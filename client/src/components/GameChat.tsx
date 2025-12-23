@@ -215,40 +215,30 @@ export function GameChat({ sessionId, apiBaseUrl = 'http://localhost:3000/api', 
       // Mark this turn as processed
       processedTurnIdsRef.current.add(turnKey);
 
-      // Add both character input and keeper response
+      // Add keeper response only (user message was already added immediately)
       setMessages(prev => {
-        // Double-check to avoid duplicates in case of race conditions
-        const existingTurnNumbers = new Set(prev.map(msg => msg.turnNumber));
-        if (existingTurnNumbers.has(turn.turnNumber)) {
-          console.log(`[GameChat] Turn ${turn.turnNumber} already exists in messages, skipping...`);
+        // Check if keeper response for this turn already exists
+        const existingKeeperMessage = prev.find(msg => 
+          msg.turnNumber === turn.turnNumber && msg.role === 'keeper'
+        );
+        if (existingKeeperMessage) {
+          console.log(`[GameChat] Keeper message for turn ${turn.turnNumber} already exists, skipping...`);
           return prev;
         }
 
-        const newMessages: Message[] = [];
-        
-        // Skip character input for simulated queries (only show user input)
-        if (turn.characterInput && !turn.isSimulated) {
-          newMessages.push({
-            role: 'character',
-            content: turn.characterInput,
-            timestamp: turn.startedAt,
-            turnNumber: turn.turnNumber,
-          });
-        }
-
-        // Only add keeper message if narrative exists (show for both real and simulated turns)
+        // Only add keeper message if narrative exists
         if (turn.keeperNarrative) {
-          newMessages.push({
+          const keeperMessage: Message = {
             role: 'keeper',
             content: turn.keeperNarrative,
             timestamp: turn.completedAt || turn.startedAt,
             turnNumber: turn.turnNumber,
-          });
+          };
+          return [...prev, keeperMessage];
         } else {
           console.warn(`[GameChat] Turn ${turn.turnNumber} completed but keeperNarrative is empty`);
+          return prev;
         }
-
-        return [...prev, ...newMessages];
       });
       setIsSending(false);
 
@@ -291,6 +281,17 @@ export function GameChat({ sessionId, apiBaseUrl = 'http://localhost:3000/api', 
     setInputValue('');
     setIsSending(true);
 
+    // Immediately add user message to chat
+    const nextTurnNumber = messages.length > 0 ? Math.max(...messages.map(m => m.turnNumber)) + 1 : 1;
+    const userMessage: Message = {
+      role: 'character',
+      content: messageText,
+      timestamp: new Date().toISOString(),
+      turnNumber: nextTurnNumber,
+    };
+    
+    setMessages(prev => [...prev, userMessage]);
+
     try {
       // Send message and create turn
       const response = await fetch(`${apiBaseUrl}/turns`, {
@@ -315,6 +316,12 @@ export function GameChat({ sessionId, apiBaseUrl = 'http://localhost:3000/api', 
     } catch (err) {
       console.error('Failed to send message:', err);
       setIsSending(false);
+      
+      // Remove the user message that was optimistically added
+      setMessages(prev => prev.filter(msg => 
+        !(msg.role === 'character' && msg.content === messageText && msg.turnNumber === userMessage.turnNumber)
+      ));
+      
       alert('Failed to send message: ' + (err instanceof Error ? err.message : 'Unknown error'));
     }
   };
