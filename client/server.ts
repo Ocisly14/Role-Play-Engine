@@ -74,6 +74,16 @@ function generateSessionIdFromIp(ip: string): string {
 }
 
 /**
+ * Generate unique sessionId for new games
+ */
+function generateUniqueSessionId(): string {
+  // Create a unique session ID using timestamp and random value
+  const timestamp = Date.now();
+  const random = Math.random().toString(36).substring(2, 15);
+  return `session-${timestamp}-${random}`;
+}
+
+/**
  * 标准化名称（用于模糊匹配）
  */
 function normalizeName(name: string): string {
@@ -636,6 +646,11 @@ app.post("/api/game/start", async (req, res) => {
   try {
     const { characterId, modName } = req.body;
 
+    console.log(`[${new Date().toISOString()}] Starting new game - clearing previous state...`);
+    
+    // Clear any previous game state for new game
+    persistentGameState = null;
+
     console.log(`[${new Date().toISOString()}] Initializing multi-agent system...`);
 
     // Initialize database if not already initialized
@@ -872,10 +887,8 @@ app.post("/api/game/start", async (req, res) => {
       }
 
       console.log(`📝 [1/3] 创建基础游戏状态...`);
-      // Generate sessionId based on client IP
-      const clientIp = getClientIp(req);
-      const sessionId = generateSessionIdFromIp(clientIp);
-      console.log(`   - 客户端 IP: ${clientIp}`);
+      // Generate unique sessionId for new game
+      const sessionId = generateUniqueSessionId();
       console.log(`   - Session ID: ${sessionId}`);
       
       let gameState: GameState = {
@@ -1223,10 +1236,8 @@ app.post("/api/game/start", async (req, res) => {
       console.log(`${"=".repeat(60)}\n`);
 
       console.log(`📝 [1/3] 创建基础游戏状态...`);
-      // Generate sessionId based on client IP
-      const clientIp = getClientIp(req);
-      const sessionId = generateSessionIdFromIp(clientIp);
-      console.log(`   - 客户端 IP: ${clientIp}`);
+      // Generate unique sessionId for new game
+      const sessionId = generateUniqueSessionId();
       console.log(`   - Session ID: ${sessionId}`);
       
       let gameState: GameState = {

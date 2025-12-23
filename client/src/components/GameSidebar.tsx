@@ -198,7 +198,7 @@ export function GameSidebar({ sessionId, apiBaseUrl = 'http://localhost:3000/api
                     <div className="status-item-full">
                       <span className="status-label">位置:</span>
                       <span className="status-value">
-                        {gameState.currentScenario?.location || '未知'}
+                        {gameState.currentScenario?.name || '未知'}
                       </span>
                     </div>
                     <div className="status-item-full">
