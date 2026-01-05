@@ -241,6 +241,7 @@ export class TurnManager {
     content: string;
     timestamp: string;
     turnNumber: number;
+    diceRolls?: string[];
   }> {
     const turns = this.getHistory(sessionId, limit);
     const conversation: Array<{
@@ -248,18 +249,33 @@ export class TurnManager {
       content: string;
       timestamp: string;
       turnNumber: number;
+      diceRolls?: string[];
     }> = [];
 
     turns.reverse().forEach((turn) => {
+      // Extract dice rolls from actionResults if available
+      const diceRolls: string[] = [];
+      if (turn.actionResults && Array.isArray(turn.actionResults)) {
+        turn.actionResults.forEach((result: any) => {
+          if (result.diceRolls && Array.isArray(result.diceRolls) && result.diceRolls.length > 0) {
+            diceRolls.push(...result.diceRolls);
+          }
+        });
+      }
+
       // For introduction turn (turnNumber 0 with empty characterInput), only add keeper narrative
       if (turn.turnNumber === 0 && !turn.characterInput) {
         if (turn.status === 'completed' && turn.keeperNarrative) {
-          conversation.push({
+          const keeperMessage: any = {
             role: 'keeper',
             content: turn.keeperNarrative,
             timestamp: turn.completedAt || turn.startedAt,
             turnNumber: turn.turnNumber,
-          });
+          };
+          if (diceRolls.length > 0) {
+            keeperMessage.diceRolls = diceRolls;
+          }
+          conversation.push(keeperMessage);
         }
       } else {
         // For normal turns, add character input and keeper narrative
@@ -275,12 +291,16 @@ export class TurnManager {
 
         // Add keeper narrative if completed (show for both real and simulated turns)
         if (turn.status === 'completed' && turn.keeperNarrative) {
-          conversation.push({
+          const keeperMessage: any = {
             role: 'keeper',
             content: turn.keeperNarrative,
             timestamp: turn.completedAt || turn.startedAt,
             turnNumber: turn.turnNumber,
-          });
+          };
+          if (diceRolls.length > 0) {
+            keeperMessage.diceRolls = diceRolls;
+          }
+          conversation.push(keeperMessage);
         }
       }
     });

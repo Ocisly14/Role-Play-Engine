@@ -869,6 +869,7 @@ export class CoCDatabase {
 
   /**
    * Update turn with processing results
+   * Only updates fields that are provided (not undefined)
    */
   updateTurnProcessing(
     turnId: string,
@@ -877,20 +878,41 @@ export class CoCDatabase {
     directorDecision?: any
   ): void {
     const database = this.db;
-    const stmt = database.prepare(`
-      UPDATE game_turns 
-      SET action_analysis = ?,
-          action_results = ?,
-          director_decision = ?
-      WHERE turn_id = ?
-    `);
     
-    stmt.run(
-      actionAnalysis ? JSON.stringify(actionAnalysis) : null,
-      actionResults ? JSON.stringify(actionResults) : null,
-      directorDecision ? JSON.stringify(directorDecision) : null,
-      turnId
-    );
+    // Build dynamic UPDATE query based on which fields are provided
+    const updates: string[] = [];
+    const values: any[] = [];
+    
+    if (actionAnalysis !== undefined) {
+      updates.push('action_analysis = ?');
+      values.push(actionAnalysis ? JSON.stringify(actionAnalysis) : null);
+    }
+    
+    if (actionResults !== undefined) {
+      updates.push('action_results = ?');
+      values.push(actionResults ? JSON.stringify(actionResults) : null);
+    }
+    
+    if (directorDecision !== undefined) {
+      updates.push('director_decision = ?');
+      values.push(directorDecision ? JSON.stringify(directorDecision) : null);
+    }
+    
+    if (updates.length === 0) {
+      // Nothing to update
+      return;
+    }
+    
+    values.push(turnId);
+    
+    const sql = `
+      UPDATE game_turns 
+      SET ${updates.join(', ')}
+      WHERE turn_id = ?
+    `;
+    
+    const stmt = database.prepare(sql);
+    stmt.run(...values);
   }
 
   /**

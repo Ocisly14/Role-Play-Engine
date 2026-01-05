@@ -122,6 +122,7 @@ const App: React.FC = () => {
     content: string;
     timestamp: string;
     turnNumber: number;
+    diceRolls?: string[];
   }> | null>(null);
   const [sidebarRefreshTrigger, setSidebarRefreshTrigger] = useState(0);
   const [isCreatingFromGameFlow, setIsCreatingFromGameFlow] = useState(false);

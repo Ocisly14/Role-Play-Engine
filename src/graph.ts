@@ -290,13 +290,31 @@ export const buildGraph = (db: CoCDatabase, scenarioLoader: ScenarioLoader, rag?
     // Update turn with action results if turnId exists
     if (state.turnId) {
       try {
-        if (actionResults) {
+        if (actionResults && actionResults.length > 0) {
+          console.log(`📝 [Action Agent] 准备保存 ${actionResults.length} 个 actionResults 到数据库`);
+          actionResults.forEach((result, idx) => {
+            console.log(`   [${idx + 1}] ActionResult:`, {
+              character: result.character,
+              hasDiceRolls: !!result.diceRolls,
+              diceRollsCount: result.diceRolls?.length || 0,
+              diceRolls: result.diceRolls,
+            });
+          });
           turnManager.updateProcessing(state.turnId, {
             actionResults: actionResults
           });
           console.log(`📝 [Action Agent] Turn ${state.turnId} 的动作结果已更新到数据库`);
+          
+          // Verify the save by reading back
+          const savedTurn = turnManager.getTurn(state.turnId);
+          if (savedTurn) {
+            console.log(`📝 [Action Agent] 验证保存结果:`, {
+              hasActionResults: !!savedTurn.actionResults,
+              actionResultsCount: savedTurn.actionResults?.length || 0,
+            });
+          }
         } else {
-          console.warn(`⚠️  [Action Agent] Turn ${state.turnId} 没有动作结果可更新`);
+          console.warn(`⚠️  [Action Agent] Turn ${state.turnId} 没有动作结果可更新 (actionResults: ${actionResults ? 'empty array' : 'null/undefined'})`);
         }
       } catch (error) {
         console.error(`❌ [Action Agent] 更新 turn 失败:`, error);

@@ -4,14 +4,16 @@
  * Handles sending messages to the game and displaying conversation history.
  */
 
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 import { useTurnPolling } from '../hooks/useTurnPolling';
+import { DiceAnimation } from './DiceAnimation';
 
 interface Message {
   role: 'character' | 'keeper';
   content: string;
   timestamp: string;
   turnNumber: number;
+  diceRolls?: string[]; // Optional dice rolls for keeper messages
 }
 
 interface GameChatProps {
@@ -33,11 +35,36 @@ export function GameChat({ sessionId, apiBaseUrl = 'http://localhost:3000/api', 
   const processedTurnIdsRef = useRef<Set<string>>(new Set());
   const wsRef = useRef<WebSocket | null>(null);
   const reconnectTimeoutRef = useRef<number | null>(null);
+  const shouldReconnectRef = useRef<boolean>(true); // Track if we should auto-reconnect
+  const currentSessionIdRef = useRef<string | null>(null); // Track current session to avoid duplicate connections
+  // Refs to access latest values without causing WebSocket reconnection
+  const messagesRef = useRef<Message[]>(messages);
+  const onNarrativeCompleteRef = useRef(onNarrativeComplete);
   const { turn, isPolling, error, startPolling } = useTurnPolling(apiBaseUrl);
+  
+  // State for dice animation
+  const [pendingDiceRolls, setPendingDiceRolls] = useState<{ turnNumber: number; diceRolls: string[]; narrative: string; timestamp: string } | null>(null);
+  const [showingDiceAnimation, setShowingDiceAnimation] = useState(false);
+  const [diceAnimationCompleted, setDiceAnimationCompleted] = useState(false);
+
+  // Update refs when values change
+  useEffect(() => {
+    messagesRef.current = messages;
+  }, [messages]);
+
+  useEffect(() => {
+    onNarrativeCompleteRef.current = onNarrativeComplete;
+  }, [onNarrativeComplete]);
 
   // WebSocket connection for progression checking
   useEffect(() => {
     if (!sessionId) return;
+
+    // Check if we already have a connection for this sessionId
+    if (currentSessionIdRef.current === sessionId && wsRef.current && wsRef.current.readyState === WebSocket.OPEN) {
+      console.log(`[WebSocket] Already connected for session ${sessionId}, skipping...`);
+      return;
+    }
 
     // Get WebSocket URL from apiBaseUrl
     const wsUrl = apiBaseUrl.replace('/api', '').replace('http://', 'ws://').replace('https://', 'wss://');
@@ -45,8 +72,25 @@ export function GameChat({ sessionId, apiBaseUrl = 'http://localhost:3000/api', 
 
     console.log(`[WebSocket] Connecting to ${wsPath}`);
 
+    // Mark that we should reconnect if connection closes (unless cleanup disables it)
+    shouldReconnectRef.current = true;
+    currentSessionIdRef.current = sessionId;
+
     const connectWebSocket = () => {
+      // Check if we should still connect (might have been cancelled by cleanup)
+      if (!shouldReconnectRef.current || currentSessionIdRef.current !== sessionId) {
+        console.log(`[WebSocket] Connection cancelled or session changed, aborting...`);
+        return;
+      }
+
       try {
+        // Close existing connection if any
+        if (wsRef.current && wsRef.current.readyState !== WebSocket.CLOSED) {
+          console.log(`[WebSocket] Closing existing connection before creating new one`);
+          shouldReconnectRef.current = false; // Prevent auto-reconnect from old connection
+          wsRef.current.close();
+        }
+
         const ws = new WebSocket(wsPath);
         wsRef.current = ws;
 
@@ -71,8 +115,9 @@ export function GameChat({ sessionId, apiBaseUrl = 'http://localhost:3000/api', 
               // Handle simulated narrative
               if (message.keeperNarrative) {
                 // Find the latest turn number and add 1 for the simulated turn
-                const latestTurnNumber = messages.length > 0 
-                  ? Math.max(...messages.map(m => m.turnNumber))
+                // Use ref to get latest messages without causing reconnection
+                const latestTurnNumber = messagesRef.current.length > 0 
+                  ? Math.max(...messagesRef.current.map(m => m.turnNumber))
                   : 0;
                 
                 setMessages(prev => {
@@ -91,9 +136,9 @@ export function GameChat({ sessionId, apiBaseUrl = 'http://localhost:3000/api', 
                   ];
                 });
 
-                // Trigger sidebar refresh
-                if (onNarrativeComplete) {
-                  onNarrativeComplete();
+                // Trigger sidebar refresh using ref
+                if (onNarrativeCompleteRef.current) {
+                  onNarrativeCompleteRef.current();
                 }
               }
             } else if (message.type === 'pong') {
@@ -114,37 +159,50 @@ export function GameChat({ sessionId, apiBaseUrl = 'http://localhost:3000/api', 
         };
 
         ws.onclose = () => {
-          console.log('[WebSocket] Connection closed, attempting to reconnect in 5 seconds...');
+          console.log('[WebSocket] Connection closed');
           wsRef.current = null;
           
-          // Reconnect after 5 seconds
-          reconnectTimeoutRef.current = window.setTimeout(() => {
-            connectWebSocket();
-          }, 5000);
+          // Only reconnect if we should and session hasn't changed
+          if (shouldReconnectRef.current && currentSessionIdRef.current === sessionId) {
+            console.log('[WebSocket] Attempting to reconnect in 5 seconds...');
+            reconnectTimeoutRef.current = window.setTimeout(() => {
+              connectWebSocket();
+            }, 5000);
+          } else {
+            console.log('[WebSocket] Reconnect disabled or session changed, not reconnecting');
+          }
         };
       } catch (error) {
         console.error('[WebSocket] Failed to connect:', error);
-        // Retry connection after 5 seconds
-        reconnectTimeoutRef.current = window.setTimeout(() => {
-          connectWebSocket();
-        }, 5000);
+        // Retry connection after 5 seconds only if we should reconnect
+        if (shouldReconnectRef.current && currentSessionIdRef.current === sessionId) {
+          reconnectTimeoutRef.current = window.setTimeout(() => {
+            connectWebSocket();
+          }, 5000);
+        }
       }
     };
 
     connectWebSocket();
 
-    // Cleanup on unmount
+    // Cleanup on unmount or when dependencies change
     return () => {
-      if (wsRef.current) {
-        wsRef.current.close();
-        wsRef.current = null;
-      }
+      console.log(`[WebSocket] Cleanup: disabling reconnect and closing connection`);
+      shouldReconnectRef.current = false; // Disable auto-reconnect
+      
       if (reconnectTimeoutRef.current !== null) {
         window.clearTimeout(reconnectTimeoutRef.current);
         reconnectTimeoutRef.current = null;
       }
+      
+      if (wsRef.current) {
+        // Remove event handlers to prevent onclose from triggering reconnect
+        wsRef.current.onclose = null;
+        wsRef.current.close();
+        wsRef.current = null;
+      }
     };
-  }, [sessionId, apiBaseUrl, messages, onNarrativeComplete]);
+  }, [sessionId, apiBaseUrl]); // Removed messages and onNarrativeComplete from dependencies
 
   // Send heartbeat ping every 60 seconds
   useEffect(() => {
@@ -193,6 +251,84 @@ export function GameChat({ sessionId, apiBaseUrl = 'http://localhost:3000/api', 
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [messages]);
 
+  // Handle dice animation completion - use useRef to access latest pendingDiceRolls
+  const pendingDiceRollsRef = useRef(pendingDiceRolls);
+  useEffect(() => {
+    pendingDiceRollsRef.current = pendingDiceRolls;
+  }, [pendingDiceRolls]);
+
+  // Track if callback has been called for current dice rolls to prevent duplicate calls
+  const diceAnimationCallbackCalledRef = useRef<string>('');
+
+  const handleDiceAnimationComplete = useCallback(() => {
+    console.log(`[GameChat] Dice animation completed`);
+    const currentPendingDiceRolls = pendingDiceRollsRef.current;
+    console.log(`[GameChat] Current pendingDiceRolls:`, currentPendingDiceRolls);
+    
+    if (!currentPendingDiceRolls) {
+      console.warn(`[GameChat] handleDiceAnimationComplete called but pendingDiceRolls is null`);
+      return;
+    }
+
+    // Create a unique key for this set of dice rolls
+    const diceRollsKey = JSON.stringify({
+      turnNumber: currentPendingDiceRolls.turnNumber,
+      diceRolls: currentPendingDiceRolls.diceRolls,
+      timestamp: currentPendingDiceRolls.timestamp
+    });
+
+    // Prevent duplicate calls for the same dice roll set
+    if (diceAnimationCallbackCalledRef.current === diceRollsKey) {
+      console.log(`[GameChat] Callback already called for this dice roll set, skipping...`);
+      return;
+    }
+
+    // Mark this set as processed
+    diceAnimationCallbackCalledRef.current = diceRollsKey;
+    
+    // Mark animation as completed - this will trigger narrative display
+    console.log(`[GameChat] Setting diceAnimationCompleted to true, narrative length: ${currentPendingDiceRolls.narrative?.length || 0}`);
+    setDiceAnimationCompleted(true);
+    
+    // Trigger sidebar refresh using ref to avoid dependency issues
+    if (onNarrativeCompleteRef.current) {
+      onNarrativeCompleteRef.current();
+    }
+  }, []); // No dependencies - uses refs to access latest values
+
+  // Add completed dice animation message to messages array
+  useEffect(() => {
+    if (diceAnimationCompleted && pendingDiceRolls) {
+      console.log(`[GameChat] Adding completed dice animation to messages`);
+
+      setMessages(prev => {
+        // Check if this message already exists
+        const existingMessage = prev.find(msg =>
+          msg.turnNumber === pendingDiceRolls.turnNumber && msg.role === 'keeper'
+        );
+        if (existingMessage) {
+          console.log(`[GameChat] Message for turn ${pendingDiceRolls.turnNumber} already exists, skipping...`);
+          return prev;
+        }
+
+        // Add the keeper message with dice rolls
+        const keeperMessage: Message = {
+          role: 'keeper',
+          content: pendingDiceRolls.narrative,
+          timestamp: pendingDiceRolls.timestamp,
+          turnNumber: pendingDiceRolls.turnNumber,
+          diceRolls: pendingDiceRolls.diceRolls,
+        };
+        return [...prev, keeperMessage];
+      });
+
+      // Clear the pending dice rolls to hide the temporary animation message
+      setShowingDiceAnimation(false);
+      setPendingDiceRolls(null);
+      setDiceAnimationCompleted(false);
+    }
+  }, [diceAnimationCompleted, pendingDiceRolls]);
+
   // Update messages when turn completes
   useEffect(() => {
     if (turn && turn.status === 'completed') {
@@ -209,43 +345,94 @@ export function GameChat({ sessionId, apiBaseUrl = 'http://localhost:3000/api', 
         turnNumber: turn.turnNumber,
         hasKeeperNarrative: !!turn.keeperNarrative,
         keeperNarrativeLength: turn.keeperNarrative?.length || 0,
+        hasActionResults: !!turn.actionResults,
+        actionResultsCount: turn.actionResults?.length || 0,
+        actionResultsType: typeof turn.actionResults,
+        actionResultsValue: turn.actionResults,
         characterInput: turn.characterInput?.substring(0, 50) + '...',
       });
 
       // Mark this turn as processed
       processedTurnIdsRef.current.add(turnKey);
 
-      // Add keeper response only (user message was already added immediately)
-      setMessages(prev => {
-        // Check if keeper response for this turn already exists
-        const existingKeeperMessage = prev.find(msg => 
-          msg.turnNumber === turn.turnNumber && msg.role === 'keeper'
-        );
-        if (existingKeeperMessage) {
-          console.log(`[GameChat] Keeper message for turn ${turn.turnNumber} already exists, skipping...`);
-          return prev;
-        }
-
-        // Only add keeper message if narrative exists
-        if (turn.keeperNarrative) {
-          const keeperMessage: Message = {
-            role: 'keeper',
-            content: turn.keeperNarrative,
-            timestamp: turn.completedAt || turn.startedAt,
-            turnNumber: turn.turnNumber,
-          };
-          return [...prev, keeperMessage];
-        } else {
-          console.warn(`[GameChat] Turn ${turn.turnNumber} completed but keeperNarrative is empty`);
-          return prev;
-        }
-      });
-      setIsSending(false);
-
-      // Trigger sidebar refresh when narrative is complete
-      if (onNarrativeComplete) {
-        onNarrativeComplete();
+      // Check if there are dice rolls to show
+      const allDiceRolls: string[] = [];
+      if (turn.actionResults && turn.actionResults.length > 0) {
+        console.log(`[GameChat] Processing ${turn.actionResults.length} actionResults`);
+        turn.actionResults.forEach((result, index) => {
+          console.log(`[GameChat] ActionResult[${index}]:`, {
+            hasDiceRolls: !!result.diceRolls,
+            diceRollsType: typeof result.diceRolls,
+            diceRollsValue: result.diceRolls,
+            diceRollsLength: result.diceRolls?.length || 0,
+            result: result.result?.substring(0, 50) + '...',
+          });
+          if (result.diceRolls && result.diceRolls.length > 0) {
+            console.log(`[GameChat] Found dice rolls in actionResult[${index}]:`, result.diceRolls);
+            allDiceRolls.push(...result.diceRolls);
+          } else {
+            console.log(`[GameChat] ActionResult[${index}] has no diceRolls or diceRolls is empty`);
+          }
+        });
+      } else {
+        console.log(`[GameChat] No actionResults or actionResults is empty:`, {
+          actionResults: turn.actionResults,
+          isArray: Array.isArray(turn.actionResults),
+          isNull: turn.actionResults === null,
+          isUndefined: turn.actionResults === undefined,
+        });
       }
+
+      console.log(`[GameChat] Total dice rolls collected: ${allDiceRolls.length}`, allDiceRolls);
+      console.log(`[GameChat] Has keeperNarrative: ${!!turn.keeperNarrative}`);
+
+      // If there are dice rolls, show animation first
+      if (allDiceRolls.length > 0 && turn.keeperNarrative) {
+        console.log(`[GameChat] Showing dice animation for ${allDiceRolls.length} dice rolls`);
+        // Reset callback tracking when new dice rolls are set
+        diceAnimationCallbackCalledRef.current = ''; // Reset to allow new callback
+        setPendingDiceRolls({
+          turnNumber: turn.turnNumber,
+          diceRolls: allDiceRolls,
+          narrative: turn.keeperNarrative,
+          timestamp: turn.completedAt || turn.startedAt,
+        });
+        setShowingDiceAnimation(true);
+        setDiceAnimationCompleted(false); // Reset animation completed state
+      } else {
+        // No dice rolls, add narrative directly to messages
+        setMessages(prev => {
+          // Check if keeper response for this turn already exists
+          const existingKeeperMessage = prev.find(msg => 
+            msg.turnNumber === turn.turnNumber && msg.role === 'keeper'
+          );
+          if (existingKeeperMessage) {
+            console.log(`[GameChat] Keeper message for turn ${turn.turnNumber} already exists, skipping...`);
+            return prev;
+          }
+
+          // Only add keeper message if narrative exists
+          if (turn.keeperNarrative) {
+            const keeperMessage: Message = {
+              role: 'keeper',
+              content: turn.keeperNarrative,
+              timestamp: turn.completedAt || turn.startedAt,
+              turnNumber: turn.turnNumber,
+            };
+            return [...prev, keeperMessage];
+          } else {
+            console.warn(`[GameChat] Turn ${turn.turnNumber} completed but keeperNarrative is empty`);
+            return prev;
+          }
+        });
+
+        // Trigger sidebar refresh when narrative is complete
+        if (onNarrativeComplete) {
+          onNarrativeComplete();
+        }
+      }
+
+      setIsSending(false);
     } else if (turn && turn.status === 'error') {
       // Handle error case
       console.error(`[GameChat] Turn ${turn.turnId || turn.turnNumber} failed:`, turn.errorMessage);
@@ -422,9 +609,39 @@ export function GameChat({ sessionId, apiBaseUrl = 'http://localhost:3000/api', 
                 })}
               </span>
             </div>
+            {msg.diceRolls && msg.diceRolls.length > 0 && (
+              <DiceAnimation 
+              diceRolls={msg.diceRolls} 
+              onAnimationComplete={undefined}
+            />
+            )}
             <div className="message-text">{msg.content}</div>
           </div>
         ))}
+
+        {showingDiceAnimation && pendingDiceRolls && (
+          <div className="chat-message keeper dice-message">
+            <div className="message-meta">
+              <span className="sender-name">🎭 Keeper</span>
+              <span className="message-timestamp">
+                {new Date(pendingDiceRolls.timestamp).toLocaleTimeString('zh-CN', { 
+                  hour: '2-digit', 
+                  minute: '2-digit' 
+                })}
+              </span>
+            </div>
+            <DiceAnimation 
+              diceRolls={pendingDiceRolls.diceRolls} 
+              onAnimationComplete={handleDiceAnimationComplete}
+            />
+            {/* Show narrative after dice animation completes */}
+            {diceAnimationCompleted && pendingDiceRolls && pendingDiceRolls.narrative && (
+              <div className="message-text" style={{ marginTop: '16px' }}>
+                {pendingDiceRolls.narrative}
+              </div>
+            )}
+          </div>
+        )}
 
         {(isSending || isPolling) && (
           <div className="chat-message keeper loading">

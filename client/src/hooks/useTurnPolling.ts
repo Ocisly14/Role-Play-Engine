@@ -7,6 +7,18 @@
 
 import { useState, useEffect, useRef } from 'react';
 
+export interface ActionResult {
+  timestamp: string | Date;
+  gameTime: string;
+  timeElapsedMinutes?: number;
+  location: string;
+  character: string;
+  result: string;
+  diceRolls: string[];
+  timeConsumption: string;
+  scenarioChanges?: string[];
+}
+
 export interface TurnStatus {
   turnId: string;
   turnNumber: number;
@@ -20,6 +32,7 @@ export interface TurnStatus {
   sceneName: string | null;
   location: string | null;
   isSimulated?: boolean;
+  actionResults?: ActionResult[] | null;
 }
 
 export interface UseTurnPollingResult {
@@ -82,6 +95,10 @@ export function useTurnPolling(
           status: data.turn?.status,
           hasKeeperNarrative: !!data.turn?.keeperNarrative,
           keeperNarrativeLength: data.turn?.keeperNarrative?.length || 0,
+          hasActionResults: !!data.turn?.actionResults,
+          actionResultsType: typeof data.turn?.actionResults,
+          actionResultsCount: Array.isArray(data.turn?.actionResults) ? data.turn.actionResults.length : 'not array',
+          actionResultsValue: data.turn?.actionResults,
         });
 
         setTurn(data.turn);

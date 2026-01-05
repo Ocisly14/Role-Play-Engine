@@ -65,22 +65,11 @@ function getClientIp(req: express.Request): string {
 }
 
 /**
- * Generate sessionId based on client IP address
+ * Generate unique sessionId
  */
 function generateSessionIdFromIp(ip: string): string {
-  // Create a hash of the IP address for consistent sessionId per IP
-  const hash = createHash("sha256").update(ip).digest("hex").slice(0, 16);
-  return `session-ip-${hash}`;
-}
-
-/**
- * Generate unique sessionId for new games
- */
-function generateUniqueSessionId(): string {
-  // Create a unique session ID using timestamp and random value
-  const timestamp = Date.now();
-  const random = Math.random().toString(36).substring(2, 15);
-  return `session-${timestamp}-${random}`;
+  // Generate a unique session ID using timestamp + random UUID
+  return `session-${Date.now()}-${randomUUID().slice(0, 8)}`;
 }
 
 /**
@@ -646,11 +635,6 @@ app.post("/api/game/start", async (req, res) => {
   try {
     const { characterId, modName } = req.body;
 
-    console.log(`[${new Date().toISOString()}] Starting new game - clearing previous state...`);
-    
-    // Clear any previous game state for new game
-    persistentGameState = null;
-
     console.log(`[${new Date().toISOString()}] Initializing multi-agent system...`);
 
     // Initialize database if not already initialized
@@ -887,8 +871,10 @@ app.post("/api/game/start", async (req, res) => {
       }
 
       console.log(`📝 [1/3] 创建基础游戏状态...`);
-      // Generate unique sessionId for new game
-      const sessionId = generateUniqueSessionId();
+      // Generate sessionId based on client IP
+      const clientIp = getClientIp(req);
+      const sessionId = generateSessionIdFromIp(clientIp);
+      console.log(`   - 客户端 IP: ${clientIp}`);
       console.log(`   - Session ID: ${sessionId}`);
       
       let gameState: GameState = {
@@ -1179,7 +1165,7 @@ app.post("/api/game/start", async (req, res) => {
           // Check if introduction turn already exists for this session
           const database = db.getDatabase();
           const existingIntro = database.prepare(`
-            SELECT turn_id FROM game_turns 
+            SELECT turn_id FROM          game_turns 
             WHERE session_id = ? AND turn_number = 0 AND character_input = ''
           `).get(persistentGameState.sessionId);
           
@@ -1236,8 +1222,10 @@ app.post("/api/game/start", async (req, res) => {
       console.log(`${"=".repeat(60)}\n`);
 
       console.log(`📝 [1/3] 创建基础游戏状态...`);
-      // Generate unique sessionId for new game
-      const sessionId = generateUniqueSessionId();
+      // Generate sessionId based on client IP
+      const clientIp = getClientIp(req);
+      const sessionId = generateSessionIdFromIp(clientIp);
+      console.log(`   - 客户端 IP: ${clientIp}`);
       console.log(`   - Session ID: ${sessionId}`);
       
       let gameState: GameState = {
@@ -2062,6 +2050,12 @@ app.get("/api/turns/:turnId", async (req, res) => {
         // If turn is completed or error, return immediately
         if (turn.status === 'completed' || turn.status === 'error') {
           console.log(`📖 [API] 获取 Turn ${turnId}: status=${turn.status}, keeperNarrative=${turn.keeperNarrative ? `${turn.keeperNarrative.length} 字符` : 'null'}`);
+          console.log(`📖 [API] Turn ${turnId} actionResults:`, {
+            hasActionResults: !!turn.actionResults,
+            actionResultsType: typeof turn.actionResults,
+            actionResultsCount: Array.isArray(turn.actionResults) ? turn.actionResults.length : 'not array',
+            actionResultsValue: turn.actionResults,
+          });
           
           return res.json({
             success: true,
@@ -2077,6 +2071,7 @@ app.get("/api/turns/:turnId", async (req, res) => {
               sceneId: turn.sceneId,
               sceneName: turn.sceneName,
               location: turn.location,
+              actionResults: turn.actionResults || null,
             },
           });
         }
@@ -2106,6 +2101,7 @@ app.get("/api/turns/:turnId", async (req, res) => {
           sceneId: turn.sceneId,
           sceneName: turn.sceneName,
           location: turn.location,
+          actionResults: turn.actionResults || null,
         },
       });
     }
@@ -2134,6 +2130,7 @@ app.get("/api/turns/:turnId", async (req, res) => {
         sceneName: turn.sceneName,
         location: turn.location,
         isSimulated: turn.isSimulated || false,
+        actionResults: turn.actionResults || null,
       },
     });
   } catch (error) {
@@ -2683,6 +2680,15 @@ wss.on('connection', (ws: WebSocket, req) => {
   
   console.log(`🔌 [WebSocket] Client connected: ${sessionId}`);
   
+  // Close existing connection for this sessionId if any
+  const existingClient = wsClients.get(sessionId);
+  if (existingClient && existingClient.ws.readyState === WebSocket.OPEN) {
+    console.log(`⚠️  [WebSocket] Closing existing connection for session ${sessionId}`);
+    // Remove from map first to prevent race condition
+    wsClients.delete(sessionId);
+    existingClient.ws.close();
+  }
+  
   // Store client connection
   const client: WSClient = {
     ws,
@@ -2745,11 +2751,16 @@ wss.on('connection', (ws: WebSocket, req) => {
   // Handle client disconnect
   ws.on('close', () => {
     console.log(`🔌 [WebSocket] Client disconnected: ${sessionId}`);
-    wsClients.delete(sessionId);
-    
-    // Stop checker if no clients connected
-    if (wsClients.size === 0) {
-      stopProgressionChecker();
+    // Only delete if this is still the current client for this sessionId
+    // (prevents race condition where old connection's close event deletes new connection)
+    const currentClient = wsClients.get(sessionId);
+    if (currentClient && currentClient.ws === ws) {
+      wsClients.delete(sessionId);
+      
+      // Stop checker if no clients connected
+      if (wsClients.size === 0) {
+        stopProgressionChecker();
+      }
     }
   });
   
