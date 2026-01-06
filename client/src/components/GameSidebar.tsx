@@ -5,6 +5,7 @@
  */
 
 import { useState, useEffect, useRef } from 'react';
+import { CharacterSheetModal } from './CharacterSheetModal';
 
 interface GameSidebarProps {
   sessionId: string;
@@ -61,7 +62,7 @@ export function GameSidebar({ sessionId, apiBaseUrl = 'http://localhost:3000/api
   const [gameState, setGameState] = useState<GameState | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [occupationalSkills, setOccupationalSkills] = useState<string[]>([]);
+  const [showCharacterSheet, setShowCharacterSheet] = useState(false);
   const isInitialLoadRef = useRef(true);
 
   // Fetch game state from backend
@@ -102,42 +103,17 @@ export function GameSidebar({ sessionId, apiBaseUrl = 'http://localhost:3000/api
     fetchGameState();
   }, [apiBaseUrl, sessionId, refreshTrigger]); // Refetch when refreshTrigger changes
 
-  // Fetch occupational skills when game state changes
-  useEffect(() => {
-    const fetchOccupationalSkills = async () => {
-      if (!gameState?.playerCharacter?.occupation) {
-        setOccupationalSkills([]);
-        return;
-      }
-
-      try {
-        const response = await fetch(`${apiBaseUrl}/occupations`);
-        const data = await response.json();
-
-        if (data.success && data.occupations) {
-          // Find the matching occupation
-          for (const group of data.occupations.groups || []) {
-            for (const occ of group.occupations || []) {
-              if (occ.name_en === gameState.playerCharacter.occupation ||
-                  occ.name_zh === gameState.playerCharacter.occupation) {
-                setOccupationalSkills(occ.suggested_skills || []);
-                return;
-              }
-            }
-          }
-        }
-        setOccupationalSkills([]);
-      } catch (err) {
-        console.error('Error fetching occupations:', err);
-        setOccupationalSkills([]);
-      }
-    };
-
-    fetchOccupationalSkills();
-  }, [gameState?.playerCharacter?.occupation, apiBaseUrl]);
-
   return (
     <div className="game-sidebar">
+      {/* Character Sheet Modal */}
+      {showCharacterSheet && (
+        <CharacterSheetModal
+          sessionId={sessionId}
+          apiBaseUrl={apiBaseUrl}
+          onClose={() => setShowCharacterSheet(false)}
+        />
+      )}
+
       {/* Tab Headers */}
       <div className="sidebar-tabs">
         <button
@@ -165,7 +141,16 @@ export function GameSidebar({ sessionId, apiBaseUrl = 'http://localhost:3000/api
             ) : gameState ? (
               <>
                 <div className="status-section">
-                  <h3>Basic Attributes</h3>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '12px' }}>
+                    <h3 style={{ margin: 0 }}>Basic Attributes</h3>
+                    <button
+                      className="view-character-btn-sidebar"
+                      onClick={() => setShowCharacterSheet(true)}
+                      title="View full character sheet"
+                    >
+                      📋 View Character
+                    </button>
+                  </div>
                   <div className="status-grid">
                     <div className="status-item">
                       <span className="status-label">HP:</span>
@@ -227,29 +212,6 @@ export function GameSidebar({ sessionId, apiBaseUrl = 'http://localhost:3000/api
                   </div>
                 </div>
 
-                <div className="status-section">
-                  <h3>Skills</h3>
-                  <div className="skills-grid">
-                    {gameState.playerCharacter.skills && Object.keys(gameState.playerCharacter.skills).length > 0 ? (
-                      Object.entries(gameState.playerCharacter.skills)
-                        .sort(([a], [b]) => a.localeCompare(b))
-                        .map(([skillName, skillValue]) => {
-                          const isOccupationalSkill = occupationalSkills.includes(skillName);
-                          return (
-                            <div
-                              key={skillName}
-                              className={`skill-item ${isOccupationalSkill ? 'occupational' : ''}`}
-                            >
-                              <span className="skill-name">{skillName}</span>
-                              <span className="skill-value">{skillValue}</span>
-                            </div>
-                          );
-                        })
-                    ) : (
-                      <p className="empty-state">No skills</p>
-                    )}
-                  </div>
-                </div>
               </>
             ) : (
               <p className="empty-state">No data</p>

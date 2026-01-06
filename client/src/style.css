@@ -520,6 +520,40 @@ textarea {
   border: 1px solid #ccc;
 }
 
+.view-character-btn {
+  margin-left: 12px;
+  padding: 6px 12px;
+  background: #5ba3c0;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  font-size: 0.85rem;
+  cursor: pointer;
+  transition: background 0.2s;
+  font-weight: 500;
+}
+
+.view-character-btn:hover {
+  background: #4a8ca8;
+}
+
+.view-character-btn-sidebar {
+  padding: 6px 10px;
+  background: #5ba3c0;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  font-size: 0.75rem;
+  cursor: pointer;
+  transition: background 0.2s;
+  font-weight: 500;
+  white-space: nowrap;
+}
+
+.view-character-btn-sidebar:hover {
+  background: #4a8ca8;
+}
+
 /* Messages Scroll Area */
 .messages-scroll-area {
   flex: 1;

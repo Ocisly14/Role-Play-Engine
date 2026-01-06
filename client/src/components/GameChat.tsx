@@ -576,8 +576,8 @@ export function GameChat({ sessionId, apiBaseUrl = 'http://localhost:3000/api', 
             {isSaving ? '💾 Saving...' : '💾 Save'}
           </button>
           {saveMessage && (
-            <span className="save-message" style={{ 
-              marginLeft: '10px', 
+            <span className="save-message" style={{
+              marginLeft: '10px',
               fontSize: '0.85rem',
               color: saveMessage.startsWith('✓') ? '#155724' : '#721c24'
             }}>

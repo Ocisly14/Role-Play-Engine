@@ -1,0 +1,175 @@
+/* Character Sheet Modal Styles */
+
+.character-modal-backdrop {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(0, 0, 0, 0.7);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 1000;
+  padding: 20px;
+}
+
+.character-modal-content {
+  background: #f5f1e8;
+  border: 3px solid #8b7355;
+  border-radius: 8px;
+  max-width: 1200px;
+  max-height: 90vh;
+  width: 100%;
+  overflow-y: auto;
+  position: relative;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+}
+
+.modal-close-btn {
+  position: sticky;
+  top: 10px;
+  right: 10px;
+  float: right;
+  background: #c41e3a;
+  color: white;
+  border: none;
+  border-radius: 50%;
+  width: 36px;
+  height: 36px;
+  font-size: 20px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 10;
+  transition: background 0.2s;
+}
+
+.modal-close-btn:hover {
+  background: #a01829;
+}
+
+.character-sheet-view {
+  padding: 30px;
+  color: #3d2817;
+}
+
+.character-sheet-view h1 {
+  font-family: 'Georgia', serif;
+  font-size: 2rem;
+  margin-bottom: 24px;
+  text-align: center;
+  color: #3d2817;
+  border-bottom: 2px solid #8b7355;
+  padding-bottom: 12px;
+}
+
+.character-sheet-view .section-title {
+  font-size: 1.3rem;
+  font-weight: bold;
+  margin-top: 24px;
+  margin-bottom: 12px;
+  padding: 8px 12px;
+  background: #8b7355;
+  color: #f5f1e8;
+  border-radius: 4px;
+}
+
+.character-sheet-view table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-bottom: 16px;
+  background: white;
+  border: 1px solid #ddd;
+}
+
+.character-sheet-view th {
+  background: #e8e3d8;
+  padding: 8px;
+  text-align: left;
+  font-weight: bold;
+  border: 1px solid #ddd;
+  color: #3d2817;
+}
+
+.character-sheet-view td {
+  padding: 8px;
+  border: 1px solid #ddd;
+  color: #3d2817;
+}
+
+/* Skills Display Grid */
+.skills-display-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+  gap: 8px;
+  margin-bottom: 16px;
+}
+
+.skill-display-item {
+  display: flex;
+  justify-content: space-between;
+  padding: 8px 12px;
+  background: white;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+}
+
+.skill-display-name {
+  font-weight: 500;
+  color: #3d2817;
+}
+
+.skill-display-value {
+  font-weight: bold;
+  color: #8b7355;
+}
+
+/* Notes Display Grid */
+.notes-display-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: 16px;
+  margin-bottom: 16px;
+}
+
+.note-section {
+  background: white;
+  padding: 16px;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+}
+
+.note-section h4 {
+  margin: 0 0 8px 0;
+  color: #8b7355;
+  font-size: 1rem;
+  font-weight: bold;
+}
+
+.note-section p {
+  margin: 0;
+  color: #3d2817;
+  white-space: pre-wrap;
+  line-height: 1.5;
+}
+
+/* Scrollbar styling for modal */
+.character-modal-content::-webkit-scrollbar {
+  width: 10px;
+}
+
+.character-modal-content::-webkit-scrollbar-track {
+  background: #e8e3d8;
+  border-radius: 4px;
+}
+
+.character-modal-content::-webkit-scrollbar-thumb {
+  background: #8b7355;
+  border-radius: 4px;
+}
+
+.character-modal-content::-webkit-scrollbar-thumb:hover {
+  background: #6d5a43;
+}

@@ -830,7 +830,8 @@ app.post("/api/game/start", async (req, res) => {
     if (characterId) {
       const database = db.getDatabase();
       const character = database.prepare(`
-        SELECT character_id, name, attributes, status, skills, inventory, notes
+        SELECT character_id, name, attributes, status, skills, inventory, notes,
+               occupation, age, gender, appearance, personality, background
         FROM characters
         WHERE character_id = ? AND is_npc = 0
       `).get(characterId) as {
@@ -841,6 +842,12 @@ app.post("/api/game/start", async (req, res) => {
         skills: string;
         inventory: string;
         notes: string;
+        occupation: string | null;
+        age: number | null;
+        gender: string | null;
+        appearance: string | null;
+        personality: string | null;
+        background: string | null;
       } | undefined;
 
       if (!character) {
@@ -856,6 +863,15 @@ app.post("/api/game/start", async (req, res) => {
       const parsedStatus = JSON.parse(character.status);
       const parsedSkillsRaw = JSON.parse(character.skills);
       const parsedInventory = JSON.parse(character.inventory);
+
+      // Parse notes JSON to extract additional character fields
+      let parsedNotes: any = {};
+      try {
+        parsedNotes = typeof character.notes === 'string' ? JSON.parse(character.notes) : {};
+      } catch (e) {
+        // If notes is not JSON, keep it as is
+        parsedNotes = {};
+      }
 
       // Convert skills to simple number format for game use
       // Support both new format (object with value) and old format (simple number)
@@ -889,6 +905,26 @@ app.post("/api/game/start", async (req, res) => {
           inventory: parsedInventory,
           notes: character.notes || "",
           actionLog: [],
+          // Additional character info for display
+          occupation: character.occupation || undefined,
+          age: character.age || undefined,
+          gender: character.gender || parsedNotes.gender || undefined,
+          appearance: character.appearance || parsedNotes.appearance || undefined,
+          personality: character.personality || undefined,
+          backstory: character.background || parsedNotes.backstory || undefined,
+          era: parsedNotes.era || undefined,
+          residence: parsedNotes.residence || undefined,
+          birthplace: parsedNotes.birthplace || undefined,
+          ideology: parsedNotes.ideology || undefined,
+          significantPeople: parsedNotes.people || undefined,
+          gear: parsedNotes.gear || undefined,
+          weapons: parsedNotes.weapons || undefined,
+          derivedAttributes: {
+            MOV: parsedStatus.mov || undefined,
+            BUILD: parsedStatus.build !== undefined ? String(parsedStatus.build) : undefined,
+            DB: parsedStatus.damageBonus || undefined,
+            ARMOR: undefined, // Not stored in status, would need to be calculated or stored separately
+          },
         },
       };
       console.log(`   ✓ 基础状态已创建`);

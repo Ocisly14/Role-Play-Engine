@@ -189,6 +189,33 @@ export interface CharacterProfile {
   skills: Record<string, number>;
   notes?: string;
   actionLog?: ActionLogEntry[];
+  // Additional character information (mainly for player characters)
+  occupation?: string;
+  age?: number;
+  gender?: string;
+  appearance?: string;
+  personality?: string;
+  backstory?: string;
+  residence?: string;
+  birthplace?: string;
+  era?: string;
+  ideology?: string;
+  significantPeople?: string;
+  gear?: string;
+  weapons?: Array<{
+    name: string;
+    skill: string;
+    damage: string;
+    range: string;
+    attacks: string;
+    ammo: string;
+  }>;
+  derivedAttributes?: {
+    MOV?: number;
+    BUILD?: string;
+    DB?: string;
+    ARMOR?: string;
+  };
 }
 
 /**

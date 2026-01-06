@@ -50,6 +50,8 @@ USAGE:
 - Examples: "1d3: 2 + 1 (DB) = 3 (unarmed damage)", "1d6: 4 + 2 (STR bonus) = 6 (knife damage)"
 
 !!! Important: Always follow the 7th edition rules of Call of Cthulhu.
+When the player's input explicitly mentions using a specific skill (e.g., "I use Spot Hidden", "I try to persuade him", "I listen at the door"), you MUST:
+- Perform a dice roll (1d100) for that skill
 
 DiceUsed field:
 - Record ONLY the dice you actually used from the pre-rolled dice
@@ -78,7 +80,7 @@ If the action involves picking up, dropping, receiving, giving, or losing items,
 TIME ESTIMATION:
 Estimate how many minutes this action realistically takes in game time. Consider the nature and complexity of the action:
 - Quick actions: 1-10 minutes (glancing, brief conversation, opening doors)
-- Standard actions: 10-30 minutes (searching, examining, skill checks)
+- Standard actions: 10-30 minutes (searching, examining)
 - Extended actions: 30-120 minutes (combat, lengthy conversations, research)
 - Long activities: 2-8 hours (travel, surveillance, extended tasks)
 - Very long activities: 8+ hours (sleeping, all-day journeys)
