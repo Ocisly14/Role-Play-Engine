@@ -103,6 +103,7 @@ const App: React.FC = () => {
   const [occupations, setOccupations] = useState<any[]>([]);
   const [selectedOccupation, setSelectedOccupation] = useState<any>(null);
   const [occupationalPoints, setOccupationalPoints] = useState<number>(0);
+  const [weaponsList, setWeaponsList] = useState<any[]>([]);
   const [interestPoints, setInterestPoints] = useState<number>(0);
   const [sessionId, setSessionId] = useState<string>("");
   const [showAttributeSelector, setShowAttributeSelector] = useState(false);
@@ -128,6 +129,24 @@ const App: React.FC = () => {
   const [isCreatingFromGameFlow, setIsCreatingFromGameFlow] = useState(false);
 
   const [form, setForm] = React.useState<Record<string, string>>({});
+
+  // Fetch weapons on component mount
+  React.useEffect(() => {
+    const fetchWeapons = async () => {
+      try {
+        const response = await fetch("http://localhost:3000/api/weapons");
+        const data = await response.json();
+
+        if (data.success && data.weapons) {
+          setWeaponsList(data.weapons);
+        }
+      } catch (error) {
+        console.error("Error fetching weapons:", error);
+      }
+    };
+
+    fetchWeapons();
+  }, []);
 
   // Fetch occupations on component mount
   React.useEffect(() => {
@@ -448,11 +467,11 @@ const App: React.FC = () => {
         setAttributeOptions([{ id: 1, attributes: data.attributes }]);
         setShowAttributeSelector(true);
       } else {
-        alert("生成属性失败: " + (data.error || "Unknown error"));
+        alert("Failed to generate attributes: " + (data.error || "Unknown error"));
       }
     } catch (error) {
       console.error("Error generating random attributes:", error);
-      alert("网络错误，无法生成随机属性");
+      alert("Network error, unable to generate random attributes");
     }
   };
 
@@ -478,11 +497,11 @@ const App: React.FC = () => {
           { id: prev.length + 1, attributes: data.attributes }
         ]);
       } else {
-        alert("生成属性失败: " + (data.error || "Unknown error"));
+        alert("Failed to generate attributes: " + (data.error || "Unknown error"));
       }
     } catch (error) {
       console.error("Error generating random attributes:", error);
-      alert("网络错误，无法生成随机属性");
+      alert("Network error, unable to generate random attributes");
     }
   };
 
@@ -536,6 +555,13 @@ const App: React.FC = () => {
     ammo: form[`weapon_${i}_ammo`] || "",
   }));
 
+  // Items/Inventory following backend InventoryItem interface
+  const items = [0, 1, 2, 3, 4].map((i) => ({
+    name: form[`item_${i}_name`] || "",
+    quantity: form[`item_${i}_quantity`] ? Number(form[`item_${i}_quantity`]) : undefined,
+    properties: form[`item_${i}_description`] ? { description: form[`item_${i}_description`] } : undefined,
+  }));
+
   const characterData = useMemo(
     () => ({
       identity: {
@@ -574,6 +600,7 @@ const App: React.FC = () => {
         {}
       ),
       weapons: weapons.filter((w) => w.name || w.skill || w.damage),
+      items: items.filter((item) => item.name), // Filter out empty items
       notes: {
         appearance: form.appearance,
         ideology: form.ideology,
@@ -582,7 +609,7 @@ const App: React.FC = () => {
         backstory: form.backstory,
       },
     }),
-    [form, skillsState, weapons]
+    [form, skillsState, weapons, items]
   );
 
   const handleCreateCharacter = async (e: React.FormEvent) => {
@@ -625,11 +652,11 @@ const App: React.FC = () => {
           setIsCreatingFromGameFlow(false);
         }, 1500);
       } else {
-        setSaveMessage({ type: "error", text: data.error || "创建角色失败" });
+        setSaveMessage({ type: "error", text: data.error || "Failed to create character" });
       }
     } catch (error) {
       console.error("Error creating character:", error);
-      setSaveMessage({ type: "error", text: "网络错误，无法连接到服务器" });
+      setSaveMessage({ type: "error", text: "Network error, unable to connect to server" });
     } finally {
       setSaving(false);
     }
@@ -678,15 +705,15 @@ const App: React.FC = () => {
                     onChange("occupation", occupationName);
 
                     // Find and store the selected occupation details
-                    const selected = occupations.find(occ => occ.name_zh === occupationName || occ.name_en === occupationName);
+                    const selected = occupations.find(occ => occ.name_en === occupationName);
                     setSelectedOccupation(selected);
                   }}
                   style={{ width: "100%", padding: "4px" }}
                 >
                   <option value="">Select occupation...</option>
                   {occupations.map((occ) => (
-                    <option key={occ.id} value={occ.name_zh}>
-                      {occ.name_zh} ({occ.name_en})
+                    <option key={occ.id} value={occ.name_en}>
+                      {occ.name_en}
                     </option>
                   ))}
                 </select>
@@ -699,17 +726,17 @@ const App: React.FC = () => {
               </td>
               <th>Gender</th>
               <td>
-                <input name="gender" placeholder="男 / 女" value={form.gender || ""} onChange={(e) => onChange("gender", e.target.value)} />
+                <input name="gender" placeholder="Male / Female" value={form.gender || ""} onChange={(e) => onChange("gender", e.target.value)} />
               </td>
               <th>Residence</th>
               <td>
-                <input name="residence" placeholder="纽约" value={form.residence || ""} onChange={(e) => onChange("residence", e.target.value)} />
+                <input name="residence" placeholder="New York" value={form.residence || ""} onChange={(e) => onChange("residence", e.target.value)} />
               </td>
             </tr>
             <tr>
               <th>Birthplace</th>
               <td colSpan={5}>
-                <input name="birthplace" placeholder="波士顿" value={form.birthplace || ""} onChange={(e) => onChange("birthplace", e.target.value)} />
+                <input name="birthplace" placeholder="Boston" value={form.birthplace || ""} onChange={(e) => onChange("birthplace", e.target.value)} />
               </td>
             </tr>
           </tbody>
@@ -826,17 +853,17 @@ const App: React.FC = () => {
           gap: "16px"
         }}>
           <div>
-            <strong style={{ color: "#8b7355", fontSize: "1rem" }}>职业技能点数:</strong>
+            <strong style={{ color: "#8b7355", fontSize: "1rem" }}>Occupational Skill Points:</strong>
             <div style={{
               fontSize: "1.5rem",
               fontWeight: "bold",
               color: skillPointsUsage.occupationalRemaining < 0 ? "#c41e3a" : "#3d2817",
               marginTop: "4px"
             }}>
-              剩余: {skillPointsUsage.occupationalRemaining}
+              Remaining: {skillPointsUsage.occupationalRemaining}
             </div>
             <div style={{ fontSize: "0.9rem", color: "#666", marginTop: "4px" }}>
-              总共: {occupationalPoints} | 已用: {skillPointsUsage.occupationalUsed}
+              Total: {occupationalPoints} | Used: {skillPointsUsage.occupationalUsed}
             </div>
             {selectedOccupation && selectedOccupation.suggested_occupational_points && (
               <div style={{ fontSize: "0.75rem", color: "#999", marginTop: "2px" }}>
@@ -845,29 +872,29 @@ const App: React.FC = () => {
             )}
             {skillPointsUsage.occupationalRemaining < 0 && (
               <div style={{ fontSize: "0.8rem", color: "#c41e3a", marginTop: "4px", fontWeight: "bold" }}>
-                ⚠️ 超出可用点数！
+                ⚠️ Exceeds available points!
               </div>
             )}
           </div>
           <div>
-            <strong style={{ color: "#8b7355", fontSize: "1rem" }}>兴趣技能点数:</strong>
+            <strong style={{ color: "#8b7355", fontSize: "1rem" }}>Interest Skill Points:</strong>
             <div style={{
               fontSize: "1.5rem",
               fontWeight: "bold",
               color: skillPointsUsage.interestRemaining < 0 ? "#c41e3a" : "#3d2817",
               marginTop: "4px"
             }}>
-              剩余: {skillPointsUsage.interestRemaining}
+              Remaining: {skillPointsUsage.interestRemaining}
             </div>
             <div style={{ fontSize: "0.9rem", color: "#666", marginTop: "4px" }}>
-              总共: {interestPoints} | 已用: {skillPointsUsage.interestUsed}
+              Total: {interestPoints} | Used: {skillPointsUsage.interestUsed}
             </div>
             <div style={{ fontSize: "0.75rem", color: "#999", marginTop: "2px" }}>
               (INT × 2)
             </div>
             {skillPointsUsage.interestRemaining < 0 && (
               <div style={{ fontSize: "0.8rem", color: "#c41e3a", marginTop: "4px", fontWeight: "bold" }}>
-                ⚠️ 超出可用点数！
+                ⚠️ Exceeds available points!
               </div>
             )}
           </div>
@@ -882,7 +909,7 @@ const App: React.FC = () => {
           fontSize: "0.85rem",
           color: "#2c5f75"
         }}>
-          <strong>💡 提示:</strong> 每个技能可以分别使用<strong>职业加点</strong>和<strong>兴趣加点</strong>进行提升，最终技能值 = 基础值 + 职业加点 + 兴趣加点
+          <strong>💡 Tip:</strong> Each skill can be improved using <strong>occupational points</strong> and <strong>interest points</strong> separately. Final skill value = Base value + Occupational points + Interest points
         </div>
 
         {selectedOccupation && selectedOccupation.suggested_skills && selectedOccupation.suggested_skills.length > 0 && (
@@ -894,7 +921,7 @@ const App: React.FC = () => {
             borderRadius: "4px"
           }}>
             <strong style={{ color: "#8b7355" }}>
-              {selectedOccupation.name_zh} ({selectedOccupation.name_en}) Recommended Skills:
+              {selectedOccupation.name_en} Recommended Skills:
             </strong>
             <div style={{ marginTop: "8px", display: "flex", flexWrap: "wrap", gap: "8px" }}>
               {selectedOccupation.suggested_skills.map((skill: string, index: number) => (
@@ -1082,12 +1109,34 @@ const App: React.FC = () => {
             {weapons.map((w, i) => (
               <tr className="weapon-row" key={i}>
                 <td>
-                  <input
+                  <select
                     name={`weapon_${i}_name`}
-                    placeholder={i === 0 ? ".38 Revolver" : "Weapon"}
                     value={w.name}
-                    onChange={(e) => onChange(`weapon_${i}_name`, e.target.value)}
-                  />
+                    onChange={(e) => {
+                      const selectedWeaponName = e.target.value;
+                      onChange(`weapon_${i}_name`, selectedWeaponName);
+
+                      // Auto-fill weapon stats if a predefined weapon is selected
+                      if (selectedWeaponName) {
+                        const selectedWeapon = weaponsList.find(weapon => weapon.name === selectedWeaponName);
+                        if (selectedWeapon) {
+                          onChange(`weapon_${i}_skill`, selectedWeapon.skill);
+                          onChange(`weapon_${i}_damage`, selectedWeapon.damage);
+                          onChange(`weapon_${i}_range`, selectedWeapon.range);
+                          onChange(`weapon_${i}_attacks`, String(selectedWeapon.attacks_per_round));
+                          onChange(`weapon_${i}_ammo`, selectedWeapon.ammo ? String(selectedWeapon.ammo) : "");
+                        }
+                      }
+                    }}
+                    style={{ width: "100%", padding: "4px" }}
+                  >
+                    <option value="">-- Select Weapon --</option>
+                    {weaponsList.map((weapon) => (
+                      <option key={weapon.name} value={weapon.name}>
+                        {weapon.name}
+                      </option>
+                    ))}
+                  </select>
                 </td>
                 <td>
                   <input
@@ -1127,6 +1176,50 @@ const App: React.FC = () => {
                     placeholder={i === 0 ? "6" : "-"}
                     value={w.ammo}
                     onChange={(e) => onChange(`weapon_${i}_ammo`, e.target.value)}
+                  />
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+
+        <div className="section-title">Items & Equipment</div>
+        <table>
+          <tbody>
+            <tr>
+              <th>Item Name</th>
+              <th style={{ width: '100px' }}>Quantity</th>
+              <th>Description</th>
+            </tr>
+            {items.map((item, i) => (
+              <tr className="item-row" key={i}>
+                <td>
+                  <input
+                    name={`item_${i}_name`}
+                    placeholder={i === 0 ? "Flashlight" : "Item name"}
+                    value={item.name}
+                    onChange={(e) => onChange(`item_${i}_name`, e.target.value)}
+                    style={{ width: "100%" }}
+                  />
+                </td>
+                <td>
+                  <input
+                    name={`item_${i}_quantity`}
+                    type="number"
+                    min="1"
+                    placeholder={i === 0 ? "1" : "-"}
+                    value={item.quantity || ""}
+                    onChange={(e) => onChange(`item_${i}_quantity`, e.target.value)}
+                    style={{ width: "100%" }}
+                  />
+                </td>
+                <td>
+                  <input
+                    name={`item_${i}_description`}
+                    placeholder={i === 0 ? "Battery-powered, heavy" : "Optional description"}
+                    value={item.properties?.description || ""}
+                    onChange={(e) => onChange(`item_${i}_description`, e.target.value)}
+                    style={{ width: "100%" }}
                   />
                 </td>
               </tr>
@@ -1290,7 +1383,7 @@ const App: React.FC = () => {
                 color: '#3d2817',
                 fontSize: '1.6rem'
               }}>
-                🎲 选择属性组合
+                🎲 Select Attribute Set
               </h2>
               <div style={{
                 display: 'flex',
@@ -1302,7 +1395,7 @@ const App: React.FC = () => {
                   color: '#666',
                   fontWeight: 'bold'
                 }}>
-                  已生成: {attributeOptions.length}/5
+                  Generated: {attributeOptions.length}/5
                 </span>
                 <button
                   onClick={handleGenerateAnotherSet}
@@ -1329,7 +1422,7 @@ const App: React.FC = () => {
                     }
                   }}
                 >
-                  {attributeOptions.length >= 5 ? '已达上限' : '🎲 再随机一组'}
+                  {attributeOptions.length >= 5 ? 'Maximum reached' : '🎲 Generate Another Set'}
                 </button>
               </div>
             </div>
@@ -1344,7 +1437,7 @@ const App: React.FC = () => {
               color: '#2c5f75',
               textAlign: 'center'
             }}>
-              💡 点击卡片选择该组属性，或点击右上角"再随机一组"继续生成（最多5组）
+              💡 Click a card to select that attribute set, or click "Generate Another Set" to continue generating (max 5 sets)
             </div>
 
             <div style={{
@@ -1389,7 +1482,7 @@ const App: React.FC = () => {
                       borderBottom: '1px solid #ddd',
                       paddingBottom: '8px'
                     }}>
-                      方案 {option.id}
+                      Set {option.id}
                     </div>
 
                     <table style={{ width: '100%', fontSize: '0.85rem' }}>
@@ -1431,7 +1524,7 @@ const App: React.FC = () => {
                           <td style={{ padding: '2px 4px', textAlign: 'right' }}>{attrs.LCK}</td>
                         </tr>
                         <tr style={{ borderTop: '1px solid #ddd' }}>
-                          <td style={{ padding: '4px 4px 2px', fontWeight: 'bold' }}>总计:</td>
+                          <td style={{ padding: '4px 4px 2px', fontWeight: 'bold' }}>Total:</td>
                           <td style={{ padding: '4px 4px 2px', textAlign: 'right', fontWeight: 'bold' }}>{total}</td>
                         </tr>
                       </tbody>
@@ -1472,7 +1565,7 @@ const App: React.FC = () => {
                 fontWeight: 'bold',
               }}
             >
-              取消
+              Cancel
             </button>
           </div>
         </div>
@@ -1515,12 +1608,12 @@ const App: React.FC = () => {
               border: '3px solid #8b7355',
               boxShadow: '0 8px 20px rgba(0, 0, 0, 0.3)',
             }}>
-              <h2 style={{ marginTop: 0, marginBottom: '20px', color: '#3d2817' }}>📂 选择存档</h2>
+              <h2 style={{ marginTop: 0, marginBottom: '20px', color: '#3d2817' }}>📂 Select Checkpoint</h2>
               
               {loadingCheckpoints ? (
-                <p>加载存档列表中...</p>
+                <p>Loading checkpoint list...</p>
               ) : checkpoints.length === 0 ? (
-                <p style={{ color: '#666' }}>暂无存档</p>
+                <p style={{ color: '#666' }}>No checkpoints available</p>
               ) : (
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
                   {checkpoints.map((checkpoint: any) => (
@@ -1543,16 +1636,16 @@ const App: React.FC = () => {
                       }}
                     >
                       <div style={{ fontWeight: 'bold', marginBottom: '5px', color: '#3d2817' }}>
-                        {checkpoint.checkpointName || '未命名存档'}
+                        {checkpoint.checkpointName || 'Unnamed Checkpoint'}
                       </div>
                       <div style={{ fontSize: '0.85rem', color: '#666' }}>
-                        {checkpoint.currentSceneName && `场景: ${checkpoint.currentSceneName}`}
-                        {checkpoint.currentLocation && ` | 位置: ${checkpoint.currentLocation}`}
-                        {checkpoint.gameDay && ` | 第 ${checkpoint.gameDay} 天`}
+                        {checkpoint.currentSceneName && `Scene: ${checkpoint.currentSceneName}`}
+                        {checkpoint.currentLocation && ` | Location: ${checkpoint.currentLocation}`}
+                        {checkpoint.gameDay && ` | Day ${checkpoint.gameDay}`}
                         {checkpoint.gameTime && ` | ${checkpoint.gameTime}`}
                       </div>
                       <div style={{ fontSize: '0.75rem', color: '#999', marginTop: '5px' }}>
-                        {checkpoint.createdAt && new Date(checkpoint.createdAt).toLocaleString('zh-CN')}
+                        {checkpoint.createdAt && new Date(checkpoint.createdAt).toLocaleString('en-US')}
                       </div>
                     </div>
                   ))}
@@ -1572,7 +1665,7 @@ const App: React.FC = () => {
                   fontSize: '1rem',
                 }}
               >
-                取消
+                Cancel
               </button>
             </div>
           </div>
@@ -1621,7 +1714,7 @@ const App: React.FC = () => {
                 fontSize: '1.8rem',
                 textAlign: 'center',
               }}>
-                📦 正在加载模组数据
+                📦 Loading Module Data
               </h2>
               
               {modLoadProgress && (
@@ -1718,14 +1811,14 @@ const App: React.FC = () => {
               borderBottom: '2px solid #8b7355',
               paddingBottom: '10px'
             }}>
-              📖 模块导入
+              📖 Module Introduction
             </h2>
             
             {moduleIntroduction && (
               <>
                 <div style={{ marginBottom: '30px' }}>
                   <h3 style={{ color: '#5a4a3a', marginBottom: '10px', fontSize: '1.2rem' }}>
-                    故事介绍
+                    Story Introduction
                   </h3>
                   <div style={{
                     backgroundColor: '#fff',
@@ -1742,7 +1835,7 @@ const App: React.FC = () => {
 
                 <div style={{ marginBottom: '30px' }}>
                   <h3 style={{ color: '#5a4a3a', marginBottom: '10px', fontSize: '1.2rem' }}>
-                    📝 角色创建指导
+                    📝 Character Creation Guide
                   </h3>
                   <div style={{
                     backgroundColor: '#fff',
@@ -1781,7 +1874,7 @@ const App: React.FC = () => {
                   e.currentTarget.style.backgroundColor = '#6b5a45';
                 }}
               >
-                返回选择模组
+                Back to Module Selection
               </button>
               <button
                 onClick={() => setPage("character-select")}
@@ -1804,7 +1897,7 @@ const App: React.FC = () => {
                   e.currentTarget.style.backgroundColor = '#8b7355';
                 }}
               >
-                下一步：选择角色
+                Next: Select Character
               </button>
             </div>
           </div>
@@ -1832,7 +1925,7 @@ const App: React.FC = () => {
         <div className="game-header">
           <h1>Call of Cthulhu - Game Session</h1>
           <button className="back-button" onClick={handleBackToHome}>
-            ← 返回首页
+            ← Back to Home
           </button>
         </div>
         <div className="game-main-layout">

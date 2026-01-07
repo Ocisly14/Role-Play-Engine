@@ -175,6 +175,37 @@ app.get("/api/occupations", (req, res) => {
   }
 });
 
+// API endpoint to get all weapons from database
+app.get("/api/weapons", (req, res) => {
+  try {
+    // Initialize database if not already initialized
+    if (!db) {
+      const dataDir = path.join(process.cwd(), "data");
+      if (!fs.existsSync(dataDir)) {
+        fs.mkdirSync(dataDir, { recursive: true });
+      }
+      db = new CoCDatabase();
+      seedDatabase(db);
+      console.log("Database initialized for weapons retrieval");
+    }
+
+    const database = db.getDatabase();
+    const weapons = database.prepare(`
+      SELECT name, skill, damage, range, attacks_per_round, ammo
+      FROM weapons
+      ORDER BY name
+    `).all();
+
+    res.json({
+      success: true,
+      weapons: weapons,
+    });
+  } catch (error) {
+    console.error("Error fetching weapons:", error);
+    res.status(500).json({ error: "Failed to fetch weapons: " + (error as Error).message });
+  }
+});
+
 // API endpoint to get all available mods
 app.get("/api/mods", (req, res) => {
   try {
@@ -1838,11 +1869,31 @@ app.post("/api/character", (req, res) => {
         mov: characterData.derived?.MOV || 8,
         conditions: [],
       }),
-      inventory: JSON.stringify(
-        (characterData.weapons || [])
+      inventory: JSON.stringify([
+        // Add items as InventoryItem objects
+        ...(characterData.items || [])
+          .filter((item: any) => item.name)
+          .map((item: any) => ({
+            name: item.name,
+            quantity: item.quantity || 1,
+            properties: item.properties || undefined
+          })),
+        // Add weapons as InventoryItem objects (for backward compatibility)
+        ...(characterData.weapons || [])
           .filter((w: any) => w.name)
-          .map((w: any) => w.name)
-      ),
+          .map((w: any) => ({
+            name: w.name,
+            quantity: 1,
+            properties: {
+              type: 'weapon',
+              skill: w.skill,
+              damage: w.damage,
+              range: w.range,
+              attacks: w.attacks,
+              ammo: w.ammo
+            }
+          }))
+      ]),
       skills: JSON.stringify(
         Object.entries(characterData.skills || {}).reduce((acc: any, [name, data]: [string, any]) => {
           // Support both old format (data.value) and new format (data.total with breakdown)
@@ -1940,6 +1991,103 @@ app.get("/api/characters", (req, res) => {
   } catch (error) {
     console.error("Error fetching characters:", error);
     res.status(500).json({ error: "Failed to fetch characters" });
+  }
+});
+
+// API endpoint to get a single character by ID
+app.get("/api/character/:characterId", (req, res) => {
+  try {
+    const { characterId } = req.params;
+
+    // Initialize database if not already initialized
+    if (!db) {
+      const dataDir = path.join(process.cwd(), "data");
+      if (!fs.existsSync(dataDir)) {
+        fs.mkdirSync(dataDir, { recursive: true });
+      }
+      db = new CoCDatabase();
+      seedDatabase(db);
+      console.log("Database initialized for character retrieval");
+    }
+
+    const database = db.getDatabase();
+
+    // Get character basic info
+    const character = database.prepare(`
+      SELECT *
+      FROM characters
+      WHERE character_id = ?
+    `).get(characterId);
+
+    if (!character) {
+      return res.status(404).json({
+        success: false,
+        error: "Character not found"
+      });
+    }
+
+    // Parse JSON fields
+    const attributes = (character as any).attributes ? JSON.parse((character as any).attributes) : null;
+    const derived = (character as any).derived ? JSON.parse((character as any).derived) : null;
+    const status = (character as any).status ? JSON.parse((character as any).status) : null;
+    const skills = (character as any).skills ? JSON.parse((character as any).skills) : null;
+    const inventory = (character as any).inventory ? JSON.parse((character as any).inventory) : [];
+    const notes = (character as any).notes ? JSON.parse((character as any).notes) : null;
+
+    // Extract weapons from inventory
+    const weapons: any[] = [];
+    const items: any[] = [];
+
+    if (Array.isArray(inventory)) {
+      inventory.forEach((item: any) => {
+        if (item.properties && item.properties.type === 'weapon') {
+          // This is a weapon stored in inventory
+          weapons.push({
+            name: item.name,
+            skill: item.properties.skill || '',
+            damage: item.properties.damage || '',
+            range: item.properties.range || '',
+            attacks: item.properties.attacks || '',
+            ammo: item.properties.ammo || ''
+          });
+        } else {
+          // Regular inventory item
+          items.push(item);
+        }
+      });
+    }
+
+    // Process skills to extract the value
+    const processedSkills: any = {};
+    if (skills) {
+      Object.keys(skills).forEach(skillName => {
+        const skillData = skills[skillName];
+        if (typeof skillData === 'object' && skillData.value !== undefined) {
+          processedSkills[skillName] = skillData.value;
+        } else {
+          processedSkills[skillName] = skillData;
+        }
+      });
+    }
+
+    const parsedCharacter: any = {
+      ...character,
+      attributes,
+      derived,
+      status,
+      skills: processedSkills,
+      weapons,
+      items,
+      notes,
+    };
+
+    res.json({
+      success: true,
+      character: parsedCharacter,
+    });
+  } catch (error) {
+    console.error("Error fetching character:", error);
+    res.status(500).json({ error: "Failed to fetch character: " + (error as Error).message });
   }
 });
 

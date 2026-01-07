@@ -603,7 +603,7 @@ export function GameChat({ sessionId, apiBaseUrl = 'http://localhost:3000/api', 
                 {msg.role === 'character' ? `📝 ${characterName}` : '🎭 Keeper'}
               </span>
               <span className="message-timestamp">
-                {new Date(msg.timestamp).toLocaleTimeString('zh-CN', { 
+                {new Date(msg.timestamp).toLocaleTimeString('en-US', { 
                   hour: '2-digit', 
                   minute: '2-digit' 
                 })}
@@ -624,7 +624,7 @@ export function GameChat({ sessionId, apiBaseUrl = 'http://localhost:3000/api', 
             <div className="message-meta">
               <span className="sender-name">🎭 Keeper</span>
               <span className="message-timestamp">
-                {new Date(pendingDiceRolls.timestamp).toLocaleTimeString('zh-CN', { 
+                {new Date(pendingDiceRolls.timestamp).toLocaleTimeString('en-US', { 
                   hour: '2-digit', 
                   minute: '2-digit' 
                 })}

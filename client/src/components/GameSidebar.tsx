@@ -15,6 +15,21 @@ interface GameSidebarProps {
 
 type TabType = 'status' | 'clues';
 
+interface Weapon {
+  name: string;
+  damage?: string;
+  range?: string;
+  attacks?: number;
+  ammo?: number;
+  malfunction?: string;
+}
+
+interface InventoryItem {
+  name: string;
+  quantity?: number;
+  description?: string;
+}
+
 interface CharacterStatus {
   hp: number;
   maxHp: number;
@@ -31,6 +46,8 @@ interface CharacterProfile {
   status: CharacterStatus;
   skills: Record<string, number>;
   occupation?: string;
+  weapons?: Weapon[];
+  inventory?: InventoryItem[];
 }
 
 interface DiscoveredClue {
@@ -135,9 +152,9 @@ export function GameSidebar({ sessionId, apiBaseUrl = 'http://localhost:3000/api
         {activeTab === 'status' && (
           <div className="tab-panel status-panel">
             {loading ? (
-              <p className="empty-state">加载中...</p>
+              <p className="empty-state">Loading...</p>
             ) : error ? (
-              <p className="empty-state" style={{ color: '#c41e3a' }}>加载失败: {error}</p>
+              <p className="empty-state" style={{ color: '#c41e3a' }}>Load failed: {error}</p>
             ) : gameState ? (
               <>
                 <div className="status-section">
@@ -178,21 +195,21 @@ export function GameSidebar({ sessionId, apiBaseUrl = 'http://localhost:3000/api
                 </div>
 
                 <div className="status-section">
-                  <h3>当前状态</h3>
+                  <h3>Current Status</h3>
                   <div className="status-list">
                     <div className="status-item-full">
-                      <span className="status-label">位置:</span>
+                      <span className="status-label">Location:</span>
                       <span className="status-value">
-                        {gameState.currentScenario?.name || '未知'}
+                        {gameState.currentScenario?.name || 'Unknown'}
                       </span>
                     </div>
                     <div className="status-item-full">
-                      <span className="status-label">时间:</span>
+                      <span className="status-label">Time:</span>
                       <span className="status-value">{gameState.timeOfDay || '--'}</span>
                     </div>
                     <div className="status-item-full">
-                      <span className="status-label">天数:</span>
-                      <span className="status-value">第 {gameState.gameDay} 天</span>
+                      <span className="status-label">Day:</span>
+                      <span className="status-value">Day {gameState.gameDay}</span>
                     </div>
                   </div>
                 </div>
@@ -208,6 +225,81 @@ export function GameSidebar({ sessionId, apiBaseUrl = 'http://localhost:3000/api
                       </ul>
                     ) : (
                       <p className="empty-state">No status effects</p>
+                    )}
+                  </div>
+                </div>
+
+                <div className="status-section">
+                  <h3>Weapons</h3>
+                  <div className="weapons-list">
+                    {gameState.playerCharacter.weapons && gameState.playerCharacter.weapons.length > 0 ? (
+                      <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                        {gameState.playerCharacter.weapons.map((weapon, idx) => (
+                          <div
+                            key={idx}
+                            style={{
+                              padding: '8px 10px',
+                              backgroundColor: '#fff',
+                              border: '1px solid var(--accent)',
+                              borderRadius: '3px',
+                            }}
+                          >
+                            <div style={{ fontWeight: 'bold', marginBottom: '4px', fontSize: '0.9rem' }}>
+                              {weapon.name}
+                            </div>
+                            <div style={{ fontSize: '0.75rem', color: '#666', display: 'flex', flexWrap: 'wrap', gap: '8px' }}>
+                              {weapon.damage && <span>DMG: {weapon.damage}</span>}
+                              {weapon.range && <span>Range: {weapon.range}</span>}
+                              {weapon.attacks && <span>Attacks: {weapon.attacks}</span>}
+                              {weapon.ammo !== undefined && <span>Ammo: {weapon.ammo}</span>}
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    ) : (
+                      <p className="empty-state">No weapons</p>
+                    )}
+                  </div>
+                </div>
+
+                <div className="status-section">
+                  <h3>Inventory</h3>
+                  <div className="inventory-list">
+                    {gameState.playerCharacter.inventory && gameState.playerCharacter.inventory.length > 0 ? (
+                      <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
+                        {gameState.playerCharacter.inventory.map((item, idx) => (
+                          <div
+                            key={idx}
+                            style={{
+                              padding: '6px 10px',
+                              backgroundColor: '#fff',
+                              border: '1px solid #ddd',
+                              borderRadius: '3px',
+                              display: 'flex',
+                              justifyContent: 'space-between',
+                              alignItems: 'center',
+                            }}
+                          >
+                            <span style={{ fontSize: '0.85rem', fontWeight: '500' }}>
+                              {item.name}
+                            </span>
+                            {item.quantity && item.quantity > 1 && (
+                              <span style={{
+                                fontSize: '0.75rem',
+                                color: '#666',
+                                backgroundColor: 'var(--header-bg)',
+                                padding: '2px 6px',
+                                borderRadius: '3px',
+                                fontWeight: 'bold'
+                              }}>
+                                x{item.quantity}
+                              </span>
+                            )}
+                          </div>
+                        ))}
+                      </div>
+                    ) : (
+                      <p className="empty-state">No items</p>
                     )}
                   </div>
                 </div>

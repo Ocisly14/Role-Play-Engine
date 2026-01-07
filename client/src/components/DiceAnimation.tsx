@@ -197,7 +197,7 @@ export function DiceAnimation({ diceRolls, onAnimationComplete }: DiceAnimationP
     <div className="dice-animation-container">
       <div className="dice-animation-header">
         <span className="dice-icon">🎲</span>
-        <span className="dice-label">骰子检定</span>
+        <span className="dice-label">Dice Roll</span>
       </div>
       <div className="dice-rolls-container">
         {parsedRolls.map((roll, index) => (

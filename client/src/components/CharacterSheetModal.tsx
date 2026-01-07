@@ -8,7 +8,8 @@ import { useEffect, useState } from 'react';
 import './CharacterSheetModal.css';
 
 interface CharacterSheetModalProps {
-  sessionId: string;
+  sessionId?: string;
+  characterId?: string;
   apiBaseUrl?: string;
   onClose: () => void;
 }
@@ -57,7 +58,7 @@ interface CharacterData {
   backstory?: string;
 }
 
-export function CharacterSheetModal({ sessionId, apiBaseUrl = 'http://localhost:3000/api', onClose }: CharacterSheetModalProps) {
+export function CharacterSheetModal({ sessionId, characterId, apiBaseUrl = 'http://localhost:3000/api', onClose }: CharacterSheetModalProps) {
   const [character, setCharacter] = useState<CharacterData | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -65,10 +66,75 @@ export function CharacterSheetModal({ sessionId, apiBaseUrl = 'http://localhost:
   useEffect(() => {
     const fetchCharacterData = async () => {
       try {
-        const response = await fetch(`${apiBaseUrl}/gamestate`);
-        const data = await response.json();
+        let response, data;
 
-        if (data.success && data.gameState && data.gameState.playerCharacter) {
+        // If characterId is provided, fetch character directly
+        if (characterId) {
+          response = await fetch(`${apiBaseUrl}/character/${characterId}`);
+          data = await response.json();
+
+          if (data.success && data.character) {
+            // Map database character to CharacterData format
+            const char: any = data.character;
+            console.log('Raw character data from API:', char);
+            console.log('Skills data:', char.skills);
+            console.log('Weapons data:', char.weapons);
+            console.log('Notes data:', char.notes);
+
+            const characterData: CharacterData = {
+              name: char.name || '',
+              occupation: char.occupation || undefined,
+              age: char.age || undefined,
+              gender: char.gender || undefined,
+              era: char.era || undefined,
+              residence: char.residence || undefined,
+              birthplace: char.birthplace || undefined,
+              STR: char.attributes?.STR || undefined,
+              CON: char.attributes?.CON || undefined,
+              DEX: char.attributes?.DEX || undefined,
+              APP: char.attributes?.APP || undefined,
+              POW: char.attributes?.POW || undefined,
+              SIZ: char.attributes?.SIZ || undefined,
+              INT: char.attributes?.INT || undefined,
+              EDU: char.attributes?.EDU || undefined,
+              LCK: char.attributes?.LCK || undefined,
+              // HP, SAN, MP etc are in status field, not derived
+              HP: char.status?.hp || undefined,
+              maxHP: char.status?.maxHp || undefined,
+              SAN: char.status?.sanity || undefined,
+              maxSAN: char.status?.maxSanity || undefined,
+              MP: char.status?.mp || undefined,
+              maxMP: char.status?.mp || undefined,
+              LUCK: char.status?.luck || undefined,
+              // MOV, BUILD, DB, ARMOR are in status or derived
+              MOV: char.status?.mov || char.derived?.MOV || undefined,
+              BUILD: char.status?.build || char.derived?.BUILD || undefined,
+              DB: char.status?.damageBonus || char.derived?.DB || undefined,
+              ARMOR: char.derived?.ARMOR || undefined,
+              skills: char.skills || undefined,
+              weapons: char.weapons || undefined,
+              appearance: char.notes?.appearance || undefined,
+              ideology: char.notes?.ideology || undefined,
+              people: char.notes?.people || undefined,
+              gear: char.notes?.gear || undefined,
+              backstory: char.notes?.backstory || undefined,
+            };
+
+            console.log('Mapped characterData:', characterData);
+            console.log('Mapped skills:', characterData.skills);
+            console.log('Mapped weapons:', characterData.weapons);
+
+            setCharacter(characterData);
+            setError(null);
+          } else {
+            throw new Error('Failed to load character data');
+          }
+        } else {
+          // Original sessionId-based fetch
+          response = await fetch(`${apiBaseUrl}/gamestate`);
+          data = await response.json();
+
+          if (data.success && data.gameState && data.gameState.playerCharacter) {
           // Map gameState.playerCharacter to our CharacterData format
           const playerChar = data.gameState.playerCharacter;
           const characterData: CharacterData = {
@@ -107,9 +173,11 @@ export function CharacterSheetModal({ sessionId, apiBaseUrl = 'http://localhost:
             gear: playerChar.gear || undefined,
             backstory: playerChar.backstory || undefined,
           };
-          setCharacter(characterData);
-        } else {
-          throw new Error('No character data found in game state');
+            setCharacter(characterData);
+            setError(null);
+          } else {
+            throw new Error('No character data found in game state');
+          }
         }
       } catch (err) {
         console.error('Error fetching character:', err);
@@ -120,7 +188,7 @@ export function CharacterSheetModal({ sessionId, apiBaseUrl = 'http://localhost:
     };
 
     fetchCharacterData();
-  }, [apiBaseUrl, sessionId]);
+  }, [apiBaseUrl, sessionId, characterId]);
 
   // Handle click on backdrop to close modal
   const handleBackdropClick = (e: React.MouseEvent<HTMLDivElement>) => {
