@@ -16,6 +16,17 @@ interface Message {
   diceRolls?: string[]; // Optional dice rolls for keeper messages
 }
 
+interface GameEndingInfo {
+  isEnded: boolean;
+  endingType: 'death' | 'time_limit' | 'victory' | 'failure' | 'other';
+  reason: string;
+  timestamp: string;
+}
+
+interface GameState {
+  gameEnding: GameEndingInfo | null;
+}
+
 interface GameChatProps {
   sessionId: string;
   apiBaseUrl?: string;
@@ -31,6 +42,7 @@ export function GameChat({ sessionId, apiBaseUrl = 'http://localhost:3000/api', 
   const [isSending, setIsSending] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
   const [saveMessage, setSaveMessage] = useState<string | null>(null);
+  const [isGameEnded, setIsGameEnded] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const processedTurnIdsRef = useRef<Set<string>>(new Set());
   const wsRef = useRef<WebSocket | null>(null);
@@ -40,7 +52,7 @@ export function GameChat({ sessionId, apiBaseUrl = 'http://localhost:3000/api', 
   // Refs to access latest values without causing WebSocket reconnection
   const messagesRef = useRef<Message[]>(messages);
   const onNarrativeCompleteRef = useRef(onNarrativeComplete);
-  const { turn, isPolling, error, startPolling } = useTurnPolling(apiBaseUrl);
+  const { turn, isPolling, error, startPolling, stopPolling } = useTurnPolling(apiBaseUrl);
   
   // State for dice animation
   const [pendingDiceRolls, setPendingDiceRolls] = useState<{ turnNumber: number; diceRolls: string[]; narrative: string; timestamp: string } | null>(null);
@@ -56,9 +68,31 @@ export function GameChat({ sessionId, apiBaseUrl = 'http://localhost:3000/api', 
     onNarrativeCompleteRef.current = onNarrativeComplete;
   }, [onNarrativeComplete]);
 
+  const fetchGameEnding = useCallback(async () => {
+    if (!sessionId) return;
+
+    try {
+      const response = await fetch(`${apiBaseUrl}/gamestate`);
+      if (!response.ok) {
+        return;
+      }
+
+      const data = await response.json();
+      const endingInfo: GameEndingInfo | null = data?.gameState?.gameEnding ?? null;
+      setIsGameEnded(Boolean(endingInfo?.isEnded));
+    } catch (err) {
+      console.error('[GameChat] Failed to fetch game state:', err);
+    }
+  }, [apiBaseUrl, sessionId]);
+
+  useEffect(() => {
+    setIsGameEnded(false);
+    fetchGameEnding();
+  }, [fetchGameEnding]);
+
   // WebSocket connection for progression checking
   useEffect(() => {
-    if (!sessionId) return;
+    if (!sessionId || isGameEnded) return;
 
     // Check if we already have a connection for this sessionId
     if (currentSessionIdRef.current === sessionId && wsRef.current && wsRef.current.readyState === WebSocket.OPEN) {
@@ -141,6 +175,7 @@ export function GameChat({ sessionId, apiBaseUrl = 'http://localhost:3000/api', 
                   onNarrativeCompleteRef.current();
                 }
               }
+              fetchGameEnding();
             } else if (message.type === 'pong') {
               // Heartbeat response
               console.log('[WebSocket] Heartbeat received');
@@ -202,10 +237,11 @@ export function GameChat({ sessionId, apiBaseUrl = 'http://localhost:3000/api', 
         wsRef.current = null;
       }
     };
-  }, [sessionId, apiBaseUrl]); // Removed messages and onNarrativeComplete from dependencies
+  }, [sessionId, apiBaseUrl, isGameEnded, fetchGameEnding]); // Removed messages and onNarrativeComplete from dependencies
 
   // Send heartbeat ping every 60 seconds
   useEffect(() => {
+    if (isGameEnded) return;
     if (!wsRef.current || wsRef.current.readyState !== WebSocket.OPEN) return;
 
     const heartbeatInterval = setInterval(() => {
@@ -216,7 +252,7 @@ export function GameChat({ sessionId, apiBaseUrl = 'http://localhost:3000/api', 
     }, 60000); // Send ping every 60 seconds
 
     return () => clearInterval(heartbeatInterval);
-  }, [sessionId]);
+  }, [sessionId, isGameEnded]);
 
   // Load conversation history on mount or when sessionId changes
   useEffect(() => {
@@ -433,12 +469,32 @@ export function GameChat({ sessionId, apiBaseUrl = 'http://localhost:3000/api', 
       }
 
       setIsSending(false);
+      fetchGameEnding();
     } else if (turn && turn.status === 'error') {
       // Handle error case
       console.error(`[GameChat] Turn ${turn.turnId || turn.turnNumber} failed:`, turn.errorMessage);
       setIsSending(false);
     }
-  }, [turn, onNarrativeComplete]);
+  }, [turn, onNarrativeComplete, fetchGameEnding]);
+
+  useEffect(() => {
+    if (!isGameEnded) return;
+
+    stopPolling();
+    setIsSending(false);
+    shouldReconnectRef.current = false;
+
+    if (reconnectTimeoutRef.current !== null) {
+      window.clearTimeout(reconnectTimeoutRef.current);
+      reconnectTimeoutRef.current = null;
+    }
+
+    if (wsRef.current) {
+      wsRef.current.onclose = null;
+      wsRef.current.close();
+      wsRef.current = null;
+    }
+  }, [isGameEnded, stopPolling]);
 
   const loadConversationHistory = async () => {
     try {
@@ -462,7 +518,7 @@ export function GameChat({ sessionId, apiBaseUrl = 'http://localhost:3000/api', 
   };
 
   const handleSendMessage = async () => {
-    if (!inputValue.trim() || isSending) return;
+    if (!inputValue.trim() || isSending || isGameEnded) return;
 
     const messageText = inputValue.trim();
     setInputValue('');
@@ -673,16 +729,16 @@ export function GameChat({ sessionId, apiBaseUrl = 'http://localhost:3000/api', 
           value={inputValue}
           onChange={(e) => setInputValue(e.target.value)}
           onKeyPress={handleKeyPress}
-          placeholder="I examine the ancient tome on the desk..."
-          disabled={isSending || isPolling}
+          placeholder={isGameEnded ? "The story has ended." : "I examine the ancient tome on the desk..."}
+          disabled={isSending || isPolling || isGameEnded}
           rows={3}
         />
         <button
           className="submit-action-btn"
           onClick={handleSendMessage}
-          disabled={!inputValue.trim() || isSending || isPolling}
+          disabled={!inputValue.trim() || isSending || isPolling || isGameEnded}
         >
-          {isSending || isPolling ? '⏳ Processing...' : '🎲 Declare Action'}
+          {isGameEnded ? '🏁 Game Ended' : isSending || isPolling ? '⏳ Processing...' : '🎲 Declare Action'}
         </button>
       </div>
     </div>

@@ -1,6 +1,6 @@
 import { getActionDrivenSceneChangeTemplate, getNarrativeDirectionTemplate, getPlayerIntentAnalysisTemplate } from "./directorTemplate.js";
 import { composeTemplate } from "../../../template.js";
-import type { GameStateManager } from "../../../state.js";
+import type { GameStateManager, GameEndingInfo } from "../../../state.js";
 import type { ScenarioSnapshot } from "../models/scenarioTypes.js";
 import { ScenarioLoader } from "../memory/scenarioloader/scenarioLoader.js";
 import { updateCurrentScenarioWithCheckpoint } from "../memory/index.js";
@@ -629,6 +629,16 @@ export class DirectorAgent {
     const template = getNarrativeDirectionTemplate();
     
     // 准备模板上下文
+    const playerCharacter = gameState.playerCharacter;
+    const playerStatus = playerCharacter ? {
+      hp: playerCharacter.status.hp,
+      maxHp: playerCharacter.status.maxHp,
+      sanity: playerCharacter.status.sanity,
+      maxSanity: playerCharacter.status.maxSanity,
+      isDead: playerCharacter.status.hp <= 0,
+      isInsane: playerCharacter.status.sanity <= 0
+    } : null;
+
     const templateContext = {
       // Current game state
       currentScene: gameState.currentScenario ? {
@@ -640,6 +650,7 @@ export class DirectorAgent {
         gameDay: gameState.gameDay,
         timeOfDay: gameState.timeOfDay
       },
+      playerStatus,
       // Module constraints
       moduleLimitations: gameState.moduleLimitations || null,
       keeperGuidance: gameState.keeperGuidance || null,
@@ -675,7 +686,25 @@ export class DirectorAgent {
         // 如果解析失败，返回原始响应（去掉可能的代码块标记）
         return response.replace(/```json\n?/g, "").replace(/```\n?/g, "").trim();
       }
-      
+
+      // 检查游戏是否结束
+      if (parsedResponse.gameEnded === true) {
+        console.log("\n🎮 [Director Agent] Game ending detected!");
+        console.log(`   Ending Type: ${parsedResponse.endingType}`);
+        console.log(`   Reason: ${parsedResponse.endingReason}`);
+
+        // 设置游戏结束信息到 GameState
+        const endingInfo: GameEndingInfo = {
+          isEnded: true,
+          endingType: parsedResponse.endingType || "other",
+          reason: parsedResponse.endingReason || "The game has ended.",
+          timestamp: new Date()
+        };
+
+        gameStateManager.setGameEnding(endingInfo);
+        console.log("   ✓ Game ending information saved to GameState");
+      }
+
       return parsedResponse.narrativeDirection || "Generate narrative based on current context while respecting module constraints.";
     } catch (error) {
       console.error("Failed to generate narrative direction:", error);

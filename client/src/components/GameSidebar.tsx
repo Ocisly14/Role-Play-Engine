@@ -66,12 +66,20 @@ interface CurrentScenario {
   location: string;
 }
 
+interface GameEndingInfo {
+  isEnded: boolean;
+  endingType: "death" | "time_limit" | "victory" | "failure" | "other";
+  reason: string;
+  timestamp: string;
+}
+
 interface GameState {
   playerCharacter: CharacterProfile;
   discoveredClues: DiscoveredClue[];
   currentScenario: CurrentScenario | null;
   gameDay: number;
   timeOfDay: string;
+  gameEnding: GameEndingInfo | null;
 }
 
 export function GameSidebar({ sessionId, apiBaseUrl = 'http://localhost:3000/api', refreshTrigger }: GameSidebarProps) {

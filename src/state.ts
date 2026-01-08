@@ -55,6 +55,16 @@ export interface SceneTransitionRejection {
   timestamp: Date;              // Rejection time
 }
 
+/**
+ * Game ending information determined by Director Agent
+ */
+export interface GameEndingInfo {
+  isEnded: boolean;             // Whether the game has ended
+  endingType: "death" | "time_limit" | "victory" | "failure" | "other";  // Type of ending
+  reason: string;               // Why the game ended (2-3 sentences explaining the ending)
+  timestamp: Date;              // When the game ended
+}
+
 export interface VisitedScenarioBasic {
   id: string;
   name: string;
@@ -96,6 +106,7 @@ export interface GameState {
   discoveredClues: DiscoveredClue[];
   playerCharacter: CharacterProfile;
   npcCharacters: CharacterProfile[];
+  gameEnding: GameEndingInfo | null;  // Game ending information (null if game is ongoing)
   // Story progression monitoring
   turnsInCurrentScene: number;  // Tracks turns spent in current scene
   lastPlayerInputTime: Date | null;  // Timestamp of last player input
@@ -176,6 +187,7 @@ export const initialGameState: GameState = {
   discoveredClues: [],
   playerCharacter: defaultPlayerCharacter,
   npcCharacters: [],
+  gameEnding: null,  // Game is ongoing by default
   turnsInCurrentScene: 0,
   lastPlayerInputTime: null,
   scenarioTimeState: {
@@ -873,6 +885,27 @@ export class GameStateManager {
    */
   clearNarrativeDirection(): void {
     this.gameState.temporaryInfo.narrativeDirection = null;
+  }
+
+  /**
+   * Set game ending information (marks the game as ended)
+   */
+  setGameEnding(endingInfo: GameEndingInfo): void {
+    this.gameState.gameEnding = endingInfo;
+  }
+
+  /**
+   * Check if the game has ended
+   */
+  isGameEnded(): boolean {
+    return this.gameState.gameEnding?.isEnded ?? false;
+  }
+
+  /**
+   * Get game ending information
+   */
+  getGameEnding(): GameEndingInfo | null {
+    return this.gameState.gameEnding;
   }
 
   /**

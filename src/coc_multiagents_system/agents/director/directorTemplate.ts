@@ -154,6 +154,13 @@ Generate narrative direction instructions for the Keeper Agent based on module c
 *Game time not available*
 {{/if}}
 
+{{#if playerStatus}}
+**Player Character Status**:
+- HP: {{playerStatus.hp}} / {{playerStatus.maxHp}}
+- Sanity: {{playerStatus.sanity}} / {{playerStatus.maxSanity}}
+- Status: {{#if playerStatus.isDead}}DEAD{{else}}{{#if playerStatus.isInsane}}INSANE{{else}}ALIVE{{/if}}{{/if}}
+{{/if}}
+
 ## 📋 Module Constraints
 
 {{#if moduleLimitations}}
@@ -200,7 +207,27 @@ Generate narrative direction instructions for the Keeper Agent based on module c
 
 ## 🎬 Your Task
 
-Based on the current game state (scene, time), module constraints (limitations, keeper guidance, module notes), the character's input, and the action results, generate a **reference-style** narrative direction instruction for the Keeper Agent.
+You have TWO responsibilities:
+
+### 1️⃣ Game Ending Detection
+
+**FIRST**, determine if the game should end based on:
+- **Player Death**: HP ≤ 0
+- **Permanent Insanity**: Sanity ≤ 0 or permanent insanity condition
+- **Time Limit Reached**: Check module limitations for any time-based ending conditions
+- **Victory Condition Met**: Player achieved the module's victory objective
+- **Other Failure**: Unrecoverable failure state (e.g., ritual completed, all NPCs dead)
+
+If the game should end:
+- Set 'gameEnded' to true
+- Choose appropriate 'endingType': "death", "time_limit", "victory", "failure", or "other"
+- Provide a clear 'endingReason' (2-3 sentences explaining WHY the game ended and what happens to the investigator)
+
+**CRITICAL**: The ending reason should provide closure appropriate for the ending type, but avoid excessive spoilers about unrevealed plot elements.
+
+### 2️⃣ Narrative Direction (if game is ongoing)
+
+If the game has NOT ended, generate a **reference-style** narrative direction instruction for the Keeper Agent based on the current game state, module constraints, character input, and action results.
 
 **The instruction should**:
 1. Consider the current scene and game time context
@@ -218,16 +245,24 @@ Based on the current game state (scene, time), module constraints (limitations, 
 - Use indirect language: "maintain tension" instead of "there's a time limit"
 - Focus on atmosphere, tone, and what to emphasize in the CURRENT moment
 
-**Format**: Provide a concise, spoiler-free instruction (2-4 sentences) that the Keeper Agent can use as a reference for their narrative generation.
+## Response Format
 
-## Response
 \`\`\`json
 {
-  "narrativeDirection": "Your narrative direction instruction here (2-4 sentences, specific and actionable)"
+  "gameEnded": false,
+  "endingType": null,
+  "endingReason": null,
+  "narrativeDirection": "Your narrative direction instruction here"
 }
 \`\`\`
 
-*Generate narrative direction instruction:*`;
+**Fields**:
+- 'gameEnded': true if game should end, false if ongoing
+- 'endingType': If ended: "death" | "time_limit" | "victory" | "failure" | "other". Otherwise null
+- 'endingReason': If ended: 2-3 sentences explaining why and what happens to the investigator. Otherwise null
+- 'narrativeDirection': Reference guidance for Keeper (2-4 sentences)
+
+*Generate your response:*`;
 }
 
 /**
