@@ -630,9 +630,21 @@ export class DirectorAgent {
     
     // 准备模板上下文
     const templateContext = {
+      // Current game state
+      currentScene: gameState.currentScenario ? {
+        name: gameState.currentScenario.name,
+        location: gameState.currentScenario.location,
+        description: gameState.currentScenario.description
+      } : null,
+      currentGameTime: {
+        gameDay: gameState.gameDay,
+        timeOfDay: gameState.timeOfDay
+      },
+      // Module constraints
       moduleLimitations: gameState.moduleLimitations || null,
       keeperGuidance: gameState.keeperGuidance || null,
       moduleNotes: module?.moduleNotes || null,
+      // Current turn context
       characterInput,
       actionResults: actionResults || []
     };

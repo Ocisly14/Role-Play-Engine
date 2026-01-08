@@ -136,6 +136,24 @@ export function getNarrativeDirectionTemplate(): string {
 
 Generate narrative direction instructions for the Keeper Agent based on module constraints, keeper guidance, and current game context.
 
+## 🎮 Current Game State
+
+{{#if currentScene}}
+**Scene**: {{currentScene.name}}
+**Location**: {{currentScene.location}}
+{{#if currentScene.description}}
+**Description**: {{currentScene.description}}
+{{/if}}
+{{else}}
+*No current scene*
+{{/if}}
+
+{{#if currentGameTime}}
+**Game Time**: Day {{currentGameTime.gameDay}}, {{currentGameTime.timeOfDay}}
+{{else}}
+*Game time not available*
+{{/if}}
+
 ## 📋 Module Constraints
 
 {{#if moduleLimitations}}
@@ -182,17 +200,25 @@ Generate narrative direction instructions for the Keeper Agent based on module c
 
 ## 🎬 Your Task
 
-Based on the module constraints (limitations, keeper guidance, module notes), the character's input, and the action results, generate a narrative direction instruction for the Keeper Agent.
+Based on the current game state (scene, time), module constraints (limitations, keeper guidance, module notes), the character's input, and the action results, generate a **reference-style** narrative direction instruction for the Keeper Agent.
 
 **The instruction should**:
-1. Guide the narrative tone and atmosphere based on keeper guidance
-2. Ensure compliance with module limitations (hard constraints)
-3. Incorporate module notes considerations (pacing, content warnings, etc.)
-4. Provide specific guidance on what to emphasize, reveal, or hint at in the narrative
-5. Suggest pacing adjustments if needed based on module notes
-6. Reference any relevant constraints from module limitations
+1. Consider the current scene and game time context
+2. Guide the narrative tone and atmosphere based on keeper guidance
+3. Be aware of module limitations internally but **DO NOT reveal spoilers to the player**
+4. Incorporate module notes considerations (pacing, content warnings, etc.)
+5. Provide specific guidance on what to emphasize, reveal, or hint at in the narrative
+6. Suggest pacing adjustments if needed based on module notes
+7. **CRITICAL**: This is a REFERENCE for the Keeper, not a hard constraint - the Keeper may adapt based on player actions
 
-**Format**: Provide a concise instruction (2-4 sentences) that the Keeper Agent can use to guide their narrative generation.
+**Anti-Spoiler Rules**:
+- **NEVER** mention specific deadlines, time limits, or future events (e.g., "Day 8", "New Year", "ritual completion")
+- **NEVER** reveal plot twists, villain identities, or hidden truths the player hasn't discovered
+- **NEVER** directly state module limitations - instead, subtly guide tone/pacing to respect them
+- Use indirect language: "maintain tension" instead of "there's a time limit"
+- Focus on atmosphere, tone, and what to emphasize in the CURRENT moment
+
+**Format**: Provide a concise, spoiler-free instruction (2-4 sentences) that the Keeper Agent can use as a reference for their narrative generation.
 
 ## Response
 \`\`\`json

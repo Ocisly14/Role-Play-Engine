@@ -77,8 +77,10 @@ export function getKeeperTemplate(): string {
   {{/if}}
   
   {{#if directorNarrativeDirection}}
-  Director Narrative Direction:
+  Director Narrative Guidance (REFERENCE ONLY - not a hard constraint):
   {{directorNarrativeDirection}}
+
+  Note: This is a reference to help guide tone and pacing. You may adapt your narrative based on player actions and context.
   {{/if}}
   
   ==================================================
@@ -100,7 +102,8 @@ export function getKeeperTemplate(): string {
   - Never re-describe environments already established unless something has changed
   - Never repeat or paraphrase previous Keeper narration
   - Never reveal clues already discovered
-  - Never override Director constraints
+  - Consider Director guidance as helpful reference for tone and pacing (not a hard constraint)
+  - **CRITICAL**: Never reveal information the investigator doesn't know yet (no spoilers, no meta-knowledge)
   
   ==================================================
   SECTION 3 — NARRATIVE RULES
