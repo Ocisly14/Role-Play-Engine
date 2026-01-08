@@ -362,7 +362,8 @@ export class DirectorAgent {
   async handleActionDrivenSceneChange(
     gameStateManager: GameStateManager,
     targetSceneName: string,
-    reason: string
+    reason: string,
+    currentCharacterInput?: string
   ): Promise<void> {
     console.log(`\n🎬 [Director Agent] ========================================`);
     console.log(`🎬 [Director Agent] Starting to process Action-driven scene transition`);
@@ -408,9 +409,11 @@ export class DirectorAgent {
       }
     }
 
-    // Get current round character input (latest turn without narrative yet, or from the latest turn)
-    let characterInput: string | null = null;
-    if (conversationHistory.length > 0) {
+    // Get current round character input
+    // Priority: 1) passed parameter, 2) latest turn without narrative, 3) fallback to any latest turn with input
+    let characterInput: string | null = currentCharacterInput || null;
+
+    if (!characterInput && conversationHistory.length > 0) {
       // Get the latest turn that has characterInput but no narrative yet
       const latestTurn = conversationHistory[conversationHistory.length - 1];
       if (latestTurn && latestTurn.characterInput && !latestTurn.keeperNarrative) {
@@ -467,7 +470,13 @@ export class DirectorAgent {
         reasoning?: string;
       };
       try {
-        parsedResponse = JSON.parse(response);
+        // Try to extract JSON from markdown code blocks first
+        const jsonMatch = response.match(/\{[\s\S]*\}/);
+        if (jsonMatch) {
+          parsedResponse = JSON.parse(jsonMatch[0]);
+        } else {
+          parsedResponse = JSON.parse(response);
+        }
       } catch (error) {
         console.error("Failed to parse LLM response as JSON:", error);
         console.error("Raw response:", response);

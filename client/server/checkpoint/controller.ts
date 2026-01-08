@@ -1,0 +1,189 @@
+import type { Request, Response } from "express";
+import { DatabaseManager } from "../core/DatabaseManager.js";
+import { GraphManager } from "../core/GraphManager.js";
+import { ServerState } from "../core/ServerState.js";
+import { saveManualCheckpoint, loadCheckpoint, listAvailableCheckpoints } from "../../../src/coc_multiagents_system/agents/memory/memoryAgent.js";
+import { RagManager } from "../../../src/coc_multiagents_system/agents/memory/RagManager.js";
+import { ScenarioLoader } from "../../../src/coc_multiagents_system/agents/memory/scenarioloader/index.js";
+import { NPCLoader } from "../../../src/coc_multiagents_system/agents/character/npcloader/index.js";
+
+/**
+ * Save current game state as checkpoint
+ * POST /api/checkpoints/save
+ */
+export async function saveCheckpoint(req: Request, res: Response): Promise<void> {
+  try {
+    const persistentGameState = ServerState.getInstance().getGameState();
+    const db = DatabaseManager.getInstance().getDatabase();
+
+    if (!persistentGameState) {
+      res.status(400).json({ error: "Game not started. Please start the game first." });
+      return;
+    }
+
+    const currentScenario = persistentGameState.currentScenario;
+    if (!currentScenario) {
+      res.status(400).json({ error: "No current scenario. Cannot save checkpoint." });
+      return;
+    }
+
+    // Generate checkpoint name
+    const currentDate = new Date().toLocaleDateString('zh-CN', {
+      year: 'numeric',
+      month: '2-digit',
+      day: '2-digit'
+    });
+    const checkpointName = `${currentScenario.name} - ${currentDate}`;
+    const description = `Manual save at ${currentScenario.location}`;
+
+    const checkpointId = saveManualCheckpoint(
+      persistentGameState,
+      db,
+      checkpointName,
+      description
+    );
+
+    // Save RAG state if available
+    const ragManager = GraphManager.getInstance().getRagManager();
+    if (ragManager) {
+      try {
+        await ragManager.saveToCheckpoint(checkpointId);
+        console.log(`[${new Date().toISOString()}] RAG state saved to checkpoint: ${checkpointId}`);
+      } catch (error) {
+        console.warn(`[${new Date().toISOString()}] Failed to save RAG state:`, error);
+      }
+    }
+
+    console.log(`[${new Date().toISOString()}] Checkpoint saved: ${checkpointName} (${checkpointId})`);
+
+    res.json({
+      success: true,
+      checkpointId: checkpointId,
+      checkpointName: checkpointName,
+      message: "存档成功",
+      timestamp: new Date().toISOString(),
+    });
+  } catch (error) {
+    console.error("Error saving checkpoint:", error);
+    res.status(500).json({ error: "Failed to save checkpoint: " + (error as Error).message });
+  }
+}
+
+/**
+ * List all available checkpoints
+ * GET /api/checkpoints/list
+ */
+export function listCheckpoints(req: Request, res: Response): void {
+  try {
+    const db = DatabaseManager.getInstance().getDatabase();
+    const sessionId = req.query.sessionId as string;
+    const limit = parseInt(req.query.limit as string) || 50;
+
+    let checkpoints: any[] = [];
+
+    if (sessionId && sessionId !== "all") {
+      checkpoints = listAvailableCheckpoints(sessionId, db, limit);
+    } else {
+      const database = db.getDatabase();
+      const stmt = database.prepare(`
+        SELECT
+          checkpoint_id, checkpoint_name, checkpoint_type, description,
+          game_day, game_time, current_scene_name, current_location,
+          player_hp, player_sanity, created_at, session_id
+        FROM game_checkpoints
+        ORDER BY created_at DESC
+        LIMIT ?
+      `);
+      checkpoints = stmt.all(limit) as any[];
+    }
+
+    // Normalize field names to camelCase
+    const normalizedCheckpoints = checkpoints.map((cp: any) => ({
+      checkpointId: cp.checkpoint_id || cp.checkpointId,
+      checkpointName: cp.checkpoint_name || cp.checkpointName,
+      checkpointType: cp.checkpoint_type || cp.checkpointType,
+      description: cp.description,
+      gameDay: cp.game_day || cp.gameDay,
+      gameTime: cp.game_time || cp.gameTime,
+      currentSceneName: cp.current_scene_name || cp.currentSceneName,
+      currentLocation: cp.current_location || cp.currentLocation,
+      playerHp: cp.player_hp || cp.playerHp,
+      playerSanity: cp.player_sanity || cp.playerSanity,
+      createdAt: cp.created_at || cp.createdAt,
+      sessionId: cp.session_id || cp.sessionId,
+    }));
+
+    res.json({
+      success: true,
+      checkpoints: normalizedCheckpoints,
+    });
+  } catch (error) {
+    console.error("Error listing checkpoints:", error);
+    res.status(500).json({ error: "Failed to list checkpoints: " + (error as Error).message });
+  }
+}
+
+/**
+ * Load a checkpoint and restore game state
+ * POST /api/checkpoints/load
+ */
+export async function loadCheckpointData(req: Request, res: Response): Promise<void> {
+  try {
+    const db = DatabaseManager.getInstance().getDatabase();
+    const { checkpointId } = req.body;
+
+    if (!checkpointId) {
+      res.status(400).json({ error: "checkpointId is required" });
+      return;
+    }
+
+    const gameState = loadCheckpoint(checkpointId, db);
+    if (!gameState) {
+      res.status(404).json({ error: "Checkpoint not found" });
+      return;
+    }
+
+    // Restore persistent game state
+    ServerState.getInstance().setGameState(gameState);
+
+    // Initialize GraphManager if needed and try to restore RAG
+    const graphManager = GraphManager.getInstance();
+    if (!graphManager.isInitialized()) {
+      try {
+        const ragManager = await RagManager.restoreFromCheckpoint(db, checkpointId);
+        console.log(`[${new Date().toISOString()}] RAG state restored from checkpoint`);
+      } catch (error) {
+        console.warn("Failed to restore RAG, using base:", error);
+        // Default: skip RAG (true), unless explicitly set to 'false'
+        await graphManager.initialize(db, process.env.SKIP_RAG !== 'false');
+      }
+    }
+
+    // Fetch conversation history
+    const turnManager = graphManager.getTurnManager();
+    let conversationHistory: any[] = [];
+
+    if (turnManager) {
+      try {
+        conversationHistory = turnManager.getConversation(gameState.sessionId, 50);
+        console.log(`[${new Date().toISOString()}] Loaded ${conversationHistory.length} conversation messages`);
+      } catch (error) {
+        console.warn("Failed to load conversation history:", error);
+      }
+    }
+
+    console.log(`[${new Date().toISOString()}] Checkpoint loaded: ${checkpointId}`);
+
+    res.json({
+      success: true,
+      sessionId: gameState.sessionId,
+      gameState: gameState,
+      conversationHistory: conversationHistory,
+      message: "存档加载成功",
+      timestamp: new Date().toISOString(),
+    });
+  } catch (error) {
+    console.error("Error loading checkpoint:", error);
+    res.status(500).json({ error: "Failed to load checkpoint: " + (error as Error).message });
+  }
+}

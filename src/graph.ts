@@ -428,11 +428,15 @@ export const buildGraph = (db: CoCDatabase, scenarioLoader: ScenarioLoader, rag?
       console.log(`   目标场景: ${sceneChangeRequest.targetSceneName}`);
       console.log(`   原因: ${sceneChangeRequest.reason}`);
       console.log(`   时间戳: ${sceneChangeRequest.timestamp.toISOString()}`);
-      
+
+      // Pass current character input to Director Agent
+      const currentCharacterInput = latestHumanMessage(state.messages);
+
       await directorAgent.handleActionDrivenSceneChange(
-        gsm, 
+        gsm,
         sceneChangeRequest.targetSceneName,
-        sceneChangeRequest.reason
+        sceneChangeRequest.reason,
+        currentCharacterInput
       );
       
       const gameStateAfter = gsm.getGameState();
@@ -775,10 +779,14 @@ export const buildListenerGraph = (db: CoCDatabase, scenarioLoader: ScenarioLoad
     const sceneChangeRequest = gameStateBefore.temporaryInfo.sceneChangeRequest;
     
     if (sceneChangeRequest?.shouldChange && sceneChangeRequest.targetSceneName) {
+      // Pass current character input to Director Agent
+      const currentCharacterInput = latestHumanMessage(state.messages);
+
       await directorAgent.handleActionDrivenSceneChange(
-        gsm, 
+        gsm,
         sceneChangeRequest.targetSceneName,
-        sceneChangeRequest.reason
+        sceneChangeRequest.reason,
+        currentCharacterInput
       );
     }
     

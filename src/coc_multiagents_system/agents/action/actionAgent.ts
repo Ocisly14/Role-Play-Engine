@@ -532,15 +532,18 @@ Example:
         }
       } else {
         // Player scene change: direct scene change request
-        const sceneChangeRequest: SceneChangeRequest = {
-          shouldChange: parsed.sceneChange.shouldChange || false,
-          targetSceneName: parsed.sceneChange.targetSceneName || null,
-          reason: parsed.sceneChange.reason || "Action-driven scene change",
-          timestamp: new Date()
-        };
-        stateManager.setSceneChangeRequest(sceneChangeRequest);
+        // Only set request if shouldChange is true to avoid overwriting existing valid requests
+        if (parsed.sceneChange.shouldChange && parsed.sceneChange.targetSceneName) {
+          const sceneChangeRequest: SceneChangeRequest = {
+            shouldChange: true,
+            targetSceneName: parsed.sceneChange.targetSceneName,
+            reason: parsed.sceneChange.reason || "Action-driven scene change",
+            timestamp: new Date()
+          };
+          stateManager.setSceneChangeRequest(sceneChangeRequest);
 
-        console.log(`Action Agent: Scene change request - `, sceneChangeRequest);
+          console.log(`Action Agent: Scene change request - `, sceneChangeRequest);
+        }
       }
     }
 
