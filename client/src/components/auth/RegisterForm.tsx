@@ -1,0 +1,126 @@
+import React, { useState } from 'react';
+import { useAuth } from '../../contexts/AuthContext';
+import { useNavigate } from 'react-router-dom';
+
+export function RegisterForm() {
+  const [email, setEmail] = useState('');
+  const [username, setUsername] = useState('');
+  const [password, setPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
+  const [error, setError] = useState('');
+  const [success, setSuccess] = useState(false);
+  const [loading, setLoading] = useState(false);
+
+  const { register } = useAuth();
+  const navigate = useNavigate();
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setError('');
+
+    // Validate password match
+    if (password !== confirmPassword) {
+      setError('Passwords do not match');
+      return;
+    }
+
+    // Validate password strength
+    if (password.length < 8) {
+      setError('Password must be at least 8 characters long');
+      return;
+    }
+
+    setLoading(true);
+
+    try {
+      await register(email, password, username || undefined);
+      setSuccess(true);
+
+      // Redirect to login page after 3 seconds
+      setTimeout(() => {
+        navigate('/login');
+      }, 3000);
+    } catch (err: any) {
+      setError(err.response?.data?.error || 'Registration failed');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  if (success) {
+    return (
+      <div className="success-message-container">
+        <h2>Registration Successful!</h2>
+        <p>Please check your email to verify your account.</p>
+        <p>Redirecting to login page...</p>
+      </div>
+    );
+  }
+
+  return (
+    <div className="register-form-container">
+      <h2>Create Account</h2>
+      <form onSubmit={handleSubmit}>
+        <div className="form-group">
+          <label htmlFor="email">Email *</label>
+          <input
+            id="email"
+            type="email"
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+            required
+            disabled={loading}
+          />
+        </div>
+
+        <div className="form-group">
+          <label htmlFor="username">Username (optional)</label>
+          <input
+            id="username"
+            type="text"
+            value={username}
+            onChange={(e) => setUsername(e.target.value)}
+            disabled={loading}
+            minLength={3}
+          />
+        </div>
+
+        <div className="form-group">
+          <label htmlFor="password">Password *</label>
+          <input
+            id="password"
+            type="password"
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
+            required
+            disabled={loading}
+            minLength={8}
+          />
+          <small>At least 8 characters with uppercase, lowercase, and numbers</small>
+        </div>
+
+        <div className="form-group">
+          <label htmlFor="confirmPassword">Confirm Password *</label>
+          <input
+            id="confirmPassword"
+            type="password"
+            value={confirmPassword}
+            onChange={(e) => setConfirmPassword(e.target.value)}
+            required
+            disabled={loading}
+          />
+        </div>
+
+        {error && <div className="error-message">{error}</div>}
+
+        <button type="submit" disabled={loading}>
+          {loading ? 'Registering...' : 'Register'}
+        </button>
+
+        <div className="form-links">
+          <a href="/login">Already have an account? Login</a>
+        </div>
+      </form>
+    </div>
+  );
+}

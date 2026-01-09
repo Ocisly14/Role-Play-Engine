@@ -535,6 +535,97 @@ export class CoCDatabase {
             CREATE INDEX IF NOT EXISTS idx_sessions_started ON sessions(started_at);
         `);
 
+    // ==================== USER AUTHENTICATION TABLES ====================
+
+    // Users table
+    this.db.exec(`
+            CREATE TABLE IF NOT EXISTS users (
+                id TEXT PRIMARY KEY,
+                email TEXT UNIQUE NOT NULL,
+                username TEXT UNIQUE,
+                password_hash TEXT NOT NULL,
+                is_email_verified INTEGER DEFAULT 0,
+                is_active INTEGER DEFAULT 1,
+                role TEXT DEFAULT 'USER', -- 'USER' | 'ADMIN' | 'MODERATOR'
+                created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+                updated_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+                last_login_at DATETIME
+            );
+            CREATE INDEX IF NOT EXISTS idx_users_email ON users(email);
+            CREATE INDEX IF NOT EXISTS idx_users_username ON users(username);
+        `);
+
+    // User Sessions table (for tracking active logins)
+    this.db.exec(`
+            CREATE TABLE IF NOT EXISTS user_sessions (
+                id TEXT PRIMARY KEY,
+                user_id TEXT NOT NULL,
+                token TEXT UNIQUE NOT NULL,
+                ip_address TEXT,
+                user_agent TEXT,
+                expires_at DATETIME NOT NULL,
+                created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+                FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+            );
+            CREATE INDEX IF NOT EXISTS idx_user_sessions_user ON user_sessions(user_id);
+            CREATE INDEX IF NOT EXISTS idx_user_sessions_token ON user_sessions(token);
+        `);
+
+    // Email Verifications table
+    this.db.exec(`
+            CREATE TABLE IF NOT EXISTS email_verifications (
+                id TEXT PRIMARY KEY,
+                user_id TEXT NOT NULL,
+                token TEXT UNIQUE NOT NULL,
+                expires_at DATETIME NOT NULL,
+                is_used INTEGER DEFAULT 0,
+                created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+                FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+            );
+            CREATE INDEX IF NOT EXISTS idx_email_verifications_user ON email_verifications(user_id);
+            CREATE INDEX IF NOT EXISTS idx_email_verifications_token ON email_verifications(token);
+        `);
+
+    // Password Resets table
+    this.db.exec(`
+            CREATE TABLE IF NOT EXISTS password_resets (
+                id TEXT PRIMARY KEY,
+                user_id TEXT NOT NULL,
+                token TEXT UNIQUE NOT NULL,
+                expires_at DATETIME NOT NULL,
+                is_used INTEGER DEFAULT 0,
+                created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+                FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+            );
+            CREATE INDEX IF NOT EXISTS idx_password_resets_user ON password_resets(user_id);
+            CREATE INDEX IF NOT EXISTS idx_password_resets_token ON password_resets(token);
+        `);
+
+    // Refresh Tokens table (for "remember me" functionality)
+    this.db.exec(`
+            CREATE TABLE IF NOT EXISTS refresh_tokens (
+                id TEXT PRIMARY KEY,
+                user_id TEXT NOT NULL,
+                token TEXT UNIQUE NOT NULL,
+                expires_at DATETIME NOT NULL,
+                is_revoked INTEGER DEFAULT 0,
+                created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+                FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+            );
+            CREATE INDEX IF NOT EXISTS idx_refresh_tokens_user ON refresh_tokens(user_id);
+            CREATE INDEX IF NOT EXISTS idx_refresh_tokens_token ON refresh_tokens(token);
+        `);
+
+    // Add user_id to characters table if it doesn't exist
+    try {
+      if (!this.hasColumn("characters", "user_id")) {
+        this.db.exec("ALTER TABLE characters ADD COLUMN user_id TEXT;");
+        this.db.exec("CREATE INDEX IF NOT EXISTS idx_characters_user ON characters(user_id);");
+      }
+    } catch {
+      // Column already exists, ignore
+    }
+
     // Game Checkpoints table - unified checkpoint storage for save/load functionality
     this.db.exec(`
             CREATE TABLE IF NOT EXISTS game_checkpoints (

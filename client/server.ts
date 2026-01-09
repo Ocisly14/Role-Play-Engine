@@ -3,10 +3,12 @@ import path from "path";
 import { fileURLToPath } from "url";
 import cors from "cors";
 import express from "express";
+import cookieParser from "cookie-parser";
 import http from "http";
 import fs from "fs";
 
 // Import all route modules
+import authRoutes from "./server/auth/routes.js";
 import dataRoutes from "./server/data/routes.js";
 import characterRoutes from "./server/character/routes.js";
 import gameRoutes from "./server/game/routes.js";
@@ -27,6 +29,7 @@ const PORT = process.env.PORT || 3000;
 // Middleware
 app.use(cors());
 app.use(express.json());
+app.use(cookieParser());
 
 // Serve frontend build
 const distDir = path.join(__dirname, "dist");
@@ -46,6 +49,7 @@ app.get("/", (_req, res) => {
 });
 
 // Mount API routes
+app.use("/api/auth", authRoutes);     // /api/auth/* - Authentication routes
 app.use("/api", dataRoutes);          // /api/occupations, /api/weapons, /api/mods
 app.use("/api", characterRoutes);     // /api/character*, /api/characters
 app.use("/api", gameRoutes);          // /api/game/*, /api/gamestate

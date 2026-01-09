@@ -1,4 +1,9 @@
 import React, { useMemo, useState } from "react";
+import { BrowserRouter, Routes, Route } from "react-router-dom";
+import { AuthProvider, useAuth } from "./contexts/AuthContext";
+import { ProtectedRoute } from "./components/ProtectedRoute";
+import Login from "./views/auth/Login";
+import Register from "./views/auth/Register";
 import Homes from "./views/Homes";
 import { GameChat } from "./components/GameChat";
 import { GameSidebar } from "./components/GameSidebar";
@@ -96,7 +101,7 @@ const SKILLS: SkillEntry[] = [
   { name: "Ride", base: "5%", category: "Physical" },
 ];
 
-const App: React.FC = () => {
+const AppShell: React.FC = () => {
   const [page, setPage] = useState<AppPage>("home");
   const [saving, setSaving] = useState(false);
   const [saveMessage, setSaveMessage] = useState<{ type: "success" | "error"; text: string } | null>(null);
@@ -129,6 +134,103 @@ const App: React.FC = () => {
   const [isCreatingFromGameFlow, setIsCreatingFromGameFlow] = useState(false);
 
   const [form, setForm] = React.useState<Record<string, string>>({});
+  const { user, logout } = useAuth();
+  const [isUserMenuOpen, setIsUserMenuOpen] = useState(false);
+
+  const handleLogout = async () => {
+    try {
+      await logout();
+    } catch (error) {
+      console.error("Error logging out:", error);
+    } finally {
+      setIsUserMenuOpen(false);
+    }
+  };
+
+  const userMenu = user ? (
+    <div
+      style={{
+        position: "fixed",
+        top: "16px",
+        right: "16px",
+        zIndex: 5000,
+        display: "flex",
+        flexDirection: "column",
+        alignItems: "flex-end",
+        gap: "8px",
+      }}
+    >
+      <button
+        onClick={() => setIsUserMenuOpen((prev) => !prev)}
+        style={{
+          display: "flex",
+          alignItems: "center",
+          gap: "8px",
+          padding: "8px 12px",
+          borderRadius: "999px",
+          border: "1px solid rgba(255, 255, 255, 0.2)",
+          background: "rgba(0, 0, 0, 0.65)",
+          color: "#f5f1e8",
+          fontSize: "0.9rem",
+          cursor: "pointer",
+          boxShadow: "0 6px 18px rgba(0, 0, 0, 0.25)",
+          maxWidth: "240px",
+        }}
+      >
+        <span
+          style={{
+            overflow: "hidden",
+            textOverflow: "ellipsis",
+            whiteSpace: "nowrap",
+          }}
+        >
+          {user.email}
+        </span>
+        <span style={{ fontSize: "0.75rem", opacity: 0.8 }}>{isUserMenuOpen ? "▲" : "▼"}</span>
+      </button>
+      {isUserMenuOpen && (
+        <div
+          style={{
+            width: "200px",
+            background: "#fffaf2",
+            borderRadius: "10px",
+            border: "1px solid rgba(0, 0, 0, 0.1)",
+            boxShadow: "0 12px 24px rgba(0, 0, 0, 0.2)",
+            padding: "12px",
+            display: "flex",
+            flexDirection: "column",
+            gap: "10px",
+          }}
+        >
+          <div
+            style={{
+              fontSize: "0.85rem",
+              color: "#5a4a3a",
+              borderBottom: "1px solid rgba(0, 0, 0, 0.08)",
+              paddingBottom: "8px",
+              wordBreak: "break-all",
+            }}
+          >
+            {user.email}
+          </div>
+          <button
+            onClick={handleLogout}
+            style={{
+              padding: "8px 10px",
+              borderRadius: "6px",
+              border: "none",
+              background: "#8b7355",
+              color: "#f5f1e8",
+              fontWeight: 600,
+              cursor: "pointer",
+            }}
+          >
+            退出
+          </button>
+        </div>
+      )}
+    </div>
+  ) : null;
 
   // Fetch weapons on component mount
   React.useEffect(() => {
@@ -1576,6 +1678,7 @@ const App: React.FC = () => {
   if (page === "home") {
     return (
       <>
+        {userMenu}
         <Homes
           onCreate={() => {
             setIsCreatingFromGameFlow(false);
@@ -1677,6 +1780,7 @@ const App: React.FC = () => {
   if (page === "mod-select") {
     return (
       <>
+        {userMenu}
         <ModSelector
           onSelectMod={handleSelectMod}
           onCancel={handleBackToHome}
@@ -1778,6 +1882,7 @@ const App: React.FC = () => {
   if (page === "module-intro") {
     return (
       <>
+        {userMenu}
         <div className="module-intro-overlay" style={{
           position: 'fixed',
           top: 0,
@@ -1908,46 +2013,76 @@ const App: React.FC = () => {
 
   if (page === "character-select") {
     return (
-      <CharacterSelector
-        onSelectCharacter={handleSelectCharacter}
-        onCancel={() => setPage("module-intro")}
-        onCreateNew={() => {
-          setIsCreatingFromGameFlow(true);
-          setPage("sheet");
-        }}
-      />
+      <>
+        {userMenu}
+        <CharacterSelector
+          onSelectCharacter={handleSelectCharacter}
+          onCancel={() => setPage("module-intro")}
+          onCreateNew={() => {
+            setIsCreatingFromGameFlow(true);
+            setPage("sheet");
+          }}
+        />
+      </>
     );
   }
   
   if (page === "game") {
     return (
-      <div className="game-container">
-        <div className="game-header">
-          <h1>Call of Cthulhu - Game Session</h1>
-          <button className="back-button" onClick={handleBackToHome}>
-            ← Back to Home
-          </button>
+      <>
+        {userMenu}
+        <div className="game-container">
+          <div className="game-header">
+            <h1>Call of Cthulhu - Game Session</h1>
+            <button className="back-button" onClick={handleBackToHome}>
+              ← Back to Home
+            </button>
+          </div>
+          <div className="game-main-layout">
+            <GameChat
+              sessionId={sessionId}
+              apiBaseUrl="/api"
+              characterName={characterName}
+              moduleIntroduction={moduleIntroduction}
+              initialMessages={conversationHistory || undefined}
+              onNarrativeComplete={() => setSidebarRefreshTrigger(prev => prev + 1)}
+            />
+            <GameSidebar
+              sessionId={sessionId}
+              apiBaseUrl="/api"
+              refreshTrigger={sidebarRefreshTrigger}
+            />
+          </div>
         </div>
-        <div className="game-main-layout">
-          <GameChat
-            sessionId={sessionId}
-            apiBaseUrl="/api"
-            characterName={characterName}
-            moduleIntroduction={moduleIntroduction}
-            initialMessages={conversationHistory || undefined}
-            onNarrativeComplete={() => setSidebarRefreshTrigger(prev => prev + 1)}
-          />
-          <GameSidebar
-            sessionId={sessionId}
-            apiBaseUrl="/api"
-            refreshTrigger={sidebarRefreshTrigger}
-          />
-        </div>
-      </div>
+      </>
     );
   }
   
-  return sheet;
+  return (
+    <>
+      {userMenu}
+      {sheet}
+    </>
+  );
 };
+
+const App: React.FC = () => (
+  <BrowserRouter>
+    <AuthProvider>
+      <Routes>
+        <Route path="/login" element={<Login />} />
+        <Route path="/register" element={<Register />} />
+        <Route
+          path="/*"
+          element={
+            <ProtectedRoute>
+              <AppShell />
+            </ProtectedRoute>
+          }
+        />
+      </Routes>
+    </AuthProvider>
+  </BrowserRouter>
+);
 
 export default App;
