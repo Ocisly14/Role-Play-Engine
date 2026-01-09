@@ -64,7 +64,7 @@ export function createCharacter(req: Request, res: Response): void {
     res.json({
       success: true,
       characterId: dbCharacter.character_id,
-      message: `角色 ${characterData.identity.name} 创建成功！`,
+      message: `Character ${characterData.identity.name} created successfully.`,
       timestamp: new Date().toISOString(),
     });
   } catch (error) {

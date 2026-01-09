@@ -4,8 +4,11 @@ import { RegisterForm } from '../../components/auth/RegisterForm';
 export default function Register() {
   return (
     <div className="auth-page">
-      <div className="auth-container">
-        <RegisterForm />
+      <div className="auth-frame">
+        <img src="/src/asset/frame.png" alt="CoC Frame" className="frame-image" />
+        <div className="auth-container">
+          <RegisterForm />
+        </div>
       </div>
     </div>
   );

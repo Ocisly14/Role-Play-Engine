@@ -225,7 +225,7 @@ const AppShell: React.FC = () => {
               cursor: "pointer",
             }}
           >
-            退出
+            Logout
           </button>
         </div>
       )}

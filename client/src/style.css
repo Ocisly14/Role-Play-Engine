@@ -48,6 +48,124 @@ body {
   overflow: hidden;
 }
 
+/* ──────────────────────────────────────
+   Auth Pages
+────────────────────────────────────── */
+.auth-page {
+  min-height: 100vh;
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+}
+
+.auth-frame {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  max-width: 95vw;
+  max-height: 95vh;
+}
+
+.auth-container {
+  position: absolute;
+  width: min(420px, 92vw);
+  background: var(--paper);
+  border: 3px solid var(--border);
+  padding: 24px 26px;
+  box-shadow:
+    0 0 0 1px var(--accent),
+    0 10px 24px rgba(0, 0, 0, 0.25);
+  text-align: center;
+}
+
+.auth-container h2 {
+  margin-bottom: 16px;
+  letter-spacing: 2px;
+  font-size: 1.6rem;
+  color: var(--title);
+  text-transform: uppercase;
+}
+
+.auth-container form {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 14px;
+}
+
+.auth-container .form-group {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+}
+
+.auth-container .form-group label {
+  font-weight: 600;
+  color: var(--title);
+}
+
+.auth-container .form-group input {
+  width: 100%;
+  border: 2px solid var(--border);
+  background: white;
+  padding: 10px 12px;
+  border-radius: 4px;
+  font-family: var(--serif);
+}
+
+.auth-container .form-group input:focus {
+  outline: none;
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px rgba(139, 115, 85, 0.2);
+}
+
+.auth-container .form-group.checkbox {
+  flex-direction: row;
+  justify-content: center;
+  flex-wrap: nowrap;
+}
+
+.auth-container .form-group.checkbox label {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-weight: 500;
+  white-space: nowrap;
+}
+
+.auth-container small {
+  color: #6b5a45;
+}
+
+.auth-container .form-links {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  font-size: 0.9rem;
+}
+
+.auth-container .form-links a {
+  color: var(--accent);
+  text-decoration: none;
+}
+
+.auth-container .form-links a:hover {
+  text-decoration: underline;
+}
+
+.success-message-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+  text-align: center;
+}
+
 .home-frame {
   position: relative;
   display: flex;
