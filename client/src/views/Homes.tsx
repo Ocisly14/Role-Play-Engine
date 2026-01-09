@@ -1,4 +1,5 @@
 import React, { useState } from "react";
+import { authFetch } from "../utils/authFetch";
 import { CharacterSheetModal } from "../components/CharacterSheetModal";
 
 interface HomeProps {
@@ -33,7 +34,7 @@ const Homes: React.FC<HomeProps> = ({ onCreate, onStartGame, onContinueGame }) =
     setLoading(true);
 
     try {
-      const response = await fetch("/api/characters");
+      const response = await authFetch("/api/characters");
       const data = await response.json();
 
       if (data.success) {

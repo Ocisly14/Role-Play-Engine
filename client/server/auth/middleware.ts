@@ -1,5 +1,6 @@
 import type { Request, Response, NextFunction } from 'express';
-import { verifyToken } from './jwt.js';
+import { generateAccessToken, verifyToken } from './jwt.js';
+import { authDbService } from './db-service.js';
 import Database from 'better-sqlite3';
 import { CoCDatabase } from '../../../src/coc_multiagents_system/agents/memory/database/schema.js';
 
@@ -56,6 +57,20 @@ export async function authenticate(
     if (!user || !user.is_active) {
       return res.status(401).json({ error: 'Invalid user' });
     }
+
+    // Sliding session: touch refresh token if provided
+    const refreshTokenHeader = req.headers['x-refresh-token'];
+    if (typeof refreshTokenHeader === 'string' && refreshTokenHeader) {
+      authDbService.touchRefreshToken(refreshTokenHeader, payload.userId);
+    }
+
+    // Issue a fresh access token for sliding expiration
+    const nextAccessToken = generateAccessToken({
+      id: user.id,
+      email: user.email,
+      role: user.role,
+    });
+    res.setHeader('x-access-token', nextAccessToken);
 
     // Attach user info to request
     req.user = payload;

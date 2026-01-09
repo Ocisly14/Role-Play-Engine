@@ -9,6 +9,7 @@ import { GameChat } from "./components/GameChat";
 import { GameSidebar } from "./components/GameSidebar";
 import { CharacterSelector } from "./components/CharacterSelector";
 import { ModSelector } from "./components/ModSelector";
+import { authFetch } from "./utils/authFetch";
 
 type SkillEntry = { name: string; base: string; category: string };
 type AppPage = "home" | "sheet" | "game" | "character-select" | "mod-select" | "module-intro";
@@ -167,13 +168,13 @@ const AppShell: React.FC = () => {
           alignItems: "center",
           gap: "8px",
           padding: "8px 12px",
-          borderRadius: "999px",
-          border: "1px solid rgba(255, 255, 255, 0.2)",
-          background: "rgba(0, 0, 0, 0.65)",
-          color: "#f5f1e8",
+          borderRadius: "4px",
+          border: "2px solid var(--border)",
+          background: "var(--header-bg)",
+          color: "var(--title)",
           fontSize: "0.9rem",
           cursor: "pointer",
-          boxShadow: "0 6px 18px rgba(0, 0, 0, 0.25)",
+          boxShadow: "2px 2px 4px rgba(0, 0, 0, 0.2)",
           maxWidth: "240px",
         }}
       >
@@ -451,7 +452,7 @@ const AppShell: React.FC = () => {
     
     try {
       // Start game with selected character and mod
-      const response = await fetch("/api/game/start", {
+      const response = await authFetch("/api/game/start", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ characterId, modName: selectedModName }),
@@ -489,7 +490,7 @@ const AppShell: React.FC = () => {
     try {
       // Get all checkpoints (we'll filter by session later if needed)
       // For now, we'll get checkpoints from a default session or all sessions
-      const response = await fetch(`/api/checkpoints/list?sessionId=all&limit=50`);
+      const response = await authFetch(`/api/checkpoints/list?sessionId=all&limit=50`);
       const data = await response.json();
 
       if (data.success) {
@@ -508,7 +509,7 @@ const AppShell: React.FC = () => {
   // Handle checkpoint selection and load
   const handleLoadCheckpoint = async (checkpointId: string) => {
     try {
-      const response = await fetch("/api/checkpoints/load", {
+      const response = await authFetch("/api/checkpoints/load", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ checkpointId }),
@@ -557,7 +558,7 @@ const AppShell: React.FC = () => {
   const handleRandomizeAttributes = async () => {
     try {
       const age = Number(form.age) || undefined;
-      const response = await fetch("/api/character/random-attributes", {
+      const response = await authFetch("/api/character/random-attributes", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ age }),
@@ -585,7 +586,7 @@ const AppShell: React.FC = () => {
 
     try {
       const age = Number(form.age) || undefined;
-      const response = await fetch("/api/character/random-attributes", {
+      const response = await authFetch("/api/character/random-attributes", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ age }),
@@ -726,11 +727,9 @@ const AppShell: React.FC = () => {
     setSaveMessage(null);
 
     try {
-      const response = await fetch("/api/character", {
+      const response = await authFetch("/api/character", {
         method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify(characterData),
       });
 

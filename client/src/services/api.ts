@@ -8,15 +8,25 @@ export const api = axios.create({
 // Request interceptor: Add token
 api.interceptors.request.use((config) => {
   const token = localStorage.getItem('accessToken');
+  const refreshToken = localStorage.getItem('refreshToken');
   if (token) {
     config.headers.Authorization = `Bearer ${token}`;
+  }
+  if (refreshToken) {
+    config.headers['X-Refresh-Token'] = refreshToken;
   }
   return config;
 });
 
 // Response interceptor: Handle token expiration
 api.interceptors.response.use(
-  (response) => response,
+  (response) => {
+    const nextToken = response.headers['x-access-token'];
+    if (nextToken) {
+      localStorage.setItem('accessToken', nextToken);
+    }
+    return response;
+  },
   async (error) => {
     const originalRequest = error.config;
 

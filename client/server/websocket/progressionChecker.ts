@@ -25,7 +25,7 @@ export async function checkAndTriggerSimulate(
   const graphManager = GraphManager.getInstance();
   const dbManager = DatabaseManager.getInstance();
 
-  const persistentGameState = serverState.getGameState();
+  const persistentGameState = serverState.getGameStateBySession(sessionId);
   const listenerGraph = graphManager.getListenerGraph();
   const turnManager = graphManager.getTurnManager();
   const ragManager = graphManager.getRagManager();
@@ -73,12 +73,12 @@ export async function checkAndTriggerSimulate(
       console.log(`🔔 [WebSocket] Simulate processed for session ${sessionId}`);
 
       // Update persistent state
-      serverState.setGameState(result.gameState);
+      serverState.setGameStateBySession(sessionId, result.gameState);
 
       // Reset the idle timer after listener executes successfully
       const gsmReset = new GameStateManager(result.gameState);
       gsmReset.updatePlayerInputTime();
-      serverState.setGameState(gsmReset.getGameState());
+      serverState.setGameStateBySession(sessionId, gsmReset.getGameState());
       console.log(`⏰ [WebSocket] Idle timer reset for session ${sessionId}`);
 
       // Get the completed turn to send to client
@@ -99,7 +99,7 @@ export async function checkAndTriggerSimulate(
       // Still reset the timer to avoid immediate re-checking
       const gsmReset = new GameStateManager(result.gameState);
       gsmReset.updatePlayerInputTime();
-      serverState.setGameState(gsmReset.getGameState());
+      serverState.setGameStateBySession(sessionId, gsmReset.getGameState());
       console.log(`⏰ [WebSocket] Idle timer reset for session ${sessionId} (no simulate triggered)`);
     }
 

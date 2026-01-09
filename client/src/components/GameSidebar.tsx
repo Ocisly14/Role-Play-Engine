@@ -6,6 +6,7 @@
 
 import { useState, useEffect, useRef } from 'react';
 import { CharacterSheetModal } from './CharacterSheetModal';
+import { authFetch } from '../utils/authFetch';
 
 interface GameSidebarProps {
   sessionId: string;
@@ -99,7 +100,7 @@ export function GameSidebar({ sessionId, apiBaseUrl = '/api', refreshTrigger }: 
           setLoading(true);
         }
 
-        const response = await fetch(`${apiBaseUrl}/gamestate`);
+        const response = await authFetch(`${apiBaseUrl}/gamestate`);
 
         if (!response.ok) {
           throw new Error('Failed to fetch game state');

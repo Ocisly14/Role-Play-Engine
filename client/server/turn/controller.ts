@@ -1,4 +1,5 @@
 import type { Request, Response } from "express";
+import type Database from "better-sqlite3";
 import { DatabaseManager } from "../core/DatabaseManager.js";
 import { GraphManager } from "../core/GraphManager.js";
 import { ServerState } from "../core/ServerState.js";
@@ -11,7 +12,8 @@ import { HumanMessage } from "@langchain/core/messages";
  */
 export async function createTurn(req: Request, res: Response): Promise<void> {
   try {
-    const persistentGameState = ServerState.getInstance().getGameState();
+    const userId = req.user!.userId;
+    const persistentGameState = ServerState.getInstance().getGameState(userId);
 
     if (!persistentGameState) {
       res.status(400).json({
@@ -52,7 +54,7 @@ export async function createTurn(req: Request, res: Response): Promise<void> {
     console.log(`[${new Date().toISOString()}] Turn created: ${turnId} for message: ${message}`);
 
     // Start async processing (don't wait for it)
-    processGameTurnAsync(turnId, message, persistentGameState)
+    processGameTurnAsync(turnId, message, persistentGameState, userId)
       .catch((error) => {
         console.error(`Error processing turn ${turnId}:`, error);
         if (turnManager) {
@@ -76,7 +78,12 @@ export async function createTurn(req: Request, res: Response): Promise<void> {
 /**
  * Helper function to process a game turn asynchronously
  */
-async function processGameTurnAsync(turnId: string, userInput: string, gameState: GameState) {
+async function processGameTurnAsync(
+  turnId: string,
+  userInput: string,
+  gameState: GameState,
+  userId: string
+) {
   try {
     console.log(`[${new Date().toISOString()}] Processing turn ${turnId}...`);
 
@@ -91,7 +98,7 @@ async function processGameTurnAsync(turnId: string, userInput: string, gameState
     });
 
     // Update the persistent state
-    ServerState.getInstance().setGameState(result.gameState);
+    ServerState.getInstance().setGameState(userId, result.gameState);
 
     console.log(`[${new Date().toISOString()}] Turn ${turnId} completed successfully`);
   } catch (error) {
@@ -114,6 +121,13 @@ export async function getTurnStatus(req: Request, res: Response): Promise<void> 
     }
 
     const { turnId } = req.params;
+    const userId = req.user!.userId;
+    const db = DatabaseManager.getInstance().getDatabase().getDatabase();
+
+    if (!isTurnOwnedByUser(turnId, userId, db)) {
+      res.status(404).json({ error: "Turn not found" });
+      return;
+    }
     const waitForCompletion = req.query.wait === 'true';
     const maxWaitTime = 60000; // 60 seconds
     const checkInterval = 500; // 500ms
@@ -167,6 +181,14 @@ export function getConversation(req: Request, res: Response): void {
     }
 
     const { sessionId } = req.params;
+    const userId = req.user!.userId;
+    const db = DatabaseManager.getInstance().getDatabase().getDatabase();
+    const serverState = ServerState.getInstance();
+
+    if (!isSessionOwnedByUser(sessionId, userId, db, serverState)) {
+      res.status(404).json({ error: "Session not found" });
+      return;
+    }
     const limit = parseInt(req.query.limit as string) || 50;
 
     const conversation = turnManager.getConversation(sessionId, limit);
@@ -192,6 +214,14 @@ export function getTurnHistory(req: Request, res: Response): void {
     }
 
     const { sessionId } = req.params;
+    const userId = req.user!.userId;
+    const db = DatabaseManager.getInstance().getDatabase().getDatabase();
+    const serverState = ServerState.getInstance();
+
+    if (!isSessionOwnedByUser(sessionId, userId, db, serverState)) {
+      res.status(404).json({ error: "Session not found" });
+      return;
+    }
     const limit = parseInt(req.query.limit as string) || 20;
     const after = req.query.after ? parseInt(req.query.after as string) : undefined;
 
@@ -206,4 +236,42 @@ export function getTurnHistory(req: Request, res: Response): void {
     console.error("Error fetching turns:", error);
     res.status(500).json({ error: "Failed to fetch turns" });
   }
+}
+
+function isTurnOwnedByUser(
+  turnId: string,
+  userId: string,
+  db: Database.Database
+): boolean {
+  const row = db.prepare(`
+    SELECT 1
+    FROM game_turns gt
+    JOIN characters c ON c.character_id = gt.character_id
+    WHERE gt.turn_id = ? AND c.user_id = ?
+    LIMIT 1
+  `).get(turnId, userId);
+
+  return Boolean(row);
+}
+
+function isSessionOwnedByUser(
+  sessionId: string,
+  userId: string,
+  db: Database.Database,
+  serverState: ServerState
+): boolean {
+  const active = serverState.getGameState(userId);
+  if (active?.sessionId === sessionId) {
+    return true;
+  }
+
+  const row = db.prepare(`
+    SELECT 1
+    FROM game_turns gt
+    JOIN characters c ON c.character_id = gt.character_id
+    WHERE gt.session_id = ? AND c.user_id = ?
+    LIMIT 1
+  `).get(sessionId, userId);
+
+  return Boolean(row);
 }

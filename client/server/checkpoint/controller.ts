@@ -13,11 +13,29 @@ import { NPCLoader } from "../../../src/coc_multiagents_system/agents/character/
  */
 export async function saveCheckpoint(req: Request, res: Response): Promise<void> {
   try {
-    const persistentGameState = ServerState.getInstance().getGameState();
+    const userId = req.user!.userId;
+    const persistentGameState = ServerState.getInstance().getGameState(userId);
     const db = DatabaseManager.getInstance().getDatabase();
+    const database = db.getDatabase();
 
     if (!persistentGameState) {
       res.status(400).json({ error: "Game not started. Please start the game first." });
+      return;
+    }
+
+    const characterId = persistentGameState.playerCharacter?.id;
+    if (!characterId) {
+      res.status(400).json({ error: "No character in game state. Cannot save checkpoint." });
+      return;
+    }
+
+    const ownedCharacter = database.prepare(`
+      SELECT character_id FROM characters
+      WHERE character_id = ? AND user_id = ? AND is_npc = 0
+    `).get(characterId, userId);
+
+    if (!ownedCharacter) {
+      res.status(403).json({ error: "Character not found" });
       return;
     }
 
@@ -76,25 +94,44 @@ export async function saveCheckpoint(req: Request, res: Response): Promise<void>
 export function listCheckpoints(req: Request, res: Response): void {
   try {
     const db = DatabaseManager.getInstance().getDatabase();
+    const database = db.getDatabase();
+    const userId = req.user!.userId;
     const sessionId = req.query.sessionId as string;
     const limit = parseInt(req.query.limit as string) || 50;
 
     let checkpoints: any[] = [];
 
     if (sessionId && sessionId !== "all") {
+      const session = database.prepare(`
+        SELECT s.session_id
+        FROM sessions s
+        JOIN characters c ON c.character_id = s.character_id
+        WHERE s.session_id = ? AND c.user_id = ?
+      `).get(sessionId, userId);
+
+      if (!session) {
+        res.status(404).json({ error: "Session not found" });
+        return;
+      }
+
       checkpoints = listAvailableCheckpoints(sessionId, db, limit);
     } else {
-      const database = db.getDatabase();
       const stmt = database.prepare(`
         SELECT
           checkpoint_id, checkpoint_name, checkpoint_type, description,
           game_day, game_time, current_scene_name, current_location,
           player_hp, player_sanity, created_at, session_id
         FROM game_checkpoints
+        WHERE session_id IN (
+          SELECT s.session_id
+          FROM sessions s
+          JOIN characters c ON c.character_id = s.character_id
+          WHERE c.user_id = ?
+        )
         ORDER BY created_at DESC
         LIMIT ?
       `);
-      checkpoints = stmt.all(limit) as any[];
+      checkpoints = stmt.all(userId, limit) as any[];
     }
 
     // Normalize field names to camelCase
@@ -130,10 +167,25 @@ export function listCheckpoints(req: Request, res: Response): void {
 export async function loadCheckpointData(req: Request, res: Response): Promise<void> {
   try {
     const db = DatabaseManager.getInstance().getDatabase();
+    const database = db.getDatabase();
+    const userId = req.user!.userId;
     const { checkpointId } = req.body;
 
     if (!checkpointId) {
       res.status(400).json({ error: "checkpointId is required" });
+      return;
+    }
+
+    const ownedCheckpoint = database.prepare(`
+      SELECT gc.checkpoint_id
+      FROM game_checkpoints gc
+      JOIN sessions s ON s.session_id = gc.session_id
+      JOIN characters c ON c.character_id = s.character_id
+      WHERE gc.checkpoint_id = ? AND c.user_id = ?
+    `).get(checkpointId, userId);
+
+    if (!ownedCheckpoint) {
+      res.status(404).json({ error: "Checkpoint not found" });
       return;
     }
 
@@ -144,7 +196,7 @@ export async function loadCheckpointData(req: Request, res: Response): Promise<v
     }
 
     // Restore persistent game state
-    ServerState.getInstance().setGameState(gameState);
+    ServerState.getInstance().setGameState(userId, gameState);
 
     // Initialize GraphManager if needed and try to restore RAG
     const graphManager = GraphManager.getInstance();

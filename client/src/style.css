@@ -6,7 +6,7 @@
   --header-bg: #d4c4b0;
   --title: #3d2f1f;
   --mono: "Courier New", "Courier", monospace;
-  --serif: "Times New Roman", "Georgia", serif;
+  --serif: "Goudy Old Style", "Garamond", "Palatino Linotype", "Book Antiqua", "Times New Roman", serif;
 }
 
 * {

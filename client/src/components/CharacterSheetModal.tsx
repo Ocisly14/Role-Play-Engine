@@ -5,6 +5,7 @@
  */
 
 import { useEffect, useState } from 'react';
+import { authFetch } from '../utils/authFetch';
 import './CharacterSheetModal.css';
 
 interface CharacterSheetModalProps {
@@ -70,7 +71,7 @@ export function CharacterSheetModal({ sessionId, characterId, apiBaseUrl = '/api
 
         // If characterId is provided, fetch character directly
         if (characterId) {
-          response = await fetch(`${apiBaseUrl}/character/${characterId}`);
+          response = await authFetch(`${apiBaseUrl}/character/${characterId}`);
           data = await response.json();
 
           if (data.success && data.character) {
@@ -131,7 +132,7 @@ export function CharacterSheetModal({ sessionId, characterId, apiBaseUrl = '/api
           }
         } else {
           // Original sessionId-based fetch
-          response = await fetch(`${apiBaseUrl}/gamestate`);
+          response = await authFetch(`${apiBaseUrl}/gamestate`);
           data = await response.json();
 
           if (data.success && data.gameState && data.gameState.playerCharacter) {

@@ -7,6 +7,7 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { useTurnPolling } from '../hooks/useTurnPolling';
 import { DiceAnimation } from './DiceAnimation';
+import { authFetch } from '../utils/authFetch';
 
 interface Message {
   role: 'character' | 'keeper';
@@ -72,7 +73,7 @@ export function GameChat({ sessionId, apiBaseUrl = '/api', characterName = 'Inve
     if (!sessionId) return;
 
     try {
-      const response = await fetch(`${apiBaseUrl}/gamestate`);
+      const response = await authFetch(`${apiBaseUrl}/gamestate`);
       if (!response.ok) {
         return;
       }
@@ -111,7 +112,9 @@ export function GameChat({ sessionId, apiBaseUrl = '/api', characterName = 'Inve
       // Absolute URL - convert to WebSocket URL
       wsUrl = apiBaseUrl.replace('/api', '').replace('http://', 'ws://').replace('https://', 'wss://');
     }
-    const wsPath = `${wsUrl}/ws?sessionId=${sessionId}`;
+    const token = localStorage.getItem('accessToken');
+    const tokenParam = token ? `&token=${encodeURIComponent(token)}` : '';
+    const wsPath = `${wsUrl}/ws?sessionId=${sessionId}${tokenParam}`;
 
     console.log(`[WebSocket] Connecting to ${wsPath}`);
 
@@ -507,7 +510,7 @@ export function GameChat({ sessionId, apiBaseUrl = '/api', characterName = 'Inve
 
   const loadConversationHistory = async () => {
     try {
-      const response = await fetch(`${apiBaseUrl}/sessions/${sessionId}/conversation`);
+      const response = await authFetch(`${apiBaseUrl}/sessions/${sessionId}/conversation`);
       const data = await response.json();
 
       if (data.success && data.conversation) {
@@ -546,7 +549,7 @@ export function GameChat({ sessionId, apiBaseUrl = '/api', characterName = 'Inve
 
     try {
       // Send message and create turn
-      const response = await fetch(`${apiBaseUrl}/turns`, {
+      const response = await authFetch(`${apiBaseUrl}/turns`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -592,7 +595,7 @@ export function GameChat({ sessionId, apiBaseUrl = '/api', characterName = 'Inve
     setSaveMessage(null);
 
     try {
-      const response = await fetch(`${apiBaseUrl}/checkpoints/save`, {
+      const response = await authFetch(`${apiBaseUrl}/checkpoints/save`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

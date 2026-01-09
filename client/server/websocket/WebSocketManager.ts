@@ -1,6 +1,8 @@
 import { WebSocketServer, WebSocket } from "ws";
 import http from "http";
 import { ServerState } from "../core/ServerState.js";
+import { DatabaseManager } from "../core/DatabaseManager.js";
+import { verifyToken } from "../auth/jwt.js";
 import { handleClientMessage } from "./handlers.js";
 import { startProgressionChecker, stopProgressionChecker } from "./progressionChecker.js";
 
@@ -35,7 +37,14 @@ export class WebSocketManager {
    */
   private setupConnectionHandling(): void {
     this.wss.on('connection', (ws: WebSocket, req) => {
-      const sessionId = this.extractSessionId(req) || ServerState.getInstance().getGameState()?.sessionId || 'unknown';
+      const sessionId = this.extractSessionId(req);
+      const token = this.extractToken(req);
+      const userId = token ? this.verifyUserId(token) : null;
+
+      if (!sessionId || !userId || !this.isSessionOwnedByUser(sessionId, userId)) {
+        ws.close();
+        return;
+      }
 
       console.log(`🔌 [WebSocket] Client connected: ${sessionId}`);
 
@@ -112,6 +121,38 @@ export class WebSocketManager {
    */
   private extractSessionId(req: any): string | null {
     return req.url?.split('sessionId=')[1]?.split('&')[0] || null;
+  }
+
+  private extractToken(req: any): string | null {
+    return req.url?.split('token=')[1]?.split('&')[0] || null;
+  }
+
+  private verifyUserId(token: string): string | null {
+    try {
+      const payload = verifyToken(decodeURIComponent(token));
+      return payload.userId;
+    } catch (error) {
+      return null;
+    }
+  }
+
+  private isSessionOwnedByUser(sessionId: string, userId: string): boolean {
+    const serverState = ServerState.getInstance();
+    const activeState = serverState.getGameState(userId);
+    if (activeState?.sessionId === sessionId) {
+      return true;
+    }
+
+    const db = DatabaseManager.getInstance().getDatabase().getDatabase();
+    const row = db.prepare(`
+      SELECT 1
+      FROM game_turns gt
+      JOIN characters c ON c.character_id = gt.character_id
+      WHERE gt.session_id = ? AND c.user_id = ?
+      LIMIT 1
+    `).get(sessionId, userId);
+
+    return Boolean(row);
   }
 
   /**

@@ -6,7 +6,8 @@ import type { GameState } from "../../../src/state.js";
  */
 export class ServerState {
   private static instance: ServerState | null = null;
-  private persistentGameState: GameState | null = null;
+  private gameStatesByUser = new Map<string, GameState>();
+  private gameStatesBySession = new Map<string, GameState>();
 
   private constructor() {}
 
@@ -21,30 +22,72 @@ export class ServerState {
   }
 
   /**
-   * Get current game state
+   * Get current game state for a user
    */
-  public getGameState(): GameState | null {
-    return this.persistentGameState;
+  public getGameState(userId: string): GameState | null {
+    return this.gameStatesByUser.get(userId) ?? null;
   }
 
   /**
-   * Set game state
+   * Get current game state by session
    */
-  public setGameState(gameState: GameState): void {
-    this.persistentGameState = gameState;
+  public getGameStateBySession(sessionId: string): GameState | null {
+    return this.gameStatesBySession.get(sessionId) ?? null;
   }
 
   /**
-   * Clear game state
+   * Set game state for a user (updates session index)
    */
-  public clearGameState(): void {
-    this.persistentGameState = null;
+  public setGameState(userId: string, gameState: GameState): void {
+    this.gameStatesByUser.set(userId, gameState);
+    if (gameState.sessionId) {
+      this.gameStatesBySession.set(gameState.sessionId, gameState);
+    }
   }
 
   /**
-   * Check if there's an active game
+   * Set game state by session (keeps user index in sync if found)
    */
-  public hasActiveGame(): boolean {
-    return this.persistentGameState !== null;
+  public setGameStateBySession(sessionId: string, gameState: GameState): void {
+    this.gameStatesBySession.set(sessionId, gameState);
+    const userId = this.findUserIdBySession(sessionId);
+    if (userId) {
+      this.gameStatesByUser.set(userId, gameState);
+    }
+  }
+
+  /**
+   * Clear game state for a user
+   */
+  public clearGameState(userId: string): void {
+    const existing = this.gameStatesByUser.get(userId);
+    if (existing?.sessionId) {
+      this.gameStatesBySession.delete(existing.sessionId);
+    }
+    this.gameStatesByUser.delete(userId);
+  }
+
+  /**
+   * Check if there's an active game for a user
+   */
+  public hasActiveGame(userId: string): boolean {
+    return this.gameStatesByUser.has(userId);
+  }
+
+  /**
+   * Get any active session id (best-effort)
+   */
+  public getAnySessionId(): string | null {
+    const first = this.gameStatesBySession.keys().next();
+    return first.done ? null : first.value;
+  }
+
+  private findUserIdBySession(sessionId: string): string | null {
+    for (const [userId, state] of this.gameStatesByUser.entries()) {
+      if (state.sessionId === sessionId) {
+        return userId;
+      }
+    }
+    return null;
   }
 }

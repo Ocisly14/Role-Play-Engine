@@ -12,6 +12,7 @@ import { initializeGameState } from "./service.js";
 export async function startGame(req: Request, res: Response): Promise<void> {
   try {
     const { characterId, modName } = req.body;
+    const userId = req.user!.userId;
 
     console.log(`[${new Date().toISOString()}] Starting game...`);
 
@@ -22,6 +23,23 @@ export async function startGame(req: Request, res: Response): Promise<void> {
     if (!graphManager.isInitialized()) {
       // Default: skip RAG (true), unless explicitly set to 'false'
       await graphManager.initialize(db, process.env.SKIP_RAG !== 'false');
+    }
+
+    // Ensure character belongs to user
+    if (!characterId) {
+      res.status(400).json({ error: "Character ID is required" });
+      return;
+    }
+
+    const database = db.getDatabase();
+    const ownedCharacter = database.prepare(`
+      SELECT character_id FROM characters
+      WHERE character_id = ? AND user_id = ? AND is_npc = 0
+    `).get(characterId, userId);
+
+    if (!ownedCharacter) {
+      res.status(403).json({ error: "Character not found" });
+      return;
     }
 
     // Generate session
@@ -37,7 +55,7 @@ export async function startGame(req: Request, res: Response): Promise<void> {
     );
 
     // Store in server state
-    ServerState.getInstance().setGameState(gameState);
+    ServerState.getInstance().setGameState(userId, gameState);
 
     // Create introduction turn if module introduction is available
     if (moduleIntroduction && moduleIntroduction.introduction) {
@@ -111,7 +129,8 @@ export async function startGame(req: Request, res: Response): Promise<void> {
  */
 export function stopGame(req: Request, res: Response): void {
   try {
-    ServerState.getInstance().clearGameState();
+    const userId = req.user!.userId;
+    ServerState.getInstance().clearGameState(userId);
 
     console.log(`[${new Date().toISOString()}] Game stopped and state cleared`);
 
@@ -177,7 +196,8 @@ export async function importGameData(req: Request, res: Response): Promise<void>
  */
 export function getGameState(req: Request, res: Response): void {
   try {
-    const gameState = ServerState.getInstance().getGameState();
+    const userId = req.user!.userId;
+    const gameState = ServerState.getInstance().getGameState(userId);
 
     if (!gameState) {
       res.json({

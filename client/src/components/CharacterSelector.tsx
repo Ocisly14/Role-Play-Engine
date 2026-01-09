@@ -4,6 +4,7 @@
  */
 
 import { useState, useEffect } from 'react';
+import { authFetch } from '../utils/authFetch';
 
 interface Character {
   character_id: string;
@@ -43,7 +44,7 @@ export function CharacterSelector({
       setLoading(true);
       setError(null);
       
-      const response = await fetch(`${apiBaseUrl}/characters`);
+      const response = await authFetch(`${apiBaseUrl}/characters`);
       const data = await response.json();
 
       if (data.success) {
@@ -437,5 +438,3 @@ export function CharacterSelector({
     </div>
   );
 }
-
-

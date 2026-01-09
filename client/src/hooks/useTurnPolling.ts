@@ -6,6 +6,7 @@
  */
 
 import { useState, useEffect, useRef } from 'react';
+import { authFetch } from '../utils/authFetch';
 
 export interface ActionResult {
   timestamp: string | Date;
@@ -74,7 +75,7 @@ export function useTurnPolling(
     const poll = async () => {
       try {
         // Use long polling: server will wait until turn is completed
-        const response = await fetch(`${apiBaseUrl}/turns/${turnId}?wait=true`, {
+        const response = await authFetch(`${apiBaseUrl}/turns/${turnId}?wait=true`, {
           signal: abortController.signal,
         });
 
@@ -149,5 +150,3 @@ export function useTurnPolling(
     stopPolling,
   };
 }
-
-

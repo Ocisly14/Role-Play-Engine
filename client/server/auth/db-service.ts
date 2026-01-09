@@ -19,6 +19,16 @@ function getDB(): Database.Database {
   return dbInstance.getDatabase();
 }
 
+const parsedIdleMinutes = Number(process.env.SESSION_IDLE_TIMEOUT_MINUTES || 60);
+const IDLE_TIMEOUT_MINUTES = Number.isFinite(parsedIdleMinutes) && parsedIdleMinutes > 0
+  ? parsedIdleMinutes
+  : 60;
+const IDLE_TIMEOUT_MS = IDLE_TIMEOUT_MINUTES * 60 * 1000;
+
+function getIdleExpiresAt(): string {
+  return new Date(Date.now() + IDLE_TIMEOUT_MS).toISOString();
+}
+
 export interface User {
   id: string;
   email: string;
@@ -107,7 +117,7 @@ export const authDbService = {
 
       // Save refresh token
       const tokenId = randomUUID();
-      const expiresAt = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString();
+      const expiresAt = getIdleExpiresAt();
 
       db.prepare(`
         INSERT INTO refresh_tokens (id, user_id, token, expires_at)
@@ -259,6 +269,11 @@ export const authDbService = {
       throw new Error('Invalid or expired refresh token');
     }
 
+    db.prepare('UPDATE refresh_tokens SET expires_at = ? WHERE id = ?').run(
+      getIdleExpiresAt(),
+      token.id
+    );
+
     const user: User = {
       id: token.user_id,
       email: token.email,
@@ -275,6 +290,27 @@ export const authDbService = {
     const accessToken = generateAccessToken(user);
 
     return { accessToken };
+  },
+
+  touchRefreshToken(refreshToken: string, userId: string) {
+    const db = getDB();
+
+    const token = db.prepare(`
+      SELECT id, expires_at, is_revoked
+      FROM refresh_tokens
+      WHERE token = ? AND user_id = ?
+    `).get(refreshToken, userId) as any;
+
+    if (!token || token.is_revoked || new Date(token.expires_at) < new Date()) {
+      return false;
+    }
+
+    db.prepare('UPDATE refresh_tokens SET expires_at = ? WHERE id = ?').run(
+      getIdleExpiresAt(),
+      token.id
+    );
+
+    return true;
   },
 
   // Get user by ID
