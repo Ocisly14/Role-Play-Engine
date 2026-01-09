@@ -44,7 +44,7 @@ export interface UseTurnPollingResult {
 }
 
 export function useTurnPolling(
-  apiBaseUrl: string = 'http://localhost:3000/api'
+  apiBaseUrl: string = '/api'
 ): UseTurnPollingResult {
   const [turn, setTurn] = useState<TurnStatus | null>(null);
   const [isPolling, setIsPolling] = useState(false);

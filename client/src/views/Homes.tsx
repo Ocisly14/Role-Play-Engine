@@ -33,7 +33,7 @@ const Homes: React.FC<HomeProps> = ({ onCreate, onStartGame, onContinueGame }) =
     setLoading(true);
 
     try {
-      const response = await fetch("http://localhost:3000/api/characters");
+      const response = await fetch("/api/characters");
       const data = await response.json();
 
       if (data.success) {
@@ -264,7 +264,7 @@ const Homes: React.FC<HomeProps> = ({ onCreate, onStartGame, onContinueGame }) =
       {showCharacterSheet && selectedCharacterId && (
         <CharacterSheetModal
           characterId={selectedCharacterId}
-          apiBaseUrl="http://localhost:3000/api"
+          apiBaseUrl="/api"
           onClose={() => {
             setShowCharacterSheet(false);
             setSelectedCharacterId("");

@@ -95,3 +95,4 @@ Return a JSON object with exactly 3 queries:
 
 *Generate queries:*`;
 }
+

@@ -82,7 +82,7 @@ interface GameState {
   gameEnding: GameEndingInfo | null;
 }
 
-export function GameSidebar({ sessionId, apiBaseUrl = 'http://localhost:3000/api', refreshTrigger }: GameSidebarProps) {
+export function GameSidebar({ sessionId, apiBaseUrl = '/api', refreshTrigger }: GameSidebarProps) {
   const [activeTab, setActiveTab] = useState<TabType>('status');
   const [gameState, setGameState] = useState<GameState | null>(null);
   const [loading, setLoading] = useState(true);

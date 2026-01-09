@@ -22,7 +22,7 @@ interface CharacterSelectorProps {
 }
 
 export function CharacterSelector({ 
-  apiBaseUrl = 'http://localhost:3000/api',
+  apiBaseUrl = '/api',
   onSelectCharacter,
   onCancel,
   onCreateNew
@@ -437,3 +437,5 @@ export function CharacterSelector({
     </div>
   );
 }
+
+

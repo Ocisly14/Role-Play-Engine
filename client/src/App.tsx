@@ -134,7 +134,7 @@ const App: React.FC = () => {
   React.useEffect(() => {
     const fetchWeapons = async () => {
       try {
-        const response = await fetch("http://localhost:3000/api/weapons");
+        const response = await fetch("/api/weapons");
         const data = await response.json();
 
         if (data.success && data.weapons) {
@@ -152,7 +152,7 @@ const App: React.FC = () => {
   React.useEffect(() => {
     const fetchOccupations = async () => {
       try {
-        const response = await fetch("http://localhost:3000/api/occupations");
+        const response = await fetch("/api/occupations");
         const data = await response.json();
 
         if (data.success && data.occupations) {
@@ -227,7 +227,7 @@ const App: React.FC = () => {
       // Step 1: Load mod data with SSE progress updates
       let loadData: any = null;
       
-      const loadResponse = await fetch("http://localhost:3000/api/mod/load?stream=true", {
+      const loadResponse = await fetch("/api/mod/load?stream=true", {
         method: "POST",
         headers: { 
           "Content-Type": "application/json",
@@ -313,7 +313,7 @@ const App: React.FC = () => {
 
       // Step 2: Fetch module introduction
       setModLoadProgress({ stage: "Generating Introduction Narrative", progress: 90, message: "Generating module introduction narrative..." });
-      const introResponse = await fetch(`http://localhost:3000/api/module/introduction?modName=${encodeURIComponent(modName)}`);
+      const introResponse = await fetch(`/api/module/introduction?modName=${encodeURIComponent(modName)}`);
       const introData = await introResponse.json();
 
       if (introResponse.ok && introData.success) {
@@ -349,7 +349,7 @@ const App: React.FC = () => {
     
     try {
       // Start game with selected character and mod
-      const response = await fetch("http://localhost:3000/api/game/start", {
+      const response = await fetch("/api/game/start", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ characterId, modName: selectedModName }),
@@ -387,7 +387,7 @@ const App: React.FC = () => {
     try {
       // Get all checkpoints (we'll filter by session later if needed)
       // For now, we'll get checkpoints from a default session or all sessions
-      const response = await fetch(`http://localhost:3000/api/checkpoints/list?sessionId=all&limit=50`);
+      const response = await fetch(`/api/checkpoints/list?sessionId=all&limit=50`);
       const data = await response.json();
 
       if (data.success) {
@@ -406,7 +406,7 @@ const App: React.FC = () => {
   // Handle checkpoint selection and load
   const handleLoadCheckpoint = async (checkpointId: string) => {
     try {
-      const response = await fetch("http://localhost:3000/api/checkpoints/load", {
+      const response = await fetch("/api/checkpoints/load", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ checkpointId }),
@@ -455,7 +455,7 @@ const App: React.FC = () => {
   const handleRandomizeAttributes = async () => {
     try {
       const age = Number(form.age) || undefined;
-      const response = await fetch("http://localhost:3000/api/character/random-attributes", {
+      const response = await fetch("/api/character/random-attributes", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ age }),
@@ -483,7 +483,7 @@ const App: React.FC = () => {
 
     try {
       const age = Number(form.age) || undefined;
-      const response = await fetch("http://localhost:3000/api/character/random-attributes", {
+      const response = await fetch("/api/character/random-attributes", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ age }),
@@ -624,7 +624,7 @@ const App: React.FC = () => {
     setSaveMessage(null);
 
     try {
-      const response = await fetch("http://localhost:3000/api/character", {
+      const response = await fetch("/api/character", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -1931,7 +1931,7 @@ const App: React.FC = () => {
         <div className="game-main-layout">
           <GameChat
             sessionId={sessionId}
-            apiBaseUrl="http://localhost:3000/api"
+            apiBaseUrl="/api"
             characterName={characterName}
             moduleIntroduction={moduleIntroduction}
             initialMessages={conversationHistory || undefined}
@@ -1939,7 +1939,7 @@ const App: React.FC = () => {
           />
           <GameSidebar
             sessionId={sessionId}
-            apiBaseUrl="http://localhost:3000/api"
+            apiBaseUrl="/api"
             refreshTrigger={sidebarRefreshTrigger}
           />
         </div>

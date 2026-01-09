@@ -117,6 +117,17 @@ export async function initializeGameState(
       gameState.moduleLimitations = module.moduleLimitations;
     }
 
+    if (module.initialGameTime) {
+      const parsedInitialTime = parseInitialGameTime(module.initialGameTime);
+      if (parsedInitialTime) {
+        if (parsedInitialTime.gameDay !== undefined) {
+          gameState.gameDay = parsedInitialTime.gameDay;
+        }
+        gameState.timeOfDay = parsedInitialTime.timeOfDay;
+        gameState.scenarioTimeState.sceneStartTime = parsedInitialTime.timeOfDay;
+      }
+    }
+
     if (module.introduction) {
       moduleIntroduction = {
         introduction: module.introduction,
@@ -165,6 +176,38 @@ export async function initializeGameState(
   }
 
   return { gameState, moduleIntroduction };
+}
+
+function parseInitialGameTime(value: string): { gameDay?: number; timeOfDay: string } | null {
+  const trimmed = value.trim();
+  const dayMatch = /^day\s+(\d+)\s+(\d{1,2}:\d{2})$/i.exec(trimmed);
+  if (dayMatch) {
+    const gameDay = Number(dayMatch[1]);
+    const timeOfDay = dayMatch[2];
+    if (Number.isFinite(gameDay) && gameDay > 0 && isValidTimeOfDay(timeOfDay)) {
+      return { gameDay, timeOfDay };
+    }
+    return null;
+  }
+
+  if (isValidTimeOfDay(trimmed)) {
+    return { timeOfDay: trimmed };
+  }
+
+  return null;
+}
+
+function isValidTimeOfDay(value: string): boolean {
+  const match = /^(\d{1,2}):(\d{2})$/.exec(value);
+  if (!match) return false;
+  const hours = Number(match[1]);
+  const minutes = Number(match[2]);
+  return Number.isFinite(hours)
+    && Number.isFinite(minutes)
+    && hours >= 0
+    && hours <= 23
+    && minutes >= 0
+    && minutes <= 59;
 }
 
 /**

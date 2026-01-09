@@ -12,7 +12,7 @@ export interface ModSelectorProps {
 }
 
 export function ModSelector({ 
-  apiBaseUrl = 'http://localhost:3000/api',
+  apiBaseUrl = '/api',
   onSelectMod,
   onCancel
 }: ModSelectorProps) {
@@ -320,3 +320,5 @@ export function ModSelector({
     </>
   );
 }
+
+

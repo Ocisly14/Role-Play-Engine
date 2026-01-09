@@ -151,3 +151,4 @@ No action result available yet.
 ## NPCs in Current Scene Location
 {{sceneNpcsJson}}
 ```
+

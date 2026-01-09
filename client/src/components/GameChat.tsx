@@ -36,7 +36,7 @@ interface GameChatProps {
   onNarrativeComplete?: () => void;
 }
 
-export function GameChat({ sessionId, apiBaseUrl = 'http://localhost:3000/api', characterName = 'Investigator', moduleIntroduction, initialMessages, onNarrativeComplete }: GameChatProps) {
+export function GameChat({ sessionId, apiBaseUrl = '/api', characterName = 'Investigator', moduleIntroduction, initialMessages, onNarrativeComplete }: GameChatProps) {
   const [messages, setMessages] = useState<Message[]>(initialMessages || []);
   const [inputValue, setInputValue] = useState('');
   const [isSending, setIsSending] = useState(false);
@@ -101,7 +101,16 @@ export function GameChat({ sessionId, apiBaseUrl = 'http://localhost:3000/api', 
     }
 
     // Get WebSocket URL from apiBaseUrl
-    const wsUrl = apiBaseUrl.replace('/api', '').replace('http://', 'ws://').replace('https://', 'wss://');
+    // If apiBaseUrl is relative, use current window location
+    let wsUrl: string;
+    if (apiBaseUrl.startsWith('/')) {
+      // Relative path - use current protocol and host
+      const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+      wsUrl = `${protocol}//${window.location.host}`;
+    } else {
+      // Absolute URL - convert to WebSocket URL
+      wsUrl = apiBaseUrl.replace('/api', '').replace('http://', 'ws://').replace('https://', 'wss://');
+    }
     const wsPath = `${wsUrl}/ws?sessionId=${sessionId}`;
 
     console.log(`[WebSocket] Connecting to ${wsPath}`);

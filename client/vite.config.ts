@@ -7,11 +7,24 @@ export default defineConfig({
     port: 5173,
     strictPort: false,
     host: true,
+    allowedHosts: ["game.coc-agent.com"],
     hmr: {
       overlay: true,
     },
     watch: {
       usePolling: true,
+    },
+    proxy: {
+      '/api': {
+        target: 'http://localhost:3000',
+        changeOrigin: true,
+        secure: false,
+      },
+      '/ws': {
+        target: 'ws://localhost:3000',
+        ws: true,
+        changeOrigin: true,
+      },
     },
   },
 });

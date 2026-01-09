@@ -58,7 +58,7 @@ interface CharacterData {
   backstory?: string;
 }
 
-export function CharacterSheetModal({ sessionId, characterId, apiBaseUrl = 'http://localhost:3000/api', onClose }: CharacterSheetModalProps) {
+export function CharacterSheetModal({ sessionId, characterId, apiBaseUrl = '/api', onClose }: CharacterSheetModalProps) {
   const [character, setCharacter] = useState<CharacterData | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
