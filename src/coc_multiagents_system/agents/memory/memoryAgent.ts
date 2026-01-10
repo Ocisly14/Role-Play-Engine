@@ -329,8 +329,8 @@ export const createScenarioCheckpoint = async (
     const playerStmt = database.prepare(`
       INSERT OR REPLACE INTO characters (
         character_id, name, attributes, status, inventory, skills, notes,
-        is_npc, updated_at
-      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP)
+        is_npc, user_id, updated_at
+      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, (SELECT user_id FROM characters WHERE character_id = ?), CURRENT_TIMESTAMP)
     `);
 
     playerStmt.run(
@@ -341,7 +341,8 @@ export const createScenarioCheckpoint = async (
       JSON.stringify(gameState.playerCharacter.inventory),
       JSON.stringify(gameState.playerCharacter.skills),
       gameState.playerCharacter.notes || null,
-      0 // is_npc = false
+      0, // is_npc = false
+      gameState.playerCharacter.id
     );
 
     // 7. Save all NPC characters (with full NPCProfile attributes if available)

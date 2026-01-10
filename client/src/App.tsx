@@ -152,13 +152,13 @@ const AppShell: React.FC = () => {
     <div
       style={{
         position: "fixed",
-        top: "16px",
-        right: "16px",
+        top: "20px",
+        right: "20px",
         zIndex: 5000,
         display: "flex",
         flexDirection: "column",
         alignItems: "flex-end",
-        gap: "8px",
+        gap: "10px",
       }}
     >
       <button
@@ -166,16 +166,30 @@ const AppShell: React.FC = () => {
         style={{
           display: "flex",
           alignItems: "center",
-          gap: "8px",
-          padding: "8px 12px",
-          borderRadius: "4px",
-          border: "2px solid var(--border)",
-          background: "var(--header-bg)",
-          color: "var(--title)",
-          fontSize: "0.9rem",
+          gap: "10px",
+          padding: "10px 16px",
+          borderRadius: "8px",
+          border: "3px solid var(--border)",
+          background: isUserMenuOpen
+            ? "linear-gradient(135deg, #6d5840 0%, #5a4633 100%)"
+            : "linear-gradient(135deg, var(--accent) 0%, #6d5840 100%)",
+          color: "var(--paper)",
+          fontSize: "0.95rem",
+          fontWeight: "700",
           cursor: "pointer",
-          boxShadow: "2px 2px 4px rgba(0, 0, 0, 0.2)",
-          maxWidth: "240px",
+          boxShadow: "0 4px 12px rgba(0, 0, 0, 0.3), inset 0 1px 0 rgba(255, 255, 255, 0.2)",
+          maxWidth: "260px",
+          transition: "all 0.3s ease",
+          fontFamily: "var(--serif)",
+          letterSpacing: "0.5px",
+        }}
+        onMouseEnter={(e) => {
+          e.currentTarget.style.transform = "translateY(-2px)";
+          e.currentTarget.style.boxShadow = "0 6px 16px rgba(0, 0, 0, 0.4), inset 0 1px 0 rgba(255, 255, 255, 0.3)";
+        }}
+        onMouseLeave={(e) => {
+          e.currentTarget.style.transform = "translateY(0)";
+          e.currentTarget.style.boxShadow = "0 4px 12px rgba(0, 0, 0, 0.3), inset 0 1px 0 rgba(255, 255, 255, 0.2)";
         }}
       >
         <span
@@ -183,53 +197,94 @@ const AppShell: React.FC = () => {
             overflow: "hidden",
             textOverflow: "ellipsis",
             whiteSpace: "nowrap",
+            textShadow: "1px 1px 2px rgba(0, 0, 0, 0.3)",
           }}
         >
-          {user.email}
+          {user.email.split('@')[0]}
         </span>
-        <span style={{ fontSize: "0.75rem", opacity: 0.8 }}>{isUserMenuOpen ? "▲" : "▼"}</span>
+        <span style={{
+          fontSize: "0.8rem",
+          opacity: 0.9,
+          transition: "transform 0.3s ease",
+          transform: isUserMenuOpen ? "rotate(180deg)" : "rotate(0deg)",
+          display: "inline-block",
+        }}>
+          ▼
+        </span>
       </button>
       {isUserMenuOpen && (
         <div
           style={{
-            width: "200px",
-            background: "#fffaf2",
-            borderRadius: "10px",
-            border: "1px solid rgba(0, 0, 0, 0.1)",
-            boxShadow: "0 12px 24px rgba(0, 0, 0, 0.2)",
-            padding: "12px",
+            width: "240px",
+            background: "var(--paper)",
+            borderRadius: "8px",
+            border: "3px solid var(--border)",
+            boxShadow: "0 8px 24px rgba(0, 0, 0, 0.4), 0 0 0 1px var(--accent)",
+            padding: "16px",
             display: "flex",
             flexDirection: "column",
-            gap: "10px",
+            gap: "12px",
+            animation: "dropdownSlideIn 0.3s ease-out",
           }}
         >
           <div
             style={{
-              fontSize: "0.85rem",
-              color: "#5a4a3a",
-              borderBottom: "1px solid rgba(0, 0, 0, 0.08)",
-              paddingBottom: "8px",
+              fontSize: "0.9rem",
+              color: "var(--title)",
+              borderBottom: "2px solid var(--accent)",
+              paddingBottom: "10px",
               wordBreak: "break-all",
+              fontFamily: "var(--serif)",
+              fontWeight: "600",
             }}
           >
+            <div style={{ fontSize: "0.75rem", color: "#888", marginBottom: "4px" }}>Signed in as:</div>
             {user.email}
           </div>
           <button
             onClick={handleLogout}
             style={{
-              padding: "8px 10px",
+              padding: "12px 16px",
               borderRadius: "6px",
-              border: "none",
-              background: "#8b7355",
-              color: "#f5f1e8",
-              fontWeight: 600,
+              border: "2px solid var(--border)",
+              background: "linear-gradient(135deg, #8b7355 0%, #6d5840 100%)",
+              color: "var(--paper)",
+              fontWeight: "700",
+              fontSize: "0.95rem",
               cursor: "pointer",
+              fontFamily: "var(--serif)",
+              letterSpacing: "1px",
+              textTransform: "uppercase",
+              boxShadow: "0 3px 8px rgba(0, 0, 0, 0.2)",
+              transition: "all 0.2s ease",
+            }}
+            onMouseEnter={(e) => {
+              e.currentTarget.style.background = "linear-gradient(135deg, #6d5840 0%, #5a4633 100%)";
+              e.currentTarget.style.transform = "translateY(-2px)";
+              e.currentTarget.style.boxShadow = "0 5px 12px rgba(0, 0, 0, 0.3)";
+            }}
+            onMouseLeave={(e) => {
+              e.currentTarget.style.background = "linear-gradient(135deg, #8b7355 0%, #6d5840 100%)";
+              e.currentTarget.style.transform = "translateY(0)";
+              e.currentTarget.style.boxShadow = "0 3px 8px rgba(0, 0, 0, 0.2)";
             }}
           >
             Logout
           </button>
         </div>
       )}
+      <style>{`
+        @keyframes dropdownSlideIn {
+          from {
+            opacity: 0;
+            transform: translateY(-10px);
+          }
+          to {
+            opacity: 1;
+            transform: translateY(0);
+          }
+        }
+      `}</style>
     </div>
   ) : null;
 
@@ -237,7 +292,7 @@ const AppShell: React.FC = () => {
   React.useEffect(() => {
     const fetchWeapons = async () => {
       try {
-        const response = await fetch("/api/weapons");
+        const response = await authFetch("/api/weapons");
         const data = await response.json();
 
         if (data.success && data.weapons) {
@@ -255,7 +310,7 @@ const AppShell: React.FC = () => {
   React.useEffect(() => {
     const fetchOccupations = async () => {
       try {
-        const response = await fetch("/api/occupations");
+        const response = await authFetch("/api/occupations");
         const data = await response.json();
 
         if (data.success && data.occupations) {
@@ -330,9 +385,9 @@ const AppShell: React.FC = () => {
       // Step 1: Load mod data with SSE progress updates
       let loadData: any = null;
       
-      const loadResponse = await fetch("/api/mod/load?stream=true", {
+      const loadResponse = await authFetch("/api/mod/load?stream=true", {
         method: "POST",
-        headers: { 
+        headers: {
           "Content-Type": "application/json",
           "Accept": "text/event-stream"
         },
@@ -416,7 +471,7 @@ const AppShell: React.FC = () => {
 
       // Step 2: Fetch module introduction
       setModLoadProgress({ stage: "Generating Introduction Narrative", progress: 90, message: "Generating module introduction narrative..." });
-      const introResponse = await fetch(`/api/module/introduction?modName=${encodeURIComponent(modName)}`);
+      const introResponse = await authFetch(`/api/module/introduction?modName=${encodeURIComponent(modName)}`);
       const introData = await introResponse.json();
 
       if (introResponse.ok && introData.success) {

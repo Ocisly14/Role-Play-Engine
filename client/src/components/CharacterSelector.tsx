@@ -74,7 +74,7 @@ export function CharacterSelector({
       setImportMessage("Importing game data...");
       
       // Step 1: Import game data
-      const importResponse = await fetch(`${apiBaseUrl}/game/import-data`, {
+      const importResponse = await authFetch(`${apiBaseUrl}/game/import-data`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
       });
