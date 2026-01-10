@@ -133,6 +133,18 @@ export class CoCDatabase {
             CREATE INDEX IF NOT EXISTS idx_turns_started ON game_turns(started_at);
         `);
 
+    // Backfill game_day and game_time columns for existing tables
+    try {
+      if (!this.hasColumn("game_turns", "game_day")) {
+        this.db.exec(`ALTER TABLE game_turns ADD COLUMN game_day INTEGER;`);
+      }
+      if (!this.hasColumn("game_turns", "game_time")) {
+        this.db.exec(`ALTER TABLE game_turns ADD COLUMN game_time TEXT;`);
+      }
+    } catch {
+      // ignore if columns already exist or cannot be added
+    }
+
     // Game events table
     this.db.exec(`
             CREATE TABLE IF NOT EXISTS game_events (
@@ -922,7 +934,9 @@ export class CoCDatabase {
     sceneId?: string,
     sceneName?: string,
     location?: string,
-    isSimulated?: boolean
+    isSimulated?: boolean,
+    gameDay?: number | null,
+    gameTime?: string | null
   ): void {
     const database = this.db;
     
@@ -940,8 +954,8 @@ export class CoCDatabase {
     const stmt = database.prepare(`
       INSERT INTO game_turns (
         turn_id, session_id, turn_number, character_input, character_id, character_name,
-        scene_id, scene_name, location, status, started_at, is_simulated
-      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, 'processing', CURRENT_TIMESTAMP, ?)
+        scene_id, scene_name, location, status, started_at, is_simulated, game_day, game_time
+      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, 'processing', CURRENT_TIMESTAMP, ?, ?, ?)
     `);
     
     stmt.run(
@@ -954,7 +968,9 @@ export class CoCDatabase {
       sceneId || null,
       sceneName || null,
       location || null,
-      isSimulated ? 1 : 0
+      isSimulated ? 1 : 0,
+      gameDay ?? null,
+      gameTime ?? null
     );
   }
 
@@ -1012,7 +1028,9 @@ export class CoCDatabase {
   completeTurn(
     turnId: string,
     keeperNarrative: string,
-    clueRevelations?: any
+    clueRevelations?: any,
+    gameDay?: number | null,
+    gameTime?: string | null
   ): void {
     const database = this.db;
     const stmt = database.prepare(`
@@ -1020,13 +1038,17 @@ export class CoCDatabase {
       SET keeper_narrative = ?,
           clue_revelations = ?,
           status = 'completed',
-          completed_at = CURRENT_TIMESTAMP
+          completed_at = CURRENT_TIMESTAMP,
+          game_day = ?,
+          game_time = ?
       WHERE turn_id = ?
     `);
     
     stmt.run(
       keeperNarrative,
       clueRevelations ? JSON.stringify(clueRevelations) : null,
+      gameDay ?? null,
+      gameTime ?? null,
       turnId
     );
   }
@@ -1077,6 +1099,8 @@ export class CoCDatabase {
       directorDecision: row.director_decision ? JSON.parse(row.director_decision) : null,
       clueRevelations: row.clue_revelations ? JSON.parse(row.clue_revelations) : null,
       isSimulated: row.is_simulated === 1 || row.is_simulated === true,
+      gameDay: row.game_day ?? null,
+      gameTime: row.game_time ?? null,
     };
   }
 
@@ -1127,6 +1151,8 @@ export class CoCDatabase {
       directorDecision: row.director_decision ? JSON.parse(row.director_decision) : null,
       clueRevelations: row.clue_revelations ? JSON.parse(row.clue_revelations) : null,
       isSimulated: row.is_simulated === 1 || row.is_simulated === true,
+      gameDay: row.game_day ?? null,
+      gameTime: row.game_time ?? null,
     }));
   }
 
@@ -1165,6 +1191,8 @@ export class CoCDatabase {
       directorDecision: row.director_decision ? JSON.parse(row.director_decision) : null,
       clueRevelations: row.clue_revelations ? JSON.parse(row.clue_revelations) : null,
       isSimulated: row.is_simulated === 1 || row.is_simulated === true,
+      gameDay: row.game_day ?? null,
+      gameTime: row.game_time ?? null,
     };
   }
 

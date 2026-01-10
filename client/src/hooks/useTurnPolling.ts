@@ -34,6 +34,8 @@ export interface TurnStatus {
   location: string | null;
   isSimulated?: boolean;
   actionResults?: ActionResult[] | null;
+  gameDay?: number | null;
+  gameTime?: string | null;
 }
 
 export interface UseTurnPollingResult {

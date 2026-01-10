@@ -582,6 +582,7 @@ const AppShell: React.FC = () => {
         }
 
         // Load conversation history if provided
+        // Note: Messages should have their game time saved when created, not filled dynamically
         if (data.conversationHistory && Array.isArray(data.conversationHistory)) {
           setConversationHistory(data.conversationHistory);
           console.log(`Loaded ${data.conversationHistory.length} messages from checkpoint`);

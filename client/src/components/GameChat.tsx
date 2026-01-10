@@ -15,6 +15,8 @@ interface Message {
   timestamp: string;
   turnNumber: number;
   diceRolls?: string[]; // Optional dice rolls for keeper messages
+  gameDay?: number | null; // Game day when message was sent
+  gameTime?: string | null; // Game time (HH:MM format) when message was sent
 }
 
 interface GameEndingInfo {
@@ -44,6 +46,7 @@ export function GameChat({ sessionId, apiBaseUrl = '/api', characterName = 'Inve
   const [isSaving, setIsSaving] = useState(false);
   const [saveMessage, setSaveMessage] = useState<string | null>(null);
   const [isGameEnded, setIsGameEnded] = useState(false);
+  const [currentGameState, setCurrentGameState] = useState<{ gameDay?: number; timeOfDay?: string } | null>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const processedTurnIdsRef = useRef<Set<string>>(new Set());
   const wsRef = useRef<WebSocket | null>(null);
@@ -56,7 +59,7 @@ export function GameChat({ sessionId, apiBaseUrl = '/api', characterName = 'Inve
   const { turn, isPolling, error, startPolling, stopPolling } = useTurnPolling(apiBaseUrl);
   
   // State for dice animation
-  const [pendingDiceRolls, setPendingDiceRolls] = useState<{ turnNumber: number; diceRolls: string[]; narrative: string; timestamp: string } | null>(null);
+  const [pendingDiceRolls, setPendingDiceRolls] = useState<{ turnNumber: number; diceRolls: string[]; narrative: string; timestamp: string; gameDay?: number | null; gameTime?: string | null } | null>(null);
   const [showingDiceAnimation, setShowingDiceAnimation] = useState(false);
   const [diceAnimationCompleted, setDiceAnimationCompleted] = useState(false);
 
@@ -81,6 +84,14 @@ export function GameChat({ sessionId, apiBaseUrl = '/api', characterName = 'Inve
       const data = await response.json();
       const endingInfo: GameEndingInfo | null = data?.gameState?.gameEnding ?? null;
       setIsGameEnded(Boolean(endingInfo?.isEnded));
+      
+      // Update current game state for time display
+      if (data?.gameState) {
+        setCurrentGameState({
+          gameDay: data.gameState.gameDay,
+          timeOfDay: data.gameState.timeOfDay,
+        });
+      }
     } catch (err) {
       console.error('[GameChat] Failed to fetch game state:', err);
     }
@@ -88,8 +99,11 @@ export function GameChat({ sessionId, apiBaseUrl = '/api', characterName = 'Inve
 
   useEffect(() => {
     setIsGameEnded(false);
-    fetchGameEnding();
-  }, [fetchGameEnding]);
+    if (sessionId) {
+      fetchGameEnding();
+    }
+  }, [fetchGameEnding, sessionId]);
+
 
   // WebSocket connection for progression checking
   useEffect(() => {
@@ -180,6 +194,8 @@ export function GameChat({ sessionId, apiBaseUrl = '/api', characterName = 'Inve
                       content: message.keeperNarrative,
                       timestamp: message.timestamp || new Date().toISOString(),
                       turnNumber: latestTurnNumber + 1,
+                      gameDay: message.gameDay ?? null,
+                      gameTime: message.gameTime ?? null,
                     }
                   ];
                 });
@@ -446,6 +462,8 @@ export function GameChat({ sessionId, apiBaseUrl = '/api', characterName = 'Inve
           diceRolls: allDiceRolls,
           narrative: turn.keeperNarrative,
           timestamp: turn.completedAt || turn.startedAt,
+          gameDay: turn.gameDay ?? null,
+          gameTime: turn.gameTime ?? null,
         });
         setShowingDiceAnimation(true);
         setDiceAnimationCompleted(false); // Reset animation completed state
@@ -468,6 +486,8 @@ export function GameChat({ sessionId, apiBaseUrl = '/api', characterName = 'Inve
               content: turn.keeperNarrative,
               timestamp: turn.completedAt || turn.startedAt,
               turnNumber: turn.turnNumber,
+              gameDay: turn.gameDay ?? null,
+              gameTime: turn.gameTime ?? null,
             };
             return [...prev, keeperMessage];
           } else {
@@ -545,6 +565,8 @@ export function GameChat({ sessionId, apiBaseUrl = '/api', characterName = 'Inve
       content: messageText,
       timestamp: new Date().toISOString(),
       turnNumber: nextTurnNumber,
+      gameDay: currentGameState?.gameDay ?? null,
+      gameTime: currentGameState?.timeOfDay ?? null,
     };
     
     setMessages(prev => [...prev, userMessage]);
@@ -673,10 +695,12 @@ export function GameChat({ sessionId, apiBaseUrl = '/api', characterName = 'Inve
                 {msg.role === 'character' ? `📝 ${characterName}` : '🎭 Keeper'}
               </span>
               <span className="message-timestamp">
-                {new Date(msg.timestamp).toLocaleTimeString('en-US', { 
-                  hour: '2-digit', 
-                  minute: '2-digit' 
-                })}
+                {msg.gameTime && msg.gameTime !== null && msg.gameTime !== undefined && msg.gameTime !== ''
+                  ? `Day ${msg.gameDay ?? 1}, ${msg.gameTime}`
+                  : new Date(msg.timestamp).toLocaleTimeString('en-US', { 
+                      hour: '2-digit', 
+                      minute: '2-digit' 
+                    })}
               </span>
             </div>
             {msg.diceRolls && msg.diceRolls.length > 0 && (
@@ -694,10 +718,12 @@ export function GameChat({ sessionId, apiBaseUrl = '/api', characterName = 'Inve
             <div className="message-meta">
               <span className="sender-name">🎭 Keeper</span>
               <span className="message-timestamp">
-                {new Date(pendingDiceRolls.timestamp).toLocaleTimeString('en-US', { 
-                  hour: '2-digit', 
-                  minute: '2-digit' 
-                })}
+                {pendingDiceRolls.gameTime && pendingDiceRolls.gameTime !== null && pendingDiceRolls.gameTime !== undefined && pendingDiceRolls.gameTime !== ''
+                  ? `Day ${pendingDiceRolls.gameDay ?? 1}, ${pendingDiceRolls.gameTime}`
+                  : new Date(pendingDiceRolls.timestamp).toLocaleTimeString('en-US', { 
+                      hour: '2-digit', 
+                      minute: '2-digit' 
+                    })}
               </span>
             </div>
             <DiceAnimation 

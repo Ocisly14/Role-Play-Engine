@@ -74,21 +74,28 @@ export async function startGame(req: Request, res: Response): Promise<void> {
             const { randomUUID } = await import("crypto");
             const introTurnId = `turn-intro-${Date.now()}-${randomUUID().slice(0, 8)}`;
 
+            // Get initial game time from gameState (set from module initialGameTime)
+            const initialGameDay = gameState.gameDay ?? null;
+            const initialGameTime = gameState.timeOfDay ?? null;
+
             // Create a special turn with turnNumber 0 for introduction
+            // Save initial game time from module's initialGameTime
             database.prepare(`
               INSERT INTO game_turns (
                 turn_id, session_id, turn_number, character_input, character_id, character_name,
-                keeper_narrative, status, started_at, completed_at, created_at
-              ) VALUES (?, ?, 0, '', ?, ?, ?, 'completed', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
+                keeper_narrative, status, started_at, completed_at, created_at, game_day, game_time
+              ) VALUES (?, ?, 0, '', ?, ?, ?, 'completed', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP, ?, ?)
             `).run(
               introTurnId,
               gameState.sessionId,
               gameState.playerCharacter.id,
               gameState.playerCharacter.name,
-              moduleIntroduction.introduction
+              moduleIntroduction.introduction,
+              initialGameDay,
+              initialGameTime
             );
 
-            console.log(`[${new Date().toISOString()}] Introduction turn created: ${introTurnId}`);
+            console.log(`[${new Date().toISOString()}] Introduction turn created: ${introTurnId} with game time: Day ${initialGameDay}, ${initialGameTime}`);
           } else {
             console.log(`[${new Date().toISOString()}] Introduction turn already exists for this session`);
           }

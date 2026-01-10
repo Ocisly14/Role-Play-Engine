@@ -90,7 +90,9 @@ export async function checkAndTriggerSimulate(
         turnId: result.turnId,
         simulatedQuery: result.messages[0]?.content.toString() || null,
         keeperNarrative: completedTurn?.keeperNarrative || keeperNarrative,
-        timestamp: new Date().toISOString()
+        timestamp: new Date().toISOString(),
+        gameDay: completedTurn?.gameDay ?? result.gameState?.gameDay ?? null,
+        gameTime: completedTurn?.gameTime ?? result.gameState?.timeOfDay ?? null,
       });
 
       return true;

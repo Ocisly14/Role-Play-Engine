@@ -18,6 +18,8 @@ export interface TurnInput {
   sceneName?: string;
   location?: string;
   isSimulated?: boolean;
+  gameDay?: number | null;
+  gameTime?: string | null;
 }
 
 export interface TurnProcessing {
@@ -29,6 +31,8 @@ export interface TurnProcessing {
 export interface TurnOutput {
   keeperNarrative: string;
   clueRevelations?: any;
+  gameDay?: number | null;
+  gameTime?: string | null;
 }
 
 export interface GameTurn {
@@ -64,6 +68,10 @@ export interface GameTurn {
   
   // Simulation flag
   isSimulated?: boolean;
+  
+  // Game time when turn completed
+  gameDay?: number | null;
+  gameTime?: string | null;
 }
 
 export class TurnManager {
@@ -90,7 +98,9 @@ export class TurnManager {
       input.sceneId,
       input.sceneName,
       input.location,
-      input.isSimulated
+      input.isSimulated,
+      input.gameDay,
+      input.gameTime
     );
 
     const turnType = input.isSimulated ? 'simulated' : 'user';
@@ -116,6 +126,8 @@ export class TurnManager {
       sceneName: gameState.currentScenario?.name,
       location: gameState.currentScenario?.location,
       isSimulated,
+      gameDay: gameState.gameDay ?? null,
+      gameTime: gameState.timeOfDay ?? null,
     });
   }
 
@@ -149,7 +161,9 @@ export class TurnManager {
     this.db.completeTurn(
       turnId,
       output.keeperNarrative,
-      output.clueRevelations
+      output.clueRevelations,
+      output.gameDay,
+      output.gameTime
     );
 
     console.log(`✓ Turn completed: ${turnId}`);
@@ -242,6 +256,8 @@ export class TurnManager {
     timestamp: string;
     turnNumber: number;
     diceRolls?: string[];
+    gameDay?: number | null;
+    gameTime?: string | null;
   }> {
     const turns = this.getHistory(sessionId, limit);
     const conversation: Array<{
@@ -250,6 +266,8 @@ export class TurnManager {
       timestamp: string;
       turnNumber: number;
       diceRolls?: string[];
+      gameDay?: number | null;
+      gameTime?: string | null;
     }> = [];
 
     turns.reverse().forEach((turn) => {
@@ -271,6 +289,8 @@ export class TurnManager {
             content: turn.keeperNarrative,
             timestamp: turn.completedAt || turn.startedAt,
             turnNumber: turn.turnNumber,
+            gameDay: turn.gameDay ?? null,
+            gameTime: turn.gameTime ?? null,
           };
           if (diceRolls.length > 0) {
             keeperMessage.diceRolls = diceRolls;
@@ -286,6 +306,8 @@ export class TurnManager {
             content: turn.characterInput,
             timestamp: turn.startedAt,
             turnNumber: turn.turnNumber,
+            gameDay: turn.gameDay ?? null,
+            gameTime: turn.gameTime ?? null,
           });
         }
 
@@ -296,6 +318,8 @@ export class TurnManager {
             content: turn.keeperNarrative,
             timestamp: turn.completedAt || turn.startedAt,
             turnNumber: turn.turnNumber,
+            gameDay: turn.gameDay ?? null,
+            gameTime: turn.gameTime ?? null,
           };
           if (diceRolls.length > 0) {
             keeperMessage.diceRolls = diceRolls;

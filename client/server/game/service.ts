@@ -180,17 +180,29 @@ export async function initializeGameState(
 
 function parseInitialGameTime(value: string): { gameDay?: number; timeOfDay: string } | null {
   const trimmed = value.trim();
-  const dayMatch = /^day\s+(\d+)\s+(\d{1,2}:\d{2})$/i.exec(trimmed);
+  // Match format: "Day X HH:MM" or "day X HH:MM" (case insensitive)
+  // Also support formats like "Day 1 21:00" or "day 1 9:00"
+  const dayMatch = /^day\s+(\d+)\s+(\d{1,2}):(\d{2})$/i.exec(trimmed);
   if (dayMatch) {
     const gameDay = Number(dayMatch[1]);
-    const timeOfDay = dayMatch[2];
+    const hours = dayMatch[2];
+    const minutes = dayMatch[3];
+    const timeOfDay = `${hours.padStart(2, '0')}:${minutes}`;
     if (Number.isFinite(gameDay) && gameDay > 0 && isValidTimeOfDay(timeOfDay)) {
       return { gameDay, timeOfDay };
     }
     return null;
   }
 
+  // Match format: "HH:MM" only
   if (isValidTimeOfDay(trimmed)) {
+    // Ensure format is HH:MM (2-digit hours)
+    const timeMatch = /^(\d{1,2}):(\d{2})$/.exec(trimmed);
+    if (timeMatch) {
+      const hours = timeMatch[1].padStart(2, '0');
+      const minutes = timeMatch[2];
+      return { timeOfDay: `${hours}:${minutes}` };
+    }
     return { timeOfDay: trimmed };
   }
 

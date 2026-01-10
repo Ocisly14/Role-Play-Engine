@@ -78,6 +78,7 @@ export function CharacterSheetModal({ sessionId, characterId, apiBaseUrl = '/api
             // Map database character to CharacterData format
             const char: any = data.character;
             console.log('Raw character data from API:', char);
+            console.log('Occupation from API:', char.occupation);
             console.log('Skills data:', char.skills);
             console.log('Weapons data:', char.weapons);
             console.log('Notes data:', char.notes);
@@ -86,10 +87,10 @@ export function CharacterSheetModal({ sessionId, characterId, apiBaseUrl = '/api
               name: char.name || '',
               occupation: char.occupation || undefined,
               age: char.age || undefined,
-              gender: char.gender || undefined,
-              era: char.era || undefined,
-              residence: char.residence || undefined,
-              birthplace: char.birthplace || undefined,
+              gender: char.gender || char.notes?.gender || undefined,
+              era: char.notes?.era || undefined,
+              residence: char.notes?.residence || undefined,
+              birthplace: char.notes?.birthplace || undefined,
               STR: char.attributes?.STR || undefined,
               CON: char.attributes?.CON || undefined,
               DEX: char.attributes?.DEX || undefined,
@@ -122,6 +123,7 @@ export function CharacterSheetModal({ sessionId, characterId, apiBaseUrl = '/api
             };
 
             console.log('Mapped characterData:', characterData);
+            console.log('Mapped occupation:', characterData.occupation);
             console.log('Mapped skills:', characterData.skills);
             console.log('Mapped weapons:', characterData.weapons);
 

@@ -503,9 +503,12 @@ export const buildGraph = (db: CoCDatabase, scenarioLoader: ScenarioLoader, rag?
     if (state.turnId) {
       const isSimulated = state.isSimulatedQuery ?? false;
       try {
+        const gameState = result.updatedGameState;
         turnManager.completeTurn(state.turnId, {
           keeperNarrative: result.narrative,
-          clueRevelations: result.clueRevelations
+          clueRevelations: result.clueRevelations,
+          gameDay: gameState?.gameDay ?? null,
+          gameTime: gameState?.timeOfDay ?? null,
         });
         const inputType = isSimulated ? '模拟查询' : '真实输入';
         console.log(`📝 [Keeper Agent] Turn ${state.turnId} (${inputType}) 已完成并保存到数据库`);
@@ -833,9 +836,12 @@ export const buildListenerGraph = (db: CoCDatabase, scenarioLoader: ScenarioLoad
     
     if (state.turnId) {
       try {
+        const gameState = result.updatedGameState;
         turnManager.completeTurn(state.turnId, {
           keeperNarrative: result.narrative,
-          clueRevelations: result.clueRevelations
+          clueRevelations: result.clueRevelations,
+          gameDay: gameState?.gameDay ?? null,
+          gameTime: gameState?.timeOfDay ?? null,
         });
         console.log(`📝 [Keeper Agent] Turn ${state.turnId} (模拟查询) 已完成并保存到数据库`);
       } catch (error) {

@@ -148,5 +148,12 @@ export function parseCharacterFromDB(character: any): any {
     weapons,
     items,
     notes,
+    // Explicitly preserve occupation and other direct fields
+    occupation: character.occupation,
+    age: character.age,
+    gender: character.gender,
+    appearance: character.appearance,
+    personality: character.personality,
+    background: character.background,
   };
 }
