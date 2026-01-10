@@ -19,7 +19,7 @@
     "chat": "tsx client/server.ts",
     "chat:frontend": "cd client && npm run dev",
     "chat:dev": "concurrently \"pnpm chat\" \"pnpm chat:frontend\"",
-    "clean": "rm -rf dist node_modules client/node_modules client/dist client/dist-server node_modules/.cache client/node_modules/.cache",
+    "clean": "rm -rf dist client/dist client/dist-server && rm -rf node_modules client/node_modules || true",
     "test": "vitest",
     "test:coverage": "vitest --coverage"
   },

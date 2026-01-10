@@ -1,3 +1,4 @@
+/// <reference path="../types/express.d.ts" />
 import type { Request, Response } from "express";
 import { DatabaseManager } from "../core/DatabaseManager.js";
 import { GraphManager } from "../core/GraphManager.js";
@@ -18,13 +19,20 @@ export async function saveCheckpoint(req: Request, res: Response): Promise<void>
     const db = DatabaseManager.getInstance().getDatabase();
     const database = db.getDatabase();
 
+    console.log(`[${new Date().toISOString()}] [Checkpoint Save] User ${userId} requesting save`);
+
     if (!persistentGameState) {
+      console.log(`[${new Date().toISOString()}] [Checkpoint Save] ERROR: No game state found for user ${userId}`);
       res.status(400).json({ error: "Game not started. Please start the game first." });
       return;
     }
 
     const characterId = persistentGameState.playerCharacter?.id;
+    const characterName = persistentGameState.playerCharacter?.name;
+    console.log(`[${new Date().toISOString()}] [Checkpoint Save] Game state found - Character: ${characterName} (ID: ${characterId}), Session: ${persistentGameState.sessionId}`);
+
     if (!characterId) {
+      console.log(`[${new Date().toISOString()}] [Checkpoint Save] ERROR: No character ID in game state. playerCharacter: ${JSON.stringify(persistentGameState.playerCharacter)}`);
       res.status(400).json({ error: "No character in game state. Cannot save checkpoint." });
       return;
     }
@@ -35,9 +43,35 @@ export async function saveCheckpoint(req: Request, res: Response): Promise<void>
     `).get(characterId, userId);
 
     if (!ownedCharacter) {
-      res.status(403).json({ error: "Character not found" });
-      return;
+      // If character exists but is unassigned (user_id is NULL), claim it for this user.
+      const unassigned = database.prepare(`
+        SELECT character_id FROM characters
+        WHERE character_id = ? AND user_id IS NULL AND is_npc = 0
+      `).get(characterId);
+
+      if (unassigned) {
+        database.prepare(`
+          UPDATE characters
+          SET user_id = ?
+          WHERE character_id = ? AND user_id IS NULL AND is_npc = 0
+        `).run(userId, characterId);
+        console.log(`[${new Date().toISOString()}] [Checkpoint Save] Claimed unassigned character ${characterId} for user ${userId}`);
+      } else {
+        console.log(`[${new Date().toISOString()}] [Checkpoint Save] ERROR: Character ${characterId} not found in database for user ${userId}`);
+        // Check if character exists at all
+        const charExists = database.prepare(`SELECT character_id, user_id, name FROM characters WHERE character_id = ?`).get(characterId);
+        if (charExists) {
+          console.log(`[${new Date().toISOString()}] [Checkpoint Save] Character exists but belongs to different user: ${JSON.stringify(charExists)}`);
+          res.status(403).json({ error: `Character not found. Character ${characterName || characterId} may belong to a different user.` });
+        } else {
+          console.log(`[${new Date().toISOString()}] [Checkpoint Save] Character does not exist in database at all`);
+          res.status(403).json({ error: `Character not found. Character ${characterName || characterId} does not exist in database.` });
+        }
+        return;
+      }
     }
+
+    console.log(`[${new Date().toISOString()}] [Checkpoint Save] Character verified, proceeding with save...`);
 
     const currentScenario = persistentGameState.currentScenario;
     if (!currentScenario) {

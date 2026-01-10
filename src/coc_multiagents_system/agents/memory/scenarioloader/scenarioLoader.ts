@@ -403,112 +403,119 @@ export class ScenarioLoader {
 
       scenarioStmt.run(...scenarioValues);
 
-      // Delete existing related data
-      database.prepare("DELETE FROM scenario_snapshots WHERE scenario_id = ?").run(scenario.id);
-      // Note: Foreign key constraints will cascade delete related characters, clues, and conditions
-
       // Get all snapshots to save (support multiple snapshots)
       const allSnapshots: ScenarioSnapshot[] = (scenario as any).__allSnapshots || [scenario.snapshot];
 
-      // Insert all snapshots
+      // Insert or create all snapshots (only if they don't exist)
+      // Snapshots are read-only original definitions - never delete or update existing ones
       for (const snapshot of allSnapshots) {
-        // Insert snapshot (with time_restriction field)
-        const snapshotColumns = [
-          "snapshot_id",
-          "scenario_id",
-          "snapshot_name",
-          "location",
-          "description",
-          "events",
-          "exits",
-          "keeper_notes",
-          "time_restriction",
-        ];
-        const snapshotValues: any[] = [
-          snapshot.id,
-          scenario.id,
-          snapshot.name,
-          snapshot.location,
-          snapshot.description,
-          JSON.stringify(snapshot.events),
-          JSON.stringify(snapshot.exits),
-          snapshot.keeperNotes || null,
-          snapshot.timeRestriction || null,
-        ];
+        // Check if snapshot already exists
+        const existingSnapshot = database
+          .prepare("SELECT snapshot_id FROM scenario_snapshots WHERE snapshot_id = ?")
+          .get(snapshot.id);
 
-        const snapshotStmt = database.prepare(
-          `INSERT INTO scenario_snapshots (${snapshotColumns.join(", ")}) VALUES (${snapshotColumns
-            .map(() => "?")
-            .join(", ")})`
-        );
+        // Only insert if snapshot doesn't exist (snapshot is read-only original definition)
+        if (!existingSnapshot) {
+          // Insert snapshot (with time_restriction field)
+          const snapshotColumns = [
+            "snapshot_id",
+            "scenario_id",
+            "snapshot_name",
+            "location",
+            "description",
+            "events",
+            "exits",
+            "keeper_notes",
+            "time_restriction",
+          ];
+          const snapshotValues: any[] = [
+            snapshot.id,
+            scenario.id,
+            snapshot.name,
+            snapshot.location,
+            snapshot.description,
+            JSON.stringify(snapshot.events),
+            JSON.stringify(snapshot.exits),
+            snapshot.keeperNotes || null,
+            snapshot.timeRestriction || null,
+          ];
 
-        snapshotStmt.run(...snapshotValues);
+          const snapshotStmt = database.prepare(
+            `INSERT INTO scenario_snapshots (${snapshotColumns.join(", ")}) VALUES (${snapshotColumns
+              .map(() => "?")
+              .join(", ")})`
+          );
+          snapshotStmt.run(...snapshotValues);
 
-        // Insert characters for this snapshot
-        if (snapshot.characters.length > 0) {
-          const charStmt = database.prepare(`
-                        INSERT INTO scenario_characters (
-                            id, snapshot_id, character_name, character_role, character_status,
-                            character_location, character_notes
-                        ) VALUES (?, ?, ?, ?, ?, ?, ?)
-                    `);
+          // Insert characters for this snapshot (only on first creation)
+          if (snapshot.characters.length > 0) {
+            const charStmt = database.prepare(`
+                          INSERT OR IGNORE INTO scenario_characters (
+                              id, snapshot_id, character_name, character_role, character_status,
+                              character_location, character_notes
+                          ) VALUES (?, ?, ?, ?, ?, ?, ?)
+                      `);
 
-          for (const char of snapshot.characters) {
-            charStmt.run(
-              char.id,
-              snapshot.id,
-              char.name,
-              char.role,
-              char.status,
-              char.location || null,
-              char.notes || null
-            );
+            for (const char of snapshot.characters) {
+              charStmt.run(
+                char.id,
+                snapshot.id,
+                char.name,
+                char.role,
+                char.status,
+                char.location || null,
+                char.notes || null
+              );
+            }
           }
-        }
 
-        // Insert clues for this snapshot
-        if (snapshot.clues.length > 0) {
-          const clueStmt = database.prepare(`
-                        INSERT INTO scenario_clues (
-                            clue_id, snapshot_id, clue_text, category, difficulty,
-                            clue_location, discovery_method, reveals, discovered, discovery_details
-                        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-                    `);
+          // Insert clues for this snapshot (only on first creation)
+          if (snapshot.clues.length > 0) {
+            const clueStmt = database.prepare(`
+                          INSERT OR IGNORE INTO scenario_clues (
+                              clue_id, snapshot_id, clue_text, category, difficulty,
+                              clue_location, discovery_method, reveals, discovered, discovery_details
+                          ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                      `);
 
-          for (const clue of snapshot.clues) {
-            clueStmt.run(
-              clue.id,
-              snapshot.id,
-              clue.clueText,
-              clue.category,
-              clue.difficulty,
-              clue.location,
-              clue.discoveryMethod || null,
-              JSON.stringify(clue.reveals),
-              clue.discovered ? 1 : 0,
-              clue.discoveryDetails ? JSON.stringify(clue.discoveryDetails) : null
-            );
+            for (const clue of snapshot.clues) {
+              clueStmt.run(
+                clue.id,
+                snapshot.id,
+                clue.clueText,
+                clue.category,
+                clue.difficulty,
+                clue.location,
+                clue.discoveryMethod || null,
+                JSON.stringify(clue.reveals),
+                clue.discovered ? 1 : 0,
+                clue.discoveryDetails ? JSON.stringify(clue.discoveryDetails) : null
+              );
+            }
           }
-        }
 
-        // Insert conditions for this snapshot
-        if (snapshot.conditions.length > 0) {
-          const condStmt = database.prepare(`
-                        INSERT INTO scenario_conditions (
-                            condition_id, snapshot_id, condition_type, description, mechanical_effect
-                        ) VALUES (?, ?, ?, ?, ?)
-                    `);
+          // Insert conditions for this snapshot (only on first creation)
+          if (snapshot.conditions.length > 0) {
+            const condStmt = database.prepare(`
+                          INSERT OR IGNORE INTO scenario_conditions (
+                              condition_id, snapshot_id, condition_type, description, mechanical_effect
+                          ) VALUES (?, ?, ?, ?, ?)
+                      `);
 
-          for (const cond of snapshot.conditions) {
-            const condId = `${snapshot.id}-cond-${randomUUID().slice(0, 8)}`;
-            condStmt.run(
-              condId,
-              snapshot.id,
-              cond.type,
-              cond.description,
-              cond.mechanicalEffect || null
-            );
+            for (const cond of snapshot.conditions) {
+              const condId = `${snapshot.id}-cond-${randomUUID().slice(0, 8)}`;
+              condStmt.run(
+                condId,
+                snapshot.id,
+                cond.type,
+                cond.description,
+                cond.mechanicalEffect || null
+              );
+            }
           }
+        } else {
+          // Snapshot already exists - skip completely (preserve original definition)
+          // Game state changes are saved in checkpoints, not in snapshots
         }
       }
     });

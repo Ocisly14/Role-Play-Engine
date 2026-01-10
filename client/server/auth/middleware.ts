@@ -1,3 +1,4 @@
+/// <reference path="../types/express.d.ts" />
 import type { Request, Response, NextFunction } from 'express';
 import { generateAccessToken, verifyToken } from './jwt.js';
 import { authDbService } from './db-service.js';
@@ -12,19 +13,6 @@ function getDB(): Database.Database {
     dbInstance = new CoCDatabase();
   }
   return dbInstance.getDatabase();
-}
-
-// Extend Express Request type
-declare global {
-  namespace Express {
-    interface Request {
-      user?: {
-        userId: string;
-        email: string;
-        role: string;
-      };
-    }
-  }
 }
 
 // Authentication middleware

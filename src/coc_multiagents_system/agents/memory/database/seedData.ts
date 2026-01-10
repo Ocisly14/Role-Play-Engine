@@ -4,28 +4,33 @@
  */
 
 import type { CoCDatabase } from "./schema.js";
+import bcrypt from "bcryptjs";
+import { randomUUID } from "crypto";
 
 export function seedDatabase(db: CoCDatabase): void {
   const database = db.getDatabase();
 
-  // Check if already seeded
+  // Check if game data already seeded
   const count = database
     .prepare("SELECT COUNT(*) as count FROM skills")
     .get() as { count: number };
-  if (count.count > 0) {
-    console.log("Database already seeded, skipping...");
-    return;
+
+  if (count.count === 0) {
+    console.log("Seeding database with CoC 7e rules...");
+
+    db.transaction(() => {
+      seedSkills(database);
+      seedWeapons(database);
+      seedSanityTriggers(database);
+    });
+
+    console.log("Game data seeding complete!");
+  } else {
+    console.log("Game data already seeded, skipping...");
   }
 
-  console.log("Seeding database with CoC 7e rules...");
-
-  db.transaction(() => {
-    seedSkills(database);
-    seedWeapons(database);
-    seedSanityTriggers(database);
-  });
-
-  console.log("Database seeding complete!");
+  // Always check and create default admin if needed (independent of game data)
+  seedDefaultAdmin(database);
 }
 
 function seedSkills(db: any): void {
@@ -298,4 +303,43 @@ function seedSanityTriggers(db: any): void {
   ];
 
   triggers.forEach((trigger) => insertTrigger.run(...trigger));
+}
+
+/**
+ * Seed default admin user
+ * Creates test@test.com with password "test" for development/demo purposes
+ */
+function seedDefaultAdmin(db: any): void {
+  // Check if admin already exists
+  const existingAdmin = db
+    .prepare("SELECT id FROM users WHERE email = ?")
+    .get("test@test.com");
+
+  if (existingAdmin) {
+    console.log("Default admin already exists, skipping...");
+    return;
+  }
+
+  console.log("Creating default admin user (test@test.com)...");
+
+  const userId = randomUUID();
+  const passwordHash = bcrypt.hashSync("test", 10);
+
+  const insertUser = db.prepare(`
+    INSERT INTO users (
+      id, email, username, password_hash, is_email_verified, is_active, role, created_at, updated_at
+    ) VALUES (?, ?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
+  `);
+
+  insertUser.run(
+    userId,
+    "test@test.com",
+    "admin",
+    passwordHash,
+    1, // is_email_verified: true
+    1, // is_active: true
+    "ADMIN" // role: ADMIN
+  );
+
+  console.log("✅ Default admin user created successfully!");
 }

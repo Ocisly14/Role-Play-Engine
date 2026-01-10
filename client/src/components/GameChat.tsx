@@ -105,9 +105,11 @@ export function GameChat({ sessionId, apiBaseUrl = '/api', characterName = 'Inve
     // If apiBaseUrl is relative, use current window location
     let wsUrl: string;
     if (apiBaseUrl.startsWith('/')) {
-      // Relative path - use current protocol and host
+      // Relative path - use current protocol and host (skip Vite ws proxy in dev)
       const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
-      wsUrl = `${protocol}//${window.location.host}`;
+      const isViteDev = import.meta.env.DEV && window.location.port === '5173';
+      const host = isViteDev ? `${window.location.hostname}:3000` : window.location.host;
+      wsUrl = `${protocol}//${host}`;
     } else {
       // Absolute URL - convert to WebSocket URL
       wsUrl = apiBaseUrl.replace('/api', '').replace('http://', 'ws://').replace('https://', 'wss://');

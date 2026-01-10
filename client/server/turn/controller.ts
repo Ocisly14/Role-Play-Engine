@@ -3,6 +3,7 @@ import type Database from "better-sqlite3";
 import { DatabaseManager } from "../core/DatabaseManager.js";
 import { GraphManager } from "../core/GraphManager.js";
 import { ServerState } from "../core/ServerState.js";
+import { TurnManager } from "../../../src/coc_multiagents_system/agents/memory/index.js";
 import type { GameState } from "../../../src/state.js";
 import { HumanMessage } from "@langchain/core/messages";
 
@@ -167,13 +168,25 @@ export async function getTurnStatus(req: Request, res: Response): Promise<void> 
   }
 }
 
+async function ensureTurnManager(): Promise<TurnManager | null> {
+  const graphManager = GraphManager.getInstance();
+
+  if (!graphManager.isInitialized()) {
+    const db = DatabaseManager.getInstance().getDatabase();
+    // Default: skip RAG (true), unless explicitly set to 'false'
+    await graphManager.initialize(db, process.env.SKIP_RAG !== 'false');
+  }
+
+  return graphManager.getTurnManager();
+}
+
 /**
  * Get conversation history
  * GET /api/sessions/:sessionId/conversation
  */
-export function getConversation(req: Request, res: Response): void {
+export async function getConversation(req: Request, res: Response): Promise<void> {
   try {
-    const turnManager = GraphManager.getInstance().getTurnManager();
+    const turnManager = await ensureTurnManager();
 
     if (!turnManager) {
       res.status(400).json({ error: "Game not initialized" });
@@ -204,9 +217,9 @@ export function getConversation(req: Request, res: Response): void {
  * Get turn history
  * GET /api/sessions/:sessionId/turns
  */
-export function getTurnHistory(req: Request, res: Response): void {
+export async function getTurnHistory(req: Request, res: Response): Promise<void> {
   try {
-    const turnManager = GraphManager.getInstance().getTurnManager();
+    const turnManager = await ensureTurnManager();
 
     if (!turnManager) {
       res.status(400).json({ error: "Game not initialized" });

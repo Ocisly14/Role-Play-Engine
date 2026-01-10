@@ -173,17 +173,23 @@ export const createScenarioCheckpoint = async (
       description
     );
 
-    // LEGACY: Still save to normalized tables for backwards compatibility and queries
-    // Determine scenarioId - infer from snapshot ID
-    let scenarioId = (currentScenario as any).scenarioId;
-    if (!scenarioId && currentScenario.id) {
-      // Infer scenario ID from snapshot ID (e.g., "scenario-xyz-snapshot" -> "scenario-xyz")
-      scenarioId = currentScenario.id.replace(/-snapshot.*$/, '');
-    }
-    const finalScenarioId = scenarioId || 'unknown';
-
-    // 1. Save/Update permanent changes at scenario level
+    // NOTE: We do NOT modify snapshot tables here
+    // Snapshots (scenario_snapshots, scenario_characters, scenario_clues, scenario_conditions) 
+    // are read-only original definitions that should never be modified after initial load.
+    // All game state (discovered clues, permanent changes, etc.) is saved in the checkpoint 
+    // (game_checkpoints table) and will be merged when restoring the scenario.
+    
+    // We still save permanent changes to scenarios table for query purposes,
+    // but this is separate from the snapshot data
     if (currentScenario.permanentChanges && currentScenario.permanentChanges.length > 0) {
+      // Determine scenarioId - infer from snapshot ID
+      let scenarioId = (currentScenario as any).scenarioId;
+      if (!scenarioId && currentScenario.id) {
+        // Infer scenario ID from snapshot ID (e.g., "scenario-xyz-snapshot" -> "scenario-xyz")
+        scenarioId = currentScenario.id.replace(/-snapshot.*$/, '');
+      }
+      const finalScenarioId = scenarioId || 'unknown';
+
       // Check if scenario exists in scenarios table
       const existingScenario = database
         .prepare("SELECT scenario_id, permanent_changes FROM scenarios WHERE scenario_id = ?")
@@ -198,130 +204,10 @@ export const createScenarioCheckpoint = async (
           new Set([...existingChanges, ...currentScenario.permanentChanges])
         );
 
-        // Update permanent changes in scenarios table
+        // Update permanent changes in scenarios table (this is scenario-level metadata, not snapshot data)
         database
           .prepare("UPDATE scenarios SET permanent_changes = ? WHERE scenario_id = ?")
           .run(JSON.stringify(mergedChanges), finalScenarioId);
-      } else {
-        // Create minimal scenario record if it doesn't exist
-        database
-          .prepare(`
-            INSERT INTO scenarios (
-              scenario_id, name, description, tags, connections, permanent_changes, metadata
-            ) VALUES (?, ?, ?, ?, ?, ?, ?)
-          `)
-          .run(
-            finalScenarioId,
-            currentScenario.name,
-            currentScenario.description || "",
-            JSON.stringify([]),
-            JSON.stringify([]),
-            JSON.stringify(currentScenario.permanentChanges),
-            JSON.stringify({
-              createdAt: new Date().toISOString(),
-              updatedAt: new Date().toISOString(),
-              gameSystem: "CoC 7e",
-            })
-          );
-      }
-    }
-
-    // 2. Save/Update the scenario snapshot (without permanent_changes - those are at scenario level)
-    const snapshotStmt = database.prepare(`
-      INSERT OR REPLACE INTO scenario_snapshots (
-        snapshot_id, scenario_id, snapshot_name, location, description, events, exits, keeper_notes, time_restriction
-      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
-    `);
-
-    snapshotStmt.run(
-      currentScenario.id,
-      finalScenarioId,
-      currentScenario.name,
-      currentScenario.location,
-      currentScenario.description,
-      JSON.stringify(currentScenario.events),
-      JSON.stringify(currentScenario.exits || []),
-      currentScenario.keeperNotes || null,
-      currentScenario.timeRestriction || null
-    );
-
-    // 3. Save scenario characters (from snapshot)
-    // Delete existing characters for this snapshot first
-    database
-      .prepare("DELETE FROM scenario_characters WHERE snapshot_id = ?")
-      .run(currentScenario.id);
-
-    if (currentScenario.characters.length > 0) {
-      const charStmt = database.prepare(`
-        INSERT INTO scenario_characters (
-          id, snapshot_id, character_name, character_role, character_status,
-          character_location, character_notes
-        ) VALUES (?, ?, ?, ?, ?, ?, ?)
-      `);
-
-      for (const char of currentScenario.characters) {
-        charStmt.run(
-          char.id,
-          currentScenario.id,
-          char.name,
-          char.role,
-          char.status,
-          char.location || null,
-          char.notes || null
-        );
-      }
-    }
-
-    // 4. Save scenario clues
-    database
-      .prepare("DELETE FROM scenario_clues WHERE snapshot_id = ?")
-      .run(currentScenario.id);
-
-    if (currentScenario.clues.length > 0) {
-      const clueStmt = database.prepare(`
-        INSERT INTO scenario_clues (
-          clue_id, snapshot_id, clue_text, category, difficulty,
-          clue_location, discovery_method, reveals, discovered, discovery_details
-        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-      `);
-
-      for (const clue of currentScenario.clues) {
-        clueStmt.run(
-          clue.id,
-          currentScenario.id,
-          clue.clueText,
-          clue.category,
-          clue.difficulty,
-          clue.location,
-          clue.discoveryMethod || null,
-          JSON.stringify(clue.reveals || []),
-          clue.discovered ? 1 : 0,
-          clue.discoveryDetails ? JSON.stringify(clue.discoveryDetails) : null
-        );
-      }
-    }
-
-    // 5. Save scenario conditions
-    database
-      .prepare("DELETE FROM scenario_conditions WHERE snapshot_id = ?")
-      .run(currentScenario.id);
-
-    if (currentScenario.conditions.length > 0) {
-      const condStmt = database.prepare(`
-        INSERT INTO scenario_conditions (
-          condition_id, snapshot_id, condition_type, description, mechanical_effect
-        ) VALUES (?, ?, ?, ?, ?)
-      `);
-
-      for (const cond of currentScenario.conditions) {
-        const condId = `${currentScenario.id}-cond-${cond.type}-${Date.now()}`;
-        condStmt.run(
-          condId,
-          currentScenario.id,
-          cond.type,
-          cond.description,
-          cond.mechanicalEffect || null
-        );
       }
     }
 
