@@ -40,8 +40,17 @@ const distDir = path.join(__dirname, "dist");
 const staticDir = fs.existsSync(path.join(distDir, "index.html")) ? distDir : __dirname;
 app.use(express.static(staticDir));
 
-// SPA fallback
-app.get("/", (_req, res) => {
+// Mount API routes
+app.use("/api/auth", authRoutes);     // /api/auth/* - Authentication routes
+app.use("/api", dataRoutes);          // /api/occupations, /api/weapons, /api/mods
+app.use("/api", characterRoutes);     // /api/character*, /api/characters
+app.use("/api", gameRoutes);          // /api/game/*, /api/gamestate
+app.use("/api", modRoutes);           // /api/mod/*, /api/module/*
+app.use("/api", turnRoutes);          // /api/turns*, /api/sessions/*
+app.use("/api", checkpointRoutes);    // /api/checkpoints/*
+
+// SPA fallback (must be after API routes)
+app.get("*", (_req, res) => {
   const indexPath = path.join(staticDir, "index.html");
   if (fs.existsSync(indexPath)) {
     res.sendFile(indexPath);
@@ -51,15 +60,6 @@ app.get("/", (_req, res) => {
       .send("Frontend not built. Run `pnpm --filter coc-investigator-sheet build` to generate dist/.");
   }
 });
-
-// Mount API routes
-app.use("/api/auth", authRoutes);     // /api/auth/* - Authentication routes
-app.use("/api", dataRoutes);          // /api/occupations, /api/weapons, /api/mods
-app.use("/api", characterRoutes);     // /api/character*, /api/characters
-app.use("/api", gameRoutes);          // /api/game/*, /api/gamestate
-app.use("/api", modRoutes);           // /api/mod/*, /api/module/*
-app.use("/api", turnRoutes);          // /api/turns*, /api/sessions/*
-app.use("/api", checkpointRoutes);    // /api/checkpoints/*
 
 // Create HTTP server
 const server = http.createServer(app);
