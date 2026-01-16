@@ -21,7 +21,7 @@ body {
   font-family: var(--serif);
   padding: 20px;
   line-height: 1.4;
-  background-image: url('./asset/background.png');
+background-image: url('/asset/background.png');
   background-size: cover;
   background-position: center;
   background-repeat: no-repeat;
