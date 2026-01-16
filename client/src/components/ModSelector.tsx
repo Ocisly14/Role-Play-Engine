@@ -208,7 +208,7 @@ export function ModSelector({
         <div className="mod-selector-modal">
           <div className="modal-header">
             <div className="modal-header-content">
-              <img src="/src/asset/icon.png" alt="Call of Cthulhu" className="header-icon" />
+              <img src="/asset/icon.png" alt="Call of Cthulhu" className="header-icon" />
               <div className="header-text">
                 <h2>Choose Your Adventure</h2>
                 <p className="header-subtitle">Select a scenario to begin your investigation</p>

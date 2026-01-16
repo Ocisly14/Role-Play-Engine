@@ -60,7 +60,7 @@ export function RegisterForm() {
   return (
     <div className="register-form-container">
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '16px', marginBottom: '8px' }}>
-        <img src="/src/asset/icon.png" alt="Call of Cthulhu" style={{ width: '80px', height: '80px', filter: 'drop-shadow(2px 2px 4px rgba(0, 0, 0, 0.3))' }} />
+        <img src="/asset/icon.png" alt="Call of Cthulhu" style={{ width: '80px', height: '80px', filter: 'drop-shadow(2px 2px 4px rgba(0, 0, 0, 0.3))' }} />
       </div>
       <h2>Create Account</h2>
       <form onSubmit={handleSubmit}>

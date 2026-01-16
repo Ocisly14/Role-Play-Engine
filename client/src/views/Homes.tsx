@@ -74,7 +74,7 @@ const Homes: React.FC<HomeProps> = ({ onCreate, onStartGame, onContinueGame }) =
     <>
       <div className="home">
         <div className="home-frame">
-          <img src="/src/asset/frame.png" alt="CoC Frame" className="frame-image" />
+          <img src="/asset/frame.png" alt="CoC Frame" className="frame-image" />
           <div className="home-actions">
             <button className="primary" onClick={handleStartGame}>
               🎮 New Game
