@@ -8,6 +8,7 @@ const router = Router();
 router.use(authenticate);
 router.post("/turns", turnController.createTurn);
 router.get("/turns/:turnId", turnController.getTurnStatus);
+router.get("/sessions/latest", turnController.getLatestSession);
 router.get("/sessions/:sessionId/conversation", turnController.getConversation);
 router.get("/sessions/:sessionId/turns", turnController.getTurnHistory);
 

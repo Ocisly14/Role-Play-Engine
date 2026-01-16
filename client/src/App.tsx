@@ -1,4 +1,4 @@
-import React, { useMemo, useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { AuthProvider, useAuth } from "./contexts/AuthContext";
 import { ProtectedRoute } from "./components/ProtectedRoute";
@@ -13,6 +13,17 @@ import { authFetch } from "./utils/authFetch";
 
 type SkillEntry = { name: string; base: string; category: string };
 type AppPage = "home" | "sheet" | "game" | "character-select" | "mod-select" | "module-intro";
+const PAGE_STORAGE_KEY = "coc.app.page";
+const APP_PAGES: AppPage[] = ["home", "sheet", "game", "character-select", "mod-select", "module-intro"];
+
+const getStoredPage = (): AppPage => {
+  if (typeof window === "undefined") {
+    return "home";
+  }
+
+  const stored = window.localStorage.getItem(PAGE_STORAGE_KEY);
+  return APP_PAGES.includes(stored as AppPage) ? (stored as AppPage) : "home";
+};
 
 const SKILLS: SkillEntry[] = [
   // Interpersonal & Social Skills
@@ -103,7 +114,7 @@ const SKILLS: SkillEntry[] = [
 ];
 
 const AppShell: React.FC = () => {
-  const [page, setPage] = useState<AppPage>("home");
+  const [page, setPage] = useState<AppPage>(() => getStoredPage());
   const [saving, setSaving] = useState(false);
   const [saveMessage, setSaveMessage] = useState<{ type: "success" | "error"; text: string } | null>(null);
   const [occupations, setOccupations] = useState<any[]>([]);
@@ -137,6 +148,44 @@ const AppShell: React.FC = () => {
   const [form, setForm] = React.useState<Record<string, string>>({});
   const { user, logout } = useAuth();
   const [isUserMenuOpen, setIsUserMenuOpen] = useState(false);
+  const [isRestoringSession, setIsRestoringSession] = useState(false);
+
+  useEffect(() => {
+    window.localStorage.setItem(PAGE_STORAGE_KEY, page);
+  }, [page]);
+
+  useEffect(() => {
+    if (!user || sessionId || isRestoringSession) {
+      return;
+    }
+
+    const restoreSession = async () => {
+      setIsRestoringSession(true);
+      try {
+        const response = await authFetch("/api/sessions/latest");
+        const data = await response.json();
+
+        if (data.success && data.session?.sessionId) {
+          setSessionId(data.session.sessionId);
+          setConversationHistory(null);
+          setShowModuleIntro(false);
+          setModuleIntroduction(null);
+          if (data.session.characterName) {
+            setCharacterName(data.session.characterName);
+          }
+          if (page === "home") {
+            setPage("game");
+          }
+        }
+      } catch (error) {
+        console.error("Failed to restore latest session:", error);
+      } finally {
+        setIsRestoringSession(false);
+      }
+    };
+
+    restoreSession();
+  }, [user, sessionId, isRestoringSession, page]);
 
   const handleLogout = async () => {
     try {

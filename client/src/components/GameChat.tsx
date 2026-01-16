@@ -650,10 +650,6 @@ export function GameChat({ sessionId, apiBaseUrl = '/api', characterName = 'Inve
     <div className="game-chat-container">
       {/* Session Info Bar */}
       <div className="session-info-bar">
-        <div className="session-metadata">
-          <span className="session-label">Session ID:</span>
-          <span className="session-value">{sessionId}</span>
-        </div>
         <div className="character-info">
           <span className="character-label">Playing as:</span>
           <span className="character-value">{characterName}</span>

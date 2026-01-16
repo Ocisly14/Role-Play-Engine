@@ -251,6 +251,58 @@ export async function getTurnHistory(req: Request, res: Response): Promise<void>
   }
 }
 
+/**
+ * Get the latest session for the current user
+ * GET /api/sessions/latest
+ */
+export async function getLatestSession(req: Request, res: Response): Promise<void> {
+  try {
+    const userId = req.user!.userId;
+    const serverState = ServerState.getInstance();
+    const activeState = serverState.getGameState(userId);
+
+    if (activeState?.sessionId) {
+      res.json({
+        success: true,
+        session: {
+          sessionId: activeState.sessionId,
+          characterId: activeState.playerCharacter?.id ?? null,
+          characterName: activeState.playerCharacter?.name ?? null,
+        },
+      });
+      return;
+    }
+
+    const db = DatabaseManager.getInstance().getDatabase().getDatabase();
+    const row = db.prepare(`
+      SELECT
+        gt.session_id AS sessionId,
+        gt.character_id AS characterId,
+        gt.character_name AS characterName,
+        MAX(gt.created_at) AS lastTurnAt
+      FROM game_turns gt
+      JOIN characters c ON c.character_id = gt.character_id
+      WHERE c.user_id = ?
+      GROUP BY gt.session_id
+      ORDER BY MAX(gt.created_at) DESC
+      LIMIT 1
+    `).get(userId) as {
+      sessionId: string;
+      characterId: string | null;
+      characterName: string | null;
+      lastTurnAt: string;
+    } | undefined;
+
+    res.json({
+      success: true,
+      session: row ?? null,
+    });
+  } catch (error) {
+    console.error("Error fetching latest session:", error);
+    res.status(500).json({ error: "Failed to fetch latest session" });
+  }
+}
+
 function isTurnOwnedByUser(
   turnId: string,
   userId: string,
