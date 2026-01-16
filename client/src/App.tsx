@@ -173,7 +173,10 @@ const AppShell: React.FC = () => {
           if (data.session.characterName) {
             setCharacterName(data.session.characterName);
           }
-          if (page === "home") {
+          // Only navigate to game page if user is explicitly on home page
+          // and no page preference is stored in localStorage
+          const storedPage = window.localStorage.getItem(PAGE_STORAGE_KEY);
+          if (!storedPage || storedPage === "home") {
             setPage("game");
           }
         }
@@ -185,7 +188,7 @@ const AppShell: React.FC = () => {
     };
 
     restoreSession();
-  }, [user, sessionId, isRestoringSession, page]);
+  }, [user, sessionId, isRestoringSession]);
 
   const handleLogout = async () => {
     try {
