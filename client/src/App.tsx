@@ -870,7 +870,7 @@ const AppShell: React.FC = () => {
 
   const sheet = (
     <div className="sheet">
-      <h1>Call of Cthulhu Investigator Sheet</h1>
+      <h1>CoC AI Agent</h1>
       <form onSubmit={handleCreateCharacter}>
         <div style={{ textAlign: "right", marginBottom: "6px" }}>
           <button
@@ -2137,7 +2137,7 @@ const AppShell: React.FC = () => {
         {userMenu}
         <div className="game-container">
           <div className="game-header">
-            <h1>Call of Cthulhu - Game Session</h1>
+            <h1>CoC AI Agent - Game Session</h1>
             <button className="back-button" onClick={handleBackToHome}>
               ← Back to Home
             </button>
