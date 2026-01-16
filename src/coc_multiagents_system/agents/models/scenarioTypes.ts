@@ -70,6 +70,8 @@ export interface ScenarioSnapshot {
   location: string;
   /** Detailed description */
   description: string;
+  /** Module-relative path to map image (inherited from parent ScenarioProfile) */
+  mapImagePath?: string;
   /** Characters present */
   characters: ScenarioCharacter[];
   /** Available clues */
@@ -106,6 +108,8 @@ export interface ScenarioProfile {
   description: string;
   /** Current scenario snapshot */
   snapshot: ScenarioSnapshot;
+  /** Module-relative path to map image (e.g., "Cassandra's_Scenarios/map/Adolph's House.jpg") */
+  mapImagePath?: string;
   /** Scenario tags for organization */
   tags: string[];
   /** Related scenarios */
@@ -170,6 +174,8 @@ export interface ParsedScenarioSnapshot {
 export interface ParsedScenarioData {
   name: string;
   description: string;
+  /** Module-relative path to map image (optional, discovered during loading) */
+  mapImagePath?: string;
   /** Single snapshot (legacy format) */
   snapshot?: ParsedScenarioSnapshot;
   /** Multiple snapshots (new format) */

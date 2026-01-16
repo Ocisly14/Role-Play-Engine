@@ -333,6 +333,19 @@ export class CoCDatabase {
       // ignore if column already exists or cannot be added
     }
 
+    // Backfill map_image_path column if table already existed
+    try {
+      if (!this.hasColumn("scenarios", "map_image_path")) {
+        console.log('Adding map_image_path column to scenarios table...');
+        this.db.exec(
+          "ALTER TABLE scenarios ADD COLUMN map_image_path TEXT;"
+        );
+        console.log('✓ map_image_path column added');
+      }
+    } catch {
+      // ignore if column already exists or cannot be added
+    }
+
     // Scenario snapshots table - each scenario can have multiple snapshots with time restrictions
     this.db.exec(`
             CREATE TABLE IF NOT EXISTS scenario_snapshots (

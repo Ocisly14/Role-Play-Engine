@@ -14,7 +14,7 @@ interface GameSidebarProps {
   refreshTrigger?: number; // When this changes, refresh game state
 }
 
-type TabType = 'status' | 'clues';
+type TabType = 'status' | 'clues' | 'map';
 
 interface Weapon {
   name: string;
@@ -65,6 +65,7 @@ interface DiscoveredClue {
 interface CurrentScenario {
   name: string;
   location: string;
+  mapImagePath?: string;
 }
 
 interface GameEndingInfo {
@@ -89,6 +90,7 @@ export function GameSidebar({ sessionId, apiBaseUrl = '/api', refreshTrigger }: 
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [showCharacterSheet, setShowCharacterSheet] = useState(false);
+  const [showMapModal, setShowMapModal] = useState(false);
   const isInitialLoadRef = useRef(true);
 
   // Fetch game state from backend
@@ -153,6 +155,12 @@ export function GameSidebar({ sessionId, apiBaseUrl = '/api', refreshTrigger }: 
           onClick={() => setActiveTab('clues')}
         >
           Discovered Clues
+        </button>
+        <button
+          className={`sidebar-tab ${activeTab === 'map' ? 'active' : ''}`}
+          onClick={() => setActiveTab('map')}
+        >
+          Map
         </button>
       </div>
 
@@ -374,6 +382,57 @@ export function GameSidebar({ sessionId, apiBaseUrl = '/api', refreshTrigger }: 
             ) : (
               <p className="empty-state">No data</p>
             )}
+          </div>
+        )}
+
+        {/* Map Tab */}
+        {activeTab === 'map' && (
+          <div className="tab-panel map-panel">
+            {loading ? (
+              <p className="empty-state">Loading...</p>
+            ) : error ? (
+              <p className="empty-state" style={{ color: '#c41e3a' }}>Load failed: {error}</p>
+            ) : gameState?.currentScenario?.mapImagePath ? (
+              <div className="map-display">
+                <img
+                  src={`${apiBaseUrl}/maps/${gameState.currentScenario.mapImagePath}`}
+                  alt={`Map of ${gameState.currentScenario.name}`}
+                  style={{ width: '100%', height: 'auto', display: 'block', cursor: 'pointer' }}
+                  onClick={() => setShowMapModal(true)}
+                  title="Click to enlarge"
+                  onError={(e) => {
+                    console.error('Failed to load map image');
+                    e.currentTarget.style.display = 'none';
+                    const errorMsg = e.currentTarget.nextElementSibling as HTMLElement;
+                    if (errorMsg) errorMsg.style.display = 'block';
+                  }}
+                />
+                <p className="empty-state" style={{ display: 'none' }}>
+                  Failed to load map image
+                </p>
+              </div>
+            ) : (
+              <div className="empty-state">
+                <p>No map available for this location</p>
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* Map Modal - Full Screen View */}
+        {showMapModal && gameState?.currentScenario?.mapImagePath && (
+          <div className="map-modal-overlay" onClick={() => setShowMapModal(false)}>
+            <div className="map-modal-content" onClick={(e) => e.stopPropagation()}>
+              <button className="map-modal-close" onClick={() => setShowMapModal(false)}>
+                ✕
+              </button>
+              <img
+                src={`${apiBaseUrl}/maps/${gameState.currentScenario.mapImagePath}`}
+                alt={`Map of ${gameState.currentScenario.name}`}
+                className="map-modal-image"
+              />
+              <div className="map-modal-title">{gameState.currentScenario.name}</div>
+            </div>
           </div>
         )}
       </div>

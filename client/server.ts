@@ -15,6 +15,7 @@ import gameRoutes from "./server/game/routes.js";
 import modRoutes from "./server/mod/routes.js";
 import turnRoutes from "./server/turn/routes.js";
 import checkpointRoutes from "./server/checkpoint/routes.js";
+import mapRoutes from "./server/maps/routes.js";
 
 // Import managers
 import { DatabaseManager } from "./server/core/DatabaseManager.js";
@@ -41,6 +42,7 @@ const staticDir = fs.existsSync(path.join(distDir, "index.html")) ? distDir : __
 app.use(express.static(staticDir));
 
 // Mount API routes
+app.use("/api/maps", mapRoutes);      // /api/maps/* - Map image serving (MUST be first, no auth)
 app.use("/api/auth", authRoutes);     // /api/auth/* - Authentication routes
 app.use("/api", dataRoutes);          // /api/occupations, /api/weapons, /api/mods
 app.use("/api", characterRoutes);     // /api/character*, /api/characters

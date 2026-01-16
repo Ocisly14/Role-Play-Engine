@@ -18,6 +18,8 @@ export async function loadMod(
   modName: string,
   onProgress?: ProgressCallback
 ): Promise<any> {
+  clearExistingModData(db);
+
   const modsDir = path.join(process.cwd(), "data", "Mods");
   const modPath = path.join(modsDir, modName);
 
@@ -96,4 +98,20 @@ export async function loadMod(
     modulesLoaded,
     timestamp: new Date().toISOString(),
   };
+}
+
+function clearExistingModData(db: CoCDatabase): void {
+  const database = db.getDatabase();
+  db.transaction(() => {
+    database.prepare("DELETE FROM scenario_clues").run();
+    database.prepare("DELETE FROM scenario_conditions").run();
+    database.prepare("DELETE FROM scenario_characters").run();
+    database.prepare("DELETE FROM scenario_snapshots").run();
+    database.prepare("DELETE FROM scenarios").run();
+    database.prepare("DELETE FROM module_backgrounds").run();
+    database.prepare("DELETE FROM npc_relationships").run();
+    database.prepare("DELETE FROM npc_clues").run();
+    database.prepare("DELETE FROM relationships").run();
+    database.prepare("DELETE FROM characters WHERE is_npc = 1").run();
+  });
 }

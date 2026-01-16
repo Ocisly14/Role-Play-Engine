@@ -87,6 +87,81 @@ export class ScenarioLoader {
   }
 
   /**
+   * Normalize scenario name for fuzzy matching
+   */
+  private normalizeScenarioName(name: string): string {
+    return name
+      .toLowerCase()
+      .replace(/[_\s'-]/g, '')  // Remove underscores, spaces, apostrophes, hyphens
+      .replace(/[^\w]/g, '');   // Remove remaining special chars
+  }
+
+  /**
+   * Calculate similarity between two names (simple character overlap)
+   */
+  private calculateNameSimilarity(name1: string, name2: string): number {
+    const normalized1 = this.normalizeScenarioName(name1);
+    const normalized2 = this.normalizeScenarioName(name2);
+
+    if (normalized1 === normalized2) return 1.0;
+
+    const longer = normalized1.length > normalized2.length ? normalized1 : normalized2;
+    const shorter = normalized1.length > normalized2.length ? normalized2 : normalized1;
+
+    if (longer.length === 0) return 0;
+
+    let matches = 0;
+    for (let i = 0; i < shorter.length; i++) {
+      if (longer.includes(shorter[i])) matches++;
+    }
+
+    return matches / longer.length;
+  }
+
+  /**
+   * Find map image file matching scenario name
+   */
+  private findMapImage(scenarioName: string, mapDir: string): string | null {
+    if (!fs.existsSync(mapDir)) {
+      return null;
+    }
+
+    // Get all image files in map directory
+    const imageFiles = fs.readdirSync(mapDir).filter(file =>
+      /\.(jpg|jpeg|png)$/i.test(file)
+    );
+
+    if (imageFiles.length === 0) {
+      return null;
+    }
+
+    const normalizedScenarioName = this.normalizeScenarioName(scenarioName);
+
+    // Try exact match first
+    for (const imageFile of imageFiles) {
+      const imageBaseName = path.basename(imageFile, path.extname(imageFile));
+      if (this.normalizeScenarioName(imageBaseName) === normalizedScenarioName) {
+        return imageFile;
+      }
+    }
+
+    // Try fuzzy match (80% similarity threshold)
+    let bestMatch: string | null = null;
+    let bestScore = 0;
+
+    for (const imageFile of imageFiles) {
+      const imageBaseName = path.basename(imageFile, path.extname(imageFile));
+      const score = this.calculateNameSimilarity(scenarioName, imageBaseName);
+      if (score > bestScore && score >= 0.8) {
+        bestScore = score;
+        bestMatch = imageFile;
+      }
+    }
+
+    return bestMatch;
+  }
+
+  /**
    * Load scenarios from JSON files in a directory (skip document parsing)
    */
   async loadScenariosFromJSONDirectory(dirPath: string, forceReload = false): Promise<ScenarioProfile[]> {
@@ -108,6 +183,13 @@ export class ScenarioLoader {
     }
 
     console.log(`Loading Scenarios from JSON files in directory: ${dirPath}`);
+
+    // Check for map directory
+    const mapDir = path.join(dirPath, 'map');
+    const hasMapDir = fs.existsSync(mapDir);
+    if (hasMapDir) {
+      console.log(`✓ Found map directory: ${mapDir}`);
+    }
 
     const files = fs.readdirSync(dirPath);
     const jsonFiles = files.filter((f) => f.toLowerCase().endsWith(".json"));
@@ -134,6 +216,19 @@ export class ScenarioLoader {
 
         for (const parsedData of scenarios) {
           try {
+            // Find matching map image using scenario NAME (not filename)
+            // Example: parsedData.name = "Reindeer Bar", file = "Reindeer_Bar_initial_scenario.json"
+            // We match against parsedData.name, not the filename
+            if (hasMapDir && !parsedData.mapImagePath) {
+              const mapImageFile = this.findMapImage(parsedData.name, mapDir);
+              if (mapImageFile) {
+                // Store module-relative path
+                const relativePath = path.join(path.basename(dirPath), 'map', mapImageFile);
+                parsedData.mapImagePath = relativePath;
+                console.log(`    ✓ Found map for "${parsedData.name}": ${mapImageFile}`);
+              }
+            }
+
             const scenarioProfile = this.convertToScenarioProfile(parsedData);
             this.saveScenarioToDatabase(scenarioProfile);
             scenarioProfiles.push(scenarioProfile);
@@ -342,6 +437,7 @@ export class ScenarioLoader {
       name: parsedData.name,
       description: parsedData.description,
       snapshot: defaultSnapshot,
+      mapImagePath: parsedData.mapImagePath,
       tags: parsedData.tags || [],
       connections: parsedData.connections?.map((conn) => ({
         scenarioId: this.generateScenarioId(conn.scenarioName),
@@ -377,8 +473,8 @@ export class ScenarioLoader {
     const hasTimeOrderColumn = this.db.hasColumn("scenario_snapshots", "time_order");
 
     this.db.transaction(() => {
-      // Insert or update scenario (including scenario-level permanent_changes)
-      const scenarioColumns = ["scenario_id", "name", "description", "tags", "connections", "permanent_changes", "metadata"];
+      // Insert or update scenario (including scenario-level permanent_changes and map_image_path)
+      const scenarioColumns = ["scenario_id", "name", "description", "tags", "connections", "permanent_changes", "metadata", "map_image_path"];
       const scenarioValues: any[] = [
         scenario.id,
         scenario.name,
@@ -387,6 +483,7 @@ export class ScenarioLoader {
         JSON.stringify(scenario.connections),
         scenario.snapshot.permanentChanges ? JSON.stringify(scenario.snapshot.permanentChanges) : null,
         JSON.stringify(scenario.metadata),
+        scenario.mapImagePath || null,
       ];
 
       if (hasCategoryColumn) {
@@ -566,6 +663,7 @@ export class ScenarioLoader {
       name: snap.snapshot_name,
       location: snap.location,
       description: snap.description,
+      mapImagePath: scenario.map_image_path || undefined,
       characters: characters.map((c) => ({
         id: c.id,
         name: c.character_name,
@@ -602,6 +700,7 @@ export class ScenarioLoader {
       name: scenario.name,
       description: scenario.description,
       snapshot,
+      mapImagePath: scenario.map_image_path || undefined,
       tags: JSON.parse(scenario.tags || "[]"),
       connections: JSON.parse(scenario.connections || "[]"),
       metadata: JSON.parse(scenario.metadata),
