@@ -149,13 +149,19 @@ const AppShell: React.FC = () => {
   const { user, logout } = useAuth();
   const [isUserMenuOpen, setIsUserMenuOpen] = useState(false);
   const [isRestoringSession, setIsRestoringSession] = useState(false);
+  const [hasInitialized, setHasInitialized] = useState(false);
 
   useEffect(() => {
     window.localStorage.setItem(PAGE_STORAGE_KEY, page);
   }, [page]);
 
   useEffect(() => {
-    if (!user || sessionId || isRestoringSession) {
+    if (!user) {
+      setHasInitialized(true);
+      return;
+    }
+
+    if (sessionId || isRestoringSession) {
       return;
     }
 
@@ -190,6 +196,7 @@ const AppShell: React.FC = () => {
         }
       } finally {
         setIsRestoringSession(false);
+        setHasInitialized(true);
       }
     };
 
@@ -197,13 +204,14 @@ const AppShell: React.FC = () => {
   }, [user, sessionId, isRestoringSession, page]);
 
   // Validate page state: if on game page without valid session, reset to home
+  // Only validate after initial session restoration is complete
   useEffect(() => {
-    if (user && page === "game" && !sessionId && !isRestoringSession) {
+    if (user && page === "game" && !sessionId && !isRestoringSession && hasInitialized) {
       // No valid session, reset to home
       setPage("home");
       window.localStorage.setItem(PAGE_STORAGE_KEY, "home");
     }
-  }, [user, page, sessionId, isRestoringSession]);
+  }, [user, page, sessionId, isRestoringSession, hasInitialized]);
 
   const handleLogout = async () => {
     try {
