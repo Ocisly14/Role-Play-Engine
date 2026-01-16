@@ -173,17 +173,37 @@ const AppShell: React.FC = () => {
           if (data.session.characterName) {
             setCharacterName(data.session.characterName);
           }
-          // Don't modify page state - it's already restored from localStorage
+          // If page is already "game", keep it; otherwise stay on current page
+        } else {
+          // No valid session found - reset to home if currently on game page
+          if (page === "game") {
+            setPage("home");
+            window.localStorage.setItem(PAGE_STORAGE_KEY, "home");
+          }
         }
       } catch (error) {
         console.error("Failed to restore latest session:", error);
+        // On error, reset to home if currently on game page
+        if (page === "game") {
+          setPage("home");
+          window.localStorage.setItem(PAGE_STORAGE_KEY, "home");
+        }
       } finally {
         setIsRestoringSession(false);
       }
     };
 
     restoreSession();
-  }, [user, sessionId, isRestoringSession]);
+  }, [user, sessionId, isRestoringSession, page]);
+
+  // Validate page state: if on game page without valid session, reset to home
+  useEffect(() => {
+    if (user && page === "game" && !sessionId && !isRestoringSession) {
+      // No valid session, reset to home
+      setPage("home");
+      window.localStorage.setItem(PAGE_STORAGE_KEY, "home");
+    }
+  }, [user, page, sessionId, isRestoringSession]);
 
   const handleLogout = async () => {
     try {
@@ -2130,6 +2150,31 @@ const AppShell: React.FC = () => {
   }
   
   if (page === "game") {
+    // Still restoring session, show loading
+    if (!sessionId && isRestoringSession) {
+      return (
+        <>
+          {userMenu}
+          <div style={{ padding: "20px", textAlign: "center" }}>
+            <p>Restoring game session...</p>
+          </div>
+        </>
+      );
+    }
+    
+    // If no valid session after restoration attempt, the useEffect above will reset to home
+    // But while waiting, show loading
+    if (!sessionId) {
+      return (
+        <>
+          {userMenu}
+          <div style={{ padding: "20px", textAlign: "center" }}>
+            <p>Loading game session...</p>
+          </div>
+        </>
+      );
+    }
+    
     return (
       <>
         {userMenu}
