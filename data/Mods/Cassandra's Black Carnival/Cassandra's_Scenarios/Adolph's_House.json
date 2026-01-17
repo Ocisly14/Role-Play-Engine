@@ -6,6 +6,7 @@
         "name": "Attack at Adolph's House",
         "location": "Residential area of Cassandra",
         "description": "The investigators arrive at Adolph’s home for questioning. The house appears ordinary and respectable, reflecting Adolph’s carefully maintained image. During the conversation, windows suddenly shatter and robed figures descend from the roof and walls, revealing themselves as grotesque spider-human hybrids intent on killing everyone inside.",
+        "showMap": false,
         "characters": [
           {
             "name": "Adolph Carl",

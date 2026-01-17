@@ -6,6 +6,7 @@
         "name": "Stars Hospital",
         "location": "Stars Hospital, Cassandra",
         "description": "The hospital operates normally on the surface, with staff accustomed to routine police inquiries. Surveillance cameras cover most areas but leave exploitable blind spots. Certain internal departments—particularly medical storage and laboratories—are unusually well protected. The morgue records indicate suspicious recent activity related to THE SECOND CASE VICTIM (21-year-old Lucifero, December 22, 2003). IMPORTANT: The FIRST CASE victim (19-year-old girl, frozen in ice, December 22, 2002) was NEVER brought here.",
+        "showMap": false,
         "characters": [
           {
             "name": "Vincent Galenus",

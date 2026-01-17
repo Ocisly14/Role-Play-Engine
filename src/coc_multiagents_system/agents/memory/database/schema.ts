@@ -358,6 +358,7 @@ export class CoCDatabase {
                 exits TEXT, -- JSON array
                 keeper_notes TEXT,
                 time_restriction TEXT, -- Optional time restriction (e.g., "day1 evening", "day2 (after)")
+                show_map INTEGER, -- Whether to show map for this snapshot (1=true, 0=false)
                 created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
                 FOREIGN KEY (scenario_id) REFERENCES scenarios(scenario_id)
             );
@@ -369,6 +370,16 @@ export class CoCDatabase {
       if (!this.hasColumn("scenario_snapshots", "time_restriction")) {
         this.db.exec(
           "ALTER TABLE scenario_snapshots ADD COLUMN time_restriction TEXT;"
+        );
+      }
+    } catch {
+      // ignore if column already exists or cannot be added
+    }
+
+    try {
+      if (!this.hasColumn("scenario_snapshots", "show_map")) {
+        this.db.exec(
+          "ALTER TABLE scenario_snapshots ADD COLUMN show_map INTEGER;"
         );
       }
     } catch {

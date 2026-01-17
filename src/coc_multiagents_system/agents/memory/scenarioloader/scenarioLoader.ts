@@ -394,6 +394,7 @@ export class ScenarioLoader {
       name: snapshotData.name || scenarioName,
       location: snapshotData.location,
       description: snapshotData.description,
+      showMap: snapshotData.showMap ?? true,
       characters,
       clues,
       conditions,
@@ -524,6 +525,7 @@ export class ScenarioLoader {
             "exits",
             "keeper_notes",
             "time_restriction",
+            "show_map",
           ];
           const snapshotValues: any[] = [
             snapshot.id,
@@ -535,6 +537,7 @@ export class ScenarioLoader {
             JSON.stringify(snapshot.exits),
             snapshot.keeperNotes || null,
             snapshot.timeRestriction || null,
+            snapshot.showMap === false ? 0 : 1,
           ];
 
           const snapshotStmt = database.prepare(
@@ -664,6 +667,7 @@ export class ScenarioLoader {
       location: snap.location,
       description: snap.description,
       mapImagePath: scenario.map_image_path || undefined,
+      showMap: snap.show_map === null || snap.show_map === undefined ? true : snap.show_map === 1,
       characters: characters.map((c) => ({
         id: c.id,
         name: c.character_name,

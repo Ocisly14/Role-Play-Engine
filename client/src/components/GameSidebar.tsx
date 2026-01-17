@@ -66,6 +66,7 @@ interface CurrentScenario {
   name: string;
   location: string;
   mapImagePath?: string;
+  showMap?: boolean;
 }
 
 interface GameEndingInfo {
@@ -392,6 +393,10 @@ export function GameSidebar({ sessionId, apiBaseUrl = '/api', refreshTrigger }: 
               <p className="empty-state">Loading...</p>
             ) : error ? (
               <p className="empty-state" style={{ color: '#c41e3a' }}>Load failed: {error}</p>
+            ) : gameState?.currentScenario?.showMap === false ? (
+              <div className="empty-state">
+                <p>No map available. Please explore on your own.</p>
+              </div>
             ) : gameState?.currentScenario?.mapImagePath ? (
               <div className="map-display">
                 <img
@@ -413,14 +418,14 @@ export function GameSidebar({ sessionId, apiBaseUrl = '/api', refreshTrigger }: 
               </div>
             ) : (
               <div className="empty-state">
-                <p>No map available for this location</p>
+                <p>No map available. Please explore on your own.</p>
               </div>
             )}
           </div>
         )}
 
         {/* Map Modal - Full Screen View */}
-        {showMapModal && gameState?.currentScenario?.mapImagePath && (
+        {showMapModal && gameState?.currentScenario?.mapImagePath && gameState?.currentScenario?.showMap !== false && (
           <div className="map-modal-overlay" onClick={() => setShowMapModal(false)}>
             <div className="map-modal-content" onClick={(e) => e.stopPropagation()}>
               <button className="map-modal-close" onClick={() => setShowMapModal(false)}>

@@ -168,6 +168,7 @@ The JSON array should contain objects following this structure:
       "location": "Primary location description",
       "description": "Detailed scene description",
       "timeRestriction": "Optional time restriction (e.g., 'day1 evening', 'day2 (after)')",
+      "showMap": "Optional boolean; true to show map, false to hide map in this scene",
       "characters": [
         {
           "name": "Character name",
@@ -212,6 +213,7 @@ The JSON array should contain objects following this structure:
       "location": "Primary location description",
       "description": "Detailed scene description",
       "timeRestriction": "Optional time restriction (e.g., 'day1 evening', 'day2 (after)')",
+      "showMap": "Optional boolean; true to show map, false to hide map in this scene",
       "characters": [...],
       "clues": [...],
       "conditions": [...],

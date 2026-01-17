@@ -70,6 +70,8 @@ export interface ScenarioSnapshot {
   location: string;
   /** Detailed description */
   description: string;
+  /** Whether the map should be shown for this scene */
+  showMap?: boolean;
   /** Module-relative path to map image (inherited from parent ScenarioProfile) */
   mapImagePath?: string;
   /** Characters present */
@@ -136,6 +138,7 @@ export interface ParsedScenarioSnapshot {
   location: string;
   description: string;
   timeRestriction?: string;
+  showMap?: boolean;
   characters?: {
     name: string;
     role?: string;

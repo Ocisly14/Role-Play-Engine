@@ -6,6 +6,7 @@
         "name": "Two-Story Wooden Cabin",
         "location": "Crescent Street B, Cassandra",
         "description": "The cabin appears unremarkable from the outside, blending in with the quiet residential surroundings. Internally, it once functioned as a hacker's safe house, chosen specifically to avoid surveillance systems. Evidence suggests hurried data destruction and prior illegal digital activities connected to underground networks.",
+        "showMap": false,
         "characters": [],
         "clues": [
           {
