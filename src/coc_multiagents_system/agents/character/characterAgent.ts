@@ -4,7 +4,7 @@ import { GameState, GameStateManager, NPCResponseAnalysis, ActionType } from "..
 import type { CharacterProfile, NPCProfile } from "../models/gameTypes.js";
 import { getCharacterTemplate } from "./characterTemplate.js";
 import { getCharacterSimulatedTemplate } from "./characterSimulatedTemplate.js";
-import { composeTemplate } from "../../../template.js";
+import { composeTemplateWithImages } from "../../../template.js";
 
 /**
  * Character Agent class - handles NPC response analysis
@@ -46,7 +46,12 @@ export class CharacterAgent {
       sceneNpcsJson: JSON.stringify(sceneNpcs, null, 2)
     };
 
-    const context = composeTemplate(template, {}, templateContext, "handlebars");
+    const { content: context, images } = composeTemplateWithImages(
+      template,
+      { gameState },
+      templateContext,
+      "handlebars"
+    );
 
     console.log("\n🎭 [Character Agent] Analyzing NPC responses to simulated query...");
     console.log(`   Simulated Query: "${simulatedQuery.substring(0, 100)}${simulatedQuery.length > 100 ? '...' : ''}"`);
@@ -57,6 +62,7 @@ export class CharacterAgent {
     const response = await generateText({
       runtime,
       context,
+      images,
       modelClass: ModelClass.SMALL,
     });
 
@@ -106,7 +112,12 @@ export class CharacterAgent {
       actionTargetJson: actionTarget ? JSON.stringify(actionTarget, null, 2) : null
     };
     
-    const context = composeTemplate(template, {}, templateContext, "handlebars");
+    const { content: context, images } = composeTemplateWithImages(
+      template,
+      { gameState },
+      templateContext,
+      "handlebars"
+    );
     
     console.log("\n🎭 [Character Agent] Analyzing NPC responses...");
     console.log(`   Scene: ${scenarioInfo.location || "Unknown"}`);
@@ -116,6 +127,7 @@ export class CharacterAgent {
     const response = await generateText({
       runtime,
       context,
+      images,
       modelClass: ModelClass.SMALL,
     });
 

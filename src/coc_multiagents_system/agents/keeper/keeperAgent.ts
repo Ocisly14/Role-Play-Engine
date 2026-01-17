@@ -1,5 +1,5 @@
 import { getKeeperTemplate } from "./keeperTemplate.js";
-import { composeTemplate } from "../../../template.js";
+import { composeTemplateWithImages } from "../../../template.js";
 import type { GameState, ActionResult, ActionAnalysis, DiscoveredClue } from "../../../state.js";
 import { GameStateManager } from "../../../state.js";
 import type { CharacterProfile, NPCProfile, ActionLogEntry } from "../models/gameTypes.js";
@@ -33,18 +33,22 @@ export class KeeperAgent {
     
     // 1. Get complete scenario information
     const completeScenarioInfo = this.extractCompleteScenarioInfo(gameState);
-    
+
     // 2. Get all action results (including player and NPC actions)
     const allActionResultsRaw = this.getAllActionResults(gameState);
-    
+
     // Filter out diceRolls field (not used in template)
     const allActionResults: Omit<ActionResult, 'diceRolls'>[] = allActionResultsRaw.map(({ diceRolls, ...result }) => result);
-    
+
     // 2.1. Get the latest complete action result (for backward compatibility)
     const latestCompleteActionResult = allActionResults.length > 0 ? allActionResults[allActionResults.length - 1] : null;
-    
+
+    // 2.2. Get interaction partner name (if action targets an NPC)
+    const actionAnalysis = gameState.temporaryInfo.currentActionAnalysis;
+    const interactionPartnerName = actionAnalysis?.target?.name || null;
+
     // 3. Get complete attributes of NPCs involved in action results
-    const actionRelatedNpcs = this.extractActionRelatedNpcs(gameState, allActionResults);
+    const actionRelatedNpcs = this.extractActionRelatedNpcs(gameState, allActionResults, interactionPartnerName);
     
     // 5. Detect scene changes, if changed then get previous scene information
     const isTransition = gameState.temporaryInfo.transition;
@@ -76,7 +80,11 @@ export class KeeperAgent {
     
     // Prepare template context (JSON-packed to keep template concise)
     const currentLocation = gameState.currentScenario?.location || null;
-    const playerCharacterComplete = this.extractCompletePlayerCharacter(gameState.playerCharacter, currentLocation);
+    const playerCharacterComplete = this.extractCompletePlayerCharacter(
+      gameState.playerCharacter,
+      currentLocation,
+      interactionPartnerName
+    );
     
     // Get full game time
     const stateManager = new GameStateManager(gameState);
@@ -110,7 +118,12 @@ export class KeeperAgent {
     };
 
     // Use template and LLM to generate narrative and clue revelations
-    const prompt = composeTemplate(template, {}, templateContext, "handlebars");
+    const { content: prompt, images } = composeTemplateWithImages(
+      template,
+      { gameState },
+      templateContext,
+      "handlebars"
+    );
 
     let response: string = "";
     let parsedResponse: any;
@@ -121,6 +134,7 @@ export class KeeperAgent {
         response = await generateText({
           runtime,
           context: prompt,
+          images,
           modelClass: ModelClass.MEDIUM,
         });
 
@@ -324,8 +338,13 @@ export class KeeperAgent {
 
   /**
    * 3. Extract complete attributes of NPCs involved in all action results
+   * @param interactionPartnerName If provided, NPCs will include their interaction history with this character
    */
-  private extractActionRelatedNpcs(gameState: GameState, allActionResults: Omit<ActionResult, 'diceRolls'>[]) {
+  private extractActionRelatedNpcs(
+    gameState: GameState,
+    allActionResults: Omit<ActionResult, 'diceRolls'>[],
+    interactionPartnerName: string | null = null
+  ) {
     if (!allActionResults || allActionResults.length === 0) {
       return [];
     }
@@ -333,14 +352,14 @@ export class KeeperAgent {
     // Collect related NPC names from all action results (deduplicated)
     const relatedNpcNames = new Set<string>();
     const playerName = gameState.playerCharacter.name;
-    
+
     // Extract related NPCs from all action results
     for (const actionResult of allActionResults) {
       // Add character from action result (if it's an NPC)
       if (actionResult.character && actionResult.character !== playerName) {
         relatedNpcNames.add(actionResult.character);
       }
-      
+
       // Extract possible NPC names from action result text (simple matching)
       if (actionResult.result) {
         gameState.npcCharacters.forEach(npc => {
@@ -360,21 +379,29 @@ export class KeeperAgent {
     // Find related NPCs and get complete attributes
     const actionRelatedNpcs = [];
     const addedNpcIds = new Set<string>();
-    
+
     for (const npcName of relatedNpcNames) {
       // Find NPC
-      const npc = gameState.npcCharacters.find(n => 
+      const npc = gameState.npcCharacters.find(n =>
         n.name.toLowerCase() === npcName.toLowerCase() ||
         n.name.toLowerCase().includes(npcName.toLowerCase())
       );
-      
+
       if (npc && !addedNpcIds.has(npc.id)) {
         // Avoid adding the same NPC twice
         addedNpcIds.add(npc.id);
         const currentLocation = gameState.currentScenario?.location || null;
+
+        // If this NPC is the interaction partner, include player's name to get interaction history
+        // Otherwise just use current location filtering
+        const partnerForThisNpc = (interactionPartnerName &&
+          npc.name.toLowerCase().includes(interactionPartnerName.toLowerCase()))
+          ? playerName
+          : null;
+
         actionRelatedNpcs.push({
           source: 'action_related',
-          character: this.extractCompleteCharacterAttributes(npc, currentLocation)
+          character: this.extractCompleteCharacterAttributes(npc, currentLocation, partnerForThisNpc)
         });
       }
     }
@@ -386,20 +413,34 @@ export class KeeperAgent {
    * Extract complete character attribute information
    * @param character Character information
    * @param currentLocation Current scene location (for filtering action log)
+   * @param interactionPartnerName Optional: if provided, also include action logs involving this partner (from any scene)
    */
-  private extractCompleteCharacterAttributes(character: CharacterProfile, currentLocation: string | null = null) {
+  private extractCompleteCharacterAttributes(
+    character: CharacterProfile,
+    currentLocation: string | null = null,
+    interactionPartnerName: string | null = null
+  ) {
     const npcData = character as NPCProfile;
-    
-    // Filter action log: only keep action logs for current location
+
+    // Filter action log: keep current location logs + interaction history with partner
     let filteredActionLog: ActionLogEntry[] = [];
     if (character.actionLog && character.actionLog.length > 0) {
-      if (currentLocation) {
-        // Only keep action logs where location matches current scene
-        filteredActionLog = character.actionLog.filter(log => 
-          log.location && log.location.toLowerCase() === currentLocation.toLowerCase()
-        );
+      if (currentLocation || interactionPartnerName) {
+        filteredActionLog = character.actionLog.filter(log => {
+          // Include if in current location
+          const isCurrentLocation = currentLocation &&
+            log.location &&
+            log.location.toLowerCase() === currentLocation.toLowerCase();
+
+          // Include if involves interaction with partner (check if partner name appears in summary)
+          const involvesPartner = interactionPartnerName &&
+            log.summary &&
+            log.summary.toLowerCase().includes(interactionPartnerName.toLowerCase());
+
+          return isCurrentLocation || involvesPartner;
+        });
       } else {
-        // If no current scene location, don't include any action log
+        // If no current scene location and no partner, don't include any action log
         filteredActionLog = [];
       }
     }
@@ -471,9 +512,14 @@ export class KeeperAgent {
    * Extract complete player character information
    * @param player Player character information
    * @param currentLocation Current scene location (for filtering action log)
+   * @param interactionPartnerName Optional: NPC name to include interaction history with
    */
-  private extractCompletePlayerCharacter(player: CharacterProfile, currentLocation: string | null = null) {
-    return this.extractCompleteCharacterAttributes(player, currentLocation);
+  private extractCompletePlayerCharacter(
+    player: CharacterProfile,
+    currentLocation: string | null = null,
+    interactionPartnerName: string | null = null
+  ) {
+    return this.extractCompleteCharacterAttributes(player, currentLocation, interactionPartnerName);
   }
 
   /**

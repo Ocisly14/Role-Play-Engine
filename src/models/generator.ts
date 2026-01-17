@@ -7,7 +7,13 @@ import { ChatOpenAI } from "@langchain/openai";
 import { ChatAnthropic } from "@langchain/anthropic";
 import { ChatGoogleGenerativeAI } from "@langchain/google-genai";
 import { models } from "./configuration.js";
-import { ModelClass, ModelProviderName, GenerationOptions, ModelSettings } from "./types.js";
+import {
+  ModelClass,
+  ModelProviderName,
+  GenerationOptions,
+  ImageInput,
+  ModelSettings,
+} from "./types.js";
 
 /**
  * Model class usage guidelines:
@@ -65,6 +71,62 @@ export function getModelSettings(
  */
 export function getEndpoint(provider: ModelProviderName): string | undefined {
   return models[provider]?.endpoint;
+}
+
+/**
+ * Normalize image inputs to data URLs or pass-through URLs so providers receive a consistent payload.
+ */
+function formatImageInput(image: ImageInput): string {
+  if ("url" in image) {
+    return image.url;
+  }
+
+  const mimeType = image.mimeType || "image/png";
+
+  if ("data" in image) {
+    const base64 = image.data.toString("base64");
+    return `data:${mimeType};base64,${base64}`;
+  }
+
+  const sanitized = image.base64Data.replace(/^data:[^;]+;base64,/, "");
+  return `data:${mimeType};base64,${sanitized}`;
+}
+
+/**
+ * Build the user message content, attaching images for providers that support vision input.
+ */
+function buildUserContent(
+  provider: ModelProviderName,
+  text: string,
+  images?: ImageInput[]
+): string | Array<Record<string, unknown>> {
+  if (!images || images.length === 0) {
+    return text;
+  }
+
+  const formattedImages = images.map((image) => formatImageInput(image));
+  const textPart = text ? [{ type: "text", text }] : [];
+
+  if (provider === ModelProviderName.GOOGLE) {
+    return [
+      ...textPart,
+      ...formattedImages.map((imageUrl) => ({ type: "image_url", image_url: imageUrl })),
+    ];
+  }
+
+  if (provider === ModelProviderName.OPENAI) {
+    return [
+      ...textPart,
+      ...formattedImages.map((imageUrl) => ({
+        type: "image_url",
+        image_url: { url: imageUrl },
+      })),
+    ];
+  }
+
+  throw new Error(
+    `Image inputs are only supported for Google or OpenAI providers (received ${provider}).`
+  );
 }
 
 /**
@@ -126,7 +188,8 @@ export async function generateText(options: GenerationOptions): Promise<string> 
     context,
     modelClass = ModelClass.MEDIUM,
     customSystemPrompt,
-    maxRetries = 3
+    maxRetries = 3,
+    images,
   } = options;
 
   // Get provider from environment variable, runtime, or default to OpenAI
@@ -151,7 +214,7 @@ export async function generateText(options: GenerationOptions): Promise<string> 
 
   messages.push({
     role: "user",
-    content: context,
+    content: buildUserContent(provider, context, images),
   });
 
   // Generate with retries

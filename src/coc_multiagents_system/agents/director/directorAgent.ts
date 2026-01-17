@@ -260,7 +260,7 @@ export class DirectorAgent {
     
     // Get scenario for permanent changes
     const scenario = database
-      .prepare(`SELECT permanent_changes FROM scenarios WHERE scenario_id = ?`)
+      .prepare(`SELECT permanent_changes, map_image_path FROM scenarios WHERE scenario_id = ?`)
       .get(snap.scenario_id) as any;
     
     const snapshot: ScenarioSnapshot = {
@@ -297,6 +297,7 @@ export class DirectorAgent {
       permanentChanges: scenario?.permanent_changes ? JSON.parse(scenario.permanent_changes) : [],
       keeperNotes: snap.keeper_notes,
       timeRestriction: snap.time_restriction || undefined,
+      mapImagePath: scenario?.map_image_path || undefined,
     };
     
     return snapshot;
@@ -455,7 +456,12 @@ export class DirectorAgent {
       currentGameTime
     };
 
-    const prompt = composeTemplate(template, {}, templateContext, "handlebars");
+    const prompt = composeTemplate(
+      template,
+      { gameState },
+      templateContext,
+      "handlebars"
+    );
 
     try {
       const response = await generateText({
@@ -571,7 +577,12 @@ export class DirectorAgent {
       tension: gameState.tension
     };
 
-    const prompt = composeTemplate(template, {}, templateContext, "handlebars");
+    const prompt = composeTemplate(
+      template,
+      { gameState },
+      templateContext,
+      "handlebars"
+    );
 
     try {
       const response = await generateText({
@@ -661,8 +672,13 @@ export class DirectorAgent {
     };
     
     // 使用模板和LLM生成叙事方向指导
-    const prompt = composeTemplate(template, {}, templateContext, "handlebars");
-    
+    const prompt = composeTemplate(
+      template,
+      { gameState },
+      templateContext,
+      "handlebars"
+    );
+
     try {
       const response = await generateText({
         runtime,

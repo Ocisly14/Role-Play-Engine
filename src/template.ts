@@ -1,11 +1,19 @@
 import handlebars from "handlebars";
+import fs from "fs";
+import path from "path";
 import { type CoCState, type GameState, initialGameState } from "./state.js";
+import type { ImageInput } from "./models/types.js";
 import { names, uniqueNamesGenerator } from "unique-names-generator";
 
 type TemplateContext = Record<string, unknown>;
 
 // Template function type for dynamic templates
 export type TemplateType = string | ((params: { state: CoCState }) => string);
+
+export interface ComposedPrompt {
+  content: string;
+  images: ImageInput[];
+}
 
 const renderValue = (value: unknown): string => {
   if (value === null || value === undefined) return "";
@@ -18,13 +26,91 @@ const renderValue = (value: unknown): string => {
 };
 
 const getValueAtPath = (context: TemplateContext, rawPath: string): unknown => {
-  const path = rawPath.trim().split(".").filter(Boolean);
-  return path.reduce<unknown>((current, key) => {
+  const segments = rawPath.trim().split(".").filter(Boolean);
+  return segments.reduce<unknown>((current, key) => {
     if (current && typeof current === "object" && key in current) {
       return (current as Record<string, unknown>)[key];
     }
     return undefined;
   }, context);
+};
+
+const imageMimeTypes: Record<string, string> = {
+  ".png": "image/png",
+  ".jpg": "image/jpeg",
+  ".jpeg": "image/jpeg",
+  ".webp": "image/webp",
+};
+
+const inferMimeType = (filePath: string): string => {
+  const ext = path.extname(filePath).toLowerCase();
+  return imageMimeTypes[ext] || "image/png";
+};
+
+const resolveMapImage = (mapImagePath?: string): ImageInput | null => {
+  if (!mapImagePath) return null;
+
+  const normalized = mapImagePath.replace(/\\/g, path.sep);
+  const candidates = new Set<string>();
+
+  if (path.isAbsolute(normalized)) {
+    candidates.add(normalized);
+  }
+
+  candidates.add(path.join(process.cwd(), normalized));
+  candidates.add(path.join(process.cwd(), "data", normalized));
+
+  const modsDir = path.join(process.cwd(), "data", "Mods");
+  if (fs.existsSync(modsDir)) {
+    const moduleDirs = fs
+      .readdirSync(modsDir, { withFileTypes: true })
+      .filter((dirent) => dirent.isDirectory())
+      .map((dirent) => dirent.name);
+
+    for (const moduleDir of moduleDirs) {
+      candidates.add(path.join(modsDir, moduleDir, normalized));
+    }
+  }
+
+  for (const candidate of candidates) {
+    try {
+      if (fs.existsSync(candidate) && fs.statSync(candidate).isFile()) {
+        const data = fs.readFileSync(candidate);
+        return { data, mimeType: inferMimeType(candidate) };
+      }
+    } catch (error) {
+      console.warn(`Failed to load image at ${candidate}:`, error);
+    }
+  }
+
+  return null;
+};
+
+const extractGameState = (state: CoCState): GameState | null => {
+  if ("gameState" in state && state.gameState) {
+    return state.gameState as GameState;
+  }
+  if ("phase" in state && "playerCharacter" in state) {
+    return state as GameState;
+  }
+  return null;
+};
+
+/**
+ * Collects scenario images (e.g., map) from the current game state.
+ */
+export const collectScenarioImages = (state: CoCState): ImageInput[] => {
+  const gameState = extractGameState(state);
+  const mapImagePath = gameState?.currentScenario?.mapImagePath;
+  if (!mapImagePath) return [];
+
+  const resolved = resolveMapImage(mapImagePath);
+  if (!resolved) {
+    console.warn(`Map image path provided but file not found: ${mapImagePath}`);
+    return [];
+  }
+
+  return [resolved];
 };
 
 /**
@@ -69,6 +155,20 @@ export const composeTemplate = (
     const value = getValueAtPath(context, rawPath);
     return renderValue(value);
   });
+};
+
+/**
+ * Compose template and attach scenario images (if present) for vision-capable models.
+ */
+export const composeTemplateWithImages = (
+  template: TemplateType,
+  state: CoCState,
+  extraContext: TemplateContext = {},
+  templatingEngine?: "handlebars"
+): ComposedPrompt => {
+  const content = composeTemplate(template, state, extraContext, templatingEngine);
+  const images = collectScenarioImages(state);
+  return { content, images };
 };
 
 /**

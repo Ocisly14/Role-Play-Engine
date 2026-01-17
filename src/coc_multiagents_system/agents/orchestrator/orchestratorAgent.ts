@@ -97,7 +97,7 @@ export class OrchestratorAgent {
     }
     
     // Compose the prompt with input and game context
-    const prompt = composeTemplate(template, {}, {
+    const prompt = composeTemplate(template, { gameState }, {
       input,
       characterName,
       scenarioLocation,

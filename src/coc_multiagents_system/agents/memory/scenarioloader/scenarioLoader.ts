@@ -354,7 +354,8 @@ export class ScenarioLoader {
     snapshotData: import("../../models/scenarioTypes.js").ParsedScenarioSnapshot,
     scenarioId: string,
     snapshotIndex: number,
-    scenarioName: string
+    scenarioName: string,
+    mapImagePath?: string
   ): ScenarioSnapshot {
     const snapshotId = snapshotIndex === 0 
       ? `${scenarioId}-snapshot` 
@@ -395,6 +396,7 @@ export class ScenarioLoader {
       location: snapshotData.location,
       description: snapshotData.description,
       showMap: snapshotData.showMap ?? true,
+      mapImagePath,
       characters,
       clues,
       conditions,
@@ -420,11 +422,11 @@ export class ScenarioLoader {
     if (parsedData.snapshots && parsedData.snapshots.length > 0) {
       // Multiple snapshots
       snapshots = parsedData.snapshots.map((snapshotData, index) =>
-        this.convertSnapshot(snapshotData, scenarioId, index, parsedData.name)
+        this.convertSnapshot(snapshotData, scenarioId, index, parsedData.name, parsedData.mapImagePath)
       );
     } else if (parsedData.snapshot) {
       // Single snapshot (legacy format)
-      snapshots = [this.convertSnapshot(parsedData.snapshot, scenarioId, 0, parsedData.name)];
+      snapshots = [this.convertSnapshot(parsedData.snapshot, scenarioId, 0, parsedData.name, parsedData.mapImagePath)];
     } else {
       throw new Error(`Scenario "${parsedData.name}" has no snapshot or snapshots`);
     }
