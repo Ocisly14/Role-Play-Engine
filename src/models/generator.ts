@@ -74,10 +74,43 @@ export function getEndpoint(provider: ModelProviderName): string | undefined {
 }
 
 /**
+ * Download image from URL and convert to base64 data URL
+ */
+async function downloadImageAsBase64(url: string): Promise<string> {
+  try {
+    const response = await fetch(url);
+    if (!response.ok) {
+      throw new Error(`Failed to download image: ${response.statusText}`);
+    }
+
+    const arrayBuffer = await response.arrayBuffer();
+    const buffer = Buffer.from(arrayBuffer);
+    const base64 = buffer.toString("base64");
+
+    // Try to detect MIME type from response headers
+    const contentType = response.headers.get("content-type") || "image/jpeg";
+
+    return `data:${contentType};base64,${base64}`;
+  } catch (error) {
+    throw new Error(`Failed to download image from URL ${url}: ${error}`);
+  }
+}
+
+/**
  * Normalize image inputs to data URLs or pass-through URLs so providers receive a consistent payload.
  */
-function formatImageInput(image: ImageInput): string {
+async function formatImageInput(image: ImageInput, provider: ModelProviderName): Promise<string> {
   if ("url" in image) {
+    // Google requires base64 data URLs, not regular URLs
+    if (provider === ModelProviderName.GOOGLE) {
+      // If it's already a data URL, return as-is
+      if (image.url.startsWith("data:")) {
+        return image.url;
+      }
+      // Otherwise download and convert to base64
+      return await downloadImageAsBase64(image.url);
+    }
+    // Other providers can use URLs directly
     return image.url;
   }
 
@@ -95,16 +128,18 @@ function formatImageInput(image: ImageInput): string {
 /**
  * Build the user message content, attaching images for providers that support vision input.
  */
-function buildUserContent(
+async function buildUserContent(
   provider: ModelProviderName,
   text: string,
   images?: ImageInput[]
-): string | Array<Record<string, unknown>> {
+): Promise<string | Array<Record<string, unknown>>> {
   if (!images || images.length === 0) {
     return text;
   }
 
-  const formattedImages = images.map((image) => formatImageInput(image));
+  const formattedImages = await Promise.all(
+    images.map((image) => formatImageInput(image, provider))
+  );
   const textPart = text ? [{ type: "text", text }] : [];
 
   if (provider === ModelProviderName.GOOGLE) {
@@ -204,7 +239,7 @@ export async function generateText(options: GenerationOptions): Promise<string> 
 
   // Prepare messages
   const messages = [];
-  
+
   if (customSystemPrompt) {
     messages.push({
       role: "system",
@@ -212,9 +247,12 @@ export async function generateText(options: GenerationOptions): Promise<string> 
     });
   }
 
+  // Build user content (may need to download images for Google)
+  const userContent = await buildUserContent(provider, context, images);
+
   messages.push({
     role: "user",
-    content: buildUserContent(provider, context, images),
+    content: userContent,
   });
 
   // Generate with retries
