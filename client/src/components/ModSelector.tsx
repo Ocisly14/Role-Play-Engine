@@ -10,12 +10,14 @@ export interface ModSelectorProps {
   apiBaseUrl?: string;
   onSelectMod: (modName: string) => void;
   onCancel: () => void;
+  onCreateStory?: () => void;
 }
 
-export function ModSelector({ 
+export function ModSelector({
   apiBaseUrl = '/api',
   onSelectMod,
-  onCancel
+  onCancel,
+  onCreateStory
 }: ModSelectorProps) {
   const [mods, setMods] = useState<Mod[]>([]);
   const [loading, setLoading] = useState(true);
@@ -218,6 +220,23 @@ export function ModSelector({
           </div>
           <div className="modal-content">
             <div className="mod-grid">
+              {/* Create Your Own Story Card */}
+              {onCreateStory && (
+                <div
+                  className="mod-card create-story-card"
+                  onClick={onCreateStory}
+                >
+                  <div className="mod-card-inner">
+                    <div className="mod-card-icon">✨</div>
+                    <div className="mod-card-content">
+                      <h3 className="mod-card-title">Create Your Own Story</h3>
+                      <p className="mod-card-subtitle">Design your own CoC adventure with AI</p>
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {/* Existing Mods */}
               {mods.map((mod) => (
                 <div
                   key={mod.name}
@@ -532,6 +551,29 @@ export function ModSelector({
           right: 12px;
           color: var(--accent, #8b7355);
           animation: checkmarkPop 0.4s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+        }
+
+        .create-story-card .mod-card-inner {
+          background: linear-gradient(135deg, #f0e6ff 0%, #e6d9ff 100%);
+          border-color: #8b6fb8;
+        }
+
+        .create-story-card:hover .mod-card-inner {
+          background: linear-gradient(135deg, #e6d9ff 0%, #d9ccff 100%);
+          border-color: #7859a6;
+          box-shadow:
+            0 8px 20px rgba(136, 111, 184, 0.3),
+            0 0 0 2px #8b6fb8,
+            inset 0 1px 0 rgba(255, 255, 255, 0.5);
+        }
+
+        .mod-card-subtitle {
+          margin: 4px 0 0;
+          font-size: 0.9rem;
+          color: #5a4a3a;
+          font-weight: 400;
+          font-style: italic;
+          letter-spacing: 0.3px;
         }
 
         @keyframes checkmarkPop {

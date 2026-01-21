@@ -9,12 +9,13 @@ import { GameChat } from "./components/GameChat";
 import { GameSidebar } from "./components/GameSidebar";
 import { CharacterSelector } from "./components/CharacterSelector";
 import { ModSelector } from "./components/ModSelector";
+import { StoryCreator } from "./components/StoryCreator";
 import { authFetch } from "./utils/authFetch";
 
 type SkillEntry = { name: string; base: string; category: string };
-type AppPage = "home" | "sheet" | "game" | "character-select" | "mod-select" | "module-intro";
+type AppPage = "home" | "sheet" | "game" | "character-select" | "mod-select" | "module-intro" | "story-creator";
 const PAGE_STORAGE_KEY = "coc.app.page";
-const APP_PAGES: AppPage[] = ["home", "sheet", "game", "character-select", "mod-select", "module-intro"];
+const APP_PAGES: AppPage[] = ["home", "sheet", "game", "character-select", "mod-select", "module-intro", "story-creator"];
 
 const getStoredPage = (): AppPage => {
   if (typeof window === "undefined") {
@@ -1914,6 +1915,7 @@ const AppShell: React.FC = () => {
         <ModSelector
           onSelectMod={handleSelectMod}
           onCancel={handleBackToHome}
+          onCreateStory={() => setPage("story-creator")}
         />
         
         {/* Loading Progress Modal */}
@@ -2137,6 +2139,21 @@ const AppShell: React.FC = () => {
             </div>
           </div>
         </div>
+      </>
+    );
+  }
+
+  if (page === "story-creator") {
+    return (
+      <>
+        {userMenu}
+        <StoryCreator
+          onComplete={(moduleName) => {
+            alert(`Module generated: ${moduleName}`);
+            setPage("mod-select");
+          }}
+          onCancel={() => setPage("mod-select")}
+        />
       </>
     );
   }

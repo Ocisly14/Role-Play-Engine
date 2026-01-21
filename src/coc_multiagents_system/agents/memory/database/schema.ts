@@ -524,6 +524,62 @@ export class CoCDatabase {
       // ignore if column already exists or cannot be added
     }
 
+    // Backfill for world builder generated content
+    try {
+      if (!this.hasColumn("module_backgrounds", "macro_scene_structure")) {
+        this.db.exec(
+          "ALTER TABLE module_backgrounds ADD COLUMN macro_scene_structure TEXT;"
+        );
+      }
+    } catch {
+      // ignore if column already exists or cannot be added
+    }
+    try {
+      if (!this.hasColumn("module_backgrounds", "truth_timeline")) {
+        this.db.exec(
+          "ALTER TABLE module_backgrounds ADD COLUMN truth_timeline TEXT;"
+        );
+      }
+    } catch {
+      // ignore if column already exists or cannot be added
+    }
+    try {
+      if (!this.hasColumn("module_backgrounds", "knowledge_matrix")) {
+        this.db.exec(
+          "ALTER TABLE module_backgrounds ADD COLUMN knowledge_matrix TEXT;"
+        );
+      }
+    } catch {
+      // ignore if column already exists or cannot be added
+    }
+    try {
+      if (!this.hasColumn("module_backgrounds", "red_herrings")) {
+        this.db.exec(
+          "ALTER TABLE module_backgrounds ADD COLUMN red_herrings TEXT;"
+        );
+      }
+    } catch {
+      // ignore if column already exists or cannot be added
+    }
+    try {
+      if (!this.hasColumn("module_backgrounds", "historical_mythos")) {
+        this.db.exec(
+          "ALTER TABLE module_backgrounds ADD COLUMN historical_mythos TEXT;"
+        );
+      }
+    } catch {
+      // ignore if column already exists or cannot be added
+    }
+    try {
+      if (!this.hasColumn("module_backgrounds", "end_state_definition")) {
+        this.db.exec(
+          "ALTER TABLE module_backgrounds ADD COLUMN end_state_definition TEXT;"
+        );
+      }
+    } catch {
+      // ignore if column already exists or cannot be added
+    }
+
     // Full-text search for module backgrounds
     this.db.exec(`
             CREATE VIRTUAL TABLE IF NOT EXISTS module_backgrounds_fts USING fts5(

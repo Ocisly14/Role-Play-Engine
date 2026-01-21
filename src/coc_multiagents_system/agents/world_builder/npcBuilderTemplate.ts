@@ -1,0 +1,227 @@
+/**
+ * NPC Builder Agent Templates
+ * Prompt templates for NPC instantiation and identity generation
+ */
+
+/**
+ * Step 1: Instantiate NPCs from Knowledge Holders
+ */
+export function getNPCInstantiationTemplate(): string {
+  return `You are a CoC world builder.
+
+# NPC INSTANTIATION FROM KNOWLEDGE HOLDERS
+
+## Critical Concept
+You are NOT generating characters from scratch.
+You are INSTANTIATING concrete people from abstract knowledge holders.
+
+Each NPC must:
+1. Trace back to a specific knowledge holder (ROLE or ORGANIZATION)
+2. Inherit the knowledge that holder possesses
+3. Embody the distortion/reliability of that holder's knowledge
+
+## Knowledge Holders (Abstract Entities)
+{{knowledgeHoldersJson}}
+
+## Red Herrings (for Context)
+{{redHerringsJson}}
+
+## Macro Scene (for Context)
+{{macroSceneJson}}
+
+## Available Occupations (Use These)
+{{occupationsJson}}
+
+## Task
+For each ROLE or ORGANIZATION knowledge holder, create 1-2 concrete NPCs who embody that role.
+
+### Guidelines
+- **ROLE holders**: Create specific individuals (e.g., "Ritual Participant" → "Marcus Webb, 45, Former Construction Foreman")
+- **ORGANIZATION holders**: Create 1-2 members (e.g., "Historical Society" → "Eleanor Price, Society President")
+- **PLACE/OBJECT holders**: Do NOT create NPCs (these are just locations/items)
+- **Occupation**: Choose an occupation from the provided list whenever possible so it can be resolved to skills later.
+
+### NPC Requirements
+- **Name**: Full name (first + last)
+- **Occupation**: Specific job/role
+- **Age**: Reasonable age for their role
+- **Gender**: Any appropriate gender
+- **Background**: 2-3 sentences linking them to their knowledge holder role
+- **Goals**: 2-3 things they actively pursue (may be mundane or mythos-related)
+- **Secrets**: 1-2 things they hide (related to inherited knowledge)
+- **Relationships**: Connections to other NPCs or holders
+- **MythosAwareness**: "none", "partial", "distorted", or "knowing"
+- **InstantiatedFrom**: Knowledge holder ID
+- **InheritsKnowledge**: Truth event IDs from the knowledge holder
+
+## Output Format
+Return ONLY valid JSON:
+Example:
+\`\`\`json
+{
+  "npcs": [
+    {
+      "name": "Marcus Webb",
+      "occupation": "Former Construction Foreman",
+      "age": 45,
+      "gender": "male",
+      "instantiatedFrom": "KH_ROLE_1",
+      "inheritsKnowledge": ["T1", "T2"],
+      "background": "Webb was the foreman on the infrastructure project that uncovered the ritual site. After the incident, he took early retirement, citing health reasons. He suffers from recurring nightmares and avoids the old town district.",
+      "goals": [
+        "Suppress memories of what he saw",
+        "Prevent anyone from investigating the sealed tunnel",
+        "Live quietly until he can leave town"
+      ],
+      "secrets": [
+        "Witnessed the ritual and one participant's death",
+        "Falsified construction records to hide the discovery",
+        "Receives monthly payments from unknown source to stay quiet"
+      ],
+      "relationships": [
+        {
+          "targetName": "Eleanor Price",
+          "relationshipType": "acquaintance",
+          "attitude": -20,
+          "description": "She's been asking too many questions about the old tunnels"
+        }
+      ],
+      "mythosAwareness": "partial"
+    }
+  ]
+}
+\`\`\`
+
+IMPORTANT:
+- Every NPC MUST reference a knowledge holder via "instantiatedFrom"
+- Every NPC MUST inherit specific truth events via "inheritsKnowledge"
+- Do NOT create NPCs without knowledge holder linkage
+- Do NOT introduce unrelated towns, organizations, or lore outside the injected context
+- Occupation MUST be chosen exactly from the injected occupations list
+
+Generate the NPCs now.`;
+}
+
+/**
+ * Step 4: Fill Core Identity and Inventory
+ */
+export function getNPCIdentityTemplate(): string {
+  return `You are a CoC world builder.
+
+# NPC CORE IDENTITY GENERATION
+
+## NPC Basic Info
+- **Name**: {{name}}
+- **Occupation**: {{occupation}}
+- **Age**: {{age}}
+- **Gender**: {{gender}}
+- **Background**: {{background}}
+- **Goals**: {{goals}}
+- **Secrets**: {{secrets}}
+- **Mythos Awareness**: {{mythosAwareness}}
+- **Instantiated From**: {{instantiatedFrom}}
+
+## Generated Attributes (for reference only)
+{{attributesJson}}
+
+## Truth Timeline (Objective Reality)
+The actual events that occurred, regardless of who knows them:
+{{truthTimelineJson}}
+
+## This NPC's Bound Knowledge Holders
+The specific knowledge holders this NPC is connected to:
+{{boundKnowledgeHoldersJson}}
+
+**CRITICAL**: This NPC can ONLY know truth events listed in their bound holders' "knows" or "containsEvidence" fields.
+- Apply "distortion" level when generating clues (e.g., partial_amnesia = fragmented/confused memories)
+- Consider "reliability" when determining accuracy of information
+- DO NOT give this NPC knowledge beyond what their bound holders possess
+- All outputs MUST remain grounded in the injected truth timeline and bound knowledge holders
+
+## Relevant Red Herrings
+False beliefs this NPC might have encountered or believe:
+{{relevantRedHerringsJson}}
+
+**Note**: This NPC may believe some red herrings, especially if:
+- They lack direct knowledge of truth events
+- Their knowledge is distorted (partial_amnesia, misinterpretation)
+- They've been exposed to official reports, media, or medical records
+
+## Task
+Based on the NPC's background, bound knowledge holders, and exposure to information, generate:
+
+### 1. Personality
+2-3 sentences describing their temperament, social style, and psychological state.
+Consider how their knowledge, distortion level, and secrets affect their behavior.
+
+### 2. Appearance
+2-3 sentences describing physical appearance, clothing style, and distinctive features.
+Should match their age and occupation.
+
+### 3. Inventory
+List of 3-8 items they typically carry or own.
+Format as InventoryItem objects: { "name": "...", "quantity": 1, "properties": {...} }
+
+Items should reflect:
+- Their occupation (tools of the trade)
+- Their bound knowledge holders (evidence they possess, objects they protect)
+- Their secrets (items they hide or protect)
+
+### 4. Clues
+Generate 1-3 clues that this NPC knows or possesses.
+
+**CRITICAL RULES FOR CLUES**:
+- Clues MUST relate to truth events in their bound knowledge holders' "knows" list
+- Apply distortion: partial_amnesia = incomplete/confused, deliberate_suppression = selective omission
+- NPC may also mention red herrings they believe
+- Higher difficulty = NPC is more reluctant/traumatized/paid to stay quiet
+
+Each clue:
+- **clueText**: The actual information (can reference specific truth event IDs from their bound holders)
+- **category**: "knowledge" | "observation" | "rumor" | "secret"
+- **difficulty**: "regular" | "hard" | "extreme" (how hard to extract from NPC)
+- **relatedTo**: List of truth event IDs (MUST be in their bound holders' knowledge)
+
+### Guidelines
+- Personality should reflect their mythos awareness and distortion level
+- Inventory must match their occupation and role
+- Clues are fragments, not full explanations
+- If NPC has "none" mythos awareness, they may mostly believe red herrings
+- If NPC has "partial" awareness, mix truth fragments with confusion/red herrings
+- Do NOT introduce unrelated places, organizations, or events not implied by the injected context
+
+## Output Format
+Return ONLY valid JSON:
+
+\`\`\`json
+{
+  "personality": "Webb is withdrawn and defensive, speaking in clipped sentences. He chain-smokes and avoids eye contact. When the old tunnels are mentioned, he becomes visibly anxious and finds excuses to leave conversations.",
+  "appearance": "A stocky man with weathered features and prematurely gray hair. Wears faded work clothes even though he's retired. Has a noticeable tremor in his hands.",
+  "inventory": [
+    { "name": "Flask of whiskey", "quantity": 1, "properties": { "description": "Half-empty, always on him" } },
+    { "name": "Old construction badge", "quantity": 1, "properties": { "description": "From the tunnel project, keeps it hidden" } },
+    { "name": "Sealed envelope", "quantity": 1, "properties": { "description": "Monthly payment instructions, never opens them" } },
+    { "name": "Lucky rabbit's foot", "quantity": 1, "properties": { "description": "Obsessively touches it when nervous" } }
+  ],
+  "clues": [
+    {
+      "id": "clue-webb-1",
+      "clueText": "The excavation team found strange carvings in the tunnel, deep ones that predated the town. Management ordered them covered up and the workers sworn to secrecy.",
+      "category": "knowledge",
+      "difficulty": "hard",
+      "relatedTo": ["T1"]
+    },
+    {
+      "id": "clue-webb-2",
+      "clueText": "Three university people came down after we found it. Only two came back up. The company paid us all off to forget we ever saw the third one.",
+      "category": "secret",
+      "difficulty": "extreme",
+      "relatedTo": ["T2"]
+    }
+  ],
+  "notes": "Deeply traumatized by T2. Will only reveal clue-webb-2 under extreme duress or if investigators can prove they already know parts of the truth."
+}
+\`\`\`
+
+Generate the NPC identity now.`;
+}

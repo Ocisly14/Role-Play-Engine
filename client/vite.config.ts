@@ -1,6 +1,10 @@
 import { defineConfig } from "vite";
 import react from "@vitejs/plugin-react";
 
+const apiUrl = process.env.API_URL || "http://localhost:3000";
+const apiOrigin = new URL(apiUrl).origin;
+const wsOrigin = apiOrigin.replace(/^http/, "ws");
+
 export default defineConfig({
   plugins: [react()],
   server: {
@@ -16,12 +20,12 @@ export default defineConfig({
     },
     proxy: {
       '/api': {
-        target: 'http://localhost:3000',
+        target: apiOrigin,
         changeOrigin: true,
         secure: false,
       },
       '/ws': {
-        target: 'ws://localhost:3000',
+        target: wsOrigin,
         ws: true,
         changeOrigin: true,
         rewriteWsOrigin: true,

@@ -29,30 +29,6 @@ export function resolveModelClass(
   runtime: any,
   requested: ModelClass = ModelClass.MEDIUM
 ): ModelClass {
-  // Force small model if environment variable is set (for cost optimization)
-  if (
-    process.env.FORCE_SMALL_MODEL === "true" &&
-    requested !== ModelClass.SMALL
-  ) {
-    console.debug(
-      `FORCE_SMALL_MODEL enabled; overriding requested model class`,
-      { requested, resolved: ModelClass.SMALL }
-    );
-    return ModelClass.SMALL;
-  }
-
-  // Force medium for large if cost optimization is enabled (default: true)
-  if (
-    (process.env.FORCE_MEDIUM_FOR_LARGE ?? "true") === "true" &&
-    requested === ModelClass.LARGE
-  ) {
-    console.debug(
-      `FORCE_MEDIUM_FOR_LARGE enabled; overriding requested model class`,
-      { requested, resolved: ModelClass.MEDIUM }
-    );
-    return ModelClass.MEDIUM;
-  }
-
   return requested;
 }
 

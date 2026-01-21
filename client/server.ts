@@ -25,7 +25,16 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
 const app = express();
-const PORT = process.env.PORT || 3000;
+const portFromApiUrl = (() => {
+  if (!process.env.API_URL) return undefined;
+  try {
+    const apiUrl = new URL(process.env.API_URL);
+    return apiUrl.port ? Number(apiUrl.port) : apiUrl.protocol === "https:" ? 443 : 80;
+  } catch {
+    return undefined;
+  }
+})();
+const PORT = Number(process.env.PORT) || portFromApiUrl || 3000;
 
 // Middleware
 app.use(cors({
