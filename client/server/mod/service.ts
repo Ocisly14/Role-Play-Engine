@@ -2,10 +2,26 @@ import type { CoCDatabase } from "../../../src/coc_multiagents_system/agents/mem
 import { ScenarioLoader } from "../../../src/coc_multiagents_system/agents/memory/scenarioloader/index.js";
 import { NPCLoader } from "../../../src/coc_multiagents_system/agents/character/npcloader/index.js";
 import { ModuleLoader } from "../../../src/coc_multiagents_system/agents/memory/moduleloader/index.js";
+import { WorldModuleLoader } from "../../../src/dynamicworldagent/world_builder/worldModuleLoader.js";
 import path from "path";
 import fs from "fs";
 
 type ProgressCallback = (stage: string, progress: number, message: string) => void;
+
+/**
+ * Check if a module is a world-builder generated module
+ */
+function isWorldBuilderModule(modPath: string): boolean {
+  const worldBuilderFiles = [
+    "truth_timeline.json",
+    "knowledge_matrix.json",
+    "macro_scene.json"
+  ];
+
+  return worldBuilderFiles.every(file =>
+    fs.existsSync(path.join(modPath, file))
+  );
+}
 
 /**
  * Load mod data from directory
@@ -29,9 +45,41 @@ export async function loadMod(
 
   onProgress?.("Initializing", 10, "Initializing loaders...");
 
+  // Check if this is a world-builder generated module
+  if (isWorldBuilderModule(modPath)) {
+    console.log(`Detected world-builder module: ${modName}`);
+    onProgress?.("Loading", 20, "Loading world-builder module...");
+
+    const worldModuleLoader = new WorldModuleLoader(db);
+    const loadedModule = await worldModuleLoader.loadAndSaveWorldModule(modPath, true);
+
+    if (!loadedModule) {
+      throw new Error("Failed to load world-builder module");
+    }
+
+    const scenariosLoaded = loadedModule.scenarios.length;
+    const npcsLoaded = loadedModule.npcs.length;
+    const modulesLoaded = 1;
+
+    onProgress?.("Complete", 100, `Loaded ${scenariosLoaded} scenarios, ${npcsLoaded} NPCs, ${modulesLoaded} modules`);
+
+    return {
+      success: true,
+      message: `World-builder mod loaded: ${scenariosLoaded} scenarios, ${npcsLoaded} NPCs, ${modulesLoaded} modules`,
+      scenariosLoaded,
+      npcsLoaded,
+      modulesLoaded,
+      timestamp: new Date().toISOString(),
+      worldBuilderModule: true,
+    };
+  }
+
+  // Regular module loading (old format)
+  console.log(`Loading regular module: ${modName}`);
+
   const scenarioLoader = new ScenarioLoader(db);
   const npcLoader = new NPCLoader(db);
-  const moduleLoader = new ModuleLoader(db);
+  const moduleLoader = new ModuleLoader(db.getDatabase());
 
   onProgress?.("Scanning", 15, "Scanning mod directory...");
 
@@ -97,6 +145,7 @@ export async function loadMod(
     npcsLoaded,
     modulesLoaded,
     timestamp: new Date().toISOString(),
+    worldBuilderModule: false,
   };
 }
 

@@ -3,7 +3,27 @@ import { DatabaseManager } from "../core/DatabaseManager.js";
 import { GraphManager } from "../core/GraphManager.js";
 import { ServerState } from "../core/ServerState.js";
 import { getClientIp, generateSessionIdFromIp } from "../utils/sessionUtils.js";
-import { initializeGameState } from "./service.js";
+import { initializeGameState, initializeWorldBuilderGameState } from "./service.js";
+import path from "path";
+import fs from "fs";
+
+/**
+ * Check if a module is a world-builder generated module
+ */
+function isWorldBuilderModule(modName: string): boolean {
+  const modsDir = path.join(process.cwd(), "data", "Mods");
+  const modPath = path.join(modsDir, modName);
+
+  const worldBuilderFiles = [
+    "truth_timeline.json",
+    "knowledge_matrix.json",
+    "macro_scene.json"
+  ];
+
+  return worldBuilderFiles.every(file =>
+    fs.existsSync(path.join(modPath, file))
+  );
+}
 
 /**
  * Start game with character
@@ -46,13 +66,15 @@ export async function startGame(req: Request, res: Response): Promise<void> {
     const clientIp = getClientIp(req);
     const sessionId = generateSessionIdFromIp(clientIp);
 
-    // Initialize game state (simplified version)
-    const { gameState, moduleIntroduction } = await initializeGameState(
-      db,
-      characterId,
-      sessionId,
-      modName
-    );
+    // Check if this is a world-builder module
+    const isWorldBuilder = modName && isWorldBuilderModule(modName);
+
+    // Initialize game state using appropriate method
+    const { gameState, moduleIntroduction } = isWorldBuilder
+      ? await initializeWorldBuilderGameState(db, characterId, sessionId, modName)
+      : await initializeGameState(db, characterId, sessionId, modName);
+
+    console.log(`[${new Date().toISOString()}] Game initialized using ${isWorldBuilder ? 'World Builder' : 'Regular'} loader`);
 
     // Store in server state
     ServerState.getInstance().setGameState(userId, gameState);

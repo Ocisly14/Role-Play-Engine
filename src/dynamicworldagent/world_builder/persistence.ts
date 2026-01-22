@@ -241,25 +241,52 @@ export async function saveWorldToDatabase(
         .get(snapshot.id);
 
       if (!snapshotExists) {
-        const snapshotStmt = database.prepare(
-          `INSERT INTO scenario_snapshots (
-            snapshot_id, scenario_id, snapshot_name, location, description, events, exits,
-            keeper_notes, time_restriction, show_map
-          ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
-        );
+        const hasInitialSnapshot = db.hasColumn("scenario_snapshots", "initial_snapshot");
+        const hasGameTime = db.hasColumn("scenario_snapshots", "game_time");
 
-        snapshotStmt.run(
-          snapshot.id,
-          startingScene.scenarioId,
-          snapshot.name,
-          snapshot.location,
-          snapshot.description,
-          JSON.stringify(snapshot.events || []),
-          JSON.stringify(snapshot.exits || []),
-          snapshot.keeperNotes || null,
-          snapshot.timeRestriction || null,
-          snapshot.showMap === false ? 0 : 1
-        );
+        if (hasInitialSnapshot && hasGameTime) {
+          const snapshotStmt = database.prepare(
+            `INSERT INTO scenario_snapshots (
+              snapshot_id, scenario_id, snapshot_name, location, description, events, exits,
+              keeper_notes, time_restriction, show_map, initial_snapshot, game_time
+            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
+          );
+
+          snapshotStmt.run(
+            snapshot.id,
+            startingScene.scenarioId,
+            snapshot.name,
+            snapshot.location,
+            snapshot.description,
+            JSON.stringify(snapshot.events || []),
+            JSON.stringify(snapshot.exits || []),
+            snapshot.keeperNotes || null,
+            snapshot.timeRestriction || null,
+            snapshot.showMap === false ? 0 : 1,
+            1, // initial_snapshot = true for starting scene
+            snapshot.gameTime || null
+          );
+        } else {
+          const snapshotStmt = database.prepare(
+            `INSERT INTO scenario_snapshots (
+              snapshot_id, scenario_id, snapshot_name, location, description, events, exits,
+              keeper_notes, time_restriction, show_map
+            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
+          );
+
+          snapshotStmt.run(
+            snapshot.id,
+            startingScene.scenarioId,
+            snapshot.name,
+            snapshot.location,
+            snapshot.description,
+            JSON.stringify(snapshot.events || []),
+            JSON.stringify(snapshot.exits || []),
+            snapshot.keeperNotes || null,
+            snapshot.timeRestriction || null,
+            snapshot.showMap === false ? 0 : 1
+          );
+        }
 
         if (snapshot.characters?.length) {
           const charStmt = database.prepare(`

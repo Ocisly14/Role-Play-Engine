@@ -41,7 +41,7 @@ Return ONLY valid JSON in this exact structure:
   "moduleNotes": "Player character creation guide: required skills, restrictions, party ties, arrival constraints, and tone warnings.",
   "keeperGuidance": "Brief GM guidance considering the user prompt: overall playstyle focus, tone, and facilitation notes.",
   "moduleLimitations": "Endstate triggers and hard constraints: what conditions cause endstate to fire.",
-  "introduction": "Player-facing intro: how they arrive at the initial scene and why they are pulled into the story."
+  "introduction": "Player-facing intro: how they arrive at the initial scene and why they are pulled into the story. It must naturally hand off into the initial snapshot without spoilers."
 }
 \`\`\`
 `;

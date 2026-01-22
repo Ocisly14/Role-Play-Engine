@@ -385,7 +385,29 @@ export class CoCDatabase {
     } catch {
       // ignore if column already exists or cannot be added
     }
-    
+
+    // Backfill initial_snapshot column for world-builder modules
+    try {
+      if (!this.hasColumn("scenario_snapshots", "initial_snapshot")) {
+        this.db.exec(
+          "ALTER TABLE scenario_snapshots ADD COLUMN initial_snapshot INTEGER DEFAULT 0;"
+        );
+      }
+    } catch {
+      // ignore if column already exists or cannot be added
+    }
+
+    // Backfill game_time column for world-builder modules
+    try {
+      if (!this.hasColumn("scenario_snapshots", "game_time")) {
+        this.db.exec(
+          "ALTER TABLE scenario_snapshots ADD COLUMN game_time TEXT;"
+        );
+      }
+    } catch {
+      // ignore if column already exists or cannot be added
+    }
+
     // Legacy time fields removed - scenarios no longer have timeline/timepoint data
 
     // Scenario characters table - characters present in scenarios
