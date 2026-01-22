@@ -4,7 +4,7 @@
  */
 
 import type { Request, Response } from "express";
-import { WorldBuilderService } from "../../../src/coc_multiagents_system/agents/world_builder/worldBuilderService.js";
+import { WorldBuilderService } from "../../../src/dynamicworldagent/world_builder/worldBuilderService.js";
 import { DatabaseManager } from "../core/DatabaseManager.js";
 
 /**

@@ -393,6 +393,7 @@ export class ScenarioLoader {
     const snapshot: ScenarioSnapshot = {
       id: snapshotId,
       name: snapshotData.name || scenarioName,
+      gameTime: snapshotData.gameTime,
       location: snapshotData.location,
       description: snapshotData.description,
       showMap: snapshotData.showMap ?? true,

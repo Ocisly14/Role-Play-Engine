@@ -66,6 +66,8 @@ export interface ScenarioSnapshot {
   id: string;
   /** Scenario name */
   name: string;
+  /** Narrative game time for this snapshot (e.g., "Day 1, 08:00") */
+  gameTime?: string;
   /** Primary location */
   location: string;
   /** Detailed description */
@@ -97,6 +99,8 @@ export interface ScenarioSnapshot {
   estimatedShortActions?: number;
   /** Time restriction for this snapshot (e.g., "day1 evening", "day2 (after)") - optional */
   timeRestriction?: string;
+  /** Whether this is the initial snapshot for the starting scene */
+  initialSnapshot?: boolean;
 }
 
 /**
@@ -135,6 +139,7 @@ export interface ScenarioProfile {
  */
 export interface ParsedScenarioSnapshot {
   name?: string;
+  gameTime?: string;
   location: string;
   description: string;
   timeRestriction?: string;

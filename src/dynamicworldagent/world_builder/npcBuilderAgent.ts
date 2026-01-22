@@ -3,9 +3,9 @@
  * Implements 5-step NPC generation following truth-first principles
  */
 
-import { generateText, ModelClass, ModelProviderName } from "../../../models/index.js";
-import { composeTemplate } from "../../../template.js";
-import { generateRandomAttributes } from "../character/characterBuilder.js";
+import { generateText, ModelClass, ModelProviderName } from "../../models/index.js";
+import { composeTemplate } from "../../template.js";
+import { generateRandomAttributes } from "../../coc_multiagents_system/agents/character/characterBuilder.js";
 import { allocateSkillPoints } from "./skillAllocator.js";
 import fs from "fs";
 import path from "path";
@@ -18,7 +18,11 @@ import type {
   NPCBasicInfo,
   ProgressCallback,
 } from "./types.js";
-import type { NPCProfile, NPCRelationship, CharacterAttributes } from "../models/gameTypes.js";
+import type {
+  NPCProfile,
+  NPCRelationship,
+  CharacterAttributes,
+} from "../../coc_multiagents_system/agents/models/gameTypes.js";
 import {
   getNPCInstantiationTemplate,
   getNPCIdentityTemplate,

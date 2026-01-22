@@ -6,9 +6,9 @@
 import { MacroSceneAgent } from "./macroSceneAgent.js";
 import { NPCBuilderAgent } from "./npcBuilderAgent.js";
 import { ScenarioBuilderAgent } from "./scenarioBuilderAgent.js";
-import { saveWorldToDatabase, saveWorldToJSON } from "./persistence.js";
+import { ModuleDigestAgent } from "./moduleDigestAgent.js";
+import { saveModuleDigestToJSON, saveWorldToJSON } from "./persistence.js";
 import type { WorldGenerationResult, MacroSceneSettingType } from "./types.js";
-import type { CoCDatabase } from "../memory/database/index.js";
 import fs from "fs/promises";
 import path from "path";
 
@@ -28,18 +28,19 @@ export class WorldBuilderService {
   private macroSceneAgent: MacroSceneAgent;
   private scenarioBuilderAgent: ScenarioBuilderAgent;
   private npcBuilderAgent: NPCBuilderAgent;
+  private moduleDigestAgent: ModuleDigestAgent;
 
   constructor() {
     this.macroSceneAgent = new MacroSceneAgent();
     this.scenarioBuilderAgent = new ScenarioBuilderAgent();
     this.npcBuilderAgent = new NPCBuilderAgent();
+    this.moduleDigestAgent = new ModuleDigestAgent();
   }
 
   /**
    * Generate complete world content
    */
   async generateWorld(
-    db: CoCDatabase,
     settingType: MacroSceneSettingType = "small_town",
     creativePrompt: string,
     progressCallback?: WorldBuilderProgressCallback
@@ -112,24 +113,22 @@ export class WorldBuilderService {
           }
         );
 
-      // ========== PHASE 5: PERSISTENCE ==========
-      progressCallback?.("persistence", 80, "Saving to database...");
+      // ========== PHASE 5: MODULE DIGEST ==========
+      progressCallback?.("module_digest", 82, "Generating module digest...");
 
-      await saveWorldToDatabase(
-        db,
-        moduleName,
+      const moduleDigest = await this.moduleDigestAgent.generate(
         macroScene,
         truthTimeline,
         knowledgeMatrix,
-        redHerrings,
-        mythosEvents,
-        endState,
         npcs,
         scenarios,
         startingScene,
-        otherScenarioNpcAssignments
+        creativePrompt
       );
 
+      const moduleDigestFile = await saveModuleDigestToJSON(moduleName, moduleDigest);
+
+      // ========== PHASE 6: PERSISTENCE ==========
       progressCallback?.("persistence", 90, "Generating JSON files...");
 
       const generatedFiles = await saveWorldToJSON(
@@ -168,7 +167,10 @@ export class WorldBuilderService {
         startingScene,
         otherScenarioNpcAssignments,
         npcs,
-        generatedFiles,
+        generatedFiles: {
+          ...generatedFiles,
+          moduleDigestFile,
+        },
       };
     } catch (error) {
       console.error("❌ [World Builder Service] Generation failed:", error);
@@ -269,7 +271,10 @@ export class WorldBuilderService {
       startingScene,
       otherScenarioNpcAssignments,
       npcs: [],
-      generatedFiles,
+      generatedFiles: {
+        ...generatedFiles,
+        moduleDigestFile: null,
+      },
     };
   }
 
@@ -368,7 +373,10 @@ export class WorldBuilderService {
       startingScene: null,
       otherScenarioNpcAssignments: [],
       npcs,
-      generatedFiles,
+      generatedFiles: {
+        ...generatedFiles,
+        moduleDigestFile: null,
+      },
     };
   }
 }

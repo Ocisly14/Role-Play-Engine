@@ -535,6 +535,7 @@ export class NPCLoader {
       inventory: InventoryUtils.normalizeInventory(parsedData.inventory),
       skills: parsedData.skills || {},
       notes: parsedData.notes,
+      actionLog: parsedData.actionLog,
       occupation: parsedData.occupation,
       age: parsedData.age,
       gender: parsedData.gender,
@@ -604,6 +605,7 @@ export class NPCLoader {
         history: r.history,
       })),
       notes: npc.notes,
+      actionLog: npc.actionLog,
     };
   }
 

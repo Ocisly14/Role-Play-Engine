@@ -3,8 +3,8 @@
  * Uses knowledge matrix PLACE holders to define scenarios and connections
  */
 
-import { generateText, ModelClass, ModelProviderName } from "../../../models/index.js";
-import { composeTemplate } from "../../../template.js";
+import { generateText, ModelClass, ModelProviderName } from "../../models/index.js";
+import { composeTemplate } from "../../template.js";
 import type {
   MacroSceneStructure,
   TruthEvent,
@@ -15,7 +15,7 @@ import type {
   ProgressCallback,
 } from "./types.js";
 import { getScenarioBuilderTemplate, getStartingSceneSnapshotTemplate } from "./scenarioBuilderTemplate.js";
-import type { NPCProfile } from "../models/gameTypes.js";
+import type { NPCProfile } from "../../coc_multiagents_system/agents/models/gameTypes.js";
 
 interface Runtime {
   modelProvider: ModelProviderName;

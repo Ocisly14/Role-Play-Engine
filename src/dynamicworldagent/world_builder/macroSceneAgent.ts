@@ -3,8 +3,8 @@
  * Implements 5-step generation following instruction.md specification
  */
 
-import { generateText, ModelClass, ModelProviderName } from "../../../models/index.js";
-import { composeTemplate } from "../../../template.js";
+import { generateText, ModelClass, ModelProviderName } from "../../models/index.js";
+import { composeTemplate } from "../../template.js";
 import type {
   MacroSceneStructure,
   MacroSceneSettingType,

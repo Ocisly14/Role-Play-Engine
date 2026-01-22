@@ -289,5 +289,6 @@ export interface ParsedNPCData {
   clues?: Omit<NPCClue, "id" | "revealed">[];
   relationships?: Omit<NPCRelationship, "targetId">[];
   notes?: string;
+  actionLog?: ActionLogEntry[];
   currentLocation?: string; // NPC的当前地点
 }

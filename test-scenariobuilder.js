@@ -11,8 +11,8 @@ import fs from "fs";
 import path from "path";
 import { randomUUID } from "crypto";
 import { CoCDatabase } from "./dist/src/coc_multiagents_system/agents/memory/database/schema.js";
-import { ScenarioBuilderAgent } from "./dist/src/coc_multiagents_system/agents/world_builder/scenarioBuilderAgent.js";
-import { saveWorldToDatabase, saveWorldToJSON } from "./dist/src/coc_multiagents_system/agents/world_builder/persistence.js";
+import { ScenarioBuilderAgent } from "./dist/src/dynamicworldagent/world_builder/scenarioBuilderAgent.js";
+import { saveWorldToDatabase, saveWorldToJSON } from "./dist/src/dynamicworldagent/world_builder/persistence.js";
 
 const logger = {
   info: (msg) => console.log(`ℹ️  ${msg}`),

@@ -3,8 +3,8 @@
  * Supports truth-first world generation following instruction.md specification
  */
 
-import type { NPCProfile } from "../models/gameTypes.js";
-import type { ScenarioSnapshot } from "../models/scenarioTypes.js";
+import type { NPCProfile } from "../../coc_multiagents_system/agents/models/gameTypes.js";
+import type { ScenarioSnapshot } from "../../coc_multiagents_system/agents/models/scenarioTypes.js";
 
 /**
  * Setting types for CoC scenarios
@@ -204,7 +204,15 @@ export interface WorldGenerationResult {
     scenariosFile: string;
     startingSceneFile: string | null;
     npcsDir: string;
+    moduleDigestFile?: string | null;
   };
+}
+
+export interface ModuleDigest {
+  moduleNotes: string;
+  keeperGuidance: string;
+  moduleLimitations: string;
+  introduction: string;
 }
 
 /**

@@ -3,7 +3,7 @@
  * Allocates occupational and interest skill points following CoC 7e rules
  */
 
-import type { CharacterAttributes } from "../models/gameTypes.js";
+import type { CharacterAttributes } from "../../coc_multiagents_system/agents/models/gameTypes.js";
 import fs from "fs";
 import path from "path";
 

@@ -106,7 +106,8 @@ Then assign every other NPC to a scenario with a short note of what they are doi
 ## Requirements
 - Choose exactly ONE scenario from the provided list as the starting scene.
 - Generate a ScenarioSnapshot for that starting scene (use the schema from ScenarioSnapshot).
-- The snapshot must include: id, name, location, description, characters, clues, conditions, events.
+- The snapshot must include: id, name, location, description, gameTime, characters, clues, conditions, events.
+- "gameTime" should follow a standard format like "Day <N>, HH:MM" (e.g., "Day 1, 08:00").
 - Populate snapshot.characters with NPCs present in the starting scene.
 - Expand the starting scenario's "clues" into fully formatted snapshot.clues entries.
   - Every scenario clue must map to at least one snapshot clue.
@@ -133,6 +134,7 @@ Return ONLY valid JSON in this exact structure:
       "name": "Scenario Name",
       "location": "Primary location",
       "description": "Detailed description of the scene.",
+      "gameTime": "<GAME_TIME>",
       "characters": [
         {
           "id": "NPC_1",

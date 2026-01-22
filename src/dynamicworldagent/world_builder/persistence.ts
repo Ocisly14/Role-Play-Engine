@@ -5,7 +5,7 @@
 
 import path from "path";
 import fs from "fs/promises";
-import type { CoCDatabase } from "../memory/database/index.js";
+import type { CoCDatabase } from "../../coc_multiagents_system/agents/memory/database/index.js";
 import type {
   MacroSceneStructure,
   TruthEvent,
@@ -16,8 +16,9 @@ import type {
   ScenarioOutline,
   StartingSceneSelection,
   ScenarioNpcAssignments,
+  ModuleDigest,
 } from "./types.js";
-import type { NPCProfile } from "../models/gameTypes.js";
+import type { ActionLogEntry, NPCProfile } from "../../coc_multiagents_system/agents/models/gameTypes.js";
 import { randomUUID } from "crypto";
 
 /**
@@ -423,33 +424,105 @@ export async function saveWorldToJSON(
     otherScenarioNpcAssignments.map((assignment) => [assignment.scenarioId, assignment])
   );
 
+  const actionLogsByNpcId = new Map<string, ActionLogEntry[]>();
+  const pushActionLog = (
+    npcId: string | undefined,
+    location: string | null | undefined,
+    summary: string | null | undefined
+  ) => {
+    if (!npcId || !summary) return;
+    const trimmedSummary = summary.trim();
+    if (!trimmedSummary) return;
+    const entry: ActionLogEntry = {
+      time: "initial",
+      location: location || "unknown",
+      summary: trimmedSummary,
+    };
+    const existing = actionLogsByNpcId.get(npcId) || [];
+    existing.push(entry);
+    actionLogsByNpcId.set(npcId, existing);
+  };
+
+  for (const assignment of otherScenarioNpcAssignments) {
+    for (const npc of assignment.npcs || []) {
+      pushActionLog(npc.id, assignment.scenarioName, npc.activity);
+    }
+  }
+
   for (const scenario of scenarios) {
     const assignment = assignmentsByScenarioId.get(scenario.id);
     const isStartingScene = startingScene?.scenarioId === scenario.id;
-    const snapshot = isStartingScene ? startingScene?.snapshot : undefined;
+
+    // Generate snapshot for all scenarios
+    let snapshot;
+    if (isStartingScene && startingScene?.snapshot) {
+      // Use LLM-generated snapshot for starting scene
+      snapshot = {
+        id: startingScene.snapshot.id,
+        name: startingScene.snapshot.name,
+        gameTime: startingScene.snapshot.gameTime,
+        location: startingScene.snapshot.location,
+        description: startingScene.snapshot.description,
+        showMap: startingScene.snapshot.showMap,
+        characters: startingScene.snapshot.characters,
+        clues: startingScene.snapshot.clues,
+        conditions: startingScene.snapshot.conditions,
+        events: startingScene.snapshot.events,
+        exits: startingScene.snapshot.exits,
+        keeperNotes: startingScene.snapshot.keeperNotes,
+        permanentChanges: startingScene.snapshot.permanentChanges,
+        estimatedShortActions: startingScene.snapshot.estimatedShortActions,
+        timeRestriction: startingScene.snapshot.timeRestriction,
+        initialSnapshot: true,
+      };
+    } else {
+      // Create basic snapshot structure for non-starting scenarios
+      const assignedNpcs = assignment?.npcs || [];
+      const snapshotClues = (scenario.clues || []).map((clue, index) => ({
+        id: `${scenario.id}-clue-${index + 1}`,
+        clueText: clue.clueText,
+        category: "environment" as const,
+        difficulty: "regular" as const,
+        location: scenario.name,
+        discovered: false,
+      }));
+
+      const snapshotCharacters = assignedNpcs.map((npc) => ({
+        id: npc.id,
+        name: npc.name,
+        role: "other" as const,
+        status: "alive" as const,
+        location: scenario.name,
+        notes: npc.activity || "",
+      }));
+
+      const snapshotExits = (scenario.connections || []).map((conn) => ({
+        direction: conn.relationshipType,
+        destination: conn.scenarioName,
+        description: conn.description || "",
+      }));
+
+      snapshot = {
+        id: scenario.id,
+        name: scenario.name,
+        gameTime: startingScene?.snapshot?.gameTime,
+        location: scenario.name,
+        description: scenario.description,
+        characters: snapshotCharacters,
+        clues: snapshotClues,
+        conditions: [],
+        events: [],
+        exits: snapshotExits,
+        initialSnapshot: false,
+      };
+    }
 
     const scenarioPayload = {
       name: scenario.name,
       description: scenario.description,
       evidence: scenario.evidence || [],
       clues: scenario.clues || [],
-      snapshot: snapshot
-        ? {
-            name: snapshot.name,
-            location: snapshot.location,
-            description: snapshot.description,
-            showMap: snapshot.showMap,
-            characters: snapshot.characters,
-            clues: snapshot.clues,
-            conditions: snapshot.conditions,
-            events: snapshot.events,
-            exits: snapshot.exits,
-            keeperNotes: snapshot.keeperNotes,
-            permanentChanges: snapshot.permanentChanges,
-            estimatedShortActions: snapshot.estimatedShortActions,
-            timeRestriction: snapshot.timeRestriction,
-          }
-        : undefined,
+      snapshot,
       tags: scenario.tags || [],
       connections: scenario.connections || [],
       npcAssignments: assignment?.npcs || [],
@@ -468,7 +541,12 @@ export async function saveWorldToJSON(
 
   for (const npc of npcs) {
     const npcFile = path.join(npcsDir, `${npc.name.replace(/[^a-zA-Z0-9_-]/g, '_')}.json`);
-    await fs.writeFile(npcFile, JSON.stringify(npc, null, 2));
+    const actionLog = [
+      ...(npc.actionLog || []),
+      ...(actionLogsByNpcId.get(npc.id) || []),
+    ];
+    const npcPayload = actionLog.length > 0 ? { ...npc, actionLog } : npc;
+    await fs.writeFile(npcFile, JSON.stringify(npcPayload, null, 2));
   }
 
   return {
@@ -479,4 +557,16 @@ export async function saveWorldToJSON(
     startingSceneFile,
     npcsDir,
   };
+}
+
+export async function saveModuleDigestToJSON(
+  moduleName: string,
+  digest: ModuleDigest
+): Promise<string> {
+  const moduleDir = path.join(process.cwd(), "data", "Mods", moduleName);
+  await fs.mkdir(moduleDir, { recursive: true });
+  const filePath = path.join(moduleDir, "module_digest.json");
+  const payload = { title: moduleName, ...digest };
+  await fs.writeFile(filePath, JSON.stringify(payload, null, 2));
+  return filePath;
 }
