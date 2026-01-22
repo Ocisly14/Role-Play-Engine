@@ -4,6 +4,7 @@
  */
 
 import type { NPCProfile } from "../models/gameTypes.js";
+import type { ScenarioSnapshot } from "../models/scenarioTypes.js";
 
 /**
  * Setting types for CoC scenarios
@@ -107,6 +108,58 @@ export interface EndStateDefinition {
 }
 
 /**
+ * Scenario connection definition (name-based, no snapshots yet)
+ */
+export type ScenarioConnectionType = "leads_to" | "concurrent" | "prerequisite" | "alternate";
+
+export interface ScenarioConnection {
+  scenarioName: string;
+  relationshipType: ScenarioConnectionType;
+  description?: string;
+}
+
+/**
+ * Scenario Outline - generated from place holders, no snapshot yet
+ */
+export interface ScenarioOutline {
+  id: string;
+  name: string;
+  description: string;
+  sourcePlaceId?: string;
+  sourcePlaceName?: string;
+  tags?: string[];
+  evidence?: string[];
+  clues?: ScenarioClueSeed[];
+  connections: ScenarioConnection[];
+}
+
+export interface ScenarioClueSeed {
+  clueText: string;
+  evidenceRef?: string;
+  notes?: string;
+}
+
+export interface ScenarioNpcAssignment {
+  id: string;
+  name: string;
+  occupation?: string;
+  activity: string;
+}
+
+export interface ScenarioNpcAssignments {
+  scenarioId: string;
+  scenarioName: string;
+  npcs: ScenarioNpcAssignment[];
+}
+
+export interface StartingSceneSelection {
+  scenarioId: string;
+  scenarioName: string;
+  selectionReason: string;
+  snapshot: ScenarioSnapshot;
+}
+
+/**
  * NPC Basic Info - Output of Step 1 of NPC Builder
  * NPCs instantiated from knowledge holders
  */
@@ -140,11 +193,16 @@ export interface WorldGenerationResult {
   redHerrings: RedHerring[];
   mythosEvents: MythosEvent[];
   endState: EndStateDefinition;
+  scenarios: ScenarioOutline[];
+  startingScene: StartingSceneSelection | null;
+  otherScenarioNpcAssignments: ScenarioNpcAssignments[];
   npcs: NPCProfile[];
   generatedFiles: {
     truthTimelineFile: string;
     knowledgeMatrixFile: string;
     macroSceneFile: string;
+    scenariosFile: string;
+    startingSceneFile: string | null;
     npcsDir: string;
   };
 }

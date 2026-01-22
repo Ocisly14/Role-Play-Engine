@@ -27,13 +27,12 @@ The goal is to generate:
 
 The AI MUST generate content strictly in the following order:
 
-0. End State Definition (Hidden)
 1. Macro Scene Construction (Town)
 2. Historical Mythos Layer
-3. NPC Population (Goal-Oriented)
-4. Temporal Slicing (Key Time Nodes)
-5. Location State Injection
-6. Player Interference Modeling
+3. End State Definition (Hidden)
+4. NPC Population (Goal-Oriented)
+5. Temporal Slicing (Key Time Nodes)
+6. Location State Injection
 7. Resolution Space Definition
 
 ---
@@ -54,6 +53,10 @@ Create the static structural skeleton of the setting.
 - No plot events
 - No daily life simulation
 - No investigators yet
+
+### Output (Current Implementation)
+- `macro_scene.json` → `macroScene` object
+- `knowledge_matrix.json` → `knowledgeMatrix` + `redHerrings`
 
 ---
 
@@ -76,6 +79,9 @@ Each historical event MUST:
 - Influence at least one currently living NPC OR
 - Shape an existing institution or location
 
+### Output (Current Implementation)
+- `macro_scene.json` → `mythosHistory` array
+
 ---
 
 ## Step 3: End State Definition (Hidden from Players)
@@ -93,6 +99,9 @@ Define the inevitable outcome of the world **if no investigators intervene**.
 - Must be deterministic
 - Must NOT depend on investigator actions
 - Must be mythos-consistent
+
+### Output (Current Implementation)
+- `macro_scene.json` → `endState` object
 
 ---
 
@@ -152,6 +161,9 @@ Store in `secrets` or `clues` with appropriate difficulty levels:
 - NPCs must NOT know the full truth
 - Goals may conflict with each other
 - Fear must be exploitable through investigation (stored in `secrets` and extractable via `clues`)
+
+### Output (Current Implementation)
+- `data/Mods/<ModuleName>_npc/*.json`
 
 ---
 

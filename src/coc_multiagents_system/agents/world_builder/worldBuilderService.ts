@@ -5,6 +5,7 @@
 
 import { MacroSceneAgent } from "./macroSceneAgent.js";
 import { NPCBuilderAgent } from "./npcBuilderAgent.js";
+import { ScenarioBuilderAgent } from "./scenarioBuilderAgent.js";
 import { saveWorldToDatabase, saveWorldToJSON } from "./persistence.js";
 import type { WorldGenerationResult, MacroSceneSettingType } from "./types.js";
 import type { CoCDatabase } from "../memory/database/index.js";
@@ -25,10 +26,12 @@ export type WorldBuilderProgressCallback = (
  */
 export class WorldBuilderService {
   private macroSceneAgent: MacroSceneAgent;
+  private scenarioBuilderAgent: ScenarioBuilderAgent;
   private npcBuilderAgent: NPCBuilderAgent;
 
   constructor() {
     this.macroSceneAgent = new MacroSceneAgent();
+    this.scenarioBuilderAgent = new ScenarioBuilderAgent();
     this.npcBuilderAgent = new NPCBuilderAgent();
   }
 
@@ -64,8 +67,22 @@ export class WorldBuilderService {
 
       progressCallback?.("macro_scene", 40, `World structure complete: ${macroScene.moduleName}`);
 
-      // ========== PHASE 2: NPC BUILDER AGENT (Steps 1-5) ==========
-      progressCallback?.("npc_builder", 50, "Instantiating NPCs from knowledge holders...");
+      // ========== PHASE 2: SCENARIO BUILDER AGENT ==========
+      progressCallback?.("scenario_builder", 45, "Generating scenarios from place holders...");
+
+      const scenarios = await this.scenarioBuilderAgent.generate(
+        macroScene,
+        truthTimeline,
+        knowledgeMatrix,
+        (msg) => {
+          progressCallback?.("scenario_builder", 55, msg);
+        }
+      );
+
+      progressCallback?.("scenario_builder", 60, `Scenario outlines generated: ${scenarios.length}`);
+
+      // ========== PHASE 3: NPC BUILDER AGENT (Steps 1-5) ==========
+      progressCallback?.("npc_builder", 65, "Instantiating NPCs from knowledge holders...");
 
       const npcs = await this.npcBuilderAgent.generateBatch(
         macroScene,
@@ -74,13 +91,28 @@ export class WorldBuilderService {
         redHerrings,
         mythosEvents,
         (msg) => {
-          progressCallback?.("npc_builder", 60, msg);
+          progressCallback?.("npc_builder", 70, msg);
         }
       );
 
       progressCallback?.("npc_builder", 75, `NPC generation complete: ${npcs.length} NPCs`);
 
-      // ========== PHASE 3: PERSISTENCE ==========
+      // ========== PHASE 4: STARTING SCENE SNAPSHOT ==========
+      progressCallback?.("scenario_snapshot", 78, "Selecting starting scene and generating snapshot...");
+
+      const { startingScene, otherScenarioNpcAssignments } =
+        await this.scenarioBuilderAgent.generateStartingSceneSnapshot(
+          macroScene,
+          truthTimeline,
+          knowledgeMatrix,
+          scenarios,
+          npcs,
+          (msg) => {
+            progressCallback?.("scenario_snapshot", 79, msg);
+          }
+        );
+
+      // ========== PHASE 5: PERSISTENCE ==========
       progressCallback?.("persistence", 80, "Saving to database...");
 
       await saveWorldToDatabase(
@@ -92,7 +124,10 @@ export class WorldBuilderService {
         redHerrings,
         mythosEvents,
         endState,
-        npcs
+        npcs,
+        scenarios,
+        startingScene,
+        otherScenarioNpcAssignments
       );
 
       progressCallback?.("persistence", 90, "Generating JSON files...");
@@ -105,7 +140,10 @@ export class WorldBuilderService {
         redHerrings,
         mythosEvents,
         endState,
-        npcs
+        scenarios,
+        npcs,
+        startingScene,
+        otherScenarioNpcAssignments
       );
 
       progressCallback?.("complete", 100, "World generation complete!");
@@ -116,6 +154,7 @@ export class WorldBuilderService {
       console.log(`   NPCs: ${npcs.length}`);
       console.log(`   Truth events: ${truthTimeline.length}`);
       console.log(`   Knowledge holders: ${knowledgeMatrix.length}`);
+      console.log(`   Scenarios: ${scenarios.length}`);
       console.log(`   Files: ${Object.keys(generatedFiles).length} generated`);
 
       return {
@@ -125,6 +164,9 @@ export class WorldBuilderService {
         redHerrings,
         mythosEvents,
         endState,
+        scenarios,
+        startingScene,
+        otherScenarioNpcAssignments,
         npcs,
         generatedFiles,
       };
@@ -163,6 +205,33 @@ export class WorldBuilderService {
     const moduleName = macroScene.moduleName;
     progressCallback?.("macro_scene", 40, `World structure complete: ${moduleName}`);
 
+    progressCallback?.("scenario_builder", 50, "Generating scenarios from place holders...");
+
+    const scenarios = await this.scenarioBuilderAgent.generate(
+      macroScene,
+      truthTimeline,
+      knowledgeMatrix,
+      (msg) => {
+        progressCallback?.("scenario_builder", 60, msg);
+      }
+    );
+
+    progressCallback?.("scenario_builder", 65, `Scenario outlines generated: ${scenarios.length}`);
+
+    progressCallback?.("scenario_snapshot", 70, "Selecting starting scene and generating snapshot...");
+
+    const { startingScene, otherScenarioNpcAssignments } =
+      await this.scenarioBuilderAgent.generateStartingSceneSnapshot(
+        macroScene,
+        truthTimeline,
+        knowledgeMatrix,
+        scenarios,
+        [],
+        (msg) => {
+          progressCallback?.("scenario_snapshot", 72, msg);
+        }
+      );
+
     progressCallback?.("persistence", 80, "Generating JSON files...");
 
     const generatedFiles = await saveWorldToJSON(
@@ -173,7 +242,10 @@ export class WorldBuilderService {
       redHerrings,
       mythosEvents,
       endState,
-      []
+      scenarios,
+      [],
+      startingScene,
+      otherScenarioNpcAssignments
     );
 
     progressCallback?.("complete", 100, "Scene generation complete!");
@@ -183,6 +255,7 @@ export class WorldBuilderService {
     console.log(`   Location: ${macroScene.locationName}`);
     console.log(`   Truth events: ${truthTimeline.length}`);
     console.log(`   Knowledge holders: ${knowledgeMatrix.length}`);
+    console.log(`   Scenarios: ${scenarios.length}`);
     console.log(`   Files: ${Object.keys(generatedFiles).length} generated`);
 
     return {
@@ -192,6 +265,9 @@ export class WorldBuilderService {
       redHerrings,
       mythosEvents,
       endState,
+      scenarios,
+      startingScene,
+      otherScenarioNpcAssignments,
       npcs: [],
       generatedFiles,
     };
@@ -231,6 +307,18 @@ export class WorldBuilderService {
     const truthTimeline = truthParsed.truthTimeline ?? [];
     const knowledgeMatrix = knowledgeParsed.knowledgeMatrix ?? [];
     const redHerrings = knowledgeParsed.redHerrings ?? [];
+    const scenariosPath = path.join(moduleDir, "scenarios_outline.json");
+    let scenarios = [];
+
+    try {
+      const scenariosRaw = await fs.readFile(scenariosPath, "utf-8");
+      const scenariosParsed = JSON.parse(scenariosRaw);
+      scenarios = scenariosParsed.scenarios ?? scenariosParsed ?? [];
+    } catch (error) {
+      if ((error as NodeJS.ErrnoException).code !== "ENOENT") {
+        console.warn("Failed to load scenarios_outline.json:", error);
+      }
+    }
 
     progressCallback?.("npc_builder", 50, "Instantiating NPCs from knowledge holders...");
 
@@ -257,7 +345,10 @@ export class WorldBuilderService {
       redHerrings,
       mythosEvents,
       endState,
-      npcs
+      scenarios,
+      npcs,
+      null,
+      []
     );
 
     progressCallback?.("complete", 100, "NPC generation complete!");
@@ -273,6 +364,9 @@ export class WorldBuilderService {
       redHerrings,
       mythosEvents,
       endState,
+      scenarios,
+      startingScene: null,
+      otherScenarioNpcAssignments: [],
       npcs,
       generatedFiles,
     };

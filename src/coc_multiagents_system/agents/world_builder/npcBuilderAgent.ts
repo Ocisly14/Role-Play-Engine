@@ -320,89 +320,103 @@ export class NPCBuilderAgent {
     console.log(`   Generated ${npcBasics.length} NPC templates`);
 
     // Steps 2-4: For each NPC, generate attributes, skills, and identity
-    const npcs: NPCProfile[] = [];
+    const npcs: NPCProfile[] = new Array(npcBasics.length);
+    const concurrencyLimit = 4;
+    let currentIndex = 0;
 
-    for (let i = 0; i < npcBasics.length; i++) {
-      const npcBasic = npcBasics[i];
-      const mappedOccupation = mapOccupationToList(npcBasic.occupation, occupationNames);
-      if (mappedOccupation !== npcBasic.occupation) {
-        console.log(
-          `   ↪ Mapped occupation "${npcBasic.occupation}" -> "${mappedOccupation}"`
+    const worker = async () => {
+      while (true) {
+        const index = currentIndex;
+        currentIndex += 1;
+
+        if (index >= npcBasics.length) {
+          return;
+        }
+
+        const npcBasic = { ...npcBasics[index] };
+        const mappedOccupation = mapOccupationToList(npcBasic.occupation, occupationNames);
+        if (mappedOccupation !== npcBasic.occupation) {
+          console.log(
+            `   ↪ Mapped occupation "${npcBasic.occupation}" -> "${mappedOccupation}"`
+          );
+          npcBasic.occupation = mappedOccupation;
+        }
+        progressCallback?.(`Processing NPC ${index + 1}/${npcBasics.length}: ${npcBasic.name}`);
+
+        // Step 2: Generate attributes
+        const generatedAttrs = this.generateAttributes(npcBasic);
+        const attributes: CharacterAttributes = {
+          STR: generatedAttrs.STR,
+          CON: generatedAttrs.CON,
+          DEX: generatedAttrs.DEX,
+          APP: generatedAttrs.APP,
+          POW: generatedAttrs.POW,
+          SIZ: generatedAttrs.SIZ,
+          INT: generatedAttrs.INT,
+          EDU: generatedAttrs.EDU,
+        };
+
+        // Step 3: Allocate skills
+        const skills = this.allocateSkills(npcBasic, attributes);
+
+        // Step 4: Fill identity and inventory
+        const identity = await this.fillIdentityAndInventory(
+          npcBasic,
+          attributes,
+          skills,
+          truthTimeline,
+          knowledgeHolders,
+          redHerrings,
+          progressCallback
         );
-        npcBasic.occupation = mappedOccupation;
+
+        // Assemble complete NPC profile
+        const relationships: NPCRelationship[] = (npcBasic.relationships || []).map((relationship) => ({
+          targetName: relationship.targetName,
+          relationshipType: normalizeRelationshipType(relationship.relationshipType),
+          attitude: relationship.attitude,
+          description: relationship.description,
+          targetId: relationship.targetName ? makeNpcId(relationship.targetName) : "unknown",
+        }));
+
+        const npc: NPCProfile = {
+          id: makeNpcId(npcBasic.name),
+          name: npcBasic.name,
+          occupation: npcBasic.occupation,
+          age: npcBasic.age,
+          gender: npcBasic.gender,
+          appearance: identity.appearance || "Not described",
+          personality: identity.personality || "Not described",
+          background: npcBasic.background,
+          goals: npcBasic.goals,
+          secrets: npcBasic.secrets,
+          attributes,
+          status: {
+            hp: generatedAttrs.HP,
+            maxHp: generatedAttrs.HP,
+            sanity: generatedAttrs.SAN,
+            maxSanity: 99,
+            luck: generatedAttrs.LUCK || 50,
+            mp: generatedAttrs.MP,
+            conditions: [],
+            damageBonus: generatedAttrs.DB,
+            build: generatedAttrs.BUILD,
+            mov: generatedAttrs.MOV,
+          },
+          skills,
+          inventory: identity.inventory || [],
+          clues: identity.clues || [],
+          relationships,
+          notes: identity.notes,
+          isNPC: true,
+        };
+
+        npcs[index] = npc;
       }
-      progressCallback?.(`Processing NPC ${i + 1}/${npcBasics.length}: ${npcBasic.name}`);
+    };
 
-      // Step 2: Generate attributes
-      const generatedAttrs = this.generateAttributes(npcBasic);
-      const attributes: CharacterAttributes = {
-        STR: generatedAttrs.STR,
-        CON: generatedAttrs.CON,
-        DEX: generatedAttrs.DEX,
-        APP: generatedAttrs.APP,
-        POW: generatedAttrs.POW,
-        SIZ: generatedAttrs.SIZ,
-        INT: generatedAttrs.INT,
-        EDU: generatedAttrs.EDU,
-      };
-
-      // Step 3: Allocate skills
-      const skills = this.allocateSkills(npcBasic, attributes);
-
-      // Step 4: Fill identity and inventory
-      const identity = await this.fillIdentityAndInventory(
-        npcBasic,
-        attributes,
-        skills,
-        truthTimeline,
-        knowledgeHolders,
-        redHerrings,
-        progressCallback
-      );
-
-      // Assemble complete NPC profile
-      const relationships: NPCRelationship[] = (npcBasic.relationships || []).map((relationship) => ({
-        targetName: relationship.targetName,
-        relationshipType: normalizeRelationshipType(relationship.relationshipType),
-        attitude: relationship.attitude,
-        description: relationship.description,
-        targetId: relationship.targetName ? makeNpcId(relationship.targetName) : "unknown",
-      }));
-
-      const npc: NPCProfile = {
-        id: makeNpcId(npcBasic.name),
-        name: npcBasic.name,
-        occupation: npcBasic.occupation,
-        age: npcBasic.age,
-        gender: npcBasic.gender,
-        appearance: identity.appearance || "Not described",
-        personality: identity.personality || "Not described",
-        background: npcBasic.background,
-        goals: npcBasic.goals,
-        secrets: npcBasic.secrets,
-        attributes,
-        status: {
-          hp: generatedAttrs.HP,
-          maxHp: generatedAttrs.HP,
-          sanity: generatedAttrs.SAN,
-          maxSanity: 99,
-          luck: generatedAttrs.LUCK || 50,
-          mp: generatedAttrs.MP,
-          conditions: [],
-          damageBonus: generatedAttrs.DB,
-          build: generatedAttrs.BUILD,
-          mov: generatedAttrs.MOV,
-        },
-        skills,
-        inventory: identity.inventory || [],
-        clues: identity.clues || [],
-        relationships,
-        notes: identity.notes,
-        isNPC: true,
-      };
-
-      npcs.push(npc);
-    }
+    const workerCount = Math.min(concurrencyLimit, npcBasics.length);
+    await Promise.all(Array.from({ length: workerCount }, () => worker()));
 
     console.log("✅ [NPC Builder Agent] NPC generation complete");
     console.log(`   Final count: ${npcs.length} NPCs`);
