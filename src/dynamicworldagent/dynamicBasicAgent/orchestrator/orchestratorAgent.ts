@@ -1,13 +1,14 @@
 import { getOrchestratorTemplate } from "./orchestratorTemplate.js";
 import { composeTemplate } from "../../../template.js";
-import type { ActionAnalysis, GameStateManager, ActionType } from "../../../state.js";
+import type { ActionAnalysis, ActionType } from "../../../state.js";
+import type { DynamicGameStateManager } from "../../state/index.js";
 import {
   ModelProviderName,
   ModelClass,
   generateText,
 } from "../../../models/index.js";
-import type { CoCDatabase } from "../memory/database/index.js";
-import { extractRecentConversationHistory } from "../memory/memoryAgent.js";
+import type { CoCDatabase } from "../../../coc_multiagents_system/agents/memory/database/index.js";
+import { extractRecentConversationHistory } from "../../../coc_multiagents_system/agents/memory/memoryAgent.js";
 
 interface OrchestratorRuntime {
   modelProvider: ModelProviderName;
@@ -27,17 +28,17 @@ export class OrchestratorAgent {
   /**
    * Process input (user query, agent result, or instruction) and determine which agent to route to
    */
-  async processInput(input: string, gameStateManager: GameStateManager, db?: CoCDatabase): Promise<string> {
+  async processInput(input: string, gameStateManager: DynamicGameStateManager, db?: CoCDatabase): Promise<string> {
     const runtime = createRuntime();
-    const gameState = gameStateManager.getGameState();
+    const dynamicState = gameStateManager.getState();
     
     // Get the template
     const template = getOrchestratorTemplate();
     
-    // Extract context from game state
-    const characterName = gameState.playerCharacter?.name || "Unknown";
-    const scenarioLocation = gameState.currentScenario?.location || "Unknown location";
-    const npcNames = gameState.npcCharacters?.map(npc => npc.name).join(", ") || "None";
+    // Extract context from dynamic game state
+    const characterName = dynamicState.playerCharacter?.name || "Unknown";
+    const scenarioLocation = dynamicState.currentScenario?.location || "Unknown location";
+    const npcNames = dynamicState.npcCharacters?.map(npc => npc.name).join(", ") || "None";
     
     // Get conversation history directly from database to extract previous narrative
     // This ensures we get the latest completed turns even if memory agent hasn't run yet
@@ -46,7 +47,7 @@ export class OrchestratorAgent {
       try {
         const conversationHistory = await extractRecentConversationHistory(
           db,
-          gameState.sessionId,
+          dynamicState.sessionId,
           1
         );
         
@@ -62,8 +63,8 @@ export class OrchestratorAgent {
         }
       } catch (error) {
         console.warn("[Orchestrator Agent] Failed to retrieve conversation history from database:", error);
-        // Fallback to gameState if database access fails
-        const conversationHistory = (gameState.temporaryInfo.contextualData?.conversationHistory as Array<{
+        // Fallback to dynamicState if database access fails
+        const conversationHistory = (dynamicState.temporaryInfo.contextualData?.conversationHistory as Array<{
           turnNumber: number;
           characterInput: string;
           keeperNarrative: string | null;
@@ -79,8 +80,8 @@ export class OrchestratorAgent {
         }
       }
     } else {
-      // Fallback to gameState if db is not provided
-      const conversationHistory = (gameState.temporaryInfo.contextualData?.conversationHistory as Array<{
+      // Fallback to dynamicState if db is not provided
+      const conversationHistory = (dynamicState.temporaryInfo.contextualData?.conversationHistory as Array<{
         turnNumber: number;
         characterInput: string;
         keeperNarrative: string | null;
@@ -97,7 +98,8 @@ export class OrchestratorAgent {
     }
     
     // Compose the prompt with input and game context
-    const prompt = composeTemplate(template, { gameState }, {
+    // Pass DynamicGameState directly to composeTemplate
+    const prompt = composeTemplate(template, dynamicState, {
       input,
       characterName,
       scenarioLocation,

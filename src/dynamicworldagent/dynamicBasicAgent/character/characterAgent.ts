@@ -1,7 +1,7 @@
 import { ModelClass } from "../../../models/types.js";
 import { generateText } from "../../../models/index.js";
 import { GameState, GameStateManager, NPCResponseAnalysis, ActionType } from "../../../state.js";
-import type { CharacterProfile, NPCProfile } from "../models/gameTypes.js";
+import type { CharacterProfile, NPCProfile } from "../../../coc_multiagents_system/agents/models/gameTypes.js";
 import { getCharacterTemplate } from "./characterTemplate.js";
 import { getCharacterSimulatedTemplate } from "./characterSimulatedTemplate.js";
 import { composeTemplateWithImages } from "../../../template.js";

@@ -3,6 +3,7 @@ import { ScenarioLoader } from "../../../src/coc_multiagents_system/agents/memor
 import { NPCLoader } from "../../../src/coc_multiagents_system/agents/character/npcloader/index.js";
 import { createBgeSqliteRagManager, RagManager } from "../../../src/coc_multiagents_system/agents/memory/RagManager.js";
 import { buildGraph, buildListenerGraph } from "../../../src/graph.js";
+import { buildDynamicGraph, buildDynamicListenerGraph } from "../../../src/dynamicworldagent/graph/index.js";
 import { TurnManager } from "../../../src/coc_multiagents_system/agents/memory/index.js";
 import { initialGameState } from "../../../src/state.js";
 
@@ -15,6 +16,8 @@ export class GraphManager {
 
   private graph: any = null;
   private listenerGraph: any = null;
+  private dynamicGraph: any = null;
+  private dynamicListenerGraph: any = null;
   private ragManager: RagManager | null = null;
   private turnManager: TurnManager | null = null;
 
@@ -86,24 +89,44 @@ export class GraphManager {
     this.graph = buildGraph(db, scenarioLoader, this.ragManager);
     this.listenerGraph = buildListenerGraph(db, scenarioLoader, this.ragManager);
 
+    // Build DynamicWorld graphs
+    this.dynamicGraph = buildDynamicGraph(db, scenarioLoader, this.ragManager);
+    this.dynamicListenerGraph = buildDynamicListenerGraph(db, scenarioLoader, this.ragManager);
+
     // Initialize TurnManager
     this.turnManager = new TurnManager(db);
 
-    console.log(`[${new Date().toISOString()}] ✅ Multi-agent system initialized`);
+    console.log(`[${new Date().toISOString()}] ✅ Multi-agent system initialized (including DynamicWorld graphs)`);
   }
 
   /**
    * Get main graph instance
+   * @param useDynamic - Whether to use DynamicWorld graph (default: false)
    */
-  public getGraph(): any {
-    return this.graph;
+  public getGraph(useDynamic: boolean = false): any {
+    return useDynamic ? this.dynamicGraph : this.graph;
   }
 
   /**
    * Get listener graph instance (for progression checking)
+   * @param useDynamic - Whether to use DynamicWorld graph (default: false)
    */
-  public getListenerGraph(): any {
-    return this.listenerGraph;
+  public getListenerGraph(useDynamic: boolean = false): any {
+    return useDynamic ? this.dynamicListenerGraph : this.listenerGraph;
+  }
+
+  /**
+   * Get DynamicWorld graph instance
+   */
+  public getDynamicGraph(): any {
+    return this.dynamicGraph;
+  }
+
+  /**
+   * Get DynamicWorld listener graph instance
+   */
+  public getDynamicListenerGraph(): any {
+    return this.dynamicListenerGraph;
   }
 
   /**

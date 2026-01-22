@@ -1,11 +1,22 @@
 import handlebars from "handlebars";
 import fs from "fs";
 import path from "path";
-import { type CoCState, type GameState, initialGameState } from "./state.js";
+import type { GameState } from "./gameState.js";
+import { initialGameState } from "./gameState.js";
+import type { DynamicGameState } from "./dynamicworldagent/state/index.js";
 import type { ImageInput } from "./models/types.js";
 import { names, uniqueNamesGenerator } from "unique-names-generator";
 
 type TemplateContext = Record<string, unknown>;
+
+/**
+ * CoC State type for template composition
+ * Can be a GameState directly, DynamicGameState, or an object containing gameState/dynamicGameState
+ */
+export type CoCState = 
+  | GameState 
+  | DynamicGameState
+  | { gameState?: GameState; dynamicGameState?: DynamicGameState; [key: string]: any };
 
 // Template function type for dynamic templates
 export type TemplateType = string | ((params: { state: CoCState }) => string);
@@ -90,6 +101,10 @@ const extractGameState = (state: CoCState): GameState | null => {
   if ("gameState" in state && state.gameState) {
     return state.gameState as GameState;
   }
+  if ("phase" in state && "playerCharacter" in state && "moduleName" in state) {
+    // This is DynamicGameState, return null as it's not GameState
+    return null;
+  }
   if ("phase" in state && "playerCharacter" in state) {
     return state as GameState;
   }
@@ -131,13 +146,19 @@ export const composeTemplate = (
   templatingEngine?: "handlebars"
 ): string => {
   // Handle both GameState directly and { gameState: GameState } object
+  // Also handle DynamicGameState
   const gameState = 'gameState' in state && state.gameState 
     ? state.gameState 
-    : (state as GameState);
+    : (("phase" in state && "playerCharacter" in state && !("moduleName" in state)) ? state as GameState : null);
+  
+  const dynamicGameState = 'dynamicGameState' in state && state.dynamicGameState
+    ? state.dynamicGameState
+    : (("phase" in state && "playerCharacter" in state && "moduleName" in state) ? state as DynamicGameState : null);
   
   const context: TemplateContext = {
     ...state,
     gameState: gameState ?? initialGameState,
+    dynamicGameState: dynamicGameState ?? null,
     ...extraContext,
   };
 

@@ -1,4 +1,5 @@
 import type { GameState } from "../../../src/state.js";
+import type { DynamicGameState } from "../../../src/dynamicworldagent/state/index.js";
 
 /**
  * Singleton class to manage global server state
@@ -8,6 +9,8 @@ export class ServerState {
   private static instance: ServerState | null = null;
   private gameStatesByUser = new Map<string, GameState>();
   private gameStatesBySession = new Map<string, GameState>();
+  private dynamicGameStatesByUser = new Map<string, DynamicGameState | null>();
+  private dynamicGameStatesBySession = new Map<string, DynamicGameState | null>();
 
   private constructor() {}
 
@@ -38,22 +41,53 @@ export class ServerState {
   /**
    * Set game state for a user (updates session index)
    */
-  public setGameState(userId: string, gameState: GameState): void {
-    this.gameStatesByUser.set(userId, gameState);
-    if (gameState.sessionId) {
-      this.gameStatesBySession.set(gameState.sessionId, gameState);
+  public setGameState(userId: string, gameState: GameState | null, dynamicGameState?: DynamicGameState | null): void {
+    if (gameState) {
+      this.gameStatesByUser.set(userId, gameState);
+      if (gameState.sessionId) {
+        this.gameStatesBySession.set(gameState.sessionId, gameState);
+      }
+    }
+    if (dynamicGameState !== undefined) {
+      this.dynamicGameStatesByUser.set(userId, dynamicGameState);
+      if (dynamicGameState?.sessionId) {
+        this.dynamicGameStatesBySession.set(dynamicGameState.sessionId, dynamicGameState);
+      }
     }
   }
 
   /**
    * Set game state by session (keeps user index in sync if found)
    */
-  public setGameStateBySession(sessionId: string, gameState: GameState): void {
-    this.gameStatesBySession.set(sessionId, gameState);
-    const userId = this.findUserIdBySession(sessionId);
-    if (userId) {
-      this.gameStatesByUser.set(userId, gameState);
+  public setGameStateBySession(sessionId: string, gameState: GameState | null, dynamicGameState?: DynamicGameState | null): void {
+    if (gameState) {
+      this.gameStatesBySession.set(sessionId, gameState);
+      const userId = this.findUserIdBySession(sessionId);
+      if (userId) {
+        this.gameStatesByUser.set(userId, gameState);
+      }
     }
+    if (dynamicGameState !== undefined) {
+      this.dynamicGameStatesBySession.set(sessionId, dynamicGameState);
+      const userId = this.findUserIdBySession(sessionId);
+      if (userId) {
+        this.dynamicGameStatesByUser.set(userId, dynamicGameState);
+      }
+    }
+  }
+
+  /**
+   * Get DynamicGameState for a user
+   */
+  public getDynamicGameState(userId: string): DynamicGameState | null {
+    return this.dynamicGameStatesByUser.get(userId) ?? null;
+  }
+
+  /**
+   * Get DynamicGameState by session
+   */
+  public getDynamicGameStateBySession(sessionId: string): DynamicGameState | null {
+    return this.dynamicGameStatesBySession.get(sessionId) ?? null;
   }
 
   /**
@@ -63,8 +97,10 @@ export class ServerState {
     const existing = this.gameStatesByUser.get(userId);
     if (existing?.sessionId) {
       this.gameStatesBySession.delete(existing.sessionId);
+      this.dynamicGameStatesBySession.delete(existing.sessionId);
     }
     this.gameStatesByUser.delete(userId);
+    this.dynamicGameStatesByUser.delete(userId);
   }
 
   /**
@@ -83,8 +119,15 @@ export class ServerState {
   }
 
   private findUserIdBySession(sessionId: string): string | null {
+    // Check GameState first
     for (const [userId, state] of this.gameStatesByUser.entries()) {
-      if (state.sessionId === sessionId) {
+      if (state?.sessionId === sessionId) {
+        return userId;
+      }
+    }
+    // Check DynamicGameState
+    for (const [userId, dynamicState] of this.dynamicGameStatesByUser.entries()) {
+      if (dynamicState?.sessionId === sessionId) {
         return userId;
       }
     }

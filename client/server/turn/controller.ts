@@ -6,6 +6,7 @@ import { ServerState } from "../core/ServerState.js";
 import { TurnManager } from "../../../src/coc_multiagents_system/agents/memory/index.js";
 import type { GameState } from "../../../src/state.js";
 import { HumanMessage } from "@langchain/core/messages";
+import { DynamicGameStateManager } from "../../../src/dynamicworldagent/state/index.js";
 
 /**
  * Create a new turn and start processing
@@ -88,20 +89,49 @@ async function processGameTurnAsync(
   try {
     console.log(`[${new Date().toISOString()}] Processing turn ${turnId}...`);
 
-    const graph = GraphManager.getInstance().getGraph();
+    const serverState = ServerState.getInstance();
+    const graphManager = GraphManager.getInstance();
+
+    // Check if this is a DynamicWorld module by checking if dynamicGameState exists
+    const dynamicGameState = serverState.getDynamicGameState(userId);
+    const useDynamic = dynamicGameState !== null;
+
+    const graph = graphManager.getGraph(useDynamic);
     const initialMessages = [new HumanMessage(userInput)];
 
-    // Invoke the graph with turnId in state
-    const result = await graph.invoke({
-      messages: initialMessages,
-      gameState: gameState,
-      turnId: turnId,
-    });
+    // Prepare graph state
+    let graphState: any;
+    
+    if (useDynamic && dynamicGameState) {
+      // For DynamicWorld modules, use only DynamicGameState
+      graphState = {
+        messages: initialMessages,
+        dynamicGameState: dynamicGameState,
+        turnId: turnId,
+      };
+    } else {
+      // For regular modules, use GameState (legacy support)
+      graphState = {
+        messages: initialMessages,
+        gameState: gameState,
+        turnId: turnId,
+      };
+    }
+
+    // Invoke the graph
+    const result = await graph.invoke(graphState);
 
     // Update the persistent state
-    ServerState.getInstance().setGameState(userId, result.gameState);
+    if (useDynamic && result.dynamicGameState) {
+      // For DynamicWorld, only store DynamicGameState
+      // Note: GameState is not needed for DynamicWorld modules
+      serverState.setGameState(userId, null as any, result.dynamicGameState);
+    } else if (result.gameState) {
+      // For regular modules, update GameState only
+      serverState.setGameState(userId, result.gameState, null);
+    }
 
-    console.log(`[${new Date().toISOString()}] Turn ${turnId} completed successfully`);
+    console.log(`[${new Date().toISOString()}] Turn ${turnId} completed successfully (${useDynamic ? 'DynamicWorld' : 'Standard'} graph)`);
   } catch (error) {
     console.error(`[${new Date().toISOString()}] Turn ${turnId} failed:`, error);
     throw error;

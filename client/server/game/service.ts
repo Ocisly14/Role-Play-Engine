@@ -5,6 +5,8 @@ import { ModuleLoader } from "../../../src/coc_multiagents_system/agents/memory/
 import { ScenarioLoader } from "../../../src/coc_multiagents_system/agents/memory/scenarioloader/index.js";
 import { NPCLoader } from "../../../src/coc_multiagents_system/agents/character/npcloader/index.js";
 import { isNameSimilar } from "../utils/stringUtils.js";
+import { loadDynamicGameState } from "../../../src/dynamicworldagent/state/index.js";
+import type { DynamicGameState } from "../../../src/dynamicworldagent/state/index.js";
 import path from "path";
 import fs from "fs";
 
@@ -186,206 +188,33 @@ export async function initializeWorldBuilderGameState(
   characterId: string | undefined,
   sessionId: string,
   modName?: string
-): Promise<{ gameState: GameState; moduleIntroduction: any }> {
-  let gameState: GameState;
-
-  if (characterId) {
-    // Load character from database
-    const database = db.getDatabase();
-    const character = database.prepare(`
-      SELECT character_id, name, attributes, status, skills, inventory, notes,
-             occupation, age, gender, appearance, personality, background
-      FROM characters
-      WHERE character_id = ? AND is_npc = 0
-    `).get(characterId);
-
-    if (!character) {
-      throw new Error("Character not found");
-    }
-
-    // Parse character data (same as regular initialization)
-    const parsedAttributes = JSON.parse((character as any).attributes);
-    const parsedStatus = JSON.parse((character as any).status);
-    const parsedSkillsRaw = JSON.parse((character as any).skills);
-    const parsedInventory = JSON.parse((character as any).inventory);
-
-    let parsedNotes: any = {};
-    try {
-      parsedNotes = typeof (character as any).notes === 'string'
-        ? JSON.parse((character as any).notes)
-        : {};
-    } catch (e) {
-      parsedNotes = {};
-    }
-
-    const parsedSkills: Record<string, number> = {};
-    for (const [skillName, skillData] of Object.entries(parsedSkillsRaw)) {
-      if (typeof skillData === 'object' && skillData !== null && 'value' in skillData) {
-        parsedSkills[skillName] = (skillData as any).value;
-      } else {
-        parsedSkills[skillName] = typeof skillData === 'number' ? skillData : 0;
-      }
-    }
-
-    gameState = {
-      ...JSON.parse(JSON.stringify(initialGameState)),
-      sessionId: sessionId,
-      playerCharacter: {
-        id: (character as any).character_id,
-        name: (character as any).name,
-        attributes: parsedAttributes,
-        status: parsedStatus,
-        skills: parsedSkills,
-        inventory: parsedInventory,
-        notes: (character as any).notes || "",
-        actionLog: [],
-        occupation: (character as any).occupation || undefined,
-        age: (character as any).age || undefined,
-        gender: (character as any).gender || parsedNotes.gender || undefined,
-        appearance: (character as any).appearance || parsedNotes.appearance || undefined,
-        personality: (character as any).personality || undefined,
-        backstory: (character as any).background || parsedNotes.backstory || undefined,
-        era: parsedNotes.era || undefined,
-        residence: parsedNotes.residence || undefined,
-        birthplace: parsedNotes.birthplace || undefined,
-        ideology: parsedNotes.ideology || undefined,
-        significantPeople: parsedNotes.people || undefined,
-        gear: parsedNotes.gear || undefined,
-        weapons: parsedNotes.weapons || undefined,
-        derivedAttributes: {
-          MOV: parsedStatus.mov || undefined,
-          BUILD: parsedStatus.build !== undefined ? String(parsedStatus.build) : undefined,
-          DB: parsedStatus.damageBonus || undefined,
-          ARMOR: undefined,
-        },
-      },
-    };
-  } else {
-    gameState = {
-      ...JSON.parse(JSON.stringify(initialGameState)),
-      sessionId: sessionId,
-    };
+): Promise<{ dynamicGameState: DynamicGameState; moduleIntroduction: any }> {
+  if (!modName) {
+    throw new Error("Module name is required for WorldBuilder game state initialization");
   }
 
-  // Load module data
+  // Use the new complete initialization function that includes runtime data
+  const { initializeCompleteDynamicGameState } = await import("../../../src/dynamicworldagent/state/DynamicGameStateLoader.js");
+  const dynamicGameState = await initializeCompleteDynamicGameState(db, {
+    sessionId,
+    moduleName: modName,
+    characterId,
+  });
+
+  if (!dynamicGameState) {
+    throw new Error(`Failed to initialize DynamicGameState for module "${modName}"`);
+  }
+
+  // Load module introduction from module digest
   let moduleIntroduction: any = null;
-  const moduleLoader = new ModuleLoader(db);
-  const modules = moduleLoader.getAllModules();
-
-  if (modules.length > 0) {
-    const module = modules[0];
-
-    if (module.keeperGuidance) {
-      gameState.keeperGuidance = module.keeperGuidance;
-    }
-
-    if (module.moduleLimitations) {
-      gameState.moduleLimitations = module.moduleLimitations;
-    }
-
-    if (module.introduction) {
-      moduleIntroduction = {
-        introduction: module.introduction,
-        moduleNotes: module.moduleNotes || ""
-      };
-    }
-
-    // Find initial snapshot using initial_snapshot flag
-    const database = db.getDatabase();
-    const initialSnapshot = database.prepare(`
-      SELECT
-        ss.snapshot_id, ss.scenario_id, ss.snapshot_name, ss.location,
-        ss.description, ss.events, ss.exits, ss.keeper_notes,
-        ss.time_restriction, ss.show_map, ss.game_time,
-        s.name as scenario_name
-      FROM scenario_snapshots ss
-      JOIN scenarios s ON ss.scenario_id = s.scenario_id
-      WHERE ss.initial_snapshot = 1
-      LIMIT 1
-    `).get();
-
-    if (initialSnapshot) {
-      const snapshot = initialSnapshot as any;
-
-      // Parse game time from snapshot
-      if (snapshot.game_time) {
-        const parsedTime = parseInitialGameTime(snapshot.game_time);
-        if (parsedTime) {
-          if (parsedTime.gameDay !== undefined) {
-            gameState.gameDay = parsedTime.gameDay;
-          }
-          gameState.timeOfDay = parsedTime.timeOfDay;
-          gameState.scenarioTimeState.sceneStartTime = parsedTime.timeOfDay;
-        }
-      }
-
-      // Load snapshot characters
-      const snapshotCharacters = database.prepare(`
-        SELECT id, character_name, character_role, character_status,
-               character_location, character_notes
-        FROM scenario_characters
-        WHERE snapshot_id = ?
-      `).all(snapshot.snapshot_id);
-
-      // Load snapshot clues
-      const snapshotClues = database.prepare(`
-        SELECT clue_id, clue_text, category, difficulty, clue_location,
-               discovery_method, reveals, discovered, discovery_details
-        FROM scenario_clues
-        WHERE snapshot_id = ?
-      `).all(snapshot.snapshot_id);
-
-      // Load snapshot conditions
-      const snapshotConditions = database.prepare(`
-        SELECT condition_id, condition_type, description, mechanical_effect
-        FROM scenario_conditions
-        WHERE snapshot_id = ?
-      `).all(snapshot.snapshot_id);
-
-      // Build current scenario
-      gameState.currentScenario = {
-        id: snapshot.snapshot_id,
-        name: snapshot.snapshot_name || snapshot.scenario_name,
-        location: snapshot.location,
-        description: snapshot.description,
-        gameTime: snapshot.game_time || undefined,
-        showMap: snapshot.show_map === 1,
-        characters: (snapshotCharacters as any[]).map(char => ({
-          id: char.id,
-          name: char.character_name,
-          role: char.character_role,
-          status: char.character_status,
-          location: char.character_location || undefined,
-          notes: char.character_notes || undefined,
-        })),
-        clues: (snapshotClues as any[]).map(clue => ({
-          id: clue.clue_id,
-          clueText: clue.clue_text,
-          category: clue.category,
-          difficulty: clue.difficulty,
-          location: clue.clue_location,
-          discoveryMethod: clue.discovery_method || undefined,
-          reveals: clue.reveals ? JSON.parse(clue.reveals) : [],
-          discovered: clue.discovered === 1,
-          discoveryDetails: clue.discovery_details ? JSON.parse(clue.discovery_details) : undefined,
-        })),
-        conditions: (snapshotConditions as any[]).map(cond => ({
-          type: cond.condition_type,
-          description: cond.description,
-          mechanicalEffect: cond.mechanical_effect || undefined,
-        })),
-        events: snapshot.events ? JSON.parse(snapshot.events) : [],
-        exits: snapshot.exits ? JSON.parse(snapshot.exits) : [],
-        keeperNotes: snapshot.keeper_notes || undefined,
-        timeRestriction: snapshot.time_restriction || undefined,
-      };
-
-      // Inject NPCs from snapshot
-      await injectWorldBuilderNPCsToGameState(db, gameState, snapshot);
-    }
+  if (dynamicGameState.moduleDigest) {
+    moduleIntroduction = {
+      introduction: dynamicGameState.moduleDigest.introduction,
+      moduleNotes: dynamicGameState.moduleDigest.moduleNotes || ""
+    };
   }
 
-  return { gameState, moduleIntroduction };
+  return { dynamicGameState, moduleIntroduction };
 }
 
 function parseInitialGameTime(value: string): { gameDay?: number; timeOfDay: string } | null {

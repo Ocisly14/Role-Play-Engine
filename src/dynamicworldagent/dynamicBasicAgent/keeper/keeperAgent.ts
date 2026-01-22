@@ -2,7 +2,7 @@ import { getKeeperTemplate } from "./keeperTemplate.js";
 import { composeTemplateWithImages } from "../../../template.js";
 import type { GameState, ActionResult, ActionAnalysis, DiscoveredClue } from "../../../state.js";
 import { GameStateManager } from "../../../state.js";
-import type { CharacterProfile, NPCProfile, ActionLogEntry } from "../models/gameTypes.js";
+import type { CharacterProfile, NPCProfile, ActionLogEntry } from "../../../coc_multiagents_system/agents/models/gameTypes.js";
 import {
   ModelProviderName,
   ModelClass,

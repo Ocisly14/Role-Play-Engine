@@ -1,9 +1,9 @@
 import { ModelClass } from "../../../models/types.js";
 import { generateText } from "../../../models/index.js";
 import { GameStateManager, GameState, ActionResult, ActionAnalysis, SceneChangeRequest, NPCResponseAnalysis, ActionType } from "../../../state.js";
-import type { CharacterProfile, ActionLogEntry, NPCProfile } from "../models/gameTypes.js";
+import type { CharacterProfile, ActionLogEntry, NPCProfile } from "../../../coc_multiagents_system/agents/models/gameTypes.js";
 import { actionTypeTemplates } from "./example.js";
-import type { ScenarioLoader } from "../memory/scenarioloader/scenarioLoader.js";
+import type { ScenarioLoader } from "../../../coc_multiagents_system/agents/memory/scenarioloader/index.js";
 
 
 /**

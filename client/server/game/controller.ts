@@ -4,6 +4,9 @@ import { GraphManager } from "../core/GraphManager.js";
 import { ServerState } from "../core/ServerState.js";
 import { getClientIp, generateSessionIdFromIp } from "../utils/sessionUtils.js";
 import { initializeGameState, initializeWorldBuilderGameState } from "./service.js";
+import { DynamicGameStateManager } from "../../../src/dynamicworldagent/state/index.js";
+import type { DynamicGameState } from "../../../src/dynamicworldagent/state/index.js";
+import type { GameState } from "../../../src/state.js";
 import path from "path";
 import fs from "fs";
 
@@ -70,14 +73,38 @@ export async function startGame(req: Request, res: Response): Promise<void> {
     const isWorldBuilder = modName && isWorldBuilderModule(modName);
 
     // Initialize game state using appropriate method
-    const { gameState, moduleIntroduction } = isWorldBuilder
-      ? await initializeWorldBuilderGameState(db, characterId, sessionId, modName)
-      : await initializeGameState(db, characterId, sessionId, modName);
+    let gameState: GameState | null = null;
+    let dynamicGameState: DynamicGameState | null = null;
+    let moduleIntroduction: any = null;
+
+    if (isWorldBuilder) {
+      // For WorldBuilder modules, only use DynamicGameState
+      const initResult = await initializeWorldBuilderGameState(db, characterId, sessionId, modName);
+      dynamicGameState = initResult.dynamicGameState;
+      moduleIntroduction = initResult.moduleIntroduction;
+      
+      // For DynamicWorld modules, GameState is not needed
+      // Only DynamicGameState is used
+      if (dynamicGameState) {
+        gameState = null as any; // GameState not needed for DynamicWorld
+      }
+    } else {
+      // For regular modules, use GameState
+      const initResult = await initializeGameState(db, characterId, sessionId, modName);
+      gameState = initResult.gameState;
+      moduleIntroduction = initResult.moduleIntroduction;
+    }
 
     console.log(`[${new Date().toISOString()}] Game initialized using ${isWorldBuilder ? 'World Builder' : 'Regular'} loader`);
 
     // Store in server state
-    ServerState.getInstance().setGameState(userId, gameState);
+    if (isWorldBuilder && dynamicGameState) {
+      // For WorldBuilder, only store DynamicGameState (no GameState needed)
+      ServerState.getInstance().setGameState(userId, null as any, dynamicGameState);
+    } else if (gameState) {
+      // For regular modules, store GameState only
+      ServerState.getInstance().setGameState(userId, gameState, null);
+    }
 
     // Create introduction turn if module introduction is available
     if (moduleIntroduction && moduleIntroduction.introduction) {
@@ -86,19 +113,32 @@ export async function startGame(req: Request, res: Response): Promise<void> {
         if (turnManager) {
           // Check if introduction turn already exists for this session
           const database = db.getDatabase();
+          const sessionId = isWorldBuilder && dynamicGameState 
+            ? dynamicGameState.sessionId 
+            : (gameState?.sessionId || "");
           const existingIntro = database.prepare(`
             SELECT turn_id FROM game_turns
             WHERE session_id = ? AND turn_number = 0 AND character_input = ''
-          `).get(gameState.sessionId);
+          `).get(sessionId);
 
           if (!existingIntro) {
             // Generate unique turn ID
             const { randomUUID } = await import("crypto");
             const introTurnId = `turn-intro-${Date.now()}-${randomUUID().slice(0, 8)}`;
 
-            // Get initial game time from gameState (set from module initialGameTime)
-            const initialGameDay = gameState.gameDay ?? null;
-            const initialGameTime = gameState.timeOfDay ?? null;
+            // Get initial game time from state (set from module initialGameTime)
+            const initialGameDay = isWorldBuilder && dynamicGameState 
+              ? dynamicGameState.gameDay 
+              : (gameState?.gameDay ?? null);
+            const initialGameTime = isWorldBuilder && dynamicGameState 
+              ? dynamicGameState.timeOfDay 
+              : (gameState?.timeOfDay ?? null);
+            const playerCharacterId = isWorldBuilder && dynamicGameState 
+              ? dynamicGameState.playerCharacter.id 
+              : (gameState?.playerCharacter.id || "");
+            const playerCharacterName = isWorldBuilder && dynamicGameState 
+              ? dynamicGameState.playerCharacter.name 
+              : (gameState?.playerCharacter.name || "");
 
             // Create a special turn with turnNumber 0 for introduction
             // Save initial game time from module's initialGameTime
@@ -109,12 +149,12 @@ export async function startGame(req: Request, res: Response): Promise<void> {
               ) VALUES (?, ?, 0, '', ?, ?, ?, 'completed', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP, ?, ?)
             `).run(
               introTurnId,
-              gameState.sessionId,
-              gameState.playerCharacter.id,
-              gameState.playerCharacter.name,
+              sessionId,
+              playerCharacterId,
+              playerCharacterName,
               moduleIntroduction.introduction,
-              initialGameDay,
-              initialGameTime
+              initialGameDay ?? null,
+              initialGameTime ?? null
             );
 
             console.log(`[${new Date().toISOString()}] Introduction turn created: ${introTurnId} with game time: Day ${initialGameDay}, ${initialGameTime}`);
@@ -130,19 +170,52 @@ export async function startGame(req: Request, res: Response): Promise<void> {
 
     console.log(`[${new Date().toISOString()}] Game started successfully`);
 
+    const finalSessionId = isWorldBuilder && dynamicGameState 
+      ? dynamicGameState.sessionId 
+      : (gameState?.sessionId || "");
+    const finalCharacterId = isWorldBuilder && dynamicGameState 
+      ? dynamicGameState.playerCharacter.id 
+      : (gameState?.playerCharacter.id || "");
+    const finalCharacterName = isWorldBuilder && dynamicGameState 
+      ? dynamicGameState.playerCharacter.name 
+      : (gameState?.playerCharacter.name || "");
+    const finalPhase = isWorldBuilder && dynamicGameState 
+      ? dynamicGameState.phase 
+      : (gameState?.phase || "intro");
+    const finalTimeOfDay = isWorldBuilder && dynamicGameState 
+      ? dynamicGameState.timeOfDay 
+      : (gameState?.timeOfDay || "08:00");
+    const finalTension = isWorldBuilder && dynamicGameState 
+      ? dynamicGameState.tension 
+      : (gameState?.tension || 1);
+    const finalCurrentScenario = isWorldBuilder && dynamicGameState 
+      ? dynamicGameState.currentScenario 
+      : (gameState?.currentScenario || null);
+
     res.json({
       success: true,
       message: `游戏已开始！`,
-      sessionId: gameState.sessionId,
-      characterId: gameState.playerCharacter.id,
-      characterName: gameState.playerCharacter.name,
+      sessionId: finalSessionId,
+      characterId: finalCharacterId,
+      characterName: finalCharacterName,
       moduleIntroduction: moduleIntroduction,
       gameState: {
-        phase: gameState.phase,
-        playerCharacter: gameState.playerCharacter,
-        timeOfDay: gameState.timeOfDay,
-        tension: gameState.tension,
-        currentScenario: gameState.currentScenario,
+        phase: finalPhase,
+        playerCharacter: isWorldBuilder && dynamicGameState 
+          ? dynamicGameState.playerCharacter 
+          : (gameState?.playerCharacter || {
+            id: "",
+            name: "",
+            attributes: { STR: 50, CON: 50, DEX: 50, APP: 50, POW: 50, SIZ: 50, INT: 50, EDU: 50 },
+            status: { hp: 10, maxHp: 10, sanity: 60, maxSanity: 99, luck: 50, mp: 10, conditions: [] },
+            skills: {},
+            inventory: [],
+            notes: "",
+            actionLog: [],
+          }),
+        timeOfDay: finalTimeOfDay,
+        tension: finalTension,
+        currentScenario: finalCurrentScenario,
       },
       timestamp: new Date().toISOString(),
     });

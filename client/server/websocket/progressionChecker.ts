@@ -26,21 +26,40 @@ export async function checkAndTriggerSimulate(
   const dbManager = DatabaseManager.getInstance();
 
   const persistentGameState = serverState.getGameStateBySession(sessionId);
-  const listenerGraph = graphManager.getListenerGraph();
+  const dynamicGameState = serverState.getDynamicGameStateBySession(sessionId);
+  const useDynamic = dynamicGameState !== null;
+  const listenerGraph = graphManager.getListenerGraph(useDynamic);
   const turnManager = graphManager.getTurnManager();
   const ragManager = graphManager.getRagManager();
   const db = dbManager.isInitialized() ? dbManager.getDatabase() : null;
 
-  if (!persistentGameState || !listenerGraph || !turnManager || !db || persistentGameState.sessionId !== sessionId) {
+  if ((!persistentGameState && !dynamicGameState) || !listenerGraph || !turnManager || !db) {
+    return false;
+  }
+
+  // Check session ID match
+  const sessionIdMatch = useDynamic && dynamicGameState
+    ? dynamicGameState.sessionId === sessionId
+    : persistentGameState?.sessionId === sessionId;
+  if (!sessionIdMatch) {
     return false;
   }
 
   try {
-    const gsm = new GameStateManager(persistentGameState);
+    // Get state manager based on type
+    let minutesSinceInput: number;
+    if (useDynamic && dynamicGameState) {
+      const { DynamicGameStateManager } = await import("../../../src/dynamicworldagent/state/index.js");
+      const dgsm = new DynamicGameStateManager(dynamicGameState);
+      minutesSinceInput = dgsm.getMinutesSinceLastInput();
+    } else if (persistentGameState) {
+      const gsm = new GameStateManager(persistentGameState);
+      minutesSinceInput = gsm.getMinutesSinceLastInput();
+    } else {
+      return false;
+    }
 
     // Only check time threshold (3 minutes), not turn count
-    const minutesSinceInput = gsm.getMinutesSinceLastInput();
-
     if (minutesSinceInput < 3) {
       // Time threshold not met, no need to trigger
       return false;
@@ -48,22 +67,37 @@ export async function checkAndTriggerSimulate(
 
     console.log(`⏰ [WebSocket] Time threshold reached (${minutesSinceInput} min idle) for session ${sessionId}`);
 
-    // Enrich game state with conversation history before invoking listener graph
-    const enrichedGameState = await enrichMemoryContext(
-      persistentGameState,
-      null, // No action analysis for progression check
-      ragManager || undefined,
-      db,
-      undefined // No character input for progression check
-    );
+    // Prepare graph state
+    let graphState: any;
+    if (useDynamic && dynamicGameState) {
+      // For DynamicWorld modules, use only DynamicGameState
+      graphState = {
+        messages: [],
+        dynamicGameState: dynamicGameState,
+        isSimulatedQuery: false,
+        simulatedQueryCount: 0,
+      };
+    } else if (persistentGameState) {
+      // For regular modules, enrich game state with conversation history
+      const enrichedGameState = await enrichMemoryContext(
+        persistentGameState,
+        null, // No action analysis for progression check
+        ragManager || undefined,
+        db,
+        undefined // No character input for progression check
+      );
+      graphState = {
+        messages: [],
+        gameState: enrichedGameState,
+        isSimulatedQuery: false,
+        simulatedQueryCount: 0,
+      };
+    } else {
+      return false;
+    }
 
     // Invoke listener graph - entry node will enrich again when simulate is triggered
-    const result = await listenerGraph.invoke({
-      messages: [],
-      gameState: enrichedGameState,
-      isSimulatedQuery: false,
-      simulatedQueryCount: 0,
-    });
+    const result = await listenerGraph.invoke(graphState);
 
     // Check if simulate was triggered and processed
     if (result.turnId && result.messages.length > 0) {
@@ -73,12 +107,23 @@ export async function checkAndTriggerSimulate(
       console.log(`🔔 [WebSocket] Simulate processed for session ${sessionId}`);
 
       // Update persistent state
-      serverState.setGameStateBySession(sessionId, result.gameState);
-
-      // Reset the idle timer after listener executes successfully
-      const gsmReset = new GameStateManager(result.gameState);
-      gsmReset.updatePlayerInputTime();
-      serverState.setGameStateBySession(sessionId, gsmReset.getGameState());
+      if (useDynamic && result.dynamicGameState) {
+        // For DynamicWorld, only store DynamicGameState
+        const { DynamicGameStateManager } = await import("../../../src/dynamicworldagent/state/index.js");
+        const dgsm = new DynamicGameStateManager(result.dynamicGameState);
+        
+        // Reset the idle timer
+        dgsm.updatePlayerInputTime();
+        serverState.setGameStateBySession(sessionId, null as any, dgsm.getState());
+      } else if (result.gameState) {
+        // For regular modules, update GameState only
+        serverState.setGameStateBySession(sessionId, result.gameState, null);
+        
+        // Reset the idle timer
+        const gsmReset = new GameStateManager(result.gameState);
+        gsmReset.updatePlayerInputTime();
+        serverState.setGameStateBySession(sessionId, gsmReset.getGameState(), null);
+      }
       console.log(`⏰ [WebSocket] Idle timer reset for session ${sessionId}`);
 
       // Get the completed turn to send to client
@@ -101,7 +146,7 @@ export async function checkAndTriggerSimulate(
       // Still reset the timer to avoid immediate re-checking
       const gsmReset = new GameStateManager(result.gameState);
       gsmReset.updatePlayerInputTime();
-      serverState.setGameStateBySession(sessionId, gsmReset.getGameState());
+      serverState.setGameStateBySession(sessionId, gsmReset.getGameState(), result.dynamicGameState || null);
       console.log(`⏰ [WebSocket] Idle timer reset for session ${sessionId} (no simulate triggered)`);
     }
 
