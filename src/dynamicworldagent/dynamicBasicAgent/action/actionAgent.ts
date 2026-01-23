@@ -1,9 +1,11 @@
 import { ModelClass } from "../../../models/types.js";
 import { generateText } from "../../../models/index.js";
-import { GameStateManager, GameState, ActionResult, ActionAnalysis, SceneChangeRequest, NPCResponseAnalysis, ActionType } from "../../../state.js";
+import { ActionResult, ActionAnalysis, SceneChangeRequest, NPCResponseAnalysis, ActionType } from "../../../state.js";
 import type { CharacterProfile, ActionLogEntry, NPCProfile } from "../../../coc_multiagents_system/agents/models/gameTypes.js";
-import { actionTypeTemplates } from "./example.js";
+import { actionTypeTemplates } from "../../../coc_multiagents_system/agents/action/example.js";
 import type { ScenarioLoader } from "../../../coc_multiagents_system/agents/memory/scenarioloader/index.js";
+import type { DynamicGameState } from "../../state/index.js";
+import { DynamicGameStateManager } from "../../state/index.js";
 
 
 /**
@@ -21,15 +23,16 @@ export class ActionAgent {
    */
   private async processCharacterAction(
     runtime: any,
-    gameState: GameState,
+    dynamicState: DynamicGameState,
     character: CharacterProfile,
     actionDescription: string,
     options: {
       isNPC: boolean;
       npcResponse?: NPCResponseAnalysis;
       targetCharacter?: CharacterProfile | null;
-    }
-  ): Promise<GameState> {
+    },
+    gameStateManager: DynamicGameStateManager
+  ): Promise<DynamicGameState> {
     const { isNPC, npcResponse, targetCharacter } = options;
 
     // Pre-roll dice
@@ -63,8 +66,6 @@ Include "scenarioUpdate" if the action permanently changes the environment. "sce
 - description: updated scene flavor text
 - conditions: array of environmental condition objects
 - events: array of event strings
-- exits: array of exit objects
-- permanentChanges: array of strings describing lasting structural/environment changes (these will be stored permanently)
 ${!isNPC ? '' : '\nDo NOT include clues here; the Keeper determines clue revelations.'}
 
 INVENTORY UPDATES:
@@ -135,9 +136,7 @@ Example:
   "scenarioUpdate": {          // Optional: only if environment permanently changes
     "description": "Updated scene description",
     "conditions": [{"type": "lighting", "description": "...", "mechanicalEffect": "..."}],
-    "events": ["Event description"],
-    "exits": [{"direction": "north", "destination": "...", "description": "...", "condition": "open"}],
-    "permanentChanges": ["Permanent change description"]
+    "events": ["Event description"]
   },
 
   "sceneChange": {
@@ -151,12 +150,12 @@ Example:
 }
 `;
 
-    const actionTypeTemplate = this.getActionTypeTemplate(gameState, isNPC, npcResponse);
+    const actionTypeTemplate = this.getActionTypeTemplate(dynamicState, isNPC, npcResponse);
 
     const systemPrompt = baseSystemPrompt + actionTypeTemplate;
 
     // Single call - no tool loop needed with pre-rolled dice
-    const context = this.buildContext(gameState, character, { isNPC, npcResponse, targetCharacter });
+    const context = this.buildContext(dynamicState, character, { isNPC, npcResponse, targetCharacter });
     const fullPrompt = systemPrompt + context + `\n\nCharacter action: ${actionDescription}`;
 
     const response = await generateText({
@@ -191,33 +190,38 @@ Example:
       console.error(`   Error message: ${error instanceof Error ? error.message : String(error)}`);
       console.error(`   Original response (first 500 chars): ${response.substring(0, 500)}${response.length > 500 ? '...' : ''}`);
       console.error(`   Original response length: ${response.length} characters`);
-      return this.buildErrorResult(gameState, character, `Invalid JSON response from model: ${error instanceof Error ? error.message : String(error)}`, [], isNPC);
+      return this.buildErrorResult(dynamicState, character, `Invalid JSON response from model: ${error instanceof Error ? error.message : String(error)}`, [], isNPC, gameStateManager);
     }
 
     // Extract dice usage from response
     const diceUsed = parsed.diceUsed || [];
 
     // Return final result
-    return this.buildFinalResult(gameState, character, parsed, diceUsed, { isNPC, npcResponse });
+    return this.buildFinalResult(dynamicState, character, parsed, diceUsed, { isNPC, npcResponse }, gameStateManager);
   }
 
   /**
    * Process character action and resolve with dice rolls and state updates
    */
-  async processAction(runtime: any, gameState: GameState, userMessage: string): Promise<GameState> {
-    const actionAnalysis = gameState.temporaryInfo.currentActionAnalysis;
-    const targetCharacter = this.findTargetCharacter(gameState, actionAnalysis);
+  async processAction(runtime: any, gameStateManager: DynamicGameStateManager, userMessage: string): Promise<void> {
+    const dynamicState = gameStateManager.getState();
+    const actionAnalysis = dynamicState.temporaryInfo.currentActionAnalysis;
+    const targetCharacter = this.findTargetCharacter(dynamicState, actionAnalysis);
 
-    return this.processCharacterAction(
+    const updatedState = await this.processCharacterAction(
       runtime,
-      gameState,
-      gameState.playerCharacter,
+      dynamicState,
+      dynamicState.playerCharacter,
       userMessage,
       {
         isNPC: false,
         targetCharacter
-      }
+      },
+      gameStateManager
     );
+    
+    // The state has been updated through the manager in buildFinalResult
+    // No need to do anything else here
   }
 
   /**
@@ -298,7 +302,7 @@ Example:
    * Find target character based on action analysis or NPC response
    */
   private findTargetCharacter(
-    gameState: GameState,
+    dynamicState: DynamicGameState,
     actionAnalysis?: ActionAnalysis | null,
     npcResponse?: NPCResponseAnalysis
   ): CharacterProfile | null {
@@ -317,12 +321,12 @@ Example:
     const targetLower = targetName.toLowerCase();
 
     // Check if target is player
-    if (gameState.playerCharacter.name.toLowerCase().includes(targetLower)) {
-      return gameState.playerCharacter;
+    if (dynamicState.playerCharacter.name.toLowerCase().includes(targetLower)) {
+      return dynamicState.playerCharacter;
     }
 
     // Check NPCs
-    const targetNpc = gameState.npcCharacters.find(npc =>
+    const targetNpc = dynamicState.npcCharacters.find(npc =>
       npc.name.toLowerCase().includes(targetLower) ||
       npc.id.toLowerCase().includes(targetLower)
     );
@@ -331,7 +335,7 @@ Example:
   }
 
   private getActionTypeTemplate(
-    gameState: GameState,
+    dynamicState: DynamicGameState,
     isNPC: boolean = false,
     npcResponse?: NPCResponseAnalysis
   ): string {
@@ -340,7 +344,7 @@ Example:
     if (isNPC && npcResponse?.responseType) {
       actionType = npcResponse.responseType;
     } else {
-      const actionAnalysis = gameState.temporaryInfo.currentActionAnalysis;
+      const actionAnalysis = dynamicState.temporaryInfo.currentActionAnalysis;
       actionType = actionAnalysis?.actionType;
     }
 
@@ -368,7 +372,7 @@ Example:
    * Unified method to build context for any character action
    */
   private buildContext(
-    gameState: GameState,
+    dynamicState: DynamicGameState,
     character: CharacterProfile,
     options: {
       isNPC: boolean;
@@ -380,14 +384,18 @@ Example:
     let { targetCharacter } = options;
 
     let context = "\n\nCurrent Scenario:\n";
-    if (gameState.currentScenario) {
+    if (dynamicState.currentScenario) {
+      // Find the corresponding scenario outline to get connections
+      const scenarioOutline = dynamicState.scenarioOutlines.find(
+        outline => outline.id === dynamicState.currentScenario!.id
+      );
+      
       const scenarioInfo = {
-        name: gameState.currentScenario.name,
-        location: gameState.currentScenario.location,
-        description: gameState.currentScenario.description,
-        conditions: gameState.currentScenario.conditions,
-        permanentChanges: gameState.currentScenario.permanentChanges,
-        exits: gameState.currentScenario.exits || []
+        name: dynamicState.currentScenario.name,
+        location: dynamicState.currentScenario.location,
+        description: dynamicState.currentScenario.description,
+        conditions: dynamicState.currentScenario.conditions,
+        connections: scenarioOutline?.connections || []
       };
       context += JSON.stringify(scenarioInfo, null, 2);
     } else {
@@ -410,7 +418,7 @@ Example:
 
     // Add last keeper narrative if available (only for player actions)
     if (!isNPC) {
-      const conversationHistory = (gameState.temporaryInfo.contextualData?.conversationHistory as Array<{
+      const conversationHistory = (dynamicState.temporaryInfo.contextualData?.conversationHistory as Array<{
         turnNumber: number;
         characterInput: string;
         keeperNarrative: string | null;
@@ -429,10 +437,16 @@ Example:
       }
     }
 
+    // Add Memory Context (DynamicWorld information prepared by Memory Agent)
+    const memoryContext = dynamicState.temporaryInfo.contextualData?.memoryContext as string | undefined;
+    if (memoryContext) {
+      context += "\n\n" + memoryContext + "\n";
+    }
+
     // Add temporary rules if any
-    if (gameState.temporaryInfo.rules.length > 0) {
+    if (dynamicState.temporaryInfo.rules.length > 0) {
       context += "\n\nTemporary Rules:\n";
-      gameState.temporaryInfo.rules.forEach((rule, index) => {
+      dynamicState.temporaryInfo.rules.forEach((rule, index) => {
         context += `${index + 1}. ${rule}\n`;
       });
     }
@@ -442,8 +456,8 @@ Example:
 
     // Add target character if applicable
     if (targetCharacter) {
-      const isPlayerTarget = targetCharacter.id === gameState.playerCharacter.id ||
-        targetCharacter.name === gameState.playerCharacter.name;
+      const isPlayerTarget = targetCharacter.id === dynamicState.playerCharacter.id ||
+        targetCharacter.name === dynamicState.playerCharacter.name;
       context += `\n\nTarget ${isPlayerTarget ? 'Character (Player)' : 'NPC'}:\n` + JSON.stringify(targetCharacter, null, 2);
     }
 
@@ -463,21 +477,21 @@ Example:
    * Unified method to build final result for any character action
    */
   private buildFinalResult(
-    gameState: GameState,
+    dynamicState: DynamicGameState,
     character: CharacterProfile,
     parsed: any,
     toolLogs: string[],
     options: {
       isNPC: boolean;
       npcResponse?: NPCResponseAnalysis;
-    }
-  ): GameState {
+    },
+    gameStateManager: DynamicGameStateManager
+  ): DynamicGameState {
     const { isNPC, npcResponse } = options;
-    const stateManager = new GameStateManager(gameState);
     
     // Apply the state update from LLM result
     if (parsed.stateUpdate) {
-      stateManager.applyActionUpdate(parsed.stateUpdate);
+      gameStateManager.applyActionUpdate(parsed.stateUpdate);
     }
 
     // Handle scene change request
@@ -494,8 +508,8 @@ Example:
             const targetScenario = searchResult.scenarios[0];
             const targetLocation = targetScenario.snapshot.location;
 
-            const currentState = stateManager.getGameState();
-            const npcInState = currentState.npcCharacters.find(n => n.id === character.id) as NPCProfile | undefined;
+            const currentState = gameStateManager.getState();
+            const npcInState = currentState.npcCharacters.find(n => n.id === character.id);
 
             if (npcInState) {
               const oldLocation = npcInState.currentLocation || null;
@@ -507,7 +521,7 @@ Example:
                 console.log(`   - NPC ${character.name} already at target location ${targetLocation}`);
               }
             } else {
-              console.warn(`   ⚠️  NPC ${character.name} (ID: ${character.id}) not found in gameState`);
+              console.warn(`   ⚠️  NPC ${character.name} (ID: ${character.id}) not found in dynamicState`);
             }
           } else {
             console.warn(`   ⚠️  Scene "${targetSceneName}" not found, unable to update NPC location`);
@@ -518,7 +532,7 @@ Example:
 
         // If NPC targets player, trigger scene change for player too
         const isPlayerTarget = npcResponse?.targetCharacter &&
-          gameState.playerCharacter.name.toLowerCase().includes(npcResponse.targetCharacter.toLowerCase());
+          dynamicState.playerCharacter.name.toLowerCase().includes(npcResponse.targetCharacter.toLowerCase());
 
         if (isPlayerTarget) {
           const sceneChangeRequest: SceneChangeRequest = {
@@ -527,7 +541,7 @@ Example:
             reason: `NPC ${character.name} moved the investigator`,
             timestamp: new Date()
           };
-          stateManager.setSceneChangeRequest(sceneChangeRequest);
+          gameStateManager.setSceneChangeRequest(sceneChangeRequest);
           console.log(`   ✓ NPC triggered player scene change:`, sceneChangeRequest);
         }
       } else {
@@ -540,7 +554,7 @@ Example:
             reason: parsed.sceneChange.reason || "Action-driven scene change",
             timestamp: new Date()
           };
-          stateManager.setSceneChangeRequest(sceneChangeRequest);
+          gameStateManager.setSceneChangeRequest(sceneChangeRequest);
 
           console.log(`Action Agent: Scene change request - `, sceneChangeRequest);
         }
@@ -554,7 +568,7 @@ Example:
       delete scenarioUpdate.clues;
     }
     if (scenarioUpdate) {
-      stateManager.updateScenarioState(scenarioUpdate);
+      gameStateManager.updateScenarioState(scenarioUpdate);
       
       // Generate scenario change descriptions for action results
       if (scenarioUpdate.description) {
@@ -568,30 +582,14 @@ Example:
       if (scenarioUpdate.events && scenarioUpdate.events.length > 0) {
         scenarioChanges.push(`New events recorded: ${scenarioUpdate.events.join(', ')}`);
       }
-      
-      if (scenarioUpdate.permanentChanges && scenarioUpdate.permanentChanges.length > 0) {
-        scenarioUpdate.permanentChanges.forEach((change: string) => {
-          scenarioChanges.push(`Permanent change: ${change}`);
-          stateManager.addPermanentScenarioChange(change);
-        });
-      }
-
-      if (scenarioUpdate.exits && scenarioUpdate.exits.length > 0) {
-        scenarioUpdate.exits.forEach((exit: any) => {
-          const changeDesc = `Exit ${exit.direction} to ${exit.destination}: ${exit.condition || 'modified'}`;
-          scenarioChanges.push(changeDesc);
-          // Record structural changes as permanent
-          stateManager.addPermanentScenarioChange(`${parsed.stateUpdate?.playerCharacter?.name || 'Character'} modified ${exit.direction} exit - ${changeDesc}`);
-        });
-      }
     }
     
     // Create structured action result
     const actionResult: ActionResult = {
       timestamp: new Date(),
-      gameTime: gameState.timeOfDay || "Unknown time",
+      gameTime: dynamicState.timeOfDay || "Unknown time",
       timeElapsedMinutes: parsed.timeElapsedMinutes || 0,
-      location: gameState.currentScenario?.location || "Unknown location",
+      location: dynamicState.currentScenario?.location || "Unknown location",
       character: character.name,
       result: parsed.summary || (isNPC && npcResponse?.responseDescription) || "performed an action",
       diceRolls: toolLogs.map(log => log), // toolLogs already contain "expression -> result" format
@@ -600,7 +598,7 @@ Example:
     };
     
     // Add to action results
-    stateManager.addActionResult(actionResult);
+    gameStateManager.addActionResult(actionResult);
 
     // Log detailed action result
     const logPrefix = isNPC ? `📊 [NPC Action Result] ${character.name}` : `📊 [Action Result] Detailed execution result`;
@@ -638,13 +636,13 @@ Example:
     if (actionResult.timeElapsedMinutes && actionResult.timeElapsedMinutes > 0) {
       if (!isNPC) {
         // Only advance time for player actions
-        const oldDay = gameState.gameDay;
-        const oldTime = gameState.timeOfDay;
-        stateManager.updateGameTime(actionResult.timeElapsedMinutes);
-        const updatedState = stateManager.getGameState();
+        const oldDay = dynamicState.gameDay;
+        const oldTime = dynamicState.timeOfDay;
+        gameStateManager.updateGameTime(actionResult.timeElapsedMinutes);
+        const updatedState = gameStateManager.getState();
         const newDay = updatedState.gameDay;
         const newTime = updatedState.timeOfDay;
-        const fullTime = stateManager.getFullGameTime();
+        const fullTime = gameStateManager.getFullGameTime();
 
         console.log(`⏰ Time advanced by ${actionResult.timeElapsedMinutes} minutes (Player action)`);
         if (newDay > oldDay) {
@@ -660,13 +658,13 @@ Example:
 
     // Append summary to action logs for actor and target (if any)
     // Use full game time from state manager
-    const fullTime = stateManager.getFullGameTime();
+    const fullTime = gameStateManager.getFullGameTime();
     const logEntry: ActionLogEntry = {
       time: fullTime,
       location: actionResult.location,
       summary: actionResult.result,
     };
-    const updatedState = stateManager.getGameState() as GameState;
+    const updatedState = gameStateManager.getState();
 
     const appendLog = (character: CharacterProfile | undefined) => {
       if (!character) return;
@@ -683,7 +681,7 @@ Example:
     appendLog(actorInState);
 
     // Target character (if present)
-    const targetName = isNPC ? npcResponse?.targetCharacter : gameState.temporaryInfo.currentActionAnalysis?.target?.name;
+    const targetName = isNPC ? npcResponse?.targetCharacter : dynamicState.temporaryInfo.currentActionAnalysis?.target?.name;
     if (targetName) {
       const targetLower = targetName.toLowerCase();
       if (updatedState.playerCharacter.name.toLowerCase().includes(targetLower)) {
@@ -697,7 +695,7 @@ Example:
     }
     
     // Return the updated game state
-    return stateManager.getGameState() as GameState;
+    return gameStateManager.getState();
   }
 
 
@@ -705,16 +703,17 @@ Example:
    * Unified method to build error result for any character action
    */
   private buildErrorResult(
-    gameState: GameState,
+    dynamicState: DynamicGameState,
     character: CharacterProfile,
     errorMessage: string,
     toolLogs: string[],
-    isNPC: boolean
-  ): GameState {
+    isNPC: boolean,
+    gameStateManager: DynamicGameStateManager
+  ): DynamicGameState {
     const logPrefix = isNPC ? `NPC action processing error (${character.name})` : `Error handling`;
     console.error(`\n❌ [Action Agent] ${logPrefix}: ${errorMessage}`);
-    console.error(`   Current game state: Day ${gameState.gameDay}, ${gameState.timeOfDay}`);
-    console.error(`   Location: ${gameState.currentScenario?.location || "Unknown"}`);
+    console.error(`   Current game state: Day ${dynamicState.gameDay}, ${dynamicState.timeOfDay}`);
+    console.error(`   Location: ${dynamicState.currentScenario?.location || "Unknown"}`);
     console.error(`   Character: ${character.name}`);
     if (toolLogs.length > 0) {
       console.error(`   Executed tool calls (${toolLogs.length}):`);
@@ -723,14 +722,14 @@ Example:
       });
     }
 
-    const stateManager = new GameStateManager(gameState);
+    const stateManager = new DynamicGameStateManager(dynamicState);
 
     // Create an error action result to record the failure
     const errorActionResult: ActionResult = {
       timestamp: new Date(),
-      gameTime: gameState.timeOfDay || "Unknown time",
+      gameTime: dynamicState.timeOfDay || "Unknown time",
       timeElapsedMinutes: 0, // No time elapsed on error
-      location: gameState.currentScenario?.location || "Unknown location",
+      location: dynamicState.currentScenario?.location || "Unknown location",
       character: character.name,
       result: `[Error] ${isNPC ? 'NPC ' : ''}action processing failed: ${errorMessage}`,
       diceRolls: toolLogs.length > 0 ? toolLogs : [],
@@ -746,16 +745,17 @@ Example:
     console.error(`   Location: ${errorActionResult.location}`);
     console.error(`   Error: ${errorActionResult.result}`);
 
-    // Return valid GameState with error recorded
-    return stateManager.getGameState() as GameState;
+    // Return valid DynamicGameState with error recorded
+    return stateManager.getState();
   }
 
   /**
    * Process NPC actions based on response analyses
    * Processes all NPCs that have willRespond=true in npcResponseAnalyses
    */
-  async processNPCActions(runtime: any, gameState: GameState): Promise<GameState> {
-    const npcResponseAnalyses = gameState.temporaryInfo.npcResponseAnalyses || [];
+  async processNPCActions(runtime: any, gameStateManager: DynamicGameStateManager): Promise<void> {
+    const dynamicState = gameStateManager.getState();
+    const npcResponseAnalyses = dynamicState.temporaryInfo.npcResponseAnalyses || [];
 
     // Filter NPCs that will respond and sort by executionOrder
     const respondingNPCs = npcResponseAnalyses
@@ -764,15 +764,14 @@ Example:
 
     if (respondingNPCs.length === 0) {
       console.log("📝 [Action Agent] No NPCs will respond, skipping NPC action processing");
-      return gameState;
+      return;
     }
 
     console.log(`\n🎭 [Action Agent] Processing ${respondingNPCs.length} NPC actions in order...`);
 
-    let currentState = gameState;
-
     // Process each NPC action sequentially in executionOrder
     for (const npcResponse of respondingNPCs) {
+      const currentState = gameStateManager.getState();
       const npc = currentState.npcCharacters.find(n => 
         n.name.toLowerCase() === npcResponse.npcName.toLowerCase()
       );
@@ -785,17 +784,17 @@ Example:
       console.log(`\n🎭 [Action Agent] Processing NPC action [${npcResponse.executionOrder}]: ${npcResponse.npcName} (${npcResponse.responseType})`);
       
       // Process this NPC's action
-      currentState = await this.processSingleNPCAction(
+      // buildFinalResult will update the manager's state
+      await this.processSingleNPCAction(
         runtime,
         currentState,
         npc,
-        npcResponse
+        npcResponse,
+        gameStateManager
       );
     }
     
     console.log(`\n✅ [Action Agent] Completed processing ${respondingNPCs.length} NPC actions`);
-    
-    return currentState;
   }
 
   /**
@@ -803,23 +802,25 @@ Example:
    */
   private async processSingleNPCAction(
     runtime: any,
-    gameState: GameState,
+    dynamicState: DynamicGameState,
     npc: CharacterProfile,
-    npcResponse: NPCResponseAnalysis
-  ): Promise<GameState> {
+    npcResponse: NPCResponseAnalysis,
+    gameStateManager: DynamicGameStateManager
+  ): Promise<DynamicGameState> {
     const npcActionDescription = npcResponse.responseDescription || `${npc.name} performs a ${npcResponse.responseType} action`;
-    const targetCharacter = this.findTargetCharacter(gameState, null, npcResponse);
+    const targetCharacter = this.findTargetCharacter(dynamicState, null, npcResponse);
 
     return this.processCharacterAction(
       runtime,
-      gameState,
+      dynamicState,
       npc,
       npcActionDescription,
       {
         isNPC: true,
         npcResponse,
         targetCharacter
-      }
+      },
+      gameStateManager
     );
   }
 }

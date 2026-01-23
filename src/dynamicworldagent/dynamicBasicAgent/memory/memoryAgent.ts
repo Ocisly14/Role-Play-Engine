@@ -172,7 +172,7 @@ export const getRelevantTruthEvents = (
   const unrevealedEvents = dynamicStateManager.getUnrevealedTruthEvents();
 
   return unrevealedEvents.filter(event => {
-    const eventText = `${event.summary} ${event.hiddenTruth}`.toLowerCase();
+    const eventText = `${event.event} ${event.cause || ''} ${event.consequence || ''}`.toLowerCase();
     return eventText.includes(queryLower);
   });
 };
@@ -276,8 +276,16 @@ export const formatMemoryContextForPrompt = (
   if (context.revealedTruthEvents.length > 0) {
     formatted += "REVEALED TRUTHS:\n";
     context.revealedTruthEvents.forEach((event, index) => {
-      formatted += `${index + 1}. [${event.id}] ${event.summary}\n`;
-      formatted += `   Truth: ${event.hiddenTruth}\n`;
+      formatted += `${index + 1}. [${event.id}] ${event.event}\n`;
+      if (event.time) {
+        formatted += `   Time: ${event.time}\n`;
+      }
+      if (event.cause) {
+        formatted += `   Cause: ${event.cause}\n`;
+      }
+      if (event.consequence) {
+        formatted += `   Consequence: ${event.consequence}\n`;
+      }
     });
     formatted += "\n";
   }

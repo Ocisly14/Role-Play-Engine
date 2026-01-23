@@ -91,8 +91,6 @@ export interface ScenarioSnapshot {
     description?: string;
     condition?: string; // e.g., "locked", "hidden"
   }[];
-  /** Permanent changes made to this scenario */
-  permanentChanges?: string[];
   /** Keeper notes */
   keeperNotes?: string;
   /** Estimated short actions the scene can accommodate (runtime-only, set by Director) */
@@ -172,7 +170,6 @@ export interface ParsedScenarioSnapshot {
     condition?: string;
   }[];
   keeperNotes?: string;
-  permanentChanges?: string[];
 }
 
 /**

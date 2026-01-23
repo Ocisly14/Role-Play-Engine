@@ -1031,6 +1031,8 @@ Return ONLY JSON array, no extra text.`;
       goals: JSON.parse(character.goals || "[]"),
       secrets: JSON.parse(character.secrets || "[]"),
       currentLocation: character.current_location || undefined,
+      instantiatedFrom: character.instantiated_from || undefined,
+      inheritsKnowledge: character.inherits_knowledge ? JSON.parse(character.inherits_knowledge) : undefined,
       clues: clues.map((c) => ({
         id: c.id,
         clueText: c.clue_text,

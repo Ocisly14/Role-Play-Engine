@@ -413,6 +413,9 @@ export class NPCBuilderAgent {
           relationships,
           notes: identity.notes,
           isNPC: true,
+          // Preserve DynamicWorld specific fields from Step 1
+          instantiatedFrom: npcBasic.instantiatedFrom,
+          inheritsKnowledge: npcBasic.inheritsKnowledge,
         };
 
         npcs[index] = npc;

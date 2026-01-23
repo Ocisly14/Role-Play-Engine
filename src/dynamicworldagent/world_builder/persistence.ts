@@ -84,7 +84,9 @@ export async function saveWorldToDatabase(
             goals = ?,
             secrets = ?,
             notes = ?,
-            current_location = ?
+            current_location = ?,
+            instantiated_from = ?,
+            inherits_knowledge = ?
         WHERE character_id = ?
       `);
 
@@ -103,6 +105,8 @@ export async function saveWorldToDatabase(
         JSON.stringify(npc.secrets || []),
         npc.notes || null,
         (npc as any).currentLocation || null,
+        npc.instantiatedFrom || null,
+        JSON.stringify(npc.inheritsKnowledge || []),
         (existing as any).character_id
       );
     } else {
@@ -110,8 +114,9 @@ export async function saveWorldToDatabase(
       const insertStmt = db.getDatabase().prepare(`
         INSERT INTO characters (
           character_id, name, occupation, age, gender, appearance, personality, background,
-          attributes, status, skills, inventory, goals, secrets, notes, is_npc, current_location
-        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 1, ?)
+          attributes, status, skills, inventory, goals, secrets, notes, is_npc, current_location,
+          instantiated_from, inherits_knowledge
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 1, ?, ?, ?)
       `);
 
       insertStmt.run(
@@ -130,7 +135,9 @@ export async function saveWorldToDatabase(
         JSON.stringify(npc.goals || []),
         JSON.stringify(npc.secrets || []),
         npc.notes || null,
-        (npc as any).currentLocation || null
+        (npc as any).currentLocation || null,
+        npc.instantiatedFrom || null,
+        JSON.stringify(npc.inheritsKnowledge || [])
       );
     }
 
@@ -208,8 +215,8 @@ export async function saveWorldToDatabase(
         "description",
         "tags",
         "connections",
-        "permanent_changes",
         "metadata",
+        "source_place_id",
       ];
       const scenarioValues: any[] = [
         scenario.id,
@@ -219,6 +226,7 @@ export async function saveWorldToDatabase(
         JSON.stringify(scenarioConnections(scenario)),
         null,
         JSON.stringify(metadata),
+        scenario.sourcePlaceId || null,
       ];
 
       if (hasMapImagePath) {
@@ -259,7 +267,7 @@ export async function saveWorldToDatabase(
             snapshot.location,
             snapshot.description,
             JSON.stringify(snapshot.events || []),
-            JSON.stringify(snapshot.exits || []),
+            JSON.stringify([]), // exits removed - connections are scenario-level data
             snapshot.keeperNotes || null,
             snapshot.timeRestriction || null,
             snapshot.showMap === false ? 0 : 1,
@@ -281,7 +289,7 @@ export async function saveWorldToDatabase(
             snapshot.location,
             snapshot.description,
             JSON.stringify(snapshot.events || []),
-            JSON.stringify(snapshot.exits || []),
+            JSON.stringify([]), // exits removed - connections are scenario-level data
             snapshot.keeperNotes || null,
             snapshot.timeRestriction || null,
             snapshot.showMap === false ? 0 : 1
@@ -495,9 +503,7 @@ export async function saveWorldToJSON(
         clues: startingScene.snapshot.clues,
         conditions: startingScene.snapshot.conditions,
         events: startingScene.snapshot.events,
-        exits: startingScene.snapshot.exits,
         keeperNotes: startingScene.snapshot.keeperNotes,
-        permanentChanges: startingScene.snapshot.permanentChanges,
         estimatedShortActions: startingScene.snapshot.estimatedShortActions,
         timeRestriction: startingScene.snapshot.timeRestriction,
         initialSnapshot: true,
@@ -523,12 +529,6 @@ export async function saveWorldToJSON(
         notes: npc.activity || "",
       }));
 
-      const snapshotExits = (scenario.connections || []).map((conn) => ({
-        direction: conn.relationshipType,
-        destination: conn.scenarioName,
-        description: conn.description || "",
-      }));
-
       snapshot = {
         id: scenario.id,
         name: scenario.name,
@@ -539,12 +539,11 @@ export async function saveWorldToJSON(
         clues: snapshotClues,
         conditions: [],
         events: [],
-        exits: snapshotExits,
         initialSnapshot: false,
       };
     }
 
-    const scenarioPayload = {
+    const scenarioPayload: any = {
       name: scenario.name,
       description: scenario.description,
       evidence: scenario.evidence || [],
@@ -554,6 +553,14 @@ export async function saveWorldToJSON(
       connections: scenario.connections || [],
       npcAssignments: assignment?.npcs || [],
     };
+    
+    // Preserve DynamicWorld specific fields
+    if (scenario.sourcePlaceId) {
+      scenarioPayload.sourcePlaceId = scenario.sourcePlaceId;
+    }
+    if (scenario.sourcePlaceName) {
+      scenarioPayload.sourcePlaceName = scenario.sourcePlaceName;
+    }
 
     const fileName = `${scenario.name.replace(/[^a-zA-Z0-9_-]/g, "_")}.json`;
     const filePath = path.join(scenariosDir, fileName);

@@ -75,13 +75,6 @@ export function getKeeperTemplate(): string {
   {{/if}}
   {{/each}}
   {{/if}}
-  
-  {{#if directorNarrativeDirection}}
-  Director Narrative Guidance (REFERENCE ONLY - not a hard constraint):
-  {{directorNarrativeDirection}}
-
-  Note: This is a reference to help guide tone and pacing. You may adapt your narrative based on player actions and context.
-  {{/if}}
 
   {{#if gameEnding}}
   Game Ending Info (REFERENCE ONLY):

@@ -103,6 +103,34 @@ export class ScenarioBuilderAgent {
         );
       }
 
+      // Ensure sourcePlaceId and sourcePlaceName are set for scenarios matching PLACE holders
+      const placeHolderMap = new Map(
+        knowledgeMatrix
+          .filter((holder) => holder.holderType === "PLACE")
+          .map((holder) => [holder.holderName.trim().toLowerCase(), holder])
+      );
+
+      for (const scenario of scenarios as ScenarioOutline[]) {
+        const scenarioName = scenario?.name?.trim();
+        if (!scenarioName) continue;
+
+        // Find matching PLACE holder by name
+        const matchingHolder = placeHolderMap.get(scenarioName.toLowerCase());
+        if (matchingHolder) {
+          // Ensure sourcePlaceId and sourcePlaceName are set
+          if (!scenario.sourcePlaceId) {
+            scenario.sourcePlaceId = matchingHolder.id;
+            console.log(`  ✓ Auto-assigned sourcePlaceId "${matchingHolder.id}" to scenario "${scenarioName}"`);
+          }
+          if (!scenario.sourcePlaceName) {
+            scenario.sourcePlaceName = matchingHolder.holderName;
+          }
+        } else if (!scenario.sourcePlaceId) {
+          // Connector scenarios may not have a PLACE holder match
+          console.warn(`  ⚠️  Scenario "${scenarioName}" has no sourcePlaceId and doesn't match any PLACE holder`);
+        }
+      }
+
       for (const place of placeEvidence) {
         if (place.containsEvidence.length === 0) continue;
         const scenario = (scenarios as ScenarioOutline[]).find(
@@ -326,7 +354,6 @@ export class ScenarioBuilderAgent {
       snapshot.clues = Array.isArray(snapshot.clues) ? snapshot.clues : [];
       snapshot.conditions = Array.isArray(snapshot.conditions) ? snapshot.conditions : [];
       snapshot.events = Array.isArray(snapshot.events) ? snapshot.events : [];
-      snapshot.exits = Array.isArray(snapshot.exits) ? snapshot.exits : [];
 
       for (const char of snapshot.characters) {
         if (!char.id || !char.name || !char.role || !char.status) {

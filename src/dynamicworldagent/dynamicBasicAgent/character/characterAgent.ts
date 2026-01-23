@@ -1,7 +1,8 @@
 import { ModelClass } from "../../../models/types.js";
 import { generateText } from "../../../models/index.js";
-import { GameState, GameStateManager, NPCResponseAnalysis, ActionType } from "../../../state.js";
+import { NPCResponseAnalysis, ActionType } from "../../../state.js";
 import type { CharacterProfile, NPCProfile } from "../../../coc_multiagents_system/agents/models/gameTypes.js";
+import type { DynamicGameState, DynamicGameStateManager } from "../../state/index.js";
 import { getCharacterTemplate } from "./characterTemplate.js";
 import { getCharacterSimulatedTemplate } from "./characterSimulatedTemplate.js";
 import { composeTemplateWithImages } from "../../../template.js";
@@ -18,19 +19,20 @@ export class CharacterAgent {
    */
   async analyzeNPCResponsesFromSimulatedQuery(
     runtime: any,
-    gameState: GameState,
+    gameStateManager: DynamicGameStateManager,
     simulatedQuery: string
   ): Promise<NPCResponseAnalysis[]> {
+    const dynamicState = gameStateManager.getState();
     const template = getCharacterSimulatedTemplate();
 
     // 1. Get current scenario information
-    const scenarioInfo = this.extractScenarioInfo(gameState);
+    const scenarioInfo = this.extractScenarioInfo(dynamicState);
 
     // 2. Get player character information
-    const playerCharacter = this.extractCharacterInfo(gameState.playerCharacter);
+    const playerCharacter = this.extractCharacterInfo(dynamicState.playerCharacter);
 
     // 3. Get NPCs in current scene location (with full details including goals)
-    const sceneNpcs = this.extractSceneNPCs(gameState);
+    const sceneNpcs = this.extractSceneNPCs(dynamicState);
 
     // If no NPCs in scene, return empty array
     if (sceneNpcs.length === 0) {
@@ -48,7 +50,7 @@ export class CharacterAgent {
 
     const { content: context, images } = composeTemplateWithImages(
       template,
-      { gameState },
+      { dynamicGameState: dynamicState },
       templateContext,
       "handlebars"
     );
@@ -75,22 +77,23 @@ export class CharacterAgent {
    */
   async analyzeNPCResponses(
     runtime: any,
-    gameState: GameState,
+    gameStateManager: DynamicGameStateManager,
     characterInput: string
   ): Promise<NPCResponseAnalysis[]> {
+    const dynamicState = gameStateManager.getState();
     const template = getCharacterTemplate();
     
     // 1. Get latest action result
-    const latestActionResult = this.getLatestActionResult(gameState);
+    const latestActionResult = this.getLatestActionResult(dynamicState);
     
     // 2. Get current scenario information
-    const scenarioInfo = this.extractScenarioInfo(gameState);
+    const scenarioInfo = this.extractScenarioInfo(dynamicState);
     
     // 3. Get player character information
-    const playerCharacter = this.extractCharacterInfo(gameState.playerCharacter);
+    const playerCharacter = this.extractCharacterInfo(dynamicState.playerCharacter);
     
     // 4. Get NPCs in current scene location
-    const sceneNpcs = this.extractSceneNPCs(gameState);
+    const sceneNpcs = this.extractSceneNPCs(dynamicState);
     
     // If no NPCs in scene, return empty array
     if (sceneNpcs.length === 0) {
@@ -99,7 +102,7 @@ export class CharacterAgent {
     }
     
     // 5. Get target information from action analysis to determine if action is targeted
-    const actionAnalysis = gameState.temporaryInfo.currentActionAnalysis;
+    const actionAnalysis = dynamicState.temporaryInfo.currentActionAnalysis;
     const actionTarget = actionAnalysis?.target || null;
     
     // Build template context
@@ -114,7 +117,7 @@ export class CharacterAgent {
     
     const { content: context, images } = composeTemplateWithImages(
       template,
-      { gameState },
+      { dynamicGameState: dynamicState },
       templateContext,
       "handlebars"
     );
@@ -138,8 +141,8 @@ export class CharacterAgent {
   /**
    * Get latest action result
    */
-  private getLatestActionResult(gameState: GameState): any | null {
-    const actionResults = gameState.temporaryInfo.actionResults;
+  private getLatestActionResult(dynamicState: DynamicGameState): any | null {
+    const actionResults = dynamicState.temporaryInfo.actionResults;
     
     if (!actionResults || actionResults.length === 0) {
       return null;
@@ -161,8 +164,8 @@ export class CharacterAgent {
   /**
    * Extract scenario information
    */
-  private extractScenarioInfo(gameState: GameState): any {
-    const currentScenario = gameState.currentScenario;
+  private extractScenarioInfo(dynamicState: DynamicGameState): any {
+    const currentScenario = dynamicState.currentScenario;
     
     if (!currentScenario) {
       return {
@@ -170,6 +173,11 @@ export class CharacterAgent {
         message: "No current scenario loaded"
       };
     }
+    
+    // Find the corresponding scenario outline to get connections
+    const scenarioOutline = dynamicState.scenarioOutlines.find(
+      outline => outline.id === currentScenario.id
+    );
     
     return {
       id: currentScenario.id,
@@ -180,8 +188,7 @@ export class CharacterAgent {
       clues: currentScenario.clues || [],
       conditions: currentScenario.conditions || [],
       events: currentScenario.events || [],
-      exits: currentScenario.exits || [],
-      permanentChanges: currentScenario.permanentChanges || []
+      connections: scenarioOutline?.connections || []
     };
   }
   
@@ -261,8 +268,8 @@ export class CharacterAgent {
   /**
    * Extract NPCs in current scene location
    */
-  private extractSceneNPCs(gameState: GameState): any[] {
-    const currentScenario = gameState.currentScenario;
+  private extractSceneNPCs(dynamicState: DynamicGameState): any[] {
+    const currentScenario = dynamicState.currentScenario;
     
     if (!currentScenario || !currentScenario.location) {
       return [];
@@ -278,11 +285,11 @@ export class CharacterAgent {
 
     console.log(`\n🔍 [Extract Scene NPCs] Current location: "${scenarioLocation}"`);
     console.log(`🔍 [Extract Scene NPCs] Scenario characters list: ${currentScenario.characters?.map(c => c.name).join(', ') || 'none'}`);
-    console.log(`🔍 [Extract Scene NPCs] Total NPCs in game: ${gameState.npcCharacters.length}`);
+    console.log(`🔍 [Extract Scene NPCs] Total NPCs in game: ${dynamicState.npcCharacters.length}`);
 
     // First, add NPCs explicitly listed in scenario (using 80% similarity fuzzy matching)
     for (const scenarioChar of currentScenario.characters || []) {
-      const matchingNpc = gameState.npcCharacters.find(npc =>
+      const matchingNpc = dynamicState.npcCharacters.find(npc =>
         this.isNameSimilar(npc.name, scenarioChar.name)
       );
 
@@ -296,7 +303,7 @@ export class CharacterAgent {
 
     // Then, add NPCs with matching currentLocation
     let addedByLocation = 0;
-    for (const npc of gameState.npcCharacters) {
+    for (const npc of dynamicState.npcCharacters) {
       const npcProfile = npc as NPCProfile;
 
       if (npcProfile.currentLocation &&

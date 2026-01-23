@@ -26,9 +26,10 @@ import type {
   DiscoveredClue,
   TimeConsumption,
 } from "../../state.js";
-import type { CharacterProfile } from "../../coc_multiagents_system/agents/models/gameTypes.js";
+import type { CharacterProfile, NPCProfile } from "../../coc_multiagents_system/agents/models/gameTypes.js";
 import { InventoryUtils } from "../../coc_multiagents_system/agents/models/gameTypes.js";
 import type { ScenarioSnapshot } from "../../coc_multiagents_system/agents/models/scenarioTypes.js";
+import type { Evidence } from "../../coc_multiagents_system/agents/memory/RagManager.js";
 
 export type Phase = "intro" | "investigation" | "confrontation" | "downtime";
 
@@ -65,9 +66,13 @@ export interface DynamicGameState {
   // Game tension
   tension: number;
 
+  // Module guidance (synchronized with moduleDigest)
+  keeperGuidance: string | null;  // Module keeper guidance (permanent information)
+  moduleLimitations: string | null;  // Module limitation conditions (permanent information)
+
   // Characters
   playerCharacter: CharacterProfile;
-  npcCharacters: CharacterProfile[];
+  npcCharacters: NPCProfile[];
 
   // Clues and progression
   discoveredClues: DiscoveredClue[];
@@ -79,6 +84,9 @@ export interface DynamicGameState {
 
   // Temporary info (cleared at start of each player turn)
   temporaryInfo: {
+    rules: string[];
+    ragResults: Evidence[];
+    contextualData: Record<string, any>;
     actionResults: ActionResult[];
     currentActionAnalysis: ActionAnalysis | null;
     npcResponseAnalyses: NPCResponseAnalysis[];
@@ -86,8 +94,6 @@ export interface DynamicGameState {
     sceneChangeRequest: SceneChangeRequest | null;
     transition: boolean;
     sceneTransitionRejection: SceneTransitionRejection | null;
-    narrativeDirection: string | null;
-    contextualData: Record<string, any>;
   };
 
   // === DynamicWorld-Specific Data ===
@@ -117,6 +123,14 @@ export interface DynamicGameState {
   pointOfNoReturnReached: boolean;
   pointOfNoReturnTrigger: string | null;  // The actual trigger value when reached
 
+  // Updated scenario snapshots (simplified versions for non-player scenarios)
+  updatedScenarioSnapshots: Map<string, ScenarioSnapshot>;  // key: scenarioId, value: 更新后的简化版 snapshot
+  globalScenarioUpdateTrigger: {
+    timeRestriction?: string;
+    events?: string[];
+    keeperNotes?: string;
+  } | null;  // 全局触发条件
+
   // Metadata
   loadedAt: Date;  // When this state was loaded
   lastUpdated: Date;  // Last time state was updated
@@ -145,6 +159,8 @@ export const initialDynamicGameState = (params: {
     playerTimeConsumption: {},
   },
   tension: 1,
+  keeperGuidance: null,
+  moduleLimitations: null,
   playerCharacter: params.playerCharacter,
   npcCharacters: [],
   discoveredClues: [],
@@ -152,6 +168,9 @@ export const initialDynamicGameState = (params: {
   lastPlayerInputTime: null,
   gameEnding: null,
   temporaryInfo: {
+    rules: [],
+    ragResults: [],
+    contextualData: {},
     actionResults: [],
     currentActionAnalysis: null,
     npcResponseAnalyses: [],
@@ -159,8 +178,6 @@ export const initialDynamicGameState = (params: {
     sceneChangeRequest: null,
     transition: false,
     sceneTransitionRejection: null,
-    narrativeDirection: null,
-    contextualData: {},
   },
 
   // DynamicWorld-Specific Data
@@ -179,6 +196,8 @@ export const initialDynamicGameState = (params: {
   mythosRevelations: new Set(),
   pointOfNoReturnReached: false,
   pointOfNoReturnTrigger: null,
+  updatedScenarioSnapshots: new Map(),
+  globalScenarioUpdateTrigger: null,
   loadedAt: new Date(),
   lastUpdated: new Date(),
 });
@@ -216,6 +235,9 @@ export class DynamicGameStateManager {
   }): void {
     if (data.moduleDigest) {
       this.state.moduleDigest = data.moduleDigest;
+      // Synchronize top-level fields for compatibility
+      this.state.keeperGuidance = data.moduleDigest.keeperGuidance || null;
+      this.state.moduleLimitations = data.moduleDigest.moduleLimitations || null;
     }
     if (data.macroScene) {
       this.state.macroScene = data.macroScene;
@@ -479,14 +501,6 @@ export class DynamicGameStateManager {
   }
 
   /**
-   * Clear narrative direction
-   */
-  clearNarrativeDirection(): void {
-    this.state.temporaryInfo.narrativeDirection = null;
-    this.state.lastUpdated = new Date();
-  }
-
-  /**
    * Update player input timestamp
    */
   updatePlayerInputTime(): void {
@@ -534,14 +548,6 @@ export class DynamicGameStateManager {
   }
 
   /**
-   * Set narrative direction
-   */
-  setNarrativeDirection(direction: string | null): void {
-    this.state.temporaryInfo.narrativeDirection = direction;
-    this.state.lastUpdated = new Date();
-  }
-
-  /**
    * Set scene change request
    */
   setSceneChangeRequest(request: SceneChangeRequest | null): void {
@@ -582,6 +588,14 @@ export class DynamicGameStateManager {
   }
 
   /**
+   * Clear scene transition rejection info
+   */
+  clearSceneTransitionRejection(): void {
+    this.state.temporaryInfo.sceneTransitionRejection = null;
+    this.state.lastUpdated = new Date();
+  }
+
+  /**
    * Set contextual data
    */
   setContextualData(key: string, value: any): void {
@@ -596,12 +610,27 @@ export class DynamicGameStateManager {
     return this.state.temporaryInfo.contextualData[key];
   }
 
+  /**
+   * Add temporary rules to game state
+   */
+  addTemporaryRules(ruleData: { rules: any[]; count: number }): void {
+    if (!ruleData || !ruleData.rules || ruleData.rules.length === 0) return;
+
+    for (const rule of ruleData.rules) {
+      const ruleText = `${rule.title}: ${rule.description}`;
+      if (!this.state.temporaryInfo.rules.includes(ruleText)) {
+        this.state.temporaryInfo.rules.push(ruleText);
+      }
+    }
+    this.state.lastUpdated = new Date();
+  }
+
   // === GameStateManager-compatible methods ===
 
   /**
    * Update or add NPCs to the game state (adds all NPCs without filtering)
    */
-  updateNpcs(npcData: CharacterProfile[]): void {
+  updateNpcs(npcData: NPCProfile[]): void {
     if (!npcData || npcData.length === 0) return;
 
     for (const newNpc of npcData) {
@@ -1128,9 +1157,7 @@ export class DynamicGameStateManager {
 
     // Update scenario description if provided
     if (scenarioUpdates.description) {
-      // Record description change as a permanent scenario change so it persists across snapshots
-      const descriptionChange = `Scene description updated: ${scenarioUpdates.description}`;
-      this.addPermanentScenarioChange(descriptionChange);
+      this.state.currentScenario.description = scenarioUpdates.description;
     }
 
     // Update environmental conditions
@@ -1153,27 +1180,6 @@ export class DynamicGameStateManager {
     // Add new events
     if (scenarioUpdates.events && Array.isArray(scenarioUpdates.events)) {
       this.state.currentScenario.events.push(...scenarioUpdates.events);
-    }
-
-    // Update exits/entrances
-    if (scenarioUpdates.exits && Array.isArray(scenarioUpdates.exits)) {
-      for (const exitUpdate of scenarioUpdates.exits) {
-        if (!this.state.currentScenario.exits) {
-          this.state.currentScenario.exits = [];
-        }
-        
-        const existingIndex = this.state.currentScenario.exits.findIndex(
-          exit => exit.direction === exitUpdate.direction
-        );
-        
-        if (existingIndex >= 0) {
-          // Update existing exit
-          this.state.currentScenario.exits[existingIndex] = exitUpdate;
-        } else {
-          // Add new exit
-          this.state.currentScenario.exits.push(exitUpdate);
-        }
-      }
     }
 
     // Update clue states
@@ -1200,18 +1206,47 @@ export class DynamicGameStateManager {
   }
 
   /**
-   * Add permanent change to the scenario (scenario-level, shared across all timeline snapshots)
+   * Set updated scenario snapshot (simplified version for non-player scenarios)
    */
-  addPermanentScenarioChange(changeDescription: string): void {
-    if (!this.state.currentScenario || !changeDescription) return;
-    
-    // Initialize permanentChanges array if it doesn't exist
-    if (!this.state.currentScenario.permanentChanges) {
-      this.state.currentScenario.permanentChanges = [];
-    }
-    
-    // Add the permanent change to current snapshot's array
-    this.state.currentScenario.permanentChanges.push(changeDescription);
+  setUpdatedScenarioSnapshot(scenarioId: string, snapshot: ScenarioSnapshot): void {
+    this.state.updatedScenarioSnapshots.set(scenarioId, snapshot);
     this.state.lastUpdated = new Date();
+  }
+
+  /**
+   * Get updated scenario snapshot by scenario ID
+   */
+  getUpdatedScenarioSnapshot(scenarioId: string): ScenarioSnapshot | null {
+    return this.state.updatedScenarioSnapshots.get(scenarioId) || null;
+  }
+
+  /**
+   * Get all updated scenario snapshots
+   */
+  getAllUpdatedScenarioSnapshots(): Map<string, ScenarioSnapshot> {
+    return this.state.updatedScenarioSnapshots;
+  }
+
+  /**
+   * Set global scenario update trigger
+   */
+  setGlobalScenarioUpdateTrigger(trigger: {
+    timeRestriction?: string;
+    events?: string[];
+    keeperNotes?: string;
+  }): void {
+    this.state.globalScenarioUpdateTrigger = trigger;
+    this.state.lastUpdated = new Date();
+  }
+
+  /**
+   * Get global scenario update trigger
+   */
+  getGlobalScenarioUpdateTrigger(): {
+    timeRestriction?: string;
+    events?: string[];
+    keeperNotes?: string;
+  } | null {
+    return this.state.globalScenarioUpdateTrigger;
   }
 }

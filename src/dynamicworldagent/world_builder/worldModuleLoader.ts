@@ -606,7 +606,7 @@ export class WorldModuleLoader {
           SET name = ?, occupation = ?, age = ?, gender = ?, appearance = ?,
               personality = ?, background = ?, attributes = ?, status = ?,
               skills = ?, inventory = ?, goals = ?, secrets = ?, notes = ?,
-              current_location = ?
+              current_location = ?, instantiated_from = ?, inherits_knowledge = ?
           WHERE character_id = ?
         `);
 
@@ -626,6 +626,8 @@ export class WorldModuleLoader {
           JSON.stringify(npc.secrets || []),
           npc.notes || null,
           (npc as any).currentLocation || null,
+          npc.instantiatedFrom || null,
+          JSON.stringify(npc.inheritsKnowledge || []),
           npc.id
         );
       } else {
@@ -634,8 +636,8 @@ export class WorldModuleLoader {
           INSERT INTO characters (
             character_id, name, occupation, age, gender, appearance, personality,
             background, attributes, status, skills, inventory, goals, secrets,
-            notes, is_npc, current_location
-          ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 1, ?)
+            notes, is_npc, current_location, instantiated_from, inherits_knowledge
+          ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 1, ?, ?, ?)
         `);
 
         insertStmt.run(
@@ -654,7 +656,9 @@ export class WorldModuleLoader {
           JSON.stringify(npc.goals || []),
           JSON.stringify(npc.secrets || []),
           npc.notes || null,
-          (npc as any).currentLocation || null
+          (npc as any).currentLocation || null,
+          npc.instantiatedFrom || null,
+          JSON.stringify(npc.inheritsKnowledge || [])
         );
       }
 
@@ -741,8 +745,8 @@ export class WorldModuleLoader {
         "description",
         "tags",
         "connections",
-        "permanent_changes",
         "metadata",
+        "source_place_id",
       ];
       const scenarioValues: any[] = [
         scenario.id,
@@ -752,6 +756,7 @@ export class WorldModuleLoader {
         JSON.stringify(connections),
         null,
         JSON.stringify(metadata),
+        scenario.sourcePlaceId || null,
       ];
 
       if (hasMapImagePath) {
@@ -808,7 +813,7 @@ export class WorldModuleLoader {
           snapshot.location,
           snapshot.description,
           JSON.stringify(snapshot.events || []),
-          JSON.stringify(snapshot.exits || []),
+          JSON.stringify([]), // exits removed - connections are scenario-level data
           snapshot.keeperNotes || null,
           snapshot.timeRestriction || null,
           snapshot.showMap === false ? 0 : 1,
@@ -830,7 +835,7 @@ export class WorldModuleLoader {
           snapshot.location,
           snapshot.description,
           JSON.stringify(snapshot.events || []),
-          JSON.stringify(snapshot.exits || []),
+          JSON.stringify([]), // exits removed - connections are scenario-level data
           snapshot.keeperNotes || null,
           snapshot.timeRestriction || null,
           snapshot.showMap === false ? 0 : 1

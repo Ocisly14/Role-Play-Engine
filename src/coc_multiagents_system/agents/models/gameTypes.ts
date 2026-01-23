@@ -267,6 +267,9 @@ export interface NPCProfile extends CharacterProfile {
   relationships: NPCRelationship[];
   isNPC: true; // flag to distinguish from player characters
   currentLocation?: string; // NPC的当前地点
+  // DynamicWorld specific fields
+  instantiatedFrom?: string;     // Knowledge holder ID that this NPC represents
+  inheritsKnowledge?: string[];   // Truth event IDs from knowledge holder
 }
 
 /**

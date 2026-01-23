@@ -1,6 +1,6 @@
 import { getOrchestratorTemplate } from "./orchestratorTemplate.js";
 import { composeTemplate } from "../../../template.js";
-import type { ActionAnalysis, ActionType } from "../../../state.js";
+import type { ActionAnalysis, ActionType, SceneChangeRequest, SceneTransitionRejection } from "../../../state.js";
 import type { DynamicGameStateManager } from "../../state/index.js";
 import {
   ModelProviderName,
@@ -39,6 +39,14 @@ export class OrchestratorAgent {
     const characterName = dynamicState.playerCharacter?.name || "Unknown";
     const scenarioLocation = dynamicState.currentScenario?.location || "Unknown location";
     const npcNames = dynamicState.npcCharacters?.map(npc => npc.name).join(", ") || "None";
+    
+    // Get scenario connections for scene change validation
+    const scenarioOutline = dynamicState.scenarioOutlines.find(
+      outline => outline.id === dynamicState.currentScenario?.id
+    );
+    const connections = scenarioOutline?.connections?.filter(
+      conn => conn.relationshipType === "leads_to"
+    ) || [];
     
     // Get conversation history directly from database to extract previous narrative
     // This ensures we get the latest completed turns even if memory agent hasn't run yet
@@ -104,7 +112,8 @@ export class OrchestratorAgent {
       characterName,
       scenarioLocation,
       npcNames,
-      previousNarrative
+      previousNarrative,
+      connections
     });
 
     // Generate response using LLM
@@ -114,7 +123,7 @@ export class OrchestratorAgent {
       modelClass: ModelClass.SMALL,
     });
 
-    // Parse the response and store action analysis
+    // Parse the response and store action analysis and scene change request
     try {
       // Extract JSON from response (in case LLM wraps it in markdown code blocks)
       const jsonText =
@@ -125,12 +134,46 @@ export class OrchestratorAgent {
         console.warn("Failed to extract JSON from orchestrator response");
       } else {
         const parsedResponse = JSON.parse(jsonText);
+        
+        // Store action analysis
         if (parsedResponse.actionAnalysis) {
           const normalizedActionAnalysis = this.normalizeActionAnalysis(
             parsedResponse.actionAnalysis,
             characterName
           );
           gameStateManager.setActionAnalysis(normalizedActionAnalysis);
+        }
+        
+        // Handle scene change request
+        if (parsedResponse.sceneChangeRequest) {
+          const sceneChangeReq = parsedResponse.sceneChangeRequest;
+          
+          if (sceneChangeReq.shouldChange && sceneChangeReq.targetSceneName) {
+            // Valid scene change request - set it
+            const sceneChangeRequest: SceneChangeRequest = {
+              shouldChange: true,
+              targetSceneName: sceneChangeReq.targetSceneName,
+              reason: sceneChangeReq.reason || "Scene change requested",
+              timestamp: new Date()
+            };
+            gameStateManager.setSceneChangeRequest(sceneChangeRequest);
+            console.log(`🎯 [Orchestrator Agent] Scene change request validated: ${sceneChangeReq.targetSceneName}`);
+          } else if (sceneChangeReq.targetSceneName && !sceneChangeReq.shouldChange && sceneChangeReq.reason) {
+            // Scene change was attempted but blocked - set rejection
+            const rejection: SceneTransitionRejection = {
+              wasRequested: true,
+              reasoning: sceneChangeReq.reason,
+              timestamp: new Date()
+            };
+            gameStateManager.setSceneTransitionRejection(rejection);
+            console.log(`🎯 [Orchestrator Agent] Scene change blocked: ${sceneChangeReq.reason}`);
+          } else {
+            // No scene change request - clear any existing request
+            gameStateManager.clearSceneChangeRequest();
+          }
+        } else {
+          // No sceneChangeRequest in response - clear any existing request
+          gameStateManager.clearSceneChangeRequest();
         }
       }
     } catch (error) {

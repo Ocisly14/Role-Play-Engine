@@ -344,7 +344,6 @@ The starting scene gets a fully LLM-generated snapshot with:
 - Available clues with discovery methods
 - Environmental conditions
 - Events in progress
-- Exits to other scenarios
 
 Non-starting scenarios get basic snapshots auto-generated from scenario outlines.
 
@@ -556,13 +555,12 @@ Based on `ScenarioSnapshot` type:
   - `description`: string
   - `mechanicalEffect`: string (optional)
 
-**Events and Connectivity:**
+**Events:**
 - `events`: string[] - Notable events that occurred or may occur
-- `exits`: { direction, destination, description?, condition? }[] (optional)
-  - `condition` examples: "locked", "hidden", "requires key"
+
+**Note:** Scenario connections are defined at the scenario level (in `ScenarioOutline.connections`), not in snapshots.
 
 **State Evolution:**
-- `permanentChanges`: string[] (optional) - Persistent changes to this location
 - `estimatedShortActions`: number (optional) - Estimated actions this scene can accommodate
 - `timeRestriction`: string (optional) - Time constraints (e.g., "day1 evening", "day2 (after)")
 
@@ -570,7 +568,7 @@ Based on `ScenarioSnapshot` type:
 - `keeperNotes`: string (optional) - Private notes for the Keeper/Director
 
 ### Constraints
-- Locations may evolve even if never visited (tracked via `permanentChanges` and `events`)
+- Locations may evolve even if never visited (tracked via `events`)
 - Some clues must decay or disappear over time (modify `discovered` status or remove from `clues` array)
 - Environmental conditions can change dynamically (update `conditions` array)
 - Time restrictions enforce temporal coherence (use `timeRestriction` field)
@@ -896,15 +894,7 @@ Individual scenario files with full snapshots (one array per file).
         }
       ],
       "events": ["Investigators enter the basement"],
-      "exits": [
-        {
-          "direction": "leads_to",
-          "destination": "Marsh Refinery",
-          "description": "Manuscript mentions the refinery"
-        }
-      ],
       "keeperNotes": "If investigators make noise, NPCs upstairs will investigate",
-      "permanentChanges": [],
       "estimatedShortActions": 5,
       "timeRestriction": null,
       "initialSnapshot": false

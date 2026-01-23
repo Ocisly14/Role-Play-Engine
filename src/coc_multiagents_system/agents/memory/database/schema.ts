@@ -237,6 +237,8 @@ export class CoCDatabase {
       "goals TEXT",
       "secrets TEXT",
       "current_location TEXT",
+      "instantiated_from TEXT",      // Knowledge holder ID for DynamicWorld NPCs
+      "inherits_knowledge TEXT",     // JSON array of truth event IDs
     ];
     for (const column of columnsToAdd) {
       try {
@@ -341,6 +343,19 @@ export class CoCDatabase {
           "ALTER TABLE scenarios ADD COLUMN map_image_path TEXT;"
         );
         console.log('✓ map_image_path column added');
+      }
+    } catch {
+      // ignore if column already exists or cannot be added
+    }
+
+    // Backfill source_place_id column if table already existed
+    try {
+      if (!this.hasColumn("scenarios", "source_place_id")) {
+        console.log('Adding source_place_id column to scenarios table...');
+        this.db.exec(
+          "ALTER TABLE scenarios ADD COLUMN source_place_id TEXT;"
+        );
+        console.log('✓ source_place_id column added');
       }
     } catch {
       // ignore if column already exists or cannot be added

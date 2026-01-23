@@ -122,9 +122,6 @@ export const buildDynamicGraph = (
     dgsm.clearActionAnalysis();
     console.log("   ✓ Cleared action analysis");
 
-    dgsm.clearNarrativeDirection();
-    console.log("   ✓ Cleared narrative direction");
-
     // Update timestamp and increment turn counter (only for real input)
     dgsm.updatePlayerInputTime();
     console.log(`   ✓ Updated player input timestamp: ${new Date().toISOString()}`);
@@ -282,7 +279,7 @@ export const buildDynamicGraph = (
     }
 
     try {
-      await actionAgent.processAction(runtime, dgsm as any, userInput);
+      await actionAgent.processAction(runtime, dgsm, userInput);
     } catch (error) {
       console.error(`\n❌ [Dynamic Action Agent] 执行过程中抛出异常:`, error);
       const currentState = dgsm.getState();
@@ -335,7 +332,7 @@ export const buildDynamicGraph = (
     try {
       const npcResponseAnalyses = await characterAgent.analyzeNPCResponses(
         runtime,
-        dgsm as any,
+        dgsm,
         userInput
       );
       
@@ -359,7 +356,7 @@ export const buildDynamicGraph = (
     const userInput = latestHumanMessage(state.messages);
 
     try {
-      const result = await keeperAgent.generateNarrative(userInput, dgsm as any);
+      const result = await keeperAgent.generateNarrative(userInput, dgsm);
 
       // TODO: Update dynamicGameState based on keeper narrative
       // For example, mark truth events as revealed, deploy red herrings, etc.
@@ -405,7 +402,7 @@ export const buildDynamicGraph = (
       const currentCharacterInput = latestHumanMessage(state.messages);
 
       await directorAgent.handleActionDrivenSceneChange(
-        dgsm as any,
+        dgsm,
         sceneChangeRequest.targetSceneName,
         sceneChangeRequest.reason,
         currentCharacterInput
@@ -413,21 +410,6 @@ export const buildDynamicGraph = (
     }
 
     dgsm.clearSceneChangeRequest();
-
-    const characterInput = latestHumanMessage(state.messages);
-    const actionResults = currentState.temporaryInfo.actionResults || [];
-
-    try {
-      const narrativeDirection =
-        await directorAgent.generateNarrativeDirection(
-          dgsm as any,
-          characterInput,
-          actionResults
-        );
-      dgsm.setNarrativeDirection(narrativeDirection);
-    } catch (error) {
-      console.error(`❌ [Dynamic Director Agent] 生成叙事方向失败:`, error);
-    }
 
     console.log("✅ [Dynamic Director Agent] 处理完成");
 
@@ -537,7 +519,7 @@ export const buildDynamicListenerGraph = (
     try {
       const npcResponseAnalyses = await characterAgent.analyzeNPCResponses(
         runtime,
-        dgsm as any,
+        dgsm,
         userInput
       );
       
@@ -561,7 +543,7 @@ export const buildDynamicListenerGraph = (
     const runtime = {};
 
     try {
-      await actionAgent.processNPCActions(runtime, dgsm as any);
+      await actionAgent.processNPCActions(runtime, dgsm);
       console.log("✅ [Dynamic Listener NPC Action Agent] NPC 动作处理完成");
     } catch (error) {
       console.error(`❌ [Dynamic Listener NPC Action Agent] 处理 NPC 动作时出错:`, error);
@@ -588,7 +570,7 @@ export const buildDynamicListenerGraph = (
       const currentCharacterInput = latestHumanMessage(state.messages);
 
       await directorAgent.handleActionDrivenSceneChange(
-        dgsm as any,
+        dgsm,
         sceneChangeRequest.targetSceneName,
         sceneChangeRequest.reason,
         currentCharacterInput
@@ -596,24 +578,6 @@ export const buildDynamicListenerGraph = (
     }
 
     dgsm.clearSceneChangeRequest();
-
-    const characterInput = latestHumanMessage(state.messages);
-    const actionResults = currentState.temporaryInfo.actionResults || [];
-
-    try {
-      const narrativeDirection =
-        await directorAgent.generateNarrativeDirection(
-          dgsm as any,
-          characterInput,
-          actionResults
-        );
-      dgsm.setNarrativeDirection(narrativeDirection);
-    } catch (error) {
-      console.error(
-        `❌ [Dynamic Listener Director Agent] 生成叙事方向失败:`,
-        error
-      );
-    }
 
     return { ...state, dynamicGameState: dgsm.getState() };
   });

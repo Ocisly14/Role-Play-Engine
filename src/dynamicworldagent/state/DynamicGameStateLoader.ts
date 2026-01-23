@@ -13,7 +13,7 @@ import {
   DynamicGameStateManager,
   initialDynamicGameState,
 } from "./DynamicGameState.js";
-import type { CharacterProfile } from "../../coc_multiagents_system/agents/models/gameTypes.js";
+import type { CharacterProfile, NPCProfile } from "../../coc_multiagents_system/agents/models/gameTypes.js";
 import type { ScenarioSnapshot } from "../../coc_multiagents_system/agents/models/scenarioTypes.js";
 import { NPCLoader } from "../../coc_multiagents_system/agents/character/npcloader/index.js";
 
@@ -307,7 +307,7 @@ export async function initializeCompleteDynamicGameState(
   const initialSnapshot = database.prepare(`
     SELECT
       ss.snapshot_id, ss.scenario_id, ss.snapshot_name, ss.location,
-      ss.description, ss.events, ss.exits, ss.keeper_notes,
+      ss.description, ss.events, ss.keeper_notes,
       ss.time_restriction, ss.show_map, ss.game_time,
       s.name as scenario_name
     FROM scenario_snapshots ss
@@ -393,14 +393,13 @@ export async function initializeCompleteDynamicGameState(
         mechanicalEffect: cond.mechanical_effect || undefined,
       })),
       events: initialSnapshot.events ? JSON.parse(initialSnapshot.events) : [],
-      exits: initialSnapshot.exits ? JSON.parse(initialSnapshot.exits) : [],
       keeperNotes: initialSnapshot.keeper_notes || undefined,
       timeRestriction: initialSnapshot.time_restriction || undefined,
     };
   }
 
   // 3. Load NPCs from snapshot
-  const npcCharacters: CharacterProfile[] = [];
+  const npcCharacters: NPCProfile[] = [];
   if (currentScenario) {
     const npcLoader = new NPCLoader(db);
     const allNPCs = npcLoader.getAllNPCs();

@@ -165,13 +165,6 @@ Return ONLY valid JSON in this exact structure:
       "events": [
         "A notable ongoing or imminent event in this scene."
       ],
-      "exits": [
-        {
-          "direction": "north",
-          "destination": "Other Scenario",
-          "description": "How it connects."
-        }
-      ],
       "keeperNotes": "Private note for the Keeper."
     }
   },

@@ -1,12 +1,13 @@
-import { getActionDrivenSceneChangeTemplate, getNarrativeDirectionTemplate, getPlayerIntentAnalysisTemplate } from "./directorTemplate.js";
+import { getActionDrivenSceneChangeTemplate, getPlayerIntentAnalysisTemplate, getScenarioUpdateTemplate } from "./directorTemplate.js";
 import { composeTemplate } from "../../../template.js";
-import type { GameStateManager, GameEndingInfo } from "../../../state.js";
-import type { ScenarioSnapshot } from "../../../coc_multiagents_system/agents/models/scenarioTypes.js";
+import type { GameEndingInfo } from "../../../state.js";
+import type { ScenarioSnapshot, ScenarioCharacter } from "../../../coc_multiagents_system/agents/models/scenarioTypes.js";
 import { ScenarioLoader } from "../../../coc_multiagents_system/agents/memory/scenarioloader/index.js";
-import { updateCurrentScenarioWithCheckpoint } from "../../../coc_multiagents_system/agents/memory/index.js";
 import type { CoCDatabase } from "../../../coc_multiagents_system/agents/memory/database/index.js";
 import { ModuleLoader } from "../../../coc_multiagents_system/agents/memory/moduleloader/index.js";
 import type { ActionResult } from "../../../state.js";
+import type { DynamicGameState, DynamicGameStateManager } from "../../state/index.js";
+import type { ActionLogEntry, NPCProfile, CharacterProfile } from "../../../coc_multiagents_system/agents/models/gameTypes.js";
 import {
   ModelProviderName,
   ModelClass,
@@ -113,7 +114,7 @@ export class DirectorAgent {
    */
   private async executeScenarioProgression(
     targetSnapshotId: string, 
-    gameStateManager: GameStateManager,
+    gameStateManager: DynamicGameStateManager,
     estimatedShortActions: number | null = null
   ): Promise<void> {
     try {
@@ -161,15 +162,14 @@ export class DirectorAgent {
           targetSnapshot.estimatedShortActions = undefined;
         }
 
-        // Execute scene update (with checkpoint save)
-        await updateCurrentScenarioWithCheckpoint(
-          gameStateManager,
-          {
-            snapshot: targetSnapshot,
-            scenarioName: scenarioName
-          },
-          this.db
-        );
+        // Execute scene update (DynamicGameStateManager has updateCurrentScenario method)
+        // Note: For DynamicWorld, we use updateCurrentScenario directly instead of updateCurrentScenarioWithCheckpoint
+        // Checkpoint functionality can be added later if needed for DynamicWorld
+        gameStateManager.updateCurrentScenario({
+          snapshot: targetSnapshot,
+          scenarioName: scenarioName
+        });
+        gameStateManager.setTransitionFlag(true);
         
         console.log(`Director Agent: Progressed to scenario "${scenarioName}" snapshot "${targetSnapshotId}" (checkpoint created)`);
       } else {
@@ -309,16 +309,16 @@ export class DirectorAgent {
   private async executeSceneTransition(
     targetSnapshot: ScenarioSnapshot,
     scenarioName: string,
-    gameStateManager: GameStateManager
+    gameStateManager: DynamicGameStateManager
   ): Promise<void> {
-    const gameState = gameStateManager.getGameState();
+    const dynamicState = gameStateManager.getState();
     
     console.log(`\n🔄 [Executing Scene Transition]:`);
     console.log(`   To: ${targetSnapshot.name}`);
     console.log(`   Location: ${targetSnapshot.location}`);
     
     // Check if we're returning to a previously visited scenario
-    const wasVisited = gameState.visitedScenarios.some(
+    const wasVisited = dynamicState.visitedScenarios.some(
       v => v.id === targetSnapshot.id || v.name === scenarioName
     );
     
@@ -329,16 +329,15 @@ export class DirectorAgent {
     }
     
     try {
-      await updateCurrentScenarioWithCheckpoint(
-        gameStateManager,
-        {
-          snapshot: targetSnapshot,
-          scenarioName: scenarioName
-        },
-        this.db
-      );
+      // For DynamicWorld, use updateCurrentScenario directly
+      // Checkpoint functionality can be added later if needed
+      gameStateManager.updateCurrentScenario({
+        snapshot: targetSnapshot,
+        scenarioName: scenarioName
+      });
+      gameStateManager.setTransitionFlag(true);
       
-      const updatedState = gameStateManager.getGameState();
+      const updatedState = gameStateManager.getState();
       
       console.log(`   ✓ Scene transition completed successfully`);
       console.log(`\n📍 [Post-Transition State]:`);
@@ -361,7 +360,7 @@ export class DirectorAgent {
    * Use map data and LLM to validate and select target scene
    */
   async handleActionDrivenSceneChange(
-    gameStateManager: GameStateManager,
+    gameStateManager: DynamicGameStateManager,
     targetSceneName: string,
     reason: string,
     currentCharacterInput?: string
@@ -370,8 +369,18 @@ export class DirectorAgent {
     console.log(`🎬 [Director Agent] Starting to process Action-driven scene transition`);
     console.log(`🎬 [Director Agent] ========================================`);
 
-    const gameState = gameStateManager.getGameState();
-    const currentScenario = gameState.currentScenario;
+    // First, update non-player scenarios before scene transition
+    console.log(`\n🔄 [Director Agent] Updating non-player scenarios before scene transition...`);
+    try {
+      await this.updateNonPlayerScenarios(gameStateManager);
+      console.log(`✅ [Director Agent] Non-player scenarios updated`);
+    } catch (error) {
+      console.error(`❌ [Director Agent] Failed to update non-player scenarios:`, error);
+      // Continue with scene transition even if update fails
+    }
+
+    const dynamicState = gameStateManager.getState();
+    const currentScenario = dynamicState.currentScenario;
 
     // Log current state
     console.log(`\n📍 [Current Scene State]:`);
@@ -389,76 +398,37 @@ export class DirectorAgent {
     console.log(`   Target Scene Name: ${targetSceneName}`);
     console.log(`   Transition Reason: ${reason}`);
 
-    // Load map data
-    const mapData = this.loadMapData();
+    // Get scene change request
+    const sceneChangeRequest = dynamicState.temporaryInfo.sceneChangeRequest;
 
-    // Get conversation history to extract previous narrative and current character input
-    const conversationHistory = (gameState.temporaryInfo.contextualData?.conversationHistory as Array<{
-      turnNumber: number;
-      characterInput: string;
-      keeperNarrative: string | null;
-    }>) || [];
+    // Get current snapshot info
+    const currentSnapshot = currentScenario ? {
+      name: currentScenario.name,
+      location: currentScenario.location,
+      description: currentScenario.description
+    } : null;
 
-    // Get previous round narrative (last completed turn with narrative)
-    let previousNarrative: string | null = null;
-    if (conversationHistory.length > 0) {
-      const lastTurnWithNarrative = [...conversationHistory]
-        .reverse()
-        .find(turn => turn.keeperNarrative);
-      if (lastTurnWithNarrative && lastTurnWithNarrative.keeperNarrative) {
-        previousNarrative = lastTurnWithNarrative.keeperNarrative;
-      }
-    }
+    // Get available scenarios with their connections and IDs from scenarioOutlines
+    const availableScenarios = dynamicState.scenarioOutlines.map(outline => ({
+      id: outline.id,
+      name: outline.name,
+      connections: outline.connections || []
+    }));
 
-    // Get current round character input
-    // Priority: 1) passed parameter, 2) latest turn without narrative, 3) fallback to any latest turn with input
-    let characterInput: string | null = currentCharacterInput || null;
-
-    if (!characterInput && conversationHistory.length > 0) {
-      // Get the latest turn that has characterInput but no narrative yet
-      const latestTurn = conversationHistory[conversationHistory.length - 1];
-      if (latestTurn && latestTurn.characterInput && !latestTurn.keeperNarrative) {
-        characterInput = latestTurn.characterInput;
-      } else {
-        // Fallback: get the latest characterInput from any turn
-        const latestWithInput = [...conversationHistory]
-          .reverse()
-          .find(turn => turn.characterInput);
-        if (latestWithInput && latestWithInput.characterInput) {
-          characterInput = latestWithInput.characterInput;
-        }
-      }
-    }
-
-    // Get all scenarios with their snapshots (including timeRestriction)
-    const allScenariosWithSnapshots = this.getAllScenariosWithSnapshots();
-
-    // Get current game time
-    const currentGameTime = {
-      gameDay: gameState.gameDay,
-      timeOfDay: gameState.timeOfDay
-    };
-
-    // Use LLM to validate and select target snapshot based on map
-    console.log(`\n🤖 [Using LLM to Select Target Snapshot Based on Map]:`);
+    // Use LLM to validate and select target scenario
+    console.log(`\n🤖 [Using LLM to Select Target Scenario]:`);
     const runtime = createRuntime();
     const template = getActionDrivenSceneChangeTemplate();
 
     const templateContext = {
-      currentScene: currentScenario ? {
-        name: currentScenario.name,
-        location: currentScenario.location
-      } : null,
-      mapData,
-      previousNarrative,
-      characterInput,
-      scenariosWithSnapshots: allScenariosWithSnapshots,
-      currentGameTime
+      sceneChangeRequest,
+      currentSnapshot,
+      availableScenarios
     };
 
     const prompt = composeTemplate(
       template,
-      { gameState },
+      { dynamicGameState: dynamicState },
       templateContext,
       "handlebars"
     );
@@ -472,8 +442,8 @@ export class DirectorAgent {
 
       // Parse LLM response
       let parsedResponse: {
-        targetSnapshotId?: string;
-        reasoning?: string;
+        targetScenarioName?: string;
+        targetScenarioId?: string;
       };
       try {
         // Try to extract JSON from markdown code blocks first
@@ -490,20 +460,27 @@ export class DirectorAgent {
       }
 
       // Validate and execute scene change
-      if (parsedResponse?.targetSnapshotId) {
-        console.log(`   ✓ LLM returned snapshot ID: ${parsedResponse.targetSnapshotId}`);
-        if (parsedResponse.reasoning) {
-          console.log(`   ✓ LLM reasoning: ${parsedResponse.reasoning}`);
-        }
+      if (parsedResponse?.targetScenarioId && parsedResponse?.targetScenarioName) {
+        console.log(`   ✓ LLM returned scenario: ${parsedResponse.targetScenarioName} (ID: ${parsedResponse.targetScenarioId})`);
 
-        // Execute scene progression using snapshot ID
-        await this.executeScenarioProgression(
-          parsedResponse.targetSnapshotId,
-          gameStateManager,
-          null
-        );
+        // Find the initial snapshot for this scenario
+        const database = this.db.getDatabase();
+        const initialSnapshot = database
+          .prepare(`SELECT snapshot_id FROM scenario_snapshots WHERE scenario_id = ? AND initial_snapshot = 1 LIMIT 1`)
+          .get(parsedResponse.targetScenarioId) as { snapshot_id: string } | undefined;
+
+        if (initialSnapshot) {
+          // Execute scene progression using snapshot ID
+          await this.executeScenarioProgression(
+            initialSnapshot.snapshot_id,
+            gameStateManager,
+            null
+          );
+        } else {
+          console.error(`   ❌ No initial snapshot found for scenario ${parsedResponse.targetScenarioId}`);
+        }
       } else {
-        console.error(`   ❌ No targetSnapshotId in LLM response`);
+        console.error(`   ❌ Missing targetScenarioName or targetScenarioId in LLM response`);
       }
     } catch (error) {
       console.error(`   ❌ LLM call failed:`, error);
@@ -514,9 +491,9 @@ export class DirectorAgent {
    * Check if story progression should trigger and generate simulated player intent query
    */
   async checkStoryProgression(
-    gameStateManager: GameStateManager
+    gameStateManager: DynamicGameStateManager
   ): Promise<{ shouldTrigger: boolean; simulatedQuery: string | null }> {
-    const gameState = gameStateManager.getGameState();
+    const dynamicState = gameStateManager.getState();
 
     // Get metrics
     const turnsInScene = gameStateManager.getTurnsInCurrentScene();
@@ -526,7 +503,7 @@ export class DirectorAgent {
     console.log(`\n🎬 [Director Agent] Story Progression Check`);
     console.log(`   Turns in scene: ${turnsInScene} / ${threshold}`);
     console.log(`   Minutes since input: ${minutesSinceInput} / 3`);
-    console.log(`   Tension: ${gameState.tension}/10`);
+    console.log(`   Tension: ${dynamicState.tension}/10`);
 
     // Check if either threshold is reached
     const shouldTrigger = gameStateManager.shouldTriggerProgression();
@@ -544,7 +521,7 @@ export class DirectorAgent {
     }
 
     // Get recent conversation history
-    const conversationHistory = (gameState.temporaryInfo.contextualData?.conversationHistory as Array<{
+    const conversationHistory = (dynamicState.temporaryInfo.contextualData?.conversationHistory as Array<{
       turnNumber: number;
       characterInput: string;
       keeperNarrative: string | null;
@@ -559,7 +536,7 @@ export class DirectorAgent {
     }));
 
     // Get current scenario info
-    const currentScenario = gameState.currentScenario;
+    const currentScenario = dynamicState.currentScenario;
     const scenarioInfo = currentScenario ? {
       name: currentScenario.name,
       location: currentScenario.location,
@@ -571,15 +548,15 @@ export class DirectorAgent {
     const template = getPlayerIntentAnalysisTemplate();
 
     const templateContext = {
-      playerName: gameState.playerCharacter.name,
+      playerName: dynamicState.playerCharacter.name,
       scenarioInfoJson: scenarioInfo ? JSON.stringify(scenarioInfo, null, 2) : "No current scene",
       recentActions,
-      tension: gameState.tension
+      tension: dynamicState.tension
     };
 
     const prompt = composeTemplate(
       template,
-      { gameState },
+      { dynamicGameState: dynamicState },
       templateContext,
       "handlebars"
     );
@@ -620,76 +597,469 @@ export class DirectorAgent {
   }
 
   /**
-   * 生成叙事方向指导
-   * 基于模块约束、keeper指导、模块笔记、角色输入和行动结果，生成给 Keeper Agent 的叙事方向指导
+   * Parse game time from snapshot gameTime string or actionLog time
+   * Format: "Day N, HH:MM" or "initial" or other formats
    */
-  async generateNarrativeDirection(
-    gameStateManager: GameStateManager,
-    characterInput: string,
-    actionResults: ActionResult[]
-  ): Promise<string> {
-    const runtime = createRuntime();
-    const gameState = gameStateManager.getGameState();
+  private parseGameTimeFromSnapshot(gameTime?: string): { gameDay: number; timeOfDay: string } | null {
+    if (!gameTime) return null;
     
-    // 获取模块信息
-    const moduleLoader = new ModuleLoader(this.db);
-    const modules = moduleLoader.getAllModules();
-    const module = modules.length > 0 ? modules[0] : null;
+    // Handle "initial" or other non-standard formats
+    if (gameTime.toLowerCase() === "initial" || !gameTime.includes("Day")) {
+      return null; // Cannot parse, treat as before any valid time
+    }
     
-    // 获取模板
-    const template = getNarrativeDirectionTemplate();
+    const match = gameTime.match(/Day\s*(\d+),\s*(\d{2}:\d{2})/i);
+    if (match) {
+      return {
+        gameDay: parseInt(match[1], 10),
+        timeOfDay: match[2]
+      };
+    }
     
-    // 准备模板上下文
-    const playerCharacter = gameState.playerCharacter;
-    const playerStatus = playerCharacter ? {
-      hp: playerCharacter.status.hp,
-      maxHp: playerCharacter.status.maxHp,
-      sanity: playerCharacter.status.sanity,
-      maxSanity: playerCharacter.status.maxSanity,
-      isDead: playerCharacter.status.hp <= 0,
-      isInsane: playerCharacter.status.sanity <= 0
-    } : null;
+    return null;
+  }
 
-    const templateContext = {
-      // Current game state
-      currentScene: gameState.currentScenario ? {
-        name: gameState.currentScenario.name,
-        location: gameState.currentScenario.location,
-        description: gameState.currentScenario.description
-      } : null,
-      currentGameTime: {
-        gameDay: gameState.gameDay,
-        timeOfDay: gameState.timeOfDay
-      },
-      playerStatus,
-      // Module constraints
-      moduleLimitations: gameState.moduleLimitations || null,
-      keeperGuidance: gameState.keeperGuidance || null,
-      moduleNotes: module?.moduleNotes || null,
-      // Current turn context
-      characterInput,
-      actionResults: actionResults || []
-    };
+  /**
+   * Get all scenarios with their latest snapshots (excluding player's current scene)
+   * Latest snapshot is determined by game_time closest to but not exceeding current game time
+   */
+  private async getAllScenariosLatestSnapshots(
+    currentScenarioId: string | null,
+    currentGameDay: number,
+    currentTimeOfDay: string
+  ): Promise<Array<{
+    scenarioId: string;
+    scenarioName: string;
+    snapshot: ScenarioSnapshot;
+  }>> {
+    const database = this.db.getDatabase();
+    const allScenarios = this.scenarioLoader.getAllScenarios();
     
-    // 使用模板和LLM生成叙事方向指导
-    const prompt = composeTemplate(
-      template,
-      { gameState },
-      templateContext,
-      "handlebars"
+    const scenariosWithLatestSnapshots: Array<{
+      scenarioId: string;
+      scenarioName: string;
+      snapshot: ScenarioSnapshot;
+    }> = [];
+
+    for (const scenario of allScenarios) {
+      // Skip player's current scenario
+      if (currentScenarioId && scenario.id === currentScenarioId) {
+        continue;
+      }
+
+      // Get all snapshots for this scenario
+      const snapshots = database
+        .prepare(`SELECT snapshot_id, snapshot_name, location, description, game_time, time_restriction
+                  FROM scenario_snapshots 
+                  WHERE scenario_id = ? 
+                  ORDER BY snapshot_id`)
+        .all(scenario.id) as Array<{
+          snapshot_id: string;
+          snapshot_name: string;
+          location: string;
+          description: string;
+          game_time: string | null;
+          time_restriction: string | null;
+        }>;
+
+      if (snapshots.length === 0) continue;
+
+      // Find the latest snapshot based on game_time
+      let latestSnapshot: ScenarioSnapshot | null = null;
+      let latestTime: { gameDay: number; timeOfDay: string } | null = null;
+
+      for (const snap of snapshots) {
+        const snapTime = this.parseGameTimeFromSnapshot(snap.game_time || undefined);
+        if (!snapTime) continue;
+
+        // Check if this snapshot's time is before or equal to current time
+        const isBeforeCurrent = snapTime.gameDay < currentGameDay ||
+          (snapTime.gameDay === currentGameDay && snapTime.timeOfDay <= currentTimeOfDay);
+
+        if (isBeforeCurrent) {
+          // Check if this is later than the current latest
+          if (!latestTime ||
+            snapTime.gameDay > latestTime.gameDay ||
+            (snapTime.gameDay === latestTime.gameDay && snapTime.timeOfDay > latestTime.timeOfDay)) {
+            latestTime = snapTime;
+            latestSnapshot = await this.buildSnapshotFromRow(snap.snapshot_id);
+          }
+        }
+      }
+
+      // If no snapshot found with valid time, use the first one
+      if (!latestSnapshot && snapshots.length > 0) {
+        latestSnapshot = await this.buildSnapshotFromRow(snapshots[0].snapshot_id);
+      }
+
+      if (latestSnapshot) {
+        scenariosWithLatestSnapshots.push({
+          scenarioId: scenario.id,
+          scenarioName: scenario.name,
+          snapshot: latestSnapshot
+        });
+      }
+    }
+
+    return scenariosWithLatestSnapshots;
+  }
+
+  /**
+   * Get NPCs that should be in a specific scenario at the current time point
+   * Based on NPC's currentLocation, actionLog, and scenario conditions
+   */
+  private getNPCsForScenario(
+    scenarioLocation: string,
+    scenarioId: string,
+    npcCharacters: NPCProfile[],
+    previousSnapshotTime: string | undefined,
+    currentGameTime: string
+  ): Array<{
+    id: string;
+    name: string;
+    occupation?: string;
+    age?: number;
+    gender?: string;
+    appearance?: string;
+    personality?: string;
+    background?: string;
+    goals?: string[];
+    secrets?: string[];
+    notes?: string;
+    status: string;
+    actionLog: ActionLogEntry[]; // Timeline from previous snapshot to current time
+    instantiatedFrom?: string | null; // Knowledge holder ID (ROLE/ORGANIZATION)
+    inheritsKnowledge?: string[]; // Truth event IDs this NPC knows
+  }> {
+    const npcsInScenario: Array<{
+      id: string;
+      name: string;
+      occupation?: string;
+      age?: number;
+      gender?: string;
+      appearance?: string;
+      personality?: string;
+      background?: string;
+      goals?: string[];
+      secrets?: string[];
+      notes?: string;
+      status: string;
+      actionLog: ActionLogEntry[];
+      instantiatedFrom?: string | null;
+      inheritsKnowledge?: string[];
+    }> = [];
+
+    for (const npc of npcCharacters) {
+      const npcProfile = npc;
+      
+      // Check if NPC is currently in this scenario location
+      // Priority: 1) currentLocation matches, 2) latest actionLog location matches
+      let isInScenario = false;
+      
+      // Check currentLocation
+      if (npcProfile.currentLocation && 
+          npcProfile.currentLocation.toLowerCase() === scenarioLocation.toLowerCase()) {
+        isInScenario = true;
+      }
+      
+      // Check latest actionLog entry location
+      if (!isInScenario && npcProfile.actionLog && npcProfile.actionLog.length > 0) {
+        const latestLog = npcProfile.actionLog[npcProfile.actionLog.length - 1];
+        if (latestLog.location && 
+            latestLog.location.toLowerCase() === scenarioLocation.toLowerCase()) {
+          isInScenario = true;
+        }
+      }
+      
+      if (isInScenario) {
+        // Extract timeline actionLog from previous snapshot time to current time
+        // This creates a timeline of events that happened in this scenario during the time period
+        let timelineActionLog: ActionLogEntry[] = [];
+        
+        if (npcProfile.actionLog && npcProfile.actionLog.length > 0) {
+          // Filter actionLog entries that fall between previous snapshot time and current time
+          // This represents what happened in the scenario during this time period
+          timelineActionLog = npcProfile.actionLog.filter(log => {
+            // Skip entries with invalid time formats (like "initial")
+            const logTime = this.parseGameTimeFromSnapshot(log.time);
+            if (!logTime) {
+              // If time is "initial" or invalid, only include if no previous snapshot time
+              // (meaning this is the first update)
+              return !previousSnapshotTime;
+            }
+            
+            // If no previous snapshot time, include all entries up to current time
+            if (!previousSnapshotTime) {
+              return this.isTimeBeforeOrEqual(log.time, currentGameTime);
+            }
+            
+            // Include entries between previous snapshot time and current time
+            // (exclusive of previous time, inclusive of current time)
+            return this.isTimeAfter(log.time, previousSnapshotTime) && 
+                   this.isTimeBeforeOrEqual(log.time, currentGameTime);
+          });
+          
+          // Sort by time to ensure chronological order
+          timelineActionLog.sort((a, b) => {
+            const timeA = this.parseGameTimeFromSnapshot(a.time);
+            const timeB = this.parseGameTimeFromSnapshot(b.time);
+            if (!timeA || !timeB) return 0;
+            if (timeA.gameDay !== timeB.gameDay) return timeA.gameDay - timeB.gameDay;
+            const [hA, mA] = timeA.timeOfDay.split(':').map(Number);
+            const [hB, mB] = timeB.timeOfDay.split(':').map(Number);
+            return hA * 60 + mA - (hB * 60 + mB);
+          });
+        }
+        
+        npcsInScenario.push({
+          id: npcProfile.id,
+          name: npcProfile.name,
+          occupation: npcProfile.occupation,
+          age: npcProfile.age,
+          gender: npcProfile.gender,
+          appearance: npcProfile.appearance,
+          personality: npcProfile.personality,
+          background: npcProfile.background,
+          goals: npcProfile.goals,
+          secrets: npcProfile.secrets,
+          notes: npcProfile.notes,
+          status: "alive", // Default status, can be updated by LLM
+          actionLog: timelineActionLog,
+          // DynamicWorld specific fields for matching with knowledge matrix
+          instantiatedFrom: npcProfile.instantiatedFrom || null, // Knowledge holder ID (ROLE/ORGANIZATION)
+          inheritsKnowledge: npcProfile.inheritsKnowledge || [] // Truth event IDs this NPC knows
+        });
+      }
+    }
+    
+    return npcsInScenario;
+  }
+
+  /**
+   * Compare game times (format: "Day N, HH:MM")
+   * Returns true if time1 is before or equal to time2
+   */
+  private isTimeBeforeOrEqual(time1: string, time2: string): boolean {
+    const t1 = this.parseGameTimeFromSnapshot(time1);
+    const t2 = this.parseGameTimeFromSnapshot(time2);
+    
+    if (!t1 || !t2) return false;
+    
+    if (t1.gameDay < t2.gameDay) return true;
+    if (t1.gameDay > t2.gameDay) return false;
+    
+    // Same day, compare time
+    const [h1, m1] = t1.timeOfDay.split(':').map(Number);
+    const [h2, m2] = t2.timeOfDay.split(':').map(Number);
+    
+    return h1 < h2 || (h1 === h2 && m1 <= m2);
+  }
+
+  /**
+   * Compare game times (format: "Day N, HH:MM")
+   * Returns true if time1 is after time2
+   */
+  private isTimeAfter(time1: string, time2: string): boolean {
+    const t1 = this.parseGameTimeFromSnapshot(time1);
+    const t2 = this.parseGameTimeFromSnapshot(time2);
+    
+    if (!t1 || !t2) return false;
+    
+    if (t1.gameDay > t2.gameDay) return true;
+    if (t1.gameDay < t2.gameDay) return false;
+    
+    // Same day, compare time
+    const [h1, m1] = t1.timeOfDay.split(':').map(Number);
+    const [h2, m2] = t2.timeOfDay.split(':').map(Number);
+    
+    return h1 > h2 || (h1 === h2 && m1 > m2);
+  }
+
+  /**
+   * Save simplified snapshot to database
+   */
+  private async saveSimplifiedSnapshotToDatabase(
+    scenarioId: string,
+    snapshot: ScenarioSnapshot
+  ): Promise<ScenarioSnapshot> {
+    const database = this.db.getDatabase();
+    const timestamp = Date.now();
+    const newSnapshotId = `${snapshot.id}_updated_${timestamp}`;
+
+    // Save snapshot to scenario_snapshots table
+    const snapshotStmt = database.prepare(`
+      INSERT INTO scenario_snapshots (
+        snapshot_id, scenario_id, snapshot_name, location, description,
+        events, exits, keeper_notes, time_restriction, show_map, game_time
+      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+    `);
+
+    snapshotStmt.run(
+      newSnapshotId,
+      scenarioId,
+      snapshot.name,
+      snapshot.location,
+      snapshot.description,
+      JSON.stringify(snapshot.events || []),
+      JSON.stringify(snapshot.exits || []),
+      snapshot.keeperNotes || null,
+      null, // timeRestriction (not used in simplified snapshots)
+      snapshot.showMap ? 1 : 0,
+      snapshot.gameTime || null
     );
 
+      // Save characters to scenario_characters table
+      if (snapshot.characters && snapshot.characters.length > 0) {
+        const charStmt = database.prepare(`
+          INSERT INTO scenario_characters (
+            id, snapshot_id, character_name, character_role, character_status,
+            character_location, character_notes
+          ) VALUES (?, ?, ?, ?, ?, ?, ?)
+        `);
+
+        for (const char of snapshot.characters) {
+          // Store actionLog in character_notes as JSON if present
+          // Note: actionLog is not part of ScenarioCharacter interface, but may be present in simplified snapshots
+          let notes = char.notes || "";
+          const charWithActionLog = char as ScenarioCharacter & { actionLog?: ActionLogEntry[] };
+          if (charWithActionLog.actionLog && charWithActionLog.actionLog.length > 0) {
+            const actionLogJson = JSON.stringify(charWithActionLog.actionLog);
+            notes = notes ? `${notes}\n\nActionLog: ${actionLogJson}` : `ActionLog: ${actionLogJson}`;
+          }
+
+          charStmt.run(
+            char.id,
+            newSnapshotId,
+            char.name,
+            char.role,
+            char.status,
+            char.location || null,
+            notes || null
+          );
+        }
+      }
+
+    // Return the saved snapshot with new ID
+    return {
+      ...snapshot,
+      id: newSnapshotId
+    };
+  }
+
+  /**
+   * Update non-player scenarios with simplified snapshots
+   */
+  async updateNonPlayerScenarios(
+    gameStateManager: DynamicGameStateManager
+  ): Promise<void> {
+    console.log(`\n🎬 [Director Agent] Starting scenario update for non-player scenes...`);
+
+    const dynamicState = gameStateManager.getState();
+    const currentScenario = dynamicState.currentScenario;
+    const currentScenarioId = currentScenario?.id || null;
+
     try {
+      // Get all scenarios with their latest snapshots (excluding player's current scene)
+      const scenariosWithSnapshots = await this.getAllScenariosLatestSnapshots(
+        currentScenarioId,
+        dynamicState.gameDay,
+        dynamicState.timeOfDay
+      );
+
+      if (scenariosWithSnapshots.length === 0) {
+        console.log(`   ✓ No scenarios to update`);
+        return;
+      }
+
+      console.log(`   📋 Found ${scenariosWithSnapshots.length} scenarios to update`);
+
+      // Build template context with NPCs for each scenario at current time point
+      const currentGameTime = `Day ${dynamicState.gameDay}, ${dynamicState.timeOfDay}`;
+      
+      // Build a map of scenarioId -> scenarioOutline for quick lookup
+      const scenarioOutlineMap = new Map(
+        dynamicState.scenarioOutlines.map(outline => [outline.id, outline])
+      );
+
+      const scenariosToUpdate = scenariosWithSnapshots.map(item => {
+        // Get NPCs that should be in this scenario at current time point
+        // NPCs can move between scenarios based on their actionLog and currentLocation
+        const npcsInScenario = this.getNPCsForScenario(
+          item.snapshot.location,
+          item.scenarioId,
+          dynamicState.npcCharacters,
+          item.snapshot.gameTime, // Previous snapshot time (for timeline extraction)
+          currentGameTime // Current game time (unified for all snapshots)
+        );
+
+        // Get scenario outline to access sourcePlaceId
+        const scenarioOutline = scenarioOutlineMap.get(item.scenarioId);
+
+        return {
+          scenarioId: item.scenarioId,
+          scenarioName: item.scenarioName,
+          sourcePlaceId: scenarioOutline?.sourcePlaceId || null, // Knowledge holder PLACE ID
+          sourcePlaceName: scenarioOutline?.sourcePlaceName || null,
+          snapshot: {
+            id: item.snapshot.id,
+            name: item.snapshot.name,
+            location: item.snapshot.location,
+            description: item.snapshot.description,
+            previousGameTime: item.snapshot.gameTime || null // Previous snapshot time for timeline reference
+          },
+          characters: npcsInScenario,
+          currentGameTime: currentGameTime // Unified current game time for all snapshots
+        };
+      });
+
+      // Serialize scenarios to JSON string for template injection
+      const scenariosToUpdateJson = JSON.stringify(scenariosToUpdate, null, 2);
+
+      const templateContext = {
+        currentGameDay: dynamicState.gameDay,
+        currentTimeOfDay: dynamicState.timeOfDay,
+        playerCurrentScene: currentScenario ? {
+          name: currentScenario.name,
+          location: currentScenario.location
+        } : null,
+        scenariosToUpdateJson,
+        truthTimelineJson: JSON.stringify(dynamicState.truthTimeline, null, 2),
+        knowledgeMatrixJson: JSON.stringify(dynamicState.knowledgeMatrix, null, 2)
+      };
+
+      // Generate updated snapshots using LLM
+      const runtime = createRuntime();
+      const template = getScenarioUpdateTemplate();
+
+      const prompt = composeTemplate(
+        template,
+        { dynamicGameState: dynamicState },
+        templateContext,
+        "handlebars"
+      );
+
+      console.log(`   🤖 Calling LLM to generate updated snapshots...`);
+
       const response = await generateText({
         runtime,
         context: prompt,
         modelClass: ModelClass.SMALL,
       });
-      
-      // 解析LLM的JSON响应
-      let parsedResponse;
+
+      // Parse LLM response
+      let parsedResponse: {
+        globalTrigger?: {
+          timeRestriction?: string;
+          events?: string[];
+          keeperNotes?: string;
+        };
+        updatedSnapshots?: Array<{
+          scenarioId: string;
+          snapshot: ScenarioSnapshot;
+        }>;
+      };
+
       try {
-        // 尝试从响应中提取JSON
         const jsonMatch = response.match(/\{[\s\S]*\}/);
         if (jsonMatch) {
           parsedResponse = JSON.parse(jsonMatch[0]);
@@ -697,34 +1067,67 @@ export class DirectorAgent {
           parsedResponse = JSON.parse(response);
         }
       } catch (error) {
-        console.error("Failed to parse narrative direction response as JSON:", error);
+        console.error("Failed to parse LLM response as JSON:", error);
         console.error("Raw response:", response);
-        // 如果解析失败，返回原始响应（去掉可能的代码块标记）
-        return response.replace(/```json\n?/g, "").replace(/```\n?/g, "").trim();
+        return;
       }
 
-      // 检查游戏是否结束
-      if (parsedResponse.gameEnded === true) {
-        console.log("\n🎮 [Director Agent] Game ending detected!");
-        console.log(`   Ending Type: ${parsedResponse.endingType}`);
-        console.log(`   Reason: ${parsedResponse.endingReason}`);
+      // Validate and save snapshots
+      if (parsedResponse.updatedSnapshots && parsedResponse.updatedSnapshots.length > 0) {
+        console.log(`   💾 Saving ${parsedResponse.updatedSnapshots.length} updated snapshots...`);
 
-        // 设置游戏结束信息到 GameState
-        const endingInfo: GameEndingInfo = {
-          isEnded: true,
-          endingType: parsedResponse.endingType || "other",
-          reason: parsedResponse.endingReason || "The game has ended.",
-          timestamp: new Date()
-        };
+        for (const item of parsedResponse.updatedSnapshots) {
+          // Validate actionLog format
+          if (item.snapshot.characters) {
+            for (const char of item.snapshot.characters) {
+              const charWithActionLog = char as ScenarioCharacter & { actionLog?: ActionLogEntry[] };
+              if (charWithActionLog.actionLog) {
+                // Validate each actionLog entry
+                for (const logEntry of charWithActionLog.actionLog) {
+                  if (!logEntry.time || !logEntry.location || !logEntry.summary) {
+                    console.warn(`   ⚠️ Invalid actionLog entry for character ${char.id}, skipping...`);
+                    charWithActionLog.actionLog = charWithActionLog.actionLog.filter((e: ActionLogEntry) => e.time && e.location && e.summary);
+                  }
+                }
+              }
+            }
+          }
 
-        gameStateManager.setGameEnding(endingInfo);
-        console.log("   ✓ Game ending information saved to GameState");
+          // Ensure snapshot uses unified current game time
+          const snapshotWithUnifiedTime: ScenarioSnapshot = {
+            ...item.snapshot,
+            gameTime: currentGameTime // Use unified current game time
+          };
+          
+          // Save to database
+          const savedSnapshot = await this.saveSimplifiedSnapshotToDatabase(
+            item.scenarioId,
+            snapshotWithUnifiedTime
+          );
+
+          // Save to state
+          gameStateManager.setUpdatedScenarioSnapshot(item.scenarioId, savedSnapshot);
+
+          console.log(`   ✓ Updated snapshot for scenario ${item.scenarioId}`);
+        }
       }
 
-      return parsedResponse.narrativeDirection || "Generate narrative based on current context while respecting module constraints.";
+      // Save global trigger condition
+      if (parsedResponse.globalTrigger) {
+        gameStateManager.setGlobalScenarioUpdateTrigger(parsedResponse.globalTrigger);
+        console.log(`   ✓ Saved global trigger condition`);
+        if (parsedResponse.globalTrigger.timeRestriction) {
+          console.log(`     - Time: ${parsedResponse.globalTrigger.timeRestriction}`);
+        }
+        if (parsedResponse.globalTrigger.events && parsedResponse.globalTrigger.events.length > 0) {
+          console.log(`     - Events: ${parsedResponse.globalTrigger.events.join(", ")}`);
+        }
+      }
+
+      console.log(`✅ [Director Agent] Scenario update completed`);
     } catch (error) {
-      console.error("Failed to generate narrative direction:", error);
-      return "Generate narrative based on current context while respecting module constraints.";
+      console.error(`❌ [Director Agent] Failed to update scenarios:`, error);
+      throw error;
     }
   }
 }
