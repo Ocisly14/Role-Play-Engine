@@ -147,6 +147,19 @@ Each snapshot should:
 
 ## 🎯 Global Trigger
 
+{{#if previousGlobalTrigger}}
+### Previous Global Trigger (Reference)
+The following is the current global trigger that was set previously. Use this as a reference, but update it based on the new NPC actions and story progression:
+
+\`\`\`json
+{{previousGlobalTriggerJson}}
+\`\`\`
+
+**Note**: You should update or replace this trigger based on the new actionLogs and story developments. The new trigger should reflect the most current and important future events.
+{{else}}
+**No previous global trigger set.**
+{{/if}}
+
 **You MUST generate a global trigger for future story progression based on the NPCs' actionLogs you have generated, and predict the future important time and events.**
 
 ### Trigger Structure:
@@ -319,6 +332,43 @@ Generate snapshots for each scenario above, with **different levels of detail ba
 
 4. **Game Time**: Set the gameTime to the unified current game time (Day {{currentGameDay}}, {{currentTimeOfDay}}) - all snapshots should use this same time
 
+## 🎯 Global Trigger (Optional)
+
+{{#if previousGlobalTrigger}}
+### Previous Global Trigger (Reference)
+The following is the current global trigger that was set previously. Use this as a reference, but update it based on the new NPC actions and story progression:
+
+\`\`\`json
+{{previousGlobalTriggerJson}}
+\`\`\`
+
+**Note**: You should update or replace this trigger based on the new actionLogs and story developments. The new trigger should reflect the most current and important future events.
+{{else}}
+**No previous global trigger set.**
+{{/if}}
+
+**You MAY generate a global trigger for future story progression based on the NPCs' actionLogs you have generated, and predict the future important time and events.**
+
+**Important**: Only generate a \`globalTrigger\` if there are significant future events or time-sensitive story developments that warrant it. If the current NPC actions don't indicate any critical future events, you can omit the \`globalTrigger\` field entirely.
+
+### Trigger Structure (if generating):
+
+1. The most important rule, the trigger you set must have great impact on the story progression.
+1. **timeRestriction** : Future time point in "Day X, HH:MM" format - MUST be at least 12 hours from current time
+2. **timeReason** : Why this specific time matters
+3. **events**: Array of trigger event descriptions (e.g., "Evidence revealed", "NPC completes action")
+4. **eventReasons**: Array of reasons (one per event) explaining why each event is important
+
+**Example:**
+\`\`\`json
+"globalTrigger": {
+  "timeRestriction": "Day 2, 22:00",
+  "timeReason": "The ritual must begin at midnight, giving player limited time to intervene",
+  "events": ["Cult members gather at the church", "Ritual preparations are completed"],
+  "eventReasons": ["Shows the cult's active planning", "Increases urgency and tension"]
+}
+\`\`\`
+
 ### 🎯 For Target Scene (scenarioId = {{targetScene.id}}):
 Generate a **COMPLETE, DETAILED snapshot** with ALL fields:
 - **description**: Full atmospheric description including lighting, sounds, smells, weather, ambiance, and narrative of what happened
@@ -447,9 +497,17 @@ Example:
       },
       "connections": []
     }
-  ]
+  ],
+  "globalTrigger": {
+    "timeRestriction": "Day X, HH:MM (at least 12 hours from now)",
+    "timeReason": "Why this specific time point matters",
+    "events": ["Event description 1", "Event description 2"],
+    "eventReasons": ["Why event 1 matters", "Why event 2 matters"]
+  }
 }
 \`\`\`
+
+**Note**: The \`globalTrigger\` field is **OPTIONAL**.
 
 *Generate the updated snapshots:*`;
 }

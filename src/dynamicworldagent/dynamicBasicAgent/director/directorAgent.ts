@@ -1063,7 +1063,9 @@ export class DirectorAgent {
         currentGameDay: dynamicState.gameDay,
         currentTimeOfDay: dynamicState.timeOfDay,
         truthTimelineJson: JSON.stringify(dynamicState.truthTimeline, null, 2),
-        knowledgeMatrixJson: JSON.stringify(dynamicState.knowledgeMatrix, null, 2)
+        knowledgeMatrixJson: JSON.stringify(dynamicState.knowledgeMatrix, null, 2),
+        previousGlobalTrigger: dynamicState.globalTrigger,
+        previousGlobalTriggerJson: dynamicState.globalTrigger ? JSON.stringify(dynamicState.globalTrigger, null, 2) : null
       };
 
       // Generate unified snapshots using LLM
@@ -1100,6 +1102,13 @@ export class DirectorAgent {
           scenarioId: string;
           snapshot: DynamicScenarioSnapshot;
         }>;
+        globalTrigger?: {
+          timeRestriction?: string;
+          timeReason?: string;
+          events?: string[];
+          eventReasons?: string[];
+          keeperNotes?: string;
+        };
       };
 
       try {
@@ -1265,6 +1274,26 @@ export class DirectorAgent {
         }
       }
 
+      // Save global trigger condition
+      if (parsedResponse.globalTrigger) {
+        gameStateManager.setGlobalTrigger(parsedResponse.globalTrigger);
+        console.log(`   ✓ Saved global trigger condition`);
+        if (parsedResponse.globalTrigger.timeRestriction) {
+          console.log(`     - Time: ${parsedResponse.globalTrigger.timeRestriction}`);
+          if (parsedResponse.globalTrigger.timeReason) {
+            console.log(`       Reason: ${parsedResponse.globalTrigger.timeReason}`);
+          }
+        }
+        if (parsedResponse.globalTrigger.events && parsedResponse.globalTrigger.events.length > 0) {
+          console.log(`     - Events: ${parsedResponse.globalTrigger.events.join(", ")}`);
+          if (parsedResponse.globalTrigger.eventReasons && parsedResponse.globalTrigger.eventReasons.length > 0) {
+            parsedResponse.globalTrigger.eventReasons.forEach((reason, index) => {
+              console.log(`       Event ${index + 1} reason: ${reason}`);
+            });
+          }
+        }
+      }
+
       console.log(`✅ [Director Agent] Scene switch update completed`);
       console.log(`   - Target: ${parsedResponse.validatedTargetSceneName} (complete)`);
       console.log(`   - Background: ${backgroundSnapshotsMap.size} scenarios (simplified)`);
@@ -1363,7 +1392,9 @@ export class DirectorAgent {
         } : null,
         scenariosToUpdateJson,
         truthTimelineJson: JSON.stringify(dynamicState.truthTimeline, null, 2),
-        knowledgeMatrixJson: JSON.stringify(dynamicState.knowledgeMatrix, null, 2)
+        knowledgeMatrixJson: JSON.stringify(dynamicState.knowledgeMatrix, null, 2),
+        previousGlobalTrigger: dynamicState.globalTrigger,
+        previousGlobalTriggerJson: dynamicState.globalTrigger ? JSON.stringify(dynamicState.globalTrigger, null, 2) : null
       };
 
       // Generate updated snapshots using LLM
@@ -1389,7 +1420,9 @@ export class DirectorAgent {
       let parsedResponse: {
         globalTrigger?: {
           timeRestriction?: string;
+          timeReason?: string;
           events?: string[];
+          eventReasons?: string[];
           keeperNotes?: string;
         };
         updatedSnapshots?: Array<{
@@ -1456,13 +1489,21 @@ export class DirectorAgent {
 
       // Save global trigger condition
       if (parsedResponse.globalTrigger) {
-        gameStateManager.setGlobalScenarioUpdateTrigger(parsedResponse.globalTrigger);
+        gameStateManager.setGlobalTrigger(parsedResponse.globalTrigger);
         console.log(`   ✓ Saved global trigger condition`);
         if (parsedResponse.globalTrigger.timeRestriction) {
           console.log(`     - Time: ${parsedResponse.globalTrigger.timeRestriction}`);
+          if (parsedResponse.globalTrigger.timeReason) {
+            console.log(`       Reason: ${parsedResponse.globalTrigger.timeReason}`);
+          }
         }
         if (parsedResponse.globalTrigger.events && parsedResponse.globalTrigger.events.length > 0) {
           console.log(`     - Events: ${parsedResponse.globalTrigger.events.join(", ")}`);
+          if (parsedResponse.globalTrigger.eventReasons && parsedResponse.globalTrigger.eventReasons.length > 0) {
+            parsedResponse.globalTrigger.eventReasons.forEach((reason, index) => {
+              console.log(`       Event ${index + 1} reason: ${reason}`);
+            });
+          }
         }
       }
 

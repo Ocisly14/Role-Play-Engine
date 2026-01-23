@@ -101,6 +101,7 @@ export class ModuleDigestAgent {
       keeperGuidance: requireString(parsed.keeperGuidance, "keeperGuidance"),
       moduleLimitations: requireString(parsed.moduleLimitations, "moduleLimitations"),
       introduction: requireString(parsed.introduction, "introduction"),
+      globalTrigger: parsed.globalTrigger || undefined,
     };
   }
 }

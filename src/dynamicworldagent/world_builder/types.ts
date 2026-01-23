@@ -323,6 +323,13 @@ export interface ModuleDigest {
   keeperGuidance: string;
   moduleLimitations: string;
   introduction: string;
+  globalTrigger?: {
+    timeRestriction?: string;
+    timeReason?: string;
+    events?: string[];
+    eventReasons?: string[];
+    keeperNotes?: string;
+  };
 }
 
 /**

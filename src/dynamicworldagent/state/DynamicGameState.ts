@@ -125,9 +125,11 @@ export interface DynamicGameState {
 
   // Updated scenario snapshots (simplified versions for non-player scenarios)
   updatedDynamicScenarioSnapshots: Map<string, DynamicScenarioSnapshot>;  // key: scenarioId, value: 更新后的简化版 snapshot
-  globalScenarioUpdateTrigger: {
+  globalTrigger: {
     timeRestriction?: string;
+    timeReason?: string;
     events?: string[];
+    eventReasons?: string[];
     keeperNotes?: string;
   } | null;  // 全局触发条件
 
@@ -197,7 +199,7 @@ export const initialDynamicGameState = (params: {
   pointOfNoReturnReached: false,
   pointOfNoReturnTrigger: null,
   updatedDynamicScenarioSnapshots: new Map(),
-  globalScenarioUpdateTrigger: null,
+  globalTrigger: null,
   loadedAt: new Date(),
   lastUpdated: new Date(),
 });
@@ -238,6 +240,10 @@ export class DynamicGameStateManager {
       // Synchronize top-level fields for compatibility
       this.state.keeperGuidance = data.moduleDigest.keeperGuidance || null;
       this.state.moduleLimitations = data.moduleDigest.moduleLimitations || null;
+      // Load initial globalTrigger from moduleDigest if present
+      if (data.moduleDigest.globalTrigger) {
+        this.state.globalTrigger = data.moduleDigest.globalTrigger;
+      }
     }
     if (data.macroScene) {
       this.state.macroScene = data.macroScene;
@@ -1206,25 +1212,29 @@ export class DynamicGameStateManager {
   }
 
   /**
-   * Set global scenario update trigger
+   * Set global trigger
    */
-  setGlobalScenarioUpdateTrigger(trigger: {
+  setGlobalTrigger(trigger: {
     timeRestriction?: string;
+    timeReason?: string;
     events?: string[];
+    eventReasons?: string[];
     keeperNotes?: string;
   }): void {
-    this.state.globalScenarioUpdateTrigger = trigger;
+    this.state.globalTrigger = trigger;
     this.state.lastUpdated = new Date();
   }
 
   /**
-   * Get global scenario update trigger
+   * Get global trigger
    */
-  getGlobalScenarioUpdateTrigger(): {
+  getGlobalTrigger(): {
     timeRestriction?: string;
+    timeReason?: string;
     events?: string[];
+    eventReasons?: string[];
     keeperNotes?: string;
   } | null {
-    return this.state.globalScenarioUpdateTrigger;
+    return this.state.globalTrigger;
   }
 }
