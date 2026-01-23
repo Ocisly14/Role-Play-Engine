@@ -6,14 +6,14 @@ import type { BaseMessage } from "@langchain/core/messages";
 import {
   CoCDatabase,
   seedDatabase,
-} from "./coc_multiagents_system/agents/memory/database/index.js";
-import { NPCLoader } from "./coc_multiagents_system/agents/character/npcloader/index.js";
-import { ModuleLoader } from "./coc_multiagents_system/agents/memory/moduleloader/index.js";
-import { ScenarioLoader } from "./coc_multiagents_system/agents/memory/scenarioloader/index.js";
-import { buildGraph } from "./graph.js";
-import type { GraphState } from "./graph.js";
-import { initialGameState } from "./state.js";
-import { createBgeSqliteRagManager } from "./coc_multiagents_system/agents/memory/RagManager.js";
+} from "./agents/memory/database/index.js";
+import { NPCLoader } from "./agents/character/npcloader/index.js";
+import { ModuleLoader } from "./agents/memory/moduleloader/index.js";
+import { ScenarioLoader } from "./agents/memory/scenarioloader/index.js";
+import { buildGraph } from "./graph/index.js";
+import type { GraphState } from "./graph/index.js";
+import { initialGameState } from "./state/index.js";
+import { createBgeSqliteRagManager } from "./agents/memory/RagManager.js";
 
 // Initialize database
 const dataDir = path.join(process.cwd(), "data");

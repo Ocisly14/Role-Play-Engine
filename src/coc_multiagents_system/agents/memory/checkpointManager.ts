@@ -7,7 +7,7 @@
  */
 
 import type { CoCDatabase } from "./database/index.js";
-import type { GameState } from "../../../state.js";
+import type { GameState } from "../../state/index.js";
 
 export interface CheckpointMetadata {
   checkpointId: string;

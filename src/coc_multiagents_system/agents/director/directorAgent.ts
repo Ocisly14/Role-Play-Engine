@@ -1,12 +1,12 @@
 import { getActionDrivenSceneChangeTemplate, getNarrativeDirectionTemplate, getPlayerIntentAnalysisTemplate } from "./directorTemplate.js";
 import { composeTemplate } from "../../../template.js";
-import type { GameStateManager, GameEndingInfo } from "../../../state.js";
+import type { GameStateManager, GameEndingInfo } from "../../state/index.js";
 import type { ScenarioSnapshot } from "../models/scenarioTypes.js";
 import { ScenarioLoader } from "../memory/scenarioloader/scenarioLoader.js";
 import { updateCurrentScenarioWithCheckpoint } from "../memory/index.js";
 import type { CoCDatabase } from "../memory/database/index.js";
 import { ModuleLoader } from "../memory/moduleloader/index.js";
-import type { ActionResult } from "../../../state.js";
+import type { ActionResult } from "../../state/index.js";
 import {
   ModelProviderName,
   ModelClass,

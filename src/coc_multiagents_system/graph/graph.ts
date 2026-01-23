@@ -1,24 +1,24 @@
 import { END, START, StateGraph } from "@langchain/langgraph";
-import type { CoCDatabase } from "./coc_multiagents_system/agents/memory/database/index.js";
-import type { RagManager } from "./coc_multiagents_system/agents/memory/RagManager.js";
+import type { CoCDatabase } from "../agents/memory/database/index.js";
+import type { RagManager } from "../agents/memory/RagManager.js";
 import type { BaseMessage } from "@langchain/core/messages";
 import { HumanMessage, AIMessage } from "@langchain/core/messages";
-import { OrchestratorAgent } from "./coc_multiagents_system/agents/orchestrator/orchestratorAgent.js";
-import { ActionAgent } from "./coc_multiagents_system/agents/action/actionAgent.js";
-import { CharacterAgent } from "./coc_multiagents_system/agents/character/characterAgent.js";
-import { KeeperAgent } from "./coc_multiagents_system/agents/keeper/keeperAgent.js";
-import { DirectorAgent } from "./coc_multiagents_system/agents/director/directorAgent.js";
-import type { ScenarioLoader } from "./coc_multiagents_system/agents/memory/scenarioloader/index.js";
+import { OrchestratorAgent } from "../agents/orchestrator/orchestratorAgent.js";
+import { ActionAgent } from "../agents/action/actionAgent.js";
+import { CharacterAgent } from "../agents/character/characterAgent.js";
+import { KeeperAgent } from "../agents/keeper/keeperAgent.js";
+import { DirectorAgent } from "../agents/director/directorAgent.js";
+import type { ScenarioLoader } from "../agents/memory/scenarioloader/index.js";
 import {
   GameStateManager,
   initialGameState,
   type GameState,
   type ActionAnalysis,
   type ActionResult,
-} from "./state.js";
-import { contentToString, latestHumanMessage } from "./utils.js";
-import { enrichMemoryContext } from "./coc_multiagents_system/agents/memory/memoryAgent.js";
-import { TurnManager } from "./coc_multiagents_system/agents/memory/index.js";
+} from "../state/state.js";
+import { contentToString, latestHumanMessage } from "../utils/utils.js";
+import { enrichMemoryContext } from "../agents/memory/memoryAgent.js";
+import { TurnManager } from "../agents/memory/index.js";
 
 export interface GraphState {
   messages: BaseMessage[];

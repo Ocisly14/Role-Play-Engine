@@ -25,7 +25,7 @@ import type {
   GameEndingInfo,
   DiscoveredClue,
   TimeConsumption,
-} from "../../state.js";
+} from "../../coc_multiagents_system/state/index.js";
 import type { DynamicCharacterProfile, DynamicNPCProfile } from "../world_builder/types.js";
 import { InventoryUtils } from "../../coc_multiagents_system/agents/models/gameTypes.js";
 import type { DynamicScenarioSnapshot } from "../world_builder/types.js";

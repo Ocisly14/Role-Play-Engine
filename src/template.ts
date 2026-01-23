@@ -1,8 +1,8 @@
 import handlebars from "handlebars";
 import fs from "fs";
 import path from "path";
-import type { GameState } from "./gameState.js";
-import { initialGameState } from "./gameState.js";
+import type { GameState } from "./coc_multiagents_system/state/index.js";
+import { initialGameState } from "./coc_multiagents_system/state/index.js";
 import type { DynamicGameState } from "./dynamicworldagent/state/index.js";
 import type { ImageInput } from "./models/types.js";
 import { names, uniqueNamesGenerator } from "unique-names-generator";

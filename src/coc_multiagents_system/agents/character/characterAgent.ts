@@ -1,6 +1,6 @@
 import { ModelClass } from "../../../models/types.js";
 import { generateText } from "../../../models/index.js";
-import { GameState, GameStateManager, NPCResponseAnalysis, ActionType } from "../../../state.js";
+import { GameState, GameStateManager, NPCResponseAnalysis, ActionType } from "../../state/index.js";
 import type { CharacterProfile, NPCProfile } from "../models/gameTypes.js";
 import { getCharacterTemplate } from "./characterTemplate.js";
 import { getCharacterSimulatedTemplate } from "./characterSimulatedTemplate.js";

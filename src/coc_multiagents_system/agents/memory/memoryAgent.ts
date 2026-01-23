@@ -7,7 +7,7 @@ import {
   type GameState,
   type ActionType,
   type ActionAnalysis,
-} from "../../../state.js";
+} from "../../state/index.js";
 import { actionRules } from "../../rules/index.js";
 import type { CoCDatabase } from "./database/index.js";
 import type { ScenarioSnapshot } from "../models/scenarioTypes.js";

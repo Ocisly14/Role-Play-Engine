@@ -13,10 +13,10 @@ import type { ScenarioLoader } from "../../coc_multiagents_system/agents/memory/
 import type {
   ActionAnalysis,
   ActionResult,
-} from "../../state.js";
+} from "../../coc_multiagents_system/state/index.js";
 import type { DynamicGameState } from "../state/index.js";
 import { DynamicGameStateManager, initialDynamicGameState } from "../state/index.js";
-import { contentToString, latestHumanMessage } from "../../utils.js";
+import { contentToString, latestHumanMessage } from "../../coc_multiagents_system/utils/index.js";
 import {
   loadModuleDynamicState,
   enrichMemoryContext,

@@ -6,7 +6,7 @@
  */
 
 import type { CoCDatabase } from "./database/index.js";
-import type { GameState } from "../../../state.js";
+import type { GameState } from "../../state/index.js";
 import { randomUUID } from "crypto";
 
 export interface TurnInput {

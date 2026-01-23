@@ -1,6 +1,6 @@
 import { ModelClass } from "../../../models/types.js";
 import { generateText } from "../../../models/index.js";
-import { NPCResponseAnalysis, ActionType } from "../../../state.js";
+import { NPCResponseAnalysis, ActionType } from "../../../coc_multiagents_system/state/index.js";
 import type { ActionLogEntry } from "../../../coc_multiagents_system/agents/models/gameTypes.js";
 import type { DynamicCharacterProfile } from "../../world_builder/types.js";
 import type { DynamicNPCProfile } from "../../world_builder/types.js";

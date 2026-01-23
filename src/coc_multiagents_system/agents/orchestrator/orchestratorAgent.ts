@@ -1,6 +1,6 @@
 import { getOrchestratorTemplate } from "./orchestratorTemplate.js";
 import { composeTemplate } from "../../../template.js";
-import type { ActionAnalysis, GameStateManager, ActionType } from "../../../state.js";
+import type { ActionAnalysis, GameStateManager, ActionType } from "../../state/index.js";
 import {
   ModelProviderName,
   ModelClass,

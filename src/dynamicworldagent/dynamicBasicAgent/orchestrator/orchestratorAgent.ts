@@ -1,6 +1,6 @@
 import { getOrchestratorTemplate } from "./orchestratorTemplate.js";
 import { composeTemplate } from "../../../template.js";
-import type { ActionAnalysis, ActionType, SceneChangeRequest, SceneTransitionRejection } from "../../../state.js";
+import type { ActionAnalysis, ActionType, SceneChangeRequest, SceneTransitionRejection } from "../../../coc_multiagents_system/state/index.js";
 import type { DynamicGameStateManager } from "../../state/index.js";
 import {
   ModelProviderName,

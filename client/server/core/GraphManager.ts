@@ -2,10 +2,10 @@ import type { CoCDatabase } from "../../../src/coc_multiagents_system/agents/mem
 import { ScenarioLoader } from "../../../src/coc_multiagents_system/agents/memory/scenarioloader/index.js";
 import { NPCLoader } from "../../../src/coc_multiagents_system/agents/character/npcloader/index.js";
 import { createBgeSqliteRagManager, RagManager } from "../../../src/coc_multiagents_system/agents/memory/RagManager.js";
-import { buildGraph, buildListenerGraph } from "../../../src/graph.js";
+import { buildGraph, buildListenerGraph } from "../../../src/coc_multiagents_system/graph/index.js";
 import { buildDynamicGraph, buildDynamicListenerGraph } from "../../../src/dynamicworldagent/graph/index.js";
 import { TurnManager } from "../../../src/coc_multiagents_system/agents/memory/index.js";
-import { initialGameState } from "../../../src/state.js";
+import { initialGameState } from "../../../src/coc_multiagents_system/state/index.js";
 
 /**
  * Singleton class to manage graph and multi-agent system lifecycle

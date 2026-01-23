@@ -1,6 +1,6 @@
 import { getKeeperTemplate } from "./keeperTemplate.js";
 import { composeTemplateWithImages } from "../../../template.js";
-import type { ActionResult, ActionAnalysis, DiscoveredClue } from "../../../state.js";
+import type { ActionResult, ActionAnalysis, DiscoveredClue } from "../../../coc_multiagents_system/state/index.js";
 import type { ActionLogEntry } from "../../../coc_multiagents_system/agents/models/gameTypes.js";
 import type { DynamicCharacterProfile } from "../../world_builder/types.js";
 import type { DynamicNPCProfile } from "../../world_builder/types.js";

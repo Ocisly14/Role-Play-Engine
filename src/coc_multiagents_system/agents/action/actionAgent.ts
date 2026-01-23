@@ -1,6 +1,6 @@
 import { ModelClass } from "../../../models/types.js";
 import { generateText } from "../../../models/index.js";
-import { GameStateManager, GameState, ActionResult, ActionAnalysis, SceneChangeRequest, NPCResponseAnalysis, ActionType } from "../../../state.js";
+import { GameStateManager, GameState, ActionResult, ActionAnalysis, SceneChangeRequest, NPCResponseAnalysis, ActionType } from "../../state/index.js";
 import type { CharacterProfile, ActionLogEntry, NPCProfile } from "../models/gameTypes.js";
 import { actionTypeTemplates } from "./example.js";
 import type { ScenarioLoader } from "../memory/scenarioloader/scenarioLoader.js";

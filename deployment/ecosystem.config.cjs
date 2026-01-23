@@ -18,7 +18,7 @@ module.exports = {
     name: 'coc-agent',
 
     // Main script to run (adjust path if needed)
-    script: './dist/src/index.js',
+    script: './dist/src/coc_multiagents_system/index.js',
 
     // Working directory
     cwd: '/home/ubuntu/app',

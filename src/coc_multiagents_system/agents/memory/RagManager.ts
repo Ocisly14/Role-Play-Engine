@@ -1,4 +1,4 @@
-import type { GameState, ActionType, Phase } from "../../../state.js";
+import type { GameState, ActionType, Phase } from "../../state/index.js";
 import type { ScenarioSnapshot } from "../models/scenarioTypes.js";
 import type { NPCProfile, InventoryItem } from "../models/gameTypes.js";
 import type { CoCDatabase } from "./database/schema.js";

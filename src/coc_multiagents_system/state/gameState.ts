@@ -1,7 +1,7 @@
-import type { CharacterProfile, InventoryItem } from "./coc_multiagents_system/agents/models/gameTypes.js";
-import { InventoryUtils } from "./coc_multiagents_system/agents/models/gameTypes.js";
-import type { ScenarioSnapshot } from "./coc_multiagents_system/agents/models/scenarioTypes.js";
-import type { Evidence } from "./coc_multiagents_system/agents/memory/RagManager.js";
+import type { CharacterProfile, InventoryItem } from "../agents/models/gameTypes.js";
+import { InventoryUtils } from "../agents/models/gameTypes.js";
+import type { ScenarioSnapshot } from "../agents/models/scenarioTypes.js";
+import type { Evidence } from "../agents/memory/RagManager.js";
 import type {
   Phase,
   ActionAnalysis,
