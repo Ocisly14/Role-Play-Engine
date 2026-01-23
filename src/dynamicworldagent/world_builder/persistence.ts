@@ -18,7 +18,8 @@ import type {
   ScenarioNpcAssignments,
   ModuleDigest,
 } from "./types.js";
-import type { ActionLogEntry, NPCProfile } from "../../coc_multiagents_system/agents/models/gameTypes.js";
+import type { ActionLogEntry } from "../../coc_multiagents_system/agents/models/gameTypes.js";
+import type { DynamicNPCProfile } from "./types.js";
 import { randomUUID } from "crypto";
 
 /**
@@ -33,7 +34,7 @@ export async function saveWorldToDatabase(
   redHerrings: RedHerring[],
   mythosEvents: MythosEvent[],
   endState: EndStateDefinition,
-  npcs: NPCProfile[],
+  npcs: DynamicNPCProfile[],
   scenarios: ScenarioOutline[],
   startingScene: StartingSceneSelection | null,
   otherScenarioNpcAssignments: ScenarioNpcAssignments[]
@@ -104,7 +105,7 @@ export async function saveWorldToDatabase(
         JSON.stringify(npc.goals || []),
         JSON.stringify(npc.secrets || []),
         npc.notes || null,
-        (npc as any).currentLocation || null,
+        null, // currentLocation removed - location tracked via actionLog
         npc.instantiatedFrom || null,
         JSON.stringify(npc.inheritsKnowledge || []),
         (existing as any).character_id
@@ -135,7 +136,7 @@ export async function saveWorldToDatabase(
         JSON.stringify(npc.goals || []),
         JSON.stringify(npc.secrets || []),
         npc.notes || null,
-        (npc as any).currentLocation || null,
+        null, // currentLocation removed - location tracked via actionLog
         npc.instantiatedFrom || null,
         JSON.stringify(npc.inheritsKnowledge || [])
       );
@@ -376,7 +377,7 @@ export async function saveWorldToJSON(
   mythosEvents: MythosEvent[],
   endState: EndStateDefinition,
   scenarios: ScenarioOutline[],
-  npcs: NPCProfile[],
+  npcs: DynamicNPCProfile[],
   startingScene: StartingSceneSelection | null,
   otherScenarioNpcAssignments: ScenarioNpcAssignments[]
 ): Promise<{

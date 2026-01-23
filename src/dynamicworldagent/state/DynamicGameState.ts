@@ -26,7 +26,7 @@ import type {
   DiscoveredClue,
   TimeConsumption,
 } from "../../state.js";
-import type { CharacterProfile, NPCProfile } from "../../coc_multiagents_system/agents/models/gameTypes.js";
+import type { DynamicCharacterProfile, DynamicNPCProfile } from "../world_builder/types.js";
 import { InventoryUtils } from "../../coc_multiagents_system/agents/models/gameTypes.js";
 import type { DynamicScenarioSnapshot } from "../world_builder/types.js";
 import type { Evidence } from "../../coc_multiagents_system/agents/memory/RagManager.js";
@@ -71,8 +71,8 @@ export interface DynamicGameState {
   moduleLimitations: string | null;  // Module limitation conditions (permanent information)
 
   // Characters
-  playerCharacter: CharacterProfile;
-  npcCharacters: NPCProfile[];
+  playerCharacter: DynamicCharacterProfile;
+  npcCharacters: DynamicNPCProfile[];
 
   // Clues and progression
   discoveredClues: DiscoveredClue[];
@@ -143,7 +143,7 @@ export interface DynamicGameState {
 export const initialDynamicGameState = (params: {
   sessionId: string;
   moduleName: string;
-  playerCharacter: CharacterProfile;
+  playerCharacter: DynamicCharacterProfile;
   gameDay?: number;
   timeOfDay?: string;
 }): DynamicGameState => ({
@@ -630,7 +630,7 @@ export class DynamicGameStateManager {
   /**
    * Update or add NPCs to the game state (adds all NPCs without filtering)
    */
-  updateNpcs(npcData: NPCProfile[]): void {
+  updateNpcs(npcData: DynamicNPCProfile[]): void {
     if (!npcData || npcData.length === 0) return;
 
     for (const newNpc of npcData) {
@@ -733,34 +733,17 @@ export class DynamicGameStateManager {
   }
 
   /**
-   * Automatically update NPC current locations based on character list in scenario
+   * Note: NPC locations are now tracked via actionLog, not currentLocation
+   * This method is kept for compatibility but no longer updates currentLocation
    */
   private updateNpcLocationsForScenario(scenario: DynamicScenarioSnapshot): void {
     if (!scenario || !scenario.characters || scenario.characters.length === 0) {
       return;
     }
 
-    const scenarioLocation = scenario.location;
-    const scenarioCharacters = scenario.characters;
-
-    // Iterate through characters in scene, update matching NPC locations
-    for (const scenarioChar of scenarioCharacters) {
-      // Find matching character in NPC list (using 80% similarity fuzzy matching)
-      const matchingNpc = this.state.npcCharacters.find(npc => {
-        return this.isNameSimilar(npc.name, scenarioChar.name);
-      });
-
-      if (matchingNpc) {
-        const npcProfile = matchingNpc as any;
-        const oldLocation = npcProfile.currentLocation || null;
-        npcProfile.currentLocation = scenarioLocation;
-        
-        if (oldLocation !== scenarioLocation) {
-          const oldLocationDisplay = oldLocation || "Unknown";
-          console.log(`📍 [Scene Transition] NPC ${matchingNpc.name} location updated: ${oldLocationDisplay} → ${scenarioLocation}`);
-        }
-      }
-    }
+    // NPC locations are tracked via actionLog entries, not currentLocation
+    // The Director Agent will add appropriate actionLog entries when NPCs move between scenes
+    // This method is kept for compatibility but does nothing
   }
 
   /**

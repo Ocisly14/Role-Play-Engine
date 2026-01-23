@@ -17,7 +17,7 @@ import type {
   ScenarioOutline,
   ModuleDigest,
 } from "./types.js";
-import type { NPCProfile } from "../../coc_multiagents_system/agents/models/gameTypes.js";
+import type { DynamicNPCProfile } from "./types.js";
 import type { DynamicScenarioSnapshot } from "./types.js";
 
 /**
@@ -34,7 +34,7 @@ export interface LoadedWorldModule {
   redHerrings: RedHerring[];
   scenarios: ScenarioOutline[];
   scenarioSnapshots: Map<string, DynamicScenarioSnapshot>; // scenarioId -> snapshot
-  npcs: NPCProfile[];
+  npcs: DynamicNPCProfile[];
   files: {
     truthTimelineFile: string;
     knowledgeMatrixFile: string;
@@ -383,8 +383,8 @@ export class WorldModuleLoader {
   /**
    * Load NPCs from individual NPC files
    */
-  private loadNPCs(npcsDir: string): NPCProfile[] {
-    const npcs: NPCProfile[] = [];
+  private loadNPCs(npcsDir: string): DynamicNPCProfile[] {
+    const npcs: DynamicNPCProfile[] = [];
 
     if (!fs.existsSync(npcsDir)) {
       console.warn(`    ⚠️  NPCs directory not found: ${npcsDir}`);
@@ -397,7 +397,7 @@ export class WorldModuleLoader {
       try {
         const filePath = path.join(npcsDir, file);
         const content = fs.readFileSync(filePath, "utf8");
-        const npc = JSON.parse(content) as NPCProfile;
+        const npc = JSON.parse(content) as DynamicNPCProfile;
 
         // Validate required NPC fields
         if (!npc.id || !npc.name) {
@@ -590,7 +590,7 @@ export class WorldModuleLoader {
   /**
    * Save NPCs to database
    */
-  private saveNPCs(npcs: NPCProfile[]): void {
+  private saveNPCs(npcs: DynamicNPCProfile[]): void {
     const database = this.db.getDatabase();
 
     for (const npc of npcs) {
@@ -625,7 +625,7 @@ export class WorldModuleLoader {
           JSON.stringify(npc.goals || []),
           JSON.stringify(npc.secrets || []),
           npc.notes || null,
-          (npc as any).currentLocation || null,
+          null, // currentLocation removed - location tracked via actionLog
           npc.instantiatedFrom || null,
           JSON.stringify(npc.inheritsKnowledge || []),
           npc.id
@@ -656,7 +656,7 @@ export class WorldModuleLoader {
           JSON.stringify(npc.goals || []),
           JSON.stringify(npc.secrets || []),
           npc.notes || null,
-          (npc as any).currentLocation || null,
+          null, // currentLocation removed - location tracked via actionLog
           npc.instantiatedFrom || null,
           JSON.stringify(npc.inheritsKnowledge || [])
         );

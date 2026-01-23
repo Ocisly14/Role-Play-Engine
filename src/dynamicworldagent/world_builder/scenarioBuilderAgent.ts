@@ -15,7 +15,7 @@ import type {
   ProgressCallback,
 } from "./types.js";
 import { getScenarioBuilderTemplate, getStartingSceneSnapshotTemplate } from "./scenarioBuilderTemplate.js";
-import type { NPCProfile } from "../../coc_multiagents_system/agents/models/gameTypes.js";
+import type { DynamicNPCProfile } from "./types.js";
 
 interface Runtime {
   modelProvider: ModelProviderName;
@@ -260,7 +260,7 @@ export class ScenarioBuilderAgent {
     truthTimeline: TruthEvent[],
     knowledgeMatrix: KnowledgeHolder[],
     scenarios: ScenarioOutline[],
-    npcs: NPCProfile[],
+    npcs: DynamicNPCProfile[],
     progressCallback?: ProgressCallback
   ): Promise<{
     startingScene: StartingSceneSelection;

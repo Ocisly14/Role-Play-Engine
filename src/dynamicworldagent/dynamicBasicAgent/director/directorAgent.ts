@@ -6,7 +6,10 @@ import type { DynamicScenarioSnapshot } from "../../world_builder/types.js";
 import { ScenarioLoader } from "../../../coc_multiagents_system/agents/memory/scenarioloader/index.js";
 import type { CoCDatabase } from "../../../coc_multiagents_system/agents/memory/database/index.js";
 import type { DynamicGameState, DynamicGameStateManager } from "../../state/index.js";
-import type { ActionLogEntry, NPCProfile, CharacterProfile } from "../../../coc_multiagents_system/agents/models/gameTypes.js";
+import type { ActionLogEntry, CharacterStatus, InventoryItem, NPCRelationship } from "../../../coc_multiagents_system/agents/models/gameTypes.js";
+import type { DynamicCharacterProfile } from "../../world_builder/types.js";
+import type { DynamicNPCProfile } from "../../world_builder/types.js";
+import { InventoryUtils } from "../../../coc_multiagents_system/agents/models/gameTypes.js";
 import type { ScenarioConnectionType } from "../../world_builder/types.js";
 import {
   ModelProviderName,
@@ -479,13 +482,31 @@ export class DirectorAgent {
   }
 
   /**
+   * Get current location from actionLog (latest entry with location)
+   */
+  private getCurrentLocationFromActionLog(actionLog?: ActionLogEntry[]): string | null {
+    if (!actionLog || actionLog.length === 0) {
+      return null;
+    }
+    
+    // Find the latest entry with a location (iterate backwards)
+    for (let i = actionLog.length - 1; i >= 0; i--) {
+      if (actionLog[i].location) {
+        return actionLog[i].location;
+      }
+    }
+    
+    return null;
+  }
+
+  /**
    * Get NPCs that should be in a specific scenario at the current time point
-   * Based on NPC's currentLocation, actionLog, and scenario conditions
+   * Based on NPC's actionLog location and scenario conditions
    */
   private getNPCsForScenario(
     scenarioLocation: string,
     scenarioId: string,
-    npcCharacters: NPCProfile[],
+    npcCharacters: DynamicNPCProfile[],
     previousSnapshotTime: string | undefined,
     currentGameTime: string
   ): Array<{
@@ -500,7 +521,9 @@ export class DirectorAgent {
     goals?: string[];
     secrets?: string[];
     notes?: string;
-    status: string;
+    status: CharacterStatus;
+    inventory: InventoryItem[];
+    relationships: NPCRelationship[];
     actionLog: ActionLogEntry[]; // Timeline from previous snapshot to current time
     instantiatedFrom?: string | null; // Knowledge holder ID (ROLE/ORGANIZATION)
     inheritsKnowledge?: string[]; // Truth event IDs this NPC knows
@@ -517,7 +540,9 @@ export class DirectorAgent {
       goals?: string[];
       secrets?: string[];
       notes?: string;
-      status: string;
+      status: CharacterStatus;
+      inventory: InventoryItem[];
+      relationships: NPCRelationship[];
       actionLog: ActionLogEntry[];
       instantiatedFrom?: string | null;
       inheritsKnowledge?: string[];
@@ -527,22 +552,13 @@ export class DirectorAgent {
       const npcProfile = npc;
       
       // Check if NPC is currently in this scenario location
-      // Priority: 1) currentLocation matches, 2) latest actionLog location matches
+      // Get current location from actionLog (latest entry with location)
+      const currentLocation = this.getCurrentLocationFromActionLog(npcProfile.actionLog);
       let isInScenario = false;
       
-      // Check currentLocation
-      if (npcProfile.currentLocation && 
-          npcProfile.currentLocation.toLowerCase() === scenarioLocation.toLowerCase()) {
+      if (currentLocation && 
+          currentLocation.toLowerCase() === scenarioLocation.toLowerCase()) {
         isInScenario = true;
-      }
-      
-      // Check latest actionLog entry location
-      if (!isInScenario && npcProfile.actionLog && npcProfile.actionLog.length > 0) {
-        const latestLog = npcProfile.actionLog[npcProfile.actionLog.length - 1];
-        if (latestLog.location && 
-            latestLog.location.toLowerCase() === scenarioLocation.toLowerCase()) {
-          isInScenario = true;
-        }
       }
       
       if (isInScenario) {
@@ -597,7 +613,9 @@ export class DirectorAgent {
           goals: npcProfile.goals,
           secrets: npcProfile.secrets,
           notes: npcProfile.notes,
-          status: "alive", // Default status, can be updated by LLM
+          status: npcProfile.status, // Full CharacterStatus object
+          inventory: npcProfile.inventory || [], // InventoryItem[]
+          relationships: npcProfile.relationships || [], // NPCRelationship[]
           actionLog: timelineActionLog,
           // DynamicWorld specific fields for matching with knowledge matrix
           instantiatedFrom: npcProfile.instantiatedFrom || null, // Knowledge holder ID (ROLE/ORGANIZATION)
@@ -647,6 +665,117 @@ export class DirectorAgent {
     const [h2, m2] = t2.timeOfDay.split(':').map(Number);
     
     return h1 > h2 || (h1 === h2 && m1 > m2);
+  }
+
+  /**
+   * Merge character delta updates from snapshot to actual NPC data
+   * Applies status changes, inventory add/remove, and relationship updates
+   */
+  private mergeCharacterDeltaToNPC(
+    npc: DynamicNPCProfile,
+    delta: {
+      status?: Partial<CharacterStatus>;
+      inventory?: { add?: InventoryItem[]; remove?: InventoryItem[] } | InventoryItem[];
+      relationships?: NPCRelationship[];
+      actionLog?: ActionLogEntry[];
+    }
+  ): void {
+    // Apply status delta (only changed attributes)
+    if (delta.status) {
+      for (const [key, value] of Object.entries(delta.status)) {
+        if (typeof value === 'number' && key in npc.status) {
+          // Apply differential update (e.g., hp: -2 means subtract 2)
+          (npc.status as any)[key] += value;
+          
+          // Ensure values don't go below 0 (except for conditions array)
+          if (key !== 'conditions' && (npc.status as any)[key] < 0) {
+            (npc.status as any)[key] = 0;
+          }
+          
+          // Ensure hp/sanity don't exceed max
+          if (key === 'hp' && npc.status.hp > npc.status.maxHp) {
+            npc.status.hp = npc.status.maxHp;
+          }
+          if (key === 'sanity' && npc.status.sanity > npc.status.maxSanity) {
+            npc.status.sanity = npc.status.maxSanity;
+          }
+        }
+      }
+    }
+
+    // Apply inventory delta (add/remove format)
+    if (delta.inventory) {
+      npc.inventory = InventoryUtils.normalizeInventory(npc.inventory);
+      
+      if (Array.isArray(delta.inventory)) {
+        // Replace entire inventory (legacy support)
+        npc.inventory = InventoryUtils.normalizeInventory(delta.inventory);
+      } else if (typeof delta.inventory === 'object' && !Array.isArray(delta.inventory)) {
+        // Support { add: [...], remove: [...] } format
+        if (delta.inventory.add) {
+          const itemsToAdd = Array.isArray(delta.inventory.add) 
+            ? delta.inventory.add 
+            : [delta.inventory.add];
+          npc.inventory = InventoryUtils.addItems(
+            npc.inventory, 
+            InventoryUtils.normalizeInventory(itemsToAdd)
+          );
+        }
+        
+        if (delta.inventory.remove) {
+          const itemsToRemove = Array.isArray(delta.inventory.remove)
+            ? delta.inventory.remove
+            : [delta.inventory.remove];
+          npc.inventory = InventoryUtils.removeItems(
+            npc.inventory, 
+            InventoryUtils.normalizeInventory(itemsToRemove)
+          );
+        }
+      }
+    }
+
+    // Apply relationship updates (merge new/changed relationships)
+    if (delta.relationships && delta.relationships.length > 0) {
+      for (const newRel of delta.relationships) {
+        const existingIndex = npc.relationships.findIndex(r => r.targetId === newRel.targetId);
+        if (existingIndex >= 0) {
+          // Update existing relationship
+          npc.relationships[existingIndex] = newRel;
+        } else {
+          // Add new relationship
+          npc.relationships.push(newRel);
+        }
+      }
+    }
+
+    // Merge actionLog (append new entries)
+    if (delta.actionLog && delta.actionLog.length > 0) {
+      if (!npc.actionLog) {
+        npc.actionLog = [];
+      }
+      // Append new actionLog entries (avoid duplicates by checking time+location+summary)
+      for (const newEntry of delta.actionLog) {
+        const isDuplicate = npc.actionLog.some(
+          existing => 
+            existing.time === newEntry.time &&
+            existing.location === newEntry.location &&
+            existing.summary === newEntry.summary
+        );
+        if (!isDuplicate) {
+          npc.actionLog.push(newEntry);
+        }
+      }
+      // Sort by time
+      npc.actionLog.sort((a, b) => {
+        const timeA = this.parseGameTimeFromSnapshot(a.time);
+        const timeB = this.parseGameTimeFromSnapshot(b.time);
+        if (!timeA || !timeB) return 0;
+        if (timeA.gameDay !== timeB.gameDay) return timeA.gameDay - timeB.gameDay;
+        const [hA, mA] = timeA.timeOfDay.split(':').map(Number);
+        const [hB, mB] = timeB.timeOfDay.split(':').map(Number);
+        return hA * 60 + mA - (hB * 60 + mB);
+      });
+    }
   }
 
   /**
@@ -1000,6 +1129,32 @@ export class DirectorAgent {
         gameTime: currentGameTime
       };
 
+      // Merge character deltas from target snapshot to actual NPCs
+      if (targetSnapshot.characters) {
+        for (const char of targetSnapshot.characters) {
+          const charWithActionLog = char as ScenarioCharacter & { 
+            actionLog?: ActionLogEntry[];
+            status?: Partial<CharacterStatus>;
+            inventory?: { add?: InventoryItem[]; remove?: InventoryItem[] } | InventoryItem[];
+            relationships?: NPCRelationship[];
+          };
+          
+          // Merge delta to actual NPC in gameState
+          const npc = dynamicState.npcCharacters.find(n => n.id === char.id);
+          if (npc) {
+            this.mergeCharacterDeltaToNPC(npc, {
+              status: charWithActionLog.status,
+              inventory: charWithActionLog.inventory,
+              relationships: charWithActionLog.relationships,
+              actionLog: charWithActionLog.actionLog
+            });
+            console.log(`   ✓ Merged delta updates to NPC: ${npc.name}`);
+          } else {
+            console.warn(`   ⚠️ NPC ${char.id} not found in gameState, skipping delta merge`);
+          }
+        }
+      }
+
       // Save target snapshot to database
       const targetSnapshotId = `${targetSnapshot.id}_entered_${Date.now()}`;
       const targetSnapshotWithId = {
@@ -1021,10 +1176,14 @@ export class DirectorAgent {
         console.log(`   💾 Saving ${parsedResponse.backgroundSnapshots.length} background snapshots...`);
 
         for (const item of parsedResponse.backgroundSnapshots) {
-          // Validate actionLog format
+          // Validate actionLog format (background snapshots don't update actual NPCs)
           if (item.snapshot.characters) {
             for (const char of item.snapshot.characters) {
-              const charWithActionLog = char as ScenarioCharacter & { actionLog?: ActionLogEntry[] };
+              const charWithActionLog = char as ScenarioCharacter & { 
+                actionLog?: ActionLogEntry[];
+              };
+              
+              // Validate actionLog entries
               if (charWithActionLog.actionLog) {
                 for (const logEntry of charWithActionLog.actionLog) {
                   if (!logEntry.time || !logEntry.location || !logEntry.summary) {
@@ -1162,7 +1321,7 @@ export class DirectorAgent {
 
       const scenariosToUpdate = scenariosWithSnapshots.map(item => {
         // Get NPCs that should be in this scenario at current time point
-        // NPCs can move between scenarios based on their actionLog and currentLocation
+        // NPCs can move between scenarios based on their actionLog
         const npcsInScenario = this.getNPCsForScenario(
           item.snapshot.location,
           item.scenarioId,
@@ -1257,12 +1416,15 @@ export class DirectorAgent {
         console.log(`   💾 Saving ${parsedResponse.updatedSnapshots.length} updated snapshots...`);
 
         for (const item of parsedResponse.updatedSnapshots) {
-          // Validate actionLog format
+          // Validate actionLog format (simplified snapshots don't update actual NPCs)
           if (item.snapshot.characters) {
             for (const char of item.snapshot.characters) {
-              const charWithActionLog = char as ScenarioCharacter & { actionLog?: ActionLogEntry[] };
+              const charWithActionLog = char as ScenarioCharacter & { 
+                actionLog?: ActionLogEntry[];
+              };
+              
+              // Validate actionLog entries
               if (charWithActionLog.actionLog) {
-                // Validate each actionLog entry
                 for (const logEntry of charWithActionLog.actionLog) {
                   if (!logEntry.time || !logEntry.location || !logEntry.summary) {
                     console.warn(`   ⚠️ Invalid actionLog entry for character ${char.id}, skipping...`);

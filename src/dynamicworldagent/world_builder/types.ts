@@ -3,13 +3,82 @@
  * Supports truth-first world generation following instruction.md specification
  */
 
-import type { NPCProfile } from "../../coc_multiagents_system/agents/models/gameTypes.js";
+import type { 
+  CharacterAttributes,
+  CharacterStatus,
+  InventoryItem,
+  ActionLogEntry,
+  NPCClue,
+  NPCRelationship
+} from "../../coc_multiagents_system/agents/models/gameTypes.js";
 import type { 
   ScenarioSnapshot,
   ScenarioCharacter,
   ScenarioClue,
   ScenarioCondition
 } from "../../coc_multiagents_system/agents/models/scenarioTypes.js";
+
+/**
+ * DynamicWorld Character Profile - Independent type definition for DynamicWorld system
+ * Based on CharacterProfile but without currentLocation field
+ * Location is determined from actionLog instead of currentLocation field
+ */
+export interface DynamicCharacterProfile {
+  id: string;
+  name: string;
+  attributes: CharacterAttributes;
+  status: CharacterStatus;
+  inventory: InventoryItem[];
+  skills: Record<string, number>;
+  notes?: string;
+  actionLog?: ActionLogEntry[];
+  // Additional character information (mainly for player characters)
+  occupation?: string;
+  age?: number;
+  gender?: string;
+  appearance?: string;
+  personality?: string;
+  backstory?: string;
+  residence?: string;
+  birthplace?: string;
+  era?: string;
+  ideology?: string;
+  significantPeople?: string;
+  gear?: string;
+  weapons?: Array<{
+    name: string;
+    skill: string;
+    damage: string;
+    range: string;
+    attacks: string;
+    ammo: string;
+  }>;
+  derivedAttributes?: {
+    MOV?: number;
+    BUILD?: string;
+    DB?: string;
+    ARMOR?: string;
+  };
+  // Note: currentLocation is intentionally omitted - location is tracked via actionLog
+}
+
+/**
+ * DynamicWorld NPC Profile - Extended character profile with NPC-specific data
+ * Location is determined from actionLog instead of currentLocation field
+ */
+export interface DynamicNPCProfile extends DynamicCharacterProfile {
+  // NPC-specific fields (override some optional fields from CharacterProfile)
+  background?: string;  // NPC-specific background (may differ from backstory)
+  goals?: string[];
+  secrets?: string[];
+  clues: NPCClue[];
+  relationships: NPCRelationship[];
+  isNPC: true; // flag to distinguish from player characters
+  
+  // DynamicWorld specific fields
+  instantiatedFrom?: string;     // Knowledge holder ID that this NPC represents
+  inheritsKnowledge?: string[];   // Truth event IDs from knowledge holder
+}
 
 /**
  * Dynamic World Scenario Snapshot - Simplified version for DynamicWorld system
@@ -237,7 +306,7 @@ export interface WorldGenerationResult {
   scenarios: ScenarioOutline[];
   startingScene: StartingSceneSelection | null;
   otherScenarioNpcAssignments: ScenarioNpcAssignments[];
-  npcs: NPCProfile[];
+  npcs: DynamicNPCProfile[];
   generatedFiles: {
     truthTimelineFile: string;
     knowledgeMatrixFile: string;

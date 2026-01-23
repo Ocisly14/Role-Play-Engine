@@ -140,8 +140,8 @@ Each snapshot should:
      \`\`\`
 
 3. **Characters**: List all NPCs that should be present in the scene at the current time point:
-   - Their current status (alive, dead, injured, etc.) based on their actionLog timeline
-   - What they are currently doing (write into the actionLog field)
+   - **ActionLog**: What they are currently doing (write into the actionLog field) - this is always required
+   - **Note**: For simplified snapshots, DO NOT include status, inventory, or relationships changes - only actionLog is needed
 
 4. **Game Time**: Set the gameTime to the unified current game time (Day {{currentGameDay}}, {{currentTimeOfDay}}) - all snapshots should use this same time
 
@@ -186,7 +186,6 @@ Return ONLY valid JSON in this exact structure:
           {
             "id": "NPC_id",
             "name": "Character Name",
-            "status": "alive",
             "actionLog": [
               {
                 "time": "time of the action",
@@ -283,7 +282,6 @@ Generate snapshots for each scenario above, with **different levels of detail ba
 
 ### Common Rules for All Snapshots:
 
-
 1. **Description**: Describe what has happened in the scene since the last update (from previousGameTime to currentGameTime) - a descriptive narrative timeline of changes/events
    
 2. **ActionLog Generation - CRITICAL**:
@@ -316,15 +314,19 @@ Generate snapshots for each scenario above, with **different levels of detail ba
      \`\`\`
 
 3. **Characters**: List all NPCs that should be present in the scene at the current time point:
-   - Their current status (alive, dead, injured, etc.) based on their actionLog timeline
-   - What they are currently doing (write into the actionLog field)
+   - **ActionLog**: What they are currently doing (write into the actionLog field) - this is always required
+   - **Note**: For simplified snapshots, DO NOT include status, inventory, or relationships changes - only actionLog is needed
 
 4. **Game Time**: Set the gameTime to the unified current game time (Day {{currentGameDay}}, {{currentTimeOfDay}}) - all snapshots should use this same time
 
 ### 🎯 For Target Scene (scenarioId = {{targetScene.id}}):
 Generate a **COMPLETE, DETAILED snapshot** with ALL fields:
 - **description**: Full atmospheric description including lighting, sounds, smells, weather, ambiance, and narrative of what happened
-- **characters**: Complete list with full ScenarioCharacter details (id, name, role, status, location, notes, actionLog)
+- **characters**: Complete list with full ScenarioCharacter details including:
+  - **Status Changes**: Only include status attributes that have changed (e.g., { "hp": -2, "sanity": -5 } means HP decreased by 2, sanity decreased by 5). Use negative numbers for decreases, positive for increases. Omit status if no changes.
+  - **Inventory Changes**: Only include inventory modifications using add and remove arrays (e.g., { "add": [{ "name": "key", "quantity": 1 }], "remove": [{ "name": "flashlight" }] }). Omit inventory if no changes.
+  - **Relationship Changes**: Only include relationships that are new or have changed (e.g., attitude changed, new relationship formed). Omit relationships if no changes.
+  - **ActionLog**: What they are currently doing (write into the actionLog field) - this is always required
 - **clues**: All ScenarioClue objects (id, clueText, category, difficulty, location, discoveryMethod, reveals, discovered, discoveryDetails)
 - **conditions**: Environmental ScenarioCondition objects (type, description, mechanicalEffect)
 - **keeperNotes**: Keeper-facing notes about the scene
@@ -341,14 +343,14 @@ Generate a **COMPLETE, DETAILED snapshot** with ALL fields:
 - **blockReason** (optional): clear explanation (e.g., "Sheriff locked the door after investigating", "Bridge collapsed during storm")
 
 ### 📋 For Other Scenarios (background scenes):
-Generate **SIMPLIFIED snapshots** with only: description, characters (with basic info + actionLog), gameTime
+Generate **SIMPLIFIED snapshots** with only: description, characters (with basic info + actionLog only, NO status/inventory/relationships), gameTime
 
 ## 📋 Output Format
 
 **⚠️ REMINDER**: Do NOT include the player's current scene ({{playerCurrentScene.name}}) in the updatedSnapshots array.
 
 Return ONLY valid JSON in this exact structure:
-
+Example:
 \`\`\`json
 {
   "updatedSnapshots": [
@@ -366,10 +368,28 @@ Return ONLY valid JSON in this exact structure:
           {
             "id": "NPC_id",
             "name": "Character Name",
-            "role": "witness",
-            "status": "alive",
-            "location": "Specific location",
-            "notes": "Detailed description of what they're doing",
+            "status": {
+              "hp": -2,
+              "sanity": -5
+            },
+            "inventory": {
+              "add": [
+                { "name": "key", "quantity": 1 }
+              ],
+              "remove": [
+                { "name": "flashlight" }
+              ]
+            },
+            "relationships": [
+              {
+                "targetId": "other_character_id",
+                "targetName": "Other Character",
+                "relationshipType": "friend",
+                "attitude": 10,
+                "description": "Relationship description",
+                "history": "Relationship history"
+              }
+            ],
             "actionLog": [
               { "time": "Day X, HH:MM", "location": "Location", "summary": "Action summary" }
             ]
@@ -419,10 +439,6 @@ Return ONLY valid JSON in this exact structure:
           {
             "id": "NPC_2",
             "name": "Character Name",
-            "role": "other",
-            "status": "alive",
-            "location": "Location",
-            "notes": "Brief notes",
             "actionLog": [...]
           }
         ],

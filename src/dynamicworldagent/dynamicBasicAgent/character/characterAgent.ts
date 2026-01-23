@@ -1,7 +1,9 @@
 import { ModelClass } from "../../../models/types.js";
 import { generateText } from "../../../models/index.js";
 import { NPCResponseAnalysis, ActionType } from "../../../state.js";
-import type { CharacterProfile, NPCProfile } from "../../../coc_multiagents_system/agents/models/gameTypes.js";
+import type { ActionLogEntry } from "../../../coc_multiagents_system/agents/models/gameTypes.js";
+import type { DynamicCharacterProfile } from "../../world_builder/types.js";
+import type { DynamicNPCProfile } from "../../world_builder/types.js";
 import type { DynamicGameState, DynamicGameStateManager } from "../../state/index.js";
 import { getCharacterTemplate } from "./characterTemplate.js";
 import { getCharacterSimulatedTemplate } from "./characterSimulatedTemplate.js";
@@ -194,7 +196,7 @@ export class CharacterAgent {
   /**
    * Extract character information (basic attributes)
    */
-  private extractCharacterInfo(character: CharacterProfile): any {
+  private extractCharacterInfo(character: DynamicCharacterProfile): any {
     return {
       id: character.id,
       name: character.name,
@@ -300,13 +302,16 @@ export class CharacterAgent {
       }
     }
 
-    // Then, add NPCs with matching currentLocation
+    // Then, add NPCs with matching location from actionLog
     let addedByLocation = 0;
     for (const npc of dynamicState.npcCharacters) {
-      const npcProfile = npc as NPCProfile;
+      const npcProfile = npc as DynamicNPCProfile;
 
-      if (npcProfile.currentLocation &&
-          npcProfile.currentLocation.toLowerCase() === scenarioLocation.toLowerCase()) {
+      // Get current location from actionLog
+      const currentLocation = this.getCurrentLocationFromActionLog(npcProfile.actionLog);
+      
+      if (currentLocation &&
+          currentLocation.toLowerCase() === scenarioLocation.toLowerCase()) {
 
         // Check if already added (avoid duplicates using fuzzy matching for consistency)
         const alreadyAdded = sceneNpcs.some(sn =>
@@ -315,7 +320,7 @@ export class CharacterAgent {
 
         if (!alreadyAdded) {
           sceneNpcs.push(this.extractNPCInfo(npc));
-          console.log(`   ✓ Added by currentLocation: "${npc.name}" (location: "${npcProfile.currentLocation}")`);
+          console.log(`   ✓ Added by actionLog location: "${npc.name}" (location: "${currentLocation}")`);
           addedByLocation++;
         } else {
           console.log(`   - Skipped duplicate: "${npc.name}" (already in scene)`);
@@ -325,17 +330,35 @@ export class CharacterAgent {
 
     console.log(`\n📊 [Extract Scene NPCs] Summary:`);
     console.log(`   From scenario.characters: ${sceneNpcs.length - addedByLocation}`);
-    console.log(`   From currentLocation match: ${addedByLocation}`);
+    console.log(`   From actionLog location match: ${addedByLocation}`);
     console.log(`   Total NPCs in scene: ${sceneNpcs.length}\n`);
 
     return sceneNpcs;
   }
   
   /**
+   * Get current location from actionLog (latest entry with location)
+   */
+  private getCurrentLocationFromActionLog(actionLog?: ActionLogEntry[]): string | null {
+    if (!actionLog || actionLog.length === 0) {
+      return null;
+    }
+    
+    // Find the latest entry with a location (iterate backwards)
+    for (let i = actionLog.length - 1; i >= 0; i--) {
+      if (actionLog[i].location) {
+        return actionLog[i].location;
+      }
+    }
+    
+    return null;
+  }
+
+  /**
    * Extract NPC information (basic attributes)
    */
-  private extractNPCInfo(npc: CharacterProfile): any {
-    const npcProfile = npc as NPCProfile;
+  private extractNPCInfo(npc: DynamicCharacterProfile): any {
+    const npcProfile = npc as DynamicNPCProfile;
     
     return {
       id: npc.id,
@@ -353,7 +376,6 @@ export class CharacterAgent {
       inventory: npc.inventory || [],
       clues: npcProfile.clues || [],
       relationships: npcProfile.relationships || [],
-      currentLocation: npcProfile.currentLocation || null,
       notes: npc.notes || ""
     };
   }

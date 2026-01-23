@@ -1,7 +1,9 @@
 import { ModelClass } from "../../../models/types.js";
 import { generateText } from "../../../models/index.js";
 import { ActionResult, ActionAnalysis, SceneChangeRequest, NPCResponseAnalysis, ActionType } from "../../../state.js";
-import type { CharacterProfile, ActionLogEntry, NPCProfile } from "../../../coc_multiagents_system/agents/models/gameTypes.js";
+import type { ActionLogEntry } from "../../../coc_multiagents_system/agents/models/gameTypes.js";
+import type { DynamicCharacterProfile } from "../../world_builder/types.js";
+import type { DynamicNPCProfile } from "../../world_builder/types.js";
 import { actionTypeTemplates } from "../../../coc_multiagents_system/agents/action/example.js";
 import type { ScenarioLoader } from "../../../coc_multiagents_system/agents/memory/scenarioloader/index.js";
 import type { DynamicGameState } from "../../state/index.js";
@@ -24,12 +26,12 @@ export class ActionAgent {
   private async processCharacterAction(
     runtime: any,
     dynamicState: DynamicGameState,
-    character: CharacterProfile,
+    character: DynamicCharacterProfile,
     actionDescription: string,
     options: {
       isNPC: boolean;
       npcResponse?: NPCResponseAnalysis;
-      targetCharacter?: CharacterProfile | null;
+      targetCharacter?: DynamicCharacterProfile | null;
     },
     gameStateManager: DynamicGameStateManager
   ): Promise<DynamicGameState> {
@@ -318,7 +320,7 @@ ${hasValidSceneChangeRequest && !isNPC ? `
     dynamicState: DynamicGameState,
     actionAnalysis?: ActionAnalysis | null,
     npcResponse?: NPCResponseAnalysis
-  ): CharacterProfile | null {
+  ): DynamicCharacterProfile | null {
     let targetName: string | null = null;
 
     if (npcResponse?.targetCharacter) {
@@ -386,11 +388,11 @@ ${hasValidSceneChangeRequest && !isNPC ? `
    */
   private buildContext(
     dynamicState: DynamicGameState,
-    character: CharacterProfile,
+    character: DynamicCharacterProfile,
     options: {
       isNPC: boolean;
       npcResponse?: NPCResponseAnalysis;
-      targetCharacter?: CharacterProfile | null;
+      targetCharacter?: DynamicCharacterProfile | null;
     }
   ): string {
     const { isNPC, npcResponse } = options;
@@ -506,7 +508,7 @@ ${hasValidSceneChangeRequest && !isNPC ? `
    */
   private buildFinalResult(
     dynamicState: DynamicGameState,
-    character: CharacterProfile,
+    character: DynamicCharacterProfile,
     parsed: any,
     toolLogs: string[],
     options: {
@@ -540,14 +542,9 @@ ${hasValidSceneChangeRequest && !isNPC ? `
             const npcInState = currentState.npcCharacters.find(n => n.id === character.id);
 
             if (npcInState) {
-              const oldLocation = npcInState.currentLocation || null;
-              npcInState.currentLocation = targetLocation;
-
-              if (oldLocation !== targetLocation) {
-                console.log(`   ✓ NPC ${character.name} location updated: ${oldLocation || "Unknown"} → ${targetLocation}`);
-              } else {
-                console.log(`   - NPC ${character.name} already at target location ${targetLocation}`);
-              }
+              // Location is tracked via actionLog, no need to update currentLocation
+              // The actionLog entry for scene change will be added by the Director Agent
+              console.log(`   ✓ NPC ${character.name} scene change requested: ${targetSceneName} (location tracked via actionLog)`);
             } else {
               console.warn(`   ⚠️  NPC ${character.name} (ID: ${character.id}) not found in dynamicState`);
             }
@@ -703,7 +700,7 @@ ${hasValidSceneChangeRequest && !isNPC ? `
     };
     const updatedState = gameStateManager.getState();
 
-    const appendLog = (character: CharacterProfile | undefined) => {
+    const appendLog = (character: DynamicCharacterProfile | undefined) => {
       if (!character) return;
       if (!character.actionLog) {
         character.actionLog = [];
@@ -741,7 +738,7 @@ ${hasValidSceneChangeRequest && !isNPC ? `
    */
   private buildErrorResult(
     dynamicState: DynamicGameState,
-    character: CharacterProfile,
+    character: DynamicCharacterProfile,
     errorMessage: string,
     toolLogs: string[],
     isNPC: boolean,
@@ -840,7 +837,7 @@ ${hasValidSceneChangeRequest && !isNPC ? `
   private async processSingleNPCAction(
     runtime: any,
     dynamicState: DynamicGameState,
-    npc: CharacterProfile,
+    npc: DynamicCharacterProfile,
     npcResponse: NPCResponseAnalysis,
     gameStateManager: DynamicGameStateManager
   ): Promise<DynamicGameState> {

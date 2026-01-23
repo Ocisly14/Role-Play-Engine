@@ -13,9 +13,28 @@ import {
   DynamicGameStateManager,
   initialDynamicGameState,
 } from "./DynamicGameState.js";
-import type { CharacterProfile, NPCProfile } from "../../coc_multiagents_system/agents/models/gameTypes.js";
+import type { NPCProfile } from "../../coc_multiagents_system/agents/models/gameTypes.js";
+import type { DynamicCharacterProfile, DynamicNPCProfile } from "../world_builder/types.js";
 import type { DynamicScenarioSnapshot } from "../world_builder/types.js";
 import { NPCLoader } from "../../coc_multiagents_system/agents/character/npcloader/index.js";
+
+/**
+ * Convert NPCProfile (from multiagent system) to DynamicNPCProfile (for DynamicWorld system)
+ * Removes currentLocation field as it's tracked via actionLog in DynamicWorld
+ */
+function convertNPCProfileToDynamic(npc: NPCProfile): DynamicNPCProfile {
+  const { currentLocation, ...rest } = npc;
+  return rest as DynamicNPCProfile;
+}
+
+/**
+ * Convert CharacterProfile (from multiagent system) to DynamicCharacterProfile (for DynamicWorld system)
+ * Removes currentLocation field as it's tracked via actionLog in DynamicWorld
+ */
+function convertCharacterProfileToDynamic(character: any): DynamicCharacterProfile {
+  const { currentLocation, ...rest } = character;
+  return rest as DynamicCharacterProfile;
+}
 
 /**
  * Load DynamicGameState from database
@@ -210,7 +229,7 @@ export async function initializeCompleteDynamicGameState(
   const database = db.getDatabase();
 
   // 1. Load player character
-  let playerCharacter: CharacterProfile;
+  let playerCharacter: DynamicCharacterProfile;
   if (params.characterId) {
     const character = database.prepare(`
       SELECT character_id, name, attributes, status, skills, inventory, notes,
@@ -398,7 +417,7 @@ export async function initializeCompleteDynamicGameState(
   }
 
   // 3. Load NPCs from snapshot
-  const npcCharacters: NPCProfile[] = [];
+  const npcCharacters: DynamicNPCProfile[] = [];
   if (currentScenario) {
     const npcLoader = new NPCLoader(db);
     const allNPCs = npcLoader.getAllNPCs();
@@ -413,15 +432,9 @@ export async function initializeCompleteDynamicGameState(
     for (const charName of npcNamesToProcess) {
       const matchingNpc = allNPCs.find(npc => isNameSimilar(npc.name, charName));
       if (matchingNpc && !npcCharacters.some(npc => npc.id === matchingNpc.id)) {
-        const npcProfile = { ...matchingNpc, currentLocation: currentScenario!.location };
-        npcCharacters.push(npcProfile);
-
-        // Update NPC location in database
-        database.prepare(`
-          UPDATE characters
-          SET current_location = ?
-          WHERE character_id = ? AND is_npc = 1
-        `).run(currentScenario.location, matchingNpc.id);
+        // Convert NPCProfile to DynamicNPCProfile (remove currentLocation)
+        const dynamicNpc = convertNPCProfileToDynamic(matchingNpc);
+        npcCharacters.push(dynamicNpc);
       }
     }
   }

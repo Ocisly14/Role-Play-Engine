@@ -12,7 +12,7 @@ import type {
   StartingSceneSelection,
   TruthEvent,
 } from "./types.js";
-import type { NPCProfile } from "../../coc_multiagents_system/agents/models/gameTypes.js";
+import type { DynamicNPCProfile } from "./types.js";
 import { getModuleDigestTemplate } from "./moduleDigestTemplate.js";
 
 interface Runtime {
@@ -55,7 +55,7 @@ export class ModuleDigestAgent {
     macroScene: MacroSceneStructure,
     truthTimeline: TruthEvent[],
     knowledgeMatrix: KnowledgeHolder[],
-    npcs: NPCProfile[],
+    npcs: DynamicNPCProfile[],
     scenarios: ScenarioOutline[],
     startingScene: StartingSceneSelection | null,
     creativePrompt: string

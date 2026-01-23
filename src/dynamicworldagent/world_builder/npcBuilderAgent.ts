@@ -17,9 +17,9 @@ import type {
   MythosEvent,
   NPCBasicInfo,
   ProgressCallback,
+  DynamicNPCProfile,
 } from "./types.js";
 import type {
-  NPCProfile,
   NPCRelationship,
   CharacterAttributes,
 } from "../../coc_multiagents_system/agents/models/gameTypes.js";
@@ -238,7 +238,7 @@ export class NPCBuilderAgent {
     allKnowledgeHolders: KnowledgeHolder[],
     allRedHerrings: RedHerring[],
     progressCallback?: ProgressCallback
-  ): Promise<Partial<NPCProfile>> {
+  ): Promise<Partial<DynamicNPCProfile>> {
     progressCallback?.(`Generating identity for ${npcBasicInfo.name}...`);
 
     // Filter bound knowledge holders (only those this NPC is connected to)
@@ -309,7 +309,7 @@ export class NPCBuilderAgent {
     redHerrings: RedHerring[],
     mythosEvents: MythosEvent[],
     progressCallback?: ProgressCallback
-  ): Promise<NPCProfile[]> {
+  ): Promise<DynamicNPCProfile[]> {
     console.log("\n👥 [NPC Builder Agent] Starting NPC generation...");
     const occupationNames = loadOccupationNames();
 
@@ -324,7 +324,7 @@ export class NPCBuilderAgent {
     console.log(`   Generated ${npcBasics.length} NPC templates`);
 
     // Steps 2-4: For each NPC, generate attributes, skills, and identity
-    const npcs: NPCProfile[] = new Array(npcBasics.length);
+    const npcs: DynamicNPCProfile[] = new Array(npcBasics.length);
     const concurrencyLimit = 4;
     let currentIndex = 0;
 
@@ -383,7 +383,7 @@ export class NPCBuilderAgent {
           targetId: relationship.targetName ? makeNpcId(relationship.targetName) : "unknown",
         }));
 
-        const npc: NPCProfile = {
+        const npc: DynamicNPCProfile = {
           id: makeNpcId(npcBasic.name),
           name: npcBasic.name,
           occupation: npcBasic.occupation,

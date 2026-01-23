@@ -1,7 +1,9 @@
 import { getKeeperTemplate } from "./keeperTemplate.js";
 import { composeTemplateWithImages } from "../../../template.js";
 import type { ActionResult, ActionAnalysis, DiscoveredClue } from "../../../state.js";
-import type { CharacterProfile, NPCProfile, ActionLogEntry } from "../../../coc_multiagents_system/agents/models/gameTypes.js";
+import type { ActionLogEntry } from "../../../coc_multiagents_system/agents/models/gameTypes.js";
+import type { DynamicCharacterProfile } from "../../world_builder/types.js";
+import type { DynamicNPCProfile } from "../../world_builder/types.js";
 import type { DynamicGameState, DynamicGameStateManager } from "../../state/index.js";
 import {
   ModelProviderName,
@@ -405,11 +407,11 @@ export class KeeperAgent {
    * @param interactionPartnerName Optional: if provided, also include action logs involving this partner (from any scene)
    */
   private extractCompleteCharacterAttributes(
-    character: CharacterProfile,
+    character: DynamicCharacterProfile,
     currentLocation: string | null = null,
     interactionPartnerName: string | null = null
   ) {
-    const npcData = character as NPCProfile;
+    const npcData = character as DynamicNPCProfile;
 
     // Filter action log: keep current location logs + interaction history with partner
     let filteredActionLog: ActionLogEntry[] = [];
@@ -489,9 +491,6 @@ export class KeeperAgent {
       // Relationships (if NPC)
       relationships: npcData.relationships || [],
       
-      // Current location
-      currentLocation: npcData.currentLocation || null,
-      
       // Notes
       notes: character.notes || ""
     };
@@ -504,7 +503,7 @@ export class KeeperAgent {
    * @param interactionPartnerName Optional: NPC name to include interaction history with
    */
   private extractCompletePlayerCharacter(
-    player: CharacterProfile,
+    player: DynamicCharacterProfile,
     currentLocation: string | null = null,
     interactionPartnerName: string | null = null
   ) {
