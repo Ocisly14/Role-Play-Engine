@@ -4,7 +4,46 @@
  */
 
 import type { NPCProfile } from "../../coc_multiagents_system/agents/models/gameTypes.js";
-import type { ScenarioSnapshot } from "../../coc_multiagents_system/agents/models/scenarioTypes.js";
+import type { 
+  ScenarioSnapshot,
+  ScenarioCharacter,
+  ScenarioClue,
+  ScenarioCondition
+} from "../../coc_multiagents_system/agents/models/scenarioTypes.js";
+
+/**
+ * Dynamic World Scenario Snapshot - Simplified version for DynamicWorld system
+ * Removes events (tracked via actionResults) and exits (replaced by scenario-level connections)
+ */
+export interface DynamicScenarioSnapshot {
+  id: string;
+  /** Scenario name */
+  name: string;
+  /** Narrative game time for this snapshot (e.g., "Day 1, 08:00") */
+  gameTime?: string;
+  /** Primary location */
+  location: string;
+  /** Detailed description */
+  description: string;
+  /** Whether the map should be shown for this scene */
+  showMap?: boolean;
+  /** Module-relative path to map image (inherited from parent ScenarioProfile) */
+  mapImagePath?: string;
+  /** Characters present */
+  characters: ScenarioCharacter[];
+  /** Available clues */
+  clues: ScenarioClue[];
+  /** Environmental conditions */
+  conditions: ScenarioCondition[];
+  /** Keeper notes */
+  keeperNotes?: string;
+  /** Estimated short actions the scene can accommodate (runtime-only, set by Director) */
+  estimatedShortActions?: number;
+  /** Time restriction for this snapshot (e.g., "day1 evening", "day2 (after)") - optional */
+  timeRestriction?: string;
+  /** Whether this is the initial snapshot for the starting scene */
+  initialSnapshot?: boolean;
+}
 
 /**
  * Setting types for CoC scenarios
@@ -116,6 +155,8 @@ export interface ScenarioConnection {
   scenarioName: string;
   relationshipType: ScenarioConnectionType;
   description?: string;
+  blocked?: boolean;        // 连接是否被物理阻挡或锁定
+  blockReason?: string;     // 阻挡原因说明（当 blocked 为 true 时建议提供）
 }
 
 /**
@@ -156,7 +197,7 @@ export interface StartingSceneSelection {
   scenarioId: string;
   scenarioName: string;
   selectionReason: string;
-  snapshot: ScenarioSnapshot;
+  snapshot: DynamicScenarioSnapshot;
 }
 
 /**

@@ -28,7 +28,7 @@ import type {
 } from "../../state.js";
 import type { CharacterProfile, NPCProfile } from "../../coc_multiagents_system/agents/models/gameTypes.js";
 import { InventoryUtils } from "../../coc_multiagents_system/agents/models/gameTypes.js";
-import type { ScenarioSnapshot } from "../../coc_multiagents_system/agents/models/scenarioTypes.js";
+import type { DynamicScenarioSnapshot } from "../world_builder/types.js";
 import type { Evidence } from "../../coc_multiagents_system/agents/memory/RagManager.js";
 
 export type Phase = "intro" | "investigation" | "confrontation" | "downtime";
@@ -49,7 +49,7 @@ export interface DynamicGameState {
   phase: Phase;
 
   // Current scenario and visited history
-  currentScenario: ScenarioSnapshot | null;
+  currentScenario: DynamicScenarioSnapshot | null;
   visitedScenarios: VisitedScenarioBasic[];
 
   // Time management
@@ -124,7 +124,7 @@ export interface DynamicGameState {
   pointOfNoReturnTrigger: string | null;  // The actual trigger value when reached
 
   // Updated scenario snapshots (simplified versions for non-player scenarios)
-  updatedScenarioSnapshots: Map<string, ScenarioSnapshot>;  // key: scenarioId, value: 更新后的简化版 snapshot
+  updatedDynamicScenarioSnapshots: Map<string, DynamicScenarioSnapshot>;  // key: scenarioId, value: 更新后的简化版 snapshot
   globalScenarioUpdateTrigger: {
     timeRestriction?: string;
     events?: string[];
@@ -196,7 +196,7 @@ export const initialDynamicGameState = (params: {
   mythosRevelations: new Set(),
   pointOfNoReturnReached: false,
   pointOfNoReturnTrigger: null,
-  updatedScenarioSnapshots: new Map(),
+  updatedDynamicScenarioSnapshots: new Map(),
   globalScenarioUpdateTrigger: null,
   loadedAt: new Date(),
   lastUpdated: new Date(),
@@ -652,7 +652,7 @@ export class DynamicGameStateManager {
   /**
    * Update current scenario and manage visited scenarios history
    */
-  updateCurrentScenario(scenarioData: { snapshot: ScenarioSnapshot; scenarioName: string } | null): void {
+  updateCurrentScenario(scenarioData: { snapshot: DynamicScenarioSnapshot; scenarioName: string } | null): void {
     if (!scenarioData) return;
 
     const newScenario = scenarioData.snapshot;
@@ -735,7 +735,7 @@ export class DynamicGameStateManager {
   /**
    * Automatically update NPC current locations based on character list in scenario
    */
-  private updateNpcLocationsForScenario(scenario: ScenarioSnapshot): void {
+  private updateNpcLocationsForScenario(scenario: DynamicScenarioSnapshot): void {
     if (!scenario || !scenario.characters || scenario.characters.length === 0) {
       return;
     }
@@ -766,7 +766,7 @@ export class DynamicGameStateManager {
   /**
    * Add a scenario snapshot to the visited list while keeping the list bounded
    */
-  addVisitedScenario(scenario: ScenarioSnapshot): void {
+  addVisitedScenario(scenario: DynamicScenarioSnapshot): void {
     // Check if this scenario is already in visited list
     const existingIndex = this.state.visitedScenarios.findIndex(
       visited => visited.id === scenario.id
@@ -1177,11 +1177,6 @@ export class DynamicGameStateManager {
       }
     }
 
-    // Add new events
-    if (scenarioUpdates.events && Array.isArray(scenarioUpdates.events)) {
-      this.state.currentScenario.events.push(...scenarioUpdates.events);
-    }
-
     // Update clue states
     if (scenarioUpdates.clues && Array.isArray(scenarioUpdates.clues)) {
       for (const clueUpdate of scenarioUpdates.clues) {
@@ -1208,23 +1203,23 @@ export class DynamicGameStateManager {
   /**
    * Set updated scenario snapshot (simplified version for non-player scenarios)
    */
-  setUpdatedScenarioSnapshot(scenarioId: string, snapshot: ScenarioSnapshot): void {
-    this.state.updatedScenarioSnapshots.set(scenarioId, snapshot);
+  setUpdatedDynamicScenarioSnapshot(scenarioId: string, snapshot: DynamicScenarioSnapshot): void {
+    this.state.updatedDynamicScenarioSnapshots.set(scenarioId, snapshot);
     this.state.lastUpdated = new Date();
   }
 
   /**
    * Get updated scenario snapshot by scenario ID
    */
-  getUpdatedScenarioSnapshot(scenarioId: string): ScenarioSnapshot | null {
-    return this.state.updatedScenarioSnapshots.get(scenarioId) || null;
+  getUpdatedDynamicScenarioSnapshot(scenarioId: string): DynamicScenarioSnapshot | null {
+    return this.state.updatedDynamicScenarioSnapshots.get(scenarioId) || null;
   }
 
   /**
    * Get all updated scenario snapshots
    */
-  getAllUpdatedScenarioSnapshots(): Map<string, ScenarioSnapshot> {
-    return this.state.updatedScenarioSnapshots;
+  getAllUpdatedDynamicScenarioSnapshots(): Map<string, DynamicScenarioSnapshot> {
+    return this.state.updatedDynamicScenarioSnapshots;
   }
 
   /**

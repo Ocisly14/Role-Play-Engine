@@ -187,7 +187,6 @@ export class CharacterAgent {
       characters: currentScenario.characters || [],
       clues: currentScenario.clues || [],
       conditions: currentScenario.conditions || [],
-      events: currentScenario.events || [],
       connections: scenarioOutline?.connections || []
     };
   }

@@ -555,10 +555,9 @@ Based on `ScenarioSnapshot` type:
   - `description`: string
   - `mechanicalEffect`: string (optional)
 
-**Events:**
-- `events`: string[] - Notable events that occurred or may occur
-
-**Note:** Scenario connections are defined at the scenario level (in `ScenarioOutline.connections`), not in snapshots.
+**Note:** 
+- Scenario connections are defined at the scenario level (in `ScenarioOutline.connections`), not in snapshots.
+- Events are tracked via actionResults and NPC actionLogs, not in snapshot fields.
 
 **State Evolution:**
 - `estimatedShortActions`: number (optional) - Estimated actions this scene can accommodate

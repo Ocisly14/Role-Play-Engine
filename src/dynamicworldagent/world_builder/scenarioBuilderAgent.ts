@@ -353,7 +353,6 @@ export class ScenarioBuilderAgent {
       snapshot.characters = Array.isArray(snapshot.characters) ? snapshot.characters : [];
       snapshot.clues = Array.isArray(snapshot.clues) ? snapshot.clues : [];
       snapshot.conditions = Array.isArray(snapshot.conditions) ? snapshot.conditions : [];
-      snapshot.events = Array.isArray(snapshot.events) ? snapshot.events : [];
 
       for (const char of snapshot.characters) {
         if (!char.id || !char.name || !char.role || !char.status) {

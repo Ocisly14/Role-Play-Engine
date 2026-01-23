@@ -14,7 +14,7 @@ import {
   initialDynamicGameState,
 } from "./DynamicGameState.js";
 import type { CharacterProfile, NPCProfile } from "../../coc_multiagents_system/agents/models/gameTypes.js";
-import type { ScenarioSnapshot } from "../../coc_multiagents_system/agents/models/scenarioTypes.js";
+import type { DynamicScenarioSnapshot } from "../world_builder/types.js";
 import { NPCLoader } from "../../coc_multiagents_system/agents/character/npcloader/index.js";
 
 /**
@@ -298,7 +298,7 @@ export async function initializeCompleteDynamicGameState(
   }
 
   // 2. Load initial snapshot
-  let currentScenario: ScenarioSnapshot | null = null;
+  let currentScenario: DynamicScenarioSnapshot | null = null;
   let gameDay = 1;
   let timeOfDay = "08:00";
 
@@ -392,7 +392,6 @@ export async function initializeCompleteDynamicGameState(
         description: cond.description,
         mechanicalEffect: cond.mechanical_effect || undefined,
       })),
-      events: initialSnapshot.events ? JSON.parse(initialSnapshot.events) : [],
       keeperNotes: initialSnapshot.keeper_notes || undefined,
       timeRestriction: initialSnapshot.time_restriction || undefined,
     };

@@ -18,7 +18,7 @@ import type {
   ModuleDigest,
 } from "./types.js";
 import type { NPCProfile } from "../../coc_multiagents_system/agents/models/gameTypes.js";
-import type { ScenarioSnapshot } from "../../coc_multiagents_system/agents/models/scenarioTypes.js";
+import type { DynamicScenarioSnapshot } from "./types.js";
 
 /**
  * Complete world module data loaded from all JSON files
@@ -33,7 +33,7 @@ export interface LoadedWorldModule {
   knowledgeMatrix: KnowledgeHolder[];
   redHerrings: RedHerring[];
   scenarios: ScenarioOutline[];
-  scenarioSnapshots: Map<string, ScenarioSnapshot>; // scenarioId -> snapshot
+  scenarioSnapshots: Map<string, DynamicScenarioSnapshot>; // scenarioId -> snapshot
   npcs: NPCProfile[];
   files: {
     truthTimelineFile: string;
@@ -54,7 +54,7 @@ interface ScenarioFilePayload {
   description: string;
   evidence?: string[];
   clues?: any[];
-  snapshot: ScenarioSnapshot;
+  snapshot: DynamicScenarioSnapshot;
   tags?: string[];
   connections?: any[];
   npcAssignments?: any[];
@@ -209,7 +209,7 @@ export class WorldModuleLoader {
       // 6. Load scenario snapshots from individual files
       console.log(`  [6/7] Loading scenario snapshots...`);
       const scenariosDir = path.join(moduleDir, `${moduleName}_Scenarios`);
-      const scenarioSnapshots = this.loadScenarioSnapshots(scenariosDir);
+      const scenarioSnapshots = this.loadDynamicScenarioSnapshots(scenariosDir);
       console.log(`    ✓ Scenario snapshots loaded: ${scenarioSnapshots.size}`);
 
       // 7. Load NPCs from individual files
@@ -347,8 +347,8 @@ export class WorldModuleLoader {
   /**
    * Load scenario snapshots from individual scenario files
    */
-  private loadScenarioSnapshots(scenariosDir: string): Map<string, ScenarioSnapshot> {
-    const snapshots = new Map<string, ScenarioSnapshot>();
+  private loadDynamicScenarioSnapshots(scenariosDir: string): Map<string, DynamicScenarioSnapshot> {
+    const snapshots = new Map<string, DynamicScenarioSnapshot>();
 
     if (!fs.existsSync(scenariosDir)) {
       console.warn(`    ⚠️  Scenarios directory not found: ${scenariosDir}`);
@@ -434,7 +434,7 @@ export class WorldModuleLoader {
 
     // 4. Save scenario snapshots
     console.log(`  [4/4] Saving ${module.scenarioSnapshots.size} scenario snapshots...`);
-    this.saveScenarioSnapshots(module);
+    this.saveDynamicScenarioSnapshots(module);
 
     console.log(`  ✓ All data saved to database`);
   }
@@ -776,7 +776,7 @@ export class WorldModuleLoader {
   /**
    * Save scenario snapshots to database
    */
-  private saveScenarioSnapshots(module: LoadedWorldModule): void {
+  private saveDynamicScenarioSnapshots(module: LoadedWorldModule): void {
     const database = this.db.getDatabase();
 
     for (const [snapshotId, snapshot] of module.scenarioSnapshots.entries()) {
@@ -812,7 +812,7 @@ export class WorldModuleLoader {
           snapshot.name,
           snapshot.location,
           snapshot.description,
-          JSON.stringify(snapshot.events || []),
+          JSON.stringify([]), // events removed - tracked via actionResults
           JSON.stringify([]), // exits removed - connections are scenario-level data
           snapshot.keeperNotes || null,
           snapshot.timeRestriction || null,
@@ -834,7 +834,7 @@ export class WorldModuleLoader {
           snapshot.name,
           snapshot.location,
           snapshot.description,
-          JSON.stringify(snapshot.events || []),
+          JSON.stringify([]), // events removed - tracked via actionResults
           JSON.stringify([]), // exits removed - connections are scenario-level data
           snapshot.keeperNotes || null,
           snapshot.timeRestriction || null,

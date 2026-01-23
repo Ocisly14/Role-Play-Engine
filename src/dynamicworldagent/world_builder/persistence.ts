@@ -266,7 +266,7 @@ export async function saveWorldToDatabase(
             snapshot.name,
             snapshot.location,
             snapshot.description,
-            JSON.stringify(snapshot.events || []),
+            JSON.stringify([]), // events removed - tracked via actionResults
             JSON.stringify([]), // exits removed - connections are scenario-level data
             snapshot.keeperNotes || null,
             snapshot.timeRestriction || null,
@@ -288,7 +288,7 @@ export async function saveWorldToDatabase(
             snapshot.name,
             snapshot.location,
             snapshot.description,
-            JSON.stringify(snapshot.events || []),
+            JSON.stringify([]), // events removed - tracked via actionResults
             JSON.stringify([]), // exits removed - connections are scenario-level data
             snapshot.keeperNotes || null,
             snapshot.timeRestriction || null,
@@ -502,7 +502,6 @@ export async function saveWorldToJSON(
         characters: startingScene.snapshot.characters,
         clues: startingScene.snapshot.clues,
         conditions: startingScene.snapshot.conditions,
-        events: startingScene.snapshot.events,
         keeperNotes: startingScene.snapshot.keeperNotes,
         estimatedShortActions: startingScene.snapshot.estimatedShortActions,
         timeRestriction: startingScene.snapshot.timeRestriction,

@@ -1,68 +1,3 @@
-/**
- * Action-Driven Scene Change Template - for validating and selecting target scene
- */
-export function getActionDrivenSceneChangeTemplate(): string {
-    return `# Director Agent - Action-Driven Scene Change Validation
-
-Based on the scene change request, determine the appropriate target scene from available scenarios.
-
-## 📋 Scene Change Request
-{{#if sceneChangeRequest}}
-- **Target Scene Name**: {{sceneChangeRequest.targetSceneName}}
-- **Reason**: {{sceneChangeRequest.reason}}
-{{else}}
-*No scene change request*
-{{/if}}
-
-## 📍 Current Scene
-{{#if currentSnapshot}}
-- **Name**: {{currentSnapshot.name}}
-- **Location**: {{currentSnapshot.location}}
-- **Description**: {{currentSnapshot.description}}
-{{else}}
-*No current scene*
-{{/if}}
-
-## 🎬 Available Scenarios
-{{#if availableScenarios}}
-{{#each availableScenarios}}
-### **{{this.name}}** (ID: {{this.id}})
-{{#if this.connections}}
-**Connections**:
-{{#each this.connections}}
-- **{{this.scenarioName}}** ({{this.relationshipType}}){{#if this.description}}: {{this.description}}{{/if}}
-{{/each}}
-{{else}}
-*No connections*
-{{/if}}
-
-{{/each}}
-{{else}}
-*No scenarios available*
-{{/if}}
-
-## 🎯 Your Task
-
-Based on the scene change request, select the target scenario that matches the requested scene name.
-
-## Response Format
-
-Return ONLY valid JSON in this exact structure:
-
-\`\`\`json
-{
-  "targetScenarioName": "exact scenario name from available scenarios",
-  "targetScenarioId": "exact scenario ID from available scenarios"
-}
-\`\`\`
-
-**Important**:
-- **MUST** return the exact scenario name and ID from the available scenarios list above
-- Match the requested scene name from the scene change request
-- If the requested scene name doesn't exactly match any scenario, select the closest matching scenario based on the name
-
-*Select the target scenario:*`;
-}
 
 /**
  * Player Intent Analysis Template - for analyzing player intent when progression threshold is reached
@@ -121,51 +56,6 @@ Generate simplified snapshots for all non-player scenarios based on current game
 **Day**: {{currentGameDay}}
 **Time**: {{currentTimeOfDay}}
 
-## 📍 Player Current Scene
-{{#if playerCurrentScene}}
-**Scene**: {{playerCurrentScene.name}}
-**Location**: {{playerCurrentScene.location}}
-{{else}}
-*No current scene*
-{{/if}}
-
-## 📋 Scene Change Request
-{{#if sceneChangeRequest}}
-- **Target Scene Name**: {{sceneChangeRequest.targetSceneName}}
-- **Reason**: {{sceneChangeRequest.reason}}
-{{else}}
-*No scene change request*
-{{/if}}
-
-## 🎬 Scenarios to Update
-
-The following JSON contains all scenarios that need to be updated, with their current snapshots, full NPC information, and scenario-level connections:
-
-\`\`\`json
-{{scenariosToUpdateJson}}
-\`\`\`
-
-**Note**: Each scenario includes a "connections" field showing how scenarios are connected. These are scenario-level global data, not snapshot data.
-
-## 🔗 ID Mapping Reference
-
-**IMPORTANT**: Each scenario and NPC has ID fields that link them to the knowledge matrix and truth timeline:
-
-### Scenario IDs
-- **sourcePlaceId**: Links to a PLACE holder in the knowledge matrix (e.g., "PLAC_7", "PLAC_11")
-  - Use this to find which knowledge holder this scenario represents
-  - The PLACE holder's containsEvidence field shows what evidence is in this location
-  - The PLACE holder's knows field shows what truth events are known here
-
-### NPC IDs
-- **instantiatedFrom**: Links to a ROLE or ORGANIZATION holder in the knowledge matrix (e.g., "ROLE_5", "ORGA_1")
-  - Use this to find which knowledge holder this NPC represents
-  - The holder's knows field shows what truth events this NPC knows
-  - The holder's distortion field shows how this NPC's knowledge is distorted
-- **inheritsKnowledge**: Array of truth event IDs this NPC knows (e.g., ["T1", "T5"])
-  - These correspond to events in the truth timeline
-  - Use this to understand what this NPC knows about the story
-
 ## 📚 Knowledge Matrix & Truth Timeline
 
 The following data provides the complete world context:
@@ -180,17 +70,48 @@ The following data provides the complete world context:
 {{knowledgeMatrixJson}}
 \`\`\`
 
+## 📍 Player Current Scene
+{{#if playerCurrentScene}}
+**Scene**: {{playerCurrentScene.name}}
+**Location**: {{playerCurrentScene.location}}
+{{else}}
+*No current scene*
+{{/if}}
+
+## 🎬 Scenarios to Update
+
+The following JSON contains all scenarios that need to be updated, with their current snapshots, full NPC information, and scenario-level connections:
+
+\`\`\`json
+{{scenariosToUpdateJson}}
+\`\`\`
+
+**Note**: Each scenario includes a "connections" field showing how scenarios are connected.
+
+## 🔗 ID Mapping Reference
+
+**IMPORTANT**: Each scenario and NPC has ID fields that link them to the knowledge matrix and truth timeline:
+
+### Scenario IDs
+- **sourcePlaceId**: Links to a PLACE holder in the knowledge matrix (e.g., "PLAC_7", "PLAC_11")
+
+### NPC IDs
+- **instantiatedFrom**: Links to a ROLE or ORGANIZATION holder in the knowledge matrix (e.g., "ROLE_5", "ORGA_1")
+- **inheritsKnowledge**: Array of truth event IDs this NPC knows (e.g., ["T1", "T5"])
+
 ## 🎯 Your Task
 
-Generate simplified snapshots for each scenario above. Each snapshot should:
+Generate simplified snapshots for each scenario above.
+
+**⚠️ CRITICAL - Exclude Player's Current Scene**:
+- Do NOT generate a snapshot for the player's current scene ({{playerCurrentScene.name}})
+
+Each snapshot should:
 
 1. **Description**: Describe what has happened in the scene since the last update (from previousGameTime to currentGameTime) - a descriptive narrative timeline of changes/events
-
-2. **Characters**: List all NPCs that should be present in the scene at the current time point:
-   - Their current status (alive, dead, injured, etc.) based on their actionLog timeline
-   - What they are currently doing (descriptive notes)
    
-3. **ActionLog Generation - CRITICAL**:
+2. **ActionLog Generation - CRITICAL**:
+   - **IMPORTANT**: The NPCs' actions should based on the things they know and the things they want to do, and they can know more about the world by taking actions. The NPCs's actions should be coherent with other NPCs' actions.
    - Generate a **time-sequenced series of actions** that the NPC would take from the previous snapshot time to the current time
    - Base actions on the NPC's **goals, personality, and secrets** (found in their full information and knowledge matrix)
    - Actions should be **chronologically ordered** with specific times progressing toward the current game time
@@ -198,12 +119,12 @@ Generate simplified snapshots for each scenario above. Each snapshot should:
      - The scene/location itself
      - The world state
      - Other NPCs
-   - **Exclude routine/mundane actions** that don't affect the story (e.g., "eating lunch", "sleeping", "walking around")
-   - **Scene Movement Constraints - CRITICAL**:
-     - NPC can ONLY move between scenarios that are **connected** (check the "connections" field in scenario data)
+   - Include important actions they took but failed as well.
+   - **Exclude routine/mundane actions** that don't affect the story (e.g., "eating lunch", "sleeping")
+   - **Scene Movement Constraints**:
+     - NPC can ONLY move between scenarios that are **connected** (check the "connections" field in scenario data), npc can try to break the blocked restrictions logically.
      - Movement between scenarios takes **realistic time** based on:
        - Distance/relationship type (adjacent, nearby, distant)
-       - Mode of transportation available
        - Time of day and conditions
      - If an NPC needs to move to a non-adjacent location, they must pass through connected intermediate locations
      - Time gaps in actionLog must be **realistic** - don't have NPCs teleporting or moving too quickly
@@ -218,7 +139,33 @@ Generate simplified snapshots for each scenario above. Each snapshot should:
      ]
      \`\`\`
 
+3. **Characters**: List all NPCs that should be present in the scene at the current time point:
+   - Their current status (alive, dead, injured, etc.) based on their actionLog timeline
+   - What they are currently doing (write into the actionLog field)
+
 4. **Game Time**: Set the gameTime to the unified current game time (Day {{currentGameDay}}, {{currentTimeOfDay}}) - all snapshots should use this same time
+
+## 🎯 Global Trigger
+
+**You MUST generate a global trigger for future story progression based on the NPCs' actionLogs you have generated, and predict the future important time and events.**
+
+### Trigger Structure:
+
+1. The most important rule, the trigger you set must have great impact on the story progression.
+1. **timeRestriction** : Future time point in "Day X, HH:MM" format - MUST be at least 12 hours from current time
+2. **timeReason** : Why this specific time matters
+3. **events**: Array of trigger event descriptions (e.g., "Evidence revealed", "NPC completes action")
+4. **eventReasons**: Array of reasons (one per event) explaining why each event is important
+
+**Example:**
+\`\`\`json
+"globalTrigger": {
+  "timeRestriction": "Day 2, 22:00",
+  "timeReason": "The ritual must begin at midnight, giving player limited time to intervene",
+  "events": ["Cult members gather at the church", "Ritual preparations are completed"],
+  "eventReasons": ["Shows the cult's active planning", "Increases urgency and tension"]
+}
+\`\`\`
 
 ## 📋 Output Format
 
@@ -251,12 +198,15 @@ Return ONLY valid JSON in this exact structure:
         ]
       }
     }
-  ]
+  ],
+  "globalTrigger": {
+    "timeRestriction": "Day X, HH:MM (at least 12 hours from now)",
+    "timeReason": "Why this specific time point matters",
+    "events": ["Event description 1", "Event description 2"],
+    "eventReasons": ["Why event 1 matters", "Why event 2 matters"]
+  }
 }
 \`\`\`
-
-## ⚠️ Important Notes
-**Exclude Player Scene**: Do NOT include the player's current scene in the updated snapshots
 
 *Generate the updated snapshots:*`;
 }
@@ -265,13 +215,27 @@ Return ONLY valid JSON in this exact structure:
  * Player Scene Switch Template - for generating complete target snapshot + simplified background snapshots during scene transitions
  */
 export function getPlayerSceneSwitchTemplate():  string {
-  return `# Director Agent - Scenario Update Generation
+  return `# Director Agent - Scenario Update Generation (Player Scene Switch)
 
-Generate snapshots for all non-player scenarios based on current game state, NPC actions, and time progression.
+Generate snapshots for all scenarios during a player scene switch. The target scene (where player is moving to) needs a **complete detailed snapshot**, while other scenes get simplified snapshots.
 
 ## ⏰ Current Game Time
 **Day**: {{currentGameDay}}
 **Time**: {{currentTimeOfDay}}
+
+## 📚 Knowledge Matrix & Truth Timeline
+
+The following data provides the complete world context:
+
+### Truth Timeline (Objective Reality)
+\`\`\`json
+{{truthTimelineJson}}
+\`\`\`
+
+### Knowledge Matrix (Who/What Knows What)
+\`\`\`json
+{{knowledgeMatrixJson}}
+\`\`\`
 
 ## 📍 Player Current Scene
 {{#if playerCurrentScene}}
@@ -279,6 +243,14 @@ Generate snapshots for all non-player scenarios based on current game state, NPC
 **Location**: {{playerCurrentScene.location}}
 {{else}}
 *No current scene*
+{{/if}}
+
+## 🎯 Target Scene (Player Moving To)
+{{#if targetScene}}
+**Scene**: {{targetScene.name}}
+**Scene ID**: {{targetScene.id}}
+{{else}}
+*No target scene specified*
 {{/if}}
 
 ## 🎬 Scenarios to Update
@@ -297,44 +269,25 @@ The following JSON contains all scenarios that need to be updated, with their cu
 
 ### Scenario IDs
 - **sourcePlaceId**: Links to a PLACE holder in the knowledge matrix (e.g., "PLAC_7", "PLAC_11")
-  - Use this to find which knowledge holder this scenario represents
-  - The PLACE holder's containsEvidence field shows what evidence is in this location
-  - The PLACE holder's knows field shows what truth events are known here
 
 ### NPC IDs
 - **instantiatedFrom**: Links to a ROLE or ORGANIZATION holder in the knowledge matrix (e.g., "ROLE_5", "ORGA_1")
-  - Use this to find which knowledge holder this NPC represents
-  - The holder's knows field shows what truth events this NPC knows
-  - The holder's distortion field shows how this NPC's knowledge is distorted
 - **inheritsKnowledge**: Array of truth event IDs this NPC knows (e.g., ["T1", "T5"])
-  - These correspond to events in the truth timeline
-  - Use this to understand what this NPC knows about the story
-
-## 📚 Knowledge Matrix & Truth Timeline
-
-The following data provides the complete world context:
-
-### Truth Timeline (Objective Reality)
-\`\`\`json
-{{truthTimelineJson}}
-\`\`\`
-
-### Knowledge Matrix (Who/What Knows What)
-\`\`\`json
-{{knowledgeMatrixJson}}
-\`\`\`
 
 ## 🎯 Your Task
 
-Generate simplified snapshots for each scenario above. Each snapshot should:
+Generate snapshots for each scenario above, with **different levels of detail based on whether it's the target scene**.
+
+**⚠️ CRITICAL - Exclude Player's Current Scene**:
+- Do NOT generate a snapshot for the player's current scene ({{playerCurrentScene.name}})
+
+### Common Rules for All Snapshots:
+
 
 1. **Description**: Describe what has happened in the scene since the last update (from previousGameTime to currentGameTime) - a descriptive narrative timeline of changes/events
-
-2. **Characters**: List all NPCs that should be present in the scene at the current time point:
-   - Their current status (alive, dead, injured, etc.) based on their actionLog timeline
-   - What they are currently doing (descriptive notes)
    
-3. **ActionLog Generation - CRITICAL**:
+2. **ActionLog Generation - CRITICAL**:
+   - **IMPORTANT**: The NPCs' actions should based on the things they know and the things they want to do, and they can know more about the world by taking actions. The NPCs's actions should be coherent with other NPCs' actions.
    - Generate a **time-sequenced series of actions** that the NPC would take from the previous snapshot time to the current time
    - Base actions on the NPC's **goals, personality, and secrets** (found in their full information and knowledge matrix)
    - Actions should be **chronologically ordered** with specific times progressing toward the current game time
@@ -342,12 +295,12 @@ Generate simplified snapshots for each scenario above. Each snapshot should:
      - The scene/location itself
      - The world state
      - Other NPCs
-   - **Exclude routine/mundane actions** that don't affect the story (e.g., "eating lunch", "sleeping", "walking around")
-   - **Scene Movement Constraints - CRITICAL**:
-     - NPC can ONLY move between scenarios that are **connected** (check the "connections" field in scenario data)
+   - Include important actions they took but failed as well.
+   - **Exclude routine/mundane actions** that don't affect the story (e.g., "eating lunch", "sleeping")
+   - **Scene Movement Constraints**:
+     - NPC can ONLY move between scenarios that are **connected** (check the "connections" field in scenario data), npc can try to break the blocked restrictions logically.
      - Movement between scenarios takes **realistic time** based on:
        - Distance/relationship type (adjacent, nearby, distant)
-       - Mode of transportation available
        - Time of day and conditions
      - If an NPC needs to move to a non-adjacent location, they must pass through connected intermediate locations
      - Time gaps in actionLog must be **realistic** - don't have NPCs teleporting or moving too quickly
@@ -362,9 +315,37 @@ Generate simplified snapshots for each scenario above. Each snapshot should:
      ]
      \`\`\`
 
+3. **Characters**: List all NPCs that should be present in the scene at the current time point:
+   - Their current status (alive, dead, injured, etc.) based on their actionLog timeline
+   - What they are currently doing (write into the actionLog field)
+
 4. **Game Time**: Set the gameTime to the unified current game time (Day {{currentGameDay}}, {{currentTimeOfDay}}) - all snapshots should use this same time
 
+### 🎯 For Target Scene (scenarioId = {{targetScene.id}}):
+Generate a **COMPLETE, DETAILED snapshot** with ALL fields:
+- **description**: Full atmospheric description including lighting, sounds, smells, weather, ambiance, and narrative of what happened
+- **characters**: Complete list with full ScenarioCharacter details (id, name, role, status, location, notes, actionLog)
+- **clues**: All ScenarioClue objects (id, clueText, category, difficulty, location, discoveryMethod, reveals, discovered, discoveryDetails)
+- **conditions**: Environmental ScenarioCondition objects (type, description, mechanicalEffect)
+- **keeperNotes**: Keeper-facing notes about the scene
+- **showMap**: Map display setting (if applicable)
+
+**🔗 Scenario Connections Update for Target Scene - CRITICAL:**
+**Based on your judgment of events, NPC actions, and time progression**, determine if any connections for the target scene have changed:
+
+**Update Connections:**
+- Based on the predicted future NPC actionLogs: Did any NPC unlock/lock doors, open/close passages, discover/block paths?
+- Consider time-based changes: Did conditions deteriorate (paths collapse, bridges weaken)?
+- Evaluate scene events: Did anything in the scene description affect accessibility (fires, flooding, barricades)?
+- **blocked** (optional): true if the connection is physically blocked/locked
+- **blockReason** (optional): clear explanation (e.g., "Sheriff locked the door after investigating", "Bridge collapsed during storm")
+
+### 📋 For Other Scenarios (background scenes):
+Generate **SIMPLIFIED snapshots** with only: description, characters (with basic info + actionLog), gameTime
+
 ## 📋 Output Format
+
+**⚠️ REMINDER**: Do NOT include the player's current scene ({{playerCurrentScene.name}}) in the updatedSnapshots array.
 
 Return ONLY valid JSON in this exact structure:
 
@@ -372,35 +353,87 @@ Return ONLY valid JSON in this exact structure:
 {
   "updatedSnapshots": [
     {
-      "scenarioId": "SCN_id",
+      "scenarioId": "target_scene_id",
+      "isTargetScene": true,
       "snapshot": {
-        "id": "SCN_id_(number)",
+        "id": "SCN_id_number",
         "name": "Scenario Name",
-        "location": "Location",
-        "description": "Describe what happened in the scene from previousGameTime to currentGameTime - a descriptive narrative timeline of changes/events",
-        "gameTime": "Day {{currentGameDay}}, {{currentTimeOfDay}}",
+        "location": "Location Name",
+        "description": "COMPLETE detailed atmospheric description: narrative of what happened + lighting + sounds + smells + ambiance + environmental details",
+        "gameTime": "Day X, HH:MM",
+        "showMap": false,
         "characters": [
           {
             "id": "NPC_id",
             "name": "Character Name",
+            "role": "witness",
             "status": "alive",
+            "location": "Specific location",
+            "notes": "Detailed description of what they're doing",
             "actionLog": [
-              {
-                "time": "time of the action",
-                "location": "Location",
-                "summary": "What they did (descriptive)"
-              }
+              { "time": "Day X, HH:MM", "location": "Location", "summary": "Action summary" }
             ]
           }
-        ]
-      }
+        ],
+        "clues": [
+          {
+            "id": "clue_1",
+            "clueText": "Detailed clue description",
+            "category": "physical",
+            "difficulty": "regular",
+            "location": "Specific location",
+            "discoveryMethod": "Investigation",
+            "reveals": ["truth_event_id"],
+            "discovered": false
+          }
+        ],
+        "conditions": [
+          {
+            "type": "lighting",
+            "description": "Dim candlelight flickering",
+            "mechanicalEffect": "Hard (-20%) to Spot Hidden"
+          }
+        ],
+        "keeperNotes": "Important keeper information"
+      },
+      "connections": [
+        {
+          "scenarioName": "Basement",
+          "relationshipType": "leads_to",
+          "description": "Stairs leading down to the basement",
+          "blocked": true,
+          "blockReason": "The basement door is locked and requires a key"
+        }
+      ]
+    },
+    {
+      "scenarioId": "other_scene_id",
+      "isTargetScene": false,
+      "snapshot": {
+        "id": "SCN_id_number",
+        "name": "Scenario Name",
+        "location": "Location",
+        "description": "Simplified narrative of what happened",
+        "gameTime": "Day X, HH:MM",
+        "characters": [
+          {
+            "id": "NPC_2",
+            "name": "Character Name",
+            "role": "other",
+            "status": "alive",
+            "location": "Location",
+            "notes": "Brief notes",
+            "actionLog": [...]
+          }
+        ],
+        "clues": [],
+        "conditions": []
+      },
+      "connections": []
     }
   ]
 }
 \`\`\`
-
-## ⚠️ Important Notes
-**Exclude Player Scene**: Do NOT include the player's current scene in the updated snapshots
 
 *Generate the updated snapshots:*`;
 }

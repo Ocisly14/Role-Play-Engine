@@ -35,8 +35,28 @@ export class ActionAgent {
   ): Promise<DynamicGameState> {
     const { isNPC, npcResponse, targetCharacter } = options;
 
+    // Check if there's a valid scene change request from orchestrator
+    const existingSceneChangeRequest = dynamicState.temporaryInfo.sceneChangeRequest;
+    const hasValidSceneChangeRequest = existingSceneChangeRequest?.shouldChange === true && existingSceneChangeRequest?.targetSceneName;
+
     // Pre-roll dice
     const preRolledDice = this.preRollDice();
+
+    // Build base system prompt - only include scene change detection if there's a valid scene change request
+    let sceneChangePrompt = '';
+    if (hasValidSceneChangeRequest && !isNPC) {
+      sceneChangePrompt = `
+SCENE CHANGE REQUEST VALIDATION:
+The orchestrator has already validated a scene change request to "${existingSceneChangeRequest.targetSceneName}".
+Your task is to determine if the action succeeds in enabling this scene change:
+1. If the action is unobstructed (open door, clear path), the scene change will proceed
+2. If the player explicitly attempts an action to enable movement (e.g., "I try to unlock the door", "I attempt to climb the wall", "I try to break down the door"):
+   * Perform the required skill check using dice
+   * If skill check SUCCEEDED, the scene change will proceed (set shouldChange: true)
+   * If skill check FAILED, set shouldChange: false and provide reason explaining why (e.g., "Failed to unlock the door", "Failed to climb the wall", "The lock is too difficult")
+3. If there's an obstruction and the player doesn't explicitly attempt an action, set shouldChange: false and provide reason (e.g., "The door is locked", "The path is blocked")
+`;
+    }
 
     const baseSystemPrompt = `
 
@@ -87,14 +107,7 @@ Estimate how many minutes this action realistically takes in game time. Consider
 - Very long activities: 8+ hours (sleeping, all-day journeys)
 
 Be realistic and use your judgment. Include "timeElapsedMinutes" in your response.
-
-SCENE CHANGE DETECTION:
-1. Determine if the character intends to move to a new location (entering/exiting rooms, moving between areas, climbing/crossing obstacles)
-2. If movement requires a skill check (locked door, difficult terrain, stealth entry), call roll_dice first and base scene change on the result
-3. If movement is unobstructed (open door, clear path), directly return sceneChange with shouldChange: true
-4. If any movement intent detected, return sceneChange with shouldChange: true
-IMPORTANT: When returning sceneChange with shouldChange: true, you MUST select the targetSceneName from the AVAILABLE SCENES list provided below. Use the EXACT scene name from that list. Do not make up scene names.
-
+${sceneChangePrompt}
 You MUST respond with a JSON result:
 
 RESPONSE FORMAT - Return a JSON object with this exact structure:
@@ -138,13 +151,13 @@ Example:
     "conditions": [{"type": "lighting", "description": "...", "mechanicalEffect": "..."}],
     "events": ["Event description"]
   },
-
+${hasValidSceneChangeRequest && !isNPC ? `
   "sceneChange": {
-    "shouldChange": false,     // true if moving to new location
-    "targetSceneName": null,   // Scene name from AVAILABLE SCENES or null
-    "reason": "Reason for scene change or staying"
+    "shouldChange": false,     // true if action succeeds in enabling scene change to "${existingSceneChangeRequest.targetSceneName}"
+    "targetSceneName": "${existingSceneChangeRequest.targetSceneName}",   // Use the target from orchestrator
+    "reason": "Reason for scene change success or failure. If blocked, explain why (e.g., 'Door is locked', 'Failed to unlock the door')"
   },
-
+` : ''}
   "timeElapsedMinutes": 5,
   "timeConsumption": "short"
 }
@@ -395,25 +408,40 @@ Example:
         location: dynamicState.currentScenario.location,
         description: dynamicState.currentScenario.description,
         conditions: dynamicState.currentScenario.conditions,
-        connections: scenarioOutline?.connections || []
+        connections: scenarioOutline?.connections || [] // Array of {scenarioName, relationshipType, description} - only "leads_to" connections allow scene change
       };
       context += JSON.stringify(scenarioInfo, null, 2);
+      
+      // Add detailed connection information for scene change validation
+      if (scenarioOutline?.connections && scenarioOutline.connections.length > 0) {
+        const accessibleScenarios = scenarioOutline.connections
+          .filter(conn => conn.relationshipType === "leads_to")
+          .map(conn => conn.scenarioName);
+        if (accessibleScenarios.length > 0) {
+          context += `\n\n=== ACCESSIBLE SCENARIOS FROM CURRENT LOCATION ===`;
+          context += `\nThe following scenarios are directly accessible from "${dynamicState.currentScenario.name}":`;
+          scenarioOutline.connections
+            .filter(conn => conn.relationshipType === "leads_to")
+            .forEach(conn => {
+              context += `\n- ${conn.scenarioName}${conn.description ? ` (${conn.description})` : ''}`;
+            });
+          context += `\n=== END OF ACCESSIBLE SCENARIOS ===\n`;
+        }
+      }
     } else {
       context += "No current scenario";
     }
 
-    // Add all available scene names for scene change selection
-    if (this.scenarioLoader) {
-      const allScenarios = this.scenarioLoader.getAllScenarios();
-      if (allScenarios.length > 0) {
-        const sceneNames = allScenarios.map(s => s.snapshot.name).filter(name => name);
-        if (sceneNames.length > 0) {
-          context += "\n\n=== AVAILABLE SCENES FOR SCENE CHANGE ===";
-          context += `\nIf the ${isNPC ? 'NPC' : 'player'} wants to move to a new location, you MUST select one of these scene names:`;
-          context += "\n" + sceneNames.join(", ");
-          context += "\n=== END OF AVAILABLE SCENES ===\n";
-        }
-      }
+    // Add scene change information only if there's a valid scene change request from orchestrator
+    const existingSceneChangeRequest = dynamicState.temporaryInfo.sceneChangeRequest;
+    const hasValidSceneChangeRequest = existingSceneChangeRequest?.shouldChange === true && existingSceneChangeRequest?.targetSceneName;
+    
+    if (hasValidSceneChangeRequest && !isNPC) {
+      context += `\n\n=== SCENE CHANGE REQUEST ===`;
+      context += `\nTarget Scene: ${existingSceneChangeRequest.targetSceneName}`;
+      context += `\nReason: ${existingSceneChangeRequest.reason || 'Scene change requested'}`;
+      context += `\nYour task: Determine if the current action enables this scene change (check for obstructions, skill requirements, etc.)`;
+      context += `\n=== END OF SCENE CHANGE REQUEST ===\n`;
     }
 
     // Add last keeper narrative if available (only for player actions)
@@ -545,18 +573,31 @@ Example:
           console.log(`   ✓ NPC triggered player scene change:`, sceneChangeRequest);
         }
       } else {
-        // Player scene change: direct scene change request
-        // Only set request if shouldChange is true to avoid overwriting existing valid requests
-        if (parsed.sceneChange.shouldChange && parsed.sceneChange.targetSceneName) {
-          const sceneChangeRequest: SceneChangeRequest = {
-            shouldChange: true,
-            targetSceneName: parsed.sceneChange.targetSceneName,
-            reason: parsed.sceneChange.reason || "Action-driven scene change",
-            timestamp: new Date()
-          };
-          gameStateManager.setSceneChangeRequest(sceneChangeRequest);
-
-          console.log(`Action Agent: Scene change request - `, sceneChangeRequest);
+        // Player scene change: check if there's already a scene change request from orchestrator
+        const existingSceneChangeRequest = dynamicState.temporaryInfo.sceneChangeRequest;
+        const hasValidSceneChangeRequest = existingSceneChangeRequest?.shouldChange === true && existingSceneChangeRequest?.targetSceneName;
+        
+        if (hasValidSceneChangeRequest) {
+          // Orchestrator already validated the scene change request
+          // Action agent only needs to check if the action succeeds
+          if (parsed.sceneChange.shouldChange) {
+            // Action succeeded - keep the existing scene change request
+            console.log(`Action Agent: Action succeeded, scene change to ${existingSceneChangeRequest.targetSceneName} will proceed`);
+          } else if (parsed.sceneChange.reason) {
+            // Action failed - clear scene change request and set rejection
+            gameStateManager.clearSceneChangeRequest();
+            const rejection = {
+              wasRequested: true,
+              reasoning: parsed.sceneChange.reason,
+              timestamp: new Date()
+            };
+            gameStateManager.setSceneTransitionRejection(rejection);
+            console.log(`Action Agent: Action failed, scene change blocked - ${parsed.sceneChange.reason}`);
+          }
+        } else {
+          // No scene change request from orchestrator - this shouldn't happen for player actions
+          // But handle it gracefully by clearing any invalid state
+          gameStateManager.clearSceneChangeRequest();
         }
       }
     }
@@ -577,10 +618,6 @@ Example:
       
       if (scenarioUpdate.conditions && scenarioUpdate.conditions.length > 0) {
         scenarioChanges.push(`Environmental conditions changed: ${scenarioUpdate.conditions.map((c: any) => c.description).join(', ')}`);
-      }
-      
-      if (scenarioUpdate.events && scenarioUpdate.events.length > 0) {
-        scenarioChanges.push(`New events recorded: ${scenarioUpdate.events.join(', ')}`);
       }
     }
     
