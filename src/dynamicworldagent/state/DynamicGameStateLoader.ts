@@ -338,7 +338,7 @@ export async function initializeCompleteDynamicGameState(
   if (initialSnapshot) {
     console.log(`[DynamicGameState] Found initial snapshot: ${initialSnapshot.snapshot_name || initialSnapshot.scenario_name} (${initialSnapshot.location})`);
     
-    // Parse game time from snapshot
+    // Parse game time from snapshot (should read from snapshot, not use defaults)
     if (initialSnapshot.game_time) {
       console.log(`[DynamicGameState] Loading game time from snapshot: "${initialSnapshot.game_time}"`);
       const parsedTime = parseInitialGameTime(initialSnapshot.game_time);
@@ -350,7 +350,7 @@ export async function initializeCompleteDynamicGameState(
         timeOfDay = parsedTime.timeOfDay;
         console.log(`[DynamicGameState] Set timeOfDay to: ${timeOfDay}`);
       } else {
-        console.warn(`[DynamicGameState] Failed to parse game_time: "${initialSnapshot.game_time}"`);
+        console.warn(`[DynamicGameState] Failed to parse game_time: "${initialSnapshot.game_time}", using defaults: Day ${gameDay}, ${timeOfDay}`);
       }
     } else {
       console.log(`[DynamicGameState] No game_time in snapshot, using defaults: Day ${gameDay}, ${timeOfDay}`);

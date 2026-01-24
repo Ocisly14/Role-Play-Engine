@@ -29,9 +29,28 @@ import type {
 import type { DynamicCharacterProfile, DynamicNPCProfile } from "../world_builder/types.js";
 import { InventoryUtils } from "../../coc_multiagents_system/agents/models/gameTypes.js";
 import type { DynamicScenarioSnapshot } from "../world_builder/types.js";
-import type { Evidence } from "../../coc_multiagents_system/agents/memory/RagManager.js";
 
 export type Phase = "intro" | "investigation" | "confrontation" | "downtime";
+
+/**
+ * Temporary Info for Dynamic World
+ * Contains temporary state that is cleared at the start of each player turn.
+ * Note: RAG is not used in Dynamic World system, so ragResults is removed.
+ */
+export interface DynamicTemporaryInfo {
+  /** Temporary rules injected by action-type rules */
+  rules: string[];
+  /** Contextual data for agents (e.g., conversation history) */
+  contextualData: Record<string, any>;
+  /** Action results from Action Agent */
+  actionResults: ActionResult[];
+  /** Current action analysis from Orchestrator Agent */
+  currentActionAnalysis: ActionAnalysis | null;
+  /** NPC response analyses from Character Agent */
+  npcResponseAnalyses: NPCResponseAnalysis[];
+  /** Scene change request from Orchestrator Agent, modified by Action Agent */
+  sceneChangeRequest: SceneChangeRequest | null;
+}
 
 export interface VisitedScenarioBasic {
   id: string;
@@ -83,18 +102,7 @@ export interface DynamicGameState {
   gameEnding: GameEndingInfo | null;
 
   // Temporary info (cleared at start of each player turn)
-  temporaryInfo: {
-    rules: string[];
-    ragResults: Evidence[];
-    contextualData: Record<string, any>;
-    actionResults: ActionResult[];
-    currentActionAnalysis: ActionAnalysis | null;
-    npcResponseAnalyses: NPCResponseAnalysis[];
-    directorDecision: DirectorDecision | null;
-    sceneChangeRequest: SceneChangeRequest | null;
-    transition: boolean;
-    sceneTransitionRejection: SceneTransitionRejection | null;
-  };
+  temporaryInfo: DynamicTemporaryInfo;
 
   // === DynamicWorld-Specific Data ===
 
@@ -171,15 +179,11 @@ export const initialDynamicGameState = (params: {
   gameEnding: null,
   temporaryInfo: {
     rules: [],
-    ragResults: [],
     contextualData: {},
     actionResults: [],
     currentActionAnalysis: null,
     npcResponseAnalyses: [],
-    directorDecision: null,
     sceneChangeRequest: null,
-    transition: false,
-    sceneTransitionRejection: null,
   },
 
   // DynamicWorld-Specific Data
@@ -554,7 +558,7 @@ export class DynamicGameStateManager {
   }
 
   /**
-   * Set scene change request
+   * Set scene change request (from Orchestrator, modified by Action Agent)
    */
   setSceneChangeRequest(request: SceneChangeRequest | null): void {
     this.state.temporaryInfo.sceneChangeRequest = request;
@@ -566,38 +570,6 @@ export class DynamicGameStateManager {
    */
   clearSceneChangeRequest(): void {
     this.state.temporaryInfo.sceneChangeRequest = null;
-    this.state.lastUpdated = new Date();
-  }
-
-  /**
-   * Set director decision
-   */
-  setDirectorDecision(decision: DirectorDecision | null): void {
-    this.state.temporaryInfo.directorDecision = decision;
-    this.state.lastUpdated = new Date();
-  }
-
-  /**
-   * Set transition flag
-   */
-  setTransition(transition: boolean): void {
-    this.state.temporaryInfo.transition = transition;
-    this.state.lastUpdated = new Date();
-  }
-
-  /**
-   * Set scene transition rejection
-   */
-  setSceneTransitionRejection(rejection: SceneTransitionRejection | null): void {
-    this.state.temporaryInfo.sceneTransitionRejection = rejection;
-    this.state.lastUpdated = new Date();
-  }
-
-  /**
-   * Clear scene transition rejection info
-   */
-  clearSceneTransitionRejection(): void {
-    this.state.temporaryInfo.sceneTransitionRejection = null;
     this.state.lastUpdated = new Date();
   }
 
@@ -1080,41 +1052,6 @@ export class DynamicGameStateManager {
     this.state.lastUpdated = new Date();
   }
 
-  /**
-   * Clear director decision
-   */
-  clearDirectorDecision(): void {
-    this.state.temporaryInfo.directorDecision = null;
-    this.state.lastUpdated = new Date();
-  }
-
-  /**
-   * Set transition flag to indicate a scene change has occurred
-   */
-  setTransitionFlag(isTransition: boolean): void {
-    this.state.temporaryInfo.transition = isTransition;
-    this.state.lastUpdated = new Date();
-  }
-
-  /**
-   * Clear transition flag
-   */
-  clearTransitionFlag(): void {
-    this.state.temporaryInfo.transition = false;
-    this.state.lastUpdated = new Date();
-  }
-
-  /**
-   * Set scene transition rejection info (when Director denies player's transition request)
-   */
-  setSceneTransitionRejectionReasoning(reasoning: string): void {
-    this.state.temporaryInfo.sceneTransitionRejection = {
-      wasRequested: true,
-      reasoning,
-      timestamp: new Date()
-    };
-    this.state.lastUpdated = new Date();
-  }
 
   /**
    * Set game ending information (marks the game as ended)

@@ -1,321 +1,117 @@
 /**
- * Memory Agent for DynamicWorld modules
- * Manages DynamicGameState loading and context enrichment
- * Focused on truth_timeline, knowledge_matrix, and world data
+ * Memory Agent helpers
+ * This module owns state-side helpers for memory workflows.
  */
-
+import {
+  DynamicGameStateManager,
+  type DynamicGameState,
+} from "../../state/index.js";
+import type {
+  ActionType,
+  ActionAnalysis,
+} from "../../../coc_multiagents_system/state/index.js";
+import { actionRules } from "../../../coc_multiagents_system/rules/index.js";
 import type { CoCDatabase } from "../../../coc_multiagents_system/agents/memory/database/index.js";
-import type { DynamicGameState, DynamicGameStateManager } from "../../state/index.js";
-import { loadDynamicGameState } from "../../state/DynamicGameStateLoader.js";
+import type { DynamicScenarioSnapshot } from "../../world_builder/types.js";
+
 
 /**
- * Memory context enriched with DynamicGameState information
+ * Inject action-type-specific rules into temporary rules so downstream agents can apply them.
  */
-export interface DynamicMemoryContext {
-  // World structure data
-  moduleDigest: {
-    moduleNotes: string;
-    keeperGuidance: string;
-    moduleLimitations: string;
-    introduction: string;
-  } | null;
+export const injectActionTypeRules = (
+  gameState: DynamicGameState,
+  actionType?: ActionType
+): DynamicGameState => {
+  if (!actionType) return gameState;
 
-  // Truth and knowledge
-  allTruthEvents: any[];
-  revealedTruthEvents: any[];
-  unrevealedTruthEvents: any[];
+  const ruleText = actionRules[actionType];
+  if (!ruleText) return gameState;
 
-  // Knowledge matrix
-  knowledgeHolders: any[];
-  relevantKnowledgeHolders: any[];  // Based on current context
+  const manager = new DynamicGameStateManager(gameState);
+  manager.addTemporaryRules({
+    rules: [
+      {
+        title: `${actionType} rules`,
+        description: ruleText,
+      },
+    ],
+    count: 1,
+  });
 
-  // Red herrings and mythos
-  redHerrings: any[];
-  deployedRedHerrings: any[];
-  mythosEvents: any[];
-  revealedMythosEvents: any[];
-
-  // Scenario data
-  scenarioOutlines: any[];
-
-  // Game progression
-  pointOfNoReturnReached: boolean;
-  pointOfNoReturnTrigger: string | null;
-
-  // Metadata
-  loadedAt: Date;
-  lastUpdated: Date;
-}
+  return manager.getState();
+};
 
 /**
- * Load DynamicGameState for a module
+ * Extract recent conversation history (last N completed turns) from database
+ * Note: Simulate queries (with actionAnalysis === null) are included in conversationHistory
+ * but should not count towards turn statistics (turnsInCurrentScene).
+ * Real queries have actionAnalysis set by the Orchestrator Agent.
  */
-export const loadModuleDynamicState = async (
-  db: CoCDatabase,
-  moduleName: string
-): Promise<DynamicGameState | null> => {
-  console.log(`🧠 [Memory Agent] Loading DynamicGameState for module: ${moduleName}`);
+export const extractRecentConversationHistory = async (
+  db: CoCDatabase | undefined,
+  sessionId: string,
+  limit = 1
+): Promise<Array<{ turnNumber: number; characterInput: string; keeperNarrative: string | null; actionAnalysis?: any | null }>> => {
+  if (!db) return [];
 
   try {
-    const dynamicState = await loadDynamicGameState(db, moduleName);
+    // Get more turns to ensure we have enough completed ones
+    const turns = db.getTurnHistory(sessionId, limit * 2);
+    
+    // Filter only completed turns with keeper narrative, then take the last N
+    // Include both real queries (with actionAnalysis) and simulate queries (actionAnalysis === null)
+    const completedTurns = turns
+      .filter(turn => turn.status === 'completed' && turn.keeperNarrative)
+      .slice(0, limit)
+      .map(turn => ({
+        turnNumber: turn.turnNumber,
+        characterInput: turn.characterInput,
+        keeperNarrative: turn.keeperNarrative,
+        actionAnalysis: turn.actionAnalysis || null, // null indicates simulate query
+      }))
+      .reverse(); // Reverse to get chronological order (oldest first)
 
-    if (dynamicState) {
-      console.log(`✅ [Memory Agent] DynamicGameState loaded successfully`);
-      console.log(`   - Truth events: ${dynamicState.truthTimeline.length}`);
-      console.log(`   - Knowledge holders: ${dynamicState.knowledgeMatrix.length}`);
-      console.log(`   - Red herrings: ${dynamicState.redHerrings.length}`);
-      console.log(`   - Mythos events: ${dynamicState.mythosEvents.length}`);
-      console.log(`   - Scenario outlines: ${dynamicState.scenarioOutlines.length}`);
-    } else {
-      console.warn(`⚠️  [Memory Agent] Failed to load DynamicGameState for module: ${moduleName}`);
+    if (completedTurns.length > 0) {
+      const simulateCount = completedTurns.filter(t => !t.actionAnalysis).length;
+      const realCount = completedTurns.length - simulateCount;
+      console.log(`📜 [Memory Agent] 提取了 ${completedTurns.length} 轮历史对话 (Turn #${completedTurns[0]?.turnNumber} 到 Turn #${completedTurns[completedTurns.length - 1]?.turnNumber}), 其中真实轮数: ${realCount}, simulate轮数: ${simulateCount}`);
     }
 
-    return dynamicState;
+    return completedTurns;
   } catch (error) {
-    console.error(`❌ [Memory Agent] Error loading DynamicGameState:`, error);
-    return null;
+    console.warn("Failed to extract conversation history:", error);
+    return [];
   }
 };
 
 /**
- * Enrich memory context with DynamicGameState information
- * This provides relevant world data for agent reasoning
+ * Enrich game state with action-type rules and conversation history for the memory workflow.
  */
-export const enrichMemoryContext = (
-  dynamicState: DynamicGameState | null,
-  dynamicStateManager: DynamicGameStateManager | null,
-  contextHints?: {
-    currentLocation?: string;
-    currentNPCs?: string[];
-    playerQuery?: string;
-  }
-): DynamicMemoryContext | null => {
-  if (!dynamicState || !dynamicStateManager) {
-    console.warn(`⚠️  [Memory Agent] No DynamicGameState available for enrichment`);
-    return null;
-  }
+export const enrichMemoryContext = async (
+  gameState: DynamicGameState,
+  actionAnalysis: ActionAnalysis | null,
+  db?: CoCDatabase,
+  characterInput?: string
+): Promise<DynamicGameState> => {
+  // First inject the action-type rules
+  const withRules = injectActionTypeRules(gameState, actionAnalysis?.actionType);
 
-  console.log(`🧠 [Memory Agent] Enriching memory context...`);
-
-  // Get revealed and unrevealed truth events
-  const revealedTruthEvents = dynamicStateManager.getRevealedTruthEvents();
-  const unrevealedTruthEvents = dynamicStateManager.getUnrevealedTruthEvents();
-
-  console.log(`   - Revealed truth events: ${revealedTruthEvents.length}/${dynamicState.truthTimeline.length}`);
-
-  // Get knowledge holders (optionally filter by context)
-  let relevantKnowledgeHolders = dynamicState.knowledgeMatrix;
-  if (contextHints?.currentLocation) {
-    // Filter knowledge holders related to current location
-    relevantKnowledgeHolders = dynamicState.knowledgeMatrix.filter(holder =>
-      holder.holderType === "PLACE" &&
-      holder.holderName.toLowerCase().includes(contextHints.currentLocation!.toLowerCase())
-    );
-    console.log(`   - Filtered knowledge holders by location: ${relevantKnowledgeHolders.length}`);
-  }
-
-  // Get deployed red herrings
-  const deployedRedHerrings = dynamicState.redHerrings.filter(rh =>
-    dynamicStateManager.isRedHerringDeployed(rh.id)
+  // Extract recent conversation history (last 1 turn) and store in contextualData
+  const conversationHistory = await extractRecentConversationHistory(
+    db,
+    gameState.sessionId,
+    1
   );
 
-  console.log(`   - Deployed red herrings: ${deployedRedHerrings.length}/${dynamicState.redHerrings.length}`);
-
-  // Get revealed mythos events
-  const revealedMythosEvents = dynamicState.mythosEvents.filter((_, index) =>
-    dynamicStateManager.isMythosEventRevealed(index)
-  );
-
-  console.log(`   - Revealed mythos events: ${revealedMythosEvents.length}/${dynamicState.mythosEvents.length}`);
-
-  // Check point of no return status
-  const pnrReached = dynamicState.pointOfNoReturnReached;
-  if (pnrReached) {
-    console.log(`   ⚠️  Point of no return reached: ${dynamicState.pointOfNoReturnTrigger}`);
-  }
-
-  const context: DynamicMemoryContext = {
-    moduleDigest: dynamicState.moduleDigest,
-    allTruthEvents: dynamicState.truthTimeline,
-    revealedTruthEvents,
-    unrevealedTruthEvents,
-    knowledgeHolders: dynamicState.knowledgeMatrix,
-    relevantKnowledgeHolders,
-    redHerrings: dynamicState.redHerrings,
-    deployedRedHerrings,
-    mythosEvents: dynamicState.mythosEvents,
-    revealedMythosEvents,
-    scenarioOutlines: dynamicState.scenarioOutlines,
-    pointOfNoReturnReached: pnrReached,
-    pointOfNoReturnTrigger: dynamicState.pointOfNoReturnTrigger,
-    loadedAt: dynamicState.loadedAt,
-    lastUpdated: dynamicState.lastUpdated,
+  return {
+    ...withRules,
+    temporaryInfo: {
+      ...withRules.temporaryInfo,
+      contextualData: {
+        ...withRules.temporaryInfo.contextualData,
+        conversationHistory,
+      },
+    },
   };
-
-  console.log(`✅ [Memory Agent] Memory context enriched successfully`);
-
-  return context;
 };
 
-/**
- * Get truth events relevant to a specific query or context
- */
-export const getRelevantTruthEvents = (
-  dynamicState: DynamicGameState | null,
-  dynamicStateManager: DynamicGameStateManager | null,
-  query: string
-): any[] => {
-  if (!dynamicState || !dynamicStateManager) return [];
-
-  // Simple keyword-based relevance (can be enhanced with semantic search later)
-  const queryLower = query.toLowerCase();
-  const unrevealedEvents = dynamicStateManager.getUnrevealedTruthEvents();
-
-  return unrevealedEvents.filter(event => {
-    const eventText = `${event.event} ${event.cause || ''} ${event.consequence || ''}`.toLowerCase();
-    return eventText.includes(queryLower);
-  });
-};
-
-/**
- * Get knowledge holders relevant to a specific NPC or location
- */
-export const getRelevantKnowledgeHolders = (
-  dynamicStateManager: DynamicGameStateManager | null,
-  filter: {
-    npcName?: string;
-    location?: string;
-    holderType?: "ROLE" | "ORGANIZATION" | "PLACE" | "OBJECT";
-  }
-): any[] => {
-  if (!dynamicStateManager) return [];
-
-  const state = dynamicStateManager.getState();
-  let filtered = state.knowledgeMatrix;
-
-  if (filter.holderType) {
-    filtered = dynamicStateManager.getKnowledgeHoldersByType(filter.holderType);
-  }
-
-  if (filter.npcName) {
-    filtered = filtered.filter(holder =>
-      holder.holderName.toLowerCase().includes(filter.npcName!.toLowerCase())
-    );
-  }
-
-  if (filter.location) {
-    filtered = filtered.filter(holder =>
-      holder.holderType === "PLACE" &&
-      holder.holderName.toLowerCase().includes(filter.location!.toLowerCase())
-    );
-  }
-
-  return filtered;
-};
-
-/**
- * Get truth events that a specific knowledge holder knows
- */
-export const getTruthEventsForKnowledgeHolder = (
-  dynamicStateManager: DynamicGameStateManager | null,
-  holderId: string
-): any[] => {
-  if (!dynamicStateManager) return [];
-
-  const holder = dynamicStateManager.getKnowledgeHolder(holderId);
-  if (!holder) return [];
-
-  const state = dynamicStateManager.getState();
-  return state.truthTimeline.filter(event =>
-    holder.knows.includes(event.id)
-  );
-};
-
-/**
- * Get available red herrings that haven't been deployed yet
- */
-export const getAvailableRedHerrings = (
-  dynamicStateManager: DynamicGameStateManager | null
-): any[] => {
-  if (!dynamicStateManager) return [];
-
-  const state = dynamicStateManager.getState();
-  return state.redHerrings.filter(rh =>
-    !dynamicStateManager.isRedHerringDeployed(rh.id)
-  );
-};
-
-/**
- * Format memory context for LLM prompt
- */
-export const formatMemoryContextForPrompt = (
-  context: DynamicMemoryContext | null
-): string => {
-  if (!context) return "No memory context available.";
-
-  let formatted = "=== WORLD MEMORY CONTEXT ===\n\n";
-
-  // Module information
-  if (context.moduleDigest) {
-    formatted += "MODULE GUIDANCE:\n";
-    formatted += `${context.moduleDigest.keeperGuidance}\n\n`;
-
-    if (context.moduleDigest.moduleLimitations) {
-      formatted += "MODULE LIMITATIONS:\n";
-      formatted += `${context.moduleDigest.moduleLimitations}\n\n`;
-    }
-  }
-
-  // Truth events status
-  formatted += `TRUTH TIMELINE STATUS:\n`;
-  formatted += `- Total events: ${context.allTruthEvents.length}\n`;
-  formatted += `- Revealed: ${context.revealedTruthEvents.length}\n`;
-  formatted += `- Unrevealed: ${context.unrevealedTruthEvents.length}\n\n`;
-
-  // Revealed truth events
-  if (context.revealedTruthEvents.length > 0) {
-    formatted += "REVEALED TRUTHS:\n";
-    context.revealedTruthEvents.forEach((event, index) => {
-      formatted += `${index + 1}. [${event.id}] ${event.event}\n`;
-      if (event.time) {
-        formatted += `   Time: ${event.time}\n`;
-      }
-      if (event.cause) {
-        formatted += `   Cause: ${event.cause}\n`;
-      }
-      if (event.consequence) {
-        formatted += `   Consequence: ${event.consequence}\n`;
-      }
-    });
-    formatted += "\n";
-  }
-
-  // Knowledge holders
-  if (context.relevantKnowledgeHolders.length > 0) {
-    formatted += "RELEVANT KNOWLEDGE HOLDERS:\n";
-    context.relevantKnowledgeHolders.forEach((holder, index) => {
-      formatted += `${index + 1}. ${holder.holderName} (${holder.holderType})\n`;
-      formatted += `   Knows: ${holder.knows.join(", ")}\n`;
-      formatted += `   Access: ${holder.accessMethod}\n`;
-    });
-    formatted += "\n";
-  }
-
-  // Red herrings
-  if (context.deployedRedHerrings.length > 0) {
-    formatted += "DEPLOYED RED HERRINGS:\n";
-    context.deployedRedHerrings.forEach((rh, index) => {
-      formatted += `${index + 1}. ${rh.description}\n`;
-    });
-    formatted += "\n";
-  }
-
-  // Point of no return
-  if (context.pointOfNoReturnReached) {
-    formatted += `⚠️  POINT OF NO RETURN REACHED: ${context.pointOfNoReturnTrigger}\n\n`;
-  }
-
-  formatted += "=== END MEMORY CONTEXT ===\n";
-
-  return formatted;
-};

@@ -144,12 +144,12 @@ export class OrchestratorAgent {
           gameStateManager.setActionAnalysis(normalizedActionAnalysis);
         }
         
-        // Handle scene change request
+        // Handle scene change request - store in temporaryInfo
         if (parsedResponse.sceneChangeRequest) {
           const sceneChangeReq = parsedResponse.sceneChangeRequest;
           
           if (sceneChangeReq.shouldChange && sceneChangeReq.targetSceneName) {
-            // Valid scene change request - set it
+            // Valid scene change request - store in temporaryInfo
             const sceneChangeRequest: SceneChangeRequest = {
               shouldChange: true,
               targetSceneName: sceneChangeReq.targetSceneName,
@@ -158,17 +158,8 @@ export class OrchestratorAgent {
             };
             gameStateManager.setSceneChangeRequest(sceneChangeRequest);
             console.log(`🎯 [Orchestrator Agent] Scene change request validated: ${sceneChangeReq.targetSceneName}`);
-          } else if (sceneChangeReq.targetSceneName && !sceneChangeReq.shouldChange && sceneChangeReq.reason) {
-            // Scene change was attempted but blocked - set rejection
-            const rejection: SceneTransitionRejection = {
-              wasRequested: true,
-              reasoning: sceneChangeReq.reason,
-              timestamp: new Date()
-            };
-            gameStateManager.setSceneTransitionRejection(rejection);
-            console.log(`🎯 [Orchestrator Agent] Scene change blocked: ${sceneChangeReq.reason}`);
           } else {
-            // No scene change request - clear any existing request
+            // No valid scene change request - clear any existing request
             gameStateManager.clearSceneChangeRequest();
           }
         } else {

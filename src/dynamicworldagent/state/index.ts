@@ -5,6 +5,7 @@
 
 export type {
   DynamicGameState,
+  DynamicTemporaryInfo,
 } from "./DynamicGameState.js";
 
 export {

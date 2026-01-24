@@ -143,7 +143,7 @@ export class DirectorAgent {
         snapshot: targetSnapshot,
         scenarioName: scenarioName
       });
-      gameStateManager.setTransitionFlag(true);
+      // Note: Scene change is now tracked via temporaryInfo.sceneChangeRequest
       
       const updatedState = gameStateManager.getState();
       

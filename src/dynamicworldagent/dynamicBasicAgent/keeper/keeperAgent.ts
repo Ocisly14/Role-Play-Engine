@@ -52,12 +52,10 @@ export class KeeperAgent {
     // 3. Get complete attributes of NPCs involved in action results
     const actionRelatedNpcs = this.extractActionRelatedNpcs(dynamicState, allActionResults, interactionPartnerName);
     
-    // 5. Detect scene changes, if changed then get previous scene information
-    const isTransition = dynamicState.temporaryInfo.transition;
+    // 5. Detect scene changes - check if sceneChangeRequest indicates a transition
+    const sceneChangeRequest = dynamicState.temporaryInfo.sceneChangeRequest;
+    const isTransition = sceneChangeRequest?.shouldChange === true;
     const previousScenarioInfo = isTransition ? this.extractPreviousScenarioInfo(dynamicState) : null;
-    
-    // 6. Detect scene transition rejection
-    const sceneTransitionRejection = dynamicState.temporaryInfo.sceneTransitionRejection;
     
     // 7. Get conversation history (from contextualData)
     const conversationHistory = (dynamicState.temporaryInfo.contextualData?.conversationHistory as Array<{
@@ -66,16 +64,7 @@ export class KeeperAgent {
       keeperNarrative: string | null;
     }>) || [];
     
-    // 8. Get RAG retrieval results, keep only needed fields
-    // TODO: Temporarily commented out RAG injection, as RAG section is being modified
-    // const rawRagResults = (dynamicState.temporaryInfo.ragResults as any[]) || [];
-    // const ragResults = rawRagResults.map((evidence: any) => ({
-    //   type: evidence.type,
-    //   title: evidence.title,
-    //   snippet: evidence.snippet,
-    //   visibility: evidence.visibility,
-    // }));
-    const ragResults: any[] = []; // Temporarily set to empty array
+    // Note: RAG is not used in Dynamic World system
     
     // 获取模板
     const template = getKeeperTemplate();
@@ -100,10 +89,8 @@ export class KeeperAgent {
       tension: dynamicState.tension,
       phase: dynamicState.phase,
       isTransition,
-      sceneTransitionRejection,  // Object (for accessing .reasoning property)
+      sceneChangeRequest,  // Scene change request from Orchestrator, modified by Action Agent
       conversationHistory,  // Recent conversation history (for {{#each}} loop)
-      // ragResults,  // TODO: Temporarily commented out RAG retrieval results, as RAG section is being modified
-      ragResults: [],  // Temporarily set to empty array
       // JSON string version (used directly in template)
       scenarioContextJson: this.safeStringify(completeScenarioInfo),
       playerCharacterJson: this.safeStringify(playerCharacterComplete),
@@ -200,14 +187,9 @@ export class KeeperAgent {
       }
     }
 
-    // Clear transition flag (already processed in narrative)
-    if (dynamicState.temporaryInfo.transition) {
-      gameStateManager.clearTransitionFlag();
-    }
-
-    // Clear scene transition rejection flag (already processed in narrative)
-    if (dynamicState.temporaryInfo.sceneTransitionRejection) {
-      gameStateManager.clearSceneTransitionRejection();
+    // Clear scene change request (already processed in narrative)
+    if (dynamicState.temporaryInfo.sceneChangeRequest) {
+      gameStateManager.clearSceneChangeRequest();
     }
 
     // Temporary state is now preserved until next real player input
@@ -242,11 +224,10 @@ export class KeeperAgent {
     gameStateManager.clearActionAnalysis();
     console.log("   ✓ Cleared action analysis");
     
-    // Clear temporary rules and RAG results
+    // Clear temporary rules
     const updatedState = gameStateManager.getState();
     updatedState.temporaryInfo.rules = [];
-    updatedState.temporaryInfo.ragResults = [];
-    console.log("   ✓ Cleared temporary rules and RAG results");
+    console.log("   ✓ Cleared temporary rules");
     
     console.log("✅ [Keeper Agent] Temporary state content cleared");
     

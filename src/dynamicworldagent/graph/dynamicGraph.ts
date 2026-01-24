@@ -17,13 +17,9 @@ import type {
 import type { DynamicGameState } from "../state/index.js";
 import { DynamicGameStateManager, initialDynamicGameState } from "../state/index.js";
 import { contentToString, latestHumanMessage } from "../../coc_multiagents_system/utils/index.js";
-import {
-  loadModuleDynamicState,
-  enrichMemoryContext,
-  formatMemoryContextForPrompt,
-  type DynamicMemoryContext,
-} from "../dynamicBasicAgent/memory/memoryAgent.js";
-import { TurnManager } from "../../coc_multiagents_system/agents/memory/index.js";
+import { loadDynamicGameState } from "../state/DynamicGameStateLoader.js";
+import { enrichMemoryContext } from "../dynamicBasicAgent/memory/memoryAgent.js";
+import { TurnManager } from "../dynamicBasicAgent/memory/turnManager.js";
 
 // Import DynamicWorld agents
 import { OrchestratorAgent } from "../dynamicBasicAgent/orchestrator/orchestratorAgent.js";
@@ -211,7 +207,7 @@ export const buildDynamicGraph = (
     if (!currentState.moduleName || !currentState.macroScene) {
       console.log(`🧠 [Memory Agent] DynamicGameState 未完全加载，尝试加载模块: ${currentState.moduleName || "unknown"}`);
       if (currentState.moduleName) {
-        const loadedState = await loadModuleDynamicState(db, currentState.moduleName);
+        const loadedState = await loadDynamicGameState(db, currentState.moduleName);
         if (loadedState) {
           dgsm.loadWorldData({
             moduleDigest: loadedState.moduleDigest || undefined,
@@ -230,27 +226,20 @@ export const buildDynamicGraph = (
 
     // Enrich memory context with DynamicGameState information
     const characterInput = latestHumanMessage(state.messages);
-    const contextHints = {
-      currentLocation: currentState.currentScenario?.location,
-      currentNPCs: currentState.npcCharacters.map(npc => npc.name),
-      playerQuery: characterInput,
-    };
-
-    const memoryContext = enrichMemoryContext(
+    const actionAnalysis = currentState.temporaryInfo.currentActionAnalysis;
+    
+    const enrichedState = await enrichMemoryContext(
       currentState,
-      dgsm,
-      contextHints
+      actionAnalysis,
+      db,
+      characterInput
     );
-
-    // Store enriched memory context in dynamic state temporary info for downstream agents
-    if (memoryContext) {
-      const formattedContext = formatMemoryContextForPrompt(memoryContext);
-      console.log(`📋 [Memory Agent] Memory context formatted (${formattedContext.length} chars)`);
-
-      // Store in temporary contextual data so other agents can access it
-      dgsm.setContextualData("memoryContext", formattedContext);
-      dgsm.setContextualData("dynamicMemoryContext", memoryContext);
-    }
+    
+    // Update manager with enriched state by creating a new manager
+    const enrichedDgsm = new DynamicGameStateManager(enrichedState);
+    
+    // Use enriched state for return
+    currentState = enrichedState;
 
     console.log("✅ [Dynamic Memory Agent] DynamicGameState 上下文丰富完成");
 

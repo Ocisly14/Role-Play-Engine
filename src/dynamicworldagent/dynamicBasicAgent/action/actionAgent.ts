@@ -1,6 +1,6 @@
 import { ModelClass } from "../../../models/types.js";
 import { generateText } from "../../../models/index.js";
-import { ActionResult, ActionAnalysis, SceneChangeRequest, NPCResponseAnalysis, ActionType } from "../../../coc_multiagents_system/state/index.js";
+import { ActionResult, ActionAnalysis, NPCResponseAnalysis, ActionType, SceneChangeRequest } from "../../../coc_multiagents_system/state/index.js";
 import type { ActionLogEntry } from "../../../coc_multiagents_system/agents/models/gameTypes.js";
 import type { DynamicCharacterProfile } from "../../world_builder/types.js";
 import type { DynamicNPCProfile } from "../../world_builder/types.js";
@@ -110,10 +110,31 @@ Estimate how many minutes this action realistically takes in game time. Consider
 
 Be realistic and use your judgment. Include "timeElapsedMinutes" in your response.
 ${sceneChangePrompt}
-You MUST respond with a JSON result:
 
-RESPONSE FORMAT - Return a JSON object with this exact structure:
-Example:
+## 📋 ActionLog Requirements
+
+**REQUIRED**: Always include at least ONE actionLog entry for the current action.
+
+**Format**: Each actionLog entry should have:
+- "time": Use the current game time (provided in context) in "Day N, HH:MM" format
+- "location": The LOCATION NAME (scenario.location), which is the physical location name
+  - Use currentScenario.location for current scenario
+  - For scene changes, use the target scenario's location name
+- "summary": Concise but descriptive summary (1-2 sentences)
+- "characterId": The ID of the character (player or NPC) who performed this action
+  - Use the acting character's id from the context (Character.id or NPC.id)
+  - If the action affects multiple characters, create separate entries with their respective characterIds
+  - This field is REQUIRED to properly associate the log with the correct character profile
+
+**For scene changes**: If sceneChange.shouldChange is true, include TWO entries:
+1. One entry for the action that enables the scene change (current location)
+2. One entry for the scene transition (target location)
+
+## 📋 Output Format
+
+Return ONLY valid JSON in this exact structure:
+
+\`\`\`json
 {
   "summary": "Brief description of what happened (1-2 sentences)",
 
@@ -122,6 +143,15 @@ Example:
     // Format: "[dice_name]: [result] ([purpose/skill] [skill%] = [success/failure/N/A])"
     "1d100: 67 (Fighting (Brawl) 50% = failure)",
     "1d3: 2 + 1 (DB) = 3 (unarmed damage)"
+  ],
+
+  "actionLog": [
+    {
+      "time": "Day 1, 14:30",
+      "location": "New York Public Library",
+      "summary": "Searched the bookshelf and found a hidden journal",
+      "characterId": "character-id-or-npc-id"
+    }
   ],
 
   "stateUpdate": {
@@ -163,6 +193,7 @@ ${hasValidSceneChangeRequest && !isNPC ? `
   "timeElapsedMinutes": 5,
   "timeConsumption": "short"
 }
+\`\`\`
 `;
 
     const actionTypeTemplate = this.getActionTypeTemplate(dynamicState, isNPC, npcResponse);
@@ -170,7 +201,7 @@ ${hasValidSceneChangeRequest && !isNPC ? `
     const systemPrompt = baseSystemPrompt + actionTypeTemplate;
 
     // Single call - no tool loop needed with pre-rolled dice
-    const context = this.buildContext(dynamicState, character, { isNPC, npcResponse, targetCharacter });
+    const context = this.buildContext(dynamicState, character, { isNPC, npcResponse, targetCharacter }, gameStateManager);
     const fullPrompt = systemPrompt + context + `\n\nCharacter action: ${actionDescription}`;
 
     const response = await generateText({
@@ -271,48 +302,6 @@ ${hasValidSceneChangeRequest && !isNPC ? `
     };
   }
 
-  private executeDiceRoll(expression: string) {
-    try {
-      const { count, sides, modifier } = this.parseDiceExpression(expression);
-
-      const rolls = Array.from(
-        { length: count },
-        () => Math.floor(Math.random() * sides) + 1
-      );
-
-      const rollTotal = rolls.reduce((a, b) => a + b, 0);
-      const finalTotal = rollTotal + modifier;
-
-      return {
-        expression,
-        rolls,
-        rollTotal,
-        modifier,
-        total: finalTotal,
-        breakdown: `${rolls.join('+')}${modifier !== 0 ? `${modifier >= 0 ? '+' : ''}${modifier}` : ''} = ${finalTotal}`
-      };
-    } catch (error) {
-      return { error: error instanceof Error ? error.message : String(error) };
-    }
-  }
-
-  private parseDiceExpression(expression: string): { count: number; sides: number; modifier: number } {
-    const cleaned = expression.toLowerCase().replace(/\s/g, '');
-    const match = cleaned.match(/^(\d*)d(\d+)(([+-])(\d+))?$/);
-    
-    if (!match) {
-      throw new Error(`Invalid dice expression: ${expression}`);
-    }
-    
-    const count = parseInt(match[1] || '1');
-    const sides = parseInt(match[2]);
-    const modifierSign = match[4] || '+';
-    const modifierValue = parseInt(match[5] || '0');
-    const modifier = modifierSign === '+' ? modifierValue : -modifierValue;
-    
-    return { count, sides, modifier };
-  }
-
   /**
    * Find target character based on action analysis or NPC response
    */
@@ -393,12 +382,16 @@ ${hasValidSceneChangeRequest && !isNPC ? `
       isNPC: boolean;
       npcResponse?: NPCResponseAnalysis;
       targetCharacter?: DynamicCharacterProfile | null;
-    }
+    },
+    gameStateManager?: DynamicGameStateManager
   ): string {
     const { isNPC, npcResponse } = options;
     let { targetCharacter } = options;
 
-    let context = "\n\nCurrent Scenario:\n";
+    // Add current game time information for actionLog generation
+    const fullGameTime = gameStateManager ? gameStateManager.getFullGameTime() : `Day ${dynamicState.gameDay}, ${dynamicState.timeOfDay}`;
+    let context = `\n\n=== CURRENT GAME TIME ===\n${fullGameTime}\n=== END OF GAME TIME ===\n`;
+    context += "\n\nCurrent Scenario:\n";
     if (dynamicState.currentScenario) {
       // Find the corresponding scenario outline to get connections
       const scenarioOutline = dynamicState.scenarioOutlines.find(
@@ -413,23 +406,6 @@ ${hasValidSceneChangeRequest && !isNPC ? `
         connections: scenarioOutline?.connections || [] // Array of {scenarioName, relationshipType, description} - only "leads_to" connections allow scene change
       };
       context += JSON.stringify(scenarioInfo, null, 2);
-      
-      // Add detailed connection information for scene change validation
-      if (scenarioOutline?.connections && scenarioOutline.connections.length > 0) {
-        const accessibleScenarios = scenarioOutline.connections
-          .filter(conn => conn.relationshipType === "leads_to")
-          .map(conn => conn.scenarioName);
-        if (accessibleScenarios.length > 0) {
-          context += `\n\n=== ACCESSIBLE SCENARIOS FROM CURRENT LOCATION ===`;
-          context += `\nThe following scenarios are directly accessible from "${dynamicState.currentScenario.name}":`;
-          scenarioOutline.connections
-            .filter(conn => conn.relationshipType === "leads_to")
-            .forEach(conn => {
-              context += `\n- ${conn.scenarioName}${conn.description ? ` (${conn.description})` : ''}`;
-            });
-          context += `\n=== END OF ACCESSIBLE SCENARIOS ===\n`;
-        }
-      }
     } else {
       context += "No current scenario";
     }
@@ -444,33 +420,6 @@ ${hasValidSceneChangeRequest && !isNPC ? `
       context += `\nReason: ${existingSceneChangeRequest.reason || 'Scene change requested'}`;
       context += `\nYour task: Determine if the current action enables this scene change (check for obstructions, skill requirements, etc.)`;
       context += `\n=== END OF SCENE CHANGE REQUEST ===\n`;
-    }
-
-    // Add last keeper narrative if available (only for player actions)
-    if (!isNPC) {
-      const conversationHistory = (dynamicState.temporaryInfo.contextualData?.conversationHistory as Array<{
-        turnNumber: number;
-        characterInput: string;
-        keeperNarrative: string | null;
-      }>) || [];
-
-      if (conversationHistory.length > 0) {
-        const lastTurnWithNarrative = [...conversationHistory]
-          .reverse()
-          .find(turn => turn.keeperNarrative);
-
-        if (lastTurnWithNarrative && lastTurnWithNarrative.keeperNarrative) {
-          context += "\n\n=== PREVIOUS KEEPER NARRATIVE ===";
-          context += `\nThe Keeper's last narrative description:\n"${lastTurnWithNarrative.keeperNarrative}"`;
-          context += "\n=== END OF PREVIOUS NARRATIVE ===\n";
-        }
-      }
-    }
-
-    // Add Memory Context (DynamicWorld information prepared by Memory Agent)
-    const memoryContext = dynamicState.temporaryInfo.contextualData?.memoryContext as string | undefined;
-    if (memoryContext) {
-      context += "\n\n" + memoryContext + "\n";
     }
 
     // Add temporary rules if any
@@ -524,78 +473,50 @@ ${hasValidSceneChangeRequest && !isNPC ? `
       gameStateManager.applyActionUpdate(parsed.stateUpdate);
     }
 
-    // Handle scene change request
-    if (parsed.sceneChange) {
-      if (isNPC && parsed.sceneChange.shouldChange && parsed.sceneChange.targetSceneName) {
-        // NPC scene change: update NPC location
-        const targetSceneName = parsed.sceneChange.targetSceneName;
-        console.log(`\n📍 [Action Agent] NPC ${character.name} requested scene transition: ${targetSceneName}`);
+    // Handle scene change modification from Action Agent
+    // Action Agent modifies the existing sceneChangeRequest from Orchestrator
+    const currentSceneChangeRequest = dynamicState.temporaryInfo.sceneChangeRequest;
+    if (parsed.sceneChange && currentSceneChangeRequest) {
+      // Update the existing sceneChangeRequest based on action result
+      const updatedRequest: SceneChangeRequest = {
+        shouldChange: parsed.sceneChange.shouldChange,
+        targetSceneName: parsed.sceneChange.targetSceneName || currentSceneChangeRequest.targetSceneName,
+        reason: parsed.sceneChange.reason || currentSceneChangeRequest.reason,
+        timestamp: currentSceneChangeRequest.timestamp
+      };
+      gameStateManager.setSceneChangeRequest(updatedRequest);
+      
+      if (!isNPC) {
+        // Player scene change: log the result
+        if (parsed.sceneChange.shouldChange) {
+          console.log(`Action Agent: Action succeeded, scene change to ${updatedRequest.targetSceneName} will proceed`);
+        } else {
+          console.log(`Action Agent: Action failed, scene change blocked - ${parsed.sceneChange.reason || "Unknown reason"}`);
+        }
+      }
+    } else if (parsed.sceneChange && isNPC && parsed.sceneChange.shouldChange && parsed.sceneChange.targetSceneName) {
+      // NPC scene change: create new request for NPC
+      const targetSceneName = parsed.sceneChange.targetSceneName;
+      console.log(`\n📍 [Action Agent] NPC ${character.name} requested scene transition: ${targetSceneName}`);
 
-        if (this.scenarioLoader) {
-          const searchResult = this.scenarioLoader.searchScenarios({ name: targetSceneName });
+      if (this.scenarioLoader) {
+        const searchResult = this.scenarioLoader.searchScenarios({ name: targetSceneName });
 
-          if (searchResult.scenarios.length > 0) {
-            const targetScenario = searchResult.scenarios[0];
-            const targetLocation = targetScenario.snapshot.location;
+        if (searchResult.scenarios.length > 0) {
+          const currentState = gameStateManager.getState();
+          const npcInState = currentState.npcCharacters.find(n => n.id === character.id);
 
-            const currentState = gameStateManager.getState();
-            const npcInState = currentState.npcCharacters.find(n => n.id === character.id);
-
-            if (npcInState) {
-              // Location is tracked via actionLog, no need to update currentLocation
-              // The actionLog entry for scene change will be added by the Director Agent
-              console.log(`   ✓ NPC ${character.name} scene change requested: ${targetSceneName} (location tracked via actionLog)`);
-            } else {
-              console.warn(`   ⚠️  NPC ${character.name} (ID: ${character.id}) not found in dynamicState`);
-            }
+          if (npcInState) {
+            // Location is tracked via actionLog
+            console.log(`   ✓ NPC ${character.name} scene change requested: ${targetSceneName} (location tracked via actionLog)`);
           } else {
-            console.warn(`   ⚠️  Scene "${targetSceneName}" not found, unable to update NPC location`);
+            console.warn(`   ⚠️  NPC ${character.name} (ID: ${character.id}) not found in dynamicState`);
           }
         } else {
-          console.warn(`   ⚠️  ScenarioLoader not initialized, unable to find scene location`);
-        }
-
-        // If NPC targets player, trigger scene change for player too
-        const isPlayerTarget = npcResponse?.targetCharacter &&
-          dynamicState.playerCharacter.name.toLowerCase().includes(npcResponse.targetCharacter.toLowerCase());
-
-        if (isPlayerTarget) {
-          const sceneChangeRequest: SceneChangeRequest = {
-            shouldChange: true,
-            targetSceneName,
-            reason: `NPC ${character.name} moved the investigator`,
-            timestamp: new Date()
-          };
-          gameStateManager.setSceneChangeRequest(sceneChangeRequest);
-          console.log(`   ✓ NPC triggered player scene change:`, sceneChangeRequest);
+          console.warn(`   ⚠️  Scene "${targetSceneName}" not found`);
         }
       } else {
-        // Player scene change: check if there's already a scene change request from orchestrator
-        const existingSceneChangeRequest = dynamicState.temporaryInfo.sceneChangeRequest;
-        const hasValidSceneChangeRequest = existingSceneChangeRequest?.shouldChange === true && existingSceneChangeRequest?.targetSceneName;
-        
-        if (hasValidSceneChangeRequest) {
-          // Orchestrator already validated the scene change request
-          // Action agent only needs to check if the action succeeds
-          if (parsed.sceneChange.shouldChange) {
-            // Action succeeded - keep the existing scene change request
-            console.log(`Action Agent: Action succeeded, scene change to ${existingSceneChangeRequest.targetSceneName} will proceed`);
-          } else if (parsed.sceneChange.reason) {
-            // Action failed - clear scene change request and set rejection
-            gameStateManager.clearSceneChangeRequest();
-            const rejection = {
-              wasRequested: true,
-              reasoning: parsed.sceneChange.reason,
-              timestamp: new Date()
-            };
-            gameStateManager.setSceneTransitionRejection(rejection);
-            console.log(`Action Agent: Action failed, scene change blocked - ${parsed.sceneChange.reason}`);
-          }
-        } else {
-          // No scene change request from orchestrator - this shouldn't happen for player actions
-          // But handle it gracefully by clearing any invalid state
-          gameStateManager.clearSceneChangeRequest();
-        }
+        console.warn(`   ⚠️  ScenarioLoader not initialized, unable to find scene location`);
       }
     }
 
@@ -690,43 +611,100 @@ ${hasValidSceneChangeRequest && !isNPC ? `
       }
     }
 
-    // Append summary to action logs for actor and target (if any)
-    // Use full game time from state manager
-    const fullTime = gameStateManager.getFullGameTime();
-    const logEntry: ActionLogEntry = {
-      time: fullTime,
-      location: actionResult.location,
-      summary: actionResult.result,
-    };
+    // Append actionLog entries generated by LLM to the corresponding character
+    // LLM generates actionLog entries in the response
     const updatedState = gameStateManager.getState();
 
-    const appendLog = (character: DynamicCharacterProfile | undefined) => {
-      if (!character) return;
-      if (!character.actionLog) {
-        character.actionLog = [];
+    // Get actionLog entries from LLM response and add to the corresponding character based on characterId
+    if (parsed.actionLog && Array.isArray(parsed.actionLog)) {
+      // Process each actionLog entry and add to the corresponding character based on characterId
+      for (const logEntry of parsed.actionLog) {
+        if (logEntry.time && logEntry.location && logEntry.summary) {
+          // Find the character by characterId if provided, otherwise use acting character
+          let targetCharacter: DynamicCharacterProfile | undefined;
+          
+          if (logEntry.characterId) {
+            // Find character by ID
+            if (logEntry.characterId === updatedState.playerCharacter.id) {
+              targetCharacter = updatedState.playerCharacter;
+            } else {
+              targetCharacter = updatedState.npcCharacters.find(
+                npc => npc.id === logEntry.characterId
+              );
+            }
+            
+            if (!targetCharacter) {
+              console.warn(`   ⚠️  Character with ID "${logEntry.characterId}" not found, skipping actionLog entry`);
+              continue;
+            }
+          } else {
+            // Fallback: use acting character if characterId not provided (backward compatibility)
+            if (isNPC) {
+              targetCharacter = updatedState.npcCharacters.find(npc => npc.id === character.id);
+            } else {
+              targetCharacter = updatedState.playerCharacter;
+            }
+            
+            if (!targetCharacter) {
+              console.warn(`   ⚠️  Acting character not found, skipping actionLog entry`);
+              continue;
+            }
+          }
+
+          // Initialize actionLog array if needed
+          if (!targetCharacter.actionLog) {
+            targetCharacter.actionLog = [];
+          }
+
+          // Create ActionLogEntry without characterId (not stored in the entry)
+          const actionLogEntry: ActionLogEntry = {
+            time: logEntry.time,
+            location: logEntry.location,
+            summary: logEntry.summary,
+          };
+          
+          targetCharacter.actionLog.push(actionLogEntry);
+        }
       }
-      character.actionLog.push(logEntry);
-    };
 
-    // Acting character (player or NPC)
-    const actorInState = isNPC
-      ? updatedState.npcCharacters.find(npc => npc.id === character.id)
-      : updatedState.playerCharacter;
-    appendLog(actorInState);
-
-    // Target character (if present)
-    const targetName = isNPC ? npcResponse?.targetCharacter : dynamicState.temporaryInfo.currentActionAnalysis?.target?.name;
-    if (targetName) {
-      const targetLower = targetName.toLowerCase();
-      if (updatedState.playerCharacter.name.toLowerCase().includes(targetLower)) {
-        appendLog(updatedState.playerCharacter);
+      if (parsed.actionLog.length > 0) {
+        console.log(`   ✓ Processed ${parsed.actionLog.length} actionLog entries`);
+      }
+    } else {
+      // Fallback: if LLM didn't generate actionLog, create a basic entry
+      const fullTime = gameStateManager.getFullGameTime();
+      
+      // Find the acting character in the current state
+      let actorInState: DynamicCharacterProfile | undefined;
+      if (isNPC) {
+        actorInState = updatedState.npcCharacters.find(npc => npc.id === character.id);
+        if (!actorInState) {
+          console.warn(`   ⚠️  NPC ${character.name} (ID: ${character.id}) not found in state, cannot add fallback actionLog`);
+        }
       } else {
-        const targetNpc = updatedState.npcCharacters.find((npc) =>
-          npc.name.toLowerCase().includes(targetLower)
-        );
-        appendLog(targetNpc);
+        actorInState = updatedState.playerCharacter;
+      }
+      
+      if (actorInState) {
+        if (!actorInState.actionLog) {
+          actorInState.actionLog = [];
+        }
+
+        // Use location name for actionLog location field
+        const locationName = updatedState.currentScenario?.location || "Unknown location";
+        
+        const fallbackLogEntry: ActionLogEntry = {
+          time: fullTime,
+          location: locationName,
+          summary: actionResult.result,
+        };
+        actorInState.actionLog.push(fallbackLogEntry);
+        console.log(`   ⚠️  LLM did not generate actionLog, added fallback entry to ${isNPC ? 'NPC' : 'player'} ${actorInState.name} with location: ${locationName}`);
       }
     }
+
+    // Note: Target character actionLog should be generated by LLM if the action affects them
+    // The LLM can include actionLog entries for target characters in the response if needed
     
     // Return the updated game state
     return gameStateManager.getState();
