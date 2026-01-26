@@ -74,6 +74,21 @@ The following data provides the complete world context:
 {{#if playerCurrentScene}}
 **Scene**: {{playerCurrentScene.name}}
 **Location**: {{playerCurrentScene.location}}
+{{#if playerCurrentScene.description}}
+**Description**: {{playerCurrentScene.description}}
+{{/if}}
+{{#if playerCurrentScene.sourcePlaceId}}
+**Source Place ID**: {{playerCurrentScene.sourcePlaceId}} (Knowledge holder PLACE ID)
+{{/if}}
+{{#if playerCurrentScene.sourcePlaceName}}
+**Source Place Name**: {{playerCurrentScene.sourcePlaceName}}
+{{/if}}
+{{#if playerCurrentScene.connections}}
+**Connections**: 
+{{#each playerCurrentScene.connections}}
+- **{{this.scenarioName}}** ({{this.relationshipType}}): {{this.description}}{{#if this.blocked}} [BLOCKED: {{this.blockReason}}]{{/if}}
+{{/each}}
+{{/if}}
 {{else}}
 *No current scene*
 {{/if}}
@@ -253,6 +268,21 @@ The following data provides the complete world context:
 {{#if playerCurrentScene}}
 **Scene**: {{playerCurrentScene.name}}
 **Location**: {{playerCurrentScene.location}}
+{{#if playerCurrentScene.description}}
+**Description**: {{playerCurrentScene.description}}
+{{/if}}
+{{#if playerCurrentScene.sourcePlaceId}}
+**Source Place ID**: {{playerCurrentScene.sourcePlaceId}} (Knowledge holder PLACE ID)
+{{/if}}
+{{#if playerCurrentScene.sourcePlaceName}}
+**Source Place Name**: {{playerCurrentScene.sourcePlaceName}}
+{{/if}}
+{{#if playerCurrentScene.connections}}
+**Connections**: 
+{{#each playerCurrentScene.connections}}
+- **{{this.scenarioName}}** ({{this.relationshipType}}): {{this.description}}{{#if this.blocked}} [BLOCKED: {{this.blockReason}}]{{/if}}
+{{/each}}
+{{/if}}
 {{else}}
 *No current scene*
 {{/if}}

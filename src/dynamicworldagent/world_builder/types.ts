@@ -90,6 +90,10 @@ export interface DynamicScenarioSnapshot {
   name: string;
   /** Narrative game time for this snapshot (e.g., "Day 1, 08:00") */
   gameTime?: string;
+  /** System timestamp when this snapshot was created */
+  timestamp?: Date;
+  /** Snapshot type: "complete" (with clues, conditions, full character data) or "simplified" (description and actionLog only) */
+  snapshotType?: "complete" | "simplified";
   /** Primary location */
   location: string;
   /** Detailed description */

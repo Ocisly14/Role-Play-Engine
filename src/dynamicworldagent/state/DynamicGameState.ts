@@ -52,12 +52,6 @@ export interface DynamicTemporaryInfo {
   sceneChangeRequest: SceneChangeRequest | null;
 }
 
-export interface VisitedScenarioBasic {
-  id: string;
-  name: string;
-  location: string;
-}
-
 /**
  * Dynamic Game State - Contains all game runtime data + DynamicWorld-specific data
  * This completely replaces the old GameState for DynamicWorld modules
@@ -67,9 +61,8 @@ export interface DynamicGameState {
   sessionId: string;
   phase: Phase;
 
-  // Current scenario and visited history
+  // Current scenario
   currentScenario: DynamicScenarioSnapshot | null;
-  visitedScenarios: VisitedScenarioBasic[];
 
   // Time management
   gameDay: number;  // Day number in game
@@ -132,7 +125,7 @@ export interface DynamicGameState {
   pointOfNoReturnTrigger: string | null;  // The actual trigger value when reached
 
   // Updated scenario snapshots (simplified versions for non-player scenarios)
-  updatedDynamicScenarioSnapshots: Map<string, DynamicScenarioSnapshot>;  // key: scenarioId, value: 更新后的简化版 snapshot
+  updatedDynamicScenarioSnapshots: Map<string, DynamicScenarioSnapshot[]>;  // key: scenarioId, value: 所有历史 snapshot 的数组（按时间顺序）
   globalTrigger: {
     timeRestriction?: string;
     timeReason?: string;
@@ -161,7 +154,6 @@ export const initialDynamicGameState = (params: {
   sessionId: params.sessionId,
   phase: "intro",
   currentScenario: null,
-  visitedScenarios: [],
   gameDay: params.gameDay ?? 1,
   timeOfDay: params.timeOfDay ?? "08:00",
   scenarioTimeState: {
@@ -635,11 +627,6 @@ export class DynamicGameStateManager {
 
     const newScenario = scenarioData.snapshot;
     
-    // If we already have a current scenario, move it to visited scenarios
-    if (this.state.currentScenario) {
-      this.addVisitedScenario(this.state.currentScenario);
-    }
-
     // Set new current scenario
     this.state.currentScenario = newScenario;
     
@@ -724,33 +711,6 @@ export class DynamicGameStateManager {
     // This method is kept for compatibility but does nothing
   }
 
-  /**
-   * Add a scenario snapshot to the visited list while keeping the list bounded
-   */
-  addVisitedScenario(scenario: DynamicScenarioSnapshot): void {
-    // Check if this scenario is already in visited list
-    const existingIndex = this.state.visitedScenarios.findIndex(
-      visited => visited.id === scenario.id
-    );
-    
-    if (existingIndex === -1) {
-      // Extract only basic information for visited scenarios
-      const basicScenario: VisitedScenarioBasic = {
-        id: scenario.id,
-        name: scenario.name,
-        location: scenario.location
-      };
-      
-      // Add scenario to visited list
-      this.state.visitedScenarios.unshift(basicScenario);
-      
-      // Keep only the most recent 3 visited scenarios
-      if (this.state.visitedScenarios.length > 3) {
-        this.state.visitedScenarios = this.state.visitedScenarios.slice(0, 3);
-      }
-      this.state.lastUpdated = new Date();
-    }
-  }
 
   /**
    * Apply state updates from action agent results
@@ -1127,24 +1087,45 @@ export class DynamicGameStateManager {
   }
 
   /**
-   * Set updated scenario snapshot (simplified version for non-player scenarios)
+   * Add updated scenario snapshot (appends to history, does not overwrite)
+   * Automatically adds timestamp if not present
    */
   setUpdatedDynamicScenarioSnapshot(scenarioId: string, snapshot: DynamicScenarioSnapshot): void {
-    this.state.updatedDynamicScenarioSnapshots.set(scenarioId, snapshot);
+    // Add timestamp if not present
+    const snapshotWithTimestamp: DynamicScenarioSnapshot = {
+      ...snapshot,
+      timestamp: snapshot.timestamp || new Date()
+    };
+    
+    const snapshots = this.state.updatedDynamicScenarioSnapshots.get(scenarioId) || [];
+    snapshots.push(snapshotWithTimestamp);
+    this.state.updatedDynamicScenarioSnapshots.set(scenarioId, snapshots);
     this.state.lastUpdated = new Date();
   }
 
   /**
-   * Get updated scenario snapshot by scenario ID
+   * Get latest updated scenario snapshot by scenario ID
    */
   getUpdatedDynamicScenarioSnapshot(scenarioId: string): DynamicScenarioSnapshot | null {
-    return this.state.updatedDynamicScenarioSnapshots.get(scenarioId) || null;
+    const snapshots = this.state.updatedDynamicScenarioSnapshots.get(scenarioId);
+    if (!snapshots || snapshots.length === 0) {
+      return null;
+    }
+    // Return the latest snapshot (last in array)
+    return snapshots[snapshots.length - 1];
   }
 
   /**
-   * Get all updated scenario snapshots
+   * Get all historical snapshots for a scenario
    */
-  getAllUpdatedDynamicScenarioSnapshots(): Map<string, DynamicScenarioSnapshot> {
+  getHistoricalSnapshots(scenarioId: string): DynamicScenarioSnapshot[] {
+    return this.state.updatedDynamicScenarioSnapshots.get(scenarioId) || [];
+  }
+
+  /**
+   * Get all updated scenario snapshots (returns Map with arrays)
+   */
+  getAllUpdatedDynamicScenarioSnapshots(): Map<string, DynamicScenarioSnapshot[]> {
     return this.state.updatedDynamicScenarioSnapshots;
   }
 

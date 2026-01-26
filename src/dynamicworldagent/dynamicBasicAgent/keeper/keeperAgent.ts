@@ -273,26 +273,11 @@ export class KeeperAgent {
 
   /**
    * Extract previous scenario information (for scene transitions)
+   * Note: visitedScenarios removed, returns null as previous scenario info is no longer tracked
    */
   private extractPreviousScenarioInfo(dynamicState: DynamicGameState) {
-    const visitedScenarios = dynamicState.visitedScenarios;
-    
-    if (!visitedScenarios || visitedScenarios.length === 0) {
-      return {
-        hasPreviousScenario: false,
-        message: "No previous scenario available"
-      };
-    }
-
-    // Get most recently visited scenario (first element is the latest)
-    const previousScenario = visitedScenarios[0];
-
-    return {
-      hasPreviousScenario: true,
-      id: previousScenario.id,
-      name: previousScenario.name,
-      location: previousScenario.location
-    };
+    // visitedScenarios removed, return null
+    return null;
   }
 
   /**
