@@ -108,34 +108,43 @@ export const buildDynamicGraph = (
       return state;
     }
 
-    // Real player input - clear temporary state from previous round
-    console.log("👤 [Dynamic Entry] Real player input - clearing temporary state");
-    const dgsm = new DynamicGameStateManager(state.dynamicGameState);
+    try {
+      // Real player input - clear temporary state from previous round
+      console.log("👤 [Dynamic Entry] Real player input - clearing temporary state");
+      const dgsm = new DynamicGameStateManager(state.dynamicGameState);
 
-    dgsm.clearActionResults();
-    console.log("   ✓ Cleared action results");
+      dgsm.clearActionResults();
+      console.log("   ✓ Cleared action results");
 
-    dgsm.clearNPCResponseAnalyses();
-    console.log("   ✓ Cleared NPC response analyses");
+      dgsm.clearNPCResponseAnalyses();
+      console.log("   ✓ Cleared NPC response analyses");
 
-    dgsm.clearActionAnalysis();
-    console.log("   ✓ Cleared action analysis");
+      dgsm.clearActionAnalysis();
+      console.log("   ✓ Cleared action analysis");
 
-    // Update timestamp and increment turn counter (only for real input)
-    dgsm.updatePlayerInputTime();
-    console.log(`   ✓ Updated player input timestamp: ${new Date().toISOString()}`);
+      // Update timestamp and increment turn counter (only for real input)
+      dgsm.updatePlayerInputTime();
+      console.log(`   ✓ Updated player input timestamp: ${new Date().toISOString()}`);
 
-    dgsm.incrementTurnCounter();
-    const currentTurn = dgsm.getTurnsInCurrentScene();
-    console.log(`   ✓ Turn counter incremented to: ${currentTurn}`);
+      dgsm.incrementTurnCounter();
+      const currentTurn = dgsm.getTurnsInCurrentScene();
+      console.log(`   ✓ Turn counter incremented to: ${currentTurn}`);
 
-    console.log("✅ [Dynamic Entry] Temporary state cleared for new player turn");
+      console.log("✅ [Dynamic Entry] Temporary state cleared for new player turn");
 
-    return {
-      ...state,
-      dynamicGameState: dgsm.getState(),
-      simulatedQueryCount: 0, // Reset loop counter on real input
-    };
+      return {
+        ...state,
+        dynamicGameState: dgsm.getState(),
+        simulatedQueryCount: 0, // Reset loop counter on real input
+      };
+    } catch (error) {
+      console.error(`❌ [Dynamic Entry] 清理状态失败:`, error);
+      // Return state as-is on error to allow graph to continue
+      return {
+        ...state,
+        simulatedQueryCount: 0,
+      };
+    }
   });
 
   // Conditional routing from entry
@@ -248,7 +257,7 @@ export const buildDynamicGraph = (
 
     return {
       ...state,
-      dynamicGameState: dgsm.getState(),
+      dynamicGameState: enrichedState,
     };
   });
 
@@ -362,6 +371,56 @@ export const buildDynamicGraph = (
       console.error(`❌ [Dynamic Keeper Agent] 生成失败:`, error);
     }
 
+    // Check global trigger conditions after narrative generation
+    console.log("\n🔍 [Dynamic Keeper Agent] 检查全局触发器...");
+    const globalTrigger = dgsm.getState().globalTrigger;
+
+    if (globalTrigger) {
+      let triggered = false;
+      let triggerReason = "";
+
+      // Check 1: Time restriction
+      const timeReached = directorAgent.checkGlobalTriggerTime(dgsm);
+      if (timeReached) {
+        triggered = true;
+        triggerReason = "时间限制到达";
+      }
+
+      // Check 2: Events (only if time not reached)
+      if (!triggered && globalTrigger.events && globalTrigger.events.length > 0) {
+        const eventsTriggered = await directorAgent.checkGlobalTriggerEvents(dgsm);
+        if (eventsTriggered) {
+          triggered = true;
+          triggerReason = "事件已完成";
+        }
+      }
+
+      if (triggered) {
+        console.log(`\n🎯 [Global Trigger] 全局触发器已触发！`);
+        console.log(`   原因: ${triggerReason}`);
+        if (globalTrigger.keeperNotes) {
+          console.log(`   KM笔记: ${globalTrigger.keeperNotes}`);
+        }
+
+        // Clear the trigger since it has been fulfilled
+        dgsm.setGlobalTrigger(null);
+        console.log(`   ✓ 全局触发器已清除`);
+
+        // Silently update all non-player scenarios in background
+        console.log(`\n🔄 [Global Trigger] 开始后台更新场景...`);
+        try {
+          await directorAgent.updateNonPlayerScenarios(dgsm);
+          console.log(`   ✓ 后台场景更新完成`);
+        } catch (error) {
+          console.error(`   ❌ 后台场景更新失败:`, error);
+        }
+      } else {
+        console.log(`   ✓ 全局触发器未触发`);
+      }
+    } else {
+      console.log(`   ℹ️  无全局触发器`);
+    }
+
     return {
       ...state,
       dynamicGameState: dgsm.getState(),
@@ -376,34 +435,40 @@ export const buildDynamicGraph = (
     const dgsm = new DynamicGameStateManager(state.dynamicGameState);
     const currentState = dgsm.getState();
 
-    // Check point of no return
-    const reached = dgsm.checkPointOfNoReturn(
-      currentState.gameDay,
-      currentState.timeOfDay
-    );
-    if (reached) {
-      console.log(
-        "⚠️  [Dynamic Director] Point of no return reached!",
-        currentState.pointOfNoReturnTrigger
+    try {
+      // Check point of no return
+      const reached = dgsm.checkPointOfNoReturn(
+        currentState.gameDay,
+        currentState.timeOfDay
       );
+      if (reached) {
+        console.log(
+          "⚠️  [Dynamic Director] Point of no return reached!",
+          currentState.pointOfNoReturnTrigger
+        );
+      }
+
+      const sceneChangeRequest = currentState.temporaryInfo.sceneChangeRequest;
+
+      if (sceneChangeRequest?.shouldChange && sceneChangeRequest.targetSceneName) {
+        const currentCharacterInput = latestHumanMessage(state.messages);
+
+        await directorAgent.handleActionDrivenSceneChange(
+          dgsm,
+          sceneChangeRequest.targetSceneName,
+          sceneChangeRequest.reason,
+          currentCharacterInput
+        );
+      }
+
+      dgsm.clearSceneChangeRequest();
+
+      console.log("✅ [Dynamic Director Agent] 处理完成");
+    } catch (error) {
+      console.error(`❌ [Dynamic Director Agent] 处理失败:`, error);
+      // Clear scene change request even on error to prevent stuck state
+      dgsm.clearSceneChangeRequest();
     }
-
-    const sceneChangeRequest = currentState.temporaryInfo.sceneChangeRequest;
-
-    if (sceneChangeRequest?.shouldChange && sceneChangeRequest.targetSceneName) {
-      const currentCharacterInput = latestHumanMessage(state.messages);
-
-      await directorAgent.handleActionDrivenSceneChange(
-        dgsm,
-        sceneChangeRequest.targetSceneName,
-        sceneChangeRequest.reason,
-        currentCharacterInput
-      );
-    }
-
-    dgsm.clearSceneChangeRequest();
-
-    console.log("✅ [Dynamic Director Agent] 处理完成");
 
     return { ...state, dynamicGameState: dgsm.getState() };
   });

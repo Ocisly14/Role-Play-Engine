@@ -3,7 +3,7 @@ import { WebSocket } from "ws";
 import { ServerState } from "../core/ServerState.js";
 import { GraphManager } from "../core/GraphManager.js";
 import { DatabaseManager } from "../core/DatabaseManager.js";
-import { GameStateManager } from "../../../src/state.js";
+import { GameStateManager } from "../../../src/coc_multiagents_system/state/gameState.js";
 import { enrichMemoryContext } from "../../../src/coc_multiagents_system/agents/memory/memoryAgent.js";
 import { notifyClients } from "./notifier.js";
 

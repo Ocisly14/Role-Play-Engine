@@ -31,6 +31,11 @@ export function getKeeperTemplate(): string {
   Current Scene (JSON):
   {{scenarioContextJson}}
   {{/if}}
+
+  {{#if sceneTransitionRejection}}
+  SCENE TRANSITION FAILED
+  Reason (Director): {{sceneTransitionRejection.reasoning}}
+  {{/if}}
   
   ### Game State
   - Time: {{fullGameTime}}
@@ -50,18 +55,15 @@ export function getKeeperTemplate(): string {
   No actions occurred this turn.
   {{/if}}
   
-  {{#if sceneTransitionRejection}}
-  SCENE TRANSITION FAILED
-  Reason (Director): {{sceneTransitionRejection.reasoning}}
-  {{/if}}
-  
   ### Characters
-  Investigator (JSON):
+  Investigator (Basic Info - JSON):
   {{playerCharacterJson}}
-  
+  Note: Focus on narrative-relevant details (status, inventory, action history), not mechanical attributes.
+
   {{#if actionRelatedNpcsJson}}
-  Relevant NPCs (JSON):
+  Relevant NPCs (Basic Info - JSON):
   {{actionRelatedNpcsJson}}
+  Note: Focus on personality, goals, secrets, and narrative context, not mechanical stats.
   {{/if}}
   
   {{#if conversationHistory}}

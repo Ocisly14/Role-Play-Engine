@@ -1,4 +1,4 @@
-import { getPlayerIntentAnalysisTemplate, getScenarioUpdateTemplate, getPlayerSceneSwitchTemplate } from "./directorTemplate.js";
+import { getPlayerIntentAnalysisTemplate, getScenarioUpdateTemplate, getPlayerSceneSwitchTemplate, getGlobalTriggerEventCheckTemplate } from "./directorTemplate.js";
 import { composeTemplate } from "../../../template.js";
 import type { GameEndingInfo } from "../../../coc_multiagents_system/state/index.js";
 import type { ScenarioCharacter } from "../../../coc_multiagents_system/agents/models/scenarioTypes.js";
@@ -1037,6 +1037,9 @@ export class DirectorAgent {
   ): Promise<void> {
     console.log(`\n🎬 [Director Agent] Starting scenario update for non-player scenes...`);
 
+    // Ensure gameStateManager has db for snapshot management
+    gameStateManager.setDb(this.db);
+
     const dynamicState = gameStateManager.getState();
     const currentScenario = dynamicState.currentScenario;
     const currentScenarioId = currentScenario?.id || null;
@@ -1210,8 +1213,7 @@ export class DirectorAgent {
           };
           
           // Save to state (no database save)
-          // Ensure gameStateManager has db for snapshot management
-          gameStateManager.setDb(this.db);
+          // db is already set at the beginning of this method
           gameStateManager.setUpdatedDynamicScenarioSnapshot(item.scenarioId, snapshotWithUnifiedTime);
 
           console.log(`   ✓ Updated snapshot for scenario ${item.scenarioId}`);
@@ -1243,5 +1245,223 @@ export class DirectorAgent {
       console.error(`❌ [Director Agent] Failed to update scenarios:`, error);
       throw error;
     }
+  }
+
+  /**
+   * Check if global trigger time restriction has been reached
+   * @returns true if current game time >= trigger time, false otherwise
+   */
+  checkGlobalTriggerTime(
+    gameStateManager: DynamicGameStateManager
+  ): boolean {
+    const dynamicState = gameStateManager.getState();
+    const globalTrigger = dynamicState.globalTrigger;
+
+    if (!globalTrigger || !globalTrigger.timeRestriction) {
+      return false;
+    }
+
+    const currentGameTime = `Day ${dynamicState.gameDay}, ${dynamicState.timeOfDay}`;
+    const triggerTime = globalTrigger.timeRestriction;
+
+    // Parse both times
+    const currentTime = this.parseGameTimeFromSnapshot(currentGameTime);
+    const targetTime = this.parseGameTimeFromSnapshot(triggerTime);
+
+    if (!currentTime || !targetTime) {
+      console.warn(`   ⚠️ Failed to parse time: current="${currentGameTime}", trigger="${triggerTime}"`);
+      return false;
+    }
+
+    // Check if current time >= trigger time
+    const timeReached =
+      currentTime.gameDay > targetTime.gameDay ||
+      (currentTime.gameDay === targetTime.gameDay &&
+       this.compareTimeOfDay(currentTime.timeOfDay, targetTime.timeOfDay) >= 0);
+
+    if (timeReached) {
+      console.log(`   ⏰ Global trigger time reached: ${triggerTime}`);
+      if (globalTrigger.timeReason) {
+        console.log(`      Reason: ${globalTrigger.timeReason}`);
+      }
+    }
+
+    return timeReached;
+  }
+
+  /**
+   * Check if global trigger events have been fulfilled using LLM analysis
+   * Analyzes recent actionLog entries from the last 3 turns
+   * @returns true if events are triggered, false otherwise
+   */
+  async checkGlobalTriggerEvents(
+    gameStateManager: DynamicGameStateManager
+  ): Promise<boolean> {
+    const dynamicState = gameStateManager.getState();
+    const globalTrigger = dynamicState.globalTrigger;
+
+    if (!globalTrigger || !globalTrigger.events || globalTrigger.events.length === 0) {
+      return false;
+    }
+
+    console.log(`\n🔍 [Director Agent] Checking global trigger events...`);
+
+    // Get conversation history from last 3 turns (including current turn)
+    const conversationHistory = (dynamicState.temporaryInfo.contextualData?.conversationHistory as Array<{
+      turnNumber: number;
+      characterInput: string;
+      keeperNarrative: string | null;
+      actionResults?: any[];
+    }>) || [];
+
+    // Get recent 3 turns (including current turn)
+    const recentTurns = conversationHistory.slice(-3);
+    if (recentTurns.length === 0) {
+      console.log(`   ℹ️  No recent turns found`);
+      return false;
+    }
+
+    // Calculate time range for recent 3 turns
+    // Get the earliest time from recent turns' actionResults
+    const currentGameTime = `Day ${dynamicState.gameDay}, ${dynamicState.timeOfDay}`;
+    let earliestTime: string | null = null;
+
+    // Find earliest time from actionResults in recent turns
+    for (const turn of recentTurns) {
+      if (turn.actionResults && turn.actionResults.length > 0) {
+        for (const result of turn.actionResults) {
+          const resultTime = result.gameTime || `Day ${dynamicState.gameDay}, ${result.timeOfDay || dynamicState.timeOfDay}`;
+          if (!earliestTime || this.isTimeBeforeOrEqual(resultTime, earliestTime)) {
+            earliestTime = resultTime;
+          }
+        }
+      }
+    }
+
+    // If no time found in actionResults, use current time as fallback
+    if (!earliestTime) {
+      earliestTime = currentGameTime;
+    }
+
+    console.log(`   📅 Time range: ${earliestTime} to ${currentGameTime}`);
+
+    // Extract actionLog entries directly from all characters' actionLog
+    // Filter entries that fall within the time range of recent 3 turns
+    const recentActionLogs: Array<{
+      turnNumber: number;
+      characterId: string;
+      characterName: string;
+      actionLog: ActionLogEntry[];
+    }> = [];
+
+    // Collect all characters (player + NPCs)
+    const allCharacters: Array<{
+      id: string;
+      name: string;
+      actionLog: ActionLogEntry[];
+    }> = [
+      {
+        id: dynamicState.playerCharacter.id,
+        name: dynamicState.playerCharacter.name,
+        actionLog: dynamicState.playerCharacter.actionLog || []
+      },
+      ...dynamicState.npcCharacters.map(npc => ({
+        id: npc.id,
+        name: npc.name,
+        actionLog: npc.actionLog || []
+      }))
+    ];
+
+    // Filter actionLog entries within the time range
+    for (const character of allCharacters) {
+      const filteredActionLog = character.actionLog.filter(entry => {
+        // Include entries that are within the time range (earliestTime to currentGameTime)
+        return this.isTimeBeforeOrEqual(earliestTime, entry.time) && 
+               this.isTimeBeforeOrEqual(entry.time, currentGameTime);
+      });
+
+      if (filteredActionLog.length > 0) {
+        recentActionLogs.push({
+          turnNumber: recentTurns[0]?.turnNumber || 0,
+          characterId: character.id,
+          characterName: character.name,
+          actionLog: filteredActionLog
+        });
+      }
+    }
+
+    if (recentActionLogs.length === 0) {
+      console.log(`   ℹ️  No recent actionLog entries found in the last 3 turns`);
+      return false;
+    }
+
+    console.log(`   📋 Found ${recentActionLogs.length} characters with actionLog entries in recent 3 turns`);
+
+    // Prepare template context
+    const runtime = createRuntime();
+    const template = getGlobalTriggerEventCheckTemplate();
+
+    const templateContext = {
+      globalTriggerJson: JSON.stringify(globalTrigger, null, 2),
+      recentActionLogsJson: JSON.stringify(recentActionLogs, null, 2)
+    };
+
+    const prompt = composeTemplate(
+      template,
+      { dynamicGameState: dynamicState },
+      templateContext,
+      "handlebars"
+    );
+
+    try {
+      const response = await generateText({
+        runtime,
+        context: prompt,
+        modelClass: ModelClass.SMALL,
+      });
+
+      // Parse response
+      let parsed: { triggered: boolean };
+      try {
+        const jsonMatch = response.match(/\{[\s\S]*\}/);
+        if (jsonMatch) {
+          parsed = JSON.parse(jsonMatch[0]);
+        } else {
+          parsed = JSON.parse(response);
+        }
+      } catch (error) {
+        console.error("   ❌ Failed to parse event check response:", error);
+        return false;
+      }
+
+      if (parsed.triggered) {
+        console.log(`   ✅ Global trigger events have been fulfilled`);
+        if (globalTrigger.events) {
+          console.log(`      Events: ${globalTrigger.events.join(", ")}`);
+        }
+      } else {
+        console.log(`   ⏳ Global trigger events not yet fulfilled`);
+      }
+
+      return parsed.triggered;
+
+    } catch (error) {
+      console.error("   ❌ Error checking global trigger events:", error);
+      return false;
+    }
+  }
+
+  /**
+   * Compare two time-of-day strings (HH:MM format)
+   * @returns negative if time1 < time2, 0 if equal, positive if time1 > time2
+   */
+  private compareTimeOfDay(time1: string, time2: string): number {
+    const [h1, m1] = time1.split(':').map(Number);
+    const [h2, m2] = time2.split(':').map(Number);
+
+    const minutes1 = h1 * 60 + m1;
+    const minutes2 = h2 * 60 + m2;
+
+    return minutes1 - minutes2;
   }
 }

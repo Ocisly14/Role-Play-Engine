@@ -1,6 +1,6 @@
 import type { CoCDatabase } from "../../../src/coc_multiagents_system/agents/memory/database/index.js";
-import type { GameState } from "../../../src/state.js";
-import { initialGameState } from "../../../src/state.js";
+import type { GameState } from "../../../src/coc_multiagents_system/state/gameState.js";
+import { initialGameState } from "../../../src/coc_multiagents_system/state/gameState.js";
 import { ModuleLoader } from "../../../src/coc_multiagents_system/agents/memory/moduleloader/index.js";
 import { ScenarioLoader } from "../../../src/coc_multiagents_system/agents/memory/scenarioloader/index.js";
 import { NPCLoader } from "../../../src/coc_multiagents_system/agents/character/npcloader/index.js";
@@ -219,8 +219,22 @@ export async function initializeWorldBuilderGameState(
 
 function parseInitialGameTime(value: string): { gameDay?: number; timeOfDay: string } | null {
   const trimmed = value.trim();
-  // Match format: "Day X HH:MM" or "day X HH:MM" (case insensitive)
-  // Also support formats like "Day 1 21:00" or "day 1 9:00"
+  
+  // Match format: "Day X, HH:MM" or "Day X HH:MM" (case insensitive, comma optional)
+  // Also support formats like "Day 1, 21:00" or "day 1 9:00"
+  const dayMatchWithComma = /^day\s+(\d+),\s*(\d{1,2}):(\d{2})$/i.exec(trimmed);
+  if (dayMatchWithComma) {
+    const gameDay = Number(dayMatchWithComma[1]);
+    const hours = dayMatchWithComma[2];
+    const minutes = dayMatchWithComma[3];
+    const timeOfDay = `${hours.padStart(2, '0')}:${minutes}`;
+    if (Number.isFinite(gameDay) && gameDay > 0 && isValidTimeOfDay(timeOfDay)) {
+      return { gameDay, timeOfDay };
+    }
+    return null;
+  }
+  
+  // Match format: "Day X HH:MM" (without comma, case insensitive)
   const dayMatch = /^day\s+(\d+)\s+(\d{1,2}):(\d{2})$/i.exec(trimmed);
   if (dayMatch) {
     const gameDay = Number(dayMatch[1]);

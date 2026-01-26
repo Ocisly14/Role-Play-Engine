@@ -1,4 +1,4 @@
-import type { GameState } from "../../../src/state.js";
+import type { GameState } from "../../../src/coc_multiagents_system/state/gameState.js";
 import type { DynamicGameState } from "../../../src/dynamicworldagent/state/index.js";
 
 /**

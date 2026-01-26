@@ -225,7 +225,6 @@ export async function saveWorldToDatabase(
         scenario.description,
         JSON.stringify(scenario.tags || []),
         JSON.stringify(scenarioConnections(scenario)),
-        null,
         JSON.stringify(metadata),
         scenario.sourcePlaceId || null,
       ];

@@ -144,6 +144,10 @@ Each snapshot should:
      - If an NPC needs to move to a non-adjacent location, they must pass through connected intermediate locations
      - Time gaps in actionLog must be **realistic** - don't have NPCs teleporting or moving too quickly
    - Each actionLog entry format: \`{ time: "Day X, HH:MM", location: "specific location", summary: "what they did and its impact" }\`
+   - **Multiple Characters**: If an action involves multiple characters (e.g., NPC A attacks NPC B, NPC A talks to NPC B), create separate actionLog entries for EACH involved character with their respective perspectives:
+     - For NPC A: "Attacked NPC B with a knife, dealing 3 damage"
+     - For NPC B: "Was attacked by NPC A, taking 3 damage"
+     - This ensures both characters have accurate records of the interaction in their actionLog
    - Example of good actionLog with movement:
      \`\`\`json
      [
@@ -346,6 +350,10 @@ Generate snapshots for each scenario above, with **different levels of detail ba
      - If an NPC needs to move to a non-adjacent location, they must pass through connected intermediate locations
      - Time gaps in actionLog must be **realistic** - don't have NPCs teleporting or moving too quickly
    - Each actionLog entry format: \`{ time: "Day X, HH:MM", location: "specific location", summary: "what they did and its impact" }\`
+   - **Multiple Characters**: If an action involves multiple characters (e.g., NPC A attacks NPC B, NPC A talks to NPC B), create separate actionLog entries for EACH involved character with their respective perspectives:
+     - For NPC A: "Attacked NPC B with a knife, dealing 3 damage"
+     - For NPC B: "Was attacked by NPC A, taking 3 damage"
+     - This ensures both characters have accurate records of the interaction in their actionLog
    - Example of good actionLog with movement:
      \`\`\`json
      [
@@ -540,4 +548,49 @@ Example:
 **Note**: The \`globalTrigger\` field is **OPTIONAL**.
 
 *Generate the updated snapshots:*`;
+}
+
+/**
+ * Global Trigger Event Check Template - for analyzing if trigger events have occurred
+ */
+export function getGlobalTriggerEventCheckTemplate(): string {
+  return `# Director Agent - Global Trigger Event Check
+
+Analyze recent game events to determine if global trigger events have been fulfilled.
+
+## 🎯 Global Trigger
+\`\`\`json
+{{globalTriggerJson}}
+\`\`\`
+
+## 📋 New ActionLog Entries (Last 3 Turns)
+
+The following are **newly added** actionLog entries from the most recent 3 turns (not all historical actionLog, only the new entries added in these turns):
+
+\`\`\`json
+{{recentActionLogsJson}}
+\`\`\`
+
+**Note**: These are only the actionLog entries that were created/added during the last 3 game turns, representing the most recent character activities.
+
+## 🎬 Task
+
+Determine if the events described in the global trigger have occurred based on these newly added actionLog entries.
+
+### Evaluation:
+- Check if the new actionLog entries provide clear evidence that the trigger events have happened
+- Consider logical implications (e.g., if someone left for a destination, they may have arrived)
+- Be strict - only return true if there's solid evidence in the recent activities
+
+## 📋 Output Format
+
+Return ONLY valid JSON:
+
+\`\`\`json
+{
+  "triggered": true
+}
+\`\`\`
+
+*Analyze:*`;
 }

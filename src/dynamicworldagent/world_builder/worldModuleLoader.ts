@@ -754,7 +754,6 @@ export class WorldModuleLoader {
         scenario.description,
         JSON.stringify(scenario.tags || []),
         JSON.stringify(connections),
-        null,
         JSON.stringify(metadata),
         scenario.sourcePlaceId || null,
       ];

@@ -6,7 +6,7 @@ import { getClientIp, generateSessionIdFromIp } from "../utils/sessionUtils.js";
 import { initializeGameState, initializeWorldBuilderGameState } from "./service.js";
 import { DynamicGameStateManager } from "../../../src/dynamicworldagent/state/index.js";
 import type { DynamicGameState } from "../../../src/dynamicworldagent/state/index.js";
-import type { GameState } from "../../../src/state.js";
+import type { GameState } from "../../../src/coc_multiagents_system/state/gameState.js";
 import path from "path";
 import fs from "fs";
 
@@ -299,9 +299,17 @@ export async function importGameData(req: Request, res: Response): Promise<void>
 export function getGameState(req: Request, res: Response): void {
   try {
     const userId = req.user!.userId;
-    const gameState = ServerState.getInstance().getGameState(userId);
+    const serverState = ServerState.getInstance();
+    
+    // Check for DynamicGameState first (for DynamicWorld modules)
+    const dynamicGameState = serverState.getDynamicGameState(userId);
+    const gameState = serverState.getGameState(userId);
 
-    if (!gameState) {
+    // For DynamicWorld modules, use DynamicGameState (which is compatible with frontend)
+    // For regular modules, use GameState
+    const stateToReturn = dynamicGameState || gameState;
+
+    if (!stateToReturn) {
       res.json({
         success: true,
         gameState: null,
@@ -313,7 +321,7 @@ export function getGameState(req: Request, res: Response): void {
 
     res.json({
       success: true,
-      gameState: gameState,
+      gameState: stateToReturn,
       initialized: true,
     });
   } catch (error) {

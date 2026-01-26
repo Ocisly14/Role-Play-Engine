@@ -89,8 +89,7 @@ export async function getModuleIntroduction(req: Request, res: Response): Promis
       return;
     }
 
-    const db = DatabaseManager.getInstance();
-    const database = db.getDatabase();
+    const db = DatabaseManager.getInstance().getDatabase();
 
     const modsDir = path.join(process.cwd(), "data", "Mods");
     const modPath = path.join(modsDir, modName);
@@ -109,7 +108,7 @@ export async function getModuleIntroduction(req: Request, res: Response): Promis
 
       if (!loadedModule) {
         // Module hasn't changed, get from database
-        const moduleLoader = new ModuleLoader(database);
+        const moduleLoader = new ModuleLoader(db);
         const modules = moduleLoader.getAllModules();
         const module = modules.find(m => m.title === modName);
 
@@ -145,7 +144,7 @@ export async function getModuleIntroduction(req: Request, res: Response): Promis
       // Regular module (old format)
       console.log(`Loading regular module: ${modName}`);
 
-      const moduleLoader = new ModuleLoader(database);
+      const moduleLoader = new ModuleLoader(db);
 
       // Load module data
       const moduleDigestPath = path.join(modPath, "module_digest.json");

@@ -94,8 +94,8 @@ export interface DiscoveredClue {
 }
 
 // Re-export GameState and GameStateManager from gameState.ts for backward compatibility
-export type { GameState, GameStateManager } from "./gameState.js";
-export { initialGameState } from "./gameState.js";
+export type { GameState } from "./gameState.js";
+export { GameStateManager, initialGameState } from "./gameState.js";
 
 export type TimeConsumption = "instant" | "short" | "scene";
 

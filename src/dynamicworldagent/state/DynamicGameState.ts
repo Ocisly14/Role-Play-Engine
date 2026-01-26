@@ -959,10 +959,10 @@ export class DynamicGameStateManager {
    */
   getProgressionThreshold(): number {
     const tension = this.state.tension;
-    if (tension <= 3) return 4;      // Low tension (1-3): 4 turns
-    if (tension <= 6) return 3;      // Medium tension (4-6): 3 turns
-    if (tension <= 8) return 2;      // High tension (7-8): 2 turns
-    return 1;                         // Critical tension (9-10): 1 turn
+    if (tension <= 3) return 5;      // Low tension (1-3): 5 turns
+    if (tension <= 6) return 4;      // Medium tension (4-6): 4 turns
+    if (tension <= 8) return 3;      // High tension (7-8): 3 turns
+    return 2;                         // Critical tension (9-10): 2 turns
   }
 
   /**
@@ -1341,7 +1341,7 @@ export class DynamicGameStateManager {
     events?: string[];
     eventReasons?: string[];
     keeperNotes?: string;
-  }): void {
+  } | null): void {
     this.state.globalTrigger = trigger;
     this.state.lastUpdated = new Date();
   }

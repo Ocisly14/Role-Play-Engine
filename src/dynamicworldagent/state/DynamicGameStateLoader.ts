@@ -470,7 +470,21 @@ export async function initializeCompleteDynamicGameState(
  */
 function parseInitialGameTime(value: string): { gameDay?: number; timeOfDay: string } | null {
   const trimmed = value.trim();
-  // Match format: "Day X HH:MM" or "day X HH:MM" (case insensitive)
+  
+  // Match format: "Day X, HH:MM" or "Day X HH:MM" (case insensitive, comma optional)
+  const dayMatchWithComma = /^day\s+(\d+),\s*(\d{1,2}):(\d{2})$/i.exec(trimmed);
+  if (dayMatchWithComma) {
+    const gameDay = Number(dayMatchWithComma[1]);
+    const hours = dayMatchWithComma[2];
+    const minutes = dayMatchWithComma[3];
+    const timeOfDay = `${hours.padStart(2, '0')}:${minutes}`;
+    if (Number.isFinite(gameDay) && gameDay > 0 && isValidTimeOfDay(timeOfDay)) {
+      return { gameDay, timeOfDay };
+    }
+    return null;
+  }
+  
+  // Match format: "Day X HH:MM" (without comma, case insensitive)
   const dayMatch = /^day\s+(\d+)\s+(\d{1,2}):(\d{2})$/i.exec(trimmed);
   if (dayMatch) {
     const gameDay = Number(dayMatch[1]);

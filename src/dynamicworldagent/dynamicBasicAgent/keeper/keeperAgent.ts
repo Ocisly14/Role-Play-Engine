@@ -82,6 +82,13 @@ export class KeeperAgent {
     
     const gameEnding = dynamicState.gameEnding || null;
 
+    // Filter sceneChangeRequest to only include narrative-relevant fields (exclude timestamp)
+    const sceneChangeRequestForNarrative = sceneChangeRequest ? {
+      shouldChange: sceneChangeRequest.shouldChange,
+      targetSceneName: sceneChangeRequest.targetSceneName,
+      reason: sceneChangeRequest.reason
+    } : null;
+
     const templateContext = {
       characterInput,
       allActionResults,  // All action results (for {{#each}} loop)
@@ -89,7 +96,7 @@ export class KeeperAgent {
       tension: dynamicState.tension,
       phase: dynamicState.phase,
       isTransition,
-      sceneChangeRequest,  // Scene change request from Orchestrator, modified by Action Agent
+      sceneChangeRequest: sceneChangeRequestForNarrative,  // Scene change request (without timestamp)
       conversationHistory,  // Recent conversation history (for {{#each}} loop)
       // JSON string version (used directly in template)
       scenarioContextJson: this.safeStringify(completeScenarioInfo),
@@ -407,56 +414,39 @@ export class KeeperAgent {
       id: character.id,
       name: character.name,
       isNPC: npcData.isNPC || true,
-      
+
       // Personal details
       occupation: npcData.occupation || "Unknown",
       age: npcData.age,
       appearance: npcData.appearance || "No description",
       personality: npcData.personality || "Unknown personality",
       background: npcData.background || "Unknown background",
-      
+
       // Goals and secrets
       goals: npcData.goals || [],
       secrets: npcData.secrets || [],
-      
-      // Complete attributes
-      attributes: {
-        STR: character.attributes.STR,
-        CON: character.attributes.CON,
-        DEX: character.attributes.DEX,
-        APP: character.attributes.APP,
-        POW: character.attributes.POW,
-        SIZ: character.attributes.SIZ,
-        INT: character.attributes.INT,
-        EDU: character.attributes.EDU
-      },
-      
-      // Complete status
+
+      // Status (only essential info for narrative)
       status: {
         hp: character.status.hp,
         maxHp: character.status.maxHp,
         sanity: character.status.sanity,
         maxSanity: character.status.maxSanity,
-        luck: character.status.luck,
-        mp: character.status.mp || 0,
-        conditions: character.status.conditions || [],
-        damageBonus: character.status.damageBonus || "0",
-        build: character.status.build || 0,
-        mov: character.status.mov || 7
+        conditions: character.status.conditions || []
       },
-      
+
       // Items
       inventory: character.inventory || [],
-      
+
       // Action Log (only includes current location)
       actionLog: filteredActionLog,
-      
+
       // Clues (if NPC)
       clues: npcData.clues || [],
-      
+
       // Relationships (if NPC)
       relationships: npcData.relationships || [],
-      
+
       // Notes
       notes: character.notes || ""
     };
