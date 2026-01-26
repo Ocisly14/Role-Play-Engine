@@ -183,21 +183,46 @@ async function processGameTurnAsync(
  */
 export async function getTurnStatus(req: Request, res: Response): Promise<void> {
   try {
-    const turnManager = GraphManager.getInstance().getTurnManager();
-
-    if (!turnManager) {
-      res.status(400).json({ error: "Game not initialized" });
-      return;
-    }
-
     const { turnId } = req.params;
     const userId = req.user!.userId;
-    const db = DatabaseManager.getInstance().getDatabase().getDatabase();
+    const db = DatabaseManager.getInstance().getDatabase();
+    const database = db.getDatabase();
 
-    if (!isTurnOwnedByUser(turnId, userId, db)) {
+    if (!isTurnOwnedByUser(turnId, userId, database)) {
       res.status(404).json({ error: "Turn not found" });
       return;
     }
+
+    // Try both TurnManagers - they both use the same database table
+    // First try to determine which one to use based on user's game state
+    const serverState = ServerState.getInstance();
+    const dynamicGameState = serverState.getDynamicGameState(userId);
+    const useDynamic = dynamicGameState !== null;
+
+    // Use appropriate TurnManager
+    let turn: any = null;
+    if (useDynamic) {
+      const dynamicTurnManager = new DynamicTurnManager(db);
+      turn = dynamicTurnManager.getTurn(turnId);
+    } else {
+      const turnManager = GraphManager.getInstance().getTurnManager();
+      if (turnManager) {
+        turn = turnManager.getTurn(turnId);
+      }
+    }
+
+    // If not found with specific manager, try the other one (fallback)
+    if (!turn) {
+      const dynamicTurnManager = new DynamicTurnManager(db);
+      turn = dynamicTurnManager.getTurn(turnId);
+      if (!turn) {
+        const turnManager = GraphManager.getInstance().getTurnManager();
+        if (turnManager) {
+          turn = turnManager.getTurn(turnId);
+        }
+      }
+    }
+
     const waitForCompletion = req.query.wait === 'true';
     const maxWaitTime = 60000; // 60 seconds
     const checkInterval = 500; // 500ms
@@ -206,7 +231,16 @@ export async function getTurnStatus(req: Request, res: Response): Promise<void> 
     // Long polling
     if (waitForCompletion) {
       while (Date.now() - startTime < maxWaitTime) {
-        const turn = turnManager.getTurn(turnId);
+        // Re-fetch turn to get latest status
+        if (useDynamic) {
+          const dynamicTurnManager = new DynamicTurnManager(db);
+          turn = dynamicTurnManager.getTurn(turnId);
+        } else {
+          const turnManager = GraphManager.getInstance().getTurnManager();
+          if (turnManager) {
+            turn = turnManager.getTurn(turnId);
+          }
+        }
 
         if (!turn) {
           res.status(404).json({ error: "Turn not found" });
@@ -214,6 +248,13 @@ export async function getTurnStatus(req: Request, res: Response): Promise<void> 
         }
 
         if (turn.status === 'completed' || turn.status === 'error') {
+          console.log(`[getTurnStatus] Turn ${turnId} completed:`, {
+            status: turn.status,
+            hasKeeperNarrative: !!turn.keeperNarrative,
+            keeperNarrativeLength: turn.keeperNarrative?.length || 0,
+            hasActionResults: !!turn.actionResults,
+            actionResultsCount: Array.isArray(turn.actionResults) ? turn.actionResults.length : 0,
+          });
           res.json({ success: true, turn: turn });
           return;
         }
@@ -222,13 +263,19 @@ export async function getTurnStatus(req: Request, res: Response): Promise<void> 
       }
     }
 
-    // Immediate return
-    const turn = turnManager.getTurn(turnId);
-
+    // Immediate return or timeout
     if (!turn) {
       res.status(404).json({ error: "Turn not found" });
       return;
     }
+
+    console.log(`[getTurnStatus] Returning turn ${turnId}:`, {
+      status: turn.status,
+      hasKeeperNarrative: !!turn.keeperNarrative,
+      keeperNarrativeLength: turn.keeperNarrative?.length || 0,
+      hasActionResults: !!turn.actionResults,
+      actionResultsCount: Array.isArray(turn.actionResults) ? turn.actionResults.length : 0,
+    });
 
     res.json({ success: true, turn: turn });
   } catch (error) {

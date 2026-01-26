@@ -423,6 +423,20 @@ export class CoCDatabase {
       // ignore if column already exists or cannot be added
     }
 
+    // Backfill is_dynamic_historical column for dynamic world historical snapshots
+    try {
+      if (!this.hasColumn("scenario_snapshots", "is_dynamic_historical")) {
+        this.db.exec(
+          "ALTER TABLE scenario_snapshots ADD COLUMN is_dynamic_historical INTEGER DEFAULT 0;"
+        );
+        this.db.exec(
+          "CREATE INDEX IF NOT EXISTS idx_snapshots_dynamic_historical ON scenario_snapshots(scenario_id, is_dynamic_historical, game_time);"
+        );
+      }
+    } catch {
+      // ignore if column already exists or cannot be added
+    }
+
     // Legacy time fields removed - scenarios no longer have timeline/timepoint data
 
     // Scenario characters table - characters present in scenarios
@@ -1223,8 +1237,19 @@ export class CoCDatabase {
 
   /**
    * Get turn history for a session
+   * @param sessionId - Session ID
+   * @param limit - Maximum number of turns to return
+   * @param afterTurnNumber - Only return turns after this turn number
+   * @param maxGameDay - Optional: Maximum game day (inclusive)
+   * @param maxGameTime - Optional: Maximum game time (inclusive, format: "HH:MM")
    */
-  getTurnHistory(sessionId: string, limit = 50, afterTurnNumber?: number): any[] {
+  getTurnHistory(
+    sessionId: string,
+    limit = 50,
+    afterTurnNumber?: number,
+    maxGameDay?: number,
+    maxGameTime?: string
+  ): any[] {
     const database = this.db;
 
     let sql = `
@@ -1238,6 +1263,19 @@ export class CoCDatabase {
     if (afterTurnNumber !== undefined) {
       sql += ` AND turn_number > ?`;
       params.push(afterTurnNumber);
+    }
+
+    // Add filter for gameTime if provided
+    if (maxGameDay !== undefined && maxGameTime !== undefined) {
+      // Filter: game_day < maxGameDay OR (game_day = maxGameDay AND game_time <= maxGameTime)
+      // Also include turns with null gameDay/gameTime (assume they're before checkpoint)
+      sql += ` AND (
+        game_day IS NULL OR 
+        game_time IS NULL OR
+        game_day < ? OR 
+        (game_day = ? AND game_time <= ?)
+      )`;
+      params.push(maxGameDay, maxGameDay, maxGameTime);
     }
 
     sql += `

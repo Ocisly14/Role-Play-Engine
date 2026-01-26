@@ -356,6 +356,8 @@ export const buildDynamicGraph = (
     const dgsm = new DynamicGameStateManager(state.dynamicGameState);
     const userInput = latestHumanMessage(state.messages);
 
+    let updatedGameState = state.dynamicGameState;
+
     try {
       const result = await keeperAgent.generateNarrative(userInput, dgsm);
 
@@ -366,21 +368,53 @@ export const buildDynamicGraph = (
         // This would need to be implemented based on specific requirements
       }
 
+      // Use the updated state from result (which includes all keeper updates)
+      updatedGameState = result.updatedGameState;
+
+      // Complete turn with keeper narrative if turnId exists
+      if (state.turnId) {
+        const isSimulated = state.isSimulatedQuery ?? false;
+        try {
+          turnManager.completeTurn(state.turnId, {
+            keeperNarrative: result.narrative,
+            clueRevelations: result.clueRevelations,
+            gameDay: updatedGameState?.gameDay ?? null,
+            gameTime: updatedGameState?.timeOfDay ?? null,
+          });
+          const inputType = isSimulated ? '模拟查询' : '真实输入';
+          console.log(`📝 [Dynamic Keeper Agent] Turn ${state.turnId} (${inputType}) 已完成并保存到数据库`);
+          console.log(`   Keeper narrative length: ${result.narrative.length} characters`);
+        } catch (error) {
+          console.error("❌ [Dynamic Keeper Agent] Failed to complete turn:", error);
+          turnManager.markError(state.turnId, error as Error);
+        }
+      }
+
       console.log("✅ [Dynamic Keeper Agent] 叙述生成完成");
     } catch (error) {
       console.error(`❌ [Dynamic Keeper Agent] 生成失败:`, error);
+      // Mark turn as error if turnId exists
+      if (state.turnId) {
+        try {
+          turnManager.markError(state.turnId, error as Error);
+        } catch (markError) {
+          console.error("❌ [Dynamic Keeper Agent] Failed to mark turn error:", markError);
+        }
+      }
     }
 
     // Check global trigger conditions after narrative generation
+    // Use updated state if available, otherwise use current state
+    const currentDgsm = new DynamicGameStateManager(updatedGameState);
     console.log("\n🔍 [Dynamic Keeper Agent] 检查全局触发器...");
-    const globalTrigger = dgsm.getState().globalTrigger;
+    const globalTrigger = currentDgsm.getState().globalTrigger;
 
     if (globalTrigger) {
       let triggered = false;
       let triggerReason = "";
 
       // Check 1: Time restriction
-      const timeReached = directorAgent.checkGlobalTriggerTime(dgsm);
+      const timeReached = directorAgent.checkGlobalTriggerTime(currentDgsm);
       if (timeReached) {
         triggered = true;
         triggerReason = "时间限制到达";
@@ -388,7 +422,7 @@ export const buildDynamicGraph = (
 
       // Check 2: Events (only if time not reached)
       if (!triggered && globalTrigger.events && globalTrigger.events.length > 0) {
-        const eventsTriggered = await directorAgent.checkGlobalTriggerEvents(dgsm);
+        const eventsTriggered = await directorAgent.checkGlobalTriggerEvents(currentDgsm);
         if (eventsTriggered) {
           triggered = true;
           triggerReason = "事件已完成";
@@ -403,13 +437,15 @@ export const buildDynamicGraph = (
         }
 
         // Clear the trigger since it has been fulfilled
-        dgsm.setGlobalTrigger(null);
+        currentDgsm.setGlobalTrigger(null);
+        updatedGameState = currentDgsm.getState();
         console.log(`   ✓ 全局触发器已清除`);
 
         // Silently update all non-player scenarios in background
         console.log(`\n🔄 [Global Trigger] 开始后台更新场景...`);
         try {
-          await directorAgent.updateNonPlayerScenarios(dgsm);
+          await directorAgent.updateNonPlayerScenarios(currentDgsm);
+          updatedGameState = currentDgsm.getState();
           console.log(`   ✓ 后台场景更新完成`);
         } catch (error) {
           console.error(`   ❌ 后台场景更新失败:`, error);
@@ -423,7 +459,7 @@ export const buildDynamicGraph = (
 
     return {
       ...state,
-      dynamicGameState: dgsm.getState(),
+      dynamicGameState: updatedGameState,
     };
   });
 

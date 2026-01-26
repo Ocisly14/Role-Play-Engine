@@ -76,6 +76,7 @@ interface GameEndingInfo {
   timestamp: string;
 }
 
+// GameState interface - compatible with both GameState and DynamicGameState
 interface GameState {
   playerCharacter: CharacterProfile;
   discoveredClues: DiscoveredClue[];
@@ -83,6 +84,13 @@ interface GameState {
   gameDay: number;
   timeOfDay: string;
   gameEnding: GameEndingInfo | null;
+  // Additional fields from DynamicGameState (optional, for compatibility)
+  moduleName?: string;
+  npcCharacters?: CharacterProfile[];
+  tension?: number;
+  phase?: string;
+  // DynamicWorld-specific fields (ignored by frontend but present in response)
+  [key: string]: any; // Allow additional fields for DynamicGameState compatibility
 }
 
 export function GameSidebar({ sessionId, apiBaseUrl = '/api', refreshTrigger }: GameSidebarProps) {

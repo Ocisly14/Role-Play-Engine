@@ -5,6 +5,7 @@
 
 import type { CoCDatabase } from "../../../coc_multiagents_system/agents/memory/database/index.js";
 import type { DynamicGameState } from "../../state/index.js";
+import type { DynamicScenarioSnapshot } from "../../world_builder/types.js";
 import { randomUUID } from "crypto";
 
 /**
@@ -36,7 +37,7 @@ export function saveDynamicGameStateCheckpoint(
     
     // Serialize DynamicGameState to JSON
     // Convert Sets to Arrays for JSON serialization
-    const serializableState = serializeDynamicGameState(dynamicState);
+    const serializableState = serializeDynamicGameState(dynamicState, db);
     
     // Save to database using existing checkpoint infrastructure
     db.saveCheckpoint(
@@ -61,7 +62,7 @@ export function saveDynamicGameStateCheckpoint(
  * Serialize DynamicGameState for database storage
  * Converts Sets to Arrays and ensures all data is JSON-serializable
  */
-function serializeDynamicGameState(state: DynamicGameState): any {
+function serializeDynamicGameState(state: DynamicGameState, db: CoCDatabase): any {
   // Convert Sets to Arrays
   const revealedTruthEvents = Array.from(state.revealedTruthEvents);
   const activatedKnowledgeHolders = Array.from(state.activatedKnowledgeHolders);
@@ -69,10 +70,11 @@ function serializeDynamicGameState(state: DynamicGameState): any {
   const mythosRevelations = Array.from(state.mythosRevelations);
   
   // Convert Map<string, DynamicScenarioSnapshot[]> to object
-  // Only save the latest snapshot for each scenario (historical snapshots are not used currently)
+  // Only save the latest snapshot for each scenario in checkpoint
+  // Historical snapshots are saved to database separately
   const updatedDynamicScenarioSnapshots: Record<string, any> = {};
   state.updatedDynamicScenarioSnapshots.forEach((snapshots, scenarioId) => {
-    // Only save the latest snapshot (last in array)
+    // Only save the latest snapshot (last in array) to checkpoint
     if (snapshots.length > 0) {
       const latestSnapshot = snapshots[snapshots.length - 1];
       updatedDynamicScenarioSnapshots[scenarioId] = {
@@ -80,6 +82,12 @@ function serializeDynamicGameState(state: DynamicGameState): any {
         // Ensure Date objects are serialized as ISO strings
         timestamp: latestSnapshot.timestamp ? latestSnapshot.timestamp.toISOString() : undefined
       };
+      
+      // Save historical snapshots (all except the latest) to database
+      if (snapshots.length > 1) {
+        const historicalSnapshots = snapshots.slice(0, -1); // All except the last one
+        saveHistoricalSnapshotsToDatabase(db, scenarioId, historicalSnapshots);
+      }
     }
   });
   
@@ -146,3 +154,177 @@ function generateCheckpointDescription(
   
   return description;
 }
+
+/**
+ * Save historical snapshots to database
+ * These are snapshots that are not the latest (all except the last one)
+ */
+function saveHistoricalSnapshotsToDatabase(
+  db: CoCDatabase,
+  scenarioId: string,
+  historicalSnapshots: DynamicScenarioSnapshot[]
+): void {
+  try {
+    const database = db.getDatabase();
+    const hasInitialSnapshot = db.hasColumn("scenario_snapshots", "initial_snapshot");
+    const hasGameTime = db.hasColumn("scenario_snapshots", "game_time");
+    const hasDynamicHistorical = db.hasColumn("scenario_snapshots", "is_dynamic_historical");
+
+    for (const snapshot of historicalSnapshots) {
+      // Generate a unique snapshot ID for historical snapshot
+      const historicalSnapshotId = `hist-${scenarioId}-${Date.now()}-${randomUUID().slice(0, 8)}`;
+      
+      // Check if snapshot already exists
+      const existing = database
+        .prepare(`SELECT snapshot_id FROM scenario_snapshots WHERE snapshot_id = ?`)
+        .get(historicalSnapshotId);
+
+      if (existing) {
+        continue; // Skip if already exists
+      }
+
+      // Insert snapshot
+      if (hasInitialSnapshot && hasGameTime && hasDynamicHistorical) {
+        const snapshotStmt = database.prepare(`
+          INSERT INTO scenario_snapshots (
+            snapshot_id, scenario_id, snapshot_name, location, description,
+            events, exits, keeper_notes, time_restriction, show_map,
+            initial_snapshot, game_time, is_dynamic_historical
+          ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        `);
+
+        snapshotStmt.run(
+          historicalSnapshotId,
+          scenarioId,
+          snapshot.name || `Historical snapshot for ${scenarioId}`,
+          snapshot.location,
+          snapshot.description,
+          JSON.stringify([]), // events removed
+          JSON.stringify([]), // exits removed
+          snapshot.keeperNotes || null,
+          snapshot.timeRestriction || null,
+          snapshot.showMap === false ? 0 : 1,
+          0, // initial_snapshot = false
+          snapshot.gameTime || null,
+          1 // is_dynamic_historical = true
+        );
+      } else if (hasInitialSnapshot && hasGameTime) {
+        const snapshotStmt = database.prepare(`
+          INSERT INTO scenario_snapshots (
+            snapshot_id, scenario_id, snapshot_name, location, description,
+            events, exits, keeper_notes, time_restriction, show_map,
+            initial_snapshot, game_time
+          ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        `);
+
+        snapshotStmt.run(
+          historicalSnapshotId,
+          scenarioId,
+          snapshot.name || `Historical snapshot for ${scenarioId}`,
+          snapshot.location,
+          snapshot.description,
+          JSON.stringify([]),
+          JSON.stringify([]),
+          snapshot.keeperNotes || null,
+          snapshot.timeRestriction || null,
+          snapshot.showMap === false ? 0 : 1,
+          0,
+          snapshot.gameTime || null
+        );
+      } else {
+        const snapshotStmt = database.prepare(`
+          INSERT INTO scenario_snapshots (
+            snapshot_id, scenario_id, snapshot_name, location, description,
+            events, exits, keeper_notes, time_restriction, show_map
+          ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        `);
+
+        snapshotStmt.run(
+          historicalSnapshotId,
+          scenarioId,
+          snapshot.name || `Historical snapshot for ${scenarioId}`,
+          snapshot.location,
+          snapshot.description,
+          JSON.stringify([]),
+          JSON.stringify([]),
+          snapshot.keeperNotes || null,
+          snapshot.timeRestriction || null,
+          snapshot.showMap === false ? 0 : 1
+        );
+      }
+
+      // Insert characters if present
+      if (snapshot.characters && snapshot.characters.length > 0) {
+        const charStmt = database.prepare(`
+          INSERT OR IGNORE INTO scenario_characters (
+            id, snapshot_id, character_name, character_role, character_status,
+            character_location, character_notes
+          ) VALUES (?, ?, ?, ?, ?, ?, ?)
+        `);
+
+        for (const char of snapshot.characters) {
+          charStmt.run(
+            char.id || `${historicalSnapshotId}-char-${randomUUID().slice(0, 8)}`,
+            historicalSnapshotId,
+            char.name,
+            char.role,
+            char.status,
+            char.location || null,
+            char.notes || null
+          );
+        }
+      }
+
+      // Insert clues if present
+      if (snapshot.clues && snapshot.clues.length > 0) {
+        const clueStmt = database.prepare(`
+          INSERT OR IGNORE INTO scenario_clues (
+            clue_id, snapshot_id, clue_text, category, difficulty,
+            clue_location, discovery_method, reveals, discovered, discovery_details
+          ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        `);
+
+        for (const clue of snapshot.clues) {
+          clueStmt.run(
+            clue.id || `${historicalSnapshotId}-clue-${randomUUID().slice(0, 8)}`,
+            historicalSnapshotId,
+            clue.clueText,
+            clue.category,
+            clue.difficulty,
+            clue.location,
+            clue.discoveryMethod || null,
+            JSON.stringify(clue.reveals || []),
+            clue.discovered ? 1 : 0,
+            clue.discoveryDetails ? JSON.stringify(clue.discoveryDetails) : null
+          );
+        }
+      }
+
+      // Insert conditions if present
+      if (snapshot.conditions && snapshot.conditions.length > 0) {
+        const conditionStmt = database.prepare(`
+          INSERT OR IGNORE INTO scenario_conditions (
+            condition_id, snapshot_id, condition_type, description, mechanical_effect
+          ) VALUES (?, ?, ?, ?, ?)
+        `);
+
+        for (const condition of snapshot.conditions) {
+          const conditionId = `${historicalSnapshotId}-cond-${randomUUID().slice(0, 8)}`;
+          conditionStmt.run(
+            conditionId,
+            historicalSnapshotId,
+            condition.type,
+            condition.description,
+            condition.mechanicalEffect || null
+          );
+        }
+      }
+    }
+
+    console.log(`💾 [Checkpoint] Saved ${historicalSnapshots.length} historical snapshots to database for scenario ${scenarioId}`);
+  } catch (error) {
+    console.error(`❌ [Checkpoint] Failed to save historical snapshots to database:`, error);
+    // Don't throw - snapshot save failure shouldn't block checkpoint save
+  }
+}
+

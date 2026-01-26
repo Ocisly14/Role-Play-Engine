@@ -293,6 +293,53 @@ export async function importGameData(req: Request, res: Response): Promise<void>
 }
 
 /**
+ * Serialize DynamicGameState for JSON response
+ * Converts Set and Map to arrays/objects for JSON compatibility
+ */
+function serializeDynamicGameState(state: any): any {
+  if (!state) return null;
+  
+  // Create a deep copy and convert Set/Map to arrays/objects
+  const serialized = { ...state };
+  
+  // Convert Sets to arrays
+  if (serialized.revealedTruthEvents instanceof Set) {
+    serialized.revealedTruthEvents = Array.from(serialized.revealedTruthEvents);
+  }
+  if (serialized.activatedKnowledgeHolders instanceof Set) {
+    serialized.activatedKnowledgeHolders = Array.from(serialized.activatedKnowledgeHolders);
+  }
+  if (serialized.deployedRedHerrings instanceof Set) {
+    serialized.deployedRedHerrings = Array.from(serialized.deployedRedHerrings);
+  }
+  if (serialized.mythosRevelations instanceof Set) {
+    serialized.mythosRevelations = Array.from(serialized.mythosRevelations);
+  }
+  
+  // Convert Map to object
+  if (serialized.updatedDynamicScenarioSnapshots instanceof Map) {
+    const snapshotsObj: Record<string, any[]> = {};
+    serialized.updatedDynamicScenarioSnapshots.forEach((value, key) => {
+      snapshotsObj[key] = value;
+    });
+    serialized.updatedDynamicScenarioSnapshots = snapshotsObj;
+  }
+  
+  // Convert Date objects to ISO strings
+  if (serialized.loadedAt instanceof Date) {
+    serialized.loadedAt = serialized.loadedAt.toISOString();
+  }
+  if (serialized.lastUpdated instanceof Date) {
+    serialized.lastUpdated = serialized.lastUpdated.toISOString();
+  }
+  if (serialized.lastPlayerInputTime instanceof Date) {
+    serialized.lastPlayerInputTime = serialized.lastPlayerInputTime.toISOString();
+  }
+  
+  return serialized;
+}
+
+/**
  * Get current game state
  * GET /api/gamestate
  */
@@ -319,9 +366,14 @@ export function getGameState(req: Request, res: Response): void {
       return;
     }
 
+    // Serialize DynamicGameState to handle Set/Map/Date conversion
+    const serializedState = dynamicGameState 
+      ? serializeDynamicGameState(stateToReturn)
+      : stateToReturn;
+
     res.json({
       success: true,
-      gameState: stateToReturn,
+      gameState: serializedState,
       initialized: true,
     });
   } catch (error) {

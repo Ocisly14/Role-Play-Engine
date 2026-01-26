@@ -1,6 +1,5 @@
 import { getPlayerIntentAnalysisTemplate, getScenarioUpdateTemplate, getPlayerSceneSwitchTemplate, getGlobalTriggerEventCheckTemplate } from "./directorTemplate.js";
 import { composeTemplate } from "../../../template.js";
-import type { GameEndingInfo } from "../../../coc_multiagents_system/state/index.js";
 import type { ScenarioCharacter } from "../../../coc_multiagents_system/agents/models/scenarioTypes.js";
 import type { DynamicScenarioSnapshot } from "../../world_builder/types.js";
 import { ScenarioLoader } from "../../../coc_multiagents_system/agents/memory/scenarioloader/index.js";

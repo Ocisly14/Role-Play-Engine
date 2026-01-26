@@ -188,9 +188,20 @@ export class TurnManager {
 
   /**
    * Get turn history for a session
+   * @param sessionId - Session ID
+   * @param limit - Maximum number of turns to return
+   * @param afterTurnNumber - Only return turns after this turn number
+   * @param maxGameDay - Optional: Maximum game day (inclusive) for filtering by gameTime
+   * @param maxGameTime - Optional: Maximum game time (inclusive, format: "HH:MM") for filtering by gameTime
    */
-  getHistory(sessionId: string, limit = 50, afterTurnNumber?: number): GameTurn[] {
-    return this.db.getTurnHistory(sessionId, limit, afterTurnNumber) as GameTurn[];
+  getHistory(
+    sessionId: string,
+    limit = 50,
+    afterTurnNumber?: number,
+    maxGameDay?: number,
+    maxGameTime?: string
+  ): GameTurn[] {
+    return this.db.getTurnHistory(sessionId, limit, afterTurnNumber, maxGameDay, maxGameTime) as GameTurn[];
   }
 
   /**
@@ -249,8 +260,17 @@ export class TurnManager {
 
   /**
    * Get conversation format (for display in frontend)
+   * @param sessionId - Session ID
+   * @param limit - Maximum number of turns to return
+   * @param maxGameDay - Optional: Maximum game day (inclusive) for filtering by gameTime
+   * @param maxGameTime - Optional: Maximum game time (inclusive, format: "HH:MM") for filtering by gameTime
    */
-  getConversation(sessionId: string, limit = 50): Array<{
+  getConversation(
+    sessionId: string,
+    limit = 50,
+    maxGameDay?: number,
+    maxGameTime?: string
+  ): Array<{
     role: 'character' | 'keeper';
     content: string;
     timestamp: string;
@@ -259,7 +279,7 @@ export class TurnManager {
     gameDay?: number | null;
     gameTime?: string | null;
   }> {
-    const turns = this.getHistory(sessionId, limit);
+    const turns = this.getHistory(sessionId, limit, undefined, maxGameDay, maxGameTime);
     const conversation: Array<{
       role: 'character' | 'keeper';
       content: string;

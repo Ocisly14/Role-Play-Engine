@@ -22,7 +22,6 @@ import type {
   DirectorDecision,
   SceneChangeRequest,
   SceneTransitionRejection,
-  GameEndingInfo,
   DiscoveredClue,
   TimeConsumption,
 } from "../../coc_multiagents_system/state/index.js";
@@ -91,9 +90,6 @@ export interface DynamicGameState {
   discoveredClues: DiscoveredClue[];
   turnsInCurrentScene: number;
   lastPlayerInputTime: Date | null;
-
-  // Game ending
-  gameEnding: GameEndingInfo | null;
 
   // Temporary info (cleared at start of each player turn)
   temporaryInfo: DynamicTemporaryInfo;
@@ -169,7 +165,6 @@ export const initialDynamicGameState = (params: {
   discoveredClues: [],
   turnsInCurrentScene: 0,
   lastPlayerInputTime: null,
-  gameEnding: null,
   temporaryInfo: {
     rules: [],
     contextualData: {},
@@ -460,34 +455,91 @@ export class DynamicGameStateManager {
 
   /**
    * Deserialize state from storage (converts Arrays back to Sets, Objects back to Maps, ISO strings back to Dates)
+   * @param data - Serialized state data
+   * @param checkpointGameDay - Optional: filter snapshots by checkpoint game day
+   * @param checkpointTimeOfDay - Optional: filter snapshots by checkpoint time of day
+   * @param db - Optional: database instance (not used for snapshot loading, only kept for backward compatibility)
    */
-  static deserialize(data: any): DynamicGameState {
+  static deserialize(
+    data: any,
+    checkpointGameDay?: number,
+    checkpointTimeOfDay?: string,
+    db?: CoCDatabase
+  ): DynamicGameState {
     // Convert updatedDynamicScenarioSnapshots from object back to Map
+    // Only loads the latest snapshot per scenario (historical snapshots remain in database)
     const updatedDynamicScenarioSnapshots = new Map<string, DynamicScenarioSnapshot[]>();
     if (data.updatedDynamicScenarioSnapshots) {
       if (data.updatedDynamicScenarioSnapshots instanceof Map) {
-        // Already a Map, just convert snapshot timestamps
+        // Already a Map (legacy format with all snapshots)
+        // For backward compatibility, only take the latest snapshot
         data.updatedDynamicScenarioSnapshots.forEach((snapshots: any[], scenarioId: string) => {
-          updatedDynamicScenarioSnapshots.set(scenarioId, snapshots.map(snapshot => ({
-            ...snapshot,
-            timestamp: snapshot.timestamp ? (typeof snapshot.timestamp === 'string' ? new Date(snapshot.timestamp) : snapshot.timestamp) : undefined
-          })));
+          if (snapshots.length > 0) {
+            // Only take the latest snapshot
+            const latestSnapshot = snapshots[snapshots.length - 1];
+            const processedSnapshot = {
+              ...latestSnapshot,
+              timestamp: latestSnapshot.timestamp ? (typeof latestSnapshot.timestamp === 'string' ? new Date(latestSnapshot.timestamp) : latestSnapshot.timestamp) : undefined
+            };
+            updatedDynamicScenarioSnapshots.set(scenarioId, [processedSnapshot]);
+          }
         });
       } else {
-        // Object format from JSON, convert to Map
+        // Object format from JSON - new format: only latest snapshot per scenario
         Object.entries(data.updatedDynamicScenarioSnapshots).forEach(([scenarioId, snapshotData]: [string, any]) => {
-          // If it's a single snapshot (not an array), wrap it in an array
-          const snapshots = Array.isArray(snapshotData) ? snapshotData : [snapshotData];
-          updatedDynamicScenarioSnapshots.set(scenarioId, snapshots.map((snapshot: any) => ({
-            ...snapshot,
-            timestamp: snapshot.timestamp ? (typeof snapshot.timestamp === 'string' ? new Date(snapshot.timestamp) : snapshot.timestamp) : undefined
-          })));
+          // Latest snapshot from checkpoint (single snapshot, not array)
+          const latestSnapshot: any = Array.isArray(snapshotData) ? snapshotData[snapshotData.length - 1] : snapshotData;
+          const processedLatestSnapshot = {
+            ...latestSnapshot,
+            timestamp: latestSnapshot.timestamp ? (typeof latestSnapshot.timestamp === 'string' ? new Date(latestSnapshot.timestamp) : latestSnapshot.timestamp) : undefined
+          };
+          
+          // Only load the latest snapshot (no historical snapshots)
+          // Historical snapshots remain in database but are not loaded into state
+          if (processedLatestSnapshot) {
+            updatedDynamicScenarioSnapshots.set(scenarioId, [processedLatestSnapshot]);
+          }
         });
       }
     }
 
+    // Filter actionLog entries by checkpoint gameTime if provided
+    let playerCharacter = data.playerCharacter;
+    let npcCharacters = data.npcCharacters || [];
+    
+    if (checkpointGameDay !== undefined && checkpointTimeOfDay !== undefined) {
+      // Filter player character's actionLog
+      if (playerCharacter && playerCharacter.actionLog && Array.isArray(playerCharacter.actionLog)) {
+        playerCharacter = {
+          ...playerCharacter,
+          actionLog: this.filterActionLogByGameTime(
+            playerCharacter.actionLog,
+            checkpointGameDay,
+            checkpointTimeOfDay
+          )
+        };
+      }
+      
+      // Filter NPC characters' actionLog
+      npcCharacters = npcCharacters.map((npc: any) => {
+        if (npc.actionLog && Array.isArray(npc.actionLog)) {
+          return {
+            ...npc,
+            actionLog: this.filterActionLogByGameTime(
+              npc.actionLog,
+              checkpointGameDay,
+              checkpointTimeOfDay
+            )
+          };
+        }
+        return npc;
+      });
+    }
+
     return {
       ...data,
+      playerCharacter,
+      npcCharacters,
       revealedTruthEvents: new Set(data.revealedTruthEvents || []),
       activatedKnowledgeHolders: new Set(data.activatedKnowledgeHolders || []),
       deployedRedHerrings: new Set(data.deployedRedHerrings || []),
@@ -497,6 +549,220 @@ export class DynamicGameStateManager {
       lastUpdated: data.lastUpdated ? (typeof data.lastUpdated === 'string' ? new Date(data.lastUpdated) : data.lastUpdated) : new Date(),
       lastPlayerInputTime: data.lastPlayerInputTime ? (typeof data.lastPlayerInputTime === 'string' ? new Date(data.lastPlayerInputTime) : data.lastPlayerInputTime) : null,
     };
+  }
+
+  /**
+   * Parse game time from string format "Day X, HH:MM"
+   * Returns { gameDay, timeOfDay } or null if cannot parse
+   */
+  private static parseGameTime(gameTime: string): { gameDay: number; timeOfDay: string } | null {
+    if (!gameTime) return null;
+    
+    // Handle "initial" or other non-standard formats
+    if (gameTime.toLowerCase() === "initial" || !gameTime.includes("Day")) {
+      return null;
+    }
+    
+    const match = gameTime.match(/Day\s*(\d+),\s*(\d{2}:\d{2})/i);
+    if (match) {
+      return {
+        gameDay: parseInt(match[1], 10),
+        timeOfDay: match[2]
+      };
+    }
+    
+    return null;
+  }
+
+  /**
+   * Compare two game times
+   * Returns: -1 if time1 < time2, 0 if equal, 1 if time1 > time2
+   * Returns null if either time cannot be parsed
+   */
+  private static compareGameTime(
+    time1: string | undefined,
+    time2: string | undefined
+  ): number | null {
+    if (!time1 || !time2) return null;
+    
+    const parsed1 = this.parseGameTime(time1);
+    const parsed2 = this.parseGameTime(time2);
+    
+    if (!parsed1 || !parsed2) return null;
+    
+    // Compare day first
+    if (parsed1.gameDay < parsed2.gameDay) return -1;
+    if (parsed1.gameDay > parsed2.gameDay) return 1;
+    
+    // Same day, compare time
+    if (parsed1.timeOfDay < parsed2.timeOfDay) return -1;
+    if (parsed1.timeOfDay > parsed2.timeOfDay) return 1;
+    
+    return 0;
+  }
+
+  /**
+   * Filter snapshots by checkpoint game time
+   * Only keeps snapshots that were created at or before the checkpoint time
+   */
+  private static filterSnapshotsByGameTime(
+    snapshots: DynamicScenarioSnapshot[],
+    checkpointGameDay: number,
+    checkpointTimeOfDay: string
+  ): DynamicScenarioSnapshot[] {
+    const checkpointTime = `Day ${checkpointGameDay}, ${checkpointTimeOfDay}`;
+    
+    return snapshots.filter(snapshot => {
+      if (!snapshot.gameTime) {
+        // If snapshot has no gameTime, keep it (assume it's before checkpoint)
+        return true;
+      }
+      
+      const comparison = this.compareGameTime(snapshot.gameTime, checkpointTime);
+      if (comparison === null) {
+        // Cannot compare, keep it to be safe
+        return true;
+      }
+      
+      // Keep snapshots at or before checkpoint time
+      return comparison <= 0;
+    });
+  }
+
+  /**
+   * Filter actionLog entries by checkpoint game time
+   * Only keeps actionLog entries that occurred at or before the checkpoint time
+   */
+  private static filterActionLogByGameTime(
+    actionLog: Array<{ time: string; location: string; summary: string }>,
+    checkpointGameDay: number,
+    checkpointTimeOfDay: string
+  ): Array<{ time: string; location: string; summary: string }> {
+    const checkpointTime = `Day ${checkpointGameDay}, ${checkpointTimeOfDay}`;
+    
+    return actionLog.filter(entry => {
+      if (!entry.time) {
+        // If entry has no time, keep it (assume it's before checkpoint)
+        return true;
+      }
+      
+      const comparison = this.compareGameTime(entry.time, checkpointTime);
+      if (comparison === null) {
+        // Cannot compare, keep it to be safe
+        return true;
+      }
+      
+      // Keep entries at or before checkpoint time
+      return comparison <= 0;
+    });
+  }
+
+  /**
+   * Load historical snapshots from database for a scenario
+   * Only loads snapshots that are marked as dynamic historical and are at or before checkpoint time
+   */
+  private static loadHistoricalSnapshotsFromDatabase(
+    db: CoCDatabase,
+    scenarioId: string,
+    checkpointGameDay: number,
+    checkpointTimeOfDay: string
+  ): DynamicScenarioSnapshot[] {
+    try {
+      const database = db.getDatabase();
+      const hasDynamicHistorical = db.hasColumn("scenario_snapshots", "is_dynamic_historical");
+      const hasGameTime = db.hasColumn("scenario_snapshots", "game_time");
+      
+      if (!hasDynamicHistorical || !hasGameTime) {
+        return []; // Cannot load if columns don't exist
+      }
+
+      // Query all historical snapshots for this scenario
+      // We'll filter by gameTime in TypeScript since SQL string comparison may not work correctly
+      const snapshotRows = database.prepare(`
+        SELECT * FROM scenario_snapshots
+        WHERE scenario_id = ? 
+          AND is_dynamic_historical = 1
+        ORDER BY game_time ASC, created_at ASC
+      `).all(scenarioId) as any[];
+
+      const checkpointTime = `Day ${checkpointGameDay}, ${checkpointTimeOfDay}`;
+      const historicalSnapshots: DynamicScenarioSnapshot[] = [];
+
+      for (const row of snapshotRows) {
+        // Filter by checkpoint gameTime
+        if (row.game_time) {
+          const comparison = this.compareGameTime(row.game_time, checkpointTime);
+          if (comparison !== null && comparison > 0) {
+            // Skip snapshots after checkpoint time
+            continue;
+          }
+        }
+        // If game_time is null, keep it (assume it's before checkpoint)
+        // Load characters, clues, conditions for this snapshot
+        const characters = database.prepare(`
+          SELECT id, character_name, character_role, character_status,
+                 character_location, character_notes
+          FROM scenario_characters
+          WHERE snapshot_id = ?
+        `).all(row.snapshot_id) as any[];
+
+        const clues = database.prepare(`
+          SELECT clue_id, clue_text, category, difficulty, clue_location,
+                 discovery_method, reveals, discovered, discovery_details
+          FROM scenario_clues
+          WHERE snapshot_id = ?
+        `).all(row.snapshot_id) as any[];
+
+        const conditions = database.prepare(`
+          SELECT condition_id, condition_type, description, mechanical_effect
+          FROM scenario_conditions
+          WHERE snapshot_id = ?
+        `).all(row.snapshot_id) as any[];
+
+        // Build snapshot object
+        const snapshot: DynamicScenarioSnapshot = {
+          id: row.snapshot_id,
+          name: row.snapshot_name || `Historical snapshot for ${scenarioId}`,
+          location: row.location,
+          description: row.description,
+          gameTime: row.game_time || undefined,
+          showMap: row.show_map === 1,
+          keeperNotes: row.keeper_notes || undefined,
+          timeRestriction: row.time_restriction || undefined,
+          characters: characters.map(char => ({
+            id: char.id,
+            name: char.character_name,
+            role: char.character_role,
+            status: char.character_status,
+            location: char.character_location || undefined,
+            notes: char.character_notes || undefined,
+          })),
+          clues: clues.map(clue => ({
+            id: clue.clue_id,
+            clueText: clue.clue_text,
+            category: clue.category,
+            difficulty: clue.difficulty,
+            location: clue.clue_location,
+            discoveryMethod: clue.discovery_method || undefined,
+            reveals: clue.reveals ? JSON.parse(clue.reveals) : [],
+            discovered: clue.discovered === 1,
+            discoveryDetails: clue.discovery_details ? JSON.parse(clue.discovery_details) : undefined,
+          })),
+          conditions: conditions.map(cond => ({
+            type: cond.condition_type,
+            description: cond.description,
+            mechanicalEffect: cond.mechanical_effect || undefined,
+          })),
+        };
+
+        historicalSnapshots.push(snapshot);
+      }
+
+      return historicalSnapshots;
+    } catch (error) {
+      console.error(`❌ [DynamicGameState] Failed to load historical snapshots from database:`, error);
+      return [];
+    }
   }
 
   /**
@@ -1049,27 +1315,6 @@ export class DynamicGameStateManager {
   }
 
 
-  /**
-   * Set game ending information (marks the game as ended)
-   */
-  setGameEnding(endingInfo: GameEndingInfo): void {
-    this.state.gameEnding = endingInfo;
-    this.state.lastUpdated = new Date();
-  }
-
-  /**
-   * Check if the game has ended
-   */
-  isGameEnded(): boolean {
-    return this.state.gameEnding?.isEnded ?? false;
-  }
-
-  /**
-   * Get game ending information
-   */
-  getGameEnding(): GameEndingInfo | null {
-    return this.state.gameEnding;
-  }
 
   /**
    * Update current scenario based on player actions
@@ -1150,9 +1395,34 @@ export class DynamicGameStateManager {
       // Check database columns
       const hasInitialSnapshot = this.db.hasColumn("scenario_snapshots", "initial_snapshot");
       const hasGameTime = this.db.hasColumn("scenario_snapshots", "game_time");
+      const hasDynamicHistorical = this.db.hasColumn("scenario_snapshots", "is_dynamic_historical");
 
       // Insert snapshot
-      if (hasInitialSnapshot && hasGameTime) {
+      if (hasInitialSnapshot && hasGameTime && hasDynamicHistorical) {
+        const snapshotStmt = database.prepare(`
+          INSERT INTO scenario_snapshots (
+            snapshot_id, scenario_id, snapshot_name, location, description,
+            events, exits, keeper_notes, time_restriction, show_map,
+            initial_snapshot, game_time, is_dynamic_historical
+          ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        `);
+
+        snapshotStmt.run(
+          historicalSnapshotId,
+          scenarioId,
+          snapshot.name || `Historical snapshot for ${scenarioId}`,
+          snapshot.location,
+          snapshot.description,
+          JSON.stringify([]), // events removed
+          JSON.stringify([]), // exits removed
+          snapshot.keeperNotes || null,
+          snapshot.timeRestriction || null,
+          snapshot.showMap === false ? 0 : 1,
+          0, // initial_snapshot = false for historical snapshots
+          snapshot.gameTime || null,
+          1 // is_dynamic_historical = true for dynamic historical snapshots
+        );
+      } else if (hasInitialSnapshot && hasGameTime) {
         const snapshotStmt = database.prepare(`
           INSERT INTO scenario_snapshots (
             snapshot_id, scenario_id, snapshot_name, location, description,

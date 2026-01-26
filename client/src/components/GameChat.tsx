@@ -26,8 +26,13 @@ interface GameEndingInfo {
   timestamp: string;
 }
 
+// GameState interface - compatible with both GameState and DynamicGameState
 interface GameState {
   gameEnding: GameEndingInfo | null;
+  gameDay?: number;
+  timeOfDay?: string;
+  // Additional fields from DynamicGameState (optional, for compatibility)
+  [key: string]: any; // Allow additional fields for DynamicGameState compatibility
 }
 
 interface GameChatProps {
@@ -56,6 +61,7 @@ export function GameChat({ sessionId, apiBaseUrl = '/api', characterName = 'Inve
   // Refs to access latest values without causing WebSocket reconnection
   const messagesRef = useRef<Message[]>(messages);
   const onNarrativeCompleteRef = useRef(onNarrativeComplete);
+  const fetchGameEndingRef = useRef<(() => Promise<void>) | null>(null);
   const { turn, isPolling, error, startPolling, stopPolling } = useTurnPolling(apiBaseUrl);
   
   // State for dice animation
@@ -97,12 +103,17 @@ export function GameChat({ sessionId, apiBaseUrl = '/api', characterName = 'Inve
     }
   }, [apiBaseUrl, sessionId]);
 
+  // Update ref when fetchGameEnding changes
+  useEffect(() => {
+    fetchGameEndingRef.current = fetchGameEnding;
+  }, [fetchGameEnding]);
+
   useEffect(() => {
     setIsGameEnded(false);
-    if (sessionId) {
-      fetchGameEnding();
+    if (sessionId && fetchGameEndingRef.current) {
+      fetchGameEndingRef.current();
     }
-  }, [fetchGameEnding, sessionId]);
+  }, [sessionId, apiBaseUrl]); // Use apiBaseUrl instead of fetchGameEnding to avoid reconnection
 
 
   // WebSocket connection for progression checking
@@ -205,7 +216,10 @@ export function GameChat({ sessionId, apiBaseUrl = '/api', characterName = 'Inve
                   onNarrativeCompleteRef.current();
                 }
               }
-              fetchGameEnding();
+              // Use ref to call fetchGameEnding without causing reconnection
+              if (fetchGameEndingRef.current) {
+                fetchGameEndingRef.current();
+              }
             } else if (message.type === 'pong') {
               // Heartbeat response
               console.log('[WebSocket] Heartbeat received');
@@ -267,7 +281,7 @@ export function GameChat({ sessionId, apiBaseUrl = '/api', characterName = 'Inve
         wsRef.current = null;
       }
     };
-  }, [sessionId, apiBaseUrl, isGameEnded, fetchGameEnding]); // Removed messages and onNarrativeComplete from dependencies
+  }, [sessionId, apiBaseUrl, isGameEnded]); // Removed fetchGameEnding to prevent unnecessary reconnections
 
   // Send heartbeat ping every 60 seconds
   useEffect(() => {
@@ -503,13 +517,16 @@ export function GameChat({ sessionId, apiBaseUrl = '/api', characterName = 'Inve
       }
 
       setIsSending(false);
-      fetchGameEnding();
+      // Use ref to call fetchGameEnding without causing reconnection
+      if (fetchGameEndingRef.current) {
+        fetchGameEndingRef.current();
+      }
     } else if (turn && turn.status === 'error') {
       // Handle error case
       console.error(`[GameChat] Turn ${turn.turnId || turn.turnNumber} failed:`, turn.errorMessage);
       setIsSending(false);
     }
-  }, [turn, onNarrativeComplete, fetchGameEnding]);
+  }, [turn, onNarrativeComplete]);
 
   useEffect(() => {
     if (!isGameEnded) return;

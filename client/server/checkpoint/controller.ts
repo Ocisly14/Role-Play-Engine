@@ -16,24 +16,35 @@ import { NPCLoader } from "../../../src/coc_multiagents_system/agents/character/
 export async function saveCheckpoint(req: Request, res: Response): Promise<void> {
   try {
     const userId = req.user!.userId;
-    const persistentGameState = ServerState.getInstance().getGameState(userId);
+    const serverState = ServerState.getInstance();
+    
+    // Check for both GameState and DynamicGameState (for DynamicWorld modules)
+    const persistentGameState = serverState.getGameState(userId);
+    const dynamicGameState = serverState.getDynamicGameState(userId);
     const db = DatabaseManager.getInstance().getDatabase();
     const database = db.getDatabase();
 
     console.log(`[${new Date().toISOString()}] [Checkpoint Save] User ${userId} requesting save`);
 
-    if (!persistentGameState) {
+    // Determine which type of game state we have
+    const useDynamic = dynamicGameState !== null;
+    const gameStateToUse = useDynamic ? dynamicGameState : persistentGameState;
+
+    if (!persistentGameState && !dynamicGameState) {
       console.log(`[${new Date().toISOString()}] [Checkpoint Save] ERROR: No game state found for user ${userId}`);
       res.status(400).json({ error: "Game not started. Please start the game first." });
       return;
     }
 
-    const characterId = persistentGameState.playerCharacter?.id;
-    const characterName = persistentGameState.playerCharacter?.name;
-    console.log(`[${new Date().toISOString()}] [Checkpoint Save] Game state found - Character: ${characterName} (ID: ${characterId}), Session: ${persistentGameState.sessionId}`);
+    // Extract character info from the appropriate state type
+    const characterId = gameStateToUse?.playerCharacter?.id;
+    const characterName = gameStateToUse?.playerCharacter?.name;
+    const sessionId = gameStateToUse?.sessionId;
+    
+    console.log(`[${new Date().toISOString()}] [Checkpoint Save] Game state found - Type: ${useDynamic ? 'DynamicWorld' : 'Standard'}, Character: ${characterName} (ID: ${characterId}), Session: ${sessionId}`);
 
     if (!characterId) {
-      console.log(`[${new Date().toISOString()}] [Checkpoint Save] ERROR: No character ID in game state. playerCharacter: ${JSON.stringify(persistentGameState.playerCharacter)}`);
+      console.log(`[${new Date().toISOString()}] [Checkpoint Save] ERROR: No character ID in game state. playerCharacter: ${JSON.stringify(gameStateToUse?.playerCharacter)}`);
       res.status(400).json({ error: "No character in game state. Cannot save checkpoint." });
       return;
     }
@@ -74,10 +85,6 @@ export async function saveCheckpoint(req: Request, res: Response): Promise<void>
 
     console.log(`[${new Date().toISOString()}] [Checkpoint Save] Character verified, proceeding with save...`);
 
-    // Check if this is a DynamicWorld module
-    const dynamicGameState = ServerState.getInstance().getDynamicGameState(userId);
-    const useDynamic = dynamicGameState !== null;
-
     let checkpointId: string;
     let checkpointName: string;
     let description: string;
@@ -113,7 +120,7 @@ export async function saveCheckpoint(req: Request, res: Response): Promise<void>
       }
 
       checkpointId = savedCheckpointId;
-    } else {
+    } else if (persistentGameState) {
       // For regular modules, use GameState checkpoint
       const currentScenario = persistentGameState.currentScenario;
       if (!currentScenario) {
@@ -136,6 +143,10 @@ export async function saveCheckpoint(req: Request, res: Response): Promise<void>
         checkpointName,
         description
       );
+    } else {
+      // This should not happen as we checked earlier, but handle it just in case
+      res.status(400).json({ error: "No game state available. Cannot save checkpoint." });
+      return;
     }
 
     // Save RAG state if available
@@ -266,9 +277,16 @@ export async function loadCheckpointData(req: Request, res: Response): Promise<v
       return;
     }
 
-    const gameState = loadCheckpoint(checkpointId, db);
-    if (!gameState) {
+    // Load checkpoint with metadata
+    const checkpoint = db.loadCheckpoint(checkpointId);
+    if (!checkpoint) {
       res.status(404).json({ error: "Checkpoint not found" });
+      return;
+    }
+
+    const gameState = checkpoint.gameState;
+    if (!gameState) {
+      res.status(404).json({ error: "Checkpoint game state not found" });
       return;
     }
 
@@ -278,10 +296,23 @@ export async function loadCheckpointData(req: Request, res: Response): Promise<v
     let restoredDynamicGameState: any = null;
     
     if (gameStateAny.moduleName && gameStateAny.updatedDynamicScenarioSnapshots !== undefined) {
-      // This is a DynamicGameState, deserialize it
+      // This is a DynamicGameState, deserialize it with checkpoint gameTime to filter snapshots
       const { DynamicGameStateManager } = await import("../../../src/dynamicworldagent/state/index.js");
-      restoredDynamicGameState = DynamicGameStateManager.deserialize(gameStateAny);
-      console.log(`[${new Date().toISOString()}] Deserialized DynamicGameState from checkpoint`);
+      const checkpointGameDay = checkpoint.metadata.gameDay;
+      const checkpointTimeOfDay = checkpoint.metadata.gameTime;
+      
+      if (checkpointGameDay && checkpointTimeOfDay) {
+        restoredDynamicGameState = DynamicGameStateManager.deserialize(
+          gameStateAny,
+          checkpointGameDay,
+          checkpointTimeOfDay,
+          db
+        );
+        console.log(`[${new Date().toISOString()}] Deserialized DynamicGameState from checkpoint (Day ${checkpointGameDay}, ${checkpointTimeOfDay})`);
+      } else {
+        restoredDynamicGameState = DynamicGameStateManager.deserialize(gameStateAny, undefined, undefined, db);
+        console.log(`[${new Date().toISOString()}] Deserialized DynamicGameState from checkpoint`);
+      }
     }
 
     // Restore persistent game state
@@ -300,14 +331,27 @@ export async function loadCheckpointData(req: Request, res: Response): Promise<v
       }
     }
 
-    // Fetch conversation history
+    // Fetch conversation history filtered by checkpoint gameTime
     const turnManager = graphManager.getTurnManager();
     let conversationHistory: any[] = [];
 
     if (turnManager) {
       try {
-        conversationHistory = turnManager.getConversation(gameState.sessionId, 50);
-        console.log(`[${new Date().toISOString()}] Loaded ${conversationHistory.length} conversation messages`);
+        const checkpointGameDay = checkpoint.metadata.gameDay;
+        const checkpointTimeOfDay = checkpoint.metadata.gameTime;
+        
+        if (checkpointGameDay && checkpointTimeOfDay) {
+          conversationHistory = turnManager.getConversation(
+            checkpoint.sessionId,
+            50,
+            checkpointGameDay,
+            checkpointTimeOfDay
+          );
+          console.log(`[${new Date().toISOString()}] Loaded ${conversationHistory.length} conversation messages (filtered by gameTime: Day ${checkpointGameDay}, ${checkpointTimeOfDay})`);
+        } else {
+          conversationHistory = turnManager.getConversation(checkpoint.sessionId, 50);
+          console.log(`[${new Date().toISOString()}] Loaded ${conversationHistory.length} conversation messages (no gameTime filter)`);
+        }
       } catch (error) {
         console.warn("Failed to load conversation history:", error);
       }
@@ -317,8 +361,8 @@ export async function loadCheckpointData(req: Request, res: Response): Promise<v
 
     res.json({
       success: true,
-      sessionId: gameState.sessionId,
-      gameState: gameState,
+      sessionId: checkpoint.sessionId,
+      gameState: restoredGameState,
       conversationHistory: conversationHistory,
       message: "存档加载成功",
       timestamp: new Date().toISOString(),

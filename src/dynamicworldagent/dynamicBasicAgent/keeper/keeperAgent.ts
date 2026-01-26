@@ -79,8 +79,6 @@ export class KeeperAgent {
     
     // Get full game time
     const fullGameTime = gameStateManager.getFullGameTime();
-    
-    const gameEnding = dynamicState.gameEnding || null;
 
     // Filter sceneChangeRequest to only include narrative-relevant fields (exclude timestamp)
     const sceneChangeRequestForNarrative = sceneChangeRequest ? {
@@ -105,7 +103,6 @@ export class KeeperAgent {
       previousScenarioJson: previousScenarioInfo
         ? this.safeStringify(previousScenarioInfo)
         : "null",
-      gameEnding: gameEnding,
     };
 
     // Use template and LLM to generate narrative and clue revelations

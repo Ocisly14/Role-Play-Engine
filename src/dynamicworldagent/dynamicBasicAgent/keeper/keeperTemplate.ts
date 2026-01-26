@@ -78,12 +78,6 @@ export function getKeeperTemplate(): string {
   {{/each}}
   {{/if}}
 
-  {{#if gameEnding}}
-  Game Ending Info (REFERENCE ONLY):
-  - Ending Type: {{gameEnding.endingType}}
-  - Ending Reason: {{gameEnding.reason}}
-  {{/if}}
-  
   ==================================================
   SECTION 2 — KEEPER DECISION LOGIC
   ==================================================
@@ -105,7 +99,6 @@ export function getKeeperTemplate(): string {
   - Never reveal clues already discovered
   - Consider Director guidance as helpful reference for tone and pacing (not a hard constraint)
   - **CRITICAL**: Never reveal information the investigator doesn't know yet (no spoilers, no meta-knowledge)
-  - **ENDING**: If gameEnding.isEnded is true, the narrative MUST clearly close the story, explicitly explaining the ending based on the provided ending type and reason.
   
   ==================================================
   SECTION 3 — NARRATIVE RULES
