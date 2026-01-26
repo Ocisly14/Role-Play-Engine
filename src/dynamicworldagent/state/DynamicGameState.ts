@@ -26,9 +26,10 @@ import type {
   DiscoveredClue,
   TimeConsumption,
 } from "../../coc_multiagents_system/state/index.js";
-import type { DynamicCharacterProfile, DynamicNPCProfile } from "../world_builder/types.js";
+import type { DynamicCharacterProfile, DynamicNPCProfile, DynamicScenarioSnapshot } from "../world_builder/types.js";
+import type { CoCDatabase } from "../../coc_multiagents_system/agents/memory/database/index.js";
 import { InventoryUtils } from "../../coc_multiagents_system/agents/models/gameTypes.js";
-import type { DynamicScenarioSnapshot } from "../world_builder/types.js";
+import { randomUUID } from "crypto";
 
 export type Phase = "intro" | "investigation" | "confrontation" | "downtime";
 
@@ -206,9 +207,18 @@ export const initialDynamicGameState = (params: {
  */
 export class DynamicGameStateManager {
   private state: DynamicGameState;
+  private db: CoCDatabase | null;
 
-  constructor(state: DynamicGameState) {
+  constructor(state: DynamicGameState, db?: CoCDatabase) {
     this.state = state;
+    this.db = db || null;
+  }
+
+  /**
+   * Set database instance for snapshot management
+   */
+  setDb(db: CoCDatabase): void {
+    this.db = db;
   }
 
   /**
@@ -449,17 +459,43 @@ export class DynamicGameStateManager {
   }
 
   /**
-   * Deserialize state from storage (converts Arrays back to Sets)
+   * Deserialize state from storage (converts Arrays back to Sets, Objects back to Maps, ISO strings back to Dates)
    */
   static deserialize(data: any): DynamicGameState {
+    // Convert updatedDynamicScenarioSnapshots from object back to Map
+    const updatedDynamicScenarioSnapshots = new Map<string, DynamicScenarioSnapshot[]>();
+    if (data.updatedDynamicScenarioSnapshots) {
+      if (data.updatedDynamicScenarioSnapshots instanceof Map) {
+        // Already a Map, just convert snapshot timestamps
+        data.updatedDynamicScenarioSnapshots.forEach((snapshots: any[], scenarioId: string) => {
+          updatedDynamicScenarioSnapshots.set(scenarioId, snapshots.map(snapshot => ({
+            ...snapshot,
+            timestamp: snapshot.timestamp ? (typeof snapshot.timestamp === 'string' ? new Date(snapshot.timestamp) : snapshot.timestamp) : undefined
+          })));
+        });
+      } else {
+        // Object format from JSON, convert to Map
+        Object.entries(data.updatedDynamicScenarioSnapshots).forEach(([scenarioId, snapshotData]: [string, any]) => {
+          // If it's a single snapshot (not an array), wrap it in an array
+          const snapshots = Array.isArray(snapshotData) ? snapshotData : [snapshotData];
+          updatedDynamicScenarioSnapshots.set(scenarioId, snapshots.map((snapshot: any) => ({
+            ...snapshot,
+            timestamp: snapshot.timestamp ? (typeof snapshot.timestamp === 'string' ? new Date(snapshot.timestamp) : snapshot.timestamp) : undefined
+          })));
+        });
+      }
+    }
+
     return {
       ...data,
       revealedTruthEvents: new Set(data.revealedTruthEvents || []),
       activatedKnowledgeHolders: new Set(data.activatedKnowledgeHolders || []),
       deployedRedHerrings: new Set(data.deployedRedHerrings || []),
       mythosRevelations: new Set(data.mythosRevelations || []),
-      loadedAt: data.loadedAt ? new Date(data.loadedAt) : new Date(),
-      lastUpdated: data.lastUpdated ? new Date(data.lastUpdated) : new Date(),
+      updatedDynamicScenarioSnapshots,
+      loadedAt: data.loadedAt ? (typeof data.loadedAt === 'string' ? new Date(data.loadedAt) : data.loadedAt) : new Date(),
+      lastUpdated: data.lastUpdated ? (typeof data.lastUpdated === 'string' ? new Date(data.lastUpdated) : data.lastUpdated) : new Date(),
+      lastPlayerInputTime: data.lastPlayerInputTime ? (typeof data.lastPlayerInputTime === 'string' ? new Date(data.lastPlayerInputTime) : data.lastPlayerInputTime) : null,
     };
   }
 
@@ -1087,8 +1123,158 @@ export class DynamicGameStateManager {
   }
 
   /**
+   * Save old snapshot to database
+   */
+  private saveOldSnapshotToDatabase(scenarioId: string, snapshot: DynamicScenarioSnapshot): void {
+    if (!this.db) {
+      console.warn(`[DynamicGameState] Cannot save old snapshot to database: no database instance provided`);
+      return;
+    }
+
+    try {
+      const database = this.db.getDatabase();
+      
+      // Generate a unique snapshot ID for historical snapshot
+      const historicalSnapshotId = `hist-${scenarioId}-${Date.now()}-${randomUUID().slice(0, 8)}`;
+      
+      // Check if snapshot already exists (shouldn't happen for historical snapshots, but check anyway)
+      const existing = database
+        .prepare(`SELECT snapshot_id FROM scenario_snapshots WHERE snapshot_id = ?`)
+        .get(historicalSnapshotId);
+
+      if (existing) {
+        console.warn(`[DynamicGameState] Historical snapshot ${historicalSnapshotId} already exists, skipping`);
+        return;
+      }
+
+      // Check database columns
+      const hasInitialSnapshot = this.db.hasColumn("scenario_snapshots", "initial_snapshot");
+      const hasGameTime = this.db.hasColumn("scenario_snapshots", "game_time");
+
+      // Insert snapshot
+      if (hasInitialSnapshot && hasGameTime) {
+        const snapshotStmt = database.prepare(`
+          INSERT INTO scenario_snapshots (
+            snapshot_id, scenario_id, snapshot_name, location, description,
+            events, exits, keeper_notes, time_restriction, show_map,
+            initial_snapshot, game_time
+          ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        `);
+
+        snapshotStmt.run(
+          historicalSnapshotId,
+          scenarioId,
+          snapshot.name || `Historical snapshot for ${scenarioId}`,
+          snapshot.location,
+          snapshot.description,
+          JSON.stringify([]), // events removed
+          JSON.stringify([]), // exits removed
+          snapshot.keeperNotes || null,
+          snapshot.timeRestriction || null,
+          snapshot.showMap === false ? 0 : 1,
+          0, // initial_snapshot = false for historical snapshots
+          snapshot.gameTime || null
+        );
+      } else {
+        const snapshotStmt = database.prepare(`
+          INSERT INTO scenario_snapshots (
+            snapshot_id, scenario_id, snapshot_name, location, description,
+            events, exits, keeper_notes, time_restriction, show_map
+          ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        `);
+
+        snapshotStmt.run(
+          historicalSnapshotId,
+          scenarioId,
+          snapshot.name || `Historical snapshot for ${scenarioId}`,
+          snapshot.location,
+          snapshot.description,
+          JSON.stringify([]), // events removed
+          JSON.stringify([]), // exits removed
+          snapshot.keeperNotes || null,
+          snapshot.timeRestriction || null,
+          snapshot.showMap === false ? 0 : 1
+        );
+      }
+
+      // Insert characters if present
+      if (snapshot.characters && snapshot.characters.length > 0) {
+        const charStmt = database.prepare(`
+          INSERT OR IGNORE INTO scenario_characters (
+            id, snapshot_id, character_name, character_role, character_status,
+            character_location, character_notes
+          ) VALUES (?, ?, ?, ?, ?, ?, ?)
+        `);
+
+        for (const char of snapshot.characters) {
+          charStmt.run(
+            char.id || `${historicalSnapshotId}-char-${randomUUID().slice(0, 8)}`,
+            historicalSnapshotId,
+            char.name,
+            char.role,
+            char.status,
+            char.location || null,
+            char.notes || null
+          );
+        }
+      }
+
+      // Insert clues if present
+      if (snapshot.clues && snapshot.clues.length > 0) {
+        const clueStmt = database.prepare(`
+          INSERT OR IGNORE INTO scenario_clues (
+            clue_id, snapshot_id, clue_text, category, difficulty,
+            clue_location, discovery_method, reveals, discovered, discovery_details
+          ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        `);
+
+        for (const clue of snapshot.clues) {
+          clueStmt.run(
+            clue.id || `${historicalSnapshotId}-clue-${randomUUID().slice(0, 8)}`,
+            historicalSnapshotId,
+            clue.clueText,
+            clue.category,
+            clue.difficulty,
+            clue.location,
+            clue.discoveryMethod || null,
+            JSON.stringify(clue.reveals || []),
+            clue.discovered ? 1 : 0,
+            clue.discoveryDetails ? JSON.stringify(clue.discoveryDetails) : null
+          );
+        }
+      }
+
+      // Insert conditions if present
+      if (snapshot.conditions && snapshot.conditions.length > 0) {
+        const conditionStmt = database.prepare(`
+          INSERT OR IGNORE INTO scenario_conditions (
+            condition_id, snapshot_id, condition_type, description, mechanical_effect
+          ) VALUES (?, ?, ?, ?, ?)
+        `);
+
+        for (const condition of snapshot.conditions) {
+          const conditionId = `${historicalSnapshotId}-cond-${randomUUID().slice(0, 8)}`;
+          conditionStmt.run(
+            conditionId,
+            historicalSnapshotId,
+            condition.type,
+            condition.description,
+            condition.mechanicalEffect || null
+          );
+        }
+      }
+
+      console.log(`💾 [DynamicGameState] Saved old snapshot to database: ${historicalSnapshotId} for scenario ${scenarioId}`);
+    } catch (error) {
+      console.error(`❌ [DynamicGameState] Failed to save old snapshot to database:`, error);
+      // Don't throw - snapshot save failure shouldn't block game updates
+    }
+  }
+
+  /**
    * Add updated scenario snapshot (appends to history, does not overwrite)
    * Automatically adds timestamp if not present
+   * Keeps only the latest 2 snapshots in state, saves older ones to database
    */
   setUpdatedDynamicScenarioSnapshot(scenarioId: string, snapshot: DynamicScenarioSnapshot): void {
     // Add timestamp if not present
@@ -1098,7 +1284,24 @@ export class DynamicGameStateManager {
     };
     
     const snapshots = this.state.updatedDynamicScenarioSnapshots.get(scenarioId) || [];
+    
+    // Add the new snapshot first
     snapshots.push(snapshotWithTimestamp);
+    
+    // If we have more than 2 snapshots, save the oldest ones to database and remove them
+    if (snapshots.length > 2) {
+      // Save all snapshots except the latest 2
+      const snapshotsToSave = snapshots.slice(0, snapshots.length - 2);
+      for (const oldSnapshot of snapshotsToSave) {
+        this.saveOldSnapshotToDatabase(scenarioId, oldSnapshot);
+      }
+      
+      // Keep only the latest 2 snapshots
+      const latestTwo = snapshots.slice(-2);
+      snapshots.length = 0;
+      snapshots.push(...latestTwo);
+    }
+    
     this.state.updatedDynamicScenarioSnapshots.set(scenarioId, snapshots);
     this.state.lastUpdated = new Date();
   }

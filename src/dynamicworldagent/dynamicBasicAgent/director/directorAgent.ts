@@ -5,7 +5,8 @@ import type { ScenarioCharacter } from "../../../coc_multiagents_system/agents/m
 import type { DynamicScenarioSnapshot } from "../../world_builder/types.js";
 import { ScenarioLoader } from "../../../coc_multiagents_system/agents/memory/scenarioloader/index.js";
 import type { CoCDatabase } from "../../../coc_multiagents_system/agents/memory/database/index.js";
-import type { DynamicGameState, DynamicGameStateManager } from "../../state/index.js";
+import type { DynamicGameState } from "../../state/index.js";
+import { DynamicGameStateManager } from "../../state/index.js";
 import type { ActionLogEntry, CharacterStatus, InventoryItem, NPCRelationship } from "../../../coc_multiagents_system/agents/models/gameTypes.js";
 import type { DynamicCharacterProfile } from "../../world_builder/types.js";
 import type { DynamicNPCProfile } from "../../world_builder/types.js";
@@ -18,6 +19,7 @@ import {
 } from "../../../models/index.js";
 import * as fs from "fs";
 import * as path from "path";
+import { saveDynamicGameStateCheckpoint } from "../memory/checkpoint.js";
 
 interface DirectorRuntime {
   modelProvider: ModelProviderName;
@@ -154,6 +156,8 @@ export class DirectorAgent {
     }
 
     // Step 3: Save all snapshots to state (using scenarioId as key)
+    // Ensure gameStateManager has db for snapshot management
+    gameStateManager.setDb(this.db);
     gameStateManager.setUpdatedDynamicScenarioSnapshot(
       targetScenarioOutline.id,
       targetSnapshot
@@ -701,6 +705,14 @@ export class DirectorAgent {
     console.log(`   📋 Scene change request: ${sceneChangeRequest.targetSceneName}`);
     console.log(`   📍 Current scenario: ${currentScenarioName}`);
 
+    // Save checkpoint before scene switch update
+    saveDynamicGameStateCheckpoint(
+      this.db,
+      dynamicState,
+      'scene_transition',
+      `Before scene switch to ${sceneChangeRequest.targetSceneName}`
+    );
+
     try {
       // Build current game time
       const currentGameTime = `Day ${dynamicState.gameDay}, ${dynamicState.timeOfDay}`;
@@ -1029,6 +1041,14 @@ export class DirectorAgent {
     const currentScenario = dynamicState.currentScenario;
     const currentScenarioId = currentScenario?.id || null;
 
+    // Save checkpoint before scenario update
+    saveDynamicGameStateCheckpoint(
+      this.db,
+      dynamicState,
+      'auto',
+      'Before non-player scenario update'
+    );
+
     try {
       // Get all scenarios with their latest snapshots (excluding player's current scene)
       const scenariosWithSnapshots = await this.getAllScenariosLatestSnapshots(
@@ -1190,6 +1210,8 @@ export class DirectorAgent {
           };
           
           // Save to state (no database save)
+          // Ensure gameStateManager has db for snapshot management
+          gameStateManager.setDb(this.db);
           gameStateManager.setUpdatedDynamicScenarioSnapshot(item.scenarioId, snapshotWithUnifiedTime);
 
           console.log(`   ✓ Updated snapshot for scenario ${item.scenarioId}`);

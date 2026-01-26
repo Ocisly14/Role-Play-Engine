@@ -4,6 +4,7 @@ import { DatabaseManager } from "../core/DatabaseManager.js";
 import { GraphManager } from "../core/GraphManager.js";
 import { ServerState } from "../core/ServerState.js";
 import { saveManualCheckpoint, loadCheckpoint, listAvailableCheckpoints } from "../../../src/coc_multiagents_system/agents/memory/memoryAgent.js";
+import { saveDynamicGameStateCheckpoint } from "../../../src/dynamicworldagent/dynamicBasicAgent/memory/checkpoint.js";
 import { RagManager } from "../../../src/coc_multiagents_system/agents/memory/RagManager.js";
 import { ScenarioLoader } from "../../../src/coc_multiagents_system/agents/memory/scenarioloader/index.js";
 import { NPCLoader } from "../../../src/coc_multiagents_system/agents/character/npcloader/index.js";
@@ -73,27 +74,69 @@ export async function saveCheckpoint(req: Request, res: Response): Promise<void>
 
     console.log(`[${new Date().toISOString()}] [Checkpoint Save] Character verified, proceeding with save...`);
 
-    const currentScenario = persistentGameState.currentScenario;
-    if (!currentScenario) {
-      res.status(400).json({ error: "No current scenario. Cannot save checkpoint." });
-      return;
+    // Check if this is a DynamicWorld module
+    const dynamicGameState = ServerState.getInstance().getDynamicGameState(userId);
+    const useDynamic = dynamicGameState !== null;
+
+    let checkpointId: string;
+    let checkpointName: string;
+    let description: string;
+
+    if (useDynamic && dynamicGameState) {
+      // For DynamicWorld modules, use DynamicGameState checkpoint
+      const currentScenario = dynamicGameState.currentScenario;
+      if (!currentScenario) {
+        res.status(400).json({ error: "No current scenario. Cannot save checkpoint." });
+        return;
+      }
+
+      // Generate checkpoint name
+      const currentDate = new Date().toLocaleDateString('zh-CN', {
+        year: 'numeric',
+        month: '2-digit',
+        day: '2-digit'
+      });
+      checkpointName = `${currentScenario.name} - ${currentDate}`;
+      description = `Manual save at ${currentScenario.location}`;
+
+      // Save DynamicGameState checkpoint (includes all snapshots)
+      const savedCheckpointId = saveDynamicGameStateCheckpoint(
+        db,
+        dynamicGameState,
+        'manual',
+        description
+      );
+
+      if (!savedCheckpointId) {
+        res.status(500).json({ error: "Failed to save checkpoint" });
+        return;
+      }
+
+      checkpointId = savedCheckpointId;
+    } else {
+      // For regular modules, use GameState checkpoint
+      const currentScenario = persistentGameState.currentScenario;
+      if (!currentScenario) {
+        res.status(400).json({ error: "No current scenario. Cannot save checkpoint." });
+        return;
+      }
+
+      // Generate checkpoint name
+      const currentDate = new Date().toLocaleDateString('zh-CN', {
+        year: 'numeric',
+        month: '2-digit',
+        day: '2-digit'
+      });
+      checkpointName = `${currentScenario.name} - ${currentDate}`;
+      description = `Manual save at ${currentScenario.location}`;
+
+      checkpointId = saveManualCheckpoint(
+        persistentGameState,
+        db,
+        checkpointName,
+        description
+      );
     }
-
-    // Generate checkpoint name
-    const currentDate = new Date().toLocaleDateString('zh-CN', {
-      year: 'numeric',
-      month: '2-digit',
-      day: '2-digit'
-    });
-    const checkpointName = `${currentScenario.name} - ${currentDate}`;
-    const description = `Manual save at ${currentScenario.location}`;
-
-    const checkpointId = saveManualCheckpoint(
-      persistentGameState,
-      db,
-      checkpointName,
-      description
-    );
 
     // Save RAG state if available
     const ragManager = GraphManager.getInstance().getRagManager();
@@ -229,8 +272,20 @@ export async function loadCheckpointData(req: Request, res: Response): Promise<v
       return;
     }
 
+    // Check if this is a DynamicGameState and deserialize if needed
+    const gameStateAny = gameState as any;
+    let restoredGameState: any = gameState;
+    let restoredDynamicGameState: any = null;
+    
+    if (gameStateAny.moduleName && gameStateAny.updatedDynamicScenarioSnapshots !== undefined) {
+      // This is a DynamicGameState, deserialize it
+      const { DynamicGameStateManager } = await import("../../../src/dynamicworldagent/state/index.js");
+      restoredDynamicGameState = DynamicGameStateManager.deserialize(gameStateAny);
+      console.log(`[${new Date().toISOString()}] Deserialized DynamicGameState from checkpoint`);
+    }
+
     // Restore persistent game state
-    ServerState.getInstance().setGameState(userId, gameState);
+    ServerState.getInstance().setGameState(userId, restoredGameState, restoredDynamicGameState);
 
     // Initialize GraphManager if needed and try to restore RAG
     const graphManager = GraphManager.getInstance();

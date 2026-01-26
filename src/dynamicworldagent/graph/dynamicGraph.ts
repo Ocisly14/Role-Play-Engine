@@ -53,6 +53,9 @@ export const buildDynamicGraph = (
   const keeperAgent = new KeeperAgent();
   const directorAgent = new DirectorAgent(scenarioLoader, db);
   const turnManager = new TurnManager(db);
+  
+  // Helper function to create DynamicGameStateManager with db for snapshot management
+  const createDGSMWithDb = (state: DynamicGameState) => new DynamicGameStateManager(state, db);
 
   const graph = new StateGraph<DynamicGraphState>({
     channels: {
