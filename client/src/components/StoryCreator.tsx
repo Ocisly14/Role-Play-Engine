@@ -268,7 +268,6 @@ export function StoryCreator({
                     <li>Creating historical events and mythology</li>
                     <li>Building truth timeline and mysteries</li>
                     <li>Instantiating NPCs with clues and secrets</li>
-                    <li>Saving JSON files</li>
                   </ul>
                 </div>
               </div>

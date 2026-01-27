@@ -637,6 +637,38 @@ const AppShell: React.FC = () => {
     }
   };
 
+  // Handle checkpoint deletion
+  const handleDeleteCheckpoint = async (checkpointId: string, checkpointName: string, e: React.MouseEvent) => {
+    e.stopPropagation(); // Prevent triggering checkpoint load
+
+    // Confirm deletion
+    const confirmed = window.confirm(
+      `Are you sure you want to delete checkpoint "${checkpointName || 'Unnamed Checkpoint'}"?\n\nThis action cannot be undone.`
+    );
+
+    if (!confirmed) {
+      return;
+    }
+
+    try {
+      const response = await authFetch(`/api/checkpoints/${checkpointId}`, {
+        method: "DELETE",
+      });
+
+      const data = await response.json();
+
+      if (response.ok && data.success) {
+        // Refresh checkpoint list
+        await handleContinueGame();
+      } else {
+        alert("Failed to delete checkpoint: " + (data.error || "Unknown error"));
+      }
+    } catch (error) {
+      console.error("Error deleting checkpoint:", error);
+      alert("Network error, unable to delete checkpoint");
+    }
+  };
+
   // Handle checkpoint selection and load
   const handleLoadCheckpoint = async (checkpointId: string) => {
     try {
@@ -1861,6 +1893,7 @@ const AppShell: React.FC = () => {
                         cursor: 'pointer',
                         backgroundColor: '#fff',
                         transition: 'background-color 0.2s',
+                        position: 'relative',
                       }}
                       onMouseEnter={(e) => {
                         e.currentTarget.style.backgroundColor = '#f0ebe0';
@@ -1869,8 +1902,59 @@ const AppShell: React.FC = () => {
                         e.currentTarget.style.backgroundColor = '#fff';
                       }}
                     >
-                      <div style={{ fontWeight: 'bold', marginBottom: '5px', color: '#3d2817' }}>
-                        {checkpoint.checkpointName || 'Unnamed Checkpoint'}
+                      <div style={{ 
+                        display: 'flex', 
+                        justifyContent: 'space-between', 
+                        alignItems: 'flex-start',
+                        marginBottom: '5px',
+                        gap: '10px',
+                      }}>
+                        <div style={{ fontWeight: 'bold', color: '#3d2817', flex: 1 }}>
+                          {checkpoint.checkpointName || 'Unnamed Checkpoint'}
+                        </div>
+                        <button
+                          onClick={(e) => handleDeleteCheckpoint(
+                            checkpoint.checkpointId,
+                            checkpoint.checkpointName || 'Unnamed Checkpoint',
+                            e
+                          )}
+                          style={{
+                            width: '28px',
+                            height: '28px',
+                            borderRadius: '50%',
+                            border: '2px solid #c82333',
+                            backgroundColor: '#fff',
+                            color: '#c82333',
+                            cursor: 'pointer',
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            fontSize: '1.2rem',
+                            lineHeight: '1',
+                            padding: 0,
+                            flexShrink: 0,
+                            fontFamily: 'var(--serif)',
+                            transition: 'all 0.2s ease',
+                            boxShadow: '0 2px 4px rgba(0, 0, 0, 0.2)',
+                          }}
+                          onMouseEnter={(e) => {
+                            e.currentTarget.style.backgroundColor = '#dc3545';
+                            e.currentTarget.style.color = '#fff';
+                            e.currentTarget.style.borderColor = '#c82333';
+                            e.currentTarget.style.transform = 'translateY(-1px)';
+                            e.currentTarget.style.boxShadow = '0 3px 6px rgba(0, 0, 0, 0.3)';
+                          }}
+                          onMouseLeave={(e) => {
+                            e.currentTarget.style.backgroundColor = '#fff';
+                            e.currentTarget.style.color = '#c82333';
+                            e.currentTarget.style.borderColor = '#c82333';
+                            e.currentTarget.style.transform = 'translateY(0)';
+                            e.currentTarget.style.boxShadow = '0 2px 4px rgba(0, 0, 0, 0.2)';
+                          }}
+                          title="Delete checkpoint"
+                        >
+                          ×
+                        </button>
                       </div>
                       <div style={{ fontSize: '0.85rem', color: '#666' }}>
                         {checkpoint.currentSceneName && `Scene: ${checkpoint.currentSceneName}`}

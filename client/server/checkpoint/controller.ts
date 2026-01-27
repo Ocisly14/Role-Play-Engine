@@ -372,3 +372,49 @@ export async function loadCheckpointData(req: Request, res: Response): Promise<v
     res.status(500).json({ error: "Failed to load checkpoint: " + (error as Error).message });
   }
 }
+
+/**
+ * Delete a checkpoint
+ * DELETE /api/checkpoints/:checkpointId
+ */
+export function deleteCheckpoint(req: Request, res: Response): void {
+  try {
+    const db = DatabaseManager.getInstance().getDatabase();
+    const database = db.getDatabase();
+    const userId = req.user!.userId;
+    const { checkpointId } = req.params;
+
+    if (!checkpointId) {
+      res.status(400).json({ error: "checkpointId is required" });
+      return;
+    }
+
+    // Verify checkpoint ownership
+    const ownedCheckpoint = database.prepare(`
+      SELECT gc.checkpoint_id
+      FROM game_checkpoints gc
+      JOIN sessions s ON s.session_id = gc.session_id
+      JOIN characters c ON c.character_id = s.character_id
+      WHERE gc.checkpoint_id = ? AND c.user_id = ?
+    `).get(checkpointId, userId);
+
+    if (!ownedCheckpoint) {
+      res.status(404).json({ error: "Checkpoint not found or you don't have permission to delete it" });
+      return;
+    }
+
+    // Delete the checkpoint
+    db.deleteCheckpoint(checkpointId);
+
+    console.log(`[${new Date().toISOString()}] Checkpoint deleted: ${checkpointId} by user ${userId}`);
+
+    res.json({
+      success: true,
+      message: "Checkpoint deleted successfully",
+      timestamp: new Date().toISOString(),
+    });
+  } catch (error) {
+    console.error("Error deleting checkpoint:", error);
+    res.status(500).json({ error: "Failed to delete checkpoint: " + (error as Error).message });
+  }
+}
