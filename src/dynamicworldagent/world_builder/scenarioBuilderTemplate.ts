@@ -22,7 +22,13 @@ Generate a list of scenarios (locations) with descriptions and connections.
 {{knowledgeMatrixJson}}
 
 ## Requirements
-- Use EVERY PLACE holder from the knowledge matrix as a scenario (match holderName).
+- Use EVERY PLACE holder from the knowledge matrix as a scenario.
+- **Scenario Naming Rules**:
+  - Each scenario MUST correspond to exactly one PLACE holder (tracked via sourcePlaceId and sourcePlaceName).
+  - The scenario "name" should be a natural, story-appropriate location name that fits the setting and real-world naming conventions.
+  - If the PLACE holder's "holderName" is already natural and story-appropriate, you may use it directly.
+  - If the "holderName" is too technical, verbose, or doesn't fit real-world naming conventions, transform it into a more natural name while preserving the core meaning and ensuring it matches the story setting.
+  - Examples: "The Utilidor service tunnels" → "The Utilidor service tunnels" (natural) or "Service Tunnels" (simpler); "The maintenance bay for the 'It's a Small World' tribute clocktower" → "Clocktower Maintenance Bay" (more natural).
 - Provide a short, evocative description for each scenario.
 - If a PLACE holder includes "containsEvidence", carry those strings into the matching scenario's "evidence" array.
 - Expand each evidence item into at least one scenario-level clue and store them in "clues" (basic only).
