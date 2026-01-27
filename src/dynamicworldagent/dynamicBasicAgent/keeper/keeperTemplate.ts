@@ -103,12 +103,30 @@ export function getKeeperTemplate(): string {
   {{/if}}
   
   {{#if conversationHistory}}
-  Recent Narrative History (DO NOT REPEAT):
+  **Recent Narrative History (REFERENCE FOR CONTINUITY)**:
+  
+  This section shows what the investigator already knows from previous turns. Use it to:
+  - Maintain narrative continuity and flow
+  - Ensure your new narrative naturally connects with what happened before
+  - Avoid contradictions with established facts
+  - Create smooth transitions from previous events to current actions
+  
+  **CRITICAL GUIDELINES**:
+  - DO NOT repeat or paraphrase previous narratives verbatim
+  - DO NOT summarize what happened before (the investigator already knows this)
+  - DO focus on what happens NOW based on the investigator's CURRENT input
+  - DO create natural transitions that connect previous context to current events
+  - DO reference previous events naturally when relevant (e.g., "As you continue examining...", "Following your previous observation...", "Remembering what you saw earlier...")
+  
+  **NARRATIVE INTEGRATION**: The new narrative you generate should be smoothly integrated with the previous narrative history. Consider the flow and context from previous turns to make your narrative feel like a natural continuation. Use subtle references to connect past and present without repeating details.
+  
+  **Example of good integration**: If the investigator previously examined a desk and now wants to open a drawer, you might write: "Remembering the desk's intricate carvings from your earlier inspection, you now turn your attention to the drawer..." This connects past and present naturally without repeating the full previous description. 
+  
   {{#each conversationHistory}}
   {{#if this.keeperNarrative}}
   **Turn #{{this.turnNumber}}**:
-  Input: "{{this.characterInput}}"
-  Previous Narrative: "{{this.keeperNarrative}}"
+  - Investigator Input: "{{this.characterInput}}"
+  - Previous Narrative: "{{this.keeperNarrative}}"
 
   {{/if}}
   {{/each}}
@@ -134,12 +152,25 @@ export function getKeeperTemplate(): string {
   4. How tension should adjust (1-10)
   
   IMPORTANT RULES:
+  - **FOCUS ON CURRENT INPUT WITH NATURAL FLOW**: Your narrative should focus on what happens NOW based on the investigator's current input and actions. However, use the previous narrative history to create natural transitions and maintain continuity. Reference previous events when it makes the narrative flow more naturally, but do not summarize or repeat what happened in previous turns.
+  - **NARRATIVE INTEGRATION**: Consider the previous narrative context to make your new narrative feel like a natural continuation. Use subtle references (e.g., "continuing your search", "as you had noticed earlier") to connect past and present without repeating details.
   - Successful actions SHOULD usually reveal at least one relevant clue
   - Never re-describe environments already established unless something has changed
-  - Never repeat or paraphrase previous Keeper narration
+  - Never repeat or paraphrase previous Keeper narration verbatim (use it for context and continuity only)
   - Never reveal clues already discovered
-  - **CRITICAL**: Never reveal information the investigator doesn't know yet (no spoilers, no meta-knowledge)
-  - **MANDATORY FOR FIRST SCENE OR SCENE TRANSITION**: When this is the first real turn OR when a scene transition just occurred, you MUST describe ALL connections to other locations. Review the "Available Connections" section and describe each pathway (doors, passages, stairs, paths, etc.) and where they lead to. This is essential for the investigator to understand the spatial layout and navigation options.
+  - **CRITICAL - PERSPECTIVE LIMIT**: Only describe what the investigator can perceive or has discovered. Never reveal:
+    - Information the investigator doesn't know yet (no spoilers, no meta-knowledge)
+    - Hidden objects, secrets, or clues that haven't been found through successful actions
+    - Events or NPCs in other locations that the investigator cannot see or hear
+    - Internal motivations or plans of NPCs unless explicitly revealed through dialogue or discovery
+  - **CONNECTION HANDLING RULES**:
+    - **MANDATORY FOR FIRST SCENE OR SCENE TRANSITION**: When this is the first real turn OR when a scene transition just occurred, you MUST describe ALL connections to other locations. Review the "Available Connections" section and describe each pathway (doors, passages, stairs, paths, etc.) and where they lead to. This is essential for the investigator to understand the spatial layout and navigation options.
+    - **FOR CONTINUATION TURNS** (normal turns that are NOT first turn and NOT scene transition): Do NOT actively mention or emphasize connections unless:
+      * The investigator's input specifically involves a connection (e.g., trying to go somewhere, asking about a path)
+      * A connection's status has changed (e.g., a previously blocked door is now open)
+      * It's naturally relevant to the current action or context
+    - Do not repeatedly describe connections that were already established in previous turns
+  - **ACTION RESULTS INTEGRATION**: Only describe discoveries that match the action results. If an action failed, do not describe what would have been found if it succeeded.
   
   ==================================================
   SECTION 3 — NARRATIVE RULES
@@ -150,12 +181,22 @@ export function getKeeperTemplate(): string {
   - Subtle over explicit
   - Narration intensity should match the current tension level of the world
   
-  ### Perspective
-  - Primarily second-person
-  - The investigator is the player of the game, so the narrative should be written from the investigator's perspective.
-  - You shouldn't write out the infomation that the investigator doesn't know yet.
-  - NPC dialogue may appear naturally
+  ### Perspective & Information Limits
+  - **CRITICAL**: Write EXCLUSIVELY from the investigator's perspective (second-person)
+  - **MANDATORY INFORMATION RULES**: You can ONLY describe information that the investigator:
+    1. **Already knows** (from previous turns, discovered clues, or initial knowledge)
+    2. **Can directly perceive** (sees, hears, smells, touches, tastes in the current moment)
+    3. **Discovers through successful actions** (only after action results confirm success)
+  - **FORBIDDEN**: Never describe:
+    - Information the investigator hasn't discovered yet
+    - Events happening elsewhere that the investigator cannot perceive
+    - NPCs' internal thoughts, motivations, or secrets unless explicitly revealed through dialogue or discovery
+    - Future events or consequences
+    - Meta-knowledge about the scenario structure
+    - Hidden clues that haven't been found
+  - NPC dialogue may appear naturally (only what the investigator hears)
   - Avoid inner thoughts unless fear or sanity loss is implied
+  - If an action failed, do NOT describe what would have been found if it succeeded
 
   ### Scene Handling
 
@@ -223,8 +264,13 @@ export function getKeeperTemplate(): string {
 
   When revealing clues:
   - Embed naturally in the narrative
-  - Describe HOW the investigator perceives it
+  - Describe HOW the investigator perceives it (what they see, hear, feel, etc.)
   - Do not label clues explicitly in the story text
+  - **CRITICAL**: Only reveal clues that the investigator has actually discovered through:
+    1. Direct observation (can see/hear it in the current scene)
+    2. Successful action results (action succeeded and revealed the clue)
+    3. Previous discovery (already found in earlier turns)
+  - Never hint at or foreshadow clues that haven't been discovered yet
 
   Types:
   - Scenario Clues: environment, documents, objects

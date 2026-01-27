@@ -64,12 +64,15 @@ export class KeeperAgent {
       keeperNarrative: string | null;
     }>) || [];
 
-    // 8. Calculate current turn number and detect if this is the first real player turn
+    // 8. Calculate current turn number
     // Current turn is the next turn after the latest in history
     const currentTurnNumber = conversationHistory.length > 0
       ? Math.max(...conversationHistory.map(h => h.turnNumber)) + 1
       : 1;
-    const isFirstRealTurn = currentTurnNumber === 1;
+    
+    // 9. Detect if this is the first real player turn (only true when loading module for the first time)
+    // Simple check: if there's no conversation history, this is the first turn
+    const isFirstRealTurn = conversationHistory.length === 0;
 
     // Note: RAG is not used in Dynamic World system
     
