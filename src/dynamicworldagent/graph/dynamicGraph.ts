@@ -14,6 +14,7 @@ import type {
   ActionAnalysis,
   ActionResult,
 } from "../../coc_multiagents_system/state/index.js";
+import type { ActionLogEntry } from "../../coc_multiagents_system/agents/models/gameTypes.js";
 import type { DynamicGameState } from "../state/index.js";
 import { DynamicGameStateManager, initialDynamicGameState } from "../state/index.js";
 import { contentToString, latestHumanMessage } from "../../coc_multiagents_system/utils/index.js";
@@ -402,7 +403,167 @@ export const buildDynamicGraph = (
     return { ...state, dynamicGameState: dgsm.getState() };
   });
 
-  graph.addEdge("director" as any, "keeper" as any);
+  graph.addEdge("director" as any, "gameEndCheck" as any);
+
+  // Game End Check: check character status and global trigger
+  graph.addNode("gameEndCheck", async (state: DynamicGraphState) => {
+    console.log("\n🎯 [Dynamic Game End Check] 检查游戏是否结束...");
+    const dgsm = new DynamicGameStateManager(state.dynamicGameState);
+    const currentState = dgsm.getState();
+
+    // Check 1: Character HP/Sanity
+    const playerStatus = currentState.playerCharacter.status;
+    const hp = playerStatus.hp || 0;
+    const sanity = playerStatus.sanity || 0;
+
+    console.log(`   Player Status: HP=${hp}, Sanity=${sanity}`);
+
+    if (hp <= 0 || sanity <= 0) {
+      const reason = hp <= 0 ? "HP归零" : "Sanity归零";
+      console.log(`\n🏁 [Game End] 角色状态导致游戏结束！`);
+      console.log(`   原因: ${reason}`);
+      
+      // Store game end reason in state for epilogue
+      currentState.temporaryInfo.contextualData = currentState.temporaryInfo.contextualData || {};
+      currentState.temporaryInfo.contextualData.gameEndReason = reason;
+      
+      return { ...state, dynamicGameState: currentState };
+    }
+
+    // Check 2: Global Trigger and Game End
+    const triggerResult = await directorAgent.checkGlobalTriggerAndGameEnd(dgsm);
+    
+    if (triggerResult.triggered) {
+      console.log(`\n🎯 [Global Trigger] 全局触发器已触发！`);
+      console.log(`   原因: ${triggerResult.reason || "未知"}`);
+      
+      if (triggerResult.causesGameEnd) {
+        console.log(`\n🏁 [Game End] 全局触发器导致游戏结束！`);
+        
+        // Store game end reason
+        currentState.temporaryInfo.contextualData = currentState.temporaryInfo.contextualData || {};
+        currentState.temporaryInfo.contextualData.gameEndReason = triggerResult.reason || "全局触发器触发";
+        
+        // Clear the trigger since it has been fulfilled
+        dgsm.setGlobalTrigger(null);
+        
+        return { ...state, dynamicGameState: dgsm.getState() };
+      } else {
+        console.log(`   ✓ 全局触发器触发但未导致游戏结束，将在后台更新场景`);
+        
+        // 不要清除 global trigger！保留它供 updateNonPlayerScenarios 使用作为 previousGlobalTrigger
+        // updateNonPlayerScenarios 会生成新的 global trigger 并替换旧的
+        const updatedState = dgsm.getState();
+        
+        // Start background scenario update (non-blocking, parallel with keeper generation)
+        console.log(`\n🔄 [Global Trigger] 启动后台场景更新任务（与 keeper 并行处理）...`);
+        console.log(`   ℹ️  保留当前 global trigger 作为 previousGlobalTrigger 供场景更新参考`);
+        console.log(`   ℹ️  场景更新完成后，如果生成新的 global trigger，将自动替换旧的`);
+        
+        directorAgent.updateNonPlayerScenarios(dgsm).then(() => {
+          // updateNonPlayerScenarios 内部会处理新的 global trigger 替换
+          // 如果生成了新的 global trigger，它已经通过 gameStateManager.setGlobalTrigger() 设置了
+          const finalState = dgsm.getState();
+          if (finalState.globalTrigger) {
+            console.log(`   ✓ [后台任务] 场景更新完成，已生成新的 global trigger`);
+          } else {
+            console.log(`   ✓ [后台任务] 场景更新完成，未生成新的 global trigger（已清除旧的）`);
+          }
+        }).catch((error) => {
+          console.error(`   ❌ [后台任务] 场景更新失败:`, error);
+        });
+        
+        // Return immediately without waiting for scenario update
+        // Keeper will generate narrative in parallel with scenario update
+        return { ...state, dynamicGameState: updatedState };
+      }
+    } else {
+      console.log(`   ✓ 全局触发器未触发，游戏继续`);
+    }
+
+    return { ...state, dynamicGameState: dgsm.getState() };
+  });
+
+  // Conditional routing: gameEndCheck -> epilogueKeeper or keeper
+  graph.addConditionalEdges(
+    "gameEndCheck" as any,
+    (state: DynamicGraphState) => {
+      const currentState = state.dynamicGameState;
+      const playerStatus = currentState.playerCharacter.status;
+      const hp = playerStatus.hp || 0;
+      const sanity = playerStatus.sanity || 0;
+      
+      // Check if character status caused game end
+      if (hp <= 0 || sanity <= 0) {
+        console.log("🔀 [Game End Router] → epilogueKeeper (角色状态)");
+        return "epilogueKeeper";
+      }
+      
+      // Check if global trigger caused game end
+      const gameEndReason = currentState.temporaryInfo.contextualData?.gameEndReason;
+      if (gameEndReason) {
+        console.log("🔀 [Game End Router] → epilogueKeeper (全局触发器)");
+        return "epilogueKeeper";
+      }
+      
+      console.log("🔀 [Game End Router] → keeper (游戏继续)");
+      return "keeper";
+    },
+    {
+      epilogueKeeper: "epilogueKeeper" as any,
+      keeper: "keeper" as any,
+    }
+  );
+
+  // Epilogue Keeper: generate ending narrative (后日谈)
+  graph.addNode("epilogueKeeper", async (state: DynamicGraphState) => {
+    console.log("📜 [Dynamic Epilogue Keeper] 开始生成后日谈叙事...");
+    const dgsm = new DynamicGameStateManager(state.dynamicGameState);
+    const currentState = dgsm.getState();
+    const userInput = latestHumanMessage(state.messages);
+
+    try {
+      // Use epilogue generation method
+      const result = await keeperAgent.generateEpilogue(userInput, dgsm);
+
+      // Complete turn with epilogue narrative if turnId exists
+      if (state.turnId) {
+        const isSimulated = state.isSimulatedQuery ?? false;
+        try {
+          turnManager.completeTurn(state.turnId, {
+            keeperNarrative: result.narrative,
+            clueRevelations: result.clueRevelations || null,
+            gameDay: currentState.gameDay ?? null,
+            gameTime: currentState.timeOfDay ?? null,
+          });
+          const inputType = isSimulated ? '模拟查询' : '真实输入';
+          console.log(`📝 [Dynamic Epilogue Keeper] Turn ${state.turnId} (${inputType}) 已完成 - 游戏结束`);
+          console.log(`   Epilogue length: ${result.narrative.length} characters`);
+        } catch (error) {
+          console.error("❌ [Dynamic Epilogue Keeper] Failed to complete turn:", error);
+          turnManager.markError(state.turnId, error as Error);
+        }
+      }
+
+      console.log("✅ [Dynamic Epilogue Keeper] 后日谈叙事生成完成");
+    } catch (error) {
+      console.error(`❌ [Dynamic Epilogue Keeper] 生成失败:`, error);
+      if (state.turnId) {
+        try {
+          turnManager.markError(state.turnId, error as Error);
+        } catch (markError) {
+          console.error("❌ [Dynamic Epilogue Keeper] Failed to mark turn error:", markError);
+        }
+      }
+    }
+
+    return {
+      ...state,
+      dynamicGameState: dgsm.getState(),
+    };
+  });
+
+  graph.addEdge("epilogueKeeper" as any, END);
 
   // Keeper: generate narrative
   graph.addNode("keeper", async (state: DynamicGraphState) => {
@@ -455,60 +616,6 @@ export const buildDynamicGraph = (
           console.error("❌ [Dynamic Keeper Agent] Failed to mark turn error:", markError);
         }
       }
-    }
-
-    // Check global trigger conditions after narrative generation
-    // Use updated state if available, otherwise use current state
-    const currentDgsm = new DynamicGameStateManager(updatedGameState);
-    console.log("\n🔍 [Dynamic Keeper Agent] 检查全局触发器...");
-    const globalTrigger = currentDgsm.getState().globalTrigger;
-
-    if (globalTrigger) {
-      let triggered = false;
-      let triggerReason = "";
-
-      // Check 1: Time restriction
-      const timeReached = directorAgent.checkGlobalTriggerTime(currentDgsm);
-      if (timeReached) {
-        triggered = true;
-        triggerReason = "时间限制到达";
-      }
-
-      // Check 2: Events (only if time not reached)
-      if (!triggered && globalTrigger.events && globalTrigger.events.length > 0) {
-        const eventsTriggered = await directorAgent.checkGlobalTriggerEvents(currentDgsm);
-        if (eventsTriggered) {
-          triggered = true;
-          triggerReason = "事件已完成";
-        }
-      }
-
-      if (triggered) {
-        console.log(`\n🎯 [Global Trigger] 全局触发器已触发！`);
-        console.log(`   原因: ${triggerReason}`);
-        if (globalTrigger.keeperNotes) {
-          console.log(`   KM笔记: ${globalTrigger.keeperNotes}`);
-        }
-
-        // Clear the trigger since it has been fulfilled
-        currentDgsm.setGlobalTrigger(null);
-        updatedGameState = currentDgsm.getState();
-        console.log(`   ✓ 全局触发器已清除`);
-
-        // Silently update all non-player scenarios in background
-        console.log(`\n🔄 [Global Trigger] 开始后台更新场景...`);
-        try {
-          await directorAgent.updateNonPlayerScenarios(currentDgsm);
-          updatedGameState = currentDgsm.getState();
-          console.log(`   ✓ 后台场景更新完成`);
-        } catch (error) {
-          console.error(`   ❌ 后台场景更新失败:`, error);
-        }
-      } else {
-        console.log(`   ✓ 全局触发器未触发`);
-      }
-    } else {
-      console.log(`   ℹ️  无全局触发器`);
     }
 
     return {
@@ -623,16 +730,29 @@ export const buildDynamicListenerGraph = (
 
   // Character node
   listenerGraph.addNode("character", async (state: DynamicGraphState) => {
-    console.log("👥 [Dynamic Listener Character Agent] 开始分析 NPC 响应 (Simulated Query)...");
+    console.log("👥 [Dynamic Listener Character Agent] 开始分析 NPC 响应 (Recent Actions)...");
     const dgsm = new DynamicGameStateManager(state.dynamicGameState);
-    const simulatedQuery = latestHumanMessage(state.messages);
     const runtime = {}; // CharacterAgent expects runtime but only passes through generateText; keep empty placeholder
 
     try {
-      const npcResponseAnalyses = await characterAgent.analyzeNPCResponsesFromSimulatedQuery(
+      // Get recent player actionLog (last 15 entries, roughly 3 turns)
+      const dynamicState = dgsm.getState();
+      const playerActionLog = dynamicState.playerCharacter.actionLog || [];
+      const recentActionLog = playerActionLog.slice(-15);
+
+      if (recentActionLog.length === 0) {
+        console.log("   ⚠️ No recent player actions found, skipping NPC response analysis");
+        dgsm.setNPCResponseAnalyses([]);
+        const currentState = dgsm.getState();
+        currentState.temporaryInfo.contextualData = currentState.temporaryInfo.contextualData || {};
+        currentState.temporaryInfo.contextualData.hasRespondingNPCs = false;
+        return { ...state, dynamicGameState: dgsm.getState() };
+      }
+
+      const npcResponseAnalyses = await characterAgent.analyzeNPCResponsesFromRecentActions(
         runtime,
         dgsm,
-        simulatedQuery
+        recentActionLog
       );
       
       // Update dynamic state with NPC response analyses
@@ -754,7 +874,167 @@ export const buildDynamicListenerGraph = (
     return { ...state, dynamicGameState: dgsm.getState() };
   });
 
-  listenerGraph.addEdge("director" as any, "keeper" as any);
+  listenerGraph.addEdge("director" as any, "gameEndCheck" as any);
+
+  // Game End Check: check character status and global trigger
+  listenerGraph.addNode("gameEndCheck", async (state: DynamicGraphState) => {
+    console.log("\n🎯 [Dynamic Listener Game End Check] 检查游戏是否结束...");
+    const dgsm = new DynamicGameStateManager(state.dynamicGameState);
+    const currentState = dgsm.getState();
+
+    // Check 1: Character HP/Sanity
+    const playerStatus = currentState.playerCharacter.status;
+    const hp = playerStatus.hp || 0;
+    const sanity = playerStatus.sanity || 0;
+
+    console.log(`   Player Status: HP=${hp}, Sanity=${sanity}`);
+
+    if (hp <= 0 || sanity <= 0) {
+      const reason = hp <= 0 ? "HP归零" : "Sanity归零";
+      console.log(`\n🏁 [Game End] 角色状态导致游戏结束！`);
+      console.log(`   原因: ${reason}`);
+      
+      // Store game end reason in state for epilogue
+      currentState.temporaryInfo.contextualData = currentState.temporaryInfo.contextualData || {};
+      currentState.temporaryInfo.contextualData.gameEndReason = reason;
+      
+      return { ...state, dynamicGameState: currentState };
+    }
+
+    // Check 2: Global Trigger and Game End
+    const triggerResult = await directorAgent.checkGlobalTriggerAndGameEnd(dgsm);
+    
+    if (triggerResult.triggered) {
+      console.log(`\n🎯 [Global Trigger] 全局触发器已触发！`);
+      console.log(`   原因: ${triggerResult.reason || "未知"}`);
+      
+      if (triggerResult.causesGameEnd) {
+        console.log(`\n🏁 [Game End] 全局触发器导致游戏结束！`);
+        
+        // Store game end reason
+        currentState.temporaryInfo.contextualData = currentState.temporaryInfo.contextualData || {};
+        currentState.temporaryInfo.contextualData.gameEndReason = triggerResult.reason || "全局触发器触发";
+        
+        // Clear the trigger since it has been fulfilled
+        dgsm.setGlobalTrigger(null);
+        
+        return { ...state, dynamicGameState: dgsm.getState() };
+      } else {
+        console.log(`   ✓ 全局触发器触发但未导致游戏结束，将在后台更新场景`);
+        
+        // 不要清除 global trigger！保留它供 updateNonPlayerScenarios 使用作为 previousGlobalTrigger
+        // updateNonPlayerScenarios 会生成新的 global trigger 并替换旧的
+        const updatedState = dgsm.getState();
+        
+        // Start background scenario update (non-blocking, parallel with keeper generation)
+        console.log(`\n🔄 [Global Trigger] 启动后台场景更新任务（与 keeper 并行处理）...`);
+        console.log(`   ℹ️  保留当前 global trigger 作为 previousGlobalTrigger 供场景更新参考`);
+        console.log(`   ℹ️  场景更新完成后，如果生成新的 global trigger，将自动替换旧的`);
+        
+        directorAgent.updateNonPlayerScenarios(dgsm).then(() => {
+          // updateNonPlayerScenarios 内部会处理新的 global trigger 替换
+          // 如果生成了新的 global trigger，它已经通过 gameStateManager.setGlobalTrigger() 设置了
+          const finalState = dgsm.getState();
+          if (finalState.globalTrigger) {
+            console.log(`   ✓ [后台任务] 场景更新完成，已生成新的 global trigger`);
+          } else {
+            console.log(`   ✓ [后台任务] 场景更新完成，未生成新的 global trigger（已清除旧的）`);
+          }
+        }).catch((error) => {
+          console.error(`   ❌ [后台任务] 场景更新失败:`, error);
+        });
+        
+        // Return immediately without waiting for scenario update
+        // Keeper will generate narrative in parallel with scenario update
+        return { ...state, dynamicGameState: updatedState };
+      }
+    } else {
+      console.log(`   ✓ 全局触发器未触发，游戏继续`);
+    }
+
+    return { ...state, dynamicGameState: dgsm.getState() };
+  });
+
+  // Conditional routing: gameEndCheck -> epilogueKeeper or keeper
+  listenerGraph.addConditionalEdges(
+    "gameEndCheck" as any,
+    (state: DynamicGraphState) => {
+      const currentState = state.dynamicGameState;
+      const playerStatus = currentState.playerCharacter.status;
+      const hp = playerStatus.hp || 0;
+      const sanity = playerStatus.sanity || 0;
+      
+      // Check if character status caused game end
+      if (hp <= 0 || sanity <= 0) {
+        console.log("🔀 [Listener Game End Router] → epilogueKeeper (角色状态)");
+        return "epilogueKeeper";
+      }
+      
+      // Check if global trigger caused game end
+      const gameEndReason = currentState.temporaryInfo.contextualData?.gameEndReason;
+      if (gameEndReason) {
+        console.log("🔀 [Listener Game End Router] → epilogueKeeper (全局触发器)");
+        return "epilogueKeeper";
+      }
+      
+      console.log("🔀 [Listener Game End Router] → keeper (游戏继续)");
+      return "keeper";
+    },
+    {
+      epilogueKeeper: "epilogueKeeper" as any,
+      keeper: "keeper" as any,
+    }
+  );
+
+  // Epilogue Keeper: generate ending narrative (后日谈)
+  listenerGraph.addNode("epilogueKeeper", async (state: DynamicGraphState) => {
+    console.log("📜 [Dynamic Listener Epilogue Keeper] 开始生成后日谈叙事...");
+    const dgsm = new DynamicGameStateManager(state.dynamicGameState);
+    const currentState = dgsm.getState();
+    const userInput = latestHumanMessage(state.messages);
+
+    try {
+      // Use epilogue generation method
+      const result = await keeperAgent.generateEpilogue(userInput, dgsm);
+
+      // Complete turn with epilogue narrative if turnId exists
+      if (state.turnId) {
+        const isSimulated = state.isSimulatedQuery ?? false;
+        try {
+          turnManager.completeTurn(state.turnId, {
+            keeperNarrative: result.narrative,
+            clueRevelations: result.clueRevelations || null,
+            gameDay: currentState.gameDay ?? null,
+            gameTime: currentState.timeOfDay ?? null,
+          });
+          const inputType = isSimulated ? '模拟查询' : '真实输入';
+          console.log(`📝 [Dynamic Listener Epilogue Keeper] Turn ${state.turnId} (${inputType}) 已完成 - 游戏结束`);
+          console.log(`   Epilogue length: ${result.narrative.length} characters`);
+        } catch (error) {
+          console.error("❌ [Dynamic Listener Epilogue Keeper] Failed to complete turn:", error);
+          turnManager.markError(state.turnId, error as Error);
+        }
+      }
+
+      console.log("✅ [Dynamic Listener Epilogue Keeper] 后日谈叙事生成完成");
+    } catch (error) {
+      console.error(`❌ [Dynamic Listener Epilogue Keeper] 生成失败:`, error);
+      if (state.turnId) {
+        try {
+          turnManager.markError(state.turnId, error as Error);
+        } catch (markError) {
+          console.error("❌ [Dynamic Listener Epilogue Keeper] Failed to mark turn error:", markError);
+        }
+      }
+    }
+
+    return {
+      ...state,
+      dynamicGameState: dgsm.getState(),
+    };
+  });
+
+  listenerGraph.addEdge("epilogueKeeper" as any, END);
 
   // Keeper node
   listenerGraph.addNode("keeper", async (state: DynamicGraphState) => {

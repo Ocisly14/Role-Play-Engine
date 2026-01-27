@@ -1,4 +1,4 @@
-import { getPlayerIntentAnalysisTemplate, getScenarioUpdateTemplate, getPlayerSceneSwitchTemplate, getGlobalTriggerEventCheckTemplate } from "./directorTemplate.js";
+import { getScenarioUpdateTemplate, getPlayerSceneSwitchTemplate, getGlobalTriggerEventCheckTemplate } from "./directorTemplate.js";
 import { composeTemplate } from "../../../template.js";
 import type { ScenarioCharacter } from "../../../coc_multiagents_system/agents/models/scenarioTypes.js";
 import type { DynamicScenarioSnapshot } from "../../world_builder/types.js";
@@ -193,11 +193,11 @@ export class DirectorAgent {
   }
 
   /**
-   * Check if story progression should trigger and generate simulated player intent query
+   * Check if story progression should trigger and return recent player actionLog
    */
   async checkStoryProgression(
     gameStateManager: DynamicGameStateManager
-  ): Promise<{ shouldTrigger: boolean; simulatedQuery: string | null }> {
+  ): Promise<{ shouldTrigger: boolean; recentActionLog: ActionLogEntry[] }> {
     const dynamicState = gameStateManager.getState();
 
     // Get metrics
@@ -209,23 +209,35 @@ export class DirectorAgent {
     console.log(`   Turns in scene: ${turnsInScene} / ${threshold}`);
     console.log(`   Minutes since input: ${minutesSinceInput} / 3`);
     console.log(`   Tension: ${dynamicState.tension}/10`);
+    console.log(`   Consecutive triggers: ${dynamicState.consecutiveProgressionTriggers} / 3`);
 
     // Check if either threshold is reached
     const shouldTrigger = gameStateManager.shouldTriggerProgression();
 
     if (!shouldTrigger) {
-      console.log(`   ✓ No trigger conditions met`);
-      return { shouldTrigger: false, simulatedQuery: null };
+      if (dynamicState.consecutiveProgressionTriggers >= 3) {
+        console.log(`   ⚠️ Max consecutive triggers reached (3), skipping to prevent infinite loop`);
+      } else {
+        console.log(`   ✓ No trigger conditions met`);
+      }
+      return { shouldTrigger: false, recentActionLog: [] };
     }
+
+    // Increment consecutive trigger count
+    gameStateManager.incrementConsecutiveTriggers();
+    const currentTriggerCount = gameStateManager.getState().consecutiveProgressionTriggers;
 
     // Log which condition triggered
     if (turnsInScene >= threshold) {
-      console.log(`   ⚠️ Turn threshold reached! Analyzing player intent...`);
+      console.log(`   ⚠️ Turn threshold reached! Getting recent player actions... (trigger ${currentTriggerCount}/3)`);
     } else if (minutesSinceInput >= 3) {
-      console.log(`   ⚠️ Time threshold reached (3 min idle)! Analyzing player intent...`);
+      console.log(`   ⚠️ Time threshold reached (3 min idle)! Getting recent player actions... (trigger ${currentTriggerCount}/3)`);
     }
 
-    // Get recent conversation history
+    // Get player's actionLog from the last 3 turns
+    const playerActionLog = dynamicState.playerCharacter.actionLog || [];
+    
+    // Get recent conversation history to determine which actionLog entries belong to last 3 turns
     const conversationHistory = (dynamicState.temporaryInfo.contextualData?.conversationHistory as Array<{
       turnNumber: number;
       characterInput: string;
@@ -234,71 +246,23 @@ export class DirectorAgent {
     }>) || [];
 
     // Get last 3 turns
-    const recentActions = conversationHistory.slice(-3).map(turn => ({
-      turnNumber: turn.turnNumber,
-      characterInput: turn.characterInput,
-      actionAnalysis: turn.actionAnalysis ? JSON.stringify(turn.actionAnalysis, null, 2) : null
-    }));
+    const last3Turns = conversationHistory.slice(-3);
+    const last3TurnNumbers = new Set(last3Turns.map(t => t.turnNumber));
 
-    // Get current scenario info
-    const currentScenario = dynamicState.currentScenario;
-    const scenarioInfo = currentScenario ? {
-      name: currentScenario.name,
-      location: currentScenario.location,
-      description: currentScenario.description
-    } : null;
+    // Filter actionLog entries that belong to the last 3 turns
+    // We'll use a simple approach: get the last N entries where N is roughly the number of actions in 3 turns
+    // Or we can get all actionLog entries and let Character Agent analyze them
+    // For simplicity, let's get the last 10-15 entries (assuming 3-5 actions per turn)
+    const recentActionLog = playerActionLog.slice(-15);
 
-    // Prepare template context
-    const runtime = createRuntime();
-    const template = getPlayerIntentAnalysisTemplate();
-
-    const templateContext = {
-      playerName: dynamicState.playerCharacter.name,
-      scenarioInfoJson: scenarioInfo ? JSON.stringify(scenarioInfo, null, 2) : "No current scene",
-      recentActions,
-      tension: dynamicState.tension
-    };
-
-    const prompt = composeTemplate(
-      template,
-      { dynamicGameState: dynamicState },
-      templateContext,
-      "handlebars"
-    );
-
-    try {
-      const response = await generateText({
-        runtime,
-        context: prompt,
-        modelClass: ModelClass.SMALL,
-      });
-
-      // Parse response
-      let parsed;
-      try {
-        const jsonMatch = response.match(/\{[\s\S]*\}/);
-        if (jsonMatch) {
-          parsed = JSON.parse(jsonMatch[0]);
-        } else {
-          parsed = JSON.parse(response);
-        }
-      } catch (error) {
-        console.error("Failed to parse player intent analysis:", error);
-        return { shouldTrigger: false, simulatedQuery: null };
-      }
-
-      if (parsed.query) {
-        console.log(`   ✓ Generated simulated query: "${parsed.query}"`);
-        return { shouldTrigger: true, simulatedQuery: parsed.query };
-      } else {
-        console.warn(`   ⚠️ No query in response`);
-        return { shouldTrigger: false, simulatedQuery: null };
-      }
-
-    } catch (error) {
-      console.error("Error generating player intent analysis:", error);
-      return { shouldTrigger: false, simulatedQuery: null };
+    if (recentActionLog.length > 0) {
+      console.log(`   ✓ Found ${recentActionLog.length} recent actionLog entries`);
+      console.log(`   Latest actions: ${recentActionLog.slice(-3).map(a => a.summary).join("; ")}`);
+    } else {
+      console.log(`   ⚠️ No recent actionLog entries found`);
     }
+
+    return { shouldTrigger: true, recentActionLog };
   }
 
   /**
@@ -873,7 +837,8 @@ export class DirectorAgent {
         truthTimelineJson: JSON.stringify(dynamicState.truthTimeline, null, 2),
         knowledgeMatrixJson: JSON.stringify(dynamicState.knowledgeMatrix, null, 2),
         previousGlobalTrigger: dynamicState.globalTrigger,
-        previousGlobalTriggerJson: dynamicState.globalTrigger ? JSON.stringify(dynamicState.globalTrigger, null, 2) : null
+        previousGlobalTriggerJson: dynamicState.globalTrigger ? JSON.stringify(dynamicState.globalTrigger, null, 2) : null,
+        endStateJson: dynamicState.endState ? JSON.stringify(dynamicState.endState, null, 2) : "null"
       };
 
       // Generate unified snapshots using LLM
@@ -1218,6 +1183,8 @@ export class DirectorAgent {
         ? scenarioOutlineMap.get(currentScenarioId)
         : null;
 
+      const endState = dynamicState.endState;
+      
       const templateContext = {
         currentGameDay: dynamicState.gameDay,
         currentTimeOfDay: dynamicState.timeOfDay,
@@ -1233,7 +1200,8 @@ export class DirectorAgent {
         truthTimelineJson: JSON.stringify(dynamicState.truthTimeline, null, 2),
         knowledgeMatrixJson: JSON.stringify(dynamicState.knowledgeMatrix, null, 2),
         previousGlobalTrigger: dynamicState.globalTrigger,
-        previousGlobalTriggerJson: dynamicState.globalTrigger ? JSON.stringify(dynamicState.globalTrigger, null, 2) : null
+        previousGlobalTriggerJson: dynamicState.globalTrigger ? JSON.stringify(dynamicState.globalTrigger, null, 2) : null,
+        endStateJson: endState ? JSON.stringify(endState, null, 2) : "null"
       };
 
       // Generate updated snapshots using LLM
@@ -1389,6 +1357,189 @@ export class DirectorAgent {
     }
 
     return timeReached;
+  }
+
+  /**
+   * Check global trigger and determine if it causes game end
+   * Combines time check and event check, and determines if trigger causes game end
+   * @returns { triggered: boolean, causesGameEnd: boolean, reason?: string }
+   */
+  async checkGlobalTriggerAndGameEnd(
+    gameStateManager: DynamicGameStateManager
+  ): Promise<{ triggered: boolean; causesGameEnd: boolean; reason?: string }> {
+    const dynamicState = gameStateManager.getState();
+    const globalTrigger = dynamicState.globalTrigger;
+    const endState = dynamicState.endState;
+
+    // If no global trigger, return early
+    if (!globalTrigger) {
+      return { triggered: false, causesGameEnd: false };
+    }
+
+    console.log(`\n🔍 [Director Agent] Checking global trigger and game end conditions...`);
+
+    let triggered = false;
+    let triggerReason = "";
+
+    // Check 1: Time restriction
+    const timeReached = this.checkGlobalTriggerTime(gameStateManager);
+    if (timeReached) {
+      triggered = true;
+      triggerReason = "时间限制到达";
+    }
+
+    // Check 2: Events (only if time not reached)
+    if (!triggered && globalTrigger.events && globalTrigger.events.length > 0) {
+      // Get recent actionLog entries for event check
+      const conversationHistory = (dynamicState.temporaryInfo.contextualData?.conversationHistory as Array<{
+        turnNumber: number;
+        characterInput: string;
+        keeperNarrative: string | null;
+        actionResults?: any[];
+      }>) || [];
+
+      const recentTurns = conversationHistory.slice(-3);
+      if (recentTurns.length > 0) {
+        const currentGameTime = `Day ${dynamicState.gameDay}, ${dynamicState.timeOfDay}`;
+        let earliestTime: string | null = null;
+
+        // Find earliest time from actionResults in recent turns
+        for (const turn of recentTurns) {
+          if (turn.actionResults && turn.actionResults.length > 0) {
+            for (const result of turn.actionResults) {
+              const resultTime = result.gameTime || `Day ${dynamicState.gameDay}, ${result.timeOfDay || dynamicState.timeOfDay}`;
+              if (!earliestTime || this.isTimeBeforeOrEqual(resultTime, earliestTime)) {
+                earliestTime = resultTime;
+              }
+            }
+          }
+        }
+
+        if (!earliestTime) {
+          earliestTime = currentGameTime;
+        }
+
+        // Extract actionLog entries from all characters
+        const recentActionLogs: Array<{
+          turnNumber: number;
+          characterId: string;
+          characterName: string;
+          actionLog: ActionLogEntry[];
+        }> = [];
+
+        const allCharacters: Array<{
+          id: string;
+          name: string;
+          actionLog: ActionLogEntry[];
+        }> = [
+          {
+            id: dynamicState.playerCharacter.id,
+            name: dynamicState.playerCharacter.name,
+            actionLog: dynamicState.playerCharacter.actionLog || []
+          },
+          ...dynamicState.npcCharacters.map(npc => ({
+            id: npc.id,
+            name: npc.name,
+            actionLog: npc.actionLog || []
+          }))
+        ];
+
+        // Filter actionLog entries within the time range
+        for (const character of allCharacters) {
+          const filteredActionLog = character.actionLog.filter(entry => {
+            return this.isTimeBeforeOrEqual(earliestTime, entry.time) && 
+                   this.isTimeBeforeOrEqual(entry.time, currentGameTime);
+          });
+
+          if (filteredActionLog.length > 0) {
+            recentActionLogs.push({
+              turnNumber: recentTurns[0]?.turnNumber || 0,
+              characterId: character.id,
+              characterName: character.name,
+              actionLog: filteredActionLog
+            });
+          }
+        }
+
+        if (recentActionLogs.length > 0) {
+          // Use unified template to check events and game end
+          const runtime = createRuntime();
+          const template = getGlobalTriggerEventCheckTemplate();
+
+          const templateContext = {
+            globalTriggerJson: JSON.stringify(globalTrigger, null, 2),
+            endStateJson: endState ? JSON.stringify(endState, null, 2) : "null",
+            recentActionLogsJson: JSON.stringify(recentActionLogs, null, 2)
+          };
+
+          const prompt = composeTemplate(
+            template,
+            { dynamicGameState: dynamicState },
+            templateContext,
+            "handlebars"
+          );
+
+          try {
+            const response = await generateText({
+              runtime,
+              context: prompt,
+              modelClass: ModelClass.SMALL,
+            });
+
+            // Parse response
+            let parsed: { triggered: boolean; causesGameEnd: boolean; reason?: string };
+            try {
+              const jsonMatch = response.match(/\{[\s\S]*\}/);
+              if (jsonMatch) {
+                parsed = JSON.parse(jsonMatch[0]);
+              } else {
+                parsed = JSON.parse(response);
+              }
+            } catch (error) {
+              console.error("   ❌ Failed to parse trigger check response:", error);
+              return { triggered: false, causesGameEnd: false };
+            }
+
+            if (parsed.triggered) {
+              triggered = true;
+              triggerReason = parsed.reason || "事件已完成";
+              
+              if (parsed.causesGameEnd) {
+                console.log(`   ✅ Global trigger triggered AND causes game end`);
+                console.log(`      Reason: ${triggerReason}`);
+                return { triggered: true, causesGameEnd: true, reason: triggerReason };
+              } else {
+                console.log(`   ✅ Global trigger triggered but does NOT cause game end`);
+                console.log(`      Reason: ${triggerReason}`);
+                return { triggered: true, causesGameEnd: false, reason: triggerReason };
+              }
+            }
+          } catch (error) {
+            console.error("   ❌ Error checking global trigger events:", error);
+            return { triggered: false, causesGameEnd: false };
+          }
+        }
+      }
+    }
+
+    // If time reached, check if it causes game end
+    if (triggered && timeReached) {
+      // Check if time trigger aligns with point of no return
+      if (endState && endState.pointOfNoReturn.type === "time") {
+        const pointOfNoReturnReached = gameStateManager.checkPointOfNoReturn(
+          dynamicState.gameDay,
+          dynamicState.timeOfDay
+        );
+        if (pointOfNoReturnReached) {
+          console.log(`   ✅ Global trigger time reached AND causes game end (point of no return)`);
+          return { triggered: true, causesGameEnd: true, reason: triggerReason };
+        }
+      }
+      console.log(`   ✅ Global trigger time reached but does NOT cause game end`);
+      return { triggered: true, causesGameEnd: false, reason: triggerReason };
+    }
+
+    return { triggered: false, causesGameEnd: false };
   }
 
   /**

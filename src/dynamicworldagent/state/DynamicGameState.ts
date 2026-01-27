@@ -89,6 +89,7 @@ export interface DynamicGameState {
   discoveredClues: DiscoveredClue[];
   turnsInCurrentScene: number;
   lastPlayerInputTime: Date | null;
+  consecutiveProgressionTriggers: number;  // Track consecutive progression triggers (max 3)
 
   // Temporary info (cleared at start of each player turn)
   temporaryInfo: DynamicTemporaryInfo;
@@ -163,6 +164,7 @@ export const initialDynamicGameState = (params: {
   discoveredClues: [],
   turnsInCurrentScene: 0,
   lastPlayerInputTime: null,
+  consecutiveProgressionTriggers: 0,
   temporaryInfo: {
     rules: [],
     contextualData: {},
@@ -547,6 +549,7 @@ export class DynamicGameStateManager {
       loadedAt: data.loadedAt ? (typeof data.loadedAt === 'string' ? new Date(data.loadedAt) : data.loadedAt) : new Date(),
       lastUpdated: data.lastUpdated ? (typeof data.lastUpdated === 'string' ? new Date(data.lastUpdated) : data.lastUpdated) : new Date(),
       lastPlayerInputTime: data.lastPlayerInputTime ? (typeof data.lastPlayerInputTime === 'string' ? new Date(data.lastPlayerInputTime) : data.lastPlayerInputTime) : null,
+      consecutiveProgressionTriggers: data.consecutiveProgressionTriggers ?? 0,
     };
   }
 
@@ -816,6 +819,16 @@ export class DynamicGameStateManager {
    */
   updatePlayerInputTime(): void {
     this.state.lastPlayerInputTime = new Date();
+    this.state.lastUpdated = new Date();
+    // Reset consecutive triggers when player provides input
+    this.state.consecutiveProgressionTriggers = 0;
+  }
+
+  /**
+   * Increment consecutive progression trigger count
+   */
+  incrementConsecutiveTriggers(): void {
+    this.state.consecutiveProgressionTriggers = (this.state.consecutiveProgressionTriggers || 0) + 1;
     this.state.lastUpdated = new Date();
   }
 
@@ -1240,9 +1253,14 @@ export class DynamicGameStateManager {
 
   /**
    * Check if progression should trigger based on turn count OR time elapsed
-   * @returns true if either condition is met
+   * @returns true if either condition is met AND consecutive triggers < 3
    */
   shouldTriggerProgression(): boolean {
+    // Check if already reached max consecutive triggers (3)
+    if (this.state.consecutiveProgressionTriggers >= 3) {
+      return false;
+    }
+
     // Check turn count threshold
     const turnsInScene = this.getTurnsInCurrentScene();
     const threshold = this.getProgressionThreshold();

@@ -1,4 +1,4 @@
-import { getKeeperTemplate } from "./keeperTemplate.js";
+import { getKeeperTemplate, getEpilogueTemplate } from "./keeperTemplate.js";
 import { composeTemplateWithImages } from "../../../template.js";
 import type { ActionResult, ActionAnalysis, DiscoveredClue } from "../../../coc_multiagents_system/state/index.js";
 import type { ActionLogEntry } from "../../../coc_multiagents_system/agents/models/gameTypes.js";
@@ -218,6 +218,113 @@ export class KeeperAgent {
       narrative: parsedResponse.narrative || response,
       clueRevelations: parsedResponse.clueRevelations || { scenarioClues: [], npcClues: [], npcSecrets: [] },
       updatedGameState: finalGameState
+    };
+  }
+
+  /**
+   * Generate epilogue narrative when game ends
+   */
+  async generateEpilogue(
+    characterInput: string,
+    gameStateManager: DynamicGameStateManager
+  ): Promise<{ narrative: string; clueRevelations: any; updatedGameState: DynamicGameState }> {
+    const runtime = createRuntime();
+    const dynamicState = gameStateManager.getState();
+    
+    // Get endState
+    const endState = dynamicState.endState;
+    if (!endState) {
+      throw new Error("Cannot generate epilogue: endState is not defined");
+    }
+
+    // Get player character information
+    const currentLocation = dynamicState.currentScenario?.location || null;
+    const playerCharacter = this.extractCompletePlayerCharacter(
+      dynamicState.playerCharacter,
+      currentLocation,
+      null // No interaction partner for epilogue
+    );
+    
+    // Get conversation history (last 5 turns)
+    const conversationHistory = (dynamicState.temporaryInfo.contextualData?.conversationHistory as Array<{
+      turnNumber: number;
+      characterInput: string;
+      keeperNarrative: string | null;
+    }>) || [];
+
+    const recentHistory = conversationHistory.slice(-5);
+    
+    // Format full game time
+    const fullGameTime = `Day ${dynamicState.gameDay}, ${dynamicState.timeOfDay}`;
+    
+    // Use epilogue template
+    const template = getEpilogueTemplate();
+    
+    // Get macroScene
+    const macroScene = dynamicState.macroScene;
+    
+    const templateContext = {
+      characterInput,
+      macroSceneJson: macroScene ? JSON.stringify(macroScene, null, 2) : "null",
+      endStateJson: JSON.stringify(endState, null, 2),
+      pointOfNoReturnTrigger: dynamicState.pointOfNoReturnTrigger || endState.pointOfNoReturn.trigger,
+      fullGameTime,
+      playerCharacterJson: this.safeStringify(playerCharacter),
+      gameHistoryJson: JSON.stringify(recentHistory, null, 2)
+    };
+
+    const { content: prompt, images } = composeTemplateWithImages(
+      template,
+      { dynamicGameState: dynamicState },
+      templateContext,
+      "handlebars"
+    );
+
+    let response: string = "";
+    let parsedResponse: any;
+    const maxAttempts = 2;
+
+    for (let attempt = 1; attempt <= maxAttempts; attempt++) {
+      try {
+        response = await generateText({
+          runtime,
+          context: prompt,
+          images,
+          modelClass: ModelClass.LARGE, // Use large model for epilogue quality
+        });
+
+        // Parse JSON response
+        let jsonText = response.trim();
+        const codeBlockMatch = jsonText.match(/```(?:json)?\s*([\s\S]*?)```/i);
+        if (codeBlockMatch) {
+          jsonText = codeBlockMatch[1].trim();
+        }
+
+        if (!jsonText.startsWith('{') && !jsonText.startsWith('[')) {
+          const jsonObjectMatch = jsonText.match(/\{[\s\S]*\}/);
+          if (jsonObjectMatch) {
+            jsonText = jsonObjectMatch[0];
+          }
+        }
+
+        parsedResponse = JSON.parse(jsonText);
+        
+        if (parsedResponse.narrative) {
+          break; // Success
+        }
+      } catch (error) {
+        if (attempt === maxAttempts) {
+          console.error(`❌ [Keeper Agent] Failed to parse epilogue response after ${maxAttempts} attempts:`, error);
+          throw new Error(`Failed to generate epilogue: ${error instanceof Error ? error.message : String(error)}`);
+        }
+        console.warn(`⚠️  [Keeper Agent] Epilogue parse attempt ${attempt} failed, retrying...`);
+      }
+    }
+
+    return {
+      narrative: parsedResponse.narrative || response,
+      clueRevelations: null, // Epilogue doesn't reveal new clues
+      updatedGameState: dynamicState
     };
   }
 

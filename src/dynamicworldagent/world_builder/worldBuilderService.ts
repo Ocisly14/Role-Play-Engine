@@ -123,7 +123,8 @@ export class WorldBuilderService {
         npcs,
         scenarios,
         startingScene,
-        creativePrompt
+        creativePrompt,
+        endState
       );
 
       const moduleDigestFile = await saveModuleDigestToJSON(moduleName, moduleDigest);

@@ -5,6 +5,7 @@
 import { generateText, ModelClass, ModelProviderName } from "../../models/index.js";
 import { composeTemplate } from "../../template.js";
 import type {
+  EndStateDefinition,
   KnowledgeHolder,
   MacroSceneStructure,
   ModuleDigest,
@@ -58,7 +59,8 @@ export class ModuleDigestAgent {
     npcs: DynamicNPCProfile[],
     scenarios: ScenarioOutline[],
     startingScene: StartingSceneSelection | null,
-    creativePrompt: string
+    creativePrompt: string,
+    endState: EndStateDefinition
   ): Promise<ModuleDigest> {
     const template = getModuleDigestTemplate();
     const startingSnapshotId = startingScene?.snapshot?.id;
@@ -87,6 +89,7 @@ export class ModuleDigestAgent {
       ),
       initialSnapshotJson: JSON.stringify(startingScene?.snapshot ?? null, null, 2),
       creativePrompt,
+      endStateJson: JSON.stringify(endState, null, 2),
     });
 
     const response = await generateText({

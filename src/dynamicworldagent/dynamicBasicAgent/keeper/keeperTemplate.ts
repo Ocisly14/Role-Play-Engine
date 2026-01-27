@@ -180,3 +180,81 @@ export function getKeeperTemplate(): string {
   ==================================================
   `;
 }
+
+/**
+ * Keeper Agent Epilogue Template
+ * For generating epilogue narrative when game ends
+ */
+export function getEpilogueTemplate(): string {
+  return `# Keeper Agent — Epilogue Narrative (后日谈)
+
+You are the **Keeper Agent**, generating the final epilogue narrative after the game has reached its end state.
+
+## 🌍 Macro Scene Context
+The overall setting and world context for this scenario:
+
+\`\`\`json
+{{macroSceneJson}}
+\`\`\`
+
+## 🏁 End State Definition
+The following defines what happened when the point of no return was reached:
+
+\`\`\`json
+{{endStateJson}}
+\`\`\`
+
+## 🎯 Point of No Return Trigger
+{{pointOfNoReturnTrigger}}
+
+## ⏰ Final Game Time
+{{fullGameTime}}
+
+## 👤 Investigator's Final State
+{{playerCharacterJson}}
+
+## 📜 Recent Game History (Last 5 Turns)
+{{gameHistoryJson}}
+
+## 🎬 Task
+
+Generate an epilogue narrative that:
+
+1. **Describes the inevitable outcome** - What happened when the point of no return was reached
+   - Use the endState summary as the foundation
+   - Describe the catastrophic outcome that occurred
+
+2. **Shows the consequences** - How the investigator's actions (or inactions) affected the outcome
+   - Reference key moments from the game history
+   - Show how the investigator's choices led to or failed to prevent the end state
+
+3. **Provides closure** - What became of the investigator, NPCs, and the world
+   - Describe the investigator's final fate
+   - Mention what happened to key NPCs
+   - Show the broader world consequences
+
+4. **Maintains tone** - Call of Cthulhu's cosmic horror and inevitable tragedy
+   - Emphasize the cosmic horror and inevitability
+   - Show that some things are beyond human control
+   - Reflect on the cost of knowledge and investigation
+
+### Style Guidelines
+- Write from a **third-person omniscient perspective** (unlike normal narrative which is second-person)
+- Reflect on the investigator's journey and choices
+- Show the broader consequences beyond just the investigator
+- Maintain the cosmic horror atmosphere
+- Should be 2-4 paragraphs
+- Can reference specific events from game history but don't repeat them verbatim
+
+## 📋 Output Format
+
+Return ONLY valid JSON:
+
+\`\`\`json
+{
+  "narrative": "Epilogue narrative text describing the final outcome..."
+}
+\`\`\`
+
+Generate the epilogue now.`;
+}

@@ -1,49 +1,3 @@
-
-/**
- * Player Intent Analysis Template - for analyzing player intent when progression threshold is reached
- */
-export function getPlayerIntentAnalysisTemplate(): string {
-  return `# Director Agent - Player Intent Analysis
-
-Analyze recent player behavior and generate a third-person query describing their intent.
-
-## Current Scene
-{{scenarioInfoJson}}
-
-## Recent Player Actions (Last 3 turns)
-
-{{#if recentActions}}
-{{#each recentActions}}
-**Turn {{this.turnNumber}}**
-- Player Input: "{{this.characterInput}}"
-{{#if this.actionAnalysis}}
-- Action Analysis: {{this.actionAnalysis}}
-{{/if}}
-
-{{/each}}
-{{else}}
-*No recent actions*
-{{/if}}
-
-## Task
-
-Generate a third-person query: "{{playerName}} + what they're trying to do"
-
-Examples:
-- "John is searching for clues in the room"
-- "Mary wants to enter the locked door"
-- "Robert is trying to get information from the Sheriff"
-
-## Response
-
-\`\`\`json
-{
-  "query": "Third-person description here"
-}
-\`\`\`
-`;
-}
-
 /**
  * Scenario Update Template - for updating non-player scenario snapshots
  */
@@ -169,6 +123,15 @@ Each snapshot should:
 
 4. **Game Time**: Set the gameTime to the unified current game time (Day {{currentGameDay}}, {{currentTimeOfDay}}) - all snapshots should use this same time
 
+## 🏁 End State Definition
+The following defines the inevitable catastrophic outcome if investigators do not intervene:
+
+\`\`\`json
+{{endStateJson}}
+\`\`\`
+
+**Important**: The endState describes the final catastrophic outcome and its pointOfNoReturn trigger. When generating a new global trigger, you must understand the event chain leading to the endState and determine where the next trigger should be positioned in that chain.
+
 ## 🎯 Global Trigger
 
 {{#if previousGlobalTrigger}}
@@ -184,7 +147,13 @@ The following is the current global trigger that was set previously. Use this as
 **No previous global trigger set.**
 {{/if}}
 
-**You MUST generate a global trigger for future story progression based on the NPCs' actionLogs you have generated, and predict the future important time and events.**
+**You MUST generate a global trigger for future story progression based on the NPCs' actionLogs you have generated, the endState definition, and predict the future important time and events.**
+
+**Critical Guidelines for Global Trigger Generation:**
+
+1. **Progressive Escalation**: Analyze the endState to understand the event chain leading to catastrophe
+   - Identify where the previous global trigger (if any) was positioned in this chain
+   - Determine the NEXT step in the progression toward the endState, the intermediate event or the final event that causes the game end.
 
 ### Trigger Structure:
 
@@ -380,6 +349,15 @@ Generate snapshots for each scenario above, with **different levels of detail ba
 
 4. **Game Time**: Set the gameTime to the unified current game time (Day {{currentGameDay}}, {{currentTimeOfDay}}) - all snapshots should use this same time
 
+## 🏁 End State Definition
+The following defines the inevitable catastrophic outcome if investigators do not intervene:
+
+\`\`\`json
+{{endStateJson}}
+\`\`\`
+
+**Important**: The endState describes the final catastrophic outcome and its pointOfNoReturn trigger. When generating a new global trigger, you must understand the event chain leading to the endState and determine where the next trigger should be positioned in that chain.
+
 ## 🎯 Global Trigger (Optional)
 
 {{#if previousGlobalTrigger}}
@@ -395,10 +373,15 @@ The following is the current global trigger that was set previously. Use this as
 **No previous global trigger set.**
 {{/if}}
 
-**You MAY generate a global trigger for future story progression based on the NPCs' actionLogs you have generated, and predict the future important time and events.**
+**You MAY generate a global trigger for future story progression based on the NPCs' actionLogs you have generated, the endState definition, and predict the future important time and events.**
 
 **Important**: Only generate a \`globalTrigger\` if there are significant future events or time-sensitive story developments that warrant it. If the current NPC actions don't indicate any critical future events, you can omit the \`globalTrigger\` field entirely.
 
+**Critical Guidelines for Global Trigger Generation:**
+
+1. **Progressive Escalation**: Analyze the endState to understand the event chain leading to catastrophe
+   - Identify where the previous global trigger (if any) was positioned in this chain
+   - Determine the NEXT step in the progression toward the endState, the intermediate event or the final event that causes the game end.
 ### Trigger Structure (if generating):
 
 1. The most important rule, the trigger you set must have great impact on the story progression.
@@ -565,14 +548,23 @@ Example:
  * Global Trigger Event Check Template - for analyzing if trigger events have occurred
  */
 export function getGlobalTriggerEventCheckTemplate(): string {
-  return `# Director Agent - Global Trigger Event Check
+  return `# Director Agent - Global Trigger Event Check & Game End Analysis
 
-Analyze recent game events to determine if global trigger events have been fulfilled.
+Analyze recent game events to determine if global trigger events have been fulfilled, and whether this triggers game end.
 
 ## 🎯 Global Trigger
 \`\`\`json
 {{globalTriggerJson}}
 \`\`\`
+
+## 🏁 End State Definition
+The following defines the inevitable outcome if no intervention occurs:
+
+\`\`\`json
+{{endStateJson}}
+\`\`\`
+
+**Note**: The endState contains the pointOfNoReturn trigger. If the global trigger events align with or directly cause the point of no return to be reached, this will cause game end.
 
 ## 📋 New ActionLog Entries (Last 3 Turns)
 
@@ -586,12 +578,31 @@ The following are **newly added** actionLog entries from the most recent 3 turns
 
 ## 🎬 Task
 
+### Step 1: Check if Global Trigger Events Have Occurred
+
 Determine if the events described in the global trigger have occurred based on these newly added actionLog entries.
 
-### Evaluation:
+**Evaluation:**
 - Check if the new actionLog entries provide clear evidence that the trigger events have happened
 - Consider logical implications (e.g., if someone left for a destination, they may have arrived)
 - Be strict - only return true if there's solid evidence in the recent activities
+
+### Step 2: Determine if This Causes Game End
+
+If the global trigger has been triggered, determine if this causes the game to end by checking:
+
+1. **Does the global trigger event align with the pointOfNoReturn trigger?**
+   - Compare the global trigger events with the endState's pointOfNoReturn trigger
+   - If the events directly fulfill or align with the point of no return condition, this causes game end
+
+2. **Is the pointOfNoReturn condition now met?**
+   - For time-based triggers: Has the time restriction been reached?
+   - For condition-based triggers: Have the required conditions been fulfilled?
+
+**Important**: 
+- Not all global trigger events cause game end
+- Only trigger events that directly relate to or fulfill the pointOfNoReturn cause game end
+- If the global trigger is just a story progression event (e.g., "NPCs gather", "Evidence revealed") but doesn't fulfill the point of no return, it does NOT cause game end
 
 ## 📋 Output Format
 
@@ -599,9 +610,16 @@ Return ONLY valid JSON:
 
 \`\`\`json
 {
-  "triggered": true
+  "triggered": true,
+  "causesGameEnd": false,
+  "reason": "Event description or null if not triggered"
 }
 \`\`\`
+
+**Fields:**
+- **triggered**: boolean - Whether the global trigger events have occurred
+- **causesGameEnd**: boolean - Whether this trigger causes the game to end (only true if triggered AND aligns with pointOfNoReturn)
+- **reason**: string | null - Brief description of what triggered (e.g., "时间限制到达", "事件已完成", "Point of no return reached") or null if not triggered
 
 *Analyze:*`;
 }
