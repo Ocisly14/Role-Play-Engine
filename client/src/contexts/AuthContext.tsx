@@ -13,7 +13,7 @@ interface AuthContextType {
   user: User | null;
   loading: boolean;
   login: (email: string, password: string, rememberMe?: boolean) => Promise<void>;
-  register: (email: string, password: string, username?: string) => Promise<void>;
+  register: (email: string, password: string, username: string | undefined, referralCode: string) => Promise<void>;
   logout: () => Promise<void>;
   refreshAuth: () => Promise<void>;
 }
@@ -51,8 +51,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
   };
 
-  const register = async (email: string, password: string, username?: string) => {
-    await api.post('/auth/register', { email, password, username });
+  const register = async (email: string, password: string, username: string | undefined, referralCode: string) => {
+    await api.post('/auth/register', { email, password, username, referralCode });
   };
 
   const logout = async () => {

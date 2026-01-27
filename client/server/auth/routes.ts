@@ -13,6 +13,7 @@ router.post(
     body('email').isEmail().normalizeEmail(),
     body('password').isLength({ min: 8 }),
     body('username').optional().trim().isLength({ min: 3 }),
+    body('referralCode').notEmpty().trim().isLength({ min: 5, max: 5 }).matches(/^[A-Z0-9]{5}$/i).withMessage('Referral code must be 5 alphanumeric characters'),
     validateRequest,
   ],
   authController.register

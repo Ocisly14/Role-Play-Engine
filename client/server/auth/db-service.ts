@@ -48,8 +48,21 @@ export const authDbService = {
     email: string;
     password: string;
     username?: string;
+    referralCode: string;
   }) {
     const db = getDB();
+
+    // Validate referral code (case-insensitive)
+    const referralCodeUpper = data.referralCode.toUpperCase();
+    const referral = db.prepare('SELECT * FROM referral_codes WHERE UPPER(code) = ?').get(referralCodeUpper) as any;
+    
+    if (!referral) {
+      throw new Error('Invalid referral code');
+    }
+    
+    if (referral.is_used) {
+      throw new Error('Referral code has already been used');
+    }
 
     // Check if email already exists
     const existing = db.prepare('SELECT id FROM users WHERE email = ?').get(data.email);
@@ -66,6 +79,13 @@ export const authDbService = {
       INSERT INTO users (id, email, username, password_hash, is_email_verified, is_active, role)
       VALUES (?, ?, ?, ?, 0, 1, 'USER')
     `).run(userId, data.email, data.username || null, passwordHash);
+
+    // Mark referral code as used
+    db.prepare(`
+      UPDATE referral_codes 
+      SET is_used = 1, used_by_user_id = ?, used_at = CURRENT_TIMESTAMP 
+      WHERE UPPER(code) = ?
+    `).run(userId, referralCodeUpper);
 
     const user = db.prepare('SELECT * FROM users WHERE id = ?').get(userId) as User;
 

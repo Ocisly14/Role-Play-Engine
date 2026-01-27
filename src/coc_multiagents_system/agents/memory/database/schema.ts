@@ -7,6 +7,7 @@ import Database from "better-sqlite3";
 type DBInstance = InstanceType<typeof Database>;
 import path from "path";
 import { fileURLToPath } from "url";
+import { randomUUID } from "crypto";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -767,6 +768,36 @@ export class CoCDatabase {
             CREATE INDEX IF NOT EXISTS idx_refresh_tokens_user ON refresh_tokens(user_id);
             CREATE INDEX IF NOT EXISTS idx_refresh_tokens_token ON refresh_tokens(token);
         `);
+
+    // Referral Codes table
+    this.db.exec(`
+            CREATE TABLE IF NOT EXISTS referral_codes (
+                id TEXT PRIMARY KEY,
+                code TEXT UNIQUE NOT NULL,
+                is_used INTEGER DEFAULT 0,
+                used_by_user_id TEXT,
+                used_at DATETIME,
+                created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+                FOREIGN KEY (used_by_user_id) REFERENCES users(id) ON DELETE SET NULL
+            );
+            CREATE INDEX IF NOT EXISTS idx_referral_codes_code ON referral_codes(code);
+            CREATE INDEX IF NOT EXISTS idx_referral_codes_used ON referral_codes(is_used);
+        `);
+
+    // Initialize referral codes if table is empty
+    const codeCount = this.db.prepare('SELECT COUNT(*) as count FROM referral_codes').get() as { count: number };
+    if (codeCount.count === 0) {
+      // Fixed referral codes
+      const fixedCodes = ['BH6XK', 'ZLDM6', 'YIJNF'];
+      
+      const insertCode = this.db.prepare(`
+        INSERT INTO referral_codes (id, code) VALUES (?, ?)
+      `);
+      
+      for (const code of fixedCodes) {
+        insertCode.run(randomUUID(), code);
+      }
+    }
 
     // Add user_id to characters table if it doesn't exist
     try {

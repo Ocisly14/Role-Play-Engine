@@ -7,6 +7,7 @@ export function RegisterForm() {
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
+  const [referralCode, setReferralCode] = useState('');
   const [error, setError] = useState('');
   const [success, setSuccess] = useState(false);
   const [loading, setLoading] = useState(false);
@@ -33,7 +34,7 @@ export function RegisterForm() {
     setLoading(true);
 
     try {
-      await register(email, password, username || undefined);
+      await register(email, password, username || undefined, referralCode);
       setSuccess(true);
 
       // Redirect to login page after 3 seconds
@@ -111,6 +112,21 @@ export function RegisterForm() {
             onChange={(e) => setConfirmPassword(e.target.value)}
             required
             disabled={loading}
+          />
+        </div>
+
+        <div className="form-group">
+          <label htmlFor="referralCode">Referral Code *</label>
+          <input
+            id="referralCode"
+            type="text"
+            value={referralCode}
+            onChange={(e) => setReferralCode(e.target.value.replace(/[^A-Z0-9]/gi, '').toUpperCase().slice(0, 5))}
+            required
+            disabled={loading}
+            maxLength={5}
+            pattern="[A-Z0-9]{5}"
+            placeholder="Enter 5-character code"
           />
         </div>
 
