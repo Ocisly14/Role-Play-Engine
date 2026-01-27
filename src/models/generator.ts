@@ -145,7 +145,8 @@ async function buildUserContent(
  */
 export function createChatModel(
   provider: ModelProviderName,
-  modelClass: ModelClass
+  modelClass: ModelClass,
+  options?: { streaming?: boolean }
 ): any {
   const settings = getModelSettings(provider, modelClass);
   const endpoint = getEndpoint(provider);
@@ -183,6 +184,7 @@ export function createChatModel(
         temperature: settings.temperature,
         maxOutputTokens: settings.maxOutputTokens,
         apiKey: process.env.GOOGLE_API_KEY,
+        streaming: options?.streaming ?? false,
       });
 
     default:
@@ -201,6 +203,7 @@ export async function generateText(options: GenerationOptions): Promise<string> 
     customSystemPrompt,
     maxRetries = 3,
     images,
+    onToken,
   } = options;
 
   // Get provider from environment variable, runtime, or default to OpenAI
@@ -211,7 +214,9 @@ export async function generateText(options: GenerationOptions): Promise<string> 
   const effectiveModelClass = resolveModelClass(runtime, modelClass);
   
   // Create chat model
-  const chatModel = createChatModel(provider, effectiveModelClass);
+  const chatModel = createChatModel(provider, effectiveModelClass, {
+    streaming: provider === ModelProviderName.GOOGLE && Boolean(onToken),
+  });
 
   // Prepare messages
   const messages = [];
@@ -240,8 +245,38 @@ export async function generateText(options: GenerationOptions): Promise<string> 
         `🤖 Generating text (attempt ${attempt}/${maxRetries}) using ${provider}/${effectiveModelClass}`
       );
 
+      if (onToken && provider === ModelProviderName.GOOGLE && typeof chatModel.stream === "function") {
+        let fullContent = "";
+        const stream = await chatModel.stream(messages);
+
+        for await (const chunk of stream) {
+          const content =
+            (chunk as any)?.content ??
+            (chunk as any)?.message?.content ??
+            "";
+          const text =
+            typeof content === "string"
+              ? content
+              : Array.isArray(content)
+                ? content.map((part: any) => part?.text ?? "").join("")
+                : String(content ?? "");
+
+          if (text) {
+            fullContent += text;
+            onToken(text);
+          }
+        }
+
+        if (!fullContent) {
+          throw new Error("Empty response from model");
+        }
+
+        console.log(`✅ Generated text successfully (${fullContent.length} characters)`);
+        return fullContent;
+      }
+
       const response = await chatModel.invoke(messages);
-      
+
       if (!response?.content) {
         throw new Error("Empty response from model");
       }

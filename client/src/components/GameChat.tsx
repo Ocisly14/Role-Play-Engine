@@ -14,6 +14,8 @@ interface Message {
   content: string;
   timestamp: string;
   turnNumber: number;
+  turnId?: string;
+  isStreaming?: boolean;
   diceRolls?: string[]; // Optional dice rolls for keeper messages
   gameDay?: number | null; // Game day when message was sent
   gameTime?: string | null; // Game time (HH:MM format) when message was sent
@@ -52,6 +54,7 @@ export function GameChat({ sessionId, apiBaseUrl = '/api', characterName = 'Inve
   const [saveMessage, setSaveMessage] = useState<string | null>(null);
   const [isGameEnded, setIsGameEnded] = useState(false);
   const [currentGameState, setCurrentGameState] = useState<{ gameDay?: number; timeOfDay?: string } | null>(null);
+  const [streamingTurnId, setStreamingTurnId] = useState<string | null>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const processedTurnIdsRef = useRef<Set<string>>(new Set());
   const wsRef = useRef<WebSocket | null>(null);
@@ -65,7 +68,7 @@ export function GameChat({ sessionId, apiBaseUrl = '/api', characterName = 'Inve
   const { turn, isPolling, error, startPolling, stopPolling } = useTurnPolling(apiBaseUrl);
   
   // State for dice animation
-  const [pendingDiceRolls, setPendingDiceRolls] = useState<{ turnNumber: number; diceRolls: string[]; narrative: string; timestamp: string; gameDay?: number | null; gameTime?: string | null } | null>(null);
+  const [pendingDiceRolls, setPendingDiceRolls] = useState<{ turnNumber: number; turnId?: string; diceRolls: string[]; narrative: string; timestamp: string; gameDay?: number | null; gameTime?: string | null; isStreaming?: boolean } | null>(null);
   const [showingDiceAnimation, setShowingDiceAnimation] = useState(false);
   const [diceAnimationCompleted, setDiceAnimationCompleted] = useState(false);
 
@@ -73,6 +76,9 @@ export function GameChat({ sessionId, apiBaseUrl = '/api', characterName = 'Inve
   useEffect(() => {
     messagesRef.current = messages;
   }, [messages]);
+
+  const streamingBufferRef = useRef<Map<string, string>>(new Map());
+  const streamingBlockedRef = useRef<Set<string>>(new Set());
 
   useEffect(() => {
     onNarrativeCompleteRef.current = onNarrativeComplete;
@@ -183,6 +189,128 @@ export function GameChat({ sessionId, apiBaseUrl = '/api', characterName = 'Inve
 
             if (message.type === 'connected') {
               console.log(`[WebSocket] Connection confirmed for session ${message.sessionId}`);
+            } else if (message.type === 'keeper_dice_rolls') {
+              const diceRolls = message.diceRolls as string[] | undefined;
+              const turnId = message.turnId as string | undefined;
+              if (!diceRolls || diceRolls.length === 0) return;
+
+              if (turnId) {
+                streamingBlockedRef.current.add(turnId);
+                setStreamingTurnId(turnId);
+              }
+
+              const turnNumber = typeof message.turnNumber === 'number'
+                ? message.turnNumber
+                : messagesRef.current.length > 0
+                  ? Math.max(...messagesRef.current.map(m => m.turnNumber)) + 1
+                  : 1;
+
+              setPendingDiceRolls({
+                turnNumber,
+                turnId,
+                diceRolls,
+                narrative: '',
+                timestamp: message.timestamp || new Date().toISOString(),
+                gameDay: message.gameDay ?? null,
+                gameTime: message.gameTime ?? null,
+                isStreaming: true,
+              });
+              setShowingDiceAnimation(true);
+              setDiceAnimationCompleted(false);
+            } else if (message.type === 'keeper_stream_start') {
+              const turnId = message.turnId as string | undefined;
+              if (!turnId) return;
+
+              setStreamingTurnId(turnId);
+              setMessages(prev => {
+                const existing = prev.find(msg => msg.turnId === turnId);
+                if (existing) {
+                  return prev.map(msg =>
+                    msg.turnId === turnId ? { ...msg, isStreaming: true } : msg
+                  );
+                }
+
+                const nextTurnNumber = typeof message.turnNumber === 'number'
+                  ? message.turnNumber
+                  : prev.length > 0 ? Math.max(...prev.map(m => m.turnNumber)) + 1 : 1;
+
+                return [
+                  ...prev,
+                  {
+                    role: 'keeper',
+                    content: '',
+                    timestamp: message.timestamp || new Date().toISOString(),
+                    turnNumber: nextTurnNumber,
+                    turnId: turnId,
+                    isStreaming: true,
+                    gameDay: message.gameDay ?? null,
+                    gameTime: message.gameTime ?? null,
+                  }
+                ];
+              });
+            } else if (message.type === 'keeper_stream_delta') {
+              const turnId = message.turnId as string | undefined;
+              const delta = message.delta as string | undefined;
+              if (!turnId || !delta) return;
+
+              if (streamingBlockedRef.current.has(turnId)) {
+                const existing = streamingBufferRef.current.get(turnId) || '';
+                streamingBufferRef.current.set(turnId, existing + delta);
+
+                setMessages(prev => {
+                  const found = prev.find(msg => msg.turnId === turnId);
+                  if (found) return prev;
+                  const nextTurnNumber = prev.length > 0 ? Math.max(...prev.map(m => m.turnNumber)) + 1 : 1;
+                  return [
+                    ...prev,
+                    {
+                      role: 'keeper',
+                      content: '',
+                      timestamp: new Date().toISOString(),
+                      turnNumber: nextTurnNumber,
+                      turnId: turnId,
+                      isStreaming: true,
+                    }
+                  ];
+                });
+                return;
+              }
+
+              setMessages(prev => {
+                let found = false;
+                const next = prev.map(msg => {
+                  if (msg.turnId === turnId) {
+                    found = true;
+                    return { ...msg, content: msg.content + delta, isStreaming: true };
+                  }
+                  return msg;
+                });
+
+                if (!found) {
+                  const nextTurnNumber = prev.length > 0 ? Math.max(...prev.map(m => m.turnNumber)) + 1 : 1;
+                  next.push({
+                    role: 'keeper',
+                    content: delta,
+                    timestamp: new Date().toISOString(),
+                    turnNumber: nextTurnNumber,
+                    turnId: turnId,
+                    isStreaming: true,
+                  });
+                }
+
+                return next;
+              });
+            } else if (message.type === 'keeper_stream_end') {
+              const turnId = message.turnId as string | undefined;
+              if (!turnId) return;
+
+              setMessages(prev =>
+                prev.map(msg =>
+                  msg.turnId === turnId ? { ...msg, isStreaming: false } : msg
+                )
+              );
+
+              setStreamingTurnId(current => current === turnId ? null : current);
             } else if (message.type === 'simulate_triggered') {
               console.log('[WebSocket] Simulate triggered:', message);
               // Handle simulated narrative
@@ -205,6 +333,7 @@ export function GameChat({ sessionId, apiBaseUrl = '/api', characterName = 'Inve
                       content: message.keeperNarrative,
                       timestamp: message.timestamp || new Date().toISOString(),
                       turnNumber: latestTurnNumber + 1,
+                      turnId: message.turnId,
                       gameDay: message.gameDay ?? null,
                       gameTime: message.gameTime ?? null,
                     }
@@ -300,6 +429,7 @@ export function GameChat({ sessionId, apiBaseUrl = '/api', characterName = 'Inve
 
   // Load conversation history on mount or when sessionId changes
   useEffect(() => {
+    setStreamingTurnId(null);
     // If initialMessages are provided, use them; otherwise load from API
     if (initialMessages && initialMessages.length > 0) {
       setMessages(initialMessages);
@@ -381,6 +511,57 @@ export function GameChat({ sessionId, apiBaseUrl = '/api', characterName = 'Inve
     if (diceAnimationCompleted && pendingDiceRolls) {
       console.log(`[GameChat] Adding completed dice animation to messages`);
 
+      if (pendingDiceRolls.isStreaming) {
+        const turnId = pendingDiceRolls.turnId;
+
+        if (turnId) {
+          streamingBlockedRef.current.delete(turnId);
+        }
+        const buffered = turnId ? (streamingBufferRef.current.get(turnId) || '') : '';
+        if (turnId && buffered) {
+          streamingBufferRef.current.delete(turnId);
+        }
+
+        if (turnId) {
+          setMessages(prev => {
+            const hasMessage = prev.some(msg => msg.turnId === turnId);
+            const next = hasMessage
+              ? prev.map(msg =>
+                  msg.turnId === turnId
+                    ? {
+                        ...msg,
+                        content: msg.content + buffered,
+                        isStreaming: true,
+                        diceRolls: msg.diceRolls ?? pendingDiceRolls.diceRolls,
+                        gameDay: pendingDiceRolls.gameDay ?? msg.gameDay ?? null,
+                        gameTime: pendingDiceRolls.gameTime ?? msg.gameTime ?? null,
+                      }
+                    : msg
+                )
+              : [
+                  ...prev,
+                  {
+                    role: 'keeper',
+                    content: buffered,
+                    timestamp: pendingDiceRolls.timestamp,
+                    turnNumber: pendingDiceRolls.turnNumber,
+                    turnId: pendingDiceRolls.turnId,
+                    isStreaming: true,
+                    diceRolls: pendingDiceRolls.diceRolls,
+                    gameDay: pendingDiceRolls.gameDay ?? null,
+                    gameTime: pendingDiceRolls.gameTime ?? null,
+                  }
+                ];
+            return next;
+          });
+        }
+
+        setShowingDiceAnimation(false);
+        setPendingDiceRolls(null);
+        setDiceAnimationCompleted(false);
+        return;
+      }
+
       setMessages(prev => {
         // Check if this message already exists
         const existingMessage = prev.find(msg =>
@@ -397,6 +578,7 @@ export function GameChat({ sessionId, apiBaseUrl = '/api', characterName = 'Inve
           content: pendingDiceRolls.narrative,
           timestamp: pendingDiceRolls.timestamp,
           turnNumber: pendingDiceRolls.turnNumber,
+          turnId: pendingDiceRolls.turnId,
           diceRolls: pendingDiceRolls.diceRolls,
         };
         return [...prev, keeperMessage];
@@ -414,7 +596,12 @@ export function GameChat({ sessionId, apiBaseUrl = '/api', characterName = 'Inve
     if (turn && turn.status === 'completed') {
       // Check if we've already processed this turn to avoid duplicates
       const turnKey = turn.turnId || `turn-${turn.turnNumber}`;
-      if (processedTurnIdsRef.current.has(turnKey)) {
+      const turnNumberKey = `turn-${turn.turnNumber}`;
+      if (
+        processedTurnIdsRef.current.has(turnKey) ||
+        processedTurnIdsRef.current.has(turnNumberKey) ||
+        (turn.turnId && processedTurnIdsRef.current.has(turn.turnId))
+      ) {
         console.log(`[GameChat] Turn ${turnKey} already processed, skipping...`);
         return;
       }
@@ -434,6 +621,10 @@ export function GameChat({ sessionId, apiBaseUrl = '/api', characterName = 'Inve
 
       // Mark this turn as processed
       processedTurnIdsRef.current.add(turnKey);
+      processedTurnIdsRef.current.add(turnNumberKey);
+      if (turn.turnId) {
+        processedTurnIdsRef.current.add(turn.turnId);
+      }
 
       // Check if there are dice rolls to show
       const allDiceRolls: string[] = [];
@@ -466,6 +657,40 @@ export function GameChat({ sessionId, apiBaseUrl = '/api', characterName = 'Inve
       console.log(`[GameChat] Total dice rolls collected: ${allDiceRolls.length}`, allDiceRolls);
       console.log(`[GameChat] Has keeperNarrative: ${!!turn.keeperNarrative}`);
 
+      const existingStreamingMessage = turn.turnId
+        ? messagesRef.current.find(msg => msg.turnId === turn.turnId && msg.role === 'keeper')
+        : null;
+
+      if (existingStreamingMessage) {
+        setMessages(prev => prev.map(msg => {
+          if (msg.turnId !== turn.turnId) return msg;
+          return {
+            ...msg,
+            content: turn.keeperNarrative || msg.content,
+            timestamp: turn.completedAt || turn.startedAt,
+            turnNumber: turn.turnNumber,
+            isStreaming: false,
+            diceRolls: allDiceRolls.length > 0 ? allDiceRolls : msg.diceRolls,
+            gameDay: turn.gameDay ?? msg.gameDay ?? null,
+            gameTime: turn.gameTime ?? msg.gameTime ?? null,
+          };
+        }));
+
+        if (turn.turnId) {
+          setStreamingTurnId(current => current === turn.turnId ? null : current);
+        }
+
+        if (onNarrativeComplete) {
+          onNarrativeComplete();
+        }
+
+        setIsSending(false);
+        if (fetchGameEndingRef.current) {
+          fetchGameEndingRef.current();
+        }
+        return;
+      }
+
       // If there are dice rolls, show animation first
       if (allDiceRolls.length > 0 && turn.keeperNarrative) {
         console.log(`[GameChat] Showing dice animation for ${allDiceRolls.length} dice rolls`);
@@ -473,6 +698,7 @@ export function GameChat({ sessionId, apiBaseUrl = '/api', characterName = 'Inve
         diceAnimationCallbackCalledRef.current = ''; // Reset to allow new callback
         setPendingDiceRolls({
           turnNumber: turn.turnNumber,
+          turnId: turn.turnId,
           diceRolls: allDiceRolls,
           narrative: turn.keeperNarrative,
           timestamp: turn.completedAt || turn.startedAt,
@@ -486,7 +712,10 @@ export function GameChat({ sessionId, apiBaseUrl = '/api', characterName = 'Inve
         setMessages(prev => {
           // Check if keeper response for this turn already exists
           const existingKeeperMessage = prev.find(msg => 
-            msg.turnNumber === turn.turnNumber && msg.role === 'keeper'
+            msg.role === 'keeper' && (
+              (turn.turnId && msg.turnId === turn.turnId) ||
+              msg.turnNumber === turn.turnNumber
+            )
           );
           if (existingKeeperMessage) {
             console.log(`[GameChat] Keeper message for turn ${turn.turnNumber} already exists, skipping...`);
@@ -500,6 +729,7 @@ export function GameChat({ sessionId, apiBaseUrl = '/api', characterName = 'Inve
               content: turn.keeperNarrative,
               timestamp: turn.completedAt || turn.startedAt,
               turnNumber: turn.turnNumber,
+              turnId: turn.turnId,
               gameDay: turn.gameDay ?? null,
               gameTime: turn.gameTime ?? null,
             };
@@ -752,7 +982,7 @@ export function GameChat({ sessionId, apiBaseUrl = '/api', characterName = 'Inve
           </div>
         )}
 
-        {(isSending || isPolling) && (
+        {(isSending || isPolling) && !streamingTurnId && (
           <div className="chat-message keeper loading">
             <div className="message-meta">
               <span className="sender-name">🎭 Keeper</span>

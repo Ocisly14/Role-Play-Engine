@@ -9,6 +9,15 @@ import type { GameState } from "../../../src/coc_multiagents_system/state/gameSt
 import type { DynamicGameState } from "../../../src/dynamicworldagent/state/index.js";
 import { HumanMessage } from "@langchain/core/messages";
 import { DynamicGameStateManager } from "../../../src/dynamicworldagent/state/index.js";
+import { WebSocketManager } from "../websocket/WebSocketManager.js";
+import { notifyClients } from "../websocket/notifier.js";
+
+type NarrativeStreamHandlers = {
+  onDiceRolls?: (diceRolls: string[]) => void;
+  onNarrativeStart?: () => void;
+  onNarrativeDelta?: (delta: string) => void;
+  onNarrativeEnd?: () => void;
+};
 
 /**
  * Create a new turn and start processing
@@ -112,6 +121,111 @@ export async function createTurn(req: Request, res: Response): Promise<void> {
   }
 }
 
+function buildNarrativeStreamHandlers(params: {
+  sessionId: string;
+  turnId: string;
+  turnNumber?: number | null;
+  isSimulated?: boolean | null;
+  gameDay?: number | null;
+  gameTime?: string | null;
+  timestamp?: string | null;
+}): NarrativeStreamHandlers | null {
+  const modelProvider = (process.env.MODEL_PROVIDER || "").toLowerCase();
+  if (modelProvider !== "google") {
+    return null;
+  }
+
+  const wsManager = WebSocketManager.getInstance();
+  if (!wsManager) {
+    return null;
+  }
+
+  const clients = wsManager.getClients();
+  if (!clients.has(params.sessionId)) {
+    return null;
+  }
+
+  let started = false;
+  let pending = "";
+  let flushTimer: ReturnType<typeof setTimeout> | null = null;
+
+  const send = (message: Record<string, unknown>) => {
+    notifyClients(params.sessionId, clients, message);
+  };
+
+  const flush = () => {
+    if (!pending) return;
+    send({
+      type: "keeper_stream_delta",
+      turnId: params.turnId,
+      delta: pending,
+    });
+    pending = "";
+  };
+
+  const start = () => {
+    if (started) return;
+    started = true;
+    send({
+      type: "keeper_stream_start",
+      turnId: params.turnId,
+      turnNumber: params.turnNumber ?? null,
+      isSimulated: params.isSimulated ?? null,
+      timestamp: params.timestamp || new Date().toISOString(),
+      gameDay: params.gameDay ?? null,
+      gameTime: params.gameTime ?? null,
+    });
+  };
+
+  return {
+    onDiceRolls: (diceRolls: string[]) => {
+      if (!Array.isArray(diceRolls) || diceRolls.length === 0) return;
+      send({
+        type: "keeper_dice_rolls",
+        turnId: params.turnId,
+        turnNumber: params.turnNumber ?? null,
+        diceRolls,
+        timestamp: params.timestamp || new Date().toISOString(),
+        gameDay: params.gameDay ?? null,
+        gameTime: params.gameTime ?? null,
+      });
+    },
+    onNarrativeStart: () => {
+      start();
+    },
+    onNarrativeDelta: (delta: string) => {
+      if (!delta) return;
+      start();
+      pending += delta;
+
+      if (pending.length >= 48) {
+        flush();
+        return;
+      }
+
+      if (!flushTimer) {
+        flushTimer = setTimeout(() => {
+          flush();
+          flushTimer = null;
+        }, 50);
+      }
+    },
+    onNarrativeEnd: () => {
+      if (!started) return;
+      if (flushTimer) {
+        clearTimeout(flushTimer);
+        flushTimer = null;
+      }
+      flush();
+      send({
+        type: "keeper_stream_end",
+        turnId: params.turnId,
+        timestamp: new Date().toISOString(),
+      });
+    },
+  };
+}
+
 /**
  * Helper function to process a game turn asynchronously
  */
@@ -135,6 +249,22 @@ async function processGameTurnAsync(
 
     const graph = graphManager.getGraph(useDynamic);
     const initialMessages = [new HumanMessage(userInput)];
+    const db = DatabaseManager.getInstance().getDatabase();
+    let streamHandlers: NarrativeStreamHandlers | null = null;
+
+    if (useDynamic && dynamicGameState) {
+      const dynamicTurnManager = new DynamicTurnManager(db);
+      const turn = dynamicTurnManager.getTurn(turnId);
+      streamHandlers = buildNarrativeStreamHandlers({
+        sessionId: dynamicGameState.sessionId,
+        turnId,
+        turnNumber: turn?.turnNumber ?? null,
+        isSimulated: turn?.isSimulated ?? null,
+        gameDay: turn?.gameDay ?? dynamicGameState.gameDay ?? null,
+        gameTime: turn?.gameTime ?? dynamicGameState.timeOfDay ?? null,
+        timestamp: turn?.startedAt ?? null,
+      });
+    }
 
     // Prepare graph state
     let graphState: any;
@@ -145,6 +275,7 @@ async function processGameTurnAsync(
         messages: initialMessages,
         dynamicGameState: dynamicGameState,
         turnId: turnId,
+        stream: streamHandlers ?? undefined,
       };
     } else if (regularGameState) {
       // For regular modules, use GameState (legacy support)

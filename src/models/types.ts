@@ -97,4 +97,5 @@ export interface GenerationOptions {
   customSystemPrompt?: string;
   maxRetries?: number;
   images?: ImageInput[];
+  onToken?: (token: string) => void;
 }

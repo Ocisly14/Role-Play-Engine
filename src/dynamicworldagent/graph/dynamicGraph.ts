@@ -38,6 +38,12 @@ export interface DynamicGraphState {
   turnId?: string;  // Current turn being processed
   isSimulatedQuery?: boolean;  // Track if input is simulated by Director Agent
   simulatedQueryCount?: number;  // Safety counter for continuous loop (max 5)
+  stream?: {
+    onDiceRolls?: (diceRolls: string[]) => void;
+    onNarrativeStart?: () => void;
+    onNarrativeDelta?: (delta: string) => void;
+    onNarrativeEnd?: () => void;
+  };
 }
 
 /**
@@ -93,6 +99,10 @@ export const buildDynamicGraph = (
       },
       simulatedQueryCount: {
         value: (left: number | undefined, right?: number | undefined) =>
+          right !== undefined ? right : left,
+      },
+      stream: {
+        value: (left: DynamicGraphState["stream"] | undefined, right?: DynamicGraphState["stream"]) =>
           right !== undefined ? right : left,
       },
     },
@@ -570,11 +580,27 @@ export const buildDynamicGraph = (
     console.log("📖 [Dynamic Keeper Agent] 开始生成叙述...");
     const dgsm = new DynamicGameStateManager(state.dynamicGameState);
     const userInput = latestHumanMessage(state.messages);
+    const stream = state.stream;
+    const actionResults = dgsm.getState().temporaryInfo.actionResults || [];
+    const diceRolls = actionResults.flatMap((result) =>
+      Array.isArray(result.diceRolls) ? result.diceRolls : []
+    );
+    const shouldStream = Boolean(stream?.onNarrativeDelta);
 
     let updatedGameState = state.dynamicGameState;
 
     try {
-      const result = await keeperAgent.generateNarrative(userInput, dgsm);
+      if (diceRolls.length > 0) {
+        stream?.onDiceRolls?.(diceRolls);
+      }
+
+      if (shouldStream) {
+        stream?.onNarrativeStart?.();
+      }
+
+      const result = await keeperAgent.generateNarrative(userInput, dgsm, {
+        onNarrativeDelta: shouldStream ? stream?.onNarrativeDelta : undefined,
+      });
 
       // TODO: Update dynamicGameState based on keeper narrative
       // For example, mark truth events as revealed, deploy red herrings, etc.
@@ -615,6 +641,10 @@ export const buildDynamicGraph = (
         } catch (markError) {
           console.error("❌ [Dynamic Keeper Agent] Failed to mark turn error:", markError);
         }
+      }
+    } finally {
+      if (shouldStream) {
+        stream?.onNarrativeEnd?.();
       }
     }
 
@@ -681,6 +711,10 @@ export const buildDynamicListenerGraph = (
       },
       simulatedQueryCount: {
         value: (left: number | undefined, right?: number | undefined) =>
+          right !== undefined ? right : left,
+      },
+      stream: {
+        value: (left: DynamicGraphState["stream"] | undefined, right?: DynamicGraphState["stream"]) =>
           right !== undefined ? right : left,
       },
     },

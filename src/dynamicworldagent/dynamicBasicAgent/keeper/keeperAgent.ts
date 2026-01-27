@@ -29,7 +29,11 @@ export class KeeperAgent {
   /**
    * Generate narrative description with clue revelation based on current game state and user query
    */
-  async generateNarrative(characterInput: string, gameStateManager: DynamicGameStateManager): Promise<{narrative: string, clueRevelations: any, updatedGameState: DynamicGameState}> {
+  async generateNarrative(
+    characterInput: string,
+    gameStateManager: DynamicGameStateManager,
+    options?: { onNarrativeDelta?: (delta: string) => void }
+  ): Promise<{narrative: string, clueRevelations: any, updatedGameState: DynamicGameState}> {
     const runtime = createRuntime();
     const dynamicState = gameStateManager.getState();
     
@@ -131,9 +135,12 @@ export class KeeperAgent {
       "handlebars"
     );
 
+    const narrativeStream = options?.onNarrativeDelta
+      ? this.createNarrativeStreamParser(options.onNarrativeDelta)
+      : null;
     let response: string = "";
     let parsedResponse: any;
-    const maxAttempts = 2; // Try up to 2 times
+    const maxAttempts = narrativeStream ? 1 : 2; // Avoid duplicate streaming retries
 
     for (let attempt = 1; attempt <= maxAttempts; attempt++) {
       try {
@@ -142,6 +149,8 @@ export class KeeperAgent {
           context: prompt,
           images,
           modelClass: ModelClass.MEDIUM,
+          maxRetries: narrativeStream ? 1 : undefined,
+          onToken: narrativeStream ? (chunk) => narrativeStream.ingest(chunk) : undefined,
         });
 
         // Extract JSON from response (in case LLM wraps it in markdown code blocks)
@@ -759,6 +768,101 @@ export class KeeperAgent {
         updatedGameState: gameStateManager.getState()
       };
     }
+  }
+
+  private createNarrativeStreamParser(onDelta: (delta: string) => void) {
+    let buffer = "";
+    let lastNarrative = "";
+
+    return {
+      ingest: (chunk: string) => {
+        if (!chunk) return;
+        buffer += chunk;
+
+        const narrative = this.extractNarrativeFromBuffer(buffer);
+        if (narrative === null) return;
+
+        if (narrative.length > lastNarrative.length) {
+          const delta = narrative.slice(lastNarrative.length);
+          if (delta) {
+            onDelta(delta);
+          }
+          lastNarrative = narrative;
+        }
+      },
+    };
+  }
+
+  private extractNarrativeFromBuffer(buffer: string): string | null {
+    const keyMatch = /"narrative"\s*:\s*"/.exec(buffer);
+    if (!keyMatch || keyMatch.index === undefined) {
+      return null;
+    }
+
+    let index = keyMatch.index + keyMatch[0].length;
+    let result = "";
+    let escaped = false;
+
+    for (; index < buffer.length; index++) {
+      const char = buffer[index];
+
+      if (escaped) {
+        switch (char) {
+          case '"':
+            result += '"';
+            break;
+          case "\\":
+            result += "\\";
+            break;
+          case "n":
+            result += "\n";
+            break;
+          case "r":
+            result += "\r";
+            break;
+          case "t":
+            result += "\t";
+            break;
+          case "b":
+            result += "\b";
+            break;
+          case "f":
+            result += "\f";
+            break;
+          case "u": {
+            const hex = buffer.slice(index + 1, index + 5);
+            if (hex.length < 4) {
+              return result;
+            }
+            if (/^[0-9a-fA-F]{4}$/.test(hex)) {
+              result += String.fromCharCode(parseInt(hex, 16));
+              index += 4;
+            } else {
+              result += "u";
+            }
+            break;
+          }
+          default:
+            result += char;
+            break;
+        }
+        escaped = false;
+        continue;
+      }
+
+      if (char === "\\") {
+        escaped = true;
+        continue;
+      }
+
+      if (char === '"') {
+        return result;
+      }
+
+      result += char;
+    }
+
+    return result;
   }
 
   private safeStringify(obj: any): string {

@@ -19,10 +19,12 @@ const HEARTBEAT_INTERVAL_MS = 60000; // Send heartbeat every 60 seconds
  * Handles client connections, message routing, and heartbeat mechanism
  */
 export class WebSocketManager {
+  private static instance: WebSocketManager | null = null;
   private wss: WebSocketServer;
   private clients = new Map<string, WSClient>();
 
   constructor(server: http.Server) {
+    WebSocketManager.instance = this;
     this.wss = new WebSocketServer({
       server,
       path: '/ws'
@@ -186,6 +188,13 @@ export class WebSocketManager {
    */
   public getClients(): Map<string, WSClient> {
     return this.clients;
+  }
+
+  /**
+   * Get current WebSocketManager instance (if initialized)
+   */
+  public static getInstance(): WebSocketManager | null {
+    return WebSocketManager.instance;
   }
 
   /**
