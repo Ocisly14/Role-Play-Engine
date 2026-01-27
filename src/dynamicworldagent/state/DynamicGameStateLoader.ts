@@ -47,13 +47,14 @@ export async function loadDynamicGameStateFromDatabase(
   
   // Check if module exists in database
   const moduleData = database.prepare(`
-    SELECT 
+    SELECT
       module_id,
       title,
       keeper_guidance,
       module_limitations,
       module_notes,
       introduction,
+      global_trigger,
       macro_scene_structure,
       truth_timeline,
       knowledge_matrix,
@@ -90,13 +91,24 @@ export async function loadDynamicGameStateFromDatabase(
   try {
     // Load module digest
     if (moduleData.keeper_guidance || moduleData.module_limitations || moduleData.module_notes || moduleData.introduction) {
+      const moduleDigest: any = {
+        moduleNotes: moduleData.module_notes || "",
+        keeperGuidance: moduleData.keeper_guidance || "",
+        moduleLimitations: moduleData.module_limitations || "",
+        introduction: moduleData.introduction || "",
+      };
+
+      // Parse globalTrigger if present
+      if (moduleData.global_trigger) {
+        try {
+          moduleDigest.globalTrigger = JSON.parse(moduleData.global_trigger);
+        } catch (e) {
+          console.warn(`[DynamicGameState] Failed to parse global_trigger:`, e);
+        }
+      }
+
       manager.loadWorldData({
-        moduleDigest: {
-          moduleNotes: moduleData.module_notes || "",
-          keeperGuidance: moduleData.keeper_guidance || "",
-          moduleLimitations: moduleData.module_limitations || "",
-          introduction: moduleData.introduction || "",
-        },
+        moduleDigest,
       });
     }
 
@@ -134,6 +146,71 @@ export async function loadDynamicGameStateFromDatabase(
     if (moduleData.end_state_definition) {
       const endState = JSON.parse(moduleData.end_state_definition);
       manager.loadWorldData({ endState });
+    }
+
+    // Load scenario outlines from database (including connections)
+    const scenarioRows = database.prepare(`
+      SELECT scenario_id, name, description, tags, connections, source_place_id
+      FROM scenarios
+    `).all() as any[];
+
+    // Get knowledge matrix to look up sourcePlaceName
+    const knowledgeMatrix = manager.getState().knowledgeMatrix || [];
+
+    const scenarioOutlines = scenarioRows.map(row => {
+      let connections: any[] = [];
+      try {
+        if (row.connections) {
+          connections = JSON.parse(row.connections);
+        }
+      } catch (e) {
+        console.warn(`[DynamicGameState] Failed to parse connections for scenario ${row.scenario_id}:`, e);
+      }
+
+      // Find sourcePlaceName from knowledgeMatrix if sourcePlaceId exists
+      let sourcePlaceName: string | undefined = undefined;
+      if (row.source_place_id) {
+        const knowledgeHolder = knowledgeMatrix.find(
+          holder => holder.id === row.source_place_id && holder.holderType === "PLACE"
+        );
+        if (knowledgeHolder) {
+          sourcePlaceName = knowledgeHolder.holderName;
+        }
+      }
+
+      // Convert database format to ScenarioOutline format
+      return {
+        id: row.scenario_id,
+        name: row.name,
+        description: row.description || "",
+        sourcePlaceId: row.source_place_id || undefined,
+        sourcePlaceName: sourcePlaceName,
+        tags: row.tags ? JSON.parse(row.tags) : [],
+        evidence: [], // Database doesn't store evidence, set to empty array
+        clues: [], // Database doesn't store clues, set to empty array
+        connections: connections.map((conn: any) => {
+          // Find target scenario to resolve name and id
+          const targetScenario = scenarioRows.find(
+            s => s.name === conn.scenarioName ||
+                 s.scenario_id === conn.scenarioName ||
+                 s.scenario_id === conn.scenarioId ||
+                 s.name === conn.scenarioId
+          );
+          return {
+            scenarioName: targetScenario?.name || conn.scenarioName || conn.scenarioId,
+            scenarioId: targetScenario?.scenario_id || conn.scenarioId || conn.scenarioName,
+            relationshipType: conn.relationshipType,
+            description: conn.description,
+            blocked: conn.blocked,
+            blockReason: conn.blockReason
+          };
+        })
+      };
+    });
+
+    if (scenarioOutlines.length > 0) {
+      manager.loadWorldData({ scenarioOutlines });
+      console.log(`[DynamicGameState] Loaded ${scenarioOutlines.length} scenario outlines from database`);
     }
 
     console.log(`[DynamicGameState] Loaded state for module "${moduleName}"`);
@@ -316,53 +393,21 @@ export async function initializeCompleteDynamicGameState(
     };
   }
 
-  // 2. Load initial snapshot
+  // 2. Load all initial snapshots for all scenarios
   let currentScenario: DynamicScenarioSnapshot | null = null;
   let gameDay = 1;
   let timeOfDay = "08:00";
+  const initialSnapshotsMap = new Map<string, DynamicScenarioSnapshot[]>();
 
-  // Query initial snapshot (for DynamicWorld modules, there should be only one initial snapshot per module)
-  // Note: scenarios table doesn't have direct module_id, but each module's scenarios are typically separate
-  const initialSnapshot = database.prepare(`
-    SELECT
-      ss.snapshot_id, ss.scenario_id, ss.snapshot_name, ss.location,
-      ss.description, ss.events, ss.keeper_notes,
-      ss.time_restriction, ss.show_map, ss.game_time,
-      s.name as scenario_name
-    FROM scenario_snapshots ss
-    JOIN scenarios s ON ss.scenario_id = s.scenario_id
-    WHERE ss.initial_snapshot = 1
-    LIMIT 1
-  `).get() as any;
-
-  if (initialSnapshot) {
-    console.log(`[DynamicGameState] Found initial snapshot: ${initialSnapshot.snapshot_name || initialSnapshot.scenario_name} (${initialSnapshot.location})`);
-    
-    // Parse game time from snapshot (should read from snapshot, not use defaults)
-    if (initialSnapshot.game_time) {
-      console.log(`[DynamicGameState] Loading game time from snapshot: "${initialSnapshot.game_time}"`);
-      const parsedTime = parseInitialGameTime(initialSnapshot.game_time);
-      if (parsedTime) {
-        if (parsedTime.gameDay !== undefined) {
-          gameDay = parsedTime.gameDay;
-          console.log(`[DynamicGameState] Set gameDay to: ${gameDay}`);
-        }
-        timeOfDay = parsedTime.timeOfDay;
-        console.log(`[DynamicGameState] Set timeOfDay to: ${timeOfDay}`);
-      } else {
-        console.warn(`[DynamicGameState] Failed to parse game_time: "${initialSnapshot.game_time}", using defaults: Day ${gameDay}, ${timeOfDay}`);
-      }
-    } else {
-      console.log(`[DynamicGameState] No game_time in snapshot, using defaults: Day ${gameDay}, ${timeOfDay}`);
-    }
-
+  // Helper function to build a snapshot from database row
+  const buildSnapshotFromRow = (snapshotRow: any): DynamicScenarioSnapshot => {
     // Load snapshot characters
     const snapshotCharacters = database.prepare(`
       SELECT id, character_name, character_role, character_status,
              character_location, character_notes
       FROM scenario_characters
       WHERE snapshot_id = ?
-    `).all(initialSnapshot.snapshot_id);
+    `).all(snapshotRow.snapshot_id);
 
     // Load snapshot clues
     const snapshotClues = database.prepare(`
@@ -370,23 +415,22 @@ export async function initializeCompleteDynamicGameState(
              discovery_method, reveals, discovered, discovery_details
       FROM scenario_clues
       WHERE snapshot_id = ?
-    `).all(initialSnapshot.snapshot_id);
+    `).all(snapshotRow.snapshot_id);
 
     // Load snapshot conditions
     const snapshotConditions = database.prepare(`
       SELECT condition_id, condition_type, description, mechanical_effect
       FROM scenario_conditions
       WHERE snapshot_id = ?
-    `).all(initialSnapshot.snapshot_id);
+    `).all(snapshotRow.snapshot_id);
 
-    // Build current scenario
-    currentScenario = {
-      id: initialSnapshot.snapshot_id,
-      name: initialSnapshot.snapshot_name || initialSnapshot.scenario_name,
-      location: initialSnapshot.location,
-      description: initialSnapshot.description,
-      gameTime: initialSnapshot.game_time || undefined,
-      showMap: initialSnapshot.show_map === 1,
+    return {
+      id: snapshotRow.snapshot_id,
+      name: snapshotRow.snapshot_name || snapshotRow.scenario_name,
+      location: snapshotRow.location,
+      description: snapshotRow.description,
+      gameTime: snapshotRow.game_time || undefined,
+      showMap: snapshotRow.show_map === 1,
       characters: (snapshotCharacters as any[]).map(char => ({
         id: char.id,
         name: char.character_name,
@@ -411,33 +455,73 @@ export async function initializeCompleteDynamicGameState(
         description: cond.description,
         mechanicalEffect: cond.mechanical_effect || undefined,
       })),
-      keeperNotes: initialSnapshot.keeper_notes || undefined,
-      timeRestriction: initialSnapshot.time_restriction || undefined,
+      keeperNotes: snapshotRow.keeper_notes || undefined,
+      timeRestriction: snapshotRow.time_restriction || undefined,
     };
+  };
+
+  // Load all initial snapshots (one per scenario)
+  const allInitialSnapshots = database.prepare(`
+    SELECT
+      ss.snapshot_id, ss.scenario_id, ss.snapshot_name, ss.location,
+      ss.description, ss.events, ss.keeper_notes,
+      ss.time_restriction, ss.show_map, ss.game_time,
+      s.name as scenario_name
+    FROM scenario_snapshots ss
+    JOIN scenarios s ON ss.scenario_id = s.scenario_id
+    WHERE ss.initial_snapshot = 1
+    ORDER BY ss.scenario_id
+  `).all() as any[];
+
+  // Build snapshots and group by scenario_id
+  for (const snapshotRow of allInitialSnapshots) {
+    const snapshot = buildSnapshotFromRow(snapshotRow);
+    
+    // Store in map (one snapshot per scenario for initial snapshots)
+    if (!initialSnapshotsMap.has(snapshotRow.scenario_id)) {
+      initialSnapshotsMap.set(snapshotRow.scenario_id, []);
+    }
+    initialSnapshotsMap.get(snapshotRow.scenario_id)!.push(snapshot);
   }
 
-  // 3. Load NPCs from snapshot
-  const npcCharacters: DynamicNPCProfile[] = [];
-  if (currentScenario) {
-    const npcLoader = new NPCLoader(db);
-    const allNPCs = npcLoader.getAllNPCs();
-
-    const npcNamesToProcess = new Set<string>();
-    if (currentScenario.characters) {
-      currentScenario.characters.forEach((char: any) => {
-        if (char.name) npcNamesToProcess.add(char.name);
-      });
-    }
-
-    for (const charName of npcNamesToProcess) {
-      const matchingNpc = allNPCs.find(npc => isNameSimilar(npc.name, charName));
-      if (matchingNpc && !npcCharacters.some(npc => npc.id === matchingNpc.id)) {
-        // Convert NPCProfile to DynamicNPCProfile (remove currentLocation)
-        const dynamicNpc = convertNPCProfileToDynamic(matchingNpc);
-        npcCharacters.push(dynamicNpc);
+  // Set the first initial snapshot as currentScenario (for player's starting scene)
+  if (allInitialSnapshots.length > 0) {
+    const firstInitialSnapshot = allInitialSnapshots[0];
+    currentScenario = buildSnapshotFromRow(firstInitialSnapshot);
+    
+    console.log(`[DynamicGameState] Found initial snapshot: ${firstInitialSnapshot.snapshot_name || firstInitialSnapshot.scenario_name} (${firstInitialSnapshot.location})`);
+    
+    // Parse game time from snapshot
+    if (firstInitialSnapshot.game_time) {
+      console.log(`[DynamicGameState] Loading game time from snapshot: "${firstInitialSnapshot.game_time}"`);
+      const parsedTime = parseInitialGameTime(firstInitialSnapshot.game_time);
+      if (parsedTime) {
+        if (parsedTime.gameDay !== undefined) {
+          gameDay = parsedTime.gameDay;
+          console.log(`[DynamicGameState] Set gameDay to: ${gameDay}`);
+        }
+        timeOfDay = parsedTime.timeOfDay;
+        console.log(`[DynamicGameState] Set timeOfDay to: ${timeOfDay}`);
+      } else {
+        console.warn(`[DynamicGameState] Failed to parse game_time: "${firstInitialSnapshot.game_time}", using defaults: Day ${gameDay}, ${timeOfDay}`);
       }
+    } else {
+      console.log(`[DynamicGameState] No game_time in snapshot, using defaults: Day ${gameDay}, ${timeOfDay}`);
     }
   }
+
+  console.log(`[DynamicGameState] Loaded ${initialSnapshotsMap.size} initial scenario snapshots`);
+
+  // 3. Load all NPCs from database (not just current scenario)
+  const npcLoader = new NPCLoader(db);
+  const allNPCs = npcLoader.getAllNPCs();
+  
+  // Convert all NPCs to DynamicNPCProfile format
+  const npcCharacters: DynamicNPCProfile[] = allNPCs.map(npc => 
+    convertNPCProfileToDynamic(npc)
+  );
+  
+  console.log(`[DynamicGameState] Loaded ${npcCharacters.length} NPCs from database`);
 
   // 4. Load DynamicWorld data
   const worldData = await loadDynamicGameState(db, params.moduleName);
@@ -447,6 +531,19 @@ export async function initializeCompleteDynamicGameState(
   }
 
   // 5. Create complete state with runtime data
+  // Merge initial snapshots with any existing snapshots from worldData
+  const mergedSnapshots = new Map(worldData.updatedDynamicScenarioSnapshots);
+  // Add initial snapshots (will not overwrite if already exists, but initial snapshots should be first)
+  for (const [scenarioId, snapshots] of initialSnapshotsMap.entries()) {
+    if (!mergedSnapshots.has(scenarioId)) {
+      mergedSnapshots.set(scenarioId, snapshots);
+    } else {
+      // If scenario already has snapshots, prepend initial snapshot to the beginning
+      const existing = mergedSnapshots.get(scenarioId)!;
+      mergedSnapshots.set(scenarioId, [...snapshots, ...existing]);
+    }
+  }
+
   const completeState: DynamicGameState = {
     ...worldData,
     sessionId: params.sessionId,
@@ -459,6 +556,9 @@ export async function initializeCompleteDynamicGameState(
       sceneStartTime: timeOfDay,
       playerTimeConsumption: {},
     },
+    // Store all initial snapshots in updatedDynamicScenarioSnapshots
+    // This allows Director Agent to access all scenario snapshots without querying database
+    updatedDynamicScenarioSnapshots: mergedSnapshots,
   };
 
   console.log(`[DynamicGameState] Initialized complete state for module "${params.moduleName}"`);

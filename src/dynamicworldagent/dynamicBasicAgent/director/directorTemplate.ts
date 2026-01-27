@@ -159,6 +159,11 @@ Each snapshot should:
      \`\`\`
 
 3. **Characters**: List all NPCs that should be present in the scene at the current time point:
+   - ⚠️ **CRITICAL - DO NOT CREATE NEW NPCs**: You MUST ONLY use NPCs from the input data provided in the "characters" field of each scenario
+   - ⚠️ **CRITICAL - PRESERVE EXACT IDs AND NAMES**:
+     * Use the EXACT character **id** from the input (e.g., if input says "NPC_5", you MUST use "NPC_5", NOT "npc_5", "NPC5", or any variation)
+     * Use the EXACT character **name** from the input (e.g., if input says "张三", you MUST use "张三", NOT "Zhang San", "张先生", or any translation/abbreviation)
+     * DO NOT invent, abbreviate, translate, or modify character IDs or names in any way
    - **ActionLog**: What they are currently doing (write into the actionLog field) - this is always required
    - **Note**: For simplified snapshots, DO NOT include status, inventory, or relationships changes - only actionLog is needed
 
@@ -365,6 +370,11 @@ Generate snapshots for each scenario above, with **different levels of detail ba
      \`\`\`
 
 3. **Characters**: List all NPCs that should be present in the scene at the current time point:
+   - ⚠️ **CRITICAL - DO NOT CREATE NEW NPCs**: You MUST ONLY use NPCs from the input data provided in the "characters" field of each scenario
+   - ⚠️ **CRITICAL - PRESERVE EXACT IDs AND NAMES**:
+     * Use the EXACT character **id** from the input (e.g., if input says "NPC_5", you MUST use "NPC_5", NOT "npc_5", "NPC5", or any variation)
+     * Use the EXACT character **name** from the input (e.g., if input says "张三", you MUST use "张三", NOT "Zhang San", "张先生", or any translation/abbreviation)
+     * DO NOT invent, abbreviate, translate, or modify character IDs or names in any way
    - **ActionLog**: What they are currently doing (write into the actionLog field) - this is always required
    - **Note**: For simplified snapshots, DO NOT include status, inventory, or relationships changes - only actionLog is needed
 
@@ -411,6 +421,7 @@ The following is the current global trigger that was set previously. Use this as
 Generate a **COMPLETE, DETAILED snapshot** with ALL fields:
 - **description**: Full atmospheric description including lighting, sounds, smells, weather, ambiance, and narrative of what happened
 - **characters**: Complete list with full ScenarioCharacter details including:
+  - ⚠️ **CRITICAL - PRESERVE EXACT IDs AND NAMES**: Use the EXACT character **id** and **name** from the input data. DO NOT invent, abbreviate, translate, or modify them in any way.
   - **Status Changes**: Only include status attributes that have changed (e.g., { "hp": -2, "sanity": -5 } means HP decreased by 2, sanity decreased by 5). Use negative numbers for decreases, positive for increases. Omit status if no changes.
   - **Inventory Changes**: Only include inventory modifications using add and remove arrays (e.g., { "add": [{ "name": "key", "quantity": 1 }], "remove": [{ "name": "flashlight" }] }). Omit inventory if no changes.
   - **Relationship Changes**: Only include relationships that are new or have changed (e.g., attitude changed, new relationship formed). Omit relationships if no changes.

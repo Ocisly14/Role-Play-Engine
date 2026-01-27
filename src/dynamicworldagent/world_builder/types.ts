@@ -225,7 +225,8 @@ export interface EndStateDefinition {
 export type ScenarioConnectionType = "leads_to" | "concurrent" | "prerequisite" | "alternate";
 
 export interface ScenarioConnection {
-  scenarioName: string;
+  scenarioName: string;     // Human-readable scenario name
+  scenarioId?: string;      // Scenario ID for precise lookup
   relationshipType: ScenarioConnectionType;
   description?: string;
   blocked?: boolean;        // 连接是否被物理阻挡或锁定

@@ -102,6 +102,12 @@ export class DirectorAgent {
     const currentScenario = dynamicState.currentScenario;
     const sceneChangeRequest = dynamicState.temporaryInfo.sceneChangeRequest;
 
+    // Save current scenario as previousScenario for Keeper to access
+    if (currentScenario) {
+      dynamicState.temporaryInfo.previousScenario = { ...currentScenario };
+      console.log(`\n💾 [Director Agent] Saved previous scenario: ${currentScenario.name}`);
+    }
+
     // Log current state
     console.log(`\n📍 [Current Scene State]:`);
     if (currentScenario) {
@@ -562,6 +568,69 @@ export class DirectorAgent {
   }
 
   /**
+   * Find NPC by ID with fuzzy matching fallback
+   * 1st priority: Exact match (case-sensitive)
+   * 2nd priority: Fuzzy match (case-insensitive, normalized)
+   */
+  private findNPCById(
+    npcCharacters: DynamicNPCProfile[],
+    targetId: string,
+    targetName?: string
+  ): DynamicNPCProfile | null {
+    // Stage 1: Exact match (case-sensitive)
+    const exactMatch = npcCharacters.find(npc => npc.id === targetId);
+    if (exactMatch) {
+      return exactMatch;
+    }
+
+    // Stage 2: Fuzzy match by ID (case-insensitive, normalized)
+    const normalizeId = (id: string) => id.toLowerCase().trim().replace(/[\s_-]/g, '');
+    const normalizedTargetId = normalizeId(targetId);
+
+    let bestMatch: DynamicNPCProfile | null = null;
+    let bestScore = 0;
+
+    for (const npc of npcCharacters) {
+      const normalizedNpcId = normalizeId(npc.id);
+
+      // Calculate similarity score
+      let score = 0;
+
+      // Check if normalized IDs match
+      if (normalizedNpcId === normalizedTargetId) {
+        score = 0.9; // High score for normalized match
+      } else if (normalizedNpcId.includes(normalizedTargetId) || normalizedTargetId.includes(normalizedNpcId)) {
+        score = 0.7; // Medium score for substring match
+      }
+
+      // Bonus: Check name similarity if provided
+      if (targetName && npc.name) {
+        const normalizedTargetName = normalizeId(targetName);
+        const normalizedNpcName = normalizeId(npc.name);
+
+        if (normalizedNpcName === normalizedTargetName) {
+          score += 0.3;
+        } else if (normalizedNpcName.includes(normalizedTargetName) || normalizedTargetName.includes(normalizedNpcName)) {
+          score += 0.2;
+        }
+      }
+
+      if (score > bestScore) {
+        bestScore = score;
+        bestMatch = npc;
+      }
+    }
+
+    // Only return fuzzy match if score is above threshold
+    if (bestScore >= 0.5) {
+      console.log(`   ℹ️  Fuzzy matched "${targetId}"${targetName ? ` (${targetName})` : ''} → "${bestMatch?.id}" (${bestMatch?.name}) [score: ${bestScore.toFixed(2)}]`);
+      return bestMatch;
+    }
+
+    return null;
+  }
+
+  /**
    * Merge character delta updates from snapshot to actual NPC data
    * Applies status changes, inventory add/remove, and relationship updates
    */
@@ -773,6 +842,11 @@ export class DirectorAgent {
         ? scenarioOutlineMap.get(currentScenario.id)
         : null;
 
+      // Find target scenario info for template
+      const targetScenarioData = allScenariosData.find(
+        s => s.scenarioName === sceneChangeRequest.targetSceneName
+      );
+
       // Build template context
       const templateContext = {
         sceneChangeRequest: {
@@ -788,6 +862,10 @@ export class DirectorAgent {
           sourcePlaceId: playerScenarioOutline?.sourcePlaceId || null,
           sourcePlaceName: playerScenarioOutline?.sourcePlaceName || null,
           connections: playerScenarioOutline?.connections || []
+        } : null,
+        targetScene: targetScenarioData ? {
+          id: targetScenarioData.scenarioId,
+          name: targetScenarioData.scenarioName
         } : null,
         allScenariosJson,
         currentGameDay: dynamicState.gameDay,
@@ -814,23 +892,22 @@ export class DirectorAgent {
       const response = await generateText({
         runtime,
         context: prompt,
-        modelClass: ModelClass.SMALL,
+        modelClass: ModelClass.LARGE,
       });
 
       // Parse LLM response
       let parsedResponse: {
-        validatedTargetSceneName?: string;
-        modifiedConnections?: Array<{
-          scenarioName: string;
-          relationshipType: string;
-          description?: string;
-          blocked?: boolean;
-          blockReason?: string | null;
-        }> | null;
-        targetSnapshot?: DynamicScenarioSnapshot;
-        backgroundSnapshots?: Array<{
+        updatedSnapshots?: Array<{
           scenarioId: string;
+          isTargetScene?: boolean;
           snapshot: DynamicScenarioSnapshot;
+          connections?: Array<{
+            scenarioName: string;
+            relationshipType: string;
+            description?: string;
+            blocked?: boolean;
+            blockReason?: string | null;
+          }>;
         }>;
         globalTrigger?: {
           timeRestriction?: string;
@@ -855,32 +932,53 @@ export class DirectorAgent {
       }
 
       // Validate response structure
-      if (!parsedResponse.validatedTargetSceneName || !parsedResponse.targetSnapshot) {
-        console.error(`❌ LLM response missing required fields`);
+      if (!parsedResponse.updatedSnapshots || parsedResponse.updatedSnapshots.length === 0) {
+        console.error(`❌ LLM response missing updatedSnapshots array`);
+        console.error(`   Full parsed response:`, JSON.stringify(parsedResponse, null, 2));
         return null;
       }
 
-      console.log(`   ✓ Validated target scene: ${parsedResponse.validatedTargetSceneName}`);
+      // Extract target scene from updatedSnapshots (marked with isTargetScene: true)
+      const targetSceneItem = parsedResponse.updatedSnapshots.find(item => item.isTargetScene === true);
+
+      if (!targetSceneItem) {
+        console.error(`❌ No target scene found in updatedSnapshots (isTargetScene: true)`);
+        console.error(`   Available scenes:`, parsedResponse.updatedSnapshots.map(s => ({
+          scenarioId: s.scenarioId,
+          isTargetScene: s.isTargetScene,
+          name: s.snapshot.name
+        })));
+        return null;
+      }
+
+      // Extract background snapshots (all non-target scenes)
+      const backgroundSnapshotsArray = parsedResponse.updatedSnapshots.filter(item => !item.isTargetScene);
+
+      // Get validated target scene name from the snapshot
+      const validatedTargetSceneName = targetSceneItem.snapshot.name;
+      const modifiedConnections = targetSceneItem.connections || null;
 
       // Ensure target snapshot has unified time and type
       const targetSnapshot: DynamicScenarioSnapshot = {
-        ...parsedResponse.targetSnapshot,
+        ...targetSceneItem.snapshot,
         gameTime: currentGameTime,
         snapshotType: "complete"  // Target snapshot is always complete
       };
 
+      console.log(`   ✓ Validated target scene: ${validatedTargetSceneName}`);
+
       // Merge character deltas from target snapshot to actual NPCs
       if (targetSnapshot.characters) {
         for (const char of targetSnapshot.characters) {
-          const charWithActionLog = char as ScenarioCharacter & { 
+          const charWithActionLog = char as ScenarioCharacter & {
             actionLog?: ActionLogEntry[];
             status?: Partial<CharacterStatus>;
             inventory?: { add?: InventoryItem[]; remove?: InventoryItem[] } | InventoryItem[];
             relationships?: NPCRelationship[];
           };
-          
-          // Merge delta to actual NPC in gameState
-          const npc = dynamicState.npcCharacters.find(n => n.id === char.id);
+
+          // Merge delta to actual NPC in gameState (with fuzzy matching)
+          const npc = this.findNPCById(dynamicState.npcCharacters, char.id, char.name);
           if (npc) {
             this.mergeCharacterDeltaToNPC(npc, {
               status: charWithActionLog.status,
@@ -888,9 +986,9 @@ export class DirectorAgent {
               relationships: charWithActionLog.relationships,
               actionLog: charWithActionLog.actionLog
             });
-            console.log(`   ✓ Merged delta updates to NPC: ${npc.name}`);
+            console.log(`   ✓ Merged delta updates to NPC: ${npc.name} (${npc.id})`);
           } else {
-            console.warn(`   ⚠️ NPC ${char.id} not found in gameState, skipping delta merge`);
+            console.warn(`   ⚠️ NPC "${char.id}"${char.name ? ` (${char.name})` : ''} not found in gameState, skipping delta merge`);
           }
         }
       }
@@ -901,10 +999,10 @@ export class DirectorAgent {
       // Process background snapshots
       const backgroundSnapshotsMap = new Map<string, DynamicScenarioSnapshot>();
 
-      if (parsedResponse.backgroundSnapshots && parsedResponse.backgroundSnapshots.length > 0) {
-        console.log(`   📋 Processing ${parsedResponse.backgroundSnapshots.length} background snapshots...`);
+      if (backgroundSnapshotsArray.length > 0) {
+        console.log(`   📋 Processing ${backgroundSnapshotsArray.length} background snapshots...`);
 
-        for (const item of parsedResponse.backgroundSnapshots) {
+        for (const item of backgroundSnapshotsArray) {
           // Validate actionLog format (background snapshots don't update actual NPCs)
           if (item.snapshot.characters) {
             for (const char of item.snapshot.characters) {
@@ -941,13 +1039,12 @@ export class DirectorAgent {
       }
 
       // Handle modified connections if present
-      let modifiedConnections = null;
-      if (parsedResponse.modifiedConnections && parsedResponse.modifiedConnections.length > 0) {
+      if (modifiedConnections && modifiedConnections.length > 0) {
         console.log(`   🔗 Updating scenario connections...`);
 
         // Find target scenario in scenarioOutlines
         const targetScenarioOutline = dynamicState.scenarioOutlines.find(
-          outline => outline.name === parsedResponse.validatedTargetSceneName
+          outline => outline.name === validatedTargetSceneName
         );
 
         if (targetScenarioOutline) {
@@ -960,26 +1057,32 @@ export class DirectorAgent {
           `);
 
           updateStmt.run(
-            JSON.stringify(parsedResponse.modifiedConnections),
+            JSON.stringify(modifiedConnections),
             targetScenarioOutline.id
           );
 
           // Update in-memory scenarioOutline
-          // Convert relationshipType to ScenarioConnectionType
-          const convertedConnections = parsedResponse.modifiedConnections.map(conn => ({
-            scenarioName: conn.scenarioName,
-            relationshipType: conn.relationshipType as ScenarioConnectionType,
-            description: conn.description,
-            blocked: conn.blocked,
-            blockReason: conn.blockReason ?? undefined
-          }));
+          // Convert relationshipType to ScenarioConnectionType and add scenarioId
+          const convertedConnections = modifiedConnections.map(conn => {
+            // Find target scenario to get ID
+            const targetScenario = dynamicState.scenarioOutlines.find(
+              outline => outline.name === conn.scenarioName || outline.id === conn.scenarioName
+            );
+            return {
+              scenarioName: targetScenario?.name || conn.scenarioName,
+              scenarioId: targetScenario?.id || conn.scenarioName,
+              relationshipType: conn.relationshipType as ScenarioConnectionType,
+              description: conn.description,
+              blocked: conn.blocked,
+              blockReason: conn.blockReason ?? undefined
+            };
+          });
           targetScenarioOutline.connections = convertedConnections;
-          modifiedConnections = parsedResponse.modifiedConnections;
 
-          console.log(`   ✓ Updated connections for ${parsedResponse.validatedTargetSceneName}`);
+          console.log(`   ✓ Updated connections for ${validatedTargetSceneName}`);
 
           // Log blocked connections if any
-          const blockedConnections = parsedResponse.modifiedConnections.filter(c => c.blocked);
+          const blockedConnections = modifiedConnections.filter(c => c.blocked);
           if (blockedConnections.length > 0) {
             console.log(`   ⚠️ Blocked connections:`);
             blockedConnections.forEach(c => {
@@ -1010,14 +1113,14 @@ export class DirectorAgent {
       }
 
       console.log(`✅ [Director Agent] Scene switch update completed`);
-      console.log(`   - Target: ${parsedResponse.validatedTargetSceneName} (complete)`);
+      console.log(`   - Target: ${validatedTargetSceneName} (complete)`);
       console.log(`   - Background: ${backgroundSnapshotsMap.size} scenarios (simplified)`);
       if (modifiedConnections) {
         console.log(`   - Connections: ${modifiedConnections.length} updated`);
       }
 
       return {
-        validatedTargetSceneName: parsedResponse.validatedTargetSceneName,
+        validatedTargetSceneName,
         targetSnapshot: savedTargetSnapshot,
         backgroundSnapshots: backgroundSnapshotsMap,
         modifiedConnections
@@ -1149,7 +1252,7 @@ export class DirectorAgent {
       const response = await generateText({
         runtime,
         context: prompt,
-        modelClass: ModelClass.SMALL,
+        modelClass: ModelClass.LARGE,
       });
 
       // Parse LLM response

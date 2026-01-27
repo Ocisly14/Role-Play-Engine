@@ -15,7 +15,13 @@ You classify the investigator's latest input into a structured action analysis a
 ## Current Scenario Connections
 The following scenarios are accessible from the current location (relationshipType: "leads_to"):
 {{#each connections}}
-- {{scenarioName}}{{#if description}} ({{description}}){{/if}}
+- **{{scenarioName}}**
+  {{#if description}}  Connection: {{description}}{{/if}}
+  {{#if targetScenario}}
+    {{#if targetScenario.description}}  Description: {{targetScenario.description}}{{/if}}
+    {{#if targetScenario.tags}}  Tags: {{targetScenario.tags}}{{/if}}
+  {{/if}}
+  {{#if blocked}}  ⚠️ BLOCKED{{#if blockReason}}: {{blockReason}}{{/if}}{{/if}}
 {{/each}}
 {{/if}}
 
@@ -28,10 +34,18 @@ The following scenarios are accessible from the current location (relationshipTy
 {{/if}}
 
 ## Scene Change Detection
-1. Determine if the input indicates intent to move to a different location/scenario
+1. Determine if the input indicates intent to move to a different location/scenario (e.g., "I'll go to ...", "I want to go to ...")
 2. If it's a scene change request:
    - Check if the target scenario is in the "Current Scenario Connections" list above
-   - If target IS in connections: set sceneChangeRequest.shouldChange = true
+   - **CRITICAL - Semantic Matching**: When matching scene names, use **SEMANTIC/MEANING-based matching**, NOT literal string matching:
+     * Match by MEANING, not exact words
+     * Examples of valid matches:
+       - "度假村保安办公室" ≈ "Resort Security Office" ✅ (same meaning: security office)
+       - "安保办公室" ≈ "Security Office" ✅ (same meaning)
+       - "Town Hall" ≈ "市政厅" ✅ (same meaning)
+       - "Sheriff's Office" ≈ "警长办公室" ✅ (same meaning)
+     * If the player's target and a connection name refer to the same physical location (regardless of language or exact wording), treat it as a MATCH
+   - If target IS in connections (semantic match): set sceneChangeRequest.shouldChange = true and use the exact scenario name from the connections list as targetSceneName
    - If target is NOT in connections: set sceneChangeRequest.shouldChange = false and provide reason (e.g., "Target location is not accessible from here", "No connection to that location")
 3. If it's NOT a scene change request: set sceneChangeRequest.shouldChange = false
 

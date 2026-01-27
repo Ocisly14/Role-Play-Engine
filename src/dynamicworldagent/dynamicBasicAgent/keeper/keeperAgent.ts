@@ -63,7 +63,14 @@ export class KeeperAgent {
       characterInput: string;
       keeperNarrative: string | null;
     }>) || [];
-    
+
+    // 8. Calculate current turn number and detect if this is the first real player turn
+    // Current turn is the next turn after the latest in history
+    const currentTurnNumber = conversationHistory.length > 0
+      ? Math.max(...conversationHistory.map(h => h.turnNumber)) + 1
+      : 1;
+    const isFirstRealTurn = currentTurnNumber === 1;
+
     // Note: RAG is not used in Dynamic World system
     
     // 获取模板
@@ -87,15 +94,23 @@ export class KeeperAgent {
       reason: sceneChangeRequest.reason
     } : null;
 
+    // Extract connections from completeScenarioInfo (already extracted there, reuse it)
+    // Connections are scenario-level data from scenarioOutlines
+    const connections = (completeScenarioInfo as any).connections || [];
+
     const templateContext = {
       characterInput,
       allActionResults,  // All action results (for {{#each}} loop)
       fullGameTime: fullGameTime,  // Complete display: "Day 1, 08:00 (Morning)"
       tension: dynamicState.tension,
-      phase: dynamicState.phase,
       isTransition,
       sceneChangeRequest: sceneChangeRequestForNarrative,  // Scene change request (without timestamp)
       conversationHistory,  // Recent conversation history (for {{#each}} loop)
+      currentTurnNumber,  // Current turn number
+      isFirstRealTurn,  // Boolean flag for turn 1 detection
+      keeperGuidance: dynamicState.keeperGuidance || null,  // Module-specific keeper guidance
+      // Connections as separate variable for easier template access (scenario-level from scenarioOutlines)
+      connections: connections,
       // JSON string version (used directly in template)
       scenarioContextJson: this.safeStringify(completeScenarioInfo),
       playerCharacterJson: this.safeStringify(playerCharacterComplete),
@@ -191,11 +206,7 @@ export class KeeperAgent {
       }
     }
 
-    // Clear scene change request (already processed in narrative)
-    if (dynamicState.temporaryInfo.sceneChangeRequest) {
-      gameStateManager.clearSceneChangeRequest();
-    }
-
+    // Note: sceneChangeRequest is now cleared by Director Agent (which runs before Keeper)
     // Temporary state is now preserved until next real player input
     // Cleanup happens in entry node for real input only
     const finalGameState = updatedGameState;
@@ -243,13 +254,19 @@ export class KeeperAgent {
    */
   private extractCompleteScenarioInfo(dynamicState: DynamicGameState) {
     const currentScenario = dynamicState.currentScenario;
-    
+
     if (!currentScenario) {
       return {
         hasScenario: false,
         message: "No current scenario loaded"
       };
     }
+
+    // Find connections for current scenario from scenarioOutlines
+    const currentScenarioOutline = dynamicState.scenarioOutlines.find(
+      outline => outline.id === currentScenario.id || outline.name === currentScenario.name
+    );
+    const connections = currentScenarioOutline?.connections || [];
 
     // Simplified scenario info - keep essential dynamic state
     // Include clue text so Keeper can decide what to reveal
@@ -260,6 +277,21 @@ export class KeeperAgent {
       location: currentScenario.location,
       // Characters present in the scene (dynamic state)
       characters: currentScenario.characters || [],
+      // Connections to other scenarios
+      connections: connections.map(conn => {
+        // Find target scenario to get proper name and id
+        const targetScenario = dynamicState.scenarioOutlines.find(
+          outline => outline.name === conn.scenarioName || outline.id === conn.scenarioName
+        );
+        return {
+          scenarioName: targetScenario?.name || conn.scenarioName,
+          scenarioId: targetScenario?.id || conn.scenarioName,
+          relationshipType: conn.relationshipType,
+          description: conn.description,
+          blocked: conn.blocked,
+          blockReason: conn.blockReason
+        };
+      }),
       // Provide clue details for Keeper decision-making
       clues: (currentScenario.clues || []).map(clue => ({
         id: clue.id,
@@ -277,11 +309,54 @@ export class KeeperAgent {
 
   /**
    * Extract previous scenario information (for scene transitions)
-   * Note: visitedScenarios removed, returns null as previous scenario info is no longer tracked
+   * Reads from temporaryInfo.previousScenario (saved by Director Agent before scene switch)
    */
   private extractPreviousScenarioInfo(dynamicState: DynamicGameState) {
-    // visitedScenarios removed, return null
-    return null;
+    const previousScenario = dynamicState.temporaryInfo.previousScenario;
+
+    if (!previousScenario) {
+      return null;
+    }
+
+    // Find connections for previous scenario from scenarioOutlines
+    const previousScenarioOutline = dynamicState.scenarioOutlines.find(
+      outline => outline.id === previousScenario.id || outline.name === previousScenario.name
+    );
+    const connections = previousScenarioOutline?.connections || [];
+
+    // Return simplified scenario info for previous scene
+    return {
+      hasScenario: true,
+      id: previousScenario.id,
+      name: previousScenario.name,
+      location: previousScenario.location,
+      description: previousScenario.description,
+      characters: previousScenario.characters || [],
+      connections: connections.map(conn => {
+        // Find target scenario to get proper name and id
+        const targetScenario = dynamicState.scenarioOutlines.find(
+          outline => outline.name === conn.scenarioName || outline.id === conn.scenarioName
+        );
+        return {
+          scenarioName: targetScenario?.name || conn.scenarioName,
+          scenarioId: targetScenario?.id || conn.scenarioName,
+          relationshipType: conn.relationshipType,
+          description: conn.description,
+          blocked: conn.blocked,
+          blockReason: conn.blockReason
+        };
+      }),
+      clues: (previousScenario.clues || []).map(clue => ({
+        id: clue.id,
+        clueText: clue.clueText,
+        location: clue.location,
+        category: clue.category,
+        difficulty: clue.difficulty,
+        reveals: clue.reveals,
+        discovered: clue.discovered,
+        ...(clue.discovered && clue.discoveryDetails ? { discoveryDetails: clue.discoveryDetails } : {})
+      }))
+    };
   }
 
   /**

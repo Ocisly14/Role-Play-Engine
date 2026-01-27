@@ -41,13 +41,84 @@ export class OrchestratorAgent {
     const npcNames = dynamicState.npcCharacters?.map(npc => npc.name).join(", ") || "None";
     
     // Get scenario connections for scene change validation
-    const scenarioOutline = dynamicState.scenarioOutlines.find(
-      outline => outline.id === dynamicState.currentScenario?.id
-    );
-    const connections = scenarioOutline?.connections?.filter(
+    // Note: currentScenario.id is snapshot_id, not scenario_id
+    // We need to find the corresponding scenario outline to get connections
+    let scenarioOutline: typeof dynamicState.scenarioOutlines[0] | undefined;
+    
+    if (db && dynamicState.currentScenario?.id) {
+      // Try to get scenario_id from database using snapshot_id
+      try {
+        const database = db.getDatabase();
+        const snapshotRow = database
+          .prepare(`SELECT scenario_id FROM scenario_snapshots WHERE snapshot_id = ?`)
+          .get(dynamicState.currentScenario.id) as { scenario_id: string } | undefined;
+        
+        if (snapshotRow) {
+          // Find scenario outline by scenario_id
+          scenarioOutline = dynamicState.scenarioOutlines.find(
+            outline => outline.id === snapshotRow.scenario_id
+          );
+        }
+      } catch (error) {
+        console.warn("[Orchestrator Agent] Failed to query scenario_id from database:", error);
+      }
+    }
+    
+    // Fallback: match by name if database query failed or db not available
+    if (!scenarioOutline && dynamicState.currentScenario?.name) {
+      scenarioOutline = dynamicState.scenarioOutlines.find(
+        outline => outline.name === dynamicState.currentScenario?.name
+      );
+    }
+    const rawConnections = scenarioOutline?.connections?.filter(
       conn => conn.relationshipType === "leads_to"
     ) || [];
     
+    // Enrich connections with target scenario details
+    const connections = rawConnections.map(conn => {
+      // Find target scenario outline by name or id
+      const targetScenario = dynamicState.scenarioOutlines.find(
+        outline => outline.name === conn.scenarioName || outline.id === conn.scenarioName
+      );
+
+      return {
+        scenarioName: targetScenario?.name || conn.scenarioName, // Use actual name from outline if found
+        scenarioId: targetScenario?.id || conn.scenarioName,     // Include ID
+        relationshipType: conn.relationshipType,
+        description: conn.description,
+        blocked: conn.blocked,
+        blockReason: conn.blockReason,
+        // Target scenario details
+        targetScenario: targetScenario ? {
+          id: targetScenario.id,
+          name: targetScenario.name,
+          description: targetScenario.description,
+          tags: targetScenario.tags || []
+        } : null
+      };
+    });
+
+    // Log connections for debugging
+    console.log(`\n🔗 [Orchestrator Agent] Current scenario connections (${connections.length}):`);
+    if (connections.length > 0) {
+      connections.forEach((conn, index) => {
+        console.log(`   ${index + 1}. "${conn.scenarioName}" (ID: ${conn.scenarioId}) [${conn.relationshipType}]`);
+        if (conn.description) console.log(`      Description: ${conn.description}`);
+        if (conn.blocked) {
+          console.log(`      ⚠️ BLOCKED: ${conn.blockReason || 'No reason specified'}`);
+        } else {
+          console.log(`      ✓ Accessible`);
+        }
+        if (conn.targetScenario) {
+          console.log(`      → Resolved to: "${conn.targetScenario.name}"`);
+        } else {
+          console.log(`      ⚠️ Warning: Could not find target scenario in outlines`);
+        }
+      });
+    } else {
+      console.log(`   (No connections found for current scenario)`);
+    }
+
     // Get conversation history directly from database to extract previous narrative
     // This ensures we get the latest completed turns even if memory agent hasn't run yet
     let previousNarrative: string | null = null;
@@ -120,7 +191,7 @@ export class OrchestratorAgent {
     const response = await generateText({
       runtime,
       context: prompt,
-      modelClass: ModelClass.SMALL,
+      modelClass: ModelClass.MEDIUM,
     });
 
     // Parse the response and store action analysis and scene change request

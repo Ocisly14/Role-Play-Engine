@@ -122,6 +122,9 @@ export const buildDynamicGraph = (
       dgsm.clearActionAnalysis();
       console.log("   ✓ Cleared action analysis");
 
+      dgsm.clearPreviousScenario();
+      console.log("   ✓ Cleared previous scenario");
+
       // Update timestamp and increment turn counter (only for real input)
       dgsm.updatePlayerInputTime();
       console.log(`   ✓ Updated player input timestamp: ${new Date().toISOString()}`);
@@ -182,6 +185,7 @@ export const buildDynamicGraph = (
 
     // Log detailed action analysis
     const actionAnalysis = dgsm.getState().temporaryInfo.currentActionAnalysis;
+    const sceneChangeRequest = dgsm.getState().temporaryInfo.sceneChangeRequest;
     if (actionAnalysis) {
       console.log("\n📋 [Dynamic Action Analysis] 详细分析结果:");
       console.log(`   Character: ${actionAnalysis.character}`);
@@ -189,7 +193,11 @@ export const buildDynamicGraph = (
       console.log(`   Action Type: ${actionAnalysis.actionType}`);
       console.log(`   Target: ${actionAnalysis.target.name || "N/A"}`);
       console.log(`   Target Intent: ${actionAnalysis.target.intent || "N/A"}`);
-      console.log(`   Requires Dice: ${actionAnalysis.requiresDice ? "Yes" : "No"}`);
+      if (sceneChangeRequest) {
+        console.log(`   SceneChangeRequest: ${sceneChangeRequest.shouldChange ? "Yes" : "No"}${sceneChangeRequest.targetSceneName ? ` -> ${sceneChangeRequest.targetSceneName}` : ""}`);
+      } else {
+        console.log(`   SceneChangeRequest: No`);
+      }
     } else {
       console.log("⚠️  [Dynamic Action Analysis] 未生成分析结果");
     }
@@ -336,10 +344,10 @@ export const buildDynamicGraph = (
         dgsm,
         userInput
       );
-      
+
       // Update dynamic state with NPC response analyses
       dgsm.setNPCResponseAnalyses(npcResponseAnalyses);
-      
+
       console.log("✅ [Dynamic Character Agent] NPC 响应分析完成");
     } catch (error) {
       console.error(`❌ [Dynamic Character Agent] 分析失败:`, error);
@@ -348,7 +356,53 @@ export const buildDynamicGraph = (
     return { ...state, dynamicGameState: dgsm.getState() };
   });
 
-  graph.addEdge("character" as any, "keeper" as any);
+  graph.addEdge("character" as any, "director" as any);
+
+  // Director: handle scene changes and narrative direction
+  graph.addNode("director", async (state: DynamicGraphState) => {
+    console.log("🎬 [Dynamic Director Agent] 处理场景转换和叙事方向...");
+    const dgsm = new DynamicGameStateManager(state.dynamicGameState);
+    const currentState = dgsm.getState();
+
+    try {
+      // Check point of no return
+      const reached = dgsm.checkPointOfNoReturn(
+        currentState.gameDay,
+        currentState.timeOfDay
+      );
+      if (reached) {
+        console.log(
+          "⚠️  [Dynamic Director] Point of no return reached!",
+          currentState.pointOfNoReturnTrigger
+        );
+      }
+
+      const sceneChangeRequest = currentState.temporaryInfo.sceneChangeRequest;
+
+      if (sceneChangeRequest?.shouldChange && sceneChangeRequest.targetSceneName) {
+        const currentCharacterInput = latestHumanMessage(state.messages);
+
+        await directorAgent.handleActionDrivenSceneChange(
+          dgsm,
+          sceneChangeRequest.targetSceneName,
+          sceneChangeRequest.reason,
+          currentCharacterInput
+        );
+      }
+
+      dgsm.clearSceneChangeRequest();
+
+      console.log("✅ [Dynamic Director Agent] 处理完成");
+    } catch (error) {
+      console.error(`❌ [Dynamic Director Agent] 处理失败:`, error);
+      // Clear scene change request even on error to prevent stuck state
+      dgsm.clearSceneChangeRequest();
+    }
+
+    return { ...state, dynamicGameState: dgsm.getState() };
+  });
+
+  graph.addEdge("director" as any, "keeper" as any);
 
   // Keeper: generate narrative
   graph.addNode("keeper", async (state: DynamicGraphState) => {
@@ -463,53 +517,7 @@ export const buildDynamicGraph = (
     };
   });
 
-  graph.addEdge("keeper" as any, "director" as any);
-
-  // Director: handle scene changes and narrative direction
-  graph.addNode("director", async (state: DynamicGraphState) => {
-    console.log("🎬 [Dynamic Director Agent] 处理场景转换和叙事方向...");
-    const dgsm = new DynamicGameStateManager(state.dynamicGameState);
-    const currentState = dgsm.getState();
-
-    try {
-      // Check point of no return
-      const reached = dgsm.checkPointOfNoReturn(
-        currentState.gameDay,
-        currentState.timeOfDay
-      );
-      if (reached) {
-        console.log(
-          "⚠️  [Dynamic Director] Point of no return reached!",
-          currentState.pointOfNoReturnTrigger
-        );
-      }
-
-      const sceneChangeRequest = currentState.temporaryInfo.sceneChangeRequest;
-
-      if (sceneChangeRequest?.shouldChange && sceneChangeRequest.targetSceneName) {
-        const currentCharacterInput = latestHumanMessage(state.messages);
-
-        await directorAgent.handleActionDrivenSceneChange(
-          dgsm,
-          sceneChangeRequest.targetSceneName,
-          sceneChangeRequest.reason,
-          currentCharacterInput
-        );
-      }
-
-      dgsm.clearSceneChangeRequest();
-
-      console.log("✅ [Dynamic Director Agent] 处理完成");
-    } catch (error) {
-      console.error(`❌ [Dynamic Director Agent] 处理失败:`, error);
-      // Clear scene change request even on error to prevent stuck state
-      dgsm.clearSceneChangeRequest();
-    }
-
-    return { ...state, dynamicGameState: dgsm.getState() };
-  });
-
-  graph.addEdge("director" as any, END);
+  graph.addEdge("keeper" as any, END);
 
   graph.addEdge(START, "entry" as any);
 
@@ -579,11 +587,22 @@ export const buildDynamicListenerGraph = (
       console.log("⏰ [Dynamic Listener] Progression trigger conditions met");
       const currentState = dgsm.getState();
       const characterInput = `[系统] 场景推进检查 - 当前场景: ${currentState.currentScenario?.name || "未知"}`;
+      
+      // Create a new turn record for the simulated query
+      const newTurnId = turnManager.createTurnFromGameState(
+        currentState.sessionId || '',
+        characterInput,
+        currentState,
+        true // Mark as simulated query
+      );
+      console.log(`📝 [Dynamic Listener] Created turn ${newTurnId} for simulated query`);
+
       return {
         ...state,
         messages: [...(state.messages || []), new HumanMessage(characterInput)],
         isSimulatedQuery: true,
         simulatedQueryCount: (state.simulatedQueryCount || 0) + 1,
+        turnId: newTurnId,
       };
     }
 
@@ -604,30 +623,80 @@ export const buildDynamicListenerGraph = (
 
   // Character node
   listenerGraph.addNode("character", async (state: DynamicGraphState) => {
-    console.log("👥 [Dynamic Listener Character Agent] 开始分析 NPC 响应...");
+    console.log("👥 [Dynamic Listener Character Agent] 开始分析 NPC 响应 (Simulated Query)...");
     const dgsm = new DynamicGameStateManager(state.dynamicGameState);
-    const userInput = latestHumanMessage(state.messages);
+    const simulatedQuery = latestHumanMessage(state.messages);
     const runtime = {}; // CharacterAgent expects runtime but only passes through generateText; keep empty placeholder
 
     try {
-      const npcResponseAnalyses = await characterAgent.analyzeNPCResponses(
+      const npcResponseAnalyses = await characterAgent.analyzeNPCResponsesFromSimulatedQuery(
         runtime,
         dgsm,
-        userInput
+        simulatedQuery
       );
       
       // Update dynamic state with NPC response analyses
       dgsm.setNPCResponseAnalyses(npcResponseAnalyses);
       
+      // Check if any NPCs need to respond
+      const hasRespondingNPCs = npcResponseAnalyses.some(
+        analysis => analysis.willRespond && analysis.responseType && analysis.responseType !== "none"
+      );
+      
+      // Store flag in state to indicate if NPCs need to act
+      const currentState = dgsm.getState();
+      currentState.temporaryInfo.contextualData = currentState.temporaryInfo.contextualData || {};
+      currentState.temporaryInfo.contextualData.hasRespondingNPCs = hasRespondingNPCs;
+      
+      if (npcResponseAnalyses.length > 0) {
+        npcResponseAnalyses.forEach(analysis => {
+          if (analysis.willRespond) {
+            console.log(`   ✓ ${analysis.npcName}: ${analysis.responseType}`);
+          } else {
+            console.log(`   - ${analysis.npcName}: 无响应`);
+          }
+        });
+      }
+      
+      if (hasRespondingNPCs) {
+        console.log(`\n📋 [Dynamic Listener Character Agent] 检测到 ${npcResponseAnalyses.filter(a => a.willRespond && a.responseType && a.responseType !== "none").length} 个 NPC 需要执行动作`);
+      } else {
+        console.log(`\n📋 [Dynamic Listener Character Agent] 没有 NPC 需要执行动作，直接进入 Director`);
+      }
+      
       console.log("✅ [Dynamic Listener Character Agent] NPC 响应分析完成");
     } catch (error) {
       console.error(`❌ [Dynamic Listener Character Agent] 分析失败:`, error);
+      // Continue with empty analyses on error
+      dgsm.setNPCResponseAnalyses([]);
+      const currentState = dgsm.getState();
+      currentState.temporaryInfo.contextualData = currentState.temporaryInfo.contextualData || {};
+      currentState.temporaryInfo.contextualData.hasRespondingNPCs = false;
     }
 
     return { ...state, dynamicGameState: dgsm.getState() };
   });
 
-  listenerGraph.addEdge("character" as any, "npcAction" as any);
+  // Conditional routing: character -> npcAction or director
+  listenerGraph.addConditionalEdges(
+    "character" as any,
+    (state: DynamicGraphState) => {
+      const currentState = state.dynamicGameState;
+      const hasRespondingNPCs = currentState.temporaryInfo.contextualData?.hasRespondingNPCs === true;
+      
+      if (hasRespondingNPCs) {
+        console.log("\n🔄 [Dynamic Listener Router] 路由到 NPC Action Agent");
+        return "npcAction";
+      } else {
+        console.log("\n🔄 [Dynamic Listener Router] 跳过 NPC Action，直接进入 Director");
+        return "director";
+      }
+    },
+    {
+      "npcAction": "npcAction" as any,
+      "director": "director" as any
+    }
+  );
 
   // NPC Action node
   listenerGraph.addNode("npcAction", async (state: DynamicGraphState) => {
@@ -650,32 +719,96 @@ export const buildDynamicListenerGraph = (
   // Director node
   listenerGraph.addNode("director", async (state: DynamicGraphState) => {
     console.log(
-      "\n🎬 [Dynamic Listener Director Agent] 处理场景转换请求和生成叙事方向..."
+      "\n🎬 [Dynamic Listener Director Agent] 处理场景转换请求..."
     );
     const dgsm = new DynamicGameStateManager(state.dynamicGameState);
     const currentState = dgsm.getState();
     const sceneChangeRequest = currentState.temporaryInfo.sceneChangeRequest;
 
-    if (
-      sceneChangeRequest?.shouldChange &&
-      sceneChangeRequest.targetSceneName
-    ) {
-      const currentCharacterInput = latestHumanMessage(state.messages);
+    try {
+      if (
+        sceneChangeRequest?.shouldChange &&
+        sceneChangeRequest.targetSceneName
+      ) {
+        const currentCharacterInput = latestHumanMessage(state.messages);
 
-      await directorAgent.handleActionDrivenSceneChange(
-        dgsm,
-        sceneChangeRequest.targetSceneName,
-        sceneChangeRequest.reason,
-        currentCharacterInput
-      );
+        await directorAgent.handleActionDrivenSceneChange(
+          dgsm,
+          sceneChangeRequest.targetSceneName,
+          sceneChangeRequest.reason,
+          currentCharacterInput
+        );
+      } else {
+        console.log("   ℹ️  无场景转换请求，跳过场景转换处理");
+      }
+
+      dgsm.clearSceneChangeRequest();
+
+      console.log("✅ [Dynamic Listener Director Agent] 处理完成");
+    } catch (error) {
+      console.error(`❌ [Dynamic Listener Director Agent] 处理失败:`, error);
+      // Clear scene change request even on error to prevent stuck state
+      dgsm.clearSceneChangeRequest();
     }
-
-    dgsm.clearSceneChangeRequest();
 
     return { ...state, dynamicGameState: dgsm.getState() };
   });
 
-  listenerGraph.addEdge("director" as any, END);
+  listenerGraph.addEdge("director" as any, "keeper" as any);
+
+  // Keeper node
+  listenerGraph.addNode("keeper", async (state: DynamicGraphState) => {
+    console.log("📖 [Dynamic Listener Keeper Agent] 开始生成叙述...");
+    const dgsm = new DynamicGameStateManager(state.dynamicGameState);
+    const userInput = latestHumanMessage(state.messages);
+
+    let updatedGameState = state.dynamicGameState;
+
+    try {
+      const result = await keeperAgent.generateNarrative(userInput, dgsm);
+
+      // Use the updated state from result (which includes all keeper updates)
+      updatedGameState = result.updatedGameState;
+
+      // Complete turn with keeper narrative if turnId exists
+      if (state.turnId) {
+        const isSimulated = state.isSimulatedQuery ?? false;
+        try {
+          turnManager.completeTurn(state.turnId, {
+            keeperNarrative: result.narrative,
+            clueRevelations: result.clueRevelations,
+            gameDay: updatedGameState?.gameDay ?? null,
+            gameTime: updatedGameState?.timeOfDay ?? null,
+          });
+          const inputType = isSimulated ? '模拟查询' : '真实输入';
+          console.log(`📝 [Dynamic Listener Keeper Agent] Turn ${state.turnId} (${inputType}) 已完成并保存到数据库`);
+          console.log(`   Keeper narrative length: ${result.narrative.length} characters`);
+        } catch (error) {
+          console.error("❌ [Dynamic Listener Keeper Agent] Failed to complete turn:", error);
+          turnManager.markError(state.turnId, error as Error);
+        }
+      }
+
+      console.log("✅ [Dynamic Listener Keeper Agent] 叙述生成完成");
+    } catch (error) {
+      console.error(`❌ [Dynamic Listener Keeper Agent] 生成失败:`, error);
+      // Mark turn as error if turnId exists
+      if (state.turnId) {
+        try {
+          turnManager.markError(state.turnId, error as Error);
+        } catch (markError) {
+          console.error("❌ [Dynamic Listener Keeper Agent] Failed to mark turn error:", markError);
+        }
+      }
+    }
+
+    return {
+      ...state,
+      dynamicGameState: updatedGameState,
+    };
+  });
+
+  listenerGraph.addEdge("keeper" as any, END);
   listenerGraph.addEdge(START, "entry" as any);
 
   return listenerGraph.compile();

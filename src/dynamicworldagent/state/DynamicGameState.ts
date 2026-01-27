@@ -30,8 +30,6 @@ import type { CoCDatabase } from "../../coc_multiagents_system/agents/memory/dat
 import { InventoryUtils } from "../../coc_multiagents_system/agents/models/gameTypes.js";
 import { randomUUID } from "crypto";
 
-export type Phase = "intro" | "investigation" | "confrontation" | "downtime";
-
 /**
  * Temporary Info for Dynamic World
  * Contains temporary state that is cleared at the start of each player turn.
@@ -50,6 +48,8 @@ export interface DynamicTemporaryInfo {
   npcResponseAnalyses: NPCResponseAnalysis[];
   /** Scene change request from Orchestrator Agent, modified by Action Agent */
   sceneChangeRequest: SceneChangeRequest | null;
+  /** Previous scenario snapshot (saved before scene switch for Keeper narrative) */
+  previousScenario: DynamicScenarioSnapshot | null;
 }
 
 /**
@@ -59,7 +59,6 @@ export interface DynamicTemporaryInfo {
 export interface DynamicGameState {
   // === Session & Runtime Data (from old GameState) ===
   sessionId: string;
-  phase: Phase;
 
   // Current scenario
   currentScenario: DynamicScenarioSnapshot | null;
@@ -149,7 +148,6 @@ export const initialDynamicGameState = (params: {
 }): DynamicGameState => ({
   // Session & Runtime Data
   sessionId: params.sessionId,
-  phase: "intro",
   currentScenario: null,
   gameDay: params.gameDay ?? 1,
   timeOfDay: params.timeOfDay ?? "08:00",
@@ -172,6 +170,7 @@ export const initialDynamicGameState = (params: {
     currentActionAnalysis: null,
     npcResponseAnalyses: [],
     sceneChangeRequest: null,
+    previousScenario: null,
   },
 
   // DynamicWorld-Specific Data
@@ -801,6 +800,14 @@ export class DynamicGameStateManager {
    */
   clearActionAnalysis(): void {
     this.state.temporaryInfo.currentActionAnalysis = null;
+    this.state.lastUpdated = new Date();
+  }
+
+  /**
+   * Clear previous scenario (saved for scene transition narrative)
+   */
+  clearPreviousScenario(): void {
+    this.state.temporaryInfo.previousScenario = null;
     this.state.lastUpdated = new Date();
   }
 

@@ -96,11 +96,11 @@ export const enrichMemoryContext = async (
   // First inject the action-type rules
   const withRules = injectActionTypeRules(gameState, actionAnalysis?.actionType);
 
-  // Extract recent conversation history (last 1 turn) and store in contextualData
+  // Extract recent conversation history (last 3 turns) and store in contextualData
   const conversationHistory = await extractRecentConversationHistory(
     db,
     gameState.sessionId,
-    1
+    3
   );
 
   return {

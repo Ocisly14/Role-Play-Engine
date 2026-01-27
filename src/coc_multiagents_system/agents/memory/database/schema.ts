@@ -622,6 +622,15 @@ export class CoCDatabase {
       // ignore if column already exists or cannot be added
     }
     try {
+      if (!this.hasColumn("module_backgrounds", "global_trigger")) {
+        this.db.exec(
+          "ALTER TABLE module_backgrounds ADD COLUMN global_trigger TEXT;"
+        );
+      }
+    } catch {
+      // ignore if column already exists or cannot be added
+    }
+    try {
       if (!this.hasColumn("module_backgrounds", "end_state_definition")) {
         this.db.exec(
           "ALTER TABLE module_backgrounds ADD COLUMN end_state_definition TEXT;"

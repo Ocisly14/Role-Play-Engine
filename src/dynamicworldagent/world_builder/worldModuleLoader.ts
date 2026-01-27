@@ -571,7 +571,8 @@ export class WorldModuleLoader {
             red_herrings = ?,
             historical_mythos = ?,
             end_state_definition = ?,
-            macro_scene_structure = ?
+            macro_scene_structure = ?,
+            global_trigger = ?
         WHERE module_id = ?
       `);
 
@@ -582,6 +583,7 @@ export class WorldModuleLoader {
         JSON.stringify(module.mythosEvents),
         JSON.stringify(module.endState),
         JSON.stringify(module.macroScene),
+        module.moduleDigest.globalTrigger ? JSON.stringify(module.moduleDigest.globalTrigger) : null,
         moduleId
       );
     }

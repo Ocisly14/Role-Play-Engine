@@ -144,9 +144,18 @@ export async function checkAndTriggerSimulate(
     } else {
       // Listener executed but didn't trigger simulate (no event to advance story)
       // Still reset the timer to avoid immediate re-checking
-      const gsmReset = new GameStateManager(result.gameState);
-      gsmReset.updatePlayerInputTime();
-      serverState.setGameStateBySession(sessionId, gsmReset.getGameState(), result.dynamicGameState || null);
+      if (useDynamic && result.dynamicGameState) {
+        // For DynamicWorld, use DynamicGameStateManager
+        const { DynamicGameStateManager } = await import("../../../src/dynamicworldagent/state/index.js");
+        const dgsmReset = new DynamicGameStateManager(result.dynamicGameState);
+        dgsmReset.updatePlayerInputTime();
+        serverState.setGameStateBySession(sessionId, null as any, dgsmReset.getState());
+      } else if (result.gameState) {
+        // For regular modules, use GameStateManager
+        const gsmReset = new GameStateManager(result.gameState);
+        gsmReset.updatePlayerInputTime();
+        serverState.setGameStateBySession(sessionId, gsmReset.getGameState(), null);
+      }
       console.log(`⏰ [WebSocket] Idle timer reset for session ${sessionId} (no simulate triggered)`);
     }
 
