@@ -421,9 +421,6 @@ export function GameSidebar({ sessionId, apiBaseUrl = '/api', refreshTrigger }: 
                     </span>
                   </div>
                 </div>
-                <div style={{ marginTop: '16px', padding: '12px', backgroundColor: 'rgba(255, 255, 255, 0.4)', borderRadius: '0.5rem', fontSize: '0.9rem', color: '#666', fontStyle: 'italic' }}>
-                  The scene image is displayed as the background of the game interface.
-                </div>
               </div>
             ) : (
               <p className="empty-state">No data</p>

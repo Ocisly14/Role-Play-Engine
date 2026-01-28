@@ -147,20 +147,34 @@ export function ModSelector({
             left: 0;
             right: 0;
             bottom: 0;
-            background: rgba(0, 0, 0, 0.7);
+            background: rgba(0, 0, 0, 0.5);
+            backdrop-filter: blur(4px);
+            -webkit-backdrop-filter: blur(4px);
             display: flex;
             align-items: center;
             justify-content: center;
             z-index: 1000;
             padding: 20px;
           }
+          @supports (backdrop-filter: blur(4px)) {
+            .mod-selector-overlay {
+              background: rgba(0, 0, 0, 0.3);
+            }
+          }
           .mod-selector-modal {
-            background: var(--paper, #f5f1e8);
-            border: 3px solid var(--border, #3d2f1f);
-            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.5);
+            background: rgba(255, 255, 255, 0.8);
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
+            border: 1px solid rgba(255, 255, 255, 0.5);
+            box-shadow: 0 30px 80px rgba(15, 23, 42, 0.25);
             max-width: 600px;
             width: 100%;
-            border-radius: 4px;
+            border-radius: 1.5rem;
+          }
+          @supports (backdrop-filter: blur(16px)) {
+            .mod-selector-modal {
+              background: rgba(255, 255, 255, 0.55);
+            }
           }
           .error-state {
             text-align: center;
@@ -195,20 +209,34 @@ export function ModSelector({
             left: 0;
             right: 0;
             bottom: 0;
-            background: rgba(0, 0, 0, 0.7);
+            background: rgba(0, 0, 0, 0.5);
+            backdrop-filter: blur(4px);
+            -webkit-backdrop-filter: blur(4px);
             display: flex;
             align-items: center;
             justify-content: center;
             z-index: 1000;
             padding: 20px;
           }
+          @supports (backdrop-filter: blur(4px)) {
+            .mod-selector-overlay {
+              background: rgba(0, 0, 0, 0.3);
+            }
+          }
           .mod-selector-modal {
-            background: var(--paper, #f5f1e8);
-            border: 3px solid var(--border, #3d2f1f);
-            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.5);
+            background: rgba(255, 255, 255, 0.8);
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
+            border: 1px solid rgba(255, 255, 255, 0.5);
+            box-shadow: 0 30px 80px rgba(15, 23, 42, 0.25);
             max-width: 600px;
             width: 100%;
-            border-radius: 4px;
+            border-radius: 1.5rem;
+          }
+          @supports (backdrop-filter: blur(16px)) {
+            .mod-selector-modal {
+              background: rgba(255, 255, 255, 0.55);
+            }
           }
           .empty-state {
             text-align: center;
@@ -346,28 +374,15 @@ export function ModSelector({
         }
 
         .modal-header {
-          padding: 24px 28px;
-          background: linear-gradient(135deg, var(--header-bg, #d4c4b0) 0%, #c4b4a0 100%);
-          border-bottom: 3px solid var(--border, #3d2f1f);
+          padding: 12px 28px;
+          background: transparent;
+          border-bottom: 1px solid rgba(226, 232, 240, 0.5);
           display: flex;
           justify-content: space-between;
           align-items: center;
           position: relative;
         }
 
-        .modal-header::after {
-          content: '';
-          position: absolute;
-          bottom: 0;
-          left: 0;
-          right: 0;
-          height: 3px;
-          background: linear-gradient(90deg,
-            transparent 0%,
-            var(--accent, #8b7355) 50%,
-            transparent 100%
-          );
-        }
 
         .modal-header-content {
           display: flex;
@@ -376,8 +391,8 @@ export function ModSelector({
         }
 
         .header-icon {
-          width: 180px;
-          height: 180px;
+          width: 120px;
+          height: 120px;
           object-fit: contain;
           filter: drop-shadow(2px 2px 4px rgba(0, 0, 0, 0.3));
           background: transparent;
@@ -438,7 +453,7 @@ export function ModSelector({
           padding: 32px 28px;
           overflow-y: auto;
           flex: 1;
-          background: #f9f6f0;
+          background: transparent;
         }
 
         .mod-grid {
@@ -483,8 +498,10 @@ export function ModSelector({
           align-items: center;
           gap: 16px;
           padding: 20px;
-          background: white;
-          border: 3px solid var(--border, #3d2f1f);
+          background: rgba(255, 255, 255, 0.6);
+          backdrop-filter: blur(8px);
+          -webkit-backdrop-filter: blur(8px);
+          border: 2px solid rgba(255, 255, 255, 0.5);
           border-radius: 8px;
           box-shadow:
             0 2px 8px rgba(0, 0, 0, 0.1),
@@ -498,18 +515,20 @@ export function ModSelector({
           transform: translateY(-4px);
           box-shadow:
             0 8px 20px rgba(0, 0, 0, 0.2),
-            0 0 0 2px var(--accent, #8b7355),
+            0 0 0 2px rgba(139, 115, 85, 0.6),
             inset 0 1px 0 rgba(255, 255, 255, 0.5);
-          border-color: var(--accent, #8b7355);
-          background: linear-gradient(135deg, #ffffff 0%, #faf8f5 100%);
+          border-color: rgba(139, 115, 85, 0.6);
+          background: rgba(255, 255, 255, 0.75);
         }
 
         .mod-card.selected .mod-card-inner {
-          background: linear-gradient(135deg, #fef9ed 0%, #f5ead0 100%);
-          border-color: var(--accent, #8b7355);
+          background: rgba(254, 249, 237, 0.8);
+          backdrop-filter: blur(10px);
+          -webkit-backdrop-filter: blur(10px);
+          border-color: rgba(139, 115, 85, 0.8);
           box-shadow:
             0 6px 16px rgba(139, 115, 85, 0.3),
-            0 0 0 3px var(--accent, #8b7355),
+            0 0 0 3px rgba(139, 115, 85, 0.6),
             inset 0 1px 0 rgba(255, 255, 255, 0.8);
           transform: translateY(-2px);
         }
@@ -572,16 +591,18 @@ export function ModSelector({
         }
 
         .create-story-card .mod-card-inner {
-          background: linear-gradient(135deg, #f0e6ff 0%, #e6d9ff 100%);
-          border-color: #8b6fb8;
+          background: rgba(240, 230, 255, 0.6);
+          backdrop-filter: blur(8px);
+          -webkit-backdrop-filter: blur(8px);
+          border-color: rgba(139, 111, 184, 0.6);
         }
 
         .create-story-card:hover .mod-card-inner {
-          background: linear-gradient(135deg, #e6d9ff 0%, #d9ccff 100%);
-          border-color: #7859a6;
+          background: rgba(230, 217, 255, 0.75);
+          border-color: rgba(120, 89, 166, 0.7);
           box-shadow:
             0 8px 20px rgba(136, 111, 184, 0.3),
-            0 0 0 2px #8b6fb8,
+            0 0 0 2px rgba(139, 111, 184, 0.6),
             inset 0 1px 0 rgba(255, 255, 255, 0.5);
         }
 
@@ -671,12 +692,12 @@ export function ModSelector({
 
         @media (max-width: 600px) {
           .modal-header {
-            padding: 20px;
+            padding: 10px 20px;
           }
 
           .header-icon {
-            width: 150px;
-            height: 150px;
+            width: 100px;
+            height: 100px;
           }
 
           .modal-header h2 {
