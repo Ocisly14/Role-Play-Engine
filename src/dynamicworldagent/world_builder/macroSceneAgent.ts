@@ -71,6 +71,7 @@ export class MacroSceneAgent {
       userPrompt: creativePrompt,
     });
 
+    progressCallback?.("Calling AI for town structure...");
     const response = await generateText({
       runtime: this.runtime,
       context: prompt,
@@ -111,6 +112,7 @@ export class MacroSceneAgent {
       userPrompt: creativePrompt,
     });
 
+    progressCallback?.("Calling AI for historical mythos...");
     const response = await generateText({
       runtime: this.runtime,
       context: prompt,
@@ -152,6 +154,7 @@ export class MacroSceneAgent {
       userPrompt: creativePrompt,
     });
 
+    progressCallback?.("Calling AI for truth timeline...");
     const response = await generateText({
       runtime: this.runtime,
       context: prompt,
@@ -207,6 +210,7 @@ export class MacroSceneAgent {
       truthTimelineJson: JSON.stringify(truthTimeline, null, 2),
     });
 
+    progressCallback?.("Calling AI for knowledge matrix...");
     const response = await generateText({
       runtime: this.runtime,
       context: prompt,
@@ -256,6 +260,7 @@ export class MacroSceneAgent {
       knowledgeMatrixJson: JSON.stringify(knowledgeMatrix, null, 2),
     });
 
+    progressCallback?.("Calling AI for red herrings...");
     const response = await generateText({
       runtime: this.runtime,
       context: prompt,
@@ -297,6 +302,7 @@ export class MacroSceneAgent {
       truthTimelineJson: JSON.stringify(truthTimeline, null, 2),
     });
 
+    progressCallback?.("Calling AI for end state...");
     const response = await generateText({
       runtime: this.runtime,
       context: prompt,

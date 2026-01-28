@@ -97,16 +97,31 @@ const resolveMapImage = (mapImagePath?: string): ImageInput | null => {
   return null;
 };
 
+const isDynamicGameState = (state: unknown): state is DynamicGameState => {
+  return Boolean(
+    state &&
+      typeof state === "object" &&
+      "moduleName" in state &&
+      "scenarioOutlines" in state &&
+      "macroScene" in state
+  );
+};
+
+const isGameState = (state: unknown): state is GameState => {
+  return Boolean(
+    state && typeof state === "object" && "phase" in state && "playerCharacter" in state
+  );
+};
+
 const extractGameState = (state: CoCState): GameState | null => {
   if ("gameState" in state && state.gameState) {
     return state.gameState as GameState;
   }
-  if ("phase" in state && "playerCharacter" in state && "moduleName" in state) {
-    // This is DynamicGameState, return null as it's not GameState
+  if (isDynamicGameState(state)) {
     return null;
   }
-  if ("phase" in state && "playerCharacter" in state) {
-    return state as GameState;
+  if (isGameState(state)) {
+    return state;
   }
   return null;
 };
@@ -147,13 +162,19 @@ export const composeTemplate = (
 ): string => {
   // Handle both GameState directly and { gameState: GameState } object
   // Also handle DynamicGameState
-  const gameState = 'gameState' in state && state.gameState 
-    ? state.gameState 
-    : (("phase" in state && "playerCharacter" in state && !("moduleName" in state)) ? state as GameState : null);
-  
-  const dynamicGameState = 'dynamicGameState' in state && state.dynamicGameState
-    ? state.dynamicGameState
-    : (("phase" in state && "playerCharacter" in state && "moduleName" in state) ? state as DynamicGameState : null);
+  const gameState =
+    "gameState" in state && state.gameState
+      ? state.gameState
+      : isGameState(state)
+        ? (state as GameState)
+        : null;
+
+  const dynamicGameState =
+    "dynamicGameState" in state && state.dynamicGameState
+      ? state.dynamicGameState
+      : isDynamicGameState(state)
+        ? (state as DynamicGameState)
+        : null;
   
   const context: TemplateContext = {
     ...state,

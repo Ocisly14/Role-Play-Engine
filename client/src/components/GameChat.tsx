@@ -16,6 +16,8 @@ interface Message {
   turnNumber: number;
   turnId?: string;
   isStreaming?: boolean;
+  imageUrl?: string;
+  imageCaption?: string;
   diceRolls?: string[]; // Optional dice rolls for keeper messages
   gameDay?: number | null; // Game day when message was sent
   gameTime?: string | null; // Game time (HH:MM format) when message was sent
@@ -311,6 +313,10 @@ export function GameChat({ sessionId, apiBaseUrl = '/api', characterName = 'Inve
               );
 
               setStreamingTurnId(current => current === turnId ? null : current);
+            } else if (message.type === 'scene_image') {
+              if (onNarrativeCompleteRef.current) {
+                onNarrativeCompleteRef.current();
+              }
             } else if (message.type === 'simulate_triggered') {
               console.log('[WebSocket] Simulate triggered:', message);
               // Handle simulated narrative
@@ -430,6 +436,8 @@ export function GameChat({ sessionId, apiBaseUrl = '/api', characterName = 'Inve
   // Load conversation history on mount or when sessionId changes
   useEffect(() => {
     setStreamingTurnId(null);
+    streamingBufferRef.current.clear();
+    streamingBlockedRef.current.clear();
     // If initialMessages are provided, use them; otherwise load from API
     if (initialMessages && initialMessages.length > 0) {
       setMessages(initialMessages);
@@ -952,7 +960,19 @@ export function GameChat({ sessionId, apiBaseUrl = '/api', characterName = 'Inve
               onAnimationComplete={undefined}
             />
             )}
-            <div className="message-text">{msg.content}</div>
+            {msg.imageUrl && (
+              <div className="scene-image-wrapper">
+                <img
+                  className="scene-image"
+                  src={msg.imageUrl}
+                  alt={msg.imageCaption || 'Scene image'}
+                />
+                {msg.imageCaption && (
+                  <div className="scene-image-caption">{msg.imageCaption}</div>
+                )}
+              </div>
+            )}
+            {msg.content && <div className="message-text">{msg.content}</div>}
           </div>
         ))}
 

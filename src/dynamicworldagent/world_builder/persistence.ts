@@ -490,23 +490,24 @@ export async function saveWorldToJSON(
 
     // Generate snapshot for all scenarios
     let snapshot;
-    if (isStartingScene && startingScene?.snapshot) {
-      // Use LLM-generated snapshot for starting scene
-      snapshot = {
-        id: startingScene.snapshot.id,
-        name: startingScene.snapshot.name,
-        gameTime: startingScene.snapshot.gameTime,
-        location: startingScene.snapshot.location,
-        description: startingScene.snapshot.description,
-        showMap: startingScene.snapshot.showMap,
-        characters: startingScene.snapshot.characters,
-        clues: startingScene.snapshot.clues,
-        conditions: startingScene.snapshot.conditions,
-        keeperNotes: startingScene.snapshot.keeperNotes,
-        estimatedShortActions: startingScene.snapshot.estimatedShortActions,
-        timeRestriction: startingScene.snapshot.timeRestriction,
-        initialSnapshot: true,
-      };
+      if (isStartingScene && startingScene?.snapshot) {
+        // Use LLM-generated snapshot for starting scene
+        snapshot = {
+          id: startingScene.snapshot.id,
+          name: startingScene.snapshot.name,
+          gameTime: startingScene.snapshot.gameTime,
+          location: startingScene.snapshot.location,
+          description: startingScene.snapshot.description,
+          showMap: startingScene.snapshot.showMap,
+          characters: startingScene.snapshot.characters,
+          clues: startingScene.snapshot.clues,
+          conditions: startingScene.snapshot.conditions,
+          keeperNotes: startingScene.snapshot.keeperNotes,
+          estimatedShortActions: startingScene.snapshot.estimatedShortActions,
+          timeRestriction: startingScene.snapshot.timeRestriction,
+          sceneImage: startingScene.snapshot.sceneImage,
+          initialSnapshot: true,
+        };
     } else {
       // Create basic snapshot structure for non-starting scenarios
       const assignedNpcs = assignment?.npcs || [];

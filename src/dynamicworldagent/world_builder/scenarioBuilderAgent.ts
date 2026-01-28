@@ -16,6 +16,7 @@ import type {
 } from "./types.js";
 import { getScenarioBuilderTemplate, getStartingSceneSnapshotTemplate } from "./scenarioBuilderTemplate.js";
 import type { DynamicNPCProfile } from "./types.js";
+import { generateSceneImageFromSnapshot } from "../visual/sceneImage.js";
 
 interface Runtime {
   modelProvider: ModelProviderName;
@@ -76,6 +77,7 @@ export class ScenarioBuilderAgent {
       knowledgeMatrixJson: JSON.stringify(knowledgeMatrix, null, 2),
     });
 
+    progressCallback?.("Calling AI for scenario outlines...");
     const response = await generateText({
       runtime: this.runtime,
       context: prompt,
@@ -292,6 +294,7 @@ export class ScenarioBuilderAgent {
       ),
     });
 
+    progressCallback?.("Calling AI for starting scene snapshot...");
     const response = await generateText({
       runtime: this.runtime,
       context: prompt,
@@ -457,6 +460,26 @@ export class ScenarioBuilderAgent {
       progressCallback?.(
         `Starting scene snapshot generated: ${resolvedStartingScene.scenarioName}`
       );
+
+      if (process.env.GOOGLE_API_KEY) {
+        progressCallback?.("Generating starting scene image...");
+        try {
+          const imageResult = await generateSceneImageFromSnapshot(
+            snapshot,
+            macroScene.moduleName
+          );
+          if (imageResult) {
+            snapshot.sceneImage = {
+              path: imageResult.path,
+              mimeType: imageResult.mimeType,
+              generatedAt: new Date().toISOString(),
+            };
+            progressCallback?.("Starting scene image generated.");
+          }
+        } catch (error) {
+          console.warn("Failed to generate starting scene image:", error);
+        }
+      }
 
       const completedAssignments = [
         ...otherScenarioNpcAssignments,

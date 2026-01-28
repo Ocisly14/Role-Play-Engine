@@ -438,6 +438,17 @@ export class CoCDatabase {
       // ignore if column already exists or cannot be added
     }
 
+    // Backfill scene_image_path for World-Builder snapshots (module-relative path, e.g. Sceneimage/xxx.png)
+    try {
+      if (!this.hasColumn("scenario_snapshots", "scene_image_path")) {
+        this.db.exec(
+          "ALTER TABLE scenario_snapshots ADD COLUMN scene_image_path TEXT;"
+        );
+      }
+    } catch {
+      // ignore if column already exists or cannot be added
+    }
+
     // Legacy time fields removed - scenarios no longer have timeline/timepoint data
 
     // Scenario characters table - characters present in scenarios

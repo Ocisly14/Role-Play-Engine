@@ -1,3 +1,4 @@
+/// <reference path="../types/express.d.ts" />
 import type { Request, Response } from "express";
 import type Database from "better-sqlite3";
 import { DatabaseManager } from "../core/DatabaseManager.js";
@@ -14,6 +15,15 @@ import { notifyClients } from "../websocket/notifier.js";
 
 type NarrativeStreamHandlers = {
   onDiceRolls?: (diceRolls: string[]) => void;
+  onSceneImage?: (payload: {
+    imagePath: string;
+    mimeType: string;
+    sceneName: string;
+    location: string;
+    gameDay?: number | null;
+    gameTime?: string | null;
+    timestamp?: string;
+  }) => void;
   onNarrativeStart?: () => void;
   onNarrativeDelta?: (delta: string) => void;
   onNarrativeEnd?: () => void;
@@ -131,9 +141,7 @@ function buildNarrativeStreamHandlers(params: {
   timestamp?: string | null;
 }): NarrativeStreamHandlers | null {
   const modelProvider = (process.env.MODEL_PROVIDER || "").toLowerCase();
-  if (modelProvider !== "google") {
-    return null;
-  }
+  const enableStreaming = modelProvider === "google";
 
   const wsManager = WebSocketManager.getInstance();
   if (!wsManager) {
@@ -190,39 +198,59 @@ function buildNarrativeStreamHandlers(params: {
         gameTime: params.gameTime ?? null,
       });
     },
-    onNarrativeStart: () => {
-      start();
-    },
-    onNarrativeDelta: (delta: string) => {
-      if (!delta) return;
-      start();
-      pending += delta;
-
-      if (pending.length >= 48) {
-        flush();
-        return;
-      }
-
-      if (!flushTimer) {
-        flushTimer = setTimeout(() => {
-          flush();
-          flushTimer = null;
-        }, 50);
-      }
-    },
-    onNarrativeEnd: () => {
-      if (!started) return;
-      if (flushTimer) {
-        clearTimeout(flushTimer);
-        flushTimer = null;
-      }
-      flush();
+    onSceneImage: (payload) => {
       send({
-        type: "keeper_stream_end",
+        type: "scene_image",
         turnId: params.turnId,
-        timestamp: new Date().toISOString(),
+        turnNumber: params.turnNumber ?? null,
+        timestamp: payload.timestamp || new Date().toISOString(),
+        gameDay: payload.gameDay ?? params.gameDay ?? null,
+        gameTime: payload.gameTime ?? params.gameTime ?? null,
+        sceneName: payload.sceneName,
+        location: payload.location,
+        imagePath: payload.imagePath,
+        mimeType: payload.mimeType,
       });
     },
+    onNarrativeStart: enableStreaming
+      ? () => {
+          start();
+        }
+      : undefined,
+    onNarrativeDelta: enableStreaming
+      ? (delta: string) => {
+          if (!delta) return;
+          start();
+          pending += delta;
+
+          if (pending.length >= 48) {
+            flush();
+            return;
+          }
+
+          if (!flushTimer) {
+            flushTimer = setTimeout(() => {
+              flush();
+              flushTimer = null;
+            }, 50);
+          }
+        }
+      : undefined,
+    onNarrativeEnd: enableStreaming
+      ? () => {
+          if (!started) return;
+          if (flushTimer) {
+            clearTimeout(flushTimer);
+            flushTimer = null;
+          }
+          flush();
+          send({
+            type: "keeper_stream_end",
+            turnId: params.turnId,
+            timestamp: new Date().toISOString(),
+          });
+        }
+      : undefined,
   };
 }
 

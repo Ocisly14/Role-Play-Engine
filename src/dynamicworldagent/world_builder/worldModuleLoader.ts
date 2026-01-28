@@ -797,17 +797,22 @@ export class WorldModuleLoader {
       // Insert snapshot
       const hasInitialSnapshot = this.db.hasColumn("scenario_snapshots", "initial_snapshot");
       const hasGameTime = this.db.hasColumn("scenario_snapshots", "game_time");
+      const hasSceneImagePath = this.db.hasColumn("scenario_snapshots", "scene_image_path");
+      const sceneImagePath = (snapshot as any).sceneImage?.path || null;
 
       if (hasInitialSnapshot && hasGameTime) {
-        const snapshotStmt = database.prepare(`
-          INSERT INTO scenario_snapshots (
-            snapshot_id, scenario_id, snapshot_name, location, description,
-            events, exits, keeper_notes, time_restriction, show_map,
-            initial_snapshot, game_time
-          ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-        `);
+        const cols = [
+          "snapshot_id", "scenario_id", "snapshot_name", "location", "description",
+          "events", "exits", "keeper_notes", "time_restriction", "show_map",
+          "initial_snapshot", "game_time",
+        ];
+        if (hasSceneImagePath) cols.push("scene_image_path");
+        const placeholders = cols.map(() => "?").join(", ");
+        const snapshotStmt = database.prepare(
+          `INSERT INTO scenario_snapshots (${cols.join(", ")}) VALUES (${placeholders})`
+        );
 
-        snapshotStmt.run(
+        const vals: any[] = [
           snapshotId,
           scenarioId,
           snapshot.name,
@@ -819,28 +824,35 @@ export class WorldModuleLoader {
           snapshot.timeRestriction || null,
           snapshot.showMap === false ? 0 : 1,
           (snapshot as any).initialSnapshot ? 1 : 0,
-          (snapshot as any).gameTime || null
-        );
+          (snapshot as any).gameTime || null,
+        ];
+        if (hasSceneImagePath) vals.push(sceneImagePath);
+        snapshotStmt.run(...vals);
       } else {
-        const snapshotStmt = database.prepare(`
-          INSERT INTO scenario_snapshots (
-            snapshot_id, scenario_id, snapshot_name, location, description,
-            events, exits, keeper_notes, time_restriction, show_map
-          ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-        `);
+        const cols = [
+          "snapshot_id", "scenario_id", "snapshot_name", "location", "description",
+          "events", "exits", "keeper_notes", "time_restriction", "show_map",
+        ];
+        if (hasSceneImagePath) cols.push("scene_image_path");
+        const placeholders = cols.map(() => "?").join(", ");
+        const snapshotStmt = database.prepare(
+          `INSERT INTO scenario_snapshots (${cols.join(", ")}) VALUES (${placeholders})`
+        );
 
-        snapshotStmt.run(
+        const vals: any[] = [
           snapshotId,
           scenarioId,
           snapshot.name,
           snapshot.location,
           snapshot.description,
-          JSON.stringify([]), // events removed - tracked via actionResults
-          JSON.stringify([]), // exits removed - connections are scenario-level data
+          JSON.stringify([]),
+          JSON.stringify([]),
           snapshot.keeperNotes || null,
           snapshot.timeRestriction || null,
-          snapshot.showMap === false ? 0 : 1
-        );
+          snapshot.showMap === false ? 0 : 1,
+        ];
+        if (hasSceneImagePath) vals.push(sceneImagePath);
+        snapshotStmt.run(...vals);
       }
 
       // Insert characters

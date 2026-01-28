@@ -1,3 +1,4 @@
+/// <reference path="../types/express.d.ts" />
 import type { Request, Response } from "express";
 import { DatabaseManager } from "../core/DatabaseManager.js";
 import { generateRandomAttributes } from "../../../src/coc_multiagents_system/agents/character/characterBuilder.js";

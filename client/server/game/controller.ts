@@ -1,3 +1,4 @@
+/// <reference path="../types/express.d.ts" />
 import type { Request, Response } from "express";
 import { DatabaseManager } from "../core/DatabaseManager.js";
 import { GraphManager } from "../core/GraphManager.js";
@@ -179,9 +180,6 @@ export async function startGame(req: Request, res: Response): Promise<void> {
     const finalCharacterName = isWorldBuilder && dynamicGameState 
       ? dynamicGameState.playerCharacter.name 
       : (gameState?.playerCharacter.name || "");
-    const finalPhase = isWorldBuilder && dynamicGameState 
-      ? dynamicGameState.phase 
-      : (gameState?.phase || "intro");
     const finalTimeOfDay = isWorldBuilder && dynamicGameState 
       ? dynamicGameState.timeOfDay 
       : (gameState?.timeOfDay || "08:00");
@@ -192,6 +190,28 @@ export async function startGame(req: Request, res: Response): Promise<void> {
       ? dynamicGameState.currentScenario 
       : (gameState?.currentScenario || null);
 
+    const gameStatePayload: Record<string, unknown> = {
+      playerCharacter: isWorldBuilder && dynamicGameState 
+        ? dynamicGameState.playerCharacter 
+        : (gameState?.playerCharacter || {
+          id: "",
+          name: "",
+          attributes: { STR: 50, CON: 50, DEX: 50, APP: 50, POW: 50, SIZ: 50, INT: 50, EDU: 50 },
+          status: { hp: 10, maxHp: 10, sanity: 60, maxSanity: 99, luck: 50, mp: 10, conditions: [] },
+          skills: {},
+          inventory: [],
+          notes: "",
+          actionLog: [],
+        }),
+      timeOfDay: finalTimeOfDay,
+      tension: finalTension,
+      currentScenario: finalCurrentScenario,
+    };
+
+    if (!isWorldBuilder) {
+      gameStatePayload.phase = gameState?.phase || "intro";
+    }
+
     res.json({
       success: true,
       message: `游戏已开始！`,
@@ -199,24 +219,7 @@ export async function startGame(req: Request, res: Response): Promise<void> {
       characterId: finalCharacterId,
       characterName: finalCharacterName,
       moduleIntroduction: moduleIntroduction,
-      gameState: {
-        phase: finalPhase,
-        playerCharacter: isWorldBuilder && dynamicGameState 
-          ? dynamicGameState.playerCharacter 
-          : (gameState?.playerCharacter || {
-            id: "",
-            name: "",
-            attributes: { STR: 50, CON: 50, DEX: 50, APP: 50, POW: 50, SIZ: 50, INT: 50, EDU: 50 },
-            status: { hp: 10, maxHp: 10, sanity: 60, maxSanity: 99, luck: 50, mp: 10, conditions: [] },
-            skills: {},
-            inventory: [],
-            notes: "",
-            actionLog: [],
-          }),
-        timeOfDay: finalTimeOfDay,
-        tension: finalTension,
-        currentScenario: finalCurrentScenario,
-      },
+      gameState: gameStatePayload,
       timestamp: new Date().toISOString(),
     });
   } catch (error) {

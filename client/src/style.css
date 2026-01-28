@@ -1661,6 +1661,25 @@ textarea {
   min-height: 60px;
 }
 
+.scene-image-wrapper {
+  margin: 10px 0 6px;
+}
+
+.scene-image {
+  width: 100%;
+  max-width: 520px;
+  border-radius: 10px;
+  border: 1px solid rgba(0, 0, 0, 0.12);
+  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.18);
+  display: block;
+}
+
+.scene-image-caption {
+  margin-top: 6px;
+  font-size: 0.85rem;
+  color: #6a4e2e;
+}
+
 .dice-spinning {
   position: relative;
   width: 100%;

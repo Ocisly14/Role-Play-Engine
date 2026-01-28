@@ -424,6 +424,11 @@ export async function initializeCompleteDynamicGameState(
       WHERE snapshot_id = ?
     `).all(snapshotRow.snapshot_id);
 
+    const sceneImage =
+      snapshotRow.scene_image_path != null && String(snapshotRow.scene_image_path).trim() !== ""
+        ? { path: String(snapshotRow.scene_image_path).trim() }
+        : undefined;
+
     return {
       id: snapshotRow.snapshot_id,
       name: snapshotRow.snapshot_name || snapshotRow.scenario_name,
@@ -431,6 +436,7 @@ export async function initializeCompleteDynamicGameState(
       description: snapshotRow.description,
       gameTime: snapshotRow.game_time || undefined,
       showMap: snapshotRow.show_map === 1,
+      sceneImage,
       characters: (snapshotCharacters as any[]).map(char => ({
         id: char.id,
         name: char.character_name,
@@ -461,11 +467,13 @@ export async function initializeCompleteDynamicGameState(
   };
 
   // Load all initial snapshots (one per scenario)
+  const hasSceneImagePath = db.hasColumn("scenario_snapshots", "scene_image_path");
+  const sceneImagePathCol = hasSceneImagePath ? ", ss.scene_image_path" : "";
   const allInitialSnapshots = database.prepare(`
     SELECT
       ss.snapshot_id, ss.scenario_id, ss.snapshot_name, ss.location,
       ss.description, ss.events, ss.keeper_notes,
-      ss.time_restriction, ss.show_map, ss.game_time,
+      ss.time_restriction, ss.show_map, ss.game_time${sceneImagePathCol},
       s.name as scenario_name
     FROM scenario_snapshots ss
     JOIN scenarios s ON ss.scenario_id = s.scenario_id

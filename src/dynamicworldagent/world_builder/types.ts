@@ -102,6 +102,8 @@ export interface DynamicScenarioSnapshot {
   showMap?: boolean;
   /** Module-relative path to map image (inherited from parent ScenarioProfile) */
   mapImagePath?: string;
+  /** Generated scene image metadata */
+  sceneImage?: SceneImage;
   /** Characters present */
   characters: ScenarioCharacter[];
   /** Available clues */
@@ -116,6 +118,12 @@ export interface DynamicScenarioSnapshot {
   timeRestriction?: string;
   /** Whether this is the initial snapshot for the starting scene */
   initialSnapshot?: boolean;
+}
+
+export interface SceneImage {
+  path: string;
+  mimeType?: string;
+  generatedAt?: string;
 }
 
 /**

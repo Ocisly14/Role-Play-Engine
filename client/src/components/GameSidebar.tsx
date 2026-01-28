@@ -66,6 +66,11 @@ interface CurrentScenario {
   name: string;
   location: string;
   mapImagePath?: string;
+  sceneImage?: {
+    path: string;
+    mimeType?: string;
+    generatedAt?: string;
+  };
   showMap?: boolean;
 }
 
@@ -88,7 +93,6 @@ interface GameState {
   moduleName?: string;
   npcCharacters?: CharacterProfile[];
   tension?: number;
-  phase?: string;
   // DynamicWorld-specific fields (ignored by frontend but present in response)
   [key: string]: any; // Allow additional fields for DynamicGameState compatibility
 }
@@ -101,6 +105,11 @@ export function GameSidebar({ sessionId, apiBaseUrl = '/api', refreshTrigger }: 
   const [showCharacterSheet, setShowCharacterSheet] = useState(false);
   const [showMapModal, setShowMapModal] = useState(false);
   const isInitialLoadRef = useRef(true);
+  const mapSrc = gameState?.currentScenario?.sceneImage?.path
+    ? `${apiBaseUrl}/maps/${gameState.currentScenario.sceneImage.path}`
+    : gameState?.currentScenario?.mapImagePath
+      ? `${apiBaseUrl}/maps/${gameState.currentScenario.mapImagePath}`
+      : null;
 
   // Fetch game state from backend
   useEffect(() => {
@@ -405,11 +414,11 @@ export function GameSidebar({ sessionId, apiBaseUrl = '/api', refreshTrigger }: 
               <div className="empty-state">
                 <p>No map available. Please explore on your own.</p>
               </div>
-            ) : gameState?.currentScenario?.mapImagePath ? (
+            ) : mapSrc ? (
               <div className="map-display">
                 <img
-                  src={`${apiBaseUrl}/maps/${gameState.currentScenario.mapImagePath}`}
-                  alt={`Map of ${gameState.currentScenario.name}`}
+                  src={mapSrc}
+                  alt={`Map of ${gameState?.currentScenario?.name || 'Scene'}`}
                   style={{ width: '100%', height: 'auto', display: 'block', cursor: 'pointer' }}
                   onClick={() => setShowMapModal(true)}
                   title="Click to enlarge"
@@ -433,15 +442,17 @@ export function GameSidebar({ sessionId, apiBaseUrl = '/api', refreshTrigger }: 
         )}
 
         {/* Map Modal - Full Screen View */}
-        {showMapModal && gameState?.currentScenario?.mapImagePath && gameState?.currentScenario?.showMap !== false && (
+        {showMapModal && (gameState?.currentScenario?.sceneImage?.path || gameState?.currentScenario?.mapImagePath) && gameState?.currentScenario?.showMap !== false && (
           <div className="map-modal-overlay" onClick={() => setShowMapModal(false)}>
             <div className="map-modal-content" onClick={(e) => e.stopPropagation()}>
               <button className="map-modal-close" onClick={() => setShowMapModal(false)}>
                 ✕
               </button>
               <img
-                src={`${apiBaseUrl}/maps/${gameState.currentScenario.mapImagePath}`}
-                alt={`Map of ${gameState.currentScenario.name}`}
+                src={gameState?.currentScenario?.sceneImage?.path
+                  ? `${apiBaseUrl}/maps/${gameState.currentScenario.sceneImage.path}`
+                  : `${apiBaseUrl}/maps/${gameState?.currentScenario?.mapImagePath || ''}`}
+                alt={`Map of ${gameState?.currentScenario?.name || 'Scene'}`}
                 className="map-modal-image"
               />
               <div className="map-modal-title">{gameState.currentScenario.name}</div>

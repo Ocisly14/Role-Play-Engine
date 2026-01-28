@@ -28,6 +28,7 @@ import { ActionAgent } from "../dynamicBasicAgent/action/actionAgent.js";
 import { CharacterAgent } from "../dynamicBasicAgent/character/characterAgent.js";
 import { KeeperAgent } from "../dynamicBasicAgent/keeper/keeperAgent.js";
 import { DirectorAgent } from "../dynamicBasicAgent/director/directorAgent.js";
+import { generateSceneImage } from "../visual/sceneImage.js";
 
 /**
  * Dynamic Graph State - Uses only DynamicGameState (no GameState)
@@ -40,6 +41,15 @@ export interface DynamicGraphState {
   simulatedQueryCount?: number;  // Safety counter for continuous loop (max 5)
   stream?: {
     onDiceRolls?: (diceRolls: string[]) => void;
+    onSceneImage?: (payload: {
+      imagePath: string;
+      mimeType: string;
+      sceneName: string;
+      location: string;
+      gameDay?: number | null;
+      gameTime?: string | null;
+      timestamp?: string;
+    }) => void;
     onNarrativeStart?: () => void;
     onNarrativeDelta?: (delta: string) => void;
     onNarrativeEnd?: () => void;
@@ -374,6 +384,8 @@ export const buildDynamicGraph = (
     console.log("🎬 [Dynamic Director Agent] 处理场景转换和叙事方向...");
     const dgsm = new DynamicGameStateManager(state.dynamicGameState);
     const currentState = dgsm.getState();
+    const stream = state.stream;
+    const beforeScenarioId = currentState.currentScenario?.id;
 
     try {
       // Check point of no return
@@ -399,6 +411,39 @@ export const buildDynamicGraph = (
           sceneChangeRequest.reason,
           currentCharacterInput
         );
+
+        const updatedState = dgsm.getState();
+        const currentScenario = updatedState.currentScenario;
+        const sceneChanged =
+          currentScenario &&
+          currentScenario.id &&
+          currentScenario.id !== beforeScenarioId;
+
+        if (sceneChanged) {
+          void generateSceneImage(currentScenario, updatedState)
+            .then((result) => {
+              if (!result) return;
+              if (currentScenario) {
+                currentScenario.sceneImage = {
+                  path: result.path,
+                  mimeType: result.mimeType,
+                  generatedAt: new Date().toISOString(),
+                };
+              }
+              stream?.onSceneImage?.({
+                imagePath: result.path,
+                mimeType: result.mimeType,
+                sceneName: currentScenario.name,
+                location: currentScenario.location,
+                gameDay: updatedState.gameDay ?? null,
+                gameTime: updatedState.timeOfDay ?? null,
+                timestamp: new Date().toISOString(),
+              });
+            })
+            .catch((error) => {
+              console.warn("[Dynamic Director] Scene image generation failed:", error);
+            });
+        }
       }
 
       dgsm.clearSceneChangeRequest();
