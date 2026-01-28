@@ -12,6 +12,7 @@ import { ModSelector } from "./components/ModSelector";
 import { StoryCreator } from "./components/StoryCreator";
 import { authFetch } from "./utils/authFetch";
 import { findAvailableImage } from "./utils/imageLoader";
+import { setBackgroundWithTransition } from "./utils/backgroundTransition";
 
 type SkillEntry = { name: string; base: string; category: string };
 type AppPage = "home" | "sheet" | "game" | "character-select" | "mod-select" | "module-intro" | "story-creator";
@@ -162,21 +163,27 @@ const AppShell: React.FC = () => {
   const setDefaultBackground = useCallback(async () => {
     try {
       const imageUrl = await findAvailableImage('background');
-      document.body.style.backgroundImage = `url('${imageUrl}')`;
-      document.body.style.backgroundSize = "cover";
-      document.body.style.backgroundPosition = "center";
-      document.body.style.backgroundRepeat = "no-repeat";
-      document.body.style.backgroundAttachment = "fixed";
+      setBackgroundWithTransition(imageUrl, true);
     } catch (err) {
       console.error("Failed to load default background:", err);
-      document.body.style.backgroundImage = "url('/asset/background.png')";
+      setBackgroundWithTransition("/asset/background.png", true);
     }
   }, []);
 
   // Initialize default background on mount (supports multiple formats)
+  // Use no transition for initial load to avoid flicker
   useEffect(() => {
-    setDefaultBackground();
-  }, [setDefaultBackground]);
+    const initializeBackground = async () => {
+      try {
+        const imageUrl = await findAvailableImage('background');
+        setBackgroundWithTransition(imageUrl, false);
+      } catch (err) {
+        console.error("Failed to load default background:", err);
+        setBackgroundWithTransition("/asset/background.png", false);
+      }
+    };
+    initializeBackground();
+  }, []);
 
   // Fetch current scenario sceneImage and set as background when on game page
   useEffect(() => {
@@ -203,12 +210,9 @@ const AppShell: React.FC = () => {
           const backgroundUrl = `/api/maps/${sceneImagePath}`;
           // Only update if the image has changed
           if (currentBackgroundImageRef.current !== backgroundUrl) {
-            document.body.style.backgroundImage = `url('${backgroundUrl}')`;
-            document.body.style.backgroundSize = "cover";
-            document.body.style.backgroundPosition = "center";
-            document.body.style.backgroundRepeat = "no-repeat";
-            document.body.style.backgroundAttachment = "fixed";
-            currentBackgroundImageRef.current = backgroundUrl;
+            setBackgroundWithTransition(backgroundUrl, true, () => {
+              currentBackgroundImageRef.current = backgroundUrl;
+            });
           }
         } else {
           // No sceneImage, reset to default

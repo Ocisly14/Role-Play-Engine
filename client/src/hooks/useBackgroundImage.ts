@@ -1,12 +1,18 @@
 import { useEffect } from 'react';
 import { findAvailableImage } from '../utils/imageLoader';
+import { setBackgroundWithTransition } from '../utils/backgroundTransition';
 
 /**
  * Hook to set the body background image, supporting multiple formats (png, jpeg, jpg)
  * @param imageName - The base name of the image (e.g., 'background')
  * @param enabled - Whether to apply the background (default: true)
+ * @param useTransition - Whether to use transition animation (default: false for initial load)
  */
-export function useBackgroundImage(imageName: string = 'background', enabled: boolean = true) {
+export function useBackgroundImage(
+  imageName: string = 'background',
+  enabled: boolean = true,
+  useTransition: boolean = false
+) {
   useEffect(() => {
     if (!enabled) {
       return;
@@ -18,17 +24,13 @@ export function useBackgroundImage(imageName: string = 'background', enabled: bo
       try {
         const imageUrl = await findAvailableImage(imageName);
         if (isMounted) {
-          document.body.style.backgroundImage = `url('${imageUrl}')`;
-          document.body.style.backgroundSize = "cover";
-          document.body.style.backgroundPosition = "center";
-          document.body.style.backgroundRepeat = "no-repeat";
-          document.body.style.backgroundAttachment = "fixed";
+          setBackgroundWithTransition(imageUrl, useTransition);
         }
       } catch (error) {
         console.error(`Failed to load background image: ${imageName}`, error);
         // Fallback to default
         if (isMounted) {
-          document.body.style.backgroundImage = `url('/asset/${imageName}.png')`;
+          setBackgroundWithTransition(`/asset/${imageName}.png`, useTransition);
         }
       }
     };
@@ -38,5 +40,5 @@ export function useBackgroundImage(imageName: string = 'background', enabled: bo
     return () => {
       isMounted = false;
     };
-  }, [imageName, enabled]);
+  }, [imageName, enabled, useTransition]);
 }
