@@ -16,6 +16,7 @@ import modRoutes from "./server/mod/routes.js";
 import turnRoutes from "./server/turn/routes.js";
 import checkpointRoutes from "./server/checkpoint/routes.js";
 import mapRoutes from "./server/maps/routes.js";
+import memoRoutes from "./server/memos/routes.js";
 
 // Import managers
 import { DatabaseManager } from "./server/core/DatabaseManager.js";
@@ -59,6 +60,7 @@ app.use("/api", gameRoutes);          // /api/game/*, /api/gamestate
 app.use("/api", modRoutes);           // /api/mod/*, /api/module/*
 app.use("/api", turnRoutes);          // /api/turns*, /api/sessions/*
 app.use("/api", checkpointRoutes);    // /api/checkpoints/*
+app.use("/api", memoRoutes);          // /api/memos
 
 // SPA fallback (must be after API routes)
 app.get("*", (_req, res) => {

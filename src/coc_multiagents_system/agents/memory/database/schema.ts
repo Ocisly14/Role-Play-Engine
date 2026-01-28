@@ -719,6 +719,21 @@ export class CoCDatabase {
             CREATE INDEX IF NOT EXISTS idx_users_username ON users(username);
         `);
 
+    // Player memos table
+    this.db.exec(`
+            CREATE TABLE IF NOT EXISTS player_memos (
+                memo_id TEXT PRIMARY KEY,
+                session_id TEXT NOT NULL,
+                user_id TEXT NOT NULL,
+                text TEXT NOT NULL,
+                created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+                updated_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+                FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+            );
+            CREATE INDEX IF NOT EXISTS idx_player_memos_session ON player_memos(session_id);
+            CREATE INDEX IF NOT EXISTS idx_player_memos_user ON player_memos(user_id);
+        `);
+
     // User Sessions table (for tracking active logins)
     this.db.exec(`
             CREATE TABLE IF NOT EXISTS user_sessions (

@@ -1,7 +1,7 @@
 /**
- * GameSidebar Component - Character status and clues panel
+ * GameSidebar Component - Character status and notes panel
  *
- * Displays character information and collected clues in separate tabs.
+ * Displays character information and a player notes memo pad in separate tabs.
  */
 
 import { useState, useEffect, useRef } from 'react';
@@ -14,7 +14,7 @@ interface GameSidebarProps {
   refreshTrigger?: number; // When this changes, refresh game state
 }
 
-type TabType = 'status' | 'clues' | 'map';
+type TabType = 'status' | 'notes' | 'map';
 
 interface Weapon {
   name: string;
@@ -103,7 +103,132 @@ export function GameSidebar({ sessionId, apiBaseUrl = '/api', refreshTrigger }: 
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [showCharacterSheet, setShowCharacterSheet] = useState(false);
+  const [memoDraft, setMemoDraft] = useState('');
+  const [memoItems, setMemoItems] = useState<Array<{ id: string; text: string }>>([]);
+  const [memoLoading, setMemoLoading] = useState(false);
+  const [memoError, setMemoError] = useState<string | null>(null);
   const isInitialLoadRef = useRef(true);
+  const memoSaveTimers = useRef<Record<string, number>>({});
+
+  useEffect(() => {
+    const fetchMemos = async () => {
+      if (!sessionId) {
+        setMemoItems([]);
+        return;
+      }
+      try {
+        setMemoLoading(true);
+        const response = await authFetch(`${apiBaseUrl}/memos?sessionId=${encodeURIComponent(sessionId)}`);
+        if (!response.ok) {
+          throw new Error('Failed to fetch memos');
+        }
+        const data = await response.json();
+        if (data.success && Array.isArray(data.memos)) {
+          setMemoItems(data.memos.map((memo: { id: string; text: string }) => ({
+            id: memo.id,
+            text: memo.text,
+          })));
+          setMemoError(null);
+        } else {
+          throw new Error('Invalid memo response');
+        }
+      } catch (err) {
+        console.error('Error fetching memos:', err);
+        setMemoError(err instanceof Error ? err.message : 'Unknown error');
+      } finally {
+        setMemoLoading(false);
+      }
+    };
+
+    fetchMemos();
+    setMemoDraft('');
+  }, [apiBaseUrl, sessionId]);
+
+  useEffect(() => {
+    return () => {
+      Object.values(memoSaveTimers.current).forEach((timerId) => {
+        window.clearTimeout(timerId);
+      });
+      memoSaveTimers.current = {};
+    };
+  }, []);
+
+  const addMemo = async () => {
+    const trimmed = memoDraft.trim();
+    if (!trimmed) return;
+    try {
+      const response = await authFetch(`${apiBaseUrl}/memos`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ sessionId, text: trimmed }),
+      });
+      if (!response.ok) {
+        throw new Error('Failed to save memo');
+      }
+      const data = await response.json();
+      if (data.success && data.memo) {
+        setMemoItems((prev) => [...prev, { id: data.memo.id, text: data.memo.text }]);
+        setMemoDraft('');
+        setMemoError(null);
+      } else {
+        throw new Error('Invalid memo response');
+      }
+    } catch (err) {
+      console.error('Error saving memo:', err);
+      setMemoError(err instanceof Error ? err.message : 'Unknown error');
+    }
+  };
+
+  const persistMemo = async (id: string, text: string) => {
+    try {
+      const response = await authFetch(`${apiBaseUrl}/memos/${encodeURIComponent(id)}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ text }),
+      });
+      if (!response.ok) {
+        throw new Error('Failed to update memo');
+      }
+      setMemoError(null);
+    } catch (err) {
+      console.error('Error updating memo:', err);
+      setMemoError(err instanceof Error ? err.message : 'Unknown error');
+    }
+  };
+
+  const updateMemo = (id: string, text: string) => {
+    setMemoItems((prev) => prev.map((item) => (item.id === id ? { ...item, text } : item)));
+    if (memoSaveTimers.current[id]) {
+      window.clearTimeout(memoSaveTimers.current[id]);
+    }
+    const trimmed = text.trim();
+    if (!trimmed) {
+      return;
+    }
+    memoSaveTimers.current[id] = window.setTimeout(() => {
+      persistMemo(id, trimmed);
+    }, 600);
+  };
+
+  const removeMemo = async (id: string) => {
+    setMemoItems((prev) => prev.filter((item) => item.id !== id));
+    if (memoSaveTimers.current[id]) {
+      window.clearTimeout(memoSaveTimers.current[id]);
+      delete memoSaveTimers.current[id];
+    }
+    try {
+      const response = await authFetch(`${apiBaseUrl}/memos/${encodeURIComponent(id)}`, {
+        method: 'DELETE',
+      });
+      if (!response.ok) {
+        throw new Error('Failed to delete memo');
+      }
+      setMemoError(null);
+    } catch (err) {
+      console.error('Error deleting memo:', err);
+      setMemoError(err instanceof Error ? err.message : 'Unknown error');
+    }
+  };
 
   // Fetch game state from backend
   useEffect(() => {
@@ -163,10 +288,10 @@ export function GameSidebar({ sessionId, apiBaseUrl = '/api', refreshTrigger }: 
           Character Status
         </button>
         <button
-          className={`sidebar-tab backdrop-blur-sm bg-white/50 border border-slate-200 shadow-md rounded-lg hover:bg-white/70 transition-all ${activeTab === 'clues' ? 'active' : ''}`}
-          onClick={() => setActiveTab('clues')}
+          className={`sidebar-tab backdrop-blur-sm bg-white/50 border border-slate-200 shadow-md rounded-lg hover:bg-white/70 transition-all ${activeTab === 'notes' ? 'active' : ''}`}
+          onClick={() => setActiveTab('notes')}
         >
-          Discovered Clues
+          Notes
         </button>
         <button
           className={`sidebar-tab backdrop-blur-sm bg-white/50 border border-slate-200 shadow-md rounded-lg hover:bg-white/70 transition-all ${activeTab === 'map' ? 'active' : ''}`}
@@ -340,60 +465,64 @@ export function GameSidebar({ sessionId, apiBaseUrl = '/api', refreshTrigger }: 
           </div>
         )}
 
-        {activeTab === 'clues' && (
-          <div className="tab-panel clues-panel">
-            {loading ? (
-              <p className="empty-state">Loading...</p>
-            ) : error ? (
-              <p className="empty-state" style={{ color: '#c41e3a' }}>Load failed: {error}</p>
-            ) : gameState ? (
-              <div className="clues-section">
-                <h3>Important Clues</h3>
-                <div className="clues-list">
-                  {gameState.discoveredClues.length > 0 ? (
-                    <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
-                      {gameState.discoveredClues.map((clue, idx) => (
-                        <div
-                          key={idx}
-                          style={{
-                            padding: '10px',
-                            backgroundColor: '#fff',
-                            border: '1px solid #ddd',
-                            borderRadius: '4px',
-                          }}
-                        >
-                          <div style={{ fontWeight: 'bold', marginBottom: '5px' }}>
-                            {clue.sourceName}
-                            <span
-                              style={{
-                                marginLeft: '8px',
-                                fontSize: '0.8rem',
-                                color: '#666',
-                                fontWeight: 'normal',
-                              }}
-                            >
-                              ({clue.type === 'scenario' ? 'Scenario Clue' : clue.type === 'npc' ? 'NPC Clue' : 'Secret'})
-                            </span>
-                          </div>
-                          <div style={{ fontSize: '0.9rem', color: '#333', marginBottom: '5px' }}>
-                            {clue.text}
-                          </div>
-                          <div style={{ fontSize: '0.75rem', color: '#999' }}>
-                            Discovered by: {clue.discoveredBy}
-                            {clue.method && ` | Method: ${clue.method}`}
-                            {clue.difficulty && ` | Difficulty: ${clue.difficulty}`}
-                          </div>
-                        </div>
-                      ))}
-                    </div>
-                  ) : (
-                    <p className="empty-state">No clues</p>
-                  )}
-                </div>
+        {activeTab === 'notes' && (
+          <div className="tab-panel notes-panel">
+            <div className="clues-section">
+              <div className="memo-header">
+                <h3>Memo Pad</h3>
               </div>
-            ) : (
-              <p className="empty-state">No data</p>
-            )}
+              <p className="memo-hint">Write your own notes here. New entries auto-save when you add them.</p>
+              {memoError && (
+                <p className="empty-state" style={{ color: '#c41e3a' }}>Memo error: {memoError}</p>
+              )}
+              {memoLoading ? (
+                <p className="empty-state">Loading...</p>
+              ) : (
+                <>
+                  <div className="memo-compose">
+                    <textarea
+                      className="memo-input"
+                      rows={3}
+                      placeholder="Write a new note..."
+                      value={memoDraft}
+                      onChange={(event) => setMemoDraft(event.target.value)}
+                    />
+                    <button
+                      className="memo-btn memo-btn-primary"
+                      onClick={addMemo}
+                      disabled={!memoDraft.trim() || !sessionId}
+                    >
+                      Add Note
+                    </button>
+                  </div>
+                  <div className="memo-list">
+                    {memoItems.length > 0 ? (
+                      memoItems.map((item, idx) => (
+                        <div key={item.id} className="memo-item">
+                          <div className="memo-item-header">
+                            <span>Note {idx + 1}</span>
+                            <button
+                              className="memo-btn memo-btn-ghost"
+                              onClick={() => removeMemo(item.id)}
+                            >
+                              Delete
+                            </button>
+                          </div>
+                          <textarea
+                            className="memo-input memo-input-item"
+                            rows={3}
+                            value={item.text}
+                            onChange={(event) => updateMemo(item.id, event.target.value)}
+                          />
+                        </div>
+                      ))
+                    ) : (
+                      <p className="empty-state">No notes yet</p>
+                    )}
+                  </div>
+                </>
+              )}
+            </div>
           </div>
         )}
 

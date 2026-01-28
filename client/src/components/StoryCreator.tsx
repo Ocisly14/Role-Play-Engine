@@ -225,7 +225,7 @@ export function StoryCreator({
                       rows={8}
                     />
                     <p className="form-hint">
-                      The AI will generate a complete Call of Cthulhu scenario based on your prompt.
+                      Create a unique world for your own story.
                     </p>
                   </div>
                 </>
@@ -262,13 +262,7 @@ export function StoryCreator({
                 </div>
 
                 <div className="progress-info">
-                  <p>This may take a few minutes. The AI is:</p>
-                  <ul>
-                    <li>Generating world structure and locations</li>
-                    <li>Creating historical events and mythology</li>
-                    <li>Building truth timeline and mysteries</li>
-                    <li>Instantiating NPCs with clues and secrets</li>
-                  </ul>
+                  <p>This may take up to 10 minutes. Creating a unique world for your own story...</p>
                 </div>
               </div>
             )}

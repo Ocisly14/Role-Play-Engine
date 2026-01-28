@@ -1382,6 +1382,122 @@ textarea {
   min-height: 100px;
 }
 
+/* Memo Notes */
+.memo-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+}
+
+.memo-hint {
+  margin: 0 0 12px 0;
+  font-size: 0.85rem;
+  color: #6b7280;
+}
+
+.memo-compose {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin-bottom: 16px;
+}
+
+.memo-input {
+  width: 100%;
+  border: 1px solid rgba(226, 232, 240, 0.8);
+  border-radius: 0.5rem;
+  padding: 10px 12px;
+  font-family: var(--serif);
+  font-size: 0.9rem;
+  background: rgba(255, 255, 255, 0.7);
+  color: var(--ink);
+  resize: vertical;
+}
+
+.memo-input:focus {
+  outline: none;
+  border-color: var(--accent);
+  box-shadow: 0 0 0 2px rgba(191, 149, 94, 0.2);
+}
+
+.memo-input-item {
+  min-height: 90px;
+}
+
+.memo-list {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  min-height: 120px;
+}
+
+.memo-item {
+  background: rgba(255, 255, 255, 0.7);
+  border: 1px solid rgba(226, 232, 240, 0.8);
+  border-radius: 0.5rem;
+  padding: 10px 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.memo-item-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-weight: 600;
+  color: var(--title);
+  font-size: 0.85rem;
+}
+
+.memo-actions {
+  display: flex;
+  gap: 8px;
+}
+
+.memo-btn {
+  padding: 6px 12px;
+  border-radius: 0.5rem;
+  border: 1px solid rgba(226, 232, 240, 0.9);
+  background: rgba(255, 255, 255, 0.7);
+  font-family: var(--serif);
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: var(--title);
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.memo-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.memo-btn-primary {
+  background: var(--accent);
+  color: #fff;
+  border-color: var(--accent);
+}
+
+.memo-btn-primary:disabled {
+  background: rgba(191, 149, 94, 0.5);
+  border-color: rgba(191, 149, 94, 0.5);
+}
+
+.memo-btn-ghost {
+  background: transparent;
+  border-color: transparent;
+  color: #b45309;
+}
+
+.memo-saved {
+  margin: 12px 0 0 0;
+  font-size: 0.75rem;
+  color: #6b7280;
+  text-align: right;
+}
+
 /* Skills Grid in Sidebar */
 .skills-grid {
   display: flex;
