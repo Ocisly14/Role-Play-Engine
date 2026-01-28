@@ -850,6 +850,45 @@ export class CoCDatabase {
       }
     }
 
+    // Referral code usage tracking (permanent codes; each use recorded with email)
+    this.db.exec(`
+            CREATE TABLE IF NOT EXISTS referral_code_uses (
+                id TEXT PRIMARY KEY,
+                referral_code_id TEXT NOT NULL,
+                user_id TEXT NOT NULL,
+                email TEXT NOT NULL,
+                used_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+                FOREIGN KEY (referral_code_id) REFERENCES referral_codes(id) ON DELETE CASCADE,
+                FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+            );
+            CREATE INDEX IF NOT EXISTS idx_referral_code_uses_code ON referral_code_uses(referral_code_id);
+            CREATE INDEX IF NOT EXISTS idx_referral_code_uses_email ON referral_code_uses(email);
+        `);
+
+    // Backfill referral_code_uses from legacy is_used / used_by_user_id (one-time)
+    const usesCount = this.db.prepare('SELECT COUNT(*) as count FROM referral_code_uses').get() as { count: number };
+    if (usesCount.count === 0) {
+      const used = this.db.prepare(`
+        SELECT rc.id AS referral_code_id, rc.used_by_user_id, rc.used_at, u.email
+        FROM referral_codes rc
+        JOIN users u ON u.id = rc.used_by_user_id
+        WHERE rc.is_used = 1 AND rc.used_by_user_id IS NOT NULL
+      `).all() as { referral_code_id: string; used_by_user_id: string; used_at: string | null; email: string }[];
+      const insertUse = this.db.prepare(`
+        INSERT INTO referral_code_uses (id, referral_code_id, user_id, email, used_at)
+        VALUES (?, ?, ?, ?, ?)
+      `);
+      for (const row of used) {
+        insertUse.run(
+          randomUUID(),
+          row.referral_code_id,
+          row.used_by_user_id,
+          row.email,
+          row.used_at ?? new Date().toISOString(),
+        );
+      }
+    }
+
     // Add user_id to characters table if it doesn't exist
     try {
       if (!this.hasColumn("characters", "user_id")) {

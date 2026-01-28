@@ -1,19 +1,24 @@
-import { Router } from 'express';
-import { body } from 'express-validator';
-import { authController } from './controller.js';
-import { authenticate } from './middleware.js';
-import { validateRequest } from '../utils/validators.js';
+import { Router } from "express";
+import { body } from "express-validator";
+import { validateRequest } from "../utils/validators.js";
+import { authController } from "./controller.js";
+import { authenticate } from "./middleware.js";
 
 const router = Router();
 
 // Register
 router.post(
-  '/register',
+  "/register",
   [
-    body('email').isEmail().normalizeEmail(),
-    body('password').isLength({ min: 8 }),
-    body('username').optional().trim().isLength({ min: 3 }),
-    body('referralCode').notEmpty().trim().isLength({ min: 5, max: 5 }).matches(/^[A-Z0-9]{5}$/i).withMessage('Referral code must be 5 alphanumeric characters'),
+    body("email").isEmail().normalizeEmail(),
+    body("password").isLength({ min: 8 }),
+    body("username").optional().trim().isLength({ min: 3 }),
+    body("referralCode")
+      .notEmpty()
+      .trim()
+      .isLength({ min: 5, max: 5 })
+      .matches(/^[A-Z0-9]{5}$/i)
+      .withMessage("Referral code must be 5 alphanumeric characters"),
     validateRequest,
   ],
   authController.register
@@ -21,43 +26,47 @@ router.post(
 
 // Login
 router.post(
-  '/login',
+  "/login",
   [
-    body('email').isEmail().normalizeEmail(),
-    body('password').notEmpty(),
+    body("email").isEmail().normalizeEmail(),
+    body("password").notEmpty(),
     validateRequest,
   ],
   authController.login
 );
 
 // Logout
-router.post('/logout', authenticate, authController.logout);
+router.post("/logout", authenticate, authController.logout);
 
 // Refresh Token
-router.post('/refresh', authController.refreshToken);
+router.post("/refresh", authController.refreshToken);
 
 // Get Current User
-router.get('/me', authenticate, authController.getCurrentUser);
+router.get("/me", authenticate, authController.getCurrentUser);
 
 // Send Verification Email
-router.post('/send-verification', authenticate, authController.sendVerification);
+router.post(
+  "/send-verification",
+  authenticate,
+  authController.sendVerification
+);
 
 // Verify Email
-router.get('/verify-email', authController.verifyEmail);
+router.get("/verify-email", authController.verifyEmail);
 
 // Forgot Password
 router.post(
-  '/forgot-password',
-  [body('email').isEmail().normalizeEmail(), validateRequest],
+  "/forgot-password",
+  [body("email").isEmail().normalizeEmail(), validateRequest],
   authController.forgotPassword
 );
 
 // Reset Password
 router.post(
-  '/reset-password',
+  "/reset-password",
   [
-    body('token').notEmpty(),
-    body('newPassword').isLength({ min: 8 }),
+    body("token").notEmpty(),
+    body("newPassword").isLength({ min: 8 }),
     validateRequest,
   ],
   authController.resetPassword
@@ -65,14 +74,17 @@ router.post(
 
 // Change Password
 router.post(
-  '/change-password',
+  "/change-password",
   authenticate,
   [
-    body('oldPassword').notEmpty(),
-    body('newPassword').isLength({ min: 8 }),
+    body("oldPassword").notEmpty(),
+    body("newPassword").isLength({ min: 8 }),
     validateRequest,
   ],
   authController.changePassword
 );
+
+// Referral usage: GET /referral-usage?code=XXX (single) or GET /referral-usage (all)
+router.get("/referral-usage", authenticate, authController.getReferralUsage);
 
 export default router;

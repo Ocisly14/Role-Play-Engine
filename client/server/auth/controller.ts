@@ -1,6 +1,6 @@
 /// <reference path="../types/express.d.ts" />
-import type { Request, Response } from 'express';
-import { authService } from './service.js';
+import type { Request, Response } from "express";
+import { authService } from "./service.js";
 
 export const authController = {
   // Register
@@ -20,10 +20,10 @@ export const authController = {
 
       // Set HTTP-only Cookie for refresh token
       if (result.refreshToken) {
-        res.cookie('refreshToken', result.refreshToken, {
+        res.cookie("refreshToken", result.refreshToken, {
           httpOnly: true,
-          secure: process.env.NODE_ENV === 'production',
-          sameSite: 'strict',
+          secure: process.env.NODE_ENV === "production",
+          sameSite: "strict",
           maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
         });
       }
@@ -38,8 +38,8 @@ export const authController = {
   async logout(req: Request, res: Response) {
     try {
       // Clear cookie
-      res.clearCookie('refreshToken');
-      res.json({ message: 'Logged out successfully' });
+      res.clearCookie("refreshToken");
+      res.json({ message: "Logged out successfully" });
     } catch (error: any) {
       res.status(500).json({ error: error.message });
     }
@@ -116,10 +116,29 @@ export const authController = {
     try {
       const userId = req.user!.userId;
       const { oldPassword, newPassword } = req.body;
-      const result = await authService.changePassword(userId, oldPassword, newPassword);
+      const result = await authService.changePassword(
+        userId,
+        oldPassword,
+        newPassword
+      );
       res.json(result);
     } catch (error: any) {
       res.status(400).json({ error: error.message });
+    }
+  },
+
+  // Referral usage stats (emails per code)
+  async getReferralUsage(req: Request, res: Response) {
+    try {
+      const code = req.query.code as string | undefined;
+      if (code?.trim()) {
+        const result = authService.getReferralCodeUsage(code.trim());
+        return res.json(result);
+      }
+      const list = authService.listAllReferralCodeUsage();
+      return res.json({ codes: list });
+    } catch (error: any) {
+      res.status(500).json({ error: error.message });
     }
   },
 };
