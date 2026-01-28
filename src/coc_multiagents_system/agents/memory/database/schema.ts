@@ -726,6 +726,9 @@ export class CoCDatabase {
                 session_id TEXT NOT NULL,
                 user_id TEXT NOT NULL,
                 text TEXT NOT NULL,
+                game_day INTEGER,
+                game_time TEXT,
+                location TEXT,
                 created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
                 updated_at DATETIME DEFAULT CURRENT_TIMESTAMP,
                 FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
@@ -733,6 +736,19 @@ export class CoCDatabase {
             CREATE INDEX IF NOT EXISTS idx_player_memos_session ON player_memos(session_id);
             CREATE INDEX IF NOT EXISTS idx_player_memos_user ON player_memos(user_id);
         `);
+    try {
+      if (!this.hasColumn("player_memos", "game_day")) {
+        this.db.exec("ALTER TABLE player_memos ADD COLUMN game_day INTEGER;");
+      }
+      if (!this.hasColumn("player_memos", "game_time")) {
+        this.db.exec("ALTER TABLE player_memos ADD COLUMN game_time TEXT;");
+      }
+      if (!this.hasColumn("player_memos", "location")) {
+        this.db.exec("ALTER TABLE player_memos ADD COLUMN location TEXT;");
+      }
+    } catch {
+      // ignore if column already exists
+    }
 
     // User Sessions table (for tracking active logins)
     this.db.exec(`

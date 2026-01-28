@@ -1451,6 +1451,11 @@ textarea {
   font-size: 0.85rem;
 }
 
+.memo-item-meta {
+  font-size: 0.75rem;
+  color: #6b7280;
+}
+
 .memo-actions {
   display: flex;
   gap: 8px;

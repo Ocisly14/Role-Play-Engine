@@ -21,7 +21,7 @@ export function listMemos(req: Request, res: Response): void {
     const database = db.getDatabase();
 
     const memos = database.prepare(`
-      SELECT memo_id, text, created_at, updated_at
+      SELECT memo_id, text, game_day, game_time, location, created_at, updated_at
       FROM player_memos
       WHERE session_id = ? AND user_id = ?
       ORDER BY created_at ASC
@@ -32,6 +32,9 @@ export function listMemos(req: Request, res: Response): void {
       memos: memos.map((memo: any) => ({
         id: memo.memo_id,
         text: memo.text,
+        gameDay: memo.game_day ?? null,
+        gameTime: memo.game_time ?? null,
+        location: memo.location ?? null,
         createdAt: memo.created_at,
         updatedAt: memo.updated_at,
       })),
@@ -48,7 +51,7 @@ export function listMemos(req: Request, res: Response): void {
  */
 export function createMemo(req: Request, res: Response): void {
   try {
-    const { sessionId, text } = req.body ?? {};
+    const { sessionId, text, gameDay, gameTime, location } = req.body ?? {};
     const userId = req.user!.userId;
 
     if (!sessionId || typeof sessionId !== "string") {
@@ -66,12 +69,20 @@ export function createMemo(req: Request, res: Response): void {
     const database = db.getDatabase();
 
     database.prepare(`
-      INSERT INTO player_memos (memo_id, session_id, user_id, text)
-      VALUES (?, ?, ?, ?)
-    `).run(memoId, sessionId, userId, text.trim());
+      INSERT INTO player_memos (memo_id, session_id, user_id, text, game_day, game_time, location)
+      VALUES (?, ?, ?, ?, ?, ?, ?)
+    `).run(
+      memoId,
+      sessionId,
+      userId,
+      text.trim(),
+      typeof gameDay === "number" ? gameDay : null,
+      typeof gameTime === "string" ? gameTime : null,
+      typeof location === "string" ? location : null
+    );
 
     const memo = database.prepare(`
-      SELECT memo_id, text, created_at, updated_at
+      SELECT memo_id, text, game_day, game_time, location, created_at, updated_at
       FROM player_memos
       WHERE memo_id = ? AND user_id = ?
     `).get(memoId, userId) as any;
@@ -81,6 +92,9 @@ export function createMemo(req: Request, res: Response): void {
       memo: {
         id: memo.memo_id,
         text: memo.text,
+        gameDay: memo.game_day ?? null,
+        gameTime: memo.game_time ?? null,
+        location: memo.location ?? null,
         createdAt: memo.created_at,
         updatedAt: memo.updated_at,
       },

@@ -104,7 +104,13 @@ export function GameSidebar({ sessionId, apiBaseUrl = '/api', refreshTrigger }: 
   const [error, setError] = useState<string | null>(null);
   const [showCharacterSheet, setShowCharacterSheet] = useState(false);
   const [memoDraft, setMemoDraft] = useState('');
-  const [memoItems, setMemoItems] = useState<Array<{ id: string; text: string }>>([]);
+  const [memoItems, setMemoItems] = useState<Array<{
+    id: string;
+    text: string;
+    gameDay?: number | null;
+    gameTime?: string | null;
+    location?: string | null;
+  }>>([]);
   const [memoLoading, setMemoLoading] = useState(false);
   const [memoError, setMemoError] = useState<string | null>(null);
   const isInitialLoadRef = useRef(true);
@@ -124,9 +130,12 @@ export function GameSidebar({ sessionId, apiBaseUrl = '/api', refreshTrigger }: 
         }
         const data = await response.json();
         if (data.success && Array.isArray(data.memos)) {
-          setMemoItems(data.memos.map((memo: { id: string; text: string }) => ({
+          setMemoItems(data.memos.map((memo: { id: string; text: string; gameDay?: number | null; gameTime?: string | null; location?: string | null }) => ({
             id: memo.id,
             text: memo.text,
+            gameDay: memo.gameDay ?? null,
+            gameTime: memo.gameTime ?? null,
+            location: memo.location ?? null,
           })));
           setMemoError(null);
         } else {
@@ -156,18 +165,31 @@ export function GameSidebar({ sessionId, apiBaseUrl = '/api', refreshTrigger }: 
   const addMemo = async () => {
     const trimmed = memoDraft.trim();
     if (!trimmed) return;
+    const memoLocation = gameState?.currentScenario?.location || gameState?.currentScenario?.name || null;
     try {
       const response = await authFetch(`${apiBaseUrl}/memos`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ sessionId, text: trimmed }),
+        body: JSON.stringify({
+          sessionId,
+          text: trimmed,
+          gameDay: gameState?.gameDay ?? null,
+          gameTime: gameState?.timeOfDay ?? null,
+          location: memoLocation,
+        }),
       });
       if (!response.ok) {
         throw new Error('Failed to save memo');
       }
       const data = await response.json();
       if (data.success && data.memo) {
-        setMemoItems((prev) => [...prev, { id: data.memo.id, text: data.memo.text }]);
+        setMemoItems((prev) => [...prev, {
+          id: data.memo.id,
+          text: data.memo.text,
+          gameDay: data.memo.gameDay ?? null,
+          gameTime: data.memo.gameTime ?? null,
+          location: data.memo.location ?? null,
+        }]);
         setMemoDraft('');
         setMemoError(null);
       } else {
@@ -497,20 +519,27 @@ export function GameSidebar({ sessionId, apiBaseUrl = '/api', refreshTrigger }: 
                   </div>
                   <div className="memo-list">
                     {memoItems.length > 0 ? (
-                      memoItems.map((item, idx) => (
-                        <div key={item.id} className="memo-item">
-                          <div className="memo-item-header">
-                            <span>Note {idx + 1}</span>
-                            <button
-                              className="memo-btn memo-btn-ghost"
-                              onClick={() => removeMemo(item.id)}
-                            >
-                              Delete
-                            </button>
-                          </div>
-                          <textarea
-                            className="memo-input memo-input-item"
-                            rows={3}
+                  memoItems.map((item, idx) => (
+                    <div key={item.id} className="memo-item">
+                      <div className="memo-item-header">
+                        <span>Note {idx + 1}</span>
+                        <button
+                          className="memo-btn memo-btn-ghost"
+                          onClick={() => removeMemo(item.id)}
+                        >
+                          Delete
+                        </button>
+                      </div>
+                      {(item.gameDay || item.gameTime || item.location) && (
+                        <div className="memo-item-meta">
+                          {item.gameDay ? `Day ${item.gameDay}` : 'Day --'}
+                          {item.gameTime ? ` · ${item.gameTime}` : ''}
+                          {item.location ? ` · ${item.location}` : ''}
+                        </div>
+                      )}
+                      <textarea
+                        className="memo-input memo-input-item"
+                        rows={3}
                             value={item.text}
                             onChange={(event) => updateMemo(item.id, event.target.value)}
                           />
