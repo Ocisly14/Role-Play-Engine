@@ -60,7 +60,8 @@ export class ModuleDigestAgent {
     scenarios: ScenarioOutline[],
     startingScene: StartingSceneSelection | null,
     creativePrompt: string,
-    endState: EndStateDefinition
+    endState: EndStateDefinition,
+    macroMapPath?: string
   ): Promise<ModuleDigest> {
     const template = getModuleDigestTemplate();
     const startingSnapshotId = startingScene?.snapshot?.id;
@@ -104,6 +105,7 @@ export class ModuleDigestAgent {
       keeperGuidance: requireString(parsed.keeperGuidance, "keeperGuidance"),
       moduleLimitations: requireString(parsed.moduleLimitations, "moduleLimitations"),
       introduction: requireString(parsed.introduction, "introduction"),
+      macroMapPath: macroMapPath || undefined,
       globalTrigger: parsed.globalTrigger || undefined,
     };
   }

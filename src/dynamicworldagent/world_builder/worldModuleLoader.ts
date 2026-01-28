@@ -572,7 +572,8 @@ export class WorldModuleLoader {
             historical_mythos = ?,
             end_state_definition = ?,
             macro_scene_structure = ?,
-            global_trigger = ?
+            global_trigger = ?,
+            macro_map_path = ?
         WHERE module_id = ?
       `);
 
@@ -584,6 +585,7 @@ export class WorldModuleLoader {
         JSON.stringify(module.endState),
         JSON.stringify(module.macroScene),
         module.moduleDigest.globalTrigger ? JSON.stringify(module.moduleDigest.globalTrigger) : null,
+        module.moduleDigest.macroMapPath || null,
         moduleId
       );
     }

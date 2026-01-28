@@ -336,6 +336,7 @@ export interface ModuleDigest {
   keeperGuidance: string;
   moduleLimitations: string;
   introduction: string;
+  macroMapPath?: string;  // Module-relative path to macro map image (e.g. "Map/[Module Name].png")
   globalTrigger?: {
     timeRestriction?: string;
     timeReason?: string;

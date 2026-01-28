@@ -14,7 +14,7 @@ interface GameSidebarProps {
   refreshTrigger?: number; // When this changes, refresh game state
 }
 
-type TabType = 'status' | 'notes' | 'map';
+type TabType = 'status' | 'notes' | 'clues' | 'map';
 
 interface Weapon {
   name: string;
@@ -81,6 +81,14 @@ interface GameEndingInfo {
   timestamp: string;
 }
 
+interface ModuleDigest {
+  moduleNotes: string;
+  keeperGuidance: string;
+  moduleLimitations: string;
+  introduction: string;
+  macroMapPath?: string;  // Module-relative path to macro map (e.g. "Map/[Module Name].png")
+}
+
 // GameState interface - compatible with both GameState and DynamicGameState
 interface GameState {
   playerCharacter: CharacterProfile;
@@ -91,6 +99,7 @@ interface GameState {
   gameEnding: GameEndingInfo | null;
   // Additional fields from DynamicGameState (optional, for compatibility)
   moduleName?: string;
+  moduleDigest?: ModuleDigest;
   npcCharacters?: CharacterProfile[];
   tension?: number;
   // DynamicWorld-specific fields (ignored by frontend but present in response)
@@ -314,6 +323,12 @@ export function GameSidebar({ sessionId, apiBaseUrl = '/api', refreshTrigger }: 
           onClick={() => setActiveTab('notes')}
         >
           Notes
+        </button>
+        <button
+          className={`sidebar-tab backdrop-blur-sm bg-white/50 border border-slate-200 shadow-md rounded-lg hover:bg-white/70 transition-all ${activeTab === 'clues' ? 'active' : ''}`}
+          onClick={() => setActiveTab('clues')}
+        >
+          Discovered Clues
         </button>
         <button
           className={`sidebar-tab backdrop-blur-sm bg-white/50 border border-slate-200 shadow-md rounded-lg hover:bg-white/70 transition-all ${activeTab === 'map' ? 'active' : ''}`}
@@ -555,6 +570,63 @@ export function GameSidebar({ sessionId, apiBaseUrl = '/api', refreshTrigger }: 
           </div>
         )}
 
+        {activeTab === 'clues' && (
+          <div className="tab-panel clues-panel">
+            {loading ? (
+              <p className="empty-state">Loading...</p>
+            ) : error ? (
+              <p className="empty-state" style={{ color: '#c41e3a' }}>Load failed: {error}</p>
+            ) : gameState ? (
+              <div className="clues-section">
+                <h3>Important Clues</h3>
+                <div className="clues-list">
+                  {gameState.discoveredClues.length > 0 ? (
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+                      {gameState.discoveredClues.map((clue, idx) => (
+                        <div
+                          key={idx}
+                          style={{
+                            padding: '10px',
+                            backgroundColor: '#fff',
+                            border: '1px solid #ddd',
+                            borderRadius: '4px',
+                          }}
+                        >
+                          <div style={{ fontWeight: 'bold', marginBottom: '5px' }}>
+                            {clue.sourceName}
+                            <span
+                              style={{
+                                marginLeft: '8px',
+                                fontSize: '0.8rem',
+                                color: '#666',
+                                fontWeight: 'normal',
+                              }}
+                            >
+                              ({clue.type === 'scenario' ? 'Scenario Clue' : clue.type === 'npc' ? 'NPC Clue' : 'Secret'})
+                            </span>
+                          </div>
+                          <div style={{ fontSize: '0.9rem', color: '#333', marginBottom: '5px' }}>
+                            {clue.text}
+                          </div>
+                          <div style={{ fontSize: '0.75rem', color: '#999' }}>
+                            Discovered by: {clue.discoveredBy}
+                            {clue.method && ` | Method: ${clue.method}`}
+                            {clue.difficulty && ` | Difficulty: ${clue.difficulty}`}
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  ) : (
+                    <p className="empty-state">No clues</p>
+                  )}
+                </div>
+              </div>
+            ) : (
+              <p className="empty-state">No data</p>
+            )}
+          </div>
+        )}
+
         {/* Map Tab */}
         {activeTab === 'map' && (
           <div className="tab-panel map-panel">
@@ -562,24 +634,66 @@ export function GameSidebar({ sessionId, apiBaseUrl = '/api', refreshTrigger }: 
               <p className="empty-state">Loading...</p>
             ) : error ? (
               <p className="empty-state" style={{ color: '#c41e3a' }}>Load failed: {error}</p>
-            ) : gameState?.currentScenario ? (
-              <div className="status-section">
-                <h3>Current Scene</h3>
-                <div className="status-list">
-                  <div className="status-item-full">
-                    <span className="status-label">Scene Name:</span>
-                    <span className="status-value">
-                      {gameState.currentScenario.name || 'Unknown'}
-                    </span>
+            ) : gameState ? (
+              <>
+                {/* Macro Map (DynamicWorld modules only) */}
+                {gameState.moduleName && gameState.moduleDigest?.macroMapPath ? (
+                  <div className="status-section">
+                    <h3>Macro Map</h3>
+                    <div className="map-display">
+                      <img 
+                        src={`${apiBaseUrl}/maps/${gameState.moduleDigest.macroMapPath}`}
+                        alt="Macro Map"
+                        style={{
+                          width: '100%',
+                          height: 'auto',
+                          borderRadius: '4px',
+                          border: '1px solid #ddd',
+                          cursor: 'pointer'
+                        }}
+                        onClick={(e) => {
+                          // Optional: Open in modal/full screen
+                          const img = e.currentTarget;
+                          if (img.requestFullscreen) {
+                            img.requestFullscreen();
+                          }
+                        }}
+                        onError={(e) => {
+                          console.error('Failed to load macro map');
+                          e.currentTarget.style.display = 'none';
+                        }}
+                      />
+                    </div>
                   </div>
-                  <div className="status-item-full">
-                    <span className="status-label">Location:</span>
-                    <span className="status-value">
-                      {gameState.currentScenario.location || 'Unknown'}
-                    </span>
+                ) : gameState.moduleName ? (
+                  <div className="status-section">
+                    <p className="empty-state">
+                      Macro map not available (module was created without GOOGLE_API_KEY)
+                    </p>
                   </div>
-                </div>
-              </div>
+                ) : null}
+
+                {/* Current Scene Info */}
+                {gameState.currentScenario && (
+                  <div className="status-section">
+                    <h3>Current Scene</h3>
+                    <div className="status-list">
+                      <div className="status-item-full">
+                        <span className="status-label">Scene Name:</span>
+                        <span className="status-value">
+                          {gameState.currentScenario.name || 'Unknown'}
+                        </span>
+                      </div>
+                      <div className="status-item-full">
+                        <span className="status-label">Location:</span>
+                        <span className="status-value">
+                          {gameState.currentScenario.location || 'Unknown'}
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+                )}
+              </>
             ) : (
               <p className="empty-state">No data</p>
             )}

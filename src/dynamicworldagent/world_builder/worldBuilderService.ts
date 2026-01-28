@@ -9,6 +9,7 @@ import { ScenarioBuilderAgent } from "./scenarioBuilderAgent.js";
 import { ModuleDigestAgent } from "./moduleDigestAgent.js";
 import { saveModuleDigestToJSON, saveWorldToJSON } from "./persistence.js";
 import type { WorldGenerationResult, MacroSceneSettingType } from "./types.js";
+import { generateMapImageFromScenarios } from "../visual/mapImage.js";
 import fs from "fs/promises";
 import path from "path";
 
@@ -152,7 +153,30 @@ export class WorldBuilderService {
           (msg) => progressCallback?.("scenario_snapshot", 79, msg)
         );
 
-      // ========== PHASE 5: MODULE DIGEST ==========
+      // ========== PHASE 4.5: MACRO MAP GENERATION (79→81) ==========
+      progressCallback?.("map_generation", 80, "Generating macro map...");
+
+      let macroMapPath: string | undefined = undefined;
+      if (process.env.GOOGLE_API_KEY) {
+        try {
+          const mapResult = await generateMapImageFromScenarios(
+            moduleName,
+            scenarios
+          );
+          if (mapResult) {
+            macroMapPath = mapResult.path;
+            console.log(`   ✓ Macro map generated: ${macroMapPath}`);
+            progressCallback?.("map_generation", 81, "Macro map generated.");
+          }
+        } catch (error) {
+          console.warn("   ⚠️  Failed to generate macro map:", error);
+          // Non-fatal: continue without map
+        }
+      } else {
+        console.log("   ⚠️  GOOGLE_API_KEY not configured, skipping macro map generation");
+      }
+
+      // ========== PHASE 5: MODULE DIGEST (82→...) ==========
       progressCallback?.("module_digest", 82, "Generating the whips of the Lord...");
 
       const moduleDigest = await this.moduleDigestAgent.generate(
@@ -163,7 +187,8 @@ export class WorldBuilderService {
         scenarios,
         startingScene,
         creativePrompt,
-        endState
+        endState,
+        macroMapPath  // Pass map path to digest
       );
 
       const moduleDigestFile = await saveModuleDigestToJSON(moduleName, moduleDigest);

@@ -60,7 +60,8 @@ export async function loadDynamicGameStateFromDatabase(
       knowledge_matrix,
       red_herrings,
       historical_mythos,
-      end_state_definition
+      end_state_definition,
+      macro_map_path
     FROM module_backgrounds
     WHERE title = ?
   `).get(moduleName) as any;
@@ -105,6 +106,11 @@ export async function loadDynamicGameStateFromDatabase(
         } catch (e) {
           console.warn(`[DynamicGameState] Failed to parse global_trigger:`, e);
         }
+      }
+
+      // Add macroMapPath if present
+      if (moduleData.macro_map_path) {
+        moduleDigest.macroMapPath = moduleData.macro_map_path;
       }
 
       manager.loadWorldData({

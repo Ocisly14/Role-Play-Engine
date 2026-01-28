@@ -651,6 +651,15 @@ export class CoCDatabase {
     } catch {
       // ignore if column already exists or cannot be added
     }
+    try {
+      if (!this.hasColumn("module_backgrounds", "macro_map_path")) {
+        this.db.exec(
+          "ALTER TABLE module_backgrounds ADD COLUMN macro_map_path TEXT;"
+        );
+      }
+    } catch {
+      // ignore if column already exists or cannot be added
+    }
 
     // Full-text search for module backgrounds
     this.db.exec(`
