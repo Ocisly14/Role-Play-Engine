@@ -98,4 +98,6 @@ export interface GenerationOptions {
   maxRetries?: number;
   images?: ImageInput[];
   onToken?: (token: string) => void;
+  userId?: string;
+  operation?: string;
 }

@@ -728,6 +728,26 @@ export class CoCDatabase {
             CREATE INDEX IF NOT EXISTS idx_users_username ON users(username);
         `);
 
+    // User token usage table (per request tracking)
+    this.db.exec(`
+            CREATE TABLE IF NOT EXISTS user_token_usage (
+                id TEXT PRIMARY KEY,
+                user_id TEXT NOT NULL,
+                provider TEXT NOT NULL,
+                model_name TEXT NOT NULL,
+                model_class TEXT NOT NULL,
+                operation TEXT NOT NULL,
+                input_tokens INTEGER NOT NULL DEFAULT 0,
+                output_tokens INTEGER NOT NULL DEFAULT 0,
+                total_tokens INTEGER NOT NULL DEFAULT 0,
+                created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+                FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+            );
+            CREATE INDEX IF NOT EXISTS idx_user_token_usage_user ON user_token_usage(user_id);
+            CREATE INDEX IF NOT EXISTS idx_user_token_usage_created ON user_token_usage(created_at);
+            CREATE INDEX IF NOT EXISTS idx_user_token_usage_model ON user_token_usage(model_name, model_class);
+        `);
+
     // Player memos table
     this.db.exec(`
             CREATE TABLE IF NOT EXISTS player_memos (
@@ -933,6 +953,39 @@ export class CoCDatabase {
 
   close(): void {
     this.db.close();
+  }
+
+  /**
+   * Record per-user token usage for AI operations
+   */
+  recordUserTokenUsage(payload: {
+    userId: string;
+    provider: string;
+    modelName: string;
+    modelClass: string;
+    operation: string;
+    inputTokens: number;
+    outputTokens: number;
+    totalTokens: number;
+  }): void {
+    const stmt = this.db.prepare(`
+      INSERT INTO user_token_usage (
+        id, user_id, provider, model_name, model_class, operation,
+        input_tokens, output_tokens, total_tokens
+      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+    `);
+
+    stmt.run(
+      randomUUID(),
+      payload.userId,
+      payload.provider,
+      payload.modelName,
+      payload.modelClass,
+      payload.operation,
+      payload.inputTokens,
+      payload.outputTokens,
+      payload.totalTokens
+    );
   }
 
   // Execute a transaction

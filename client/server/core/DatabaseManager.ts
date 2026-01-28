@@ -1,4 +1,5 @@
 import { CoCDatabase, seedDatabase } from "../../../src/coc_multiagents_system/agents/memory/database/index.js";
+import { configureTokenUsageDatabase } from "../../../src/models/index.js";
 import path from "path";
 import fs from "fs";
 
@@ -34,6 +35,7 @@ export class DatabaseManager {
       }
       this.db = new CoCDatabase();
       seedDatabase(this.db);
+      configureTokenUsageDatabase(this.db);
       console.log("✅ Database initialized");
     }
     return this.db;

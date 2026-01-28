@@ -14,6 +14,7 @@ import {
   ImageInput,
   ModelSettings,
 } from "./types.js";
+import { attachUsageTracking } from "./tokenUsage.js";
 
 /**
  * Model class usage guidelines:
@@ -146,7 +147,7 @@ async function buildUserContent(
 export function createChatModel(
   provider: ModelProviderName,
   modelClass: ModelClass,
-  options?: { streaming?: boolean }
+  options?: { streaming?: boolean; operation?: string; userId?: string }
 ): any {
   const settings = getModelSettings(provider, modelClass);
   const endpoint = getEndpoint(provider);
@@ -155,9 +156,11 @@ export function createChatModel(
     throw new Error(`No settings found for provider ${provider} and model class ${modelClass}`);
   }
 
+  let model: any;
+
   switch (provider) {
     case ModelProviderName.OPENAI:
-      return new ChatOpenAI({
+      model = new ChatOpenAI({
         modelName: settings.name,
         temperature: settings.temperature,
         maxTokens: settings.maxOutputTokens,
@@ -166,9 +169,10 @@ export function createChatModel(
           baseURL: endpoint,
         },
       });
+      break;
 
     case ModelProviderName.ANTHROPIC:
-      return new ChatAnthropic({
+      model = new ChatAnthropic({
         modelName: settings.name,
         temperature: settings.temperature,
         maxTokens: settings.maxOutputTokens,
@@ -177,19 +181,29 @@ export function createChatModel(
           baseURL: endpoint,
         },
       });
+      break;
 
     case ModelProviderName.GOOGLE:
-      return new ChatGoogleGenerativeAI({
+      model = new ChatGoogleGenerativeAI({
         modelName: settings.name,
         temperature: settings.temperature,
         maxOutputTokens: settings.maxOutputTokens,
         apiKey: process.env.GOOGLE_API_KEY,
         streaming: options?.streaming ?? false,
       });
+      break;
 
     default:
       throw new Error(`Unsupported provider: ${provider}`);
   }
+
+  return attachUsageTracking(model, {
+    provider,
+    modelClass,
+    modelName: settings.name,
+    operation: options?.operation,
+    userId: options?.userId,
+  });
 }
 
 /**
@@ -216,6 +230,8 @@ export async function generateText(options: GenerationOptions): Promise<string> 
   // Create chat model
   const chatModel = createChatModel(provider, effectiveModelClass, {
     streaming: provider === ModelProviderName.GOOGLE && Boolean(onToken),
+    operation: options.operation,
+    userId: options.userId,
   });
 
   // Prepare messages

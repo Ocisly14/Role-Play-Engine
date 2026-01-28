@@ -1,5 +1,6 @@
 import { getEndpoint } from "./generator.js";
-import { ModelProviderName } from "./types.js";
+import { ModelClass, ModelProviderName } from "./types.js";
+import { normalizeUsageMetadata, recordTokenUsage } from "./tokenUsage.js";
 
 export interface GeneratedImage {
   mimeType: string;
@@ -57,6 +58,20 @@ export async function generateGeminiImage(
   }
 
   const data = await response.json();
+  const usage = normalizeUsageMetadata(
+    data?.usageMetadata || data?.usage_metadata || data?.usage
+  );
+  if (usage) {
+    recordTokenUsage({
+      provider: ModelProviderName.GOOGLE,
+      modelClass: ModelClass.IMAGE,
+      modelName: model,
+      operation: "image",
+      input_tokens: usage.input_tokens,
+      output_tokens: usage.output_tokens,
+      total_tokens: usage.total_tokens,
+    });
+  }
   const parts = data?.candidates?.[0]?.content?.parts || [];
   const imagePart = parts.find((part: any) => part?.inlineData?.data || part?.inline_data?.data);
 

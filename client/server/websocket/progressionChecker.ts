@@ -6,6 +6,7 @@ import { DatabaseManager } from "../core/DatabaseManager.js";
 import { GameStateManager } from "../../../src/coc_multiagents_system/state/gameState.js";
 import { enrichMemoryContext } from "../../../src/coc_multiagents_system/agents/memory/memoryAgent.js";
 import { notifyClients } from "./notifier.js";
+import { runWithTokenContext } from "../../../src/models/index.js";
 
 const CHECK_INTERVAL_MS = 60000; // Check every 60 seconds
 let progressionCheckInterval: NodeJS.Timeout | null = null;
@@ -21,6 +22,24 @@ export async function checkAndTriggerSimulate(
   sessionId: string,
   clients: Map<string, WSClient>
 ): Promise<boolean> {
+  const resolveUserId = (): string | null => {
+    const serverState = ServerState.getInstance();
+    const fromState = serverState.getUserIdBySession(sessionId);
+    if (fromState) return fromState;
+
+    const db = DatabaseManager.getInstance().getDatabase().getDatabase();
+    const row = db.prepare(`
+      SELECT c.user_id
+      FROM game_turns gt
+      JOIN characters c ON c.character_id = gt.character_id
+      WHERE gt.session_id = ? AND c.user_id IS NOT NULL
+      LIMIT 1
+    `).get(sessionId) as { user_id?: string } | undefined;
+    return row?.user_id ?? null;
+  };
+
+  const userId = resolveUserId();
+  const runner = async () => {
   const serverState = ServerState.getInstance();
   const graphManager = GraphManager.getInstance();
   const dbManager = DatabaseManager.getInstance();
@@ -164,6 +183,12 @@ export async function checkAndTriggerSimulate(
     console.error(`[WebSocket] Error checking progression for session ${sessionId}:`, error);
     return false;
   }
+  };
+
+  if (userId) {
+    return runWithTokenContext({ userId }, () => runner());
+  }
+  return runner();
 }
 
 /**

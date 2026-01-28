@@ -1,6 +1,7 @@
 /// <reference path="../types/express.d.ts" />
 import type { Request, Response, NextFunction } from 'express';
 import { generateAccessToken, verifyToken } from './jwt.js';
+import { runWithTokenContext } from '../../../src/models/index.js';
 import { authDbService } from './db-service.js';
 import Database from 'better-sqlite3';
 import { CoCDatabase } from '../../../src/coc_multiagents_system/agents/memory/database/schema.js';
@@ -62,7 +63,7 @@ export async function authenticate(
 
     // Attach user info to request
     req.user = payload;
-    next();
+    return runWithTokenContext({ userId: payload.userId }, () => next());
   } catch (error) {
     return res.status(401).json({ error: 'Invalid or expired token' });
   }
@@ -82,6 +83,7 @@ export async function optionalAuthenticate(
     if (token) {
       const payload = verifyToken(token);
       req.user = payload;
+      return runWithTokenContext({ userId: payload.userId }, () => next());
     }
   } catch (error) {
     // Ignore error, continue

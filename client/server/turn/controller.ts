@@ -12,6 +12,7 @@ import { HumanMessage } from "@langchain/core/messages";
 import { DynamicGameStateManager } from "../../../src/dynamicworldagent/state/index.js";
 import { WebSocketManager } from "../websocket/WebSocketManager.js";
 import { notifyClients } from "../websocket/notifier.js";
+import { runWithTokenContext } from "../../../src/models/index.js";
 
 type NarrativeStreamHandlers = {
   onDiceRolls?: (diceRolls: string[]) => void;
@@ -103,20 +104,22 @@ export async function createTurn(req: Request, res: Response): Promise<void> {
     // Start async processing (don't wait for it)
     // Pass the appropriate state type to processGameTurnAsync
     const stateToProcess = useDynamic ? dynamicGameState! : persistentGameState!;
-    processGameTurnAsync(turnId, message, stateToProcess, userId)
-      .catch((error) => {
-        console.error(`Error processing turn ${turnId}:`, error);
-        // Mark error using appropriate turn manager
-        if (useDynamic) {
-          const dynamicTurnManager = new DynamicTurnManager(db);
-          dynamicTurnManager.markError(turnId, error);
-        } else {
-          const turnManager = graphManager.getTurnManager();
-          if (turnManager) {
-            turnManager.markError(turnId, error);
+    runWithTokenContext({ userId }, () => {
+      processGameTurnAsync(turnId, message, stateToProcess, userId)
+        .catch((error) => {
+          console.error(`Error processing turn ${turnId}:`, error);
+          // Mark error using appropriate turn manager
+          if (useDynamic) {
+            const dynamicTurnManager = new DynamicTurnManager(db);
+            dynamicTurnManager.markError(turnId, error);
+          } else {
+            const turnManager = graphManager.getTurnManager();
+            if (turnManager) {
+              turnManager.markError(turnId, error);
+            }
           }
-        }
-      });
+        });
+    });
 
     // Immediately return the turnId
     res.json({
