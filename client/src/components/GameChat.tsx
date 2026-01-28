@@ -57,6 +57,8 @@ export function GameChat({ sessionId, apiBaseUrl = '/api', characterName = 'Inve
   const [isGameEnded, setIsGameEnded] = useState(false);
   const [currentGameState, setCurrentGameState] = useState<{ gameDay?: number; timeOfDay?: string } | null>(null);
   const [streamingTurnId, setStreamingTurnId] = useState<string | null>(null);
+  const [isInputCollapsed, setIsInputCollapsed] = useState(true);
+  const collapseTimeoutRef = useRef<number | null>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const processedTurnIdsRef = useRef<Set<string>>(new Set());
   const wsRef = useRef<WebSocket | null>(null);
@@ -239,7 +241,7 @@ export function GameChat({ sessionId, apiBaseUrl = '/api', characterName = 'Inve
                 return [
                   ...prev,
                   {
-                    role: 'keeper',
+                    role: 'keeper' as const,
                     content: '',
                     timestamp: message.timestamp || new Date().toISOString(),
                     turnNumber: nextTurnNumber,
@@ -266,12 +268,14 @@ export function GameChat({ sessionId, apiBaseUrl = '/api', characterName = 'Inve
                   return [
                     ...prev,
                     {
-                      role: 'keeper',
+                      role: 'keeper' as const,
                       content: '',
                       timestamp: new Date().toISOString(),
                       turnNumber: nextTurnNumber,
                       turnId: turnId,
                       isStreaming: true,
+                      gameDay: null,
+                      gameTime: null,
                     }
                   ];
                 });
@@ -291,12 +295,14 @@ export function GameChat({ sessionId, apiBaseUrl = '/api', characterName = 'Inve
                 if (!found) {
                   const nextTurnNumber = prev.length > 0 ? Math.max(...prev.map(m => m.turnNumber)) + 1 : 1;
                   next.push({
-                    role: 'keeper',
+                    role: 'keeper' as const,
                     content: delta,
                     timestamp: new Date().toISOString(),
                     turnNumber: nextTurnNumber,
                     turnId: turnId,
                     isStreaming: true,
+                    gameDay: null,
+                    gameTime: null,
                   });
                 }
 
@@ -335,7 +341,7 @@ export function GameChat({ sessionId, apiBaseUrl = '/api', characterName = 'Inve
                   return [
                     ...prev,
                     {
-                      role: 'keeper',
+                      role: 'keeper' as const,
                       content: message.keeperNarrative,
                       timestamp: message.timestamp || new Date().toISOString(),
                       turnNumber: latestTurnNumber + 1,
@@ -549,7 +555,7 @@ export function GameChat({ sessionId, apiBaseUrl = '/api', characterName = 'Inve
               : [
                   ...prev,
                   {
-                    role: 'keeper',
+                    role: 'keeper' as const,
                     content: buffered,
                     timestamp: pendingDiceRolls.timestamp,
                     turnNumber: pendingDiceRolls.turnNumber,
@@ -588,6 +594,8 @@ export function GameChat({ sessionId, apiBaseUrl = '/api', characterName = 'Inve
           turnNumber: pendingDiceRolls.turnNumber,
           turnId: pendingDiceRolls.turnId,
           diceRolls: pendingDiceRolls.diceRolls,
+          gameDay: pendingDiceRolls.gameDay ?? null,
+          gameTime: pendingDiceRolls.gameTime ?? null,
         };
         return [...prev, keeperMessage];
       });
@@ -733,7 +741,7 @@ export function GameChat({ sessionId, apiBaseUrl = '/api', characterName = 'Inve
           // Only add keeper message if narrative exists
           if (turn.keeperNarrative) {
             const keeperMessage: Message = {
-              role: 'keeper',
+              role: 'keeper' as const,
               content: turn.keeperNarrative,
               timestamp: turn.completedAt || turn.startedAt,
               turnNumber: turn.turnNumber,
@@ -816,7 +824,7 @@ export function GameChat({ sessionId, apiBaseUrl = '/api', characterName = 'Inve
     // Immediately add user message to chat
     const nextTurnNumber = messages.length > 0 ? Math.max(...messages.map(m => m.turnNumber)) + 1 : 1;
     const userMessage: Message = {
-      role: 'character',
+      role: 'character' as const,
       content: messageText,
       timestamp: new Date().toISOString(),
       turnNumber: nextTurnNumber,
@@ -860,12 +868,61 @@ export function GameChat({ sessionId, apiBaseUrl = '/api', characterName = 'Inve
     }
   };
 
-  const handleKeyPress = (e: React.KeyboardEvent) => {
+  const handleKeyPress = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
     if (e.key === 'Enter' && !e.shiftKey) {
       e.preventDefault();
       handleSendMessage();
     }
   };
+
+  const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
+    if (e.key === 'Enter' && !e.shiftKey) {
+      e.preventDefault();
+      if (e.nativeEvent.isComposing) return;
+      handleSendMessage();
+    }
+  };
+
+  // Collapsible input area handlers
+  const handleInputAreaMouseEnter = () => {
+    // Clear any pending collapse timeout
+    if (collapseTimeoutRef.current) {
+      clearTimeout(collapseTimeoutRef.current);
+      collapseTimeoutRef.current = null;
+    }
+    // Expand the input area
+    setIsInputCollapsed(false);
+  };
+
+  const handleInputAreaMouseLeave = () => {
+    // Only collapse if input is empty
+    if (!inputValue.trim()) {
+      // Start a 1-second timeout before collapsing
+      collapseTimeoutRef.current = setTimeout(() => {
+        setIsInputCollapsed(true);
+      }, 1000);
+    }
+  };
+
+  // Expand input when user starts typing
+  useEffect(() => {
+    if (inputValue.trim()) {
+      setIsInputCollapsed(false);
+      if (collapseTimeoutRef.current) {
+        clearTimeout(collapseTimeoutRef.current);
+        collapseTimeoutRef.current = null;
+      }
+    }
+  }, [inputValue]);
+
+  // Cleanup timeout on unmount
+  useEffect(() => {
+    return () => {
+      if (collapseTimeoutRef.current) {
+        clearTimeout(collapseTimeoutRef.current);
+      }
+    };
+  }, []);
 
   const handleSaveCheckpoint = async () => {
     if (isSaving) return;
@@ -902,16 +959,16 @@ export function GameChat({ sessionId, apiBaseUrl = '/api', characterName = 'Inve
   };
 
   return (
-    <div className="game-chat-container">
+    <div className="game-chat-container backdrop-blur-sm border border-slate-200 shadow-md rounded-lg">
       {/* Session Info Bar */}
       <div className="session-info-bar">
-        <div className="character-info">
+        <div className="character-info backdrop-blur-sm bg-white/50 border border-slate-200 shadow-md rounded-lg px-3 py-1.5 h-9 flex items-center">
           <span className="character-label">Playing as:</span>
           <span className="character-value">{characterName}</span>
         </div>
         <div className="save-checkpoint-section">
           <button
-            className="save-checkpoint-btn"
+            className="save-checkpoint-btn backdrop-blur-md bg-white/50 border border-slate-200 shadow-md rounded-xl px-3 py-1.5 text-sm hover:bg-white/70 hover:border-slate-300 hover:-translate-y-0.5 transition-all h-9"
             onClick={handleSaveCheckpoint}
             disabled={isSaving}
             title="Save current game progress"
@@ -972,7 +1029,15 @@ export function GameChat({ sessionId, apiBaseUrl = '/api', characterName = 'Inve
                 )}
               </div>
             )}
-            {msg.content && <div className="message-text">{msg.content}</div>}
+            {msg.content && (
+              <div className={`message-text backdrop-blur-sm border border-slate-200 shadow-md rounded-lg px-[18px] py-[14px] ${
+                msg.role === 'character' 
+                  ? 'bg-[rgba(232,220,196,0.5)]' 
+                  : 'bg-white/50'
+              }`}>
+                {msg.content}
+              </div>
+            )}
           </div>
         ))}
 
@@ -995,7 +1060,7 @@ export function GameChat({ sessionId, apiBaseUrl = '/api', characterName = 'Inve
             />
             {/* Show narrative after dice animation completes */}
             {diceAnimationCompleted && pendingDiceRolls && pendingDiceRolls.narrative && (
-              <div className="message-text" style={{ marginTop: '16px' }}>
+              <div className="message-text backdrop-blur-sm bg-white/50 border border-slate-200 shadow-md rounded-lg px-[18px] py-[14px]" style={{ marginTop: '16px' }}>
                 {pendingDiceRolls.narrative}
               </div>
             )}
@@ -1007,7 +1072,7 @@ export function GameChat({ sessionId, apiBaseUrl = '/api', characterName = 'Inve
             <div className="message-meta">
               <span className="sender-name">🎭 Keeper</span>
             </div>
-            <div className="message-text">
+            <div className="message-text backdrop-blur-sm bg-white/50 border border-slate-200 shadow-md rounded-lg px-[18px] py-[14px]">
               <span className="typing-indicator">
                 <span>•</span><span>•</span><span>•</span>
               </span>
@@ -1026,23 +1091,68 @@ export function GameChat({ sessionId, apiBaseUrl = '/api', characterName = 'Inve
       </div>
 
       {/* Input Area */}
-      <div className="chat-input-area">
-        <textarea
-          className="action-input"
-          value={inputValue}
-          onChange={(e) => setInputValue(e.target.value)}
-          onKeyPress={handleKeyPress}
-          placeholder={isGameEnded ? "The story has ended." : "I examine the ancient tome on the desk..."}
-          disabled={isSending || isPolling || isGameEnded}
-          rows={3}
-        />
-        <button
-          className="submit-action-btn"
-          onClick={handleSendMessage}
-          disabled={!inputValue.trim() || isSending || isPolling || isGameEnded}
+      <div className="fixed bottom-0 left-0 right-0 z-30 pointer-events-none px-2 sm:px-0">
+        <div
+          onMouseEnter={handleInputAreaMouseEnter}
+          onMouseLeave={handleInputAreaMouseLeave}
+          className={`mx-auto w-full px-4 sm:px-0 pointer-events-auto rounded-3xl border border-white/30 dark:border-white/20 backdrop-blur-md shadow-[0_5px_13px_rgba(15,23,42,0.55)] ease-in-out ${
+            isInputCollapsed && !inputValue.trim()
+              ? 'max-w-[160px] max-h-6 overflow-hidden mb-3 [transition:max-height_0.5s_ease-in-out,max-width_1s_ease-in-out_0.5s]'
+              : 'max-w-xl max-h-[80vh] mb-2 [transition:max-width_1s_ease-in-out,max-height_0.5s_ease-in-out]'
+          }`}
         >
-          {isGameEnded ? '🏁 Game Ended' : isSending || isPolling ? '⏳ Processing...' : '🎲 Declare Action'}
-        </button>
+          <div
+            className={`flex flex-col transition-opacity duration-300 ${
+              isInputCollapsed && !inputValue.trim()
+                ? 'space-y-0 opacity-0 pointer-events-none invisible'
+                : 'space-y-1 opacity-100 visible'
+            }`}
+            aria-hidden={isInputCollapsed && !inputValue.trim()}
+          >
+            {/* Input Form */}
+            <div className="px-2 pb-2 pt-2">
+              <div className="relative">
+                <div
+                  aria-hidden
+                  className="pointer-events-none absolute inset-x-6 bottom-[-40px] h-24 rounded-full bg-slate-500/10 blur-3xl dark:bg-slate-900/60"
+                />
+                <form
+                  onSubmit={(e) => {
+                    e.preventDefault();
+                    handleSendMessage();
+                  }}
+                  className="relative z-10 overflow-hidden rounded-2xl border border-white/50 shadow-[0_6px_15px_rgba(15,23,42,0.25)] transition-all duration-300 ease-in-out bg-white/80 dark:bg-slate-950/60 supports-[backdrop-filter]:bg-white/55 supports-[backdrop-filter]:backdrop-blur-2xl dark:supports-[backdrop-filter]:bg-slate-900/40"
+                >
+                  <textarea
+                    className="select-none md:text-sm max-h-12 px-4 text-sm placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50 w-full flex items-center h-16 min-h-10 resize-none rounded-md bg-transparent border-0 py-1 pl-2 pr-0.5 mt-2 shadow-none focus-visible:ring-0"
+                    autoComplete="off"
+                    name="message"
+                    value={inputValue}
+                    onChange={(e) => setInputValue(e.target.value)}
+                    onKeyDown={handleKeyDown}
+                    placeholder={isGameEnded ? "The story has ended." : "Type your message here..."}
+                    disabled={isSending || isPolling || isGameEnded}
+                  />
+                  <div className="flex items-center p-1.5 pt-0">
+                    <button
+                      type="submit"
+                      className="inline-flex items-center justify-center whitespace-nowrap font-medium transition-all focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg]:size-4 [&_svg]:shrink-0 backdrop-blur-md bg-white/50 border border-slate-200 text-slate-900 shadow-md hover:bg-white/70 hover:border-slate-300 hover:-translate-y-0.5 rounded-xl px-3 text-xs ml-auto gap-0.5 h-[30px]"
+                      disabled={!inputValue.trim() || isSending || isPolling || isGameEnded}
+                    >
+                      {isGameEnded ? 'Game Ended' : isSending || isPolling ? 'Processing...' : 'Send Message'}
+                      {!isGameEnded && !isSending && !isPolling && (
+                        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="lucide lucide-send size-3.5">
+                          <path d="M14.536 21.686a.5.5 0 0 0 .937-.024l6.5-19a.496.496 0 0 0-.635-.635l-19 6.5a.5.5 0 0 0-.024.937l7.93 3.18a2 2 0 0 1 1.112 1.11z"/>
+                          <path d="m21.854 2.147-10.94 10.939"/>
+                        </svg>
+                      )}
+                    </button>
+                  </div>
+                </form>
+              </div>
+            </div>
+          </div>
+        </div>
       </div>
     </div>
   );

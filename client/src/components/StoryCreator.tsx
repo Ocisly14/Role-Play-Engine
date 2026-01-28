@@ -283,39 +283,41 @@ export function StoryCreator({
           left: 0;
           right: 0;
           bottom: 0;
-          background: rgba(0, 0, 0, 0.85);
+          background: rgba(0, 0, 0, 0.5);
           backdrop-filter: blur(4px);
+          -webkit-backdrop-filter: blur(4px);
           display: flex;
           align-items: center;
           justify-content: center;
           z-index: 1000;
           padding: 20px;
-          animation: overlayFadeIn 0.3s ease-out;
         }
 
-        @keyframes overlayFadeIn {
-          from {
-            opacity: 0;
-          }
-          to {
-            opacity: 1;
+        @supports (backdrop-filter: blur(4px)) {
+          .story-creator-overlay {
+            background: rgba(0, 0, 0, 0.3);
           }
         }
 
         .story-creator-modal {
-          background: var(--paper, #f5f1e8);
-          border: 4px solid var(--border, #3d2f1f);
-          box-shadow:
-            0 0 0 2px var(--accent, #8b7355),
-            0 20px 60px rgba(0, 0, 0, 0.6);
+          background: rgba(255, 255, 255, 0.8);
+          backdrop-filter: blur(16px);
+          -webkit-backdrop-filter: blur(16px);
+          border: 1px solid rgba(255, 255, 255, 0.5);
+          box-shadow: 0 30px 80px rgba(15, 23, 42, 0.25);
           max-width: 900px;
           width: 100%;
           max-height: 90vh;
           display: flex;
           flex-direction: column;
-          border-radius: 8px;
-          animation: modalSlideIn 0.4s ease-out;
+          border-radius: 1.5rem;
           overflow: hidden;
+        }
+
+        @supports (backdrop-filter: blur(16px)) {
+          .story-creator-modal {
+            background: rgba(255, 255, 255, 0.55);
+          }
         }
 
         @keyframes modalSlideIn {
@@ -331,26 +333,12 @@ export function StoryCreator({
 
         .modal-header {
           padding: 24px 28px;
-          background: linear-gradient(135deg, var(--header-bg, #d4c4b0) 0%, #c4b4a0 100%);
-          border-bottom: 3px solid var(--border, #3d2f1f);
+          background: transparent;
+          border-bottom: 1px solid rgba(226, 232, 240, 0.5);
           display: flex;
           justify-content: space-between;
           align-items: center;
           position: relative;
-        }
-
-        .modal-header::after {
-          content: '';
-          position: absolute;
-          bottom: 0;
-          left: 0;
-          right: 0;
-          height: 3px;
-          background: linear-gradient(90deg,
-            transparent 0%,
-            var(--accent, #8b7355) 50%,
-            transparent 100%
-          );
         }
 
         .modal-header-content {
@@ -393,26 +381,28 @@ export function StoryCreator({
         .close-button {
           width: 40px;
           height: 40px;
-          border: 2px solid var(--border, #3d2f1f);
-          background: var(--paper, #f5f1e8);
-          color: var(--title, #3d2f1f);
-          font-size: 2rem;
+          backdrop-filter: blur(4px);
+          -webkit-backdrop-filter: blur(4px);
+          background: rgba(255, 255, 255, 0.3);
+          border: 1px solid rgba(226, 232, 240, 0.8);
+          color: rgba(0, 0, 0, 0.7);
+          font-size: 1.5rem;
           line-height: 1;
           cursor: pointer;
-          transition: all 0.2s;
-          border-radius: 50%;
+          transition: all 0.2s ease-in-out;
+          border-radius: 0.75rem;
           display: flex;
           align-items: center;
           justify-content: center;
           padding: 0;
-          box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+          opacity: 0.7;
+          box-shadow: 0 2px 4px -1px rgba(0, 0, 0, 0.1);
         }
 
         .close-button:hover:not(:disabled) {
-          background: var(--border, #3d2f1f);
-          color: var(--paper, #f5f1e8);
-          transform: rotate(90deg) scale(1.1);
-          box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
+          opacity: 1;
+          background: rgba(255, 255, 255, 0.5);
+          border-color: rgba(203, 213, 225, 1);
         }
 
         .close-button:disabled {
@@ -424,7 +414,7 @@ export function StoryCreator({
           padding: 32px 28px;
           overflow-y: auto;
           flex: 1;
-          background: #f9f6f0;
+          background: transparent;
         }
 
         .error-message {
@@ -584,47 +574,49 @@ export function StoryCreator({
           letter-spacing: 1.5px;
           text-transform: uppercase;
           font-family: var(--serif);
-          border-radius: 6px;
+          border-radius: 0.75rem;
           cursor: pointer;
-          transition: all 0.2s ease;
-          border: 2px solid var(--border, #3d2f1f);
-          box-shadow: 0 3px 6px rgba(0, 0, 0, 0.15);
+          transition: all 0.2s ease-in-out;
+          backdrop-filter: blur(4px);
+          -webkit-backdrop-filter: blur(4px);
+          box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
         }
 
         .btn-secondary {
-          background: white;
+          background: rgba(255, 255, 255, 0.5);
+          border: 1px solid rgba(226, 232, 240, 1);
           color: var(--title, #3d2f1f);
         }
 
         .btn-secondary:hover {
-          background: var(--header-bg, #d4c4b0);
+          background: rgba(255, 255, 255, 0.7);
+          border-color: rgba(203, 213, 225, 1);
           transform: translateY(-2px);
-          box-shadow: 0 5px 10px rgba(0, 0, 0, 0.2);
+          box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
         }
 
         .btn-primary {
-          background: linear-gradient(135deg, var(--accent, #8b7355) 0%, #6d5840 100%);
-          color: var(--paper, #f5f1e8);
-          border-color: var(--border, #3d2f1f);
+          background: rgba(255, 255, 255, 0.5);
+          border: 1px solid rgba(226, 232, 240, 1);
+          color: var(--title, #3d2f1f);
         }
 
         .btn-primary:hover:not(:disabled) {
-          background: linear-gradient(135deg, #6d5840 0%, #5a4633 100%);
+          background: rgba(255, 255, 255, 0.7);
+          border-color: rgba(203, 213, 225, 1);
           transform: translateY(-2px);
-          box-shadow: 0 5px 12px rgba(0, 0, 0, 0.3);
+          box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
         }
 
         .btn-primary:active:not(:disabled) {
           transform: translateY(0);
-          box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+          box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
         }
 
         .btn-primary:disabled {
           opacity: 0.5;
           cursor: not-allowed;
           transform: none;
-          background: #bbb;
-          border-color: #999;
         }
 
         .generation-progress {

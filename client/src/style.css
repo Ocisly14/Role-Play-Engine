@@ -1,3 +1,7 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
 :root {
   --ink: #2b2519;
   --paper: #f5f1e8;
@@ -7,6 +11,12 @@
   --title: #3d2f1f;
   --mono: "Courier New", "Courier", monospace;
   --serif: "Goudy Old Style", "Garamond", "Palatino Linotype", "Book Antiqua", "Times New Roman", serif;
+  /* Tailwind primary colors for compatibility */
+  --primary: 240 5.9% 10%;
+  --primary-foreground: 0 0% 98%;
+  --muted-foreground: 220 9% 46%;
+  --ring: 240 5.9% 10%;
+  --input: 220 13% 90%;
 }
 
 * {
@@ -461,38 +471,43 @@ background-image: url('/asset/background.png');
 }
 
 .home-actions button.primary {
-  background: linear-gradient(135deg, #8b7355 0%, #6d5840 100%);
-  border: 3px solid var(--border);
-  color: var(--paper);
-  font-weight: 800;
-  letter-spacing: 2px;
-  text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.3);
+  backdrop-filter: blur(4px);
+  -webkit-backdrop-filter: blur(4px);
+  background: rgba(255, 255, 255, 0.5);
+  border: 1px solid rgba(226, 232, 240, 1);
+  color: var(--title);
+  font-weight: 700;
+  letter-spacing: 1px;
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+  border-radius: 0.75rem;
+  transition: all 0.2s ease-in-out;
 }
 
 .home-actions button.primary:hover {
-  background: linear-gradient(135deg, #6d5840 0%, #5a4633 100%);
-  transform: translateY(-3px);
-  box-shadow:
-    0 8px 20px rgba(0, 0, 0, 0.4),
-    0 0 0 3px var(--accent),
-    inset 0 1px 0 rgba(255, 255, 255, 0.3);
+  background: rgba(255, 255, 255, 0.7);
+  border-color: rgba(203, 213, 225, 1);
+  transform: translateY(-2px);
+  box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
 }
 
 .home-actions button.secondary {
-  background: linear-gradient(135deg, var(--header-bg) 0%, #b4a490 100%);
-  border: 3px solid var(--border);
+  backdrop-filter: blur(4px);
+  -webkit-backdrop-filter: blur(4px);
+  background: rgba(255, 255, 255, 0.5);
+  border: 1px solid rgba(226, 232, 240, 1);
   color: var(--title);
   font-weight: 700;
-  letter-spacing: 1.5px;
+  letter-spacing: 1px;
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+  border-radius: 0.75rem;
+  transition: all 0.2s ease-in-out;
 }
 
 .home-actions button.secondary:hover {
-  background: linear-gradient(135deg, #b4a490 0%, #a49480 100%);
-  transform: translateY(-3px);
-  box-shadow:
-    0 8px 20px rgba(0, 0, 0, 0.4),
-    0 0 0 3px var(--accent),
-    inset 0 1px 0 rgba(255, 255, 255, 0.3);
+  background: rgba(255, 255, 255, 0.7);
+  border-color: rgba(203, 213, 225, 1);
+  transform: translateY(-2px);
+  box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
 }
 
 .home-panels {
@@ -517,8 +532,11 @@ background-image: url('/asset/background.png');
 }
 
 button, .primary {
-  border: 2px solid var(--border);
-  background: var(--header-bg);
+  backdrop-filter: blur(4px);
+  -webkit-backdrop-filter: blur(4px);
+  background: rgba(255, 255, 255, 0.5);
+  border: 1px solid rgba(226, 232, 240, 1);
+  border-radius: 0.75rem;
   padding: 10px 20px;
   cursor: pointer;
   font-weight: 700;
@@ -527,20 +545,20 @@ button, .primary {
   color: var(--title);
   text-transform: uppercase;
   font-size: 0.9rem;
-  box-shadow: 2px 2px 4px rgba(0, 0, 0, 0.2);
-  transition: all 0.2s;
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+  transition: all 0.2s ease-in-out;
 }
 
 button:hover, .primary:hover {
-  background: var(--border);
-  color: var(--paper);
-  transform: translateY(-1px);
-  box-shadow: 3px 3px 6px rgba(0, 0, 0, 0.3);
+  background: rgba(255, 255, 255, 0.7);
+  border-color: rgba(203, 213, 225, 1);
+  transform: translateY(-2px);
+  box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
 }
 
 button:active, .primary:active {
   transform: translateY(0);
-  box-shadow: 1px 1px 2px rgba(0, 0, 0, 0.2);
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
 }
 
 button:disabled {
@@ -768,9 +786,12 @@ textarea {
 }
 
 .pill-btn {
-  border: 2px solid var(--border);
+  backdrop-filter: blur(4px);
+  -webkit-backdrop-filter: blur(4px);
+  background: rgba(255, 255, 255, 0.5);
+  border: 1px solid rgba(226, 232, 240, 1);
+  border-radius: 0.75rem;
   padding: 10px 20px;
-  background: var(--header-bg);
   cursor: pointer;
   font-weight: 700;
   letter-spacing: 1px;
@@ -778,20 +799,20 @@ textarea {
   font-family: var(--serif);
   color: var(--title);
   font-size: 0.9rem;
-  box-shadow: 2px 2px 4px rgba(0, 0, 0, 0.2);
-  transition: all 0.2s;
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+  transition: all 0.2s ease-in-out;
 }
 
 .pill-btn:hover {
-  background: var(--border);
-  color: var(--paper);
-  transform: translateY(-1px);
-  box-shadow: 3px 3px 6px rgba(0, 0, 0, 0.3);
+  background: rgba(255, 255, 255, 0.7);
+  border-color: rgba(203, 213, 225, 1);
+  transform: translateY(-2px);
+  box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
 }
 
 .pill-btn:active {
   transform: translateY(0);
-  box-shadow: 1px 1px 2px rgba(0, 0, 0, 0.2);
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
 }
 
 .pill-btn:disabled {
@@ -844,9 +865,7 @@ textarea {
   justify-content: space-between;
   align-items: center;
   padding: 16px 24px;
-  background: var(--paper);
-  border: 3px solid var(--border);
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+  /* background, border, box-shadow 已由 Tailwind 类名处理 */
   margin-bottom: 16px;
 }
 
@@ -859,25 +878,21 @@ textarea {
 
 .back-button {
   padding: 10px 20px;
-  background: var(--accent);
-  color: var(--paper);
-  border: 2px solid var(--border);
-  border-radius: 4px;
+  /* background, border, border-radius, box-shadow 已由 Tailwind 类名处理 */
+  color: var(--title);
   cursor: pointer;
   font-size: 0.95rem;
   font-family: var(--serif);
   font-weight: bold;
   transition: all 0.2s;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
 }
 
-.back-button:hover {
-  background: #6d5840;
+.back-button:hover:not(:disabled) {
   transform: translateY(-2px);
   box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
 }
 
-.back-button:active {
+.back-button:active:not(:disabled) {
   transform: translateY(0);
   box-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
 }
@@ -899,22 +914,17 @@ textarea {
   display: flex;
   flex-direction: column;
   flex: 2;
-  background: var(--paper);
-  border: 3px solid var(--border);
-  box-shadow:
-    0 0 0 1px var(--accent),
-    0 8px 20px rgba(0, 0, 0, 0.3);
+  /* background, border, box-shadow 已由 Tailwind 类名处理 */
   overflow: hidden;
 }
 
 /* Session Info Bar */
 .session-info-bar {
-  padding: 12px 20px;
-  background: var(--header-bg);
-  border-bottom: 2px solid var(--border);
+  padding: 12px;
   display: flex;
   justify-content: space-between;
   align-items: center;
+  gap: 8px;
   font-family: var(--mono);
   font-size: 0.85rem;
 }
@@ -923,6 +933,7 @@ textarea {
   display: flex;
   gap: 8px;
   align-items: center;
+  /* background, border, border-radius, box-shadow 已由 Tailwind 类名处理 */
 }
 
 .session-label, .character-label {
@@ -932,10 +943,9 @@ textarea {
 
 .session-value, .character-value {
   color: var(--title);
-  background: rgba(255, 255, 255, 0.6);
-  padding: 2px 8px;
-  border-radius: 3px;
-  border: 1px solid #ccc;
+  /* background, border, border-radius 已由父元素的 Tailwind 类名处理 */
+  padding: 0;
+  font-weight: 600;
 }
 
 .view-character-btn {
@@ -957,19 +967,23 @@ textarea {
 
 .view-character-btn-sidebar {
   padding: 6px 10px;
-  background: #5ba3c0;
-  color: white;
-  border: none;
-  border-radius: 4px;
+  background: rgba(255, 255, 255, 0.5);
+  backdrop-filter: blur(4px);
+  -webkit-backdrop-filter: blur(4px);
+  color: var(--title);
+  border: 1px solid rgba(226, 232, 240, 0.8);
+  border-radius: 0.5rem;
   font-size: 0.75rem;
   cursor: pointer;
-  transition: background 0.2s;
+  transition: all 0.2s;
   font-weight: 500;
   white-space: nowrap;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
 }
 
 .view-character-btn-sidebar:hover {
-  background: #4a8ca8;
+  background: rgba(255, 255, 255, 0.7);
+  border-color: rgba(226, 232, 240, 1);
 }
 
 /* Messages Scroll Area */
@@ -977,15 +991,7 @@ textarea {
   flex: 1;
   overflow-y: auto;
   padding: 20px;
-  background: #f9f6f0;
-  background-image: 
-    repeating-linear-gradient(
-      0deg,
-      transparent,
-      transparent 24px,
-      rgba(139, 115, 85, 0.1) 24px,
-      rgba(139, 115, 85, 0.1) 25px
-    );
+  background: transparent;
 }
 
 .empty-chat-prompt {
@@ -1048,37 +1054,11 @@ textarea {
 }
 
 .message-text {
-  padding: 14px 18px;
   line-height: 1.6;
   white-space: pre-wrap;
   word-wrap: break-word;
   font-family: var(--serif);
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-}
-
-.chat-message.character .message-text {
-  background: #e8dcc4;
-  border: 2px solid var(--accent);
-  border-radius: 4px 4px 0 4px;
-}
-
-.chat-message.keeper .message-text {
-  background: white;
-  border: 2px solid var(--border);
-  border-radius: 4px 4px 4px 0;
-  position: relative;
-}
-
-.chat-message.keeper .message-text::before {
-  content: '';
-  position: absolute;
-  left: -8px;
-  top: 12px;
-  width: 0;
-  height: 0;
-  border-style: solid;
-  border-width: 0 8px 8px 0;
-  border-color: transparent white transparent transparent;
+  /* padding, backdrop-filter, background, border, border-radius, box-shadow 已由 Tailwind 类名处理 */
 }
 
 /* Loading State */
@@ -1128,38 +1108,30 @@ textarea {
 
 /* Input Area */
 .chat-input-area {
-  padding: 16px 20px;
-  background: var(--header-bg);
-  border-top: 2px solid var(--border);
-  display: flex;
-  gap: 12px;
-  align-items: flex-end;
+  /* 已改为 fixed 定位的独立圆角矩形，样式由 Tailwind 类名处理 */
 }
 
 .action-input {
-  flex: 1;
   padding: 12px 16px;
-  border: 2px solid var(--border);
-  background: white;
+  /* background, border, border-radius 已由 Tailwind 类名处理 */
   font-family: var(--serif);
-  font-size: 1rem;
+  font-size: 0.875rem;
   line-height: 1.5;
-  resize: vertical;
-  min-height: 80px;
-  border-radius: 4px;
-  box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.05);
+  resize: none;
+  min-height: 40px;
+  max-height: 200px;
+  box-shadow: none;
 }
 
 .action-input:focus {
   outline: none;
-  border-color: var(--accent);
-  box-shadow: 
-    inset 0 2px 4px rgba(0, 0, 0, 0.05),
-    0 0 0 3px rgba(139, 115, 85, 0.2);
+  box-shadow: none;
 }
 
 .action-input:disabled {
-  background: #f0f0f0;
+  background: rgba(240, 240, 240, 0.5);
+  backdrop-filter: blur(4px);
+  -webkit-backdrop-filter: blur(4px);
   cursor: not-allowed;
   color: #999;
 }
@@ -1170,22 +1142,17 @@ textarea {
 }
 
 .submit-action-btn {
-  padding: 12px 24px;
-  background: var(--accent);
-  color: var(--paper);
-  border: 2px solid var(--border);
+  /* padding, background, border, border-radius, box-shadow 已由 Tailwind 类名处理 */
+  color: var(--title);
   font-family: var(--serif);
   font-size: 1rem;
   font-weight: bold;
   cursor: pointer;
   white-space: nowrap;
-  border-radius: 4px;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
   transition: all 0.2s;
 }
 
 .submit-action-btn:hover:not(:disabled) {
-  background: #6d5840;
   transform: translateY(-2px);
   box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
 }
@@ -1196,8 +1163,8 @@ textarea {
 }
 
 .submit-action-btn:disabled {
-  background: #bbb;
-  border-color: #999;
+  background: rgba(187, 187, 187, 0.5);
+  border-color: rgba(153, 153, 153, 0.5);
   cursor: not-allowed;
   opacity: 0.6;
   transform: none;
@@ -1210,11 +1177,7 @@ textarea {
   display: flex;
   flex-direction: column;
   flex: 1;
-  background: var(--paper);
-  border: 3px solid var(--border);
-  box-shadow:
-    0 0 0 1px var(--accent),
-    0 8px 20px rgba(0, 0, 0, 0.3);
+  /* background, border, box-shadow 已由 Tailwind 类名处理 */
   overflow: hidden;
   min-width: 320px;
   max-width: 400px;
@@ -1223,16 +1186,15 @@ textarea {
 /* Sidebar Tabs */
 .sidebar-tabs {
   display: flex;
-  background: var(--header-bg);
-  border-bottom: 2px solid var(--border);
+  gap: 8px;
+  padding: 12px;
+  /* 移除背景和边框，让每个 tab 独立 */
 }
 
 .sidebar-tab {
   flex: 1;
   padding: 12px 16px;
-  background: transparent;
-  border: none;
-  border-right: 1px solid var(--border);
+  /* background, border, border-radius, box-shadow 已由 Tailwind 类名处理 */
   font-family: var(--serif);
   font-size: 0.9rem;
   font-weight: bold;
@@ -1240,21 +1202,14 @@ textarea {
   cursor: pointer;
   transition: all 0.2s;
   text-transform: none;
-  box-shadow: none;
-}
-
-.sidebar-tab:last-child {
-  border-right: none;
 }
 
 .sidebar-tab:hover {
-  background: rgba(139, 115, 85, 0.1);
   transform: none;
 }
 
 .sidebar-tab.active {
-  background: var(--paper);
-  border-bottom: 3px solid var(--accent);
+  border-color: var(--accent);
   color: var(--accent);
   transform: none;
 }
@@ -1264,7 +1219,7 @@ textarea {
   flex: 1;
   overflow-y: auto;
   padding: 16px;
-  background: #f9f6f0;
+  background: transparent;
 }
 
 .tab-panel {
@@ -1275,9 +1230,11 @@ textarea {
 
 /* Status Panel */
 .status-section {
-  background: white;
-  border: 2px solid var(--border);
-  border-radius: 4px;
+  background: rgba(255, 255, 255, 0.5);
+  backdrop-filter: blur(4px);
+  -webkit-backdrop-filter: blur(4px);
+  border: 1px solid rgba(226, 232, 240, 0.8);
+  border-radius: 0.5rem;
   padding: 12px;
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
 }
@@ -1304,9 +1261,11 @@ textarea {
   justify-content: space-between;
   align-items: center;
   padding: 6px 10px;
-  background: var(--paper);
-  border: 1px solid var(--accent);
-  border-radius: 3px;
+  background: rgba(255, 255, 255, 0.4);
+  backdrop-filter: blur(4px);
+  -webkit-backdrop-filter: blur(4px);
+  border: 1px solid rgba(226, 232, 240, 0.6);
+  border-radius: 0.5rem;
 }
 
 .status-label {
@@ -1334,9 +1293,11 @@ textarea {
   justify-content: space-between;
   align-items: center;
   padding: 6px 10px;
-  background: var(--paper);
-  border: 1px solid var(--accent);
-  border-radius: 3px;
+  background: rgba(255, 255, 255, 0.4);
+  backdrop-filter: blur(4px);
+  -webkit-backdrop-filter: blur(4px);
+  border: 1px solid rgba(226, 232, 240, 0.6);
+  border-radius: 0.5rem;
 }
 
 .status-effects {
@@ -1353,9 +1314,11 @@ textarea {
 
 /* Clues Panel */
 .clues-section {
-  background: white;
-  border: 2px solid var(--border);
-  border-radius: 4px;
+  background: rgba(255, 255, 255, 0.5);
+  backdrop-filter: blur(4px);
+  -webkit-backdrop-filter: blur(4px);
+  border: 1px solid rgba(226, 232, 240, 0.8);
+  border-radius: 0.5rem;
   padding: 12px;
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
 }
@@ -1392,15 +1355,17 @@ textarea {
   justify-content: space-between;
   align-items: center;
   padding: 6px 10px;
-  background: white;
-  border: 1px solid #ddd;
-  border-radius: 3px;
+  background: rgba(255, 255, 255, 0.4);
+  backdrop-filter: blur(4px);
+  -webkit-backdrop-filter: blur(4px);
+  border: 1px solid rgba(226, 232, 240, 0.6);
+  border-radius: 0.5rem;
   transition: all 0.2s;
 }
 
 .skill-item:hover {
-  background: #f9f9f9;
-  border-color: var(--accent);
+  background: rgba(255, 255, 255, 0.6);
+  border-color: rgba(226, 232, 240, 0.9);
 }
 
 /* Occupational skills highlighted with paper-yellow background */
@@ -1476,13 +1441,20 @@ textarea {
   left: 0;
   right: 0;
   bottom: 0;
-  background: rgba(0, 0, 0, 0.9);
+  background: rgba(0, 0, 0, 0.5);
+  backdrop-filter: blur(4px);
+  -webkit-backdrop-filter: blur(4px);
   display: flex;
   align-items: center;
   justify-content: center;
   z-index: 10000;
   padding: 2rem;
-  animation: fadeIn 0.2s ease;
+}
+
+@supports (backdrop-filter: blur(4px)) {
+  .map-modal-overlay {
+    background: rgba(0, 0, 0, 0.3);
+  }
 }
 
 @keyframes fadeIn {

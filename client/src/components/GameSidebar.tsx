@@ -150,7 +150,7 @@ export function GameSidebar({ sessionId, apiBaseUrl = '/api', refreshTrigger }: 
   }, [apiBaseUrl, sessionId, refreshTrigger]); // Refetch when refreshTrigger changes
 
   return (
-    <div className="game-sidebar">
+    <div className="game-sidebar backdrop-blur-sm border border-slate-200 shadow-md rounded-lg">
       {/* Character Sheet Modal */}
       {showCharacterSheet && (
         <CharacterSheetModal
@@ -163,19 +163,19 @@ export function GameSidebar({ sessionId, apiBaseUrl = '/api', refreshTrigger }: 
       {/* Tab Headers */}
       <div className="sidebar-tabs">
         <button
-          className={`sidebar-tab ${activeTab === 'status' ? 'active' : ''}`}
+          className={`sidebar-tab backdrop-blur-sm bg-white/50 border border-slate-200 shadow-md rounded-lg hover:bg-white/70 transition-all ${activeTab === 'status' ? 'active' : ''}`}
           onClick={() => setActiveTab('status')}
         >
           Character Status
         </button>
         <button
-          className={`sidebar-tab ${activeTab === 'clues' ? 'active' : ''}`}
+          className={`sidebar-tab backdrop-blur-sm bg-white/50 border border-slate-200 shadow-md rounded-lg hover:bg-white/70 transition-all ${activeTab === 'clues' ? 'active' : ''}`}
           onClick={() => setActiveTab('clues')}
         >
           Discovered Clues
         </button>
         <button
-          className={`sidebar-tab ${activeTab === 'map' ? 'active' : ''}`}
+          className={`sidebar-tab backdrop-blur-sm bg-white/50 border border-slate-200 shadow-md rounded-lg hover:bg-white/70 transition-all ${activeTab === 'map' ? 'active' : ''}`}
           onClick={() => setActiveTab('map')}
         >
           Map
@@ -200,7 +200,7 @@ export function GameSidebar({ sessionId, apiBaseUrl = '/api', refreshTrigger }: 
                       onClick={() => setShowCharacterSheet(true)}
                       title="View full character sheet"
                     >
-                      📋 View Character
+                      View Character
                     </button>
                   </div>
                   <div className="status-grid">

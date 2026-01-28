@@ -77,16 +77,16 @@ const Homes: React.FC<HomeProps> = ({ onCreate, onStartGame, onContinueGame }) =
           <img src="/asset/frame.png" alt="CoC Frame" className="frame-image" />
           <div className="home-actions">
             <button className="primary" onClick={handleStartGame}>
-              🎮 New Game
+              New Game
             </button>
             <button className="secondary" onClick={onContinueGame}>
-              📂 Continue Game
+              Continue Game
             </button>
             <button className="secondary" onClick={onCreate}>
-              ✏️ Create Character
+              Create Character
             </button>
             <button className="secondary" onClick={handleViewCharacters}>
-              👥 View Characters
+              View Characters
             </button>
           </div>
         </div>
@@ -94,112 +94,31 @@ const Homes: React.FC<HomeProps> = ({ onCreate, onStartGame, onContinueGame }) =
 
       {/* Character Browser Modal */}
       {showCharacterBrowser && (
-        <div style={{
-          position: 'fixed',
-          top: 0,
-          left: 0,
-          right: 0,
-          bottom: 0,
-          background: 'rgba(0, 0, 0, 0.85)',
-          backdropFilter: 'blur(4px)',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          zIndex: 2000,
-          padding: '20px',
-          animation: 'fadeIn 0.3s ease-out',
-        }}>
-          <div style={{
-            background: 'var(--paper, #f5f1e8)',
-            border: '4px solid var(--border, #3d2f1f)',
-            boxShadow: '0 0 0 2px var(--accent), 0 20px 60px rgba(0, 0, 0, 0.6)',
-            maxWidth: '1000px',
-            width: '100%',
-            maxHeight: '90vh',
-            display: 'flex',
-            flexDirection: 'column',
-            borderRadius: '12px',
-            overflow: 'hidden',
-            animation: 'modalSlideUp 0.4s ease-out',
-          }}>
-            <div style={{
-              padding: '24px 28px',
-              borderBottom: '3px solid var(--border, #3d2f1f)',
-              display: 'flex',
-              justifyContent: 'space-between',
-              alignItems: 'center',
-              background: 'linear-gradient(135deg, var(--header-bg, #d4c4b0) 0%, #c4b4a0 100%)',
-              position: 'relative',
-            }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-                <span style={{ fontSize: '2rem' }}>👥</span>
-                <div>
-                  <h2 style={{
-                    margin: 0,
-                    fontSize: '1.8rem',
-                    color: 'var(--title, #3d2f1f)',
-                    letterSpacing: '2px',
-                    textTransform: 'uppercase',
-                    textShadow: '1px 1px 2px rgba(255, 255, 255, 0.5)',
-                  }}>
+        <div className="fixed inset-0 z-50 bg-black/50 backdrop-blur-sm supports-[backdrop-filter]:bg-black/30 supports-[backdrop-filter]:backdrop-blur-sm flex items-center justify-center p-5">
+          <div className="fixed left-[50%] top-[50%] z-50 translate-x-[-50%] translate-y-[-50%] max-w-[1000px] max-h-[90vh] w-full overflow-y-auto rounded-3xl p-0 supports-[backdrop-filter]:backdrop-blur-lg border border-white/50 bg-white/80 shadow-[0_30px_80px_rgba(15,23,42,0.25)] supports-[backdrop-filter]:bg-white/55 flex flex-col">
+            <div className="p-12 space-y-12">
+              <div className="flex justify-between items-center">
+                <div className="flex items-center gap-3">
+                  <h2 className="text-2xl font-semibold m-0">
                     Your Characters
                   </h2>
-                  <p style={{
-                    margin: '4px 0 0 0',
-                    fontSize: '0.9rem',
-                    color: '#5a4a3a',
-                    fontStyle: 'italic',
-                  }}>
+                  <p className="text-sm text-gray-600 italic m-0">
                     {characters.length} {characters.length === 1 ? 'investigator' : 'investigators'} ready
                   </p>
                 </div>
+                <button
+                  onClick={() => setShowCharacterBrowser(false)}
+                  className="absolute right-6 top-6 rounded-sm opacity-70 transition-opacity hover:opacity-100 focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:pointer-events-none z-10"
+                >
+                  <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="h-6 w-6">
+                    <path d="M18 6 6 18"></path>
+                    <path d="m6 6 12 12"></path>
+                  </svg>
+                  <span className="sr-only">Close</span>
+                </button>
               </div>
-              <button
-                onClick={() => setShowCharacterBrowser(false)}
-                style={{
-                  background: 'var(--paper)',
-                  border: '2px solid var(--border)',
-                  fontSize: '2rem',
-                  cursor: 'pointer',
-                  color: 'var(--title)',
-                  width: '44px',
-                  height: '44px',
-                  borderRadius: '50%',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  transition: 'all 0.2s ease',
-                  boxShadow: '0 2px 4px rgba(0, 0, 0, 0.2)',
-                }}
-                onMouseEnter={(e) => {
-                  e.currentTarget.style.background = 'var(--border)';
-                  e.currentTarget.style.color = 'var(--paper)';
-                  e.currentTarget.style.transform = 'rotate(90deg) scale(1.1)';
-                }}
-                onMouseLeave={(e) => {
-                  e.currentTarget.style.background = 'var(--paper)';
-                  e.currentTarget.style.color = 'var(--title)';
-                  e.currentTarget.style.transform = 'rotate(0deg) scale(1)';
-                }}
-              >
-                ×
-              </button>
-              <div style={{
-                position: 'absolute',
-                bottom: 0,
-                left: 0,
-                right: 0,
-                height: '3px',
-                background: 'linear-gradient(90deg, transparent 0%, var(--accent) 50%, transparent 100%)',
-              }} />
-            </div>
 
-            <div style={{
-              padding: '32px 28px',
-              overflowY: 'auto',
-              flex: 1,
-              background: '#f9f6f0',
-            }}>
+            <div className="overflow-y-auto flex-1">
               {loading ? (
                 <div style={{
                   textAlign: 'center',
@@ -411,6 +330,7 @@ const Homes: React.FC<HomeProps> = ({ onCreate, onStartGame, onContinueGame }) =
                   })}
                 </div>
               )}
+            </div>
             </div>
           </div>
         </div>

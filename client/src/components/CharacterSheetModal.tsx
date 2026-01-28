@@ -5,6 +5,7 @@
  */
 
 import { useEffect, useState } from 'react';
+import { createPortal } from 'react-dom';
 import { authFetch } from '../utils/authFetch';
 import './CharacterSheetModal.css';
 
@@ -200,18 +201,19 @@ export function CharacterSheetModal({ sessionId, characterId, apiBaseUrl = '/api
     }
   };
 
+  // Determine what to render
+  let modalContent: React.ReactNode = null;
+
   if (loading) {
-    return (
+    modalContent = (
       <div className="character-modal-backdrop" onClick={handleBackdropClick}>
         <div className="character-modal-content">
           <p style={{ textAlign: 'center', padding: '40px' }}>Loading character data...</p>
         </div>
       </div>
     );
-  }
-
-  if (error || !character) {
-    return (
+  } else if (error || !character) {
+    modalContent = (
       <div className="character-modal-backdrop" onClick={handleBackdropClick}>
         <div className="character-modal-content">
           <button className="modal-close-btn" onClick={onClose}>✕</button>
@@ -221,24 +223,8 @@ export function CharacterSheetModal({ sessionId, characterId, apiBaseUrl = '/api
         </div>
       </div>
     );
-  }
-
-  // Organize skills by category (simple categorization based on common CoC skills)
-  const skillCategories = {
-    social: ['Charm', 'Fast Talk', 'Intimidate', 'Persuade', 'Psychology'],
-    knowledge: ['Accounting', 'Anthropology', 'Appraise', 'Archaeology', 'History', 'Library Use', 'Natural World', 'Occult', 'Science'],
-    investigation: ['Law', 'Spot Hidden', 'Listen'],
-    physical: ['Climb', 'Dodge', 'Jump', 'Ride', 'Swim'],
-    stealth: ['Locksmith', 'Sleight of Hand', 'Stealth'],
-    technical: ['Art/Craft', 'Computer Use', 'Disguise', 'Drive Auto', 'Electrical Repair', 'Mechanical Repair', 'Navigate', 'Operate Heavy Machinery', 'Pilot'],
-    medical: ['First Aid', 'Medicine', 'Pharmacy', 'Psychoanalysis'],
-    combat: ['Brawl', 'Firearms', 'Handgun', 'Rifle', 'Shotgun', 'Submachine Gun', 'Fighting'],
-    criminal: ['Credit Rating', 'Locksmith', 'Track'],
-    language: ['Language (Own)', 'Language (Other)'],
-    special: ['Cthulhu Mythos', 'Status']
-  };
-
-  return (
+  } else if (character) {
+    modalContent = (
     <div className="character-modal-backdrop" onClick={handleBackdropClick}>
       <div className="character-modal-content">
         <button className="modal-close-btn" onClick={onClose}>✕</button>
@@ -415,5 +401,11 @@ export function CharacterSheetModal({ sessionId, characterId, apiBaseUrl = '/api
         </div>
       </div>
     </div>
-  );
+    );
+  }
+
+  // Render modal using Portal to body for full-screen overlay
+  return typeof document !== 'undefined' && modalContent
+    ? createPortal(modalContent, document.body)
+    : null;
 }

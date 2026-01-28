@@ -239,33 +239,24 @@ const AppShell: React.FC = () => {
     >
       <button
         onClick={() => setIsUserMenuOpen((prev) => !prev)}
+        className="backdrop-blur-sm bg-white/50 border border-slate-200 shadow-md rounded-xl px-3 py-2 hover:bg-white/70 transition-all"
         style={{
           display: "flex",
           alignItems: "center",
-          gap: "10px",
-          padding: "10px 16px",
-          borderRadius: "8px",
-          border: "3px solid var(--border)",
-          background: isUserMenuOpen
-            ? "linear-gradient(135deg, #6d5840 0%, #5a4633 100%)"
-            : "linear-gradient(135deg, var(--accent) 0%, #6d5840 100%)",
-          color: "var(--paper)",
-          fontSize: "0.95rem",
-          fontWeight: "700",
-          cursor: "pointer",
-          boxShadow: "0 4px 12px rgba(0, 0, 0, 0.3), inset 0 1px 0 rgba(255, 255, 255, 0.2)",
-          maxWidth: "260px",
-          transition: "all 0.3s ease",
+          gap: "8px",
+          maxWidth: "220px",
           fontFamily: "var(--serif)",
           letterSpacing: "0.5px",
+          color: "var(--title)",
+          fontSize: "0.85rem",
+          fontWeight: "700",
+          cursor: "pointer",
         }}
         onMouseEnter={(e) => {
           e.currentTarget.style.transform = "translateY(-2px)";
-          e.currentTarget.style.boxShadow = "0 6px 16px rgba(0, 0, 0, 0.4), inset 0 1px 0 rgba(255, 255, 255, 0.3)";
         }}
         onMouseLeave={(e) => {
           e.currentTarget.style.transform = "translateY(0)";
-          e.currentTarget.style.boxShadow = "0 4px 12px rgba(0, 0, 0, 0.3), inset 0 1px 0 rgba(255, 255, 255, 0.2)";
         }}
       >
         <span
@@ -273,7 +264,6 @@ const AppShell: React.FC = () => {
             overflow: "hidden",
             textOverflow: "ellipsis",
             whiteSpace: "nowrap",
-            textShadow: "1px 1px 2px rgba(0, 0, 0, 0.3)",
           }}
         >
           {user.email.split('@')[0]}
@@ -290,12 +280,9 @@ const AppShell: React.FC = () => {
       </button>
       {isUserMenuOpen && (
         <div
+          className="backdrop-blur-sm bg-white/50 border border-slate-200 shadow-xl rounded-xl"
           style={{
             width: "240px",
-            background: "var(--paper)",
-            borderRadius: "8px",
-            border: "3px solid var(--border)",
-            boxShadow: "0 8px 24px rgba(0, 0, 0, 0.4), 0 0 0 1px var(--accent)",
             padding: "16px",
             display: "flex",
             flexDirection: "column",
@@ -307,7 +294,7 @@ const AppShell: React.FC = () => {
             style={{
               fontSize: "0.9rem",
               color: "var(--title)",
-              borderBottom: "2px solid var(--accent)",
+              borderBottom: "1px solid rgba(226, 232, 240, 0.6)",
               paddingBottom: "10px",
               wordBreak: "break-all",
               fontFamily: "var(--serif)",
@@ -319,30 +306,21 @@ const AppShell: React.FC = () => {
           </div>
           <button
             onClick={handleLogout}
+            className="backdrop-blur-sm bg-white/50 border border-slate-200 shadow-md rounded-lg px-4 py-3 hover:bg-white/70 transition-all"
             style={{
-              padding: "12px 16px",
-              borderRadius: "6px",
-              border: "2px solid var(--border)",
-              background: "linear-gradient(135deg, #8b7355 0%, #6d5840 100%)",
-              color: "var(--paper)",
               fontWeight: "700",
               fontSize: "0.95rem",
               cursor: "pointer",
               fontFamily: "var(--serif)",
               letterSpacing: "1px",
               textTransform: "uppercase",
-              boxShadow: "0 3px 8px rgba(0, 0, 0, 0.2)",
-              transition: "all 0.2s ease",
+              color: "var(--title)",
             }}
             onMouseEnter={(e) => {
-              e.currentTarget.style.background = "linear-gradient(135deg, #6d5840 0%, #5a4633 100%)";
               e.currentTarget.style.transform = "translateY(-2px)";
-              e.currentTarget.style.boxShadow = "0 5px 12px rgba(0, 0, 0, 0.3)";
             }}
             onMouseLeave={(e) => {
-              e.currentTarget.style.background = "linear-gradient(135deg, #8b7355 0%, #6d5840 100%)";
               e.currentTarget.style.transform = "translateY(0)";
-              e.currentTarget.style.boxShadow = "0 3px 8px rgba(0, 0, 0, 0.2)";
             }}
           >
             Logout
@@ -1851,30 +1829,21 @@ const AppShell: React.FC = () => {
           onContinueGame={handleContinueGame}
         />
         {showCheckpointSelector && (
-          <div className="checkpoint-selector-overlay" style={{
-            position: 'fixed',
-            top: 0,
-            left: 0,
-            right: 0,
-            bottom: 0,
-            backgroundColor: 'rgba(0, 0, 0, 0.7)',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            zIndex: 1000,
-          }}>
-            <div className="checkpoint-selector" style={{
-              backgroundColor: '#f5f1e8',
-              padding: '30px',
-              borderRadius: '8px',
-              maxWidth: '600px',
-              width: '90%',
-              maxHeight: '80vh',
-              overflow: 'auto',
-              border: '3px solid #8b7355',
-              boxShadow: '0 8px 20px rgba(0, 0, 0, 0.3)',
-            }}>
-              <h2 style={{ marginTop: 0, marginBottom: '20px', color: '#3d2817' }}>📂 Select Checkpoint</h2>
+          <div className="fixed inset-0 z-50 bg-black/50 backdrop-blur-sm supports-[backdrop-filter]:bg-black/30 supports-[backdrop-filter]:backdrop-blur-sm flex items-center justify-center p-5">
+            <div className="fixed left-[50%] top-[50%] z-50 translate-x-[-50%] translate-y-[-50%] max-w-[600px] max-h-[80vh] w-[90%] overflow-y-auto rounded-3xl p-12 supports-[backdrop-filter]:backdrop-blur-lg border border-white/50 bg-white/80 shadow-[0_30px_80px_rgba(15,23,42,0.25)] supports-[backdrop-filter]:bg-white/55">
+              <div className="flex justify-between items-center mb-6">
+                <h2 className="text-2xl font-semibold m-0">Select Checkpoint</h2>
+                <button
+                  onClick={() => setShowCheckpointSelector(false)}
+                  className="absolute right-6 top-6 rounded-sm opacity-70 transition-opacity hover:opacity-100 focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:pointer-events-none z-10"
+                >
+                  <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="h-6 w-6">
+                    <path d="M18 6 6 18"></path>
+                    <path d="m6 6 12 12"></path>
+                  </svg>
+                  <span className="sr-only">Close</span>
+                </button>
+              </div>
               
               {loadingCheckpoints ? (
                 <p>Loading checkpoint list...</p>
@@ -1969,22 +1938,6 @@ const AppShell: React.FC = () => {
                   ))}
                 </div>
               )}
-              
-              <button
-                onClick={() => setShowCheckpointSelector(false)}
-                style={{
-                  marginTop: '20px',
-                  padding: '10px 20px',
-                  backgroundColor: '#8b7355',
-                  color: '#f5f1e8',
-                  border: 'none',
-                  borderRadius: '4px',
-                  cursor: 'pointer',
-                  fontSize: '1rem',
-                }}
-              >
-                Cancel
-              </button>
             </div>
           </div>
         )}
@@ -2004,86 +1957,32 @@ const AppShell: React.FC = () => {
         
         {/* Loading Progress Modal */}
         {loadingModData && (
-          <div className="mod-loading-overlay" style={{
-            position: 'fixed',
-            top: 0,
-            left: 0,
-            right: 0,
-            bottom: 0,
-            backgroundColor: 'rgba(0, 0, 0, 0.85)',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            zIndex: 3000,
-            padding: '20px',
-          }}>
-            <div className="mod-loading-modal" style={{
-              backgroundColor: '#f5f1e8',
-              padding: '40px',
-              borderRadius: '8px',
-              maxWidth: '500px',
-              width: '90%',
-              border: '3px solid #8b7355',
-              boxShadow: '0 8px 20px rgba(0, 0, 0, 0.5)',
-              fontFamily: 'serif',
-            }}>
-              <h2 style={{ 
-                marginTop: 0, 
-                marginBottom: '30px', 
-                color: '#3d2817',
-                fontSize: '1.8rem',
-                textAlign: 'center',
-              }}>
-                📦 Loading Module Data
-              </h2>
+          <div className="fixed inset-0 z-50 bg-black/50 backdrop-blur-sm supports-[backdrop-filter]:bg-black/30 supports-[backdrop-filter]:backdrop-blur-sm flex items-center justify-center p-5">
+            <div className="fixed left-[50%] top-[50%] z-50 translate-x-[-50%] translate-y-[-50%] max-w-[500px] max-h-[90vh] w-[90%] overflow-y-auto rounded-3xl p-12 supports-[backdrop-filter]:backdrop-blur-lg border border-white/50 bg-white/80 shadow-[0_30px_80px_rgba(15,23,42,0.25)] supports-[backdrop-filter]:bg-white/55">
+              <div className="flex justify-between items-center mb-6">
+                <h2 className="text-2xl font-semibold m-0 text-center w-full">
+                  Loading Module Data
+                </h2>
+              </div>
               
               {modLoadProgress && (
                 <>
-                  <div style={{ marginBottom: '20px' }}>
-                    <div style={{
-                      display: 'flex',
-                      justifyContent: 'space-between',
-                      marginBottom: '10px',
-                      fontSize: '0.9rem',
-                      color: '#5a4a3a',
-                    }}>
+                  <div className="mb-5">
+                    <div className="flex justify-between mb-2.5 text-sm text-gray-700">
                       <span>{modLoadProgress.stage}</span>
                       <span>{modLoadProgress.progress}%</span>
                     </div>
-                    <div style={{
-                      width: '100%',
-                      height: '24px',
-                      backgroundColor: '#ddd',
-                      borderRadius: '12px',
-                      overflow: 'hidden',
-                      border: '2px solid #8b7355',
-                    }}>
-                      <div style={{
-                        width: `${modLoadProgress.progress}%`,
-                        height: '100%',
-                        backgroundColor: '#8b7355',
-                        transition: 'width 0.3s ease',
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                        color: '#f5f1e8',
-                        fontSize: '0.8rem',
-                        fontWeight: 'bold',
-                      }}>
+                    <div className="w-full h-6 bg-gray-300 rounded-xl overflow-hidden border-2 border-gray-400">
+                      <div 
+                        className="h-full bg-gray-600 transition-all duration-300 flex items-center justify-center text-xs font-bold text-white"
+                        style={{ width: `${modLoadProgress.progress}%` }}
+                      >
                         {modLoadProgress.progress >= 10 && `${modLoadProgress.progress}%`}
                       </div>
                     </div>
                   </div>
                   
-                  <div style={{
-                    textAlign: 'center',
-                    color: '#5a4a3a',
-                    fontSize: '1rem',
-                    minHeight: '40px',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                  }}>
+                  <div className="text-center text-base min-h-[40px] flex items-center justify-center text-gray-700">
                     {modLoadProgress.message}
                   </div>
                 </>
@@ -2099,41 +1998,23 @@ const AppShell: React.FC = () => {
     return (
       <>
         {userMenu}
-        <div className="module-intro-overlay" style={{
-          position: 'fixed',
-          top: 0,
-          left: 0,
-          right: 0,
-          bottom: 0,
-          backgroundColor: 'rgba(0, 0, 0, 0.85)',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          zIndex: 2000,
-          padding: '20px',
-        }}>
-          <div className="module-intro-modal" style={{
-            backgroundColor: '#f5f1e8',
-            padding: '40px',
-            borderRadius: '8px',
-            maxWidth: '800px',
-            width: '90%',
-            maxHeight: '90vh',
-            overflow: 'auto',
-            border: '3px solid #8b7355',
-            boxShadow: '0 8px 20px rgba(0, 0, 0, 0.5)',
-            fontFamily: 'serif',
-          }}>
-            <h2 style={{ 
-              marginTop: 0, 
-              marginBottom: '20px', 
-              color: '#3d2817',
-              fontSize: '1.8rem',
-              borderBottom: '2px solid #8b7355',
-              paddingBottom: '10px'
-            }}>
-              📖 Module Introduction
-            </h2>
+        <div className="fixed inset-0 z-50 bg-black/50 backdrop-blur-sm supports-[backdrop-filter]:bg-black/30 supports-[backdrop-filter]:backdrop-blur-sm flex items-center justify-center p-5">
+          <div className="fixed left-[50%] top-[50%] z-50 translate-x-[-50%] translate-y-[-50%] max-w-[800px] max-h-[90vh] w-[90%] overflow-y-auto rounded-3xl p-12 supports-[backdrop-filter]:backdrop-blur-lg border border-white/50 bg-white/80 shadow-[0_30px_80px_rgba(15,23,42,0.25)] supports-[backdrop-filter]:bg-white/55">
+            <div className="flex justify-between items-center mb-6">
+              <h2 className="text-2xl font-semibold m-0 border-b-2 border-gray-300 pb-3 w-full">
+                Module Introduction
+              </h2>
+              <button
+                onClick={() => setPage("mod-select")}
+                className="absolute right-6 top-6 rounded-sm opacity-70 transition-opacity hover:opacity-100 focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:pointer-events-none z-10"
+              >
+                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="h-6 w-6">
+                  <path d="M18 6 6 18"></path>
+                  <path d="m6 6 12 12"></path>
+                </svg>
+                <span className="sr-only">Close</span>
+              </button>
+            </div>
             
             {moduleIntroduction && (
               <>
@@ -2173,50 +2054,16 @@ const AppShell: React.FC = () => {
               </>
             )}
 
-            <div style={{ display: 'flex', gap: '10px' }}>
+            <div className="flex gap-3 mt-8">
               <button
                 onClick={() => setPage("mod-select")}
-                style={{
-                  flex: 1,
-                  padding: '15px 20px',
-                  backgroundColor: '#6b5a45',
-                  color: '#f5f1e8',
-                  border: 'none',
-                  borderRadius: '4px',
-                  cursor: 'pointer',
-                  fontSize: '1.1rem',
-                  fontWeight: 'bold',
-                  transition: 'background-color 0.2s',
-                }}
-                onMouseEnter={(e) => {
-                  e.currentTarget.style.backgroundColor = '#5a4a3a';
-                }}
-                onMouseLeave={(e) => {
-                  e.currentTarget.style.backgroundColor = '#6b5a45';
-                }}
+                className="flex-1 px-5 py-3.5 backdrop-blur-sm bg-white/50 border border-slate-200 shadow-md rounded-lg hover:bg-white/70 transition-all text-base font-bold cursor-pointer"
               >
                 Back to Module Selection
               </button>
               <button
                 onClick={() => setPage("character-select")}
-                style={{
-                  flex: 2,
-                  padding: '15px 20px',
-                  backgroundColor: '#8b7355',
-                  color: '#f5f1e8',
-                  border: 'none',
-                  borderRadius: '4px',
-                  cursor: 'pointer',
-                  fontSize: '1.1rem',
-                  fontWeight: 'bold',
-                  transition: 'background-color 0.2s',
-                }}
-                onMouseEnter={(e) => {
-                  e.currentTarget.style.backgroundColor = '#6b5a45';
-                }}
-                onMouseLeave={(e) => {
-                  e.currentTarget.style.backgroundColor = '#8b7355';
-                }}
+                className="flex-[2] px-5 py-3.5 backdrop-blur-sm bg-white/50 border border-slate-200 shadow-md rounded-lg hover:bg-white/70 transition-all text-base font-bold cursor-pointer"
               >
                 Next: Select Character
               </button>
@@ -2288,9 +2135,9 @@ const AppShell: React.FC = () => {
       <>
         {userMenu}
         <div className="game-container">
-          <div className="game-header">
+          <div className="game-header backdrop-blur-sm border border-slate-200 shadow-md rounded-lg">
             <h1>CoC AI Agent - Game Session</h1>
-            <button className="back-button" onClick={handleBackToHome}>
+            <button className="back-button backdrop-blur-md bg-white/50 border border-slate-200 shadow-md rounded-xl px-5 py-2.5 hover:bg-white/70 hover:border-slate-300 hover:-translate-y-0.5 transition-all" onClick={handleBackToHome}>
               ← Back to Home
             </button>
           </div>

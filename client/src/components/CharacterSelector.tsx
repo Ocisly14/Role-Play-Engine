@@ -236,7 +236,9 @@ export function CharacterSelector({
           left: 0;
           right: 0;
           bottom: 0;
-          background: rgba(0, 0, 0, 0.7);
+          background: rgba(0, 0, 0, 0.5);
+          backdrop-filter: blur(4px);
+          -webkit-backdrop-filter: blur(4px);
           display: flex;
           align-items: center;
           justify-content: center;
@@ -244,25 +246,39 @@ export function CharacterSelector({
           padding: 20px;
         }
 
+        @supports (backdrop-filter: blur(4px)) {
+          .character-selector-overlay {
+            background: rgba(0, 0, 0, 0.3);
+          }
+        }
+
         .character-selector-modal {
-          background: var(--paper, #f5f1e8);
-          border: 3px solid var(--border, #3d2f1f);
-          box-shadow: 0 10px 40px rgba(0, 0, 0, 0.5);
+          background: rgba(255, 255, 255, 0.8);
+          backdrop-filter: blur(16px);
+          -webkit-backdrop-filter: blur(16px);
+          border: 1px solid rgba(255, 255, 255, 0.5);
+          box-shadow: 0 30px 80px rgba(15, 23, 42, 0.25);
           max-width: 800px;
           width: 100%;
           max-height: 90vh;
           display: flex;
           flex-direction: column;
-          border-radius: 4px;
+          border-radius: 1.5rem;
+        }
+
+        @supports (backdrop-filter: blur(16px)) {
+          .character-selector-modal {
+            background: rgba(255, 255, 255, 0.55);
+          }
         }
 
         .modal-header {
           padding: 20px 24px;
-          border-bottom: 2px solid var(--border, #3d2f1f);
+          border-bottom: 1px solid rgba(226, 232, 240, 0.5);
           display: flex;
           justify-content: space-between;
           align-items: center;
-          background: var(--header-bg, #d4c4b0);
+          background: transparent;
         }
 
         .modal-header h2 {
@@ -272,22 +288,28 @@ export function CharacterSelector({
         }
 
         .close-button {
-          background: none;
-          border: none;
-          font-size: 2rem;
+          backdrop-filter: blur(4px);
+          -webkit-backdrop-filter: blur(4px);
+          background: rgba(255, 255, 255, 0.3);
+          border: 1px solid rgba(226, 232, 240, 0.8);
+          font-size: 1.5rem;
           cursor: pointer;
-          color: var(--title, #3d2f1f);
+          color: rgba(0, 0, 0, 0.7);
+          opacity: 0.7;
+          transition: all 0.2s ease-in-out;
           width: 40px;
           height: 40px;
           display: flex;
           align-items: center;
           justify-content: center;
-          border-radius: 4px;
-          transition: background 0.2s;
+          border-radius: 0.75rem;
+          box-shadow: 0 2px 4px -1px rgba(0, 0, 0, 0.1);
         }
 
         .close-button:hover {
-          background: rgba(0, 0, 0, 0.1);
+          opacity: 1;
+          background: rgba(255, 255, 255, 0.5);
+          border-color: rgba(203, 213, 225, 1);
         }
 
         .modal-content {
@@ -396,34 +418,43 @@ export function CharacterSelector({
         .modal-actions button {
           padding: 10px 24px;
           font-size: 1rem;
-          border: none;
-          border-radius: 4px;
+          backdrop-filter: blur(4px);
+          -webkit-backdrop-filter: blur(4px);
+          border: 1px solid rgba(226, 232, 240, 1);
+          border-radius: 0.75rem;
           cursor: pointer;
           font-weight: bold;
-          transition: all 0.2s;
+          transition: all 0.2s ease-in-out;
+          box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
         }
 
         .modal-actions button.primary {
-          background: var(--accent, #8b7355);
-          color: white;
+          background: rgba(255, 255, 255, 0.5);
+          color: var(--title, #3d2f1f);
         }
 
         .modal-actions button.primary:hover:not(:disabled) {
-          background: #6d5840;
+          background: rgba(255, 255, 255, 0.7);
+          border-color: rgba(203, 213, 225, 1);
+          transform: translateY(-2px);
+          box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
         }
 
         .modal-actions button.primary:disabled {
-          background: #ccc;
+          opacity: 0.5;
           cursor: not-allowed;
         }
 
         .modal-actions button.secondary {
-          background: #6c757d;
-          color: white;
+          background: rgba(255, 255, 255, 0.5);
+          color: var(--title, #3d2f1f);
         }
 
         .modal-actions button.secondary:hover {
-          background: #5a6268;
+          background: rgba(255, 255, 255, 0.7);
+          border-color: rgba(203, 213, 225, 1);
+          transform: translateY(-2px);
+          box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
         }
 
         .modal-actions button.tertiary {
