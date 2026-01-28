@@ -33,7 +33,8 @@ export class ActionAgent {
       npcResponse?: NPCResponseAnalysis;
       targetCharacter?: DynamicCharacterProfile | null;
     },
-    gameStateManager: DynamicGameStateManager
+    gameStateManager: DynamicGameStateManager,
+    originalUserInput?: string | null
   ): Promise<DynamicGameState> {
     const { isNPC, npcResponse, targetCharacter } = options;
 
@@ -61,22 +62,27 @@ Your task is to determine if the action succeeds in enabling this scene change:
     }
 
     const baseSystemPrompt = `
+${originalUserInput && !isNPC ? `## User Input
+User input: ${originalUserInput}
+
+` : ''}## Character Action
+Character action: ${actionDescription}
 
 PRE-ROLLED DICE AVAILABLE:
 ${JSON.stringify(preRolledDice, null, 2)}
 
 USAGE:
+- First, analyze the user input and determine if it is just a normal behavior or the use of a specific skill.
+- If it is a normal behavior, Do not use any dice.
+- If it is the use of a specific skill, (e.g., "I use Spot Hidden", "I try to persuade him", "I listen at the door"),MUST choose and use one or more of the following dice:
 - 1d100: Use for single skill checks, attribute checks, luck rolls (compare against character's skill percentage)
 - 1d100_opposed: Use for opposed checks (the second character's roll)
 - 1d3, 1d4, 1d6, 2d6, 1d8, 1d10, 1d20: Use for damage, sanity loss, etc.
 - Dice with modifiers: You can add modifiers to pre-rolled dice (e.g., 1d3+1, 1d6+2 for damage bonus/STR bonus)
 - You can choose to use these dice OR not use any if the action doesn't require dice
 - When you use a die, record which die you used and the result in your response
-- Examples: "1d3: 2 + 1 (DB) = 3 (unarmed damage)", "1d6: 4 + 2 (STR bonus) = 6 (knife damage)"
 
 !!! Important: Always follow the 7th edition rules of Call of Cthulhu.
-When the player's input explicitly mentions using a specific skill (e.g., "I use Spot Hidden", "I try to persuade him", "I listen at the door"), you MUST:
-- Perform a dice roll (1d100) for that skill
 
 DiceUsed field:
 - Record ONLY the dice you actually used from the pre-rolled dice
@@ -87,7 +93,6 @@ DiceUsed field:
 Include "scenarioUpdate" if the action permanently changes the environment. "scenarioUpdate" can include:
 - description: updated scene flavor text
 - conditions: array of environmental condition objects
-- events: array of event strings
 ${!isNPC ? '' : '\nDo NOT include clues here; the Keeper determines clue revelations.'}
 
 INVENTORY UPDATES:
@@ -105,8 +110,8 @@ Estimate how many minutes this action realistically takes in game time. Consider
 - Quick actions: 1-10 minutes (glancing, brief conversation, opening doors)
 - Standard actions: 10-30 minutes (searching, examining)
 - Extended actions: 30-120 minutes (combat, lengthy conversations, research)
-- Long activities: 2-8 hours (travel, surveillance, extended tasks)
-- Very long activities: 8+ hours (sleeping, all-day journeys)
+- Long activities: 2-6 hours (long distance travel, surveillance, extended tasks)
+- Very long activities: 6+ hours (sleeping, all-day journeys)
 
 Be realistic and use your judgment. Include "timeElapsedMinutes" in your response.
 ${sceneChangePrompt}
@@ -117,14 +122,11 @@ ${sceneChangePrompt}
 
 **Format**: Each actionLog entry should have:
 - "time": Use the current game time (provided in context) in "Day N, HH:MM" format
-- "location": The LOCATION NAME (scenario.location), which is the physical location name
-  - Use currentScenario.location for current scenario
-  - For scene changes, use the target scenario's location name
+- "location": The LOCATION NAME
 - "summary": Concise but descriptive summary (1-2 sentences)
 - "characterId": The ID of the character (player or NPC) who performed this action
   - Use the acting character's id from the context (Character.id or NPC.id)
   - If the action affects multiple characters, create separate entries with their respective characterIds
-  - This field is REQUIRED to properly associate the log with the correct character profile
 
 **For scene changes**: If sceneChange.shouldChange is true, include TWO entries:
 1. One entry for the action that enables the scene change (current location)
@@ -180,8 +182,7 @@ Return ONLY valid JSON in this exact structure:
 
   "scenarioUpdate": {          // Optional: only if environment permanently changes
     "description": "Updated scene description",
-    "conditions": [{"type": "lighting", "description": "...", "mechanicalEffect": "..."}],
-    "events": ["Event description"]
+    "conditions": [{"type": "lighting", "description": "...", "mechanicalEffect": "..."}]
   },
 ${hasValidSceneChangeRequest && !isNPC ? `
   "sceneChange": {
@@ -190,8 +191,8 @@ ${hasValidSceneChangeRequest && !isNPC ? `
     "reason": "Reason for scene change success or failure. If blocked, explain why (e.g., 'Door is locked', 'Failed to unlock the door')"
   },
 ` : ''}
-  "timeElapsedMinutes": 5,
-  "timeConsumption": "short"
+  "timeElapsedMinutes": <estimate the time elapsed in minutes>,
+  "timeConsumption": "short" // "short", "medium", "long", "very long"
 }
 \`\`\`
 `;
@@ -202,7 +203,7 @@ ${hasValidSceneChangeRequest && !isNPC ? `
 
     // Single call - no tool loop needed with pre-rolled dice
     const context = this.buildContext(dynamicState, character, { isNPC, npcResponse, targetCharacter }, gameStateManager);
-    const fullPrompt = systemPrompt + context + `\n\nCharacter action: ${actionDescription}`;
+    const fullPrompt = systemPrompt + context;
 
     const response = await generateText({
       runtime,
@@ -263,7 +264,8 @@ ${hasValidSceneChangeRequest && !isNPC ? `
         isNPC: false,
         targetCharacter
       },
-      gameStateManager
+      gameStateManager,
+      userMessage // Pass original user input
     );
     
     // The state has been updated through the manager in buildFinalResult
@@ -832,7 +834,8 @@ ${hasValidSceneChangeRequest && !isNPC ? `
         npcResponse,
         targetCharacter
       },
-      gameStateManager
+      gameStateManager,
+      null // NPC actions don't have original user input
     );
   }
 }

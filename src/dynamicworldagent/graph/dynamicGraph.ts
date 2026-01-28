@@ -175,8 +175,9 @@ export const buildDynamicGraph = (
   const routeFromEntry = (state: DynamicGraphState): string => {
     const isSimulated = state.isSimulatedQuery ?? false;
     if (isSimulated) {
-      console.log("🔀 [Dynamic Entry Router] → character (skip orchestrator & memory)");
-      return "character";
+      // Temporarily skip simulated queries - they will be handled by Listener Graph
+      console.log("🔀 [Dynamic Entry Router] → END (simulated query skipped in main graph)");
+      return END;
     } else {
       console.log("🔀 [Dynamic Entry Router] → orchestrator (full pipeline)");
       return "orchestrator";
@@ -188,7 +189,7 @@ export const buildDynamicGraph = (
     routeFromEntry,
     {
       orchestrator: "orchestrator" as any,
-      character: "character" as any,
+      [END]: END,
     }
   );
 
@@ -350,34 +351,12 @@ export const buildDynamicGraph = (
 
   graph.addEdge("orchestrator" as any, "memory" as any);
   graph.addEdge("memory" as any, "action" as any);
-  graph.addEdge("action" as any, "character" as any);
+  // Skip Character Agent in main graph - NPC response analysis and execution happens in Listener Graph
+  graph.addEdge("action" as any, "director" as any);
 
-  // Character: analyze NPC responses
-  graph.addNode("character", async (state: DynamicGraphState) => {
-    console.log("👥 [Dynamic Character Agent] 开始分析 NPC 响应...");
-    const dgsm = new DynamicGameStateManager(state.dynamicGameState);
-    const userInput = latestHumanMessage(state.messages);
-    const runtime = {}; // CharacterAgent expects runtime but only passes through generateText; keep empty placeholder
-
-    try {
-      const npcResponseAnalyses = await characterAgent.analyzeNPCResponses(
-        runtime,
-        dgsm,
-        userInput
-      );
-
-      // Update dynamic state with NPC response analyses
-      dgsm.setNPCResponseAnalyses(npcResponseAnalyses);
-
-      console.log("✅ [Dynamic Character Agent] NPC 响应分析完成");
-    } catch (error) {
-      console.error(`❌ [Dynamic Character Agent] 分析失败:`, error);
-    }
-
-    return { ...state, dynamicGameState: dgsm.getState() };
-  });
-
-  graph.addEdge("character" as any, "director" as any);
+  // Character Agent removed from main graph
+  // NPC response analysis is handled by Listener Graph's Character Agent which uses analyzeNPCResponsesFromRecentActions
+  // NPC action execution is handled by Listener Graph's NPC Action Agent via processNPCActions
 
   // Director: handle scene changes and narrative direction
   graph.addNode("director", async (state: DynamicGraphState) => {
