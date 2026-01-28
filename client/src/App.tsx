@@ -147,6 +147,7 @@ const AppShell: React.FC = () => {
   }> | null>(null);
   const [sidebarRefreshTrigger, setSidebarRefreshTrigger] = useState(0);
   const [isCreatingFromGameFlow, setIsCreatingFromGameFlow] = useState(false);
+  const [currentModuleName, setCurrentModuleName] = useState<string>("");
   const currentBackgroundImageRef = useRef<string | null>(null);
 
   const [form, setForm] = React.useState<Record<string, string>>({});
@@ -205,6 +206,12 @@ const AppShell: React.FC = () => {
 
         const data = await response.json();
         const sceneImagePath = data?.gameState?.currentScenario?.sceneImage?.path;
+        
+        // Extract module name from game state (for DynamicGameState)
+        const moduleName = data?.gameState?.moduleName;
+        if (moduleName) {
+          setCurrentModuleName(moduleName);
+        }
         
         if (sceneImagePath) {
           const backgroundUrl = `/api/maps/${sceneImagePath}`;
@@ -681,6 +688,10 @@ const AppShell: React.FC = () => {
 
       if (response.ok) {
         setSessionId(data.sessionId || `session-${Date.now()}`);
+        // Set module name if available
+        if (selectedModName) {
+          setCurrentModuleName(selectedModName);
+        }
         // Clear conversation history for new game (will be loaded from API)
         setConversationHistory(null);
         // Don't show module introduction again (already shown before character selection)
@@ -698,6 +709,7 @@ const AppShell: React.FC = () => {
   };
 
   const handleBackToHome = () => {
+    setCurrentModuleName("");
     setPage("home");
   };
 
@@ -775,6 +787,11 @@ const AppShell: React.FC = () => {
         // Extract character name from game state if available
         if (data.gameState?.playerCharacter?.name) {
           setCharacterName(data.gameState.playerCharacter.name);
+        }
+
+        // Extract module name from game state if available
+        if (data.gameState?.moduleName) {
+          setCurrentModuleName(data.gameState.moduleName);
         }
 
         // Load conversation history if provided
@@ -2240,7 +2257,7 @@ const AppShell: React.FC = () => {
         {userMenu}
         <div className="game-container">
           <div className="game-header backdrop-blur-sm border border-slate-200 shadow-md rounded-lg">
-            <h1>CoC AI Agent - Game Session</h1>
+            <h1>{currentModuleName ? `CoC AI Agent - ${currentModuleName}` : "CoC AI Agent - Game Session"}</h1>
             <button className="back-button backdrop-blur-md bg-white/50 border border-slate-200 shadow-md rounded-xl px-5 py-2.5 hover:bg-white/70 hover:border-slate-300 hover:-translate-y-0.5 transition-all" onClick={handleBackToHome}>
               ← Back to Home
             </button>

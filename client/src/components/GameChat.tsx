@@ -8,6 +8,7 @@ import { useState, useEffect, useRef, useCallback } from 'react';
 import { useTurnPolling } from '../hooks/useTurnPolling';
 import { DiceAnimation } from './DiceAnimation';
 import { authFetch } from '../utils/authFetch';
+import ReactMarkdown from 'react-markdown';
 
 interface Message {
   role: 'character' | 'keeper';
@@ -1035,7 +1036,7 @@ export function GameChat({ sessionId, apiBaseUrl = '/api', characterName = 'Inve
                   ? 'bg-[rgba(232,220,196,0.5)]' 
                   : 'bg-white/50'
               }`}>
-                {msg.content}
+                <ReactMarkdown className="markdown-content">{msg.content}</ReactMarkdown>
               </div>
             )}
           </div>
@@ -1061,7 +1062,7 @@ export function GameChat({ sessionId, apiBaseUrl = '/api', characterName = 'Inve
             {/* Show narrative after dice animation completes */}
             {diceAnimationCompleted && pendingDiceRolls && pendingDiceRolls.narrative && (
               <div className="message-text backdrop-blur-sm bg-white/50 border border-slate-200 shadow-md rounded-lg px-[18px] py-[14px]" style={{ marginTop: '16px' }}>
-                {pendingDiceRolls.narrative}
+                <ReactMarkdown className="markdown-content">{pendingDiceRolls.narrative}</ReactMarkdown>
               </div>
             )}
           </div>
