@@ -85,8 +85,10 @@ background-image: url('/asset/background.png');
   display: flex;
   align-items: center;
   justify-content: center;
-  max-width: 95vw;
-  max-height: 95vh;
+  width: 110vw;
+  height: 110vh;
+  max-width: 110vw;
+  max-height: 110vh;
 }
 
 .auth-container {
@@ -385,15 +387,17 @@ background-image: url('/asset/background.png');
   display: flex;
   justify-content: center;
   align-items: center;
-  max-width: 95vw;
-  max-height: 95vh;
+  width: 110vw;
+  height: 110vh;
+  max-width: 110vw;
+  max-height: 110vh;
 }
 
 .frame-image {
+  width: 100%;
+  height: 100%;
   max-width: 100%;
-  max-height: 100vh;
-  height: auto;
-  width: auto;
+  max-height: 110vh;
   object-fit: contain;
 }
 

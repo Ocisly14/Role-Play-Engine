@@ -1,6 +1,7 @@
 import React, { useState } from "react";
 import { authFetch } from "../utils/authFetch";
 import { CharacterSheetModal } from "../components/CharacterSheetModal";
+import { FrameImage } from "../components/FrameImage";
 
 interface HomeProps {
   onCreate: () => void;
@@ -74,7 +75,7 @@ const Homes: React.FC<HomeProps> = ({ onCreate, onStartGame, onContinueGame }) =
     <>
       <div className="home">
         <div className="home-frame">
-          <img src="/asset/frame.png" alt="CoC Frame" className="frame-image" />
+          <FrameImage />
           <div className="home-actions">
             <button className="primary" onClick={handleStartGame}>
               New Game
@@ -108,13 +109,10 @@ const Homes: React.FC<HomeProps> = ({ onCreate, onStartGame, onContinueGame }) =
                 </div>
                 <button
                   onClick={() => setShowCharacterBrowser(false)}
-                  className="absolute right-6 top-6 rounded-sm opacity-70 transition-opacity hover:opacity-100 focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:pointer-events-none z-10"
+                  className="close-button"
+                  aria-label="Close"
                 >
-                  <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="h-6 w-6">
-                    <path d="M18 6 6 18"></path>
-                    <path d="m6 6 12 12"></path>
-                  </svg>
-                  <span className="sr-only">Close</span>
+                  ×
                 </button>
               </div>
 
@@ -163,27 +161,13 @@ const Homes: React.FC<HomeProps> = ({ onCreate, onStartGame, onContinueGame }) =
                       <div
                         key={char.character_id}
                         onClick={() => handleViewCharacterSheet(char.character_id)}
+                        className="backdrop-blur-sm bg-white/50 border border-slate-200 shadow-md rounded-xl hover:bg-white/70 hover:border-slate-300 hover:-translate-y-1 transition-all"
                         style={{
-                          border: '3px solid var(--border, #3d2f1f)',
                           padding: '20px',
                           cursor: 'pointer',
-                          transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
-                          background: 'white',
-                          borderRadius: '10px',
-                          boxShadow: '0 2px 8px rgba(0, 0, 0, 0.1)',
                           animation: `cardFadeIn 0.4s ease-out ${index * 0.05}s backwards`,
                           position: 'relative',
                           overflow: 'hidden',
-                        }}
-                        onMouseEnter={(e) => {
-                          e.currentTarget.style.boxShadow = '0 8px 24px rgba(0, 0, 0, 0.2), 0 0 0 2px var(--accent)';
-                          e.currentTarget.style.transform = 'translateY(-4px)';
-                          e.currentTarget.style.borderColor = 'var(--accent)';
-                        }}
-                        onMouseLeave={(e) => {
-                          e.currentTarget.style.boxShadow = '0 2px 8px rgba(0, 0, 0, 0.1)';
-                          e.currentTarget.style.transform = 'translateY(0)';
-                          e.currentTarget.style.borderColor = 'var(--border)';
                         }}
                       >
                         <div style={{
@@ -256,38 +240,29 @@ const Homes: React.FC<HomeProps> = ({ onCreate, onStartGame, onContinueGame }) =
                               margin: '12px 0',
                               flexWrap: 'wrap',
                             }}>
-                              <span style={{
+                              <span className="backdrop-blur-sm bg-blue-50/60 border border-blue-200 rounded-lg" style={{
                                 padding: '6px 12px',
-                                background: 'linear-gradient(135deg, #e3f2fd 0%, #bbdefb 100%)',
-                                borderRadius: '6px',
                                 fontFamily: 'var(--mono)',
                                 fontSize: '0.85rem',
                                 fontWeight: '700',
-                                border: '1px solid #90caf9',
                                 color: '#1565c0',
                               }}>
                                 ❤️ {status.hp || '?'}
                               </span>
-                              <span style={{
+                              <span className="backdrop-blur-sm bg-purple-50/60 border border-purple-200 rounded-lg" style={{
                                 padding: '6px 12px',
-                                background: 'linear-gradient(135deg, #f3e5f5 0%, #e1bee7 100%)',
-                                borderRadius: '6px',
                                 fontFamily: 'var(--mono)',
                                 fontSize: '0.85rem',
                                 fontWeight: '700',
-                                border: '1px solid #ce93d8',
                                 color: '#6a1b9a',
                               }}>
                                 🧠 {status.sanity || '?'}
                               </span>
-                              <span style={{
+                              <span className="backdrop-blur-sm bg-green-50/60 border border-green-200 rounded-lg" style={{
                                 padding: '6px 12px',
-                                background: 'linear-gradient(135deg, #e8f5e9 0%, #c8e6c9 100%)',
-                                borderRadius: '6px',
                                 fontFamily: 'var(--mono)',
                                 fontSize: '0.85rem',
                                 fontWeight: '700',
-                                border: '1px solid #81c784',
                                 color: '#2e7d32',
                               }}>
                                 ✨ {status.mp || '?'}
@@ -306,15 +281,13 @@ const Homes: React.FC<HomeProps> = ({ onCreate, onStartGame, onContinueGame }) =
                                 attrs[attr] && (
                                   <span
                                     key={attr}
+                                    className="backdrop-blur-sm bg-white/60 border border-slate-200 rounded-lg"
                                     style={{
                                       padding: '4px 8px',
-                                      background: 'var(--header-bg)',
-                                      borderRadius: '4px',
                                       fontFamily: 'var(--mono)',
                                       fontSize: '0.75rem',
                                       fontWeight: '600',
                                       textAlign: 'center',
-                                      border: '1px solid var(--accent)',
                                       color: 'var(--title)',
                                     }}
                                   >
@@ -363,6 +336,35 @@ const Homes: React.FC<HomeProps> = ({ onCreate, onStartGame, onContinueGame }) =
         @keyframes spin {
           from { transform: rotate(0deg); }
           to { transform: rotate(360deg); }
+        }
+
+        .close-button {
+          position: absolute;
+          top: 1.5rem;
+          right: 1.5rem;
+          backdrop-filter: blur(4px);
+          -webkit-backdrop-filter: blur(4px);
+          background: rgba(255, 255, 255, 0.3);
+          border: 1px solid rgba(226, 232, 240, 0.8);
+          color: rgba(0, 0, 0, 0.7);
+          border-radius: 0.75rem;
+          width: 40px;
+          height: 40px;
+          font-size: 1.5rem;
+          cursor: pointer;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          z-index: 10;
+          transition: all 0.2s ease-in-out;
+          opacity: 0.7;
+          box-shadow: 0 2px 4px -1px rgba(0, 0, 0, 0.1);
+        }
+
+        .close-button:hover {
+          opacity: 1;
+          background: rgba(255, 255, 255, 0.5);
+          border-color: rgba(203, 213, 225, 1);
         }
       `}</style>
 

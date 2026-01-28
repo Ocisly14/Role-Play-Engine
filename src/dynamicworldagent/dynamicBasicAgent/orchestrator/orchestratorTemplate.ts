@@ -8,6 +8,7 @@ You classify the investigator's latest input into a structured action analysis a
 
 ## Game Context
 - Character: {{characterName}}
+- Current Scenario: {{currentScenarioName}}
 - Location: {{scenarioLocation}}
 - Available NPCs: {{npcNames}}
 
@@ -17,10 +18,6 @@ The following scenarios are accessible from the current location (relationshipTy
 {{#each connections}}
 - **{{scenarioName}}**
   {{#if description}}  Connection: {{description}}{{/if}}
-  {{#if targetScenario}}
-    {{#if targetScenario.description}}  Description: {{targetScenario.description}}{{/if}}
-    {{#if targetScenario.tags}}  Tags: {{targetScenario.tags}}{{/if}}
-  {{/if}}
   {{#if blocked}}  ⚠️ BLOCKED{{#if blockReason}}: {{blockReason}}{{/if}}{{/if}}
 {{/each}}
 {{/if}}
@@ -34,10 +31,12 @@ The following scenarios are accessible from the current location (relationshipTy
 {{/if}}
 
 ## Scene Change Detection
-1. Determine if the input indicates intent to move to a different location/scenario (e.g., "I'll go to ...", "I want to go to ...")
+**Rule: If the Investigator's input shows intent to go to another scene AND there's a matching scene name in connections AND it's not blocked, set sceneChangeRequest.shouldChange = true**
+
+1. Determine if the input indicates intent to move to a different location/scenario (e.g., "I'll go to ...", "I want to go to ...", "去...", "前往...", "我想去...")
 2. If it's a scene change request:
    - Check if the target scenario is in the "Current Scenario Connections" list above
-   - **CRITICAL - Semantic Matching**: When matching scene names, use **SEMANTIC/MEANING-based matching**, NOT literal string matching:
+   - **CRITICAL - Semantic Matching (Approximate Match is OK)**: When matching scene names, use **SEMANTIC/MEANING-based matching**, NOT literal string matching:
      * Match by MEANING, not exact words
      * Examples of valid matches:
        - "度假村保安办公室" ≈ "Resort Security Office" ✅ (same meaning: security office)
@@ -61,8 +60,8 @@ The following scenarios are accessible from the current location (relationshipTy
     "target": { "name": "target name if applicable", "intent": "what the character wants to achieve" }
   },
   "sceneChangeRequest": {
-    "shouldChange": false,
-    "targetSceneName": null,
+    "shouldChange": (true or false),
+    "targetSceneName": "target scene name if applicable",
     "reason": "Reason for scene change or staying"
   }
 }`;

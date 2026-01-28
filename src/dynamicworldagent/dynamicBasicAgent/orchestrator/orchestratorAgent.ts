@@ -38,6 +38,7 @@ export class OrchestratorAgent {
     // Extract context from dynamic game state
     const characterName = dynamicState.playerCharacter?.name || "Unknown";
     const scenarioLocation = dynamicState.currentScenario?.location || "Unknown location";
+    const currentScenarioName = dynamicState.currentScenario?.name || "Unknown scenario";
     const npcNames = dynamicState.npcCharacters?.map(npc => npc.name).join(", ") || "None";
     
     // Get scenario connections for scene change validation
@@ -87,14 +88,7 @@ export class OrchestratorAgent {
         relationshipType: conn.relationshipType,
         description: conn.description,
         blocked: conn.blocked,
-        blockReason: conn.blockReason,
-        // Target scenario details
-        targetScenario: targetScenario ? {
-          id: targetScenario.id,
-          name: targetScenario.name,
-          description: targetScenario.description,
-          tags: targetScenario.tags || []
-        } : null
+        blockReason: conn.blockReason
       };
     });
 
@@ -109,11 +103,7 @@ export class OrchestratorAgent {
         } else {
           console.log(`      ✓ Accessible`);
         }
-        if (conn.targetScenario) {
-          console.log(`      → Resolved to: "${conn.targetScenario.name}"`);
-        } else {
-          console.log(`      ⚠️ Warning: Could not find target scenario in outlines`);
-        }
+        console.log(`      → Resolved to: "${conn.scenarioName}"`);
       });
     } else {
       console.log(`   (No connections found for current scenario)`);
@@ -178,14 +168,21 @@ export class OrchestratorAgent {
     
     // Compose the prompt with input and game context
     // Pass DynamicGameState directly to composeTemplate
-    const prompt = composeTemplate(template, dynamicState, {
-      input,
-      characterName,
-      scenarioLocation,
-      npcNames,
-      previousNarrative,
-      connections
-    });
+    // Use Handlebars so {{#if connections}}, {{#each connections}}, etc. render correctly
+    const prompt = composeTemplate(
+      template,
+      dynamicState,
+      {
+        input,
+        characterName,
+        scenarioLocation,
+        currentScenarioName,
+        npcNames,
+        previousNarrative,
+        connections,
+      },
+      "handlebars"
+    );
 
     // Generate response using LLM
     const response = await generateText({
@@ -202,9 +199,17 @@ export class OrchestratorAgent {
         response.match(/\{[\s\S]*\}/)?.[0];
 
       if (!jsonText) {
-        console.warn("Failed to extract JSON from orchestrator response");
+        console.warn("⚠️ [Orchestrator Agent] Failed to extract JSON from orchestrator response");
+        console.warn("Raw response:", response.substring(0, 500));
       } else {
         const parsedResponse = JSON.parse(jsonText);
+        
+        // Debug: Log the parsed sceneChangeRequest
+        if (parsedResponse.sceneChangeRequest) {
+          console.log(`\n🔍 [Orchestrator Agent] Parsed sceneChangeRequest:`, JSON.stringify(parsedResponse.sceneChangeRequest, null, 2));
+        } else {
+          console.log(`\n⚠️ [Orchestrator Agent] No sceneChangeRequest in parsed response`);
+        }
         
         // Store action analysis
         if (parsedResponse.actionAnalysis) {
@@ -219,6 +224,8 @@ export class OrchestratorAgent {
         if (parsedResponse.sceneChangeRequest) {
           const sceneChangeReq = parsedResponse.sceneChangeRequest;
           
+          console.log(`🔍 [Orchestrator Agent] Checking sceneChangeRequest: shouldChange=${sceneChangeReq.shouldChange}, targetSceneName="${sceneChangeReq.targetSceneName}"`);
+          
           if (sceneChangeReq.shouldChange && sceneChangeReq.targetSceneName) {
             // Valid scene change request - store in temporaryInfo
             const sceneChangeRequest: SceneChangeRequest = {
@@ -228,19 +235,21 @@ export class OrchestratorAgent {
               timestamp: new Date()
             };
             gameStateManager.setSceneChangeRequest(sceneChangeRequest);
-            console.log(`🎯 [Orchestrator Agent] Scene change request validated: ${sceneChangeReq.targetSceneName}`);
+            console.log(`✅ [Orchestrator Agent] Scene change request validated: ${sceneChangeReq.targetSceneName}`);
           } else {
             // No valid scene change request - clear any existing request
+            console.log(`❌ [Orchestrator Agent] Scene change request invalid: shouldChange=${sceneChangeReq.shouldChange}, targetSceneName="${sceneChangeReq.targetSceneName}"`);
             gameStateManager.clearSceneChangeRequest();
           }
         } else {
           // No sceneChangeRequest in response - clear any existing request
+          console.log(`⚠️ [Orchestrator Agent] No sceneChangeRequest field in response - clearing any existing request`);
           gameStateManager.clearSceneChangeRequest();
         }
       }
     } catch (error) {
-      console.warn("Failed to parse orchestrator response for action analysis:", error);
-      console.warn("Response content:", response.substring(0, 200));
+      console.warn("❌ [Orchestrator Agent] Failed to parse orchestrator response for action analysis:", error);
+      console.warn("Response content:", response.substring(0, 500));
     }
 
     return response;

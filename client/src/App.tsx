@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from "react";
+import React, { useEffect, useMemo, useState, useRef, useCallback } from "react";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { AuthProvider, useAuth } from "./contexts/AuthContext";
 import { ProtectedRoute } from "./components/ProtectedRoute";
@@ -11,6 +11,7 @@ import { CharacterSelector } from "./components/CharacterSelector";
 import { ModSelector } from "./components/ModSelector";
 import { StoryCreator } from "./components/StoryCreator";
 import { authFetch } from "./utils/authFetch";
+import { findAvailableImage } from "./utils/imageLoader";
 
 type SkillEntry = { name: string; base: string; category: string };
 type AppPage = "home" | "sheet" | "game" | "character-select" | "mod-select" | "module-intro" | "story-creator";
@@ -145,6 +146,7 @@ const AppShell: React.FC = () => {
   }> | null>(null);
   const [sidebarRefreshTrigger, setSidebarRefreshTrigger] = useState(0);
   const [isCreatingFromGameFlow, setIsCreatingFromGameFlow] = useState(false);
+  const currentBackgroundImageRef = useRef<string | null>(null);
 
   const [form, setForm] = React.useState<Record<string, string>>({});
   const { user, logout } = useAuth();
@@ -155,6 +157,81 @@ const AppShell: React.FC = () => {
   useEffect(() => {
     window.localStorage.setItem(PAGE_STORAGE_KEY, page);
   }, [page]);
+
+  // Helper function to set default background (supports multiple formats)
+  const setDefaultBackground = useCallback(async () => {
+    try {
+      const imageUrl = await findAvailableImage('background');
+      document.body.style.backgroundImage = `url('${imageUrl}')`;
+      document.body.style.backgroundSize = "cover";
+      document.body.style.backgroundPosition = "center";
+      document.body.style.backgroundRepeat = "no-repeat";
+      document.body.style.backgroundAttachment = "fixed";
+    } catch (err) {
+      console.error("Failed to load default background:", err);
+      document.body.style.backgroundImage = "url('/asset/background.png')";
+    }
+  }, []);
+
+  // Initialize default background on mount (supports multiple formats)
+  useEffect(() => {
+    setDefaultBackground();
+  }, [setDefaultBackground]);
+
+  // Fetch current scenario sceneImage and set as background when on game page
+  useEffect(() => {
+    if (page !== "game" || !sessionId) {
+      // Reset to default background when not on game page
+      if (currentBackgroundImageRef.current) {
+        setDefaultBackground();
+        currentBackgroundImageRef.current = null;
+      }
+      return;
+    }
+
+    const fetchGameState = async () => {
+      try {
+        const response = await authFetch("/api/gamestate");
+        if (!response.ok) {
+          return;
+        }
+
+        const data = await response.json();
+        const sceneImagePath = data?.gameState?.currentScenario?.sceneImage?.path;
+        
+        if (sceneImagePath) {
+          const backgroundUrl = `/api/maps/${sceneImagePath}`;
+          // Only update if the image has changed
+          if (currentBackgroundImageRef.current !== backgroundUrl) {
+            document.body.style.backgroundImage = `url('${backgroundUrl}')`;
+            document.body.style.backgroundSize = "cover";
+            document.body.style.backgroundPosition = "center";
+            document.body.style.backgroundRepeat = "no-repeat";
+            document.body.style.backgroundAttachment = "fixed";
+            currentBackgroundImageRef.current = backgroundUrl;
+          }
+        } else {
+          // No sceneImage, reset to default
+          if (currentBackgroundImageRef.current) {
+            setDefaultBackground();
+            currentBackgroundImageRef.current = null;
+          }
+        }
+      } catch (err) {
+        console.error("Failed to fetch game state for background:", err);
+      }
+    };
+
+    fetchGameState();
+
+    // Cleanup: restore default background when component unmounts or page changes
+    return () => {
+      if (page !== "game") {
+        setDefaultBackground();
+        currentBackgroundImageRef.current = null;
+      }
+    };
+  }, [page, sessionId, sidebarRefreshTrigger]);
 
   useEffect(() => {
     if (!user) {
@@ -337,6 +414,35 @@ const AppShell: React.FC = () => {
             opacity: 1;
             transform: translateY(0);
           }
+        }
+
+        .close-button {
+          position: absolute;
+          top: 1.5rem;
+          right: 1.5rem;
+          backdrop-filter: blur(4px);
+          -webkit-backdrop-filter: blur(4px);
+          background: rgba(255, 255, 255, 0.3);
+          border: 1px solid rgba(226, 232, 240, 0.8);
+          color: rgba(0, 0, 0, 0.7);
+          border-radius: 0.75rem;
+          width: 40px;
+          height: 40px;
+          font-size: 1.5rem;
+          cursor: pointer;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          z-index: 10;
+          transition: all 0.2s ease-in-out;
+          opacity: 0.7;
+          box-shadow: 0 2px 4px -1px rgba(0, 0, 0, 0.1);
+        }
+
+        .close-button:hover {
+          opacity: 1;
+          background: rgba(255, 255, 255, 0.5);
+          border-color: rgba(203, 213, 225, 1);
         }
       `}</style>
     </div>
@@ -1835,13 +1941,10 @@ const AppShell: React.FC = () => {
                 <h2 className="text-2xl font-semibold m-0">Select Checkpoint</h2>
                 <button
                   onClick={() => setShowCheckpointSelector(false)}
-                  className="absolute right-6 top-6 rounded-sm opacity-70 transition-opacity hover:opacity-100 focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:pointer-events-none z-10"
+                  className="close-button"
+                  aria-label="Close"
                 >
-                  <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="h-6 w-6">
-                    <path d="M18 6 6 18"></path>
-                    <path d="m6 6 12 12"></path>
-                  </svg>
-                  <span className="sr-only">Close</span>
+                  ×
                 </button>
               </div>
               
@@ -2006,13 +2109,10 @@ const AppShell: React.FC = () => {
               </h2>
               <button
                 onClick={() => setPage("mod-select")}
-                className="absolute right-6 top-6 rounded-sm opacity-70 transition-opacity hover:opacity-100 focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:pointer-events-none z-10"
+                className="close-button"
+                aria-label="Close"
               >
-                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="h-6 w-6">
-                  <path d="M18 6 6 18"></path>
-                  <path d="m6 6 12 12"></path>
-                </svg>
-                <span className="sr-only">Close</span>
+                ×
               </button>
             </div>
             

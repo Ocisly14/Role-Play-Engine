@@ -103,13 +103,7 @@ export function GameSidebar({ sessionId, apiBaseUrl = '/api', refreshTrigger }: 
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [showCharacterSheet, setShowCharacterSheet] = useState(false);
-  const [showMapModal, setShowMapModal] = useState(false);
   const isInitialLoadRef = useRef(true);
-  const mapSrc = gameState?.currentScenario?.sceneImage?.path
-    ? `${apiBaseUrl}/maps/${gameState.currentScenario.sceneImage.path}`
-    : gameState?.currentScenario?.mapImagePath
-      ? `${apiBaseUrl}/maps/${gameState.currentScenario.mapImagePath}`
-      : null;
 
   // Fetch game state from backend
   useEffect(() => {
@@ -410,53 +404,30 @@ export function GameSidebar({ sessionId, apiBaseUrl = '/api', refreshTrigger }: 
               <p className="empty-state">Loading...</p>
             ) : error ? (
               <p className="empty-state" style={{ color: '#c41e3a' }}>Load failed: {error}</p>
-            ) : gameState?.currentScenario?.showMap === false ? (
-              <div className="empty-state">
-                <p>No map available. Please explore on your own.</p>
-              </div>
-            ) : mapSrc ? (
-              <div className="map-display">
-                <img
-                  src={mapSrc}
-                  alt={`Map of ${gameState?.currentScenario?.name || 'Scene'}`}
-                  style={{ width: '100%', height: 'auto', display: 'block', cursor: 'pointer' }}
-                  onClick={() => setShowMapModal(true)}
-                  title="Click to enlarge"
-                  onError={(e) => {
-                    console.error('Failed to load map image');
-                    e.currentTarget.style.display = 'none';
-                    const errorMsg = e.currentTarget.nextElementSibling as HTMLElement;
-                    if (errorMsg) errorMsg.style.display = 'block';
-                  }}
-                />
-                <p className="empty-state" style={{ display: 'none' }}>
-                  Failed to load map image
-                </p>
+            ) : gameState?.currentScenario ? (
+              <div className="status-section">
+                <h3>Current Scene</h3>
+                <div className="status-list">
+                  <div className="status-item-full">
+                    <span className="status-label">Scene Name:</span>
+                    <span className="status-value">
+                      {gameState.currentScenario.name || 'Unknown'}
+                    </span>
+                  </div>
+                  <div className="status-item-full">
+                    <span className="status-label">Location:</span>
+                    <span className="status-value">
+                      {gameState.currentScenario.location || 'Unknown'}
+                    </span>
+                  </div>
+                </div>
+                <div style={{ marginTop: '16px', padding: '12px', backgroundColor: 'rgba(255, 255, 255, 0.4)', borderRadius: '0.5rem', fontSize: '0.9rem', color: '#666', fontStyle: 'italic' }}>
+                  The scene image is displayed as the background of the game interface.
+                </div>
               </div>
             ) : (
-              <div className="empty-state">
-                <p>No map available. Please explore on your own.</p>
-              </div>
+              <p className="empty-state">No data</p>
             )}
-          </div>
-        )}
-
-        {/* Map Modal - Full Screen View */}
-        {showMapModal && (gameState?.currentScenario?.sceneImage?.path || gameState?.currentScenario?.mapImagePath) && gameState?.currentScenario?.showMap !== false && (
-          <div className="map-modal-overlay" onClick={() => setShowMapModal(false)}>
-            <div className="map-modal-content" onClick={(e) => e.stopPropagation()}>
-              <button className="map-modal-close" onClick={() => setShowMapModal(false)}>
-                ✕
-              </button>
-              <img
-                src={gameState?.currentScenario?.sceneImage?.path
-                  ? `${apiBaseUrl}/maps/${gameState.currentScenario.sceneImage.path}`
-                  : `${apiBaseUrl}/maps/${gameState?.currentScenario?.mapImagePath || ''}`}
-                alt={`Map of ${gameState?.currentScenario?.name || 'Scene'}`}
-                className="map-modal-image"
-              />
-              <div className="map-modal-title">{gameState.currentScenario.name}</div>
-            </div>
           </div>
         )}
       </div>
