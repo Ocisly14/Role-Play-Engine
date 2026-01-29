@@ -111,7 +111,7 @@ export function getKeeperTemplate(): string {
     * Already knows (from previous turns or initial knowledge)
     * Can directly perceive (sees, hears, smells in the current moment)
     * Discovers through successful actions (only after action results confirm success)
-  - NEVER reveal: hidden information, events elsewhere, NPC internal thoughts, undiscovered clues, meta-knowledge
+  - NEVER reveal: hidden information, events elsewhere, NPC internal thoughts, undiscovered secrets, undiscovered clues, meta-knowledge
 
   ### Connection Handling
   - **First scene OR scene transition**: MUST describe ALL connections (doors, passages, paths) and where they lead

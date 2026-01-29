@@ -7,6 +7,7 @@ import type { DynamicNPCProfile } from "../../world_builder/types.js";
 import type { ScenarioLoader } from "../../../coc_multiagents_system/agents/memory/scenarioloader/index.js";
 import type { DynamicGameState } from "../../state/index.js";
 import { DynamicGameStateManager } from "../../state/index.js";
+import { isTimeAfter, getLatestActionLogEntryWithLocation } from "../../utils/gameTime.js";
 import { buildActionSystemPrompt, getActionTypeTemplate } from "./actionTemplate.js";
 
 
@@ -247,6 +248,9 @@ export class ActionAgent {
     if (!scenario?.location) return [];
 
     const scenarioLocation = scenario.location;
+    const snapshotTime =
+      scenario.gameTime ??
+      `Day ${dynamicState.gameDay}, ${dynamicState.timeOfDay}`;
     const out: any[] = [];
     const seen = new Set<string>();
 
@@ -265,12 +269,6 @@ export class ActionAgent {
       const tokensB = nb.split(/\s+/);
       if (tokensA[0] && tokensA[0] === tokensB[0]) return true;
       return false;
-    };
-
-    // Helper to get current location from actionLog
-    const getCurrentLocationFromActionLog = (actionLog?: ActionLogEntry[]): string | null => {
-      if (!actionLog || actionLog.length === 0) return null;
-      return actionLog[actionLog.length - 1]?.location || null;
     };
 
     const addNPC = (npc: DynamicCharacterProfile) => {
@@ -297,16 +295,31 @@ export class ActionAgent {
       });
     };
 
-    // Add NPCs from scenario characters
+    // 1. From scenario.characters: include unless we can prove they "left" (latest actionLog
+    //    after snapshot time and location !== current scene). If no actionLog → use scene NPC as authority (include).
     for (const sc of scenario.characters || []) {
       const npc = dynamicState.npcCharacters.find((n) => isNameSimilar(n.name, sc.name));
-      if (npc) addNPC(npc);
+      if (!npc) continue;
+      const latest = getLatestActionLogEntryWithLocation(npc.actionLog);
+      if (
+        latest &&
+        isTimeAfter(latest.time, snapshotTime) &&
+        latest.location.toLowerCase() !== scenarioLocation.toLowerCase()
+      ) {
+        // NPC's latest actionLog is after snapshot and they're elsewhere → left, don't inject
+        continue;
+      }
+      addNPC(npc);
     }
 
-    // Add NPCs whose actionLog shows they're in this location
+    // 2. From all NPCs: include only if we have actionLog showing they "arrived" (latest after snapshot and at current scene). If no actionLog, do not add here (scene NPC list is the authority).
     for (const npc of dynamicState.npcCharacters) {
-      const loc = getCurrentLocationFromActionLog(npc.actionLog);
-      if (loc && loc.toLowerCase() === scenarioLocation.toLowerCase()) {
+      const latest = getLatestActionLogEntryWithLocation(npc.actionLog);
+      if (
+        latest &&
+        isTimeAfter(latest.time, snapshotTime) &&
+        latest.location.toLowerCase() === scenarioLocation.toLowerCase()
+      ) {
         addNPC(npc);
       }
     }

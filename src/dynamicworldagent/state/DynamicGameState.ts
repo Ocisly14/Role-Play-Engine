@@ -815,13 +815,22 @@ export class DynamicGameStateManager {
   }
 
   /**
-   * Update player input timestamp
+   * Update player input timestamp (resets consecutive progression triggers)
    */
   updatePlayerInputTime(): void {
     this.state.lastPlayerInputTime = new Date();
     this.state.lastUpdated = new Date();
     // Reset consecutive triggers when player provides input
     this.state.consecutiveProgressionTriggers = 0;
+  }
+
+  /**
+   * Only update lastPlayerInputTime, without resetting consecutiveProgressionTriggers.
+   * Used after a stuck-hint so the next hint is 5 min later, while still counting toward the max-3 limit.
+   */
+  touchIdleTimerOnly(): void {
+    this.state.lastPlayerInputTime = new Date();
+    this.state.lastUpdated = new Date();
   }
 
   /**

@@ -21,7 +21,8 @@
     "chat:dev": "concurrently \"pnpm chat\" \"pnpm chat:frontend\"",
     "clean": "rm -rf dist client/dist client/dist-server && rm -rf node_modules client/node_modules || true",
     "test": "vitest",
-    "test:coverage": "vitest --coverage"
+    "test:coverage": "vitest --coverage",
+    "test:scene-npc": "node test-scene-npc-extraction.mjs"
   },
   "keywords": ["langgraph", "langchain", "multi-agent", "typescript"],
   "author": "CoC AI",
