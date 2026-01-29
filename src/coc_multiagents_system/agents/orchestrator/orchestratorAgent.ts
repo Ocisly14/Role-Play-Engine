@@ -47,9 +47,7 @@ export class OrchestratorAgent {
         const conversationHistory = await extractRecentConversationHistory(
           db,
           gameState.sessionId,
-          1,
-          gameState.gameDay,
-          gameState.timeOfDay
+          1
         );
         
         // Get previous round narrative (last completed turn with narrative)

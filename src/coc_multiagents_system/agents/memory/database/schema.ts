@@ -707,6 +707,33 @@ export class CoCDatabase {
             CREATE INDEX IF NOT EXISTS idx_sessions_status ON sessions(status);
             CREATE INDEX IF NOT EXISTS idx_sessions_started ON sessions(started_at);
         `);
+    
+    // Add parent_session_id and sub_id columns if they don't exist (for existing databases)
+    // Must be done BEFORE creating indexes on these columns
+    try {
+      if (!this.hasColumn("sessions", "parent_session_id")) {
+        console.log('Adding parent_session_id column to sessions table...');
+        this.db.exec(`ALTER TABLE sessions ADD COLUMN parent_session_id TEXT`);
+        console.log('✓ parent_session_id column added');
+      }
+      if (!this.hasColumn("sessions", "sub_id")) {
+        console.log('Adding sub_id column to sessions table...');
+        this.db.exec(`ALTER TABLE sessions ADD COLUMN sub_id INTEGER`);
+        console.log('✓ sub_id column added');
+      }
+      
+      // Create indexes only after columns exist
+      // Note: SQLite doesn't support adding FOREIGN KEY constraints via ALTER TABLE
+      // So we skip the foreign key constraint for existing tables
+      if (this.hasColumn("sessions", "parent_session_id")) {
+        this.db.exec(`CREATE INDEX IF NOT EXISTS idx_sessions_parent ON sessions(parent_session_id)`);
+      }
+      if (this.hasColumn("sessions", "parent_session_id") && this.hasColumn("sessions", "sub_id")) {
+        this.db.exec(`CREATE INDEX IF NOT EXISTS idx_sessions_parent_sub ON sessions(parent_session_id, sub_id)`);
+      }
+    } catch (error) {
+      console.warn("Failed to add parent_session_id/sub_id columns (may already exist):", error);
+    }
 
     // ==================== USER AUTHENTICATION TABLES ====================
 
@@ -1000,7 +1027,9 @@ export class CoCDatabase {
    */
   private ensureSessionExists(
     sessionId: string,
-    gameState: any
+    gameState: any,
+    parentSessionId?: string | null,
+    subId?: number | null
   ): void {
     const database = this.db;
     
@@ -1012,18 +1041,37 @@ export class CoCDatabase {
     
     if (!existing) {
       // Create session if it doesn't exist
-      const insertStmt = database.prepare(`
-        INSERT INTO sessions (
-          session_id, mod_name, character_id, character_name, status
-        ) VALUES (?, ?, ?, ?, 'active')
-      `);
+      const hasParentSubColumns = this.hasColumn("sessions", "parent_session_id") && this.hasColumn("sessions", "sub_id");
       
-      insertStmt.run(
-        sessionId,
-        null, // mod_name - can be extracted from gameState if available
-        gameState.playerCharacter?.id || null,
-        gameState.playerCharacter?.name || null
-      );
+      if (hasParentSubColumns && parentSessionId) {
+        const insertStmt = database.prepare(`
+          INSERT INTO sessions (
+            session_id, mod_name, character_id, character_name, status, parent_session_id, sub_id
+          ) VALUES (?, ?, ?, ?, 'active', ?, ?)
+        `);
+        
+        insertStmt.run(
+          sessionId,
+          null, // mod_name - can be extracted from gameState if available
+          gameState.playerCharacter?.id || null,
+          gameState.playerCharacter?.name || null,
+          parentSessionId,
+          subId || null
+        );
+      } else {
+        const insertStmt = database.prepare(`
+          INSERT INTO sessions (
+            session_id, mod_name, character_id, character_name, status
+          ) VALUES (?, ?, ?, ?, 'active')
+        `);
+        
+        insertStmt.run(
+          sessionId,
+          null, // mod_name - can be extracted from gameState if available
+          gameState.playerCharacter?.id || null,
+          gameState.playerCharacter?.name || null
+        );
+      }
     } else {
       // Update last_activity_at if session exists
       const updateStmt = database.prepare(`
@@ -1033,6 +1081,129 @@ export class CoCDatabase {
       `);
       updateStmt.run(sessionId);
     }
+  }
+  
+  /**
+   * Get the next sub_id for a parent session
+   */
+  getNextSubId(parentSessionId: string): number {
+    const database = this.db;
+    
+    if (!this.hasColumn("sessions", "sub_id")) {
+      return 1; // Default to 1 if column doesn't exist
+    }
+    
+    const stmt = database.prepare(`
+      SELECT MAX(sub_id) as max_sub_id FROM sessions WHERE parent_session_id = ?
+    `);
+    const row = stmt.get(parentSessionId) as { max_sub_id: number | null } | undefined;
+    return (row?.max_sub_id || 0) + 1;
+  }
+  
+  /**
+   * Create a branch session (subId) from a parent session
+   * Copies the last 3 narrative turns from parent session (filtered by gameTime) to the new branch
+   * Returns the branch session ID and the subId
+   */
+  async createBranchSession(
+    parentSessionId: string,
+    gameState: any,
+    checkpointGameDay?: number | null,
+    checkpointTimeOfDay?: string | null
+  ): Promise<{ branchSessionId: string; subId: number }> {
+    const database = this.db;
+    const subId = this.getNextSubId(parentSessionId);
+    const branchSessionId = `${parentSessionId}-sub-${subId}`;
+    
+    // Ensure parent session exists first
+    this.ensureSessionExists(parentSessionId, gameState);
+    
+    // Create branch session
+    this.ensureSessionExists(branchSessionId, gameState, parentSessionId, subId);
+    
+    // Copy last 3 narrative turns from parent session (filtered by gameTime)
+    if (checkpointGameDay !== undefined && checkpointGameDay !== null && checkpointTimeOfDay) {
+      try {
+        // Get parent session's turns up to checkpoint time
+        const parentTurns = this.getTurnHistory(
+          parentSessionId,
+          10, // Get more to ensure we have enough completed ones
+          undefined, // afterTurnNumber
+          checkpointGameDay,
+          checkpointTimeOfDay
+        );
+        
+        // Filter completed turns with narrative, sort by gameTime, take last 3
+        const compareGameTime = (a: { gameDay?: number | null; gameTime?: string | null }, b: { gameDay?: number | null; gameTime?: string | null }): number => {
+          if (!a.gameDay || !a.gameTime) return -1;
+          if (!b.gameDay || !b.gameTime) return 1;
+          if (a.gameDay !== b.gameDay) return b.gameDay - a.gameDay;
+          const [aHour, aMin] = a.gameTime.split(':').map(Number);
+          const [bHour, bMin] = b.gameTime.split(':').map(Number);
+          return (bHour * 60 + bMin) - (aHour * 60 + aMin);
+        };
+        
+        let completedTurns = parentTurns
+          .filter(turn => turn.status === 'completed' && turn.keeperNarrative);
+        
+        completedTurns.sort(compareGameTime);
+        const last3Turns = completedTurns.slice(0, 3).reverse(); // Get last 3, reverse to chronological order
+        
+        // Copy turns to branch session
+        if (last3Turns.length > 0) {
+          let newTurnNumber = 0;
+          
+          for (const turn of last3Turns) {
+            newTurnNumber++;
+            const newTurnId = `turn-branch-${branchSessionId}-${Date.now()}-${randomUUID().slice(0, 8)}`;
+            
+            // Insert turn with all fields from parent turn
+            const insertStmt = database.prepare(`
+              INSERT INTO game_turns (
+                turn_id, session_id, turn_number, character_input, character_id, character_name,
+                scene_id, scene_name, location, status, started_at, completed_at,
+                keeper_narrative, clue_revelations, action_analysis, action_results,
+                director_decision, is_simulated, game_day, game_time, error_message
+              ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+            `);
+            
+            insertStmt.run(
+              newTurnId,
+              branchSessionId, // New session ID
+              newTurnNumber, // Sequential turn number starting from 1
+              turn.characterInput || '',
+              turn.characterId || null,
+              turn.characterName || null,
+              turn.sceneId || null,
+              turn.sceneName || null,
+              turn.location || null,
+              turn.status || 'completed',
+              turn.startedAt || new Date().toISOString(),
+              turn.completedAt || new Date().toISOString(),
+              turn.keeperNarrative || null,
+              turn.clueRevelations ? JSON.stringify(turn.clueRevelations) : null,
+              turn.actionAnalysis ? JSON.stringify(turn.actionAnalysis) : null,
+              turn.actionResults ? JSON.stringify(turn.actionResults) : null,
+              turn.directorDecision ? JSON.stringify(turn.directorDecision) : null,
+              turn.isSimulated ? 1 : 0,
+              turn.gameDay || null,
+              turn.gameTime || null,
+              turn.errorMessage || null
+            );
+          }
+          
+          console.log(`🌿 [Branch Session] Copied ${last3Turns.length} narrative turns from parent session to branch: ${branchSessionId}`);
+        } else {
+          console.log(`🌿 [Branch Session] No narrative turns found in parent session up to checkpoint time`);
+        }
+      } catch (error) {
+        console.warn(`⚠️ [Branch Session] Failed to copy parent narrative turns:`, error);
+        // Don't fail branch creation if copying fails
+      }
+    }
+    
+    console.log(`🌿 [Branch Session] Created branch session: ${branchSessionId} (parent: ${parentSessionId}, subId: ${subId})`);
+    return { branchSessionId, subId };
   }
 
   /**
@@ -1049,7 +1220,10 @@ export class CoCDatabase {
     const database = this.db;
     
     // Ensure session exists before inserting checkpoint (required by foreign key constraint)
-    this.ensureSessionExists(sessionId, gameState);
+    // Extract parent_session_id and sub_id from gameState if available
+    const parentSessionId = (gameState as any).parentSessionId || null;
+    const subId = (gameState as any).subId || null;
+    this.ensureSessionExists(sessionId, gameState, parentSessionId, subId);
     
     // Extract metadata for quick queries
     const gameDay = gameState.gameDay || 1;

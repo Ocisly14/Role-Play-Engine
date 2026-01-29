@@ -122,9 +122,7 @@ export class OrchestratorAgent {
         const history = await extractRecentConversationHistory(
           db,
           dynamicState.sessionId,
-          3,  // Get last 3 turns
-          dynamicState.gameDay,
-          dynamicState.timeOfDay
+          3  // Get last 3 turns
         );
         
         // Filter to only include turns with narrative

@@ -290,6 +290,50 @@ export async function loadCheckpointData(req: Request, res: Response): Promise<v
       return;
     }
 
+    // Check if we need to create a branch session (subId)
+    // Create branch if loading a checkpoint from the past (earlier gameTime)
+    const serverState = ServerState.getInstance();
+    const currentGameState = serverState.getGameState(userId);
+    const currentDynamicGameState = serverState.getDynamicGameState(userId);
+    const currentState = currentDynamicGameState || currentGameState;
+    
+    let shouldCreateBranch = false;
+    let branchSessionId: string | null = null;
+    let branchSubId: number | null = null;
+    const checkpointGameDay = checkpoint.metadata.gameDay;
+    const checkpointTimeOfDay = checkpoint.metadata.gameTime;
+    
+    if (currentState && checkpointGameDay && checkpointTimeOfDay) {
+      const currentGameDay = currentState.gameDay || 1;
+      const currentTimeOfDay = currentState.timeOfDay || "00:00";
+      
+      // Compare gameTime: if checkpoint is earlier, create branch
+      const compareGameTime = (day1: number, time1: string, day2: number, time2: string): number => {
+        if (day1 !== day2) return day1 - day2;
+        const [h1, m1] = time1.split(':').map(Number);
+        const [h2, m2] = time2.split(':').map(Number);
+        return (h1 * 60 + m1) - (h2 * 60 + m2);
+      };
+      
+      const timeDiff = compareGameTime(checkpointGameDay, checkpointTimeOfDay, currentGameDay, currentTimeOfDay);
+      if (timeDiff < 0) {
+        // Checkpoint is from the past, create branch
+        shouldCreateBranch = true;
+        const branchInfo = await db.createBranchSession(
+          checkpoint.sessionId,
+          gameState,
+          checkpointGameDay,
+          checkpointTimeOfDay
+        );
+        branchSessionId = branchInfo.branchSessionId;
+        branchSubId = branchInfo.subId;
+        console.log(`[${new Date().toISOString()}] Creating branch session: ${branchSessionId} (checkpoint is from Day ${checkpointGameDay} ${checkpointTimeOfDay}, current is Day ${currentGameDay} ${currentTimeOfDay})`);
+      }
+    }
+    
+    // Use branch session ID if created, otherwise use original session ID
+    const finalSessionId = branchSessionId || checkpoint.sessionId;
+
     // Check if this is a DynamicGameState and deserialize if needed
     const gameStateAny = gameState as any;
     let restoredGameState: any = gameState;
@@ -298,8 +342,6 @@ export async function loadCheckpointData(req: Request, res: Response): Promise<v
     if (gameStateAny.moduleName && gameStateAny.updatedDynamicScenarioSnapshots !== undefined) {
       // This is a DynamicGameState, deserialize it with checkpoint gameTime to filter snapshots
       const { DynamicGameStateManager } = await import("../../../src/dynamicworldagent/state/index.js");
-      const checkpointGameDay = checkpoint.metadata.gameDay;
-      const checkpointTimeOfDay = checkpoint.metadata.gameTime;
       
       if (checkpointGameDay && checkpointTimeOfDay) {
         restoredDynamicGameState = DynamicGameStateManager.deserialize(
@@ -312,6 +354,20 @@ export async function loadCheckpointData(req: Request, res: Response): Promise<v
       } else {
         restoredDynamicGameState = DynamicGameStateManager.deserialize(gameStateAny, undefined, undefined, db);
         console.log(`[${new Date().toISOString()}] Deserialized DynamicGameState from checkpoint`);
+      }
+      
+      // Update sessionId to branch session if created
+      if (shouldCreateBranch && restoredDynamicGameState && branchSubId !== null) {
+        restoredDynamicGameState.sessionId = finalSessionId;
+        (restoredDynamicGameState as any).parentSessionId = checkpoint.sessionId;
+        (restoredDynamicGameState as any).subId = branchSubId;
+      }
+    } else {
+      // Update sessionId to branch session if created
+      if (shouldCreateBranch && restoredGameState && branchSubId !== null) {
+        restoredGameState.sessionId = finalSessionId;
+        (restoredGameState as any).parentSessionId = checkpoint.sessionId;
+        (restoredGameState as any).subId = branchSubId;
       }
     }
 
@@ -331,40 +387,37 @@ export async function loadCheckpointData(req: Request, res: Response): Promise<v
       }
     }
 
-    // Fetch conversation history filtered by checkpoint gameTime
+    // Fetch conversation history
+    // For branch sessions, use the branch session's own conversation history (which includes copied parent turns)
+    // For regular loads, use the original session
     const turnManager = graphManager.getTurnManager();
     let conversationHistory: any[] = [];
 
     if (turnManager) {
       try {
-        const checkpointGameDay = checkpoint.metadata.gameDay;
-        const checkpointTimeOfDay = checkpoint.metadata.gameTime;
-        
-        if (checkpointGameDay && checkpointTimeOfDay) {
-          conversationHistory = turnManager.getConversation(
-            checkpoint.sessionId,
-            50,
-            checkpointGameDay,
-            checkpointTimeOfDay
-          );
-          console.log(`[${new Date().toISOString()}] Loaded ${conversationHistory.length} conversation messages (filtered by gameTime: Day ${checkpointGameDay}, ${checkpointTimeOfDay})`);
-        } else {
-          conversationHistory = turnManager.getConversation(checkpoint.sessionId, 50);
-          console.log(`[${new Date().toISOString()}] Loaded ${conversationHistory.length} conversation messages (no gameTime filter)`);
-        }
+        // Use finalSessionId (branch session if created, otherwise original)
+        // Branch sessions now have their own copied turns, so we can directly query them
+        conversationHistory = turnManager.getConversation(finalSessionId, 50);
+        console.log(`[${new Date().toISOString()}] Loaded ${conversationHistory.length} conversation messages from session: ${finalSessionId}${shouldCreateBranch ? ' (branch)' : ''}`);
       } catch (error) {
         console.warn("Failed to load conversation history:", error);
       }
     }
 
-    console.log(`[${new Date().toISOString()}] Checkpoint loaded: ${checkpointId}`);
+    const loadMessage = shouldCreateBranch 
+      ? `存档加载成功（已创建支线：${finalSessionId}）`
+      : "存档加载成功";
+
+    console.log(`[${new Date().toISOString()}] Checkpoint loaded: ${checkpointId}${shouldCreateBranch ? ` (branch: ${finalSessionId})` : ''}`);
 
     res.json({
       success: true,
-      sessionId: checkpoint.sessionId,
+      sessionId: finalSessionId,
+      parentSessionId: shouldCreateBranch ? checkpoint.sessionId : undefined,
+      isBranch: shouldCreateBranch,
       gameState: restoredGameState,
       conversationHistory: conversationHistory,
-      message: "存档加载成功",
+      message: loadMessage,
       timestamp: new Date().toISOString(),
     });
   } catch (error) {
