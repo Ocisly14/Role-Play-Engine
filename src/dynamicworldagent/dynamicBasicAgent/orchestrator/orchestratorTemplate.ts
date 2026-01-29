@@ -25,9 +25,15 @@ The following scenarios are accessible from the current location (relationshipTy
 ## Investigator's Input
 "{{input}}"
 
-{{#if previousNarrative}}
-## Previous Round Narrative
-"{{previousNarrative}}"
+{{#if conversationHistory}}
+## Recent Narrative History (Last 3 Turns)
+Use for continuity and context understanding. Focus on understanding the current input in relation to recent events.
+
+{{#each conversationHistory}}
+{{#if this.keeperNarrative}}
+**Turn #{{this.turnNumber}}**: "{{this.characterInput}}" → "{{this.keeperNarrative}}"
+{{/if}}
+{{/each}}
 {{/if}}
 
 ## Scene Change Detection

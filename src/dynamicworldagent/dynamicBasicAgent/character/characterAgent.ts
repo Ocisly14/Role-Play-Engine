@@ -91,49 +91,53 @@ export class CharacterAgent {
   ): Promise<NPCResponseAnalysis[]> {
     const dynamicState = gameStateManager.getState();
     const template = getCharacterTemplate();
-    
-    // 1. Get latest action result
-    const latestActionResult = this.getLatestActionResult(dynamicState);
-    
-    // 2. Get current scenario information
-    const scenarioInfo = this.extractScenarioInfo(dynamicState);
-    
-    // 3. Get player character information
-    const playerCharacter = this.extractCharacterInfo(dynamicState.playerCharacter);
-    
-    // 4. Get NPCs in current scene location
-    const sceneNpcs = this.extractSceneNPCs(dynamicState);
-    
-    // If no NPCs in scene, return empty array
-    if (sceneNpcs.length === 0) {
+
+    // 1. Investigator's action results only
+    const investigatorActionResults = this.getInvestigatorActionResults(dynamicState);
+
+    // 2. Current game time
+    const gameTime = gameStateManager.getFullGameTime();
+
+    // 3. Scene snapshot (name, location, description, conditions, connections)
+    const sceneSnapshot = this.extractSceneSnapshotForTemplate(dynamicState);
+
+    // 4. Characters in scene (restricted fields)
+    const sceneCharacters = this.extractSceneCharactersForTemplate(dynamicState);
+
+    if (sceneCharacters.length === 0) {
       console.log("📝 [Character Agent] No NPCs in current scene, skipping response analysis");
       return [];
     }
-    
-    // 5. Get target information from action analysis to determine if action is targeted
-    const actionAnalysis = dynamicState.temporaryInfo.currentActionAnalysis;
-    const actionTarget = actionAnalysis?.target || null;
-    
-    // Build template context
+
+    // 5. Last 3 action logs per character (investigator + each scene NPC)
+    const recentActionLogPerCharacter = this.getLast3ActionLogPerCharacter(dynamicState, sceneCharacters);
+
     const templateContext = {
-      characterInput,
-      latestActionResultJson: latestActionResult ? JSON.stringify(latestActionResult, null, 2) : "No action result available yet.",
-      scenarioInfoJson: JSON.stringify(scenarioInfo, null, 2),
-      playerCharacterJson: JSON.stringify(playerCharacter, null, 2),
-      sceneNpcsJson: JSON.stringify(sceneNpcs, null, 2),
-      actionTargetJson: actionTarget ? JSON.stringify(actionTarget, null, 2) : null
+      investigatorActionResults: investigatorActionResults.length > 0 ? investigatorActionResults : null,
+      investigatorActionResultsJson:
+        investigatorActionResults.length > 0
+          ? JSON.stringify(investigatorActionResults, null, 2)
+          : "",
+      gameTime,
+      sceneSnapshot,
+      sceneCharactersJson: JSON.stringify(sceneCharacters, null, 2),
+      recentActionLogPerCharacter: recentActionLogPerCharacter.length > 0 ? recentActionLogPerCharacter : null,
+      recentActionLogPerCharacterJson:
+        recentActionLogPerCharacter.length > 0
+          ? JSON.stringify(recentActionLogPerCharacter, null, 2)
+          : "",
     };
-    
+
     const { content: context, images } = composeTemplateWithImages(
       template,
       { dynamicGameState: dynamicState },
       templateContext,
       "handlebars"
     );
-    
+
     console.log("\n🎭 [Character Agent] Analyzing NPC responses...");
-    console.log(`   Scene: ${scenarioInfo.location || "Unknown"}`);
-    console.log(`   NPCs to analyze: ${sceneNpcs.length}`);
+    console.log(`   Scene: ${sceneSnapshot?.location ?? "Unknown"}`);
+    console.log(`   NPCs to analyze: ${sceneCharacters.length}`);
     
     // Call LLM
     const response = await generateText({
@@ -152,13 +156,13 @@ export class CharacterAgent {
    */
   private getLatestActionResult(dynamicState: DynamicGameState): any | null {
     const actionResults = dynamicState.temporaryInfo.actionResults;
-    
+
     if (!actionResults || actionResults.length === 0) {
       return null;
     }
-    
+
     const latest = actionResults[actionResults.length - 1];
-    
+
     return {
       gameTime: latest.gameTime,
       timeElapsedMinutes: latest.timeElapsedMinutes,
@@ -166,10 +170,133 @@ export class CharacterAgent {
       character: latest.character,
       result: latest.result,
       timeConsumption: latest.timeConsumption,
-      scenarioChanges: latest.scenarioChanges || []
+      scenarioChanges: latest.scenarioChanges || [],
     };
   }
-  
+
+  /**
+   * Get investigator (player) action results only.
+   */
+  private getInvestigatorActionResults(dynamicState: DynamicGameState): any[] {
+    const actionResults = dynamicState.temporaryInfo.actionResults;
+    const playerName = dynamicState.playerCharacter?.name;
+
+    if (!actionResults || !playerName) {
+      return [];
+    }
+
+    return actionResults
+      .filter((r: { character?: string }) => r.character === playerName)
+      .map((r: any) => ({
+        gameTime: r.gameTime,
+        timeElapsedMinutes: r.timeElapsedMinutes,
+        location: r.location,
+        character: r.character,
+        result: r.result,
+        timeConsumption: r.timeConsumption,
+        scenarioChanges: r.scenarioChanges || [],
+      }));
+  }
+
+  /**
+   * Scene snapshot for template: name, location, description, conditions, connections.
+   */
+  private extractSceneSnapshotForTemplate(dynamicState: DynamicGameState): {
+    name: string;
+    location: string;
+    description: string;
+    conditionsJson: string;
+    connectionsJson: string;
+  } | null {
+    const scenario = dynamicState.currentScenario;
+    if (!scenario) return null;
+
+    const outline = dynamicState.scenarioOutlines.find((o) => o.id === scenario.id);
+    const conditions = scenario.conditions || [];
+    const connections = outline?.connections || [];
+
+    return {
+      name: scenario.name ?? "",
+      location: scenario.location ?? "",
+      description: scenario.description ?? "",
+      conditionsJson: JSON.stringify(conditions, null, 2),
+      connectionsJson: JSON.stringify(connections, null, 2),
+    };
+  }
+
+  /**
+   * Characters in scene for template: name, status, location, age, gender, appearance,
+   * personality, goals, secrets, background, inventory, relationship only.
+   */
+  private extractSceneCharactersForTemplate(dynamicState: DynamicGameState): any[] {
+    const scenario = dynamicState.currentScenario;
+    if (!scenario?.location) return [];
+
+    const scenarioLocation = scenario.location;
+    const out: any[] = [];
+    const seen = new Set<string>();
+
+    const add = (
+      npc: DynamicCharacterProfile,
+      locationInScene: string | null,
+      scenarioStatus?: string
+    ) => {
+      const key = this.normalizeName(npc.name);
+      if (seen.has(key)) return;
+      seen.add(key);
+      const npcProfile = npc as DynamicNPCProfile;
+      out.push({
+        name: npc.name,
+        status: scenarioStatus ?? npc.status,
+        location: locationInScene ?? scenarioLocation,
+        age: npcProfile.age ?? null,
+        gender: (npcProfile as { gender?: string }).gender ?? null,
+        appearance: npcProfile.appearance ?? null,
+        personality: npcProfile.personality ?? null,
+        goals: npcProfile.goals ?? [],
+        secrets: npcProfile.secrets ?? [],
+        background: npcProfile.background ?? null,
+        inventory: npc.inventory ?? [],
+        relationship: npcProfile.relationships ?? [],
+      });
+    };
+
+    for (const sc of scenario.characters || []) {
+      const npc = dynamicState.npcCharacters.find((n) => this.isNameSimilar(n.name, sc.name));
+      if (npc) add(npc, sc.location ?? null, sc.status);
+    }
+
+    for (const npc of dynamicState.npcCharacters) {
+      const loc = this.getCurrentLocationFromActionLog((npc as DynamicNPCProfile).actionLog);
+      if (loc && loc.toLowerCase() === scenarioLocation.toLowerCase()) add(npc, loc);
+    }
+
+    return out;
+  }
+
+  /**
+   * Last 3 action logs per character (investigator + each scene NPC).
+   */
+  private getLast3ActionLogPerCharacter(
+    dynamicState: DynamicGameState,
+    sceneCharacters: { name: string }[]
+  ): { characterName: string; last3ActionLog: ActionLogEntry[] }[] {
+    const out: { characterName: string; last3ActionLog: ActionLogEntry[] }[] = [];
+
+    const player = dynamicState.playerCharacter;
+    const playerLog = (player.actionLog || []).slice(-3);
+    out.push({ characterName: player.name, last3ActionLog: playerLog });
+
+    for (const sc of sceneCharacters) {
+      const npc = dynamicState.npcCharacters.find((n) => this.isNameSimilar(n.name, sc.name));
+      if (!npc) continue;
+      const log = (npc.actionLog || []).slice(-3);
+      out.push({ characterName: npc.name, last3ActionLog: log });
+    }
+
+    return out;
+  }
+
   /**
    * Extract scenario information
    */

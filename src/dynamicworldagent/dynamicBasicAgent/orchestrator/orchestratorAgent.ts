@@ -111,59 +111,56 @@ export class OrchestratorAgent {
 
     // Get conversation history directly from database to extract previous narrative
     // This ensures we get the latest completed turns even if memory agent hasn't run yet
-    let previousNarrative: string | null = null;
+    let conversationHistory: Array<{
+      turnNumber: number;
+      characterInput: string;
+      keeperNarrative: string | null;
+    }> = [];
+    
     if (db) {
       try {
-        const conversationHistory = await extractRecentConversationHistory(
+        const history = await extractRecentConversationHistory(
           db,
           dynamicState.sessionId,
-          1
+          3  // Get last 3 turns
         );
         
-        // Get previous round narrative (last completed turn with narrative)
+        // Filter to only include turns with narrative
+        conversationHistory = history
+          .filter(turn => turn.keeperNarrative)
+          .map(turn => ({
+            turnNumber: turn.turnNumber,
+            characterInput: turn.characterInput,
+            keeperNarrative: turn.keeperNarrative
+          }));
+        
         if (conversationHistory.length > 0) {
-          const lastTurnWithNarrative = [...conversationHistory]
-            .reverse()
-            .find(turn => turn.keeperNarrative);
-          if (lastTurnWithNarrative && lastTurnWithNarrative.keeperNarrative) {
-            previousNarrative = lastTurnWithNarrative.keeperNarrative;
-            console.log(`📜 [Orchestrator Agent] Retrieved last round's Keeper Narrative from database (Turn #${lastTurnWithNarrative.turnNumber})`);
-          }
+          console.log(`📜 [Orchestrator Agent] Retrieved ${conversationHistory.length} rounds of Keeper Narrative from database (Turn #${conversationHistory[0]?.turnNumber} to Turn #${conversationHistory[conversationHistory.length - 1]?.turnNumber})`);
         }
       } catch (error) {
         console.warn("[Orchestrator Agent] Failed to retrieve conversation history from database:", error);
         // Fallback to dynamicState if database access fails
-        const conversationHistory = (dynamicState.temporaryInfo.contextualData?.conversationHistory as Array<{
+        const fallbackHistory = (dynamicState.temporaryInfo.contextualData?.conversationHistory as Array<{
           turnNumber: number;
           characterInput: string;
           keeperNarrative: string | null;
         }>) || [];
         
-        if (conversationHistory.length > 0) {
-          const lastTurnWithNarrative = [...conversationHistory]
-            .reverse()
-            .find(turn => turn.keeperNarrative);
-          if (lastTurnWithNarrative && lastTurnWithNarrative.keeperNarrative) {
-            previousNarrative = lastTurnWithNarrative.keeperNarrative;
-          }
-        }
+        conversationHistory = fallbackHistory
+          .filter(turn => turn.keeperNarrative)
+          .slice(-3);  // Get last 3 turns
       }
     } else {
       // Fallback to dynamicState if db is not provided
-      const conversationHistory = (dynamicState.temporaryInfo.contextualData?.conversationHistory as Array<{
+      const fallbackHistory = (dynamicState.temporaryInfo.contextualData?.conversationHistory as Array<{
         turnNumber: number;
         characterInput: string;
         keeperNarrative: string | null;
       }>) || [];
       
-      if (conversationHistory.length > 0) {
-        const lastTurnWithNarrative = [...conversationHistory]
-          .reverse()
-          .find(turn => turn.keeperNarrative);
-        if (lastTurnWithNarrative && lastTurnWithNarrative.keeperNarrative) {
-          previousNarrative = lastTurnWithNarrative.keeperNarrative;
-        }
-      }
+      conversationHistory = fallbackHistory
+        .filter(turn => turn.keeperNarrative)
+        .slice(-3);  // Get last 3 turns
     }
     
     // Compose the prompt with input and game context
@@ -178,7 +175,7 @@ export class OrchestratorAgent {
         scenarioLocation,
         currentScenarioName,
         npcNames,
-        previousNarrative,
+        conversationHistory,  // Pass conversation history instead of single previousNarrative
         connections,
       },
       "handlebars"
