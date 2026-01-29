@@ -40,7 +40,7 @@ export class KeeperAgent {
     // 1. Get complete scenario information
     const completeScenarioInfo = this.extractCompleteScenarioInfo(dynamicState);
 
-    // 2. Get all action results (including player and NPC actions)
+    // 2. Get all action results (player first, then NPCs in executionOrder; same round fed from character → npcAction flow)
     const allActionResultsRaw = this.getAllActionResults(dynamicState);
 
     // Filter out diceRolls field (not used in template)

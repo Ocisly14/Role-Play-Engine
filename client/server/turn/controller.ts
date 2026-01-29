@@ -12,7 +12,7 @@ import { HumanMessage } from "@langchain/core/messages";
 import { DynamicGameStateManager } from "../../../src/dynamicworldagent/state/index.js";
 import { WebSocketManager } from "../websocket/WebSocketManager.js";
 import { notifyClients } from "../websocket/notifier.js";
-import { runWithTokenContext } from "../../../src/models/index.js";
+import { runWithTokenContext, getCurrentUsageTotals } from "../../../src/models/index.js";
 
 type NarrativeStreamHandlers = {
   onDiceRolls?: (diceRolls: string[]) => void;
@@ -104,7 +104,13 @@ export async function createTurn(req: Request, res: Response): Promise<void> {
     // Start async processing (don't wait for it)
     // Pass the appropriate state type to processGameTurnAsync
     const stateToProcess = useDynamic ? dynamicGameState! : persistentGameState!;
-    runWithTokenContext({ userId }, () => {
+    runWithTokenContext(
+      {
+        userId,
+        turnId,
+        usageTotals: { input_tokens: 0, output_tokens: 0, total_tokens: 0 },
+      },
+      () => {
       processGameTurnAsync(turnId, message, stateToProcess, userId)
         .catch((error) => {
           console.error(`Error processing turn ${turnId}:`, error);
@@ -119,7 +125,8 @@ export async function createTurn(req: Request, res: Response): Promise<void> {
             }
           }
         });
-    });
+      }
+    );
 
     // Immediately return the turnId
     res.json({
@@ -332,8 +339,21 @@ async function processGameTurnAsync(
       serverState.setGameState(userId, result.gameState, null);
     }
 
+    const totals = getCurrentUsageTotals();
+    if (totals && totals.total_tokens > 0) {
+      console.log(
+        `🧮 [Token Usage] Turn ${turnId} total: ${totals.total_tokens} (input ${totals.input_tokens}, output ${totals.output_tokens})`
+      );
+    }
+
     console.log(`[${new Date().toISOString()}] Turn ${turnId} completed successfully (${useDynamic ? 'DynamicWorld' : 'Standard'} graph)`);
   } catch (error) {
+    const totals = getCurrentUsageTotals();
+    if (totals && totals.total_tokens > 0) {
+      console.warn(
+        `🧮 [Token Usage] Turn ${turnId} partial: ${totals.total_tokens} (input ${totals.input_tokens}, output ${totals.output_tokens})`
+      );
+    }
     console.error(`[${new Date().toISOString()}] Turn ${turnId} failed:`, error);
     throw error;
   }

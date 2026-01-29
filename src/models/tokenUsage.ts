@@ -4,6 +4,8 @@ import { ModelClass, ModelProviderName } from "./types.js";
 
 export type TokenUsageContext = {
   userId?: string;
+  turnId?: string;
+  usageTotals?: TokenUsageTotals;
 };
 
 export type TokenUsageTotals = {
@@ -37,6 +39,18 @@ export function runWithTokenContext<T>(
 
 export function getTokenContext(): TokenUsageContext | undefined {
   return storage.getStore();
+}
+
+export function getCurrentUsageTotals(): TokenUsageTotals | null {
+  const store = storage.getStore();
+  if (!store?.usageTotals) {
+    return null;
+  }
+  return {
+    input_tokens: store.usageTotals.input_tokens,
+    output_tokens: store.usageTotals.output_tokens,
+    total_tokens: store.usageTotals.total_tokens,
+  };
 }
 
 function getUsageDb(): CoCDatabase | null {
@@ -135,7 +149,8 @@ export function mergeUsageTotals(
 }
 
 export function recordTokenUsage(params: TokenUsageRecord): void {
-  const resolvedUserId = params.userId || storage.getStore()?.userId;
+  const store = storage.getStore();
+  const resolvedUserId = params.userId || store?.userId;
   if (!resolvedUserId) {
     return;
   }
@@ -149,6 +164,14 @@ export function recordTokenUsage(params: TokenUsageRecord): void {
     params.total_tokens ?? params.input_tokens + params.output_tokens;
   if (totalTokens <= 0) {
     return;
+  }
+
+  if (store?.usageTotals) {
+    mergeUsageTotals(store.usageTotals, {
+      input_tokens: params.input_tokens ?? 0,
+      output_tokens: params.output_tokens ?? 0,
+      total_tokens: totalTokens,
+    });
   }
 
   try {

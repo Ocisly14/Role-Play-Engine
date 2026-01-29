@@ -4,10 +4,10 @@ import { ActionResult, ActionAnalysis, NPCResponseAnalysis, ActionType, SceneCha
 import type { ActionLogEntry } from "../../../coc_multiagents_system/agents/models/gameTypes.js";
 import type { DynamicCharacterProfile } from "../../world_builder/types.js";
 import type { DynamicNPCProfile } from "../../world_builder/types.js";
-import { actionTypeTemplates } from "../../../coc_multiagents_system/agents/action/example.js";
 import type { ScenarioLoader } from "../../../coc_multiagents_system/agents/memory/scenarioloader/index.js";
 import type { DynamicGameState } from "../../state/index.js";
 import { DynamicGameStateManager } from "../../state/index.js";
+import { buildActionSystemPrompt, getActionTypeTemplate } from "./actionTemplate.js";
 
 
 /**
@@ -38,166 +38,26 @@ export class ActionAgent {
   ): Promise<DynamicGameState> {
     const { isNPC, npcResponse, targetCharacter } = options;
 
-    // Check if there's a valid scene change request from orchestrator
-    const existingSceneChangeRequest = dynamicState.temporaryInfo.sceneChangeRequest;
-    const hasValidSceneChangeRequest = existingSceneChangeRequest?.shouldChange === true && existingSceneChangeRequest?.targetSceneName;
-
     // Pre-roll dice
     const preRolledDice = this.preRollDice();
 
-    // Build base system prompt - only include scene change detection if there's a valid scene change request
-    let sceneChangePrompt = '';
-    if (hasValidSceneChangeRequest && !isNPC) {
-      sceneChangePrompt = `
-SCENE CHANGE REQUEST VALIDATION:
-The orchestrator has already validated a scene change request to "${existingSceneChangeRequest.targetSceneName}".
-Your task is to determine if the action succeeds in enabling this scene change:
-1. If the action is unobstructed (open door, clear path), the scene change will proceed
-2. If the player explicitly attempts an action to enable movement (e.g., "I try to unlock the door", "I attempt to climb the wall", "I try to break down the door"):
-   * Perform the required skill check using dice
-   * If skill check SUCCEEDED, the scene change will proceed (set shouldChange: true)
-   * If skill check FAILED, set shouldChange: false and provide reason explaining why (e.g., "Failed to unlock the door", "Failed to climb the wall", "The lock is too difficult")
-3. If there's an obstruction and the player doesn't explicitly attempt an action, set shouldChange: false and provide reason (e.g., "The door is locked", "The path is blocked")
-`;
-    }
+    // Get existing scene change request
+    const existingSceneChangeRequest = dynamicState.temporaryInfo.sceneChangeRequest;
 
-    const baseSystemPrompt = `
-${originalUserInput && !isNPC ? `## User Input
-User input: ${originalUserInput}
+    // Extract scene NPCs for player actions (for NPC response analysis)
+    const sceneNPCs = !isNPC ? this.extractSceneNPCsForAction(dynamicState) : null;
 
-` : ''}## Character Action
-Character action: ${actionDescription}
+    // Build system prompt using template
+    const baseSystemPrompt = buildActionSystemPrompt(
+      originalUserInput,
+      actionDescription,
+      preRolledDice,
+      isNPC,
+      existingSceneChangeRequest,
+      sceneNPCs
+    );
 
-PRE-ROLLED DICE AVAILABLE:
-${JSON.stringify(preRolledDice, null, 2)}
-
-USAGE:
-- First, analyze the user input and determine if it is just a normal behavior or the use of a specific skill.
-- If it is a normal behavior, Do not use any dice.
-- If it is the use of a specific skill, (e.g., "I use Spot Hidden", "I try to persuade him", "I listen at the door"),MUST choose and use one or more of the following dice:
-- 1d100: Use for single skill checks, attribute checks, luck rolls (compare against character's skill percentage)
-- 1d100_opposed: Use for opposed checks (the second character's roll)
-- 1d3, 1d4, 1d6, 2d6, 1d8, 1d10, 1d20: Use for damage, sanity loss, etc.
-- Dice with modifiers: You can add modifiers to pre-rolled dice (e.g., 1d3+1, 1d6+2 for damage bonus/STR bonus)
-- You can choose to use these dice OR not use any if the action doesn't require dice
-- When you use a die, record which die you used and the result in your response
-
-!!! Important: Always follow the 7th edition rules of Call of Cthulhu.
-
-DiceUsed field:
-- Record ONLY the dice you actually used from the pre-rolled dice
-- Format: "[dice_name]: [result] ([purpose] = [success/failure])"
-- Examples: "1d100: 67 (Brawl 50% = success)", "1d6: 4 (knife damage)", "1d100_opposed: 55 (opposed check)"
-- If no dice needed, use empty array: "diceUsed": []
-
-Include "scenarioUpdate" if the action permanently changes the environment. "scenarioUpdate" can include:
-- description: updated scene flavor text
-- conditions: array of environmental condition objects
-${!isNPC ? '' : '\nDo NOT include clues here; the Keeper determines clue revelations.'}
-
-INVENTORY UPDATES:
-If the action involves picking up, dropping, receiving, giving, or losing items, include "inventory" in stateUpdate.playerCharacter or stateUpdate.npcCharacters:
-- Inventory items are objects with: { name: string, quantity?: number, properties?: Record<string, any> }
-- To add items: "inventory": { "add": [{ "name": "item name 1", "quantity": 1 }, { "name": "item name 2" }] }
-- To remove items: "inventory": { "remove": [{ "name": "item name", "quantity": 1 }] }
-- To replace entire inventory: "inventory": [{ "name": "item1" }, { "name": "item2", "quantity": 3, "properties": { "weight": 2.5 } }]
-- For item transfers between characters: update BOTH the giver and receiver
-  * Giver: "inventory": { "remove": [{ "name": "item name" }] }
-  * Receiver: "inventory": { "add": [{ "name": "item name" }] }
-
-TIME ESTIMATION:
-Estimate how many minutes this action realistically takes in game time. Consider the nature and complexity of the action:
-- Quick actions: 1-10 minutes (glancing, brief conversation, opening doors)
-- Standard actions: 10-30 minutes (searching, examining)
-- Extended actions: 30-120 minutes (combat, lengthy conversations, research)
-- Long activities: 2-6 hours (long distance travel, surveillance, extended tasks)
-- Very long activities: 6+ hours (sleeping, all-day journeys)
-
-Be realistic and use your judgment. Include "timeElapsedMinutes" in your response.
-${sceneChangePrompt}
-
-## 📋 ActionLog Requirements
-
-**REQUIRED**: Always include at least ONE actionLog entry for the current action.
-
-**Format**: Each actionLog entry should have:
-- "time": Use the current game time (provided in context) in "Day N, HH:MM" format
-- "location": The LOCATION NAME
-- "summary": Concise but descriptive summary (1-2 sentences)
-- "characterId": The ID of the character (player or NPC) who performed this action
-  - Use the acting character's id from the context (Character.id or NPC.id)
-  - If the action affects multiple characters, create separate entries with their respective characterIds
-
-**For scene changes**: If sceneChange.shouldChange is true, include TWO entries:
-1. One entry for the action that enables the scene change (current location)
-2. One entry for the scene transition (target location)
-
-## 📋 Output Format
-
-Return ONLY valid JSON in this exact structure:
-
-\`\`\`json
-{
-  "summary": "Brief description of what happened (1-2 sentences)",
-
-  "diceUsed": [
-    // Array of dice you actually used (empty array if no dice needed)
-    // Format: "[dice_name]: [result] ([purpose/skill] [skill%] = [success/failure/N/A])"
-    "1d100: 67 (Fighting (Brawl) 50% = failure)",
-    "1d3: 2 + 1 (DB) = 3 (unarmed damage)"
-  ],
-
-  "actionLog": [
-    {
-      "time": "Day 1, 14:30",
-      "location": "New York Public Library",
-      "summary": "Searched the bookshelf and found a hidden journal",
-      "characterId": "character-id-or-npc-id"
-    }
-  ],
-
-  "stateUpdate": {
-    // Optional: Update character states (HP, sanity, inventory, etc.)
-    "playerCharacter": {
-      "name": "Character Name",  // MUST match the acting character's name
-      "status": {
-        "hp": -3,              // HP change (negative for damage, positive for healing)
-        "sanity": 0,           // Sanity change
-        "magic": 0,            // Magic points change
-        "luck": 0              // Luck change
-      },
-      "inventory": {           // Optional: only if inventory changes
-        "add": [{"name": "item name", "quantity": 1}],
-        "remove": [{"name": "item name", "quantity": 1}]
-      }
-    },
-    "npcCharacters": [         // Optional: only if NPC states change
-      {
-        "id": "npc-id",        // MUST use exact NPC id
-        "name": "NPC Name",
-        "status": {"hp": -4, "sanity": 0}
-      }
-    ]
-  },
-
-  "scenarioUpdate": {          // Optional: only if environment permanently changes
-    "description": "Updated scene description",
-    "conditions": [{"type": "lighting", "description": "...", "mechanicalEffect": "..."}]
-  },
-${hasValidSceneChangeRequest && !isNPC ? `
-  "sceneChange": {
-    "shouldChange": false,     // true if action succeeds in enabling scene change to "${existingSceneChangeRequest.targetSceneName}"
-    "targetSceneName": "${existingSceneChangeRequest.targetSceneName}",   // Use the target from orchestrator
-    "reason": "Reason for scene change success or failure. If blocked, explain why (e.g., 'Door is locked', 'Failed to unlock the door')"
-  },
-` : ''}
-  "timeElapsedMinutes": <estimate the time elapsed in minutes>,
-  "timeConsumption": "short" // "short", "medium", "long", "very long"
-}
-\`\`\`
-`;
-
-    const actionTypeTemplate = this.getActionTypeTemplate(dynamicState, isNPC, npcResponse);
+    const actionTypeTemplate = getActionTypeTemplate(dynamicState, isNPC, npcResponse);
 
     const systemPrompt = baseSystemPrompt + actionTypeTemplate;
 
@@ -208,7 +68,7 @@ ${hasValidSceneChangeRequest && !isNPC ? `
     const response = await generateText({
       runtime,
       context: fullPrompt,
-      modelClass: ModelClass.SMALL,
+      modelClass: ModelClass.MEDIUM,
     });
 
     // Parse JSON response
@@ -280,27 +140,37 @@ ${hasValidSceneChangeRequest && !isNPC ? `
       return Array.from({ length: count }, () => Math.floor(Math.random() * sides) + 1);
     };
 
-    // Pre-roll all common dice types
-    const d100_1 = rollDice(100)[0];
-    const d100_2 = rollDice(100)[0];
-    const d20 = rollDice(20)[0];
-    const d10 = rollDice(10)[0];
-    const d8 = rollDice(8)[0];
-    const d6_1 = rollDice(6)[0];
-    const d6_2 = rollDice(6)[0];
-    const d4 = rollDice(4)[0];
-    const d3 = rollDice(3)[0];
+    // Pre-roll 1d100: 10 results
+    const d100_results = rollDice(100, 10);
+    
+    // Pre-roll 1d100_opposed: 5 results
+    const d100_opposed_results = rollDice(100, 5);
+    
+    // Pre-roll other dice types: 5 results each
+    const d20_results = rollDice(20, 5);
+    const d10_results = rollDice(10, 5);
+    const d8_results = rollDice(8, 5);
+    const d6_results = rollDice(6, 5);
+    const d4_results = rollDice(4, 5);
+    const d3_results = rollDice(3, 5);
+    
+    // For 2d6, roll 5 pairs and sum each pair
+    const d6_pairs: number[] = [];
+    for (let i = 0; i < 5; i++) {
+      const pair = rollDice(6, 2);
+      d6_pairs.push(pair[0] + pair[1]);
+    }
 
     return {
-      "1d100": d100_1,        // For single skill checks
-      "1d100_opposed": d100_2, // For opposed checks (second roll)
-      "1d20": d20,
-      "1d10": d10,
-      "1d8": d8,
-      "1d6": d6_1,
-      "2d6": d6_1 + d6_2,
-      "1d4": d4,
-      "1d3": d3
+      "1d100": d100_results,              // 10 results for single skill checks
+      "1d100_opposed": d100_opposed_results, // 5 results for opposed checks
+      "1d20": d20_results,                 // 5 results
+      "1d10": d10_results,                 // 5 results
+      "1d8": d8_results,                   // 5 results
+      "1d6": d6_results,                   // 5 results
+      "2d6": d6_pairs,                     // 5 results (sum of 2d6)
+      "1d4": d4_results,                   // 5 results
+      "1d3": d3_results                    // 5 results
     };
   }
 
@@ -340,38 +210,108 @@ ${hasValidSceneChangeRequest && !isNPC ? `
     return targetNpc || null;
   }
 
-  private getActionTypeTemplate(
-    dynamicState: DynamicGameState,
-    isNPC: boolean = false,
-    npcResponse?: NPCResponseAnalysis
-  ): string {
-    let actionType: string | undefined;
 
-    if (isNPC && npcResponse?.responseType) {
-      actionType = npcResponse.responseType;
-    } else {
-      const actionAnalysis = dynamicState.temporaryInfo.currentActionAnalysis;
-      actionType = actionAnalysis?.actionType;
+  /**
+   * Filter character profile to remove unnecessary fields for action context
+   * Removes: age, gender, appearance, personality, backstory, background, goals, secrets,
+   * clues, relationships, instantiatedFrom, inheritsKnowledge, actionLog
+   * Keeps: occupation, notes, and all core fields (id, name, attributes, status, inventory, skills, weapons, derivedAttributes, etc.)
+   */
+  private filterCharacterForContext(character: DynamicCharacterProfile): Partial<DynamicCharacterProfile> {
+    const {
+      age,
+      gender,
+      appearance,
+      personality,
+      backstory,
+      background,
+      goals,
+      secrets,
+      clues,
+      relationships,
+      instantiatedFrom,
+      inheritsKnowledge,
+      actionLog,
+      ...filteredCharacter
+    } = character as any;
+
+    return filteredCharacter;
+  }
+
+  /**
+   * Extract NPCs in current scene for action context
+   * Returns filtered NPC information (only essential fields)
+   */
+  private extractSceneNPCsForAction(dynamicState: DynamicGameState): any[] {
+    const scenario = dynamicState.currentScenario;
+    if (!scenario?.location) return [];
+
+    const scenarioLocation = scenario.location;
+    const out: any[] = [];
+    const seen = new Set<string>();
+
+    // Helper to normalize names for deduplication
+    const normalizeName = (name: string): string => {
+      return name.toLowerCase().replace(/[^a-z0-9\u4e00-\u9fa5]+/g, " ").trim();
+    };
+
+    // Helper to check if names are similar
+    const isNameSimilar = (name1: string, name2: string): boolean => {
+      const na = normalizeName(name1);
+      const nb = normalizeName(name2);
+      if (!na || !nb) return false;
+      if (na === nb) return true;
+      const tokensA = na.split(/\s+/);
+      const tokensB = nb.split(/\s+/);
+      if (tokensA[0] && tokensA[0] === tokensB[0]) return true;
+      return false;
+    };
+
+    // Helper to get current location from actionLog
+    const getCurrentLocationFromActionLog = (actionLog?: ActionLogEntry[]): string | null => {
+      if (!actionLog || actionLog.length === 0) return null;
+      return actionLog[actionLog.length - 1]?.location || null;
+    };
+
+    const addNPC = (npc: DynamicCharacterProfile) => {
+      const key = normalizeName(npc.name);
+      if (seen.has(key)) return;
+      seen.add(key);
+
+      // Filter NPC to only include essential fields
+      const filtered = this.filterCharacterForContext(npc);
+      
+      // Get last 3 actionLog entries
+      const last3ActionLog = (npc.actionLog || []).slice(-3);
+      
+      out.push({
+        id: filtered.id,
+        name: filtered.name,
+        attributes: filtered.attributes,
+        status: filtered.status,
+        skills: filtered.skills,
+        inventory: filtered.inventory || [],
+        occupation: filtered.occupation || null,
+        notes: filtered.notes || null,
+        last3ActionLog: last3ActionLog, // Add last 3 actionLog entries
+      });
+    };
+
+    // Add NPCs from scenario characters
+    for (const sc of scenario.characters || []) {
+      const npc = dynamicState.npcCharacters.find((n) => isNameSimilar(n.name, sc.name));
+      if (npc) addNPC(npc);
     }
 
-    if (!actionType) {
-      return `
-{
-  "type": "result",
-  "summary": "Action completed",
-  "stateUpdate": {
-    "playerCharacter": {
-      "name": "Character Name",
-      "status": { "hp": 0 }
-    }
-  },
-  "log": ["Action log entry"]
-}`;
+    // Add NPCs whose actionLog shows they're in this location
+    for (const npc of dynamicState.npcCharacters) {
+      const loc = getCurrentLocationFromActionLog(npc.actionLog);
+      if (loc && loc.toLowerCase() === scenarioLocation.toLowerCase()) {
+        addNPC(npc);
+      }
     }
 
-    const template =
-      actionTypeTemplates[actionType as keyof typeof actionTypeTemplates];
-    return template || actionTypeTemplates.exploration; // fallback to exploration
+    return out;
   }
 
   /**
@@ -432,14 +372,16 @@ ${hasValidSceneChangeRequest && !isNPC ? `
       });
     }
 
-    // Add acting character
-    context += `\n\n${isNPC ? 'NPC (acting character)' : 'Character'}:\n` + JSON.stringify(character, null, 2);
+    // Add acting character (filtered to remove unnecessary fields)
+    const filteredCharacter = this.filterCharacterForContext(character);
+    context += `\n\n${isNPC ? 'NPC (acting character)' : 'Character'}:\n` + JSON.stringify(filteredCharacter, null, 2);
 
-    // Add target character if applicable
+    // Add target character if applicable (filtered to remove unnecessary fields)
     if (targetCharacter) {
       const isPlayerTarget = targetCharacter.id === dynamicState.playerCharacter.id ||
         targetCharacter.name === dynamicState.playerCharacter.name;
-      context += `\n\nTarget ${isPlayerTarget ? 'Character (Player)' : 'NPC'}:\n` + JSON.stringify(targetCharacter, null, 2);
+      const filteredTargetCharacter = this.filterCharacterForContext(targetCharacter);
+      context += `\n\nTarget ${isPlayerTarget ? 'Character (Player)' : 'NPC'}:\n` + JSON.stringify(filteredTargetCharacter, null, 2);
     }
 
     // Add NPC response context if NPC action
@@ -613,6 +555,105 @@ ${hasValidSceneChangeRequest && !isNPC ? `
       }
     }
 
+    // Process NPC responses if this is a player action
+    if (!isNPC && parsed.npcResponses && Array.isArray(parsed.npcResponses)) {
+      const npcResponses = parsed.npcResponses
+        .filter((r: any) => r.willRespond && r.responseType && r.responseType !== "none")
+        .sort((a: any, b: any) => (a.executionOrder || 999) - (b.executionOrder || 999));
+
+      if (npcResponses.length > 0) {
+        console.log(`\n🎭 [Action Agent] Processing ${npcResponses.length} NPC responses...`);
+
+        const currentState = gameStateManager.getState();
+        const fullGameTime = gameStateManager.getFullGameTime();
+
+        for (const npcResponse of npcResponses) {
+          const npc = currentState.npcCharacters.find(n =>
+            n.id === npcResponse.npcId || n.name.toLowerCase() === npcResponse.npcName.toLowerCase()
+          );
+
+          if (!npc) {
+            console.warn(`⚠️ [Action Agent] NPC not found: ${npcResponse.npcName} (ID: ${npcResponse.npcId})`);
+            continue;
+          }
+
+          console.log(`\n🎭 [Action Agent] Processing NPC response [${npcResponse.executionOrder}]: ${npc.name} (${npcResponse.responseType})`);
+
+          // Create ActionResult for NPC response
+          const npcActionResult: ActionResult = {
+            timestamp: new Date(),
+            gameTime: currentState.timeOfDay || "Unknown time",
+            timeElapsedMinutes: 0, // NPC reactions don't advance time
+            location: currentState.currentScenario?.location || "Unknown location",
+            character: npc.name,
+            result: npcResponse.summary || `${npc.name} responds`,
+            diceRolls: npcResponse.diceUsed || [],
+            timeConsumption: "instant",
+            scenarioChanges: undefined
+          };
+
+          gameStateManager.addActionResult(npcActionResult);
+
+          // Update NPC state if provided
+          if (npcResponse.stateUpdate) {
+            const npcStateUpdate: any = {
+              npcCharacters: [{
+                id: npc.id,
+                name: npc.name,
+                ...npcResponse.stateUpdate
+              }]
+            };
+            gameStateManager.applyActionUpdate(npcStateUpdate);
+          }
+
+          // Add actionLog entries for NPC
+          if (npcResponse.actionLog && Array.isArray(npcResponse.actionLog)) {
+            const updatedStateAfterUpdate = gameStateManager.getState();
+            const npcInState = updatedStateAfterUpdate.npcCharacters.find(n => n.id === npc.id);
+
+            if (npcInState) {
+              if (!npcInState.actionLog) {
+                npcInState.actionLog = [];
+              }
+
+              for (const logEntry of npcResponse.actionLog) {
+                if (logEntry.time && logEntry.location && logEntry.summary) {
+                  const actionLogEntry: ActionLogEntry = {
+                    time: logEntry.time,
+                    location: logEntry.location,
+                    summary: logEntry.summary,
+                  };
+                  npcInState.actionLog.push(actionLogEntry);
+                }
+              }
+            }
+          } else {
+            // Fallback: create a basic actionLog entry
+            const updatedStateAfterUpdate = gameStateManager.getState();
+            const npcInState = updatedStateAfterUpdate.npcCharacters.find(n => n.id === npc.id);
+
+            if (npcInState) {
+              if (!npcInState.actionLog) {
+                npcInState.actionLog = [];
+              }
+
+              const locationName = currentState.currentScenario?.location || "Unknown location";
+              const fallbackLogEntry: ActionLogEntry = {
+                time: fullGameTime,
+                location: locationName,
+                summary: npcResponse.summary || `${npc.name} responds`,
+              };
+              npcInState.actionLog.push(fallbackLogEntry);
+            }
+          }
+
+          console.log(`   ✓ NPC ${npc.name} response processed: ${npcResponse.summary}`);
+        }
+
+        console.log(`\n✅ [Action Agent] Completed processing ${npcResponses.length} NPC responses`);
+      }
+    }
+
     // Append actionLog entries generated by LLM to the corresponding character
     // LLM generates actionLog entries in the response
     const updatedState = gameStateManager.getState();
@@ -764,8 +805,10 @@ ${hasValidSceneChangeRequest && !isNPC ? `
   }
 
   /**
-   * Process NPC actions based on response analyses
-   * Processes all NPCs that have willRespond=true in npcResponseAnalyses
+   * Process NPC actions based on response analyses (for listenerGraph only)
+   * This method is kept for backward compatibility with listenerGraph which processes
+   * NPC responses to recent actions rather than a single action.
+   * For regular player actions, NPC responses are handled directly in buildFinalResult.
    */
   async processNPCActions(runtime: any, gameStateManager: DynamicGameStateManager): Promise<void> {
     const dynamicState = gameStateManager.getState();
@@ -797,45 +840,25 @@ ${hasValidSceneChangeRequest && !isNPC ? `
       
       console.log(`\n🎭 [Action Agent] Processing NPC action [${npcResponse.executionOrder}]: ${npcResponse.npcName} (${npcResponse.responseType})`);
       
-      // Process this NPC's action
-      // buildFinalResult will update the manager's state
-      await this.processSingleNPCAction(
+      // Process this NPC's action using processCharacterAction
+      const npcActionDescription = npcResponse.responseDescription || `${npc.name} performs a ${npcResponse.responseType} action`;
+      const targetCharacter = this.findTargetCharacter(currentState, null, npcResponse);
+
+      await this.processCharacterAction(
         runtime,
         currentState,
         npc,
-        npcResponse,
-        gameStateManager
+        npcActionDescription,
+        {
+          isNPC: true,
+          npcResponse,
+          targetCharacter
+        },
+        gameStateManager,
+        null // NPC actions don't have original user input
       );
     }
     
     console.log(`\n✅ [Action Agent] Completed processing ${respondingNPCs.length} NPC actions`);
-  }
-
-  /**
-   * Process a single NPC action
-   */
-  private async processSingleNPCAction(
-    runtime: any,
-    dynamicState: DynamicGameState,
-    npc: DynamicCharacterProfile,
-    npcResponse: NPCResponseAnalysis,
-    gameStateManager: DynamicGameStateManager
-  ): Promise<DynamicGameState> {
-    const npcActionDescription = npcResponse.responseDescription || `${npc.name} performs a ${npcResponse.responseType} action`;
-    const targetCharacter = this.findTargetCharacter(dynamicState, null, npcResponse);
-
-    return this.processCharacterAction(
-      runtime,
-      dynamicState,
-      npc,
-      npcActionDescription,
-      {
-        isNPC: true,
-        npcResponse,
-        targetCharacter
-      },
-      gameStateManager,
-      null // NPC actions don't have original user input
-    );
   }
 }

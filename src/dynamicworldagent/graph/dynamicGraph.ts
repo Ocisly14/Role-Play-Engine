@@ -351,12 +351,7 @@ export const buildDynamicGraph = (
 
   graph.addEdge("orchestrator" as any, "memory" as any);
   graph.addEdge("memory" as any, "action" as any);
-  // Skip Character Agent in main graph - NPC response analysis and execution happens in Listener Graph
   graph.addEdge("action" as any, "director" as any);
-
-  // Character Agent removed from main graph
-  // NPC response analysis is handled by Listener Graph's Character Agent which uses analyzeNPCResponsesFromRecentActions
-  // NPC action execution is handled by Listener Graph's NPC Action Agent via processNPCActions
 
   // Director: handle scene changes and narrative direction
   graph.addNode("director", async (state: DynamicGraphState) => {

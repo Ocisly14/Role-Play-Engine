@@ -20,4 +20,6 @@ export {
   configureTokenUsageDatabase,
   runWithTokenContext,
   recordTokenUsage,
+  getTokenContext,
+  getCurrentUsageTotals,
 } from "./tokenUsage.js";
