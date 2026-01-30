@@ -101,6 +101,7 @@ After resolving the player's action, analyze how NPCs in the current scene will 
 For each NPC in the current scene, determine:
 
 1. **Will the NPC respond?** (willRespond: true/false)
+   - NPC can act against the investigator's action based on investigator's intent and the situation.
    - NPC must be able to perceive the action from their perspective and location
    - Consider NPC's goals, personality, relationships, and current state
    - For targeted actions: In most cases, only the targeted NPC should respond. Other NPCs should only respond if the action significantly impacts them.
