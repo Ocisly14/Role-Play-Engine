@@ -16,6 +16,7 @@ import type {
   RedHerring,
   MythosEvent,
   NPCBasicInfo,
+  NPCBasicInfoStep1,
   ProgressCallback,
   DynamicNPCProfile,
 } from "./types.js";
@@ -23,8 +24,10 @@ import type {
   NPCRelationship,
   CharacterAttributes,
 } from "../../coc_multiagents_system/agents/models/gameTypes.js";
+import type { StoryLength } from "./storyLengthConfig.js";
 import {
   getNPCInstantiationTemplate,
+  getNPCGoalsSecretsRelationshipsMythosTemplate,
   getNPCIdentityTemplate,
 } from "./npcBuilderTemplate.js";
 
@@ -168,46 +171,124 @@ export class NPCBuilderAgent {
   }
 
   /**
-   * Step 1: Instantiate NPCs from knowledge holders
+   * Step 1a + 1b: Instantiate NPCs from knowledge holders (basic fields), then goals/secrets/relationships/mythosAwareness
    */
   async instantiateNPCsFromHolders(
     macroScene: MacroSceneStructure,
     knowledgeHolders: KnowledgeHolder[],
     redHerrings: RedHerring[],
+    truthTimeline: TruthEvent[],
     progressCallback?: ProgressCallback
   ): Promise<NPCBasicInfo[]> {
     progressCallback?.("Instantiating NPCs from knowledge holders...");
 
-    const template = getNPCInstantiationTemplate();
     const occupationNames = loadOccupationNames();
-    const prompt = composeTemplate(template, {}, {
+
+    // Step 1a: Basic fields only
+    const template1 = getNPCInstantiationTemplate();
+    const prompt1 = composeTemplate(template1, {}, {
       knowledgeHoldersJson: JSON.stringify(knowledgeHolders, null, 2),
       redHerringsJson: JSON.stringify(redHerrings, null, 2),
       macroSceneJson: JSON.stringify(macroScene, null, 2),
+      truthTimelineJson: JSON.stringify(truthTimeline, null, 2),
       occupationsJson: JSON.stringify(occupationNames, null, 2),
     });
 
-    const response = await generateText({
+    const response1 = await generateText({
       runtime: this.runtime,
-      context: prompt,
+      context: prompt1,
       modelClass: ModelClass.LARGE,
     });
 
+    let step1Npcs: NPCBasicInfoStep1[];
     try {
-      const parsed = parseJSONResponse(response);
-      const npcs = parsed.npcs || parsed;
-
-      if (!Array.isArray(npcs)) {
+      const parsed1 = parseJSONResponse(response1);
+      const npcs1 = parsed1.npcs || parsed1;
+      if (!Array.isArray(npcs1)) {
         throw new Error("NPCs must be an array");
       }
-
-      progressCallback?.(`Instantiated ${npcs.length} NPCs from knowledge holders`);
-      return npcs as NPCBasicInfo[];
+      step1Npcs = npcs1 as NPCBasicInfoStep1[];
     } catch (error) {
-      console.error("Failed to parse NPC instantiation response:", error);
-      console.error("Response:", response.substring(0, 500));
-      throw new Error(`Failed to instantiate NPCs: ${(error as Error).message}`);
+      console.error("Failed to parse NPC instantiation (Step 1) response:", error);
+      console.error("Response:", response1.substring(0, 500));
+      throw new Error(`Failed to instantiate NPCs (Step 1): ${(error as Error).message}`);
     }
+
+    progressCallback?.(`Instantiated ${step1Npcs.length} NPCs from knowledge holders.`);
+
+    if (step1Npcs.length === 0) {
+      return [];
+    }
+
+    progressCallback?.("Generating goals, secrets, relationships, mythosAwareness (following knowledge matrix)...");
+
+    // Step 1b: Goals, secrets, relationships, mythosAwareness (MUST follow knowledge matrix)
+    const template2 = getNPCGoalsSecretsRelationshipsMythosTemplate();
+    const prompt2 = composeTemplate(template2, {}, {
+      step1NpcsJson: JSON.stringify(step1Npcs, null, 2),
+      knowledgeHoldersJson: JSON.stringify(knowledgeHolders, null, 2),
+      redHerringsJson: JSON.stringify(redHerrings, null, 2),
+      macroSceneJson: JSON.stringify(macroScene, null, 2),
+      truthTimelineJson: JSON.stringify(truthTimeline, null, 2),
+    });
+
+    const response2 = await generateText({
+      runtime: this.runtime,
+      context: prompt2,
+      modelClass: ModelClass.LARGE,
+    });
+
+    interface Step2Item {
+      name: string;
+      goals?: string[];
+      secrets?: string[];
+      relationships?: Array<{ targetName: string; relationshipType: string; attitude: number; description: string }>;
+      mythosAwareness?: "none" | "partial" | "distorted" | "knowing";
+    }
+
+    let step2Npcs: Step2Item[];
+    try {
+      const parsed2 = parseJSONResponse(response2);
+      const npcs2 = parsed2.npcs || parsed2;
+      if (!Array.isArray(npcs2)) {
+        throw new Error("Step 2 NPCs must be an array");
+      }
+      if (npcs2.length !== step1Npcs.length) {
+        throw new Error(`Step 2 NPC count mismatch: expected ${step1Npcs.length}, got ${npcs2.length}`);
+      }
+      step2Npcs = npcs2 as Step2Item[];
+    } catch (error) {
+      console.error("Failed to parse goals/secrets/relationships/mythos (Step 2) response:", error);
+      console.error("Response:", response2.substring(0, 500));
+      throw new Error(`Failed to generate goals/secrets/relationships/mythos (Step 2): ${(error as Error).message}`);
+    }
+
+    // Merge Step 1 + Step 2 by index
+    const merged: NPCBasicInfo[] = step1Npcs.map((s1, i) => {
+      const s2 = step2Npcs[i]!;
+      const goals = Array.isArray(s2.goals) ? s2.goals : [];
+      const secrets = Array.isArray(s2.secrets) ? s2.secrets : [];
+      const relationships = Array.isArray(s2.relationships) ? s2.relationships : [];
+      const mythosAwareness = s2.mythosAwareness && ["none", "partial", "distorted", "knowing"].includes(s2.mythosAwareness)
+        ? s2.mythosAwareness
+        : "none";
+      return {
+        name: s1.name,
+        occupation: s1.occupation,
+        age: s1.age,
+        gender: s1.gender,
+        background: s1.background,
+        instantiatedFrom: s1.instantiatedFrom,
+        inheritsKnowledge: s1.inheritsKnowledge,
+        goals,
+        secrets,
+        relationships,
+        mythosAwareness,
+      };
+    });
+
+    progressCallback?.(`Instantiated ${merged.length} NPCs from knowledge holders.`);
+    return merged;
   }
 
   /**
@@ -279,7 +360,7 @@ export class NPCBuilderAgent {
     const response = await generateText({
       runtime: this.runtime,
       context: prompt,
-      modelClass: ModelClass.MEDIUM,
+      modelClass: ModelClass.LARGE,
     });
 
     try {
@@ -313,11 +394,12 @@ export class NPCBuilderAgent {
     console.log("\n👥 [NPC Builder Agent] Starting NPC generation...");
     const occupationNames = loadOccupationNames();
 
-    // Step 1: Instantiate from knowledge holders
+    // Step 1: Instantiate from knowledge holders (Step 1a basic + Step 1b goals/secrets/relationships/mythos)
     const npcBasics = await this.instantiateNPCsFromHolders(
       macroScene,
       knowledgeHolders,
       redHerrings,
+      truthTimeline,
       progressCallback
     );
 

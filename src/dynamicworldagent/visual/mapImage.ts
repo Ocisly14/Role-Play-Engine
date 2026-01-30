@@ -81,20 +81,22 @@ ${scenarioSummaries}
 
 ## CRITICAL REQUIREMENTS
 
-1. **Spatial Layout**: Arrange all scenarios on the map to reflect their connections.
+1. **NO TEXT WHATSOEVER**: The image must contain ZERO characters, letters, numbers, symbols, or any form of text. No labels, no names, no captions, no watermarks, no UI text. The map must be purely visual—let buildings, areas, and paths convey meaning without any written language.
 
-2. **No Text Labels**: DO NOT add any text labels, names, or captions to the map. Let the visual elements (buildings, areas, paths) speak for themselves.
+2. **NO HIDDEN LOCATIONS**: Show only locations that are explicitly listed in "All Scenarios in Module" above. Do NOT add or hint at any hidden, secret, or undisclosed places. Every visible location on the map must correspond to one of the scenarios listed.
 
-3. **Visual Representation**: All scenarios should appear on the map as distinct visual elements (buildings, areas, landmarks, etc.) but without text annotations.
+3. **Spatial Layout**: Arrange all scenarios on the map to reflect their connections.
 
-4. **Style**: 
+4. **Visual Representation**: Each listed scenario appears as a distinct visual element (building, area, landmark, etc.) with no text annotations.
+
+5. **Style**:
    - Realistic, grounded, high detail with a little bit of mystery and lovecraftian elements.
-   - Choose the best view based on the scenario connections
-   - DO NOT include UI elements, watermarks, or any text
+   - Choose the best view based on the scenario connections.
+   - No UI elements, watermarks, or any text.
 
-5. **Connections**: Visual indication of how scenarios connect (paths, doors, passages, etc.) based on the connection information above.
+6. **Connections**: Visual indication of how scenarios connect (paths, doors, passages, etc.) based on the connection information above.
 
-Generate a single cohesive map image with clear visual distinctions between different locations, but no text overlays.
+Generate a single cohesive map image with clear visual distinctions between different locations. The final image must be completely free of any characters or text, and must not depict any hidden or unlisted locations.
 `.trim();
 }
 

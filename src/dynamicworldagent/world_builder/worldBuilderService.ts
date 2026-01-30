@@ -9,9 +9,12 @@ import { ScenarioBuilderAgent } from "./scenarioBuilderAgent.js";
 import { ModuleDigestAgent } from "./moduleDigestAgent.js";
 import { saveModuleDigestToJSON, saveWorldToJSON } from "./persistence.js";
 import type { WorldGenerationResult, MacroSceneSettingType } from "./types.js";
+import type { StoryLength } from "./storyLengthConfig.js";
 import { generateMapImageFromScenarios } from "../visual/mapImage.js";
 import fs from "fs/promises";
 import path from "path";
+
+export type { StoryLength };
 
 /**
  * Progress callback for SSE reporting
@@ -44,10 +47,12 @@ export class WorldBuilderService {
   async generateWorld(
     settingType: MacroSceneSettingType = "small_town",
     creativePrompt: string,
+    storyLength: StoryLength = "medium",
     progressCallback?: WorldBuilderProgressCallback
   ): Promise<WorldGenerationResult> {
     console.log("\n🌍🏗️ [World Builder Service] Starting world generation...");
     console.log(`   Setting Type: ${settingType}`);
+    console.log(`   Story Length: ${storyLength}`);
     console.log(`   Creative Prompt: ${creativePrompt.substring(0, 150)}${creativePrompt.length > 150 ? '...' : ''}`);
 
     try {
@@ -57,7 +62,8 @@ export class WorldBuilderService {
       const macroScene = await this.macroSceneAgent.generateTownStructure(
         settingType,
         creativePrompt,
-        (msg) => progressCallback?.("macro_scene", 8, msg)
+        (msg) => progressCallback?.("macro_scene", 8, msg),
+        storyLength
       );
       progressCallback?.("macro_scene", 8, `Town structure: ${macroScene.locationName}`);
 
@@ -74,7 +80,8 @@ export class WorldBuilderService {
         macroScene,
         mythosEvents,
         creativePrompt,
-        (msg) => progressCallback?.("macro_scene", 18, msg)
+        (msg) => progressCallback?.("macro_scene", 18, msg),
+        storyLength
       );
       progressCallback?.("macro_scene", 18, `Mysteries completed`);
 
@@ -83,7 +90,8 @@ export class WorldBuilderService {
         macroScene,
         mythosEvents,
         truthTimeline,
-        (msg) => progressCallback?.("macro_scene", 25, msg)
+        (msg) => progressCallback?.("macro_scene", 25, msg),
+        storyLength
       );
       progressCallback?.("macro_scene", 25, `Knowledge matrix completed`);
 
@@ -92,7 +100,8 @@ export class WorldBuilderService {
         mythosEvents,
         truthTimeline,
         knowledgeMatrix,
-        (msg) => progressCallback?.("macro_scene", 32, msg)
+        (msg) => progressCallback?.("macro_scene", 32, msg),
+        storyLength
       );
       progressCallback?.("macro_scene", 32, `Wisps of truth completed`);
 

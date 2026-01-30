@@ -4,7 +4,7 @@
  */
 
 export function getScenarioBuilderTemplate(): string {
-  return `You are a CoC world builder.
+  return `You are a writer for a CoC game.
 
 # SCENARIO OUTLINES GENERATION
 
@@ -85,7 +85,7 @@ Return ONLY valid JSON in this exact structure:
  * Step X: Select starting scene and build a snapshot
  */
 export function getStartingSceneSnapshotTemplate(): string {
-  return `You are a CoC world builder.
+  return `You are a writer for a CoC game.
 
 # STARTING SCENE SELECTION + SNAPSHOT
 

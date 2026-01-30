@@ -283,8 +283,21 @@ export interface StartingSceneSelection {
 }
 
 /**
- * NPC Basic Info - Output of Step 1 of NPC Builder
- * NPCs instantiated from knowledge holders
+ * NPC Basic Info (Step 1 only) - Name, occupation, age, gender, instantiatedFrom, inheritsKnowledge, background
+ */
+export interface NPCBasicInfoStep1 {
+  name: string;
+  occupation: string;
+  age: number;
+  gender: string;
+  instantiatedFrom?: string;
+  inheritsKnowledge?: string[];
+  background: string;
+}
+
+/**
+ * NPC Basic Info - Output of Step 1 + Step 2 of NPC Builder
+ * NPCs instantiated from knowledge holders, with goals, secrets, relationships, mythosAwareness
  */
 export interface NPCBasicInfo {
   name: string;

@@ -4,6 +4,13 @@
  */
 
 import type { MacroSceneSettingType } from "./types.js";
+import type { StoryLength } from "./storyLengthConfig.js";
+import {
+  getStoryLengthMacroGuidance,
+  getStoryLengthTruthEventsSentence,
+  getStoryLengthKnowledgeMatrixGuidance,
+  getStoryLengthRedHerringsSentence,
+} from "./storyLengthConfig.js";
 
 /**
  * Get setting-specific guidance for macro scene generation
@@ -105,10 +112,14 @@ This is a **route or journey setting**.
 /**
  * Step 1: Macro Scene Structure (Setting-Adaptive)
  */
-export function getMacroSceneStep1Template(settingType: MacroSceneSettingType = "small_town"): string {
+export function getMacroSceneStep1Template(
+  settingType: MacroSceneSettingType = "small_town",
+  storyLength: StoryLength = "medium"
+): string {
   const guidance = getSettingGuidance(settingType);
+  const storyGuidance = getStoryLengthMacroGuidance(storyLength);
 
-  return `You are a CoC world builder.
+  return `You are a writer for a CoC game.
 
 # MACRO SCENE GENERATION - STEP 1:
 
@@ -137,6 +148,8 @@ ${guidance.specificInstructions}
 - If the user prompt specifies location/style/themes, those take ABSOLUTE priority
 - Use setting type guidance ONLY for organizational structure, NOT for content generation
 - When in doubt, always defer to the user's creative prompt
+
+${storyGuidance}
 
 ## Objective
 Create the static structural skeleton of the setting based on the user's creative prompt.
@@ -252,14 +265,16 @@ Generate the macro scene structure now.`;
 /**
  * Step 3: Truth Timeline (Current Events, NO Names)
  */
-export function getTruthTimelineTemplate(): string {
-  return getTruthTimelineTemplateForSetting("small_town");
+export function getTruthTimelineTemplate(storyLength: StoryLength = "medium"): string {
+  return getTruthTimelineTemplateForSetting("small_town", storyLength);
 }
 
 export function getTruthTimelineTemplateForSetting(
-  settingType: MacroSceneSettingType
+  settingType: MacroSceneSettingType,
+  storyLength: StoryLength = "medium"
 ): string {
-  return `You are a CoC world builder.
+  const truthEventsSentence = getStoryLengthTruthEventsSentence(storyLength);
+  return `You are a writer for a CoC game.
 
 # TRUTH TIMELINE GENERATION - CURRENT EVENTS
 
@@ -303,7 +318,7 @@ The historical mythos events that created the foundation for current events:
 {{mythosEventsJson}}
 
 ## Task
-Generate 5-8 truth events that form the objective reality of CURRENT/RECENT events in this scenario.
+${truthEventsSentence}
 Each event should be a discrete point in the cause-effect chain.
 
 ### Connection to Historical Mythos
@@ -380,10 +395,11 @@ Generate the truth timeline now.`;
 }
 
 /**
- * Step 3: Knowledge Matrix (Abstract Holders, NOT NPCs)
+ * Step 4: Knowledge Matrix (Abstract Holders, NOT NPCs)
  */
-export function getKnowledgeMatrixTemplate(): string {
-  return `You are a CoC world builder.
+export function getKnowledgeMatrixTemplate(storyLength: StoryLength = "medium"): string {
+  const storyGuidance = getStoryLengthKnowledgeMatrixGuidance(storyLength);
+  return `You are a writer for a CoC game.
 
 # KNOWLEDGE MATRIX GENERATION
 
@@ -414,6 +430,8 @@ The historical events that shaped the present:
 
 ## Truth Timeline (Current Events)
 {{truthTimelineJson}}
+
+${storyGuidance}
 
 ## Task
 For each truth event in the timeline, determine which abstract HOLDERS possess knowledge of it.
@@ -488,8 +506,9 @@ Generate the knowledge matrix now.`;
 /**
  * Step 5: Red Herrings (False but Plausible Explanations)
  */
-export function getRedHerringsTemplate(): string {
-  return `You are a CoC world builder.
+export function getRedHerringsTemplate(storyLength: StoryLength = "medium"): string {
+  const redHerringsSentence = getStoryLengthRedHerringsSentence(storyLength);
+  return `You are a writer for a CoC game.
 
 # RED HERRINGS GENERATION
 
@@ -519,7 +538,7 @@ The historical events that may have been covered up or rationalized:
 {{knowledgeMatrixJson}}
 
 ## Task
-Generate 2-4 red herrings that investigators might plausibly believe.
+${redHerringsSentence}
 
 ### Red Herrings Can Target
 1. **Current Events**: Misinterpret recent truth events (e.g., "serial killer" instead of "ritual murders")
@@ -583,7 +602,7 @@ Generate the red herrings now.`;
 export function getHistoricalMythosTemplateForSetting(
   _settingType: MacroSceneSettingType
 ): string {
-  return `You are a CoC world builder.
+  return `You are a writer for a CoC game.
 
 # MACRO SCENE GENERATION - STEP 2: Historical Mythos Layer
 
@@ -686,7 +705,7 @@ Generate the historical mythos events now.`;
  * Step 6: End State Definition
  */
 export function getEndStateTemplate(): string {
-  return `You are a CoC world builder.
+  return `You are a writer for a CoC game.
 
 # MACRO SCENE GENERATION - STEP 6: End State Definition
 

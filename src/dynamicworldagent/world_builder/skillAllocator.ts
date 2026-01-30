@@ -7,6 +7,11 @@ import type { CharacterAttributes } from "../../coc_multiagents_system/agents/mo
 import fs from "fs";
 import path from "path";
 
+/** Per-skill cap for occupational skill points */
+const OCCUPATIONAL_SKILL_CAP = 90;
+/** Per-skill cap for interest skill points */
+const INTEREST_SKILL_CAP = 80;
+
 /**
  * Occupation data structure from Character occupation.json
  */
@@ -140,6 +145,36 @@ function getRandomSubset<T>(array: T[], count: number): T[] {
 }
 
 /**
+ * Cap each skill at maxPerSkill, then randomly redistribute overflow to other skills (same category, still under cap).
+ */
+function capAndRedistributeOverflow(
+  skillsRaw: Record<string, number>,
+  skillNames: string[],
+  maxPerSkill: number
+): Record<string, number> {
+  const skills: Record<string, number> = {};
+  let overflow = 0;
+  for (const name of skillNames) {
+    const points = skillsRaw[name] ?? 0;
+    if (points > maxPerSkill) {
+      skills[name] = maxPerSkill;
+      overflow += points - maxPerSkill;
+    } else {
+      skills[name] = points;
+    }
+  }
+  while (overflow > 0) {
+    const underCap = skillNames.filter((name) => (skills[name] ?? 0) < maxPerSkill);
+    if (underCap.length === 0) break;
+    const target = underCap[Math.floor(Math.random() * underCap.length)]!;
+    const add = Math.min(overflow, maxPerSkill - (skills[target] ?? 0));
+    skills[target] = (skills[target] ?? 0) + add;
+    overflow -= add;
+  }
+  return skills;
+}
+
+/**
  * Common CoC skill list
  */
 const COMMON_SKILLS = [
@@ -174,11 +209,21 @@ export function allocateSkillPoints(
     const interestPoints = attributes.INT * 2;
 
     const randomOccSkills = getRandomSubset(COMMON_SKILLS, 6);
-    const occupationalSkills = distributePointsWeighted(randomOccSkills, occupationalPoints);
+    const occupationalSkillsRaw = distributePointsWeighted(randomOccSkills, occupationalPoints);
+    const occupationalSkills = capAndRedistributeOverflow(
+      occupationalSkillsRaw,
+      randomOccSkills,
+      OCCUPATIONAL_SKILL_CAP
+    );
 
     const remainingSkills = COMMON_SKILLS.filter(s => !randomOccSkills.includes(s));
     const randomInterestSkills = getRandomSubset(remainingSkills, 3);
-    const interestSkills = distributePointsWeighted(randomInterestSkills, interestPoints);
+    const interestSkillsRaw = distributePointsWeighted(randomInterestSkills, interestPoints);
+    const interestSkills = capAndRedistributeOverflow(
+      interestSkillsRaw,
+      randomInterestSkills,
+      INTEREST_SKILL_CAP
+    );
 
     return { ...occupationalSkills, ...interestSkills };
   }
@@ -190,10 +235,15 @@ export function allocateSkillPoints(
   );
   const interestPoints = attributes.INT * 2;
 
-  // Distribute occupational points to suggested skills
-  const occupationalSkills = distributePointsWeighted(
+  // Distribute occupational points to suggested skills (cap 90 per skill, overflow redistributed randomly)
+  const occupationalSkillsRaw = distributePointsWeighted(
     occupationData.suggested_skills,
     occupationalPoints
+  );
+  const occupationalSkills = capAndRedistributeOverflow(
+    occupationalSkillsRaw,
+    occupationData.suggested_skills,
+    OCCUPATIONAL_SKILL_CAP
   );
 
   // Select random interest skills (not in occupational skills)
@@ -203,8 +253,13 @@ export function allocateSkillPoints(
   const numInterestSkills = Math.min(3 + Math.floor(Math.random() * 3), interestCandidates.length); // 3-5 skills
   const selectedInterestSkills = getRandomSubset(interestCandidates, numInterestSkills);
 
-  // Distribute interest points evenly across selected skills
-  const interestSkills = distributePointsWeighted(selectedInterestSkills, interestPoints);
+  // Distribute interest points across selected skills (cap 80 per skill, overflow redistributed randomly)
+  const interestSkillsRaw = distributePointsWeighted(selectedInterestSkills, interestPoints);
+  const interestSkills = capAndRedistributeOverflow(
+    interestSkillsRaw,
+    selectedInterestSkills,
+    INTEREST_SKILL_CAP
+  );
 
   // Merge occupational and interest skills
   for (const [skill, points] of Object.entries(occupationalSkills)) {

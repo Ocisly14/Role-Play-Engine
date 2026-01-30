@@ -4,12 +4,12 @@
  */
 
 /**
- * Step 1: Instantiate NPCs from Knowledge Holders
+ * Step 1: Instantiate NPCs from Knowledge Holders (basic fields only)
  */
 export function getNPCInstantiationTemplate(): string {
-  return `You are a CoC world builder.
+  return `You are a writer for a CoC game.
 
-# NPC INSTANTIATION FROM KNOWLEDGE HOLDERS
+# NPC INSTANTIATION FROM KNOWLEDGE HOLDERS (STEP 1 - BASIC FIELDS ONLY)
 
 ## Critical Concept
 You are NOT generating characters from scratch.
@@ -29,6 +29,9 @@ Each NPC must:
 ## Macro Scene (for Context)
 {{macroSceneJson}}
 
+## Truth Timeline (What T1, T2, etc. Mean — use when writing background)
+{{truthTimelineJson}}
+
 ## Available Occupations (Use These)
 {{occupationsJson}}
 
@@ -41,16 +44,12 @@ For each ROLE or ORGANIZATION knowledge holder, create 1-2 concrete NPCs who emb
 - **PLACE/OBJECT holders**: Do NOT create NPCs (these are just locations/items)
 - **Occupation**: Choose an occupation from the provided list whenever possible so it can be resolved to skills later.
 
-### NPC Requirements
+### NPC Requirements (Step 1 - only these fields)
 - **Name**: Full name (first + last)
 - **Occupation**: Specific job/role
 - **Age**: Reasonable age for their role
 - **Gender**: Any appropriate gender
 - **Background**: 2-3 sentences linking them to their knowledge holder role
-- **Goals**: 2-3 things they actively pursue (may be mundane or mythos-related)
-- **Secrets**: 1-2 things they hide (related to inherited knowledge)
-- **Relationships**: Connections to other NPCs or holders
-- **MythosAwareness**: "none", "partial", "distorted", or "knowing"
 - **InstantiatedFrom**: Knowledge holder ID
 - **InheritsKnowledge**: Truth event IDs from the knowledge holder
 
@@ -67,7 +66,72 @@ Example:
       "gender": "male",
       "instantiatedFrom": "KH_ROLE_1",
       "inheritsKnowledge": ["T1", "T2"],
-      "background": "Webb was the foreman on the infrastructure project that uncovered the ritual site. After the incident, he took early retirement, citing health reasons. He suffers from recurring nightmares and avoids the old town district.",
+      "background": "Webb was the foreman on the infrastructure project that uncovered the ritual site. After the incident, he took early retirement, citing health reasons. He suffers from recurring nightmares and avoids the old town district."
+    }
+  ]
+}
+\`\`\`
+
+IMPORTANT:
+- Every NPC MUST reference a knowledge holder via "instantiatedFrom"
+- Every NPC MUST inherit specific truth events via "inheritsKnowledge"
+- Do NOT create NPCs without knowledge holder linkage
+- Do NOT introduce unrelated towns, organizations, or lore outside the injected context
+- Occupation MUST be chosen exactly from the injected occupations list
+
+Generate the NPCs now.`;
+}
+
+/**
+ * Step 2: Generate goals, secrets, relationships, and mythosAwareness (MUST follow knowledge matrix)
+ */
+export function getNPCGoalsSecretsRelationshipsMythosTemplate(): string {
+  return `You are a writer for a CoC game.
+
+# NPC GOALS, SECRETS, RELATIONSHIPS, MYTHOS AWARENESS (STEP 2)
+
+## CRITICAL: YOU MUST ALWAYS FOLLOW THE KNOWLEDGE MATRIX
+
+Goals, secrets, relationships, and mythosAwareness MUST be grounded **only** in:
+1. The knowledge holder each NPC is instantiated from: \`knows\`, \`containsEvidence\`, \`distortion\`, \`reliability\`
+2. The truth events they \`inheritsKnowledge\` (from Step 1)
+3. Red herrings that contradict those events, where relevant (e.g. false beliefs an NPC might hold)
+
+Do NOT introduce knowledge, goals, secrets, or relationships that contradict or go beyond the knowledge matrix.
+\`mythosAwareness\` MUST be consistent with the holder's \`distortion\` and \`reliability\` (e.g. deliberate_suppression → often "partial" or "distorted"; partial_amnesia → "partial"; none → "none" or "knowing" depending on context).
+
+## Step 1 NPCs (Basic Info - Same Order)
+{{step1NpcsJson}}
+
+## Knowledge Matrix (MUST Follow)
+{{knowledgeHoldersJson}}
+
+## Red Herrings
+{{redHerringsJson}}
+
+## Macro Scene (Context)
+{{macroSceneJson}}
+
+## Truth Timeline (What T1, T2, etc. Mean)
+{{truthTimelineJson}}
+
+## Task
+For each NPC in the Step 1 list, in the **exact same order**, produce:
+- **goals**: 2-3 things they actively pursue (mundane or mythos-related; must align with holder + inherited knowledge)
+- **secrets**: 1-2 things they hide (related to inherited knowledge only)
+- **relationships**: Connections to other NPCs in the list (reference by name). Use \`relationshipType\` (e.g. ally, enemy, neutral, acquaintance), \`attitude\` (-100 to 100), \`description\`
+- **mythosAwareness**: "none" | "partial" | "distorted" | "knowing" — consistent with holder's distortion/reliability
+
+## Output Format
+Return ONLY valid JSON. The \`npcs\` array MUST have the **same length and order** as the Step 1 list.
+Each element: \`{ "name": "...", "goals": [...], "secrets": [...], "relationships": [...], "mythosAwareness": "..." }\`
+
+Example:
+\`\`\`json
+{
+  "npcs": [
+    {
+      "name": "Marcus Webb",
       "goals": [
         "Suppress memories of what he saw",
         "Prevent anyone from investigating the sealed tunnel",
@@ -92,21 +156,14 @@ Example:
 }
 \`\`\`
 
-IMPORTANT:
-- Every NPC MUST reference a knowledge holder via "instantiatedFrom"
-- Every NPC MUST inherit specific truth events via "inheritsKnowledge"
-- Do NOT create NPCs without knowledge holder linkage
-- Do NOT introduce unrelated towns, organizations, or lore outside the injected context
-- Occupation MUST be chosen exactly from the injected occupations list
-
-Generate the NPCs now.`;
+Generate goals, secrets, relationships, and mythosAwareness for each NPC now.`;
 }
 
 /**
  * Step 4: Fill Core Identity and Inventory
  */
 export function getNPCIdentityTemplate(): string {
-  return `You are a CoC world builder.
+  return `You are a writer for a CoC game.
 
 # NPC CORE IDENTITY GENERATION
 

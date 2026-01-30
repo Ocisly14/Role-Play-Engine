@@ -8,6 +8,15 @@ export interface StoryCreatorProps {
 
 type SettingType = 'small_town' | 'city' | 'academic' | 'isolated' | 'single_structure' | 'route';
 
+/** Story length: short / medium / long */
+export type StoryLength = 'short' | 'medium' | 'long';
+
+const STORY_LENGTH_OPTIONS: { value: StoryLength; label: string; description: string; icon: string }[] = [
+  { value: 'short', label: 'Short Story', description: 'Single thread, fewer scenes & NPCs (~10 total), 1–2 sessions', icon: '📖' },
+  { value: 'medium', label: 'Medium Story', description: 'Multiple threads, moderate scenes & characters (~15 total), 3–5 sessions', icon: '📚' },
+  { value: 'long', label: 'Long Story', description: 'Full campaign, rich scenes & NPCs (20+ total), many sessions', icon: '🗂️' }
+];
+
 interface ProgressUpdate {
   stage: string;
   progress: number;
@@ -60,6 +69,7 @@ export function StoryCreator({
 }: StoryCreatorProps) {
   const [creativePrompt, setCreativePrompt] = useState('');
   const [settingType, setSettingType] = useState<SettingType>('small_town');
+  const [storyLength, setStoryLength] = useState<StoryLength>('medium');
   const [isGenerating, setIsGenerating] = useState(false);
   const [progress, setProgress] = useState<ProgressUpdate | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -130,6 +140,7 @@ export function StoryCreator({
     try {
       const data = await runGeneration('/module/generate-world', {
         settingType,
+        storyLength,
         creativePrompt: creativePrompt.trim()
       });
 
@@ -188,6 +199,30 @@ export function StoryCreator({
                 )}
 
                 <>
+                  <div className="form-section">
+                    <label htmlFor="storyLength" className="form-label">
+                      Story Length
+                    </label>
+                    <div className="story-length-grid">
+                      {STORY_LENGTH_OPTIONS.map((opt) => (
+                        <div
+                          key={opt.value}
+                          className={`setting-card ${storyLength === opt.value ? 'selected' : ''}`}
+                          onClick={() => setStoryLength(opt.value)}
+                        >
+                          <div className="setting-icon">{opt.icon}</div>
+                          <div className="setting-content">
+                            <div className="setting-label">{opt.label}</div>
+                            <div className="setting-description">{opt.description}</div>
+                          </div>
+                          {storyLength === opt.value && (
+                            <div className="setting-checkmark">✓</div>
+                          )}
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+
                   <div className="form-section">
                     <label htmlFor="settingType" className="form-label">
                       Setting Type
@@ -483,10 +518,21 @@ export function StoryCreator({
           font-style: italic;
         }
 
+        .story-length-grid,
         .setting-grid {
           display: grid;
           grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
           gap: 12px;
+        }
+
+        .story-length-grid {
+          grid-template-columns: repeat(3, 1fr);
+        }
+
+        @media (max-width: 768px) {
+          .story-length-grid {
+            grid-template-columns: 1fr;
+          }
         }
 
         .setting-card {

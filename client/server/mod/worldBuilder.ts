@@ -19,7 +19,7 @@ export async function generateWorld(req: Request, res: Response): Promise<void> 
   res.setHeader("X-Accel-Buffering", "no"); // Disable nginx buffering
 
   try {
-    const { settingType, creativePrompt } = req.body;
+    const { settingType, creativePrompt, storyLength } = req.body;
 
     if (!creativePrompt || typeof creativePrompt !== "string") {
       res.write(
@@ -39,8 +39,14 @@ export async function generateWorld(req: Request, res: Response): Promise<void> 
       ? settingType
       : "small_town";
 
+    const validStoryLengths = ["short", "medium", "long"];
+    const selectedStoryLength = storyLength && validStoryLengths.includes(storyLength)
+      ? storyLength
+      : "medium";
+
     console.log(`\n🌍 [World Builder API] Request received`);
     console.log(`   Setting Type: ${selectedSettingType}`);
+    console.log(`   Story Length: ${selectedStoryLength}`);
     console.log(`   Creative Prompt: ${creativePrompt.substring(0, 100)}${creativePrompt.length > 100 ? '...' : ''}`);
 
     // Run world generation with progress callback
@@ -50,6 +56,7 @@ export async function generateWorld(req: Request, res: Response): Promise<void> 
     const result = await service.generateWorld(
       selectedSettingType as any,
       creativePrompt.trim(),
+      selectedStoryLength,
       (stage, progress, message) => {
         res.write(
           `data: ${JSON.stringify({ stage, progress, message })}\n\n`

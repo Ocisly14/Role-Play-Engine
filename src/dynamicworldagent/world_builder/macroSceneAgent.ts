@@ -15,6 +15,7 @@ import type {
   EndStateDefinition,
   ProgressCallback,
 } from "./types.js";
+import type { StoryLength } from "./storyLengthConfig.js";
 import {
   getMacroSceneStep1Template,
   getHistoricalMythosTemplateForSetting,
@@ -62,11 +63,12 @@ export class MacroSceneAgent {
   async generateTownStructure(
     settingType: MacroSceneSettingType = "small_town",
     creativePrompt: string,
-    progressCallback?: ProgressCallback
+    progressCallback?: ProgressCallback,
+    storyLength: StoryLength = "medium"
   ): Promise<MacroSceneStructure> {
     progressCallback?.(`Generating ${settingType} structure...`);
 
-    const template = getMacroSceneStep1Template(settingType);
+    const template = getMacroSceneStep1Template(settingType, storyLength);
     const prompt = composeTemplate(template, {}, {
       userPrompt: creativePrompt,
     });
@@ -143,11 +145,12 @@ export class MacroSceneAgent {
     macroScene: MacroSceneStructure,
     mythosEvents: MythosEvent[],
     creativePrompt: string,
-    progressCallback?: ProgressCallback
+    progressCallback?: ProgressCallback,
+    storyLength: StoryLength = "medium"
   ): Promise<TruthEvent[]> {
     progressCallback?.("Generating truth timeline (current events)...");
 
-    const template = getTruthTimelineTemplateForSetting(macroScene.settingType ?? "small_town");
+    const template = getTruthTimelineTemplateForSetting(macroScene.settingType ?? "small_town", storyLength);
     const prompt = composeTemplate(template, {}, {
       macroSceneJson: JSON.stringify(macroScene, null, 2),
       mythosEventsJson: JSON.stringify(mythosEvents, null, 2),
@@ -199,11 +202,12 @@ export class MacroSceneAgent {
     macroScene: MacroSceneStructure,
     mythosEvents: MythosEvent[],
     truthTimeline: TruthEvent[],
-    progressCallback?: ProgressCallback
+    progressCallback?: ProgressCallback,
+    storyLength: StoryLength = "medium"
   ): Promise<KnowledgeHolder[]> {
     progressCallback?.("Generating knowledge matrix (abstract holders)...");
 
-    const template = getKnowledgeMatrixTemplate();
+    const template = getKnowledgeMatrixTemplate(storyLength);
     const prompt = composeTemplate(template, {}, {
       macroSceneJson: JSON.stringify(macroScene, null, 2),
       mythosEventsJson: JSON.stringify(mythosEvents, null, 2),
@@ -249,11 +253,12 @@ export class MacroSceneAgent {
     mythosEvents: MythosEvent[],
     truthTimeline: TruthEvent[],
     knowledgeMatrix: KnowledgeHolder[],
-    progressCallback?: ProgressCallback
+    progressCallback?: ProgressCallback,
+    storyLength: StoryLength = "medium"
   ): Promise<RedHerring[]> {
     progressCallback?.("Generating red herrings (false trails)...");
 
-    const template = getRedHerringsTemplate();
+    const template = getRedHerringsTemplate(storyLength);
     const prompt = composeTemplate(template, {}, {
       mythosEventsJson: JSON.stringify(mythosEvents, null, 2),
       truthTimelineJson: JSON.stringify(truthTimeline, null, 2),
