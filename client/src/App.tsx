@@ -167,7 +167,7 @@ const AppShell: React.FC = () => {
       setBackgroundWithTransition(imageUrl, true);
     } catch (err) {
       console.error("Failed to load default background:", err);
-      setBackgroundWithTransition("/asset/background.png", true);
+      setBackgroundWithTransition("/asset/background.jpeg", true);
     }
   }, []);
 
@@ -180,7 +180,7 @@ const AppShell: React.FC = () => {
         setBackgroundWithTransition(imageUrl, false);
       } catch (err) {
         console.error("Failed to load default background:", err);
-        setBackgroundWithTransition("/asset/background.png", false);
+        setBackgroundWithTransition("/asset/background.jpeg", false);
       }
     };
     initializeBackground();

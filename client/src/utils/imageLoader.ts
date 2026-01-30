@@ -33,8 +33,8 @@ export async function findAvailableImage(
     }
   }
   
-  // Fallback to png if all formats fail
-  return `${basePath}.png`;
+  // Fallback to jpeg if all formats fail
+  return `${basePath}.jpeg`;
 }
 
 /**
