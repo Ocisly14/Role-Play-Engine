@@ -10,7 +10,7 @@ interface FrameImageProps {
 
 export function FrameImage({ 
   className = 'frame-image', 
-  alt = 'CoC Frame',
+  alt = 'TaleCraft Frame',
   imageName = 'frame',
   formats = ['png', 'jpeg', 'jpg']
 }: FrameImageProps) {

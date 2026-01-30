@@ -273,7 +273,7 @@ export function ModSelector({
                     <div className="mod-card-icon">✨</div>
                     <div className="mod-card-content">
                       <h3 className="mod-card-title">Create Your Own Story</h3>
-                      <p className="mod-card-subtitle">Design your own CoC adventure with AI</p>
+                      <p className="mod-card-subtitle">Design your own TaleCraft adventure with AI</p>
                     </div>
                   </div>
                 </div>

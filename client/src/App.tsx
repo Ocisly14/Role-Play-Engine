@@ -16,7 +16,7 @@ import { setBackgroundWithTransition } from "./utils/backgroundTransition";
 
 type SkillEntry = { name: string; base: string; category: string };
 type AppPage = "home" | "sheet" | "game" | "character-select" | "mod-select" | "module-intro" | "story-creator";
-const PAGE_STORAGE_KEY = "coc.app.page";
+const PAGE_STORAGE_KEY = "talecraft.app.page";
 const APP_PAGES: AppPage[] = ["home", "sheet", "game", "character-select", "mod-select", "module-intro", "story-creator"];
 
 const getStoredPage = (): AppPage => {
@@ -1034,7 +1034,7 @@ const AppShell: React.FC = () => {
 
   const sheet = (
     <div className="sheet">
-      <h1>CoC AI Agent</h1>
+      <h1>TaleCraft AI Agent</h1>
       <form onSubmit={handleCreateCharacter}>
         <div style={{ textAlign: "right", marginBottom: "6px" }}>
           <button
@@ -2257,7 +2257,7 @@ const AppShell: React.FC = () => {
         {userMenu}
         <div className="game-container">
           <div className="game-header backdrop-blur-sm border border-slate-200 shadow-md rounded-lg">
-            <h1>{currentModuleName ? `CoC AI Agent - ${currentModuleName}` : "CoC AI Agent - Game Session"}</h1>
+            <h1>{currentModuleName ? `TaleCraft AI Agent - ${currentModuleName}` : "TaleCraft AI Agent - Game Session"}</h1>
             <button className="back-button backdrop-blur-md bg-white/50 border border-slate-200 shadow-md rounded-xl px-5 py-2.5 hover:bg-white/70 hover:border-slate-300 hover:-translate-y-0.5 transition-all" onClick={handleBackToHome}>
               ← Back to Home
             </button>
