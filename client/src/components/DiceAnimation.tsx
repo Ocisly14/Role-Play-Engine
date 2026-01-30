@@ -50,7 +50,7 @@ function parseDiceRoll(roll: string): ParsedDiceRoll {
     };
   }
   
-  // Format 3: "1d100: 9 (Spot Hidden 25% = success)" (log format)
+  // Format 3: "1d100: 9 (Perception 25% = success)" (log format)
   match = roll.match(/(\d+)d(\d+):\s*(\d+)/);
   if (match) {
     const expression = `${match[1]}d${match[2]}`;
@@ -118,7 +118,7 @@ export function DiceAnimation({ diceRolls, onAnimationComplete }: DiceAnimationP
     // Parse dice rolls from various formats:
     // - "roll_dice: 1d100 -> 1 = 9" (actual format from tools.ts)
     // - "1d100 -> 45" (simple format)
-    // - "1d100: 9 (Spot Hidden 25% = success)" (log format)
+    // - "1d100: 9 (Perception 25% = success)" (log format)
     const parsed = diceRolls.map(parseDiceRoll);
     
     // Filter out invalid rolls

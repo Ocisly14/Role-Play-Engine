@@ -350,7 +350,7 @@ async function main() {
   // Create mock player character
   const playerCharacter: DynamicCharacterProfile = {
     id: "player-test",
-    name: "Test Investigator",
+    name: "Test Character",
     occupation: "Detective",
     age: 35,
     gender: "male",
@@ -380,7 +380,7 @@ async function main() {
       mov: 8,
     },
     skills: {
-      "Spot Hidden": 65,
+      "Perception": 65,
       "Listen": 60,
       "Psychology": 55,
       "Persuade": 50,

@@ -14,7 +14,7 @@
           "occupational_skills": [],
           "occupational_skill_choices": [],
           "suggested_skills": [
-            "Library Use",
+            "Research",
             "History",
             "Anthropology",
             "Language (Other)",
@@ -40,8 +40,8 @@
             "Archaeology",
             "History",
             "Anthropology",
-            "Library Use",
-            "Spot Hidden",
+            "Research",
+            "Perception",
             "Navigate",
             "Language (Other)",
             "Appraise"
@@ -64,10 +64,10 @@
             "First Aid",
             "Psychology",
             "Persuade",
-            "Library Use",
-            "Science (Biology)",
-            "Spot Hidden",
-            "Credit Rating"
+            "Research",
+            "Biology",
+            "Perception",
+            "Social Status"
           ],
           "suggested_occupational_points": {
             "expression": "EDU*4",
@@ -87,10 +87,10 @@
             "Psychoanalysis",
             "Persuade",
             "Listen",
-            "Library Use",
+            "Research",
             "Medicine",
             "Language (Other)",
-            "Spot Hidden"
+            "Perception"
           ],
           "suggested_occupational_points": {
             "expression": "EDU*4",
@@ -107,10 +107,10 @@
           "occupational_skill_choices": [],
           "suggested_skills": [
             "Science (Chemistry)",
-            "Science (Biology)",
+            "Biology",
             "Science (Physics)",
-            "Library Use",
-            "Spot Hidden",
+            "Research",
+            "Perception",
             "Navigate",
             "Mechanical Repair",
             "Language (Other)"
@@ -129,14 +129,14 @@
           "occupational_skills": [],
           "occupational_skill_choices": [],
           "suggested_skills": [
-            "Library Use",
+            "Research",
             "History",
             "Anthropology",
             "Psychology",
             "Persuade",
             "Language (Other)",
             "Archaeology",
-            "Credit Rating"
+            "Social Status"
           ],
           "suggested_occupational_points": {
             "expression": "EDU*4",
@@ -152,12 +152,12 @@
           "occupational_skills": [],
           "occupational_skill_choices": [],
           "suggested_skills": [
-            "Library Use",
+            "Research",
             "History",
             "Language (Other)",
             "Psychology",
             "Appraise",
-            "Spot Hidden",
+            "Perception",
             "Accounting",
             "Persuade"
           ],
@@ -179,10 +179,10 @@
             "History",
             "Archaeology",
             "Language (Other)",
-            "Library Use",
+            "Research",
             "Psychology",
             "Navigate",
-            "Spot Hidden"
+            "Perception"
           ],
           "suggested_occupational_points": {
             "expression": "EDU*4",
@@ -199,7 +199,7 @@
           "occupational_skill_choices": [],
           "suggested_skills": [
             "History",
-            "Library Use",
+            "Research",
             "Language (Other)",
             "Anthropology",
             "Appraise",
@@ -221,14 +221,14 @@
           "occupational_skills": [],
           "occupational_skill_choices": [],
           "suggested_skills": [
-            "Spot Hidden",
+            "Perception",
             "Listen",
             "Psychology",
             "Law",
             "Stealth",
             "Track",
             "Persuade",
-            "Firearms (Handgun)"
+            "Pistol"
           ],
           "suggested_occupational_points": {
             "expression": "EDU*2+DEX*2",
@@ -245,12 +245,12 @@
           "occupational_skills": [],
           "occupational_skill_choices": [],
           "suggested_skills": [
-            "Spot Hidden",
+            "Perception",
             "Listen",
             "Psychology",
             "Law",
-            "Firearms (Handgun)",
-            "Fighting (Brawl)",
+            "Pistol",
+            "Brawling",
             "Drive Auto",
             "Intimidate"
           ],
@@ -269,10 +269,10 @@
           "occupational_skills": [],
           "occupational_skill_choices": [],
           "suggested_skills": [
-            "Firearms (Handgun)",
-            "Fighting (Brawl)",
+            "Pistol",
+            "Brawling",
             "Drive Auto",
-            "Spot Hidden",
+            "Perception",
             "Listen",
             "Intimidate",
             "Law",
@@ -293,9 +293,9 @@
           "occupational_skills": [],
           "occupational_skill_choices": [],
           "suggested_skills": [
-            "Firearms (Handgun)",
-            "Firearms (Rifle/Shotgun)",
-            "Spot Hidden",
+            "Pistol",
+            "Rifle",
+            "Perception",
             "Listen",
             "Psychology",
             "Law",
@@ -319,12 +319,12 @@
           "suggested_skills": [
             "Persuade",
             "Charm",
-            "Fast Talk",
+            "Bluff",
             "Psychology",
-            "Library Use",
+            "Research",
             "History",
-            "Spot Hidden",
-            "Credit Rating"
+            "Perception",
+            "Social Status"
           ],
           "suggested_occupational_points": {
             "expression": "EDU*2+APP*2",
@@ -344,10 +344,10 @@
             "Law",
             "Persuade",
             "Charm",
-            "Fast Talk",
+            "Bluff",
             "Psychology",
-            "Library Use",
-            "Credit Rating",
+            "Research",
+            "Social Status",
             "Accounting"
           ],
           "suggested_occupational_points": {
@@ -366,12 +366,12 @@
           "suggested_skills": [
             "Accounting",
             "Law",
-            "Library Use",
+            "Research",
             "Appraise",
             "Persuade",
             "Psychology",
-            "Credit Rating",
-            "Spot Hidden"
+            "Social Status",
+            "Perception"
           ],
           "suggested_occupational_points": {
             "expression": "EDU*4",
@@ -387,11 +387,11 @@
           "occupational_skills": [],
           "occupational_skill_choices": [],
           "suggested_skills": [
-            "Credit Rating",
+            "Social Status",
             "Accounting",
             "Persuade",
             "Charm",
-            "Fast Talk",
+            "Bluff",
             "Law",
             "Psychology",
             "Appraise"
@@ -412,13 +412,13 @@
           "occupational_skill_choices": [],
           "suggested_skills": [
             "Accounting",
-            "Credit Rating",
+            "Social Status",
             "Persuade",
             "Law",
             "Appraise",
             "Psychology",
-            "Library Use",
-            "Fast Talk"
+            "Research",
+            "Bluff"
           ],
           "suggested_occupational_points": {
             "expression": "EDU*4",
@@ -434,10 +434,10 @@
           "occupational_skills": [],
           "occupational_skill_choices": [],
           "suggested_skills": [
-            "Credit Rating",
+            "Social Status",
             "Persuade",
             "Charm",
-            "Fast Talk",
+            "Bluff",
             "Psychology",
             "Law",
             "Intimidate",
@@ -460,10 +460,10 @@
           "suggested_skills": [
             "Accounting",
             "Law",
-            "Library Use",
+            "Research",
             "Persuade",
             "Psychology",
-            "Credit Rating",
+            "Social Status",
             "History",
             "Language (Other)"
           ],
@@ -482,13 +482,13 @@
           "occupational_skill_choices": [],
           "suggested_skills": [
             "Accounting",
-            "Library Use",
+            "Research",
             "Language (Other)",
             "Persuade",
-            "Fast Talk",
+            "Bluff",
             "Psychology",
             "Appraise",
-            "Credit Rating"
+            "Social Status"
           ],
           "suggested_occupational_points": {
             "expression": "EDU*4",
@@ -511,7 +511,7 @@
             "Navigate",
             "Drive Auto",
             "Appraise",
-            "Library Use"
+            "Research"
           ],
           "suggested_occupational_points": {
             "expression": "EDU*2+DEX*2",
@@ -532,8 +532,8 @@
             "Drive Auto",
             "Electrical Repair",
             "Operate Heavy Machinery",
-            "Fighting (Brawl)",
-            "Spot Hidden",
+            "Brawling",
+            "Perception",
             "First Aid",
             "Navigate"
           ],
@@ -557,7 +557,7 @@
             "Operate Heavy Machinery",
             "Science (Physics)",
             "Drive Auto",
-            "Spot Hidden",
+            "Perception",
             "First Aid",
             "Navigate"
           ],
@@ -579,11 +579,11 @@
             "Art and Craft",
             "Appraise",
             "History",
-            "Library Use",
+            "Research",
             "Persuade",
             "Navigate",
             "Mechanical Repair",
-            "Credit Rating"
+            "Social Status"
           ],
           "suggested_occupational_points": {
             "expression": "EDU*4",
@@ -600,13 +600,13 @@
           "occupational_skill_choices": [],
           "suggested_skills": [
             "Navigate",
-            "Spot Hidden",
+            "Perception",
             "Track",
             "Science (Physics)",
             "Mechanical Repair",
             "Drive Auto",
             "Natural World",
-            "Library Use"
+            "Research"
           ],
           "suggested_occupational_points": {
             "expression": "EDU*2+DEX*2",
@@ -627,7 +627,7 @@
             "Navigate",
             "Mechanical Repair",
             "Electrical Repair",
-            "Spot Hidden",
+            "Perception",
             "Listen",
             "Drive Auto",
             "First Aid"
@@ -652,7 +652,7 @@
             "Swim",
             "Climb",
             "Mechanical Repair",
-            "Fighting (Brawl)",
+            "Brawling",
             "Natural World",
             "First Aid"
           ],
@@ -675,8 +675,8 @@
             "Mechanical Repair",
             "Navigate",
             "Listen",
-            "Spot Hidden",
-            "Fighting (Brawl)",
+            "Perception",
+            "Brawling",
             "First Aid",
             "Intimidate"
           ],
@@ -702,7 +702,7 @@
             "Appraise",
             "History",
             "Disguise",
-            "Credit Rating"
+            "Social Status"
           ],
           "suggested_occupational_points": {
             "expression": "EDU*2+APP*2",
@@ -719,13 +719,13 @@
           "occupational_skills": [],
           "occupational_skill_choices": [],
           "suggested_skills": [
-            "Library Use",
+            "Research",
             "History",
             "Psychology",
             "Persuade",
             "Language (Other)",
             "Charm",
-            "Spot Hidden",
+            "Perception",
             "Occult"
           ],
           "suggested_occupational_points": {
@@ -747,8 +747,8 @@
             "Persuade",
             "Listen",
             "Psychology",
-            "Credit Rating",
-            "Fast Talk",
+            "Social Status",
+            "Bluff",
             "Disguise"
           ],
           "suggested_occupational_points": {
@@ -768,11 +768,11 @@
           "suggested_skills": [
             "Disguise",
             "Charm",
-            "Fast Talk",
+            "Bluff",
             "Persuade",
             "Psychology",
             "Sleight of Hand",
-            "Credit Rating",
+            "Social Status",
             "Listen"
           ],
           "suggested_occupational_points": {
@@ -793,10 +793,10 @@
             "Persuade",
             "Psychology",
             "History",
-            "Library Use",
+            "Research",
             "Charm",
             "Occult",
-            "Credit Rating",
+            "Social Status",
             "Language (Other)"
           ],
           "suggested_occupational_points": {
@@ -814,10 +814,10 @@
           "occupational_skill_choices": [],
           "suggested_skills": [
             "Occult",
-            "Library Use",
+            "Research",
             "History",
             "Psychology",
-            "Spot Hidden",
+            "Perception",
             "Language (Other)",
             "Persuade",
             "Appraise"
@@ -836,9 +836,9 @@
           "occupational_skills": [],
           "occupational_skill_choices": [],
           "suggested_skills": [
-            "Firearms (Rifle/Shotgun)",
-            "Firearms (Handgun)",
-            "Fighting (Brawl)",
+            "Rifle",
+            "Pistol",
+            "Brawling",
             "First Aid",
             "Survival (Forest)",
             "Navigate",
@@ -860,11 +860,11 @@
           "occupational_skills": [],
           "occupational_skill_choices": [],
           "suggested_skills": [
-            "Firearms (Handgun)",
-            "Firearms (Rifle/Shotgun)",
+            "Pistol",
+            "Rifle",
             "Law",
             "Persuade",
-            "Credit Rating",
+            "Social Status",
             "Navigate",
             "Psychology",
             "First Aid"
@@ -884,9 +884,9 @@
           "occupational_skills": [],
           "occupational_skill_choices": [],
           "suggested_skills": [
-            "Firearms (Rifle/Shotgun)",
-            "Firearms (Handgun)",
-            "Fighting (Brawl)",
+            "Rifle",
+            "Pistol",
+            "Brawling",
             "Intimidate",
             "Stealth",
             "Survival (Forest)",
@@ -914,7 +914,7 @@
             "Track",
             "Climb",
             "Swim",
-            "Spot Hidden",
+            "Perception",
             "First Aid"
           ],
           "suggested_occupational_points": {
@@ -937,7 +937,7 @@
             "Swim",
             "Dodge",
             "Throw",
-            "Fighting (Brawl)",
+            "Brawling",
             "Persuade",
             "First Aid"
           ],
@@ -968,9 +968,9 @@
             "Psychology",
             "Listen",
             "Persuade",
-            "Spot Hidden",
+            "Perception",
             "Drive Auto",
-            "Credit Rating"
+            "Social Status"
           ],
           "suggested_occupational_points": {
             "expression": "EDU*4",
@@ -989,10 +989,10 @@
             "First Aid",
             "Drive Auto",
             "Medicine",
-            "Spot Hidden",
+            "Perception",
             "Listen",
             "Intimidate",
-            "Fighting (Brawl)",
+            "Brawling",
             "Navigate"
           ],
           "suggested_occupational_points": {
@@ -1011,9 +1011,9 @@
           "occupational_skill_choices": [],
           "suggested_skills": [
             "Medicine",
-            "Science (Biology)",
-            "Spot Hidden",
-            "Library Use",
+            "Biology",
+            "Perception",
+            "Research",
             "Psychology",
             "First Aid",
             "Law",
@@ -1035,12 +1035,12 @@
           "suggested_skills": [
             "Medicine",
             "Natural World",
-            "Science (Biology)",
+            "Biology",
             "First Aid",
             "Psychology",
-            "Spot Hidden",
+            "Perception",
             "Ride",
-            "Library Use"
+            "Research"
           ],
           "suggested_occupational_points": {
             "expression": "EDU*4",
@@ -1057,10 +1057,10 @@
           "occupational_skill_choices": [],
           "suggested_skills": [
             "Science (Chemistry)",
-            "Library Use",
+            "Research",
             "Science (Physics)",
-            "Science (Biology)",
-            "Spot Hidden",
+            "Biology",
+            "Perception",
             "Appraise",
             "Mechanical Repair",
             "Language (Other)"
@@ -1079,11 +1079,11 @@
           "occupational_skills": [],
           "occupational_skill_choices": [],
           "suggested_skills": [
-            "Science (Biology)",
+            "Biology",
             "Natural World",
-            "Library Use",
+            "Research",
             "Science (Chemistry)",
-            "Spot Hidden",
+            "Perception",
             "Navigate",
             "Language (Other)",
             "First Aid"
@@ -1104,10 +1104,10 @@
           "suggested_skills": [
             "Science (Physics)",
             "Science (Chemistry)",
-            "Library Use",
+            "Research",
             "Mechanical Repair",
             "Electrical Repair",
-            "Spot Hidden",
+            "Perception",
             "Appraise",
             "Language (Other)"
           ],
@@ -1126,7 +1126,7 @@
           "occupational_skill_choices": [],
           "suggested_skills": [
             "Accounting",
-            "Library Use",
+            "Research",
             "Science (Physics)",
             "Psychology",
             "Persuade",
@@ -1148,12 +1148,12 @@
           "occupational_skills": [],
           "occupational_skill_choices": [],
           "suggested_skills": [
-            "Firearms (Rifle/Shotgun)",
+            "Rifle",
             "Track",
             "Natural World",
             "Survival (Forest)",
             "Stealth",
-            "Spot Hidden",
+            "Perception",
             "Navigate",
             "First Aid"
           ],
@@ -1176,7 +1176,7 @@
             "Track",
             "Natural World",
             "Survival (Forest)",
-            "Spot Hidden",
+            "Perception",
             "Climb",
             "Swim",
             "First Aid"
@@ -1202,7 +1202,7 @@
             "Survival (Arctic)",
             "Track",
             "Natural World",
-            "Spot Hidden",
+            "Perception",
             "First Aid"
           ],
           "suggested_occupational_points": {
@@ -1227,7 +1227,7 @@
             "Track",
             "Navigate",
             "First Aid",
-            "Spot Hidden"
+            "Perception"
           ],
           "suggested_occupational_points": {
             "expression": "STR*2+DEX*2",
@@ -1248,8 +1248,8 @@
             "Science (Chemistry)",
             "Natural World",
             "Navigate",
-            "Spot Hidden",
-            "Library Use",
+            "Perception",
+            "Research",
             "Appraise",
             "Language (Other)"
           ],
@@ -1270,11 +1270,11 @@
             "Stealth",
             "Sleight of Hand",
             "Locksmith",
-            "Fighting (Brawl)",
+            "Brawling",
             "Intimidate",
-            "Fast Talk",
+            "Bluff",
             "Disguise",
-            "Firearms (Handgun)"
+            "Pistol"
           ],
           "suggested_occupational_points": {
             "expression": "DEX*2+APP*2",
@@ -1291,12 +1291,12 @@
           "occupational_skills": [],
           "occupational_skill_choices": [],
           "suggested_skills": [
-            "Fast Talk",
+            "Bluff",
             "Stealth",
             "Drive Auto",
             "Pilot (Boat)",
             "Sleight of Hand",
-            "Firearms (Handgun)",
+            "Pistol",
             "Navigate",
             "Psychology"
           ],
@@ -1315,11 +1315,11 @@
           "occupational_skills": [],
           "occupational_skill_choices": [],
           "suggested_skills": [
-            "Fast Talk",
-            "Credit Rating",
+            "Bluff",
+            "Social Status",
             "Drive Auto",
             "Stealth",
-            "Firearms (Handgun)",
+            "Pistol",
             "Persuade",
             "Sleight of Hand",
             "Law"
@@ -1339,11 +1339,11 @@
           "occupational_skills": [],
           "occupational_skill_choices": [],
           "suggested_skills": [
-            "Firearms (Handgun)",
+            "Pistol",
             "Intimidate",
-            "Fast Talk",
-            "Fighting (Brawl)",
-            "Credit Rating",
+            "Bluff",
+            "Brawling",
+            "Social Status",
             "Drive Auto",
             "Stealth",
             "Psychology"
@@ -1367,9 +1367,9 @@
             "Sleight of Hand",
             "Locksmith",
             "Disguise",
-            "Spot Hidden",
+            "Perception",
             "Listen",
-            "Fast Talk",
+            "Bluff",
             "Climb"
           ],
           "suggested_occupational_points": {
@@ -1387,13 +1387,13 @@
           "occupational_skills": [],
           "occupational_skill_choices": [],
           "suggested_skills": [
-            "Fast Talk",
+            "Bluff",
             "Charm",
             "Psychology",
             "Disguise",
             "Sleight of Hand",
             "Persuade",
-            "Credit Rating",
+            "Social Status",
             "Law"
           ],
           "suggested_occupational_points": {
@@ -1415,7 +1415,7 @@
             "Mechanical Repair",
             "Drive Auto",
             "Survival (Forest)",
-            "Spot Hidden",
+            "Perception",
             "Track",
             "First Aid",
             "Ride"
@@ -1439,8 +1439,8 @@
             "Operate Heavy Machinery",
             "Electrical Repair",
             "Drive Auto",
-            "Fighting (Brawl)",
-            "Spot Hidden",
+            "Brawling",
+            "Perception",
             "First Aid",
             "Navigate"
           ],
@@ -1461,7 +1461,7 @@
           "suggested_skills": [
             "Operate Heavy Machinery",
             "Mechanical Repair",
-            "Spot Hidden",
+            "Perception",
             "Listen",
             "Climb",
             "Survival (Forest)",
@@ -1483,11 +1483,11 @@
           "occupational_skills": [],
           "occupational_skill_choices": [],
           "suggested_skills": [
-            "Fighting (Brawl)",
+            "Brawling",
             "Swim",
             "Mechanical Repair",
             "Operate Heavy Machinery",
-            "Spot Hidden",
+            "Perception",
             "Intimidate",
             "First Aid",
             "Drive Auto"
@@ -1509,10 +1509,10 @@
           "suggested_skills": [
             "Operate Heavy Machinery",
             "Mechanical Repair",
-            "Fighting (Brawl)",
+            "Brawling",
             "Climb",
             "Throw",
-            "Spot Hidden",
+            "Perception",
             "First Aid",
             "Intimidate"
           ],
@@ -1531,9 +1531,9 @@
           "occupational_skills": [],
           "occupational_skill_choices": [],
           "suggested_skills": [
-            "Spot Hidden",
+            "Perception",
             "Art and Craft",
-            "Library Use",
+            "Research",
             "Psychology",
             "Stealth",
             "Disguise",
@@ -1555,14 +1555,14 @@
           "occupational_skills": [],
           "occupational_skill_choices": [],
           "suggested_skills": [
-            "Spot Hidden",
+            "Perception",
             "Art and Craft",
             "Drive Auto",
             "Stealth",
             "Listen",
             "Psychology",
             "Persuade",
-            "Library Use"
+            "Research"
           ],
           "suggested_occupational_points": {
             "expression": "EDU*2+DEX*2",
@@ -1580,12 +1580,12 @@
           "occupational_skill_choices": [],
           "suggested_skills": [
             "Charm",
-            "Fast Talk",
+            "Bluff",
             "Persuade",
             "Psychology",
-            "Credit Rating",
+            "Social Status",
             "Listen",
-            "Library Use",
+            "Research",
             "History"
           ],
           "suggested_occupational_points": {
@@ -1605,12 +1605,12 @@
           "suggested_skills": [
             "Charm",
             "Persuade",
-            "Fast Talk",
+            "Bluff",
             "Psychology",
             "Disguise",
             "Sleight of Hand",
             "Art and Craft",
-            "Credit Rating"
+            "Social Status"
           ],
           "suggested_occupational_points": {
             "expression": "EDU*2+APP*2",
@@ -1636,12 +1636,12 @@
           "suggested_skills": [
             "Appraise",
             "History",
-            "Library Use",
+            "Research",
             "Occult",
-            "Credit Rating",
+            "Social Status",
             "Persuade",
             "Language (Other)",
-            "Spot Hidden"
+            "Perception"
           ],
           "suggested_occupational_points": {
             "expression": "EDU*4",
@@ -1657,13 +1657,13 @@
           "occupational_skills": [],
           "occupational_skill_choices": [],
           "suggested_skills": [
-            "Credit Rating",
+            "Social Status",
             "Charm",
             "Persuade",
-            "Fast Talk",
+            "Bluff",
             "Appraise",
             "History",
-            "Library Use",
+            "Research",
             "Psychology"
           ],
           "suggested_occupational_points": {
@@ -1681,12 +1681,12 @@
           "occupational_skills": [],
           "occupational_skill_choices": [],
           "suggested_skills": [
-            "Credit Rating",
+            "Social Status",
             "Navigate",
             "Natural World",
             "Track",
-            "Firearms (Rifle/Shotgun)",
-            "Spot Hidden",
+            "Rifle",
+            "Perception",
             "Language (Other)",
             "Survival (Forest)"
           ],
@@ -1705,14 +1705,14 @@
           "occupational_skills": [],
           "occupational_skill_choices": [],
           "suggested_skills": [
-            "Credit Rating",
+            "Social Status",
             "Charm",
             "Persuade",
-            "Fast Talk",
+            "Bluff",
             "Psychology",
             "Disguise",
             "Appraise",
-            "Library Use"
+            "Research"
           ],
           "suggested_occupational_points": {
             "expression": "EDU*2+APP*2",
@@ -1729,14 +1729,14 @@
           "occupational_skills": [],
           "occupational_skill_choices": [],
           "suggested_skills": [
-            "Library Use",
+            "Research",
             "Persuade",
             "Psychology",
             "Charm",
-            "Fast Talk",
+            "Bluff",
             "Accounting",
             "History",
-            "Spot Hidden"
+            "Perception"
           ],
           "suggested_occupational_points": {
             "expression": "EDU*4",
@@ -1759,7 +1759,7 @@
             "Listen",
             "Persuade",
             "Language (Other)",
-            "Spot Hidden"
+            "Perception"
           ],
           "suggested_occupational_points": {
             "expression": "EDU*2+POW*2",
@@ -1776,12 +1776,12 @@
           "occupational_skills": [],
           "occupational_skill_choices": [],
           "suggested_skills": [
-            "Fighting (Brawl)",
+            "Brawling",
             "Dodge",
             "Psychology",
             "Occult",
             "History",
-            "Library Use",
+            "Research",
             "Persuade",
             "Stealth"
           ],
@@ -1804,9 +1804,9 @@
             "Psychology",
             "Persuade",
             "Listen",
-            "Library Use",
+            "Research",
             "Language (Other)",
-            "Spot Hidden",
+            "Perception",
             "History"
           ],
           "suggested_occupational_points": {
@@ -1853,7 +1853,7 @@
             "Psychology",
             "Language (Other)",
             "History",
-            "Library Use",
+            "Research",
             "First Aid",
             "Occult"
           ],
@@ -1876,10 +1876,10 @@
             "Stealth",
             "Psychology",
             "Intimidate",
-            "Fast Talk",
+            "Bluff",
             "Disguise",
-            "Spot Hidden",
-            "Cthulhu Mythos"
+            "Perception",
+            "Forbidden Lore"
           ],
           "suggested_occupational_points": {
             "expression": "EDU*2+POW*2",
@@ -1898,8 +1898,8 @@
           "suggested_skills": [
             "Occult",
             "Psychology",
-            "Spot Hidden",
-            "Cthulhu Mythos",
+            "Perception",
+            "Forbidden Lore",
             "Persuade",
             "Stealth",
             "Disguise",
@@ -1921,12 +1921,12 @@
           "occupational_skill_choices": [],
           "suggested_skills": [
             "Occult",
-            "Library Use",
+            "Research",
             "History",
             "Language (Other)",
-            "Spot Hidden",
+            "Perception",
             "Psychology",
-            "Cthulhu Mythos",
+            "Forbidden Lore",
             "Appraise"
           ],
           "suggested_occupational_points": {
@@ -1944,12 +1944,12 @@
           "occupational_skill_choices": [],
           "suggested_skills": [
             "Occult",
-            "Library Use",
+            "Research",
             "History",
             "Language (Other)",
-            "Cthulhu Mythos",
+            "Forbidden Lore",
             "Psychology",
-            "Spot Hidden",
+            "Perception",
             "Archaeology"
           ],
           "suggested_occupational_points": {
@@ -1967,8 +1967,8 @@
           "occupational_skill_choices": [],
           "suggested_skills": [
             "Psychology",
-            "Library Use",
-            "Spot Hidden",
+            "Research",
+            "Perception",
             "Listen",
             "Language (Other)",
             "Law",
@@ -1992,9 +1992,9 @@
             "Electrical Repair",
             "Mechanical Repair",
             "Science (Physics)",
-            "Library Use",
+            "Research",
             "Stealth",
-            "Fast Talk",
+            "Bluff",
             "Forgery",
             "Locksmith"
           ],
@@ -2015,10 +2015,10 @@
           "suggested_skills": [
             "Electrical Repair",
             "Science (Physics)",
-            "Library Use",
+            "Research",
             "Accounting",
             "Law",
-            "Spot Hidden",
+            "Perception",
             "Psychology",
             "Mechanical Repair"
           ],
@@ -2037,9 +2037,9 @@
           "occupational_skill_choices": [],
           "suggested_skills": [
             "Science (Physics)",
-            "Library Use",
+            "Research",
             "Occult",
-            "Spot Hidden",
+            "Perception",
             "History",
             "Psychology",
             "Language (Other)",

@@ -382,7 +382,7 @@ export async function initializeCompleteDynamicGameState(
     // Use default character
     playerCharacter = {
       id: "investigator-1",
-      name: "Investigator",
+      name: "Character",
       attributes: {
         STR: 50, CON: 50, DEX: 50, APP: 50, POW: 50, SIZ: 50, INT: 50, EDU: 50,
       },
@@ -391,8 +391,8 @@ export async function initializeCompleteDynamicGameState(
       },
       inventory: [],
       skills: {
-        "Spot Hidden": 25, Listen: 20, "Library Use": 20,
-        "Fighting (Brawl)": 25, Dodge: 25, "Firearms (Handgun)": 20,
+        "Perception": 25, Listen: 20, "Research": 20,
+        "Brawling": 25, Dodge: 25, "Pistol": 20,
       },
       notes: "Auto-generated placeholder character",
       actionLog: [],

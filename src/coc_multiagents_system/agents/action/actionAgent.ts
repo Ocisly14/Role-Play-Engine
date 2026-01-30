@@ -50,7 +50,7 @@ USAGE:
 - Examples: "1d3: 2 + 1 (DB) = 3 (unarmed damage)", "1d6: 4 + 2 (STR bonus) = 6 (knife damage)"
 
 !!! Important: Always follow the 7th edition rules of Call of Cthulhu.
-When the player's input explicitly mentions using a specific skill (e.g., "I use Spot Hidden", "I try to persuade him", "I listen at the door"), you MUST:
+When the player's input explicitly mentions using a specific skill (e.g., "I use Perception", "I try to persuade him", "I listen at the door"), you MUST:
 - Perform a dice roll (1d100) for that skill
 
 DiceUsed field:
@@ -104,7 +104,7 @@ Example:
   "diceUsed": [
     // Array of dice you actually used (empty array if no dice needed)
     // Format: "[dice_name]: [result] ([purpose/skill] [skill%] = [success/failure/N/A])"
-    "1d100: 67 (Fighting (Brawl) 50% = failure)",
+    "1d100: 67 (Brawling 50% = failure)",
     "1d3: 2 + 1 (DB) = 3 (unarmed damage)"
   ],
 

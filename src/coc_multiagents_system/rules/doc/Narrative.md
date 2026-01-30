@@ -25,4 +25,4 @@
 - Scene: full interlude, chapter wrap, time skip, consequences montage; the common Narrative shape.
 
 ## Skills in Narrative
-- Principle: Narrative doesn’t rely on skills. Skills may color narration (Psychology to describe insight; Occult/History for background; Art/Craft/Language for flavor; Credit Rating to show status) without rolling—they justify flavor, not success checks.
+- Principle: Narrative doesn’t rely on skills. Skills may color narration (Psychology to describe insight; Occult/History for background; Art/Craft/Language for flavor; Social Status to show status) without rolling—they justify flavor, not success checks.

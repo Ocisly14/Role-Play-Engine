@@ -45,7 +45,7 @@ ${JSON.stringify(preRolledDice, null, 2)}
 USAGE:
 - First, analyze the user input and determine if it is just a normal behavior or the use of a specific skill.
 - If it is a normal behavior, Do not use any dice.
-- If it is the use of a specific skill, (e.g., "I use Spot Hidden", "I try to persuade him", "I listen at the door"),MUST choose and use one or more of the following dice:
+- If it is the use of a specific skill, (e.g., "I use Perception", "I try to persuade him", "I listen at the door"),MUST choose and use one or more of the following dice:
 - Each dice type has multiple pre-rolled results (1d100 has 10, others have 5). Select ONE result from the array for each dice you need.
 - 1d100: Use for single skill checks, attribute checks, luck rolls (compare against character's skill percentage) - select one from 10 available results
 - 1d100_opposed: Use for opposed checks (the second character's roll) - select one from 5 available results
@@ -65,7 +65,7 @@ DiceUsed field:
 Include "scenarioUpdate" if the action permanently changes the environment. "scenarioUpdate" can include:
 - description: updated scene flavor text
 - conditions: array of environmental condition objects
-${!isNPC ? '' : '\nDo NOT include clues here; the Keeper determines clue revelations.'}
+${!isNPC ? '' : '\nDo NOT include clues here; the GM determines clue revelations.'}
 
 INVENTORY UPDATES:
 If the action involves picking up, dropping, receiving, giving, or losing items, include "inventory" in stateUpdate.playerCharacter or stateUpdate.npcCharacters:
@@ -169,7 +169,7 @@ Return ONLY valid JSON in this exact structure:
     // Array of dice you actually used (empty array if no dice needed)
     // Format: "[dice_name][index]: [result] ([purpose/skill] [skill%] = [success/failure/N/A])"
     // Select one result from the pre-rolled array for each dice you need
-    "1d100[0]: 67 (Fighting (Brawl) 50% = failure)",
+    "1d100[0]: 67 (Brawling 50% = failure)",
     "1d3[1]: 2 + 1 (DB) = 3 (unarmed damage)"
   ],
 

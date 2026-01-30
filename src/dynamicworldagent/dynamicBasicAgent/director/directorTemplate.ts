@@ -411,7 +411,7 @@ Generate a **COMPLETE, DETAILED snapshot** with ALL fields:
   - **ActionLog**: What they are currently doing (write into the actionLog field) - this is always required
 - **clues**: All ScenarioClue objects (id, clueText, category, difficulty, location, discoveryMethod, reveals, discovered, discoveryDetails)
 - **conditions**: Environmental ScenarioCondition objects (type, description, mechanicalEffect)
-- **keeperNotes**: Keeper-facing notes about the scene
+- **keeperNotes**: GM-facing notes about the scene
 - **showMap**: Map display setting (if applicable)
 
 **🔗 Scenario Connections Update for Target Scene - CRITICAL:**
@@ -493,7 +493,7 @@ Example:
           {
             "type": "lighting",
             "description": "Dim candlelight flickering",
-            "mechanicalEffect": "Hard (-20%) to Spot Hidden"
+            "mechanicalEffect": "Hard (-20%) to Perception"
           }
         ],
         "keeperNotes": "Important keeper information"
@@ -632,7 +632,7 @@ Return ONLY valid JSON:
 export function getStuckHintNarrativeTemplate(): string {
   return `# Director Agent - Stuck Hint Narrative
 
-The player appears stuck and does not know what to do next. Your task is to generate a **short in-world hint narrative** that subtly nudges them—without directly revealing solutions or secrets. The narrative must **sound natural**, **follow smoothly from the recent Keeper narratives above**, and read as one continuous, fluent story—not a detached hint box.
+The player appears stuck and does not know what to do next. Your task is to generate a **short in-world hint narrative** that subtly nudges them—without directly revealing solutions or secrets. The narrative must **sound natural**, **follow smoothly from the recent GM narratives above**, and read as one continuous, fluent story—not a detached hint box.
 
 ## Game State
 - **Game Time**: {{gameTime}}
@@ -646,19 +646,19 @@ The player appears stuck and does not know what to do next. Your task is to gene
 
 ## Scenario Connections
 
-Available connections from the current scene (other locations the investigator could go or consider):
+Available connections from the current scene (other locations the character could go or consider):
 
 \`\`\`json
 {{scenarioConnectionsJson}}
 \`\`\`
 
-## Recent Investigator Actions (Last 3 turns)
+## Recent Character Actions (Last 3 turns)
 
 {{#if recentTurns}}
 {{#each recentTurns}}
 **Turn #{{this.turnNumber}}**
-- Investigator input: "{{this.characterInput}}"
-- Keeper narrative: {{#if this.keeperNarrative}}"{{this.keeperNarrative}}"{{else}}*none*{{/if}}
+- Character input: "{{this.characterInput}}"
+- GM narrative: {{#if this.keeperNarrative}}"{{this.keeperNarrative}}"{{else}}*none*{{/if}}
 
 {{/each}}
 {{else}}
@@ -669,9 +669,9 @@ Available connections from the current scene (other locations the investigator c
 
 Based on the current situation (scene, connections, recent inputs and narratives), produce a **brief narrative hint** (2–4 sentences) that:
 
-- **Output language**: Write the narrative in the **same language** as the investigator's recent inputs (see "Investigator input" above). If they wrote in Chinese, respond in Chinese; if in English, respond in English. Match the player's language.
+- **Output language**: Write the narrative in the **same language** as the investigator's recent inputs (see "Character input" above). If they wrote in Chinese, respond in Chinese; if in English, respond in English. Match the player's language.
 - **Quantity**: Give **at most two** clue/location/NPC hints in the narrative. Do not list more than two distinct nudges; one or two is enough.
-- **Tone and continuity**: Use a **natural, in-world tone**. The hint must **flow directly from the last Keeper narrative**—same voice, same pacing, no abrupt shift. It should feel like the next paragraph of the story, not a separate "hint" message. Keep the prose **coherent and fluent**.
+- **Tone and continuity**: Use a **natural, in-world tone**. The hint must **flow directly from the last GM narrative**—same voice, same pacing, no abrupt shift. It should feel like the next paragraph of the story, not a separate "hint" message. Keep the prose **coherent and fluent**.
 - **Allowed**: Subtle hints about clues, items, locations, or NPCs—e.g. atmosphere, something worth noticing, a nudge toward a person or place. Write as in-world description (what the investigator might sense, notice, or recall), not meta-advice.
 - **Not allowed**: Do NOT spell out the solution, directly reveal secrets, or tell the player what to do in plain language.
 

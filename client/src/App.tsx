@@ -31,7 +31,7 @@ const getStoredPage = (): AppPage => {
 const SKILLS: SkillEntry[] = [
   // Interpersonal & Social Skills
   { name: "Charm", base: "15%", category: "Social" },
-  { name: "Fast Talk", base: "5%", category: "Social" },
+  { name: "Bluff", base: "5%", category: "Social" },
   { name: "Intimidate", base: "15%", category: "Social" },
   { name: "Persuade", base: "10%", category: "Social" },
   { name: "Psychology", base: "10%", category: "Social" },
@@ -43,15 +43,15 @@ const SKILLS: SkillEntry[] = [
   { name: "Art and Craft", base: "5%", category: "Knowledge" },
   { name: "History", base: "5%", category: "Knowledge" },
   { name: "Law", base: "5%", category: "Knowledge" },
-  { name: "Library Use", base: "20%", category: "Knowledge" },
+  { name: "Research", base: "20%", category: "Knowledge" },
   { name: "Occult", base: "5%", category: "Knowledge" },
-  { name: "Science (Biology)", base: "1%", category: "Knowledge" },
-  { name: "Science (Chemistry)", base: "1%", category: "Knowledge" },
-  { name: "Science (Physics)", base: "1%", category: "Knowledge" },
+  { name: "Biology", base: "1%", category: "Knowledge" },
+  { name: "Chemistry", base: "1%", category: "Knowledge" },
+  { name: "Physics", base: "1%", category: "Knowledge" },
 
   // Perception & Investigation Skills
   { name: "Listen", base: "20%", category: "Investigation" },
-  { name: "Spot Hidden", base: "25%", category: "Investigation" },
+  { name: "Perception", base: "25%", category: "Investigation" },
   { name: "Track", base: "10%", category: "Investigation" },
 
   // Physical & Movement Skills
@@ -83,16 +83,16 @@ const SKILLS: SkillEntry[] = [
   { name: "Survival (Forest)", base: "10%", category: "Medical" },
 
   // Combat Skills - Fighting
-  { name: "Fighting (Brawl)", base: "25%", category: "Combat" },
-  { name: "Fighting (Sword)", base: "20%", category: "Combat" },
-  { name: "Fighting (Axe)", base: "15%", category: "Combat" },
-  { name: "Fighting (Whip)", base: "5%", category: "Combat" },
+  { name: "Brawling", base: "25%", category: "Combat" },
+  { name: "Sword", base: "20%", category: "Combat" },
+  { name: "Axe", base: "15%", category: "Combat" },
+  { name: "Whip", base: "5%", category: "Combat" },
 
   // Combat Skills - Firearms
-  { name: "Firearms (Handgun)", base: "20%", category: "Combat" },
-  { name: "Firearms (Rifle/Shotgun)", base: "25%", category: "Combat" },
-  { name: "Firearms (Submachine Gun)", base: "15%", category: "Combat" },
-  { name: "Firearms (Bow)", base: "15%", category: "Combat" },
+  { name: "Pistol", base: "20%", category: "Combat" },
+  { name: "Rifle", base: "25%", category: "Combat" },
+  { name: "Submachine Gun", base: "15%", category: "Combat" },
+  { name: "Bow", base: "15%", category: "Combat" },
 
   // Criminal & Subterfuge Skills
   { name: "Locksmith", base: "1%", category: "Criminal" },
@@ -104,10 +104,10 @@ const SKILLS: SkillEntry[] = [
   { name: "Language (Other)", base: "1%", category: "Language" },
 
   // Financial & Status Skill
-  { name: "Credit Rating", base: "0%", category: "Status" },
+  { name: "Social Status", base: "0%", category: "Status" },
 
-  // Cthulhu Mythos
-  { name: "Cthulhu Mythos", base: "0%", category: "Mythos" },
+  // Forbidden Lore (Mythos knowledge)
+  { name: "Forbidden Lore", base: "0%", category: "Mythos" },
 
   // Additional Common Skills
   { name: "Appraise", base: "5%", category: "Knowledge" },
@@ -1059,7 +1059,7 @@ const AppShell: React.FC = () => {
             <tr>
               <th>Era</th>
               <td>
-                <input name="era" placeholder="1920s Investigator" value={form.era || ""} onChange={(e) => onChange("era", e.target.value)} />
+                <input name="era" placeholder="1920s Character" value={form.era || ""} onChange={(e) => onChange("era", e.target.value)} />
               </td>
               <th>Name</th>
               <td>

@@ -73,7 +73,7 @@ NPCs are not scripted—they **dynamically respond** based on:
 ### 3. Complete CoC 7e Rules
 
 - **8 Action Types**: Exploration, Social, Combat, Stealth, Chase, Mental, Environmental, Narrative
-- **Skill System**: 40+ skills (Spot Hidden, Persuade, Fighting, Occult, etc.)
+- **Skill System**: 40+ skills (Perception, Persuade, Brawling, Occult, etc.)
 - **Sanity Mechanics**: Cosmic horror encounters reduce sanity and cause madness
 - **Inventory Management**: Pick up items, use equipment, track resources
 - **Time Tracking**: In-game clock with day/night cycles
@@ -235,12 +235,12 @@ Create JSON files in `My Mystery_npc/`:
     "conditions": []
   },
   "skills": {
-    "Spot Hidden": 70,
+    "Perception": 70,
     "Psychology": 60,
     "Persuade": 55,
     "Intimidate": 50,
-    "Fighting (Brawl)": 65,
-    "Firearms (Handgun)": 60,
+    "Brawling": 65,
+    "Pistol": 60,
     "Law": 50
   },
   "inventory": [
@@ -310,7 +310,7 @@ Create JSON files in `My Mystery_Scenarios/`:
       "category": "physical",
       "difficulty": "regular",
       "location": "brick wall near dumpster",
-      "discoveryMethod": "Spot Hidden check or forensics knowledge",
+      "discoveryMethod": "Perception check or forensics knowledge",
       "reveals": ["weapon_type", "killer_height"],
       "discovered": false
     },
@@ -329,7 +329,7 @@ Create JSON files in `My Mystery_Scenarios/`:
     {
       "type": "lighting",
       "description": "Dim streetlight, deep shadows",
-      "mechanicalEffect": "Spot Hidden checks at -20% penalty at night"
+      "mechanicalEffect": "Perception checks at -20% penalty at night"
     },
     {
       "type": "smell",

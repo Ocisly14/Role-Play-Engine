@@ -179,13 +179,13 @@ function capAndRedistributeOverflow(
  */
 const COMMON_SKILLS = [
   "Accounting", "Anthropology", "Appraise", "Archaeology", "Art/Craft",
-  "Charm", "Climb", "Credit Rating", "Cthulhu Mythos", "Disguise",
-  "Dodge", "Drive Auto", "Electrical Repair", "Fast Talk", "Fighting (Brawl)",
-  "Firearms (Handgun)", "Firearms (Rifle/Shotgun)", "First Aid", "History",
-  "Intimidate", "Jump", "Language (Other)", "Law", "Library Use", "Listen",
+  "Charm", "Climb", "Social Status", "Forbidden Lore", "Disguise",
+  "Dodge", "Drive Auto", "Electrical Repair", "Bluff", "Brawling",
+  "Pistol", "Rifle", "First Aid", "History",
+  "Intimidate", "Jump", "Language (Other)", "Law", "Research", "Listen",
   "Locksmith", "Mechanical Repair", "Medicine", "Natural World", "Navigate",
   "Occult", "Operate Heavy Machinery", "Persuade", "Pilot", "Psychology",
-  "Psychoanalysis", "Ride", "Science", "Sleight of Hand", "Spot Hidden",
+  "Psychoanalysis", "Ride", "Science", "Sleight of Hand", "Perception",
   "Stealth", "Survival", "Swim", "Throw", "Track"
 ];
 

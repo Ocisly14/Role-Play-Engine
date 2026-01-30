@@ -165,13 +165,13 @@ Return ONLY valid JSON in this exact structure:
         {
           "type": "lighting",
           "description": "Dim and flickering.",
-          "mechanicalEffect": "Spot Hidden checks are hard."
+          "mechanicalEffect": "Perception checks are hard."
         }
       ],
       "events": [
         "A notable ongoing or imminent event in this scene."
       ],
-      "keeperNotes": "Private note for the Keeper."
+      "keeperNotes": "Private note for the GM."
     }
   },
   "otherScenarioNpcAssignments": [

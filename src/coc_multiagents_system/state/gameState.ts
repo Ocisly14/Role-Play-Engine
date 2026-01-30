@@ -82,12 +82,12 @@ const defaultPlayerCharacter: CharacterProfile = {
   },
   inventory: [], // InventoryItem[]
   skills: {
-    "Spot Hidden": 25,
+    "Perception": 25,
     Listen: 20,
-    "Library Use": 20,
-    "Fighting (Brawl)": 25,
+    "Research": 20,
+    "Brawling": 25,
     Dodge: 25,
-    "Firearms (Handgun)": 20,
+    "Pistol": 20,
   },
   notes: "Auto-generated placeholder character",
   actionLog: [],

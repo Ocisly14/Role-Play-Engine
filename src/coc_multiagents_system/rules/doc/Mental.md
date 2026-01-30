@@ -28,5 +28,5 @@
 
 ## Skills and attributes
 - Core attributes: SAN (tolerance), POW (will/mental defense), INT (comprehension).
-- Supporting skills: Psychology (understand others), Psychoanalysis (long-term treatment/SAN recovery), Occult/Cthulhu Mythos (comprehend terror—at a cost), Medicine (support mental treatment).
+- Supporting skills: Psychology (understand others), Psychoanalysis (long-term treatment/SAN recovery), Occult/Forbidden Lore (comprehend terror—at a cost), Medicine (support mental treatment).
 - Principles: Social charms/acting don’t negate fear; skills cannot replace SAN checks.
