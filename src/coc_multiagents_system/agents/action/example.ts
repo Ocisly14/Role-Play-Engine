@@ -4,278 +4,93 @@
  */
 
 export const explorationTemplate = `
+You are an action resolution specialist for Call of Cthulhu based on the 7th edition rules.
+
 EXPLORATION ACTIONS - Discovering clues, understanding environment, gathering information:
 
 TIME CONSUMPTION ANALYSIS:
 - "instant": Quick glance at obvious clues, overview of room, checking exposed items, confirming environment
 - "short": Quick search of desk/drawers, listening at door, checking locks/windows, rough search of corner
 - "scene": Thorough search of house, investigating crime scene, systematic area investigation, reading documents
-
-{
-  "type": "result",
-  "summary": "Detective Smith carefully searches the library shelves and discovers a hidden compartment containing an ancient tome",
-  "timeConsumption": "short",
-  "stateUpdate": {
-    "playerCharacter": {
-      "name": "Detective Smith",
-      "status": { "hp": 0 }
-    }
-  },
-  "scenarioUpdate": {
-    "description": "The library now shows signs of thorough searching, with books displaced and the hidden compartment revealed",
-    "events": ["Hidden compartment discovered behind the bookshelf"],
-    "permanentChanges": [
-      "Hidden compartment in the library bookshelf is now revealed and accessible"
-    ],
-    "clues": [
-      {
-        "id": "ancient-tome",
-        "discovered": true,
-        "discoveredBy": "Detective Smith",
-        "discoveredAt": "current time"
-      }
-    ]
-  },
-  "sceneChange": {
-    "shouldChange": false,
-    "targetSceneName": null,
-    "reason": "Action performed within current location"
-  },
-  "log": ["Spot Hidden 45% vs roll 23 = success", "Hidden compartment discovered"]
-}`;
+`;
 
 export const socialTemplate = `
+You are an action resolution specialist for Call of Cthulhu based on the 7th edition rules.
+
 SOCIAL ACTIONS - Influencing NPCs, gathering intelligence, reaching consensus:
 
 TIME CONSUMPTION ANALYSIS:
 - "instant": Nod/brief response, casual question, simple yes/no answer
 - "short": Probing questions, interjecting/arguing, observing reactions, simple threats/reassurance
 - "scene": Formal conversation/interrogation, multi-round persuasion, building/breaking trust, changing NPC stance
-
-{
-  "type": "result",
-  "summary": "Detective Smith successfully persuades the librarian to reveal information about the missing books",
-  "timeConsumption": "short",
-  "stateUpdate": {
-    "playerCharacter": {
-      "name": "Detective Smith",
-      "status": { "hp": 0 }
-    },
-    "npcCharacters": [
-      {
-        "id": "librarian-1",
-        "name": "Old Librarian",
-        "status": { "hp": 0 }
-      }
-    ]
-  },
-  "sceneChange": {
-    "shouldChange": false,
-    "targetSceneName": null,
-    "reason": "Conversation occurs in current location"
-  },
-  "log": ["Persuade 60% vs roll 45 = success", "Librarian becomes helpful"]
-}`;
+`;
 
 export const stealthTemplate = `
+You are an action resolution specialist for Call of Cthulhu based on the 7th edition rules.
+
 STEALTH ACTIONS - Acting without being detected:
 
 TIME CONSUMPTION ANALYSIS:
 - "instant": Hiding in place motionless, pause action to observe
 - "short": Short distance stealth, duck behind cover, peek around corner, quick lock picking attempt
 - "scene": Infiltrating building, bypassing complete guard system, long surveillance, stealing key items
-
-{
-  "type": "result",
-  "summary": "Detective Smith silently moves through the shadows but accidentally knocks over a candlestick, alerting the cultist",
-  "timeConsumption": "short",
-  "stateUpdate": {
-    "playerCharacter": {
-      "name": "Detective Smith",
-      "status": { "hp": 0 }
-    }
-  },
-  "sceneChange": {
-    "shouldChange": false,
-    "targetSceneName": null,
-    "reason": "Stealth movement within current area"
-  },
-  "log": ["Stealth 35% vs roll 67 = failure", "Noise alerts enemies"]
-}`;
+`;
 
 export const combatTemplate = `
+You are an action resolution specialist for Call of Cthulhu based on the 7th edition rules.
+
 COMBAT ACTIONS - Causing damage, subduing or stopping opponents:
 
 TIME CONSUMPTION ANALYSIS:
-⚠️ Combat generally does NOT use scene time
+Combat generally does NOT use scene time
 - "instant": Say a word, drop items, change stance description (not tactical movement)
 - "short": Attack, dodge, reload, get up/help others (= round actions)
-- "scene": ❌ Generally not applicable ✔ Post-combat "battlefield cleanup/stabilize situation"
-
-{
-  "type": "result",
-  "summary": "Detective Smith successfully punches the cultist, dealing significant damage and stunning the opponent",
-  "timeConsumption": "short",
-  "stateUpdate": {
-    "playerCharacter": {
-      "name": "Detective Smith",
-      "status": { "hp": 0 }
-    },
-    "npcCharacters": [
-      {
-        "id": "cultist-1",
-        "name": "Hooded Cultist",
-        "status": { "hp": -4 }
-      }
-    ]
-  },
-  "scenarioUpdate": {
-    "description": "The library shows signs of violent struggle, with overturned furniture and blood stains on the floor",
-    "events": ["Combat occurred between Detective Smith and the cultist"],
-    "conditions": [
-      {
-        "type": "other",
-        "description": "Signs of struggle",
-        "mechanicalEffect": "Investigation checks in this area get +10% bonus"
-      }
-    ],
-    "permanentChanges": [
-      "Library now bears visible signs of combat: overturned furniture and blood stains"
-    ]
-  },
-  "sceneChange": {
-    "shouldChange": false,
-    "targetSceneName": null,
-    "reason": "Combat occurs in current location"
-  },
-  "log": ["Fighting (Brawl) 50% vs roll 32 = success", "Damage 1d3+1 = 4", "Cultist HP: -4"]
-}`;
+- "scene": Generally not applicable ✔ Post-combat "battlefield cleanup/stabilize situation"
+`;
 
 export const chaseTemplate = `
+You are an action resolution specialist for Call of Cthulhu based on the 7th edition rules.
+
 CHASE ACTIONS - Extending or closing distance:
 
 TIME CONSUMPTION ANALYSIS:
 - "instant": Observe target movement, brief shouting
 - "short": Sprint, overcome obstacles, driving sharp turns, dodge attacks (= each chase check)
-- "scene": ❌ Not used during chase ✔ Post-chase "escape/hide" phase
-
-{
-  "type": "result",
-  "summary": "Detective Smith sprints down the alley but stumbles on loose cobblestones, allowing the suspect to gain distance",
-  "timeConsumption": "short",
-  "stateUpdate": {
-    "playerCharacter": {
-      "name": "Detective Smith",
-      "status": { "hp": -1 }
-    }
-  },
-  "sceneChange": {
-    "shouldChange": true,
-    "targetSceneName": "dark-alley",
-    "reason": "Chase moves to a new location"
-  },
-  "log": ["Athletics 40% vs roll 78 = failure", "Fall damage 1 point", "Target escapes"]
-}`;
+- "scene": Not used during chase ✔ Post-chase "escape/hide" phase
+`;
 
 export const mentalTemplate = `
+You are an action resolution specialist for Call of Cthulhu based on the 7th edition rules.
+
 MENTAL ACTIONS - Withstanding or resisting psychological shock:
 
 TIME CONSUMPTION ANALYSIS:
 - "instant": SAN check itself, instant fear reaction
 - "short": Temporary madness loss of control, compulsive actions
 - "scene": Prolonged madness episode, deep mental shock recovery/breakdown phase
-
-{
-  "type": "result",
-  "summary": "Detective Smith witnesses the eldritch horror but maintains composure, though the sight leaves lasting psychological scars",
-  "timeConsumption": "instant",
-  "stateUpdate": {
-    "playerCharacter": {
-      "name": "Detective Smith",
-      "status": { "sanity": -3 }
-    }
-  },
-  "sceneChange": {
-    "shouldChange": false,
-    "targetSceneName": null,
-    "reason": "Mental state change does not trigger scene change"
-  },
-  "log": ["Sanity 65% vs roll 82 = failure", "Sanity loss 1d4 = 3", "Current sanity: 62"]
-}`;
+`;
 
 export const environmentalTemplate = `
+You are an action resolution specialist for Call of Cthulhu based on the 7th edition rules.
+
 ENVIRONMENTAL ACTIONS - Confronting environment and physiological limits:
 
 TIME CONSUMPTION ANALYSIS:
 - "instant": Feel weather changes, notice physical discomfort
 - "short": Overcome obstacles, simple climbing, temporary environmental danger avoidance, emergency minor injury treatment
 - "scene": Complete first aid treatment, repair equipment, traverse dangerous terrain, endure harsh environment for extended period
-
-{
-  "type": "result",
-  "summary": "Detective Smith breaks down the locked door with tremendous force, creating a new passage but alerting everyone nearby",
-  "timeConsumption": "short",
-  "stateUpdate": {
-    "playerCharacter": {
-      "name": "Detective Smith",
-      "status": { "hp": 0 }
-    }
-  },
-  "scenarioUpdate": {
-    "description": "The wooden door lies in splinters, creating an open passage to the next room",
-    "events": ["Door forcibly broken down, loud noise echoes through the building"],
-    "exits": [
-      {
-        "direction": "north",
-        "destination": "secret-chamber",
-        "description": "Through the broken doorway",
-        "condition": "open"
-      }
-    ],
-    "permanentChanges": [
-      "Wooden door destroyed; passage to the next room is now open"
-    ]
-  },
-  "sceneChange": {
-    "shouldChange": true,
-    "targetSceneName": "secret-chamber",
-    "reason": "Breaking through the door opens access to a new room"
-  },
-  "log": ["STR check 60% vs roll 45 = success", "Door destroyed with brute force"]
-}`;
+`;
 
 export const narrativeTemplate = `
+You are an action resolution specialist for Call of Cthulhu based on the 7th edition rules.
+
 NARRATIVE ACTIONS - Key choices without mechanical rolls:
 
 TIME CONSUMPTION ANALYSIS:
 - "instant": Brief decision, line of dialogue, gesture
 - "short": Short exchange, small reveal, quick character beat
 - "scene": Longer conversation or monologue that shifts tone or relationships
-
-{
-  "type": "result",
-  "summary": "Detective Smith confides in the doctor about last night's horrors, earning a measure of trust and support",
-  "timeConsumption": "short",
-  "stateUpdate": {
-    "playerCharacter": {
-      "name": "Detective Smith",
-      "status": { "hp": 0 }
-    },
-    "npcCharacters": [
-      {
-        "id": "doctor-1",
-        "name": "Dr. Rowan",
-        "status": { "hp": 0 }
-      }
-    ]
-  },
-  "sceneChange": {
-    "shouldChange": false,
-    "targetSceneName": null,
-    "reason": "Narrative interaction occurs in current location"
-  },
-  "log": ["No dice rolled; narrative choice builds rapport"]
-}`;
+`;
 
 export const actionTypeTemplates = {
   exploration: explorationTemplate,

@@ -1,21 +1,7 @@
 /**
  * Scenario Type Definitions
- * Data structures for scenario management and timeline tracking
+ * Data structures for scenario management (single snapshot per scenario, no timeline)
  */
-
-/**
- * Time point for scenario events
- */
-export interface ScenarioTimePoint {
-  /** Absolute time in ISO 8601 format (e.g., "1925-03-15T08:00:00Z") */
-  absoluteTime: string;
-  /** Game day number (1 for first day, 2 for second day, etc.) */
-  gameDay: number;
-  /** Time of day classification for quick filtering and atmospheric queries */
-  timeOfDay: "dawn" | "morning" | "noon" | "afternoon" | "evening" | "night" | "midnight" | "unknown";
-  /** Additional notes about this time point */
-  notes?: string;
-}
 
 /**
  * Character presence in a scenario
@@ -74,27 +60,29 @@ export interface ScenarioCondition {
 }
 
 /**
- * Single scenario state at a specific time point
+ * Scenario snapshot - represents the current state of a scenario
  */
 export interface ScenarioSnapshot {
   id: string;
-  /** Reference to the parent scenario */
-  scenarioId: string;
-  /** Time information */
-  timePoint: ScenarioTimePoint;
-  /** Scenario name at this time */
+  /** Scenario name */
   name: string;
+  /** Narrative game time for this snapshot (e.g., "Day 1, 08:00") */
+  gameTime?: string;
   /** Primary location */
   location: string;
   /** Detailed description */
   description: string;
+  /** Whether the map should be shown for this scene */
+  showMap?: boolean;
+  /** Module-relative path to map image (inherited from parent ScenarioProfile) */
+  mapImagePath?: string;
   /** Characters present */
   characters: ScenarioCharacter[];
   /** Available clues */
   clues: ScenarioClue[];
   /** Environmental conditions */
   conditions: ScenarioCondition[];
-  /** Notable events at this time */
+  /** Notable events */
   events: string[];
   /** Exits and connections to other locations */
   exits?: {
@@ -103,16 +91,18 @@ export interface ScenarioSnapshot {
     description?: string;
     condition?: string; // e.g., "locked", "hidden"
   }[];
-  /** Reference to permanent changes from the parent scenario */
-  permanentChanges?: string[];
-  /** Keeper notes for this snapshot */
+  /** Keeper notes */
   keeperNotes?: string;
   /** Estimated short actions the scene can accommodate (runtime-only, set by Director) */
   estimatedShortActions?: number;
+  /** Time restriction for this snapshot (e.g., "day1 evening", "day2 (after)") - optional */
+  timeRestriction?: string;
+  /** Whether this is the initial snapshot for the starting scene */
+  initialSnapshot?: boolean;
 }
 
 /**
- * Complete scenario with timeline
+ * Complete scenario profile (single snapshot, no timeline)
  */
 export interface ScenarioProfile {
   id: string;
@@ -120,8 +110,10 @@ export interface ScenarioProfile {
   name: string;
   /** Overall description */
   description: string;
-  /** All timeline snapshots */
-  timeline: ScenarioSnapshot[];
+  /** Current scenario snapshot */
+  snapshot: ScenarioSnapshot;
+  /** Module-relative path to map image (e.g., "Cassandra's_Scenarios/map/Adolph's House.jpg") */
+  mapImagePath?: string;
   /** Scenario tags for organization */
   tags: string[];
   /** Related scenarios */
@@ -130,8 +122,6 @@ export interface ScenarioProfile {
     relationshipType: "leads_to" | "concurrent" | "prerequisite" | "alternate";
     description?: string;
   }[];
-  /** Permanent changes made to the scenario */
-  permanentChanges?: string[];
   /** Scenario metadata */
   metadata: {
     createdAt: string;
@@ -143,50 +133,58 @@ export interface ScenarioProfile {
 }
 
 /**
+ * Raw parsed scenario snapshot data from documents
+ */
+export interface ParsedScenarioSnapshot {
+  name?: string;
+  gameTime?: string;
+  location: string;
+  description: string;
+  timeRestriction?: string;
+  showMap?: boolean;
+  characters?: {
+    name: string;
+    role?: string;
+    status?: string;
+    location?: string;
+    notes?: string;
+  }[];
+  clues?: {
+    clueText: string;
+    category?: string;
+    difficulty?: string;
+    location?: string;
+    discoveryMethod?: string;
+    reveals?: string[];
+  }[];
+  conditions?: {
+    type?: string;
+    description: string;
+    mechanicalEffect?: string;
+  }[];
+  events?: string[];
+  exits?: {
+    direction: string;
+    destination: string;
+    description?: string;
+    condition?: string;
+  }[];
+  keeperNotes?: string;
+}
+
+/**
  * Raw parsed scenario data from documents
+ * Supports both single snapshot and multiple snapshots
  */
 export interface ParsedScenarioData {
   name: string;
   description: string;
-  timeline: {
-    timePoint: {
-      absoluteTime: string;
-      gameDay: number;
-      timeOfDay: "dawn" | "morning" | "noon" | "afternoon" | "evening" | "night" | "midnight" | "unknown";
-      notes?: string;
-    };
-    name?: string;
-    location: string;
-    description: string;
-    characters?: {
-      name: string;
-      role?: string;
-      status?: string;
-      location?: string;
-      notes?: string;
-    }[];
-    clues?: {
-      clueText: string;
-      category?: string;
-      difficulty?: string;
-      location?: string;
-      discoveryMethod?: string;
-      reveals?: string[];
-    }[];
-    conditions?: {
-      type?: string;
-      description: string;
-      mechanicalEffect?: string;
-    }[];
-    events?: string[];
-    exits?: {
-      direction: string;
-      destination: string;
-      description?: string;
-      condition?: string;
-    }[];
-    keeperNotes?: string;
-  }[];
+  /** Module-relative path to map image (optional, discovered during loading) */
+  mapImagePath?: string;
+  /** Single snapshot (legacy format) */
+  snapshot?: ParsedScenarioSnapshot;
+  /** Multiple snapshots (new format) */
+  snapshots?: ParsedScenarioSnapshot[];
   tags?: string[];
   connections?: {
     scenarioName: string;
@@ -200,10 +198,6 @@ export interface ParsedScenarioData {
  */
 export interface ScenarioQuery {
   name?: string;
-  timeRange?: {
-    start: string;
-    end: string;
-  };
   location?: string;
   charactersInvolved?: string[];
   tags?: string[];
@@ -215,7 +209,6 @@ export interface ScenarioQuery {
  */
 export interface ScenarioSearchResult {
   scenarios: ScenarioProfile[];
-  snapshots: ScenarioSnapshot[];
   totalCount: number;
   relevanceScores?: number[];
 }

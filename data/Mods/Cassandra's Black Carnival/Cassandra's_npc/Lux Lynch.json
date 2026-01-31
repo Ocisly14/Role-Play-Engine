@@ -1,0 +1,102 @@
+[
+    {
+      "name": "Lux Lynch",
+      "occupation": "Police Officer (corrupt)",
+      "age": 32,
+      "gender": "male",
+      "appearance": "An ordinary-looking man who blends easily into the background; usually dressed as a plainclothes police officer, giving off a cautious and somewhat nervous demeanor.",
+      "personality": "Pragmatic, fearful, morally compromised, and deeply conflicted. Once idealistic, now cynical and submissive to authority, with traces of a guilty conscience.",
+      "background": "Lux Lynch was once a passionate and idealistic young man. In his youth, he and his classmates exposed corporate fraud involving falsified accounts and the use of child labor overseas. The whistleblowing ruined their careers and nearly landed them in legal trouble. Disillusioned, Lux returned to his hometown, became a police officer, and survived by ingratiating himself with his superiors. He gradually became a corrupt cop, taking bribes to handle minor illegal matters. Although he avoids committing truly heinous crimes, he is now trapped by fear and dependence. His superior, Patrizio von Samsa, has begun displaying increasingly strange and inhuman behavior, terrifying Lux but leaving him too compromised to defect.",
+      "goals": [
+        "Protect himself from exposure and retaliation",
+        "Maintain his position and personal safety within the police force"
+      ],
+      "secrets": [
+        "He has accepted bribes and maintains records of people whose 'small problems' he has helped cover up",
+        "He was ordered by higher authorities to release Martin Gin (Ghost Hand), indirectly allowing Jenny Florence's murderer to escape",
+        "He was the 'acquaintance' Adolph met at the Reindeer Bar on the day of the murder (2003.12.22), though Adolph doesn't know why Lux was there",
+        "He planted the folding knife (which belonged to Philip) on Lucifero's body on Martin's orders to confuse the investigation",
+        "He transported Lucifero's body to Star Hospital and later to the crematorium under orders",
+        "He knows Martin (Ghost Hand) works for the government/Patrizio but doesn't know his true identity",
+        "He is terrified of Patrizio's inhuman powers and cannot betray him"
+      ],
+      "attributes": {
+        "STR": 55,
+        "CON": 60,
+        "DEX": 55,
+        "APP": 50,
+        "POW": 45,
+        "SIZ": 60,
+        "INT": 60,
+        "EDU": 70
+      },
+      "status": {
+        "hp": 12,
+        "maxHp": 12,
+        "sanity": 45,
+        "maxSanity": 99,
+        "luck": 55,
+        "mp": 9,
+        "conditions": []
+      },
+      "skills": {
+        "Law": 60,
+        "Spot Hidden": 55,
+        "Psychology": 40,
+        "Intimidate": 50,
+        "Firearms (Handgun)": 45,
+        "Stealth": 40
+      },
+      "inventory": [
+        {
+          "name": "Police badge and identification",
+          "properties": {
+            "note": "Official police credentials."
+          }
+        },
+        {
+          "name": "Notebook recording illicit favors",
+          "properties": {
+            "clue": "A small notebook documenting people whose 'small problems' he has helped cover up. This is both leverage against others and evidence that could be used against him."
+          }
+        },
+        {
+          "name": "Service handgun",
+          "properties": {
+            "note": "Standard police-issued firearm."
+          }
+        }
+      ],
+      "clues": [
+        {
+          "clueText": "Patrizio von Samsa possesses strange powers and is involved in activities that do not appear entirely human.",
+          "category": "observation",
+          "difficulty": "hard",
+          "relatedTo": ["Patrizio von Samsa"]
+        },
+        {
+          "clueText": "Martin Gin was deliberately released from custody under official orders despite being highly suspicious.",
+          "category": "secret",
+          "difficulty": "extreme",
+          "relatedTo": ["Martin Gin", "Reindeer Bar"]
+        }
+      ],
+      "relationships": [
+        {
+          "targetName": "Patrizio von Samsa",
+          "relationshipType": "employer",
+          "attitude": -40,
+          "description": "Lux’s superior and the source of his fear and corruption.",
+          "history": "Lux secured his promotion by aligning himself closely with Patrizio, who later drew him into increasingly dangerous and unnatural affairs."
+        },
+        {
+          "targetName": "Jenny Florence (berforth Locefern)",
+          "relationshipType": "enemy",
+          "attitude": -20,
+          "description": "A hacker whose death weighs on Lux’s conscience.",
+          "history": "Lux was indirectly involved in the chain of events that led to her murder by releasing her killer under orders."
+        }
+      ],
+      "notes": "Lux is aware that Simon/Anatole can easily uncover evidence of his corruption, making him highly susceptible to coercion. He lives in constant fear of betrayal and exposure."
+    }
+  ]

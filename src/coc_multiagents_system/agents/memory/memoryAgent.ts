@@ -7,11 +7,12 @@ import {
   type GameState,
   type ActionType,
   type ActionAnalysis,
-} from "../../../state.js";
+} from "../../state/index.js";
 import { actionRules } from "../../rules/index.js";
-import type { RAGEngine } from "../../../rag/engine.js";
 import type { CoCDatabase } from "./database/index.js";
 import type { ScenarioSnapshot } from "../models/scenarioTypes.js";
+import type { Evidence, RagManager } from "./RagManager.js";
+
 
 /**
  * Inject action-type-specific rules into temporary rules so downstream agents can apply them.
@@ -40,63 +41,111 @@ export const injectActionTypeRules = (
 };
 
 /**
- * Fetch top-N RAG slices based on the current action analysis and scenario context.
+ * Extract recent conversation history (last N completed turns) from database
+ * Directly gets the last N turns by sessionId, no gameTime filtering needed
+ * Note: Simulate queries (with actionAnalysis === null) are included in conversationHistory
+ * but should not count towards turn statistics (turnsInCurrentScene).
+ * Real queries have actionAnalysis set by the Orchestrator Agent.
  */
-export const fetchRagSlicesForAction = async (
-  ragEngine: RAGEngine | undefined,
-  actionAnalysis: ActionAnalysis | null,
-  gameState: GameState,
-  limit = 3
-): Promise<string[]> => {
-  if (!ragEngine || !actionAnalysis) return [];
-
-  const queryParts = [
-    actionAnalysis.character,
-    actionAnalysis.actionType,
-    actionAnalysis.action,
-    actionAnalysis.target.intent,
-    actionAnalysis.target.name ?? undefined,
-  ].filter(Boolean);
-  const query = queryParts.join(" ");
-
-  const context = gameState.currentScenario
-    ? `${gameState.currentScenario.name} ${gameState.currentScenario.location} ${gameState.currentScenario.description ?? ""}`
-    : undefined;
+export const extractRecentConversationHistory = async (
+  db: CoCDatabase | undefined,
+  sessionId: string,
+  limit = 1
+): Promise<Array<{ turnNumber: number; characterInput: string; keeperNarrative: string | null; actionAnalysis?: any | null }>> => {
+  if (!db) return [];
 
   try {
-    const hits = await ragEngine.search(query, context, limit);
-    return hits.map(
-      (hit) => `(${hit.source} #${hit.chunkIndex ?? 0}) ${hit.text.slice(0, 320)}`
+    // Get recent turns directly by sessionId (already sorted by turn_number DESC)
+    // Get more turns to ensure we have enough completed ones
+    const turns = db.getTurnHistory(
+      sessionId,
+      limit * 3, // Get more turns to account for filtering completed ones
+      undefined // afterTurnNumber
     );
+    
+    // Filter only completed turns with keeper narrative
+    // Include both real queries (with actionAnalysis) and simulate queries (actionAnalysis === null)
+    const completedTurns = turns
+      .filter(turn => turn.status === 'completed' && turn.keeperNarrative)
+      .slice(0, limit) // Take first N (already sorted DESC, so these are the newest)
+      .reverse(); // Reverse to get chronological order (oldest first)
+    
+    const result = completedTurns.map(turn => ({
+      turnNumber: turn.turnNumber,
+      characterInput: turn.characterInput,
+      keeperNarrative: turn.keeperNarrative,
+      actionAnalysis: turn.actionAnalysis || null, // null indicates simulate query
+    }));
+
+    if (result.length > 0) {
+      const simulateCount = result.filter(t => !t.actionAnalysis).length;
+      const realCount = result.length - simulateCount;
+      console.log(`📜 [Memory Agent] 提取了 ${result.length} 轮历史对话 (Turn #${result[0]?.turnNumber} 到 Turn #${result[result.length - 1]?.turnNumber}), 其中真实轮数: ${realCount}, simulate轮数: ${simulateCount}`);
+    }
+
+    return result;
   } catch (error) {
-    console.warn("Memory agent RAG search failed:", error);
+    console.warn("Failed to extract conversation history:", error);
     return [];
   }
 };
 
 /**
- * Enrich game state with action-type rules and RAG results for the memory workflow.
+ * Enrich game state with action-type rules, RAG results, and conversation history for the memory workflow.
  */
 export const enrichMemoryContext = async (
   gameState: GameState,
   actionAnalysis: ActionAnalysis | null,
-  ragEngine?: RAGEngine
+  ragManager?: RagManager,
+  db?: CoCDatabase,
+  characterInput?: string
 ): Promise<GameState> => {
   // First inject the action-type rules
   const withRules = injectActionTypeRules(gameState, actionAnalysis?.actionType);
 
-  // Then fetch RAG slices and write into temporaryInfo.ragResults
-  const ragResults = await fetchRagSlicesForAction(
-    ragEngine,
-    actionAnalysis,
-    withRules
+  // Fetch RAG evidence using the new RagManager
+  // TODO: 暂时跳过RAG环节
+  const SKIP_RAG = true; // 设置为 false 以启用 RAG
+  let ragEvidence: Evidence[] = [];
+  if (ragManager && !SKIP_RAG) {
+    try {
+      console.log(`[Memory Agent] 开始RAG检索 (场景: ${gameState.currentScenario?.name || '未知'}, 动作类型: ${actionAnalysis?.actionType || '未知'})`);
+      const startTime = Date.now();
+      const { evidence, debug } = await ragManager.runRagForTurn(withRules, {
+        mode: "player",
+      });
+      const duration = Date.now() - startTime;
+      ragEvidence = evidence;
+      console.log(`[Memory Agent] RAG检索完成: 找到 ${evidence.length} 条证据 (耗时: ${duration}ms)`);
+      if (debug) {
+        const semanticCount = debug.semanticHits?.length ?? 0;
+        const lexicalCount = debug.lexicalHits?.length ?? 0;
+        const graphCount = debug.graphHits?.length ?? 0;
+        console.log(`[Memory Agent] RAG详细统计: 语义检索 ${semanticCount} 条, 关键词检索 ${lexicalCount} 条, 图检索 ${graphCount} 条`);
+      }
+    } catch (error) {
+      console.warn("[Memory Agent] RAG retrieval failed:", error);
+    }
+  } else if (SKIP_RAG) {
+    console.log(`[Memory Agent] RAG环节已跳过 (SKIP_RAG = true)`);
+  }
+
+  // Extract recent conversation history (last 1 turn) and store in contextualData
+  const conversationHistory = await extractRecentConversationHistory(
+    db,
+    gameState.sessionId,
+    1
   );
 
   return {
     ...withRules,
     temporaryInfo: {
       ...withRules.temporaryInfo,
-      ragResults,
+      ragResults: ragEvidence,
+      contextualData: {
+        ...withRules.temporaryInfo.contextualData,
+        conversationHistory,
+      },
     },
   };
 };
@@ -119,7 +168,7 @@ export const createScenarioCheckpoint = async (
   db.transaction(() => {
     // UNIFIED CHECKPOINT: Save complete game state to single checkpoint table
     const checkpointId = `checkpoint-${currentScenario.id}-${Date.now()}`;
-    const checkpointName = `${currentScenario.name} - Day ${currentScenario.timePoint.gameDay} ${currentScenario.timePoint.timeOfDay}`;
+    const checkpointName = `${currentScenario.name}`;
     const description = `Auto-saved at ${currentScenario.location}`;
     
     db.saveCheckpoint(
@@ -131,13 +180,27 @@ export const createScenarioCheckpoint = async (
       description
     );
 
-    // LEGACY: Still save to normalized tables for backwards compatibility and queries
-    // 1. Save/Update permanent changes at scenario level (shared by all timeline snapshots)
+    // NOTE: We do NOT modify snapshot tables here
+    // Snapshots (scenario_snapshots, scenario_characters, scenario_clues, scenario_conditions) 
+    // are read-only original definitions that should never be modified after initial load.
+    // All game state (discovered clues, permanent changes, etc.) is saved in the checkpoint 
+    // (game_checkpoints table) and will be merged when restoring the scenario.
+    
+    // We still save permanent changes to scenarios table for query purposes,
+    // but this is separate from the snapshot data
     if (currentScenario.permanentChanges && currentScenario.permanentChanges.length > 0) {
+      // Determine scenarioId - infer from snapshot ID
+      let scenarioId = (currentScenario as any).scenarioId;
+      if (!scenarioId && currentScenario.id) {
+        // Infer scenario ID from snapshot ID (e.g., "scenario-xyz-snapshot" -> "scenario-xyz")
+        scenarioId = currentScenario.id.replace(/-snapshot.*$/, '');
+      }
+      const finalScenarioId = scenarioId || 'unknown';
+
       // Check if scenario exists in scenarios table
       const existingScenario = database
         .prepare("SELECT scenario_id, permanent_changes FROM scenarios WHERE scenario_id = ?")
-        .get(currentScenario.scenarioId) as any;
+        .get(finalScenarioId) as any;
 
       if (existingScenario) {
         // Merge with existing permanent changes to avoid duplicates
@@ -148,135 +211,10 @@ export const createScenarioCheckpoint = async (
           new Set([...existingChanges, ...currentScenario.permanentChanges])
         );
 
-        // Update permanent changes in scenarios table
+        // Update permanent changes in scenarios table (this is scenario-level metadata, not snapshot data)
         database
           .prepare("UPDATE scenarios SET permanent_changes = ? WHERE scenario_id = ?")
-          .run(JSON.stringify(mergedChanges), currentScenario.scenarioId);
-      } else {
-        // Create minimal scenario record if it doesn't exist
-        database
-          .prepare(`
-            INSERT INTO scenarios (
-              scenario_id, name, description, tags, connections, permanent_changes, metadata
-            ) VALUES (?, ?, ?, ?, ?, ?, ?)
-          `)
-          .run(
-            currentScenario.scenarioId,
-            currentScenario.name,
-            currentScenario.description || "",
-            JSON.stringify([]),
-            JSON.stringify([]),
-            JSON.stringify(currentScenario.permanentChanges),
-            JSON.stringify({
-              createdAt: new Date().toISOString(),
-              updatedAt: new Date().toISOString(),
-              gameSystem: "CoC 7e",
-            })
-          );
-      }
-    }
-
-    // 2. Save/Update the scenario snapshot (without permanent_changes - those are at scenario level)
-    const snapshotStmt = database.prepare(`
-      INSERT OR REPLACE INTO scenario_snapshots (
-        snapshot_id, scenario_id, time_timestamp, absolute_time, game_day, time_of_day,
-        time_notes, snapshot_name, location, description, events, exits, keeper_notes
-      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-    `);
-
-    snapshotStmt.run(
-      currentScenario.id,
-      currentScenario.scenarioId,
-      currentScenario.timePoint.absoluteTime, // Use as legacy timestamp
-      currentScenario.timePoint.absoluteTime,
-      currentScenario.timePoint.gameDay,
-      currentScenario.timePoint.timeOfDay,
-      currentScenario.timePoint.notes || null,
-      currentScenario.name,
-      currentScenario.location,
-      currentScenario.description,
-      JSON.stringify(currentScenario.events),
-      JSON.stringify(currentScenario.exits || []),
-      currentScenario.keeperNotes || null
-    );
-
-    // 3. Save scenario characters (from snapshot)
-    // Delete existing characters for this snapshot first
-    database
-      .prepare("DELETE FROM scenario_characters WHERE snapshot_id = ?")
-      .run(currentScenario.id);
-
-    if (currentScenario.characters.length > 0) {
-      const charStmt = database.prepare(`
-        INSERT INTO scenario_characters (
-          id, snapshot_id, character_name, character_role, character_status,
-          character_location, character_notes
-        ) VALUES (?, ?, ?, ?, ?, ?, ?)
-      `);
-
-      for (const char of currentScenario.characters) {
-        charStmt.run(
-          char.id,
-          currentScenario.id,
-          char.name,
-          char.role,
-          char.status,
-          char.location || null,
-          char.notes || null
-        );
-      }
-    }
-
-    // 4. Save scenario clues
-    database
-      .prepare("DELETE FROM scenario_clues WHERE snapshot_id = ?")
-      .run(currentScenario.id);
-
-    if (currentScenario.clues.length > 0) {
-      const clueStmt = database.prepare(`
-        INSERT INTO scenario_clues (
-          clue_id, snapshot_id, clue_text, category, difficulty,
-          clue_location, discovery_method, reveals, discovered, discovery_details
-        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-      `);
-
-      for (const clue of currentScenario.clues) {
-        clueStmt.run(
-          clue.id,
-          currentScenario.id,
-          clue.clueText,
-          clue.category,
-          clue.difficulty,
-          clue.location,
-          clue.discoveryMethod || null,
-          JSON.stringify(clue.reveals || []),
-          clue.discovered ? 1 : 0,
-          clue.discoveryDetails ? JSON.stringify(clue.discoveryDetails) : null
-        );
-      }
-    }
-
-    // 5. Save scenario conditions
-    database
-      .prepare("DELETE FROM scenario_conditions WHERE snapshot_id = ?")
-      .run(currentScenario.id);
-
-    if (currentScenario.conditions.length > 0) {
-      const condStmt = database.prepare(`
-        INSERT INTO scenario_conditions (
-          condition_id, snapshot_id, condition_type, description, mechanical_effect
-        ) VALUES (?, ?, ?, ?, ?)
-      `);
-
-      for (const cond of currentScenario.conditions) {
-        const condId = `${currentScenario.id}-cond-${cond.type}-${Date.now()}`;
-        condStmt.run(
-          condId,
-          currentScenario.id,
-          cond.type,
-          cond.description,
-          cond.mechanicalEffect || null
-        );
+          .run(JSON.stringify(mergedChanges), finalScenarioId);
       }
     }
 
@@ -284,8 +222,8 @@ export const createScenarioCheckpoint = async (
     const playerStmt = database.prepare(`
       INSERT OR REPLACE INTO characters (
         character_id, name, attributes, status, inventory, skills, notes,
-        is_npc, updated_at
-      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP)
+        is_npc, user_id, updated_at
+      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, (SELECT user_id FROM characters WHERE character_id = ?), CURRENT_TIMESTAMP)
     `);
 
     playerStmt.run(
@@ -296,7 +234,8 @@ export const createScenarioCheckpoint = async (
       JSON.stringify(gameState.playerCharacter.inventory),
       JSON.stringify(gameState.playerCharacter.skills),
       gameState.playerCharacter.notes || null,
-      0 // is_npc = false
+      0, // is_npc = false
+      gameState.playerCharacter.id
     );
 
     // 7. Save all NPC characters (with full NPCProfile attributes if available)
@@ -304,9 +243,9 @@ export const createScenarioCheckpoint = async (
       const npcStmt = database.prepare(`
         INSERT OR REPLACE INTO characters (
           character_id, name, attributes, status, inventory, skills, notes,
-          is_npc, occupation, age, appearance, personality, background, goals, secrets,
+          is_npc, occupation, age, appearance, personality, background, goals, secrets, current_location,
           updated_at
-        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP)
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP)
       `);
 
       for (const npc of gameState.npcCharacters) {
@@ -328,7 +267,8 @@ export const createScenarioCheckpoint = async (
           npcWithExtras.personality || null,
           npcWithExtras.background || null,
           npcWithExtras.goals ? JSON.stringify(npcWithExtras.goals) : null,
-          npcWithExtras.secrets ? JSON.stringify(npcWithExtras.secrets) : null
+          npcWithExtras.secrets ? JSON.stringify(npcWithExtras.secrets) : null,
+          npcWithExtras.currentLocation || null
         );
         
         // Save NPC clues if available
@@ -402,7 +342,6 @@ export const createScenarioCheckpoint = async (
           gameState.sessionId,
           new Date().toISOString(),
           JSON.stringify({
-            scenarioId: currentScenario.scenarioId,
             snapshotId: currentScenario.id,
             change: change,
           }),
@@ -419,9 +358,66 @@ export const createScenarioCheckpoint = async (
 };
 
 /**
- * Update current scenario with automatic checkpoint creation.
+ * Merge scenario state from checkpoint into current scenario snapshot
+ * Preserves global state (player, discoveredClues, etc.) while restoring scenario-specific state
+ */
+const mergeScenarioStateFromCheckpoint = (
+  originalSnapshot: ScenarioSnapshot,
+  checkpointScenario: ScenarioSnapshot | null,
+  currentGameState: GameState
+): ScenarioSnapshot => {
+  if (!checkpointScenario) {
+    return originalSnapshot;
+  }
+
+  // Create a merged snapshot
+  const mergedSnapshot: ScenarioSnapshot = {
+    ...originalSnapshot,
+    // Restore clue discovery states from checkpoint
+    clues: originalSnapshot.clues.map(originalClue => {
+      const checkpointClue = checkpointScenario.clues.find(c => c.id === originalClue.id);
+      if (checkpointClue) {
+        // Restore discovery state and details from checkpoint
+        return {
+          ...originalClue,
+          discovered: checkpointClue.discovered,
+          discoveryDetails: checkpointClue.discoveryDetails,
+        };
+      }
+      return originalClue;
+    }),
+    // Restore permanent changes from checkpoint (merge with original to avoid duplicates)
+    permanentChanges: [
+      ...(originalSnapshot.permanentChanges || []),
+      ...(checkpointScenario.permanentChanges || []).filter(
+        change => !originalSnapshot.permanentChanges?.includes(change)
+      )
+    ],
+    // Merge events (combine original and checkpoint events, avoiding duplicates)
+    events: [
+      ...(originalSnapshot.events || []),
+      ...(checkpointScenario.events || []).filter(e => !originalSnapshot.events?.includes(e))
+    ],
+    // Merge conditions (prefer checkpoint conditions if they exist and are different)
+    conditions: checkpointScenario.conditions.length > 0 
+      ? checkpointScenario.conditions 
+      : originalSnapshot.conditions,
+    // Merge exits (prefer checkpoint exits if they exist)
+    exits: checkpointScenario.exits && checkpointScenario.exits.length > 0
+      ? checkpointScenario.exits
+      : originalSnapshot.exits,
+    // Keep checkpoint keeper notes if they exist
+    keeperNotes: checkpointScenario.keeperNotes || originalSnapshot.keeperNotes,
+  };
+
+  return mergedSnapshot;
+};
+
+/**
+ * Update current scenario with automatic checkpoint creation and restoration.
  * This should be called instead of directly calling GameStateManager.updateCurrentScenario
- * to ensure the current state is persisted before switching scenarios.
+ * to ensure the current state is persisted before switching scenarios, and to restore
+ * previous state when returning to a previously visited scenario.
  */
 export const updateCurrentScenarioWithCheckpoint = async (
   manager: GameStateManager,
@@ -437,8 +433,38 @@ export const updateCurrentScenarioWithCheckpoint = async (
     await createScenarioCheckpoint(gameStateBefore, db);
   }
 
-  // Now update the scenario in memory
-  manager.updateCurrentScenario(scenarioData);
+  // Check if we're returning to a previously visited scenario
+  // If so, restore its state from the latest checkpoint
+  const latestCheckpoint = db.findLatestCheckpointForScenario(
+    gameStateBefore.sessionId,
+    scenarioData.scenarioName,
+    scenarioData.snapshot.id  // Also match by snapshot ID for more reliable matching
+  );
+
+  let targetSnapshot = scenarioData.snapshot;
+
+  if (latestCheckpoint && latestCheckpoint.gameState?.currentScenario) {
+    console.log(`📂 [Checkpoint] 发现场景 "${scenarioData.scenarioName}" 的历史 checkpoint，正在恢复场景状态...`);
+    
+    // Merge scenario state from checkpoint while preserving current global state
+    targetSnapshot = mergeScenarioStateFromCheckpoint(
+      scenarioData.snapshot,  // Original scenario from database
+      latestCheckpoint.gameState.currentScenario,  // Scenario state from checkpoint
+      gameStateBefore  // Current game state (to preserve global state)
+    );
+
+    console.log(`✓ [Checkpoint] 场景状态已恢复：`);
+    console.log(`   - 已发现线索: ${targetSnapshot.clues.filter(c => c.discovered).length}/${targetSnapshot.clues.length}`);
+    console.log(`   - 永久性变化: ${targetSnapshot.permanentChanges?.length || 0} 项`);
+  } else {
+    console.log(`📂 [Checkpoint] 场景 "${scenarioData.scenarioName}" 首次访问，使用原始状态`);
+  }
+
+  // Now update the scenario in memory with merged state
+  manager.updateCurrentScenario({
+    snapshot: targetSnapshot,
+    scenarioName: scenarioData.scenarioName
+  });
   
   // 设置场景转换标志，让 Keeper Agent 知道发生了场景变化
   manager.setTransitionFlag(true);

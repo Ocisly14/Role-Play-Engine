@@ -1,0 +1,76 @@
+[
+    {
+      "name": "Solomon",
+      "occupation": "Occult book collector",
+      "age": 50,
+      "gender": "male",
+      "appearance": "A middle-aged man with a thoughtful demeanor, often appearing absorbed in books and research rather than his surroundings.",
+      "personality": "Curious about the occult, secretive, cautious, and financially impulsive when it comes to mystical knowledge. Generally reserved and unwilling to share sensitive information.",
+      "background": "Solomon is considered a descendant of Native Americans under the 'one-drop blood rule.' From a young age, he showed a strong interest in mysticism and appeared to possess some magical aptitude, particularly precognitive abilities. However, as he grew older, these abilities faded and are currently dormant. He habitually spends any money he has on books related to the occult, though he often ends up being deceived by unreliable sellers. Before coming to Cassandra, Solomon purchased a myth-related book connected to real occult lore—'The King in Yellow'—which contains no spells but is tied to genuine mythos knowledge.",
+      "goals": [
+        "Acquire rare occult knowledge",
+        "Avoid attracting dangerous attention from mythos forces"
+      ],
+      "secrets": [
+        "He owns a copy of 'The King in Yellow' and refuses to let anyone else read it or even learn its title"
+      ],
+      "attributes": {
+        "STR": 45,
+        "CON": 50,
+        "DEX": 50,
+        "APP": 45,
+        "POW": 65,
+        "SIZ": 55,
+        "INT": 70,
+        "EDU": 60
+      },
+      "status": {
+        "hp": 10,
+        "maxHp": 10,
+        "sanity": 65,
+        "maxSanity": 65,
+        "luck": 60,
+        "mp": 13,
+        "conditions": []
+      },
+      "skills": {
+        "Occult": 65,
+        "Library Use": 60,
+        "History": 45,
+        "Psychology": 40
+      },
+      "inventory": [
+        "A copy of 'The King in Yellow'"
+      ],
+      "clues": [
+        {
+          "clueText": "Solomon regularly reads 'The King in Yellow' but no longer loses sanity from it.",
+          "category": "knowledge",
+          "difficulty": "regular",
+          "relatedTo": ["The King in Yellow"]
+        },
+        {
+          "clueText": "He insists that 'The King in Yellow' will not appear or have influence in Cassandra.",
+          "category": "knowledge",
+          "difficulty": "hard",
+          "relatedTo": ["Cassandra"]
+        },
+        {
+          "clueText": "Solomon will not allow investigators to read the book or even know its name.",
+          "category": "secret",
+          "difficulty": "regular",
+          "relatedTo": ["The King in Yellow"]
+        }
+      ],
+      "relationships": [
+        {
+          "targetName": "Robin",
+          "relationshipType": "friend",
+          "attitude": 70,
+          "description": "Close personal friend",
+          "history": "Robin visited Solomon in Cassandra and helped care for another friend during that time."
+        }
+      ],
+      "notes": "Solomon's former precognitive abilities are currently sealed and inactive."
+    }
+  ]

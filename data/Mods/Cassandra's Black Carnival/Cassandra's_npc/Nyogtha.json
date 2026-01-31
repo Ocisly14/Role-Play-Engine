@@ -1,0 +1,61 @@
+[
+    {
+      "name": "Nyogtha",
+      "occupation": "Great Old One / Subterranean Cosmic Entity",
+      "appearance": "An immense, amorphous mass of cold, gelatinous substance, riddled with countless minute fissures. Its body constantly seeps and writhes, as if the earth itself has been torn open and given malignant life. Any creature near it suffers innumerable tiny wounds as its substance shifts and presses against reality.",
+      "background": "Nyogtha is an ancient subterranean cosmic entity, classified among the Great Old Ones or beings of comparable magnitude. It does not fully exist within the material world, manifesting only through powerful rituals or dimensional breaches. Wherever Nyogtha appears, the ground collapses inward, forming a gateway to a lightless abyss beneath the earth.",
+      "goals": [
+        "Drag living beings into the subterranean abyss",
+        "Expand its influence beneath the earth"
+      ],
+      "secrets": [
+        "Nyogtha cannot be destroyed; when reduced to zero HP it is banished from the material world",
+        "Its alien substance negates conventional concepts of injury and damage"
+      ],
+      "attributes": {
+        "STR": 425,
+        "CON": 200,
+        "DEX": 100,
+        "APP": 0,
+        "POW": 140,
+        "SIZ": 400,
+        "INT": 100,
+        "EDU": 0
+      },
+      "status": {
+        "hp": 60,
+        "maxHp": 60,
+        "sanity": 0,
+        "maxSanity": 0,
+        "luck": 0,
+        "mp": 28,
+        "conditions": []
+      },
+      "skills": {
+        "Fighting": 100
+      },
+      "inventory": [],
+      "clues": [
+        {
+          "clueText": "Nyogtha's substance renders the first 10 points of damage it would take each round completely ineffective.",
+          "category": "knowledge",
+          "difficulty": "hard",
+          "relatedTo": ["Occult Lore", "Great Old Ones"]
+        },
+        {
+          "clueText": "When Nyogtha is reduced to zero HP, it is not slain but banished from the material world.",
+          "category": "knowledge",
+          "difficulty": "hard",
+          "relatedTo": ["Banishment Rituals"]
+        },
+        {
+          "clueText": "Any hostile manifestation by Nyogtha automatically inflicts damage on all enemies within 10 yards.",
+          "category": "observation",
+          "difficulty": "regular",
+          "relatedTo": ["Combat Encounters"]
+        }
+      ],
+      "relationships": [],
+      "notes": "Damage Bonus: Not applicable. Nyogtha’s composition makes damage bonus irrelevant.\n\nCombat: If Nyogtha intends to cause harm, all enemies within 10 yards automatically suffer 1D10 damage per round from countless tiny wounds. Nyogtha may also seize a victim and drag them into the subterranean abyss unless repelled or banished by appropriate magic. Nyogtha attacks once per round.\n\nArmor: Each round, the first 10 points of damage inflicted by any means are ignored. When reduced to 0 HP, Nyogtha is banished from the material world rather than destroyed.\n\nSpells: All Call and Contact spells; Create Gate.\n\nSanity Loss: Seeing Nyogtha causes a SAN loss of 1D6/1D20.\n\nNyogtha’s attributes exceed normal Call of Cthulhu limits and represent a cosmic-scale entity rather than a conventional opponent."
+    }
+  ]

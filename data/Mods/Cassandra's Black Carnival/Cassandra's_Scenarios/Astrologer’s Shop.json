@@ -1,0 +1,38 @@
+[
+    {
+      "name": "Astrologer’s Shop",
+      "description": "A small, obscure astrologer’s shop in Cassandra, known locally for fortune-telling and esoteric services. The shop contributes to the town’s atmosphere of superstition and unease, though concrete information about its inner workings is limited.",
+      "snapshot": {
+        "name": "Astrologer’s Shop",
+        "location": "A small storefront in Cassandra",
+        "description": "The shop is modest in size and filled with occult decorations typical of a fortune-teller’s business. Incense, charts, and esoteric symbols dominate the space, creating an unsettling yet ambiguous environment. The location hints at deeper occult currents in the town, but little is openly revealed.",
+        "characters": [],
+        "clues": [],
+        "conditions": [
+          {
+            "type": "lighting",
+            "description": "Dim, atmospheric interior lighting, dominated by candles or low lamps.",
+            "mechanicalEffect": ""
+          },
+          {
+            "type": "smell",
+            "description": "The lingering scent of incense and herbs.",
+            "mechanicalEffect": ""
+          }
+        ],
+        "events": [],
+        "exits": [
+          {
+            "direction": "Front door",
+            "destination": "Street outside the shop",
+            "description": "The main entrance leading back to the surrounding streets of Cassandra.",
+            "condition": ""
+          }
+        ],
+        "keeperNotes": "The astrologer’s shop serves primarily as atmospheric reinforcement of Cassandra’s occult undercurrents. If needed, the Keeper may use it as a place to foreshadow mythos elements or redirect investigators toward other locations, but no fixed revelations are required here.",
+        "permanentChanges": []
+      },
+      "tags": ["occult", "astrology", "fortune-telling", "atmospheric"],
+      "connections": []
+    }
+  ]

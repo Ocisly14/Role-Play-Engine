@@ -77,6 +77,17 @@ export interface Models {
 }
 
 /**
+ * Image inputs for vision-capable models.
+ * - Use `url` for public URLs or prebuilt data URLs.
+ * - Use `base64Data` (with optional mimeType) for raw base64 payloads that need data URL wrapping.
+ * - Use `data` when you have a Buffer and want the helper to handle encoding.
+ */
+export type ImageInput =
+  | { url: string }
+  | { base64Data: string; mimeType?: string }
+  | { data: Buffer; mimeType?: string };
+
+/**
  * Generation options for AI calls
  */
 export interface GenerationOptions {
@@ -85,4 +96,8 @@ export interface GenerationOptions {
   modelClass?: ModelClass;
   customSystemPrompt?: string;
   maxRetries?: number;
+  images?: ImageInput[];
+  onToken?: (token: string) => void;
+  userId?: string;
+  operation?: string;
 }

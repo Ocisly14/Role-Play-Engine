@@ -1,0 +1,88 @@
+[
+    {
+    "name": "Unknown",
+    "occupation": "Traveler / Investigator (unofficial)",
+    "age": 19,
+    "gender": "female",
+      "appearance": "A young woman of indeterminate background, travel-worn and tired, with signs of long-distance journeying and emotional strain.",
+      "personality": "Determined, anxious, and persistent; driven by guilt and familial attachment, yet unaware of the true cosmic horror surrounding her investigation.",
+      "background": "An unnamed Black woman, approximately 19 years old, who died on December 22, 2002 at the Paradil Hotel. She was not a local resident of Cassandra, so no missing person report exists. She came to Cassandra to investigate the disappearance of her younger sister, who ran away from home. Evidence indicates that her sister's last known destination was Cassandra. Her body was discovered in a cold storage unit in the hotel kitchen's basement, completely naked and encased in a large block of ice. The body showed no wounds. She had no identification documents and no relatives could be found. The case was quickly shelved and became a cold case.",
+      "goals": [
+        "Find her missing sister",
+        "Uncover the truth behind her sister’s disappearance"
+      ],
+      "secrets": [
+        "Her sister had already been sacrificed to Shub-Niggurath a year earlier",
+        "Her own death at the Paradil Hotel was never properly identified or investigated"
+      ],
+      "attributes": {
+        "STR": 45,
+        "CON": 55,
+        "DEX": 50,
+        "APP": 50,
+        "POW": 60,
+        "SIZ": 50,
+        "INT": 65,
+        "EDU": 60
+      },
+      "status": {
+        "hp": 10,
+        "maxHp": 10,
+        "sanity": 60,
+        "maxSanity": 60,
+        "luck": 55,
+        "mp": 12,
+        "conditions": ["deceased"]
+      },
+      "skills": {
+        "Spot Hidden": 50,
+        "Library Use": 40,
+        "Psychology": 35,
+        "Persuade": 40
+      },
+    "inventory": [
+      {
+        "name": "Travel bag",
+        "properties": {
+          "note": "Personal belongings, location unknown after death."
+        }
+      },
+      {
+        "name": "Notes about her sister's disappearance",
+        "properties": {
+          "note": "Evidence that her sister's last known destination was Cassandra."
+        }
+      },
+      {
+        "name": "Hotel receipt from Paradil Hotel",
+        "properties": {
+          "note": "Proof of her stay at the hotel before her death."
+        }
+      }
+    ],
+      "clues": [
+        {
+          "clueText": "Her sister’s final journey ended in Cassandra and she was never seen again afterward.",
+          "category": "knowledge",
+          "difficulty": "regular",
+          "relatedTo": ["Cassandra", "Shub-Niggurath Cult"]
+        },
+        {
+          "clueText": "Her sister had already been sacrificed to Shub-Niggurath one year before her arrival.",
+          "category": "secret",
+          "difficulty": "hard",
+          "relatedTo": ["Shub-Niggurath"]
+        }
+      ],
+      "relationships": [
+        {
+          "targetName": "Unknown Sister",
+          "relationshipType": "family",
+          "attitude": 80,
+          "description": "Her younger sister who ran away from home and disappeared.",
+          "history": "She traveled to Cassandra solely to find her sister, unaware that the cult had already sacrificed her."
+        }
+      ],
+      "notes": "Victim of the 2002 Paradil Hotel murder case (the old case). Age approximately 19, Black female. Body found on December 22, 2002 in a cold storage unit in the hotel kitchen's basement, completely naked and encased in a large block of ice. No wounds on the body. No identification documents found, no relatives could be located. The case was quickly shelved and became a cold case. Bruno persistently investigated this case despite lack of support from superiors. The murderer was Martin Gin (Ghost Hand). Jenny Florence (Lucifero) witnessed the murder but did not reveal it until planning to tell Bruno in 2003."
+    }
+  ]

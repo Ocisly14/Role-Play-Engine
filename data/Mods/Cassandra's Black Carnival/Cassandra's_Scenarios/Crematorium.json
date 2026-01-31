@@ -1,0 +1,75 @@
+[
+    {
+      "name": "Crematorium",
+      "description": "The Crematorium is the official facility in Cassandra responsible for the final disposal of bodies. It is normally inaccessible to the public and becomes relevant due to suspicious hospital records regarding the rapid transfer of THE SECOND CASE VICTIM's body.",
+      "snapshot": {
+        "name": "Crematorium",
+        "location": "Cassandra Crematorium",
+        "description": "According to hospital archives, Lucifero's body (THE SECOND CASE VICTIM, 21-year-old, December 22, 2003) was transferred here shortly before investigators arrived at the hospital. The facility represents the final documented destination of the SECOND CASE corpse, but what actually occurred inside remains unclear. IMPORTANT: The FIRST CASE victim (19-year-old girl, frozen in ice, December 22, 2002) was NEVER brought here—her body was found in the hotel freezer and handled differently.",
+        "characters": [],
+        "clues": [
+          {
+            "clueText": "Hospital records state that Lucifero's body (THE SECOND CASE VICTIM, 21-year-old, December 22, 2003) was transported to the crematorium shortly before the investigators' arrival.",
+            "category": "document",
+            "difficulty": "automatic",
+            "location": "Hospital transfer records referencing the crematorium",
+            "discoveryMethod": "",
+            "reveals": [
+              "The crematorium is the last known official destination of the SECOND CASE body",
+              "The transfer happened with unusual speed",
+              "This is DISTINCT from the first case—the first victim was never brought here"
+            ]
+          },
+          {
+            "clueText": "The transfer record lists Vincent Galenus as the person who personally delivered the SECOND CASE victim's body. No records exist for the FIRST CASE victim (19-year-old, December 22, 2002).",
+            "category": "document",
+            "difficulty": "automatic",
+            "location": "Hospital morgue and transport logs",
+            "discoveryMethod": "",
+            "reveals": [
+              "Vincent Galenus is directly involved in the handling of the SECOND CASE body",
+              "The crematorium visit may be connected to evidence concealment",
+              "Two separate cases with different body disposal methods",
+              "The first case victim was never processed through this facility"
+            ]
+          },
+          {
+            "clueText": "No records exist here for the FIRST CASE victim (19-year-old Black girl, frozen in ice, December 22, 2002). Her body was found in the hotel freezer and never brought to the hospital or crematorium.",
+            "category": "document",
+            "difficulty": "regular",
+            "location": "Crematorium records",
+            "discoveryMethod": "Library Use or investigation",
+            "reveals": [
+              "The first case victim was disposed of differently",
+              "Two separate murder cases, one year apart",
+              "The first case was deliberately suppressed and not properly processed"
+            ]
+          }
+        ],
+        "conditions": [],
+        "events": [
+          "Investigators learn that the SECOND CASE victim's body (Lucifero, 21-year-old, December 22, 2003) has already been sent to the crematorium",
+          "The FIRST CASE victim (19-year-old, December 22, 2002) was never processed here",
+          "DANGER: The crematorium is inhabited by dangerous and terrible creatures (Shoggoths). Investigators must investigate quietly—any noise will alert them. When they awaken, investigators will face misfortune or even death. Investigators must leave very quickly; any attempt to fight will result in death"
+        ],
+        "exits": [],
+        "keeperNotes": "The crematorium handles THE SECOND CASE VICTIM (Lucifero, 21-year-old, December 22, 2003). CRITICALLY DISTINCT: The FIRST CASE victim (19-year-old girl, frozen in ice, December 22, 2002) was NEVER brought here—her body was found in the hotel freezer and handled separately. Emphasize that these are TWO SEPARATE CASES with TWO DIFFERENT BODIES, exactly one year apart. The crematorium is introduced through documentation rather than direct on-site description. The Keeper may choose whether the second case body was truly destroyed or if the transfer record conceals further wrongdoing.",
+        "permanentChanges": [
+          "Once the transfer is confirmed, the SECOND CASE body can no longer be found at the hospital"
+        ]
+      },
+      "tags": [
+        "crematorium",
+        "evidence-disposal",
+        "investigation",
+        "restricted-access"
+      ],
+      "connections": [
+        {
+          "scenarioName": "Stars Hospital",
+          "relationshipType": "prerequisite",
+          "description": "Hospital records reveal that the SECOND CASE victim's body was sent to the crematorium."
+        }
+      ]
+    }
+  ]

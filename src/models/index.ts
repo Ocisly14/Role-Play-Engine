@@ -15,3 +15,11 @@ export {
   getModelSettings,
   createChatModel,
 } from "./generator.js";
+
+export {
+  configureTokenUsageDatabase,
+  runWithTokenContext,
+  recordTokenUsage,
+  getTokenContext,
+  getCurrentUsageTotals,
+} from "./tokenUsage.js";

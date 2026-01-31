@@ -1,0 +1,46 @@
+[
+    {
+      "name": "Deep Forest",
+      "description": "A remote and dangerous part of the forest beyond the abandoned logging camp, where something inhuman now lurks, driven by endless hunger.",
+      "snapshot": {
+        "name": "Deep Forest",
+        "location": "Deep within the forest beyond the abandoned logging camp",
+        "description": "Far from the logging camp, deep within the forest, something unnatural resides. The forest here is isolated and conceals a horrific presence, making it extremely dangerous for anyone who ventures too far from the path.",
+        "characters": [
+          {
+            "name": "Gof'en-Hupadego-Shub-Nicholas",
+            "role": "Monster / Former human",
+            "status": "Alive",
+            "location": "Deep within the forest",
+            "notes": "Once a wealthy businessman, now transformed into an inhuman abomination, endlessly hungry."
+          }
+        ],
+        "clues": [],
+        "conditions": [],
+        "events": [],
+        "exits": [
+          {
+            "direction": "South",
+            "destination": "Abandoned Logging Camp",
+            "description": "The path leading back toward the abandoned logging camp"
+          }
+        ],
+        "keeperNotes": "This location represents a major point of danger and potential confrontation. The creature here should feel overwhelming and alien, emphasizing the consequences of forbidden rituals and transformations.",
+        "permanentChanges": []
+      },
+      "tags": [
+        "forest",
+        "mythos",
+        "monster",
+        "final-threat",
+        "dangerous"
+      ],
+      "connections": [
+        {
+          "scenarioName": "Abandoned Logging Camp",
+          "relationshipType": "prerequisite",
+          "description": "The deep forest can be reached by following the abandoned path from the logging camp"
+        }
+      ]
+    }
+  ]

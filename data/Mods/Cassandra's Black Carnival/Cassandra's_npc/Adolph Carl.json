@@ -1,0 +1,143 @@
+[
+  {
+    "name": "Adolph Carl",
+    "occupation": "Information broker / upper-class intermediary",
+    "age": 35,
+    "gender": "male",
+    "appearance": "A tall, slender man with a pale complexion and an unhealthy yet dangerous aura. He is meticulous about his appearance, always dressed in elegant, well-tailored formal wear. He keeps expensive incense and has refined taste in perfumes.",
+    "personality": "Calm, elegant, manipulative, highly self-controlled. Enjoys being in control, skilled at concealing emotions and lying when necessary. Cynical toward high society yet obsessed with being accepted by it. Opportunistic and untrustworthy.",
+    "background": "Born into a once-wealthy family descended from minor nobility. Studied economics and electronics in university, believing in the future of information industries. His parents were ruined by an Egyptian businessman (an avatar of Nyarlathotep), whose organization seized their assets. Adolph was sent to the United States before completing his studies; his parents later committed suicide in France. While his family was collapsing, he secretly witnessed Anatole murder Nancy's mother in his family home in France (1988). After the rise of the internet, he used his computer skills and gathered secrets to infiltrate elite circles again. In 2002, he came to Cassandra following some leads and obtained the Qianwei System from the basement of the missing businessmen's villa. He stayed in Cassandra to control this powerful surveillance system.",
+    "goals": [
+      "Return permanently to high society",
+      "Take back everything that was taken from his family",
+      "Take revenge on those who destroyed his family",
+      "Maintain control through information"
+    ],
+    "secrets": [
+      "He secretly witnessed Anatole murder Nancy's mother in his family home in France (1988)",
+      "He possesses and controls the Qianwei System, obtained from the missing businessmen's villa in 2002",
+      "He survives among elites by blackmail and sensitive information",
+      "He knows the deceased (Lucifero) was a contact person he had met recently",
+      "He knows the deceased (Lucifero) had a note in her pocket listing 'good deeds' done by Adolph and others",
+      "He knows Red Stone Lady (Mrs. Barklyite) works under the alias 'Susan' as a nurse at Star Hospital (though unaware that after Dec 26, 'Susan' is actually Shandra)",
+      "He knows the secrets of the hardware store and the code phrase for buying guns",
+      "He sent Anatole a note arranging a meeting at the Reindeer Bar, but Lucifero's murder and Lux's appearance prevented the meeting",
+      "He does not know about Simon/Anatole's dual personality",
+      "He has been monitoring Anatole/Simon's activities since recognizing him in Cassandra"
+    ],
+    "attributes": {
+      "STR": 45,
+      "CON": 50,
+      "DEX": 55,
+      "APP": 70,
+      "POW": 65,
+      "SIZ": 55,
+      "INT": 80,
+      "EDU": 75
+    },
+    "status": {
+      "hp": 10,
+      "maxHp": 10,
+      "sanity": 65,
+      "maxSanity": 99,
+      "luck": 60,
+      "mp": 13,
+      "conditions": []
+    },
+    "skills": {
+      "Psychology": 70,
+      "Charm": 60,
+      "Fast Talk": 65,
+      "Persuade": 55,
+      "Computer Use": 60,
+      "Credit Rating": 70,
+      "Spot Hidden": 50
+    },
+    "inventory": [
+      {
+        "name": "Fine formal suits (wardrobe)",
+        "properties": {
+          "note": "Keeps many well-preserved, tailored formal outfits."
+        }
+      },
+      {
+        "name": "Expensive incense (in wardrobe)",
+        "properties": {
+          "note": "Always stores pricey incense; skilled with perfume pairings."
+        }
+      },
+      {
+        "name": "Qianwei System (the real one, stolen/obtained)",
+        "properties": {
+          "clue": "The real Qianwei System was built by Anatole and was taken away by Adolph from the missing businessmen's villa basement in 2002."
+        }
+      },
+      {
+        "name": "Heavy walking cane",
+        "properties": {
+          "note": "A heavy cane that can be used as a weapon. Adolph often carries it with him."
+        }
+      }
+    ],
+    "clues": [
+      {
+        "clueText": "Knows extensive hidden information about influential figures in Cassandra.",
+        "category": "knowledge",
+        "difficulty": "hard",
+        "relatedTo": [
+          "Cassandra",
+          "Qianwei System"
+        ]
+      },
+      {
+        "clueText": "Witnessed Anatole murder Nancy's mother in his family home in France (1988).",
+        "category": "secret",
+        "difficulty": "extreme",
+        "relatedTo": [
+          "Anatole",
+          "Nancy Charlotte",
+          "France",
+          "1988 Paris train incident"
+        ]
+      },
+      {
+        "clueText": "The deceased (Lucifero) was a contact person he knew, and she had a note listing Adolph's 'good deeds'.",
+        "category": "knowledge",
+        "difficulty": "hard",
+        "relatedTo": [
+          "Jenny Florence (Lucifero)",
+          "Reindeer Bar murder (2003)"
+        ]
+      },
+      {
+        "clueText": "Knows Red Stone Lady works as 'Susan' at Star Hospital, and knows the hardware store's secrets and gun-buying code.",
+        "category": "knowledge",
+        "difficulty": "regular",
+        "relatedTo": [
+          "Mrs. Barklyite (Red Stone Lady)",
+          "Harrison Lockheed",
+          "Star Hospital"
+        ]
+      },
+      {
+        "clueText": "The 'acquaintance' he met at the Reindeer Bar was Lux Lynch, though he doesn't know why Lux was there.",
+        "category": "observation",
+        "difficulty": "hard",
+        "relatedTo": [
+          "Lux Lynch",
+          "Reindeer Bar murder (2003)"
+        ]
+      }
+    ],
+    "relationships": [
+      {
+        "targetName": "Anatole",
+        "relationshipType": "neutral",
+        "attitude": -20,
+        "description": "Unaware that Adolph once witnessed his crime.",
+        "history": "Their paths crossed unknowingly during a murder in France."
+      }
+    ],
+    "notes": "Adolph frequently manipulates investigators to gather information while revealing only what benefits him. He may betray allies at any moment if it secures his safety or advantage."
+  }
+]

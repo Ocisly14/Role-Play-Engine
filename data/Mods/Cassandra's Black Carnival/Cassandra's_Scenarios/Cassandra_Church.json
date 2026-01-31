@@ -1,0 +1,115 @@
+[
+    {
+      "name": "Cassandra Church",
+      "description": "A small yet solemn church in Cassandra, built in a cruciform layout. Despite its modest size, the building carries an oppressive and unsettling atmosphere. The church is normally closed, quiet, and seemingly abandoned, but hides profound secrets beneath its sacred façade.",
+      "snapshot": {
+        "name": "The Church",
+        "location": "A cruciform church with a tall main door, central nave, altar, bell tower, and stained-glass windows",
+        "description": "The church features a four-meter-high main entrance that inspires awe before entry. Inside, the building forms a cross shape. At the deepest end stands a crucifix of Jesus Christ. Behind it rises a bell tower, backed by a massive stained-glass window. Above the tower is a domed ceiling that deepens the sense of depth and silence. The interior is usually quiet, with faint echoes and an unnatural stillness.",
+        "characters": [
+          {
+            "name": "Constantine Frollo",
+            "role": "Priest / Cultist",
+            "status": "Alive",
+            "location": "Inside the church, usually near the altar or reading the Bible",
+            "notes": "Appears calm and devout, but is secretly influenced by Atlach-Nacha. He claims to have been in the church at specific times and subtly pressures investigators to leave, stating the church is closed."
+          },
+          {
+            "name": "Three Mysterious Visitors",
+            "role": "Unknown / Suspected cult associates",
+            "status": "Alive",
+            "location": "Church entrance",
+            "notes": "Dressed similarly to Ben. They are dismissed by Constantine, who refuses to explain their relationship to him."
+          }
+        ],
+        "clues": [
+          {
+            "clueText": "The church bell shows signs of incorrect time despite being crafted by a master clockmaker.",
+            "category": "observation",
+            "difficulty": "regular",
+            "location": "Bell tower",
+            "discoveryMethod": "Observation or Mechanical Repair",
+            "reveals": ["Time irregularities in Cassandra", "Possible tampering or supernatural influence"]
+          },
+          {
+            "clueText": "Hidden trapdoor concealed within the church, behind signs of spider activity.",
+            "category": "environment",
+            "difficulty": "hard",
+            "location": "Church interior",
+            "discoveryMethod": "Spot Hidden",
+            "reveals": ["Access to hidden structures beneath the church"]
+          },
+          {
+            "clueText": "A massive web woven by Atlach-Nacha connects the church to the Dreamlands.",
+            "category": "knowledge",
+            "difficulty": "extreme",
+            "location": "Behind the hidden door",
+            "discoveryMethod": "Cthulhu Mythos",
+            "reveals": ["Atlach-Nacha’s influence", "Cold spiders entering the real world"]
+          },
+          {
+            "clueText": "Black spiders are occasionally seen roaming the church after certain investigations.",
+            "category": "observation",
+            "difficulty": "automatic",
+            "location": "Church interior",
+            "reveals": ["Connection between the church and spider-related infections"]
+          }
+        ],
+        "conditions": [
+          {
+            "type": "lighting",
+            "description": "Dim natural light filtered through stained-glass windows.",
+            "mechanicalEffect": "Perception-based rolls may be harder."
+          },
+          {
+            "type": "sound",
+            "description": "Oppressive silence, broken only by faint echoes.",
+            "mechanicalEffect": "Heightens tension and unease."
+          }
+        ],
+        "events": [
+          "First meeting with Constantine",
+          "Discovery of time discrepancy in the bell",
+          "Appearance of black spiders after hospital investigation",
+          "Potential discovery of hidden door and underground secrets",
+          "Three mysterious men in black clothing may suddenly visit the church. If investigators ask other passersby about them, they will say they haven't seen them. If investigators ask Marks White at the clock shop, he will tell them he saw three men in black clothes heading toward the train station platform"
+        ],
+        "exits": [
+          {
+            "direction": "Main Entrance",
+            "destination": "Cassandra Town",
+            "description": "Large front doors of the church"
+          },
+          {
+            "direction": "Hidden Trapdoor",
+            "destination": "Underground Casino / Web Chamber",
+            "description": "Concealed passage behind the church interior",
+            "condition": "hidden"
+          }
+        ],
+        "keeperNotes": "The church is a key nexus of Atlach-Nacha’s influence. Constantine believes himself a priest but is deeply compromised. The church evolves based on investigator progress, especially after hospital revelations.",
+        "permanentChanges": [
+          "Once discovered, spider presence in the church becomes persistent",
+          "The hidden trapdoor remains known to investigators"
+        ]
+      },
+      "tags": ["church", "cult", "Atlach-Nacha", "hidden passage", "time anomaly"],
+      "connections": [
+        {
+          "scenarioName": "Hospital",
+          "relationshipType": "prerequisite",
+          "description": "Discovering the truth about Constantine and spiders in the hospital enables further developments in the church."
+        },
+        {
+          "scenarioName": "Underground Casino",
+          "relationshipType": "leads_to",
+          "description": "A hidden passage beneath the church connects to the underground casino."
+        },
+        {
+          "scenarioName": "Clock Shop",
+          "relationshipType": "alternate",
+          "description": "The clockmaker Marks White provides insight into the abnormal bell mechanism."
+        }
+      ]
+    }
+  ]

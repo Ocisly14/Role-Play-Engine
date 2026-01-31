@@ -185,139 +185,107 @@ This is designed as an introductory investigation to introduce players to the un
     if (markdownFiles.length > 0) {
       logger.info("Found markdown files - creating mock scenario data for testing");
       
-      // Create a mock scenario for testing
+      // Create a mock scenario for testing (single snapshot design - no timeline)
       const mockScenarioData = {
         name: "The Old Library Investigation",
         description: "The investigators are called to investigate mysterious disappearances at the Miskatonic University Library.",
-        timeline: [
-          {
-            timePoint: {
-              timestamp: "Day 1 - Morning (9:00 AM)",
-              notes: "Normal library operations"
+        snapshot: {
+          location: "Miskatonic University Library - Main Reading Room",
+          description: "The library appears normal during the day. Librarian Eleanor Ward is at her desk, looking nervous and tired. Strange phenomena have been reported.",
+          characters: [
+            {
+              name: "Eleanor Ward",
+              role: "Head Librarian",
+              status: "distressed",
+              location: "Front desk",
+              notes: "Obviously nervous about recent events"
             },
-            location: "Miskatonic University Library - Main Reading Room",
-            description: "The library appears normal during the day. Librarian Eleanor Ward is at her desk, looking nervous and tired.",
-            characters: [
-              {
-                name: "Eleanor Ward",
-                role: "Head Librarian",
-                status: "distressed",
-                location: "Front desk",
-                notes: "Obviously nervous about recent events"
-              },
-              {
-                name: "Dr. Marcus Thompson", 
-                role: "Professor",
-                status: "researching",
-                location: "Reading room",
-                notes: "Professor of Ancient History"
-              }
-            ],
-            clues: [
-              {
-                clueText: "Missing person reports on Eleanor's desk",
-                category: "document",
-                difficulty: "regular",
-                location: "Librarian's desk",
-                discoveryMethod: "Spot Hidden",
-                reveals: ["Names of missing students", "Timeline of disappearances"]
-              },
-              {
-                clueText: "Strange symbols carved into reading table",
-                category: "physical",
-                difficulty: "hard", 
-                location: "Reading room table",
-                discoveryMethod: "Library Use or Archaeology",
-                reveals: ["Connection to ancient texts"]
-              }
-            ],
-            conditions: [
-              {
-                type: "lighting",
-                description: "Bright fluorescent lighting, slightly flickering near east wall",
-                mechanicalEffect: "No penalty to vision"
-              },
-              {
-                type: "temperature",
-                description: "Noticeably colder than normal",
-                mechanicalEffect: "Suggests supernatural presence"
-              }
-            ],
-            events: [
-              "Eleanor approaches investigators nervously",
-              "Dr. Thompson leaves abruptly when questioned"
-            ],
-            exits: [
-              {
-                direction: "East", 
-                destination: "Restricted stacks",
-                description: "Locked door to special collections"
-              },
-              {
-                direction: "West",
-                destination: "Main entrance",
-                description: "Public entrance/exit"
-              }
-            ]
-          },
-          {
-            timePoint: {
-              timestamp: "Day 1 - Evening (10:00 PM)",
-              notes: "After hours - supernatural activity increases"
+            {
+              name: "Dr. Marcus Thompson", 
+              role: "Professor",
+              status: "researching",
+              location: "Reading room",
+              notes: "Professor of Ancient History"
             },
-            location: "Miskatonic University Library - After Hours", 
-            description: "The library takes on a sinister atmosphere after closing. Strange phenomena begin to manifest.",
-            characters: [
-              {
-                name: "Night security guard",
-                role: "Security",
-                status: "asleep",
-                location: "Security desk",
-                notes: "Unnaturally deep sleep"
-              }
-            ],
-            clues: [
-              {
-                clueText: "Security logs showing missing time gaps",
-                category: "document",
-                difficulty: "regular",
-                location: "Security office",
-                discoveryMethod: "Search",
-                reveals: ["Pattern of supernatural interference"]
-              },
-              {
-                clueText: "Ancient book left open to specific page",
-                category: "knowledge",
-                difficulty: "extreme",
-                location: "Reading room",
-                discoveryMethod: "Occult",
-                reveals: ["Summoning ritual details"]
-              }
-            ],
-            conditions: [
-              {
-                type: "lighting",
-                description: "Dim emergency lighting only",
-                mechanicalEffect: "-2 penalty to Spot Hidden"
-              },
-              {
-                type: "temperature", 
-                description: "Frigid near eastern section",
-                mechanicalEffect: "CON check or suffer cold effects"
-              },
-              {
-                type: "sound",
-                description: "Scratching sounds from within the walls",
-                mechanicalEffect: "Sanity check (0/1d3)"
-              }
-            ],
-            events: [
-              "Books fall from shelves without cause",
-              "Shadowy figures glimpsed in peripheral vision",
-              "Possible encounter with otherworldly entity"
-            ]
-          }
-        ],
+            {
+              name: "Night security guard",
+              role: "Security",
+              status: "on duty",
+              location: "Security desk",
+              notes: "Often found asleep during shifts"
+            }
+          ],
+          clues: [
+            {
+              clueText: "Missing person reports on Eleanor's desk",
+              category: "document",
+              difficulty: "regular",
+              location: "Librarian's desk",
+              discoveryMethod: "Spot Hidden",
+              reveals: ["Names of missing students", "Timeline of disappearances"]
+            },
+            {
+              clueText: "Strange symbols carved into reading table",
+              category: "physical",
+              difficulty: "hard", 
+              location: "Reading room table",
+              discoveryMethod: "Library Use or Archaeology",
+              reveals: ["Connection to ancient texts"]
+            },
+            {
+              clueText: "Security logs showing missing time gaps",
+              category: "document",
+              difficulty: "regular",
+              location: "Security office",
+              discoveryMethod: "Search",
+              reveals: ["Pattern of supernatural interference"]
+            },
+            {
+              clueText: "Ancient book left open to specific page",
+              category: "knowledge",
+              difficulty: "extreme",
+              location: "Reading room",
+              discoveryMethod: "Occult",
+              reveals: ["Summoning ritual details"]
+            }
+          ],
+          conditions: [
+            {
+              type: "lighting",
+              description: "Bright fluorescent lighting, slightly flickering near east wall",
+              mechanicalEffect: "No penalty to vision normally, -2 penalty at night"
+            },
+            {
+              type: "temperature",
+              description: "Noticeably colder than normal, especially near eastern section",
+              mechanicalEffect: "Suggests supernatural presence, CON check if staying long"
+            },
+            {
+              type: "sound",
+              description: "Scratching sounds occasionally heard from within the walls",
+              mechanicalEffect: "Sanity check (0/1d3) if encountered at night"
+            }
+          ],
+          events: [
+            "Eleanor approaches investigators nervously",
+            "Dr. Thompson leaves abruptly when questioned",
+            "Books fall from shelves without cause (at night)",
+            "Shadowy figures glimpsed in peripheral vision",
+            "Possible encounter with otherworldly entity"
+          ],
+          exits: [
+            {
+              direction: "East", 
+              destination: "Restricted stacks",
+              description: "Locked door to special collections"
+            },
+            {
+              direction: "West",
+              destination: "Main entrance",
+              description: "Public entrance/exit"
+            }
+          ]
+        },
         tags: ["investigation", "university", "supernatural", "library"],
         connections: [
           {
@@ -336,27 +304,24 @@ This is designed as an introductory investigation to introduce players to the un
       logger.info(`📜 Scenario: ${scenarioProfile.name}`);
       logger.info(`🆔 ID: ${scenarioProfile.id}`);
       logger.info(`📝 Description: ${scenarioProfile.description.substring(0, 100)}...`);
-      logger.info(`⏰ Timeline: ${scenarioProfile.timeline.length} time points`);
 
-      // Display timeline information
-      logger.section("Timeline Analysis");
-      for (const snapshot of scenarioProfile.timeline) {
-        logger.info(`🕒 ${snapshot.timePoint.timestamp}`);
-        logger.debug(`   📍 Location: ${snapshot.location}`);
-        logger.debug(`   👥 Characters: ${snapshot.characters.length}`);
-        logger.debug(`   🔍 Clues: ${snapshot.clues.length}`);
-        logger.debug(`   🌤️  Conditions: ${snapshot.conditions.length}`);
-        logger.debug(`   📅 Events: ${snapshot.events.length}`);
-        
-        // Show character details
-        if (snapshot.characters.length > 0) {
-          logger.debug(`   Characters: ${snapshot.characters.map(c => `${c.name} (${c.role}, ${c.status})`).join(', ')}`);
-        }
-        
-        // Show clue summary
-        if (snapshot.clues.length > 0) {
-          logger.debug(`   Clues: ${snapshot.clues.map(c => `${c.category}/${c.difficulty}: ${c.clueText.substring(0, 40)}...`).join('; ')}`);
-        }
+      // Display scenario snapshot information
+      logger.section("Scenario Snapshot Analysis");
+      const snapshot = scenarioProfile.snapshot;
+      logger.info(`📍 Location: ${snapshot.location}`);
+      logger.debug(`   👥 Characters: ${snapshot.characters.length}`);
+      logger.debug(`   🔍 Clues: ${snapshot.clues.length}`);
+      logger.debug(`   🌤️  Conditions: ${snapshot.conditions.length}`);
+      logger.debug(`   📅 Events: ${snapshot.events.length}`);
+      
+      // Show character details
+      if (snapshot.characters.length > 0) {
+        logger.debug(`   Characters: ${snapshot.characters.map(c => `${c.name} (${c.role}, ${c.status})`).join(', ')}`);
+      }
+      
+      // Show clue summary
+      if (snapshot.clues.length > 0) {
+        logger.debug(`   Clues: ${snapshot.clues.map(c => `${c.category}/${c.difficulty}: ${c.clueText.substring(0, 40)}...`).join('; ')}`);
       }
 
       // Test database operations
@@ -402,7 +367,7 @@ This is designed as an introductory investigation to introduce players to the un
         tags: ["library"]
       });
       
-      logger.success(`✓ Search results: ${searchResult.scenarios.length} scenarios, ${searchResult.snapshots.length} total snapshots`);
+      logger.success(`✓ Search results: ${searchResult.scenarios.length} scenarios found`);
     }
 
     // Try to load from actual documents if they exist
@@ -416,7 +381,7 @@ This is designed as an introductory investigation to introduce players to the un
         logger.success(`Successfully processed ${loadedScenarios.length} scenarios from documents`);
         
         for (const scenario of loadedScenarios) {
-          logger.info(`📜 ${scenario.name}: ${scenario.timeline.length} time points`);
+          logger.info(`📜 ${scenario.name} - Location: ${scenario.snapshot.location}`);
         }
       }
     }

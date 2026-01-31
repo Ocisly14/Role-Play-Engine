@@ -1,7 +1,7 @@
 import { OpenAIEmbeddings } from "@langchain/openai";
 import { GoogleGenerativeAIEmbeddings } from "@langchain/google-genai";
 import { getModelSettings } from "../models/generator.js";
-import { ModelClass, ModelProviderName } from "../models/types.js";
+import { ModelClass, ModelProviderName, type EmbeddingModelSettings } from "../models/types.js";
 import { LocalEmbeddingManager } from "./localEmbeddingManager.js";
 
 export class EmbeddingClient {
@@ -23,7 +23,7 @@ export class EmbeddingClient {
       console.warn("[RAG] Local embedding failed, falling back to remote provider", error);
     }
 
-    const settings = getModelSettings(this.provider, ModelClass.EMBEDDING);
+    const settings = getModelSettings(this.provider, ModelClass.EMBEDDING) as EmbeddingModelSettings | undefined;
 
     if (this.provider === ModelProviderName.GOOGLE) {
       const model = new GoogleGenerativeAIEmbeddings({

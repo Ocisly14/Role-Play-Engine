@@ -1,0 +1,67 @@
+[
+    {
+      "name": "Abandoned Logging Camp",
+      "description": "An abandoned logging camp located at the end of Sunset Boulevard, bordering a dense and ominous forest. The site is rusted, unused, and clearly never fully operational, suggesting it served purposes beyond legitimate logging.",
+      "snapshot": {
+        "name": "Abandoned Logging Camp",
+        "location": "End of Sunset Boulevard, at the edge of a dense forest",
+        "description": "The logging camp is completely deserted. Most machinery is heavily rusted, and several machines appear never to have been truly used. A small work shed contains a fireplace with burned ashes. Within the ashes, investigators can faintly make out a piece of paper bearing a strange symbol identical to one found in Padrich’s blueprints. A narrow, overgrown road leads from the camp into the forest, which is thick, dark, and extremely easy to become lost in.",
+        "characters": [],
+        "clues": [
+          {
+            "clueText": "A partially burned piece of paper bearing a symbol associated with a dark fertility deity, matching a symbol found in Padrich’s blueprints.",
+            "category": "physical",
+            "difficulty": "automatic",
+            "location": "Fireplace ashes inside the work shed",
+            "discoveryMethod": "Visual inspection; Cthulhu Mythos skill to identify",
+            "reveals": [
+              "The involvement of a cult worshipping a dark god associated with harvest and fertility",
+              "A connection between the logging camp and Padrich’s research or plans"
+            ]
+          }
+        ],
+        "conditions": [
+          {
+            "type": "environment",
+            "description": "The surrounding forest is extremely dense and dark; entering it recklessly risks becoming hopelessly lost.",
+            "mechanicalEffect": "Navigation or survival rolls may be required; failure may result in investigators becoming lost"
+          }
+        ],
+        "events": [],
+        "exits": [
+          {
+            "direction": "South",
+            "destination": "Sunset Boulevard",
+            "description": "The road back toward Cassandra town and the cemetery"
+          },
+          {
+            "direction": "North",
+            "destination": "Deep Forest",
+            "description": "A narrow, abandoned path leading into the forest",
+            "condition": "dangerous"
+          }
+        ],
+        "keeperNotes": "The logging camp was never a normal industrial site; it likely served as a front or staging area for cult-related activities. The forest beyond the camp should feel threatening and overwhelming, discouraging casual exploration.",
+        "permanentChanges": []
+      },
+      "tags": [
+        "abandoned",
+        "cult",
+        "forest",
+        "ritual-site",
+        "mythos"
+      ],
+      "connections": [
+        {
+          "scenarioName": "Cassandra Cemetery",
+          "relationshipType": "prerequisite",
+          "description": "Investigators pass the cemetery on the way to the logging camp, and clues there may foreshadow what is found here"
+        },
+        {
+          "scenarioName": "Deep Forest",
+          "relationshipType": "leads_to",
+          "description": "A hidden path from the logging camp leads deeper into the forest where a transformed abomination lurks"
+        }
+      ]
+    }
+  ]

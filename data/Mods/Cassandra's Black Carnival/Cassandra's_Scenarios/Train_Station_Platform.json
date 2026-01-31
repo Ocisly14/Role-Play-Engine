@@ -1,0 +1,75 @@
+[
+    {
+      "name": "Train Station Platform",
+      "description": "A quiet, sparsely used train station platform in Cassandra. At first glance it appears abandoned and insignificant, but it conceals a major criminal secret beneath its mundane exterior.",
+      "snapshot": {
+        "name": "Platform",
+        "location": "Cassandra Train Station Platform",
+        "description": "The platform is largely empty, with only a single elderly man present. Trains arrive infrequently, and there is little activity. Despite its ordinary appearance, the platform is in fact a disguised access point to a hidden dock area connected to organized crime operations.",
+        "characters": [
+          {
+            "name": "Harlan",
+            "role": "Witness / Gatekeeper",
+            "status": "Alive",
+            "location": "On the train station platform",
+            "notes": "An elderly man who appears to be the only regular presence on the platform. He lies when questioned about seeing three people near the church and conceals knowledge of the platform’s true purpose."
+          }
+        ],
+        "clues": [
+          {
+            "clueText": "Harlan claims he saw nothing when asked about the three people connected to the church.",
+            "category": "witness",
+            "difficulty": "regular",
+            "location": "Conversation on the platform",
+            "discoveryMethod": "Psychology or Insight during questioning",
+            "reveals": ["Harlan is lying and hiding information about the platform"]
+          },
+          {
+            "clueText": "The platform is actually a disguised dock, accessible through Harlan’s work hut.",
+            "category": "environment",
+            "difficulty": "hard",
+            "location": "Harlan’s work hut near the platform",
+            "discoveryMethod": "Spot Hidden or careful exploration",
+            "reveals": ["A hidden dock leading to the Mafia headquarters", "The platform’s connection to organized crime"]
+          }
+        ],
+        "conditions": [
+          {
+            "type": "sound",
+            "description": "Occasional distant train noises and otherwise oppressive silence.",
+            "mechanicalEffect": ""
+          }
+        ],
+        "events": [
+          "Investigators question Harlan about recent suspicious individuals.",
+          "Discovery of the hidden access to the dock through the work hut."
+        ],
+        "exits": [
+          {
+            "direction": "Rail line",
+            "destination": "Outside Cassandra / Other towns",
+            "description": "The tracks leading away from Cassandra.",
+            "condition": ""
+          },
+          {
+            "direction": "Work hut",
+            "destination": "Hidden dock and Mafia headquarters",
+            "description": "A seemingly ordinary work hut that conceals a secret passage.",
+            "condition": "hidden"
+          }
+        ],
+        "keeperNotes": "Harlan should initially appear harmless and unimportant. His lies are a key signal that the platform is more than it seems. The revelation that the platform is actually a dock can significantly escalate the investigation and introduce direct contact with the Mafia.",
+        "permanentChanges": [
+          "Once discovered, the secret of the platform being a dock cannot be concealed again."
+        ]
+      },
+      "tags": ["train station", "platform", "deception", "mafia", "hidden location"],
+      "connections": [
+        {
+          "scenarioName": "Mafia Headquarters",
+          "relationshipType": "leads_to",
+          "description": "The hidden dock beneath the platform provides direct access to the Mafia’s base of operations."
+        }
+      ]
+    }
+  ]

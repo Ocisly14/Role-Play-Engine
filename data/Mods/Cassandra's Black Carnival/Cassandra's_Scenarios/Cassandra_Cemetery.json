@@ -1,0 +1,79 @@
+[
+    {
+      "name": "Cassandra Cemetery",
+      "description": "A quiet and desolate cemetery located on the outskirts of Cassandra, along the road leading to the logging camp. It appears ordinary at first glance, but hides disturbing signs of unnatural events connected to the spreading horror in the region.",
+      "snapshot": {
+        "name": "The Cemetery",
+        "location": "On the roadside between Cassandra town and the logging camp",
+        "description": "The cemetery lies not far from the abandoned logging camp. Rows of old tombstones stand in uneven lines, many weathered and neglected. The atmosphere is cold and still, with little sign of recent visitors. Among the graves is the resting place of Vincent’s wife—except her grave is empty, leaving behind an unsettling sense that something is profoundly wrong.",
+        "characters": [],
+        "clues": [
+          {
+            "clueText": "Vincent’s wife’s grave is completely empty.",
+            "category": "physical",
+            "difficulty": "automatic",
+            "location": "Vincent’s wife’s grave",
+            "reveals": ["Her body is missing", "Possible grave desecration or unnatural interference"]
+          },
+          {
+            "clueText": "The cemetery shows little sign of recent maintenance or visitation.",
+            "category": "observation",
+            "difficulty": "regular",
+            "location": "Throughout the cemetery",
+            "discoveryMethod": "Spot Hidden",
+            "reveals": ["The cemetery is rarely visited", "Events here may go unnoticed for long periods"]
+          }
+        ],
+        "conditions": [
+          {
+            "type": "lighting",
+            "description": "Natural outdoor lighting, often gloomy due to cloud cover or surrounding trees.",
+            "mechanicalEffect": ""
+          },
+          {
+            "type": "sound",
+            "description": "Near-total silence, occasionally broken by wind or distant forest sounds.",
+            "mechanicalEffect": ""
+          },
+          {
+            "type": "temperature",
+            "description": "Noticeably colder than the surrounding town.",
+            "mechanicalEffect": ""
+          }
+        ],
+        "events": [
+          "Discovery of the empty grave",
+          "Uneasy realization that bodies may be taken rather than buried"
+        ],
+        "exits": [
+          {
+            "direction": "Main Path",
+            "destination": "Road to Cassandra Town",
+            "description": "A narrow path leading back toward town"
+          },
+          {
+            "direction": "Forest Road",
+            "destination": "Logging Camp",
+            "description": "The road continues deeper toward the abandoned logging camp"
+          }
+        ],
+        "keeperNotes": "The empty grave is a subtle but powerful clue suggesting corpse removal or resurrection-related activity. This scene works best as a quiet, unsettling discovery rather than an action-heavy encounter.",
+        "permanentChanges": [
+          "Once discovered, the empty grave confirms that the dead are not resting peacefully in Cassandra"
+        ]
+      },
+      "tags": ["cemetery", "empty grave", "unease", "death"],
+      "connections": [
+        {
+          "scenarioName": "Logging Camp",
+          "relationshipType": "leads_to",
+          "description": "The cemetery lies along the route to the abandoned logging camp."
+        },
+        {
+          "scenarioName": "Vincent",
+          "relationshipType": "concurrent",
+          "description": "The empty grave directly relates to Vincent’s personal tragedy and motivations."
+        }
+      ]
+    }
+  ]

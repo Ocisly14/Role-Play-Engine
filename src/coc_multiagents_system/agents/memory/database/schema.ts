@@ -7,6 +7,7 @@ import Database from "better-sqlite3";
 type DBInstance = InstanceType<typeof Database>;
 import path from "path";
 import { fileURLToPath } from "url";
+import { randomUUID } from "crypto";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -122,13 +123,28 @@ export class CoCDatabase {
                 error_message TEXT,
                 started_at DATETIME NOT NULL,
                 completed_at DATETIME,
-                created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+                created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+                
+                -- Simulation flag
+                is_simulated INTEGER DEFAULT 0 -- 0 for real user input, 1 for simulated query
             );
             CREATE INDEX IF NOT EXISTS idx_turns_session ON game_turns(session_id);
             CREATE INDEX IF NOT EXISTS idx_turns_status ON game_turns(status);
             CREATE INDEX IF NOT EXISTS idx_turns_number ON game_turns(session_id, turn_number);
             CREATE INDEX IF NOT EXISTS idx_turns_started ON game_turns(started_at);
         `);
+
+    // Backfill game_day and game_time columns for existing tables
+    try {
+      if (!this.hasColumn("game_turns", "game_day")) {
+        this.db.exec(`ALTER TABLE game_turns ADD COLUMN game_day INTEGER;`);
+      }
+      if (!this.hasColumn("game_turns", "game_time")) {
+        this.db.exec(`ALTER TABLE game_turns ADD COLUMN game_time TEXT;`);
+      }
+    } catch {
+      // ignore if columns already exist or cannot be added
+    }
 
     // Game events table
     this.db.exec(`
@@ -197,11 +213,13 @@ export class CoCDatabase {
                 is_npc INTEGER DEFAULT 0, -- 0 for PC, 1 for NPC
                 occupation TEXT,
                 age INTEGER,
+                gender TEXT,
                 appearance TEXT,
                 personality TEXT,
                 background TEXT,
                 goals TEXT, -- JSON array
                 secrets TEXT, -- JSON array
+                current_location TEXT, -- NPC的当前地点
                 updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
             );
             CREATE INDEX IF NOT EXISTS idx_characters_name ON characters(name);
@@ -213,11 +231,15 @@ export class CoCDatabase {
       "is_npc INTEGER DEFAULT 0",
       "occupation TEXT",
       "age INTEGER",
+      "gender TEXT",
       "appearance TEXT",
       "personality TEXT",
       "background TEXT",
       "goals TEXT",
       "secrets TEXT",
+      "current_location TEXT",
+      "instantiated_from TEXT",      // Knowledge holder ID for DynamicWorld NPCs
+      "inherits_knowledge TEXT",     // JSON array of truth event IDs
     ];
     for (const column of columnsToAdd) {
       try {
@@ -314,46 +336,120 @@ export class CoCDatabase {
       // ignore if column already exists or cannot be added
     }
 
-    // Scenario snapshots table - for timeline data
+    // Backfill map_image_path column if table already existed
+    try {
+      if (!this.hasColumn("scenarios", "map_image_path")) {
+        console.log('Adding map_image_path column to scenarios table...');
+        this.db.exec(
+          "ALTER TABLE scenarios ADD COLUMN map_image_path TEXT;"
+        );
+        console.log('✓ map_image_path column added');
+      }
+    } catch {
+      // ignore if column already exists or cannot be added
+    }
+
+    // Backfill source_place_id column if table already existed
+    try {
+      if (!this.hasColumn("scenarios", "source_place_id")) {
+        console.log('Adding source_place_id column to scenarios table...');
+        this.db.exec(
+          "ALTER TABLE scenarios ADD COLUMN source_place_id TEXT;"
+        );
+        console.log('✓ source_place_id column added');
+      }
+    } catch {
+      // ignore if column already exists or cannot be added
+    }
+
+    // Scenario snapshots table - each scenario can have multiple snapshots with time restrictions
     this.db.exec(`
             CREATE TABLE IF NOT EXISTS scenario_snapshots (
                 snapshot_id TEXT PRIMARY KEY,
                 scenario_id TEXT NOT NULL,
-                time_timestamp TEXT NOT NULL,
-                time_notes TEXT,
                 snapshot_name TEXT,
                 location TEXT NOT NULL,
                 description TEXT NOT NULL,
                 events TEXT, -- JSON array
                 exits TEXT, -- JSON array
                 keeper_notes TEXT,
+                time_restriction TEXT, -- Optional time restriction (e.g., "day1 evening", "day2 (after)")
+                show_map INTEGER, -- Whether to show map for this snapshot (1=true, 0=false)
                 created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
                 FOREIGN KEY (scenario_id) REFERENCES scenarios(scenario_id)
             );
             CREATE INDEX IF NOT EXISTS idx_snapshots_scenario ON scenario_snapshots(scenario_id);
         `);
     
-    // Add new quantifiable time fields
+    // Backfill time_restriction column if table already existed
     try {
-      if (!this.hasColumn("scenario_snapshots", "absolute_time")) {
-        this.db.exec("ALTER TABLE scenario_snapshots ADD COLUMN absolute_time TEXT;");
-      }
-      if (!this.hasColumn("scenario_snapshots", "game_day")) {
-        this.db.exec("ALTER TABLE scenario_snapshots ADD COLUMN game_day INTEGER;");
-      }
-      if (!this.hasColumn("scenario_snapshots", "time_of_day")) {
-        this.db.exec("ALTER TABLE scenario_snapshots ADD COLUMN time_of_day TEXT;");
+      if (!this.hasColumn("scenario_snapshots", "time_restriction")) {
+        this.db.exec(
+          "ALTER TABLE scenario_snapshots ADD COLUMN time_restriction TEXT;"
+        );
       }
     } catch {
-      // ignore if columns already exist or cannot be added
+      // ignore if column already exists or cannot be added
     }
-    
-    // Create indexes for new time fields for efficient querying
-    this.db.exec(`
-      CREATE INDEX IF NOT EXISTS idx_snapshots_absolute_time ON scenario_snapshots(absolute_time);
-      CREATE INDEX IF NOT EXISTS idx_snapshots_game_day ON scenario_snapshots(game_day);
-      CREATE INDEX IF NOT EXISTS idx_snapshots_time_of_day ON scenario_snapshots(time_of_day);
-    `);
+
+    try {
+      if (!this.hasColumn("scenario_snapshots", "show_map")) {
+        this.db.exec(
+          "ALTER TABLE scenario_snapshots ADD COLUMN show_map INTEGER;"
+        );
+      }
+    } catch {
+      // ignore if column already exists or cannot be added
+    }
+
+    // Backfill initial_snapshot column for world-builder modules
+    try {
+      if (!this.hasColumn("scenario_snapshots", "initial_snapshot")) {
+        this.db.exec(
+          "ALTER TABLE scenario_snapshots ADD COLUMN initial_snapshot INTEGER DEFAULT 0;"
+        );
+      }
+    } catch {
+      // ignore if column already exists or cannot be added
+    }
+
+    // Backfill game_time column for world-builder modules
+    try {
+      if (!this.hasColumn("scenario_snapshots", "game_time")) {
+        this.db.exec(
+          "ALTER TABLE scenario_snapshots ADD COLUMN game_time TEXT;"
+        );
+      }
+    } catch {
+      // ignore if column already exists or cannot be added
+    }
+
+    // Backfill is_dynamic_historical column for dynamic world historical snapshots
+    try {
+      if (!this.hasColumn("scenario_snapshots", "is_dynamic_historical")) {
+        this.db.exec(
+          "ALTER TABLE scenario_snapshots ADD COLUMN is_dynamic_historical INTEGER DEFAULT 0;"
+        );
+        this.db.exec(
+          "CREATE INDEX IF NOT EXISTS idx_snapshots_dynamic_historical ON scenario_snapshots(scenario_id, is_dynamic_historical, game_time);"
+        );
+      }
+    } catch {
+      // ignore if column already exists or cannot be added
+    }
+
+    // Backfill scene_image_path for World-Builder snapshots (module-relative path, e.g. Sceneimage/xxx.png)
+    try {
+      if (!this.hasColumn("scenario_snapshots", "scene_image_path")) {
+        this.db.exec(
+          "ALTER TABLE scenario_snapshots ADD COLUMN scene_image_path TEXT;"
+        );
+      }
+    } catch {
+      // ignore if column already exists or cannot be added
+    }
+
+    // Legacy time fields removed - scenarios no longer have timeline/timepoint data
 
     // Scenario characters table - characters present in scenarios
     this.db.exec(`
@@ -443,11 +539,11 @@ export class CoCDatabase {
                 story_outline TEXT,
                 module_notes TEXT,
                 keeper_guidance TEXT,
-                story_hook TEXT,
                 module_limitations TEXT,
-                tags TEXT, -- JSON array
-                source TEXT,
-                created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+                initial_game_time TEXT,
+                initial_scenario_npcs TEXT, -- JSON array of NPC names
+                introduction TEXT,
+                tags TEXT -- JSON array
             );
         `);
     // Backfill for module_limitations if table already existed
@@ -455,6 +551,110 @@ export class CoCDatabase {
       if (!this.hasColumn("module_backgrounds", "module_limitations")) {
         this.db.exec(
           "ALTER TABLE module_backgrounds ADD COLUMN module_limitations TEXT;"
+        );
+      }
+    } catch {
+      // ignore if column already exists or cannot be added
+    }
+    // Backfill for initial_game_time if table already existed
+    try {
+      if (!this.hasColumn("module_backgrounds", "initial_game_time")) {
+        this.db.exec(
+          "ALTER TABLE module_backgrounds ADD COLUMN initial_game_time TEXT;"
+        );
+      }
+    } catch {
+      // ignore if column already exists or cannot be added
+    }
+    // Backfill for introduction if table already existed
+    try {
+      if (!this.hasColumn("module_backgrounds", "introduction")) {
+        this.db.exec(
+          "ALTER TABLE module_backgrounds ADD COLUMN introduction TEXT;"
+        );
+      }
+    } catch {
+      // ignore if column already exists or cannot be added
+    }
+    // Backfill for initial_scenario_npcs if table already existed
+    try {
+      if (!this.hasColumn("module_backgrounds", "initial_scenario_npcs")) {
+        this.db.exec(
+          "ALTER TABLE module_backgrounds ADD COLUMN initial_scenario_npcs TEXT;"
+        );
+      }
+    } catch {
+      // ignore if column already exists or cannot be added
+    }
+
+    // Backfill for world builder generated content
+    try {
+      if (!this.hasColumn("module_backgrounds", "macro_scene_structure")) {
+        this.db.exec(
+          "ALTER TABLE module_backgrounds ADD COLUMN macro_scene_structure TEXT;"
+        );
+      }
+    } catch {
+      // ignore if column already exists or cannot be added
+    }
+    try {
+      if (!this.hasColumn("module_backgrounds", "truth_timeline")) {
+        this.db.exec(
+          "ALTER TABLE module_backgrounds ADD COLUMN truth_timeline TEXT;"
+        );
+      }
+    } catch {
+      // ignore if column already exists or cannot be added
+    }
+    try {
+      if (!this.hasColumn("module_backgrounds", "knowledge_matrix")) {
+        this.db.exec(
+          "ALTER TABLE module_backgrounds ADD COLUMN knowledge_matrix TEXT;"
+        );
+      }
+    } catch {
+      // ignore if column already exists or cannot be added
+    }
+    try {
+      if (!this.hasColumn("module_backgrounds", "red_herrings")) {
+        this.db.exec(
+          "ALTER TABLE module_backgrounds ADD COLUMN red_herrings TEXT;"
+        );
+      }
+    } catch {
+      // ignore if column already exists or cannot be added
+    }
+    try {
+      if (!this.hasColumn("module_backgrounds", "historical_mythos")) {
+        this.db.exec(
+          "ALTER TABLE module_backgrounds ADD COLUMN historical_mythos TEXT;"
+        );
+      }
+    } catch {
+      // ignore if column already exists or cannot be added
+    }
+    try {
+      if (!this.hasColumn("module_backgrounds", "global_trigger")) {
+        this.db.exec(
+          "ALTER TABLE module_backgrounds ADD COLUMN global_trigger TEXT;"
+        );
+      }
+    } catch {
+      // ignore if column already exists or cannot be added
+    }
+    try {
+      if (!this.hasColumn("module_backgrounds", "end_state_definition")) {
+        this.db.exec(
+          "ALTER TABLE module_backgrounds ADD COLUMN end_state_definition TEXT;"
+        );
+      }
+    } catch {
+      // ignore if column already exists or cannot be added
+    }
+    try {
+      if (!this.hasColumn("module_backgrounds", "macro_map_path")) {
+        this.db.exec(
+          "ALTER TABLE module_backgrounds ADD COLUMN macro_map_path TEXT;"
         );
       }
     } catch {
@@ -470,15 +670,14 @@ export class CoCDatabase {
                 story_outline,
                 module_notes,
                 keeper_guidance,
-                story_hook,
                 module_limitations,
                 content='module_backgrounds',
                 content_rowid='rowid'
             );
 
             CREATE TRIGGER IF NOT EXISTS module_backgrounds_fts_insert AFTER INSERT ON module_backgrounds BEGIN
-                INSERT INTO module_backgrounds_fts(module_id, title, background, story_outline, module_notes, keeper_guidance, story_hook, module_limitations)
-                VALUES (new.module_id, new.title, new.background, new.story_outline, new.module_notes, new.keeper_guidance, new.story_hook, new.module_limitations);
+                INSERT INTO module_backgrounds_fts(module_id, title, background, story_outline, module_notes, keeper_guidance, module_limitations)
+                VALUES (new.module_id, new.title, new.background, new.story_outline, new.module_notes, new.keeper_guidance, new.module_limitations);
             END;
 
             CREATE TRIGGER IF NOT EXISTS module_backgrounds_fts_delete AFTER DELETE ON module_backgrounds BEGIN
@@ -487,10 +686,265 @@ export class CoCDatabase {
 
             CREATE TRIGGER IF NOT EXISTS module_backgrounds_fts_update AFTER UPDATE ON module_backgrounds BEGIN
                 DELETE FROM module_backgrounds_fts WHERE module_id = old.module_id;
-                INSERT INTO module_backgrounds_fts(module_id, title, background, story_outline, module_notes, keeper_guidance, story_hook, module_limitations)
-                VALUES (new.module_id, new.title, new.background, new.story_outline, new.module_notes, new.keeper_guidance, new.story_hook, new.module_limitations);
+                INSERT INTO module_backgrounds_fts(module_id, title, background, story_outline, module_notes, keeper_guidance, module_limitations)
+                VALUES (new.module_id, new.title, new.background, new.story_outline, new.module_notes, new.keeper_guidance, new.module_limitations);
             END;
         `);
+
+    // Sessions table - tracks game sessions
+    this.db.exec(`
+            CREATE TABLE IF NOT EXISTS sessions (
+                session_id TEXT PRIMARY KEY,
+                mod_name TEXT,
+                character_id TEXT,
+                character_name TEXT,
+                started_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+                last_activity_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+                status TEXT NOT NULL DEFAULT 'active', -- 'active' | 'completed' | 'paused'
+                metadata TEXT, -- JSON blob for additional session data
+                created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+            );
+            CREATE INDEX IF NOT EXISTS idx_sessions_status ON sessions(status);
+            CREATE INDEX IF NOT EXISTS idx_sessions_started ON sessions(started_at);
+        `);
+    
+    // Add parent_session_id and sub_id columns if they don't exist (for existing databases)
+    // Must be done BEFORE creating indexes on these columns
+    try {
+      if (!this.hasColumn("sessions", "parent_session_id")) {
+        console.log('Adding parent_session_id column to sessions table...');
+        this.db.exec(`ALTER TABLE sessions ADD COLUMN parent_session_id TEXT`);
+        console.log('✓ parent_session_id column added');
+      }
+      if (!this.hasColumn("sessions", "sub_id")) {
+        console.log('Adding sub_id column to sessions table...');
+        this.db.exec(`ALTER TABLE sessions ADD COLUMN sub_id INTEGER`);
+        console.log('✓ sub_id column added');
+      }
+      
+      // Create indexes only after columns exist
+      // Note: SQLite doesn't support adding FOREIGN KEY constraints via ALTER TABLE
+      // So we skip the foreign key constraint for existing tables
+      if (this.hasColumn("sessions", "parent_session_id")) {
+        this.db.exec(`CREATE INDEX IF NOT EXISTS idx_sessions_parent ON sessions(parent_session_id)`);
+      }
+      if (this.hasColumn("sessions", "parent_session_id") && this.hasColumn("sessions", "sub_id")) {
+        this.db.exec(`CREATE INDEX IF NOT EXISTS idx_sessions_parent_sub ON sessions(parent_session_id, sub_id)`);
+      }
+    } catch (error) {
+      console.warn("Failed to add parent_session_id/sub_id columns (may already exist):", error);
+    }
+
+    // ==================== USER AUTHENTICATION TABLES ====================
+
+    // Users table
+    this.db.exec(`
+            CREATE TABLE IF NOT EXISTS users (
+                id TEXT PRIMARY KEY,
+                email TEXT UNIQUE NOT NULL,
+                username TEXT UNIQUE,
+                password_hash TEXT NOT NULL,
+                is_email_verified INTEGER DEFAULT 0,
+                is_active INTEGER DEFAULT 1,
+                role TEXT DEFAULT 'USER', -- 'USER' | 'ADMIN' | 'MODERATOR'
+                created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+                updated_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+                last_login_at DATETIME
+            );
+            CREATE INDEX IF NOT EXISTS idx_users_email ON users(email);
+            CREATE INDEX IF NOT EXISTS idx_users_username ON users(username);
+        `);
+
+    // User token usage table (per request tracking)
+    this.db.exec(`
+            CREATE TABLE IF NOT EXISTS user_token_usage (
+                id TEXT PRIMARY KEY,
+                user_id TEXT NOT NULL,
+                provider TEXT NOT NULL,
+                model_name TEXT NOT NULL,
+                model_class TEXT NOT NULL,
+                operation TEXT NOT NULL,
+                input_tokens INTEGER NOT NULL DEFAULT 0,
+                output_tokens INTEGER NOT NULL DEFAULT 0,
+                total_tokens INTEGER NOT NULL DEFAULT 0,
+                created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+                FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+            );
+            CREATE INDEX IF NOT EXISTS idx_user_token_usage_user ON user_token_usage(user_id);
+            CREATE INDEX IF NOT EXISTS idx_user_token_usage_created ON user_token_usage(created_at);
+            CREATE INDEX IF NOT EXISTS idx_user_token_usage_model ON user_token_usage(model_name, model_class);
+        `);
+
+    // Player memos table
+    this.db.exec(`
+            CREATE TABLE IF NOT EXISTS player_memos (
+                memo_id TEXT PRIMARY KEY,
+                session_id TEXT NOT NULL,
+                user_id TEXT NOT NULL,
+                text TEXT NOT NULL,
+                game_day INTEGER,
+                game_time TEXT,
+                location TEXT,
+                created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+                updated_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+                FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+            );
+            CREATE INDEX IF NOT EXISTS idx_player_memos_session ON player_memos(session_id);
+            CREATE INDEX IF NOT EXISTS idx_player_memos_user ON player_memos(user_id);
+        `);
+    try {
+      if (!this.hasColumn("player_memos", "game_day")) {
+        this.db.exec("ALTER TABLE player_memos ADD COLUMN game_day INTEGER;");
+      }
+      if (!this.hasColumn("player_memos", "game_time")) {
+        this.db.exec("ALTER TABLE player_memos ADD COLUMN game_time TEXT;");
+      }
+      if (!this.hasColumn("player_memos", "location")) {
+        this.db.exec("ALTER TABLE player_memos ADD COLUMN location TEXT;");
+      }
+    } catch {
+      // ignore if column already exists
+    }
+
+    // User Sessions table (for tracking active logins)
+    this.db.exec(`
+            CREATE TABLE IF NOT EXISTS user_sessions (
+                id TEXT PRIMARY KEY,
+                user_id TEXT NOT NULL,
+                token TEXT UNIQUE NOT NULL,
+                ip_address TEXT,
+                user_agent TEXT,
+                expires_at DATETIME NOT NULL,
+                created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+                FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+            );
+            CREATE INDEX IF NOT EXISTS idx_user_sessions_user ON user_sessions(user_id);
+            CREATE INDEX IF NOT EXISTS idx_user_sessions_token ON user_sessions(token);
+        `);
+
+    // Email Verifications table
+    this.db.exec(`
+            CREATE TABLE IF NOT EXISTS email_verifications (
+                id TEXT PRIMARY KEY,
+                user_id TEXT NOT NULL,
+                token TEXT UNIQUE NOT NULL,
+                expires_at DATETIME NOT NULL,
+                is_used INTEGER DEFAULT 0,
+                created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+                FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+            );
+            CREATE INDEX IF NOT EXISTS idx_email_verifications_user ON email_verifications(user_id);
+            CREATE INDEX IF NOT EXISTS idx_email_verifications_token ON email_verifications(token);
+        `);
+
+    // Password Resets table
+    this.db.exec(`
+            CREATE TABLE IF NOT EXISTS password_resets (
+                id TEXT PRIMARY KEY,
+                user_id TEXT NOT NULL,
+                token TEXT UNIQUE NOT NULL,
+                expires_at DATETIME NOT NULL,
+                is_used INTEGER DEFAULT 0,
+                created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+                FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+            );
+            CREATE INDEX IF NOT EXISTS idx_password_resets_user ON password_resets(user_id);
+            CREATE INDEX IF NOT EXISTS idx_password_resets_token ON password_resets(token);
+        `);
+
+    // Refresh Tokens table (for "remember me" functionality)
+    this.db.exec(`
+            CREATE TABLE IF NOT EXISTS refresh_tokens (
+                id TEXT PRIMARY KEY,
+                user_id TEXT NOT NULL,
+                token TEXT UNIQUE NOT NULL,
+                expires_at DATETIME NOT NULL,
+                is_revoked INTEGER DEFAULT 0,
+                created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+                FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+            );
+            CREATE INDEX IF NOT EXISTS idx_refresh_tokens_user ON refresh_tokens(user_id);
+            CREATE INDEX IF NOT EXISTS idx_refresh_tokens_token ON refresh_tokens(token);
+        `);
+
+    // Referral Codes table
+    this.db.exec(`
+            CREATE TABLE IF NOT EXISTS referral_codes (
+                id TEXT PRIMARY KEY,
+                code TEXT UNIQUE NOT NULL,
+                is_used INTEGER DEFAULT 0,
+                used_by_user_id TEXT,
+                used_at DATETIME,
+                created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+                FOREIGN KEY (used_by_user_id) REFERENCES users(id) ON DELETE SET NULL
+            );
+            CREATE INDEX IF NOT EXISTS idx_referral_codes_code ON referral_codes(code);
+            CREATE INDEX IF NOT EXISTS idx_referral_codes_used ON referral_codes(is_used);
+        `);
+
+    // Initialize referral codes if table is empty
+    const codeCount = this.db.prepare('SELECT COUNT(*) as count FROM referral_codes').get() as { count: number };
+    if (codeCount.count === 0) {
+      // Fixed referral codes
+      const fixedCodes = ['BH6XK', 'ZLDM6', 'YIJNF'];
+      
+      const insertCode = this.db.prepare(`
+        INSERT INTO referral_codes (id, code) VALUES (?, ?)
+      `);
+      
+      for (const code of fixedCodes) {
+        insertCode.run(randomUUID(), code);
+      }
+    }
+
+    // Referral code usage tracking (permanent codes; each use recorded with email)
+    this.db.exec(`
+            CREATE TABLE IF NOT EXISTS referral_code_uses (
+                id TEXT PRIMARY KEY,
+                referral_code_id TEXT NOT NULL,
+                user_id TEXT NOT NULL,
+                email TEXT NOT NULL,
+                used_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+                FOREIGN KEY (referral_code_id) REFERENCES referral_codes(id) ON DELETE CASCADE,
+                FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+            );
+            CREATE INDEX IF NOT EXISTS idx_referral_code_uses_code ON referral_code_uses(referral_code_id);
+            CREATE INDEX IF NOT EXISTS idx_referral_code_uses_email ON referral_code_uses(email);
+        `);
+
+    // Backfill referral_code_uses from legacy is_used / used_by_user_id (one-time)
+    const usesCount = this.db.prepare('SELECT COUNT(*) as count FROM referral_code_uses').get() as { count: number };
+    if (usesCount.count === 0) {
+      const used = this.db.prepare(`
+        SELECT rc.id AS referral_code_id, rc.used_by_user_id, rc.used_at, u.email
+        FROM referral_codes rc
+        JOIN users u ON u.id = rc.used_by_user_id
+        WHERE rc.is_used = 1 AND rc.used_by_user_id IS NOT NULL
+      `).all() as { referral_code_id: string; used_by_user_id: string; used_at: string | null; email: string }[];
+      const insertUse = this.db.prepare(`
+        INSERT INTO referral_code_uses (id, referral_code_id, user_id, email, used_at)
+        VALUES (?, ?, ?, ?, ?)
+      `);
+      for (const row of used) {
+        insertUse.run(
+          randomUUID(),
+          row.referral_code_id,
+          row.used_by_user_id,
+          row.email,
+          row.used_at ?? new Date().toISOString(),
+        );
+      }
+    }
+
+    // Add user_id to characters table if it doesn't exist
+    try {
+      if (!this.hasColumn("characters", "user_id")) {
+        this.db.exec("ALTER TABLE characters ADD COLUMN user_id TEXT;");
+        this.db.exec("CREATE INDEX IF NOT EXISTS idx_characters_user ON characters(user_id);");
+      }
+    } catch {
+      // Column already exists, ignore
+    }
 
     // Game Checkpoints table - unified checkpoint storage for save/load functionality
     this.db.exec(`
@@ -515,6 +969,8 @@ export class CoCDatabase {
             CREATE INDEX IF NOT EXISTS idx_checkpoints_type ON game_checkpoints(checkpoint_type);
             CREATE INDEX IF NOT EXISTS idx_checkpoints_created ON game_checkpoints(created_at);
             CREATE INDEX IF NOT EXISTS idx_checkpoints_game_day ON game_checkpoints(game_day);
+            CREATE INDEX IF NOT EXISTS idx_checkpoints_scene_name ON game_checkpoints(current_scene_name);
+            CREATE INDEX IF NOT EXISTS idx_checkpoints_session_scene ON game_checkpoints(session_id, current_scene_name);
         `);
   }
 
@@ -526,10 +982,228 @@ export class CoCDatabase {
     this.db.close();
   }
 
+  /**
+   * Record per-user token usage for AI operations
+   */
+  recordUserTokenUsage(payload: {
+    userId: string;
+    provider: string;
+    modelName: string;
+    modelClass: string;
+    operation: string;
+    inputTokens: number;
+    outputTokens: number;
+    totalTokens: number;
+  }): void {
+    const stmt = this.db.prepare(`
+      INSERT INTO user_token_usage (
+        id, user_id, provider, model_name, model_class, operation,
+        input_tokens, output_tokens, total_tokens
+      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+    `);
+
+    stmt.run(
+      randomUUID(),
+      payload.userId,
+      payload.provider,
+      payload.modelName,
+      payload.modelClass,
+      payload.operation,
+      payload.inputTokens,
+      payload.outputTokens,
+      payload.totalTokens
+    );
+  }
+
   // Execute a transaction
   transaction<T>(fn: () => T): T {
     const txn = this.db.transaction(fn);
     return txn();
+  }
+
+  /**
+   * Ensure a session exists in the sessions table, create it if it doesn't
+   * This is required before inserting checkpoints due to foreign key constraint
+   */
+  private ensureSessionExists(
+    sessionId: string,
+    gameState: any,
+    parentSessionId?: string | null,
+    subId?: number | null
+  ): void {
+    const database = this.db;
+    
+    // Check if session exists
+    const checkStmt = database.prepare(`
+      SELECT session_id FROM sessions WHERE session_id = ?
+    `);
+    const existing = checkStmt.get(sessionId);
+    
+    if (!existing) {
+      // Create session if it doesn't exist
+      const hasParentSubColumns = this.hasColumn("sessions", "parent_session_id") && this.hasColumn("sessions", "sub_id");
+      
+      if (hasParentSubColumns && parentSessionId) {
+        const insertStmt = database.prepare(`
+          INSERT INTO sessions (
+            session_id, mod_name, character_id, character_name, status, parent_session_id, sub_id
+          ) VALUES (?, ?, ?, ?, 'active', ?, ?)
+        `);
+        
+        insertStmt.run(
+          sessionId,
+          null, // mod_name - can be extracted from gameState if available
+          gameState.playerCharacter?.id || null,
+          gameState.playerCharacter?.name || null,
+          parentSessionId,
+          subId || null
+        );
+      } else {
+        const insertStmt = database.prepare(`
+          INSERT INTO sessions (
+            session_id, mod_name, character_id, character_name, status
+          ) VALUES (?, ?, ?, ?, 'active')
+        `);
+        
+        insertStmt.run(
+          sessionId,
+          null, // mod_name - can be extracted from gameState if available
+          gameState.playerCharacter?.id || null,
+          gameState.playerCharacter?.name || null
+        );
+      }
+    } else {
+      // Update last_activity_at if session exists
+      const updateStmt = database.prepare(`
+        UPDATE sessions 
+        SET last_activity_at = CURRENT_TIMESTAMP 
+        WHERE session_id = ?
+      `);
+      updateStmt.run(sessionId);
+    }
+  }
+  
+  /**
+   * Get the next sub_id for a parent session
+   */
+  getNextSubId(parentSessionId: string): number {
+    const database = this.db;
+    
+    if (!this.hasColumn("sessions", "sub_id")) {
+      return 1; // Default to 1 if column doesn't exist
+    }
+    
+    const stmt = database.prepare(`
+      SELECT MAX(sub_id) as max_sub_id FROM sessions WHERE parent_session_id = ?
+    `);
+    const row = stmt.get(parentSessionId) as { max_sub_id: number | null } | undefined;
+    return (row?.max_sub_id || 0) + 1;
+  }
+  
+  /**
+   * Create a branch session (subId) from a parent session
+   * Copies the last 3 narrative turns from parent session (filtered by gameTime) to the new branch
+   * Returns the branch session ID and the subId
+   */
+  async createBranchSession(
+    parentSessionId: string,
+    gameState: any,
+    checkpointGameDay?: number | null,
+    checkpointTimeOfDay?: string | null
+  ): Promise<{ branchSessionId: string; subId: number }> {
+    const database = this.db;
+    const subId = this.getNextSubId(parentSessionId);
+    const branchSessionId = `${parentSessionId}-sub-${subId}`;
+    
+    // Ensure parent session exists first
+    this.ensureSessionExists(parentSessionId, gameState);
+    
+    // Create branch session
+    this.ensureSessionExists(branchSessionId, gameState, parentSessionId, subId);
+    
+    // Copy last 3 narrative turns from parent session (filtered by gameTime)
+    if (checkpointGameDay !== undefined && checkpointGameDay !== null && checkpointTimeOfDay) {
+      try {
+        // Get parent session's turns up to checkpoint time
+        const parentTurns = this.getTurnHistory(
+          parentSessionId,
+          10, // Get more to ensure we have enough completed ones
+          undefined, // afterTurnNumber
+          checkpointGameDay,
+          checkpointTimeOfDay
+        );
+        
+        // Filter completed turns with narrative, sort by gameTime, take last 3
+        const compareGameTime = (a: { gameDay?: number | null; gameTime?: string | null }, b: { gameDay?: number | null; gameTime?: string | null }): number => {
+          if (!a.gameDay || !a.gameTime) return -1;
+          if (!b.gameDay || !b.gameTime) return 1;
+          if (a.gameDay !== b.gameDay) return b.gameDay - a.gameDay;
+          const [aHour, aMin] = a.gameTime.split(':').map(Number);
+          const [bHour, bMin] = b.gameTime.split(':').map(Number);
+          return (bHour * 60 + bMin) - (aHour * 60 + aMin);
+        };
+        
+        let completedTurns = parentTurns
+          .filter(turn => turn.status === 'completed' && turn.keeperNarrative);
+        
+        completedTurns.sort(compareGameTime);
+        const last3Turns = completedTurns.slice(0, 3).reverse(); // Get last 3, reverse to chronological order
+        
+        // Copy turns to branch session
+        if (last3Turns.length > 0) {
+          let newTurnNumber = 0;
+          
+          for (const turn of last3Turns) {
+            newTurnNumber++;
+            const newTurnId = `turn-branch-${branchSessionId}-${Date.now()}-${randomUUID().slice(0, 8)}`;
+            
+            // Insert turn with all fields from parent turn
+            const insertStmt = database.prepare(`
+              INSERT INTO game_turns (
+                turn_id, session_id, turn_number, character_input, character_id, character_name,
+                scene_id, scene_name, location, status, started_at, completed_at,
+                keeper_narrative, clue_revelations, action_analysis, action_results,
+                director_decision, is_simulated, game_day, game_time, error_message
+              ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+            `);
+            
+            insertStmt.run(
+              newTurnId,
+              branchSessionId, // New session ID
+              newTurnNumber, // Sequential turn number starting from 1
+              turn.characterInput || '',
+              turn.characterId || null,
+              turn.characterName || null,
+              turn.sceneId || null,
+              turn.sceneName || null,
+              turn.location || null,
+              turn.status || 'completed',
+              turn.startedAt || new Date().toISOString(),
+              turn.completedAt || new Date().toISOString(),
+              turn.keeperNarrative || null,
+              turn.clueRevelations ? JSON.stringify(turn.clueRevelations) : null,
+              turn.actionAnalysis ? JSON.stringify(turn.actionAnalysis) : null,
+              turn.actionResults ? JSON.stringify(turn.actionResults) : null,
+              turn.directorDecision ? JSON.stringify(turn.directorDecision) : null,
+              turn.isSimulated ? 1 : 0,
+              turn.gameDay || null,
+              turn.gameTime || null,
+              turn.errorMessage || null
+            );
+          }
+          
+          console.log(`🌿 [Branch Session] Copied ${last3Turns.length} narrative turns from parent session to branch: ${branchSessionId}`);
+        } else {
+          console.log(`🌿 [Branch Session] No narrative turns found in parent session up to checkpoint time`);
+        }
+      } catch (error) {
+        console.warn(`⚠️ [Branch Session] Failed to copy parent narrative turns:`, error);
+        // Don't fail branch creation if copying fails
+      }
+    }
+    
+    console.log(`🌿 [Branch Session] Created branch session: ${branchSessionId} (parent: ${parentSessionId}, subId: ${subId})`);
+    return { branchSessionId, subId };
   }
 
   /**
@@ -545,9 +1219,15 @@ export class CoCDatabase {
   ): void {
     const database = this.db;
     
+    // Ensure session exists before inserting checkpoint (required by foreign key constraint)
+    // Extract parent_session_id and sub_id from gameState if available
+    const parentSessionId = (gameState as any).parentSessionId || null;
+    const subId = (gameState as any).subId || null;
+    this.ensureSessionExists(sessionId, gameState, parentSessionId, subId);
+    
     // Extract metadata for quick queries
-    const gameDay = gameState.currentScenario?.timePoint?.gameDay || null;
-    const gameTime = gameState.currentScenario?.timePoint?.timeOfDay || gameState.timeOfDay || null;
+    const gameDay = gameState.gameDay || 1;
+    const gameTime = gameState.timeOfDay || null;
     const currentSceneName = gameState.currentScenario?.name || null;
     const currentLocation = gameState.currentScenario?.location || null;
     const playerHp = gameState.playerCharacter?.status?.hp || null;
@@ -628,6 +1308,81 @@ export class CoCDatabase {
   }
 
   /**
+   * Find the latest checkpoint for a specific scenario
+   * Returns the most recent checkpoint where current_scene_name matches the scenario name
+   * or where the scenario snapshot ID matches
+   */
+  findLatestCheckpointForScenario(
+    sessionId: string, 
+    scenarioName: string, 
+    scenarioSnapshotId?: string
+  ): any | null {
+    const database = this.db;
+    
+    // First try to find by scenario name
+    let stmt = database.prepare(`
+      SELECT 
+        checkpoint_id, checkpoint_name, checkpoint_type, description,
+        game_day, game_time, current_scene_name, current_location,
+        player_hp, player_sanity, created_at, game_state
+      FROM game_checkpoints 
+      WHERE session_id = ? AND current_scene_name = ?
+      ORDER BY created_at DESC
+      LIMIT 1
+    `);
+    
+    let row = stmt.get(sessionId, scenarioName) as any;
+    
+    // If not found by name and we have snapshot ID, try to find by matching snapshot ID in game_state
+    if (!row && scenarioSnapshotId) {
+      // Get all checkpoints for this session and filter by snapshot ID
+      const allCheckpoints = database.prepare(`
+        SELECT 
+          checkpoint_id, checkpoint_name, checkpoint_type, description,
+          game_day, game_time, current_scene_name, current_location,
+          player_hp, player_sanity, created_at, game_state
+        FROM game_checkpoints 
+        WHERE session_id = ?
+        ORDER BY created_at DESC
+      `).all(sessionId) as any[];
+      
+      // Find checkpoint where the scenario snapshot ID matches
+      for (const checkpointRow of allCheckpoints) {
+        try {
+          const gameState = JSON.parse(checkpointRow.game_state);
+          if (gameState.currentScenario?.id === scenarioSnapshotId) {
+            row = checkpointRow;
+            break;
+          }
+        } catch (e) {
+          // Skip invalid JSON
+          continue;
+        }
+      }
+    }
+    
+    if (!row) return null;
+
+    return {
+      checkpointId: row.checkpoint_id,
+      sessionId: sessionId,
+      checkpointName: row.checkpoint_name,
+      checkpointType: row.checkpoint_type,
+      description: row.description,
+      gameState: JSON.parse(row.game_state),
+      metadata: {
+        gameDay: row.game_day,
+        gameTime: row.game_time,
+        currentSceneName: row.current_scene_name,
+        currentLocation: row.current_location,
+        playerHp: row.player_hp,
+        playerSanity: row.player_sanity,
+        createdAt: row.created_at,
+      }
+    };
+  }
+
+  /**
    * Delete a checkpoint
    */
   deleteCheckpoint(checkpointId: string): void {
@@ -666,14 +1421,29 @@ export class CoCDatabase {
     characterName?: string,
     sceneId?: string,
     sceneName?: string,
-    location?: string
+    location?: string,
+    isSimulated?: boolean,
+    gameDay?: number | null,
+    gameTime?: string | null
   ): void {
     const database = this.db;
+    
+    // Add is_simulated column if it doesn't exist (for backward compatibility)
+    if (!this.hasColumn('game_turns', 'is_simulated')) {
+      try {
+        database.exec(`ALTER TABLE game_turns ADD COLUMN is_simulated INTEGER DEFAULT 0`);
+        console.log('✓ Added is_simulated column to game_turns table');
+      } catch (error) {
+        // Column might already exist, ignore error
+        console.log('Note: is_simulated column may already exist');
+      }
+    }
+    
     const stmt = database.prepare(`
       INSERT INTO game_turns (
         turn_id, session_id, turn_number, character_input, character_id, character_name,
-        scene_id, scene_name, location, status, started_at
-      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, 'processing', CURRENT_TIMESTAMP)
+        scene_id, scene_name, location, status, started_at, is_simulated, game_day, game_time
+      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, 'processing', CURRENT_TIMESTAMP, ?, ?, ?)
     `);
     
     stmt.run(
@@ -685,12 +1455,16 @@ export class CoCDatabase {
       characterName || null,
       sceneId || null,
       sceneName || null,
-      location || null
+      location || null,
+      isSimulated ? 1 : 0,
+      gameDay ?? null,
+      gameTime ?? null
     );
   }
 
   /**
    * Update turn with processing results
+   * Only updates fields that are provided (not undefined)
    */
   updateTurnProcessing(
     turnId: string,
@@ -699,20 +1473,41 @@ export class CoCDatabase {
     directorDecision?: any
   ): void {
     const database = this.db;
-    const stmt = database.prepare(`
-      UPDATE game_turns 
-      SET action_analysis = ?,
-          action_results = ?,
-          director_decision = ?
-      WHERE turn_id = ?
-    `);
     
-    stmt.run(
-      actionAnalysis ? JSON.stringify(actionAnalysis) : null,
-      actionResults ? JSON.stringify(actionResults) : null,
-      directorDecision ? JSON.stringify(directorDecision) : null,
-      turnId
-    );
+    // Build dynamic UPDATE query based on which fields are provided
+    const updates: string[] = [];
+    const values: any[] = [];
+    
+    if (actionAnalysis !== undefined) {
+      updates.push('action_analysis = ?');
+      values.push(actionAnalysis ? JSON.stringify(actionAnalysis) : null);
+    }
+    
+    if (actionResults !== undefined) {
+      updates.push('action_results = ?');
+      values.push(actionResults ? JSON.stringify(actionResults) : null);
+    }
+    
+    if (directorDecision !== undefined) {
+      updates.push('director_decision = ?');
+      values.push(directorDecision ? JSON.stringify(directorDecision) : null);
+    }
+    
+    if (updates.length === 0) {
+      // Nothing to update
+      return;
+    }
+    
+    values.push(turnId);
+    
+    const sql = `
+      UPDATE game_turns 
+      SET ${updates.join(', ')}
+      WHERE turn_id = ?
+    `;
+    
+    const stmt = database.prepare(sql);
+    stmt.run(...values);
   }
 
   /**
@@ -721,7 +1516,9 @@ export class CoCDatabase {
   completeTurn(
     turnId: string,
     keeperNarrative: string,
-    clueRevelations?: any
+    clueRevelations?: any,
+    gameDay?: number | null,
+    gameTime?: string | null
   ): void {
     const database = this.db;
     const stmt = database.prepare(`
@@ -729,13 +1526,17 @@ export class CoCDatabase {
       SET keeper_narrative = ?,
           clue_revelations = ?,
           status = 'completed',
-          completed_at = CURRENT_TIMESTAMP
+          completed_at = CURRENT_TIMESTAMP,
+          game_day = ?,
+          game_time = ?
       WHERE turn_id = ?
     `);
     
     stmt.run(
       keeperNarrative,
       clueRevelations ? JSON.stringify(clueRevelations) : null,
+      gameDay ?? null,
+      gameTime ?? null,
       turnId
     );
   }
@@ -767,33 +1568,103 @@ export class CoCDatabase {
     if (!row) return null;
 
     return {
-      ...row,
+      turnId: row.turn_id,
+      sessionId: row.session_id,
+      turnNumber: row.turn_number,
+      characterInput: row.character_input,
+      characterId: row.character_id,
+      characterName: row.character_name,
+      keeperNarrative: row.keeper_narrative,
+      status: row.status,
+      errorMessage: row.error_message,
+      startedAt: row.started_at,
+      completedAt: row.completed_at,
+      sceneId: row.scene_id,
+      sceneName: row.scene_name,
+      location: row.location,
       actionAnalysis: row.action_analysis ? JSON.parse(row.action_analysis) : null,
       actionResults: row.action_results ? JSON.parse(row.action_results) : null,
       directorDecision: row.director_decision ? JSON.parse(row.director_decision) : null,
       clueRevelations: row.clue_revelations ? JSON.parse(row.clue_revelations) : null,
+      isSimulated: row.is_simulated === 1 || row.is_simulated === true,
+      gameDay: row.game_day ?? null,
+      gameTime: row.game_time ?? null,
     };
   }
 
   /**
    * Get turn history for a session
+   * @param sessionId - Session ID
+   * @param limit - Maximum number of turns to return
+   * @param afterTurnNumber - Only return turns after this turn number
+   * @param maxGameDay - Optional: Maximum game day (inclusive)
+   * @param maxGameTime - Optional: Maximum game time (inclusive, format: "HH:MM")
    */
-  getTurnHistory(sessionId: string, limit = 50): any[] {
+  getTurnHistory(
+    sessionId: string,
+    limit = 50,
+    afterTurnNumber?: number,
+    maxGameDay?: number,
+    maxGameTime?: string
+  ): any[] {
     const database = this.db;
-    const stmt = database.prepare(`
-      SELECT * FROM game_turns 
+
+    let sql = `
+      SELECT * FROM game_turns
       WHERE session_id = ?
+    `;
+
+    const params: any[] = [sessionId];
+
+    // Add filter for turns after a specific turn number
+    if (afterTurnNumber !== undefined) {
+      sql += ` AND turn_number > ?`;
+      params.push(afterTurnNumber);
+    }
+
+    // Add filter for gameTime if provided
+    if (maxGameDay !== undefined && maxGameTime !== undefined) {
+      // Filter: game_day < maxGameDay OR (game_day = maxGameDay AND game_time <= maxGameTime)
+      // Also include turns with null gameDay/gameTime (assume they're before checkpoint)
+      sql += ` AND (
+        game_day IS NULL OR 
+        game_time IS NULL OR
+        game_day < ? OR 
+        (game_day = ? AND game_time <= ?)
+      )`;
+      params.push(maxGameDay, maxGameDay, maxGameTime);
+    }
+
+    sql += `
       ORDER BY turn_number DESC
       LIMIT ?
-    `);
-    
-    const rows = stmt.all(sessionId, limit) as any[];
+    `;
+    params.push(limit);
+
+    const stmt = database.prepare(sql);
+    const rows = stmt.all(...params) as any[];
     return rows.map(row => ({
-      ...row,
+      turnId: row.turn_id,
+      sessionId: row.session_id,
+      turnNumber: row.turn_number,
+      characterInput: row.character_input,
+      characterId: row.character_id,
+      characterName: row.character_name,
+      keeperNarrative: row.keeper_narrative,
+      status: row.status,
+      errorMessage: row.error_message,
+      startedAt: row.started_at,
+      completedAt: row.completed_at,
+      sceneId: row.scene_id,
+      sceneName: row.scene_name,
+      location: row.location,
       actionAnalysis: row.action_analysis ? JSON.parse(row.action_analysis) : null,
       actionResults: row.action_results ? JSON.parse(row.action_results) : null,
       directorDecision: row.director_decision ? JSON.parse(row.director_decision) : null,
       clueRevelations: row.clue_revelations ? JSON.parse(row.clue_revelations) : null,
+      isSimulated: row.is_simulated === 1 || row.is_simulated === true,
+      gameDay: row.game_day ?? null,
+      gameTime: row.game_time ?? null,
     }));
   }
 
@@ -813,11 +1684,27 @@ export class CoCDatabase {
     if (!row) return null;
 
     return {
-      ...row,
+      turnId: row.turn_id,
+      sessionId: row.session_id,
+      turnNumber: row.turn_number,
+      characterInput: row.character_input,
+      characterId: row.character_id,
+      characterName: row.character_name,
+      keeperNarrative: row.keeper_narrative,
+      status: row.status,
+      errorMessage: row.error_message,
+      startedAt: row.started_at,
+      completedAt: row.completed_at,
+      sceneId: row.scene_id,
+      sceneName: row.scene_name,
+      location: row.location,
       actionAnalysis: row.action_analysis ? JSON.parse(row.action_analysis) : null,
       actionResults: row.action_results ? JSON.parse(row.action_results) : null,
       directorDecision: row.director_decision ? JSON.parse(row.director_decision) : null,
       clueRevelations: row.clue_revelations ? JSON.parse(row.clue_revelations) : null,
+      isSimulated: row.is_simulated === 1 || row.is_simulated === true,
+      gameDay: row.game_day ?? null,
+      gameTime: row.game_time ?? null,
     };
   }
 
@@ -847,7 +1734,18 @@ export class CoCDatabase {
     
     const rows = stmt.all(sessionId) as any[];
     return rows.map(row => ({
-      ...row,
+      turnId: row.turn_id,
+      sessionId: row.session_id,
+      turnNumber: row.turn_number,
+      characterInput: row.character_input,
+      keeperNarrative: row.keeper_narrative,
+      status: row.status,
+      errorMessage: row.error_message,
+      startedAt: row.started_at,
+      completedAt: row.completed_at,
+      sceneId: row.scene_id,
+      sceneName: row.scene_name,
+      location: row.location,
       actionAnalysis: row.action_analysis ? JSON.parse(row.action_analysis) : null,
       actionResults: row.action_results ? JSON.parse(row.action_results) : null,
       directorDecision: row.director_decision ? JSON.parse(row.director_decision) : null,

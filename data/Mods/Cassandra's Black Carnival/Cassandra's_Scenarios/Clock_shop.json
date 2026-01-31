@@ -1,0 +1,80 @@
+[
+    {
+      "name": "Clock Shop",
+      "description": "A small, old-fashioned clock shop located on Cassandra Old Street, packed tightly with clocks and pocket watches of exquisite craftsmanship. The shop has an unsettling reputation due to its owner's obsession with perfect timekeeping and his uncanny awareness of temporal anomalies in the town.",
+      "snapshot": {
+        "name": "Marks White's Clock Shop",
+        "location": "Cassandra Old Street (Old-Street)",
+        "description": "The interior of the shop is cramped and quiet, filled wall-to-wall with ticking clocks of all sizes. Glass display cases hold finely crafted pocket watches, each engraved with the maker’s name. Time seems unnaturally precise here, almost oppressive. An old decorative oil painting hangs on the wall, its abstract form subtly disturbing.",
+        "characters": [
+          {
+            "name": "Marks White",
+            "role": "Shop owner / witness",
+            "status": "alive",
+            "location": "Inside the clock shop",
+            "notes": "A frail, elderly man with reading glasses. A master clockmaker who prides himself on absolute accuracy. He is aware of the town’s temporal abnormalities but refuses to intervene."
+          }
+        ],
+        "clues": [
+          {
+            "clueText": "All clocks and pocket watches are engraved with Marks White's name and are unnaturally precise, never losing even a single second.",
+            "category": "observation",
+            "difficulty": "automatic",
+            "location": "Display cases and wall clocks",
+            "discoveryMethod": "",
+            "reveals": ["The town’s time distortion is abnormal and possibly controlled or influenced."]
+          },
+          {
+            "clueText": "Marks White claims the church's grand clock was also made by him and considers it his greatest work.",
+            "category": "witness",
+            "difficulty": "regular",
+            "location": "Conversation with Marks White",
+            "discoveryMethod": "Charm / Talk",
+            "reveals": ["A connection between the clock shop and the church."]
+          },
+          {
+            "clueText": "An old decorative oil painting in the shop contains a distorted figure resembling a hybrid Hound of Tindalos.",
+            "category": "environment",
+            "difficulty": "hard",
+            "location": "Wall painting inside the shop",
+            "discoveryMethod": "Spot Hidden / Mythos knowledge",
+            "reveals": ["Temporal predators may already be present in Cassandra."]
+          }
+        ],
+        "conditions": [
+          {
+            "type": "sound",
+            "description": "Constant synchronized ticking from dozens of clocks.",
+            "mechanicalEffect": "Extended exposure may increase unease; Keeper may call for a SAN check in prolonged scenes."
+          },
+          {
+            "type": "other",
+            "description": "Timekeeping devices function with unnatural precision.",
+            "mechanicalEffect": ""
+          }
+        ],
+        "events": [
+          "Marks White explains his philosophy of being 'standard time'.",
+          "Marks White refuses to aid investigators despite knowing the town's secret."
+        ],
+        "exits": [
+          {
+            "direction": "Front door",
+            "destination": "Cassandra Old Street",
+            "description": "A narrow wooden door leading back to the old street.",
+            "condition": ""
+          }
+        ],
+        "keeperNotes": "Marks White is a passive but important lore character. He should not push the plot directly, but his dialogue reinforces the theme of distorted time and inevitability.",
+        "permanentChanges": []
+      },
+      "tags": ["time anomaly", "old street", "mythos foreshadowing", "witness NPC"],
+      "connections": [
+        {
+          "scenarioName": "Church",
+          "relationshipType": "leads_to",
+          "description": "Marks White built the church's grand clock, linking the clock shop to the church and its secrets."
+        }
+      ]
+    }
+  ]

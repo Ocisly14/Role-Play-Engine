@@ -1,0 +1,71 @@
+[
+    {
+      "name": "Crescent Street B",
+      "description": "Crescent Street B is a worn residential street marked by neglect and quiet tension. Old houses, uneven pavement, and aging municipal infrastructure give the impression of a place long ignored by the town’s authorities. Though seemingly ordinary, the street subtly connects several critical locations tied to the investigation.",
+      "snapshot": {
+        "name": "Crescent Street B",
+        "location": "Crescent Street B, Cassandra",
+        "description": "The street is lined with aging houses and dim, unreliable streetlights. Cracks in the pavement reveal repeated repairs, and the air often carries a faint damp smell from underground utilities. Residents keep to themselves, avoiding unnecessary attention. At night, the street feels especially oppressive, as if something beneath the surface is active but unseen.",
+        "characters": [],
+        "clues": [],
+        "conditions": [
+          {
+            "type": "lighting",
+            "description": "Streetlights flicker intermittently, leaving long stretches in partial darkness.",
+            "mechanicalEffect": "No mechanical effect; atmosphere-focused"
+          },
+          {
+            "type": "smell",
+            "description": "A faint, persistent odor of dampness and sewage lingers near certain sections of the street.",
+            "mechanicalEffect": "No mechanical effect"
+          }
+        ],
+        "events": [],
+        "exits": [
+          {
+            "direction": "Residential lot",
+            "destination": "Two-story wooden cabin",
+            "description": "A weathered two-story wooden house set slightly back from the street, appearing poorly maintained and unusually isolated.",
+            "condition": "accessible"
+          },
+          {
+            "direction": "Street level access",
+            "destination": "Underground sewer system",
+            "description": "Sewer access points concealed within the street, blending into the damaged pavement.",
+            "condition": "locked"
+          },
+          {
+            "direction": "Curbside",
+            "destination": "Bruno Galilei’s car",
+            "description": "Bruno’s vehicle parked along the street, used during the investigation and serving as a temporary point of mobility.(The car only appears after 12.26,with Bruno's dead body found in the car)",
+            "condition": "accessible"
+          },
+          {
+            "direction": "West",
+            "destination": "Crescent Street A",
+            "description": "Leads back toward Crescent Street A."
+          },
+          {
+            "direction": "East",
+            "destination": "Crescent Street C",
+            "description": "Continues toward other residential areas of Cassandra."
+          }
+        ],
+        "keeperNotes": "Crescent Street B is best used as a connective and transitional environment. While it offers few immediate clues, its exits link to several high-impact locations. Emphasize unease, neglect, and the sense that the street itself is quietly complicit in the town’s secrets.",
+        "permanentChanges": []
+      },
+      "tags": ["street", "residential", "neglect", "infrastructure"],
+      "connections": [
+        {
+          "scenarioName": "Crescent Street A – South",
+          "relationshipType": "concurrent",
+          "description": "Connected streets forming part of the same residential and official boundary zone."
+        },
+        {
+          "scenarioName": "Crescent Street C",
+          "relationshipType": "concurrent",
+          "description": "Crescent Street B transitions into Crescent Street C within the residential district."
+        }
+      ]
+    }
+  ]

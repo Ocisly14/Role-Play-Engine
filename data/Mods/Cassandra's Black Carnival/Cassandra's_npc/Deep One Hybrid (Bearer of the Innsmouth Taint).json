@@ -1,0 +1,67 @@
+[
+  {
+    "name": "Deep One Hybrid (Bearer of the Innsmouth Taint)",
+    "occupation": "Hybrid Humanoid / Mythos Bloodline",
+    "age": 0,
+    "appearance": "A largely human-looking individual bearing subtle but disturbing aquatic traits: slightly bulging, unblinking eyes; thickened lips; coarse skin; and an unusual body odor reminiscent of the sea. With age, these traits grow more pronounced as the transformation toward a true Deep One progresses.",
+    "personality": "Withdrawn, secretive, and inwardly conflicted. Younger hybrids may cling to human identity, while older ones who accept their aquatic heritage become calm, fatalistic, and increasingly alien in outlook.",
+    "background": "Deep One hybrids are the descendants of humans tainted by the Innsmouth bloodline. Though born human, they inevitably undergo a gradual transformation into full Deep Ones later in life. Some remain unaware of their heritage for years, while others are raised within communities that normalize or even revere their destiny.",
+    "goals": [
+      "Survive while hiding their true heritage",
+      "Eventually answer the call of the sea"
+    ],
+    "secrets": [
+      "All hybrids will eventually transform into full Deep Ones if they live long enough",
+      "Older hybrids may already commune with Deep Ones or aquatic Mythos entities"
+    ],
+    "attributes": {
+      "STR": 55,
+      "CON": 60,
+      "DEX": 55,
+      "APP": 35,
+      "POW": 50,
+      "SIZ": 60,
+      "INT": 55,
+      "EDU": 40
+    },
+    "status": {
+      "hp": 12,
+      "maxHp": 12,
+      "sanity": 0,
+      "maxSanity": 0,
+      "luck": 0,
+      "mp": 10,
+      "conditions": []
+    },
+    "skills": {
+      "Stealth": 46,
+      "Swim": 60,
+      "Jump": 45,
+      "Dodge": 30,
+      "Listen": 50,
+      "Fighting": 45
+    },
+    "inventory": [],
+    "clues": [
+      {
+        "clueText": "Deep One hybrids age normally but will eventually undergo a complete transformation into Deep Ones.",
+        "category": "knowledge",
+        "difficulty": "regular",
+        "relatedTo": [
+          "Innsmouth",
+          "Deep Ones"
+        ]
+      },
+      {
+        "clueText": "Older hybrids who accept their heritage may possess forbidden spells.",
+        "category": "rumor",
+        "difficulty": "hard",
+        "relatedTo": [
+          "Deep Ones"
+        ]
+      }
+    ],
+    "relationships": [],
+    "notes": "Combat & Abilities:\n\nCombat Style:\nDeep One hybrids can use standard human weapons and attack once per round.\n\nAttacks:\n• Fighting 45% (22/9): Damage is based on the weapon used plus damage bonus, or unarmed strike for 1D3 + damage bonus.\n\nArmor:\nNone.\n\nSpells:\nOlder hybrids who have begun to accept their aquatic heritage have a 10% chance to know 1D3 spells.\n\nSkills (Racial Tendencies):\n• Stealth 46%\n• Swim 60%\n• Jump 45%\n• Dodge 30% (15/6)\n• Listen 50%\n\nSpecial Ability – Limited Aquatic Endurance:\nBefore fully transforming into Deep Ones, hybrids cannot breathe underwater. However, from early childhood they can hold their breath underwater for up to twice as long as a normal human.\n\nSanity Loss:\nSeeing a Deep One hybrid causes SAN loss of 0 / 1D4. Particularly horrifying individuals may cause increased loss (1 / 1D6 or higher) at the Keeper’s discretion.\n\nKeeper Notes:\nHybrids work best as slow-burn horror elements. Their tragedy lies in inevitability rather than immediate monstrosity, making them effective long-term NPCs or revelations tied to Innsmouth-related investigations."
+  }
+]

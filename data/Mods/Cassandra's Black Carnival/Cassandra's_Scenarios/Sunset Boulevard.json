@@ -1,0 +1,71 @@
+[
+    {
+      "name": "Sunset Boulevard",
+      "description": "Sunset Boulevard runs along the outskirts of Cassandra, gradually transitioning from town structures into industrial and then wilderness areas. The street feels increasingly isolated the farther one travels, serving as the main route toward places tied to death, labor, and the unknown.",
+      "snapshot": {
+        "name": "Sunset Boulevard",
+        "location": "Cassandra – Sunset Boulevard",
+        "description": "Sunset Boulevard begins as a sparsely populated road and steadily loses signs of urban life. Buildings thin out, the air grows cooler, and natural sounds replace human activity. The boulevard functions less as a destination itself and more as a passage toward darker and more remote locations connected to Cassandra’s past and hidden horrors.",
+        "characters": [],
+        "clues": [],
+        "conditions": [
+          {
+            "type": "sound",
+            "description": "Distant wind through trees and occasional industrial noises from afar.",
+            "mechanicalEffect": ""
+          },
+          {
+            "type": "lighting",
+            "description": "Natural light fades quickly toward evening; street lighting is minimal or absent.",
+            "mechanicalEffect": ""
+          },
+          {
+            "type": "temperature",
+            "description": "Noticeably cooler than the town center, especially near the forest edge.",
+            "mechanicalEffect": ""
+          }
+        ],
+        "events": [],
+        "exits": [
+          {
+            "direction": "Roadside path",
+            "destination": "Cemetery",
+            "description": "A branching path leading to Cassandra’s cemetery, a quiet and somber resting place on the edge of town.",
+            "condition": ""
+          },
+          {
+            "direction": "Industrial spur",
+            "destination": "Logging Camp",
+            "description": "A rough road splitting off toward the logging camp, marked by signs of heavy labor and machinery.",
+            "condition": ""
+          },
+          {
+            "direction": "End of the road",
+            "destination": "Deep Forest",
+            "description": "The boulevard ultimately gives way to dense woodland, leading investigators into the forest depths beyond civilization.",
+            "condition": ""
+          }
+        ],
+        "keeperNotes": "Sunset Boulevard should emphasize transition and unease. It is a liminal space, guiding investigators away from safety and toward increasingly dangerous and supernatural locations.",
+        "permanentChanges": []
+      },
+      "tags": ["outskirts", "transition", "isolated", "ominous"],
+      "connections": [
+        {
+          "scenarioName": "Cemetery",
+          "relationshipType": "leads_to",
+          "description": "Sunset Boulevard provides access to the cemetery located just beyond the town limits."
+        },
+        {
+          "scenarioName": "Logging Camp",
+          "relationshipType": "leads_to",
+          "description": "A branching road from Sunset Boulevard leads directly to the logging camp."
+        },
+        {
+          "scenarioName": "Forest Depths",
+          "relationshipType": "leads_to",
+          "description": "At the far end of Sunset Boulevard, the road fades into the deep forest."
+        }
+      ]
+    }
+  ]

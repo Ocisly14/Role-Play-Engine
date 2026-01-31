@@ -1,6 +1,5 @@
 export {
   injectActionTypeRules,
-  fetchRagSlicesForAction,
   enrichMemoryContext,
   createScenarioCheckpoint,
   updateCurrentScenarioWithCheckpoint,
@@ -14,4 +13,3 @@ export { ScenarioLoader } from "./scenarioloader/index.js";
 export { ModuleLoader } from "./moduleloader/index.js";
 export { TurnManager } from "./turnManager.js";
 export type { TurnInput, TurnProcessing, TurnOutput, GameTurn } from "./turnManager.js";
-

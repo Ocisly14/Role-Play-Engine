@@ -1,0 +1,67 @@
+[
+    {
+      "name": "Flower Shop",
+      "description": "A small local flower shop in Cassandra that normally serves as a quiet, ordinary business, but may become the final resting place of a tragic victim if events take a darker turn.",
+      "snapshot": {
+        "name": "Flower Shop",
+        "location": "A neighborhood flower shop in Cassandra",
+        "description": "The flower shop is usually filled with fresh flowers and the scent of plants. Under normal circumstances it is peaceful and unremarkable. However, under certain outcomes of the investigation, it becomes a grim discovery site where a body is found among the flowers, sharply contrasting with the shop’s intended atmosphere of beauty and life.",
+        "characters": [
+          {
+            "name": "Nancy",
+            "role": "Victim",
+            "status": "Deceased (conditional)",
+            "location": "Inside the flower shop",
+            "notes": "If the surgical intervention fails or is not performed, Nancy’s corpse will appear here."
+          }
+        ],
+        "clues": [
+          {
+            "clueText": "Nancy’s body is discovered inside the flower shop.",
+            "category": "observation",
+            "difficulty": "automatic",
+            "location": "Among the flower displays inside the shop",
+            "discoveryMethod": "",
+            "reveals": ["Failure to save Nancy from the spider infection", "The tragic consequence of earlier investigative choices"]
+          }
+        ],
+        "conditions": [
+          {
+            "type": "smell",
+            "description": "A strong floral scent mixed with the unsettling odor of death",
+            "mechanicalEffect": ""
+          },
+          {
+            "type": "lighting",
+            "description": "Soft indoor lighting typical of a small retail shop",
+            "mechanicalEffect": ""
+          }
+        ],
+        "events": [
+          "Discovery of Nancy’s corpse if the operation fails",
+          "Simon collapses emotionally and disappears following the discovery"
+        ],
+        "exits": [
+          {
+            "direction": "Front entrance",
+            "destination": "Cassandra streets",
+            "description": "The main glass door leading out to the street",
+            "condition": ""
+          }
+        ],
+        "keeperNotes": "The flower shop is a conditional scene that only becomes relevant if Nancy dies. Use the contrast between flowers and death to heighten horror. This scene marks a major emotional and narrative turning point, especially for Simon.",
+        "permanentChanges": [
+          "Nancy is dead",
+          "Simon disappears from the story"
+        ]
+      },
+      "tags": ["shop", "death scene", "conditional location", "emotional climax"],
+      "connections": [
+        {
+          "scenarioName": "Winery",
+          "relationshipType": "prerequisite",
+          "description": "Nancy’s spider bite near the winery and the failed attempt to save her lead to this outcome"
+        }
+      ]
+    }
+  ]

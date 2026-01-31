@@ -1,0 +1,50 @@
+[
+    {
+      "name": "Pomegranate Lane",
+      "description": "Pomegranate Lane is a narrow residential lane in Cassandra, quieter than the main streets and lightly trafficked. The lane feels enclosed and private, with few destinations and little reason for passersby to linger.",
+      "snapshot": {
+        "name": "Pomegranate Lane",
+        "location": "Cassandra – Pomegranate Lane",
+        "description": "Pomegranate Lane is a short, subdued street bordered by closely spaced residential buildings. The atmosphere is muted and restrained, giving the impression of a place where residents prefer not to draw attention. The most notable feature of the lane is Adolph's house, which stands out as the primary destination here.",
+        "characters": [],
+        "clues": [],
+        "conditions": [
+          {
+            "type": "sound",
+            "description": "Very little ambient noise; conversations and footsteps carry easily.",
+            "mechanicalEffect": ""
+          },
+          {
+            "type": "lighting",
+            "description": "Limited lighting at night, with shadows pooling between buildings.",
+            "mechanicalEffect": ""
+          }
+        ],
+        "events": [],
+        "exits": [
+          {
+            "direction": "Residential entrance",
+            "destination": "Adolph's House",
+            "description": "A private residence belonging to Adolph, located directly along Pomegranate Lane and serving as the main point of interest on the street.",
+            "condition": ""
+          },
+          {
+            "direction": "Lane entrance",
+            "destination": "Connecting streets of Cassandra",
+            "description": "The lane opens back toward the surrounding streets of Cassandra.",
+            "condition": ""
+          }
+        ],
+        "keeperNotes": "Pomegranate Lane should feel intimate and exposed. Investigators visiting Adolph's house are noticeable, and any activity here may quickly draw the attention of nearby residents.",
+        "permanentChanges": []
+      },
+      "tags": ["residential", "quiet", "narrow street"],
+      "connections": [
+        {
+          "scenarioName": "Adolph's House",
+          "relationshipType": "leads_to",
+          "description": "Pomegranate Lane primarily serves as access to Adolph's residence."
+        }
+      ]
+    }
+  ]

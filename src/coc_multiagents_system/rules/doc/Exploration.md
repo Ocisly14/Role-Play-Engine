@@ -28,7 +28,7 @@
 - Scene/Extended (30+ min up to half/whole day): library research, reading diaries/tomes, full building sweep, studying mechanisms; can retry; expect external changes (NPC/time).
 
 ## Relevant skills
-- Core: Spot Hidden; Listen; Library Use.
-- Knowledge/analysis: History; Occult; Cthulhu Mythos; Law/Accounting; Medicine; Psychology.
+- Core: Perception; Listen; Research.
+- Knowledge/analysis: History; Occult; Forbidden Lore; Law/Accounting; Medicine; Psychology.
 - Physical/environment: Climb/Jump/Swim; Mechanical Repair; Electrical Repair; Track.
 - If no skill fits, fall back to an attribute check (INT/EDU/DEX).

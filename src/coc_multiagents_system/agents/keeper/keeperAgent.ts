@@ -1,8 +1,8 @@
 import { getKeeperTemplate } from "./keeperTemplate.js";
-import { composeTemplate } from "../../../template.js";
-import type { GameState, ActionResult, ActionAnalysis } from "../../../state.js";
-import { GameStateManager } from "../../../state.js";
-import type { CharacterProfile, NPCProfile } from "../models/gameTypes.js";
+import { composeTemplateWithImages } from "../../../template.js";
+import type { GameState, ActionResult, ActionAnalysis, DiscoveredClue } from "../../state/index.js";
+import { GameStateManager } from "../../state/index.js";
+import type { CharacterProfile, NPCProfile, ActionLogEntry } from "../models/gameTypes.js";
 import {
   ModelProviderName,
   ModelClass,
@@ -31,103 +31,239 @@ export class KeeperAgent {
     const runtime = createRuntime();
     const gameState = gameStateManager.getGameState();
     
-    // 1. 获取完整的场景信息
+    // 1. Get complete scenario information
     const completeScenarioInfo = this.extractCompleteScenarioInfo(gameState);
+
+    // 2. Get all action results (including player and NPC actions)
+    const allActionResultsRaw = this.getAllActionResults(gameState);
+
+    // Filter out diceRolls field (not used in template)
+    const allActionResults: Omit<ActionResult, 'diceRolls'>[] = allActionResultsRaw.map(({ diceRolls, ...result }) => result);
+
+    // 2.1. Get the latest complete action result (for backward compatibility)
+    const latestCompleteActionResult = allActionResults.length > 0 ? allActionResults[allActionResults.length - 1] : null;
+
+    // 2.2. Get interaction partner name (if action targets an NPC)
+    const actionAnalysis = gameState.temporaryInfo.currentActionAnalysis;
+    const interactionPartnerName = actionAnalysis?.target?.name || null;
+
+    // 3. Get complete attributes of NPCs involved in action results
+    const actionRelatedNpcs = this.extractActionRelatedNpcs(gameState, allActionResults, interactionPartnerName);
     
-    // 2. 获取最新的完整的action result
-    const latestCompleteActionResult = this.getLatestCompleteActionResult(gameState);
-    
-    // 3. 获取场景中所有角色的完整属性
-    const allSceneCharacters = this.extractAllSceneCharactersWithCompleteAttributes(gameState);
-    
-    // 4. 获取action result中涉及的NPC完整属性（与场景角色去重）
-    const actionRelatedNpcs = this.extractActionRelatedNpcsWithDeduplication(
-      gameState, 
-      latestCompleteActionResult, 
-      allSceneCharacters
-    );
-    
-    // 5. 检测场景变化，如果有变化则获取前一个场景的信息
+    // 5. Detect scene changes, if changed then get previous scene information
     const isTransition = gameState.temporaryInfo.transition;
     const previousScenarioInfo = isTransition ? this.extractPreviousScenarioInfo(gameState) : null;
     
-    // 6. 检测场景转换被拒绝的情况
+    // 6. Detect scene transition rejection
     const sceneTransitionRejection = gameState.temporaryInfo.sceneTransitionRejection;
+    
+    // 7. Get conversation history (from contextualData)
+    const conversationHistory = (gameState.temporaryInfo.contextualData?.conversationHistory as Array<{
+      turnNumber: number;
+      characterInput: string;
+      keeperNarrative: string | null;
+    }>) || [];
+    
+    // 8. Get RAG retrieval results, keep only needed fields
+    // TODO: Temporarily commented out RAG injection, as RAG section is being modified
+    // const rawRagResults = (gameState.temporaryInfo.ragResults as any[]) || [];
+    // const ragResults = rawRagResults.map((evidence: any) => ({
+    //   type: evidence.type,
+    //   title: evidence.title,
+    //   snippet: evidence.snippet,
+    //   visibility: evidence.visibility,
+    // }));
+    const ragResults: any[] = []; // Temporarily set to empty array
     
     // 获取模板
     const template = getKeeperTemplate();
     
     // Prepare template context (JSON-packed to keep template concise)
-    const playerCharacterComplete = this.extractCompletePlayerCharacter(gameState.playerCharacter);
+    const currentLocation = gameState.currentScenario?.location || null;
+    const playerCharacterComplete = this.extractCompletePlayerCharacter(
+      gameState.playerCharacter,
+      currentLocation,
+      interactionPartnerName
+    );
+    
+    // Get full game time
+    const stateManager = new GameStateManager(gameState);
+    const fullGameTime = stateManager.getFullGameTime();
+    
+    // Get narrative direction from state (set by Director Agent)
+    const directorNarrativeDirection = gameState.temporaryInfo.narrativeDirection || null;
+    
+    const gameEnding = gameState.gameEnding || null;
+
     const templateContext = {
       characterInput,
-      completeScenarioInfo,
-      latestCompleteActionResult,
-      playerCharacterComplete,
-      allSceneCharacters,
-      actionRelatedNpcs,
-      timeOfDay: gameState.timeOfDay,
+      allActionResults,  // All action results (for {{#each}} loop)
+      fullGameTime: fullGameTime,  // Complete display: "Day 1, 08:00 (Morning)"
       tension: gameState.tension,
       phase: gameState.phase,
       isTransition,
-      previousScenarioInfo,
-      sceneTransitionRejection,
+      sceneTransitionRejection,  // Object (for accessing .reasoning property)
+      conversationHistory,  // Recent conversation history (for {{#each}} loop)
+      // ragResults,  // TODO: Temporarily commented out RAG retrieval results, as RAG section is being modified
+      ragResults: [],  // Temporarily set to empty array
+      // JSON string version (used directly in template)
       scenarioContextJson: this.safeStringify(completeScenarioInfo),
-      latestActionResultJson: latestCompleteActionResult
-        ? this.safeStringify(latestCompleteActionResult)
-        : "null",
       playerCharacterJson: this.safeStringify(playerCharacterComplete),
-      sceneCharactersJson: this.safeStringify(allSceneCharacters),
       actionRelatedNpcsJson: this.safeStringify(actionRelatedNpcs),
-      previousScenarioJson: previousScenarioInfo 
+      previousScenarioJson: previousScenarioInfo
         ? this.safeStringify(previousScenarioInfo)
         : "null",
+      directorNarrativeDirection: directorNarrativeDirection,  // Narrative direction guidance generated by Director (read from state)
+      gameEnding: gameEnding,
     };
 
-    // 使用模板和LLM生成叙事和线索揭示
-    const prompt = composeTemplate(template, {}, templateContext, "handlebars");
+    // Use template and LLM to generate narrative and clue revelations
+    const { content: prompt, images } = composeTemplateWithImages(
+      template,
+      { gameState },
+      templateContext,
+      "handlebars"
+    );
 
-    const response = await generateText({
-      runtime,
-      context: prompt,
-      modelClass: ModelClass.MEDIUM,
-    });
+    let response: string = "";
+    let parsedResponse: any;
+    const maxAttempts = 2; // Try up to 2 times
 
-    // 解析LLM的JSON响应
-    let parsedResponse;
-    try {
-      parsedResponse = JSON.parse(response);
-    } catch (error) {
-      console.error("Failed to parse keeper response as JSON:", error);
-      return {
-        narrative: response,
-        clueRevelations: { scenarioClues: [], npcClues: [], npcSecrets: [] },
-        updatedGameState: gameState
-      };
+    for (let attempt = 1; attempt <= maxAttempts; attempt++) {
+      try {
+        response = await generateText({
+          runtime,
+          context: prompt,
+          images,
+          modelClass: ModelClass.MEDIUM,
+        });
+
+        // Extract JSON from response (in case LLM wraps it in markdown code blocks)
+        const jsonText =
+          response.match(/```(?:json)?\s*([\s\S]*?)```/i)?.[1] ||
+          response.match(/\{[\s\S]*\}/)?.[0];
+
+        if (!jsonText) {
+          if (attempt < maxAttempts) {
+            console.warn(`⚠️ Failed to extract JSON from keeper response (attempt ${attempt}/${maxAttempts}), retrying...`);
+            continue;
+          }
+          console.warn("Failed to extract JSON from keeper response");
+          console.warn("Response content:", response);
+          return {
+            narrative: response,
+            clueRevelations: { scenarioClues: [], npcClues: [], npcSecrets: [] },
+            updatedGameState: gameState
+          };
+        }
+
+        parsedResponse = JSON.parse(jsonText);
+        console.log(`✅ Successfully parsed keeper response on attempt ${attempt}`);
+        break; // Success, exit retry loop
+
+      } catch (error) {
+        if (attempt < maxAttempts) {
+          console.warn(`⚠️ Failed to parse keeper response as JSON (attempt ${attempt}/${maxAttempts}), retrying...`);
+          continue;
+        }
+
+        // Final attempt failed
+        console.error("Failed to parse keeper response as JSON:", error);
+        console.warn("Response content:", response);
+
+        // Try to extract narrative from incomplete JSON
+        let fallbackNarrative = response;
+        const narrativeMatch = response.match(/"narrative"\s*:\s*"((?:[^"\\]|\\.)*)"/);
+        if (narrativeMatch && narrativeMatch[1]) {
+          fallbackNarrative = narrativeMatch[1]
+            .replace(/\\n/g, '\n')
+            .replace(/\\"/g, '"')
+            .replace(/\\\\/g, '\\');
+          console.log("✓ Extracted narrative from incomplete JSON");
+        }
+
+        return {
+          narrative: fallbackNarrative,
+          clueRevelations: { scenarioClues: [], npcClues: [], npcSecrets: [] },
+          updatedGameState: gameState
+        };
+      }
     }
 
-    // 更新游戏状态中的线索状态
+    // Update clue states in game state
     const updatedGameState = this.updateClueStates(gameState, parsedResponse.clueRevelations, gameStateManager);
 
-    // 清除 transition 标志（已经在叙事中处理过了）
+    // Update tension (if provided by LLM)
+    if (parsedResponse.tensionLevel && typeof parsedResponse.tensionLevel === 'number') {
+      const oldTension = gameState.tension;
+      gameStateManager.updateTension(parsedResponse.tensionLevel);
+      const newTension = gameStateManager.getGameState().tension;
+      if (oldTension !== newTension) {
+        console.log(`🎭 Tension changed: ${oldTension} → ${newTension}`);
+      }
+    }
+
+    // Clear narrative direction (already used in this narrative)
+    gameStateManager.clearNarrativeDirection();
+
+    // Clear transition flag (already processed in narrative)
     if (gameState.temporaryInfo.transition) {
       gameStateManager.clearTransitionFlag();
     }
 
-    // 清除场景转换拒绝标志（已经在叙事中处理过了）
+    // Clear scene transition rejection flag (already processed in narrative)
     if (gameState.temporaryInfo.sceneTransitionRejection) {
       gameStateManager.clearSceneTransitionRejection();
     }
 
+    // Temporary state is now preserved until next real player input
+    // Cleanup happens in entry node for real input only
+    const finalGameState = updatedGameState;
+
     return {
       narrative: parsedResponse.narrative || response,
       clueRevelations: parsedResponse.clueRevelations || { scenarioClues: [], npcClues: [], npcSecrets: [] },
-      updatedGameState
+      updatedGameState: finalGameState
     };
   }
 
   /**
-   * 1. 提取完整的场景信息
+   * Clear temporary state content
+   * @deprecated Cleanup now happens in entry node for real player input.
+   * Temporary state is preserved across simulated queries during listening loop.
+   * Kept for backward compatibility but no longer called.
+   */
+  private clearTemporaryState(gameState: GameState, gameStateManager: GameStateManager): GameState {
+    console.log("\n🧹 [Keeper Agent] Clearing temporary state content...");
+    
+    // Use new GameStateManager to update state
+    const stateManager = new GameStateManager(gameState);
+    
+    // Clear action results
+    stateManager.clearActionResults();
+    console.log("   ✓ Cleared action results");
+    
+    // Clear NPC response analyses
+    stateManager.clearNPCResponseAnalyses();
+    console.log("   ✓ Cleared NPC response analyses");
+    
+    // Clear action analysis
+    stateManager.clearActionAnalysis();
+    console.log("   ✓ Cleared action analysis");
+    
+    // Clear temporary rules and RAG results
+    const updatedState = stateManager.getGameState() as GameState;
+    updatedState.temporaryInfo.rules = [];
+    updatedState.temporaryInfo.ragResults = [];
+    console.log("   ✓ Cleared temporary rules and RAG results");
+    
+    console.log("✅ [Keeper Agent] Temporary state content cleared");
+    
+    return updatedState;
+  }
+
+  /**
+   * 1. Extract complete scenario information
    */
   private extractCompleteScenarioInfo(gameState: GameState) {
     const currentScenario = gameState.currentScenario;
@@ -139,25 +275,32 @@ export class KeeperAgent {
       };
     }
 
+    // Simplified scenario info - keep essential dynamic state
+    // Include clue text so Keeper can decide what to reveal
     return {
       hasScenario: true,
       id: currentScenario.id,
-      scenarioId: currentScenario.scenarioId,
       name: currentScenario.name,
       location: currentScenario.location,
-      description: currentScenario.description,
-      timePoint: currentScenario.timePoint || { timestamp: "Unknown", notes: "" },
+      // Characters present in the scene (dynamic state)
       characters: currentScenario.characters || [],
-      clues: currentScenario.clues || [],
-      conditions: currentScenario.conditions || [],
-      events: currentScenario.events || [],
-      keeperNotes: currentScenario.keeperNotes || "",
-      permanentChanges: currentScenario.permanentChanges
+      // Provide clue details for Keeper decision-making
+      clues: (currentScenario.clues || []).map(clue => ({
+        id: clue.id,
+        clueText: clue.clueText,
+        location: clue.location,
+        category: clue.category,
+        difficulty: clue.difficulty,
+        reveals: clue.reveals,
+        discovered: clue.discovered,
+        // Keep discovery details if the clue was discovered
+        ...(clue.discovered && clue.discoveryDetails ? { discoveryDetails: clue.discoveryDetails } : {})
+      }))
     };
   }
 
   /**
-   * 提取前一个场景的信息（用于场景转换时）
+   * Extract previous scenario information (for scene transitions)
    */
   private extractPreviousScenarioInfo(gameState: GameState) {
     const visitedScenarios = gameState.visitedScenarios;
@@ -169,107 +312,97 @@ export class KeeperAgent {
       };
     }
 
-    // 获取最近访问的场景（第一个元素是最新的）
+    // Get most recently visited scenario (first element is the latest)
     const previousScenario = visitedScenarios[0];
 
     return {
       hasPreviousScenario: true,
       id: previousScenario.id,
-      scenarioId: previousScenario.scenarioId,
       name: previousScenario.name,
-      location: previousScenario.location,
-      timePoint: previousScenario.timePoint
+      location: previousScenario.location
     };
   }
 
   /**
-   * 2. 获取最新的完整的action result
+   * 2. Get all action results (including player and NPC actions)
    */
-  private getLatestCompleteActionResult(gameState: GameState): ActionResult | null {
-    const actionResults = gameState.temporaryInfo.actionResults;
+  private getAllActionResults(gameState: GameState): ActionResult[] {
+    const actionResults = gameState.temporaryInfo.actionResults || [];
     
-    if (!actionResults || actionResults.length === 0) {
-      return null;
-    }
-    
-    // 返回最新的action result的完整信息
-    const latest = actionResults[actionResults.length - 1];
-    
-    return {
-      ...latest,
-      diceRolls: latest.diceRolls || []
-    };
-  }
-
-  /**
-   * 3. 提取场景中所有角色的完整属性
-   */
-  private extractAllSceneCharactersWithCompleteAttributes(gameState: GameState) {
-    return gameState.npcCharacters.map(npc => ({
-      source: 'scene',
-      character: this.extractCompleteCharacterAttributes(npc)
+    // Return complete information for all action results
+    return actionResults.map(result => ({
+      ...result,
+      diceRolls: result.diceRolls || []
     }));
   }
 
   /**
-   * 4. 提取action result中涉及的NPC完整属性（与场景角色去重）
+   * 3. Extract complete attributes of NPCs involved in all action results
+   * @param interactionPartnerName If provided, NPCs will include their interaction history with this character
    */
-  private extractActionRelatedNpcsWithDeduplication(
-    gameState: GameState, 
-    latestActionResult: ActionResult | null,
-    allSceneCharacters: any[]
+  private extractActionRelatedNpcs(
+    gameState: GameState,
+    allActionResults: Omit<ActionResult, 'diceRolls'>[],
+    interactionPartnerName: string | null = null
   ) {
-    if (!latestActionResult) {
+    if (!allActionResults || allActionResults.length === 0) {
       return [];
     }
 
-    // 从action result中识别涉及的角色
-    const actionCharacterName = latestActionResult.character;
-    const actionResult = latestActionResult.result;
-    
-    // 从action analysis中获取目标角色
-    const actionAnalysis = gameState.temporaryInfo.currentActionAnalysis;
-    const targetName = actionAnalysis?.target?.name;
-
-    // 收集相关的NPC名称
+    // Collect related NPC names from all action results (deduplicated)
     const relatedNpcNames = new Set<string>();
-    
-    // 添加action result中的角色（如果是NPC）
-    if (actionCharacterName && actionCharacterName !== gameState.playerCharacter.name) {
-      relatedNpcNames.add(actionCharacterName);
-    }
-    
-    // 添加目标角色
-    if (targetName) {
-      relatedNpcNames.add(targetName);
-    }
-    
-    // 从action result文本中提取可能的NPC名称（简单匹配）
-    gameState.npcCharacters.forEach(npc => {
-      if (actionResult.toLowerCase().includes(npc.name.toLowerCase())) {
-        relatedNpcNames.add(npc.name);
-      }
-    });
+    const playerName = gameState.playerCharacter.name;
 
-    // 找到相关的NPC并获取完整属性
+    // Extract related NPCs from all action results
+    for (const actionResult of allActionResults) {
+      // Add character from action result (if it's an NPC)
+      if (actionResult.character && actionResult.character !== playerName) {
+        relatedNpcNames.add(actionResult.character);
+      }
+
+      // Extract possible NPC names from action result text (simple matching)
+      if (actionResult.result) {
+        gameState.npcCharacters.forEach(npc => {
+          if (actionResult.result.toLowerCase().includes(npc.name.toLowerCase())) {
+            relatedNpcNames.add(npc.name);
+          }
+        });
+      }
+    }
+
+    // Get target character from action analysis
+    const actionAnalysis = gameState.temporaryInfo.currentActionAnalysis;
+    if (actionAnalysis?.target?.name) {
+      relatedNpcNames.add(actionAnalysis.target.name);
+    }
+
+    // Find related NPCs and get complete attributes
     const actionRelatedNpcs = [];
-    const sceneCharacterNames = new Set(allSceneCharacters.map(sc => sc.character.name));
-    
+    const addedNpcIds = new Set<string>();
+
     for (const npcName of relatedNpcNames) {
-      // 查找NPC
-      const npc = gameState.npcCharacters.find(n => 
+      // Find NPC
+      const npc = gameState.npcCharacters.find(n =>
         n.name.toLowerCase() === npcName.toLowerCase() ||
         n.name.toLowerCase().includes(npcName.toLowerCase())
       );
-      
-      if (npc) {
-        // 检查是否已在场景角色中（去重）
-        if (!sceneCharacterNames.has(npc.name)) {
-          actionRelatedNpcs.push({
-            source: 'action_related',
-            character: this.extractCompleteCharacterAttributes(npc)
-          });
-        }
+
+      if (npc && !addedNpcIds.has(npc.id)) {
+        // Avoid adding the same NPC twice
+        addedNpcIds.add(npc.id);
+        const currentLocation = gameState.currentScenario?.location || null;
+
+        // If this NPC is the interaction partner, include player's name to get interaction history
+        // Otherwise just use current location filtering
+        const partnerForThisNpc = (interactionPartnerName &&
+          npc.name.toLowerCase().includes(interactionPartnerName.toLowerCase()))
+          ? playerName
+          : null;
+
+        actionRelatedNpcs.push({
+          source: 'action_related',
+          character: this.extractCompleteCharacterAttributes(npc, currentLocation, partnerForThisNpc)
+        });
       }
     }
 
@@ -277,29 +410,59 @@ export class KeeperAgent {
   }
 
   /**
-   * 提取角色的完整属性信息
+   * Extract complete character attribute information
+   * @param character Character information
+   * @param currentLocation Current scene location (for filtering action log)
+   * @param interactionPartnerName Optional: if provided, also include action logs involving this partner (from any scene)
    */
-  private extractCompleteCharacterAttributes(character: CharacterProfile) {
+  private extractCompleteCharacterAttributes(
+    character: CharacterProfile,
+    currentLocation: string | null = null,
+    interactionPartnerName: string | null = null
+  ) {
     const npcData = character as NPCProfile;
+
+    // Filter action log: keep current location logs + interaction history with partner
+    let filteredActionLog: ActionLogEntry[] = [];
+    if (character.actionLog && character.actionLog.length > 0) {
+      if (currentLocation || interactionPartnerName) {
+        filteredActionLog = character.actionLog.filter(log => {
+          // Include if in current location
+          const isCurrentLocation = currentLocation &&
+            log.location &&
+            log.location.toLowerCase() === currentLocation.toLowerCase();
+
+          // Include if involves interaction with partner (check if partner name appears in summary)
+          const involvesPartner = interactionPartnerName &&
+            log.summary &&
+            log.summary.toLowerCase().includes(interactionPartnerName.toLowerCase());
+
+          return isCurrentLocation || involvesPartner;
+        });
+      } else {
+        // If no current scene location and no partner, don't include any action log
+        filteredActionLog = [];
+      }
+    }
     
     return {
-      // 基本信息
+      // Basic information
       id: character.id,
       name: character.name,
       isNPC: npcData.isNPC || true,
       
-      // 个人详细信息
+      // Personal details
       occupation: npcData.occupation || "Unknown",
-      age: npcData.age || "Unknown",
+      age: npcData.age,
       appearance: npcData.appearance || "No description",
       personality: npcData.personality || "Unknown personality",
       background: npcData.background || "Unknown background",
       
-      // 目标和秘密
+      // Goals and secrets
       goals: npcData.goals || [],
       secrets: npcData.secrets || [],
       
-      // 完整属性
+      // Complete attributes
       attributes: {
         STR: character.attributes.STR,
         CON: character.attributes.CON,
@@ -311,7 +474,7 @@ export class KeeperAgent {
         EDU: character.attributes.EDU
       },
       
-      // 完整状态
+      // Complete status
       status: {
         hp: character.status.hp,
         maxHp: character.status.maxHp,
@@ -325,54 +488,81 @@ export class KeeperAgent {
         mov: character.status.mov || 7
       },
       
-      // 物品
+      // Items
       inventory: character.inventory || [],
       
-      // 线索（如果是NPC）
+      // Action Log (only includes current location)
+      actionLog: filteredActionLog,
+      
+      // Clues (if NPC)
       clues: npcData.clues || [],
       
-      // 关系（如果是NPC）
+      // Relationships (if NPC)
       relationships: npcData.relationships || [],
       
-      // 备注
+      // Current location
+      currentLocation: npcData.currentLocation || null,
+      
+      // Notes
       notes: character.notes || ""
     };
   }
 
   /**
-   * 提取玩家角色完整信息
+   * Extract complete player character information
+   * @param player Player character information
+   * @param currentLocation Current scene location (for filtering action log)
+   * @param interactionPartnerName Optional: NPC name to include interaction history with
    */
-  private extractCompletePlayerCharacter(player: CharacterProfile) {
-    return this.extractCompleteCharacterAttributes(player);
+  private extractCompletePlayerCharacter(
+    player: CharacterProfile,
+    currentLocation: string | null = null,
+    interactionPartnerName: string | null = null
+  ) {
+    return this.extractCompleteCharacterAttributes(player, currentLocation, interactionPartnerName);
   }
 
   /**
-   * 更新游戏状态中的线索状态
+   * Update clue states in game state
    */
   private updateClueStates(gameState: GameState, clueRevelations: any, gameStateManager: GameStateManager): GameState {
     const stateManager = new GameStateManager(gameState);
-    const newDiscoveredClues: string[] = [];
-    
-    // 更新场景线索状态
+    const newDiscoveredClues: DiscoveredClue[] = [];
+
+    // Update scenario clue states
     if (clueRevelations.scenarioClues && clueRevelations.scenarioClues.length > 0) {
       const currentScenario = gameState.currentScenario;
       if (currentScenario && currentScenario.clues) {
-        clueRevelations.scenarioClues.forEach((clueId: string) => {
+        clueRevelations.scenarioClues.forEach((item: string | { clueId: string }) => {
+          const clueId = typeof item === "string" ? item : item?.clueId;
+          if (!clueId) return;
           const clue = currentScenario.clues.find(c => c.id === clueId);
           if (clue && !clue.discovered) {
+            const discoveredAt = new Date().toISOString();
             clue.discovered = true;
             clue.discoveryDetails = {
               discoveredBy: gameState.playerCharacter.name,
-              discoveredAt: new Date().toISOString(),
+              discoveredAt,
               method: "Keeper revelation"
             };
-            newDiscoveredClues.push(clue.clueText);
+
+            // Create detailed clue info
+            newDiscoveredClues.push({
+              text: clue.clueText,
+              type: "scenario",
+              sourceName: currentScenario.name,
+              discoveredBy: gameState.playerCharacter.name,
+              discoveredAt,
+              category: clue.category,
+              difficulty: clue.difficulty,
+              method: "Keeper revelation"
+            });
           }
         });
       }
     }
 
-    // 更新NPC线索状态
+    // Update NPC clue states
     if (clueRevelations.npcClues && clueRevelations.npcClues.length > 0) {
       clueRevelations.npcClues.forEach((item: {npcId: string, clueId: string}) => {
         const npc = gameState.npcCharacters.find(n => n.id === item.npcId) as NPCProfile;
@@ -380,27 +570,49 @@ export class KeeperAgent {
           const clue = npc.clues.find(c => c.id === item.clueId);
           if (clue && !clue.revealed) {
             clue.revealed = true;
-            newDiscoveredClues.push(clue.clueText);
+
+            // Create detailed clue info
+            newDiscoveredClues.push({
+              text: clue.clueText,
+              type: "npc",
+              sourceName: npc.name,
+              discoveredBy: gameState.playerCharacter.name,
+              discoveredAt: new Date().toISOString(),
+              category: clue.category as any,
+              difficulty: clue.difficulty as any,
+              method: "Social interaction"
+            });
           }
         }
       });
     }
 
-    // 处理NPC秘密揭示（秘密是字符串数组，用索引标识）
+    // Handle NPC secret revelations (secrets are string arrays, identified by index)
     if (clueRevelations.npcSecrets && clueRevelations.npcSecrets.length > 0) {
       clueRevelations.npcSecrets.forEach((item: {npcId: string, secretIndex: number}) => {
         const npc = gameState.npcCharacters.find(n => n.id === item.npcId) as NPCProfile;
         if (npc && npc.secrets && npc.secrets[item.secretIndex]) {
           const secret = npc.secrets[item.secretIndex];
-          newDiscoveredClues.push(`Secret: ${secret}`);
+
+          // Create detailed secret info
+          newDiscoveredClues.push({
+            text: `Secret: ${secret}`,
+            type: "secret",
+            sourceName: npc.name,
+            discoveredBy: gameState.playerCharacter.name,
+            discoveredAt: new Date().toISOString(),
+            method: "Secret revelation"
+          });
         }
       });
     }
 
-    // 将新发现的线索添加到全局发现列表
-    newDiscoveredClues.forEach(clueText => {
-      if (!gameState.discoveredClues.includes(clueText)) {
-        gameState.discoveredClues.push(clueText);
+    // Add newly discovered clues to global discovery list
+    newDiscoveredClues.forEach(discoveredClue => {
+      // Check if clue text already exists
+      const exists = gameState.discoveredClues.some(c => c.text === discoveredClue.text);
+      if (!exists) {
+        gameState.discoveredClues.push(discoveredClue);
       }
     });
 
@@ -408,7 +620,7 @@ export class KeeperAgent {
   }
 
   /**
-   * 处理输入并生成适当的叙事响应
+   * Process input and generate appropriate narrative response
    */
   async processInput(input: string, gameStateManager: GameStateManager): Promise<{narrative: string, clueRevelations: any, updatedGameState: GameState}> {
     try {

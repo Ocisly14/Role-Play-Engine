@@ -1,0 +1,87 @@
+[
+    {
+      "name": "Harrison's Hardware Store",
+      "description": "A small local hardware store that appears ordinary on the surface, but secretly serves as an illegal arms dealer protected by the local mafia. It functions as a discreet supply point for weapons and equipment in Cassandra.",
+      "snapshot": {
+        "name": "The Hardware Store",
+        "location": "A street-level hardware store in Cassandra",
+        "description": "The hardware store is run by a middle-aged man who appears shrewd and observant. The shop contains shelves of standard tools and supplies, while the upper display shelves hold small handmade inventions marked as not for sale. Harrison enjoys introducing these creations to curious customers and may offer discounts if conversation goes well. Beneath this friendly merchant exterior lies a covert weapons trade.",
+        "characters": [
+          {
+            "name": "Harrison",
+            "role": "Shop owner / Illegal arms dealer",
+            "status": "Alive",
+            "location": "Behind the counter of the hardware store",
+            "notes": "A middle-aged man who often squints while speaking, giving him a sly appearance. Publicly a hardware store owner, secretly sells firearms and is under local mafia protection."
+          }
+        ],
+        "clues": [
+          {
+            "clueText": "Harrison reacts to a specific coded phrase about hammering a nail.",
+            "category": "witness",
+            "difficulty": "regular",
+            "location": "Hardware store counter",
+            "discoveryMethod": "Conversation",
+            "reveals": ["Harrison is involved in an illegal trade"]
+          },
+          {
+            "clueText": "Harrison possesses a hidden inventory of firearms not displayed openly.",
+            "category": "physical",
+            "difficulty": "hard",
+            "location": "Back area of the store",
+            "discoveryMethod": "Persuade or Intimidate",
+            "reveals": ["The hardware store is a front for weapons trafficking"]
+          },
+          {
+            "clueText": "Harrison mentions that his protection comes from the local mafia rather than being a member himself.",
+            "category": "witness",
+            "difficulty": "regular",
+            "location": "Hardware store",
+            "discoveryMethod": "Conversation",
+            "reveals": ["Connection between the hardware store and organized crime"]
+          }
+        ],
+        "conditions": [
+          {
+            "type": "lighting",
+            "description": "Normal indoor lighting with slightly dim corners due to cluttered shelves.",
+            "mechanicalEffect": ""
+          },
+          {
+            "type": "sound",
+            "description": "Quiet, with occasional metallic clinks from tools and shelves.",
+            "mechanicalEffect": ""
+          }
+        ],
+        "events": [
+          "Use of the coded phrase to access illegal goods",
+          "Harrison showcases non-sale inventions",
+          "Negotiation over weapon prices"
+        ],
+        "exits": [
+          {
+            "direction": "Front Door",
+            "destination": "Cassandra streets",
+            "description": "The main entrance to the hardware store"
+          }
+        ],
+        "keeperNotes": "Harrison should appear cautious but not openly hostile. If investigators know the correct code phrase, he treats them as potential clients rather than threats. Weapon availability can strongly affect later encounters.",
+        "permanentChanges": [
+          "Once the code phrase is used, investigators gain access to Harrison’s illegal inventory"
+        ]
+      },
+      "tags": ["hardware store", "illegal arms", "mafia connection", "black market"],
+      "connections": [
+        {
+          "scenarioName": "Church Underground Casino",
+          "relationshipType": "concurrent",
+          "description": "Both locations are indirectly protected and influenced by the local mafia."
+        },
+        {
+          "scenarioName": "Train Station (The Dock)",
+          "relationshipType": "alternate",
+          "description": "The hardware store provides local weapons, while the train station handles external black-market logistics."
+        }
+      ]
+    }
+  ]

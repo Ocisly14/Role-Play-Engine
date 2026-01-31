@@ -14,7 +14,7 @@
 ## How to resolve
 - Treat Stealth as a contest against perception even if implicit.
 - Keeper should check: who could notice; are they alert or passive; does the environment favor stealth or exposure.
-- Use Stealth vs observers’ Listen/Spot Hidden when apt; otherwise a standard Stealth check.
+- Use Stealth vs observers’ Listen/Perception when apt; otherwise a standard Stealth check.
 
 ## Outcomes
 - Success: remain unnoticed, gain positional advantage, choose next action (explore/social/ambush), delay conflict. Success alone does not grant extra info or attack bonuses beyond being unseen.
@@ -31,5 +31,5 @@
 
 ## Relevant skills
 - Core: Stealth for quiet movement and concealment.
-- Supporting: Listen/Spot Hidden to judge detection (from observers), Track for covert tailing, Disguise for static concealment or prep, Sleight of Hand for close-up covert acts, Climb/Jump to support stealth routes.
+- Supporting: Listen/Perception to judge detection (from observers), Track for covert tailing, Disguise for static concealment or prep, Sleight of Hand for close-up covert acts, Climb/Jump to support stealth routes.
 - Attribute substitutes allowed: DEX for agile movement, APP to blend in crowds, POW to maintain composure.

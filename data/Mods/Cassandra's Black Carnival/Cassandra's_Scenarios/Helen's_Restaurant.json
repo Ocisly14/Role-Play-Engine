@@ -1,0 +1,46 @@
+[
+    {
+      "name": "Helen's Restaurant",
+      "description": "A small local restaurant operated by Helen, serving as a casual public space where townsfolk gather for meals and conversation. The atmosphere is ordinary on the surface, but it may function as a social information hub within the town.",
+      "snapshot": {
+        "name": "Helen's Restaurant",
+        "location": "A modest roadside or town-center restaurant with a dining area and service counter",
+        "description": "The restaurant is clean but worn, with simple tables and the lingering smell of cooked food. Customers come and go throughout the day, making it a suitable place to overhear rumors or speak with locals. Nothing overtly unnatural is immediately visible.",
+        "characters": [
+          {
+            "name": "Helen",
+            "role": "Owner / witness",
+            "status": "alive",
+            "location": "Behind the counter or in the kitchen area",
+            "notes": "Runs the restaurant and interacts regularly with local customers. May have overheard or witnessed unusual conversations or behaviors."
+          }
+        ],
+        "clues": [],
+        "conditions": [
+          {
+            "type": "smell",
+            "description": "The mixed aroma of cooked food, oil, and coffee hangs in the air.",
+            "mechanicalEffect": ""
+          },
+          {
+            "type": "sound",
+            "description": "Low background noise from conversation, clinking dishes, and kitchen activity.",
+            "mechanicalEffect": ""
+          }
+        ],
+        "events": [],
+        "exits": [
+          {
+            "direction": "Front door",
+            "destination": "Street / town area",
+            "description": "The main entrance used by customers.",
+            "condition": ""
+          }
+        ],
+        "keeperNotes": "Use this location primarily for social interaction, rumor gathering, and grounding the investigators in everyday normalcy before introducing darker elements.",
+        "permanentChanges": []
+      },
+      "tags": ["restaurant", "public place", "social hub"],
+      "connections": []
+    }
+  ]

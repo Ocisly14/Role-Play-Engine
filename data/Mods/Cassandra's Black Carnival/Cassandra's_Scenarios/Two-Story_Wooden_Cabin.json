@@ -1,0 +1,84 @@
+[
+    {
+      "name": "Two-Story Wooden Cabin",
+      "description": "A secluded two-story wooden cabin located on Crescent Street B, used as a former safe house by a hacker. The location is tied to multiple secret cyber pursuits and later becomes indirectly linked to a suspicious death scene nearby.",
+      "snapshot": {
+        "name": "Two-Story Wooden Cabin",
+        "location": "Crescent Street B, Cassandra",
+        "description": "The cabin appears unremarkable from the outside, blending in with the quiet residential surroundings. Internally, it once functioned as a hacker's safe house, chosen specifically to avoid surveillance systems. Evidence suggests hurried data destruction and prior illegal digital activities connected to underground networks.",
+        "showMap": false,
+        "characters": [],
+        "clues": [
+          {
+            "clueText": "Traces indicating the cabin was deliberately chosen to avoid surveillance systems, making it an ideal safe house.",
+            "category": "knowledge",
+            "difficulty": "regular",
+            "location": "General interior of the cabin",
+            "discoveryMethod": "Computer Use or Intelligence roll",
+            "reveals": [
+              "The occupant was highly aware of and actively avoiding digital monitoring."
+            ]
+          },
+          {
+            "clueText": "Evidence that a computer once used here had been completely destroyed and removed.",
+            "category": "physical",
+            "difficulty": "hard",
+            "location": "Former workstation area inside the cabin",
+            "discoveryMethod": "Spot Hidden",
+            "reveals": [
+              "A hacker attempted to erase all traces of their activities.",
+              "Someone later recovered or tampered with the destroyed device."
+            ]
+          },
+          {
+            "clueText": "Network activity traced to this cabin abruptly ceased here.",
+            "category": "observation",
+            "difficulty": "regular",
+            "location": "Cabin as a whole",
+            "discoveryMethod": "Computer Use",
+            "reveals": [
+              "This was the endpoint of a cyber pursuit involving multiple hackers."
+            ]
+          }
+        ],
+        "conditions": [
+          {
+            "type": "lighting",
+            "description": "Dim interior lighting, with no modern security systems or active electronics.",
+            "mechanicalEffect": ""
+          }
+        ],
+        "events": [
+          "The hacker known as Lucifero (THE SECOND CASE VICTIM, 21-year-old, killed December 22, 2003) traced a rival hacker's signal to this cabin before her death",
+          "A destroyed computer was recovered and partially restored elsewhere",
+          "The cabin later became contextually linked to Bruno's death nearby—Bruno was investigating both the first case (2002) and second case (2003) when he died"
+        ],
+        "exits": [
+          {
+            "direction": "Front Door",
+            "destination": "Crescent Street B",
+            "description": "The main entrance facing the street.",
+            "condition": ""
+          }
+        ],
+        "keeperNotes": "This location is primarily a background investigative site connected to THE SECOND CASE VICTIM (Lucifero, 21-year-old, December 22, 2003). Lucifero was investigating hackers before her death at Reindeer Bar. This cabin was her safe house. Bruno's body was found nearby in his car—he was investigating BOTH cases: the FIRST CASE (19-year-old, frozen in ice, December 22, 2002) and the SECOND CASE (Lucifero, gunshot/stab, December 22, 2003). Emphasize its role as a deliberate blind spot in the town's surveillance network and its importance in the cyber conflict between NPCs.",
+        "permanentChanges": [
+          "The cabin is no longer actively used as a safe house.",
+          "Its role as a former hacker hideout can be discovered permanently."
+        ]
+      },
+      "tags": ["safe house", "hacker", "surveillance blind spot", "investigation"],
+      "connections": [
+        {
+          "scenarioName": "Bruno's Car",
+          "relationshipType": "leads_to",
+          "description": "Bruno's body is found in his car parked in front of this cabin, linking the location to his death."
+        },
+        {
+          "scenarioName": "Reindeer Bar",
+          "relationshipType": "alternate",
+          "description": "Information recovered from this cabin indirectly leads to events at the Reindeer Bar."
+        }
+      ]
+    }
+  ]

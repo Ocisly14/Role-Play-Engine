@@ -67,7 +67,117 @@ export interface CharacterStatus {
 
 export interface ActionLogEntry {
   time: string;
+  location: string;
   summary: string;
+}
+
+/**
+ * Inventory Item - Represents an item in a character's inventory
+ */
+export interface InventoryItem {
+  name: string;                    // Item name (required)
+  quantity?: number;                // Quantity (default: 1)
+  properties?: Record<string, any>; // Additional properties (weight, durability, description, etc.)
+}
+
+/**
+ * Utility functions for inventory management
+ */
+export class InventoryUtils {
+  /**
+   * Normalize inventory to InventoryItem[] format
+   */
+  static normalizeInventory(inventory: InventoryItem[] | undefined | null): InventoryItem[] {
+    if (!inventory || !Array.isArray(inventory)) return [];
+    return inventory.filter((item): item is InventoryItem => 
+      item && typeof item === 'object' && 'name' in item && typeof item.name === 'string'
+    );
+  }
+
+  /**
+   * Convert InventoryItem[] to string[] (for simple display or legacy compatibility)
+   */
+  static toSimpleList(inventory: InventoryItem[]): string[] {
+    return inventory.map(item => {
+      if (item.quantity && item.quantity > 1) {
+        return `${item.name} (x${item.quantity})`;
+      }
+      return item.name;
+    });
+  }
+
+  /**
+   * Find an item in inventory by name (case-insensitive)
+   */
+  static findItem(inventory: InventoryItem[], itemName: string): InventoryItem | undefined {
+    const normalizedName = itemName.toLowerCase().trim();
+    return inventory.find(item => item.name.toLowerCase().trim() === normalizedName);
+  }
+
+  /**
+   * Add items to inventory, merging quantities if item already exists
+   */
+  static addItems(inventory: InventoryItem[], items: InventoryItem[]): InventoryItem[] {
+    const newInventory = [...inventory];
+    
+    for (const itemToAdd of items) {
+      const existingIndex = newInventory.findIndex(
+        invItem => invItem.name.toLowerCase().trim() === itemToAdd.name.toLowerCase().trim()
+      );
+      
+      if (existingIndex >= 0) {
+        // Merge quantities if item exists
+        const existing = newInventory[existingIndex];
+        newInventory[existingIndex] = {
+          ...existing,
+          quantity: (existing.quantity || 1) + (itemToAdd.quantity || 1),
+          // Merge properties if both have them
+          properties: existing.properties || itemToAdd.properties
+            ? { ...existing.properties, ...itemToAdd.properties }
+            : undefined
+        };
+      } else {
+        // Add new item
+        newInventory.push({
+          name: itemToAdd.name,
+          quantity: itemToAdd.quantity || 1,
+          properties: itemToAdd.properties
+        });
+      }
+    }
+    
+    return newInventory;
+  }
+
+  /**
+   * Remove items from inventory
+   */
+  static removeItems(inventory: InventoryItem[], itemsToRemove: InventoryItem[]): InventoryItem[] {
+    const removeNames = itemsToRemove.map(item => item.name.toLowerCase().trim());
+    
+    return inventory
+      .map(item => {
+        const itemName = item.name.toLowerCase().trim();
+        const index = removeNames.indexOf(itemName);
+        
+        if (index >= 0) {
+          const removeItem = itemsToRemove[index];
+          const removeQuantity = removeItem.quantity || 1;
+          const currentQuantity = item.quantity || 1;
+          
+          if (currentQuantity > removeQuantity) {
+            // Reduce quantity
+            return { ...item, quantity: currentQuantity - removeQuantity };
+          } else {
+            // Remove completely
+            return null;
+          }
+        }
+        
+        return item;
+      })
+      .filter((item): item is InventoryItem => item !== null);
+  }
 }
 
 export interface CharacterProfile {
@@ -75,10 +185,37 @@ export interface CharacterProfile {
   name: string;
   attributes: CharacterAttributes;
   status: CharacterStatus;
-  inventory: string[];
+  inventory: InventoryItem[];       // Changed from string[] to InventoryItem[]
   skills: Record<string, number>;
   notes?: string;
   actionLog?: ActionLogEntry[];
+  // Additional character information (mainly for player characters)
+  occupation?: string;
+  age?: number;
+  gender?: string;
+  appearance?: string;
+  personality?: string;
+  backstory?: string;
+  residence?: string;
+  birthplace?: string;
+  era?: string;
+  ideology?: string;
+  significantPeople?: string;
+  gear?: string;
+  weapons?: Array<{
+    name: string;
+    skill: string;
+    damage: string;
+    range: string;
+    attacks: string;
+    ammo: string;
+  }>;
+  derivedAttributes?: {
+    MOV?: number;
+    BUILD?: string;
+    DB?: string;
+    ARMOR?: string;
+  };
 }
 
 /**
@@ -120,6 +257,7 @@ export interface NPCRelationship {
 export interface NPCProfile extends CharacterProfile {
   occupation?: string;
   age?: number;
+  gender?: string;
   appearance?: string;
   personality?: string;
   background?: string;
@@ -128,6 +266,10 @@ export interface NPCProfile extends CharacterProfile {
   clues: NPCClue[];
   relationships: NPCRelationship[];
   isNPC: true; // flag to distinguish from player characters
+  currentLocation?: string; // NPC的当前地点
+  // DynamicWorld specific fields
+  instantiatedFrom?: string;     // Knowledge holder ID that this NPC represents
+  inheritsKnowledge?: string[];   // Truth event IDs from knowledge holder
 }
 
 /**
@@ -137,6 +279,7 @@ export interface ParsedNPCData {
   name: string;
   occupation?: string;
   age?: number;
+  gender?: string;
   appearance?: string;
   personality?: string;
   background?: string;
@@ -145,8 +288,10 @@ export interface ParsedNPCData {
   attributes?: Partial<CharacterAttributes>;
   status?: Partial<CharacterStatus>;
   skills?: Record<string, number>;
-  inventory?: string[];
+  inventory?: InventoryItem[];
   clues?: Omit<NPCClue, "id" | "revealed">[];
   relationships?: Omit<NPCRelationship, "targetId">[];
   notes?: string;
+  actionLog?: ActionLogEntry[];
+  currentLocation?: string; // NPC的当前地点
 }

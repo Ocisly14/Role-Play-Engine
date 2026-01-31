@@ -10,7 +10,7 @@ import { ChatGoogleGenerativeAI } from "@langchain/google-genai";
 import mammoth from "mammoth";
 import pdfParse from "pdf-parse";
 import { createChatModel, ModelProviderName, ModelClass } from "../../../../models/index.js";
-import type { ParsedScenarioData } from "../../models/scenarioTypes.js";
+import type { ParsedScenarioData, ParsedScenarioSnapshot } from "../../models/scenarioTypes.js";
 
 /**
  * Supported document formats
@@ -30,10 +30,12 @@ export class ScenarioDocumentParser {
       const openaiApiKey = process.env.OPENAI_API_KEY;
       
       if (geminiApiKey) {
-        // Use small model for document parsing (cost-effective for this task)
+        // Use SMALL model for scenario extraction (cost optimization)
         this.llm = createChatModel(ModelProviderName.GOOGLE, ModelClass.SMALL);
+        console.log("✓ Using small model for scenario parsing");
       } else if (openaiApiKey) {
         this.llm = createChatModel(ModelProviderName.OPENAI, ModelClass.SMALL);
+        console.log("✓ Using small model for scenario parsing");
       } else {
         throw new Error("No API key found. Please set either GOOGLE_API_KEY or OPENAI_API_KEY environment variable.");
       }
@@ -43,9 +45,9 @@ export class ScenarioDocumentParser {
   }
 
   /**
-   * Parse a document and extract scenario data
+   * Parse a document and extract scenario data (supports multiple scenarios per document)
    */
-  async parseDocument(filePath: string): Promise<ParsedScenarioData> {
+  async parseDocument(filePath: string): Promise<ParsedScenarioData[]> {
     const ext = path
       .extname(filePath)
       .toLowerCase()
@@ -60,10 +62,12 @@ export class ScenarioDocumentParser {
     // Extract text from document
     const text = await this.extractText(filePath, ext);
 
-    // Use LLM to parse structured data from text
-    const scenarioData = await this.extractScenarioData(text, path.basename(filePath));
+    console.log(`📄 Document size: ${text.length} characters`);
 
-    return scenarioData;
+    // Use LLM to parse structured data from text (now returns array)
+    const scenarioDataArray = await this.extractScenarioData(text, path.basename(filePath));
+
+    return scenarioDataArray;
   }
 
   /**
@@ -88,66 +92,83 @@ export class ScenarioDocumentParser {
 
   /**
    * Use LLM to extract structured scenario data from raw text.
+   * Now processes the entire document at once using Large model, returning multiple scenarios if found.
    */
   private async extractScenarioData(
     text: string,
     fileName: string
-  ): Promise<ParsedScenarioData> {
-    const CHUNK_SIZE = 5000;
-    const OVERLAP = 1000;
+  ): Promise<ParsedScenarioData[]> {
+    // With Large model, we can handle much larger inputs (up to ~50,000 characters)
+    // Only chunk if document is extremely large (>100,000 chars)
+    const MAX_SIZE = 100000;
 
-    if (text.length > CHUNK_SIZE) {
-      const chunks = this.splitTextWithOverlap(text, CHUNK_SIZE, OVERLAP);
-      let merged: ParsedScenarioData | null = null;
-
-      for (let i = 0; i < chunks.length; i++) {
-        console.log(
-          `Chunking ${fileName}: processing part ${i + 1}/${chunks.length} (${chunks[i].length} chars)`
-        );
-        const partName = `${fileName} (part ${i + 1}/${chunks.length})`;
-        const partial = await this.extractScenarioDataFromText(
-          chunks[i],
-          partName
-        );
-        merged = merged ? this.mergeScenarioResults(merged, partial) : partial;
-      }
-
-      if (!merged) {
-        throw new Error(`Failed to parse any scenario data for ${fileName}`);
-      }
-
-      return merged;
+    if (text.length > MAX_SIZE) {
+      console.warn(`⚠️  Document is very large (${text.length} chars). Consider splitting into separate files.`);
+      // For extremely large documents, still use chunking but with larger chunks
+      return this.extractWithChunking(text, fileName);
     }
 
-    return this.extractScenarioDataFromText(text, fileName);
+    console.log(`🤖 Processing entire document with Large model (${text.length} chars)...`);
+    return this.extractScenariosFromText(text, fileName);
   }
 
   /**
-   * Core extraction for a single text chunk
+   * Fallback method for extremely large documents (>100k chars)
    */
-  private async extractScenarioDataFromText(
+  private async extractWithChunking(
     text: string,
     fileName: string
-  ): Promise<ParsedScenarioData> {
+  ): Promise<ParsedScenarioData[]> {
+    const CHUNK_SIZE = 50000; // Much larger chunks with Large model
+    const OVERLAP = 2000;
+    
+    const chunks = this.splitTextWithOverlap(text, CHUNK_SIZE, OVERLAP);
+    const allScenarios: ParsedScenarioData[] = [];
+
+    for (let i = 0; i < chunks.length; i++) {
+      console.log(
+        `📄 Processing chunk ${i + 1}/${chunks.length} (${chunks[i].length} chars)`
+      );
+      const partName = `${fileName} (part ${i + 1}/${chunks.length})`;
+      const scenarios = await this.extractScenariosFromText(chunks[i], partName);
+      allScenarios.push(...scenarios);
+    }
+
+    // Deduplicate scenarios by name (keep first occurrence)
+    const uniqueScenarios = new Map<string, ParsedScenarioData>();
+    for (const scenario of allScenarios) {
+      if (!uniqueScenarios.has(scenario.name)) {
+        uniqueScenarios.set(scenario.name, scenario);
+      }
+    }
+
+    return Array.from(uniqueScenarios.values());
+  }
+
+  /**
+   * Core extraction - returns array of scenarios from text
+   */
+  private async extractScenariosFromText(
+    text: string,
+    fileName: string
+  ): Promise<ParsedScenarioData[]> {
     const prompt = `You are a scenario data extractor for a Call of Cthulhu 7th Edition TRPG game.
 
-Extract scenario information from the following document and return it as a JSON object.
+Extract ALL scenarios from the following document and return them as a JSON array.
 
-The JSON should follow this structure (no category field; the scenario name/description is the location anchor):
+**IMPORTANT**: If the document contains multiple locations/scenarios (e.g., a bar, hospital, train station, etc.), 
+extract each as a SEPARATE object in the array. Each unique location = one scenario object.
+
+The JSON array should contain objects following this structure:
 {
-  "name": "AAA Hospital / BBB Factory / CCC Plaza ...",
+  "name": "Scenario Location Name (e.g., 'AAA Hospital', 'BBB Factory', 'CCC Plaza')",
   "description": "Overall scenario description (the environment as a whole)",
-  "timeline": [
-    {
-      "timePoint": {
-        "absoluteTime": "ISO 8601 datetime (e.g., '1925-03-15T08:00:00Z', '1925-04-03T06:00:00Z')",
-        "gameDay": 1,  // Integer: which day of the investigation (1, 2, 3, ...)
-        "timeOfDay": "dawn|morning|noon|afternoon|evening|night|midnight|unknown",
-        "notes": "Additional time notes (optional)"
-      },
-      "name": "Scene name at this time (optional)",
-      "location": "Primary location (same site; use description for sub-areas, not separate rooms)",
-      "description": "Detailed scene description for this time",
+  "snapshot": {
+      "name": "Scene name (optional, can be same as scenario name)",
+      "location": "Primary location description",
+      "description": "Detailed scene description",
+      "timeRestriction": "Optional time restriction (e.g., 'day1 evening', 'day2 (after)')",
+      "showMap": "Optional boolean; true to show map, false to hide map in this scene",
       "characters": [
         {
           "name": "Character name",
@@ -174,7 +195,7 @@ The JSON should follow this structure (no category field; the scenario name/desc
           "mechanicalEffect": "Game mechanical effect if any"
         }
       ],
-      "events": ["List of notable events at this time"],
+      "events": ["List of notable events"],
       "exits": [
         {
           "direction": "Direction or exit name",
@@ -183,7 +204,23 @@ The JSON should follow this structure (no category field; the scenario name/desc
           "condition": "locked/hidden/etc (optional)"
         }
       ],
-      "keeperNotes": "Notes for the Keeper"
+      "keeperNotes": "Notes for the Keeper",
+      "permanentChanges": ["Any permanent changes to the scenario"]
+    },
+  "snapshots": [
+    {
+      "name": "Scene name (optional)",
+      "location": "Primary location description",
+      "description": "Detailed scene description",
+      "timeRestriction": "Optional time restriction (e.g., 'day1 evening', 'day2 (after)')",
+      "showMap": "Optional boolean; true to show map, false to hide map in this scene",
+      "characters": [...],
+      "clues": [...],
+      "conditions": [...],
+      "events": [...],
+      "exits": [...],
+      "keeperNotes": "...",
+      "permanentChanges": [...]
     }
   ],
   "tags": ["tag1", "tag2", "descriptive tags"],
@@ -197,34 +234,23 @@ The JSON should follow this structure (no category field; the scenario name/desc
 }
 
 Important extraction guidelines:
-1. **Timeline Ordering**: Convert time descriptions to structured format:
-   - **absoluteTime**: Parse dates/times into ISO 8601 format (YYYY-MM-DDTHH:MM:SSZ). Estimate reasonable times based on context (e.g., "dawn" → 06:00:00, "noon" → 12:00:00, "evening" → 18:00:00, "night" → 22:00:00, "midnight" → 00:00:00)
-   - **gameDay**: Extract or infer the investigation day number (1 for first day, 2 for second day, etc.). If vague like "later", use context from previous entries
-   - **timeOfDay**: Classify into one of: dawn (4-7am), morning (7-11am), noon (11am-1pm), afternoon (1-5pm), evening (5-8pm), night (8pm-12am), midnight (12-4am), or unknown
-2. **Character Tracking**: Note how characters move between small locations and change status over time
-3. **Clue Evolution**: Some clues may only be available at certain times or after certain events
-4. **Environmental Changes**: Weather, lighting, sounds that change over time
-5. **Multiple Time Points**: If the document describes the same location at different times, create separate timeline entries
-6. **Keeper Information**: Separate player-visible information from Keeper-only notes
-7. **Clue Scope**: Only include clues that can be discovered in the scene/location/timeline entry itself. Do NOT include clues that belong solely to an NPC's private knowledge.
-8. **Partial Inputs**: The text you see may be only a fragment of the full scenario. If information is missing or incomplete, leave the field blank or omit it—do NOT fabricate details, but keep the json format of response complete.
-9. **Scene Granularity**: Treat a scene as a whole area/building (e.g., a hotel, a plaza, a home, a hospital, a lumberyard). Do NOT split into individual rooms; fold room-level details into the description/clues of the parent location. Story background or meta setup is not itself a scene—only concrete places/areas that investigators can visit.
-10. **Location-First Modeling**: Each scenario maps to a single location/environment (e.g., “医院”, “工厂”, “广场”). Do NOT create separate scenarios for events. Use the timeline to capture different time states of the same location (what time, which people, what events/clues), not to jump across different places. Do not add a category field—only the name/description identify the place.
+1. **Multiple Scenarios**: If the document describes multiple distinct locations (bar, hospital, church, train station, etc.), create SEPARATE scenario objects for each
+2. **Single or Multiple Snapshots**: Each scenario can have either a single "snapshot" object (legacy format) or multiple "snapshots" array (new format). Use "snapshots" array if the scenario has different states at different times (e.g., before/after an event, different time periods)
+3. **Time Restrictions**: If a snapshot is only valid at a specific time, include "timeRestriction" field (e.g., "day1 evening", "day2 (after)")
+3. **Character Information**: Document all characters present in each scenario with their status
+4. **Clue Scope**: Only include clues discoverable in the scene/location. Do NOT include clues belonging solely to NPC private knowledge
+5. **Partial Inputs**: If information is missing, leave the field blank or omit it—do NOT fabricate details
+6. **Scene Granularity**: Treat a scene as a whole area/building (e.g., hotel, plaza, hospital). Do NOT split into individual rooms; fold room-level details into the description/clues of the parent location
+7. **Location-First**: Each scenario maps to one location/environment. The snapshot captures the state of that location
+8. **Connections**: When scenarios reference other scenarios in the document, include them in the "connections" array
 
 Pay special attention to:
-- Time markers and chronological sequence
-- Character movements and status changes
-- When clues become available or discoverable
-- Environmental/atmospheric changes
-- Events that trigger scene changes
+- Characters present and their status
+- Clues available in the location
+- Environmental/atmospheric conditions
+- Notable events or activities
+- Connections to other locations
 
-Extract ALL time points mentioned in the document, even if subtle. Look for phrases like:
-- "Later that evening..."
-- "The next morning..."
-- "Meanwhile, in the library..."
-- "After the investigators leave..."
-- "During the night..."
-But remember: you should make it specific based on the related information, always include the date or timeline like "day 1""day 2"
 Document content:
 ---
 ${text}
@@ -232,46 +258,90 @@ ${text}
 
 File name: ${fileName}
 
-Return ONLY the JSON object, no additional text.`;
+Return ONLY a JSON array of scenario objects. Even if there's only one scenario, wrap it in an array: [{"name": "...", ...}]
+Do not include any additional text, explanations, or markdown formatting.`;
 
     let lastError: unknown;
 
     for (let attempt = 1; attempt <= 3; attempt++) {
       try {
         const response = await this.llm.invoke(prompt);
-        const content = response.content as string;
+        const content =
+          typeof response.content === "string"
+            ? response.content
+            : JSON.stringify(response.content, null, 2);
 
-        // Extract JSON from response (in case LLM wraps it in markdown code blocks)
+        // Save raw LLM response to JSON file for debugging/auditing
+        try {
+          const rawDir = path.join(
+            process.cwd(),
+            "data",
+            "scenarios",
+            "raw_responses"
+          );
+          fs.mkdirSync(rawDir, { recursive: true });
+
+          const safeFileName = fileName.replace(/[^\w.-]+/g, "_");
+          const rawPath = path.join(
+            rawDir,
+            `${safeFileName}-${Date.now()}.json`
+          );
+
+          const rawPayload = {
+            fileName,
+            attempt,
+            timestamp: new Date().toISOString(),
+            promptLength: prompt.length,
+            content,
+          };
+
+          fs.writeFileSync(rawPath, JSON.stringify(rawPayload, null, 2), "utf8");
+        } catch (saveErr) {
+          console.warn("⚠️ Failed to save raw LLM response:", saveErr);
+        }
+
+        // Extract JSON from response (support both array and single object wrapped in code blocks)
         const jsonText =
           content.match(/```(?:json)?\s*([\s\S]*?)```/i)?.[1] ||
+          content.match(/\[[\s\S]*\]/)?.[0] ||
           content.match(/\{[\s\S]*\}/)?.[0];
 
         if (!jsonText) {
-          throw new Error(`Failed to extract JSON from LLM response: ${content}`);
+          throw new Error(`Failed to extract JSON from LLM response: ${content.substring(0, 500)}...`);
         }
 
-        const scenarioData: ParsedScenarioData = JSON.parse(jsonText);
+        let parsedData = JSON.parse(jsonText);
 
-        // Validate required fields
-        if (!scenarioData.name) {
-          throw new Error(
-            `Scenario name is required but not found in document: ${fileName}`
-          );
+        // Ensure we always return an array
+        const scenariosArray: ParsedScenarioData[] = Array.isArray(parsedData) 
+          ? parsedData 
+          : [parsedData];
+
+        // Validate each scenario
+        for (const scenario of scenariosArray) {
+          if (!scenario.name) {
+            throw new Error(
+              `Scenario name is required but not found in one of the scenarios in: ${fileName}`
+            );
+          }
+
+          if (!scenario.snapshot) {
+            throw new Error(
+              `Scenario snapshot is required for scenario "${scenario.name}" in: ${fileName}`
+            );
+          }
         }
 
-        if (!scenarioData.timeline || scenarioData.timeline.length === 0) {
-          throw new Error(
-            `At least one timeline entry is required but not found in document: ${fileName}`
-          );
-        }
+        console.log(`✓ Extracted ${scenariosArray.length} scenario(s) from ${fileName}`);
+        scenariosArray.forEach((s, i) => console.log(`  ${i + 1}. ${s.name}`));
 
-        return scenarioData;
+        return scenariosArray;
       } catch (err) {
         lastError = err;
         const detail =
           err instanceof Error ? err.message : typeof err === "string" ? err : "Unknown error";
         console.warn(
-          `Retry ${attempt}/3 for ${fileName} due to error: ${detail}`
+          `⚠️  Retry ${attempt}/3 for ${fileName} due to error: ${detail}`
         );
         if (attempt === 3) {
           throw err;
@@ -301,10 +371,10 @@ Return ONLY the JSON object, no additional text.`;
     for (const file of scenarioFiles) {
       try {
         const filePath = path.join(dirPath, file);
-        console.log(`Parsing scenario document: ${file}...`);
-        const scenarioData = await this.parseDocument(filePath);
-        results.push(scenarioData);
-        console.log(`✓ Successfully parsed: ${scenarioData.name} (${scenarioData.timeline.length} time points)`);
+        console.log(`\n📖 Parsing scenario document: ${file}...`);
+        const scenariosFromFile = await this.parseDocument(filePath);
+        results.push(...scenariosFromFile); // Spread the array
+        console.log(`✓ Successfully parsed ${scenariosFromFile.length} scenario(s) from ${file}`);
       } catch (error) {
         console.error(`✗ Failed to parse ${file}:`, error);
       }
@@ -345,31 +415,33 @@ Return ONLY the JSON object, no additional text.`;
   }
 
   /**
-   * Merge scenario results from multiple chunks
+   * LEGACY: Merge scenario results from multiple chunks
+   * Note: This is now only used for extremely large documents (>100k chars)
+   * Regular documents are processed in one shot with Large model
    */
   private mergeScenarioResults(
     base: ParsedScenarioData,
     incoming: ParsedScenarioData
   ): ParsedScenarioData {
-    const norm = (v?: string | number) => (v ? String(v).toLowerCase().trim() : "");
-    const makeTimelineKey = (entry: ParsedScenarioData["timeline"][number]) => {
-      const absTime = norm(entry.timePoint.absoluteTime);
-      const gameDay = norm(entry.timePoint.gameDay);
-      const timeOfDay = norm(entry.timePoint.timeOfDay);
-      const loc = norm(entry.location);
-      const name = norm(entry.name);
-      const desc = norm(entry.description?.slice(0, 32));
+    // Merge snapshots - handle both single snapshot and multiple snapshots
+    let mergedSnapshot: ParsedScenarioSnapshot | undefined;
+    let mergedSnapshots: ParsedScenarioSnapshot[] | undefined;
 
-      if (absTime || gameDay || loc || name) {
-        return `time:${absTime}|day:${gameDay}|tod:${timeOfDay}|loc:${loc}|name:${name}`;
-      }
-      return `desc:${desc}`;
-    };
+    if (base.snapshots || incoming.snapshots) {
+      // Both have snapshots arrays - merge them
+      const baseSnapshots = base.snapshots || (base.snapshot ? [base.snapshot] : []);
+      const incomingSnapshots = incoming.snapshots || (incoming.snapshot ? [incoming.snapshot] : []);
+      mergedSnapshots = [...baseSnapshots, ...incomingSnapshots];
+    } else if (base.snapshot || incoming.snapshot) {
+      // Both have single snapshot - merge them
+      mergedSnapshot = this.mergeSnapshot(base.snapshot, incoming.snapshot);
+    }
 
     const merged: ParsedScenarioData = {
       name: base.name || incoming.name,
       description: this.pickLonger(base.description, incoming.description) || "",
-      timeline: [],
+      snapshot: mergedSnapshot,
+      snapshots: mergedSnapshots,
       tags: this.mergeStringArrays(base.tags, incoming.tags) || [],
       connections: this.mergeByKey(
         base.connections,
@@ -378,39 +450,24 @@ Return ONLY the JSON object, no additional text.`;
       ),
     };
 
-    const timelineMap = new Map<string, typeof base.timeline[number]>();
-    const addTimeline = (entry: typeof base.timeline[number]) => {
-      const key = makeTimelineKey(entry);
-      if (timelineMap.has(key)) {
-        const existing = timelineMap.get(key)!;
-        timelineMap.set(key, this.mergeTimelineEntry(existing, entry));
-      } else {
-        timelineMap.set(key, entry);
-      }
-    };
-
-    base.timeline.forEach(addTimeline);
-    incoming.timeline.forEach(addTimeline);
-
-    merged.timeline = Array.from(timelineMap.values());
     return merged;
   }
 
-  private mergeTimelineEntry(
-    a: ParsedScenarioData["timeline"][number],
-    b: ParsedScenarioData["timeline"][number]
-  ): ParsedScenarioData["timeline"][number] {
+  private mergeSnapshot(
+    a: ParsedScenarioData["snapshot"],
+    b: ParsedScenarioData["snapshot"]
+  ): ParsedScenarioSnapshot {
+    if (!a && !b) {
+      throw new Error("Cannot merge: both snapshots are undefined");
+    }
+    if (!a) return b!;
+    if (!b) return a;
+
     return {
-      ...a,
-      timePoint: {
-        absoluteTime: a.timePoint.absoluteTime || b.timePoint.absoluteTime,
-        gameDay: a.timePoint.gameDay || b.timePoint.gameDay,
-        timeOfDay: a.timePoint.timeOfDay || b.timePoint.timeOfDay,
-        notes: this.pickLonger(a.timePoint.notes, b.timePoint.notes),
-      },
       name: a.name || b.name,
       location: a.location || b.location,
       description: this.pickLonger(a.description, b.description) || "",
+      timeRestriction: a.timeRestriction || b.timeRestriction,
       characters: this.mergeByKey(
         a.characters,
         b.characters,
@@ -429,6 +486,7 @@ Return ONLY the JSON object, no additional text.`;
         (e) => `${e.direction}-${e.destination}`
       ),
       keeperNotes: this.pickLonger(a.keeperNotes, b.keeperNotes),
+      permanentChanges: this.mergeStringArrays(a.permanentChanges, b.permanentChanges),
     };
   }
 

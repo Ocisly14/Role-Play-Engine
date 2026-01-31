@@ -18,6 +18,9 @@ export default defineConfig({
       ],
     },
   },
+  server: {
+    allowedHosts: ["game.coc-agent.com"],
+  },
   resolve: {
     alias: {
       "@": new URL("./src", import.meta.url).pathname,

@@ -23,6 +23,13 @@ export class ModuleLoader {
   }
 
   /**
+   * Get database instance for column checks
+   */
+  private get dbInstance(): CoCDatabase {
+    return this.db;
+  }
+
+  /**
    * Check if any files in directory have changed since last load
    */
   private checkForChanges(dirPath: string): { hasChanges: boolean; currentFiles: Map<string, number> } {
@@ -69,6 +76,50 @@ export class ModuleLoader {
   }
 
   /**
+   * Check if any JSON files in directory have changed since last load
+   */
+  private checkForJSONChanges(dirPath: string): { hasChanges: boolean; currentFiles: Map<string, number> } {
+    if (!fs.existsSync(dirPath)) {
+      return { hasChanges: false, currentFiles: new Map() };
+    }
+
+    const currentFiles = new Map<string, number>();
+    const files = fs.readdirSync(dirPath).filter(file => file.toLowerCase().endsWith(".json"));
+
+    // Get modification times for all JSON files
+    for (const file of files) {
+      const filePath = path.join(dirPath, file);
+      const stats = fs.statSync(filePath);
+      currentFiles.set(file, stats.mtime.getTime());
+    }
+
+    // Check if we have existing modules
+    const existingModules = this.getAllModules();
+    
+    // If no modules exist, we need to load
+    if (existingModules.length === 0) {
+      return { hasChanges: true, currentFiles };
+    }
+
+    // Check timestamp file
+    const lastLoadFile = path.join(dirPath, '.last_module_load_timestamp');
+    let lastLoadTime = 0;
+    
+    if (fs.existsSync(lastLoadFile)) {
+      try {
+        lastLoadTime = parseInt(fs.readFileSync(lastLoadFile, 'utf8'));
+      } catch {
+        return { hasChanges: true, currentFiles };
+      }
+    }
+
+    // Check if any file is newer than last load
+    const hasChanges = Array.from(currentFiles.values()).some(mtime => mtime > lastLoadTime);
+    
+    return { hasChanges, currentFiles };
+  }
+
+  /**
    * Update the last load timestamp
    */
   private updateLastLoadTimestamp(dirPath: string): void {
@@ -78,27 +129,168 @@ export class ModuleLoader {
   }
 
   /**
+   * Load module from a single JSON file (skip document parsing)
+   */
+  async loadModuleFromJSON(filePath: string, forceReload = false): Promise<ModuleBackground[]> {
+    console.log(`\n=== Loading Module from JSON file: ${filePath} ===`);
+
+    if (!fs.existsSync(filePath)) {
+      console.log(`File does not exist: ${filePath}`);
+      return [];
+    }
+
+    try {
+      console.log(`📦 Loading JSON file...`);
+      const fileContent = fs.readFileSync(filePath, "utf-8");
+      const jsonData = JSON.parse(fileContent);
+
+      // Handle both array of modules and single module object
+      const modules: ParsedModuleData[] = Array.isArray(jsonData) ? jsonData : [jsonData];
+
+      if (modules.length === 0) {
+        console.log("⚠️  No module data found in JSON file.");
+        return [];
+      }
+
+      // Convert and store each module
+      console.log(`💾 Starting to save ${modules.length} modules to database...`);
+      const moduleRecords: ModuleBackground[] = [];
+      for (let i = 0; i < modules.length; i++) {
+        const parsed = modules[i];
+        try {
+          console.log(`  [${i + 1}/${modules.length}] Saving module: ${parsed.title}`);
+          const moduleRecord = this.convertToModuleBackground(parsed);
+          this.saveModuleToDatabase(moduleRecord);
+          moduleRecords.push(moduleRecord);
+          console.log(`    ✓ Saved module: ${moduleRecord.title}`);
+        } catch (error) {
+          console.error(`    ✗ Failed to save module ${parsed.title}:`, error);
+        }
+      }
+
+      console.log(`\n=== Successfully loaded ${moduleRecords.length} modules from JSON file ===\n`);
+      return moduleRecords;
+    } catch (error) {
+      console.error(`✗ Failed to load JSON file ${filePath}:`, error);
+      return [];
+    }
+  }
+
+  /**
+   * Load modules from JSON files in a directory (skip document parsing)
+   */
+  async loadModulesFromJSONDirectory(dirPath: string, forceReload = false): Promise<ModuleBackground[]> {
+    console.log(`\n=== Loading Modules from JSON directory: ${dirPath} ===`);
+
+    if (!fs.existsSync(dirPath)) {
+      console.log(`Directory does not exist: ${dirPath}`);
+      return [];
+    }
+
+    // Check for file changes unless forced reload
+    if (!forceReload) {
+      const { hasChanges } = this.checkForJSONChanges(dirPath);
+      if (!hasChanges) {
+        const existingModules = this.getAllModules();
+        console.log(`No changes detected. Using ${existingModules.length} existing modules from database.`);
+        return existingModules;
+      }
+    }
+
+    console.log(`📦 找到模块JSON文件，开始加载...`);
+
+    const files = fs.readdirSync(dirPath);
+    const jsonFiles = files.filter((f) => f.toLowerCase().endsWith(".json"));
+
+    if (jsonFiles.length === 0) {
+      console.log("⚠️  目录中未找到JSON文件。");
+      this.updateLastLoadTimestamp(dirPath);
+      return [];
+    }
+
+    console.log(`📦 找到 ${jsonFiles.length} 个模块JSON文件，开始加载...`);
+    const allParsedModules: ParsedModuleData[] = [];
+
+    for (let i = 0; i < jsonFiles.length; i++) {
+      const file = jsonFiles[i];
+      try {
+        console.log(`  [${i + 1}/${jsonFiles.length}] 正在加载: ${file}`);
+        const filePath = path.join(dirPath, file);
+        const fileContent = fs.readFileSync(filePath, "utf-8");
+        const jsonData = JSON.parse(fileContent);
+
+        // Handle both array of modules and single module object
+        const modules: ParsedModuleData[] = Array.isArray(jsonData) ? jsonData : [jsonData];
+
+        for (const moduleData of modules) {
+          allParsedModules.push(moduleData);
+        }
+        console.log(`  ✓ 已加载 ${modules.length} 个模块从文件: ${file}`);
+      } catch (error) {
+        console.error(`  ✗ 加载文件失败 ${file}:`, error);
+      }
+    }
+
+    if (allParsedModules.length === 0) {
+      console.log("⚠️  JSON文件中未找到模块数据。");
+      this.updateLastLoadTimestamp(dirPath);
+      return [];
+    }
+
+    // Convert and store each module
+    console.log(`💾 开始保存 ${allParsedModules.length} 个模块到数据库...`);
+    const moduleRecords: ModuleBackground[] = [];
+    for (let i = 0; i < allParsedModules.length; i++) {
+      const parsed = allParsedModules[i];
+      try {
+        console.log(`  [${i + 1}/${allParsedModules.length}] 正在保存模块: ${parsed.title}`);
+        const moduleRecord = this.convertToModuleBackground(parsed);
+        this.saveModuleToDatabase(moduleRecord);
+        moduleRecords.push(moduleRecord);
+        console.log(`    ✓ 已保存模块: ${moduleRecord.title}`);
+      } catch (error) {
+        console.error(`    ✗ 保存模块失败 ${parsed.title}:`, error);
+      }
+    }
+
+    // Update timestamp after successful load
+    this.updateLastLoadTimestamp(dirPath);
+
+    console.log(`\n=== Successfully loaded ${moduleRecords.length} modules from JSON files ===\n`);
+    return moduleRecords;
+  }
+
+  /**
    * Get all modules from database
    */
   getAllModules(): ModuleBackground[] {
     const database = this.db.getDatabase();
     const modules = database.prepare(`
-      SELECT * FROM module_backgrounds ORDER BY created_at DESC
+      SELECT * FROM module_backgrounds
     `).all() as any[];
 
-    return modules.map((row) => ({
-      id: row.module_id,
-      title: row.title,
-      background: row.background,
-      storyOutline: row.story_outline,
-      moduleNotes: row.module_notes,
-      keeperGuidance: row.keeper_guidance,
-      storyHook: row.story_hook,
-      moduleLimitations: row.module_limitations,
-      tags: JSON.parse(row.tags || '[]'),
-      source: row.source,
-      createdAt: row.created_at,
-    }));
+    return modules.map((row) => {
+      const module: ModuleBackground = {
+        id: row.module_id,
+        title: row.title,
+        background: row.background,
+        storyOutline: row.story_outline,
+        moduleNotes: row.module_notes,
+        keeperGuidance: row.keeper_guidance,
+        moduleLimitations: row.module_limitations,
+        initialGameTime: row.initial_game_time,
+        initialScenarioNPCs: row.initial_scenario_npcs ? JSON.parse(row.initial_scenario_npcs) : [],
+        tags: JSON.parse(row.tags || '[]'),
+      };
+      
+      // Load introduction if it exists in database
+      // (Note: This field may not exist in older database schemas)
+      if (row.introduction) {
+        module.introduction = row.introduction;
+      }
+      
+      return module;
+    });
   }
 
   /**
@@ -123,25 +315,28 @@ export class ModuleLoader {
       }
     }
 
-    console.log(`Loading Modules from directory: ${dirPath}`);
+    console.log(`📦 Starting to load modules from directory: ${dirPath}`);
 
     const parsedModules = await this.parser.parseDirectory(dirPath);
 
     if (parsedModules.length === 0) {
-      console.log("No module documents found in directory.");
+      console.log("⚠️  No module documents found in directory.");
       this.updateLastLoadTimestamp(dirPath);
       return [];
     }
 
+    console.log(`💾 Starting to save ${parsedModules.length} modules to database...`);
     const moduleRecords: ModuleBackground[] = [];
-    for (const parsed of parsedModules) {
+    for (let i = 0; i < parsedModules.length; i++) {
+      const parsed = parsedModules[i];
       try {
+        console.log(`  [${i + 1}/${parsedModules.length}] Saving module: ${parsed.title}`);
         const moduleRecord = this.convertToModuleBackground(parsed);
         this.saveModuleToDatabase(moduleRecord);
         moduleRecords.push(moduleRecord);
-        console.log(`✓ Loaded Module: ${moduleRecord.title} (${moduleRecord.id})`);
+        console.log(`    ✓ Saved module: ${moduleRecord.title}`);
       } catch (error) {
-        console.error(`✗ Failed to load module ${parsed.title}:`, error);
+        console.error(`    ✗ Failed to save module ${parsed.title}:`, error);
       }
     }
 
@@ -151,6 +346,7 @@ export class ModuleLoader {
     console.log(`\n=== Successfully loaded ${moduleRecords.length} modules ===\n`);
     return moduleRecords;
   }
+
 
   private convertToModuleBackground(parsed: ParsedModuleData): ModuleBackground {
     const moduleId = this.generateModuleId(parsed.title);
@@ -162,11 +358,12 @@ export class ModuleLoader {
       storyOutline: parsed.storyOutline,
       moduleNotes: parsed.moduleNotes,
       keeperGuidance: parsed.keeperGuidance,
-      storyHook: parsed.storyHook,
       moduleLimitations: parsed.moduleLimitations,
+      initialGameTime: parsed.initialGameTime,
+      initialScenarioNPCs: parsed.initialScenarioNPCs || [],
       tags: parsed.tags || [],
-      source: parsed.source,
-      createdAt: new Date().toISOString(),
+      // Introduction is used as story introduction for players
+      introduction: parsed.introduction,
     };
   }
 
@@ -177,25 +374,99 @@ export class ModuleLoader {
   private saveModuleToDatabase(module: ModuleBackground): void {
     const database = this.db.getDatabase();
 
-    const stmt = database.prepare(`
-            INSERT OR REPLACE INTO module_backgrounds (
-                module_id, title, background, story_outline, module_notes,
-                keeper_guidance, story_hook, module_limitations, tags, source, created_at
-            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-        `);
+    // Check if initial_game_time column exists
+    const hasInitialGameTime = this.dbInstance.hasColumn("module_backgrounds", "initial_game_time");
 
-    stmt.run(
-      module.id,
-      module.title,
-      module.background || null,
-      module.storyOutline || null,
-      module.moduleNotes || null,
-      module.keeperGuidance || null,
-      module.storyHook || null,
-      module.moduleLimitations || null,
-      JSON.stringify(module.tags || []),
-      module.source || null,
-      module.createdAt
-    );
+    // Check if introduction column exists
+    const hasIntroduction = this.dbInstance.hasColumn("module_backgrounds", "introduction");
+
+    // Check if initial_scenario_npcs column exists
+    const hasInitialScenarioNPCs = this.dbInstance.hasColumn("module_backgrounds", "initial_scenario_npcs");
+
+    if (hasInitialGameTime && hasIntroduction && hasInitialScenarioNPCs) {
+      // Full schema with all current fields
+      const stmt = database.prepare(`
+              INSERT OR REPLACE INTO module_backgrounds (
+                  module_id, title, background, story_outline, module_notes,
+                  keeper_guidance, module_limitations, initial_game_time, 
+                  initial_scenario_npcs, introduction, tags
+              ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+          `);
+
+      stmt.run(
+        module.id,
+        module.title,
+        module.background || null,
+        module.storyOutline || null,
+        module.moduleNotes || null,
+        module.keeperGuidance || null,
+        module.moduleLimitations || null,
+        module.initialGameTime || null,
+        module.initialScenarioNPCs ? JSON.stringify(module.initialScenarioNPCs) : null,
+        module.introduction || null,
+        JSON.stringify(module.tags || [])
+      );
+    } else if (hasInitialGameTime && hasInitialScenarioNPCs) {
+      // Schema with initial_game_time and initial_scenario_npcs but without introduction
+      const stmt = database.prepare(`
+              INSERT OR REPLACE INTO module_backgrounds (
+                  module_id, title, background, story_outline, module_notes,
+                  keeper_guidance, module_limitations, initial_game_time, 
+                  initial_scenario_npcs, tags
+              ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+          `);
+
+      stmt.run(
+        module.id,
+        module.title,
+        module.background || null,
+        module.storyOutline || null,
+        module.moduleNotes || null,
+        module.keeperGuidance || null,
+        module.moduleLimitations || null,
+        module.initialGameTime || null,
+        module.initialScenarioNPCs ? JSON.stringify(module.initialScenarioNPCs) : null,
+        JSON.stringify(module.tags || [])
+      );
+    } else if (hasInitialGameTime) {
+      // Schema with initial_game_time but without introduction or initial_scenario_npcs
+      const stmt = database.prepare(`
+              INSERT OR REPLACE INTO module_backgrounds (
+                  module_id, title, background, story_outline, module_notes,
+                  keeper_guidance, module_limitations, initial_game_time, tags
+              ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+          `);
+
+      stmt.run(
+        module.id,
+        module.title,
+        module.background || null,
+        module.storyOutline || null,
+        module.moduleNotes || null,
+        module.keeperGuidance || null,
+        module.moduleLimitations || null,
+        module.initialGameTime || null,
+        JSON.stringify(module.tags || [])
+      );
+    } else {
+      // Fallback for older schema
+      const stmt = database.prepare(`
+              INSERT OR REPLACE INTO module_backgrounds (
+                  module_id, title, background, story_outline, module_notes,
+                  keeper_guidance, module_limitations, tags
+              ) VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+          `);
+
+      stmt.run(
+        module.id,
+        module.title,
+        module.background || null,
+        module.storyOutline || null,
+        module.moduleNotes || null,
+        module.keeperGuidance || null,
+        module.moduleLimitations || null,
+        JSON.stringify(module.tags || [])
+      );
+    }
   }
 }

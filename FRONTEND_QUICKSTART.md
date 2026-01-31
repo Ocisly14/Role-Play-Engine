@@ -146,3 +146,4 @@ Turn 状态变为 'completed'
 - **后端**: Express + SQLite + LangGraph
 - **样式**: 原生 CSS（复古纸张风格）
 - **状态管理**: React hooks (useState, useEffect)
+

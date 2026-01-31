@@ -3,6 +3,7 @@
 > AI-powered Call of Cthulhu (7th Edition) game master using LangGraph multi-agent architecture.
 
 **Note: This documentation is for the `weaktime` branch only.**
+
 ## What is This?
 
 CoC Multi-Agent System is an AI framework that runs complete Call of Cthulhu tabletop RPG sessions. Instead of a human game master, **7 specialized AI agents** work together to:
@@ -15,6 +16,7 @@ CoC Multi-Agent System is an AI framework that runs complete Call of Cthulhu tab
 **Technology:** TypeScript + LangGraph + LangChain + SQLite + React
 
 **Supported AI Models:** OpenAI GPT-4, Google Gemini
+
 ---
 
 ## Key Capabilities
@@ -71,7 +73,7 @@ NPCs are not scripted—they **dynamically respond** based on:
 ### 3. Complete CoC 7e Rules
 
 - **8 Action Types**: Exploration, Social, Combat, Stealth, Chase, Mental, Environmental, Narrative
-- **Skill System**: 40+ skills (Spot Hidden, Persuade, Fighting, Occult, etc.)
+- **Skill System**: 40+ skills (Perception, Persuade, Brawling, Occult, etc.)
 - **Sanity Mechanics**: Cosmic horror encounters reduce sanity and cause madness
 - **Inventory Management**: Pick up items, use equipment, track resources
 - **Time Tracking**: In-game clock with day/night cycles
@@ -233,12 +235,12 @@ Create JSON files in `My Mystery_npc/`:
     "conditions": []
   },
   "skills": {
-    "Spot Hidden": 70,
+    "Perception": 70,
     "Psychology": 60,
     "Persuade": 55,
     "Intimidate": 50,
-    "Fighting (Brawl)": 65,
-    "Firearms (Handgun)": 60,
+    "Brawling": 65,
+    "Pistol": 60,
     "Law": 50
   },
   "inventory": [
@@ -308,7 +310,7 @@ Create JSON files in `My Mystery_Scenarios/`:
       "category": "physical",
       "difficulty": "regular",
       "location": "brick wall near dumpster",
-      "discoveryMethod": "Spot Hidden check or forensics knowledge",
+      "discoveryMethod": "Perception check or forensics knowledge",
       "reveals": ["weapon_type", "killer_height"],
       "discovered": false
     },
@@ -327,7 +329,7 @@ Create JSON files in `My Mystery_Scenarios/`:
     {
       "type": "lighting",
       "description": "Dim streetlight, deep shadows",
-      "mechanicalEffect": "Spot Hidden checks at -20% penalty at night"
+      "mechanicalEffect": "Perception checks at -20% penalty at night"
     },
     {
       "type": "smell",
@@ -368,7 +370,7 @@ pnpm chat
 
 **Option B: Specify module explicitly**
 
-Modify `src/index.ts` to load your specific module:
+Modify `src/coc_multiagents_system/index.ts` to load your specific module:
 
 ```typescript
 const moduleDigest = await loadModuleDigest("My Mystery");
@@ -478,6 +480,7 @@ PORT=3000
 Only the **Keeper** agent use MEDIUM models—everything else uses SMALL for cost efficiency.
 
 ---
+
 ## Current Limitations & Future Improvements
 
 ### Known Limitations
@@ -538,6 +541,8 @@ We're actively working on:
 ## License
 
 MIT License
+
+---
 
 ---
 

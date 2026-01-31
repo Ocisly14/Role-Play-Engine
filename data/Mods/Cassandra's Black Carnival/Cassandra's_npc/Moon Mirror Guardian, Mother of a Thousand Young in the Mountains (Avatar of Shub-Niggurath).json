@@ -1,0 +1,30 @@
+[
+    {
+      "name": "Moon Mirror Guardian, Mother of a Thousand Young in the Mountains (Avatar of Shub-Niggurath)",
+      "occupation": "Outer God Avatar / Guardian Entity",
+      "appearance": "A vast, grotesque being with a semi-translucent, gelatinous body crowned by a massive beak filled with countless teeth. Within its form, swallowed sacrifices can be seen slowly transforming. Its presence is monstrous and alien, radiating fertility and corruption.",
+      "background": "The Moon Mirror Guardian is an avatar of Shub-Niggurath, worshipped by cultists as the Mother of a Thousand Young in the Mountains. It can only be summoned through the Moon Mirror during a full moon. Cultists offer living sacrifices to it, which are devoured whole and transformed within its body into servants blessed by Shub-Niggurath, destined to dwell eternally in subterranean nests.",
+      "goals": [
+        "Consume living sacrifices offered by its cult",
+        "Create and nurture new servants of Shub-Niggurath"
+      ],
+      "attributes": {
+        "STR": 275,
+        "CON": 675,
+        "DEX": 80,
+        "POW": 350,
+        "SIZ": 485,
+        "INT": 105
+      },
+      "status": {
+        "hp": 115,
+        "maxHp": 115,
+        "mp": 70
+      },
+      "skills": {
+        "Fighting": 90,
+        "Crush": 75
+      },
+      "notes": "Combat Behavior: The Moon Mirror Guardian attacks enemies with its massive, tooth-filled beak or crushes them beneath its enormous bulk. Attacks per round: 1.\nCombat – Beak: 90%, damage 1D10 or may swallow the target whole.\nCombat – Crush: 75%, damage 1D6 plus damage bonus.\nArmor: None; however, damage from any weapon is reduced to a maximum of 1 point per hit (piercing weapons deal 2 points). Fire, electricity, and spells deal normal damage. The avatar regenerates 1D10 HP each round.\nSpells: Any spells related to Outer Gods; additionally, spells associated with nature or the natural environment (or as determined by the Keeper).\nSanity Loss: Seeing the Moon Mirror Guardian causes 1D10/1D100 SAN loss.\nSpecial Conditions: It can only be summoned via the Moon Mirror during a full moon. Swallowed victims slowly transform inside its body into servants of Shub-Niggurath."
+    }
+  ]

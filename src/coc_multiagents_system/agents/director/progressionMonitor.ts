@@ -1,4 +1,4 @@
-import type { GameState, GameStateManager, ActionResult } from "../../../state.js";
+import type { GameState, GameStateManager, ActionResult } from "../../state/index.js";
 
 /**
  * Progression Monitor - 监听游戏状态变化，判断是否需要启动 Director Agent

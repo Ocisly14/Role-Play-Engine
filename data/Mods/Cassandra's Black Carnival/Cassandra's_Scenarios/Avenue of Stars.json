@@ -1,0 +1,95 @@
+[
+    {
+      "name": "Avenue of Stars",
+      "description": "A major thoroughfare running through the central spine of Cassandra. Avenue of Stars connects multiple residential, commercial, and institutional locations, making it one of the most frequently traveled streets in the city.",
+      "snapshot": {
+        "name": "Avenue of Stars",
+        "location": "Central Cassandra, north–south main road",
+        "description": "A wide urban street cutting through Cassandra from north to south. Buildings cluster tightly along both sides of the road, including shops, residences, and public institutions. Pedestrians, vehicles, and occasional patrols pass through regularly, giving the avenue a sense of constant motion. Despite its normal appearance, the street often feels watched, as if unseen eyes track those who linger too long.",
+        "characters": [],
+        "clues": [],
+        "conditions": [
+          {
+            "type": "lighting",
+            "description": "Streetlights and storefront signs illuminate the avenue at night, leaving pockets of shadow between buildings.",
+            "mechanicalEffect": ""
+          },
+          {
+            "type": "sound",
+            "description": "Footsteps, distant traffic, murmured conversations, and the occasional passing vehicle.",
+            "mechanicalEffect": ""
+          }
+        ],
+        "events": [],
+        "exits": [
+          {
+            "direction": "East",
+            "destination": "Star Hospital",
+            "description": "A modern but poorly managed hospital complex marked with a red cross.",
+            "condition": ""
+          },
+          {
+            "direction": "East",
+            "destination": "Adolph's House",
+            "description": "A private residence located close to the avenue, accessible via a short side street.",
+            "condition": ""
+          },
+          {
+            "direction": "West",
+            "destination": "Clock Shop",
+            "description": "A small, old-fashioned clock and watch shop tucked among other storefronts.",
+            "condition": ""
+          },
+          {
+            "direction": "West",
+            "destination": "Flower Shop",
+            "description": "A modest flower shop with a constantly changing selection of fresh and dried plants.",
+            "condition": ""
+          },
+          {
+            "direction": "South",
+            "destination": "New Crescent Street A (South)",
+            "description": "A continuation of the city road network leading into Crescent Street A (southern section).",
+            "condition": ""
+          },
+          {
+            "direction": "North",
+            "destination": "New Crescent Street A (North)",
+            "description": "The northern continuation of the road, linking Avenue of Stars to Crescent Street A (northern section).",
+            "condition": ""
+          },
+          {
+            "direction": "South",
+            "destination": "Cassandra Train Station",
+            "description": "The main railway station of Cassandra, reachable by following the avenue further south.",
+            "condition": ""
+          }
+        ],
+        "keeperNotes": "Avenue of Stars works best as a connective tissue between major investigation locations. It is ideal for tailing suspects, staging chance encounters, or giving investigators the sense that the city itself is reacting to their movements.",
+        "permanentChanges": []
+      },
+      "tags": ["urban", "main street", "transit", "public space"],
+      "connections": [
+        {
+          "scenarioName": "Star Hospital",
+          "relationshipType": "leads_to",
+          "description": "The hospital is directly accessible from Avenue of Stars."
+        },
+        {
+          "scenarioName": "Clock Shop",
+          "relationshipType": "leads_to",
+          "description": "Investigators can reach the clock shop by following storefronts along the avenue."
+        },
+        {
+          "scenarioName": "Flower Shop",
+          "relationshipType": "leads_to",
+          "description": "The flower shop sits along the avenue and is easily noticed by passersby."
+        },
+        {
+          "scenarioName": "Train Station",
+          "relationshipType": "leads_to",
+          "description": "Continuing south along Avenue of Stars eventually leads to the train station."
+        }
+      ]
+    }
+  ]

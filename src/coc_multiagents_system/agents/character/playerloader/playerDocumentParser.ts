@@ -195,8 +195,8 @@ Example output:
     "Anthropology": 20,
     "Archaeology": 70,
     "History": 60,
-    "Library Use": 80,
-    "Spot Hidden": 45
+    "Research": 80,
+    "Perception": 45
   },
   "inventory": [
     "Magnifying glass",

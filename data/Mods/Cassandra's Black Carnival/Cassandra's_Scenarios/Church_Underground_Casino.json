@@ -1,0 +1,113 @@
+[
+    {
+      "name": "Church Underground Casino",
+      "description": "A large illegal underground casino hidden beneath the church. It serves as a major black-market hub and meeting point for the local mafia, sharply contrasting with the sacred silence above.",
+      "snapshot": {
+        "name": "The Underground Casino Beneath the Church",
+        "location": "Beneath the church, accessed through a hidden passage",
+        "description": "Hidden beneath the church is a vast, dimly lit underground casino. The air is thick with smoke and noise, filled with shouting gamblers, stacked gambling tables, and constant movement. Lookouts may be stationed near the entrance. The atmosphere is tense and hostile toward intruders, especially those without permission. This location is controlled by the local mafia and serves as an operational base rather than mere entertainment.",
+        "characters": [
+          {
+            "name": "Ben Cleo",
+            "role": "Mafia boss",
+            "status": "Alive",
+            "location": "Underground casino",
+            "notes": "The leader of the local mafia. Ben Cleo will stop hostilities if he arrives and may propose cooperation to the investigators."
+          },
+          {
+            "name": "Covent",
+            "role": "Casino overseer / Enforcer",
+            "status": "Alive",
+            "location": "Underground casino",
+            "notes": "The person in charge on site. He will immediately attack investigators who enter without permission."
+          },
+          {
+            "name": "Tallinn",
+            "role": "Mafia associate",
+            "status": "Alive",
+            "location": "Underground casino",
+            "notes": "Appears here once investigators have aligned with Ben Cleo."
+          },
+          {
+            "name": "Lookouts",
+            "role": "Guards",
+            "status": "Alive",
+            "location": "Casino entrance",
+            "notes": "Stationed near the entrance to warn against or intercept intruders."
+          }
+        ],
+        "clues": [
+          {
+            "clueText": "The church conceals a fully operational underground casino.",
+            "category": "environment",
+            "difficulty": "automatic",
+            "location": "Underground casino",
+            "reveals": ["The church is tied to organized crime activities"]
+          },
+          {
+            "clueText": "Unauthorized entry into the casino is met with immediate lethal force.",
+            "category": "observation",
+            "difficulty": "automatic",
+            "location": "Underground casino",
+            "reveals": ["The mafia strictly controls access and operations"]
+          },
+          {
+            "clueText": "The underground casino functions as a base for mafia negotiations and deals.",
+            "category": "knowledge",
+            "difficulty": "regular",
+            "location": "Underground casino",
+            "discoveryMethod": "Conversation or Social skills",
+            "reveals": ["The mafia’s broader influence in Cassandra"]
+          }
+        ],
+        "conditions": [
+          {
+            "type": "lighting",
+            "description": "Low, artificial lighting with heavy shadows.",
+            "mechanicalEffect": "Spot Hidden rolls may be harder."
+          },
+          {
+            "type": "sound",
+            "description": "Constant shouting, gambling calls, and crowd noise.",
+            "mechanicalEffect": "Stealth actions are easier, but communication is harder."
+          },
+          {
+            "type": "smell",
+            "description": "Smoke, sweat, and alcohol hang thick in the air.",
+            "mechanicalEffect": ""
+          }
+        ],
+        "events": [
+          "Immediate combat if investigators enter without Ben Cleo's approval",
+          "Ben Cleo arrives and halts the fight",
+          "Ben Cleo proposes cooperation and assigns investigators to investigate Padric"
+        ],
+        "exits": [
+          {
+            "direction": "Hidden Stairway",
+            "destination": "Church",
+            "description": "A concealed passage leading back to the church interior",
+            "condition": "hidden"
+          }
+        ],
+        "keeperNotes": "This location should feel dangerous and overwhelming. The casino reinforces the theme that Cassandra's institutions are deeply corrupted. Ben Cleo can act as a temporary ally, but the mafia remains morally ambiguous and self-interested.",
+        "permanentChanges": [
+          "Once allied with Ben Cleo, investigators may freely enter the casino",
+          "Hostility ceases after cooperation is established"
+        ]
+      },
+      "tags": ["underground", "casino", "mafia", "illegal gambling", "hidden location"],
+      "connections": [
+        {
+          "scenarioName": "Church",
+          "relationshipType": "prerequisite",
+          "description": "The casino is accessed through a hidden passage beneath the church."
+        },
+        {
+          "scenarioName": "Train Station (The Dock)",
+          "relationshipType": "concurrent",
+          "description": "Both locations serve as operational hubs for Ben Cleo's mafia organization."
+        }
+      ]
+    }
+  ]

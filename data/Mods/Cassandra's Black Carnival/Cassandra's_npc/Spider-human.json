@@ -1,0 +1,73 @@
+[
+    {
+      "name": "Spider-Human",
+      "occupation": "Mythos Hybrid Creature",
+      "age": 0,
+      "appearance": "A distorted half-human, half-spider creature. Beneath dark robes or clothing, its body shows chitinous growths, hooked claws instead of hands, and vestigial spider traits. When revealed, its true form is deeply unsettling.",
+      "personality": "Predatory, obedient, and instinct-driven. Spider-humans retain fragments of human behavior but are largely dominated by alien impulses and obedience toward higher Mythos entities.",
+      "background": "Spider-humans are former humans who were infected by cold spiders and survived the parasitic process. Instead of dying, they were assimilated into a hybrid form, becoming servants and tools of the Spider God and its agents.",
+      "goals": [
+        "Serve the will of the Spider God and its priests",
+        "Hunt or capture targets designated by their masters"
+      ],
+      "secrets": [
+        "Spider-humans were once ordinary humans",
+        "Some spider-humans may retain faint memories of their former lives"
+      ],
+      "attributes": {
+        "STR": 83,
+        "CON": 65,
+        "DEX": 65,
+        "APP": 10,
+        "POW": 65,
+        "SIZ": 65,
+        "INT": 65,
+        "EDU": 0
+      },
+      "status": {
+        "hp": 13,
+        "maxHp": 13,
+        "sanity": 0,
+        "maxSanity": 0,
+        "luck": 0,
+        "mp": 13,
+        "conditions": []
+      },
+      "skills": {
+        "Claw Attack": 90,
+        "Bite": 30
+      },
+      "inventory": [],
+      "clues": [
+        {
+          "clueText": "Spider-humans are created when a human survives cold spider infection instead of dying.",
+          "category": "knowledge",
+          "difficulty": "regular",
+          "relatedTo": ["Cold Spider"]
+        },
+        {
+          "clueText": "Seeing the true face beneath a spider-human’s robes causes SAN loss.",
+          "category": "observation",
+          "difficulty": "hard",
+          "relatedTo": ["Spider-Human"]
+        }
+      ],
+      "relationships": [
+        {
+          "targetName": "Cold Spider",
+          "relationshipType": "ally",
+          "attitude": 80,
+          "description": "Created through cold spider infection and transformation.",
+          "history": "Cold spiders parasitize humans; survivors may become spider-humans."
+        },
+        {
+          "targetName": "Atlach-Nacha",
+          "relationshipType": "employer",
+          "attitude": 100,
+          "description": "Ultimate master of spider-humans.",
+          "history": "Spider-humans exist to serve the Spider God and its web-spanning designs."
+        }
+      ],
+      "notes": "Combat & Horror Details:\n\nCombat Style:\nSpider-humans primarily attack with their mutated hook-like claws, and occasionally with venomous bites. They may attack once per combat round.\n\nAttacks:\n• Hook Claw – 90%: Deals 1d4 + damage bonus.\n• Bite (Special Attack) – 30%: Deals 1d6 damage plus venom. The venom’s POT equals 1/10 of the spider-human’s CON (rounded down).\n\nArmor:\nNone.\n\nSpells:\nNone.\n\nSanity Loss:\nWitnessing the true form of a spider-human beneath its black robes causes SAN loss of 0 / 1d6.\n\nAdditional Notes:\nSpider-humans are former humans transformed through cold spider parasitic infection. Although they retain a roughly human silhouette, their true bodies are heavily mutated, with chitinous growths and predatory appendages. Their behavior is driven by instinct and obedience rather than human morality."
+  }
+  ]

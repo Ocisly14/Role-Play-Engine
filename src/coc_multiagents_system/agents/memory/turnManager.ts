@@ -6,7 +6,7 @@
  */
 
 import type { CoCDatabase } from "./database/index.js";
-import type { GameState } from "../../../state.js";
+import type { GameState } from "../../state/index.js";
 import { randomUUID } from "crypto";
 
 export interface TurnInput {
@@ -17,6 +17,9 @@ export interface TurnInput {
   sceneId?: string;
   sceneName?: string;
   location?: string;
+  isSimulated?: boolean;
+  gameDay?: number | null;
+  gameTime?: string | null;
 }
 
 export interface TurnProcessing {
@@ -28,6 +31,8 @@ export interface TurnProcessing {
 export interface TurnOutput {
   keeperNarrative: string;
   clueRevelations?: any;
+  gameDay?: number | null;
+  gameTime?: string | null;
 }
 
 export interface GameTurn {
@@ -60,6 +65,13 @@ export interface GameTurn {
   startedAt: string;
   completedAt: string | null;
   createdAt: string;
+  
+  // Simulation flag
+  isSimulated?: boolean;
+  
+  // Game time when turn completed
+  gameDay?: number | null;
+  gameTime?: string | null;
 }
 
 export class TurnManager {
@@ -85,10 +97,14 @@ export class TurnManager {
       input.characterName,
       input.sceneId,
       input.sceneName,
-      input.location
+      input.location,
+      input.isSimulated,
+      input.gameDay,
+      input.gameTime
     );
 
-    console.log(`✓ Turn created: ${turnId} (Turn #${turnNumber})`);
+    const turnType = input.isSimulated ? 'simulated' : 'user';
+    console.log(`✓ Turn created: ${turnId} (Turn #${turnNumber}, ${turnType})`);
     return turnId;
   }
 
@@ -98,7 +114,8 @@ export class TurnManager {
   createTurnFromGameState(
     sessionId: string,
     characterInput: string,
-    gameState: GameState
+    gameState: GameState,
+    isSimulated?: boolean
   ): string {
     return this.createTurn({
       sessionId,
@@ -108,6 +125,9 @@ export class TurnManager {
       sceneId: gameState.currentScenario?.id,
       sceneName: gameState.currentScenario?.name,
       location: gameState.currentScenario?.location,
+      isSimulated,
+      gameDay: gameState.gameDay ?? null,
+      gameTime: gameState.timeOfDay ?? null,
     });
   }
 
@@ -141,7 +161,9 @@ export class TurnManager {
     this.db.completeTurn(
       turnId,
       output.keeperNarrative,
-      output.clueRevelations
+      output.clueRevelations,
+      output.gameDay,
+      output.gameTime
     );
 
     console.log(`✓ Turn completed: ${turnId}`);
@@ -166,9 +188,20 @@ export class TurnManager {
 
   /**
    * Get turn history for a session
+   * @param sessionId - Session ID
+   * @param limit - Maximum number of turns to return
+   * @param afterTurnNumber - Only return turns after this turn number
+   * @param maxGameDay - Optional: Maximum game day (inclusive) for filtering by gameTime
+   * @param maxGameTime - Optional: Maximum game time (inclusive, format: "HH:MM") for filtering by gameTime
    */
-  getHistory(sessionId: string, limit = 50): GameTurn[] {
-    return this.db.getTurnHistory(sessionId, limit) as GameTurn[];
+  getHistory(
+    sessionId: string,
+    limit = 50,
+    afterTurnNumber?: number,
+    maxGameDay?: number,
+    maxGameTime?: string
+  ): GameTurn[] {
+    return this.db.getTurnHistory(sessionId, limit, afterTurnNumber, maxGameDay, maxGameTime) as GameTurn[];
   }
 
   /**
@@ -227,38 +260,92 @@ export class TurnManager {
 
   /**
    * Get conversation format (for display in frontend)
+   * @param sessionId - Session ID
+   * @param limit - Maximum number of turns to return
+   * @param maxGameDay - Optional: Maximum game day (inclusive) for filtering by gameTime
+   * @param maxGameTime - Optional: Maximum game time (inclusive, format: "HH:MM") for filtering by gameTime
    */
-  getConversation(sessionId: string, limit = 50): Array<{
+  getConversation(
+    sessionId: string,
+    limit = 50,
+    maxGameDay?: number,
+    maxGameTime?: string
+  ): Array<{
     role: 'character' | 'keeper';
     content: string;
     timestamp: string;
     turnNumber: number;
+    diceRolls?: string[];
+    gameDay?: number | null;
+    gameTime?: string | null;
   }> {
-    const turns = this.getHistory(sessionId, limit);
+    const turns = this.getHistory(sessionId, limit, undefined, maxGameDay, maxGameTime);
     const conversation: Array<{
       role: 'character' | 'keeper';
       content: string;
       timestamp: string;
       turnNumber: number;
+      diceRolls?: string[];
+      gameDay?: number | null;
+      gameTime?: string | null;
     }> = [];
 
     turns.reverse().forEach((turn) => {
-      // Add character input
-      conversation.push({
-        role: 'character',
-        content: turn.characterInput,
-        timestamp: turn.startedAt,
-        turnNumber: turn.turnNumber,
-      });
-
-      // Add keeper narrative if completed
-      if (turn.status === 'completed' && turn.keeperNarrative) {
-        conversation.push({
-          role: 'keeper',
-          content: turn.keeperNarrative,
-          timestamp: turn.completedAt || turn.startedAt,
-          turnNumber: turn.turnNumber,
+      // Extract dice rolls from actionResults if available
+      const diceRolls: string[] = [];
+      if (turn.actionResults && Array.isArray(turn.actionResults)) {
+        turn.actionResults.forEach((result: any) => {
+          if (result.diceRolls && Array.isArray(result.diceRolls) && result.diceRolls.length > 0) {
+            diceRolls.push(...result.diceRolls);
+          }
         });
+      }
+
+      // For introduction turn (turnNumber 0 with empty characterInput), only add keeper narrative
+      if (turn.turnNumber === 0 && !turn.characterInput) {
+        if (turn.status === 'completed' && turn.keeperNarrative) {
+          const keeperMessage: any = {
+            role: 'keeper',
+            content: turn.keeperNarrative,
+            timestamp: turn.completedAt || turn.startedAt,
+            turnNumber: turn.turnNumber,
+            gameDay: turn.gameDay ?? null,
+            gameTime: turn.gameTime ?? null,
+          };
+          if (diceRolls.length > 0) {
+            keeperMessage.diceRolls = diceRolls;
+          }
+          conversation.push(keeperMessage);
+        }
+      } else {
+        // For normal turns, add character input and keeper narrative
+        // Skip character input for simulated queries (only show user input)
+        if (turn.characterInput && !turn.isSimulated) {
+          conversation.push({
+            role: 'character',
+            content: turn.characterInput,
+            timestamp: turn.startedAt,
+            turnNumber: turn.turnNumber,
+            gameDay: turn.gameDay ?? null,
+            gameTime: turn.gameTime ?? null,
+          });
+        }
+
+        // Add keeper narrative if completed (show for both real and simulated turns)
+        if (turn.status === 'completed' && turn.keeperNarrative) {
+          const keeperMessage: any = {
+            role: 'keeper',
+            content: turn.keeperNarrative,
+            timestamp: turn.completedAt || turn.startedAt,
+            turnNumber: turn.turnNumber,
+            gameDay: turn.gameDay ?? null,
+            gameTime: turn.gameTime ?? null,
+          };
+          if (diceRolls.length > 0) {
+            keeperMessage.diceRolls = diceRolls;
+          }
+          conversation.push(keeperMessage);
+        }
       }
     });
 

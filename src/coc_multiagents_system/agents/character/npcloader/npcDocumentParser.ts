@@ -9,7 +9,7 @@ import { ChatOpenAI } from "@langchain/openai";
 import { ChatGoogleGenerativeAI } from "@langchain/google-genai";
 import mammoth from "mammoth";
 import pdfParse from "pdf-parse";
-import type { ParsedNPCData } from "../../models/gameTypes.js";
+import type { ParsedNPCData, InventoryItem } from "../../models/gameTypes.js";
 import { createChatModel, ModelProviderName, ModelClass } from "../../../../models/index.js";
 
 /**
@@ -31,9 +31,9 @@ export class NPCDocumentParser {
       
       if (geminiApiKey) {
         // Use small model for document parsing (cost-effective for this task)
-        this.llm = createChatModel(ModelProviderName.GOOGLE, ModelClass.MEDIUM);
+        this.llm = createChatModel(ModelProviderName.GOOGLE, ModelClass.SMALL);
       } else if (openaiApiKey) {
-        this.llm = createChatModel(ModelProviderName.OPENAI, ModelClass.MEDIUM);
+        this.llm = createChatModel(ModelProviderName.OPENAI, ModelClass.SMALL);
       } else {
         throw new Error("No API key found. Please set either GOOGLE_API_KEY or OPENAI_API_KEY environment variable.");
       }
@@ -149,6 +149,7 @@ The JSON array entries should follow this structure:
     "name": "NPC name",
     "occupation": "NPC occupation",
     "age": number,
+    "gender": "male" | "female" | "other",
     "appearance": "physical description",
     "personality": "personality traits",
     "background": "backstory",
@@ -203,7 +204,7 @@ Important notes:
 2. For missing numerical attributes, you can infer reasonable values based on the NPC description
 3. If skills are not specified, include only the most relevant skills for this NPC
 4. Extract all clues and relationships mentioned in the document
-5. Ensure all numerical values are within valid CoC 7e ranges (attributes: 0-100, hp: derived from CON+SIZ/10, sanity: typically POW*5, luck: typically 50-99)
+5. Ensure all numerical values are within valid CoC 7e ranges (attributes: 0-Infinity, hp: derived from CON+SIZ/10, sanity: typically POW*5, luck: typically 50-99)
 6. Return a JSON ARRAY only. Do not wrap in an object or add extra keys.
 7. The text you see may be only a fragment of the full NPC data. If information is missing or incomplete, leave the field empty/omit it—do NOT fabricate details.
 8. Status fields: if provided, include hp/maxHp/sanity/maxSanity/luck/mp and, if available, damageBonus/build/mov. If not provided, leave them blank; they will be derived later.
@@ -372,7 +373,7 @@ Return ONLY the JSON array, no additional text.`;
 
       merged.goals = this.mergeStringArrays(merged.goals, next.goals);
       merged.secrets = this.mergeStringArrays(merged.secrets, next.secrets);
-      merged.inventory = this.mergeStringArrays(
+      merged.inventory = this.mergeInventoryArrays(
         merged.inventory,
         next.inventory
       );
@@ -431,6 +432,38 @@ Return ONLY the JSON array, no additional text.`;
     (a || []).forEach((v) => merged.add(v));
     (b || []).forEach((v) => merged.add(v));
     return merged.size ? Array.from(merged) : undefined;
+  }
+
+  private mergeInventoryArrays(
+    a?: InventoryItem[],
+    b?: InventoryItem[]
+  ): InventoryItem[] | undefined {
+    const merged = new Map<string, InventoryItem>();
+    
+    // Add items from first array, using name as key
+    (a || []).forEach((item) => {
+      merged.set(item.name.toLowerCase(), item);
+    });
+    
+    // Add items from second array, merging quantities if item already exists
+    (b || []).forEach((item) => {
+      const key = item.name.toLowerCase();
+      const existing = merged.get(key);
+      if (existing) {
+        // Merge quantities if both have quantities
+        const quantity = (existing.quantity || 1) + (item.quantity || 1);
+        merged.set(key, {
+          ...existing,
+          quantity,
+          // Merge properties if both exist
+          properties: { ...(existing.properties || {}), ...(item.properties || {}) }
+        });
+      } else {
+        merged.set(key, item);
+      }
+    });
+    
+    return merged.size ? Array.from(merged.values()) : undefined;
   }
 
   private mergeByKey<T extends Record<string, any>>(

@@ -1,0 +1,185 @@
+[
+    {
+      "name": "Shandra's Cabin",
+      "description": "A secluded and modest cabin belonging to Shandra, located away from the busier parts of Cassandra. The cabin serves as a private refuge where confidential conversations can take place, and it becomes an important narrative location following Bruno's death.",
+      "snapshots": [
+        {
+          "name": "Shandra's Cabin",
+          "location": "Outskirts of Cassandra",
+          "timeRestriction": "day2 evening (before)",
+          "description": "The cabin is quiet and sparsely furnished, with a sense of isolation that makes it suitable for private discussions. The atmosphere is tense and heavy with unspoken fear. Inside, Shandra recounts events surrounding Bruno, clearly shaken and emotionally strained.",
+        "characters": [
+          {
+            "name": "Shandra Hernandez",
+            "role": "Witness / confidant",
+            "status": "alive",
+            "location": "Inside the cabin",
+            "notes": "A reserved woman who trusted Bruno deeply. Shandra is visibly pale and distressed when speaking about him and insists on secrecy."
+          }
+        ],
+        "clues": [
+          {
+            "clueText": "Shandra reveals that Bruno received an anonymous text message warning him not to trust his superiors, especially Padrich, and stating that Constantine Frollo was unfit to serve God. The message specifically mentioned Bruno's investigation into BOTH murder cases.",
+            "category": "witness",
+            "difficulty": "regular",
+            "location": "Conversation with Shandra inside the cabin",
+            "discoveryMethod": "Talk / Charm",
+            "reveals": [
+              "Bruno was investigating BOTH cases: the FIRST CASE (December 22, 2002, 19-year-old girl frozen in ice at Paradil Grand Hotel) and the SECOND CASE (December 22, 2003, 21-year-old Lucifero killed at Reindeer Bar)",
+              "Bruno believed the two cases were connected despite being exactly one year apart",
+              "Padrich and Constantine may be involved in a conspiracy to suppress both cases"
+            ]
+          },
+          {
+            "clueText": "Shandra confirms the message sender knew details about Bruno's investigation into BOTH murder cases that were not public knowledge, including the suppressed first case from 2002.",
+            "category": "knowledge",
+            "difficulty": "automatic",
+            "location": "Conversation with Shandra",
+            "discoveryMethod": "",
+            "reveals": [
+              "The anonymous sender had insider information about both cases",
+              "The first case (2002) was deliberately suppressed and not widely known",
+              "Someone with inside knowledge was helping Bruno investigate both cases"
+            ]
+          },
+          {
+            "clueText": "Shandra admits she did not tell the local police about the message, fearing they could not be trusted. She mentions Bruno was particularly focused on the first case from 2002, which had been officially closed.",
+            "category": "witness",
+            "difficulty": "automatic",
+            "location": "Conversation with Shandra",
+            "discoveryMethod": "",
+            "reveals": [
+              "Local authorities may be compromised",
+              "The first case (2002) was officially closed despite Bruno's efforts",
+              "Bruno's determination to solve both cases may have led to his death"
+            ]
+          },
+          {
+            "clueText": "Shandra reveals Bruno mentioned the two cases were connected—both involved young Black girls killed exactly one year apart, but with completely different methods (frozen in ice vs gunshot/stab).",
+            "category": "witness",
+            "difficulty": "hard",
+            "location": "Conversation with Shandra",
+            "discoveryMethod": "Persuade or Psychology",
+            "reveals": [
+              "Bruno believed the same killer was responsible for both cases",
+              "The methods were different but the pattern was the same",
+              "The first case victim (19-year-old) and second case victim (21-year-old Lucifero) were both Black girls"
+            ]
+          }
+        ],
+        "conditions": [
+          {
+            "type": "lighting",
+            "description": "Dim indoor lighting, mostly from a single lamp.",
+            "mechanicalEffect": ""
+          },
+          {
+            "type": "other",
+            "description": "An atmosphere of secrecy and paranoia.",
+            "mechanicalEffect": "Keeper may apply a situational penalty to social rolls if investigators push too aggressively."
+          }
+        ],
+        "events": [
+          "Shandra recounts Bruno's final days and the anonymous warning message about both murder cases",
+          "Shandra reveals Bruno was investigating TWO SEPARATE CASES: the first from December 22, 2002 (19-year-old girl, frozen in ice) and the second from December 22, 2003 (21-year-old Lucifero, gunshot/stab)",
+          "Shandra entrusts the investigators with information she refused to give the police, including details about both cases",
+          "When investigators leave: Constantine may appear at the door. Investigators must make a successful POW check to avoid showing panic. If Constantine suspects Shandra told investigators something about him based on their expressions, he will decide to eliminate Shandra"
+        ],
+        "exits": [
+          {
+            "direction": "Front door",
+            "destination": "Cassandra outskirts",
+            "description": "A simple wooden door leading outside the cabin.",
+            "condition": ""
+          }
+        ],
+          "keeperNotes": "Shandra is cautious and will not reveal everything at once. CRITICALLY: She knows about BOTH MURDER CASES. The FIRST CASE (December 22, 2002) involved a 19-year-old Black girl found frozen in ice in the Paradil Grand Hotel freezer. The SECOND CASE (December 22, 2003) involved 21-year-old Aberforth Locefern (Lucifero) killed by gunshot and knife at Reindeer Bar. Bruno believed they were connected despite different methods. If investigators mention Mythos or inhuman forces, she may become more cooperative but will still withhold details about the Nine Angels.",
+          "permanentChanges": []
+        },
+        {
+          "name": "Shandra's Cabin (After Fire)",
+          "location": "Outskirts of Cassandra",
+          "timeRestriction": "day2 night (after)",
+        "description": "The cabin has been completely destroyed by fire. Only charred ruins remain, with smoke still rising from the debris. Firefighters have arrived and are searching through the wreckage. In the ruins, they have discovered a charred female body. The fire occurred regardless of whether investigators encountered Constantine or not. Shandra's fate is unknown, but the discovery of the body suggests she may have been killed.",
+        "characters": [
+          {
+            "name": "Firefighters",
+            "role": "Emergency responders",
+            "status": "alive",
+            "location": "At the fire scene",
+            "notes": "Searching through the ruins and have found a charred female body"
+          }
+        ],
+        "clues": [
+          {
+            "clueText": "A charred female body has been found in the ruins of Shandra's cabin.",
+            "category": "physical",
+            "difficulty": "automatic",
+            "location": "Fire scene",
+            "discoveryMethod": "",
+            "reveals": [
+              "Shandra may have been killed",
+              "The fire was likely intentional, not accidental",
+              "This may be connected to Constantine's visit or the information Shandra shared"
+            ]
+          },
+          {
+            "clueText": "The fire occurred after night on day 2, regardless of whether investigators encountered Constantine when leaving the cabin.",
+            "category": "observation",
+            "difficulty": "automatic",
+            "location": "Fire scene",
+            "discoveryMethod": "",
+            "reveals": [
+              "The timing suggests this was a deliberate act",
+              "Constantine or his associates may be responsible",
+              "Shandra's knowledge about Bruno and the murder cases made her a target"
+            ]
+          }
+        ],
+        "conditions": [
+          {
+            "type": "lighting",
+            "description": "Smoke and fire damage create poor visibility. Emergency lighting from fire trucks.",
+            "mechanicalEffect": "Spot Hidden checks may be more difficult"
+          },
+          {
+            "type": "smell",
+            "description": "Strong smell of smoke, burned wood, and charred remains.",
+            "mechanicalEffect": ""
+          }
+        ],
+        "events": [
+          "Investigators discover the cabin has been burned down",
+          "Firefighters have found a charred female body in the ruins",
+          "The fire occurred after night on day 2, regardless of previous encounters"
+        ],
+        "exits": [
+          {
+            "direction": "Road",
+            "destination": "Cassandra outskirts",
+            "description": "The path leading away from the burned cabin site.",
+            "condition": ""
+          }
+        ],
+          "keeperNotes": "This snapshot represents the aftermath of the fire that destroys Shandra's cabin. The fire happens regardless of whether investigators encountered Constantine or not. The charred body suggests Shandra was killed, but this could also be a ruse. The timing (after night on day 2) connects this to Constantine's potential visit and Shandra's knowledge about Bruno's investigation into both murder cases.",
+          "permanentChanges": [
+            "Shandra's cabin is destroyed",
+            "Shandra's status is unknown—she may be dead or in hiding"
+          ]
+        }
+      ],
+      "tags": ["witness testimony", "secrecy", "conspiracy hint", "safe location"],
+      "connections": [
+        {
+          "scenarioName": "Police Office",
+          "relationshipType": "alternate",
+          "description": "Sandra deliberately avoids reporting information to the police, offering an alternate source of truth."
+        },
+        {
+          "scenarioName": "Church",
+          "relationshipType": "leads_to",
+          "description": "The warning message implicates Constantine Frollo, connecting the cabin revelations to the church storyline."
+        }
+      ]
+    }
+  ]

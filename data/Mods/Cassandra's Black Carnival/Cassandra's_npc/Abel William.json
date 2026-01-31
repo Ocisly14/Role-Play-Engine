@@ -1,0 +1,120 @@
+[
+  {
+    "name": "Abel William",
+    "occupation": "Distillery owner",
+    "age": 40,
+    "gender": "male",
+    "appearance": "A bearded man with a square face and darker complexion than most white men. He keeps a thick beard that appears carefully groomed.",
+    "personality": "Anxious, overworked, and frustrated. He tries to stay professional but is clearly under pressure from economic decline and unexplained events.",
+    "background": "After his father Peter William died, Abel inherited the family distillery in Cassandra. He manages the business alone, but declining economic conditions forced him to shut down part of the factory and lay off many workers, leaving much of the facility unused.",
+    "goals": [
+      "Keep the distillery operational",
+      "Understand the strange events plaguing his workplace"
+    ],
+    "secrets": [
+      "The spider infestation and his own death are connected to unnatural forces (cold spiders from Constantine's church)",
+      "He was already dead earlier than it appeared to investigators",
+      "He was infected by a cold spider bite, similar to Nancy Charlotte's infection",
+      "His father's death in 2002 may be connected to Patrizio von Samsa's human experiments"
+    ],
+    "attributes": {
+      "STR": 50,
+      "CON": 55,
+      "DEX": 45,
+      "APP": 45,
+      "POW": 50,
+      "SIZ": 60,
+      "INT": 55,
+      "EDU": 50
+    },
+    "status": {
+      "hp": 11,
+      "maxHp": 11,
+      "sanity": 50,
+      "maxSanity": 50,
+      "luck": 55,
+      "mp": 10,
+      "conditions": [
+        "deceased"
+      ]
+    },
+    "skills": {
+      "Accounting": 45,
+      "Craft (Distilling)": 55,
+      "Spot Hidden": 40,
+      "Listen": 40
+    },
+    "inventory": [
+      {
+        "name": "Scrapbook clippings (incl. father's obituary + loose 1988 newspaper clipping)",
+        "properties": {
+          "clue": "Obituary + a loose 1988-era clipping about a riot, hinting at Simon's past."
+        }
+      },
+      {
+        "name": "Recent newspaper (weeks old)",
+        "properties": {
+          "clue": "Reports unusual Pacific fish activity + shark attacks/beach controls; foreshadows Cassandra anomalies tied to Deep Ones activity."
+        }
+      }
+    ],
+    "clues": [
+      {
+        "clueText": "Abel complained about a growing spider infestation in and around the distillery (cold spiders from Constantine's church).",
+        "category": "observation",
+        "difficulty": "regular",
+        "relatedTo": [
+          "William Distillery",
+          "Cold spiders",
+          "Constantine Frollo"
+        ]
+      },
+      {
+        "clueText": "A black spider (cold spider) emerged from Abel's neck, killing him instantly. This is the same type of infection that Nancy Charlotte suffers from.",
+        "category": "observation",
+        "difficulty": "regular",
+        "relatedTo": [
+          "William Distillery",
+          "Cold spider",
+          "Spider infection",
+          "Nancy Charlotte"
+        ]
+      },
+      {
+        "clueText": "Marcel was one of the employees laid off after the distillery downsized.",
+        "category": "knowledge",
+        "difficulty": "regular",
+        "relatedTo": [
+          "Marcel Gwynplaine"
+        ]
+      },
+      {
+        "clueText": "His father's death in 2002 may be connected to Patrizio von Samsa's human experiments.",
+        "category": "secret",
+        "difficulty": "hard",
+        "relatedTo": [
+          "Peter William",
+          "Patrizio von Samsa",
+          "Human experiments"
+        ]
+      }
+    ],
+    "relationships": [
+      {
+        "targetName": "Peter William",
+        "relationshipType": "family",
+        "attitude": 60,
+        "description": "Son and successor",
+        "history": "Inherited the distillery after Peter’s death."
+      },
+      {
+        "targetName": "Marcel",
+        "relationshipType": "employee",
+        "attitude": -20,
+        "description": "Former employee",
+        "history": "Marcel was dismissed during downsizing of the distillery."
+      }
+    ],
+    "notes": "Abel’s corpse may later reappear in the wine cellar if investigators return."
+  }
+]

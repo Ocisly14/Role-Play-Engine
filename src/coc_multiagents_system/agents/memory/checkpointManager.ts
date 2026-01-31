@@ -7,7 +7,7 @@
  */
 
 import type { CoCDatabase } from "./database/index.js";
-import type { GameState } from "../../../state.js";
+import type { GameState } from "../../state/index.js";
 
 export interface CheckpointMetadata {
   checkpointId: string;
@@ -146,7 +146,7 @@ export class CheckpointManager {
   private generateAutoCheckpointName(gameState: GameState): string {
     if (gameState.currentScenario) {
       const scene = gameState.currentScenario;
-      return `${scene.name} - Day ${scene.timePoint.gameDay} ${scene.timePoint.timeOfDay}`;
+      return `${scene.name}`;
     }
     return `Auto-save - ${new Date().toLocaleString()}`;
   }

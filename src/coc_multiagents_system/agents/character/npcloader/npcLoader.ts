@@ -12,11 +12,13 @@ import type { CoCDatabase } from "../../memory/database/schema.js";
 import type {
   CharacterAttributes,
   CharacterStatus,
+  InventoryItem,
   NPCClue,
   NPCProfile,
   NPCRelationship,
   ParsedNPCData,
 } from "../../models/gameTypes.js";
+import { InventoryUtils } from "../../models/gameTypes.js";
 import {
   createChatModel,
   ModelClass,
@@ -301,6 +303,133 @@ export class NPCLoader {
   }
 
   /**
+   * Load NPCs from JSON files in a directory (skip document parsing)
+   */
+  async loadNPCsFromJSONDirectory(dirPath: string, forceReload = false): Promise<NPCProfile[]> {
+    console.log(`\n=== Loading NPCs from JSON directory: ${dirPath} ===`);
+
+    if (!fs.existsSync(dirPath)) {
+      console.log(`Directory does not exist: ${dirPath}`);
+      return [];
+    }
+
+    // Check for file changes unless forced reload
+    if (!forceReload) {
+      const { hasChanges } = this.checkForJSONChanges(dirPath);
+      if (!hasChanges) {
+        const existingNPCs = this.getAllNPCs();
+        console.log(`No changes detected. Using ${existingNPCs.length} existing NPCs from database.`);
+        return existingNPCs;
+      }
+    }
+
+    console.log(`Loading NPCs from JSON files in directory: ${dirPath}`);
+
+    const files = fs.readdirSync(dirPath);
+    const jsonFiles = files.filter((f) => f.toLowerCase().endsWith(".json"));
+
+    if (jsonFiles.length === 0) {
+      console.log("No JSON files found in directory.");
+      this.updateLastLoadTimestamp(dirPath);
+      return [];
+    }
+
+    const allParsedNPCs: ParsedNPCData[] = [];
+
+    console.log(`📦 找到 ${jsonFiles.length} 个NPC JSON文件，开始加载...`);
+    for (let i = 0; i < jsonFiles.length; i++) {
+      const file = jsonFiles[i];
+      try {
+        console.log(`  [${i + 1}/${jsonFiles.length}] 正在加载: ${file}`);
+        const filePath = path.join(dirPath, file);
+        const fileContent = fs.readFileSync(filePath, "utf-8");
+        const jsonData = JSON.parse(fileContent);
+
+        // Handle both array of NPCs and single NPC object
+        const npcs: ParsedNPCData[] = Array.isArray(jsonData) ? jsonData : [jsonData];
+
+        for (const npcData of npcs) {
+          allParsedNPCs.push(npcData);
+        }
+        console.log(`  ✓ 已加载 ${npcs.length} 个NPC从文件: ${file}`);
+      } catch (error) {
+        console.error(`  ✗ 加载文件失败 ${file}:`, error);
+      }
+    }
+
+    if (allParsedNPCs.length === 0) {
+      console.log("No NPC data found in JSON files.");
+      this.updateLastLoadTimestamp(dirPath);
+      return [];
+    }
+
+    // Direct import from JSON - no merging needed
+    console.log(`💾 开始保存 ${allParsedNPCs.length} 个NPC到数据库（直接导入，跳过合并）...`);
+    const npcProfiles: NPCProfile[] = [];
+    for (let i = 0; i < allParsedNPCs.length; i++) {
+      const parsedData = allParsedNPCs[i];
+      try {
+        const npcProfile = this.convertToNPCProfile(parsedData);
+        this.saveNPCToDatabase(npcProfile);
+        npcProfiles.push(npcProfile);
+        console.log(`  [${i + 1}/${allParsedNPCs.length}] ✓ 已保存NPC: ${npcProfile.name}`);
+      } catch (error) {
+        console.error(`  [${i + 1}/${allParsedNPCs.length}] ✗ 保存NPC失败 ${parsedData.name}:`, error);
+      }
+    }
+
+    // Update timestamp after successful load
+    this.updateLastLoadTimestamp(dirPath);
+
+    console.log(`\n=== Successfully loaded ${npcProfiles.length} NPCs from JSON files ===\n`);
+    return npcProfiles;
+  }
+
+  /**
+   * Check if any JSON files in directory have changed since last load
+   */
+  private checkForJSONChanges(dirPath: string): { hasChanges: boolean; currentFiles: Map<string, number> } {
+    if (!fs.existsSync(dirPath)) {
+      return { hasChanges: false, currentFiles: new Map() };
+    }
+
+    const currentFiles = new Map<string, number>();
+    const files = fs.readdirSync(dirPath).filter(file => file.toLowerCase().endsWith(".json"));
+
+    // Get modification times for all JSON files
+    for (const file of files) {
+      const filePath = path.join(dirPath, file);
+      const stats = fs.statSync(filePath);
+      currentFiles.set(file, stats.mtime.getTime());
+    }
+
+    // Check if we have existing NPCs
+    const existingNPCs = this.getAllNPCs();
+    
+    // If no NPCs exist, we need to load
+    if (existingNPCs.length === 0) {
+      return { hasChanges: true, currentFiles };
+    }
+
+    // Check timestamp file
+    const lastLoadFile = path.join(dirPath, '.last_load_timestamp');
+    let lastLoadTime = 0;
+    
+    if (fs.existsSync(lastLoadFile)) {
+      try {
+        lastLoadTime = parseInt(fs.readFileSync(lastLoadFile, 'utf8'));
+      } catch {
+        return { hasChanges: true, currentFiles };
+      }
+    }
+
+    // Check if any file is newer than last load
+    const hasChanges = Array.from(currentFiles.values()).some(mtime => mtime > lastLoadTime);
+    
+    return { hasChanges, currentFiles };
+  }
+
+  /**
    * Load NPCs from a directory (only if files have changed)
    */
   async loadNPCsFromDirectory(dirPath: string, forceReload = false): Promise<NPCProfile[]> {
@@ -326,24 +455,28 @@ export class NPCLoader {
 
     // Parse all documents in the directory
     const parsedNPCs = await this.parser.parseDirectory(dirPath);
+    console.log(`🔄 开始合并相似NPC，共 ${parsedNPCs.length} 个...`);
     const dedupedNPCs = await this.mergeSimilarNPCs(parsedNPCs);
+    console.log(`✓ 合并完成，剩余 ${dedupedNPCs.length} 个唯一NPC`);
 
     if (dedupedNPCs.length === 0) {
-      console.log("No NPC documents found in directory.");
+      console.log("⚠️  目录中未找到NPC文档。");
       this.updateLastLoadTimestamp(dirPath);
       return [];
     }
 
     // Convert and store each NPC
+    console.log(`💾 开始保存 ${dedupedNPCs.length} 个NPC到数据库...`);
     const npcProfiles: NPCProfile[] = [];
-    for (const parsedData of dedupedNPCs) {
+    for (let i = 0; i < dedupedNPCs.length; i++) {
+      const parsedData = dedupedNPCs[i];
       try {
         const npcProfile = this.convertToNPCProfile(parsedData);
         this.saveNPCToDatabase(npcProfile);
         npcProfiles.push(npcProfile);
-        console.log(`✓ Loaded NPC: ${npcProfile.name} (${npcProfile.id})`);
+        console.log(`  [${i + 1}/${dedupedNPCs.length}] ✓ 已保存NPC: ${npcProfile.name}`);
       } catch (error) {
-        console.error(`✗ Failed to load NPC ${parsedData.name}:`, error);
+        console.error(`  [${i + 1}/${dedupedNPCs.length}] ✗ 保存NPC失败 ${parsedData.name}:`, error);
       }
     }
 
@@ -399,16 +532,19 @@ export class NPCLoader {
       name: parsedData.name,
       attributes,
       status,
-      inventory: parsedData.inventory || [],
+      inventory: InventoryUtils.normalizeInventory(parsedData.inventory),
       skills: parsedData.skills || {},
       notes: parsedData.notes,
+      actionLog: parsedData.actionLog,
       occupation: parsedData.occupation,
       age: parsedData.age,
+      gender: parsedData.gender,
       appearance: parsedData.appearance,
       personality: parsedData.personality,
       background: parsedData.background,
       goals: parsedData.goals || [],
       secrets: parsedData.secrets || [],
+      currentLocation: parsedData.currentLocation,
       clues,
       relationships,
       isNPC: true,
@@ -450,6 +586,7 @@ export class NPCLoader {
       background: npc.background,
       goals: npc.goals,
       secrets: npc.secrets,
+      currentLocation: npc.currentLocation,
       attributes: npc.attributes,
       status: npc.status,
       skills: npc.skills,
@@ -468,6 +605,7 @@ export class NPCLoader {
         history: r.history,
       })),
       notes: npc.notes,
+      actionLog: npc.actionLog,
     };
   }
 
@@ -596,7 +734,7 @@ export class NPCLoader {
       attributes: npc.attributes || {},
       status: npc.status || {},
       skills: npc.skills || {},
-      inventory: npc.inventory || [],
+      inventory: InventoryUtils.normalizeInventory(npc.inventory),
       clues: npc.clues || [],
       relationships: npc.relationships || [],
       notes: npc.notes,
@@ -753,9 +891,9 @@ Return ONLY JSON array, no extra text.`;
       const stmt = database.prepare(`
                 INSERT OR REPLACE INTO characters (
                     character_id, name, attributes, status, inventory, skills, notes,
-                    is_npc, occupation, age, appearance, personality, background, goals, secrets,
+                    is_npc, occupation, age, gender, appearance, personality, background, goals, secrets, current_location,
                     updated_at
-                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP)
+                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP)
             `);
 
       stmt.run(
@@ -769,11 +907,13 @@ Return ONLY JSON array, no extra text.`;
         1, // is_npc = true
         npc.occupation || null,
         npc.age || null,
+        npc.gender || null,
         npc.appearance || null,
         npc.personality || null,
         npc.background || null,
         JSON.stringify(npc.goals),
-        JSON.stringify(npc.secrets)
+        JSON.stringify(npc.secrets),
+        npc.currentLocation || null
       );
 
       // Delete existing clues and relationships for this NPC
@@ -879,16 +1019,20 @@ Return ONLY JSON array, no extra text.`;
       name: character.name,
       attributes: JSON.parse(character.attributes),
       status: JSON.parse(character.status),
-      inventory: JSON.parse(character.inventory || "[]"),
+      inventory: InventoryUtils.normalizeInventory(JSON.parse(character.inventory || "[]")),
       skills: JSON.parse(character.skills || "{}"),
       notes: character.notes,
       occupation: character.occupation,
       age: character.age,
+      gender: character.gender,
       appearance: character.appearance,
       personality: character.personality,
       background: character.background,
       goals: JSON.parse(character.goals || "[]"),
       secrets: JSON.parse(character.secrets || "[]"),
+      currentLocation: character.current_location || undefined,
+      instantiatedFrom: character.instantiated_from || undefined,
+      inheritsKnowledge: character.inherits_knowledge ? JSON.parse(character.inherits_knowledge) : undefined,
       clues: clues.map((c) => ({
         id: c.id,
         clueText: c.clue_text,

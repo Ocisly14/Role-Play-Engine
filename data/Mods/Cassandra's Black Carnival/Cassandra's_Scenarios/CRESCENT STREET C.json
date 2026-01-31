@@ -1,0 +1,53 @@
+[
+    {
+      "name": "Crescent Street C",
+      "description": "Crescent Street C is a short, quiet residential street in Cassandra. It is sparsely developed and largely devoid of public activity. According to both the scenario text and the town map, the street ends without branching into other locations, reinforcing a sense of isolation and finality.",
+      "snapshot": {
+        "name": "Crescent Street C",
+        "location": "A narrow residential street in Cassandra, ending in a single private residence.",
+        "description": "Crescent Street C is calm and largely empty, with little foot traffic. The road stretches forward only to terminate at a single house. There are no shops, public buildings, or side streets along the way. At the very end of the street stands Philip Scaletta’s home, the only notable structure on this road.",
+        "characters": [
+          {
+            "name": "Philip Scaletta",
+            "role": "Resident / suspect / witness",
+            "status": "alive",
+            "location": "Philip's house at the end of Crescent Street C",
+            "notes": "Philip lives alone at the very end of Crescent Street C. His home is the only significant destination on this street, making visits here deliberate and difficult to conceal."
+          }
+        ],
+        "clues": [],
+        "conditions": [
+          {
+            "type": "sound",
+            "description": "The street is unusually quiet, with little traffic or ambient noise.",
+            "mechanicalEffect": ""
+          }
+        ],
+        "events": [],
+        "exits": [
+          {
+            "direction": "Street end",
+            "destination": "Philip Scaletta’s house",
+            "description": "The road terminates directly at Philip’s residence; there are no other buildings or paths beyond this point.",
+            "condition": ""
+          },
+          {
+            "direction": "Back toward town",
+            "destination": "Other parts of Cassandra",
+            "description": "The only way out of Crescent Street C is to return the way investigators came.",
+            "condition": ""
+          }
+        ],
+        "keeperNotes": "Crescent Street C should feel deliberately sparse. Emphasize that Philip’s house is the sole point of interest and that anyone coming here has a clear, traceable purpose.",
+        "permanentChanges": []
+      },
+      "tags": ["residential", "quiet", "dead end", "isolated"],
+      "connections": [
+        {
+          "scenarioName": "Philip Scaletta’s House",
+          "relationshipType": "leads_to",
+          "description": "Crescent Street C exists primarily to lead investigators to Philip’s home, which sits at the end of the street."
+        }
+      ]
+    }
+  ]

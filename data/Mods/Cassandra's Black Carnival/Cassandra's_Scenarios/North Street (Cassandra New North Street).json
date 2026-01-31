@@ -1,0 +1,81 @@
+[
+    {
+      "name": "North Street (Cassandra New North Street)",
+      "description": "North Street is a moderately active mixed-use street in Cassandra, combining small businesses with residential elements. It serves as a transitional area between quieter residential streets and more socially active locations, making it a common path for investigators moving through town.",
+      "snapshot": {
+        "name": "North Street",
+        "location": "Cassandra – New North Street",
+        "description": "North Street features several small but notable establishments clustered along the road. The street is neither crowded nor deserted; foot traffic varies by time of day. The presence of a flower shop, a popular small restaurant, and a rarely open astrologer’s hut gives the area a subtle sense of daily normalcy layered with quiet unease.",
+        "characters": [
+          {
+            "name": "Nancy Charlotte",
+            "role": "Shop owner / witness",
+            "status": "alive",
+            "location": "Flower Shop",
+            "notes": "Nancy is usually found tending plants in the flower shop during business hours and is aware of visitors entering the area."
+          },
+          {
+            "name": "Helen",
+            "role": "Restaurant owner / witness",
+            "status": "alive",
+            "location": "Helen’s Restaurant",
+            "notes": "Helen runs a small but well-known restaurant. She is attentive to customers and observant of unusual behavior on the street."
+          }
+        ],
+        "clues": [],
+        "conditions": [
+          {
+            "type": "sound",
+            "description": "Low-level street noise mixed with occasional conversation from shops and diners.",
+            "mechanicalEffect": ""
+          },
+          {
+            "type": "smell",
+            "description": "A blend of fresh flowers and cooking aromas drifting through the street.",
+            "mechanicalEffect": ""
+          }
+        ],
+        "events": [],
+        "exits": [
+          {
+            "direction": "Flower Shop",
+            "destination": "Flower Shop (Simon Laplace’s workplace)",
+            "description": "A two-story building housing the flower shop on the ground floor and private rooms above.",
+            "condition": ""
+          },
+          {
+            "direction": "Restaurant",
+            "destination": "Helen’s Restaurant",
+            "description": "A small but popular restaurant that often requires reservations during busy hours.",
+            "condition": ""
+          },
+          {
+            "direction": "Side storefront",
+            "destination": "Astrologer’s Hut",
+            "description": "A small fortune-telling shop next to the flower shop; most of the time it appears closed.",
+            "condition": "often closed"
+          }
+        ],
+        "keeperNotes": "North Street works best as a connective hub. Investigators can naturally encounter multiple NPCs here and choose which lead to pursue without overt pressure.",
+        "permanentChanges": []
+      },
+      "tags": ["street", "commercial", "social hub", "investigation"],
+      "connections": [
+        {
+          "scenarioName": "Flower Shop",
+          "relationshipType": "leads_to",
+          "description": "North Street provides direct access to the flower shop and its associated investigations."
+        },
+        {
+          "scenarioName": "Helen’s Restaurant",
+          "relationshipType": "leads_to",
+          "description": "Investigators can move from the street into Helen’s Restaurant for social encounters and information gathering."
+        },
+        {
+          "scenarioName": "Astrologer’s Hut",
+          "relationshipType": "leads_to",
+          "description": "The astrologer’s hut is a minor but atmospheric location branching off North Street."
+        }
+      ]
+    }
+  ]

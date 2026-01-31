@@ -10,10 +10,12 @@ export interface ParsedModuleData {
   storyOutline?: string;
   moduleNotes?: string;
   keeperGuidance?: string;
-  storyHook?: string;
   moduleLimitations?: string;
+  initialGameTime?: string; // Initial game time in format "HH:MM" or "Day X HH:MM"
+  initialScenarioNPCs?: string[]; // List of NPC names that are present with the player at the initial scenario
   tags?: string[];
-  source?: string;
+  // Player-facing story introduction (from JSON or generated during document parsing)
+  introduction?: string;
 }
 
 /** Stored module background record */
@@ -24,9 +26,10 @@ export interface ModuleBackground {
   storyOutline?: string;
   moduleNotes?: string;
   keeperGuidance?: string;
-  storyHook?: string;
   moduleLimitations?: string;
+  initialGameTime?: string; // Initial game time in format "HH:MM" or "Day X HH:MM"
+  initialScenarioNPCs?: string[]; // List of NPC names that are present with the player at the initial scenario
   tags: string[];
-  source?: string;
-  createdAt: string;
+  // Player-facing story introduction (from JSON's introduction field or generated from documents)
+  introduction?: string;
 }

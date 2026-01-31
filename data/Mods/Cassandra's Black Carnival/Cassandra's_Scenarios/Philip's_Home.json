@@ -1,0 +1,88 @@
+[
+    {
+      "name": "Philip's Home",
+      "description": "A modest, cramped private residence belonging to Philip Scaletta, filled with stolen goods and personal mementos. The space reflects a life of poverty, paranoia, and petty crime, with cluttered storage and little concern for hospitality or order.",
+      "snapshot": {
+        "name": "Philip's Home",
+        "location": "A small, inconspicuous residence in Cassandra, serving as Philip Scaletta's personal living space",
+        "description": "Philip's home is cluttered with numerous stolen items—his so-called 'trophies'—carelessly stacked or hidden throughout the room. Despite the mess, certain items are kept with care, including a treasured old family photograph. The atmosphere is tense and defensive, suggesting Philip's constant fear of being exposed or robbed himself.",
+        "characters": [
+          {
+            "name": "Philip Scaletta",
+            "role": "Witness / Suspect",
+            "status": "Alive",
+            "location": "Inside his home",
+            "notes": "A small-time thief who values money and survival above all else. He witnessed THE SECOND MURDER CASE (December 22, 2003) at Reindeer Bar where 21-year-old Lucifero was killed. He is extremely reluctant to cooperate unless bribed or promised protection from trouble."
+          }
+        ],
+        "clues": [
+          {
+            "clueText": "The house is filled with various stolen goods and personal 'trophies' collected by Philip over time.",
+            "category": "observation",
+            "difficulty": "automatic",
+            "location": "Throughout the residence",
+            "discoveryMethod": "",
+            "reveals": ["Philip's habitual theft and obsession with keeping his stolen gains"]
+          },
+          {
+            "clueText": "An old family photograph showing Philip with his parents, carefully preserved.",
+            "category": "physical",
+            "difficulty": "regular",
+            "location": "Hidden among Philip's personal belongings",
+            "discoveryMethod": "Search",
+            "reveals": ["Philip once had a happy family life and still harbors emotional attachment to his past"]
+          },
+          {
+            "clueText": "Philip stole the wallet from THE SECOND CASE VICTIM (21-year-old Lucifero) at Reindeer Bar on December 22, 2003. The wallet contained the victim's ID and a note about the 'Thousand-Dimensional System'.",
+            "category": "witness",
+            "difficulty": "hard",
+            "location": "Conversation with Philip or search of his belongings",
+            "discoveryMethod": "Intimidate, Persuade, or Search",
+            "reveals": [
+              "Philip was present at the SECOND CASE murder scene",
+              "The victim's identity: Aberforth Locefern (Lucifero), 21 years old",
+              "This is the SECOND CASE, distinct from the FIRST CASE (19-year-old, December 22, 2002)"
+            ]
+          }
+        ],
+        "conditions": [
+          {
+            "type": "lighting",
+            "description": "Dim indoor lighting with poorly lit corners",
+            "mechanicalEffect": ""
+          },
+          {
+            "type": "other",
+            "description": "Cluttered and cramped interior space",
+            "mechanicalEffect": "May impose situational penalties on movement or stealth if a chase or struggle occurs indoors"
+          }
+        ],
+        "events": [
+          "Investigators may confront Philip about his stolen property and involvement in THE SECOND CASE",
+          "Philip may refuse cooperation unless offered money or assistance",
+          "Philip reveals information about the SECOND CASE victim (Lucifero) if properly pressured"
+        ],
+        "exits": [
+          {
+            "direction": "Front door",
+            "destination": "Cassandra streets",
+            "description": "A simple, frequently used exit",
+            "condition": ""
+          }
+        ],
+        "keeperNotes": "Philip is highly protective of his belongings and will react defensively if investigators search his home without permission. CRITICALLY: Philip was a witness to THE SECOND MURDER CASE (December 22, 2003, 21-year-old Lucifero killed at Reindeer Bar). He stole the victim's wallet and lost his folding knife at the scene. This is DISTINCT from the FIRST CASE (December 22, 2002, 19-year-old girl frozen in ice at Paradil Grand Hotel). Emphasize his greed, fear, and resentment of authority. He may reveal information only when adequately bribed or pressured.",
+        "permanentChanges": [
+          "Stolen items may be confiscated or removed by investigators",
+          "Philip's attitude toward the investigators may permanently worsen or improve depending on their actions"
+        ]
+      },
+      "tags": ["private residence", "criminal", "cluttered", "NPC home"],
+      "connections": [
+        {
+          "scenarioName": "Reindeer Bar",
+          "relationshipType": "leads_to",
+          "description": "Philip's involvement in THE SECOND MURDER CASE (December 22, 2003) at the Reindeer Bar—where 21-year-old Lucifero was killed—and his lost knife connect his home to the events at the bar. This is distinct from the FIRST CASE (December 22, 2002) at Paradil Grand Hotel."
+        }
+      ]
+    }
+  ]

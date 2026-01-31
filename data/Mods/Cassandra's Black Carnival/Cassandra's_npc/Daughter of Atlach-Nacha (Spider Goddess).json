@@ -1,0 +1,72 @@
+[
+    {
+      "name": "Daughter of Atlach-Nacha (Spider Goddess)",
+      "occupation": "Mythos Entity / Servant of the Spider God",
+      "age": 0,
+      "appearance": "A terrifying spider-goddess hybrid with a vaguely humanoid female outline and monstrous arachnid features. Her body is covered with chitin and coarse hair, her eyes are predatory and inhuman, and her fanged mouth drips with paralytic venom. Her presence is overwhelmingly alien and predatory.",
+      "personality": "Cruel, instinct-driven, and utterly devoted to the Spider God. She shows no empathy toward humans and treats prey as livestock, acting with ritualistic patience and divine entitlement.",
+      "background": "The Daughters of Atlach-Nacha are transformed beings, possibly once human females, elevated into sacred servants of the Spider God. They act as favored predators and executioners, feeding upon paralyzed victims and spreading the god’s influence through terror and consumption.",
+      "goals": [
+        "Serve Atlach-Nacha with absolute devotion",
+        "Hunt, paralyze, and consume chosen victims"
+      ],
+      "secrets": [
+        "Some may have once been human before their transformation",
+        "Victims can survive if rescued before their INT is reduced to zero"
+      ],
+      "attributes": {
+        "STR": 113,
+        "CON": 93,
+        "DEX": 65,
+        "APP": 5,
+        "POW": 65,
+        "SIZ": 93,
+        "INT": 55,
+        "EDU": 0
+      },
+      "status": {
+        "hp": 19,
+        "maxHp": 19,
+        "sanity": 0,
+        "maxSanity": 0,
+        "luck": 0,
+        "mp": 13,
+        "conditions": []
+      },
+      "skills": {
+        "Bite": 75
+      },
+      "inventory": [],
+      "clues": [
+        {
+          "clueText": "The Daughter of Atlach-Nacha uses a paralytic venom and then feeds on the victim’s brain through the eye sockets.",
+          "category": "knowledge",
+          "difficulty": "hard",
+          "relatedTo": ["Atlach-Nacha"]
+        },
+        {
+          "clueText": "If victims are rescued before their INT reaches zero, they may survive but suffer permanent blindness and loss of APP.",
+          "category": "secret",
+          "difficulty": "extreme",
+          "relatedTo": ["Daughter of Atlach-Nacha"]
+        }
+      ],
+      "relationships": [
+        {
+          "targetName": "Atlach-Nacha",
+          "relationshipType": "family",
+          "attitude": 100,
+          "description": "Divine progenitor and object of absolute worship.",
+          "history": "The Daughters exist solely to enact the will and hunger of the Spider God."
+        },
+        {
+          "targetName": "Spider-Humans",
+          "relationshipType": "ally",
+          "attitude": 70,
+          "description": "Lesser servants created through parasitic transformation.",
+          "history": "Spider-humans act as hunters and attendants within the Spider God’s domain."
+        }
+      ],
+      "notes": "Combat Statistics & Horror Details (Supplemental):\n\nDamage Bonus:\nAverage damage bonus: +2D6.\n\nCombat Style:\nEach Daughter of Atlach-Nacha attacks once per round, always using a single venomous bite. Her venom is a paralytic toxin with POT 20. If the toxin’s POT exceeds the victim’s CON, the victim is immediately paralyzed for 1D6 hours.\n\nAttacks:\n• Bite – 75%: Deals 1D10 damage plus venom. Upon paralysis, feeding begins immediately. While feeding, the victim loses 1 INT per round (see Feeding Horror below).\n\nFeeding Horror:\nAfter paralyzing a victim, the Daughter consumes the flesh of the victim’s head and ultimately drains the brain through the emptied eye sockets. Each minute of feeding reduces the victim’s INT by 1. When INT reaches 0, the victim dies as their brain is completely consumed.\n\nIf the feeding is interrupted before INT reaches 0, the victim survives but suffers permanent consequences: irreversible blindness (eyes destroyed), permanent loss of all INT already lost, and a permanent loss of 2D4 APP.\n\nArmor:\n5-point hardened shell.\n\nSpells:\nAll Daughters of Atlach-Nacha know the spell “Contact/Call Atlach-Nacha.” Individuals with INT higher than 15 may additionally know 1D3 other spells.\n\nSkills:\n• Stealth 35%.\n\nSanity Loss:\n• First sight of a Daughter of Atlach-Nacha: 1 / 1D8 SAN.\n• Witnessing a human shedding their skin and transforming into a Daughter of Atlach-Nacha: additional 1 / 1D8 SAN.\n\nKeeper Notes:\nThese entities represent extreme body horror and predation. Their feeding process is slow, ritualistic, and terrifying, allowing opportunities for rescue at great cost. Use their appearance sparingly to maximize psychological impact."
+  }
+  ]

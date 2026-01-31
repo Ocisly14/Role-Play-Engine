@@ -1,0 +1,66 @@
+[
+    {
+      "name": "Cold Spider (Dreamlands)",
+      "occupation": "Mythos Creature",
+      "age": 0,
+      "appearance": "An enormous, pallid spider-like entity native to the Dreamlands, far larger and more grotesque than its weakened real-world counterparts. Its body is covered in thick chitin, its many eyes gleam with unnatural intelligence, and its movements are both deliberate and unsettling.",
+      "personality": "Alien, solitary, and vicious. Despite possessing intelligence, cold spiders do not cooperate with one another and may even prey upon their own kind. They act purely according to predatory instinct and self-interest.",
+      "background": "Cold spiders originate in the Dreamlands and are associated with the Spider God Atlach-Nacha. In this realm they exist in a far more powerful and primordial form. Some legends speak of truly colossal specimens, dwarfing even normal Dreamlands cold spiders.",
+      "goals": [
+        "Hunt and feed on prey encountered in the Dreamlands",
+        "Serve the broader, inscrutable designs of Atlach-Nacha"
+      ],
+      "secrets": [
+        "Cold spiders may cannibalize one another",
+        "There exist exceptionally gigantic cold spiders beyond the norm"
+      ],
+      "attributes": {
+        "STR": 140,
+        "CON": 90,
+        "DEX": 85,
+        "APP": 5,
+        "POW": 70,
+        "SIZ": 175,
+        "INT": 55,
+        "EDU": 0
+      },
+      "status": {
+        "hp": 27,
+        "maxHp": 27,
+        "sanity": 0,
+        "maxSanity": 0,
+        "luck": 0,
+        "mp": 14,
+        "conditions": []
+      },
+      "skills": {
+        "Bite": 40,
+        "Web Projection": 60
+      },
+      "inventory": [],
+      "clues": [
+        {
+          "clueText": "Dreamlands cold spiders are far stronger and more resilient than those encountered in the waking world.",
+          "category": "knowledge",
+          "difficulty": "regular",
+          "relatedTo": ["Dreamlands", "Atlach-Nacha"]
+        },
+        {
+          "clueText": "Some cold spiders grow to truly gigantic size, inspiring far greater terror.",
+          "category": "rumor",
+          "difficulty": "hard",
+          "relatedTo": ["Cold Spider"]
+        }
+      ],
+      "relationships": [
+        {
+          "targetName": "Atlach-Nacha",
+          "relationshipType": "employer",
+          "attitude": 80,
+          "description": "A distant but absolute patron entity tied to the spiders’ existence.",
+          "history": "Cold spiders are creatures associated with the webs and designs of Atlach-Nacha in the Dreamlands."
+        }
+      ],
+      "notes": "Combat & Abilities:\n\nCombat Style:\nAlthough cold spiders possess intelligence, they do not cooperate with one another and may even engage in cannibalism. A bite injects deadly venom. Rumors persist of extraordinarily gigantic cold spiders. Each cold spider attacks once per round.\n\nAttacks:\n• Bite – 40%: Deals 1D3 damage plus venom. Venom POT equals 1/5 of the spider’s CON.\n\nCombat Maneuvers:\n• Web Projection – 60% (Entangle): Targets must succeed in a STR vs STR contest to escape. The effective STR of the web equals half the spider’s SIZ.\n\nArmor:\n6 points (thick chitinous shell).\n\nSpells:\nRoll 1D20; if the result is lower than the spider’s INT, the Keeper selects 1D3 spells for the spider to use.\n\nSanity Loss:\nSeeing a cold spider causes SAN loss of 0 / 1D10. Encountering a truly gigantic cold spider increases this to 1 / 1D20.\n\nKeeper Notes:\nDreamlands cold spiders are apex predators and should be treated as major threats rather than minor encounters."
+    }
+  ]

@@ -11,9 +11,11 @@ import type {
   CharacterAttributes,
   CharacterProfile,
   CharacterStatus,
+  InventoryItem,
   Skill,
   WeaponData,
 } from "../models/gameTypes.js";
+import { InventoryUtils } from "../models/gameTypes.js";
 import type { ModuleBackground } from "../models/moduleTypes.js";
 import type { ScenarioSnapshot } from "../models/scenarioTypes.js";
 
@@ -53,7 +55,7 @@ export class MemoryAgent {
   public getModuleBackgrounds(limit = 5): ModuleBackground[] {
     const rows = this.db
       .prepare(
-        `SELECT * FROM module_backgrounds ORDER BY datetime(created_at) DESC LIMIT ?`
+        `SELECT * FROM module_backgrounds LIMIT ?`
       )
       .all(limit) as any[];
 
@@ -66,7 +68,7 @@ export class MemoryAgent {
   public getLatestModuleBackground(): ModuleBackground | null {
     const row = this.db
       .prepare(
-        `SELECT * FROM module_backgrounds ORDER BY datetime(created_at) DESC LIMIT 1`
+        `SELECT * FROM module_backgrounds LIMIT 1`
       )
       .get() as any;
 
@@ -128,11 +130,11 @@ export class MemoryAgent {
       storyOutline: row.story_outline || undefined,
       moduleNotes: row.module_notes || undefined,
       keeperGuidance: row.keeper_guidance || undefined,
-      storyHook: row.story_hook || undefined,
       moduleLimitations: row.module_limitations || undefined,
+      initialGameTime: row.initial_game_time || undefined,
+      initialScenarioNPCs: row.initial_scenario_npcs ? JSON.parse(row.initial_scenario_npcs) : [],
       tags: row.tags ? JSON.parse(row.tags) : [],
-      source: row.source || undefined,
-      createdAt: row.created_at,
+      introduction: row.introduction || undefined,
     };
   }
 
@@ -290,7 +292,7 @@ export class MemoryAgent {
         row.status,
         this.buildDefaultStatus()
       ),
-      inventory: this.safeParse<string[]>(row.inventory, []),
+      inventory: InventoryUtils.normalizeInventory(this.safeParse<InventoryItem[]>(row.inventory, [])),
       skills: this.safeParse<Record<string, number>>(row.skills, {}),
       notes: row.notes ?? this.buildNpcNotes(row),
     };
@@ -312,13 +314,6 @@ export class MemoryAgent {
 
     return {
       id: row.snapshot_id,
-      scenarioId: row.scenario_id,
-      timePoint: {
-        absoluteTime: row.absolute_time || row.time_timestamp,
-        gameDay: row.game_day || 1,
-        timeOfDay: row.time_of_day || "unknown",
-        notes: row.time_notes ?? undefined,
-      },
       name: row.snapshot_name,
       location: row.location,
       description: row.description,
@@ -351,6 +346,7 @@ export class MemoryAgent {
       events: this.safeParse<string[]>(row.events, []),
       exits: this.safeParse(row.exits, []),
       keeperNotes: row.keeper_notes ?? undefined,
+      timeRestriction: row.time_restriction ?? undefined,
     };
   }
 

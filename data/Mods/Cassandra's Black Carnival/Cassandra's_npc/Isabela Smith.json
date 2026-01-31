@@ -1,0 +1,63 @@
+[
+    {
+      "name": "Isabela Smith",
+      "occupation": "Head Nurse",
+      "appearance": "A young woman with a professional and neat appearance, usually dressed in a nurse’s uniform, giving off a calm and trustworthy impression.",
+      "personality": "Responsible, patient, diligent, and caring. She takes her duties seriously and shows strong emotional commitment to those she cares about.",
+      "background": "Isabela Smith is a young head nurse at the local hospital. She is known among her colleagues for being conscientious and patient. She is engaged to a man from a well-off family who works as a diplomat. Many hospital staff privately speculate that she will eventually leave her job to marry and move to a big city. On the night of December 26, she abruptly resigned and left Cassandra overnight, taking her fiancé with her after he suddenly suffered a mental breakdown.",
+      "goals": [
+        "Protect and take care of her mentally unstable fiancé",
+        "Leave Cassandra and start a safer, more stable life elsewhere"
+      ],
+      "secrets": [
+        "After the night of December 26, the Isabela seen by investigators is actually an impostor disguised by Mrs. Barklyite"
+      ],
+      "attributes": {
+        "STR": 45,
+        "CON": 55,
+        "DEX": 55,
+        "APP": 60,
+        "POW": 65,
+        "SIZ": 50,
+        "INT": 65,
+        "EDU": 75
+      },
+      "skills": {
+        "Medicine": 70,
+        "First Aid": 75,
+        "Psychology": 50,
+        "Persuade": 45
+      },
+      "clues": [
+        {
+          "clueText": "Isabela resigned and left Cassandra on the night of December 26, urgently taking her fiancé with her after he became mentally unstable.",
+          "category": "knowledge",
+          "difficulty": "regular",
+          "relatedTo": ["Cassandra Hospital", "Isabela Smith's Fiancé"]
+        },
+        {
+          "clueText": "Any Isabela encountered by investigators after December 26 is actually Mrs. Barklyite in disguise.",
+          "category": "secret",
+          "difficulty": "hard",
+          "relatedTo": ["Mrs. Barklyite"]
+        }
+      ],
+      "relationships": [
+        {
+          "targetName": "Mrs. Barklyite",
+          "relationshipType": "enemy",
+          "attitude": -40,
+          "description": "An unknown but dangerous figure who impersonates Isabela after her departure.",
+          "history": "Mrs. Barklyite disguises herself as Isabela after December 26, misleading investigators."
+        },
+        {
+          "targetName": "Unnamed Fiancé",
+          "relationshipType": "family",
+          "attitude": 80,
+          "description": "Her fiancé from a wealthy family, who suddenly became mentally unstable.",
+          "history": "Their engagement was stable until his sudden mental collapse, prompting Isabela to flee Cassandra with him."
+        }
+      ],
+      "notes": "Isabela is no longer physically present in Cassandra after December 26; her apparent presence afterward is a deliberate deception."
+    }
+  ]

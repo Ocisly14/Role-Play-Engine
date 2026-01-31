@@ -1,0 +1,78 @@
+[
+    {
+      "name": "Paradil Grand Hotel",
+      "description": "A local hotel in Cassandra that became the site of the FIRST murder case on December 22, 2002—exactly one year before the Reindeer Bar murder. The hotel is known to locals but is not currently under active investigation by authorities. Its past incident is largely forgotten, recorded only as an anonymous death with no clear resolution.",
+      "snapshot": {
+        "name": "Paradil Grand Hotel",
+        "location": "A standard mid-sized hotel in the town of Cassandra",
+        "timeRestriction": "day1 evening",
+        "description": "The hotel appears ordinary and functional, serving travelers and visitors. Beneath its mundane appearance, it carries the shadow of an unresolved incident: THE FIRST MURDER CASE occurred here on December 22, 2002—exactly one year before the Reindeer Bar murder. A 19-year-old Black girl was found dead in a freezer in the hotel kitchen's basement, her body completely naked and encased in a massive block of ice. The case was never fully investigated and never developed into a formal missing person case. The body has long since been removed and processed. Bruno arranges for investigators to stay here after questioning suspects at the Reindeer Bar. Around 2 AM, investigators will be attacked by two masked assailants.",
+        "characters": [],
+        "clues": [
+          {
+            "clueText": "Record of the FIRST murder case: an unidentified 19-year-old Black girl found dead in the Paradil Grand Hotel on December 22, 2002—exactly one year before the Reindeer Bar murder.",
+            "category": "document",
+            "difficulty": "regular",
+            "location": "Hotel records or local archives",
+            "discoveryMethod": "Library Use or investigation of hotel records",
+            "reveals": [
+              "The victim was not from Cassandra",
+              "The case was never fully investigated",
+              "This is the FIRST of two murder cases, separated by exactly one year",
+              "The body was found in a freezer, encased in ice—distinct from the second case"
+            ]
+          },
+          {
+            "clueText": "According to case records, the victim's body was discovered in the hotel kitchen's basement freezer on December 22, 2002, completely naked and encased in a massive block of ice—a distinctive method that differs from the second murder case. The body has since been removed.",
+            "category": "document",
+            "difficulty": "regular",
+            "location": "Hotel records, police case files, or investigation of hotel basement",
+            "discoveryMethod": "Library Use, investigation of hotel records, or police archives",
+            "reveals": [
+              "The first case involved freezing the body in ice",
+              "This method is completely different from the second case (gunshot and knife)",
+              "The two cases may be connected but use different killing methods",
+              "The body was removed long ago—this is a past incident, not a current crime scene"
+            ]
+          },
+          {
+            "clueText": "Information indicating the deceased woman came to Cassandra to search for her missing sister.",
+            "category": "knowledge",
+            "difficulty": "hard",
+            "location": "Cross-referenced testimonies or background investigation",
+            "discoveryMethod": "Interviews or research",
+            "reveals": [
+              "Her sister disappeared after traveling to Cassandra",
+              "A possible connection to cult activities",
+              "The first victim was investigating a disappearance before her own death"
+            ]
+          }
+        ],
+        "conditions": [],
+        "events": [
+          "December 22, 2002: THE FIRST MURDER CASE—A 19-year-old Black girl found dead in the hotel kitchen basement freezer, her body encased in ice",
+          "Day 1 night (around 2 AM): Investigators staying at the hotel are attacked by two masked assailants wearing black clothes and carrying clubs. The attackers will flee if defeated or after some time, jumping out of windows and climbing walls like spiders (SC 0/1d3)",
+          "After the attack: A hotel staff member arrives but does not believe the investigators' account of the attack. Investigators must use persuasion, bribery, or other methods to handle the situation, or the staff will threaten to call the police",
+          "If police are called: Lux responds and claims he was on duty at the station but did not see Bruno there",
+          "Easter egg: After dealing with the staff, a gunshot is heard from the circular corridor. If investigators follow, they encounter a group of out-of-towners: Lily (pink-haired), Hongsen, Lyn, Bigbear, and Reid. Lily's gun accidentally discharged, injuring Hongsen and Lyn. They mention their friend Wind came to meet his fiancée, and that their friend Bruno (a different person) and O'Neil are investigating a serial murder case targeting Black girls"
+        ],
+        "exits": [
+          {
+            "direction": "Main Entrance",
+            "destination": "Cassandra town streets",
+            "description": "The primary entrance and exit for guests and staff"
+          }
+        ],
+        "keeperNotes": "The Paradil Grand Hotel is the site of THE FIRST MURDER CASE (December 22, 2002). This case is CRITICALLY DISTINCT from the second case: the first victim was a 19-year-old Black girl found in a freezer, completely naked and encased in a massive block of ice. The second case (December 22, 2003) involved a 21-year-old Black girl (Lucifero) killed by gunshot and knife in the Reindeer Bar restroom. Emphasize that these are TWO SEPARATE CASES, exactly one year apart, with DIFFERENT BODIES and DIFFERENT METHODS. The first case serves as background foreshadowing and connects to Bruno's determination to solve both cases.",
+        "permanentChanges": []
+      },
+      "tags": ["hotel", "past crime", "unresolved death", "outsider victim"],
+      "connections": [
+        {
+          "scenarioName": "Cassandra Town",
+          "relationshipType": "concurrent",
+          "description": "The hotel is part of the town and its unresolved incident contributes to the broader mystery surrounding Cassandra."
+        }
+      ]
+    }
+  ]

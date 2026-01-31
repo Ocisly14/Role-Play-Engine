@@ -39,6 +39,7 @@ logs
 *.db-shm
 *.db-wal
 data/
+cache/
 
 # Cache directories
 .cache/
@@ -64,3 +65,9 @@ Thumbs.db
 # Temporary files
 tmp/
 temp/
+
+/src/generated/prisma
+
+*.pem
+deployment/.env.production
+client/coc-deploy.tar.gz

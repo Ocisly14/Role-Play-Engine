@@ -1,15 +1,19 @@
-import { getDirectorTemplate } from "./directorTemplate.js";
+import { getActionDrivenSceneChangeTemplate, getNarrativeDirectionTemplate, getPlayerIntentAnalysisTemplate } from "./directorTemplate.js";
 import { composeTemplate } from "../../../template.js";
-import type { GameState, GameStateManager, VisitedScenarioBasic, DirectorDecision } from "../../../state.js";
-import type { ScenarioProfile, ScenarioSnapshot } from "../models/scenarioTypes.js";
+import type { GameStateManager, GameEndingInfo } from "../../state/index.js";
+import type { ScenarioSnapshot } from "../models/scenarioTypes.js";
 import { ScenarioLoader } from "../memory/scenarioloader/scenarioLoader.js";
 import { updateCurrentScenarioWithCheckpoint } from "../memory/index.js";
 import type { CoCDatabase } from "../memory/database/index.js";
+import { ModuleLoader } from "../memory/moduleloader/index.js";
+import type { ActionResult } from "../../state/index.js";
 import {
   ModelProviderName,
   ModelClass,
   generateText,
 } from "../../../models/index.js";
+import * as fs from "fs";
+import * as path from "path";
 
 interface DirectorRuntime {
   modelProvider: ModelProviderName;
@@ -22,299 +26,90 @@ const createRuntime = (): DirectorRuntime => ({
 });
 
 /**
- * Director Agent - 剧情推进和场景转换导演
- * 负责监控游戏进度并推进剧情发展
+ * Director Agent - Story progression and scene transition director
+ * Responsible for monitoring game progress and advancing story development
  */
 export class DirectorAgent {
   private scenarioLoader: ScenarioLoader;
   private db: CoCDatabase;
-  private userQueryHistory: string[] = [];
 
   constructor(scenarioLoader: ScenarioLoader, db: CoCDatabase) {
     this.scenarioLoader = scenarioLoader;
     this.db = db;
   }
-
   /**
-   * 分析当前游戏状态并提供剧情推进建议
+   * Load map information
    */
-  async analyzeProgressionNeeds(gameStateManager: GameStateManager, userQuery?: string): Promise<DirectorDecision> {
-    const runtime = createRuntime();
-    const gameState = gameStateManager.getGameState();
-    
-    // 记录用户查询历史
-    if (userQuery) {
-      this.addToQueryHistory(userQuery);
-    }
-    
-    // 获取当前场景完整信息
-    const currentScenarioInfo = this.extractCurrentScenarioInfo(gameState);
-    
-    // 获取已发现的线索信息
-    const discoveredCluesInfo = this.extractDiscoveredClues(gameState);
-    
-    // 获取用户最近10条查询
-    const recentQueries = this.getRecentQueries();
-    
-    // 获取未访问的场景选项
-    const unvisitedScenarios = await this.getUnvisitedScenarios(gameState);
-    
-    // 获取当前场景的时间线进展选项
-    const timeProgressionOptions = this.getTimeProgressionOptions(gameState);
-    
-    // 获取模板
-    const template = getDirectorTemplate();
-    
-    // 准备模板上下文
-    const templateContext = {
-      // 当前游戏状态
-      currentScenario: currentScenarioInfo,
-      
-      // 已发现的线索
-      discoveredClues: discoveredCluesInfo,
-      
-      // 用户查询历史
-      recentQueries,
-      
-      // 未访问的场景
-      unvisitedScenarios,
-      
-      // 时间推进选项
-      timeProgressionOptions,
-      
-      // 游戏状态统计
-      gameStats: {
-        sessionId: gameState.sessionId,
-        phase: gameState.phase,
-        timeOfDay: gameState.timeOfDay,
-        tension: gameState.tension,
-        totalCluesDiscovered: gameState.discoveredClues.length,
-        visitedScenarioCount: gameState.visitedScenarios.length,
-        playerStatus: {
-          hp: gameState.playerCharacter.status.hp,
-          maxHp: gameState.playerCharacter.status.maxHp,
-          sanity: gameState.playerCharacter.status.sanity,
-          maxSanity: gameState.playerCharacter.status.maxSanity
-        }
-      },
-      
-      // 最新用户查询
-      latestUserQuery: userQuery || "No recent query"
-    };
-
-    // 使用模板和LLM分析剧情推进需求
-    const prompt = composeTemplate(template, {}, templateContext, "handlebars");
-
-    const response = await generateText({
-      runtime,
-      context: prompt,
-      modelClass: ModelClass.MEDIUM,
-    });
-
-    // 解析LLM的JSON响应
-    let parsedResponse;
+  private loadMapData(): any | null {
     try {
-      parsedResponse = JSON.parse(response);
+      const mapPath = path.join(process.cwd(), "data", "Mods", "Cassandra's Black Carnival", "map.json");
+      if (!fs.existsSync(mapPath)) {
+        console.warn(`Map file not found at: ${mapPath}`);
+        return null;
+      }
+      const mapContent = fs.readFileSync(mapPath, "utf-8");
+      return JSON.parse(mapContent);
     } catch (error) {
-      console.error("Failed to parse director response as JSON:", error);
-      return {
-        shouldProgress: false,
-        targetSnapshotId: undefined,
-        reasoning: "Unable to analyze progression needs - JSON parse error",
-        timestamp: new Date()
-      };
-    }
-
-    const estimatedShortActions = 
-      typeof parsedResponse.estimatedShortActions === "number" && parsedResponse.estimatedShortActions > 0
-        ? parsedResponse.estimatedShortActions
-        : null;
-    const increaseShortActionCapBy =
-      typeof parsedResponse.increaseShortActionCapBy === "number" && parsedResponse.increaseShortActionCapBy > 0
-        ? parsedResponse.increaseShortActionCapBy
-        : null;
-
-    // 构建 Director Decision
-    const decision: DirectorDecision = {
-      shouldProgress: parsedResponse.shouldProgress || false,
-      targetSnapshotId: parsedResponse.targetSnapshotId,
-      estimatedShortActions,
-      increaseShortActionCapBy,
-      reasoning: parsedResponse.reasoning || parsedResponse.recommendation || "No reasoning provided",
-      timestamp: new Date()
-    };
-
-    // 保存决策到 game state
-    gameStateManager.setDirectorDecision(decision);
-
-    // 如果需要推进且有目标场景ID，直接执行场景更新
-    if (decision.shouldProgress && decision.targetSnapshotId) {
-      await this.executeScenarioProgression(decision.targetSnapshotId, gameStateManager, estimatedShortActions);
-    } else if (!decision.shouldProgress && increaseShortActionCapBy) {
-      this.extendCurrentScenarioActionCap(gameStateManager, increaseShortActionCapBy);
-    }
-
-    return decision;
-  }
-
-  /**
-   * 提取当前场景的完整信息
-   */
-  private extractCurrentScenarioInfo(gameState: GameState) {
-    if (!gameState.currentScenario) {
+      console.error("Error loading map data:", error);
       return null;
     }
-
-    // 返回完整的当前场景状态
-    return gameState.currentScenario;
   }
 
   /**
-   * 提取已发现的线索信息
+   * Get all scenarios with their snapshots (including timeRestriction)
    */
-  private extractDiscoveredClues(gameState: GameState) {
-    const discoveredClues = [];
-
-    // 从全局发现列表获取
-    const globalClues = gameState.discoveredClues.map(clue => ({
-      source: "global",
-      clueText: clue
-    }));
-    discoveredClues.push(...globalClues);
-
-    // 从当前场景获取已发现的线索
-    if (gameState.currentScenario && gameState.currentScenario.clues) {
-      const scenarioClues = gameState.currentScenario.clues
-        .filter(clue => clue.discovered)
-        .map(clue => ({
-          source: "scenario",
-          id: clue.id,
-          clueText: clue.clueText,
-          location: clue.location,
-          discoveryMethod: clue.discoveryMethod,
-          reveals: clue.reveals
-        }));
-      discoveredClues.push(...scenarioClues);
-    }
-
-    // 从NPC获取已揭示的线索
-    gameState.npcCharacters.forEach(npc => {
-      const npcData = npc as any;
-      if (npcData.clues) {
-        const revealedNpcClues = npcData.clues
-          .filter((clue: any) => clue.revealed)
-          .map((clue: any) => ({
-            source: "npc",
-            npcName: npc.name,
-            clueText: clue.clueText
-          }));
-        discoveredClues.push(...revealedNpcClues);
-      }
+  private getAllScenariosWithSnapshots(): Array<{
+    scenarioName: string;
+    scenarioId: string;
+    snapshots: Array<{
+      snapshotId: string;
+      snapshotName: string;
+      location: string;
+      timeRestriction: string | null;
+    }>;
+  }> {
+    const database = this.db.getDatabase();
+    const allScenarios = this.scenarioLoader.getAllScenarios();
+    
+    const scenariosWithSnapshots = allScenarios.map(scenario => {
+      // Get all snapshots for this scenario from database
+      const snapshots = database
+        .prepare(`SELECT snapshot_id, snapshot_name, location, time_restriction 
+                  FROM scenario_snapshots 
+                  WHERE scenario_id = ? 
+                  ORDER BY 
+                    CASE 
+                      WHEN time_restriction IS NULL THEN 0 
+                      ELSE 1 
+                    END,
+                    snapshot_id`)
+        .all(scenario.id) as Array<{
+          snapshot_id: string;
+          snapshot_name: string;
+          location: string;
+          time_restriction: string | null;
+        }>;
+      
+      return {
+        scenarioName: scenario.name,
+        scenarioId: scenario.id,
+        snapshots: snapshots.map(snap => ({
+          snapshotId: snap.snapshot_id,
+          snapshotName: snap.snapshot_name || scenario.name,
+          location: snap.location,
+          timeRestriction: snap.time_restriction
+        }))
+      };
     });
-
-    return discoveredClues;
+    
+    return scenariosWithSnapshots;
   }
 
-  /**
-   * 添加用户查询到历史记录
-   */
-  private addToQueryHistory(query: string) {
-    this.userQueryHistory.push(query);
-    
-    // 只保留最近20条查询（比需要的多一些以便筛选）
-    if (this.userQueryHistory.length > 20) {
-      this.userQueryHistory = this.userQueryHistory.slice(-20);
-    }
-  }
+  // Time progression removed - scenarios are now static snapshots without timeline
 
   /**
-   * 获取最近10条用户查询
-   */
-  private getRecentQueries(): string[] {
-    return this.userQueryHistory.slice(-10);
-  }
-
-  /**
-   * 获取未访问的场景（仅返回24小时内且有连接的场景）
-   */
-  private async getUnvisitedScenarios(gameState: GameState): Promise<any[]> {
-    if (!gameState.currentScenario) {
-      return [];
-    }
-
-    // 获取24小时内的连接场景
-    const connectedScenes = await this.getConnectedScenesWithin24Hours(gameState.currentScenario);
-    
-    // 获取已访问的场景ID集合（注意这里是 scenarioId，不是 snapshot id）
-    const visitedScenarioIds = new Set<string>();
-    
-    // 添加当前场景的 scenarioId
-    visitedScenarioIds.add(gameState.currentScenario.scenarioId);
-    
-    // 添加已访问场景的 scenarioId
-    gameState.visitedScenarios.forEach(scenario => {
-      visitedScenarioIds.add(scenario.scenarioId);
-    });
-
-    // 过滤出未访问的连接场景
-    const unvisitedScenarios = connectedScenes
-      .filter(snapshot => !visitedScenarioIds.has(snapshot.scenarioId))
-      .map(snapshot => ({
-        id: snapshot.id,
-        scenarioId: snapshot.scenarioId,
-        name: snapshot.name,
-        location: snapshot.location,
-        timePoint: snapshot.timePoint,
-        description: snapshot.description.length > 200 ? snapshot.description.slice(0, 200) + "..." : snapshot.description,
-        keeperNotes: snapshot.keeperNotes || "",
-        hoursFromNow: snapshot.timeDifferenceHours,
-        connectionType: snapshot.connectionType,
-        connectionDescription: snapshot.connectionDescription,
-        clueCount: snapshot.clues.length,
-        characterCount: snapshot.characters.length
-      }));
-
-    return unvisitedScenarios;
-  }
-
-  /**
-   * 获取当前场景的时间线推进选项
-   */
-  private getTimeProgressionOptions(gameState: GameState): any[] {
-    if (!gameState.currentScenario || !gameState.currentScenario.scenarioId) {
-      return [];
-    }
-
-    // 从数据库获取完整的场景信息
-    const fullScenario = this.scenarioLoader.getScenarioById(gameState.currentScenario.scenarioId);
-    if (!fullScenario) {
-      return [];
-    }
-
-    // 找到当前时间点在timeline中的位置
-    const currentSnapshotId = gameState.currentScenario.id;
-    const currentIndex = fullScenario.timeline.findIndex(snapshot => snapshot.id === currentSnapshotId);
-    
-    if (currentIndex === -1) {
-      return [];
-    }
-
-    // 返回后续的时间点选项（只包含基础信息）
-    const futureSnapshots = fullScenario.timeline.slice(currentIndex + 1);
-    
-    return futureSnapshots.map(snapshot => ({
-      id: snapshot.id,
-      scenarioId: snapshot.scenarioId,
-      name: snapshot.name,
-      location: snapshot.location,
-      timePoint: snapshot.timePoint,
-      description: snapshot.description,
-      keeperNotes: snapshot.keeperNotes
-    }));
-  }
-
-  /**
-   * 执行场景推进 - 根据目标场景ID更新当前场景
+   * Execute scenario progression - update current scenario based on target scene ID
+   * Supports scenarios with multiple snapshots by searching in the database
    */
   private async executeScenarioProgression(
     targetSnapshotId: string, 
@@ -322,30 +117,51 @@ export class DirectorAgent {
     estimatedShortActions: number | null = null
   ): Promise<void> {
     try {
-      // 从场景加载器中查找目标场景快照
+      // First try to find in scenario loader's default snapshots (backward compatibility)
       const allScenarios = this.scenarioLoader.getAllScenarios();
       let targetSnapshot: ScenarioSnapshot | null = null;
       let scenarioName = "";
 
-      // 在所有场景的时间线中搜索目标快照
+      // Search for target snapshot in all scenarios' default snapshots first
       for (const scenario of allScenarios) {
-        const foundSnapshot = scenario.timeline.find(snapshot => snapshot.id === targetSnapshotId);
-        if (foundSnapshot) {
-          targetSnapshot = foundSnapshot;
+        if (scenario.snapshot.id === targetSnapshotId) {
+          targetSnapshot = scenario.snapshot;
           scenarioName = scenario.name;
           break;
         }
       }
 
-      if (targetSnapshot) {
-        // 将短行动估算附加到目标场景快照，方便后续状态追踪
+      // If not found in default snapshots, search in database for all snapshots
+      if (!targetSnapshot) {
+        const database = this.db.getDatabase();
+        const snapshotRow = database
+          .prepare(`SELECT snapshot_id, scenario_id FROM scenario_snapshots WHERE snapshot_id = ?`)
+          .get(targetSnapshotId) as { snapshot_id: string; scenario_id: string } | undefined;
+
+        if (snapshotRow) {
+          // Find the scenario name
+          const scenario = allScenarios.find(s => s.id === snapshotRow.scenario_id);
+          if (scenario) {
+            scenarioName = scenario.name;
+            // Build complete snapshot object from database
+            targetSnapshot = await this.buildSnapshotFromRow(targetSnapshotId);
+            if (!targetSnapshot) {
+              console.warn(`Director Agent: Failed to build snapshot object for ID "${targetSnapshotId}"`);
+              return;
+            }
+          }
+        }
+      }
+
+      if (targetSnapshot && scenarioName) {
+        // Attach short action estimate to target scenario snapshot for subsequent state tracking
         if (estimatedShortActions && estimatedShortActions > 0) {
           targetSnapshot.estimatedShortActions = estimatedShortActions;
         } else {
           targetSnapshot.estimatedShortActions = undefined;
         }
 
-        // 执行场景更新（带 checkpoint 保存）
+        // Execute scene update (with checkpoint save)
         await updateCurrentScenarioWithCheckpoint(
           gameStateManager,
           {
@@ -357,7 +173,7 @@ export class DirectorAgent {
         
         console.log(`Director Agent: Progressed to scenario "${scenarioName}" snapshot "${targetSnapshotId}" (checkpoint created)`);
       } else {
-        console.warn(`Director Agent: Could not find target snapshot "${targetSnapshotId}"`);
+        console.warn(`Director Agent: Could not find target snapshot "${targetSnapshotId}" in any scenario`);
       }
     } catch (error) {
       console.error("Error executing scenario progression:", error);
@@ -365,383 +181,550 @@ export class DirectorAgent {
   }
 
   /**
-   * 处理Director Agent的输入请求
+   * Select snapshot based on current game time
    */
-  async processInput(input: string, gameStateManager: GameStateManager): Promise<DirectorDecision> {
-    try {
-      const result = await this.analyzeProgressionNeeds(gameStateManager, input);
-      return result;
-    } catch (error) {
-      console.error("Error in Director Agent:", error);
-      const errorDecision: DirectorDecision = {
-        shouldProgress: false,
-        targetSnapshotId: undefined,
-        estimatedShortActions: null,
-        reasoning: "Director Agent encountered an error analyzing progression needs",
-        timestamp: new Date()
-      };
-      gameStateManager.setDirectorDecision(errorDecision);
-      return errorDecision;
+  private selectSnapshotByTime(
+    snapshots: Array<{ snapshot_id: string; snapshot_name: string; location: string; description: string; time_restriction: string | null }>,
+    currentDay: number,
+    currentTime: string
+  ): typeof snapshots[0] | null {
+    // First, try to find snapshots without time restriction
+    const noRestriction = snapshots.find(s => !s.time_restriction);
+    if (noRestriction) {
+      return noRestriction;
     }
-  }
-
-  /**
-   * 扩充当前场景的短行动上限（在不推进场景时使用）
-   */
-  private extendCurrentScenarioActionCap(gameStateManager: GameStateManager, increaseBy: number): void {
-    const gameState = gameStateManager.getGameState();
-    if (!gameState.currentScenario) {
-      console.warn("Director Agent: No current scenario to extend short action cap");
-      return;
-    }
-
-    const currentCap = gameState.currentScenario.estimatedShortActions || 3;
-    const newCap = currentCap + increaseBy;
-    gameState.currentScenario.estimatedShortActions = newCap;
-    console.log(`Director Agent: Extended current scenario short action cap from ${currentCap} to ${newCap}`);
-  }
-
-  /**
-   * 处理 Action Agent 发起的场景切换请求
-   * 直接执行场景切换，不需要判断进度条件
-   */
-  async handleActionDrivenSceneChange(
-    gameStateManager: GameStateManager,
-    targetSceneName: string,
-    reason: string
-  ): Promise<void> {
-    console.log(`\n=== Director Agent: Handling action-driven scene change ===`);
-    console.log(`Target: ${targetSceneName}`);
-    console.log(`Reason: ${reason}`);
-  }
-
-  /**
-   * 获取与当前场景连接的、时间在24小时内的场景
-   */
-  async getConnectedScenesWithin24Hours(currentScenario: ScenarioSnapshot): Promise<ConnectedSceneInfo[]> {
-    try {
-      // 获取当前场景所属的 scenario profile
-      const currentScenarioProfile = this.scenarioLoader.getScenarioById(currentScenario.scenarioId);
-      if (!currentScenarioProfile || !currentScenarioProfile.connections) {
-        console.log("No scenario profile or connections found");
-        return [];
-      }
-
-      // 获取所有连接的 scenario IDs
-      const connectedScenarioIds = currentScenarioProfile.connections.map(conn => conn.scenarioId);
+    
+    // Then, try to find snapshots that match current time
+    const matchingTime = snapshots.find(s => {
+      if (!s.time_restriction) return false;
+      const restriction = s.time_restriction.toLowerCase();
       
-      if (connectedScenarioIds.length === 0) {
-        console.log("No connected scenarios");
-        return [];
+      // Check for "dayX (after)" format - available from day X onwards
+      const afterMatch = restriction.match(/day\s*(\d+)\s*\(after\)/i);
+      if (afterMatch) {
+        const requiredDay = parseInt(afterMatch[1]);
+        return currentDay >= requiredDay;
       }
-
-      // 解析当前场景的时间
-      const currentTime = new Date(currentScenario.timePoint.absoluteTime);
-      const currentTimeMs = currentTime.getTime();
-      const twentyFourHoursMs = 24 * 60 * 60 * 1000; // 24 hours in milliseconds
-
-      const connectedScenes: ConnectedSceneInfo[] = [];
-
-      // 遍历每个连接的 scenario
-      for (const connectedScenarioId of connectedScenarioIds) {
-        const scenarioProfile = this.scenarioLoader.getScenarioById(connectedScenarioId);
-        if (!scenarioProfile) continue;
-
-        // 找到对应的 connection 信息
-        const connectionInfo = currentScenarioProfile.connections!.find(
-          conn => conn.scenarioId === connectedScenarioId
-        );
-
-        // 遍历该 scenario 的所有 timeline snapshots
-        for (const snapshot of scenarioProfile.timeline) {
-          try {
-            const snapshotTime = new Date(snapshot.timePoint.absoluteTime);
-            const snapshotTimeMs = snapshotTime.getTime();
-            
-            // 检查时间是否在当前场景之后的24小时内
-            const timeDiffMs = snapshotTimeMs - currentTimeMs;
-            if (timeDiffMs > 0 && timeDiffMs <= twentyFourHoursMs) {
-              const timeDifferenceHours = Math.round(timeDiffMs / (60 * 60 * 1000) * 10) / 10;
-              
-              connectedScenes.push({
-                ...snapshot,
-                connectionType: connectionInfo?.relationshipType || "unknown",
-                connectionDescription: connectionInfo?.description || "",
-                timeDifferenceHours,
-              });
-            }
-          } catch (error) {
-            console.warn(`Failed to parse time for snapshot ${snapshot.id}:`, error);
-            continue;
-          }
-        }
+      
+      // Check for "dayX evening" format - only available on day X evening
+      const eveningMatch = restriction.match(/day\s*(\d+)\s*evening/i);
+      if (eveningMatch) {
+        const requiredDay = parseInt(eveningMatch[1]);
+        return currentDay === requiredDay && (currentTime.includes("evening") || parseInt(currentTime.split(":")[0]) >= 18);
       }
-
-      // 按时间差排序（最近的优先）
-      connectedScenes.sort((a, b) => a.timeDifferenceHours - b.timeDifferenceHours);
-
-      console.log(`Found ${connectedScenes.length} connected scenes within 24 hours`);
-      return connectedScenes;
-    } catch (error) {
-      console.error("Error getting connected scenes:", error);
-      return [];
-    }
-  }
-
-  /**
-   * 使用场景切换模板进行决策
-   */
-  async decideSceneTransition(gameStateManager: GameStateManager): Promise<SceneTransitionDecision> {
-    const runtime = createRuntime();
-    const gameState = gameStateManager.getGameState();
-    const { getSceneTransitionTemplate } = await import("./directorTemplate.js");
-    
-    if (!gameState.currentScenario) {
-      throw new Error("No current scenario to transition from");
-    }
-
-    // 获取连接的场景
-    const connectedScenes = await this.getConnectedScenesWithin24Hours(gameState.currentScenario);
-
-    // 打包当前场景信息
-    const discoveredCount = gameState.currentScenario.clues.filter(c => c.discovered).length;
-    const totalCount = gameState.currentScenario.clues.length;
-    const actionCount = Object.values(gameState.scenarioTimeState.playerTimeConsumption)
-      .reduce((sum, p: any) => sum + (p.totalShortActions || 0), 0);
-
-    const currentScene = {
-      name: gameState.currentScenario.name,
-      location: gameState.currentScenario.location,
-      gameDay: gameState.currentScenario.timePoint.gameDay,
-      timeOfDay: gameState.currentScenario.timePoint.timeOfDay,
-      description: gameState.currentScenario.description,
-      cluesDiscovered: discoveredCount,
-      cluesTotal: totalCount,
-      characterCount: gameState.currentScenario.characters.length,
-      actionCount,
-      keeperNotes: gameState.currentScenario.keeperNotes,
-    };
-
-    // 打包可用场景信息
-    const availableScenes = connectedScenes.map(scene => ({
-      id: scene.id,
-      name: scene.name,
-      location: scene.location,
-      gameDay: scene.timePoint.gameDay,
-      timeOfDay: scene.timePoint.timeOfDay,
-      hoursFromNow: scene.timeDifferenceHours,
-      connectionType: scene.connectionType,
-      connectionDesc: scene.connectionDescription,
-      description: scene.description.length > 200 ? scene.description.slice(0, 200) + "..." : scene.description,
-      clueCount: scene.clues.length,
-      characterCount: scene.characters.length,
-      keeperNotes: scene.keeperNotes,
-    }));
-
-    // 打包活动摘要
-    const recentActions = gameState.temporaryInfo.actionResults.slice(-5);
-    const discoveredClues = gameState.currentScenario.clues.filter(c => c.discovered);
-    
-    const activityParts = [];
-    if (recentActions.length > 0) {
-      activityParts.push(`**Recent**: ${recentActions.map((a, i) => `${i+1}.${a.character}:${a.result}`).join("; ")}`);
-    }
-    if (discoveredClues.length > 0) {
-      activityParts.push(`**Clues**: ${discoveredClues.map(c => c.clueText.slice(0, 40)).join("; ")}`);
-    }
-    const timeConsumption = Object.entries(gameState.scenarioTimeState.playerTimeConsumption)
-      .map(([name, data]: [string, any]) => `${name}:${data.totalShortActions}acts`).join(", ");
-    if (timeConsumption) {
-      activityParts.push(`**Time**: ${timeConsumption}`);
-    }
-
-    const activitySummary = activityParts.length > 0 ? activityParts.join("\n") : "*No activity yet*";
-
-    // 构建模板数据
-    const templateData = {
-      currentScene,
-      availableScenes,
-      activitySummary,
-    };
-
-    const template = getSceneTransitionTemplate();
-    const prompt = composeTemplate(template, templateData);
-
-    console.log("\n=== Director: Scene Transition Analysis ===");
-    console.log(`Current Scene: ${gameState.currentScenario.name}`);
-    console.log(`Connected Scenes Available: ${connectedScenes.length}`);
-
-    const response = await generateText({
-      runtime,
-      context: prompt,
-      modelClass: ModelClass.LARGE,
+      
+      // Check for exact "dayX" match
+      const dayMatch = restriction.match(/day\s*(\d+)/i);
+      if (dayMatch) {
+        const requiredDay = parseInt(dayMatch[1]);
+        return currentDay === requiredDay;
+      }
+      
+      return false;
     });
-
-    console.log("\n=== Director Response ===");
-    console.log(response);
-
-    // 解析 JSON 响应
-    const decision = this.parseSceneTransitionDecision(response);
     
-    // 验证目标场景 ID
-    if (decision.shouldTransition && decision.targetSceneId) {
-      const targetScene = connectedScenes.find(s => s.id === decision.targetSceneId);
-      if (!targetScene) {
-        console.warn(`Target scene ${decision.targetSceneId} not found in connected scenes`);
-        decision.shouldTransition = false;
-        decision.targetSceneId = null;
-      }
+    if (matchingTime) {
+      return matchingTime;
     }
-
-    return decision;
+    
+    // If no match, return the first snapshot (fallback)
+    return snapshots[0] || null;
   }
 
   /**
-   * 解析场景切换决策 JSON
+   * Build complete snapshot object from database row
    */
-  private parseSceneTransitionDecision(response: string): SceneTransitionDecision {
-    try {
-      // 尝试提取 JSON
-      const jsonMatch = response.match(/```json\s*([\s\S]*?)\s*```/) || 
-                       response.match(/\{[\s\S]*\}/);
-      
-      if (!jsonMatch) {
-        throw new Error("No JSON found in response");
-      }
-
-      const jsonStr = jsonMatch[1] || jsonMatch[0];
-      const parsed = JSON.parse(jsonStr);
-
-      return {
-        shouldTransition: parsed.shouldTransition || false,
-        targetSceneId: parsed.targetSceneId || null,
-        reasoning: parsed.reasoning || "No reasoning provided",
-        urgency: parsed.urgency || "low",
-        transitionType: parsed.transitionType || "player-initiated",
-        suggestedTransitionNarrative: parsed.suggestedTransitionNarrative || "",
-      };
-    } catch (error) {
-      console.error("Failed to parse scene transition decision:", error);
-      return {
-        shouldTransition: false,
-        targetSceneId: null,
-        reasoning: "Failed to parse director response",
-        urgency: "low",
-        transitionType: "player-initiated",
-        suggestedTransitionNarrative: "",
-      };
+  private async buildSnapshotFromRow(snapshotId: string): Promise<ScenarioSnapshot | null> {
+    const database = this.db.getDatabase();
+    
+    const snap = database
+      .prepare(`SELECT * FROM scenario_snapshots WHERE snapshot_id = ?`)
+      .get(snapshotId) as any;
+    
+    if (!snap) {
+      return null;
     }
+    
+    // Get characters, clues, conditions for this snapshot
+    const characters = database
+      .prepare(`SELECT * FROM scenario_characters WHERE snapshot_id = ?`)
+      .all(snapshotId) as any[];
+    
+    const clues = database
+      .prepare(`SELECT * FROM scenario_clues WHERE snapshot_id = ?`)
+      .all(snapshotId) as any[];
+    
+    const conditions = database
+      .prepare(`SELECT * FROM scenario_conditions WHERE snapshot_id = ?`)
+      .all(snapshotId) as any[];
+    
+    // Get scenario for permanent changes
+    const scenario = database
+      .prepare(`SELECT permanent_changes, map_image_path FROM scenarios WHERE scenario_id = ?`)
+      .get(snap.scenario_id) as any;
+    
+    const snapshot: ScenarioSnapshot = {
+      id: snap.snapshot_id,
+      name: snap.snapshot_name,
+      location: snap.location,
+      description: snap.description,
+      characters: characters.map((c) => ({
+        id: c.id,
+        name: c.character_name,
+        role: c.character_role,
+        status: c.character_status,
+        location: c.character_location,
+        notes: c.character_notes,
+      })),
+      clues: clues.map((c) => ({
+        id: c.clue_id,
+        clueText: c.clue_text,
+        category: c.category,
+        difficulty: c.difficulty,
+        location: c.clue_location,
+        discoveryMethod: c.discovery_method,
+        reveals: c.reveals ? JSON.parse(c.reveals) : [],
+        discovered: c.discovered === 1,
+        discoveryDetails: c.discovery_details ? JSON.parse(c.discovery_details) : undefined,
+      })),
+      conditions: conditions.map((c) => ({
+        type: c.condition_type,
+        description: c.description,
+        mechanicalEffect: c.mechanical_effect,
+      })),
+      events: snap.events ? JSON.parse(snap.events) : [],
+      exits: snap.exits ? JSON.parse(snap.exits) : [],
+      permanentChanges: scenario?.permanent_changes ? JSON.parse(scenario.permanent_changes) : [],
+      keeperNotes: snap.keeper_notes,
+      timeRestriction: snap.time_restriction || undefined,
+      mapImagePath: scenario?.map_image_path || undefined,
+    };
+    
+    return snapshot;
   }
 
   /**
-   * 决策并自动执行场景切换（如果决策为 true）
+   * Execute scene transition (shared logic)
    */
-  async decideAndTransition(gameStateManager: GameStateManager): Promise<SceneTransitionResult> {
-    // 第一步：做决策
-    const decision = await this.decideSceneTransition(gameStateManager);
-
-    console.log("\n=== Director: Transition Decision ===");
-    console.log(`Should Transition: ${decision.shouldTransition}`);
-    console.log(`Reasoning: ${decision.reasoning}`);
-
-    // 如果不需要切换，保存拒绝信息并返回
-    if (!decision.shouldTransition || !decision.targetSceneId) {
-      // 保存场景转换拒绝信息，让 Keeper 可以生成合理的叙述
-      gameStateManager.setSceneTransitionRejection(decision.reasoning);
-      
-      return {
-        decision,
-        transitioned: false,
-        message: "No transition needed"
-      };
+  private async executeSceneTransition(
+    targetSnapshot: ScenarioSnapshot,
+    scenarioName: string,
+    gameStateManager: GameStateManager
+  ): Promise<void> {
+    const gameState = gameStateManager.getGameState();
+    
+    console.log(`\n🔄 [Executing Scene Transition]:`);
+    console.log(`   To: ${targetSnapshot.name}`);
+    console.log(`   Location: ${targetSnapshot.location}`);
+    
+    // Check if we're returning to a previously visited scenario
+    const wasVisited = gameState.visitedScenarios.some(
+      v => v.id === targetSnapshot.id || v.name === scenarioName
+    );
+    
+    if (wasVisited) {
+      console.log(`   📂 This is a previously visited scene, will restore historical state`);
+    } else {
+      console.log(`   🆕 This is a first-time visit scene`);
     }
-
-    // 第二步：执行切换
+    
     try {
-      const targetScenarioId = decision.targetSceneId;
-      
-      // 从 scenarioLoader 获取完整的 scenario
-      const targetScenario = this.scenarioLoader.getScenarioById(targetScenarioId);
-      if (!targetScenario) {
-        console.error(`Target scenario not found for snapshot ID: ${targetScenarioId}`);
-        return {
-          decision,
-          transitioned: false,
-          message: `Target scenario not found: ${targetScenarioId}`
-        };
-      }
-
-      // 在 timeline 中找到对应的 snapshot
-      const targetSnapshot = targetScenario.timeline.find(snap => snap.id === targetScenarioId);
-      if (!targetSnapshot) {
-        console.error(`Snapshot ${targetScenarioId} not found in scenario timeline`);
-        return {
-          decision,
-          transitioned: false,
-          message: `Snapshot not found: ${targetScenarioId}`
-        };
-      }
-
-      // 更新场景（带 checkpoint 保存）
       await updateCurrentScenarioWithCheckpoint(
         gameStateManager,
         {
           snapshot: targetSnapshot,
-          scenarioName: targetScenario.name
+          scenarioName: scenarioName
         },
         this.db
       );
-
-      console.log(`\n✓ Scene Transition Executed (checkpoint saved)`);
-      console.log(`  From: ${gameStateManager.getGameState().visitedScenarios[0]?.name || "Unknown"}`);
-      console.log(`  To: ${targetSnapshot.name}`);
-      console.log(`  Narrative: ${decision.suggestedTransitionNarrative}`);
-
-      return {
-        decision,
-        transitioned: true,
-        message: `Transitioned to: ${targetSnapshot.name}`,
-        newScenario: targetSnapshot
-      };
-
+      
+      const updatedState = gameStateManager.getGameState();
+      
+      console.log(`   ✓ Scene transition completed successfully`);
+      console.log(`\n📍 [Post-Transition State]:`);
+      console.log(`   Current Scene: ${updatedState.currentScenario?.name || 'None'}`);
+      console.log(`   Scene ID: ${updatedState.currentScenario?.id || 'None'}`);
+      console.log(`   Location: ${updatedState.currentScenario?.location || 'None'}`);
+      console.log(`   Visited Scenarios Count: ${updatedState.visitedScenarios.length}`);
+      
+      console.log(`\n✅ [Director Agent] Scene transition completed`);
+      console.log(`🎬 [Director Agent] ========================================\n`);
+      
     } catch (error) {
-      console.error("Failed to execute scene transition:", error);
-      return {
-        decision,
-        transitioned: false,
-        message: `Transition failed: ${error instanceof Error ? error.message : "Unknown error"}`
-      };
+      console.error(`   ❌ Scene transition failed:`, error);
+      throw error;
     }
   }
-}
 
-/**
- * 场景切换结果
- */
-export interface SceneTransitionResult {
-  decision: SceneTransitionDecision;
-  transitioned: boolean;
-  message: string;
-  newScenario?: ScenarioSnapshot;
-}
+  /**
+   * Handle scene change request initiated by Action Agent
+   * Use map data and LLM to validate and select target scene
+   */
+  async handleActionDrivenSceneChange(
+    gameStateManager: GameStateManager,
+    targetSceneName: string,
+    reason: string,
+    currentCharacterInput?: string
+  ): Promise<void> {
+    console.log(`\n🎬 [Director Agent] ========================================`);
+    console.log(`🎬 [Director Agent] Starting to process Action-driven scene transition`);
+    console.log(`🎬 [Director Agent] ========================================`);
 
-/**
- * 连接场景信息（扩展了 ScenarioSnapshot）
- */
-export interface ConnectedSceneInfo extends ScenarioSnapshot {
-  connectionType: string;
-  connectionDescription: string;
-  timeDifferenceHours: number;
-}
+    const gameState = gameStateManager.getGameState();
+    const currentScenario = gameState.currentScenario;
 
-/**
- * 场景切换决策
- */
-export interface SceneTransitionDecision {
-  shouldTransition: boolean;
-  targetSceneId: string | null;
-  reasoning: string;
-  urgency: "low" | "medium" | "high";
-  transitionType: "immediate" | "gradual" | "player-initiated";
-  suggestedTransitionNarrative: string;
+    // Log current state
+    console.log(`\n📍 [Current Scene State]:`);
+    if (currentScenario) {
+      console.log(`   Scene Name: ${currentScenario.name}`);
+      console.log(`   Scene ID: ${currentScenario.id}`);
+      console.log(`   Location: ${currentScenario.location}`);
+      console.log(`   Description: ${currentScenario.description ? currentScenario.description.substring(0, 100) + '...' : 'None'}`);
+    } else {
+      console.log(`   ⚠️  No current scene`);
+    }
+
+    // Log target scene request
+    console.log(`\n🎯 [Scene Transition Request]:`);
+    console.log(`   Target Scene Name: ${targetSceneName}`);
+    console.log(`   Transition Reason: ${reason}`);
+
+    // Load map data
+    const mapData = this.loadMapData();
+
+    // Get conversation history to extract previous narrative and current character input
+    const conversationHistory = (gameState.temporaryInfo.contextualData?.conversationHistory as Array<{
+      turnNumber: number;
+      characterInput: string;
+      keeperNarrative: string | null;
+    }>) || [];
+
+    // Get previous round narrative (last completed turn with narrative)
+    let previousNarrative: string | null = null;
+    if (conversationHistory.length > 0) {
+      const lastTurnWithNarrative = [...conversationHistory]
+        .reverse()
+        .find(turn => turn.keeperNarrative);
+      if (lastTurnWithNarrative && lastTurnWithNarrative.keeperNarrative) {
+        previousNarrative = lastTurnWithNarrative.keeperNarrative;
+      }
+    }
+
+    // Get current round character input
+    // Priority: 1) passed parameter, 2) latest turn without narrative, 3) fallback to any latest turn with input
+    let characterInput: string | null = currentCharacterInput || null;
+
+    if (!characterInput && conversationHistory.length > 0) {
+      // Get the latest turn that has characterInput but no narrative yet
+      const latestTurn = conversationHistory[conversationHistory.length - 1];
+      if (latestTurn && latestTurn.characterInput && !latestTurn.keeperNarrative) {
+        characterInput = latestTurn.characterInput;
+      } else {
+        // Fallback: get the latest characterInput from any turn
+        const latestWithInput = [...conversationHistory]
+          .reverse()
+          .find(turn => turn.characterInput);
+        if (latestWithInput && latestWithInput.characterInput) {
+          characterInput = latestWithInput.characterInput;
+        }
+      }
+    }
+
+    // Get all scenarios with their snapshots (including timeRestriction)
+    const allScenariosWithSnapshots = this.getAllScenariosWithSnapshots();
+
+    // Get current game time
+    const currentGameTime = {
+      gameDay: gameState.gameDay,
+      timeOfDay: gameState.timeOfDay
+    };
+
+    // Use LLM to validate and select target snapshot based on map
+    console.log(`\n🤖 [Using LLM to Select Target Snapshot Based on Map]:`);
+    const runtime = createRuntime();
+    const template = getActionDrivenSceneChangeTemplate();
+
+    const templateContext = {
+      currentScene: currentScenario ? {
+        name: currentScenario.name,
+        location: currentScenario.location
+      } : null,
+      mapData,
+      previousNarrative,
+      characterInput,
+      scenariosWithSnapshots: allScenariosWithSnapshots,
+      currentGameTime
+    };
+
+    const prompt = composeTemplate(
+      template,
+      { gameState },
+      templateContext,
+      "handlebars"
+    );
+
+    try {
+      const response = await generateText({
+        runtime,
+        context: prompt,
+        modelClass: ModelClass.SMALL,
+      });
+
+      // Parse LLM response
+      let parsedResponse: {
+        targetSnapshotId?: string;
+        reasoning?: string;
+      };
+      try {
+        // Try to extract JSON from markdown code blocks first
+        const jsonMatch = response.match(/\{[\s\S]*\}/);
+        if (jsonMatch) {
+          parsedResponse = JSON.parse(jsonMatch[0]);
+        } else {
+          parsedResponse = JSON.parse(response);
+        }
+      } catch (error) {
+        console.error("Failed to parse LLM response as JSON:", error);
+        console.error("Raw response:", response);
+        return;
+      }
+
+      // Validate and execute scene change
+      if (parsedResponse?.targetSnapshotId) {
+        console.log(`   ✓ LLM returned snapshot ID: ${parsedResponse.targetSnapshotId}`);
+        if (parsedResponse.reasoning) {
+          console.log(`   ✓ LLM reasoning: ${parsedResponse.reasoning}`);
+        }
+
+        // Execute scene progression using snapshot ID
+        await this.executeScenarioProgression(
+          parsedResponse.targetSnapshotId,
+          gameStateManager,
+          null
+        );
+      } else {
+        console.error(`   ❌ No targetSnapshotId in LLM response`);
+      }
+    } catch (error) {
+      console.error(`   ❌ LLM call failed:`, error);
+    }
+  }
+
+  /**
+   * Check if story progression should trigger and generate simulated player intent query
+   */
+  async checkStoryProgression(
+    gameStateManager: GameStateManager
+  ): Promise<{ shouldTrigger: boolean; simulatedQuery: string | null }> {
+    const gameState = gameStateManager.getGameState();
+
+    // Get metrics
+    const turnsInScene = gameStateManager.getTurnsInCurrentScene();
+    const threshold = gameStateManager.getProgressionThreshold();
+    const minutesSinceInput = gameStateManager.getMinutesSinceLastInput();
+
+    console.log(`\n🎬 [Director Agent] Story Progression Check`);
+    console.log(`   Turns in scene: ${turnsInScene} / ${threshold}`);
+    console.log(`   Minutes since input: ${minutesSinceInput} / 3`);
+    console.log(`   Tension: ${gameState.tension}/10`);
+
+    // Check if either threshold is reached
+    const shouldTrigger = gameStateManager.shouldTriggerProgression();
+
+    if (!shouldTrigger) {
+      console.log(`   ✓ No trigger conditions met`);
+      return { shouldTrigger: false, simulatedQuery: null };
+    }
+
+    // Log which condition triggered
+    if (turnsInScene >= threshold) {
+      console.log(`   ⚠️ Turn threshold reached! Analyzing player intent...`);
+    } else if (minutesSinceInput >= 3) {
+      console.log(`   ⚠️ Time threshold reached (3 min idle)! Analyzing player intent...`);
+    }
+
+    // Get recent conversation history
+    const conversationHistory = (gameState.temporaryInfo.contextualData?.conversationHistory as Array<{
+      turnNumber: number;
+      characterInput: string;
+      keeperNarrative: string | null;
+      actionAnalysis?: any;
+    }>) || [];
+
+    // Get last 3 turns
+    const recentActions = conversationHistory.slice(-3).map(turn => ({
+      turnNumber: turn.turnNumber,
+      characterInput: turn.characterInput,
+      actionAnalysis: turn.actionAnalysis ? JSON.stringify(turn.actionAnalysis, null, 2) : null
+    }));
+
+    // Get current scenario info
+    const currentScenario = gameState.currentScenario;
+    const scenarioInfo = currentScenario ? {
+      name: currentScenario.name,
+      location: currentScenario.location,
+      description: currentScenario.description
+    } : null;
+
+    // Prepare template context
+    const runtime = createRuntime();
+    const template = getPlayerIntentAnalysisTemplate();
+
+    const templateContext = {
+      playerName: gameState.playerCharacter.name,
+      scenarioInfoJson: scenarioInfo ? JSON.stringify(scenarioInfo, null, 2) : "No current scene",
+      recentActions,
+      tension: gameState.tension
+    };
+
+    const prompt = composeTemplate(
+      template,
+      { gameState },
+      templateContext,
+      "handlebars"
+    );
+
+    try {
+      const response = await generateText({
+        runtime,
+        context: prompt,
+        modelClass: ModelClass.SMALL,
+      });
+
+      // Parse response
+      let parsed;
+      try {
+        const jsonMatch = response.match(/\{[\s\S]*\}/);
+        if (jsonMatch) {
+          parsed = JSON.parse(jsonMatch[0]);
+        } else {
+          parsed = JSON.parse(response);
+        }
+      } catch (error) {
+        console.error("Failed to parse player intent analysis:", error);
+        return { shouldTrigger: false, simulatedQuery: null };
+      }
+
+      if (parsed.query) {
+        console.log(`   ✓ Generated simulated query: "${parsed.query}"`);
+        return { shouldTrigger: true, simulatedQuery: parsed.query };
+      } else {
+        console.warn(`   ⚠️ No query in response`);
+        return { shouldTrigger: false, simulatedQuery: null };
+      }
+
+    } catch (error) {
+      console.error("Error generating player intent analysis:", error);
+      return { shouldTrigger: false, simulatedQuery: null };
+    }
+  }
+
+  /**
+   * 生成叙事方向指导
+   * 基于模块约束、keeper指导、模块笔记、角色输入和行动结果，生成给 Keeper Agent 的叙事方向指导
+   */
+  async generateNarrativeDirection(
+    gameStateManager: GameStateManager,
+    characterInput: string,
+    actionResults: ActionResult[]
+  ): Promise<string> {
+    const runtime = createRuntime();
+    const gameState = gameStateManager.getGameState();
+    
+    // 获取模块信息
+    const moduleLoader = new ModuleLoader(this.db);
+    const modules = moduleLoader.getAllModules();
+    const module = modules.length > 0 ? modules[0] : null;
+    
+    // 获取模板
+    const template = getNarrativeDirectionTemplate();
+    
+    // 准备模板上下文
+    const playerCharacter = gameState.playerCharacter;
+    const playerStatus = playerCharacter ? {
+      hp: playerCharacter.status.hp,
+      maxHp: playerCharacter.status.maxHp,
+      sanity: playerCharacter.status.sanity,
+      maxSanity: playerCharacter.status.maxSanity,
+      isDead: playerCharacter.status.hp <= 0,
+      isInsane: playerCharacter.status.sanity <= 0
+    } : null;
+
+    const templateContext = {
+      // Current game state
+      currentScene: gameState.currentScenario ? {
+        name: gameState.currentScenario.name,
+        location: gameState.currentScenario.location,
+        description: gameState.currentScenario.description
+      } : null,
+      currentGameTime: {
+        gameDay: gameState.gameDay,
+        timeOfDay: gameState.timeOfDay
+      },
+      playerStatus,
+      // Module constraints
+      moduleLimitations: gameState.moduleLimitations || null,
+      keeperGuidance: gameState.keeperGuidance || null,
+      moduleNotes: module?.moduleNotes || null,
+      // Current turn context
+      characterInput,
+      actionResults: actionResults || []
+    };
+    
+    // 使用模板和LLM生成叙事方向指导
+    const prompt = composeTemplate(
+      template,
+      { gameState },
+      templateContext,
+      "handlebars"
+    );
+
+    try {
+      const response = await generateText({
+        runtime,
+        context: prompt,
+        modelClass: ModelClass.SMALL,
+      });
+      
+      // 解析LLM的JSON响应
+      let parsedResponse;
+      try {
+        // 尝试从响应中提取JSON
+        const jsonMatch = response.match(/\{[\s\S]*\}/);
+        if (jsonMatch) {
+          parsedResponse = JSON.parse(jsonMatch[0]);
+        } else {
+          parsedResponse = JSON.parse(response);
+        }
+      } catch (error) {
+        console.error("Failed to parse narrative direction response as JSON:", error);
+        console.error("Raw response:", response);
+        // 如果解析失败，返回原始响应（去掉可能的代码块标记）
+        return response.replace(/```json\n?/g, "").replace(/```\n?/g, "").trim();
+      }
+
+      // 检查游戏是否结束
+      if (parsedResponse.gameEnded === true) {
+        console.log("\n🎮 [Director Agent] Game ending detected!");
+        console.log(`   Ending Type: ${parsedResponse.endingType}`);
+        console.log(`   Reason: ${parsedResponse.endingReason}`);
+
+        // 设置游戏结束信息到 GameState
+        const endingInfo: GameEndingInfo = {
+          isEnded: true,
+          endingType: parsedResponse.endingType || "other",
+          reason: parsedResponse.endingReason || "The game has ended.",
+          timestamp: new Date()
+        };
+
+        gameStateManager.setGameEnding(endingInfo);
+        console.log("   ✓ Game ending information saved to GameState");
+      }
+
+      return parsedResponse.narrativeDirection || "Generate narrative based on current context while respecting module constraints.";
+    } catch (error) {
+      console.error("Failed to generate narrative direction:", error);
+      return "Generate narrative based on current context while respecting module constraints.";
+    }
+  }
 }

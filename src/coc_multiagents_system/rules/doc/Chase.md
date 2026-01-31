@@ -32,5 +32,5 @@
 ## Relevant skills
 - Core: Dodge (avoid obstacles), Jump, Climb, Swim.
 - Movement/control: Stealth to drop pursuit at the end; Track to follow; Drive Auto/Pilot for vehicle chases.
-- Situational: Listen (direction when visuals are lost), Spot Hidden (find shortcuts/exits), Throw (create obstacles), Mechanical Repair (sabotage the environment).
+- Situational: Listen (direction when visuals are lost), Perception (find shortcuts/exits), Throw (create obstacles), Mechanical Repair (sabotage the environment).
 - Attributes: DEX for agility, CON for endurance, STR for forcing through, POW for will under panic.
