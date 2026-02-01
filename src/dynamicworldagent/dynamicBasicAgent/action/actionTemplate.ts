@@ -11,7 +11,8 @@ export function buildActionSystemPrompt(
   preRolledDice: Record<string, number[]>,
   isNPC: boolean,
   existingSceneChangeRequest?: SceneChangeRequest | null,
-  sceneNPCs?: any[] | null
+  sceneNPCs?: any[] | null,
+  selectedSkill?: string | null
 ): string {
   // Check if there's a valid scene change request from orchestrator
   const hasValidSceneChangeRequest = existingSceneChangeRequest?.shouldChange === true && existingSceneChangeRequest?.targetSceneName;
@@ -39,11 +40,17 @@ User input: ${originalUserInput}
 ` : ''}## Character Action
 Character action: ${actionDescription}
 
-PRE-ROLLED DICE AVAILABLE:
+${!isNPC && selectedSkill ? `## Player-Selected Skill
+Player selected skill: ${selectedSkill}
+- If a skill check is required for this action, you MUST use this skill.
+- If no check is needed, keep diceUsed empty.
+
+` : ''}PRE-ROLLED DICE AVAILABLE:
 ${JSON.stringify(preRolledDice, null, 2)}
 
 USAGE:
-- First, analyze the user input and determine if it is just a normal behavior or the use of a specific skill.
+- If a player-selected skill is provided, treat the action as using that skill.
+- Otherwise, analyze the user input and determine if it is just a normal behavior or the use of a specific skill.
 - If it is a normal behavior, Do not use any dice.
 - If it is the use of a specific skill, (e.g., "I use Perception", "I try to persuade him", "I listen at the door"),MUST choose and use one or more of the following dice:
 - Each dice type has multiple pre-rolled results (1d100 has 10, others have 5). Select ONE result from the array for each dice you need.

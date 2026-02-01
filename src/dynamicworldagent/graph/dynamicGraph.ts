@@ -39,6 +39,7 @@ export interface DynamicGraphState {
   turnId?: string;  // Current turn being processed
   isSimulatedQuery?: boolean;  // Track if input is simulated by Director Agent
   simulatedQueryCount?: number;  // Safety counter for continuous loop (max 5)
+  selectedSkill?: string | null;  // Optional player-selected skill for this turn
   stream?: {
     onDiceRolls?: (diceRolls: string[]) => void;
     onSceneImage?: (payload: {
@@ -109,6 +110,10 @@ export const buildDynamicGraph = (
       },
       simulatedQueryCount: {
         value: (left: number | undefined, right?: number | undefined) =>
+          right !== undefined ? right : left,
+      },
+      selectedSkill: {
+        value: (left: string | null | undefined, right?: string | null | undefined) =>
           right !== undefined ? right : left,
       },
       stream: {
@@ -297,6 +302,7 @@ export const buildDynamicGraph = (
     const dgsm = new DynamicGameStateManager(state.dynamicGameState);
     const runtime = {}; // ActionAgent expects runtime but only passes through generateText; keep empty placeholder
     const userInput = latestHumanMessage(state.messages);
+    const selectedSkill = state.selectedSkill ?? null;
 
     // Log input context
     const actionAnalysis = dgsm.getState().temporaryInfo.currentActionAnalysis;
@@ -308,9 +314,12 @@ export const buildDynamicGraph = (
         `⚡ [Dynamic Action Agent] 角色: ${actionAnalysis.character}, 目标: ${actionAnalysis.target.name || "N/A"}`
       );
     }
+    if (selectedSkill) {
+      console.log(`⚡ [Dynamic Action Agent] 玩家选择技能: ${selectedSkill}`);
+    }
 
     try {
-      await actionAgent.processAction(runtime, dgsm, userInput);
+      await actionAgent.processAction(runtime, dgsm, userInput, selectedSkill);
     } catch (error) {
       console.error(`\n❌ [Dynamic Action Agent] 执行过程中抛出异常:`, error);
       const currentState = dgsm.getState();

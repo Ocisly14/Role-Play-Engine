@@ -33,11 +33,12 @@ export class ActionAgent {
       isNPC: boolean;
       npcResponse?: NPCResponseAnalysis;
       targetCharacter?: DynamicCharacterProfile | null;
+      selectedSkill?: string | null;
     },
     gameStateManager: DynamicGameStateManager,
     originalUserInput?: string | null
   ): Promise<DynamicGameState> {
-    const { isNPC, npcResponse, targetCharacter } = options;
+    const { isNPC, npcResponse, targetCharacter, selectedSkill } = options;
 
     // Pre-roll dice
     const preRolledDice = this.preRollDice();
@@ -55,7 +56,8 @@ export class ActionAgent {
       preRolledDice,
       isNPC,
       existingSceneChangeRequest,
-      sceneNPCs
+      sceneNPCs,
+      !isNPC ? selectedSkill ?? null : null
     );
 
     const actionTypeTemplate = getActionTypeTemplate(dynamicState, isNPC, npcResponse);
@@ -108,10 +110,12 @@ export class ActionAgent {
     return this.buildFinalResult(dynamicState, character, parsed, diceUsed, { isNPC, npcResponse }, gameStateManager);
   }
 
-  /**
-   * Process character action and resolve with dice rolls and state updates
-   */
-  async processAction(runtime: any, gameStateManager: DynamicGameStateManager, userMessage: string): Promise<void> {
+  async processAction(
+    runtime: any,
+    gameStateManager: DynamicGameStateManager,
+    userMessage: string,
+    selectedSkill?: string | null
+  ): Promise<void> {
     const dynamicState = gameStateManager.getState();
     const actionAnalysis = dynamicState.temporaryInfo.currentActionAnalysis;
     const targetCharacter = this.findTargetCharacter(dynamicState, actionAnalysis);
@@ -123,7 +127,8 @@ export class ActionAgent {
       userMessage,
       {
         isNPC: false,
-        targetCharacter
+        targetCharacter,
+        selectedSkill: selectedSkill ?? null
       },
       gameStateManager,
       userMessage // Pass original user input

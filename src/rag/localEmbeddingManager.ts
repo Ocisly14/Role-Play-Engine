@@ -18,6 +18,10 @@ export class LocalEmbeddingManager {
     return LocalEmbeddingManager.instance;
   }
 
+  async warmup(): Promise<void> {
+    await this.ensureModel();
+  }
+
   private async ensureModel(): Promise<void> {
     if (this.model || this.initializing) {
       while (this.initializing && !this.model) {
@@ -31,6 +35,15 @@ export class LocalEmbeddingManager {
       const cacheDir = path.join(process.cwd(), "cache");
       if (!fs.existsSync(cacheDir)) {
         fs.mkdirSync(cacheDir, { recursive: true });
+      }
+
+      const modelDir = path.join(cacheDir, EmbeddingModel.BGESmallENV15);
+      const modelFile = path.join(modelDir, "model_optimized.onnx");
+      if (fs.existsSync(modelDir) && !fs.existsSync(modelFile)) {
+        console.warn(
+          `[RAG] Local model cache incomplete (missing ${path.basename(modelFile)}). Re-downloading...`
+        );
+        fs.rmSync(modelDir, { recursive: true, force: true });
       }
 
       this.model = await FlagEmbedding.init({
@@ -54,6 +67,9 @@ export class LocalEmbeddingManager {
     const embedding = await this.model.queryEmbed(text);
     if (Array.isArray(embedding)) {
       return Array.from(embedding as number[]);
+    }
+    if (ArrayBuffer.isView(embedding)) {
+      return Array.from(embedding as ArrayLike<number>);
     }
 
     return [];

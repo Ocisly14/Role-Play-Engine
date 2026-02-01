@@ -59,7 +59,11 @@ export async function createTurn(req: Request, res: Response): Promise<void> {
       await graphManager.initialize(db, process.env.SKIP_RAG !== 'false');
     }
 
-    const { message } = req.body;
+    const { message, selectedSkill: rawSelectedSkill } = req.body ?? {};
+    const selectedSkill = typeof rawSelectedSkill === "string"
+      ? rawSelectedSkill.trim()
+      : null;
+    const normalizedSkill = selectedSkill && selectedSkill.length > 0 ? selectedSkill : null;
 
     if (!message || typeof message !== "string") {
       res.status(400).json({ error: "Message is required" });
@@ -100,6 +104,9 @@ export async function createTurn(req: Request, res: Response): Promise<void> {
     }
 
     console.log(`[${new Date().toISOString()}] Turn created: ${turnId} for message: ${message} (${useDynamic ? 'DynamicWorld' : 'Standard'})`);
+    if (normalizedSkill) {
+      console.log(`[${new Date().toISOString()}] Selected skill: ${normalizedSkill}`);
+    }
 
     // Start async processing (don't wait for it)
     // Pass the appropriate state type to processGameTurnAsync
@@ -111,7 +118,7 @@ export async function createTurn(req: Request, res: Response): Promise<void> {
         usageTotals: { input_tokens: 0, output_tokens: 0, total_tokens: 0 },
       },
       () => {
-      processGameTurnAsync(turnId, message, stateToProcess, userId)
+      processGameTurnAsync(turnId, message, stateToProcess, userId, normalizedSkill)
         .catch((error) => {
           console.error(`Error processing turn ${turnId}:`, error);
           // Mark error using appropriate turn manager
@@ -271,7 +278,8 @@ async function processGameTurnAsync(
   turnId: string,
   userInput: string,
   gameState: GameState | DynamicGameState,
-  userId: string
+  userId: string,
+  selectedSkill?: string | null
 ) {
   try {
     console.log(`[${new Date().toISOString()}] Processing turn ${turnId}...`);
@@ -314,6 +322,7 @@ async function processGameTurnAsync(
         dynamicGameState: dynamicGameState,
         turnId: turnId,
         stream: streamHandlers ?? undefined,
+        selectedSkill: selectedSkill ?? null,
       };
     } else if (regularGameState) {
       // For regular modules, use GameState (legacy support)
