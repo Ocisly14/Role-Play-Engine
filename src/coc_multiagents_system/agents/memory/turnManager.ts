@@ -293,9 +293,22 @@ export class TurnManager {
     turns.reverse().forEach((turn) => {
       // Extract dice rolls from actionResults if available
       const diceRolls: string[] = [];
+      const playerNameNormalized =
+        typeof turn.characterName === 'string' && turn.characterName.trim().length > 0
+          ? turn.characterName.trim().toLowerCase()
+          : null;
       if (turn.actionResults && Array.isArray(turn.actionResults)) {
         turn.actionResults.forEach((result: any) => {
           if (result.diceRolls && Array.isArray(result.diceRolls) && result.diceRolls.length > 0) {
+            const resultNameNormalized =
+              typeof result.character === 'string' && result.character.trim().length > 0
+                ? result.character.trim().toLowerCase()
+                : null;
+            if (playerNameNormalized) {
+              if (!resultNameNormalized || resultNameNormalized !== playerNameNormalized) {
+                return;
+              }
+            }
             diceRolls.push(...result.diceRolls);
           }
         });
@@ -352,5 +365,4 @@ export class TurnManager {
     return conversation;
   }
 }
-
 

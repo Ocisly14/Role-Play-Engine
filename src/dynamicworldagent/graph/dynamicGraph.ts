@@ -621,7 +621,13 @@ export const buildDynamicGraph = (
     const userInput = latestHumanMessage(state.messages);
     const stream = state.stream;
     const actionResults = (dgsm.getState().temporaryInfo.actionResults || []) as ActionResult[];
-    const diceRollInfos = buildDiceRollInfos(actionResults);
+    const playerName = dgsm.getState().playerCharacter?.name || null;
+    const playerNameNormalized = playerName ? playerName.trim().toLowerCase() : null;
+    const diceRollInfos = buildDiceRollInfos(actionResults).filter((roll) => {
+      if (!playerNameNormalized) return true;
+      const rollNameNormalized = roll.character ? roll.character.trim().toLowerCase() : null;
+      return !!rollNameNormalized && rollNameNormalized === playerNameNormalized;
+    });
     const shouldStream = Boolean(stream?.onNarrativeDelta);
 
     let updatedGameState = state.dynamicGameState;

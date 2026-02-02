@@ -11,9 +11,25 @@ import { authFetch } from '../utils/authFetch';
 import ReactMarkdown from 'react-markdown';
 
 /** Build DiceRollInfo[] from action results (for turn history display) */
-function buildDiceRollInfos(actionResults: Array<{ character: string; diceRolls?: string[] }>): DiceRollInfo[] {
+function normalizeName(name?: string | null): string | null {
+  if (!name) return null;
+  const trimmed = name.trim();
+  return trimmed.length > 0 ? trimmed.toLowerCase() : null;
+}
+
+function buildDiceRollInfos(
+  actionResults: Array<{ character: string; diceRolls?: string[] }>,
+  playerName?: string
+): DiceRollInfo[] {
   const infos: DiceRollInfo[] = [];
+  const playerNameNormalized = normalizeName(playerName);
   for (const result of actionResults || []) {
+    if (playerNameNormalized) {
+      const resultNameNormalized = normalizeName(result.character);
+      if (!resultNameNormalized || resultNameNormalized !== playerNameNormalized) {
+        continue;
+      }
+    }
     for (const roll of result.diceRolls || []) {
       const info: DiceRollInfo = { character: result.character, roll };
       const parenMatches = [...roll.matchAll(/\(([^)]+)\)/g)];
@@ -31,6 +47,21 @@ function buildDiceRollInfos(actionResults: Array<{ character: string; diceRolls?
     }
   }
   return infos;
+}
+
+function filterDiceRollsForPlayer(
+  diceRolls: DiceRollInfo[] | string[] | undefined,
+  playerName?: string
+): DiceRollInfo[] | string[] | undefined {
+  if (!diceRolls || diceRolls.length === 0) return diceRolls;
+  const playerNameNormalized = normalizeName(playerName);
+  if (!playerNameNormalized) return diceRolls;
+  const first = diceRolls[0] as DiceRollInfo | string;
+  if (typeof first === 'string') return diceRolls;
+  return (diceRolls as DiceRollInfo[]).filter((roll) => {
+    const rollNameNormalized = normalizeName(roll.character);
+    return !!rollNameNormalized && rollNameNormalized === playerNameNormalized;
+  });
 }
 
 interface Message {
@@ -308,7 +339,10 @@ export function GameChat({ sessionId, apiBaseUrl = '/api', characterName = 'Inve
             if (message.type === 'connected') {
               console.log(`[WebSocket] Connection confirmed for session ${message.sessionId}`);
             } else if (message.type === 'keeper_dice_rolls') {
-              const diceRolls = message.diceRolls as DiceRollInfo[] | string[] | undefined;
+              const diceRolls = filterDiceRollsForPlayer(
+                message.diceRolls as DiceRollInfo[] | string[] | undefined,
+                characterName
+              );
               const turnId = message.turnId as string | undefined;
               if (!diceRolls || diceRolls.length === 0) return;
 
@@ -757,7 +791,10 @@ export function GameChat({ sessionId, apiBaseUrl = '/api', characterName = 'Inve
       }
 
       // Build structured dice roll infos from action results
-      const allDiceRolls: DiceRollInfo[] = buildDiceRollInfos(turn.actionResults || []);
+      const allDiceRolls: DiceRollInfo[] = buildDiceRollInfos(
+        turn.actionResults || [],
+        characterName
+      );
       console.log(`[GameChat] Has keeperNarrative: ${!!turn.keeperNarrative}`);
 
       const existingStreamingMessage = turn.turnId
