@@ -13,9 +13,10 @@ import { DynamicGameStateManager } from "../../../src/dynamicworldagent/state/in
 import { WebSocketManager } from "../websocket/WebSocketManager.js";
 import { notifyClients } from "../websocket/notifier.js";
 import { runWithTokenContext, getCurrentUsageTotals } from "../../../src/models/index.js";
+import type { DiceRollInfo } from "../../../src/coc_multiagents_system/state/index.js";
 
 type NarrativeStreamHandlers = {
-  onDiceRolls?: (diceRolls: string[]) => void;
+  onDiceRolls?: (diceRolls: DiceRollInfo[]) => void;
   onSceneImage?: (payload: {
     imagePath: string;
     mimeType: string;
@@ -203,7 +204,7 @@ function buildNarrativeStreamHandlers(params: {
   };
 
   return {
-    onDiceRolls: (diceRolls: string[]) => {
+    onDiceRolls: (diceRolls: DiceRollInfo[]) => {
       if (!Array.isArray(diceRolls) || diceRolls.length === 0) return;
       send({
         type: "keeper_dice_rolls",

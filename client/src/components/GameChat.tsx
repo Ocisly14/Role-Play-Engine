@@ -6,9 +6,32 @@
 
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { useTurnPolling } from '../hooks/useTurnPolling';
-import { DiceAnimation } from './DiceAnimation';
+import { DiceAnimation, type DiceRollInfo } from './DiceAnimation';
 import { authFetch } from '../utils/authFetch';
 import ReactMarkdown from 'react-markdown';
+
+/** Build DiceRollInfo[] from action results (for turn history display) */
+function buildDiceRollInfos(actionResults: Array<{ character: string; diceRolls?: string[] }>): DiceRollInfo[] {
+  const infos: DiceRollInfo[] = [];
+  for (const result of actionResults || []) {
+    for (const roll of result.diceRolls || []) {
+      const info: DiceRollInfo = { character: result.character, roll };
+      const parenMatches = [...roll.matchAll(/\(([^)]+)\)/g)];
+      const content = parenMatches.length > 0 ? parenMatches[parenMatches.length - 1][1] : null;
+      if (content) {
+        const successMatch = content.match(/\s*=\s*(success|failure|critical|fumble)\s*$/i);
+        if (successMatch) info.success = successMatch[1].toLowerCase() as DiceRollInfo['success'];
+        const penaltyMatch = content.match(/(?:penalty\s+die|bonus\s+die|-\s*\d+\s*%?|\(\s*-\s*\d+\s*\))/i);
+        if (penaltyMatch) info.penalty = penaltyMatch[0].trim();
+        const beforeEquals = content.replace(/\s*=\s*(success|failure|critical|fumble)\s*$/i, '').trim();
+        const skillPart = beforeEquals.replace(/(?:penalty\s+die|bonus\s+die|-\s*\d+\s*%?|\(\s*-\s*\d+\s*\)).*/gi, '').trim();
+        if (skillPart && (/\d+%\s*$/.test(skillPart) || skillPart.length < 40)) info.skill = skillPart;
+      }
+      infos.push(info);
+    }
+  }
+  return infos;
+}
 
 interface Message {
   role: 'character' | 'keeper';
@@ -19,9 +42,9 @@ interface Message {
   isStreaming?: boolean;
   imageUrl?: string;
   imageCaption?: string;
-  diceRolls?: string[]; // Optional dice rolls for keeper messages
-  gameDay?: number | null; // Game day when message was sent
-  gameTime?: string | null; // Game time (HH:MM format) when message was sent
+  diceRolls?: DiceRollInfo[] | string[];
+  gameDay?: number | null;
+  gameTime?: string | null;
 }
 
 interface GameEndingInfo {
@@ -79,7 +102,7 @@ export function GameChat({ sessionId, apiBaseUrl = '/api', characterName = 'Inve
   const { turn, isPolling, error, startPolling, stopPolling } = useTurnPolling(apiBaseUrl);
   
   // State for dice animation
-  const [pendingDiceRolls, setPendingDiceRolls] = useState<{ turnNumber: number; turnId?: string; diceRolls: string[]; narrative: string; timestamp: string; gameDay?: number | null; gameTime?: string | null; isStreaming?: boolean } | null>(null);
+  const [pendingDiceRolls, setPendingDiceRolls] = useState<{ turnNumber: number; turnId?: string; diceRolls: DiceRollInfo[] | string[]; narrative: string; timestamp: string; gameDay?: number | null; gameTime?: string | null; isStreaming?: boolean } | null>(null);
   const [showingDiceAnimation, setShowingDiceAnimation] = useState(false);
   const [diceAnimationCompleted, setDiceAnimationCompleted] = useState(false);
 
@@ -284,7 +307,7 @@ export function GameChat({ sessionId, apiBaseUrl = '/api', characterName = 'Inve
             if (message.type === 'connected') {
               console.log(`[WebSocket] Connection confirmed for session ${message.sessionId}`);
             } else if (message.type === 'keeper_dice_rolls') {
-              const diceRolls = message.diceRolls as string[] | undefined;
+              const diceRolls = message.diceRolls as DiceRollInfo[] | string[] | undefined;
               const turnId = message.turnId as string | undefined;
               if (!diceRolls || diceRolls.length === 0) return;
 
@@ -732,35 +755,8 @@ export function GameChat({ sessionId, apiBaseUrl = '/api', characterName = 'Inve
         processedTurnIdsRef.current.add(turn.turnId);
       }
 
-      // Check if there are dice rolls to show
-      const allDiceRolls: string[] = [];
-      if (turn.actionResults && turn.actionResults.length > 0) {
-        console.log(`[GameChat] Processing ${turn.actionResults.length} actionResults`);
-        turn.actionResults.forEach((result, index) => {
-          console.log(`[GameChat] ActionResult[${index}]:`, {
-            hasDiceRolls: !!result.diceRolls,
-            diceRollsType: typeof result.diceRolls,
-            diceRollsValue: result.diceRolls,
-            diceRollsLength: result.diceRolls?.length || 0,
-            result: result.result?.substring(0, 50) + '...',
-          });
-          if (result.diceRolls && result.diceRolls.length > 0) {
-            console.log(`[GameChat] Found dice rolls in actionResult[${index}]:`, result.diceRolls);
-            allDiceRolls.push(...result.diceRolls);
-          } else {
-            console.log(`[GameChat] ActionResult[${index}] has no diceRolls or diceRolls is empty`);
-          }
-        });
-      } else {
-        console.log(`[GameChat] No actionResults or actionResults is empty:`, {
-          actionResults: turn.actionResults,
-          isArray: Array.isArray(turn.actionResults),
-          isNull: turn.actionResults === null,
-          isUndefined: turn.actionResults === undefined,
-        });
-      }
-
-      console.log(`[GameChat] Total dice rolls collected: ${allDiceRolls.length}`, allDiceRolls);
+      // Build structured dice roll infos from action results
+      const allDiceRolls: DiceRollInfo[] = buildDiceRollInfos(turn.actionResults || []);
       console.log(`[GameChat] Has keeperNarrative: ${!!turn.keeperNarrative}`);
 
       const existingStreamingMessage = turn.turnId

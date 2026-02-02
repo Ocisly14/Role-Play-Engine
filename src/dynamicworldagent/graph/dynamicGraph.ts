@@ -13,7 +13,9 @@ import type { ScenarioLoader } from "../../coc_multiagents_system/agents/memory/
 import type {
   ActionAnalysis,
   ActionResult,
+  DiceRollInfo,
 } from "../../coc_multiagents_system/state/index.js";
+import { buildDiceRollInfos } from "../../coc_multiagents_system/state/index.js";
 import type { ActionLogEntry } from "../../coc_multiagents_system/agents/models/gameTypes.js";
 import type { DynamicGameState } from "../state/index.js";
 import { DynamicGameStateManager, initialDynamicGameState } from "../state/index.js";
@@ -41,7 +43,7 @@ export interface DynamicGraphState {
   simulatedQueryCount?: number;  // Safety counter for continuous loop (max 5)
   selectedSkill?: string | null;  // Optional player-selected skill for this turn
   stream?: {
-    onDiceRolls?: (diceRolls: string[]) => void;
+    onDiceRolls?: (diceRolls: DiceRollInfo[]) => void;
     onSceneImage?: (payload: {
       imagePath: string;
       mimeType: string;
@@ -609,17 +611,15 @@ export const buildDynamicGraph = (
     const dgsm = new DynamicGameStateManager(state.dynamicGameState);
     const userInput = latestHumanMessage(state.messages);
     const stream = state.stream;
-    const actionResults = dgsm.getState().temporaryInfo.actionResults || [];
-    const diceRolls = actionResults.flatMap((result) =>
-      Array.isArray(result.diceRolls) ? result.diceRolls : []
-    );
+    const actionResults = (dgsm.getState().temporaryInfo.actionResults || []) as ActionResult[];
+    const diceRollInfos = buildDiceRollInfos(actionResults);
     const shouldStream = Boolean(stream?.onNarrativeDelta);
 
     let updatedGameState = state.dynamicGameState;
 
     try {
-      if (diceRolls.length > 0) {
-        stream?.onDiceRolls?.(diceRolls);
+      if (diceRollInfos.length > 0) {
+        stream?.onDiceRolls?.(diceRollInfos);
       }
 
       if (shouldStream) {

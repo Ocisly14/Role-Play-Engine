@@ -1,5 +1,5 @@
 import React, { useEffect, useMemo, useState, useRef, useCallback } from "react";
-import { BrowserRouter, Routes, Route } from "react-router-dom";
+import { BrowserRouter, Routes, Route, useLocation, useNavigate } from "react-router-dom";
 import { AuthProvider, useAuth } from "./contexts/AuthContext";
 import { ProtectedRoute } from "./components/ProtectedRoute";
 import Login from "./views/auth/Login";
@@ -117,6 +117,8 @@ const SKILLS: SkillEntry[] = [
 ];
 
 const AppShell: React.FC = () => {
+  const location = useLocation();
+  const navigate = useNavigate();
   const [page, setPage] = useState<AppPage>(() => getStoredPage());
   const [saving, setSaving] = useState(false);
   const [saveMessage, setSaveMessage] = useState<{ type: "success" | "error"; text: string } | null>(null);
@@ -188,7 +190,7 @@ const AppShell: React.FC = () => {
 
   // Fetch current scenario sceneImage and set as background when on game page
   useEffect(() => {
-    if (page !== "game" || !sessionId) {
+    if (location.pathname !== "/gamechat" || !sessionId) {
       // Reset to default background when not on game page
       if (currentBackgroundImageRef.current) {
         setDefaultBackground();
@@ -237,12 +239,12 @@ const AppShell: React.FC = () => {
 
     // Cleanup: restore default background when component unmounts or page changes
     return () => {
-      if (page !== "game") {
+      if (location.pathname !== "/gamechat") {
         setDefaultBackground();
         currentBackgroundImageRef.current = null;
       }
     };
-  }, [page, sessionId, sidebarRefreshTrigger]);
+  }, [location.pathname, sessionId, sidebarRefreshTrigger]);
 
   useEffect(() => {
     if (!user) {
@@ -272,6 +274,7 @@ const AppShell: React.FC = () => {
         } else {
           // No valid session found - reset to home if currently on game page
           if (page === "game") {
+            navigate("/");
             setPage("home");
             window.localStorage.setItem(PAGE_STORAGE_KEY, "home");
           }
@@ -280,6 +283,7 @@ const AppShell: React.FC = () => {
         console.error("Failed to restore latest session:", error);
         // On error, reset to home if currently on game page
         if (page === "game") {
+          navigate("/");
           setPage("home");
           window.localStorage.setItem(PAGE_STORAGE_KEY, "home");
         }
@@ -290,17 +294,25 @@ const AppShell: React.FC = () => {
     };
 
     restoreSession();
-  }, [user, sessionId, isRestoringSession, page]);
+  }, [user, sessionId, isRestoringSession, page, navigate]);
 
   // Validate page state: if on game page without valid session, reset to home
   // Only validate after initial session restoration is complete
   useEffect(() => {
     if (user && page === "game" && !sessionId && !isRestoringSession && hasInitialized) {
-      // No valid session, reset to home
+      // No valid session, reset to home and leave /gamechat
+      navigate("/");
       setPage("home");
       window.localStorage.setItem(PAGE_STORAGE_KEY, "home");
     }
-  }, [user, page, sessionId, isRestoringSession, hasInitialized]);
+  }, [user, page, sessionId, isRestoringSession, hasInitialized, navigate]);
+
+  // Sync page with /gamechat URL: when on /gamechat, treat as game page
+  useEffect(() => {
+    if (location.pathname === "/gamechat") {
+      setPage("game");
+    }
+  }, [location.pathname]);
 
   const handleLogout = async () => {
     try {
@@ -696,6 +708,7 @@ const AppShell: React.FC = () => {
         setConversationHistory(null);
         // Don't show module introduction again (already shown before character selection)
         setShowModuleIntro(false);
+        navigate("/gamechat");
         setPage("game");
       } else {
         alert("Failed to start game: " + (data.error || "Unknown error"));
@@ -710,6 +723,7 @@ const AppShell: React.FC = () => {
 
   const handleBackToHome = () => {
     setCurrentModuleName("");
+    navigate("/");
     setPage("home");
   };
 
@@ -809,6 +823,7 @@ const AppShell: React.FC = () => {
 
         // Close checkpoint selector and go to game
         setShowCheckpointSelector(false);
+        navigate("/gamechat");
         setPage("game");
       } else {
         alert("Failed to load checkpoint: " + (data.error || "Unknown error"));
@@ -2226,7 +2241,7 @@ const AppShell: React.FC = () => {
     );
   }
   
-  if (page === "game") {
+  if (location.pathname === "/gamechat") {
     // Still restoring session, show loading
     if (!sessionId && isRestoringSession) {
       return (

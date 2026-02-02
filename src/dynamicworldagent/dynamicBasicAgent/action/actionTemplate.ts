@@ -65,8 +65,10 @@ USAGE:
 
 DiceUsed field:
 - Record ONLY the dice you actually used from the pre-rolled dice
-- Format: "[dice_name][index]: [result] ([purpose] = [success/failure])" or "[dice_name]: [result] ([purpose] = [success/failure])"
-- Examples: "1d100[0]: 67 (Brawl 50% = success)", "1d6[2]: 4 (knife damage)", "1d100_opposed[1]: 55 (opposed check)"
+- Format: "[dice_name][index]: [result] ([skill/purpose] [penalty if any] = [success/failure])"
+- Examples: "1d100[0]: 67 (Brawl 50% = success)", "1d100[1]: 82 (Spot Hidden 60% penalty die = failure)", "1d6[2]: 4 (knife damage)"
+- When penalty dice or bonus dice apply, include "penalty die" or "bonus die" in parentheses, e.g. "(Perception 25% penalty die = failure)"
+- When a percentage penalty applies (e.g. -20%), include it: "(Drive Auto 50% -20 = failure)"
 - If no dice needed, use empty array: "diceUsed": []
 
 Include "scenarioUpdate" if the action permanently changes the environment. "scenarioUpdate" can include:
@@ -174,9 +176,10 @@ Return ONLY valid JSON in this exact structure:
 
   "diceUsed": [
     // Array of dice you actually used (empty array if no dice needed)
-    // Format: "[dice_name][index]: [result] ([purpose/skill] [skill%] = [success/failure/N/A])"
-    // Select one result from the pre-rolled array for each dice you need
+    // Format: "[dice_name][index]: [result] ([skill%] [penalty if any] = [success/failure/N/A])"
+    // Include "penalty die", "bonus die", or "-20" etc. when applicable
     "1d100[0]: 67 (Brawling 50% = failure)",
+    "1d100[1]: 82 (Spot Hidden 60% penalty die = failure)",
     "1d3[1]: 2 + 1 (DB) = 3 (unarmed damage)"
   ],
 
