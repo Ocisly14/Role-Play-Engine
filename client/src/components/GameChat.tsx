@@ -82,6 +82,7 @@ export function GameChat({ sessionId, apiBaseUrl = '/api', characterName = 'Inve
   const [currentGameState, setCurrentGameState] = useState<{ gameDay?: number; timeOfDay?: string } | null>(null);
   const [availableSkills, setAvailableSkills] = useState<Array<{ name: string; value: number }>>([]);
   const [selectedSkill, setSelectedSkill] = useState('');
+  const [isSkillAuto, setIsSkillAuto] = useState(false);
   const [suggestedSkills, setSuggestedSkills] = useState<Array<{ name: string; value: number }>>([]);
   const [isSuggesting, setIsSuggesting] = useState(false);
   const [isSkillPickerOpen, setIsSkillPickerOpen] = useState(false);
@@ -904,7 +905,10 @@ export function GameChat({ sessionId, apiBaseUrl = '/api', characterName = 'Inve
     if (!inputValue.trim() || isSending || isGameEnded) return;
 
     const messageText = inputValue.trim();
-    const skillToSend = selectedSkill.trim() || null;
+    const trimmedSkill = selectedSkill.trim();
+    const hasSelectedSkill = trimmedSkill.length > 0;
+    const skillToSend = hasSelectedSkill ? trimmedSkill : null;
+    const skillSelectionMode = hasSelectedSkill ? 'manual' : (isSkillAuto ? 'auto' : 'manual');
     setInputValue('');
     setIsSending(true);
     setIsSkillPickerOpen(false);
@@ -932,6 +936,7 @@ export function GameChat({ sessionId, apiBaseUrl = '/api', characterName = 'Inve
         body: JSON.stringify({
           message: messageText,
           selectedSkill: skillToSend,
+          skillSelectionMode,
         }),
       });
 
@@ -1213,7 +1218,7 @@ export function GameChat({ sessionId, apiBaseUrl = '/api', characterName = 'Inve
                   }}
                   className="relative z-10 overflow-hidden rounded-2xl border border-white/50 shadow-[0_6px_15px_rgba(15,23,42,0.25)] transition-all duration-300 ease-in-out bg-white/80 dark:bg-slate-950/60 supports-[backdrop-filter]:bg-white/55 supports-[backdrop-filter]:backdrop-blur-2xl dark:supports-[backdrop-filter]:bg-slate-900/40"
                 >
-                  {(suggestedSkills.length > 0 || selectedSkill) && (
+                  {(suggestedSkills.length > 0 || selectedSkill || isSkillAuto) && (
                     <div className="px-3 pt-2">
                       <div className="flex items-center">
                         <span className="text-[10px] uppercase tracking-wide text-slate-500">
@@ -1225,7 +1230,10 @@ export function GameChat({ sessionId, apiBaseUrl = '/api', characterName = 'Inve
                           <button
                             type="button"
                             className="flex items-center gap-1 rounded-full border border-amber-300 bg-amber-200 px-2 py-0.5 text-[11px] text-amber-900 shadow-[0_10px_20px_rgba(124,45,18,0.25)] transition-all -translate-y-0.5"
-                            onClick={() => setSelectedSkill('')}
+                            onClick={() => {
+                              setSelectedSkill('');
+                              setIsSkillAuto(false);
+                            }}
                             disabled={isSending || isPolling || isGameEnded}
                           >
                             {selectedSkill}
@@ -1249,33 +1257,60 @@ export function GameChat({ sessionId, apiBaseUrl = '/api', characterName = 'Inve
                               ? 'border-amber-300 bg-amber-200 text-amber-900 -translate-y-0.5 shadow-[0_10px_20px_rgba(124,45,18,0.25)]'
                               : 'border-slate-200 bg-white/70 text-slate-700 hover:-translate-y-0.5 hover:shadow-md'
                           }`}
-                          onClick={() => setSelectedSkill(selectedSkill === skill.name ? '' : skill.name)}
+                          onClick={() => {
+                            setSelectedSkill(selectedSkill === skill.name ? '' : skill.name);
+                            setIsSkillAuto(false);
+                          }}
                           disabled={isSending || isPolling || isGameEnded}
                         >
                           {skill.name}
                           {Number.isFinite(skill.value) ? ` ${skill.value}%` : ''}
                         </button>
                       ))}
-                        <button
-                          type="button"
-                          className="ml-auto flex h-6 w-6 shrink-0 items-center justify-center rounded-full border border-slate-200 bg-white/70 text-[11px] text-slate-600 shadow-sm transition-all hover:-translate-y-0.5 hover:bg-white hover:shadow-md [&_svg]:shrink-0"
-                          onClick={() => setIsSkillPickerOpen((prev) => !prev)}
-                          disabled={isSending || isPolling || isGameEnded || availableSkills.length === 0}
-                          aria-label="Choose skill"
-                        >
-                          <svg
-                            xmlns="http://www.w3.org/2000/svg"
-                            width="16"
-                            height="16"
-                            viewBox="0 0 24 24"
-                            fill="currentColor"
-                            aria-hidden="true"
+                        <div className="ml-auto flex items-center gap-1">
+                          <button
+                            type="button"
+                            className={`flex h-6 items-center rounded-full border px-2 text-[10px] uppercase tracking-wide shadow-sm transition-all ${
+                              isSkillAuto
+                                ? 'border-amber-300 bg-amber-200 text-amber-900 shadow-[0_8px_16px_rgba(124,45,18,0.2)]'
+                                : 'border-slate-200 bg-white/70 text-slate-600 hover:-translate-y-0.5 hover:bg-white hover:shadow-md'
+                            }`}
+                            onClick={() => {
+                              setIsSkillAuto((prev) => {
+                                const next = !prev;
+                                if (next) {
+                                  setSelectedSkill('');
+                                  setIsSkillPickerOpen(false);
+                                }
+                                return next;
+                              });
+                            }}
+                            disabled={isSending || isPolling || isGameEnded}
+                            aria-label="Auto select skill"
                           >
-                            <circle cx="6" cy="12" r="2" />
-                            <circle cx="12" cy="12" r="2" />
-                            <circle cx="18" cy="12" r="2" />
-                          </svg>
-                        </button>
+                            auto
+                          </button>
+                          <button
+                            type="button"
+                            className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full border border-slate-200 bg-white/70 text-[11px] text-slate-600 shadow-sm transition-all hover:-translate-y-0.5 hover:bg-white hover:shadow-md [&_svg]:shrink-0"
+                            onClick={() => setIsSkillPickerOpen((prev) => !prev)}
+                            disabled={isSending || isPolling || isGameEnded || availableSkills.length === 0}
+                            aria-label="Choose skill"
+                          >
+                            <svg
+                              xmlns="http://www.w3.org/2000/svg"
+                              width="16"
+                              height="16"
+                              viewBox="0 0 24 24"
+                              fill="currentColor"
+                              aria-hidden="true"
+                            >
+                              <circle cx="6" cy="12" r="2" />
+                              <circle cx="12" cy="12" r="2" />
+                              <circle cx="18" cy="12" r="2" />
+                            </svg>
+                          </button>
+                        </div>
                       </div>
                     </div>
                   )}
@@ -1293,6 +1328,7 @@ export function GameChat({ sessionId, apiBaseUrl = '/api', characterName = 'Inve
                             }`}
                             onClick={() => {
                               setSelectedSkill(selectedSkill === skill.name ? '' : skill.name);
+                              setIsSkillAuto(false);
                               setIsSkillPickerOpen(false);
                             }}
                             disabled={isSending || isPolling || isGameEnded}

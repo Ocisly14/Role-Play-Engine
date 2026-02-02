@@ -157,10 +157,22 @@ const AppShell: React.FC = () => {
   const [isUserMenuOpen, setIsUserMenuOpen] = useState(false);
   const [isRestoringSession, setIsRestoringSession] = useState(false);
   const [hasInitialized, setHasInitialized] = useState(false);
+  const prevUserRef = useRef<typeof user | null>(null);
 
   useEffect(() => {
     window.localStorage.setItem(PAGE_STORAGE_KEY, page);
   }, [page]);
+
+  // After a fresh login, always land on home instead of restoring create-character.
+  useEffect(() => {
+    const prevUser = prevUserRef.current;
+    if (!prevUser && user) {
+      setPage("home");
+      window.localStorage.setItem(PAGE_STORAGE_KEY, "home");
+      navigate("/");
+    }
+    prevUserRef.current = user ?? null;
+  }, [user, navigate]);
 
   // Helper function to set default background (supports multiple formats)
   const setDefaultBackground = useCallback(async () => {
@@ -307,12 +319,30 @@ const AppShell: React.FC = () => {
     }
   }, [user, page, sessionId, isRestoringSession, hasInitialized, navigate]);
 
-  // Sync page with /gamechat URL: when on /gamechat, treat as game page
+  // Sync page with /gamechat and /charactercreate URL: when on those paths, treat as their pages
   useEffect(() => {
     if (location.pathname === "/gamechat") {
       setPage("game");
+      return;
+    }
+    if (location.pathname === "/charactercreate") {
+      setPage("sheet");
     }
   }, [location.pathname]);
+
+  // Keep URL in sync with the create-character page
+  useEffect(() => {
+    if (location.pathname === "/gamechat") {
+      return;
+    }
+    if (page === "sheet" && location.pathname !== "/charactercreate") {
+      navigate("/charactercreate");
+      return;
+    }
+    if (page !== "sheet" && location.pathname === "/charactercreate") {
+      navigate("/");
+    }
+  }, [page, location.pathname, navigate]);
 
   const handleLogout = async () => {
     try {

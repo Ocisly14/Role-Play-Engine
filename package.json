@@ -13,7 +13,6 @@
     "build:turbo": "turbo build",
     "build:swc": "pnpm rebuild better-sqlite3 && swc src -d dist",
     "build:tsc": "pnpm rebuild better-sqlite3 && tsc -p tsconfig.json",
-    "start": "node dist/src/coc_multiagents_system/index.js",
     "dev": "tsx src/coc_multiagents_system/index.ts",
     "dev:debug": "cross-env NODE_ENV=development DEBUG=coc:* tsx src/coc_multiagents_system/index.ts",
     "chat": "tsx client/server.ts",

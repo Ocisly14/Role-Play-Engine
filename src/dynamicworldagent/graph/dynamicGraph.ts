@@ -42,6 +42,7 @@ export interface DynamicGraphState {
   isSimulatedQuery?: boolean;  // Track if input is simulated by Director Agent
   simulatedQueryCount?: number;  // Safety counter for continuous loop (max 5)
   selectedSkill?: string | null;  // Optional player-selected skill for this turn
+  skillSelectionMode?: "auto" | "manual"; // How skill selection should behave for this turn
   stream?: {
     onDiceRolls?: (diceRolls: DiceRollInfo[]) => void;
     onSceneImage?: (payload: {
@@ -116,6 +117,10 @@ export const buildDynamicGraph = (
       },
       selectedSkill: {
         value: (left: string | null | undefined, right?: string | null | undefined) =>
+          right !== undefined ? right : left,
+      },
+      skillSelectionMode: {
+        value: (left: DynamicGraphState["skillSelectionMode"] | undefined, right?: DynamicGraphState["skillSelectionMode"]) =>
           right !== undefined ? right : left,
       },
       stream: {
@@ -305,6 +310,7 @@ export const buildDynamicGraph = (
     const runtime = {}; // ActionAgent expects runtime but only passes through generateText; keep empty placeholder
     const userInput = latestHumanMessage(state.messages);
     const selectedSkill = state.selectedSkill ?? null;
+    const skillSelectionMode = state.skillSelectionMode ?? "manual";
 
     // Log input context
     const actionAnalysis = dgsm.getState().temporaryInfo.currentActionAnalysis;
@@ -319,9 +325,12 @@ export const buildDynamicGraph = (
     if (selectedSkill) {
       console.log(`⚡ [Dynamic Action Agent] 玩家选择技能: ${selectedSkill}`);
     }
+    if (!selectedSkill && skillSelectionMode === "auto") {
+      console.log(`⚡ [Dynamic Action Agent] 技能选择模式: auto`);
+    }
 
     try {
-      await actionAgent.processAction(runtime, dgsm, userInput, selectedSkill);
+      await actionAgent.processAction(runtime, dgsm, userInput, selectedSkill, skillSelectionMode);
     } catch (error) {
       console.error(`\n❌ [Dynamic Action Agent] 执行过程中抛出异常:`, error);
       const currentState = dgsm.getState();

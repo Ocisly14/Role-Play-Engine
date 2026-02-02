@@ -34,11 +34,12 @@ export class ActionAgent {
       npcResponse?: NPCResponseAnalysis;
       targetCharacter?: DynamicCharacterProfile | null;
       selectedSkill?: string | null;
+      skillSelectionMode?: "auto" | "manual";
     },
     gameStateManager: DynamicGameStateManager,
     originalUserInput?: string | null
   ): Promise<DynamicGameState> {
-    const { isNPC, npcResponse, targetCharacter, selectedSkill } = options;
+    const { isNPC, npcResponse, targetCharacter, selectedSkill, skillSelectionMode } = options;
 
     // Pre-roll dice
     const preRolledDice = this.preRollDice();
@@ -57,7 +58,8 @@ export class ActionAgent {
       isNPC,
       existingSceneChangeRequest,
       sceneNPCs,
-      !isNPC ? selectedSkill ?? null : null
+      !isNPC ? selectedSkill ?? null : null,
+      !isNPC ? skillSelectionMode : undefined
     );
 
     const actionTypeTemplate = getActionTypeTemplate(dynamicState, isNPC, npcResponse);
@@ -114,7 +116,8 @@ export class ActionAgent {
     runtime: any,
     gameStateManager: DynamicGameStateManager,
     userMessage: string,
-    selectedSkill?: string | null
+    selectedSkill?: string | null,
+    skillSelectionMode?: "auto" | "manual"
   ): Promise<void> {
     const dynamicState = gameStateManager.getState();
     const actionAnalysis = dynamicState.temporaryInfo.currentActionAnalysis;
@@ -128,7 +131,8 @@ export class ActionAgent {
       {
         isNPC: false,
         targetCharacter,
-        selectedSkill: selectedSkill ?? null
+        selectedSkill: selectedSkill ?? null,
+        skillSelectionMode
       },
       gameStateManager,
       userMessage // Pass original user input
