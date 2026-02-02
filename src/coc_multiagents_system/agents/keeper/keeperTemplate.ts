@@ -160,6 +160,8 @@ export function getKeeperTemplate(): string {
 
   ### Clue Difficulty & Revelation Limits
   CRITICAL RULES:
+  - For each successful action, reveal at most ONE clue.
+  - If no relevant ("fits the action") clue is available, you may reveal none.
   - **AUTOMATIC** clues: May be revealed progressively over multiple turns without requiring specific action success
   - **REGULAR or higher** difficulty clues (Regular, Hard, Extreme):
     * MUST only be revealed when the corresponding action succeeds
