@@ -7,6 +7,7 @@ import { randomUUID } from "crypto";
 import fs from "fs";
 import path from "path";
 import type { CoCDatabase } from "../database/schema.js";
+import { resolveEmailId, scopeId } from "../database/userContext.js";
 import type {
   ScenarioProfile,
   ScenarioSnapshot,
@@ -25,10 +26,20 @@ import { ScenarioDocumentParser } from "./scenarioDocumentParser.js";
 export class ScenarioLoader {
   private db: CoCDatabase;
   private parser: ScenarioDocumentParser;
+  private emailId?: string;
 
-  constructor(db: CoCDatabase, parser?: ScenarioDocumentParser) {
+  constructor(db: CoCDatabase, parser?: ScenarioDocumentParser, options?: { emailId?: string }) {
     this.db = db;
     this.parser = parser || new ScenarioDocumentParser();
+    this.emailId = options?.emailId;
+  }
+
+  private getEmailId(): string | undefined {
+    return resolveEmailId(this.emailId);
+  }
+
+  private scopeScenarioId(id: string): string {
+    return scopeId(id, this.getEmailId());
   }
 
   /**
@@ -465,7 +476,8 @@ export class ScenarioLoader {
    * Generate a unique ID for a scenario based on its name
    */
   private generateScenarioId(name: string): string {
-    return `scenario-${name.toLowerCase().replace(/\s+/g, "-").replace(/[^\w-]/g, "")}-${randomUUID().slice(0, 8)}`;
+    const rawId = `scenario-${name.toLowerCase().replace(/\s+/g, "-").replace(/[^\w-]/g, "")}-${randomUUID().slice(0, 8)}`;
+    return this.scopeScenarioId(rawId);
   }
 
   /**
@@ -475,6 +487,12 @@ export class ScenarioLoader {
     const database = this.db.getDatabase();
     const hasCategoryColumn = this.db.hasColumn("scenarios", "category");
     const hasTimeOrderColumn = this.db.hasColumn("scenario_snapshots", "time_order");
+    const emailId = this.getEmailId();
+    const hasScenarioEmailId = this.db.hasColumn("scenarios", "email_id");
+    const hasSnapshotEmailId = this.db.hasColumn("scenario_snapshots", "email_id");
+    const hasCharacterEmailId = this.db.hasColumn("scenario_characters", "email_id");
+    const hasClueEmailId = this.db.hasColumn("scenario_clues", "email_id");
+    const hasConditionEmailId = this.db.hasColumn("scenario_conditions", "email_id");
 
     this.db.transaction(() => {
       // Insert or update scenario (including scenario-level permanent_changes and map_image_path)
@@ -495,6 +513,10 @@ export class ScenarioLoader {
         scenarioColumns.splice(2, 0, "category");
         scenarioValues.splice(2, 0, "location");
       }
+      if (hasScenarioEmailId) {
+        scenarioColumns.push("email_id");
+        scenarioValues.push(emailId || null);
+      }
 
       const scenarioStmt = database.prepare(
         `INSERT OR REPLACE INTO scenarios (${scenarioColumns.join(", ")}) VALUES (${scenarioColumns
@@ -512,8 +534,8 @@ export class ScenarioLoader {
       for (const snapshot of allSnapshots) {
         // Check if snapshot already exists
         const existingSnapshot = database
-          .prepare("SELECT snapshot_id FROM scenario_snapshots WHERE snapshot_id = ?")
-          .get(snapshot.id);
+          .prepare(`SELECT snapshot_id FROM scenario_snapshots WHERE snapshot_id = ?${hasSnapshotEmailId && emailId ? " AND email_id = ?" : ""}`)
+          .get(...(hasSnapshotEmailId && emailId ? [snapshot.id, emailId] : [snapshot.id]));
 
         // Only insert if snapshot doesn't exist (snapshot is read-only original definition)
         if (!existingSnapshot) {
@@ -542,6 +564,10 @@ export class ScenarioLoader {
             snapshot.timeRestriction || null,
             snapshot.showMap === false ? 0 : 1,
           ];
+          if (hasSnapshotEmailId) {
+            snapshotColumns.push("email_id");
+            snapshotValues.push(emailId || null);
+          }
 
           const snapshotStmt = database.prepare(
             `INSERT INTO scenario_snapshots (${snapshotColumns.join(", ")}) VALUES (${snapshotColumns
@@ -552,37 +578,66 @@ export class ScenarioLoader {
 
           // Insert characters for this snapshot (only on first creation)
           if (snapshot.characters.length > 0) {
-            const charStmt = database.prepare(`
-                          INSERT OR IGNORE INTO scenario_characters (
-                              id, snapshot_id, character_name, character_role, character_status,
-                              character_location, character_notes
-                          ) VALUES (?, ?, ?, ?, ?, ?, ?)
-                      `);
+            const charColumns = [
+              "id",
+              "snapshot_id",
+              "character_name",
+              "character_role",
+              "character_status",
+              "character_location",
+              "character_notes",
+            ];
+            if (hasCharacterEmailId) {
+              charColumns.push("email_id");
+            }
+            const charStmt = database.prepare(
+              `INSERT OR IGNORE INTO scenario_characters (${charColumns.join(", ")}) VALUES (${charColumns
+                .map(() => "?")
+                .join(", ")})`
+            );
 
             for (const char of snapshot.characters) {
-              charStmt.run(
+              const charValues: any[] = [
                 char.id,
                 snapshot.id,
                 char.name,
                 char.role,
                 char.status,
                 char.location || null,
-                char.notes || null
-              );
+                char.notes || null,
+              ];
+              if (hasCharacterEmailId) {
+                charValues.push(emailId || null);
+              }
+              charStmt.run(...charValues);
             }
           }
 
           // Insert clues for this snapshot (only on first creation)
           if (snapshot.clues.length > 0) {
-            const clueStmt = database.prepare(`
-                          INSERT OR IGNORE INTO scenario_clues (
-                              clue_id, snapshot_id, clue_text, category, difficulty,
-                              clue_location, discovery_method, reveals, discovered, discovery_details
-                          ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-                      `);
+            const clueColumns = [
+              "clue_id",
+              "snapshot_id",
+              "clue_text",
+              "category",
+              "difficulty",
+              "clue_location",
+              "discovery_method",
+              "reveals",
+              "discovered",
+              "discovery_details",
+            ];
+            if (hasClueEmailId) {
+              clueColumns.push("email_id");
+            }
+            const clueStmt = database.prepare(
+              `INSERT OR IGNORE INTO scenario_clues (${clueColumns.join(", ")}) VALUES (${clueColumns
+                .map(() => "?")
+                .join(", ")})`
+            );
 
             for (const clue of snapshot.clues) {
-              clueStmt.run(
+              const clueValues: any[] = [
                 clue.id,
                 snapshot.id,
                 clue.clueText,
@@ -592,28 +647,46 @@ export class ScenarioLoader {
                 clue.discoveryMethod || null,
                 JSON.stringify(clue.reveals),
                 clue.discovered ? 1 : 0,
-                clue.discoveryDetails ? JSON.stringify(clue.discoveryDetails) : null
-              );
+                clue.discoveryDetails ? JSON.stringify(clue.discoveryDetails) : null,
+              ];
+              if (hasClueEmailId) {
+                clueValues.push(emailId || null);
+              }
+              clueStmt.run(...clueValues);
             }
           }
 
           // Insert conditions for this snapshot (only on first creation)
           if (snapshot.conditions.length > 0) {
-            const condStmt = database.prepare(`
-                          INSERT OR IGNORE INTO scenario_conditions (
-                              condition_id, snapshot_id, condition_type, description, mechanical_effect
-                          ) VALUES (?, ?, ?, ?, ?)
-                      `);
+            const condColumns = [
+              "condition_id",
+              "snapshot_id",
+              "condition_type",
+              "description",
+              "mechanical_effect",
+            ];
+            if (hasConditionEmailId) {
+              condColumns.push("email_id");
+            }
+            const condStmt = database.prepare(
+              `INSERT OR IGNORE INTO scenario_conditions (${condColumns.join(", ")}) VALUES (${condColumns
+                .map(() => "?")
+                .join(", ")})`
+            );
 
             for (const cond of snapshot.conditions) {
               const condId = `${snapshot.id}-cond-${randomUUID().slice(0, 8)}`;
-              condStmt.run(
+              const condValues: any[] = [
                 condId,
                 snapshot.id,
                 cond.type,
                 cond.description,
-                cond.mechanicalEffect || null
-              );
+                cond.mechanicalEffect || null,
+              ];
+              if (hasConditionEmailId) {
+                condValues.push(emailId || null);
+              }
+              condStmt.run(...condValues);
             }
           }
         } else {
@@ -629,11 +702,18 @@ export class ScenarioLoader {
    */
   getScenarioById(scenarioId: string): ScenarioProfile | null {
     const database = this.db.getDatabase();
+    const scopedScenarioId = this.scopeScenarioId(scenarioId);
+    const emailId = this.getEmailId();
+    const hasScenarioEmailId = this.db.hasColumn("scenarios", "email_id");
+    const hasSnapshotEmailId = this.db.hasColumn("scenario_snapshots", "email_id");
+    const hasCharacterEmailId = this.db.hasColumn("scenario_characters", "email_id");
+    const hasClueEmailId = this.db.hasColumn("scenario_clues", "email_id");
+    const hasConditionEmailId = this.db.hasColumn("scenario_conditions", "email_id");
 
     // Get scenario data
     const scenario = database
-      .prepare(`SELECT * FROM scenarios WHERE scenario_id = ?`)
-      .get(scenarioId) as any;
+      .prepare(`SELECT * FROM scenarios WHERE scenario_id = ?${hasScenarioEmailId && emailId ? " AND email_id = ?" : ""}`)
+      .get(...(hasScenarioEmailId && emailId ? [scopedScenarioId, emailId] : [scopedScenarioId])) as any;
 
     if (!scenario) {
       return null;
@@ -641,8 +721,8 @@ export class ScenarioLoader {
 
     // Get snapshot (single snapshot per scenario)
     const snap = database
-      .prepare(`SELECT * FROM scenario_snapshots WHERE scenario_id = ? LIMIT 1`)
-      .get(scenarioId) as any;
+      .prepare(`SELECT * FROM scenario_snapshots WHERE scenario_id = ?${hasSnapshotEmailId && emailId ? " AND email_id = ?" : ""} LIMIT 1`)
+      .get(...(hasSnapshotEmailId && emailId ? [scopedScenarioId, emailId] : [scopedScenarioId])) as any;
 
     if (!snap) {
       console.warn(`No snapshot found for scenario ${scenarioId}`);
@@ -651,18 +731,18 @@ export class ScenarioLoader {
 
     // Get characters for this snapshot
     const characters = database
-      .prepare(`SELECT * FROM scenario_characters WHERE snapshot_id = ?`)
-      .all(snap.snapshot_id) as any[];
+      .prepare(`SELECT * FROM scenario_characters WHERE snapshot_id = ?${hasCharacterEmailId && emailId ? " AND email_id = ?" : ""}`)
+      .all(...(hasCharacterEmailId && emailId ? [snap.snapshot_id, emailId] : [snap.snapshot_id])) as any[];
 
     // Get clues for this snapshot
     const clues = database
-      .prepare(`SELECT * FROM scenario_clues WHERE snapshot_id = ?`)
-      .all(snap.snapshot_id) as any[];
+      .prepare(`SELECT * FROM scenario_clues WHERE snapshot_id = ?${hasClueEmailId && emailId ? " AND email_id = ?" : ""}`)
+      .all(...(hasClueEmailId && emailId ? [snap.snapshot_id, emailId] : [snap.snapshot_id])) as any[];
 
     // Get conditions for this snapshot
     const conditions = database
-      .prepare(`SELECT * FROM scenario_conditions WHERE snapshot_id = ?`)
-      .all(snap.snapshot_id) as any[];
+      .prepare(`SELECT * FROM scenario_conditions WHERE snapshot_id = ?${hasConditionEmailId && emailId ? " AND email_id = ?" : ""}`)
+      .all(...(hasConditionEmailId && emailId ? [snap.snapshot_id, emailId] : [snap.snapshot_id])) as any[];
 
     const snapshot: ScenarioSnapshot = {
       id: snap.snapshot_id,
@@ -721,10 +801,16 @@ export class ScenarioLoader {
    */
   getAllScenarios(): ScenarioProfile[] {
     const database = this.db.getDatabase();
+    const emailId = this.getEmailId();
+    const hasEmailIdColumn = this.db.hasColumn("scenarios", "email_id");
 
-    const scenarios = database
-      .prepare(`SELECT scenario_id FROM scenarios`)
-      .all() as any[];
+    let sql = "SELECT scenario_id FROM scenarios";
+    const params: any[] = [];
+    if (hasEmailIdColumn && emailId) {
+      sql += " WHERE email_id = ?";
+      params.push(emailId);
+    }
+    const scenarios = database.prepare(sql).all(...params) as any[];
 
     return scenarios
       .map((s) => this.getScenarioById(s.scenario_id))
@@ -799,6 +885,12 @@ export class ScenarioLoader {
     const database = this.db.getDatabase();
     let sqlQuery = `SELECT scenario_id, name FROM scenarios WHERE 1=1`;
     const params: any[] = [];
+    const emailId = this.getEmailId();
+    const hasEmailIdColumn = this.db.hasColumn("scenarios", "email_id");
+    if (hasEmailIdColumn && emailId) {
+      sqlQuery += " AND email_id = ?";
+      params.push(emailId);
+    }
 
     if (query.name) {
       // Use very loose matching - match if ANY word from search term appears
@@ -907,9 +999,12 @@ export class ScenarioLoader {
    */
   scenarioExists(scenarioId: string): boolean {
     const database = this.db.getDatabase();
+    const scopedScenarioId = this.scopeScenarioId(scenarioId);
+    const emailId = this.getEmailId();
+    const hasEmailIdColumn = this.db.hasColumn("scenarios", "email_id");
     const result = database
-      .prepare(`SELECT COUNT(*) as count FROM scenarios WHERE scenario_id = ?`)
-      .get(scenarioId) as any;
+      .prepare(`SELECT COUNT(*) as count FROM scenarios WHERE scenario_id = ?${hasEmailIdColumn && emailId ? " AND email_id = ?" : ""}`)
+      .get(...(hasEmailIdColumn && emailId ? [scopedScenarioId, emailId] : [scopedScenarioId])) as any;
     return result.count > 0;
   }
 
@@ -923,6 +1018,9 @@ export class ScenarioLoader {
     timestamp: string = new Date().toISOString()
   ): void {
     const database = this.db.getDatabase();
+    const emailId = this.getEmailId();
+    const scopedClueId = scopeId(clueId, emailId);
+    const hasClueEmailId = this.db.hasColumn("scenario_clues", "email_id");
 
     const discoveryDetails = {
       discoveredBy,
@@ -934,9 +1032,9 @@ export class ScenarioLoader {
       .prepare(`
             UPDATE scenario_clues 
             SET discovered = 1, discovery_details = ?
-            WHERE clue_id = ?
+            WHERE clue_id = ?${hasClueEmailId && emailId ? " AND email_id = ?" : ""}
         `)
-      .run(JSON.stringify(discoveryDetails), clueId);
+      .run(...(hasClueEmailId && emailId ? [JSON.stringify(discoveryDetails), scopedClueId, emailId] : [JSON.stringify(discoveryDetails), scopedClueId]));
   }
 
   /**
@@ -944,26 +1042,39 @@ export class ScenarioLoader {
    */
   getUndiscoveredClues(scenarioId?: string, snapshotId?: string): ScenarioClue[] {
     const database = this.db.getDatabase();
+    const emailId = this.getEmailId();
+    const hasClueEmailId = this.db.hasColumn("scenario_clues", "email_id");
+    const hasSnapshotEmailId = this.db.hasColumn("scenario_snapshots", "email_id");
 
     let query: string;
     let params: any[];
 
     if (snapshotId) {
+      const scopedSnapshotId = scopeId(snapshotId, emailId);
       query = `
                 SELECT * FROM scenario_clues 
-                WHERE snapshot_id = ? AND discovered = 0
+                WHERE snapshot_id = ? AND discovered = 0${hasClueEmailId && emailId ? " AND email_id = ?" : ""}
             `;
-      params = [snapshotId];
+      params = hasClueEmailId && emailId ? [scopedSnapshotId, emailId] : [scopedSnapshotId];
     } else if (scenarioId) {
+      const scopedScenarioId = this.scopeScenarioId(scenarioId);
       query = `
                 SELECT sc.* FROM scenario_clues sc
                 JOIN scenario_snapshots ss ON sc.snapshot_id = ss.snapshot_id
-                WHERE ss.scenario_id = ? AND sc.discovered = 0
+                WHERE ss.scenario_id = ? AND sc.discovered = 0${hasClueEmailId && emailId ? " AND sc.email_id = ?" : ""}${hasSnapshotEmailId && emailId ? " AND ss.email_id = ?" : ""}
             `;
-      params = [scenarioId];
+      if (hasClueEmailId && emailId && hasSnapshotEmailId) {
+        params = [scopedScenarioId, emailId, emailId];
+      } else if (hasClueEmailId && emailId) {
+        params = [scopedScenarioId, emailId];
+      } else if (hasSnapshotEmailId && emailId) {
+        params = [scopedScenarioId, emailId];
+      } else {
+        params = [scopedScenarioId];
+      }
     } else {
-      query = `SELECT * FROM scenario_clues WHERE discovered = 0`;
-      params = [];
+      query = `SELECT * FROM scenario_clues WHERE discovered = 0${hasClueEmailId && emailId ? " AND email_id = ?" : ""}`;
+      params = hasClueEmailId && emailId ? [emailId] : [];
     }
 
     const results = database.prepare(query).all(params) as any[];

@@ -1,8 +1,10 @@
+/// <reference path="../types/express.d.ts" />
 import type { Request, Response } from "express";
 import { DatabaseManager } from "../core/DatabaseManager.js";
 import { loadMod } from "./service.js";
 import { ModuleLoader } from "../../../src/coc_multiagents_system/agents/memory/moduleloader/index.js";
 import { WorldModuleLoader } from "../../../src/dynamicworldagent/world_builder/worldModuleLoader.js";
+import { isNameSimilar } from "../utils/stringUtils.js";
 import path from "path";
 import fs from "fs";
 
@@ -50,9 +52,10 @@ export async function loadModData(req: Request, res: Response): Promise<void> {
     }
 
     const db = DatabaseManager.getInstance().getDatabase();
+    const emailId = req.user?.email;
 
     // Load mod with progress reporting
-    const result = await loadMod(db, modName, (stage, progress, message) => {
+    const result = await loadMod(db, modName, emailId, (stage, progress, message) => {
       if (useSSE) {
         res.write(`data: ${JSON.stringify({ stage, progress, message })}\n\n`);
       }
@@ -90,6 +93,7 @@ export async function getModuleIntroduction(req: Request, res: Response): Promis
     }
 
     const db = DatabaseManager.getInstance().getDatabase();
+    const emailId = req.user?.email;
 
     const modsDir = path.join(process.cwd(), "data", "Mods");
     const modPath = path.join(modsDir, modName);
@@ -103,14 +107,18 @@ export async function getModuleIntroduction(req: Request, res: Response): Promis
     if (isWorldBuilderModule(modPath)) {
       console.log(`Loading world-builder module: ${modName}`);
 
-      const worldModuleLoader = new WorldModuleLoader(db);
+      const worldModuleLoader = new WorldModuleLoader(db, { emailId: emailId });
       const loadedModule = await worldModuleLoader.loadAndSaveWorldModule(modPath, false);
 
       if (!loadedModule) {
         // Module hasn't changed, get from database
-        const moduleLoader = new ModuleLoader(db);
+        const moduleLoader = new ModuleLoader(db, undefined, { emailId: emailId });
         const modules = moduleLoader.getAllModules();
-        const module = modules.find(m => m.title === modName);
+        const normalizedModName = modName.trim().toLowerCase();
+        const module =
+          modules.find((candidate) => candidate.title?.trim().toLowerCase() === normalizedModName) ||
+          modules.find((candidate) => candidate.title && isNameSimilar(candidate.title, modName)) ||
+          modules[0];
 
         if (!module) {
           res.status(404).json({ error: "Module not found in database" });
@@ -144,7 +152,7 @@ export async function getModuleIntroduction(req: Request, res: Response): Promis
       // Regular module (old format)
       console.log(`Loading regular module: ${modName}`);
 
-      const moduleLoader = new ModuleLoader(db);
+      const moduleLoader = new ModuleLoader(db, undefined, { emailId: emailId });
 
       // Load module data
       const moduleDigestPath = path.join(modPath, "module_digest.json");
@@ -158,7 +166,11 @@ export async function getModuleIntroduction(req: Request, res: Response): Promis
         return;
       }
 
-      const module = modules[0];
+      const normalizedModName = modName.trim().toLowerCase();
+      const module =
+        modules.find((candidate) => candidate.title?.trim().toLowerCase() === normalizedModName) ||
+        modules.find((candidate) => candidate.title && isNameSimilar(candidate.title, modName)) ||
+        modules[0];
       const moduleIntroduction = module.introduction ? {
         introduction: module.introduction,
         moduleNotes: module.moduleNotes || ""

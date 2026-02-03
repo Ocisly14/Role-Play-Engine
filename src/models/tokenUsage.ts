@@ -3,7 +3,7 @@ import { CoCDatabase } from "../coc_multiagents_system/agents/memory/database/sc
 import { ModelClass, ModelProviderName } from "./types.js";
 
 export type TokenUsageContext = {
-  userId?: string;
+  email?: string;
   turnId?: string;
   usageTotals?: TokenUsageTotals;
 };
@@ -15,7 +15,7 @@ export type TokenUsageTotals = {
 };
 
 type TokenUsageRecord = TokenUsageTotals & {
-  userId?: string;
+  email?: string;
   provider: ModelProviderName;
   modelClass: ModelClass;
   modelName?: string;
@@ -150,8 +150,8 @@ export function mergeUsageTotals(
 
 export function recordTokenUsage(params: TokenUsageRecord): void {
   const store = storage.getStore();
-  const resolvedUserId = params.userId || store?.userId;
-  if (!resolvedUserId) {
+  const resolvedEmail = params.email || store?.email;
+  if (!resolvedEmail) {
     return;
   }
 
@@ -176,7 +176,7 @@ export function recordTokenUsage(params: TokenUsageRecord): void {
 
   try {
     db.recordUserTokenUsage({
-      userId: resolvedUserId,
+      email: resolvedEmail,
       provider: params.provider,
       modelName: params.modelName ?? "unknown",
       modelClass: params.modelClass,
@@ -197,7 +197,7 @@ export function attachUsageTracking<T extends { invoke: any; stream?: any }>(
     modelClass: ModelClass;
     modelName?: string;
     operation?: string;
-    userId?: string;
+    email?: string;
   }
 ): T {
   const marker = tokenUsageWrapped as unknown as keyof T;
@@ -213,7 +213,7 @@ export function attachUsageTracking<T extends { invoke: any; stream?: any }>(
       const usage = extractUsageMetadata(response);
       if (usage) {
         recordTokenUsage({
-          userId: info.userId,
+          email: info.email,
           provider: info.provider,
           modelClass: info.modelClass,
           modelName: info.modelName,
@@ -247,7 +247,7 @@ export function attachUsageTracking<T extends { invoke: any; stream?: any }>(
         } finally {
           if (totals.total_tokens > 0) {
             recordTokenUsage({
-              userId: info.userId,
+              email: info.email,
               provider: info.provider,
               modelClass: info.modelClass,
               modelName: info.modelName,

@@ -38,6 +38,7 @@ type NarrativeStreamHandlers = {
 export async function createTurn(req: Request, res: Response): Promise<void> {
   try {
     const userId = req.user!.userId;
+    const userEmail = req.user!.email;
     const serverState = ServerState.getInstance();
     
     // Check for both GameState and DynamicGameState (for DynamicWorld modules)
@@ -127,7 +128,7 @@ export async function createTurn(req: Request, res: Response): Promise<void> {
     const stateToProcess = useDynamic ? dynamicGameState! : persistentGameState!;
     runWithTokenContext(
       {
-        userId,
+        email: userEmail,
         turnId,
         usageTotals: { input_tokens: 0, output_tokens: 0, total_tokens: 0 },
       },
@@ -402,7 +403,7 @@ export async function getTurnStatus(req: Request, res: Response): Promise<void> 
     const db = DatabaseManager.getInstance().getDatabase();
     const database = db.getDatabase();
 
-    if (!isTurnOwnedByUser(turnId, userId, database)) {
+    if (!isTurnOwnedByUser(turnId, req.user!.email, database)) {
       res.status(404).json({ error: "Turn not found" });
       return;
     }
@@ -528,7 +529,7 @@ export async function getConversation(req: Request, res: Response): Promise<void
     const db = DatabaseManager.getInstance().getDatabase().getDatabase();
     const serverState = ServerState.getInstance();
 
-    if (!isSessionOwnedByUser(sessionId, userId, db, serverState)) {
+    if (!isSessionOwnedByUser(sessionId, userId, req.user!.email, db, serverState)) {
       res.status(404).json({ error: "Session not found" });
       return;
     }
@@ -561,7 +562,7 @@ export async function getTurnHistory(req: Request, res: Response): Promise<void>
     const db = DatabaseManager.getInstance().getDatabase().getDatabase();
     const serverState = ServerState.getInstance();
 
-    if (!isSessionOwnedByUser(sessionId, userId, db, serverState)) {
+    if (!isSessionOwnedByUser(sessionId, userId, req.user!.email, db, serverState)) {
       res.status(404).json({ error: "Session not found" });
       return;
     }
@@ -612,11 +613,11 @@ export async function getLatestSession(req: Request, res: Response): Promise<voi
         MAX(gt.created_at) AS lastTurnAt
       FROM game_turns gt
       JOIN characters c ON c.character_id = gt.character_id
-      WHERE c.user_id = ?
+      WHERE c.email_id = ?
       GROUP BY gt.session_id
       ORDER BY MAX(gt.created_at) DESC
       LIMIT 1
-    `).get(userId) as {
+    `).get(req.user!.email) as {
       sessionId: string;
       characterId: string | null;
       characterName: string | null;
@@ -635,16 +636,16 @@ export async function getLatestSession(req: Request, res: Response): Promise<voi
 
 function isTurnOwnedByUser(
   turnId: string,
-  userId: string,
+  email: string,
   db: Database.Database
 ): boolean {
   const row = db.prepare(`
     SELECT 1
     FROM game_turns gt
     JOIN characters c ON c.character_id = gt.character_id
-    WHERE gt.turn_id = ? AND c.user_id = ?
+    WHERE gt.turn_id = ? AND c.email_id = ?
     LIMIT 1
-  `).get(turnId, userId);
+  `).get(turnId, email);
 
   return Boolean(row);
 }
@@ -652,6 +653,7 @@ function isTurnOwnedByUser(
 function isSessionOwnedByUser(
   sessionId: string,
   userId: string,
+  email: string,
   db: Database.Database,
   serverState: ServerState
 ): boolean {
@@ -664,9 +666,9 @@ function isSessionOwnedByUser(
     SELECT 1
     FROM game_turns gt
     JOIN characters c ON c.character_id = gt.character_id
-    WHERE gt.session_id = ? AND c.user_id = ?
+    WHERE gt.session_id = ? AND c.email_id = ?
     LIMIT 1
-  `).get(sessionId, userId);
+  `).get(sessionId, email);
 
   return Boolean(row);
 }

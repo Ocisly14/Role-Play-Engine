@@ -14,6 +14,7 @@ import {
 } from "../../../models/index.js";
 import * as fs from "fs";
 import * as path from "path";
+import { resolveEmailId } from "../memory/database/userContext.js";
 
 interface DirectorRuntime {
   modelProvider: ModelProviderName;
@@ -70,20 +71,22 @@ export class DirectorAgent {
   }> {
     const database = this.db.getDatabase();
     const allScenarios = this.scenarioLoader.getAllScenarios();
+    const emailId = resolveEmailId();
+    const hasSnapshotEmailId = this.db.hasColumn("scenario_snapshots", "email_id");
     
     const scenariosWithSnapshots = allScenarios.map(scenario => {
       // Get all snapshots for this scenario from database
       const snapshots = database
         .prepare(`SELECT snapshot_id, snapshot_name, location, time_restriction 
                   FROM scenario_snapshots 
-                  WHERE scenario_id = ? 
+                  WHERE scenario_id = ?${hasSnapshotEmailId && emailId ? " AND email_id = ?" : ""} 
                   ORDER BY 
                     CASE 
                       WHEN time_restriction IS NULL THEN 0 
                       ELSE 1 
                     END,
                     snapshot_id`)
-        .all(scenario.id) as Array<{
+        .all(...(hasSnapshotEmailId && emailId ? [scenario.id, emailId] : [scenario.id])) as Array<{
           snapshot_id: string;
           snapshot_name: string;
           location: string;
@@ -134,9 +137,11 @@ export class DirectorAgent {
       // If not found in default snapshots, search in database for all snapshots
       if (!targetSnapshot) {
         const database = this.db.getDatabase();
+        const emailId = resolveEmailId();
+        const hasSnapshotEmailId = this.db.hasColumn("scenario_snapshots", "email_id");
         const snapshotRow = database
-          .prepare(`SELECT snapshot_id, scenario_id FROM scenario_snapshots WHERE snapshot_id = ?`)
-          .get(targetSnapshotId) as { snapshot_id: string; scenario_id: string } | undefined;
+          .prepare(`SELECT snapshot_id, scenario_id FROM scenario_snapshots WHERE snapshot_id = ?${hasSnapshotEmailId && emailId ? " AND email_id = ?" : ""}`)
+          .get(...(hasSnapshotEmailId && emailId ? [targetSnapshotId, emailId] : [targetSnapshotId])) as { snapshot_id: string; scenario_id: string } | undefined;
 
         if (snapshotRow) {
           // Find the scenario name
@@ -236,10 +241,15 @@ export class DirectorAgent {
    */
   private async buildSnapshotFromRow(snapshotId: string): Promise<ScenarioSnapshot | null> {
     const database = this.db.getDatabase();
+    const emailId = resolveEmailId();
+    const hasSnapshotEmailId = this.db.hasColumn("scenario_snapshots", "email_id");
+    const hasCharacterEmailId = this.db.hasColumn("scenario_characters", "email_id");
+    const hasClueEmailId = this.db.hasColumn("scenario_clues", "email_id");
+    const hasConditionEmailId = this.db.hasColumn("scenario_conditions", "email_id");
     
     const snap = database
-      .prepare(`SELECT * FROM scenario_snapshots WHERE snapshot_id = ?`)
-      .get(snapshotId) as any;
+      .prepare(`SELECT * FROM scenario_snapshots WHERE snapshot_id = ?${hasSnapshotEmailId && emailId ? " AND email_id = ?" : ""}`)
+      .get(...(hasSnapshotEmailId && emailId ? [snapshotId, emailId] : [snapshotId])) as any;
     
     if (!snap) {
       return null;
@@ -247,16 +257,16 @@ export class DirectorAgent {
     
     // Get characters, clues, conditions for this snapshot
     const characters = database
-      .prepare(`SELECT * FROM scenario_characters WHERE snapshot_id = ?`)
-      .all(snapshotId) as any[];
+      .prepare(`SELECT * FROM scenario_characters WHERE snapshot_id = ?${hasCharacterEmailId && emailId ? " AND email_id = ?" : ""}`)
+      .all(...(hasCharacterEmailId && emailId ? [snapshotId, emailId] : [snapshotId])) as any[];
     
     const clues = database
-      .prepare(`SELECT * FROM scenario_clues WHERE snapshot_id = ?`)
-      .all(snapshotId) as any[];
+      .prepare(`SELECT * FROM scenario_clues WHERE snapshot_id = ?${hasClueEmailId && emailId ? " AND email_id = ?" : ""}`)
+      .all(...(hasClueEmailId && emailId ? [snapshotId, emailId] : [snapshotId])) as any[];
     
     const conditions = database
-      .prepare(`SELECT * FROM scenario_conditions WHERE snapshot_id = ?`)
-      .all(snapshotId) as any[];
+      .prepare(`SELECT * FROM scenario_conditions WHERE snapshot_id = ?${hasConditionEmailId && emailId ? " AND email_id = ?" : ""}`)
+      .all(...(hasConditionEmailId && emailId ? [snapshotId, emailId] : [snapshotId])) as any[];
     
     // Get scenario for permanent changes
     const scenario = database

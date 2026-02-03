@@ -1,5 +1,6 @@
 import type { Request, Response } from "express";
 import { DatabaseManager } from "../core/DatabaseManager.js";
+import { ModuleLoader } from "../../../src/coc_multiagents_system/agents/memory/moduleloader/index.js";
 import path from "path";
 import fs from "fs";
 
@@ -67,19 +68,13 @@ export function getWeapons(req: Request, res: Response): void {
 export function getMods(req: Request, res: Response): void {
   try {
     const modsDir = path.join(process.cwd(), "data", "Mods");
-
-    if (!fs.existsSync(modsDir)) {
-      res.json({ success: true, mods: [] });
-      return;
-    }
-
-    const dirs = fs.readdirSync(modsDir, { withFileTypes: true });
-    const mods = dirs
-      .filter(dirent => dirent.isDirectory())
-      .map(dirent => ({
-        name: dirent.name,
-        path: path.join(modsDir, dirent.name),
-      }));
+    const db = DatabaseManager.getInstance().getDatabase();
+    const moduleLoader = new ModuleLoader(db, undefined, { emailId: req.user?.email });
+    const modules = moduleLoader.getAllModules();
+    const mods = modules.map((mod) => ({
+      name: mod.title,
+      path: path.join(modsDir, mod.title),
+    }));
 
     res.json({
       success: true,

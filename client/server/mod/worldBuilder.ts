@@ -1,3 +1,4 @@
+/// <reference path="../types/express.d.ts" />
 /**
  * World Builder API Controller
  * Handles world generation requests via SSE
@@ -5,6 +6,10 @@
 
 import type { Request, Response } from "express";
 import { WorldBuilderService } from "../../../src/dynamicworldagent/world_builder/worldBuilderService.js";
+import { WorldModuleLoader } from "../../../src/dynamicworldagent/world_builder/worldModuleLoader.js";
+import { DatabaseManager } from "../core/DatabaseManager.js";
+import path from "path";
+import fs from "fs";
 
 /**
  * Generate world content for a module
@@ -63,6 +68,17 @@ export async function generateWorld(req: Request, res: Response): Promise<void> 
         );
       }
     );
+
+    // Persist to DB for this user (keep JSON unchanged)
+    try {
+      const db = DatabaseManager.getInstance().getDatabase();
+      const moduleDir = path.join(process.cwd(), "data", "Mods", result.macroScene.moduleName);
+      const worldLoader = new WorldModuleLoader(db, { emailId: req.user?.email });
+      await worldLoader.loadAndSaveWorldModule(moduleDir, true);
+      console.log(`✅ [World Builder API] Module persisted to DB for user`);
+    } catch (error) {
+      console.warn("⚠️  [World Builder API] Failed to persist module to DB:", error);
+    }
 
     // Send final result with summary (including generated module name)
     res.write(
@@ -148,6 +164,20 @@ export async function generateScene(req: Request, res: Response): Promise<void> 
       }
     );
 
+    // Persist to DB if module_digest.json exists (scene-only may not generate it)
+    try {
+      const moduleDir = path.join(process.cwd(), "data", "Mods", result.macroScene.moduleName);
+      const digestPath = path.join(moduleDir, "module_digest.json");
+      if (fs.existsSync(digestPath)) {
+        const db = DatabaseManager.getInstance().getDatabase();
+        const worldLoader = new WorldModuleLoader(db, { emailId: req.user?.email });
+        await worldLoader.loadAndSaveWorldModule(moduleDir, true);
+        console.log(`✅ [World Builder API] Scene module persisted to DB for user`);
+      }
+    } catch (error) {
+      console.warn("⚠️  [World Builder API] Failed to persist scene module to DB:", error);
+    }
+
     res.write(
       `data: ${JSON.stringify({
         stage: "complete",
@@ -222,6 +252,17 @@ export async function generateNpcs(req: Request, res: Response): Promise<void> {
         );
       }
     );
+
+    // Refresh DB module data with newly generated NPCs
+    try {
+      const db = DatabaseManager.getInstance().getDatabase();
+      const moduleDir = path.join(process.cwd(), "data", "Mods", result.macroScene.moduleName);
+      const worldLoader = new WorldModuleLoader(db, { emailId: req.user?.email });
+      await worldLoader.loadAndSaveWorldModule(moduleDir, true);
+      console.log(`✅ [World Builder API] NPC updates persisted to DB for user`);
+    } catch (error) {
+      console.warn("⚠️  [World Builder API] Failed to persist NPC updates to DB:", error);
+    }
 
     res.write(
       `data: ${JSON.stringify({

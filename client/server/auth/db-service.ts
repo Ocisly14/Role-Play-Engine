@@ -84,16 +84,16 @@ export const authDbService = {
 
     // Record referral code use (permanent codes; track email per use)
     db.prepare(`
-      INSERT INTO referral_code_uses (id, referral_code_id, user_id, email, used_at)
-      VALUES (?, ?, ?, ?, CURRENT_TIMESTAMP)
-    `).run(randomUUID(), referral.id, userId, data.email);
+      INSERT INTO referral_code_uses (id, referral_code_id, email_id, used_at)
+      VALUES (?, ?, ?, CURRENT_TIMESTAMP)
+    `).run(randomUUID(), referral.id, data.email);
 
     const user = db
       .prepare("SELECT * FROM users WHERE id = ?")
       .get(userId) as User;
 
     // Send verification email
-    await this.sendEmailVerification(userId);
+    await this.sendEmailVerification(data.email);
 
     return {
       user: this.sanitizeUser(user),
@@ -151,9 +151,9 @@ export const authDbService = {
       const expiresAt = getIdleExpiresAt();
 
       db.prepare(`
-        INSERT INTO refresh_tokens (id, user_id, token, expires_at)
+        INSERT INTO refresh_tokens (id, email_id, token, expires_at)
         VALUES (?, ?, ?, ?)
-      `).run(tokenId, user.id, refreshToken, expiresAt);
+      `).run(tokenId, user.email, refreshToken, expiresAt);
     }
 
     return {
@@ -164,10 +164,10 @@ export const authDbService = {
   },
 
   // Send email verification
-  async sendEmailVerification(userId: string) {
+  async sendEmailVerification(email: string) {
     const db = getDB();
 
-    const user = db.prepare("SELECT * FROM users WHERE id = ?").get(userId) as
+    const user = db.prepare("SELECT * FROM users WHERE email = ?").get(email) as
       | User
       | undefined;
 
@@ -186,9 +186,9 @@ export const authDbService = {
 
     // Save to database
     db.prepare(`
-      INSERT INTO email_verifications (id, user_id, token, expires_at)
+      INSERT INTO email_verifications (id, email_id, token, expires_at)
       VALUES (?, ?, ?, ?)
-    `).run(verificationId, user.id, token, expiresAt);
+    `).run(verificationId, user.email, token, expiresAt);
 
     // Send email
     await emailService.sendVerificationEmail(user.email, token);
@@ -202,9 +202,8 @@ export const authDbService = {
 
     const verification = db
       .prepare(`
-      SELECT ev.*, u.email
+      SELECT ev.*
       FROM email_verifications ev
-      JOIN users u ON ev.user_id = u.id
       WHERE ev.token = ?
     `)
       .get(token) as any;
@@ -222,8 +221,8 @@ export const authDbService = {
     }
 
     // Update user status
-    db.prepare("UPDATE users SET is_email_verified = 1 WHERE id = ?").run(
-      verification.user_id
+    db.prepare("UPDATE users SET is_email_verified = 1 WHERE email = ?").run(
+      verification.email_id
     );
 
     // Mark token as used
@@ -254,9 +253,9 @@ export const authDbService = {
 
     // Save to database
     db.prepare(`
-      INSERT INTO password_resets (id, user_id, token, expires_at)
+      INSERT INTO password_resets (id, email_id, token, expires_at)
       VALUES (?, ?, ?, ?)
-    `).run(resetId, user.id, token, expiresAt);
+    `).run(resetId, user.email, token, expiresAt);
 
     // Send email
     await emailService.sendPasswordResetEmail(user.email, token);
@@ -286,9 +285,9 @@ export const authDbService = {
 
     // Update password
     const passwordHash = await hashPassword(newPassword);
-    db.prepare("UPDATE users SET password_hash = ? WHERE id = ?").run(
+    db.prepare("UPDATE users SET password_hash = ? WHERE email = ?").run(
       passwordHash,
-      reset.user_id
+      reset.email_id
     );
 
     // Mark token as used
@@ -298,8 +297,8 @@ export const authDbService = {
 
     // Revoke all refresh tokens
     db.prepare(
-      "UPDATE refresh_tokens SET is_revoked = 1 WHERE user_id = ?"
-    ).run(reset.user_id);
+      "UPDATE refresh_tokens SET is_revoked = 1 WHERE email_id = ?"
+    ).run(reset.email_id);
 
     return { message: "Password reset successfully" };
   },
@@ -310,9 +309,12 @@ export const authDbService = {
 
     const token = db
       .prepare(`
-      SELECT rt.*, u.*
+      SELECT rt.id AS token_id, rt.is_revoked, rt.expires_at,
+             u.id AS uid, u.email, u.username, u.password_hash,
+             u.is_email_verified, u.is_active, u.role,
+             u.created_at, u.updated_at, u.last_login_at
       FROM refresh_tokens rt
-      JOIN users u ON rt.user_id = u.id
+      JOIN users u ON rt.email_id = u.email
       WHERE rt.token = ?
     `)
       .get(refreshToken) as any;
@@ -323,11 +325,11 @@ export const authDbService = {
 
     db.prepare("UPDATE refresh_tokens SET expires_at = ? WHERE id = ?").run(
       getIdleExpiresAt(),
-      token.id
+      token.token_id
     );
 
     const user: User = {
-      id: token.user_id,
+      id: token.uid,
       email: token.email,
       username: token.username,
       password_hash: token.password_hash,
@@ -344,16 +346,16 @@ export const authDbService = {
     return { accessToken };
   },
 
-  touchRefreshToken(refreshToken: string, userId: string) {
+  touchRefreshToken(refreshToken: string, email: string) {
     const db = getDB();
 
     const token = db
       .prepare(`
       SELECT id, expires_at, is_revoked
       FROM refresh_tokens
-      WHERE token = ? AND user_id = ?
+      WHERE token = ? AND email_id = ?
     `)
-      .get(refreshToken, userId) as any;
+      .get(refreshToken, email) as any;
 
     if (!token || token.is_revoked || new Date(token.expires_at) < new Date()) {
       return false;
@@ -384,13 +386,13 @@ export const authDbService = {
 
   // Change password
   async changePassword(
-    userId: string,
+    email: string,
     oldPassword: string,
     newPassword: string
   ) {
     const db = getDB();
 
-    const user = db.prepare("SELECT * FROM users WHERE id = ?").get(userId) as
+    const user = db.prepare("SELECT * FROM users WHERE email = ?").get(email) as
       | User
       | undefined;
 
@@ -406,15 +408,15 @@ export const authDbService = {
 
     // Update password
     const passwordHash = await hashPassword(newPassword);
-    db.prepare("UPDATE users SET password_hash = ? WHERE id = ?").run(
+    db.prepare("UPDATE users SET password_hash = ? WHERE email = ?").run(
       passwordHash,
-      userId
+      email
     );
 
     // Revoke all refresh tokens
     db.prepare(
-      "UPDATE refresh_tokens SET is_revoked = 1 WHERE user_id = ?"
-    ).run(userId);
+      "UPDATE refresh_tokens SET is_revoked = 1 WHERE email_id = ?"
+    ).run(email);
 
     return { message: "Password changed successfully" };
   },
@@ -445,7 +447,7 @@ export const authDbService = {
     }
     const rows = db
       .prepare(
-        "SELECT email FROM referral_code_uses WHERE referral_code_id = ? ORDER BY used_at ASC"
+        "SELECT email_id AS email FROM referral_code_uses WHERE referral_code_id = ? ORDER BY used_at ASC"
       )
       .all(ref.id) as { email: string }[];
     const emails = rows.map((r) => r.email);
@@ -464,7 +466,7 @@ export const authDbService = {
       .all() as { id: string; code: string }[];
     const out: Array<{ code: string; emails: string[]; count: number }> = [];
     const getEmails = db.prepare(
-      "SELECT email FROM referral_code_uses WHERE referral_code_id = ? ORDER BY used_at ASC"
+      "SELECT email_id AS email FROM referral_code_uses WHERE referral_code_id = ? ORDER BY used_at ASC"
     );
     for (const c of codes) {
       const rows = getEmails.all(c.id) as { email: string }[];

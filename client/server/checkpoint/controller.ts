@@ -51,27 +51,27 @@ export async function saveCheckpoint(req: Request, res: Response): Promise<void>
 
     const ownedCharacter = database.prepare(`
       SELECT character_id FROM characters
-      WHERE character_id = ? AND user_id = ? AND is_npc = 0
-    `).get(characterId, userId);
+      WHERE character_id = ? AND email_id = ? AND is_npc = 0
+    `).get(characterId, req.user!.email);
 
     if (!ownedCharacter) {
-      // If character exists but is unassigned (user_id is NULL), claim it for this user.
+      // If character exists but is unassigned (email_id is NULL), claim it for this user.
       const unassigned = database.prepare(`
         SELECT character_id FROM characters
-        WHERE character_id = ? AND user_id IS NULL AND is_npc = 0
+        WHERE character_id = ? AND email_id IS NULL AND is_npc = 0
       `).get(characterId);
 
       if (unassigned) {
         database.prepare(`
           UPDATE characters
-          SET user_id = ?
-          WHERE character_id = ? AND user_id IS NULL AND is_npc = 0
-        `).run(userId, characterId);
-        console.log(`[${new Date().toISOString()}] [Checkpoint Save] Claimed unassigned character ${characterId} for user ${userId}`);
+          SET email_id = ?
+          WHERE character_id = ? AND email_id IS NULL AND is_npc = 0
+        `).run(req.user!.email, characterId);
+        console.log(`[${new Date().toISOString()}] [Checkpoint Save] Claimed unassigned character ${characterId} for user ${req.user!.email}`);
       } else {
-        console.log(`[${new Date().toISOString()}] [Checkpoint Save] ERROR: Character ${characterId} not found in database for user ${userId}`);
+        console.log(`[${new Date().toISOString()}] [Checkpoint Save] ERROR: Character ${characterId} not found in database for user ${req.user!.email}`);
         // Check if character exists at all
-        const charExists = database.prepare(`SELECT character_id, user_id, name FROM characters WHERE character_id = ?`).get(characterId);
+        const charExists = database.prepare(`SELECT character_id, email_id, name FROM characters WHERE character_id = ?`).get(characterId);
         if (charExists) {
           console.log(`[${new Date().toISOString()}] [Checkpoint Save] Character exists but belongs to different user: ${JSON.stringify(charExists)}`);
           res.status(403).json({ error: `Character not found. Character ${characterName || characterId} may belong to a different user.` });
@@ -194,8 +194,8 @@ export function listCheckpoints(req: Request, res: Response): void {
         SELECT s.session_id
         FROM sessions s
         JOIN characters c ON c.character_id = s.character_id
-        WHERE s.session_id = ? AND c.user_id = ?
-      `).get(sessionId, userId);
+        WHERE s.session_id = ? AND c.email_id = ?
+      `).get(sessionId, req.user!.email);
 
       if (!session) {
         res.status(404).json({ error: "Session not found" });
@@ -214,12 +214,12 @@ export function listCheckpoints(req: Request, res: Response): void {
           SELECT s.session_id
           FROM sessions s
           JOIN characters c ON c.character_id = s.character_id
-          WHERE c.user_id = ?
+          WHERE c.email_id = ?
         )
         ORDER BY created_at DESC
         LIMIT ?
       `);
-      checkpoints = stmt.all(userId, limit) as any[];
+      checkpoints = stmt.all(req.user!.email, limit) as any[];
     }
 
     // Normalize field names to camelCase
@@ -269,8 +269,8 @@ export async function loadCheckpointData(req: Request, res: Response): Promise<v
       FROM game_checkpoints gc
       JOIN sessions s ON s.session_id = gc.session_id
       JOIN characters c ON c.character_id = s.character_id
-      WHERE gc.checkpoint_id = ? AND c.user_id = ?
-    `).get(checkpointId, userId);
+      WHERE gc.checkpoint_id = ? AND c.email_id = ?
+    `).get(checkpointId, req.user!.email);
 
     if (!ownedCheckpoint) {
       res.status(404).json({ error: "Checkpoint not found" });
@@ -448,8 +448,8 @@ export function deleteCheckpoint(req: Request, res: Response): void {
       FROM game_checkpoints gc
       JOIN sessions s ON s.session_id = gc.session_id
       JOIN characters c ON c.character_id = s.character_id
-      WHERE gc.checkpoint_id = ? AND c.user_id = ?
-    `).get(checkpointId, userId);
+      WHERE gc.checkpoint_id = ? AND c.email_id = ?
+    `).get(checkpointId, req.user!.email);
 
     if (!ownedCheckpoint) {
       res.status(404).json({ error: "Checkpoint not found or you don't have permission to delete it" });

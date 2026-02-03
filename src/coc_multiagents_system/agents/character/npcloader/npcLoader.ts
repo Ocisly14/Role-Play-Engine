@@ -9,6 +9,7 @@ import path from "path";
 import { ChatGoogleGenerativeAI } from "@langchain/google-genai";
 import { ChatOpenAI } from "@langchain/openai";
 import type { CoCDatabase } from "../../memory/database/schema.js";
+import { resolveEmailId, scopeId } from "../../memory/database/userContext.js";
 import type {
   CharacterAttributes,
   CharacterStatus,
@@ -102,15 +103,22 @@ export class NPCLoader {
   private db: CoCDatabase;
   private parser: NPCDocumentParser;
   private mergeModel: ChatOpenAI | ChatGoogleGenerativeAI;
+  private emailId?: string;
 
   constructor(
     db: CoCDatabase,
     parser?: NPCDocumentParser,
-    mergeModel?: ChatOpenAI | ChatGoogleGenerativeAI
+    mergeModel?: ChatOpenAI | ChatGoogleGenerativeAI,
+    options?: { emailId?: string }
   ) {
     this.db = db;
     this.parser = parser || new NPCDocumentParser();
     this.mergeModel = mergeModel || this.createMergeModel();
+    this.emailId = options?.emailId;
+  }
+
+  private getEmailId(): string | undefined {
+    return resolveEmailId(this.emailId);
   }
 
   /**
@@ -130,9 +138,20 @@ export class NPCLoader {
     // Wipe and reinsert
     const database = this.db.getDatabase();
     this.db.transaction(() => {
-      database.prepare("DELETE FROM npc_clues").run();
-      database.prepare("DELETE FROM npc_relationships").run();
-      database.prepare("DELETE FROM characters WHERE is_npc = 1").run();
+      const emailId = this.getEmailId();
+      const hasClueEmailId = this.db.hasColumn("npc_clues", "email_id");
+      const hasRelEmailId = this.db.hasColumn("npc_relationships", "email_id");
+      const hasCharacterEmailId = this.db.hasColumn("characters", "email_id");
+
+      database
+        .prepare(`DELETE FROM npc_clues${hasClueEmailId && emailId ? " WHERE email_id = ?" : ""}`)
+        .run(...(hasClueEmailId && emailId ? [emailId] : []));
+      database
+        .prepare(`DELETE FROM npc_relationships${hasRelEmailId && emailId ? " WHERE email_id = ?" : ""}`)
+        .run(...(hasRelEmailId && emailId ? [emailId] : []));
+      database
+        .prepare(`DELETE FROM characters WHERE is_npc = 1${hasCharacterEmailId && emailId ? " AND email_id = ?" : ""}`)
+        .run(...(hasCharacterEmailId && emailId ? [emailId] : []));
     });
     console.log("Cleared existing NPC data from DB.");
 
@@ -228,9 +247,20 @@ export class NPCLoader {
     // Rewrite DB
     const database = this.db.getDatabase();
     this.db.transaction(() => {
-      database.prepare("DELETE FROM npc_clues").run();
-      database.prepare("DELETE FROM npc_relationships").run();
-      database.prepare("DELETE FROM characters WHERE is_npc = 1").run();
+      const emailId = this.getEmailId();
+      const hasClueEmailId = this.db.hasColumn("npc_clues", "email_id");
+      const hasRelEmailId = this.db.hasColumn("npc_relationships", "email_id");
+      const hasCharacterEmailId = this.db.hasColumn("characters", "email_id");
+
+      database
+        .prepare(`DELETE FROM npc_clues${hasClueEmailId && emailId ? " WHERE email_id = ?" : ""}`)
+        .run(...(hasClueEmailId && emailId ? [emailId] : []));
+      database
+        .prepare(`DELETE FROM npc_relationships${hasRelEmailId && emailId ? " WHERE email_id = ?" : ""}`)
+        .run(...(hasRelEmailId && emailId ? [emailId] : []));
+      database
+        .prepare(`DELETE FROM characters WHERE is_npc = 1${hasCharacterEmailId && emailId ? " AND email_id = ?" : ""}`)
+        .run(...(hasCharacterEmailId && emailId ? [emailId] : []));
     });
     console.log("Rewrote DB with LLM-suggested merges.");
 
@@ -491,7 +521,7 @@ export class NPCLoader {
    * Convert ParsedNPCData to NPCProfile
    */
   private convertToNPCProfile(parsedData: ParsedNPCData): NPCProfile {
-    const npcId = this.generateNPCId(parsedData.name);
+    const npcId = scopeId(this.generateNPCId(parsedData.name), this.getEmailId());
 
     // Merge attributes with defaults
     const attributes: CharacterAttributes = this.normalizeAttributes(
@@ -885,6 +915,10 @@ Return ONLY JSON array, no extra text.`;
    */
   private saveNPCToDatabase(npc: NPCProfile): void {
     const database = this.db.getDatabase();
+    const emailId = this.getEmailId();
+    const hasCharacterEmailId = this.db.hasColumn("characters", "email_id");
+    const hasClueEmailId = this.db.hasColumn("npc_clues", "email_id");
+    const hasRelationshipEmailId = this.db.hasColumn("npc_relationships", "email_id");
 
     this.db.transaction(() => {
       // Insert or update character
@@ -892,8 +926,8 @@ Return ONLY JSON array, no extra text.`;
                 INSERT OR REPLACE INTO characters (
                     character_id, name, attributes, status, inventory, skills, notes,
                     is_npc, occupation, age, gender, appearance, personality, background, goals, secrets, current_location,
-                    updated_at
-                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP)
+                    ${hasCharacterEmailId ? "email_id, " : ""}updated_at
+                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ${hasCharacterEmailId ? "?, " : ""}CURRENT_TIMESTAMP)
             `);
 
       stmt.run(
@@ -913,21 +947,24 @@ Return ONLY JSON array, no extra text.`;
         npc.background || null,
         JSON.stringify(npc.goals),
         JSON.stringify(npc.secrets),
-        npc.currentLocation || null
+        npc.currentLocation || null,
+        ...(hasCharacterEmailId ? [emailId ?? null] : [])
       );
 
       // Delete existing clues and relationships for this NPC
-      database.prepare("DELETE FROM npc_clues WHERE npc_id = ?").run(npc.id);
       database
-        .prepare("DELETE FROM npc_relationships WHERE source_id = ?")
-        .run(npc.id);
+        .prepare(`DELETE FROM npc_clues WHERE npc_id = ?${hasClueEmailId && emailId ? " AND email_id = ?" : ""}`)
+        .run(...(hasClueEmailId && emailId ? [npc.id, emailId] : [npc.id]));
+      database
+        .prepare(`DELETE FROM npc_relationships WHERE source_id = ?${hasRelationshipEmailId && emailId ? " AND email_id = ?" : ""}`)
+        .run(...(hasRelationshipEmailId && emailId ? [npc.id, emailId] : [npc.id]));
 
       // Insert clues
       if (npc.clues.length > 0) {
         const clueStmt = database.prepare(`
                     INSERT INTO npc_clues (
-                        id, npc_id, clue_text, category, difficulty, revealed, related_to
-                    ) VALUES (?, ?, ?, ?, ?, ?, ?)
+                        id, npc_id, clue_text, category, difficulty, revealed, related_to${hasClueEmailId ? ", email_id" : ""}
+                    ) VALUES (?, ?, ?, ?, ?, ?, ?${hasClueEmailId ? ", ?" : ""})
                 `);
 
         for (const clue of npc.clues) {
@@ -938,7 +975,8 @@ Return ONLY JSON array, no extra text.`;
             clue.category || null,
             clue.difficulty || null,
             clue.revealed ? 1 : 0,
-            clue.relatedTo ? JSON.stringify(clue.relatedTo) : null
+            clue.relatedTo ? JSON.stringify(clue.relatedTo) : null,
+            ...(hasClueEmailId ? [emailId ?? null] : [])
           );
         }
       }
@@ -947,8 +985,8 @@ Return ONLY JSON array, no extra text.`;
       if (npc.relationships.length > 0) {
         const relStmt = database.prepare(`
                     INSERT INTO npc_relationships (
-                        id, source_id, target_id, target_name, relationship_type, attitude, description, history
-                    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+                        id, source_id, target_id, target_name, relationship_type, attitude, description, history${hasRelationshipEmailId ? ", email_id" : ""}
+                    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?${hasRelationshipEmailId ? ", ?" : ""})
                 `);
 
         const seenTargets = new Set<string>();
@@ -968,7 +1006,8 @@ Return ONLY JSON array, no extra text.`;
             rel.relationshipType,
             rel.attitude,
             rel.description || null,
-            rel.history || null
+            rel.history || null,
+            ...(hasRelationshipEmailId ? [emailId ?? null] : [])
           );
         }
       }
@@ -987,13 +1026,18 @@ Return ONLY JSON array, no extra text.`;
    */
   getNPCById(npcId: string): NPCProfile | null {
     const database = this.db.getDatabase();
+    const scopedNpcId = scopeId(npcId, this.getEmailId());
+    const emailId = this.getEmailId();
+    const hasCharacterEmailId = this.db.hasColumn("characters", "email_id");
+    const hasClueEmailId = this.db.hasColumn("npc_clues", "email_id");
+    const hasRelationshipEmailId = this.db.hasColumn("npc_relationships", "email_id");
 
     // Get character data
     const character = database
       .prepare(`
-            SELECT * FROM characters WHERE character_id = ? AND is_npc = 1
+            SELECT * FROM characters WHERE character_id = ? AND is_npc = 1${hasCharacterEmailId && emailId ? " AND email_id = ?" : ""}
         `)
-      .get(npcId) as any;
+      .get(...(hasCharacterEmailId && emailId ? [scopedNpcId, emailId] : [scopedNpcId])) as any;
 
     if (!character) {
       return null;
@@ -1002,16 +1046,16 @@ Return ONLY JSON array, no extra text.`;
     // Get clues
     const clues = database
       .prepare(`
-            SELECT * FROM npc_clues WHERE npc_id = ?
+            SELECT * FROM npc_clues WHERE npc_id = ?${hasClueEmailId && emailId ? " AND email_id = ?" : ""}
         `)
-      .all(npcId) as any[];
+      .all(...(hasClueEmailId && emailId ? [scopedNpcId, emailId] : [scopedNpcId])) as any[];
 
     // Get relationships
     const relationships = database
       .prepare(`
-            SELECT * FROM npc_relationships WHERE source_id = ?
+            SELECT * FROM npc_relationships WHERE source_id = ?${hasRelationshipEmailId && emailId ? " AND email_id = ?" : ""}
         `)
-      .all(npcId) as any[];
+      .all(...(hasRelationshipEmailId && emailId ? [scopedNpcId, emailId] : [scopedNpcId])) as any[];
 
     // Build NPC profile
     const npcProfile: NPCProfile = {
@@ -1060,12 +1104,16 @@ Return ONLY JSON array, no extra text.`;
    */
   getAllNPCs(): NPCProfile[] {
     const database = this.db.getDatabase();
+    const emailId = this.getEmailId();
+    const hasEmailIdColumn = this.db.hasColumn("characters", "email_id");
 
-    const characters = database
-      .prepare(`
-            SELECT character_id FROM characters WHERE is_npc = 1
-        `)
-      .all() as any[];
+    let sql = "SELECT character_id FROM characters WHERE is_npc = 1";
+    const params: any[] = [];
+    if (hasEmailIdColumn && emailId) {
+      sql += " AND email_id = ?";
+      params.push(emailId);
+    }
+    const characters = database.prepare(sql).all(...params) as any[];
 
     return characters
       .map((c) => this.getNPCById(c.character_id))
@@ -1077,11 +1125,14 @@ Return ONLY JSON array, no extra text.`;
    */
   npcExists(npcId: string): boolean {
     const database = this.db.getDatabase();
+    const scopedNpcId = scopeId(npcId, this.getEmailId());
+    const emailId = this.getEmailId();
+    const hasEmailIdColumn = this.db.hasColumn("characters", "email_id");
     const result = database
       .prepare(`
-            SELECT COUNT(*) as count FROM characters WHERE character_id = ? AND is_npc = 1
+            SELECT COUNT(*) as count FROM characters WHERE character_id = ? AND is_npc = 1${hasEmailIdColumn && emailId ? " AND email_id = ?" : ""}
         `)
-      .get(npcId) as any;
+      .get(...(hasEmailIdColumn && emailId ? [scopedNpcId, emailId] : [scopedNpcId])) as any;
     return result.count > 0;
   }
 

@@ -29,6 +29,7 @@ import type { DynamicCharacterProfile, DynamicNPCProfile, DynamicScenarioSnapsho
 import type { CoCDatabase } from "../../coc_multiagents_system/agents/memory/database/index.js";
 import { InventoryUtils } from "../../coc_multiagents_system/agents/models/gameTypes.js";
 import { randomUUID } from "crypto";
+import { resolveEmailId } from "../../coc_multiagents_system/agents/memory/database/userContext.js";
 
 /**
  * Temporary Info for Dynamic World
@@ -671,8 +672,13 @@ export class DynamicGameStateManager {
   ): DynamicScenarioSnapshot[] {
     try {
       const database = db.getDatabase();
+      const emailId = resolveEmailId();
       const hasDynamicHistorical = db.hasColumn("scenario_snapshots", "is_dynamic_historical");
       const hasGameTime = db.hasColumn("scenario_snapshots", "game_time");
+      const hasSnapshotEmailId = db.hasColumn("scenario_snapshots", "email_id");
+      const hasCharacterEmailId = db.hasColumn("scenario_characters", "email_id");
+      const hasClueEmailId = db.hasColumn("scenario_clues", "email_id");
+      const hasConditionEmailId = db.hasColumn("scenario_conditions", "email_id");
       
       if (!hasDynamicHistorical || !hasGameTime) {
         return []; // Cannot load if columns don't exist
@@ -683,9 +689,9 @@ export class DynamicGameStateManager {
       const snapshotRows = database.prepare(`
         SELECT * FROM scenario_snapshots
         WHERE scenario_id = ? 
-          AND is_dynamic_historical = 1
+          AND is_dynamic_historical = 1${hasSnapshotEmailId && emailId ? " AND email_id = ?" : ""}
         ORDER BY game_time ASC, created_at ASC
-      `).all(scenarioId) as any[];
+      `).all(...(hasSnapshotEmailId && emailId ? [scenarioId, emailId] : [scenarioId])) as any[];
 
       const checkpointTime = `Day ${checkpointGameDay}, ${checkpointTimeOfDay}`;
       const historicalSnapshots: DynamicScenarioSnapshot[] = [];
@@ -705,21 +711,21 @@ export class DynamicGameStateManager {
           SELECT id, character_name, character_role, character_status,
                  character_location, character_notes
           FROM scenario_characters
-          WHERE snapshot_id = ?
-        `).all(row.snapshot_id) as any[];
+          WHERE snapshot_id = ?${hasCharacterEmailId && emailId ? " AND email_id = ?" : ""}
+        `).all(...(hasCharacterEmailId && emailId ? [row.snapshot_id, emailId] : [row.snapshot_id])) as any[];
 
         const clues = database.prepare(`
           SELECT clue_id, clue_text, category, difficulty, clue_location,
                  discovery_method, reveals, discovered, discovery_details
           FROM scenario_clues
-          WHERE snapshot_id = ?
-        `).all(row.snapshot_id) as any[];
+          WHERE snapshot_id = ?${hasClueEmailId && emailId ? " AND email_id = ?" : ""}
+        `).all(...(hasClueEmailId && emailId ? [row.snapshot_id, emailId] : [row.snapshot_id])) as any[];
 
         const conditions = database.prepare(`
           SELECT condition_id, condition_type, description, mechanical_effect
           FROM scenario_conditions
-          WHERE snapshot_id = ?
-        `).all(row.snapshot_id) as any[];
+          WHERE snapshot_id = ?${hasConditionEmailId && emailId ? " AND email_id = ?" : ""}
+        `).all(...(hasConditionEmailId && emailId ? [row.snapshot_id, emailId] : [row.snapshot_id])) as any[];
 
         // Build snapshot object
         const snapshot: DynamicScenarioSnapshot = {
@@ -1412,6 +1418,11 @@ export class DynamicGameStateManager {
 
     try {
       const database = this.db.getDatabase();
+      const emailId = resolveEmailId();
+      const hasEmailIdColumn = this.db.hasColumn("scenario_snapshots", "email_id");
+      const hasCharacterEmailId = this.db.hasColumn("scenario_characters", "email_id");
+      const hasClueEmailId = this.db.hasColumn("scenario_clues", "email_id");
+      const hasConditionEmailId = this.db.hasColumn("scenario_conditions", "email_id");
       
       // Generate a unique snapshot ID for historical snapshot
       const historicalSnapshotId = `hist-${scenarioId}-${Date.now()}-${randomUUID().slice(0, 8)}`;
@@ -1437,8 +1448,8 @@ export class DynamicGameStateManager {
           INSERT INTO scenario_snapshots (
             snapshot_id, scenario_id, snapshot_name, location, description,
             events, exits, keeper_notes, time_restriction, show_map,
-            initial_snapshot, game_time, is_dynamic_historical
-          ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+            initial_snapshot, game_time, is_dynamic_historical${hasEmailIdColumn ? ", email_id" : ""}
+          ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?${hasEmailIdColumn ? ", ?" : ""})
         `);
 
         snapshotStmt.run(
@@ -1454,15 +1465,16 @@ export class DynamicGameStateManager {
           snapshot.showMap === false ? 0 : 1,
           0, // initial_snapshot = false for historical snapshots
           snapshot.gameTime || null,
-          1 // is_dynamic_historical = true for dynamic historical snapshots
+          1, // is_dynamic_historical = true for dynamic historical snapshots
+          ...(hasEmailIdColumn ? [emailId ?? null] : [])
         );
       } else if (hasInitialSnapshot && hasGameTime) {
         const snapshotStmt = database.prepare(`
           INSERT INTO scenario_snapshots (
             snapshot_id, scenario_id, snapshot_name, location, description,
             events, exits, keeper_notes, time_restriction, show_map,
-            initial_snapshot, game_time
-          ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+            initial_snapshot, game_time${hasEmailIdColumn ? ", email_id" : ""}
+          ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?${hasEmailIdColumn ? ", ?" : ""})
         `);
 
         snapshotStmt.run(
@@ -1477,14 +1489,15 @@ export class DynamicGameStateManager {
           snapshot.timeRestriction || null,
           snapshot.showMap === false ? 0 : 1,
           0, // initial_snapshot = false for historical snapshots
-          snapshot.gameTime || null
+          snapshot.gameTime || null,
+          ...(hasEmailIdColumn ? [emailId ?? null] : [])
         );
       } else {
         const snapshotStmt = database.prepare(`
           INSERT INTO scenario_snapshots (
             snapshot_id, scenario_id, snapshot_name, location, description,
-            events, exits, keeper_notes, time_restriction, show_map
-          ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+            events, exits, keeper_notes, time_restriction, show_map${hasEmailIdColumn ? ", email_id" : ""}
+          ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?${hasEmailIdColumn ? ", ?" : ""})
         `);
 
         snapshotStmt.run(
@@ -1497,7 +1510,8 @@ export class DynamicGameStateManager {
           JSON.stringify([]), // exits removed
           snapshot.keeperNotes || null,
           snapshot.timeRestriction || null,
-          snapshot.showMap === false ? 0 : 1
+          snapshot.showMap === false ? 0 : 1,
+          ...(hasEmailIdColumn ? [emailId ?? null] : [])
         );
       }
 
@@ -1506,19 +1520,21 @@ export class DynamicGameStateManager {
         const charStmt = database.prepare(`
           INSERT OR IGNORE INTO scenario_characters (
             id, snapshot_id, character_name, character_role, character_status,
-            character_location, character_notes
-          ) VALUES (?, ?, ?, ?, ?, ?, ?)
+            character_location, character_notes${hasCharacterEmailId ? ", email_id" : ""}
+          ) VALUES (?, ?, ?, ?, ?, ?, ?${hasCharacterEmailId ? ", ?" : ""})
         `);
 
         for (const char of snapshot.characters) {
+          const charId = char.id || `${historicalSnapshotId}-char-${randomUUID().slice(0, 8)}`;
           charStmt.run(
-            char.id || `${historicalSnapshotId}-char-${randomUUID().slice(0, 8)}`,
+            charId,
             historicalSnapshotId,
             char.name,
             char.role,
             char.status,
             char.location || null,
-            char.notes || null
+            char.notes || null,
+            ...(hasCharacterEmailId ? [emailId ?? null] : [])
           );
         }
       }
@@ -1528,13 +1544,14 @@ export class DynamicGameStateManager {
         const clueStmt = database.prepare(`
           INSERT OR IGNORE INTO scenario_clues (
             clue_id, snapshot_id, clue_text, category, difficulty,
-            clue_location, discovery_method, reveals, discovered, discovery_details
-          ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+            clue_location, discovery_method, reveals, discovered, discovery_details${hasClueEmailId ? ", email_id" : ""}
+          ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?${hasClueEmailId ? ", ?" : ""})
         `);
 
         for (const clue of snapshot.clues) {
+          const clueId = clue.id || `${historicalSnapshotId}-clue-${randomUUID().slice(0, 8)}`;
           clueStmt.run(
-            clue.id || `${historicalSnapshotId}-clue-${randomUUID().slice(0, 8)}`,
+            clueId,
             historicalSnapshotId,
             clue.clueText,
             clue.category,
@@ -1543,7 +1560,8 @@ export class DynamicGameStateManager {
             clue.discoveryMethod || null,
             JSON.stringify(clue.reveals || []),
             clue.discovered ? 1 : 0,
-            clue.discoveryDetails ? JSON.stringify(clue.discoveryDetails) : null
+            clue.discoveryDetails ? JSON.stringify(clue.discoveryDetails) : null,
+            ...(hasClueEmailId ? [emailId ?? null] : [])
           );
         }
       }
@@ -1552,8 +1570,8 @@ export class DynamicGameStateManager {
       if (snapshot.conditions && snapshot.conditions.length > 0) {
         const conditionStmt = database.prepare(`
           INSERT OR IGNORE INTO scenario_conditions (
-            condition_id, snapshot_id, condition_type, description, mechanical_effect
-          ) VALUES (?, ?, ?, ?, ?)
+            condition_id, snapshot_id, condition_type, description, mechanical_effect${hasConditionEmailId ? ", email_id" : ""}
+          ) VALUES (?, ?, ?, ?, ?${hasConditionEmailId ? ", ?" : ""})
         `);
 
         for (const condition of snapshot.conditions) {
@@ -1563,7 +1581,8 @@ export class DynamicGameStateManager {
             historicalSnapshotId,
             condition.type,
             condition.description,
-            condition.mechanicalEffect || null
+            condition.mechanicalEffect || null,
+            ...(hasConditionEmailId ? [emailId ?? null] : [])
           );
         }
       }

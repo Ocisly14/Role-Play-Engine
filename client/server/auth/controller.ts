@@ -70,8 +70,7 @@ export const authController = {
   // Send Verification Email
   async sendVerification(req: Request, res: Response) {
     try {
-      const userId = req.user!.userId;
-      const result = await authService.sendEmailVerification(userId);
+      const result = await authService.sendEmailVerification(req.user!.email);
       res.json(result);
     } catch (error: any) {
       res.status(400).json({ error: error.message });
@@ -114,10 +113,9 @@ export const authController = {
   // Change Password
   async changePassword(req: Request, res: Response) {
     try {
-      const userId = req.user!.userId;
       const { oldPassword, newPassword } = req.body;
       const result = await authService.changePassword(
-        userId,
+        req.user!.email,
         oldPassword,
         newPassword
       );

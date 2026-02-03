@@ -9,6 +9,7 @@ import {
 } from "../../../models/index.js";
 import type { CoCDatabase } from "../../../coc_multiagents_system/agents/memory/database/index.js";
 import { extractRecentConversationHistory } from "../../../coc_multiagents_system/agents/memory/memoryAgent.js";
+import { resolveEmailId } from "../../../coc_multiagents_system/agents/memory/database/userContext.js";
 
 interface OrchestratorRuntime {
   modelProvider: ModelProviderName;
@@ -50,9 +51,11 @@ export class OrchestratorAgent {
       // Try to get scenario_id from database using snapshot_id
       try {
         const database = db.getDatabase();
+        const emailId = resolveEmailId();
+        const hasSnapshotEmailId = db.hasColumn("scenario_snapshots", "email_id");
         const snapshotRow = database
-          .prepare(`SELECT scenario_id FROM scenario_snapshots WHERE snapshot_id = ?`)
-          .get(dynamicState.currentScenario.id) as { scenario_id: string } | undefined;
+          .prepare(`SELECT scenario_id FROM scenario_snapshots WHERE snapshot_id = ?${hasSnapshotEmailId && emailId ? " AND email_id = ?" : ""}`)
+          .get(...(hasSnapshotEmailId && emailId ? [dynamicState.currentScenario.id, emailId] : [dynamicState.currentScenario.id])) as { scenario_id: string } | undefined;
         
         if (snapshotRow) {
           // Find scenario outline by scenario_id
