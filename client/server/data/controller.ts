@@ -1,6 +1,6 @@
 import type { Request, Response } from "express";
 import { DatabaseManager } from "../core/DatabaseManager.js";
-import { ModuleLoader } from "../../../src/coc_multiagents_system/agents/memory/moduleloader/index.js";
+import { listUserLibrary } from "../mod/library.js";
 import path from "path";
 import fs from "fs";
 
@@ -69,11 +69,17 @@ export function getMods(req: Request, res: Response): void {
   try {
     const modsDir = path.join(process.cwd(), "data", "Mods");
     const db = DatabaseManager.getInstance().getDatabase();
-    const moduleLoader = new ModuleLoader(db, undefined, { emailId: req.user?.email });
-    const modules = moduleLoader.getAllModules();
-    const mods = modules.map((mod) => ({
-      name: mod.title,
-      path: path.join(modsDir, mod.title),
+    const email = req.user?.email;
+    if (!email) {
+      res.status(401).json({ error: "Authentication required" });
+      return;
+    }
+    const mods = listUserLibrary(db, email).map((mod) => ({
+      name: mod.name,
+      path: path.join(modsDir, mod.name),
+      shared: mod.shared,
+      ownerEmail: mod.ownerEmail,
+      isOwner: mod.isOwner,
     }));
 
     res.json({

@@ -8,6 +8,7 @@ import type { Request, Response } from "express";
 import { WorldBuilderService } from "../../../src/dynamicworldagent/world_builder/worldBuilderService.js";
 import { WorldModuleLoader } from "../../../src/dynamicworldagent/world_builder/worldModuleLoader.js";
 import { DatabaseManager } from "../core/DatabaseManager.js";
+import { registerModuleForUser } from "./library.js";
 import path from "path";
 import fs from "fs";
 
@@ -75,6 +76,9 @@ export async function generateWorld(req: Request, res: Response): Promise<void> 
       const moduleDir = path.join(process.cwd(), "data", "Mods", result.macroScene.moduleName);
       const worldLoader = new WorldModuleLoader(db, { emailId: req.user?.email });
       await worldLoader.loadAndSaveWorldModule(moduleDir, true);
+      if (req.user?.email) {
+        registerModuleForUser(db, req.user.email, result.macroScene.moduleName);
+      }
       console.log(`✅ [World Builder API] Module persisted to DB for user`);
     } catch (error) {
       console.warn("⚠️  [World Builder API] Failed to persist module to DB:", error);
@@ -172,6 +176,9 @@ export async function generateScene(req: Request, res: Response): Promise<void> 
         const db = DatabaseManager.getInstance().getDatabase();
         const worldLoader = new WorldModuleLoader(db, { emailId: req.user?.email });
         await worldLoader.loadAndSaveWorldModule(moduleDir, true);
+        if (req.user?.email) {
+          registerModuleForUser(db, req.user.email, result.macroScene.moduleName);
+        }
         console.log(`✅ [World Builder API] Scene module persisted to DB for user`);
       }
     } catch (error) {
@@ -259,6 +266,9 @@ export async function generateNpcs(req: Request, res: Response): Promise<void> {
       const moduleDir = path.join(process.cwd(), "data", "Mods", result.macroScene.moduleName);
       const worldLoader = new WorldModuleLoader(db, { emailId: req.user?.email });
       await worldLoader.loadAndSaveWorldModule(moduleDir, true);
+      if (req.user?.email) {
+        registerModuleForUser(db, req.user.email, result.macroScene.moduleName);
+      }
       console.log(`✅ [World Builder API] NPC updates persisted to DB for user`);
     } catch (error) {
       console.warn("⚠️  [World Builder API] Failed to persist NPC updates to DB:", error);

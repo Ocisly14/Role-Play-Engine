@@ -610,6 +610,52 @@ export class CoCDatabase {
                 tags TEXT -- JSON array
             );
         `);
+
+    // Mod catalog table - global registry for module ownership/sharing
+    this.db.exec(`
+            CREATE TABLE IF NOT EXISTS mod_catalog (
+                module_name TEXT PRIMARY KEY,
+                owner_email TEXT NOT NULL,
+                shared INTEGER NOT NULL DEFAULT 0,
+                created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+                deleted_at DATETIME DEFAULT NULL
+            );
+            CREATE INDEX IF NOT EXISTS idx_mod_catalog_owner ON mod_catalog(owner_email);
+            CREATE INDEX IF NOT EXISTS idx_mod_catalog_shared ON mod_catalog(shared);
+            CREATE INDEX IF NOT EXISTS idx_mod_catalog_deleted ON mod_catalog(deleted_at);
+        `);
+
+    // User mod library table - per-user module library
+    this.db.exec(`
+            CREATE TABLE IF NOT EXISTS user_mods (
+                email_id TEXT NOT NULL,
+                module_name TEXT NOT NULL,
+                added_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+                PRIMARY KEY (email_id, module_name)
+            );
+            CREATE INDEX IF NOT EXISTS idx_user_mods_email ON user_mods(email_id);
+            CREATE INDEX IF NOT EXISTS idx_user_mods_module ON user_mods(module_name);
+        `);
+
+    // User mod library bootstrap marker
+    this.db.exec(`
+            CREATE TABLE IF NOT EXISTS user_mods_bootstrap (
+                email_id TEXT PRIMARY KEY,
+                bootstrapped_at DATETIME DEFAULT CURRENT_TIMESTAMP
+            );
+        `);
+
+    // User mod soft-delete tombstones (tracks per-user deletions for restore/expiry)
+    this.db.exec(`
+            CREATE TABLE IF NOT EXISTS user_mods_deleted (
+                email_id TEXT NOT NULL,
+                module_name TEXT NOT NULL,
+                deleted_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+                PRIMARY KEY (email_id, module_name)
+            );
+            CREATE INDEX IF NOT EXISTS idx_user_mods_deleted_email ON user_mods_deleted(email_id);
+            CREATE INDEX IF NOT EXISTS idx_user_mods_deleted_module ON user_mods_deleted(module_name);
+        `);
     try {
       if (!this.hasColumn("module_backgrounds", "email_id")) {
         this.db.exec("ALTER TABLE module_backgrounds ADD COLUMN email_id TEXT;");

@@ -9,6 +9,7 @@ import { GameChat } from "./components/GameChat";
 import { GameSidebar } from "./components/GameSidebar";
 import { CharacterSelector } from "./components/CharacterSelector";
 import { ModSelector } from "./components/ModSelector";
+import { ModManager } from "./components/ModManager";
 import { StoryCreator } from "./components/StoryCreator";
 import { authFetch } from "./utils/authFetch";
 import { findAvailableImage } from "./utils/imageLoader";
@@ -134,6 +135,7 @@ const AppShell: React.FC = () => {
   const [selectedCharacterId, setSelectedCharacterId] = useState<string>("");
   const [selectedModName, setSelectedModName] = useState<string>("");
   const [showCheckpointSelector, setShowCheckpointSelector] = useState(false);
+  const [showModManager, setShowModManager] = useState(false);
   const [checkpoints, setCheckpoints] = useState<any[]>([]);
   const [loadingCheckpoints, setLoadingCheckpoints] = useState(false);
   const [moduleIntroduction, setModuleIntroduction] = useState<{ introduction: string; moduleNotes: string } | null>(null);
@@ -1999,7 +2001,11 @@ const AppShell: React.FC = () => {
           }}
           onStartGame={handleShowCharacterSelector}
           onContinueGame={handleContinueGame}
+          onManageMods={() => setShowModManager(true)}
         />
+        {showModManager && (
+          <ModManager onClose={() => setShowModManager(false)} />
+        )}
         {showCheckpointSelector && (
           <div className="fixed inset-0 z-50 bg-black/50 backdrop-blur-sm supports-[backdrop-filter]:bg-black/30 supports-[backdrop-filter]:backdrop-blur-sm flex items-center justify-center p-5">
             <div className="fixed left-[50%] top-[50%] z-50 translate-x-[-50%] translate-y-[-50%] max-w-[600px] max-h-[80vh] w-[90%] overflow-y-auto rounded-3xl p-12 supports-[backdrop-filter]:backdrop-blur-lg border border-white/50 bg-white/80 shadow-[0_30px_80px_rgba(15,23,42,0.25)] supports-[backdrop-filter]:bg-white/55">

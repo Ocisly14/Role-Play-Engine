@@ -485,9 +485,13 @@ body.background-transitioning::after {
 }
 
 .home-actions button {
-  padding: 20px 50px;
+  width: clamp(260px, 50vw, 340px);
+  height: 64px;
+  padding: 0 24px;
   font-size: 1.25rem;
-  min-width: 320px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
   border-radius: 8px;
   position: relative;
   overflow: hidden;

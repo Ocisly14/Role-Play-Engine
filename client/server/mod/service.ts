@@ -3,6 +3,7 @@ import { ScenarioLoader } from "../../../src/coc_multiagents_system/agents/memor
 import { NPCLoader } from "../../../src/coc_multiagents_system/agents/character/npcloader/index.js";
 import { ModuleLoader } from "../../../src/coc_multiagents_system/agents/memory/moduleloader/index.js";
 import { WorldModuleLoader } from "../../../src/dynamicworldagent/world_builder/worldModuleLoader.js";
+import { registerModuleForUser } from "./library.js";
 import path from "path";
 import fs from "fs";
 
@@ -63,6 +64,10 @@ export async function loadMod(
     const modulesLoaded = 1;
 
     onProgress?.("Complete", 100, `Loaded ${scenariosLoaded} scenarios, ${npcsLoaded} NPCs, ${modulesLoaded} modules`);
+
+    if (emailId) {
+      registerModuleForUser(db, emailId, modName);
+    }
 
     return {
       success: true,
@@ -138,6 +143,10 @@ export async function loadMod(
   }
 
   onProgress?.("Complete", 100, `Loaded ${scenariosLoaded} scenarios, ${npcsLoaded} NPCs, ${modulesLoaded} modules`);
+
+  if (emailId) {
+    registerModuleForUser(db, emailId, modName);
+  }
 
   return {
     success: true,

@@ -7,6 +7,7 @@ interface HomeProps {
   onCreate: () => void;
   onStartGame: () => void;
   onContinueGame: () => void;
+  onManageMods: () => void;
 }
 
 interface Character {
@@ -18,7 +19,7 @@ interface Character {
   status?: string;
 }
 
-const Homes: React.FC<HomeProps> = ({ onCreate, onStartGame, onContinueGame }) => {
+const Homes: React.FC<HomeProps> = ({ onCreate, onStartGame, onContinueGame, onManageMods }) => {
   const [showCharacterBrowser, setShowCharacterBrowser] = useState(false);
   const [characters, setCharacters] = useState<Character[]>([]);
   const [loading, setLoading] = useState(false);
@@ -82,6 +83,9 @@ const Homes: React.FC<HomeProps> = ({ onCreate, onStartGame, onContinueGame }) =
             </button>
             <button className="secondary" onClick={onContinueGame}>
               Continue Game
+            </button>
+            <button className="secondary" onClick={onManageMods}>
+              Manage Modules
             </button>
             <button className="secondary" onClick={onCreate}>
               Create Character

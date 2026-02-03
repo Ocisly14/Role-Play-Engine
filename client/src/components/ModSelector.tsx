@@ -396,7 +396,7 @@ export function ModSelector({
 
         .empty-state {
           text-align: center;
-          padding: 20px 12px 8px;
+          padding: 10px 0 18px;
           color: #5a4a3a;
         }
 
