@@ -1535,6 +1535,47 @@ textarea {
   margin-bottom: 16px;
 }
 
+.memo-filters {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+  gap: 10px;
+  margin-bottom: 12px;
+}
+
+.memo-filter,
+.memo-search {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.memo-filter-label {
+  font-size: 0.7rem;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: #6b7280;
+  font-weight: 600;
+}
+
+.memo-filter-select,
+.memo-filter-input {
+  width: 100%;
+  border: 1px solid rgba(226, 232, 240, 0.8);
+  border-radius: 0.5rem;
+  padding: 6px 10px;
+  font-family: var(--serif);
+  font-size: 0.85rem;
+  background: rgba(255, 255, 255, 0.7);
+  color: var(--ink);
+}
+
+.memo-filter-select:focus,
+.memo-filter-input:focus {
+  outline: none;
+  border-color: var(--accent);
+  box-shadow: 0 0 0 2px rgba(191, 149, 94, 0.2);
+}
+
 .memo-input {
   width: 100%;
   border: 1px solid rgba(226, 232, 240, 0.8);

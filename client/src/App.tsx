@@ -1084,7 +1084,7 @@ const AppShell: React.FC = () => {
   const sheet = (
     <div className="sheet">
       <h1>TaleCraft AI Agent</h1>
-      <form onSubmit={handleCreateCharacter}>
+      <form onSubmit={handleCreateCharacter} onKeyDown={(e) => { if (e.key === 'Enter') e.preventDefault(); }}>
         <div style={{ textAlign: "right", marginBottom: "6px" }}>
           <button
             type="button"

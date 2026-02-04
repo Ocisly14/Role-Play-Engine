@@ -1379,6 +1379,72 @@ export class CoCDatabase {
         // Don't fail branch creation if copying fails
       }
     }
+
+    // Copy player memos from parent session (filtered by checkpoint time if provided)
+    try {
+      const memoRows = database.prepare(`
+        SELECT memo_id, email_id, text, game_day, game_time, location, created_at, updated_at
+        FROM player_memos
+        WHERE session_id = ?
+        ORDER BY created_at ASC
+      `).all(parentSessionId) as any[];
+
+      const parseTime = (value: string): number | null => {
+        if (!value || typeof value !== "string") return null;
+        const parts = value.split(":").map((part) => Number(part));
+        if (parts.length < 2) return null;
+        const [hours, minutes] = parts;
+        if (!Number.isFinite(hours) || !Number.isFinite(minutes)) return null;
+        return hours * 60 + minutes;
+      };
+
+      const checkpointMinutes = checkpointTimeOfDay ? parseTime(checkpointTimeOfDay) : null;
+      const filteredMemos = memoRows.filter((memo) => {
+        if (checkpointGameDay === undefined || checkpointGameDay === null || !checkpointTimeOfDay) {
+          return true;
+        }
+        if (memo.game_day === null || memo.game_day === undefined) return true;
+        if (!memo.game_time || typeof memo.game_time !== "string") return true;
+        const memoDay = Number(memo.game_day);
+        const memoMinutes = parseTime(memo.game_time);
+        if (!Number.isFinite(memoDay) || memoMinutes === null || checkpointMinutes === null) {
+          return true;
+        }
+        if (memoDay < checkpointGameDay) return true;
+        if (memoDay > checkpointGameDay) return false;
+        return memoMinutes <= checkpointMinutes;
+      });
+
+      if (filteredMemos.length > 0) {
+        const insertMemoStmt = database.prepare(`
+          INSERT INTO player_memos (
+            memo_id, session_id, email_id, text, game_day, game_time, location, created_at, updated_at
+          ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+        `);
+
+        for (const memo of filteredMemos) {
+          const newMemoId = `memo-${randomUUID()}`;
+          insertMemoStmt.run(
+            newMemoId,
+            branchSessionId,
+            memo.email_id || null,
+            memo.text || "",
+            memo.game_day ?? null,
+            memo.game_time ?? null,
+            memo.location ?? null,
+            memo.created_at || new Date().toISOString(),
+            memo.updated_at || memo.created_at || new Date().toISOString()
+          );
+        }
+
+        console.log(`📝 [Branch Session] Copied ${filteredMemos.length} memos to branch: ${branchSessionId}`);
+      } else {
+        console.log(`📝 [Branch Session] No memos to copy for branch: ${branchSessionId}`);
+      }
+    } catch (error) {
+      console.warn(`⚠️ [Branch Session] Failed to copy parent memos:`, error);
+      // Don't fail branch creation if memo copy fails
+    }
     
     console.log(`🌿 [Branch Session] Created branch session: ${branchSessionId} (parent: ${parentSessionId}, subId: ${subId})`);
     return { branchSessionId, subId };

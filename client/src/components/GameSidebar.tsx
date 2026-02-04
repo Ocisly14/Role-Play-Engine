@@ -122,6 +122,9 @@ export function GameSidebar({ sessionId, apiBaseUrl = '/api', refreshTrigger }: 
   }>>([]);
   const [memoLoading, setMemoLoading] = useState(false);
   const [memoError, setMemoError] = useState<string | null>(null);
+  const [memoDayFilter, setMemoDayFilter] = useState('all');
+  const [memoLocationFilter, setMemoLocationFilter] = useState('all');
+  const [memoQuery, setMemoQuery] = useState('');
   const isInitialLoadRef = useRef(true);
   const memoSaveTimers = useRef<Record<string, number>>({});
 
@@ -298,6 +301,36 @@ export function GameSidebar({ sessionId, apiBaseUrl = '/api', refreshTrigger }: 
 
     fetchGameState();
   }, [apiBaseUrl, sessionId, refreshTrigger]); // Refetch when refreshTrigger changes
+
+  const memoDayOptions = Array.from(
+    new Set(
+      memoItems
+        .map((item) => item.gameDay)
+        .filter((day): day is number => typeof day === 'number')
+    )
+  ).sort((a, b) => a - b);
+
+  const memoLocationOptions = Array.from(
+    new Set(
+      memoItems
+        .map((item) => item.location?.trim())
+        .filter((location): location is string => Boolean(location))
+    )
+  ).sort((a, b) => a.localeCompare(b));
+
+  const normalizedMemoQuery = memoQuery.trim().toLowerCase();
+  const filteredMemoItems = memoItems.filter((item) => {
+    if (memoDayFilter !== 'all' && item.gameDay !== Number(memoDayFilter)) {
+      return false;
+    }
+    if (memoLocationFilter !== 'all' && (item.location?.trim() ?? '') !== memoLocationFilter) {
+      return false;
+    }
+    if (normalizedMemoQuery) {
+      return item.text.toLowerCase().includes(normalizedMemoQuery);
+    }
+    return true;
+  });
 
   return (
     <div className="game-sidebar backdrop-blur-sm border border-slate-200 shadow-md rounded-lg">
@@ -516,6 +549,51 @@ export function GameSidebar({ sessionId, apiBaseUrl = '/api', refreshTrigger }: 
                 <p className="empty-state">Loading...</p>
               ) : (
                 <>
+                  <div className="memo-filters">
+                    <div className="memo-filter">
+                      <label className="memo-filter-label" htmlFor="memo-day-filter">Game day</label>
+                      <select
+                        id="memo-day-filter"
+                        className="memo-filter-select"
+                        value={memoDayFilter}
+                        onChange={(event) => setMemoDayFilter(event.target.value)}
+                      >
+                        <option value="all">All days</option>
+                        {memoDayOptions.map((day) => (
+                          <option key={day} value={String(day)}>
+                            Day {day}
+                          </option>
+                        ))}
+                      </select>
+                    </div>
+                    <div className="memo-filter">
+                      <label className="memo-filter-label" htmlFor="memo-location-filter">Location</label>
+                      <select
+                        id="memo-location-filter"
+                        className="memo-filter-select"
+                        value={memoLocationFilter}
+                        onChange={(event) => setMemoLocationFilter(event.target.value)}
+                      >
+                        <option value="all">All locations</option>
+                        {memoLocationOptions.map((location) => (
+                          <option key={location} value={location}>
+                            {location}
+                          </option>
+                        ))}
+                      </select>
+                    </div>
+                    <div className="memo-search">
+                      <label className="memo-filter-label" htmlFor="memo-search">Search</label>
+                      <input
+                        id="memo-search"
+                        className="memo-filter-input"
+                        type="search"
+                        placeholder="Search notes..."
+                        value={memoQuery}
+                        onChange={(event) => setMemoQuery(event.target.value)}
+                      />
+                    </div>
+                  </div>
                   <div className="memo-compose">
                     <textarea
                       className="memo-input"
@@ -534,32 +612,36 @@ export function GameSidebar({ sessionId, apiBaseUrl = '/api', refreshTrigger }: 
                   </div>
                   <div className="memo-list">
                     {memoItems.length > 0 ? (
-                  memoItems.map((item, idx) => (
-                    <div key={item.id} className="memo-item">
-                      <div className="memo-item-header">
-                        <span>Note {idx + 1}</span>
-                        <button
-                          className="memo-btn memo-btn-ghost"
-                          onClick={() => removeMemo(item.id)}
-                        >
-                          Delete
-                        </button>
-                      </div>
-                      {(item.gameDay || item.gameTime || item.location) && (
-                        <div className="memo-item-meta">
-                          {item.gameDay ? `Day ${item.gameDay}` : 'Day --'}
-                          {item.gameTime ? ` · ${item.gameTime}` : ''}
-                          {item.location ? ` · ${item.location}` : ''}
-                        </div>
-                      )}
-                      <textarea
-                        className="memo-input memo-input-item"
-                        rows={3}
-                            value={item.text}
-                            onChange={(event) => updateMemo(item.id, event.target.value)}
-                          />
-                        </div>
-                      ))
+                      filteredMemoItems.length > 0 ? (
+                        filteredMemoItems.map((item, idx) => (
+                          <div key={item.id} className="memo-item">
+                            <div className="memo-item-header">
+                              <span>Note {idx + 1}</span>
+                              <button
+                                className="memo-btn memo-btn-ghost"
+                                onClick={() => removeMemo(item.id)}
+                              >
+                                Delete
+                              </button>
+                            </div>
+                            {(item.gameDay || item.gameTime || item.location) && (
+                              <div className="memo-item-meta">
+                                {item.gameDay ? `Day ${item.gameDay}` : 'Day --'}
+                                {item.gameTime ? ` · ${item.gameTime}` : ''}
+                                {item.location ? ` · ${item.location}` : ''}
+                              </div>
+                            )}
+                            <textarea
+                              className="memo-input memo-input-item"
+                              rows={3}
+                              value={item.text}
+                              onChange={(event) => updateMemo(item.id, event.target.value)}
+                            />
+                          </div>
+                        ))
+                      ) : (
+                        <p className="empty-state">No notes match the current filters</p>
+                      )
                     ) : (
                       <p className="empty-state">No notes yet</p>
                     )}

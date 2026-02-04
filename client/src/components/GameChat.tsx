@@ -79,6 +79,31 @@ interface Message {
   gameTime?: string | null;
 }
 
+function getLatestTurnNumber(messages: Message[]): number | null {
+  if (!messages || messages.length === 0) return null;
+  let max = Number.NEGATIVE_INFINITY;
+  for (const msg of messages) {
+    const num = typeof msg.turnNumber === 'number' ? msg.turnNumber : NaN;
+    if (Number.isFinite(num) && num > max) {
+      max = num;
+    }
+  }
+  return Number.isFinite(max) ? max : null;
+}
+
+function getLatestCompletedTurnNumber(messages: Message[]): number | null {
+  if (!messages || messages.length === 0) return null;
+  let max = Number.NEGATIVE_INFINITY;
+  for (const msg of messages) {
+    if (msg.role !== 'keeper') continue;
+    const num = typeof msg.turnNumber === 'number' ? msg.turnNumber : NaN;
+    if (Number.isFinite(num) && num > max) {
+      max = num;
+    }
+  }
+  return Number.isFinite(max) ? max : null;
+}
+
 interface GameEndingInfo {
   isEnded: boolean;
   endingType: 'death' | 'time_limit' | 'victory' | 'failure' | 'other';
@@ -129,6 +154,7 @@ export function GameChat({ sessionId, apiBaseUrl = '/api', characterName = 'Inve
   const shouldReconnectRef = useRef<boolean>(true); // Track if we should auto-reconnect
   const currentSessionIdRef = useRef<string | null>(null); // Track current session to avoid duplicate connections
   const autoSaveTriggeredRef = useRef(false);
+  const lastSavedTurnNumberRef = useRef<number | null>(null);
   const sessionIdRef = useRef<string | null>(sessionId);
   const autoSaveEffectRunsRef = useRef(0);
   // Refs to access latest values without causing WebSocket reconnection
@@ -158,10 +184,25 @@ export function GameChat({ sessionId, apiBaseUrl = '/api', characterName = 'Inve
   useEffect(() => {
     sessionIdRef.current = sessionId || null;
     autoSaveTriggeredRef.current = false;
+    lastSavedTurnNumberRef.current = null;
   }, [sessionId]);
+
+  const updateLastSavedTurnNumber = useCallback((nextMessages: Message[]) => {
+    const latestCompleted = getLatestCompletedTurnNumber(nextMessages);
+    const latestAny = getLatestTurnNumber(nextMessages);
+    lastSavedTurnNumberRef.current = latestCompleted ?? latestAny ?? null;
+  }, []);
+
+  const hasNewTurnSinceLastSave = useCallback(() => {
+    const latestTurnNumber = getLatestTurnNumber(messagesRef.current);
+    const lastSavedTurnNumber = lastSavedTurnNumberRef.current;
+    if (latestTurnNumber === null || lastSavedTurnNumber === null) return false;
+    return latestTurnNumber > lastSavedTurnNumber;
+  }, []);
 
   const triggerAutoSave = useCallback((reason: string, keepalive = false) => {
     if (autoSaveTriggeredRef.current) return;
+    if (reason === "exit" && !hasNewTurnSinceLastSave()) return;
     const activeSessionId = sessionIdRef.current;
     if (!activeSessionId) return;
 
@@ -175,7 +216,7 @@ export function GameChat({ sessionId, apiBaseUrl = '/api', characterName = 'Inve
     }).catch((err) => {
       console.warn("[GameChat] Auto-save failed:", err);
     });
-  }, [apiBaseUrl]);
+  }, [apiBaseUrl, hasNewTurnSinceLastSave]);
 
   useEffect(() => {
     const handleBeforeUnload = () => {
@@ -651,6 +692,7 @@ export function GameChat({ sessionId, apiBaseUrl = '/api', characterName = 'Inve
       // Mark all existing turnNumbers as processed
       const existingTurnNumbers = new Set(initialMessages.map(msg => msg.turnNumber));
       processedTurnIdsRef.current = new Set(Array.from(existingTurnNumbers).map(n => `turn-${n}`));
+      updateLastSavedTurnNumber(initialMessages);
     } else if (sessionId) {
       loadConversationHistory();
     }
@@ -664,6 +706,7 @@ export function GameChat({ sessionId, apiBaseUrl = '/api', characterName = 'Inve
       // Mark all existing turnNumbers as processed
       const existingTurnNumbers = new Set(initialMessages.map(msg => msg.turnNumber));
       processedTurnIdsRef.current = new Set(Array.from(existingTurnNumbers).map(n => `turn-${n}`));
+      updateLastSavedTurnNumber(initialMessages);
     } else if (!initialMessages && sessionId) {
       // If initialMessages is cleared, reload from API
       loadConversationHistory();
@@ -977,17 +1020,20 @@ export function GameChat({ sessionId, apiBaseUrl = '/api', characterName = 'Inve
 
       if (data.success && data.conversation) {
         setMessages(data.conversation);
+        updateLastSavedTurnNumber(data.conversation);
         // Mark all existing turnNumbers as processed
         const existingTurnNumbers = new Set(data.conversation.map((msg: Message) => msg.turnNumber));
         processedTurnIdsRef.current = new Set(Array.from(existingTurnNumbers).map(n => `turn-${n}`));
       } else {
         setMessages([]);
         processedTurnIdsRef.current.clear();
+        lastSavedTurnNumberRef.current = null;
       }
     } catch (err) {
       console.error('Failed to load conversation history:', err);
       setMessages([]);
       processedTurnIdsRef.current.clear();
+      lastSavedTurnNumberRef.current = null;
     }
   };
 
@@ -1130,6 +1176,7 @@ export function GameChat({ sessionId, apiBaseUrl = '/api', characterName = 'Inve
       }
 
       setSaveMessage(`✓ ${data.message}: ${data.checkpointName}`);
+      updateLastSavedTurnNumber(messagesRef.current);
       
       // Clear message after 3 seconds
       setTimeout(() => {
