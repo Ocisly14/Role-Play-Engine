@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 
 export interface StoryCreatorProps {
   apiBaseUrl?: string;
@@ -21,6 +21,16 @@ interface ProgressUpdate {
   stage: string;
   progress: number;
   message: string;
+}
+
+interface QuotaStatus {
+  phase: 'initial' | 'weekly';
+  totalUsed: number;
+  totalLimit: number;
+  mediumUsed: number;
+  mediumLimit: number;
+  largeUsed: number;
+  largeLimit: number;
 }
 
 const SETTING_TYPES: { value: SettingType; label: string; description: string; icon: string }[] = [
@@ -73,6 +83,25 @@ export function StoryCreator({
   const [isGenerating, setIsGenerating] = useState(false);
   const [progress, setProgress] = useState<ProgressUpdate | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [quota, setQuota] = useState<QuotaStatus | null>(null);
+
+  useEffect(() => {
+    const token = localStorage.getItem('accessToken');
+    fetch(`${apiBaseUrl}/mods/quota`, {
+      headers: token ? { Authorization: `Bearer ${token}` } : {},
+    })
+      .then((res) => res.json())
+      .then((data) => { if (data.quota) setQuota(data.quota); })
+      .catch(() => {});
+  }, [apiBaseUrl]);
+
+  const isLengthDisabled = (value: StoryLength): boolean => {
+    if (!quota) return false;
+    if (quota.totalUsed >= quota.totalLimit) return true;
+    if (value === 'medium' && quota.mediumUsed >= quota.mediumLimit) return true;
+    if (value === 'long' && quota.largeUsed >= quota.largeLimit) return true;
+    return false;
+  };
 
   const runGeneration = async (endpoint: string, payload: Record<string, string>) => {
     const token = localStorage.getItem('accessToken');
@@ -198,28 +227,63 @@ export function StoryCreator({
                   </div>
                 )}
 
+                {quota && (
+                  <div className={`quota-banner ${quota.totalUsed >= quota.totalLimit ? 'exhausted' : ''}`}>
+                    <div className="quota-row">
+                      <span className="quota-title">Generation Quota</span>
+                      <span className="quota-remaining">
+                        {quota.totalUsed >= quota.totalLimit
+                          ? 'Quota Exhausted'
+                          : `${quota.totalLimit - quota.totalUsed} chances left`}
+                      </span>
+                    </div>
+                    <p className="quota-rule">
+                      {quota.phase === 'initial'
+                        ? `You have ${quota.totalLimit} generation chances in total — Medium up to ${quota.mediumLimit} times, Long up to ${quota.largeLimit} time. Short has no extra limit.`
+                        : `You have ${quota.totalLimit} generation chances per week — Medium up to ${quota.mediumLimit} times, Long up to ${quota.largeLimit} time. Short has no extra limit.`}
+                    </p>
+                    <div className="quota-details">
+                      <span className={`quota-tag ${quota.mediumUsed >= quota.mediumLimit ? 'used-up' : ''}`}>
+                        Medium: {quota.mediumUsed >= quota.mediumLimit ? 'Limit reached' : `${quota.mediumLimit - quota.mediumUsed} available`}
+                      </span>
+                      <span className={`quota-tag ${quota.largeUsed >= quota.largeLimit ? 'used-up' : ''}`}>
+                        Long: {quota.largeUsed >= quota.largeLimit ? 'Limit reached' : `${quota.largeLimit - quota.largeUsed} available`}
+                      </span>
+                    </div>
+                    <div className="quota-refresh">
+                      {quota.phase === 'initial'
+                        ? 'Initial allowance · weekly quota (4/week) unlocks after'
+                        : 'Refreshes every 7 days'}
+                    </div>
+                  </div>
+                )}
+
                 <>
                   <div className="form-section">
                     <label htmlFor="storyLength" className="form-label">
                       Story Length
                     </label>
                     <div className="story-length-grid">
-                      {STORY_LENGTH_OPTIONS.map((opt) => (
-                        <div
-                          key={opt.value}
-                          className={`setting-card ${storyLength === opt.value ? 'selected' : ''}`}
-                          onClick={() => setStoryLength(opt.value)}
-                        >
-                          <div className="setting-icon">{opt.icon}</div>
-                          <div className="setting-content">
-                            <div className="setting-label">{opt.label}</div>
-                            <div className="setting-description">{opt.description}</div>
+                      {STORY_LENGTH_OPTIONS.map((opt) => {
+                        const disabled = isLengthDisabled(opt.value);
+                        return (
+                          <div
+                            key={opt.value}
+                            className={`setting-card ${storyLength === opt.value ? 'selected' : ''} ${disabled ? 'disabled' : ''}`}
+                            onClick={() => !disabled && setStoryLength(opt.value)}
+                          >
+                            <div className="setting-icon">{opt.icon}</div>
+                            <div className="setting-content">
+                              <div className="setting-label">{opt.label}</div>
+                              <div className="setting-description">{opt.description}</div>
+                              {disabled && <div className="quota-limit-badge">Limit reached</div>}
+                            </div>
+                            {storyLength === opt.value && !disabled && (
+                              <div className="setting-checkmark">✓</div>
+                            )}
                           </div>
-                          {storyLength === opt.value && (
-                            <div className="setting-checkmark">✓</div>
-                          )}
-                        </div>
-                      ))}
+                        );
+                      })}
                     </div>
                   </div>
 
@@ -272,7 +336,7 @@ export function StoryCreator({
                   <button
                     onClick={handleGenerateWorld}
                     className="btn-primary"
-                    disabled={!creativePrompt.trim()}
+                    disabled={!creativePrompt.trim() || isLengthDisabled(storyLength)}
                   >
                     Generate World →
                   </button>
@@ -453,6 +517,103 @@ export function StoryCreator({
           border-radius: 4px;
           margin-bottom: 20px;
           border: 1px solid #f5c6cb;
+        }
+
+        /* ── quota banner ── */
+        .quota-banner {
+          background: rgba(255, 248, 230, 0.95);
+          border: 1px solid rgba(139, 115, 85, 0.35);
+          border-radius: 8px;
+          padding: 14px 18px;
+          margin-bottom: 20px;
+        }
+
+        .quota-banner.exhausted {
+          background: rgba(255, 235, 235, 0.95);
+          border-color: rgba(200, 35, 51, 0.4);
+        }
+
+        .quota-row {
+          display: flex;
+          justify-content: space-between;
+          align-items: center;
+          margin-bottom: 4px;
+        }
+
+        .quota-rule {
+          margin: 0 0 10px;
+          font-size: 0.85rem;
+          color: #5a4a3a;
+          line-height: 1.45;
+        }
+
+        .quota-title {
+          font-weight: 700;
+          font-size: 0.95rem;
+          color: var(--title, #3d2f1f);
+        }
+
+        .quota-remaining {
+          font-weight: 700;
+          font-size: 0.95rem;
+          color: var(--accent, #8b7355);
+        }
+
+        .quota-banner.exhausted .quota-remaining {
+          color: #c82333;
+        }
+
+        .quota-details {
+          display: flex;
+          gap: 10px;
+          flex-wrap: wrap;
+        }
+
+        .quota-tag {
+          font-size: 0.82rem;
+          background: rgba(255, 255, 255, 0.7);
+          border: 1px solid rgba(139, 115, 85, 0.25);
+          padding: 3px 10px;
+          border-radius: 12px;
+          color: #5a4a3a;
+        }
+
+        .quota-tag.used-up {
+          background: rgba(248, 215, 218, 0.8);
+          border-color: rgba(200, 35, 51, 0.35);
+          color: #721c24;
+          font-weight: 600;
+        }
+
+        .quota-refresh {
+          font-size: 0.78rem;
+          color: #888;
+          font-style: italic;
+          margin-top: 6px;
+        }
+
+        /* ── disabled story-length card ── */
+        .setting-card.disabled {
+          opacity: 0.45;
+          cursor: not-allowed;
+          background: #f3f0ec;
+        }
+
+        .setting-card.disabled:hover {
+          transform: none;
+          box-shadow: none;
+          border-color: var(--border, #3d2f1f);
+        }
+
+        .quota-limit-badge {
+          display: inline-block;
+          margin-top: 5px;
+          font-size: 0.72rem;
+          font-weight: 600;
+          background: #f8d7da;
+          color: #721c24;
+          padding: 2px 7px;
+          border-radius: 10px;
         }
 
         .form-section {

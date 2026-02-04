@@ -656,6 +656,20 @@ export class CoCDatabase {
             CREATE INDEX IF NOT EXISTS idx_user_mods_deleted_email ON user_mods_deleted(email_id);
             CREATE INDEX IF NOT EXISTS idx_user_mods_deleted_module ON user_mods_deleted(module_name);
         `);
+
+    // Module generation records — used for per-user generation quota enforcement
+    this.db.exec(`
+            CREATE TABLE IF NOT EXISTS mod_generations (
+                id TEXT PRIMARY KEY,
+                email_id TEXT NOT NULL,
+                module_name TEXT NOT NULL,
+                story_length TEXT NOT NULL,
+                generated_at DATETIME DEFAULT CURRENT_TIMESTAMP
+            );
+            CREATE INDEX IF NOT EXISTS idx_mod_generations_email ON mod_generations(email_id);
+            CREATE INDEX IF NOT EXISTS idx_mod_generations_email_time ON mod_generations(email_id, generated_at);
+        `);
+
     try {
       if (!this.hasColumn("module_backgrounds", "email_id")) {
         this.db.exec("ALTER TABLE module_backgrounds ADD COLUMN email_id TEXT;");

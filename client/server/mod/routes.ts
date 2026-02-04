@@ -12,6 +12,7 @@ router.use(authenticate);
 router.post("/mod/load", modController.loadModData);
 router.get("/module/introduction", modController.getModuleIntroduction);
 router.get("/mods/shared", modController.getSharedMods);
+router.get("/mods/quota", modController.getModQuota);
 router.post("/mods/share", modController.shareMod);
 router.post("/mods/unshare", modController.unshareMod);
 router.post("/mods/delete", modController.removeMod);

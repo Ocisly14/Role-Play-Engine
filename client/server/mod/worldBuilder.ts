@@ -9,6 +9,7 @@ import { WorldBuilderService } from "../../../src/dynamicworldagent/world_builde
 import { WorldModuleLoader } from "../../../src/dynamicworldagent/world_builder/worldModuleLoader.js";
 import { DatabaseManager } from "../core/DatabaseManager.js";
 import { registerModuleForUser } from "./library.js";
+import { checkGenerationQuota, recordGeneration } from "./quotaManager.js";
 import path from "path";
 import fs from "fs";
 
@@ -50,6 +51,33 @@ export async function generateWorld(req: Request, res: Response): Promise<void> 
       ? storyLength
       : "medium";
 
+    const email = req.user?.email;
+    if (!email) {
+      res.write(
+        `data: ${JSON.stringify({
+          stage: "error",
+          progress: 0,
+          message: "Authentication required to generate modules",
+        })}\n\n`
+      );
+      res.end();
+      return;
+    }
+
+    const db = DatabaseManager.getInstance().getDatabase();
+    const quotaCheck = checkGenerationQuota(db, email, selectedStoryLength);
+    if (!quotaCheck.allowed) {
+      res.write(
+        `data: ${JSON.stringify({
+          stage: "error",
+          progress: 0,
+          message: quotaCheck.reason,
+        })}\n\n`
+      );
+      res.end();
+      return;
+    }
+
     console.log(`\n🌍 [World Builder API] Request received`);
     console.log(`   Setting Type: ${selectedSettingType}`);
     console.log(`   Story Length: ${selectedStoryLength}`);
@@ -72,13 +100,11 @@ export async function generateWorld(req: Request, res: Response): Promise<void> 
 
     // Persist to DB for this user (keep JSON unchanged)
     try {
-      const db = DatabaseManager.getInstance().getDatabase();
       const moduleDir = path.join(process.cwd(), "data", "Mods", result.macroScene.moduleName);
-      const worldLoader = new WorldModuleLoader(db, { emailId: req.user?.email });
+      const worldLoader = new WorldModuleLoader(db, { emailId: email });
       await worldLoader.loadAndSaveWorldModule(moduleDir, true);
-      if (req.user?.email) {
-        registerModuleForUser(db, req.user.email, result.macroScene.moduleName);
-      }
+      registerModuleForUser(db, email, result.macroScene.moduleName);
+      recordGeneration(db, email, result.macroScene.moduleName, selectedStoryLength);
       console.log(`✅ [World Builder API] Module persisted to DB for user`);
     } catch (error) {
       console.warn("⚠️  [World Builder API] Failed to persist module to DB:", error);

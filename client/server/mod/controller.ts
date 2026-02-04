@@ -14,6 +14,7 @@ import {
   listDeletedMods,
   restoreDeletedModule,
 } from "./library.js";
+import { getQuotaStatus } from "./quotaManager.js";
 import path from "path";
 import fs from "fs";
 
@@ -443,5 +444,27 @@ export function restoreModsBulk(req: Request, res: Response): void {
   } catch (error) {
     console.error("Error restoring mods:", error);
     res.status(500).json({ error: "Failed to restore mods: " + (error as Error).message });
+  }
+}
+
+/**
+ * Get current generation quota status for the authenticated user
+ * GET /api/mods/quota
+ */
+export function getModQuota(req: Request, res: Response): void {
+  try {
+    const email = req.user?.email;
+    if (!email) {
+      res.status(401).json({ error: "Authentication required" });
+      return;
+    }
+
+    const db = DatabaseManager.getInstance().getDatabase();
+    const quota = getQuotaStatus(db, email);
+
+    res.json({ success: true, quota });
+  } catch (error) {
+    console.error("Error getting quota status:", error);
+    res.status(500).json({ error: "Failed to get quota status: " + (error as Error).message });
   }
 }
