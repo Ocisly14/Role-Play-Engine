@@ -6,6 +6,7 @@
 
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { useTurnPolling } from '../hooks/useTurnPolling';
+import { getSkillNameZh } from '../lib/skillNames';
 import { DiceAnimation, type DiceRollInfo } from './DiceAnimation';
 import { authFetch } from '../utils/authFetch';
 import ReactMarkdown from 'react-markdown';
@@ -111,12 +112,13 @@ export function GameChat({ sessionId, apiBaseUrl = '/api', characterName = 'Inve
   const [saveMessage, setSaveMessage] = useState<string | null>(null);
   const [isGameEnded, setIsGameEnded] = useState(false);
   const [currentGameState, setCurrentGameState] = useState<{ gameDay?: number; timeOfDay?: string } | null>(null);
-  const [availableSkills, setAvailableSkills] = useState<Array<{ name: string; value: number }>>([]);
+  const [availableSkills, setAvailableSkills] = useState<Array<{ name: string; value: number; displayNameZh?: string }>>([]);
   const [selectedSkill, setSelectedSkill] = useState('');
   const [isSkillAuto, setIsSkillAuto] = useState(false);
-  const [suggestedSkills, setSuggestedSkills] = useState<Array<{ name: string; value: number }>>([]);
+  const [suggestedSkills, setSuggestedSkills] = useState<Array<{ name: string; value: number; displayName?: string }>>([]);
   const [isSuggesting, setIsSuggesting] = useState(false);
   const [isSkillPickerOpen, setIsSkillPickerOpen] = useState(false);
+  const [suggestedLanguage, setSuggestedLanguage] = useState<'en' | 'zh'>('zh');
   const [streamingTurnId, setStreamingTurnId] = useState<string | null>(null);
   const [isInputCollapsed, setIsInputCollapsed] = useState(true);
   const collapseTimeoutRef = useRef<number | null>(null);
@@ -161,6 +163,10 @@ export function GameChat({ sessionId, apiBaseUrl = '/api', characterName = 'Inve
         return null;
       })
       .filter((entry): entry is { name: string; value: number } => Boolean(entry))
+      .map((entry) => ({
+        ...entry,
+        displayNameZh: getSkillNameZh(entry.name),
+      }))
       .sort((a, b) => {
         if (b.value !== a.value) return b.value - a.value;
         return a.name.localeCompare(b.name);
@@ -201,12 +207,17 @@ export function GameChat({ sessionId, apiBaseUrl = '/api', characterName = 'Inve
         if (requestId !== suggestRequestIdRef.current) return;
 
         const suggestions = Array.isArray(data?.suggestions) ? data.suggestions : [];
+        if (data?.language === 'en' || data?.language === 'zh') {
+          setSuggestedLanguage(data.language);
+        }
+        const nextLanguage = data?.language === 'en' || data?.language === 'zh' ? data.language : suggestedLanguage;
         setSuggestedSkills(
           suggestions
             .filter((skill: { name?: string; value?: number }) => typeof skill?.name === 'string')
-            .map((skill: { name: string; value?: number }) => ({
+            .map((skill: { name: string; value?: number; displayName?: string }) => ({
               name: skill.name,
               value: typeof skill.value === 'number' ? skill.value : 0,
+              displayName: typeof skill.displayName === 'string' ? skill.displayName : (nextLanguage === 'zh' ? getSkillNameZh(skill.name) : skill.name),
             }))
         );
       } catch (err) {
@@ -1273,7 +1284,14 @@ export function GameChat({ sessionId, apiBaseUrl = '/api', characterName = 'Inve
                             }}
                             disabled={isSending || isPolling || isGameEnded}
                           >
-                            {selectedSkill}
+                            {(() => {
+                              const selectedDisplay =
+                                suggestedSkills.find((item) => item.name === selectedSkill)?.displayName ??
+                                (suggestedLanguage === 'zh'
+                                  ? availableSkills.find((item) => item.name === selectedSkill)?.displayNameZh ?? getSkillNameZh(selectedSkill)
+                                  : selectedSkill);
+                              return selectedDisplay;
+                            })()}
                             {(() => {
                               const selectedValue =
                                 availableSkills.find((item) => item.name === selectedSkill)?.value ??
@@ -1300,7 +1318,7 @@ export function GameChat({ sessionId, apiBaseUrl = '/api', characterName = 'Inve
                           }}
                           disabled={isSending || isPolling || isGameEnded}
                         >
-                          {skill.name}
+                          {skill.displayName ?? skill.name}
                           {Number.isFinite(skill.value) ? ` ${skill.value}%` : ''}
                         </button>
                       ))}
@@ -1370,7 +1388,9 @@ export function GameChat({ sessionId, apiBaseUrl = '/api', characterName = 'Inve
                             }}
                             disabled={isSending || isPolling || isGameEnded}
                           >
-                            {skill.name}
+                            {suggestedLanguage === 'zh'
+                              ? (skill.displayNameZh ?? getSkillNameZh(skill.name))
+                              : skill.name}
                             {Number.isFinite(skill.value) ? ` ${skill.value}%` : ''}
                           </button>
                         ))}

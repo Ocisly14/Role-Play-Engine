@@ -92,7 +92,7 @@ server.listen(PORT, () => {
 
   if (process.env.SKIP_EMBEDDING_WARMUP !== "true") {
     LocalEmbeddingManager.getInstance()
-      .warmup()
+      .warmup(["en", "zh"])
       .then(() => {
         console.log("✅ Local embedding model warmed up");
         if (process.env.SKIP_SKILL_EMBEDDING_WARMUP === "true") {

@@ -2,6 +2,7 @@
 import type { Request, Response } from "express";
 import { ServerState } from "../core/ServerState.js";
 import { suggestSkillsFromInput } from "./skillMatcher.js";
+import { getSkillNameZh } from "./skillDescriptions.js";
 
 /**
  * Suggest skills based on user input (semantic matching)
@@ -55,13 +56,20 @@ export async function suggestSkills(req: Request, res: Response): Promise<void> 
       return;
     }
 
-    const suggestions = await suggestSkillsFromInput({
+    const { suggestions, language } = await suggestSkillsFromInput({
       input: input.trim(),
       skills,
       max: maxSuggestions,
     });
 
-    res.json({ success: true, suggestions });
+    res.json({
+      success: true,
+      language,
+      suggestions: suggestions.map((item) => ({
+        ...item,
+        displayName: language === "zh" ? getSkillNameZh(item.name) : item.name,
+      })),
+    });
   } catch (error) {
     console.error("Error suggesting skills:", error);
     res.status(500).json({ error: "Failed to suggest skills" });
