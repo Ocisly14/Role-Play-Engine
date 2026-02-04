@@ -183,6 +183,17 @@ export const authDbService = {
       throw new Error("Email already verified");
     }
 
+    // Enforce 60-second cooldown between sends
+    const recent = db
+      .prepare(
+        "SELECT created_at FROM email_verifications WHERE email_id = ? AND is_used = 0 ORDER BY created_at DESC LIMIT 1"
+      )
+      .get(user.email) as { created_at: string } | undefined;
+
+    if (recent && Date.now() - new Date(recent.created_at).getTime() < 60 * 1000) {
+      throw new Error("Please wait before requesting a new code");
+    }
+
     // Generate 5-digit verification code
     const code = crypto.randomInt(10000, 100000).toString();
     const verificationId = randomUUID();

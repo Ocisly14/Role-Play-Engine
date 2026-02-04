@@ -1,7 +1,9 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useAuth } from '../../contexts/AuthContext';
 import { api } from '../../services/api';
 import { useNavigate } from 'react-router-dom';
+
+const RESEND_COOLDOWN_SECONDS = 60;
 
 export function RegisterForm() {
   const [step, setStep] = useState<'form' | 'verify'>('form');
@@ -15,9 +17,34 @@ export function RegisterForm() {
   const [success, setSuccess] = useState(false);
   const [loading, setLoading] = useState(false);
   const [resendMessage, setResendMessage] = useState('');
+  const [resendCooldown, setResendCooldown] = useState(0);
+  const cooldownRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
   const { register } = useAuth();
   const navigate = useNavigate();
+
+  // Start or reset the countdown timer
+  const startCooldown = () => {
+    setResendCooldown(RESEND_COOLDOWN_SECONDS);
+    if (cooldownRef.current) clearInterval(cooldownRef.current);
+    cooldownRef.current = setInterval(() => {
+      setResendCooldown((prev) => {
+        if (prev <= 1) {
+          clearInterval(cooldownRef.current!);
+          cooldownRef.current = null;
+          return 0;
+        }
+        return prev - 1;
+      });
+    }, 1000);
+  };
+
+  // Clean up interval on unmount
+  useEffect(() => {
+    return () => {
+      if (cooldownRef.current) clearInterval(cooldownRef.current);
+    };
+  }, []);
 
   const handleRegister = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -38,6 +65,7 @@ export function RegisterForm() {
     try {
       await register(email, password, username || undefined, referralCode);
       setStep('verify');
+      startCooldown();
     } catch (err: any) {
       setError(err.response?.data?.error || 'Registration failed');
     } finally {
@@ -71,6 +99,7 @@ export function RegisterForm() {
       await api.post('/auth/resend-verification', { email });
       setVerificationCode('');
       setResendMessage('A new verification code has been sent.');
+      startCooldown();
     } catch (err: any) {
       setError(err.response?.data?.error || 'Failed to resend code');
     } finally {
@@ -125,9 +154,15 @@ export function RegisterForm() {
           </button>
 
           <div className="form-links">
-            <a href="#" onClick={(e) => { e.preventDefault(); handleResend(); }}>
-              Didn't receive the code? Resend
-            </a>
+            {resendCooldown > 0 ? (
+              <span style={{ color: '#666' }}>
+                Resend code in {resendCooldown}s
+              </span>
+            ) : (
+              <a href="#" onClick={(e) => { e.preventDefault(); handleResend(); }}>
+                Didn't receive the code? Resend
+              </a>
+            )}
           </div>
         </form>
       </div>

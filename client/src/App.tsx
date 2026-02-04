@@ -4,6 +4,8 @@ import { AuthProvider, useAuth } from "./contexts/AuthContext";
 import { ProtectedRoute } from "./components/ProtectedRoute";
 import Login from "./views/auth/Login";
 import Register from "./views/auth/Register";
+import ForgotPassword from "./views/auth/ForgotPassword";
+import ResetPassword from "./views/auth/ResetPassword";
 import Homes from "./views/Homes";
 import { GameChat } from "./components/GameChat";
 import { GameSidebar } from "./components/GameSidebar";
@@ -2347,6 +2349,8 @@ const App: React.FC = () => (
       <Routes>
         <Route path="/login" element={<Login />} />
         <Route path="/register" element={<Register />} />
+        <Route path="/forgot-password" element={<ForgotPassword />} />
+        <Route path="/reset-password" element={<ResetPassword />} />
         <Route
           path="/*"
           element={

@@ -21,7 +21,7 @@ export const emailService = {
   // Send verification code email
   async sendVerificationEmail(to: string, code: string) {
     const template = await this.loadTemplate('verify-email');
-    const html = template({ verificationCode: code, appName: 'CoC Game' });
+    const html = template({ verificationCode: code, appName: 'Talecraft Game' });
 
     await transporter.sendMail({
       from: process.env.EMAIL_FROM,
@@ -36,7 +36,7 @@ export const emailService = {
     const resetUrl = `${process.env.APP_URL}/reset-password?token=${token}`;
 
     const template = await this.loadTemplate('reset-password');
-    const html = template({ resetUrl, appName: 'CoC Game' });
+    const html = template({ resetUrl, appName: 'Talecraft Game' });
 
     await transporter.sendMail({
       from: process.env.EMAIL_FROM,
