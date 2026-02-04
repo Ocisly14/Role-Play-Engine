@@ -1008,18 +1008,51 @@ export class CoCDatabase {
             CREATE INDEX IF NOT EXISTS idx_referral_codes_used ON referral_codes(is_used);
         `);
 
-    // Initialize referral codes if table is empty
-    const codeCount = this.db.prepare('SELECT COUNT(*) as count FROM referral_codes').get() as { count: number };
-    if (codeCount.count === 0) {
-      // Fixed referral codes
-      const fixedCodes = ['BH6XK', 'ZLDM6', 'YIJNF'];
-      
-      const insertCode = this.db.prepare(`
-        INSERT INTO referral_codes (id, code) VALUES (?, ?)
-      `);
-      
-      for (const code of fixedCodes) {
-        insertCode.run(randomUUID(), code);
+    // Migration: add max_uses column if not present
+    {
+      const cols = this.db.prepare("PRAGMA table_info(referral_codes)").all() as Array<{ name: string }>;
+      if (!cols.some((c) => c.name === "max_uses")) {
+        this.db.exec("ALTER TABLE referral_codes ADD COLUMN max_uses INTEGER");
+      }
+    }
+
+    // Sync referral codes from env (REFERRAL_CODE_1, REFERRAL_CODE_2, ...)
+    // Format: "CODE" (unlimited) or "CODE_N" (usable N times).
+    // Inserts missing codes; updates max_uses if changed.
+    // Codes removed from env are left in the DB so usage records stay valid.
+    {
+      const insert = this.db.prepare("INSERT INTO referral_codes (id, code, max_uses) VALUES (?, ?, ?)");
+      const lookup = this.db.prepare("SELECT id, max_uses FROM referral_codes WHERE UPPER(code) = ?");
+      const updateLimit = this.db.prepare("UPDATE referral_codes SET max_uses = ? WHERE id = ?");
+
+      let i = 1;
+      while (process.env[`REFERRAL_CODE_${i}`]) {
+        const raw = process.env[`REFERRAL_CODE_${i}`]!.trim().toUpperCase();
+        i++;
+
+        // Parse "CODE_N" → code + maxUses; plain "CODE" → unlimited (null)
+        let code: string;
+        let maxUses: number | null = null;
+        const lastUnderscore = raw.lastIndexOf("_");
+        if (lastUnderscore > 0) {
+          const numPart = raw.slice(lastUnderscore + 1);
+          const parsed = Number(numPart);
+          if (Number.isInteger(parsed) && parsed > 0 && String(parsed) === numPart) {
+            code = raw.slice(0, lastUnderscore);
+            maxUses = parsed;
+          } else {
+            code = raw;
+          }
+        } else {
+          code = raw;
+        }
+
+        const row = lookup.get(code) as { id: string; max_uses: number | null } | undefined;
+        if (!row) {
+          insert.run(randomUUID(), code, maxUses);
+        } else if (row.max_uses !== maxUses) {
+          updateLimit.run(maxUses, row.id);
+        }
       }
     }
 

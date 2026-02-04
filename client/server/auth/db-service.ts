@@ -64,6 +64,18 @@ export const authDbService = {
       throw new Error("Invalid referral code");
     }
 
+    // Check usage limit (max_uses = null means unlimited)
+    if (referral.max_uses != null) {
+      const usage = db
+        .prepare(
+          "SELECT COUNT(*) as count FROM referral_code_uses WHERE referral_code_id = ?"
+        )
+        .get(referral.id) as { count: number };
+      if (usage.count >= referral.max_uses) {
+        throw new Error("Referral code has reached its usage limit");
+      }
+    }
+
     // Check if email already exists
     const existing = db
       .prepare("SELECT id FROM users WHERE email = ?")
