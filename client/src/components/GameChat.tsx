@@ -128,6 +128,9 @@ export function GameChat({ sessionId, apiBaseUrl = '/api', characterName = 'Inve
   const reconnectTimeoutRef = useRef<number | null>(null);
   const shouldReconnectRef = useRef<boolean>(true); // Track if we should auto-reconnect
   const currentSessionIdRef = useRef<string | null>(null); // Track current session to avoid duplicate connections
+  const autoSaveTriggeredRef = useRef(false);
+  const sessionIdRef = useRef<string | null>(sessionId);
+  const autoSaveEffectRunsRef = useRef(0);
   // Refs to access latest values without causing WebSocket reconnection
   const messagesRef = useRef<Message[]>(messages);
   const onNarrativeCompleteRef = useRef(onNarrativeComplete);
@@ -151,6 +154,45 @@ export function GameChat({ sessionId, apiBaseUrl = '/api', characterName = 'Inve
   useEffect(() => {
     onNarrativeCompleteRef.current = onNarrativeComplete;
   }, [onNarrativeComplete]);
+
+  useEffect(() => {
+    sessionIdRef.current = sessionId || null;
+    autoSaveTriggeredRef.current = false;
+  }, [sessionId]);
+
+  const triggerAutoSave = useCallback((reason: string, keepalive = false) => {
+    if (autoSaveTriggeredRef.current) return;
+    const activeSessionId = sessionIdRef.current;
+    if (!activeSessionId) return;
+
+    autoSaveTriggeredRef.current = true;
+
+    authFetch(`${apiBaseUrl}/checkpoints/save`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ checkpointType: "auto", reason }),
+      keepalive,
+    }).catch((err) => {
+      console.warn("[GameChat] Auto-save failed:", err);
+    });
+  }, [apiBaseUrl]);
+
+  useEffect(() => {
+    const handleBeforeUnload = () => {
+      triggerAutoSave("exit", true);
+    };
+
+    window.addEventListener("beforeunload", handleBeforeUnload);
+
+    return () => {
+      window.removeEventListener("beforeunload", handleBeforeUnload);
+      autoSaveEffectRunsRef.current += 1;
+      if (import.meta.env?.DEV && autoSaveEffectRunsRef.current === 1) {
+        return;
+      }
+      triggerAutoSave("exit", true);
+    };
+  }, [triggerAutoSave]);
 
   const normalizeSkills = useCallback((skills: Record<string, unknown> | undefined | null) => {
     if (!skills || typeof skills !== 'object') return [];

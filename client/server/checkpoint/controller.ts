@@ -17,6 +17,12 @@ export async function saveCheckpoint(req: Request, res: Response): Promise<void>
   try {
     const userId = req.user!.userId;
     const serverState = ServerState.getInstance();
+    const requestedType = typeof req.body?.checkpointType === "string" ? req.body.checkpointType : undefined;
+    const checkpointType = requestedType === "auto" || requestedType === "manual" || requestedType === "scene_transition"
+      ? requestedType
+      : "manual";
+    const reason = typeof req.body?.reason === "string" ? req.body.reason : undefined;
+    const descriptionOverride = typeof req.body?.description === "string" ? req.body.description : undefined;
     
     // Check for both GameState and DynamicGameState (for DynamicWorld modules)
     const persistentGameState = serverState.getGameState(userId);
@@ -97,29 +103,55 @@ export async function saveCheckpoint(req: Request, res: Response): Promise<void>
         return;
       }
 
-      // Generate checkpoint name
-      const currentDate = new Date().toLocaleDateString('zh-CN', {
-        year: 'numeric',
-        month: '2-digit',
-        day: '2-digit'
-      });
-      checkpointName = `${currentScenario.name} - ${currentDate}`;
-      description = `Manual save at ${currentScenario.location}`;
+      if (checkpointType === "manual") {
+        // Generate checkpoint name
+        const currentDate = new Date().toLocaleDateString('zh-CN', {
+          year: 'numeric',
+          month: '2-digit',
+          day: '2-digit'
+        });
+        checkpointName = `${currentScenario.name} - ${currentDate}`;
+        description = descriptionOverride || `Manual save at ${currentScenario.location}`;
 
-      // Save DynamicGameState checkpoint (includes all snapshots)
-      const savedCheckpointId = saveDynamicGameStateCheckpoint(
-        db,
-        dynamicGameState,
-        'manual',
-        description
-      );
+        // Save DynamicGameState checkpoint (includes all snapshots)
+        const savedCheckpointId = saveDynamicGameStateCheckpoint(
+          db,
+          dynamicGameState,
+          "manual",
+          description
+        );
 
-      if (!savedCheckpointId) {
-        res.status(500).json({ error: "Failed to save checkpoint" });
-        return;
+        if (!savedCheckpointId) {
+          res.status(500).json({ error: "Failed to save checkpoint" });
+          return;
+        }
+
+        checkpointId = savedCheckpointId;
+      } else {
+        const gameDay = dynamicGameState.gameDay ?? 1;
+        const timeOfDay = dynamicGameState.timeOfDay ?? "Unknown time";
+        const timeLabel = timeOfDay ? ` (Day ${gameDay}, ${timeOfDay})` : ` (Day ${gameDay})`;
+        checkpointName = `${checkpointType === "scene_transition" ? "Scene Transition" : "Auto Save"} - ${currentScenario.name}${timeLabel}`;
+        description = descriptionOverride || `Auto save${reason ? ` (${reason})` : ""} at ${currentScenario.location}`;
+
+        const savedCheckpointId = saveDynamicGameStateCheckpoint(
+          db,
+          dynamicGameState,
+          checkpointType,
+          description
+        );
+
+        if (!savedCheckpointId) {
+          res.status(500).json({ error: "Failed to save checkpoint" });
+          return;
+        }
+
+        checkpointId = savedCheckpointId;
+
+        if (checkpointType === "auto") {
+          db.cleanupAutoCheckpoints(dynamicGameState.sessionId, 10);
+        }
       }
-
-      checkpointId = savedCheckpointId;
     } else if (persistentGameState) {
       // For regular modules, use GameState checkpoint
       const currentScenario = persistentGameState.currentScenario;
@@ -128,21 +160,46 @@ export async function saveCheckpoint(req: Request, res: Response): Promise<void>
         return;
       }
 
-      // Generate checkpoint name
-      const currentDate = new Date().toLocaleDateString('zh-CN', {
-        year: 'numeric',
-        month: '2-digit',
-        day: '2-digit'
-      });
-      checkpointName = `${currentScenario.name} - ${currentDate}`;
-      description = `Manual save at ${currentScenario.location}`;
+      if (checkpointType === "manual") {
+        // Generate checkpoint name
+        const currentDate = new Date().toLocaleDateString('zh-CN', {
+          year: 'numeric',
+          month: '2-digit',
+          day: '2-digit'
+        });
+        checkpointName = `${currentScenario.name} - ${currentDate}`;
+        description = descriptionOverride || `Manual save at ${currentScenario.location}`;
 
-      checkpointId = saveManualCheckpoint(
-        persistentGameState,
-        db,
-        checkpointName,
-        description
-      );
+        checkpointId = saveManualCheckpoint(
+          persistentGameState,
+          db,
+          checkpointName,
+          description
+        );
+      } else {
+        const gameDay = persistentGameState.gameDay ?? 1;
+        const timeOfDay = persistentGameState.timeOfDay ?? "Unknown time";
+        const timeLabel = timeOfDay ? ` (Day ${gameDay}, ${timeOfDay})` : ` (Day ${gameDay})`;
+        checkpointName = `${checkpointType === "scene_transition" ? "Scene Transition" : "Auto Save"} - ${currentScenario.name}${timeLabel}`;
+        description = descriptionOverride || `Auto save${reason ? ` (${reason})` : ""} at ${currentScenario.location}`;
+
+        checkpointId = checkpointType === "scene_transition"
+          ? `scene-${Date.now()}`
+          : `auto-${Date.now()}`;
+
+        db.saveCheckpoint(
+          checkpointId,
+          persistentGameState.sessionId,
+          checkpointName,
+          persistentGameState,
+          checkpointType,
+          description
+        );
+
+        if (checkpointType === "auto") {
+          db.cleanupAutoCheckpoints(persistentGameState.sessionId, 10);
+        }
+      }
     } else {
       // This should not happen as we checked earlier, but handle it just in case
       res.status(400).json({ error: "No game state available. Cannot save checkpoint." });
@@ -166,7 +223,7 @@ export async function saveCheckpoint(req: Request, res: Response): Promise<void>
       success: true,
       checkpointId: checkpointId,
       checkpointName: checkpointName,
-      message: "存档成功",
+      message: checkpointType === "auto" ? "自动存档成功" : "存档成功",
       timestamp: new Date().toISOString(),
     });
   } catch (error) {
@@ -290,45 +347,27 @@ export async function loadCheckpointData(req: Request, res: Response): Promise<v
       return;
     }
 
-    // Check if we need to create a branch session (subId)
-    // Create branch if loading a checkpoint from the past (earlier gameTime)
-    const serverState = ServerState.getInstance();
-    const currentGameState = serverState.getGameState(userId);
-    const currentDynamicGameState = serverState.getDynamicGameState(userId);
-    const currentState = currentDynamicGameState || currentGameState;
-    
+    // Always create a branch session when loading any checkpoint
     let shouldCreateBranch = false;
     let branchSessionId: string | null = null;
     let branchSubId: number | null = null;
     const checkpointGameDay = checkpoint.metadata.gameDay;
     const checkpointTimeOfDay = checkpoint.metadata.gameTime;
     
-    if (currentState && checkpointGameDay && checkpointTimeOfDay) {
-      const currentGameDay = currentState.gameDay || 1;
-      const currentTimeOfDay = currentState.timeOfDay || "00:00";
-      
-      // Compare gameTime: if checkpoint is earlier, create branch
-      const compareGameTime = (day1: number, time1: string, day2: number, time2: string): number => {
-        if (day1 !== day2) return day1 - day2;
-        const [h1, m1] = time1.split(':').map(Number);
-        const [h2, m2] = time2.split(':').map(Number);
-        return (h1 * 60 + m1) - (h2 * 60 + m2);
-      };
-      
-      const timeDiff = compareGameTime(checkpointGameDay, checkpointTimeOfDay, currentGameDay, currentTimeOfDay);
-      if (timeDiff < 0) {
-        // Checkpoint is from the past, create branch
-        shouldCreateBranch = true;
-        const branchInfo = await db.createBranchSession(
-          checkpoint.sessionId,
-          gameState,
-          checkpointGameDay,
-          checkpointTimeOfDay
-        );
-        branchSessionId = branchInfo.branchSessionId;
-        branchSubId = branchInfo.subId;
-        console.log(`[${new Date().toISOString()}] Creating branch session: ${branchSessionId} (checkpoint is from Day ${checkpointGameDay} ${checkpointTimeOfDay}, current is Day ${currentGameDay} ${currentTimeOfDay})`);
-      }
+    try {
+      const branchInfo = await db.createBranchSession(
+        checkpoint.sessionId,
+        gameState,
+        checkpointGameDay,
+        checkpointTimeOfDay
+      );
+      branchSessionId = branchInfo.branchSessionId;
+      branchSubId = branchInfo.subId;
+      shouldCreateBranch = true;
+      console.log(`[${new Date().toISOString()}] Creating branch session: ${branchSessionId} (checkpoint load)`);
+    } catch (error) {
+      console.warn(`[${new Date().toISOString()}] Failed to create branch session for checkpoint load:`, error);
+      shouldCreateBranch = false;
     }
     
     // Use branch session ID if created, otherwise use original session ID

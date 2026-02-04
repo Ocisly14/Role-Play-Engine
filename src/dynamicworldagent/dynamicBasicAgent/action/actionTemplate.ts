@@ -56,6 +56,7 @@ Your task is to determine if the action succeeds in enabling this scene change:
 - No player-selected skill is provided.
 - Do NOT select or infer a skill on the player's behalf.
 - Do NOT perform any skill checks and do NOT use any dice.
+***IMPORTANT: If the input does NOT involve a scene change and does NOT cause major impact on the scene or any NPC, do NOT mention any skill and do NOT output any dice rolls.***
 - Always use empty array: "diceUsed": [].
 `;
 
