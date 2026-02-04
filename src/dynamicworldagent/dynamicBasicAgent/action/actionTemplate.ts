@@ -1,6 +1,6 @@
 import type { DynamicGameState } from "../../state/index.js";
-import type { NPCResponseAnalysis, SceneChangeRequest } from "../../../coc_multiagents_system/state/index.js";
-import { actionTypeTemplates } from "../../../coc_multiagents_system/agents/action/example.js";
+import type { NPCResponseAnalysis, SceneChangeRequest } from "../../../shared/state/index.js";
+import { actionTypeTemplates } from "../../../shared/agents/action/example.js";
 
 /**
  * Build the base system prompt for action resolution

@@ -2,7 +2,7 @@
 import type { Request, Response } from "express";
 import { DatabaseManager } from "../core/DatabaseManager.js";
 import { loadMod } from "./service.js";
-import { ModuleLoader } from "../../../src/coc_multiagents_system/agents/memory/moduleloader/index.js";
+import { ModuleLoader } from "../../../src/shared/agents/memory/moduleloader/index.js";
 import { WorldModuleLoader } from "../../../src/dynamicworldagent/world_builder/worldModuleLoader.js";
 import { isNameSimilar } from "../utils/stringUtils.js";
 import {

@@ -48,7 +48,7 @@ agents/
 ## Integration
 
 These agents are used by a separate LangGraph pipeline for world-builder modules,
-while regular modules continue to use the base agents in `src/coc_multiagents_system/agents/`.
+while regular modules continue to use the base agents in `src/shared/agents/`.
 
 ## Agent Pipeline Order
 

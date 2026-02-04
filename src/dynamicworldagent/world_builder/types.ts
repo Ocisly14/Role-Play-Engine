@@ -10,13 +10,13 @@ import type {
   ActionLogEntry,
   NPCClue,
   NPCRelationship
-} from "../../coc_multiagents_system/agents/models/gameTypes.js";
+} from "../../shared/agents/models/gameTypes.js";
 import type { 
   ScenarioSnapshot,
   ScenarioCharacter,
   ScenarioClue,
   ScenarioCondition
-} from "../../coc_multiagents_system/agents/models/scenarioTypes.js";
+} from "../../shared/agents/models/scenarioTypes.js";
 
 /**
  * DynamicWorld Character Profile - Independent type definition for DynamicWorld system

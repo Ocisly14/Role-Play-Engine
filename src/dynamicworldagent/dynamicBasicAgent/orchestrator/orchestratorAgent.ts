@@ -1,15 +1,15 @@
 import { getOrchestratorTemplate } from "./orchestratorTemplate.js";
 import { composeTemplate } from "../../../template.js";
-import type { ActionAnalysis, ActionType, SceneChangeRequest, SceneTransitionRejection } from "../../../coc_multiagents_system/state/index.js";
+import type { ActionAnalysis, ActionType, SceneChangeRequest, SceneTransitionRejection } from "../../../shared/state/index.js";
 import type { DynamicGameStateManager } from "../../state/index.js";
 import {
   ModelProviderName,
   ModelClass,
   generateText,
 } from "../../../models/index.js";
-import type { CoCDatabase } from "../../../coc_multiagents_system/agents/memory/database/index.js";
-import { extractRecentConversationHistory } from "../../../coc_multiagents_system/agents/memory/memoryAgent.js";
-import { resolveEmailId } from "../../../coc_multiagents_system/agents/memory/database/userContext.js";
+import type { CoCDatabase } from "../../../shared/agents/memory/database/index.js";
+import { extractRecentConversationHistory } from "../memory/memoryAgent.js";
+import { resolveEmailId } from "../../../shared/agents/memory/database/userContext.js";
 
 interface OrchestratorRuntime {
   modelProvider: ModelProviderName;

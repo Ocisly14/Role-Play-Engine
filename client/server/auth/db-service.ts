@@ -6,7 +6,7 @@ import { generateAccessToken, generateRefreshToken } from "./jwt.js";
 import { hashPassword, verifyPassword } from "./password.js";
 
 // Get database instance from CoCDatabase singleton
-import { CoCDatabase } from "../../../src/coc_multiagents_system/agents/memory/database/schema.js";
+import { CoCDatabase } from "../../../src/shared/agents/memory/database/schema.js";
 
 // Create a singleton instance
 let dbInstance: CoCDatabase | null = null;

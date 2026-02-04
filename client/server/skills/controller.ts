@@ -23,15 +23,12 @@ export async function suggestSkills(req: Request, res: Response): Promise<void> 
 
     const serverState = ServerState.getInstance();
     const dynamicGameState = serverState.getDynamicGameState(userId);
-    const gameState = serverState.getGameState(userId);
-    const stateToUse = dynamicGameState || gameState;
-
-    if (!stateToUse?.playerCharacter) {
+    if (!dynamicGameState?.playerCharacter) {
       res.status(400).json({ error: "Game state not available" });
       return;
     }
 
-    const rawSkills = stateToUse.playerCharacter.skills ?? {};
+    const rawSkills = dynamicGameState.playerCharacter.skills ?? {};
     const skills = Object.entries(rawSkills)
       .map(([name, raw]) => {
         if (typeof raw === "number") {

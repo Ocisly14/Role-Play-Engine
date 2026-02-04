@@ -9,7 +9,7 @@
  * - Library downloads (addSharedMod) are never quota-gated.
  */
 
-import type { CoCDatabase } from "../../../src/coc_multiagents_system/agents/memory/database/index.js";
+import type { CoCDatabase } from "../../../src/shared/agents/memory/database/index.js";
 import { randomUUID } from "crypto";
 
 const INITIAL_QUOTA_TOTAL = 3;

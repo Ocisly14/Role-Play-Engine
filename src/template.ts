@@ -1,8 +1,6 @@
 import handlebars from "handlebars";
 import fs from "fs";
 import path from "path";
-import type { GameState } from "./coc_multiagents_system/state/index.js";
-import { initialGameState } from "./coc_multiagents_system/state/index.js";
 import type { DynamicGameState } from "./dynamicworldagent/state/index.js";
 import type { ImageInput } from "./models/types.js";
 import { names, uniqueNamesGenerator } from "unique-names-generator";
@@ -11,12 +9,11 @@ type TemplateContext = Record<string, unknown>;
 
 /**
  * CoC State type for template composition
- * Can be a GameState directly, DynamicGameState, or an object containing gameState/dynamicGameState
+ * Can be a DynamicGameState directly, or an object containing dynamicGameState
  */
 export type CoCState = 
-  | GameState 
   | DynamicGameState
-  | { gameState?: GameState; dynamicGameState?: DynamicGameState; [key: string]: any };
+  | { dynamicGameState?: DynamicGameState; [key: string]: any };
 
 // Template function type for dynamic templates
 export type TemplateType = string | ((params: { state: CoCState }) => string);
@@ -107,20 +104,11 @@ const isDynamicGameState = (state: unknown): state is DynamicGameState => {
   );
 };
 
-const isGameState = (state: unknown): state is GameState => {
-  return Boolean(
-    state && typeof state === "object" && "phase" in state && "playerCharacter" in state
-  );
-};
-
-const extractGameState = (state: CoCState): GameState | null => {
-  if ("gameState" in state && state.gameState) {
-    return state.gameState as GameState;
+const extractDynamicGameState = (state: CoCState): DynamicGameState | null => {
+  if ("dynamicGameState" in state && state.dynamicGameState) {
+    return state.dynamicGameState as DynamicGameState;
   }
   if (isDynamicGameState(state)) {
-    return null;
-  }
-  if (isGameState(state)) {
     return state;
   }
   return null;
@@ -130,8 +118,8 @@ const extractGameState = (state: CoCState): GameState | null => {
  * Collects scenario images (e.g., map) from the current game state.
  */
 export const collectScenarioImages = (state: CoCState): ImageInput[] => {
-  const gameState = extractGameState(state);
-  const mapImagePath = gameState?.currentScenario?.mapImagePath;
+  const dynamicState = extractDynamicGameState(state);
+  const mapImagePath = dynamicState?.currentScenario?.mapImagePath;
   if (!mapImagePath) return [];
 
   const resolved = resolveMapImage(mapImagePath);
@@ -160,25 +148,10 @@ export const composeTemplate = (
   extraContext: TemplateContext = {},
   templatingEngine?: "handlebars"
 ): string => {
-  // Handle both GameState directly and { gameState: GameState } object
-  // Also handle DynamicGameState
-  const gameState =
-    "gameState" in state && state.gameState
-      ? state.gameState
-      : isGameState(state)
-        ? (state as GameState)
-        : null;
+  const dynamicGameState = extractDynamicGameState(state);
 
-  const dynamicGameState =
-    "dynamicGameState" in state && state.dynamicGameState
-      ? state.dynamicGameState
-      : isDynamicGameState(state)
-        ? (state as DynamicGameState)
-        : null;
-  
   const context: TemplateContext = {
     ...state,
-    gameState: gameState ?? initialGameState,
     dynamicGameState: dynamicGameState ?? null,
     ...extraContext,
   };
@@ -267,7 +240,7 @@ export const composeContext = ({
   } catch (error) {
     console.error("Error composing context:", error);
     // Fallback to simple template without dynamic features
-    const fallbackTemplate = typeof template === "string" ? template : "{{gameState}}";
+    const fallbackTemplate = typeof template === "string" ? template : "{{dynamicGameState}}";
     return composeTemplate(fallbackTemplate, state, extraContext);
   }
 };

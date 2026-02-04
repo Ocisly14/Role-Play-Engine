@@ -40,12 +40,9 @@
 | POST /api/game/import-data | POST /api/game/import-data | `server/game/routes.ts:9` | ✅ |
 | GET /api/gamestate | GET /api/gamestate | `server/game/routes.ts:10` | ✅ |
 
-**功能说明**：新版本的 `initializeGameState()` 保留了所有核心功能：
-- ✅ 加载角色数据
-- ✅ 注入模组配置
-- ✅ 加载初始场景
-- ✅ 注入NPC到游戏状态（包括更新 currentScenario.characters）
-- ✅ 代码从原来的 665-1638行（973行）简化到 service.ts 的 14-250行（237行），减少75%
+**功能说明**：当前仅保留 DynamicWorld 的 `initializeWorldBuilderGameState()`：
+- ✅ 基于 World Builder 模块加载动态游戏状态
+- ✅ 从模块摘要加载 introduction/moduleNotes
 
 ### 4. Mod 模块 (2个端点)
 
@@ -226,10 +223,10 @@ let persistentGameState: GameState | null = null;
 
 **新代码**：集中管理
 ```typescript
-ServerState.getInstance().setGameState(gameState);
+ServerState.getInstance().setGameState(dynamicGameState);
 ```
 
-**改进**：✅ 更清晰的状态管理，易于扩展
+**改进**：✅ 更清晰的状态管理，专注 DynamicWorld
 
 ### 差异3：Graph 初始化
 

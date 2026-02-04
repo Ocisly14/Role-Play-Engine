@@ -4,10 +4,8 @@ import { DatabaseManager } from "../core/DatabaseManager.js";
 import { GraphManager } from "../core/GraphManager.js";
 import { ServerState } from "../core/ServerState.js";
 import { getClientIp, generateSessionIdFromIp } from "../utils/sessionUtils.js";
-import { initializeGameState, initializeWorldBuilderGameState } from "./service.js";
-import { DynamicGameStateManager } from "../../../src/dynamicworldagent/state/index.js";
+import { initializeWorldBuilderGameState } from "./service.js";
 import type { DynamicGameState } from "../../../src/dynamicworldagent/state/index.js";
-import type { GameState } from "../../../src/coc_multiagents_system/state/gameState.js";
 import path from "path";
 import fs from "fs";
 
@@ -44,10 +42,9 @@ export async function startGame(req: Request, res: Response): Promise<void> {
     const db = DatabaseManager.getInstance().getDatabase();
     const graphManager = GraphManager.getInstance();
 
-    // Initialize multi-agent system if needed
+    // Initialize DynamicWorld system if needed
     if (!graphManager.isInitialized()) {
-      // Default: skip RAG (true), unless explicitly set to 'false'
-      await graphManager.initialize(db, process.env.SKIP_RAG !== 'false');
+      await graphManager.initialize(db);
     }
 
     // Ensure character belongs to user
@@ -71,98 +68,69 @@ export async function startGame(req: Request, res: Response): Promise<void> {
     const clientIp = getClientIp(req);
     const sessionId = generateSessionIdFromIp(clientIp);
 
-    // Check if this is a world-builder module
+    // DynamicWorld only: require WorldBuilder module
     const isWorldBuilder = modName && isWorldBuilderModule(modName);
-
-    // Initialize game state using appropriate method
-    let gameState: GameState | null = null;
-    let dynamicGameState: DynamicGameState | null = null;
-    let moduleIntroduction: any = null;
-
-    if (isWorldBuilder) {
-      // For WorldBuilder modules, only use DynamicGameState
-      const initResult = await initializeWorldBuilderGameState(db, characterId, sessionId, modName, userEmail);
-      dynamicGameState = initResult.dynamicGameState;
-      moduleIntroduction = initResult.moduleIntroduction;
-      
-      // For DynamicWorld modules, GameState is not needed
-      // Only DynamicGameState is used
-      if (dynamicGameState) {
-        gameState = null as any; // GameState not needed for DynamicWorld
-      }
-    } else {
-      // For regular modules, use GameState
-      const initResult = await initializeGameState(db, characterId, sessionId, modName, userEmail);
-      gameState = initResult.gameState;
-      moduleIntroduction = initResult.moduleIntroduction;
+    if (!isWorldBuilder) {
+      res.status(400).json({ error: "Only World Builder modules are supported in DynamicWorld mode" });
+      return;
     }
 
-    console.log(`[${new Date().toISOString()}] Game initialized using ${isWorldBuilder ? 'World Builder' : 'Regular'} loader`);
+    // Initialize DynamicWorld game state
+    let dynamicGameState: DynamicGameState | null = null;
+    let moduleIntroduction: any = null;
+    const initResult = await initializeWorldBuilderGameState(db, characterId, sessionId, modName, userEmail);
+    dynamicGameState = initResult.dynamicGameState;
+    moduleIntroduction = initResult.moduleIntroduction;
+
+    console.log(`[${new Date().toISOString()}] Game initialized using DynamicWorld loader`);
 
     // Store in server state
-    if (isWorldBuilder && dynamicGameState) {
-      // For WorldBuilder, only store DynamicGameState (no GameState needed)
-      ServerState.getInstance().setGameState(userId, null as any, dynamicGameState);
-    } else if (gameState) {
-      // For regular modules, store GameState only
-      ServerState.getInstance().setGameState(userId, gameState, null);
+    if (dynamicGameState) {
+      ServerState.getInstance().setGameState(userId, dynamicGameState);
     }
 
     // Create introduction turn if module introduction is available
     if (moduleIntroduction && moduleIntroduction.introduction) {
       try {
-        const turnManager = graphManager.getTurnManager();
-        if (turnManager) {
-          // Check if introduction turn already exists for this session
-          const database = db.getDatabase();
-          const sessionId = isWorldBuilder && dynamicGameState 
-            ? dynamicGameState.sessionId 
-            : (gameState?.sessionId || "");
-          const existingIntro = database.prepare(`
-            SELECT turn_id FROM game_turns
-            WHERE session_id = ? AND turn_number = 0 AND character_input = ''
-          `).get(sessionId);
+        // Check if introduction turn already exists for this session
+        const database = db.getDatabase();
+        const sessionId = dynamicGameState?.sessionId || "";
+        const existingIntro = database.prepare(`
+          SELECT turn_id FROM game_turns
+          WHERE session_id = ? AND turn_number = 0 AND character_input = ''
+        `).get(sessionId);
 
-          if (!existingIntro) {
-            // Generate unique turn ID
-            const { randomUUID } = await import("crypto");
-            const introTurnId = `turn-intro-${Date.now()}-${randomUUID().slice(0, 8)}`;
+        if (!existingIntro) {
+          // Generate unique turn ID
+          const { randomUUID } = await import("crypto");
+          const introTurnId = `turn-intro-${Date.now()}-${randomUUID().slice(0, 8)}`;
 
-            // Get initial game time from state (set from module initialGameTime)
-            const initialGameDay = isWorldBuilder && dynamicGameState 
-              ? dynamicGameState.gameDay 
-              : (gameState?.gameDay ?? null);
-            const initialGameTime = isWorldBuilder && dynamicGameState 
-              ? dynamicGameState.timeOfDay 
-              : (gameState?.timeOfDay ?? null);
-            const playerCharacterId = isWorldBuilder && dynamicGameState 
-              ? dynamicGameState.playerCharacter.id 
-              : (gameState?.playerCharacter.id || "");
-            const playerCharacterName = isWorldBuilder && dynamicGameState 
-              ? dynamicGameState.playerCharacter.name 
-              : (gameState?.playerCharacter.name || "");
+          // Get initial game time from state (set from module initialGameTime)
+          const initialGameDay = dynamicGameState?.gameDay ?? null;
+          const initialGameTime = dynamicGameState?.timeOfDay ?? null;
+          const playerCharacterId = dynamicGameState?.playerCharacter.id || "";
+          const playerCharacterName = dynamicGameState?.playerCharacter.name || "";
 
-            // Create a special turn with turnNumber 0 for introduction
-            // Save initial game time from module's initialGameTime
-            database.prepare(`
-              INSERT INTO game_turns (
-                turn_id, session_id, turn_number, character_input, character_id, character_name,
-                keeper_narrative, status, started_at, completed_at, created_at, game_day, game_time
-              ) VALUES (?, ?, 0, '', ?, ?, ?, 'completed', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP, ?, ?)
-            `).run(
-              introTurnId,
-              sessionId,
-              playerCharacterId,
-              playerCharacterName,
-              moduleIntroduction.introduction,
-              initialGameDay ?? null,
-              initialGameTime ?? null
-            );
+          // Create a special turn with turnNumber 0 for introduction
+          // Save initial game time from module's initialGameTime
+          database.prepare(`
+            INSERT INTO game_turns (
+              turn_id, session_id, turn_number, character_input, character_id, character_name,
+              keeper_narrative, status, started_at, completed_at, created_at, game_day, game_time
+            ) VALUES (?, ?, 0, '', ?, ?, ?, 'completed', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP, ?, ?)
+          `).run(
+            introTurnId,
+            sessionId,
+            playerCharacterId,
+            playerCharacterName,
+            moduleIntroduction.introduction,
+            initialGameDay ?? null,
+            initialGameTime ?? null
+          );
 
-            console.log(`[${new Date().toISOString()}] Introduction turn created: ${introTurnId} with game time: Day ${initialGameDay}, ${initialGameTime}`);
-          } else {
-            console.log(`[${new Date().toISOString()}] Introduction turn already exists for this session`);
-          }
+          console.log(`[${new Date().toISOString()}] Introduction turn created: ${introTurnId} with game time: Day ${initialGameDay}, ${initialGameTime}`);
+        } else {
+          console.log(`[${new Date().toISOString()}] Introduction turn already exists for this session`);
         }
       } catch (error) {
         console.error("Failed to create introduction turn:", error);
@@ -172,46 +140,28 @@ export async function startGame(req: Request, res: Response): Promise<void> {
 
     console.log(`[${new Date().toISOString()}] Game started successfully`);
 
-    const finalSessionId = isWorldBuilder && dynamicGameState 
-      ? dynamicGameState.sessionId 
-      : (gameState?.sessionId || "");
-    const finalCharacterId = isWorldBuilder && dynamicGameState 
-      ? dynamicGameState.playerCharacter.id 
-      : (gameState?.playerCharacter.id || "");
-    const finalCharacterName = isWorldBuilder && dynamicGameState 
-      ? dynamicGameState.playerCharacter.name 
-      : (gameState?.playerCharacter.name || "");
-    const finalTimeOfDay = isWorldBuilder && dynamicGameState 
-      ? dynamicGameState.timeOfDay 
-      : (gameState?.timeOfDay || "08:00");
-    const finalTension = isWorldBuilder && dynamicGameState 
-      ? dynamicGameState.tension 
-      : (gameState?.tension || 1);
-    const finalCurrentScenario = isWorldBuilder && dynamicGameState 
-      ? dynamicGameState.currentScenario 
-      : (gameState?.currentScenario || null);
+    const finalSessionId = dynamicGameState?.sessionId || "";
+    const finalCharacterId = dynamicGameState?.playerCharacter.id || "";
+    const finalCharacterName = dynamicGameState?.playerCharacter.name || "";
+    const finalTimeOfDay = dynamicGameState?.timeOfDay || "08:00";
+    const finalTension = dynamicGameState?.tension || 1;
+    const finalCurrentScenario = dynamicGameState?.currentScenario || null;
 
     const gameStatePayload: Record<string, unknown> = {
-      playerCharacter: isWorldBuilder && dynamicGameState 
-        ? dynamicGameState.playerCharacter 
-        : (gameState?.playerCharacter || {
-          id: "",
-          name: "",
-          attributes: { STR: 50, CON: 50, DEX: 50, APP: 50, POW: 50, SIZ: 50, INT: 50, EDU: 50 },
-          status: { hp: 10, maxHp: 10, sanity: 60, maxSanity: 99, luck: 50, mp: 10, conditions: [] },
-          skills: {},
-          inventory: [],
-          notes: "",
-          actionLog: [],
-        }),
+      playerCharacter: dynamicGameState?.playerCharacter || {
+        id: "",
+        name: "",
+        attributes: { STR: 50, CON: 50, DEX: 50, APP: 50, POW: 50, SIZ: 50, INT: 50, EDU: 50 },
+        status: { hp: 10, maxHp: 10, sanity: 60, maxSanity: 99, luck: 50, mp: 10, conditions: [] },
+        skills: {},
+        inventory: [],
+        notes: "",
+        actionLog: [],
+      },
       timeOfDay: finalTimeOfDay,
       tension: finalTension,
       currentScenario: finalCurrentScenario,
     };
-
-    if (!isWorldBuilder) {
-      gameStatePayload.phase = gameState?.phase || "intro";
-    }
 
     res.json({
       success: true,
@@ -264,9 +214,9 @@ export async function importGameData(req: Request, res: Response): Promise<void>
     const db = DatabaseManager.getInstance().getDatabase();
 
     // Use loaders to get data counts (same as original code)
-    const { ScenarioLoader } = await import("../../../src/coc_multiagents_system/agents/memory/scenarioloader/index.js");
-    const { NPCLoader } = await import("../../../src/coc_multiagents_system/agents/character/npcloader/index.js");
-    const { ModuleLoader } = await import("../../../src/coc_multiagents_system/agents/memory/moduleloader/index.js");
+    const { ScenarioLoader } = await import("../../../src/shared/agents/memory/scenarioloader/index.js");
+    const { NPCLoader } = await import("../../../src/shared/agents/character/npcloader/index.js");
+    const { ModuleLoader } = await import("../../../src/shared/agents/memory/moduleloader/index.js");
 
     const scenarioLoader = new ScenarioLoader(db);
     const npcLoader = new NPCLoader(db);
@@ -352,15 +302,8 @@ export function getGameState(req: Request, res: Response): void {
     const userId = req.user!.userId;
     const serverState = ServerState.getInstance();
     
-    // Check for DynamicGameState first (for DynamicWorld modules)
     const dynamicGameState = serverState.getDynamicGameState(userId);
-    const gameState = serverState.getGameState(userId);
-
-    // For DynamicWorld modules, use DynamicGameState (which is compatible with frontend)
-    // For regular modules, use GameState
-    const stateToReturn = dynamicGameState || gameState;
-
-    if (!stateToReturn) {
+    if (!dynamicGameState) {
       res.json({
         success: true,
         gameState: null,
@@ -371,9 +314,7 @@ export function getGameState(req: Request, res: Response): void {
     }
 
     // Serialize DynamicGameState to handle Set/Map/Date conversion
-    const serializedState = dynamicGameState 
-      ? serializeDynamicGameState(stateToReturn)
-      : stateToReturn;
+    const serializedState = serializeDynamicGameState(dynamicGameState);
 
     res.json({
       success: true,

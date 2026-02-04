@@ -1,4 +1,4 @@
-import type { CoCDatabase } from "../../../src/coc_multiagents_system/agents/memory/database/index.js";
+import type { CoCDatabase } from "../../../src/shared/agents/memory/database/index.js";
 
 /**
  * Prepare character data for database insertion

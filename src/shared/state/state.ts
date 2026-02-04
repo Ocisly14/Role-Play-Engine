@@ -1,7 +1,5 @@
 /**
- * Shared types used by both GameState and DynamicGameState
- * GameState-specific types are in gameState.ts
- * DynamicGameState-specific types are in dynamicworldagent/state/
+ * Shared types used by DynamicGameState
  */
 
 export type AgentId = "keeper" | "memory" | "action";
@@ -92,10 +90,6 @@ export interface DiscoveredClue {
   /** Discovery method */
   method?: string;
 }
-
-// Re-export GameState and GameStateManager from gameState.ts for backward compatibility
-export type { GameState } from "./gameState.js";
-export { GameStateManager, initialGameState } from "./gameState.js";
 
 export type TimeConsumption = "instant" | "short" | "scene";
 

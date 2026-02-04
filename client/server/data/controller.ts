@@ -13,7 +13,7 @@ export function getOccupations(req: Request, res: Response): void {
     const occupationsFile = path.join(
       process.cwd(),
       "src",
-      "coc_multiagents_system",
+      "shared",
       "agents",
       "character",
       "Character occupation.json"

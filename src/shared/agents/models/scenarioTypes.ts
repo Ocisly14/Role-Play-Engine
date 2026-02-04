@@ -99,6 +99,8 @@ export interface ScenarioSnapshot {
   timeRestriction?: string;
   /** Whether this is the initial snapshot for the starting scene */
   initialSnapshot?: boolean;
+  /** Permanent changes applied to this scenario (persisted across scene switches) */
+  permanentChanges?: string[];
 }
 
 /**
@@ -170,6 +172,8 @@ export interface ParsedScenarioSnapshot {
     condition?: string;
   }[];
   keeperNotes?: string;
+  /** Permanent changes applied to this scenario */
+  permanentChanges?: string[];
 }
 
 /**

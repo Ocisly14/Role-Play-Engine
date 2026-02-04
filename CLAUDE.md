@@ -80,12 +80,12 @@ Player Input → Entry → Orchestrator → Memory → Action → Character → 
 **Agent Responsibilities:**
 
 1. **Entry** (`src/graph.ts:60`): Routes input type, clears temporary state for new player turns
-2. **Orchestrator** (`src/coc_multiagents_system/agents/orchestrator/orchestratorAgent.ts`): Analyzes player intent and determines action type
-3. **Memory** (`src/coc_multiagents_system/agents/memory/memoryAgent.ts`): Enriches context with relevant game rules, scenario details, and RAG results
-4. **Action** (`src/coc_multiagents_system/agents/action/actionAgent.ts`): Executes dice rolls, updates character stats, manages inventory
-5. **Character** (`src/coc_multiagents_system/agents/character/characterAgent.ts`): Determines NPC responses and behaviors
-6. **Director** (`src/coc_multiagents_system/agents/director/directorAgent.ts`): Manages scene transitions, time progression, and game ending conditions
-7. **Keeper** (`src/coc_multiagents_system/agents/keeper/keeperAgent.ts`): Generates narrative output for the player
+2. **Orchestrator** (`src/shared/agents/orchestrator/orchestratorAgent.ts`): Analyzes player intent and determines action type
+3. **Memory** (`src/shared/agents/memory/memoryAgent.ts`): Enriches context with relevant game rules, scenario details, and RAG results
+4. **Action** (`src/shared/agents/action/actionAgent.ts`): Executes dice rolls, updates character stats, manages inventory
+5. **Character** (`src/shared/agents/character/characterAgent.ts`): Determines NPC responses and behaviors
+6. **Director** (`src/shared/agents/director/directorAgent.ts`): Manages scene transitions, time progression, and game ending conditions
+7. **Keeper** (`src/shared/agents/keeper/keeperAgent.ts`): Generates narrative output for the player
 
 **Key State Management:**
 - `GraphState` (graph-level): Messages, game state, turn tracking
@@ -100,7 +100,7 @@ CoC-AI-agent/
 │   ├── graph.ts                           # LangGraph workflow definition
 │   ├── state.ts                           # GameState types and manager
 │   ├── index.ts                           # CLI entry point
-│   ├── coc_multiagents_system/
+│   ├── shared/
 │   │   ├── agents/                        # 6 specialized AI agents
 │   │   │   ├── orchestrator/              # Intent analysis
 │   │   │   ├── memory/                    # Context enrichment & loaders
@@ -181,7 +181,7 @@ When a player submits an action via the web UI:
    - Character determines NPC responses → outputs `NPCResponseAnalysis[]`
    - Director checks scene transitions, time progression, game ending → outputs `DirectorDecision`
    - Keeper generates narrative using all previous agent outputs
-4. **Turn Manager** (`src/coc_multiagents_system/agents/memory/turnManager.ts`) persists turn to database
+4. **Turn Manager** (`src/shared/agents/memory/turnManager.ts`) persists turn to database
 5. **WebSocket** broadcasts updated game state to connected clients
 
 ### Module Loading
@@ -194,9 +194,9 @@ The system supports custom Call of Cthulhu scenarios (modules) with NPCs, locati
 - `data/Mods/[Module Name]/[Module]_Scenarios/`: Scenario JSON files or documents
 
 **Loaders:**
-- `ModuleLoader` (`src/coc_multiagents_system/agents/memory/moduleloader/`): Parses module digest
-- `NPCLoader` (`src/coc_multiagents_system/agents/character/npcloader/`): Loads NPC profiles with AI-powered document parsing
-- `ScenarioLoader` (`src/coc_multiagents_system/agents/memory/scenarioloader/`): Loads scenarios/locations
+- `ModuleLoader` (`src/shared/agents/memory/moduleloader/`): Parses module digest
+- `NPCLoader` (`src/shared/agents/character/npcloader/`): Loads NPC profiles with AI-powered document parsing
+- `ScenarioLoader` (`src/shared/agents/memory/scenarioloader/`): Loads scenarios/locations
 
 **Document Parsing:**
 - Supports both structured JSON and unstructured documents (.docx, .pdf)
@@ -204,7 +204,7 @@ The system supports custom Call of Cthulhu scenarios (modules) with NPCs, locati
 
 ### Database Schema
 
-SQLite database (`data/db.sqlite`) managed by `src/coc_multiagents_system/agents/memory/database/schema.ts`:
+SQLite database (`data/db.sqlite`) managed by `src/shared/agents/memory/database/schema.ts`:
 
 **Core Tables:**
 - `users`: User authentication
@@ -287,7 +287,7 @@ CoC 7e mechanics organized into 8 action types (`src/state.ts:10-19`):
 7. **Environmental**: Surviving harsh conditions, physical endurance
 8. **Narrative**: Key story choices, plot decisions
 
-Each type has corresponding rules in `src/coc_multiagents_system/rules/[type].ts`
+Each type has corresponding rules in `src/shared/rules/[type].ts`
 
 ### NPC Response System
 
@@ -380,7 +380,7 @@ The backend API is organized by domain:
 ### Agent Development
 
 When adding/modifying agents:
-1. Agent logic goes in `src/coc_multiagents_system/agents/[agent-name]/[agent-name]Agent.ts`
+1. Agent logic goes in `src/shared/agents/[agent-name]/[agent-name]Agent.ts`
 2. Prompt templates in `[agent-name]Template.ts`
 3. Update `src/graph.ts` to wire into pipeline
 4. Update `GraphState` or `GameState` if new state fields needed

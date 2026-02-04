@@ -10,8 +10,8 @@ config();
 
 import fs from "fs";
 import path from "path";
-import { CoCDatabase } from "./src/coc_multiagents_system/agents/memory/database/schema.js";
-import { ModuleLoader } from "./src/coc_multiagents_system/agents/memory/moduleloader/index.js";
+import { CoCDatabase } from "./src/shared/agents/memory/database/schema.js";
+import { ModuleLoader } from "./src/shared/agents/memory/moduleloader/index.js";
 
 const logger = {
   info: (msg: string) => console.log(`ℹ️  ${msg}`),

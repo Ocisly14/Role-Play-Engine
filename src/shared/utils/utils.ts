@@ -3,7 +3,6 @@
  */
 
 import type { BaseMessage } from "@langchain/core/messages";
-import type { AgentId, GameState } from "../state/state.js";
 
 /**
  * Convert various content types to string

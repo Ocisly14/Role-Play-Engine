@@ -5,7 +5,7 @@
  * which record each complete interaction cycle from character input to keeper narrative.
  */
 
-import type { CoCDatabase } from "../../../coc_multiagents_system/agents/memory/database/index.js";
+import type { CoCDatabase } from "../../../shared/agents/memory/database/index.js";
 import type { DynamicGameState } from "../../state/index.js";
 import { randomUUID } from "crypto";
 

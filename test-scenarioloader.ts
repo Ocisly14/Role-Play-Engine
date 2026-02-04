@@ -10,8 +10,8 @@ config();
 
 import fs from "fs";
 import path from "path";
-import { CoCDatabase } from "./src/coc_multiagents_system/agents/memory/database/schema.js";
-import { ScenarioLoader } from "./src/coc_multiagents_system/agents/memory/scenarioloader/index.js";
+import { CoCDatabase } from "./src/shared/agents/memory/database/schema.js";
+import { ScenarioLoader } from "./src/shared/agents/memory/scenarioloader/index.js";
 
 // Configure logging for terminal display
 const logger = {

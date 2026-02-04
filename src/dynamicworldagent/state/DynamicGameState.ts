@@ -24,12 +24,12 @@ import type {
   SceneTransitionRejection,
   DiscoveredClue,
   TimeConsumption,
-} from "../../coc_multiagents_system/state/index.js";
+} from "../../shared/state/index.js";
 import type { DynamicCharacterProfile, DynamicNPCProfile, DynamicScenarioSnapshot } from "../world_builder/types.js";
-import type { CoCDatabase } from "../../coc_multiagents_system/agents/memory/database/index.js";
-import { InventoryUtils } from "../../coc_multiagents_system/agents/models/gameTypes.js";
+import type { CoCDatabase } from "../../shared/agents/memory/database/index.js";
+import { InventoryUtils } from "../../shared/agents/models/gameTypes.js";
 import { randomUUID } from "crypto";
-import { resolveEmailId } from "../../coc_multiagents_system/agents/memory/database/userContext.js";
+import { resolveEmailId } from "../../shared/agents/memory/database/userContext.js";
 
 /**
  * Temporary Info for Dynamic World

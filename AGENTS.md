@@ -3,9 +3,9 @@
 ## Project Structure & Module Organization
 - Source lives in `src/`; `index.ts` is the CLI entry that seeds the SQLite DB and runs the LangGraph flow.
 - Graph wiring and orchestrator logic sit in `src/graph.ts` and `src/runtime.ts`; shared state types are in `src/state.ts` with prompt helpers in `src/template.ts` and utilities in `src/utils.ts`.
-- Game-specific agents and data access are under `src/coc_multiagents_system/`: `agents/` (orchestrator, memory, keeper, character stub) and `shared/database/` (schema, seed data).
+- Game-specific agents and data access are under `src/shared/`: `agents/` (orchestrator, memory, keeper, character stub) and `shared/database/` (schema, seed data).
 - Build artifacts land in `dist/` after compilation; the runtime creates `data/coc_game.db` if it does not exist.
-- Architecture notes: see `ARCHITECTURE.md` and `src/coc_multiagents_system/README.md` for agent roles and DB shape.
+- Architecture notes: see `ARCHITECTURE.md` and `src/shared/README.md` for agent roles and DB shape.
 
 ## Build, Test, and Development Commands
 - `npm install` — install dependencies.
@@ -18,7 +18,7 @@
 - TypeScript with `strict` mode and NodeNext ES modules; keep `.js` extensions on internal imports.
 - Prefer 2-space indentation, explicit return types, and narrow unions (e.g., `AgentId = "character" | "memory"`; keeper is invoked implicitly).
 - Keep orchestrator prompts/json parsing deterministic; avoid `any` and prefer small helpers over inline logic.
-- Name files and symbols descriptively (`buildKeeperPrompt`, `parseRoutingDecision`); align new agents under `src/coc_multiagents_system/agents/<agent>/`.
+- Name files and symbols descriptively (`buildKeeperPrompt`, `parseRoutingDecision`); align new agents under `src/shared/agents/<agent>/`.
 
 ## Testing Guidelines
 - No automated test runner is configured yet; at minimum run `npm run build` before sending changes to catch type regressions.

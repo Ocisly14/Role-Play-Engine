@@ -14,9 +14,9 @@
 
 import fs from "fs";
 import path from "path";
-import { CoCDatabase } from "../src/coc_multiagents_system/agents/memory/database/schema.js";
-import { NPCLoader } from "../src/coc_multiagents_system/agents/character/npcloader/index.js";
-import type { NPCProfile } from "../src/coc_multiagents_system/agents/models/gameTypes.js";
+import { CoCDatabase } from "../src/shared/agents/memory/database/schema.js";
+import { NPCLoader } from "../src/shared/agents/character/npcloader/index.js";
+import type { NPCProfile } from "../src/shared/agents/models/gameTypes.js";
 
 const dbPath = process.argv[2] || "data/test_coc.db";
 const outputPath = path.join("data", "npc_merge_prompt.txt");

@@ -4,7 +4,7 @@ import { generateAccessToken, verifyToken } from './jwt.js';
 import { runWithTokenContext } from '../../../src/models/index.js';
 import { authDbService } from './db-service.js';
 import Database from 'better-sqlite3';
-import { CoCDatabase } from '../../../src/coc_multiagents_system/agents/memory/database/schema.js';
+import { CoCDatabase } from '../../../src/shared/agents/memory/database/schema.js';
 
 // Database instance
 let dbInstance: CoCDatabase | null = null;

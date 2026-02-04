@@ -4,16 +4,13 @@ import type Database from "better-sqlite3";
 import { DatabaseManager } from "../core/DatabaseManager.js";
 import { GraphManager } from "../core/GraphManager.js";
 import { ServerState } from "../core/ServerState.js";
-import { TurnManager } from "../../../src/coc_multiagents_system/agents/memory/index.js";
 import { TurnManager as DynamicTurnManager } from "../../../src/dynamicworldagent/dynamicBasicAgent/memory/turnManager.js";
-import type { GameState } from "../../../src/coc_multiagents_system/state/gameState.js";
 import type { DynamicGameState } from "../../../src/dynamicworldagent/state/index.js";
 import { HumanMessage } from "@langchain/core/messages";
-import { DynamicGameStateManager } from "../../../src/dynamicworldagent/state/index.js";
 import { WebSocketManager } from "../websocket/WebSocketManager.js";
 import { notifyClients } from "../websocket/notifier.js";
 import { runWithTokenContext, getCurrentUsageTotals } from "../../../src/models/index.js";
-import type { DiceRollInfo } from "../../../src/coc_multiagents_system/state/index.js";
+import type { DiceRollInfo } from "../../../src/shared/state/index.js";
 
 type NarrativeStreamHandlers = {
   onDiceRolls?: (diceRolls: DiceRollInfo[]) => void;
@@ -41,13 +38,11 @@ export async function createTurn(req: Request, res: Response): Promise<void> {
     const userEmail = req.user!.email;
     const serverState = ServerState.getInstance();
     
-    // Check for both GameState and DynamicGameState (for DynamicWorld modules)
-    const persistentGameState = serverState.getGameState(userId);
     const dynamicGameState = serverState.getDynamicGameState(userId);
 
-    if (!persistentGameState && !dynamicGameState) {
+    if (!dynamicGameState) {
       res.status(400).json({
-        error: "Game not started. Please start the game first by calling /api/game/start"
+        error: "DynamicWorld game not started. Please start the game first by calling /api/game/start"
       });
       return;
     }
@@ -57,8 +52,7 @@ export async function createTurn(req: Request, res: Response): Promise<void> {
     // Initialize graph if needed
     if (!graphManager.isInitialized()) {
       const db = DatabaseManager.getInstance().getDatabase();
-      // Default: skip RAG (true), unless explicitly set to 'false'
-      await graphManager.initialize(db, process.env.SKIP_RAG !== 'false');
+      await graphManager.initialize(db);
     }
 
     const { message, selectedSkill: rawSelectedSkill, skillSelectionMode: rawSkillSelectionMode } = req.body ?? {};
@@ -82,50 +76,27 @@ export async function createTurn(req: Request, res: Response): Promise<void> {
       return;
     }
 
-    // Determine which type of game state we have
-    const useDynamic = dynamicGameState !== null;
     const db = DatabaseManager.getInstance().getDatabase();
 
-    // Get appropriate turn manager based on game state type
     let turnId: string;
-    if (useDynamic && dynamicGameState) {
-      // For DynamicWorld modules, use DynamicTurnManager
-      const dynamicTurnManager = new DynamicTurnManager(db);
-      turnId = dynamicTurnManager.createTurnFromGameState(
-        dynamicGameState.sessionId,
-        message,
-        dynamicGameState
-      );
-    } else if (persistentGameState) {
-      // For regular modules, use standard TurnManager
-      const turnManager = graphManager.getTurnManager();
-      if (!turnManager) {
-        res.status(500).json({ error: "Turn manager not initialized" });
-        return;
-      }
-      turnId = turnManager.createTurnFromGameState(
-        persistentGameState.sessionId,
-        message,
-        persistentGameState
-      );
-    } else {
-      res.status(400).json({
-        error: "Game not started. Please start the game first by calling /api/game/start"
-      });
-      return;
-    }
+    const dynamicTurnManager = new DynamicTurnManager(db);
+    turnId = dynamicTurnManager.createTurnFromGameState(
+      dynamicGameState.sessionId,
+      message,
+      dynamicGameState
+    );
 
-    console.log(`[${new Date().toISOString()}] Turn created: ${turnId} for message: ${message} (${useDynamic ? 'DynamicWorld' : 'Standard'})`);
+    console.log(`[${new Date().toISOString()}] Turn created: ${turnId} for message: ${message} (DynamicWorld)`);
     if (normalizedSkill) {
       console.log(`[${new Date().toISOString()}] Selected skill: ${normalizedSkill}`);
     }
-    if (useDynamic && effectiveSkillSelectionMode === "auto") {
+    if (effectiveSkillSelectionMode === "auto") {
       console.log(`[${new Date().toISOString()}] Skill selection mode: auto`);
     }
 
     // Start async processing (don't wait for it)
     // Pass the appropriate state type to processGameTurnAsync
-    const stateToProcess = useDynamic ? dynamicGameState! : persistentGameState!;
+    const stateToProcess = dynamicGameState;
     runWithTokenContext(
       {
         email: userEmail,
@@ -143,16 +114,8 @@ export async function createTurn(req: Request, res: Response): Promise<void> {
       )
         .catch((error) => {
           console.error(`Error processing turn ${turnId}:`, error);
-          // Mark error using appropriate turn manager
-          if (useDynamic) {
-            const dynamicTurnManager = new DynamicTurnManager(db);
-            dynamicTurnManager.markError(turnId, error);
-          } else {
-            const turnManager = graphManager.getTurnManager();
-            if (turnManager) {
-              turnManager.markError(turnId, error);
-            }
-          }
+          const dynamicTurnManager = new DynamicTurnManager(db);
+          dynamicTurnManager.markError(turnId, error);
         });
       }
     );
@@ -299,7 +262,7 @@ function buildNarrativeStreamHandlers(params: {
 async function processGameTurnAsync(
   turnId: string,
   userInput: string,
-  gameState: GameState | DynamicGameState,
+  gameState: DynamicGameState,
   userId: string,
   selectedSkill?: string | null,
   skillSelectionMode?: "auto" | "manual"
@@ -310,66 +273,42 @@ async function processGameTurnAsync(
     const serverState = ServerState.getInstance();
     const graphManager = GraphManager.getInstance();
 
-    // Check if this is a DynamicWorld module by checking the state type
-    // If gameState has 'moduleName' property, it's a DynamicGameState
-    const useDynamic = 'moduleName' in gameState;
-    const dynamicGameState = useDynamic ? (gameState as DynamicGameState) : null;
-    const regularGameState = useDynamic ? null : (gameState as GameState);
-
-    const graph = graphManager.getGraph(useDynamic);
+    const dynamicGameState = gameState;
+    const graph = graphManager.getGraph(true);
     const initialMessages = [new HumanMessage(userInput)];
     const db = DatabaseManager.getInstance().getDatabase();
     let streamHandlers: NarrativeStreamHandlers | null = null;
 
-    if (useDynamic && dynamicGameState) {
-      const dynamicTurnManager = new DynamicTurnManager(db);
-      const turn = dynamicTurnManager.getTurn(turnId);
-      streamHandlers = buildNarrativeStreamHandlers({
-        sessionId: dynamicGameState.sessionId,
-        turnId,
-        turnNumber: turn?.turnNumber ?? null,
-        isSimulated: turn?.isSimulated ?? null,
-        gameDay: turn?.gameDay ?? dynamicGameState.gameDay ?? null,
-        gameTime: turn?.gameTime ?? dynamicGameState.timeOfDay ?? null,
-        timestamp: turn?.startedAt ?? null,
-      });
-    }
+    const dynamicTurnManager = new DynamicTurnManager(db);
+    const turn = dynamicTurnManager.getTurn(turnId);
+    streamHandlers = buildNarrativeStreamHandlers({
+      sessionId: dynamicGameState.sessionId,
+      turnId,
+      turnNumber: turn?.turnNumber ?? null,
+      isSimulated: turn?.isSimulated ?? null,
+      gameDay: turn?.gameDay ?? dynamicGameState.gameDay ?? null,
+      gameTime: turn?.gameTime ?? dynamicGameState.timeOfDay ?? null,
+      timestamp: turn?.startedAt ?? null,
+    });
 
     // Prepare graph state
     let graphState: any;
     
-    if (useDynamic && dynamicGameState) {
-      // For DynamicWorld modules, use only DynamicGameState
-      graphState = {
-        messages: initialMessages,
-        dynamicGameState: dynamicGameState,
-        turnId: turnId,
-        stream: streamHandlers ?? undefined,
-        selectedSkill: selectedSkill ?? null,
-        skillSelectionMode,
-      };
-    } else if (regularGameState) {
-      // For regular modules, use GameState (legacy support)
-      graphState = {
-        messages: initialMessages,
-        gameState: regularGameState,
-        turnId: turnId,
-      };
-    } else {
-      throw new Error("Invalid game state: neither DynamicGameState nor GameState");
-    }
+    graphState = {
+      messages: initialMessages,
+      dynamicGameState: dynamicGameState,
+      turnId: turnId,
+      stream: streamHandlers ?? undefined,
+      selectedSkill: selectedSkill ?? null,
+      skillSelectionMode,
+    };
 
     // Invoke the graph
     const result = await graph.invoke(graphState);
 
     // Update the persistent state
-    if (useDynamic && result.dynamicGameState) {
-      // For DynamicWorld, only store DynamicGameState
-      // Note: GameState is not needed for DynamicWorld modules
-      serverState.setGameState(userId, null as any, result.dynamicGameState);
-    } else if (result.gameState) {
-      // For regular modules, update GameState only
-      serverState.setGameState(userId, result.gameState, null);
+    if (result.dynamicGameState) {
+      serverState.setGameState(userId, result.dynamicGameState);
     }
 
     const totals = getCurrentUsageTotals();
@@ -379,7 +318,7 @@ async function processGameTurnAsync(
       );
     }
 
-    console.log(`[${new Date().toISOString()}] Turn ${turnId} completed successfully (${useDynamic ? 'DynamicWorld' : 'Standard'} graph)`);
+    console.log(`[${new Date().toISOString()}] Turn ${turnId} completed successfully (DynamicWorld graph)`);
   } catch (error) {
     const totals = getCurrentUsageTotals();
     if (totals && totals.total_tokens > 0) {
@@ -399,7 +338,6 @@ async function processGameTurnAsync(
 export async function getTurnStatus(req: Request, res: Response): Promise<void> {
   try {
     const { turnId } = req.params;
-    const userId = req.user!.userId;
     const db = DatabaseManager.getInstance().getDatabase();
     const database = db.getDatabase();
 
@@ -408,35 +346,8 @@ export async function getTurnStatus(req: Request, res: Response): Promise<void> 
       return;
     }
 
-    // Try both TurnManagers - they both use the same database table
-    // First try to determine which one to use based on user's game state
-    const serverState = ServerState.getInstance();
-    const dynamicGameState = serverState.getDynamicGameState(userId);
-    const useDynamic = dynamicGameState !== null;
-
-    // Use appropriate TurnManager
-    let turn: any = null;
-    if (useDynamic) {
-      const dynamicTurnManager = new DynamicTurnManager(db);
-      turn = dynamicTurnManager.getTurn(turnId);
-    } else {
-      const turnManager = GraphManager.getInstance().getTurnManager();
-      if (turnManager) {
-        turn = turnManager.getTurn(turnId);
-      }
-    }
-
-    // If not found with specific manager, try the other one (fallback)
-    if (!turn) {
-      const dynamicTurnManager = new DynamicTurnManager(db);
-      turn = dynamicTurnManager.getTurn(turnId);
-      if (!turn) {
-        const turnManager = GraphManager.getInstance().getTurnManager();
-        if (turnManager) {
-          turn = turnManager.getTurn(turnId);
-        }
-      }
-    }
+    const dynamicTurnManager = new DynamicTurnManager(db);
+    let turn: any = dynamicTurnManager.getTurn(turnId);
 
     const waitForCompletion = req.query.wait === 'true';
     const maxWaitTime = 60000; // 60 seconds
@@ -447,15 +358,8 @@ export async function getTurnStatus(req: Request, res: Response): Promise<void> 
     if (waitForCompletion) {
       while (Date.now() - startTime < maxWaitTime) {
         // Re-fetch turn to get latest status
-        if (useDynamic) {
-          const dynamicTurnManager = new DynamicTurnManager(db);
-          turn = dynamicTurnManager.getTurn(turnId);
-        } else {
-          const turnManager = GraphManager.getInstance().getTurnManager();
-          if (turnManager) {
-            turn = turnManager.getTurn(turnId);
-          }
-        }
+        const dynamicTurnManager = new DynamicTurnManager(db);
+        turn = dynamicTurnManager.getTurn(turnId);
 
         if (!turn) {
           res.status(404).json({ error: "Turn not found" });
@@ -499,37 +403,21 @@ export async function getTurnStatus(req: Request, res: Response): Promise<void> 
   }
 }
 
-async function ensureTurnManager(): Promise<TurnManager | null> {
-  const graphManager = GraphManager.getInstance();
-
-  if (!graphManager.isInitialized()) {
-    const db = DatabaseManager.getInstance().getDatabase();
-    // Default: skip RAG (true), unless explicitly set to 'false'
-    await graphManager.initialize(db, process.env.SKIP_RAG !== 'false');
-  }
-
-  return graphManager.getTurnManager();
-}
-
 /**
  * Get conversation history
  * GET /api/sessions/:sessionId/conversation
  */
 export async function getConversation(req: Request, res: Response): Promise<void> {
   try {
-    const turnManager = await ensureTurnManager();
-
-    if (!turnManager) {
-      res.status(400).json({ error: "Game not initialized" });
-      return;
-    }
+    const db = DatabaseManager.getInstance().getDatabase();
+    const turnManager = new DynamicTurnManager(db);
 
     const { sessionId } = req.params;
     const userId = req.user!.userId;
-    const db = DatabaseManager.getInstance().getDatabase().getDatabase();
+    const database = db.getDatabase();
     const serverState = ServerState.getInstance();
 
-    if (!isSessionOwnedByUser(sessionId, userId, req.user!.email, db, serverState)) {
+    if (!isSessionOwnedByUser(sessionId, userId, req.user!.email, database, serverState)) {
       res.status(404).json({ error: "Session not found" });
       return;
     }
@@ -550,19 +438,15 @@ export async function getConversation(req: Request, res: Response): Promise<void
  */
 export async function getTurnHistory(req: Request, res: Response): Promise<void> {
   try {
-    const turnManager = await ensureTurnManager();
-
-    if (!turnManager) {
-      res.status(400).json({ error: "Game not initialized" });
-      return;
-    }
+    const db = DatabaseManager.getInstance().getDatabase();
+    const turnManager = new DynamicTurnManager(db);
 
     const { sessionId } = req.params;
     const userId = req.user!.userId;
-    const db = DatabaseManager.getInstance().getDatabase().getDatabase();
+    const database = db.getDatabase();
     const serverState = ServerState.getInstance();
 
-    if (!isSessionOwnedByUser(sessionId, userId, req.user!.email, db, serverState)) {
+    if (!isSessionOwnedByUser(sessionId, userId, req.user!.email, database, serverState)) {
       res.status(404).json({ error: "Session not found" });
       return;
     }
@@ -590,7 +474,7 @@ export async function getLatestSession(req: Request, res: Response): Promise<voi
   try {
     const userId = req.user!.userId;
     const serverState = ServerState.getInstance();
-    const activeState = serverState.getGameState(userId);
+    const activeState = serverState.getDynamicGameState(userId);
 
     if (activeState?.sessionId) {
       res.json({
@@ -657,7 +541,7 @@ function isSessionOwnedByUser(
   db: Database.Database,
   serverState: ServerState
 ): boolean {
-  const active = serverState.getGameState(userId);
+  const active = serverState.getDynamicGameState(userId);
   if (active?.sessionId === sessionId) {
     return true;
   }

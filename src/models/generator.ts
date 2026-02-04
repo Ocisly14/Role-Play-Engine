@@ -202,7 +202,7 @@ export function createChatModel(
     modelClass,
     modelName: settings.name,
     operation: options?.operation,
-    userId: options?.userId,
+    email: options?.userId,
   });
 }
 

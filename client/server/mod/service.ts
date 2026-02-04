@@ -1,7 +1,7 @@
-import type { CoCDatabase } from "../../../src/coc_multiagents_system/agents/memory/database/index.js";
-import { ScenarioLoader } from "../../../src/coc_multiagents_system/agents/memory/scenarioloader/index.js";
-import { NPCLoader } from "../../../src/coc_multiagents_system/agents/character/npcloader/index.js";
-import { ModuleLoader } from "../../../src/coc_multiagents_system/agents/memory/moduleloader/index.js";
+import type { CoCDatabase } from "../../../src/shared/agents/memory/database/index.js";
+import { ScenarioLoader } from "../../../src/shared/agents/memory/scenarioloader/index.js";
+import { NPCLoader } from "../../../src/shared/agents/character/npcloader/index.js";
+import { ModuleLoader } from "../../../src/shared/agents/memory/moduleloader/index.js";
 import { WorldModuleLoader } from "../../../src/dynamicworldagent/world_builder/worldModuleLoader.js";
 import { registerModuleForUser } from "./library.js";
 import path from "path";

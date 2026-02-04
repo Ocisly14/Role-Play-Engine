@@ -5,7 +5,7 @@
 
 import { generateText, ModelClass, ModelProviderName } from "../../models/index.js";
 import { composeTemplate } from "../../template.js";
-import { generateRandomAttributes } from "../../coc_multiagents_system/agents/character/characterBuilder.js";
+import { generateRandomAttributes } from "../../shared/agents/character/characterBuilder.js";
 import { allocateSkillPoints } from "./skillAllocator.js";
 import fs from "fs";
 import path from "path";
@@ -23,7 +23,7 @@ import type {
 import type {
   NPCRelationship,
   CharacterAttributes,
-} from "../../coc_multiagents_system/agents/models/gameTypes.js";
+} from "../../shared/agents/models/gameTypes.js";
 import type { StoryLength } from "./storyLengthConfig.js";
 import {
   getNPCInstantiationTemplate,
@@ -125,7 +125,7 @@ const loadOccupationNames = (): string[] => {
     const occupationsPath = path.join(
       process.cwd(),
       "src",
-      "coc_multiagents_system",
+      "shared",
       "agents",
       "character",
       "Character occupation.json"

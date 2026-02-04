@@ -6,8 +6,8 @@
 
 import fs from "fs";
 import path from "path";
-import type { CoCDatabase } from "../../coc_multiagents_system/agents/memory/database/schema.js";
-import { resolveEmailId, scopeArray, scopeId } from "../../coc_multiagents_system/agents/memory/database/userContext.js";
+import type { CoCDatabase } from "../../shared/agents/memory/database/schema.js";
+import { resolveEmailId, scopeArray, scopeId } from "../../shared/agents/memory/database/userContext.js";
 import type {
   MacroSceneStructure,
   TruthEvent,

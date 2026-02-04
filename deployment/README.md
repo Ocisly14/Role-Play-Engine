@@ -304,7 +304,7 @@ mkdir -p /home/ubuntu/app/data
 cd /home/ubuntu/app
 
 # 首次运行会自动创建数据库表
-NODE_ENV=production node dist/src/coc_multiagents_system/index.js --prompt "init" || true
+NODE_ENV=production node dist/src/shared/index.js --prompt "init" || true
 ```
 
 #### 3.5 启动应用

@@ -370,7 +370,7 @@ pnpm chat
 
 **Option B: Specify module explicitly**
 
-Modify `src/coc_multiagents_system/index.ts` to load your specific module:
+Modify `src/shared/index.ts` to load your specific module:
 
 ```typescript
 const moduleDigest = await loadModuleDigest("My Mystery");

@@ -445,7 +445,7 @@ Store in `secrets` or `clues` with appropriate difficulty levels:
 
 ### Occupation Mapping (Current Implementation)
 The system automatically maps LLM-generated occupations to the standard CoC occupation list:
-- Loads from `src/coc_multiagents_system/agents/character/Character occupation.json`
+- Loads from `src/shared/agents/character/Character occupation.json`
 - Fuzzy matching with token-based scoring
 - Falls back to original occupation if no good match (score < 0.5)
 
@@ -1082,7 +1082,7 @@ Generated content integrates with existing game database:
 
 ```typescript
 import { WorldBuilderService } from './worldBuilderService.js';
-import { DatabaseManager } from '../../coc_multiagents_system/agents/memory/database/index.js';
+import { DatabaseManager } from '../../shared/agents/memory/database/index.js';
 
 const db = DatabaseManager.getInstance();
 const service = new WorldBuilderService(db);

@@ -1,5 +1,5 @@
 import { AsyncLocalStorage } from "async_hooks";
-import { CoCDatabase } from "../coc_multiagents_system/agents/memory/database/schema.js";
+import { CoCDatabase } from "../shared/agents/memory/database/schema.js";
 import { ModelClass, ModelProviderName } from "./types.js";
 
 export type TokenUsageContext = {

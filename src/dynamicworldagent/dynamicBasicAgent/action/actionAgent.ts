@@ -1,10 +1,10 @@
 import { ModelClass } from "../../../models/types.js";
 import { generateText } from "../../../models/index.js";
-import { ActionResult, ActionAnalysis, NPCResponseAnalysis, ActionType, SceneChangeRequest } from "../../../coc_multiagents_system/state/index.js";
-import type { ActionLogEntry } from "../../../coc_multiagents_system/agents/models/gameTypes.js";
+import { ActionResult, ActionAnalysis, NPCResponseAnalysis, ActionType, SceneChangeRequest } from "../../../shared/state/index.js";
+import type { ActionLogEntry } from "../../../shared/agents/models/gameTypes.js";
 import type { DynamicCharacterProfile } from "../../world_builder/types.js";
 import type { DynamicNPCProfile } from "../../world_builder/types.js";
-import type { ScenarioLoader } from "../../../coc_multiagents_system/agents/memory/scenarioloader/index.js";
+import type { ScenarioLoader } from "../../../shared/agents/memory/scenarioloader/index.js";
 import type { DynamicGameState } from "../../state/index.js";
 import { DynamicGameStateManager } from "../../state/index.js";
 import { isTimeAfter, getLatestActionLogEntryWithLocation } from "../../utils/gameTime.js";

@@ -5,21 +5,20 @@
  */
 
 import { END, START, StateGraph } from "@langchain/langgraph";
-import type { CoCDatabase } from "../../coc_multiagents_system/agents/memory/database/index.js";
-import type { RagManager } from "../../coc_multiagents_system/agents/memory/RagManager.js";
+import type { CoCDatabase } from "../../shared/agents/memory/database/index.js";
 import type { BaseMessage } from "@langchain/core/messages";
 import { HumanMessage, AIMessage } from "@langchain/core/messages";
-import type { ScenarioLoader } from "../../coc_multiagents_system/agents/memory/scenarioloader/index.js";
+import type { ScenarioLoader } from "../../shared/agents/memory/scenarioloader/index.js";
 import type {
   ActionAnalysis,
   ActionResult,
   DiceRollInfo,
-} from "../../coc_multiagents_system/state/index.js";
-import { buildDiceRollInfos } from "../../coc_multiagents_system/state/index.js";
-import type { ActionLogEntry } from "../../coc_multiagents_system/agents/models/gameTypes.js";
+} from "../../shared/state/index.js";
+import { buildDiceRollInfos } from "../../shared/state/index.js";
+import type { ActionLogEntry } from "../../shared/agents/models/gameTypes.js";
 import type { DynamicGameState } from "../state/index.js";
 import { DynamicGameStateManager, initialDynamicGameState } from "../state/index.js";
-import { contentToString, latestHumanMessage } from "../../coc_multiagents_system/utils/index.js";
+import { contentToString, latestHumanMessage } from "../../shared/utils/index.js";
 import { loadDynamicGameState } from "../state/DynamicGameStateLoader.js";
 import { enrichMemoryContext } from "../dynamicBasicAgent/memory/memoryAgent.js";
 import { TurnManager } from "../dynamicBasicAgent/memory/turnManager.js";
@@ -65,8 +64,7 @@ export interface DynamicGraphState {
  */
 export const buildDynamicGraph = (
   db: CoCDatabase,
-  scenarioLoader: ScenarioLoader,
-  rag?: RagManager
+  scenarioLoader: ScenarioLoader
 ) => {
   const orchestrator = new OrchestratorAgent();
   const actionAgent = new ActionAgent(scenarioLoader);
@@ -710,8 +708,7 @@ export const buildDynamicGraph = (
  */
 export const buildDynamicListenerGraph = (
   db: CoCDatabase,
-  scenarioLoader: ScenarioLoader,
-  rag?: RagManager
+  scenarioLoader: ScenarioLoader
 ) => {
   const directorAgent = new DirectorAgent(scenarioLoader, db);
   const turnManager = new TurnManager(db);

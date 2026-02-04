@@ -4,7 +4,7 @@
  */
 
 import path from "path";
-import type { CoCDatabase } from "../../coc_multiagents_system/agents/memory/database/index.js";
+import type { CoCDatabase } from "../../shared/agents/memory/database/index.js";
 import { WorldModuleLoader } from "../world_builder/worldModuleLoader.js";
 import type {
   DynamicGameState,
@@ -13,11 +13,11 @@ import {
   DynamicGameStateManager,
   initialDynamicGameState,
 } from "./DynamicGameState.js";
-import type { NPCProfile } from "../../coc_multiagents_system/agents/models/gameTypes.js";
+import type { NPCProfile } from "../../shared/agents/models/gameTypes.js";
 import type { DynamicCharacterProfile, DynamicNPCProfile } from "../world_builder/types.js";
 import type { DynamicScenarioSnapshot } from "../world_builder/types.js";
-import { NPCLoader } from "../../coc_multiagents_system/agents/character/npcloader/index.js";
-import { resolveEmailId } from "../../coc_multiagents_system/agents/memory/database/userContext.js";
+import { NPCLoader } from "../../shared/agents/character/npcloader/index.js";
+import { resolveEmailId } from "../../shared/agents/memory/database/userContext.js";
 
 /**
  * Convert NPCProfile (from multiagent system) to DynamicNPCProfile (for DynamicWorld system)

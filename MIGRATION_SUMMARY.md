@@ -20,7 +20,7 @@
 - ✅ 更新了`createMemoryNode` - 使用CoCTemplateFactory.getMemoryAgent
 - ✅ 更新了`createActionNode` - 使用统一模板字符串
 
-### 4. **Orchestrator迁移** (`src/coc_multiagents_system/agents/orchestrator/orchestrator.ts`)
+### 4. **Orchestrator迁移** (`src/shared/agents/orchestrator/orchestrator.ts`)
 - ✅ 更新了`createOrchestratorNode` - 使用CoCTemplateFactory.getOrchestrator
 - ✅ 集成了新的模型选择系统
 

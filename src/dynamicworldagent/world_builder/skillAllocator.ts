@@ -3,7 +3,7 @@
  * Allocates occupational and interest skill points following CoC 7e rules
  */
 
-import type { CharacterAttributes } from "../../coc_multiagents_system/agents/models/gameTypes.js";
+import type { CharacterAttributes } from "../../shared/agents/models/gameTypes.js";
 import fs from "fs";
 import path from "path";
 
@@ -32,7 +32,7 @@ function loadOccupationData(occupation: string): OccupationData | null {
     const occupationsPath = path.join(
       process.cwd(),
       "src",
-      "coc_multiagents_system",
+      "shared",
       "agents",
       "character",
       "Character occupation.json"

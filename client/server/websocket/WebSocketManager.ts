@@ -142,7 +142,7 @@ export class WebSocketManager {
 
   private isSessionOwnedByUser(sessionId: string, userId: string, email: string): boolean {
     const serverState = ServerState.getInstance();
-    const activeState = serverState.getGameState(userId);
+    const activeState = serverState.getDynamicGameState(userId);
     if (activeState?.sessionId === sessionId) {
       return true;
     }

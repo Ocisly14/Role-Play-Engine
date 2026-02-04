@@ -3,8 +3,8 @@
  * Tests the player loading functionality
  */
 
-import { CoCDatabase } from "./src/coc_multiagents_system/agents/memory/database/index.js";
-import { PlayerLoader } from "./src/coc_multiagents_system/agents/character/index.js";
+import { CoCDatabase } from "./src/shared/agents/memory/database/index.js";
+import { PlayerLoader } from "./src/shared/agents/character/index.js";
 import fs from "fs";
 import path from "path";
 

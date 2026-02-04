@@ -1,15 +1,15 @@
 import { getScenarioUpdateTemplate, getPlayerSceneSwitchTemplate, getGlobalTriggerEventCheckTemplate, getStuckHintNarrativeTemplate } from "./directorTemplate.js";
 import { composeTemplate } from "../../../template.js";
-import type { ScenarioCharacter } from "../../../coc_multiagents_system/agents/models/scenarioTypes.js";
+import type { ScenarioCharacter } from "../../../shared/agents/models/scenarioTypes.js";
 import type { DynamicScenarioSnapshot } from "../../world_builder/types.js";
-import { ScenarioLoader } from "../../../coc_multiagents_system/agents/memory/scenarioloader/index.js";
-import type { CoCDatabase } from "../../../coc_multiagents_system/agents/memory/database/index.js";
+import { ScenarioLoader } from "../../../shared/agents/memory/scenarioloader/index.js";
+import type { CoCDatabase } from "../../../shared/agents/memory/database/index.js";
 import type { DynamicGameState } from "../../state/index.js";
 import { DynamicGameStateManager } from "../../state/index.js";
-import type { ActionLogEntry, CharacterStatus, InventoryItem, NPCRelationship } from "../../../coc_multiagents_system/agents/models/gameTypes.js";
+import type { ActionLogEntry, CharacterStatus, InventoryItem, NPCRelationship } from "../../../shared/agents/models/gameTypes.js";
 import type { DynamicCharacterProfile } from "../../world_builder/types.js";
 import type { DynamicNPCProfile } from "../../world_builder/types.js";
-import { InventoryUtils } from "../../../coc_multiagents_system/agents/models/gameTypes.js";
+import { InventoryUtils } from "../../../shared/agents/models/gameTypes.js";
 import type { ScenarioConnectionType } from "../../world_builder/types.js";
 import {
   ModelProviderName,

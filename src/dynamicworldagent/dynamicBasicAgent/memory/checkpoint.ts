@@ -3,11 +3,11 @@
  * Saves complete game state to database before major updates
  */
 
-import type { CoCDatabase } from "../../../coc_multiagents_system/agents/memory/database/index.js";
+import type { CoCDatabase } from "../../../shared/agents/memory/database/index.js";
 import type { DynamicGameState } from "../../state/index.js";
 import type { DynamicScenarioSnapshot } from "../../world_builder/types.js";
 import { randomUUID } from "crypto";
-import { resolveEmailId } from "../../../coc_multiagents_system/agents/memory/database/userContext.js";
+import { resolveEmailId } from "../../../shared/agents/memory/database/userContext.js";
 
 /**
  * Save DynamicGameState checkpoint to database

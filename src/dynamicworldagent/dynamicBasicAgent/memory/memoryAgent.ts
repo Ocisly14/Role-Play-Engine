@@ -9,9 +9,9 @@ import {
 import type {
   ActionType,
   ActionAnalysis,
-} from "../../../coc_multiagents_system/state/index.js";
-import { actionRules } from "../../../coc_multiagents_system/rules/index.js";
-import type { CoCDatabase } from "../../../coc_multiagents_system/agents/memory/database/index.js";
+} from "../../../shared/state/index.js";
+import { actionRules } from "../../../shared/rules/index.js";
+import type { CoCDatabase } from "../../../shared/agents/memory/database/index.js";
 import type { DynamicScenarioSnapshot } from "../../world_builder/types.js";
 
 

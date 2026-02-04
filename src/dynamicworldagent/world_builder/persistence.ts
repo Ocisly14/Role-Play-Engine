@@ -5,7 +5,7 @@
 
 import path from "path";
 import fs from "fs/promises";
-import type { CoCDatabase } from "../../coc_multiagents_system/agents/memory/database/index.js";
+import type { CoCDatabase } from "../../shared/agents/memory/database/index.js";
 import type {
   MacroSceneStructure,
   TruthEvent,
@@ -18,7 +18,7 @@ import type {
   ScenarioNpcAssignments,
   ModuleDigest,
 } from "./types.js";
-import type { ActionLogEntry } from "../../coc_multiagents_system/agents/models/gameTypes.js";
+import type { ActionLogEntry } from "../../shared/agents/models/gameTypes.js";
 import type { DynamicNPCProfile } from "./types.js";
 import { randomUUID } from "crypto";
 
