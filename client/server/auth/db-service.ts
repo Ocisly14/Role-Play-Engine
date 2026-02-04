@@ -98,7 +98,7 @@ export const authDbService = {
     return {
       user: this.sanitizeUser(user),
       message:
-        "Registration successful. Please check your email to verify your account.",
+        "Registration successful. A verification code has been sent to your email.",
     };
   },
 
@@ -134,6 +134,10 @@ export const authDbService = {
       throw new Error("Account is disabled");
     }
 
+    if (!user.is_email_verified) {
+      throw new Error("Email not verified. Please verify your email first.");
+    }
+
     // Update last login time
     db.prepare(
       "UPDATE users SET last_login_at = CURRENT_TIMESTAMP WHERE id = ?"
@@ -163,7 +167,7 @@ export const authDbService = {
     };
   },
 
-  // Send email verification
+  // Send email verification code
   async sendEmailVerification(email: string) {
     const db = getDB();
 
@@ -179,58 +183,69 @@ export const authDbService = {
       throw new Error("Email already verified");
     }
 
-    // Generate verification token
-    const token = crypto.randomBytes(32).toString("hex");
+    // Generate 5-digit verification code
+    const code = crypto.randomInt(10000, 100000).toString();
     const verificationId = randomUUID();
-    const expiresAt = new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString();
+    const expiresAt = new Date(Date.now() + 10 * 60 * 1000).toISOString(); // 10 minutes
 
     // Save to database
     db.prepare(`
       INSERT INTO email_verifications (id, email_id, token, expires_at)
       VALUES (?, ?, ?, ?)
-    `).run(verificationId, user.email, token, expiresAt);
+    `).run(verificationId, user.email, code, expiresAt);
 
-    // Send email
-    await emailService.sendVerificationEmail(user.email, token);
+    // Send email with code
+    await emailService.sendVerificationEmail(user.email, code);
 
-    return { message: "Verification email sent" };
+    return { message: "Verification code sent" };
   },
 
-  // Verify email
-  async verifyEmail(token: string) {
+  // Verify email with 5-digit code
+  async verifyEmailCode(email: string, code: string) {
     const db = getDB();
 
     const verification = db
       .prepare(`
-      SELECT ev.*
-      FROM email_verifications ev
-      WHERE ev.token = ?
+      SELECT * FROM email_verifications
+      WHERE email_id = ? AND token = ? AND is_used = 0
     `)
-      .get(token) as any;
+      .get(email, code) as any;
 
     if (!verification) {
-      throw new Error("Invalid verification token");
-    }
-
-    if (verification.is_used) {
-      throw new Error("Token already used");
+      throw new Error("Invalid verification code");
     }
 
     if (new Date(verification.expires_at) < new Date()) {
-      throw new Error("Token expired");
+      throw new Error("Verification code has expired");
     }
 
-    // Update user status
+    // Mark email as verified
     db.prepare("UPDATE users SET is_email_verified = 1 WHERE email = ?").run(
-      verification.email_id
+      email
     );
 
-    // Mark token as used
+    // Mark code as used
     db.prepare("UPDATE email_verifications SET is_used = 1 WHERE id = ?").run(
       verification.id
     );
 
     return { message: "Email verified successfully" };
+  },
+
+  // Resend verification code (public-safe: never reveals whether email exists)
+  async resendEmailVerification(email: string) {
+    const db = getDB();
+    const user = db.prepare("SELECT * FROM users WHERE email = ?").get(email) as
+      | User
+      | undefined;
+
+    if (!user || user.is_email_verified) {
+      // Generic message to prevent email enumeration
+      return { message: "Verification code sent" };
+    }
+
+    await this.sendEmailVerification(email);
+    return { message: "Verification code sent" };
   },
 
   // Request password reset

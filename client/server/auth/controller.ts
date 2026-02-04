@@ -77,11 +77,22 @@ export const authController = {
     }
   },
 
-  // Verify Email
-  async verifyEmail(req: Request, res: Response) {
+  // Verify email with 5-digit code
+  async verifyCode(req: Request, res: Response) {
     try {
-      const { token } = req.query;
-      const result = await authService.verifyEmail(token as string);
+      const { email, code } = req.body;
+      const result = await authService.verifyEmailCode(email, code);
+      res.json(result);
+    } catch (error: any) {
+      res.status(400).json({ error: error.message });
+    }
+  },
+
+  // Resend verification code (public)
+  async resendVerification(req: Request, res: Response) {
+    try {
+      const { email } = req.body;
+      const result = await authService.resendEmailVerification(email);
       res.json(result);
     } catch (error: any) {
       res.status(400).json({ error: error.message });

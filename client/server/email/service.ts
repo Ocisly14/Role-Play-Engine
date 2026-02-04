@@ -18,17 +18,15 @@ const transporter = nodemailer.createTransport({
 });
 
 export const emailService = {
-  // Send verification email
-  async sendVerificationEmail(to: string, token: string) {
-    const verificationUrl = `${process.env.APP_URL}/verify-email?token=${token}`;
-
+  // Send verification code email
+  async sendVerificationEmail(to: string, code: string) {
     const template = await this.loadTemplate('verify-email');
-    const html = template({ verificationUrl, appName: 'CoC Game' });
+    const html = template({ verificationCode: code, appName: 'CoC Game' });
 
     await transporter.sendMail({
       from: process.env.EMAIL_FROM,
       to,
-      subject: 'Verify Your Email',
+      subject: 'Your Verification Code',
       html,
     });
   },
