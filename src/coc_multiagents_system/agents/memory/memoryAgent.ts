@@ -222,8 +222,8 @@ export const createScenarioCheckpoint = async (
     const playerStmt = database.prepare(`
       INSERT OR REPLACE INTO characters (
         character_id, name, attributes, status, inventory, skills, notes,
-        is_npc, user_id, updated_at
-      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, (SELECT user_id FROM characters WHERE character_id = ?), CURRENT_TIMESTAMP)
+        is_npc, email_id, updated_at
+      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, (SELECT email_id FROM characters WHERE character_id = ?), CURRENT_TIMESTAMP)
     `);
 
     playerStmt.run(

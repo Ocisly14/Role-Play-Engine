@@ -11,6 +11,16 @@ router.use(authenticate);
 // Mod management endpoints
 router.post("/mod/load", modController.loadModData);
 router.get("/module/introduction", modController.getModuleIntroduction);
+router.get("/mods/shared", modController.getSharedMods);
+router.get("/mods/quota", modController.getModQuota);
+router.post("/mods/share", modController.shareMod);
+router.post("/mods/unshare", modController.unshareMod);
+router.post("/mods/delete", modController.removeMod);
+router.post("/mods/delete-bulk", modController.removeModsBulk);
+router.post("/mods/add", modController.addSharedMod);
+router.get("/mods/deleted", modController.getDeletedMods);
+router.post("/mods/restore", modController.restoreMod);
+router.post("/mods/restore-bulk", modController.restoreModsBulk);
 
 // World builder endpoints
 router.post("/module/generate-world", worldBuilderController.generateWorld);

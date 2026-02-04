@@ -17,6 +17,12 @@ export async function saveCheckpoint(req: Request, res: Response): Promise<void>
   try {
     const userId = req.user!.userId;
     const serverState = ServerState.getInstance();
+    const requestedType = typeof req.body?.checkpointType === "string" ? req.body.checkpointType : undefined;
+    const checkpointType = requestedType === "auto" || requestedType === "manual" || requestedType === "scene_transition"
+      ? requestedType
+      : "manual";
+    const reason = typeof req.body?.reason === "string" ? req.body.reason : undefined;
+    const descriptionOverride = typeof req.body?.description === "string" ? req.body.description : undefined;
     
     // Check for both GameState and DynamicGameState (for DynamicWorld modules)
     const persistentGameState = serverState.getGameState(userId);
@@ -51,27 +57,27 @@ export async function saveCheckpoint(req: Request, res: Response): Promise<void>
 
     const ownedCharacter = database.prepare(`
       SELECT character_id FROM characters
-      WHERE character_id = ? AND user_id = ? AND is_npc = 0
-    `).get(characterId, userId);
+      WHERE character_id = ? AND email_id = ? AND is_npc = 0
+    `).get(characterId, req.user!.email);
 
     if (!ownedCharacter) {
-      // If character exists but is unassigned (user_id is NULL), claim it for this user.
+      // If character exists but is unassigned (email_id is NULL), claim it for this user.
       const unassigned = database.prepare(`
         SELECT character_id FROM characters
-        WHERE character_id = ? AND user_id IS NULL AND is_npc = 0
+        WHERE character_id = ? AND email_id IS NULL AND is_npc = 0
       `).get(characterId);
 
       if (unassigned) {
         database.prepare(`
           UPDATE characters
-          SET user_id = ?
-          WHERE character_id = ? AND user_id IS NULL AND is_npc = 0
-        `).run(userId, characterId);
-        console.log(`[${new Date().toISOString()}] [Checkpoint Save] Claimed unassigned character ${characterId} for user ${userId}`);
+          SET email_id = ?
+          WHERE character_id = ? AND email_id IS NULL AND is_npc = 0
+        `).run(req.user!.email, characterId);
+        console.log(`[${new Date().toISOString()}] [Checkpoint Save] Claimed unassigned character ${characterId} for user ${req.user!.email}`);
       } else {
-        console.log(`[${new Date().toISOString()}] [Checkpoint Save] ERROR: Character ${characterId} not found in database for user ${userId}`);
+        console.log(`[${new Date().toISOString()}] [Checkpoint Save] ERROR: Character ${characterId} not found in database for user ${req.user!.email}`);
         // Check if character exists at all
-        const charExists = database.prepare(`SELECT character_id, user_id, name FROM characters WHERE character_id = ?`).get(characterId);
+        const charExists = database.prepare(`SELECT character_id, email_id, name FROM characters WHERE character_id = ?`).get(characterId);
         if (charExists) {
           console.log(`[${new Date().toISOString()}] [Checkpoint Save] Character exists but belongs to different user: ${JSON.stringify(charExists)}`);
           res.status(403).json({ error: `Character not found. Character ${characterName || characterId} may belong to a different user.` });
@@ -97,29 +103,55 @@ export async function saveCheckpoint(req: Request, res: Response): Promise<void>
         return;
       }
 
-      // Generate checkpoint name
-      const currentDate = new Date().toLocaleDateString('zh-CN', {
-        year: 'numeric',
-        month: '2-digit',
-        day: '2-digit'
-      });
-      checkpointName = `${currentScenario.name} - ${currentDate}`;
-      description = `Manual save at ${currentScenario.location}`;
+      if (checkpointType === "manual") {
+        // Generate checkpoint name
+        const currentDate = new Date().toLocaleDateString('zh-CN', {
+          year: 'numeric',
+          month: '2-digit',
+          day: '2-digit'
+        });
+        checkpointName = `${currentScenario.name} - ${currentDate}`;
+        description = descriptionOverride || `Manual save at ${currentScenario.location}`;
 
-      // Save DynamicGameState checkpoint (includes all snapshots)
-      const savedCheckpointId = saveDynamicGameStateCheckpoint(
-        db,
-        dynamicGameState,
-        'manual',
-        description
-      );
+        // Save DynamicGameState checkpoint (includes all snapshots)
+        const savedCheckpointId = saveDynamicGameStateCheckpoint(
+          db,
+          dynamicGameState,
+          "manual",
+          description
+        );
 
-      if (!savedCheckpointId) {
-        res.status(500).json({ error: "Failed to save checkpoint" });
-        return;
+        if (!savedCheckpointId) {
+          res.status(500).json({ error: "Failed to save checkpoint" });
+          return;
+        }
+
+        checkpointId = savedCheckpointId;
+      } else {
+        const gameDay = dynamicGameState.gameDay ?? 1;
+        const timeOfDay = dynamicGameState.timeOfDay ?? "Unknown time";
+        const timeLabel = timeOfDay ? ` (Day ${gameDay}, ${timeOfDay})` : ` (Day ${gameDay})`;
+        checkpointName = `${checkpointType === "scene_transition" ? "Scene Transition" : "Auto Save"} - ${currentScenario.name}${timeLabel}`;
+        description = descriptionOverride || `Auto save${reason ? ` (${reason})` : ""} at ${currentScenario.location}`;
+
+        const savedCheckpointId = saveDynamicGameStateCheckpoint(
+          db,
+          dynamicGameState,
+          checkpointType,
+          description
+        );
+
+        if (!savedCheckpointId) {
+          res.status(500).json({ error: "Failed to save checkpoint" });
+          return;
+        }
+
+        checkpointId = savedCheckpointId;
+
+        if (checkpointType === "auto") {
+          db.cleanupAutoCheckpoints(dynamicGameState.sessionId, 10);
+        }
       }
-
-      checkpointId = savedCheckpointId;
     } else if (persistentGameState) {
       // For regular modules, use GameState checkpoint
       const currentScenario = persistentGameState.currentScenario;
@@ -128,21 +160,46 @@ export async function saveCheckpoint(req: Request, res: Response): Promise<void>
         return;
       }
 
-      // Generate checkpoint name
-      const currentDate = new Date().toLocaleDateString('zh-CN', {
-        year: 'numeric',
-        month: '2-digit',
-        day: '2-digit'
-      });
-      checkpointName = `${currentScenario.name} - ${currentDate}`;
-      description = `Manual save at ${currentScenario.location}`;
+      if (checkpointType === "manual") {
+        // Generate checkpoint name
+        const currentDate = new Date().toLocaleDateString('zh-CN', {
+          year: 'numeric',
+          month: '2-digit',
+          day: '2-digit'
+        });
+        checkpointName = `${currentScenario.name} - ${currentDate}`;
+        description = descriptionOverride || `Manual save at ${currentScenario.location}`;
 
-      checkpointId = saveManualCheckpoint(
-        persistentGameState,
-        db,
-        checkpointName,
-        description
-      );
+        checkpointId = saveManualCheckpoint(
+          persistentGameState,
+          db,
+          checkpointName,
+          description
+        );
+      } else {
+        const gameDay = persistentGameState.gameDay ?? 1;
+        const timeOfDay = persistentGameState.timeOfDay ?? "Unknown time";
+        const timeLabel = timeOfDay ? ` (Day ${gameDay}, ${timeOfDay})` : ` (Day ${gameDay})`;
+        checkpointName = `${checkpointType === "scene_transition" ? "Scene Transition" : "Auto Save"} - ${currentScenario.name}${timeLabel}`;
+        description = descriptionOverride || `Auto save${reason ? ` (${reason})` : ""} at ${currentScenario.location}`;
+
+        checkpointId = checkpointType === "scene_transition"
+          ? `scene-${Date.now()}`
+          : `auto-${Date.now()}`;
+
+        db.saveCheckpoint(
+          checkpointId,
+          persistentGameState.sessionId,
+          checkpointName,
+          persistentGameState,
+          checkpointType,
+          description
+        );
+
+        if (checkpointType === "auto") {
+          db.cleanupAutoCheckpoints(persistentGameState.sessionId, 10);
+        }
+      }
     } else {
       // This should not happen as we checked earlier, but handle it just in case
       res.status(400).json({ error: "No game state available. Cannot save checkpoint." });
@@ -166,7 +223,7 @@ export async function saveCheckpoint(req: Request, res: Response): Promise<void>
       success: true,
       checkpointId: checkpointId,
       checkpointName: checkpointName,
-      message: "存档成功",
+      message: checkpointType === "auto" ? "自动存档成功" : "存档成功",
       timestamp: new Date().toISOString(),
     });
   } catch (error) {
@@ -194,8 +251,8 @@ export function listCheckpoints(req: Request, res: Response): void {
         SELECT s.session_id
         FROM sessions s
         JOIN characters c ON c.character_id = s.character_id
-        WHERE s.session_id = ? AND c.user_id = ?
-      `).get(sessionId, userId);
+        WHERE s.session_id = ? AND c.email_id = ?
+      `).get(sessionId, req.user!.email);
 
       if (!session) {
         res.status(404).json({ error: "Session not found" });
@@ -214,12 +271,12 @@ export function listCheckpoints(req: Request, res: Response): void {
           SELECT s.session_id
           FROM sessions s
           JOIN characters c ON c.character_id = s.character_id
-          WHERE c.user_id = ?
+          WHERE c.email_id = ?
         )
         ORDER BY created_at DESC
         LIMIT ?
       `);
-      checkpoints = stmt.all(userId, limit) as any[];
+      checkpoints = stmt.all(req.user!.email, limit) as any[];
     }
 
     // Normalize field names to camelCase
@@ -269,8 +326,8 @@ export async function loadCheckpointData(req: Request, res: Response): Promise<v
       FROM game_checkpoints gc
       JOIN sessions s ON s.session_id = gc.session_id
       JOIN characters c ON c.character_id = s.character_id
-      WHERE gc.checkpoint_id = ? AND c.user_id = ?
-    `).get(checkpointId, userId);
+      WHERE gc.checkpoint_id = ? AND c.email_id = ?
+    `).get(checkpointId, req.user!.email);
 
     if (!ownedCheckpoint) {
       res.status(404).json({ error: "Checkpoint not found" });
@@ -290,45 +347,27 @@ export async function loadCheckpointData(req: Request, res: Response): Promise<v
       return;
     }
 
-    // Check if we need to create a branch session (subId)
-    // Create branch if loading a checkpoint from the past (earlier gameTime)
-    const serverState = ServerState.getInstance();
-    const currentGameState = serverState.getGameState(userId);
-    const currentDynamicGameState = serverState.getDynamicGameState(userId);
-    const currentState = currentDynamicGameState || currentGameState;
-    
+    // Always create a branch session when loading any checkpoint
     let shouldCreateBranch = false;
     let branchSessionId: string | null = null;
     let branchSubId: number | null = null;
     const checkpointGameDay = checkpoint.metadata.gameDay;
     const checkpointTimeOfDay = checkpoint.metadata.gameTime;
     
-    if (currentState && checkpointGameDay && checkpointTimeOfDay) {
-      const currentGameDay = currentState.gameDay || 1;
-      const currentTimeOfDay = currentState.timeOfDay || "00:00";
-      
-      // Compare gameTime: if checkpoint is earlier, create branch
-      const compareGameTime = (day1: number, time1: string, day2: number, time2: string): number => {
-        if (day1 !== day2) return day1 - day2;
-        const [h1, m1] = time1.split(':').map(Number);
-        const [h2, m2] = time2.split(':').map(Number);
-        return (h1 * 60 + m1) - (h2 * 60 + m2);
-      };
-      
-      const timeDiff = compareGameTime(checkpointGameDay, checkpointTimeOfDay, currentGameDay, currentTimeOfDay);
-      if (timeDiff < 0) {
-        // Checkpoint is from the past, create branch
-        shouldCreateBranch = true;
-        const branchInfo = await db.createBranchSession(
-          checkpoint.sessionId,
-          gameState,
-          checkpointGameDay,
-          checkpointTimeOfDay
-        );
-        branchSessionId = branchInfo.branchSessionId;
-        branchSubId = branchInfo.subId;
-        console.log(`[${new Date().toISOString()}] Creating branch session: ${branchSessionId} (checkpoint is from Day ${checkpointGameDay} ${checkpointTimeOfDay}, current is Day ${currentGameDay} ${currentTimeOfDay})`);
-      }
+    try {
+      const branchInfo = await db.createBranchSession(
+        checkpoint.sessionId,
+        gameState,
+        checkpointGameDay,
+        checkpointTimeOfDay
+      );
+      branchSessionId = branchInfo.branchSessionId;
+      branchSubId = branchInfo.subId;
+      shouldCreateBranch = true;
+      console.log(`[${new Date().toISOString()}] Creating branch session: ${branchSessionId} (checkpoint load)`);
+    } catch (error) {
+      console.warn(`[${new Date().toISOString()}] Failed to create branch session for checkpoint load:`, error);
+      shouldCreateBranch = false;
     }
     
     // Use branch session ID if created, otherwise use original session ID
@@ -448,8 +487,8 @@ export function deleteCheckpoint(req: Request, res: Response): void {
       FROM game_checkpoints gc
       JOIN sessions s ON s.session_id = gc.session_id
       JOIN characters c ON c.character_id = s.character_id
-      WHERE gc.checkpoint_id = ? AND c.user_id = ?
-    `).get(checkpointId, userId);
+      WHERE gc.checkpoint_id = ? AND c.email_id = ?
+    `).get(checkpointId, req.user!.email);
 
     if (!ownedCheckpoint) {
       res.status(404).json({ error: "Checkpoint not found or you don't have permission to delete it" });

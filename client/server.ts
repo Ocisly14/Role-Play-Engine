@@ -17,10 +17,13 @@ import turnRoutes from "./server/turn/routes.js";
 import checkpointRoutes from "./server/checkpoint/routes.js";
 import mapRoutes from "./server/maps/routes.js";
 import memoRoutes from "./server/memos/routes.js";
+import skillRoutes from "./server/skills/routes.js";
 
 // Import managers
 import { DatabaseManager } from "./server/core/DatabaseManager.js";
 import { WebSocketManager } from "./server/websocket/WebSocketManager.js";
+import { LocalEmbeddingManager } from "../src/rag/localEmbeddingManager.js";
+import { warmupSkillEmbeddings } from "./server/skills/skillMatcher.js";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -61,6 +64,7 @@ app.use("/api", modRoutes);           // /api/mod/*, /api/module/*
 app.use("/api", turnRoutes);          // /api/turns*, /api/sessions/*
 app.use("/api", checkpointRoutes);    // /api/checkpoints/*
 app.use("/api", memoRoutes);          // /api/memos
+app.use("/api", skillRoutes);         // /api/skills/*
 
 // SPA fallback (must be after API routes)
 app.get("*", (_req, res) => {
@@ -85,6 +89,41 @@ server.listen(PORT, () => {
   console.log(`🚀 Server running on http://localhost:${PORT}`);
   console.log(`🔌 WebSocket server ready on ws://localhost:${PORT}/ws`);
   console.log("✅ Frontend server ready (lazy initialization)");
+
+  if (process.env.SKIP_EMBEDDING_WARMUP !== "true") {
+    LocalEmbeddingManager.getInstance()
+      .warmup(["en", "zh"])
+      .then(() => {
+        console.log("✅ Local embedding model warmed up");
+        if (process.env.SKIP_SKILL_EMBEDDING_WARMUP === "true") {
+          return;
+        }
+        try {
+          const db = DatabaseManager.getInstance().getDatabase();
+          const database = db.getDatabase();
+          const skills = database
+            .prepare("SELECT name, description FROM skills")
+            .all() as Array<{ name: string; description: string }>;
+          if (skills.length === 0) {
+            console.warn("⚠️  Skill embedding warmup skipped: no skills found");
+            return;
+          }
+          warmupSkillEmbeddings(skills)
+            .then(() => {
+              console.log("✅ Skill embeddings warmed up");
+            })
+            .catch((error) => {
+              console.warn("⚠️  Skill embedding warmup failed:", error);
+            });
+        } catch (error) {
+          console.warn("⚠️  Skill embedding warmup failed:", error);
+        }
+      })
+      .catch((error) => {
+        console.warn("⚠️  Local embedding warmup failed:", error);
+        console.warn("⚠️  Skill embedding warmup skipped (local embedding unavailable)");
+      });
+  }
 });
 
 // Graceful shutdown

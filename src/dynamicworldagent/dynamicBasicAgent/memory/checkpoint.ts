@@ -7,6 +7,7 @@ import type { CoCDatabase } from "../../../coc_multiagents_system/agents/memory/
 import type { DynamicGameState } from "../../state/index.js";
 import type { DynamicScenarioSnapshot } from "../../world_builder/types.js";
 import { randomUUID } from "crypto";
+import { resolveEmailId } from "../../../coc_multiagents_system/agents/memory/database/userContext.js";
 
 /**
  * Save DynamicGameState checkpoint to database
@@ -166,9 +167,14 @@ function saveHistoricalSnapshotsToDatabase(
 ): void {
   try {
     const database = db.getDatabase();
+    const emailId = resolveEmailId();
     const hasInitialSnapshot = db.hasColumn("scenario_snapshots", "initial_snapshot");
     const hasGameTime = db.hasColumn("scenario_snapshots", "game_time");
     const hasDynamicHistorical = db.hasColumn("scenario_snapshots", "is_dynamic_historical");
+    const hasSnapshotEmailId = db.hasColumn("scenario_snapshots", "email_id");
+    const hasCharacterEmailId = db.hasColumn("scenario_characters", "email_id");
+    const hasClueEmailId = db.hasColumn("scenario_clues", "email_id");
+    const hasConditionEmailId = db.hasColumn("scenario_conditions", "email_id");
 
     for (const snapshot of historicalSnapshots) {
       // Generate a unique snapshot ID for historical snapshot
@@ -176,8 +182,8 @@ function saveHistoricalSnapshotsToDatabase(
       
       // Check if snapshot already exists
       const existing = database
-        .prepare(`SELECT snapshot_id FROM scenario_snapshots WHERE snapshot_id = ?`)
-        .get(historicalSnapshotId);
+        .prepare(`SELECT snapshot_id FROM scenario_snapshots WHERE snapshot_id = ?${hasSnapshotEmailId && emailId ? " AND email_id = ?" : ""}`)
+        .get(...(hasSnapshotEmailId && emailId ? [historicalSnapshotId, emailId] : [historicalSnapshotId]));
 
       if (existing) {
         continue; // Skip if already exists
@@ -252,6 +258,11 @@ function saveHistoricalSnapshotsToDatabase(
           snapshot.showMap === false ? 0 : 1
         );
       }
+      if (hasSnapshotEmailId && emailId) {
+        database
+          .prepare("UPDATE scenario_snapshots SET email_id = ? WHERE snapshot_id = ?")
+          .run(emailId, historicalSnapshotId);
+      }
 
       // Insert characters if present
       if (snapshot.characters && snapshot.characters.length > 0) {
@@ -263,8 +274,9 @@ function saveHistoricalSnapshotsToDatabase(
         `);
 
         for (const char of snapshot.characters) {
+          const charId = char.id || `${historicalSnapshotId}-char-${randomUUID().slice(0, 8)}`;
           charStmt.run(
-            char.id || `${historicalSnapshotId}-char-${randomUUID().slice(0, 8)}`,
+            charId,
             historicalSnapshotId,
             char.name,
             char.role,
@@ -272,6 +284,11 @@ function saveHistoricalSnapshotsToDatabase(
             char.location || null,
             char.notes || null
           );
+          if (hasCharacterEmailId && emailId) {
+            database
+              .prepare("UPDATE scenario_characters SET email_id = ? WHERE id = ?")
+              .run(emailId, charId);
+          }
         }
       }
 
@@ -285,8 +302,9 @@ function saveHistoricalSnapshotsToDatabase(
         `);
 
         for (const clue of snapshot.clues) {
+          const clueId = clue.id || `${historicalSnapshotId}-clue-${randomUUID().slice(0, 8)}`;
           clueStmt.run(
-            clue.id || `${historicalSnapshotId}-clue-${randomUUID().slice(0, 8)}`,
+            clueId,
             historicalSnapshotId,
             clue.clueText,
             clue.category,
@@ -297,6 +315,11 @@ function saveHistoricalSnapshotsToDatabase(
             clue.discovered ? 1 : 0,
             clue.discoveryDetails ? JSON.stringify(clue.discoveryDetails) : null
           );
+          if (hasClueEmailId && emailId) {
+            database
+              .prepare("UPDATE scenario_clues SET email_id = ? WHERE clue_id = ?")
+              .run(emailId, clueId);
+          }
         }
       }
 
@@ -317,6 +340,11 @@ function saveHistoricalSnapshotsToDatabase(
             condition.description,
             condition.mechanicalEffect || null
           );
+          if (hasConditionEmailId && emailId) {
+            database
+              .prepare("UPDATE scenario_conditions SET email_id = ? WHERE condition_id = ?")
+              .run(emailId, conditionId);
+          }
         }
       }
     }
@@ -327,4 +355,3 @@ function saveHistoricalSnapshotsToDatabase(
     // Don't throw - snapshot save failure shouldn't block checkpoint save
   }
 }
-

@@ -11,7 +11,9 @@ export function buildActionSystemPrompt(
   preRolledDice: Record<string, number[]>,
   isNPC: boolean,
   existingSceneChangeRequest?: SceneChangeRequest | null,
-  sceneNPCs?: any[] | null
+  sceneNPCs?: any[] | null,
+  selectedSkill?: string | null,
+  skillSelectionMode?: "auto" | "manual"
 ): string {
   // Check if there's a valid scene change request from orchestrator
   const hasValidSceneChangeRequest = existingSceneChangeRequest?.shouldChange === true && existingSceneChangeRequest?.targetSceneName;
@@ -32,6 +34,32 @@ Your task is to determine if the action succeeds in enabling this scene change:
 `;
   }
 
+  const usagePolicy = isNPC
+    ? `SKILL POLICY:
+- Analyze the NPC action and decide whether a skill check is required.
+- If no check is needed, do not use any dice.
+- If a skill check is required, choose the appropriate skill and use dice.
+`
+    : selectedSkill
+      ? `SKILL POLICY:
+- A player-selected skill is provided; treat the action as using that skill.
+- If no check is needed, keep diceUsed empty.
+`
+      : skillSelectionMode === "auto"
+        ? `SKILL POLICY:
+- No player-selected skill is provided.
+- Analyze the user input to determine whether it is normal behavior or a specific skill use.
+- If it is normal behavior, do not use any dice.
+- If it implies a specific skill, choose the appropriate skill and use dice.
+`
+        : `SKILL POLICY:
+- No player-selected skill is provided.
+- Do NOT select or infer a skill on the player's behalf.
+- Do NOT perform any skill checks and do NOT use any dice.
+***IMPORTANT: If the input does NOT involve a scene change and does NOT cause major impact on the scene or any NPC, do NOT mention any skill and do NOT output any dice rolls.***
+- Always use empty array: "diceUsed": [].
+`;
+
   return `
 ${originalUserInput && !isNPC ? `## User Input
 User input: ${originalUserInput}
@@ -39,13 +67,15 @@ User input: ${originalUserInput}
 ` : ''}## Character Action
 Character action: ${actionDescription}
 
-PRE-ROLLED DICE AVAILABLE:
+${!isNPC && selectedSkill ? `## Player-Selected Skill
+Player selected skill: ${selectedSkill}
+- If a skill check is required for this action, you MUST use this skill.
+- If no check is needed, keep diceUsed empty.
+
+` : ''}${usagePolicy}PRE-ROLLED DICE AVAILABLE:
 ${JSON.stringify(preRolledDice, null, 2)}
 
 USAGE:
-- First, analyze the user input and determine if it is just a normal behavior or the use of a specific skill.
-- If it is a normal behavior, Do not use any dice.
-- If it is the use of a specific skill, (e.g., "I use Perception", "I try to persuade him", "I listen at the door"),MUST choose and use one or more of the following dice:
 - Each dice type has multiple pre-rolled results (1d100 has 10, others have 5). Select ONE result from the array for each dice you need.
 - 1d100: Use for single skill checks, attribute checks, luck rolls (compare against character's skill percentage) - select one from 10 available results
 - 1d100_opposed: Use for opposed checks (the second character's roll) - select one from 5 available results
@@ -58,8 +88,10 @@ USAGE:
 
 DiceUsed field:
 - Record ONLY the dice you actually used from the pre-rolled dice
-- Format: "[dice_name][index]: [result] ([purpose] = [success/failure])" or "[dice_name]: [result] ([purpose] = [success/failure])"
-- Examples: "1d100[0]: 67 (Brawl 50% = success)", "1d6[2]: 4 (knife damage)", "1d100_opposed[1]: 55 (opposed check)"
+- Format: "[dice_name][index]: [result] ([skill/purpose] [penalty if any] = [success/failure])"
+- Examples: "1d100[0]: 67 (Brawl 50% = success)", "1d100[1]: 82 (Spot Hidden 60% penalty die = failure)", "1d6[2]: 4 (knife damage)"
+- When penalty dice or bonus dice apply, include "penalty die" or "bonus die" in parentheses, e.g. "(Perception 25% penalty die = failure)"
+- When a percentage penalty applies (e.g. -20%), include it: "(Drive Auto 50% -20 = failure)"
 - If no dice needed, use empty array: "diceUsed": []
 
 Include "scenarioUpdate" if the action permanently changes the environment. "scenarioUpdate" can include:
@@ -167,9 +199,10 @@ Return ONLY valid JSON in this exact structure:
 
   "diceUsed": [
     // Array of dice you actually used (empty array if no dice needed)
-    // Format: "[dice_name][index]: [result] ([purpose/skill] [skill%] = [success/failure/N/A])"
-    // Select one result from the pre-rolled array for each dice you need
+    // Format: "[dice_name][index]: [result] ([skill%] [penalty if any] = [success/failure/N/A])"
+    // Include "penalty die", "bonus die", or "-20" etc. when applicable
     "1d100[0]: 67 (Brawling 50% = failure)",
+    "1d100[1]: 82 (Spot Hidden 60% penalty die = failure)",
     "1d3[1]: 2 + 1 (DB) = 3 (unarmed damage)"
   ],
 

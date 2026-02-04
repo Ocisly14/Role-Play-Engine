@@ -13,7 +13,9 @@ import type { ScenarioLoader } from "../../coc_multiagents_system/agents/memory/
 import type {
   ActionAnalysis,
   ActionResult,
+  DiceRollInfo,
 } from "../../coc_multiagents_system/state/index.js";
+import { buildDiceRollInfos } from "../../coc_multiagents_system/state/index.js";
 import type { ActionLogEntry } from "../../coc_multiagents_system/agents/models/gameTypes.js";
 import type { DynamicGameState } from "../state/index.js";
 import { DynamicGameStateManager, initialDynamicGameState } from "../state/index.js";
@@ -39,8 +41,10 @@ export interface DynamicGraphState {
   turnId?: string;  // Current turn being processed
   isSimulatedQuery?: boolean;  // Track if input is simulated by Director Agent
   simulatedQueryCount?: number;  // Safety counter for continuous loop (max 5)
+  selectedSkill?: string | null;  // Optional player-selected skill for this turn
+  skillSelectionMode?: "auto" | "manual"; // How skill selection should behave for this turn
   stream?: {
-    onDiceRolls?: (diceRolls: string[]) => void;
+    onDiceRolls?: (diceRolls: DiceRollInfo[]) => void;
     onSceneImage?: (payload: {
       imagePath: string;
       mimeType: string;
@@ -109,6 +113,14 @@ export const buildDynamicGraph = (
       },
       simulatedQueryCount: {
         value: (left: number | undefined, right?: number | undefined) =>
+          right !== undefined ? right : left,
+      },
+      selectedSkill: {
+        value: (left: string | null | undefined, right?: string | null | undefined) =>
+          right !== undefined ? right : left,
+      },
+      skillSelectionMode: {
+        value: (left: DynamicGraphState["skillSelectionMode"] | undefined, right?: DynamicGraphState["skillSelectionMode"]) =>
           right !== undefined ? right : left,
       },
       stream: {
@@ -297,6 +309,8 @@ export const buildDynamicGraph = (
     const dgsm = new DynamicGameStateManager(state.dynamicGameState);
     const runtime = {}; // ActionAgent expects runtime but only passes through generateText; keep empty placeholder
     const userInput = latestHumanMessage(state.messages);
+    const selectedSkill = state.selectedSkill ?? null;
+    const skillSelectionMode = state.skillSelectionMode ?? "manual";
 
     // Log input context
     const actionAnalysis = dgsm.getState().temporaryInfo.currentActionAnalysis;
@@ -308,9 +322,15 @@ export const buildDynamicGraph = (
         `⚡ [Dynamic Action Agent] 角色: ${actionAnalysis.character}, 目标: ${actionAnalysis.target.name || "N/A"}`
       );
     }
+    if (selectedSkill) {
+      console.log(`⚡ [Dynamic Action Agent] 玩家选择技能: ${selectedSkill}`);
+    }
+    if (!selectedSkill && skillSelectionMode === "auto") {
+      console.log(`⚡ [Dynamic Action Agent] 技能选择模式: auto`);
+    }
 
     try {
-      await actionAgent.processAction(runtime, dgsm, userInput);
+      await actionAgent.processAction(runtime, dgsm, userInput, selectedSkill, skillSelectionMode);
     } catch (error) {
       console.error(`\n❌ [Dynamic Action Agent] 执行过程中抛出异常:`, error);
       const currentState = dgsm.getState();
@@ -600,17 +620,21 @@ export const buildDynamicGraph = (
     const dgsm = new DynamicGameStateManager(state.dynamicGameState);
     const userInput = latestHumanMessage(state.messages);
     const stream = state.stream;
-    const actionResults = dgsm.getState().temporaryInfo.actionResults || [];
-    const diceRolls = actionResults.flatMap((result) =>
-      Array.isArray(result.diceRolls) ? result.diceRolls : []
-    );
+    const actionResults = (dgsm.getState().temporaryInfo.actionResults || []) as ActionResult[];
+    const playerName = dgsm.getState().playerCharacter?.name || null;
+    const playerNameNormalized = playerName ? playerName.trim().toLowerCase() : null;
+    const diceRollInfos = buildDiceRollInfos(actionResults).filter((roll) => {
+      if (!playerNameNormalized) return true;
+      const rollNameNormalized = roll.character ? roll.character.trim().toLowerCase() : null;
+      return !!rollNameNormalized && rollNameNormalized === playerNameNormalized;
+    });
     const shouldStream = Boolean(stream?.onNarrativeDelta);
 
     let updatedGameState = state.dynamicGameState;
 
     try {
-      if (diceRolls.length > 0) {
-        stream?.onDiceRolls?.(diceRolls);
+      if (diceRollInfos.length > 0) {
+        stream?.onDiceRolls?.(diceRollInfos);
       }
 
       if (shouldStream) {

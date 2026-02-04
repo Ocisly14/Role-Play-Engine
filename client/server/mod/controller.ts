@@ -1,8 +1,20 @@
+/// <reference path="../types/express.d.ts" />
 import type { Request, Response } from "express";
 import { DatabaseManager } from "../core/DatabaseManager.js";
 import { loadMod } from "./service.js";
 import { ModuleLoader } from "../../../src/coc_multiagents_system/agents/memory/moduleloader/index.js";
 import { WorldModuleLoader } from "../../../src/dynamicworldagent/world_builder/worldModuleLoader.js";
+import { isNameSimilar } from "../utils/stringUtils.js";
+import {
+  listSharedMods,
+  shareModule,
+  unshareModule,
+  removeModuleFromLibrary,
+  addSharedModuleToLibrary,
+  listDeletedMods,
+  restoreDeletedModule,
+} from "./library.js";
+import { getQuotaStatus } from "./quotaManager.js";
 import path from "path";
 import fs from "fs";
 
@@ -50,9 +62,10 @@ export async function loadModData(req: Request, res: Response): Promise<void> {
     }
 
     const db = DatabaseManager.getInstance().getDatabase();
+    const emailId = req.user?.email;
 
     // Load mod with progress reporting
-    const result = await loadMod(db, modName, (stage, progress, message) => {
+    const result = await loadMod(db, modName, emailId, (stage, progress, message) => {
       if (useSSE) {
         res.write(`data: ${JSON.stringify({ stage, progress, message })}\n\n`);
       }
@@ -90,6 +103,7 @@ export async function getModuleIntroduction(req: Request, res: Response): Promis
     }
 
     const db = DatabaseManager.getInstance().getDatabase();
+    const emailId = req.user?.email;
 
     const modsDir = path.join(process.cwd(), "data", "Mods");
     const modPath = path.join(modsDir, modName);
@@ -103,14 +117,18 @@ export async function getModuleIntroduction(req: Request, res: Response): Promis
     if (isWorldBuilderModule(modPath)) {
       console.log(`Loading world-builder module: ${modName}`);
 
-      const worldModuleLoader = new WorldModuleLoader(db);
+      const worldModuleLoader = new WorldModuleLoader(db, { emailId: emailId });
       const loadedModule = await worldModuleLoader.loadAndSaveWorldModule(modPath, false);
 
       if (!loadedModule) {
         // Module hasn't changed, get from database
-        const moduleLoader = new ModuleLoader(db);
+        const moduleLoader = new ModuleLoader(db, undefined, { emailId: emailId });
         const modules = moduleLoader.getAllModules();
-        const module = modules.find(m => m.title === modName);
+        const normalizedModName = modName.trim().toLowerCase();
+        const module =
+          modules.find((candidate) => candidate.title?.trim().toLowerCase() === normalizedModName) ||
+          modules.find((candidate) => candidate.title && isNameSimilar(candidate.title, modName)) ||
+          modules[0];
 
         if (!module) {
           res.status(404).json({ error: "Module not found in database" });
@@ -144,7 +162,7 @@ export async function getModuleIntroduction(req: Request, res: Response): Promis
       // Regular module (old format)
       console.log(`Loading regular module: ${modName}`);
 
-      const moduleLoader = new ModuleLoader(db);
+      const moduleLoader = new ModuleLoader(db, undefined, { emailId: emailId });
 
       // Load module data
       const moduleDigestPath = path.join(modPath, "module_digest.json");
@@ -158,7 +176,11 @@ export async function getModuleIntroduction(req: Request, res: Response): Promis
         return;
       }
 
-      const module = modules[0];
+      const normalizedModName = modName.trim().toLowerCase();
+      const module =
+        modules.find((candidate) => candidate.title?.trim().toLowerCase() === normalizedModName) ||
+        modules.find((candidate) => candidate.title && isNameSimilar(candidate.title, modName)) ||
+        modules[0];
       const moduleIntroduction = module.introduction ? {
         introduction: module.introduction,
         moduleNotes: module.moduleNotes || ""
@@ -173,5 +195,276 @@ export async function getModuleIntroduction(req: Request, res: Response): Promis
   } catch (error) {
     console.error("Error getting module introduction:", error);
     res.status(500).json({ error: "Failed to get module introduction: " + (error as Error).message });
+  }
+}
+
+/**
+ * List shared modules (searchable)
+ * GET /api/mods/shared
+ */
+export function getSharedMods(req: Request, res: Response): void {
+  try {
+    const email = req.user?.email;
+    if (!email) {
+      res.status(401).json({ error: "Authentication required" });
+      return;
+    }
+
+    const query = typeof req.query.q === "string" ? req.query.q : undefined;
+    const db = DatabaseManager.getInstance().getDatabase();
+    const mods = listSharedMods(db, email, query);
+
+    res.json({ success: true, mods });
+  } catch (error) {
+    console.error("Error listing shared mods:", error);
+    res.status(500).json({ error: "Failed to list shared mods: " + (error as Error).message });
+  }
+}
+
+/**
+ * Share a module (owner only)
+ * POST /api/mods/share
+ */
+export function shareMod(req: Request, res: Response): void {
+  try {
+    const email = req.user?.email;
+    const { modName } = req.body;
+
+    if (!email) {
+      res.status(401).json({ error: "Authentication required" });
+      return;
+    }
+    if (!modName || typeof modName !== "string") {
+      res.status(400).json({ error: "modName is required" });
+      return;
+    }
+
+    const db = DatabaseManager.getInstance().getDatabase();
+    shareModule(db, email, modName);
+
+    res.json({ success: true, shared: true });
+  } catch (error) {
+    console.error("Error sharing mod:", error);
+    res.status(500).json({ error: "Failed to share mod: " + (error as Error).message });
+  }
+}
+
+/**
+ * Unshare a module (owner only)
+ * POST /api/mods/unshare
+ */
+export function unshareMod(req: Request, res: Response): void {
+  try {
+    const email = req.user?.email;
+    const { modName } = req.body;
+
+    if (!email) {
+      res.status(401).json({ error: "Authentication required" });
+      return;
+    }
+    if (!modName || typeof modName !== "string") {
+      res.status(400).json({ error: "modName is required" });
+      return;
+    }
+
+    const db = DatabaseManager.getInstance().getDatabase();
+    unshareModule(db, email, modName);
+
+    res.json({ success: true, shared: false });
+  } catch (error) {
+    console.error("Error unsharing mod:", error);
+    res.status(500).json({ error: "Failed to unshare mod: " + (error as Error).message });
+  }
+}
+
+/**
+ * Remove module from user's library
+ * POST /api/mods/remove
+ */
+export function removeMod(req: Request, res: Response): void {
+  try {
+    const email = req.user?.email;
+    const { modName } = req.body;
+
+    if (!email) {
+      res.status(401).json({ error: "Authentication required" });
+      return;
+    }
+    if (!modName || typeof modName !== "string") {
+      res.status(400).json({ error: "modName is required" });
+      return;
+    }
+
+    const db = DatabaseManager.getInstance().getDatabase();
+    const result = removeModuleFromLibrary(db, email, modName);
+
+    res.json({ success: true, removed: true, trashed: result.trashed });
+  } catch (error) {
+    console.error("Error removing mod:", error);
+    res.status(500).json({ error: "Failed to remove mod: " + (error as Error).message });
+  }
+}
+
+/**
+ * Remove multiple modules from user's library
+ * POST /api/mods/remove-bulk
+ */
+export function removeModsBulk(req: Request, res: Response): void {
+  try {
+    const email = req.user?.email;
+    const { modNames } = req.body as { modNames?: string[] };
+
+    if (!email) {
+      res.status(401).json({ error: "Authentication required" });
+      return;
+    }
+    if (!Array.isArray(modNames) || modNames.length === 0) {
+      res.status(400).json({ error: "modNames is required" });
+      return;
+    }
+
+    const db = DatabaseManager.getInstance().getDatabase();
+    const results = modNames.map((modName) =>
+      typeof modName === "string"
+        ? removeModuleFromLibrary(db, email, modName)
+        : { trashed: false }
+    );
+    const trashedCount = results.filter((r) => r.trashed).length;
+
+    res.json({ success: true, removed: true, trashedCount });
+  } catch (error) {
+    console.error("Error removing mods:", error);
+    res.status(500).json({ error: "Failed to remove mods: " + (error as Error).message });
+  }
+}
+
+/**
+ * Add shared module to user's library
+ * POST /api/mods/add
+ */
+export function addSharedMod(req: Request, res: Response): void {
+  try {
+    const email = req.user?.email;
+    const { modName } = req.body;
+
+    if (!email) {
+      res.status(401).json({ error: "Authentication required" });
+      return;
+    }
+    if (!modName || typeof modName !== "string") {
+      res.status(400).json({ error: "modName is required" });
+      return;
+    }
+
+    const db = DatabaseManager.getInstance().getDatabase();
+    addSharedModuleToLibrary(db, email, modName);
+
+    res.json({ success: true, added: true });
+  } catch (error) {
+    console.error("Error adding shared mod:", error);
+    res.status(500).json({ error: "Failed to add shared mod: " + (error as Error).message });
+  }
+}
+
+/**
+ * List deleted modules for current user
+ * GET /api/mods/deleted
+ */
+export function getDeletedMods(req: Request, res: Response): void {
+  try {
+    const email = req.user?.email;
+    if (!email) {
+      res.status(401).json({ error: "Authentication required" });
+      return;
+    }
+
+    const db = DatabaseManager.getInstance().getDatabase();
+    const mods = listDeletedMods(db, email);
+
+    res.json({ success: true, mods });
+  } catch (error) {
+    console.error("Error listing deleted mods:", error);
+    res.status(500).json({ error: "Failed to list deleted mods: " + (error as Error).message });
+  }
+}
+
+/**
+ * Restore a deleted module (owner only)
+ * POST /api/mods/restore
+ */
+export function restoreMod(req: Request, res: Response): void {
+  try {
+    const email = req.user?.email;
+    const { modName } = req.body;
+
+    if (!email) {
+      res.status(401).json({ error: "Authentication required" });
+      return;
+    }
+    if (!modName || typeof modName !== "string") {
+      res.status(400).json({ error: "modName is required" });
+      return;
+    }
+
+    const db = DatabaseManager.getInstance().getDatabase();
+    restoreDeletedModule(db, email, modName);
+
+    res.json({ success: true, restored: true });
+  } catch (error) {
+    console.error("Error restoring mod:", error);
+    res.status(500).json({ error: "Failed to restore mod: " + (error as Error).message });
+  }
+}
+
+/**
+ * Restore multiple deleted modules
+ * POST /api/mods/restore-bulk
+ */
+export function restoreModsBulk(req: Request, res: Response): void {
+  try {
+    const email = req.user?.email;
+    const { modNames } = req.body as { modNames?: string[] };
+
+    if (!email) {
+      res.status(401).json({ error: "Authentication required" });
+      return;
+    }
+    if (!Array.isArray(modNames) || modNames.length === 0) {
+      res.status(400).json({ error: "modNames is required" });
+      return;
+    }
+
+    const db = DatabaseManager.getInstance().getDatabase();
+    for (const modName of modNames) {
+      if (typeof modName !== "string") continue;
+      restoreDeletedModule(db, email, modName);
+    }
+
+    res.json({ success: true, restored: true });
+  } catch (error) {
+    console.error("Error restoring mods:", error);
+    res.status(500).json({ error: "Failed to restore mods: " + (error as Error).message });
+  }
+}
+
+/**
+ * Get current generation quota status for the authenticated user
+ * GET /api/mods/quota
+ */
+export function getModQuota(req: Request, res: Response): void {
+  try {
+    const email = req.user?.email;
+    if (!email) {
+      res.status(401).json({ error: "Authentication required" });
+      return;
+    }
+
+    const db = DatabaseManager.getInstance().getDatabase();
+    const quota = getQuotaStatus(db, email);
+
+    res.json({ success: true, quota });
+  } catch (error) {
+    console.error("Error getting quota status:", error);
+    res.status(500).json({ error: "Failed to get quota status: " + (error as Error).message });
   }
 }

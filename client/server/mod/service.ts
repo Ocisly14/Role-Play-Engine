@@ -3,6 +3,7 @@ import { ScenarioLoader } from "../../../src/coc_multiagents_system/agents/memor
 import { NPCLoader } from "../../../src/coc_multiagents_system/agents/character/npcloader/index.js";
 import { ModuleLoader } from "../../../src/coc_multiagents_system/agents/memory/moduleloader/index.js";
 import { WorldModuleLoader } from "../../../src/dynamicworldagent/world_builder/worldModuleLoader.js";
+import { registerModuleForUser } from "./library.js";
 import path from "path";
 import fs from "fs";
 
@@ -32,9 +33,10 @@ function isWorldBuilderModule(modPath: string): boolean {
 export async function loadMod(
   db: CoCDatabase,
   modName: string,
+  emailId?: string,
   onProgress?: ProgressCallback
 ): Promise<any> {
-  clearExistingModData(db);
+  clearExistingModData(db, emailId);
 
   const modsDir = path.join(process.cwd(), "data", "Mods");
   const modPath = path.join(modsDir, modName);
@@ -50,7 +52,7 @@ export async function loadMod(
     console.log(`Detected world-builder module: ${modName}`);
     onProgress?.("Loading", 20, "Loading world-builder module...");
 
-    const worldModuleLoader = new WorldModuleLoader(db);
+    const worldModuleLoader = new WorldModuleLoader(db, { emailId: emailId });
     const loadedModule = await worldModuleLoader.loadAndSaveWorldModule(modPath, true);
 
     if (!loadedModule) {
@@ -62,6 +64,10 @@ export async function loadMod(
     const modulesLoaded = 1;
 
     onProgress?.("Complete", 100, `Loaded ${scenariosLoaded} scenarios, ${npcsLoaded} NPCs, ${modulesLoaded} modules`);
+
+    if (emailId) {
+      registerModuleForUser(db, emailId, modName);
+    }
 
     return {
       success: true,
@@ -77,9 +83,9 @@ export async function loadMod(
   // Regular module loading (old format)
   console.log(`Loading regular module: ${modName}`);
 
-  const scenarioLoader = new ScenarioLoader(db);
-  const npcLoader = new NPCLoader(db);
-  const moduleLoader = new ModuleLoader(db.getDatabase());
+  const scenarioLoader = new ScenarioLoader(db, undefined, { emailId: emailId });
+  const npcLoader = new NPCLoader(db, undefined, undefined, { emailId: emailId });
+  const moduleLoader = new ModuleLoader(db, undefined, { emailId: emailId });
 
   onProgress?.("Scanning", 15, "Scanning mod directory...");
 
@@ -138,6 +144,10 @@ export async function loadMod(
 
   onProgress?.("Complete", 100, `Loaded ${scenariosLoaded} scenarios, ${npcsLoaded} NPCs, ${modulesLoaded} modules`);
 
+  if (emailId) {
+    registerModuleForUser(db, emailId, modName);
+  }
+
   return {
     success: true,
     message: `Mod data loaded: ${scenariosLoaded} scenarios, ${npcsLoaded} NPCs, ${modulesLoaded} modules`,
@@ -149,18 +159,51 @@ export async function loadMod(
   };
 }
 
-function clearExistingModData(db: CoCDatabase): void {
+function clearExistingModData(db: CoCDatabase, emailId?: string): void {
+  if (!emailId) throw new Error("emailId is required for clearExistingModData");
+
   const database = db.getDatabase();
   db.transaction(() => {
-    database.prepare("DELETE FROM scenario_clues").run();
-    database.prepare("DELETE FROM scenario_conditions").run();
-    database.prepare("DELETE FROM scenario_characters").run();
-    database.prepare("DELETE FROM scenario_snapshots").run();
-    database.prepare("DELETE FROM scenarios").run();
-    database.prepare("DELETE FROM module_backgrounds").run();
-    database.prepare("DELETE FROM npc_relationships").run();
-    database.prepare("DELETE FROM npc_clues").run();
-    database.prepare("DELETE FROM relationships").run();
-    database.prepare("DELETE FROM characters WHERE is_npc = 1").run();
+    const hasScenarioEmailId = db.hasColumn("scenarios", "email_id");
+    const hasSnapshotEmailId = db.hasColumn("scenario_snapshots", "email_id");
+    const hasScenarioCharactersEmailId = db.hasColumn("scenario_characters", "email_id");
+    const hasScenarioCluesEmailId = db.hasColumn("scenario_clues", "email_id");
+    const hasScenarioConditionsEmailId = db.hasColumn("scenario_conditions", "email_id");
+    const hasModuleEmailId = db.hasColumn("module_backgrounds", "email_id");
+    const hasNpcRelEmailId = db.hasColumn("npc_relationships", "email_id");
+    const hasNpcClueEmailId = db.hasColumn("npc_clues", "email_id");
+    const hasCharacterEmailId = db.hasColumn("characters", "email_id");
+    const hasRelationshipsEmailId = db.hasColumn("relationships", "email_id");
+
+    database
+      .prepare(`DELETE FROM scenario_clues${hasScenarioCluesEmailId ? " WHERE email_id = ?" : ""}`)
+      .run(...(hasScenarioCluesEmailId ? [emailId] : []));
+    database
+      .prepare(`DELETE FROM scenario_conditions${hasScenarioConditionsEmailId ? " WHERE email_id = ?" : ""}`)
+      .run(...(hasScenarioConditionsEmailId ? [emailId] : []));
+    database
+      .prepare(`DELETE FROM scenario_characters${hasScenarioCharactersEmailId ? " WHERE email_id = ?" : ""}`)
+      .run(...(hasScenarioCharactersEmailId ? [emailId] : []));
+    database
+      .prepare(`DELETE FROM scenario_snapshots${hasSnapshotEmailId ? " WHERE email_id = ?" : ""}`)
+      .run(...(hasSnapshotEmailId ? [emailId] : []));
+    database
+      .prepare(`DELETE FROM scenarios${hasScenarioEmailId ? " WHERE email_id = ?" : ""}`)
+      .run(...(hasScenarioEmailId ? [emailId] : []));
+    database
+      .prepare(`DELETE FROM module_backgrounds${hasModuleEmailId ? " WHERE email_id = ?" : ""}`)
+      .run(...(hasModuleEmailId ? [emailId] : []));
+    database
+      .prepare(`DELETE FROM npc_relationships${hasNpcRelEmailId ? " WHERE email_id = ?" : ""}`)
+      .run(...(hasNpcRelEmailId ? [emailId] : []));
+    database
+      .prepare(`DELETE FROM npc_clues${hasNpcClueEmailId ? " WHERE email_id = ?" : ""}`)
+      .run(...(hasNpcClueEmailId ? [emailId] : []));
+    database
+      .prepare(`DELETE FROM relationships${hasRelationshipsEmailId ? " WHERE email_id = ?" : ""}`)
+      .run(...(hasRelationshipsEmailId ? [emailId] : []));
+    database
+      .prepare(`DELETE FROM characters WHERE is_npc = 1${hasCharacterEmailId ? " AND email_id = ?" : ""}`)
+      .run(...(hasCharacterEmailId ? [emailId] : []));
   });
 }

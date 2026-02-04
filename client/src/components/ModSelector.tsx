@@ -185,68 +185,6 @@ export function ModSelector({
     );
   }
 
-  if (mods.length === 0) {
-    return (
-      <>
-        <div className="mod-selector-overlay">
-          <div className="mod-selector-modal">
-            <div className="modal-header">
-              <h2>Select Module</h2>
-              <button onClick={onCancel} className="close-button">×</button>
-            </div>
-            <div className="modal-content">
-              <div className="empty-state">
-                <p>No available modules found. Please ensure there are module folders in the <code>data/Mods/</code> directory.</p>
-                <button onClick={onCancel} className="secondary" style={{ marginTop: '16px' }}>Back</button>
-              </div>
-            </div>
-          </div>
-        </div>
-        <style>{`
-          .mod-selector-overlay {
-            position: fixed;
-            top: 0;
-            left: 0;
-            right: 0;
-            bottom: 0;
-            background: rgba(0, 0, 0, 0.5);
-            backdrop-filter: blur(4px);
-            -webkit-backdrop-filter: blur(4px);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            z-index: 1000;
-            padding: 20px;
-          }
-          @supports (backdrop-filter: blur(4px)) {
-            .mod-selector-overlay {
-              background: rgba(0, 0, 0, 0.3);
-            }
-          }
-          .mod-selector-modal {
-            background: rgba(255, 255, 255, 0.8);
-            backdrop-filter: blur(16px);
-            -webkit-backdrop-filter: blur(16px);
-            border: 1px solid rgba(255, 255, 255, 0.5);
-            box-shadow: 0 30px 80px rgba(15, 23, 42, 0.25);
-            max-width: 600px;
-            width: 100%;
-            border-radius: 1.5rem;
-          }
-          @supports (backdrop-filter: blur(16px)) {
-            .mod-selector-modal {
-              background: rgba(255, 255, 255, 0.55);
-            }
-          }
-          .empty-state {
-            text-align: center;
-            padding: 40px 20px;
-          }
-        `}</style>
-      </>
-    );
-  }
-
   return (
     <>
       <div className="mod-selector-overlay">
@@ -454,6 +392,12 @@ export function ModSelector({
           overflow-y: auto;
           flex: 1;
           background: transparent;
+        }
+
+        .empty-state {
+          text-align: center;
+          padding: 10px 0 18px;
+          color: #5a4a3a;
         }
 
         .mod-grid {
@@ -725,5 +669,3 @@ export function ModSelector({
     </>
   );
 }
-
-

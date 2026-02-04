@@ -2,7 +2,7 @@ import { OpenAIEmbeddings } from "@langchain/openai";
 import { GoogleGenerativeAIEmbeddings } from "@langchain/google-genai";
 import { getModelSettings } from "../models/generator.js";
 import { ModelClass, ModelProviderName, type EmbeddingModelSettings } from "../models/types.js";
-import { LocalEmbeddingManager } from "./localEmbeddingManager.js";
+import { LocalEmbeddingManager, type LocalEmbeddingLanguage } from "./localEmbeddingManager.js";
 
 export class EmbeddingClient {
   private provider: ModelProviderName;
@@ -12,13 +12,18 @@ export class EmbeddingClient {
     this.provider = provider || ModelProviderName.OPENAI;
   }
 
-  async embed(text: string): Promise<number[]> {
+  async embed(
+    text: string,
+    options?: { language?: LocalEmbeddingLanguage; skipLocal?: boolean }
+  ): Promise<number[]> {
     const normalized = text?.trim();
     if (!normalized) return [];
 
     // Prefer local BGE embeddings to mirror senti-agent behaviour
     try {
-      return await this.local.embed(normalized);
+      if (!options?.skipLocal) {
+        return await this.local.embed(normalized, options?.language);
+      }
     } catch (error) {
       console.warn("[RAG] Local embedding failed, falling back to remote provider", error);
     }

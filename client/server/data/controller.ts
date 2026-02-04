@@ -1,5 +1,6 @@
 import type { Request, Response } from "express";
 import { DatabaseManager } from "../core/DatabaseManager.js";
+import { listUserLibrary } from "../mod/library.js";
 import path from "path";
 import fs from "fs";
 
@@ -67,19 +68,19 @@ export function getWeapons(req: Request, res: Response): void {
 export function getMods(req: Request, res: Response): void {
   try {
     const modsDir = path.join(process.cwd(), "data", "Mods");
-
-    if (!fs.existsSync(modsDir)) {
-      res.json({ success: true, mods: [] });
+    const db = DatabaseManager.getInstance().getDatabase();
+    const email = req.user?.email;
+    if (!email) {
+      res.status(401).json({ error: "Authentication required" });
       return;
     }
-
-    const dirs = fs.readdirSync(modsDir, { withFileTypes: true });
-    const mods = dirs
-      .filter(dirent => dirent.isDirectory())
-      .map(dirent => ({
-        name: dirent.name,
-        path: path.join(modsDir, dirent.name),
-      }));
+    const mods = listUserLibrary(db, email).map((mod) => ({
+      name: mod.name,
+      path: path.join(modsDir, mod.name),
+      shared: mod.shared,
+      ownerEmail: mod.ownerEmail,
+      isOwner: mod.isOwner,
+    }));
 
     res.json({
       success: true,

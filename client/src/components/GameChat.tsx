@@ -6,9 +6,64 @@
 
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { useTurnPolling } from '../hooks/useTurnPolling';
-import { DiceAnimation } from './DiceAnimation';
+import { getSkillNameZh } from '../lib/skillNames';
+import { DiceAnimation, type DiceRollInfo } from './DiceAnimation';
 import { authFetch } from '../utils/authFetch';
 import ReactMarkdown from 'react-markdown';
+
+/** Build DiceRollInfo[] from action results (for turn history display) */
+function normalizeName(name?: string | null): string | null {
+  if (!name) return null;
+  const trimmed = name.trim();
+  return trimmed.length > 0 ? trimmed.toLowerCase() : null;
+}
+
+function buildDiceRollInfos(
+  actionResults: Array<{ character: string; diceRolls?: string[] }>,
+  playerName?: string
+): DiceRollInfo[] {
+  const infos: DiceRollInfo[] = [];
+  const playerNameNormalized = normalizeName(playerName);
+  for (const result of actionResults || []) {
+    if (playerNameNormalized) {
+      const resultNameNormalized = normalizeName(result.character);
+      if (!resultNameNormalized || resultNameNormalized !== playerNameNormalized) {
+        continue;
+      }
+    }
+    for (const roll of result.diceRolls || []) {
+      const info: DiceRollInfo = { character: result.character, roll };
+      const parenMatches = [...roll.matchAll(/\(([^)]+)\)/g)];
+      const content = parenMatches.length > 0 ? parenMatches[parenMatches.length - 1][1] : null;
+      if (content) {
+        const successMatch = content.match(/\s*=\s*(success|failure|critical|fumble)\s*$/i);
+        if (successMatch) info.success = successMatch[1].toLowerCase() as DiceRollInfo['success'];
+        const penaltyMatch = content.match(/(?:penalty\s+die|bonus\s+die|-\s*\d+\s*%?|\(\s*-\s*\d+\s*\))/i);
+        if (penaltyMatch) info.penalty = penaltyMatch[0].trim();
+        const beforeEquals = content.replace(/\s*=\s*(success|failure|critical|fumble)\s*$/i, '').trim();
+        const skillPart = beforeEquals.replace(/(?:penalty\s+die|bonus\s+die|-\s*\d+\s*%?|\(\s*-\s*\d+\s*\)).*/gi, '').trim();
+        if (skillPart && (/\d+%\s*$/.test(skillPart) || skillPart.length < 40)) info.skill = skillPart;
+      }
+      infos.push(info);
+    }
+  }
+  return infos;
+}
+
+function filterDiceRollsForPlayer(
+  diceRolls: DiceRollInfo[] | string[] | undefined,
+  playerName?: string
+): DiceRollInfo[] | string[] | undefined {
+  if (!diceRolls || diceRolls.length === 0) return diceRolls;
+  const playerNameNormalized = normalizeName(playerName);
+  if (!playerNameNormalized) return diceRolls;
+  const first = diceRolls[0] as DiceRollInfo | string;
+  if (typeof first === 'string') return diceRolls;
+  return (diceRolls as DiceRollInfo[]).filter((roll) => {
+    const rollNameNormalized = normalizeName(roll.character);
+    return !!rollNameNormalized && rollNameNormalized === playerNameNormalized;
+  });
+}
 
 interface Message {
   role: 'character' | 'keeper';
@@ -19,9 +74,9 @@ interface Message {
   isStreaming?: boolean;
   imageUrl?: string;
   imageCaption?: string;
-  diceRolls?: string[]; // Optional dice rolls for keeper messages
-  gameDay?: number | null; // Game day when message was sent
-  gameTime?: string | null; // Game time (HH:MM format) when message was sent
+  diceRolls?: DiceRollInfo[] | string[];
+  gameDay?: number | null;
+  gameTime?: string | null;
 }
 
 interface GameEndingInfo {
@@ -57,6 +112,13 @@ export function GameChat({ sessionId, apiBaseUrl = '/api', characterName = 'Inve
   const [saveMessage, setSaveMessage] = useState<string | null>(null);
   const [isGameEnded, setIsGameEnded] = useState(false);
   const [currentGameState, setCurrentGameState] = useState<{ gameDay?: number; timeOfDay?: string } | null>(null);
+  const [availableSkills, setAvailableSkills] = useState<Array<{ name: string; value: number; displayNameZh?: string }>>([]);
+  const [selectedSkill, setSelectedSkill] = useState('');
+  const [isSkillAuto, setIsSkillAuto] = useState(false);
+  const [suggestedSkills, setSuggestedSkills] = useState<Array<{ name: string; value: number; displayName?: string }>>([]);
+  const [isSuggesting, setIsSuggesting] = useState(false);
+  const [isSkillPickerOpen, setIsSkillPickerOpen] = useState(false);
+  const [suggestedLanguage, setSuggestedLanguage] = useState<'en' | 'zh'>('zh');
   const [streamingTurnId, setStreamingTurnId] = useState<string | null>(null);
   const [isInputCollapsed, setIsInputCollapsed] = useState(true);
   const collapseTimeoutRef = useRef<number | null>(null);
@@ -66,14 +128,18 @@ export function GameChat({ sessionId, apiBaseUrl = '/api', characterName = 'Inve
   const reconnectTimeoutRef = useRef<number | null>(null);
   const shouldReconnectRef = useRef<boolean>(true); // Track if we should auto-reconnect
   const currentSessionIdRef = useRef<string | null>(null); // Track current session to avoid duplicate connections
+  const autoSaveTriggeredRef = useRef(false);
+  const sessionIdRef = useRef<string | null>(sessionId);
+  const autoSaveEffectRunsRef = useRef(0);
   // Refs to access latest values without causing WebSocket reconnection
   const messagesRef = useRef<Message[]>(messages);
   const onNarrativeCompleteRef = useRef(onNarrativeComplete);
   const fetchGameEndingRef = useRef<(() => Promise<void>) | null>(null);
+  const suggestRequestIdRef = useRef(0);
   const { turn, isPolling, error, startPolling, stopPolling } = useTurnPolling(apiBaseUrl);
   
   // State for dice animation
-  const [pendingDiceRolls, setPendingDiceRolls] = useState<{ turnNumber: number; turnId?: string; diceRolls: string[]; narrative: string; timestamp: string; gameDay?: number | null; gameTime?: string | null; isStreaming?: boolean } | null>(null);
+  const [pendingDiceRolls, setPendingDiceRolls] = useState<{ turnNumber: number; turnId?: string; diceRolls: DiceRollInfo[] | string[]; narrative: string; timestamp: string; gameDay?: number | null; gameTime?: string | null; isStreaming?: boolean } | null>(null);
   const [showingDiceAnimation, setShowingDiceAnimation] = useState(false);
   const [diceAnimationCompleted, setDiceAnimationCompleted] = useState(false);
 
@@ -88,6 +154,132 @@ export function GameChat({ sessionId, apiBaseUrl = '/api', characterName = 'Inve
   useEffect(() => {
     onNarrativeCompleteRef.current = onNarrativeComplete;
   }, [onNarrativeComplete]);
+
+  useEffect(() => {
+    sessionIdRef.current = sessionId || null;
+    autoSaveTriggeredRef.current = false;
+  }, [sessionId]);
+
+  const triggerAutoSave = useCallback((reason: string, keepalive = false) => {
+    if (autoSaveTriggeredRef.current) return;
+    const activeSessionId = sessionIdRef.current;
+    if (!activeSessionId) return;
+
+    autoSaveTriggeredRef.current = true;
+
+    authFetch(`${apiBaseUrl}/checkpoints/save`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ checkpointType: "auto", reason }),
+      keepalive,
+    }).catch((err) => {
+      console.warn("[GameChat] Auto-save failed:", err);
+    });
+  }, [apiBaseUrl]);
+
+  useEffect(() => {
+    const handleBeforeUnload = () => {
+      triggerAutoSave("exit", true);
+    };
+
+    window.addEventListener("beforeunload", handleBeforeUnload);
+
+    return () => {
+      window.removeEventListener("beforeunload", handleBeforeUnload);
+      autoSaveEffectRunsRef.current += 1;
+      if (import.meta.env?.DEV && autoSaveEffectRunsRef.current === 1) {
+        return;
+      }
+      triggerAutoSave("exit", true);
+    };
+  }, [triggerAutoSave]);
+
+  const normalizeSkills = useCallback((skills: Record<string, unknown> | undefined | null) => {
+    if (!skills || typeof skills !== 'object') return [];
+    return Object.entries(skills)
+      .map(([name, raw]) => {
+        if (typeof raw === 'number') return { name, value: raw };
+        if (raw && typeof raw === 'object' && 'value' in raw && typeof (raw as { value: unknown }).value === 'number') {
+          return { name, value: (raw as { value: number }).value };
+        }
+        return null;
+      })
+      .filter((entry): entry is { name: string; value: number } => Boolean(entry))
+      .map((entry) => ({
+        ...entry,
+        displayNameZh: getSkillNameZh(entry.name),
+      }))
+      .sort((a, b) => {
+        if (b.value !== a.value) return b.value - a.value;
+        return a.name.localeCompare(b.name);
+      });
+  }, []);
+
+  useEffect(() => {
+    const trimmed = inputValue.trim();
+    if (!trimmed || trimmed.length < 2 || isGameEnded) {
+      setSuggestedSkills([]);
+      setIsSuggesting(false);
+      return;
+    }
+
+    const requestId = ++suggestRequestIdRef.current;
+    const controller = new AbortController();
+
+    const timeoutId = window.setTimeout(async () => {
+      setIsSuggesting(true);
+      try {
+        const response = await authFetch(`${apiBaseUrl}/skills/suggest`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            input: trimmed,
+            max: 3,
+          }),
+          signal: controller.signal,
+        });
+
+        if (!response.ok) {
+          throw new Error('Failed to fetch skill suggestions');
+        }
+
+        const data = await response.json();
+        if (requestId !== suggestRequestIdRef.current) return;
+
+        const suggestions = Array.isArray(data?.suggestions) ? data.suggestions : [];
+        if (data?.language === 'en' || data?.language === 'zh') {
+          setSuggestedLanguage(data.language);
+        }
+        const nextLanguage = data?.language === 'en' || data?.language === 'zh' ? data.language : suggestedLanguage;
+        setSuggestedSkills(
+          suggestions
+            .filter((skill: { name?: string; value?: number }) => typeof skill?.name === 'string')
+            .map((skill: { name: string; value?: number; displayName?: string }) => ({
+              name: skill.name,
+              value: typeof skill.value === 'number' ? skill.value : 0,
+              displayName: typeof skill.displayName === 'string' ? skill.displayName : (nextLanguage === 'zh' ? getSkillNameZh(skill.name) : skill.name),
+            }))
+        );
+      } catch (err) {
+        if ((err as Error)?.name === 'AbortError') return;
+        console.warn('[GameChat] Failed to fetch skill suggestions:', err);
+        if (requestId === suggestRequestIdRef.current) {
+          setSuggestedSkills([]);
+        }
+      } finally {
+        if (requestId === suggestRequestIdRef.current) {
+          setIsSuggesting(false);
+        }
+      }
+    }, 250);
+
+    return () => {
+      window.clearTimeout(timeoutId);
+      controller.abort();
+    };
+  }, [apiBaseUrl, inputValue, isGameEnded]);
 
   const fetchGameEnding = useCallback(async () => {
     if (!sessionId) return;
@@ -108,11 +300,16 @@ export function GameChat({ sessionId, apiBaseUrl = '/api', characterName = 'Inve
           gameDay: data.gameState.gameDay,
           timeOfDay: data.gameState.timeOfDay,
         });
+        const skills = normalizeSkills(data.gameState.playerCharacter?.skills);
+        setAvailableSkills(skills);
+        if (selectedSkill && !skills.find(skill => skill.name === selectedSkill)) {
+          setSelectedSkill('');
+        }
       }
     } catch (err) {
       console.error('[GameChat] Failed to fetch game state:', err);
     }
-  }, [apiBaseUrl, sessionId]);
+  }, [apiBaseUrl, sessionId, selectedSkill, normalizeSkills]);
 
   // Update ref when fetchGameEnding changes
   useEffect(() => {
@@ -195,7 +392,10 @@ export function GameChat({ sessionId, apiBaseUrl = '/api', characterName = 'Inve
             if (message.type === 'connected') {
               console.log(`[WebSocket] Connection confirmed for session ${message.sessionId}`);
             } else if (message.type === 'keeper_dice_rolls') {
-              const diceRolls = message.diceRolls as string[] | undefined;
+              const diceRolls = filterDiceRollsForPlayer(
+                message.diceRolls as DiceRollInfo[] | string[] | undefined,
+                characterName
+              );
               const turnId = message.turnId as string | undefined;
               if (!diceRolls || diceRolls.length === 0) return;
 
@@ -643,35 +843,11 @@ export function GameChat({ sessionId, apiBaseUrl = '/api', characterName = 'Inve
         processedTurnIdsRef.current.add(turn.turnId);
       }
 
-      // Check if there are dice rolls to show
-      const allDiceRolls: string[] = [];
-      if (turn.actionResults && turn.actionResults.length > 0) {
-        console.log(`[GameChat] Processing ${turn.actionResults.length} actionResults`);
-        turn.actionResults.forEach((result, index) => {
-          console.log(`[GameChat] ActionResult[${index}]:`, {
-            hasDiceRolls: !!result.diceRolls,
-            diceRollsType: typeof result.diceRolls,
-            diceRollsValue: result.diceRolls,
-            diceRollsLength: result.diceRolls?.length || 0,
-            result: result.result?.substring(0, 50) + '...',
-          });
-          if (result.diceRolls && result.diceRolls.length > 0) {
-            console.log(`[GameChat] Found dice rolls in actionResult[${index}]:`, result.diceRolls);
-            allDiceRolls.push(...result.diceRolls);
-          } else {
-            console.log(`[GameChat] ActionResult[${index}] has no diceRolls or diceRolls is empty`);
-          }
-        });
-      } else {
-        console.log(`[GameChat] No actionResults or actionResults is empty:`, {
-          actionResults: turn.actionResults,
-          isArray: Array.isArray(turn.actionResults),
-          isNull: turn.actionResults === null,
-          isUndefined: turn.actionResults === undefined,
-        });
-      }
-
-      console.log(`[GameChat] Total dice rolls collected: ${allDiceRolls.length}`, allDiceRolls);
+      // Build structured dice roll infos from action results
+      const allDiceRolls: DiceRollInfo[] = buildDiceRollInfos(
+        turn.actionResults || [],
+        characterName
+      );
       console.log(`[GameChat] Has keeperNarrative: ${!!turn.keeperNarrative}`);
 
       const existingStreamingMessage = turn.turnId
@@ -819,8 +995,13 @@ export function GameChat({ sessionId, apiBaseUrl = '/api', characterName = 'Inve
     if (!inputValue.trim() || isSending || isGameEnded) return;
 
     const messageText = inputValue.trim();
+    const trimmedSkill = selectedSkill.trim();
+    const hasSelectedSkill = trimmedSkill.length > 0;
+    const skillToSend = hasSelectedSkill ? trimmedSkill : null;
+    const skillSelectionMode = hasSelectedSkill ? 'manual' : (isSkillAuto ? 'auto' : 'manual');
     setInputValue('');
     setIsSending(true);
+    setIsSkillPickerOpen(false);
 
     // Immediately add user message to chat
     const nextTurnNumber = messages.length > 0 ? Math.max(...messages.map(m => m.turnNumber)) + 1 : 1;
@@ -844,6 +1025,8 @@ export function GameChat({ sessionId, apiBaseUrl = '/api', characterName = 'Inve
         },
         body: JSON.stringify({
           message: messageText,
+          selectedSkill: skillToSend,
+          skillSelectionMode,
         }),
       });
 
@@ -853,6 +1036,7 @@ export function GameChat({ sessionId, apiBaseUrl = '/api', characterName = 'Inve
         throw new Error(data.error || 'Failed to send message');
       }
 
+      setSelectedSkill('');
       // Start polling for turn completion
       startPolling(data.turnId);
 
@@ -1124,6 +1308,137 @@ export function GameChat({ sessionId, apiBaseUrl = '/api', characterName = 'Inve
                   }}
                   className="relative z-10 overflow-hidden rounded-2xl border border-white/50 shadow-[0_6px_15px_rgba(15,23,42,0.25)] transition-all duration-300 ease-in-out bg-white/80 dark:bg-slate-950/60 supports-[backdrop-filter]:bg-white/55 supports-[backdrop-filter]:backdrop-blur-2xl dark:supports-[backdrop-filter]:bg-slate-900/40"
                 >
+                  {(suggestedSkills.length > 0 || selectedSkill || isSkillAuto) && (
+                    <div className="px-3 pt-2">
+                      <div className="flex items-center">
+                        <span className="text-[10px] uppercase tracking-wide text-slate-500">
+                          Suggested Skills{isSuggesting ? '...' : ''}
+                        </span>
+                      </div>
+                      <div className="mt-2 flex flex-wrap items-center gap-1.5">
+                        {selectedSkill && (
+                          <button
+                            type="button"
+                            className="flex items-center gap-1 rounded-full border border-amber-300 bg-amber-200 px-2 py-0.5 text-[11px] text-amber-900 shadow-[0_10px_20px_rgba(124,45,18,0.25)] transition-all -translate-y-0.5"
+                            onClick={() => {
+                              setSelectedSkill('');
+                              setIsSkillAuto(false);
+                            }}
+                            disabled={isSending || isPolling || isGameEnded}
+                          >
+                            {(() => {
+                              const selectedDisplay =
+                                suggestedSkills.find((item) => item.name === selectedSkill)?.displayName ??
+                                (suggestedLanguage === 'zh'
+                                  ? availableSkills.find((item) => item.name === selectedSkill)?.displayNameZh ?? getSkillNameZh(selectedSkill)
+                                  : selectedSkill);
+                              return selectedDisplay;
+                            })()}
+                            {(() => {
+                              const selectedValue =
+                                availableSkills.find((item) => item.name === selectedSkill)?.value ??
+                                suggestedSkills.find((item) => item.name === selectedSkill)?.value ??
+                                null;
+                              return Number.isFinite(selectedValue as number) ? ` ${selectedValue}%` : '';
+                            })()}
+                          </button>
+                        )}
+                        {suggestedSkills
+                          .filter((skill) => skill.name !== selectedSkill)
+                          .map((skill) => (
+                        <button
+                          key={skill.name}
+                          type="button"
+                          className={`flex items-center gap-1 rounded-full border px-2 py-0.5 text-[11px] shadow-sm transition-all ${
+                            selectedSkill === skill.name
+                              ? 'border-amber-300 bg-amber-200 text-amber-900 -translate-y-0.5 shadow-[0_10px_20px_rgba(124,45,18,0.25)]'
+                              : 'border-slate-200 bg-white/70 text-slate-700 hover:-translate-y-0.5 hover:shadow-md'
+                          }`}
+                          onClick={() => {
+                            setSelectedSkill(selectedSkill === skill.name ? '' : skill.name);
+                            setIsSkillAuto(false);
+                          }}
+                          disabled={isSending || isPolling || isGameEnded}
+                        >
+                          {skill.displayName ?? skill.name}
+                          {Number.isFinite(skill.value) ? ` ${skill.value}%` : ''}
+                        </button>
+                      ))}
+                        <div className="ml-auto flex items-center gap-1">
+                          <button
+                            type="button"
+                            className={`flex h-6 items-center rounded-full border px-2 text-[10px] uppercase tracking-wide shadow-sm transition-all ${
+                              isSkillAuto
+                                ? 'border-amber-300 bg-amber-200 text-amber-900 shadow-[0_8px_16px_rgba(124,45,18,0.2)]'
+                                : 'border-slate-200 bg-white/70 text-slate-600 hover:-translate-y-0.5 hover:bg-white hover:shadow-md'
+                            }`}
+                            onClick={() => {
+                              setIsSkillAuto((prev) => {
+                                const next = !prev;
+                                if (next) {
+                                  setSelectedSkill('');
+                                  setIsSkillPickerOpen(false);
+                                }
+                                return next;
+                              });
+                            }}
+                            disabled={isSending || isPolling || isGameEnded}
+                            aria-label="Auto select skill"
+                          >
+                            auto
+                          </button>
+                          <button
+                            type="button"
+                            className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full border border-slate-200 bg-white/70 text-[11px] text-slate-600 shadow-sm transition-all hover:-translate-y-0.5 hover:bg-white hover:shadow-md [&_svg]:shrink-0"
+                            onClick={() => setIsSkillPickerOpen((prev) => !prev)}
+                            disabled={isSending || isPolling || isGameEnded || availableSkills.length === 0}
+                            aria-label="Choose skill"
+                          >
+                            <svg
+                              xmlns="http://www.w3.org/2000/svg"
+                              width="16"
+                              height="16"
+                              viewBox="0 0 24 24"
+                              fill="currentColor"
+                              aria-hidden="true"
+                            >
+                              <circle cx="6" cy="12" r="2" />
+                              <circle cx="12" cy="12" r="2" />
+                              <circle cx="18" cy="12" r="2" />
+                            </svg>
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+                  )}
+                  {isSkillPickerOpen && availableSkills.length > 0 && (
+                    <div className="mx-3 mt-2 max-h-40 overflow-auto rounded-xl border border-slate-200 bg-white/80 p-2 text-[11px] text-slate-700 shadow-sm">
+                      <div className="flex flex-wrap gap-1.5">
+                        {availableSkills.map((skill) => (
+                          <button
+                            key={skill.name}
+                            type="button"
+                            className={`flex items-center gap-1 rounded-full border px-2 py-0.5 text-[11px] shadow-sm transition-all ${
+                              selectedSkill === skill.name
+                                ? 'border-amber-300 bg-amber-200 text-amber-900 shadow-[0_8px_16px_rgba(124,45,18,0.2)]'
+                                : 'border-slate-200 bg-white/70 text-slate-700 hover:-translate-y-0.5 hover:shadow-md'
+                            }`}
+                            onClick={() => {
+                              setSelectedSkill(selectedSkill === skill.name ? '' : skill.name);
+                              setIsSkillAuto(false);
+                              setIsSkillPickerOpen(false);
+                            }}
+                            disabled={isSending || isPolling || isGameEnded}
+                          >
+                            {suggestedLanguage === 'zh'
+                              ? (skill.displayNameZh ?? getSkillNameZh(skill.name))
+                              : skill.name}
+                            {Number.isFinite(skill.value) ? ` ${skill.value}%` : ''}
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+                  )}
                   <textarea
                     className="select-none md:text-sm max-h-12 px-4 text-sm placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50 w-full flex items-center h-16 min-h-10 resize-none rounded-md bg-transparent border-0 py-1 pl-2 pr-0.5 mt-2 shadow-none focus-visible:ring-0"
                     autoComplete="off"

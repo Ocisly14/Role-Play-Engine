@@ -17,7 +17,8 @@ export async function initializeGameState(
   db: CoCDatabase,
   characterId: string | undefined,
   sessionId: string,
-  modName?: string
+  modName?: string,
+  emailId?: string
 ): Promise<{ gameState: GameState; moduleIntroduction: any }> {
   let gameState: GameState;
 
@@ -105,11 +106,16 @@ export async function initializeGameState(
 
   // Load module data if available
   let moduleIntroduction: any = null;
-  const moduleLoader = new ModuleLoader(db);
+  const moduleLoader = new ModuleLoader(db, undefined, { emailId: emailId });
   const modules = moduleLoader.getAllModules();
 
   if (modules.length > 0) {
-    const module = modules[0];
+    const normalizedModName = modName ? modName.trim().toLowerCase() : "";
+    const module =
+      (normalizedModName
+        ? modules.find((candidate) => candidate.title?.trim().toLowerCase() === normalizedModName) ||
+          modules.find((candidate) => isNameSimilar(candidate.title, modName!))
+        : null) || modules[0];
 
     if (module.keeperGuidance) {
       gameState.keeperGuidance = module.keeperGuidance;
@@ -139,7 +145,7 @@ export async function initializeGameState(
 
     // Load initial scenario if modName is provided
     if (modName) {
-      const scenarioLoader = new ScenarioLoader(db);
+      const scenarioLoader = new ScenarioLoader(db, undefined, { emailId: emailId });
       const modsDir = path.join(process.cwd(), "data", "Mods");
       const modPath = path.join(modsDir, modName);
 
@@ -187,7 +193,8 @@ export async function initializeWorldBuilderGameState(
   db: CoCDatabase,
   characterId: string | undefined,
   sessionId: string,
-  modName?: string
+  modName?: string,
+  emailId?: string
 ): Promise<{ dynamicGameState: DynamicGameState; moduleIntroduction: any }> {
   if (!modName) {
     throw new Error("Module name is required for WorldBuilder game state initialization");
@@ -199,6 +206,7 @@ export async function initializeWorldBuilderGameState(
     sessionId,
     moduleName: modName,
     characterId,
+    emailId: emailId,
   });
 
   if (!dynamicGameState) {

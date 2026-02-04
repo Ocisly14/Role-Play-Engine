@@ -70,19 +70,29 @@ export const authController = {
   // Send Verification Email
   async sendVerification(req: Request, res: Response) {
     try {
-      const userId = req.user!.userId;
-      const result = await authService.sendEmailVerification(userId);
+      const result = await authService.sendEmailVerification(req.user!.email);
       res.json(result);
     } catch (error: any) {
       res.status(400).json({ error: error.message });
     }
   },
 
-  // Verify Email
-  async verifyEmail(req: Request, res: Response) {
+  // Verify email with 5-digit code
+  async verifyCode(req: Request, res: Response) {
     try {
-      const { token } = req.query;
-      const result = await authService.verifyEmail(token as string);
+      const { email, code } = req.body;
+      const result = await authService.verifyEmailCode(email, code);
+      res.json(result);
+    } catch (error: any) {
+      res.status(400).json({ error: error.message });
+    }
+  },
+
+  // Resend verification code (public)
+  async resendVerification(req: Request, res: Response) {
+    try {
+      const { email } = req.body;
+      const result = await authService.resendEmailVerification(email);
       res.json(result);
     } catch (error: any) {
       res.status(400).json({ error: error.message });
@@ -114,10 +124,9 @@ export const authController = {
   // Change Password
   async changePassword(req: Request, res: Response) {
     try {
-      const userId = req.user!.userId;
       const { oldPassword, newPassword } = req.body;
       const result = await authService.changePassword(
-        userId,
+        req.user!.email,
         oldPassword,
         newPassword
       );

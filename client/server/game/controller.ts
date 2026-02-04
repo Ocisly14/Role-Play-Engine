@@ -37,6 +37,7 @@ export async function startGame(req: Request, res: Response): Promise<void> {
   try {
     const { characterId, modName } = req.body;
     const userId = req.user!.userId;
+    const userEmail = req.user!.email;
 
     console.log(`[${new Date().toISOString()}] Starting game...`);
 
@@ -58,8 +59,8 @@ export async function startGame(req: Request, res: Response): Promise<void> {
     const database = db.getDatabase();
     const ownedCharacter = database.prepare(`
       SELECT character_id FROM characters
-      WHERE character_id = ? AND user_id = ? AND is_npc = 0
-    `).get(characterId, userId);
+      WHERE character_id = ? AND email_id = ? AND is_npc = 0
+    `).get(characterId, userEmail);
 
     if (!ownedCharacter) {
       res.status(403).json({ error: "Character not found" });
@@ -80,7 +81,7 @@ export async function startGame(req: Request, res: Response): Promise<void> {
 
     if (isWorldBuilder) {
       // For WorldBuilder modules, only use DynamicGameState
-      const initResult = await initializeWorldBuilderGameState(db, characterId, sessionId, modName);
+      const initResult = await initializeWorldBuilderGameState(db, characterId, sessionId, modName, userEmail);
       dynamicGameState = initResult.dynamicGameState;
       moduleIntroduction = initResult.moduleIntroduction;
       
@@ -91,7 +92,7 @@ export async function startGame(req: Request, res: Response): Promise<void> {
       }
     } else {
       // For regular modules, use GameState
-      const initResult = await initializeGameState(db, characterId, sessionId, modName);
+      const initResult = await initializeGameState(db, characterId, sessionId, modName, userEmail);
       gameState = initResult.gameState;
       moduleIntroduction = initResult.moduleIntroduction;
     }

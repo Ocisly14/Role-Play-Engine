@@ -41,9 +41,11 @@ export class WebSocketManager {
     this.wss.on('connection', (ws: WebSocket, req) => {
       const sessionId = this.extractSessionId(req);
       const token = this.extractToken(req);
-      const userId = token ? this.verifyUserId(token) : null;
+      const creds = token ? this.verifyTokenCreds(token) : null;
+      const userId = creds?.userId ?? null;
+      const email = creds?.email ?? null;
 
-      if (!sessionId || !userId || !this.isSessionOwnedByUser(sessionId, userId)) {
+      if (!sessionId || !userId || !email || !this.isSessionOwnedByUser(sessionId, userId, email)) {
         ws.close();
         return;
       }
@@ -129,16 +131,16 @@ export class WebSocketManager {
     return req.url?.split('token=')[1]?.split('&')[0] || null;
   }
 
-  private verifyUserId(token: string): string | null {
+  private verifyTokenCreds(token: string): { userId: string; email: string } | null {
     try {
       const payload = verifyToken(decodeURIComponent(token));
-      return payload.userId;
+      return { userId: payload.userId, email: payload.email };
     } catch (error) {
       return null;
     }
   }
 
-  private isSessionOwnedByUser(sessionId: string, userId: string): boolean {
+  private isSessionOwnedByUser(sessionId: string, userId: string, email: string): boolean {
     const serverState = ServerState.getInstance();
     const activeState = serverState.getGameState(userId);
     if (activeState?.sessionId === sessionId) {
@@ -150,9 +152,9 @@ export class WebSocketManager {
       SELECT 1
       FROM game_turns gt
       JOIN characters c ON c.character_id = gt.character_id
-      WHERE gt.session_id = ? AND c.user_id = ?
+      WHERE gt.session_id = ? AND c.email_id = ?
       LIMIT 1
-    `).get(sessionId, userId);
+    `).get(sessionId, email);
 
     return Boolean(row);
   }

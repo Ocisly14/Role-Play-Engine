@@ -35,7 +35,6 @@ export function generateRandomAttrs(req: Request, res: Response): void {
 export function createCharacter(req: Request, res: Response): void {
   try {
     const characterData = req.body;
-    const userId = req.user!.userId;
 
     if (!characterData || !characterData.identity?.name) {
       res.status(400).json({ error: "Character name is required" });
@@ -47,16 +46,16 @@ export function createCharacter(req: Request, res: Response): void {
 
     // Prepare character data for database
     const dbCharacter = prepareCharacterForDB(characterData);
-    dbCharacter.user_id = userId;
+    dbCharacter.email_id = req.user!.email;
 
     // Insert into database
     const insertStmt = database.prepare(`
       INSERT INTO characters (
         character_id, name, attributes, status, inventory, skills, notes,
-        is_npc, occupation, age, appearance, personality, background, goals, secrets, user_id
+        is_npc, occupation, age, appearance, personality, background, goals, secrets, email_id
       ) VALUES (
         @character_id, @name, @attributes, @status, @inventory, @skills, @notes,
-        @is_npc, @occupation, @age, @appearance, @personality, @background, @goals, @secrets, @user_id
+        @is_npc, @occupation, @age, @appearance, @personality, @background, @goals, @secrets, @email_id
       )
     `);
 
@@ -84,14 +83,13 @@ export function getAllCharacters(req: Request, res: Response): void {
   try {
     const db = DatabaseManager.getInstance().getDatabase();
     const database = db.getDatabase();
-    const userId = req.user!.userId;
 
     const characters = database.prepare(`
       SELECT character_id, name, occupation, age, is_npc, appearance
       FROM characters
-      WHERE (is_npc = 0 OR is_npc IS NULL) AND user_id = ?
+      WHERE (is_npc = 0 OR is_npc IS NULL) AND email_id = ?
       ORDER BY updated_at DESC
-    `).all(userId);
+    `).all(req.user!.email);
 
     res.json({
       success: true,
@@ -110,7 +108,6 @@ export function getAllCharacters(req: Request, res: Response): void {
 export function getCharacterById(req: Request, res: Response): void {
   try {
     const { characterId } = req.params;
-    const userId = req.user!.userId;
 
     const db = DatabaseManager.getInstance().getDatabase();
     const database = db.getDatabase();
@@ -119,8 +116,8 @@ export function getCharacterById(req: Request, res: Response): void {
     const character = database.prepare(`
       SELECT *
       FROM characters
-      WHERE character_id = ? AND user_id = ?
-    `).get(characterId, userId);
+      WHERE character_id = ? AND email_id = ?
+    `).get(characterId, req.user!.email);
 
     if (!character) {
       res.status(404).json({

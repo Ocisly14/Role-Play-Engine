@@ -1,14 +1,17 @@
 import React, { useEffect, useMemo, useState, useRef, useCallback } from "react";
-import { BrowserRouter, Routes, Route } from "react-router-dom";
+import { BrowserRouter, Routes, Route, useLocation, useNavigate } from "react-router-dom";
 import { AuthProvider, useAuth } from "./contexts/AuthContext";
 import { ProtectedRoute } from "./components/ProtectedRoute";
 import Login from "./views/auth/Login";
 import Register from "./views/auth/Register";
+import ForgotPassword from "./views/auth/ForgotPassword";
+import ResetPassword from "./views/auth/ResetPassword";
 import Homes from "./views/Homes";
 import { GameChat } from "./components/GameChat";
 import { GameSidebar } from "./components/GameSidebar";
 import { CharacterSelector } from "./components/CharacterSelector";
 import { ModSelector } from "./components/ModSelector";
+import { ModManager } from "./components/ModManager";
 import { StoryCreator } from "./components/StoryCreator";
 import { authFetch } from "./utils/authFetch";
 import { findAvailableImage } from "./utils/imageLoader";
@@ -117,6 +120,8 @@ const SKILLS: SkillEntry[] = [
 ];
 
 const AppShell: React.FC = () => {
+  const location = useLocation();
+  const navigate = useNavigate();
   const [page, setPage] = useState<AppPage>(() => getStoredPage());
   const [saving, setSaving] = useState(false);
   const [saveMessage, setSaveMessage] = useState<{ type: "success" | "error"; text: string } | null>(null);
@@ -132,6 +137,7 @@ const AppShell: React.FC = () => {
   const [selectedCharacterId, setSelectedCharacterId] = useState<string>("");
   const [selectedModName, setSelectedModName] = useState<string>("");
   const [showCheckpointSelector, setShowCheckpointSelector] = useState(false);
+  const [showModManager, setShowModManager] = useState(false);
   const [checkpoints, setCheckpoints] = useState<any[]>([]);
   const [loadingCheckpoints, setLoadingCheckpoints] = useState(false);
   const [moduleIntroduction, setModuleIntroduction] = useState<{ introduction: string; moduleNotes: string } | null>(null);
@@ -155,10 +161,22 @@ const AppShell: React.FC = () => {
   const [isUserMenuOpen, setIsUserMenuOpen] = useState(false);
   const [isRestoringSession, setIsRestoringSession] = useState(false);
   const [hasInitialized, setHasInitialized] = useState(false);
+  const prevUserRef = useRef<typeof user | null>(null);
 
   useEffect(() => {
     window.localStorage.setItem(PAGE_STORAGE_KEY, page);
   }, [page]);
+
+  // After a fresh login, always land on home instead of restoring create-character.
+  useEffect(() => {
+    const prevUser = prevUserRef.current;
+    if (!prevUser && user) {
+      setPage("home");
+      window.localStorage.setItem(PAGE_STORAGE_KEY, "home");
+      navigate("/");
+    }
+    prevUserRef.current = user ?? null;
+  }, [user, navigate]);
 
   // Helper function to set default background (supports multiple formats)
   const setDefaultBackground = useCallback(async () => {
@@ -188,7 +206,7 @@ const AppShell: React.FC = () => {
 
   // Fetch current scenario sceneImage and set as background when on game page
   useEffect(() => {
-    if (page !== "game" || !sessionId) {
+    if (location.pathname !== "/gamechat" || !sessionId) {
       // Reset to default background when not on game page
       if (currentBackgroundImageRef.current) {
         setDefaultBackground();
@@ -237,12 +255,12 @@ const AppShell: React.FC = () => {
 
     // Cleanup: restore default background when component unmounts or page changes
     return () => {
-      if (page !== "game") {
+      if (location.pathname !== "/gamechat") {
         setDefaultBackground();
         currentBackgroundImageRef.current = null;
       }
     };
-  }, [page, sessionId, sidebarRefreshTrigger]);
+  }, [location.pathname, sessionId, sidebarRefreshTrigger]);
 
   useEffect(() => {
     if (!user) {
@@ -272,6 +290,7 @@ const AppShell: React.FC = () => {
         } else {
           // No valid session found - reset to home if currently on game page
           if (page === "game") {
+            navigate("/");
             setPage("home");
             window.localStorage.setItem(PAGE_STORAGE_KEY, "home");
           }
@@ -280,6 +299,7 @@ const AppShell: React.FC = () => {
         console.error("Failed to restore latest session:", error);
         // On error, reset to home if currently on game page
         if (page === "game") {
+          navigate("/");
           setPage("home");
           window.localStorage.setItem(PAGE_STORAGE_KEY, "home");
         }
@@ -290,17 +310,43 @@ const AppShell: React.FC = () => {
     };
 
     restoreSession();
-  }, [user, sessionId, isRestoringSession, page]);
+  }, [user, sessionId, isRestoringSession, page, navigate]);
 
   // Validate page state: if on game page without valid session, reset to home
   // Only validate after initial session restoration is complete
   useEffect(() => {
     if (user && page === "game" && !sessionId && !isRestoringSession && hasInitialized) {
-      // No valid session, reset to home
+      // No valid session, reset to home and leave /gamechat
+      navigate("/");
       setPage("home");
       window.localStorage.setItem(PAGE_STORAGE_KEY, "home");
     }
-  }, [user, page, sessionId, isRestoringSession, hasInitialized]);
+  }, [user, page, sessionId, isRestoringSession, hasInitialized, navigate]);
+
+  // Sync page with /gamechat and /charactercreate URL: when on those paths, treat as their pages
+  useEffect(() => {
+    if (location.pathname === "/gamechat") {
+      setPage("game");
+      return;
+    }
+    if (location.pathname === "/charactercreate") {
+      setPage("sheet");
+    }
+  }, [location.pathname]);
+
+  // Keep URL in sync with the create-character page
+  useEffect(() => {
+    if (location.pathname === "/gamechat") {
+      return;
+    }
+    if (page === "sheet" && location.pathname !== "/charactercreate") {
+      navigate("/charactercreate");
+      return;
+    }
+    if (page !== "sheet" && location.pathname === "/charactercreate") {
+      navigate("/");
+    }
+  }, [page, location.pathname, navigate]);
 
   const handleLogout = async () => {
     try {
@@ -696,6 +742,7 @@ const AppShell: React.FC = () => {
         setConversationHistory(null);
         // Don't show module introduction again (already shown before character selection)
         setShowModuleIntro(false);
+        navigate("/gamechat");
         setPage("game");
       } else {
         alert("Failed to start game: " + (data.error || "Unknown error"));
@@ -710,6 +757,7 @@ const AppShell: React.FC = () => {
 
   const handleBackToHome = () => {
     setCurrentModuleName("");
+    navigate("/");
     setPage("home");
   };
 
@@ -809,6 +857,7 @@ const AppShell: React.FC = () => {
 
         // Close checkpoint selector and go to game
         setShowCheckpointSelector(false);
+        navigate("/gamechat");
         setPage("game");
       } else {
         alert("Failed to load checkpoint: " + (data.error || "Unknown error"));
@@ -1954,7 +2003,11 @@ const AppShell: React.FC = () => {
           }}
           onStartGame={handleShowCharacterSelector}
           onContinueGame={handleContinueGame}
+          onManageMods={() => setShowModManager(true)}
         />
+        {showModManager && (
+          <ModManager onClose={() => setShowModManager(false)} />
+        )}
         {showCheckpointSelector && (
           <div className="fixed inset-0 z-50 bg-black/50 backdrop-blur-sm supports-[backdrop-filter]:bg-black/30 supports-[backdrop-filter]:backdrop-blur-sm flex items-center justify-center p-5">
             <div className="fixed left-[50%] top-[50%] z-50 translate-x-[-50%] translate-y-[-50%] max-w-[600px] max-h-[80vh] w-[90%] overflow-y-auto rounded-3xl p-12 supports-[backdrop-filter]:backdrop-blur-lg border border-white/50 bg-white/80 shadow-[0_30px_80px_rgba(15,23,42,0.25)] supports-[backdrop-filter]:bg-white/55">
@@ -2226,7 +2279,7 @@ const AppShell: React.FC = () => {
     );
   }
   
-  if (page === "game") {
+  if (location.pathname === "/gamechat") {
     // Still restoring session, show loading
     if (!sessionId && isRestoringSession) {
       return (
@@ -2296,6 +2349,8 @@ const App: React.FC = () => (
       <Routes>
         <Route path="/login" element={<Login />} />
         <Route path="/register" element={<Register />} />
+        <Route path="/forgot-password" element={<ForgotPassword />} />
+        <Route path="/reset-password" element={<ResetPassword />} />
         <Route
           path="/*"
           element={

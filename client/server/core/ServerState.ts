@@ -118,13 +118,6 @@ export class ServerState {
     return first.done ? null : first.value;
   }
 
-  /**
-   * Get user ID for a session if tracked
-   */
-  public getUserIdBySession(sessionId: string): string | null {
-    return this.findUserIdBySession(sessionId);
-  }
-
   private findUserIdBySession(sessionId: string): string | null {
     // Check GameState first
     for (const [userId, state] of this.gameStatesByUser.entries()) {

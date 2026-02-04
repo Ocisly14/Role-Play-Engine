@@ -23,23 +23,19 @@ export async function checkAndTriggerSimulate(
   sessionId: string,
   clients: Map<string, WSClient>
 ): Promise<boolean> {
-  const resolveUserId = (): string | null => {
-    const serverState = ServerState.getInstance();
-    const fromState = serverState.getUserIdBySession(sessionId);
-    if (fromState) return fromState;
-
+  const resolveEmail = (): string | undefined => {
     const db = DatabaseManager.getInstance().getDatabase().getDatabase();
     const row = db.prepare(`
-      SELECT c.user_id
+      SELECT c.email_id
       FROM game_turns gt
       JOIN characters c ON c.character_id = gt.character_id
-      WHERE gt.session_id = ? AND c.user_id IS NOT NULL
+      WHERE gt.session_id = ? AND c.email_id IS NOT NULL
       LIMIT 1
-    `).get(sessionId) as { user_id?: string } | undefined;
-    return row?.user_id ?? null;
+    `).get(sessionId) as { email_id?: string } | undefined;
+    return row?.email_id;
   };
 
-  const userId = resolveUserId();
+  const email = resolveEmail();
   const runner = async () => {
     const serverState = ServerState.getInstance();
     const graphManager = GraphManager.getInstance();
@@ -222,10 +218,10 @@ export async function checkAndTriggerSimulate(
     }
   };
 
-  if (userId) {
+  if (email) {
     return runWithTokenContext(
       {
-        userId,
+        email,
         usageTotals: { input_tokens: 0, output_tokens: 0, total_tokens: 0 },
       },
       () => runner()

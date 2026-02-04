@@ -199,6 +199,14 @@ export class CoCDatabase {
             CREATE INDEX IF NOT EXISTS idx_relationships_character ON relationships(character_id);
             CREATE INDEX IF NOT EXISTS idx_relationships_npc ON relationships(npc_id);
         `);
+    try {
+      if (!this.hasColumn("relationships", "email_id")) {
+        this.db.exec("ALTER TABLE relationships ADD COLUMN email_id TEXT;");
+        this.db.exec("CREATE INDEX IF NOT EXISTS idx_relationships_email ON relationships(email_id);");
+      }
+    } catch {
+      // ignore if column already exists
+    }
 
     // Characters table
     this.db.exec(`
@@ -265,6 +273,14 @@ export class CoCDatabase {
             CREATE INDEX IF NOT EXISTS idx_npc_clues_npc ON npc_clues(npc_id);
             CREATE INDEX IF NOT EXISTS idx_npc_clues_revealed ON npc_clues(revealed);
         `);
+    try {
+      if (!this.hasColumn("npc_clues", "email_id")) {
+        this.db.exec("ALTER TABLE npc_clues ADD COLUMN email_id TEXT;");
+        this.db.exec("CREATE INDEX IF NOT EXISTS idx_npc_clues_email ON npc_clues(email_id);");
+      }
+    } catch {
+      // ignore if column already exists
+    }
 
     // NPC Relationships table (extended version)
     this.db.exec(`
@@ -284,6 +300,14 @@ export class CoCDatabase {
             CREATE INDEX IF NOT EXISTS idx_npc_relationships_source ON npc_relationships(source_id);
             CREATE INDEX IF NOT EXISTS idx_npc_relationships_target ON npc_relationships(target_id);
         `);
+    try {
+      if (!this.hasColumn("npc_relationships", "email_id")) {
+        this.db.exec("ALTER TABLE npc_relationships ADD COLUMN email_id TEXT;");
+        this.db.exec("CREATE INDEX IF NOT EXISTS idx_npc_relationships_email ON npc_relationships(email_id);");
+      }
+    } catch {
+      // ignore if column already exists
+    }
 
     // Full-text search for events
     this.db.exec(`
@@ -324,6 +348,14 @@ export class CoCDatabase {
             );
             CREATE INDEX IF NOT EXISTS idx_scenarios_name ON scenarios(name);
         `);
+    try {
+      if (!this.hasColumn("scenarios", "email_id")) {
+        this.db.exec("ALTER TABLE scenarios ADD COLUMN email_id TEXT;");
+        this.db.exec("CREATE INDEX IF NOT EXISTS idx_scenarios_email ON scenarios(email_id);");
+      }
+    } catch {
+      // ignore if column already exists
+    }
     
     // Backfill permanent_changes column if table already existed
     try {
@@ -380,6 +412,14 @@ export class CoCDatabase {
             );
             CREATE INDEX IF NOT EXISTS idx_snapshots_scenario ON scenario_snapshots(scenario_id);
         `);
+    try {
+      if (!this.hasColumn("scenario_snapshots", "email_id")) {
+        this.db.exec("ALTER TABLE scenario_snapshots ADD COLUMN email_id TEXT;");
+        this.db.exec("CREATE INDEX IF NOT EXISTS idx_snapshots_email ON scenario_snapshots(email_id);");
+      }
+    } catch {
+      // ignore if column already exists
+    }
     
     // Backfill time_restriction column if table already existed
     try {
@@ -467,6 +507,14 @@ export class CoCDatabase {
             CREATE INDEX IF NOT EXISTS idx_scenario_characters_snapshot ON scenario_characters(snapshot_id);
             CREATE INDEX IF NOT EXISTS idx_scenario_characters_name ON scenario_characters(character_name);
         `);
+    try {
+      if (!this.hasColumn("scenario_characters", "email_id")) {
+        this.db.exec("ALTER TABLE scenario_characters ADD COLUMN email_id TEXT;");
+        this.db.exec("CREATE INDEX IF NOT EXISTS idx_scenario_characters_email ON scenario_characters(email_id);");
+      }
+    } catch {
+      // ignore if column already exists
+    }
 
     // Scenario clues table - clues available in scenarios
     this.db.exec(`
@@ -488,6 +536,14 @@ export class CoCDatabase {
             CREATE INDEX IF NOT EXISTS idx_scenario_clues_location ON scenario_clues(clue_location);
             CREATE INDEX IF NOT EXISTS idx_scenario_clues_discovered ON scenario_clues(discovered);
         `);
+    try {
+      if (!this.hasColumn("scenario_clues", "email_id")) {
+        this.db.exec("ALTER TABLE scenario_clues ADD COLUMN email_id TEXT;");
+        this.db.exec("CREATE INDEX IF NOT EXISTS idx_scenario_clues_email ON scenario_clues(email_id);");
+      }
+    } catch {
+      // ignore if column already exists
+    }
 
     // Scenario conditions table - environmental conditions
     this.db.exec(`
@@ -503,6 +559,14 @@ export class CoCDatabase {
             CREATE INDEX IF NOT EXISTS idx_scenario_conditions_snapshot ON scenario_conditions(snapshot_id);
             CREATE INDEX IF NOT EXISTS idx_scenario_conditions_type ON scenario_conditions(condition_type);
         `);
+    try {
+      if (!this.hasColumn("scenario_conditions", "email_id")) {
+        this.db.exec("ALTER TABLE scenario_conditions ADD COLUMN email_id TEXT;");
+        this.db.exec("CREATE INDEX IF NOT EXISTS idx_scenario_conditions_email ON scenario_conditions(email_id);");
+      }
+    } catch {
+      // ignore if column already exists
+    }
 
     // Full-text search for scenarios
     this.db.exec(`
@@ -546,6 +610,74 @@ export class CoCDatabase {
                 tags TEXT -- JSON array
             );
         `);
+
+    // Mod catalog table - global registry for module ownership/sharing
+    this.db.exec(`
+            CREATE TABLE IF NOT EXISTS mod_catalog (
+                module_name TEXT PRIMARY KEY,
+                owner_email TEXT NOT NULL,
+                shared INTEGER NOT NULL DEFAULT 0,
+                created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+                deleted_at DATETIME DEFAULT NULL
+            );
+            CREATE INDEX IF NOT EXISTS idx_mod_catalog_owner ON mod_catalog(owner_email);
+            CREATE INDEX IF NOT EXISTS idx_mod_catalog_shared ON mod_catalog(shared);
+            CREATE INDEX IF NOT EXISTS idx_mod_catalog_deleted ON mod_catalog(deleted_at);
+        `);
+
+    // User mod library table - per-user module library
+    this.db.exec(`
+            CREATE TABLE IF NOT EXISTS user_mods (
+                email_id TEXT NOT NULL,
+                module_name TEXT NOT NULL,
+                added_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+                PRIMARY KEY (email_id, module_name)
+            );
+            CREATE INDEX IF NOT EXISTS idx_user_mods_email ON user_mods(email_id);
+            CREATE INDEX IF NOT EXISTS idx_user_mods_module ON user_mods(module_name);
+        `);
+
+    // User mod library bootstrap marker
+    this.db.exec(`
+            CREATE TABLE IF NOT EXISTS user_mods_bootstrap (
+                email_id TEXT PRIMARY KEY,
+                bootstrapped_at DATETIME DEFAULT CURRENT_TIMESTAMP
+            );
+        `);
+
+    // User mod soft-delete tombstones (tracks per-user deletions for restore/expiry)
+    this.db.exec(`
+            CREATE TABLE IF NOT EXISTS user_mods_deleted (
+                email_id TEXT NOT NULL,
+                module_name TEXT NOT NULL,
+                deleted_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+                PRIMARY KEY (email_id, module_name)
+            );
+            CREATE INDEX IF NOT EXISTS idx_user_mods_deleted_email ON user_mods_deleted(email_id);
+            CREATE INDEX IF NOT EXISTS idx_user_mods_deleted_module ON user_mods_deleted(module_name);
+        `);
+
+    // Module generation records — used for per-user generation quota enforcement
+    this.db.exec(`
+            CREATE TABLE IF NOT EXISTS mod_generations (
+                id TEXT PRIMARY KEY,
+                email_id TEXT NOT NULL,
+                module_name TEXT NOT NULL,
+                story_length TEXT NOT NULL,
+                generated_at DATETIME DEFAULT CURRENT_TIMESTAMP
+            );
+            CREATE INDEX IF NOT EXISTS idx_mod_generations_email ON mod_generations(email_id);
+            CREATE INDEX IF NOT EXISTS idx_mod_generations_email_time ON mod_generations(email_id, generated_at);
+        `);
+
+    try {
+      if (!this.hasColumn("module_backgrounds", "email_id")) {
+        this.db.exec("ALTER TABLE module_backgrounds ADD COLUMN email_id TEXT;");
+        this.db.exec("CREATE INDEX IF NOT EXISTS idx_module_backgrounds_email ON module_backgrounds(email_id);");
+      }
+    } catch {
+      // ignore if column already exists
+    }
     // Backfill for module_limitations if table already existed
     try {
       if (!this.hasColumn("module_backgrounds", "module_limitations")) {
@@ -759,7 +891,7 @@ export class CoCDatabase {
     this.db.exec(`
             CREATE TABLE IF NOT EXISTS user_token_usage (
                 id TEXT PRIMARY KEY,
-                user_id TEXT NOT NULL,
+                email_id TEXT NOT NULL,
                 provider TEXT NOT NULL,
                 model_name TEXT NOT NULL,
                 model_class TEXT NOT NULL,
@@ -767,10 +899,9 @@ export class CoCDatabase {
                 input_tokens INTEGER NOT NULL DEFAULT 0,
                 output_tokens INTEGER NOT NULL DEFAULT 0,
                 total_tokens INTEGER NOT NULL DEFAULT 0,
-                created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-                FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+                created_at DATETIME DEFAULT CURRENT_TIMESTAMP
             );
-            CREATE INDEX IF NOT EXISTS idx_user_token_usage_user ON user_token_usage(user_id);
+            CREATE INDEX IF NOT EXISTS idx_user_token_usage_email ON user_token_usage(email_id);
             CREATE INDEX IF NOT EXISTS idx_user_token_usage_created ON user_token_usage(created_at);
             CREATE INDEX IF NOT EXISTS idx_user_token_usage_model ON user_token_usage(model_name, model_class);
         `);
@@ -780,17 +911,16 @@ export class CoCDatabase {
             CREATE TABLE IF NOT EXISTS player_memos (
                 memo_id TEXT PRIMARY KEY,
                 session_id TEXT NOT NULL,
-                user_id TEXT NOT NULL,
+                email_id TEXT NOT NULL,
                 text TEXT NOT NULL,
                 game_day INTEGER,
                 game_time TEXT,
                 location TEXT,
                 created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-                updated_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-                FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+                updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
             );
             CREATE INDEX IF NOT EXISTS idx_player_memos_session ON player_memos(session_id);
-            CREATE INDEX IF NOT EXISTS idx_player_memos_user ON player_memos(user_id);
+            CREATE INDEX IF NOT EXISTS idx_player_memos_email ON player_memos(email_id);
         `);
     try {
       if (!this.hasColumn("player_memos", "game_day")) {
@@ -810,15 +940,14 @@ export class CoCDatabase {
     this.db.exec(`
             CREATE TABLE IF NOT EXISTS user_sessions (
                 id TEXT PRIMARY KEY,
-                user_id TEXT NOT NULL,
+                email_id TEXT NOT NULL,
                 token TEXT UNIQUE NOT NULL,
                 ip_address TEXT,
                 user_agent TEXT,
                 expires_at DATETIME NOT NULL,
-                created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-                FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+                created_at DATETIME DEFAULT CURRENT_TIMESTAMP
             );
-            CREATE INDEX IF NOT EXISTS idx_user_sessions_user ON user_sessions(user_id);
+            CREATE INDEX IF NOT EXISTS idx_user_sessions_email ON user_sessions(email_id);
             CREATE INDEX IF NOT EXISTS idx_user_sessions_token ON user_sessions(token);
         `);
 
@@ -826,14 +955,13 @@ export class CoCDatabase {
     this.db.exec(`
             CREATE TABLE IF NOT EXISTS email_verifications (
                 id TEXT PRIMARY KEY,
-                user_id TEXT NOT NULL,
+                email_id TEXT NOT NULL,
                 token TEXT UNIQUE NOT NULL,
                 expires_at DATETIME NOT NULL,
                 is_used INTEGER DEFAULT 0,
-                created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-                FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+                created_at DATETIME DEFAULT CURRENT_TIMESTAMP
             );
-            CREATE INDEX IF NOT EXISTS idx_email_verifications_user ON email_verifications(user_id);
+            CREATE INDEX IF NOT EXISTS idx_email_verifications_email ON email_verifications(email_id);
             CREATE INDEX IF NOT EXISTS idx_email_verifications_token ON email_verifications(token);
         `);
 
@@ -841,14 +969,13 @@ export class CoCDatabase {
     this.db.exec(`
             CREATE TABLE IF NOT EXISTS password_resets (
                 id TEXT PRIMARY KEY,
-                user_id TEXT NOT NULL,
+                email_id TEXT NOT NULL,
                 token TEXT UNIQUE NOT NULL,
                 expires_at DATETIME NOT NULL,
                 is_used INTEGER DEFAULT 0,
-                created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-                FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+                created_at DATETIME DEFAULT CURRENT_TIMESTAMP
             );
-            CREATE INDEX IF NOT EXISTS idx_password_resets_user ON password_resets(user_id);
+            CREATE INDEX IF NOT EXISTS idx_password_resets_email ON password_resets(email_id);
             CREATE INDEX IF NOT EXISTS idx_password_resets_token ON password_resets(token);
         `);
 
@@ -856,14 +983,13 @@ export class CoCDatabase {
     this.db.exec(`
             CREATE TABLE IF NOT EXISTS refresh_tokens (
                 id TEXT PRIMARY KEY,
-                user_id TEXT NOT NULL,
+                email_id TEXT NOT NULL,
                 token TEXT UNIQUE NOT NULL,
                 expires_at DATETIME NOT NULL,
                 is_revoked INTEGER DEFAULT 0,
-                created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-                FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+                created_at DATETIME DEFAULT CURRENT_TIMESTAMP
             );
-            CREATE INDEX IF NOT EXISTS idx_refresh_tokens_user ON refresh_tokens(user_id);
+            CREATE INDEX IF NOT EXISTS idx_refresh_tokens_email ON refresh_tokens(email_id);
             CREATE INDEX IF NOT EXISTS idx_refresh_tokens_token ON refresh_tokens(token);
         `);
 
@@ -882,18 +1008,51 @@ export class CoCDatabase {
             CREATE INDEX IF NOT EXISTS idx_referral_codes_used ON referral_codes(is_used);
         `);
 
-    // Initialize referral codes if table is empty
-    const codeCount = this.db.prepare('SELECT COUNT(*) as count FROM referral_codes').get() as { count: number };
-    if (codeCount.count === 0) {
-      // Fixed referral codes
-      const fixedCodes = ['BH6XK', 'ZLDM6', 'YIJNF'];
-      
-      const insertCode = this.db.prepare(`
-        INSERT INTO referral_codes (id, code) VALUES (?, ?)
-      `);
-      
-      for (const code of fixedCodes) {
-        insertCode.run(randomUUID(), code);
+    // Migration: add max_uses column if not present
+    {
+      const cols = this.db.prepare("PRAGMA table_info(referral_codes)").all() as Array<{ name: string }>;
+      if (!cols.some((c) => c.name === "max_uses")) {
+        this.db.exec("ALTER TABLE referral_codes ADD COLUMN max_uses INTEGER");
+      }
+    }
+
+    // Sync referral codes from env (REFERRAL_CODE_1, REFERRAL_CODE_2, ...)
+    // Format: "CODE" (unlimited) or "CODE_N" (usable N times).
+    // Inserts missing codes; updates max_uses if changed.
+    // Codes removed from env are left in the DB so usage records stay valid.
+    {
+      const insert = this.db.prepare("INSERT INTO referral_codes (id, code, max_uses) VALUES (?, ?, ?)");
+      const lookup = this.db.prepare("SELECT id, max_uses FROM referral_codes WHERE UPPER(code) = ?");
+      const updateLimit = this.db.prepare("UPDATE referral_codes SET max_uses = ? WHERE id = ?");
+
+      let i = 1;
+      while (process.env[`REFERRAL_CODE_${i}`]) {
+        const raw = process.env[`REFERRAL_CODE_${i}`]!.trim().toUpperCase();
+        i++;
+
+        // Parse "CODE_N" → code + maxUses; plain "CODE" → unlimited (null)
+        let code: string;
+        let maxUses: number | null = null;
+        const lastUnderscore = raw.lastIndexOf("_");
+        if (lastUnderscore > 0) {
+          const numPart = raw.slice(lastUnderscore + 1);
+          const parsed = Number(numPart);
+          if (Number.isInteger(parsed) && parsed > 0 && String(parsed) === numPart) {
+            code = raw.slice(0, lastUnderscore);
+            maxUses = parsed;
+          } else {
+            code = raw;
+          }
+        } else {
+          code = raw;
+        }
+
+        const row = lookup.get(code) as { id: string; max_uses: number | null } | undefined;
+        if (!row) {
+          insert.run(randomUUID(), code, maxUses);
+        } else if (row.max_uses !== maxUses) {
+          updateLimit.run(maxUses, row.id);
+        }
       }
     }
 
@@ -902,14 +1061,12 @@ export class CoCDatabase {
             CREATE TABLE IF NOT EXISTS referral_code_uses (
                 id TEXT PRIMARY KEY,
                 referral_code_id TEXT NOT NULL,
-                user_id TEXT NOT NULL,
-                email TEXT NOT NULL,
+                email_id TEXT NOT NULL,
                 used_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-                FOREIGN KEY (referral_code_id) REFERENCES referral_codes(id) ON DELETE CASCADE,
-                FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+                FOREIGN KEY (referral_code_id) REFERENCES referral_codes(id) ON DELETE CASCADE
             );
             CREATE INDEX IF NOT EXISTS idx_referral_code_uses_code ON referral_code_uses(referral_code_id);
-            CREATE INDEX IF NOT EXISTS idx_referral_code_uses_email ON referral_code_uses(email);
+            CREATE INDEX IF NOT EXISTS idx_referral_code_uses_email ON referral_code_uses(email_id);
         `);
 
     // Backfill referral_code_uses from legacy is_used / used_by_user_id (one-time)
@@ -922,25 +1079,46 @@ export class CoCDatabase {
         WHERE rc.is_used = 1 AND rc.used_by_user_id IS NOT NULL
       `).all() as { referral_code_id: string; used_by_user_id: string; used_at: string | null; email: string }[];
       const insertUse = this.db.prepare(`
-        INSERT INTO referral_code_uses (id, referral_code_id, user_id, email, used_at)
-        VALUES (?, ?, ?, ?, ?)
+        INSERT INTO referral_code_uses (id, referral_code_id, email_id, used_at)
+        VALUES (?, ?, ?, ?)
       `);
       for (const row of used) {
         insertUse.run(
           randomUUID(),
           row.referral_code_id,
-          row.used_by_user_id,
           row.email,
           row.used_at ?? new Date().toISOString(),
         );
       }
     }
 
-    // Add user_id to characters table if it doesn't exist
+    // Migrate Category B tables: rename user_id → email_id for existing databases
+    const categoryBTables = [
+      "user_token_usage",
+      "player_memos",
+      "user_sessions",
+      "email_verifications",
+      "password_resets",
+      "refresh_tokens",
+      "referral_code_uses",
+    ];
+    for (const table of categoryBTables) {
+      try {
+        if (this.hasColumn(table, "user_id") && !this.hasColumn(table, "email_id")) {
+          this.db.exec(`ALTER TABLE ${table} RENAME COLUMN user_id TO email_id;`);
+          this.db.exec(`CREATE INDEX IF NOT EXISTS idx_${table}_email ON ${table}(email_id);`);
+        }
+      } catch {
+        // ignore
+      }
+    }
+    // referral_code_uses: drop redundant legacy 'email' column data handled by migration above
+
+    // Add email_id to characters table if it doesn't exist
     try {
-      if (!this.hasColumn("characters", "user_id")) {
-        this.db.exec("ALTER TABLE characters ADD COLUMN user_id TEXT;");
-        this.db.exec("CREATE INDEX IF NOT EXISTS idx_characters_user ON characters(user_id);");
+      if (!this.hasColumn("characters", "email_id")) {
+        this.db.exec("ALTER TABLE characters ADD COLUMN email_id TEXT;");
+        this.db.exec("CREATE INDEX IF NOT EXISTS idx_characters_email ON characters(email_id);");
       }
     } catch {
       // Column already exists, ignore
@@ -986,7 +1164,7 @@ export class CoCDatabase {
    * Record per-user token usage for AI operations
    */
   recordUserTokenUsage(payload: {
-    userId: string;
+    email: string;
     provider: string;
     modelName: string;
     modelClass: string;
@@ -997,14 +1175,14 @@ export class CoCDatabase {
   }): void {
     const stmt = this.db.prepare(`
       INSERT INTO user_token_usage (
-        id, user_id, provider, model_name, model_class, operation,
+        id, email_id, provider, model_name, model_class, operation,
         input_tokens, output_tokens, total_tokens
       ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
     `);
 
     stmt.run(
       randomUUID(),
-      payload.userId,
+      payload.email,
       payload.provider,
       payload.modelName,
       payload.modelClass,

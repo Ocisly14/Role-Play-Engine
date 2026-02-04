@@ -485,9 +485,13 @@ body.background-transitioning::after {
 }
 
 .home-actions button {
-  padding: 20px 50px;
+  width: clamp(260px, 50vw, 340px);
+  height: 64px;
+  padding: 0 24px;
   font-size: 1.25rem;
-  min-width: 320px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
   border-radius: 8px;
   position: relative;
   overflow: hidden;
@@ -1893,13 +1897,70 @@ textarea {
 
 .dice-roll-item {
   display: flex;
-  align-items: center;
-  gap: 16px;
+  flex-direction: column;
+  gap: 8px;
   padding: 12px;
   background: white;
   border: 1px solid var(--border);
   border-radius: 6px;
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.dice-roll-meta {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  font-size: 0.85rem;
+}
+
+.dice-roll-character {
+  font-weight: 600;
+  color: var(--title);
+}
+
+.dice-roll-skill {
+  color: #5a4a3a;
+  background: rgba(139, 90, 43, 0.12);
+  padding: 2px 6px;
+  border-radius: 4px;
+}
+
+.dice-roll-penalty {
+  color: #8b4513;
+  font-style: italic;
+}
+
+.dice-roll-success {
+  font-weight: 600;
+  padding: 2px 6px;
+  border-radius: 4px;
+}
+
+.dice-roll-success--success {
+  color: #2d5a27;
+  background: rgba(45, 90, 39, 0.15);
+}
+
+.dice-roll-success--failure {
+  color: #8b3a3a;
+  background: rgba(139, 58, 58, 0.12);
+}
+
+.dice-roll-success--critical {
+  color: #1a4d1a;
+  background: rgba(26, 77, 26, 0.2);
+}
+
+.dice-roll-success--fumble {
+  color: #6b2020;
+  background: rgba(107, 32, 32, 0.18);
+}
+
+.dice-roll-values {
+  display: flex;
+  align-items: center;
+  gap: 16px;
 }
 
 .dice-expression {
@@ -1915,8 +1976,11 @@ textarea {
   border: 1px solid var(--accent);
 }
 
-.dice-result {
+.dice-roll-values .dice-result {
   flex: 1;
+}
+
+.dice-result {
   display: flex;
   justify-content: center;
   align-items: center;

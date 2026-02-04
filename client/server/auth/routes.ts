@@ -44,15 +44,30 @@ router.post("/refresh", authController.refreshToken);
 // Get Current User
 router.get("/me", authenticate, authController.getCurrentUser);
 
-// Send Verification Email
+// Send Verification Email (requires auth, for already-logged-in users)
 router.post(
   "/send-verification",
   authenticate,
   authController.sendVerification
 );
 
-// Verify Email
-router.get("/verify-email", authController.verifyEmail);
+// Verify email with code (public, used during registration flow)
+router.post(
+  "/verify-code",
+  [
+    body("email").isEmail().normalizeEmail(),
+    body("code").notEmpty().trim().isLength({ min: 5, max: 5 }).matches(/^\d{5}$/),
+    validateRequest,
+  ],
+  authController.verifyCode
+);
+
+// Resend verification code (public)
+router.post(
+  "/resend-verification",
+  [body("email").isEmail().normalizeEmail(), validateRequest],
+  authController.resendVerification
+);
 
 // Forgot Password
 router.post(

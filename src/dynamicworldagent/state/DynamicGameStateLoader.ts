@@ -17,6 +17,7 @@ import type { NPCProfile } from "../../coc_multiagents_system/agents/models/game
 import type { DynamicCharacterProfile, DynamicNPCProfile } from "../world_builder/types.js";
 import type { DynamicScenarioSnapshot } from "../world_builder/types.js";
 import { NPCLoader } from "../../coc_multiagents_system/agents/character/npcloader/index.js";
+import { resolveEmailId } from "../../coc_multiagents_system/agents/memory/database/userContext.js";
 
 /**
  * Convert NPCProfile (from multiagent system) to DynamicNPCProfile (for DynamicWorld system)
@@ -41,9 +42,12 @@ function convertCharacterProfileToDynamic(character: any): DynamicCharacterProfi
  */
 export async function loadDynamicGameStateFromDatabase(
   db: CoCDatabase,
-  moduleName: string
+  moduleName: string,
+  emailId?: string
 ): Promise<DynamicGameState | null> {
   const database = db.getDatabase();
+  const resolvedEmailId = resolveEmailId(emailId);
+  const hasModuleEmailId = db.hasColumn("module_backgrounds", "email_id");
   
   // Check if module exists in database
   const moduleData = database.prepare(`
@@ -63,8 +67,8 @@ export async function loadDynamicGameStateFromDatabase(
       end_state_definition,
       macro_map_path
     FROM module_backgrounds
-    WHERE title = ?
-  `).get(moduleName) as any;
+    WHERE title = ?${hasModuleEmailId && resolvedEmailId ? " AND email_id = ?" : ""}
+  `).get(...(hasModuleEmailId && resolvedEmailId ? [moduleName, resolvedEmailId] : [moduleName])) as any;
 
   if (!moduleData) {
     console.warn(`[DynamicGameState] Module "${moduleName}" not found in database`);
@@ -155,10 +159,11 @@ export async function loadDynamicGameStateFromDatabase(
     }
 
     // Load scenario outlines from database (including connections)
+    const hasScenarioEmailId = db.hasColumn("scenarios", "email_id");
     const scenarioRows = database.prepare(`
       SELECT scenario_id, name, description, tags, connections, source_place_id
-      FROM scenarios
-    `).all() as any[];
+      FROM scenarios${hasScenarioEmailId && resolvedEmailId ? " WHERE email_id = ?" : ""}
+    `).all(...(hasScenarioEmailId && resolvedEmailId ? [resolvedEmailId] : [])) as any[];
 
     // Get knowledge matrix to look up sourcePlaceName
     const knowledgeMatrix = manager.getState().knowledgeMatrix || [];
@@ -232,12 +237,13 @@ export async function loadDynamicGameStateFromDatabase(
  */
 export async function loadDynamicGameStateFromModuleLoader(
   db: CoCDatabase,
-  moduleName: string
+  moduleName: string,
+  emailId?: string
 ): Promise<DynamicGameState | null> {
   const modsDir = path.join(process.cwd(), "data", "Mods");
   const moduleDir = path.join(modsDir, moduleName);
 
-  const loader = new WorldModuleLoader(db);
+  const loader = new WorldModuleLoader(db, { emailId: resolveEmailId(emailId) });
   const loadedModule = await loader.loadWorldModule(moduleDir);
 
   if (!loadedModule) {
@@ -285,16 +291,18 @@ export async function loadDynamicGameStateFromModuleLoader(
  */
 export async function loadDynamicGameState(
   db: CoCDatabase,
-  moduleName: string
+  moduleName: string,
+  emailId?: string
 ): Promise<DynamicGameState | null> {
+  const resolvedEmailId = resolveEmailId(emailId);
   // Try database first
-  const dbState = await loadDynamicGameStateFromDatabase(db, moduleName);
+  const dbState = await loadDynamicGameStateFromDatabase(db, moduleName, resolvedEmailId);
   if (dbState) {
     return dbState;
   }
 
   // Fall back to file loader
-  return await loadDynamicGameStateFromModuleLoader(db, moduleName);
+  return await loadDynamicGameStateFromModuleLoader(db, moduleName, resolvedEmailId);
 }
 
 /**
@@ -307,9 +315,11 @@ export async function initializeCompleteDynamicGameState(
     sessionId: string;
     moduleName: string;
     characterId?: string;
+    emailId?: string;
   }
 ): Promise<DynamicGameState | null> {
   const database = db.getDatabase();
+  const resolvedEmailId = resolveEmailId(params.emailId);
 
   // 1. Load player character
   let playerCharacter: DynamicCharacterProfile;
@@ -407,28 +417,32 @@ export async function initializeCompleteDynamicGameState(
 
   // Helper function to build a snapshot from database row
   const buildSnapshotFromRow = (snapshotRow: any): DynamicScenarioSnapshot => {
+    const hasCharacterEmailId = db.hasColumn("scenario_characters", "email_id");
+    const hasClueEmailId = db.hasColumn("scenario_clues", "email_id");
+    const hasConditionEmailId = db.hasColumn("scenario_conditions", "email_id");
+
     // Load snapshot characters
     const snapshotCharacters = database.prepare(`
       SELECT id, character_name, character_role, character_status,
              character_location, character_notes
       FROM scenario_characters
-      WHERE snapshot_id = ?
-    `).all(snapshotRow.snapshot_id);
+      WHERE snapshot_id = ?${resolvedEmailId && hasCharacterEmailId ? " AND email_id = ?" : ""}
+    `).all(...(resolvedEmailId && hasCharacterEmailId ? [snapshotRow.snapshot_id, resolvedEmailId] : [snapshotRow.snapshot_id]));
 
     // Load snapshot clues
     const snapshotClues = database.prepare(`
       SELECT clue_id, clue_text, category, difficulty, clue_location,
              discovery_method, reveals, discovered, discovery_details
       FROM scenario_clues
-      WHERE snapshot_id = ?
-    `).all(snapshotRow.snapshot_id);
+      WHERE snapshot_id = ?${resolvedEmailId && hasClueEmailId ? " AND email_id = ?" : ""}
+    `).all(...(resolvedEmailId && hasClueEmailId ? [snapshotRow.snapshot_id, resolvedEmailId] : [snapshotRow.snapshot_id]));
 
     // Load snapshot conditions
     const snapshotConditions = database.prepare(`
       SELECT condition_id, condition_type, description, mechanical_effect
       FROM scenario_conditions
-      WHERE snapshot_id = ?
-    `).all(snapshotRow.snapshot_id);
+      WHERE snapshot_id = ?${resolvedEmailId && hasConditionEmailId ? " AND email_id = ?" : ""}
+    `).all(...(resolvedEmailId && hasConditionEmailId ? [snapshotRow.snapshot_id, resolvedEmailId] : [snapshotRow.snapshot_id]));
 
     const sceneImage =
       snapshotRow.scene_image_path != null && String(snapshotRow.scene_image_path).trim() !== ""
@@ -475,6 +489,18 @@ export async function initializeCompleteDynamicGameState(
   // Load all initial snapshots (one per scenario)
   const hasSceneImagePath = db.hasColumn("scenario_snapshots", "scene_image_path");
   const sceneImagePathCol = hasSceneImagePath ? ", ss.scene_image_path" : "";
+  const hasSnapshotEmailId = db.hasColumn("scenario_snapshots", "email_id");
+  const hasScenarioEmailId = db.hasColumn("scenarios", "email_id");
+  const initialSnapshotParams: any[] = [];
+  let initialSnapshotWhere = "ss.initial_snapshot = 1";
+  if (resolvedEmailId && hasSnapshotEmailId) {
+    initialSnapshotWhere += " AND ss.email_id = ?";
+    initialSnapshotParams.push(resolvedEmailId);
+  } else if (resolvedEmailId && hasScenarioEmailId) {
+    initialSnapshotWhere += " AND s.email_id = ?";
+    initialSnapshotParams.push(resolvedEmailId);
+  }
+
   const allInitialSnapshots = database.prepare(`
     SELECT
       ss.snapshot_id, ss.scenario_id, ss.snapshot_name, ss.location,
@@ -483,9 +509,9 @@ export async function initializeCompleteDynamicGameState(
       s.name as scenario_name
     FROM scenario_snapshots ss
     JOIN scenarios s ON ss.scenario_id = s.scenario_id
-    WHERE ss.initial_snapshot = 1
+    WHERE ${initialSnapshotWhere}
     ORDER BY ss.scenario_id
-  `).all() as any[];
+  `).all(...initialSnapshotParams) as any[];
 
   // Build snapshots and group by scenario_id
   for (const snapshotRow of allInitialSnapshots) {
@@ -527,7 +553,7 @@ export async function initializeCompleteDynamicGameState(
   console.log(`[DynamicGameState] Loaded ${initialSnapshotsMap.size} initial scenario snapshots`);
 
   // 3. Load all NPCs from database (not just current scenario)
-  const npcLoader = new NPCLoader(db);
+  const npcLoader = new NPCLoader(db, undefined, undefined, { emailId: resolvedEmailId });
   const allNPCs = npcLoader.getAllNPCs();
   
   // Convert all NPCs to DynamicNPCProfile format
@@ -538,7 +564,7 @@ export async function initializeCompleteDynamicGameState(
   console.log(`[DynamicGameState] Loaded ${npcCharacters.length} NPCs from database`);
 
   // 4. Load DynamicWorld data
-  const worldData = await loadDynamicGameState(db, params.moduleName);
+  const worldData = await loadDynamicGameState(db, params.moduleName, resolvedEmailId);
   if (!worldData) {
     console.warn(`[DynamicGameState] Failed to load world data for module "${params.moduleName}"`);
     return null;

@@ -64,6 +64,18 @@ export const authDbService = {
       throw new Error("Invalid referral code");
     }
 
+    // Check usage limit (max_uses = null means unlimited)
+    if (referral.max_uses != null) {
+      const usage = db
+        .prepare(
+          "SELECT COUNT(*) as count FROM referral_code_uses WHERE referral_code_id = ?"
+        )
+        .get(referral.id) as { count: number };
+      if (usage.count >= referral.max_uses) {
+        throw new Error("Referral code has reached its usage limit");
+      }
+    }
+
     // Check if email already exists
     const existing = db
       .prepare("SELECT id FROM users WHERE email = ?")
@@ -84,21 +96,21 @@ export const authDbService = {
 
     // Record referral code use (permanent codes; track email per use)
     db.prepare(`
-      INSERT INTO referral_code_uses (id, referral_code_id, user_id, email, used_at)
-      VALUES (?, ?, ?, ?, CURRENT_TIMESTAMP)
-    `).run(randomUUID(), referral.id, userId, data.email);
+      INSERT INTO referral_code_uses (id, referral_code_id, email_id, used_at)
+      VALUES (?, ?, ?, CURRENT_TIMESTAMP)
+    `).run(randomUUID(), referral.id, data.email);
 
     const user = db
       .prepare("SELECT * FROM users WHERE id = ?")
       .get(userId) as User;
 
     // Send verification email
-    await this.sendEmailVerification(userId);
+    await this.sendEmailVerification(data.email);
 
     return {
       user: this.sanitizeUser(user),
       message:
-        "Registration successful. Please check your email to verify your account.",
+        "Registration successful. A verification code has been sent to your email.",
     };
   },
 
@@ -134,6 +146,10 @@ export const authDbService = {
       throw new Error("Account is disabled");
     }
 
+    if (!user.is_email_verified) {
+      throw new Error("Email not verified. Please verify your email first.");
+    }
+
     // Update last login time
     db.prepare(
       "UPDATE users SET last_login_at = CURRENT_TIMESTAMP WHERE id = ?"
@@ -151,9 +167,9 @@ export const authDbService = {
       const expiresAt = getIdleExpiresAt();
 
       db.prepare(`
-        INSERT INTO refresh_tokens (id, user_id, token, expires_at)
+        INSERT INTO refresh_tokens (id, email_id, token, expires_at)
         VALUES (?, ?, ?, ?)
-      `).run(tokenId, user.id, refreshToken, expiresAt);
+      `).run(tokenId, user.email, refreshToken, expiresAt);
     }
 
     return {
@@ -163,11 +179,11 @@ export const authDbService = {
     };
   },
 
-  // Send email verification
-  async sendEmailVerification(userId: string) {
+  // Send email verification code
+  async sendEmailVerification(email: string) {
     const db = getDB();
 
-    const user = db.prepare("SELECT * FROM users WHERE id = ?").get(userId) as
+    const user = db.prepare("SELECT * FROM users WHERE email = ?").get(email) as
       | User
       | undefined;
 
@@ -179,59 +195,80 @@ export const authDbService = {
       throw new Error("Email already verified");
     }
 
-    // Generate verification token
-    const token = crypto.randomBytes(32).toString("hex");
+    // Enforce 60-second cooldown between sends
+    const recent = db
+      .prepare(
+        "SELECT created_at FROM email_verifications WHERE email_id = ? AND is_used = 0 ORDER BY created_at DESC LIMIT 1"
+      )
+      .get(user.email) as { created_at: string } | undefined;
+
+    if (recent && Date.now() - new Date(recent.created_at).getTime() < 60 * 1000) {
+      throw new Error("Please wait before requesting a new code");
+    }
+
+    // Generate 5-digit verification code
+    const code = crypto.randomInt(10000, 100000).toString();
     const verificationId = randomUUID();
-    const expiresAt = new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString();
+    const expiresAt = new Date(Date.now() + 10 * 60 * 1000).toISOString(); // 10 minutes
 
     // Save to database
     db.prepare(`
-      INSERT INTO email_verifications (id, user_id, token, expires_at)
+      INSERT INTO email_verifications (id, email_id, token, expires_at)
       VALUES (?, ?, ?, ?)
-    `).run(verificationId, user.id, token, expiresAt);
+    `).run(verificationId, user.email, code, expiresAt);
 
-    // Send email
-    await emailService.sendVerificationEmail(user.email, token);
+    // Send email with code
+    await emailService.sendVerificationEmail(user.email, code);
 
-    return { message: "Verification email sent" };
+    return { message: "Verification code sent" };
   },
 
-  // Verify email
-  async verifyEmail(token: string) {
+  // Verify email with 5-digit code
+  async verifyEmailCode(email: string, code: string) {
     const db = getDB();
 
     const verification = db
       .prepare(`
-      SELECT ev.*, u.email
-      FROM email_verifications ev
-      JOIN users u ON ev.user_id = u.id
-      WHERE ev.token = ?
+      SELECT * FROM email_verifications
+      WHERE email_id = ? AND token = ? AND is_used = 0
     `)
-      .get(token) as any;
+      .get(email, code) as any;
 
     if (!verification) {
-      throw new Error("Invalid verification token");
-    }
-
-    if (verification.is_used) {
-      throw new Error("Token already used");
+      throw new Error("Invalid verification code");
     }
 
     if (new Date(verification.expires_at) < new Date()) {
-      throw new Error("Token expired");
+      throw new Error("Verification code has expired");
     }
 
-    // Update user status
-    db.prepare("UPDATE users SET is_email_verified = 1 WHERE id = ?").run(
-      verification.user_id
+    // Mark email as verified
+    db.prepare("UPDATE users SET is_email_verified = 1 WHERE email = ?").run(
+      email
     );
 
-    // Mark token as used
+    // Mark code as used
     db.prepare("UPDATE email_verifications SET is_used = 1 WHERE id = ?").run(
       verification.id
     );
 
     return { message: "Email verified successfully" };
+  },
+
+  // Resend verification code (public-safe: never reveals whether email exists)
+  async resendEmailVerification(email: string) {
+    const db = getDB();
+    const user = db.prepare("SELECT * FROM users WHERE email = ?").get(email) as
+      | User
+      | undefined;
+
+    if (!user || user.is_email_verified) {
+      // Generic message to prevent email enumeration
+      return { message: "Verification code sent" };
+    }
+
+    await this.sendEmailVerification(email);
+    return { message: "Verification code sent" };
   },
 
   // Request password reset
@@ -254,9 +291,9 @@ export const authDbService = {
 
     // Save to database
     db.prepare(`
-      INSERT INTO password_resets (id, user_id, token, expires_at)
+      INSERT INTO password_resets (id, email_id, token, expires_at)
       VALUES (?, ?, ?, ?)
-    `).run(resetId, user.id, token, expiresAt);
+    `).run(resetId, user.email, token, expiresAt);
 
     // Send email
     await emailService.sendPasswordResetEmail(user.email, token);
@@ -286,9 +323,9 @@ export const authDbService = {
 
     // Update password
     const passwordHash = await hashPassword(newPassword);
-    db.prepare("UPDATE users SET password_hash = ? WHERE id = ?").run(
+    db.prepare("UPDATE users SET password_hash = ? WHERE email = ?").run(
       passwordHash,
-      reset.user_id
+      reset.email_id
     );
 
     // Mark token as used
@@ -298,8 +335,8 @@ export const authDbService = {
 
     // Revoke all refresh tokens
     db.prepare(
-      "UPDATE refresh_tokens SET is_revoked = 1 WHERE user_id = ?"
-    ).run(reset.user_id);
+      "UPDATE refresh_tokens SET is_revoked = 1 WHERE email_id = ?"
+    ).run(reset.email_id);
 
     return { message: "Password reset successfully" };
   },
@@ -310,9 +347,12 @@ export const authDbService = {
 
     const token = db
       .prepare(`
-      SELECT rt.*, u.*
+      SELECT rt.id AS token_id, rt.is_revoked, rt.expires_at,
+             u.id AS uid, u.email, u.username, u.password_hash,
+             u.is_email_verified, u.is_active, u.role,
+             u.created_at, u.updated_at, u.last_login_at
       FROM refresh_tokens rt
-      JOIN users u ON rt.user_id = u.id
+      JOIN users u ON rt.email_id = u.email
       WHERE rt.token = ?
     `)
       .get(refreshToken) as any;
@@ -323,11 +363,11 @@ export const authDbService = {
 
     db.prepare("UPDATE refresh_tokens SET expires_at = ? WHERE id = ?").run(
       getIdleExpiresAt(),
-      token.id
+      token.token_id
     );
 
     const user: User = {
-      id: token.user_id,
+      id: token.uid,
       email: token.email,
       username: token.username,
       password_hash: token.password_hash,
@@ -344,16 +384,16 @@ export const authDbService = {
     return { accessToken };
   },
 
-  touchRefreshToken(refreshToken: string, userId: string) {
+  touchRefreshToken(refreshToken: string, email: string) {
     const db = getDB();
 
     const token = db
       .prepare(`
       SELECT id, expires_at, is_revoked
       FROM refresh_tokens
-      WHERE token = ? AND user_id = ?
+      WHERE token = ? AND email_id = ?
     `)
-      .get(refreshToken, userId) as any;
+      .get(refreshToken, email) as any;
 
     if (!token || token.is_revoked || new Date(token.expires_at) < new Date()) {
       return false;
@@ -384,13 +424,13 @@ export const authDbService = {
 
   // Change password
   async changePassword(
-    userId: string,
+    email: string,
     oldPassword: string,
     newPassword: string
   ) {
     const db = getDB();
 
-    const user = db.prepare("SELECT * FROM users WHERE id = ?").get(userId) as
+    const user = db.prepare("SELECT * FROM users WHERE email = ?").get(email) as
       | User
       | undefined;
 
@@ -406,15 +446,15 @@ export const authDbService = {
 
     // Update password
     const passwordHash = await hashPassword(newPassword);
-    db.prepare("UPDATE users SET password_hash = ? WHERE id = ?").run(
+    db.prepare("UPDATE users SET password_hash = ? WHERE email = ?").run(
       passwordHash,
-      userId
+      email
     );
 
     // Revoke all refresh tokens
     db.prepare(
-      "UPDATE refresh_tokens SET is_revoked = 1 WHERE user_id = ?"
-    ).run(userId);
+      "UPDATE refresh_tokens SET is_revoked = 1 WHERE email_id = ?"
+    ).run(email);
 
     return { message: "Password changed successfully" };
   },
@@ -445,7 +485,7 @@ export const authDbService = {
     }
     const rows = db
       .prepare(
-        "SELECT email FROM referral_code_uses WHERE referral_code_id = ? ORDER BY used_at ASC"
+        "SELECT email_id AS email FROM referral_code_uses WHERE referral_code_id = ? ORDER BY used_at ASC"
       )
       .all(ref.id) as { email: string }[];
     const emails = rows.map((r) => r.email);
@@ -464,7 +504,7 @@ export const authDbService = {
       .all() as { id: string; code: string }[];
     const out: Array<{ code: string; emails: string[]; count: number }> = [];
     const getEmails = db.prepare(
-      "SELECT email FROM referral_code_uses WHERE referral_code_id = ? ORDER BY used_at ASC"
+      "SELECT email_id AS email FROM referral_code_uses WHERE referral_code_id = ? ORDER BY used_at ASC"
     );
     for (const c of codes) {
       const rows = getEmails.all(c.id) as { email: string }[];

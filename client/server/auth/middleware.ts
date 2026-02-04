@@ -50,7 +50,7 @@ export async function authenticate(
     // Sliding session: touch refresh token if provided
     const refreshTokenHeader = req.headers['x-refresh-token'];
     if (typeof refreshTokenHeader === 'string' && refreshTokenHeader) {
-      authDbService.touchRefreshToken(refreshTokenHeader, payload.userId);
+      authDbService.touchRefreshToken(refreshTokenHeader, payload.email);
     }
 
     // Issue a fresh access token for sliding expiration
@@ -63,7 +63,7 @@ export async function authenticate(
 
     // Attach user info to request
     req.user = payload;
-    return runWithTokenContext({ userId: payload.userId }, () => next());
+    return runWithTokenContext({ email: payload.email }, () => next());
   } catch (error) {
     return res.status(401).json({ error: 'Invalid or expired token' });
   }
@@ -83,7 +83,7 @@ export async function optionalAuthenticate(
     if (token) {
       const payload = verifyToken(token);
       req.user = payload;
-      return runWithTokenContext({ userId: payload.userId }, () => next());
+      return runWithTokenContext({ email: payload.email }, () => next());
     }
   } catch (error) {
     // Ignore error, continue

@@ -18,6 +18,7 @@ import type {
 import { InventoryUtils } from "../models/gameTypes.js";
 import type { ModuleBackground } from "../models/moduleTypes.js";
 import type { ScenarioSnapshot } from "../models/scenarioTypes.js";
+import { resolveEmailId } from "./database/userContext.js";
 
 
 
@@ -48,16 +49,28 @@ export class MemoryAgent {
     this.db = cocDB.getDatabase();
   }
 
+  private hasColumn(table: string, column: string): boolean {
+    try {
+      const rows = this.db.prepare(`PRAGMA table_info(${table})`).all() as Array<{ name: string }>;
+      return rows.some((row) => row.name === column);
+    } catch {
+      return false;
+    }
+  }
+
 
   /**
    * Get module background briefings ordered by recency
    */
   public getModuleBackgrounds(limit = 5): ModuleBackground[] {
+    const emailId = resolveEmailId();
+    const hasEmailId = this.hasColumn("module_backgrounds", "email_id");
+    const params: any[] = [];
     const rows = this.db
       .prepare(
-        `SELECT * FROM module_backgrounds LIMIT ?`
+        `SELECT * FROM module_backgrounds${hasEmailId && emailId ? " WHERE email_id = ?" : ""} LIMIT ?`
       )
-      .all(limit) as any[];
+      .all(...(hasEmailId && emailId ? [emailId, limit] : [limit])) as any[];
 
     return rows.map((row) => this.rowToModuleBackground(row));
   }
@@ -66,11 +79,13 @@ export class MemoryAgent {
    * Get the latest module briefing (if any)
    */
   public getLatestModuleBackground(): ModuleBackground | null {
+    const emailId = resolveEmailId();
+    const hasEmailId = this.hasColumn("module_backgrounds", "email_id");
     const row = this.db
       .prepare(
-        `SELECT * FROM module_backgrounds LIMIT 1`
+        `SELECT * FROM module_backgrounds${hasEmailId && emailId ? " WHERE email_id = ?" : ""} LIMIT 1`
       )
-      .get() as any;
+      .get(...(hasEmailId && emailId ? [emailId] : [])) as any;
 
     if (!row) return null;
     return this.rowToModuleBackground(row);
@@ -81,13 +96,18 @@ export class MemoryAgent {
    */
   public listNpcNames(options: { includePlayers?: boolean } = {}): string[] {
     const hasNpcFlag = this.hasColumn("characters", "is_npc");
+    const hasEmailId = this.hasColumn("characters", "email_id");
+    const emailId = resolveEmailId();
     let sql = "SELECT name FROM characters";
     const params: any[] = [];
 
     if (hasNpcFlag && !options.includePlayers) {
       sql += " WHERE is_npc = 1";
     }
-
+    if (hasEmailId && emailId) {
+      sql += hasNpcFlag && !options.includePlayers ? " AND email_id = ?" : " WHERE email_id = ?";
+      params.push(emailId);
+    }
     const rows = this.db.prepare(sql).all(...params) as any[];
     return rows.map((r) => r.name as string);
   }
@@ -102,15 +122,28 @@ export class MemoryAgent {
     snapshotName: string;
     location: string;
   }[] {
+    const emailId = resolveEmailId();
+    const hasSnapshotEmailId = this.hasColumn("scenario_snapshots", "email_id");
+    const hasScenarioEmailId = this.hasColumn("scenarios", "email_id");
+    const params: any[] = [];
+    let whereClause = "";
+    if (emailId && hasSnapshotEmailId) {
+      whereClause = "WHERE ss.email_id = ?";
+      params.push(emailId);
+    } else if (emailId && hasScenarioEmailId) {
+      whereClause = "WHERE s.email_id = ?";
+      params.push(emailId);
+    }
     const rows = this.db
       .prepare(
         `
             SELECT ss.snapshot_id, ss.snapshot_name, ss.location, ss.scenario_id, s.name as scenario_name
             FROM scenario_snapshots ss
             JOIN scenarios s ON ss.scenario_id = s.scenario_id
+            ${whereClause}
         `
       )
-      .all() as any[];
+      .all(...params) as any[];
 
     return rows.map((r) => ({
       scenarioId: r.scenario_id,
