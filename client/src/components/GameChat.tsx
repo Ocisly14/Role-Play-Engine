@@ -875,6 +875,31 @@ export function GameChat({ sessionId, apiBaseUrl = '/api', characterName = 'Inve
     }
   }, [diceAnimationCompleted, pendingDiceRolls]);
 
+  // Handle skill selection requirement
+  useEffect(() => {
+    if (turn && turn.status === 'requires_skill_selection') {
+      console.log('[GameChat] Turn requires skill selection, opening skill picker');
+
+      // Open skill picker modal
+      setIsSkillPickerOpen(true);
+
+      // Set suggested skills from action analysis if available
+      if (turn.actionAnalysis) {
+        // Use the existing skill suggestion mechanism with the player's original input
+        // The RAG-based suggestion will provide top 3 skills
+        const originalInput = turn.characterInput || '';
+        if (originalInput) {
+          // Trigger skill suggestion (this is already implemented in your code)
+          // The suggestedSkills state will be populated by the existing mechanism
+        }
+      }
+
+      // Stop polling since we're waiting for user input
+      stopPolling();
+      setIsSending(false);
+    }
+  }, [turn, stopPolling]);
+
   // Update messages when turn completes
   useEffect(() => {
     if (turn && turn.status === 'completed') {

@@ -1,6 +1,7 @@
 /// <reference path="../types/express.d.ts" />
 import type { Request, Response } from "express";
 import { ServerState } from "../core/ServerState.js";
+import { DatabaseManager } from "../core/DatabaseManager.js";
 import { suggestSkillsFromInput } from "./skillMatcher.js";
 import { getSkillNameZh } from "./skillDescriptions.js";
 
@@ -26,6 +27,24 @@ export async function suggestSkills(req: Request, res: Response): Promise<void> 
     if (!dynamicGameState?.playerCharacter) {
       res.status(400).json({ error: "Game state not available" });
       return;
+    }
+
+    // Get language from session metadata (if available)
+    let sessionLanguage: 'en' | 'zh' | undefined;
+    try {
+      const db = DatabaseManager.getInstance().getDatabase().getDatabase();
+      const sessionId = dynamicGameState.sessionId;
+      if (sessionId) {
+        const session = db.prepare(`SELECT metadata FROM sessions WHERE session_id = ?`).get(sessionId) as { metadata?: string } | undefined;
+        if (session?.metadata) {
+          const metadata = JSON.parse(session.metadata);
+          if (metadata.language === 'en' || metadata.language === 'zh') {
+            sessionLanguage = metadata.language;
+          }
+        }
+      }
+    } catch (error) {
+      console.warn('[SkillSuggest] Failed to read session language, will auto-detect:', error);
     }
 
     const rawSkills = dynamicGameState.playerCharacter.skills ?? {};
@@ -57,6 +76,7 @@ export async function suggestSkills(req: Request, res: Response): Promise<void> 
       input: input.trim(),
       skills,
       max: maxSuggestions,
+      preferredLanguage: sessionLanguage, // Pass session language preference
     });
 
     res.json({

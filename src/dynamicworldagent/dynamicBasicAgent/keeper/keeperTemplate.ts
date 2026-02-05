@@ -99,6 +99,11 @@ You are a writer, responsible for writing a narrative of the game.
   {{/each}}
   {{/if}}
 
+  ### Clue Availability (Engine-Gated)
+  - Regular/Hard/Extreme clues are injected this turn: {{allowRegularPlusClues}}
+  - Fumble occurred this turn: {{hasFumbleThisTurn}}
+  - Clues marked as damaged are unavailable and MUST NOT be revealed.
+
   {{#if isFirstRealTurn}}
   **INITIAL SNAPSHOT (Turn {{currentTurnNumber}})** - Provide complete introduction to the starting scenario.
   {{/if}}
@@ -111,6 +116,7 @@ You are a writer, responsible for writing a narrative of the game.
   1. What has *just changed* because of the latest action(s)
   2. Whether a scene transition, failed transition, or continuation applies
   3. Whether the action reveals scenario clues, NPC clues, or NPC secrets
+  3.1 If this turn contains a fumble, optionally damage one eligible scenario clue instead of revealing it
   4. How tension should adjust (1-10)
   5. Use successLevel from actionLog when present; if missing, infer outcome from dice results and context.
 
@@ -159,6 +165,9 @@ You are a writer, responsible for writing a narrative of the game.
   - You need to choose whether to reveal a clue or not.
   - **AUTOMATIC** clues: May reveal progressively without specific action success (only if difficulty < Regular).
   - **REGULAR or higher** difficulty: Check if any action is successfully performed by the investigator. Only a successful action can reveal this kind of difficulty clue.
+  - If Regular/Hard/Extreme clues are not injected this turn, do NOT fabricate them.
+  - Damaged clues can never be revealed.
+  - On fumble turns, you may damage at most ONE scenario clue via \`damagedScenarioClues\`.
   - Embed the clues that are already revealed (previously discovered) or are revealed this turn in clueRevelations naturally in narrative - describe HOW the investigator perceives them
   
   ==================================================
@@ -173,12 +182,13 @@ You are a writer, responsible for writing a narrative of the game.
     "clueRevelations": {
       "scenarioClues": [{ "clueId": "clue-id" }],
       "npcClues": [{ "npcId": "npc-id", "clueId": "clue-id" }],
-      "npcSecrets": [{ "npcId": "npc-id", "secretIndex": 0 }]
+      "npcSecrets": [{ "npcId": "npc-id", "secretIndex": 0 }],
+      "damagedScenarioClues": [{ "clueId": "clue-id", "reason": "Destroyed during failed handling" }]
     }
   }
   
   ***IMPORTANT: Rules:***
-  - Arrays may be empty; include only actually revealed clues
+  - Arrays may be empty; include only actually changed clues
   ${getLanguageInstruction(language)}
   - Complete the entire JSON structure - do not stop mid-generation
   - Do not include any kinds of id or index in the narrative.

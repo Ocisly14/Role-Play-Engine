@@ -57,13 +57,21 @@ Use for continuity and context understanding. Focus on understanding the current
 ## Action Types
 - exploration | social | stealth | combat | chase | mental | environmental | narrative
 
+## Skill Selection Requirement
+{{#if hasSelectedSkill}}
+Player has selected a skill, set requiresSkillSelection = false
+{{else}}
+Player has NOT selected a skill. Set requiresSkillSelection = true ONLY if the action could have MAJOR impact on NPCs or the scenario (e.g., attacking NPCs, destroying objects, significant confrontations). Otherwise, set false.
+{{/if}}
+
 ## Output (JSON only)
 {
   "actionAnalysis": {
     "character": "character name",
     "action": "what action the character wants to perform",
     "actionType": "exploration|social|stealth|combat|chase|mental|environmental|narrative",
-    "target": { "name": "target name if applicable", "intent": "what the character wants to achieve" }
+    "target": { "name": "target name if applicable", "intent": "what the character wants to achieve" },
+    "requiresSkillSelection": (true or false)
   },
   "sceneChangeRequest": {
     "shouldChange": (true or false),

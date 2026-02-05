@@ -116,6 +116,12 @@ If the action involves picking up, dropping, receiving, giving, or losing items,
   * Giver: "inventory": { "remove": [{ "name": "item name" }] }
   * Receiver: "inventory": { "add": [{ "name": "item name" }] }
 
+IMPORTANT - ITEM USAGE RESTRICTION:
+The player can ONLY use items that:
+1. Are in their current inventory (check the Character.inventory provided in context), OR
+2. Are explicitly available in the current scene (mentioned in scenario description or conditions)
+If the player attempts to use an item they don't have and isn't available in the scene, the action should fail with an appropriate explanation (e.g., "You don't have [item name]", "There is no [item name] available here").
+
 TIME ESTIMATION:
 Estimate how many minutes this action realistically takes in game time. Consider the nature and complexity of the action:
 - Quick actions: 1-10 minutes (glancing, brief conversation, opening doors)
@@ -198,9 +204,10 @@ ${JSON.stringify(sceneNPCs, null, 2)}
 - "time": Use the current game time (provided in context) in "Day N, HH:MM" format
 - "location": The LOCATION NAME
 - "summary": Concise but descriptive summary (1-2 sentences)
-- "successLevel": One of "critical" | "extreme" | "hard" | "regular" | "failure" | "fumble" | "unknown"
-  - Use CoC 7e rules above when dice are used.
-  - If no dice are used, set based on outcome (regular/failure) or "unknown" if indeterminate.
+- "successLevel": Optional. Include ONLY when this actionLog entry uses a SKILL CHECK.
+  - Allowed values: "critical" | "extreme" | "hard" | "regular" | "failure" | "fumble" | "unknown"
+  - If no skill check is used for this entry, omit "successLevel" entirely.
+  - Do NOT infer successLevel for pure narrative/non-skill actions.
 - "characterId": The ID of the character (player or NPC) who performed this action
   - Use the acting character's id from the context (Character.id or NPC.id)
   - If the action affects multiple characters, create separate entries with their respective characterIds

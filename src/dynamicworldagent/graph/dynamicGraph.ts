@@ -43,6 +43,7 @@ export interface DynamicGraphState {
   language?: "en" | "zh";  // User-selected output language
   selectedSkill?: string | null;  // Optional player-selected skill for this turn
   skillSelectionMode?: "auto" | "manual"; // How skill selection should behave for this turn
+  precomputedActionAnalysis?: ActionAnalysis | null;  // Saved actionAnalysis from initial orchestrator run (for skill selection retry)
   stream?: {
     onDiceRolls?: (diceRolls: DiceRollInfo[]) => void;
     onSceneImage?: (payload: {
@@ -128,6 +129,10 @@ export const buildDynamicGraph = (
         value: (left: DynamicGraphState["skillSelectionMode"] | undefined, right?: DynamicGraphState["skillSelectionMode"]) =>
           right !== undefined ? right : left,
       },
+      precomputedActionAnalysis: {
+        value: (left: ActionAnalysis | null | undefined, right?: ActionAnalysis | null | undefined) =>
+          right !== undefined ? right : left,
+      },
       stream: {
         value: (left: DynamicGraphState["stream"] | undefined, right?: DynamicGraphState["stream"]) =>
           right !== undefined ? right : left,
@@ -171,6 +176,14 @@ export const buildDynamicGraph = (
       const currentTurn = dgsm.getTurnsInCurrentScene();
       console.log(`   ✓ Turn counter incremented to: ${currentTurn}`);
 
+      // If precomputedActionAnalysis exists (retry after skill selection), inject it into game state
+      if (state.precomputedActionAnalysis) {
+        console.log("🔄 [Dynamic Entry] Skill selection retry detected - injecting saved actionAnalysis");
+        const currentState = dgsm.getState();
+        currentState.temporaryInfo.currentActionAnalysis = state.precomputedActionAnalysis;
+        console.log(`   ✓ Injected actionAnalysis: ${state.precomputedActionAnalysis.action} (${state.precomputedActionAnalysis.actionType})`);
+      }
+
       console.log("✅ [Dynamic Entry] Temporary state cleared for new player turn");
 
       return {
@@ -195,10 +208,16 @@ export const buildDynamicGraph = (
       // Temporarily skip simulated queries - they will be handled by Listener Graph
       console.log("🔀 [Dynamic Entry Router] → END (simulated query skipped in main graph)");
       return END;
-    } else {
-      console.log("🔀 [Dynamic Entry Router] → orchestrator (full pipeline)");
-      return "orchestrator";
     }
+
+    // Check if this is a skill selection retry (precomputedActionAnalysis exists)
+    if (state.precomputedActionAnalysis) {
+      console.log("🔀 [Dynamic Entry Router] → memory (skip orchestrator, use saved actionAnalysis)");
+      return "memory";
+    }
+
+    console.log("🔀 [Dynamic Entry Router] → orchestrator (full pipeline)");
+    return "orchestrator";
   };
 
   graph.addConditionalEdges(
@@ -206,6 +225,7 @@ export const buildDynamicGraph = (
     routeFromEntry,
     {
       orchestrator: "orchestrator" as any,
+      memory: "memory" as any,
       [END]: END,
     }
   );
@@ -215,10 +235,14 @@ export const buildDynamicGraph = (
     console.log("🎯 [Dynamic Orchestrator Agent] 开始分析用户输入...");
     const dgsm = new DynamicGameStateManager(state.dynamicGameState);
     const userInput = latestHumanMessage(state.messages);
+    const selectedSkill = state.selectedSkill ?? null;
     console.log(
       `🎯 [Dynamic Orchestrator Agent] 用户输入: "${userInput.substring(0, 100)}${userInput.length > 100 ? "..." : ""}"`
     );
-    const result = await orchestrator.processInput(userInput, dgsm, db);
+    if (selectedSkill) {
+      console.log(`🎯 [Dynamic Orchestrator Agent] 玩家已选择技能: ${selectedSkill}`);
+    }
+    const result = await orchestrator.processInput(userInput, dgsm, db, selectedSkill);
     
     console.log("✅ [Dynamic Orchestrator Agent] 分析完成");
 
@@ -232,6 +256,9 @@ export const buildDynamicGraph = (
       console.log(`   Action Type: ${actionAnalysis.actionType}`);
       console.log(`   Target: ${actionAnalysis.target.name || "N/A"}`);
       console.log(`   Target Intent: ${actionAnalysis.target.intent || "N/A"}`);
+      if (actionAnalysis.requiresSkillSelection) {
+        console.log(`   ⚠️  Requires Skill Selection: Yes`);
+      }
       if (sceneChangeRequest) {
         console.log(`   SceneChangeRequest: ${sceneChangeRequest.shouldChange ? "Yes" : "No"}${sceneChangeRequest.targetSceneName ? ` -> ${sceneChangeRequest.targetSceneName}` : ""}`);
       } else {

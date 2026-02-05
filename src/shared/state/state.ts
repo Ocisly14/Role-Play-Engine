@@ -24,7 +24,7 @@ export interface ActionAnalysis {
     name: string | null;
     intent: string;
   };
-  requiresDice: boolean;  // Whether dice roll is required
+  requiresSkillSelection?: boolean;  // Whether player needs to select a skill (frontend will use RAG to suggest skills)
 }
 
 export type NPCResponseType = 

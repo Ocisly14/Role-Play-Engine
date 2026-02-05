@@ -310,9 +310,40 @@ async function processGameTurnAsync(
       timestamp: turn?.startedAt ?? null,
     });
 
+    // Check if this is a skill selection retry
+    let precomputedActionAnalysis: any = null;
+    if (selectedSkill) {
+      // Look for a recent turn with requires_skill_selection status for this session
+      const database = db.getDatabase();
+      const skillSelectionTurn = database.prepare(`
+        SELECT * FROM game_turns
+        WHERE session_id = ? AND status = 'requires_skill_selection'
+        ORDER BY turn_number DESC
+        LIMIT 1
+      `).get(dynamicGameState.sessionId) as any;
+
+      if (skillSelectionTurn && skillSelectionTurn.action_analysis) {
+        console.log(`🔄 [${new Date().toISOString()}] Skill selection retry detected - reusing actionAnalysis from turn ${skillSelectionTurn.turn_id}`);
+        precomputedActionAnalysis = JSON.parse(skillSelectionTurn.action_analysis);
+
+        // Mark the old turn as completed (it was just waiting for skill selection)
+        // The new turn will be the actual execution turn
+        try {
+          database.prepare(`
+            UPDATE game_turns
+            SET status = 'completed'
+            WHERE turn_id = ?
+          `).run(skillSelectionTurn.turn_id);
+          console.log(`   ✓ Marked turn ${skillSelectionTurn.turn_id} as completed`);
+        } catch (error) {
+          console.warn(`   ⚠️  Failed to mark old turn as completed:`, error);
+        }
+      }
+    }
+
     // Prepare graph state
     let graphState: any;
-    
+
     graphState = {
       messages: initialMessages,
       dynamicGameState: dynamicGameState,
@@ -321,10 +352,24 @@ async function processGameTurnAsync(
       language: language || 'zh',
       selectedSkill: selectedSkill ?? null,
       skillSelectionMode,
+      precomputedActionAnalysis: precomputedActionAnalysis,
     };
 
     // Invoke the graph
     const result = await graph.invoke(graphState);
+
+    // Check if skill selection is required
+    const actionAnalysis = result.dynamicGameState?.temporaryInfo?.currentActionAnalysis;
+    if (actionAnalysis?.requiresSkillSelection) {
+      console.log(`⚠️  [${new Date().toISOString()}] Turn ${turnId} requires skill selection, pausing execution`);
+
+      // Mark turn as requiring skill selection
+      const dynamicTurnManager = new DynamicTurnManager(db);
+      dynamicTurnManager.markRequiresSkillSelection(turnId, actionAnalysis);
+
+      // Don't update game state yet, wait for skill selection
+      return;
+    }
 
     // Update the persistent state
     if (result.dynamicGameState) {
@@ -386,13 +431,15 @@ export async function getTurnStatus(req: Request, res: Response): Promise<void> 
           return;
         }
 
-        if (turn.status === 'completed' || turn.status === 'error') {
+        if (turn.status === 'completed' || turn.status === 'error' || turn.status === 'requires_skill_selection') {
           console.log(`[getTurnStatus] Turn ${turnId} completed:`, {
             status: turn.status,
             hasKeeperNarrative: !!turn.keeperNarrative,
             keeperNarrativeLength: turn.keeperNarrative?.length || 0,
             hasActionResults: !!turn.actionResults,
             actionResultsCount: Array.isArray(turn.actionResults) ? turn.actionResults.length : 0,
+            requiresSkillSelection: turn.status === 'requires_skill_selection',
+            hasActionAnalysis: !!turn.actionAnalysis,
           });
           res.json({ success: true, turn: turn });
           return;

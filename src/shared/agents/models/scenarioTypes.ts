@@ -45,6 +45,14 @@ export interface ScenarioClue {
     discoveredAt: string;
     method: string;
   };
+  /** Whether this clue has been permanently damaged/destroyed and can no longer be revealed */
+  damaged?: boolean;
+  /** Who damaged it and when */
+  damageDetails?: {
+    damagedBy: string;
+    damagedAt: string;
+    reason: string;
+  };
 }
 
 /**

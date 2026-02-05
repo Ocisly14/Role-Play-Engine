@@ -269,6 +269,14 @@ export class TurnManager {
   }
 
   /**
+   * Mark turn as requiring skill selection
+   */
+  markRequiresSkillSelection(turnId: string, actionAnalysis: any): void {
+    this.db.markTurnRequiresSkillSelection(turnId, actionAnalysis);
+    console.log(`⚠️  Turn ${turnId} marked as requiring skill selection`);
+  }
+
+  /**
    * Get a turn by ID
    */
   getTurn(turnId: string): GameTurn | null {

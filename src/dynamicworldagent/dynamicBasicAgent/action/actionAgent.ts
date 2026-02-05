@@ -21,6 +21,45 @@ export class ActionAgent {
     this.scenarioLoader = scenarioLoader;
   }
 
+  private hasSkillCheckFromDice(diceUsed: unknown): boolean {
+    if (!Array.isArray(diceUsed)) return false;
+    return diceUsed.some((entry) => {
+      if (typeof entry !== "string") return false;
+      const text = entry.toLowerCase();
+      return text.includes("1d100") || /\b\d+%/.test(text);
+    });
+  }
+
+  private sanitizeActionLogsBySkillUsage(
+    actionLogs: unknown,
+    hasSkillCheck: boolean
+  ): unknown {
+    if (!Array.isArray(actionLogs)) return actionLogs;
+    return actionLogs.map((entry) => {
+      if (!entry || typeof entry !== "object") return entry;
+      const cleaned = { ...(entry as Record<string, unknown>) };
+      if (!hasSkillCheck && "successLevel" in cleaned) {
+        delete cleaned.successLevel;
+      }
+      return cleaned;
+    });
+  }
+
+  private sanitizeSuccessLevels(parsed: Record<string, unknown>): void {
+    const playerUsedSkill = this.hasSkillCheckFromDice(parsed.diceUsed);
+    parsed.actionLog = this.sanitizeActionLogsBySkillUsage(parsed.actionLog, playerUsedSkill);
+
+    if (Array.isArray(parsed.npcResponses)) {
+      parsed.npcResponses = parsed.npcResponses.map((response) => {
+        if (!response || typeof response !== "object") return response;
+        const cleaned = { ...(response as Record<string, unknown>) };
+        const npcUsedSkill = this.hasSkillCheckFromDice(cleaned.diceUsed);
+        cleaned.actionLog = this.sanitizeActionLogsBySkillUsage(cleaned.actionLog, npcUsedSkill);
+        return cleaned;
+      });
+    }
+  }
+
   /**
    * Unified method to process any character's action (player or NPC)
    */
@@ -99,6 +138,9 @@ export class ActionAgent {
       }
 
       parsed = JSON.parse(jsonText);
+      if (parsed && typeof parsed === "object") {
+        this.sanitizeSuccessLevels(parsed as Record<string, unknown>);
+      }
     } catch (error) {
       console.error(`❌ [Action Agent] JSON parsing error:`, error);
       console.error(`   Error type: ${error instanceof Error ? error.constructor.name : typeof error}`);
@@ -649,11 +691,15 @@ export class ActionAgent {
 
               for (const logEntry of npcResponse.actionLog) {
                 if (logEntry.time && logEntry.location && logEntry.summary) {
+                  const npcUsedSkill = this.hasSkillCheckFromDice(npcResponse.diceUsed);
                   const actionLogEntry: ActionLogEntry = {
                     time: logEntry.time,
                     location: logEntry.location,
                     summary: logEntry.summary,
-                    successLevel: typeof logEntry.successLevel === "string" ? logEntry.successLevel : undefined,
+                    successLevel:
+                      npcUsedSkill && typeof logEntry.successLevel === "string"
+                        ? logEntry.successLevel
+                        : undefined,
                   };
                   npcInState.actionLog.push(actionLogEntry);
                 }
@@ -674,7 +720,7 @@ export class ActionAgent {
                 time: fullGameTime,
                 location: locationName,
                 summary: npcResponse.summary || `${npc.name} responds`,
-                successLevel: "unknown",
+                successLevel: this.hasSkillCheckFromDice(npcResponse.diceUsed) ? "unknown" : undefined,
               };
               npcInState.actionLog.push(fallbackLogEntry);
             }
@@ -737,7 +783,10 @@ export class ActionAgent {
             time: logEntry.time,
             location: logEntry.location,
             summary: logEntry.summary,
-            successLevel: typeof logEntry.successLevel === "string" ? logEntry.successLevel : undefined,
+            successLevel:
+              this.hasSkillCheckFromDice(parsed.diceUsed) && typeof logEntry.successLevel === "string"
+                ? logEntry.successLevel
+                : undefined,
           };
           
           targetCharacter.actionLog.push(actionLogEntry);
@@ -774,7 +823,7 @@ export class ActionAgent {
           time: fullTime,
           location: locationName,
           summary: actionResult.result,
-          successLevel: "unknown",
+          successLevel: this.hasSkillCheckFromDice(parsed.diceUsed) ? "unknown" : undefined,
         };
         actorInState.actionLog.push(fallbackLogEntry);
         console.log(`   ⚠️  LLM did not generate actionLog, added fallback entry to ${isNPC ? 'NPC' : 'player'} ${actorInState.name} with location: ${locationName}`);

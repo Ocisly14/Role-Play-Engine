@@ -25,7 +25,7 @@ export interface TurnStatus {
   turnNumber: number;
   characterInput: string;
   keeperNarrative: string | null;
-  status: 'processing' | 'completed' | 'error';
+  status: 'processing' | 'completed' | 'error' | 'requires_skill_selection';
   errorMessage: string | null;
   startedAt: string;
   completedAt: string | null;
@@ -34,6 +34,7 @@ export interface TurnStatus {
   location: string | null;
   isSimulated?: boolean;
   actionResults?: ActionResult[] | null;
+  actionAnalysis?: any | null;  // For requires_skill_selection status
   gameDay?: number | null;
   gameTime?: string | null;
 }

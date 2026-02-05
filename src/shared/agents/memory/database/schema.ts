@@ -119,7 +119,7 @@ export class CoCDatabase {
                 location TEXT,
                 
                 -- Status and timing
-                status TEXT NOT NULL DEFAULT 'processing', -- 'processing' | 'completed' | 'error'
+                status TEXT NOT NULL DEFAULT 'processing', -- 'processing' | 'completed' | 'error' | 'requires_skill_selection'
                 error_message TEXT,
                 started_at DATETIME NOT NULL,
                 completed_at DATETIME,
@@ -1825,12 +1825,25 @@ export class CoCDatabase {
   markTurnError(turnId: string, errorMessage: string): void {
     const database = this.db;
     database.prepare(`
-      UPDATE game_turns 
+      UPDATE game_turns
       SET status = 'error',
           error_message = ?,
           completed_at = CURRENT_TIMESTAMP
       WHERE turn_id = ?
     `).run(errorMessage, turnId);
+  }
+
+  /**
+   * Mark turn as requiring skill selection
+   */
+  markTurnRequiresSkillSelection(turnId: string, actionAnalysis: any): void {
+    const database = this.db;
+    database.prepare(`
+      UPDATE game_turns
+      SET status = 'requires_skill_selection',
+          action_analysis = ?
+      WHERE turn_id = ?
+    `).run(JSON.stringify(actionAnalysis), turnId);
   }
 
   /**

@@ -29,7 +29,7 @@ export class OrchestratorAgent {
   /**
    * Process input (user query, agent result, or instruction) and determine which agent to route to
    */
-  async processInput(input: string, gameStateManager: DynamicGameStateManager, db?: CoCDatabase): Promise<string> {
+  async processInput(input: string, gameStateManager: DynamicGameStateManager, db?: CoCDatabase, selectedSkill?: string | null): Promise<string> {
     const runtime = createRuntime();
     const dynamicState = gameStateManager.getState();
     
@@ -180,6 +180,7 @@ export class OrchestratorAgent {
         npcNames,
         conversationHistory,  // Pass conversation history instead of single previousNarrative
         connections,
+        hasSelectedSkill: !!selectedSkill,  // Whether player has pre-selected a skill
       },
       "handlebars"
     );
@@ -265,7 +266,7 @@ export class OrchestratorAgent {
         name: rawAnalysis.target?.name ?? null,
         intent: rawAnalysis.target?.intent || ""
       },
-      requiresDice: Boolean(rawAnalysis.requiresDice)
+      requiresSkillSelection: Boolean(rawAnalysis.requiresSkillSelection)
     };
   }
 
