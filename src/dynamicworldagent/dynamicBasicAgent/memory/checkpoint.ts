@@ -8,6 +8,7 @@ import type { DynamicGameState } from "../../state/index.js";
 import type { DynamicScenarioSnapshot } from "../../world_builder/types.js";
 import { randomUUID } from "crypto";
 import { resolveEmailId } from "../../../shared/agents/memory/database/userContext.js";
+import { TurnManager } from "./turnManager.js";
 
 /**
  * Save DynamicGameState checkpoint to database
@@ -40,6 +41,19 @@ export function saveDynamicGameStateCheckpoint(
     // Convert Sets to Arrays for JSON serialization
     const serializableState = serializeDynamicGameState(dynamicState, db);
     
+    // Attach conversation history and player memos so the checkpoint is self-contained
+    const turnManager = new TurnManager(db);
+    serializableState.conversationHistory = turnManager.getConversation(dynamicState.sessionId);
+    try {
+      const database = db.getDatabase();
+      serializableState.playerMemos = database.prepare(
+        `SELECT memo_id, email_id, text, game_day, game_time, location, created_at, updated_at
+         FROM player_memos WHERE session_id = ? ORDER BY created_at ASC`
+      ).all(dynamicState.sessionId);
+    } catch (error) {
+      serializableState.playerMemos = [];
+    }
+
     // Save to database using existing checkpoint infrastructure
     db.saveCheckpoint(
       checkpointId,

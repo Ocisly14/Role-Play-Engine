@@ -4,7 +4,7 @@ import { DatabaseManager } from "../core/DatabaseManager.js";
 import { GraphManager } from "../core/GraphManager.js";
 import { ServerState } from "../core/ServerState.js";
 import { saveDynamicGameStateCheckpoint } from "../../../src/dynamicworldagent/dynamicBasicAgent/memory/checkpoint.js";
-import { TurnManager as DynamicTurnManager } from "../../../src/dynamicworldagent/dynamicBasicAgent/memory/turnManager.js";
+import { randomUUID } from "crypto";
 
 /**
  * Save current game state as checkpoint
@@ -288,38 +288,25 @@ export async function loadCheckpointData(req: Request, res: Response): Promise<v
       return;
     }
 
-    // Always create a branch session when loading any checkpoint
-    let shouldCreateBranch = false;
-    let branchSessionId: string | null = null;
-    let branchSubId: number | null = null;
-    const checkpointGameDay = checkpoint.metadata.gameDay;
-    const checkpointTimeOfDay = checkpoint.metadata.gameTime;
-    
-    try {
-      const branchInfo = await db.createBranchSession(
-        checkpoint.sessionId,
-        gameState,
-        checkpointGameDay,
-        checkpointTimeOfDay
-      );
-      branchSessionId = branchInfo.branchSessionId;
-      branchSubId = branchInfo.subId;
-      shouldCreateBranch = true;
-      console.log(`[${new Date().toISOString()}] Creating branch session: ${branchSessionId} (checkpoint load)`);
-    } catch (error) {
-      console.warn(`[${new Date().toISOString()}] Failed to create branch session for checkpoint load:`, error);
-      shouldCreateBranch = false;
-    }
-    
-    // Use branch session ID if created, otherwise use original session ID
-    const finalSessionId = branchSessionId || checkpoint.sessionId;
 
-    // Check if this is a DynamicGameState and deserialize if needed
-    let restoredDynamicGameState: any = null;
+    // Extract conversation history and memos saved in the checkpoint
+    const conversationHistory: any[] = gameStateAny.conversationHistory || [];
+    const playerMemos: any[] = gameStateAny.playerMemos || [];
+
+    // Generate new session ID — no parent/child relationship needed
+    const newSessionId = `session-${randomUUID()}`;
+
+    // Create session and populate with saved conversation + memos
+    db.createSessionFromCheckpoint(newSessionId, gameState, conversationHistory, playerMemos);
+
+    console.log(`[${new Date().toISOString()}] Created session ${newSessionId} from checkpoint ${checkpointId} (${conversationHistory.length} messages, ${playerMemos.length} memos)`);
 
     // Deserialize DynamicGameState with checkpoint gameTime to filter snapshots
     const { DynamicGameStateManager } = await import("../../../src/dynamicworldagent/state/index.js");
+    const checkpointGameDay = checkpoint.metadata.gameDay;
+    const checkpointTimeOfDay = checkpoint.metadata.gameTime;
 
+    let restoredDynamicGameState: any;
     if (checkpointGameDay && checkpointTimeOfDay) {
       restoredDynamicGameState = DynamicGameStateManager.deserialize(
         gameStateAny,
@@ -327,20 +314,18 @@ export async function loadCheckpointData(req: Request, res: Response): Promise<v
         checkpointTimeOfDay,
         db
       );
-      console.log(`[${new Date().toISOString()}] Deserialized DynamicGameState from checkpoint (Day ${checkpointGameDay}, ${checkpointTimeOfDay})`);
     } else {
       restoredDynamicGameState = DynamicGameStateManager.deserialize(gameStateAny, undefined, undefined, db);
-      console.log(`[${new Date().toISOString()}] Deserialized DynamicGameState from checkpoint`);
     }
 
-    // Update sessionId to branch session if created
-    if (shouldCreateBranch && restoredDynamicGameState && branchSubId !== null) {
-      restoredDynamicGameState.sessionId = finalSessionId;
-      (restoredDynamicGameState as any).parentSessionId = checkpoint.sessionId;
-      (restoredDynamicGameState as any).subId = branchSubId;
-    }
+    // Set new session ID, clean up any stale fields from old checkpoints
+    restoredDynamicGameState.sessionId = newSessionId;
+    delete (restoredDynamicGameState as any).conversationHistory;
+    delete (restoredDynamicGameState as any).playerMemos;
+    delete (restoredDynamicGameState as any).parentSessionId;
+    delete (restoredDynamicGameState as any).subId;
 
-    // Restore DynamicWorld game state
+    // Restore game state
     ServerState.getInstance().setGameState(userId, restoredDynamicGameState);
 
     // Initialize GraphManager if needed
@@ -349,35 +334,14 @@ export async function loadCheckpointData(req: Request, res: Response): Promise<v
       await graphManager.initialize(db);
     }
 
-    // Fetch conversation history
-    // For branch sessions, use the branch session's own conversation history (which includes copied parent turns)
-    // For regular loads, use the original session
-    const dynamicTurnManager = new DynamicTurnManager(db);
-    let conversationHistory: any[] = [];
-
-    try {
-      // Use finalSessionId (branch session if created, otherwise original)
-      // Branch sessions now have their own copied turns, so we can directly query them
-      conversationHistory = dynamicTurnManager.getConversation(finalSessionId, 50);
-      console.log(`[${new Date().toISOString()}] Loaded ${conversationHistory.length} conversation messages from session: ${finalSessionId}${shouldCreateBranch ? ' (branch)' : ''}`);
-    } catch (error) {
-      console.warn("Failed to load conversation history:", error);
-    }
-
-    const loadMessage = shouldCreateBranch 
-      ? `存档加载成功（已创建支线：${finalSessionId}）`
-      : "存档加载成功";
-
-    console.log(`[${new Date().toISOString()}] Checkpoint loaded: ${checkpointId}${shouldCreateBranch ? ` (branch: ${finalSessionId})` : ''}`);
+    console.log(`[${new Date().toISOString()}] Checkpoint loaded: ${checkpointId} → session ${newSessionId}`);
 
     res.json({
       success: true,
-      sessionId: finalSessionId,
-      parentSessionId: shouldCreateBranch ? checkpoint.sessionId : undefined,
-      isBranch: shouldCreateBranch,
+      sessionId: newSessionId,
       gameState: restoredDynamicGameState,
       conversationHistory: conversationHistory,
-      message: loadMessage,
+      message: "存档加载成功",
       timestamp: new Date().toISOString(),
     });
   } catch (error) {

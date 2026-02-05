@@ -1261,174 +1261,116 @@ export class CoCDatabase {
     }
   }
   
+
   /**
-   * Get the next sub_id for a parent session
+   * Create a new session from checkpoint data and populate with saved conversation and memos.
+   * Replaces the old createBranchSession — no parent/child relationship needed.
    */
-  getNextSubId(parentSessionId: string): number {
-    const database = this.db;
-    
-    if (!this.hasColumn("sessions", "sub_id")) {
-      return 1; // Default to 1 if column doesn't exist
-    }
-    
-    const stmt = database.prepare(`
-      SELECT MAX(sub_id) as max_sub_id FROM sessions WHERE parent_session_id = ?
-    `);
-    const row = stmt.get(parentSessionId) as { max_sub_id: number | null } | undefined;
-    return (row?.max_sub_id || 0) + 1;
-  }
-  
-  /**
-   * Create a branch session (subId) from a parent session
-   * Copies the last 3 narrative turns from parent session (filtered by gameTime) to the new branch
-   * Returns the branch session ID and the subId
-   */
-  async createBranchSession(
-    parentSessionId: string,
+  createSessionFromCheckpoint(
+    sessionId: string,
     gameState: any,
-    checkpointGameDay?: number | null,
-    checkpointTimeOfDay?: string | null
-  ): Promise<{ branchSessionId: string; subId: number }> {
+    conversationHistory: Array<{ role: string; content: string; timestamp: string; turnNumber: number; diceRolls?: string[]; gameDay?: number | null; gameTime?: string | null }>,
+    playerMemos: Array<{ text?: string; game_day?: number | null; game_time?: string | null; location?: string | null; created_at?: string; updated_at?: string; email_id?: string | null }>
+  ): void {
     const database = this.db;
-    const subId = this.getNextSubId(parentSessionId);
-    const branchSessionId = `${parentSessionId}-sub-${subId}`;
-    
-    // Ensure parent session exists first
-    this.ensureSessionExists(parentSessionId, gameState);
-    
-    // Create branch session
-    this.ensureSessionExists(branchSessionId, gameState, parentSessionId, subId);
-    
-    // Copy last 3 narrative turns from parent session (filtered by gameTime)
-    if (checkpointGameDay !== undefined && checkpointGameDay !== null && checkpointTimeOfDay) {
-      try {
-        // Get parent session's turns up to checkpoint time
-        const parentTurns = this.getTurnHistory(
-          parentSessionId,
-          10, // Get more to ensure we have enough completed ones
-          undefined, // afterTurnNumber
-          checkpointGameDay,
-          checkpointTimeOfDay
-        );
-        
-        // Filter completed turns with narrative, sort by gameTime, take last 3
-        const compareGameTime = (a: { gameDay?: number | null; gameTime?: string | null }, b: { gameDay?: number | null; gameTime?: string | null }): number => {
-          if (!a.gameDay || !a.gameTime) return -1;
-          if (!b.gameDay || !b.gameTime) return 1;
-          if (a.gameDay !== b.gameDay) return b.gameDay - a.gameDay;
-          const [aHour, aMin] = a.gameTime.split(':').map(Number);
-          const [bHour, bMin] = b.gameTime.split(':').map(Number);
-          return (bHour * 60 + bMin) - (aHour * 60 + aMin);
-        };
-        
-        let completedTurns = parentTurns
-          .filter(turn => turn.status === 'completed' && turn.keeperNarrative);
-        
-        completedTurns.sort(compareGameTime);
-        const last3Turns = completedTurns.slice(0, 3).reverse(); // Get last 3, reverse to chronological order
-        
-        // Copy turns to branch session
-        if (last3Turns.length > 0) {
-          let newTurnNumber = 0;
-          
-          for (const turn of last3Turns) {
-            newTurnNumber++;
-            const newTurnId = `turn-branch-${branchSessionId}-${Date.now()}-${randomUUID().slice(0, 8)}`;
-            
-            // Insert turn with all fields from parent turn
-            const insertStmt = database.prepare(`
-              INSERT INTO game_turns (
-                turn_id, session_id, turn_number, character_input, character_id, character_name,
-                scene_id, scene_name, location, status, started_at, completed_at,
-                keeper_narrative, clue_revelations, action_analysis, action_results,
-                director_decision, is_simulated, game_day, game_time, error_message
-              ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-            `);
-            
-            insertStmt.run(
-              newTurnId,
-              branchSessionId, // New session ID
-              newTurnNumber, // Sequential turn number starting from 1
-              turn.characterInput || '',
-              turn.characterId || null,
-              turn.characterName || null,
-              turn.sceneId || null,
-              turn.sceneName || null,
-              turn.location || null,
-              turn.status || 'completed',
-              turn.startedAt || new Date().toISOString(),
-              turn.completedAt || new Date().toISOString(),
-              turn.keeperNarrative || null,
-              turn.clueRevelations ? JSON.stringify(turn.clueRevelations) : null,
-              turn.actionAnalysis ? JSON.stringify(turn.actionAnalysis) : null,
-              turn.actionResults ? JSON.stringify(turn.actionResults) : null,
-              turn.directorDecision ? JSON.stringify(turn.directorDecision) : null,
-              turn.isSimulated ? 1 : 0,
-              turn.gameDay || null,
-              turn.gameTime || null,
-              turn.errorMessage || null
-            );
-          }
-          
-          console.log(`🌿 [Branch Session] Copied ${last3Turns.length} narrative turns from parent session to branch: ${branchSessionId}`);
-        } else {
-          console.log(`🌿 [Branch Session] No narrative turns found in parent session up to checkpoint time`);
+
+    // Create session record
+    this.ensureSessionExists(sessionId, gameState);
+
+    // Reconstruct turns from conversation messages and insert into game_turns
+    if (conversationHistory.length > 0) {
+      // Group messages by turnNumber — each turn produces a 'character' and/or 'keeper' message
+      const turnMap = new Map<number, {
+        characterInput: string | null;
+        keeperNarrative: string | null;
+        diceRolls: string[];
+        gameDay: number | null;
+        gameTime: string | null;
+        startedAt: string;
+        completedAt: string;
+      }>();
+
+      for (const msg of conversationHistory) {
+        if (!turnMap.has(msg.turnNumber)) {
+          turnMap.set(msg.turnNumber, {
+            characterInput: null,
+            keeperNarrative: null,
+            diceRolls: [],
+            gameDay: msg.gameDay ?? null,
+            gameTime: msg.gameTime ?? null,
+            startedAt: msg.timestamp,
+            completedAt: msg.timestamp,
+          });
         }
-      } catch (error) {
-        console.warn(`⚠️ [Branch Session] Failed to copy parent narrative turns:`, error);
-        // Don't fail branch creation if copying fails
+        const entry = turnMap.get(msg.turnNumber)!;
+        if (msg.role === 'character') {
+          entry.characterInput = msg.content;
+        } else if (msg.role === 'keeper') {
+          entry.keeperNarrative = msg.content;
+          entry.completedAt = msg.timestamp;
+          if (msg.diceRolls && msg.diceRolls.length > 0) {
+            entry.diceRolls = msg.diceRolls;
+          }
+        }
       }
+
+      const characterId = gameState.playerCharacter?.id || null;
+      const characterName = gameState.playerCharacter?.name || null;
+
+      const insertStmt = database.prepare(`
+        INSERT INTO game_turns (
+          turn_id, session_id, turn_number, character_input, character_id, character_name,
+          status, started_at, completed_at, keeper_narrative, action_results,
+          is_simulated, game_day, game_time
+        ) VALUES (?, ?, ?, ?, ?, ?, 'completed', ?, ?, ?, ?, ?, ?, ?)
+      `);
+
+      const sortedTurns = [...turnMap.entries()].sort((a, b) => a[0] - b[0]);
+      for (const [turnNumber, entry] of sortedTurns) {
+        const turnId = `turn-restored-${sessionId}-${turnNumber}`;
+        // isSimulated: no character input but has keeper narrative (covers turn 0 intro + simulated turns)
+        const isSimulated = !entry.characterInput && entry.keeperNarrative ? 1 : 0;
+        // Reconstruct action_results with diceRolls so getConversation() can extract them on page refresh
+        const actionResults = entry.diceRolls.length > 0
+          ? JSON.stringify([{ character: characterName || 'Investigator', diceRolls: entry.diceRolls }])
+          : null;
+
+        insertStmt.run(
+          turnId,
+          sessionId,
+          turnNumber,
+          entry.characterInput || '',
+          characterId,
+          characterName,
+          entry.startedAt,
+          entry.completedAt,
+          entry.keeperNarrative || null,
+          actionResults,
+          isSimulated,
+          entry.gameDay,
+          entry.gameTime
+        );
+      }
+
+      console.log(`📥 [Session] Restored ${sortedTurns.length} turns into session ${sessionId}`);
     }
 
-    // Copy player memos from parent session (filtered by checkpoint time if provided)
-    try {
-      const memoRows = database.prepare(`
-        SELECT memo_id, email_id, text, game_day, game_time, location, created_at, updated_at
-        FROM player_memos
-        WHERE session_id = ?
-        ORDER BY created_at ASC
-      `).all(parentSessionId) as any[];
-
-      const parseTime = (value: string): number | null => {
-        if (!value || typeof value !== "string") return null;
-        const parts = value.split(":").map((part) => Number(part));
-        if (parts.length < 2) return null;
-        const [hours, minutes] = parts;
-        if (!Number.isFinite(hours) || !Number.isFinite(minutes)) return null;
-        return hours * 60 + minutes;
-      };
-
-      const checkpointMinutes = checkpointTimeOfDay ? parseTime(checkpointTimeOfDay) : null;
-      const filteredMemos = memoRows.filter((memo) => {
-        if (checkpointGameDay === undefined || checkpointGameDay === null || !checkpointTimeOfDay) {
-          return true;
-        }
-        if (memo.game_day === null || memo.game_day === undefined) return true;
-        if (!memo.game_time || typeof memo.game_time !== "string") return true;
-        const memoDay = Number(memo.game_day);
-        const memoMinutes = parseTime(memo.game_time);
-        if (!Number.isFinite(memoDay) || memoMinutes === null || checkpointMinutes === null) {
-          return true;
-        }
-        if (memoDay < checkpointGameDay) return true;
-        if (memoDay > checkpointGameDay) return false;
-        return memoMinutes <= checkpointMinutes;
-      });
-
-      if (filteredMemos.length > 0) {
+    // Insert player memos
+    if (playerMemos.length > 0) {
+      try {
         const insertMemoStmt = database.prepare(`
           INSERT INTO player_memos (
             memo_id, session_id, email_id, text, game_day, game_time, location, created_at, updated_at
           ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
         `);
 
-        for (const memo of filteredMemos) {
+        for (const memo of playerMemos) {
           const newMemoId = `memo-${randomUUID()}`;
           insertMemoStmt.run(
             newMemoId,
-            branchSessionId,
+            sessionId,
             memo.email_id || null,
-            memo.text || "",
+            memo.text || '',
             memo.game_day ?? null,
             memo.game_time ?? null,
             memo.location ?? null,
@@ -1437,17 +1379,11 @@ export class CoCDatabase {
           );
         }
 
-        console.log(`📝 [Branch Session] Copied ${filteredMemos.length} memos to branch: ${branchSessionId}`);
-      } else {
-        console.log(`📝 [Branch Session] No memos to copy for branch: ${branchSessionId}`);
+        console.log(`📝 [Session] Restored ${playerMemos.length} memos into session ${sessionId}`);
+      } catch (error) {
+        console.warn(`⚠️ [Session] Failed to restore memos:`, error);
       }
-    } catch (error) {
-      console.warn(`⚠️ [Branch Session] Failed to copy parent memos:`, error);
-      // Don't fail branch creation if memo copy fails
     }
-    
-    console.log(`🌿 [Branch Session] Created branch session: ${branchSessionId} (parent: ${parentSessionId}, subId: ${subId})`);
-    return { branchSessionId, subId };
   }
 
   /**
