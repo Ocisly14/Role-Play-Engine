@@ -13,7 +13,8 @@ export function buildActionSystemPrompt(
   existingSceneChangeRequest?: SceneChangeRequest | null,
   sceneNPCs?: any[] | null,
   selectedSkill?: string | null,
-  skillSelectionMode?: "auto" | "manual"
+  skillSelectionMode?: "auto" | "manual",
+  outputLanguage: "en" | "zh" = "zh"
 ): string {
   // Check if there's a valid scene change request from orchestrator
   const hasValidSceneChangeRequest = existingSceneChangeRequest?.shouldChange === true && existingSceneChangeRequest?.targetSceneName;
@@ -59,6 +60,7 @@ Your task is to determine if the action succeeds in enabling this scene change:
 ***IMPORTANT: If the input does NOT involve a scene change and does NOT cause major impact on the scene or any NPC, do NOT mention any skill and do NOT output any dice rolls.***
 - Always use empty array: "diceUsed": [].
 `;
+  const targetLanguageLabel = outputLanguage === "en" ? "English" : "Chinese";
 
   return `
 ${originalUserInput && !isNPC ? `## User Input
@@ -74,6 +76,11 @@ Player selected skill: ${selectedSkill}
 
 ` : ''}${usagePolicy}PRE-ROLLED DICE AVAILABLE:
 ${JSON.stringify(preRolledDice, null, 2)}
+
+OUTPUT LANGUAGE REQUIREMENT:
+- Keep all JSON keys and enum values in English exactly as specified.
+- In \`actionLog\`, \`summary\` MUST use ${targetLanguageLabel}.
+- Keep names/identifiers/location values from context unchanged (do not translate them).
 
 USAGE:
 - Each dice type has multiple pre-rolled results (1d100 has 10, others have 5). Select ONE result from the array for each dice you need.

@@ -57,7 +57,7 @@ export async function createTurn(req: Request, res: Response): Promise<void> {
       await graphManager.initialize(db);
     }
 
-    const { message, selectedSkill: rawSelectedSkill, skillSelectionMode: rawSkillSelectionMode } = req.body ?? {};
+    const { message, selectedSkill: rawSelectedSkill, skillSelectionMode: rawSkillSelectionMode, language: rawLanguage } = req.body ?? {};
     const selectedSkill = typeof rawSelectedSkill === "string"
       ? rawSelectedSkill.trim()
       : null;
@@ -72,6 +72,7 @@ export async function createTurn(req: Request, res: Response): Promise<void> {
     const effectiveSkillSelectionMode = normalizedSkill
       ? "manual"
       : (skillSelectionMode === "auto" ? "auto" : "manual");
+    const language = (rawLanguage === 'en' || rawLanguage === 'zh') ? rawLanguage : 'zh';
 
     if (!message || typeof message !== "string") {
       res.status(400).json({ error: "Message is required" });
@@ -112,7 +113,8 @@ export async function createTurn(req: Request, res: Response): Promise<void> {
         stateToProcess,
         userId,
         normalizedSkill,
-        effectiveSkillSelectionMode
+        effectiveSkillSelectionMode,
+        language
       )
         .catch((error) => {
           console.error(`Error processing turn ${turnId}:`, error);
@@ -281,7 +283,8 @@ async function processGameTurnAsync(
   gameState: DynamicGameState,
   userId: string,
   selectedSkill?: string | null,
-  skillSelectionMode?: "auto" | "manual"
+  skillSelectionMode?: "auto" | "manual",
+  language?: 'en' | 'zh'
 ) {
   try {
     console.log(`[${new Date().toISOString()}] Processing turn ${turnId}...`);
@@ -315,6 +318,7 @@ async function processGameTurnAsync(
       dynamicGameState: dynamicGameState,
       turnId: turnId,
       stream: streamHandlers ?? undefined,
+      language: language || 'zh',
       selectedSkill: selectedSkill ?? null,
       skillSelectionMode,
     };

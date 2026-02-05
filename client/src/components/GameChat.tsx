@@ -127,9 +127,10 @@ interface GameChatProps {
   moduleIntroduction?: { introduction: string; moduleNotes: string } | null;
   initialMessages?: Message[];
   onNarrativeComplete?: () => void;
+  language?: 'en' | 'zh';
 }
 
-export function GameChat({ sessionId, apiBaseUrl = '/api', characterName = 'Investigator', moduleIntroduction, initialMessages, onNarrativeComplete }: GameChatProps) {
+export function GameChat({ sessionId, apiBaseUrl = '/api', characterName = 'Investigator', moduleIntroduction, initialMessages, onNarrativeComplete, language = 'zh' }: GameChatProps) {
   const [messages, setMessages] = useState<Message[]>(initialMessages || []);
   const [inputValue, setInputValue] = useState('');
   const [isSending, setIsSending] = useState(false);
@@ -1098,6 +1099,7 @@ export function GameChat({ sessionId, apiBaseUrl = '/api', characterName = 'Inve
           message: messageText,
           selectedSkill: skillToSend,
           skillSelectionMode,
+          language,
         }),
       });
 

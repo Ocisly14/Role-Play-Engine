@@ -32,6 +32,7 @@ export class KeeperAgent {
   async generateNarrative(
     characterInput: string,
     gameStateManager: DynamicGameStateManager,
+    language: "en" | "zh" = "zh",
     options?: { onNarrativeDelta?: (delta: string) => void }
   ): Promise<{narrative: string, clueRevelations: any, updatedGameState: DynamicGameState}> {
     const runtime = createRuntime();
@@ -82,6 +83,14 @@ export class KeeperAgent {
       keeperNarrative: string | null;
     }>) || [];
 
+    // 7.1. Get relevant history from RAG (from contextualData)
+    const relevantHistory = (dynamicState.temporaryInfo.contextualData?.relevantHistory as Array<{
+      type: string;
+      content: string;
+      score: number;
+      metadata: Record<string, any>;
+    }>) || [];
+
     // 8. Calculate current turn number
     // Current turn is the next turn after the latest in history
     const currentTurnNumber = conversationHistory.length > 0
@@ -95,7 +104,7 @@ export class KeeperAgent {
     // Note: RAG is not used in Dynamic World system
     
     // 获取模板
-    const template = getKeeperTemplate();
+    const template = getKeeperTemplate(language);
     
     // Prepare template context (JSON-packed to keep template concise)
     const currentLocation = dynamicState.currentScenario?.location || null;
@@ -123,6 +132,7 @@ export class KeeperAgent {
       isTransition,
       sceneChangeRequest: sceneChangeRequestForNarrative,  // Scene change request (without timestamp)
       conversationHistory,  // Recent conversation history (for {{#each}} loop)
+      relevantHistory,  // RAG-retrieved relevant history (for {{#each}} loop)
       currentTurnNumber,  // Current turn number
       isFirstRealTurn,  // Boolean flag for turn 1 detection
       keeperGuidance: dynamicState.keeperGuidance || null,  // Module-specific keeper guidance
@@ -243,7 +253,8 @@ export class KeeperAgent {
    */
   async generateEpilogue(
     characterInput: string,
-    gameStateManager: DynamicGameStateManager
+    gameStateManager: DynamicGameStateManager,
+    language: "en" | "zh" = "zh"
   ): Promise<{ narrative: string; clueRevelations: any; updatedGameState: DynamicGameState }> {
     const runtime = createRuntime();
     const dynamicState = gameStateManager.getState();
@@ -275,7 +286,7 @@ export class KeeperAgent {
     const fullGameTime = `Day ${dynamicState.gameDay}, ${dynamicState.timeOfDay}`;
     
     // Use epilogue template
-    const template = getEpilogueTemplate();
+    const template = getEpilogueTemplate(language);
     
     // Get macroScene
     const macroScene = dynamicState.macroScene;
@@ -575,28 +586,9 @@ export class KeeperAgent {
   ) {
     const npcData = character as DynamicNPCProfile;
 
-    // Filter action log: keep current location logs + interaction history with partner
-    let filteredActionLog: ActionLogEntry[] = [];
-    if (character.actionLog && character.actionLog.length > 0) {
-      if (currentLocation || interactionPartnerName) {
-        filteredActionLog = character.actionLog.filter(log => {
-          // Include if in current location
-          const isCurrentLocation = currentLocation &&
-            log.location &&
-            log.location.toLowerCase() === currentLocation.toLowerCase();
-
-          // Include if involves interaction with partner (check if partner name appears in summary)
-          const involvesPartner = interactionPartnerName &&
-            log.summary &&
-            log.summary.toLowerCase().includes(interactionPartnerName.toLowerCase());
-
-          return isCurrentLocation || involvesPartner;
-        });
-      } else {
-        // If no current scene location and no partner, don't include any action log
-        filteredActionLog = [];
-      }
-    }
+    // NOTE: Action log filtering removed - now handled by RAG semantic search
+    // The RAG system (BM25 + Vector) provides more intelligent retrieval
+    // of relevant historical actions through temporaryInfo.relevantHistory
     
     return {
       // Basic information
@@ -627,8 +619,8 @@ export class KeeperAgent {
       // Items
       inventory: character.inventory || [],
 
-      // Action Log (only includes current location)
-      actionLog: filteredActionLog,
+      // NOTE: actionLog removed - now provided by RAG relevantHistory
+      // Use relevantHistory from temporaryInfo.contextualData instead
 
       // Clues (if NPC)
       clues: npcData.clues || [],
@@ -644,8 +636,11 @@ export class KeeperAgent {
   /**
    * Extract complete player character information
    * @param player Player character information
-   * @param currentLocation Current scene location (for filtering action log)
-   * @param interactionPartnerName Optional: NPC name to include interaction history with
+   * @param currentLocation Current scene location (retained for backward compatibility)
+   * @param interactionPartnerName Optional: NPC name (retained for backward compatibility)
+   *
+   * NOTE: currentLocation and interactionPartnerName are no longer used for action log filtering
+   * Action history is now provided by RAG semantic search via relevantHistory
    */
   private extractCompletePlayerCharacter(
     player: DynamicCharacterProfile,

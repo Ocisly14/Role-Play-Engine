@@ -2,7 +2,18 @@
  * Keeper Agent Template
  * Call of Cthulhu 7e – Narrative & Revelation Engine
  */
-export function getKeeperTemplate(): string {
+const getLanguageInstruction = (language: "en" | "zh"): string =>
+  language === "en"
+    ? `- Only the \`narrative\` text MUST be in English.
+  - Keep JSON keys and structure in English exactly as specified.
+  - Non-narrative fields (IDs, names, enum values, and other structured values) MUST remain English/canonical and must not be translated.
+  - Do not mix Chinese with English in the \`narrative\` text.`
+    : `- Only the \`narrative\` text MUST be in Chinese.
+  - Keep JSON keys and structure in English exactly as specified.
+  - Non-narrative fields (IDs, names, enum values, and other structured values) MUST remain English/canonical and must not be translated.
+  - Do not mix English with Chinese in the \`narrative\` text.`;
+
+export function getKeeperTemplate(language: "en" | "zh" = "zh"): string {
   return `
 You are a writer, responsible for writing a narrative of the game.
   Your job is to describe what the investigator experiences, and what is revealed as a consequence of their actions.
@@ -69,11 +80,22 @@ You are a writer, responsible for writing a narrative of the game.
   {{#if conversationHistory}}
   **Recent Narrative History**:
   Use for continuity. DO NOT generate repetitive or redundant content. Focus on current events with natural transitions.
-  
+
   {{#each conversationHistory}}
   {{#if this.keeperNarrative}}
   **Turn #{{this.turnNumber}}**: "{{this.characterInput}}" → "{{this.keeperNarrative}}"
   {{/if}}
+  {{/each}}
+  {{/if}}
+
+  {{#if relevantHistory}}
+  **Relevant Historical Context** (Retrieved via semantic similarity):
+  These past events and conversations are semantically related to the current action. Use them to create narrative callbacks, recognize patterns, or maintain long-term continuity. Reference naturally when relevant - do NOT force connections.
+
+  {{#each relevantHistory}}
+  - **{{this.type}}** (similarity: {{this.score}}): {{this.content}}
+    {{#if this.metadata.location}}Location: {{this.metadata.location}}{{/if}}
+    {{#if this.metadata.timestamp}}Time: {{this.metadata.timestamp}}{{/if}}
   {{/each}}
   {{/if}}
 
@@ -157,7 +179,7 @@ You are a writer, responsible for writing a narrative of the game.
   
   ***IMPORTANT: Rules:***
   - Arrays may be empty; include only actually revealed clues
-  - Narrative language MUST match investigator's input language
+  ${getLanguageInstruction(language)}
   - Complete the entire JSON structure - do not stop mid-generation
   - Do not include any kinds of id or index in the narrative.
   `;
@@ -167,7 +189,8 @@ You are a writer, responsible for writing a narrative of the game.
  * Keeper Agent Epilogue Template
  * For generating epilogue narrative when game ends
  */
-export function getEpilogueTemplate(): string {
+export function getEpilogueTemplate(language: "en" | "zh" = "zh"): string {
+  const targetLanguage = language === "en" ? "English" : "Chinese";
   return `# Keeper Agent — Epilogue Narrative (后日谈)
 
 You are the **Keeper Agent**, generating the final epilogue narrative after the game has reached its end state.
@@ -227,6 +250,8 @@ Generate an epilogue narrative that:
 - Maintain the cosmic horror atmosphere
 - Should be 2-4 paragraphs
 - Can reference specific events from game history but don't repeat them verbatim
+- Write all narrative text in **${targetLanguage}**
+- Keep JSON keys in English exactly as defined below
 
 ## 📋 Output Format
 

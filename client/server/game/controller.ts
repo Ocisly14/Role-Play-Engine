@@ -33,11 +33,12 @@ function isWorldBuilderModule(modName: string): boolean {
  */
 export async function startGame(req: Request, res: Response): Promise<void> {
   try {
-    const { characterId, modName } = req.body;
+    const { characterId, modName, language: rawLanguage } = req.body;
     const userId = req.user!.userId;
     const userEmail = req.user!.email;
+    const language = (rawLanguage === 'en' || rawLanguage === 'zh') ? rawLanguage : 'zh';
 
-    console.log(`[${new Date().toISOString()}] Starting game...`);
+    console.log(`[${new Date().toISOString()}] Starting game with language: ${language}...`);
 
     const db = DatabaseManager.getInstance().getDatabase();
     const graphManager = GraphManager.getInstance();
@@ -141,6 +142,28 @@ export async function startGame(req: Request, res: Response): Promise<void> {
     console.log(`[${new Date().toISOString()}] Game started successfully`);
 
     const finalSessionId = dynamicGameState?.sessionId || "";
+
+    // Save language to session metadata
+    if (finalSessionId) {
+      try {
+        const database = db.getDatabase();
+        const existingSession = database.prepare(`
+          SELECT metadata FROM sessions WHERE session_id = ?
+        `).get(finalSessionId) as { metadata: string | null } | undefined;
+
+        const metadata = existingSession?.metadata ? JSON.parse(existingSession.metadata) : {};
+        metadata.language = language;
+
+        database.prepare(`
+          UPDATE sessions SET metadata = ? WHERE session_id = ?
+        `).run(JSON.stringify(metadata), finalSessionId);
+
+        console.log(`[${new Date().toISOString()}] Session language saved: ${language}`);
+      } catch (error) {
+        console.error("Failed to save session language:", error);
+        // Don't fail game start if metadata update fails
+      }
+    }
     const finalCharacterId = dynamicGameState?.playerCharacter.id || "";
     const finalCharacterName = dynamicGameState?.playerCharacter.name || "";
     const finalTimeOfDay = dynamicGameState?.timeOfDay || "08:00";

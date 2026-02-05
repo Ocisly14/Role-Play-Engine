@@ -1,4 +1,16 @@
-下面是一份完整的 RAG + CoC 知识图架构说明（偏“交给 coding agent 直接开工”的规格文档）。我按你现有的 GameState/ScenarioSnapshot/NPCProfile 来设计，核心目标：
+# ⚠️ DEPRECATED - NOT IN USE ⚠️
+
+**Status**: This design document is **deprecated and not implemented**.
+
+**Current System**: The Dynamic World system does **NOT** use RAG. Only basic embedding functionality is used for skill matching (see `src/rag/embedding.ts`).
+
+**Do not implement this design** - it is kept for historical reference only.
+
+---
+
+# Original RAG Architecture Design (Unused)
+
+下面是一份完整的 RAG + CoC 知识图架构说明（偏"交给 coding agent 直接开工"的规格文档）。我按你现有的 GameState/ScenarioSnapshot/NPCProfile 来设计，核心目标：
 	•	既能做 混合召回（BM25 + 向量 + 图扩散）
 	•	又能保证 不剧透（player/keeper 可见性隔离）
 	•	支持 增量更新（场景永久变化、线索发现、NPC移动）

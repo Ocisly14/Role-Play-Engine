@@ -252,10 +252,11 @@ JWT_SECRET=CHANGE-THIS-TO-A-SECURE-RANDOM-STRING
 
 ### RAG System Status
 
-RAG (Retrieval-Augmented Generation) is currently **disabled** by default in production:
-- `SKIP_RAG = true` in memory agent
-- System under active redesign for better semantic search and graph traversal
-- See `RAG.md` for architecture design notes
+RAG (Retrieval-Augmented Generation) is **NOT USED** in the system:
+- Dynamic World system does not use RAG (explicitly disabled)
+- `RAG.md` contains an unimplemented design document (marked as deprecated)
+- Only basic embedding functionality exists in `src/rag/` for skill matching feature
+- Skill matching uses semantic similarity to suggest relevant character skills
 
 ## Important Implementation Details
 

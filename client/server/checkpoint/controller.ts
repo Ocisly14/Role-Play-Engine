@@ -301,6 +301,30 @@ export async function loadCheckpointData(req: Request, res: Response): Promise<v
 
     console.log(`[${new Date().toISOString()}] Created session ${newSessionId} from checkpoint ${checkpointId} (${conversationHistory.length} messages, ${playerMemos.length} memos)`);
 
+    // Restore language from original session metadata
+    let restoredLanguage: 'en' | 'zh' = 'zh';
+    try {
+      const originalSession = database.prepare(`
+        SELECT metadata FROM sessions WHERE session_id = ?
+      `).get(checkpoint.sessionId) as { metadata: string | null } | undefined;
+
+      if (originalSession?.metadata) {
+        const metadata = JSON.parse(originalSession.metadata);
+        restoredLanguage = (metadata.language === 'en' || metadata.language === 'zh') ? metadata.language : 'zh';
+      }
+
+      // Save language to new session metadata
+      const newMetadata = { language: restoredLanguage };
+      database.prepare(`
+        UPDATE sessions SET metadata = ? WHERE session_id = ?
+      `).run(JSON.stringify(newMetadata), newSessionId);
+
+      console.log(`[${new Date().toISOString()}] Restored language setting: ${restoredLanguage}`);
+    } catch (error) {
+      console.error("Failed to restore language setting:", error);
+      // Continue with default language
+    }
+
     // Deserialize DynamicGameState with checkpoint gameTime to filter snapshots
     const { DynamicGameStateManager } = await import("../../../src/dynamicworldagent/state/index.js");
     const checkpointGameDay = checkpoint.metadata.gameDay;
@@ -341,6 +365,7 @@ export async function loadCheckpointData(req: Request, res: Response): Promise<v
       sessionId: newSessionId,
       gameState: restoredDynamicGameState,
       conversationHistory: conversationHistory,
+      language: restoredLanguage,
       message: "存档加载成功",
       timestamp: new Date().toISOString(),
     });

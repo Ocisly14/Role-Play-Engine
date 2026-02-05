@@ -8,6 +8,8 @@
 import type { CoCDatabase } from "../../../shared/agents/memory/database/index.js";
 import type { DynamicGameState } from "../../state/index.js";
 import { randomUUID } from "crypto";
+import { GameHistoryRag } from "../../../rag/gameHistoryRag.js";
+import type { ActionLogEntry } from "../../../shared/agents/models/gameTypes.js";
 
 export interface TurnInput {
   sessionId: string;
@@ -74,9 +76,11 @@ export interface GameTurn {
 
 export class TurnManager {
   private db: CoCDatabase;
+  private ragManager: GameHistoryRag;
 
   constructor(db: CoCDatabase) {
     this.db = db;
+    this.ragManager = new GameHistoryRag(db);
   }
 
   /**
@@ -153,7 +157,7 @@ export class TurnManager {
   /**
    * Complete a turn with Keeper's narrative
    */
-  completeTurn(turnId: string, output: TurnOutput): void {
+  completeTurn(turnId: string, output: TurnOutput, language?: 'en' | 'zh'): void {
     this.db.completeTurn(
       turnId,
       output.keeperNarrative,
@@ -163,6 +167,95 @@ export class TurnManager {
     );
 
     console.log(`✓ Turn completed: ${turnId}`);
+
+    // Trigger embedding asynchronously (non-blocking)
+    this.embedTurnAsync(turnId, output.keeperNarrative, language).catch((error) => {
+      console.error(`[TurnManager] Failed to embed turn ${turnId}:`, error);
+    });
+  }
+
+  /**
+   * Embed turn data for RAG retrieval (async, non-blocking)
+   * Embeds action logs and turn (user input + narrative) pair
+   */
+  private async embedTurnAsync(turnId: string, narrative: string, language?: 'en' | 'zh'): Promise<void> {
+    try {
+      // Get turn data from database
+      const turn = this.getTurn(turnId);
+      if (!turn) {
+        console.warn(`[TurnManager] Turn ${turnId} not found for embedding`);
+        return;
+      }
+
+      // Skip simulated turns
+      if (turn.isSimulated) {
+        return;
+      }
+
+      const userInput = turn.characterInput;
+      const sessionId = turn.sessionId;
+      const effectiveLanguage = language || 'zh';
+
+      // Embed turn (user input + narrative) with correct language model
+      await this.ragManager.embedTurn(
+        sessionId,
+        turnId,
+        userInput,
+        narrative,
+        undefined, // emailId
+        effectiveLanguage
+      );
+
+      // Embed action logs if available
+      if (turn.actionResults && Array.isArray(turn.actionResults)) {
+        for (const actionResult of turn.actionResults) {
+          // Extract action log from action result
+          const actionLog: ActionLogEntry = {
+            time: actionResult.gameTime || turn.gameTime || "",
+            location: actionResult.location || turn.location || "",
+            character: actionResult.character || turn.characterName || undefined,
+            summary: actionResult.result || "",
+            successLevel: this.extractSuccessLevel(actionResult),
+          };
+
+          await this.ragManager.embedActionLog(
+            sessionId,
+            turnId,
+            actionLog,
+            undefined, // emailId
+            effectiveLanguage
+          );
+        }
+      }
+
+      console.log(`✓ Turn ${turnId} embedded for RAG retrieval (language: ${effectiveLanguage})`);
+    } catch (error) {
+      console.error(`[TurnManager] Error embedding turn ${turnId}:`, error);
+      throw error;
+    }
+  }
+
+  /**
+   * Extract success level from action result
+   */
+  private extractSuccessLevel(actionResult: any): ActionLogEntry["successLevel"] {
+    if (!actionResult.diceRolls || !Array.isArray(actionResult.diceRolls)) {
+      return "unknown";
+    }
+
+    // Try to parse success level from dice roll strings
+    for (const roll of actionResult.diceRolls) {
+      if (typeof roll === "string") {
+        if (roll.includes("critical")) return "critical";
+        if (roll.includes("extreme")) return "extreme";
+        if (roll.includes("hard")) return "hard";
+        if (roll.includes("success")) return "regular";
+        if (roll.includes("failure")) return "failure";
+        if (roll.includes("fumble")) return "fumble";
+      }
+    }
+
+    return "unknown";
   }
 
   /**

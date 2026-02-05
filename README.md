@@ -493,12 +493,11 @@ Only the **Keeper** agent use MEDIUM models—everything else uses SMALL for cos
   - Turn-based coordination between players
   - Shared investigation and collaborative problem-solving
 
-**RAG System Under Improvement**
-- The Retrieval-Augmented Generation (RAG) system for knowledge retrieval is **currently being redesigned**
-- Current status: RAG is disabled by default (`SKIP_RAG = true`)
-- Improvements in progress:
-  - Better semantic search for scenario clues and NPC knowledge
-  - Optimized graph traversal for relationship discovery
+**Embedding-Based Skill Matching**
+- The system uses semantic embedding for intelligent skill suggestion
+- When players describe actions, the system recommends relevant character skills
+- Uses local BGE-small model for fast, offline embedding generation
+- Supports both English and Chinese language detection
   - Enhanced context retrieval for more accurate rule application
 
 **Frontend UI Improvements**

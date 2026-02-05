@@ -162,10 +162,18 @@ const AppShell: React.FC = () => {
   const [isRestoringSession, setIsRestoringSession] = useState(false);
   const [hasInitialized, setHasInitialized] = useState(false);
   const prevUserRef = useRef<typeof user | null>(null);
+  const [language, setLanguage] = useState<'en' | 'zh'>(() => {
+    const stored = localStorage.getItem('app.language');
+    return (stored === 'en' || stored === 'zh') ? stored : 'zh';
+  });
 
   useEffect(() => {
     window.localStorage.setItem(PAGE_STORAGE_KEY, page);
   }, [page]);
+
+  useEffect(() => {
+    localStorage.setItem('app.language', language);
+  }, [language]);
 
   // After a fresh login, always land on home instead of restoring create-character.
   useEffect(() => {
@@ -727,7 +735,7 @@ const AppShell: React.FC = () => {
       const response = await authFetch("/api/game/start", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ characterId, modName: selectedModName }),
+        body: JSON.stringify({ characterId, modName: selectedModName, language }),
       });
 
       const data = await response.json();
@@ -854,6 +862,14 @@ const AppShell: React.FC = () => {
         // Don't show module introduction when loading checkpoint (only for new games)
         setShowModuleIntro(false);
         setModuleIntroduction(null);
+
+        // Restore language from checkpoint
+        if (data.language) {
+          const restoredLanguage = (data.language === 'en' || data.language === 'zh') ? data.language : 'zh';
+          setLanguage(restoredLanguage);
+          const languageLabel = restoredLanguage === 'zh' ? '中文' : 'English';
+          alert(`存档已加载！\n语言设置：${languageLabel}\n(该设置与存档时一致，无法更改)`);
+        }
 
         // Close checkpoint selector and go to game
         setShowCheckpointSelector(false);
@@ -2118,6 +2134,76 @@ const AppShell: React.FC = () => {
             </div>
           </div>
         )}
+        {/* Language Toggle - Fixed Bottom Right (only on home page) */}
+        <div
+          style={{
+            position: 'fixed',
+            bottom: '24px',
+            right: '24px',
+            zIndex: 9999,
+            display: 'flex',
+            gap: '8px',
+            background: 'rgba(0, 0, 0, 0.7)',
+            backdropFilter: 'blur(10px)',
+            padding: '8px 12px',
+            borderRadius: '20px',
+            border: '1px solid rgba(255, 255, 255, 0.1)',
+            boxShadow: '0 4px 12px rgba(0, 0, 0, 0.3)',
+          }}
+        >
+          <button
+            onClick={() => setLanguage('zh')}
+            style={{
+              padding: '6px 16px',
+              borderRadius: '14px',
+              border: 'none',
+              background: language === 'zh' ? 'rgba(59, 130, 246, 0.8)' : 'transparent',
+              color: language === 'zh' ? '#fff' : 'rgba(255, 255, 255, 0.7)',
+              fontWeight: language === 'zh' ? '600' : '400',
+              fontSize: '14px',
+              cursor: 'pointer',
+              transition: 'all 0.2s',
+            }}
+            onMouseEnter={(e) => {
+              if (language !== 'zh') {
+                e.currentTarget.style.background = 'rgba(255, 255, 255, 0.1)';
+              }
+            }}
+            onMouseLeave={(e) => {
+              if (language !== 'zh') {
+                e.currentTarget.style.background = 'transparent';
+              }
+            }}
+          >
+            中文
+          </button>
+          <button
+            onClick={() => setLanguage('en')}
+            style={{
+              padding: '6px 16px',
+              borderRadius: '14px',
+              border: 'none',
+              background: language === 'en' ? 'rgba(59, 130, 246, 0.8)' : 'transparent',
+              color: language === 'en' ? '#fff' : 'rgba(255, 255, 255, 0.7)',
+              fontWeight: language === 'en' ? '600' : '400',
+              fontSize: '14px',
+              cursor: 'pointer',
+              transition: 'all 0.2s',
+            }}
+            onMouseEnter={(e) => {
+              if (language !== 'en') {
+                e.currentTarget.style.background = 'rgba(255, 255, 255, 0.1)';
+              }
+            }}
+            onMouseLeave={(e) => {
+              if (language !== 'en') {
+                e.currentTarget.style.background = 'transparent';
+              }
+            }}
+          >
+            EN
+          </button>
+        </div>
       </>
     );
   }
@@ -2323,6 +2409,7 @@ const AppShell: React.FC = () => {
               moduleIntroduction={moduleIntroduction}
               initialMessages={conversationHistory || undefined}
               onNarrativeComplete={() => setSidebarRefreshTrigger(prev => prev + 1)}
+              language={language}
             />
             <GameSidebar
               sessionId={sessionId}

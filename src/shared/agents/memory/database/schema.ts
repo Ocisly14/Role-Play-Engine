@@ -1150,6 +1150,104 @@ export class CoCDatabase {
             CREATE INDEX IF NOT EXISTS idx_checkpoints_scene_name ON game_checkpoints(current_scene_name);
             CREATE INDEX IF NOT EXISTS idx_checkpoints_session_scene ON game_checkpoints(session_id, current_scene_name);
         `);
+
+    // Action Log Embeddings table - for RAG retrieval of action history
+    this.db.exec(`
+            CREATE TABLE IF NOT EXISTS action_log_embeddings (
+                id TEXT PRIMARY KEY,
+                session_id TEXT NOT NULL,
+                turn_id TEXT NOT NULL,
+                action_log TEXT NOT NULL, -- JSON serialized ActionLogEntry
+                embedding BLOB NOT NULL, -- Float array stored as binary
+                created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+                FOREIGN KEY (turn_id) REFERENCES game_turns(turn_id)
+            );
+            CREATE INDEX IF NOT EXISTS idx_action_embeddings_session ON action_log_embeddings(session_id);
+            CREATE INDEX IF NOT EXISTS idx_action_embeddings_turn ON action_log_embeddings(turn_id);
+        `);
+    try {
+      if (!this.hasColumn("action_log_embeddings", "email_id")) {
+        this.db.exec("ALTER TABLE action_log_embeddings ADD COLUMN email_id TEXT;");
+        this.db.exec("CREATE INDEX IF NOT EXISTS idx_action_embeddings_email ON action_log_embeddings(email_id);");
+      }
+    } catch {
+      // ignore if column already exists
+    }
+
+    // Turn Embeddings table - for RAG retrieval of conversation history
+    this.db.exec(`
+            CREATE TABLE IF NOT EXISTS turn_embeddings (
+                id TEXT PRIMARY KEY,
+                session_id TEXT NOT NULL,
+                turn_id TEXT NOT NULL,
+                user_input TEXT NOT NULL,
+                narrative TEXT NOT NULL,
+                embedding BLOB NOT NULL, -- Float array stored as binary
+                created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+                FOREIGN KEY (turn_id) REFERENCES game_turns(turn_id)
+            );
+            CREATE INDEX IF NOT EXISTS idx_turn_embeddings_session ON turn_embeddings(session_id);
+            CREATE INDEX IF NOT EXISTS idx_turn_embeddings_turn ON turn_embeddings(turn_id);
+        `);
+    try {
+      if (!this.hasColumn("turn_embeddings", "email_id")) {
+        this.db.exec("ALTER TABLE turn_embeddings ADD COLUMN email_id TEXT;");
+        this.db.exec("CREATE INDEX IF NOT EXISTS idx_turn_embeddings_email ON turn_embeddings(email_id);");
+      }
+    } catch {
+      // ignore if column already exists
+    }
+
+    // FTS5 full-text search for turn embeddings (for BM25 keyword search)
+    this.db.exec(`
+            CREATE VIRTUAL TABLE IF NOT EXISTS turn_embeddings_fts USING fts5(
+                id UNINDEXED,
+                user_input,
+                narrative,
+                content='turn_embeddings',
+                content_rowid='rowid'
+            );
+
+            CREATE TRIGGER IF NOT EXISTS turn_embeddings_fts_insert AFTER INSERT ON turn_embeddings BEGIN
+                INSERT INTO turn_embeddings_fts(rowid, id, user_input, narrative)
+                VALUES (new.rowid, new.id, new.user_input, new.narrative);
+            END;
+
+            CREATE TRIGGER IF NOT EXISTS turn_embeddings_fts_delete AFTER DELETE ON turn_embeddings BEGIN
+                DELETE FROM turn_embeddings_fts WHERE rowid = old.rowid;
+            END;
+
+            CREATE TRIGGER IF NOT EXISTS turn_embeddings_fts_update AFTER UPDATE ON turn_embeddings BEGIN
+                DELETE FROM turn_embeddings_fts WHERE rowid = old.rowid;
+                INSERT INTO turn_embeddings_fts(rowid, id, user_input, narrative)
+                VALUES (new.rowid, new.id, new.user_input, new.narrative);
+            END;
+        `);
+
+    // FTS5 full-text search for action log embeddings (for BM25 keyword search)
+    this.db.exec(`
+            CREATE VIRTUAL TABLE IF NOT EXISTS action_log_embeddings_fts USING fts5(
+                id UNINDEXED,
+                action_log_text,
+                content='action_log_embeddings',
+                content_rowid='rowid'
+            );
+
+            CREATE TRIGGER IF NOT EXISTS action_log_embeddings_fts_insert AFTER INSERT ON action_log_embeddings BEGIN
+                INSERT INTO action_log_embeddings_fts(rowid, id, action_log_text)
+                VALUES (new.rowid, new.id, new.action_log);
+            END;
+
+            CREATE TRIGGER IF NOT EXISTS action_log_embeddings_fts_delete AFTER DELETE ON action_log_embeddings BEGIN
+                DELETE FROM action_log_embeddings_fts WHERE rowid = old.rowid;
+            END;
+
+            CREATE TRIGGER IF NOT EXISTS action_log_embeddings_fts_update AFTER UPDATE ON action_log_embeddings BEGIN
+                DELETE FROM action_log_embeddings_fts WHERE rowid = old.rowid;
+                INSERT INTO action_log_embeddings_fts(rowid, id, action_log_text)
+                VALUES (new.rowid, new.id, new.action_log);
+            END;
+        `);
   }
 
   getDatabase(): DBInstance {
@@ -1930,6 +2028,314 @@ export class CoCDatabase {
       actionResults: row.action_results ? JSON.parse(row.action_results) : null,
       directorDecision: row.director_decision ? JSON.parse(row.director_decision) : null,
       clueRevelations: row.clue_revelations ? JSON.parse(row.clue_revelations) : null,
+    }));
+  }
+
+  // ==================== Embeddings Methods (Game History RAG) ====================
+
+  /**
+   * Add action log embedding for RAG retrieval
+   */
+  addActionLogEmbedding(params: {
+    sessionId: string;
+    turnId: string;
+    actionLog: any;
+    embedding: number[];
+    emailId?: string;
+  }): void {
+    const { sessionId, turnId, actionLog, embedding, emailId } = params;
+    const id = randomUUID();
+
+    // Convert embedding array to Buffer for BLOB storage
+    const embeddingBuffer = Buffer.from(new Float32Array(embedding).buffer);
+
+    const stmt = this.db.prepare(`
+      INSERT INTO action_log_embeddings (id, session_id, turn_id, action_log, embedding, email_id)
+      VALUES (?, ?, ?, ?, ?, ?)
+    `);
+
+    stmt.run(
+      id,
+      sessionId,
+      turnId,
+      JSON.stringify(actionLog),
+      embeddingBuffer,
+      emailId || null
+    );
+  }
+
+  /**
+   * Add turn embedding for RAG retrieval
+   */
+  addTurnEmbedding(params: {
+    sessionId: string;
+    turnId: string;
+    userInput: string;
+    narrative: string;
+    embedding: number[];
+    emailId?: string;
+  }): void {
+    const { sessionId, turnId, userInput, narrative, embedding, emailId } = params;
+    const id = randomUUID();
+
+    // Convert embedding array to Buffer for BLOB storage
+    const embeddingBuffer = Buffer.from(new Float32Array(embedding).buffer);
+
+    const stmt = this.db.prepare(`
+      INSERT INTO turn_embeddings (id, session_id, turn_id, user_input, narrative, embedding, email_id)
+      VALUES (?, ?, ?, ?, ?, ?, ?)
+    `);
+
+    stmt.run(
+      id,
+      sessionId,
+      turnId,
+      userInput,
+      narrative,
+      embeddingBuffer,
+      emailId || null
+    );
+  }
+
+  /**
+   * Search action log embeddings by similarity
+   * Returns action logs sorted by cosine similarity
+   */
+  searchActionLogEmbeddings(params: {
+    sessionId: string;
+    queryEmbedding: number[];
+    topK?: number;
+    emailId?: string;
+  }): Array<{
+    id: string;
+    turnId: string;
+    actionLog: any;
+    similarity: number;
+  }> {
+    const { sessionId, queryEmbedding, topK = 5, emailId } = params;
+
+    // Build email filter
+    const emailFilter = emailId ? " AND email_id = ?" : "";
+    const args = emailId ? [sessionId, emailId] : [sessionId];
+
+    const stmt = this.db.prepare(`
+      SELECT id, turn_id, action_log, embedding
+      FROM action_log_embeddings
+      WHERE session_id = ?${emailFilter}
+      ORDER BY created_at DESC
+    `);
+
+    const rows = stmt.all(...args) as Array<{
+      id: string;
+      turn_id: string;
+      action_log: string;
+      embedding: Buffer;
+    }>;
+
+    // Calculate cosine similarity for each embedding
+    const results = rows.map(row => {
+      const embeddingBuffer = row.embedding;
+      const embedding = Array.from(new Float32Array(embeddingBuffer.buffer, embeddingBuffer.byteOffset, embeddingBuffer.length / 4));
+      const similarity = this.cosineSimilarity(queryEmbedding, embedding);
+
+      return {
+        id: row.id,
+        turnId: row.turn_id,
+        actionLog: JSON.parse(row.action_log),
+        similarity,
+      };
+    });
+
+    // Sort by similarity (descending) and return topK
+    return results
+      .sort((a, b) => b.similarity - a.similarity)
+      .slice(0, topK);
+  }
+
+  /**
+   * Search turn embeddings by similarity
+   * Returns turns sorted by cosine similarity
+   */
+  searchTurnEmbeddings(params: {
+    sessionId: string;
+    queryEmbedding: number[];
+    topK?: number;
+    emailId?: string;
+  }): Array<{
+    id: string;
+    turnId: string;
+    userInput: string;
+    narrative: string;
+    similarity: number;
+  }> {
+    const { sessionId, queryEmbedding, topK = 5, emailId } = params;
+
+    // Build email filter
+    const emailFilter = emailId ? " AND email_id = ?" : "";
+    const args = emailId ? [sessionId, emailId] : [sessionId];
+
+    const stmt = this.db.prepare(`
+      SELECT id, turn_id, user_input, narrative, embedding
+      FROM turn_embeddings
+      WHERE session_id = ?${emailFilter}
+      ORDER BY created_at DESC
+    `);
+
+    const rows = stmt.all(...args) as Array<{
+      id: string;
+      turn_id: string;
+      user_input: string;
+      narrative: string;
+      embedding: Buffer;
+    }>;
+
+    // Calculate cosine similarity for each embedding
+    const results = rows.map(row => {
+      const embeddingBuffer = row.embedding;
+      const embedding = Array.from(new Float32Array(embeddingBuffer.buffer, embeddingBuffer.byteOffset, embeddingBuffer.length / 4));
+      const similarity = this.cosineSimilarity(queryEmbedding, embedding);
+
+      return {
+        id: row.id,
+        turnId: row.turn_id,
+        userInput: row.user_input,
+        narrative: row.narrative,
+        similarity,
+      };
+    });
+
+    // Sort by similarity (descending) and return topK
+    return results
+      .sort((a, b) => b.similarity - a.similarity)
+      .slice(0, topK);
+  }
+
+  /**
+   * Calculate cosine similarity between two vectors
+   */
+  private cosineSimilarity(a: number[], b: number[]): number {
+    if (a.length !== b.length || a.length === 0) return 0;
+
+    let dotProduct = 0;
+    let normA = 0;
+    let normB = 0;
+
+    for (let i = 0; i < a.length; i++) {
+      dotProduct += a[i] * b[i];
+      normA += a[i] * a[i];
+      normB += b[i] * b[i];
+    }
+
+    if (normA === 0 || normB === 0) return 0;
+
+    return dotProduct / (Math.sqrt(normA) * Math.sqrt(normB));
+  }
+
+  /**
+   * Search turn embeddings using BM25 keyword matching (FTS5)
+   * Returns turns sorted by BM25 relevance score
+   */
+  searchTurnsByKeywords(params: {
+    sessionId: string;
+    query: string;
+    topK?: number;
+    emailId?: string;
+  }): Array<{
+    id: string;
+    turnId: string;
+    userInput: string;
+    narrative: string;
+    bm25Score: number;
+  }> {
+    const { sessionId, query, topK = 10, emailId } = params;
+
+    // Build email filter
+    const emailFilter = emailId ? " AND te.email_id = ?" : "";
+    const baseArgs = [sessionId];
+    if (emailId) baseArgs.push(emailId);
+    const args = [...baseArgs, query, topK];
+
+    const stmt = this.db.prepare(`
+      SELECT
+        te.id,
+        te.turn_id,
+        te.user_input,
+        te.narrative,
+        fts.rank as bm25_score
+      FROM turn_embeddings te
+      JOIN turn_embeddings_fts fts ON te.rowid = fts.rowid
+      WHERE te.session_id = ?${emailFilter}
+        AND turn_embeddings_fts MATCH ?
+      ORDER BY fts.rank
+      LIMIT ?
+    `);
+
+    const rows = stmt.all(...args) as Array<{
+      id: string;
+      turn_id: string;
+      user_input: string;
+      narrative: string;
+      bm25_score: number;
+    }>;
+
+    return rows.map(row => ({
+      id: row.id,
+      turnId: row.turn_id,
+      userInput: row.user_input,
+      narrative: row.narrative,
+      bm25Score: -row.bm25_score, // FTS5 rank is negative, negate to positive score
+    }));
+  }
+
+  /**
+   * Search action log embeddings using BM25 keyword matching (FTS5)
+   * Returns action logs sorted by BM25 relevance score
+   */
+  searchActionLogsByKeywords(params: {
+    sessionId: string;
+    query: string;
+    topK?: number;
+    emailId?: string;
+  }): Array<{
+    id: string;
+    turnId: string;
+    actionLog: any;
+    bm25Score: number;
+  }> {
+    const { sessionId, query, topK = 10, emailId } = params;
+
+    // Build email filter
+    const emailFilter = emailId ? " AND ale.email_id = ?" : "";
+    const baseArgs = [sessionId];
+    if (emailId) baseArgs.push(emailId);
+    const args = [...baseArgs, query, topK];
+
+    const stmt = this.db.prepare(`
+      SELECT
+        ale.id,
+        ale.turn_id,
+        ale.action_log,
+        fts.rank as bm25_score
+      FROM action_log_embeddings ale
+      JOIN action_log_embeddings_fts fts ON ale.rowid = fts.rowid
+      WHERE ale.session_id = ?${emailFilter}
+        AND action_log_embeddings_fts MATCH ?
+      ORDER BY fts.rank
+      LIMIT ?
+    `);
+
+    const rows = stmt.all(...args) as Array<{
+      id: string;
+      turn_id: string;
+      action_log: string;
+      bm25_score: number;
+    }>;
+
+    return rows.map(row => ({
+      id: row.id,
+      turnId: row.turn_id,
+      actionLog: JSON.parse(row.action_log),
+      bm25Score: -row.bm25_score, // FTS5 rank is negative, negate to positive score
     }));
   }
 }

@@ -40,6 +40,7 @@ export interface DynamicGraphState {
   turnId?: string;  // Current turn being processed
   isSimulatedQuery?: boolean;  // Track if input is simulated by Director Agent
   simulatedQueryCount?: number;  // Safety counter for continuous loop (max 5)
+  language?: "en" | "zh";  // User-selected output language
   selectedSkill?: string | null;  // Optional player-selected skill for this turn
   skillSelectionMode?: "auto" | "manual"; // How skill selection should behave for this turn
   stream?: {
@@ -113,6 +114,10 @@ export const buildDynamicGraph = (
       },
       simulatedQueryCount: {
         value: (left: number | undefined, right?: number | undefined) =>
+          right !== undefined ? right : left,
+      },
+      language: {
+        value: (left: DynamicGraphState["language"] | undefined, right?: DynamicGraphState["language"]) =>
           right !== undefined ? right : left,
       },
       selectedSkill: {
@@ -281,12 +286,14 @@ export const buildDynamicGraph = (
     // Enrich memory context with DynamicGameState information
     const characterInput = latestHumanMessage(state.messages);
     const actionAnalysis = currentState.temporaryInfo.currentActionAnalysis;
-    
+    const language = (state.language === 'en' || state.language === 'zh') ? state.language : 'zh';
+
     const enrichedState = await enrichMemoryContext(
       currentState,
       actionAnalysis,
       db,
-      characterInput
+      characterInput,
+      language
     );
     
     // Update manager with enriched state by creating a new manager
@@ -311,6 +318,7 @@ export const buildDynamicGraph = (
     const userInput = latestHumanMessage(state.messages);
     const selectedSkill = state.selectedSkill ?? null;
     const skillSelectionMode = state.skillSelectionMode ?? "manual";
+    const language = (state.language === "en" || state.language === "zh") ? state.language : "zh";
 
     // Log input context
     const actionAnalysis = dgsm.getState().temporaryInfo.currentActionAnalysis;
@@ -330,7 +338,7 @@ export const buildDynamicGraph = (
     }
 
     try {
-      await actionAgent.processAction(runtime, dgsm, userInput, selectedSkill, skillSelectionMode);
+      await actionAgent.processAction(runtime, dgsm, userInput, selectedSkill, skillSelectionMode, language);
     } catch (error) {
       console.error(`\n❌ [Dynamic Action Agent] 执行过程中抛出异常:`, error);
       const currentState = dgsm.getState();
@@ -582,10 +590,11 @@ export const buildDynamicGraph = (
     const dgsm = new DynamicGameStateManager(state.dynamicGameState);
     const currentState = dgsm.getState();
     const userInput = latestHumanMessage(state.messages);
+    const language = (state.language === "en" || state.language === "zh") ? state.language : "zh";
 
     try {
       // Use epilogue generation method
-      const result = await keeperAgent.generateEpilogue(userInput, dgsm);
+      const result = await keeperAgent.generateEpilogue(userInput, dgsm, language);
 
       // Complete turn with epilogue narrative if turnId exists
       if (state.turnId) {
@@ -596,7 +605,7 @@ export const buildDynamicGraph = (
             clueRevelations: result.clueRevelations || null,
             gameDay: currentState.gameDay ?? null,
             gameTime: currentState.timeOfDay ?? null,
-          });
+          }, state.language);
           const inputType = isSimulated ? '模拟查询' : '真实输入';
           console.log(`📝 [Dynamic Epilogue Keeper] Turn ${state.turnId} (${inputType}) 已完成 - 游戏结束`);
           console.log(`   Epilogue length: ${result.narrative.length} characters`);
@@ -631,6 +640,7 @@ export const buildDynamicGraph = (
     console.log("📖 [Dynamic Keeper Agent] 开始生成叙述...");
     const dgsm = new DynamicGameStateManager(state.dynamicGameState);
     const userInput = latestHumanMessage(state.messages);
+    const language = (state.language === "en" || state.language === "zh") ? state.language : "zh";
     const stream = state.stream;
     const actionResults = (dgsm.getState().temporaryInfo.actionResults || []) as ActionResult[];
     const playerName = dgsm.getState().playerCharacter?.name || null;
@@ -653,7 +663,7 @@ export const buildDynamicGraph = (
         stream?.onNarrativeStart?.();
       }
 
-      const result = await keeperAgent.generateNarrative(userInput, dgsm, {
+      const result = await keeperAgent.generateNarrative(userInput, dgsm, language, {
         onNarrativeDelta: shouldStream ? stream?.onNarrativeDelta : undefined,
       });
 
@@ -676,7 +686,7 @@ export const buildDynamicGraph = (
             clueRevelations: result.clueRevelations,
             gameDay: updatedGameState?.gameDay ?? null,
             gameTime: updatedGameState?.timeOfDay ?? null,
-          });
+          }, state.language);
           const inputType = isSimulated ? '模拟查询' : '真实输入';
           console.log(`📝 [Dynamic Keeper Agent] Turn ${state.turnId} (${inputType}) 已完成并保存到数据库`);
           console.log(`   Keeper narrative length: ${result.narrative.length} characters`);
@@ -765,6 +775,10 @@ export const buildDynamicListenerGraph = (
       },
       simulatedQueryCount: {
         value: (left: number | undefined, right?: number | undefined) =>
+          right !== undefined ? right : left,
+      },
+      language: {
+        value: (left: DynamicGraphState["language"] | undefined, right?: DynamicGraphState["language"]) =>
           right !== undefined ? right : left,
       },
       stream: {
@@ -911,9 +925,10 @@ export const buildDynamicListenerGraph = (
     console.log("🤖 [Dynamic Listener NPC Action Agent] 开始执行 NPC 响应...");
     const dgsm = new DynamicGameStateManager(state.dynamicGameState);
     const runtime = {};
+    const language = (state.language === "en" || state.language === "zh") ? state.language : "zh";
 
     try {
-      await actionAgent.processNPCActions(runtime, dgsm);
+      await actionAgent.processNPCActions(runtime, dgsm, language);
       console.log("✅ [Dynamic Listener NPC Action Agent] NPC 动作处理完成");
     } catch (error) {
       console.error(`❌ [Dynamic Listener NPC Action Agent] 处理 NPC 动作时出错:`, error);
@@ -1086,10 +1101,11 @@ export const buildDynamicListenerGraph = (
     const dgsm = new DynamicGameStateManager(state.dynamicGameState);
     const currentState = dgsm.getState();
     const userInput = latestHumanMessage(state.messages);
+    const language = (state.language === "en" || state.language === "zh") ? state.language : "zh";
 
     try {
       // Use epilogue generation method
-      const result = await keeperAgent.generateEpilogue(userInput, dgsm);
+      const result = await keeperAgent.generateEpilogue(userInput, dgsm, language);
 
       // Complete turn with epilogue narrative if turnId exists
       if (state.turnId) {
@@ -1100,7 +1116,7 @@ export const buildDynamicListenerGraph = (
             clueRevelations: result.clueRevelations || null,
             gameDay: currentState.gameDay ?? null,
             gameTime: currentState.timeOfDay ?? null,
-          });
+          }, state.language);
           const inputType = isSimulated ? '模拟查询' : '真实输入';
           console.log(`📝 [Dynamic Listener Epilogue Keeper] Turn ${state.turnId} (${inputType}) 已完成 - 游戏结束`);
           console.log(`   Epilogue length: ${result.narrative.length} characters`);
@@ -1135,11 +1151,12 @@ export const buildDynamicListenerGraph = (
     console.log("📖 [Dynamic Listener Keeper Agent] 开始生成叙述...");
     const dgsm = new DynamicGameStateManager(state.dynamicGameState);
     const userInput = latestHumanMessage(state.messages);
+    const language = (state.language === "en" || state.language === "zh") ? state.language : "zh";
 
     let updatedGameState = state.dynamicGameState;
 
     try {
-      const result = await keeperAgent.generateNarrative(userInput, dgsm);
+      const result = await keeperAgent.generateNarrative(userInput, dgsm, language);
 
       // Use the updated state from result (which includes all keeper updates)
       updatedGameState = result.updatedGameState;
@@ -1153,7 +1170,7 @@ export const buildDynamicListenerGraph = (
             clueRevelations: result.clueRevelations,
             gameDay: updatedGameState?.gameDay ?? null,
             gameTime: updatedGameState?.timeOfDay ?? null,
-          });
+          }, state.language);
           const inputType = isSimulated ? '模拟查询' : '真实输入';
           console.log(`📝 [Dynamic Listener Keeper Agent] Turn ${state.turnId} (${inputType}) 已完成并保存到数据库`);
           console.log(`   Keeper narrative length: ${result.narrative.length} characters`);

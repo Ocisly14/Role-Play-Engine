@@ -68,6 +68,7 @@ export interface CharacterStatus {
 export interface ActionLogEntry {
   time: string;
   location: string;
+  character?: string;  // Who performed the action (player or NPC name)
   summary: string;
   successLevel?: "critical" | "extreme" | "hard" | "regular" | "failure" | "fumble" | "unknown";
 }

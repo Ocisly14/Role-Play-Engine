@@ -35,11 +35,13 @@ export class ActionAgent {
       targetCharacter?: DynamicCharacterProfile | null;
       selectedSkill?: string | null;
       skillSelectionMode?: "auto" | "manual";
+      language?: "en" | "zh";
     },
     gameStateManager: DynamicGameStateManager,
     originalUserInput?: string | null
   ): Promise<DynamicGameState> {
     const { isNPC, npcResponse, targetCharacter, selectedSkill, skillSelectionMode } = options;
+    const language = options.language === "en" || options.language === "zh" ? options.language : "zh";
 
     // Pre-roll dice
     const preRolledDice = this.preRollDice();
@@ -59,7 +61,8 @@ export class ActionAgent {
       existingSceneChangeRequest,
       sceneNPCs,
       !isNPC ? selectedSkill ?? null : null,
-      !isNPC ? skillSelectionMode : undefined
+      !isNPC ? skillSelectionMode : undefined,
+      language
     );
 
     const actionTypeTemplate = getActionTypeTemplate(dynamicState, isNPC, npcResponse);
@@ -117,7 +120,8 @@ export class ActionAgent {
     gameStateManager: DynamicGameStateManager,
     userMessage: string,
     selectedSkill?: string | null,
-    skillSelectionMode?: "auto" | "manual"
+    skillSelectionMode?: "auto" | "manual",
+    language?: "en" | "zh"
   ): Promise<void> {
     const dynamicState = gameStateManager.getState();
     const actionAnalysis = dynamicState.temporaryInfo.currentActionAnalysis;
@@ -132,7 +136,8 @@ export class ActionAgent {
         isNPC: false,
         targetCharacter,
         selectedSkill: selectedSkill ?? null,
-        skillSelectionMode
+        skillSelectionMode,
+        language
       },
       gameStateManager,
       userMessage // Pass original user input
@@ -911,7 +916,11 @@ export class ActionAgent {
    * NPC responses to recent actions rather than a single action.
    * For regular player actions, NPC responses are handled directly in buildFinalResult.
    */
-  async processNPCActions(runtime: any, gameStateManager: DynamicGameStateManager): Promise<void> {
+  async processNPCActions(
+    runtime: any,
+    gameStateManager: DynamicGameStateManager,
+    language?: "en" | "zh"
+  ): Promise<void> {
     const dynamicState = gameStateManager.getState();
     const npcResponseAnalyses = dynamicState.temporaryInfo.npcResponseAnalyses || [];
 
@@ -953,7 +962,8 @@ export class ActionAgent {
         {
           isNPC: true,
           npcResponse,
-          targetCharacter
+          targetCharacter,
+          language
         },
         gameStateManager,
         null // NPC actions don't have original user input
