@@ -169,6 +169,18 @@ export function GameChat({ sessionId, apiBaseUrl = '/api', characterName = 'Inve
   const [showingDiceAnimation, setShowingDiceAnimation] = useState(false);
   const [diceAnimationCompleted, setDiceAnimationCompleted] = useState(false);
 
+  // Scene change overlay
+  const [isSceneChanging, setIsSceneChanging] = useState(false);
+  const sceneChangeTimeoutRef = useRef<number | null>(null);
+
+  const clearSceneChanging = useCallback(() => {
+    setIsSceneChanging(false);
+    if (sceneChangeTimeoutRef.current !== null) {
+      clearTimeout(sceneChangeTimeoutRef.current);
+      sceneChangeTimeoutRef.current = null;
+    }
+  }, []);
+
   // Update refs when values change
   useEffect(() => {
     messagesRef.current = messages;
@@ -561,6 +573,17 @@ export function GameChat({ sessionId, apiBaseUrl = '/api', characterName = 'Inve
               );
 
               setStreamingTurnId(current => current === turnId ? null : current);
+            } else if (message.type === 'scene_change_start') {
+              setIsSceneChanging(true);
+              if (sceneChangeTimeoutRef.current !== null) {
+                clearTimeout(sceneChangeTimeoutRef.current);
+              }
+              sceneChangeTimeoutRef.current = window.setTimeout(() => {
+                setIsSceneChanging(false);
+                sceneChangeTimeoutRef.current = null;
+              }, 180000);
+            } else if (message.type === 'scene_change_end') {
+              clearSceneChanging();
             } else if (message.type === 'scene_image') {
               if (onNarrativeCompleteRef.current) {
                 onNarrativeCompleteRef.current();
@@ -983,6 +1006,7 @@ export function GameChat({ sessionId, apiBaseUrl = '/api', characterName = 'Inve
       }
 
       setIsSending(false);
+      clearSceneChanging();
       // Use ref to call fetchGameEnding without causing reconnection
       if (fetchGameEndingRef.current) {
         fetchGameEndingRef.current();
@@ -991,8 +1015,9 @@ export function GameChat({ sessionId, apiBaseUrl = '/api', characterName = 'Inve
       // Handle error case
       console.error(`[GameChat] Turn ${turn.turnId || turn.turnNumber} failed:`, turn.errorMessage);
       setIsSending(false);
+      clearSceneChanging();
     }
-  }, [turn, onNarrativeComplete]);
+  }, [turn, onNarrativeComplete, clearSceneChanging]);
 
   useEffect(() => {
     if (!isGameEnded) return;
@@ -1146,11 +1171,14 @@ export function GameChat({ sessionId, apiBaseUrl = '/api', characterName = 'Inve
     }
   }, [inputValue]);
 
-  // Cleanup timeout on unmount
+  // Cleanup timeouts on unmount
   useEffect(() => {
     return () => {
       if (collapseTimeoutRef.current) {
         clearTimeout(collapseTimeoutRef.current);
+      }
+      if (sceneChangeTimeoutRef.current !== null) {
+        clearTimeout(sceneChangeTimeoutRef.current);
       }
     };
   }, []);
@@ -1192,6 +1220,16 @@ export function GameChat({ sessionId, apiBaseUrl = '/api', characterName = 'Inve
 
   return (
     <div className="game-chat-container backdrop-blur-sm border border-slate-200 shadow-md rounded-lg">
+      {/* Scene Change Overlay */}
+      {isSceneChanging && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center pointer-events-none">
+          <div className="bg-white/90 border border-slate-200 shadow-[0_4px_14px_rgba(15,23,42,0.25)] rounded-xl px-5 py-3 flex items-center gap-3">
+            <div className="w-4 h-4 border-2 border-slate-500 border-t-transparent rounded-full animate-spin" />
+            <span className="text-sm text-slate-700 font-medium">世界变更中…</span>
+          </div>
+        </div>
+      )}
+
       {/* Session Info Bar */}
       <div className="session-info-bar">
         <div className="character-info backdrop-blur-sm bg-white/50 border border-slate-200 shadow-md rounded-lg px-3 py-1.5 h-9 flex items-center">

@@ -521,6 +521,10 @@ export class ActionAgent {
     // Add to action results
     gameStateManager.addActionResult(actionResult);
 
+    // Record full action output for downstream prompts (keeper)
+    const detailedResult = this.buildDetailedActionResult(character, parsed, isNPC, toolLogs);
+    gameStateManager.addActionResultDetail(detailedResult);
+
     // Log detailed action result
     const logPrefix = isNPC ? `📊 [NPC Action Result] ${character.name}` : `📊 [Action Result] Detailed execution result`;
     console.log(`\n${logPrefix}:`);
@@ -644,6 +648,7 @@ export class ActionAgent {
                     time: logEntry.time,
                     location: logEntry.location,
                     summary: logEntry.summary,
+                    successLevel: typeof logEntry.successLevel === "string" ? logEntry.successLevel : undefined,
                   };
                   npcInState.actionLog.push(actionLogEntry);
                 }
@@ -664,6 +669,7 @@ export class ActionAgent {
                 time: fullGameTime,
                 location: locationName,
                 summary: npcResponse.summary || `${npc.name} responds`,
+                successLevel: "unknown",
               };
               npcInState.actionLog.push(fallbackLogEntry);
             }
@@ -726,6 +732,7 @@ export class ActionAgent {
             time: logEntry.time,
             location: logEntry.location,
             summary: logEntry.summary,
+            successLevel: typeof logEntry.successLevel === "string" ? logEntry.successLevel : undefined,
           };
           
           targetCharacter.actionLog.push(actionLogEntry);
@@ -762,6 +769,7 @@ export class ActionAgent {
           time: fullTime,
           location: locationName,
           summary: actionResult.result,
+          successLevel: "unknown",
         };
         actorInState.actionLog.push(fallbackLogEntry);
         console.log(`   ⚠️  LLM did not generate actionLog, added fallback entry to ${isNPC ? 'NPC' : 'player'} ${actorInState.name} with location: ${locationName}`);
@@ -773,6 +781,67 @@ export class ActionAgent {
     
     // Return the updated game state
     return gameStateManager.getState();
+  }
+
+  /**
+   * Build a normalized detailed action result payload for keeper prompts.
+   */
+  private buildDetailedActionResult(
+    character: DynamicCharacterProfile,
+    parsed: unknown,
+    isNPC: boolean,
+    toolLogs: string[]
+  ): Record<string, unknown> {
+    const parsedObject =
+      parsed && typeof parsed === "object" ? (parsed as Record<string, unknown>) : {};
+    const detailedResult: Record<string, unknown> = {
+      character: character.name,
+      isNPC,
+      ...parsedObject,
+    };
+
+    if ("sceneChange" in detailedResult) {
+      delete detailedResult.sceneChange;
+    }
+
+    if ("diceUsed" in detailedResult) {
+      delete detailedResult.diceUsed;
+    }
+
+    const stripActionLogLocation = (entries: unknown): unknown => {
+      if (!Array.isArray(entries)) return entries;
+      return entries.map((entry) => {
+        if (!entry || typeof entry !== "object") return entry;
+        const cleaned = { ...(entry as Record<string, unknown>) };
+        if ("location" in cleaned) {
+          delete cleaned.location;
+        }
+        return cleaned;
+      });
+    };
+
+    if ("actionLog" in detailedResult) {
+      detailedResult.actionLog = stripActionLogLocation(detailedResult.actionLog);
+    }
+
+    if (Array.isArray(detailedResult.npcResponses)) {
+      detailedResult.npcResponses = detailedResult.npcResponses.map((response) => {
+        if (!response || typeof response !== "object") return response;
+        const cleaned = { ...(response as Record<string, unknown>) };
+        if ("summary" in cleaned) {
+          delete cleaned.summary;
+        }
+        if ("diceUsed" in cleaned) {
+          delete cleaned.diceUsed;
+        }
+        if ("actionLog" in cleaned) {
+          cleaned.actionLog = stripActionLogLocation(cleaned.actionLog);
+        }
+        return cleaned;
+      });
+    }
+
+    return detailedResult;
   }
 
 
@@ -816,6 +885,16 @@ export class ActionAgent {
 
     // Add error result to action results
     stateManager.addActionResult(errorActionResult);
+
+    // Record detailed error output for downstream prompts (keeper)
+    const errorDetail: Record<string, unknown> = {
+      character: character.name,
+      isNPC,
+      timeElapsedMinutes: 0,
+      timeConsumption: "instant",
+      error: errorMessage,
+    };
+    stateManager.addActionResultDetail(errorDetail);
 
     console.error(`\n📊 [Action Result] Error result recorded:`);
     console.error(`   Character: ${errorActionResult.character}`);

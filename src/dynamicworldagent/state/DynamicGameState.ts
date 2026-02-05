@@ -43,6 +43,8 @@ export interface DynamicTemporaryInfo {
   contextualData: Record<string, any>;
   /** Action results from Action Agent */
   actionResults: ActionResult[];
+  /** Full action outputs from Action Agent (raw JSON response + actor metadata) */
+  actionResultsDetailed: Array<Record<string, unknown>>;
   /** Current action analysis from Orchestrator Agent */
   currentActionAnalysis: ActionAnalysis | null;
   /** NPC response analyses from Character Agent */
@@ -170,6 +172,7 @@ export const initialDynamicGameState = (params: {
     rules: [],
     contextualData: {},
     actionResults: [],
+    actionResultsDetailed: [],
     currentActionAnalysis: null,
     npcResponseAnalyses: [],
     sceneChangeRequest: null,
@@ -793,6 +796,7 @@ export class DynamicGameStateManager {
    */
   clearActionResults(): void {
     this.state.temporaryInfo.actionResults = [];
+    this.state.temporaryInfo.actionResultsDetailed = [];
     this.state.lastUpdated = new Date();
   }
 
@@ -867,6 +871,22 @@ export class DynamicGameStateManager {
    */
   setActionResults(results: ActionResult[]): void {
     this.state.temporaryInfo.actionResults = results;
+    this.state.lastUpdated = new Date();
+  }
+
+  /**
+   * Add detailed action result to temporary storage
+   */
+  addActionResultDetail(detail: Record<string, unknown>): void {
+    if (!detail) return;
+    this.state.temporaryInfo.actionResultsDetailed.push(detail);
+
+    // Keep only the most recent 10 detailed action results to avoid memory bloat
+    if (this.state.temporaryInfo.actionResultsDetailed.length > 10) {
+      this.state.temporaryInfo.actionResultsDetailed =
+        this.state.temporaryInfo.actionResultsDetailed.slice(-10);
+    }
+
     this.state.lastUpdated = new Date();
   }
 

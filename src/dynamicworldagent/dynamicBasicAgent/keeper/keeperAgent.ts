@@ -43,8 +43,22 @@ export class KeeperAgent {
     // 2. Get all action results (player first, then NPCs in executionOrder; same round fed from character → npcAction flow)
     const allActionResultsRaw = this.getAllActionResults(dynamicState);
 
-    // Filter out diceRolls field (not used in template)
-    const allActionResults: Omit<ActionResult, 'diceRolls'>[] = allActionResultsRaw.map(({ diceRolls, ...result }) => result);
+    // Filter out fields not used in template (diceRolls, location)
+    const allActionResults: Omit<ActionResult, 'diceRolls' | 'location'>[] =
+      allActionResultsRaw.map(({ diceRolls, location, ...result }) => result);
+
+    // 2.1 Get full action outputs for keeper prompt
+    const detailedResultsRaw = this.getAllActionResultsDetailed(dynamicState);
+    const allActionResultsDetailed = detailedResultsRaw.length > 0
+      ? detailedResultsRaw.map((detail, index) => {
+          const character =
+            typeof detail.character === "string" ? detail.character : `Action ${index}`;
+          return {
+            character,
+            actionResultJson: this.safeStringify(detail),
+          };
+        })
+      : null;
 
     // 2.1. Get the latest complete action result (for backward compatibility)
     const latestCompleteActionResult = allActionResults.length > 0 ? allActionResults[allActionResults.length - 1] : null;
@@ -101,13 +115,9 @@ export class KeeperAgent {
       reason: sceneChangeRequest.reason
     } : null;
 
-    // Extract connections from completeScenarioInfo (already extracted there, reuse it)
-    // Connections are scenario-level data from scenarioOutlines
-    const connections = (completeScenarioInfo as any).connections || [];
-
     const templateContext = {
       characterInput,
-      allActionResults,  // All action results (for {{#each}} loop)
+      allActionResultsDetailed,  // Full action outputs (for {{#each}} loop)
       fullGameTime: fullGameTime,  // Complete display: "Day 1, 08:00 (Morning)"
       tension: dynamicState.tension,
       isTransition,
@@ -116,8 +126,6 @@ export class KeeperAgent {
       currentTurnNumber,  // Current turn number
       isFirstRealTurn,  // Boolean flag for turn 1 detection
       keeperGuidance: dynamicState.keeperGuidance || null,  // Module-specific keeper guidance
-      // Connections as separate variable for easier template access (scenario-level from scenarioOutlines)
-      connections: connections,
       // JSON string version (used directly in template)
       scenarioContextJson: this.safeStringify(completeScenarioInfo),
       playerCharacterJson: this.safeStringify(playerCharacterComplete),
@@ -387,16 +395,11 @@ export class KeeperAgent {
     );
     const connections = currentScenarioOutline?.connections || [];
 
-    // Simplified scenario info - keep essential dynamic state
-    // Include clue text so Keeper can decide what to reveal
+    // Full snapshot minus gameTime and sceneImage, plus scenario-level connections
+    const { gameTime, sceneImage, ...snapshot } = currentScenario;
+
     return {
-      hasScenario: true,
-      id: currentScenario.id,
-      name: currentScenario.name,
-      location: currentScenario.location,
-      // Characters present in the scene (dynamic state)
-      characters: currentScenario.characters || [],
-      // Connections to other scenarios
+      ...snapshot,
       connections: connections.map(conn => {
         // Find target scenario to get proper name and id
         const targetScenario = dynamicState.scenarioOutlines.find(
@@ -410,19 +413,7 @@ export class KeeperAgent {
           blocked: conn.blocked,
           blockReason: conn.blockReason
         };
-      }),
-      // Provide clue details for Keeper decision-making
-      clues: (currentScenario.clues || []).map(clue => ({
-        id: clue.id,
-        clueText: clue.clueText,
-        location: clue.location,
-        category: clue.category,
-        difficulty: clue.difficulty,
-        reveals: clue.reveals,
-        discovered: clue.discovered,
-        // Keep discovery details if the clue was discovered
-        ...(clue.discovered && clue.discoveryDetails ? { discoveryDetails: clue.discoveryDetails } : {})
-      }))
+      })
     };
   }
 
@@ -492,12 +483,19 @@ export class KeeperAgent {
   }
 
   /**
+   * Get full action outputs (raw JSON from Action Agent).
+   */
+  private getAllActionResultsDetailed(dynamicState: DynamicGameState): Array<Record<string, unknown>> {
+    return dynamicState.temporaryInfo.actionResultsDetailed || [];
+  }
+
+  /**
    * 3. Extract complete attributes of NPCs involved in all action results
    * @param interactionPartnerName If provided, NPCs will include their interaction history with this character
    */
   private extractActionRelatedNpcs(
     dynamicState: DynamicGameState,
-    allActionResults: Omit<ActionResult, 'diceRolls'>[],
+    allActionResults: Omit<ActionResult, 'diceRolls' | 'location'>[],
     interactionPartnerName: string | null = null
   ) {
     if (!allActionResults || allActionResults.length === 0) {
@@ -604,7 +602,7 @@ export class KeeperAgent {
       // Basic information
       id: character.id,
       name: character.name,
-      isNPC: npcData.isNPC || true,
+      isNPC: npcData.isNPC === true,
 
       // Personal details
       occupation: npcData.occupation || "Unknown",

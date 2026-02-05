@@ -156,7 +156,6 @@ For each NPC in the current scene, determine:
    - Consider narrative flow and cause-effect relationships
 
 5. **NPC Action Details**: For each responding NPC, provide:
-   - **summary**: What the NPC does (1-2 sentences)
    - **diceUsed**: Choose and use one or more Dices from the pre-rolled dice array if the NPC action requires skill checks
    - **actionLog**: Action log entry for the NPC
    - **stateUpdate**: State changes for the NPC (if any)
@@ -173,6 +172,17 @@ Each NPC includes their last 3 actionLog entries (recentActionLog) showing their
 ${JSON.stringify(sceneNPCs, null, 2)}
 ` : ''}
 
+## 🎲 Dice Interpretation (CoC 7e)
+
+- Prefer explicit labels in dice results (success/failure/critical/fumble). If labels conflict, trust the numeric roll.
+- **Critical success**: roll is 01.
+- **Extreme success**: roll ≤ (skill ÷ 5).
+- **Hard success**: roll ≤ (skill ÷ 2).
+- **Regular success**: roll ≤ skill.
+- **Failure**: roll > skill.
+- **Fumble**: roll 96–100 if skill < 50; roll 100 if skill ≥ 50.
+- If only "success" is provided without level, treat as regular unless roll/skill allows a higher tier.
+
 ## 📋 ActionLog Requirements
 
 **REQUIRED**: Always include at least ONE actionLog entry for the current action.
@@ -181,6 +191,9 @@ ${JSON.stringify(sceneNPCs, null, 2)}
 - "time": Use the current game time (provided in context) in "Day N, HH:MM" format
 - "location": The LOCATION NAME
 - "summary": Concise but descriptive summary (1-2 sentences)
+- "successLevel": One of "critical" | "extreme" | "hard" | "regular" | "failure" | "fumble" | "unknown"
+  - Use CoC 7e rules above when dice are used.
+  - If no dice are used, set based on outcome (regular/failure) or "unknown" if indeterminate.
 - "characterId": The ID of the character (player or NPC) who performed this action
   - Use the acting character's id from the context (Character.id or NPC.id)
   - If the action affects multiple characters, create separate entries with their respective characterIds
@@ -195,8 +208,6 @@ Return ONLY valid JSON in this exact structure:
 
 \`\`\`json
 {
-  "summary": "Brief description of what happened (1-2 sentences)",
-
   "diceUsed": [
     // Array of dice you actually used (empty array if no dice needed)
     // Format: "[dice_name][index]: [result] ([skill%] [penalty if any] = [success/failure/N/A])"
@@ -211,6 +222,7 @@ Return ONLY valid JSON in this exact structure:
       "time": "Day 1, 14:30",
       "location": "New York Public Library",
       "summary": "Searched the bookshelf and found a hidden journal",
+      "successLevel": "regular",
       "characterId": "character-id-or-npc-id"
     }
   ],
@@ -260,15 +272,15 @@ ${!isNPC && sceneNPCs && sceneNPCs.length > 0 ? `
       "willRespond": true,
       "responseType": "social",
       "executionOrder": 1,
-      "summary": "Brief description of what the NPC does",
       "diceUsed": [  // Optional: Dice rolls if NPC action requires skill checks
-        "1d100[0]: 45 (Persuade 50% = success)"
+        "1d100[index]: 45 (Persuade 50% = success)"
       ],
       "actionLog": [  // Required: At least one actionLog entry
         {
           "time": "Day 1, 14:30",
           "location": "Current Location",
           "summary": "NPC's action summary",
+          "successLevel": "regular",
           "characterId": "npc-id"
         }
       ],
@@ -305,7 +317,6 @@ export function getActionTypeTemplate(
     return `
 {
   "type": "result",
-  "summary": "Action completed",
   "stateUpdate": {
     "playerCharacter": {
       "name": "Character Name",

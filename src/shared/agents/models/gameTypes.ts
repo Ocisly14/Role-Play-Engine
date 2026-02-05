@@ -69,6 +69,7 @@ export interface ActionLogEntry {
   time: string;
   location: string;
   summary: string;
+  successLevel?: "critical" | "extreme" | "hard" | "regular" | "failure" | "fumble" | "unknown";
 }
 
 /**

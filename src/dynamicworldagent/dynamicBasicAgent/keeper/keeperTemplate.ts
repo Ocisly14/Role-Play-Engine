@@ -32,15 +32,6 @@ You are a writer, responsible for writing a narrative of the game.
   {{scenarioContextJson}}
   {{/if}}
 
-  {{#if connections}}
-  ### Available Connections
-  {{#each connections}}
-  - **{{this.scenarioName}}** ({{this.relationshipType}})
-    {{#if this.description}}Description: {{this.description}}{{/if}}
-    {{#if this.blocked}}Status: BLOCKED - {{this.blockReason}}{{else}}Status: Accessible{{/if}}
-  {{/each}}
-  {{/if}}
-
   {{#if keeperGuidance}}
   ### Keeper Guidance
   {{keeperGuidance}}
@@ -57,13 +48,12 @@ You are a writer, responsible for writing a narrative of the game.
   - Tension: {{tension}} / 10
 
   ### Action Results
-  {{#if allActionResults}}
-  {{#each allActionResults}}
+  {{#if allActionResultsDetailed}}
+  {{#each allActionResultsDetailed}}
   Action {{@index}} — {{character}}
-  - Result: {{this.result}}
-  - Location: {{this.location}}
-  - Time Passed: {{this.timeElapsedMinutes}} minutes
-  - Changes: {{#each this.scenarioChanges}}{{this}}{{#unless @last}}, {{/unless}}{{/each}}
+  \`\`\`json
+  {{{actionResultJson}}}
+  \`\`\`
   {{/each}}
   {{else}}
   No actions occurred this turn.
@@ -100,6 +90,7 @@ You are a writer, responsible for writing a narrative of the game.
   2. Whether a scene transition, failed transition, or continuation applies
   3. Whether the action reveals scenario clues, NPC clues, or NPC secrets
   4. How tension should adjust (1-10)
+  5. Use successLevel from actionLog when present; if missing, infer outcome from dice results and context.
 
   ### Perspective & Information Limits (CRITICAL)
   - Write EXCLUSIVELY from the investigator's second-person perspective

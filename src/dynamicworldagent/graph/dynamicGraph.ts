@@ -53,6 +53,8 @@ export interface DynamicGraphState {
       gameTime?: string | null;
       timestamp?: string;
     }) => void;
+    onSceneChangeStart?: () => void;
+    onSceneChangeEnd?: () => void;
     onNarrativeStart?: () => void;
     onNarrativeDelta?: (delta: string) => void;
     onNarrativeEnd?: () => void;
@@ -346,6 +348,14 @@ export const buildDynamicGraph = (
         ],
       };
       dgsm.addActionResult(errorActionResult);
+      dgsm.addActionResultDetail({
+        character: errorActionResult.character,
+        isNPC: false,
+        summary: errorActionResult.result,
+        timeElapsedMinutes: 0,
+        timeConsumption: "instant",
+        error: error instanceof Error ? error.message : String(error),
+      });
     }
 
     console.log("✅ [Dynamic Action Agent] 动作执行完成");
@@ -397,12 +407,16 @@ export const buildDynamicGraph = (
       if (sceneChangeRequest?.shouldChange && sceneChangeRequest.targetSceneName) {
         const currentCharacterInput = latestHumanMessage(state.messages);
 
+        stream?.onSceneChangeStart?.();
+
         await directorAgent.handleActionDrivenSceneChange(
           dgsm,
           sceneChangeRequest.targetSceneName,
           sceneChangeRequest.reason,
           currentCharacterInput
         );
+
+        stream?.onSceneChangeEnd?.();
 
         const updatedState = dgsm.getState();
         const currentScenario = updatedState.currentScenario;
@@ -919,6 +933,8 @@ export const buildDynamicListenerGraph = (
     const currentState = dgsm.getState();
     const sceneChangeRequest = currentState.temporaryInfo.sceneChangeRequest;
 
+    const stream = state.stream;
+
     try {
       if (
         sceneChangeRequest?.shouldChange &&
@@ -926,12 +942,16 @@ export const buildDynamicListenerGraph = (
       ) {
         const currentCharacterInput = latestHumanMessage(state.messages);
 
+        stream?.onSceneChangeStart?.();
+
         await directorAgent.handleActionDrivenSceneChange(
           dgsm,
           sceneChangeRequest.targetSceneName,
           sceneChangeRequest.reason,
           currentCharacterInput
         );
+
+        stream?.onSceneChangeEnd?.();
       } else {
         console.log("   ℹ️  无场景转换请求，跳过场景转换处理");
       }

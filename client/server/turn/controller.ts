@@ -23,6 +23,8 @@ type NarrativeStreamHandlers = {
     gameTime?: string | null;
     timestamp?: string;
   }) => void;
+  onSceneChangeStart?: () => void;
+  onSceneChangeEnd?: () => void;
   onNarrativeStart?: () => void;
   onNarrativeDelta?: (delta: string) => void;
   onNarrativeEnd?: () => void;
@@ -212,6 +214,20 @@ function buildNarrativeStreamHandlers(params: {
         location: payload.location,
         imagePath: payload.imagePath,
         mimeType: payload.mimeType,
+      });
+    },
+    onSceneChangeStart: () => {
+      send({
+        type: "scene_change_start",
+        turnId: params.turnId,
+        timestamp: new Date().toISOString(),
+      });
+    },
+    onSceneChangeEnd: () => {
+      send({
+        type: "scene_change_end",
+        turnId: params.turnId,
+        timestamp: new Date().toISOString(),
       });
     },
     onNarrativeStart: enableStreaming
