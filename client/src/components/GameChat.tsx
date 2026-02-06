@@ -157,7 +157,6 @@ export function GameChat({ sessionId, apiBaseUrl = '/api', characterName = 'Inve
   const [isSkillSelectionModalOpen, setIsSkillSelectionModalOpen] = useState(false);
   const [pendingTurnForSkillSelection, setPendingTurnForSkillSelection] = useState<TurnStatus | null>(null);
   const processedSkillSelectionTurnsRef = useRef<Set<string>>(new Set());
-  const [suggestedLanguage, setSuggestedLanguage] = useState<'en' | 'zh'>('zh');
   const [streamingTurnId, setStreamingTurnId] = useState<string | null>(null);
   const [isInputCollapsed, setIsInputCollapsed] = useState(true);
   const collapseTimeoutRef = useRef<number | null>(null);
@@ -182,10 +181,6 @@ export function GameChat({ sessionId, apiBaseUrl = '/api', characterName = 'Inve
   const [pendingDiceRolls, setPendingDiceRolls] = useState<{ turnNumber: number; turnId?: string; diceRolls: Array<string | DiceRollInfo>; narrative: string; timestamp: string; gameDay?: number | null; gameTime?: string | null; isStreaming?: boolean } | null>(null);
   const [showingDiceAnimation, setShowingDiceAnimation] = useState(false);
   const [diceAnimationCompleted, setDiceAnimationCompleted] = useState(false);
-
-  useEffect(() => {
-    setSuggestedLanguage(language);
-  }, [language]);
 
   // Scene change overlay
   const [isSceneChanging, setIsSceneChanging] = useState(false);
@@ -321,10 +316,7 @@ export function GameChat({ sessionId, apiBaseUrl = '/api', characterName = 'Inve
         if (requestId !== suggestRequestIdRef.current) return;
 
         const suggestions = Array.isArray(data?.suggestions) ? data.suggestions : [];
-        if (data?.language === 'en' || data?.language === 'zh') {
-          setSuggestedLanguage(data.language);
-        }
-        const nextLanguage = data?.language === 'en' || data?.language === 'zh' ? data.language : language;
+        const nextLanguage = language;
         setSuggestedSkills(
           suggestions
             .filter((skill: { name?: string; value?: number }) => typeof skill?.name === 'string')
@@ -944,6 +936,10 @@ export function GameChat({ sessionId, apiBaseUrl = '/api', characterName = 'Inve
         (turn.turnId && processedTurnIdsRef.current.has(turn.turnId))
       ) {
         console.log(`[GameChat] Turn ${turnKey} already processed, skipping...`);
+        // Defensive: duplicate completion events can race with loading state updates.
+        // Always clear transient UI states so the chat doesn't remain stuck in "Processing...".
+        setIsSending(false);
+        clearSceneChanging();
         return;
       }
 
@@ -1339,40 +1335,42 @@ export function GameChat({ sessionId, apiBaseUrl = '/api', characterName = 'Inve
     <div className="game-chat-container backdrop-blur-sm border border-slate-200 shadow-md rounded-lg">
       {/* Skill Selection Modal */}
       {isSkillSelectionModalOpen && (
-        <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/50 backdrop-blur-sm">
-          <div className="bg-white rounded-2xl shadow-2xl max-w-2xl w-full mx-4 max-h-[80vh] overflow-hidden flex flex-col">
+        <div className="fixed inset-0 z-[100] flex items-center justify-center bg-[radial-gradient(circle_at_top,rgba(148,163,184,0.28),rgba(15,23,42,0.62))] px-3 backdrop-blur-md">
+          <div className="relative w-full max-w-xl max-h-[74vh] overflow-hidden rounded-[24px] border border-white/45 bg-white/30 shadow-[0_18px_60px_rgba(15,23,42,0.42)] backdrop-blur-2xl flex flex-col">
+            <div className="pointer-events-none absolute -top-20 left-[-12%] h-56 w-56 rounded-full bg-amber-200/40 blur-3xl" />
+            <div className="pointer-events-none absolute -bottom-24 right-[-10%] h-64 w-64 rounded-full bg-sky-200/35 blur-3xl" />
             {/* Modal Header */}
-            <div className="bg-gradient-to-r from-amber-500 to-orange-500 px-6 py-4 text-white">
-              <h2 className="text-2xl font-bold flex items-center gap-2">
-                <span>⚔️</span>
-                <span>技能选择 Skill Selection</span>
+            <div className="relative border-b border-white/35 bg-white/20 px-4 py-3 sm:px-5 sm:py-4 text-slate-900">
+              <h2 className="text-lg sm:text-xl font-semibold flex items-center gap-2">
+                <span className="inline-flex h-8 w-8 items-center justify-center rounded-full border border-white/70 bg-white/55 text-base shadow-sm">⚔️</span>
+                <span>Skill Check Required</span>
               </h2>
-              <p className="text-amber-50 text-sm mt-1">
-                你的行动需要进行技能检定 - Your action requires a skill check
+              <p className="text-slate-700 text-xs sm:text-sm mt-1">
+                Your action requires a skill check.
               </p>
             </div>
 
             {/* Modal Body */}
-            <div className="flex-1 overflow-y-auto p-6">
+            <div className="relative flex-1 overflow-y-auto p-3 sm:p-4">
               {/* Action Description */}
               {pendingTurnForSkillSelection && (
-                <div className="mb-6 p-4 bg-slate-50 rounded-lg border border-slate-200">
-                  <p className="text-sm text-slate-600 mb-1">你的行动：</p>
-                  <p className="font-medium text-slate-900">{pendingTurnForSkillSelection.characterInput}</p>
+                <div className="mb-4 rounded-2xl border border-white/60 bg-white/45 px-3 py-2.5 shadow-[0_8px_28px_rgba(15,23,42,0.12)]">
+                  <p className="text-xs uppercase tracking-wide text-slate-500 mb-1">Your Action</p>
+                  <p className="font-medium text-slate-900 leading-relaxed">{pendingTurnForSkillSelection.characterInput}</p>
                 </div>
               )}
 
               {/* Selected Skill Display */}
               {selectedSkill && (
-                <div className="mb-4 p-3 bg-amber-50 border-2 border-amber-300 rounded-lg">
-                  <p className="text-xs text-amber-700 mb-1">已选择技能：</p>
+                <div className="mb-4 rounded-2xl border border-amber-300/65 bg-amber-100/45 px-3 py-2.5 shadow-[0_10px_28px_rgba(146,64,14,0.18)]">
+                  <p className="text-xs uppercase tracking-wide text-amber-800/80 mb-1">Selected Skill</p>
                   <div className="flex items-center justify-between">
-                    <span className="text-lg font-semibold text-amber-900">
-                      {suggestedLanguage === 'zh'
+                    <span className="text-base sm:text-lg font-semibold text-amber-950">
+                      {language === 'zh'
                         ? (availableSkills.find(s => s.name === selectedSkill)?.displayNameZh ?? getSkillNameZh(selectedSkill))
                         : selectedSkill}
                     </span>
-                    <span className="text-amber-700 font-mono">
+                    <span className="text-amber-800 font-mono">
                       {availableSkills.find(s => s.name === selectedSkill)?.value ?? 0}%
                     </span>
                   </div>
@@ -1383,25 +1381,25 @@ export function GameChat({ sessionId, apiBaseUrl = '/api', characterName = 'Inve
               {availableSkills.length > 0 ? (
                 <div>
                   <p className="text-sm font-medium text-slate-700 mb-3">
-                    选择一个技能进行检定：
+                    Choose one skill for this check:
                   </p>
-                  <div className="grid grid-cols-2 gap-2 max-h-96 overflow-y-auto">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 max-h-64 overflow-y-auto pr-1">
                     {availableSkills.map((skill) => (
                       <button
                         key={skill.name}
                         type="button"
                         onClick={() => setSelectedSkill(skill.name)}
-                        className={`text-left p-3 rounded-lg border-2 transition-all ${
+                        className={`text-left p-2.5 rounded-xl border transition-all duration-200 ${
                           selectedSkill === skill.name
-                            ? 'border-amber-500 bg-amber-50 shadow-md scale-[1.02]'
-                            : 'border-slate-200 bg-white hover:border-slate-300 hover:shadow-sm'
+                            ? 'border-amber-300/90 bg-amber-100/65 shadow-[0_10px_25px_rgba(180,83,9,0.22)] scale-[1.01]'
+                            : 'border-white/65 bg-white/45 hover:border-white/90 hover:bg-white/60 hover:-translate-y-0.5 hover:shadow-[0_8px_18px_rgba(15,23,42,0.14)]'
                         }`}
                       >
                         <div className="flex items-center justify-between">
                           <span className={`font-medium ${
                             selectedSkill === skill.name ? 'text-amber-900' : 'text-slate-700'
                           }`}>
-                            {suggestedLanguage === 'zh'
+                            {language === 'zh'
                               ? (skill.displayNameZh ?? getSkillNameZh(skill.name))
                               : skill.name}
                           </span>
@@ -1417,26 +1415,26 @@ export function GameChat({ sessionId, apiBaseUrl = '/api', characterName = 'Inve
                 </div>
               ) : (
                 <div className="text-center py-8">
-                  <div className="w-8 h-8 border-3 border-slate-400 border-t-transparent rounded-full animate-spin mx-auto mb-3" />
-                  <p className="text-slate-600">加载技能列表中...</p>
+                  <div className="w-8 h-8 border-2 border-slate-400 border-t-transparent rounded-full animate-spin mx-auto mb-3" />
+                  <p className="text-slate-600">Loading skills...</p>
                 </div>
               )}
             </div>
 
             {/* Modal Footer */}
-            <div className="border-t border-slate-200 px-6 py-4 bg-slate-50 flex items-center justify-end gap-3">
+            <div className="border-t border-white/35 bg-white/20 px-3 py-3 sm:px-4 flex items-center justify-end gap-2.5">
               <button
                 onClick={handleSkillSelectionCancel}
-                className="px-4 py-2 text-slate-700 bg-white border border-slate-300 rounded-lg hover:bg-slate-50 transition-colors"
+                className="px-4 py-2 text-slate-700 bg-white/55 border border-white/75 rounded-xl hover:bg-white/70 transition-all hover:-translate-y-0.5"
               >
-                取消 Cancel
+                Cancel
               </button>
               <button
                 onClick={handleSkillSelectionConfirm}
                 disabled={!selectedSkill}
-                className="px-6 py-2 bg-gradient-to-r from-amber-500 to-orange-500 text-white font-medium rounded-lg hover:from-amber-600 hover:to-orange-600 transition-all disabled:opacity-50 disabled:cursor-not-allowed shadow-lg disabled:shadow-none"
+                className="px-6 py-2 bg-gradient-to-r from-amber-500/95 to-orange-500/95 text-white font-medium rounded-xl hover:from-amber-500 hover:to-orange-500 transition-all hover:-translate-y-0.5 disabled:opacity-50 disabled:cursor-not-allowed shadow-[0_12px_26px_rgba(194,65,12,0.34)] disabled:shadow-none"
               >
-                确认选择 Confirm
+                Confirm Selection
               </button>
             </div>
           </div>
@@ -1446,9 +1444,9 @@ export function GameChat({ sessionId, apiBaseUrl = '/api', characterName = 'Inve
       {/* Scene Change Overlay */}
       {isSceneChanging && (
         <div className="fixed inset-0 z-50 flex items-center justify-center pointer-events-none">
-          <div className="bg-white/90 border border-slate-200 shadow-[0_4px_14px_rgba(15,23,42,0.25)] rounded-xl px-5 py-3 flex items-center gap-3">
-            <div className="w-4 h-4 border-2 border-slate-500 border-t-transparent rounded-full animate-spin" />
-            <span className="text-sm text-slate-700 font-medium">世界变更中…</span>
+          <div className="rounded-2xl border border-white/60 bg-white/30 px-5 py-3 backdrop-blur-xl shadow-[0_12px_34px_rgba(15,23,42,0.3)] flex items-center gap-3">
+            <div className="w-4 h-4 border-2 border-slate-600 border-t-transparent rounded-full animate-spin" />
+            <span className="text-sm text-slate-800 font-medium">World Updating...</span>
           </div>
         </div>
       )}
@@ -1637,7 +1635,7 @@ export function GameChat({ sessionId, apiBaseUrl = '/api', characterName = 'Inve
                             {(() => {
                               const selectedDisplay =
                                 suggestedSkills.find((item) => item.name === selectedSkill)?.displayName ??
-                                (suggestedLanguage === 'zh'
+                                (language === 'zh'
                                   ? availableSkills.find((item) => item.name === selectedSkill)?.displayNameZh ?? getSkillNameZh(selectedSkill)
                                   : selectedSkill);
                               return selectedDisplay;
@@ -1738,7 +1736,7 @@ export function GameChat({ sessionId, apiBaseUrl = '/api', characterName = 'Inve
                             }}
                             disabled={isSending || isPolling || isGameEnded}
                           >
-                            {suggestedLanguage === 'zh'
+                            {language === 'zh'
                               ? (skill.displayNameZh ?? getSkillNameZh(skill.name))
                               : skill.name}
                             {Number.isFinite(skill.value) ? ` ${skill.value}%` : ''}

@@ -145,7 +145,8 @@ export async function createTurn(req: Request, res: Response): Promise<void> {
         userId,
         normalizedSkill,
         effectiveSkillSelectionMode,
-        language
+        language,
+        isResumingTurn
       )
         .catch((error) => {
           console.error(`Error processing turn ${turnId}:`, error);
@@ -315,7 +316,8 @@ async function processGameTurnAsync(
   userId: string,
   selectedSkill?: string | null,
   skillSelectionMode?: "auto" | "manual",
-  language?: 'en' | 'zh'
+  language?: 'en' | 'zh',
+  resumeFromInterrupt: boolean = false
 ) {
   try {
     console.log(`[${new Date().toISOString()}] Processing turn ${turnId}...`);
@@ -341,13 +343,7 @@ async function processGameTurnAsync(
       timestamp: turn?.startedAt ?? null,
     });
 
-    // Check if this is a resuming turn by checking turn status
-    const database = db.getDatabase();
-    const currentTurn = database.prepare(`
-      SELECT status FROM game_turns WHERE turn_id = ?
-    `).get(turnId) as any;
-
-    const isResumingTurn = currentTurn && currentTurn.status === 'requires_skill_selection';
+    const isResumingTurn = resumeFromInterrupt;
 
     // Prepare graph state
     let graphState: any;
@@ -360,6 +356,7 @@ async function processGameTurnAsync(
       language: language || 'zh',
       selectedSkill: selectedSkill ?? null,
       skillSelectionMode,
+      resumeFromInterrupt: isResumingTurn,
     };
 
     // Invoke the graph with checkpoint support

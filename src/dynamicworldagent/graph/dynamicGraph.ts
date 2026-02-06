@@ -39,6 +39,7 @@ export interface DynamicGraphState {
   messages: BaseMessage[];
   dynamicGameState: DynamicGameState;  // DynamicWorld state (required, not null)
   turnId?: string;  // Current turn being processed
+  resumeFromInterrupt?: boolean;  // True only when resuming a skill-selection interruption
   isSimulatedQuery?: boolean;  // Track if input is simulated by Director Agent
   simulatedQueryCount?: number;  // Safety counter for continuous loop (max 5)
   language?: "en" | "zh";  // User-selected output language
@@ -112,6 +113,10 @@ export const buildDynamicGraph = (
         value: (left: string | undefined, right?: string | undefined) =>
           right !== undefined ? right : left,
       },
+      resumeFromInterrupt: {
+        value: (left: boolean | undefined, right?: boolean | undefined) =>
+          right !== undefined ? right : left,
+      },
       isSimulatedQuery: {
         value: (left: boolean | undefined, right?: boolean | undefined) =>
           right !== undefined ? right : left,
@@ -159,7 +164,7 @@ export const buildDynamicGraph = (
       const hasNoActionResults =
         !currentState.temporaryInfo.actionResults ||
         currentState.temporaryInfo.actionResults.length === 0;
-      const isResuming = actionAnalysis !== null && hasNoActionResults;
+      const isResuming = state.resumeFromInterrupt === true && actionAnalysis !== null && hasNoActionResults;
 
       if (isResuming) {
         console.log("🔄 [Dynamic Entry] Resuming from interrupt - preserving state");
@@ -222,9 +227,8 @@ export const buildDynamicGraph = (
       return END;
     }
 
-    // Check if this is resuming from interrupt (has actionAnalysis already)
-    const hasActionAnalysis = state.dynamicGameState.temporaryInfo.currentActionAnalysis !== null;
-    if (hasActionAnalysis) {
+    // Only route to memory when this turn is explicitly a resume from skill-selection interrupt
+    if (state.resumeFromInterrupt === true) {
       console.log("🔀 [Dynamic Entry Router] → memory (resuming from interrupt, skip orchestrator)");
       return "memory";
     }
