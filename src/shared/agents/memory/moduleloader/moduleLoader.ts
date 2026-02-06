@@ -19,7 +19,11 @@ export class ModuleLoader {
   private parser: ModuleDocumentParser;
   private emailId?: string;
 
-  constructor(db: CoCDatabase, parser?: ModuleDocumentParser, options?: { emailId?: string }) {
+  constructor(
+    db: CoCDatabase,
+    parser?: ModuleDocumentParser,
+    options?: { emailId?: string }
+  ) {
     this.db = db;
     this.parser = parser || new ModuleDocumentParser();
     this.emailId = options?.emailId;
@@ -39,15 +43,18 @@ export class ModuleLoader {
   /**
    * Check if any files in directory have changed since last load
    */
-  private checkForChanges(dirPath: string): { hasChanges: boolean; currentFiles: Map<string, number> } {
+  private checkForChanges(dirPath: string): {
+    hasChanges: boolean;
+    currentFiles: Map<string, number>;
+  } {
     if (!fs.existsSync(dirPath)) {
       return { hasChanges: false, currentFiles: new Map() };
     }
 
     const currentFiles = new Map<string, number>();
-    const files = fs.readdirSync(dirPath).filter(file => 
-      file.endsWith('.docx') || file.endsWith('.pdf')
-    );
+    const files = fs
+      .readdirSync(dirPath)
+      .filter((file) => file.endsWith(".docx") || file.endsWith(".pdf"));
 
     // Get modification times for all relevant files
     for (const file of files) {
@@ -58,40 +65,47 @@ export class ModuleLoader {
 
     // Check if we have existing modules in database
     const existingModules = this.getAllModules();
-    
+
     // If no modules exist, we need to load
     if (existingModules.length === 0) {
       return { hasChanges: true, currentFiles };
     }
 
     // Check timestamp file
-    const lastLoadFile = path.join(dirPath, '.last_module_load_timestamp');
+    const lastLoadFile = path.join(dirPath, ".last_module_load_timestamp");
     let lastLoadTime = 0;
-    
+
     if (fs.existsSync(lastLoadFile)) {
       try {
-        lastLoadTime = parseInt(fs.readFileSync(lastLoadFile, 'utf8'));
+        lastLoadTime = parseInt(fs.readFileSync(lastLoadFile, "utf8"));
       } catch {
         return { hasChanges: true, currentFiles };
       }
     }
 
     // Check if any file is newer than last load
-    const hasChanges = Array.from(currentFiles.values()).some(mtime => mtime > lastLoadTime);
-    
+    const hasChanges = Array.from(currentFiles.values()).some(
+      (mtime) => mtime > lastLoadTime
+    );
+
     return { hasChanges, currentFiles };
   }
 
   /**
    * Check if any JSON files in directory have changed since last load
    */
-  private checkForJSONChanges(dirPath: string): { hasChanges: boolean; currentFiles: Map<string, number> } {
+  private checkForJSONChanges(dirPath: string): {
+    hasChanges: boolean;
+    currentFiles: Map<string, number>;
+  } {
     if (!fs.existsSync(dirPath)) {
       return { hasChanges: false, currentFiles: new Map() };
     }
 
     const currentFiles = new Map<string, number>();
-    const files = fs.readdirSync(dirPath).filter(file => file.toLowerCase().endsWith(".json"));
+    const files = fs
+      .readdirSync(dirPath)
+      .filter((file) => file.toLowerCase().endsWith(".json"));
 
     // Get modification times for all JSON files
     for (const file of files) {
@@ -102,27 +116,29 @@ export class ModuleLoader {
 
     // Check if we have existing modules
     const existingModules = this.getAllModules();
-    
+
     // If no modules exist, we need to load
     if (existingModules.length === 0) {
       return { hasChanges: true, currentFiles };
     }
 
     // Check timestamp file
-    const lastLoadFile = path.join(dirPath, '.last_module_load_timestamp');
+    const lastLoadFile = path.join(dirPath, ".last_module_load_timestamp");
     let lastLoadTime = 0;
-    
+
     if (fs.existsSync(lastLoadFile)) {
       try {
-        lastLoadTime = parseInt(fs.readFileSync(lastLoadFile, 'utf8'));
+        lastLoadTime = parseInt(fs.readFileSync(lastLoadFile, "utf8"));
       } catch {
         return { hasChanges: true, currentFiles };
       }
     }
 
     // Check if any file is newer than last load
-    const hasChanges = Array.from(currentFiles.values()).some(mtime => mtime > lastLoadTime);
-    
+    const hasChanges = Array.from(currentFiles.values()).some(
+      (mtime) => mtime > lastLoadTime
+    );
+
     return { hasChanges, currentFiles };
   }
 
@@ -130,15 +146,18 @@ export class ModuleLoader {
    * Update the last load timestamp
    */
   private updateLastLoadTimestamp(dirPath: string): void {
-    const lastLoadFile = path.join(dirPath, '.last_module_load_timestamp');
+    const lastLoadFile = path.join(dirPath, ".last_module_load_timestamp");
     const currentTime = Date.now().toString();
-    fs.writeFileSync(lastLoadFile, currentTime, 'utf8');
+    fs.writeFileSync(lastLoadFile, currentTime, "utf8");
   }
 
   /**
    * Load module from a single JSON file (skip document parsing)
    */
-  async loadModuleFromJSON(filePath: string, forceReload = false): Promise<ModuleBackground[]> {
+  async loadModuleFromJSON(
+    filePath: string,
+    forceReload = false
+  ): Promise<ModuleBackground[]> {
     console.log(`\n=== Loading Module from JSON file: ${filePath} ===`);
 
     if (!fs.existsSync(filePath)) {
@@ -152,7 +171,9 @@ export class ModuleLoader {
       const jsonData = JSON.parse(fileContent);
 
       // Handle both array of modules and single module object
-      const modules: ParsedModuleData[] = Array.isArray(jsonData) ? jsonData : [jsonData];
+      const modules: ParsedModuleData[] = Array.isArray(jsonData)
+        ? jsonData
+        : [jsonData];
 
       if (modules.length === 0) {
         console.log("⚠️  No module data found in JSON file.");
@@ -160,12 +181,16 @@ export class ModuleLoader {
       }
 
       // Convert and store each module
-      console.log(`💾 Starting to save ${modules.length} modules to database...`);
+      console.log(
+        `💾 Starting to save ${modules.length} modules to database...`
+      );
       const moduleRecords: ModuleBackground[] = [];
       for (let i = 0; i < modules.length; i++) {
         const parsed = modules[i];
         try {
-          console.log(`  [${i + 1}/${modules.length}] Saving module: ${parsed.title}`);
+          console.log(
+            `  [${i + 1}/${modules.length}] Saving module: ${parsed.title}`
+          );
           const moduleRecord = this.convertToModuleBackground(parsed);
           this.saveModuleToDatabase(moduleRecord);
           moduleRecords.push(moduleRecord);
@@ -175,7 +200,9 @@ export class ModuleLoader {
         }
       }
 
-      console.log(`\n=== Successfully loaded ${moduleRecords.length} modules from JSON file ===\n`);
+      console.log(
+        `\n=== Successfully loaded ${moduleRecords.length} modules from JSON file ===\n`
+      );
       return moduleRecords;
     } catch (error) {
       console.error(`✗ Failed to load JSON file ${filePath}:`, error);
@@ -186,7 +213,10 @@ export class ModuleLoader {
   /**
    * Load modules from JSON files in a directory (skip document parsing)
    */
-  async loadModulesFromJSONDirectory(dirPath: string, forceReload = false): Promise<ModuleBackground[]> {
+  async loadModulesFromJSONDirectory(
+    dirPath: string,
+    forceReload = false
+  ): Promise<ModuleBackground[]> {
     console.log(`\n=== Loading Modules from JSON directory: ${dirPath} ===`);
 
     if (!fs.existsSync(dirPath)) {
@@ -199,7 +229,9 @@ export class ModuleLoader {
       const { hasChanges } = this.checkForJSONChanges(dirPath);
       if (!hasChanges) {
         const existingModules = this.getAllModules();
-        console.log(`No changes detected. Using ${existingModules.length} existing modules from database.`);
+        console.log(
+          `No changes detected. Using ${existingModules.length} existing modules from database.`
+        );
         return existingModules;
       }
     }
@@ -227,7 +259,9 @@ export class ModuleLoader {
         const jsonData = JSON.parse(fileContent);
 
         // Handle both array of modules and single module object
-        const modules: ParsedModuleData[] = Array.isArray(jsonData) ? jsonData : [jsonData];
+        const modules: ParsedModuleData[] = Array.isArray(jsonData)
+          ? jsonData
+          : [jsonData];
 
         for (const moduleData of modules) {
           allParsedModules.push(moduleData);
@@ -250,7 +284,9 @@ export class ModuleLoader {
     for (let i = 0; i < allParsedModules.length; i++) {
       const parsed = allParsedModules[i];
       try {
-        console.log(`  [${i + 1}/${allParsedModules.length}] 正在保存模块: ${parsed.title}`);
+        console.log(
+          `  [${i + 1}/${allParsedModules.length}] 正在保存模块: ${parsed.title}`
+        );
         const moduleRecord = this.convertToModuleBackground(parsed);
         this.saveModuleToDatabase(moduleRecord);
         moduleRecords.push(moduleRecord);
@@ -263,7 +299,9 @@ export class ModuleLoader {
     // Update timestamp after successful load
     this.updateLastLoadTimestamp(dirPath);
 
-    console.log(`\n=== Successfully loaded ${moduleRecords.length} modules from JSON files ===\n`);
+    console.log(
+      `\n=== Successfully loaded ${moduleRecords.length} modules from JSON files ===\n`
+    );
     return moduleRecords;
   }
 
@@ -273,7 +311,10 @@ export class ModuleLoader {
   getAllModules(): ModuleBackground[] {
     const database = this.db.getDatabase();
     const emailId = this.getEmailId();
-    const hasEmailIdColumn = this.dbInstance.hasColumn("module_backgrounds", "email_id");
+    const hasEmailIdColumn = this.dbInstance.hasColumn(
+      "module_backgrounds",
+      "email_id"
+    );
     let sql = "SELECT * FROM module_backgrounds";
     const params: any[] = [];
     if (hasEmailIdColumn && emailId) {
@@ -292,16 +333,18 @@ export class ModuleLoader {
         keeperGuidance: row.keeper_guidance,
         moduleLimitations: row.module_limitations,
         initialGameTime: row.initial_game_time,
-        initialScenarioNPCs: row.initial_scenario_npcs ? JSON.parse(row.initial_scenario_npcs) : [],
-        tags: JSON.parse(row.tags || '[]'),
+        initialScenarioNPCs: row.initial_scenario_npcs
+          ? JSON.parse(row.initial_scenario_npcs)
+          : [],
+        tags: JSON.parse(row.tags || "[]"),
       };
-      
+
       // Load introduction if it exists in database
       // (Note: This field may not exist in older database schemas)
       if (row.introduction) {
         module.introduction = row.introduction;
       }
-      
+
       return module;
     });
   }
@@ -309,7 +352,10 @@ export class ModuleLoader {
   /**
    * Load module briefings from a directory (only if files have changed)
    */
-  async loadModulesFromDirectory(dirPath: string, forceReload = false): Promise<ModuleBackground[]> {
+  async loadModulesFromDirectory(
+    dirPath: string,
+    forceReload = false
+  ): Promise<ModuleBackground[]> {
     console.log(`\n=== Checking Modules in directory: ${dirPath} ===`);
 
     if (!fs.existsSync(dirPath)) {
@@ -323,7 +369,9 @@ export class ModuleLoader {
       const { hasChanges } = this.checkForChanges(dirPath);
       if (!hasChanges) {
         const existingModules = this.getAllModules();
-        console.log(`No changes detected. Using ${existingModules.length} existing modules from database.`);
+        console.log(
+          `No changes detected. Using ${existingModules.length} existing modules from database.`
+        );
         return existingModules;
       }
     }
@@ -338,12 +386,16 @@ export class ModuleLoader {
       return [];
     }
 
-    console.log(`💾 Starting to save ${parsedModules.length} modules to database...`);
+    console.log(
+      `💾 Starting to save ${parsedModules.length} modules to database...`
+    );
     const moduleRecords: ModuleBackground[] = [];
     for (let i = 0; i < parsedModules.length; i++) {
       const parsed = parsedModules[i];
       try {
-        console.log(`  [${i + 1}/${parsedModules.length}] Saving module: ${parsed.title}`);
+        console.log(
+          `  [${i + 1}/${parsedModules.length}] Saving module: ${parsed.title}`
+        );
         const moduleRecord = this.convertToModuleBackground(parsed);
         this.saveModuleToDatabase(moduleRecord);
         moduleRecords.push(moduleRecord);
@@ -356,12 +408,15 @@ export class ModuleLoader {
     // Update timestamp after successful load
     this.updateLastLoadTimestamp(dirPath);
 
-    console.log(`\n=== Successfully loaded ${moduleRecords.length} modules ===\n`);
+    console.log(
+      `\n=== Successfully loaded ${moduleRecords.length} modules ===\n`
+    );
     return moduleRecords;
   }
 
-
-  private convertToModuleBackground(parsed: ParsedModuleData): ModuleBackground {
+  private convertToModuleBackground(
+    parsed: ParsedModuleData
+  ): ModuleBackground {
     const moduleId = this.generateModuleId(parsed.title);
 
     return {
@@ -381,16 +436,31 @@ export class ModuleLoader {
   }
 
   private generateModuleId(title: string): string {
-    return `module-${title.toLowerCase().replace(/\s+/g, "-").replace(/[^\w-]/g, "")}-${randomUUID().slice(0, 8)}`;
+    return `module-${title
+      .toLowerCase()
+      .replace(/\s+/g, "-")
+      .replace(/[^\w-]/g, "")}-${randomUUID().slice(0, 8)}`;
   }
 
   private saveModuleToDatabase(module: ModuleBackground): void {
     const database = this.db.getDatabase();
     const emailId = this.getEmailId();
-    const hasInitialGameTime = this.dbInstance.hasColumn("module_backgrounds", "initial_game_time");
-    const hasIntroduction = this.dbInstance.hasColumn("module_backgrounds", "introduction");
-    const hasInitialScenarioNPCs = this.dbInstance.hasColumn("module_backgrounds", "initial_scenario_npcs");
-    const hasEmailIdColumn = this.dbInstance.hasColumn("module_backgrounds", "email_id");
+    const hasInitialGameTime = this.dbInstance.hasColumn(
+      "module_backgrounds",
+      "initial_game_time"
+    );
+    const hasIntroduction = this.dbInstance.hasColumn(
+      "module_backgrounds",
+      "introduction"
+    );
+    const hasInitialScenarioNPCs = this.dbInstance.hasColumn(
+      "module_backgrounds",
+      "initial_scenario_npcs"
+    );
+    const hasEmailIdColumn = this.dbInstance.hasColumn(
+      "module_backgrounds",
+      "email_id"
+    );
 
     const columns = [
       "module_id",
@@ -419,7 +489,11 @@ export class ModuleLoader {
     }
     if (hasInitialScenarioNPCs) {
       columns.push("initial_scenario_npcs");
-      values.push(module.initialScenarioNPCs ? JSON.stringify(module.initialScenarioNPCs) : null);
+      values.push(
+        module.initialScenarioNPCs
+          ? JSON.stringify(module.initialScenarioNPCs)
+          : null
+      );
     }
     if (hasIntroduction) {
       columns.push("introduction");

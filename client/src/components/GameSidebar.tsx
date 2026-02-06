@@ -4,9 +4,9 @@
  * Displays character information and a player notes memo pad in separate tabs.
  */
 
-import { useState, useEffect, useRef } from 'react';
-import { CharacterSheetModal } from './CharacterSheetModal';
-import { authFetch } from '../utils/authFetch';
+import { useState, useEffect, useRef } from "react";
+import { CharacterSheetModal } from "./CharacterSheetModal";
+import { authFetch } from "../utils/authFetch";
 
 interface GameSidebarProps {
   sessionId: string;
@@ -14,7 +14,7 @@ interface GameSidebarProps {
   refreshTrigger?: number; // When this changes, refresh game state
 }
 
-type TabType = 'status' | 'notes' | 'clues' | 'map';
+type TabType = "status" | "notes" | "clues" | "map";
 
 interface Weapon {
   name: string;
@@ -57,7 +57,13 @@ interface DiscoveredClue {
   sourceName: string;
   discoveredBy: string;
   discoveredAt: string;
-  category?: "physical" | "witness" | "document" | "environment" | "knowledge" | "observation";
+  category?:
+    | "physical"
+    | "witness"
+    | "document"
+    | "environment"
+    | "knowledge"
+    | "observation";
   difficulty?: "automatic" | "regular" | "hard" | "extreme";
   method?: string;
 }
@@ -86,7 +92,7 @@ interface ModuleDigest {
   keeperGuidance: string;
   moduleLimitations: string;
   introduction: string;
-  macroMapPath?: string;  // Module-relative path to macro map (e.g. "Map/[Module Name].png")
+  macroMapPath?: string; // Module-relative path to macro map (e.g. "Map/[Module Name].png")
 }
 
 // GameState interface - compatible with both GameState and DynamicGameState
@@ -106,25 +112,31 @@ interface GameState {
   [key: string]: any; // Allow additional fields for DynamicGameState compatibility
 }
 
-export function GameSidebar({ sessionId, apiBaseUrl = '/api', refreshTrigger }: GameSidebarProps) {
-  const [activeTab, setActiveTab] = useState<TabType>('status');
+export function GameSidebar({
+  sessionId,
+  apiBaseUrl = "/api",
+  refreshTrigger,
+}: GameSidebarProps) {
+  const [activeTab, setActiveTab] = useState<TabType>("status");
   const [gameState, setGameState] = useState<GameState | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [showCharacterSheet, setShowCharacterSheet] = useState(false);
-  const [memoDraft, setMemoDraft] = useState('');
-  const [memoItems, setMemoItems] = useState<Array<{
-    id: string;
-    text: string;
-    gameDay?: number | null;
-    gameTime?: string | null;
-    location?: string | null;
-  }>>([]);
+  const [memoDraft, setMemoDraft] = useState("");
+  const [memoItems, setMemoItems] = useState<
+    Array<{
+      id: string;
+      text: string;
+      gameDay?: number | null;
+      gameTime?: string | null;
+      location?: string | null;
+    }>
+  >([]);
   const [memoLoading, setMemoLoading] = useState(false);
   const [memoError, setMemoError] = useState<string | null>(null);
-  const [memoDayFilter, setMemoDayFilter] = useState('all');
-  const [memoLocationFilter, setMemoLocationFilter] = useState('all');
-  const [memoQuery, setMemoQuery] = useState('');
+  const [memoDayFilter, setMemoDayFilter] = useState("all");
+  const [memoLocationFilter, setMemoLocationFilter] = useState("all");
+  const [memoQuery, setMemoQuery] = useState("");
   const isInitialLoadRef = useRef(true);
   const memoSaveTimers = useRef<Record<string, number>>({});
 
@@ -136,33 +148,45 @@ export function GameSidebar({ sessionId, apiBaseUrl = '/api', refreshTrigger }: 
       }
       try {
         setMemoLoading(true);
-        const response = await authFetch(`${apiBaseUrl}/memos?sessionId=${encodeURIComponent(sessionId)}`);
+        const response = await authFetch(
+          `${apiBaseUrl}/memos?sessionId=${encodeURIComponent(sessionId)}`
+        );
         if (!response.ok) {
-          throw new Error('Failed to fetch memos');
+          throw new Error("Failed to fetch memos");
         }
         const data = await response.json();
         if (data.success && Array.isArray(data.memos)) {
-          setMemoItems(data.memos.map((memo: { id: string; text: string; gameDay?: number | null; gameTime?: string | null; location?: string | null }) => ({
-            id: memo.id,
-            text: memo.text,
-            gameDay: memo.gameDay ?? null,
-            gameTime: memo.gameTime ?? null,
-            location: memo.location ?? null,
-          })));
+          setMemoItems(
+            data.memos.map(
+              (memo: {
+                id: string;
+                text: string;
+                gameDay?: number | null;
+                gameTime?: string | null;
+                location?: string | null;
+              }) => ({
+                id: memo.id,
+                text: memo.text,
+                gameDay: memo.gameDay ?? null,
+                gameTime: memo.gameTime ?? null,
+                location: memo.location ?? null,
+              })
+            )
+          );
           setMemoError(null);
         } else {
-          throw new Error('Invalid memo response');
+          throw new Error("Invalid memo response");
         }
       } catch (err) {
-        console.error('Error fetching memos:', err);
-        setMemoError(err instanceof Error ? err.message : 'Unknown error');
+        console.error("Error fetching memos:", err);
+        setMemoError(err instanceof Error ? err.message : "Unknown error");
       } finally {
         setMemoLoading(false);
       }
     };
 
     fetchMemos();
-    setMemoDraft('');
+    setMemoDraft("");
   }, [apiBaseUrl, sessionId]);
 
   useEffect(() => {
@@ -177,11 +201,14 @@ export function GameSidebar({ sessionId, apiBaseUrl = '/api', refreshTrigger }: 
   const addMemo = async () => {
     const trimmed = memoDraft.trim();
     if (!trimmed) return;
-    const memoLocation = gameState?.currentScenario?.location || gameState?.currentScenario?.name || null;
+    const memoLocation =
+      gameState?.currentScenario?.location ||
+      gameState?.currentScenario?.name ||
+      null;
     try {
       const response = await authFetch(`${apiBaseUrl}/memos`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           sessionId,
           text: trimmed,
@@ -191,47 +218,55 @@ export function GameSidebar({ sessionId, apiBaseUrl = '/api', refreshTrigger }: 
         }),
       });
       if (!response.ok) {
-        throw new Error('Failed to save memo');
+        throw new Error("Failed to save memo");
       }
       const data = await response.json();
       if (data.success && data.memo) {
-        setMemoItems((prev) => [...prev, {
-          id: data.memo.id,
-          text: data.memo.text,
-          gameDay: data.memo.gameDay ?? null,
-          gameTime: data.memo.gameTime ?? null,
-          location: data.memo.location ?? null,
-        }]);
-        setMemoDraft('');
+        setMemoItems((prev) => [
+          ...prev,
+          {
+            id: data.memo.id,
+            text: data.memo.text,
+            gameDay: data.memo.gameDay ?? null,
+            gameTime: data.memo.gameTime ?? null,
+            location: data.memo.location ?? null,
+          },
+        ]);
+        setMemoDraft("");
         setMemoError(null);
       } else {
-        throw new Error('Invalid memo response');
+        throw new Error("Invalid memo response");
       }
     } catch (err) {
-      console.error('Error saving memo:', err);
-      setMemoError(err instanceof Error ? err.message : 'Unknown error');
+      console.error("Error saving memo:", err);
+      setMemoError(err instanceof Error ? err.message : "Unknown error");
     }
   };
 
   const persistMemo = async (id: string, text: string) => {
     try {
-      const response = await authFetch(`${apiBaseUrl}/memos/${encodeURIComponent(id)}`, {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ text }),
-      });
+      const response = await authFetch(
+        `${apiBaseUrl}/memos/${encodeURIComponent(id)}`,
+        {
+          method: "PUT",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ text }),
+        }
+      );
       if (!response.ok) {
-        throw new Error('Failed to update memo');
+        throw new Error("Failed to update memo");
       }
       setMemoError(null);
     } catch (err) {
-      console.error('Error updating memo:', err);
-      setMemoError(err instanceof Error ? err.message : 'Unknown error');
+      console.error("Error updating memo:", err);
+      setMemoError(err instanceof Error ? err.message : "Unknown error");
     }
   };
 
   const updateMemo = (id: string, text: string) => {
-    setMemoItems((prev) => prev.map((item) => (item.id === id ? { ...item, text } : item)));
+    setMemoItems((prev) =>
+      prev.map((item) => (item.id === id ? { ...item, text } : item))
+    );
     if (memoSaveTimers.current[id]) {
       window.clearTimeout(memoSaveTimers.current[id]);
     }
@@ -251,16 +286,19 @@ export function GameSidebar({ sessionId, apiBaseUrl = '/api', refreshTrigger }: 
       delete memoSaveTimers.current[id];
     }
     try {
-      const response = await authFetch(`${apiBaseUrl}/memos/${encodeURIComponent(id)}`, {
-        method: 'DELETE',
-      });
+      const response = await authFetch(
+        `${apiBaseUrl}/memos/${encodeURIComponent(id)}`,
+        {
+          method: "DELETE",
+        }
+      );
       if (!response.ok) {
-        throw new Error('Failed to delete memo');
+        throw new Error("Failed to delete memo");
       }
       setMemoError(null);
     } catch (err) {
-      console.error('Error deleting memo:', err);
-      setMemoError(err instanceof Error ? err.message : 'Unknown error');
+      console.error("Error deleting memo:", err);
+      setMemoError(err instanceof Error ? err.message : "Unknown error");
     }
   };
 
@@ -276,7 +314,7 @@ export function GameSidebar({ sessionId, apiBaseUrl = '/api', refreshTrigger }: 
         const response = await authFetch(`${apiBaseUrl}/gamestate`);
 
         if (!response.ok) {
-          throw new Error('Failed to fetch game state');
+          throw new Error("Failed to fetch game state");
         }
 
         const data = await response.json();
@@ -285,11 +323,11 @@ export function GameSidebar({ sessionId, apiBaseUrl = '/api', refreshTrigger }: 
           setGameState(data.gameState);
           setError(null);
         } else {
-          throw new Error('Invalid game state response');
+          throw new Error("Invalid game state response");
         }
       } catch (err) {
-        console.error('Error fetching game state:', err);
-        setError(err instanceof Error ? err.message : 'Unknown error');
+        console.error("Error fetching game state:", err);
+        setError(err instanceof Error ? err.message : "Unknown error");
       } finally {
         // Clear loading state and mark as no longer initial load
         if (isInitialLoadRef.current) {
@@ -306,7 +344,7 @@ export function GameSidebar({ sessionId, apiBaseUrl = '/api', refreshTrigger }: 
     new Set(
       memoItems
         .map((item) => item.gameDay)
-        .filter((day): day is number => typeof day === 'number')
+        .filter((day): day is number => typeof day === "number")
     )
   ).sort((a, b) => a - b);
 
@@ -320,10 +358,13 @@ export function GameSidebar({ sessionId, apiBaseUrl = '/api', refreshTrigger }: 
 
   const normalizedMemoQuery = memoQuery.trim().toLowerCase();
   const filteredMemoItems = memoItems.filter((item) => {
-    if (memoDayFilter !== 'all' && item.gameDay !== Number(memoDayFilter)) {
+    if (memoDayFilter !== "all" && item.gameDay !== Number(memoDayFilter)) {
       return false;
     }
-    if (memoLocationFilter !== 'all' && (item.location?.trim() ?? '') !== memoLocationFilter) {
+    if (
+      memoLocationFilter !== "all" &&
+      (item.location?.trim() ?? "") !== memoLocationFilter
+    ) {
       return false;
     }
     if (normalizedMemoQuery) {
@@ -346,26 +387,26 @@ export function GameSidebar({ sessionId, apiBaseUrl = '/api', refreshTrigger }: 
       {/* Tab Headers */}
       <div className="sidebar-tabs">
         <button
-          className={`sidebar-tab backdrop-blur-sm bg-white/50 border border-slate-200 shadow-md rounded-lg hover:bg-white/70 transition-all ${activeTab === 'status' ? 'active' : ''}`}
-          onClick={() => setActiveTab('status')}
+          className={`sidebar-tab backdrop-blur-sm bg-white/50 border border-slate-200 shadow-md rounded-lg hover:bg-white/70 transition-all ${activeTab === "status" ? "active" : ""}`}
+          onClick={() => setActiveTab("status")}
         >
           Character Status
         </button>
         <button
-          className={`sidebar-tab backdrop-blur-sm bg-white/50 border border-slate-200 shadow-md rounded-lg hover:bg-white/70 transition-all ${activeTab === 'notes' ? 'active' : ''}`}
-          onClick={() => setActiveTab('notes')}
+          className={`sidebar-tab backdrop-blur-sm bg-white/50 border border-slate-200 shadow-md rounded-lg hover:bg-white/70 transition-all ${activeTab === "notes" ? "active" : ""}`}
+          onClick={() => setActiveTab("notes")}
         >
           Notes
         </button>
         <button
-          className={`sidebar-tab backdrop-blur-sm bg-white/50 border border-slate-200 shadow-md rounded-lg hover:bg-white/70 transition-all ${activeTab === 'clues' ? 'active' : ''}`}
-          onClick={() => setActiveTab('clues')}
+          className={`sidebar-tab backdrop-blur-sm bg-white/50 border border-slate-200 shadow-md rounded-lg hover:bg-white/70 transition-all ${activeTab === "clues" ? "active" : ""}`}
+          onClick={() => setActiveTab("clues")}
         >
           Discovered Clues
         </button>
         <button
-          className={`sidebar-tab backdrop-blur-sm bg-white/50 border border-slate-200 shadow-md rounded-lg hover:bg-white/70 transition-all ${activeTab === 'map' ? 'active' : ''}`}
-          onClick={() => setActiveTab('map')}
+          className={`sidebar-tab backdrop-blur-sm bg-white/50 border border-slate-200 shadow-md rounded-lg hover:bg-white/70 transition-all ${activeTab === "map" ? "active" : ""}`}
+          onClick={() => setActiveTab("map")}
         >
           Map
         </button>
@@ -373,16 +414,25 @@ export function GameSidebar({ sessionId, apiBaseUrl = '/api', refreshTrigger }: 
 
       {/* Tab Content */}
       <div className="sidebar-content">
-        {activeTab === 'status' && (
+        {activeTab === "status" && (
           <div className="tab-panel status-panel">
             {loading ? (
               <p className="empty-state">Loading...</p>
             ) : error ? (
-              <p className="empty-state" style={{ color: '#c41e3a' }}>Load failed: {error}</p>
+              <p className="empty-state" style={{ color: "#c41e3a" }}>
+                Load failed: {error}
+              </p>
             ) : gameState ? (
               <>
                 <div className="status-section">
-                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '12px' }}>
+                  <div
+                    style={{
+                      display: "flex",
+                      justifyContent: "space-between",
+                      alignItems: "center",
+                      marginBottom: "12px",
+                    }}
+                  >
                     <h3 style={{ margin: 0 }}>Basic Attributes</h3>
                     <button
                       className="view-character-btn-sidebar"
@@ -396,24 +446,29 @@ export function GameSidebar({ sessionId, apiBaseUrl = '/api', refreshTrigger }: 
                     <div className="status-item">
                       <span className="status-label">HP:</span>
                       <span className="status-value">
-                        {gameState.playerCharacter.status.hp}/{gameState.playerCharacter.status.maxHp}
+                        {gameState.playerCharacter.status.hp}/
+                        {gameState.playerCharacter.status.maxHp}
                       </span>
                     </div>
                     <div className="status-item">
                       <span className="status-label">MP:</span>
                       <span className="status-value">
-                        {gameState.playerCharacter.status.mp || 0}/{gameState.playerCharacter.status.mp || 0}
+                        {gameState.playerCharacter.status.mp || 0}/
+                        {gameState.playerCharacter.status.mp || 0}
                       </span>
                     </div>
                     <div className="status-item">
                       <span className="status-label">SAN:</span>
                       <span className="status-value">
-                        {gameState.playerCharacter.status.sanity}/{gameState.playerCharacter.status.maxSanity}
+                        {gameState.playerCharacter.status.sanity}/
+                        {gameState.playerCharacter.status.maxSanity}
                       </span>
                     </div>
                     <div className="status-item">
                       <span className="status-label">LUCK:</span>
-                      <span className="status-value">{gameState.playerCharacter.status.luck}</span>
+                      <span className="status-value">
+                        {gameState.playerCharacter.status.luck}
+                      </span>
                     </div>
                   </div>
                 </div>
@@ -424,16 +479,20 @@ export function GameSidebar({ sessionId, apiBaseUrl = '/api', refreshTrigger }: 
                     <div className="status-item-full">
                       <span className="status-label">Location:</span>
                       <span className="status-value">
-                        {gameState.currentScenario?.name || 'Unknown'}
+                        {gameState.currentScenario?.name || "Unknown"}
                       </span>
                     </div>
                     <div className="status-item-full">
                       <span className="status-label">Time:</span>
-                      <span className="status-value">{gameState.timeOfDay || '--'}</span>
+                      <span className="status-value">
+                        {gameState.timeOfDay || "--"}
+                      </span>
                     </div>
                     <div className="status-item-full">
                       <span className="status-label">Day:</span>
-                      <span className="status-value">Day {gameState.gameDay}</span>
+                      <span className="status-value">
+                        Day {gameState.gameDay}
+                      </span>
                     </div>
                   </div>
                 </div>
@@ -442,10 +501,12 @@ export function GameSidebar({ sessionId, apiBaseUrl = '/api', refreshTrigger }: 
                   <h3>Status Effects</h3>
                   <div className="status-effects">
                     {gameState.playerCharacter.status.conditions.length > 0 ? (
-                      <ul style={{ margin: 0, paddingLeft: '20px' }}>
-                        {gameState.playerCharacter.status.conditions.map((condition, idx) => (
-                          <li key={idx}>{condition}</li>
-                        ))}
+                      <ul style={{ margin: 0, paddingLeft: "20px" }}>
+                        {gameState.playerCharacter.status.conditions.map(
+                          (condition, idx) => (
+                            <li key={idx}>{condition}</li>
+                          )
+                        )}
                       </ul>
                     ) : (
                       <p className="empty-state">No status effects</p>
@@ -456,29 +517,60 @@ export function GameSidebar({ sessionId, apiBaseUrl = '/api', refreshTrigger }: 
                 <div className="status-section">
                   <h3>Weapons</h3>
                   <div className="weapons-list">
-                    {gameState.playerCharacter.weapons && gameState.playerCharacter.weapons.length > 0 ? (
-                      <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-                        {gameState.playerCharacter.weapons.map((weapon, idx) => (
-                          <div
-                            key={idx}
-                            style={{
-                              padding: '8px 10px',
-                              backgroundColor: '#fff',
-                              border: '1px solid var(--accent)',
-                              borderRadius: '3px',
-                            }}
-                          >
-                            <div style={{ fontWeight: 'bold', marginBottom: '4px', fontSize: '0.9rem' }}>
-                              {weapon.name}
+                    {gameState.playerCharacter.weapons &&
+                    gameState.playerCharacter.weapons.length > 0 ? (
+                      <div
+                        style={{
+                          display: "flex",
+                          flexDirection: "column",
+                          gap: "8px",
+                        }}
+                      >
+                        {gameState.playerCharacter.weapons.map(
+                          (weapon, idx) => (
+                            <div
+                              key={idx}
+                              style={{
+                                padding: "8px 10px",
+                                backgroundColor: "#fff",
+                                border: "1px solid var(--accent)",
+                                borderRadius: "3px",
+                              }}
+                            >
+                              <div
+                                style={{
+                                  fontWeight: "bold",
+                                  marginBottom: "4px",
+                                  fontSize: "0.9rem",
+                                }}
+                              >
+                                {weapon.name}
+                              </div>
+                              <div
+                                style={{
+                                  fontSize: "0.75rem",
+                                  color: "#666",
+                                  display: "flex",
+                                  flexWrap: "wrap",
+                                  gap: "8px",
+                                }}
+                              >
+                                {weapon.damage && (
+                                  <span>DMG: {weapon.damage}</span>
+                                )}
+                                {weapon.range && (
+                                  <span>Range: {weapon.range}</span>
+                                )}
+                                {weapon.attacks && (
+                                  <span>Attacks: {weapon.attacks}</span>
+                                )}
+                                {weapon.ammo !== undefined && (
+                                  <span>Ammo: {weapon.ammo}</span>
+                                )}
+                              </div>
                             </div>
-                            <div style={{ fontSize: '0.75rem', color: '#666', display: 'flex', flexWrap: 'wrap', gap: '8px' }}>
-                              {weapon.damage && <span>DMG: {weapon.damage}</span>}
-                              {weapon.range && <span>Range: {weapon.range}</span>}
-                              {weapon.attacks && <span>Attacks: {weapon.attacks}</span>}
-                              {weapon.ammo !== undefined && <span>Ammo: {weapon.ammo}</span>}
-                            </div>
-                          </div>
-                        ))}
+                          )
+                        )}
                       </div>
                     ) : (
                       <p className="empty-state">No weapons</p>
@@ -489,45 +581,60 @@ export function GameSidebar({ sessionId, apiBaseUrl = '/api', refreshTrigger }: 
                 <div className="status-section">
                   <h3>Inventory</h3>
                   <div className="inventory-list">
-                    {gameState.playerCharacter.inventory && gameState.playerCharacter.inventory.length > 0 ? (
-                      <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
-                        {gameState.playerCharacter.inventory.map((item, idx) => (
-                          <div
-                            key={idx}
-                            style={{
-                              padding: '6px 10px',
-                              backgroundColor: '#fff',
-                              border: '1px solid #ddd',
-                              borderRadius: '3px',
-                              display: 'flex',
-                              justifyContent: 'space-between',
-                              alignItems: 'center',
-                            }}
-                          >
-                            <span style={{ fontSize: '0.85rem', fontWeight: '500' }}>
-                              {item.name}
-                            </span>
-                            {item.quantity && item.quantity > 1 && (
-                              <span style={{
-                                fontSize: '0.75rem',
-                                color: '#666',
-                                backgroundColor: 'var(--header-bg)',
-                                padding: '2px 6px',
-                                borderRadius: '3px',
-                                fontWeight: 'bold'
-                              }}>
-                                x{item.quantity}
+                    {gameState.playerCharacter.inventory &&
+                    gameState.playerCharacter.inventory.length > 0 ? (
+                      <div
+                        style={{
+                          display: "flex",
+                          flexDirection: "column",
+                          gap: "6px",
+                        }}
+                      >
+                        {gameState.playerCharacter.inventory.map(
+                          (item, idx) => (
+                            <div
+                              key={idx}
+                              style={{
+                                padding: "6px 10px",
+                                backgroundColor: "#fff",
+                                border: "1px solid #ddd",
+                                borderRadius: "3px",
+                                display: "flex",
+                                justifyContent: "space-between",
+                                alignItems: "center",
+                              }}
+                            >
+                              <span
+                                style={{
+                                  fontSize: "0.85rem",
+                                  fontWeight: "500",
+                                }}
+                              >
+                                {item.name}
                               </span>
-                            )}
-                          </div>
-                        ))}
+                              {item.quantity && item.quantity > 1 && (
+                                <span
+                                  style={{
+                                    fontSize: "0.75rem",
+                                    color: "#666",
+                                    backgroundColor: "var(--header-bg)",
+                                    padding: "2px 6px",
+                                    borderRadius: "3px",
+                                    fontWeight: "bold",
+                                  }}
+                                >
+                                  x{item.quantity}
+                                </span>
+                              )}
+                            </div>
+                          )
+                        )}
                       </div>
                     ) : (
                       <p className="empty-state">No items</p>
                     )}
                   </div>
                 </div>
-
               </>
             ) : (
               <p className="empty-state">No data</p>
@@ -535,15 +642,20 @@ export function GameSidebar({ sessionId, apiBaseUrl = '/api', refreshTrigger }: 
           </div>
         )}
 
-        {activeTab === 'notes' && (
+        {activeTab === "notes" && (
           <div className="tab-panel notes-panel">
             <div className="clues-section">
               <div className="memo-header">
                 <h3>Memo Pad</h3>
               </div>
-              <p className="memo-hint">Write your own notes here. New entries auto-save when you add them.</p>
+              <p className="memo-hint">
+                Write your own notes here. New entries auto-save when you add
+                them.
+              </p>
               {memoError && (
-                <p className="empty-state" style={{ color: '#c41e3a' }}>Memo error: {memoError}</p>
+                <p className="empty-state" style={{ color: "#c41e3a" }}>
+                  Memo error: {memoError}
+                </p>
               )}
               {memoLoading ? (
                 <p className="empty-state">Loading...</p>
@@ -551,12 +663,19 @@ export function GameSidebar({ sessionId, apiBaseUrl = '/api', refreshTrigger }: 
                 <>
                   <div className="memo-filters">
                     <div className="memo-filter">
-                      <label className="memo-filter-label" htmlFor="memo-day-filter">Game day</label>
+                      <label
+                        className="memo-filter-label"
+                        htmlFor="memo-day-filter"
+                      >
+                        Game day
+                      </label>
                       <select
                         id="memo-day-filter"
                         className="memo-filter-select"
                         value={memoDayFilter}
-                        onChange={(event) => setMemoDayFilter(event.target.value)}
+                        onChange={(event) =>
+                          setMemoDayFilter(event.target.value)
+                        }
                       >
                         <option value="all">All days</option>
                         {memoDayOptions.map((day) => (
@@ -567,12 +686,19 @@ export function GameSidebar({ sessionId, apiBaseUrl = '/api', refreshTrigger }: 
                       </select>
                     </div>
                     <div className="memo-filter">
-                      <label className="memo-filter-label" htmlFor="memo-location-filter">Location</label>
+                      <label
+                        className="memo-filter-label"
+                        htmlFor="memo-location-filter"
+                      >
+                        Location
+                      </label>
                       <select
                         id="memo-location-filter"
                         className="memo-filter-select"
                         value={memoLocationFilter}
-                        onChange={(event) => setMemoLocationFilter(event.target.value)}
+                        onChange={(event) =>
+                          setMemoLocationFilter(event.target.value)
+                        }
                       >
                         <option value="all">All locations</option>
                         {memoLocationOptions.map((location) => (
@@ -583,7 +709,12 @@ export function GameSidebar({ sessionId, apiBaseUrl = '/api', refreshTrigger }: 
                       </select>
                     </div>
                     <div className="memo-search">
-                      <label className="memo-filter-label" htmlFor="memo-search">Search</label>
+                      <label
+                        className="memo-filter-label"
+                        htmlFor="memo-search"
+                      >
+                        Search
+                      </label>
                       <input
                         id="memo-search"
                         className="memo-filter-input"
@@ -624,23 +755,31 @@ export function GameSidebar({ sessionId, apiBaseUrl = '/api', refreshTrigger }: 
                                 Delete
                               </button>
                             </div>
-                            {(item.gameDay || item.gameTime || item.location) && (
+                            {(item.gameDay ||
+                              item.gameTime ||
+                              item.location) && (
                               <div className="memo-item-meta">
-                                {item.gameDay ? `Day ${item.gameDay}` : 'Day --'}
-                                {item.gameTime ? ` · ${item.gameTime}` : ''}
-                                {item.location ? ` · ${item.location}` : ''}
+                                {item.gameDay
+                                  ? `Day ${item.gameDay}`
+                                  : "Day --"}
+                                {item.gameTime ? ` · ${item.gameTime}` : ""}
+                                {item.location ? ` · ${item.location}` : ""}
                               </div>
                             )}
                             <textarea
                               className="memo-input memo-input-item"
                               rows={3}
                               value={item.text}
-                              onChange={(event) => updateMemo(item.id, event.target.value)}
+                              onChange={(event) =>
+                                updateMemo(item.id, event.target.value)
+                              }
                             />
                           </div>
                         ))
                       ) : (
-                        <p className="empty-state">No notes match the current filters</p>
+                        <p className="empty-state">
+                          No notes match the current filters
+                        </p>
                       )
                     ) : (
                       <p className="empty-state">No notes yet</p>
@@ -652,48 +791,71 @@ export function GameSidebar({ sessionId, apiBaseUrl = '/api', refreshTrigger }: 
           </div>
         )}
 
-        {activeTab === 'clues' && (
+        {activeTab === "clues" && (
           <div className="tab-panel clues-panel">
             {loading ? (
               <p className="empty-state">Loading...</p>
             ) : error ? (
-              <p className="empty-state" style={{ color: '#c41e3a' }}>Load failed: {error}</p>
+              <p className="empty-state" style={{ color: "#c41e3a" }}>
+                Load failed: {error}
+              </p>
             ) : gameState ? (
               <div className="clues-section">
                 <h3>Important Clues</h3>
                 <div className="clues-list">
                   {gameState.discoveredClues.length > 0 ? (
-                    <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+                    <div
+                      style={{
+                        display: "flex",
+                        flexDirection: "column",
+                        gap: "10px",
+                      }}
+                    >
                       {gameState.discoveredClues.map((clue, idx) => (
                         <div
                           key={idx}
                           style={{
-                            padding: '10px',
-                            backgroundColor: '#fff',
-                            border: '1px solid #ddd',
-                            borderRadius: '4px',
+                            padding: "10px",
+                            backgroundColor: "#fff",
+                            border: "1px solid #ddd",
+                            borderRadius: "4px",
                           }}
                         >
-                          <div style={{ fontWeight: 'bold', marginBottom: '5px' }}>
+                          <div
+                            style={{ fontWeight: "bold", marginBottom: "5px" }}
+                          >
                             {clue.sourceName}
                             <span
                               style={{
-                                marginLeft: '8px',
-                                fontSize: '0.8rem',
-                                color: '#666',
-                                fontWeight: 'normal',
+                                marginLeft: "8px",
+                                fontSize: "0.8rem",
+                                color: "#666",
+                                fontWeight: "normal",
                               }}
                             >
-                              ({clue.type === 'scenario' ? 'Scenario Clue' : clue.type === 'npc' ? 'NPC Clue' : 'Secret'})
+                              (
+                              {clue.type === "scenario"
+                                ? "Scenario Clue"
+                                : clue.type === "npc"
+                                  ? "NPC Clue"
+                                  : "Secret"}
+                              )
                             </span>
                           </div>
-                          <div style={{ fontSize: '0.9rem', color: '#333', marginBottom: '5px' }}>
+                          <div
+                            style={{
+                              fontSize: "0.9rem",
+                              color: "#333",
+                              marginBottom: "5px",
+                            }}
+                          >
                             {clue.text}
                           </div>
-                          <div style={{ fontSize: '0.75rem', color: '#999' }}>
+                          <div style={{ fontSize: "0.75rem", color: "#999" }}>
                             Discovered by: {clue.discoveredBy}
                             {clue.method && ` | Method: ${clue.method}`}
-                            {clue.difficulty && ` | Difficulty: ${clue.difficulty}`}
+                            {clue.difficulty &&
+                              ` | Difficulty: ${clue.difficulty}`}
                           </div>
                         </div>
                       ))}
@@ -710,28 +872,31 @@ export function GameSidebar({ sessionId, apiBaseUrl = '/api', refreshTrigger }: 
         )}
 
         {/* Map Tab */}
-        {activeTab === 'map' && (
+        {activeTab === "map" && (
           <div className="tab-panel map-panel">
             {loading ? (
               <p className="empty-state">Loading...</p>
             ) : error ? (
-              <p className="empty-state" style={{ color: '#c41e3a' }}>Load failed: {error}</p>
+              <p className="empty-state" style={{ color: "#c41e3a" }}>
+                Load failed: {error}
+              </p>
             ) : gameState ? (
               <>
                 {/* Macro Map (DynamicWorld modules only) */}
-                {gameState.moduleName && gameState.moduleDigest?.macroMapPath ? (
+                {gameState.moduleName &&
+                gameState.moduleDigest?.macroMapPath ? (
                   <div className="status-section">
                     <h3>Macro Map</h3>
                     <div className="map-display">
-                      <img 
+                      <img
                         src={`${apiBaseUrl}/maps/${gameState.moduleDigest.macroMapPath}`}
                         alt="Macro Map"
                         style={{
-                          width: '100%',
-                          height: 'auto',
-                          borderRadius: '4px',
-                          border: '1px solid #ddd',
-                          cursor: 'pointer'
+                          width: "100%",
+                          height: "auto",
+                          borderRadius: "4px",
+                          border: "1px solid #ddd",
+                          cursor: "pointer",
                         }}
                         onClick={(e) => {
                           // Optional: Open in modal/full screen
@@ -741,8 +906,8 @@ export function GameSidebar({ sessionId, apiBaseUrl = '/api', refreshTrigger }: 
                           }
                         }}
                         onError={(e) => {
-                          console.error('Failed to load macro map');
-                          e.currentTarget.style.display = 'none';
+                          console.error("Failed to load macro map");
+                          e.currentTarget.style.display = "none";
                         }}
                       />
                     </div>
@@ -750,7 +915,8 @@ export function GameSidebar({ sessionId, apiBaseUrl = '/api', refreshTrigger }: 
                 ) : gameState.moduleName ? (
                   <div className="status-section">
                     <p className="empty-state">
-                      Macro map not available (module was created without GOOGLE_API_KEY)
+                      Macro map not available (module was created without
+                      GOOGLE_API_KEY)
                     </p>
                   </div>
                 ) : null}
@@ -763,13 +929,13 @@ export function GameSidebar({ sessionId, apiBaseUrl = '/api', refreshTrigger }: 
                       <div className="status-item-full">
                         <span className="status-label">Scene Name:</span>
                         <span className="status-value">
-                          {gameState.currentScenario.name || 'Unknown'}
+                          {gameState.currentScenario.name || "Unknown"}
                         </span>
                       </div>
                       <div className="status-item-full">
                         <span className="status-label">Location:</span>
                         <span className="status-value">
-                          {gameState.currentScenario.location || 'Unknown'}
+                          {gameState.currentScenario.location || "Unknown"}
                         </span>
                       </div>
                     </div>

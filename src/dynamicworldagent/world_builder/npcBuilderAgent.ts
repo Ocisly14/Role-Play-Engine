@@ -3,7 +3,11 @@
  * Implements 5-step NPC generation following truth-first principles
  */
 
-import { generateText, ModelClass, ModelProviderName } from "../../models/index.js";
+import {
+  generateText,
+  ModelClass,
+  ModelProviderName,
+} from "../../models/index.js";
 import { composeTemplate } from "../../template.js";
 import { generateRandomAttributes } from "../../shared/agents/character/characterBuilder.js";
 import { allocateSkillPoints } from "./skillAllocator.js";
@@ -37,12 +41,17 @@ interface Runtime {
 }
 
 const createRuntime = (): Runtime => ({
-  modelProvider: (process.env.MODEL_PROVIDER as ModelProviderName) || ModelProviderName.OPENAI,
+  modelProvider:
+    (process.env.MODEL_PROVIDER as ModelProviderName) ||
+    ModelProviderName.OPENAI,
   getSetting: (key: string) => process.env[key],
 });
 
-const makeNpcId = (name: string): string => `npc-${name.toLowerCase().replace(/\s+/g, "-")}`;
-const normalizeRelationshipType = (rawType: string): NPCRelationship["relationshipType"] => {
+const makeNpcId = (name: string): string =>
+  `npc-${name.toLowerCase().replace(/\s+/g, "-")}`;
+const normalizeRelationshipType = (
+  rawType: string
+): NPCRelationship["relationshipType"] => {
   const normalized = rawType.trim().toLowerCase();
 
   switch (normalized) {
@@ -97,7 +106,10 @@ const scoreOccupationCandidate = (raw: string, candidate: string): number => {
   const rawTokens = rawNorm.split(" ").filter(Boolean);
   const candTokens = candNorm.split(" ").filter(Boolean);
   const rawSet = new Set(rawTokens);
-  const overlap = candTokens.reduce((count, token) => count + (rawSet.has(token) ? 1 : 0), 0);
+  const overlap = candTokens.reduce(
+    (count, token) => count + (rawSet.has(token) ? 1 : 0),
+    0
+  );
 
   if (overlap === 0) return 0;
   return overlap / Math.max(rawTokens.length, candTokens.length);
@@ -109,7 +121,9 @@ const mapOccupationToList = (raw: string, occupations: string[]): string => {
 
   for (const occupation of occupations) {
     const scoreDirect = scoreOccupationCandidate(raw, occupation);
-    const scoreStripped = rawStripped ? scoreOccupationCandidate(rawStripped, occupation) : 0;
+    const scoreStripped = rawStripped
+      ? scoreOccupationCandidate(rawStripped, occupation)
+      : 0;
     const score = Math.max(scoreDirect, scoreStripped);
 
     if (score > best.score) {
@@ -130,7 +144,9 @@ const loadOccupationNames = (): string[] => {
       "character",
       "Character occupation.json"
     );
-    const occupationsFile = JSON.parse(fs.readFileSync(occupationsPath, "utf-8"));
+    const occupationsFile = JSON.parse(
+      fs.readFileSync(occupationsPath, "utf-8")
+    );
     const names: string[] = [];
 
     for (const group of occupationsFile.groups || []) {
@@ -186,13 +202,17 @@ export class NPCBuilderAgent {
 
     // Step 1a: Basic fields only
     const template1 = getNPCInstantiationTemplate();
-    const prompt1 = composeTemplate(template1, {}, {
-      knowledgeHoldersJson: JSON.stringify(knowledgeHolders, null, 2),
-      redHerringsJson: JSON.stringify(redHerrings, null, 2),
-      macroSceneJson: JSON.stringify(macroScene, null, 2),
-      truthTimelineJson: JSON.stringify(truthTimeline, null, 2),
-      occupationsJson: JSON.stringify(occupationNames, null, 2),
-    });
+    const prompt1 = composeTemplate(
+      template1,
+      {},
+      {
+        knowledgeHoldersJson: JSON.stringify(knowledgeHolders, null, 2),
+        redHerringsJson: JSON.stringify(redHerrings, null, 2),
+        macroSceneJson: JSON.stringify(macroScene, null, 2),
+        truthTimelineJson: JSON.stringify(truthTimeline, null, 2),
+        occupationsJson: JSON.stringify(occupationNames, null, 2),
+      }
+    );
 
     const response1 = await generateText({
       runtime: this.runtime,
@@ -209,28 +229,41 @@ export class NPCBuilderAgent {
       }
       step1Npcs = npcs1 as NPCBasicInfoStep1[];
     } catch (error) {
-      console.error("Failed to parse NPC instantiation (Step 1) response:", error);
+      console.error(
+        "Failed to parse NPC instantiation (Step 1) response:",
+        error
+      );
       console.error("Response:", response1.substring(0, 500));
-      throw new Error(`Failed to instantiate NPCs (Step 1): ${(error as Error).message}`);
+      throw new Error(
+        `Failed to instantiate NPCs (Step 1): ${(error as Error).message}`
+      );
     }
 
-    progressCallback?.(`Instantiated ${step1Npcs.length} NPCs from knowledge holders.`);
+    progressCallback?.(
+      `Instantiated ${step1Npcs.length} NPCs from knowledge holders.`
+    );
 
     if (step1Npcs.length === 0) {
       return [];
     }
 
-    progressCallback?.("Generating goals, secrets, relationships, mythosAwareness (following knowledge matrix)...");
+    progressCallback?.(
+      "Generating goals, secrets, relationships, mythosAwareness (following knowledge matrix)..."
+    );
 
     // Step 1b: Goals, secrets, relationships, mythosAwareness (MUST follow knowledge matrix)
     const template2 = getNPCGoalsSecretsRelationshipsMythosTemplate();
-    const prompt2 = composeTemplate(template2, {}, {
-      step1NpcsJson: JSON.stringify(step1Npcs, null, 2),
-      knowledgeHoldersJson: JSON.stringify(knowledgeHolders, null, 2),
-      redHerringsJson: JSON.stringify(redHerrings, null, 2),
-      macroSceneJson: JSON.stringify(macroScene, null, 2),
-      truthTimelineJson: JSON.stringify(truthTimeline, null, 2),
-    });
+    const prompt2 = composeTemplate(
+      template2,
+      {},
+      {
+        step1NpcsJson: JSON.stringify(step1Npcs, null, 2),
+        knowledgeHoldersJson: JSON.stringify(knowledgeHolders, null, 2),
+        redHerringsJson: JSON.stringify(redHerrings, null, 2),
+        macroSceneJson: JSON.stringify(macroScene, null, 2),
+        truthTimelineJson: JSON.stringify(truthTimeline, null, 2),
+      }
+    );
 
     const response2 = await generateText({
       runtime: this.runtime,
@@ -242,7 +275,12 @@ export class NPCBuilderAgent {
       name: string;
       goals?: string[];
       secrets?: string[];
-      relationships?: Array<{ targetName: string; relationshipType: string; attitude: number; description: string }>;
+      relationships?: Array<{
+        targetName: string;
+        relationshipType: string;
+        attitude: number;
+        description: string;
+      }>;
       mythosAwareness?: "none" | "partial" | "distorted" | "knowing";
     }
 
@@ -254,13 +292,20 @@ export class NPCBuilderAgent {
         throw new Error("Step 2 NPCs must be an array");
       }
       if (npcs2.length !== step1Npcs.length) {
-        throw new Error(`Step 2 NPC count mismatch: expected ${step1Npcs.length}, got ${npcs2.length}`);
+        throw new Error(
+          `Step 2 NPC count mismatch: expected ${step1Npcs.length}, got ${npcs2.length}`
+        );
       }
       step2Npcs = npcs2 as Step2Item[];
     } catch (error) {
-      console.error("Failed to parse goals/secrets/relationships/mythos (Step 2) response:", error);
+      console.error(
+        "Failed to parse goals/secrets/relationships/mythos (Step 2) response:",
+        error
+      );
       console.error("Response:", response2.substring(0, 500));
-      throw new Error(`Failed to generate goals/secrets/relationships/mythos (Step 2): ${(error as Error).message}`);
+      throw new Error(
+        `Failed to generate goals/secrets/relationships/mythos (Step 2): ${(error as Error).message}`
+      );
     }
 
     // Merge Step 1 + Step 2 by index
@@ -268,10 +313,14 @@ export class NPCBuilderAgent {
       const s2 = step2Npcs[i]!;
       const goals = Array.isArray(s2.goals) ? s2.goals : [];
       const secrets = Array.isArray(s2.secrets) ? s2.secrets : [];
-      const relationships = Array.isArray(s2.relationships) ? s2.relationships : [];
-      const mythosAwareness = s2.mythosAwareness && ["none", "partial", "distorted", "knowing"].includes(s2.mythosAwareness)
-        ? s2.mythosAwareness
-        : "none";
+      const relationships = Array.isArray(s2.relationships)
+        ? s2.relationships
+        : [];
+      const mythosAwareness =
+        s2.mythosAwareness &&
+        ["none", "partial", "distorted", "knowing"].includes(s2.mythosAwareness)
+          ? s2.mythosAwareness
+          : "none";
       return {
         name: s1.name,
         occupation: s1.occupation,
@@ -287,14 +336,18 @@ export class NPCBuilderAgent {
       };
     });
 
-    progressCallback?.(`Instantiated ${merged.length} NPCs from knowledge holders.`);
+    progressCallback?.(
+      `Instantiated ${merged.length} NPCs from knowledge holders.`
+    );
     return merged;
   }
 
   /**
    * Step 2: Generate attributes via dice rolling
    */
-  generateAttributes(npcBasicInfo: NPCBasicInfo): ReturnType<typeof generateRandomAttributes> {
+  generateAttributes(
+    npcBasicInfo: NPCBasicInfo
+  ): ReturnType<typeof generateRandomAttributes> {
     return generateRandomAttributes(npcBasicInfo.age);
   }
 
@@ -323,39 +376,52 @@ export class NPCBuilderAgent {
     progressCallback?.(`Generating identity for ${npcBasicInfo.name}...`);
 
     // Filter bound knowledge holders (only those this NPC is connected to)
-    const boundKnowledgeHolders = allKnowledgeHolders.filter(holder =>
-      holder.id === npcBasicInfo.instantiatedFrom ||
-      (npcBasicInfo.inheritsKnowledge || []).some(eventId =>
-        (holder.knows || []).includes(eventId) ||
-        (holder.containsEvidence || []).includes(eventId)
-      )
+    const boundKnowledgeHolders = allKnowledgeHolders.filter(
+      (holder) =>
+        holder.id === npcBasicInfo.instantiatedFrom ||
+        (npcBasicInfo.inheritsKnowledge || []).some(
+          (eventId) =>
+            (holder.knows || []).includes(eventId) ||
+            (holder.containsEvidence || []).includes(eventId)
+        )
     );
 
     // Filter relevant red herrings (those that contradict or relate to NPC's known events)
     const npcKnownEvents = npcBasicInfo.inheritsKnowledge || [];
-    const relevantRedHerrings = allRedHerrings.filter(rh =>
-      rh.contradictsEvents?.some(eventId => npcKnownEvents.includes(eventId)) ||
-      // Also include general red herrings that anyone might encounter
-      ['MEDIA_RUMOR', 'OFFICIAL_REPORT'].includes(rh.sourceType)
+    const relevantRedHerrings = allRedHerrings.filter(
+      (rh) =>
+        rh.contradictsEvents?.some((eventId) =>
+          npcKnownEvents.includes(eventId)
+        ) ||
+        // Also include general red herrings that anyone might encounter
+        ["MEDIA_RUMOR", "OFFICIAL_REPORT"].includes(rh.sourceType)
     );
 
     const template = getNPCIdentityTemplate();
-    const prompt = composeTemplate(template, {}, {
-      name: npcBasicInfo.name,
-      occupation: npcBasicInfo.occupation,
-      age: npcBasicInfo.age.toString(),
-      gender: npcBasicInfo.gender,
-      background: npcBasicInfo.background,
-      goals: JSON.stringify(npcBasicInfo.goals),
-      secrets: JSON.stringify(npcBasicInfo.secrets),
-      mythosAwareness: npcBasicInfo.mythosAwareness,
-      instantiatedFrom: npcBasicInfo.instantiatedFrom || "Unknown",
-      attributesJson: JSON.stringify(attributes, null, 2),
-      skillsJson: JSON.stringify(skills, null, 2),
-      truthTimelineJson: JSON.stringify(truthTimeline, null, 2),
-      boundKnowledgeHoldersJson: JSON.stringify(boundKnowledgeHolders, null, 2),
-      relevantRedHerringsJson: JSON.stringify(relevantRedHerrings, null, 2),
-    });
+    const prompt = composeTemplate(
+      template,
+      {},
+      {
+        name: npcBasicInfo.name,
+        occupation: npcBasicInfo.occupation,
+        age: npcBasicInfo.age.toString(),
+        gender: npcBasicInfo.gender,
+        background: npcBasicInfo.background,
+        goals: JSON.stringify(npcBasicInfo.goals),
+        secrets: JSON.stringify(npcBasicInfo.secrets),
+        mythosAwareness: npcBasicInfo.mythosAwareness,
+        instantiatedFrom: npcBasicInfo.instantiatedFrom || "Unknown",
+        attributesJson: JSON.stringify(attributes, null, 2),
+        skillsJson: JSON.stringify(skills, null, 2),
+        truthTimelineJson: JSON.stringify(truthTimeline, null, 2),
+        boundKnowledgeHoldersJson: JSON.stringify(
+          boundKnowledgeHolders,
+          null,
+          2
+        ),
+        relevantRedHerringsJson: JSON.stringify(relevantRedHerrings, null, 2),
+      }
+    );
 
     const response = await generateText({
       runtime: this.runtime,
@@ -374,7 +440,10 @@ export class NPCBuilderAgent {
         notes: parsed.notes,
       };
     } catch (error) {
-      console.error(`Failed to parse identity for ${npcBasicInfo.name}:`, error);
+      console.error(
+        `Failed to parse identity for ${npcBasicInfo.name}:`,
+        error
+      );
       console.error("Response:", response.substring(0, 500));
       throw new Error(`Failed to fill identity: ${(error as Error).message}`);
     }
@@ -420,14 +489,19 @@ export class NPCBuilderAgent {
         }
 
         const npcBasic = { ...npcBasics[index] };
-        const mappedOccupation = mapOccupationToList(npcBasic.occupation, occupationNames);
+        const mappedOccupation = mapOccupationToList(
+          npcBasic.occupation,
+          occupationNames
+        );
         if (mappedOccupation !== npcBasic.occupation) {
           console.log(
             `   ↪ Mapped occupation "${npcBasic.occupation}" -> "${mappedOccupation}"`
           );
           npcBasic.occupation = mappedOccupation;
         }
-        progressCallback?.(`Processing NPC ${index + 1}/${npcBasics.length}: ${npcBasic.name}`);
+        progressCallback?.(
+          `Processing NPC ${index + 1}/${npcBasics.length}: ${npcBasic.name}`
+        );
 
         // Step 2: Generate attributes
         const generatedAttrs = this.generateAttributes(npcBasic);
@@ -457,12 +531,18 @@ export class NPCBuilderAgent {
         );
 
         // Assemble complete NPC profile
-        const relationships: NPCRelationship[] = (npcBasic.relationships || []).map((relationship) => ({
+        const relationships: NPCRelationship[] = (
+          npcBasic.relationships || []
+        ).map((relationship) => ({
           targetName: relationship.targetName,
-          relationshipType: normalizeRelationshipType(relationship.relationshipType),
+          relationshipType: normalizeRelationshipType(
+            relationship.relationshipType
+          ),
           attitude: relationship.attitude,
           description: relationship.description,
-          targetId: relationship.targetName ? makeNpcId(relationship.targetName) : "unknown",
+          targetId: relationship.targetName
+            ? makeNpcId(relationship.targetName)
+            : "unknown",
         }));
 
         const npc: DynamicNPCProfile = {

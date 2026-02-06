@@ -57,7 +57,9 @@ function parseScenarioNames(moduleDir: string, moduleName: string): string[] {
   }
 
   if (fs.existsSync(scenariosDir)) {
-    const files = fs.readdirSync(scenariosDir).filter((f) => f.toLowerCase().endsWith(".json"));
+    const files = fs
+      .readdirSync(scenariosDir)
+      .filter((f) => f.toLowerCase().endsWith(".json"));
     for (const file of files) {
       readScenarioFile(path.join(scenariosDir, file));
     }
@@ -74,7 +76,9 @@ function parseNpcNames(moduleDir: string, moduleName: string): string[] {
     return [];
   }
 
-  const files = fs.readdirSync(npcDir).filter((f) => f.toLowerCase().endsWith(".json"));
+  const files = fs
+    .readdirSync(npcDir)
+    .filter((f) => f.toLowerCase().endsWith(".json"));
   for (const file of files) {
     try {
       const raw = fs.readFileSync(path.join(npcDir, file), "utf-8");
@@ -100,15 +104,17 @@ function deleteDynamicCheckpointsForModule(
   modName: string
 ): void {
   const database = db.getDatabase();
-  const rows = database.prepare(
-    `
+  const rows = database
+    .prepare(
+      `
       SELECT gc.checkpoint_id, gc.game_state
       FROM game_checkpoints gc
       JOIN sessions s ON s.session_id = gc.session_id
       JOIN characters c ON c.character_id = s.character_id
       WHERE c.email_id = ?
     `
-  ).all(email) as CheckpointRow[];
+    )
+    .all(email) as CheckpointRow[];
 
   const target = normalizeModName(modName).toLowerCase();
   const toDelete: string[] = [];
@@ -116,7 +122,10 @@ function deleteDynamicCheckpointsForModule(
   for (const row of rows) {
     try {
       const state = JSON.parse(row.game_state);
-      const moduleName = typeof state?.moduleName === "string" ? state.moduleName.trim().toLowerCase() : "";
+      const moduleName =
+        typeof state?.moduleName === "string"
+          ? state.moduleName.trim().toLowerCase()
+          : "";
       if (moduleName && moduleName === target) {
         toDelete.push(row.checkpoint_id);
       }
@@ -130,9 +139,11 @@ function deleteDynamicCheckpointsForModule(
   }
 
   const placeholders = toDelete.map(() => "?").join(", ");
-  database.prepare(
-    `DELETE FROM game_checkpoints WHERE checkpoint_id IN (${placeholders})`
-  ).run(...toDelete);
+  database
+    .prepare(
+      `DELETE FROM game_checkpoints WHERE checkpoint_id IN (${placeholders})`
+    )
+    .run(...toDelete);
 }
 
 function cleanModuleDataForOwner(
@@ -148,9 +159,15 @@ function cleanModuleDataForOwner(
 
   const hasScenarioEmailId = db.hasColumn("scenarios", "email_id");
   const hasSnapshotEmailId = db.hasColumn("scenario_snapshots", "email_id");
-  const hasScenarioCharsEmailId = db.hasColumn("scenario_characters", "email_id");
+  const hasScenarioCharsEmailId = db.hasColumn(
+    "scenario_characters",
+    "email_id"
+  );
   const hasScenarioCluesEmailId = db.hasColumn("scenario_clues", "email_id");
-  const hasScenarioConditionsEmailId = db.hasColumn("scenario_conditions", "email_id");
+  const hasScenarioConditionsEmailId = db.hasColumn(
+    "scenario_conditions",
+    "email_id"
+  );
   const hasModuleEmailId = db.hasColumn("module_backgrounds", "email_id");
   const hasCharactersEmailId = db.hasColumn("characters", "email_id");
   const hasNpcCluesEmailId = db.hasColumn("npc_clues", "email_id");
@@ -160,10 +177,14 @@ function cleanModuleDataForOwner(
   db.transaction(() => {
     if (hasModuleEmailId) {
       database
-        .prepare("DELETE FROM module_backgrounds WHERE title = ? AND email_id = ?")
+        .prepare(
+          "DELETE FROM module_backgrounds WHERE title = ? AND email_id = ?"
+        )
         .run(modName, ownerEmail);
     } else {
-      database.prepare("DELETE FROM module_backgrounds WHERE title = ?").run(modName);
+      database
+        .prepare("DELETE FROM module_backgrounds WHERE title = ?")
+        .run(modName);
     }
 
     if (scenarioNames.length > 0) {
@@ -174,7 +195,10 @@ function cleanModuleDataForOwner(
             hasScenarioEmailId ? " AND email_id = ?" : ""
           }`
         )
-        .all(...scenarioNames, ...(hasScenarioEmailId ? [ownerEmail] : [])) as Array<{ scenario_id: string }>;
+        .all(
+          ...scenarioNames,
+          ...(hasScenarioEmailId ? [ownerEmail] : [])
+        ) as Array<{ scenario_id: string }>;
 
       const scenarioIds = scenarioRows.map((row) => row.scenario_id);
       if (scenarioIds.length > 0) {
@@ -185,7 +209,10 @@ function cleanModuleDataForOwner(
               hasSnapshotEmailId ? " AND email_id = ?" : ""
             }`
           )
-          .all(...scenarioIds, ...(hasSnapshotEmailId ? [ownerEmail] : [])) as Array<{ snapshot_id: string }>;
+          .all(
+            ...scenarioIds,
+            ...(hasSnapshotEmailId ? [ownerEmail] : [])
+          ) as Array<{ snapshot_id: string }>;
 
         const snapshotIds = snapshotRows.map((row) => row.snapshot_id);
         if (snapshotIds.length > 0) {
@@ -197,7 +224,10 @@ function cleanModuleDataForOwner(
                   hasScenarioCharsEmailId ? " AND email_id = ?" : ""
                 }`
               )
-              .run(...snapshotIds, ...(hasScenarioCharsEmailId ? [ownerEmail] : []));
+              .run(
+                ...snapshotIds,
+                ...(hasScenarioCharsEmailId ? [ownerEmail] : [])
+              );
           }
           if (db.hasColumn("scenario_clues", "snapshot_id")) {
             database
@@ -206,7 +236,10 @@ function cleanModuleDataForOwner(
                   hasScenarioCluesEmailId ? " AND email_id = ?" : ""
                 }`
               )
-              .run(...snapshotIds, ...(hasScenarioCluesEmailId ? [ownerEmail] : []));
+              .run(
+                ...snapshotIds,
+                ...(hasScenarioCluesEmailId ? [ownerEmail] : [])
+              );
           }
           if (db.hasColumn("scenario_conditions", "snapshot_id")) {
             database
@@ -215,7 +248,10 @@ function cleanModuleDataForOwner(
                   hasScenarioConditionsEmailId ? " AND email_id = ?" : ""
                 }`
               )
-              .run(...snapshotIds, ...(hasScenarioConditionsEmailId ? [ownerEmail] : []));
+              .run(
+                ...snapshotIds,
+                ...(hasScenarioConditionsEmailId ? [ownerEmail] : [])
+              );
           }
         }
 
@@ -245,7 +281,10 @@ function cleanModuleDataForOwner(
             hasCharactersEmailId ? " AND email_id = ?" : ""
           }`
         )
-        .all(...npcNames, ...(hasCharactersEmailId ? [ownerEmail] : [])) as Array<{ character_id: string }>;
+        .all(
+          ...npcNames,
+          ...(hasCharactersEmailId ? [ownerEmail] : [])
+        ) as Array<{ character_id: string }>;
 
       const npcIds = npcRows.map((row) => row.character_id);
       if (npcIds.length > 0) {
@@ -283,11 +322,16 @@ function cleanModuleDataForOwner(
   });
 }
 
-function getCatalogEntry(db: CoCDatabase, modName: string): ModCatalogRow | null {
+function getCatalogEntry(
+  db: CoCDatabase,
+  modName: string
+): ModCatalogRow | null {
   const database = db.getDatabase();
-  const row = database.prepare(
-    "SELECT module_name, owner_email, shared, deleted_at FROM mod_catalog WHERE lower(module_name) = lower(?)"
-  ).get(modName) as ModCatalogRow | undefined;
+  const row = database
+    .prepare(
+      "SELECT module_name, owner_email, shared, deleted_at FROM mod_catalog WHERE lower(module_name) = lower(?)"
+    )
+    .get(modName) as ModCatalogRow | undefined;
   return row || null;
 }
 
@@ -302,16 +346,20 @@ export function ensureModCatalogEntry(
 
   if (existing) {
     if (existing.deleted_at && existing.owner_email === ownerEmail) {
-      database.prepare(
-        "UPDATE mod_catalog SET deleted_at = NULL WHERE lower(module_name) = lower(?)"
-      ).run(normalized);
+      database
+        .prepare(
+          "UPDATE mod_catalog SET deleted_at = NULL WHERE lower(module_name) = lower(?)"
+        )
+        .run(normalized);
     }
     return;
   }
 
-  database.prepare(
-    "INSERT INTO mod_catalog (module_name, owner_email, shared) VALUES (?, ?, 0)"
-  ).run(normalized, ownerEmail);
+  database
+    .prepare(
+      "INSERT INTO mod_catalog (module_name, owner_email, shared) VALUES (?, ?, 0)"
+    )
+    .run(normalized, ownerEmail);
 }
 
 export function ensureUserLibraryEntry(
@@ -321,12 +369,16 @@ export function ensureUserLibraryEntry(
 ): void {
   const database = db.getDatabase();
   const normalized = normalizeModName(modName);
-  database.prepare(
-    "INSERT OR IGNORE INTO user_mods (email_id, module_name) VALUES (?, ?)"
-  ).run(email, normalized);
-  database.prepare(
-    "DELETE FROM user_mods_deleted WHERE email_id = ? AND lower(module_name) = lower(?)"
-  ).run(email, normalized);
+  database
+    .prepare(
+      "INSERT OR IGNORE INTO user_mods (email_id, module_name) VALUES (?, ?)"
+    )
+    .run(email, normalized);
+  database
+    .prepare(
+      "DELETE FROM user_mods_deleted WHERE email_id = ? AND lower(module_name) = lower(?)"
+    )
+    .run(email, normalized);
 }
 
 export function registerModuleForUser(
@@ -338,7 +390,10 @@ export function registerModuleForUser(
   ensureUserLibraryEntry(db, email, modName);
 }
 
-export function ensureLegacyLibraryEntries(db: CoCDatabase, email: string): void {
+export function ensureLegacyLibraryEntries(
+  db: CoCDatabase,
+  email: string
+): void {
   const database = db.getDatabase();
   const bootstrapRow = database
     .prepare("SELECT email_id FROM user_mods_bootstrap WHERE email_id = ?")
@@ -348,9 +403,11 @@ export function ensureLegacyLibraryEntries(db: CoCDatabase, email: string): void
     return;
   }
 
-  const rows = database.prepare(
-    "SELECT DISTINCT title FROM module_backgrounds WHERE email_id = ? AND title IS NOT NULL"
-  ).all(email) as Array<{ title: string }>;
+  const rows = database
+    .prepare(
+      "SELECT DISTINCT title FROM module_backgrounds WHERE email_id = ? AND title IS NOT NULL"
+    )
+    .all(email) as Array<{ title: string }>;
 
   for (const row of rows) {
     const title = row.title?.trim();
@@ -361,22 +418,28 @@ export function ensureLegacyLibraryEntries(db: CoCDatabase, email: string): void
     ensureUserLibraryEntry(db, email, title);
   }
 
-  database.prepare(
-    "INSERT OR REPLACE INTO user_mods_bootstrap (email_id, bootstrapped_at) VALUES (?, datetime('now'))"
-  ).run(email);
+  database
+    .prepare(
+      "INSERT OR REPLACE INTO user_mods_bootstrap (email_id, bootstrapped_at) VALUES (?, datetime('now'))"
+    )
+    .run(email);
 }
 
 export function cleanupExpiredDeletedMods(db: CoCDatabase): void {
   const database = db.getDatabase();
-  const expired = database.prepare(
-    "SELECT module_name FROM mod_catalog WHERE shared = 0 AND deleted_at IS NOT NULL AND deleted_at <= datetime('now', '-7 days')"
-  ).all() as Array<{ module_name: string }>;
+  const expired = database
+    .prepare(
+      "SELECT module_name FROM mod_catalog WHERE shared = 0 AND deleted_at IS NOT NULL AND deleted_at <= datetime('now', '-7 days')"
+    )
+    .all() as Array<{ module_name: string }>;
 
   for (const row of expired) {
     const modName = row.module_name;
-    const usage = database.prepare(
-      "SELECT COUNT(*) as count FROM user_mods WHERE lower(module_name) = lower(?)"
-    ).get(modName) as { count: number } | undefined;
+    const usage = database
+      .prepare(
+        "SELECT COUNT(*) as count FROM user_mods WHERE lower(module_name) = lower(?)"
+      )
+      .get(modName) as { count: number } | undefined;
 
     if (usage && usage.count > 0) {
       continue;
@@ -387,7 +450,10 @@ export function cleanupExpiredDeletedMods(db: CoCDatabase): void {
       try {
         cleanModuleDataForOwner(db, catalog.owner_email, modName);
       } catch (error) {
-        console.warn(`[Mod Library] Failed to clean module data for ${modName}:`, error);
+        console.warn(
+          `[Mod Library] Failed to clean module data for ${modName}:`,
+          error
+        );
       }
     }
 
@@ -397,23 +463,31 @@ export function cleanupExpiredDeletedMods(db: CoCDatabase): void {
         fs.rmSync(modPath, { recursive: true, force: true });
       }
     } catch (error) {
-      console.warn(`[Mod Library] Failed to delete module folder: ${modPath}`, error);
+      console.warn(
+        `[Mod Library] Failed to delete module folder: ${modPath}`,
+        error
+      );
       continue;
     }
 
-    database.prepare(
-      "DELETE FROM user_mods WHERE lower(module_name) = lower(?)"
-    ).run(modName);
-    database.prepare(
-      "DELETE FROM user_mods_deleted WHERE lower(module_name) = lower(?)"
-    ).run(modName);
-    database.prepare(
-      "DELETE FROM mod_catalog WHERE lower(module_name) = lower(?)"
-    ).run(modName);
+    database
+      .prepare("DELETE FROM user_mods WHERE lower(module_name) = lower(?)")
+      .run(modName);
+    database
+      .prepare(
+        "DELETE FROM user_mods_deleted WHERE lower(module_name) = lower(?)"
+      )
+      .run(modName);
+    database
+      .prepare("DELETE FROM mod_catalog WHERE lower(module_name) = lower(?)")
+      .run(modName);
   }
 }
 
-export function listUserLibrary(db: CoCDatabase, email: string): Array<{
+export function listUserLibrary(
+  db: CoCDatabase,
+  email: string
+): Array<{
   name: string;
   shared: boolean;
   ownerEmail: string | null;
@@ -423,8 +497,9 @@ export function listUserLibrary(db: CoCDatabase, email: string): Array<{
   ensureLegacyLibraryEntries(db, email);
 
   const database = db.getDatabase();
-  const rows = database.prepare(
-    `
+  const rows = database
+    .prepare(
+      `
       SELECT um.module_name as module_name,
              mc.owner_email as owner_email,
              mc.shared as shared,
@@ -436,7 +511,8 @@ export function listUserLibrary(db: CoCDatabase, email: string): Array<{
         AND (mc.deleted_at IS NULL OR mc.deleted_at = '')
       ORDER BY um.module_name COLLATE NOCASE
     `
-  ).all(email) as Array<{
+    )
+    .all(email) as Array<{
     module_name: string;
     owner_email: string | null;
     shared: number | null;
@@ -460,8 +536,9 @@ export function listSharedMods(
   const normalizedQuery = query?.trim().toLowerCase();
   const likeQuery = normalizedQuery ? `%${normalizedQuery}%` : null;
 
-  const rows = database.prepare(
-    `
+  const rows = database
+    .prepare(
+      `
       SELECT mc.module_name as module_name,
              mc.owner_email as owner_email,
              CASE WHEN um.email_id IS NULL THEN 0 ELSE 1 END as in_library
@@ -473,7 +550,8 @@ export function listSharedMods(
         ${likeQuery ? "AND lower(mc.module_name) LIKE ?" : ""}
       ORDER BY mc.module_name COLLATE NOCASE
     `
-  ).all(...(likeQuery ? [email, likeQuery] : [email])) as Array<{
+    )
+    .all(...(likeQuery ? [email, likeQuery] : [email])) as Array<{
     module_name: string;
     owner_email: string;
     in_library: number;
@@ -486,7 +564,11 @@ export function listSharedMods(
   }));
 }
 
-export function shareModule(db: CoCDatabase, email: string, modName: string): void {
+export function shareModule(
+  db: CoCDatabase,
+  email: string,
+  modName: string
+): void {
   const database = db.getDatabase();
   const normalized = normalizeModName(modName);
   const catalog = getCatalogEntry(db, normalized);
@@ -498,12 +580,18 @@ export function shareModule(db: CoCDatabase, email: string, modName: string): vo
     throw new Error("Only the owner can share this module");
   }
 
-  database.prepare(
-    "UPDATE mod_catalog SET shared = 1, deleted_at = NULL WHERE lower(module_name) = lower(?)"
-  ).run(normalized);
+  database
+    .prepare(
+      "UPDATE mod_catalog SET shared = 1, deleted_at = NULL WHERE lower(module_name) = lower(?)"
+    )
+    .run(normalized);
 }
 
-export function unshareModule(db: CoCDatabase, email: string, modName: string): void {
+export function unshareModule(
+  db: CoCDatabase,
+  email: string,
+  modName: string
+): void {
   const database = db.getDatabase();
   const normalized = normalizeModName(modName);
   const catalog = getCatalogEntry(db, normalized);
@@ -515,9 +603,11 @@ export function unshareModule(db: CoCDatabase, email: string, modName: string): 
     throw new Error("Only the owner can unshare this module");
   }
 
-  database.prepare(
-    "UPDATE mod_catalog SET shared = 0 WHERE lower(module_name) = lower(?)"
-  ).run(normalized);
+  database
+    .prepare(
+      "UPDATE mod_catalog SET shared = 0 WHERE lower(module_name) = lower(?)"
+    )
+    .run(normalized);
 }
 
 export function removeModuleFromLibrary(
@@ -530,12 +620,16 @@ export function removeModuleFromLibrary(
   const catalog = getCatalogEntry(db, normalized);
 
   if (catalog && catalog.shared) {
-    database.prepare(
-      "DELETE FROM user_mods WHERE email_id = ? AND lower(module_name) = lower(?)"
-    ).run(email, normalized);
-    database.prepare(
-      "INSERT OR REPLACE INTO user_mods_deleted (email_id, module_name, deleted_at) VALUES (?, ?, datetime('now'))"
-    ).run(email, normalized);
+    database
+      .prepare(
+        "DELETE FROM user_mods WHERE email_id = ? AND lower(module_name) = lower(?)"
+      )
+      .run(email, normalized);
+    database
+      .prepare(
+        "INSERT OR REPLACE INTO user_mods_deleted (email_id, module_name, deleted_at) VALUES (?, ?, datetime('now'))"
+      )
+      .run(email, normalized);
     deleteDynamicCheckpointsForModule(db, email, normalized);
     return { trashed: false };
   }
@@ -544,19 +638,25 @@ export function removeModuleFromLibrary(
     throw new Error("Only the owner can remove this module");
   }
 
-  database.prepare(
-    "DELETE FROM user_mods WHERE email_id = ? AND lower(module_name) = lower(?)"
-  ).run(email, normalized);
+  database
+    .prepare(
+      "DELETE FROM user_mods WHERE email_id = ? AND lower(module_name) = lower(?)"
+    )
+    .run(email, normalized);
 
   if (catalog) {
-    database.prepare(
-      "UPDATE mod_catalog SET deleted_at = datetime('now') WHERE lower(module_name) = lower(?)"
-    ).run(normalized);
+    database
+      .prepare(
+        "UPDATE mod_catalog SET deleted_at = datetime('now') WHERE lower(module_name) = lower(?)"
+      )
+      .run(normalized);
   }
 
-  database.prepare(
-    "INSERT OR REPLACE INTO user_mods_deleted (email_id, module_name, deleted_at) VALUES (?, ?, datetime('now'))"
-  ).run(email, normalized);
+  database
+    .prepare(
+      "INSERT OR REPLACE INTO user_mods_deleted (email_id, module_name, deleted_at) VALUES (?, ?, datetime('now'))"
+    )
+    .run(email, normalized);
   deleteDynamicCheckpointsForModule(db, email, normalized);
   return { trashed: true };
 }
@@ -579,14 +679,22 @@ export function addSharedModuleToLibrary(
 export function listDeletedMods(
   db: CoCDatabase,
   email: string
-): Array<{ name: string; deletedAt: string; ownerEmail: string; daysLeft: number }> {
+): Array<{
+  name: string;
+  deletedAt: string;
+  ownerEmail: string;
+  daysLeft: number;
+}> {
   cleanupExpiredDeletedMods(db);
   const database = db.getDatabase();
-  database.prepare(
-    "DELETE FROM user_mods_deleted WHERE deleted_at <= datetime('now', '-7 days')"
-  ).run();
-  const rows = database.prepare(
-    `
+  database
+    .prepare(
+      "DELETE FROM user_mods_deleted WHERE deleted_at <= datetime('now', '-7 days')"
+    )
+    .run();
+  const rows = database
+    .prepare(
+      `
       SELECT d.module_name, d.deleted_at, mc.owner_email
       FROM user_mods_deleted d
       LEFT JOIN mod_catalog mc
@@ -594,7 +702,12 @@ export function listDeletedMods(
       WHERE d.email_id = ?
       ORDER BY d.deleted_at DESC
     `
-  ).all(email) as Array<{ module_name: string; owner_email: string | null; deleted_at: string }>;
+    )
+    .all(email) as Array<{
+    module_name: string;
+    owner_email: string | null;
+    deleted_at: string;
+  }>;
 
   const now = Date.now();
 
@@ -603,7 +716,10 @@ export function listDeletedMods(
     const expiresAtMs = Number.isFinite(deletedAtMs)
       ? deletedAtMs + 7 * 24 * 60 * 60 * 1000
       : now;
-    const daysLeft = Math.max(0, Math.ceil((expiresAtMs - now) / (24 * 60 * 60 * 1000)));
+    const daysLeft = Math.max(
+      0,
+      Math.ceil((expiresAtMs - now) / (24 * 60 * 60 * 1000))
+    );
 
     return {
       name: row.module_name,
@@ -621,9 +737,11 @@ export function restoreDeletedModule(
 ): void {
   const database = db.getDatabase();
   const normalized = normalizeModName(modName);
-  const deletedRow = database.prepare(
-    "SELECT module_name FROM user_mods_deleted WHERE email_id = ? AND lower(module_name) = lower(?)"
-  ).get(email, normalized) as { module_name: string } | undefined;
+  const deletedRow = database
+    .prepare(
+      "SELECT module_name FROM user_mods_deleted WHERE email_id = ? AND lower(module_name) = lower(?)"
+    )
+    .get(email, normalized) as { module_name: string } | undefined;
   if (!deletedRow) {
     throw new Error("Module not found in deleted list");
   }
@@ -635,13 +753,17 @@ export function restoreDeletedModule(
 
   const catalog = getCatalogEntry(db, normalized);
   if (catalog && catalog.owner_email === email && catalog.deleted_at) {
-    database.prepare(
-      "UPDATE mod_catalog SET deleted_at = NULL WHERE lower(module_name) = lower(?)"
-    ).run(normalized);
+    database
+      .prepare(
+        "UPDATE mod_catalog SET deleted_at = NULL WHERE lower(module_name) = lower(?)"
+      )
+      .run(normalized);
   }
 
-  database.prepare(
-    "DELETE FROM user_mods_deleted WHERE email_id = ? AND lower(module_name) = lower(?)"
-  ).run(email, normalized);
+  database
+    .prepare(
+      "DELETE FROM user_mods_deleted WHERE email_id = ? AND lower(module_name) = lower(?)"
+    )
+    .run(email, normalized);
   ensureUserLibraryEntry(db, email, normalized);
 }

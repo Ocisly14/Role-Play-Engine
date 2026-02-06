@@ -17,7 +17,10 @@ export function notifyClients(
     try {
       client.ws.send(JSON.stringify(message));
     } catch (error) {
-      console.error(`[WebSocket] Error sending message to client ${sessionId}:`, error);
+      console.error(
+        `[WebSocket] Error sending message to client ${sessionId}:`,
+        error
+      );
     }
   }
 }

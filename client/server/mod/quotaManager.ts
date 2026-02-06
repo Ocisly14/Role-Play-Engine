@@ -44,9 +44,11 @@ export function checkGenerationQuota(
 ): QuotaCheckResult {
   const database = db.getDatabase();
 
-  const totalAllTime = (database
-    .prepare("SELECT COUNT(*) as cnt FROM mod_generations WHERE email_id = ?")
-    .get(email) as { cnt: number }).cnt;
+  const totalAllTime = (
+    database
+      .prepare("SELECT COUNT(*) as cnt FROM mod_generations WHERE email_id = ?")
+      .get(email) as { cnt: number }
+  ).cnt;
 
   if (totalAllTime < INITIAL_QUOTA_TOTAL) {
     // Still consuming the one-time initial grant — sub-caps counted all-time
@@ -56,16 +58,19 @@ export function checkGenerationQuota(
   // Initial grant exhausted → enforce rolling weekly quota
   const weekAgo = new Date(Date.now() - SEVEN_DAYS_MS).toISOString();
 
-  const weeklyTotal = (database
-    .prepare(
-      "SELECT COUNT(*) as cnt FROM mod_generations WHERE email_id = ? AND generated_at >= ?"
-    )
-    .get(email, weekAgo) as { cnt: number }).cnt;
+  const weeklyTotal = (
+    database
+      .prepare(
+        "SELECT COUNT(*) as cnt FROM mod_generations WHERE email_id = ? AND generated_at >= ?"
+      )
+      .get(email, weekAgo) as { cnt: number }
+  ).cnt;
 
   if (weeklyTotal >= WEEKLY_QUOTA_TOTAL) {
     return {
       allowed: false,
-      reason: "Weekly generation quota reached (max 4 per week). Please try again later.",
+      reason:
+        "Weekly generation quota reached (max 4 per week). Please try again later.",
     };
   }
 
@@ -87,11 +92,13 @@ function checkSubCaps(
   const params: unknown[] = sinceIso ? [email, sinceIso] : [email];
 
   if (storyLength === "medium") {
-    const count = (database
-      .prepare(
-        `SELECT COUNT(*) as cnt FROM mod_generations WHERE email_id = ? AND story_length = 'medium'${timeClause}`
-      )
-      .get(...params) as { cnt: number }).cnt;
+    const count = (
+      database
+        .prepare(
+          `SELECT COUNT(*) as cnt FROM mod_generations WHERE email_id = ? AND story_length = 'medium'${timeClause}`
+        )
+        .get(...params) as { cnt: number }
+    ).cnt;
 
     if (count >= MEDIUM_LIMIT) {
       return {
@@ -104,11 +111,13 @@ function checkSubCaps(
   }
 
   if (storyLength === "long") {
-    const count = (database
-      .prepare(
-        `SELECT COUNT(*) as cnt FROM mod_generations WHERE email_id = ? AND story_length = 'long'${timeClause}`
-      )
-      .get(...params) as { cnt: number }).cnt;
+    const count = (
+      database
+        .prepare(
+          `SELECT COUNT(*) as cnt FROM mod_generations WHERE email_id = ? AND story_length = 'long'${timeClause}`
+        )
+        .get(...params) as { cnt: number }
+    ).cnt;
 
     if (count >= LARGE_LIMIT) {
       return {
@@ -129,18 +138,28 @@ function checkSubCaps(
 export function getQuotaStatus(db: CoCDatabase, email: string): QuotaStatus {
   const database = db.getDatabase();
 
-  const totalAllTime = (database
-    .prepare("SELECT COUNT(*) as cnt FROM mod_generations WHERE email_id = ?")
-    .get(email) as { cnt: number }).cnt;
+  const totalAllTime = (
+    database
+      .prepare("SELECT COUNT(*) as cnt FROM mod_generations WHERE email_id = ?")
+      .get(email) as { cnt: number }
+  ).cnt;
 
   if (totalAllTime < INITIAL_QUOTA_TOTAL) {
     // Initial-grant phase — sub-caps counted across all time
-    const mediumUsed = (database
-      .prepare("SELECT COUNT(*) as cnt FROM mod_generations WHERE email_id = ? AND story_length = 'medium'")
-      .get(email) as { cnt: number }).cnt;
-    const largeUsed = (database
-      .prepare("SELECT COUNT(*) as cnt FROM mod_generations WHERE email_id = ? AND story_length = 'long'")
-      .get(email) as { cnt: number }).cnt;
+    const mediumUsed = (
+      database
+        .prepare(
+          "SELECT COUNT(*) as cnt FROM mod_generations WHERE email_id = ? AND story_length = 'medium'"
+        )
+        .get(email) as { cnt: number }
+    ).cnt;
+    const largeUsed = (
+      database
+        .prepare(
+          "SELECT COUNT(*) as cnt FROM mod_generations WHERE email_id = ? AND story_length = 'long'"
+        )
+        .get(email) as { cnt: number }
+    ).cnt;
 
     return {
       phase: "initial",
@@ -156,15 +175,27 @@ export function getQuotaStatus(db: CoCDatabase, email: string): QuotaStatus {
   // Weekly phase — rolling 7-day window
   const weekAgo = new Date(Date.now() - SEVEN_DAYS_MS).toISOString();
 
-  const weeklyTotal = (database
-    .prepare("SELECT COUNT(*) as cnt FROM mod_generations WHERE email_id = ? AND generated_at >= ?")
-    .get(email, weekAgo) as { cnt: number }).cnt;
-  const weeklyMedium = (database
-    .prepare("SELECT COUNT(*) as cnt FROM mod_generations WHERE email_id = ? AND story_length = 'medium' AND generated_at >= ?")
-    .get(email, weekAgo) as { cnt: number }).cnt;
-  const weeklyLarge = (database
-    .prepare("SELECT COUNT(*) as cnt FROM mod_generations WHERE email_id = ? AND story_length = 'long' AND generated_at >= ?")
-    .get(email, weekAgo) as { cnt: number }).cnt;
+  const weeklyTotal = (
+    database
+      .prepare(
+        "SELECT COUNT(*) as cnt FROM mod_generations WHERE email_id = ? AND generated_at >= ?"
+      )
+      .get(email, weekAgo) as { cnt: number }
+  ).cnt;
+  const weeklyMedium = (
+    database
+      .prepare(
+        "SELECT COUNT(*) as cnt FROM mod_generations WHERE email_id = ? AND story_length = 'medium' AND generated_at >= ?"
+      )
+      .get(email, weekAgo) as { cnt: number }
+  ).cnt;
+  const weeklyLarge = (
+    database
+      .prepare(
+        "SELECT COUNT(*) as cnt FROM mod_generations WHERE email_id = ? AND story_length = 'long' AND generated_at >= ?"
+      )
+      .get(email, weekAgo) as { cnt: number }
+  ).cnt;
 
   return {
     phase: "weekly",

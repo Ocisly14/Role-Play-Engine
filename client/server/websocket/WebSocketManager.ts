@@ -4,7 +4,10 @@ import { ServerState } from "../core/ServerState.js";
 import { DatabaseManager } from "../core/DatabaseManager.js";
 import { verifyToken } from "../auth/jwt.js";
 import { handleClientMessage } from "./handlers.js";
-import { startProgressionChecker, stopProgressionChecker } from "./progressionChecker.js";
+import {
+  startProgressionChecker,
+  stopProgressionChecker,
+} from "./progressionChecker.js";
 
 export interface WSClient {
   ws: WebSocket;
@@ -27,7 +30,7 @@ export class WebSocketManager {
     WebSocketManager.instance = this;
     this.wss = new WebSocketServer({
       server,
-      path: '/ws'
+      path: "/ws",
     });
 
     this.setupConnectionHandling();
@@ -38,14 +41,19 @@ export class WebSocketManager {
    * Setup WebSocket connection event handlers
    */
   private setupConnectionHandling(): void {
-    this.wss.on('connection', (ws: WebSocket, req) => {
+    this.wss.on("connection", (ws: WebSocket, req) => {
       const sessionId = this.extractSessionId(req);
       const token = this.extractToken(req);
       const creds = token ? this.verifyTokenCreds(token) : null;
       const userId = creds?.userId ?? null;
       const email = creds?.email ?? null;
 
-      if (!sessionId || !userId || !email || !this.isSessionOwnedByUser(sessionId, userId, email)) {
+      if (
+        !sessionId ||
+        !userId ||
+        !email ||
+        !this.isSessionOwnedByUser(sessionId, userId, email)
+      ) {
         ws.close();
         return;
       }
@@ -65,7 +73,9 @@ export class WebSocketManager {
     // Close existing connection for this sessionId if any
     const existingClient = this.clients.get(sessionId);
     if (existingClient && existingClient.ws.readyState === WebSocket.OPEN) {
-      console.log(`⚠️  [WebSocket] Closing existing connection for session ${sessionId}`);
+      console.log(
+        `⚠️  [WebSocket] Closing existing connection for session ${sessionId}`
+      );
       // Remove from map first to prevent race condition
       this.clients.delete(sessionId);
       existingClient.ws.close();
@@ -75,21 +85,27 @@ export class WebSocketManager {
     const client: WSClient = {
       ws,
       sessionId,
-      lastHeartbeat: new Date()
+      lastHeartbeat: new Date(),
     };
     this.clients.set(sessionId, client);
 
     // Send welcome message
-    ws.send(JSON.stringify({
-      type: 'connected',
-      sessionId: sessionId,
-      timestamp: new Date().toISOString()
-    }));
+    ws.send(
+      JSON.stringify({
+        type: "connected",
+        sessionId: sessionId,
+        timestamp: new Date().toISOString(),
+      })
+    );
 
     // Setup event handlers
-    ws.on('message', (data: Buffer) => handleClientMessage(data, client, this.clients));
-    ws.on('close', () => this.handleDisconnection(sessionId, ws));
-    ws.on('error', (error) => console.error(`[WebSocket] Error for client ${sessionId}:`, error));
+    ws.on("message", (data: Buffer) =>
+      handleClientMessage(data, client, this.clients)
+    );
+    ws.on("close", () => this.handleDisconnection(sessionId, ws));
+    ws.on("error", (error) =>
+      console.error(`[WebSocket] Error for client ${sessionId}:`, error)
+    );
 
     // Start progression checker if this is the first client
     if (this.clients.size === 1) {
@@ -124,14 +140,16 @@ export class WebSocketManager {
    * @returns Session ID or null if not found
    */
   private extractSessionId(req: any): string | null {
-    return req.url?.split('sessionId=')[1]?.split('&')[0] || null;
+    return req.url?.split("sessionId=")[1]?.split("&")[0] || null;
   }
 
   private extractToken(req: any): string | null {
-    return req.url?.split('token=')[1]?.split('&')[0] || null;
+    return req.url?.split("token=")[1]?.split("&")[0] || null;
   }
 
-  private verifyTokenCreds(token: string): { userId: string; email: string } | null {
+  private verifyTokenCreds(
+    token: string
+  ): { userId: string; email: string } | null {
     try {
       const payload = verifyToken(decodeURIComponent(token));
       return { userId: payload.userId, email: payload.email };
@@ -140,7 +158,11 @@ export class WebSocketManager {
     }
   }
 
-  private isSessionOwnedByUser(sessionId: string, userId: string, email: string): boolean {
+  private isSessionOwnedByUser(
+    sessionId: string,
+    userId: string,
+    email: string
+  ): boolean {
     const serverState = ServerState.getInstance();
     const activeState = serverState.getDynamicGameState(userId);
     if (activeState?.sessionId === sessionId) {
@@ -148,13 +170,15 @@ export class WebSocketManager {
     }
 
     const db = DatabaseManager.getInstance().getDatabase().getDatabase();
-    const row = db.prepare(`
+    const row = db
+      .prepare(`
       SELECT 1
       FROM game_turns gt
       JOIN characters c ON c.character_id = gt.character_id
       WHERE gt.session_id = ? AND c.email_id = ?
       LIMIT 1
-    `).get(sessionId, email);
+    `)
+      .get(sessionId, email);
 
     return Boolean(row);
   }
@@ -169,7 +193,10 @@ export class WebSocketManager {
           try {
             client.ws.ping();
           } catch (error) {
-            console.error(`[WebSocket] Error sending ping to ${sessionId}:`, error);
+            console.error(
+              `[WebSocket] Error sending ping to ${sessionId}:`,
+              error
+            );
             this.clients.delete(sessionId);
           }
         } else {

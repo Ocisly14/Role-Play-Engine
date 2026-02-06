@@ -116,7 +116,9 @@ export function extractUsageMetadata(response: any): TokenUsageTotals | null {
     return null;
   }
 
-  const direct = normalizeUsageMetadata(response.usage_metadata ?? response.usageMetadata);
+  const direct = normalizeUsageMetadata(
+    response.usage_metadata ?? response.usageMetadata
+  );
   if (direct) {
     return direct;
   }

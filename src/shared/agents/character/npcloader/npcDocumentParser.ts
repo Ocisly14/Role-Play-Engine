@@ -10,7 +10,11 @@ import { ChatGoogleGenerativeAI } from "@langchain/google-genai";
 import mammoth from "mammoth";
 import pdfParse from "pdf-parse";
 import type { ParsedNPCData, InventoryItem } from "../../models/gameTypes.js";
-import { createChatModel, ModelProviderName, ModelClass } from "../../../../models/index.js";
+import {
+  createChatModel,
+  ModelProviderName,
+  ModelClass,
+} from "../../../../models/index.js";
 
 /**
  * Supported document formats
@@ -28,14 +32,16 @@ export class NPCDocumentParser {
     if (!model) {
       const geminiApiKey = process.env.GOOGLE_API_KEY;
       const openaiApiKey = process.env.OPENAI_API_KEY;
-      
+
       if (geminiApiKey) {
         // Use small model for document parsing (cost-effective for this task)
         this.llm = createChatModel(ModelProviderName.GOOGLE, ModelClass.SMALL);
       } else if (openaiApiKey) {
         this.llm = createChatModel(ModelProviderName.OPENAI, ModelClass.SMALL);
       } else {
-        throw new Error("No API key found. Please set either GOOGLE_API_KEY or OPENAI_API_KEY environment variable.");
+        throw new Error(
+          "No API key found. Please set either GOOGLE_API_KEY or OPENAI_API_KEY environment variable."
+        );
       }
     } else {
       this.llm = model;
@@ -114,7 +120,11 @@ export class NPCDocumentParser {
         merged = this.mergeNPCResults(merged, partial);
       } catch (err) {
         const detail =
-          err instanceof Error ? err.message : typeof err === "string" ? err : "Unknown error";
+          err instanceof Error
+            ? err.message
+            : typeof err === "string"
+              ? err
+              : "Unknown error";
         errors.push(`Part ${i + 1}/${chunks.length}: ${detail}`);
         console.warn(
           `Skipping failed chunk ${i + 1}/${chunks.length} for ${fileName}: ${detail}`
@@ -231,7 +241,9 @@ Return ONLY the JSON array, no additional text.`;
           content.match(/\{[\s\S]*\}/)?.[0];
 
         if (!jsonText) {
-          throw new Error(`Failed to extract JSON from LLM response: ${content}`);
+          throw new Error(
+            `Failed to extract JSON from LLM response: ${content}`
+          );
         }
 
         const parsed = (() => {
@@ -273,7 +285,11 @@ Return ONLY the JSON array, no additional text.`;
       } catch (err) {
         lastError = err;
         const detail =
-          err instanceof Error ? err.message : typeof err === "string" ? err : "Unknown error";
+          err instanceof Error
+            ? err.message
+            : typeof err === "string"
+              ? err
+              : "Unknown error";
         console.warn(
           `Retry ${attempt}/3 for ${fileName} due to error: ${detail}`
         );
@@ -308,7 +324,9 @@ Return ONLY the JSON array, no additional text.`;
         console.log(`Parsing NPC document: ${file}...`);
         const npcData = await this.parseDocument(filePath);
         results.push(...npcData);
-        console.log(`✓ Successfully parsed ${npcData.length} NPC(s) from: ${file}`);
+        console.log(
+          `✓ Successfully parsed ${npcData.length} NPC(s) from: ${file}`
+        );
       } catch (error) {
         console.error(`✗ Failed to parse ${file}:`, error);
       }
@@ -367,7 +385,10 @@ Return ONLY the JSON array, no additional text.`;
       merged.occupation = merged.occupation || next.occupation;
       merged.age = merged.age ?? next.age;
       merged.appearance = this.pickLonger(merged.appearance, next.appearance);
-      merged.personality = this.pickLonger(merged.personality, next.personality);
+      merged.personality = this.pickLonger(
+        merged.personality,
+        next.personality
+      );
       merged.background = this.pickLonger(merged.background, next.background);
       merged.notes = this.pickLonger(merged.notes, next.notes);
 
@@ -378,7 +399,10 @@ Return ONLY the JSON array, no additional text.`;
         next.inventory
       );
 
-      merged.attributes = { ...(merged.attributes || {}), ...(next.attributes || {}) };
+      merged.attributes = {
+        ...(merged.attributes || {}),
+        ...(next.attributes || {}),
+      };
       merged.status = { ...(merged.status || {}), ...(next.status || {}) };
       merged.skills = { ...(merged.skills || {}), ...(next.skills || {}) };
 
@@ -414,20 +438,14 @@ Return ONLY the JSON array, no additional text.`;
     return Array.from(byName.values());
   }
 
-  private pickLonger(
-    a?: string,
-    b?: string
-  ): string | undefined {
+  private pickLonger(a?: string, b?: string): string | undefined {
     if (a && b) {
       return b.length > a.length ? b : a;
     }
     return a || b;
   }
 
-  private mergeStringArrays(
-    a?: string[],
-    b?: string[]
-  ): string[] | undefined {
+  private mergeStringArrays(a?: string[], b?: string[]): string[] | undefined {
     const merged = new Set<string>();
     (a || []).forEach((v) => merged.add(v));
     (b || []).forEach((v) => merged.add(v));
@@ -439,12 +457,12 @@ Return ONLY the JSON array, no additional text.`;
     b?: InventoryItem[]
   ): InventoryItem[] | undefined {
     const merged = new Map<string, InventoryItem>();
-    
+
     // Add items from first array, using name as key
     (a || []).forEach((item) => {
       merged.set(item.name.toLowerCase(), item);
     });
-    
+
     // Add items from second array, merging quantities if item already exists
     (b || []).forEach((item) => {
       const key = item.name.toLowerCase();
@@ -456,13 +474,16 @@ Return ONLY the JSON array, no additional text.`;
           ...existing,
           quantity,
           // Merge properties if both exist
-          properties: { ...(existing.properties || {}), ...(item.properties || {}) }
+          properties: {
+            ...(existing.properties || {}),
+            ...(item.properties || {}),
+          },
         });
       } else {
         merged.set(key, item);
       }
     });
-    
+
     return merged.size ? Array.from(merged.values()) : undefined;
   }
 

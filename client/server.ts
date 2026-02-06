@@ -33,7 +33,11 @@ const portFromApiUrl = (() => {
   if (!process.env.API_URL) return undefined;
   try {
     const apiUrl = new URL(process.env.API_URL);
-    return apiUrl.port ? Number(apiUrl.port) : apiUrl.protocol === "https:" ? 443 : 80;
+    return apiUrl.port
+      ? Number(apiUrl.port)
+      : apiUrl.protocol === "https:"
+        ? 443
+        : 80;
   } catch {
     return undefined;
   }
@@ -41,30 +45,34 @@ const portFromApiUrl = (() => {
 const PORT = Number(process.env.PORT) || portFromApiUrl || 3000;
 
 // Middleware
-app.use(cors({
-  origin: true,
-  credentials: true,
-  exposedHeaders: ["x-access-token"],
-}));
+app.use(
+  cors({
+    origin: true,
+    credentials: true,
+    exposedHeaders: ["x-access-token"],
+  })
+);
 app.use(express.json());
 app.use(cookieParser());
 
 // Serve frontend build
 const distDir = path.join(__dirname, "dist");
-const staticDir = fs.existsSync(path.join(distDir, "index.html")) ? distDir : __dirname;
+const staticDir = fs.existsSync(path.join(distDir, "index.html"))
+  ? distDir
+  : __dirname;
 app.use(express.static(staticDir));
 
 // Mount API routes
-app.use("/api/maps", mapRoutes);      // /api/maps/* - Map image serving (MUST be first, no auth)
-app.use("/api/auth", authRoutes);     // /api/auth/* - Authentication routes
-app.use("/api", dataRoutes);          // /api/occupations, /api/weapons, /api/mods
-app.use("/api", characterRoutes);     // /api/character*, /api/characters
-app.use("/api", gameRoutes);          // /api/game/*, /api/gamestate
-app.use("/api", modRoutes);           // /api/mod/*, /api/module/*
-app.use("/api", turnRoutes);          // /api/turns*, /api/sessions/*
-app.use("/api", checkpointRoutes);    // /api/checkpoints/*
-app.use("/api", memoRoutes);          // /api/memos
-app.use("/api", skillRoutes);         // /api/skills/*
+app.use("/api/maps", mapRoutes); // /api/maps/* - Map image serving (MUST be first, no auth)
+app.use("/api/auth", authRoutes); // /api/auth/* - Authentication routes
+app.use("/api", dataRoutes); // /api/occupations, /api/weapons, /api/mods
+app.use("/api", characterRoutes); // /api/character*, /api/characters
+app.use("/api", gameRoutes); // /api/game/*, /api/gamestate
+app.use("/api", modRoutes); // /api/mod/*, /api/module/*
+app.use("/api", turnRoutes); // /api/turns*, /api/sessions/*
+app.use("/api", checkpointRoutes); // /api/checkpoints/*
+app.use("/api", memoRoutes); // /api/memos
+app.use("/api", skillRoutes); // /api/skills/*
 
 // SPA fallback (must be after API routes)
 app.get("*", (_req, res) => {
@@ -74,7 +82,9 @@ app.get("*", (_req, res) => {
   } else {
     res
       .status(500)
-      .send("Frontend not built. Run `pnpm --filter coc-investigator-sheet build` to generate dist/.");
+      .send(
+        "Frontend not built. Run `pnpm --filter coc-investigator-sheet build` to generate dist/."
+      );
   }
 });
 
@@ -121,7 +131,9 @@ server.listen(PORT, () => {
       })
       .catch((error) => {
         console.warn("⚠️  Local embedding warmup failed:", error);
-        console.warn("⚠️  Skill embedding warmup skipped (local embedding unavailable)");
+        console.warn(
+          "⚠️  Skill embedding warmup skipped (local embedding unavailable)"
+        );
       });
   }
 });

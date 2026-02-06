@@ -38,7 +38,9 @@ function loadOccupationData(occupation: string): OccupationData | null {
       "Character occupation.json"
     );
 
-    const occupationsFile = JSON.parse(fs.readFileSync(occupationsPath, "utf-8"));
+    const occupationsFile = JSON.parse(
+      fs.readFileSync(occupationsPath, "utf-8")
+    );
 
     // Flatten all occupation groups
     const allOccupations: OccupationData[] = [];
@@ -77,7 +79,10 @@ function calculateOccupationalPoints(
     // eslint-disable-next-line no-eval
     return Math.floor(eval(evaluated));
   } catch (error) {
-    console.error("Failed to evaluate occupational points expression:", expression);
+    console.error(
+      "Failed to evaluate occupational points expression:",
+      expression
+    );
     return 0;
   }
 }
@@ -164,7 +169,9 @@ function capAndRedistributeOverflow(
     }
   }
   while (overflow > 0) {
-    const underCap = skillNames.filter((name) => (skills[name] ?? 0) < maxPerSkill);
+    const underCap = skillNames.filter(
+      (name) => (skills[name] ?? 0) < maxPerSkill
+    );
     if (underCap.length === 0) break;
     const target = underCap[Math.floor(Math.random() * underCap.length)]!;
     const add = Math.min(overflow, maxPerSkill - (skills[target] ?? 0));
@@ -178,15 +185,51 @@ function capAndRedistributeOverflow(
  * Common CoC skill list
  */
 const COMMON_SKILLS = [
-  "Accounting", "Anthropology", "Appraise", "Archaeology", "Art/Craft",
-  "Charm", "Climb", "Social Status", "Forbidden Lore", "Disguise",
-  "Dodge", "Drive Auto", "Electrical Repair", "Bluff", "Brawling",
-  "Pistol", "Rifle", "First Aid", "History",
-  "Intimidate", "Jump", "Language (Other)", "Law", "Research", "Listen",
-  "Locksmith", "Mechanical Repair", "Medicine", "Natural World", "Navigate",
-  "Occult", "Operate Heavy Machinery", "Persuade", "Pilot", "Psychology",
-  "Psychoanalysis", "Ride", "Science", "Sleight of Hand", "Perception",
-  "Stealth", "Survival", "Swim", "Throw", "Track"
+  "Accounting",
+  "Anthropology",
+  "Appraise",
+  "Archaeology",
+  "Art/Craft",
+  "Charm",
+  "Climb",
+  "Social Status",
+  "Forbidden Lore",
+  "Disguise",
+  "Dodge",
+  "Drive Auto",
+  "Electrical Repair",
+  "Bluff",
+  "Brawling",
+  "Pistol",
+  "Rifle",
+  "First Aid",
+  "History",
+  "Intimidate",
+  "Jump",
+  "Language (Other)",
+  "Law",
+  "Research",
+  "Listen",
+  "Locksmith",
+  "Mechanical Repair",
+  "Medicine",
+  "Natural World",
+  "Navigate",
+  "Occult",
+  "Operate Heavy Machinery",
+  "Persuade",
+  "Pilot",
+  "Psychology",
+  "Psychoanalysis",
+  "Ride",
+  "Science",
+  "Sleight of Hand",
+  "Perception",
+  "Stealth",
+  "Survival",
+  "Swim",
+  "Throw",
+  "Track",
 ];
 
 /**
@@ -202,23 +245,33 @@ export function allocateSkillPoints(
   const occupationData = loadOccupationData(occupation);
 
   if (!occupationData) {
-    console.warn(`Occupation "${occupation}" not found, using generic allocation`);
+    console.warn(
+      `Occupation "${occupation}" not found, using generic allocation`
+    );
 
     // Generic allocation if occupation not found
     const occupationalPoints = attributes.EDU * 4;
     const interestPoints = attributes.INT * 2;
 
     const randomOccSkills = getRandomSubset(COMMON_SKILLS, 6);
-    const occupationalSkillsRaw = distributePointsWeighted(randomOccSkills, occupationalPoints);
+    const occupationalSkillsRaw = distributePointsWeighted(
+      randomOccSkills,
+      occupationalPoints
+    );
     const occupationalSkills = capAndRedistributeOverflow(
       occupationalSkillsRaw,
       randomOccSkills,
       OCCUPATIONAL_SKILL_CAP
     );
 
-    const remainingSkills = COMMON_SKILLS.filter(s => !randomOccSkills.includes(s));
+    const remainingSkills = COMMON_SKILLS.filter(
+      (s) => !randomOccSkills.includes(s)
+    );
     const randomInterestSkills = getRandomSubset(remainingSkills, 3);
-    const interestSkillsRaw = distributePointsWeighted(randomInterestSkills, interestPoints);
+    const interestSkillsRaw = distributePointsWeighted(
+      randomInterestSkills,
+      interestPoints
+    );
     const interestSkills = capAndRedistributeOverflow(
       interestSkillsRaw,
       randomInterestSkills,
@@ -248,13 +301,22 @@ export function allocateSkillPoints(
 
   // Select random interest skills (not in occupational skills)
   const interestCandidates = COMMON_SKILLS.filter(
-    s => !occupationData.suggested_skills.includes(s)
+    (s) => !occupationData.suggested_skills.includes(s)
   );
-  const numInterestSkills = Math.min(3 + Math.floor(Math.random() * 3), interestCandidates.length); // 3-5 skills
-  const selectedInterestSkills = getRandomSubset(interestCandidates, numInterestSkills);
+  const numInterestSkills = Math.min(
+    3 + Math.floor(Math.random() * 3),
+    interestCandidates.length
+  ); // 3-5 skills
+  const selectedInterestSkills = getRandomSubset(
+    interestCandidates,
+    numInterestSkills
+  );
 
   // Distribute interest points across selected skills (cap 80 per skill, overflow redistributed randomly)
-  const interestSkillsRaw = distributePointsWeighted(selectedInterestSkills, interestPoints);
+  const interestSkillsRaw = distributePointsWeighted(
+    selectedInterestSkills,
+    interestPoints
+  );
   const interestSkills = capAndRedistributeOverflow(
     interestSkillsRaw,
     selectedInterestSkills,

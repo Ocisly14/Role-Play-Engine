@@ -1,5 +1,17 @@
-import React, { useEffect, useMemo, useState, useRef, useCallback } from "react";
-import { BrowserRouter, Routes, Route, useLocation, useNavigate } from "react-router-dom";
+import React, {
+  useEffect,
+  useMemo,
+  useState,
+  useRef,
+  useCallback,
+} from "react";
+import {
+  BrowserRouter,
+  Routes,
+  Route,
+  useLocation,
+  useNavigate,
+} from "react-router-dom";
 import { AuthProvider, useAuth } from "./contexts/AuthContext";
 import { ProtectedRoute } from "./components/ProtectedRoute";
 import Login from "./views/auth/Login";
@@ -19,9 +31,24 @@ import { findAvailableImage } from "./utils/imageLoader";
 import { setBackgroundWithTransition } from "./utils/backgroundTransition";
 
 type SkillEntry = { name: string; base: string; category: string };
-type AppPage = "home" | "sheet" | "game" | "character-select" | "mod-select" | "module-intro" | "story-creator";
+type AppPage =
+  | "home"
+  | "sheet"
+  | "game"
+  | "character-select"
+  | "mod-select"
+  | "module-intro"
+  | "story-creator";
 const PAGE_STORAGE_KEY = "talecraft.app.page";
-const APP_PAGES: AppPage[] = ["home", "sheet", "game", "character-select", "mod-select", "module-intro", "story-creator"];
+const APP_PAGES: AppPage[] = [
+  "home",
+  "sheet",
+  "game",
+  "character-select",
+  "mod-select",
+  "module-intro",
+  "story-creator",
+];
 
 const getStoredPage = (): AppPage => {
   if (typeof window === "undefined") {
@@ -125,7 +152,10 @@ const AppShell: React.FC = () => {
   const navigate = useNavigate();
   const [page, setPage] = useState<AppPage>(() => getStoredPage());
   const [saving, setSaving] = useState(false);
-  const [saveMessage, setSaveMessage] = useState<{ type: "success" | "error"; text: string } | null>(null);
+  const [saveMessage, setSaveMessage] = useState<{
+    type: "success" | "error";
+    text: string;
+  } | null>(null);
   const [occupations, setOccupations] = useState<any[]>([]);
   const [selectedOccupation, setSelectedOccupation] = useState<any>(null);
   const [occupationalPoints, setOccupationalPoints] = useState<number>(0);
@@ -141,12 +171,19 @@ const AppShell: React.FC = () => {
   const [showModManager, setShowModManager] = useState(false);
   const [checkpoints, setCheckpoints] = useState<any[]>([]);
   const [loadingCheckpoints, setLoadingCheckpoints] = useState(false);
-  const [moduleIntroduction, setModuleIntroduction] = useState<{ introduction: string; moduleNotes: string } | null>(null);
+  const [moduleIntroduction, setModuleIntroduction] = useState<{
+    introduction: string;
+    moduleNotes: string;
+  } | null>(null);
   const [showModuleIntro, setShowModuleIntro] = useState(false);
   const [loadingModData, setLoadingModData] = useState(false);
-  const [modLoadProgress, setModLoadProgress] = useState<{ stage: string; progress: number; message: string } | null>(null);
+  const [modLoadProgress, setModLoadProgress] = useState<{
+    stage: string;
+    progress: number;
+    message: string;
+  } | null>(null);
   const [conversationHistory, setConversationHistory] = useState<Array<{
-    role: 'character' | 'keeper';
+    role: "character" | "keeper";
     content: string;
     timestamp: string;
     turnNumber: number;
@@ -163,9 +200,9 @@ const AppShell: React.FC = () => {
   const [isRestoringSession, setIsRestoringSession] = useState(false);
   const [hasInitialized, setHasInitialized] = useState(false);
   const prevUserRef = useRef<typeof user | null>(null);
-  const [language, setLanguage] = useState<'en' | 'zh'>(() => {
-    const stored = localStorage.getItem('app.language');
-    return (stored === 'en' || stored === 'zh') ? stored : 'zh';
+  const [language, setLanguage] = useState<"en" | "zh">(() => {
+    const stored = localStorage.getItem("app.language");
+    return stored === "en" || stored === "zh" ? stored : "zh";
   });
 
   useEffect(() => {
@@ -173,7 +210,7 @@ const AppShell: React.FC = () => {
   }, [page]);
 
   useEffect(() => {
-    localStorage.setItem('app.language', language);
+    localStorage.setItem("app.language", language);
   }, [language]);
 
   // After a fresh login, always land on home instead of restoring create-character.
@@ -190,7 +227,7 @@ const AppShell: React.FC = () => {
   // Helper function to set default background (supports multiple formats)
   const setDefaultBackground = useCallback(async () => {
     try {
-      const imageUrl = await findAvailableImage('background');
+      const imageUrl = await findAvailableImage("background");
       setBackgroundWithTransition(imageUrl, true);
     } catch (err) {
       console.error("Failed to load default background:", err);
@@ -203,7 +240,7 @@ const AppShell: React.FC = () => {
   useEffect(() => {
     const initializeBackground = async () => {
       try {
-        const imageUrl = await findAvailableImage('background');
+        const imageUrl = await findAvailableImage("background");
         setBackgroundWithTransition(imageUrl, false);
       } catch (err) {
         console.error("Failed to load default background:", err);
@@ -232,14 +269,15 @@ const AppShell: React.FC = () => {
         }
 
         const data = await response.json();
-        const sceneImagePath = data?.gameState?.currentScenario?.sceneImage?.path;
-        
+        const sceneImagePath =
+          data?.gameState?.currentScenario?.sceneImage?.path;
+
         // Extract module name from game state (for DynamicGameState)
         const moduleName = data?.gameState?.moduleName;
         if (moduleName) {
           setCurrentModuleName(moduleName);
         }
-        
+
         if (sceneImagePath) {
           const backgroundUrl = `/api/maps/${sceneImagePath}`;
           // Only update if the image has changed
@@ -324,7 +362,13 @@ const AppShell: React.FC = () => {
   // Validate page state: if on game page without valid session, reset to home
   // Only validate after initial session restoration is complete
   useEffect(() => {
-    if (user && page === "game" && !sessionId && !isRestoringSession && hasInitialized) {
+    if (
+      user &&
+      page === "game" &&
+      !sessionId &&
+      !isRestoringSession &&
+      hasInitialized
+    ) {
       // No valid session, reset to home and leave /gamechat
       navigate("/");
       setPage("home");
@@ -409,15 +453,17 @@ const AppShell: React.FC = () => {
             whiteSpace: "nowrap",
           }}
         >
-          {user.email.split('@')[0]}
+          {user.email.split("@")[0]}
         </span>
-        <span style={{
-          fontSize: "0.8rem",
-          opacity: 0.9,
-          transition: "transform 0.3s ease",
-          transform: isUserMenuOpen ? "rotate(180deg)" : "rotate(0deg)",
-          display: "inline-block",
-        }}>
+        <span
+          style={{
+            fontSize: "0.8rem",
+            opacity: 0.9,
+            transition: "transform 0.3s ease",
+            transform: isUserMenuOpen ? "rotate(180deg)" : "rotate(0deg)",
+            display: "inline-block",
+          }}
+        >
           ▼
         </span>
       </button>
@@ -444,7 +490,15 @@ const AppShell: React.FC = () => {
               fontWeight: "600",
             }}
           >
-            <div style={{ fontSize: "0.75rem", color: "#888", marginBottom: "4px" }}>Signed in as:</div>
+            <div
+              style={{
+                fontSize: "0.75rem",
+                color: "#888",
+                marginBottom: "4px",
+              }}
+            >
+              Signed in as:
+            </div>
             {user.email}
           </div>
           <button
@@ -567,8 +621,12 @@ const AppShell: React.FC = () => {
     setInterestPoints(intValue * 2);
 
     // Calculate occupational points based on selected occupation
-    if (selectedOccupation && selectedOccupation.suggested_occupational_points) {
-      const expression = selectedOccupation.suggested_occupational_points.expression;
+    if (
+      selectedOccupation &&
+      selectedOccupation.suggested_occupational_points
+    ) {
+      const expression =
+        selectedOccupation.suggested_occupational_points.expression;
 
       try {
         // Parse and evaluate the expression
@@ -594,7 +652,17 @@ const AppShell: React.FC = () => {
     } else {
       setOccupationalPoints(0);
     }
-  }, [form.STR, form.CON, form.DEX, form.APP, form.POW, form.SIZ, form.INT, form.EDU, selectedOccupation]);
+  }, [
+    form.STR,
+    form.CON,
+    form.DEX,
+    form.APP,
+    form.POW,
+    form.SIZ,
+    form.INT,
+    form.EDU,
+    selectedOccupation,
+  ]);
 
   // Show mod selector first, then character selector
   const handleShowCharacterSelector = () => {
@@ -605,17 +673,21 @@ const AppShell: React.FC = () => {
   const handleSelectMod = async (modName: string) => {
     setSelectedModName(modName);
     setLoadingModData(true);
-    setModLoadProgress({ stage: "Initializing", progress: 0, message: "Initializing..." });
-    
+    setModLoadProgress({
+      stage: "Initializing",
+      progress: 0,
+      message: "Initializing...",
+    });
+
     try {
       // Step 1: Load mod data with SSE progress updates
       let loadData: any = null;
-      
+
       const loadResponse = await authFetch("/api/mod/load?stream=true", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-          "Accept": "text/event-stream"
+          Accept: "text/event-stream",
         },
         body: JSON.stringify({ modName }),
       });
@@ -660,21 +732,25 @@ const AppShell: React.FC = () => {
             if (line.startsWith("data: ")) {
               try {
                 const data = JSON.parse(line.slice(6));
-                
+
                 // Check for errors
                 if (data.stage === "Error" && data.message) {
                   throw new Error(data.message);
                 }
-                
+
                 // Update progress if this is a progress update
-                if (data.stage && typeof data.progress === "number" && data.message) {
-                  setModLoadProgress({ 
-                    stage: data.stage, 
-                    progress: data.progress, 
-                    message: data.message 
+                if (
+                  data.stage &&
+                  typeof data.progress === "number" &&
+                  data.message
+                ) {
+                  setModLoadProgress({
+                    stage: data.stage,
+                    progress: data.progress,
+                    message: data.message,
                   });
                 }
-                
+
                 // Store final result data
                 if (data.success && data.scenariosLoaded !== undefined) {
                   loadData = data;
@@ -696,13 +772,23 @@ const AppShell: React.FC = () => {
       }
 
       // Step 2: Fetch module introduction
-      setModLoadProgress({ stage: "Generating Introduction Narrative", progress: 90, message: "Generating module introduction narrative..." });
-      const introResponse = await authFetch(`/api/module/introduction?modName=${encodeURIComponent(modName)}`);
+      setModLoadProgress({
+        stage: "Generating Introduction Narrative",
+        progress: 90,
+        message: "Generating module introduction narrative...",
+      });
+      const introResponse = await authFetch(
+        `/api/module/introduction?modName=${encodeURIComponent(modName)}`
+      );
       const introData = await introResponse.json();
 
       if (introResponse.ok && introData.success) {
         setModuleIntroduction(introData.moduleIntroduction);
-        setModLoadProgress({ stage: "Complete", progress: 100, message: "Ready" });
+        setModLoadProgress({
+          stage: "Complete",
+          progress: 100,
+          message: "Ready",
+        });
         setTimeout(() => {
           setLoadingModData(false);
           setModLoadProgress(null);
@@ -726,17 +812,24 @@ const AppShell: React.FC = () => {
 
   // Handle character selection and start game
   // Note: Data import is now handled in CharacterSelector component
-  const handleSelectCharacter = async (characterId: string, charName: string) => {
+  const handleSelectCharacter = async (
+    characterId: string,
+    charName: string
+  ) => {
     console.log("Selected character:", characterId, charName);
     setSelectedCharacterId(characterId);
     setCharacterName(charName);
-    
+
     try {
       // Start game with selected character and mod
       const response = await authFetch("/api/game/start", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ characterId, modName: selectedModName, language }),
+        body: JSON.stringify({
+          characterId,
+          modName: selectedModName,
+          language,
+        }),
       });
 
       const data = await response.json();
@@ -778,13 +871,17 @@ const AppShell: React.FC = () => {
     try {
       // Get all checkpoints (we'll filter by session later if needed)
       // For now, we'll get checkpoints from a default session or all sessions
-      const response = await authFetch(`/api/checkpoints/list?sessionId=all&limit=50`);
+      const response = await authFetch(
+        `/api/checkpoints/list?sessionId=all&limit=50`
+      );
       const data = await response.json();
 
       if (data.success) {
         setCheckpoints(data.checkpoints || []);
       } else {
-        alert("Failed to load checkpoint list: " + (data.error || "Unknown error"));
+        alert(
+          "Failed to load checkpoint list: " + (data.error || "Unknown error")
+        );
       }
     } catch (error) {
       console.error("Error loading checkpoints:", error);
@@ -795,12 +892,16 @@ const AppShell: React.FC = () => {
   };
 
   // Handle checkpoint deletion
-  const handleDeleteCheckpoint = async (checkpointId: string, checkpointName: string, e: React.MouseEvent) => {
+  const handleDeleteCheckpoint = async (
+    checkpointId: string,
+    checkpointName: string,
+    e: React.MouseEvent
+  ) => {
     e.stopPropagation(); // Prevent triggering checkpoint load
 
     // Confirm deletion
     const confirmed = window.confirm(
-      `Are you sure you want to delete checkpoint "${checkpointName || 'Unnamed Checkpoint'}"?\n\nThis action cannot be undone.`
+      `Are you sure you want to delete checkpoint "${checkpointName || "Unnamed Checkpoint"}"?\n\nThis action cannot be undone.`
     );
 
     if (!confirmed) {
@@ -818,7 +919,9 @@ const AppShell: React.FC = () => {
         // Refresh checkpoint list
         await handleContinueGame();
       } else {
-        alert("Failed to delete checkpoint: " + (data.error || "Unknown error"));
+        alert(
+          "Failed to delete checkpoint: " + (data.error || "Unknown error")
+        );
       }
     } catch (error) {
       console.error("Error deleting checkpoint:", error);
@@ -840,7 +943,7 @@ const AppShell: React.FC = () => {
       if (response.ok && data.success) {
         // Restore game state
         setSessionId(data.sessionId || `session-${Date.now()}`);
-        
+
         // Extract character name from game state if available
         if (data.gameState?.playerCharacter?.name) {
           setCharacterName(data.gameState.playerCharacter.name);
@@ -853,9 +956,14 @@ const AppShell: React.FC = () => {
 
         // Load conversation history if provided
         // Note: Messages should have their game time saved when created, not filled dynamically
-        if (data.conversationHistory && Array.isArray(data.conversationHistory)) {
+        if (
+          data.conversationHistory &&
+          Array.isArray(data.conversationHistory)
+        ) {
           setConversationHistory(data.conversationHistory);
-          console.log(`Loaded ${data.conversationHistory.length} messages from checkpoint`);
+          console.log(
+            `Loaded ${data.conversationHistory.length} messages from checkpoint`
+          );
         } else {
           setConversationHistory(null);
         }
@@ -866,10 +974,16 @@ const AppShell: React.FC = () => {
 
         // Restore language from checkpoint
         if (data.language) {
-          const restoredLanguage = (data.language === 'en' || data.language === 'zh') ? data.language : 'zh';
+          const restoredLanguage =
+            data.language === "en" || data.language === "zh"
+              ? data.language
+              : "zh";
           setLanguage(restoredLanguage);
-          const languageLabel = restoredLanguage === 'zh' ? 'Chinese' : 'English';
-          alert(`Checkpoint loaded successfully!\nLanguage: ${languageLabel}\n(This setting matches the checkpoint and cannot be changed)`);
+          const languageLabel =
+            restoredLanguage === "zh" ? "Chinese" : "English";
+          alert(
+            `Checkpoint loaded successfully!\nLanguage: ${languageLabel}\n(This setting matches the checkpoint and cannot be changed)`
+          );
         }
 
         // Close checkpoint selector and go to game
@@ -905,7 +1019,9 @@ const AppShell: React.FC = () => {
         setAttributeOptions([{ id: 1, attributes: data.attributes }]);
         setShowAttributeSelector(true);
       } else {
-        alert("Failed to generate attributes: " + (data.error || "Unknown error"));
+        alert(
+          "Failed to generate attributes: " + (data.error || "Unknown error")
+        );
       }
     } catch (error) {
       console.error("Error generating random attributes:", error);
@@ -932,10 +1048,12 @@ const AppShell: React.FC = () => {
       if (response.ok && data.success) {
         setAttributeOptions((prev) => [
           ...prev,
-          { id: prev.length + 1, attributes: data.attributes }
+          { id: prev.length + 1, attributes: data.attributes },
         ]);
       } else {
-        alert("Failed to generate attributes: " + (data.error || "Unknown error"));
+        alert(
+          "Failed to generate attributes: " + (data.error || "Unknown error")
+        );
       }
     } catch (error) {
       console.error("Error generating random attributes:", error);
@@ -996,8 +1114,12 @@ const AppShell: React.FC = () => {
   // Items/Inventory following backend InventoryItem interface
   const items = [0, 1, 2, 3, 4].map((i) => ({
     name: form[`item_${i}_name`] || "",
-    quantity: form[`item_${i}_quantity`] ? Number(form[`item_${i}_quantity`]) : undefined,
-    properties: form[`item_${i}_description`] ? { description: form[`item_${i}_description`] } : undefined,
+    quantity: form[`item_${i}_quantity`]
+      ? Number(form[`item_${i}_quantity`])
+      : undefined,
+    properties: form[`item_${i}_description`]
+      ? { description: form[`item_${i}_description`] }
+      : undefined,
   }));
 
   const characterData = useMemo(
@@ -1011,10 +1133,17 @@ const AppShell: React.FC = () => {
         residence: form.residence,
         birthplace: form.birthplace,
       },
-      attributes: ["STR", "CON", "DEX", "APP", "POW", "SIZ", "INT", "EDU", "LCK"].reduce(
-        (acc, key) => ({ ...acc, [key]: Number(form[key]) || 0 }),
-        {}
-      ),
+      attributes: [
+        "STR",
+        "CON",
+        "DEX",
+        "APP",
+        "POW",
+        "SIZ",
+        "INT",
+        "EDU",
+        "LCK",
+      ].reduce((acc, key) => ({ ...acc, [key]: Number(form[key]) || 0 }), {}),
       derived: {
         HP: Number(form.HP) || 0,
         SAN: Number(form.SAN) || 0,
@@ -1032,8 +1161,11 @@ const AppShell: React.FC = () => {
             base: parseInt(s.base.replace("%", "")) || 0,
             occupationalPoints: Number(s.occupationalValue) || 0,
             interestPoints: Number(s.interestValue) || 0,
-            total: (parseInt(s.base.replace("%", "")) || 0) + (Number(s.occupationalValue) || 0) + (Number(s.interestValue) || 0)
-          }
+            total:
+              (parseInt(s.base.replace("%", "")) || 0) +
+              (Number(s.occupationalValue) || 0) +
+              (Number(s.interestValue) || 0),
+          },
         }),
         {}
       ),
@@ -1088,11 +1220,17 @@ const AppShell: React.FC = () => {
           setIsCreatingFromGameFlow(false);
         }, 1500);
       } else {
-        setSaveMessage({ type: "error", text: data.error || "Failed to create character" });
+        setSaveMessage({
+          type: "error",
+          text: data.error || "Failed to create character",
+        });
       }
     } catch (error) {
       console.error("Error creating character:", error);
-      setSaveMessage({ type: "error", text: "Network error, unable to connect to server" });
+      setSaveMessage({
+        type: "error",
+        text: "Network error, unable to connect to server",
+      });
     } finally {
       setSaving(false);
     }
@@ -1101,7 +1239,12 @@ const AppShell: React.FC = () => {
   const sheet = (
     <div className="sheet">
       <h1>TaleCraft AI Agent</h1>
-      <form onSubmit={handleCreateCharacter} onKeyDown={(e) => { if (e.key === 'Enter') e.preventDefault(); }}>
+      <form
+        onSubmit={handleCreateCharacter}
+        onKeyDown={(e) => {
+          if (e.key === "Enter") e.preventDefault();
+        }}
+      >
         <div style={{ textAlign: "right", marginBottom: "6px" }}>
           <button
             type="button"
@@ -1116,7 +1259,9 @@ const AppShell: React.FC = () => {
             }}
             style={{ background: "#eee" }}
           >
-            {isCreatingFromGameFlow ? "← Back to Character Selection" : "← Return to Home"}
+            {isCreatingFromGameFlow
+              ? "← Back to Character Selection"
+              : "← Return to Home"}
           </button>
         </div>
         <div className="section-title">Identity</div>
@@ -1125,11 +1270,21 @@ const AppShell: React.FC = () => {
             <tr>
               <th>Era</th>
               <td>
-                <input name="era" placeholder="1920s Character" value={form.era || ""} onChange={(e) => onChange("era", e.target.value)} />
+                <input
+                  name="era"
+                  placeholder="1920s Character"
+                  value={form.era || ""}
+                  onChange={(e) => onChange("era", e.target.value)}
+                />
               </td>
               <th>Name</th>
               <td>
-                <input name="name" placeholder="Name" value={form.name || ""} onChange={(e) => onChange("name", e.target.value)} />
+                <input
+                  name="name"
+                  placeholder="Name"
+                  value={form.name || ""}
+                  onChange={(e) => onChange("name", e.target.value)}
+                />
               </td>
               <th>Occupation</th>
               <td>
@@ -1141,7 +1296,9 @@ const AppShell: React.FC = () => {
                     onChange("occupation", occupationName);
 
                     // Find and store the selected occupation details
-                    const selected = occupations.find(occ => occ.name_en === occupationName);
+                    const selected = occupations.find(
+                      (occ) => occ.name_en === occupationName
+                    );
                     setSelectedOccupation(selected);
                   }}
                   style={{ width: "100%", padding: "4px" }}
@@ -1158,28 +1315,56 @@ const AppShell: React.FC = () => {
             <tr>
               <th>Age</th>
               <td>
-                <input name="age" type="number" min="1" placeholder="32" value={form.age || ""} onChange={(e) => onChange("age", e.target.value)} />
+                <input
+                  name="age"
+                  type="number"
+                  min="1"
+                  placeholder="32"
+                  value={form.age || ""}
+                  onChange={(e) => onChange("age", e.target.value)}
+                />
               </td>
               <th>Gender</th>
               <td>
-                <input name="gender" placeholder="Male / Female" value={form.gender || ""} onChange={(e) => onChange("gender", e.target.value)} />
+                <input
+                  name="gender"
+                  placeholder="Male / Female"
+                  value={form.gender || ""}
+                  onChange={(e) => onChange("gender", e.target.value)}
+                />
               </td>
               <th>Residence</th>
               <td>
-                <input name="residence" placeholder="New York" value={form.residence || ""} onChange={(e) => onChange("residence", e.target.value)} />
+                <input
+                  name="residence"
+                  placeholder="New York"
+                  value={form.residence || ""}
+                  onChange={(e) => onChange("residence", e.target.value)}
+                />
               </td>
             </tr>
             <tr>
               <th>Birthplace</th>
               <td colSpan={5}>
-                <input name="birthplace" placeholder="Boston" value={form.birthplace || ""} onChange={(e) => onChange("birthplace", e.target.value)} />
+                <input
+                  name="birthplace"
+                  placeholder="Boston"
+                  value={form.birthplace || ""}
+                  onChange={(e) => onChange("birthplace", e.target.value)}
+                />
               </td>
             </tr>
           </tbody>
         </table>
 
         <div className="section-title">Attributes</div>
-        <div style={{ display: "flex", justifyContent: "flex-end", marginBottom: "8px" }}>
+        <div
+          style={{
+            display: "flex",
+            justifyContent: "flex-end",
+            marginBottom: "8px",
+          }}
+        >
           <button
             type="button"
             className="pill-btn"
@@ -1201,7 +1386,7 @@ const AppShell: React.FC = () => {
                 { key: "SIZ", label: "Size" },
                 { key: "INT", label: "Intelligence" },
                 { key: "EDU", label: "Education" },
-                { key: "LCK", label: "Luck" }
+                { key: "LCK", label: "Luck" },
               ].map((attr) => (
                 <th key={attr.key}>{attr.label}</th>
               ))}
@@ -1216,7 +1401,7 @@ const AppShell: React.FC = () => {
                 { key: "SIZ", label: "Size" },
                 { key: "INT", label: "Intelligence" },
                 { key: "EDU", label: "Education" },
-                { key: "LCK", label: "Luck" }
+                { key: "LCK", label: "Luck" },
               ].map((attr) => (
                 <td key={attr.key}>
                   <input
@@ -1239,37 +1424,87 @@ const AppShell: React.FC = () => {
             <tr>
               <th>HP</th>
               <td>
-                <input name="HP" type="number" min="1" placeholder="10" value={form.HP || ""} onChange={(e) => onChange("HP", e.target.value)} />
+                <input
+                  name="HP"
+                  type="number"
+                  min="1"
+                  placeholder="10"
+                  value={form.HP || ""}
+                  onChange={(e) => onChange("HP", e.target.value)}
+                />
               </td>
               <th>Sanity</th>
               <td>
-                <input name="SAN" type="number" min="0" placeholder="60" value={form.SAN || ""} onChange={(e) => onChange("SAN", e.target.value)} />
+                <input
+                  name="SAN"
+                  type="number"
+                  min="0"
+                  placeholder="60"
+                  value={form.SAN || ""}
+                  onChange={(e) => onChange("SAN", e.target.value)}
+                />
               </td>
               <th>MP</th>
               <td>
-                <input name="MP" type="number" min="0" placeholder="10" value={form.MP || ""} onChange={(e) => onChange("MP", e.target.value)} />
+                <input
+                  name="MP"
+                  type="number"
+                  min="0"
+                  placeholder="10"
+                  value={form.MP || ""}
+                  onChange={(e) => onChange("MP", e.target.value)}
+                />
               </td>
               <th>Luck</th>
               <td>
-                <input name="LUCK" type="number" min="0" placeholder="50" value={form.LUCK || ""} onChange={(e) => onChange("LUCK", e.target.value)} />
+                <input
+                  name="LUCK"
+                  type="number"
+                  min="0"
+                  placeholder="50"
+                  value={form.LUCK || ""}
+                  onChange={(e) => onChange("LUCK", e.target.value)}
+                />
               </td>
             </tr>
             <tr>
               <th>Move</th>
               <td>
-                <input name="MOV" type="number" min="1" placeholder="8" value={form.MOV || ""} onChange={(e) => onChange("MOV", e.target.value)} />
+                <input
+                  name="MOV"
+                  type="number"
+                  min="1"
+                  placeholder="8"
+                  value={form.MOV || ""}
+                  onChange={(e) => onChange("MOV", e.target.value)}
+                />
               </td>
               <th>Build</th>
               <td>
-                <input name="BUILD" placeholder="0" value={form.BUILD || ""} onChange={(e) => onChange("BUILD", e.target.value)} />
+                <input
+                  name="BUILD"
+                  placeholder="0"
+                  value={form.BUILD || ""}
+                  onChange={(e) => onChange("BUILD", e.target.value)}
+                />
               </td>
               <th>DB</th>
               <td>
-                <input name="DB" placeholder="+0" value={form.DB || ""} onChange={(e) => onChange("DB", e.target.value)} />
+                <input
+                  name="DB"
+                  placeholder="+0"
+                  value={form.DB || ""}
+                  onChange={(e) => onChange("DB", e.target.value)}
+                />
               </td>
               <th>Armor</th>
               <td colSpan={3}>
-                <input name="ARMOR" placeholder="-" value={form.ARMOR || ""} onChange={(e) => onChange("ARMOR", e.target.value)} />
+                <input
+                  name="ARMOR"
+                  placeholder="-"
+                  value={form.ARMOR || ""}
+                  onChange={(e) => onChange("ARMOR", e.target.value)}
+                />
               </td>
             </tr>
           </tbody>
@@ -1278,132 +1513,219 @@ const AppShell: React.FC = () => {
         <div className="section-title">Skills</div>
 
         {/* Skill Points Display */}
-        <div style={{
-          marginBottom: "16px",
-          padding: "16px",
-          background: "#fff9e6",
-          border: "2px solid #8b7355",
-          borderRadius: "4px",
-          display: "grid",
-          gridTemplateColumns: "1fr 1fr",
-          gap: "16px"
-        }}>
+        <div
+          style={{
+            marginBottom: "16px",
+            padding: "16px",
+            background: "#fff9e6",
+            border: "2px solid #8b7355",
+            borderRadius: "4px",
+            display: "grid",
+            gridTemplateColumns: "1fr 1fr",
+            gap: "16px",
+          }}
+        >
           <div>
-            <strong style={{ color: "#8b7355", fontSize: "1rem" }}>Occupational Skill Points:</strong>
-            <div style={{
-              fontSize: "1.5rem",
-              fontWeight: "bold",
-              color: skillPointsUsage.occupationalRemaining < 0 ? "#c41e3a" : "#3d2817",
-              marginTop: "4px"
-            }}>
+            <strong style={{ color: "#8b7355", fontSize: "1rem" }}>
+              Occupational Skill Points:
+            </strong>
+            <div
+              style={{
+                fontSize: "1.5rem",
+                fontWeight: "bold",
+                color:
+                  skillPointsUsage.occupationalRemaining < 0
+                    ? "#c41e3a"
+                    : "#3d2817",
+                marginTop: "4px",
+              }}
+            >
               Remaining: {skillPointsUsage.occupationalRemaining}
             </div>
-            <div style={{ fontSize: "0.9rem", color: "#666", marginTop: "4px" }}>
-              Total: {occupationalPoints} | Used: {skillPointsUsage.occupationalUsed}
+            <div
+              style={{ fontSize: "0.9rem", color: "#666", marginTop: "4px" }}
+            >
+              Total: {occupationalPoints} | Used:{" "}
+              {skillPointsUsage.occupationalUsed}
             </div>
-            {selectedOccupation && selectedOccupation.suggested_occupational_points && (
-              <div style={{ fontSize: "0.75rem", color: "#999", marginTop: "2px" }}>
-                ({selectedOccupation.suggested_occupational_points.expression})
-              </div>
-            )}
+            {selectedOccupation &&
+              selectedOccupation.suggested_occupational_points && (
+                <div
+                  style={{
+                    fontSize: "0.75rem",
+                    color: "#999",
+                    marginTop: "2px",
+                  }}
+                >
+                  ({selectedOccupation.suggested_occupational_points.expression}
+                  )
+                </div>
+              )}
             {skillPointsUsage.occupationalRemaining < 0 && (
-              <div style={{ fontSize: "0.8rem", color: "#c41e3a", marginTop: "4px", fontWeight: "bold" }}>
+              <div
+                style={{
+                  fontSize: "0.8rem",
+                  color: "#c41e3a",
+                  marginTop: "4px",
+                  fontWeight: "bold",
+                }}
+              >
                 ⚠️ Exceeds available points!
               </div>
             )}
           </div>
           <div>
-            <strong style={{ color: "#8b7355", fontSize: "1rem" }}>Interest Skill Points:</strong>
-            <div style={{
-              fontSize: "1.5rem",
-              fontWeight: "bold",
-              color: skillPointsUsage.interestRemaining < 0 ? "#c41e3a" : "#3d2817",
-              marginTop: "4px"
-            }}>
+            <strong style={{ color: "#8b7355", fontSize: "1rem" }}>
+              Interest Skill Points:
+            </strong>
+            <div
+              style={{
+                fontSize: "1.5rem",
+                fontWeight: "bold",
+                color:
+                  skillPointsUsage.interestRemaining < 0
+                    ? "#c41e3a"
+                    : "#3d2817",
+                marginTop: "4px",
+              }}
+            >
               Remaining: {skillPointsUsage.interestRemaining}
             </div>
-            <div style={{ fontSize: "0.9rem", color: "#666", marginTop: "4px" }}>
+            <div
+              style={{ fontSize: "0.9rem", color: "#666", marginTop: "4px" }}
+            >
               Total: {interestPoints} | Used: {skillPointsUsage.interestUsed}
             </div>
-            <div style={{ fontSize: "0.75rem", color: "#999", marginTop: "2px" }}>
+            <div
+              style={{ fontSize: "0.75rem", color: "#999", marginTop: "2px" }}
+            >
               (INT × 2)
             </div>
             {skillPointsUsage.interestRemaining < 0 && (
-              <div style={{ fontSize: "0.8rem", color: "#c41e3a", marginTop: "4px", fontWeight: "bold" }}>
+              <div
+                style={{
+                  fontSize: "0.8rem",
+                  color: "#c41e3a",
+                  marginTop: "4px",
+                  fontWeight: "bold",
+                }}
+              >
                 ⚠️ Exceeds available points!
               </div>
             )}
           </div>
         </div>
 
-        <div style={{
-          marginBottom: "12px",
-          padding: "10px",
-          background: "#e8f4f8",
-          border: "1px solid #5ba3c0",
-          borderRadius: "4px",
-          fontSize: "0.85rem",
-          color: "#2c5f75"
-        }}>
-          <strong>💡 Tip:</strong> Each skill can be improved using <strong>occupational points</strong> and <strong>interest points</strong> separately. Final skill value = Base value + Occupational points + Interest points
+        <div
+          style={{
+            marginBottom: "12px",
+            padding: "10px",
+            background: "#e8f4f8",
+            border: "1px solid #5ba3c0",
+            borderRadius: "4px",
+            fontSize: "0.85rem",
+            color: "#2c5f75",
+          }}
+        >
+          <strong>💡 Tip:</strong> Each skill can be improved using{" "}
+          <strong>occupational points</strong> and{" "}
+          <strong>interest points</strong> separately. Final skill value = Base
+          value + Occupational points + Interest points
         </div>
 
-        {selectedOccupation && selectedOccupation.suggested_skills && selectedOccupation.suggested_skills.length > 0 && (
-          <div style={{
-            marginBottom: "16px",
-            padding: "12px",
-            background: "#f0f8ff",
-            border: "1px solid #8b7355",
-            borderRadius: "4px"
-          }}>
-            <strong style={{ color: "#8b7355" }}>
-              {selectedOccupation.name_en} Recommended Skills:
-            </strong>
-            <div style={{ marginTop: "8px", display: "flex", flexWrap: "wrap", gap: "8px" }}>
-              {selectedOccupation.suggested_skills.map((skill: string, index: number) => (
-                <span
-                  key={index}
-                  style={{
-                    padding: "4px 8px",
-                    background: "#fff",
-                    border: "1px solid #ddd",
-                    borderRadius: "3px",
-                    fontSize: "0.85rem"
-                  }}
-                >
-                  {skill}
-                </span>
-              ))}
+        {selectedOccupation &&
+          selectedOccupation.suggested_skills &&
+          selectedOccupation.suggested_skills.length > 0 && (
+            <div
+              style={{
+                marginBottom: "16px",
+                padding: "12px",
+                background: "#f0f8ff",
+                border: "1px solid #8b7355",
+                borderRadius: "4px",
+              }}
+            >
+              <strong style={{ color: "#8b7355" }}>
+                {selectedOccupation.name_en} Recommended Skills:
+              </strong>
+              <div
+                style={{
+                  marginTop: "8px",
+                  display: "flex",
+                  flexWrap: "wrap",
+                  gap: "8px",
+                }}
+              >
+                {selectedOccupation.suggested_skills.map(
+                  (skill: string, index: number) => (
+                    <span
+                      key={index}
+                      style={{
+                        padding: "4px 8px",
+                        background: "#fff",
+                        border: "1px solid #ddd",
+                        borderRadius: "3px",
+                        fontSize: "0.85rem",
+                      }}
+                    >
+                      {skill}
+                    </span>
+                  )
+                )}
+              </div>
             </div>
-          </div>
-        )}
-        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '20px' }}>
+          )}
+        <div
+          style={{
+            display: "grid",
+            gridTemplateColumns: "1fr 1fr",
+            gap: "20px",
+          }}
+        >
           {/* Left Column */}
           <div>
             {[
-              { key: "social-knowledge", label: "Social & Knowledge Skills", categories: ["Social", "Knowledge", "Language"] },
-              { key: "investigation", label: "Investigation & Criminal Skills", categories: ["Investigation", "Criminal"] },
-              { key: "combat", label: "Combat Skills", categories: ["Combat"] }
+              {
+                key: "social-knowledge",
+                label: "Social & Knowledge Skills",
+                categories: ["Social", "Knowledge", "Language"],
+              },
+              {
+                key: "investigation",
+                label: "Investigation & Criminal Skills",
+                categories: ["Investigation", "Criminal"],
+              },
+              { key: "combat", label: "Combat Skills", categories: ["Combat"] },
             ].map((group) => {
-              const groupSkills = skillsState.filter((s) => group.categories.includes(s.category));
+              const groupSkills = skillsState.filter((s) =>
+                group.categories.includes(s.category)
+              );
               if (groupSkills.length === 0) return null;
 
               return (
-                <div key={group.key} className="skill-category" style={{ marginBottom: '20px' }}>
+                <div
+                  key={group.key}
+                  className="skill-category"
+                  style={{ marginBottom: "20px" }}
+                >
                   <h4 className="skill-category-title">{group.label}</h4>
                   <table className="skills-table">
                     <thead>
                       <tr>
-                        <th style={{ textAlign: 'left' }}>Skill Name</th>
-                        <th style={{ width: '80px' }}>Occupational</th>
-                        <th style={{ width: '80px' }}>Interest</th>
-                        <th style={{ width: '80px' }}>Total</th>
+                        <th style={{ textAlign: "left" }}>Skill Name</th>
+                        <th style={{ width: "80px" }}>Occupational</th>
+                        <th style={{ width: "80px" }}>Interest</th>
+                        <th style={{ width: "80px" }}>Total</th>
                       </tr>
                     </thead>
                     <tbody>
                       {groupSkills.map((skill) => {
-                        const isOccupationalSkill = selectedOccupation?.suggested_skills?.includes(skill.name);
-                        const baseValue = parseInt(skill.base.replace("%", "")) || 0;
+                        const isOccupationalSkill =
+                          selectedOccupation?.suggested_skills?.includes(
+                            skill.name
+                          );
+                        const baseValue =
+                          parseInt(skill.base.replace("%", "")) || 0;
                         const occValue = parseInt(skill.occupationalValue) || 0;
                         const intValue = parseInt(skill.interestValue) || 0;
                         const totalValue = baseValue + occValue + intValue;
@@ -1412,12 +1734,19 @@ const AppShell: React.FC = () => {
                           <tr
                             key={skill.name}
                             style={{
-                              backgroundColor: isOccupationalSkill ? '#f5e6d3' : 'transparent'
+                              backgroundColor: isOccupationalSkill
+                                ? "#f5e6d3"
+                                : "transparent",
                             }}
                           >
                             <td className="skill-name-cell">
                               <span>{skill.name}</span>
-                              <span className="skill-base" style={{ marginLeft: '8px', color: '#999' }}>({skill.base})</span>
+                              <span
+                                className="skill-base"
+                                style={{ marginLeft: "8px", color: "#999" }}
+                              >
+                                ({skill.base})
+                              </span>
                             </td>
                             <td className="skill-value-cell">
                               <input
@@ -1426,8 +1755,13 @@ const AppShell: React.FC = () => {
                                 max="99"
                                 placeholder="0"
                                 value={skill.occupationalValue}
-                                onChange={(e) => onChange(`skill_occ_${skill.name}`, e.target.value)}
-                                style={{ width: '100%' }}
+                                onChange={(e) =>
+                                  onChange(
+                                    `skill_occ_${skill.name}`,
+                                    e.target.value
+                                  )
+                                }
+                                style={{ width: "100%" }}
                               />
                             </td>
                             <td className="skill-value-cell">
@@ -1437,11 +1771,23 @@ const AppShell: React.FC = () => {
                                 max="99"
                                 placeholder="0"
                                 value={skill.interestValue}
-                                onChange={(e) => onChange(`skill_int_${skill.name}`, e.target.value)}
-                                style={{ width: '100%' }}
+                                onChange={(e) =>
+                                  onChange(
+                                    `skill_int_${skill.name}`,
+                                    e.target.value
+                                  )
+                                }
+                                style={{ width: "100%" }}
                               />
                             </td>
-                            <td className="skill-value-cell" style={{ textAlign: 'center', fontWeight: 'bold', backgroundColor: '#f0f0f0' }}>
+                            <td
+                              className="skill-value-cell"
+                              style={{
+                                textAlign: "center",
+                                fontWeight: "bold",
+                                backgroundColor: "#f0f0f0",
+                              }}
+                            >
                               {totalValue}
                             </td>
                           </tr>
@@ -1457,29 +1803,51 @@ const AppShell: React.FC = () => {
           {/* Right Column */}
           <div>
             {[
-              { key: "physical", label: "Physical & Stealth Skills", categories: ["Physical", "Stealth"] },
-              { key: "technical-medical", label: "Technical & Medical Skills", categories: ["Technical", "Medical"] },
-              { key: "special", label: "Special Skills", categories: ["Status", "Mythos"] }
+              {
+                key: "physical",
+                label: "Physical & Stealth Skills",
+                categories: ["Physical", "Stealth"],
+              },
+              {
+                key: "technical-medical",
+                label: "Technical & Medical Skills",
+                categories: ["Technical", "Medical"],
+              },
+              {
+                key: "special",
+                label: "Special Skills",
+                categories: ["Status", "Mythos"],
+              },
             ].map((group) => {
-              const groupSkills = skillsState.filter((s) => group.categories.includes(s.category));
+              const groupSkills = skillsState.filter((s) =>
+                group.categories.includes(s.category)
+              );
               if (groupSkills.length === 0) return null;
 
               return (
-                <div key={group.key} className="skill-category" style={{ marginBottom: '20px' }}>
+                <div
+                  key={group.key}
+                  className="skill-category"
+                  style={{ marginBottom: "20px" }}
+                >
                   <h4 className="skill-category-title">{group.label}</h4>
                   <table className="skills-table">
                     <thead>
                       <tr>
-                        <th style={{ textAlign: 'left' }}>Skill Name</th>
-                        <th style={{ width: '80px' }}>Occupational</th>
-                        <th style={{ width: '80px' }}>Interest</th>
-                        <th style={{ width: '80px' }}>Total</th>
+                        <th style={{ textAlign: "left" }}>Skill Name</th>
+                        <th style={{ width: "80px" }}>Occupational</th>
+                        <th style={{ width: "80px" }}>Interest</th>
+                        <th style={{ width: "80px" }}>Total</th>
                       </tr>
                     </thead>
                     <tbody>
                       {groupSkills.map((skill) => {
-                        const isOccupationalSkill = selectedOccupation?.suggested_skills?.includes(skill.name);
-                        const baseValue = parseInt(skill.base.replace("%", "")) || 0;
+                        const isOccupationalSkill =
+                          selectedOccupation?.suggested_skills?.includes(
+                            skill.name
+                          );
+                        const baseValue =
+                          parseInt(skill.base.replace("%", "")) || 0;
                         const occValue = parseInt(skill.occupationalValue) || 0;
                         const intValue = parseInt(skill.interestValue) || 0;
                         const totalValue = baseValue + occValue + intValue;
@@ -1488,12 +1856,19 @@ const AppShell: React.FC = () => {
                           <tr
                             key={skill.name}
                             style={{
-                              backgroundColor: isOccupationalSkill ? '#f5e6d3' : 'transparent'
+                              backgroundColor: isOccupationalSkill
+                                ? "#f5e6d3"
+                                : "transparent",
                             }}
                           >
                             <td className="skill-name-cell">
                               <span>{skill.name}</span>
-                              <span className="skill-base" style={{ marginLeft: '8px', color: '#999' }}>({skill.base})</span>
+                              <span
+                                className="skill-base"
+                                style={{ marginLeft: "8px", color: "#999" }}
+                              >
+                                ({skill.base})
+                              </span>
                             </td>
                             <td className="skill-value-cell">
                               <input
@@ -1502,8 +1877,13 @@ const AppShell: React.FC = () => {
                                 max="99"
                                 placeholder="0"
                                 value={skill.occupationalValue}
-                                onChange={(e) => onChange(`skill_occ_${skill.name}`, e.target.value)}
-                                style={{ width: '100%' }}
+                                onChange={(e) =>
+                                  onChange(
+                                    `skill_occ_${skill.name}`,
+                                    e.target.value
+                                  )
+                                }
+                                style={{ width: "100%" }}
                               />
                             </td>
                             <td className="skill-value-cell">
@@ -1513,11 +1893,23 @@ const AppShell: React.FC = () => {
                                 max="99"
                                 placeholder="0"
                                 value={skill.interestValue}
-                                onChange={(e) => onChange(`skill_int_${skill.name}`, e.target.value)}
-                                style={{ width: '100%' }}
+                                onChange={(e) =>
+                                  onChange(
+                                    `skill_int_${skill.name}`,
+                                    e.target.value
+                                  )
+                                }
+                                style={{ width: "100%" }}
                               />
                             </td>
-                            <td className="skill-value-cell" style={{ textAlign: 'center', fontWeight: 'bold', backgroundColor: '#f0f0f0' }}>
+                            <td
+                              className="skill-value-cell"
+                              style={{
+                                textAlign: "center",
+                                fontWeight: "bold",
+                                backgroundColor: "#f0f0f0",
+                              }}
+                            >
                               {totalValue}
                             </td>
                           </tr>
@@ -1554,13 +1946,23 @@ const AppShell: React.FC = () => {
 
                       // Auto-fill weapon stats if a predefined weapon is selected
                       if (selectedWeaponName) {
-                        const selectedWeapon = weaponsList.find(weapon => weapon.name === selectedWeaponName);
+                        const selectedWeapon = weaponsList.find(
+                          (weapon) => weapon.name === selectedWeaponName
+                        );
                         if (selectedWeapon) {
                           onChange(`weapon_${i}_skill`, selectedWeapon.skill);
                           onChange(`weapon_${i}_damage`, selectedWeapon.damage);
                           onChange(`weapon_${i}_range`, selectedWeapon.range);
-                          onChange(`weapon_${i}_attacks`, String(selectedWeapon.attacks_per_round));
-                          onChange(`weapon_${i}_ammo`, selectedWeapon.ammo ? String(selectedWeapon.ammo) : "");
+                          onChange(
+                            `weapon_${i}_attacks`,
+                            String(selectedWeapon.attacks_per_round)
+                          );
+                          onChange(
+                            `weapon_${i}_ammo`,
+                            selectedWeapon.ammo
+                              ? String(selectedWeapon.ammo)
+                              : ""
+                          );
                         }
                       }
                     }}
@@ -1579,7 +1981,9 @@ const AppShell: React.FC = () => {
                     name={`weapon_${i}_skill`}
                     placeholder={i === 0 ? "Handgun" : "Skill"}
                     value={w.skill}
-                    onChange={(e) => onChange(`weapon_${i}_skill`, e.target.value)}
+                    onChange={(e) =>
+                      onChange(`weapon_${i}_skill`, e.target.value)
+                    }
                   />
                 </td>
                 <td>
@@ -1587,7 +1991,9 @@ const AppShell: React.FC = () => {
                     name={`weapon_${i}_damage`}
                     placeholder={i === 0 ? "1d10" : "-"}
                     value={w.damage}
-                    onChange={(e) => onChange(`weapon_${i}_damage`, e.target.value)}
+                    onChange={(e) =>
+                      onChange(`weapon_${i}_damage`, e.target.value)
+                    }
                   />
                 </td>
                 <td>
@@ -1595,7 +2001,9 @@ const AppShell: React.FC = () => {
                     name={`weapon_${i}_range`}
                     placeholder={i === 0 ? "15" : "-"}
                     value={w.range}
-                    onChange={(e) => onChange(`weapon_${i}_range`, e.target.value)}
+                    onChange={(e) =>
+                      onChange(`weapon_${i}_range`, e.target.value)
+                    }
                   />
                 </td>
                 <td>
@@ -1603,7 +2011,9 @@ const AppShell: React.FC = () => {
                     name={`weapon_${i}_attacks`}
                     placeholder={i === 0 ? "1" : "-"}
                     value={w.attacks}
-                    onChange={(e) => onChange(`weapon_${i}_attacks`, e.target.value)}
+                    onChange={(e) =>
+                      onChange(`weapon_${i}_attacks`, e.target.value)
+                    }
                   />
                 </td>
                 <td>
@@ -1611,7 +2021,9 @@ const AppShell: React.FC = () => {
                     name={`weapon_${i}_ammo`}
                     placeholder={i === 0 ? "6" : "-"}
                     value={w.ammo}
-                    onChange={(e) => onChange(`weapon_${i}_ammo`, e.target.value)}
+                    onChange={(e) =>
+                      onChange(`weapon_${i}_ammo`, e.target.value)
+                    }
                   />
                 </td>
               </tr>
@@ -1624,7 +2036,7 @@ const AppShell: React.FC = () => {
           <tbody>
             <tr>
               <th>Item Name</th>
-              <th style={{ width: '100px' }}>Quantity</th>
+              <th style={{ width: "100px" }}>Quantity</th>
               <th>Description</th>
             </tr>
             {items.map((item, i) => (
@@ -1645,16 +2057,24 @@ const AppShell: React.FC = () => {
                     min="1"
                     placeholder={i === 0 ? "1" : "-"}
                     value={item.quantity || ""}
-                    onChange={(e) => onChange(`item_${i}_quantity`, e.target.value)}
+                    onChange={(e) =>
+                      onChange(`item_${i}_quantity`, e.target.value)
+                    }
                     style={{ width: "100%" }}
                   />
                 </td>
                 <td>
                   <input
                     name={`item_${i}_description`}
-                    placeholder={i === 0 ? "Battery-powered, heavy" : "Optional description"}
+                    placeholder={
+                      i === 0
+                        ? "Battery-powered, heavy"
+                        : "Optional description"
+                    }
                     value={item.properties?.description || ""}
-                    onChange={(e) => onChange(`item_${i}_description`, e.target.value)}
+                    onChange={(e) =>
+                      onChange(`item_${i}_description`, e.target.value)
+                    }
                     style={{ width: "100%" }}
                   />
                 </td>
@@ -1757,7 +2177,8 @@ const AppShell: React.FC = () => {
               marginTop: "12px",
               padding: "12px",
               borderRadius: "4px",
-              backgroundColor: saveMessage.type === "success" ? "#d4edda" : "#f8d7da",
+              backgroundColor:
+                saveMessage.type === "success" ? "#d4edda" : "#f8d7da",
               color: saveMessage.type === "success" ? "#155724" : "#721c24",
               border: `1px solid ${saveMessage.type === "success" ? "#c3e6cb" : "#f5c6cb"}`,
             }}
@@ -1765,13 +2186,25 @@ const AppShell: React.FC = () => {
             {saveMessage.text}
           </div>
         )}
-        <div style={{ marginTop: "20px", textAlign: "center", display: "flex", gap: "12px", justifyContent: "center" }}>
+        <div
+          style={{
+            marginTop: "20px",
+            textAlign: "center",
+            display: "flex",
+            gap: "12px",
+            justifyContent: "center",
+          }}
+        >
           {saveMessage && (
             <button
               className="pill-btn"
               type="button"
               onClick={() => setSaveMessage(null)}
-              style={{ background: "#8b7355", borderColor: "#8b7355", color: "#f5f1e8" }}
+              style={{
+                background: "#8b7355",
+                borderColor: "#8b7355",
+                color: "#f5f1e8",
+              }}
             >
               Clear Message
             </button>
@@ -1784,200 +2217,309 @@ const AppShell: React.FC = () => {
 
       {/* Attribute Selector Modal */}
       {showAttributeSelector && (
-        <div style={{
-          position: 'fixed',
-          top: 0,
-          left: 0,
-          right: 0,
-          bottom: 0,
-          backgroundColor: 'rgba(0, 0, 0, 0.75)',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          zIndex: 2000,
-          padding: '20px',
-        }}>
-          <div style={{
-            backgroundColor: '#f5f1e8',
-            padding: '30px',
-            borderRadius: '8px',
-            maxWidth: '1200px',
-            width: '95%',
-            maxHeight: '90vh',
-            overflow: 'auto',
-            border: '3px solid #8b7355',
-            boxShadow: '0 8px 20px rgba(0, 0, 0, 0.4)',
-          }}>
-            <div style={{
-              display: 'flex',
-              justifyContent: 'space-between',
-              alignItems: 'center',
-              marginBottom: '20px'
-            }}>
-              <h2 style={{
-                margin: 0,
-                color: '#3d2817',
-                fontSize: '1.6rem'
-              }}>
+        <div
+          style={{
+            position: "fixed",
+            top: 0,
+            left: 0,
+            right: 0,
+            bottom: 0,
+            backgroundColor: "rgba(0, 0, 0, 0.75)",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            zIndex: 2000,
+            padding: "20px",
+          }}
+        >
+          <div
+            style={{
+              backgroundColor: "#f5f1e8",
+              padding: "30px",
+              borderRadius: "8px",
+              maxWidth: "1200px",
+              width: "95%",
+              maxHeight: "90vh",
+              overflow: "auto",
+              border: "3px solid #8b7355",
+              boxShadow: "0 8px 20px rgba(0, 0, 0, 0.4)",
+            }}
+          >
+            <div
+              style={{
+                display: "flex",
+                justifyContent: "space-between",
+                alignItems: "center",
+                marginBottom: "20px",
+              }}
+            >
+              <h2
+                style={{
+                  margin: 0,
+                  color: "#3d2817",
+                  fontSize: "1.6rem",
+                }}
+              >
                 🎲 Select Attribute Set
               </h2>
-              <div style={{
-                display: 'flex',
-                alignItems: 'center',
-                gap: '15px'
-              }}>
-                <span style={{
-                  fontSize: '0.9rem',
-                  color: '#666',
-                  fontWeight: 'bold'
-                }}>
+              <div
+                style={{
+                  display: "flex",
+                  alignItems: "center",
+                  gap: "15px",
+                }}
+              >
+                <span
+                  style={{
+                    fontSize: "0.9rem",
+                    color: "#666",
+                    fontWeight: "bold",
+                  }}
+                >
                   Generated: {attributeOptions.length}/5
                 </span>
                 <button
                   onClick={handleGenerateAnotherSet}
                   disabled={attributeOptions.length >= 5}
                   style={{
-                    padding: '8px 16px',
-                    backgroundColor: attributeOptions.length >= 5 ? '#ccc' : '#8b7355',
-                    color: '#f5f1e8',
-                    border: 'none',
-                    borderRadius: '4px',
-                    cursor: attributeOptions.length >= 5 ? 'not-allowed' : 'pointer',
-                    fontSize: '0.9rem',
-                    fontWeight: 'bold',
-                    transition: 'background-color 0.2s'
+                    padding: "8px 16px",
+                    backgroundColor:
+                      attributeOptions.length >= 5 ? "#ccc" : "#8b7355",
+                    color: "#f5f1e8",
+                    border: "none",
+                    borderRadius: "4px",
+                    cursor:
+                      attributeOptions.length >= 5 ? "not-allowed" : "pointer",
+                    fontSize: "0.9rem",
+                    fontWeight: "bold",
+                    transition: "background-color 0.2s",
                   }}
                   onMouseEnter={(e) => {
                     if (attributeOptions.length < 5) {
-                      e.currentTarget.style.backgroundColor = '#6b5a45';
+                      e.currentTarget.style.backgroundColor = "#6b5a45";
                     }
                   }}
                   onMouseLeave={(e) => {
                     if (attributeOptions.length < 5) {
-                      e.currentTarget.style.backgroundColor = '#8b7355';
+                      e.currentTarget.style.backgroundColor = "#8b7355";
                     }
                   }}
                 >
-                  {attributeOptions.length >= 5 ? 'Maximum reached' : '🎲 Generate Another Set'}
+                  {attributeOptions.length >= 5
+                    ? "Maximum reached"
+                    : "🎲 Generate Another Set"}
                 </button>
               </div>
             </div>
 
-            <div style={{
-              padding: '12px',
-              background: '#e8f4f8',
-              border: '1px solid #5ba3c0',
-              borderRadius: '4px',
-              marginBottom: '15px',
-              fontSize: '0.9rem',
-              color: '#2c5f75',
-              textAlign: 'center'
-            }}>
-              💡 Click a card to select that attribute set, or click "Generate Another Set" to continue generating (max 5 sets)
+            <div
+              style={{
+                padding: "12px",
+                background: "#e8f4f8",
+                border: "1px solid #5ba3c0",
+                borderRadius: "4px",
+                marginBottom: "15px",
+                fontSize: "0.9rem",
+                color: "#2c5f75",
+                textAlign: "center",
+              }}
+            >
+              💡 Click a card to select that attribute set, or click "Generate
+              Another Set" to continue generating (max 5 sets)
             </div>
 
-            <div style={{
-              display: 'grid',
-              gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))',
-              gap: '15px',
-              marginBottom: '20px'
-            }}>
+            <div
+              style={{
+                display: "grid",
+                gridTemplateColumns: "repeat(auto-fit, minmax(200px, 1fr))",
+                gap: "15px",
+                marginBottom: "20px",
+              }}
+            >
               {attributeOptions.map((option) => {
                 const attrs = option.attributes;
-                const total = (attrs.STR || 0) + (attrs.CON || 0) + (attrs.DEX || 0) +
-                             (attrs.APP || 0) + (attrs.POW || 0) + (attrs.SIZ || 0) +
-                             (attrs.INT || 0) + (attrs.EDU || 0) + (attrs.LCK || 0);
+                const total =
+                  (attrs.STR || 0) +
+                  (attrs.CON || 0) +
+                  (attrs.DEX || 0) +
+                  (attrs.APP || 0) +
+                  (attrs.POW || 0) +
+                  (attrs.SIZ || 0) +
+                  (attrs.INT || 0) +
+                  (attrs.EDU || 0) +
+                  (attrs.LCK || 0);
 
                 return (
                   <div
                     key={option.id}
                     onClick={() => handleSelectAttributeSet(attrs)}
                     style={{
-                      padding: '15px',
-                      border: '2px solid #8b7355',
-                      borderRadius: '6px',
-                      cursor: 'pointer',
-                      backgroundColor: '#fff',
-                      transition: 'all 0.2s',
+                      padding: "15px",
+                      border: "2px solid #8b7355",
+                      borderRadius: "6px",
+                      cursor: "pointer",
+                      backgroundColor: "#fff",
+                      transition: "all 0.2s",
                     }}
                     onMouseEnter={(e) => {
-                      e.currentTarget.style.backgroundColor = '#f0ebe0';
-                      e.currentTarget.style.transform = 'scale(1.02)';
+                      e.currentTarget.style.backgroundColor = "#f0ebe0";
+                      e.currentTarget.style.transform = "scale(1.02)";
                     }}
                     onMouseLeave={(e) => {
-                      e.currentTarget.style.backgroundColor = '#fff';
-                      e.currentTarget.style.transform = 'scale(1)';
+                      e.currentTarget.style.backgroundColor = "#fff";
+                      e.currentTarget.style.transform = "scale(1)";
                     }}
                   >
-                    <div style={{
-                      fontWeight: 'bold',
-                      fontSize: '1.1rem',
-                      marginBottom: '10px',
-                      color: '#8b7355',
-                      textAlign: 'center',
-                      borderBottom: '1px solid #ddd',
-                      paddingBottom: '8px'
-                    }}>
+                    <div
+                      style={{
+                        fontWeight: "bold",
+                        fontSize: "1.1rem",
+                        marginBottom: "10px",
+                        color: "#8b7355",
+                        textAlign: "center",
+                        borderBottom: "1px solid #ddd",
+                        paddingBottom: "8px",
+                      }}
+                    >
                       Set {option.id}
                     </div>
 
-                    <table style={{ width: '100%', fontSize: '0.85rem' }}>
+                    <table style={{ width: "100%", fontSize: "0.85rem" }}>
                       <tbody>
                         <tr>
-                          <td style={{ padding: '2px 4px', fontWeight: '500' }}>STR:</td>
-                          <td style={{ padding: '2px 4px', textAlign: 'right' }}>{attrs.STR}</td>
+                          <td style={{ padding: "2px 4px", fontWeight: "500" }}>
+                            STR:
+                          </td>
+                          <td
+                            style={{ padding: "2px 4px", textAlign: "right" }}
+                          >
+                            {attrs.STR}
+                          </td>
                         </tr>
                         <tr>
-                          <td style={{ padding: '2px 4px', fontWeight: '500' }}>CON:</td>
-                          <td style={{ padding: '2px 4px', textAlign: 'right' }}>{attrs.CON}</td>
+                          <td style={{ padding: "2px 4px", fontWeight: "500" }}>
+                            CON:
+                          </td>
+                          <td
+                            style={{ padding: "2px 4px", textAlign: "right" }}
+                          >
+                            {attrs.CON}
+                          </td>
                         </tr>
                         <tr>
-                          <td style={{ padding: '2px 4px', fontWeight: '500' }}>DEX:</td>
-                          <td style={{ padding: '2px 4px', textAlign: 'right' }}>{attrs.DEX}</td>
+                          <td style={{ padding: "2px 4px", fontWeight: "500" }}>
+                            DEX:
+                          </td>
+                          <td
+                            style={{ padding: "2px 4px", textAlign: "right" }}
+                          >
+                            {attrs.DEX}
+                          </td>
                         </tr>
                         <tr>
-                          <td style={{ padding: '2px 4px', fontWeight: '500' }}>APP:</td>
-                          <td style={{ padding: '2px 4px', textAlign: 'right' }}>{attrs.APP}</td>
+                          <td style={{ padding: "2px 4px", fontWeight: "500" }}>
+                            APP:
+                          </td>
+                          <td
+                            style={{ padding: "2px 4px", textAlign: "right" }}
+                          >
+                            {attrs.APP}
+                          </td>
                         </tr>
                         <tr>
-                          <td style={{ padding: '2px 4px', fontWeight: '500' }}>POW:</td>
-                          <td style={{ padding: '2px 4px', textAlign: 'right' }}>{attrs.POW}</td>
+                          <td style={{ padding: "2px 4px", fontWeight: "500" }}>
+                            POW:
+                          </td>
+                          <td
+                            style={{ padding: "2px 4px", textAlign: "right" }}
+                          >
+                            {attrs.POW}
+                          </td>
                         </tr>
                         <tr>
-                          <td style={{ padding: '2px 4px', fontWeight: '500' }}>SIZ:</td>
-                          <td style={{ padding: '2px 4px', textAlign: 'right' }}>{attrs.SIZ}</td>
+                          <td style={{ padding: "2px 4px", fontWeight: "500" }}>
+                            SIZ:
+                          </td>
+                          <td
+                            style={{ padding: "2px 4px", textAlign: "right" }}
+                          >
+                            {attrs.SIZ}
+                          </td>
                         </tr>
                         <tr>
-                          <td style={{ padding: '2px 4px', fontWeight: '500' }}>INT:</td>
-                          <td style={{ padding: '2px 4px', textAlign: 'right' }}>{attrs.INT}</td>
+                          <td style={{ padding: "2px 4px", fontWeight: "500" }}>
+                            INT:
+                          </td>
+                          <td
+                            style={{ padding: "2px 4px", textAlign: "right" }}
+                          >
+                            {attrs.INT}
+                          </td>
                         </tr>
                         <tr>
-                          <td style={{ padding: '2px 4px', fontWeight: '500' }}>EDU:</td>
-                          <td style={{ padding: '2px 4px', textAlign: 'right' }}>{attrs.EDU}</td>
+                          <td style={{ padding: "2px 4px", fontWeight: "500" }}>
+                            EDU:
+                          </td>
+                          <td
+                            style={{ padding: "2px 4px", textAlign: "right" }}
+                          >
+                            {attrs.EDU}
+                          </td>
                         </tr>
                         <tr>
-                          <td style={{ padding: '2px 4px', fontWeight: '500' }}>LCK:</td>
-                          <td style={{ padding: '2px 4px', textAlign: 'right' }}>{attrs.LCK}</td>
+                          <td style={{ padding: "2px 4px", fontWeight: "500" }}>
+                            LCK:
+                          </td>
+                          <td
+                            style={{ padding: "2px 4px", textAlign: "right" }}
+                          >
+                            {attrs.LCK}
+                          </td>
                         </tr>
-                        <tr style={{ borderTop: '1px solid #ddd' }}>
-                          <td style={{ padding: '4px 4px 2px', fontWeight: 'bold' }}>Total:</td>
-                          <td style={{ padding: '4px 4px 2px', textAlign: 'right', fontWeight: 'bold' }}>{total}</td>
+                        <tr style={{ borderTop: "1px solid #ddd" }}>
+                          <td
+                            style={{
+                              padding: "4px 4px 2px",
+                              fontWeight: "bold",
+                            }}
+                          >
+                            Total:
+                          </td>
+                          <td
+                            style={{
+                              padding: "4px 4px 2px",
+                              textAlign: "right",
+                              fontWeight: "bold",
+                            }}
+                          >
+                            {total}
+                          </td>
                         </tr>
                       </tbody>
                     </table>
 
-                    <div style={{
-                      marginTop: '10px',
-                      padding: '8px',
-                      background: '#f9f9f9',
-                      borderRadius: '4px',
-                      fontSize: '0.75rem',
-                      color: '#666'
-                    }}>
-                      <div><strong>HP:</strong> {attrs.HP}</div>
-                      <div><strong>MP:</strong> {attrs.MP}</div>
-                      <div><strong>SAN:</strong> {attrs.SAN}</div>
-                      <div><strong>MOV:</strong> {attrs.MOV}</div>
+                    <div
+                      style={{
+                        marginTop: "10px",
+                        padding: "8px",
+                        background: "#f9f9f9",
+                        borderRadius: "4px",
+                        fontSize: "0.75rem",
+                        color: "#666",
+                      }}
+                    >
+                      <div>
+                        <strong>HP:</strong> {attrs.HP}
+                      </div>
+                      <div>
+                        <strong>MP:</strong> {attrs.MP}
+                      </div>
+                      <div>
+                        <strong>SAN:</strong> {attrs.SAN}
+                      </div>
+                      <div>
+                        <strong>MOV:</strong> {attrs.MOV}
+                      </div>
                     </div>
                   </div>
                 );
@@ -1990,15 +2532,15 @@ const AppShell: React.FC = () => {
                 setAttributeOptions([]);
               }}
               style={{
-                width: '100%',
-                padding: '12px 20px',
-                backgroundColor: '#6b5a45',
-                color: '#f5f1e8',
-                border: 'none',
-                borderRadius: '4px',
-                cursor: 'pointer',
-                fontSize: '1rem',
-                fontWeight: 'bold',
+                width: "100%",
+                padding: "12px 20px",
+                backgroundColor: "#6b5a45",
+                color: "#f5f1e8",
+                border: "none",
+                borderRadius: "4px",
+                cursor: "pointer",
+                fontSize: "1rem",
+                fontWeight: "bold",
               }}
             >
               Cancel
@@ -2027,9 +2569,11 @@ const AppShell: React.FC = () => {
         )}
         {showCheckpointSelector && (
           <div className="fixed inset-0 z-50 bg-black/50 backdrop-blur-sm supports-[backdrop-filter]:bg-black/30 supports-[backdrop-filter]:backdrop-blur-sm flex items-center justify-center p-5">
-            <div className="fixed left-[50%] top-[50%] z-50 translate-x-[-50%] translate-y-[-50%] max-w-[600px] max-h-[80vh] w-[90%] overflow-y-auto rounded-3xl p-12 supports-[backdrop-filter]:backdrop-blur-lg border border-white/50 bg-white/80 shadow-[0_30px_80px_rgba(15,23,42,0.25)] supports-[backdrop-filter]:bg-white/55">
+            <div className="fixed left-[50%] top-[50%] z-50 translate-x-[-50%] translate-y-[-50%] max-w-[800px] max-h-[80vh] w-[90%] overflow-y-auto rounded-3xl p-12 supports-[backdrop-filter]:backdrop-blur-lg border border-white/50 bg-white/80 shadow-[0_30px_80px_rgba(15,23,42,0.25)] supports-[backdrop-filter]:bg-white/55">
               <div className="flex justify-between items-center mb-6">
-                <h2 className="text-2xl font-semibold m-0">Select Checkpoint</h2>
+                <h2 className="text-2xl font-semibold m-0">
+                  Select Checkpoint
+                </h2>
                 <button
                   onClick={() => setShowCheckpointSelector(false)}
                   className="close-button"
@@ -2038,99 +2582,208 @@ const AppShell: React.FC = () => {
                   ×
                 </button>
               </div>
-              
+
               {loadingCheckpoints ? (
                 <p>Loading checkpoint list...</p>
               ) : checkpoints.length === 0 ? (
-                <p style={{ color: '#666' }}>No checkpoints available</p>
+                <p style={{ color: "#666" }}>No checkpoints available</p>
               ) : (
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
-                  {checkpoints.map((checkpoint: any) => (
+                (() => {
+                  // Group checkpoints by module name
+                  const groupedCheckpoints = checkpoints.reduce(
+                    (acc: Record<string, any[]>, checkpoint: any) => {
+                      const modName = checkpoint.modName || "Unknown Module";
+                      if (!acc[modName]) {
+                        acc[modName] = [];
+                      }
+                      acc[modName].push(checkpoint);
+                      return acc;
+                    },
+                    {}
+                  );
+
+                  return (
                     <div
-                      key={checkpoint.checkpointId}
-                      onClick={() => handleLoadCheckpoint(checkpoint.checkpointId)}
                       style={{
-                        padding: '15px',
-                        border: '2px solid #8b7355',
-                        borderRadius: '4px',
-                        cursor: 'pointer',
-                        backgroundColor: '#fff',
-                        transition: 'background-color 0.2s',
-                        position: 'relative',
-                      }}
-                      onMouseEnter={(e) => {
-                        e.currentTarget.style.backgroundColor = '#f0ebe0';
-                      }}
-                      onMouseLeave={(e) => {
-                        e.currentTarget.style.backgroundColor = '#fff';
+                        display: "flex",
+                        flexDirection: "column",
+                        gap: "20px",
                       }}
                     >
-                      <div style={{ 
-                        display: 'flex', 
-                        justifyContent: 'space-between', 
-                        alignItems: 'flex-start',
-                        marginBottom: '5px',
-                        gap: '10px',
-                      }}>
-                        <div style={{ fontWeight: 'bold', color: '#3d2817', flex: 1 }}>
-                          {checkpoint.checkpointName || 'Unnamed Checkpoint'}
-                        </div>
-                        <button
-                          onClick={(e) => handleDeleteCheckpoint(
-                            checkpoint.checkpointId,
-                            checkpoint.checkpointName || 'Unnamed Checkpoint',
-                            e
-                          )}
-                          style={{
-                            width: '28px',
-                            height: '28px',
-                            borderRadius: '50%',
-                            border: '2px solid #c82333',
-                            backgroundColor: '#fff',
-                            color: '#c82333',
-                            cursor: 'pointer',
-                            display: 'flex',
-                            alignItems: 'center',
-                            justifyContent: 'center',
-                            fontSize: '1.2rem',
-                            lineHeight: '1',
-                            padding: 0,
-                            flexShrink: 0,
-                            fontFamily: 'var(--serif)',
-                            transition: 'all 0.2s ease',
-                            boxShadow: '0 2px 4px rgba(0, 0, 0, 0.2)',
-                          }}
-                          onMouseEnter={(e) => {
-                            e.currentTarget.style.backgroundColor = '#dc3545';
-                            e.currentTarget.style.color = '#fff';
-                            e.currentTarget.style.borderColor = '#c82333';
-                            e.currentTarget.style.transform = 'translateY(-1px)';
-                            e.currentTarget.style.boxShadow = '0 3px 6px rgba(0, 0, 0, 0.3)';
-                          }}
-                          onMouseLeave={(e) => {
-                            e.currentTarget.style.backgroundColor = '#fff';
-                            e.currentTarget.style.color = '#c82333';
-                            e.currentTarget.style.borderColor = '#c82333';
-                            e.currentTarget.style.transform = 'translateY(0)';
-                            e.currentTarget.style.boxShadow = '0 2px 4px rgba(0, 0, 0, 0.2)';
-                          }}
-                          title="Delete checkpoint"
-                        >
-                          ×
-                        </button>
-                      </div>
-                      <div style={{ fontSize: '0.85rem', color: '#666' }}>
-                        {checkpoint.currentSceneName && `Scene: ${checkpoint.currentSceneName}`}
-                        {checkpoint.currentLocation && ` | Location: ${checkpoint.currentLocation}`}
-                        {checkpoint.gameDay && ` | Day ${checkpoint.gameDay}`}
-                        {checkpoint.gameTime && ` | ${checkpoint.gameTime}`}
-                      </div>
-                      <div style={{ fontSize: '0.75rem', color: '#999', marginTop: '5px' }}>
-                        {checkpoint.createdAt && new Date(checkpoint.createdAt).toLocaleString('en-US')}
-                      </div>
+                      {Object.entries(groupedCheckpoints).map(
+                        ([modName, modCheckpoints]) => (
+                          <div
+                            key={modName}
+                            style={{
+                              display: "flex",
+                              flexDirection: "column",
+                              gap: "10px",
+                            }}
+                          >
+                            {/* Module Header */}
+                            <div
+                              style={{
+                                padding: "8px 12px",
+                                backgroundColor: "#8b7355",
+                                color: "#fff",
+                                fontWeight: "bold",
+                                fontSize: "0.9rem",
+                                borderRadius: "4px",
+                                display: "flex",
+                                alignItems: "center",
+                                gap: "8px",
+                              }}
+                            >
+                              <span>📚</span>
+                              <span>{modName}</span>
+                              <span
+                                style={{
+                                  marginLeft: "auto",
+                                  fontSize: "0.85rem",
+                                  fontWeight: "normal",
+                                  opacity: 0.9,
+                                }}
+                              >
+                                ({modCheckpoints.length}{" "}
+                                {modCheckpoints.length === 1
+                                  ? "checkpoint"
+                                  : "checkpoints"}
+                                )
+                              </span>
+                            </div>
+
+                            {/* Checkpoints in this module */}
+                            {modCheckpoints.map((checkpoint: any) => (
+                              <div
+                                key={checkpoint.checkpointId}
+                                onClick={() =>
+                                  handleLoadCheckpoint(checkpoint.checkpointId)
+                                }
+                                style={{
+                                  padding: "15px",
+                                  border: "2px solid #8b7355",
+                                  borderRadius: "4px",
+                                  cursor: "pointer",
+                                  backgroundColor: "#fff",
+                                  transition: "background-color 0.2s",
+                                  position: "relative",
+                                  marginLeft: "15px",
+                                }}
+                                onMouseEnter={(e) => {
+                                  e.currentTarget.style.backgroundColor =
+                                    "#f0ebe0";
+                                }}
+                                onMouseLeave={(e) => {
+                                  e.currentTarget.style.backgroundColor =
+                                    "#fff";
+                                }}
+                              >
+                                <div
+                                  style={{
+                                    display: "flex",
+                                    justifyContent: "space-between",
+                                    alignItems: "flex-start",
+                                    marginBottom: "5px",
+                                    gap: "10px",
+                                  }}
+                                >
+                                  <div
+                                    style={{
+                                      fontWeight: "bold",
+                                      color: "#3d2817",
+                                      flex: 1,
+                                    }}
+                                  >
+                                    {checkpoint.checkpointName ||
+                                      "Unnamed Checkpoint"}
+                                  </div>
+                                  <button
+                                    onClick={(e) =>
+                                      handleDeleteCheckpoint(
+                                        checkpoint.checkpointId,
+                                        checkpoint.checkpointName ||
+                                          "Unnamed Checkpoint",
+                                        e
+                                      )
+                                    }
+                                    style={{
+                                      width: "28px",
+                                      height: "28px",
+                                      borderRadius: "50%",
+                                      border: "2px solid #c82333",
+                                      backgroundColor: "#fff",
+                                      color: "#c82333",
+                                      cursor: "pointer",
+                                      display: "flex",
+                                      alignItems: "center",
+                                      justifyContent: "center",
+                                      fontSize: "1.2rem",
+                                      lineHeight: "1",
+                                      padding: 0,
+                                      flexShrink: 0,
+                                      fontFamily: "var(--serif)",
+                                      transition: "all 0.2s ease",
+                                      boxShadow: "0 2px 4px rgba(0, 0, 0, 0.2)",
+                                    }}
+                                    onMouseEnter={(e) => {
+                                      e.currentTarget.style.backgroundColor =
+                                        "#dc3545";
+                                      e.currentTarget.style.color = "#fff";
+                                      e.currentTarget.style.borderColor =
+                                        "#c82333";
+                                      e.currentTarget.style.transform =
+                                        "translateY(-1px)";
+                                      e.currentTarget.style.boxShadow =
+                                        "0 3px 6px rgba(0, 0, 0, 0.3)";
+                                    }}
+                                    onMouseLeave={(e) => {
+                                      e.currentTarget.style.backgroundColor =
+                                        "#fff";
+                                      e.currentTarget.style.color = "#c82333";
+                                      e.currentTarget.style.borderColor =
+                                        "#c82333";
+                                      e.currentTarget.style.transform =
+                                        "translateY(0)";
+                                      e.currentTarget.style.boxShadow =
+                                        "0 2px 4px rgba(0, 0, 0, 0.2)";
+                                    }}
+                                    title="Delete checkpoint"
+                                  >
+                                    ×
+                                  </button>
+                                </div>
+                                <div
+                                  style={{ fontSize: "0.85rem", color: "#666" }}
+                                >
+                                  {checkpoint.currentSceneName &&
+                                    `Scene: ${checkpoint.currentSceneName}`}
+                                  {checkpoint.currentLocation &&
+                                    ` | Location: ${checkpoint.currentLocation}`}
+                                  {checkpoint.gameDay &&
+                                    ` | Day ${checkpoint.gameDay}`}
+                                  {checkpoint.gameTime &&
+                                    ` | ${checkpoint.gameTime}`}
+                                </div>
+                                <div
+                                  style={{
+                                    fontSize: "0.75rem",
+                                    color: "#999",
+                                    marginTop: "5px",
+                                  }}
+                                >
+                                  {checkpoint.createdAt &&
+                                    new Date(
+                                      checkpoint.createdAt
+                                    ).toLocaleString("en-US")}
+                                </div>
+                              </div>
+                            ))}
+                          </div>
+                        )
+                      )}
                     </div>
-                  ))}
-                </div>
+                  );
+                })()
               )}
             </div>
           </div>
@@ -2138,67 +2791,69 @@ const AppShell: React.FC = () => {
         {/* Language Toggle - Fixed Bottom Right (only on home page) */}
         <div
           style={{
-            position: 'fixed',
-            bottom: '24px',
-            right: '24px',
+            position: "fixed",
+            bottom: "24px",
+            right: "24px",
             zIndex: 9999,
-            display: 'flex',
-            gap: '8px',
-            background: 'rgba(0, 0, 0, 0.7)',
-            backdropFilter: 'blur(10px)',
-            padding: '8px 12px',
-            borderRadius: '20px',
-            border: '1px solid rgba(255, 255, 255, 0.1)',
-            boxShadow: '0 4px 12px rgba(0, 0, 0, 0.3)',
+            display: "flex",
+            gap: "8px",
+            background: "rgba(0, 0, 0, 0.7)",
+            backdropFilter: "blur(10px)",
+            padding: "8px 12px",
+            borderRadius: "20px",
+            border: "1px solid rgba(255, 255, 255, 0.1)",
+            boxShadow: "0 4px 12px rgba(0, 0, 0, 0.3)",
           }}
         >
           <button
-            onClick={() => setLanguage('zh')}
+            onClick={() => setLanguage("zh")}
             style={{
-              padding: '6px 16px',
-              borderRadius: '14px',
-              border: 'none',
-              background: language === 'zh' ? 'rgba(59, 130, 246, 0.8)' : 'transparent',
-              color: language === 'zh' ? '#fff' : 'rgba(255, 255, 255, 0.7)',
-              fontWeight: language === 'zh' ? '600' : '400',
-              fontSize: '14px',
-              cursor: 'pointer',
-              transition: 'all 0.2s',
+              padding: "6px 16px",
+              borderRadius: "14px",
+              border: "none",
+              background:
+                language === "zh" ? "rgba(59, 130, 246, 0.8)" : "transparent",
+              color: language === "zh" ? "#fff" : "rgba(255, 255, 255, 0.7)",
+              fontWeight: language === "zh" ? "600" : "400",
+              fontSize: "14px",
+              cursor: "pointer",
+              transition: "all 0.2s",
             }}
             onMouseEnter={(e) => {
-              if (language !== 'zh') {
-                e.currentTarget.style.background = 'rgba(255, 255, 255, 0.1)';
+              if (language !== "zh") {
+                e.currentTarget.style.background = "rgba(255, 255, 255, 0.1)";
               }
             }}
             onMouseLeave={(e) => {
-              if (language !== 'zh') {
-                e.currentTarget.style.background = 'transparent';
+              if (language !== "zh") {
+                e.currentTarget.style.background = "transparent";
               }
             }}
           >
-            Chinese
+            中文
           </button>
           <button
-            onClick={() => setLanguage('en')}
+            onClick={() => setLanguage("en")}
             style={{
-              padding: '6px 16px',
-              borderRadius: '14px',
-              border: 'none',
-              background: language === 'en' ? 'rgba(59, 130, 246, 0.8)' : 'transparent',
-              color: language === 'en' ? '#fff' : 'rgba(255, 255, 255, 0.7)',
-              fontWeight: language === 'en' ? '600' : '400',
-              fontSize: '14px',
-              cursor: 'pointer',
-              transition: 'all 0.2s',
+              padding: "6px 16px",
+              borderRadius: "14px",
+              border: "none",
+              background:
+                language === "en" ? "rgba(59, 130, 246, 0.8)" : "transparent",
+              color: language === "en" ? "#fff" : "rgba(255, 255, 255, 0.7)",
+              fontWeight: language === "en" ? "600" : "400",
+              fontSize: "14px",
+              cursor: "pointer",
+              transition: "all 0.2s",
             }}
             onMouseEnter={(e) => {
-              if (language !== 'en') {
-                e.currentTarget.style.background = 'rgba(255, 255, 255, 0.1)';
+              if (language !== "en") {
+                e.currentTarget.style.background = "rgba(255, 255, 255, 0.1)";
               }
             }}
             onMouseLeave={(e) => {
-              if (language !== 'en') {
-                e.currentTarget.style.background = 'transparent';
+              if (language !== "en") {
+                e.currentTarget.style.background = "transparent";
               }
             }}
           >
@@ -2218,7 +2873,7 @@ const AppShell: React.FC = () => {
           onCancel={handleBackToHome}
           onCreateStory={() => setPage("story-creator")}
         />
-        
+
         {/* Loading Progress Modal */}
         {loadingModData && (
           <div className="fixed inset-0 z-50 bg-black/50 backdrop-blur-sm supports-[backdrop-filter]:bg-black/30 supports-[backdrop-filter]:backdrop-blur-sm flex items-center justify-center p-5">
@@ -2228,7 +2883,7 @@ const AppShell: React.FC = () => {
                   Loading Module Data
                 </h2>
               </div>
-              
+
               {modLoadProgress && (
                 <>
                   <div className="mb-5">
@@ -2237,15 +2892,16 @@ const AppShell: React.FC = () => {
                       <span>{modLoadProgress.progress}%</span>
                     </div>
                     <div className="w-full h-6 bg-gray-300 rounded-xl overflow-hidden border-2 border-gray-400">
-                      <div 
+                      <div
                         className="h-full bg-gray-600 transition-all duration-300 flex items-center justify-center text-xs font-bold text-white"
                         style={{ width: `${modLoadProgress.progress}%` }}
                       >
-                        {modLoadProgress.progress >= 10 && `${modLoadProgress.progress}%`}
+                        {modLoadProgress.progress >= 10 &&
+                          `${modLoadProgress.progress}%`}
                       </div>
                     </div>
                   </div>
-                  
+
                   <div className="text-center text-base min-h-[40px] flex items-center justify-center text-gray-700">
                     {modLoadProgress.message}
                   </div>
@@ -2276,39 +2932,55 @@ const AppShell: React.FC = () => {
                 ×
               </button>
             </div>
-            
+
             {moduleIntroduction && (
               <>
-                <div style={{ marginBottom: '30px' }}>
-                  <h3 style={{ color: '#5a4a3a', marginBottom: '10px', fontSize: '1.2rem' }}>
+                <div style={{ marginBottom: "30px" }}>
+                  <h3
+                    style={{
+                      color: "#5a4a3a",
+                      marginBottom: "10px",
+                      fontSize: "1.2rem",
+                    }}
+                  >
                     Story Introduction
                   </h3>
-                  <div style={{
-                    backgroundColor: '#fff',
-                    padding: '20px',
-                    borderRadius: '4px',
-                    border: '1px solid #ddd',
-                    lineHeight: '1.8',
-                    color: '#2c2c2c',
-                    whiteSpace: 'pre-wrap',
-                  }}>
+                  <div
+                    style={{
+                      backgroundColor: "#fff",
+                      padding: "20px",
+                      borderRadius: "4px",
+                      border: "1px solid #ddd",
+                      lineHeight: "1.8",
+                      color: "#2c2c2c",
+                      whiteSpace: "pre-wrap",
+                    }}
+                  >
                     {moduleIntroduction.introduction}
                   </div>
                 </div>
 
-                <div style={{ marginBottom: '30px' }}>
-                  <h3 style={{ color: '#5a4a3a', marginBottom: '10px', fontSize: '1.2rem' }}>
+                <div style={{ marginBottom: "30px" }}>
+                  <h3
+                    style={{
+                      color: "#5a4a3a",
+                      marginBottom: "10px",
+                      fontSize: "1.2rem",
+                    }}
+                  >
                     📝 Character Creation Guide
                   </h3>
-                  <div style={{
-                    backgroundColor: '#fff',
-                    padding: '20px',
-                    borderRadius: '4px',
-                    border: '1px solid #ddd',
-                    lineHeight: '1.8',
-                    color: '#2c2c2c',
-                    whiteSpace: 'pre-wrap',
-                  }}>
+                  <div
+                    style={{
+                      backgroundColor: "#fff",
+                      padding: "20px",
+                      borderRadius: "4px",
+                      border: "1px solid #ddd",
+                      lineHeight: "1.8",
+                      color: "#2c2c2c",
+                      whiteSpace: "pre-wrap",
+                    }}
+                  >
                     {moduleIntroduction.moduleNotes}
                   </div>
                 </div>
@@ -2365,7 +3037,7 @@ const AppShell: React.FC = () => {
       </>
     );
   }
-  
+
   if (location.pathname === "/gamechat") {
     // Still restoring session, show loading
     if (!sessionId && isRestoringSession) {
@@ -2378,7 +3050,7 @@ const AppShell: React.FC = () => {
         </>
       );
     }
-    
+
     // If no valid session after restoration attempt, the useEffect above will reset to home
     // But while waiting, show loading
     if (!sessionId) {
@@ -2391,14 +3063,21 @@ const AppShell: React.FC = () => {
         </>
       );
     }
-    
+
     return (
       <>
         {userMenu}
         <div className="game-container">
           <div className="game-header backdrop-blur-sm border border-slate-200 shadow-md rounded-lg">
-            <h1>{currentModuleName ? `TaleCraft AI Agent - ${currentModuleName}` : "TaleCraft AI Agent - Game Session"}</h1>
-            <button className="back-button backdrop-blur-md bg-white/50 border border-slate-200 shadow-md rounded-xl px-5 py-2.5 hover:bg-white/70 hover:border-slate-300 hover:-translate-y-0.5 transition-all" onClick={handleBackToHome}>
+            <h1>
+              {currentModuleName
+                ? `TaleCraft AI Agent - ${currentModuleName}`
+                : "TaleCraft AI Agent - Game Session"}
+            </h1>
+            <button
+              className="back-button backdrop-blur-md bg-white/50 border border-slate-200 shadow-md rounded-xl px-5 py-2.5 hover:bg-white/70 hover:border-slate-300 hover:-translate-y-0.5 transition-all"
+              onClick={handleBackToHome}
+            >
               ← Back to Home
             </button>
           </div>
@@ -2409,7 +3088,9 @@ const AppShell: React.FC = () => {
               characterName={characterName}
               moduleIntroduction={moduleIntroduction}
               initialMessages={conversationHistory || undefined}
-              onNarrativeComplete={() => setSidebarRefreshTrigger(prev => prev + 1)}
+              onNarrativeComplete={() =>
+                setSidebarRefreshTrigger((prev) => prev + 1)
+              }
               language={language}
             />
             <GameSidebar
@@ -2422,7 +3103,7 @@ const AppShell: React.FC = () => {
       </>
     );
   }
-  
+
   return (
     <>
       {userMenu}

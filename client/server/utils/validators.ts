@@ -1,5 +1,5 @@
-import { validationResult } from 'express-validator';
-import type { Request, Response, NextFunction } from 'express';
+import { validationResult } from "express-validator";
+import type { Request, Response, NextFunction } from "express";
 
 export function validateRequest(
   req: Request,
@@ -10,8 +10,8 @@ export function validateRequest(
 
   if (!errors.isEmpty()) {
     return res.status(400).json({
-      error: 'Validation failed',
-      details: errors.array()
+      error: "Validation failed",
+      details: errors.array(),
     });
   }
 

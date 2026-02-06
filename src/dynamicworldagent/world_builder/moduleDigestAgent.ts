@@ -2,7 +2,11 @@
  * Module Digest Agent - Generates module notes, guidance, limitations, and introduction
  */
 
-import { generateText, ModelClass, ModelProviderName } from "../../models/index.js";
+import {
+  generateText,
+  ModelClass,
+  ModelProviderName,
+} from "../../models/index.js";
 import { composeTemplate } from "../../template.js";
 import type {
   EndStateDefinition,
@@ -22,7 +26,9 @@ interface Runtime {
 }
 
 const createRuntime = (): Runtime => ({
-  modelProvider: (process.env.MODEL_PROVIDER as ModelProviderName) || ModelProviderName.OPENAI,
+  modelProvider:
+    (process.env.MODEL_PROVIDER as ModelProviderName) ||
+    ModelProviderName.OPENAI,
   getSetting: (key: string) => process.env[key],
 });
 
@@ -66,32 +72,40 @@ export class ModuleDigestAgent {
     const template = getModuleDigestTemplate();
     const startingSnapshotId = startingScene?.snapshot?.id;
     const startingSnapshotName = startingScene?.snapshot?.name;
-    const prompt = composeTemplate(template, {}, {
-      macroSceneJson: JSON.stringify(macroScene, null, 2),
-      truthTimelineJson: JSON.stringify(truthTimeline, null, 2),
-      knowledgeMatrixJson: JSON.stringify(knowledgeMatrix, null, 2),
-      npcsBriefJson: JSON.stringify(
-        npcs.map((npc) => ({ id: npc.id, name: npc.name })),
-        null,
-        2
-      ),
-      scenarioSnapshotsBriefJson: JSON.stringify(
-        scenarios.map((scenario) => {
-          if (startingScene && scenario.id === startingScene.scenarioId) {
-            return {
-              id: startingSnapshotId || scenario.id,
-              name: startingSnapshotName || scenario.name,
-            };
-          }
-          return { id: scenario.id, name: scenario.name };
-        }),
-        null,
-        2
-      ),
-      initialSnapshotJson: JSON.stringify(startingScene?.snapshot ?? null, null, 2),
-      creativePrompt,
-      endStateJson: JSON.stringify(endState, null, 2),
-    });
+    const prompt = composeTemplate(
+      template,
+      {},
+      {
+        macroSceneJson: JSON.stringify(macroScene, null, 2),
+        truthTimelineJson: JSON.stringify(truthTimeline, null, 2),
+        knowledgeMatrixJson: JSON.stringify(knowledgeMatrix, null, 2),
+        npcsBriefJson: JSON.stringify(
+          npcs.map((npc) => ({ id: npc.id, name: npc.name })),
+          null,
+          2
+        ),
+        scenarioSnapshotsBriefJson: JSON.stringify(
+          scenarios.map((scenario) => {
+            if (startingScene && scenario.id === startingScene.scenarioId) {
+              return {
+                id: startingSnapshotId || scenario.id,
+                name: startingSnapshotName || scenario.name,
+              };
+            }
+            return { id: scenario.id, name: scenario.name };
+          }),
+          null,
+          2
+        ),
+        initialSnapshotJson: JSON.stringify(
+          startingScene?.snapshot ?? null,
+          null,
+          2
+        ),
+        creativePrompt,
+        endStateJson: JSON.stringify(endState, null, 2),
+      }
+    );
 
     const response = await generateText({
       runtime: this.runtime,
@@ -103,7 +117,10 @@ export class ModuleDigestAgent {
     return {
       moduleNotes: requireString(parsed.moduleNotes, "moduleNotes"),
       keeperGuidance: requireString(parsed.keeperGuidance, "keeperGuidance"),
-      moduleLimitations: requireString(parsed.moduleLimitations, "moduleLimitations"),
+      moduleLimitations: requireString(
+        parsed.moduleLimitations,
+        "moduleLimitations"
+      ),
       introduction: requireString(parsed.introduction, "introduction"),
       macroMapPath: macroMapPath || undefined,
       globalTrigger: parsed.globalTrigger || undefined,

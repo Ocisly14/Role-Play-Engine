@@ -28,9 +28,9 @@ export class CoCDatabase {
   public hasColumn(tableName: string, columnName: string): boolean {
     const safeTable = tableName.replace(/[^\w]/g, "");
     const safeColumn = columnName.replace(/[^\w]/g, "");
-    const rows = this.db
-      .prepare(`PRAGMA table_info(${safeTable});`)
-      .all() as { name: string }[];
+    const rows = this.db.prepare(`PRAGMA table_info(${safeTable});`).all() as {
+      name: string;
+    }[];
     return rows.some((row) => row.name === safeColumn);
   }
 
@@ -90,7 +90,6 @@ export class CoCDatabase {
                 created_at DATETIME DEFAULT CURRENT_TIMESTAMP
             );
         `);
-
 
     // Game Turns table - records each complete game interaction round
     this.db.exec(`
@@ -165,8 +164,6 @@ export class CoCDatabase {
             CREATE INDEX IF NOT EXISTS idx_events_character ON game_events(character_id);
         `);
 
-
-
     // Discoveries table
     this.db.exec(`
             CREATE TABLE IF NOT EXISTS discoveries (
@@ -202,7 +199,9 @@ export class CoCDatabase {
     try {
       if (!this.hasColumn("relationships", "email_id")) {
         this.db.exec("ALTER TABLE relationships ADD COLUMN email_id TEXT;");
-        this.db.exec("CREATE INDEX IF NOT EXISTS idx_relationships_email ON relationships(email_id);");
+        this.db.exec(
+          "CREATE INDEX IF NOT EXISTS idx_relationships_email ON relationships(email_id);"
+        );
       }
     } catch {
       // ignore if column already exists
@@ -246,8 +245,8 @@ export class CoCDatabase {
       "goals TEXT",
       "secrets TEXT",
       "current_location TEXT",
-      "instantiated_from TEXT",      // Knowledge holder ID for DynamicWorld NPCs
-      "inherits_knowledge TEXT",     // JSON array of truth event IDs
+      "instantiated_from TEXT", // Knowledge holder ID for DynamicWorld NPCs
+      "inherits_knowledge TEXT", // JSON array of truth event IDs
     ];
     for (const column of columnsToAdd) {
       try {
@@ -276,7 +275,9 @@ export class CoCDatabase {
     try {
       if (!this.hasColumn("npc_clues", "email_id")) {
         this.db.exec("ALTER TABLE npc_clues ADD COLUMN email_id TEXT;");
-        this.db.exec("CREATE INDEX IF NOT EXISTS idx_npc_clues_email ON npc_clues(email_id);");
+        this.db.exec(
+          "CREATE INDEX IF NOT EXISTS idx_npc_clues_email ON npc_clues(email_id);"
+        );
       }
     } catch {
       // ignore if column already exists
@@ -303,7 +304,9 @@ export class CoCDatabase {
     try {
       if (!this.hasColumn("npc_relationships", "email_id")) {
         this.db.exec("ALTER TABLE npc_relationships ADD COLUMN email_id TEXT;");
-        this.db.exec("CREATE INDEX IF NOT EXISTS idx_npc_relationships_email ON npc_relationships(email_id);");
+        this.db.exec(
+          "CREATE INDEX IF NOT EXISTS idx_npc_relationships_email ON npc_relationships(email_id);"
+        );
       }
     } catch {
       // ignore if column already exists
@@ -351,12 +354,14 @@ export class CoCDatabase {
     try {
       if (!this.hasColumn("scenarios", "email_id")) {
         this.db.exec("ALTER TABLE scenarios ADD COLUMN email_id TEXT;");
-        this.db.exec("CREATE INDEX IF NOT EXISTS idx_scenarios_email ON scenarios(email_id);");
+        this.db.exec(
+          "CREATE INDEX IF NOT EXISTS idx_scenarios_email ON scenarios(email_id);"
+        );
       }
     } catch {
       // ignore if column already exists
     }
-    
+
     // Backfill permanent_changes column if table already existed
     try {
       if (!this.hasColumn("scenarios", "permanent_changes")) {
@@ -371,11 +376,9 @@ export class CoCDatabase {
     // Backfill map_image_path column if table already existed
     try {
       if (!this.hasColumn("scenarios", "map_image_path")) {
-        console.log('Adding map_image_path column to scenarios table...');
-        this.db.exec(
-          "ALTER TABLE scenarios ADD COLUMN map_image_path TEXT;"
-        );
-        console.log('✓ map_image_path column added');
+        console.log("Adding map_image_path column to scenarios table...");
+        this.db.exec("ALTER TABLE scenarios ADD COLUMN map_image_path TEXT;");
+        console.log("✓ map_image_path column added");
       }
     } catch {
       // ignore if column already exists or cannot be added
@@ -384,11 +387,9 @@ export class CoCDatabase {
     // Backfill source_place_id column if table already existed
     try {
       if (!this.hasColumn("scenarios", "source_place_id")) {
-        console.log('Adding source_place_id column to scenarios table...');
-        this.db.exec(
-          "ALTER TABLE scenarios ADD COLUMN source_place_id TEXT;"
-        );
-        console.log('✓ source_place_id column added');
+        console.log("Adding source_place_id column to scenarios table...");
+        this.db.exec("ALTER TABLE scenarios ADD COLUMN source_place_id TEXT;");
+        console.log("✓ source_place_id column added");
       }
     } catch {
       // ignore if column already exists or cannot be added
@@ -414,13 +415,17 @@ export class CoCDatabase {
         `);
     try {
       if (!this.hasColumn("scenario_snapshots", "email_id")) {
-        this.db.exec("ALTER TABLE scenario_snapshots ADD COLUMN email_id TEXT;");
-        this.db.exec("CREATE INDEX IF NOT EXISTS idx_snapshots_email ON scenario_snapshots(email_id);");
+        this.db.exec(
+          "ALTER TABLE scenario_snapshots ADD COLUMN email_id TEXT;"
+        );
+        this.db.exec(
+          "CREATE INDEX IF NOT EXISTS idx_snapshots_email ON scenario_snapshots(email_id);"
+        );
       }
     } catch {
       // ignore if column already exists
     }
-    
+
     // Backfill time_restriction column if table already existed
     try {
       if (!this.hasColumn("scenario_snapshots", "time_restriction")) {
@@ -509,8 +514,12 @@ export class CoCDatabase {
         `);
     try {
       if (!this.hasColumn("scenario_characters", "email_id")) {
-        this.db.exec("ALTER TABLE scenario_characters ADD COLUMN email_id TEXT;");
-        this.db.exec("CREATE INDEX IF NOT EXISTS idx_scenario_characters_email ON scenario_characters(email_id);");
+        this.db.exec(
+          "ALTER TABLE scenario_characters ADD COLUMN email_id TEXT;"
+        );
+        this.db.exec(
+          "CREATE INDEX IF NOT EXISTS idx_scenario_characters_email ON scenario_characters(email_id);"
+        );
       }
     } catch {
       // ignore if column already exists
@@ -539,7 +548,9 @@ export class CoCDatabase {
     try {
       if (!this.hasColumn("scenario_clues", "email_id")) {
         this.db.exec("ALTER TABLE scenario_clues ADD COLUMN email_id TEXT;");
-        this.db.exec("CREATE INDEX IF NOT EXISTS idx_scenario_clues_email ON scenario_clues(email_id);");
+        this.db.exec(
+          "CREATE INDEX IF NOT EXISTS idx_scenario_clues_email ON scenario_clues(email_id);"
+        );
       }
     } catch {
       // ignore if column already exists
@@ -561,8 +572,12 @@ export class CoCDatabase {
         `);
     try {
       if (!this.hasColumn("scenario_conditions", "email_id")) {
-        this.db.exec("ALTER TABLE scenario_conditions ADD COLUMN email_id TEXT;");
-        this.db.exec("CREATE INDEX IF NOT EXISTS idx_scenario_conditions_email ON scenario_conditions(email_id);");
+        this.db.exec(
+          "ALTER TABLE scenario_conditions ADD COLUMN email_id TEXT;"
+        );
+        this.db.exec(
+          "CREATE INDEX IF NOT EXISTS idx_scenario_conditions_email ON scenario_conditions(email_id);"
+        );
       }
     } catch {
       // ignore if column already exists
@@ -672,8 +687,12 @@ export class CoCDatabase {
 
     try {
       if (!this.hasColumn("module_backgrounds", "email_id")) {
-        this.db.exec("ALTER TABLE module_backgrounds ADD COLUMN email_id TEXT;");
-        this.db.exec("CREATE INDEX IF NOT EXISTS idx_module_backgrounds_email ON module_backgrounds(email_id);");
+        this.db.exec(
+          "ALTER TABLE module_backgrounds ADD COLUMN email_id TEXT;"
+        );
+        this.db.exec(
+          "CREATE INDEX IF NOT EXISTS idx_module_backgrounds_email ON module_backgrounds(email_id);"
+        );
       }
     } catch {
       // ignore if column already exists
@@ -839,32 +858,42 @@ export class CoCDatabase {
             CREATE INDEX IF NOT EXISTS idx_sessions_status ON sessions(status);
             CREATE INDEX IF NOT EXISTS idx_sessions_started ON sessions(started_at);
         `);
-    
+
     // Add parent_session_id and sub_id columns if they don't exist (for existing databases)
     // Must be done BEFORE creating indexes on these columns
     try {
       if (!this.hasColumn("sessions", "parent_session_id")) {
-        console.log('Adding parent_session_id column to sessions table...');
+        console.log("Adding parent_session_id column to sessions table...");
         this.db.exec(`ALTER TABLE sessions ADD COLUMN parent_session_id TEXT`);
-        console.log('✓ parent_session_id column added');
+        console.log("✓ parent_session_id column added");
       }
       if (!this.hasColumn("sessions", "sub_id")) {
-        console.log('Adding sub_id column to sessions table...');
+        console.log("Adding sub_id column to sessions table...");
         this.db.exec(`ALTER TABLE sessions ADD COLUMN sub_id INTEGER`);
-        console.log('✓ sub_id column added');
+        console.log("✓ sub_id column added");
       }
-      
+
       // Create indexes only after columns exist
       // Note: SQLite doesn't support adding FOREIGN KEY constraints via ALTER TABLE
       // So we skip the foreign key constraint for existing tables
       if (this.hasColumn("sessions", "parent_session_id")) {
-        this.db.exec(`CREATE INDEX IF NOT EXISTS idx_sessions_parent ON sessions(parent_session_id)`);
+        this.db.exec(
+          `CREATE INDEX IF NOT EXISTS idx_sessions_parent ON sessions(parent_session_id)`
+        );
       }
-      if (this.hasColumn("sessions", "parent_session_id") && this.hasColumn("sessions", "sub_id")) {
-        this.db.exec(`CREATE INDEX IF NOT EXISTS idx_sessions_parent_sub ON sessions(parent_session_id, sub_id)`);
+      if (
+        this.hasColumn("sessions", "parent_session_id") &&
+        this.hasColumn("sessions", "sub_id")
+      ) {
+        this.db.exec(
+          `CREATE INDEX IF NOT EXISTS idx_sessions_parent_sub ON sessions(parent_session_id, sub_id)`
+        );
       }
     } catch (error) {
-      console.warn("Failed to add parent_session_id/sub_id columns (may already exist):", error);
+      console.warn(
+        "Failed to add parent_session_id/sub_id columns (may already exist):",
+        error
+      );
     }
 
     // ==================== USER AUTHENTICATION TABLES ====================
@@ -1010,7 +1039,9 @@ export class CoCDatabase {
 
     // Migration: add max_uses column if not present
     {
-      const cols = this.db.prepare("PRAGMA table_info(referral_codes)").all() as Array<{ name: string }>;
+      const cols = this.db
+        .prepare("PRAGMA table_info(referral_codes)")
+        .all() as Array<{ name: string }>;
       if (!cols.some((c) => c.name === "max_uses")) {
         this.db.exec("ALTER TABLE referral_codes ADD COLUMN max_uses INTEGER");
       }
@@ -1021,9 +1052,15 @@ export class CoCDatabase {
     // Inserts missing codes; updates max_uses if changed.
     // Codes removed from env are left in the DB so usage records stay valid.
     {
-      const insert = this.db.prepare("INSERT INTO referral_codes (id, code, max_uses) VALUES (?, ?, ?)");
-      const lookup = this.db.prepare("SELECT id, max_uses FROM referral_codes WHERE UPPER(code) = ?");
-      const updateLimit = this.db.prepare("UPDATE referral_codes SET max_uses = ? WHERE id = ?");
+      const insert = this.db.prepare(
+        "INSERT INTO referral_codes (id, code, max_uses) VALUES (?, ?, ?)"
+      );
+      const lookup = this.db.prepare(
+        "SELECT id, max_uses FROM referral_codes WHERE UPPER(code) = ?"
+      );
+      const updateLimit = this.db.prepare(
+        "UPDATE referral_codes SET max_uses = ? WHERE id = ?"
+      );
 
       let i = 1;
       while (process.env[`REFERRAL_CODE_${i}`]) {
@@ -1037,7 +1074,11 @@ export class CoCDatabase {
         if (lastUnderscore > 0) {
           const numPart = raw.slice(lastUnderscore + 1);
           const parsed = Number(numPart);
-          if (Number.isInteger(parsed) && parsed > 0 && String(parsed) === numPart) {
+          if (
+            Number.isInteger(parsed) &&
+            parsed > 0 &&
+            String(parsed) === numPart
+          ) {
             code = raw.slice(0, lastUnderscore);
             maxUses = parsed;
           } else {
@@ -1047,7 +1088,9 @@ export class CoCDatabase {
           code = raw;
         }
 
-        const row = lookup.get(code) as { id: string; max_uses: number | null } | undefined;
+        const row = lookup.get(code) as
+          | { id: string; max_uses: number | null }
+          | undefined;
         if (!row) {
           insert.run(randomUUID(), code, maxUses);
         } else if (row.max_uses !== maxUses) {
@@ -1070,14 +1113,23 @@ export class CoCDatabase {
         `);
 
     // Backfill referral_code_uses from legacy is_used / used_by_user_id (one-time)
-    const usesCount = this.db.prepare('SELECT COUNT(*) as count FROM referral_code_uses').get() as { count: number };
+    const usesCount = this.db
+      .prepare("SELECT COUNT(*) as count FROM referral_code_uses")
+      .get() as { count: number };
     if (usesCount.count === 0) {
-      const used = this.db.prepare(`
+      const used = this.db
+        .prepare(`
         SELECT rc.id AS referral_code_id, rc.used_by_user_id, rc.used_at, u.email
         FROM referral_codes rc
         JOIN users u ON u.id = rc.used_by_user_id
         WHERE rc.is_used = 1 AND rc.used_by_user_id IS NOT NULL
-      `).all() as { referral_code_id: string; used_by_user_id: string; used_at: string | null; email: string }[];
+      `)
+        .all() as {
+        referral_code_id: string;
+        used_by_user_id: string;
+        used_at: string | null;
+        email: string;
+      }[];
       const insertUse = this.db.prepare(`
         INSERT INTO referral_code_uses (id, referral_code_id, email_id, used_at)
         VALUES (?, ?, ?, ?)
@@ -1087,7 +1139,7 @@ export class CoCDatabase {
           randomUUID(),
           row.referral_code_id,
           row.email,
-          row.used_at ?? new Date().toISOString(),
+          row.used_at ?? new Date().toISOString()
         );
       }
     }
@@ -1104,9 +1156,16 @@ export class CoCDatabase {
     ];
     for (const table of categoryBTables) {
       try {
-        if (this.hasColumn(table, "user_id") && !this.hasColumn(table, "email_id")) {
-          this.db.exec(`ALTER TABLE ${table} RENAME COLUMN user_id TO email_id;`);
-          this.db.exec(`CREATE INDEX IF NOT EXISTS idx_${table}_email ON ${table}(email_id);`);
+        if (
+          this.hasColumn(table, "user_id") &&
+          !this.hasColumn(table, "email_id")
+        ) {
+          this.db.exec(
+            `ALTER TABLE ${table} RENAME COLUMN user_id TO email_id;`
+          );
+          this.db.exec(
+            `CREATE INDEX IF NOT EXISTS idx_${table}_email ON ${table}(email_id);`
+          );
         }
       } catch {
         // ignore
@@ -1118,7 +1177,9 @@ export class CoCDatabase {
     try {
       if (!this.hasColumn("characters", "email_id")) {
         this.db.exec("ALTER TABLE characters ADD COLUMN email_id TEXT;");
-        this.db.exec("CREATE INDEX IF NOT EXISTS idx_characters_email ON characters(email_id);");
+        this.db.exec(
+          "CREATE INDEX IF NOT EXISTS idx_characters_email ON characters(email_id);"
+        );
       }
     } catch {
       // Column already exists, ignore
@@ -1167,8 +1228,12 @@ export class CoCDatabase {
         `);
     try {
       if (!this.hasColumn("action_log_embeddings", "email_id")) {
-        this.db.exec("ALTER TABLE action_log_embeddings ADD COLUMN email_id TEXT;");
-        this.db.exec("CREATE INDEX IF NOT EXISTS idx_action_embeddings_email ON action_log_embeddings(email_id);");
+        this.db.exec(
+          "ALTER TABLE action_log_embeddings ADD COLUMN email_id TEXT;"
+        );
+        this.db.exec(
+          "CREATE INDEX IF NOT EXISTS idx_action_embeddings_email ON action_log_embeddings(email_id);"
+        );
       }
     } catch {
       // ignore if column already exists
@@ -1192,7 +1257,9 @@ export class CoCDatabase {
     try {
       if (!this.hasColumn("turn_embeddings", "email_id")) {
         this.db.exec("ALTER TABLE turn_embeddings ADD COLUMN email_id TEXT;");
-        this.db.exec("CREATE INDEX IF NOT EXISTS idx_turn_embeddings_email ON turn_embeddings(email_id);");
+        this.db.exec(
+          "CREATE INDEX IF NOT EXISTS idx_turn_embeddings_email ON turn_embeddings(email_id);"
+        );
       }
     } catch {
       // ignore if column already exists
@@ -1308,27 +1375,32 @@ export class CoCDatabase {
     subId?: number | null
   ): void {
     const database = this.db;
-    
+
+    // Extract mod_name from gameState
+    const modName = gameState.moduleName || gameState.modName || null;
+
     // Check if session exists
     const checkStmt = database.prepare(`
       SELECT session_id FROM sessions WHERE session_id = ?
     `);
     const existing = checkStmt.get(sessionId);
-    
+
     if (!existing) {
       // Create session if it doesn't exist
-      const hasParentSubColumns = this.hasColumn("sessions", "parent_session_id") && this.hasColumn("sessions", "sub_id");
-      
+      const hasParentSubColumns =
+        this.hasColumn("sessions", "parent_session_id") &&
+        this.hasColumn("sessions", "sub_id");
+
       if (hasParentSubColumns && parentSessionId) {
         const insertStmt = database.prepare(`
           INSERT INTO sessions (
             session_id, mod_name, character_id, character_name, status, parent_session_id, sub_id
           ) VALUES (?, ?, ?, ?, 'active', ?, ?)
         `);
-        
+
         insertStmt.run(
           sessionId,
-          null, // mod_name - can be extracted from gameState if available
+          modName,
           gameState.playerCharacter?.id || null,
           gameState.playerCharacter?.name || null,
           parentSessionId,
@@ -1340,25 +1412,25 @@ export class CoCDatabase {
             session_id, mod_name, character_id, character_name, status
           ) VALUES (?, ?, ?, ?, 'active')
         `);
-        
+
         insertStmt.run(
           sessionId,
-          null, // mod_name - can be extracted from gameState if available
+          modName,
           gameState.playerCharacter?.id || null,
           gameState.playerCharacter?.name || null
         );
       }
     } else {
-      // Update last_activity_at if session exists
+      // Update last_activity_at and mod_name if session exists
       const updateStmt = database.prepare(`
-        UPDATE sessions 
-        SET last_activity_at = CURRENT_TIMESTAMP 
+        UPDATE sessions
+        SET last_activity_at = CURRENT_TIMESTAMP,
+            mod_name = COALESCE(?, mod_name)
         WHERE session_id = ?
       `);
-      updateStmt.run(sessionId);
+      updateStmt.run(modName, sessionId);
     }
   }
-  
 
   /**
    * Create a new session from checkpoint data and populate with saved conversation and memos.
@@ -1376,7 +1448,15 @@ export class CoCDatabase {
       gameDay?: number | null;
       gameTime?: string | null;
     }>,
-    playerMemos: Array<{ text?: string; game_day?: number | null; game_time?: string | null; location?: string | null; created_at?: string; updated_at?: string; email_id?: string | null }>
+    playerMemos: Array<{
+      text?: string;
+      game_day?: number | null;
+      game_time?: string | null;
+      location?: string | null;
+      created_at?: string;
+      updated_at?: string;
+      email_id?: string | null;
+    }>
   ): void {
     const database = this.db;
 
@@ -1386,15 +1466,18 @@ export class CoCDatabase {
     // Reconstruct turns from conversation messages and insert into game_turns
     if (conversationHistory.length > 0) {
       // Group messages by turnNumber — each turn produces a 'character' and/or 'keeper' message
-      const turnMap = new Map<number, {
-        characterInput: string | null;
-        keeperNarrative: string | null;
-        diceRolls: Array<string | { character?: string; roll?: string }>;
-        gameDay: number | null;
-        gameTime: string | null;
-        startedAt: string;
-        completedAt: string;
-      }>();
+      const turnMap = new Map<
+        number,
+        {
+          characterInput: string | null;
+          keeperNarrative: string | null;
+          diceRolls: Array<string | { character?: string; roll?: string }>;
+          gameDay: number | null;
+          gameTime: string | null;
+          startedAt: string;
+          completedAt: string;
+        }
+      >();
 
       for (const msg of conversationHistory) {
         if (!turnMap.has(msg.turnNumber)) {
@@ -1409,9 +1492,9 @@ export class CoCDatabase {
           });
         }
         const entry = turnMap.get(msg.turnNumber)!;
-        if (msg.role === 'character') {
+        if (msg.role === "character") {
           entry.characterInput = msg.content;
-        } else if (msg.role === 'keeper') {
+        } else if (msg.role === "keeper") {
           entry.keeperNarrative = msg.content;
           entry.completedAt = msg.timestamp;
           if (msg.diceRolls && msg.diceRolls.length > 0) {
@@ -1435,7 +1518,8 @@ export class CoCDatabase {
       for (const [turnNumber, entry] of sortedTurns) {
         const turnId = `turn-restored-${sessionId}-${turnNumber}`;
         // isSimulated: no character input but has keeper narrative (covers turn 0 intro + simulated turns)
-        const isSimulated = !entry.characterInput && entry.keeperNarrative ? 1 : 0;
+        const isSimulated =
+          !entry.characterInput && entry.keeperNarrative ? 1 : 0;
         // Reconstruct action_results with dice ownership preserved when available.
         let actionResults: string | null = null;
         if (entry.diceRolls.length > 0) {
@@ -1449,10 +1533,16 @@ export class CoCDatabase {
             if (typeof diceEntry === "string") {
               rollText = diceEntry;
             } else if (diceEntry && typeof diceEntry === "object") {
-              if (typeof diceEntry.roll === "string" && diceEntry.roll.trim().length > 0) {
+              if (
+                typeof diceEntry.roll === "string" &&
+                diceEntry.roll.trim().length > 0
+              ) {
                 rollText = diceEntry.roll;
               }
-              if (typeof diceEntry.character === "string" && diceEntry.character.trim().length > 0) {
+              if (
+                typeof diceEntry.character === "string" &&
+                diceEntry.character.trim().length > 0
+              ) {
                 rollCharacter = diceEntry.character.trim();
               }
             }
@@ -1465,10 +1555,12 @@ export class CoCDatabase {
           }
 
           if (groupedByCharacter.size > 0) {
-            const reconstructed = Array.from(groupedByCharacter.entries()).map(([character, diceRolls]) => ({
-              character,
-              diceRolls,
-            }));
+            const reconstructed = Array.from(groupedByCharacter.entries()).map(
+              ([character, diceRolls]) => ({
+                character,
+                diceRolls,
+              })
+            );
             actionResults = JSON.stringify(reconstructed);
           }
         }
@@ -1477,7 +1569,7 @@ export class CoCDatabase {
           turnId,
           sessionId,
           turnNumber,
-          entry.characterInput || '',
+          entry.characterInput || "",
           characterId,
           characterName,
           entry.startedAt,
@@ -1490,7 +1582,9 @@ export class CoCDatabase {
         );
       }
 
-      console.log(`📥 [Session] Restored ${sortedTurns.length} turns into session ${sessionId}`);
+      console.log(
+        `📥 [Session] Restored ${sortedTurns.length} turns into session ${sessionId}`
+      );
     }
 
     // Insert player memos
@@ -1508,7 +1602,7 @@ export class CoCDatabase {
             newMemoId,
             sessionId,
             memo.email_id || null,
-            memo.text || '',
+            memo.text || "",
             memo.game_day ?? null,
             memo.game_time ?? null,
             memo.location ?? null,
@@ -1517,7 +1611,9 @@ export class CoCDatabase {
           );
         }
 
-        console.log(`📝 [Session] Restored ${playerMemos.length} memos into session ${sessionId}`);
+        console.log(
+          `📝 [Session] Restored ${playerMemos.length} memos into session ${sessionId}`
+        );
       } catch (error) {
         console.warn(`⚠️ [Session] Failed to restore memos:`, error);
       }
@@ -1532,17 +1628,17 @@ export class CoCDatabase {
     sessionId: string,
     checkpointName: string,
     gameState: any, // GameState object
-    checkpointType: 'auto' | 'manual' | 'scene_transition' = 'auto',
+    checkpointType: "auto" | "manual" | "scene_transition" = "auto",
     description?: string
   ): void {
     const database = this.db;
-    
+
     // Ensure session exists before inserting checkpoint (required by foreign key constraint)
     // Extract parent_session_id and sub_id from gameState if available
     const parentSessionId = (gameState as any).parentSessionId || null;
     const subId = (gameState as any).subId || null;
     this.ensureSessionExists(sessionId, gameState, parentSessionId, subId);
-    
+
     // Extract metadata for quick queries
     const gameDay = gameState.gameDay || 1;
     const gameTime = gameState.timeOfDay || null;
@@ -1583,7 +1679,7 @@ export class CoCDatabase {
     const stmt = database.prepare(`
       SELECT * FROM game_checkpoints WHERE checkpoint_id = ?
     `);
-    
+
     const row = stmt.get(checkpointId) as any;
     if (!row) return null;
 
@@ -1602,7 +1698,7 @@ export class CoCDatabase {
         playerHp: row.player_hp,
         playerSanity: row.player_sanity,
         createdAt: row.created_at,
-      }
+      },
     };
   }
 
@@ -1621,7 +1717,7 @@ export class CoCDatabase {
       ORDER BY created_at DESC
       LIMIT ?
     `);
-    
+
     return stmt.all(sessionId, limit) as any[];
   }
 
@@ -1631,12 +1727,12 @@ export class CoCDatabase {
    * or where the scenario snapshot ID matches
    */
   findLatestCheckpointForScenario(
-    sessionId: string, 
-    scenarioName: string, 
+    sessionId: string,
+    scenarioName: string,
     scenarioSnapshotId?: string
   ): any | null {
     const database = this.db;
-    
+
     // First try to find by scenario name
     let stmt = database.prepare(`
       SELECT 
@@ -1648,13 +1744,14 @@ export class CoCDatabase {
       ORDER BY created_at DESC
       LIMIT 1
     `);
-    
+
     let row = stmt.get(sessionId, scenarioName) as any;
-    
+
     // If not found by name and we have snapshot ID, try to find by matching snapshot ID in game_state
     if (!row && scenarioSnapshotId) {
       // Get all checkpoints for this session and filter by snapshot ID
-      const allCheckpoints = database.prepare(`
+      const allCheckpoints = database
+        .prepare(`
         SELECT 
           checkpoint_id, checkpoint_name, checkpoint_type, description,
           game_day, game_time, current_scene_name, current_location,
@@ -1662,8 +1759,9 @@ export class CoCDatabase {
         FROM game_checkpoints 
         WHERE session_id = ?
         ORDER BY created_at DESC
-      `).all(sessionId) as any[];
-      
+      `)
+        .all(sessionId) as any[];
+
       // Find checkpoint where the scenario snapshot ID matches
       for (const checkpointRow of allCheckpoints) {
         try {
@@ -1678,7 +1776,7 @@ export class CoCDatabase {
         }
       }
     }
-    
+
     if (!row) return null;
 
     return {
@@ -1696,7 +1794,7 @@ export class CoCDatabase {
         playerHp: row.player_hp,
         playerSanity: row.player_sanity,
         createdAt: row.created_at,
-      }
+      },
     };
   }
 
@@ -1705,7 +1803,9 @@ export class CoCDatabase {
    */
   deleteCheckpoint(checkpointId: string): void {
     const database = this.db;
-    database.prepare("DELETE FROM game_checkpoints WHERE checkpoint_id = ?").run(checkpointId);
+    database
+      .prepare("DELETE FROM game_checkpoints WHERE checkpoint_id = ?")
+      .run(checkpointId);
   }
 
   /**
@@ -1713,7 +1813,8 @@ export class CoCDatabase {
    */
   cleanupAutoCheckpoints(sessionId: string, keepCount = 10): void {
     const database = this.db;
-    database.prepare(`
+    database
+      .prepare(`
       DELETE FROM game_checkpoints 
       WHERE session_id = ? 
         AND checkpoint_type = 'auto'
@@ -1724,7 +1825,8 @@ export class CoCDatabase {
           ORDER BY created_at DESC 
           LIMIT ?
         )
-    `).run(sessionId, sessionId, keepCount);
+    `)
+      .run(sessionId, sessionId, keepCount);
   }
 
   /**
@@ -1745,25 +1847,27 @@ export class CoCDatabase {
     gameTime?: string | null
   ): void {
     const database = this.db;
-    
+
     // Add is_simulated column if it doesn't exist (for backward compatibility)
-    if (!this.hasColumn('game_turns', 'is_simulated')) {
+    if (!this.hasColumn("game_turns", "is_simulated")) {
       try {
-        database.exec(`ALTER TABLE game_turns ADD COLUMN is_simulated INTEGER DEFAULT 0`);
-        console.log('✓ Added is_simulated column to game_turns table');
+        database.exec(
+          `ALTER TABLE game_turns ADD COLUMN is_simulated INTEGER DEFAULT 0`
+        );
+        console.log("✓ Added is_simulated column to game_turns table");
       } catch (error) {
         // Column might already exist, ignore error
-        console.log('Note: is_simulated column may already exist');
+        console.log("Note: is_simulated column may already exist");
       }
     }
-    
+
     const stmt = database.prepare(`
       INSERT INTO game_turns (
         turn_id, session_id, turn_number, character_input, character_id, character_name,
         scene_id, scene_name, location, status, started_at, is_simulated, game_day, game_time
       ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, 'processing', CURRENT_TIMESTAMP, ?, ?, ?)
     `);
-    
+
     stmt.run(
       turnId,
       sessionId,
@@ -1791,39 +1895,39 @@ export class CoCDatabase {
     directorDecision?: any
   ): void {
     const database = this.db;
-    
+
     // Build dynamic UPDATE query based on which fields are provided
     const updates: string[] = [];
     const values: any[] = [];
-    
+
     if (actionAnalysis !== undefined) {
-      updates.push('action_analysis = ?');
+      updates.push("action_analysis = ?");
       values.push(actionAnalysis ? JSON.stringify(actionAnalysis) : null);
     }
-    
+
     if (actionResults !== undefined) {
-      updates.push('action_results = ?');
+      updates.push("action_results = ?");
       values.push(actionResults ? JSON.stringify(actionResults) : null);
     }
-    
+
     if (directorDecision !== undefined) {
-      updates.push('director_decision = ?');
+      updates.push("director_decision = ?");
       values.push(directorDecision ? JSON.stringify(directorDecision) : null);
     }
-    
+
     if (updates.length === 0) {
       // Nothing to update
       return;
     }
-    
+
     values.push(turnId);
-    
+
     const sql = `
       UPDATE game_turns 
-      SET ${updates.join(', ')}
+      SET ${updates.join(", ")}
       WHERE turn_id = ?
     `;
-    
+
     const stmt = database.prepare(sql);
     stmt.run(...values);
   }
@@ -1849,7 +1953,7 @@ export class CoCDatabase {
           game_time = ?
       WHERE turn_id = ?
     `);
-    
+
     stmt.run(
       keeperNarrative,
       clueRevelations ? JSON.stringify(clueRevelations) : null,
@@ -1864,13 +1968,15 @@ export class CoCDatabase {
    */
   markTurnError(turnId: string, errorMessage: string): void {
     const database = this.db;
-    database.prepare(`
+    database
+      .prepare(`
       UPDATE game_turns
       SET status = 'error',
           error_message = ?,
           completed_at = CURRENT_TIMESTAMP
       WHERE turn_id = ?
-    `).run(errorMessage, turnId);
+    `)
+      .run(errorMessage, turnId);
   }
 
   /**
@@ -1878,12 +1984,14 @@ export class CoCDatabase {
    */
   markTurnRequiresSkillSelection(turnId: string, actionAnalysis: any): void {
     const database = this.db;
-    database.prepare(`
+    database
+      .prepare(`
       UPDATE game_turns
       SET status = 'requires_skill_selection',
           action_analysis = ?
       WHERE turn_id = ?
-    `).run(JSON.stringify(actionAnalysis), turnId);
+    `)
+      .run(JSON.stringify(actionAnalysis), turnId);
   }
 
   /**
@@ -1894,7 +2002,7 @@ export class CoCDatabase {
     const stmt = database.prepare(`
       SELECT * FROM game_turns WHERE turn_id = ?
     `);
-    
+
     const row = stmt.get(turnId) as any;
     if (!row) return null;
 
@@ -1913,10 +2021,16 @@ export class CoCDatabase {
       sceneId: row.scene_id,
       sceneName: row.scene_name,
       location: row.location,
-      actionAnalysis: row.action_analysis ? JSON.parse(row.action_analysis) : null,
+      actionAnalysis: row.action_analysis
+        ? JSON.parse(row.action_analysis)
+        : null,
       actionResults: row.action_results ? JSON.parse(row.action_results) : null,
-      directorDecision: row.director_decision ? JSON.parse(row.director_decision) : null,
-      clueRevelations: row.clue_revelations ? JSON.parse(row.clue_revelations) : null,
+      directorDecision: row.director_decision
+        ? JSON.parse(row.director_decision)
+        : null,
+      clueRevelations: row.clue_revelations
+        ? JSON.parse(row.clue_revelations)
+        : null,
       isSimulated: row.is_simulated === 1 || row.is_simulated === true,
       gameDay: row.game_day ?? null,
       gameTime: row.game_time ?? null,
@@ -1974,7 +2088,7 @@ export class CoCDatabase {
 
     const stmt = database.prepare(sql);
     const rows = stmt.all(...params) as any[];
-    return rows.map(row => ({
+    return rows.map((row) => ({
       turnId: row.turn_id,
       sessionId: row.session_id,
       turnNumber: row.turn_number,
@@ -1989,10 +2103,16 @@ export class CoCDatabase {
       sceneId: row.scene_id,
       sceneName: row.scene_name,
       location: row.location,
-      actionAnalysis: row.action_analysis ? JSON.parse(row.action_analysis) : null,
+      actionAnalysis: row.action_analysis
+        ? JSON.parse(row.action_analysis)
+        : null,
       actionResults: row.action_results ? JSON.parse(row.action_results) : null,
-      directorDecision: row.director_decision ? JSON.parse(row.director_decision) : null,
-      clueRevelations: row.clue_revelations ? JSON.parse(row.clue_revelations) : null,
+      directorDecision: row.director_decision
+        ? JSON.parse(row.director_decision)
+        : null,
+      clueRevelations: row.clue_revelations
+        ? JSON.parse(row.clue_revelations)
+        : null,
       isSimulated: row.is_simulated === 1 || row.is_simulated === true,
       gameDay: row.game_day ?? null,
       gameTime: row.game_time ?? null,
@@ -2010,7 +2130,7 @@ export class CoCDatabase {
       ORDER BY turn_number DESC
       LIMIT 1
     `);
-    
+
     const row = stmt.get(sessionId) as any;
     if (!row) return null;
 
@@ -2029,10 +2149,16 @@ export class CoCDatabase {
       sceneId: row.scene_id,
       sceneName: row.scene_name,
       location: row.location,
-      actionAnalysis: row.action_analysis ? JSON.parse(row.action_analysis) : null,
+      actionAnalysis: row.action_analysis
+        ? JSON.parse(row.action_analysis)
+        : null,
       actionResults: row.action_results ? JSON.parse(row.action_results) : null,
-      directorDecision: row.director_decision ? JSON.parse(row.director_decision) : null,
-      clueRevelations: row.clue_revelations ? JSON.parse(row.clue_revelations) : null,
+      directorDecision: row.director_decision
+        ? JSON.parse(row.director_decision)
+        : null,
+      clueRevelations: row.clue_revelations
+        ? JSON.parse(row.clue_revelations)
+        : null,
       isSimulated: row.is_simulated === 1 || row.is_simulated === true,
       gameDay: row.game_day ?? null,
       gameTime: row.game_time ?? null,
@@ -2047,7 +2173,7 @@ export class CoCDatabase {
     const stmt = database.prepare(`
       SELECT MAX(turn_number) as max_turn FROM game_turns WHERE session_id = ?
     `);
-    
+
     const row = stmt.get(sessionId) as any;
     return (row?.max_turn || 0) + 1;
   }
@@ -2062,9 +2188,9 @@ export class CoCDatabase {
       WHERE session_id = ? AND status = 'processing'
       ORDER BY turn_number ASC
     `);
-    
+
     const rows = stmt.all(sessionId) as any[];
-    return rows.map(row => ({
+    return rows.map((row) => ({
       turnId: row.turn_id,
       sessionId: row.session_id,
       turnNumber: row.turn_number,
@@ -2077,10 +2203,16 @@ export class CoCDatabase {
       sceneId: row.scene_id,
       sceneName: row.scene_name,
       location: row.location,
-      actionAnalysis: row.action_analysis ? JSON.parse(row.action_analysis) : null,
+      actionAnalysis: row.action_analysis
+        ? JSON.parse(row.action_analysis)
+        : null,
       actionResults: row.action_results ? JSON.parse(row.action_results) : null,
-      directorDecision: row.director_decision ? JSON.parse(row.director_decision) : null,
-      clueRevelations: row.clue_revelations ? JSON.parse(row.clue_revelations) : null,
+      directorDecision: row.director_decision
+        ? JSON.parse(row.director_decision)
+        : null,
+      clueRevelations: row.clue_revelations
+        ? JSON.parse(row.clue_revelations)
+        : null,
     }));
   }
 
@@ -2128,7 +2260,8 @@ export class CoCDatabase {
     embedding: number[];
     emailId?: string;
   }): void {
-    const { sessionId, turnId, userInput, narrative, embedding, emailId } = params;
+    const { sessionId, turnId, userInput, narrative, embedding, emailId } =
+      params;
     const id = randomUUID();
 
     // Convert embedding array to Buffer for BLOB storage
@@ -2186,9 +2319,15 @@ export class CoCDatabase {
     }>;
 
     // Calculate cosine similarity for each embedding
-    const results = rows.map(row => {
+    const results = rows.map((row) => {
       const embeddingBuffer = row.embedding;
-      const embedding = Array.from(new Float32Array(embeddingBuffer.buffer, embeddingBuffer.byteOffset, embeddingBuffer.length / 4));
+      const embedding = Array.from(
+        new Float32Array(
+          embeddingBuffer.buffer,
+          embeddingBuffer.byteOffset,
+          embeddingBuffer.length / 4
+        )
+      );
       const similarity = this.cosineSimilarity(queryEmbedding, embedding);
 
       return {
@@ -2200,9 +2339,7 @@ export class CoCDatabase {
     });
 
     // Sort by similarity (descending) and return topK
-    return results
-      .sort((a, b) => b.similarity - a.similarity)
-      .slice(0, topK);
+    return results.sort((a, b) => b.similarity - a.similarity).slice(0, topK);
   }
 
   /**
@@ -2243,9 +2380,15 @@ export class CoCDatabase {
     }>;
 
     // Calculate cosine similarity for each embedding
-    const results = rows.map(row => {
+    const results = rows.map((row) => {
       const embeddingBuffer = row.embedding;
-      const embedding = Array.from(new Float32Array(embeddingBuffer.buffer, embeddingBuffer.byteOffset, embeddingBuffer.length / 4));
+      const embedding = Array.from(
+        new Float32Array(
+          embeddingBuffer.buffer,
+          embeddingBuffer.byteOffset,
+          embeddingBuffer.length / 4
+        )
+      );
       const similarity = this.cosineSimilarity(queryEmbedding, embedding);
 
       return {
@@ -2258,9 +2401,7 @@ export class CoCDatabase {
     });
 
     // Sort by similarity (descending) and return topK
-    return results
-      .sort((a, b) => b.similarity - a.similarity)
-      .slice(0, topK);
+    return results.sort((a, b) => b.similarity - a.similarity).slice(0, topK);
   }
 
   /**
@@ -2331,7 +2472,7 @@ export class CoCDatabase {
       bm25_score: number;
     }>;
 
-    return rows.map(row => ({
+    return rows.map((row) => ({
       id: row.id,
       turnId: row.turn_id,
       userInput: row.user_input,
@@ -2384,7 +2525,7 @@ export class CoCDatabase {
       bm25_score: number;
     }>;
 
-    return rows.map(row => ({
+    return rows.map((row) => ({
       id: row.id,
       turnId: row.turn_id,
       actionLog: JSON.parse(row.action_log),

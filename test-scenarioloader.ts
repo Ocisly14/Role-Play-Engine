@@ -20,7 +20,7 @@ const logger = {
   error: (msg: string) => console.log(`❌ ${msg}`),
   warn: (msg: string) => console.log(`⚠️  ${msg}`),
   debug: (msg: string) => console.log(`🔍 ${msg}`),
-  section: (msg: string) => console.log(`\n📋 === ${msg} ===\n`)
+  section: (msg: string) => console.log(`\n📋 === ${msg} ===\n`),
 };
 
 async function testScenarioLoader() {
@@ -30,18 +30,22 @@ async function testScenarioLoader() {
     // Check for required environment variables
     const hasGoogleApi = !!process.env.GOOGLE_API_KEY;
     const hasOpenAiApi = !!process.env.OPENAI_API_KEY;
-    
+
     if (!hasGoogleApi && !hasOpenAiApi) {
-      logger.error("No API keys found. Please set either GOOGLE_API_KEY or OPENAI_API_KEY environment variable.");
+      logger.error(
+        "No API keys found. Please set either GOOGLE_API_KEY or OPENAI_API_KEY environment variable."
+      );
       return;
     }
-    
-    logger.success(`API Key available: ${hasGoogleApi ? 'Google Gemini' : 'OpenAI'}`);
+
+    logger.success(
+      `API Key available: ${hasGoogleApi ? "Google Gemini" : "OpenAI"}`
+    );
 
     // Initialize database
     logger.info("Initializing database...");
     const dbPath = path.join(process.cwd(), "data", "test_scenario.db");
-    
+
     // Remove existing test database if it exists
     if (fs.existsSync(dbPath)) {
       fs.unlinkSync(dbPath);
@@ -60,7 +64,7 @@ async function testScenarioLoader() {
     if (!fs.existsSync(scenarioDocDir)) {
       fs.mkdirSync(scenarioDocDir, { recursive: true });
       logger.info(`Created scenarios directory: ${scenarioDocDir}`);
-      
+
       // Create a sample scenario document for testing
       const sampleScenario = `
 # The Old Library Investigation
@@ -150,7 +154,7 @@ This scenario can lead to "The Dunwich Horror" investigation if the ancient arti
 ## Keeper Notes
 This is designed as an introductory investigation to introduce players to the university setting and establish ongoing NPCs like Eleanor Ward and Dr. Thompson.
 `;
-      
+
       const samplePath = path.join(scenarioDocDir, "old-library.md");
       fs.writeFileSync(samplePath, sampleScenario);
       logger.info("Created sample scenario document");
@@ -159,61 +163,73 @@ This is designed as an introductory investigation to introduce players to the un
     // Check what files are available
     if (fs.existsSync(scenarioDocDir)) {
       const files = fs.readdirSync(scenarioDocDir);
-      const scenarioFiles = files.filter(f => {
+      const scenarioFiles = files.filter((f) => {
         const ext = path.extname(f).toLowerCase();
-        return ext === '.docx' || ext === '.pdf' || ext === '.md';
+        return ext === ".docx" || ext === ".pdf" || ext === ".md";
       });
-      
-      logger.info(`Found ${scenarioFiles.length} scenario document(s): ${scenarioFiles.join(', ')}`);
-      
+
+      logger.info(
+        `Found ${scenarioFiles.length} scenario document(s): ${scenarioFiles.join(", ")}`
+      );
+
       if (scenarioFiles.length === 0) {
-        logger.warn("No .docx, .pdf, or .md files found in the scenarios directory");
+        logger.warn(
+          "No .docx, .pdf, or .md files found in the scenarios directory"
+        );
         return;
       }
     } else {
-      logger.error(`Scenario document directory does not exist: ${scenarioDocDir}`);
+      logger.error(
+        `Scenario document directory does not exist: ${scenarioDocDir}`
+      );
       return;
     }
 
     // Process the scenarios
     logger.section("Processing Scenario Documents");
-    
+
     // For .md files, we'll need to simulate the process since our parser only handles docx/pdf
     // In a real implementation, you'd extend the parser to handle markdown
-    const markdownFiles = fs.readdirSync(scenarioDocDir).filter(f => f.endsWith('.md'));
-    
+    const markdownFiles = fs
+      .readdirSync(scenarioDocDir)
+      .filter((f) => f.endsWith(".md"));
+
     if (markdownFiles.length > 0) {
-      logger.info("Found markdown files - creating mock scenario data for testing");
-      
+      logger.info(
+        "Found markdown files - creating mock scenario data for testing"
+      );
+
       // Create a mock scenario for testing (single snapshot design - no timeline)
       const mockScenarioData = {
         name: "The Old Library Investigation",
-        description: "The investigators are called to investigate mysterious disappearances at the Miskatonic University Library.",
+        description:
+          "The investigators are called to investigate mysterious disappearances at the Miskatonic University Library.",
         snapshot: {
           location: "Miskatonic University Library - Main Reading Room",
-          description: "The library appears normal during the day. Librarian Eleanor Ward is at her desk, looking nervous and tired. Strange phenomena have been reported.",
+          description:
+            "The library appears normal during the day. Librarian Eleanor Ward is at her desk, looking nervous and tired. Strange phenomena have been reported.",
           characters: [
             {
               name: "Eleanor Ward",
               role: "Head Librarian",
               status: "distressed",
               location: "Front desk",
-              notes: "Obviously nervous about recent events"
+              notes: "Obviously nervous about recent events",
             },
             {
-              name: "Dr. Marcus Thompson", 
+              name: "Dr. Marcus Thompson",
               role: "Professor",
               status: "researching",
               location: "Reading room",
-              notes: "Professor of Ancient History"
+              notes: "Professor of Ancient History",
             },
             {
               name: "Night security guard",
               role: "Security",
               status: "on duty",
               location: "Security desk",
-              notes: "Often found asleep during shifts"
-            }
+              notes: "Often found asleep during shifts",
+            },
           ],
           clues: [
             {
@@ -222,15 +238,18 @@ This is designed as an introductory investigation to introduce players to the un
               difficulty: "regular",
               location: "Librarian's desk",
               discoveryMethod: "Spot Hidden",
-              reveals: ["Names of missing students", "Timeline of disappearances"]
+              reveals: [
+                "Names of missing students",
+                "Timeline of disappearances",
+              ],
             },
             {
               clueText: "Strange symbols carved into reading table",
               category: "physical",
-              difficulty: "hard", 
+              difficulty: "hard",
               location: "Reading room table",
               discoveryMethod: "Library Use or Archaeology",
-              reveals: ["Connection to ancient texts"]
+              reveals: ["Connection to ancient texts"],
             },
             {
               clueText: "Security logs showing missing time gaps",
@@ -238,7 +257,7 @@ This is designed as an introductory investigation to introduce players to the un
               difficulty: "regular",
               location: "Security office",
               discoveryMethod: "Search",
-              reveals: ["Pattern of supernatural interference"]
+              reveals: ["Pattern of supernatural interference"],
             },
             {
               clueText: "Ancient book left open to specific page",
@@ -246,64 +265,74 @@ This is designed as an introductory investigation to introduce players to the un
               difficulty: "extreme",
               location: "Reading room",
               discoveryMethod: "Occult",
-              reveals: ["Summoning ritual details"]
-            }
+              reveals: ["Summoning ritual details"],
+            },
           ],
           conditions: [
             {
               type: "lighting",
-              description: "Bright fluorescent lighting, slightly flickering near east wall",
-              mechanicalEffect: "No penalty to vision normally, -2 penalty at night"
+              description:
+                "Bright fluorescent lighting, slightly flickering near east wall",
+              mechanicalEffect:
+                "No penalty to vision normally, -2 penalty at night",
             },
             {
               type: "temperature",
-              description: "Noticeably colder than normal, especially near eastern section",
-              mechanicalEffect: "Suggests supernatural presence, CON check if staying long"
+              description:
+                "Noticeably colder than normal, especially near eastern section",
+              mechanicalEffect:
+                "Suggests supernatural presence, CON check if staying long",
             },
             {
               type: "sound",
-              description: "Scratching sounds occasionally heard from within the walls",
-              mechanicalEffect: "Sanity check (0/1d3) if encountered at night"
-            }
+              description:
+                "Scratching sounds occasionally heard from within the walls",
+              mechanicalEffect: "Sanity check (0/1d3) if encountered at night",
+            },
           ],
           events: [
             "Eleanor approaches investigators nervously",
             "Dr. Thompson leaves abruptly when questioned",
             "Books fall from shelves without cause (at night)",
             "Shadowy figures glimpsed in peripheral vision",
-            "Possible encounter with otherworldly entity"
+            "Possible encounter with otherworldly entity",
           ],
           exits: [
             {
-              direction: "East", 
+              direction: "East",
               destination: "Restricted stacks",
-              description: "Locked door to special collections"
+              description: "Locked door to special collections",
             },
             {
               direction: "West",
               destination: "Main entrance",
-              description: "Public entrance/exit"
-            }
-          ]
+              description: "Public entrance/exit",
+            },
+          ],
         },
         tags: ["investigation", "university", "supernatural", "library"],
         connections: [
           {
             scenarioName: "The Dunwich Horror",
             relationshipType: "leads_to",
-            description: "Ancient artifacts connect to Whateley research"
-          }
-        ]
+            description: "Ancient artifacts connect to Whateley research",
+          },
+        ],
       };
 
       // Manually create and save scenario using our loader
-      const scenarioProfile = scenarioLoader['convertToScenarioProfile'](mockScenarioData);
-      scenarioLoader['saveScenarioToDatabase'](scenarioProfile);
-      
-      logger.success(`Successfully processed mock scenario: ${scenarioProfile.name}`);
+      const scenarioProfile =
+        scenarioLoader["convertToScenarioProfile"](mockScenarioData);
+      scenarioLoader["saveScenarioToDatabase"](scenarioProfile);
+
+      logger.success(
+        `Successfully processed mock scenario: ${scenarioProfile.name}`
+      );
       logger.info(`📜 Scenario: ${scenarioProfile.name}`);
       logger.info(`🆔 ID: ${scenarioProfile.id}`);
-      logger.info(`📝 Description: ${scenarioProfile.description.substring(0, 100)}...`);
+      logger.info(
+        `📝 Description: ${scenarioProfile.description.substring(0, 100)}...`
+      );
 
       // Display scenario snapshot information
       logger.section("Scenario Snapshot Analysis");
@@ -313,75 +342,108 @@ This is designed as an introductory investigation to introduce players to the un
       logger.debug(`   🔍 Clues: ${snapshot.clues.length}`);
       logger.debug(`   🌤️  Conditions: ${snapshot.conditions.length}`);
       logger.debug(`   📅 Events: ${snapshot.events.length}`);
-      
+
       // Show character details
       if (snapshot.characters.length > 0) {
-        logger.debug(`   Characters: ${snapshot.characters.map(c => `${c.name} (${c.role}, ${c.status})`).join(', ')}`);
+        logger.debug(
+          `   Characters: ${snapshot.characters.map((c) => `${c.name} (${c.role}, ${c.status})`).join(", ")}`
+        );
       }
-      
+
       // Show clue summary
       if (snapshot.clues.length > 0) {
-        logger.debug(`   Clues: ${snapshot.clues.map(c => `${c.category}/${c.difficulty}: ${c.clueText.substring(0, 40)}...`).join('; ')}`);
+        logger.debug(
+          `   Clues: ${snapshot.clues.map((c) => `${c.category}/${c.difficulty}: ${c.clueText.substring(0, 40)}...`).join("; ")}`
+        );
       }
 
       // Test database operations
       logger.section("Testing Database Operations");
-      
+
       // Test retrieval
       logger.debug("Testing scenario retrieval from database...");
-      const retrievedScenario = scenarioLoader.getScenarioById(scenarioProfile.id);
+      const retrievedScenario = scenarioLoader.getScenarioById(
+        scenarioProfile.id
+      );
       if (retrievedScenario) {
-        logger.success(`✓ Successfully retrieved scenario: ${retrievedScenario.name}`);
+        logger.success(
+          `✓ Successfully retrieved scenario: ${retrievedScenario.name}`
+        );
       } else {
         logger.error("✗ Failed to retrieve scenario from database");
       }
-      
+
       // Test existence check
       const exists = scenarioLoader.scenarioExists(scenarioProfile.id);
-      logger.success(`✓ Scenario existence check: ${exists ? 'Found' : 'Not found'}`);
-      
+      logger.success(
+        `✓ Scenario existence check: ${exists ? "Found" : "Not found"}`
+      );
+
       // Test getting all scenarios
       const allScenarios = scenarioLoader.getAllScenarios();
-      logger.success(`✓ Retrieved ${allScenarios.length} total scenarios from database`);
-      
+      logger.success(
+        `✓ Retrieved ${allScenarios.length} total scenarios from database`
+      );
+
       // Test clue management
       logger.section("Testing Clue Discovery System");
-      const undiscoveredClues = scenarioLoader.getUndiscoveredClues(scenarioProfile.id);
+      const undiscoveredClues = scenarioLoader.getUndiscoveredClues(
+        scenarioProfile.id
+      );
       logger.info(`Found ${undiscoveredClues.length} undiscovered clues`);
-      
+
       if (undiscoveredClues.length > 0) {
         const firstClue = undiscoveredClues[0];
-        logger.debug(`Testing clue discovery: ${firstClue.clueText.substring(0, 50)}...`);
-        
-        scenarioLoader.discoverClue(firstClue.id, "Test Investigator", "Spot Hidden check");
+        logger.debug(
+          `Testing clue discovery: ${firstClue.clueText.substring(0, 50)}...`
+        );
+
+        scenarioLoader.discoverClue(
+          firstClue.id,
+          "Test Investigator",
+          "Spot Hidden check"
+        );
         logger.success("✓ Marked clue as discovered");
-        
-        const remainingClues = scenarioLoader.getUndiscoveredClues(scenarioProfile.id);
-        logger.success(`✓ Remaining undiscovered clues: ${remainingClues.length}`);
+
+        const remainingClues = scenarioLoader.getUndiscoveredClues(
+          scenarioProfile.id
+        );
+        logger.success(
+          `✓ Remaining undiscovered clues: ${remainingClues.length}`
+        );
       }
 
       // Test search functionality
       logger.section("Testing Search Functionality");
-      
+
       const searchResult = scenarioLoader.searchScenarios({
-        tags: ["library"]
+        tags: ["library"],
       });
-      
-      logger.success(`✓ Search results: ${searchResult.scenarios.length} scenarios found`);
+
+      logger.success(
+        `✓ Search results: ${searchResult.scenarios.length} scenarios found`
+      );
     }
 
     // Try to load from actual documents if they exist
-    const actualDocuments = fs.readdirSync(scenarioDocDir).filter(f => f.endsWith('.docx') || f.endsWith('.pdf'));
-    
+    const actualDocuments = fs
+      .readdirSync(scenarioDocDir)
+      .filter((f) => f.endsWith(".docx") || f.endsWith(".pdf"));
+
     if (actualDocuments.length > 0) {
       logger.section("Processing Real Documents");
-      const loadedScenarios = await scenarioLoader.loadScenariosFromDirectory(scenarioDocDir);
-      
+      const loadedScenarios =
+        await scenarioLoader.loadScenariosFromDirectory(scenarioDocDir);
+
       if (loadedScenarios.length > 0) {
-        logger.success(`Successfully processed ${loadedScenarios.length} scenarios from documents`);
-        
+        logger.success(
+          `Successfully processed ${loadedScenarios.length} scenarios from documents`
+        );
+
         for (const scenario of loadedScenarios) {
-          logger.info(`📜 ${scenario.name} - Location: ${scenario.snapshot.location}`);
+          logger.info(
+            `📜 ${scenario.name} - Location: ${scenario.snapshot.location}`
+          );
         }
       }
     }
@@ -391,7 +453,6 @@ This is designed as an introductory investigation to introduce players to the un
     logger.success("Database connection closed");
 
     logger.section("🎉 Scenario Loader Test Completed Successfully");
-
   } catch (error) {
     logger.error(`Test failed: ${error}`);
     if (error instanceof Error) {
@@ -403,7 +464,7 @@ This is designed as an introductory investigation to introduce players to the un
 
 // Run the test
 if (import.meta.url === `file://${process.argv[1]}`) {
-  testScenarioLoader().catch(error => {
+  testScenarioLoader().catch((error) => {
     console.error("Unhandled error:", error);
     process.exit(1);
   });

@@ -9,8 +9,15 @@ import { ChatOpenAI } from "@langchain/openai";
 import { ChatGoogleGenerativeAI } from "@langchain/google-genai";
 import mammoth from "mammoth";
 import pdfParse from "pdf-parse";
-import { createChatModel, ModelProviderName, ModelClass } from "../../../../models/index.js";
-import type { ParsedScenarioData, ParsedScenarioSnapshot } from "../../models/scenarioTypes.js";
+import {
+  createChatModel,
+  ModelProviderName,
+  ModelClass,
+} from "../../../../models/index.js";
+import type {
+  ParsedScenarioData,
+  ParsedScenarioSnapshot,
+} from "../../models/scenarioTypes.js";
 
 /**
  * Supported document formats
@@ -28,7 +35,7 @@ export class ScenarioDocumentParser {
     if (!model) {
       const geminiApiKey = process.env.GOOGLE_API_KEY;
       const openaiApiKey = process.env.OPENAI_API_KEY;
-      
+
       if (geminiApiKey) {
         // Use SMALL model for scenario extraction (cost optimization)
         this.llm = createChatModel(ModelProviderName.GOOGLE, ModelClass.SMALL);
@@ -37,7 +44,9 @@ export class ScenarioDocumentParser {
         this.llm = createChatModel(ModelProviderName.OPENAI, ModelClass.SMALL);
         console.log("✓ Using small model for scenario parsing");
       } else {
-        throw new Error("No API key found. Please set either GOOGLE_API_KEY or OPENAI_API_KEY environment variable.");
+        throw new Error(
+          "No API key found. Please set either GOOGLE_API_KEY or OPENAI_API_KEY environment variable."
+        );
       }
     } else {
       this.llm = model;
@@ -65,7 +74,10 @@ export class ScenarioDocumentParser {
     console.log(`📄 Document size: ${text.length} characters`);
 
     // Use LLM to parse structured data from text (now returns array)
-    const scenarioDataArray = await this.extractScenarioData(text, path.basename(filePath));
+    const scenarioDataArray = await this.extractScenarioData(
+      text,
+      path.basename(filePath)
+    );
 
     return scenarioDataArray;
   }
@@ -103,12 +115,16 @@ export class ScenarioDocumentParser {
     const MAX_SIZE = 100000;
 
     if (text.length > MAX_SIZE) {
-      console.warn(`⚠️  Document is very large (${text.length} chars). Consider splitting into separate files.`);
+      console.warn(
+        `⚠️  Document is very large (${text.length} chars). Consider splitting into separate files.`
+      );
       // For extremely large documents, still use chunking but with larger chunks
       return this.extractWithChunking(text, fileName);
     }
 
-    console.log(`🤖 Processing entire document with Large model (${text.length} chars)...`);
+    console.log(
+      `🤖 Processing entire document with Large model (${text.length} chars)...`
+    );
     return this.extractScenariosFromText(text, fileName);
   }
 
@@ -121,7 +137,7 @@ export class ScenarioDocumentParser {
   ): Promise<ParsedScenarioData[]> {
     const CHUNK_SIZE = 50000; // Much larger chunks with Large model
     const OVERLAP = 2000;
-    
+
     const chunks = this.splitTextWithOverlap(text, CHUNK_SIZE, OVERLAP);
     const allScenarios: ParsedScenarioData[] = [];
 
@@ -130,7 +146,10 @@ export class ScenarioDocumentParser {
         `📄 Processing chunk ${i + 1}/${chunks.length} (${chunks[i].length} chars)`
       );
       const partName = `${fileName} (part ${i + 1}/${chunks.length})`;
-      const scenarios = await this.extractScenariosFromText(chunks[i], partName);
+      const scenarios = await this.extractScenariosFromText(
+        chunks[i],
+        partName
+      );
       allScenarios.push(...scenarios);
     }
 
@@ -295,7 +314,11 @@ Do not include any additional text, explanations, or markdown formatting.`;
             content,
           };
 
-          fs.writeFileSync(rawPath, JSON.stringify(rawPayload, null, 2), "utf8");
+          fs.writeFileSync(
+            rawPath,
+            JSON.stringify(rawPayload, null, 2),
+            "utf8"
+          );
         } catch (saveErr) {
           console.warn("⚠️ Failed to save raw LLM response:", saveErr);
         }
@@ -307,14 +330,16 @@ Do not include any additional text, explanations, or markdown formatting.`;
           content.match(/\{[\s\S]*\}/)?.[0];
 
         if (!jsonText) {
-          throw new Error(`Failed to extract JSON from LLM response: ${content.substring(0, 500)}...`);
+          throw new Error(
+            `Failed to extract JSON from LLM response: ${content.substring(0, 500)}...`
+          );
         }
 
         let parsedData = JSON.parse(jsonText);
 
         // Ensure we always return an array
-        const scenariosArray: ParsedScenarioData[] = Array.isArray(parsedData) 
-          ? parsedData 
+        const scenariosArray: ParsedScenarioData[] = Array.isArray(parsedData)
+          ? parsedData
           : [parsedData];
 
         // Validate each scenario
@@ -332,14 +357,20 @@ Do not include any additional text, explanations, or markdown formatting.`;
           }
         }
 
-        console.log(`✓ Extracted ${scenariosArray.length} scenario(s) from ${fileName}`);
+        console.log(
+          `✓ Extracted ${scenariosArray.length} scenario(s) from ${fileName}`
+        );
         scenariosArray.forEach((s, i) => console.log(`  ${i + 1}. ${s.name}`));
 
         return scenariosArray;
       } catch (err) {
         lastError = err;
         const detail =
-          err instanceof Error ? err.message : typeof err === "string" ? err : "Unknown error";
+          err instanceof Error
+            ? err.message
+            : typeof err === "string"
+              ? err
+              : "Unknown error";
         console.warn(
           `⚠️  Retry ${attempt}/3 for ${fileName} due to error: ${detail}`
         );
@@ -374,7 +405,9 @@ Do not include any additional text, explanations, or markdown formatting.`;
         console.log(`\n📖 Parsing scenario document: ${file}...`);
         const scenariosFromFile = await this.parseDocument(filePath);
         results.push(...scenariosFromFile); // Spread the array
-        console.log(`✓ Successfully parsed ${scenariosFromFile.length} scenario(s) from ${file}`);
+        console.log(
+          `✓ Successfully parsed ${scenariosFromFile.length} scenario(s) from ${file}`
+        );
       } catch (error) {
         console.error(`✗ Failed to parse ${file}:`, error);
       }
@@ -429,8 +462,10 @@ Do not include any additional text, explanations, or markdown formatting.`;
 
     if (base.snapshots || incoming.snapshots) {
       // Both have snapshots arrays - merge them
-      const baseSnapshots = base.snapshots || (base.snapshot ? [base.snapshot] : []);
-      const incomingSnapshots = incoming.snapshots || (incoming.snapshot ? [incoming.snapshot] : []);
+      const baseSnapshots =
+        base.snapshots || (base.snapshot ? [base.snapshot] : []);
+      const incomingSnapshots =
+        incoming.snapshots || (incoming.snapshot ? [incoming.snapshot] : []);
       mergedSnapshots = [...baseSnapshots, ...incomingSnapshots];
     } else if (base.snapshot || incoming.snapshot) {
       // Both have single snapshot - merge them
@@ -439,7 +474,8 @@ Do not include any additional text, explanations, or markdown formatting.`;
 
     const merged: ParsedScenarioData = {
       name: base.name || incoming.name,
-      description: this.pickLonger(base.description, incoming.description) || "",
+      description:
+        this.pickLonger(base.description, incoming.description) || "",
       snapshot: mergedSnapshot,
       snapshots: mergedSnapshots,
       tags: this.mergeStringArrays(base.tags, incoming.tags) || [],
@@ -468,11 +504,7 @@ Do not include any additional text, explanations, or markdown formatting.`;
       location: a.location || b.location,
       description: this.pickLonger(a.description, b.description) || "",
       timeRestriction: a.timeRestriction || b.timeRestriction,
-      characters: this.mergeByKey(
-        a.characters,
-        b.characters,
-        (c) => c.name
-      ),
+      characters: this.mergeByKey(a.characters, b.characters, (c) => c.name),
       clues: this.mergeByKey(a.clues, b.clues, (c) => c.clueText),
       conditions: this.mergeByKey(
         a.conditions,
@@ -486,7 +518,10 @@ Do not include any additional text, explanations, or markdown formatting.`;
         (e) => `${e.direction}-${e.destination}`
       ),
       keeperNotes: this.pickLonger(a.keeperNotes, b.keeperNotes),
-      permanentChanges: this.mergeStringArrays(a.permanentChanges, b.permanentChanges),
+      permanentChanges: this.mergeStringArrays(
+        a.permanentChanges,
+        b.permanentChanges
+      ),
     };
   }
 
@@ -497,10 +532,7 @@ Do not include any additional text, explanations, or markdown formatting.`;
     return a || b;
   }
 
-  private mergeStringArrays(
-    a?: string[],
-    b?: string[]
-  ): string[] | undefined {
+  private mergeStringArrays(a?: string[], b?: string[]): string[] | undefined {
     const merged = new Set<string>();
     (a || []).forEach((v) => merged.add(v));
     (b || []).forEach((v) => merged.add(v));

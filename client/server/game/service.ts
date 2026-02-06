@@ -12,11 +12,15 @@ export async function initializeWorldBuilderGameState(
   emailId?: string
 ): Promise<{ dynamicGameState: DynamicGameState; moduleIntroduction: any }> {
   if (!modName) {
-    throw new Error("Module name is required for WorldBuilder game state initialization");
+    throw new Error(
+      "Module name is required for WorldBuilder game state initialization"
+    );
   }
 
   // Use the new complete initialization function that includes runtime data
-  const { initializeCompleteDynamicGameState } = await import("../../../src/dynamicworldagent/state/DynamicGameStateLoader.js");
+  const { initializeCompleteDynamicGameState } = await import(
+    "../../../src/dynamicworldagent/state/DynamicGameStateLoader.js"
+  );
   const dynamicGameState = await initializeCompleteDynamicGameState(db, {
     sessionId,
     moduleName: modName,
@@ -25,7 +29,9 @@ export async function initializeWorldBuilderGameState(
   });
 
   if (!dynamicGameState) {
-    throw new Error(`Failed to initialize DynamicGameState for module "${modName}"`);
+    throw new Error(
+      `Failed to initialize DynamicGameState for module "${modName}"`
+    );
   }
 
   // Load module introduction from module digest
@@ -33,7 +39,7 @@ export async function initializeWorldBuilderGameState(
   if (dynamicGameState.moduleDigest) {
     moduleIntroduction = {
       introduction: dynamicGameState.moduleDigest.introduction,
-      moduleNotes: dynamicGameState.moduleDigest.moduleNotes || ""
+      moduleNotes: dynamicGameState.moduleDigest.moduleNotes || "",
     };
   }
 

@@ -1,5 +1,8 @@
 import type { DynamicGameState } from "../../state/index.js";
-import type { NPCResponseAnalysis, SceneChangeRequest } from "../../../shared/state/index.js";
+import type {
+  NPCResponseAnalysis,
+  SceneChangeRequest,
+} from "../../../shared/state/index.js";
 import { actionTypeTemplates } from "../../../shared/agents/action/example.js";
 
 /**
@@ -17,10 +20,12 @@ export function buildActionSystemPrompt(
   outputLanguage: "en" | "zh" = "zh"
 ): string {
   // Check if there's a valid scene change request from orchestrator
-  const hasValidSceneChangeRequest = existingSceneChangeRequest?.shouldChange === true && existingSceneChangeRequest?.targetSceneName;
+  const hasValidSceneChangeRequest =
+    existingSceneChangeRequest?.shouldChange === true &&
+    existingSceneChangeRequest?.targetSceneName;
 
   // Build base system prompt - only include scene change detection if there's a valid scene change request
-  let sceneChangePrompt = '';
+  let sceneChangePrompt = "";
   if (hasValidSceneChangeRequest && !isNPC) {
     sceneChangePrompt = `
 SCENE CHANGE REQUEST VALIDATION:
@@ -63,18 +68,26 @@ Your task is to determine if the action succeeds in enabling this scene change:
   const targetLanguageLabel = outputLanguage === "en" ? "English" : "Chinese";
 
   return `
-${originalUserInput && !isNPC ? `## User Input
+${
+  originalUserInput && !isNPC
+    ? `## User Input
 User input: ${originalUserInput}
 
-` : ''}## Character Action
+`
+    : ""
+}## Character Action
 Character action: ${actionDescription}
 
-${!isNPC && selectedSkill ? `## Player-Selected Skill
+${
+  !isNPC && selectedSkill
+    ? `## Player-Selected Skill
 Player selected skill: ${selectedSkill}
 - If a skill check is required for this action, you MUST use this skill.
 - If no check is needed, keep diceUsed empty.
 
-` : ''}${usagePolicy}PRE-ROLLED DICE AVAILABLE:
+`
+    : ""
+}${usagePolicy}PRE-ROLLED DICE AVAILABLE:
 ${JSON.stringify(preRolledDice, null, 2)}
 
 OUTPUT LANGUAGE REQUIREMENT:
@@ -105,7 +118,7 @@ DiceUsed field:
 Include "scenarioUpdate" if the action permanently changes the environment. "scenarioUpdate" can include:
 - description: updated scene flavor text
 - conditions: array of environmental condition objects
-${!isNPC ? '' : '\nDo NOT include clues here; the GM determines clue revelations.'}
+${!isNPC ? "" : "\nDo NOT include clues here; the GM determines clue revelations."}
 
 INVENTORY UPDATES:
 If the action involves picking up, dropping, receiving, giving, or losing items, include "inventory" in stateUpdate.playerCharacter or stateUpdate.npcCharacters:
@@ -133,7 +146,9 @@ Estimate how many minutes this action realistically takes in game time. Consider
 
 Be realistic and use your judgment. Include "timeElapsedMinutes" in your response.
 ${sceneChangePrompt}
-${!isNPC && sceneNPCs && sceneNPCs.length > 0 ? `
+${
+  !isNPC && sceneNPCs && sceneNPCs.length > 0
+    ? `
 
 ## 🎭 NPC Response Analysis (Only for Player Actions)
 
@@ -184,7 +199,9 @@ For each NPC in the current scene, determine:
 Each NPC includes their last 3 actionLog entries (recentActionLog) showing their recent activities and locations. Use this information to understand what each NPC has been doing recently and how they might respond to the player's action.
 
 ${JSON.stringify(sceneNPCs, null, 2)}
-` : ''}
+`
+    : ""
+}
 
 ## 🎲 Dice Interpretation (CoC 7e)
 
@@ -270,16 +287,22 @@ Return ONLY valid JSON in this exact structure:
     "description": "Updated scene description",
     "conditions": [{"type": "lighting", "description": "...", "mechanicalEffect": "..."}]
   },
-${hasValidSceneChangeRequest && !isNPC ? `
+${
+  hasValidSceneChangeRequest && !isNPC
+    ? `
   "sceneChange": {
     "shouldChange": false,     // true if action succeeds in enabling scene change to "${existingSceneChangeRequest.targetSceneName}"
     "targetSceneName": "${existingSceneChangeRequest.targetSceneName}",   // Use the target from orchestrator
     "reason": "Reason for scene change success or failure. If blocked, explain why (e.g., 'Door is locked', 'Failed to unlock the door')"
   },
-` : ''}
+`
+    : ""
+}
   "timeElapsedMinutes": <estimate the time elapsed in minutes>,
   "timeConsumption": "short", // "short", "medium", "long", "very long"
-${!isNPC && sceneNPCs && sceneNPCs.length > 0 ? `
+${
+  !isNPC && sceneNPCs && sceneNPCs.length > 0
+    ? `
   "npcResponses": [  // Optional: Array of NPC responses (only for player actions)
     {
       "npcName": "NPC name",
@@ -305,7 +328,9 @@ ${!isNPC && sceneNPCs && sceneNPCs.length > 0 ? `
       }
     }
   ]
-` : ''}
+`
+    : ""
+}
 }
 \`\`\`
 `;

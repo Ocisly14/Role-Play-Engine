@@ -73,7 +73,9 @@ async function main() {
   const parsed = npcs.map(profileToParsed);
 
   console.log("Running LLM merge on similar-name clusters...");
-  const merged: ParsedNPCData[] = await (loader as any).mergeSimilarNPCs(parsed);
+  const merged: ParsedNPCData[] = await (loader as any).mergeSimilarNPCs(
+    parsed
+  );
   console.log(
     `Merge complete: ${parsed.length} -> ${merged.length} NPC(s) after dedup.`
   );

@@ -13,7 +13,7 @@ import { TurnManager } from "./turnManager.js";
 /**
  * Save DynamicGameState checkpoint to database
  * Includes all historical snapshots for each scenario
- * 
+ *
  * @param db - Database instance
  * @param dynamicState - Complete DynamicGameState to save
  * @param checkpointType - Type of checkpoint ('auto' | 'manual' | 'scene_transition')
@@ -23,33 +23,37 @@ import { TurnManager } from "./turnManager.js";
 export function saveDynamicGameStateCheckpoint(
   db: CoCDatabase,
   dynamicState: DynamicGameState,
-  checkpointType: 'auto' | 'manual' | 'scene_transition' = 'auto',
+  checkpointType: "auto" | "manual" | "scene_transition" = "auto",
   description?: string
 ): string | null {
   try {
     // Generate checkpoint ID based on type
     let checkpointId: string;
-    if (checkpointType === 'manual') {
+    if (checkpointType === "manual") {
       checkpointId = `manual-${Date.now()}`;
     } else {
       checkpointId = randomUUID();
     }
-    
+
     const checkpointName = generateCheckpointName(dynamicState, checkpointType);
-    
+
     // Serialize DynamicGameState to JSON
     // Convert Sets to Arrays for JSON serialization
     const serializableState = serializeDynamicGameState(dynamicState, db);
-    
+
     // Attach conversation history and player memos so the checkpoint is self-contained
     const turnManager = new TurnManager(db);
-    serializableState.conversationHistory = turnManager.getConversation(dynamicState.sessionId);
+    serializableState.conversationHistory = turnManager.getConversation(
+      dynamicState.sessionId
+    );
     try {
       const database = db.getDatabase();
-      serializableState.playerMemos = database.prepare(
-        `SELECT memo_id, email_id, text, game_day, game_time, location, created_at, updated_at
+      serializableState.playerMemos = database
+        .prepare(
+          `SELECT memo_id, email_id, text, game_day, game_time, location, created_at, updated_at
          FROM player_memos WHERE session_id = ? ORDER BY created_at ASC`
-      ).all(dynamicState.sessionId);
+        )
+        .all(dynamicState.sessionId);
     } catch (error) {
       serializableState.playerMemos = [];
     }
@@ -63,8 +67,10 @@ export function saveDynamicGameStateCheckpoint(
       checkpointType,
       description || generateCheckpointDescription(dynamicState, checkpointType)
     );
-    
-    console.log(`💾 [Checkpoint] Saved ${checkpointType} checkpoint: ${checkpointName} (${checkpointId})`);
+
+    console.log(
+      `💾 [Checkpoint] Saved ${checkpointType} checkpoint: ${checkpointName} (${checkpointId})`
+    );
     return checkpointId;
   } catch (error) {
     console.error(`❌ [Checkpoint] Failed to save checkpoint:`, error);
@@ -77,13 +83,16 @@ export function saveDynamicGameStateCheckpoint(
  * Serialize DynamicGameState for database storage
  * Converts Sets to Arrays and ensures all data is JSON-serializable
  */
-function serializeDynamicGameState(state: DynamicGameState, db: CoCDatabase): any {
+function serializeDynamicGameState(
+  state: DynamicGameState,
+  db: CoCDatabase
+): any {
   // Convert Sets to Arrays
   const revealedTruthEvents = Array.from(state.revealedTruthEvents);
   const activatedKnowledgeHolders = Array.from(state.activatedKnowledgeHolders);
   const deployedRedHerrings = Array.from(state.deployedRedHerrings);
   const mythosRevelations = Array.from(state.mythosRevelations);
-  
+
   // Convert Map<string, DynamicScenarioSnapshot[]> to object
   // Only save the latest snapshot for each scenario in checkpoint
   // Historical snapshots are saved to database separately
@@ -95,9 +104,11 @@ function serializeDynamicGameState(state: DynamicGameState, db: CoCDatabase): an
       updatedDynamicScenarioSnapshots[scenarioId] = {
         ...latestSnapshot,
         // Ensure Date objects are serialized as ISO strings
-        timestamp: latestSnapshot.timestamp ? latestSnapshot.timestamp.toISOString() : undefined
+        timestamp: latestSnapshot.timestamp
+          ? latestSnapshot.timestamp.toISOString()
+          : undefined,
       };
-      
+
       // Save historical snapshots (all except the latest) to database
       if (snapshots.length > 1) {
         const historicalSnapshots = snapshots.slice(0, -1); // All except the last one
@@ -105,7 +116,7 @@ function serializeDynamicGameState(state: DynamicGameState, db: CoCDatabase): an
       }
     }
   });
-  
+
   // Convert Date objects to ISO strings
   const serializedState = {
     ...state,
@@ -116,16 +127,19 @@ function serializeDynamicGameState(state: DynamicGameState, db: CoCDatabase): an
     updatedDynamicScenarioSnapshots,
     loadedAt: state.loadedAt.toISOString(),
     lastUpdated: state.lastUpdated.toISOString(),
-    lastPlayerInputTime: state.lastPlayerInputTime ? state.lastPlayerInputTime.toISOString() : null,
+    lastPlayerInputTime: state.lastPlayerInputTime
+      ? state.lastPlayerInputTime.toISOString()
+      : null,
     // Ensure temporaryInfo doesn't have circular references
     temporaryInfo: {
       ...state.temporaryInfo,
       // Convert any Date objects in temporaryInfo
-      contextualData: state.temporaryInfo.contextualData ? 
-        JSON.parse(JSON.stringify(state.temporaryInfo.contextualData)) : null
-    }
+      contextualData: state.temporaryInfo.contextualData
+        ? JSON.parse(JSON.stringify(state.temporaryInfo.contextualData))
+        : null,
+    },
   };
-  
+
   return serializedState;
 }
 
@@ -134,17 +148,17 @@ function serializeDynamicGameState(state: DynamicGameState, db: CoCDatabase): an
  */
 function generateCheckpointName(
   state: DynamicGameState,
-  checkpointType: 'auto' | 'manual' | 'scene_transition'
+  checkpointType: "auto" | "manual" | "scene_transition"
 ): string {
-  const sceneName = state.currentScenario?.name || 'Unknown Scene';
+  const sceneName = state.currentScenario?.name || "Unknown Scene";
   const gameTime = `Day ${state.gameDay}, ${state.timeOfDay}`;
-  
+
   switch (checkpointType) {
-    case 'manual':
+    case "manual":
       return `Manual Save - ${sceneName} (${gameTime})`;
-    case 'scene_transition':
+    case "scene_transition":
       return `Scene Transition - ${sceneName} (${gameTime})`;
-    case 'auto':
+    case "auto":
     default:
       return `Auto Save - ${sceneName} (${gameTime})`;
   }
@@ -155,18 +169,18 @@ function generateCheckpointName(
  */
 function generateCheckpointDescription(
   state: DynamicGameState,
-  checkpointType: 'auto' | 'manual' | 'scene_transition'
+  checkpointType: "auto" | "manual" | "scene_transition"
 ): string {
-  const sceneName = state.currentScenario?.name || 'Unknown Scene';
-  const location = state.currentScenario?.location || 'Unknown Location';
+  const sceneName = state.currentScenario?.name || "Unknown Scene";
+  const location = state.currentScenario?.location || "Unknown Location";
   const gameTime = `Day ${state.gameDay}, ${state.timeOfDay}`;
   const scenarioCount = state.updatedDynamicScenarioSnapshots.size;
-  
-  let description = `${checkpointType === 'manual' ? 'Manual' : checkpointType === 'scene_transition' ? 'Scene transition' : 'Automatic'} checkpoint. `;
+
+  let description = `${checkpointType === "manual" ? "Manual" : checkpointType === "scene_transition" ? "Scene transition" : "Automatic"} checkpoint. `;
   description += `Scene: ${sceneName} (${location}). `;
   description += `Game Time: ${gameTime}. `;
   description += `Scenarios with snapshots: ${scenarioCount}.`;
-  
+
   return description;
 }
 
@@ -182,9 +196,15 @@ function saveHistoricalSnapshotsToDatabase(
   try {
     const database = db.getDatabase();
     const emailId = resolveEmailId();
-    const hasInitialSnapshot = db.hasColumn("scenario_snapshots", "initial_snapshot");
+    const hasInitialSnapshot = db.hasColumn(
+      "scenario_snapshots",
+      "initial_snapshot"
+    );
     const hasGameTime = db.hasColumn("scenario_snapshots", "game_time");
-    const hasDynamicHistorical = db.hasColumn("scenario_snapshots", "is_dynamic_historical");
+    const hasDynamicHistorical = db.hasColumn(
+      "scenario_snapshots",
+      "is_dynamic_historical"
+    );
     const hasSnapshotEmailId = db.hasColumn("scenario_snapshots", "email_id");
     const hasCharacterEmailId = db.hasColumn("scenario_characters", "email_id");
     const hasClueEmailId = db.hasColumn("scenario_clues", "email_id");
@@ -193,11 +213,17 @@ function saveHistoricalSnapshotsToDatabase(
     for (const snapshot of historicalSnapshots) {
       // Generate a unique snapshot ID for historical snapshot
       const historicalSnapshotId = `hist-${scenarioId}-${Date.now()}-${randomUUID().slice(0, 8)}`;
-      
+
       // Check if snapshot already exists
       const existing = database
-        .prepare(`SELECT snapshot_id FROM scenario_snapshots WHERE snapshot_id = ?${hasSnapshotEmailId && emailId ? " AND email_id = ?" : ""}`)
-        .get(...(hasSnapshotEmailId && emailId ? [historicalSnapshotId, emailId] : [historicalSnapshotId]));
+        .prepare(
+          `SELECT snapshot_id FROM scenario_snapshots WHERE snapshot_id = ?${hasSnapshotEmailId && emailId ? " AND email_id = ?" : ""}`
+        )
+        .get(
+          ...(hasSnapshotEmailId && emailId
+            ? [historicalSnapshotId, emailId]
+            : [historicalSnapshotId])
+        );
 
       if (existing) {
         continue; // Skip if already exists
@@ -274,7 +300,9 @@ function saveHistoricalSnapshotsToDatabase(
       }
       if (hasSnapshotEmailId && emailId) {
         database
-          .prepare("UPDATE scenario_snapshots SET email_id = ? WHERE snapshot_id = ?")
+          .prepare(
+            "UPDATE scenario_snapshots SET email_id = ? WHERE snapshot_id = ?"
+          )
           .run(emailId, historicalSnapshotId);
       }
 
@@ -288,7 +316,9 @@ function saveHistoricalSnapshotsToDatabase(
         `);
 
         for (const char of snapshot.characters) {
-          const charId = char.id || `${historicalSnapshotId}-char-${randomUUID().slice(0, 8)}`;
+          const charId =
+            char.id ||
+            `${historicalSnapshotId}-char-${randomUUID().slice(0, 8)}`;
           charStmt.run(
             charId,
             historicalSnapshotId,
@@ -300,7 +330,9 @@ function saveHistoricalSnapshotsToDatabase(
           );
           if (hasCharacterEmailId && emailId) {
             database
-              .prepare("UPDATE scenario_characters SET email_id = ? WHERE id = ?")
+              .prepare(
+                "UPDATE scenario_characters SET email_id = ? WHERE id = ?"
+              )
               .run(emailId, charId);
           }
         }
@@ -316,7 +348,9 @@ function saveHistoricalSnapshotsToDatabase(
         `);
 
         for (const clue of snapshot.clues) {
-          const clueId = clue.id || `${historicalSnapshotId}-clue-${randomUUID().slice(0, 8)}`;
+          const clueId =
+            clue.id ||
+            `${historicalSnapshotId}-clue-${randomUUID().slice(0, 8)}`;
           clueStmt.run(
             clueId,
             historicalSnapshotId,
@@ -331,7 +365,9 @@ function saveHistoricalSnapshotsToDatabase(
           );
           if (hasClueEmailId && emailId) {
             database
-              .prepare("UPDATE scenario_clues SET email_id = ? WHERE clue_id = ?")
+              .prepare(
+                "UPDATE scenario_clues SET email_id = ? WHERE clue_id = ?"
+              )
               .run(emailId, clueId);
           }
         }
@@ -356,16 +392,23 @@ function saveHistoricalSnapshotsToDatabase(
           );
           if (hasConditionEmailId && emailId) {
             database
-              .prepare("UPDATE scenario_conditions SET email_id = ? WHERE condition_id = ?")
+              .prepare(
+                "UPDATE scenario_conditions SET email_id = ? WHERE condition_id = ?"
+              )
               .run(emailId, conditionId);
           }
         }
       }
     }
 
-    console.log(`💾 [Checkpoint] Saved ${historicalSnapshots.length} historical snapshots to database for scenario ${scenarioId}`);
+    console.log(
+      `💾 [Checkpoint] Saved ${historicalSnapshots.length} historical snapshots to database for scenario ${scenarioId}`
+    );
   } catch (error) {
-    console.error(`❌ [Checkpoint] Failed to save historical snapshots to database:`, error);
+    console.error(
+      `❌ [Checkpoint] Failed to save historical snapshots to database:`,
+      error
+    );
     // Don't throw - snapshot save failure shouldn't block checkpoint save
   }
 }

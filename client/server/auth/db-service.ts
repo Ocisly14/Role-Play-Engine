@@ -202,7 +202,10 @@ export const authDbService = {
       )
       .get(user.email) as { created_at: string } | undefined;
 
-    if (recent && Date.now() - new Date(recent.created_at).getTime() < 60 * 1000) {
+    if (
+      recent &&
+      Date.now() - new Date(recent.created_at).getTime() < 60 * 1000
+    ) {
       throw new Error("Please wait before requesting a new code");
     }
 

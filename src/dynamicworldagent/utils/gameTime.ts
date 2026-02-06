@@ -47,8 +47,7 @@ export function getLatestActionLogEntryWithLocation(
   if (!actionLog || actionLog.length === 0) return null;
   for (let i = actionLog.length - 1; i >= 0; i--) {
     const e = actionLog[i];
-    if (e?.time && e?.location)
-      return { time: e.time, location: e.location };
+    if (e?.time && e?.location) return { time: e.time, location: e.location };
   }
   return null;
 }

@@ -27,9 +27,15 @@ export function setBackgroundWithTransition(
 ): void {
   if (!useTransition) {
     // Direct set without transition (for initial load)
-    document.documentElement.style.setProperty('--background-image', `url('${imageUrl}')`);
-    document.documentElement.style.setProperty('--background-image-new', 'none');
-    document.body.classList.remove('background-transitioning');
+    document.documentElement.style.setProperty(
+      "--background-image",
+      `url('${imageUrl}')`
+    );
+    document.documentElement.style.setProperty(
+      "--background-image-new",
+      "none"
+    );
+    document.body.classList.remove("background-transitioning");
     if (callback) {
       callback();
     }
@@ -40,22 +46,31 @@ export function setBackgroundWithTransition(
   preloadImage(imageUrl)
     .then(() => {
       // Set new image to top layer
-      document.documentElement.style.setProperty('--background-image-new', `url('${imageUrl}')`);
-      
+      document.documentElement.style.setProperty(
+        "--background-image-new",
+        `url('${imageUrl}')`
+      );
+
       // Small delay to ensure CSS variable is set
       requestAnimationFrame(() => {
         // Trigger transition to show new layer
-        document.body.classList.add('background-transitioning');
-        
+        document.body.classList.add("background-transitioning");
+
         // After transition completes, swap layers and reset
         setTimeout(() => {
           // Move new image to bottom layer
-          document.documentElement.style.setProperty('--background-image', `url('${imageUrl}')`);
+          document.documentElement.style.setProperty(
+            "--background-image",
+            `url('${imageUrl}')`
+          );
           // Clear top layer
-          document.documentElement.style.setProperty('--background-image-new', 'none');
+          document.documentElement.style.setProperty(
+            "--background-image-new",
+            "none"
+          );
           // Remove transition class
-          document.body.classList.remove('background-transitioning');
-          
+          document.body.classList.remove("background-transitioning");
+
           if (callback) {
             callback();
           }
@@ -63,9 +78,12 @@ export function setBackgroundWithTransition(
       });
     })
     .catch((error) => {
-      console.error('Failed to preload background image:', error);
+      console.error("Failed to preload background image:", error);
       // Fallback to direct set if preload fails
-      document.documentElement.style.setProperty('--background-image', `url('${imageUrl}')`);
+      document.documentElement.style.setProperty(
+        "--background-image",
+        `url('${imageUrl}')`
+      );
       if (callback) {
         callback();
       }

@@ -31,7 +31,7 @@ This is a **small town or rural setting**.
 **Geographic Layout**: Emphasize natural features, sparse infrastructure
 **Economic Core**: Primary industries such as agriculture, fishing, mining, forestry, or small-scale operations
 **Power Structure**: Informal power structures - community elders, religious leaders, local law enforcement
-`
+`,
       };
 
     case "city":
@@ -45,7 +45,7 @@ This is an **urban or city setting**.
 **Geographic Layout**: Urban features such as districts, neighborhoods, landmarks, and transportation infrastructure
 **Economic Core**: Urban economic activities - industry, commerce, finance, trade, or institutional operations
 **Power Structure**: Complex power dynamics - political entities, corporate interests, underground organizations, media influence
-`
+`,
       };
 
     case "academic":
@@ -59,7 +59,7 @@ This is an **academic or research setting**.
 **Geographic Layout**: Academic infrastructure - buildings, research facilities, libraries, restricted zones
 **Economic Core**: Funding sources - institutional budgets, grants, donations, research contracts
 **Power Structure**: Academic hierarchies - administrators, department leaders, funding authorities, scholarly societies
-`
+`,
       };
 
     case "isolated":
@@ -73,7 +73,7 @@ This is an **isolated or enclosed environment**.
 **Geographic Layout**: Emphasis on geographical or logistical barriers - natural boundaries, remote location, limited access
 **Economic Core**: Purpose of the isolated operation - research mission, industrial activity, expeditionary goal, or strategic function
 **Power Structure**: Command hierarchies, technical experts, informal social dynamics in constrained environments
-`
+`,
       };
 
     case "single_structure":
@@ -87,7 +87,7 @@ This is a **single structure or confined space**.
 **Geographic Layout**: Focus on interior architecture - levels, rooms, concealed areas, structural details
 **Economic Core**: The building's primary function or historical purpose
 **Power Structure**: Management hierarchy, staff leadership, resident influence, keepers of restricted areas
-`
+`,
       };
 
     case "route":
@@ -101,7 +101,7 @@ This is a **route or journey setting**.
 **Geographic Layout**: Key waypoints, stops, and significant locations along the journey
 **Economic Core**: Transportation-related activities, trade functions, or the journey's purpose
 **Power Structure**: Transit authorities, operators, local powers at waypoints, networks operating along the route
-`
+`,
       };
 
     default:
@@ -265,7 +265,9 @@ Generate the macro scene structure now.`;
 /**
  * Step 3: Truth Timeline (Current Events, NO Names)
  */
-export function getTruthTimelineTemplate(storyLength: StoryLength = "medium"): string {
+export function getTruthTimelineTemplate(
+  storyLength: StoryLength = "medium"
+): string {
   return getTruthTimelineTemplateForSetting("small_town", storyLength);
 }
 
@@ -397,7 +399,9 @@ Generate the truth timeline now.`;
 /**
  * Step 4: Knowledge Matrix (Abstract Holders, NOT NPCs)
  */
-export function getKnowledgeMatrixTemplate(storyLength: StoryLength = "medium"): string {
+export function getKnowledgeMatrixTemplate(
+  storyLength: StoryLength = "medium"
+): string {
   const storyGuidance = getStoryLengthKnowledgeMatrixGuidance(storyLength);
   return `You are a writer for a CoC game.
 
@@ -506,7 +510,9 @@ Generate the knowledge matrix now.`;
 /**
  * Step 5: Red Herrings (False but Plausible Explanations)
  */
-export function getRedHerringsTemplate(storyLength: StoryLength = "medium"): string {
+export function getRedHerringsTemplate(
+  storyLength: StoryLength = "medium"
+): string {
   const redHerringsSentence = getStoryLengthRedHerringsSentence(storyLength);
   return `You are a writer for a CoC game.
 

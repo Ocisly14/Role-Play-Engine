@@ -25,7 +25,11 @@ import type {
   DiscoveredClue,
   TimeConsumption,
 } from "../../shared/state/index.js";
-import type { DynamicCharacterProfile, DynamicNPCProfile, DynamicScenarioSnapshot } from "../world_builder/types.js";
+import type {
+  DynamicCharacterProfile,
+  DynamicNPCProfile,
+  DynamicScenarioSnapshot,
+} from "../world_builder/types.js";
 import type { CoCDatabase } from "../../shared/agents/memory/database/index.js";
 import { InventoryUtils } from "../../shared/agents/models/gameTypes.js";
 import { randomUUID } from "crypto";
@@ -67,22 +71,25 @@ export interface DynamicGameState {
   currentScenario: DynamicScenarioSnapshot | null;
 
   // Time management
-  gameDay: number;  // Day number in game
-  timeOfDay: string;  // Game time in HH:MM format
+  gameDay: number; // Day number in game
+  timeOfDay: string; // Game time in HH:MM format
   scenarioTimeState: {
     sceneStartTime: string;
-    playerTimeConsumption: Record<string, {
-      totalShortActions: number;
-      lastActionTime: string;
-    }>;
+    playerTimeConsumption: Record<
+      string,
+      {
+        totalShortActions: number;
+        lastActionTime: string;
+      }
+    >;
   };
 
   // Game tension
   tension: number;
 
   // Module guidance (synchronized with moduleDigest)
-  keeperGuidance: string | null;  // Module keeper guidance (permanent information)
-  moduleLimitations: string | null;  // Module limitation conditions (permanent information)
+  keeperGuidance: string | null; // Module keeper guidance (permanent information)
+  moduleLimitations: string | null; // Module limitation conditions (permanent information)
 
   // Characters
   playerCharacter: DynamicCharacterProfile;
@@ -92,7 +99,7 @@ export interface DynamicGameState {
   discoveredClues: DiscoveredClue[];
   turnsInCurrentScene: number;
   lastPlayerInputTime: Date | null;
-  consecutiveProgressionTriggers: number;  // Track consecutive progression triggers (max 3)
+  consecutiveProgressionTriggers: number; // Track consecutive progression triggers (max 3)
 
   // Temporary info (cleared at start of each player turn)
   temporaryInfo: DynamicTemporaryInfo;
@@ -115,28 +122,28 @@ export interface DynamicGameState {
   scenarioOutlines: ScenarioOutline[];
 
   // Runtime tracking for DynamicWorld features
-  revealedTruthEvents: Set<string>;  // Truth event IDs that have been revealed to players
-  activatedKnowledgeHolders: Set<string>;  // Knowledge holder IDs that have been activated/accessed
-  deployedRedHerrings: Set<string>;  // Red herring IDs that have been deployed
-  mythosRevelations: Set<string>;  // Mythos event IDs that have been revealed
+  revealedTruthEvents: Set<string>; // Truth event IDs that have been revealed to players
+  activatedKnowledgeHolders: Set<string>; // Knowledge holder IDs that have been activated/accessed
+  deployedRedHerrings: Set<string>; // Red herring IDs that have been deployed
+  mythosRevelations: Set<string>; // Mythos event IDs that have been revealed
 
   // End state tracking
   pointOfNoReturnReached: boolean;
-  pointOfNoReturnTrigger: string | null;  // The actual trigger value when reached
+  pointOfNoReturnTrigger: string | null; // The actual trigger value when reached
 
   // Updated scenario snapshots (simplified versions for non-player scenarios)
-  updatedDynamicScenarioSnapshots: Map<string, DynamicScenarioSnapshot[]>;  // key: scenarioId, value: 所有历史 snapshot 的数组（按时间顺序）
+  updatedDynamicScenarioSnapshots: Map<string, DynamicScenarioSnapshot[]>; // key: scenarioId, value: 所有历史 snapshot 的数组（按时间顺序）
   globalTrigger: {
     timeRestriction?: string;
     timeReason?: string;
     events?: string[];
     eventReasons?: string[];
     keeperNotes?: string;
-  } | null;  // 全局触发条件
+  } | null; // 全局触发条件
 
   // Metadata
-  loadedAt: Date;  // When this state was loaded
-  lastUpdated: Date;  // Last time state was updated
+  loadedAt: Date; // When this state was loaded
+  lastUpdated: Date; // Last time state was updated
 }
 
 /**
@@ -245,7 +252,8 @@ export class DynamicGameStateManager {
       this.state.moduleDigest = data.moduleDigest;
       // Synchronize top-level fields for compatibility
       this.state.keeperGuidance = data.moduleDigest.keeperGuidance || null;
-      this.state.moduleLimitations = data.moduleDigest.moduleLimitations || null;
+      this.state.moduleLimitations =
+        data.moduleDigest.moduleLimitations || null;
       // Load initial globalTrigger from moduleDigest if present
       if (data.moduleDigest.globalTrigger) {
         this.state.globalTrigger = data.moduleDigest.globalTrigger;
@@ -272,7 +280,7 @@ export class DynamicGameStateManager {
     if (data.scenarioOutlines) {
       this.state.scenarioOutlines = data.scenarioOutlines;
     }
-    
+
     this.state.lastUpdated = new Date();
   }
 
@@ -295,7 +303,7 @@ export class DynamicGameStateManager {
    * Get all revealed truth events
    */
   getRevealedTruthEvents(): TruthEvent[] {
-    return this.state.truthTimeline.filter(event => 
+    return this.state.truthTimeline.filter((event) =>
       this.state.revealedTruthEvents.has(event.id)
     );
   }
@@ -304,8 +312,8 @@ export class DynamicGameStateManager {
    * Get all unrevealed truth events
    */
   getUnrevealedTruthEvents(): TruthEvent[] {
-    return this.state.truthTimeline.filter(event => 
-      !this.state.revealedTruthEvents.has(event.id)
+    return this.state.truthTimeline.filter(
+      (event) => !this.state.revealedTruthEvents.has(event.id)
     );
   }
 
@@ -328,7 +336,7 @@ export class DynamicGameStateManager {
    * Get knowledge holder by ID
    */
   getKnowledgeHolder(holderId: string): KnowledgeHolder | undefined {
-    return this.state.knowledgeMatrix.find(holder => holder.id === holderId);
+    return this.state.knowledgeMatrix.find((holder) => holder.id === holderId);
   }
 
   /**
@@ -337,14 +345,16 @@ export class DynamicGameStateManager {
   getKnowledgeHoldersByType(
     type: "ROLE" | "ORGANIZATION" | "PLACE" | "OBJECT"
   ): KnowledgeHolder[] {
-    return this.state.knowledgeMatrix.filter(holder => holder.holderType === type);
+    return this.state.knowledgeMatrix.filter(
+      (holder) => holder.holderType === type
+    );
   }
 
   /**
    * Get knowledge holders that know a specific truth event
    */
   getKnowledgeHoldersForTruthEvent(eventId: string): KnowledgeHolder[] {
-    return this.state.knowledgeMatrix.filter(holder => 
+    return this.state.knowledgeMatrix.filter((holder) =>
       holder.knows.includes(eventId)
     );
   }
@@ -368,7 +378,7 @@ export class DynamicGameStateManager {
    * Get red herring by ID
    */
   getRedHerring(redHerringId: string): RedHerring | undefined {
-    return this.state.redHerrings.find(rh => rh.id === redHerringId);
+    return this.state.redHerrings.find((rh) => rh.id === redHerringId);
   }
 
   /**
@@ -400,13 +410,17 @@ export class DynamicGameStateManager {
 
     if (pointOfNoReturn.type === "time") {
       // Parse time trigger (e.g., "Day 8 0:00")
-      const timeMatch = /Day\s+(\d+)\s+(\d{1,2}):(\d{2})/i.exec(pointOfNoReturn.trigger);
+      const timeMatch = /Day\s+(\d+)\s+(\d{1,2}):(\d{2})/i.exec(
+        pointOfNoReturn.trigger
+      );
       if (timeMatch) {
         const triggerDay = parseInt(timeMatch[1], 10);
         const triggerTime = timeMatch[2] + ":" + timeMatch[3];
-        
-        if (currentGameDay > triggerDay || 
-            (currentGameDay === triggerDay && currentTime >= triggerTime)) {
+
+        if (
+          currentGameDay > triggerDay ||
+          (currentGameDay === triggerDay && currentTime >= triggerTime)
+        ) {
           this.state.pointOfNoReturnReached = true;
           this.state.pointOfNoReturnTrigger = pointOfNoReturn.trigger;
           this.state.lastUpdated = new Date();
@@ -430,13 +444,17 @@ export class DynamicGameStateManager {
 
     // Match NPCs based on holder type and name
     // This is a simplified matching - actual implementation may need more sophisticated logic
-    return allNPCs.filter(npc => {
+    return allNPCs.filter((npc) => {
       if (holder.holderType === "ROLE") {
-        return npc.occupation === holder.holderName || 
-               npc.notes?.includes(holder.holderName);
+        return (
+          npc.occupation === holder.holderName ||
+          npc.notes?.includes(holder.holderName)
+        );
       } else if (holder.holderType === "ORGANIZATION") {
-        return npc.background?.includes(holder.holderName) ||
-               npc.notes?.includes(holder.holderName);
+        return (
+          npc.background?.includes(holder.holderName) ||
+          npc.notes?.includes(holder.holderName)
+        );
       }
       // For PLACE and OBJECT types, matching would be based on location/items
       return false;
@@ -450,7 +468,9 @@ export class DynamicGameStateManager {
     return {
       ...this.state,
       revealedTruthEvents: Array.from(this.state.revealedTruthEvents),
-      activatedKnowledgeHolders: Array.from(this.state.activatedKnowledgeHolders),
+      activatedKnowledgeHolders: Array.from(
+        this.state.activatedKnowledgeHolders
+      ),
       deployedRedHerrings: Array.from(this.state.deployedRedHerrings),
       mythosRevelations: Array.from(this.state.mythosRevelations),
       loadedAt: this.state.loadedAt.toISOString(),
@@ -473,58 +493,83 @@ export class DynamicGameStateManager {
   ): DynamicGameState {
     // Convert updatedDynamicScenarioSnapshots from object back to Map
     // Only loads the latest snapshot per scenario (historical snapshots remain in database)
-    const updatedDynamicScenarioSnapshots = new Map<string, DynamicScenarioSnapshot[]>();
+    const updatedDynamicScenarioSnapshots = new Map<
+      string,
+      DynamicScenarioSnapshot[]
+    >();
     if (data.updatedDynamicScenarioSnapshots) {
       if (data.updatedDynamicScenarioSnapshots instanceof Map) {
         // Already a Map (legacy format with all snapshots)
         // For backward compatibility, only take the latest snapshot
-        data.updatedDynamicScenarioSnapshots.forEach((snapshots: any[], scenarioId: string) => {
-          if (snapshots.length > 0) {
-            // Only take the latest snapshot
-            const latestSnapshot = snapshots[snapshots.length - 1];
-            const processedSnapshot = {
-              ...latestSnapshot,
-              timestamp: latestSnapshot.timestamp ? (typeof latestSnapshot.timestamp === 'string' ? new Date(latestSnapshot.timestamp) : latestSnapshot.timestamp) : undefined
-            };
-            updatedDynamicScenarioSnapshots.set(scenarioId, [processedSnapshot]);
+        data.updatedDynamicScenarioSnapshots.forEach(
+          (snapshots: any[], scenarioId: string) => {
+            if (snapshots.length > 0) {
+              // Only take the latest snapshot
+              const latestSnapshot = snapshots[snapshots.length - 1];
+              const processedSnapshot = {
+                ...latestSnapshot,
+                timestamp: latestSnapshot.timestamp
+                  ? typeof latestSnapshot.timestamp === "string"
+                    ? new Date(latestSnapshot.timestamp)
+                    : latestSnapshot.timestamp
+                  : undefined,
+              };
+              updatedDynamicScenarioSnapshots.set(scenarioId, [
+                processedSnapshot,
+              ]);
+            }
           }
-        });
+        );
       } else {
         // Object format from JSON - new format: only latest snapshot per scenario
-        Object.entries(data.updatedDynamicScenarioSnapshots).forEach(([scenarioId, snapshotData]: [string, any]) => {
-          // Latest snapshot from checkpoint (single snapshot, not array)
-          const latestSnapshot: any = Array.isArray(snapshotData) ? snapshotData[snapshotData.length - 1] : snapshotData;
-          const processedLatestSnapshot = {
-            ...latestSnapshot,
-            timestamp: latestSnapshot.timestamp ? (typeof latestSnapshot.timestamp === 'string' ? new Date(latestSnapshot.timestamp) : latestSnapshot.timestamp) : undefined
-          };
-          
-          // Only load the latest snapshot (no historical snapshots)
-          // Historical snapshots remain in database but are not loaded into state
-          if (processedLatestSnapshot) {
-            updatedDynamicScenarioSnapshots.set(scenarioId, [processedLatestSnapshot]);
+        Object.entries(data.updatedDynamicScenarioSnapshots).forEach(
+          ([scenarioId, snapshotData]: [string, any]) => {
+            // Latest snapshot from checkpoint (single snapshot, not array)
+            const latestSnapshot: any = Array.isArray(snapshotData)
+              ? snapshotData[snapshotData.length - 1]
+              : snapshotData;
+            const processedLatestSnapshot = {
+              ...latestSnapshot,
+              timestamp: latestSnapshot.timestamp
+                ? typeof latestSnapshot.timestamp === "string"
+                  ? new Date(latestSnapshot.timestamp)
+                  : latestSnapshot.timestamp
+                : undefined,
+            };
+
+            // Only load the latest snapshot (no historical snapshots)
+            // Historical snapshots remain in database but are not loaded into state
+            if (processedLatestSnapshot) {
+              updatedDynamicScenarioSnapshots.set(scenarioId, [
+                processedLatestSnapshot,
+              ]);
+            }
           }
-        });
+        );
       }
     }
 
     // Filter actionLog entries by checkpoint gameTime if provided
     let playerCharacter = data.playerCharacter;
     let npcCharacters = data.npcCharacters || [];
-    
+
     if (checkpointGameDay !== undefined && checkpointTimeOfDay !== undefined) {
       // Filter player character's actionLog
-      if (playerCharacter && playerCharacter.actionLog && Array.isArray(playerCharacter.actionLog)) {
+      if (
+        playerCharacter &&
+        playerCharacter.actionLog &&
+        Array.isArray(playerCharacter.actionLog)
+      ) {
         playerCharacter = {
           ...playerCharacter,
           actionLog: this.filterActionLogByGameTime(
             playerCharacter.actionLog,
             checkpointGameDay,
             checkpointTimeOfDay
-          )
+          ),
         };
       }
-      
+
       // Filter NPC characters' actionLog
       npcCharacters = npcCharacters.map((npc: any) => {
         if (npc.actionLog && Array.isArray(npc.actionLog)) {
@@ -534,7 +579,7 @@ export class DynamicGameStateManager {
               npc.actionLog,
               checkpointGameDay,
               checkpointTimeOfDay
-            )
+            ),
           };
         }
         return npc;
@@ -550,9 +595,21 @@ export class DynamicGameStateManager {
       deployedRedHerrings: new Set(data.deployedRedHerrings || []),
       mythosRevelations: new Set(data.mythosRevelations || []),
       updatedDynamicScenarioSnapshots,
-      loadedAt: data.loadedAt ? (typeof data.loadedAt === 'string' ? new Date(data.loadedAt) : data.loadedAt) : new Date(),
-      lastUpdated: data.lastUpdated ? (typeof data.lastUpdated === 'string' ? new Date(data.lastUpdated) : data.lastUpdated) : new Date(),
-      lastPlayerInputTime: data.lastPlayerInputTime ? (typeof data.lastPlayerInputTime === 'string' ? new Date(data.lastPlayerInputTime) : data.lastPlayerInputTime) : null,
+      loadedAt: data.loadedAt
+        ? typeof data.loadedAt === "string"
+          ? new Date(data.loadedAt)
+          : data.loadedAt
+        : new Date(),
+      lastUpdated: data.lastUpdated
+        ? typeof data.lastUpdated === "string"
+          ? new Date(data.lastUpdated)
+          : data.lastUpdated
+        : new Date(),
+      lastPlayerInputTime: data.lastPlayerInputTime
+        ? typeof data.lastPlayerInputTime === "string"
+          ? new Date(data.lastPlayerInputTime)
+          : data.lastPlayerInputTime
+        : null,
       consecutiveProgressionTriggers: data.consecutiveProgressionTriggers ?? 0,
     };
   }
@@ -561,22 +618,24 @@ export class DynamicGameStateManager {
    * Parse game time from string format "Day X, HH:MM"
    * Returns { gameDay, timeOfDay } or null if cannot parse
    */
-  private static parseGameTime(gameTime: string): { gameDay: number; timeOfDay: string } | null {
+  private static parseGameTime(
+    gameTime: string
+  ): { gameDay: number; timeOfDay: string } | null {
     if (!gameTime) return null;
-    
+
     // Handle "initial" or other non-standard formats
     if (gameTime.toLowerCase() === "initial" || !gameTime.includes("Day")) {
       return null;
     }
-    
+
     const match = gameTime.match(/Day\s*(\d+),\s*(\d{2}:\d{2})/i);
     if (match) {
       return {
         gameDay: parseInt(match[1], 10),
-        timeOfDay: match[2]
+        timeOfDay: match[2],
       };
     }
-    
+
     return null;
   }
 
@@ -590,20 +649,20 @@ export class DynamicGameStateManager {
     time2: string | undefined
   ): number | null {
     if (!time1 || !time2) return null;
-    
+
     const parsed1 = this.parseGameTime(time1);
     const parsed2 = this.parseGameTime(time2);
-    
+
     if (!parsed1 || !parsed2) return null;
-    
+
     // Compare day first
     if (parsed1.gameDay < parsed2.gameDay) return -1;
     if (parsed1.gameDay > parsed2.gameDay) return 1;
-    
+
     // Same day, compare time
     if (parsed1.timeOfDay < parsed2.timeOfDay) return -1;
     if (parsed1.timeOfDay > parsed2.timeOfDay) return 1;
-    
+
     return 0;
   }
 
@@ -617,19 +676,22 @@ export class DynamicGameStateManager {
     checkpointTimeOfDay: string
   ): DynamicScenarioSnapshot[] {
     const checkpointTime = `Day ${checkpointGameDay}, ${checkpointTimeOfDay}`;
-    
-    return snapshots.filter(snapshot => {
+
+    return snapshots.filter((snapshot) => {
       if (!snapshot.gameTime) {
         // If snapshot has no gameTime, keep it (assume it's before checkpoint)
         return true;
       }
-      
-      const comparison = this.compareGameTime(snapshot.gameTime, checkpointTime);
+
+      const comparison = this.compareGameTime(
+        snapshot.gameTime,
+        checkpointTime
+      );
       if (comparison === null) {
         // Cannot compare, keep it to be safe
         return true;
       }
-      
+
       // Keep snapshots at or before checkpoint time
       return comparison <= 0;
     });
@@ -645,19 +707,19 @@ export class DynamicGameStateManager {
     checkpointTimeOfDay: string
   ): Array<{ time: string; location: string; summary: string }> {
     const checkpointTime = `Day ${checkpointGameDay}, ${checkpointTimeOfDay}`;
-    
-    return actionLog.filter(entry => {
+
+    return actionLog.filter((entry) => {
       if (!entry.time) {
         // If entry has no time, keep it (assume it's before checkpoint)
         return true;
       }
-      
+
       const comparison = this.compareGameTime(entry.time, checkpointTime);
       if (comparison === null) {
         // Cannot compare, keep it to be safe
         return true;
       }
-      
+
       // Keep entries at or before checkpoint time
       return comparison <= 0;
     });
@@ -676,25 +738,40 @@ export class DynamicGameStateManager {
     try {
       const database = db.getDatabase();
       const emailId = resolveEmailId();
-      const hasDynamicHistorical = db.hasColumn("scenario_snapshots", "is_dynamic_historical");
+      const hasDynamicHistorical = db.hasColumn(
+        "scenario_snapshots",
+        "is_dynamic_historical"
+      );
       const hasGameTime = db.hasColumn("scenario_snapshots", "game_time");
       const hasSnapshotEmailId = db.hasColumn("scenario_snapshots", "email_id");
-      const hasCharacterEmailId = db.hasColumn("scenario_characters", "email_id");
+      const hasCharacterEmailId = db.hasColumn(
+        "scenario_characters",
+        "email_id"
+      );
       const hasClueEmailId = db.hasColumn("scenario_clues", "email_id");
-      const hasConditionEmailId = db.hasColumn("scenario_conditions", "email_id");
-      
+      const hasConditionEmailId = db.hasColumn(
+        "scenario_conditions",
+        "email_id"
+      );
+
       if (!hasDynamicHistorical || !hasGameTime) {
         return []; // Cannot load if columns don't exist
       }
 
       // Query all historical snapshots for this scenario
       // We'll filter by gameTime in TypeScript since SQL string comparison may not work correctly
-      const snapshotRows = database.prepare(`
+      const snapshotRows = database
+        .prepare(`
         SELECT * FROM scenario_snapshots
         WHERE scenario_id = ? 
           AND is_dynamic_historical = 1${hasSnapshotEmailId && emailId ? " AND email_id = ?" : ""}
         ORDER BY game_time ASC, created_at ASC
-      `).all(...(hasSnapshotEmailId && emailId ? [scenarioId, emailId] : [scenarioId])) as any[];
+      `)
+        .all(
+          ...(hasSnapshotEmailId && emailId
+            ? [scenarioId, emailId]
+            : [scenarioId])
+        ) as any[];
 
       const checkpointTime = `Day ${checkpointGameDay}, ${checkpointTimeOfDay}`;
       const historicalSnapshots: DynamicScenarioSnapshot[] = [];
@@ -702,7 +779,10 @@ export class DynamicGameStateManager {
       for (const row of snapshotRows) {
         // Filter by checkpoint gameTime
         if (row.game_time) {
-          const comparison = this.compareGameTime(row.game_time, checkpointTime);
+          const comparison = this.compareGameTime(
+            row.game_time,
+            checkpointTime
+          );
           if (comparison !== null && comparison > 0) {
             // Skip snapshots after checkpoint time
             continue;
@@ -710,25 +790,43 @@ export class DynamicGameStateManager {
         }
         // If game_time is null, keep it (assume it's before checkpoint)
         // Load characters, clues, conditions for this snapshot
-        const characters = database.prepare(`
+        const characters = database
+          .prepare(`
           SELECT id, character_name, character_role, character_status,
                  character_location, character_notes
           FROM scenario_characters
           WHERE snapshot_id = ?${hasCharacterEmailId && emailId ? " AND email_id = ?" : ""}
-        `).all(...(hasCharacterEmailId && emailId ? [row.snapshot_id, emailId] : [row.snapshot_id])) as any[];
+        `)
+          .all(
+            ...(hasCharacterEmailId && emailId
+              ? [row.snapshot_id, emailId]
+              : [row.snapshot_id])
+          ) as any[];
 
-        const clues = database.prepare(`
+        const clues = database
+          .prepare(`
           SELECT clue_id, clue_text, category, difficulty, clue_location,
                  discovery_method, reveals, discovered, discovery_details
           FROM scenario_clues
           WHERE snapshot_id = ?${hasClueEmailId && emailId ? " AND email_id = ?" : ""}
-        `).all(...(hasClueEmailId && emailId ? [row.snapshot_id, emailId] : [row.snapshot_id])) as any[];
+        `)
+          .all(
+            ...(hasClueEmailId && emailId
+              ? [row.snapshot_id, emailId]
+              : [row.snapshot_id])
+          ) as any[];
 
-        const conditions = database.prepare(`
+        const conditions = database
+          .prepare(`
           SELECT condition_id, condition_type, description, mechanical_effect
           FROM scenario_conditions
           WHERE snapshot_id = ?${hasConditionEmailId && emailId ? " AND email_id = ?" : ""}
-        `).all(...(hasConditionEmailId && emailId ? [row.snapshot_id, emailId] : [row.snapshot_id])) as any[];
+        `)
+          .all(
+            ...(hasConditionEmailId && emailId
+              ? [row.snapshot_id, emailId]
+              : [row.snapshot_id])
+          ) as any[];
 
         // Build snapshot object
         const snapshot: DynamicScenarioSnapshot = {
@@ -740,7 +838,7 @@ export class DynamicGameStateManager {
           showMap: row.show_map === 1,
           keeperNotes: row.keeper_notes || undefined,
           timeRestriction: row.time_restriction || undefined,
-          characters: characters.map(char => ({
+          characters: characters.map((char) => ({
             id: char.id,
             name: char.character_name,
             role: char.character_role,
@@ -748,7 +846,7 @@ export class DynamicGameStateManager {
             location: char.character_location || undefined,
             notes: char.character_notes || undefined,
           })),
-          clues: clues.map(clue => ({
+          clues: clues.map((clue) => ({
             id: clue.clue_id,
             clueText: clue.clue_text,
             category: clue.category,
@@ -757,9 +855,11 @@ export class DynamicGameStateManager {
             discoveryMethod: clue.discovery_method || undefined,
             reveals: clue.reveals ? JSON.parse(clue.reveals) : [],
             discovered: clue.discovered === 1,
-            discoveryDetails: clue.discovery_details ? JSON.parse(clue.discovery_details) : undefined,
+            discoveryDetails: clue.discovery_details
+              ? JSON.parse(clue.discovery_details)
+              : undefined,
           })),
-          conditions: conditions.map(cond => ({
+          conditions: conditions.map((cond) => ({
             type: cond.condition_type,
             description: cond.description,
             mechanicalEffect: cond.mechanical_effect || undefined,
@@ -771,7 +871,10 @@ export class DynamicGameStateManager {
 
       return historicalSnapshots;
     } catch (error) {
-      console.error(`❌ [DynamicGameState] Failed to load historical snapshots from database:`, error);
+      console.error(
+        `❌ [DynamicGameState] Failed to load historical snapshots from database:`,
+        error
+      );
       return [];
     }
   }
@@ -847,7 +950,8 @@ export class DynamicGameStateManager {
    * Increment consecutive progression trigger count
    */
   incrementConsecutiveTriggers(): void {
-    this.state.consecutiveProgressionTriggers = (this.state.consecutiveProgressionTriggers || 0) + 1;
+    this.state.consecutiveProgressionTriggers =
+      (this.state.consecutiveProgressionTriggers || 0) + 1;
     this.state.lastUpdated = new Date();
   }
 
@@ -962,9 +1066,9 @@ export class DynamicGameStateManager {
 
     for (const newNpc of npcData) {
       const existingIndex = this.state.npcCharacters.findIndex(
-        npc => npc.id === newNpc.id
+        (npc) => npc.id === newNpc.id
       );
-      
+
       if (existingIndex >= 0) {
         // Update existing NPC
         this.state.npcCharacters[existingIndex] = newNpc;
@@ -979,20 +1083,25 @@ export class DynamicGameStateManager {
   /**
    * Update current scenario and manage visited scenarios history
    */
-  updateCurrentScenario(scenarioData: { snapshot: DynamicScenarioSnapshot; scenarioName: string } | null): void {
+  updateCurrentScenario(
+    scenarioData: {
+      snapshot: DynamicScenarioSnapshot;
+      scenarioName: string;
+    } | null
+  ): void {
     if (!scenarioData) return;
 
     const newScenario = scenarioData.snapshot;
-    
+
     // Set new current scenario
     this.state.currentScenario = newScenario;
-    
+
     // Automatically update NPC locations in the scene
     this.updateNpcLocationsForScenario(newScenario);
-    
+
     // Reset time consumption state for any scenario update
     this.resetScenarioTimeState();
-    
+
     this.state.lastUpdated = new Date();
   }
 
@@ -1058,7 +1167,9 @@ export class DynamicGameStateManager {
    * Note: NPC locations are now tracked via actionLog, not currentLocation
    * This method is kept for compatibility but no longer updates currentLocation
    */
-  private updateNpcLocationsForScenario(scenario: DynamicScenarioSnapshot): void {
+  private updateNpcLocationsForScenario(
+    scenario: DynamicScenarioSnapshot
+  ): void {
     if (!scenario || !scenario.characters || scenario.characters.length === 0) {
       return;
     }
@@ -1068,7 +1179,6 @@ export class DynamicGameStateManager {
     // This method is kept for compatibility but does nothing
   }
 
-
   /**
    * Apply state updates from action agent results
    */
@@ -1077,13 +1187,18 @@ export class DynamicGameStateManager {
 
     // Update player character
     if (stateUpdate.playerCharacter) {
-      this.updateCharacter(this.state.playerCharacter, stateUpdate.playerCharacter);
+      this.updateCharacter(
+        this.state.playerCharacter,
+        stateUpdate.playerCharacter
+      );
     }
 
     // Update NPC characters
     if (stateUpdate.npcCharacters && Array.isArray(stateUpdate.npcCharacters)) {
       for (const npcUpdate of stateUpdate.npcCharacters) {
-        const existingNpc = this.state.npcCharacters.find(npc => npc.id === npcUpdate.id);
+        const existingNpc = this.state.npcCharacters.find(
+          (npc) => npc.id === npcUpdate.id
+        );
         if (existingNpc) {
           this.updateCharacter(existingNpc, npcUpdate);
         }
@@ -1100,14 +1215,14 @@ export class DynamicGameStateManager {
     if (updates.name) {
       character.name = updates.name;
     }
-    
+
     // Update status values (hp, sanity, mp, etc.)
     if (updates.status) {
       for (const [key, value] of Object.entries(updates.status)) {
-        if (typeof value === 'number' && key in character.status) {
+        if (typeof value === "number" && key in character.status) {
           // Apply differential update (e.g., hp: -2 means subtract 2)
           character.status[key] += value;
-          
+
           // Ensure values don't go below 0
           if (character.status[key] < 0) {
             character.status[key] = 0;
@@ -1115,20 +1230,20 @@ export class DynamicGameStateManager {
         }
       }
     }
-    
+
     // Update attributes if provided
     if (updates.attributes) {
       for (const [key, value] of Object.entries(updates.attributes)) {
-        if (typeof value === 'number' && key in character.attributes) {
+        if (typeof value === "number" && key in character.attributes) {
           character.attributes[key] += value;
         }
       }
     }
-    
+
     // Update skills if provided
     if (updates.skills) {
       for (const [skillName, value] of Object.entries(updates.skills)) {
-        if (typeof value === 'number') {
+        if (typeof value === "number") {
           if (skillName in character.skills) {
             character.skills[skillName] += value;
           } else {
@@ -1137,33 +1252,40 @@ export class DynamicGameStateManager {
         }
       }
     }
-    
+
     // Update inventory if provided
     if (updates.inventory !== undefined) {
       // Normalize existing inventory to InventoryItem[]
-      character.inventory = InventoryUtils.normalizeInventory(character.inventory);
-      
+      character.inventory = InventoryUtils.normalizeInventory(
+        character.inventory
+      );
+
       if (Array.isArray(updates.inventory)) {
         // Replace entire inventory with InventoryItem[]
-        character.inventory = InventoryUtils.normalizeInventory(updates.inventory);
-      } else if (typeof updates.inventory === 'object' && !Array.isArray(updates.inventory)) {
+        character.inventory = InventoryUtils.normalizeInventory(
+          updates.inventory
+        );
+      } else if (
+        typeof updates.inventory === "object" &&
+        !Array.isArray(updates.inventory)
+      ) {
         // Support operations like { add: [...], remove: [...] }
         if (updates.inventory.add) {
-          const itemsToAdd = Array.isArray(updates.inventory.add) 
-            ? updates.inventory.add 
+          const itemsToAdd = Array.isArray(updates.inventory.add)
+            ? updates.inventory.add
             : [updates.inventory.add];
           character.inventory = InventoryUtils.addItems(
-            character.inventory, 
+            character.inventory,
             InventoryUtils.normalizeInventory(itemsToAdd)
           );
         }
-        
+
         if (updates.inventory.remove) {
           const itemsToRemove = Array.isArray(updates.inventory.remove)
             ? updates.inventory.remove
             : [updates.inventory.remove];
           character.inventory = InventoryUtils.removeItems(
-            character.inventory, 
+            character.inventory,
             InventoryUtils.normalizeInventory(itemsToRemove)
           );
         }
@@ -1176,15 +1298,19 @@ export class DynamicGameStateManager {
    */
   addActionResult(actionResult: ActionResult): void {
     if (!actionResult) return;
-    
+
     // Update player time consumption
-    this.updatePlayerTimeConsumption(actionResult.character, actionResult.timeConsumption);
-    
+    this.updatePlayerTimeConsumption(
+      actionResult.character,
+      actionResult.timeConsumption
+    );
+
     this.state.temporaryInfo.actionResults.push(actionResult);
-    
+
     // Keep only the most recent 10 action results to avoid memory bloat
     if (this.state.temporaryInfo.actionResults.length > 10) {
-      this.state.temporaryInfo.actionResults = this.state.temporaryInfo.actionResults.slice(-10);
+      this.state.temporaryInfo.actionResults =
+        this.state.temporaryInfo.actionResults.slice(-10);
     }
 
     this.state.lastUpdated = new Date();
@@ -1193,35 +1319,42 @@ export class DynamicGameStateManager {
   /**
    * Update player time consumption tracking
    */
-  private updatePlayerTimeConsumption(playerName: string, timeConsumption: TimeConsumption): void {
+  private updatePlayerTimeConsumption(
+    playerName: string,
+    timeConsumption: TimeConsumption
+  ): void {
     // Initialize player record if doesn't exist
     if (!this.state.scenarioTimeState.playerTimeConsumption[playerName]) {
       this.state.scenarioTimeState.playerTimeConsumption[playerName] = {
         totalShortActions: 0,
-        lastActionTime: timeConsumption
+        lastActionTime: timeConsumption,
       };
     }
 
-    const playerTime = this.state.scenarioTimeState.playerTimeConsumption[playerName];
+    const playerTime =
+      this.state.scenarioTimeState.playerTimeConsumption[playerName];
     const shortActionCap = this.getScenarioShortActionCap();
-    
+
     // Update based on time consumption type
     switch (timeConsumption) {
       case "instant":
         // Instant actions don't affect time tracking
         playerTime.lastActionTime = timeConsumption;
         break;
-        
+
       case "short":
         // Track short actions count
         playerTime.totalShortActions += 1;
         playerTime.lastActionTime = timeConsumption;
         break;
-        
+
       case "scene":
         // Scene actions are significant time consumers
         // Scene action counts as reaching the short-action cap for this scenario
-        playerTime.totalShortActions = Math.max(playerTime.totalShortActions, shortActionCap);
+        playerTime.totalShortActions = Math.max(
+          playerTime.totalShortActions,
+          shortActionCap
+        );
         playerTime.lastActionTime = timeConsumption;
         break;
     }
@@ -1238,7 +1371,8 @@ export class DynamicGameStateManager {
    * Get player's short action count in current scenario
    */
   getPlayerShortActions(playerName: string): number {
-    const playerTime = this.state.scenarioTimeState.playerTimeConsumption[playerName];
+    const playerTime =
+      this.state.scenarioTimeState.playerTimeConsumption[playerName];
     return playerTime ? playerTime.totalShortActions : 0;
   }
 
@@ -1246,8 +1380,9 @@ export class DynamicGameStateManager {
    * Get player's last action time consumption
    */
   getPlayerLastActionTime(playerName: string): TimeConsumption | null {
-    const playerTime = this.state.scenarioTimeState.playerTimeConsumption[playerName];
-    return playerTime ? playerTime.lastActionTime as TimeConsumption : null;
+    const playerTime =
+      this.state.scenarioTimeState.playerTimeConsumption[playerName];
+    return playerTime ? (playerTime.lastActionTime as TimeConsumption) : null;
   }
 
   /**
@@ -1280,10 +1415,10 @@ export class DynamicGameStateManager {
    */
   getProgressionThreshold(): number {
     const tension = this.state.tension;
-    if (tension <= 3) return 5;      // Low tension (1-3): 5 turns
-    if (tension <= 6) return 4;      // Medium tension (4-6): 4 turns
-    if (tension <= 8) return 3;      // High tension (7-8): 3 turns
-    return 2;                         // Critical tension (9-10): 2 turns
+    if (tension <= 3) return 5; // Low tension (1-3): 5 turns
+    if (tension <= 6) return 4; // Medium tension (4-6): 4 turns
+    if (tension <= 8) return 3; // High tension (7-8): 3 turns
+    return 2; // Critical tension (9-10): 2 turns
   }
 
   /**
@@ -1320,25 +1455,26 @@ export class DynamicGameStateManager {
     if (!elapsedMinutes || elapsedMinutes <= 0) return;
 
     // Parse current time "HH:MM"
-    const [hours, minutes] = this.state.timeOfDay.split(':').map(Number);
-    
+    const [hours, minutes] = this.state.timeOfDay.split(":").map(Number);
+
     // Calculate new time
     let totalMinutes = hours * 60 + minutes + elapsedMinutes;
-    
+
     // Handle day overflow (24 hours = 1440 minutes)
     if (totalMinutes >= 1440) {
       const daysElapsed = Math.floor(totalMinutes / 1440);
       this.state.gameDay += daysElapsed;
       totalMinutes = totalMinutes % 1440;
-      console.log(`🌅 A new day has dawned! It is now Day ${this.state.gameDay}`);
+      console.log(
+        `🌅 A new day has dawned! It is now Day ${this.state.gameDay}`
+      );
     }
-    
+
     const newHours = Math.floor(totalMinutes / 60);
     const newMinutes = totalMinutes % 60;
-    
+
     // Update time in HH:MM format
-    this.state.timeOfDay = 
-      `${String(newHours).padStart(2, '0')}:${String(newMinutes).padStart(2, '0')}`;
+    this.state.timeOfDay = `${String(newHours).padStart(2, "0")}:${String(newMinutes).padStart(2, "0")}`;
     this.state.lastUpdated = new Date();
   }
 
@@ -1346,8 +1482,8 @@ export class DynamicGameStateManager {
    * Get human-readable time of day description
    */
   getTimeOfDayDescription(): string {
-    const [hours] = this.state.timeOfDay.split(':').map(Number);
-    
+    const [hours] = this.state.timeOfDay.split(":").map(Number);
+
     if (hours >= 5 && hours < 8) return "Dawn";
     if (hours >= 8 && hours < 12) return "Morning";
     if (hours >= 12 && hours < 14) return "Noon";
@@ -1374,8 +1510,6 @@ export class DynamicGameStateManager {
     this.state.lastUpdated = new Date();
   }
 
-
-
   /**
    * Update current scenario based on player actions
    */
@@ -1388,12 +1522,15 @@ export class DynamicGameStateManager {
     }
 
     // Update environmental conditions
-    if (scenarioUpdates.conditions && Array.isArray(scenarioUpdates.conditions)) {
+    if (
+      scenarioUpdates.conditions &&
+      Array.isArray(scenarioUpdates.conditions)
+    ) {
       for (const newCondition of scenarioUpdates.conditions) {
         const existingIndex = this.state.currentScenario.conditions.findIndex(
-          condition => condition.type === newCondition.type
+          (condition) => condition.type === newCondition.type
         );
-        
+
         if (existingIndex >= 0) {
           // Update existing condition
           this.state.currentScenario.conditions[existingIndex] = newCondition;
@@ -1408,14 +1545,14 @@ export class DynamicGameStateManager {
     if (scenarioUpdates.clues && Array.isArray(scenarioUpdates.clues)) {
       for (const clueUpdate of scenarioUpdates.clues) {
         const existingIndex = this.state.currentScenario.clues.findIndex(
-          clue => clue.id === clueUpdate.id
+          (clue) => clue.id === clueUpdate.id
         );
-        
+
         if (existingIndex >= 0) {
           // Update existing clue
           this.state.currentScenario.clues[existingIndex] = {
             ...this.state.currentScenario.clues[existingIndex],
-            ...clueUpdate
+            ...clueUpdate,
           };
         } else if (clueUpdate.id) {
           // Add new clue
@@ -1430,37 +1567,61 @@ export class DynamicGameStateManager {
   /**
    * Save old snapshot to database
    */
-  private saveOldSnapshotToDatabase(scenarioId: string, snapshot: DynamicScenarioSnapshot): void {
+  private saveOldSnapshotToDatabase(
+    scenarioId: string,
+    snapshot: DynamicScenarioSnapshot
+  ): void {
     if (!this.db) {
-      console.warn(`[DynamicGameState] Cannot save old snapshot to database: no database instance provided`);
+      console.warn(
+        `[DynamicGameState] Cannot save old snapshot to database: no database instance provided`
+      );
       return;
     }
 
     try {
       const database = this.db.getDatabase();
       const emailId = resolveEmailId();
-      const hasEmailIdColumn = this.db.hasColumn("scenario_snapshots", "email_id");
-      const hasCharacterEmailId = this.db.hasColumn("scenario_characters", "email_id");
+      const hasEmailIdColumn = this.db.hasColumn(
+        "scenario_snapshots",
+        "email_id"
+      );
+      const hasCharacterEmailId = this.db.hasColumn(
+        "scenario_characters",
+        "email_id"
+      );
       const hasClueEmailId = this.db.hasColumn("scenario_clues", "email_id");
-      const hasConditionEmailId = this.db.hasColumn("scenario_conditions", "email_id");
-      
+      const hasConditionEmailId = this.db.hasColumn(
+        "scenario_conditions",
+        "email_id"
+      );
+
       // Generate a unique snapshot ID for historical snapshot
       const historicalSnapshotId = `hist-${scenarioId}-${Date.now()}-${randomUUID().slice(0, 8)}`;
-      
+
       // Check if snapshot already exists (shouldn't happen for historical snapshots, but check anyway)
       const existing = database
-        .prepare(`SELECT snapshot_id FROM scenario_snapshots WHERE snapshot_id = ?`)
+        .prepare(
+          `SELECT snapshot_id FROM scenario_snapshots WHERE snapshot_id = ?`
+        )
         .get(historicalSnapshotId);
 
       if (existing) {
-        console.warn(`[DynamicGameState] Historical snapshot ${historicalSnapshotId} already exists, skipping`);
+        console.warn(
+          `[DynamicGameState] Historical snapshot ${historicalSnapshotId} already exists, skipping`
+        );
         return;
       }
 
       // Check database columns
-      const hasInitialSnapshot = this.db.hasColumn("scenario_snapshots", "initial_snapshot");
+      const hasInitialSnapshot = this.db.hasColumn(
+        "scenario_snapshots",
+        "initial_snapshot"
+      );
       const hasGameTime = this.db.hasColumn("scenario_snapshots", "game_time");
-      const hasDynamicHistorical = this.db.hasColumn("scenario_snapshots", "is_dynamic_historical");
+      const hasDynamicHistorical = this.db.hasColumn(
+        "scenario_snapshots",
+        "is_dynamic_historical"
+      );
 
       // Insert snapshot
       if (hasInitialSnapshot && hasGameTime && hasDynamicHistorical) {
@@ -1545,7 +1706,9 @@ export class DynamicGameStateManager {
         `);
 
         for (const char of snapshot.characters) {
-          const charId = char.id || `${historicalSnapshotId}-char-${randomUUID().slice(0, 8)}`;
+          const charId =
+            char.id ||
+            `${historicalSnapshotId}-char-${randomUUID().slice(0, 8)}`;
           charStmt.run(
             charId,
             historicalSnapshotId,
@@ -1569,7 +1732,9 @@ export class DynamicGameStateManager {
         `);
 
         for (const clue of snapshot.clues) {
-          const clueId = clue.id || `${historicalSnapshotId}-clue-${randomUUID().slice(0, 8)}`;
+          const clueId =
+            clue.id ||
+            `${historicalSnapshotId}-clue-${randomUUID().slice(0, 8)}`;
           clueStmt.run(
             clueId,
             historicalSnapshotId,
@@ -1580,7 +1745,9 @@ export class DynamicGameStateManager {
             clue.discoveryMethod || null,
             JSON.stringify(clue.reveals || []),
             clue.discovered ? 1 : 0,
-            clue.discoveryDetails ? JSON.stringify(clue.discoveryDetails) : null,
+            clue.discoveryDetails
+              ? JSON.stringify(clue.discoveryDetails)
+              : null,
             ...(hasClueEmailId ? [emailId ?? null] : [])
           );
         }
@@ -1607,9 +1774,14 @@ export class DynamicGameStateManager {
         }
       }
 
-      console.log(`💾 [DynamicGameState] Saved old snapshot to database: ${historicalSnapshotId} for scenario ${scenarioId}`);
+      console.log(
+        `💾 [DynamicGameState] Saved old snapshot to database: ${historicalSnapshotId} for scenario ${scenarioId}`
+      );
     } catch (error) {
-      console.error(`❌ [DynamicGameState] Failed to save old snapshot to database:`, error);
+      console.error(
+        `❌ [DynamicGameState] Failed to save old snapshot to database:`,
+        error
+      );
       // Don't throw - snapshot save failure shouldn't block game updates
     }
   }
@@ -1619,18 +1791,22 @@ export class DynamicGameStateManager {
    * Automatically adds timestamp if not present
    * Keeps only the latest 2 snapshots in state, saves older ones to database
    */
-  setUpdatedDynamicScenarioSnapshot(scenarioId: string, snapshot: DynamicScenarioSnapshot): void {
+  setUpdatedDynamicScenarioSnapshot(
+    scenarioId: string,
+    snapshot: DynamicScenarioSnapshot
+  ): void {
     // Add timestamp if not present
     const snapshotWithTimestamp: DynamicScenarioSnapshot = {
       ...snapshot,
-      timestamp: snapshot.timestamp || new Date()
+      timestamp: snapshot.timestamp || new Date(),
     };
-    
-    const snapshots = this.state.updatedDynamicScenarioSnapshots.get(scenarioId) || [];
-    
+
+    const snapshots =
+      this.state.updatedDynamicScenarioSnapshots.get(scenarioId) || [];
+
     // Add the new snapshot first
     snapshots.push(snapshotWithTimestamp);
-    
+
     // If we have more than 2 snapshots, save the oldest ones to database and remove them
     if (snapshots.length > 2) {
       // Save all snapshots except the latest 2
@@ -1638,13 +1814,13 @@ export class DynamicGameStateManager {
       for (const oldSnapshot of snapshotsToSave) {
         this.saveOldSnapshotToDatabase(scenarioId, oldSnapshot);
       }
-      
+
       // Keep only the latest 2 snapshots
       const latestTwo = snapshots.slice(-2);
       snapshots.length = 0;
       snapshots.push(...latestTwo);
     }
-    
+
     this.state.updatedDynamicScenarioSnapshots.set(scenarioId, snapshots);
     this.state.lastUpdated = new Date();
   }
@@ -1652,8 +1828,11 @@ export class DynamicGameStateManager {
   /**
    * Get latest updated scenario snapshot by scenario ID
    */
-  getUpdatedDynamicScenarioSnapshot(scenarioId: string): DynamicScenarioSnapshot | null {
-    const snapshots = this.state.updatedDynamicScenarioSnapshots.get(scenarioId);
+  getUpdatedDynamicScenarioSnapshot(
+    scenarioId: string
+  ): DynamicScenarioSnapshot | null {
+    const snapshots =
+      this.state.updatedDynamicScenarioSnapshots.get(scenarioId);
     if (!snapshots || snapshots.length === 0) {
       return null;
     }
@@ -1671,20 +1850,25 @@ export class DynamicGameStateManager {
   /**
    * Get all updated scenario snapshots (returns Map with arrays)
    */
-  getAllUpdatedDynamicScenarioSnapshots(): Map<string, DynamicScenarioSnapshot[]> {
+  getAllUpdatedDynamicScenarioSnapshots(): Map<
+    string,
+    DynamicScenarioSnapshot[]
+  > {
     return this.state.updatedDynamicScenarioSnapshots;
   }
 
   /**
    * Set global trigger
    */
-  setGlobalTrigger(trigger: {
-    timeRestriction?: string;
-    timeReason?: string;
-    events?: string[];
-    eventReasons?: string[];
-    keeperNotes?: string;
-  } | null): void {
+  setGlobalTrigger(
+    trigger: {
+      timeRestriction?: string;
+      timeReason?: string;
+      events?: string[];
+      eventReasons?: string[];
+      keeperNotes?: string;
+    } | null
+  ): void {
     this.state.globalTrigger = trigger;
     this.state.lastUpdated = new Date();
   }

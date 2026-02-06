@@ -9,7 +9,9 @@ export interface SceneImageResult {
   mimeType: string;
 }
 
-function sanitizeSnapshot(snapshot: DynamicScenarioSnapshot): DynamicScenarioSnapshot {
+function sanitizeSnapshot(
+  snapshot: DynamicScenarioSnapshot
+): DynamicScenarioSnapshot {
   return {
     ...snapshot,
     clues: [],
@@ -64,11 +66,13 @@ function extFromMime(mimeType: string): string {
 }
 
 function safeFilename(input: string): string {
-  return input
-    .trim()
-    .replace(/[^a-zA-Z0-9\u4e00-\u9fa5]+/g, "_")
-    .replace(/^_+|_+$/g, "")
-    .slice(0, 80) || "scene";
+  return (
+    input
+      .trim()
+      .replace(/[^a-zA-Z0-9\u4e00-\u9fa5]+/g, "_")
+      .replace(/^_+|_+$/g, "")
+      .slice(0, 80) || "scene"
+  );
 }
 
 function formatGameTimeLabel(gameTime?: string): string {
@@ -97,10 +101,24 @@ async function saveSceneImageToModule(
 ): Promise<string> {
   const ext = extFromMime(mimeType);
   const timeLabel = formatGameTimeLabel(gameTime);
-  const filenameBase = safeFilename(`${sceneName}_${timeLabel}_${uniqueSuffix()}`);
+  const filenameBase = safeFilename(
+    `${sceneName}_${timeLabel}_${uniqueSuffix()}`
+  );
   const relativePath = path.join("Sceneimage", `${filenameBase}.${ext}`);
-  const outputDir = path.join(process.cwd(), "data", "Mods", moduleName, "Sceneimage");
-  const outputPath = path.join(process.cwd(), "data", "Mods", moduleName, relativePath);
+  const outputDir = path.join(
+    process.cwd(),
+    "data",
+    "Mods",
+    moduleName,
+    "Sceneimage"
+  );
+  const outputPath = path.join(
+    process.cwd(),
+    "data",
+    "Mods",
+    moduleName,
+    relativePath
+  );
 
   await fs.mkdir(outputDir, { recursive: true });
   const buffer = Buffer.from(base64Data, "base64");
@@ -124,7 +142,8 @@ export async function generateSceneImage(
   const result = await generateGeminiImage(prompt);
   const moduleName = state.moduleName;
   const sceneName = scenario.name || scenario.id || "scene";
-  const gameTime = scenario.gameTime || `Day ${state.gameDay}, ${state.timeOfDay}`;
+  const gameTime =
+    scenario.gameTime || `Day ${state.gameDay}, ${state.timeOfDay}`;
   const relativePath = await saveSceneImageToModule(
     moduleName,
     sceneName,
@@ -151,9 +170,7 @@ export async function generateSceneImageFromSnapshot(
   }
 
   const sanitizedSnapshot = sanitizeSnapshot(snapshot);
-  const prompt = buildSceneImagePromptFromSnapshot(
-    sanitizedSnapshot
-  );
+  const prompt = buildSceneImagePromptFromSnapshot(sanitizedSnapshot);
   const result = await generateGeminiImage(prompt);
   const sceneName = snapshot.name || snapshot.id || "scene";
   const gameTime = snapshot.gameTime;

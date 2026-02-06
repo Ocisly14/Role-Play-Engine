@@ -19,12 +19,12 @@ export default defineConfig({
       usePolling: true,
     },
     proxy: {
-      '/api': {
+      "/api": {
         target: apiOrigin,
         changeOrigin: true,
         secure: false,
       },
-      '/ws': {
+      "/ws": {
         target: wsOrigin,
         ws: true,
         changeOrigin: true,

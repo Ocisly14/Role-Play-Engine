@@ -1,6 +1,9 @@
 import type { CoCDatabase } from "../../../src/shared/agents/memory/database/index.js";
 import { ScenarioLoader } from "../../../src/shared/agents/memory/scenarioloader/index.js";
-import { buildDynamicGraph, buildDynamicListenerGraph } from "../../../src/dynamicworldagent/graph/index.js";
+import {
+  buildDynamicGraph,
+  buildDynamicListenerGraph,
+} from "../../../src/dynamicworldagent/graph/index.js";
 
 /**
  * Singleton class to manage DynamicWorld graph lifecycle
@@ -33,7 +36,9 @@ export class GraphManager {
       return;
     }
 
-    console.log(`[${new Date().toISOString()}] Initializing DynamicWorld system...`);
+    console.log(
+      `[${new Date().toISOString()}] Initializing DynamicWorld system...`
+    );
 
     const scenarioLoader = new ScenarioLoader(db);
 
@@ -41,7 +46,9 @@ export class GraphManager {
     this.dynamicGraph = buildDynamicGraph(db, scenarioLoader);
     this.dynamicListenerGraph = buildDynamicListenerGraph(db, scenarioLoader);
 
-    console.log(`[${new Date().toISOString()}] ✅ DynamicWorld system initialized`);
+    console.log(
+      `[${new Date().toISOString()}] ✅ DynamicWorld system initialized`
+    );
   }
 
   /**

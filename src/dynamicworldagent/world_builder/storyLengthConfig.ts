@@ -88,7 +88,9 @@ export function getStoryLengthTruthEventsSentence(length: StoryLength): string {
 }
 
 /** For Knowledge Matrix: PLACE/ROLE count guidance */
-export function getStoryLengthKnowledgeMatrixGuidance(length: StoryLength): string {
+export function getStoryLengthKnowledgeMatrixGuidance(
+  length: StoryLength
+): string {
   const c = getStoryLengthConfig(length);
   return `
 ### Module scale (story length): ${c.label}

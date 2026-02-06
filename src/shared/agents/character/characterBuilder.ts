@@ -21,15 +21,15 @@ function rollDice(numDice: number, sides: number): number {
  */
 export function generateRandomAttributes(age?: number) {
   const attributes = {
-    STR: rollDice(3, 6) * 5,      // Strength: 3d6×5
-    DEX: rollDice(3, 6) * 5,      // Dexterity: 3d6×5
+    STR: rollDice(3, 6) * 5, // Strength: 3d6×5
+    DEX: rollDice(3, 6) * 5, // Dexterity: 3d6×5
     SIZ: (rollDice(2, 6) + 6) * 5, // Size: (2d6+6)×5
-    APP: rollDice(3, 6) * 5,      // Appearance: 3d6×5
-    CON: rollDice(3, 6) * 5,      // Constitution: 3d6×5
+    APP: rollDice(3, 6) * 5, // Appearance: 3d6×5
+    CON: rollDice(3, 6) * 5, // Constitution: 3d6×5
     INT: (rollDice(2, 6) + 6) * 5, // Intelligence: (2d6+6)×5
-    POW: rollDice(3, 6) * 5,      // Power: 3d6×5
+    POW: rollDice(3, 6) * 5, // Power: 3d6×5
     EDU: (rollDice(2, 6) + 6) * 5, // Education: (2d6+6)×5
-    LCK: rollDice(3, 6) * 5,      // Luck: 3d6×5
+    LCK: rollDice(3, 6) * 5, // Luck: 3d6×5
   };
 
   // Apply age modifiers if age is provided
@@ -114,7 +114,10 @@ function calculateDerivedAttributes(attributes: any) {
   let MOV = 8; // Default
   if (attributes.DEX < attributes.SIZ && attributes.STR < attributes.SIZ) {
     MOV = 7;
-  } else if (attributes.DEX >= attributes.SIZ && attributes.STR >= attributes.SIZ) {
+  } else if (
+    attributes.DEX >= attributes.SIZ &&
+    attributes.STR >= attributes.SIZ
+  ) {
     MOV = 9;
   }
 

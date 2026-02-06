@@ -15,7 +15,9 @@ export function generateRandomAttrs(req: Request, res: Response): void {
     // Generate random attributes
     const attributes = generateRandomAttributes(age);
 
-    console.log(`[${new Date().toISOString()}] Generated random attributes${age ? ` for age ${age}` : ''}`);
+    console.log(
+      `[${new Date().toISOString()}] Generated random attributes${age ? ` for age ${age}` : ""}`
+    );
 
     res.json({
       success: true,
@@ -24,7 +26,12 @@ export function generateRandomAttrs(req: Request, res: Response): void {
     });
   } catch (error) {
     console.error("Error generating random attributes:", error);
-    res.status(500).json({ error: "Failed to generate random attributes: " + (error as Error).message });
+    res
+      .status(500)
+      .json({
+        error:
+          "Failed to generate random attributes: " + (error as Error).message,
+      });
   }
 }
 
@@ -61,7 +68,9 @@ export function createCharacter(req: Request, res: Response): void {
 
     insertStmt.run(dbCharacter);
 
-    console.log(`[${new Date().toISOString()}] Character created: ${characterData.identity.name} (${dbCharacter.character_id})`);
+    console.log(
+      `[${new Date().toISOString()}] Character created: ${characterData.identity.name} (${dbCharacter.character_id})`
+    );
 
     res.json({
       success: true,
@@ -71,7 +80,11 @@ export function createCharacter(req: Request, res: Response): void {
     });
   } catch (error) {
     console.error("Error creating character:", error);
-    res.status(500).json({ error: "Failed to create character: " + (error as Error).message });
+    res
+      .status(500)
+      .json({
+        error: "Failed to create character: " + (error as Error).message,
+      });
   }
 }
 
@@ -84,12 +97,14 @@ export function getAllCharacters(req: Request, res: Response): void {
     const db = DatabaseManager.getInstance().getDatabase();
     const database = db.getDatabase();
 
-    const characters = database.prepare(`
+    const characters = database
+      .prepare(`
       SELECT character_id, name, occupation, age, is_npc, appearance
       FROM characters
       WHERE (is_npc = 0 OR is_npc IS NULL) AND email_id = ?
       ORDER BY updated_at DESC
-    `).all(req.user!.email);
+    `)
+      .all(req.user!.email);
 
     res.json({
       success: true,
@@ -113,16 +128,18 @@ export function getCharacterById(req: Request, res: Response): void {
     const database = db.getDatabase();
 
     // Get character from database
-    const character = database.prepare(`
+    const character = database
+      .prepare(`
       SELECT *
       FROM characters
       WHERE character_id = ? AND email_id = ?
-    `).get(characterId, req.user!.email);
+    `)
+      .get(characterId, req.user!.email);
 
     if (!character) {
       res.status(404).json({
         success: false,
-        error: "Character not found"
+        error: "Character not found",
       });
       return;
     }
@@ -136,6 +153,10 @@ export function getCharacterById(req: Request, res: Response): void {
     });
   } catch (error) {
     console.error("Error fetching character:", error);
-    res.status(500).json({ error: "Failed to fetch character: " + (error as Error).message });
+    res
+      .status(500)
+      .json({
+        error: "Failed to fetch character: " + (error as Error).message,
+      });
   }
 }

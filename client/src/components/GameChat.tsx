@@ -1,15 +1,15 @@
 /**
  * GameChat Component - Main game interaction interface
- * 
+ *
  * Handles sending messages to the game and displaying conversation history.
  */
 
-import { useState, useEffect, useRef, useCallback } from 'react';
-import { useTurnPolling, type TurnStatus } from '../hooks/useTurnPolling';
-import { getSkillNameZh } from '../lib/skillNames';
-import { DiceAnimation, type DiceRollInfo } from './DiceAnimation';
-import { authFetch } from '../utils/authFetch';
-import ReactMarkdown from 'react-markdown';
+import { useState, useEffect, useRef, useCallback } from "react";
+import { useTurnPolling, type TurnStatus } from "../hooks/useTurnPolling";
+import { getSkillNameZh } from "../lib/skillNames";
+import { DiceAnimation, type DiceRollInfo } from "./DiceAnimation";
+import { authFetch } from "../utils/authFetch";
+import ReactMarkdown from "react-markdown";
 
 /** Build DiceRollInfo[] from action results (for turn history display) */
 function normalizeName(name?: string | null): string | null {
@@ -33,22 +33,41 @@ function buildDiceRollInfos(
     for (const roll of result.diceRolls || []) {
       if (playerNameNormalized) {
         const resultNameNormalized = normalizeName(result.character);
-        const isPlayerRoll = !!resultNameNormalized && resultNameNormalized === playerNameNormalized;
+        const isPlayerRoll =
+          !!resultNameNormalized &&
+          resultNameNormalized === playerNameNormalized;
         if (!isPlayerRoll && !isOpposedRoll(roll)) {
           continue;
         }
       }
       const info: DiceRollInfo = { character: result.character, roll };
       const parenMatches = [...roll.matchAll(/\(([^)]+)\)/g)];
-      const content = parenMatches.length > 0 ? parenMatches[parenMatches.length - 1][1] : null;
+      const content =
+        parenMatches.length > 0
+          ? parenMatches[parenMatches.length - 1][1]
+          : null;
       if (content) {
-        const successMatch = content.match(/\s*=\s*(success|failure|critical|fumble)\s*$/i);
-        if (successMatch) info.success = successMatch[1].toLowerCase() as DiceRollInfo['success'];
-        const penaltyMatch = content.match(/(?:penalty\s+die|bonus\s+die|-\s*\d+\s*%?|\(\s*-\s*\d+\s*\))/i);
+        const successMatch = content.match(
+          /\s*=\s*(success|failure|critical|fumble)\s*$/i
+        );
+        if (successMatch)
+          info.success =
+            successMatch[1].toLowerCase() as DiceRollInfo["success"];
+        const penaltyMatch = content.match(
+          /(?:penalty\s+die|bonus\s+die|-\s*\d+\s*%?|\(\s*-\s*\d+\s*\))/i
+        );
         if (penaltyMatch) info.penalty = penaltyMatch[0].trim();
-        const beforeEquals = content.replace(/\s*=\s*(success|failure|critical|fumble)\s*$/i, '').trim();
-        const skillPart = beforeEquals.replace(/(?:penalty\s+die|bonus\s+die|-\s*\d+\s*%?|\(\s*-\s*\d+\s*\)).*/gi, '').trim();
-        if (skillPart && (/\d+%\s*$/.test(skillPart) || skillPart.length < 40)) info.skill = skillPart;
+        const beforeEquals = content
+          .replace(/\s*=\s*(success|failure|critical|fumble)\s*$/i, "")
+          .trim();
+        const skillPart = beforeEquals
+          .replace(
+            /(?:penalty\s+die|bonus\s+die|-\s*\d+\s*%?|\(\s*-\s*\d+\s*\)).*/gi,
+            ""
+          )
+          .trim();
+        if (skillPart && (/\d+%\s*$/.test(skillPart) || skillPart.length < 40))
+          info.skill = skillPart;
       }
       infos.push(info);
     }
@@ -76,7 +95,7 @@ function filterDiceRollsForPlayer(
 }
 
 interface Message {
-  role: 'character' | 'keeper';
+  role: "character" | "keeper";
   content: string;
   timestamp: string;
   turnNumber: number;
@@ -93,7 +112,7 @@ function getLatestTurnNumber(messages: Message[]): number | null {
   if (!messages || messages.length === 0) return null;
   let max = Number.NEGATIVE_INFINITY;
   for (const msg of messages) {
-    const num = typeof msg.turnNumber === 'number' ? msg.turnNumber : NaN;
+    const num = typeof msg.turnNumber === "number" ? msg.turnNumber : NaN;
     if (Number.isFinite(num) && num > max) {
       max = num;
     }
@@ -105,8 +124,8 @@ function getLatestCompletedTurnNumber(messages: Message[]): number | null {
   if (!messages || messages.length === 0) return null;
   let max = Number.NEGATIVE_INFINITY;
   for (const msg of messages) {
-    if (msg.role !== 'keeper') continue;
-    const num = typeof msg.turnNumber === 'number' ? msg.turnNumber : NaN;
+    if (msg.role !== "keeper") continue;
+    const num = typeof msg.turnNumber === "number" ? msg.turnNumber : NaN;
     if (Number.isFinite(num) && num > max) {
       max = num;
     }
@@ -116,7 +135,7 @@ function getLatestCompletedTurnNumber(messages: Message[]): number | null {
 
 interface GameEndingInfo {
   isEnded: boolean;
-  endingType: 'death' | 'time_limit' | 'victory' | 'failure' | 'other';
+  endingType: "death" | "time_limit" | "victory" | "failure" | "other";
   reason: string;
   timestamp: string;
 }
@@ -137,25 +156,42 @@ interface GameChatProps {
   moduleIntroduction?: { introduction: string; moduleNotes: string } | null;
   initialMessages?: Message[];
   onNarrativeComplete?: () => void;
-  language?: 'en' | 'zh';
+  language?: "en" | "zh";
 }
 
-export function GameChat({ sessionId, apiBaseUrl = '/api', characterName = 'Investigator', moduleIntroduction, initialMessages, onNarrativeComplete, language = 'zh' }: GameChatProps) {
+export function GameChat({
+  sessionId,
+  apiBaseUrl = "/api",
+  characterName = "Investigator",
+  moduleIntroduction,
+  initialMessages,
+  onNarrativeComplete,
+  language = "zh",
+}: GameChatProps) {
   const [messages, setMessages] = useState<Message[]>(initialMessages || []);
-  const [inputValue, setInputValue] = useState('');
+  const [inputValue, setInputValue] = useState("");
   const [isSending, setIsSending] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
   const [saveMessage, setSaveMessage] = useState<string | null>(null);
   const [isGameEnded, setIsGameEnded] = useState(false);
-  const [currentGameState, setCurrentGameState] = useState<{ gameDay?: number; timeOfDay?: string } | null>(null);
-  const [availableSkills, setAvailableSkills] = useState<Array<{ name: string; value: number; displayNameZh?: string }>>([]);
-  const [selectedSkill, setSelectedSkill] = useState('');
+  const [currentGameState, setCurrentGameState] = useState<{
+    gameDay?: number;
+    timeOfDay?: string;
+  } | null>(null);
+  const [availableSkills, setAvailableSkills] = useState<
+    Array<{ name: string; value: number; displayNameZh?: string }>
+  >([]);
+  const [selectedSkill, setSelectedSkill] = useState("");
   const [isSkillAuto, setIsSkillAuto] = useState(false);
-  const [suggestedSkills, setSuggestedSkills] = useState<Array<{ name: string; value: number; displayName?: string }>>([]);
+  const [suggestedSkills, setSuggestedSkills] = useState<
+    Array<{ name: string; value: number; displayName?: string }>
+  >([]);
   const [isSuggesting, setIsSuggesting] = useState(false);
   const [isSkillPickerOpen, setIsSkillPickerOpen] = useState(false);
-  const [isSkillSelectionModalOpen, setIsSkillSelectionModalOpen] = useState(false);
-  const [pendingTurnForSkillSelection, setPendingTurnForSkillSelection] = useState<TurnStatus | null>(null);
+  const [isSkillSelectionModalOpen, setIsSkillSelectionModalOpen] =
+    useState(false);
+  const [pendingTurnForSkillSelection, setPendingTurnForSkillSelection] =
+    useState<TurnStatus | null>(null);
   const processedSkillSelectionTurnsRef = useRef<Set<string>>(new Set());
   const [streamingTurnId, setStreamingTurnId] = useState<string | null>(null);
   const [isInputCollapsed, setIsInputCollapsed] = useState(true);
@@ -175,10 +211,20 @@ export function GameChat({ sessionId, apiBaseUrl = '/api', characterName = 'Inve
   const onNarrativeCompleteRef = useRef(onNarrativeComplete);
   const fetchGameEndingRef = useRef<(() => Promise<void>) | null>(null);
   const suggestRequestIdRef = useRef(0);
-  const { turn, isPolling, error, startPolling, stopPolling } = useTurnPolling(apiBaseUrl);
-  
+  const { turn, isPolling, error, startPolling, stopPolling } =
+    useTurnPolling(apiBaseUrl);
+
   // State for dice animation
-  const [pendingDiceRolls, setPendingDiceRolls] = useState<{ turnNumber: number; turnId?: string; diceRolls: Array<string | DiceRollInfo>; narrative: string; timestamp: string; gameDay?: number | null; gameTime?: string | null; isStreaming?: boolean } | null>(null);
+  const [pendingDiceRolls, setPendingDiceRolls] = useState<{
+    turnNumber: number;
+    turnId?: string;
+    diceRolls: Array<string | DiceRollInfo>;
+    narrative: string;
+    timestamp: string;
+    gameDay?: number | null;
+    gameTime?: string | null;
+    isStreaming?: boolean;
+  } | null>(null);
   const [showingDiceAnimation, setShowingDiceAnimation] = useState(false);
   const [diceAnimationCompleted, setDiceAnimationCompleted] = useState(false);
 
@@ -225,23 +271,26 @@ export function GameChat({ sessionId, apiBaseUrl = '/api', characterName = 'Inve
     return latestTurnNumber > lastSavedTurnNumber;
   }, []);
 
-  const triggerAutoSave = useCallback((reason: string, keepalive = false) => {
-    if (autoSaveTriggeredRef.current) return;
-    if (reason === "exit" && !hasNewTurnSinceLastSave()) return;
-    const activeSessionId = sessionIdRef.current;
-    if (!activeSessionId) return;
+  const triggerAutoSave = useCallback(
+    (reason: string, keepalive = false) => {
+      if (autoSaveTriggeredRef.current) return;
+      if (reason === "exit" && !hasNewTurnSinceLastSave()) return;
+      const activeSessionId = sessionIdRef.current;
+      if (!activeSessionId) return;
 
-    autoSaveTriggeredRef.current = true;
+      autoSaveTriggeredRef.current = true;
 
-    authFetch(`${apiBaseUrl}/checkpoints/save`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ checkpointType: "auto", reason }),
-      keepalive,
-    }).catch((err) => {
-      console.warn("[GameChat] Auto-save failed:", err);
-    });
-  }, [apiBaseUrl, hasNewTurnSinceLastSave]);
+      authFetch(`${apiBaseUrl}/checkpoints/save`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ checkpointType: "auto", reason }),
+        keepalive,
+      }).catch((err) => {
+        console.warn("[GameChat] Auto-save failed:", err);
+      });
+    },
+    [apiBaseUrl, hasNewTurnSinceLastSave]
+  );
 
   useEffect(() => {
     const handleBeforeUnload = () => {
@@ -260,26 +309,36 @@ export function GameChat({ sessionId, apiBaseUrl = '/api', characterName = 'Inve
     };
   }, [triggerAutoSave]);
 
-  const normalizeSkills = useCallback((skills: Record<string, unknown> | undefined | null) => {
-    if (!skills || typeof skills !== 'object') return [];
-    return Object.entries(skills)
-      .map(([name, raw]) => {
-        if (typeof raw === 'number') return { name, value: raw };
-        if (raw && typeof raw === 'object' && 'value' in raw && typeof (raw as { value: unknown }).value === 'number') {
-          return { name, value: (raw as { value: number }).value };
-        }
-        return null;
-      })
-      .filter((entry): entry is { name: string; value: number } => Boolean(entry))
-      .map((entry) => ({
-        ...entry,
-        displayNameZh: getSkillNameZh(entry.name),
-      }))
-      .sort((a, b) => {
-        if (b.value !== a.value) return b.value - a.value;
-        return a.name.localeCompare(b.name);
-      });
-  }, []);
+  const normalizeSkills = useCallback(
+    (skills: Record<string, unknown> | undefined | null) => {
+      if (!skills || typeof skills !== "object") return [];
+      return Object.entries(skills)
+        .map(([name, raw]) => {
+          if (typeof raw === "number") return { name, value: raw };
+          if (
+            raw &&
+            typeof raw === "object" &&
+            "value" in raw &&
+            typeof (raw as { value: unknown }).value === "number"
+          ) {
+            return { name, value: (raw as { value: number }).value };
+          }
+          return null;
+        })
+        .filter((entry): entry is { name: string; value: number } =>
+          Boolean(entry)
+        )
+        .map((entry) => ({
+          ...entry,
+          displayNameZh: getSkillNameZh(entry.name),
+        }))
+        .sort((a, b) => {
+          if (b.value !== a.value) return b.value - a.value;
+          return a.name.localeCompare(b.name);
+        });
+    },
+    []
+  );
 
   useEffect(() => {
     const trimmed = inputValue.trim();
@@ -296,9 +355,9 @@ export function GameChat({ sessionId, apiBaseUrl = '/api', characterName = 'Inve
       setIsSuggesting(true);
       try {
         const response = await authFetch(`${apiBaseUrl}/skills/suggest`, {
-          method: 'POST',
+          method: "POST",
           headers: {
-            'Content-Type': 'application/json',
+            "Content-Type": "application/json",
           },
           body: JSON.stringify({
             input: trimmed,
@@ -309,26 +368,42 @@ export function GameChat({ sessionId, apiBaseUrl = '/api', characterName = 'Inve
         });
 
         if (!response.ok) {
-          throw new Error('Failed to fetch skill suggestions');
+          throw new Error("Failed to fetch skill suggestions");
         }
 
         const data = await response.json();
         if (requestId !== suggestRequestIdRef.current) return;
 
-        const suggestions = Array.isArray(data?.suggestions) ? data.suggestions : [];
+        const suggestions = Array.isArray(data?.suggestions)
+          ? data.suggestions
+          : [];
         const nextLanguage = language;
         setSuggestedSkills(
           suggestions
-            .filter((skill: { name?: string; value?: number }) => typeof skill?.name === 'string')
-            .map((skill: { name: string; value?: number; displayName?: string }) => ({
-              name: skill.name,
-              value: typeof skill.value === 'number' ? skill.value : 0,
-              displayName: typeof skill.displayName === 'string' ? skill.displayName : (nextLanguage === 'zh' ? getSkillNameZh(skill.name) : skill.name),
-            }))
+            .filter(
+              (skill: { name?: string; value?: number }) =>
+                typeof skill?.name === "string"
+            )
+            .map(
+              (skill: {
+                name: string;
+                value?: number;
+                displayName?: string;
+              }) => ({
+                name: skill.name,
+                value: typeof skill.value === "number" ? skill.value : 0,
+                displayName:
+                  typeof skill.displayName === "string"
+                    ? skill.displayName
+                    : nextLanguage === "zh"
+                      ? getSkillNameZh(skill.name)
+                      : skill.name,
+              })
+            )
         );
       } catch (err) {
-        if ((err as Error)?.name === 'AbortError') return;
-        console.warn('[GameChat] Failed to fetch skill suggestions:', err);
+        if ((err as Error)?.name === "AbortError") return;
+        console.warn("[GameChat] Failed to fetch skill suggestions:", err);
         if (requestId === suggestRequestIdRef.current) {
           setSuggestedSkills([]);
         }
@@ -355,9 +430,10 @@ export function GameChat({ sessionId, apiBaseUrl = '/api', characterName = 'Inve
       }
 
       const data = await response.json();
-      const endingInfo: GameEndingInfo | null = data?.gameState?.gameEnding ?? null;
+      const endingInfo: GameEndingInfo | null =
+        data?.gameState?.gameEnding ?? null;
       setIsGameEnded(Boolean(endingInfo?.isEnded));
-      
+
       // Update current game state for time display
       if (data?.gameState) {
         setCurrentGameState({
@@ -366,12 +442,15 @@ export function GameChat({ sessionId, apiBaseUrl = '/api', characterName = 'Inve
         });
         const skills = normalizeSkills(data.gameState.playerCharacter?.skills);
         setAvailableSkills(skills);
-        if (selectedSkill && !skills.find(skill => skill.name === selectedSkill)) {
-          setSelectedSkill('');
+        if (
+          selectedSkill &&
+          !skills.find((skill) => skill.name === selectedSkill)
+        ) {
+          setSelectedSkill("");
         }
       }
     } catch (err) {
-      console.error('[GameChat] Failed to fetch game state:', err);
+      console.error("[GameChat] Failed to fetch game state:", err);
     }
   }, [apiBaseUrl, sessionId, selectedSkill, normalizeSkills]);
 
@@ -387,32 +466,42 @@ export function GameChat({ sessionId, apiBaseUrl = '/api', characterName = 'Inve
     }
   }, [sessionId, apiBaseUrl]); // Use apiBaseUrl instead of fetchGameEnding to avoid reconnection
 
-
   // WebSocket connection for progression checking
   useEffect(() => {
     if (!sessionId || isGameEnded) return;
 
     // Check if we already have a connection for this sessionId
-    if (currentSessionIdRef.current === sessionId && wsRef.current && wsRef.current.readyState === WebSocket.OPEN) {
-      console.log(`[WebSocket] Already connected for session ${sessionId}, skipping...`);
+    if (
+      currentSessionIdRef.current === sessionId &&
+      wsRef.current &&
+      wsRef.current.readyState === WebSocket.OPEN
+    ) {
+      console.log(
+        `[WebSocket] Already connected for session ${sessionId}, skipping...`
+      );
       return;
     }
 
     // Get WebSocket URL from apiBaseUrl
     // If apiBaseUrl is relative, use current window location
     let wsUrl: string;
-    if (apiBaseUrl.startsWith('/')) {
+    if (apiBaseUrl.startsWith("/")) {
       // Relative path - use current protocol and host (skip Vite ws proxy in dev)
-      const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
-      const isViteDev = import.meta.env.DEV && window.location.port === '5173';
-      const host = isViteDev ? `${window.location.hostname}:3000` : window.location.host;
+      const protocol = window.location.protocol === "https:" ? "wss:" : "ws:";
+      const isViteDev = import.meta.env.DEV && window.location.port === "5173";
+      const host = isViteDev
+        ? `${window.location.hostname}:3000`
+        : window.location.host;
       wsUrl = `${protocol}//${host}`;
     } else {
       // Absolute URL - convert to WebSocket URL
-      wsUrl = apiBaseUrl.replace('/api', '').replace('http://', 'ws://').replace('https://', 'wss://');
+      wsUrl = apiBaseUrl
+        .replace("/api", "")
+        .replace("http://", "ws://")
+        .replace("https://", "wss://");
     }
-    const token = localStorage.getItem('accessToken');
-    const tokenParam = token ? `&token=${encodeURIComponent(token)}` : '';
+    const token = localStorage.getItem("accessToken");
+    const tokenParam = token ? `&token=${encodeURIComponent(token)}` : "";
     const wsPath = `${wsUrl}/ws?sessionId=${sessionId}${tokenParam}`;
 
     console.log(`[WebSocket] Connecting to ${wsPath}`);
@@ -423,15 +512,22 @@ export function GameChat({ sessionId, apiBaseUrl = '/api', characterName = 'Inve
 
     const connectWebSocket = () => {
       // Check if we should still connect (might have been cancelled by cleanup)
-      if (!shouldReconnectRef.current || currentSessionIdRef.current !== sessionId) {
-        console.log(`[WebSocket] Connection cancelled or session changed, aborting...`);
+      if (
+        !shouldReconnectRef.current ||
+        currentSessionIdRef.current !== sessionId
+      ) {
+        console.log(
+          `[WebSocket] Connection cancelled or session changed, aborting...`
+        );
         return;
       }
 
       try {
         // Close existing connection if any
         if (wsRef.current && wsRef.current.readyState !== WebSocket.CLOSED) {
-          console.log(`[WebSocket] Closing existing connection before creating new one`);
+          console.log(
+            `[WebSocket] Closing existing connection before creating new one`
+          );
           shouldReconnectRef.current = false; // Prevent auto-reconnect from old connection
           wsRef.current.close();
         }
@@ -440,7 +536,7 @@ export function GameChat({ sessionId, apiBaseUrl = '/api', characterName = 'Inve
         wsRef.current = ws;
 
         ws.onopen = () => {
-          console.log('[WebSocket] Connected');
+          console.log("[WebSocket] Connected");
           // Clear any reconnect timeout
           if (reconnectTimeoutRef.current) {
             clearTimeout(reconnectTimeoutRef.current);
@@ -451,11 +547,13 @@ export function GameChat({ sessionId, apiBaseUrl = '/api', characterName = 'Inve
         ws.onmessage = (event) => {
           try {
             const message = JSON.parse(event.data);
-            console.log('[WebSocket] Received message:', message);
+            console.log("[WebSocket] Received message:", message);
 
-            if (message.type === 'connected') {
-              console.log(`[WebSocket] Connection confirmed for session ${message.sessionId}`);
-            } else if (message.type === 'keeper_dice_rolls') {
+            if (message.type === "connected") {
+              console.log(
+                `[WebSocket] Connection confirmed for session ${message.sessionId}`
+              );
+            } else if (message.type === "keeper_dice_rolls") {
               const diceRolls = filterDiceRollsForPlayer(
                 message.diceRolls as Array<string | DiceRollInfo> | undefined,
                 characterName
@@ -468,17 +566,20 @@ export function GameChat({ sessionId, apiBaseUrl = '/api', characterName = 'Inve
                 setStreamingTurnId(turnId);
               }
 
-              const turnNumber = typeof message.turnNumber === 'number'
-                ? message.turnNumber
-                : messagesRef.current.length > 0
-                  ? Math.max(...messagesRef.current.map(m => m.turnNumber)) + 1
-                  : 1;
+              const turnNumber =
+                typeof message.turnNumber === "number"
+                  ? message.turnNumber
+                  : messagesRef.current.length > 0
+                    ? Math.max(
+                        ...messagesRef.current.map((m) => m.turnNumber)
+                      ) + 1
+                    : 1;
 
               setPendingDiceRolls({
                 turnNumber,
                 turnId,
                 diceRolls,
-                narrative: '',
+                narrative: "",
                 timestamp: message.timestamp || new Date().toISOString(),
                 gameDay: message.gameDay ?? null,
                 gameTime: message.gameTime ?? null,
@@ -486,81 +587,94 @@ export function GameChat({ sessionId, apiBaseUrl = '/api', characterName = 'Inve
               });
               setShowingDiceAnimation(true);
               setDiceAnimationCompleted(false);
-            } else if (message.type === 'keeper_stream_start') {
+            } else if (message.type === "keeper_stream_start") {
               const turnId = message.turnId as string | undefined;
               if (!turnId) return;
 
               setStreamingTurnId(turnId);
-              setMessages(prev => {
-                const existing = prev.find(msg => msg.turnId === turnId);
+              setMessages((prev) => {
+                const existing = prev.find((msg) => msg.turnId === turnId);
                 if (existing) {
-                  return prev.map(msg =>
+                  return prev.map((msg) =>
                     msg.turnId === turnId ? { ...msg, isStreaming: true } : msg
                   );
                 }
 
-                const nextTurnNumber = typeof message.turnNumber === 'number'
-                  ? message.turnNumber
-                  : prev.length > 0 ? Math.max(...prev.map(m => m.turnNumber)) + 1 : 1;
+                const nextTurnNumber =
+                  typeof message.turnNumber === "number"
+                    ? message.turnNumber
+                    : prev.length > 0
+                      ? Math.max(...prev.map((m) => m.turnNumber)) + 1
+                      : 1;
 
                 return [
                   ...prev,
                   {
-                    role: 'keeper' as const,
-                    content: '',
+                    role: "keeper" as const,
+                    content: "",
                     timestamp: message.timestamp || new Date().toISOString(),
                     turnNumber: nextTurnNumber,
                     turnId: turnId,
                     isStreaming: true,
                     gameDay: message.gameDay ?? null,
                     gameTime: message.gameTime ?? null,
-                  }
+                  },
                 ];
               });
-            } else if (message.type === 'keeper_stream_delta') {
+            } else if (message.type === "keeper_stream_delta") {
               const turnId = message.turnId as string | undefined;
               const delta = message.delta as string | undefined;
               if (!turnId || !delta) return;
 
               if (streamingBlockedRef.current.has(turnId)) {
-                const existing = streamingBufferRef.current.get(turnId) || '';
+                const existing = streamingBufferRef.current.get(turnId) || "";
                 streamingBufferRef.current.set(turnId, existing + delta);
 
-                setMessages(prev => {
-                  const found = prev.find(msg => msg.turnId === turnId);
+                setMessages((prev) => {
+                  const found = prev.find((msg) => msg.turnId === turnId);
                   if (found) return prev;
-                  const nextTurnNumber = prev.length > 0 ? Math.max(...prev.map(m => m.turnNumber)) + 1 : 1;
+                  const nextTurnNumber =
+                    prev.length > 0
+                      ? Math.max(...prev.map((m) => m.turnNumber)) + 1
+                      : 1;
                   return [
                     ...prev,
                     {
-                      role: 'keeper' as const,
-                      content: '',
+                      role: "keeper" as const,
+                      content: "",
                       timestamp: new Date().toISOString(),
                       turnNumber: nextTurnNumber,
                       turnId: turnId,
                       isStreaming: true,
                       gameDay: null,
                       gameTime: null,
-                    }
+                    },
                   ];
                 });
                 return;
               }
 
-              setMessages(prev => {
+              setMessages((prev) => {
                 let found = false;
-                const next = prev.map(msg => {
+                const next = prev.map((msg) => {
                   if (msg.turnId === turnId) {
                     found = true;
-                    return { ...msg, content: msg.content + delta, isStreaming: true };
+                    return {
+                      ...msg,
+                      content: msg.content + delta,
+                      isStreaming: true,
+                    };
                   }
                   return msg;
                 });
 
                 if (!found) {
-                  const nextTurnNumber = prev.length > 0 ? Math.max(...prev.map(m => m.turnNumber)) + 1 : 1;
+                  const nextTurnNumber =
+                    prev.length > 0
+                      ? Math.max(...prev.map((m) => m.turnNumber)) + 1
+                      : 1;
                   next.push({
-                    role: 'keeper' as const,
+                    role: "keeper" as const,
                     content: delta,
                     timestamp: new Date().toISOString(),
                     turnNumber: nextTurnNumber,
@@ -573,17 +687,19 @@ export function GameChat({ sessionId, apiBaseUrl = '/api', characterName = 'Inve
 
                 return next;
               });
-            } else if (message.type === 'keeper_stream_end') {
+            } else if (message.type === "keeper_stream_end") {
               const turnId = message.turnId as string | undefined;
               if (!turnId) return;
 
-              setMessages(prev =>
-                prev.map(msg =>
+              setMessages((prev) =>
+                prev.map((msg) =>
                   msg.turnId === turnId ? { ...msg, isStreaming: false } : msg
                 )
               );
 
-              setStreamingTurnId(current => current === turnId ? null : current);
+              setStreamingTurnId((current) =>
+                current === turnId ? null : current
+              );
 
               // ✅ Fix 1: Clear all loading states to prevent frontend from getting stuck
               setIsSending(false);
@@ -593,48 +709,53 @@ export function GameChat({ sessionId, apiBaseUrl = '/api', characterName = 'Inve
               if (fetchGameEndingRef.current) {
                 fetchGameEndingRef.current();
               }
-            } else if (message.type === 'scene_change_start') {
+            } else if (message.type === "scene_change_start") {
               setIsSceneChanging(true);
               // ✅ Fix 4: Only create timeout if none exists to prevent indefinite postponement
               if (sceneChangeTimeoutRef.current === null) {
                 sceneChangeTimeoutRef.current = window.setTimeout(() => {
-                  console.warn('[GameChat] Scene change timeout triggered - auto clearing');
+                  console.warn(
+                    "[GameChat] Scene change timeout triggered - auto clearing"
+                  );
                   setIsSceneChanging(false);
                   sceneChangeTimeoutRef.current = null;
                 }, 180000); // Keep 180000 (3 minutes)
               }
-            } else if (message.type === 'scene_change_end') {
+            } else if (message.type === "scene_change_end") {
               clearSceneChanging();
-            } else if (message.type === 'scene_image') {
+            } else if (message.type === "scene_image") {
               if (onNarrativeCompleteRef.current) {
                 onNarrativeCompleteRef.current();
               }
-            } else if (message.type === 'simulate_triggered') {
-              console.log('[WebSocket] Simulate triggered:', message);
+            } else if (message.type === "simulate_triggered") {
+              console.log("[WebSocket] Simulate triggered:", message);
               // Handle simulated narrative
               if (message.keeperNarrative) {
                 // Find the latest turn number and add 1 for the simulated turn
                 // Use ref to get latest messages without causing reconnection
-                const latestTurnNumber = messagesRef.current.length > 0 
-                  ? Math.max(...messagesRef.current.map(m => m.turnNumber))
-                  : 0;
-                
-                setMessages(prev => {
+                const latestTurnNumber =
+                  messagesRef.current.length > 0
+                    ? Math.max(...messagesRef.current.map((m) => m.turnNumber))
+                    : 0;
+
+                setMessages((prev) => {
                   // Check if this turn already exists
-                  const existingTurn = prev.find(m => m.turnNumber === latestTurnNumber + 1);
+                  const existingTurn = prev.find(
+                    (m) => m.turnNumber === latestTurnNumber + 1
+                  );
                   if (existingTurn) return prev;
 
                   return [
                     ...prev,
                     {
-                      role: 'keeper' as const,
+                      role: "keeper" as const,
                       content: message.keeperNarrative,
                       timestamp: message.timestamp || new Date().toISOString(),
                       turnNumber: latestTurnNumber + 1,
                       turnId: message.turnId,
                       gameDay: message.gameDay ?? null,
                       gameTime: message.gameTime ?? null,
-                    }
+                    },
                   ];
                 });
 
@@ -647,41 +768,55 @@ export function GameChat({ sessionId, apiBaseUrl = '/api', characterName = 'Inve
               if (fetchGameEndingRef.current) {
                 fetchGameEndingRef.current();
               }
-            } else if (message.type === 'pong') {
+            } else if (message.type === "pong") {
               // Heartbeat response
-              console.log('[WebSocket] Heartbeat received');
-            } else if (message.type === 'progression_check_result') {
-              console.log('[WebSocket] Progression check result:', message.triggered);
-            } else if (message.type === 'error') {
-              console.error('[WebSocket] Error:', message.message || message.error);
+              console.log("[WebSocket] Heartbeat received");
+            } else if (message.type === "progression_check_result") {
+              console.log(
+                "[WebSocket] Progression check result:",
+                message.triggered
+              );
+            } else if (message.type === "error") {
+              console.error(
+                "[WebSocket] Error:",
+                message.message || message.error
+              );
             }
           } catch (error) {
-            console.error('[WebSocket] Error parsing message:', error);
+            console.error("[WebSocket] Error parsing message:", error);
           }
         };
 
         ws.onerror = (error) => {
-          console.error('[WebSocket] Error:', error);
+          console.error("[WebSocket] Error:", error);
         };
 
         ws.onclose = () => {
-          console.log('[WebSocket] Connection closed');
+          console.log("[WebSocket] Connection closed");
           wsRef.current = null;
-          
+
           // Only reconnect if we should and session hasn't changed
-          if (shouldReconnectRef.current && currentSessionIdRef.current === sessionId) {
-            console.log('[WebSocket] Attempting to reconnect in 5 seconds...');
+          if (
+            shouldReconnectRef.current &&
+            currentSessionIdRef.current === sessionId
+          ) {
+            console.log("[WebSocket] Attempting to reconnect in 5 seconds...");
             reconnectTimeoutRef.current = window.setTimeout(() => {
               connectWebSocket();
             }, 5000);
           } else {
-            console.log('[WebSocket] Reconnect disabled or session changed, not reconnecting');
+            console.log(
+              "[WebSocket] Reconnect disabled or session changed, not reconnecting"
+            );
           }
         };
       } catch (error) {
-        console.error('[WebSocket] Failed to connect:', error);
+        console.error("[WebSocket] Failed to connect:", error);
         // Retry connection after 5 seconds only if we should reconnect
-        if (shouldReconnectRef.current && currentSessionIdRef.current === sessionId) {
+        if (
+          shouldReconnectRef.current &&
+          currentSessionIdRef.current === sessionId
+        ) {
           reconnectTimeoutRef.current = window.setTimeout(() => {
             connectWebSocket();
           }, 5000);
@@ -693,14 +828,16 @@ export function GameChat({ sessionId, apiBaseUrl = '/api', characterName = 'Inve
 
     // Cleanup on unmount or when dependencies change
     return () => {
-      console.log(`[WebSocket] Cleanup: disabling reconnect and closing connection`);
+      console.log(
+        `[WebSocket] Cleanup: disabling reconnect and closing connection`
+      );
       shouldReconnectRef.current = false; // Disable auto-reconnect
-      
+
       if (reconnectTimeoutRef.current !== null) {
         window.clearTimeout(reconnectTimeoutRef.current);
         reconnectTimeoutRef.current = null;
       }
-      
+
       if (wsRef.current) {
         // Remove event handlers to prevent onclose from triggering reconnect
         wsRef.current.onclose = null;
@@ -717,8 +854,8 @@ export function GameChat({ sessionId, apiBaseUrl = '/api', characterName = 'Inve
 
     const heartbeatInterval = setInterval(() => {
       if (wsRef.current && wsRef.current.readyState === WebSocket.OPEN) {
-        wsRef.current.send(JSON.stringify({ type: 'ping' }));
-        console.log('[WebSocket] Sent heartbeat ping');
+        wsRef.current.send(JSON.stringify({ type: "ping" }));
+        console.log("[WebSocket] Sent heartbeat ping");
       }
     }, 60000); // Send ping every 60 seconds
 
@@ -734,8 +871,12 @@ export function GameChat({ sessionId, apiBaseUrl = '/api', characterName = 'Inve
     if (initialMessages && initialMessages.length > 0) {
       setMessages(initialMessages);
       // Mark all existing turnNumbers as processed
-      const existingTurnNumbers = new Set(initialMessages.map(msg => msg.turnNumber));
-      processedTurnIdsRef.current = new Set(Array.from(existingTurnNumbers).map(n => `turn-${n}`));
+      const existingTurnNumbers = new Set(
+        initialMessages.map((msg) => msg.turnNumber)
+      );
+      processedTurnIdsRef.current = new Set(
+        Array.from(existingTurnNumbers).map((n) => `turn-${n}`)
+      );
       updateLastSavedTurnNumber(initialMessages);
     } else if (sessionId) {
       loadConversationHistory();
@@ -748,8 +889,12 @@ export function GameChat({ sessionId, apiBaseUrl = '/api', characterName = 'Inve
     if (initialMessages && initialMessages.length > 0) {
       setMessages(initialMessages);
       // Mark all existing turnNumbers as processed
-      const existingTurnNumbers = new Set(initialMessages.map(msg => msg.turnNumber));
-      processedTurnIdsRef.current = new Set(Array.from(existingTurnNumbers).map(n => `turn-${n}`));
+      const existingTurnNumbers = new Set(
+        initialMessages.map((msg) => msg.turnNumber)
+      );
+      processedTurnIdsRef.current = new Set(
+        Array.from(existingTurnNumbers).map((n) => `turn-${n}`)
+      );
       updateLastSavedTurnNumber(initialMessages);
     } else if (!initialMessages && sessionId) {
       // If initialMessages is cleared, reload from API
@@ -760,7 +905,7 @@ export function GameChat({ sessionId, apiBaseUrl = '/api', characterName = 'Inve
 
   // Auto-scroll to bottom when new messages arrive
   useEffect(() => {
-    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages]);
 
   // Handle dice animation completion - use useRef to access latest pendingDiceRolls
@@ -770,15 +915,20 @@ export function GameChat({ sessionId, apiBaseUrl = '/api', characterName = 'Inve
   }, [pendingDiceRolls]);
 
   // Track if callback has been called for current dice rolls to prevent duplicate calls
-  const diceAnimationCallbackCalledRef = useRef<string>('');
+  const diceAnimationCallbackCalledRef = useRef<string>("");
 
   const handleDiceAnimationComplete = useCallback(() => {
     console.log(`[GameChat] Dice animation completed`);
     const currentPendingDiceRolls = pendingDiceRollsRef.current;
-    console.log(`[GameChat] Current pendingDiceRolls:`, currentPendingDiceRolls);
-    
+    console.log(
+      `[GameChat] Current pendingDiceRolls:`,
+      currentPendingDiceRolls
+    );
+
     if (!currentPendingDiceRolls) {
-      console.warn(`[GameChat] handleDiceAnimationComplete called but pendingDiceRolls is null`);
+      console.warn(
+        `[GameChat] handleDiceAnimationComplete called but pendingDiceRolls is null`
+      );
       return;
     }
 
@@ -786,22 +936,26 @@ export function GameChat({ sessionId, apiBaseUrl = '/api', characterName = 'Inve
     const diceRollsKey = JSON.stringify({
       turnNumber: currentPendingDiceRolls.turnNumber,
       diceRolls: currentPendingDiceRolls.diceRolls,
-      timestamp: currentPendingDiceRolls.timestamp
+      timestamp: currentPendingDiceRolls.timestamp,
     });
 
     // Prevent duplicate calls for the same dice roll set
     if (diceAnimationCallbackCalledRef.current === diceRollsKey) {
-      console.log(`[GameChat] Callback already called for this dice roll set, skipping...`);
+      console.log(
+        `[GameChat] Callback already called for this dice roll set, skipping...`
+      );
       return;
     }
 
     // Mark this set as processed
     diceAnimationCallbackCalledRef.current = diceRollsKey;
-    
+
     // Mark animation as completed - this will trigger narrative display
-    console.log(`[GameChat] Setting diceAnimationCompleted to true, narrative length: ${currentPendingDiceRolls.narrative?.length || 0}`);
+    console.log(
+      `[GameChat] Setting diceAnimationCompleted to true, narrative length: ${currentPendingDiceRolls.narrative?.length || 0}`
+    );
     setDiceAnimationCompleted(true);
-    
+
     // Trigger sidebar refresh using ref to avoid dependency issues
     if (onNarrativeCompleteRef.current) {
       onNarrativeCompleteRef.current();
@@ -819,31 +973,35 @@ export function GameChat({ sessionId, apiBaseUrl = '/api', characterName = 'Inve
         if (turnId) {
           streamingBlockedRef.current.delete(turnId);
         }
-        const buffered = turnId ? (streamingBufferRef.current.get(turnId) || '') : '';
+        const buffered = turnId
+          ? streamingBufferRef.current.get(turnId) || ""
+          : "";
         if (turnId && buffered) {
           streamingBufferRef.current.delete(turnId);
         }
 
         if (turnId) {
-          setMessages(prev => {
-            const hasMessage = prev.some(msg => msg.turnId === turnId);
+          setMessages((prev) => {
+            const hasMessage = prev.some((msg) => msg.turnId === turnId);
             const next = hasMessage
-              ? prev.map(msg =>
+              ? prev.map((msg) =>
                   msg.turnId === turnId
                     ? {
                         ...msg,
                         content: msg.content + buffered,
                         isStreaming: true,
                         diceRolls: msg.diceRolls ?? pendingDiceRolls.diceRolls,
-                        gameDay: pendingDiceRolls.gameDay ?? msg.gameDay ?? null,
-                        gameTime: pendingDiceRolls.gameTime ?? msg.gameTime ?? null,
+                        gameDay:
+                          pendingDiceRolls.gameDay ?? msg.gameDay ?? null,
+                        gameTime:
+                          pendingDiceRolls.gameTime ?? msg.gameTime ?? null,
                       }
                     : msg
                 )
               : [
                   ...prev,
                   {
-                    role: 'keeper' as const,
+                    role: "keeper" as const,
                     content: buffered,
                     timestamp: pendingDiceRolls.timestamp,
                     turnNumber: pendingDiceRolls.turnNumber,
@@ -852,7 +1010,7 @@ export function GameChat({ sessionId, apiBaseUrl = '/api', characterName = 'Inve
                     diceRolls: pendingDiceRolls.diceRolls,
                     gameDay: pendingDiceRolls.gameDay ?? null,
                     gameTime: pendingDiceRolls.gameTime ?? null,
-                  }
+                  },
                 ];
             return next;
           });
@@ -864,19 +1022,23 @@ export function GameChat({ sessionId, apiBaseUrl = '/api', characterName = 'Inve
         return;
       }
 
-      setMessages(prev => {
+      setMessages((prev) => {
         // Check if this message already exists
-        const existingMessage = prev.find(msg =>
-          msg.turnNumber === pendingDiceRolls.turnNumber && msg.role === 'keeper'
+        const existingMessage = prev.find(
+          (msg) =>
+            msg.turnNumber === pendingDiceRolls.turnNumber &&
+            msg.role === "keeper"
         );
         if (existingMessage) {
-          console.log(`[GameChat] Message for turn ${pendingDiceRolls.turnNumber} already exists, skipping...`);
+          console.log(
+            `[GameChat] Message for turn ${pendingDiceRolls.turnNumber} already exists, skipping...`
+          );
           return prev;
         }
 
         // Add the keeper message with dice rolls
         const keeperMessage: Message = {
-          role: 'keeper',
+          role: "keeper",
           content: pendingDiceRolls.narrative,
           timestamp: pendingDiceRolls.timestamp,
           turnNumber: pendingDiceRolls.turnNumber,
@@ -897,21 +1059,28 @@ export function GameChat({ sessionId, apiBaseUrl = '/api', characterName = 'Inve
 
   // Handle skill selection requirement
   useEffect(() => {
-    if (turn && turn.status === 'requires_skill_selection') {
+    if (turn && turn.status === "requires_skill_selection") {
       // Always clear sending/loading state when backend asks for skill selection.
       setIsSending(false);
       stopPolling();
 
       // Check if this turn has already been processed
       const turnId = turn.turnId || `turn-${turn.turnNumber}`;
-      const alreadyProcessed = processedSkillSelectionTurnsRef.current.has(turnId);
+      const alreadyProcessed =
+        processedSkillSelectionTurnsRef.current.has(turnId);
 
       // Only open modal if not already processed and modal is not open
       if (!alreadyProcessed && !isSkillSelectionModalOpen) {
-        console.log('[GameChat] Turn requires skill selection, opening modal');
-        console.log('[GameChat] availableSkills count:', availableSkills.length);
-        console.log('[GameChat] suggestedSkills count:', suggestedSkills.length);
-        console.log('[GameChat] turn data:', {
+        console.log("[GameChat] Turn requires skill selection, opening modal");
+        console.log(
+          "[GameChat] availableSkills count:",
+          availableSkills.length
+        );
+        console.log(
+          "[GameChat] suggestedSkills count:",
+          suggestedSkills.length
+        );
+        console.log("[GameChat] turn data:", {
           turnId: turn.turnId,
           characterInput: turn.characterInput,
           hasActionAnalysis: !!turn.actionAnalysis,
@@ -926,17 +1095,22 @@ export function GameChat({ sessionId, apiBaseUrl = '/api', characterName = 'Inve
 
         // Ensure skills are loaded
         if (availableSkills.length === 0 && fetchGameEndingRef.current) {
-          console.log('[GameChat] Skills not loaded, fetching game state...');
+          console.log("[GameChat] Skills not loaded, fetching game state...");
           fetchGameEndingRef.current();
         }
-
       }
     }
-  }, [turn, stopPolling, availableSkills.length, suggestedSkills.length, isSkillSelectionModalOpen]);
+  }, [
+    turn,
+    stopPolling,
+    availableSkills.length,
+    suggestedSkills.length,
+    isSkillSelectionModalOpen,
+  ]);
 
   // Update messages when turn completes
   useEffect(() => {
-    if (turn && turn.status === 'completed') {
+    if (turn && turn.status === "completed") {
       // Check if we've already processed this turn to avoid duplicates
       const turnKey = turn.turnId || `turn-${turn.turnNumber}`;
       const turnNumberKey = `turn-${turn.turnNumber}`;
@@ -945,7 +1119,9 @@ export function GameChat({ sessionId, apiBaseUrl = '/api', characterName = 'Inve
         processedTurnIdsRef.current.has(turnNumberKey) ||
         (turn.turnId && processedTurnIdsRef.current.has(turn.turnId))
       ) {
-        console.log(`[GameChat] Turn ${turnKey} already processed, skipping...`);
+        console.log(
+          `[GameChat] Turn ${turnKey} already processed, skipping...`
+        );
         // Defensive: duplicate completion events can race with loading state updates.
         // Always clear transient UI states so the chat doesn't remain stuck in "Processing...".
         setIsSending(false);
@@ -963,7 +1139,7 @@ export function GameChat({ sessionId, apiBaseUrl = '/api', characterName = 'Inve
         actionResultsCount: turn.actionResults?.length || 0,
         actionResultsType: typeof turn.actionResults,
         actionResultsValue: turn.actionResults,
-        characterInput: turn.characterInput?.substring(0, 50) + '...',
+        characterInput: turn.characterInput?.substring(0, 50) + "...",
       });
 
       // Mark this turn as processed
@@ -981,26 +1157,32 @@ export function GameChat({ sessionId, apiBaseUrl = '/api', characterName = 'Inve
       console.log(`[GameChat] Has keeperNarrative: ${!!turn.keeperNarrative}`);
 
       const existingStreamingMessage = turn.turnId
-        ? messagesRef.current.find(msg => msg.turnId === turn.turnId && msg.role === 'keeper')
+        ? messagesRef.current.find(
+            (msg) => msg.turnId === turn.turnId && msg.role === "keeper"
+          )
         : null;
 
       if (existingStreamingMessage) {
-        setMessages(prev => prev.map(msg => {
-          if (msg.turnId !== turn.turnId) return msg;
-          return {
-            ...msg,
-            content: turn.keeperNarrative || msg.content,
-            timestamp: turn.completedAt || turn.startedAt,
-            turnNumber: turn.turnNumber,
-            isStreaming: false,
-            diceRolls: allDiceRolls.length > 0 ? allDiceRolls : msg.diceRolls,
-            gameDay: turn.gameDay ?? msg.gameDay ?? null,
-            gameTime: turn.gameTime ?? msg.gameTime ?? null,
-          };
-        }));
+        setMessages((prev) =>
+          prev.map((msg) => {
+            if (msg.turnId !== turn.turnId) return msg;
+            return {
+              ...msg,
+              content: turn.keeperNarrative || msg.content,
+              timestamp: turn.completedAt || turn.startedAt,
+              turnNumber: turn.turnNumber,
+              isStreaming: false,
+              diceRolls: allDiceRolls.length > 0 ? allDiceRolls : msg.diceRolls,
+              gameDay: turn.gameDay ?? msg.gameDay ?? null,
+              gameTime: turn.gameTime ?? msg.gameTime ?? null,
+            };
+          })
+        );
 
         if (turn.turnId) {
-          setStreamingTurnId(current => current === turn.turnId ? null : current);
+          setStreamingTurnId((current) =>
+            current === turn.turnId ? null : current
+          );
         }
 
         if (onNarrativeComplete) {
@@ -1016,9 +1198,11 @@ export function GameChat({ sessionId, apiBaseUrl = '/api', characterName = 'Inve
 
       // If there are dice rolls, show animation first
       if (allDiceRolls.length > 0 && turn.keeperNarrative) {
-        console.log(`[GameChat] Showing dice animation for ${allDiceRolls.length} dice rolls`);
+        console.log(
+          `[GameChat] Showing dice animation for ${allDiceRolls.length} dice rolls`
+        );
         // Reset callback tracking when new dice rolls are set
-        diceAnimationCallbackCalledRef.current = ''; // Reset to allow new callback
+        diceAnimationCallbackCalledRef.current = ""; // Reset to allow new callback
         setPendingDiceRolls({
           turnNumber: turn.turnNumber,
           turnId: turn.turnId,
@@ -1032,23 +1216,25 @@ export function GameChat({ sessionId, apiBaseUrl = '/api', characterName = 'Inve
         setDiceAnimationCompleted(false); // Reset animation completed state
       } else {
         // No dice rolls, add narrative directly to messages
-        setMessages(prev => {
+        setMessages((prev) => {
           // Check if keeper response for this turn already exists
-          const existingKeeperMessage = prev.find(msg => 
-            msg.role === 'keeper' && (
-              (turn.turnId && msg.turnId === turn.turnId) ||
-              msg.turnNumber === turn.turnNumber
-            )
+          const existingKeeperMessage = prev.find(
+            (msg) =>
+              msg.role === "keeper" &&
+              ((turn.turnId && msg.turnId === turn.turnId) ||
+                msg.turnNumber === turn.turnNumber)
           );
           if (existingKeeperMessage) {
-            console.log(`[GameChat] Keeper message for turn ${turn.turnNumber} already exists, skipping...`);
+            console.log(
+              `[GameChat] Keeper message for turn ${turn.turnNumber} already exists, skipping...`
+            );
             return prev;
           }
 
           // Only add keeper message if narrative exists
           if (turn.keeperNarrative) {
             const keeperMessage: Message = {
-              role: 'keeper' as const,
+              role: "keeper" as const,
               content: turn.keeperNarrative,
               timestamp: turn.completedAt || turn.startedAt,
               turnNumber: turn.turnNumber,
@@ -1058,7 +1244,9 @@ export function GameChat({ sessionId, apiBaseUrl = '/api', characterName = 'Inve
             };
             return [...prev, keeperMessage];
           } else {
-            console.warn(`[GameChat] Turn ${turn.turnNumber} completed but keeperNarrative is empty`);
+            console.warn(
+              `[GameChat] Turn ${turn.turnNumber} completed but keeperNarrative is empty`
+            );
             return prev;
           }
         });
@@ -1075,9 +1263,12 @@ export function GameChat({ sessionId, apiBaseUrl = '/api', characterName = 'Inve
       if (fetchGameEndingRef.current) {
         fetchGameEndingRef.current();
       }
-    } else if (turn && turn.status === 'error') {
+    } else if (turn && turn.status === "error") {
       // ✅ Fix 5: Clear loading states on error as well
-      console.error(`[GameChat] Turn ${turn.turnId || turn.turnNumber} failed:`, turn.errorMessage);
+      console.error(
+        `[GameChat] Turn ${turn.turnId || turn.turnNumber} failed:`,
+        turn.errorMessage
+      );
       setIsSending(false);
       clearSceneChanging();
     }
@@ -1104,22 +1295,28 @@ export function GameChat({ sessionId, apiBaseUrl = '/api', characterName = 'Inve
 
   const loadConversationHistory = async () => {
     try {
-      const response = await authFetch(`${apiBaseUrl}/sessions/${sessionId}/conversation`);
+      const response = await authFetch(
+        `${apiBaseUrl}/sessions/${sessionId}/conversation`
+      );
       const data = await response.json();
 
       if (data.success && data.conversation) {
         setMessages(data.conversation);
         updateLastSavedTurnNumber(data.conversation);
         // Mark all existing turnNumbers as processed
-        const existingTurnNumbers = new Set(data.conversation.map((msg: Message) => msg.turnNumber));
-        processedTurnIdsRef.current = new Set(Array.from(existingTurnNumbers).map(n => `turn-${n}`));
+        const existingTurnNumbers = new Set(
+          data.conversation.map((msg: Message) => msg.turnNumber)
+        );
+        processedTurnIdsRef.current = new Set(
+          Array.from(existingTurnNumbers).map((n) => `turn-${n}`)
+        );
       } else {
         setMessages([]);
         processedTurnIdsRef.current.clear();
         lastSavedTurnNumberRef.current = null;
       }
     } catch (err) {
-      console.error('Failed to load conversation history:', err);
+      console.error("Failed to load conversation history:", err);
       setMessages([]);
       processedTurnIdsRef.current.clear();
       lastSavedTurnNumberRef.current = null;
@@ -1133,30 +1330,37 @@ export function GameChat({ sessionId, apiBaseUrl = '/api', characterName = 'Inve
     const trimmedSkill = selectedSkill.trim();
     const hasSelectedSkill = trimmedSkill.length > 0;
     const skillToSend = hasSelectedSkill ? trimmedSkill : null;
-    const skillSelectionMode = hasSelectedSkill ? 'manual' : (isSkillAuto ? 'auto' : 'manual');
-    setInputValue('');
+    const skillSelectionMode = hasSelectedSkill
+      ? "manual"
+      : isSkillAuto
+        ? "auto"
+        : "manual";
+    setInputValue("");
     setIsSending(true);
     setIsSkillPickerOpen(false);
 
     // Immediately add user message to chat
-    const nextTurnNumber = messages.length > 0 ? Math.max(...messages.map(m => m.turnNumber)) + 1 : 1;
+    const nextTurnNumber =
+      messages.length > 0
+        ? Math.max(...messages.map((m) => m.turnNumber)) + 1
+        : 1;
     const userMessage: Message = {
-      role: 'character' as const,
+      role: "character" as const,
       content: messageText,
       timestamp: new Date().toISOString(),
       turnNumber: nextTurnNumber,
       gameDay: currentGameState?.gameDay ?? null,
       gameTime: currentGameState?.timeOfDay ?? null,
     };
-    
-    setMessages(prev => [...prev, userMessage]);
+
+    setMessages((prev) => [...prev, userMessage]);
 
     try {
       // Send message and create turn
       const response = await authFetch(`${apiBaseUrl}/turns`, {
-        method: 'POST',
+        method: "POST",
         headers: {
-          'Content-Type': 'application/json',
+          "Content-Type": "application/json",
         },
         body: JSON.stringify({
           message: messageText,
@@ -1169,35 +1373,44 @@ export function GameChat({ sessionId, apiBaseUrl = '/api', characterName = 'Inve
       const data = await response.json();
 
       if (!data.success) {
-        throw new Error(data.error || 'Failed to send message');
+        throw new Error(data.error || "Failed to send message");
       }
 
-      setSelectedSkill('');
+      setSelectedSkill("");
       // Start polling for turn completion
       startPolling(data.turnId);
-
     } catch (err) {
-      console.error('Failed to send message:', err);
+      console.error("Failed to send message:", err);
       setIsSending(false);
-      
+
       // Remove the user message that was optimistically added
-      setMessages(prev => prev.filter(msg => 
-        !(msg.role === 'character' && msg.content === messageText && msg.turnNumber === userMessage.turnNumber)
-      ));
-      
-      alert('Failed to send message: ' + (err instanceof Error ? err.message : 'Unknown error'));
+      setMessages((prev) =>
+        prev.filter(
+          (msg) =>
+            !(
+              msg.role === "character" &&
+              msg.content === messageText &&
+              msg.turnNumber === userMessage.turnNumber
+            )
+        )
+      );
+
+      alert(
+        "Failed to send message: " +
+          (err instanceof Error ? err.message : "Unknown error")
+      );
     }
   };
 
   const handleKeyPress = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
-    if (e.key === 'Enter' && !e.shiftKey) {
+    if (e.key === "Enter" && !e.shiftKey) {
       e.preventDefault();
       handleSendMessage();
     }
   };
 
   const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
-    if (e.key === 'Enter' && !e.shiftKey) {
+    if (e.key === "Enter" && !e.shiftKey) {
       e.preventDefault();
       if (e.nativeEvent.isComposing) return;
       handleSendMessage();
@@ -1256,16 +1469,16 @@ export function GameChat({ sessionId, apiBaseUrl = '/api', characterName = 'Inve
 
     try {
       const response = await authFetch(`${apiBaseUrl}/checkpoints/save`, {
-        method: 'POST',
+        method: "POST",
         headers: {
-          'Content-Type': 'application/json',
+          "Content-Type": "application/json",
         },
       });
 
       const data = await response.json();
 
       if (!data.success) {
-        throw new Error(data.error || 'Failed to save checkpoint');
+        throw new Error(data.error || "Failed to save checkpoint");
       }
 
       setSaveMessage(`✓ ${data.message}: ${data.checkpointName}`);
@@ -1276,8 +1489,11 @@ export function GameChat({ sessionId, apiBaseUrl = '/api', characterName = 'Inve
         setSaveMessage(null);
       }, 3000);
     } catch (err) {
-      console.error('Failed to save checkpoint:', err);
-      setSaveMessage('Failed to save: ' + (err instanceof Error ? err.message : 'Unknown error'));
+      console.error("Failed to save checkpoint:", err);
+      setSaveMessage(
+        "Failed to save: " +
+          (err instanceof Error ? err.message : "Unknown error")
+      );
     } finally {
       setIsSaving(false);
     }
@@ -1285,34 +1501,46 @@ export function GameChat({ sessionId, apiBaseUrl = '/api', characterName = 'Inve
 
   const handleSkillSelectionConfirm = async () => {
     if (!pendingTurnForSkillSelection || !selectedSkill) {
-      console.warn('[GameChat] Cannot confirm skill selection: no turn or skill selected');
+      console.warn(
+        "[GameChat] Cannot confirm skill selection: no turn or skill selected"
+      );
       return;
     }
 
     const messageText = pendingTurnForSkillSelection.characterInput;
     const skillToSend = selectedSkill.trim();
-    const turnId = pendingTurnForSkillSelection.turnId || `turn-${pendingTurnForSkillSelection.turnNumber}`;
+    const turnId =
+      pendingTurnForSkillSelection.turnId ||
+      `turn-${pendingTurnForSkillSelection.turnNumber}`;
 
-    console.log('[GameChat] Confirming skill selection:', skillToSend, 'for turn:', turnId);
-    console.log('[GameChat] Processed turns before:', Array.from(processedSkillSelectionTurnsRef.current));
+    console.log(
+      "[GameChat] Confirming skill selection:",
+      skillToSend,
+      "for turn:",
+      turnId
+    );
+    console.log(
+      "[GameChat] Processed turns before:",
+      Array.from(processedSkillSelectionTurnsRef.current)
+    );
 
     // Close modal and clear states IMMEDIATELY
     setIsSkillSelectionModalOpen(false);
     setPendingTurnForSkillSelection(null);
-    setSelectedSkill('');
+    setSelectedSkill("");
     setIsSending(true);
 
     try {
       // Re-submit the action with the selected skill
       const response = await authFetch(`${apiBaseUrl}/turns`, {
-        method: 'POST',
+        method: "POST",
         headers: {
-          'Content-Type': 'application/json',
+          "Content-Type": "application/json",
         },
         body: JSON.stringify({
           message: messageText,
           selectedSkill: skillToSend,
-          skillSelectionMode: 'manual',
+          skillSelectionMode: "manual",
           language,
         }),
       });
@@ -1320,24 +1548,27 @@ export function GameChat({ sessionId, apiBaseUrl = '/api', characterName = 'Inve
       const data = await response.json();
 
       if (!data.success) {
-        throw new Error(data.error || 'Failed to send message');
+        throw new Error(data.error || "Failed to send message");
       }
 
       // Start polling for turn completion
       startPolling(data.turnId);
     } catch (err) {
-      console.error('Failed to submit with skill selection:', err);
+      console.error("Failed to submit with skill selection:", err);
       setIsSending(false);
       // Re-open modal on error
       setIsSkillSelectionModalOpen(true);
-      alert('Failed to submit action: ' + (err instanceof Error ? err.message : 'Unknown error'));
+      alert(
+        "Failed to submit action: " +
+          (err instanceof Error ? err.message : "Unknown error")
+      );
     }
   };
 
   const handleSkillSelectionCancel = () => {
     setIsSkillSelectionModalOpen(false);
     setPendingTurnForSkillSelection(null);
-    setSelectedSkill('');
+    setSelectedSkill("");
     setIsSending(false);
   };
 
@@ -1352,7 +1583,9 @@ export function GameChat({ sessionId, apiBaseUrl = '/api', characterName = 'Inve
             {/* Modal Header */}
             <div className="relative border-b border-white/35 bg-white/20 px-4 py-3 sm:px-5 sm:py-4 text-slate-900">
               <h2 className="text-lg sm:text-xl font-semibold flex items-center gap-2">
-                <span className="inline-flex h-8 w-8 items-center justify-center rounded-full border border-white/70 bg-white/55 text-base shadow-sm">⚔️</span>
+                <span className="inline-flex h-8 w-8 items-center justify-center rounded-full border border-white/70 bg-white/55 text-base shadow-sm">
+                  ⚔️
+                </span>
                 <span>Skill Check Required</span>
               </h2>
               <p className="text-slate-700 text-xs sm:text-sm mt-1">
@@ -1365,23 +1598,32 @@ export function GameChat({ sessionId, apiBaseUrl = '/api', characterName = 'Inve
               {/* Action Description */}
               {pendingTurnForSkillSelection && (
                 <div className="mb-4 rounded-2xl border border-white/60 bg-white/45 px-3 py-2.5 shadow-[0_8px_28px_rgba(15,23,42,0.12)]">
-                  <p className="text-xs uppercase tracking-wide text-slate-500 mb-1">Your Action</p>
-                  <p className="font-medium text-slate-900 leading-relaxed">{pendingTurnForSkillSelection.characterInput}</p>
+                  <p className="text-xs uppercase tracking-wide text-slate-500 mb-1">
+                    Your Action
+                  </p>
+                  <p className="font-medium text-slate-900 leading-relaxed">
+                    {pendingTurnForSkillSelection.characterInput}
+                  </p>
                 </div>
               )}
 
               {/* Selected Skill Display */}
               {selectedSkill && (
                 <div className="mb-4 rounded-2xl border border-amber-300/65 bg-amber-100/45 px-3 py-2.5 shadow-[0_10px_28px_rgba(146,64,14,0.18)]">
-                  <p className="text-xs uppercase tracking-wide text-amber-800/80 mb-1">Selected Skill</p>
+                  <p className="text-xs uppercase tracking-wide text-amber-800/80 mb-1">
+                    Selected Skill
+                  </p>
                   <div className="flex items-center justify-between">
                     <span className="text-base sm:text-lg font-semibold text-amber-950">
-                      {language === 'zh'
-                        ? (availableSkills.find(s => s.name === selectedSkill)?.displayNameZh ?? getSkillNameZh(selectedSkill))
+                      {language === "zh"
+                        ? (availableSkills.find((s) => s.name === selectedSkill)
+                            ?.displayNameZh ?? getSkillNameZh(selectedSkill))
                         : selectedSkill}
                     </span>
                     <span className="text-amber-800 font-mono">
-                      {availableSkills.find(s => s.name === selectedSkill)?.value ?? 0}%
+                      {availableSkills.find((s) => s.name === selectedSkill)
+                        ?.value ?? 0}
+                      %
                     </span>
                   </div>
                 </div>
@@ -1401,21 +1643,30 @@ export function GameChat({ sessionId, apiBaseUrl = '/api', characterName = 'Inve
                         onClick={() => setSelectedSkill(skill.name)}
                         className={`text-left p-2.5 rounded-xl border transition-all duration-200 ${
                           selectedSkill === skill.name
-                            ? 'border-amber-300/90 bg-amber-100/65 shadow-[0_10px_25px_rgba(180,83,9,0.22)] scale-[1.01]'
-                            : 'border-white/65 bg-white/45 hover:border-white/90 hover:bg-white/60 hover:-translate-y-0.5 hover:shadow-[0_8px_18px_rgba(15,23,42,0.14)]'
+                            ? "border-amber-300/90 bg-amber-100/65 shadow-[0_10px_25px_rgba(180,83,9,0.22)] scale-[1.01]"
+                            : "border-white/65 bg-white/45 hover:border-white/90 hover:bg-white/60 hover:-translate-y-0.5 hover:shadow-[0_8px_18px_rgba(15,23,42,0.14)]"
                         }`}
                       >
                         <div className="flex items-center justify-between">
-                          <span className={`font-medium ${
-                            selectedSkill === skill.name ? 'text-amber-900' : 'text-slate-700'
-                          }`}>
-                            {language === 'zh'
-                              ? (skill.displayNameZh ?? getSkillNameZh(skill.name))
+                          <span
+                            className={`font-medium ${
+                              selectedSkill === skill.name
+                                ? "text-amber-900"
+                                : "text-slate-700"
+                            }`}
+                          >
+                            {language === "zh"
+                              ? (skill.displayNameZh ??
+                                getSkillNameZh(skill.name))
                               : skill.name}
                           </span>
-                          <span className={`font-mono text-sm ${
-                            selectedSkill === skill.name ? 'text-amber-700' : 'text-slate-500'
-                          }`}>
+                          <span
+                            className={`font-mono text-sm ${
+                              selectedSkill === skill.name
+                                ? "text-amber-700"
+                                : "text-slate-500"
+                            }`}
+                          >
                             {skill.value}%
                           </span>
                         </div>
@@ -1456,7 +1707,9 @@ export function GameChat({ sessionId, apiBaseUrl = '/api', characterName = 'Inve
         <div className="fixed inset-0 z-50 flex items-center justify-center pointer-events-none">
           <div className="rounded-2xl border border-white/60 bg-white/30 px-6 py-4 backdrop-blur-xl shadow-[0_12px_34px_rgba(15,23,42,0.3)] flex items-center gap-3">
             <div className="w-5 h-5 border-2 border-slate-600 border-t-transparent rounded-full animate-spin" />
-            <span className="text-base text-slate-800 font-medium">Scene Transition...</span>
+            <span className="text-base text-slate-800 font-medium">
+              Scene Transition...
+            </span>
           </div>
         </div>
       )}
@@ -1474,14 +1727,17 @@ export function GameChat({ sessionId, apiBaseUrl = '/api', characterName = 'Inve
             disabled={isSaving}
             title="Save current game progress"
           >
-            {isSaving ? '💾 Saving...' : '💾 Save'}
+            {isSaving ? "💾 Saving..." : "💾 Save"}
           </button>
           {saveMessage && (
-            <span className="save-message" style={{
-              marginLeft: '10px',
-              fontSize: '0.85rem',
-              color: saveMessage.startsWith('✓') ? '#155724' : '#721c24'
-            }}>
+            <span
+              className="save-message"
+              style={{
+                marginLeft: "10px",
+                fontSize: "0.85rem",
+                color: saveMessage.startsWith("✓") ? "#155724" : "#721c24",
+              }}
+            >
               {saveMessage}
             </span>
           )}
@@ -1492,15 +1748,17 @@ export function GameChat({ sessionId, apiBaseUrl = '/api', characterName = 'Inve
       <div
         className="messages-scroll-area"
         style={{
-          filter: isSceneChanging ? 'blur(8px)' : 'none',
-          transition: 'filter 0.5s ease-in-out',
-          pointerEvents: isSceneChanging ? 'none' : 'auto',
+          filter: isSceneChanging ? "blur(8px)" : "none",
+          transition: "filter 0.5s ease-in-out",
+          pointerEvents: isSceneChanging ? "none" : "auto",
         }}
       >
         {messages.length === 0 && (
           <div className="empty-chat-prompt">
             <p>🎲 Welcome to Call of Cthulhu!</p>
-            <p>Describe your investigator's actions to begin the adventure...</p>
+            <p>
+              Describe your investigator's actions to begin the adventure...
+            </p>
           </div>
         )}
 
@@ -1508,29 +1766,32 @@ export function GameChat({ sessionId, apiBaseUrl = '/api', characterName = 'Inve
           <div key={index} className={`chat-message ${msg.role}`}>
             <div className="message-meta">
               <span className="sender-name">
-                {msg.role === 'character' ? `📝 ${characterName}` : '🎭 Keeper'}
+                {msg.role === "character" ? `📝 ${characterName}` : "🎭 Keeper"}
               </span>
               <span className="message-timestamp">
-                {msg.gameTime && msg.gameTime !== null && msg.gameTime !== undefined && msg.gameTime !== ''
+                {msg.gameTime &&
+                msg.gameTime !== null &&
+                msg.gameTime !== undefined &&
+                msg.gameTime !== ""
                   ? `Day ${msg.gameDay ?? 1}, ${msg.gameTime}`
-                  : new Date(msg.timestamp).toLocaleTimeString('en-US', { 
-                      hour: '2-digit', 
-                      minute: '2-digit' 
+                  : new Date(msg.timestamp).toLocaleTimeString("en-US", {
+                      hour: "2-digit",
+                      minute: "2-digit",
                     })}
               </span>
             </div>
             {msg.diceRolls && msg.diceRolls.length > 0 && (
-              <DiceAnimation 
-              diceRolls={msg.diceRolls} 
-              onAnimationComplete={undefined}
-            />
+              <DiceAnimation
+                diceRolls={msg.diceRolls}
+                onAnimationComplete={undefined}
+              />
             )}
             {msg.imageUrl && (
               <div className="scene-image-wrapper">
                 <img
                   className="scene-image"
                   src={msg.imageUrl}
-                  alt={msg.imageCaption || 'Scene image'}
+                  alt={msg.imageCaption || "Scene image"}
                 />
                 {msg.imageCaption && (
                   <div className="scene-image-caption">{msg.imageCaption}</div>
@@ -1538,12 +1799,16 @@ export function GameChat({ sessionId, apiBaseUrl = '/api', characterName = 'Inve
               </div>
             )}
             {msg.content && (
-              <div className={`message-text backdrop-blur-sm border border-slate-200 shadow-md rounded-lg px-[18px] py-[14px] ${
-                msg.role === 'character' 
-                  ? 'bg-[rgba(232,220,196,0.5)]' 
-                  : 'bg-white/50'
-              }`}>
-                <ReactMarkdown className="markdown-content">{msg.content}</ReactMarkdown>
+              <div
+                className={`message-text backdrop-blur-sm border border-slate-200 shadow-md rounded-lg px-[18px] py-[14px] ${
+                  msg.role === "character"
+                    ? "bg-[rgba(232,220,196,0.5)]"
+                    : "bg-white/50"
+                }`}
+              >
+                <ReactMarkdown className="markdown-content">
+                  {msg.content}
+                </ReactMarkdown>
               </div>
             )}
           </div>
@@ -1554,24 +1819,37 @@ export function GameChat({ sessionId, apiBaseUrl = '/api', characterName = 'Inve
             <div className="message-meta">
               <span className="sender-name">🎭 Keeper</span>
               <span className="message-timestamp">
-                {pendingDiceRolls.gameTime && pendingDiceRolls.gameTime !== null && pendingDiceRolls.gameTime !== undefined && pendingDiceRolls.gameTime !== ''
+                {pendingDiceRolls.gameTime &&
+                pendingDiceRolls.gameTime !== null &&
+                pendingDiceRolls.gameTime !== undefined &&
+                pendingDiceRolls.gameTime !== ""
                   ? `Day ${pendingDiceRolls.gameDay ?? 1}, ${pendingDiceRolls.gameTime}`
-                  : new Date(pendingDiceRolls.timestamp).toLocaleTimeString('en-US', { 
-                      hour: '2-digit', 
-                      minute: '2-digit' 
-                    })}
+                  : new Date(pendingDiceRolls.timestamp).toLocaleTimeString(
+                      "en-US",
+                      {
+                        hour: "2-digit",
+                        minute: "2-digit",
+                      }
+                    )}
               </span>
             </div>
-            <DiceAnimation 
-              diceRolls={pendingDiceRolls.diceRolls} 
+            <DiceAnimation
+              diceRolls={pendingDiceRolls.diceRolls}
               onAnimationComplete={handleDiceAnimationComplete}
             />
             {/* Show narrative after dice animation completes */}
-            {diceAnimationCompleted && pendingDiceRolls && pendingDiceRolls.narrative && (
-              <div className="message-text backdrop-blur-sm bg-white/50 border border-slate-200 shadow-md rounded-lg px-[18px] py-[14px]" style={{ marginTop: '16px' }}>
-                <ReactMarkdown className="markdown-content">{pendingDiceRolls.narrative}</ReactMarkdown>
-              </div>
-            )}
+            {diceAnimationCompleted &&
+              pendingDiceRolls &&
+              pendingDiceRolls.narrative && (
+                <div
+                  className="message-text backdrop-blur-sm bg-white/50 border border-slate-200 shadow-md rounded-lg px-[18px] py-[14px]"
+                  style={{ marginTop: "16px" }}
+                >
+                  <ReactMarkdown className="markdown-content">
+                    {pendingDiceRolls.narrative}
+                  </ReactMarkdown>
+                </div>
+              )}
           </div>
         )}
 
@@ -1582,9 +1860,13 @@ export function GameChat({ sessionId, apiBaseUrl = '/api', characterName = 'Inve
             </div>
             <div className="message-text backdrop-blur-sm bg-white/50 border border-slate-200 shadow-md rounded-lg px-[18px] py-[14px]">
               <span className="typing-indicator">
-                <span>•</span><span>•</span><span>•</span>
+                <span>•</span>
+                <span>•</span>
+                <span>•</span>
               </span>
-              {isPolling ? ' The Keeper contemplates...' : ' Processing your action...'}
+              {isPolling
+                ? " The Keeper contemplates..."
+                : " Processing your action..."}
             </div>
           </div>
         )}
@@ -1602,8 +1884,8 @@ export function GameChat({ sessionId, apiBaseUrl = '/api', characterName = 'Inve
       <div
         className="fixed bottom-0 left-0 right-0 z-30 pointer-events-none px-2 sm:px-0"
         style={{
-          filter: isSceneChanging ? 'blur(8px)' : 'none',
-          transition: 'filter 0.5s ease-in-out',
+          filter: isSceneChanging ? "blur(8px)" : "none",
+          transition: "filter 0.5s ease-in-out",
         }}
       >
         <div
@@ -1611,15 +1893,15 @@ export function GameChat({ sessionId, apiBaseUrl = '/api', characterName = 'Inve
           onMouseLeave={handleInputAreaMouseLeave}
           className={`mx-auto w-full px-4 sm:px-0 pointer-events-auto rounded-3xl border border-white/30 dark:border-white/20 backdrop-blur-md shadow-[0_5px_13px_rgba(15,23,42,0.55)] ease-in-out ${
             isInputCollapsed && !inputValue.trim()
-              ? 'max-w-[160px] max-h-6 overflow-hidden mb-3 [transition:max-height_0.5s_ease-in-out,max-width_1s_ease-in-out_0.5s]'
-              : 'max-w-xl max-h-[80vh] mb-2 [transition:max-width_1s_ease-in-out,max-height_0.5s_ease-in-out]'
+              ? "max-w-[160px] max-h-6 overflow-hidden mb-3 [transition:max-height_0.5s_ease-in-out,max-width_1s_ease-in-out_0.5s]"
+              : "max-w-xl max-h-[80vh] mb-2 [transition:max-width_1s_ease-in-out,max-height_0.5s_ease-in-out]"
           }`}
         >
           <div
             className={`flex flex-col transition-opacity duration-300 ${
               isInputCollapsed && !inputValue.trim()
-                ? 'space-y-0 opacity-0 pointer-events-none invisible'
-                : 'space-y-1 opacity-100 visible'
+                ? "space-y-0 opacity-0 pointer-events-none invisible"
+                : "space-y-1 opacity-100 visible"
             }`}
             aria-hidden={isInputCollapsed && !inputValue.trim()}
           >
@@ -1637,11 +1919,13 @@ export function GameChat({ sessionId, apiBaseUrl = '/api', characterName = 'Inve
                   }}
                   className="relative z-10 overflow-hidden rounded-2xl border border-white/50 shadow-[0_6px_15px_rgba(15,23,42,0.25)] transition-all duration-300 ease-in-out bg-white/80 dark:bg-slate-950/60 supports-[backdrop-filter]:bg-white/55 supports-[backdrop-filter]:backdrop-blur-2xl dark:supports-[backdrop-filter]:bg-slate-900/40"
                 >
-                  {(suggestedSkills.length > 0 || selectedSkill || isSkillAuto) && (
+                  {(suggestedSkills.length > 0 ||
+                    selectedSkill ||
+                    isSkillAuto) && (
                     <div className="px-3 pt-2">
                       <div className="flex items-center">
                         <span className="text-[10px] uppercase tracking-wide text-slate-500">
-                          Suggested Skills{isSuggesting ? '...' : ''}
+                          Suggested Skills{isSuggesting ? "..." : ""}
                         </span>
                       </div>
                       <div className="mt-2 flex flex-wrap items-center gap-1.5">
@@ -1650,62 +1934,77 @@ export function GameChat({ sessionId, apiBaseUrl = '/api', characterName = 'Inve
                             type="button"
                             className="flex items-center gap-1 rounded-full border border-amber-300 bg-amber-200 px-2 py-0.5 text-[11px] text-amber-900 shadow-[0_10px_20px_rgba(124,45,18,0.25)] transition-all -translate-y-0.5"
                             onClick={() => {
-                              setSelectedSkill('');
+                              setSelectedSkill("");
                               setIsSkillAuto(false);
                             }}
                             disabled={isSending || isPolling || isGameEnded}
                           >
                             {(() => {
                               const selectedDisplay =
-                                suggestedSkills.find((item) => item.name === selectedSkill)?.displayName ??
-                                (language === 'zh'
-                                  ? availableSkills.find((item) => item.name === selectedSkill)?.displayNameZh ?? getSkillNameZh(selectedSkill)
+                                suggestedSkills.find(
+                                  (item) => item.name === selectedSkill
+                                )?.displayName ??
+                                (language === "zh"
+                                  ? (availableSkills.find(
+                                      (item) => item.name === selectedSkill
+                                    )?.displayNameZh ??
+                                    getSkillNameZh(selectedSkill))
                                   : selectedSkill);
                               return selectedDisplay;
                             })()}
                             {(() => {
                               const selectedValue =
-                                availableSkills.find((item) => item.name === selectedSkill)?.value ??
-                                suggestedSkills.find((item) => item.name === selectedSkill)?.value ??
+                                availableSkills.find(
+                                  (item) => item.name === selectedSkill
+                                )?.value ??
+                                suggestedSkills.find(
+                                  (item) => item.name === selectedSkill
+                                )?.value ??
                                 null;
-                              return Number.isFinite(selectedValue as number) ? ` ${selectedValue}%` : '';
+                              return Number.isFinite(selectedValue as number)
+                                ? ` ${selectedValue}%`
+                                : "";
                             })()}
                           </button>
                         )}
                         {suggestedSkills
                           .filter((skill) => skill.name !== selectedSkill)
                           .map((skill) => (
-                        <button
-                          key={skill.name}
-                          type="button"
-                          className={`flex items-center gap-1 rounded-full border px-2 py-0.5 text-[11px] shadow-sm transition-all ${
-                            selectedSkill === skill.name
-                              ? 'border-amber-300 bg-amber-200 text-amber-900 -translate-y-0.5 shadow-[0_10px_20px_rgba(124,45,18,0.25)]'
-                              : 'border-slate-200 bg-white/70 text-slate-700 hover:-translate-y-0.5 hover:shadow-md'
-                          }`}
-                          onClick={() => {
-                            setSelectedSkill(selectedSkill === skill.name ? '' : skill.name);
-                            setIsSkillAuto(false);
-                          }}
-                          disabled={isSending || isPolling || isGameEnded}
-                        >
-                          {skill.displayName ?? skill.name}
-                          {Number.isFinite(skill.value) ? ` ${skill.value}%` : ''}
-                        </button>
-                      ))}
+                            <button
+                              key={skill.name}
+                              type="button"
+                              className={`flex items-center gap-1 rounded-full border px-2 py-0.5 text-[11px] shadow-sm transition-all ${
+                                selectedSkill === skill.name
+                                  ? "border-amber-300 bg-amber-200 text-amber-900 -translate-y-0.5 shadow-[0_10px_20px_rgba(124,45,18,0.25)]"
+                                  : "border-slate-200 bg-white/70 text-slate-700 hover:-translate-y-0.5 hover:shadow-md"
+                              }`}
+                              onClick={() => {
+                                setSelectedSkill(
+                                  selectedSkill === skill.name ? "" : skill.name
+                                );
+                                setIsSkillAuto(false);
+                              }}
+                              disabled={isSending || isPolling || isGameEnded}
+                            >
+                              {skill.displayName ?? skill.name}
+                              {Number.isFinite(skill.value)
+                                ? ` ${skill.value}%`
+                                : ""}
+                            </button>
+                          ))}
                         <div className="ml-auto flex items-center gap-1">
                           <button
                             type="button"
                             className={`flex h-6 items-center rounded-full border px-2 text-[10px] uppercase tracking-wide shadow-sm transition-all ${
                               isSkillAuto
-                                ? 'border-amber-300 bg-amber-200 text-amber-900 shadow-[0_8px_16px_rgba(124,45,18,0.2)]'
-                                : 'border-slate-200 bg-white/70 text-slate-600 hover:-translate-y-0.5 hover:bg-white hover:shadow-md'
+                                ? "border-amber-300 bg-amber-200 text-amber-900 shadow-[0_8px_16px_rgba(124,45,18,0.2)]"
+                                : "border-slate-200 bg-white/70 text-slate-600 hover:-translate-y-0.5 hover:bg-white hover:shadow-md"
                             }`}
                             onClick={() => {
                               setIsSkillAuto((prev) => {
                                 const next = !prev;
                                 if (next) {
-                                  setSelectedSkill('');
+                                  setSelectedSkill("");
                                   setIsSkillPickerOpen(false);
                                 }
                                 return next;
@@ -1719,8 +2018,15 @@ export function GameChat({ sessionId, apiBaseUrl = '/api', characterName = 'Inve
                           <button
                             type="button"
                             className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full border border-slate-200 bg-white/70 text-[11px] text-slate-600 shadow-sm transition-all hover:-translate-y-0.5 hover:bg-white hover:shadow-md [&_svg]:shrink-0"
-                            onClick={() => setIsSkillPickerOpen((prev) => !prev)}
-                            disabled={isSending || isPolling || isGameEnded || availableSkills.length === 0}
+                            onClick={() =>
+                              setIsSkillPickerOpen((prev) => !prev)
+                            }
+                            disabled={
+                              isSending ||
+                              isPolling ||
+                              isGameEnded ||
+                              availableSkills.length === 0
+                            }
                             aria-label="Choose skill"
                           >
                             <svg
@@ -1749,20 +2055,25 @@ export function GameChat({ sessionId, apiBaseUrl = '/api', characterName = 'Inve
                             type="button"
                             className={`flex items-center gap-1 rounded-full border px-2 py-0.5 text-[11px] shadow-sm transition-all ${
                               selectedSkill === skill.name
-                                ? 'border-amber-300 bg-amber-200 text-amber-900 shadow-[0_8px_16px_rgba(124,45,18,0.2)]'
-                                : 'border-slate-200 bg-white/70 text-slate-700 hover:-translate-y-0.5 hover:shadow-md'
+                                ? "border-amber-300 bg-amber-200 text-amber-900 shadow-[0_8px_16px_rgba(124,45,18,0.2)]"
+                                : "border-slate-200 bg-white/70 text-slate-700 hover:-translate-y-0.5 hover:shadow-md"
                             }`}
                             onClick={() => {
-                              setSelectedSkill(selectedSkill === skill.name ? '' : skill.name);
+                              setSelectedSkill(
+                                selectedSkill === skill.name ? "" : skill.name
+                              );
                               setIsSkillAuto(false);
                               setIsSkillPickerOpen(false);
                             }}
                             disabled={isSending || isPolling || isGameEnded}
                           >
-                            {language === 'zh'
-                              ? (skill.displayNameZh ?? getSkillNameZh(skill.name))
+                            {language === "zh"
+                              ? (skill.displayNameZh ??
+                                getSkillNameZh(skill.name))
                               : skill.name}
-                            {Number.isFinite(skill.value) ? ` ${skill.value}%` : ''}
+                            {Number.isFinite(skill.value)
+                              ? ` ${skill.value}%`
+                              : ""}
                           </button>
                         ))}
                       </div>
@@ -1775,20 +2086,44 @@ export function GameChat({ sessionId, apiBaseUrl = '/api', characterName = 'Inve
                     value={inputValue}
                     onChange={(e) => setInputValue(e.target.value)}
                     onKeyDown={handleKeyDown}
-                    placeholder={isGameEnded ? "The story has ended." : "Type your message here..."}
+                    placeholder={
+                      isGameEnded
+                        ? "The story has ended."
+                        : "Type your message here..."
+                    }
                     disabled={isSending || isPolling || isGameEnded}
                   />
                   <div className="flex items-center p-1.5 pt-0">
                     <button
                       type="submit"
                       className="inline-flex items-center justify-center whitespace-nowrap font-medium transition-all focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg]:size-4 [&_svg]:shrink-0 backdrop-blur-md bg-white/50 border border-slate-200 text-slate-900 shadow-md hover:bg-white/70 hover:border-slate-300 hover:-translate-y-0.5 rounded-xl px-3 text-xs ml-auto gap-0.5 h-[30px]"
-                      disabled={!inputValue.trim() || isSending || isPolling || isGameEnded}
+                      disabled={
+                        !inputValue.trim() ||
+                        isSending ||
+                        isPolling ||
+                        isGameEnded
+                      }
                     >
-                      {isGameEnded ? 'Game Ended' : isSending || isPolling ? 'Processing...' : 'Send Message'}
+                      {isGameEnded
+                        ? "Game Ended"
+                        : isSending || isPolling
+                          ? "Processing..."
+                          : "Send Message"}
                       {!isGameEnded && !isSending && !isPolling && (
-                        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="lucide lucide-send size-3.5">
-                          <path d="M14.536 21.686a.5.5 0 0 0 .937-.024l6.5-19a.496.496 0 0 0-.635-.635l-19 6.5a.5.5 0 0 0-.024.937l7.93 3.18a2 2 0 0 1 1.112 1.11z"/>
-                          <path d="m21.854 2.147-10.94 10.939"/>
+                        <svg
+                          xmlns="http://www.w3.org/2000/svg"
+                          width="24"
+                          height="24"
+                          viewBox="0 0 24 24"
+                          fill="none"
+                          stroke="currentColor"
+                          strokeWidth="2"
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          className="lucide lucide-send size-3.5"
+                        >
+                          <path d="M14.536 21.686a.5.5 0 0 0 .937-.024l6.5-19a.496.496 0 0 0-.635-.635l-19 6.5a.5.5 0 0 0-.024.937l7.93 3.18a2 2 0 0 1 1.112 1.11z" />
+                          <path d="m21.854 2.147-10.94 10.939" />
                         </svg>
                       )}
                     </button>

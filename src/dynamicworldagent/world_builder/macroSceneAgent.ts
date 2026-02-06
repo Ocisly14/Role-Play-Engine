@@ -3,7 +3,11 @@
  * Implements 5-step generation following instruction.md specification
  */
 
-import { generateText, ModelClass, ModelProviderName } from "../../models/index.js";
+import {
+  generateText,
+  ModelClass,
+  ModelProviderName,
+} from "../../models/index.js";
 import { composeTemplate } from "../../template.js";
 import type {
   MacroSceneStructure,
@@ -31,7 +35,9 @@ interface Runtime {
 }
 
 const createRuntime = (): Runtime => ({
-  modelProvider: (process.env.MODEL_PROVIDER as ModelProviderName) || ModelProviderName.OPENAI,
+  modelProvider:
+    (process.env.MODEL_PROVIDER as ModelProviderName) ||
+    ModelProviderName.OPENAI,
   getSetting: (key: string) => process.env[key],
 });
 
@@ -69,9 +75,13 @@ export class MacroSceneAgent {
     progressCallback?.(`Generating ${settingType} structure...`);
 
     const template = getMacroSceneStep1Template(settingType, storyLength);
-    const prompt = composeTemplate(template, {}, {
-      userPrompt: creativePrompt,
-    });
+    const prompt = composeTemplate(
+      template,
+      {},
+      {
+        userPrompt: creativePrompt,
+      }
+    );
 
     progressCallback?.("Calling AI for town structure...");
     const response = await generateText({
@@ -89,12 +99,16 @@ export class MacroSceneAgent {
         throw new Error("Missing required field: locationName");
       }
 
-      progressCallback?.(`Setting structure generated: ${macroScene.locationName}`);
+      progressCallback?.(
+        `Setting structure generated: ${macroScene.locationName}`
+      );
       return macroScene as MacroSceneStructure;
     } catch (error) {
       console.error("Failed to parse macro scene response:", error);
       console.error("Response:", response.substring(0, 500));
-      throw new Error(`Failed to generate town structure: ${(error as Error).message}`);
+      throw new Error(
+        `Failed to generate town structure: ${(error as Error).message}`
+      );
     }
   }
 
@@ -108,11 +122,17 @@ export class MacroSceneAgent {
   ): Promise<MythosEvent[]> {
     progressCallback?.("Generating historical mythos layer...");
 
-    const template = getHistoricalMythosTemplateForSetting(macroScene.settingType ?? "small_town");
-    const prompt = composeTemplate(template, {}, {
-      macroSceneJson: JSON.stringify(macroScene, null, 2),
-      userPrompt: creativePrompt,
-    });
+    const template = getHistoricalMythosTemplateForSetting(
+      macroScene.settingType ?? "small_town"
+    );
+    const prompt = composeTemplate(
+      template,
+      {},
+      {
+        macroSceneJson: JSON.stringify(macroScene, null, 2),
+        userPrompt: creativePrompt,
+      }
+    );
 
     progressCallback?.("Calling AI for historical mythos...");
     const response = await generateText({
@@ -129,12 +149,16 @@ export class MacroSceneAgent {
         throw new Error("Mythos events must be an array");
       }
 
-      progressCallback?.(`Historical mythos layer generated: ${mythosEvents.length} events`);
+      progressCallback?.(
+        `Historical mythos layer generated: ${mythosEvents.length} events`
+      );
       return mythosEvents as MythosEvent[];
     } catch (error) {
       console.error("Failed to parse historical mythos response:", error);
       console.error("Response:", response.substring(0, 500));
-      throw new Error(`Failed to generate historical mythos: ${(error as Error).message}`);
+      throw new Error(
+        `Failed to generate historical mythos: ${(error as Error).message}`
+      );
     }
   }
 
@@ -150,12 +174,19 @@ export class MacroSceneAgent {
   ): Promise<TruthEvent[]> {
     progressCallback?.("Generating truth timeline (current events)...");
 
-    const template = getTruthTimelineTemplateForSetting(macroScene.settingType ?? "small_town", storyLength);
-    const prompt = composeTemplate(template, {}, {
-      macroSceneJson: JSON.stringify(macroScene, null, 2),
-      mythosEventsJson: JSON.stringify(mythosEvents, null, 2),
-      userPrompt: creativePrompt,
-    });
+    const template = getTruthTimelineTemplateForSetting(
+      macroScene.settingType ?? "small_town",
+      storyLength
+    );
+    const prompt = composeTemplate(
+      template,
+      {},
+      {
+        macroSceneJson: JSON.stringify(macroScene, null, 2),
+        mythosEventsJson: JSON.stringify(mythosEvents, null, 2),
+        userPrompt: creativePrompt,
+      }
+    );
 
     progressCallback?.("Calling AI for truth timeline...");
     const response = await generateText({
@@ -179,19 +210,27 @@ export class MacroSceneAgent {
         }
 
         // Warning: check for potential names (capitalized words that aren't at sentence start)
-        const suspiciousNames = event.event.match(/(?<!^|\. )[A-Z][a-z]+ [A-Z][a-z]+/g);
+        const suspiciousNames = event.event.match(
+          /(?<!^|\. )[A-Z][a-z]+ [A-Z][a-z]+/g
+        );
         if (suspiciousNames) {
-          console.warn(`⚠️ Potential names found in truth event ${event.id}: ${suspiciousNames.join(", ")}`);
+          console.warn(
+            `⚠️ Potential names found in truth event ${event.id}: ${suspiciousNames.join(", ")}`
+          );
           console.warn(`   Event: ${event.event}`);
         }
       }
 
-      progressCallback?.(`Truth timeline generated: ${truthEvents.length} events`);
+      progressCallback?.(
+        `Truth timeline generated: ${truthEvents.length} events`
+      );
       return truthEvents as TruthEvent[];
     } catch (error) {
       console.error("Failed to parse truth timeline response:", error);
       console.error("Response:", response.substring(0, 500));
-      throw new Error(`Failed to generate truth timeline: ${(error as Error).message}`);
+      throw new Error(
+        `Failed to generate truth timeline: ${(error as Error).message}`
+      );
     }
   }
 
@@ -208,11 +247,15 @@ export class MacroSceneAgent {
     progressCallback?.("Generating knowledge matrix (abstract holders)...");
 
     const template = getKnowledgeMatrixTemplate(storyLength);
-    const prompt = composeTemplate(template, {}, {
-      macroSceneJson: JSON.stringify(macroScene, null, 2),
-      mythosEventsJson: JSON.stringify(mythosEvents, null, 2),
-      truthTimelineJson: JSON.stringify(truthTimeline, null, 2),
-    });
+    const prompt = composeTemplate(
+      template,
+      {},
+      {
+        macroSceneJson: JSON.stringify(macroScene, null, 2),
+        mythosEventsJson: JSON.stringify(mythosEvents, null, 2),
+        truthTimelineJson: JSON.stringify(truthTimeline, null, 2),
+      }
+    );
 
     progressCallback?.("Calling AI for knowledge matrix...");
     const response = await generateText({
@@ -232,17 +275,23 @@ export class MacroSceneAgent {
       // Add IDs if missing
       for (let i = 0; i < knowledgeHolders.length; i++) {
         if (!knowledgeHolders[i].id) {
-          const prefix = knowledgeHolders[i].holderType?.substring(0, 4).toUpperCase() || "KH";
+          const prefix =
+            knowledgeHolders[i].holderType?.substring(0, 4).toUpperCase() ||
+            "KH";
           knowledgeHolders[i].id = `${prefix}_${i + 1}`;
         }
       }
 
-      progressCallback?.(`Knowledge matrix generated: ${knowledgeHolders.length} holders`);
+      progressCallback?.(
+        `Knowledge matrix generated: ${knowledgeHolders.length} holders`
+      );
       return knowledgeHolders as KnowledgeHolder[];
     } catch (error) {
       console.error("Failed to parse knowledge matrix response:", error);
       console.error("Response:", response.substring(0, 500));
-      throw new Error(`Failed to generate knowledge matrix: ${(error as Error).message}`);
+      throw new Error(
+        `Failed to generate knowledge matrix: ${(error as Error).message}`
+      );
     }
   }
 
@@ -259,11 +308,15 @@ export class MacroSceneAgent {
     progressCallback?.("Generating red herrings (false trails)...");
 
     const template = getRedHerringsTemplate(storyLength);
-    const prompt = composeTemplate(template, {}, {
-      mythosEventsJson: JSON.stringify(mythosEvents, null, 2),
-      truthTimelineJson: JSON.stringify(truthTimeline, null, 2),
-      knowledgeMatrixJson: JSON.stringify(knowledgeMatrix, null, 2),
-    });
+    const prompt = composeTemplate(
+      template,
+      {},
+      {
+        mythosEventsJson: JSON.stringify(mythosEvents, null, 2),
+        truthTimelineJson: JSON.stringify(truthTimeline, null, 2),
+        knowledgeMatrixJson: JSON.stringify(knowledgeMatrix, null, 2),
+      }
+    );
 
     progressCallback?.("Calling AI for red herrings...");
     const response = await generateText({
@@ -280,12 +333,16 @@ export class MacroSceneAgent {
         throw new Error("Red herrings must be an array");
       }
 
-      progressCallback?.(`Red herrings generated: ${redHerrings.length} false trails`);
+      progressCallback?.(
+        `Red herrings generated: ${redHerrings.length} false trails`
+      );
       return redHerrings as RedHerring[];
     } catch (error) {
       console.error("Failed to parse red herrings response:", error);
       console.error("Response:", response.substring(0, 500));
-      throw new Error(`Failed to generate red herrings: ${(error as Error).message}`);
+      throw new Error(
+        `Failed to generate red herrings: ${(error as Error).message}`
+      );
     }
   }
 
@@ -301,11 +358,15 @@ export class MacroSceneAgent {
     progressCallback?.("Generating end state definition...");
 
     const template = getEndStateTemplate();
-    const prompt = composeTemplate(template, {}, {
-      macroSceneJson: JSON.stringify(macroScene, null, 2),
-      mythosEventsJson: JSON.stringify(mythosEvents, null, 2),
-      truthTimelineJson: JSON.stringify(truthTimeline, null, 2),
-    });
+    const prompt = composeTemplate(
+      template,
+      {},
+      {
+        macroSceneJson: JSON.stringify(macroScene, null, 2),
+        mythosEventsJson: JSON.stringify(mythosEvents, null, 2),
+        truthTimelineJson: JSON.stringify(truthTimeline, null, 2),
+      }
+    );
 
     progressCallback?.("Calling AI for end state...");
     const response = await generateText({
@@ -327,7 +388,9 @@ export class MacroSceneAgent {
     } catch (error) {
       console.error("Failed to parse end state response:", error);
       console.error("Response:", response.substring(0, 500));
-      throw new Error(`Failed to generate end state: ${(error as Error).message}`);
+      throw new Error(
+        `Failed to generate end state: ${(error as Error).message}`
+      );
     }
   }
 
@@ -346,26 +409,58 @@ export class MacroSceneAgent {
     redHerrings: RedHerring[];
     endState: EndStateDefinition;
   }> {
-    console.log(`\n🌍 [Macro Scene Agent] Starting world generation for ${settingType}...`);
-    console.log(`   Creative Prompt: ${creativePrompt.substring(0, 100)}${creativePrompt.length > 100 ? '...' : ''}`);
+    console.log(
+      `\n🌍 [Macro Scene Agent] Starting world generation for ${settingType}...`
+    );
+    console.log(
+      `   Creative Prompt: ${creativePrompt.substring(0, 100)}${creativePrompt.length > 100 ? "..." : ""}`
+    );
 
     // Step 1: Setting structure (adaptive to setting type)
-    const macroScene = await this.generateTownStructure(settingType, creativePrompt, progressCallback);
+    const macroScene = await this.generateTownStructure(
+      settingType,
+      creativePrompt,
+      progressCallback
+    );
 
     // Step 2: Historical mythos layer (foundation for current events)
-    const mythosEvents = await this.generateHistoricalMythos(macroScene, creativePrompt, progressCallback);
+    const mythosEvents = await this.generateHistoricalMythos(
+      macroScene,
+      creativePrompt,
+      progressCallback
+    );
 
     // Step 3: Truth timeline (current events, influenced by historical mythos)
-    const truthTimeline = await this.generateTruthTimeline(macroScene, mythosEvents, creativePrompt, progressCallback);
+    const truthTimeline = await this.generateTruthTimeline(
+      macroScene,
+      mythosEvents,
+      creativePrompt,
+      progressCallback
+    );
 
     // Step 4: Knowledge matrix
-    const knowledgeMatrix = await this.generateKnowledgeMatrix(macroScene, mythosEvents, truthTimeline, progressCallback);
+    const knowledgeMatrix = await this.generateKnowledgeMatrix(
+      macroScene,
+      mythosEvents,
+      truthTimeline,
+      progressCallback
+    );
 
     // Step 5: Red herrings
-    const redHerrings = await this.generateRedHerrings(mythosEvents, truthTimeline, knowledgeMatrix, progressCallback);
+    const redHerrings = await this.generateRedHerrings(
+      mythosEvents,
+      truthTimeline,
+      knowledgeMatrix,
+      progressCallback
+    );
 
     // Step 6: End state
-    const endState = await this.generateEndState(macroScene, mythosEvents, truthTimeline, progressCallback);
+    const endState = await this.generateEndState(
+      macroScene,
+      mythosEvents,
+      truthTimeline,
+      progressCallback
+    );
 
     console.log("✅ [Macro Scene Agent] World generation complete");
     console.log(`   Setting: ${macroScene.locationName} (${settingType})`);

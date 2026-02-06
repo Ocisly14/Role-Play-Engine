@@ -93,12 +93,16 @@ async function testPlayerLoader() {
     // Test 1: Load single player
     console.log("Test 1: Loading single player document...");
     const player = await playerLoader.loadPlayerFromDocument(testPlayerFile);
-    
+
     if (player) {
       console.log(`✓ Loaded player: ${player.name}`);
       console.log(`  ID: ${player.id}`);
-      console.log(`  Attributes: STR=${player.attributes.STR}, INT=${player.attributes.INT}`);
-      console.log(`  Skills: Psychology=${player.skills.Psychology}, Medicine=${player.skills.Medicine}`);
+      console.log(
+        `  Attributes: STR=${player.attributes.STR}, INT=${player.attributes.INT}`
+      );
+      console.log(
+        `  Skills: Psychology=${player.skills.Psychology}, Medicine=${player.skills.Medicine}`
+      );
       console.log(`  Inventory items: ${player.inventory.length}`);
     } else {
       console.log("✗ Failed to load player");
@@ -110,7 +114,9 @@ async function testPlayerLoader() {
     const retrievedPlayer = playerLoader.getPlayerById(player.id);
     if (retrievedPlayer) {
       console.log(`✓ Retrieved player: ${retrievedPlayer.name}`);
-      console.log(`  Status: HP=${retrievedPlayer.status.hp}/${retrievedPlayer.status.maxHp}, Sanity=${retrievedPlayer.status.sanity}/${retrievedPlayer.status.maxSanity}`);
+      console.log(
+        `  Status: HP=${retrievedPlayer.status.hp}/${retrievedPlayer.status.maxHp}, Sanity=${retrievedPlayer.status.sanity}/${retrievedPlayer.status.maxSanity}`
+      );
     } else {
       console.log("✗ Failed to retrieve player from database");
     }
@@ -124,27 +130,29 @@ async function testPlayerLoader() {
     console.log("\nTest 4: Searching players by name...");
     const foundPlayers = playerLoader.findPlayersByName("Sarah");
     console.log(`✓ Found ${foundPlayers.length} player(s) matching 'Sarah'`);
-    foundPlayers.forEach(p => console.log(`  - ${p.name} (${p.id})`));
+    foundPlayers.forEach((p) => console.log(`  - ${p.name} (${p.id})`));
 
     // Test 5: Get all players
     console.log("\nTest 5: Getting all players...");
     const allPlayers = playerLoader.getAllPlayers();
     console.log(`✓ Total players in database: ${allPlayers.length}`);
-    allPlayers.forEach(p => console.log(`  - ${p.name} (${p.id})`));
+    allPlayers.forEach((p) => console.log(`  - ${p.name} (${p.id})`));
 
     // Test 6: Update player
     console.log("\nTest 6: Updating player...");
     if (player) {
       player.status.hp = 8; // Take some damage
-      player.notes += "\n\nUpdated: Character was injured during investigation.";
+      player.notes +=
+        "\n\nUpdated: Character was injured during investigation.";
       playerLoader.updatePlayer(player);
-      
+
       const updatedPlayer = playerLoader.getPlayerById(player.id);
-      console.log(`✓ Updated player HP: ${updatedPlayer?.status.hp}/${updatedPlayer?.status.maxHp}`);
+      console.log(
+        `✓ Updated player HP: ${updatedPlayer?.status.hp}/${updatedPlayer?.status.maxHp}`
+      );
     }
 
     console.log("\n=== All tests completed successfully! ===");
-
   } catch (error) {
     console.error("✗ Test failed:", error);
   } finally {

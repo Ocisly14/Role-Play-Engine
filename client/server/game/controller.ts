@@ -19,10 +19,10 @@ function isWorldBuilderModule(modName: string): boolean {
   const worldBuilderFiles = [
     "truth_timeline.json",
     "knowledge_matrix.json",
-    "macro_scene.json"
+    "macro_scene.json",
   ];
 
-  return worldBuilderFiles.every(file =>
+  return worldBuilderFiles.every((file) =>
     fs.existsSync(path.join(modPath, file))
   );
 }
@@ -36,9 +36,12 @@ export async function startGame(req: Request, res: Response): Promise<void> {
     const { characterId, modName, language: rawLanguage } = req.body;
     const userId = req.user!.userId;
     const userEmail = req.user!.email;
-    const language = (rawLanguage === 'en' || rawLanguage === 'zh') ? rawLanguage : 'zh';
+    const language =
+      rawLanguage === "en" || rawLanguage === "zh" ? rawLanguage : "zh";
 
-    console.log(`[${new Date().toISOString()}] Starting game with language: ${language}...`);
+    console.log(
+      `[${new Date().toISOString()}] Starting game with language: ${language}...`
+    );
 
     const db = DatabaseManager.getInstance().getDatabase();
     const graphManager = GraphManager.getInstance();
@@ -55,10 +58,12 @@ export async function startGame(req: Request, res: Response): Promise<void> {
     }
 
     const database = db.getDatabase();
-    const ownedCharacter = database.prepare(`
+    const ownedCharacter = database
+      .prepare(`
       SELECT character_id FROM characters
       WHERE character_id = ? AND email_id = ? AND is_npc = 0
-    `).get(characterId, userEmail);
+    `)
+      .get(characterId, userEmail);
 
     if (!ownedCharacter) {
       res.status(403).json({ error: "Character not found" });
@@ -72,18 +77,31 @@ export async function startGame(req: Request, res: Response): Promise<void> {
     // DynamicWorld only: require WorldBuilder module
     const isWorldBuilder = modName && isWorldBuilderModule(modName);
     if (!isWorldBuilder) {
-      res.status(400).json({ error: "Only World Builder modules are supported in DynamicWorld mode" });
+      res
+        .status(400)
+        .json({
+          error:
+            "Only World Builder modules are supported in DynamicWorld mode",
+        });
       return;
     }
 
     // Initialize DynamicWorld game state
     let dynamicGameState: DynamicGameState | null = null;
     let moduleIntroduction: any = null;
-    const initResult = await initializeWorldBuilderGameState(db, characterId, sessionId, modName, userEmail);
+    const initResult = await initializeWorldBuilderGameState(
+      db,
+      characterId,
+      sessionId,
+      modName,
+      userEmail
+    );
     dynamicGameState = initResult.dynamicGameState;
     moduleIntroduction = initResult.moduleIntroduction;
 
-    console.log(`[${new Date().toISOString()}] Game initialized using DynamicWorld loader`);
+    console.log(
+      `[${new Date().toISOString()}] Game initialized using DynamicWorld loader`
+    );
 
     // Store in server state
     if (dynamicGameState) {
@@ -96,10 +114,12 @@ export async function startGame(req: Request, res: Response): Promise<void> {
         // Check if introduction turn already exists for this session
         const database = db.getDatabase();
         const sessionId = dynamicGameState?.sessionId || "";
-        const existingIntro = database.prepare(`
+        const existingIntro = database
+          .prepare(`
           SELECT turn_id FROM game_turns
           WHERE session_id = ? AND turn_number = 0 AND character_input = ''
-        `).get(sessionId);
+        `)
+          .get(sessionId);
 
         if (!existingIntro) {
           // Generate unique turn ID
@@ -110,28 +130,35 @@ export async function startGame(req: Request, res: Response): Promise<void> {
           const initialGameDay = dynamicGameState?.gameDay ?? null;
           const initialGameTime = dynamicGameState?.timeOfDay ?? null;
           const playerCharacterId = dynamicGameState?.playerCharacter.id || "";
-          const playerCharacterName = dynamicGameState?.playerCharacter.name || "";
+          const playerCharacterName =
+            dynamicGameState?.playerCharacter.name || "";
 
           // Create a special turn with turnNumber 0 for introduction
           // Save initial game time from module's initialGameTime
-          database.prepare(`
+          database
+            .prepare(`
             INSERT INTO game_turns (
               turn_id, session_id, turn_number, character_input, character_id, character_name,
               keeper_narrative, status, started_at, completed_at, created_at, game_day, game_time
             ) VALUES (?, ?, 0, '', ?, ?, ?, 'completed', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP, ?, ?)
-          `).run(
-            introTurnId,
-            sessionId,
-            playerCharacterId,
-            playerCharacterName,
-            moduleIntroduction.introduction,
-            initialGameDay ?? null,
-            initialGameTime ?? null
-          );
+          `)
+            .run(
+              introTurnId,
+              sessionId,
+              playerCharacterId,
+              playerCharacterName,
+              moduleIntroduction.introduction,
+              initialGameDay ?? null,
+              initialGameTime ?? null
+            );
 
-          console.log(`[${new Date().toISOString()}] Introduction turn created: ${introTurnId} with game time: Day ${initialGameDay}, ${initialGameTime}`);
+          console.log(
+            `[${new Date().toISOString()}] Introduction turn created: ${introTurnId} with game time: Day ${initialGameDay}, ${initialGameTime}`
+          );
         } else {
-          console.log(`[${new Date().toISOString()}] Introduction turn already exists for this session`);
+          console.log(
+            `[${new Date().toISOString()}] Introduction turn already exists for this session`
+          );
         }
       } catch (error) {
         console.error("Failed to create introduction turn:", error);
@@ -147,18 +174,26 @@ export async function startGame(req: Request, res: Response): Promise<void> {
     if (finalSessionId) {
       try {
         const database = db.getDatabase();
-        const existingSession = database.prepare(`
+        const existingSession = database
+          .prepare(`
           SELECT metadata FROM sessions WHERE session_id = ?
-        `).get(finalSessionId) as { metadata: string | null } | undefined;
+        `)
+          .get(finalSessionId) as { metadata: string | null } | undefined;
 
-        const metadata = existingSession?.metadata ? JSON.parse(existingSession.metadata) : {};
+        const metadata = existingSession?.metadata
+          ? JSON.parse(existingSession.metadata)
+          : {};
         metadata.language = language;
 
-        database.prepare(`
+        database
+          .prepare(`
           UPDATE sessions SET metadata = ? WHERE session_id = ?
-        `).run(JSON.stringify(metadata), finalSessionId);
+        `)
+          .run(JSON.stringify(metadata), finalSessionId);
 
-        console.log(`[${new Date().toISOString()}] Session language saved: ${language}`);
+        console.log(
+          `[${new Date().toISOString()}] Session language saved: ${language}`
+        );
       } catch (error) {
         console.error("Failed to save session language:", error);
         // Don't fail game start if metadata update fails
@@ -174,8 +209,25 @@ export async function startGame(req: Request, res: Response): Promise<void> {
       playerCharacter: dynamicGameState?.playerCharacter || {
         id: "",
         name: "",
-        attributes: { STR: 50, CON: 50, DEX: 50, APP: 50, POW: 50, SIZ: 50, INT: 50, EDU: 50 },
-        status: { hp: 10, maxHp: 10, sanity: 60, maxSanity: 99, luck: 50, mp: 10, conditions: [] },
+        attributes: {
+          STR: 50,
+          CON: 50,
+          DEX: 50,
+          APP: 50,
+          POW: 50,
+          SIZ: 50,
+          INT: 50,
+          EDU: 50,
+        },
+        status: {
+          hp: 10,
+          maxHp: 10,
+          sanity: 60,
+          maxSanity: 99,
+          luck: 50,
+          mp: 10,
+          conditions: [],
+        },
         skills: {},
         inventory: [],
         notes: "",
@@ -198,7 +250,9 @@ export async function startGame(req: Request, res: Response): Promise<void> {
     });
   } catch (error) {
     console.error("Error starting game:", error);
-    res.status(500).json({ error: "Failed to start game: " + (error as Error).message });
+    res
+      .status(500)
+      .json({ error: "Failed to start game: " + (error as Error).message });
   }
 }
 
@@ -232,14 +286,23 @@ export function stopGame(req: Request, res: Response): void {
  * This endpoint is kept for backward compatibility and returns success
  * if data has already been loaded through the mod system.
  */
-export async function importGameData(req: Request, res: Response): Promise<void> {
+export async function importGameData(
+  req: Request,
+  res: Response
+): Promise<void> {
   try {
     const db = DatabaseManager.getInstance().getDatabase();
 
     // Use loaders to get data counts (same as original code)
-    const { ScenarioLoader } = await import("../../../src/shared/agents/memory/scenarioloader/index.js");
-    const { NPCLoader } = await import("../../../src/shared/agents/character/npcloader/index.js");
-    const { ModuleLoader } = await import("../../../src/shared/agents/memory/moduleloader/index.js");
+    const { ScenarioLoader } = await import(
+      "../../../src/shared/agents/memory/scenarioloader/index.js"
+    );
+    const { NPCLoader } = await import(
+      "../../../src/shared/agents/character/npcloader/index.js"
+    );
+    const { ModuleLoader } = await import(
+      "../../../src/shared/agents/memory/moduleloader/index.js"
+    );
 
     const scenarioLoader = new ScenarioLoader(db);
     const npcLoader = new NPCLoader(db);
@@ -253,7 +316,9 @@ export async function importGameData(req: Request, res: Response): Promise<void>
     const npcsLoaded = npcs.length;
     const modulesLoaded = modules.length;
 
-    console.log(`[${new Date().toISOString()}] Data import check: ${scenariosLoaded} scenarios, ${npcsLoaded} NPCs, ${modulesLoaded} modules`);
+    console.log(
+      `[${new Date().toISOString()}] Data import check: ${scenariosLoaded} scenarios, ${npcsLoaded} NPCs, ${modulesLoaded} modules`
+    );
 
     res.json({
       success: true,
@@ -265,7 +330,11 @@ export async function importGameData(req: Request, res: Response): Promise<void>
     });
   } catch (error) {
     console.error("Error checking imported data:", error);
-    res.status(500).json({ error: "Failed to check imported data: " + (error as Error).message });
+    res
+      .status(500)
+      .json({
+        error: "Failed to check imported data: " + (error as Error).message,
+      });
   }
 }
 
@@ -275,16 +344,18 @@ export async function importGameData(req: Request, res: Response): Promise<void>
  */
 function serializeDynamicGameState(state: any): any {
   if (!state) return null;
-  
+
   // Create a deep copy and convert Set/Map to arrays/objects
   const serialized = { ...state };
-  
+
   // Convert Sets to arrays
   if (serialized.revealedTruthEvents instanceof Set) {
     serialized.revealedTruthEvents = Array.from(serialized.revealedTruthEvents);
   }
   if (serialized.activatedKnowledgeHolders instanceof Set) {
-    serialized.activatedKnowledgeHolders = Array.from(serialized.activatedKnowledgeHolders);
+    serialized.activatedKnowledgeHolders = Array.from(
+      serialized.activatedKnowledgeHolders
+    );
   }
   if (serialized.deployedRedHerrings instanceof Set) {
     serialized.deployedRedHerrings = Array.from(serialized.deployedRedHerrings);
@@ -292,7 +363,7 @@ function serializeDynamicGameState(state: any): any {
   if (serialized.mythosRevelations instanceof Set) {
     serialized.mythosRevelations = Array.from(serialized.mythosRevelations);
   }
-  
+
   // Convert Map to object
   if (serialized.updatedDynamicScenarioSnapshots instanceof Map) {
     const snapshotsObj: Record<string, any[]> = {};
@@ -301,7 +372,7 @@ function serializeDynamicGameState(state: any): any {
     });
     serialized.updatedDynamicScenarioSnapshots = snapshotsObj;
   }
-  
+
   // Convert Date objects to ISO strings
   if (serialized.loadedAt instanceof Date) {
     serialized.loadedAt = serialized.loadedAt.toISOString();
@@ -310,9 +381,10 @@ function serializeDynamicGameState(state: any): any {
     serialized.lastUpdated = serialized.lastUpdated.toISOString();
   }
   if (serialized.lastPlayerInputTime instanceof Date) {
-    serialized.lastPlayerInputTime = serialized.lastPlayerInputTime.toISOString();
+    serialized.lastPlayerInputTime =
+      serialized.lastPlayerInputTime.toISOString();
   }
-  
+
   return serialized;
 }
 
@@ -324,7 +396,7 @@ export function getGameState(req: Request, res: Response): void {
   try {
     const userId = req.user!.userId;
     const serverState = ServerState.getInstance();
-    
+
     const dynamicGameState = serverState.getDynamicGameState(userId);
     if (!dynamicGameState) {
       res.json({

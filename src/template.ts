@@ -11,7 +11,7 @@ type TemplateContext = Record<string, unknown>;
  * CoC State type for template composition
  * Can be a DynamicGameState directly, or an object containing dynamicGameState
  */
-export type CoCState = 
+export type CoCState =
   | DynamicGameState
   | { dynamicGameState?: DynamicGameState; [key: string]: any };
 
@@ -135,7 +135,7 @@ export const collectScenarioImages = (state: CoCState): ImageInput[] => {
  * Enhanced template composition with support for dynamic templates and handlebars.
  * Replaces `{{path.to.value}}` placeholders in a template using state-driven context.
  * This keeps prompts declarative while safely surfacing the latest state to the LLM.
- * 
+ *
  * @param template - Template string or function
  * @param state - CoC game state
  * @param extraContext - Additional context variables
@@ -157,7 +157,8 @@ export const composeTemplate = (
   };
 
   // Resolve template function to string
-  const templateStr = typeof template === "function" ? template({ state }) : template;
+  const templateStr =
+    typeof template === "function" ? template({ state }) : template;
 
   // Use handlebars if specified
   if (templatingEngine === "handlebars") {
@@ -181,7 +182,12 @@ export const composeTemplateWithImages = (
   extraContext: TemplateContext = {},
   templatingEngine?: "handlebars"
 ): ComposedPrompt => {
-  const content = composeTemplate(template, state, extraContext, templatingEngine);
+  const content = composeTemplate(
+    template,
+    state,
+    extraContext,
+    templatingEngine
+  );
   const images = collectScenarioImages(state);
   return { content, images };
 };
@@ -189,7 +195,7 @@ export const composeTemplateWithImages = (
 /**
  * Generates a string with random user names populated in a template.
  * Useful for creating examples with varied character names.
- * 
+ *
  * @param template - Template string containing {{user1}}, {{user2}}, etc. placeholders
  * @param length - Number of random user names to generate
  * @returns Template with user placeholders replaced by random names
@@ -198,7 +204,7 @@ export const composeRandomUser = (template: string, length: number): string => {
   const exampleNames = Array.from({ length }, () =>
     uniqueNamesGenerator({ dictionaries: [names] })
   );
-  
+
   let result = template;
   for (let i = 0; i < exampleNames.length; i++) {
     result = result.replaceAll(`{{user${i + 1}}}`, exampleNames[i]);
@@ -209,7 +215,7 @@ export const composeRandomUser = (template: string, length: number): string => {
 
 /**
  * Adds a header to a body of text with proper formatting.
- * 
+ *
  * @param header - Header text to prepend
  * @param body - Body text
  * @returns Formatted text with header
@@ -220,7 +226,7 @@ export const addHeader = (header: string, body: string): string => {
 
 /**
  * Composes context for CoC game scenarios with enhanced error handling and validation.
- * 
+ *
  * @param params - Object containing state, template, and optional templating engine
  * @returns Composed context string
  */
@@ -240,7 +246,8 @@ export const composeContext = ({
   } catch (error) {
     console.error("Error composing context:", error);
     // Fallback to simple template without dynamic features
-    const fallbackTemplate = typeof template === "string" ? template : "{{dynamicGameState}}";
+    const fallbackTemplate =
+      typeof template === "string" ? template : "{{dynamicGameState}}";
     return composeTemplate(fallbackTemplate, state, extraContext);
   }
 };

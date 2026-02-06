@@ -15,31 +15,47 @@ export async function handleClientMessage(
   try {
     const message = JSON.parse(data.toString());
 
-    if (message.type === 'ping') {
+    if (message.type === "ping") {
       // Heartbeat ping - update last heartbeat and respond with pong
       client.lastHeartbeat = new Date();
-      client.ws.send(JSON.stringify({
-        type: 'pong',
-        timestamp: new Date().toISOString()
-      }));
-    } else if (message.type === 'check_progression') {
+      client.ws.send(
+        JSON.stringify({
+          type: "pong",
+          timestamp: new Date().toISOString(),
+        })
+      );
+    } else if (message.type === "check_progression") {
       // Client requests immediate progression check
-      console.log(`📨 [WebSocket] Received check_progression request from ${client.sessionId}`);
+      console.log(
+        `📨 [WebSocket] Received check_progression request from ${client.sessionId}`
+      );
 
-      const triggered = await checkAndTriggerSimulate(client.sessionId, clients);
+      const triggered = await checkAndTriggerSimulate(
+        client.sessionId,
+        clients
+      );
 
       if (!triggered) {
-        console.log(`⏸️  [WebSocket] No simulate trigger needed (conditions not met)`);
-        client.ws.send(JSON.stringify({
-          type: 'progression_check_result',
-          triggered: false,
-          timestamp: new Date().toISOString()
-        }));
+        console.log(
+          `⏸️  [WebSocket] No simulate trigger needed (conditions not met)`
+        );
+        client.ws.send(
+          JSON.stringify({
+            type: "progression_check_result",
+            triggered: false,
+            timestamp: new Date().toISOString(),
+          })
+        );
       }
     } else {
-      console.log(`⚠️  [WebSocket] Unknown message type from ${client.sessionId}: ${message.type}`);
+      console.log(
+        `⚠️  [WebSocket] Unknown message type from ${client.sessionId}: ${message.type}`
+      );
     }
   } catch (error) {
-    console.error(`[WebSocket] Error parsing message from ${client.sessionId}:`, error);
+    console.error(
+      `[WebSocket] Error parsing message from ${client.sessionId}:`,
+      error
+    );
   }
 }

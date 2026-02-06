@@ -169,7 +169,9 @@ function main() {
 
   const prompt = buildPrompt(clusters);
   fs.writeFileSync(outputPath, prompt, "utf8");
-  console.log(`Found ${clusters.length} candidate group(s). Prompt written to ${outputPath}`);
+  console.log(
+    `Found ${clusters.length} candidate group(s). Prompt written to ${outputPath}`
+  );
   db.close();
 }
 

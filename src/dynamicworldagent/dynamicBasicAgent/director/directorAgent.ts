@@ -1,4 +1,9 @@
-import { getScenarioUpdateTemplate, getPlayerSceneSwitchTemplate, getGlobalTriggerEventCheckTemplate, getStuckHintNarrativeTemplate } from "./directorTemplate.js";
+import {
+  getScenarioUpdateTemplate,
+  getPlayerSceneSwitchTemplate,
+  getGlobalTriggerEventCheckTemplate,
+  getStuckHintNarrativeTemplate,
+} from "./directorTemplate.js";
 import { composeTemplate } from "../../../template.js";
 import type { ScenarioCharacter } from "../../../shared/agents/models/scenarioTypes.js";
 import type { DynamicScenarioSnapshot } from "../../world_builder/types.js";
@@ -6,7 +11,12 @@ import { ScenarioLoader } from "../../../shared/agents/memory/scenarioloader/ind
 import type { CoCDatabase } from "../../../shared/agents/memory/database/index.js";
 import type { DynamicGameState } from "../../state/index.js";
 import { DynamicGameStateManager } from "../../state/index.js";
-import type { ActionLogEntry, CharacterStatus, InventoryItem, NPCRelationship } from "../../../shared/agents/models/gameTypes.js";
+import type {
+  ActionLogEntry,
+  CharacterStatus,
+  InventoryItem,
+  NPCRelationship,
+} from "../../../shared/agents/models/gameTypes.js";
 import type { DynamicCharacterProfile } from "../../world_builder/types.js";
 import type { DynamicNPCProfile } from "../../world_builder/types.js";
 import { InventoryUtils } from "../../../shared/agents/models/gameTypes.js";
@@ -26,7 +36,9 @@ interface DirectorRuntime {
 }
 
 const createRuntime = (): DirectorRuntime => ({
-  modelProvider: (process.env.MODEL_PROVIDER as ModelProviderName) || ModelProviderName.OPENAI,
+  modelProvider:
+    (process.env.MODEL_PROVIDER as ModelProviderName) ||
+    ModelProviderName.OPENAI,
   getSetting: (key: string) => process.env[key],
 });
 
@@ -43,7 +55,6 @@ export class DirectorAgent {
     this.db = db;
   }
 
-
   /**
    * Execute scene transition (shared logic)
    */
@@ -53,31 +64,36 @@ export class DirectorAgent {
     gameStateManager: DynamicGameStateManager
   ): Promise<void> {
     const dynamicState = gameStateManager.getState();
-    
+
     console.log(`\n🔄 [Executing Scene Transition]:`);
     console.log(`   To: ${targetSnapshot.name}`);
     console.log(`   Location: ${targetSnapshot.location}`);
-    
+
     try {
       // For DynamicWorld, use updateCurrentScenario directly
       // Checkpoint functionality can be added later if needed
       gameStateManager.updateCurrentScenario({
         snapshot: targetSnapshot,
-        scenarioName: scenarioName
+        scenarioName: scenarioName,
       });
       // Note: Scene change is now tracked via temporaryInfo.sceneChangeRequest
-      
+
       const updatedState = gameStateManager.getState();
-      
+
       console.log(`   ✓ Scene transition completed successfully`);
       console.log(`\n📍 [Post-Transition State]:`);
-      console.log(`   Current Scene: ${updatedState.currentScenario?.name || 'None'}`);
-      console.log(`   Scene ID: ${updatedState.currentScenario?.id || 'None'}`);
-      console.log(`   Location: ${updatedState.currentScenario?.location || 'None'}`);
-      
+      console.log(
+        `   Current Scene: ${updatedState.currentScenario?.name || "None"}`
+      );
+      console.log(`   Scene ID: ${updatedState.currentScenario?.id || "None"}`);
+      console.log(
+        `   Location: ${updatedState.currentScenario?.location || "None"}`
+      );
+
       console.log(`\n✅ [Director Agent] Scene transition completed`);
-      console.log(`🎬 [Director Agent] ========================================\n`);
-      
+      console.log(
+        `🎬 [Director Agent] ========================================\n`
+      );
     } catch (error) {
       console.error(`   ❌ Scene transition failed:`, error);
       throw error;
@@ -94,8 +110,12 @@ export class DirectorAgent {
     reason: string,
     currentCharacterInput?: string
   ): Promise<void> {
-    console.log(`\n🎬 [Director Agent] ========================================`);
-    console.log(`🎬 [Director Agent] Starting to process Action-driven scene transition`);
+    console.log(
+      `\n🎬 [Director Agent] ========================================`
+    );
+    console.log(
+      `🎬 [Director Agent] Starting to process Action-driven scene transition`
+    );
     console.log(`🎬 [Director Agent] ========================================`);
 
     const dynamicState = gameStateManager.getState();
@@ -105,7 +125,9 @@ export class DirectorAgent {
     // Save current scenario as previousScenario for Keeper to access
     if (currentScenario) {
       dynamicState.temporaryInfo.previousScenario = { ...currentScenario };
-      console.log(`\n💾 [Director Agent] Saved previous scenario: ${currentScenario.name}`);
+      console.log(
+        `\n💾 [Director Agent] Saved previous scenario: ${currentScenario.name}`
+      );
     }
 
     // Log current state
@@ -114,7 +136,9 @@ export class DirectorAgent {
       console.log(`   Scene Name: ${currentScenario.name}`);
       console.log(`   Scene ID: ${currentScenario.id}`);
       console.log(`   Location: ${currentScenario.location}`);
-      console.log(`   Description: ${currentScenario.description ? currentScenario.description.substring(0, 100) + '...' : 'None'}`);
+      console.log(
+        `   Description: ${currentScenario.description ? currentScenario.description.substring(0, 100) + "..." : "None"}`
+      );
     } else {
       console.log(`   ⚠️  No current scene`);
     }
@@ -132,7 +156,8 @@ export class DirectorAgent {
 
     // Step 1: Unified update - validates target + generates all snapshots (complete target + simplified background)
     console.log(`\n🔄 [Director Agent] Updating scenarios for scene switch...`);
-    const updateResult = await this.updateScenariosForSceneSwitch(gameStateManager);
+    const updateResult =
+      await this.updateScenariosForSceneSwitch(gameStateManager);
 
     if (!updateResult) {
       // Validation failed, clear scene change request and return
@@ -141,21 +166,32 @@ export class DirectorAgent {
       return;
     }
 
-    const { validatedTargetSceneName, targetSnapshot, backgroundSnapshots, modifiedConnections } = updateResult;
+    const {
+      validatedTargetSceneName,
+      targetSnapshot,
+      backgroundSnapshots,
+      modifiedConnections,
+    } = updateResult;
 
     console.log(`   ✓ Validated target scene: ${validatedTargetSceneName}`);
-    console.log(`   ✓ Generated complete target snapshot + ${backgroundSnapshots.size} background snapshots`);
+    console.log(
+      `   ✓ Generated complete target snapshot + ${backgroundSnapshots.size} background snapshots`
+    );
     if (modifiedConnections) {
-      console.log(`   ✓ Updated ${modifiedConnections.length} connections for target scene`);
+      console.log(
+        `   ✓ Updated ${modifiedConnections.length} connections for target scene`
+      );
     }
 
     // Step 2: Find target scenario outline to get scenarioId
     const targetScenarioOutline = dynamicState.scenarioOutlines.find(
-      outline => outline.name === validatedTargetSceneName
+      (outline) => outline.name === validatedTargetSceneName
     );
 
     if (!targetScenarioOutline) {
-      console.error(`   ❌ Target scenario outline not found for: ${validatedTargetSceneName}`);
+      console.error(
+        `   ❌ Target scenario outline not found for: ${validatedTargetSceneName}`
+      );
       gameStateManager.clearSceneChangeRequest();
       return;
     }
@@ -189,7 +225,9 @@ export class DirectorAgent {
     gameStateManager.clearSceneChangeRequest();
 
     console.log(`✅ [Director Agent] Scene change completed successfully`);
-    console.log(`🎬 [Director Agent] ========================================\n`);
+    console.log(
+      `🎬 [Director Agent] ========================================\n`
+    );
   }
 
   /**
@@ -209,14 +247,18 @@ export class DirectorAgent {
     console.log(`   Turns in scene: ${turnsInScene} / ${threshold}`);
     console.log(`   Minutes since input: ${minutesSinceInput} / 3`);
     console.log(`   Tension: ${dynamicState.tension}/10`);
-    console.log(`   Consecutive triggers: ${dynamicState.consecutiveProgressionTriggers} / 3`);
+    console.log(
+      `   Consecutive triggers: ${dynamicState.consecutiveProgressionTriggers} / 3`
+    );
 
     // Check if either threshold is reached
     const shouldTrigger = gameStateManager.shouldTriggerProgression();
 
     if (!shouldTrigger) {
       if (dynamicState.consecutiveProgressionTriggers >= 3) {
-        console.log(`   ⚠️ Max consecutive triggers reached (3), skipping to prevent infinite loop`);
+        console.log(
+          `   ⚠️ Max consecutive triggers reached (3), skipping to prevent infinite loop`
+        );
       } else {
         console.log(`   ✓ No trigger conditions met`);
       }
@@ -225,29 +267,35 @@ export class DirectorAgent {
 
     // Increment consecutive trigger count
     gameStateManager.incrementConsecutiveTriggers();
-    const currentTriggerCount = gameStateManager.getState().consecutiveProgressionTriggers;
+    const currentTriggerCount =
+      gameStateManager.getState().consecutiveProgressionTriggers;
 
     // Log which condition triggered
     if (turnsInScene >= threshold) {
-      console.log(`   ⚠️ Turn threshold reached! Getting recent player actions... (trigger ${currentTriggerCount}/3)`);
+      console.log(
+        `   ⚠️ Turn threshold reached! Getting recent player actions... (trigger ${currentTriggerCount}/3)`
+      );
     } else if (minutesSinceInput >= 3) {
-      console.log(`   ⚠️ Time threshold reached (3 min idle)! Getting recent player actions... (trigger ${currentTriggerCount}/3)`);
+      console.log(
+        `   ⚠️ Time threshold reached (3 min idle)! Getting recent player actions... (trigger ${currentTriggerCount}/3)`
+      );
     }
 
     // Get player's actionLog from the last 3 turns
     const playerActionLog = dynamicState.playerCharacter.actionLog || [];
-    
+
     // Get recent conversation history to determine which actionLog entries belong to last 3 turns
-    const conversationHistory = (dynamicState.temporaryInfo.contextualData?.conversationHistory as Array<{
-      turnNumber: number;
-      characterInput: string;
-      keeperNarrative: string | null;
-      actionAnalysis?: any;
-    }>) || [];
+    const conversationHistory =
+      (dynamicState.temporaryInfo.contextualData?.conversationHistory as Array<{
+        turnNumber: number;
+        characterInput: string;
+        keeperNarrative: string | null;
+        actionAnalysis?: any;
+      }>) || [];
 
     // Get last 3 turns
     const last3Turns = conversationHistory.slice(-3);
-    const last3TurnNumbers = new Set(last3Turns.map(t => t.turnNumber));
+    const last3TurnNumbers = new Set(last3Turns.map((t) => t.turnNumber));
 
     // Filter actionLog entries that belong to the last 3 turns
     // We'll use a simple approach: get the last N entries where N is roughly the number of actions in 3 turns
@@ -256,8 +304,15 @@ export class DirectorAgent {
     const recentActionLog = playerActionLog.slice(-15);
 
     if (recentActionLog.length > 0) {
-      console.log(`   ✓ Found ${recentActionLog.length} recent actionLog entries`);
-      console.log(`   Latest actions: ${recentActionLog.slice(-3).map(a => a.summary).join("; ")}`);
+      console.log(
+        `   ✓ Found ${recentActionLog.length} recent actionLog entries`
+      );
+      console.log(
+        `   Latest actions: ${recentActionLog
+          .slice(-3)
+          .map((a) => a.summary)
+          .join("; ")}`
+      );
     } else {
       console.log(`   ⚠️ No recent actionLog entries found`);
     }
@@ -269,22 +324,24 @@ export class DirectorAgent {
    * Parse game time from snapshot gameTime string or actionLog time
    * Format: "Day N, HH:MM" or "initial" or other formats
    */
-  private parseGameTimeFromSnapshot(gameTime?: string): { gameDay: number; timeOfDay: string } | null {
+  private parseGameTimeFromSnapshot(
+    gameTime?: string
+  ): { gameDay: number; timeOfDay: string } | null {
     if (!gameTime) return null;
-    
+
     // Handle "initial" or other non-standard formats
     if (gameTime.toLowerCase() === "initial" || !gameTime.includes("Day")) {
       return null; // Cannot parse, treat as before any valid time
     }
-    
+
     const match = gameTime.match(/Day\s*(\d+),\s*(\d{2}:\d{2})/i);
     if (match) {
       return {
         gameDay: parseInt(match[1], 10),
-        timeOfDay: match[2]
+        timeOfDay: match[2],
       };
     }
-    
+
     return null;
   }
 
@@ -297,13 +354,15 @@ export class DirectorAgent {
     currentGameDay: number,
     currentTimeOfDay: string,
     dynamicState: DynamicGameState
-  ): Promise<Array<{
-    scenarioId: string;
-    scenarioName: string;
-    snapshot: DynamicScenarioSnapshot;
-  }>> {
+  ): Promise<
+    Array<{
+      scenarioId: string;
+      scenarioName: string;
+      snapshot: DynamicScenarioSnapshot;
+    }>
+  > {
     const allScenarios = this.scenarioLoader.getAllScenarios();
-    
+
     const scenariosWithLatestSnapshots: Array<{
       scenarioId: string;
       scenarioName: string;
@@ -317,17 +376,21 @@ export class DirectorAgent {
       }
 
       // Try to get latest updated snapshot from dynamicState first
-      const snapshots = dynamicState.updatedDynamicScenarioSnapshots.get(scenario.id);
+      const snapshots = dynamicState.updatedDynamicScenarioSnapshots.get(
+        scenario.id
+      );
       let snapshot: DynamicScenarioSnapshot | null = null;
-      
+
       if (snapshots && snapshots.length > 0) {
         // Get the latest snapshot (last in array)
         snapshot = snapshots[snapshots.length - 1];
       }
-      
+
       // If no updated snapshot, get initial snapshot from scenarioLoader
       if (!snapshot) {
-        const scenarioProfile = this.scenarioLoader.getScenarioById(scenario.id);
+        const scenarioProfile = this.scenarioLoader.getScenarioById(
+          scenario.id
+        );
         if (scenarioProfile && scenarioProfile.snapshot) {
           snapshot = scenarioProfile.snapshot;
         }
@@ -337,7 +400,7 @@ export class DirectorAgent {
         scenariosWithLatestSnapshots.push({
           scenarioId: scenario.id,
           scenarioName: scenario.name,
-          snapshot: snapshot
+          snapshot: snapshot,
         });
       }
     }
@@ -348,18 +411,20 @@ export class DirectorAgent {
   /**
    * Get current location from actionLog (latest entry with location)
    */
-  private getCurrentLocationFromActionLog(actionLog?: ActionLogEntry[]): string | null {
+  private getCurrentLocationFromActionLog(
+    actionLog?: ActionLogEntry[]
+  ): string | null {
     if (!actionLog || actionLog.length === 0) {
       return null;
     }
-    
+
     // Find the latest entry with a location (iterate backwards)
     for (let i = actionLog.length - 1; i >= 0; i--) {
       if (actionLog[i].location) {
         return actionLog[i].location;
       }
     }
-    
+
     return null;
   }
 
@@ -414,26 +479,30 @@ export class DirectorAgent {
 
     for (const npc of npcCharacters) {
       const npcProfile = npc;
-      
+
       // Check if NPC is currently in this scenario location
       // Get current location from actionLog (latest entry with location)
-      const currentLocation = this.getCurrentLocationFromActionLog(npcProfile.actionLog);
+      const currentLocation = this.getCurrentLocationFromActionLog(
+        npcProfile.actionLog
+      );
       let isInScenario = false;
-      
-      if (currentLocation && 
-          currentLocation.toLowerCase() === scenarioLocation.toLowerCase()) {
+
+      if (
+        currentLocation &&
+        currentLocation.toLowerCase() === scenarioLocation.toLowerCase()
+      ) {
         isInScenario = true;
       }
-      
+
       if (isInScenario) {
         // Extract timeline actionLog from previous snapshot time to current time
         // This creates a timeline of events that happened in this scenario during the time period
         let timelineActionLog: ActionLogEntry[] = [];
-        
+
         if (npcProfile.actionLog && npcProfile.actionLog.length > 0) {
           // Filter actionLog entries that fall between previous snapshot time and current time
           // This represents what happened in the scenario during this time period
-          timelineActionLog = npcProfile.actionLog.filter(log => {
+          timelineActionLog = npcProfile.actionLog.filter((log) => {
             // Skip entries with invalid time formats (like "initial")
             const logTime = this.parseGameTimeFromSnapshot(log.time);
             if (!logTime) {
@@ -441,30 +510,33 @@ export class DirectorAgent {
               // (meaning this is the first update)
               return !previousSnapshotTime;
             }
-            
+
             // If no previous snapshot time, include all entries up to current time
             if (!previousSnapshotTime) {
               return this.isTimeBeforeOrEqual(log.time, currentGameTime);
             }
-            
+
             // Include entries between previous snapshot time and current time
             // (exclusive of previous time, inclusive of current time)
-            return this.isTimeAfter(log.time, previousSnapshotTime) && 
-                   this.isTimeBeforeOrEqual(log.time, currentGameTime);
+            return (
+              this.isTimeAfter(log.time, previousSnapshotTime) &&
+              this.isTimeBeforeOrEqual(log.time, currentGameTime)
+            );
           });
-          
+
           // Sort by time to ensure chronological order
           timelineActionLog.sort((a, b) => {
             const timeA = this.parseGameTimeFromSnapshot(a.time);
             const timeB = this.parseGameTimeFromSnapshot(b.time);
             if (!timeA || !timeB) return 0;
-            if (timeA.gameDay !== timeB.gameDay) return timeA.gameDay - timeB.gameDay;
-            const [hA, mA] = timeA.timeOfDay.split(':').map(Number);
-            const [hB, mB] = timeB.timeOfDay.split(':').map(Number);
+            if (timeA.gameDay !== timeB.gameDay)
+              return timeA.gameDay - timeB.gameDay;
+            const [hA, mA] = timeA.timeOfDay.split(":").map(Number);
+            const [hB, mB] = timeB.timeOfDay.split(":").map(Number);
             return hA * 60 + mA - (hB * 60 + mB);
           });
         }
-        
+
         npcsInScenario.push({
           id: npcProfile.id,
           name: npcProfile.name,
@@ -483,11 +555,11 @@ export class DirectorAgent {
           actionLog: timelineActionLog,
           // DynamicWorld specific fields for matching with knowledge matrix
           instantiatedFrom: npcProfile.instantiatedFrom || null, // Knowledge holder ID (ROLE/ORGANIZATION)
-          inheritsKnowledge: npcProfile.inheritsKnowledge || [] // Truth event IDs this NPC knows
+          inheritsKnowledge: npcProfile.inheritsKnowledge || [], // Truth event IDs this NPC knows
         });
       }
     }
-    
+
     return npcsInScenario;
   }
 
@@ -498,16 +570,16 @@ export class DirectorAgent {
   private isTimeBeforeOrEqual(time1: string, time2: string): boolean {
     const t1 = this.parseGameTimeFromSnapshot(time1);
     const t2 = this.parseGameTimeFromSnapshot(time2);
-    
+
     if (!t1 || !t2) return false;
-    
+
     if (t1.gameDay < t2.gameDay) return true;
     if (t1.gameDay > t2.gameDay) return false;
-    
+
     // Same day, compare time
-    const [h1, m1] = t1.timeOfDay.split(':').map(Number);
-    const [h2, m2] = t2.timeOfDay.split(':').map(Number);
-    
+    const [h1, m1] = t1.timeOfDay.split(":").map(Number);
+    const [h2, m2] = t2.timeOfDay.split(":").map(Number);
+
     return h1 < h2 || (h1 === h2 && m1 <= m2);
   }
 
@@ -518,16 +590,16 @@ export class DirectorAgent {
   private isTimeAfter(time1: string, time2: string): boolean {
     const t1 = this.parseGameTimeFromSnapshot(time1);
     const t2 = this.parseGameTimeFromSnapshot(time2);
-    
+
     if (!t1 || !t2) return false;
-    
+
     if (t1.gameDay > t2.gameDay) return true;
     if (t1.gameDay < t2.gameDay) return false;
-    
+
     // Same day, compare time
-    const [h1, m1] = t1.timeOfDay.split(':').map(Number);
-    const [h2, m2] = t2.timeOfDay.split(':').map(Number);
-    
+    const [h1, m1] = t1.timeOfDay.split(":").map(Number);
+    const [h2, m2] = t2.timeOfDay.split(":").map(Number);
+
     return h1 > h2 || (h1 === h2 && m1 > m2);
   }
 
@@ -542,13 +614,17 @@ export class DirectorAgent {
     targetName?: string
   ): DynamicNPCProfile | null {
     // Stage 1: Exact match (case-sensitive)
-    const exactMatch = npcCharacters.find(npc => npc.id === targetId);
+    const exactMatch = npcCharacters.find((npc) => npc.id === targetId);
     if (exactMatch) {
       return exactMatch;
     }
 
     // Stage 2: Fuzzy match by ID (case-insensitive, normalized)
-    const normalizeId = (id: string) => id.toLowerCase().trim().replace(/[\s_-]/g, '');
+    const normalizeId = (id: string) =>
+      id
+        .toLowerCase()
+        .trim()
+        .replace(/[\s_-]/g, "");
     const normalizedTargetId = normalizeId(targetId);
 
     let bestMatch: DynamicNPCProfile | null = null;
@@ -563,7 +639,10 @@ export class DirectorAgent {
       // Check if normalized IDs match
       if (normalizedNpcId === normalizedTargetId) {
         score = 0.9; // High score for normalized match
-      } else if (normalizedNpcId.includes(normalizedTargetId) || normalizedTargetId.includes(normalizedNpcId)) {
+      } else if (
+        normalizedNpcId.includes(normalizedTargetId) ||
+        normalizedTargetId.includes(normalizedNpcId)
+      ) {
         score = 0.7; // Medium score for substring match
       }
 
@@ -574,7 +653,10 @@ export class DirectorAgent {
 
         if (normalizedNpcName === normalizedTargetName) {
           score += 0.3;
-        } else if (normalizedNpcName.includes(normalizedTargetName) || normalizedTargetName.includes(normalizedNpcName)) {
+        } else if (
+          normalizedNpcName.includes(normalizedTargetName) ||
+          normalizedTargetName.includes(normalizedNpcName)
+        ) {
           score += 0.2;
         }
       }
@@ -587,7 +669,9 @@ export class DirectorAgent {
 
     // Only return fuzzy match if score is above threshold
     if (bestScore >= 0.5) {
-      console.log(`   ℹ️  Fuzzy matched "${targetId}"${targetName ? ` (${targetName})` : ''} → "${bestMatch?.id}" (${bestMatch?.name}) [score: ${bestScore.toFixed(2)}]`);
+      console.log(
+        `   ℹ️  Fuzzy matched "${targetId}"${targetName ? ` (${targetName})` : ""} → "${bestMatch?.id}" (${bestMatch?.name}) [score: ${bestScore.toFixed(2)}]`
+      );
       return bestMatch;
     }
 
@@ -602,7 +686,9 @@ export class DirectorAgent {
     npc: DynamicNPCProfile,
     delta: {
       status?: Partial<CharacterStatus>;
-      inventory?: { add?: InventoryItem[]; remove?: InventoryItem[] } | InventoryItem[];
+      inventory?:
+        | { add?: InventoryItem[]; remove?: InventoryItem[] }
+        | InventoryItem[];
       relationships?: NPCRelationship[];
       actionLog?: ActionLogEntry[];
     }
@@ -610,20 +696,20 @@ export class DirectorAgent {
     // Apply status delta (only changed attributes)
     if (delta.status) {
       for (const [key, value] of Object.entries(delta.status)) {
-        if (typeof value === 'number' && key in npc.status) {
+        if (typeof value === "number" && key in npc.status) {
           // Apply differential update (e.g., hp: -2 means subtract 2)
           (npc.status as any)[key] += value;
-          
+
           // Ensure values don't go below 0 (except for conditions array)
-          if (key !== 'conditions' && (npc.status as any)[key] < 0) {
+          if (key !== "conditions" && (npc.status as any)[key] < 0) {
             (npc.status as any)[key] = 0;
           }
-          
+
           // Ensure hp/sanity don't exceed max
-          if (key === 'hp' && npc.status.hp > npc.status.maxHp) {
+          if (key === "hp" && npc.status.hp > npc.status.maxHp) {
             npc.status.hp = npc.status.maxHp;
           }
-          if (key === 'sanity' && npc.status.sanity > npc.status.maxSanity) {
+          if (key === "sanity" && npc.status.sanity > npc.status.maxSanity) {
             npc.status.sanity = npc.status.maxSanity;
           }
         }
@@ -633,28 +719,31 @@ export class DirectorAgent {
     // Apply inventory delta (add/remove format)
     if (delta.inventory) {
       npc.inventory = InventoryUtils.normalizeInventory(npc.inventory);
-      
+
       if (Array.isArray(delta.inventory)) {
         // Replace entire inventory (legacy support)
         npc.inventory = InventoryUtils.normalizeInventory(delta.inventory);
-      } else if (typeof delta.inventory === 'object' && !Array.isArray(delta.inventory)) {
+      } else if (
+        typeof delta.inventory === "object" &&
+        !Array.isArray(delta.inventory)
+      ) {
         // Support { add: [...], remove: [...] } format
         if (delta.inventory.add) {
-          const itemsToAdd = Array.isArray(delta.inventory.add) 
-            ? delta.inventory.add 
+          const itemsToAdd = Array.isArray(delta.inventory.add)
+            ? delta.inventory.add
             : [delta.inventory.add];
           npc.inventory = InventoryUtils.addItems(
-            npc.inventory, 
+            npc.inventory,
             InventoryUtils.normalizeInventory(itemsToAdd)
           );
         }
-        
+
         if (delta.inventory.remove) {
           const itemsToRemove = Array.isArray(delta.inventory.remove)
             ? delta.inventory.remove
             : [delta.inventory.remove];
           npc.inventory = InventoryUtils.removeItems(
-            npc.inventory, 
+            npc.inventory,
             InventoryUtils.normalizeInventory(itemsToRemove)
           );
         }
@@ -664,7 +753,9 @@ export class DirectorAgent {
     // Apply relationship updates (merge new/changed relationships)
     if (delta.relationships && delta.relationships.length > 0) {
       for (const newRel of delta.relationships) {
-        const existingIndex = npc.relationships.findIndex(r => r.targetId === newRel.targetId);
+        const existingIndex = npc.relationships.findIndex(
+          (r) => r.targetId === newRel.targetId
+        );
         if (existingIndex >= 0) {
           // Update existing relationship
           npc.relationships[existingIndex] = newRel;
@@ -683,7 +774,7 @@ export class DirectorAgent {
       // Append new actionLog entries (avoid duplicates by checking time+location+summary)
       for (const newEntry of delta.actionLog) {
         const isDuplicate = npc.actionLog.some(
-          existing => 
+          (existing) =>
             existing.time === newEntry.time &&
             existing.location === newEntry.location &&
             existing.summary === newEntry.summary
@@ -697,9 +788,10 @@ export class DirectorAgent {
         const timeA = this.parseGameTimeFromSnapshot(a.time);
         const timeB = this.parseGameTimeFromSnapshot(b.time);
         if (!timeA || !timeB) return 0;
-        if (timeA.gameDay !== timeB.gameDay) return timeA.gameDay - timeB.gameDay;
-        const [hA, mA] = timeA.timeOfDay.split(':').map(Number);
-        const [hB, mB] = timeB.timeOfDay.split(':').map(Number);
+        if (timeA.gameDay !== timeB.gameDay)
+          return timeA.gameDay - timeB.gameDay;
+        const [hA, mA] = timeA.timeOfDay.split(":").map(Number);
+        const [hB, mB] = timeB.timeOfDay.split(":").map(Number);
         return hA * 60 + mA - (hB * 60 + mB);
       });
     }
@@ -734,7 +826,9 @@ export class DirectorAgent {
       return null;
     }
 
-    console.log(`   📋 Scene change request: ${sceneChangeRequest.targetSceneName}`);
+    console.log(
+      `   📋 Scene change request: ${sceneChangeRequest.targetSceneName}`
+    );
     console.log(`   📍 Current scenario: ${currentScenarioName}`);
 
     try {
@@ -746,7 +840,7 @@ export class DirectorAgent {
 
       // Build scenario outline map for quick lookup
       const scenarioOutlineMap = new Map(
-        dynamicState.scenarioOutlines.map(outline => [outline.id, outline])
+        dynamicState.scenarioOutlines.map((outline) => [outline.id, outline])
       );
 
       // Build comprehensive scenario data with NPCs, clues, conditions for ALL scenarios
@@ -754,7 +848,9 @@ export class DirectorAgent {
 
       for (const scenario of allScenarios) {
         // Get the scenario's initial snapshot (with full details: clues, conditions)
-        const scenarioProfile = this.scenarioLoader.getScenarioById(scenario.id);
+        const scenarioProfile = this.scenarioLoader.getScenarioById(
+          scenario.id
+        );
         if (!scenarioProfile || !scenarioProfile.snapshot) continue;
         const initialSnapshot = scenarioProfile.snapshot;
 
@@ -783,10 +879,10 @@ export class DirectorAgent {
             description: initialSnapshot.description,
             clues: initialSnapshot.clues || [], // FULL clues for target scene
             conditions: initialSnapshot.conditions || [], // FULL conditions
-            previousGameTime: initialSnapshot.gameTime || null
+            previousGameTime: initialSnapshot.gameTime || null,
           },
           characters: npcsInScenario,
-          currentGameTime: currentGameTime
+          currentGameTime: currentGameTime,
         });
       }
 
@@ -794,13 +890,13 @@ export class DirectorAgent {
       const allScenariosJson = JSON.stringify(allScenariosData, null, 2);
 
       // Get player's current scenario outline for sourcePlaceId, sourcePlaceName, and connections
-      const playerScenarioOutline = currentScenario?.id 
+      const playerScenarioOutline = currentScenario?.id
         ? scenarioOutlineMap.get(currentScenario.id)
         : null;
 
       // Find target scenario info for template
       const targetScenarioData = allScenariosData.find(
-        s => s.scenarioName === sceneChangeRequest.targetSceneName
+        (s) => s.scenarioName === sceneChangeRequest.targetSceneName
       );
 
       // Build template context
@@ -808,29 +904,43 @@ export class DirectorAgent {
         sceneChangeRequest: {
           targetSceneName: sceneChangeRequest.targetSceneName,
           reason: sceneChangeRequest.reason,
-          timestamp: sceneChangeRequest.timestamp?.toISOString() || new Date().toISOString()
+          timestamp:
+            sceneChangeRequest.timestamp?.toISOString() ||
+            new Date().toISOString(),
         },
         currentScenarioName,
-        playerCurrentScene: currentScenario ? {
-          name: currentScenario.name,
-          location: currentScenario.location,
-          description: currentScenario.description || null,
-          sourcePlaceId: playerScenarioOutline?.sourcePlaceId || null,
-          sourcePlaceName: playerScenarioOutline?.sourcePlaceName || null,
-          connections: playerScenarioOutline?.connections || []
-        } : null,
-        targetScene: targetScenarioData ? {
-          id: targetScenarioData.scenarioId,
-          name: targetScenarioData.scenarioName
-        } : null,
+        playerCurrentScene: currentScenario
+          ? {
+              name: currentScenario.name,
+              location: currentScenario.location,
+              description: currentScenario.description || null,
+              sourcePlaceId: playerScenarioOutline?.sourcePlaceId || null,
+              sourcePlaceName: playerScenarioOutline?.sourcePlaceName || null,
+              connections: playerScenarioOutline?.connections || [],
+            }
+          : null,
+        targetScene: targetScenarioData
+          ? {
+              id: targetScenarioData.scenarioId,
+              name: targetScenarioData.scenarioName,
+            }
+          : null,
         allScenariosJson,
         currentGameDay: dynamicState.gameDay,
         currentTimeOfDay: dynamicState.timeOfDay,
         truthTimelineJson: JSON.stringify(dynamicState.truthTimeline, null, 2),
-        knowledgeMatrixJson: JSON.stringify(dynamicState.knowledgeMatrix, null, 2),
+        knowledgeMatrixJson: JSON.stringify(
+          dynamicState.knowledgeMatrix,
+          null,
+          2
+        ),
         previousGlobalTrigger: dynamicState.globalTrigger,
-        previousGlobalTriggerJson: dynamicState.globalTrigger ? JSON.stringify(dynamicState.globalTrigger, null, 2) : null,
-        endStateJson: dynamicState.endState ? JSON.stringify(dynamicState.endState, null, 2) : "null"
+        previousGlobalTriggerJson: dynamicState.globalTrigger
+          ? JSON.stringify(dynamicState.globalTrigger, null, 2)
+          : null,
+        endStateJson: dynamicState.endState
+          ? JSON.stringify(dynamicState.endState, null, 2)
+          : "null",
       };
 
       // Generate unified snapshots using LLM
@@ -844,7 +954,9 @@ export class DirectorAgent {
         "handlebars"
       );
 
-      console.log(`   🤖 Calling LLM to generate unified snapshots (1 complete target + ${allScenariosData.length - 1} simplified background)...`);
+      console.log(
+        `   🤖 Calling LLM to generate unified snapshots (1 complete target + ${allScenariosData.length - 1} simplified background)...`
+      );
 
       const response = await generateText({
         runtime,
@@ -889,27 +1001,42 @@ export class DirectorAgent {
       }
 
       // Validate response structure
-      if (!parsedResponse.updatedSnapshots || parsedResponse.updatedSnapshots.length === 0) {
+      if (
+        !parsedResponse.updatedSnapshots ||
+        parsedResponse.updatedSnapshots.length === 0
+      ) {
         console.error(`❌ LLM response missing updatedSnapshots array`);
-        console.error(`   Full parsed response:`, JSON.stringify(parsedResponse, null, 2));
+        console.error(
+          `   Full parsed response:`,
+          JSON.stringify(parsedResponse, null, 2)
+        );
         return null;
       }
 
       // Extract target scene from updatedSnapshots (marked with isTargetScene: true)
-      const targetSceneItem = parsedResponse.updatedSnapshots.find(item => item.isTargetScene === true);
+      const targetSceneItem = parsedResponse.updatedSnapshots.find(
+        (item) => item.isTargetScene === true
+      );
 
       if (!targetSceneItem) {
-        console.error(`❌ No target scene found in updatedSnapshots (isTargetScene: true)`);
-        console.error(`   Available scenes:`, parsedResponse.updatedSnapshots.map(s => ({
-          scenarioId: s.scenarioId,
-          isTargetScene: s.isTargetScene,
-          name: s.snapshot.name
-        })));
+        console.error(
+          `❌ No target scene found in updatedSnapshots (isTargetScene: true)`
+        );
+        console.error(
+          `   Available scenes:`,
+          parsedResponse.updatedSnapshots.map((s) => ({
+            scenarioId: s.scenarioId,
+            isTargetScene: s.isTargetScene,
+            name: s.snapshot.name,
+          }))
+        );
         return null;
       }
 
       // Extract background snapshots (all non-target scenes)
-      const backgroundSnapshotsArray = parsedResponse.updatedSnapshots.filter(item => !item.isTargetScene);
+      const backgroundSnapshotsArray = parsedResponse.updatedSnapshots.filter(
+        (item) => !item.isTargetScene
+      );
 
       // Get validated target scene name from the snapshot
       const validatedTargetSceneName = targetSceneItem.snapshot.name;
@@ -919,7 +1046,7 @@ export class DirectorAgent {
       const targetSnapshot: DynamicScenarioSnapshot = {
         ...targetSceneItem.snapshot,
         gameTime: currentGameTime,
-        snapshotType: "complete"  // Target snapshot is always complete
+        snapshotType: "complete", // Target snapshot is always complete
       };
 
       console.log(`   ✓ Validated target scene: ${validatedTargetSceneName}`);
@@ -930,22 +1057,32 @@ export class DirectorAgent {
           const charWithActionLog = char as ScenarioCharacter & {
             actionLog?: ActionLogEntry[];
             status?: Partial<CharacterStatus>;
-            inventory?: { add?: InventoryItem[]; remove?: InventoryItem[] } | InventoryItem[];
+            inventory?:
+              | { add?: InventoryItem[]; remove?: InventoryItem[] }
+              | InventoryItem[];
             relationships?: NPCRelationship[];
           };
 
           // Merge delta to actual NPC in gameState (with fuzzy matching)
-          const npc = this.findNPCById(dynamicState.npcCharacters, char.id, char.name);
+          const npc = this.findNPCById(
+            dynamicState.npcCharacters,
+            char.id,
+            char.name
+          );
           if (npc) {
             this.mergeCharacterDeltaToNPC(npc, {
               status: charWithActionLog.status,
               inventory: charWithActionLog.inventory,
               relationships: charWithActionLog.relationships,
-              actionLog: charWithActionLog.actionLog
+              actionLog: charWithActionLog.actionLog,
             });
-            console.log(`   ✓ Merged delta updates to NPC: ${npc.name} (${npc.id})`);
+            console.log(
+              `   ✓ Merged delta updates to NPC: ${npc.name} (${npc.id})`
+            );
           } else {
-            console.warn(`   ⚠️ NPC "${char.id}"${char.name ? ` (${char.name})` : ''} not found in gameState, skipping delta merge`);
+            console.warn(
+              `   ⚠️ NPC "${char.id}"${char.name ? ` (${char.name})` : ""} not found in gameState, skipping delta merge`
+            );
           }
         }
       }
@@ -957,24 +1094,33 @@ export class DirectorAgent {
       const backgroundSnapshotsMap = new Map<string, DynamicScenarioSnapshot>();
 
       if (backgroundSnapshotsArray.length > 0) {
-        console.log(`   📋 Processing ${backgroundSnapshotsArray.length} background snapshots...`);
+        console.log(
+          `   📋 Processing ${backgroundSnapshotsArray.length} background snapshots...`
+        );
 
         for (const item of backgroundSnapshotsArray) {
           // Validate actionLog format (background snapshots don't update actual NPCs)
           if (item.snapshot.characters) {
             for (const char of item.snapshot.characters) {
-              const charWithActionLog = char as ScenarioCharacter & { 
+              const charWithActionLog = char as ScenarioCharacter & {
                 actionLog?: ActionLogEntry[];
               };
-              
+
               // Validate actionLog entries
               if (charWithActionLog.actionLog) {
                 for (const logEntry of charWithActionLog.actionLog) {
-                  if (!logEntry.time || !logEntry.location || !logEntry.summary) {
-                    console.warn(`   ⚠️ Invalid actionLog entry for character ${char.id}, filtering...`);
-                    charWithActionLog.actionLog = charWithActionLog.actionLog.filter(
-                      (e: ActionLogEntry) => e.time && e.location && e.summary
+                  if (
+                    !logEntry.time ||
+                    !logEntry.location ||
+                    !logEntry.summary
+                  ) {
+                    console.warn(
+                      `   ⚠️ Invalid actionLog entry for character ${char.id}, filtering...`
                     );
+                    charWithActionLog.actionLog =
+                      charWithActionLog.actionLog.filter(
+                        (e: ActionLogEntry) => e.time && e.location && e.summary
+                      );
                   }
                 }
               }
@@ -985,13 +1131,15 @@ export class DirectorAgent {
           const bgSnapshot: DynamicScenarioSnapshot = {
             ...item.snapshot,
             gameTime: currentGameTime,
-            snapshotType: "simplified"  // Background snapshots are simplified
+            snapshotType: "simplified", // Background snapshots are simplified
           };
 
           // Add to map (no database save)
           backgroundSnapshotsMap.set(item.scenarioId, bgSnapshot);
 
-          console.log(`   ✓ Processed background snapshot for scenario ${item.scenarioId}`);
+          console.log(
+            `   ✓ Processed background snapshot for scenario ${item.scenarioId}`
+          );
         }
       }
 
@@ -1001,7 +1149,7 @@ export class DirectorAgent {
 
         // Find target scenario in scenarioOutlines
         const targetScenarioOutline = dynamicState.scenarioOutlines.find(
-          outline => outline.name === validatedTargetSceneName
+          (outline) => outline.name === validatedTargetSceneName
         );
 
         if (targetScenarioOutline) {
@@ -1020,10 +1168,12 @@ export class DirectorAgent {
 
           // Update in-memory scenarioOutline
           // Convert relationshipType to ScenarioConnectionType and add scenarioId
-          const convertedConnections = modifiedConnections.map(conn => {
+          const convertedConnections = modifiedConnections.map((conn) => {
             // Find target scenario to get ID
             const targetScenario = dynamicState.scenarioOutlines.find(
-              outline => outline.name === conn.scenarioName || outline.id === conn.scenarioName
+              (outline) =>
+                outline.name === conn.scenarioName ||
+                outline.id === conn.scenarioName
             );
             return {
               scenarioName: targetScenario?.name || conn.scenarioName,
@@ -1031,19 +1181,25 @@ export class DirectorAgent {
               relationshipType: conn.relationshipType as ScenarioConnectionType,
               description: conn.description,
               blocked: conn.blocked,
-              blockReason: conn.blockReason ?? undefined
+              blockReason: conn.blockReason ?? undefined,
             };
           });
           targetScenarioOutline.connections = convertedConnections;
 
-          console.log(`   ✓ Updated connections for ${validatedTargetSceneName}`);
+          console.log(
+            `   ✓ Updated connections for ${validatedTargetSceneName}`
+          );
 
           // Log blocked connections if any
-          const blockedConnections = modifiedConnections.filter(c => c.blocked);
+          const blockedConnections = modifiedConnections.filter(
+            (c) => c.blocked
+          );
           if (blockedConnections.length > 0) {
             console.log(`   ⚠️ Blocked connections:`);
-            blockedConnections.forEach(c => {
-              console.log(`      - ${c.scenarioName}: ${c.blockReason || 'blocked'}`);
+            blockedConnections.forEach((c) => {
+              console.log(
+                `      - ${c.scenarioName}: ${c.blockReason || "blocked"}`
+              );
             });
           }
         }
@@ -1054,24 +1210,40 @@ export class DirectorAgent {
         gameStateManager.setGlobalTrigger(parsedResponse.globalTrigger);
         console.log(`   ✓ Saved global trigger condition`);
         if (parsedResponse.globalTrigger.timeRestriction) {
-          console.log(`     - Time: ${parsedResponse.globalTrigger.timeRestriction}`);
+          console.log(
+            `     - Time: ${parsedResponse.globalTrigger.timeRestriction}`
+          );
           if (parsedResponse.globalTrigger.timeReason) {
-            console.log(`       Reason: ${parsedResponse.globalTrigger.timeReason}`);
+            console.log(
+              `       Reason: ${parsedResponse.globalTrigger.timeReason}`
+            );
           }
         }
-        if (parsedResponse.globalTrigger.events && parsedResponse.globalTrigger.events.length > 0) {
-          console.log(`     - Events: ${parsedResponse.globalTrigger.events.join(", ")}`);
-          if (parsedResponse.globalTrigger.eventReasons && parsedResponse.globalTrigger.eventReasons.length > 0) {
-            parsedResponse.globalTrigger.eventReasons.forEach((reason, index) => {
-              console.log(`       Event ${index + 1} reason: ${reason}`);
-            });
+        if (
+          parsedResponse.globalTrigger.events &&
+          parsedResponse.globalTrigger.events.length > 0
+        ) {
+          console.log(
+            `     - Events: ${parsedResponse.globalTrigger.events.join(", ")}`
+          );
+          if (
+            parsedResponse.globalTrigger.eventReasons &&
+            parsedResponse.globalTrigger.eventReasons.length > 0
+          ) {
+            parsedResponse.globalTrigger.eventReasons.forEach(
+              (reason, index) => {
+                console.log(`       Event ${index + 1} reason: ${reason}`);
+              }
+            );
           }
         }
       }
 
       console.log(`✅ [Director Agent] Scene switch update completed`);
       console.log(`   - Target: ${validatedTargetSceneName} (complete)`);
-      console.log(`   - Background: ${backgroundSnapshotsMap.size} scenarios (simplified)`);
+      console.log(
+        `   - Background: ${backgroundSnapshotsMap.size} scenarios (simplified)`
+      );
       if (modifiedConnections) {
         console.log(`   - Connections: ${modifiedConnections.length} updated`);
       }
@@ -1080,10 +1252,13 @@ export class DirectorAgent {
         validatedTargetSceneName,
         targetSnapshot: savedTargetSnapshot,
         backgroundSnapshots: backgroundSnapshotsMap,
-        modifiedConnections
+        modifiedConnections,
       };
     } catch (error) {
-      console.error(`❌ [Director Agent] Failed to update scenarios for scene switch:`, error);
+      console.error(
+        `❌ [Director Agent] Failed to update scenarios for scene switch:`,
+        error
+      );
       return null;
     }
   }
@@ -1094,7 +1269,9 @@ export class DirectorAgent {
   async updateNonPlayerScenarios(
     gameStateManager: DynamicGameStateManager
   ): Promise<void> {
-    console.log(`\n🎬 [Director Agent] Starting scenario update for non-player scenes...`);
+    console.log(
+      `\n🎬 [Director Agent] Starting scenario update for non-player scenes...`
+    );
 
     // Ensure gameStateManager has db for snapshot management
     gameStateManager.setDb(this.db);
@@ -1107,8 +1284,8 @@ export class DirectorAgent {
     saveDynamicGameStateCheckpoint(
       this.db,
       dynamicState,
-      'auto',
-      'Before non-player scenario update'
+      "auto",
+      "Before non-player scenario update"
     );
 
     try {
@@ -1125,17 +1302,19 @@ export class DirectorAgent {
         return;
       }
 
-      console.log(`   📋 Found ${scenariosWithSnapshots.length} scenarios to update`);
+      console.log(
+        `   📋 Found ${scenariosWithSnapshots.length} scenarios to update`
+      );
 
       // Build template context with NPCs for each scenario at current time point
       const currentGameTime = `Day ${dynamicState.gameDay}, ${dynamicState.timeOfDay}`;
-      
+
       // Build a map of scenarioId -> scenarioOutline for quick lookup
       const scenarioOutlineMap = new Map(
-        dynamicState.scenarioOutlines.map(outline => [outline.id, outline])
+        dynamicState.scenarioOutlines.map((outline) => [outline.id, outline])
       );
 
-      const scenariosToUpdate = scenariosWithSnapshots.map(item => {
+      const scenariosToUpdate = scenariosWithSnapshots.map((item) => {
         // Get NPCs that should be in this scenario at current time point
         // NPCs can move between scenarios based on their actionLog
         const npcsInScenario = this.getNPCsForScenario(
@@ -1160,10 +1339,10 @@ export class DirectorAgent {
             name: item.snapshot.name,
             location: item.snapshot.location,
             description: item.snapshot.description,
-            previousGameTime: item.snapshot.gameTime || null // Previous snapshot time for timeline reference
+            previousGameTime: item.snapshot.gameTime || null, // Previous snapshot time for timeline reference
           },
           characters: npcsInScenario,
-          currentGameTime: currentGameTime // Unified current game time for all snapshots
+          currentGameTime: currentGameTime, // Unified current game time for all snapshots
         };
       });
 
@@ -1171,29 +1350,37 @@ export class DirectorAgent {
       const scenariosToUpdateJson = JSON.stringify(scenariosToUpdate, null, 2);
 
       // Get player's current scenario outline for sourcePlaceId, sourcePlaceName, and connections
-      const playerScenarioOutline = currentScenarioId 
+      const playerScenarioOutline = currentScenarioId
         ? scenarioOutlineMap.get(currentScenarioId)
         : null;
 
       const endState = dynamicState.endState;
-      
+
       const templateContext = {
         currentGameDay: dynamicState.gameDay,
         currentTimeOfDay: dynamicState.timeOfDay,
-        playerCurrentScene: currentScenario ? {
-          name: currentScenario.name,
-          location: currentScenario.location,
-          description: currentScenario.description || null,
-          sourcePlaceId: playerScenarioOutline?.sourcePlaceId || null,
-          sourcePlaceName: playerScenarioOutline?.sourcePlaceName || null,
-          connections: playerScenarioOutline?.connections || []
-        } : null,
+        playerCurrentScene: currentScenario
+          ? {
+              name: currentScenario.name,
+              location: currentScenario.location,
+              description: currentScenario.description || null,
+              sourcePlaceId: playerScenarioOutline?.sourcePlaceId || null,
+              sourcePlaceName: playerScenarioOutline?.sourcePlaceName || null,
+              connections: playerScenarioOutline?.connections || [],
+            }
+          : null,
         scenariosToUpdateJson,
         truthTimelineJson: JSON.stringify(dynamicState.truthTimeline, null, 2),
-        knowledgeMatrixJson: JSON.stringify(dynamicState.knowledgeMatrix, null, 2),
+        knowledgeMatrixJson: JSON.stringify(
+          dynamicState.knowledgeMatrix,
+          null,
+          2
+        ),
         previousGlobalTrigger: dynamicState.globalTrigger,
-        previousGlobalTriggerJson: dynamicState.globalTrigger ? JSON.stringify(dynamicState.globalTrigger, null, 2) : null,
-        endStateJson: endState ? JSON.stringify(endState, null, 2) : "null"
+        previousGlobalTriggerJson: dynamicState.globalTrigger
+          ? JSON.stringify(dynamicState.globalTrigger, null, 2)
+          : null,
+        endStateJson: endState ? JSON.stringify(endState, null, 2) : "null",
       };
 
       // Generate updated snapshots using LLM
@@ -1244,23 +1431,37 @@ export class DirectorAgent {
       }
 
       // Validate and process snapshots
-      if (parsedResponse.updatedSnapshots && parsedResponse.updatedSnapshots.length > 0) {
-        console.log(`   📋 Processing ${parsedResponse.updatedSnapshots.length} updated snapshots...`);
+      if (
+        parsedResponse.updatedSnapshots &&
+        parsedResponse.updatedSnapshots.length > 0
+      ) {
+        console.log(
+          `   📋 Processing ${parsedResponse.updatedSnapshots.length} updated snapshots...`
+        );
 
         for (const item of parsedResponse.updatedSnapshots) {
           // Validate actionLog format (simplified snapshots don't update actual NPCs)
           if (item.snapshot.characters) {
             for (const char of item.snapshot.characters) {
-              const charWithActionLog = char as ScenarioCharacter & { 
+              const charWithActionLog = char as ScenarioCharacter & {
                 actionLog?: ActionLogEntry[];
               };
-              
+
               // Validate actionLog entries
               if (charWithActionLog.actionLog) {
                 for (const logEntry of charWithActionLog.actionLog) {
-                  if (!logEntry.time || !logEntry.location || !logEntry.summary) {
-                    console.warn(`   ⚠️ Invalid actionLog entry for character ${char.id}, skipping...`);
-                    charWithActionLog.actionLog = charWithActionLog.actionLog.filter((e: ActionLogEntry) => e.time && e.location && e.summary);
+                  if (
+                    !logEntry.time ||
+                    !logEntry.location ||
+                    !logEntry.summary
+                  ) {
+                    console.warn(
+                      `   ⚠️ Invalid actionLog entry for character ${char.id}, skipping...`
+                    );
+                    charWithActionLog.actionLog =
+                      charWithActionLog.actionLog.filter(
+                        (e: ActionLogEntry) => e.time && e.location && e.summary
+                      );
                   }
                 }
               }
@@ -1271,12 +1472,15 @@ export class DirectorAgent {
           const snapshotWithUnifiedTime: DynamicScenarioSnapshot = {
             ...item.snapshot,
             gameTime: currentGameTime, // Use unified current game time
-            snapshotType: "simplified"  // Non-player scenario snapshots are simplified
+            snapshotType: "simplified", // Non-player scenario snapshots are simplified
           };
-          
+
           // Save to state (no database save)
           // db is already set at the beginning of this method
-          gameStateManager.setUpdatedDynamicScenarioSnapshot(item.scenarioId, snapshotWithUnifiedTime);
+          gameStateManager.setUpdatedDynamicScenarioSnapshot(
+            item.scenarioId,
+            snapshotWithUnifiedTime
+          );
 
           console.log(`   ✓ Updated snapshot for scenario ${item.scenarioId}`);
         }
@@ -1287,17 +1491,31 @@ export class DirectorAgent {
         gameStateManager.setGlobalTrigger(parsedResponse.globalTrigger);
         console.log(`   ✓ Saved global trigger condition`);
         if (parsedResponse.globalTrigger.timeRestriction) {
-          console.log(`     - Time: ${parsedResponse.globalTrigger.timeRestriction}`);
+          console.log(
+            `     - Time: ${parsedResponse.globalTrigger.timeRestriction}`
+          );
           if (parsedResponse.globalTrigger.timeReason) {
-            console.log(`       Reason: ${parsedResponse.globalTrigger.timeReason}`);
+            console.log(
+              `       Reason: ${parsedResponse.globalTrigger.timeReason}`
+            );
           }
         }
-        if (parsedResponse.globalTrigger.events && parsedResponse.globalTrigger.events.length > 0) {
-          console.log(`     - Events: ${parsedResponse.globalTrigger.events.join(", ")}`);
-          if (parsedResponse.globalTrigger.eventReasons && parsedResponse.globalTrigger.eventReasons.length > 0) {
-            parsedResponse.globalTrigger.eventReasons.forEach((reason, index) => {
-              console.log(`       Event ${index + 1} reason: ${reason}`);
-            });
+        if (
+          parsedResponse.globalTrigger.events &&
+          parsedResponse.globalTrigger.events.length > 0
+        ) {
+          console.log(
+            `     - Events: ${parsedResponse.globalTrigger.events.join(", ")}`
+          );
+          if (
+            parsedResponse.globalTrigger.eventReasons &&
+            parsedResponse.globalTrigger.eventReasons.length > 0
+          ) {
+            parsedResponse.globalTrigger.eventReasons.forEach(
+              (reason, index) => {
+                console.log(`       Event ${index + 1} reason: ${reason}`);
+              }
+            );
           }
         }
       }
@@ -1313,9 +1531,7 @@ export class DirectorAgent {
    * Check if global trigger time restriction has been reached
    * @returns true if current game time >= trigger time, false otherwise
    */
-  checkGlobalTriggerTime(
-    gameStateManager: DynamicGameStateManager
-  ): boolean {
+  checkGlobalTriggerTime(gameStateManager: DynamicGameStateManager): boolean {
     const dynamicState = gameStateManager.getState();
     const globalTrigger = dynamicState.globalTrigger;
 
@@ -1331,7 +1547,9 @@ export class DirectorAgent {
     const targetTime = this.parseGameTimeFromSnapshot(triggerTime);
 
     if (!currentTime || !targetTime) {
-      console.warn(`   ⚠️ Failed to parse time: current="${currentGameTime}", trigger="${triggerTime}"`);
+      console.warn(
+        `   ⚠️ Failed to parse time: current="${currentGameTime}", trigger="${triggerTime}"`
+      );
       return false;
     }
 
@@ -1339,7 +1557,8 @@ export class DirectorAgent {
     const timeReached =
       currentTime.gameDay > targetTime.gameDay ||
       (currentTime.gameDay === targetTime.gameDay &&
-       this.compareTimeOfDay(currentTime.timeOfDay, targetTime.timeOfDay) >= 0);
+        this.compareTimeOfDay(currentTime.timeOfDay, targetTime.timeOfDay) >=
+          0);
 
     if (timeReached) {
       console.log(`   ⏰ Global trigger time reached: ${triggerTime}`);
@@ -1368,7 +1587,9 @@ export class DirectorAgent {
       return { triggered: false, causesGameEnd: false };
     }
 
-    console.log(`\n🔍 [Director Agent] Checking global trigger and game end conditions...`);
+    console.log(
+      `\n🔍 [Director Agent] Checking global trigger and game end conditions...`
+    );
 
     let triggered = false;
     let triggerReason = "";
@@ -1383,12 +1604,14 @@ export class DirectorAgent {
     // Check 2: Events (only if time not reached)
     if (!triggered && globalTrigger.events && globalTrigger.events.length > 0) {
       // Get recent actionLog entries for event check
-      const conversationHistory = (dynamicState.temporaryInfo.contextualData?.conversationHistory as Array<{
-        turnNumber: number;
-        characterInput: string;
-        keeperNarrative: string | null;
-        actionResults?: any[];
-      }>) || [];
+      const conversationHistory =
+        (dynamicState.temporaryInfo.contextualData
+          ?.conversationHistory as Array<{
+          turnNumber: number;
+          characterInput: string;
+          keeperNarrative: string | null;
+          actionResults?: any[];
+        }>) || [];
 
       const recentTurns = conversationHistory.slice(-3);
       if (recentTurns.length > 0) {
@@ -1399,8 +1622,13 @@ export class DirectorAgent {
         for (const turn of recentTurns) {
           if (turn.actionResults && turn.actionResults.length > 0) {
             for (const result of turn.actionResults) {
-              const resultTime = result.gameTime || `Day ${dynamicState.gameDay}, ${result.timeOfDay || dynamicState.timeOfDay}`;
-              if (!earliestTime || this.isTimeBeforeOrEqual(resultTime, earliestTime)) {
+              const resultTime =
+                result.gameTime ||
+                `Day ${dynamicState.gameDay}, ${result.timeOfDay || dynamicState.timeOfDay}`;
+              if (
+                !earliestTime ||
+                this.isTimeBeforeOrEqual(resultTime, earliestTime)
+              ) {
                 earliestTime = resultTime;
               }
             }
@@ -1427,20 +1655,22 @@ export class DirectorAgent {
           {
             id: dynamicState.playerCharacter.id,
             name: dynamicState.playerCharacter.name,
-            actionLog: dynamicState.playerCharacter.actionLog || []
+            actionLog: dynamicState.playerCharacter.actionLog || [],
           },
-          ...dynamicState.npcCharacters.map(npc => ({
+          ...dynamicState.npcCharacters.map((npc) => ({
             id: npc.id,
             name: npc.name,
-            actionLog: npc.actionLog || []
-          }))
+            actionLog: npc.actionLog || [],
+          })),
         ];
 
         // Filter actionLog entries within the time range
         for (const character of allCharacters) {
-          const filteredActionLog = character.actionLog.filter(entry => {
-            return this.isTimeBeforeOrEqual(earliestTime, entry.time) && 
-                   this.isTimeBeforeOrEqual(entry.time, currentGameTime);
+          const filteredActionLog = character.actionLog.filter((entry) => {
+            return (
+              this.isTimeBeforeOrEqual(earliestTime, entry.time) &&
+              this.isTimeBeforeOrEqual(entry.time, currentGameTime)
+            );
           });
 
           if (filteredActionLog.length > 0) {
@@ -1448,7 +1678,7 @@ export class DirectorAgent {
               turnNumber: recentTurns[0]?.turnNumber || 0,
               characterId: character.id,
               characterName: character.name,
-              actionLog: filteredActionLog
+              actionLog: filteredActionLog,
             });
           }
         }
@@ -1461,7 +1691,7 @@ export class DirectorAgent {
           const templateContext = {
             globalTriggerJson: JSON.stringify(globalTrigger, null, 2),
             endStateJson: endState ? JSON.stringify(endState, null, 2) : "null",
-            recentActionLogsJson: JSON.stringify(recentActionLogs, null, 2)
+            recentActionLogsJson: JSON.stringify(recentActionLogs, null, 2),
           };
 
           const prompt = composeTemplate(
@@ -1479,7 +1709,11 @@ export class DirectorAgent {
             });
 
             // Parse response
-            let parsed: { triggered: boolean; causesGameEnd: boolean; reason?: string };
+            let parsed: {
+              triggered: boolean;
+              causesGameEnd: boolean;
+              reason?: string;
+            };
             try {
               const jsonMatch = response.match(/\{[\s\S]*\}/);
               if (jsonMatch) {
@@ -1488,22 +1722,37 @@ export class DirectorAgent {
                 parsed = JSON.parse(response);
               }
             } catch (error) {
-              console.error("   ❌ Failed to parse trigger check response:", error);
+              console.error(
+                "   ❌ Failed to parse trigger check response:",
+                error
+              );
               return { triggered: false, causesGameEnd: false };
             }
 
             if (parsed.triggered) {
               triggered = true;
               triggerReason = parsed.reason || "事件已完成";
-              
+
               if (parsed.causesGameEnd) {
-                console.log(`   ✅ Global trigger triggered AND causes game end`);
+                console.log(
+                  `   ✅ Global trigger triggered AND causes game end`
+                );
                 console.log(`      Reason: ${triggerReason}`);
-                return { triggered: true, causesGameEnd: true, reason: triggerReason };
+                return {
+                  triggered: true,
+                  causesGameEnd: true,
+                  reason: triggerReason,
+                };
               } else {
-                console.log(`   ✅ Global trigger triggered but does NOT cause game end`);
+                console.log(
+                  `   ✅ Global trigger triggered but does NOT cause game end`
+                );
                 console.log(`      Reason: ${triggerReason}`);
-                return { triggered: true, causesGameEnd: false, reason: triggerReason };
+                return {
+                  triggered: true,
+                  causesGameEnd: false,
+                  reason: triggerReason,
+                };
               }
             }
           } catch (error) {
@@ -1523,11 +1772,19 @@ export class DirectorAgent {
           dynamicState.timeOfDay
         );
         if (pointOfNoReturnReached) {
-          console.log(`   ✅ Global trigger time reached AND causes game end (point of no return)`);
-          return { triggered: true, causesGameEnd: true, reason: triggerReason };
+          console.log(
+            `   ✅ Global trigger time reached AND causes game end (point of no return)`
+          );
+          return {
+            triggered: true,
+            causesGameEnd: true,
+            reason: triggerReason,
+          };
         }
       }
-      console.log(`   ✅ Global trigger time reached but does NOT cause game end`);
+      console.log(
+        `   ✅ Global trigger time reached but does NOT cause game end`
+      );
       return { triggered: true, causesGameEnd: false, reason: triggerReason };
     }
 
@@ -1545,19 +1802,24 @@ export class DirectorAgent {
     const dynamicState = gameStateManager.getState();
     const globalTrigger = dynamicState.globalTrigger;
 
-    if (!globalTrigger || !globalTrigger.events || globalTrigger.events.length === 0) {
+    if (
+      !globalTrigger ||
+      !globalTrigger.events ||
+      globalTrigger.events.length === 0
+    ) {
       return false;
     }
 
     console.log(`\n🔍 [Director Agent] Checking global trigger events...`);
 
     // Get conversation history from last 3 turns (including current turn)
-    const conversationHistory = (dynamicState.temporaryInfo.contextualData?.conversationHistory as Array<{
-      turnNumber: number;
-      characterInput: string;
-      keeperNarrative: string | null;
-      actionResults?: any[];
-    }>) || [];
+    const conversationHistory =
+      (dynamicState.temporaryInfo.contextualData?.conversationHistory as Array<{
+        turnNumber: number;
+        characterInput: string;
+        keeperNarrative: string | null;
+        actionResults?: any[];
+      }>) || [];
 
     // Get recent 3 turns (including current turn)
     const recentTurns = conversationHistory.slice(-3);
@@ -1575,8 +1837,13 @@ export class DirectorAgent {
     for (const turn of recentTurns) {
       if (turn.actionResults && turn.actionResults.length > 0) {
         for (const result of turn.actionResults) {
-          const resultTime = result.gameTime || `Day ${dynamicState.gameDay}, ${result.timeOfDay || dynamicState.timeOfDay}`;
-          if (!earliestTime || this.isTimeBeforeOrEqual(resultTime, earliestTime)) {
+          const resultTime =
+            result.gameTime ||
+            `Day ${dynamicState.gameDay}, ${result.timeOfDay || dynamicState.timeOfDay}`;
+          if (
+            !earliestTime ||
+            this.isTimeBeforeOrEqual(resultTime, earliestTime)
+          ) {
             earliestTime = resultTime;
           }
         }
@@ -1608,21 +1875,23 @@ export class DirectorAgent {
       {
         id: dynamicState.playerCharacter.id,
         name: dynamicState.playerCharacter.name,
-        actionLog: dynamicState.playerCharacter.actionLog || []
+        actionLog: dynamicState.playerCharacter.actionLog || [],
       },
-      ...dynamicState.npcCharacters.map(npc => ({
+      ...dynamicState.npcCharacters.map((npc) => ({
         id: npc.id,
         name: npc.name,
-        actionLog: npc.actionLog || []
-      }))
+        actionLog: npc.actionLog || [],
+      })),
     ];
 
     // Filter actionLog entries within the time range
     for (const character of allCharacters) {
-      const filteredActionLog = character.actionLog.filter(entry => {
+      const filteredActionLog = character.actionLog.filter((entry) => {
         // Include entries that are within the time range (earliestTime to currentGameTime)
-        return this.isTimeBeforeOrEqual(earliestTime, entry.time) && 
-               this.isTimeBeforeOrEqual(entry.time, currentGameTime);
+        return (
+          this.isTimeBeforeOrEqual(earliestTime, entry.time) &&
+          this.isTimeBeforeOrEqual(entry.time, currentGameTime)
+        );
       });
 
       if (filteredActionLog.length > 0) {
@@ -1630,17 +1899,21 @@ export class DirectorAgent {
           turnNumber: recentTurns[0]?.turnNumber || 0,
           characterId: character.id,
           characterName: character.name,
-          actionLog: filteredActionLog
+          actionLog: filteredActionLog,
         });
       }
     }
 
     if (recentActionLogs.length === 0) {
-      console.log(`   ℹ️  No recent actionLog entries found in the last 3 turns`);
+      console.log(
+        `   ℹ️  No recent actionLog entries found in the last 3 turns`
+      );
       return false;
     }
 
-    console.log(`   📋 Found ${recentActionLogs.length} characters with actionLog entries in recent 3 turns`);
+    console.log(
+      `   📋 Found ${recentActionLogs.length} characters with actionLog entries in recent 3 turns`
+    );
 
     // Prepare template context
     const runtime = createRuntime();
@@ -1648,7 +1921,7 @@ export class DirectorAgent {
 
     const templateContext = {
       globalTriggerJson: JSON.stringify(globalTrigger, null, 2),
-      recentActionLogsJson: JSON.stringify(recentActionLogs, null, 2)
+      recentActionLogsJson: JSON.stringify(recentActionLogs, null, 2),
     };
 
     const prompt = composeTemplate(
@@ -1689,7 +1962,6 @@ export class DirectorAgent {
       }
 
       return parsed.triggered;
-
     } catch (error) {
       console.error("   ❌ Error checking global trigger events:", error);
       return false;
@@ -1702,7 +1974,9 @@ export class DirectorAgent {
    * calls the stuck-hint template and LLM, parses { "narrative": string } and returns the narrative.
    * @returns The hint narrative string, or null if no current scenario, parse failure, or LLM error.
    */
-  async generateStuckHintNarrative(gameStateManager: DynamicGameStateManager): Promise<string | null> {
+  async generateStuckHintNarrative(
+    gameStateManager: DynamicGameStateManager
+  ): Promise<string | null> {
     const dynamicState = gameStateManager.getState();
     const currentScenario = dynamicState.currentScenario;
 
@@ -1716,12 +1990,15 @@ export class DirectorAgent {
     const currentSceneSnapshotJson = JSON.stringify(currentScenario, null, 2);
 
     const currentScenarioOutline = dynamicState.scenarioOutlines.find(
-      (outline) => outline.id === currentScenario.id || outline.name === currentScenario.name
+      (outline) =>
+        outline.id === currentScenario.id ||
+        outline.name === currentScenario.name
     );
     const rawConnections = currentScenarioOutline?.connections || [];
     const connections = rawConnections.map((conn) => {
       const targetScenario = dynamicState.scenarioOutlines.find(
-        (outline) => outline.name === conn.scenarioName || outline.id === conn.scenarioName
+        (outline) =>
+          outline.name === conn.scenarioName || outline.id === conn.scenarioName
       );
       return {
         scenarioName: targetScenario?.name ?? conn.scenarioName,
@@ -1733,11 +2010,12 @@ export class DirectorAgent {
     });
     const scenarioConnectionsJson = JSON.stringify(connections, null, 2);
 
-    const conversationHistory = (dynamicState.temporaryInfo.contextualData?.conversationHistory as Array<{
-      turnNumber: number;
-      characterInput: string;
-      keeperNarrative: string | null;
-    }>) ?? [];
+    const conversationHistory =
+      (dynamicState.temporaryInfo.contextualData?.conversationHistory as Array<{
+        turnNumber: number;
+        characterInput: string;
+        keeperNarrative: string | null;
+      }>) ?? [];
     const recentTurns = conversationHistory.slice(-3).map((t) => ({
       turnNumber: t.turnNumber,
       characterInput: t.characterInput,
@@ -1776,7 +2054,10 @@ export class DirectorAgent {
       }
       return null;
     } catch (error) {
-      console.error("[Director Agent] generateStuckHintNarrative failed:", error);
+      console.error(
+        "[Director Agent] generateStuckHintNarrative failed:",
+        error
+      );
       return null;
     }
   }
@@ -1786,8 +2067,8 @@ export class DirectorAgent {
    * @returns negative if time1 < time2, 0 if equal, positive if time1 > time2
    */
   private compareTimeOfDay(time1: string, time2: string): number {
-    const [h1, m1] = time1.split(':').map(Number);
-    const [h2, m2] = time2.split(':').map(Number);
+    const [h1, m1] = time1.split(":").map(Number);
+    const [h2, m2] = time2.split(":").map(Number);
 
     const minutes1 = h1 * 60 + m1;
     const minutes2 = h2 * 60 + m2;

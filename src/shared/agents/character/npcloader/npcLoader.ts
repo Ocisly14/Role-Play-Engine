@@ -131,7 +131,9 @@ export class NPCLoader {
       return [];
     }
 
-    console.log(`Merging ${existing.length} existing NPC(s) by similar names...`);
+    console.log(
+      `Merging ${existing.length} existing NPC(s) by similar names...`
+    );
     const parsed = existing.map((npc) => this.profileToParsed(npc));
     const mergedParsed = await this.mergeSimilarNPCs(parsed);
 
@@ -144,13 +146,19 @@ export class NPCLoader {
       const hasCharacterEmailId = this.db.hasColumn("characters", "email_id");
 
       database
-        .prepare(`DELETE FROM npc_clues${hasClueEmailId && emailId ? " WHERE email_id = ?" : ""}`)
+        .prepare(
+          `DELETE FROM npc_clues${hasClueEmailId && emailId ? " WHERE email_id = ?" : ""}`
+        )
         .run(...(hasClueEmailId && emailId ? [emailId] : []));
       database
-        .prepare(`DELETE FROM npc_relationships${hasRelEmailId && emailId ? " WHERE email_id = ?" : ""}`)
+        .prepare(
+          `DELETE FROM npc_relationships${hasRelEmailId && emailId ? " WHERE email_id = ?" : ""}`
+        )
         .run(...(hasRelEmailId && emailId ? [emailId] : []));
       database
-        .prepare(`DELETE FROM characters WHERE is_npc = 1${hasCharacterEmailId && emailId ? " AND email_id = ?" : ""}`)
+        .prepare(
+          `DELETE FROM characters WHERE is_npc = 1${hasCharacterEmailId && emailId ? " AND email_id = ?" : ""}`
+        )
         .run(...(hasCharacterEmailId && emailId ? [emailId] : []));
     });
     console.log("Cleared existing NPC data from DB.");
@@ -253,13 +261,19 @@ export class NPCLoader {
       const hasCharacterEmailId = this.db.hasColumn("characters", "email_id");
 
       database
-        .prepare(`DELETE FROM npc_clues${hasClueEmailId && emailId ? " WHERE email_id = ?" : ""}`)
+        .prepare(
+          `DELETE FROM npc_clues${hasClueEmailId && emailId ? " WHERE email_id = ?" : ""}`
+        )
         .run(...(hasClueEmailId && emailId ? [emailId] : []));
       database
-        .prepare(`DELETE FROM npc_relationships${hasRelEmailId && emailId ? " WHERE email_id = ?" : ""}`)
+        .prepare(
+          `DELETE FROM npc_relationships${hasRelEmailId && emailId ? " WHERE email_id = ?" : ""}`
+        )
         .run(...(hasRelEmailId && emailId ? [emailId] : []));
       database
-        .prepare(`DELETE FROM characters WHERE is_npc = 1${hasCharacterEmailId && emailId ? " AND email_id = ?" : ""}`)
+        .prepare(
+          `DELETE FROM characters WHERE is_npc = 1${hasCharacterEmailId && emailId ? " AND email_id = ?" : ""}`
+        )
         .run(...(hasCharacterEmailId && emailId ? [emailId] : []));
     });
     console.log("Rewrote DB with LLM-suggested merges.");
@@ -278,15 +292,18 @@ export class NPCLoader {
   /**
    * Check if any files in directory have changed since last load
    */
-  private checkForChanges(dirPath: string): { hasChanges: boolean; currentFiles: Map<string, number> } {
+  private checkForChanges(dirPath: string): {
+    hasChanges: boolean;
+    currentFiles: Map<string, number>;
+  } {
     if (!fs.existsSync(dirPath)) {
       return { hasChanges: false, currentFiles: new Map() };
     }
 
     const currentFiles = new Map<string, number>();
-    const files = fs.readdirSync(dirPath).filter(file => 
-      file.endsWith('.docx') || file.endsWith('.pdf')
-    );
+    const files = fs
+      .readdirSync(dirPath)
+      .filter((file) => file.endsWith(".docx") || file.endsWith(".pdf"));
 
     // Get modification times for all relevant files
     for (const file of files) {
@@ -297,7 +314,7 @@ export class NPCLoader {
 
     // Check if we have cached file info
     const existingNPCs = this.getAllNPCs();
-    
+
     // If no NPCs exist, we need to load
     if (existingNPCs.length === 0) {
       return { hasChanges: true, currentFiles };
@@ -305,12 +322,12 @@ export class NPCLoader {
 
     // For now, we'll use a simple approach - check if any file timestamps changed
     // In a production system, you might want to store this in the database
-    const lastLoadFile = path.join(dirPath, '.last_load_timestamp');
+    const lastLoadFile = path.join(dirPath, ".last_load_timestamp");
     let lastLoadTime = 0;
-    
+
     if (fs.existsSync(lastLoadFile)) {
       try {
-        lastLoadTime = parseInt(fs.readFileSync(lastLoadFile, 'utf8'));
+        lastLoadTime = parseInt(fs.readFileSync(lastLoadFile, "utf8"));
       } catch {
         // If we can't read the timestamp, assume changes
         return { hasChanges: true, currentFiles };
@@ -318,8 +335,10 @@ export class NPCLoader {
     }
 
     // Check if any file is newer than last load
-    const hasChanges = Array.from(currentFiles.values()).some(mtime => mtime > lastLoadTime);
-    
+    const hasChanges = Array.from(currentFiles.values()).some(
+      (mtime) => mtime > lastLoadTime
+    );
+
     return { hasChanges, currentFiles };
   }
 
@@ -327,15 +346,18 @@ export class NPCLoader {
    * Update the last load timestamp
    */
   private updateLastLoadTimestamp(dirPath: string): void {
-    const lastLoadFile = path.join(dirPath, '.last_load_timestamp');
+    const lastLoadFile = path.join(dirPath, ".last_load_timestamp");
     const currentTime = Date.now().toString();
-    fs.writeFileSync(lastLoadFile, currentTime, 'utf8');
+    fs.writeFileSync(lastLoadFile, currentTime, "utf8");
   }
 
   /**
    * Load NPCs from JSON files in a directory (skip document parsing)
    */
-  async loadNPCsFromJSONDirectory(dirPath: string, forceReload = false): Promise<NPCProfile[]> {
+  async loadNPCsFromJSONDirectory(
+    dirPath: string,
+    forceReload = false
+  ): Promise<NPCProfile[]> {
     console.log(`\n=== Loading NPCs from JSON directory: ${dirPath} ===`);
 
     if (!fs.existsSync(dirPath)) {
@@ -348,7 +370,9 @@ export class NPCLoader {
       const { hasChanges } = this.checkForJSONChanges(dirPath);
       if (!hasChanges) {
         const existingNPCs = this.getAllNPCs();
-        console.log(`No changes detected. Using ${existingNPCs.length} existing NPCs from database.`);
+        console.log(
+          `No changes detected. Using ${existingNPCs.length} existing NPCs from database.`
+        );
         return existingNPCs;
       }
     }
@@ -376,7 +400,9 @@ export class NPCLoader {
         const jsonData = JSON.parse(fileContent);
 
         // Handle both array of NPCs and single NPC object
-        const npcs: ParsedNPCData[] = Array.isArray(jsonData) ? jsonData : [jsonData];
+        const npcs: ParsedNPCData[] = Array.isArray(jsonData)
+          ? jsonData
+          : [jsonData];
 
         for (const npcData of npcs) {
           allParsedNPCs.push(npcData);
@@ -394,7 +420,9 @@ export class NPCLoader {
     }
 
     // Direct import from JSON - no merging needed
-    console.log(`💾 开始保存 ${allParsedNPCs.length} 个NPC到数据库（直接导入，跳过合并）...`);
+    console.log(
+      `💾 开始保存 ${allParsedNPCs.length} 个NPC到数据库（直接导入，跳过合并）...`
+    );
     const npcProfiles: NPCProfile[] = [];
     for (let i = 0; i < allParsedNPCs.length; i++) {
       const parsedData = allParsedNPCs[i];
@@ -402,29 +430,41 @@ export class NPCLoader {
         const npcProfile = this.convertToNPCProfile(parsedData);
         this.saveNPCToDatabase(npcProfile);
         npcProfiles.push(npcProfile);
-        console.log(`  [${i + 1}/${allParsedNPCs.length}] ✓ 已保存NPC: ${npcProfile.name}`);
+        console.log(
+          `  [${i + 1}/${allParsedNPCs.length}] ✓ 已保存NPC: ${npcProfile.name}`
+        );
       } catch (error) {
-        console.error(`  [${i + 1}/${allParsedNPCs.length}] ✗ 保存NPC失败 ${parsedData.name}:`, error);
+        console.error(
+          `  [${i + 1}/${allParsedNPCs.length}] ✗ 保存NPC失败 ${parsedData.name}:`,
+          error
+        );
       }
     }
 
     // Update timestamp after successful load
     this.updateLastLoadTimestamp(dirPath);
 
-    console.log(`\n=== Successfully loaded ${npcProfiles.length} NPCs from JSON files ===\n`);
+    console.log(
+      `\n=== Successfully loaded ${npcProfiles.length} NPCs from JSON files ===\n`
+    );
     return npcProfiles;
   }
 
   /**
    * Check if any JSON files in directory have changed since last load
    */
-  private checkForJSONChanges(dirPath: string): { hasChanges: boolean; currentFiles: Map<string, number> } {
+  private checkForJSONChanges(dirPath: string): {
+    hasChanges: boolean;
+    currentFiles: Map<string, number>;
+  } {
     if (!fs.existsSync(dirPath)) {
       return { hasChanges: false, currentFiles: new Map() };
     }
 
     const currentFiles = new Map<string, number>();
-    const files = fs.readdirSync(dirPath).filter(file => file.toLowerCase().endsWith(".json"));
+    const files = fs
+      .readdirSync(dirPath)
+      .filter((file) => file.toLowerCase().endsWith(".json"));
 
     // Get modification times for all JSON files
     for (const file of files) {
@@ -435,34 +475,39 @@ export class NPCLoader {
 
     // Check if we have existing NPCs
     const existingNPCs = this.getAllNPCs();
-    
+
     // If no NPCs exist, we need to load
     if (existingNPCs.length === 0) {
       return { hasChanges: true, currentFiles };
     }
 
     // Check timestamp file
-    const lastLoadFile = path.join(dirPath, '.last_load_timestamp');
+    const lastLoadFile = path.join(dirPath, ".last_load_timestamp");
     let lastLoadTime = 0;
-    
+
     if (fs.existsSync(lastLoadFile)) {
       try {
-        lastLoadTime = parseInt(fs.readFileSync(lastLoadFile, 'utf8'));
+        lastLoadTime = parseInt(fs.readFileSync(lastLoadFile, "utf8"));
       } catch {
         return { hasChanges: true, currentFiles };
       }
     }
 
     // Check if any file is newer than last load
-    const hasChanges = Array.from(currentFiles.values()).some(mtime => mtime > lastLoadTime);
-    
+    const hasChanges = Array.from(currentFiles.values()).some(
+      (mtime) => mtime > lastLoadTime
+    );
+
     return { hasChanges, currentFiles };
   }
 
   /**
    * Load NPCs from a directory (only if files have changed)
    */
-  async loadNPCsFromDirectory(dirPath: string, forceReload = false): Promise<NPCProfile[]> {
+  async loadNPCsFromDirectory(
+    dirPath: string,
+    forceReload = false
+  ): Promise<NPCProfile[]> {
     console.log(`\n=== Checking NPCs in directory: ${dirPath} ===`);
 
     if (!fs.existsSync(dirPath)) {
@@ -476,7 +521,9 @@ export class NPCLoader {
       const { hasChanges } = this.checkForChanges(dirPath);
       if (!hasChanges) {
         const existingNPCs = this.getAllNPCs();
-        console.log(`No changes detected. Using ${existingNPCs.length} existing NPCs from database.`);
+        console.log(
+          `No changes detected. Using ${existingNPCs.length} existing NPCs from database.`
+        );
         return existingNPCs;
       }
     }
@@ -504,15 +551,20 @@ export class NPCLoader {
         const npcProfile = this.convertToNPCProfile(parsedData);
         this.saveNPCToDatabase(npcProfile);
         npcProfiles.push(npcProfile);
-        console.log(`  [${i + 1}/${dedupedNPCs.length}] ✓ 已保存NPC: ${npcProfile.name}`);
+        console.log(
+          `  [${i + 1}/${dedupedNPCs.length}] ✓ 已保存NPC: ${npcProfile.name}`
+        );
       } catch (error) {
-        console.error(`  [${i + 1}/${dedupedNPCs.length}] ✗ 保存NPC失败 ${parsedData.name}:`, error);
+        console.error(
+          `  [${i + 1}/${dedupedNPCs.length}] ✗ 保存NPC失败 ${parsedData.name}:`,
+          error
+        );
       }
     }
 
     // Update timestamp after successful load
     this.updateLastLoadTimestamp(dirPath);
-    
+
     console.log(`\n=== Successfully loaded ${npcProfiles.length} NPCs ===\n`);
     return npcProfiles;
   }
@@ -521,7 +573,10 @@ export class NPCLoader {
    * Convert ParsedNPCData to NPCProfile
    */
   private convertToNPCProfile(parsedData: ParsedNPCData): NPCProfile {
-    const npcId = scopeId(this.generateNPCId(parsedData.name), this.getEmailId());
+    const npcId = scopeId(
+      this.generateNPCId(parsedData.name),
+      this.getEmailId()
+    );
 
     // Merge attributes with defaults
     const attributes: CharacterAttributes = this.normalizeAttributes(
@@ -642,7 +697,9 @@ export class NPCLoader {
   /**
    * Merge similar NPC entries (e.g., "Ben" vs "Ben Cleo") using LLM guidance.
    */
-  private async mergeSimilarNPCs(parsedNPCs: ParsedNPCData[]): Promise<ParsedNPCData[]> {
+  private async mergeSimilarNPCs(
+    parsedNPCs: ParsedNPCData[]
+  ): Promise<ParsedNPCData[]> {
     if (parsedNPCs.length === 0) return [];
 
     const clusters = this.clusterSimilar(parsedNPCs);
@@ -750,7 +807,9 @@ export class NPCLoader {
     return clusters;
   }
 
-  private async mergeClusterWithLLM(cluster: ParsedNPCData[]): Promise<ParsedNPCData[]> {
+  private async mergeClusterWithLLM(
+    cluster: ParsedNPCData[]
+  ): Promise<ParsedNPCData[]> {
     const entries = cluster.map((npc, idx) => ({
       idx,
       name: npc.name,
@@ -797,7 +856,9 @@ Return ONLY JSON (object or array), no extra text.`;
           content.match(/\{[\s\S]*\}/)?.[0];
 
         if (!jsonText) {
-          throw new Error(`Failed to extract JSON from LLM response: ${content}`);
+          throw new Error(
+            `Failed to extract JSON from LLM response: ${content}`
+          );
         }
 
         const parsed = JSON.parse(jsonText) as unknown;
@@ -833,7 +894,11 @@ Return ONLY JSON (object or array), no extra text.`;
       } catch (err) {
         lastError = err;
         const detail =
-          err instanceof Error ? err.message : typeof err === "string" ? err : "Unknown error";
+          err instanceof Error
+            ? err.message
+            : typeof err === "string"
+              ? err
+              : "Unknown error";
         console.warn(
           `Retry ${attempt}/3 for NPC merge cluster (${cluster
             .map((c) => c.name)
@@ -876,7 +941,9 @@ Return ONLY JSON array, no extra text.`;
           content.match(/\[[\s\S]*\]/)?.[0];
 
         if (!jsonText) {
-          throw new Error(`Failed to extract JSON from LLM response: ${content}`);
+          throw new Error(
+            `Failed to extract JSON from LLM response: ${content}`
+          );
         }
 
         const parsed = JSON.parse(jsonText);
@@ -890,7 +957,11 @@ Return ONLY JSON array, no extra text.`;
       } catch (err) {
         lastError = err;
         const detail =
-          err instanceof Error ? err.message : typeof err === "string" ? err : "Unknown error";
+          err instanceof Error
+            ? err.message
+            : typeof err === "string"
+              ? err
+              : "Unknown error";
         console.warn(
           `Retry ${attempt}/3 for duplicate suggestion due to error: ${detail}`
         );
@@ -918,7 +989,10 @@ Return ONLY JSON array, no extra text.`;
     const emailId = this.getEmailId();
     const hasCharacterEmailId = this.db.hasColumn("characters", "email_id");
     const hasClueEmailId = this.db.hasColumn("npc_clues", "email_id");
-    const hasRelationshipEmailId = this.db.hasColumn("npc_relationships", "email_id");
+    const hasRelationshipEmailId = this.db.hasColumn(
+      "npc_relationships",
+      "email_id"
+    );
 
     this.db.transaction(() => {
       // Insert or update character
@@ -953,11 +1027,17 @@ Return ONLY JSON array, no extra text.`;
 
       // Delete existing clues and relationships for this NPC
       database
-        .prepare(`DELETE FROM npc_clues WHERE npc_id = ?${hasClueEmailId && emailId ? " AND email_id = ?" : ""}`)
+        .prepare(
+          `DELETE FROM npc_clues WHERE npc_id = ?${hasClueEmailId && emailId ? " AND email_id = ?" : ""}`
+        )
         .run(...(hasClueEmailId && emailId ? [npc.id, emailId] : [npc.id]));
       database
-        .prepare(`DELETE FROM npc_relationships WHERE source_id = ?${hasRelationshipEmailId && emailId ? " AND email_id = ?" : ""}`)
-        .run(...(hasRelationshipEmailId && emailId ? [npc.id, emailId] : [npc.id]));
+        .prepare(
+          `DELETE FROM npc_relationships WHERE source_id = ?${hasRelationshipEmailId && emailId ? " AND email_id = ?" : ""}`
+        )
+        .run(
+          ...(hasRelationshipEmailId && emailId ? [npc.id, emailId] : [npc.id])
+        );
 
       // Insert clues
       if (npc.clues.length > 0) {
@@ -1018,7 +1098,10 @@ Return ONLY JSON array, no extra text.`;
    * Normalize a name into a slug-like id fragment
    */
   private slugify(name: string): string {
-    return name.toLowerCase().replace(/[^a-z0-9\u4e00-\u9fa5]+/g, "-").replace(/(^-+|-+$)/g, "");
+    return name
+      .toLowerCase()
+      .replace(/[^a-z0-9\u4e00-\u9fa5]+/g, "-")
+      .replace(/(^-+|-+$)/g, "");
   }
 
   /**
@@ -1030,14 +1113,21 @@ Return ONLY JSON array, no extra text.`;
     const emailId = this.getEmailId();
     const hasCharacterEmailId = this.db.hasColumn("characters", "email_id");
     const hasClueEmailId = this.db.hasColumn("npc_clues", "email_id");
-    const hasRelationshipEmailId = this.db.hasColumn("npc_relationships", "email_id");
+    const hasRelationshipEmailId = this.db.hasColumn(
+      "npc_relationships",
+      "email_id"
+    );
 
     // Get character data
     const character = database
       .prepare(`
             SELECT * FROM characters WHERE character_id = ? AND is_npc = 1${hasCharacterEmailId && emailId ? " AND email_id = ?" : ""}
         `)
-      .get(...(hasCharacterEmailId && emailId ? [scopedNpcId, emailId] : [scopedNpcId])) as any;
+      .get(
+        ...(hasCharacterEmailId && emailId
+          ? [scopedNpcId, emailId]
+          : [scopedNpcId])
+      ) as any;
 
     if (!character) {
       return null;
@@ -1048,14 +1138,20 @@ Return ONLY JSON array, no extra text.`;
       .prepare(`
             SELECT * FROM npc_clues WHERE npc_id = ?${hasClueEmailId && emailId ? " AND email_id = ?" : ""}
         `)
-      .all(...(hasClueEmailId && emailId ? [scopedNpcId, emailId] : [scopedNpcId])) as any[];
+      .all(
+        ...(hasClueEmailId && emailId ? [scopedNpcId, emailId] : [scopedNpcId])
+      ) as any[];
 
     // Get relationships
     const relationships = database
       .prepare(`
             SELECT * FROM npc_relationships WHERE source_id = ?${hasRelationshipEmailId && emailId ? " AND email_id = ?" : ""}
         `)
-      .all(...(hasRelationshipEmailId && emailId ? [scopedNpcId, emailId] : [scopedNpcId])) as any[];
+      .all(
+        ...(hasRelationshipEmailId && emailId
+          ? [scopedNpcId, emailId]
+          : [scopedNpcId])
+      ) as any[];
 
     // Build NPC profile
     const npcProfile: NPCProfile = {
@@ -1063,7 +1159,9 @@ Return ONLY JSON array, no extra text.`;
       name: character.name,
       attributes: JSON.parse(character.attributes),
       status: JSON.parse(character.status),
-      inventory: InventoryUtils.normalizeInventory(JSON.parse(character.inventory || "[]")),
+      inventory: InventoryUtils.normalizeInventory(
+        JSON.parse(character.inventory || "[]")
+      ),
       skills: JSON.parse(character.skills || "{}"),
       notes: character.notes,
       occupation: character.occupation,
@@ -1076,7 +1174,9 @@ Return ONLY JSON array, no extra text.`;
       secrets: JSON.parse(character.secrets || "[]"),
       currentLocation: character.current_location || undefined,
       instantiatedFrom: character.instantiated_from || undefined,
-      inheritsKnowledge: character.inherits_knowledge ? JSON.parse(character.inherits_knowledge) : undefined,
+      inheritsKnowledge: character.inherits_knowledge
+        ? JSON.parse(character.inherits_knowledge)
+        : undefined,
       clues: clues.map((c) => ({
         id: c.id,
         clueText: c.clue_text,
@@ -1132,7 +1232,11 @@ Return ONLY JSON array, no extra text.`;
       .prepare(`
             SELECT COUNT(*) as count FROM characters WHERE character_id = ? AND is_npc = 1${hasEmailIdColumn && emailId ? " AND email_id = ?" : ""}
         `)
-      .get(...(hasEmailIdColumn && emailId ? [scopedNpcId, emailId] : [scopedNpcId])) as any;
+      .get(
+        ...(hasEmailIdColumn && emailId
+          ? [scopedNpcId, emailId]
+          : [scopedNpcId])
+      ) as any;
     return result.count > 0;
   }
 

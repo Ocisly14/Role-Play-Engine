@@ -7,7 +7,10 @@ import type { DynamicGameState } from "../../../src/dynamicworldagent/state/inde
 export class ServerState {
   private static instance: ServerState | null = null;
   private dynamicGameStatesByUser = new Map<string, DynamicGameState | null>();
-  private dynamicGameStatesBySession = new Map<string, DynamicGameState | null>();
+  private dynamicGameStatesBySession = new Map<
+    string,
+    DynamicGameState | null
+  >();
 
   private constructor() {}
 
@@ -24,17 +27,26 @@ export class ServerState {
   /**
    * Set DynamicGameState for a user (updates session index)
    */
-  public setGameState(userId: string, dynamicGameState: DynamicGameState | null): void {
+  public setGameState(
+    userId: string,
+    dynamicGameState: DynamicGameState | null
+  ): void {
     this.dynamicGameStatesByUser.set(userId, dynamicGameState);
     if (dynamicGameState?.sessionId) {
-      this.dynamicGameStatesBySession.set(dynamicGameState.sessionId, dynamicGameState);
+      this.dynamicGameStatesBySession.set(
+        dynamicGameState.sessionId,
+        dynamicGameState
+      );
     }
   }
 
   /**
    * Set DynamicGameState by session (keeps user index in sync if found)
    */
-  public setGameStateBySession(sessionId: string, dynamicGameState: DynamicGameState | null): void {
+  public setGameStateBySession(
+    sessionId: string,
+    dynamicGameState: DynamicGameState | null
+  ): void {
     this.dynamicGameStatesBySession.set(sessionId, dynamicGameState);
     const userId = this.findUserIdBySession(sessionId);
     if (userId) {
@@ -52,7 +64,9 @@ export class ServerState {
   /**
    * Get DynamicGameState by session
    */
-  public getDynamicGameStateBySession(sessionId: string): DynamicGameState | null {
+  public getDynamicGameStateBySession(
+    sessionId: string
+  ): DynamicGameState | null {
     return this.dynamicGameStatesBySession.get(sessionId) ?? null;
   }
 
@@ -88,7 +102,10 @@ export class ServerState {
 
   private findUserIdBySession(sessionId: string): string | null {
     // Check DynamicGameState
-    for (const [userId, dynamicState] of this.dynamicGameStatesByUser.entries()) {
+    for (const [
+      userId,
+      dynamicState,
+    ] of this.dynamicGameStatesByUser.entries()) {
       if (dynamicState?.sessionId === sessionId) {
         return userId;
       }

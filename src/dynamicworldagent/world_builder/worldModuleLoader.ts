@@ -7,7 +7,11 @@
 import fs from "fs";
 import path from "path";
 import type { CoCDatabase } from "../../shared/agents/memory/database/schema.js";
-import { resolveEmailId, scopeArray, scopeId } from "../../shared/agents/memory/database/userContext.js";
+import {
+  resolveEmailId,
+  scopeArray,
+  scopeId,
+} from "../../shared/agents/memory/database/userContext.js";
 import type {
   MacroSceneStructure,
   TruthEvent,
@@ -81,7 +85,10 @@ export class WorldModuleLoader {
   /**
    * Check if module directory has changed since last load
    */
-  private checkForChanges(moduleDir: string): { hasChanges: boolean; timestamp: number } {
+  private checkForChanges(moduleDir: string): {
+    hasChanges: boolean;
+    timestamp: number;
+  } {
     const timestampFile = path.join(moduleDir, ".last_world_load_timestamp");
     const currentTime = Date.now();
 
@@ -105,7 +112,10 @@ export class WorldModuleLoader {
 
     // Check NPC and scenario directories
     const npcsDir = path.join(moduleDir, `${path.basename(moduleDir)}_npc`);
-    const scenariosDir = path.join(moduleDir, `${path.basename(moduleDir)}_Scenarios`);
+    const scenariosDir = path.join(
+      moduleDir,
+      `${path.basename(moduleDir)}_Scenarios`
+    );
 
     for (const dir of [npcsDir, scenariosDir]) {
       if (fs.existsSync(dir)) {
@@ -120,10 +130,20 @@ export class WorldModuleLoader {
 
     // Check if we have existing data in database
     const emailId = this.getEmailId();
-    const hasEmailIdColumn = this.db.hasColumn("module_backgrounds", "email_id");
-    const existing = this.db.getDatabase().prepare(
-      `SELECT module_id FROM module_backgrounds WHERE title = ?${hasEmailIdColumn && emailId ? " AND email_id = ?" : ""}`
-    ).get(...(hasEmailIdColumn && emailId ? [path.basename(moduleDir), emailId] : [path.basename(moduleDir)]));
+    const hasEmailIdColumn = this.db.hasColumn(
+      "module_backgrounds",
+      "email_id"
+    );
+    const existing = this.db
+      .getDatabase()
+      .prepare(
+        `SELECT module_id FROM module_backgrounds WHERE title = ?${hasEmailIdColumn && emailId ? " AND email_id = ?" : ""}`
+      )
+      .get(
+        ...(hasEmailIdColumn && emailId
+          ? [path.basename(moduleDir), emailId]
+          : [path.basename(moduleDir)])
+      );
 
     if (!existing) {
       return { hasChanges: true, timestamp: currentTime };
@@ -171,7 +191,9 @@ export class WorldModuleLoader {
     if (!forceReload) {
       const { hasChanges } = this.checkForChanges(moduleDir);
       if (!hasChanges) {
-        console.log(`No changes detected for module "${moduleName}". Skipping reload.`);
+        console.log(
+          `No changes detected for module "${moduleName}". Skipping reload.`
+        );
         // Could return existing data from database here
         return null;
       }
@@ -183,7 +205,9 @@ export class WorldModuleLoader {
       // 1. Load module digest
       console.log(`  [1/7] Loading module_digest.json...`);
       const moduleDigestFile = path.join(moduleDir, "module_digest.json");
-      const moduleDigest = this.loadJSON<ModuleDigest & { title: string }>(moduleDigestFile);
+      const moduleDigest = this.loadJSON<ModuleDigest & { title: string }>(
+        moduleDigestFile
+      );
       console.log(`    ✓ Module digest loaded: ${moduleDigest.title}`);
 
       // 2. Load macro scene (includes mythos events and end state)
@@ -194,14 +218,20 @@ export class WorldModuleLoader {
         mythosEvents: MythosEvent[];
         endState: EndStateDefinition;
       }>(macroSceneFile);
-      console.log(`    ✓ Macro scene loaded: ${macroSceneData.macroScene.locationName}`);
+      console.log(
+        `    ✓ Macro scene loaded: ${macroSceneData.macroScene.locationName}`
+      );
       console.log(`    ✓ Mythos events: ${macroSceneData.mythosEvents.length}`);
 
       // 3. Load truth timeline
       console.log(`  [3/7] Loading truth_timeline.json...`);
       const truthTimelineFile = path.join(moduleDir, "truth_timeline.json");
-      const truthTimelineData = this.loadJSON<{ truthTimeline: TruthEvent[] }>(truthTimelineFile);
-      console.log(`    ✓ Truth events: ${truthTimelineData.truthTimeline.length}`);
+      const truthTimelineData = this.loadJSON<{ truthTimeline: TruthEvent[] }>(
+        truthTimelineFile
+      );
+      console.log(
+        `    ✓ Truth events: ${truthTimelineData.truthTimeline.length}`
+      );
 
       // 4. Load knowledge matrix and red herrings
       console.log(`  [4/7] Loading knowledge_matrix.json...`);
@@ -210,13 +240,19 @@ export class WorldModuleLoader {
         knowledgeMatrix: KnowledgeHolder[];
         redHerrings: RedHerring[];
       }>(knowledgeMatrixFile);
-      console.log(`    ✓ Knowledge holders: ${knowledgeMatrixData.knowledgeMatrix.length}`);
-      console.log(`    ✓ Red herrings: ${knowledgeMatrixData.redHerrings.length}`);
+      console.log(
+        `    ✓ Knowledge holders: ${knowledgeMatrixData.knowledgeMatrix.length}`
+      );
+      console.log(
+        `    ✓ Red herrings: ${knowledgeMatrixData.redHerrings.length}`
+      );
 
       // 5. Load scenario outlines
       console.log(`  [5/7] Loading scenarios_outline.json...`);
       const scenariosFile = path.join(moduleDir, "scenarios_outline.json");
-      const scenariosData = this.loadJSON<{ scenarios: ScenarioOutline[] }>(scenariosFile);
+      const scenariosData = this.loadJSON<{ scenarios: ScenarioOutline[] }>(
+        scenariosFile
+      );
       console.log(`    ✓ Scenario outlines: ${scenariosData.scenarios.length}`);
 
       // 6. Load scenario snapshots from individual files
@@ -256,7 +292,9 @@ export class WorldModuleLoader {
 
       console.log(`\n✅ World module loaded successfully: ${moduleName}`);
       console.log(`   - Truth events: ${loadedModule.truthTimeline.length}`);
-      console.log(`   - Knowledge holders: ${loadedModule.knowledgeMatrix.length}`);
+      console.log(
+        `   - Knowledge holders: ${loadedModule.knowledgeMatrix.length}`
+      );
       console.log(`   - Red herrings: ${loadedModule.redHerrings.length}`);
       console.log(`   - Scenarios: ${loadedModule.scenarios.length}`);
       console.log(`   - NPCs: ${loadedModule.npcs.length}`);
@@ -316,7 +354,9 @@ export class WorldModuleLoader {
       return fs.statSync(fullPath).isDirectory();
     });
 
-    console.log(`\n=== Loading ${moduleDirs.length} world modules from ${modsDir} ===\n`);
+    console.log(
+      `\n=== Loading ${moduleDirs.length} world modules from ${modsDir} ===\n`
+    );
 
     const loadedModules: LoadedWorldModule[] = [];
 
@@ -327,7 +367,10 @@ export class WorldModuleLoader {
       console.log(`[${i + 1}/${moduleDirs.length}] Loading module: ${dir}`);
 
       try {
-        const module = await this.loadAndSaveWorldModule(moduleDir, forceReload);
+        const module = await this.loadAndSaveWorldModule(
+          moduleDir,
+          forceReload
+        );
         if (module) {
           loadedModules.push(module);
         }
@@ -336,7 +379,9 @@ export class WorldModuleLoader {
       }
     }
 
-    console.log(`\n=== Successfully loaded ${loadedModules.length}/${moduleDirs.length} world modules ===\n`);
+    console.log(
+      `\n=== Successfully loaded ${loadedModules.length}/${moduleDirs.length} world modules ===\n`
+    );
 
     return loadedModules;
   }
@@ -353,14 +398,18 @@ export class WorldModuleLoader {
       const content = fs.readFileSync(filePath, "utf8");
       return JSON.parse(content) as T;
     } catch (error) {
-      throw new Error(`Failed to parse JSON from ${filePath}: ${(error as Error).message}`);
+      throw new Error(
+        `Failed to parse JSON from ${filePath}: ${(error as Error).message}`
+      );
     }
   }
 
   /**
    * Load scenario snapshots from individual scenario files
    */
-  private loadDynamicScenarioSnapshots(scenariosDir: string): Map<string, DynamicScenarioSnapshot> {
+  private loadDynamicScenarioSnapshots(
+    scenariosDir: string
+  ): Map<string, DynamicScenarioSnapshot> {
     const snapshots = new Map<string, DynamicScenarioSnapshot>();
 
     if (!fs.existsSync(scenariosDir)) {
@@ -368,7 +417,9 @@ export class WorldModuleLoader {
       return snapshots;
     }
 
-    const files = fs.readdirSync(scenariosDir).filter((f) => f.endsWith(".json"));
+    const files = fs
+      .readdirSync(scenariosDir)
+      .filter((f) => f.endsWith(".json"));
 
     for (const file of files) {
       try {
@@ -377,7 +428,9 @@ export class WorldModuleLoader {
         const data = JSON.parse(content);
 
         // Handle array format (single entry per file)
-        const scenarios: ScenarioFilePayload[] = Array.isArray(data) ? data : [data];
+        const scenarios: ScenarioFilePayload[] = Array.isArray(data)
+          ? data
+          : [data];
 
         for (const scenario of scenarios) {
           if (scenario.snapshot) {
@@ -446,7 +499,9 @@ export class WorldModuleLoader {
     this.saveScenarios(module);
 
     // 4. Save scenario snapshots
-    console.log(`  [4/4] Saving ${module.scenarioSnapshots.size} scenario snapshots...`);
+    console.log(
+      `  [4/4] Saving ${module.scenarioSnapshots.size} scenario snapshots...`
+    );
     this.saveDynamicScenarioSnapshots(module);
 
     console.log(`  ✓ All data saved to database`);
@@ -457,9 +512,14 @@ export class WorldModuleLoader {
    */
   private saveModuleBackground(module: LoadedWorldModule): void {
     const database = this.db.getDatabase();
-    const moduleId = this.scopeId(`module-${module.moduleName.toLowerCase().replace(/\s+/g, "-")}`);
+    const moduleId = this.scopeId(
+      `module-${module.moduleName.toLowerCase().replace(/\s+/g, "-")}`
+    );
     const emailId = this.getEmailId();
-    const hasEmailIdColumn = this.db.hasColumn("module_backgrounds", "email_id");
+    const hasEmailIdColumn = this.db.hasColumn(
+      "module_backgrounds",
+      "email_id"
+    );
 
     // Generate background from macro scene
     const background = `${module.macroScene.locationName} - ${module.macroScene.settingType || "setting"}. ${module.macroScene.economicCore}`;
@@ -479,7 +539,9 @@ export class WorldModuleLoader {
     // Get initial scenario NPCs from starting scene
     const initialScenarioNPCs: string[] = [];
     if (firstSnapshot?.characters) {
-      initialScenarioNPCs.push(...firstSnapshot.characters.map((c: any) => c.name));
+      initialScenarioNPCs.push(
+        ...firstSnapshot.characters.map((c: any) => c.name)
+      );
     }
 
     // Auto-generate tags
@@ -491,9 +553,18 @@ export class WorldModuleLoader {
     ];
 
     // Check column availability
-    const hasInitialGameTime = this.db.hasColumn("module_backgrounds", "initial_game_time");
-    const hasIntroduction = this.db.hasColumn("module_backgrounds", "introduction");
-    const hasInitialScenarioNPCs = this.db.hasColumn("module_backgrounds", "initial_scenario_npcs");
+    const hasInitialGameTime = this.db.hasColumn(
+      "module_backgrounds",
+      "initial_game_time"
+    );
+    const hasIntroduction = this.db.hasColumn(
+      "module_backgrounds",
+      "introduction"
+    );
+    const hasInitialScenarioNPCs = this.db.hasColumn(
+      "module_backgrounds",
+      "initial_scenario_npcs"
+    );
 
     if (hasInitialGameTime && hasIntroduction && hasInitialScenarioNPCs) {
       const stmt = database.prepare(`
@@ -579,7 +650,9 @@ export class WorldModuleLoader {
 
     if (hasEmailIdColumn && emailId) {
       database
-        .prepare("UPDATE module_backgrounds SET email_id = ? WHERE module_id = ?")
+        .prepare(
+          "UPDATE module_backgrounds SET email_id = ? WHERE module_id = ?"
+        )
         .run(emailId, moduleId);
     }
 
@@ -605,7 +678,9 @@ export class WorldModuleLoader {
         JSON.stringify(module.mythosEvents),
         JSON.stringify(module.endState),
         JSON.stringify(module.macroScene),
-        module.moduleDigest.globalTrigger ? JSON.stringify(module.moduleDigest.globalTrigger) : null,
+        module.moduleDigest.globalTrigger
+          ? JSON.stringify(module.moduleDigest.globalTrigger)
+          : null,
         module.moduleDigest.macroMapPath || null,
         moduleId
       );
@@ -620,7 +695,10 @@ export class WorldModuleLoader {
     const emailId = this.getEmailId();
     const hasCharacterEmailId = this.db.hasColumn("characters", "email_id");
     const hasClueEmailId = this.db.hasColumn("npc_clues", "email_id");
-    const hasRelationshipEmailId = this.db.hasColumn("npc_relationships", "email_id");
+    const hasRelationshipEmailId = this.db.hasColumn(
+      "npc_relationships",
+      "email_id"
+    );
 
     for (const npc of npcs) {
       const npcId = this.scopeId(npc.id);
@@ -766,7 +844,10 @@ export class WorldModuleLoader {
     const now = new Date().toISOString();
 
     const scenarioByName = new Map(
-      module.scenarios.map((scenario) => [scenario.name.toLowerCase(), scenario])
+      module.scenarios.map((scenario) => [
+        scenario.name.toLowerCase(),
+        scenario,
+      ])
     );
 
     for (const scenario of module.scenarios) {
@@ -780,8 +861,12 @@ export class WorldModuleLoader {
       };
 
       const connections = (scenario.connections || []).map((connection) => {
-        const targetScenario = scenarioByName.get(connection.scenarioName.toLowerCase());
-        const targetScenarioId = targetScenario ? this.scopeId(targetScenario.id) : null;
+        const targetScenario = scenarioByName.get(
+          connection.scenarioName.toLowerCase()
+        );
+        const targetScenarioId = targetScenario
+          ? this.scopeId(targetScenario.id)
+          : null;
         return {
           scenarioId: targetScenarioId || connection.scenarioName,
           relationshipType: connection.relationshipType,
@@ -832,38 +917,70 @@ export class WorldModuleLoader {
   private saveDynamicScenarioSnapshots(module: LoadedWorldModule): void {
     const database = this.db.getDatabase();
     const emailId = this.getEmailId();
-    const hasSnapshotEmailId = this.db.hasColumn("scenario_snapshots", "email_id");
-    const hasCharacterEmailId = this.db.hasColumn("scenario_characters", "email_id");
+    const hasSnapshotEmailId = this.db.hasColumn(
+      "scenario_snapshots",
+      "email_id"
+    );
+    const hasCharacterEmailId = this.db.hasColumn(
+      "scenario_characters",
+      "email_id"
+    );
     const hasClueEmailId = this.db.hasColumn("scenario_clues", "email_id");
-    const hasConditionEmailId = this.db.hasColumn("scenario_conditions", "email_id");
+    const hasConditionEmailId = this.db.hasColumn(
+      "scenario_conditions",
+      "email_id"
+    );
 
     for (const [snapshotId, snapshot] of module.scenarioSnapshots.entries()) {
       const scopedSnapshotId = this.scopeId(snapshotId);
       // Check if snapshot exists
       const existing = database
-        .prepare(`SELECT snapshot_id FROM scenario_snapshots WHERE snapshot_id = ?${hasSnapshotEmailId && emailId ? " AND email_id = ?" : ""}`)
-        .get(...(hasSnapshotEmailId && emailId ? [scopedSnapshotId, emailId] : [scopedSnapshotId]));
+        .prepare(
+          `SELECT snapshot_id FROM scenario_snapshots WHERE snapshot_id = ?${hasSnapshotEmailId && emailId ? " AND email_id = ?" : ""}`
+        )
+        .get(
+          ...(hasSnapshotEmailId && emailId
+            ? [scopedSnapshotId, emailId]
+            : [scopedSnapshotId])
+        );
 
       if (existing) {
         continue; // Skip existing snapshots
       }
 
       // Find corresponding scenario
-      const scenario = module.scenarios.find((s) => s.id === snapshot.id || s.name === snapshot.name);
+      const scenario = module.scenarios.find(
+        (s) => s.id === snapshot.id || s.name === snapshot.name
+      );
       const scenarioId = scenario?.id || snapshotId;
       const scopedScenarioId = this.scopeId(scenarioId);
 
       // Insert snapshot
-      const hasInitialSnapshot = this.db.hasColumn("scenario_snapshots", "initial_snapshot");
+      const hasInitialSnapshot = this.db.hasColumn(
+        "scenario_snapshots",
+        "initial_snapshot"
+      );
       const hasGameTime = this.db.hasColumn("scenario_snapshots", "game_time");
-      const hasSceneImagePath = this.db.hasColumn("scenario_snapshots", "scene_image_path");
+      const hasSceneImagePath = this.db.hasColumn(
+        "scenario_snapshots",
+        "scene_image_path"
+      );
       const sceneImagePath = (snapshot as any).sceneImage?.path || null;
 
       if (hasInitialSnapshot && hasGameTime) {
         const cols = [
-          "snapshot_id", "scenario_id", "snapshot_name", "location", "description",
-          "events", "exits", "keeper_notes", "time_restriction", "show_map",
-          "initial_snapshot", "game_time",
+          "snapshot_id",
+          "scenario_id",
+          "snapshot_name",
+          "location",
+          "description",
+          "events",
+          "exits",
+          "keeper_notes",
+          "time_restriction",
+          "show_map",
+          "initial_snapshot",
+          "game_time",
         ];
         if (hasSceneImagePath) cols.push("scene_image_path");
         if (hasSnapshotEmailId) cols.push("email_id");
@@ -891,8 +1008,16 @@ export class WorldModuleLoader {
         snapshotStmt.run(...vals);
       } else {
         const cols = [
-          "snapshot_id", "scenario_id", "snapshot_name", "location", "description",
-          "events", "exits", "keeper_notes", "time_restriction", "show_map",
+          "snapshot_id",
+          "scenario_id",
+          "snapshot_name",
+          "location",
+          "description",
+          "events",
+          "exits",
+          "keeper_notes",
+          "time_restriction",
+          "show_map",
         ];
         if (hasSceneImagePath) cols.push("scene_image_path");
         if (hasSnapshotEmailId) cols.push("email_id");
@@ -928,7 +1053,9 @@ export class WorldModuleLoader {
         `);
 
         for (const char of snapshot.characters) {
-          const rawCharId = char.id || `${scopedSnapshotId}-char-${Math.random().toString(36).slice(2, 10)}`;
+          const rawCharId =
+            char.id ||
+            `${scopedSnapshotId}-char-${Math.random().toString(36).slice(2, 10)}`;
           const scopedCharId = scopeId(rawCharId, emailId);
           charStmt.run(
             scopedCharId,
@@ -941,7 +1068,9 @@ export class WorldModuleLoader {
           );
           if (hasCharacterEmailId && emailId) {
             database
-              .prepare("UPDATE scenario_characters SET email_id = ? WHERE id = ?")
+              .prepare(
+                "UPDATE scenario_characters SET email_id = ? WHERE id = ?"
+              )
               .run(emailId, scopedCharId);
           }
         }
@@ -972,7 +1101,9 @@ export class WorldModuleLoader {
           );
           if (hasClueEmailId && emailId) {
             database
-              .prepare("UPDATE scenario_clues SET email_id = ? WHERE clue_id = ?")
+              .prepare(
+                "UPDATE scenario_clues SET email_id = ? WHERE clue_id = ?"
+              )
               .run(emailId, scopedClueId);
           }
         }
@@ -997,7 +1128,9 @@ export class WorldModuleLoader {
           );
           if (hasConditionEmailId && emailId) {
             database
-              .prepare("UPDATE scenario_conditions SET email_id = ? WHERE condition_id = ?")
+              .prepare(
+                "UPDATE scenario_conditions SET email_id = ? WHERE condition_id = ?"
+              )
               .run(emailId, conditionId);
           }
         }

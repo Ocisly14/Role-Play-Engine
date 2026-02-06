@@ -76,7 +76,10 @@ async function downloadImageAsBase64(url: string): Promise<string> {
 /**
  * Normalize image inputs to data URLs or pass-through URLs so providers receive a consistent payload.
  */
-async function formatImageInput(image: ImageInput, provider: ModelProviderName): Promise<string> {
+async function formatImageInput(
+  image: ImageInput,
+  provider: ModelProviderName
+): Promise<string> {
   if ("url" in image) {
     // Google requires base64 data URLs, not regular URLs
     if (provider === ModelProviderName.GOOGLE) {
@@ -122,7 +125,10 @@ async function buildUserContent(
   if (provider === ModelProviderName.GOOGLE) {
     return [
       ...textPart,
-      ...formattedImages.map((imageUrl) => ({ type: "image_url", image_url: imageUrl })),
+      ...formattedImages.map((imageUrl) => ({
+        type: "image_url",
+        image_url: imageUrl,
+      })),
     ];
   }
 
@@ -153,7 +159,9 @@ export function createChatModel(
   const endpoint = getEndpoint(provider);
 
   if (!settings) {
-    throw new Error(`No settings found for provider ${provider} and model class ${modelClass}`);
+    throw new Error(
+      `No settings found for provider ${provider} and model class ${modelClass}`
+    );
   }
 
   let model: any;
@@ -209,7 +217,9 @@ export function createChatModel(
 /**
  * Generates text using the appropriate model class for CoC scenarios
  */
-export async function generateText(options: GenerationOptions): Promise<string> {
+export async function generateText(
+  options: GenerationOptions
+): Promise<string> {
   const {
     runtime,
     context,
@@ -222,11 +232,12 @@ export async function generateText(options: GenerationOptions): Promise<string> 
 
   // Get provider from environment variable, runtime, or default to OpenAI
   const envProvider = process.env.MODEL_PROVIDER as ModelProviderName;
-  const provider = envProvider || runtime.modelProvider || ModelProviderName.OPENAI;
-  
+  const provider =
+    envProvider || runtime.modelProvider || ModelProviderName.OPENAI;
+
   // Resolve effective model class
   const effectiveModelClass = resolveModelClass(runtime, modelClass);
-  
+
   // Create chat model
   const chatModel = createChatModel(provider, effectiveModelClass, {
     streaming: provider === ModelProviderName.GOOGLE && Boolean(onToken),
@@ -254,22 +265,24 @@ export async function generateText(options: GenerationOptions): Promise<string> 
 
   // Generate with retries
   let lastError: Error | null = null;
-  
+
   for (let attempt = 1; attempt <= maxRetries; attempt++) {
     try {
       console.log(
         `🤖 Generating text (attempt ${attempt}/${maxRetries}) using ${provider}/${effectiveModelClass}`
       );
 
-      if (onToken && provider === ModelProviderName.GOOGLE && typeof chatModel.stream === "function") {
+      if (
+        onToken &&
+        provider === ModelProviderName.GOOGLE &&
+        typeof chatModel.stream === "function"
+      ) {
         let fullContent = "";
         const stream = await chatModel.stream(messages);
 
         for await (const chunk of stream) {
           const content =
-            (chunk as any)?.content ??
-            (chunk as any)?.message?.content ??
-            "";
+            (chunk as any)?.content ?? (chunk as any)?.message?.content ?? "";
           const text =
             typeof content === "string"
               ? content
@@ -287,7 +300,9 @@ export async function generateText(options: GenerationOptions): Promise<string> 
           throw new Error("Empty response from model");
         }
 
-        console.log(`✅ Generated text successfully (${fullContent.length} characters)`);
+        console.log(
+          `✅ Generated text successfully (${fullContent.length} characters)`
+        );
         return fullContent;
       }
 
@@ -297,15 +312,13 @@ export async function generateText(options: GenerationOptions): Promise<string> 
         throw new Error("Empty response from model");
       }
 
-      console.log(`✅ Generated text successfully (${response.content.length} characters)`);
+      console.log(
+        `✅ Generated text successfully (${response.content.length} characters)`
+      );
       return response.content;
-
     } catch (error) {
       lastError = error as Error;
-      console.error(
-        `❌ Generation attempt ${attempt} failed:`,
-        error
-      );
+      console.error(`❌ Generation attempt ${attempt} failed:`, error);
 
       if (attempt < maxRetries) {
         const delay = Math.pow(2, attempt) * 1000; // Exponential backoff
@@ -314,5 +327,7 @@ export async function generateText(options: GenerationOptions): Promise<string> 
     }
   }
 
-  throw new Error(`Failed to generate text after ${maxRetries} attempts: ${lastError?.message}`);
+  throw new Error(
+    `Failed to generate text after ${maxRetries} attempts: ${lastError?.message}`
+  );
 }

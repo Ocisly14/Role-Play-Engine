@@ -219,7 +219,7 @@ Return ONLY valid JSON in this exact structure:
 /**
  * Player Scene Switch Template - for generating complete target snapshot + simplified background snapshots during scene transitions
  */
-export function getPlayerSceneSwitchTemplate():  string {
+export function getPlayerSceneSwitchTemplate(): string {
   return `# Director Agent - Scenario Update Generation (Player Scene Switch)
 
 Generate snapshots for all scenarios during a player scene switch. The target scene (where player is moving to) needs a **complete detailed snapshot**, while other scenes get simplified snapshots.

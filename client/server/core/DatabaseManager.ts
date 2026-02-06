@@ -1,4 +1,7 @@
-import { CoCDatabase, seedDatabase } from "../../../src/shared/agents/memory/database/index.js";
+import {
+  CoCDatabase,
+  seedDatabase,
+} from "../../../src/shared/agents/memory/database/index.js";
 import { configureTokenUsageDatabase } from "../../../src/models/index.js";
 import path from "path";
 import fs from "fs";

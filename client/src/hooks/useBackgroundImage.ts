@@ -1,6 +1,6 @@
-import { useEffect } from 'react';
-import { findAvailableImage } from '../utils/imageLoader';
-import { setBackgroundWithTransition } from '../utils/backgroundTransition';
+import { useEffect } from "react";
+import { findAvailableImage } from "../utils/imageLoader";
+import { setBackgroundWithTransition } from "../utils/backgroundTransition";
 
 /**
  * Hook to set the body background image, supporting multiple formats (png, jpeg, jpg)
@@ -9,7 +9,7 @@ import { setBackgroundWithTransition } from '../utils/backgroundTransition';
  * @param useTransition - Whether to use transition animation (default: false for initial load)
  */
 export function useBackgroundImage(
-  imageName: string = 'background',
+  imageName: string = "background",
   enabled: boolean = true,
   useTransition: boolean = false
 ) {

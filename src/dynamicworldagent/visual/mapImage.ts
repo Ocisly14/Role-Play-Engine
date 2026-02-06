@@ -9,7 +9,7 @@ import path from "path";
 import fs from "fs/promises";
 
 export interface MapImageResult {
-  path: string;        // Module-relative path, e.g. "Map/[Module Name].png"
+  path: string; // Module-relative path, e.g. "Map/[Module Name].png"
   mimeType: string;
 }
 
@@ -32,11 +32,13 @@ function extFromMime(mimeType: string): string {
  * Helper: Sanitize filename (remove special characters)
  */
 function safeFilename(input: string): string {
-  return input
-    .trim()
-    .replace(/[^a-zA-Z0-9\u4e00-\u9fa5]+/g, "_")
-    .replace(/^_+|_+$/g, "")
-    .slice(0, 80) || "map";
+  return (
+    input
+      .trim()
+      .replace(/[^a-zA-Z0-9\u4e00-\u9fa5]+/g, "_")
+      .replace(/^_+|_+$/g, "")
+      .slice(0, 80) || "map"
+  );
 }
 
 /**
@@ -50,7 +52,7 @@ function uniqueSuffix(): string {
 
 /**
  * Build prompt for macro map image generation
- * 
+ *
  * @param scenarioOutlines - All scenarios in the module
  * @returns Prompt string for Gemini image generation
  */
@@ -58,17 +60,19 @@ export function buildMapImagePrompt(
   scenarioOutlines: ScenarioOutline[]
 ): string {
   // Build scenario summary
-  const scenarioSummaries = scenarioOutlines.map(scenario => {
-    const connections = scenario.connections
-      .map(conn => `  → ${conn.scenarioName} (${conn.relationshipType})`)
-      .join("\n");
-    
-    return `
+  const scenarioSummaries = scenarioOutlines
+    .map((scenario) => {
+      const connections = scenario.connections
+        .map((conn) => `  → ${conn.scenarioName} (${conn.relationshipType})`)
+        .join("\n");
+
+      return `
 **${scenario.name}**
 ${scenario.description}
 ${connections ? `Connections:\n${connections}` : "No connections"}
 `.trim();
-  }).join("\n\n");
+    })
+    .join("\n\n");
 
   return `
 # Macro Map Illustration Prompt
@@ -102,7 +106,7 @@ Generate a single cohesive map image with clear visual distinctions between diff
 
 /**
  * Save map image to module directory
- * 
+ *
  * @param moduleName - Module name
  * @param mimeType - Image MIME type
  * @param base64Data - Base64-encoded image data
@@ -117,7 +121,13 @@ async function saveMapImageToModule(
   const filenameBase = safeFilename(moduleName);
   const relativePath = path.join("Map", `${filenameBase}.${ext}`);
   const outputDir = path.join(process.cwd(), "data", "Mods", moduleName, "Map");
-  const outputPath = path.join(process.cwd(), "data", "Mods", moduleName, relativePath);
+  const outputPath = path.join(
+    process.cwd(),
+    "data",
+    "Mods",
+    moduleName,
+    relativePath
+  );
 
   await fs.mkdir(outputDir, { recursive: true });
   const buffer = Buffer.from(base64Data, "base64");
@@ -128,7 +138,7 @@ async function saveMapImageToModule(
 
 /**
  * Generate macro map image from scenario outlines
- * 
+ *
  * @param moduleName - Module name for save path
  * @param scenarios - All scenario outlines
  * @returns Map image result or null if generation failed/skipped
@@ -139,7 +149,9 @@ export async function generateMapImageFromScenarios(
 ): Promise<MapImageResult | null> {
   // Check prerequisites
   if (!process.env.GOOGLE_API_KEY) {
-    console.log("   ⚠️  GOOGLE_API_KEY not configured, skipping macro map generation");
+    console.log(
+      "   ⚠️  GOOGLE_API_KEY not configured, skipping macro map generation"
+    );
     return null;
   }
 
@@ -156,10 +168,10 @@ export async function generateMapImageFromScenarios(
   try {
     // Build prompt
     const prompt = buildMapImagePrompt(scenarios);
-    
+
     // Generate image
     const result = await generateGeminiImage(prompt);
-    
+
     // Save to module directory
     const relativePath = await saveMapImageToModule(
       moduleName,

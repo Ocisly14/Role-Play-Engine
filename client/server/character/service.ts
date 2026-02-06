@@ -15,10 +15,14 @@ export function prepareCharacterForDB(characterData: any): any {
     status: JSON.stringify({
       hp: characterData.derived?.HP || 10,
       maxHp: characterData.derived?.HP || 10,
-      sanity: characterData.derived?.SAN || (characterData.attributes?.POW || 60),
+      sanity: characterData.derived?.SAN || characterData.attributes?.POW || 60,
       maxSanity: 99, // COC规则：最大理智值固定为99
       luck: characterData.derived?.LUCK || characterData.attributes?.LCK || 50,
-      mp: characterData.derived?.MP || (characterData.attributes?.POW ? Math.floor(characterData.attributes.POW / 5) : 10),
+      mp:
+        characterData.derived?.MP ||
+        (characterData.attributes?.POW
+          ? Math.floor(characterData.attributes.POW / 5)
+          : 10),
       damageBonus: characterData.derived?.DB || "0",
       build: characterData.derived?.BUILD || 0,
       mov: characterData.derived?.MOV || 8,
@@ -31,7 +35,7 @@ export function prepareCharacterForDB(characterData: any): any {
         .map((item: any) => ({
           name: item.name,
           quantity: item.quantity || 1,
-          properties: item.properties || undefined
+          properties: item.properties || undefined,
         })),
       // Add weapons as InventoryItem objects (for backward compatibility)
       ...(characterData.weapons || [])
@@ -40,32 +44,35 @@ export function prepareCharacterForDB(characterData: any): any {
           name: w.name,
           quantity: 1,
           properties: {
-            type: 'weapon',
+            type: "weapon",
             skill: w.skill,
             damage: w.damage,
             range: w.range,
             attacks: w.attacks,
-            ammo: w.ammo
-          }
-        }))
+            ammo: w.ammo,
+          },
+        })),
     ]),
     skills: JSON.stringify(
-      Object.entries(characterData.skills || {}).reduce((acc: any, [name, data]: [string, any]) => {
-        // Support both old format (data.value) and new format (data.total with breakdown)
-        if (typeof data === 'object' && data.total !== undefined) {
-          // New format: store complete skill data with breakdown
-          acc[name] = {
-            value: data.total,
-            base: data.base || 0,
-            occupationalPoints: data.occupationalPoints || 0,
-            interestPoints: data.interestPoints || 0
-          };
-        } else {
-          // Old format or simple value: store as is
-          acc[name] = typeof data === 'object' ? (data.value || 0) : data;
-        }
-        return acc;
-      }, {})
+      Object.entries(characterData.skills || {}).reduce(
+        (acc: any, [name, data]: [string, any]) => {
+          // Support both old format (data.value) and new format (data.total with breakdown)
+          if (typeof data === "object" && data.total !== undefined) {
+            // New format: store complete skill data with breakdown
+            acc[name] = {
+              value: data.total,
+              base: data.base || 0,
+              occupationalPoints: data.occupationalPoints || 0,
+              interestPoints: data.interestPoints || 0,
+            };
+          } else {
+            // Old format or simple value: store as is
+            acc[name] = typeof data === "object" ? data.value || 0 : data;
+          }
+          return acc;
+        },
+        {}
+      )
     ),
     notes: JSON.stringify({
       era: characterData.identity?.era || "",
@@ -96,7 +103,9 @@ export function prepareCharacterForDB(characterData: any): any {
  * @returns Parsed character with JSON fields converted
  */
 export function parseCharacterFromDB(character: any): any {
-  const attributes = character.attributes ? JSON.parse(character.attributes) : null;
+  const attributes = character.attributes
+    ? JSON.parse(character.attributes)
+    : null;
   const derived = character.derived ? JSON.parse(character.derived) : null;
   const status = character.status ? JSON.parse(character.status) : null;
   const skills = character.skills ? JSON.parse(character.skills) : null;
@@ -109,15 +118,15 @@ export function parseCharacterFromDB(character: any): any {
 
   if (Array.isArray(inventory)) {
     inventory.forEach((item: any) => {
-      if (item.properties && item.properties.type === 'weapon') {
+      if (item.properties && item.properties.type === "weapon") {
         // This is a weapon stored in inventory
         weapons.push({
           name: item.name,
-          skill: item.properties.skill || '',
-          damage: item.properties.damage || '',
-          range: item.properties.range || '',
-          attacks: item.properties.attacks || '',
-          ammo: item.properties.ammo || ''
+          skill: item.properties.skill || "",
+          damage: item.properties.damage || "",
+          range: item.properties.range || "",
+          attacks: item.properties.attacks || "",
+          ammo: item.properties.ammo || "",
         });
       } else {
         // Regular inventory item
@@ -129,9 +138,9 @@ export function parseCharacterFromDB(character: any): any {
   // Process skills to extract the value
   const processedSkills: any = {};
   if (skills) {
-    Object.keys(skills).forEach(skillName => {
+    Object.keys(skills).forEach((skillName) => {
       const skillData = skills[skillName];
-      if (typeof skillData === 'object' && skillData.value !== undefined) {
+      if (typeof skillData === "object" && skillData.value !== undefined) {
         processedSkills[skillName] = skillData.value;
       } else {
         processedSkills[skillName] = skillData;

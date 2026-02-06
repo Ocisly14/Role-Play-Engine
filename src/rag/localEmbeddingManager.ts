@@ -63,7 +63,10 @@ export class LocalEmbeddingManager {
     }
   }
 
-  async embed(text: string, language: LocalEmbeddingLanguage = "en"): Promise<number[]> {
+  async embed(
+    text: string,
+    language: LocalEmbeddingLanguage = "en"
+  ): Promise<number[]> {
     if (!text?.trim()) return [];
     await this.ensureModel(language);
 

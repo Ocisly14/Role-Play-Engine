@@ -28,7 +28,13 @@ export interface ScenarioClue {
   /** The clue text or description */
   clueText: string;
   /** Category of clue */
-  category: "physical" | "witness" | "document" | "environment" | "knowledge" | "observation";
+  category:
+    | "physical"
+    | "witness"
+    | "document"
+    | "environment"
+    | "knowledge"
+    | "observation";
   /** How obvious/difficult to find */
   difficulty: "automatic" | "regular" | "hard" | "extreme";
   /** Location where this clue can be found */

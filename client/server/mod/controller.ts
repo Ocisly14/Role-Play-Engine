@@ -26,10 +26,10 @@ function isWorldBuilderModule(modPath: string): boolean {
   const worldBuilderFiles = [
     "truth_timeline.json",
     "knowledge_matrix.json",
-    "macro_scene.json"
+    "macro_scene.json",
   ];
 
-  return worldBuilderFiles.every(file =>
+  return worldBuilderFiles.every((file) =>
     fs.existsSync(path.join(modPath, file))
   );
 }
@@ -39,21 +39,25 @@ function isWorldBuilderModule(modPath: string): boolean {
  * POST /api/mod/load
  */
 export async function loadModData(req: Request, res: Response): Promise<void> {
-  const useSSE = req.headers.accept?.includes('text/event-stream') || req.query.stream === 'true';
+  const useSSE =
+    req.headers.accept?.includes("text/event-stream") ||
+    req.query.stream === "true";
 
   if (useSSE) {
-    res.setHeader('Content-Type', 'text/event-stream');
-    res.setHeader('Cache-Control', 'no-cache');
-    res.setHeader('Connection', 'keep-alive');
-    res.setHeader('X-Accel-Buffering', 'no');
+    res.setHeader("Content-Type", "text/event-stream");
+    res.setHeader("Cache-Control", "no-cache");
+    res.setHeader("Connection", "keep-alive");
+    res.setHeader("X-Accel-Buffering", "no");
   }
 
   try {
     const { modName } = req.body;
 
-    if (!modName || typeof modName !== 'string') {
+    if (!modName || typeof modName !== "string") {
       if (useSSE) {
-        res.write(`data: ${JSON.stringify({ stage: "Error", progress: 0, message: "modName is required" })}\n\n`);
+        res.write(
+          `data: ${JSON.stringify({ stage: "Error", progress: 0, message: "modName is required" })}\n\n`
+        );
         res.end();
       } else {
         res.status(400).json({ error: "modName is required" });
@@ -65,14 +69,23 @@ export async function loadModData(req: Request, res: Response): Promise<void> {
     const emailId = req.user?.email;
 
     // Load mod with progress reporting
-    const result = await loadMod(db, modName, emailId, (stage, progress, message) => {
-      if (useSSE) {
-        res.write(`data: ${JSON.stringify({ stage, progress, message })}\n\n`);
+    const result = await loadMod(
+      db,
+      modName,
+      emailId,
+      (stage, progress, message) => {
+        if (useSSE) {
+          res.write(
+            `data: ${JSON.stringify({ stage, progress, message })}\n\n`
+          );
+        }
       }
-    });
+    );
 
     if (useSSE) {
-      res.write(`data: ${JSON.stringify({ ...result, stage: "Complete", progress: 100 })}\n\n`);
+      res.write(
+        `data: ${JSON.stringify({ ...result, stage: "Complete", progress: 100 })}\n\n`
+      );
       res.end();
     } else {
       res.json(result);
@@ -81,7 +94,9 @@ export async function loadModData(req: Request, res: Response): Promise<void> {
     console.error("Error loading mod data:", error);
     const errorMessage = "Failed to load mod data: " + (error as Error).message;
     if (useSSE) {
-      res.write(`data: ${JSON.stringify({ stage: "Error", progress: 0, message: errorMessage })}\n\n`);
+      res.write(
+        `data: ${JSON.stringify({ stage: "Error", progress: 0, message: errorMessage })}\n\n`
+      );
       res.end();
     } else {
       res.status(500).json({ error: errorMessage });
@@ -93,11 +108,14 @@ export async function loadModData(req: Request, res: Response): Promise<void> {
  * Get module introduction (without starting game)
  * GET /api/module/introduction
  */
-export async function getModuleIntroduction(req: Request, res: Response): Promise<void> {
+export async function getModuleIntroduction(
+  req: Request,
+  res: Response
+): Promise<void> {
   try {
     const { modName } = req.query;
 
-    if (!modName || typeof modName !== 'string') {
+    if (!modName || typeof modName !== "string") {
       res.status(400).json({ error: "modName is required" });
       return;
     }
@@ -118,16 +136,27 @@ export async function getModuleIntroduction(req: Request, res: Response): Promis
       console.log(`Loading world-builder module: ${modName}`);
 
       const worldModuleLoader = new WorldModuleLoader(db, { emailId: emailId });
-      const loadedModule = await worldModuleLoader.loadAndSaveWorldModule(modPath, false);
+      const loadedModule = await worldModuleLoader.loadAndSaveWorldModule(
+        modPath,
+        false
+      );
 
       if (!loadedModule) {
         // Module hasn't changed, get from database
-        const moduleLoader = new ModuleLoader(db, undefined, { emailId: emailId });
+        const moduleLoader = new ModuleLoader(db, undefined, {
+          emailId: emailId,
+        });
         const modules = moduleLoader.getAllModules();
         const normalizedModName = modName.trim().toLowerCase();
         const module =
-          modules.find((candidate) => candidate.title?.trim().toLowerCase() === normalizedModName) ||
-          modules.find((candidate) => candidate.title && isNameSimilar(candidate.title, modName)) ||
+          modules.find(
+            (candidate) =>
+              candidate.title?.trim().toLowerCase() === normalizedModName
+          ) ||
+          modules.find(
+            (candidate) =>
+              candidate.title && isNameSimilar(candidate.title, modName)
+          ) ||
           modules[0];
 
         if (!module) {
@@ -135,10 +164,12 @@ export async function getModuleIntroduction(req: Request, res: Response): Promis
           return;
         }
 
-        const moduleIntroduction = module.introduction ? {
-          introduction: module.introduction,
-          moduleNotes: module.moduleNotes || ""
-        } : null;
+        const moduleIntroduction = module.introduction
+          ? {
+              introduction: module.introduction,
+              moduleNotes: module.moduleNotes || "",
+            }
+          : null;
 
         res.json({
           success: true,
@@ -147,10 +178,12 @@ export async function getModuleIntroduction(req: Request, res: Response): Promis
         });
       } else {
         // Freshly loaded world module
-        const moduleIntroduction = loadedModule.moduleDigest.introduction ? {
-          introduction: loadedModule.moduleDigest.introduction,
-          moduleNotes: loadedModule.moduleDigest.moduleNotes || ""
-        } : null;
+        const moduleIntroduction = loadedModule.moduleDigest.introduction
+          ? {
+              introduction: loadedModule.moduleDigest.introduction,
+              moduleNotes: loadedModule.moduleDigest.moduleNotes || "",
+            }
+          : null;
 
         res.json({
           success: true,
@@ -162,7 +195,9 @@ export async function getModuleIntroduction(req: Request, res: Response): Promis
       // Regular module (old format)
       console.log(`Loading regular module: ${modName}`);
 
-      const moduleLoader = new ModuleLoader(db, undefined, { emailId: emailId });
+      const moduleLoader = new ModuleLoader(db, undefined, {
+        emailId: emailId,
+      });
 
       // Load module data
       const moduleDigestPath = path.join(modPath, "module_digest.json");
@@ -178,13 +213,21 @@ export async function getModuleIntroduction(req: Request, res: Response): Promis
 
       const normalizedModName = modName.trim().toLowerCase();
       const module =
-        modules.find((candidate) => candidate.title?.trim().toLowerCase() === normalizedModName) ||
-        modules.find((candidate) => candidate.title && isNameSimilar(candidate.title, modName)) ||
+        modules.find(
+          (candidate) =>
+            candidate.title?.trim().toLowerCase() === normalizedModName
+        ) ||
+        modules.find(
+          (candidate) =>
+            candidate.title && isNameSimilar(candidate.title, modName)
+        ) ||
         modules[0];
-      const moduleIntroduction = module.introduction ? {
-        introduction: module.introduction,
-        moduleNotes: module.moduleNotes || ""
-      } : null;
+      const moduleIntroduction = module.introduction
+        ? {
+            introduction: module.introduction,
+            moduleNotes: module.moduleNotes || "",
+          }
+        : null;
 
       res.json({
         success: true,
@@ -194,7 +237,11 @@ export async function getModuleIntroduction(req: Request, res: Response): Promis
     }
   } catch (error) {
     console.error("Error getting module introduction:", error);
-    res.status(500).json({ error: "Failed to get module introduction: " + (error as Error).message });
+    res
+      .status(500)
+      .json({
+        error: "Failed to get module introduction: " + (error as Error).message,
+      });
   }
 }
 
@@ -217,7 +264,11 @@ export function getSharedMods(req: Request, res: Response): void {
     res.json({ success: true, mods });
   } catch (error) {
     console.error("Error listing shared mods:", error);
-    res.status(500).json({ error: "Failed to list shared mods: " + (error as Error).message });
+    res
+      .status(500)
+      .json({
+        error: "Failed to list shared mods: " + (error as Error).message,
+      });
   }
 }
 
@@ -245,7 +296,9 @@ export function shareMod(req: Request, res: Response): void {
     res.json({ success: true, shared: true });
   } catch (error) {
     console.error("Error sharing mod:", error);
-    res.status(500).json({ error: "Failed to share mod: " + (error as Error).message });
+    res
+      .status(500)
+      .json({ error: "Failed to share mod: " + (error as Error).message });
   }
 }
 
@@ -273,7 +326,9 @@ export function unshareMod(req: Request, res: Response): void {
     res.json({ success: true, shared: false });
   } catch (error) {
     console.error("Error unsharing mod:", error);
-    res.status(500).json({ error: "Failed to unshare mod: " + (error as Error).message });
+    res
+      .status(500)
+      .json({ error: "Failed to unshare mod: " + (error as Error).message });
   }
 }
 
@@ -301,7 +356,9 @@ export function removeMod(req: Request, res: Response): void {
     res.json({ success: true, removed: true, trashed: result.trashed });
   } catch (error) {
     console.error("Error removing mod:", error);
-    res.status(500).json({ error: "Failed to remove mod: " + (error as Error).message });
+    res
+      .status(500)
+      .json({ error: "Failed to remove mod: " + (error as Error).message });
   }
 }
 
@@ -334,7 +391,9 @@ export function removeModsBulk(req: Request, res: Response): void {
     res.json({ success: true, removed: true, trashedCount });
   } catch (error) {
     console.error("Error removing mods:", error);
-    res.status(500).json({ error: "Failed to remove mods: " + (error as Error).message });
+    res
+      .status(500)
+      .json({ error: "Failed to remove mods: " + (error as Error).message });
   }
 }
 
@@ -362,7 +421,9 @@ export function addSharedMod(req: Request, res: Response): void {
     res.json({ success: true, added: true });
   } catch (error) {
     console.error("Error adding shared mod:", error);
-    res.status(500).json({ error: "Failed to add shared mod: " + (error as Error).message });
+    res
+      .status(500)
+      .json({ error: "Failed to add shared mod: " + (error as Error).message });
   }
 }
 
@@ -384,7 +445,11 @@ export function getDeletedMods(req: Request, res: Response): void {
     res.json({ success: true, mods });
   } catch (error) {
     console.error("Error listing deleted mods:", error);
-    res.status(500).json({ error: "Failed to list deleted mods: " + (error as Error).message });
+    res
+      .status(500)
+      .json({
+        error: "Failed to list deleted mods: " + (error as Error).message,
+      });
   }
 }
 
@@ -412,7 +477,9 @@ export function restoreMod(req: Request, res: Response): void {
     res.json({ success: true, restored: true });
   } catch (error) {
     console.error("Error restoring mod:", error);
-    res.status(500).json({ error: "Failed to restore mod: " + (error as Error).message });
+    res
+      .status(500)
+      .json({ error: "Failed to restore mod: " + (error as Error).message });
   }
 }
 
@@ -443,7 +510,9 @@ export function restoreModsBulk(req: Request, res: Response): void {
     res.json({ success: true, restored: true });
   } catch (error) {
     console.error("Error restoring mods:", error);
-    res.status(500).json({ error: "Failed to restore mods: " + (error as Error).message });
+    res
+      .status(500)
+      .json({ error: "Failed to restore mods: " + (error as Error).message });
   }
 }
 
@@ -465,6 +534,10 @@ export function getModQuota(req: Request, res: Response): void {
     res.json({ success: true, quota });
   } catch (error) {
     console.error("Error getting quota status:", error);
-    res.status(500).json({ error: "Failed to get quota status: " + (error as Error).message });
+    res
+      .status(500)
+      .json({
+        error: "Failed to get quota status: " + (error as Error).message,
+      });
   }
 }

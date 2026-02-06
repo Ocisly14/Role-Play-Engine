@@ -9,7 +9,10 @@ import type { DynamicGameState } from "../../../src/dynamicworldagent/state/inde
 import { HumanMessage } from "@langchain/core/messages";
 import { WebSocketManager } from "../websocket/WebSocketManager.js";
 import { notifyClients } from "../websocket/notifier.js";
-import { runWithTokenContext, getCurrentUsageTotals } from "../../../src/models/index.js";
+import {
+  runWithTokenContext,
+  getCurrentUsageTotals,
+} from "../../../src/models/index.js";
 import type { DiceRollInfo } from "../../../src/shared/state/index.js";
 
 type NarrativeStreamHandlers = {
@@ -39,12 +42,13 @@ export async function createTurn(req: Request, res: Response): Promise<void> {
     const userId = req.user!.userId;
     const userEmail = req.user!.email;
     const serverState = ServerState.getInstance();
-    
+
     const dynamicGameState = serverState.getDynamicGameState(userId);
 
     if (!dynamicGameState) {
       res.status(400).json({
-        error: "DynamicWorld game not started. Please start the game first by calling /api/game/start"
+        error:
+          "DynamicWorld game not started. Please start the game first by calling /api/game/start",
       });
       return;
     }
@@ -57,22 +61,32 @@ export async function createTurn(req: Request, res: Response): Promise<void> {
       await graphManager.initialize(db);
     }
 
-    const { message, selectedSkill: rawSelectedSkill, skillSelectionMode: rawSkillSelectionMode, language: rawLanguage } = req.body ?? {};
-    const selectedSkill = typeof rawSelectedSkill === "string"
-      ? rawSelectedSkill.trim()
-      : null;
-    const normalizedSkill = selectedSkill && selectedSkill.length > 0 ? selectedSkill : null;
-    const normalizedSkillSelectionMode = typeof rawSkillSelectionMode === "string"
-      ? rawSkillSelectionMode.trim().toLowerCase()
-      : null;
-    const skillSelectionMode = normalizedSkillSelectionMode === "auto"
-      || normalizedSkillSelectionMode === "manual"
-      ? normalizedSkillSelectionMode
-      : null;
+    const {
+      message,
+      selectedSkill: rawSelectedSkill,
+      skillSelectionMode: rawSkillSelectionMode,
+      language: rawLanguage,
+    } = req.body ?? {};
+    const selectedSkill =
+      typeof rawSelectedSkill === "string" ? rawSelectedSkill.trim() : null;
+    const normalizedSkill =
+      selectedSkill && selectedSkill.length > 0 ? selectedSkill : null;
+    const normalizedSkillSelectionMode =
+      typeof rawSkillSelectionMode === "string"
+        ? rawSkillSelectionMode.trim().toLowerCase()
+        : null;
+    const skillSelectionMode =
+      normalizedSkillSelectionMode === "auto" ||
+      normalizedSkillSelectionMode === "manual"
+        ? normalizedSkillSelectionMode
+        : null;
     const effectiveSkillSelectionMode = normalizedSkill
       ? "manual"
-      : (skillSelectionMode === "auto" ? "auto" : "manual");
-    const language = (rawLanguage === 'en' || rawLanguage === 'zh') ? rawLanguage : 'zh';
+      : skillSelectionMode === "auto"
+        ? "auto"
+        : "manual";
+    const language =
+      rawLanguage === "en" || rawLanguage === "zh" ? rawLanguage : "zh";
 
     if (!message || typeof message !== "string") {
       res.status(400).json({ error: "Message is required" });
@@ -89,25 +103,31 @@ export async function createTurn(req: Request, res: Response): Promise<void> {
 
     if (normalizedSkill) {
       // Look for a recent turn with requires_skill_selection status for this session
-      const skillSelectionTurn = database.prepare(`
+      const skillSelectionTurn = database
+        .prepare(`
         SELECT * FROM game_turns
         WHERE session_id = ? AND status = 'requires_skill_selection'
         ORDER BY turn_number DESC
         LIMIT 1
-      `).get(dynamicGameState.sessionId) as any;
+      `)
+        .get(dynamicGameState.sessionId) as any;
 
       if (skillSelectionTurn) {
-        console.log(`🔄 [${new Date().toISOString()}] Resuming interrupted turn ${skillSelectionTurn.turn_id} with selected skill: ${normalizedSkill}`);
+        console.log(
+          `🔄 [${new Date().toISOString()}] Resuming interrupted turn ${skillSelectionTurn.turn_id} with selected skill: ${normalizedSkill}`
+        );
         isResumingTurn = true;
         turnId = skillSelectionTurn.turn_id;
 
         // Move the interrupted turn back to processing before resuming graph execution.
-        database.prepare(`
+        database
+          .prepare(`
           UPDATE game_turns
           SET status = 'processing',
               error_message = NULL
           WHERE turn_id = ?
-        `).run(turnId);
+        `)
+          .run(turnId);
       }
     }
 
@@ -118,11 +138,15 @@ export async function createTurn(req: Request, res: Response): Promise<void> {
         message,
         dynamicGameState
       );
-      console.log(`[${new Date().toISOString()}] Turn created: ${turnId} for message: ${message} (DynamicWorld)`);
+      console.log(
+        `[${new Date().toISOString()}] Turn created: ${turnId} for message: ${message} (DynamicWorld)`
+      );
     }
 
     if (normalizedSkill) {
-      console.log(`[${new Date().toISOString()}] Selected skill: ${normalizedSkill}`);
+      console.log(
+        `[${new Date().toISOString()}] Selected skill: ${normalizedSkill}`
+      );
     }
     if (effectiveSkillSelectionMode === "auto") {
       console.log(`[${new Date().toISOString()}] Skill selection mode: auto`);
@@ -138,17 +162,16 @@ export async function createTurn(req: Request, res: Response): Promise<void> {
         usageTotals: { input_tokens: 0, output_tokens: 0, total_tokens: 0 },
       },
       () => {
-      processGameTurnAsync(
-        turnId,
-        message,
-        stateToProcess,
-        userId,
-        normalizedSkill,
-        effectiveSkillSelectionMode,
-        language,
-        isResumingTurn
-      )
-        .catch((error) => {
+        processGameTurnAsync(
+          turnId,
+          message,
+          stateToProcess,
+          userId,
+          normalizedSkill,
+          effectiveSkillSelectionMode,
+          language,
+          isResumingTurn
+        ).catch((error) => {
           console.error(`Error processing turn ${turnId}:`, error);
           const dynamicTurnManager = new DynamicTurnManager(db);
           dynamicTurnManager.markError(turnId, error);
@@ -160,12 +183,14 @@ export async function createTurn(req: Request, res: Response): Promise<void> {
     res.json({
       success: true,
       turnId: turnId,
-      status: 'processing',
+      status: "processing",
       timestamp: new Date().toISOString(),
     });
   } catch (error) {
     console.error("Error creating turn:", error);
-    res.status(500).json({ error: "Failed to create turn: " + (error as Error).message });
+    res
+      .status(500)
+      .json({ error: "Failed to create turn: " + (error as Error).message });
   }
 }
 
@@ -316,7 +341,7 @@ async function processGameTurnAsync(
   userId: string,
   selectedSkill?: string | null,
   skillSelectionMode?: "auto" | "manual",
-  language?: 'en' | 'zh',
+  language?: "en" | "zh",
   resumeFromInterrupt: boolean = false
 ) {
   try {
@@ -353,7 +378,7 @@ async function processGameTurnAsync(
       dynamicGameState: dynamicGameState,
       turnId: turnId,
       stream: streamHandlers ?? undefined,
-      language: language || 'zh',
+      language: language || "zh",
       selectedSkill: selectedSkill ?? null,
       skillSelectionMode,
       resumeFromInterrupt: isResumingTurn,
@@ -368,7 +393,9 @@ async function processGameTurnAsync(
     };
 
     if (isResumingTurn) {
-      console.log(`   🔄 Resuming graph execution from checkpoint (thread_id: ${turnId})`);
+      console.log(
+        `   🔄 Resuming graph execution from checkpoint (thread_id: ${turnId})`
+      );
     } else {
       console.log(`   ▶️  Starting new graph execution (thread_id: ${turnId})`);
     }
@@ -380,8 +407,10 @@ async function processGameTurnAsync(
     // If skill selection is required, the graph will mark the turn and end early
     // In that case, we should NOT update the game state
     const updatedTurn = dynamicTurnManager.getTurn(turnId);
-    if (updatedTurn && updatedTurn.status === 'requires_skill_selection') {
-      console.log(`⏸️  [${new Date().toISOString()}] Turn ${turnId} requires skill selection - game state not updated`);
+    if (updatedTurn && updatedTurn.status === "requires_skill_selection") {
+      console.log(
+        `⏸️  [${new Date().toISOString()}] Turn ${turnId} requires skill selection - game state not updated`
+      );
       // Don't update game state, wait for player to select skill
       return;
     }
@@ -397,7 +426,9 @@ async function processGameTurnAsync(
       );
     }
 
-    console.log(`[${new Date().toISOString()}] Turn ${turnId} completed successfully (DynamicWorld graph)`);
+    console.log(
+      `[${new Date().toISOString()}] Turn ${turnId} completed successfully (DynamicWorld graph)`
+    );
   } catch (error) {
     const totals = getCurrentUsageTotals();
     if (totals && totals.total_tokens > 0) {
@@ -405,7 +436,10 @@ async function processGameTurnAsync(
         `🧮 [Token Usage] Turn ${turnId} partial: ${totals.total_tokens} (input ${totals.input_tokens}, output ${totals.output_tokens})`
       );
     }
-    console.error(`[${new Date().toISOString()}] Turn ${turnId} failed:`, error);
+    console.error(
+      `[${new Date().toISOString()}] Turn ${turnId} failed:`,
+      error
+    );
     throw error;
   }
 }
@@ -414,7 +448,10 @@ async function processGameTurnAsync(
  * Get turn status and result
  * GET /api/turns/:turnId
  */
-export async function getTurnStatus(req: Request, res: Response): Promise<void> {
+export async function getTurnStatus(
+  req: Request,
+  res: Response
+): Promise<void> {
   try {
     const { turnId } = req.params;
     const db = DatabaseManager.getInstance().getDatabase();
@@ -428,7 +465,7 @@ export async function getTurnStatus(req: Request, res: Response): Promise<void> 
     const dynamicTurnManager = new DynamicTurnManager(db);
     let turn: any = dynamicTurnManager.getTurn(turnId);
 
-    const waitForCompletion = req.query.wait === 'true';
+    const waitForCompletion = req.query.wait === "true";
     const maxWaitTime = 60000; // 60 seconds
     const checkInterval = 500; // 500ms
     const startTime = Date.now();
@@ -445,21 +482,27 @@ export async function getTurnStatus(req: Request, res: Response): Promise<void> 
           return;
         }
 
-        if (turn.status === 'completed' || turn.status === 'error' || turn.status === 'requires_skill_selection') {
+        if (
+          turn.status === "completed" ||
+          turn.status === "error" ||
+          turn.status === "requires_skill_selection"
+        ) {
           console.log(`[getTurnStatus] Turn ${turnId} completed:`, {
             status: turn.status,
             hasKeeperNarrative: !!turn.keeperNarrative,
             keeperNarrativeLength: turn.keeperNarrative?.length || 0,
             hasActionResults: !!turn.actionResults,
-            actionResultsCount: Array.isArray(turn.actionResults) ? turn.actionResults.length : 0,
-            requiresSkillSelection: turn.status === 'requires_skill_selection',
+            actionResultsCount: Array.isArray(turn.actionResults)
+              ? turn.actionResults.length
+              : 0,
+            requiresSkillSelection: turn.status === "requires_skill_selection",
             hasActionAnalysis: !!turn.actionAnalysis,
           });
           res.json({ success: true, turn: turn });
           return;
         }
 
-        await new Promise(resolve => setTimeout(resolve, checkInterval));
+        await new Promise((resolve) => setTimeout(resolve, checkInterval));
       }
     }
 
@@ -474,7 +517,9 @@ export async function getTurnStatus(req: Request, res: Response): Promise<void> 
       hasKeeperNarrative: !!turn.keeperNarrative,
       keeperNarrativeLength: turn.keeperNarrative?.length || 0,
       hasActionResults: !!turn.actionResults,
-      actionResultsCount: Array.isArray(turn.actionResults) ? turn.actionResults.length : 0,
+      actionResultsCount: Array.isArray(turn.actionResults)
+        ? turn.actionResults.length
+        : 0,
     });
 
     res.json({ success: true, turn: turn });
@@ -488,7 +533,10 @@ export async function getTurnStatus(req: Request, res: Response): Promise<void> 
  * Get conversation history
  * GET /api/sessions/:sessionId/conversation
  */
-export async function getConversation(req: Request, res: Response): Promise<void> {
+export async function getConversation(
+  req: Request,
+  res: Response
+): Promise<void> {
   try {
     const db = DatabaseManager.getInstance().getDatabase();
     const turnManager = new DynamicTurnManager(db);
@@ -498,7 +546,15 @@ export async function getConversation(req: Request, res: Response): Promise<void
     const database = db.getDatabase();
     const serverState = ServerState.getInstance();
 
-    if (!isSessionOwnedByUser(sessionId, userId, req.user!.email, database, serverState)) {
+    if (
+      !isSessionOwnedByUser(
+        sessionId,
+        userId,
+        req.user!.email,
+        database,
+        serverState
+      )
+    ) {
       res.status(404).json({ error: "Session not found" });
       return;
     }
@@ -517,7 +573,10 @@ export async function getConversation(req: Request, res: Response): Promise<void
  * Get turn history
  * GET /api/sessions/:sessionId/turns
  */
-export async function getTurnHistory(req: Request, res: Response): Promise<void> {
+export async function getTurnHistory(
+  req: Request,
+  res: Response
+): Promise<void> {
   try {
     const db = DatabaseManager.getInstance().getDatabase();
     const turnManager = new DynamicTurnManager(db);
@@ -527,12 +586,22 @@ export async function getTurnHistory(req: Request, res: Response): Promise<void>
     const database = db.getDatabase();
     const serverState = ServerState.getInstance();
 
-    if (!isSessionOwnedByUser(sessionId, userId, req.user!.email, database, serverState)) {
+    if (
+      !isSessionOwnedByUser(
+        sessionId,
+        userId,
+        req.user!.email,
+        database,
+        serverState
+      )
+    ) {
       res.status(404).json({ error: "Session not found" });
       return;
     }
     const limit = parseInt(req.query.limit as string) || 20;
-    const after = req.query.after ? parseInt(req.query.after as string) : undefined;
+    const after = req.query.after
+      ? parseInt(req.query.after as string)
+      : undefined;
 
     const turns = turnManager.getHistory(sessionId, limit, after);
 
@@ -551,7 +620,10 @@ export async function getTurnHistory(req: Request, res: Response): Promise<void>
  * Get the latest session for the current user
  * GET /api/sessions/latest
  */
-export async function getLatestSession(req: Request, res: Response): Promise<void> {
+export async function getLatestSession(
+  req: Request,
+  res: Response
+): Promise<void> {
   try {
     const userId = req.user!.userId;
     const serverState = ServerState.getInstance();
@@ -570,7 +642,8 @@ export async function getLatestSession(req: Request, res: Response): Promise<voi
     }
 
     const db = DatabaseManager.getInstance().getDatabase().getDatabase();
-    const row = db.prepare(`
+    const row = db
+      .prepare(`
       SELECT
         gt.session_id AS sessionId,
         gt.character_id AS characterId,
@@ -582,12 +655,15 @@ export async function getLatestSession(req: Request, res: Response): Promise<voi
       GROUP BY gt.session_id
       ORDER BY MAX(gt.created_at) DESC
       LIMIT 1
-    `).get(req.user!.email) as {
-      sessionId: string;
-      characterId: string | null;
-      characterName: string | null;
-      lastTurnAt: string;
-    } | undefined;
+    `)
+      .get(req.user!.email) as
+      | {
+          sessionId: string;
+          characterId: string | null;
+          characterName: string | null;
+          lastTurnAt: string;
+        }
+      | undefined;
 
     res.json({
       success: true,
@@ -604,13 +680,15 @@ function isTurnOwnedByUser(
   email: string,
   db: Database.Database
 ): boolean {
-  const row = db.prepare(`
+  const row = db
+    .prepare(`
     SELECT 1
     FROM game_turns gt
     JOIN characters c ON c.character_id = gt.character_id
     WHERE gt.turn_id = ? AND c.email_id = ?
     LIMIT 1
-  `).get(turnId, email);
+  `)
+    .get(turnId, email);
 
   return Boolean(row);
 }
@@ -627,13 +705,15 @@ function isSessionOwnedByUser(
     return true;
   }
 
-  const row = db.prepare(`
+  const row = db
+    .prepare(`
     SELECT 1
     FROM game_turns gt
     JOIN characters c ON c.character_id = gt.character_id
     WHERE gt.session_id = ? AND c.email_id = ?
     LIMIT 1
-  `).get(sessionId, email);
+  `)
+    .get(sessionId, email);
 
   return Boolean(row);
 }

@@ -68,17 +68,24 @@ export interface CharacterStatus {
 export interface ActionLogEntry {
   time: string;
   location: string;
-  character?: string;  // Who performed the action (player or NPC name)
+  character?: string; // Who performed the action (player or NPC name)
   summary: string;
-  successLevel?: "critical" | "extreme" | "hard" | "regular" | "failure" | "fumble" | "unknown";
+  successLevel?:
+    | "critical"
+    | "extreme"
+    | "hard"
+    | "regular"
+    | "failure"
+    | "fumble"
+    | "unknown";
 }
 
 /**
  * Inventory Item - Represents an item in a character's inventory
  */
 export interface InventoryItem {
-  name: string;                    // Item name (required)
-  quantity?: number;                // Quantity (default: 1)
+  name: string; // Item name (required)
+  quantity?: number; // Quantity (default: 1)
   properties?: Record<string, any>; // Additional properties (weight, durability, description, etc.)
 }
 
@@ -89,10 +96,16 @@ export class InventoryUtils {
   /**
    * Normalize inventory to InventoryItem[] format
    */
-  static normalizeInventory(inventory: InventoryItem[] | undefined | null): InventoryItem[] {
+  static normalizeInventory(
+    inventory: InventoryItem[] | undefined | null
+  ): InventoryItem[] {
     if (!inventory || !Array.isArray(inventory)) return [];
-    return inventory.filter((item): item is InventoryItem => 
-      item && typeof item === 'object' && 'name' in item && typeof item.name === 'string'
+    return inventory.filter(
+      (item): item is InventoryItem =>
+        item &&
+        typeof item === "object" &&
+        "name" in item &&
+        typeof item.name === "string"
     );
   }
 
@@ -100,7 +113,7 @@ export class InventoryUtils {
    * Convert InventoryItem[] to string[] (for simple display or legacy compatibility)
    */
   static toSimpleList(inventory: InventoryItem[]): string[] {
-    return inventory.map(item => {
+    return inventory.map((item) => {
       if (item.quantity && item.quantity > 1) {
         return `${item.name} (x${item.quantity})`;
       }
@@ -111,22 +124,32 @@ export class InventoryUtils {
   /**
    * Find an item in inventory by name (case-insensitive)
    */
-  static findItem(inventory: InventoryItem[], itemName: string): InventoryItem | undefined {
+  static findItem(
+    inventory: InventoryItem[],
+    itemName: string
+  ): InventoryItem | undefined {
     const normalizedName = itemName.toLowerCase().trim();
-    return inventory.find(item => item.name.toLowerCase().trim() === normalizedName);
+    return inventory.find(
+      (item) => item.name.toLowerCase().trim() === normalizedName
+    );
   }
 
   /**
    * Add items to inventory, merging quantities if item already exists
    */
-  static addItems(inventory: InventoryItem[], items: InventoryItem[]): InventoryItem[] {
+  static addItems(
+    inventory: InventoryItem[],
+    items: InventoryItem[]
+  ): InventoryItem[] {
     const newInventory = [...inventory];
-    
+
     for (const itemToAdd of items) {
       const existingIndex = newInventory.findIndex(
-        invItem => invItem.name.toLowerCase().trim() === itemToAdd.name.toLowerCase().trim()
+        (invItem) =>
+          invItem.name.toLowerCase().trim() ===
+          itemToAdd.name.toLowerCase().trim()
       );
-      
+
       if (existingIndex >= 0) {
         // Merge quantities if item exists
         const existing = newInventory[existingIndex];
@@ -134,39 +157,45 @@ export class InventoryUtils {
           ...existing,
           quantity: (existing.quantity || 1) + (itemToAdd.quantity || 1),
           // Merge properties if both have them
-          properties: existing.properties || itemToAdd.properties
-            ? { ...existing.properties, ...itemToAdd.properties }
-            : undefined
+          properties:
+            existing.properties || itemToAdd.properties
+              ? { ...existing.properties, ...itemToAdd.properties }
+              : undefined,
         };
       } else {
         // Add new item
         newInventory.push({
           name: itemToAdd.name,
           quantity: itemToAdd.quantity || 1,
-          properties: itemToAdd.properties
+          properties: itemToAdd.properties,
         });
       }
     }
-    
+
     return newInventory;
   }
 
   /**
    * Remove items from inventory
    */
-  static removeItems(inventory: InventoryItem[], itemsToRemove: InventoryItem[]): InventoryItem[] {
-    const removeNames = itemsToRemove.map(item => item.name.toLowerCase().trim());
-    
+  static removeItems(
+    inventory: InventoryItem[],
+    itemsToRemove: InventoryItem[]
+  ): InventoryItem[] {
+    const removeNames = itemsToRemove.map((item) =>
+      item.name.toLowerCase().trim()
+    );
+
     return inventory
-      .map(item => {
+      .map((item) => {
         const itemName = item.name.toLowerCase().trim();
         const index = removeNames.indexOf(itemName);
-        
+
         if (index >= 0) {
           const removeItem = itemsToRemove[index];
           const removeQuantity = removeItem.quantity || 1;
           const currentQuantity = item.quantity || 1;
-          
+
           if (currentQuantity > removeQuantity) {
             // Reduce quantity
             return { ...item, quantity: currentQuantity - removeQuantity };
@@ -175,7 +204,7 @@ export class InventoryUtils {
             return null;
           }
         }
-        
+
         return item;
       })
       .filter((item): item is InventoryItem => item !== null);
@@ -187,7 +216,7 @@ export interface CharacterProfile {
   name: string;
   attributes: CharacterAttributes;
   status: CharacterStatus;
-  inventory: InventoryItem[];       // Changed from string[] to InventoryItem[]
+  inventory: InventoryItem[]; // Changed from string[] to InventoryItem[]
   skills: Record<string, number>;
   notes?: string;
   actionLog?: ActionLogEntry[];
@@ -270,8 +299,8 @@ export interface NPCProfile extends CharacterProfile {
   isNPC: true; // flag to distinguish from player characters
   currentLocation?: string; // NPC的当前地点
   // DynamicWorld specific fields
-  instantiatedFrom?: string;     // Knowledge holder ID that this NPC represents
-  inheritsKnowledge?: string[];   // Truth event IDs from knowledge holder
+  instantiatedFrom?: string; // Knowledge holder ID that this NPC represents
+  inheritsKnowledge?: string[]; // Truth event IDs from knowledge holder
 }
 
 /**

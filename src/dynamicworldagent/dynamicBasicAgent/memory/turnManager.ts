@@ -1,6 +1,6 @@
 /**
  * Turn Manager - Manages game turn records for character-keeper interactions
- * 
+ *
  * This module provides a high-level interface for managing game turns,
  * which record each complete interaction cycle from character input to keeper narrative.
  */
@@ -42,35 +42,35 @@ export interface GameTurn {
   turnId: string;
   sessionId: string;
   turnNumber: number;
-  
+
   // Input
   characterInput: string;
   characterId: string | null;
   characterName: string | null;
-  
+
   // Processing
   actionAnalysis: any | null;
   actionResults: any[] | null;
-  
+
   // Output
   keeperNarrative: string | null;
   clueRevelations: any | null;
-  
+
   // Context
   sceneId: string | null;
   sceneName: string | null;
   location: string | null;
-  
+
   // Status
-  status: 'processing' | 'completed' | 'error' | 'requires_skill_selection';
+  status: "processing" | "completed" | "error" | "requires_skill_selection";
   errorMessage: string | null;
   startedAt: string;
   completedAt: string | null;
   createdAt: string;
-  
+
   // Simulation flag
   isSimulated?: boolean;
-  
+
   // Game time when turn completed
   gameDay?: number | null;
   gameTime?: string | null;
@@ -107,7 +107,7 @@ export class TurnManager {
       input.gameTime
     );
 
-    const turnType = input.isSimulated ? 'simulated' : 'user';
+    const turnType = input.isSimulated ? "simulated" : "user";
     console.log(`✓ Turn created: ${turnId} (Turn #${turnNumber}, ${turnType})`);
     return turnId;
   }
@@ -149,7 +149,10 @@ export class TurnManager {
   /**
    * Update turn with processing results from game state
    */
-  updateProcessingFromGameState(turnId: string, gameState: DynamicGameState): void {
+  updateProcessingFromGameState(
+    turnId: string,
+    gameState: DynamicGameState
+  ): void {
     this.updateProcessing(turnId, {
       actionAnalysis: gameState.temporaryInfo.currentActionAnalysis,
       actionResults: gameState.temporaryInfo.actionResults,
@@ -159,7 +162,11 @@ export class TurnManager {
   /**
    * Complete a turn with Keeper's narrative
    */
-  completeTurn(turnId: string, output: TurnOutput, language?: 'en' | 'zh'): void {
+  completeTurn(
+    turnId: string,
+    output: TurnOutput,
+    language?: "en" | "zh"
+  ): void {
     this.db.completeTurn(
       turnId,
       output.keeperNarrative,
@@ -171,16 +178,22 @@ export class TurnManager {
     console.log(`✓ Turn completed: ${turnId}`);
 
     // Trigger embedding asynchronously (non-blocking)
-    this.embedTurnAsync(turnId, output.keeperNarrative, language).catch((error) => {
-      console.error(`[TurnManager] Failed to embed turn ${turnId}:`, error);
-    });
+    this.embedTurnAsync(turnId, output.keeperNarrative, language).catch(
+      (error) => {
+        console.error(`[TurnManager] Failed to embed turn ${turnId}:`, error);
+      }
+    );
   }
 
   /**
    * Embed turn data for RAG retrieval (async, non-blocking)
    * Embeds action logs and turn (user input + narrative) pair
    */
-  private async embedTurnAsync(turnId: string, narrative: string, language?: 'en' | 'zh'): Promise<void> {
+  private async embedTurnAsync(
+    turnId: string,
+    narrative: string,
+    language?: "en" | "zh"
+  ): Promise<void> {
     try {
       // Get turn data from database
       const turn = this.getTurn(turnId);
@@ -196,7 +209,7 @@ export class TurnManager {
 
       const userInput = turn.characterInput;
       const sessionId = turn.sessionId;
-      const effectiveLanguage = language || 'zh';
+      const effectiveLanguage = language || "zh";
 
       // Embed turn (user input + narrative) with correct language model
       await this.ragManager.embedTurn(
@@ -215,7 +228,8 @@ export class TurnManager {
           const actionLog: ActionLogEntry = {
             time: actionResult.gameTime || turn.gameTime || "",
             location: actionResult.location || turn.location || "",
-            character: actionResult.character || turn.characterName || undefined,
+            character:
+              actionResult.character || turn.characterName || undefined,
             summary: actionResult.result || "",
             successLevel: this.extractSuccessLevel(actionResult),
           };
@@ -230,7 +244,9 @@ export class TurnManager {
         }
       }
 
-      console.log(`✓ Turn ${turnId} embedded for RAG retrieval (language: ${effectiveLanguage})`);
+      console.log(
+        `✓ Turn ${turnId} embedded for RAG retrieval (language: ${effectiveLanguage})`
+      );
     } catch (error) {
       console.error(`[TurnManager] Error embedding turn ${turnId}:`, error);
       throw error;
@@ -240,7 +256,9 @@ export class TurnManager {
   /**
    * Extract success level from action result
    */
-  private extractSuccessLevel(actionResult: any): ActionLogEntry["successLevel"] {
+  private extractSuccessLevel(
+    actionResult: any
+  ): ActionLogEntry["successLevel"] {
     if (!actionResult.diceRolls || !Array.isArray(actionResult.diceRolls)) {
       return "unknown";
     }
@@ -288,8 +306,16 @@ export class TurnManager {
   /**
    * Get turn history for a session
    */
-  getHistory(sessionId: string, limit = 50, afterTurnNumber?: number): GameTurn[] {
-    return this.db.getTurnHistory(sessionId, limit, afterTurnNumber) as GameTurn[];
+  getHistory(
+    sessionId: string,
+    limit = 50,
+    afterTurnNumber?: number
+  ): GameTurn[] {
+    return this.db.getTurnHistory(
+      sessionId,
+      limit,
+      afterTurnNumber
+    ) as GameTurn[];
   }
 
   /**
@@ -327,21 +353,31 @@ export class TurnManager {
     console.log("\n=== Turn History ===\n");
 
     turns.reverse().forEach((turn) => {
-      const statusIcon = turn.status === 'completed' ? '✓' : 
-                        turn.status === 'error' ? '✗' : '⏳';
-      
+      const statusIcon =
+        turn.status === "completed"
+          ? "✓"
+          : turn.status === "error"
+            ? "✗"
+            : "⏳";
+
       console.log(`${statusIcon} Turn #${turn.turnNumber} (${turn.turnId})`);
-      console.log(`   Input: ${turn.characterInput.slice(0, 60)}${turn.characterInput.length > 60 ? '...' : ''}`);
-      
+      console.log(
+        `   Input: ${turn.characterInput.slice(0, 60)}${turn.characterInput.length > 60 ? "..." : ""}`
+      );
+
       if (turn.keeperNarrative) {
-        console.log(`   Narrative: ${turn.keeperNarrative.slice(0, 60)}${turn.keeperNarrative.length > 60 ? '...' : ''}`);
+        console.log(
+          `   Narrative: ${turn.keeperNarrative.slice(0, 60)}${turn.keeperNarrative.length > 60 ? "..." : ""}`
+        );
       }
-      
-      if (turn.status === 'error' && turn.errorMessage) {
+
+      if (turn.status === "error" && turn.errorMessage) {
         console.log(`   Error: ${turn.errorMessage}`);
       }
-      
-      console.log(`   Time: ${turn.startedAt} → ${turn.completedAt || 'processing...'}`);
+
+      console.log(
+        `   Time: ${turn.startedAt} → ${turn.completedAt || "processing..."}`
+      );
       console.log();
     });
   }
@@ -360,8 +396,11 @@ export class TurnManager {
     return /^\s*1d100_opposed\[\d+\]\s*:/i.test(roll);
   }
 
-  getConversation(sessionId: string, limit = 50): Array<{
-    role: 'character' | 'keeper';
+  getConversation(
+    sessionId: string,
+    limit = 50
+  ): Array<{
+    role: "character" | "keeper";
     content: string;
     timestamp: string;
     turnNumber: number;
@@ -371,7 +410,7 @@ export class TurnManager {
   }> {
     const turns = this.getHistory(sessionId, limit);
     const conversation: Array<{
-      role: 'character' | 'keeper';
+      role: "character" | "keeper";
       content: string;
       timestamp: string;
       turnNumber: number;
@@ -405,7 +444,8 @@ export class TurnManager {
           }
 
           const rollNameNormalized = this.normalizeName(roll.character);
-          const isPlayerRoll = !!rollNameNormalized && rollNameNormalized === playerNameNormalized;
+          const isPlayerRoll =
+            !!rollNameNormalized && rollNameNormalized === playerNameNormalized;
           if (isPlayerRoll || this.isOpposedRoll(roll.roll)) {
             diceRolls.push(roll);
           }
@@ -414,9 +454,9 @@ export class TurnManager {
 
       // For introduction turn (turnNumber 0 with empty characterInput), only add keeper narrative
       if (turn.turnNumber === 0 && !turn.characterInput) {
-        if (turn.status === 'completed' && turn.keeperNarrative) {
+        if (turn.status === "completed" && turn.keeperNarrative) {
           const keeperMessage: any = {
-            role: 'keeper',
+            role: "keeper",
             content: turn.keeperNarrative,
             timestamp: turn.completedAt || turn.startedAt,
             turnNumber: turn.turnNumber,
@@ -433,7 +473,7 @@ export class TurnManager {
         // Skip character input for simulated queries (only show user input)
         if (turn.characterInput && !turn.isSimulated) {
           conversation.push({
-            role: 'character',
+            role: "character",
             content: turn.characterInput,
             timestamp: turn.startedAt,
             turnNumber: turn.turnNumber,
@@ -443,9 +483,9 @@ export class TurnManager {
         }
 
         // Add keeper narrative if completed (show for both real and simulated turns)
-        if (turn.status === 'completed' && turn.keeperNarrative) {
+        if (turn.status === "completed" && turn.keeperNarrative) {
           const keeperMessage: any = {
-            role: 'keeper',
+            role: "keeper",
             content: turn.keeperNarrative,
             timestamp: turn.completedAt || turn.startedAt,
             turnNumber: turn.turnNumber,

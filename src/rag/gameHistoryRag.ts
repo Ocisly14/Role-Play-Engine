@@ -41,7 +41,10 @@ export class GameHistoryRag {
 
   constructor(db: CoCDatabase, provider?: ModelProviderName) {
     this.db = db;
-    const modelProvider = provider || (process.env.MODEL_PROVIDER as ModelProviderName) || ModelProviderName.OPENAI;
+    const modelProvider =
+      provider ||
+      (process.env.MODEL_PROVIDER as ModelProviderName) ||
+      ModelProviderName.OPENAI;
     this.embedder = new EmbeddingClient(modelProvider);
   }
 
@@ -53,16 +56,20 @@ export class GameHistoryRag {
     turnId: string,
     actionLog: ActionLogEntry,
     emailId?: string,
-    language?: 'en' | 'zh'
+    language?: "en" | "zh"
   ): Promise<void> {
     try {
       // Create text representation of action log
       const text = this.formatActionLog(actionLog);
 
       // Generate embedding with correct language model
-      const embedding = await this.embedder.embed(text, { language: language || 'zh' });
+      const embedding = await this.embedder.embed(text, {
+        language: language || "zh",
+      });
       if (!embedding || embedding.length === 0) {
-        console.warn("[GameHistoryRag] Failed to generate embedding for action log");
+        console.warn(
+          "[GameHistoryRag] Failed to generate embedding for action log"
+        );
         return;
       }
 
@@ -88,14 +95,16 @@ export class GameHistoryRag {
     userInput: string,
     narrative: string,
     emailId?: string,
-    language?: 'en' | 'zh'
+    language?: "en" | "zh"
   ): Promise<void> {
     try {
       // Combine user input and narrative for embedding
       const text = this.formatTurn(userInput, narrative);
 
       // Generate embedding with correct language model
-      const embedding = await this.embedder.embed(text, { language: language || 'zh' });
+      const embedding = await this.embedder.embed(text, {
+        language: language || "zh",
+      });
       if (!embedding || embedding.length === 0) {
         console.warn("[GameHistoryRag] Failed to generate embedding for turn");
         return;
@@ -131,10 +140,10 @@ export class GameHistoryRag {
       alpha?: number;
       emailId?: string;
       // NEW OPTIONS
-      targetCharacters?: string[];       // Filter action logs by these characters
-      topKPerCharacter?: number;         // Top K per character (default: 3)
-      currentLocation?: string;          // Boost logs matching this location
-      locationBoostFactor?: number;      // Boost multiplier (default: 1.5)
+      targetCharacters?: string[]; // Filter action logs by these characters
+      topKPerCharacter?: number; // Top K per character (default: 3)
+      currentLocation?: string; // Boost logs matching this location
+      locationBoostFactor?: number; // Boost multiplier (default: 1.5)
     } = {}
   ): Promise<HistorySearchResult> {
     const {
@@ -165,7 +174,12 @@ export class GameHistoryRag {
       });
 
       // 2. BM25 search for action logs
-      let bm25ActionLogs: Array<{ id: string; turnId: string; actionLog: any; bm25Score: number }> = [];
+      let bm25ActionLogs: Array<{
+        id: string;
+        turnId: string;
+        actionLog: any;
+        bm25Score: number;
+      }> = [];
       try {
         bm25ActionLogs = this.db.searchActionLogsByKeywords({
           sessionId,
@@ -186,7 +200,13 @@ export class GameHistoryRag {
       });
 
       // 4. BM25 search for turns
-      let bm25Turns: Array<{ id: string; turnId: string; userInput: string; narrative: string; bm25Score: number }> = [];
+      let bm25Turns: Array<{
+        id: string;
+        turnId: string;
+        userInput: string;
+        narrative: string;
+        bm25Score: number;
+      }> = [];
       try {
         bm25Turns = this.db.searchTurnsByKeywords({
           sessionId,
@@ -200,8 +220,16 @@ export class GameHistoryRag {
 
       // 5. Fuse action logs
       const fusedActionLogs = this.fuseResults(
-        vectorActionLogs.map(r => ({ id: r.id, score: r.similarity, data: r as any })),
-        bm25ActionLogs.map(r => ({ id: r.id, score: r.bm25Score, data: r as any })),
+        vectorActionLogs.map((r) => ({
+          id: r.id,
+          score: r.similarity,
+          data: r as any,
+        })),
+        bm25ActionLogs.map((r) => ({
+          id: r.id,
+          score: r.bm25Score,
+          data: r as any,
+        })),
         alpha
       );
 
@@ -244,7 +272,9 @@ export class GameHistoryRag {
         for (const [char, items] of byCharacter.entries()) {
           const topK = items.slice(0, topKPerCharacter);
           selectedActionLogs.push(...topK);
-          console.debug(`[GameHistoryRag] Selected ${topK.length} action logs for character: ${char}`);
+          console.debug(
+            `[GameHistoryRag] Selected ${topK.length} action logs for character: ${char}`
+          );
         }
 
         // Re-sort merged results by hybrid score
@@ -252,7 +282,7 @@ export class GameHistoryRag {
 
         console.log(
           `🎯 [GameHistoryRag] Per-character retrieval: ${selectedActionLogs.length} action logs ` +
-          `(${targetCharacters.length} characters × ${topKPerCharacter} per character)`
+            `(${targetCharacters.length} characters × ${topKPerCharacter} per character)`
         );
       } else {
         // Global retrieval mode (existing behavior)
@@ -261,8 +291,16 @@ export class GameHistoryRag {
 
       // 6. Fuse turns
       const fusedTurns = this.fuseResults(
-        vectorTurns.map(r => ({ id: r.id, score: r.similarity, data: r as any })),
-        bm25Turns.map(r => ({ id: r.id, score: r.bm25Score, data: r as any })),
+        vectorTurns.map((r) => ({
+          id: r.id,
+          score: r.similarity,
+          data: r as any,
+        })),
+        bm25Turns.map((r) => ({
+          id: r.id,
+          score: r.bm25Score,
+          data: r as any,
+        })),
         alpha
       ).slice(0, topKTurns);
 
@@ -319,14 +357,16 @@ export class GameHistoryRag {
     alpha: number
   ): Array<{ id: string; hybridScore: number; data: T }> {
     // Normalize scores to [0, 1]
-    const normalizeScores = (results: Array<{ id: string; score: number; data: T }>) => {
+    const normalizeScores = (
+      results: Array<{ id: string; score: number; data: T }>
+    ) => {
       if (results.length === 0) return [];
-      const scores = results.map(r => r.score);
+      const scores = results.map((r) => r.score);
       const maxScore = Math.max(...scores);
       const minScore = Math.min(...scores);
       const range = maxScore - minScore || 1;
 
-      return results.map(r => ({
+      return results.map((r) => ({
         ...r,
         normalizedScore: (r.score - minScore) / range,
       }));
@@ -336,7 +376,10 @@ export class GameHistoryRag {
     const bm25Normalized = normalizeScores(bm25Results);
 
     // Fuse scores: Hybrid = alpha * BM25 + (1 - alpha) * Vector
-    const fusedMap = new Map<string, { id: string; hybridScore: number; data: T }>();
+    const fusedMap = new Map<
+      string,
+      { id: string; hybridScore: number; data: T }
+    >();
 
     for (const item of vectorNormalized) {
       fusedMap.set(item.id, {
@@ -360,8 +403,9 @@ export class GameHistoryRag {
     }
 
     // Sort by hybrid score (descending)
-    return Array.from(fusedMap.values())
-      .sort((a, b) => b.hybridScore - a.hybridScore);
+    return Array.from(fusedMap.values()).sort(
+      (a, b) => b.hybridScore - a.hybridScore
+    );
   }
 
   /**

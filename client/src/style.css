@@ -10,7 +10,8 @@
   --header-bg: #d4c4b0;
   --title: #3d2f1f;
   --mono: "Courier New", "Courier", monospace;
-  --serif: "Goudy Old Style", "Garamond", "Palatino Linotype", "Book Antiqua", "Times New Roman", serif;
+  --serif: "Goudy Old Style", "Garamond", "Palatino Linotype", "Book Antiqua",
+    "Times New Roman", serif;
   /* Tailwind primary colors for compatibility */
   --primary: 240 5.9% 10%;
   --primary-foreground: 0 0% 98%;
@@ -37,13 +38,13 @@ body {
 
 /* Background layer - current (bottom layer) */
 body::before {
-  content: '';
+  content: "";
   position: fixed;
   top: 0;
   left: 0;
   width: 100%;
   height: 100%;
-  background-image: var(--background-image, url('/asset/background.jpeg'));
+  background-image: var(--background-image, url("/asset/background.jpeg"));
   background-size: cover;
   background-position: center;
   background-repeat: no-repeat;
@@ -54,7 +55,7 @@ body::before {
 
 /* Background layer - new (top layer) */
 body::after {
-  content: '';
+  content: "";
   position: fixed;
   top: 0;
   left: 0;
@@ -135,10 +136,8 @@ body.background-transitioning::after {
   border: 4px solid var(--border);
   border-radius: 12px;
   padding: 40px 36px;
-  box-shadow:
-    0 0 0 2px var(--accent),
-    0 20px 60px rgba(0, 0, 0, 0.4),
-    inset 0 1px 0 rgba(255, 255, 255, 0.5);
+  box-shadow: 0 0 0 2px var(--accent), 0 20px 60px rgba(0, 0, 0, 0.4), inset 0
+    1px 0 rgba(255, 255, 255, 0.5);
   text-align: center;
   animation: authContainerSlideIn 0.5s ease-out;
 }
@@ -155,7 +154,7 @@ body.background-transitioning::after {
 }
 
 .auth-container::before {
-  content: '';
+  content: "";
   position: absolute;
   top: 12px;
   left: 12px;
@@ -179,7 +178,7 @@ body.background-transitioning::after {
 }
 
 .auth-container h2::after {
-  content: '';
+  content: "";
   position: absolute;
   bottom: 0;
   left: 50%;
@@ -228,9 +227,8 @@ body.background-transitioning::after {
 .auth-container .form-group input:focus {
   outline: none;
   border-color: var(--accent);
-  box-shadow:
-    0 0 0 4px rgba(139, 115, 85, 0.2),
-    inset 0 2px 4px rgba(0, 0, 0, 0.05);
+  box-shadow: 0 0 0 4px rgba(139, 115, 85, 0.2), inset 0 2px 4px
+    rgba(0, 0, 0, 0.05);
   transform: translateY(-1px);
 }
 
@@ -284,21 +282,25 @@ body.background-transitioning::after {
   color: var(--paper);
   cursor: pointer;
   transition: all 0.3s ease;
-  box-shadow:
-    0 4px 12px rgba(0, 0, 0, 0.3),
-    inset 0 1px 0 rgba(255, 255, 255, 0.3);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3), inset 0 1px 0
+    rgba(255, 255, 255, 0.3);
   position: relative;
   overflow: hidden;
 }
 
 .auth-container button[type="submit"]::before {
-  content: '';
+  content: "";
   position: absolute;
   top: 0;
   left: -100%;
   width: 100%;
   height: 100%;
-  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.3), transparent);
+  background: linear-gradient(
+    90deg,
+    transparent,
+    rgba(255, 255, 255, 0.3),
+    transparent
+  );
   transition: left 0.5s ease;
 }
 
@@ -309,17 +311,14 @@ body.background-transitioning::after {
 .auth-container button[type="submit"]:hover:not(:disabled) {
   background: linear-gradient(135deg, #6d5840 0%, #5a4633 100%);
   transform: translateY(-2px);
-  box-shadow:
-    0 6px 20px rgba(0, 0, 0, 0.4),
-    0 0 0 3px var(--accent),
-    inset 0 1px 0 rgba(255, 255, 255, 0.3);
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.4), 0 0 0 3px var(--accent), inset 0
+    1px 0 rgba(255, 255, 255, 0.3);
 }
 
 .auth-container button[type="submit"]:active:not(:disabled) {
   transform: translateY(0);
-  box-shadow:
-    0 2px 8px rgba(0, 0, 0, 0.3),
-    inset 0 1px 0 rgba(255, 255, 255, 0.3);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3), inset 0 1px 0
+    rgba(255, 255, 255, 0.3);
 }
 
 .auth-container button[type="submit"]:disabled {
@@ -344,9 +343,16 @@ body.background-transitioning::after {
 }
 
 @keyframes errorShake {
-  0%, 100% { transform: translateX(0); }
-  25% { transform: translateX(-10px); }
-  75% { transform: translateX(10px); }
+  0%,
+  100% {
+    transform: translateX(0);
+  }
+  25% {
+    transform: translateX(-10px);
+  }
+  75% {
+    transform: translateX(10px);
+  }
 }
 
 .auth-container .form-links {
@@ -405,7 +411,7 @@ body.background-transitioning::after {
 }
 
 .success-message-container h2::before {
-  content: '✓ ';
+  content: "✓ ";
   font-size: 2.5rem;
   display: block;
   margin-bottom: 16px;
@@ -442,9 +448,7 @@ body.background-transitioning::after {
   border: 3px solid var(--border);
   background: var(--paper);
   padding: 24px;
-  box-shadow: 
-    0 0 0 1px var(--accent),
-    0 8px 20px rgba(0, 0, 0, 0.3);
+  box-shadow: 0 0 0 1px var(--accent), 0 8px 20px rgba(0, 0, 0, 0.3);
 }
 
 .eyebrow {
@@ -495,19 +499,23 @@ body.background-transitioning::after {
   border-radius: 8px;
   position: relative;
   overflow: hidden;
-  box-shadow:
-    0 4px 12px rgba(0, 0, 0, 0.3),
-    inset 0 1px 0 rgba(255, 255, 255, 0.3);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3), inset 0 1px 0
+    rgba(255, 255, 255, 0.3);
 }
 
 .home-actions button::before {
-  content: '';
+  content: "";
   position: absolute;
   top: 0;
   left: -100%;
   width: 100%;
   height: 100%;
-  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+  background: linear-gradient(
+    90deg,
+    transparent,
+    rgba(255, 255, 255, 0.2),
+    transparent
+  );
   transition: left 0.5s ease;
 }
 
@@ -523,7 +531,8 @@ body.background-transitioning::after {
   color: var(--title);
   font-weight: 700;
   letter-spacing: 1px;
-  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px
+    rgba(0, 0, 0, 0.06);
   border-radius: 0.75rem;
   transition: all 0.2s ease-in-out;
 }
@@ -532,7 +541,8 @@ body.background-transitioning::after {
   background: rgba(255, 255, 255, 0.7);
   border-color: rgba(203, 213, 225, 1);
   transform: translateY(-2px);
-  box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+  box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px
+    rgba(0, 0, 0, 0.05);
 }
 
 .home-actions button.secondary {
@@ -543,7 +553,8 @@ body.background-transitioning::after {
   color: var(--title);
   font-weight: 700;
   letter-spacing: 1px;
-  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px
+    rgba(0, 0, 0, 0.06);
   border-radius: 0.75rem;
   transition: all 0.2s ease-in-out;
 }
@@ -552,7 +563,8 @@ body.background-transitioning::after {
   background: rgba(255, 255, 255, 0.7);
   border-color: rgba(203, 213, 225, 1);
   transform: translateY(-2px);
-  box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+  box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px
+    rgba(0, 0, 0, 0.05);
 }
 
 .home-panels {
@@ -576,7 +588,8 @@ body.background-transitioning::after {
   letter-spacing: 1px;
 }
 
-button, .primary {
+button,
+.primary {
   backdrop-filter: blur(4px);
   -webkit-backdrop-filter: blur(4px);
   background: rgba(255, 255, 255, 0.5);
@@ -590,20 +603,25 @@ button, .primary {
   color: var(--title);
   text-transform: uppercase;
   font-size: 0.9rem;
-  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px
+    rgba(0, 0, 0, 0.06);
   transition: all 0.2s ease-in-out;
 }
 
-button:hover, .primary:hover {
+button:hover,
+.primary:hover {
   background: rgba(255, 255, 255, 0.7);
   border-color: rgba(203, 213, 225, 1);
   transform: translateY(-2px);
-  box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+  box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px
+    rgba(0, 0, 0, 0.05);
 }
 
-button:active, .primary:active {
+button:active,
+.primary:active {
   transform: translateY(0);
-  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px
+    rgba(0, 0, 0, 0.06);
 }
 
 button:disabled {
@@ -621,15 +639,13 @@ button:disabled {
   background: var(--paper);
   padding: 2rem;
   border: 8px solid var(--border);
-  box-shadow: 
-    0 0 0 2px var(--accent),
-    0 0 0 4px var(--border),
-    0 8px 30px rgba(0, 0, 0, 0.4);
+  box-shadow: 0 0 0 2px var(--accent), 0 0 0 4px var(--border), 0 8px 30px
+    rgba(0, 0, 0, 0.4);
   position: relative;
 }
 
 .sheet::before {
-  content: '';
+  content: "";
   position: absolute;
   top: 16px;
   left: 16px;
@@ -844,7 +860,8 @@ textarea {
   font-family: var(--serif);
   color: var(--title);
   font-size: 0.9rem;
-  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px
+    rgba(0, 0, 0, 0.06);
   transition: all 0.2s ease-in-out;
 }
 
@@ -852,12 +869,14 @@ textarea {
   background: rgba(255, 255, 255, 0.7);
   border-color: rgba(203, 213, 225, 1);
   transform: translateY(-2px);
-  box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+  box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px
+    rgba(0, 0, 0, 0.05);
 }
 
 .pill-btn:active {
   transform: translateY(0);
-  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px
+    rgba(0, 0, 0, 0.06);
 }
 
 .pill-btn:disabled {
@@ -881,7 +900,7 @@ textarea {
 
 /* Decorative corners */
 .sheet::after {
-  content: '';
+  content: "";
   position: absolute;
   top: 8px;
   left: 8px;
@@ -974,19 +993,22 @@ textarea {
   font-size: 0.85rem;
 }
 
-.session-metadata, .character-info {
+.session-metadata,
+.character-info {
   display: flex;
   gap: 8px;
   align-items: center;
   /* background, border, border-radius, box-shadow handled by Tailwind classes */
 }
 
-.session-label, .character-label {
+.session-label,
+.character-label {
   color: #666;
   font-weight: bold;
 }
 
-.session-value, .character-value {
+.session-value,
+.character-value {
   color: var(--title);
   /* background, border, border-radius handled by parent element's Tailwind classes */
   padding: 0;
@@ -1262,9 +1284,17 @@ textarea {
 }
 
 @keyframes typingBlink {
-  0%, 20% { opacity: 0.3; }
-  40% { opacity: 1; }
-  60%, 100% { opacity: 0.3; }
+  0%,
+  20% {
+    opacity: 0.3;
+  }
+  40% {
+    opacity: 1;
+  }
+  60%,
+  100% {
+    opacity: 0.3;
+  }
 }
 
 /* Error Message */
@@ -1754,7 +1784,7 @@ textarea {
 .map-display img {
   border: 2px solid var(--border);
   border-radius: 4px;
-  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
   max-width: 100%;
   height: auto;
   transition: transform 0.2s ease, box-shadow 0.2s ease;
@@ -1762,7 +1792,7 @@ textarea {
 
 .map-display img:hover {
   transform: scale(1.02);
-  box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
 }
 
 .map-display .empty-state.hidden {
@@ -1913,7 +1943,8 @@ textarea {
 }
 
 @keyframes diceIconBounce {
-  0%, 100% {
+  0%,
+  100% {
     transform: translateY(0) rotate(0deg);
   }
   50% {
@@ -2078,7 +2109,8 @@ textarea {
 }
 
 @keyframes diceFaceChange {
-  0%, 100% {
+  0%,
+  100% {
     opacity: 0.7;
     transform: scale(1);
   }

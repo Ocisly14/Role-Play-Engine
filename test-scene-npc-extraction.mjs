@@ -10,8 +10,7 @@ function parseGameTime(gameTime) {
   if (gameTime.toLowerCase() === "initial" || !gameTime.includes("Day"))
     return null;
   const match = gameTime.match(/Day\s*(\d+),\s*(\d{2}:\d{2})/i);
-  if (match)
-    return { gameDay: parseInt(match[1], 10), timeOfDay: match[2] };
+  if (match) return { gameDay: parseInt(match[1], 10), timeOfDay: match[2] };
   return null;
 }
 
@@ -36,7 +35,10 @@ function getLatestActionLogEntryWithLocation(actionLog) {
 }
 
 function normalizeName(name) {
-  return name.toLowerCase().replace(/[^a-z0-9\u4e00-\u9fa5]+/g, " ").trim();
+  return name
+    .toLowerCase()
+    .replace(/[^a-z0-9\u4e00-\u9fa5]+/g, " ")
+    .trim();
 }
 
 function isNameSimilar(name1, name2) {
@@ -102,7 +104,9 @@ function runTest(name, state, expectedNames, expectExcluded = []) {
     resultNames.length === expectedSorted.length &&
     resultNames.every((n, i) => n === expectedSorted[i]);
   const wronglyIncluded = resultNames.filter((n) => expectExcluded.includes(n));
-  const wronglyExcluded = expectedSorted.filter((n) => !resultNames.includes(n));
+  const wronglyExcluded = expectedSorted.filter(
+    (n) => !resultNames.includes(n)
+  );
 
   console.log("\n--- " + name + " ---");
   console.log(
@@ -117,22 +121,18 @@ function runTest(name, state, expectedNames, expectExcluded = []) {
   );
   console.log(
     "NPCs in scene:",
-    result.length ? result.map((r) => `${r.name} (${r.source})`).join(", ") : "(none)"
+    result.length
+      ? result.map((r) => `${r.name} (${r.source})`).join(", ")
+      : "(none)"
   );
   console.log("Expected:", expectedNames.join(", "));
   if (ok && wronglyIncluded.length === 0 && wronglyExcluded.length === 0) {
     console.log("✅ PASS");
   } else {
     if (wronglyIncluded.length)
-      console.log(
-        "❌ Wrongly included (should be excluded):",
-        wronglyIncluded
-      );
+      console.log("❌ Wrongly included (should be excluded):", wronglyIncluded);
     if (wronglyExcluded.length)
-      console.log(
-        "❌ Wrongly excluded (should be included):",
-        wronglyExcluded
-      );
+      console.log("❌ Wrongly excluded (should be included):", wronglyExcluded);
     if (!ok) console.log("❌ FAIL");
   }
   return ok;
@@ -175,7 +175,11 @@ function main() {
           id: "b",
           name: "Bob",
           actionLog: [
-            { time: "Day 1, 09:00", location: "Main Lodge", summary: "was here" },
+            {
+              time: "Day 1, 09:00",
+              location: "Main Lodge",
+              summary: "was here",
+            },
             { time: "Day 1, 11:00", location: "Jungle Trail", summary: "left" },
           ],
         },
@@ -201,8 +205,16 @@ function main() {
           id: "c",
           name: "Carol",
           actionLog: [
-            { time: "Day 1, 08:00", location: "Jungle Trail", summary: "was there" },
-            { time: "Day 1, 11:00", location: "Main Lodge", summary: "arrived" },
+            {
+              time: "Day 1, 08:00",
+              location: "Jungle Trail",
+              summary: "was there",
+            },
+            {
+              time: "Day 1, 11:00",
+              location: "Main Lodge",
+              summary: "arrived",
+            },
           ],
         },
       ],
@@ -224,7 +236,9 @@ function main() {
         {
           id: "b",
           name: "Bob",
-          actionLog: [{ time: "Day 1, 10:00", location: "Main Lodge", summary: "here" }],
+          actionLog: [
+            { time: "Day 1, 10:00", location: "Main Lodge", summary: "here" },
+          ],
         },
       ],
     },
@@ -239,7 +253,9 @@ function main() {
   );
   console.log(
     "getLatestActionLogEntryWithLocation([{time:'Day 1, 11:00', location:'A'}]):",
-    getLatestActionLogEntryWithLocation([{ time: "Day 1, 11:00", location: "A" }])
+    getLatestActionLogEntryWithLocation([
+      { time: "Day 1, 11:00", location: "A" },
+    ])
   );
 
   console.log("\nDone.");

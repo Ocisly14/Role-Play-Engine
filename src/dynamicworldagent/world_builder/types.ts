@@ -3,19 +3,19 @@
  * Supports truth-first world generation following instruction.md specification
  */
 
-import type { 
+import type {
   CharacterAttributes,
   CharacterStatus,
   InventoryItem,
   ActionLogEntry,
   NPCClue,
-  NPCRelationship
+  NPCRelationship,
 } from "../../shared/agents/models/gameTypes.js";
-import type { 
+import type {
   ScenarioSnapshot,
   ScenarioCharacter,
   ScenarioClue,
-  ScenarioCondition
+  ScenarioCondition,
 } from "../../shared/agents/models/scenarioTypes.js";
 
 /**
@@ -68,16 +68,16 @@ export interface DynamicCharacterProfile {
  */
 export interface DynamicNPCProfile extends DynamicCharacterProfile {
   // NPC-specific fields (override some optional fields from CharacterProfile)
-  background?: string;  // NPC-specific background (may differ from backstory)
+  background?: string; // NPC-specific background (may differ from backstory)
   goals?: string[];
   secrets?: string[];
   clues: NPCClue[];
   relationships: NPCRelationship[];
   isNPC: true; // flag to distinguish from player characters
-  
+
   // DynamicWorld specific fields
-  instantiatedFrom?: string;     // Knowledge holder ID that this NPC represents
-  inheritsKnowledge?: string[];   // Truth event IDs from knowledge holder
+  instantiatedFrom?: string; // Knowledge holder ID that this NPC represents
+  inheritsKnowledge?: string[]; // Truth event IDs from knowledge holder
 }
 
 /**
@@ -130,20 +130,20 @@ export interface SceneImage {
  * Setting types for CoC scenarios
  */
 export type MacroSceneSettingType =
-  | "small_town"      // 小镇/乡村
-  | "city"            // 城市
-  | "academic"        // 学术/研究场所
-  | "isolated"        // 偏远据点/封闭环境
+  | "small_town" // 小镇/乡村
+  | "city" // 城市
+  | "academic" // 学术/研究场所
+  | "isolated" // 偏远据点/封闭环境
   | "single_structure" // 单一建筑
-  | "route";          // 路径/旅程型
+  | "route"; // 路径/旅程型
 
 /**
  * Macro Scene Structure - Setting skeleton (not limited to towns)
  */
 export interface MacroSceneStructure {
-  moduleName: string;                     // CoC-style module title (e.g., "The Shadow Over Innsmouth")
-  locationName: string;                   // Location name (e.g., "Innsmouth", "Arkham University")
-  settingType?: MacroSceneSettingType;    // Type of setting
+  moduleName: string; // CoC-style module title (e.g., "The Shadow Over Innsmouth")
+  locationName: string; // Location name (e.g., "Innsmouth", "Arkham University")
+  settingType?: MacroSceneSettingType; // Type of setting
   geographicLayout: {
     naturalFeatures: string[];
     artificialStructures: string[];
@@ -166,12 +166,12 @@ export interface MacroSceneStructure {
  * Pure cause-effect chains independent of observers
  */
 export interface TruthEvent {
-  id: string;                    // e.g., "T1", "T2"
-  time: string;                  // e.g., "2 months ago", "Day 3 evening"
-  event: string;                 // Objective description, NO names
-  cause?: string;                // What caused this event
-  consequence?: string;          // What this event caused
-  mythosInvolved: boolean;       // Whether this involves mythos
+  id: string; // e.g., "T1", "T2"
+  time: string; // e.g., "2 months ago", "Day 3 evening"
+  event: string; // Objective description, NO names
+  cause?: string; // What caused this event
+  consequence?: string; // What this event caused
+  mythosInvolved: boolean; // Whether this involves mythos
 }
 
 /**
@@ -179,12 +179,16 @@ export interface TruthEvent {
  * NOT NPCs - these are roles, organizations, places, or objects
  */
 export interface KnowledgeHolder {
-  id: string;                    // e.g., "KH_ROLE_1", "KH_PLACE_1"
+  id: string; // e.g., "KH_ROLE_1", "KH_PLACE_1"
   holderType: "ROLE" | "ORGANIZATION" | "PLACE" | "OBJECT";
-  holderName: string;            // e.g., "Ritual Participant", "Local Historical Society"
-  knows: string[];               // Truth event IDs this holder knows
-  distortion?: "none" | "partial_amnesia" | "deliberate_suppression" | "misinterpretation";
-  containsEvidence?: string[];   // For PLACE/OBJECT types
+  holderName: string; // e.g., "Ritual Participant", "Local Historical Society"
+  knows: string[]; // Truth event IDs this holder knows
+  distortion?:
+    | "none"
+    | "partial_amnesia"
+    | "deliberate_suppression"
+    | "misinterpretation";
+  containsEvidence?: string[]; // For PLACE/OBJECT types
   reliability?: "high" | "medium" | "low";
 }
 
@@ -193,12 +197,17 @@ export interface KnowledgeHolder {
  * Must have a physical or psychological source
  */
 export interface RedHerring {
-  id: string;                    // e.g., "RH1", "RH2"
-  falseBelief: string;           // The false but plausible explanation
-  sourceType: "MEDIA_RUMOR" | "MEDICAL_RECORD" | "OFFICIAL_REPORT" | "WITNESS_MISIDENTIFICATION" | "COINCIDENCE";
-  origin: string;                // Where this false belief comes from
-  whyPlausible: string;          // Why people would believe it
-  contradictsEvents?: string[];  // Truth event IDs this contradicts
+  id: string; // e.g., "RH1", "RH2"
+  falseBelief: string; // The false but plausible explanation
+  sourceType:
+    | "MEDIA_RUMOR"
+    | "MEDICAL_RECORD"
+    | "OFFICIAL_REPORT"
+    | "WITNESS_MISIDENTIFICATION"
+    | "COINCIDENCE";
+  origin: string; // Where this false belief comes from
+  whyPlausible: string; // Why people would believe it
+  contradictsEvents?: string[]; // Truth event IDs this contradicts
 }
 
 /**
@@ -218,27 +227,31 @@ export interface MythosEvent {
  * End State Definition - Inevitable outcome if no intervention
  */
 export interface EndStateDefinition {
-  summary: string;               // 1-3 paragraphs
+  summary: string; // 1-3 paragraphs
   catastropheNature: string;
   winnersAndSurvivors: string[];
   pointOfNoReturn: {
     type: "time" | "condition";
-    trigger: string;             // e.g., "Day 8 0:00" or "All seals broken"
+    trigger: string; // e.g., "Day 8 0:00" or "All seals broken"
   };
 }
 
 /**
  * Scenario connection definition (name-based, no snapshots yet)
  */
-export type ScenarioConnectionType = "leads_to" | "concurrent" | "prerequisite" | "alternate";
+export type ScenarioConnectionType =
+  | "leads_to"
+  | "concurrent"
+  | "prerequisite"
+  | "alternate";
 
 export interface ScenarioConnection {
-  scenarioName: string;     // Human-readable scenario name
-  scenarioId?: string;      // Scenario ID for precise lookup
+  scenarioName: string; // Human-readable scenario name
+  scenarioId?: string; // Scenario ID for precise lookup
   relationshipType: ScenarioConnectionType;
   description?: string;
-  blocked?: boolean;        // 连接是否被物理阻挡或锁定
-  blockReason?: string;     // 阻挡原因说明（当 blocked 为 true 时建议提供）
+  blocked?: boolean; // 连接是否被物理阻挡或锁定
+  blockReason?: string; // 阻挡原因说明（当 blocked 为 true 时建议提供）
 }
 
 /**
@@ -315,8 +328,8 @@ export interface NPCBasicInfo {
   }>;
   mythosAwareness: "none" | "partial" | "distorted" | "knowing";
   // NEW: Link to knowledge holders
-  instantiatedFrom?: string;     // Knowledge holder ID that this NPC represents
-  inheritsKnowledge?: string[];  // Truth event IDs from knowledge holder
+  instantiatedFrom?: string; // Knowledge holder ID that this NPC represents
+  inheritsKnowledge?: string[]; // Truth event IDs from knowledge holder
 }
 
 /**
@@ -349,7 +362,7 @@ export interface ModuleDigest {
   keeperGuidance: string;
   moduleLimitations: string;
   introduction: string;
-  macroMapPath?: string;  // Module-relative path to macro map image (e.g. "Map/[Module Name].png")
+  macroMapPath?: string; // Module-relative path to macro map image (e.g. "Map/[Module Name].png")
   globalTrigger?: {
     timeRestriction?: string;
     timeReason?: string;

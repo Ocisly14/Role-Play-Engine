@@ -1,11 +1,20 @@
 import { ModelClass } from "../../../models/types.js";
 import { generateText } from "../../../models/index.js";
-import { NPCResponseAnalysis, ActionType } from "../../../shared/state/index.js";
+import {
+  NPCResponseAnalysis,
+  ActionType,
+} from "../../../shared/state/index.js";
 import type { ActionLogEntry } from "../../../shared/agents/models/gameTypes.js";
 import type { DynamicCharacterProfile } from "../../world_builder/types.js";
 import type { DynamicNPCProfile } from "../../world_builder/types.js";
-import type { DynamicGameState, DynamicGameStateManager } from "../../state/index.js";
-import { isTimeAfter, getLatestActionLogEntryWithLocation } from "../../utils/gameTime.js";
+import type {
+  DynamicGameState,
+  DynamicGameStateManager,
+} from "../../state/index.js";
+import {
+  isTimeAfter,
+  getLatestActionLogEntryWithLocation,
+} from "../../utils/gameTime.js";
 import { getCharacterTemplate } from "./characterTemplate.js";
 import { getCharacterSimulatedTemplate } from "./characterSimulatedTemplate.js";
 import { composeTemplateWithImages } from "../../../template.js";
@@ -14,7 +23,6 @@ import { composeTemplateWithImages } from "../../../template.js";
  * Character Agent class - handles NPC response analysis
  */
 export class CharacterAgent {
-
   /**
    * Analyze NPC responses to recent player actions (from Director Agent)
    * This method is used when the Director detects progression threshold and analyzes recent player actionLog
@@ -32,20 +40,26 @@ export class CharacterAgent {
     const scenarioInfo = this.extractScenarioInfo(dynamicState);
 
     // 2. Get player character information
-    const playerCharacter = this.extractCharacterInfo(dynamicState.playerCharacter);
+    const playerCharacter = this.extractCharacterInfo(
+      dynamicState.playerCharacter
+    );
 
     // 3. Get NPCs in current scene location (with full details including goals)
     const sceneNpcs = this.extractSceneNPCs(dynamicState);
 
     // If no NPCs in scene, return empty array
     if (sceneNpcs.length === 0) {
-      console.log("📝 [Character Agent] No NPCs in current scene, skipping analysis");
+      console.log(
+        "📝 [Character Agent] No NPCs in current scene, skipping analysis"
+      );
       return [];
     }
 
     // If no recent actions, return empty array
     if (recentActionLog.length === 0) {
-      console.log("📝 [Character Agent] No recent player actions, skipping analysis");
+      console.log(
+        "📝 [Character Agent] No recent player actions, skipping analysis"
+      );
       return [];
     }
 
@@ -54,7 +68,7 @@ export class CharacterAgent {
       recentActionLogJson: JSON.stringify(recentActionLog, null, 2),
       scenarioInfoJson: JSON.stringify(scenarioInfo, null, 2),
       playerCharacterJson: JSON.stringify(playerCharacter, null, 2),
-      sceneNpcsJson: JSON.stringify(sceneNpcs, null, 2)
+      sceneNpcsJson: JSON.stringify(sceneNpcs, null, 2),
     };
 
     const { content: context, images } = composeTemplateWithImages(
@@ -64,9 +78,16 @@ export class CharacterAgent {
       "handlebars"
     );
 
-    console.log("\n🎭 [Character Agent] Analyzing NPC responses to recent player actions...");
+    console.log(
+      "\n🎭 [Character Agent] Analyzing NPC responses to recent player actions..."
+    );
     console.log(`   Recent actions: ${recentActionLog.length} entries`);
-    console.log(`   Latest actions: ${recentActionLog.slice(-3).map(a => `${a.time}: ${a.summary}`).join("; ")}`);
+    console.log(
+      `   Latest actions: ${recentActionLog
+        .slice(-3)
+        .map((a) => `${a.time}: ${a.summary}`)
+        .join("; ")}`
+    );
     console.log(`   Scene: ${scenarioInfo.location || "Unknown"}`);
     console.log(`   NPCs to analyze: ${sceneNpcs.length}`);
 
@@ -94,7 +115,8 @@ export class CharacterAgent {
     const template = getCharacterTemplate();
 
     // 1. Investigator's action results only
-    const investigatorActionResults = this.getInvestigatorActionResults(dynamicState);
+    const investigatorActionResults =
+      this.getInvestigatorActionResults(dynamicState);
 
     // 2. Current game time
     const gameTime = gameStateManager.getFullGameTime();
@@ -103,18 +125,25 @@ export class CharacterAgent {
     const sceneSnapshot = this.extractSceneSnapshotForTemplate(dynamicState);
 
     // 4. Characters in scene (restricted fields)
-    const sceneCharacters = this.extractSceneCharactersForTemplate(dynamicState);
+    const sceneCharacters =
+      this.extractSceneCharactersForTemplate(dynamicState);
 
     if (sceneCharacters.length === 0) {
-      console.log("📝 [Character Agent] No NPCs in current scene, skipping response analysis");
+      console.log(
+        "📝 [Character Agent] No NPCs in current scene, skipping response analysis"
+      );
       return [];
     }
 
     // 5. Last 3 action logs per character (investigator + each scene NPC)
-    const recentActionLogPerCharacter = this.getLast3ActionLogPerCharacter(dynamicState, sceneCharacters);
+    const recentActionLogPerCharacter = this.getLast3ActionLogPerCharacter(
+      dynamicState,
+      sceneCharacters
+    );
 
     const templateContext = {
-      investigatorActionResults: investigatorActionResults.length > 0 ? investigatorActionResults : null,
+      investigatorActionResults:
+        investigatorActionResults.length > 0 ? investigatorActionResults : null,
       investigatorActionResultsJson:
         investigatorActionResults.length > 0
           ? JSON.stringify(investigatorActionResults, null, 2)
@@ -122,7 +151,10 @@ export class CharacterAgent {
       gameTime,
       sceneSnapshot,
       sceneCharactersJson: JSON.stringify(sceneCharacters, null, 2),
-      recentActionLogPerCharacter: recentActionLogPerCharacter.length > 0 ? recentActionLogPerCharacter : null,
+      recentActionLogPerCharacter:
+        recentActionLogPerCharacter.length > 0
+          ? recentActionLogPerCharacter
+          : null,
       recentActionLogPerCharacterJson:
         recentActionLogPerCharacter.length > 0
           ? JSON.stringify(recentActionLogPerCharacter, null, 2)
@@ -139,7 +171,7 @@ export class CharacterAgent {
     console.log("\n🎭 [Character Agent] Analyzing NPC responses...");
     console.log(`   Scene: ${sceneSnapshot?.location ?? "Unknown"}`);
     console.log(`   NPCs to analyze: ${sceneCharacters.length}`);
-    
+
     // Call LLM
     const response = await generateText({
       runtime,
@@ -151,7 +183,7 @@ export class CharacterAgent {
     // Parse and validate response
     return this.parseNPCResponseAnalyses(response);
   }
-  
+
   /**
    * Get latest action result
    */
@@ -212,7 +244,9 @@ export class CharacterAgent {
     const scenario = dynamicState.currentScenario;
     if (!scenario) return null;
 
-    const outline = dynamicState.scenarioOutlines.find((o) => o.id === scenario.id);
+    const outline = dynamicState.scenarioOutlines.find(
+      (o) => o.id === scenario.id
+    );
     const conditions = scenario.conditions || [];
     const connections = outline?.connections || [];
 
@@ -230,7 +264,9 @@ export class CharacterAgent {
    * personality, goals, secrets, background, inventory, relationship only.
    * Same logic as extractSceneNPCs: no actionLog → use scenario.characters as authority; exclude left, include arrived.
    */
-  private extractSceneCharactersForTemplate(dynamicState: DynamicGameState): any[] {
+  private extractSceneCharactersForTemplate(
+    dynamicState: DynamicGameState
+  ): any[] {
     const scenario = dynamicState.currentScenario;
     if (!scenario?.location) return [];
 
@@ -271,7 +307,9 @@ export class CharacterAgent {
 
     // 1. From scenario.characters: exclude only if we can prove they left. No actionLog → include (scene NPC as authority).
     for (const sc of scenario.characters || []) {
-      const npc = dynamicState.npcCharacters.find((n) => this.isNameSimilar(n.name, sc.name));
+      const npc = dynamicState.npcCharacters.find((n) =>
+        this.isNameSimilar(n.name, sc.name)
+      );
       if (!npc) continue;
       const latest = getLatestActionLogEntryWithLocation(npc.actionLog);
       if (
@@ -287,7 +325,9 @@ export class CharacterAgent {
     // 2. From all NPCs: include only if actionLog shows arrived. No actionLog → do not add here.
     for (const npc of dynamicState.npcCharacters) {
       if (alreadyAdded(npc.name)) continue;
-      const latest = getLatestActionLogEntryWithLocation((npc as DynamicNPCProfile).actionLog);
+      const latest = getLatestActionLogEntryWithLocation(
+        (npc as DynamicNPCProfile).actionLog
+      );
       if (
         latest &&
         isTimeAfter(latest.time, snapshotTime) &&
@@ -307,14 +347,17 @@ export class CharacterAgent {
     dynamicState: DynamicGameState,
     sceneCharacters: { name: string }[]
   ): { characterName: string; last3ActionLog: ActionLogEntry[] }[] {
-    const out: { characterName: string; last3ActionLog: ActionLogEntry[] }[] = [];
+    const out: { characterName: string; last3ActionLog: ActionLogEntry[] }[] =
+      [];
 
     const player = dynamicState.playerCharacter;
     const playerLog = (player.actionLog || []).slice(-3);
     out.push({ characterName: player.name, last3ActionLog: playerLog });
 
     for (const sc of sceneCharacters) {
-      const npc = dynamicState.npcCharacters.find((n) => this.isNameSimilar(n.name, sc.name));
+      const npc = dynamicState.npcCharacters.find((n) =>
+        this.isNameSimilar(n.name, sc.name)
+      );
       if (!npc) continue;
       const log = (npc.actionLog || []).slice(-3);
       out.push({ characterName: npc.name, last3ActionLog: log });
@@ -328,19 +371,19 @@ export class CharacterAgent {
    */
   private extractScenarioInfo(dynamicState: DynamicGameState): any {
     const currentScenario = dynamicState.currentScenario;
-    
+
     if (!currentScenario) {
       return {
         hasScenario: false,
-        message: "No current scenario loaded"
+        message: "No current scenario loaded",
       };
     }
-    
+
     // Find the corresponding scenario outline to get connections
     const scenarioOutline = dynamicState.scenarioOutlines.find(
-      outline => outline.id === currentScenario.id
+      (outline) => outline.id === currentScenario.id
     );
-    
+
     return {
       id: currentScenario.id,
       name: currentScenario.name,
@@ -349,10 +392,10 @@ export class CharacterAgent {
       characters: currentScenario.characters || [],
       clues: currentScenario.clues || [],
       conditions: currentScenario.conditions || [],
-      connections: scenarioOutline?.connections || []
+      connections: scenarioOutline?.connections || [],
     };
   }
-  
+
   /**
    * Extract character information (basic attributes)
    */
@@ -364,10 +407,10 @@ export class CharacterAgent {
       status: character.status,
       skills: character.skills,
       inventory: character.inventory || [],
-      notes: character.notes || ""
+      notes: character.notes || "",
     };
   }
-  
+
   /**
    * Normalize name (for fuzzy matching)
    */
@@ -448,10 +491,16 @@ export class CharacterAgent {
     let excludedLeft = 0;
     let addedByArrived = 0;
 
-    console.log(`\n🔍 [Extract Scene NPCs] Current location: "${scenarioLocation}"`);
+    console.log(
+      `\n🔍 [Extract Scene NPCs] Current location: "${scenarioLocation}"`
+    );
     console.log(`🔍 [Extract Scene NPCs] Snapshot time: "${snapshotTime}"`);
-    console.log(`🔍 [Extract Scene NPCs] Scenario characters list: ${currentScenario.characters?.map(c => c.name).join(', ') || 'none'}`);
-    console.log(`🔍 [Extract Scene NPCs] Total NPCs in game: ${dynamicState.npcCharacters.length}`);
+    console.log(
+      `🔍 [Extract Scene NPCs] Scenario characters list: ${currentScenario.characters?.map((c) => c.name).join(", ") || "none"}`
+    );
+    console.log(
+      `🔍 [Extract Scene NPCs] Total NPCs in game: ${dynamicState.npcCharacters.length}`
+    );
 
     const alreadyInScene = (name: string) =>
       sceneNpcs.some((sn) => this.isNameSimilar(sn.name, name));
@@ -463,7 +512,9 @@ export class CharacterAgent {
       );
 
       if (!matchingNpc) {
-        console.log(`   ⚠️  No match found for scenario character: "${scenarioChar.name}"`);
+        console.log(
+          `   ⚠️  No match found for scenario character: "${scenarioChar.name}"`
+        );
         continue;
       }
 
@@ -473,7 +524,9 @@ export class CharacterAgent {
         isTimeAfter(latest.time, snapshotTime) &&
         latest.location.toLowerCase() !== scenarioLocation.toLowerCase()
       ) {
-        console.log(`   ⊗ Excluded (left): "${matchingNpc.name}" (latest: ${latest.location} at ${latest.time})`);
+        console.log(
+          `   ⊗ Excluded (left): "${matchingNpc.name}" (latest: ${latest.location} at ${latest.time})`
+        );
         excludedLeft++;
         continue;
       }
@@ -487,14 +540,18 @@ export class CharacterAgent {
     for (const npc of dynamicState.npcCharacters) {
       if (alreadyInScene(npc.name)) continue;
 
-      const latest = getLatestActionLogEntryWithLocation((npc as DynamicNPCProfile).actionLog);
+      const latest = getLatestActionLogEntryWithLocation(
+        (npc as DynamicNPCProfile).actionLog
+      );
       if (
         latest &&
         isTimeAfter(latest.time, snapshotTime) &&
         latest.location.toLowerCase() === scenarioLocation.toLowerCase()
       ) {
         sceneNpcs.push(this.extractNPCInfo(npc));
-        console.log(`   ✓ Added by actionLog (arrived): "${npc.name}" (location: "${latest.location}" at ${latest.time})`);
+        console.log(
+          `   ✓ Added by actionLog (arrived): "${npc.name}" (location: "${latest.location}" at ${latest.time})`
+        );
         addedByArrived++;
       }
     }
@@ -507,22 +564,24 @@ export class CharacterAgent {
 
     return sceneNpcs;
   }
-  
+
   /**
    * Get current location from actionLog (latest entry with location)
    */
-  private getCurrentLocationFromActionLog(actionLog?: ActionLogEntry[]): string | null {
+  private getCurrentLocationFromActionLog(
+    actionLog?: ActionLogEntry[]
+  ): string | null {
     if (!actionLog || actionLog.length === 0) {
       return null;
     }
-    
+
     // Find the latest entry with a location (iterate backwards)
     for (let i = actionLog.length - 1; i >= 0; i--) {
       if (actionLog[i].location) {
         return actionLog[i].location;
       }
     }
-    
+
     return null;
   }
 
@@ -531,11 +590,11 @@ export class CharacterAgent {
    */
   private extractNPCInfo(npc: DynamicCharacterProfile): any {
     const npcProfile = npc as DynamicNPCProfile;
-    
+
     // Get recent actionLog (last 15 entries, roughly 3 turns)
     const npcActionLog = npc.actionLog || [];
     const recentActionLog = npcActionLog.slice(-15);
-    
+
     return {
       id: npc.id,
       name: npc.name,
@@ -553,7 +612,7 @@ export class CharacterAgent {
       clues: npcProfile.clues || [],
       relationships: npcProfile.relationships || [],
       notes: npc.notes || "",
-      recentActionLog: recentActionLog
+      recentActionLog: recentActionLog,
     };
   }
 
@@ -572,11 +631,13 @@ export class CharacterAgent {
       const codeBlockMatch = jsonText.match(/```(?:json)?\s*([\s\S]*?)```/i);
       if (codeBlockMatch) {
         jsonText = codeBlockMatch[1].trim();
-        console.log(`📝 [Character Agent] Detected markdown code block, extracted JSON content`);
+        console.log(
+          `📝 [Character Agent] Detected markdown code block, extracted JSON content`
+        );
       }
 
       // Try to extract JSON object if wrapped in other text
-      if (!jsonText.startsWith('{') && !jsonText.startsWith('[')) {
+      if (!jsonText.startsWith("{") && !jsonText.startsWith("[")) {
         const jsonObjectMatch = jsonText.match(/\{[\s\S]*\}/);
         if (jsonObjectMatch) {
           jsonText = jsonObjectMatch[0];
@@ -587,7 +648,9 @@ export class CharacterAgent {
       parsed = JSON.parse(jsonText);
     } catch (error) {
       console.error(`❌ [Character Agent] JSON parsing error:`, error);
-      console.error(`   Original response (first 500 chars): ${response.substring(0, 500)}${response.length > 500 ? '...' : ''}`);
+      console.error(
+        `   Original response (first 500 chars): ${response.substring(0, 500)}${response.length > 500 ? "..." : ""}`
+      );
       return [];
     }
 
@@ -596,23 +659,37 @@ export class CharacterAgent {
 
     // Valid action types
     const validActionTypes: ActionType[] = [
-      "exploration", "social", "stealth", "combat",
-      "chase", "mental", "environmental", "narrative"
+      "exploration",
+      "social",
+      "stealth",
+      "combat",
+      "chase",
+      "mental",
+      "environmental",
+      "narrative",
     ];
 
-    if (parsed.npcResponseAnalyses && Array.isArray(parsed.npcResponseAnalyses)) {
+    if (
+      parsed.npcResponseAnalyses &&
+      Array.isArray(parsed.npcResponseAnalyses)
+    ) {
       for (const analysis of parsed.npcResponseAnalyses) {
         // Validate required fields
-        if (analysis.npcName && typeof analysis.willRespond === 'boolean') {
+        if (analysis.npcName && typeof analysis.willRespond === "boolean") {
           // Validate responseType
           let responseType: ActionType | "none" | null = null;
           if (analysis.willRespond) {
             if (analysis.responseType === "none") {
               responseType = "none";
-            } else if (analysis.responseType && validActionTypes.includes(analysis.responseType as ActionType)) {
+            } else if (
+              analysis.responseType &&
+              validActionTypes.includes(analysis.responseType as ActionType)
+            ) {
               responseType = analysis.responseType as ActionType;
             } else {
-              console.warn(`⚠️ [Character Agent] Invalid responseType for ${analysis.npcName}: ${analysis.responseType}, defaulting to null`);
+              console.warn(
+                `⚠️ [Character Agent] Invalid responseType for ${analysis.npcName}: ${analysis.responseType}, defaulting to null`
+              );
               responseType = null;
             }
           }
@@ -622,18 +699,25 @@ export class CharacterAgent {
             willRespond: analysis.willRespond,
             responseType: responseType,
             responseDescription: analysis.responseDescription || "",
-            executionOrder: typeof analysis.executionOrder === 'number' ? analysis.executionOrder : 999,
-            targetCharacter: analysis.targetCharacter || null
+            executionOrder:
+              typeof analysis.executionOrder === "number"
+                ? analysis.executionOrder
+                : 999,
+            targetCharacter: analysis.targetCharacter || null,
           };
 
           analyses.push(validated);
 
-          console.log(`   ✓ ${validated.npcName}: ${validated.willRespond ? validated.responseType : 'no response'}`);
+          console.log(
+            `   ✓ ${validated.npcName}: ${validated.willRespond ? validated.responseType : "no response"}`
+          );
         }
       }
     }
 
-    console.log(`\n✅ [Character Agent] Analyzed ${analyses.length} NPC responses`);
+    console.log(
+      `\n✅ [Character Agent] Analyzed ${analyses.length} NPC responses`
+    );
 
     return analyses;
   }

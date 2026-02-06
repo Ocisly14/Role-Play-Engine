@@ -3,7 +3,11 @@
  * Uses knowledge matrix PLACE holders to define scenarios and connections
  */
 
-import { generateText, ModelClass, ModelProviderName } from "../../models/index.js";
+import {
+  generateText,
+  ModelClass,
+  ModelProviderName,
+} from "../../models/index.js";
 import { composeTemplate } from "../../template.js";
 import type {
   MacroSceneStructure,
@@ -14,7 +18,10 @@ import type {
   ScenarioNpcAssignments,
   ProgressCallback,
 } from "./types.js";
-import { getScenarioBuilderTemplate, getStartingSceneSnapshotTemplate } from "./scenarioBuilderTemplate.js";
+import {
+  getScenarioBuilderTemplate,
+  getStartingSceneSnapshotTemplate,
+} from "./scenarioBuilderTemplate.js";
 import type { DynamicNPCProfile } from "./types.js";
 import { generateSceneImageFromSnapshot } from "../visual/sceneImage.js";
 
@@ -24,7 +31,9 @@ interface Runtime {
 }
 
 const createRuntime = (): Runtime => ({
-  modelProvider: (process.env.MODEL_PROVIDER as ModelProviderName) || ModelProviderName.OPENAI,
+  modelProvider:
+    (process.env.MODEL_PROVIDER as ModelProviderName) ||
+    ModelProviderName.OPENAI,
   getSetting: (key: string) => process.env[key],
 });
 
@@ -71,11 +80,15 @@ export class ScenarioBuilderAgent {
       .filter((holder) => holder.holderName);
 
     const template = getScenarioBuilderTemplate();
-    const prompt = composeTemplate(template, {}, {
-      macroSceneJson: JSON.stringify(macroScene, null, 2),
-      truthTimelineJson: JSON.stringify(truthTimeline, null, 2),
-      knowledgeMatrixJson: JSON.stringify(knowledgeMatrix, null, 2),
-    });
+    const prompt = composeTemplate(
+      template,
+      {},
+      {
+        macroSceneJson: JSON.stringify(macroScene, null, 2),
+        truthTimelineJson: JSON.stringify(truthTimeline, null, 2),
+        knowledgeMatrixJson: JSON.stringify(knowledgeMatrix, null, 2),
+      }
+    );
 
     progressCallback?.("Calling AI for scenario outlines...");
     const response = await generateText({
@@ -96,7 +109,10 @@ export class ScenarioBuilderAgent {
         .map((scenario: ScenarioOutline) => scenario?.name?.trim())
         .filter(Boolean);
       const missingPlaces = placeNames.filter(
-        (placeName) => !scenarioNames.some((name) => name.toLowerCase() === placeName.toLowerCase())
+        (placeName) =>
+          !scenarioNames.some(
+            (name) => name.toLowerCase() === placeName.toLowerCase()
+          )
       );
 
       if (missingPlaces.length > 0) {
@@ -122,28 +138,34 @@ export class ScenarioBuilderAgent {
           // Ensure sourcePlaceId and sourcePlaceName are set
           if (!scenario.sourcePlaceId) {
             scenario.sourcePlaceId = matchingHolder.id;
-            console.log(`  ✓ Auto-assigned sourcePlaceId "${matchingHolder.id}" to scenario "${scenarioName}"`);
+            console.log(
+              `  ✓ Auto-assigned sourcePlaceId "${matchingHolder.id}" to scenario "${scenarioName}"`
+            );
           }
           if (!scenario.sourcePlaceName) {
             scenario.sourcePlaceName = matchingHolder.holderName;
           }
         } else if (!scenario.sourcePlaceId) {
           // Connector scenarios may not have a PLACE holder match
-          console.warn(`  ⚠️  Scenario "${scenarioName}" has no sourcePlaceId and doesn't match any PLACE holder`);
+          console.warn(
+            `  ⚠️  Scenario "${scenarioName}" has no sourcePlaceId and doesn't match any PLACE holder`
+          );
         }
       }
 
       for (const place of placeEvidence) {
         if (place.containsEvidence.length === 0) continue;
         const scenario = (scenarios as ScenarioOutline[]).find(
-          (entry) => entry.name?.trim().toLowerCase() === place.holderName.toLowerCase()
+          (entry) =>
+            entry.name?.trim().toLowerCase() === place.holderName.toLowerCase()
         );
         if (!scenario) continue;
         const scenarioEvidence = scenario.evidence || [];
         const missingEvidence = place.containsEvidence.filter(
           (evidence) =>
             !scenarioEvidence.some(
-              (entry) => entry.trim().toLowerCase() === evidence.trim().toLowerCase()
+              (entry) =>
+                entry.trim().toLowerCase() === evidence.trim().toLowerCase()
             )
         );
         if (missingEvidence.length > 0) {
@@ -168,7 +190,9 @@ export class ScenarioBuilderAgent {
         }
       }
 
-      const scenarioNameSet = new Set(scenarioNames.map((name) => name.toLowerCase()));
+      const scenarioNameSet = new Set(
+        scenarioNames.map((name) => name.toLowerCase())
+      );
       const invalidConnections: string[] = [];
       const adjacency = new Map<string, Set<string>>();
 
@@ -248,12 +272,16 @@ export class ScenarioBuilderAgent {
         }
       }
 
-      progressCallback?.(`Scenario outlines generated: ${scenarios.length} entries`);
+      progressCallback?.(
+        `Scenario outlines generated: ${scenarios.length} entries`
+      );
       return scenarios as ScenarioOutline[];
     } catch (error) {
       console.error("Failed to parse scenario builder response:", error);
       console.error("Response:", response.substring(0, 500));
-      throw new Error(`Failed to generate scenarios: ${(error as Error).message}`);
+      throw new Error(
+        `Failed to generate scenarios: ${(error as Error).message}`
+      );
     }
   }
 
@@ -271,28 +299,32 @@ export class ScenarioBuilderAgent {
     progressCallback?.("Selecting starting scene and generating snapshot...");
 
     const template = getStartingSceneSnapshotTemplate();
-    const prompt = composeTemplate(template, {}, {
-      macroSceneJson: JSON.stringify(macroScene, null, 2),
-      truthTimelineJson: JSON.stringify(truthTimeline, null, 2),
-      knowledgeMatrixJson: JSON.stringify(knowledgeMatrix, null, 2),
-      scenariosJson: JSON.stringify(scenarios, null, 2),
-      npcsJson: JSON.stringify(
-        npcs.map((npc) => ({
-          id: npc.id,
-          name: npc.name,
-          occupation: npc.occupation,
-          age: npc.age,
-          gender: npc.gender,
-          appearance: npc.appearance,
-          personality: npc.personality,
-          background: npc.background,
-          goals: npc.goals,
-          secrets: npc.secrets,
-        })),
-        null,
-        2
-      ),
-    });
+    const prompt = composeTemplate(
+      template,
+      {},
+      {
+        macroSceneJson: JSON.stringify(macroScene, null, 2),
+        truthTimelineJson: JSON.stringify(truthTimeline, null, 2),
+        knowledgeMatrixJson: JSON.stringify(knowledgeMatrix, null, 2),
+        scenariosJson: JSON.stringify(scenarios, null, 2),
+        npcsJson: JSON.stringify(
+          npcs.map((npc) => ({
+            id: npc.id,
+            name: npc.name,
+            occupation: npc.occupation,
+            age: npc.age,
+            gender: npc.gender,
+            appearance: npc.appearance,
+            personality: npc.personality,
+            background: npc.background,
+            goals: npc.goals,
+            secrets: npc.secrets,
+          })),
+          null,
+          2
+        ),
+      }
+    );
 
     progressCallback?.("Calling AI for starting scene snapshot...");
     const response = await generateText({
@@ -303,21 +335,28 @@ export class ScenarioBuilderAgent {
 
     try {
       const parsed = parseJSONResponse(response);
-      const startingScene = parsed.startingScene as StartingSceneSelection | undefined;
+      const startingScene = parsed.startingScene as
+        | StartingSceneSelection
+        | undefined;
       const otherScenarioNpcAssignments =
-        (parsed.otherScenarioNpcAssignments as ScenarioNpcAssignments[] | undefined) || [];
+        (parsed.otherScenarioNpcAssignments as
+          | ScenarioNpcAssignments[]
+          | undefined) || [];
 
       if (!startingScene) {
         console.warn("Missing startingScene; falling back to first scenario.");
       }
 
-      const scenarioById = new Map(scenarios.map((scenario) => [scenario.id, scenario]));
+      const scenarioById = new Map(
+        scenarios.map((scenario) => [scenario.id, scenario])
+      );
       const scenarioByName = new Map(
         scenarios.map((scenario) => [scenario.name.toLowerCase(), scenario])
       );
 
       const selectedScenario =
-        (startingScene?.scenarioId && scenarioById.get(startingScene.scenarioId)) ||
+        (startingScene?.scenarioId &&
+          scenarioById.get(startingScene.scenarioId)) ||
         (startingScene?.scenarioName &&
           scenarioByName.get(startingScene.scenarioName.toLowerCase())) ||
         scenarios[0];
@@ -329,7 +368,8 @@ export class ScenarioBuilderAgent {
       const resolvedStartingScene: StartingSceneSelection = {
         scenarioId: selectedScenario.id,
         scenarioName: selectedScenario.name,
-        selectionReason: startingScene?.selectionReason || "Fallback selection.",
+        selectionReason:
+          startingScene?.selectionReason || "Fallback selection.",
         snapshot: startingScene?.snapshot as StartingSceneSelection["snapshot"],
       };
 
@@ -353,13 +393,19 @@ export class ScenarioBuilderAgent {
         );
       }
 
-      snapshot.characters = Array.isArray(snapshot.characters) ? snapshot.characters : [];
+      snapshot.characters = Array.isArray(snapshot.characters)
+        ? snapshot.characters
+        : [];
       snapshot.clues = Array.isArray(snapshot.clues) ? snapshot.clues : [];
-      snapshot.conditions = Array.isArray(snapshot.conditions) ? snapshot.conditions : [];
+      snapshot.conditions = Array.isArray(snapshot.conditions)
+        ? snapshot.conditions
+        : [];
 
       for (const char of snapshot.characters) {
         if (!char.id || !char.name || !char.role || !char.status) {
-          console.warn("Scenario snapshot character missing id/name/role/status");
+          console.warn(
+            "Scenario snapshot character missing id/name/role/status"
+          );
         }
       }
 
@@ -385,7 +431,9 @@ export class ScenarioBuilderAgent {
       }
 
       const npcById = new Map(npcs.map((npc) => [npc.id, npc]));
-      const npcByName = new Map(npcs.map((npc) => [npc.name.toLowerCase(), npc]));
+      const npcByName = new Map(
+        npcs.map((npc) => [npc.name.toLowerCase(), npc])
+      );
       const accountedNpcIds = new Set<string>();
 
       for (const char of snapshot.characters) {
@@ -393,7 +441,9 @@ export class ScenarioBuilderAgent {
           (char.id && npcById.get(char.id)) ||
           (char.name && npcByName.get(char.name.toLowerCase()));
         if (!npc) {
-          console.warn(`Snapshot character "${char.name}" does not match any NPC`);
+          console.warn(
+            `Snapshot character "${char.name}" does not match any NPC`
+          );
           continue;
         }
         accountedNpcIds.add(npc.id);
@@ -429,7 +479,10 @@ export class ScenarioBuilderAgent {
         assignment.scenarioId = scenario.id;
         assignment.scenarioName = scenario.name;
 
-        if (assignment.scenarioId === selectedScenario.id && assignment.npcs?.length) {
+        if (
+          assignment.scenarioId === selectedScenario.id &&
+          assignment.npcs?.length
+        ) {
           console.warn("Starting scene NPCs assigned to other scenarios");
         }
 
@@ -454,7 +507,9 @@ export class ScenarioBuilderAgent {
         .map((npc) => npc.id)
         .filter((id) => !accountedNpcIds.has(id));
       if (missingNpcs.length > 0) {
-        console.warn(`Not all NPCs assigned to scenarios: ${missingNpcs.join(", ")}`);
+        console.warn(
+          `Not all NPCs assigned to scenarios: ${missingNpcs.join(", ")}`
+        );
       }
 
       progressCallback?.(

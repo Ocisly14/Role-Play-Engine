@@ -64,9 +64,12 @@ export async function saveWorldToDatabase(
   // 2. Insert NPCs into characters table
   for (const npc of npcs) {
     // Check if NPC already exists
-    const existing = db.getDatabase().prepare(
-      `SELECT character_id FROM characters WHERE name = ? AND is_npc = 1`
-    ).get(npc.name);
+    const existing = db
+      .getDatabase()
+      .prepare(
+        `SELECT character_id FROM characters WHERE name = ? AND is_npc = 1`
+      )
+      .get(npc.name);
 
     if (existing) {
       // Update existing NPC
@@ -193,7 +196,9 @@ export async function saveWorldToDatabase(
 
     const scenarioConnections = (scenario: ScenarioOutline) =>
       (scenario.connections || []).map((connection) => {
-        const targetScenario = scenarioByName.get(connection.scenarioName.toLowerCase());
+        const targetScenario = scenarioByName.get(
+          connection.scenarioName.toLowerCase()
+        );
         return {
           scenarioId: targetScenario?.id || connection.scenarioName,
           relationshipType: connection.relationshipType,
@@ -245,11 +250,16 @@ export async function saveWorldToDatabase(
     if (startingScene?.snapshot) {
       const snapshot = startingScene.snapshot;
       const snapshotExists = database
-        .prepare("SELECT snapshot_id FROM scenario_snapshots WHERE snapshot_id = ?")
+        .prepare(
+          "SELECT snapshot_id FROM scenario_snapshots WHERE snapshot_id = ?"
+        )
         .get(snapshot.id);
 
       if (!snapshotExists) {
-        const hasInitialSnapshot = db.hasColumn("scenario_snapshots", "initial_snapshot");
+        const hasInitialSnapshot = db.hasColumn(
+          "scenario_snapshots",
+          "initial_snapshot"
+        );
         const hasGameTime = db.hasColumn("scenario_snapshots", "game_time");
 
         if (hasInitialSnapshot && hasGameTime) {
@@ -336,7 +346,9 @@ export async function saveWorldToDatabase(
               clue.discoveryMethod || null,
               JSON.stringify(clue.reveals || []),
               clue.discovered ? 1 : 0,
-              clue.discoveryDetails ? JSON.stringify(clue.discoveryDetails) : null
+              clue.discoveryDetails
+                ? JSON.stringify(clue.discoveryDetails)
+                : null
             );
           }
         }
@@ -456,7 +468,10 @@ export async function saveWorldToJSON(
   await fs.mkdir(scenariosDir, { recursive: true });
 
   const assignmentsByScenarioId = new Map(
-    otherScenarioNpcAssignments.map((assignment) => [assignment.scenarioId, assignment])
+    otherScenarioNpcAssignments.map((assignment) => [
+      assignment.scenarioId,
+      assignment,
+    ])
   );
 
   const actionLogsByNpcId = new Map<string, ActionLogEntry[]>();
@@ -490,24 +505,24 @@ export async function saveWorldToJSON(
 
     // Generate snapshot for all scenarios
     let snapshot;
-      if (isStartingScene && startingScene?.snapshot) {
-        // Use LLM-generated snapshot for starting scene
-        snapshot = {
-          id: startingScene.snapshot.id,
-          name: startingScene.snapshot.name,
-          gameTime: startingScene.snapshot.gameTime,
-          location: startingScene.snapshot.location,
-          description: startingScene.snapshot.description,
-          showMap: startingScene.snapshot.showMap,
-          characters: startingScene.snapshot.characters,
-          clues: startingScene.snapshot.clues,
-          conditions: startingScene.snapshot.conditions,
-          keeperNotes: startingScene.snapshot.keeperNotes,
-          estimatedShortActions: startingScene.snapshot.estimatedShortActions,
-          timeRestriction: startingScene.snapshot.timeRestriction,
-          sceneImage: startingScene.snapshot.sceneImage,
-          initialSnapshot: true,
-        };
+    if (isStartingScene && startingScene?.snapshot) {
+      // Use LLM-generated snapshot for starting scene
+      snapshot = {
+        id: startingScene.snapshot.id,
+        name: startingScene.snapshot.name,
+        gameTime: startingScene.snapshot.gameTime,
+        location: startingScene.snapshot.location,
+        description: startingScene.snapshot.description,
+        showMap: startingScene.snapshot.showMap,
+        characters: startingScene.snapshot.characters,
+        clues: startingScene.snapshot.clues,
+        conditions: startingScene.snapshot.conditions,
+        keeperNotes: startingScene.snapshot.keeperNotes,
+        estimatedShortActions: startingScene.snapshot.estimatedShortActions,
+        timeRestriction: startingScene.snapshot.timeRestriction,
+        sceneImage: startingScene.snapshot.sceneImage,
+        initialSnapshot: true,
+      };
     } else {
       // Create basic snapshot structure for non-starting scenarios
       const assignedNpcs = assignment?.npcs || [];
@@ -553,7 +568,7 @@ export async function saveWorldToJSON(
       connections: scenario.connections || [],
       npcAssignments: assignment?.npcs || [],
     };
-    
+
     // Preserve DynamicWorld specific fields
     if (scenario.sourcePlaceId) {
       scenarioPayload.sourcePlaceId = scenario.sourcePlaceId;
@@ -574,7 +589,10 @@ export async function saveWorldToJSON(
   await fs.mkdir(npcsDir, { recursive: true });
 
   for (const npc of npcs) {
-    const npcFile = path.join(npcsDir, `${npc.name.replace(/[^a-zA-Z0-9_-]/g, '_')}.json`);
+    const npcFile = path.join(
+      npcsDir,
+      `${npc.name.replace(/[^a-zA-Z0-9_-]/g, "_")}.json`
+    );
     const actionLog = [
       ...(npc.actionLog || []),
       ...(actionLogsByNpcId.get(npc.id) || []),

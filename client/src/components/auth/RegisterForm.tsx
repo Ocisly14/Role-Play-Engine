@@ -1,22 +1,22 @@
-import React, { useState, useEffect, useRef } from 'react';
-import { useAuth } from '../../contexts/AuthContext';
-import { api } from '../../services/api';
-import { useNavigate } from 'react-router-dom';
+import React, { useState, useEffect, useRef } from "react";
+import { useAuth } from "../../contexts/AuthContext";
+import { api } from "../../services/api";
+import { useNavigate } from "react-router-dom";
 
 const RESEND_COOLDOWN_SECONDS = 60;
 
 export function RegisterForm() {
-  const [step, setStep] = useState<'form' | 'verify'>('form');
-  const [email, setEmail] = useState('');
-  const [username, setUsername] = useState('');
-  const [password, setPassword] = useState('');
-  const [confirmPassword, setConfirmPassword] = useState('');
-  const [referralCode, setReferralCode] = useState('');
-  const [verificationCode, setVerificationCode] = useState('');
-  const [error, setError] = useState('');
+  const [step, setStep] = useState<"form" | "verify">("form");
+  const [email, setEmail] = useState("");
+  const [username, setUsername] = useState("");
+  const [password, setPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
+  const [referralCode, setReferralCode] = useState("");
+  const [verificationCode, setVerificationCode] = useState("");
+  const [error, setError] = useState("");
   const [success, setSuccess] = useState(false);
   const [loading, setLoading] = useState(false);
-  const [resendMessage, setResendMessage] = useState('');
+  const [resendMessage, setResendMessage] = useState("");
   const [resendCooldown, setResendCooldown] = useState(0);
   const cooldownRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
@@ -48,15 +48,15 @@ export function RegisterForm() {
 
   const handleRegister = async (e: React.FormEvent) => {
     e.preventDefault();
-    setError('');
+    setError("");
 
     if (password !== confirmPassword) {
-      setError('Passwords do not match');
+      setError("Passwords do not match");
       return;
     }
 
     if (password.length < 8) {
-      setError('Password must be at least 8 characters long');
+      setError("Password must be at least 8 characters long");
       return;
     }
 
@@ -64,10 +64,10 @@ export function RegisterForm() {
 
     try {
       await register(email, password, username || undefined, referralCode);
-      setStep('verify');
+      setStep("verify");
       startCooldown();
     } catch (err: any) {
-      setError(err.response?.data?.error || 'Registration failed');
+      setError(err.response?.data?.error || "Registration failed");
     } finally {
       setLoading(false);
     }
@@ -75,33 +75,33 @@ export function RegisterForm() {
 
   const handleVerify = async (e: React.FormEvent) => {
     e.preventDefault();
-    setError('');
-    setResendMessage('');
+    setError("");
+    setResendMessage("");
     setLoading(true);
 
     try {
-      await api.post('/auth/verify-code', { email, code: verificationCode });
+      await api.post("/auth/verify-code", { email, code: verificationCode });
       setSuccess(true);
-      setTimeout(() => navigate('/login'), 3000);
+      setTimeout(() => navigate("/login"), 3000);
     } catch (err: any) {
-      setError(err.response?.data?.error || 'Verification failed');
+      setError(err.response?.data?.error || "Verification failed");
     } finally {
       setLoading(false);
     }
   };
 
   const handleResend = async () => {
-    setError('');
-    setResendMessage('');
+    setError("");
+    setResendMessage("");
     setLoading(true);
 
     try {
-      await api.post('/auth/resend-verification', { email });
-      setVerificationCode('');
-      setResendMessage('A new verification code has been sent.');
+      await api.post("/auth/resend-verification", { email });
+      setVerificationCode("");
+      setResendMessage("A new verification code has been sent.");
       startCooldown();
     } catch (err: any) {
-      setError(err.response?.data?.error || 'Failed to resend code');
+      setError(err.response?.data?.error || "Failed to resend code");
     } finally {
       setLoading(false);
     }
@@ -117,14 +117,30 @@ export function RegisterForm() {
     );
   }
 
-  if (step === 'verify') {
+  if (step === "verify") {
     return (
       <div className="register-form-container">
-        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '16px', marginBottom: '8px' }}>
-          <img src="/asset/icon.png" alt="Call of Cthulhu" style={{ width: '80px', height: '80px', filter: 'drop-shadow(2px 2px 4px rgba(0, 0, 0, 0.3))' }} />
+        <div
+          style={{
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            gap: "16px",
+            marginBottom: "8px",
+          }}
+        >
+          <img
+            src="/asset/icon.png"
+            alt="Call of Cthulhu"
+            style={{
+              width: "80px",
+              height: "80px",
+              filter: "drop-shadow(2px 2px 4px rgba(0, 0, 0, 0.3))",
+            }}
+          />
         </div>
         <h2>Verify Your Email</h2>
-        <p style={{ textAlign: 'center', color: '#aaa', marginBottom: '8px' }}>
+        <p style={{ textAlign: "center", color: "#aaa", marginBottom: "8px" }}>
           We sent a 5-digit verification code to <strong>{email}</strong>
         </p>
         <form onSubmit={handleVerify}>
@@ -135,7 +151,11 @@ export function RegisterForm() {
               type="text"
               inputMode="numeric"
               value={verificationCode}
-              onChange={(e) => setVerificationCode(e.target.value.replace(/\D/g, '').slice(0, 5))}
+              onChange={(e) =>
+                setVerificationCode(
+                  e.target.value.replace(/\D/g, "").slice(0, 5)
+                )
+              }
               required
               disabled={loading}
               maxLength={5}
@@ -147,19 +167,39 @@ export function RegisterForm() {
           </div>
 
           {error && <div className="error-message">{error}</div>}
-          {resendMessage && <div style={{ color: '#6c757d', fontSize: '14px', textAlign: 'center', marginBottom: '8px' }}>{resendMessage}</div>}
+          {resendMessage && (
+            <div
+              style={{
+                color: "#6c757d",
+                fontSize: "14px",
+                textAlign: "center",
+                marginBottom: "8px",
+              }}
+            >
+              {resendMessage}
+            </div>
+          )}
 
-          <button type="submit" disabled={loading || verificationCode.length < 5}>
-            {loading ? 'Verifying...' : 'Verify'}
+          <button
+            type="submit"
+            disabled={loading || verificationCode.length < 5}
+          >
+            {loading ? "Verifying..." : "Verify"}
           </button>
 
           <div className="form-links">
             {resendCooldown > 0 ? (
-              <span style={{ color: '#666' }}>
+              <span style={{ color: "#666" }}>
                 Resend code in {resendCooldown}s
               </span>
             ) : (
-              <a href="#" onClick={(e) => { e.preventDefault(); handleResend(); }}>
+              <a
+                href="#"
+                onClick={(e) => {
+                  e.preventDefault();
+                  handleResend();
+                }}
+              >
                 Didn't receive the code? Resend
               </a>
             )}
@@ -171,8 +211,24 @@ export function RegisterForm() {
 
   return (
     <div className="register-form-container">
-      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '16px', marginBottom: '8px' }}>
-        <img src="/asset/icon.png" alt="Call of Cthulhu" style={{ width: '80px', height: '80px', filter: 'drop-shadow(2px 2px 4px rgba(0, 0, 0, 0.3))' }} />
+      <div
+        style={{
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+          gap: "16px",
+          marginBottom: "8px",
+        }}
+      >
+        <img
+          src="/asset/icon.png"
+          alt="Call of Cthulhu"
+          style={{
+            width: "80px",
+            height: "80px",
+            filter: "drop-shadow(2px 2px 4px rgba(0, 0, 0, 0.3))",
+          }}
+        />
       </div>
       <h2>Create Account</h2>
       <form onSubmit={handleRegister}>
@@ -211,7 +267,9 @@ export function RegisterForm() {
             disabled={loading}
             minLength={8}
           />
-          <small>At least 8 characters with uppercase, lowercase, and numbers</small>
+          <small>
+            At least 8 characters with uppercase, lowercase, and numbers
+          </small>
         </div>
 
         <div className="form-group">
@@ -232,7 +290,14 @@ export function RegisterForm() {
             id="referralCode"
             type="text"
             value={referralCode}
-            onChange={(e) => setReferralCode(e.target.value.replace(/[^A-Z0-9]/gi, '').toUpperCase().slice(0, 5))}
+            onChange={(e) =>
+              setReferralCode(
+                e.target.value
+                  .replace(/[^A-Z0-9]/gi, "")
+                  .toUpperCase()
+                  .slice(0, 5)
+              )
+            }
             required
             disabled={loading}
             maxLength={5}
@@ -244,7 +309,7 @@ export function RegisterForm() {
         {error && <div className="error-message">{error}</div>}
 
         <button type="submit" disabled={loading}>
-          {loading ? 'Registering...' : 'Register'}
+          {loading ? "Registering..." : "Register"}
         </button>
 
         <div className="form-links">

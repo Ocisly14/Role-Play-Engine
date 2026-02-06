@@ -28,7 +28,11 @@ export class ScenarioLoader {
   private parser: ScenarioDocumentParser;
   private emailId?: string;
 
-  constructor(db: CoCDatabase, parser?: ScenarioDocumentParser, options?: { emailId?: string }) {
+  constructor(
+    db: CoCDatabase,
+    parser?: ScenarioDocumentParser,
+    options?: { emailId?: string }
+  ) {
     this.db = db;
     this.parser = parser || new ScenarioDocumentParser();
     this.emailId = options?.emailId;
@@ -45,15 +49,18 @@ export class ScenarioLoader {
   /**
    * Check if any files in directory have changed since last load
    */
-  private checkForChanges(dirPath: string): { hasChanges: boolean; currentFiles: Map<string, number> } {
+  private checkForChanges(dirPath: string): {
+    hasChanges: boolean;
+    currentFiles: Map<string, number>;
+  } {
     if (!fs.existsSync(dirPath)) {
       return { hasChanges: false, currentFiles: new Map() };
     }
 
     const currentFiles = new Map<string, number>();
-    const files = fs.readdirSync(dirPath).filter(file => 
-      file.endsWith('.docx') || file.endsWith('.pdf')
-    );
+    const files = fs
+      .readdirSync(dirPath)
+      .filter((file) => file.endsWith(".docx") || file.endsWith(".pdf"));
 
     // Get modification times for all relevant files
     for (const file of files) {
@@ -64,27 +71,29 @@ export class ScenarioLoader {
 
     // Check if we have existing scenarios
     const existingScenarios = this.getAllScenarios();
-    
+
     // If no scenarios exist, we need to load
     if (existingScenarios.length === 0) {
       return { hasChanges: true, currentFiles };
     }
 
     // Check timestamp file
-    const lastLoadFile = path.join(dirPath, '.last_scenario_load_timestamp');
+    const lastLoadFile = path.join(dirPath, ".last_scenario_load_timestamp");
     let lastLoadTime = 0;
-    
+
     if (fs.existsSync(lastLoadFile)) {
       try {
-        lastLoadTime = parseInt(fs.readFileSync(lastLoadFile, 'utf8'));
+        lastLoadTime = parseInt(fs.readFileSync(lastLoadFile, "utf8"));
       } catch {
         return { hasChanges: true, currentFiles };
       }
     }
 
     // Check if any file is newer than last load
-    const hasChanges = Array.from(currentFiles.values()).some(mtime => mtime > lastLoadTime);
-    
+    const hasChanges = Array.from(currentFiles.values()).some(
+      (mtime) => mtime > lastLoadTime
+    );
+
     return { hasChanges, currentFiles };
   }
 
@@ -92,9 +101,9 @@ export class ScenarioLoader {
    * Update the last load timestamp
    */
   private updateLastLoadTimestamp(dirPath: string): void {
-    const lastLoadFile = path.join(dirPath, '.last_scenario_load_timestamp');
+    const lastLoadFile = path.join(dirPath, ".last_scenario_load_timestamp");
     const currentTime = Date.now().toString();
-    fs.writeFileSync(lastLoadFile, currentTime, 'utf8');
+    fs.writeFileSync(lastLoadFile, currentTime, "utf8");
   }
 
   /**
@@ -103,8 +112,8 @@ export class ScenarioLoader {
   private normalizeScenarioName(name: string): string {
     return name
       .toLowerCase()
-      .replace(/[_\s'-]/g, '')  // Remove underscores, spaces, apostrophes, hyphens
-      .replace(/[^\w]/g, '');   // Remove remaining special chars
+      .replace(/[_\s'-]/g, "") // Remove underscores, spaces, apostrophes, hyphens
+      .replace(/[^\w]/g, ""); // Remove remaining special chars
   }
 
   /**
@@ -116,8 +125,10 @@ export class ScenarioLoader {
 
     if (normalized1 === normalized2) return 1.0;
 
-    const longer = normalized1.length > normalized2.length ? normalized1 : normalized2;
-    const shorter = normalized1.length > normalized2.length ? normalized2 : normalized1;
+    const longer =
+      normalized1.length > normalized2.length ? normalized1 : normalized2;
+    const shorter =
+      normalized1.length > normalized2.length ? normalized2 : normalized1;
 
     if (longer.length === 0) return 0;
 
@@ -138,9 +149,9 @@ export class ScenarioLoader {
     }
 
     // Get all image files in map directory
-    const imageFiles = fs.readdirSync(mapDir).filter(file =>
-      /\.(jpg|jpeg|png)$/i.test(file)
-    );
+    const imageFiles = fs
+      .readdirSync(mapDir)
+      .filter((file) => /\.(jpg|jpeg|png)$/i.test(file));
 
     if (imageFiles.length === 0) {
       return null;
@@ -151,7 +162,9 @@ export class ScenarioLoader {
     // Try exact match first
     for (const imageFile of imageFiles) {
       const imageBaseName = path.basename(imageFile, path.extname(imageFile));
-      if (this.normalizeScenarioName(imageBaseName) === normalizedScenarioName) {
+      if (
+        this.normalizeScenarioName(imageBaseName) === normalizedScenarioName
+      ) {
         return imageFile;
       }
     }
@@ -175,7 +188,10 @@ export class ScenarioLoader {
   /**
    * Load scenarios from JSON files in a directory (skip document parsing)
    */
-  async loadScenariosFromJSONDirectory(dirPath: string, forceReload = false): Promise<ScenarioProfile[]> {
+  async loadScenariosFromJSONDirectory(
+    dirPath: string,
+    forceReload = false
+  ): Promise<ScenarioProfile[]> {
     console.log(`\n=== Loading Scenarios from JSON directory: ${dirPath} ===`);
 
     if (!fs.existsSync(dirPath)) {
@@ -188,7 +204,9 @@ export class ScenarioLoader {
       const { hasChanges } = this.checkForJSONChanges(dirPath);
       if (!hasChanges) {
         const existingScenarios = this.getAllScenarios();
-        console.log(`No changes detected. Using ${existingScenarios.length} existing scenarios from database.`);
+        console.log(
+          `No changes detected. Using ${existingScenarios.length} existing scenarios from database.`
+        );
         return existingScenarios;
       }
     }
@@ -196,7 +214,7 @@ export class ScenarioLoader {
     console.log(`Loading Scenarios from JSON files in directory: ${dirPath}`);
 
     // Check for map directory
-    const mapDir = path.join(dirPath, 'map');
+    const mapDir = path.join(dirPath, "map");
     const hasMapDir = fs.existsSync(mapDir);
     if (hasMapDir) {
       console.log(`✓ Found map directory: ${mapDir}`);
@@ -223,7 +241,9 @@ export class ScenarioLoader {
         const jsonData = JSON.parse(fileContent);
 
         // Handle both array of scenarios and single scenario object
-        const scenarios: ParsedScenarioData[] = Array.isArray(jsonData) ? jsonData : [jsonData];
+        const scenarios: ParsedScenarioData[] = Array.isArray(jsonData)
+          ? jsonData
+          : [jsonData];
 
         for (const parsedData of scenarios) {
           try {
@@ -234,9 +254,15 @@ export class ScenarioLoader {
               const mapImageFile = this.findMapImage(parsedData.name, mapDir);
               if (mapImageFile) {
                 // Store module-relative path
-                const relativePath = path.join(path.basename(dirPath), 'map', mapImageFile);
+                const relativePath = path.join(
+                  path.basename(dirPath),
+                  "map",
+                  mapImageFile
+                );
                 parsedData.mapImagePath = relativePath;
-                console.log(`    ✓ Found map for "${parsedData.name}": ${mapImageFile}`);
+                console.log(
+                  `    ✓ Found map for "${parsedData.name}": ${mapImageFile}`
+                );
               }
             }
 
@@ -245,7 +271,10 @@ export class ScenarioLoader {
             scenarioProfiles.push(scenarioProfile);
             console.log(`    ✓ 已加载场景: ${scenarioProfile.name}`);
           } catch (error) {
-            console.error(`    ✗ 加载场景失败 ${parsedData.name} from ${file}:`, error);
+            console.error(
+              `    ✗ 加载场景失败 ${parsedData.name} from ${file}:`,
+              error
+            );
           }
         }
         console.log(`  ✓ 已加载 ${scenarios.length} 个场景从文件: ${file}`);
@@ -257,20 +286,27 @@ export class ScenarioLoader {
     // Update timestamp after successful load
     this.updateLastLoadTimestamp(dirPath);
 
-    console.log(`\n=== Successfully loaded ${scenarioProfiles.length} scenarios from JSON files ===\n`);
+    console.log(
+      `\n=== Successfully loaded ${scenarioProfiles.length} scenarios from JSON files ===\n`
+    );
     return scenarioProfiles;
   }
 
   /**
    * Check if any JSON files in directory have changed since last load
    */
-  private checkForJSONChanges(dirPath: string): { hasChanges: boolean; currentFiles: Map<string, number> } {
+  private checkForJSONChanges(dirPath: string): {
+    hasChanges: boolean;
+    currentFiles: Map<string, number>;
+  } {
     if (!fs.existsSync(dirPath)) {
       return { hasChanges: false, currentFiles: new Map() };
     }
 
     const currentFiles = new Map<string, number>();
-    const files = fs.readdirSync(dirPath).filter(file => file.toLowerCase().endsWith(".json"));
+    const files = fs
+      .readdirSync(dirPath)
+      .filter((file) => file.toLowerCase().endsWith(".json"));
 
     // Get modification times for all JSON files
     for (const file of files) {
@@ -281,34 +317,39 @@ export class ScenarioLoader {
 
     // Check if we have existing scenarios
     const existingScenarios = this.getAllScenarios();
-    
+
     // If no scenarios exist, we need to load
     if (existingScenarios.length === 0) {
       return { hasChanges: true, currentFiles };
     }
 
     // Check timestamp file
-    const lastLoadFile = path.join(dirPath, '.last_scenario_load_timestamp');
+    const lastLoadFile = path.join(dirPath, ".last_scenario_load_timestamp");
     let lastLoadTime = 0;
-    
+
     if (fs.existsSync(lastLoadFile)) {
       try {
-        lastLoadTime = parseInt(fs.readFileSync(lastLoadFile, 'utf8'));
+        lastLoadTime = parseInt(fs.readFileSync(lastLoadFile, "utf8"));
       } catch {
         return { hasChanges: true, currentFiles };
       }
     }
 
     // Check if any file is newer than last load
-    const hasChanges = Array.from(currentFiles.values()).some(mtime => mtime > lastLoadTime);
-    
+    const hasChanges = Array.from(currentFiles.values()).some(
+      (mtime) => mtime > lastLoadTime
+    );
+
     return { hasChanges, currentFiles };
   }
 
   /**
    * Load scenarios from a directory (only if files have changed)
    */
-  async loadScenariosFromDirectory(dirPath: string, forceReload = false): Promise<ScenarioProfile[]> {
+  async loadScenariosFromDirectory(
+    dirPath: string,
+    forceReload = false
+  ): Promise<ScenarioProfile[]> {
     console.log(`\n=== Checking Scenarios in directory: ${dirPath} ===`);
 
     if (!fs.existsSync(dirPath)) {
@@ -322,7 +363,9 @@ export class ScenarioLoader {
       const { hasChanges } = this.checkForChanges(dirPath);
       if (!hasChanges) {
         const existingScenarios = this.getAllScenarios();
-        console.log(`No changes detected. Using ${existingScenarios.length} existing scenarios from database.`);
+        console.log(
+          `No changes detected. Using ${existingScenarios.length} existing scenarios from database.`
+        );
         return existingScenarios;
       }
     }
@@ -345,7 +388,9 @@ export class ScenarioLoader {
         const scenarioProfile = this.convertToScenarioProfile(parsedData);
         this.saveScenarioToDatabase(scenarioProfile);
         scenarioProfiles.push(scenarioProfile);
-        console.log(`✓ Loaded Scenario: ${scenarioProfile.name} (${scenarioProfile.id})`);
+        console.log(
+          `✓ Loaded Scenario: ${scenarioProfile.name} (${scenarioProfile.id})`
+        );
       } catch (error) {
         console.error(`✗ Failed to load scenario ${parsedData.name}:`, error);
       }
@@ -354,7 +399,9 @@ export class ScenarioLoader {
     // Update timestamp after successful load
     this.updateLastLoadTimestamp(dirPath);
 
-    console.log(`\n=== Successfully loaded ${scenarioProfiles.length} scenarios ===\n`);
+    console.log(
+      `\n=== Successfully loaded ${scenarioProfiles.length} scenarios ===\n`
+    );
     return scenarioProfiles;
   }
 
@@ -362,44 +409,53 @@ export class ScenarioLoader {
    * Convert a single parsed snapshot to ScenarioSnapshot
    */
   private convertSnapshot(
-    snapshotData: import("../../models/scenarioTypes.js").ParsedScenarioSnapshot,
+    snapshotData: import(
+      "../../models/scenarioTypes.js"
+    ).ParsedScenarioSnapshot,
     scenarioId: string,
     snapshotIndex: number,
     scenarioName: string,
     mapImagePath?: string
   ): ScenarioSnapshot {
-    const snapshotId = snapshotIndex === 0 
-      ? `${scenarioId}-snapshot` 
-      : `${scenarioId}-snapshot-${snapshotIndex}`;
+    const snapshotId =
+      snapshotIndex === 0
+        ? `${scenarioId}-snapshot`
+        : `${scenarioId}-snapshot-${snapshotIndex}`;
 
     // Convert characters
-    const characters: ScenarioCharacter[] = (snapshotData.characters || []).map((char, charIndex) => ({
-      id: `${snapshotId}-char-${charIndex}`,
-      name: char.name,
-      role: char.role || "unknown",
-      status: char.status || "unknown",
-      location: char.location,
-      notes: char.notes,
-    }));
+    const characters: ScenarioCharacter[] = (snapshotData.characters || []).map(
+      (char, charIndex) => ({
+        id: `${snapshotId}-char-${charIndex}`,
+        name: char.name,
+        role: char.role || "unknown",
+        status: char.status || "unknown",
+        location: char.location,
+        notes: char.notes,
+      })
+    );
 
     // Convert clues
-    const clues: ScenarioClue[] = (snapshotData.clues || []).map((clue, clueIndex) => ({
-      id: `${snapshotId}-clue-${clueIndex}`,
-      clueText: clue.clueText,
-      category: (clue.category as any) || "observation",
-      difficulty: (clue.difficulty as any) || "regular",
-      location: clue.location || snapshotData.location,
-      discoveryMethod: clue.discoveryMethod,
-      reveals: clue.reveals || [],
-      discovered: false,
-    }));
+    const clues: ScenarioClue[] = (snapshotData.clues || []).map(
+      (clue, clueIndex) => ({
+        id: `${snapshotId}-clue-${clueIndex}`,
+        clueText: clue.clueText,
+        category: (clue.category as any) || "observation",
+        difficulty: (clue.difficulty as any) || "regular",
+        location: clue.location || snapshotData.location,
+        discoveryMethod: clue.discoveryMethod,
+        reveals: clue.reveals || [],
+        discovered: false,
+      })
+    );
 
     // Convert conditions
-    const conditions: ScenarioCondition[] = (snapshotData.conditions || []).map((cond) => ({
-      type: (cond.type as any) || "other",
-      description: cond.description,
-      mechanicalEffect: cond.mechanicalEffect,
-    }));
+    const conditions: ScenarioCondition[] = (snapshotData.conditions || []).map(
+      (cond) => ({
+        type: (cond.type as any) || "other",
+        description: cond.description,
+        mechanicalEffect: cond.mechanicalEffect,
+      })
+    );
 
     const snapshot: ScenarioSnapshot = {
       id: snapshotId,
@@ -426,7 +482,9 @@ export class ScenarioLoader {
    * Convert ParsedScenarioData to ScenarioProfile
    * Supports both single snapshot and multiple snapshots
    */
-  private convertToScenarioProfile(parsedData: ParsedScenarioData): ScenarioProfile {
+  private convertToScenarioProfile(
+    parsedData: ParsedScenarioData
+  ): ScenarioProfile {
     const scenarioId = this.generateScenarioId(parsedData.name);
 
     // Handle both single snapshot (legacy) and multiple snapshots (new format)
@@ -434,18 +492,35 @@ export class ScenarioLoader {
     if (parsedData.snapshots && parsedData.snapshots.length > 0) {
       // Multiple snapshots
       snapshots = parsedData.snapshots.map((snapshotData, index) =>
-        this.convertSnapshot(snapshotData, scenarioId, index, parsedData.name, parsedData.mapImagePath)
+        this.convertSnapshot(
+          snapshotData,
+          scenarioId,
+          index,
+          parsedData.name,
+          parsedData.mapImagePath
+        )
       );
     } else if (parsedData.snapshot) {
       // Single snapshot (legacy format)
-      snapshots = [this.convertSnapshot(parsedData.snapshot, scenarioId, 0, parsedData.name, parsedData.mapImagePath)];
+      snapshots = [
+        this.convertSnapshot(
+          parsedData.snapshot,
+          scenarioId,
+          0,
+          parsedData.name,
+          parsedData.mapImagePath
+        ),
+      ];
     } else {
-      throw new Error(`Scenario "${parsedData.name}" has no snapshot or snapshots`);
+      throw new Error(
+        `Scenario "${parsedData.name}" has no snapshot or snapshots`
+      );
     }
 
     // Use the first snapshot as the default snapshot for backward compatibility
     // (or the one without timeRestriction if available)
-    const defaultSnapshot = snapshots.find(s => !s.timeRestriction) || snapshots[0];
+    const defaultSnapshot =
+      snapshots.find((s) => !s.timeRestriction) || snapshots[0];
 
     const scenarioProfile: ScenarioProfile = {
       id: scenarioId,
@@ -454,11 +529,12 @@ export class ScenarioLoader {
       snapshot: defaultSnapshot,
       mapImagePath: parsedData.mapImagePath,
       tags: parsedData.tags || [],
-      connections: parsedData.connections?.map((conn) => ({
-        scenarioId: this.generateScenarioId(conn.scenarioName),
-        relationshipType: conn.relationshipType as any,
-        description: conn.description,
-      })) || [],
+      connections:
+        parsedData.connections?.map((conn) => ({
+          scenarioId: this.generateScenarioId(conn.scenarioName),
+          relationshipType: conn.relationshipType as any,
+          description: conn.description,
+        })) || [],
       metadata: {
         createdAt: new Date().toISOString(),
         updatedAt: new Date().toISOString(),
@@ -476,7 +552,10 @@ export class ScenarioLoader {
    * Generate a unique ID for a scenario based on its name
    */
   private generateScenarioId(name: string): string {
-    const rawId = `scenario-${name.toLowerCase().replace(/\s+/g, "-").replace(/[^\w-]/g, "")}-${randomUUID().slice(0, 8)}`;
+    const rawId = `scenario-${name
+      .toLowerCase()
+      .replace(/\s+/g, "-")
+      .replace(/[^\w-]/g, "")}-${randomUUID().slice(0, 8)}`;
     return this.scopeScenarioId(rawId);
   }
 
@@ -486,24 +565,47 @@ export class ScenarioLoader {
   private saveScenarioToDatabase(scenario: ScenarioProfile): void {
     const database = this.db.getDatabase();
     const hasCategoryColumn = this.db.hasColumn("scenarios", "category");
-    const hasTimeOrderColumn = this.db.hasColumn("scenario_snapshots", "time_order");
+    const hasTimeOrderColumn = this.db.hasColumn(
+      "scenario_snapshots",
+      "time_order"
+    );
     const emailId = this.getEmailId();
     const hasScenarioEmailId = this.db.hasColumn("scenarios", "email_id");
-    const hasSnapshotEmailId = this.db.hasColumn("scenario_snapshots", "email_id");
-    const hasCharacterEmailId = this.db.hasColumn("scenario_characters", "email_id");
+    const hasSnapshotEmailId = this.db.hasColumn(
+      "scenario_snapshots",
+      "email_id"
+    );
+    const hasCharacterEmailId = this.db.hasColumn(
+      "scenario_characters",
+      "email_id"
+    );
     const hasClueEmailId = this.db.hasColumn("scenario_clues", "email_id");
-    const hasConditionEmailId = this.db.hasColumn("scenario_conditions", "email_id");
+    const hasConditionEmailId = this.db.hasColumn(
+      "scenario_conditions",
+      "email_id"
+    );
 
     this.db.transaction(() => {
       // Insert or update scenario (including scenario-level permanent_changes and map_image_path)
-      const scenarioColumns = ["scenario_id", "name", "description", "tags", "connections", "permanent_changes", "metadata", "map_image_path"];
+      const scenarioColumns = [
+        "scenario_id",
+        "name",
+        "description",
+        "tags",
+        "connections",
+        "permanent_changes",
+        "metadata",
+        "map_image_path",
+      ];
       const scenarioValues: any[] = [
         scenario.id,
         scenario.name,
         scenario.description,
         JSON.stringify(scenario.tags),
         JSON.stringify(scenario.connections),
-        scenario.snapshot.permanentChanges ? JSON.stringify(scenario.snapshot.permanentChanges) : null,
+        scenario.snapshot.permanentChanges
+          ? JSON.stringify(scenario.snapshot.permanentChanges)
+          : null,
         JSON.stringify(scenario.metadata),
         scenario.mapImagePath || null,
       ];
@@ -527,15 +629,22 @@ export class ScenarioLoader {
       scenarioStmt.run(...scenarioValues);
 
       // Get all snapshots to save (support multiple snapshots)
-      const allSnapshots: ScenarioSnapshot[] = (scenario as any).__allSnapshots || [scenario.snapshot];
+      const allSnapshots: ScenarioSnapshot[] = (scenario as any)
+        .__allSnapshots || [scenario.snapshot];
 
       // Insert or create all snapshots (only if they don't exist)
       // Snapshots are read-only original definitions - never delete or update existing ones
       for (const snapshot of allSnapshots) {
         // Check if snapshot already exists
         const existingSnapshot = database
-          .prepare(`SELECT snapshot_id FROM scenario_snapshots WHERE snapshot_id = ?${hasSnapshotEmailId && emailId ? " AND email_id = ?" : ""}`)
-          .get(...(hasSnapshotEmailId && emailId ? [snapshot.id, emailId] : [snapshot.id]));
+          .prepare(
+            `SELECT snapshot_id FROM scenario_snapshots WHERE snapshot_id = ?${hasSnapshotEmailId && emailId ? " AND email_id = ?" : ""}`
+          )
+          .get(
+            ...(hasSnapshotEmailId && emailId
+              ? [snapshot.id, emailId]
+              : [snapshot.id])
+          );
 
         // Only insert if snapshot doesn't exist (snapshot is read-only original definition)
         if (!existingSnapshot) {
@@ -647,7 +756,9 @@ export class ScenarioLoader {
                 clue.discoveryMethod || null,
                 JSON.stringify(clue.reveals),
                 clue.discovered ? 1 : 0,
-                clue.discoveryDetails ? JSON.stringify(clue.discoveryDetails) : null,
+                clue.discoveryDetails
+                  ? JSON.stringify(clue.discoveryDetails)
+                  : null,
               ];
               if (hasClueEmailId) {
                 clueValues.push(emailId || null);
@@ -705,15 +816,30 @@ export class ScenarioLoader {
     const scopedScenarioId = this.scopeScenarioId(scenarioId);
     const emailId = this.getEmailId();
     const hasScenarioEmailId = this.db.hasColumn("scenarios", "email_id");
-    const hasSnapshotEmailId = this.db.hasColumn("scenario_snapshots", "email_id");
-    const hasCharacterEmailId = this.db.hasColumn("scenario_characters", "email_id");
+    const hasSnapshotEmailId = this.db.hasColumn(
+      "scenario_snapshots",
+      "email_id"
+    );
+    const hasCharacterEmailId = this.db.hasColumn(
+      "scenario_characters",
+      "email_id"
+    );
     const hasClueEmailId = this.db.hasColumn("scenario_clues", "email_id");
-    const hasConditionEmailId = this.db.hasColumn("scenario_conditions", "email_id");
+    const hasConditionEmailId = this.db.hasColumn(
+      "scenario_conditions",
+      "email_id"
+    );
 
     // Get scenario data
     const scenario = database
-      .prepare(`SELECT * FROM scenarios WHERE scenario_id = ?${hasScenarioEmailId && emailId ? " AND email_id = ?" : ""}`)
-      .get(...(hasScenarioEmailId && emailId ? [scopedScenarioId, emailId] : [scopedScenarioId])) as any;
+      .prepare(
+        `SELECT * FROM scenarios WHERE scenario_id = ?${hasScenarioEmailId && emailId ? " AND email_id = ?" : ""}`
+      )
+      .get(
+        ...(hasScenarioEmailId && emailId
+          ? [scopedScenarioId, emailId]
+          : [scopedScenarioId])
+      ) as any;
 
     if (!scenario) {
       return null;
@@ -721,8 +847,14 @@ export class ScenarioLoader {
 
     // Get snapshot (single snapshot per scenario)
     const snap = database
-      .prepare(`SELECT * FROM scenario_snapshots WHERE scenario_id = ?${hasSnapshotEmailId && emailId ? " AND email_id = ?" : ""} LIMIT 1`)
-      .get(...(hasSnapshotEmailId && emailId ? [scopedScenarioId, emailId] : [scopedScenarioId])) as any;
+      .prepare(
+        `SELECT * FROM scenario_snapshots WHERE scenario_id = ?${hasSnapshotEmailId && emailId ? " AND email_id = ?" : ""} LIMIT 1`
+      )
+      .get(
+        ...(hasSnapshotEmailId && emailId
+          ? [scopedScenarioId, emailId]
+          : [scopedScenarioId])
+      ) as any;
 
     if (!snap) {
       console.warn(`No snapshot found for scenario ${scenarioId}`);
@@ -731,18 +863,36 @@ export class ScenarioLoader {
 
     // Get characters for this snapshot
     const characters = database
-      .prepare(`SELECT * FROM scenario_characters WHERE snapshot_id = ?${hasCharacterEmailId && emailId ? " AND email_id = ?" : ""}`)
-      .all(...(hasCharacterEmailId && emailId ? [snap.snapshot_id, emailId] : [snap.snapshot_id])) as any[];
+      .prepare(
+        `SELECT * FROM scenario_characters WHERE snapshot_id = ?${hasCharacterEmailId && emailId ? " AND email_id = ?" : ""}`
+      )
+      .all(
+        ...(hasCharacterEmailId && emailId
+          ? [snap.snapshot_id, emailId]
+          : [snap.snapshot_id])
+      ) as any[];
 
     // Get clues for this snapshot
     const clues = database
-      .prepare(`SELECT * FROM scenario_clues WHERE snapshot_id = ?${hasClueEmailId && emailId ? " AND email_id = ?" : ""}`)
-      .all(...(hasClueEmailId && emailId ? [snap.snapshot_id, emailId] : [snap.snapshot_id])) as any[];
+      .prepare(
+        `SELECT * FROM scenario_clues WHERE snapshot_id = ?${hasClueEmailId && emailId ? " AND email_id = ?" : ""}`
+      )
+      .all(
+        ...(hasClueEmailId && emailId
+          ? [snap.snapshot_id, emailId]
+          : [snap.snapshot_id])
+      ) as any[];
 
     // Get conditions for this snapshot
     const conditions = database
-      .prepare(`SELECT * FROM scenario_conditions WHERE snapshot_id = ?${hasConditionEmailId && emailId ? " AND email_id = ?" : ""}`)
-      .all(...(hasConditionEmailId && emailId ? [snap.snapshot_id, emailId] : [snap.snapshot_id])) as any[];
+      .prepare(
+        `SELECT * FROM scenario_conditions WHERE snapshot_id = ?${hasConditionEmailId && emailId ? " AND email_id = ?" : ""}`
+      )
+      .all(
+        ...(hasConditionEmailId && emailId
+          ? [snap.snapshot_id, emailId]
+          : [snap.snapshot_id])
+      ) as any[];
 
     const snapshot: ScenarioSnapshot = {
       id: snap.snapshot_id,
@@ -750,7 +900,10 @@ export class ScenarioLoader {
       location: snap.location,
       description: snap.description,
       mapImagePath: scenario.map_image_path || undefined,
-      showMap: snap.show_map === null || snap.show_map === undefined ? true : snap.show_map === 1,
+      showMap:
+        snap.show_map === null || snap.show_map === undefined
+          ? true
+          : snap.show_map === 1,
       characters: characters.map((c) => ({
         id: c.id,
         name: c.character_name,
@@ -768,7 +921,9 @@ export class ScenarioLoader {
         discoveryMethod: c.discovery_method,
         reveals: c.reveals ? JSON.parse(c.reveals) : [],
         discovered: c.discovered === 1,
-        discoveryDetails: c.discovery_details ? JSON.parse(c.discovery_details) : undefined,
+        discoveryDetails: c.discovery_details
+          ? JSON.parse(c.discovery_details)
+          : undefined,
       })),
       conditions: conditions.map((c) => ({
         type: c.condition_type,
@@ -777,7 +932,9 @@ export class ScenarioLoader {
       })),
       events: snap.events ? JSON.parse(snap.events) : [],
       exits: snap.exits ? JSON.parse(snap.exits) : [],
-      permanentChanges: scenario.permanent_changes ? JSON.parse(scenario.permanent_changes) : [],
+      permanentChanges: scenario.permanent_changes
+        ? JSON.parse(scenario.permanent_changes)
+        : [],
       keeperNotes: snap.keeper_notes,
       timeRestriction: snap.time_restriction || undefined,
     };
@@ -843,7 +1000,9 @@ export class ScenarioLoader {
       const jsonData = JSON.parse(fileContent);
 
       // Handle both array of scenarios and single scenario object
-      const scenarios: ParsedScenarioData[] = Array.isArray(jsonData) ? jsonData : [jsonData];
+      const scenarios: ParsedScenarioData[] = Array.isArray(jsonData)
+        ? jsonData
+        : [jsonData];
 
       if (scenarios.length === 0) {
         return null;
@@ -851,10 +1010,13 @@ export class ScenarioLoader {
 
       // Get the first scenario from the file
       const initialScenarioData = scenarios[0];
-      const scenarioName = initialScenarioData.name || initialScenarioData.snapshot?.name;
+      const scenarioName =
+        initialScenarioData.name || initialScenarioData.snapshot?.name;
 
       if (!scenarioName) {
-        console.warn(`⚠️  初始场景文件 "${initialScenarioFile}" 中未找到场景名称`);
+        console.warn(
+          `⚠️  初始场景文件 "${initialScenarioFile}" 中未找到场景名称`
+        );
         return null;
       }
 
@@ -865,14 +1027,21 @@ export class ScenarioLoader {
       );
 
       if (foundScenario) {
-        console.log(`   ✓ 根据文件名找到初始场景: ${foundScenario.name} (来自文件: ${initialScenarioFile})`);
+        console.log(
+          `   ✓ 根据文件名找到初始场景: ${foundScenario.name} (来自文件: ${initialScenarioFile})`
+        );
         return foundScenario;
       } else {
-        console.warn(`⚠️  在已加载的场景中未找到名为 "${scenarioName}" 的场景（来自文件: ${initialScenarioFile}）`);
+        console.warn(
+          `⚠️  在已加载的场景中未找到名为 "${scenarioName}" 的场景（来自文件: ${initialScenarioFile}）`
+        );
         return null;
       }
     } catch (error) {
-      console.error(`   ✗ 读取初始场景文件失败 "${initialScenarioFile}":`, error);
+      console.error(
+        `   ✗ 读取初始场景文件失败 "${initialScenarioFile}":`,
+        error
+      );
       return null;
     }
   }
@@ -896,13 +1065,15 @@ export class ScenarioLoader {
       // Use very loose matching - match if ANY word from search term appears
       // Then use scoring to find the best match
       const searchTerm = query.name.trim().toLowerCase();
-      const words = searchTerm.split(/\s+/).filter(w => w.length > 0);
-      
+      const words = searchTerm.split(/\s+/).filter((w) => w.length > 0);
+
       if (words.length > 0) {
         // Match if any word appears (very loose, will filter by score later)
-        const wordConditions = words.map(() => `LOWER(name) LIKE ?`).join(' OR ');
+        const wordConditions = words
+          .map(() => `LOWER(name) LIKE ?`)
+          .join(" OR ");
         sqlQuery += ` AND (${wordConditions})`;
-        words.forEach(word => params.push(`%${word}%`));
+        words.forEach((word) => params.push(`%${word}%`));
       } else {
         // Fallback: simple contains match
         sqlQuery += ` AND LOWER(name) LIKE ?`;
@@ -927,20 +1098,20 @@ export class ScenarioLoader {
     }
 
     // Find the best match by similarity score
-    const searchTerm = query.name ? query.name.trim().toLowerCase() : '';
-    const normalizedSearch = searchTerm.replace(/[^a-z0-9\u4e00-\u9fa5]/g, '');
-    const searchWords = searchTerm.split(/\s+/).filter(w => w.length > 0);
+    const searchTerm = query.name ? query.name.trim().toLowerCase() : "";
+    const normalizedSearch = searchTerm.replace(/[^a-z0-9\u4e00-\u9fa5]/g, "");
+    const searchWords = searchTerm.split(/\s+/).filter((w) => w.length > 0);
 
     let bestMatch = results[0];
     let bestScore = 0;
 
     for (const result of results) {
       const name = result.name.toLowerCase();
-      const normalizedName = name.replace(/[^a-z0-9\u4e00-\u9fa5]/g, '');
+      const normalizedName = name.replace(/[^a-z0-9\u4e00-\u9fa5]/g, "");
       const nameWords = name.split(/\s+/).filter((w: string) => w.length > 0);
-      
+
       let score = 0;
-      
+
       // Exact match gets highest score
       if (name === searchTerm) {
         score = 1000;
@@ -963,7 +1134,9 @@ export class ScenarioLoader {
       }
       // Word-based matching: count how many search words appear in the name
       else if (searchWords.length > 0) {
-        const matchedWords = searchWords.filter((word: string) => name.includes(word)).length;
+        const matchedWords = searchWords.filter((word: string) =>
+          name.includes(word)
+        ).length;
         const matchRatio = matchedWords / searchWords.length;
         // Score based on how many words match
         score = matchRatio * 150; // Max 150 for partial word matches
@@ -974,8 +1147,13 @@ export class ScenarioLoader {
       }
       // Calculate similarity based on common characters
       else {
-        const commonChars = normalizedSearch.split('').filter(char => normalizedName.includes(char)).length;
-        score = (commonChars / Math.max(normalizedSearch.length, normalizedName.length)) * 50;
+        const commonChars = normalizedSearch
+          .split("")
+          .filter((char) => normalizedName.includes(char)).length;
+        score =
+          (commonChars /
+            Math.max(normalizedSearch.length, normalizedName.length)) *
+          50;
       }
 
       if (score > bestScore) {
@@ -1003,8 +1181,14 @@ export class ScenarioLoader {
     const emailId = this.getEmailId();
     const hasEmailIdColumn = this.db.hasColumn("scenarios", "email_id");
     const result = database
-      .prepare(`SELECT COUNT(*) as count FROM scenarios WHERE scenario_id = ?${hasEmailIdColumn && emailId ? " AND email_id = ?" : ""}`)
-      .get(...(hasEmailIdColumn && emailId ? [scopedScenarioId, emailId] : [scopedScenarioId])) as any;
+      .prepare(
+        `SELECT COUNT(*) as count FROM scenarios WHERE scenario_id = ?${hasEmailIdColumn && emailId ? " AND email_id = ?" : ""}`
+      )
+      .get(
+        ...(hasEmailIdColumn && emailId
+          ? [scopedScenarioId, emailId]
+          : [scopedScenarioId])
+      ) as any;
     return result.count > 0;
   }
 
@@ -1034,17 +1218,27 @@ export class ScenarioLoader {
             SET discovered = 1, discovery_details = ?
             WHERE clue_id = ?${hasClueEmailId && emailId ? " AND email_id = ?" : ""}
         `)
-      .run(...(hasClueEmailId && emailId ? [JSON.stringify(discoveryDetails), scopedClueId, emailId] : [JSON.stringify(discoveryDetails), scopedClueId]));
+      .run(
+        ...(hasClueEmailId && emailId
+          ? [JSON.stringify(discoveryDetails), scopedClueId, emailId]
+          : [JSON.stringify(discoveryDetails), scopedClueId])
+      );
   }
 
   /**
    * Get undiscovered clues for a scenario or snapshot
    */
-  getUndiscoveredClues(scenarioId?: string, snapshotId?: string): ScenarioClue[] {
+  getUndiscoveredClues(
+    scenarioId?: string,
+    snapshotId?: string
+  ): ScenarioClue[] {
     const database = this.db.getDatabase();
     const emailId = this.getEmailId();
     const hasClueEmailId = this.db.hasColumn("scenario_clues", "email_id");
-    const hasSnapshotEmailId = this.db.hasColumn("scenario_snapshots", "email_id");
+    const hasSnapshotEmailId = this.db.hasColumn(
+      "scenario_snapshots",
+      "email_id"
+    );
 
     let query: string;
     let params: any[];
@@ -1055,7 +1249,10 @@ export class ScenarioLoader {
                 SELECT * FROM scenario_clues 
                 WHERE snapshot_id = ? AND discovered = 0${hasClueEmailId && emailId ? " AND email_id = ?" : ""}
             `;
-      params = hasClueEmailId && emailId ? [scopedSnapshotId, emailId] : [scopedSnapshotId];
+      params =
+        hasClueEmailId && emailId
+          ? [scopedSnapshotId, emailId]
+          : [scopedSnapshotId];
     } else if (scenarioId) {
       const scopedScenarioId = this.scopeScenarioId(scenarioId);
       query = `

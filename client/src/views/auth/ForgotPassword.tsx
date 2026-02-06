@@ -1,10 +1,10 @@
-import React from 'react';
-import { ForgotPasswordForm } from '../../components/auth/ForgotPasswordForm';
-import { FrameImage } from '../../components/FrameImage';
-import { useBackgroundImage } from '../../hooks/useBackgroundImage';
+import React from "react";
+import { ForgotPasswordForm } from "../../components/auth/ForgotPasswordForm";
+import { FrameImage } from "../../components/FrameImage";
+import { useBackgroundImage } from "../../hooks/useBackgroundImage";
 
 export default function ForgotPassword() {
-  useBackgroundImage('background', true);
+  useBackgroundImage("background", true);
 
   return (
     <div className="auth-page">

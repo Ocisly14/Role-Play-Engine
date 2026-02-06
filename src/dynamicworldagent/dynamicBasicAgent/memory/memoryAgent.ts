@@ -13,8 +13,10 @@ import type {
 import { actionRules } from "../../../shared/rules/index.js";
 import type { CoCDatabase } from "../../../shared/agents/memory/database/index.js";
 import type { DynamicScenarioSnapshot } from "../../world_builder/types.js";
-import { GameHistoryRag, type RelevantHistoryItem } from "../../../rag/gameHistoryRag.js";
-
+import {
+  GameHistoryRag,
+  type RelevantHistoryItem,
+} from "../../../rag/gameHistoryRag.js";
 
 /**
  * Inject action-type-specific rules into temporary rules so downstream agents can apply them.
@@ -53,7 +55,14 @@ export const extractRecentConversationHistory = async (
   db: CoCDatabase | undefined,
   sessionId: string,
   limit = 1
-): Promise<Array<{ turnNumber: number; characterInput: string; keeperNarrative: string | null; actionAnalysis?: any | null }>> => {
+): Promise<
+  Array<{
+    turnNumber: number;
+    characterInput: string;
+    keeperNarrative: string | null;
+    actionAnalysis?: any | null;
+  }>
+> => {
   if (!db) return [];
 
   try {
@@ -64,15 +73,15 @@ export const extractRecentConversationHistory = async (
       limit * 3, // Get more turns to account for filtering completed ones
       undefined // afterTurnNumber
     );
-    
+
     // Filter only completed turns with keeper narrative
     // Include both real queries (with actionAnalysis) and simulate queries (actionAnalysis === null)
     const completedTurns = turns
-      .filter(turn => turn.status === 'completed' && turn.keeperNarrative)
+      .filter((turn) => turn.status === "completed" && turn.keeperNarrative)
       .slice(0, limit) // Take first N (already sorted DESC, so these are the newest)
       .reverse(); // Reverse to get chronological order (oldest first)
-    
-    const result = completedTurns.map(turn => ({
+
+    const result = completedTurns.map((turn) => ({
       turnNumber: turn.turnNumber,
       characterInput: turn.characterInput,
       keeperNarrative: turn.keeperNarrative,
@@ -80,9 +89,11 @@ export const extractRecentConversationHistory = async (
     }));
 
     if (result.length > 0) {
-      const simulateCount = result.filter(t => !t.actionAnalysis).length;
+      const simulateCount = result.filter((t) => !t.actionAnalysis).length;
       const realCount = result.length - simulateCount;
-      console.log(`📜 [Memory Agent] 提取了 ${result.length} 轮历史对话 (Turn #${result[0]?.turnNumber} 到 Turn #${result[result.length - 1]?.turnNumber}), 其中真实轮数: ${realCount}, simulate轮数: ${simulateCount}`);
+      console.log(
+        `📜 [Memory Agent] 提取了 ${result.length} 轮历史对话 (Turn #${result[0]?.turnNumber} 到 Turn #${result[result.length - 1]?.turnNumber}), 其中真实轮数: ${realCount}, simulate轮数: ${simulateCount}`
+      );
     }
 
     return result;
@@ -113,11 +124,7 @@ export const retrieveRelevantHistory = async (
 ): Promise<RelevantHistoryItem[]> => {
   if (!db || !query.trim()) return [];
 
-  const {
-    topKActionLogs = 3,
-    topKTurns = 3,
-    alpha = 0.3,
-  } = options;
+  const { topKActionLogs = 3, topKTurns = 3, alpha = 0.3 } = options;
 
   try {
     const ragManager = new GameHistoryRag(db);
@@ -137,14 +144,18 @@ export const retrieveRelevantHistory = async (
     );
 
     if (searchResult.items.length > 0) {
-      const actionLogCount = searchResult.items.filter(i => i.type === "action_log").length;
-      const turnCount = searchResult.items.filter(i => i.type === "turn").length;
+      const actionLogCount = searchResult.items.filter(
+        (i) => i.type === "action_log"
+      ).length;
+      const turnCount = searchResult.items.filter(
+        (i) => i.type === "turn"
+      ).length;
       const modeInfo = options.targetCharacters?.length
         ? `per-character mode (${options.targetCharacters.length} chars)`
         : "global mode";
       console.log(
         `🔍 [Memory Agent] Retrieved ${searchResult.items.length} relevant history items via Hybrid RAG ` +
-        `(${actionLogCount} action logs, ${turnCount} turns, α=${alpha}, ${modeInfo})`
+          `(${actionLogCount} action logs, ${turnCount} turns, α=${alpha}, ${modeInfo})`
       );
     }
 
@@ -163,10 +174,13 @@ export const enrichMemoryContext = async (
   actionAnalysis: ActionAnalysis | null,
   db?: CoCDatabase,
   characterInput?: string,
-  language?: 'en' | 'zh'
+  language?: "en" | "zh"
 ): Promise<DynamicGameState> => {
   // First inject the action-type rules
-  const withRules = injectActionTypeRules(gameState, actionAnalysis?.actionType);
+  const withRules = injectActionTypeRules(
+    gameState,
+    actionAnalysis?.actionType
+  );
 
   // Extract recent conversation history (last 3 turns) and store in contextualData
   const conversationHistory = await extractRecentConversationHistory(
@@ -205,8 +219,8 @@ export const enrichMemoryContext = async (
 
   // Adjust BM25 weight based on language
   // Chinese has poor BM25 performance due to FTS5 character-level tokenization
-  const effectiveLanguage = language || 'zh'; // Default to Chinese
-  const alpha = effectiveLanguage === 'zh' ? 0.1 : 0.3; // Lower BM25 weight for Chinese
+  const effectiveLanguage = language || "zh"; // Default to Chinese
+  const alpha = effectiveLanguage === "zh" ? 0.1 : 0.3; // Lower BM25 weight for Chinese
 
   // Retrieve relevant history using Hybrid RAG (BM25 + Vector) with per-character filtering
   let relevantHistory: RelevantHistoryItem[] = [];
@@ -216,30 +230,34 @@ export const enrichMemoryContext = async (
       gameState.sessionId,
       characterInput,
       {
-        topKActionLogs: 15,  // Advisory max (3 chars × 5 per char)
-        topKTurns: 3,       // Global turns (unchanged)
-        alpha,              // Dynamic: 10% BM25 (中文) or 30% BM25 (英文)
+        topKActionLogs: 15, // Advisory max (3 chars × 5 per char)
+        topKTurns: 3, // Global turns (unchanged)
+        alpha, // Dynamic: 10% BM25 (中文) or 30% BM25 (英文)
         // NEW: Per-character options
-        targetCharacters: uniqueCharacters.length > 0 ? uniqueCharacters : undefined,
-        topKPerCharacter: 5,         // Top 5 per character
+        targetCharacters:
+          uniqueCharacters.length > 0 ? uniqueCharacters : undefined,
+        topKPerCharacter: 5, // Top 5 per character
         currentLocation: currentLocation || undefined,
-        locationBoostFactor: 1.2,    // 20% boost for matching location
+        locationBoostFactor: 1.2, // 20% boost for matching location
       }
     );
 
     // Deduplicate turns: Remove RAG-retrieved turns that are already in conversationHistory
     const conversationTurnNumbers = new Set(
-      conversationHistory.map(t => t.turnNumber)
+      conversationHistory.map((t) => t.turnNumber)
     );
 
-    relevantHistory = rawRelevantHistory.filter(item => {
+    relevantHistory = rawRelevantHistory.filter((item) => {
       if (item.type === "turn" && item.metadata.turnId) {
         // Extract turn number from turnId (format: "turn_123" or "123")
-        const turnNumber = parseInt(item.metadata.turnId.replace(/^turn_/, ""), 10);
+        const turnNumber = parseInt(
+          item.metadata.turnId.replace(/^turn_/, ""),
+          10
+        );
         if (conversationTurnNumbers.has(turnNumber)) {
           console.debug(
             `[Memory Agent] Filtered duplicate turn #${turnNumber} from RAG results ` +
-            `(already in conversationHistory)`
+              `(already in conversationHistory)`
           );
           return false; // Skip this turn
         }
@@ -257,7 +275,7 @@ export const enrichMemoryContext = async (
     if (uniqueCharacters.length > 0) {
       console.log(
         `📍 [Memory Agent] Retrieved history for characters: [${uniqueCharacters.join(", ")}] ` +
-        `in location: "${currentLocation || "N/A"}"`
+          `in location: "${currentLocation || "N/A"}"`
       );
     }
   }
@@ -274,4 +292,3 @@ export const enrichMemoryContext = async (
     },
   };
 };
-

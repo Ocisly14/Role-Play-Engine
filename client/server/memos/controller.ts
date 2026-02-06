@@ -9,7 +9,8 @@ import { DatabaseManager } from "../core/DatabaseManager.js";
  */
 export function listMemos(req: Request, res: Response): void {
   try {
-    const sessionId = typeof req.query.sessionId === "string" ? req.query.sessionId : "";
+    const sessionId =
+      typeof req.query.sessionId === "string" ? req.query.sessionId : "";
     const email = req.user!.email;
 
     if (!sessionId) {
@@ -20,12 +21,14 @@ export function listMemos(req: Request, res: Response): void {
     const db = DatabaseManager.getInstance().getDatabase();
     const database = db.getDatabase();
 
-    const memos = database.prepare(`
+    const memos = database
+      .prepare(`
       SELECT memo_id, text, game_day, game_time, location, created_at, updated_at
       FROM player_memos
       WHERE session_id = ? AND email_id = ?
       ORDER BY created_at ASC
-    `).all(sessionId, email);
+    `)
+      .all(sessionId, email);
 
     res.json({
       success: true,
@@ -68,24 +71,28 @@ export function createMemo(req: Request, res: Response): void {
     const db = DatabaseManager.getInstance().getDatabase();
     const database = db.getDatabase();
 
-    database.prepare(`
+    database
+      .prepare(`
       INSERT INTO player_memos (memo_id, session_id, email_id, text, game_day, game_time, location)
       VALUES (?, ?, ?, ?, ?, ?, ?)
-    `).run(
-      memoId,
-      sessionId,
-      email,
-      text.trim(),
-      typeof gameDay === "number" ? gameDay : null,
-      typeof gameTime === "string" ? gameTime : null,
-      typeof location === "string" ? location : null
-    );
+    `)
+      .run(
+        memoId,
+        sessionId,
+        email,
+        text.trim(),
+        typeof gameDay === "number" ? gameDay : null,
+        typeof gameTime === "string" ? gameTime : null,
+        typeof location === "string" ? location : null
+      );
 
-    const memo = database.prepare(`
+    const memo = database
+      .prepare(`
       SELECT memo_id, text, game_day, game_time, location, created_at, updated_at
       FROM player_memos
       WHERE memo_id = ? AND email_id = ?
-    `).get(memoId, email) as any;
+    `)
+      .get(memoId, email) as any;
 
     res.json({
       success: true,
@@ -128,11 +135,13 @@ export function updateMemo(req: Request, res: Response): void {
     const db = DatabaseManager.getInstance().getDatabase();
     const database = db.getDatabase();
 
-    const result = database.prepare(`
+    const result = database
+      .prepare(`
       UPDATE player_memos
       SET text = ?, updated_at = CURRENT_TIMESTAMP
       WHERE memo_id = ? AND email_id = ?
-    `).run(text.trim(), memoId, email);
+    `)
+      .run(text.trim(), memoId, email);
 
     if (result.changes === 0) {
       res.status(404).json({ error: "Memo not found" });
@@ -163,10 +172,12 @@ export function deleteMemo(req: Request, res: Response): void {
     const db = DatabaseManager.getInstance().getDatabase();
     const database = db.getDatabase();
 
-    const result = database.prepare(`
+    const result = database
+      .prepare(`
       DELETE FROM player_memos
       WHERE memo_id = ? AND email_id = ?
-    `).run(memoId, email);
+    `)
+      .run(memoId, email);
 
     if (result.changes === 0) {
       res.status(404).json({ error: "Memo not found" });

@@ -1,12 +1,12 @@
 /**
  * Custom hook for waiting for turn completion using long polling
- * 
+ *
  * This hook uses long polling to wait for turn completion instead of frequent polling.
  * The server will keep the connection open until the turn is completed.
  */
 
-import { useState, useEffect, useRef } from 'react';
-import { authFetch } from '../utils/authFetch';
+import { useState, useEffect, useRef } from "react";
+import { authFetch } from "../utils/authFetch";
 
 export interface ActionResult {
   timestamp: string | Date;
@@ -25,7 +25,7 @@ export interface TurnStatus {
   turnNumber: number;
   characterInput: string;
   keeperNarrative: string | null;
-  status: 'processing' | 'completed' | 'error' | 'requires_skill_selection';
+  status: "processing" | "completed" | "error" | "requires_skill_selection";
   errorMessage: string | null;
   startedAt: string;
   completedAt: string | null;
@@ -34,7 +34,7 @@ export interface TurnStatus {
   location: string | null;
   isSimulated?: boolean;
   actionResults?: ActionResult[] | null;
-  actionAnalysis?: any | null;  // For requires_skill_selection status
+  actionAnalysis?: any | null; // For requires_skill_selection status
   gameDay?: number | null;
   gameTime?: string | null;
 }
@@ -48,7 +48,7 @@ export interface UseTurnPollingResult {
 }
 
 export function useTurnPolling(
-  apiBaseUrl: string = '/api'
+  apiBaseUrl: string = "/api"
 ): UseTurnPollingResult {
   const [turn, setTurn] = useState<TurnStatus | null>(null);
   const [isPolling, setIsPolling] = useState(false);
@@ -78,9 +78,12 @@ export function useTurnPolling(
     const poll = async () => {
       try {
         // Use long polling: server will wait until turn is completed
-        const response = await authFetch(`${apiBaseUrl}/turns/${turnId}?wait=true`, {
-          signal: abortController.signal,
-        });
+        const response = await authFetch(
+          `${apiBaseUrl}/turns/${turnId}?wait=true`,
+          {
+            signal: abortController.signal,
+          }
+        );
 
         if (!response.ok) {
           throw new Error(`HTTP error! status: ${response.status}`);
@@ -89,7 +92,7 @@ export function useTurnPolling(
         const data = await response.json();
 
         if (!data.success) {
-          throw new Error(data.error || 'Failed to fetch turn status');
+          throw new Error(data.error || "Failed to fetch turn status");
         }
 
         // Log turn data for debugging
@@ -101,19 +104,23 @@ export function useTurnPolling(
           keeperNarrativeLength: data.turn?.keeperNarrative?.length || 0,
           hasActionResults: !!data.turn?.actionResults,
           actionResultsType: typeof data.turn?.actionResults,
-          actionResultsCount: Array.isArray(data.turn?.actionResults) ? data.turn.actionResults.length : 'not array',
+          actionResultsCount: Array.isArray(data.turn?.actionResults)
+            ? data.turn.actionResults.length
+            : "not array",
           actionResultsValue: data.turn?.actionResults,
         });
 
         setTurn(data.turn);
 
-        if (data.turn.status === 'error') {
-          setError(data.turn.errorMessage || 'Turn processing failed');
+        if (data.turn.status === "error") {
+          setError(data.turn.errorMessage || "Turn processing failed");
           setIsPolling(false);
           abortControllerRef.current = null;
-        } else if (data.turn.status === 'processing') {
+        } else if (data.turn.status === "processing") {
           // Still processing, continue polling
-          console.log(`[useTurnPolling] Turn still processing, continuing to poll...`);
+          console.log(
+            `[useTurnPolling] Turn still processing, continuing to poll...`
+          );
           poll(); // Continue polling recursively
         } else {
           // Completed
@@ -122,14 +129,14 @@ export function useTurnPolling(
         }
       } catch (err) {
         // Ignore abort errors (user cancelled)
-        if (err instanceof Error && err.name === 'AbortError') {
+        if (err instanceof Error && err.name === "AbortError") {
           setIsPolling(false);
           abortControllerRef.current = null;
           return;
         }
 
-        console.error('Error waiting for turn:', err);
-        setError(err instanceof Error ? err.message : 'Unknown error');
+        console.error("Error waiting for turn:", err);
+        setError(err instanceof Error ? err.message : "Unknown error");
         setIsPolling(false);
         abortControllerRef.current = null;
       }

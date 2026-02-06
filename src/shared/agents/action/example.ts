@@ -100,5 +100,5 @@ export const actionTypeTemplates = {
   chase: chaseTemplate,
   mental: mentalTemplate,
   environmental: environmentalTemplate,
-  narrative: narrativeTemplate
+  narrative: narrativeTemplate,
 };

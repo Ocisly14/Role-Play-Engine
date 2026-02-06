@@ -27,7 +27,9 @@ async function run() {
   const hasGemini = !!process.env.GOOGLE_API_KEY;
   const hasOpenAI = !!process.env.OPENAI_API_KEY;
   if (!hasGemini && !hasOpenAI) {
-    logger.error("API key not found (GOOGLE_API_KEY or OPENAI_API_KEY). Please configure one before running.");
+    logger.error(
+      "API key not found (GOOGLE_API_KEY or OPENAI_API_KEY). Please configure one before running."
+    );
     return;
   }
   logger.success(`Using ${hasGemini ? "Google Gemini" : "OpenAI"} for parsing`);
@@ -44,7 +46,9 @@ async function run() {
   const backgroundDir = path.join(process.cwd(), "data", "background");
   if (!fs.existsSync(backgroundDir)) {
     fs.mkdirSync(backgroundDir, { recursive: true });
-    logger.warn(`Created directory: ${backgroundDir}. Add .docx/.pdf files and rerun.`);
+    logger.warn(
+      `Created directory: ${backgroundDir}. Add .docx/.pdf files and rerun.`
+    );
     return;
   }
 
@@ -52,7 +56,9 @@ async function run() {
     .readdirSync(backgroundDir)
     .filter((f) => [".docx", ".pdf"].includes(path.extname(f).toLowerCase()));
   if (files.length === 0) {
-    logger.warn(`Directory is empty: ${backgroundDir}. Add .docx/.pdf files and rerun.`);
+    logger.warn(
+      `Directory is empty: ${backgroundDir}. Add .docx/.pdf files and rerun.`
+    );
     return;
   }
   logger.info(`Found ${files.length} document(s): ${files.join(", ")}`);
@@ -91,5 +97,7 @@ async function run() {
 }
 
 run().catch((err) => {
-  logger.error(`Test failed: ${err instanceof Error ? err.message : String(err)}`);
+  logger.error(
+    `Test failed: ${err instanceof Error ? err.message : String(err)}`
+  );
 });

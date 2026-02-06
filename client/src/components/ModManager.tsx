@@ -33,11 +33,18 @@ export function ModManager({ onClose }: ModManagerProps) {
   const [loadingLibrary, setLoadingLibrary] = useState(false);
   const [loadingShared, setLoadingShared] = useState(false);
   const [loadingDeleted, setLoadingDeleted] = useState(false);
-  const [selectedDeleted, setSelectedDeleted] = useState<Record<string, boolean>>({});
-  const [selectedLibrary, setSelectedLibrary] = useState<Record<string, boolean>>({});
+  const [selectedDeleted, setSelectedDeleted] = useState<
+    Record<string, boolean>
+  >({});
+  const [selectedLibrary, setSelectedLibrary] = useState<
+    Record<string, boolean>
+  >({});
   const [searchQuery, setSearchQuery] = useState("");
   const [previewMod, setPreviewMod] = useState<string | null>(null);
-  const [previewIntro, setPreviewIntro] = useState<{ introduction: string; moduleNotes: string } | null>(null);
+  const [previewIntro, setPreviewIntro] = useState<{
+    introduction: string;
+    moduleNotes: string;
+  } | null>(null);
   const [loadingPreview, setLoadingPreview] = useState(false);
   const hasLibrarySelection = Object.values(selectedLibrary).some(Boolean);
   const hasDeletedSelection = Object.values(selectedDeleted).some(Boolean);
@@ -86,7 +93,9 @@ export function ModManager({ onClose }: ModManagerProps) {
     try {
       setLoadingShared(true);
       const q = searchQuery.trim();
-      const url = q ? `/api/mods/shared?q=${encodeURIComponent(q)}` : "/api/mods/shared";
+      const url = q
+        ? `/api/mods/shared?q=${encodeURIComponent(q)}`
+        : "/api/mods/shared";
       const response = await authFetch(url);
       const data = await response.json();
       if (response.ok && data.success) {
@@ -126,7 +135,9 @@ export function ModManager({ onClose }: ModManagerProps) {
     setPreviewMod(modName);
     setLoadingPreview(true);
     try {
-      const response = await authFetch(`/api/module/introduction?modName=${encodeURIComponent(modName)}`);
+      const response = await authFetch(
+        `/api/module/introduction?modName=${encodeURIComponent(modName)}`
+      );
       const data = await response.json();
       if (response.ok && data.success) {
         setPreviewIntro(data.moduleIntroduction);
@@ -251,7 +262,9 @@ export function ModManager({ onClose }: ModManagerProps) {
   };
 
   const handleRemoveSelected = async () => {
-    const modNames = Object.keys(selectedLibrary).filter((name) => selectedLibrary[name]);
+    const modNames = Object.keys(selectedLibrary).filter(
+      (name) => selectedLibrary[name]
+    );
     if (modNames.length === 0) {
       alert("No modules selected");
       return;
@@ -340,7 +353,9 @@ export function ModManager({ onClose }: ModManagerProps) {
   };
 
   const handleRestoreSelected = async () => {
-    const modNames = Object.keys(selectedDeleted).filter((name) => selectedDeleted[name]);
+    const modNames = Object.keys(selectedDeleted).filter(
+      (name) => selectedDeleted[name]
+    );
     if (modNames.length === 0) {
       alert("No modules selected");
       return;
@@ -368,13 +383,22 @@ export function ModManager({ onClose }: ModManagerProps) {
         <div className="mod-manager-modal">
           <div className="mod-manager-header">
             <h2>Module Manager</h2>
-            <button onClick={onClose} className="close-button" aria-label="Close">×</button>
+            <button
+              onClick={onClose}
+              className="close-button"
+              aria-label="Close"
+            >
+              ×
+            </button>
           </div>
 
           <div className="mod-manager-tabs">
             <button
               className={`tab-button ${tab === "library" ? "active" : ""}`}
-              onClick={() => { setTab("library"); setPreviewMod(null); }}
+              onClick={() => {
+                setTab("library");
+                setPreviewMod(null);
+              }}
             >
               My Library
             </button>
@@ -405,13 +429,22 @@ export function ModManager({ onClose }: ModManagerProps) {
               <>
                 {hasLibrarySelection && (
                   <div className="deleted-actions">
-                    <button className="btn-secondary" onClick={handleSelectAllLibrary}>
+                    <button
+                      className="btn-secondary"
+                      onClick={handleSelectAllLibrary}
+                    >
                       Select All
                     </button>
-                    <button className="btn-secondary" onClick={handleClearLibrarySelection}>
+                    <button
+                      className="btn-secondary"
+                      onClick={handleClearLibrarySelection}
+                    >
                       Clear
                     </button>
-                    <button className="btn-primary" onClick={handleRemoveSelected}>
+                    <button
+                      className="btn-primary"
+                      onClick={handleRemoveSelected}
+                    >
                       Delete Selected
                     </button>
                   </div>
@@ -431,24 +464,38 @@ export function ModManager({ onClose }: ModManagerProps) {
                               checked={Boolean(selectedLibrary[mod.name])}
                               onChange={() => handleToggleLibrary(mod.name)}
                             />
-                            <span className="mod-title mod-title-clickable" onClick={() => fetchPreview(mod.name)}>
+                            <span
+                              className="mod-title mod-title-clickable"
+                              onClick={() => fetchPreview(mod.name)}
+                            >
                               {mod.name}
                             </span>
                           </div>
-                          {mod.shared && <span className="mod-badge">Shared</span>}
+                          {mod.shared && (
+                            <span className="mod-badge">Shared</span>
+                          )}
                         </div>
                         <div className="mod-actions">
                           {!mod.shared && mod.isOwner && (
-                            <button className="btn-secondary" onClick={() => confirmShare(mod.name)}>
+                            <button
+                              className="btn-secondary"
+                              onClick={() => confirmShare(mod.name)}
+                            >
                               Share
                             </button>
                           )}
                           {mod.shared && mod.isOwner && (
-                            <button className="btn-secondary" onClick={() => handleUnshare(mod.name)}>
+                            <button
+                              className="btn-secondary"
+                              onClick={() => handleUnshare(mod.name)}
+                            >
                               Unshare
                             </button>
                           )}
-                          <button className="btn-secondary" onClick={() => confirmRemove(mod.name)}>
+                          <button
+                            className="btn-secondary"
+                            onClick={() => confirmRemove(mod.name)}
+                          >
                             Delete
                           </button>
                         </div>
@@ -482,7 +529,12 @@ export function ModManager({ onClose }: ModManagerProps) {
                     {sharedMods.map((mod) => (
                       <div key={mod.name} className="mod-row">
                         <div className="mod-info">
-                          <span className="mod-title mod-title-clickable" onClick={() => fetchPreview(mod.name)}>{mod.name}</span>
+                          <span
+                            className="mod-title mod-title-clickable"
+                            onClick={() => fetchPreview(mod.name)}
+                          >
+                            {mod.name}
+                          </span>
                         </div>
                         <div className="mod-actions">
                           <button
@@ -504,13 +556,22 @@ export function ModManager({ onClose }: ModManagerProps) {
               <>
                 {hasDeletedSelection && (
                   <div className="deleted-actions">
-                    <button className="btn-secondary" onClick={handleSelectAllDeleted}>
+                    <button
+                      className="btn-secondary"
+                      onClick={handleSelectAllDeleted}
+                    >
                       Select All
                     </button>
-                    <button className="btn-secondary" onClick={handleClearDeletedSelection}>
+                    <button
+                      className="btn-secondary"
+                      onClick={handleClearDeletedSelection}
+                    >
                       Clear
                     </button>
-                    <button className="btn-primary" onClick={handleRestoreSelected}>
+                    <button
+                      className="btn-primary"
+                      onClick={handleRestoreSelected}
+                    >
                       Restore Selected
                     </button>
                   </div>
@@ -533,11 +594,17 @@ export function ModManager({ onClose }: ModManagerProps) {
                             <span className="mod-title">{mod.name}</span>
                           </label>
                           <div className="mod-meta">
-                            Deleted at {new Date(mod.deletedAt).toLocaleString()} · {mod.daysLeft} day{mod.daysLeft === 1 ? "" : "s"} left
+                            Deleted at{" "}
+                            {new Date(mod.deletedAt).toLocaleString()} ·{" "}
+                            {mod.daysLeft} day{mod.daysLeft === 1 ? "" : "s"}{" "}
+                            left
                           </div>
                         </div>
                         <div className="mod-actions">
-                          <button className="btn-secondary" onClick={() => handleRestore(mod.name)}>
+                          <button
+                            className="btn-secondary"
+                            onClick={() => handleRestore(mod.name)}
+                          >
                             Restore
                           </button>
                         </div>
@@ -826,27 +893,44 @@ export function ModManager({ onClose }: ModManagerProps) {
           <div className="confirm-modal intro-preview-modal">
             <div className="intro-preview-header">
               <h3 className="confirm-title">{previewMod}</h3>
-              <button className="close-button" onClick={() => { setPreviewMod(null); setPreviewIntro(null); }} aria-label="Close">×</button>
+              <button
+                className="close-button"
+                onClick={() => {
+                  setPreviewMod(null);
+                  setPreviewIntro(null);
+                }}
+                aria-label="Close"
+              >
+                ×
+              </button>
             </div>
             {loadingPreview ? (
-              <p style={{ color: "#666", margin: "20px 0" }}>Loading introduction...</p>
+              <p style={{ color: "#666", margin: "20px 0" }}>
+                Loading introduction...
+              </p>
             ) : previewIntro ? (
               <>
                 <div className="preview-section">
                   <h4 className="preview-section-title">Story Introduction</h4>
                   <div className="preview-content">
-                    {previewIntro.introduction || "No story introduction available."}
+                    {previewIntro.introduction ||
+                      "No story introduction available."}
                   </div>
                 </div>
                 <div className="preview-section">
-                  <h4 className="preview-section-title">📝 Character Creation Guide</h4>
+                  <h4 className="preview-section-title">
+                    📝 Character Creation Guide
+                  </h4>
                   <div className="preview-content">
-                    {previewIntro.moduleNotes || "No character creation guide available."}
+                    {previewIntro.moduleNotes ||
+                      "No character creation guide available."}
                   </div>
                 </div>
               </>
             ) : (
-              <p style={{ color: "#666", margin: "20px 0" }}>No introduction available for this module.</p>
+              <p style={{ color: "#666", margin: "20px 0" }}>
+                No introduction available for this module.
+              </p>
             )}
           </div>
         </div>
@@ -860,7 +944,9 @@ export function ModManager({ onClose }: ModManagerProps) {
             <div className="confirm-actions">
               <button
                 className="btn-secondary"
-                onClick={() => setConfirmState((prev) => ({ ...prev, open: false }))}
+                onClick={() =>
+                  setConfirmState((prev) => ({ ...prev, open: false }))
+                }
               >
                 Cancel
               </button>

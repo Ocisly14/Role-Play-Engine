@@ -3,7 +3,10 @@ import { WebSocket } from "ws";
 import { ServerState } from "../core/ServerState.js";
 import { DatabaseManager } from "../core/DatabaseManager.js";
 import { notifyClients } from "./notifier.js";
-import { runWithTokenContext, getCurrentUsageTotals } from "../../../src/models/index.js";
+import {
+  runWithTokenContext,
+  getCurrentUsageTotals,
+} from "../../../src/models/index.js";
 
 const CHECK_INTERVAL_MS = 60000; // Check every 60 seconds
 const IDLE_MINUTES_BEFORE_SIMULATE = 5; // Trigger virtual query after this many minutes idle
@@ -22,13 +25,15 @@ export async function checkAndTriggerSimulate(
 ): Promise<boolean> {
   const resolveEmail = (): string | undefined => {
     const db = DatabaseManager.getInstance().getDatabase().getDatabase();
-    const row = db.prepare(`
+    const row = db
+      .prepare(`
       SELECT c.email_id
       FROM game_turns gt
       JOIN characters c ON c.character_id = gt.character_id
       WHERE gt.session_id = ? AND c.email_id IS NOT NULL
       LIMIT 1
-    `).get(sessionId) as { email_id?: string } | undefined;
+    `)
+      .get(sessionId) as { email_id?: string } | undefined;
     return row?.email_id;
   };
 
@@ -37,7 +42,8 @@ export async function checkAndTriggerSimulate(
     const serverState = ServerState.getInstance();
     const dbManager = DatabaseManager.getInstance();
 
-    const dynamicGameState = serverState.getDynamicGameStateBySession(sessionId);
+    const dynamicGameState =
+      serverState.getDynamicGameStateBySession(sessionId);
     const db = dbManager.isInitialized() ? dbManager.getDatabase() : null;
 
     if (!dynamicGameState || !db) {
@@ -51,7 +57,9 @@ export async function checkAndTriggerSimulate(
     }
 
     try {
-      const { DynamicGameStateManager } = await import("../../../src/dynamicworldagent/state/index.js");
+      const { DynamicGameStateManager } = await import(
+        "../../../src/dynamicworldagent/state/index.js"
+      );
       const dgsm = new DynamicGameStateManager(dynamicGameState);
       const minutesSinceInput = dgsm.getMinutesSinceLastInput();
 
@@ -61,25 +69,38 @@ export async function checkAndTriggerSimulate(
         return false;
       }
 
-      console.log(`⏰ [WebSocket] Time threshold reached (${minutesSinceInput} min idle) for session ${sessionId}`);
+      console.log(
+        `⏰ [WebSocket] Time threshold reached (${minutesSinceInput} min idle) for session ${sessionId}`
+      );
 
       // DynamicWorld: use stuck-hint narrative instead of full listener pipeline (max 3 consecutive)
-      const { DirectorAgent } = await import("../../../src/dynamicworldagent/dynamicBasicAgent/director/directorAgent.js");
-      const { ScenarioLoader } = await import("../../../src/shared/agents/memory/scenarioloader/index.js");
-      const { TurnManager: DynamicTurnManager } = await import("../../../src/dynamicworldagent/dynamicBasicAgent/memory/turnManager.js");
+      const { DirectorAgent } = await import(
+        "../../../src/dynamicworldagent/dynamicBasicAgent/director/directorAgent.js"
+      );
+      const { ScenarioLoader } = await import(
+        "../../../src/shared/agents/memory/scenarioloader/index.js"
+      );
+      const { TurnManager: DynamicTurnManager } = await import(
+        "../../../src/dynamicworldagent/dynamicBasicAgent/memory/turnManager.js"
+      );
 
       const consecutive = dgsm.getState().consecutiveProgressionTriggers ?? 0;
       if (consecutive >= 3) {
-        console.log(`⏰ [WebSocket] Stuck-hint skipped: max consecutive (3) reached for session ${sessionId}`);
+        console.log(
+          `⏰ [WebSocket] Stuck-hint skipped: max consecutive (3) reached for session ${sessionId}`
+        );
         return false;
       }
 
       const scenarioLoader = new ScenarioLoader(db);
       const directorAgent = new DirectorAgent(scenarioLoader, db);
-      const hintNarrative = await directorAgent.generateStuckHintNarrative(dgsm);
+      const hintNarrative =
+        await directorAgent.generateStuckHintNarrative(dgsm);
 
       if (!hintNarrative) {
-        console.log(`⏰ [WebSocket] Stuck-hint generation returned no narrative for session ${sessionId}`);
+        console.log(
+          `⏰ [WebSocket] Stuck-hint generation returned no narrative for session ${sessionId}`
+        );
         dgsm.touchIdleTimerOnly();
         serverState.setGameStateBySession(sessionId, dgsm.getState());
         return false;
@@ -104,7 +125,9 @@ export async function checkAndTriggerSimulate(
       dgsm.touchIdleTimerOnly();
       serverState.setGameStateBySession(sessionId, dgsm.getState());
       console.log(`⏰ [WebSocket] Idle timer reset for session ${sessionId}`);
-      console.log(`🔔 [WebSocket] Stuck-hint narrative sent for session ${sessionId}`);
+      console.log(
+        `🔔 [WebSocket] Stuck-hint narrative sent for session ${sessionId}`
+      );
 
       const completedTurn = dynamicTurnManager.getTurn(newTurnId);
       notifyClients(sessionId, clients, {
@@ -125,7 +148,10 @@ export async function checkAndTriggerSimulate(
       }
       return true;
     } catch (error) {
-      console.error(`[WebSocket] Error checking progression for session ${sessionId}:`, error);
+      console.error(
+        `[WebSocket] Error checking progression for session ${sessionId}:`,
+        error
+      );
       return false;
     }
   };
@@ -156,14 +182,19 @@ export function startProgressionChecker(clients: Map<string, WSClient>): void {
     // Check all active sessions
     for (const [sessionId, client] of clients.entries()) {
       if (client.ws.readyState === WebSocket.OPEN) {
-        checkAndTriggerSimulate(sessionId, clients).catch(error => {
-          console.error(`[WebSocket] Error in progression check for ${sessionId}:`, error);
+        checkAndTriggerSimulate(sessionId, clients).catch((error) => {
+          console.error(
+            `[WebSocket] Error in progression check for ${sessionId}:`,
+            error
+          );
         });
       }
     }
   }, CHECK_INTERVAL_MS);
 
-  console.log(`🔄 [WebSocket] Progression checker started (interval: ${CHECK_INTERVAL_MS}ms)`);
+  console.log(
+    `🔄 [WebSocket] Progression checker started (interval: ${CHECK_INTERVAL_MS}ms)`
+  );
 }
 
 /**

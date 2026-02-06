@@ -15,7 +15,13 @@ import "dotenv/config";
 import fs from "fs/promises";
 import path from "path";
 import { NPCBuilderAgent } from "../src/dynamicworldagent/world_builder/npcBuilderAgent.js";
-import type { MacroSceneStructure, TruthEvent, KnowledgeHolder, RedHerring, MythosEvent } from "../src/dynamicworldagent/world_builder/types.js";
+import type {
+  MacroSceneStructure,
+  TruthEvent,
+  KnowledgeHolder,
+  RedHerring,
+  MythosEvent,
+} from "../src/dynamicworldagent/world_builder/types.js";
 
 const MODULE_NAME = "鸦栖堡的冰封安魂曲 (The Frozen Requiem of Ravenscroft)";
 const MODULE_DIR = path.join(process.cwd(), "data", "Mods", MODULE_NAME);
@@ -39,17 +45,27 @@ async function loadModuleData() {
     redHerrings?: RedHerring[];
   };
 
-  const macroScene = macroParsed.macroScene ?? (macroParsed as unknown as MacroSceneStructure);
+  const macroScene =
+    macroParsed.macroScene ?? (macroParsed as unknown as MacroSceneStructure);
   const mythosEvents = macroParsed.mythosEvents ?? [];
   const truthTimeline = truthParsed.truthTimeline ?? [];
   const knowledgeMatrix = knowledgeParsed.knowledgeMatrix ?? [];
   const redHerrings = knowledgeParsed.redHerrings ?? [];
 
-  return { macroScene, mythosEvents, truthTimeline, knowledgeMatrix, redHerrings };
+  return {
+    macroScene,
+    mythosEvents,
+    truthTimeline,
+    knowledgeMatrix,
+    redHerrings,
+  };
 }
 
 async function main() {
-  console.log("\n🧪 [test-npc-builder] Testing NPC Builder with module:", MODULE_NAME);
+  console.log(
+    "\n🧪 [test-npc-builder] Testing NPC Builder with module:",
+    MODULE_NAME
+  );
   console.log("   Module dir:", MODULE_DIR);
   console.log("   Output dir:", OUTPUT_DIR);
 
@@ -60,8 +76,16 @@ async function main() {
   }
 
   console.log("\n   Loading macro_scene, truth_timeline, knowledge_matrix...");
-  const { macroScene, mythosEvents, truthTimeline, knowledgeMatrix, redHerrings } = await loadModuleData();
-  console.log(`   Truth events: ${truthTimeline.length}, Knowledge holders: ${knowledgeMatrix.length}, Red herrings: ${redHerrings.length}`);
+  const {
+    macroScene,
+    mythosEvents,
+    truthTimeline,
+    knowledgeMatrix,
+    redHerrings,
+  } = await loadModuleData();
+  console.log(
+    `   Truth events: ${truthTimeline.length}, Knowledge holders: ${knowledgeMatrix.length}, Red herrings: ${redHerrings.length}`
+  );
 
   const agent = new NPCBuilderAgent();
   const npcs = await agent.generateBatch(
@@ -84,7 +108,9 @@ async function main() {
     await fs.writeFile(f, JSON.stringify(npc, null, 2), "utf-8");
   }
   if (npcs.length > 0) {
-    console.log(`   Also wrote per-NPC files (e.g. ${npcs[0]!.id}.json) into ${OUTPUT_DIR}`);
+    console.log(
+      `   Also wrote per-NPC files (e.g. ${npcs[0]!.id}.json) into ${OUTPUT_DIR}`
+    );
   }
 }
 

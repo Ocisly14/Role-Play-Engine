@@ -25,9 +25,7 @@
           ],
           "suggested_occupational_points": {
             "expression": "EDU*4",
-            "characteristics": [
-              "EDU"
-            ]
+            "characteristics": ["EDU"]
           }
         },
         {
@@ -48,9 +46,7 @@
           ],
           "suggested_occupational_points": {
             "expression": "EDU*4",
-            "characteristics": [
-              "EDU"
-            ]
+            "characteristics": ["EDU"]
           }
         },
         {
@@ -71,9 +67,7 @@
           ],
           "suggested_occupational_points": {
             "expression": "EDU*4",
-            "characteristics": [
-              "EDU"
-            ]
+            "characteristics": ["EDU"]
           }
         },
         {
@@ -94,9 +88,7 @@
           ],
           "suggested_occupational_points": {
             "expression": "EDU*4",
-            "characteristics": [
-              "EDU"
-            ]
+            "characteristics": ["EDU"]
           }
         },
         {
@@ -117,9 +109,7 @@
           ],
           "suggested_occupational_points": {
             "expression": "EDU*4",
-            "characteristics": [
-              "EDU"
-            ]
+            "characteristics": ["EDU"]
           }
         },
         {
@@ -140,9 +130,7 @@
           ],
           "suggested_occupational_points": {
             "expression": "EDU*4",
-            "characteristics": [
-              "EDU"
-            ]
+            "characteristics": ["EDU"]
           }
         },
         {
@@ -163,9 +151,7 @@
           ],
           "suggested_occupational_points": {
             "expression": "EDU*4",
-            "characteristics": [
-              "EDU"
-            ]
+            "characteristics": ["EDU"]
           }
         },
         {
@@ -186,9 +172,7 @@
           ],
           "suggested_occupational_points": {
             "expression": "EDU*4",
-            "characteristics": [
-              "EDU"
-            ]
+            "characteristics": ["EDU"]
           }
         },
         {
@@ -209,9 +193,7 @@
           ],
           "suggested_occupational_points": {
             "expression": "EDU*4",
-            "characteristics": [
-              "EDU"
-            ]
+            "characteristics": ["EDU"]
           }
         },
         {
@@ -232,10 +214,7 @@
           ],
           "suggested_occupational_points": {
             "expression": "EDU*2+DEX*2",
-            "characteristics": [
-              "EDU",
-              "DEX"
-            ]
+            "characteristics": ["EDU", "DEX"]
           }
         },
         {
@@ -256,10 +235,7 @@
           ],
           "suggested_occupational_points": {
             "expression": "EDU*2+DEX*2",
-            "characteristics": [
-              "EDU",
-              "DEX"
-            ]
+            "characteristics": ["EDU", "DEX"]
           }
         },
         {
@@ -280,10 +256,7 @@
           ],
           "suggested_occupational_points": {
             "expression": "EDU*2+STR*2",
-            "characteristics": [
-              "EDU",
-              "STR"
-            ]
+            "characteristics": ["EDU", "STR"]
           }
         },
         {
@@ -304,10 +277,7 @@
           ],
           "suggested_occupational_points": {
             "expression": "EDU*2+DEX*2",
-            "characteristics": [
-              "EDU",
-              "DEX"
-            ]
+            "characteristics": ["EDU", "DEX"]
           }
         },
         {
@@ -328,10 +298,7 @@
           ],
           "suggested_occupational_points": {
             "expression": "EDU*2+APP*2",
-            "characteristics": [
-              "EDU",
-              "APP"
-            ]
+            "characteristics": ["EDU", "APP"]
           }
         },
         {
@@ -352,9 +319,7 @@
           ],
           "suggested_occupational_points": {
             "expression": "EDU*4",
-            "characteristics": [
-              "EDU"
-            ]
+            "characteristics": ["EDU"]
           }
         },
         {
@@ -375,9 +340,7 @@
           ],
           "suggested_occupational_points": {
             "expression": "EDU*4",
-            "characteristics": [
-              "EDU"
-            ]
+            "characteristics": ["EDU"]
           }
         },
         {
@@ -398,10 +361,7 @@
           ],
           "suggested_occupational_points": {
             "expression": "EDU*2+APP*2",
-            "characteristics": [
-              "EDU",
-              "APP"
-            ]
+            "characteristics": ["EDU", "APP"]
           }
         },
         {
@@ -422,9 +382,7 @@
           ],
           "suggested_occupational_points": {
             "expression": "EDU*4",
-            "characteristics": [
-              "EDU"
-            ]
+            "characteristics": ["EDU"]
           }
         },
         {
@@ -445,10 +403,7 @@
           ],
           "suggested_occupational_points": {
             "expression": "EDU*2+APP*2",
-            "characteristics": [
-              "EDU",
-              "APP"
-            ]
+            "characteristics": ["EDU", "APP"]
           }
         },
         {
@@ -469,9 +424,7 @@
           ],
           "suggested_occupational_points": {
             "expression": "EDU*4",
-            "characteristics": [
-              "EDU"
-            ]
+            "characteristics": ["EDU"]
           }
         },
         {
@@ -492,9 +445,7 @@
           ],
           "suggested_occupational_points": {
             "expression": "EDU*4",
-            "characteristics": [
-              "EDU"
-            ]
+            "characteristics": ["EDU"]
           }
         },
         {
@@ -515,10 +466,7 @@
           ],
           "suggested_occupational_points": {
             "expression": "EDU*2+DEX*2",
-            "characteristics": [
-              "EDU",
-              "DEX"
-            ]
+            "characteristics": ["EDU", "DEX"]
           }
         },
         {
@@ -539,10 +487,7 @@
           ],
           "suggested_occupational_points": {
             "expression": "EDU*2+DEX*2",
-            "characteristics": [
-              "EDU",
-              "DEX"
-            ]
+            "characteristics": ["EDU", "DEX"]
           }
         },
         {
@@ -563,10 +508,7 @@
           ],
           "suggested_occupational_points": {
             "expression": "EDU*2+DEX*2",
-            "characteristics": [
-              "EDU",
-              "DEX"
-            ]
+            "characteristics": ["EDU", "DEX"]
           }
         },
         {
@@ -587,9 +529,7 @@
           ],
           "suggested_occupational_points": {
             "expression": "EDU*4",
-            "characteristics": [
-              "EDU"
-            ]
+            "characteristics": ["EDU"]
           }
         },
         {
@@ -610,10 +550,7 @@
           ],
           "suggested_occupational_points": {
             "expression": "EDU*2+DEX*2",
-            "characteristics": [
-              "EDU",
-              "DEX"
-            ]
+            "characteristics": ["EDU", "DEX"]
           }
         },
         {
@@ -634,10 +571,7 @@
           ],
           "suggested_occupational_points": {
             "expression": "EDU*2+DEX*2",
-            "characteristics": [
-              "EDU",
-              "DEX"
-            ]
+            "characteristics": ["EDU", "DEX"]
           }
         },
         {
@@ -658,10 +592,7 @@
           ],
           "suggested_occupational_points": {
             "expression": "STR*2+DEX*2",
-            "characteristics": [
-              "STR",
-              "DEX"
-            ]
+            "characteristics": ["STR", "DEX"]
           }
         },
         {
@@ -682,10 +613,7 @@
           ],
           "suggested_occupational_points": {
             "expression": "STR*2+DEX*2",
-            "characteristics": [
-              "STR",
-              "DEX"
-            ]
+            "characteristics": ["STR", "DEX"]
           }
         },
         {
@@ -706,10 +634,7 @@
           ],
           "suggested_occupational_points": {
             "expression": "EDU*2+APP*2",
-            "characteristics": [
-              "EDU",
-              "APP"
-            ]
+            "characteristics": ["EDU", "APP"]
           }
         },
         {
@@ -730,9 +655,7 @@
           ],
           "suggested_occupational_points": {
             "expression": "EDU*4",
-            "characteristics": [
-              "EDU"
-            ]
+            "characteristics": ["EDU"]
           }
         },
         {
@@ -753,10 +676,7 @@
           ],
           "suggested_occupational_points": {
             "expression": "EDU*2+APP*2",
-            "characteristics": [
-              "EDU",
-              "APP"
-            ]
+            "characteristics": ["EDU", "APP"]
           }
         },
         {
@@ -777,10 +697,7 @@
           ],
           "suggested_occupational_points": {
             "expression": "EDU*2+APP*2",
-            "characteristics": [
-              "EDU",
-              "APP"
-            ]
+            "characteristics": ["EDU", "APP"]
           }
         },
         {
@@ -801,9 +718,7 @@
           ],
           "suggested_occupational_points": {
             "expression": "EDU*4",
-            "characteristics": [
-              "EDU"
-            ]
+            "characteristics": ["EDU"]
           }
         },
         {
@@ -824,9 +739,7 @@
           ],
           "suggested_occupational_points": {
             "expression": "EDU*4",
-            "characteristics": [
-              "EDU"
-            ]
+            "characteristics": ["EDU"]
           }
         },
         {
@@ -847,10 +760,7 @@
           ],
           "suggested_occupational_points": {
             "expression": "STR*2+DEX*2",
-            "characteristics": [
-              "STR",
-              "DEX"
-            ]
+            "characteristics": ["STR", "DEX"]
           }
         },
         {
@@ -871,10 +781,7 @@
           ],
           "suggested_occupational_points": {
             "expression": "EDU*2+APP*2",
-            "characteristics": [
-              "EDU",
-              "APP"
-            ]
+            "characteristics": ["EDU", "APP"]
           }
         },
         {
@@ -895,10 +802,7 @@
           ],
           "suggested_occupational_points": {
             "expression": "STR*2+DEX*2",
-            "characteristics": [
-              "STR",
-              "DEX"
-            ]
+            "characteristics": ["STR", "DEX"]
           }
         },
         {
@@ -919,10 +823,7 @@
           ],
           "suggested_occupational_points": {
             "expression": "EDU*2+DEX*2",
-            "characteristics": [
-              "EDU",
-              "DEX"
-            ]
+            "characteristics": ["EDU", "DEX"]
           }
         },
         {
@@ -943,10 +844,7 @@
           ],
           "suggested_occupational_points": {
             "expression": "STR*2+DEX*2",
-            "characteristics": [
-              "STR",
-              "DEX"
-            ]
+            "characteristics": ["STR", "DEX"]
           }
         }
       ]
@@ -974,9 +872,7 @@
           ],
           "suggested_occupational_points": {
             "expression": "EDU*4",
-            "characteristics": [
-              "EDU"
-            ]
+            "characteristics": ["EDU"]
           }
         },
         {
@@ -997,10 +893,7 @@
           ],
           "suggested_occupational_points": {
             "expression": "EDU*2+DEX*2",
-            "characteristics": [
-              "EDU",
-              "DEX"
-            ]
+            "characteristics": ["EDU", "DEX"]
           }
         },
         {
@@ -1021,9 +914,7 @@
           ],
           "suggested_occupational_points": {
             "expression": "EDU*4",
-            "characteristics": [
-              "EDU"
-            ]
+            "characteristics": ["EDU"]
           }
         },
         {
@@ -1044,9 +935,7 @@
           ],
           "suggested_occupational_points": {
             "expression": "EDU*4",
-            "characteristics": [
-              "EDU"
-            ]
+            "characteristics": ["EDU"]
           }
         },
         {
@@ -1067,9 +956,7 @@
           ],
           "suggested_occupational_points": {
             "expression": "EDU*4",
-            "characteristics": [
-              "EDU"
-            ]
+            "characteristics": ["EDU"]
           }
         },
         {
@@ -1090,9 +977,7 @@
           ],
           "suggested_occupational_points": {
             "expression": "EDU*4",
-            "characteristics": [
-              "EDU"
-            ]
+            "characteristics": ["EDU"]
           }
         },
         {
@@ -1113,9 +998,7 @@
           ],
           "suggested_occupational_points": {
             "expression": "EDU*4",
-            "characteristics": [
-              "EDU"
-            ]
+            "characteristics": ["EDU"]
           }
         },
         {
@@ -1136,9 +1019,7 @@
           ],
           "suggested_occupational_points": {
             "expression": "EDU*4",
-            "characteristics": [
-              "EDU"
-            ]
+            "characteristics": ["EDU"]
           }
         },
         {
@@ -1159,10 +1040,7 @@
           ],
           "suggested_occupational_points": {
             "expression": "STR*2+DEX*2",
-            "characteristics": [
-              "STR",
-              "DEX"
-            ]
+            "characteristics": ["STR", "DEX"]
           }
         },
         {
@@ -1183,10 +1061,7 @@
           ],
           "suggested_occupational_points": {
             "expression": "STR*2+DEX*2",
-            "characteristics": [
-              "STR",
-              "DEX"
-            ]
+            "characteristics": ["STR", "DEX"]
           }
         },
         {
@@ -1207,10 +1082,7 @@
           ],
           "suggested_occupational_points": {
             "expression": "STR*2+DEX*2",
-            "characteristics": [
-              "STR",
-              "DEX"
-            ]
+            "characteristics": ["STR", "DEX"]
           }
         },
         {
@@ -1231,10 +1103,7 @@
           ],
           "suggested_occupational_points": {
             "expression": "STR*2+DEX*2",
-            "characteristics": [
-              "STR",
-              "DEX"
-            ]
+            "characteristics": ["STR", "DEX"]
           }
         },
         {
@@ -1255,9 +1124,7 @@
           ],
           "suggested_occupational_points": {
             "expression": "EDU*4",
-            "characteristics": [
-              "EDU"
-            ]
+            "characteristics": ["EDU"]
           }
         },
         {
@@ -1278,10 +1145,7 @@
           ],
           "suggested_occupational_points": {
             "expression": "DEX*2+APP*2",
-            "characteristics": [
-              "DEX",
-              "APP"
-            ]
+            "characteristics": ["DEX", "APP"]
           }
         },
         {
@@ -1302,10 +1166,7 @@
           ],
           "suggested_occupational_points": {
             "expression": "DEX*2+APP*2",
-            "characteristics": [
-              "DEX",
-              "APP"
-            ]
+            "characteristics": ["DEX", "APP"]
           }
         },
         {
@@ -1326,10 +1187,7 @@
           ],
           "suggested_occupational_points": {
             "expression": "EDU*2+APP*2",
-            "characteristics": [
-              "EDU",
-              "APP"
-            ]
+            "characteristics": ["EDU", "APP"]
           }
         },
         {
@@ -1350,10 +1208,7 @@
           ],
           "suggested_occupational_points": {
             "expression": "STR*2+APP*2",
-            "characteristics": [
-              "STR",
-              "APP"
-            ]
+            "characteristics": ["STR", "APP"]
           }
         },
         {
@@ -1374,10 +1229,7 @@
           ],
           "suggested_occupational_points": {
             "expression": "DEX*2+APP*2",
-            "characteristics": [
-              "DEX",
-              "APP"
-            ]
+            "characteristics": ["DEX", "APP"]
           }
         },
         {
@@ -1398,10 +1250,7 @@
           ],
           "suggested_occupational_points": {
             "expression": "EDU*2+APP*2",
-            "characteristics": [
-              "EDU",
-              "APP"
-            ]
+            "characteristics": ["EDU", "APP"]
           }
         },
         {
@@ -1422,10 +1271,7 @@
           ],
           "suggested_occupational_points": {
             "expression": "STR*2+DEX*2",
-            "characteristics": [
-              "STR",
-              "DEX"
-            ]
+            "characteristics": ["STR", "DEX"]
           }
         },
         {
@@ -1446,10 +1292,7 @@
           ],
           "suggested_occupational_points": {
             "expression": "STR*2+DEX*2",
-            "characteristics": [
-              "STR",
-              "DEX"
-            ]
+            "characteristics": ["STR", "DEX"]
           }
         },
         {
@@ -1470,10 +1313,7 @@
           ],
           "suggested_occupational_points": {
             "expression": "STR*2+CON*2",
-            "characteristics": [
-              "STR",
-              "CON"
-            ]
+            "characteristics": ["STR", "CON"]
           }
         },
         {
@@ -1494,10 +1334,7 @@
           ],
           "suggested_occupational_points": {
             "expression": "STR*2+CON*2",
-            "characteristics": [
-              "STR",
-              "CON"
-            ]
+            "characteristics": ["STR", "CON"]
           }
         },
         {
@@ -1518,10 +1355,7 @@
           ],
           "suggested_occupational_points": {
             "expression": "STR*2+CON*2",
-            "characteristics": [
-              "STR",
-              "CON"
-            ]
+            "characteristics": ["STR", "CON"]
           }
         },
         {
@@ -1542,10 +1376,7 @@
           ],
           "suggested_occupational_points": {
             "expression": "EDU*2+DEX*2",
-            "characteristics": [
-              "EDU",
-              "DEX"
-            ]
+            "characteristics": ["EDU", "DEX"]
           }
         },
         {
@@ -1566,10 +1397,7 @@
           ],
           "suggested_occupational_points": {
             "expression": "EDU*2+DEX*2",
-            "characteristics": [
-              "EDU",
-              "DEX"
-            ]
+            "characteristics": ["EDU", "DEX"]
           }
         },
         {
@@ -1590,10 +1418,7 @@
           ],
           "suggested_occupational_points": {
             "expression": "EDU*2+APP*2",
-            "characteristics": [
-              "EDU",
-              "APP"
-            ]
+            "characteristics": ["EDU", "APP"]
           }
         },
         {
@@ -1614,10 +1439,7 @@
           ],
           "suggested_occupational_points": {
             "expression": "EDU*2+APP*2",
-            "characteristics": [
-              "EDU",
-              "APP"
-            ]
+            "characteristics": ["EDU", "APP"]
           }
         }
       ]
@@ -1645,9 +1467,7 @@
           ],
           "suggested_occupational_points": {
             "expression": "EDU*4",
-            "characteristics": [
-              "EDU"
-            ]
+            "characteristics": ["EDU"]
           }
         },
         {
@@ -1668,10 +1488,7 @@
           ],
           "suggested_occupational_points": {
             "expression": "EDU*2+APP*2",
-            "characteristics": [
-              "EDU",
-              "APP"
-            ]
+            "characteristics": ["EDU", "APP"]
           }
         },
         {
@@ -1692,10 +1509,7 @@
           ],
           "suggested_occupational_points": {
             "expression": "EDU*2+APP*2",
-            "characteristics": [
-              "EDU",
-              "APP"
-            ]
+            "characteristics": ["EDU", "APP"]
           }
         },
         {
@@ -1716,10 +1530,7 @@
           ],
           "suggested_occupational_points": {
             "expression": "EDU*2+APP*2",
-            "characteristics": [
-              "EDU",
-              "APP"
-            ]
+            "characteristics": ["EDU", "APP"]
           }
         },
         {
@@ -1740,9 +1551,7 @@
           ],
           "suggested_occupational_points": {
             "expression": "EDU*4",
-            "characteristics": [
-              "EDU"
-            ]
+            "characteristics": ["EDU"]
           }
         },
         {
@@ -1763,10 +1572,7 @@
           ],
           "suggested_occupational_points": {
             "expression": "EDU*2+POW*2",
-            "characteristics": [
-              "EDU",
-              "POW"
-            ]
+            "characteristics": ["EDU", "POW"]
           }
         },
         {
@@ -1787,10 +1593,7 @@
           ],
           "suggested_occupational_points": {
             "expression": "STR*2+DEX*2",
-            "characteristics": [
-              "STR",
-              "DEX"
-            ]
+            "characteristics": ["STR", "DEX"]
           }
         },
         {
@@ -1811,10 +1614,7 @@
           ],
           "suggested_occupational_points": {
             "expression": "EDU*2+POW*2",
-            "characteristics": [
-              "EDU",
-              "POW"
-            ]
+            "characteristics": ["EDU", "POW"]
           }
         },
         {
@@ -1835,10 +1635,7 @@
           ],
           "suggested_occupational_points": {
             "expression": "EDU*2+APP*2",
-            "characteristics": [
-              "EDU",
-              "APP"
-            ]
+            "characteristics": ["EDU", "APP"]
           }
         },
         {
@@ -1859,10 +1656,7 @@
           ],
           "suggested_occupational_points": {
             "expression": "EDU*2+APP*2",
-            "characteristics": [
-              "EDU",
-              "APP"
-            ]
+            "characteristics": ["EDU", "APP"]
           }
         },
         {
@@ -1883,10 +1677,7 @@
           ],
           "suggested_occupational_points": {
             "expression": "EDU*2+POW*2",
-            "characteristics": [
-              "EDU",
-              "POW"
-            ]
+            "characteristics": ["EDU", "POW"]
           }
         },
         {
@@ -1907,10 +1698,7 @@
           ],
           "suggested_occupational_points": {
             "expression": "EDU*2+POW*2",
-            "characteristics": [
-              "EDU",
-              "POW"
-            ]
+            "characteristics": ["EDU", "POW"]
           }
         },
         {
@@ -1931,9 +1719,7 @@
           ],
           "suggested_occupational_points": {
             "expression": "EDU*4",
-            "characteristics": [
-              "EDU"
-            ]
+            "characteristics": ["EDU"]
           }
         },
         {
@@ -1954,9 +1740,7 @@
           ],
           "suggested_occupational_points": {
             "expression": "EDU*4",
-            "characteristics": [
-              "EDU"
-            ]
+            "characteristics": ["EDU"]
           }
         },
         {
@@ -1977,9 +1761,7 @@
           ],
           "suggested_occupational_points": {
             "expression": "EDU*4",
-            "characteristics": [
-              "EDU"
-            ]
+            "characteristics": ["EDU"]
           }
         },
         {
@@ -2000,10 +1782,7 @@
           ],
           "suggested_occupational_points": {
             "expression": "EDU*2+DEX*2",
-            "characteristics": [
-              "EDU",
-              "DEX"
-            ]
+            "characteristics": ["EDU", "DEX"]
           }
         },
         {
@@ -2024,9 +1803,7 @@
           ],
           "suggested_occupational_points": {
             "expression": "EDU*4",
-            "characteristics": [
-              "EDU"
-            ]
+            "characteristics": ["EDU"]
           }
         },
         {
@@ -2047,9 +1824,7 @@
           ],
           "suggested_occupational_points": {
             "expression": "EDU*4",
-            "characteristics": [
-              "EDU"
-            ]
+            "characteristics": ["EDU"]
           }
         },
         {
@@ -2070,10 +1845,7 @@
           ],
           "suggested_occupational_points": {
             "expression": "EDU*2+DEX*2",
-            "characteristics": [
-              "EDU",
-              "DEX"
-            ]
+            "characteristics": ["EDU", "DEX"]
           }
         }
       ]

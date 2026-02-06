@@ -4,14 +4,14 @@
  * Shows character, skill, penalty, and dice result.
  */
 
-import { useState, useEffect, useMemo, useRef } from 'react';
+import { useState, useEffect, useMemo, useRef } from "react";
 
 /** Structured dice roll info (matches backend DiceRollInfo) */
 export interface DiceRollInfo {
   character: string;
   roll: string;
   skill?: string;
-  success?: 'success' | 'failure' | 'critical' | 'fumble';
+  success?: "success" | "failure" | "critical" | "fumble";
   penalty?: string;
 }
 
@@ -34,18 +34,20 @@ interface ParsedDiceRoll {
 
 /** Psychology check: do not display dice result (Keeper secret) */
 function isPsychologyRoll(info: DiceRollInfo): boolean {
-  const skill = (info.skill ?? '').toLowerCase();
-  const roll = (info.roll ?? '').toLowerCase();
+  const skill = (info.skill ?? "").toLowerCase();
+  const roll = (info.roll ?? "").toLowerCase();
   return (
-    skill.includes('psychology') ||
-    skill.includes('心理学') || // Chinese translation - required for zh language support
-    roll.includes('psychology') ||
-    roll.includes('心理学')  // Chinese translation - required for zh language support
+    skill.includes("psychology") ||
+    skill.includes("心理学") || // Chinese translation - required for zh language support
+    roll.includes("psychology") ||
+    roll.includes("心理学") // Chinese translation - required for zh language support
   );
 }
 
 /** Normalize input to DiceRollInfo[] */
-function normalizeDiceRolls(input: Array<string | DiceRollInfo>): DiceRollInfo[] {
+function normalizeDiceRolls(
+  input: Array<string | DiceRollInfo>
+): DiceRollInfo[] {
   if (!input?.length) return [];
   return input.map((item) =>
     typeof item === "string" ? { character: "", roll: item } : item
@@ -53,8 +55,15 @@ function normalizeDiceRolls(input: Array<string | DiceRollInfo>): DiceRollInfo[]
 }
 
 /** Parse expression and result from roll string */
-function parseDiceRoll(roll: string): { expression: string; result: number; diceType: string; numDice: number } {
-  let match = roll.match(/roll_dice:\s*(\d+)d(\d+)\s*->\s*(?:[\d+\s=]+\s*=\s*)?(\d+)/);
+function parseDiceRoll(roll: string): {
+  expression: string;
+  result: number;
+  diceType: string;
+  numDice: number;
+} {
+  let match = roll.match(
+    /roll_dice:\s*(\d+)d(\d+)\s*->\s*(?:[\d+\s=]+\s*=\s*)?(\d+)/
+  );
   if (match) {
     return {
       expression: `${match[1]}d${match[2]}`,
@@ -95,16 +104,21 @@ function parseDiceRoll(roll: string): { expression: string; result: number; dice
   const fallbackExpr = roll.match(/(\d+)d(\d+)/);
   if (fallbackMatch) {
     return {
-      expression: fallbackExpr ? `${fallbackExpr[1]}d${fallbackExpr[2]}` : '1d100',
+      expression: fallbackExpr
+        ? `${fallbackExpr[1]}d${fallbackExpr[2]}`
+        : "1d100",
       result: parseInt(fallbackMatch[1], 10),
-      diceType: fallbackExpr ? `d${fallbackExpr[2]}` : 'd100',
+      diceType: fallbackExpr ? `d${fallbackExpr[2]}` : "d100",
       numDice: fallbackExpr ? parseInt(fallbackExpr[1], 10) : 1,
     };
   }
-  return { expression: roll, result: 0, diceType: 'd100', numDice: 1 };
+  return { expression: roll, result: 0, diceType: "d100", numDice: 1 };
 }
 
-export function DiceAnimation({ diceRolls, onAnimationComplete }: DiceAnimationProps) {
+export function DiceAnimation({
+  diceRolls,
+  onAnimationComplete,
+}: DiceAnimationProps) {
   const [isAnimating, setIsAnimating] = useState(true);
   const [animationCompleted, setAnimationCompleted] = useState(false);
   const animationTimerRef = useRef<number | null>(null);
@@ -119,7 +133,7 @@ export function DiceAnimation({ diceRolls, onAnimationComplete }: DiceAnimationP
         const parsed = parseDiceRoll(info.roll);
         return {
           ...parsed,
-          character: info.character || '',
+          character: info.character || "",
           skill: info.skill,
           success: info.success,
           penalty: info.penalty,
@@ -128,8 +142,8 @@ export function DiceAnimation({ diceRolls, onAnimationComplete }: DiceAnimationP
       .filter((p) => p.result > 0);
   }, [normalized]);
 
-  const animatedDiceRollsRef = useRef<string>('');
-  const callbackCalledRef = useRef<string>('');
+  const animatedDiceRollsRef = useRef<string>("");
+  const callbackCalledRef = useRef<string>("");
 
   useEffect(() => {
     if (onAnimationComplete === undefined) {
@@ -151,7 +165,7 @@ export function DiceAnimation({ diceRolls, onAnimationComplete }: DiceAnimationP
     }
 
     animatedDiceRollsRef.current = diceRollsKey;
-    callbackCalledRef.current = '';
+    callbackCalledRef.current = "";
     setIsAnimating(true);
     setAnimationCompleted(false);
 
@@ -197,14 +211,18 @@ export function DiceAnimation({ diceRolls, onAnimationComplete }: DiceAnimationP
                 <span className="dice-roll-penalty">{roll.penalty}</span>
               )}
               {roll.success && (
-                <span className={`dice-roll-success dice-roll-success--${roll.success}`}>
+                <span
+                  className={`dice-roll-success dice-roll-success--${roll.success}`}
+                >
                   {roll.success}
                 </span>
               )}
             </div>
             <div className="dice-roll-values">
               <div className="dice-expression">{roll.expression}</div>
-              <div className={`dice-result ${isAnimating ? 'dice-spinning' : 'dice-final'}`}>
+              <div
+                className={`dice-result ${isAnimating ? "dice-spinning" : "dice-final"}`}
+              >
                 {isAnimating ? (
                   <div className="dice-spinner">
                     <span className="dice-face">⚀</span>

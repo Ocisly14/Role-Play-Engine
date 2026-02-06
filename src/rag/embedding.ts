@@ -1,8 +1,15 @@
 import { OpenAIEmbeddings } from "@langchain/openai";
 import { GoogleGenerativeAIEmbeddings } from "@langchain/google-genai";
 import { getModelSettings } from "../models/generator.js";
-import { ModelClass, ModelProviderName, type EmbeddingModelSettings } from "../models/types.js";
-import { LocalEmbeddingManager, type LocalEmbeddingLanguage } from "./localEmbeddingManager.js";
+import {
+  ModelClass,
+  ModelProviderName,
+  type EmbeddingModelSettings,
+} from "../models/types.js";
+import {
+  LocalEmbeddingManager,
+  type LocalEmbeddingLanguage,
+} from "./localEmbeddingManager.js";
 
 export class EmbeddingClient {
   private provider: ModelProviderName;
@@ -25,10 +32,15 @@ export class EmbeddingClient {
         return await this.local.embed(normalized, options?.language);
       }
     } catch (error) {
-      console.warn("[RAG] Local embedding failed, falling back to remote provider", error);
+      console.warn(
+        "[RAG] Local embedding failed, falling back to remote provider",
+        error
+      );
     }
 
-    const settings = getModelSettings(this.provider, ModelClass.EMBEDDING) as EmbeddingModelSettings | undefined;
+    const settings = getModelSettings(this.provider, ModelClass.EMBEDDING) as
+      | EmbeddingModelSettings
+      | undefined;
 
     if (this.provider === ModelProviderName.GOOGLE) {
       const model = new GoogleGenerativeAIEmbeddings({
