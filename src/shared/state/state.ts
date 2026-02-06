@@ -124,12 +124,22 @@ export interface ActionResult {
 }
 
 /** Build DiceRollInfo[] from action results for frontend display */
-export function buildDiceRollInfos(actionResults: ActionResult[]): DiceRollInfo[] {
+export function buildDiceRollInfos(
+  actionResults: ActionResult[],
+  options?: {
+    opposedRollCharacter?: string | null;
+  }
+): DiceRollInfo[] {
   const infos: DiceRollInfo[] = [];
+  const opposedRollCharacter = options?.opposedRollCharacter?.trim() || null;
   for (const result of actionResults || []) {
     const rolls = result.diceRolls || [];
     for (const roll of rolls) {
-      infos.push(parseDiceRollInfo(result.character, roll));
+      const isOpposed = /^\s*1d100_opposed\[\d+\]\s*:/i.test(roll);
+      const rollCharacter = isOpposed && opposedRollCharacter
+        ? opposedRollCharacter
+        : result.character;
+      infos.push(parseDiceRollInfo(rollCharacter, roll));
     }
   }
   return infos;

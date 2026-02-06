@@ -97,6 +97,7 @@ DiceUsed field:
 - Record ONLY the dice you actually used from the pre-rolled dice
 - Format: "[dice_name][index]: [result] ([skill/purpose] [penalty if any] = [success/failure])"
 - Examples: "1d100[0]: 67 (Brawl 50% = success)", "1d100[1]: 82 (Spot Hidden 60% penalty die = failure)", "1d6[2]: 4 (knife damage)"
+- For opposed checks, the second roll MUST use dice_name exactly "1d100_opposed", e.g. "1d100_opposed[0]: 82 (Brawling 25% = failure)"
 - When penalty dice or bonus dice apply, include "penalty die" or "bonus die" in parentheses, e.g. "(Perception 25% penalty die = failure)"
 - When a percentage penalty applies (e.g. -20%), include it: "(Drive Auto 50% -20 = failure)"
 - If no dice needed, use empty array: "diceUsed": []

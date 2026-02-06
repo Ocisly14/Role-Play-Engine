@@ -33,6 +33,7 @@
     "@langchain/core": "^1.0.1",
     "@langchain/google-genai": "^0.1.0",
     "@langchain/langgraph": "^1.0.4",
+    "@langchain/langgraph-checkpoint-sqlite": "^1.0.0",
     "@langchain/openai": "^0.3.4",
     "bcryptjs": "^2.4.3",
     "better-sqlite3": "^11.8.1",

@@ -60,7 +60,7 @@ export interface GameTurn {
   location: string | null;
   
   // Status
-  status: 'processing' | 'completed' | 'error';
+  status: 'processing' | 'completed' | 'error' | 'requires_skill_selection';
   errorMessage: string | null;
   startedAt: string;
   completedAt: string | null;

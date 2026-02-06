@@ -4,7 +4,8 @@
  * Uses DynamicWorld-specific agents and includes DynamicGameState
  */
 
-import { END, START, StateGraph } from "@langchain/langgraph";
+import { END, START, StateGraph, interrupt } from "@langchain/langgraph";
+import { SqliteSaver } from "@langchain/langgraph-checkpoint-sqlite";
 import type { CoCDatabase } from "../../shared/agents/memory/database/index.js";
 import type { BaseMessage } from "@langchain/core/messages";
 import { HumanMessage, AIMessage } from "@langchain/core/messages";
@@ -43,7 +44,6 @@ export interface DynamicGraphState {
   language?: "en" | "zh";  // User-selected output language
   selectedSkill?: string | null;  // Optional player-selected skill for this turn
   skillSelectionMode?: "auto" | "manual"; // How skill selection should behave for this turn
-  precomputedActionAnalysis?: ActionAnalysis | null;  // Saved actionAnalysis from initial orchestrator run (for skill selection retry)
   stream?: {
     onDiceRolls?: (diceRolls: DiceRollInfo[]) => void;
     onSceneImage?: (payload: {
@@ -76,6 +76,9 @@ export const buildDynamicGraph = (
   const keeperAgent = new KeeperAgent();
   const directorAgent = new DirectorAgent(scenarioLoader, db);
   const turnManager = new TurnManager(db);
+
+  // Create checkpointer for saving/resuming graph state
+  const checkpointer = SqliteSaver.fromConnString(":memory:");
   
   // Helper function to create DynamicGameStateManager with db for snapshot management
   const createDGSMWithDb = (state: DynamicGameState) => new DynamicGameStateManager(state, db);
@@ -129,10 +132,6 @@ export const buildDynamicGraph = (
         value: (left: DynamicGraphState["skillSelectionMode"] | undefined, right?: DynamicGraphState["skillSelectionMode"]) =>
           right !== undefined ? right : left,
       },
-      precomputedActionAnalysis: {
-        value: (left: ActionAnalysis | null | undefined, right?: ActionAnalysis | null | undefined) =>
-          right !== undefined ? right : left,
-      },
       stream: {
         value: (left: DynamicGraphState["stream"] | undefined, right?: DynamicGraphState["stream"]) =>
           right !== undefined ? right : left,
@@ -152,9 +151,30 @@ export const buildDynamicGraph = (
     }
 
     try {
-      // Real player input - clear temporary state from previous round
-      console.log("👤 [Dynamic Entry] Real player input - clearing temporary state");
       const dgsm = new DynamicGameStateManager(state.dynamicGameState);
+      const currentState = dgsm.getState();
+
+      // Check if this is resuming from an interrupt (has actionAnalysis but no results yet)
+      const actionAnalysis = currentState.temporaryInfo.currentActionAnalysis;
+      const hasNoActionResults =
+        !currentState.temporaryInfo.actionResults ||
+        currentState.temporaryInfo.actionResults.length === 0;
+      const isResuming = actionAnalysis !== null && hasNoActionResults;
+
+      if (isResuming) {
+        console.log("🔄 [Dynamic Entry] Resuming from interrupt - preserving state");
+        console.log(
+          `   ✓ Preserving actionAnalysis: ${actionAnalysis.action} (${actionAnalysis.actionType})`
+        );
+        // Don't clear state when resuming, just return as-is
+        return {
+          ...state,
+          simulatedQueryCount: 0,
+        };
+      }
+
+      // Real player input (new turn) - clear temporary state from previous round
+      console.log("👤 [Dynamic Entry] Real player input - clearing temporary state");
 
       dgsm.clearActionResults();
       console.log("   ✓ Cleared action results");
@@ -175,14 +195,6 @@ export const buildDynamicGraph = (
       dgsm.incrementTurnCounter();
       const currentTurn = dgsm.getTurnsInCurrentScene();
       console.log(`   ✓ Turn counter incremented to: ${currentTurn}`);
-
-      // If precomputedActionAnalysis exists (retry after skill selection), inject it into game state
-      if (state.precomputedActionAnalysis) {
-        console.log("🔄 [Dynamic Entry] Skill selection retry detected - injecting saved actionAnalysis");
-        const currentState = dgsm.getState();
-        currentState.temporaryInfo.currentActionAnalysis = state.precomputedActionAnalysis;
-        console.log(`   ✓ Injected actionAnalysis: ${state.precomputedActionAnalysis.action} (${state.precomputedActionAnalysis.actionType})`);
-      }
 
       console.log("✅ [Dynamic Entry] Temporary state cleared for new player turn");
 
@@ -210,9 +222,10 @@ export const buildDynamicGraph = (
       return END;
     }
 
-    // Check if this is a skill selection retry (precomputedActionAnalysis exists)
-    if (state.precomputedActionAnalysis) {
-      console.log("🔀 [Dynamic Entry Router] → memory (skip orchestrator, use saved actionAnalysis)");
+    // Check if this is resuming from interrupt (has actionAnalysis already)
+    const hasActionAnalysis = state.dynamicGameState.temporaryInfo.currentActionAnalysis !== null;
+    if (hasActionAnalysis) {
+      console.log("🔀 [Dynamic Entry Router] → memory (resuming from interrupt, skip orchestrator)");
       return "memory";
     }
 
@@ -413,7 +426,90 @@ export const buildDynamicGraph = (
   });
 
   graph.addEdge("orchestrator" as any, "memory" as any);
-  graph.addEdge("memory" as any, "action" as any);
+
+  // Add skill selection check node
+  graph.addNode("skillSelectionCheck", async (state: DynamicGraphState) => {
+    console.log("🎯 [Skill Selection Check] 检查是否需要技能选择...");
+    const dgsm = new DynamicGameStateManager(state.dynamicGameState);
+    const currentState = dgsm.getState();
+    const actionAnalysis = currentState.temporaryInfo.currentActionAnalysis;
+    const selectedSkill = state.selectedSkill;
+
+    if (actionAnalysis?.requiresSkillSelection) {
+      console.log(`   ⚠️  Action requires skill selection: ${actionAnalysis.action}`);
+
+      if (selectedSkill) {
+        console.log(`   ✓ Player has selected skill: ${selectedSkill}`);
+        console.log(`   → Continuing to action execution`);
+      } else {
+        console.log(`   ⚠️  No skill selected - pausing execution`);
+        console.log(`   → Will mark turn as requires_skill_selection`);
+      }
+    } else {
+      console.log(`   ✓ No skill selection required`);
+    }
+
+    return state;
+  });
+
+  // Conditional routing: memory → skillSelectionCheck → action or skillSelectionRequired
+  graph.addEdge("memory" as any, "skillSelectionCheck" as any);
+
+  graph.addConditionalEdges(
+    "skillSelectionCheck" as any,
+    (state: DynamicGraphState) => {
+      const currentState = state.dynamicGameState;
+      const actionAnalysis = currentState.temporaryInfo.currentActionAnalysis;
+      const selectedSkill = state.selectedSkill;
+
+      // Check if skill selection is required and no skill was provided
+      if (actionAnalysis?.requiresSkillSelection && !selectedSkill) {
+        console.log("🔀 [Skill Selection Router] → skillSelectionRequired (需要技能选择)");
+        return "skillSelectionRequired";
+      }
+
+      console.log("🔀 [Skill Selection Router] → action (继续执行)");
+      return "action";
+    },
+    {
+      skillSelectionRequired: "skillSelectionRequired" as any,
+      action: "action" as any,
+    }
+  );
+
+  // Add skillSelectionRequired node (interrupts graph execution to wait for skill selection)
+  graph.addNode("skillSelectionRequired", async (state: DynamicGraphState) => {
+    console.log("⏸️  [Skill Selection Required] 暂停执行，等待玩家选择技能...");
+    const dgsm = new DynamicGameStateManager(state.dynamicGameState);
+    const currentState = dgsm.getState();
+    const actionAnalysis = currentState.temporaryInfo.currentActionAnalysis;
+
+    // Mark turn as requiring skill selection
+    if (state.turnId && actionAnalysis) {
+      try {
+        turnManager.markRequiresSkillSelection(state.turnId, actionAnalysis);
+        console.log(`   ✓ Turn ${state.turnId} marked as requires_skill_selection`);
+        console.log(`   Action: ${actionAnalysis.action}`);
+        console.log(`   Action Type: ${actionAnalysis.actionType}`);
+      } catch (error) {
+        console.error("   ❌ Failed to mark turn:", error);
+      }
+    }
+
+    // Interrupt the graph to wait for user skill selection
+    // The graph will resume when the user provides selectedSkill
+    console.log("   🔄 Interrupting graph execution - waiting for skill selection");
+    interrupt({
+      action: actionAnalysis?.action,
+      actionType: actionAnalysis?.actionType,
+      requiresSkillSelection: true,
+    });
+
+    return state;
+  });
+
+  // After interrupt is resolved (user selected skill), continue to action
+  graph.addEdge("skillSelectionRequired" as any, "action" as any);
   graph.addEdge("action" as any, "director" as any);
 
   // Director: handle scene changes and narrative direction
@@ -670,12 +766,17 @@ export const buildDynamicGraph = (
     const language = (state.language === "en" || state.language === "zh") ? state.language : "zh";
     const stream = state.stream;
     const actionResults = (dgsm.getState().temporaryInfo.actionResults || []) as ActionResult[];
+    const actionAnalysis = dgsm.getState().temporaryInfo.currentActionAnalysis;
+    const opposedRollTarget = actionAnalysis?.target?.name || null;
     const playerName = dgsm.getState().playerCharacter?.name || null;
     const playerNameNormalized = playerName ? playerName.trim().toLowerCase() : null;
-    const diceRollInfos = buildDiceRollInfos(actionResults).filter((roll) => {
+    const playerActionResults = actionResults.filter((result) => {
       if (!playerNameNormalized) return true;
-      const rollNameNormalized = roll.character ? roll.character.trim().toLowerCase() : null;
-      return !!rollNameNormalized && rollNameNormalized === playerNameNormalized;
+      const resultCharacter = result.character ? result.character.trim().toLowerCase() : null;
+      return !!resultCharacter && resultCharacter === playerNameNormalized;
+    });
+    const diceRollInfos = buildDiceRollInfos(playerActionResults, {
+      opposedRollCharacter: opposedRollTarget,
     });
     const shouldStream = Boolean(stream?.onNarrativeDelta);
 
@@ -750,7 +851,7 @@ export const buildDynamicGraph = (
 
   graph.addEdge(START, "entry" as any);
 
-  return graph.compile();
+  return graph.compile({ checkpointer });
 };
 
 /**

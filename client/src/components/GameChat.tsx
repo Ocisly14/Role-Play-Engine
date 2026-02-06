@@ -5,7 +5,7 @@
  */
 
 import { useState, useEffect, useRef, useCallback } from 'react';
-import { useTurnPolling } from '../hooks/useTurnPolling';
+import { useTurnPolling, type TurnStatus } from '../hooks/useTurnPolling';
 import { getSkillNameZh } from '../lib/skillNames';
 import { DiceAnimation, type DiceRollInfo } from './DiceAnimation';
 import { authFetch } from '../utils/authFetch';
@@ -144,6 +144,9 @@ export function GameChat({ sessionId, apiBaseUrl = '/api', characterName = 'Inve
   const [suggestedSkills, setSuggestedSkills] = useState<Array<{ name: string; value: number; displayName?: string }>>([]);
   const [isSuggesting, setIsSuggesting] = useState(false);
   const [isSkillPickerOpen, setIsSkillPickerOpen] = useState(false);
+  const [isSkillSelectionModalOpen, setIsSkillSelectionModalOpen] = useState(false);
+  const [pendingTurnForSkillSelection, setPendingTurnForSkillSelection] = useState<TurnStatus | null>(null);
+  const processedSkillSelectionTurnsRef = useRef<Set<string>>(new Set());
   const [suggestedLanguage, setSuggestedLanguage] = useState<'en' | 'zh'>('zh');
   const [streamingTurnId, setStreamingTurnId] = useState<string | null>(null);
   const [isInputCollapsed, setIsInputCollapsed] = useState(true);
@@ -878,27 +881,41 @@ export function GameChat({ sessionId, apiBaseUrl = '/api', characterName = 'Inve
   // Handle skill selection requirement
   useEffect(() => {
     if (turn && turn.status === 'requires_skill_selection') {
-      console.log('[GameChat] Turn requires skill selection, opening skill picker');
-
-      // Open skill picker modal
-      setIsSkillPickerOpen(true);
-
-      // Set suggested skills from action analysis if available
-      if (turn.actionAnalysis) {
-        // Use the existing skill suggestion mechanism with the player's original input
-        // The RAG-based suggestion will provide top 3 skills
-        const originalInput = turn.characterInput || '';
-        if (originalInput) {
-          // Trigger skill suggestion (this is already implemented in your code)
-          // The suggestedSkills state will be populated by the existing mechanism
-        }
-      }
-
-      // Stop polling since we're waiting for user input
-      stopPolling();
+      // Always clear sending/loading state when backend asks for skill selection.
       setIsSending(false);
+      stopPolling();
+
+      // Check if this turn has already been processed
+      const turnId = turn.turnId || `turn-${turn.turnNumber}`;
+      const alreadyProcessed = processedSkillSelectionTurnsRef.current.has(turnId);
+
+      // Only open modal if not already processed and modal is not open
+      if (!alreadyProcessed && !isSkillSelectionModalOpen) {
+        console.log('[GameChat] Turn requires skill selection, opening modal');
+        console.log('[GameChat] availableSkills count:', availableSkills.length);
+        console.log('[GameChat] suggestedSkills count:', suggestedSkills.length);
+        console.log('[GameChat] turn data:', {
+          turnId: turn.turnId,
+          characterInput: turn.characterInput,
+          hasActionAnalysis: !!turn.actionAnalysis,
+        });
+
+        // Mark this turn as processed
+        processedSkillSelectionTurnsRef.current.add(turnId);
+
+        // Open skill selection modal
+        setIsSkillSelectionModalOpen(true);
+        setPendingTurnForSkillSelection(turn);
+
+        // Ensure skills are loaded
+        if (availableSkills.length === 0 && fetchGameEndingRef.current) {
+          console.log('[GameChat] Skills not loaded, fetching game state...');
+          fetchGameEndingRef.current();
+        }
+
+      }
     }
-  }, [turn, stopPolling]);
+  }, [turn, stopPolling, availableSkills.length, suggestedSkills.length, isSkillSelectionModalOpen]);
 
   // Update messages when turn completes
   useEffect(() => {
@@ -1232,7 +1249,7 @@ export function GameChat({ sessionId, apiBaseUrl = '/api', characterName = 'Inve
 
       setSaveMessage(`✓ ${data.message}: ${data.checkpointName}`);
       updateLastSavedTurnNumber(messagesRef.current);
-      
+
       // Clear message after 3 seconds
       setTimeout(() => {
         setSaveMessage(null);
@@ -1245,8 +1262,172 @@ export function GameChat({ sessionId, apiBaseUrl = '/api', characterName = 'Inve
     }
   };
 
+  const handleSkillSelectionConfirm = async () => {
+    if (!pendingTurnForSkillSelection || !selectedSkill) {
+      console.warn('[GameChat] Cannot confirm skill selection: no turn or skill selected');
+      return;
+    }
+
+    const messageText = pendingTurnForSkillSelection.characterInput;
+    const skillToSend = selectedSkill.trim();
+    const turnId = pendingTurnForSkillSelection.turnId || `turn-${pendingTurnForSkillSelection.turnNumber}`;
+
+    console.log('[GameChat] Confirming skill selection:', skillToSend, 'for turn:', turnId);
+    console.log('[GameChat] Processed turns before:', Array.from(processedSkillSelectionTurnsRef.current));
+
+    // Close modal and clear states IMMEDIATELY
+    setIsSkillSelectionModalOpen(false);
+    setPendingTurnForSkillSelection(null);
+    setSelectedSkill('');
+    setIsSending(true);
+
+    try {
+      // Re-submit the action with the selected skill
+      const response = await authFetch(`${apiBaseUrl}/turns`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          message: messageText,
+          selectedSkill: skillToSend,
+          skillSelectionMode: 'manual',
+          language,
+        }),
+      });
+
+      const data = await response.json();
+
+      if (!data.success) {
+        throw new Error(data.error || 'Failed to send message');
+      }
+
+      // Start polling for turn completion
+      startPolling(data.turnId);
+    } catch (err) {
+      console.error('Failed to submit with skill selection:', err);
+      setIsSending(false);
+      // Re-open modal on error
+      setIsSkillSelectionModalOpen(true);
+      alert('Failed to submit action: ' + (err instanceof Error ? err.message : 'Unknown error'));
+    }
+  };
+
+  const handleSkillSelectionCancel = () => {
+    setIsSkillSelectionModalOpen(false);
+    setPendingTurnForSkillSelection(null);
+    setSelectedSkill('');
+    setIsSending(false);
+  };
+
   return (
     <div className="game-chat-container backdrop-blur-sm border border-slate-200 shadow-md rounded-lg">
+      {/* Skill Selection Modal */}
+      {isSkillSelectionModalOpen && (
+        <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/50 backdrop-blur-sm">
+          <div className="bg-white rounded-2xl shadow-2xl max-w-2xl w-full mx-4 max-h-[80vh] overflow-hidden flex flex-col">
+            {/* Modal Header */}
+            <div className="bg-gradient-to-r from-amber-500 to-orange-500 px-6 py-4 text-white">
+              <h2 className="text-2xl font-bold flex items-center gap-2">
+                <span>⚔️</span>
+                <span>技能选择 Skill Selection</span>
+              </h2>
+              <p className="text-amber-50 text-sm mt-1">
+                你的行动需要进行技能检定 - Your action requires a skill check
+              </p>
+            </div>
+
+            {/* Modal Body */}
+            <div className="flex-1 overflow-y-auto p-6">
+              {/* Action Description */}
+              {pendingTurnForSkillSelection && (
+                <div className="mb-6 p-4 bg-slate-50 rounded-lg border border-slate-200">
+                  <p className="text-sm text-slate-600 mb-1">你的行动：</p>
+                  <p className="font-medium text-slate-900">{pendingTurnForSkillSelection.characterInput}</p>
+                </div>
+              )}
+
+              {/* Selected Skill Display */}
+              {selectedSkill && (
+                <div className="mb-4 p-3 bg-amber-50 border-2 border-amber-300 rounded-lg">
+                  <p className="text-xs text-amber-700 mb-1">已选择技能：</p>
+                  <div className="flex items-center justify-between">
+                    <span className="text-lg font-semibold text-amber-900">
+                      {suggestedLanguage === 'zh'
+                        ? (availableSkills.find(s => s.name === selectedSkill)?.displayNameZh ?? getSkillNameZh(selectedSkill))
+                        : selectedSkill}
+                    </span>
+                    <span className="text-amber-700 font-mono">
+                      {availableSkills.find(s => s.name === selectedSkill)?.value ?? 0}%
+                    </span>
+                  </div>
+                </div>
+              )}
+
+              {/* Skills Grid */}
+              {availableSkills.length > 0 ? (
+                <div>
+                  <p className="text-sm font-medium text-slate-700 mb-3">
+                    选择一个技能进行检定：
+                  </p>
+                  <div className="grid grid-cols-2 gap-2 max-h-96 overflow-y-auto">
+                    {availableSkills.map((skill) => (
+                      <button
+                        key={skill.name}
+                        type="button"
+                        onClick={() => setSelectedSkill(skill.name)}
+                        className={`text-left p-3 rounded-lg border-2 transition-all ${
+                          selectedSkill === skill.name
+                            ? 'border-amber-500 bg-amber-50 shadow-md scale-[1.02]'
+                            : 'border-slate-200 bg-white hover:border-slate-300 hover:shadow-sm'
+                        }`}
+                      >
+                        <div className="flex items-center justify-between">
+                          <span className={`font-medium ${
+                            selectedSkill === skill.name ? 'text-amber-900' : 'text-slate-700'
+                          }`}>
+                            {suggestedLanguage === 'zh'
+                              ? (skill.displayNameZh ?? getSkillNameZh(skill.name))
+                              : skill.name}
+                          </span>
+                          <span className={`font-mono text-sm ${
+                            selectedSkill === skill.name ? 'text-amber-700' : 'text-slate-500'
+                          }`}>
+                            {skill.value}%
+                          </span>
+                        </div>
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              ) : (
+                <div className="text-center py-8">
+                  <div className="w-8 h-8 border-3 border-slate-400 border-t-transparent rounded-full animate-spin mx-auto mb-3" />
+                  <p className="text-slate-600">加载技能列表中...</p>
+                </div>
+              )}
+            </div>
+
+            {/* Modal Footer */}
+            <div className="border-t border-slate-200 px-6 py-4 bg-slate-50 flex items-center justify-end gap-3">
+              <button
+                onClick={handleSkillSelectionCancel}
+                className="px-4 py-2 text-slate-700 bg-white border border-slate-300 rounded-lg hover:bg-slate-50 transition-colors"
+              >
+                取消 Cancel
+              </button>
+              <button
+                onClick={handleSkillSelectionConfirm}
+                disabled={!selectedSkill}
+                className="px-6 py-2 bg-gradient-to-r from-amber-500 to-orange-500 text-white font-medium rounded-lg hover:from-amber-600 hover:to-orange-600 transition-all disabled:opacity-50 disabled:cursor-not-allowed shadow-lg disabled:shadow-none"
+              >
+                确认选择 Confirm
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Scene Change Overlay */}
       {isSceneChanging && (
         <div className="fixed inset-0 z-50 flex items-center justify-center pointer-events-none">
