@@ -13,6 +13,7 @@ import { CharacterSelector } from "./components/CharacterSelector";
 import { ModSelector } from "./components/ModSelector";
 import { ModManager } from "./components/ModManager";
 import { StoryCreator } from "./components/StoryCreator";
+import type { DiceRollInfo } from "./components/DiceAnimation";
 import { authFetch } from "./utils/authFetch";
 import { findAvailableImage } from "./utils/imageLoader";
 import { setBackgroundWithTransition } from "./utils/backgroundTransition";
@@ -149,7 +150,7 @@ const AppShell: React.FC = () => {
     content: string;
     timestamp: string;
     turnNumber: number;
-    diceRolls?: string[];
+    diceRolls?: DiceRollInfo[] | string[];
   }> | null>(null);
   const [sidebarRefreshTrigger, setSidebarRefreshTrigger] = useState(0);
   const [isCreatingFromGameFlow, setIsCreatingFromGameFlow] = useState(false);

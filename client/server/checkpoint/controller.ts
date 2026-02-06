@@ -4,6 +4,7 @@ import { DatabaseManager } from "../core/DatabaseManager.js";
 import { GraphManager } from "../core/GraphManager.js";
 import { ServerState } from "../core/ServerState.js";
 import { saveDynamicGameStateCheckpoint } from "../../../src/dynamicworldagent/dynamicBasicAgent/memory/checkpoint.js";
+import { TurnManager } from "../../../src/dynamicworldagent/dynamicBasicAgent/memory/turnManager.js";
 import { randomUUID } from "crypto";
 
 /**
@@ -298,6 +299,7 @@ export async function loadCheckpointData(req: Request, res: Response): Promise<v
 
     // Create session and populate with saved conversation + memos
     db.createSessionFromCheckpoint(newSessionId, gameState, conversationHistory, playerMemos);
+    const restoredConversation = new TurnManager(db).getConversation(newSessionId);
 
     console.log(`[${new Date().toISOString()}] Created session ${newSessionId} from checkpoint ${checkpointId} (${conversationHistory.length} messages, ${playerMemos.length} memos)`);
 
@@ -364,7 +366,7 @@ export async function loadCheckpointData(req: Request, res: Response): Promise<v
       success: true,
       sessionId: newSessionId,
       gameState: restoredDynamicGameState,
-      conversationHistory: conversationHistory,
+      conversationHistory: restoredConversation,
       language: restoredLanguage,
       message: "存档加载成功",
       timestamp: new Date().toISOString(),

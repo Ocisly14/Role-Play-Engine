@@ -16,8 +16,8 @@ export interface DiceRollInfo {
 }
 
 interface DiceAnimationProps {
-  /** Dice rolls: structured (DiceRollInfo[]) or legacy (string[]) */
-  diceRolls: DiceRollInfo[] | string[];
+  /** Dice rolls: structured, legacy, or mixed */
+  diceRolls: Array<string | DiceRollInfo>;
   onAnimationComplete?: () => void;
 }
 
@@ -45,13 +45,11 @@ function isPsychologyRoll(info: DiceRollInfo): boolean {
 }
 
 /** Normalize input to DiceRollInfo[] */
-function normalizeDiceRolls(input: DiceRollInfo[] | string[]): DiceRollInfo[] {
+function normalizeDiceRolls(input: Array<string | DiceRollInfo>): DiceRollInfo[] {
   if (!input?.length) return [];
-  const first = input[0];
-  if (typeof first === 'string') {
-    return (input as string[]).map((roll) => ({ character: '', roll }));
-  }
-  return input as DiceRollInfo[];
+  return input.map((item) =>
+    typeof item === "string" ? { character: "", roll: item } : item
+  );
 }
 
 /** Parse expression and result from roll string */

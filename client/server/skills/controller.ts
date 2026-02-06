@@ -9,10 +9,13 @@ import { getSkillNameZh } from "./skillDescriptions.js";
  * Suggest skills based on user input (semantic matching)
  * POST /api/skills/suggest
  */
-export async function suggestSkills(req: Request, res: Response): Promise<void> {
+export async function suggestSkills(
+  req: Request,
+  res: Response
+): Promise<void> {
   try {
     const userId = req.user!.userId;
-    const { input, max } = req.body ?? {};
+    const { input, max, language: rawLanguage } = req.body ?? {};
 
     if (!input || typeof input !== "string" || !input.trim()) {
       res.status(400).json({ error: "input is required" });
@@ -21,6 +24,8 @@ export async function suggestSkills(req: Request, res: Response): Promise<void> 
 
     const maxSuggestions =
       typeof max === "number" && Number.isFinite(max) ? max : undefined;
+    const requestLanguage =
+      rawLanguage === "en" || rawLanguage === "zh" ? rawLanguage : undefined;
 
     const serverState = ServerState.getInstance();
     const dynamicGameState = serverState.getDynamicGameState(userId);
@@ -29,23 +34,29 @@ export async function suggestSkills(req: Request, res: Response): Promise<void> 
       return;
     }
 
-    // Get language from session metadata (if available)
-    let sessionLanguage: 'en' | 'zh' | undefined;
+    // Resolve language from request first, then session metadata.
+    let sessionLanguage: "en" | "zh" | undefined;
     try {
       const db = DatabaseManager.getInstance().getDatabase().getDatabase();
       const sessionId = dynamicGameState.sessionId;
       if (sessionId) {
-        const session = db.prepare(`SELECT metadata FROM sessions WHERE session_id = ?`).get(sessionId) as { metadata?: string } | undefined;
+        const session = db
+          .prepare(`SELECT metadata FROM sessions WHERE session_id = ?`)
+          .get(sessionId) as { metadata?: string } | undefined;
         if (session?.metadata) {
           const metadata = JSON.parse(session.metadata);
-          if (metadata.language === 'en' || metadata.language === 'zh') {
+          if (metadata.language === "en" || metadata.language === "zh") {
             sessionLanguage = metadata.language;
           }
         }
       }
     } catch (error) {
-      console.warn('[SkillSuggest] Failed to read session language, will auto-detect:', error);
+      console.warn(
+        "[SkillSuggest] Failed to read session language metadata:",
+        error
+      );
     }
+    const selectedLanguage = requestLanguage ?? sessionLanguage ?? "zh";
 
     const rawSkills = dynamicGameState.playerCharacter.skills ?? {};
     const skills = Object.entries(rawSkills)
@@ -63,8 +74,8 @@ export async function suggestSkills(req: Request, res: Response): Promise<void> 
         }
         return null;
       })
-      .filter(
-        (entry): entry is { name: string; value: number } => Boolean(entry)
+      .filter((entry): entry is { name: string; value: number } =>
+        Boolean(entry)
       );
 
     if (skills.length === 0) {
@@ -76,7 +87,7 @@ export async function suggestSkills(req: Request, res: Response): Promise<void> 
       input: input.trim(),
       skills,
       max: maxSuggestions,
-      preferredLanguage: sessionLanguage, // Pass session language preference
+      language: selectedLanguage,
     });
 
     res.json({

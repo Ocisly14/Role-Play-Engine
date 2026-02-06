@@ -1367,7 +1367,15 @@ export class CoCDatabase {
   createSessionFromCheckpoint(
     sessionId: string,
     gameState: any,
-    conversationHistory: Array<{ role: string; content: string; timestamp: string; turnNumber: number; diceRolls?: string[]; gameDay?: number | null; gameTime?: string | null }>,
+    conversationHistory: Array<{
+      role: string;
+      content: string;
+      timestamp: string;
+      turnNumber: number;
+      diceRolls?: Array<string | { character?: string; roll?: string }>;
+      gameDay?: number | null;
+      gameTime?: string | null;
+    }>,
     playerMemos: Array<{ text?: string; game_day?: number | null; game_time?: string | null; location?: string | null; created_at?: string; updated_at?: string; email_id?: string | null }>
   ): void {
     const database = this.db;
@@ -1381,7 +1389,7 @@ export class CoCDatabase {
       const turnMap = new Map<number, {
         characterInput: string | null;
         keeperNarrative: string | null;
-        diceRolls: string[];
+        diceRolls: Array<string | { character?: string; roll?: string }>;
         gameDay: number | null;
         gameTime: string | null;
         startedAt: string;
@@ -1428,10 +1436,42 @@ export class CoCDatabase {
         const turnId = `turn-restored-${sessionId}-${turnNumber}`;
         // isSimulated: no character input but has keeper narrative (covers turn 0 intro + simulated turns)
         const isSimulated = !entry.characterInput && entry.keeperNarrative ? 1 : 0;
-        // Reconstruct action_results with diceRolls so getConversation() can extract them on page refresh
-        const actionResults = entry.diceRolls.length > 0
-          ? JSON.stringify([{ character: characterName || 'Investigator', diceRolls: entry.diceRolls }])
-          : null;
+        // Reconstruct action_results with dice ownership preserved when available.
+        let actionResults: string | null = null;
+        if (entry.diceRolls.length > 0) {
+          const groupedByCharacter = new Map<string, string[]>();
+          const fallbackCharacter = characterName || "Investigator";
+
+          for (const diceEntry of entry.diceRolls) {
+            let rollText: string | null = null;
+            let rollCharacter = fallbackCharacter;
+
+            if (typeof diceEntry === "string") {
+              rollText = diceEntry;
+            } else if (diceEntry && typeof diceEntry === "object") {
+              if (typeof diceEntry.roll === "string" && diceEntry.roll.trim().length > 0) {
+                rollText = diceEntry.roll;
+              }
+              if (typeof diceEntry.character === "string" && diceEntry.character.trim().length > 0) {
+                rollCharacter = diceEntry.character.trim();
+              }
+            }
+
+            if (!rollText) continue;
+            if (!groupedByCharacter.has(rollCharacter)) {
+              groupedByCharacter.set(rollCharacter, []);
+            }
+            groupedByCharacter.get(rollCharacter)!.push(rollText);
+          }
+
+          if (groupedByCharacter.size > 0) {
+            const reconstructed = Array.from(groupedByCharacter.entries()).map(([character, diceRolls]) => ({
+              character,
+              diceRolls,
+            }));
+            actionResults = JSON.stringify(reconstructed);
+          }
+        }
 
         insertStmt.run(
           turnId,

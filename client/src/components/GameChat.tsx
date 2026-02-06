@@ -18,6 +18,11 @@ function normalizeName(name?: string | null): string | null {
   return trimmed.length > 0 ? trimmed.toLowerCase() : null;
 }
 
+function isOpposedRoll(roll?: string | null): boolean {
+  if (!roll) return false;
+  return /^\s*1d100_opposed\[\d+\]\s*:/i.test(roll);
+}
+
 function buildDiceRollInfos(
   actionResults: Array<{ character: string; diceRolls?: string[] }>,
   playerName?: string
@@ -25,13 +30,14 @@ function buildDiceRollInfos(
   const infos: DiceRollInfo[] = [];
   const playerNameNormalized = normalizeName(playerName);
   for (const result of actionResults || []) {
-    if (playerNameNormalized) {
-      const resultNameNormalized = normalizeName(result.character);
-      if (!resultNameNormalized || resultNameNormalized !== playerNameNormalized) {
-        continue;
-      }
-    }
     for (const roll of result.diceRolls || []) {
+      if (playerNameNormalized) {
+        const resultNameNormalized = normalizeName(result.character);
+        const isPlayerRoll = !!resultNameNormalized && resultNameNormalized === playerNameNormalized;
+        if (!isPlayerRoll && !isOpposedRoll(roll)) {
+          continue;
+        }
+      }
       const info: DiceRollInfo = { character: result.character, roll };
       const parenMatches = [...roll.matchAll(/\(([^)]+)\)/g)];
       const content = parenMatches.length > 0 ? parenMatches[parenMatches.length - 1][1] : null;
@@ -51,15 +57,19 @@ function buildDiceRollInfos(
 }
 
 function filterDiceRollsForPlayer(
-  diceRolls: DiceRollInfo[] | string[] | undefined,
+  diceRolls: Array<string | DiceRollInfo> | undefined,
   playerName?: string
-): DiceRollInfo[] | string[] | undefined {
+): Array<string | DiceRollInfo> | undefined {
   if (!diceRolls || diceRolls.length === 0) return diceRolls;
   const playerNameNormalized = normalizeName(playerName);
   if (!playerNameNormalized) return diceRolls;
-  const first = diceRolls[0] as DiceRollInfo | string;
-  if (typeof first === 'string') return diceRolls;
-  return (diceRolls as DiceRollInfo[]).filter((roll) => {
+  return diceRolls.filter((roll) => {
+    if (typeof roll === "string") {
+      return true;
+    }
+    if (isOpposedRoll(roll.roll)) {
+      return true;
+    }
     const rollNameNormalized = normalizeName(roll.character);
     return !!rollNameNormalized && rollNameNormalized === playerNameNormalized;
   });
@@ -74,7 +84,7 @@ interface Message {
   isStreaming?: boolean;
   imageUrl?: string;
   imageCaption?: string;
-  diceRolls?: DiceRollInfo[] | string[];
+  diceRolls?: Array<string | DiceRollInfo>;
   gameDay?: number | null;
   gameTime?: string | null;
 }
@@ -169,9 +179,13 @@ export function GameChat({ sessionId, apiBaseUrl = '/api', characterName = 'Inve
   const { turn, isPolling, error, startPolling, stopPolling } = useTurnPolling(apiBaseUrl);
   
   // State for dice animation
-  const [pendingDiceRolls, setPendingDiceRolls] = useState<{ turnNumber: number; turnId?: string; diceRolls: DiceRollInfo[] | string[]; narrative: string; timestamp: string; gameDay?: number | null; gameTime?: string | null; isStreaming?: boolean } | null>(null);
+  const [pendingDiceRolls, setPendingDiceRolls] = useState<{ turnNumber: number; turnId?: string; diceRolls: Array<string | DiceRollInfo>; narrative: string; timestamp: string; gameDay?: number | null; gameTime?: string | null; isStreaming?: boolean } | null>(null);
   const [showingDiceAnimation, setShowingDiceAnimation] = useState(false);
   const [diceAnimationCompleted, setDiceAnimationCompleted] = useState(false);
+
+  useEffect(() => {
+    setSuggestedLanguage(language);
+  }, [language]);
 
   // Scene change overlay
   const [isSceneChanging, setIsSceneChanging] = useState(false);
@@ -294,6 +308,7 @@ export function GameChat({ sessionId, apiBaseUrl = '/api', characterName = 'Inve
           body: JSON.stringify({
             input: trimmed,
             max: 3,
+            language,
           }),
           signal: controller.signal,
         });
@@ -309,7 +324,7 @@ export function GameChat({ sessionId, apiBaseUrl = '/api', characterName = 'Inve
         if (data?.language === 'en' || data?.language === 'zh') {
           setSuggestedLanguage(data.language);
         }
-        const nextLanguage = data?.language === 'en' || data?.language === 'zh' ? data.language : suggestedLanguage;
+        const nextLanguage = data?.language === 'en' || data?.language === 'zh' ? data.language : language;
         setSuggestedSkills(
           suggestions
             .filter((skill: { name?: string; value?: number }) => typeof skill?.name === 'string')
@@ -336,7 +351,7 @@ export function GameChat({ sessionId, apiBaseUrl = '/api', characterName = 'Inve
       window.clearTimeout(timeoutId);
       controller.abort();
     };
-  }, [apiBaseUrl, inputValue, isGameEnded]);
+  }, [apiBaseUrl, inputValue, isGameEnded, language]);
 
   const fetchGameEnding = useCallback(async () => {
     if (!sessionId) return;
@@ -450,7 +465,7 @@ export function GameChat({ sessionId, apiBaseUrl = '/api', characterName = 'Inve
               console.log(`[WebSocket] Connection confirmed for session ${message.sessionId}`);
             } else if (message.type === 'keeper_dice_rolls') {
               const diceRolls = filterDiceRollsForPlayer(
-                message.diceRolls as DiceRollInfo[] | string[] | undefined,
+                message.diceRolls as Array<string | DiceRollInfo> | undefined,
                 characterName
               );
               const turnId = message.turnId as string | undefined;

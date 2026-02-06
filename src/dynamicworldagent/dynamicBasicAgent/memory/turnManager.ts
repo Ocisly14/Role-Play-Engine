@@ -10,6 +10,8 @@ import type { DynamicGameState } from "../../state/index.js";
 import { randomUUID } from "crypto";
 import { GameHistoryRag } from "../../../rag/gameHistoryRag.js";
 import type { ActionLogEntry } from "../../../shared/agents/models/gameTypes.js";
+import { buildDiceRollInfos } from "../../../shared/state/index.js";
+import type { DiceRollInfo } from "../../../shared/state/index.js";
 
 export interface TurnInput {
   sessionId: string;
@@ -347,12 +349,23 @@ export class TurnManager {
   /**
    * Get conversation format (for display in frontend)
    */
+  private normalizeName(name?: string | null): string | null {
+    if (!name || typeof name !== "string") return null;
+    const trimmed = name.trim();
+    return trimmed.length > 0 ? trimmed.toLowerCase() : null;
+  }
+
+  private isOpposedRoll(roll?: string | null): boolean {
+    if (!roll || typeof roll !== "string") return false;
+    return /^\s*1d100_opposed\[\d+\]\s*:/i.test(roll);
+  }
+
   getConversation(sessionId: string, limit = 50): Array<{
     role: 'character' | 'keeper';
     content: string;
     timestamp: string;
     turnNumber: number;
-    diceRolls?: string[];
+    diceRolls?: DiceRollInfo[];
     gameDay?: number | null;
     gameTime?: string | null;
   }> {
@@ -362,33 +375,41 @@ export class TurnManager {
       content: string;
       timestamp: string;
       turnNumber: number;
-      diceRolls?: string[];
+      diceRolls?: DiceRollInfo[];
       gameDay?: number | null;
       gameTime?: string | null;
     }> = [];
 
     turns.reverse().forEach((turn) => {
       // Extract dice rolls from actionResults if available
-      const diceRolls: string[] = [];
-      const playerNameNormalized =
-        typeof turn.characterName === 'string' && turn.characterName.trim().length > 0
-          ? turn.characterName.trim().toLowerCase()
-          : null;
+      const diceRolls: DiceRollInfo[] = [];
+      const playerNameNormalized = this.normalizeName(turn.characterName);
       if (turn.actionResults && Array.isArray(turn.actionResults)) {
-        turn.actionResults.forEach((result: any) => {
-          if (result.diceRolls && Array.isArray(result.diceRolls) && result.diceRolls.length > 0) {
-            const resultNameNormalized =
-              typeof result.character === 'string' && result.character.trim().length > 0
-                ? result.character.trim().toLowerCase()
-                : null;
-            if (playerNameNormalized) {
-              if (!resultNameNormalized || resultNameNormalized !== playerNameNormalized) {
-                return;
-              }
-            }
-            diceRolls.push(...result.diceRolls);
-          }
+        const opposedRollTarget =
+          turn.actionAnalysis &&
+          typeof turn.actionAnalysis === "object" &&
+          turn.actionAnalysis.target &&
+          typeof turn.actionAnalysis.target === "object" &&
+          typeof turn.actionAnalysis.target.name === "string"
+            ? turn.actionAnalysis.target.name
+            : null;
+
+        const allDiceRollInfos = buildDiceRollInfos(turn.actionResults, {
+          opposedRollCharacter: opposedRollTarget,
         });
+
+        for (const roll of allDiceRollInfos) {
+          if (!playerNameNormalized) {
+            diceRolls.push(roll);
+            continue;
+          }
+
+          const rollNameNormalized = this.normalizeName(roll.character);
+          const isPlayerRoll = !!rollNameNormalized && rollNameNormalized === playerNameNormalized;
+          if (isPlayerRoll || this.isOpposedRoll(roll.roll)) {
+            diceRolls.push(roll);
+          }
+        }
       }
 
       // For introduction turn (turnNumber 0 with empty characterInput), only add keeper narrative
@@ -442,4 +463,3 @@ export class TurnManager {
     return conversation;
   }
 }
-
