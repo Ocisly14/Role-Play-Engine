@@ -737,14 +737,6 @@ export class DirectorAgent {
     console.log(`   📋 Scene change request: ${sceneChangeRequest.targetSceneName}`);
     console.log(`   📍 Current scenario: ${currentScenarioName}`);
 
-    // Save checkpoint before scene switch update
-    saveDynamicGameStateCheckpoint(
-      this.db,
-      dynamicState,
-      'scene_transition',
-      `Before scene switch to ${sceneChangeRequest.targetSceneName}`
-    );
-
     try {
       // Build current game time
       const currentGameTime = `Day ${dynamicState.gameDay}, ${dynamicState.timeOfDay}`;

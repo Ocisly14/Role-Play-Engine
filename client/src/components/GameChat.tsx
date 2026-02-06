@@ -584,15 +584,25 @@ export function GameChat({ sessionId, apiBaseUrl = '/api', characterName = 'Inve
               );
 
               setStreamingTurnId(current => current === turnId ? null : current);
+
+              // ✅ 修改 1：清除所有加载状态，防止前端卡住
+              setIsSending(false);
+              clearSceneChanging();
+
+              // ✅ 修改 1：刷新游戏状态
+              if (fetchGameEndingRef.current) {
+                fetchGameEndingRef.current();
+              }
             } else if (message.type === 'scene_change_start') {
               setIsSceneChanging(true);
-              if (sceneChangeTimeoutRef.current !== null) {
-                clearTimeout(sceneChangeTimeoutRef.current);
+              // ✅ 修改 4：只在没有超时器时创建新的，防止超时被无限推迟
+              if (sceneChangeTimeoutRef.current === null) {
+                sceneChangeTimeoutRef.current = window.setTimeout(() => {
+                  console.warn('[GameChat] Scene change timeout triggered - auto clearing');
+                  setIsSceneChanging(false);
+                  sceneChangeTimeoutRef.current = null;
+                }, 180000); // 保持 180000（3 分钟）
               }
-              sceneChangeTimeoutRef.current = window.setTimeout(() => {
-                setIsSceneChanging(false);
-                sceneChangeTimeoutRef.current = null;
-              }, 180000);
             } else if (message.type === 'scene_change_end') {
               clearSceneChanging();
             } else if (message.type === 'scene_image') {
@@ -1066,7 +1076,7 @@ export function GameChat({ sessionId, apiBaseUrl = '/api', characterName = 'Inve
         fetchGameEndingRef.current();
       }
     } else if (turn && turn.status === 'error') {
-      // Handle error case
+      // ✅ 修改 5：错误状态下也清除加载状态
       console.error(`[GameChat] Turn ${turn.turnId || turn.turnNumber} failed:`, turn.errorMessage);
       setIsSending(false);
       clearSceneChanging();
@@ -1444,9 +1454,9 @@ export function GameChat({ sessionId, apiBaseUrl = '/api', characterName = 'Inve
       {/* Scene Change Overlay */}
       {isSceneChanging && (
         <div className="fixed inset-0 z-50 flex items-center justify-center pointer-events-none">
-          <div className="rounded-2xl border border-white/60 bg-white/30 px-5 py-3 backdrop-blur-xl shadow-[0_12px_34px_rgba(15,23,42,0.3)] flex items-center gap-3">
-            <div className="w-4 h-4 border-2 border-slate-600 border-t-transparent rounded-full animate-spin" />
-            <span className="text-sm text-slate-800 font-medium">World Updating...</span>
+          <div className="rounded-2xl border border-white/60 bg-white/30 px-6 py-4 backdrop-blur-xl shadow-[0_12px_34px_rgba(15,23,42,0.3)] flex items-center gap-3">
+            <div className="w-5 h-5 border-2 border-slate-600 border-t-transparent rounded-full animate-spin" />
+            <span className="text-base text-slate-800 font-medium">Scene Transition...</span>
           </div>
         </div>
       )}
@@ -1479,7 +1489,14 @@ export function GameChat({ sessionId, apiBaseUrl = '/api', characterName = 'Inve
       </div>
 
       {/* Messages Area */}
-      <div className="messages-scroll-area">
+      <div
+        className="messages-scroll-area"
+        style={{
+          filter: isSceneChanging ? 'blur(8px)' : 'none',
+          transition: 'filter 0.5s ease-in-out',
+          pointerEvents: isSceneChanging ? 'none' : 'auto',
+        }}
+      >
         {messages.length === 0 && (
           <div className="empty-chat-prompt">
             <p>🎲 Welcome to Call of Cthulhu!</p>
@@ -1582,7 +1599,13 @@ export function GameChat({ sessionId, apiBaseUrl = '/api', characterName = 'Inve
       </div>
 
       {/* Input Area */}
-      <div className="fixed bottom-0 left-0 right-0 z-30 pointer-events-none px-2 sm:px-0">
+      <div
+        className="fixed bottom-0 left-0 right-0 z-30 pointer-events-none px-2 sm:px-0"
+        style={{
+          filter: isSceneChanging ? 'blur(8px)' : 'none',
+          transition: 'filter 0.5s ease-in-out',
+        }}
+      >
         <div
           onMouseEnter={handleInputAreaMouseEnter}
           onMouseLeave={handleInputAreaMouseLeave}
