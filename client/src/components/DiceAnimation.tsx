@@ -38,9 +38,9 @@ function isPsychologyRoll(info: DiceRollInfo): boolean {
   const roll = (info.roll ?? '').toLowerCase();
   return (
     skill.includes('psychology') ||
-    skill.includes('心理学') ||
+    skill.includes('心理学') || // Chinese translation - required for zh language support
     roll.includes('psychology') ||
-    roll.includes('心理学')
+    roll.includes('心理学')  // Chinese translation - required for zh language support
   );
 }
 

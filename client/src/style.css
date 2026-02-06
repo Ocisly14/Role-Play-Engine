@@ -910,7 +910,7 @@ textarea {
   justify-content: space-between;
   align-items: center;
   padding: 16px 24px;
-  /* background, border, box-shadow 已由 Tailwind 类名处理 */
+  /* background, border, box-shadow handled by Tailwind classes */
   margin-bottom: 16px;
 }
 
@@ -923,7 +923,7 @@ textarea {
 
 .back-button {
   padding: 10px 20px;
-  /* background, border, border-radius, box-shadow 已由 Tailwind 类名处理 */
+  /* background, border, border-radius, box-shadow handled by Tailwind classes */
   color: var(--title);
   cursor: pointer;
   font-size: 0.95rem;
@@ -959,7 +959,7 @@ textarea {
   display: flex;
   flex-direction: column;
   flex: 2;
-  /* background, border, box-shadow 已由 Tailwind 类名处理 */
+  /* background, border, box-shadow handled by Tailwind classes */
   overflow: hidden;
 }
 
@@ -978,7 +978,7 @@ textarea {
   display: flex;
   gap: 8px;
   align-items: center;
-  /* background, border, border-radius, box-shadow 已由 Tailwind 类名处理 */
+  /* background, border, border-radius, box-shadow handled by Tailwind classes */
 }
 
 .session-label, .character-label {
@@ -988,7 +988,7 @@ textarea {
 
 .session-value, .character-value {
   color: var(--title);
-  /* background, border, border-radius 已由父元素的 Tailwind 类名处理 */
+  /* background, border, border-radius handled by parent element's Tailwind classes */
   padding: 0;
   font-weight: 600;
 }
@@ -1103,7 +1103,7 @@ textarea {
   white-space: pre-wrap;
   word-wrap: break-word;
   font-family: var(--serif);
-  /* padding, backdrop-filter, background, border, border-radius, box-shadow 已由 Tailwind 类名处理 */
+  /* padding, backdrop-filter, background, border, border-radius, box-shadow handled by Tailwind classes */
 }
 
 /* Markdown content styling */
@@ -1280,12 +1280,12 @@ textarea {
 
 /* Input Area */
 .chat-input-area {
-  /* 已改为 fixed 定位的独立圆角矩形，样式由 Tailwind 类名处理 */
+  /* Changed to fixed positioning with independent rounded rectangle, styles handled by Tailwind classes */
 }
 
 .action-input {
   padding: 12px 16px;
-  /* background, border, border-radius 已由 Tailwind 类名处理 */
+  /* background, border, border-radius handled by Tailwind classes */
   font-family: var(--serif);
   font-size: 0.875rem;
   line-height: 1.5;
@@ -1314,7 +1314,7 @@ textarea {
 }
 
 .submit-action-btn {
-  /* padding, background, border, border-radius, box-shadow 已由 Tailwind 类名处理 */
+  /* padding, background, border, border-radius, box-shadow handled by Tailwind classes */
   color: var(--title);
   font-family: var(--serif);
   font-size: 1rem;
@@ -1349,7 +1349,7 @@ textarea {
   display: flex;
   flex-direction: column;
   flex: 1;
-  /* background, border, box-shadow 已由 Tailwind 类名处理 */
+  /* background, border, box-shadow handled by Tailwind classes */
   overflow: hidden;
   min-width: 320px;
   max-width: 400px;
@@ -1360,13 +1360,13 @@ textarea {
   display: flex;
   gap: 8px;
   padding: 12px;
-  /* 移除背景和边框，让每个 tab 独立 */
+  /* Removed background and border to make each tab independent */
 }
 
 .sidebar-tab {
   flex: 1;
   padding: 8px 10px;
-  /* background, border, border-radius, box-shadow 已由 Tailwind 类名处理 */
+  /* background, border, border-radius, box-shadow handled by Tailwind classes */
   font-family: var(--serif);
   font-size: 0.8rem;
   font-weight: bold;

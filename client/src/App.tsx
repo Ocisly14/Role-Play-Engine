@@ -868,8 +868,8 @@ const AppShell: React.FC = () => {
         if (data.language) {
           const restoredLanguage = (data.language === 'en' || data.language === 'zh') ? data.language : 'zh';
           setLanguage(restoredLanguage);
-          const languageLabel = restoredLanguage === 'zh' ? '中文' : 'English';
-          alert(`存档已加载！\n语言设置：${languageLabel}\n(该设置与存档时一致，无法更改)`);
+          const languageLabel = restoredLanguage === 'zh' ? 'Chinese' : 'English';
+          alert(`Checkpoint loaded successfully!\nLanguage: ${languageLabel}\n(This setting matches the checkpoint and cannot be changed)`);
         }
 
         // Close checkpoint selector and go to game
@@ -2176,7 +2176,7 @@ const AppShell: React.FC = () => {
               }
             }}
           >
-            中文
+            Chinese
           </button>
           <button
             onClick={() => setLanguage('en')}

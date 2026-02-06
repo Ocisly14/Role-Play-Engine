@@ -585,23 +585,23 @@ export function GameChat({ sessionId, apiBaseUrl = '/api', characterName = 'Inve
 
               setStreamingTurnId(current => current === turnId ? null : current);
 
-              // ✅ 修改 1：清除所有加载状态，防止前端卡住
+              // ✅ Fix 1: Clear all loading states to prevent frontend from getting stuck
               setIsSending(false);
               clearSceneChanging();
 
-              // ✅ 修改 1：刷新游戏状态
+              // ✅ Fix 1: Refresh game state
               if (fetchGameEndingRef.current) {
                 fetchGameEndingRef.current();
               }
             } else if (message.type === 'scene_change_start') {
               setIsSceneChanging(true);
-              // ✅ 修改 4：只在没有超时器时创建新的，防止超时被无限推迟
+              // ✅ Fix 4: Only create timeout if none exists to prevent indefinite postponement
               if (sceneChangeTimeoutRef.current === null) {
                 sceneChangeTimeoutRef.current = window.setTimeout(() => {
                   console.warn('[GameChat] Scene change timeout triggered - auto clearing');
                   setIsSceneChanging(false);
                   sceneChangeTimeoutRef.current = null;
-                }, 180000); // 保持 180000（3 分钟）
+                }, 180000); // Keep 180000 (3 minutes)
               }
             } else if (message.type === 'scene_change_end') {
               clearSceneChanging();
@@ -1076,7 +1076,7 @@ export function GameChat({ sessionId, apiBaseUrl = '/api', characterName = 'Inve
         fetchGameEndingRef.current();
       }
     } else if (turn && turn.status === 'error') {
-      // ✅ 修改 5：错误状态下也清除加载状态
+      // ✅ Fix 5: Clear loading states on error as well
       console.error(`[GameChat] Turn ${turn.turnId || turn.turnNumber} failed:`, turn.errorMessage);
       setIsSending(false);
       clearSceneChanging();
