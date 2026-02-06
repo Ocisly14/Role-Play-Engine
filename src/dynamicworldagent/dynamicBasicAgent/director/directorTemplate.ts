@@ -98,6 +98,7 @@ Each snapshot should:
      - If an NPC needs to move to a non-adjacent location, they must pass through connected intermediate locations
      - Time gaps in actionLog must be **realistic** - don't have NPCs teleporting or moving too quickly
    - Each actionLog entry format: \`{ time: "Day X, HH:MM", location: "specific location", summary: "what they did and its impact" }\`
+   - **IMPORTANT**: If the action has a target (another character, object, or location), INCLUDE the target in the summary (e.g., "Asked Dr. Smith about the ritual", "Examined the ancient tome", "Locked the basement door")
    - **Multiple Characters**: If an action involves multiple characters (e.g., NPC A attacks NPC B, NPC A talks to NPC B), create separate actionLog entries for EACH involved character with their respective perspectives:
      - For NPC A: "Attacked NPC B with a knife, dealing 3 damage"
      - For NPC B: "Was attacked by NPC A, taking 3 damage"
@@ -324,6 +325,7 @@ Generate snapshots for each scenario above, with **different levels of detail ba
      - If an NPC needs to move to a non-adjacent location, they must pass through connected intermediate locations
      - Time gaps in actionLog must be **realistic** - don't have NPCs teleporting or moving too quickly
    - Each actionLog entry format: \`{ time: "Day X, HH:MM", location: "specific location", summary: "what they did and its impact" }\`
+   - **IMPORTANT**: If the action has a target (another character, object, or location), INCLUDE the target in the summary (e.g., "Asked Dr. Smith about the ritual", "Examined the ancient tome", "Locked the basement door")
    - **Multiple Characters**: If an action involves multiple characters (e.g., NPC A attacks NPC B, NPC A talks to NPC B), create separate actionLog entries for EACH involved character with their respective perspectives:
      - For NPC A: "Attacked NPC B with a knife, dealing 3 damage"
      - For NPC B: "Was attacked by NPC A, taking 3 damage"

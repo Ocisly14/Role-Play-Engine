@@ -429,6 +429,67 @@ export class DirectorAgent {
   }
 
   /**
+   * Convert full character data to lightweight ScenarioCharacter format
+   * This prevents data duplication in snapshots (full data is in gameState.npcCharacters)
+   */
+  private convertToLightweightScenarioCharacter(
+    char: ScenarioCharacter & {
+      actionLog?: ActionLogEntry[];
+      status?: any;
+      inventory?: any;
+      relationships?: any;
+    }
+  ): ScenarioCharacter {
+    // Extract latest location from actionLog if available
+    let location = char.location;
+    if (char.actionLog && char.actionLog.length > 0) {
+      const latestLog = char.actionLog[char.actionLog.length - 1];
+      if (latestLog.location) {
+        location = latestLog.location;
+      }
+    }
+
+    // Determine status string based on character state
+    let statusString = 'active'; // Default status
+
+    // If status is already a string, use it
+    if (typeof char.status === 'string') {
+      statusString = char.status;
+    }
+    // If status is an object with HP/sanity deltas, infer status
+    else if (char.status && typeof char.status === 'object') {
+      const statusObj = char.status as Partial<CharacterStatus>;
+
+      // Check for negative HP changes (injuries)
+      if (statusObj.hp !== undefined && statusObj.hp < -5) {
+        statusString = 'injured';
+      } else if (statusObj.hp !== undefined && statusObj.hp < -10) {
+        statusString = 'critically_injured';
+      }
+      // Check for negative sanity changes (mental state)
+      else if (statusObj.sanity !== undefined && statusObj.sanity < -5) {
+        statusString = 'shaken';
+      } else if (statusObj.sanity !== undefined && statusObj.sanity < -10) {
+        statusString = 'disturbed';
+      }
+      // Check for conditions
+      else if (statusObj.conditions && Array.isArray(statusObj.conditions) && statusObj.conditions.length > 0) {
+        statusString = statusObj.conditions[0]; // Use first condition as status
+      }
+    }
+
+    // Return lightweight ScenarioCharacter (only essential presence info)
+    return {
+      id: char.id,
+      name: char.name,
+      role: char.role || 'npc',
+      status: statusString,
+      location: location || 'unknown',
+      notes: char.notes,
+    };
+  }
+
+  /**
    * Get NPCs that should be in a specific scenario at the current time point
    * Based on NPC's actionLog location and scenario conditions
    */
@@ -1087,6 +1148,13 @@ export class DirectorAgent {
         }
       }
 
+      // Convert target snapshot characters to lightweight format after merging deltas
+      if (targetSnapshot.characters) {
+        targetSnapshot.characters = targetSnapshot.characters.map((char) =>
+          this.convertToLightweightScenarioCharacter(char as any)
+        );
+      }
+
       // Use target snapshot directly (no database save)
       const savedTargetSnapshot = targetSnapshot;
 
@@ -1099,7 +1167,7 @@ export class DirectorAgent {
         );
 
         for (const item of backgroundSnapshotsArray) {
-          // Validate actionLog format (background snapshots don't update actual NPCs)
+          // Merge actionLog from background snapshot characters to actual NPCs
           if (item.snapshot.characters) {
             for (const char of item.snapshot.characters) {
               const charWithActionLog = char as ScenarioCharacter & {
@@ -1108,23 +1176,38 @@ export class DirectorAgent {
 
               // Validate actionLog entries
               if (charWithActionLog.actionLog) {
-                for (const logEntry of charWithActionLog.actionLog) {
-                  if (
-                    !logEntry.time ||
-                    !logEntry.location ||
-                    !logEntry.summary
-                  ) {
-                    console.warn(
-                      `   ⚠️ Invalid actionLog entry for character ${char.id}, filtering...`
-                    );
-                    charWithActionLog.actionLog =
-                      charWithActionLog.actionLog.filter(
-                        (e: ActionLogEntry) => e.time && e.location && e.summary
-                      );
-                  }
+                // Filter out invalid entries
+                charWithActionLog.actionLog = charWithActionLog.actionLog.filter(
+                  (logEntry) => logEntry.time && logEntry.location && logEntry.summary
+                );
+
+                // Merge actionLog to actual NPC in gameState
+                const npc = this.findNPCById(
+                  dynamicState.npcCharacters,
+                  char.id,
+                  char.name
+                );
+                if (npc && charWithActionLog.actionLog.length > 0) {
+                  this.mergeCharacterDeltaToNPC(npc, {
+                    actionLog: charWithActionLog.actionLog,
+                  });
+                  console.log(
+                    `   ✓ Merged actionLog to background NPC: ${npc.name} (${npc.id})`
+                  );
+                } else if (!npc) {
+                  console.warn(
+                    `   ⚠️ Background NPC "${char.id}"${char.name ? ` (${char.name})` : ""} not found in gameState, skipping actionLog merge`
+                  );
                 }
               }
             }
+          }
+
+          // Convert background snapshot characters to lightweight format after merging actionLogs
+          if (item.snapshot.characters) {
+            item.snapshot.characters = item.snapshot.characters.map((char) =>
+              this.convertToLightweightScenarioCharacter(char as any)
+            );
           }
 
           // Ensure snapshot uses unified time and type
@@ -1440,32 +1523,47 @@ export class DirectorAgent {
         );
 
         for (const item of parsedResponse.updatedSnapshots) {
-          // Validate actionLog format (simplified snapshots don't update actual NPCs)
+          // Merge actionLog from snapshot characters to actual NPCs
           if (item.snapshot.characters) {
             for (const char of item.snapshot.characters) {
               const charWithActionLog = char as ScenarioCharacter & {
                 actionLog?: ActionLogEntry[];
               };
 
-              // Validate actionLog entries
+              // Validate and merge actionLog entries
               if (charWithActionLog.actionLog) {
-                for (const logEntry of charWithActionLog.actionLog) {
-                  if (
-                    !logEntry.time ||
-                    !logEntry.location ||
-                    !logEntry.summary
-                  ) {
-                    console.warn(
-                      `   ⚠️ Invalid actionLog entry for character ${char.id}, skipping...`
-                    );
-                    charWithActionLog.actionLog =
-                      charWithActionLog.actionLog.filter(
-                        (e: ActionLogEntry) => e.time && e.location && e.summary
-                      );
-                  }
+                // Filter out invalid entries
+                charWithActionLog.actionLog = charWithActionLog.actionLog.filter(
+                  (logEntry) => logEntry.time && logEntry.location && logEntry.summary
+                );
+
+                // Merge actionLog to actual NPC in gameState
+                const npc = this.findNPCById(
+                  dynamicState.npcCharacters,
+                  char.id,
+                  char.name
+                );
+                if (npc && charWithActionLog.actionLog.length > 0) {
+                  this.mergeCharacterDeltaToNPC(npc, {
+                    actionLog: charWithActionLog.actionLog,
+                  });
+                  console.log(
+                    `   ✓ Merged actionLog to NPC: ${npc.name} (${npc.id})`
+                  );
+                } else if (!npc) {
+                  console.warn(
+                    `   ⚠️ NPC "${char.id}"${char.name ? ` (${char.name})` : ""} not found in gameState, skipping actionLog merge`
+                  );
                 }
               }
             }
+          }
+
+          // Convert snapshot characters to lightweight format after merging actionLogs
+          if (item.snapshot.characters) {
+            item.snapshot.characters = item.snapshot.characters.map((char) =>
+              this.convertToLightweightScenarioCharacter(char as any)
+            );
           }
 
           // Ensure snapshot uses unified current game time and type

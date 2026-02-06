@@ -221,7 +221,7 @@ ${JSON.stringify(sceneNPCs, null, 2)}
 **Format**: Each actionLog entry should have:
 - "time": Use the current game time (provided in context) in "Day N, HH:MM" format
 - "location": The LOCATION NAME
-- "summary": Concise but descriptive summary (1-2 sentences)
+- "summary": Concise but descriptive summary (1-2 sentences). **IMPORTANT**: If the action has a target (NPC, object, or location), INCLUDE the target in the summary (e.g., "Asked Dr. Smith about the missing journal", "Attacked the cultist with a knife", "Examined the locked door").
 - "successLevel": Optional. Include ONLY when this actionLog entry uses a SKILL CHECK.
   - Allowed values: "critical" | "extreme" | "hard" | "regular" | "failure" | "fumble" | "unknown"
   - If no skill check is used for this entry, omit "successLevel" entirely.
