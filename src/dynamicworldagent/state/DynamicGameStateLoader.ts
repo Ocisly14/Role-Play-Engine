@@ -754,8 +754,12 @@ export async function initializeCompleteDynamicGameState(
     updatedDynamicScenarioSnapshots: mergedSnapshots,
   };
 
+  // Create session record in database
+  // This is required for checkpoint saves to work correctly
+  db.ensureSessionExists(params.sessionId, completeState);
+
   console.log(
-    `[DynamicGameState] Initialized complete state for module "${params.moduleName}"`
+    `[DynamicGameState] Initialized complete state for module "${params.moduleName}" and created session record`
   );
   return completeState;
 }

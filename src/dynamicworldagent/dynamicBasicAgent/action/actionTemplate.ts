@@ -41,11 +41,7 @@ Your task is to determine if the action succeeds in enabling this scene change:
   }
 
   const usagePolicy = isNPC
-    ? `SKILL POLICY:
-- Analyze the NPC action and decide whether a skill check is required.
-- If no check is needed, do not use any dice.
-- If a skill check is required, choose the appropriate skill and use dice.
-`
+    ? ""
     : selectedSkill
       ? `SKILL POLICY:
 - A player-selected skill is provided; treat the action as using that skill.
@@ -103,6 +99,8 @@ USAGE:
 - Dice with modifiers: You can add modifiers to pre-rolled dice (e.g., 1d3+1, 1d6+2 for damage bonus/STR bonus)
 - You can choose to use these dice OR not use any if the action doesn't require dice
 - When you use a die, record which die you used (including which result from the array, e.g., "1d100[0]: 67") and the result in your response
+
+🚨 CRITICAL: If no skill is chosen by the user, DO NOT select any dice. Always use empty array "diceUsed": [] when no skill is selected.
 
 !!! Important: Always follow the 7th edition rules of Call of Cthulhu.
 

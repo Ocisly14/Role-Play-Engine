@@ -18,12 +18,14 @@ import checkpointRoutes from "./server/checkpoint/routes.js";
 import mapRoutes from "./server/maps/routes.js";
 import memoRoutes from "./server/memos/routes.js";
 import skillRoutes from "./server/skills/routes.js";
+import analyticsRoutes from "./server/analytics/routes.js";
 
 // Import managers
 import { DatabaseManager } from "./server/core/DatabaseManager.js";
 import { WebSocketManager } from "./server/websocket/WebSocketManager.js";
 import { LocalEmbeddingManager } from "../src/rag/localEmbeddingManager.js";
 import { warmupSkillEmbeddings } from "./server/skills/skillMatcher.js";
+import { startDailyScheduler, stopDailyScheduler } from "./server/analytics/scheduler.js";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -73,6 +75,7 @@ app.use("/api", turnRoutes); // /api/turns*, /api/sessions/*
 app.use("/api", checkpointRoutes); // /api/checkpoints/*
 app.use("/api", memoRoutes); // /api/memos
 app.use("/api", skillRoutes); // /api/skills/*
+app.use("/api", analyticsRoutes); // /api/analytics/*
 
 // SPA fallback (must be after API routes)
 app.get("*", (_req, res) => {
@@ -99,6 +102,9 @@ server.listen(PORT, () => {
   console.log(`🚀 Server running on http://localhost:${PORT}`);
   console.log(`🔌 WebSocket server ready on ws://localhost:${PORT}/ws`);
   console.log("✅ Frontend server ready (lazy initialization)");
+
+  // Start analytics scheduler
+  startDailyScheduler();
 
   if (process.env.SKIP_EMBEDDING_WARMUP !== "true") {
     LocalEmbeddingManager.getInstance()
@@ -142,6 +148,7 @@ server.listen(PORT, () => {
 process.on("SIGINT", () => {
   console.log("\nShutting down gracefully...");
 
+  stopDailyScheduler();
   wsManager.close();
   DatabaseManager.getInstance().close();
 

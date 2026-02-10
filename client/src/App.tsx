@@ -25,6 +25,7 @@ import { CharacterSelector } from "./components/CharacterSelector";
 import { ModSelector } from "./components/ModSelector";
 import { ModManager } from "./components/ModManager";
 import { StoryCreator } from "./components/StoryCreator";
+import { Analytics } from "./components/Analytics";
 import type { DiceRollInfo } from "./components/DiceAnimation";
 import { authFetch } from "./utils/authFetch";
 import { findAvailableImage } from "./utils/imageLoader";
@@ -197,6 +198,7 @@ const AppShell: React.FC = () => {
   const [form, setForm] = React.useState<Record<string, string>>({});
   const { user, logout } = useAuth();
   const [isUserMenuOpen, setIsUserMenuOpen] = useState(false);
+  const [showAnalytics, setShowAnalytics] = useState(false);
   const [isRestoringSession, setIsRestoringSession] = useState(false);
   const [hasInitialized, setHasInitialized] = useState(false);
   const prevUserRef = useRef<typeof user | null>(null);
@@ -212,6 +214,37 @@ const AppShell: React.FC = () => {
   useEffect(() => {
     localStorage.setItem("app.language", language);
   }, [language]);
+
+  // Handler to update language both locally and on server
+  const handleLanguageChange = useCallback(
+    async (newLanguage: "en" | "zh") => {
+      // Update local state first for immediate UI feedback
+      setLanguage(newLanguage);
+
+      // Try to update server-side session metadata
+      try {
+        const response = await authFetch("/api/game/update-language", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ language: newLanguage }),
+        });
+
+        if (!response.ok) {
+          // Session might not be active yet, which is fine
+          const data = await response.json();
+          if (response.status !== 400) {
+            console.warn("Failed to update session language:", data.error);
+          }
+        } else {
+          console.log(`Language updated to ${newLanguage} in session metadata`);
+        }
+      } catch (error) {
+        console.warn("Failed to update session language:", error);
+        // Continue anyway - localStorage will be used
+      }
+    },
+    []
+  );
 
   // After a fresh login, always land on home instead of restoring create-character.
   useEffect(() => {
@@ -501,6 +534,32 @@ const AppShell: React.FC = () => {
             </div>
             {user.email}
           </div>
+          {user.role === "ADMIN" && (
+            <button
+              onClick={() => {
+                setShowAnalytics(true);
+                setIsUserMenuOpen(false);
+              }}
+              className="backdrop-blur-sm bg-white/50 border border-slate-200 shadow-md rounded-lg px-4 py-3 hover:bg-white/70 transition-all"
+              style={{
+                fontWeight: "700",
+                fontSize: "0.95rem",
+                cursor: "pointer",
+                fontFamily: "var(--serif)",
+                letterSpacing: "1px",
+                textTransform: "uppercase",
+                color: "#3b82f6",
+              }}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.transform = "translateY(-2px)";
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.transform = "translateY(0)";
+              }}
+            >
+              Analytics
+            </button>
+          )}
           <button
             onClick={handleLogout}
             className="backdrop-blur-sm bg-white/50 border border-slate-200 shadow-md rounded-lg px-4 py-3 hover:bg-white/70 transition-all"
@@ -978,11 +1037,16 @@ const AppShell: React.FC = () => {
             data.language === "en" || data.language === "zh"
               ? data.language
               : "zh";
+          console.log(`[Checkpoint Load Frontend] Restoring language: ${restoredLanguage}`);
+
+          // Update local state and localStorage
           setLanguage(restoredLanguage);
+          localStorage.setItem("app.language", restoredLanguage);
+
           const languageLabel =
             restoredLanguage === "zh" ? "Chinese" : "English";
           alert(
-            `Checkpoint loaded successfully!\nLanguage: ${languageLabel}\n(This setting matches the checkpoint and cannot be changed)`
+            `Checkpoint loaded successfully!\nLanguage restored: ${languageLabel}\n(You can change the language anytime using the language toggle)`
           );
         }
 
@@ -2806,7 +2870,7 @@ const AppShell: React.FC = () => {
           }}
         >
           <button
-            onClick={() => setLanguage("zh")}
+            onClick={() => handleLanguageChange("zh")}
             style={{
               padding: "6px 16px",
               borderRadius: "14px",
@@ -2833,7 +2897,7 @@ const AppShell: React.FC = () => {
             中文
           </button>
           <button
-            onClick={() => setLanguage("en")}
+            onClick={() => handleLanguageChange("en")}
             style={{
               padding: "6px 16px",
               borderRadius: "14px",
@@ -3108,6 +3172,7 @@ const AppShell: React.FC = () => {
     <>
       {userMenu}
       {sheet}
+      {showAnalytics && <Analytics onClose={() => setShowAnalytics(false)} />}
     </>
   );
 };

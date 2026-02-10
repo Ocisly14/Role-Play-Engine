@@ -50,6 +50,7 @@
     "mammoth": "^1.8.0",
     "nodemailer": "^6.9.15",
     "pdf-parse": "^1.1.1",
+    "recharts": "^2.10.3",
     "unique-names-generator": "^4.7.1",
     "ws": "^8.18.0"
   },

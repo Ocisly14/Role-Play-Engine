@@ -58,6 +58,54 @@ export function saveDynamicGameStateCheckpoint(
       serializableState.playerMemos = [];
     }
 
+    // Save language setting from session metadata to checkpoint
+    try {
+      const database = db.getDatabase();
+      const session = database
+        .prepare(`SELECT metadata FROM sessions WHERE session_id = ?`)
+        .get(dynamicState.sessionId) as { metadata: string | null } | undefined;
+
+      console.log(`[Checkpoint Save] Session found:`, !!session);
+      console.log(`[Checkpoint Save] Session metadata:`, session?.metadata);
+
+      let languageToSave: "en" | "zh" = "zh"; // Default to zh
+
+      if (session) {
+        if (session.metadata) {
+          try {
+            const metadata = JSON.parse(session.metadata);
+            console.log(`[Checkpoint Save] Parsed metadata:`, metadata);
+            if (metadata.language === "en" || metadata.language === "zh") {
+              languageToSave = metadata.language;
+              console.log(`[Checkpoint Save] Found language in metadata: ${languageToSave}`);
+            } else {
+              console.log(`[Checkpoint Save] No valid language in metadata, using default: ${languageToSave}`);
+            }
+          } catch (parseError) {
+            console.warn(`[Checkpoint Save] Failed to parse metadata JSON, using default language:`, parseError);
+          }
+        } else {
+          console.log(`[Checkpoint Save] Session metadata is NULL, initializing with default language: ${languageToSave}`);
+          // Initialize metadata for existing sessions that don't have it
+          const newMetadata = { language: languageToSave };
+          database
+            .prepare(`UPDATE sessions SET metadata = ? WHERE session_id = ?`)
+            .run(JSON.stringify(newMetadata), dynamicState.sessionId);
+          console.log(`[Checkpoint Save] Initialized session metadata with language: ${languageToSave}`);
+        }
+      } else {
+        console.warn(`[Checkpoint Save] Session not found in database, using default language: ${languageToSave}`);
+      }
+
+      // Save language to checkpoint
+      serializableState.language = languageToSave;
+      console.log(`[Checkpoint Save] Saved language to checkpoint: ${languageToSave}`);
+    } catch (error) {
+      console.warn("Failed to save language setting to checkpoint:", error);
+      // Continue without language - not critical
+      serializableState.language = "zh"; // Fallback to default
+    }
+
     // Save to database using existing checkpoint infrastructure
     db.saveCheckpoint(
       checkpointId,

@@ -9,6 +9,7 @@ router.use(authenticate);
 router.post("/game/start", gameController.startGame);
 router.post("/game/stop", gameController.stopGame);
 router.post("/game/import-data", gameController.importGameData);
+router.post("/game/update-language", gameController.updateSessionLanguage);
 router.get("/gamestate", gameController.getGameState);
 
 export default router;

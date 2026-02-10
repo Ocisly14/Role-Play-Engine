@@ -400,21 +400,35 @@ export async function loadCheckpointData(
       `[${new Date().toISOString()}] Created session ${newSessionId} from checkpoint ${checkpointId} (${conversationHistory.length} messages, ${playerMemos.length} memos)`
     );
 
-    // Restore language from original session metadata
+    // Restore language from checkpoint's game state (saved when checkpoint was created)
     let restoredLanguage: "en" | "zh" = "zh";
     try {
-      const originalSession = database
-        .prepare(`
-        SELECT metadata FROM sessions WHERE session_id = ?
-      `)
-        .get(checkpoint.sessionId) as { metadata: string | null } | undefined;
+      console.log(`[Checkpoint Load] gameStateAny.language:`, gameStateAny.language);
 
-      if (originalSession?.metadata) {
-        const metadata = JSON.parse(originalSession.metadata);
-        restoredLanguage =
-          metadata.language === "en" || metadata.language === "zh"
-            ? metadata.language
-            : "zh";
+      // First try to get language from checkpoint's game state
+      if (gameStateAny.language === "en" || gameStateAny.language === "zh") {
+        restoredLanguage = gameStateAny.language;
+        console.log(`[Checkpoint Load] Language from checkpoint: ${restoredLanguage}`);
+      } else {
+        console.log(`[Checkpoint Load] No valid language in checkpoint, trying original session`);
+        // Fallback: try to get from original session metadata
+        const originalSession = database
+          .prepare(`
+          SELECT metadata FROM sessions WHERE session_id = ?
+        `)
+          .get(checkpoint.sessionId) as { metadata: string | null } | undefined;
+
+        console.log(`[Checkpoint Load] Original session metadata:`, originalSession?.metadata);
+
+        if (originalSession?.metadata) {
+          const metadata = JSON.parse(originalSession.metadata);
+          console.log(`[Checkpoint Load] Parsed original metadata:`, metadata);
+          restoredLanguage =
+            metadata.language === "en" || metadata.language === "zh"
+              ? metadata.language
+              : "zh";
+          console.log(`[Checkpoint Load] Language from original session: ${restoredLanguage}`);
+        }
       }
 
       // Save language to new session metadata
@@ -426,7 +440,7 @@ export async function loadCheckpointData(
         .run(JSON.stringify(newMetadata), newSessionId);
 
       console.log(
-        `[${new Date().toISOString()}] Restored language setting: ${restoredLanguage}`
+        `[${new Date().toISOString()}] Restored language setting: ${restoredLanguage} → session ${newSessionId}`
       );
     } catch (error) {
       console.error("Failed to restore language setting:", error);
@@ -463,6 +477,7 @@ export async function loadCheckpointData(
     delete (restoredDynamicGameState as any).playerMemos;
     delete (restoredDynamicGameState as any).parentSessionId;
     delete (restoredDynamicGameState as any).subId;
+    delete (restoredDynamicGameState as any).language; // Language is stored in session metadata, not game state
 
     // Restore game state
     ServerState.getInstance().setGameState(userId, restoredDynamicGameState);

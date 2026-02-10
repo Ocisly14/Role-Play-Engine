@@ -421,3 +421,72 @@ export function getGameState(req: Request, res: Response): void {
     res.status(500).json({ error: "Failed to fetch game state" });
   }
 }
+
+/**
+ * Update session language preference
+ * POST /api/game/update-language
+ */
+export function updateSessionLanguage(
+  req: Request,
+  res: Response
+): void {
+  try {
+    const userId = req.user!.userId;
+    const { language: rawLanguage } = req.body;
+
+    if (rawLanguage !== "en" && rawLanguage !== "zh") {
+      res.status(400).json({ error: "Invalid language. Must be 'en' or 'zh'" });
+      return;
+    }
+
+    const language = rawLanguage as "en" | "zh";
+    const serverState = ServerState.getInstance();
+    const dynamicGameState = serverState.getDynamicGameState(userId);
+
+    if (!dynamicGameState) {
+      res.status(400).json({ error: "No active game session" });
+      return;
+    }
+
+    const sessionId = dynamicGameState.sessionId;
+    if (!sessionId) {
+      res.status(400).json({ error: "No session ID found" });
+      return;
+    }
+
+    // Update session metadata with new language
+    const db = DatabaseManager.getInstance().getDatabase();
+    const database = db.getDatabase();
+
+    const existingSession = database
+      .prepare(`
+        SELECT metadata FROM sessions WHERE session_id = ?
+      `)
+      .get(sessionId) as { metadata: string | null } | undefined;
+
+    const metadata = existingSession?.metadata
+      ? JSON.parse(existingSession.metadata)
+      : {};
+    metadata.language = language;
+
+    database
+      .prepare(`
+        UPDATE sessions SET metadata = ? WHERE session_id = ?
+      `)
+      .run(JSON.stringify(metadata), sessionId);
+
+    console.log(
+      `[${new Date().toISOString()}] Session language updated: ${language} for session ${sessionId}`
+    );
+
+    res.json({
+      success: true,
+      language,
+      message: "Language preference updated",
+      timestamp: new Date().toISOString(),
+    });
+  } catch (error) {
+    console.error("Error updating session language:", error);
+    res.status(500).json({ error: "Failed to update language preference" });
+  }
+}

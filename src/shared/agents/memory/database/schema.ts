@@ -935,6 +935,34 @@ export class CoCDatabase {
             CREATE INDEX IF NOT EXISTS idx_user_token_usage_model ON user_token_usage(model_name, model_class);
         `);
 
+    // Daily analytics table
+    this.db.exec(`
+            CREATE TABLE IF NOT EXISTS daily_analytics (
+                id TEXT PRIMARY KEY,
+                stat_date DATE NOT NULL UNIQUE,
+
+                -- User activity metrics
+                login_users_count INTEGER DEFAULT 0,
+                active_users_count INTEGER DEFAULT 0,
+                new_users_count INTEGER DEFAULT 0,
+
+                -- Message activity
+                total_messages_count INTEGER DEFAULT 0,
+                avg_messages_per_active_user REAL DEFAULT 0.0,
+
+                -- Module generation metrics
+                new_mods_short_count INTEGER DEFAULT 0,
+                new_mods_medium_count INTEGER DEFAULT 0,
+                new_mods_long_count INTEGER DEFAULT 0,
+                total_new_mods_count INTEGER DEFAULT 0,
+
+                -- Metadata
+                created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+                updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
+            );
+            CREATE INDEX IF NOT EXISTS idx_daily_analytics_date ON daily_analytics(stat_date);
+        `);
+
     // Player memos table
     this.db.exec(`
             CREATE TABLE IF NOT EXISTS player_memos (
@@ -1394,8 +1422,8 @@ export class CoCDatabase {
       if (hasParentSubColumns && parentSessionId) {
         const insertStmt = database.prepare(`
           INSERT INTO sessions (
-            session_id, mod_name, character_id, character_name, status, parent_session_id, sub_id
-          ) VALUES (?, ?, ?, ?, 'active', ?, ?)
+            session_id, mod_name, character_id, character_name, status, parent_session_id, sub_id, metadata
+          ) VALUES (?, ?, ?, ?, 'active', ?, ?, ?)
         `);
 
         insertStmt.run(
@@ -1404,20 +1432,22 @@ export class CoCDatabase {
           gameState.playerCharacter?.id || null,
           gameState.playerCharacter?.name || null,
           parentSessionId,
-          subId || null
+          subId || null,
+          '{}'  // Initialize metadata as empty JSON object
         );
       } else {
         const insertStmt = database.prepare(`
           INSERT INTO sessions (
-            session_id, mod_name, character_id, character_name, status
-          ) VALUES (?, ?, ?, ?, 'active')
+            session_id, mod_name, character_id, character_name, status, metadata
+          ) VALUES (?, ?, ?, ?, 'active', ?)
         `);
 
         insertStmt.run(
           sessionId,
           modName,
           gameState.playerCharacter?.id || null,
-          gameState.playerCharacter?.name || null
+          gameState.playerCharacter?.name || null,
+          '{}'  // Initialize metadata as empty JSON object
         );
       }
     } else {
@@ -2426,6 +2456,15 @@ export class CoCDatabase {
   }
 
   /**
+   * Sanitize query for FTS5 to prevent syntax errors
+   * Escapes special characters and wraps in quotes for phrase search
+   */
+  private sanitizeFTS5Query(query: string): string {
+    // Escape double quotes and wrap entire query in quotes for phrase search
+    return `"${query.replace(/"/g, '""')}"`;
+  }
+
+  /**
    * Search turn embeddings using BM25 keyword matching (FTS5)
    * Returns turns sorted by BM25 relevance score
    */
@@ -2443,11 +2482,14 @@ export class CoCDatabase {
   }> {
     const { sessionId, query, topK = 10, emailId } = params;
 
+    // Sanitize query for FTS5
+    const sanitizedQuery = this.sanitizeFTS5Query(query);
+
     // Build email filter
     const emailFilter = emailId ? " AND te.email_id = ?" : "";
     const baseArgs = [sessionId];
     if (emailId) baseArgs.push(emailId);
-    const args = [...baseArgs, query, topK];
+    const args = [...baseArgs, sanitizedQuery, topK];
 
     const stmt = this.db.prepare(`
       SELECT
@@ -2498,11 +2540,14 @@ export class CoCDatabase {
   }> {
     const { sessionId, query, topK = 10, emailId } = params;
 
+    // Sanitize query for FTS5
+    const sanitizedQuery = this.sanitizeFTS5Query(query);
+
     // Build email filter
     const emailFilter = emailId ? " AND ale.email_id = ?" : "";
     const baseArgs = [sessionId];
     if (emailId) baseArgs.push(emailId);
-    const args = [...baseArgs, query, topK];
+    const args = [...baseArgs, sanitizedQuery, topK];
 
     const stmt = this.db.prepare(`
       SELECT

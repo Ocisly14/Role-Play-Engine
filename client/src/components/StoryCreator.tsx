@@ -26,20 +26,20 @@ const STORY_LENGTH_OPTIONS: {
   {
     value: "short",
     label: "Short Story",
-    description: "Single thread, fewer scenes & NPCs (~10 total), 1–2 sessions",
+    description: "Simple thread, fewer scenes & NPCs",
     icon: "📖",
   },
   {
     value: "medium",
     label: "Medium Story",
     description:
-      "Multiple threads, moderate scenes & characters (~15 total), 3–5 sessions",
+      "Multiple threads, moderate scenes & characters",
     icon: "📚",
   },
   {
     value: "long",
     label: "Long Story",
-    description: "Full campaign, rich scenes & NPCs (20+ total), many sessions",
+    description: "Full campaign, rich scenes & NPCs",
     icon: "🗂️",
   },
 ];
@@ -266,7 +266,7 @@ export function StoryCreator({
               <div className="header-text">
                 <h2>Create Your Own Story</h2>
                 <p className="header-subtitle">
-                  Design your own Call of Cthulhu adventure
+                  Design your own adventure
                 </p>
               </div>
             </div>
