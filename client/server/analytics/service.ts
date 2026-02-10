@@ -208,17 +208,49 @@ export function saveDailyStats(stats: Omit<DailyStats, 'id' | 'created_at' | 'up
 
 /**
  * Get historical statistics for the last N days
+ * Returns data for the past N days, filling in missing days with calculated stats
  */
 export function getHistoricalStats(days: number): DailyStats[] {
   const db = getDB();
 
+  // Get stats for the past N days
   const stats = db
     .prepare(
       `SELECT * FROM daily_analytics
-       ORDER BY stat_date DESC
-       LIMIT ?`
+       WHERE stat_date >= DATE('now', '-' || ? || ' days')
+       ORDER BY stat_date DESC`
     )
     .all(days) as DailyStats[];
+
+  // If we have fewer records than requested days, fill in missing days
+  if (stats.length < days) {
+    const existingDates = new Set(stats.map(s => s.stat_date));
+    const today = new Date();
+
+    for (let i = 0; i < days; i++) {
+      const date = new Date(today);
+      date.setDate(date.getDate() - i);
+      const dateString = date.toISOString().split('T')[0];
+
+      if (!existingDates.has(dateString)) {
+        // Calculate stats for this missing day
+        const calculatedStats = calculateDailyStats(dateString);
+        saveDailyStats(calculatedStats);
+
+        // Retrieve the saved record
+        const saved = db
+          .prepare(`SELECT * FROM daily_analytics WHERE stat_date = ?`)
+          .get(dateString) as DailyStats;
+
+        if (saved) {
+          stats.push(saved);
+        }
+      }
+    }
+
+    // Re-sort after adding missing days
+    stats.sort((a, b) => b.stat_date.localeCompare(a.stat_date));
+  }
 
   return stats;
 }

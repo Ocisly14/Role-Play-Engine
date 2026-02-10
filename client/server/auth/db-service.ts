@@ -88,11 +88,20 @@ export const authDbService = {
     const userId = randomUUID();
     const passwordHash = await hashPassword(data.password);
 
+    // Determine user role based on ADMIN_EMAIL environment variable
+    const adminEmails = (process.env.ADMIN_EMAIL || "")
+      .split(",")
+      .map((email) => email.trim().toLowerCase())
+      .filter((email) => email.length > 0);
+    const userRole = adminEmails.includes(data.email.toLowerCase())
+      ? "ADMIN"
+      : "USER";
+
     // Create user
     db.prepare(`
       INSERT INTO users (id, email, username, password_hash, is_email_verified, is_active, role)
-      VALUES (?, ?, ?, ?, 0, 1, 'USER')
-    `).run(userId, data.email, data.username || null, passwordHash);
+      VALUES (?, ?, ?, ?, 0, 1, ?)
+    `).run(userId, data.email, data.username || null, passwordHash, userRole);
 
     // Record referral code use (permanent codes; track email per use)
     db.prepare(`

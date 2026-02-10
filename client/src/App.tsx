@@ -250,12 +250,23 @@ const AppShell: React.FC = () => {
   useEffect(() => {
     const prevUser = prevUserRef.current;
     if (!prevUser && user) {
+      // User just logged in - force redirect to home page
       setPage("home");
       window.localStorage.setItem(PAGE_STORAGE_KEY, "home");
-      navigate("/");
+      navigate("/", { replace: true }); // Use replace to avoid adding to history
     }
     prevUserRef.current = user ?? null;
   }, [user, navigate]);
+
+  // On initial load, if user is logged in and page is "sheet", reset to home
+  useEffect(() => {
+    if (user && page === "sheet" && !hasInitialized) {
+      console.log("Resetting page from 'sheet' to 'home' on initial load");
+      setPage("home");
+      window.localStorage.setItem(PAGE_STORAGE_KEY, "home");
+      navigate("/", { replace: true });
+    }
+  }, [user, page, hasInitialized, navigate]);
 
   // Helper function to set default background (supports multiple formats)
   const setDefaultBackground = useCallback(async () => {
@@ -537,8 +548,11 @@ const AppShell: React.FC = () => {
           {user.role === "ADMIN" && (
             <button
               onClick={() => {
+                console.log("Analytics button clicked");
+                console.log("Current showAnalytics:", showAnalytics);
                 setShowAnalytics(true);
                 setIsUserMenuOpen(false);
+                console.log("Set showAnalytics to true");
               }}
               className="backdrop-blur-sm bg-white/50 border border-slate-200 shadow-md rounded-lg px-4 py-3 hover:bg-white/70 transition-all"
               style={{
@@ -2675,7 +2689,7 @@ const AppShell: React.FC = () => {
                       }}
                     >
                       {Object.entries(groupedCheckpoints).map(
-                        ([modName, modCheckpoints]) => (
+                        ([modName, modCheckpoints]: [string, any[]]) => (
                           <div
                             key={modName}
                             style={{
@@ -2924,6 +2938,12 @@ const AppShell: React.FC = () => {
             EN
           </button>
         </div>
+        {showAnalytics && (
+          <>
+            {console.log("Rendering Analytics component in home view")}
+            <Analytics onClose={() => setShowAnalytics(false)} />
+          </>
+        )}
       </>
     );
   }
@@ -3164,6 +3184,12 @@ const AppShell: React.FC = () => {
             />
           </div>
         </div>
+        {showAnalytics && (
+          <>
+            {console.log("Rendering Analytics component in game view")}
+            <Analytics onClose={() => setShowAnalytics(false)} />
+          </>
+        )}
       </>
     );
   }
@@ -3172,7 +3198,12 @@ const AppShell: React.FC = () => {
     <>
       {userMenu}
       {sheet}
-      {showAnalytics && <Analytics onClose={() => setShowAnalytics(false)} />}
+      {showAnalytics && (
+        <>
+          {console.log("Rendering Analytics component")}
+          <Analytics onClose={() => setShowAnalytics(false)} />
+        </>
+      )}
     </>
   );
 };

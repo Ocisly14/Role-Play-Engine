@@ -45,7 +45,7 @@ export function Analytics({ onClose }: AnalyticsProps) {
   const fetchAnalytics = async () => {
     try {
       setLoading(true);
-      const response = await api.get("/analytics/daily");
+      const response = await api.get("/analytics/daily?days=30");
       setStats(response.data.history || []);
       setError(null);
     } catch (err: any) {

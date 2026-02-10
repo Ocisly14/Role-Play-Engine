@@ -97,11 +97,47 @@ const server = http.createServer(app);
 // Create WebSocket server
 const wsManager = new WebSocketManager(server);
 
+/**
+ * Update admin user roles based on ADMIN_EMAIL environment variable
+ * This runs on every server startup to ensure admin users have the correct role
+ */
+function updateAdminUserRoles() {
+  try {
+    const adminEmails = (process.env.ADMIN_EMAIL || "")
+      .split(",")
+      .map((email) => email.trim().toLowerCase())
+      .filter((email) => email.length > 0);
+
+    if (adminEmails.length === 0) {
+      console.log("⚠️  No admin emails configured in ADMIN_EMAIL");
+      return;
+    }
+
+    const db = DatabaseManager.getInstance().getDatabase();
+    const database = db.getDatabase();
+
+    for (const email of adminEmails) {
+      const result = database
+        .prepare(`UPDATE users SET role = 'ADMIN' WHERE LOWER(email) = ? AND role != 'ADMIN'`)
+        .run(email);
+
+      if (result.changes > 0) {
+        console.log(`✅ Updated user ${email} to ADMIN role`);
+      }
+    }
+  } catch (error) {
+    console.error("❌ Failed to update admin user roles:", error);
+  }
+}
+
 // Start server
 server.listen(PORT, () => {
   console.log(`🚀 Server running on http://localhost:${PORT}`);
   console.log(`🔌 WebSocket server ready on ws://localhost:${PORT}/ws`);
   console.log("✅ Frontend server ready (lazy initialization)");
+
+  // Update admin user roles on startup
+  updateAdminUserRoles();
 
   // Start analytics scheduler
   startDailyScheduler();
