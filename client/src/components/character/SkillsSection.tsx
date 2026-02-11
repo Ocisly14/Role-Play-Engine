@@ -1,0 +1,442 @@
+import React from "react";
+
+interface Skill {
+  name: string;
+  base: string;
+  category: string;
+  occupationalValue: string;
+  interestValue: string;
+}
+
+interface SkillsSectionProps {
+  form: Record<string, string>;
+  onChange: (key: string, value: string) => void;
+  skillsState: Skill[];
+  skillPointsUsage: {
+    occupationalUsed: number;
+    interestUsed: number;
+    occupationalRemaining: number;
+    interestRemaining: number;
+  };
+  selectedOccupation: any;
+  occupationalPoints: number;
+  interestPoints: number;
+}
+
+export const SkillsSection: React.FC<SkillsSectionProps> = ({
+  form,
+  onChange,
+  skillsState,
+  skillPointsUsage,
+  selectedOccupation,
+  occupationalPoints,
+  interestPoints,
+}) => {
+  return (
+    <>
+      <div className="section-title">Skills</div>
+
+      {/* Skill Points Display */}
+      <div
+        style={{
+          marginBottom: "16px",
+          padding: "16px",
+          background: "#fff9e6",
+          border: "2px solid #8b7355",
+          borderRadius: "4px",
+          display: "grid",
+          gridTemplateColumns: "1fr 1fr",
+          gap: "16px",
+        }}
+      >
+        <div>
+          <strong style={{ color: "#8b7355", fontSize: "1rem" }}>
+            Occupational Skill Points:
+          </strong>
+          <div
+            style={{
+              fontSize: "1.5rem",
+              fontWeight: "bold",
+              color:
+                skillPointsUsage.occupationalRemaining < 0
+                  ? "#c41e3a"
+                  : "#3d2817",
+              marginTop: "4px",
+            }}
+          >
+            Remaining: {skillPointsUsage.occupationalRemaining}
+          </div>
+          <div style={{ fontSize: "0.9rem", color: "#666", marginTop: "4px" }}>
+            Total: {occupationalPoints} | Used:{" "}
+            {skillPointsUsage.occupationalUsed}
+          </div>
+          {selectedOccupation &&
+            selectedOccupation.suggested_occupational_points && (
+              <div
+                style={{
+                  fontSize: "0.75rem",
+                  color: "#999",
+                  marginTop: "2px",
+                }}
+              >
+                ({selectedOccupation.suggested_occupational_points.expression})
+              </div>
+            )}
+          {skillPointsUsage.occupationalRemaining < 0 && (
+            <div
+              style={{
+                fontSize: "0.8rem",
+                color: "#c41e3a",
+                marginTop: "4px",
+                fontWeight: "bold",
+              }}
+            >
+              ⚠️ Exceeds available points!
+            </div>
+          )}
+        </div>
+        <div>
+          <strong style={{ color: "#8b7355", fontSize: "1rem" }}>
+            Interest Skill Points:
+          </strong>
+          <div
+            style={{
+              fontSize: "1.5rem",
+              fontWeight: "bold",
+              color:
+                skillPointsUsage.interestRemaining < 0
+                  ? "#c41e3a"
+                  : "#3d2817",
+              marginTop: "4px",
+            }}
+          >
+            Remaining: {skillPointsUsage.interestRemaining}
+          </div>
+          <div style={{ fontSize: "0.9rem", color: "#666", marginTop: "4px" }}>
+            Total: {interestPoints} | Used: {skillPointsUsage.interestUsed}
+          </div>
+          <div style={{ fontSize: "0.75rem", color: "#999", marginTop: "2px" }}>
+            (INT × 2)
+          </div>
+          {skillPointsUsage.interestRemaining < 0 && (
+            <div
+              style={{
+                fontSize: "0.8rem",
+                color: "#c41e3a",
+                marginTop: "4px",
+                fontWeight: "bold",
+              }}
+            >
+              ⚠️ Exceeds available points!
+            </div>
+          )}
+        </div>
+      </div>
+
+      {/* Tip */}
+      <div
+        style={{
+          marginBottom: "16px",
+          padding: "10px",
+          background: "#e8f4f8",
+          border: "1px solid #5ba3c0",
+          borderRadius: "4px",
+          fontSize: "0.85rem",
+          color: "#2c5f75",
+        }}
+      >
+        <strong>💡 Tip:</strong> Each skill can be improved using{" "}
+        <strong>occupational points</strong> and{" "}
+        <strong>interest points</strong> separately. Final skill value = Base
+        value + Occupational points + Interest points
+      </div>
+
+      {/* Recommended Skills */}
+      {selectedOccupation &&
+        selectedOccupation.suggested_skills &&
+        selectedOccupation.suggested_skills.length > 0 && (
+          <div
+            style={{
+              marginBottom: "16px",
+              padding: "12px",
+              background: "#f0f8ff",
+              border: "1px solid #8b7355",
+              borderRadius: "4px",
+            }}
+          >
+            <strong style={{ color: "#8b7355" }}>
+              {selectedOccupation.name_en} Recommended Skills:
+            </strong>
+            <div
+              style={{
+                marginTop: "8px",
+                display: "flex",
+                flexWrap: "wrap",
+                gap: "8px",
+              }}
+            >
+              {selectedOccupation.suggested_skills.map(
+                (skill: string, index: number) => (
+                  <span
+                    key={index}
+                    style={{
+                      padding: "4px 8px",
+                      background: "#fff",
+                      border: "1px solid #ddd",
+                      borderRadius: "3px",
+                      fontSize: "0.85rem",
+                    }}
+                  >
+                    {skill}
+                  </span>
+                )
+              )}
+            </div>
+          </div>
+        )}
+
+      {/* Skills Grid - Two Columns */}
+      <div
+        style={{
+          display: "grid",
+          gridTemplateColumns: "1fr 1fr",
+          gap: "20px",
+        }}
+      >
+        {/* Left Column */}
+        <div>
+          {[
+            {
+              key: "social-knowledge",
+              label: "Social & Knowledge Skills",
+              categories: ["Social", "Knowledge", "Language"],
+            },
+            {
+              key: "investigation",
+              label: "Investigation & Criminal Skills",
+              categories: ["Investigation", "Criminal"],
+            },
+            { key: "combat", label: "Combat Skills", categories: ["Combat"] },
+          ].map((group) => {
+            const groupSkills = skillsState.filter((s) =>
+              group.categories.includes(s.category)
+            );
+            if (groupSkills.length === 0) return null;
+
+            return (
+              <div
+                key={group.key}
+                className="skill-category"
+                style={{ marginBottom: "20px" }}
+              >
+                <h4 className="skill-category-title">{group.label}</h4>
+                <table className="skills-table">
+                  <thead>
+                    <tr>
+                      <th style={{ textAlign: "left" }}>Skill Name</th>
+                      <th style={{ width: "80px" }}>Occupational</th>
+                      <th style={{ width: "80px" }}>Interest</th>
+                      <th style={{ width: "80px" }}>Total</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {groupSkills.map((skill) => {
+                      const isOccupationalSkill =
+                        selectedOccupation?.suggested_skills?.includes(
+                          skill.name
+                        );
+                      const baseValue =
+                        parseInt(skill.base.replace("%", "")) || 0;
+                      const occValue = parseInt(skill.occupationalValue) || 0;
+                      const intValue = parseInt(skill.interestValue) || 0;
+                      const totalValue = baseValue + occValue + intValue;
+
+                      return (
+                        <tr
+                          key={skill.name}
+                          style={{
+                            backgroundColor: isOccupationalSkill
+                              ? "#f5e6d3"
+                              : "transparent",
+                          }}
+                        >
+                          <td className="skill-name-cell">
+                            <span>{skill.name}</span>
+                            <span
+                              className="skill-base"
+                              style={{ marginLeft: "8px", color: "#999" }}
+                            >
+                              ({skill.base})
+                            </span>
+                          </td>
+                          <td className="skill-value-cell">
+                            <input
+                              type="number"
+                              min="0"
+                              max="99"
+                              placeholder="0"
+                              value={skill.occupationalValue}
+                              onChange={(e) =>
+                                onChange(
+                                  `skill_occ_${skill.name}`,
+                                  e.target.value
+                                )
+                              }
+                              style={{ width: "100%" }}
+                            />
+                          </td>
+                          <td className="skill-value-cell">
+                            <input
+                              type="number"
+                              min="0"
+                              max="99"
+                              placeholder="0"
+                              value={skill.interestValue}
+                              onChange={(e) =>
+                                onChange(`skill_int_${skill.name}`, e.target.value)
+                              }
+                              style={{ width: "100%" }}
+                            />
+                          </td>
+                          <td
+                            className="skill-value-cell"
+                            style={{
+                              textAlign: "center",
+                              fontWeight: "bold",
+                              backgroundColor: "#f0f0f0",
+                            }}
+                          >
+                            {totalValue}
+                          </td>
+                        </tr>
+                      );
+                    })}
+                  </tbody>
+                </table>
+              </div>
+            );
+          })}
+        </div>
+
+        {/* Right Column */}
+        <div>
+          {[
+            {
+              key: "physical",
+              label: "Physical & Stealth Skills",
+              categories: ["Physical", "Stealth"],
+            },
+            {
+              key: "technical-medical",
+              label: "Technical & Medical Skills",
+              categories: ["Technical", "Medical"],
+            },
+            {
+              key: "special",
+              label: "Special Skills",
+              categories: ["Status", "Mythos"],
+            },
+          ].map((group) => {
+            const groupSkills = skillsState.filter((s) =>
+              group.categories.includes(s.category)
+            );
+            if (groupSkills.length === 0) return null;
+
+            return (
+              <div
+                key={group.key}
+                className="skill-category"
+                style={{ marginBottom: "20px" }}
+              >
+                <h4 className="skill-category-title">{group.label}</h4>
+                <table className="skills-table">
+                  <thead>
+                    <tr>
+                      <th style={{ textAlign: "left" }}>Skill Name</th>
+                      <th style={{ width: "80px" }}>Occupational</th>
+                      <th style={{ width: "80px" }}>Interest</th>
+                      <th style={{ width: "80px" }}>Total</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {groupSkills.map((skill) => {
+                      const isOccupationalSkill =
+                        selectedOccupation?.suggested_skills?.includes(
+                          skill.name
+                        );
+                      const baseValue =
+                        parseInt(skill.base.replace("%", "")) || 0;
+                      const occValue = parseInt(skill.occupationalValue) || 0;
+                      const intValue = parseInt(skill.interestValue) || 0;
+                      const totalValue = baseValue + occValue + intValue;
+
+                      return (
+                        <tr
+                          key={skill.name}
+                          style={{
+                            backgroundColor: isOccupationalSkill
+                              ? "#f5e6d3"
+                              : "transparent",
+                          }}
+                        >
+                          <td className="skill-name-cell">
+                            <span>{skill.name}</span>
+                            <span
+                              className="skill-base"
+                              style={{ marginLeft: "8px", color: "#999" }}
+                            >
+                              ({skill.base})
+                            </span>
+                          </td>
+                          <td className="skill-value-cell">
+                            <input
+                              type="number"
+                              min="0"
+                              max="99"
+                              placeholder="0"
+                              value={skill.occupationalValue}
+                              onChange={(e) =>
+                                onChange(
+                                  `skill_occ_${skill.name}`,
+                                  e.target.value
+                                )
+                              }
+                              style={{ width: "100%" }}
+                            />
+                          </td>
+                          <td className="skill-value-cell">
+                            <input
+                              type="number"
+                              min="0"
+                              max="99"
+                              placeholder="0"
+                              value={skill.interestValue}
+                              onChange={(e) =>
+                                onChange(`skill_int_${skill.name}`, e.target.value)
+                              }
+                              style={{ width: "100%" }}
+                            />
+                          </td>
+                          <td
+                            className="skill-value-cell"
+                            style={{
+                              textAlign: "center",
+                              fontWeight: "bold",
+                              backgroundColor: "#f0f0f0",
+                            }}
+                          >
+                            {totalValue}
+                          </td>
+                        </tr>
+                      );
+                    })}
+                  </tbody>
+                </table>
+              </div>
+            );
+          })}
+        </div>
+      </div>
+    </>
+  );
+};
