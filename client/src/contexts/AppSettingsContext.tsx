@@ -18,7 +18,7 @@ export const AppSettingsProvider: React.FC<{ children: React.ReactNode }> = ({
 }) => {
   const [language, setLanguage] = useState<"en" | "zh">(() => {
     const stored = localStorage.getItem("app.language");
-    return stored === "en" || stored === "zh" ? stored : "zh";
+    return stored === "en" || stored === "zh" ? stored : "en";
   });
 
   const [currentBackground, setCurrentBackground] = useState<string>("");

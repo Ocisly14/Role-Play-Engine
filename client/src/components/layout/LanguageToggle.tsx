@@ -27,33 +27,6 @@ export const LanguageToggle: React.FC<LanguageToggleProps> = ({
       }}
     >
       <button
-        onClick={() => onLanguageChange("zh")}
-        style={{
-          padding: "6px 16px",
-          borderRadius: "14px",
-          border: "none",
-          background:
-            language === "zh" ? "rgba(59, 130, 246, 0.8)" : "transparent",
-          color: language === "zh" ? "#fff" : "rgba(255, 255, 255, 0.7)",
-          fontWeight: language === "zh" ? "600" : "400",
-          fontSize: "14px",
-          cursor: "pointer",
-          transition: "all 0.2s",
-        }}
-        onMouseEnter={(e) => {
-          if (language !== "zh") {
-            e.currentTarget.style.background = "rgba(255, 255, 255, 0.1)";
-          }
-        }}
-        onMouseLeave={(e) => {
-          if (language !== "zh") {
-            e.currentTarget.style.background = "transparent";
-          }
-        }}
-      >
-        中文
-      </button>
-      <button
         onClick={() => onLanguageChange("en")}
         style={{
           padding: "6px 16px",
@@ -79,6 +52,33 @@ export const LanguageToggle: React.FC<LanguageToggleProps> = ({
         }}
       >
         EN
+      </button>
+      <button
+        onClick={() => onLanguageChange("zh")}
+        style={{
+          padding: "6px 16px",
+          borderRadius: "14px",
+          border: "none",
+          background:
+            language === "zh" ? "rgba(59, 130, 246, 0.8)" : "transparent",
+          color: language === "zh" ? "#fff" : "rgba(255, 255, 255, 0.7)",
+          fontWeight: language === "zh" ? "600" : "400",
+          fontSize: "14px",
+          cursor: "pointer",
+          transition: "all 0.2s",
+        }}
+        onMouseEnter={(e) => {
+          if (language !== "zh") {
+            e.currentTarget.style.background = "rgba(255, 255, 255, 0.1)";
+          }
+        }}
+        onMouseLeave={(e) => {
+          if (language !== "zh") {
+            e.currentTarget.style.background = "transparent";
+          }
+        }}
+      >
+        中文
       </button>
     </div>
   );

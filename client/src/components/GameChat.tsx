@@ -34,7 +34,7 @@ export function GameChat({
   moduleIntroduction,
   initialMessages,
   onNarrativeComplete,
-  language = "zh",
+  language = "en",
 }: GameChatProps) {
   // Local component state
   const [inputValue, setInputValue] = useState("");
