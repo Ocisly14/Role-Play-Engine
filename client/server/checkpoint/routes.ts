@@ -13,5 +13,9 @@ router.delete(
   "/checkpoints/:checkpointId",
   checkpointController.deleteCheckpoint
 );
+router.post(
+  "/checkpoints/batch-delete",
+  checkpointController.batchDeleteCheckpoints
+);
 
 export default router;

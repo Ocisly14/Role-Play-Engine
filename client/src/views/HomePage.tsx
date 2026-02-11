@@ -81,6 +81,32 @@ export const HomePage: React.FC = () => {
     }
   };
 
+  // Handle batch checkpoint deletion
+  const handleBatchDeleteCheckpoints = async (checkpointIds: string[]) => {
+    try {
+      const response = await authFetch("/api/checkpoints/batch-delete", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ checkpointIds }),
+      });
+
+      const data = await response.json();
+
+      if (response.ok && data.success) {
+        alert(data.message || `Successfully deleted ${data.deletedCount} checkpoint(s)`);
+        // Refresh checkpoint list
+        await handleContinueGame();
+      } else {
+        alert("Failed to delete checkpoints: " + (data.error || "Unknown error"));
+      }
+    } catch (error) {
+      console.error("Error batch deleting checkpoints:", error);
+      alert("Network error, unable to delete checkpoints");
+    }
+  };
+
   // Handle checkpoint selection and load
   const handleLoadCheckpoint = async (checkpointId: string) => {
     await gameSession.loadCheckpoint(checkpointId, language);
@@ -107,6 +133,7 @@ export const HomePage: React.FC = () => {
         loadingCheckpoints={loadingCheckpoints}
         onLoad={handleLoadCheckpoint}
         onDelete={handleDeleteCheckpoint}
+        onBatchDelete={handleBatchDeleteCheckpoints}
       />
 
       <LanguageToggle

@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useState } from "react";
 
 interface Checkpoint {
   checkpointId: string;
@@ -18,11 +18,15 @@ interface CheckpointSelectorModalProps {
   loadingCheckpoints: boolean;
   onLoad: (checkpointId: string) => Promise<void>;
   onDelete: (checkpointId: string, checkpointName: string, e: React.MouseEvent) => Promise<void>;
+  onBatchDelete: (checkpointIds: string[]) => Promise<void>;
 }
 
 export const CheckpointSelectorModal: React.FC<
   CheckpointSelectorModalProps
-> = ({ open, onClose, checkpoints, loadingCheckpoints, onLoad, onDelete }) => {
+> = ({ open, onClose, checkpoints, loadingCheckpoints, onLoad, onDelete, onBatchDelete }) => {
+  const [batchMode, setBatchMode] = useState(false);
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
+
   if (!open) {
     return null;
   }
@@ -40,15 +44,137 @@ export const CheckpointSelectorModal: React.FC<
     {}
   );
 
+  const handleToggleSelect = (checkpointId: string) => {
+    const newSelected = new Set(selectedIds);
+    if (newSelected.has(checkpointId)) {
+      newSelected.delete(checkpointId);
+    } else {
+      newSelected.add(checkpointId);
+    }
+    setSelectedIds(newSelected);
+  };
+
+  const handleSelectAll = () => {
+    if (selectedIds.size === checkpoints.length) {
+      setSelectedIds(new Set());
+    } else {
+      setSelectedIds(new Set(checkpoints.map(cp => cp.checkpointId)));
+    }
+  };
+
+  const handleBatchDelete = async () => {
+    if (selectedIds.size === 0) return;
+
+    const confirmed = window.confirm(
+      `Are you sure you want to delete ${selectedIds.size} checkpoint(s)?\n\nThis action cannot be undone.`
+    );
+
+    if (!confirmed) return;
+
+    await onBatchDelete(Array.from(selectedIds));
+    setSelectedIds(new Set());
+    setBatchMode(false);
+  };
+
+  const handleCloseBatchMode = () => {
+    setBatchMode(false);
+    setSelectedIds(new Set());
+  };
+
   return (
     <div className="fixed inset-0 z-50 bg-black/50 backdrop-blur-sm supports-[backdrop-filter]:bg-black/30 supports-[backdrop-filter]:backdrop-blur-sm flex items-center justify-center p-5">
       <div className="fixed left-[50%] top-[50%] z-50 translate-x-[-50%] translate-y-[-50%] max-w-[800px] max-h-[80vh] w-[90%] overflow-y-auto rounded-3xl p-12 supports-[backdrop-filter]:backdrop-blur-lg border border-white/50 bg-white/80 shadow-[0_30px_80px_rgba(15,23,42,0.25)] supports-[backdrop-filter]:bg-white/55">
         <div className="flex justify-between items-center mb-6">
-          <h2 className="text-2xl font-semibold m-0">Select Checkpoint</h2>
+          <h2 className="text-2xl font-semibold m-0">
+            {batchMode ? "Batch Delete Checkpoints" : "Select Checkpoint"}
+          </h2>
           <button onClick={onClose} className="close-button" aria-label="Close">
             ×
           </button>
         </div>
+
+        {!loadingCheckpoints && checkpoints.length > 0 && (
+          <div style={{ display: "flex", gap: "10px", marginBottom: "20px" }}>
+            {!batchMode ? (
+              <button
+                onClick={() => setBatchMode(true)}
+                style={{
+                  padding: "8px 16px",
+                  backgroundColor: "#dc3545",
+                  color: "#fff",
+                  border: "none",
+                  borderRadius: "6px",
+                  cursor: "pointer",
+                  fontWeight: "600",
+                  fontSize: "14px",
+                  transition: "all 0.2s",
+                }}
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.backgroundColor = "#c82333";
+                  e.currentTarget.style.transform = "translateY(-1px)";
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.backgroundColor = "#dc3545";
+                  e.currentTarget.style.transform = "translateY(0)";
+                }}
+              >
+                🗑️ Batch Delete
+              </button>
+            ) : (
+              <>
+                <button
+                  onClick={handleSelectAll}
+                  style={{
+                    padding: "8px 16px",
+                    backgroundColor: "#6c757d",
+                    color: "#fff",
+                    border: "none",
+                    borderRadius: "6px",
+                    cursor: "pointer",
+                    fontWeight: "600",
+                    fontSize: "14px",
+                    transition: "all 0.2s",
+                  }}
+                >
+                  {selectedIds.size === checkpoints.length ? "Deselect All" : "Select All"}
+                </button>
+                <button
+                  onClick={handleBatchDelete}
+                  disabled={selectedIds.size === 0}
+                  style={{
+                    padding: "8px 16px",
+                    backgroundColor: selectedIds.size === 0 ? "#ccc" : "#dc3545",
+                    color: "#fff",
+                    border: "none",
+                    borderRadius: "6px",
+                    cursor: selectedIds.size === 0 ? "not-allowed" : "pointer",
+                    fontWeight: "600",
+                    fontSize: "14px",
+                    transition: "all 0.2s",
+                  }}
+                >
+                  Delete Selected ({selectedIds.size})
+                </button>
+                <button
+                  onClick={handleCloseBatchMode}
+                  style={{
+                    padding: "8px 16px",
+                    backgroundColor: "#fff",
+                    color: "#333",
+                    border: "2px solid #8b7355",
+                    borderRadius: "6px",
+                    cursor: "pointer",
+                    fontWeight: "600",
+                    fontSize: "14px",
+                    transition: "all 0.2s",
+                  }}
+                >
+                  Cancel
+                </button>
+              </>
+            )}
+          </div>
+        )}
 
         {loadingCheckpoints ? (
           <p>Loading checkpoint list...</p>
@@ -105,54 +231,72 @@ export const CheckpointSelectorModal: React.FC<
                   </div>
 
                   {/* Checkpoints in this module */}
-                  {modCheckpoints.map((checkpoint) => (
-                    <div
-                      key={checkpoint.checkpointId}
-                      onClick={() => onLoad(checkpoint.checkpointId)}
-                      style={{
-                        padding: "15px",
-                        border: "2px solid #8b7355",
-                        borderRadius: "4px",
-                        cursor: "pointer",
-                        backgroundColor: "#fff",
-                        transition: "background-color 0.2s",
-                        position: "relative",
-                        marginLeft: "15px",
-                      }}
-                      onMouseEnter={(e) => {
-                        e.currentTarget.style.backgroundColor = "#f0ebe0";
-                      }}
-                      onMouseLeave={(e) => {
-                        e.currentTarget.style.backgroundColor = "#fff";
-                      }}
-                    >
+                  {modCheckpoints.map((checkpoint) => {
+                    const isSelected = selectedIds.has(checkpoint.checkpointId);
+                    return (
                       <div
+                        key={checkpoint.checkpointId}
+                        onClick={() => batchMode ? handleToggleSelect(checkpoint.checkpointId) : onLoad(checkpoint.checkpointId)}
                         style={{
-                          display: "flex",
-                          justifyContent: "space-between",
-                          alignItems: "flex-start",
-                          marginBottom: "5px",
-                          gap: "10px",
+                          padding: "15px",
+                          border: isSelected ? "2px solid #dc3545" : "2px solid #8b7355",
+                          borderRadius: "4px",
+                          cursor: "pointer",
+                          backgroundColor: isSelected ? "#ffe5e5" : "#fff",
+                          transition: "all 0.2s",
+                          position: "relative",
+                          marginLeft: "15px",
+                        }}
+                        onMouseEnter={(e) => {
+                          e.currentTarget.style.backgroundColor = isSelected ? "#ffd5d5" : "#f0ebe0";
+                        }}
+                        onMouseLeave={(e) => {
+                          e.currentTarget.style.backgroundColor = isSelected ? "#ffe5e5" : "#fff";
                         }}
                       >
                         <div
                           style={{
-                            fontWeight: "bold",
-                            color: "#3d2817",
-                            flex: 1,
+                            display: "flex",
+                            justifyContent: "space-between",
+                            alignItems: "flex-start",
+                            marginBottom: "5px",
+                            gap: "10px",
                           }}
                         >
-                          {checkpoint.checkpointName || "Unnamed Checkpoint"}
-                        </div>
-                        <button
-                          onClick={(e) =>
-                            onDelete(
-                              checkpoint.checkpointId,
-                              checkpoint.checkpointName || "Unnamed Checkpoint",
-                              e
-                            )
-                          }
-                          style={{
+                          {batchMode && (
+                            <input
+                              type="checkbox"
+                              checked={isSelected}
+                              onChange={() => handleToggleSelect(checkpoint.checkpointId)}
+                              onClick={(e) => e.stopPropagation()}
+                              style={{
+                                width: "20px",
+                                height: "20px",
+                                cursor: "pointer",
+                                flexShrink: 0,
+                                marginTop: "2px",
+                              }}
+                            />
+                          )}
+                          <div
+                            style={{
+                              fontWeight: "bold",
+                              color: "#3d2817",
+                              flex: 1,
+                            }}
+                          >
+                            {checkpoint.checkpointName || "Unnamed Checkpoint"}
+                          </div>
+                        {!batchMode && (
+                          <button
+                            onClick={(e) =>
+                              onDelete(
+                                checkpoint.checkpointId,
+                                checkpoint.checkpointName || "Unnamed Checkpoint",
+                                e
+                              )
+                            }
+                            style={{
                             width: "28px",
                             height: "28px",
                             borderRadius: "50%",
@@ -191,6 +335,7 @@ export const CheckpointSelectorModal: React.FC<
                         >
                           ×
                         </button>
+                        )}
                       </div>
                       <div style={{ fontSize: "0.85rem", color: "#666" }}>
                         {checkpoint.currentSceneName &&
@@ -213,7 +358,8 @@ export const CheckpointSelectorModal: React.FC<
                           )}
                       </div>
                     </div>
-                  ))}
+                  );
+                  })}
                 </div>
               )
             )}

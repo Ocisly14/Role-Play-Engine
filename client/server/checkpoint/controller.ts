@@ -492,10 +492,16 @@ export async function loadCheckpointData(
       `[${new Date().toISOString()}] Checkpoint loaded: ${checkpointId} → session ${newSessionId}`
     );
 
+    // Only return necessary data to frontend (reduce network payload)
     res.json({
       success: true,
       sessionId: newSessionId,
-      gameState: restoredDynamicGameState,
+      gameState: {
+        playerCharacter: {
+          name: restoredDynamicGameState.playerCharacter?.name,
+        },
+        moduleName: restoredDynamicGameState.moduleName,
+      },
       conversationHistory: restoredConversation,
       language: restoredLanguage,
       message: "存档加载成功",
@@ -567,5 +573,73 @@ export function deleteCheckpoint(req: Request, res: Response): void {
       .json({
         error: "Failed to delete checkpoint: " + (error as Error).message,
       });
+  }
+}
+
+/**
+ * Batch delete checkpoints
+ * POST /api/checkpoints/batch-delete
+ */
+export function batchDeleteCheckpoints(req: Request, res: Response): void {
+  try {
+    const db = DatabaseManager.getInstance().getDatabase();
+    const database = db.getDatabase();
+    const userId = req.user!.userId;
+    const { checkpointIds } = req.body;
+
+    if (!checkpointIds || !Array.isArray(checkpointIds) || checkpointIds.length === 0) {
+      res.status(400).json({ error: "checkpointIds array is required and must not be empty" });
+      return;
+    }
+
+    // Verify all checkpoints belong to the user
+    const placeholders = checkpointIds.map(() => "?").join(",");
+    const ownedCheckpoints = database
+      .prepare(`
+        SELECT gc.checkpoint_id
+        FROM game_checkpoints gc
+        JOIN sessions s ON s.session_id = gc.session_id
+        JOIN characters c ON c.character_id = s.character_id
+        WHERE gc.checkpoint_id IN (${placeholders}) AND c.email_id = ?
+      `)
+      .all(...checkpointIds, req.user!.email) as Array<{ checkpoint_id: string }>;
+
+    if (ownedCheckpoints.length !== checkpointIds.length) {
+      res.status(403).json({
+        error: "Some checkpoints not found or you don't have permission to delete them",
+      });
+      return;
+    }
+
+    // Delete all checkpoints
+    let deletedCount = 0;
+    const errors: string[] = [];
+
+    for (const checkpointId of checkpointIds) {
+      try {
+        db.deleteCheckpoint(checkpointId);
+        deletedCount++;
+      } catch (error) {
+        errors.push(`Failed to delete ${checkpointId}: ${(error as Error).message}`);
+      }
+    }
+
+    console.log(
+      `[${new Date().toISOString()}] Batch delete: ${deletedCount}/${checkpointIds.length} checkpoints deleted by user ${userId}`
+    );
+
+    res.json({
+      success: true,
+      message: `Successfully deleted ${deletedCount} checkpoint(s)`,
+      deletedCount,
+      totalRequested: checkpointIds.length,
+      errors: errors.length > 0 ? errors : undefined,
+      timestamp: new Date().toISOString(),
+    });
+  } catch (error) {
+    console.error("Error batch deleting checkpoints:", error);
+    res.status(500).json({
+      error: "Failed to batch delete checkpoints: " + (error as Error).message,
+    });
   }
 }

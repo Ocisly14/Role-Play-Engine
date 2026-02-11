@@ -192,22 +192,16 @@ export const GameSessionProvider: React.FC<{ children: React.ReactNode }> = ({
       const response = await authFetch("/api/sessions/latest");
       const data = await response.json();
 
-      if (response.ok && data.success && data.sessionId) {
-        console.log("Restored session:", data.sessionId);
-        setSessionId(data.sessionId);
+      if (response.ok && data.success && data.session?.sessionId) {
+        console.log("Restored session:", data.session.sessionId);
+        setSessionId(data.session.sessionId);
 
-        if (data.gameState) {
-          if (data.gameState.playerCharacter?.name) {
-            setCharacterName(data.gameState.playerCharacter.name);
-          }
-          if (data.gameState.moduleName) {
-            setCurrentModuleName(data.gameState.moduleName);
-          }
+        if (data.session.characterName) {
+          setCharacterName(data.session.characterName);
         }
 
-        if (data.conversationHistory) {
-          setConversationHistory(data.conversationHistory);
-        }
+        // Note: /api/sessions/latest doesn't return gameState or conversationHistory
+        // Those are only available from /api/checkpoints/load
 
         hasInitialized.current = true;
         setIsRestoringSession(false);
