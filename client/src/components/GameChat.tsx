@@ -839,9 +839,30 @@ export function GameChat({
       }
 
       if (wsRef.current) {
+        const ws = wsRef.current;
         // Remove event handlers to prevent onclose from triggering reconnect
-        wsRef.current.onclose = null;
-        wsRef.current.close();
+        ws.onclose = null;
+        ws.onerror = null;
+
+        // Only close if not in CONNECTING state to avoid the warning
+        // If it's CONNECTING, wait a bit before closing
+        if (ws.readyState === WebSocket.CONNECTING) {
+          // Wait for connection to establish or fail before closing
+          const closeTimer = setTimeout(() => {
+            if (ws.readyState !== WebSocket.CLOSED) {
+              ws.close();
+            }
+          }, 100);
+
+          // But if it opens quickly, close it immediately
+          ws.onopen = () => {
+            clearTimeout(closeTimer);
+            ws.close();
+          };
+        } else if (ws.readyState !== WebSocket.CLOSED) {
+          ws.close();
+        }
+
         wsRef.current = null;
       }
     };
