@@ -1140,6 +1140,90 @@ export class CoCDatabase {
             CREATE INDEX IF NOT EXISTS idx_referral_code_uses_email ON referral_code_uses(email_id);
         `);
 
+    // Disposable/temporary email domain blacklist
+    this.db.exec(`
+            CREATE TABLE IF NOT EXISTS disposable_email_domains (
+                id TEXT PRIMARY KEY,
+                domain TEXT UNIQUE NOT NULL,
+                reason TEXT,
+                created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+            );
+            CREATE INDEX IF NOT EXISTS idx_disposable_domains ON disposable_email_domains(domain);
+        `);
+
+    // Seed common disposable email domains
+    {
+      const existingCount = this.db
+        .prepare("SELECT COUNT(*) as count FROM disposable_email_domains")
+        .get() as { count: number };
+
+      if (existingCount.count === 0) {
+        const disposableDomains = [
+          // Popular temporary email services
+          "passmail.net",
+          "tempmail.com",
+          "temp-mail.org",
+          "temp-mail.io",
+          "guerrillamail.com",
+          "guerrillamail.org",
+          "guerrillamail.net",
+          "guerrillamail.biz",
+          "guerrillamail.de",
+          "10minutemail.com",
+          "10minutemail.net",
+          "mailinator.com",
+          "throwaway.email",
+          "getnada.com",
+          "maildrop.cc",
+          "trashmail.com",
+          "yopmail.com",
+          "fakeinbox.com",
+          "mohmal.com",
+          "emailondeck.com",
+          "sharklasers.com",
+          "grr.la",
+          "mintemail.com",
+          "mytemp.email",
+          "discard.email",
+          "1secmail.com",
+          "1secmail.org",
+          "1secmail.net",
+          "zetmail.com",
+          "adguard.net",
+          "anonymbox.com",
+          "mailnesia.com",
+          "temp-mail.de",
+          "temp-mail.fr",
+          "tmpnator.com",
+          "spamgourmet.com",
+          "mailcatch.com",
+          "mt2015.com",
+          "inboxbear.com",
+          "spambox.us",
+          "tempr.email",
+          "tafmail.com",
+          "emailfake.com",
+          "tempinbox.com",
+        ];
+
+        const insert = this.db.prepare(
+          "INSERT OR IGNORE INTO disposable_email_domains (id, domain, reason) VALUES (?, ?, ?)"
+        );
+
+        for (const domain of disposableDomains) {
+          insert.run(
+            randomUUID(),
+            domain,
+            "Common disposable email service"
+          );
+        }
+
+        console.log(
+          `[Database] Initialized ${disposableDomains.length} disposable email domains`
+        );
+      }
+    }
+
     // Backfill referral_code_uses from legacy is_used / used_by_user_id (one-time)
     const usesCount = this.db
       .prepare("SELECT COUNT(*) as count FROM referral_code_uses")

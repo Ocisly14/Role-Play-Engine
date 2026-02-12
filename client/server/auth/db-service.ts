@@ -85,6 +85,18 @@ export const authDbService = {
       throw new Error("Email already registered");
     }
 
+    // Check if email domain is in disposable email blacklist
+    const emailDomain = data.email.split("@")[1]?.toLowerCase();
+    if (emailDomain) {
+      const blacklisted = db
+        .prepare("SELECT domain, reason FROM disposable_email_domains WHERE domain = ?")
+        .get(emailDomain);
+
+      if (blacklisted) {
+        throw new Error("Disposable email addresses are not allowed. Please use a permanent email address.");
+      }
+    }
+
     const userId = randomUUID();
     const passwordHash = await hashPassword(data.password);
 
