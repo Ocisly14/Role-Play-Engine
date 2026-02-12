@@ -94,6 +94,10 @@ app.get("*", (_req, res) => {
 // Create HTTP server
 const server = http.createServer(app);
 
+// Set timeout to 10 minutes for long-running operations (e.g., module generation)
+server.timeout = 600000; // 10 minutes (600 seconds)
+server.keepAliveTimeout = 610000; // Slightly longer than timeout
+
 // Create WebSocket server
 const wsManager = new WebSocketManager(server);
 
