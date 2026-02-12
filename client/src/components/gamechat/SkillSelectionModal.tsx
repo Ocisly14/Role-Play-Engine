@@ -3,7 +3,8 @@
  */
 
 import React from "react";
-import { getSkillNameZh } from "../../lib/skillNames";
+import { useTranslation } from "react-i18next";
+import { useSkillTranslation } from "../../hooks/useSkillTranslation";
 import type { Skill } from "../../types/gamechat";
 import type { TurnStatus } from "../../hooks/useTurnPolling";
 
@@ -28,6 +29,9 @@ export const SkillSelectionModal = React.memo<SkillSelectionModalProps>(({
   onCancel,
   language,
 }) => {
+  const { t } = useTranslation('game');
+  const { translateSkill } = useSkillTranslation();
+
   if (!isOpen) return null;
 
   return (
@@ -42,10 +46,10 @@ export const SkillSelectionModal = React.memo<SkillSelectionModalProps>(({
             <span className="inline-flex h-8 w-8 items-center justify-center rounded-full border border-white/70 bg-white/55 text-base shadow-sm">
               ⚔️
             </span>
-            <span>Skill Check Required</span>
+            <span>{t('skillModal.title')}</span>
           </h2>
           <p className="text-slate-700 text-xs sm:text-sm mt-1">
-            Your action requires a skill check.
+            {t('skillModal.description')}
           </p>
         </div>
 
@@ -55,7 +59,7 @@ export const SkillSelectionModal = React.memo<SkillSelectionModalProps>(({
           {pendingTurn && (
             <div className="mb-4 rounded-2xl border border-white/60 bg-white/45 px-3 py-2.5 shadow-[0_8px_28px_rgba(15,23,42,0.12)]">
               <p className="text-xs uppercase tracking-wide text-slate-500 mb-1">
-                Your Action
+                {t('skillModal.yourAction')}
               </p>
               <p className="font-medium text-slate-900 leading-relaxed">
                 {pendingTurn.characterInput}
@@ -67,14 +71,11 @@ export const SkillSelectionModal = React.memo<SkillSelectionModalProps>(({
           {selectedSkill && (
             <div className="mb-4 rounded-2xl border border-amber-300/65 bg-amber-100/45 px-3 py-2.5 shadow-[0_10px_28px_rgba(146,64,14,0.18)]">
               <p className="text-xs uppercase tracking-wide text-amber-800/80 mb-1">
-                Selected Skill
+                {t('skillModal.selectedSkill')}
               </p>
               <div className="flex items-center justify-between">
                 <span className="text-base sm:text-lg font-semibold text-amber-950">
-                  {language === "zh"
-                    ? (availableSkills.find((s) => s.name === selectedSkill)
-                        ?.displayNameZh ?? getSkillNameZh(selectedSkill))
-                    : selectedSkill}
+                  {translateSkill(selectedSkill)}
                 </span>
                 <span className="text-amber-800 font-mono">
                   {availableSkills.find((s) => s.name === selectedSkill)
@@ -89,7 +90,7 @@ export const SkillSelectionModal = React.memo<SkillSelectionModalProps>(({
           {availableSkills.length > 0 ? (
             <div>
               <p className="text-sm font-medium text-slate-700 mb-3">
-                Choose one skill for this check:
+                {t('skillModal.chooseSkill')}
               </p>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 max-h-64 overflow-y-auto pr-1">
                 {availableSkills.map((skill) => (
@@ -111,9 +112,7 @@ export const SkillSelectionModal = React.memo<SkillSelectionModalProps>(({
                             : "text-slate-700"
                         }`}
                       >
-                        {language === "zh"
-                          ? (skill.displayNameZh ?? getSkillNameZh(skill.name))
-                          : skill.name}
+                        {translateSkill(skill.name)}
                       </span>
                       <span
                         className={`font-mono text-sm ${
@@ -132,7 +131,7 @@ export const SkillSelectionModal = React.memo<SkillSelectionModalProps>(({
           ) : (
             <div className="text-center py-8">
               <div className="w-8 h-8 border-2 border-slate-400 border-t-transparent rounded-full animate-spin mx-auto mb-3" />
-              <p className="text-slate-600">Loading skills...</p>
+              <p className="text-slate-600">{t('common:loading.loading')}</p>
             </div>
           )}
         </div>
@@ -143,14 +142,14 @@ export const SkillSelectionModal = React.memo<SkillSelectionModalProps>(({
             onClick={onCancel}
             className="px-4 py-2 text-slate-700 bg-white/55 border border-white/75 rounded-xl hover:bg-white/70 transition-all hover:-translate-y-0.5"
           >
-            Cancel
+            {t('common:button.cancel')}
           </button>
           <button
             onClick={onConfirm}
             disabled={!selectedSkill}
             className="px-6 py-2 bg-gradient-to-r from-amber-500/95 to-orange-500/95 text-white font-medium rounded-xl hover:from-amber-500 hover:to-orange-500 transition-all hover:-translate-y-0.5 disabled:opacity-50 disabled:cursor-not-allowed shadow-[0_12px_26px_rgba(194,65,12,0.34)] disabled:shadow-none"
           >
-            Confirm Selection
+            {t('common:button.confirm')}
           </button>
         </div>
       </div>

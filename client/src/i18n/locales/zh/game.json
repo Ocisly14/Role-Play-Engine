@@ -1,0 +1,196 @@
+{
+  "session": {
+    "playingAs": "扮演角色:",
+    "title": "TaleCraft AI Agent",
+    "titleWithModule": "TaleCraft AI Agent - {{module}}",
+    "backToHome": "返回首页",
+    "restoringSession": "正在恢复游戏会话...",
+    "loadingSession": "正在加载游戏会话...",
+    "defaultCharacter": "调查员",
+    "languageRestored": "语言已恢复: {{language}}",
+    "language": {
+      "english": "英文",
+      "chinese": "中文"
+    },
+    "save": "保存",
+    "saving": "保存中...",
+    "saveTitle": "保存当前游戏进度",
+    "saveSuccess": "游戏保存成功",
+    "saveFailed": "游戏保存失败",
+    "load": "加载",
+    "loading": "加载中...",
+    "loadSuccess": "游戏加载成功",
+    "loadFailed": "游戏加载失败",
+    "quit": "退出游戏",
+    "quitConfirm": "确定要退出吗?未保存的进度将会丢失。",
+    "menu": "菜单",
+    "characterSheet": "角色卡",
+    "inventory": "物品栏",
+    "notes": "笔记"
+  },
+  "input": {
+    "placeholder": "在此输入您的消息...",
+    "placeholderEnded": "故事已结束。",
+    "placeholderWithSkill": "输入您的行动(已选择{{skill}})...",
+    "suggestedSkills": "推荐技能",
+    "auto": "自动",
+    "chooseSkill": "选择技能",
+    "send": "发送",
+    "sendMessage": "发送消息",
+    "sending": "发送中...",
+    "processing": "处理中...",
+    "gameEnded": "游戏已结束",
+    "selectSkill": "选择技能",
+    "clearSkill": "清除技能",
+    "tooLong": "消息过长(最多{{max}}个字符)"
+  },
+  "skillModal": {
+    "title": "需要技能检定",
+    "description": "您的行动需要进行技能检定。",
+    "yourAction": "您的行动",
+    "selectedSkill": "已选技能",
+    "chooseSkill": "为此检定选择一项技能:",
+    "search": "搜索技能...",
+    "skillValue": "{{value}}%",
+    "close": "关闭",
+    "noResults": "未找到技能",
+    "categories": {
+      "all": "所有技能",
+      "combat": "战斗",
+      "investigation": "调查",
+      "social": "社交",
+      "knowledge": "知识",
+      "other": "其他"
+    }
+  },
+  "messages": {
+    "system": "系统",
+    "keeper": "守密人",
+    "player": "您",
+    "npc": "{{name}}",
+    "typing": "守密人正在输入...",
+    "contemplating": "守密人正在思考...",
+    "processingAction": "正在处理您的行动...",
+    "error": "消息发送失败",
+    "errorPrefix": "错误:",
+    "retry": "重试",
+    "timestamp": "{{time}}",
+    "welcome": "欢迎来到克苏鲁的呼唤!",
+    "welcomePrompt": "描述您的调查员的行动以开始冒险...",
+    "sceneImage": "场景图片",
+    "day": "第"
+  },
+  "dice": {
+    "roll": "投掷",
+    "rolled": "{{name}}投掷了{{dice}}",
+    "result": "结果: {{result}}",
+    "success": "成功!",
+    "failure": "失败",
+    "critical": "大成功!",
+    "fumble": "大失败!",
+    "damage": "伤害: {{amount}}"
+  },
+  "clues": {
+    "discovered": "发现线索",
+    "title": "{{title}}",
+    "description": "{{description}}",
+    "viewAll": "查看所有线索"
+  },
+  "time": {
+    "day": "第{{day}}天",
+    "time": "{{time}}",
+    "advanced": "时间推进至{{time}}"
+  },
+  "errors": {
+    "sessionNotFound": "游戏会话未找到",
+    "connectionLost": "与服务器的连接已断开",
+    "reconnecting": "重新连接中...",
+    "reconnected": "已重新连接到服务器",
+    "actionFailed": "行动失败",
+    "invalidAction": "无效行动",
+    "initFailed": "初始化游戏失败"
+  },
+  "sidebar": {
+    "tabs": {
+      "status": "角色状态",
+      "notes": "笔记",
+      "clues": "已发现线索",
+      "map": "地图"
+    },
+    "noData": "暂无数据",
+    "dayNumber": "第{{day}}天",
+    "dayUnknown": "第--天",
+    "errors": {
+      "fetchGameStateFailed": "获取游戏状态失败",
+      "invalidGameState": "游戏状态响应无效",
+      "loadFailed": "加载失败"
+    },
+    "status": {
+      "basicAttributes": "基础属性",
+      "viewCharacterTitle": "查看完整角色卡",
+      "viewCharacter": "查看角色",
+      "hp": "HP:",
+      "mp": "MP:",
+      "san": "SAN:",
+      "luck": "幸运:",
+      "currentStatus": "当前状态",
+      "location": "地点:",
+      "time": "时间:",
+      "day": "天数:",
+      "unknown": "未知",
+      "statusEffects": "状态效果",
+      "noStatusEffects": "无状态效果",
+      "weapons": "武器",
+      "dmg": "伤害:",
+      "range": "射程:",
+      "attacks": "攻击:",
+      "ammo": "弹药:",
+      "noWeapons": "无武器",
+      "inventory": "物品栏",
+      "noItems": "无物品"
+    },
+    "memo": {
+      "title": "备忘录",
+      "hint": "你可以在这里记录笔记。新增后会自动保存。",
+      "errorPrefix": "备忘录错误:",
+      "gameDay": "游戏天数",
+      "allDays": "全部天数",
+      "location": "地点",
+      "allLocations": "全部地点",
+      "search": "搜索",
+      "searchPlaceholder": "搜索笔记...",
+      "newNotePlaceholder": "写一条新笔记...",
+      "addNote": "添加笔记",
+      "noteNumber": "笔记 {{number}}",
+      "noNotesMatchFilters": "没有匹配当前筛选条件的笔记",
+      "noNotesYet": "暂无笔记",
+      "errors": {
+        "fetchFailed": "获取备忘录失败",
+        "invalidResponse": "备忘录响应无效",
+        "saveFailed": "保存备忘录失败",
+        "updateFailed": "更新备忘录失败",
+        "deleteFailed": "删除备忘录失败"
+      }
+    },
+    "clues": {
+      "title": "重要线索",
+      "types": {
+        "scenario": "场景线索",
+        "npc": "NPC线索",
+        "secret": "秘密"
+      },
+      "discoveredBy": "发现者: {{name}}",
+      "method": "方式: {{method}}",
+      "difficulty": "难度: {{difficulty}}",
+      "noClues": "暂无线索"
+    },
+    "map": {
+      "macroMap": "宏观地图",
+      "macroMapAlt": "宏观地图",
+      "macroMapUnavailable": "宏观地图不可用（该模组创建时未配置 GOOGLE_API_KEY）",
+      "currentScene": "当前场景",
+      "sceneName": "场景名:"
+    }
+  },
+  "sceneTransition": "场景转换中..."
+}

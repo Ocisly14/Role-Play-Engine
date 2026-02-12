@@ -3,6 +3,7 @@
  */
 
 import React from "react";
+import { useTranslation } from "react-i18next";
 import ReactMarkdown from "react-markdown";
 import { DiceAnimation, type DiceRollInfo } from "../DiceAnimation";
 
@@ -31,15 +32,16 @@ export const MessageItem = React.memo<MessageItemProps>(({
   gameTime,
   onAnimationComplete,
 }) => {
+  const { t } = useTranslation('game');
   return (
     <div className={`chat-message ${role}`}>
       <div className="message-meta">
         <span className="sender-name">
-          {role === "character" ? `📝 ${characterName}` : "🎭 Keeper"}
+          {role === "character" ? `📝 ${characterName}` : `🎭 ${t('messages.keeper')}`}
         </span>
         <span className="message-timestamp">
           {gameTime && gameTime !== null && gameTime !== undefined && gameTime !== ""
-            ? `Day ${gameDay ?? 1}, ${gameTime}`
+            ? `${t('messages.day')} ${gameDay ?? 1}, ${gameTime}`
             : new Date(timestamp).toLocaleTimeString("en-US", {
                 hour: "2-digit",
                 minute: "2-digit",
@@ -57,7 +59,7 @@ export const MessageItem = React.memo<MessageItemProps>(({
           <img
             className="scene-image"
             src={imageUrl}
-            alt={imageCaption || "Scene image"}
+            alt={imageCaption || t('messages.sceneImage')}
           />
           {imageCaption && (
             <div className="scene-image-caption">{imageCaption}</div>

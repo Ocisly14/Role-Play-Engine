@@ -1,4 +1,5 @@
 import React from "react";
+import { useTranslation } from "react-i18next";
 
 interface ModuleIntroduction {
   introduction: string;
@@ -16,14 +17,20 @@ export const ModuleIntroModal: React.FC<ModuleIntroModalProps> = ({
   onClose,
   onNext,
 }) => {
+  const { t } = useTranslation("module");
+
   return (
     <div className="fixed inset-0 z-50 bg-black/50 backdrop-blur-sm supports-[backdrop-filter]:bg-black/30 supports-[backdrop-filter]:backdrop-blur-sm flex items-center justify-center p-5">
       <div className="fixed left-[50%] top-[50%] z-50 translate-x-[-50%] translate-y-[-50%] max-w-[800px] max-h-[90vh] w-[90%] overflow-y-auto rounded-3xl p-12 supports-[backdrop-filter]:backdrop-blur-lg border border-white/50 bg-white/80 shadow-[0_30px_80px_rgba(15,23,42,0.25)] supports-[backdrop-filter]:bg-white/55">
         <div className="flex justify-between items-center mb-6">
           <h2 className="text-2xl font-semibold m-0 border-b-2 border-gray-300 pb-3 w-full">
-            Module Introduction
+            {t("intro.title")}
           </h2>
-          <button onClick={onClose} className="close-button" aria-label="Close">
+          <button
+            onClick={onClose}
+            className="close-button"
+            aria-label={t("intro.closeAria")}
+          >
             ×
           </button>
         </div>
@@ -38,7 +45,7 @@ export const ModuleIntroModal: React.FC<ModuleIntroModalProps> = ({
                   fontSize: "1.2rem",
                 }}
               >
-                Story Introduction
+                {t("manager.preview.storyIntro")}
               </h3>
               <div
                 style={{
@@ -63,7 +70,7 @@ export const ModuleIntroModal: React.FC<ModuleIntroModalProps> = ({
                   fontSize: "1.2rem",
                 }}
               >
-                📝 Character Creation Guide
+                {t("manager.preview.creationGuide")}
               </h3>
               <div
                 style={{
@@ -87,13 +94,13 @@ export const ModuleIntroModal: React.FC<ModuleIntroModalProps> = ({
             onClick={onClose}
             className="flex-1 px-5 py-3.5 backdrop-blur-sm bg-white/50 border border-slate-200 shadow-md rounded-lg hover:bg-white/70 transition-all text-base font-bold cursor-pointer"
           >
-            Back to Module Selection
+            {t("intro.backToSelection")}
           </button>
           <button
             onClick={onNext}
             className="flex-[2] px-5 py-3.5 backdrop-blur-sm bg-white/50 border border-slate-200 shadow-md rounded-lg hover:bg-white/70 transition-all text-base font-bold cursor-pointer"
           >
-            Next: Select Character
+            {t("intro.nextSelectCharacter")}
           </button>
         </div>
       </div>

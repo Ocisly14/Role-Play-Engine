@@ -1,11 +1,13 @@
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
+import { useTranslation } from "react-i18next";
 import { ModSelector } from "../components/ModSelector";
 import { ModLoadingModal } from "../components/modals/ModLoadingModal";
 import { useGameSession } from "../hooks/useGameSession";
 import { authFetch } from "../utils/authFetch";
 
 export const ModSelectionPage: React.FC = () => {
+  const { t } = useTranslation(["module", "common"]);
   const navigate = useNavigate();
   const gameSession = useGameSession();
 
@@ -21,9 +23,9 @@ export const ModSelectionPage: React.FC = () => {
     gameSession.setSelectedModName(modName);
     setLoadingModData(true);
     setModLoadProgress({
-      stage: "Initializing",
+      stage: t("module:moduleLoad.stages.initializing"),
       progress: 0,
-      message: "Initializing...",
+      message: t("module:moduleLoad.messages.initializing"),
     });
 
     try {
@@ -52,12 +54,14 @@ export const ModSelectionPage: React.FC = () => {
           }
           try {
             const errorData = JSON.parse(errorBuffer);
-            throw new Error(errorData.error || "Failed to load module data");
+            throw new Error(
+              errorData.error || t("module:errors.loadFailed")
+            );
           } catch (e) {
-            throw new Error(errorBuffer || "Failed to load module data");
+            throw new Error(errorBuffer || t("module:errors.loadFailed"));
           }
         } else {
-          throw new Error("Failed to load module data");
+          throw new Error(t("module:errors.loadFailed"));
         }
       }
 
@@ -115,14 +119,14 @@ export const ModSelectionPage: React.FC = () => {
       }
 
       if (!loadData) {
-        throw new Error("Server did not return load result");
+        throw new Error(t("module:moduleLoad.errors.noLoadResult"));
       }
 
       // Step 2: Fetch module introduction
       setModLoadProgress({
-        stage: "Generating Introduction Narrative",
+        stage: t("module:moduleLoad.stages.generatingIntro"),
         progress: 90,
-        message: "Generating module introduction narrative...",
+        message: t("module:moduleLoad.messages.generatingIntro"),
       });
       const introResponse = await authFetch(
         `/api/module/introduction?modName=${encodeURIComponent(modName)}`
@@ -132,9 +136,9 @@ export const ModSelectionPage: React.FC = () => {
       if (introResponse.ok && introData.success) {
         gameSession.setModuleIntroduction(introData.moduleIntroduction);
         setModLoadProgress({
-          stage: "Complete",
+          stage: t("module:moduleLoad.stages.complete"),
           progress: 100,
-          message: "Ready",
+          message: t("module:moduleLoad.messages.ready"),
         });
         setTimeout(() => {
           setLoadingModData(false);
@@ -152,7 +156,7 @@ export const ModSelectionPage: React.FC = () => {
       console.error("Error loading mod:", error);
       setLoadingModData(false);
       setModLoadProgress(null);
-      alert("Failed to load module: " + (error as Error).message);
+      alert(`${t("module:errors.loadFailed")}: ${(error as Error).message}`);
     }
   };
 

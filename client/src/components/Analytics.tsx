@@ -1,4 +1,5 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
+import { useTranslation } from "react-i18next";
 import {
   LineChart,
   Line,
@@ -34,13 +35,14 @@ interface AnalyticsProps {
 }
 
 export function Analytics({ onClose }: AnalyticsProps) {
+  const { t, i18n } = useTranslation(["home", "common"]);
   const [stats, setStats] = useState<DailyStats[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     fetchAnalytics();
-  }, []);
+  }, [i18n.language]);
 
   const fetchAnalytics = async () => {
     try {
@@ -49,7 +51,7 @@ export function Analytics({ onClose }: AnalyticsProps) {
       setStats(response.data.history || []);
       setError(null);
     } catch (err: any) {
-      setError(err.response?.data?.error || "Failed to load analytics");
+      setError(err.response?.data?.error || t("home:analytics.errors.loadFailed"));
       console.error("Analytics fetch error:", err);
     } finally {
       setLoading(false);
@@ -62,35 +64,57 @@ export function Analytics({ onClose }: AnalyticsProps) {
       await api.post("/analytics/refresh");
       await fetchAnalytics();
     } catch (err: any) {
-      setError(err.response?.data?.error || "Failed to refresh analytics");
+      setError(
+        err.response?.data?.error || t("home:analytics.errors.refreshFailed")
+      );
       console.error("Analytics refresh error:", err);
       setLoading(false);
     }
   };
 
+  const dateLocale = i18n.language === "zh" ? "zh-CN" : "en-US";
+
   // Format data for charts (reverse to show oldest to newest)
   const chartData = [...stats].reverse().map((stat) => ({
-    date: new Date(stat.stat_date).toLocaleDateString("en-US", {
+    date: new Date(stat.stat_date).toLocaleDateString(dateLocale, {
       month: "short",
       day: "numeric",
     }),
-    "Login Users": stat.login_users_count,
-    "Active Users": stat.active_users_count,
-    "New Users": stat.new_users_count,
-    Messages: stat.total_messages_count,
-    "Avg Msgs/User": Number(stat.avg_messages_per_active_user.toFixed(1)),
-    "New Mods": stat.total_new_mods_count,
+    loginUsers: stat.login_users_count,
+    activeUsers: stat.active_users_count,
+    newUsers: stat.new_users_count,
+    messages: stat.total_messages_count,
+    avgMsgsPerUser: Number(stat.avg_messages_per_active_user.toFixed(1)),
+    newMods: stat.total_new_mods_count,
   }));
 
   const modChartData = [...stats].reverse().map((stat) => ({
-    date: new Date(stat.stat_date).toLocaleDateString("en-US", {
+    date: new Date(stat.stat_date).toLocaleDateString(dateLocale, {
       month: "short",
       day: "numeric",
     }),
-    Short: stat.new_mods_short_count,
-    Medium: stat.new_mods_medium_count,
-    Long: stat.new_mods_long_count,
+    short: stat.new_mods_short_count,
+    medium: stat.new_mods_medium_count,
+    long: stat.new_mods_long_count,
   }));
+
+  const metricLabels = useMemo(
+    () => ({
+      loginUsers: t("home:analytics.metrics.loginUsers"),
+      activeUsers: t("home:analytics.metrics.activeUsers"),
+      newUsers: t("home:analytics.metrics.newUsers"),
+      messages: t("home:analytics.metrics.messages"),
+      avgMsgsPerUser: t("home:analytics.metrics.avgMsgsPerUser"),
+      newMods: t("home:analytics.metrics.newMods"),
+      short: t("home:analytics.length.short"),
+      medium: t("home:analytics.length.medium"),
+      long: t("home:analytics.length.long"),
+    }),
+    [t]
+  );
+
+  const formatMetric = (value: string): string =>
+    metricLabels[value as keyof typeof metricLabels] || value;
 
   const todayStats = stats[0];
 
@@ -149,7 +173,7 @@ export function Analytics({ onClose }: AnalyticsProps) {
               color: "var(--title)",
             }}
           >
-            Analytics Dashboard
+            {t("home:analytics.title")}
           </h2>
           <div style={{ display: "flex", gap: "12px" }}>
             <button
@@ -173,7 +197,9 @@ export function Analytics({ onClose }: AnalyticsProps) {
                 e.currentTarget.style.backgroundColor = "white";
               }}
             >
-              {loading ? "Refreshing..." : "Refresh"}
+              {loading
+                ? t("home:analytics.actions.refreshing")
+                : t("home:analytics.actions.refresh")}
             </button>
             <button
               onClick={onClose}
@@ -195,7 +221,7 @@ export function Analytics({ onClose }: AnalyticsProps) {
                 e.currentTarget.style.backgroundColor = "#ef4444";
               }}
             >
-              Close
+              {t("common:button.close")}
             </button>
           </div>
         </div>
@@ -226,7 +252,7 @@ export function Analytics({ onClose }: AnalyticsProps) {
                   fontFamily: "var(--serif)",
                 }}
               >
-                Loading analytics...
+                {t("home:analytics.states.loading")}
               </div>
             </div>
           ) : stats.length === 0 ? (
@@ -238,7 +264,7 @@ export function Analytics({ onClose }: AnalyticsProps) {
                   fontFamily: "var(--serif)",
                 }}
               >
-                No analytics data available yet
+                {t("home:analytics.states.empty")}
               </div>
             </div>
           ) : (
@@ -255,7 +281,9 @@ export function Analytics({ onClose }: AnalyticsProps) {
                       color: "var(--title)",
                     }}
                   >
-                    Today's Summary ({todayStats.stat_date})
+                    {t("home:analytics.todaySummary", {
+                      date: todayStats.stat_date,
+                    })}
                   </h3>
                   <div
                     style={{
@@ -265,32 +293,32 @@ export function Analytics({ onClose }: AnalyticsProps) {
                     }}
                   >
                     <StatCard
-                      label="Login Users"
+                      label={t("home:analytics.metrics.loginUsers")}
                       value={todayStats.login_users_count}
                       color="#3b82f6"
                     />
                     <StatCard
-                      label="Active Users"
+                      label={t("home:analytics.metrics.activeUsers")}
                       value={todayStats.active_users_count}
                       color="#10b981"
                     />
                     <StatCard
-                      label="New Users"
+                      label={t("home:analytics.metrics.newUsers")}
                       value={todayStats.new_users_count}
                       color="#8b5cf6"
                     />
                     <StatCard
-                      label="Total Messages"
+                      label={t("home:analytics.metrics.totalMessages")}
                       value={todayStats.total_messages_count}
                       color="#f59e0b"
                     />
                     <StatCard
-                      label="Avg Msgs/User"
+                      label={t("home:analytics.metrics.avgMsgsPerUser")}
                       value={todayStats.avg_messages_per_active_user.toFixed(1)}
                       color="#06b6d4"
                     />
                     <StatCard
-                      label="New Mods"
+                      label={t("home:analytics.metrics.newMods")}
                       value={todayStats.total_new_mods_count}
                       color="#ec4899"
                     />
@@ -309,30 +337,30 @@ export function Analytics({ onClose }: AnalyticsProps) {
                     color: "var(--title)",
                   }}
                 >
-                  User Activity Trends
+                  {t("home:analytics.charts.userActivity")}
                 </h3>
                 <ResponsiveContainer width="100%" height={300}>
                   <LineChart data={chartData}>
                     <CartesianGrid strokeDasharray="3 3" />
                     <XAxis dataKey="date" />
                     <YAxis />
-                    <Tooltip />
-                    <Legend />
+                    <Tooltip formatter={(value, name) => [value, formatMetric(String(name))]} />
+                    <Legend formatter={(value) => formatMetric(String(value))} />
                     <Line
                       type="monotone"
-                      dataKey="Login Users"
+                      dataKey="loginUsers"
                       stroke="#3b82f6"
                       strokeWidth={2}
                     />
                     <Line
                       type="monotone"
-                      dataKey="Active Users"
+                      dataKey="activeUsers"
                       stroke="#10b981"
                       strokeWidth={2}
                     />
                     <Line
                       type="monotone"
-                      dataKey="New Users"
+                      dataKey="newUsers"
                       stroke="#8b5cf6"
                       strokeWidth={2}
                     />
@@ -351,24 +379,24 @@ export function Analytics({ onClose }: AnalyticsProps) {
                     color: "var(--title)",
                   }}
                 >
-                  Message Activity
+                  {t("home:analytics.charts.messageActivity")}
                 </h3>
                 <ResponsiveContainer width="100%" height={300}>
                   <LineChart data={chartData}>
                     <CartesianGrid strokeDasharray="3 3" />
                     <XAxis dataKey="date" />
                     <YAxis />
-                    <Tooltip />
-                    <Legend />
+                    <Tooltip formatter={(value, name) => [value, formatMetric(String(name))]} />
+                    <Legend formatter={(value) => formatMetric(String(value))} />
                     <Line
                       type="monotone"
-                      dataKey="Messages"
+                      dataKey="messages"
                       stroke="#f59e0b"
                       strokeWidth={2}
                     />
                     <Line
                       type="monotone"
-                      dataKey="Avg Msgs/User"
+                      dataKey="avgMsgsPerUser"
                       stroke="#06b6d4"
                       strokeWidth={2}
                     />
@@ -377,7 +405,7 @@ export function Analytics({ onClose }: AnalyticsProps) {
               </div>
 
               {/* Module Generation Chart */}
-              {modChartData.some((d) => d.Short + d.Medium + d.Long > 0) && (
+              {modChartData.some((d) => d.short + d.medium + d.long > 0) && (
                 <div style={{ marginBottom: "32px" }}>
                   <h3
                     style={{
@@ -388,18 +416,18 @@ export function Analytics({ onClose }: AnalyticsProps) {
                       color: "var(--title)",
                     }}
                   >
-                    Module Generations by Length
+                    {t("home:analytics.charts.moduleGeneration")}
                   </h3>
                   <ResponsiveContainer width="100%" height={300}>
                     <BarChart data={modChartData}>
                       <CartesianGrid strokeDasharray="3 3" />
                       <XAxis dataKey="date" />
                       <YAxis />
-                      <Tooltip />
-                      <Legend />
-                      <Bar dataKey="Short" fill="#10b981" />
-                      <Bar dataKey="Medium" fill="#f59e0b" />
-                      <Bar dataKey="Long" fill="#ef4444" />
+                      <Tooltip formatter={(value, name) => [value, formatMetric(String(name))]} />
+                      <Legend formatter={(value) => formatMetric(String(value))} />
+                      <Bar dataKey="short" fill="#10b981" />
+                      <Bar dataKey="medium" fill="#f59e0b" />
+                      <Bar dataKey="long" fill="#ef4444" />
                     </BarChart>
                   </ResponsiveContainer>
                 </div>

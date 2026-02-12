@@ -1,4 +1,5 @@
 import React, { useState } from "react";
+import { useTranslation } from "react-i18next";
 import { authFetch } from "../utils/authFetch";
 import { CharacterSheetModal } from "../components/CharacterSheetModal";
 import { FrameImage } from "../components/FrameImage";
@@ -25,6 +26,7 @@ const Homes: React.FC<HomeProps> = ({
   onContinueGame,
   onManageMods,
 }) => {
+  const { t } = useTranslation('home');
   const [showCharacterBrowser, setShowCharacterBrowser] = useState(false);
   const [characters, setCharacters] = useState<Character[]>([]);
   const [loading, setLoading] = useState(false);
@@ -84,19 +86,19 @@ const Homes: React.FC<HomeProps> = ({
           <FrameImage />
           <div className="home-actions">
             <button className="primary" onClick={handleStartGame}>
-              New Game
+              {t('menu.newGame')}
             </button>
             <button className="secondary" onClick={onContinueGame}>
-              Continue Game
+              {t('menu.continueGame')}
             </button>
             <button className="secondary" onClick={onManageMods}>
-              Manage Modules
+              {t('menu.manageModules')}
             </button>
             <button className="secondary" onClick={onCreate}>
-              Create Character
+              {t('menu.createCharacter')}
             </button>
             <button className="secondary" onClick={handleViewCharacters}>
-              View Characters
+              {t('menu.viewCharacters')}
             </button>
           </div>
         </div>
@@ -110,18 +112,17 @@ const Homes: React.FC<HomeProps> = ({
               <div className="flex justify-between items-center">
                 <div className="flex items-center gap-3">
                   <h2 className="text-2xl font-semibold m-0">
-                    Your Characters
+                    {t('characters.title')}
                   </h2>
                   <p className="text-sm text-gray-600 italic m-0">
-                    {characters.length}{" "}
-                    {characters.length === 1 ? "investigator" : "investigators"}{" "}
-                    ready
+                    {t('characters.count', { count: characters.length })}{" "}
+                    {t('characters.ready')}
                   </p>
                 </div>
                 <button
                   onClick={() => setShowCharacterBrowser(false)}
                   className="close-button"
-                  aria-label="Close"
+                  aria-label={t("common:button.close")}
                 >
                   ×
                 </button>
@@ -146,7 +147,7 @@ const Homes: React.FC<HomeProps> = ({
                     >
                       🎲
                     </div>
-                    Loading characters...
+                    {t('characters.loading')}
                   </div>
                 ) : characters.length === 0 ? (
                   <div
@@ -166,10 +167,10 @@ const Homes: React.FC<HomeProps> = ({
                         color: "var(--title)",
                       }}
                     >
-                      No characters created yet
+                      {t('characters.empty')}
                     </p>
                     <p style={{ fontSize: "0.95rem" }}>
-                      Create your first investigator to begin your journey
+                      {t('characters.emptyDescription')}
                     </p>
                   </div>
                 ) : (
@@ -217,7 +218,7 @@ const Homes: React.FC<HomeProps> = ({
                               boxShadow: "0 2px 6px rgba(0, 0, 0, 0.2)",
                             }}
                           >
-                            View Sheet
+                            {t('characters.viewSheet')}
                           </div>
                           <div
                             style={{
@@ -254,7 +255,7 @@ const Homes: React.FC<HomeProps> = ({
                                   fontWeight: "500",
                                 }}
                               >
-                                {char.occupation || "Unknown Occupation"}
+                                {char.occupation || t('characters.unknownOccupation')}
                               </span>
                             </div>
                           </div>
@@ -276,7 +277,7 @@ const Homes: React.FC<HomeProps> = ({
                                     color: "var(--title)",
                                   }}
                                 >
-                                  Age: {char.age}
+                                  {t('selector.age')} {char.age}
                                 </span>
                               </div>
                             )}

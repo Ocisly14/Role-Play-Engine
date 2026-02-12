@@ -6,6 +6,7 @@
  */
 
 import { useState, useEffect, useRef, useCallback } from "react";
+import { useTranslation } from "react-i18next";
 import { useTurnPolling, type TurnStatus } from "../hooks/useTurnPolling";
 import { useInputCollapse } from "../hooks/useInputCollapse";
 import { useSceneTransition } from "../hooks/useSceneTransition";
@@ -36,6 +37,8 @@ export function GameChat({
   onNarrativeComplete,
   language = "en",
 }: GameChatProps) {
+  const { t } = useTranslation('game');
+
   // Local component state
   const [inputValue, setInputValue] = useState("");
   const [isSending, setIsSending] = useState(false);
@@ -574,7 +577,7 @@ export function GameChat({
           <div className="rounded-2xl border border-white/60 bg-white/30 px-6 py-4 backdrop-blur-xl shadow-[0_12px_34px_rgba(15,23,42,0.3)] flex items-center gap-3">
             <div className="w-5 h-5 border-2 border-slate-600 border-t-transparent rounded-full animate-spin" />
             <span className="text-base text-slate-800 font-medium">
-              Scene Transition...
+              {t('sceneTransition')}
             </span>
           </div>
         </div>

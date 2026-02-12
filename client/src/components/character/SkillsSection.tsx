@@ -1,4 +1,5 @@
 import React from "react";
+import { useTranslation } from "react-i18next";
 
 interface Skill {
   name: string;
@@ -32,9 +33,10 @@ export const SkillsSection: React.FC<SkillsSectionProps> = ({
   occupationalPoints,
   interestPoints,
 }) => {
+  const { t } = useTranslation('character');
   return (
     <>
-      <div className="section-title">Skills</div>
+      <div className="section-title">{t('skills.title')}</div>
 
       {/* Skill Points Display */}
       <div
@@ -51,7 +53,7 @@ export const SkillsSection: React.FC<SkillsSectionProps> = ({
       >
         <div>
           <strong style={{ color: "#8b7355", fontSize: "1rem" }}>
-            Occupational Skill Points:
+            {t('skills.occupational')}
           </strong>
           <div
             style={{
@@ -64,10 +66,10 @@ export const SkillsSection: React.FC<SkillsSectionProps> = ({
               marginTop: "4px",
             }}
           >
-            Remaining: {skillPointsUsage.occupationalRemaining}
+            {t('skills.remaining')} {skillPointsUsage.occupationalRemaining}
           </div>
           <div style={{ fontSize: "0.9rem", color: "#666", marginTop: "4px" }}>
-            Total: {occupationalPoints} | Used:{" "}
+            {t('skills.totalLabel')} {occupationalPoints} | {t('skills.used')}{" "}
             {skillPointsUsage.occupationalUsed}
           </div>
           {selectedOccupation &&
@@ -91,13 +93,13 @@ export const SkillsSection: React.FC<SkillsSectionProps> = ({
                 fontWeight: "bold",
               }}
             >
-              ⚠️ Exceeds available points!
+              {t('skills.pointsExceeded')}
             </div>
           )}
         </div>
         <div>
           <strong style={{ color: "#8b7355", fontSize: "1rem" }}>
-            Interest Skill Points:
+            {t('skills.interest')}
           </strong>
           <div
             style={{
@@ -110,10 +112,10 @@ export const SkillsSection: React.FC<SkillsSectionProps> = ({
               marginTop: "4px",
             }}
           >
-            Remaining: {skillPointsUsage.interestRemaining}
+            {t('skills.remaining')} {skillPointsUsage.interestRemaining}
           </div>
           <div style={{ fontSize: "0.9rem", color: "#666", marginTop: "4px" }}>
-            Total: {interestPoints} | Used: {skillPointsUsage.interestUsed}
+            {t('skills.totalLabel')} {interestPoints} | {t('skills.used')} {skillPointsUsage.interestUsed}
           </div>
           <div style={{ fontSize: "0.75rem", color: "#999", marginTop: "2px" }}>
             (INT × 2)
@@ -127,7 +129,7 @@ export const SkillsSection: React.FC<SkillsSectionProps> = ({
                 fontWeight: "bold",
               }}
             >
-              ⚠️ Exceeds available points!
+              {t('skills.pointsExceeded')}
             </div>
           )}
         </div>
@@ -145,10 +147,7 @@ export const SkillsSection: React.FC<SkillsSectionProps> = ({
           color: "#2c5f75",
         }}
       >
-        <strong>💡 Tip:</strong> Each skill can be improved using{" "}
-        <strong>occupational points</strong> and{" "}
-        <strong>interest points</strong> separately. Final skill value = Base
-        value + Occupational points + Interest points
+        <strong>{t('skills.tip')}</strong> {t('skills.tipText')}
       </div>
 
       {/* Recommended Skills */}
@@ -165,7 +164,7 @@ export const SkillsSection: React.FC<SkillsSectionProps> = ({
             }}
           >
             <strong style={{ color: "#8b7355" }}>
-              {selectedOccupation.name_en} Recommended Skills:
+              {t('skills.recommended', { occupation: selectedOccupation.name_en })}
             </strong>
             <div
               style={{
@@ -208,15 +207,15 @@ export const SkillsSection: React.FC<SkillsSectionProps> = ({
           {[
             {
               key: "social-knowledge",
-              label: "Social & Knowledge Skills",
+              labelKey: "categories.socialKnowledge",
               categories: ["Social", "Knowledge", "Language"],
             },
             {
               key: "investigation",
-              label: "Investigation & Criminal Skills",
+              labelKey: "categories.investigationCriminal",
               categories: ["Investigation", "Criminal"],
             },
-            { key: "combat", label: "Combat Skills", categories: ["Combat"] },
+            { key: "combat", labelKey: "categories.combat", categories: ["Combat"] },
           ].map((group) => {
             const groupSkills = skillsState.filter((s) =>
               group.categories.includes(s.category)
@@ -229,14 +228,14 @@ export const SkillsSection: React.FC<SkillsSectionProps> = ({
                 className="skill-category"
                 style={{ marginBottom: "20px" }}
               >
-                <h4 className="skill-category-title">{group.label}</h4>
+                <h4 className="skill-category-title">{t(`skills.${group.labelKey}`)}</h4>
                 <table className="skills-table">
                   <thead>
                     <tr>
-                      <th style={{ textAlign: "left" }}>Skill Name</th>
-                      <th style={{ width: "80px" }}>Occupational</th>
-                      <th style={{ width: "80px" }}>Interest</th>
-                      <th style={{ width: "80px" }}>Total</th>
+                      <th style={{ textAlign: "left" }}>{t('skills.skillName')}</th>
+                      <th style={{ width: "80px" }}>{t('skills.occupationalColumn')}</th>
+                      <th style={{ width: "80px" }}>{t('skills.interestColumn')}</th>
+                      <th style={{ width: "80px" }}>{t('skills.total')}</th>
                     </tr>
                   </thead>
                   <tbody>
@@ -348,14 +347,14 @@ export const SkillsSection: React.FC<SkillsSectionProps> = ({
                 className="skill-category"
                 style={{ marginBottom: "20px" }}
               >
-                <h4 className="skill-category-title">{group.label}</h4>
+                <h4 className="skill-category-title">{t(`skills.${group.labelKey}`)}</h4>
                 <table className="skills-table">
                   <thead>
                     <tr>
-                      <th style={{ textAlign: "left" }}>Skill Name</th>
-                      <th style={{ width: "80px" }}>Occupational</th>
-                      <th style={{ width: "80px" }}>Interest</th>
-                      <th style={{ width: "80px" }}>Total</th>
+                      <th style={{ textAlign: "left" }}>{t('skills.skillName')}</th>
+                      <th style={{ width: "80px" }}>{t('skills.occupationalColumn')}</th>
+                      <th style={{ width: "80px" }}>{t('skills.interestColumn')}</th>
+                      <th style={{ width: "80px" }}>{t('skills.total')}</th>
                     </tr>
                   </thead>
                   <tbody>

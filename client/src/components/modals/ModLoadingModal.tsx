@@ -1,4 +1,5 @@
 import React from "react";
+import { useTranslation } from "react-i18next";
 
 interface ModLoadProgressData {
   stage: string;
@@ -17,6 +18,8 @@ export const ModLoadingModal: React.FC<ModLoadingModalProps> = ({
   progress,
   onClose,
 }) => {
+  const { t } = useTranslation('module');
+
   if (!loading) {
     return null;
   }
@@ -26,7 +29,7 @@ export const ModLoadingModal: React.FC<ModLoadingModalProps> = ({
       <div className="fixed left-[50%] top-[50%] z-50 translate-x-[-50%] translate-y-[-50%] max-w-[600px] w-[90%] rounded-3xl p-12 supports-[backdrop-filter]:backdrop-blur-lg border border-white/50 bg-white/80 shadow-[0_30px_80px_rgba(15,23,42,0.25)] supports-[backdrop-filter]:bg-white/55">
         <div className="mb-6">
           <h2 className="text-2xl font-semibold m-0 text-center w-full">
-            Loading Module Data
+            {t('loading')}
           </h2>
         </div>
 

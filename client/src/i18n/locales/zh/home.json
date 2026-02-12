@@ -1,0 +1,104 @@
+{
+  "menu": {
+    "newGame": "新游戏",
+    "continueGame": "继续游戏",
+    "manageModules": "管理模组",
+    "createCharacter": "创建角色",
+    "viewCharacters": "查看角色",
+    "settings": "设置",
+    "logout": "退出登录"
+  },
+  "characters": {
+    "title": "您的角色",
+    "count": "{{count}}个调查员",
+    "count_plural": "{{count}}个调查员",
+    "ready": "就绪",
+    "loading": "加载角色中...",
+    "empty": "还没有创建角色",
+    "emptyDescription": "创建您的第一个调查员,开始克苏鲁的呼唤之旅",
+    "viewSheet": "查看角色卡",
+    "unknownOccupation": "未知职业",
+    "delete": "删除角色",
+    "deleteConfirm": "确定要删除{{name}}吗?",
+    "deleteSuccess": "角色删除成功",
+    "deleteFailed": "角色删除失败"
+  },
+  "selector": {
+    "title": "选择调查员",
+    "processing": "处理中...",
+    "importWait": "请稍候,这可能需要几秒钟...",
+    "retry": "重试",
+    "createFirst": "创建第一个调查员",
+    "age": "年龄:",
+    "createNew": "创建新角色",
+    "done": "完成",
+    "importing": "导入数据中...",
+    "startGame": "使用此角色开始游戏",
+    "loadError": "加载角色失败",
+    "networkError": "网络错误: 无法连接到服务器",
+    "importingData": "导入游戏数据中...",
+    "dataImportComplete": "数据导入完成: {{scenariosLoaded}}个场景,{{npcsLoaded}}个NPC",
+    "startingGame": "启动游戏中...",
+    "importFailed": "数据导入失败"
+  },
+  "sessions": {
+    "title": "游戏会话",
+    "active": "活跃会话",
+    "recent": "最近会话",
+    "none": "还没有游戏会话",
+    "noneDescription": "开始新游戏以开始您的调查",
+    "resume": "继续",
+    "delete": "删除会话",
+    "lastPlayed": "上次游玩: {{date}}",
+    "module": "模组: {{name}}",
+    "investigator": "调查员: {{name}}"
+  },
+  "settings": {
+    "title": "设置",
+    "language": "语言",
+    "languageDescription": "选择您的首选语言",
+    "english": "English",
+    "chinese": "中文",
+    "theme": "主题",
+    "lightMode": "浅色模式",
+    "darkMode": "深色模式",
+    "notifications": "通知",
+    "soundEffects": "音效",
+    "saveSuccess": "设置保存成功"
+  },
+  "analytics": {
+    "title": "数据看板",
+    "todaySummary": "今日汇总 ({{date}})",
+    "actions": {
+      "refresh": "刷新",
+      "refreshing": "刷新中..."
+    },
+    "states": {
+      "loading": "正在加载统计数据...",
+      "empty": "暂无统计数据"
+    },
+    "metrics": {
+      "loginUsers": "登录用户",
+      "activeUsers": "活跃用户",
+      "newUsers": "新增用户",
+      "messages": "消息数",
+      "totalMessages": "消息总量",
+      "avgMsgsPerUser": "人均消息",
+      "newMods": "新增模组"
+    },
+    "charts": {
+      "userActivity": "用户活跃趋势",
+      "messageActivity": "消息活动",
+      "moduleGeneration": "按长度统计的模组生成数"
+    },
+    "length": {
+      "short": "短篇",
+      "medium": "中篇",
+      "long": "长篇"
+    },
+    "errors": {
+      "loadFailed": "加载统计数据失败",
+      "refreshFailed": "刷新统计数据失败"
+    }
+  }
+}

@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from "react";
+import { useTranslation } from "react-i18next";
 import { authFetch } from "../utils/authFetch";
 
 export interface Mod {
@@ -19,6 +20,7 @@ export function ModSelector({
   onCancel,
   onCreateStory,
 }: ModSelectorProps) {
+  const { t } = useTranslation('module');
   const [mods, setMods] = useState<Mod[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -41,11 +43,11 @@ export function ModSelector({
           setSelectedMod(data.mods[0].name);
         }
       } else {
-        setError(data.error || "Failed to load mods");
+        setError(data.error || t('errors.loadFailed'));
       }
     } catch (err) {
       console.error("Error fetching mods:", err);
-      setError("Network error, unable to connect to server");
+      setError(t('common:error.network'));
     } finally {
       setLoading(false);
     }
@@ -63,11 +65,11 @@ export function ModSelector({
         <div className="mod-selector-overlay">
           <div className="mod-selector-modal">
             <div className="modal-header">
-              <h2>Select Module</h2>
+              <h2>{t('select')}</h2>
             </div>
             <div className="modal-content">
               <div className="loading-state">
-                <p>Loading module list...</p>
+                <p>{t('loading')}</p>
               </div>
             </div>
           </div>
@@ -124,7 +126,7 @@ export function ModSelector({
         <div className="mod-selector-overlay">
           <div className="mod-selector-modal">
             <div className="modal-header">
-              <h2>Select Module</h2>
+              <h2>{t('select')}</h2>
               <button onClick={onCancel} className="close-button">
                 ×
               </button>
@@ -144,10 +146,10 @@ export function ModSelector({
                 </div>
                 <div className="modal-actions">
                   <button onClick={onCancel} className="secondary">
-                    Cancel
+                    {t('common:button.cancel')}
                   </button>
                   <button onClick={fetchMods} className="primary">
-                    Retry
+                    {t('common:button.retry')}
                   </button>
                 </div>
               </div>
@@ -207,20 +209,20 @@ export function ModSelector({
             <div className="modal-header-content">
               <img
                 src="/asset/icon.png"
-                alt="Call of Cthulhu"
+                alt={t('chooseAdventure')}
                 className="header-icon"
               />
               <div className="header-text">
-                <h2>Choose Your Adventure</h2>
+                <h2>{t('chooseAdventure')}</h2>
                 <p className="header-subtitle">
-                  Select a scenario to begin your investigation
+                  {t('selectScenario')}
                 </p>
               </div>
             </div>
             <button
               onClick={onCancel}
               className="close-button"
-              aria-label="Close"
+              aria-label={t('common:button.close')}
             >
               ×
             </button>
@@ -236,9 +238,9 @@ export function ModSelector({
                   <div className="mod-card-inner">
                     <div className="mod-card-icon">✨</div>
                     <div className="mod-card-content">
-                      <h3 className="mod-card-title">Create Your Own Story</h3>
+                      <h3 className="mod-card-title">{t('createStory')}</h3>
                       <p className="mod-card-subtitle">
-                        Design your own TaleCraft adventure with AI
+                        {t('createStoryDesc')}
                       </p>
                     </div>
                   </div>
@@ -289,14 +291,14 @@ export function ModSelector({
             </div>
             <div className="modal-footer">
               <button onClick={onCancel} className="btn-secondary">
-                Cancel
+                {t('common:button.cancel')}
               </button>
               <button
                 onClick={handleSelect}
                 className="btn-primary"
                 disabled={!selectedMod}
               >
-                Start Adventure →
+                {t('startAdventure')} →
               </button>
             </div>
           </div>

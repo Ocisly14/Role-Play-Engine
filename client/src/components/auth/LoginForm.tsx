@@ -1,8 +1,10 @@
 import React, { useState } from "react";
+import { useTranslation } from "react-i18next";
 import { useAuth } from "../../contexts/AuthContext";
 import { useNavigate } from "react-router-dom";
 
 export function LoginForm() {
+  const { t } = useTranslation('auth');
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [rememberMe, setRememberMe] = useState(false);
@@ -21,7 +23,7 @@ export function LoginForm() {
       await login(email, password, rememberMe);
       navigate("/"); // Navigate to home after successful login
     } catch (err: any) {
-      setError(err.response?.data?.error || "Login failed");
+      setError(err.response?.data?.error || t('login.error'));
     } finally {
       setLoading(false);
     }
@@ -40,7 +42,7 @@ export function LoginForm() {
       >
         <img
           src="/asset/icon.png"
-          alt="Call of Cthulhu"
+          alt={t('login.title')}
           style={{
             width: "80px",
             height: "80px",
@@ -48,10 +50,10 @@ export function LoginForm() {
           }}
         />
       </div>
-      <h2>Login</h2>
+      <h2>{t('login.title')}</h2>
       <form onSubmit={handleSubmit}>
         <div className="form-group">
-          <label htmlFor="email">Email</label>
+          <label htmlFor="email">{t('login.email')}</label>
           <input
             id="email"
             type="email"
@@ -63,7 +65,7 @@ export function LoginForm() {
         </div>
 
         <div className="form-group">
-          <label htmlFor="password">Password</label>
+          <label htmlFor="password">{t('login.password')}</label>
           <input
             id="password"
             type="password"
@@ -82,19 +84,19 @@ export function LoginForm() {
               onChange={(e) => setRememberMe(e.target.checked)}
               disabled={loading}
             />
-            Remember me
+            {t('login.rememberMe')}
           </label>
         </div>
 
         {error && <div className="error-message">{error}</div>}
 
         <button type="submit" disabled={loading}>
-          {loading ? "Logging in..." : "Login"}
+          {loading ? t('login.submitting') : t('login.submit')}
         </button>
 
         <div className="form-links">
-          <a href="/forgot-password">Forgot password?</a>
-          <a href="/register">Create an account</a>
+          <a href="/forgot-password">{t('login.forgotPassword')}</a>
+          <a href="/register">{t('login.createAccount')}</a>
         </div>
       </form>
     </div>

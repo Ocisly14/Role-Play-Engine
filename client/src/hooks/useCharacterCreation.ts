@@ -1,4 +1,5 @@
 import { useState, useMemo, useEffect, useCallback } from "react";
+import { useTranslation } from "react-i18next";
 import { authFetch } from "../utils/authFetch";
 import { SKILLS } from "../constants/skills";
 
@@ -9,6 +10,7 @@ interface UseCharacterCreationProps {
 export const useCharacterCreation = ({
   onCharacterCreated,
 }: UseCharacterCreationProps = {}) => {
+  const { t } = useTranslation(["character", "common"]);
   // Form state
   const [form, setForm] = useState<Record<string, string>>({});
 
@@ -230,12 +232,14 @@ export const useCharacterCreation = ({
         setShowAttributeSelector(true);
       } else {
         alert(
-          "Failed to generate attributes: " + (data.error || "Unknown error")
+          `${t("character:attributes.selector.errors.generateFailed")}: ${
+            data.error || t("common:error.generic")
+          }`
         );
       }
     } catch (error) {
       console.error("Error generating random attributes:", error);
-      alert("Network error, unable to generate random attributes");
+      alert(t("character:attributes.selector.errors.networkGenerateFailed"));
     }
   };
 
@@ -252,7 +256,7 @@ export const useCharacterCreation = ({
   // Handle character creation
   const handleCreateCharacter = async () => {
     if (!form.name) {
-      setSaveMessage({ type: "error", text: "Character name is required" });
+      setSaveMessage({ type: "error", text: t("character:validation.nameRequired") });
       return;
     }
 
@@ -269,7 +273,7 @@ export const useCharacterCreation = ({
       const data = await response.json();
 
       if (response.ok && data.success) {
-        setSaveMessage({ type: "success", text: "Character saved successfully!" });
+        setSaveMessage({ type: "success", text: t("character:form.success") });
 
         if (onCharacterCreated && data.characterId) {
           onCharacterCreated(data.characterId);
@@ -277,14 +281,16 @@ export const useCharacterCreation = ({
       } else {
         setSaveMessage({
           type: "error",
-          text: "Failed to save character: " + (data.error || "Unknown error"),
+          text: `${t("character:form.failed")}: ${
+            data.error || t("common:error.generic")
+          }`,
         });
       }
     } catch (error) {
       console.error("Error saving character:", error);
       setSaveMessage({
         type: "error",
-        text: "Network error, unable to save character",
+        text: t("common:error.network"),
       });
     } finally {
       setSaving(false);

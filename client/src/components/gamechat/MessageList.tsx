@@ -3,6 +3,7 @@
  */
 
 import React, { useEffect } from "react";
+import { useTranslation } from "react-i18next";
 import { MessageItem } from "./MessageItem";
 import type { Message, PendingDiceRolls } from "../../types/gamechat";
 
@@ -37,6 +38,7 @@ export const MessageList = React.memo<MessageListProps>(({
   isSceneChanging,
   isInputCollapsed,
 }) => {
+  const { t } = useTranslation('game');
   // Auto-scroll when input area expands
   useEffect(() => {
     if (!isInputCollapsed) {
@@ -59,9 +61,9 @@ export const MessageList = React.memo<MessageListProps>(({
     >
       {messages.length === 0 && (
         <div className="empty-chat-prompt">
-          <p>🎲 Welcome to Call of Cthulhu!</p>
+          <p>🎲 {t('messages.welcome')}</p>
           <p>
-            Describe your investigator's actions to begin the adventure...
+            {t('messages.welcomePrompt')}
           </p>
         </div>
       )}
@@ -98,7 +100,7 @@ export const MessageList = React.memo<MessageListProps>(({
       {(isSending || isPolling) && !streamingTurnId && (
         <div className="chat-message keeper loading">
           <div className="message-meta">
-            <span className="sender-name">🎭 Keeper</span>
+            <span className="sender-name">🎭 {t('messages.keeper')}</span>
           </div>
           <div className="message-text backdrop-blur-sm bg-white/50 border border-slate-200 shadow-md rounded-lg px-[18px] py-[14px]">
             <span className="typing-indicator">
@@ -107,15 +109,15 @@ export const MessageList = React.memo<MessageListProps>(({
               <span>•</span>
             </span>
             {isPolling
-              ? " The Keeper contemplates..."
-              : " Processing your action..."}
+              ? ` ${t('messages.contemplating')}`
+              : ` ${t('messages.processingAction')}`}
           </div>
         </div>
       )}
 
       {error && (
         <div className="error-message">
-          <strong>⚠️ Error:</strong> {error}
+          <strong>⚠️ {t('messages.errorPrefix')}</strong> {error}
         </div>
       )}
 

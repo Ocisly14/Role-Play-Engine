@@ -1,8 +1,10 @@
 import React, { useState } from "react";
 import { useSearchParams, useNavigate } from "react-router-dom";
+import { useTranslation } from "react-i18next";
 import { api } from "../../services/api";
 
 export function ResetPasswordForm() {
+  const { t } = useTranslation('auth');
   const [searchParams] = useSearchParams();
   const token = searchParams.get("token");
   const navigate = useNavigate();
@@ -18,12 +20,12 @@ export function ResetPasswordForm() {
     setError("");
 
     if (newPassword !== confirmPassword) {
-      setError("Passwords do not match");
+      setError(t('register.errors.passwordMismatch'));
       return;
     }
 
     if (newPassword.length < 8) {
-      setError("Password must be at least 8 characters long");
+      setError(t('register.errors.passwordTooShort'));
       return;
     }
 
@@ -55,7 +57,7 @@ export function ResetPasswordForm() {
         >
           <img
             src="/asset/icon.png"
-            alt="Call of Cthulhu"
+            alt={t('resetPassword.title')}
             style={{
               width: "80px",
               height: "80px",
@@ -63,12 +65,12 @@ export function ResetPasswordForm() {
             }}
           />
         </div>
-        <h2>Invalid Link</h2>
+        <h2>{t('resetPassword.invalidLink')}</h2>
         <p style={{ textAlign: "center", color: "#aaa", marginBottom: "16px" }}>
-          This reset link is invalid or has expired.
+          {t('resetPassword.invalidLinkMessage')}
         </p>
         <div className="form-links">
-          <a href="/forgot-password">Request a new reset link</a>
+          <a href="/forgot-password">{t('resetPassword.requestNew')}</a>
         </div>
       </div>
     );
@@ -77,9 +79,9 @@ export function ResetPasswordForm() {
   if (success) {
     return (
       <div className="success-message-container">
-        <h2>Password Reset!</h2>
-        <p>Your password has been reset successfully.</p>
-        <p>Redirecting to login...</p>
+        <h2>{t('resetPassword.success')}</h2>
+        <p>{t('resetPassword.successMessage')}</p>
+        <p>{t('resetPassword.redirecting')}</p>
       </div>
     );
   }
@@ -97,7 +99,7 @@ export function ResetPasswordForm() {
       >
         <img
           src="/asset/icon.png"
-          alt="Call of Cthulhu"
+          alt={t('resetPassword.title')}
           style={{
             width: "80px",
             height: "80px",
@@ -105,10 +107,10 @@ export function ResetPasswordForm() {
           }}
         />
       </div>
-      <h2>Reset Password</h2>
+      <h2>{t('resetPassword.title')}</h2>
       <form onSubmit={handleSubmit}>
         <div className="form-group">
-          <label htmlFor="newPassword">New Password *</label>
+          <label htmlFor="newPassword">{t('resetPassword.newPassword')}</label>
           <input
             id="newPassword"
             type="password"
@@ -118,11 +120,11 @@ export function ResetPasswordForm() {
             disabled={loading}
             minLength={8}
           />
-          <small>At least 8 characters</small>
+          <small>{t('resetPassword.passwordHint')}</small>
         </div>
 
         <div className="form-group">
-          <label htmlFor="confirmPassword">Confirm Password *</label>
+          <label htmlFor="confirmPassword">{t('register.confirmPassword')}</label>
           <input
             id="confirmPassword"
             type="password"
@@ -136,7 +138,7 @@ export function ResetPasswordForm() {
         {error && <div className="error-message">{error}</div>}
 
         <button type="submit" disabled={loading}>
-          {loading ? "Resetting..." : "Reset Password"}
+          {loading ? t('resetPassword.submitting') : t('resetPassword.submit')}
         </button>
       </form>
     </div>

@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from "react";
+import { useTranslation } from "react-i18next";
 import { authFetch } from "../../utils/authFetch";
 
 interface AttributeSet {
@@ -33,6 +34,7 @@ interface AttributeSelectorModalProps {
 export const AttributeSelectorModal: React.FC<
   AttributeSelectorModalProps
 > = ({ open, onClose, onSelectAttributes, age, initialOptions = [] }) => {
+  const { t } = useTranslation(["character", "common"]);
   const [attributeOptions, setAttributeOptions] = useState<AttributeOption[]>(
     initialOptions
   );
@@ -66,12 +68,14 @@ export const AttributeSelectorModal: React.FC<
         ]);
       } else {
         alert(
-          "Failed to generate attributes: " + (data.error || "Unknown error")
+          `${t("character:attributes.selector.errors.generateFailed")}: ${
+            data.error || t("common:error.generic")
+          }`
         );
       }
     } catch (error) {
       console.error("Error generating random attributes:", error);
-      alert("Network error, unable to generate random attributes");
+      alert(t("character:attributes.selector.errors.networkGenerateFailed"));
     }
   };
 
@@ -129,7 +133,7 @@ export const AttributeSelectorModal: React.FC<
               fontSize: "1.6rem",
             }}
           >
-            🎲 Select Attribute Set
+            🎲 {t("character:attributes.selector.title")}
           </h2>
           <div
             style={{
@@ -145,7 +149,10 @@ export const AttributeSelectorModal: React.FC<
                 fontWeight: "bold",
               }}
             >
-              Generated: {attributeOptions.length}/5
+              {t("character:attributes.selector.generatedCount", {
+                count: attributeOptions.length,
+                max: 5,
+              })}
             </span>
             <button
               onClick={handleGenerateAnotherSet}
@@ -175,8 +182,8 @@ export const AttributeSelectorModal: React.FC<
               }}
             >
               {attributeOptions.length >= 5
-                ? "Maximum reached"
-                : "🎲 Generate Another Set"}
+                ? t("character:attributes.selector.maxReached")
+                : `🎲 ${t("character:attributes.selector.generateAnother")}`}
             </button>
           </div>
         </div>
@@ -193,8 +200,7 @@ export const AttributeSelectorModal: React.FC<
             textAlign: "center",
           }}
         >
-          💡 Click a card to select that attribute set, or click "Generate
-          Another Set" to continue generating (max 5 sets)
+          {t("character:attributes.selector.hint")}
         </div>
 
         <div
@@ -250,7 +256,7 @@ export const AttributeSelectorModal: React.FC<
                     paddingBottom: "8px",
                   }}
                 >
-                  Set {option.id}
+                  {t("character:attributes.selector.setLabel", { id: option.id })}
                 </div>
 
                 <table style={{ width: "100%", fontSize: "0.85rem" }}>
@@ -334,7 +340,7 @@ export const AttributeSelectorModal: React.FC<
                           fontWeight: "bold",
                         }}
                       >
-                        Total:
+                        {t("character:attributes.selector.total")}:
                       </td>
                       <td
                         style={{
@@ -391,7 +397,7 @@ export const AttributeSelectorModal: React.FC<
             fontWeight: "bold",
           }}
         >
-          Cancel
+          {t("common:button.cancel")}
         </button>
       </div>
     </div>

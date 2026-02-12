@@ -1,4 +1,5 @@
 import React from "react";
+import { useTranslation } from "react-i18next";
 
 interface IdentitySectionProps {
   form: Record<string, string>;
@@ -15,31 +16,32 @@ export const IdentitySection: React.FC<IdentitySectionProps> = ({
   selectedOccupation,
   onSelectOccupation,
 }) => {
+  const { t } = useTranslation('character');
   return (
     <>
-      <div className="section-title">Identity</div>
+      <div className="section-title">{t('identity.title')}</div>
       <table>
         <tbody>
           <tr>
-            <th>Era</th>
+            <th>{t('identity.era')}</th>
             <td>
               <input
                 name="era"
-                placeholder="1920s Character"
+                placeholder={t('identity.eraPlaceholder')}
                 value={form.era || ""}
                 onChange={(e) => onChange("era", e.target.value)}
               />
             </td>
-            <th>Name</th>
+            <th>{t('identity.name')}</th>
             <td>
               <input
                 name="name"
-                placeholder="Name"
+                placeholder={t('identity.namePlaceholder')}
                 value={form.name || ""}
                 onChange={(e) => onChange("name", e.target.value)}
               />
             </td>
-            <th>Occupation</th>
+            <th>{t('identity.occupation')}</th>
             <td>
               <select
                 name="occupation"
@@ -54,7 +56,7 @@ export const IdentitySection: React.FC<IdentitySectionProps> = ({
                 }}
                 style={{ width: "100%", padding: "4px" }}
               >
-                <option value="">Select occupation...</option>
+                <option value="">{t('identity.occupationPlaceholder')}</option>
                 {occupations.map((occ) => (
                   <option key={occ.id} value={occ.name_en}>
                     {occ.name_en}
@@ -64,7 +66,7 @@ export const IdentitySection: React.FC<IdentitySectionProps> = ({
             </td>
           </tr>
           <tr>
-            <th>Age</th>
+            <th>{t('identity.age')}</th>
             <td>
               <input
                 name="age"
@@ -75,31 +77,31 @@ export const IdentitySection: React.FC<IdentitySectionProps> = ({
                 onChange={(e) => onChange("age", e.target.value)}
               />
             </td>
-            <th>Gender</th>
+            <th>{t('identity.gender')}</th>
             <td>
               <input
                 name="gender"
-                placeholder="Male / Female"
+                placeholder={t('identity.genderPlaceholder')}
                 value={form.gender || ""}
                 onChange={(e) => onChange("gender", e.target.value)}
               />
             </td>
-            <th>Residence</th>
+            <th>{t('identity.residence')}</th>
             <td>
               <input
                 name="residence"
-                placeholder="New York"
+                placeholder={t('identity.residencePlaceholder')}
                 value={form.residence || ""}
                 onChange={(e) => onChange("residence", e.target.value)}
               />
             </td>
           </tr>
           <tr>
-            <th>Birthplace</th>
+            <th>{t('identity.birthplace')}</th>
             <td colSpan={5}>
               <input
                 name="birthplace"
-                placeholder="Boston"
+                placeholder={t('identity.birthplacePlaceholder')}
                 value={form.birthplace || ""}
                 onChange={(e) => onChange("birthplace", e.target.value)}
               />

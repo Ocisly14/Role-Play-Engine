@@ -3,6 +3,7 @@
  */
 
 import React from "react";
+import { useTranslation } from "react-i18next";
 import { getSkillNameZh } from "../../lib/skillNames";
 import type { Skill } from "../../types/gamechat";
 
@@ -53,6 +54,7 @@ export const InputArea = React.memo<InputAreaProps>(({
   handleSendMessage,
   handleKeyDown,
 }) => {
+  const { t } = useTranslation('game');
   return (
     <div
       className="fixed bottom-0 left-0 right-0 z-30 pointer-events-none px-2 sm:px-0"
@@ -96,7 +98,7 @@ export const InputArea = React.memo<InputAreaProps>(({
                   <div className="px-3 pt-2">
                     <div className="flex items-center">
                       <span className="text-[10px] uppercase tracking-wide text-slate-500">
-                        Suggested Skills{isSuggesting ? "..." : ""}
+                        {t('input.suggestedSkills')}{isSuggesting ? "..." : ""}
                       </span>
                     </div>
                     <div className="mt-2 flex flex-wrap items-center gap-1.5">
@@ -182,9 +184,9 @@ export const InputArea = React.memo<InputAreaProps>(({
                             });
                           }}
                           disabled={isSending || isPolling || isGameEnded}
-                          aria-label="Auto select skill"
+                          aria-label={t('input.auto')}
                         >
-                          auto
+                          {t('input.auto')}
                         </button>
                         <button
                           type="button"
@@ -198,7 +200,7 @@ export const InputArea = React.memo<InputAreaProps>(({
                             isGameEnded ||
                             availableSkills.length === 0
                           }
-                          aria-label="Choose skill"
+                          aria-label={t('input.chooseSkill')}
                         >
                           <svg
                             xmlns="http://www.w3.org/2000/svg"
@@ -259,8 +261,8 @@ export const InputArea = React.memo<InputAreaProps>(({
                   onKeyDown={handleKeyDown}
                   placeholder={
                     isGameEnded
-                      ? "The story has ended."
-                      : "Type your message here..."
+                      ? t('input.placeholderEnded')
+                      : t('input.placeholder')
                   }
                   disabled={isSending || isPolling || isGameEnded}
                 />
@@ -276,10 +278,10 @@ export const InputArea = React.memo<InputAreaProps>(({
                     }
                   >
                     {isGameEnded
-                      ? "Game Ended"
+                      ? t('input.gameEnded')
                       : isSending || isPolling
-                        ? "Processing..."
-                        : "Send Message"}
+                        ? t('input.processing')
+                        : t('input.sendMessage')}
                     {!isGameEnded && !isSending && !isPolling && (
                       <svg
                         xmlns="http://www.w3.org/2000/svg"

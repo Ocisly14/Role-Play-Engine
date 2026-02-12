@@ -4,6 +4,7 @@
  */
 
 import { useState, useEffect } from "react";
+import { useTranslation } from "react-i18next";
 import { authFetch } from "../utils/authFetch";
 
 interface Character {
@@ -28,6 +29,7 @@ export function CharacterSelector({
   onCancel,
   onCreateNew,
 }: CharacterSelectorProps) {
+  const { t } = useTranslation('home');
   const [characters, setCharacters] = useState<Character[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -53,11 +55,11 @@ export function CharacterSelector({
           setSelectedId(data.characters[0].character_id);
         }
       } else {
-        setError("Failed to load characters");
+        setError(t('selector.loadError'));
       }
     } catch (err) {
       console.error("Error loading characters:", err);
-      setError("Network error: Unable to connect to server");
+      setError(t('selector.networkError'));
     } finally {
       setLoading(false);
     }
@@ -71,7 +73,7 @@ export function CharacterSelector({
 
     try {
       setImporting(true);
-      setImportMessage("Importing game data...");
+      setImportMessage(t('selector.importingData'));
 
       // Step 1: Import game data
       const importResponse = await authFetch(`${apiBaseUrl}/game/import-data`, {
@@ -82,23 +84,26 @@ export function CharacterSelector({
       const importData = await importResponse.json();
 
       if (!importResponse.ok) {
-        throw new Error(importData.error || "Data import failed");
+        throw new Error(importData.error || t('selector.importFailed'));
       }
 
       setImportMessage(
-        `Data import completed: ${importData.scenariosLoaded} scenarios, ${importData.npcsLoaded} NPCs`
+        t('selector.dataImportComplete', {
+          scenariosLoaded: importData.scenariosLoaded,
+          npcsLoaded: importData.npcsLoaded
+        })
       );
 
       // Small delay to show the message
       await new Promise((resolve) => setTimeout(resolve, 500));
 
-      setImportMessage("Starting game...");
+      setImportMessage(t('selector.startingGame'));
 
       // Step 2: Call the parent handler which will start the game
       onSelectCharacter(selectedId, selectedChar.name);
     } catch (err) {
       console.error("Error importing data:", err);
-      setError(err instanceof Error ? err.message : "Data import failed");
+      setError(err instanceof Error ? err.message : t('selector.importFailed'));
       setImporting(false);
       setImportMessage(null);
     }
@@ -126,7 +131,7 @@ export function CharacterSelector({
     <div className="character-selector-overlay">
       <div className="character-selector-modal">
         <div className="modal-header">
-          <h2>Select Investigator</h2>
+          <h2>{t('selector.title')}</h2>
           <button className="close-button" onClick={onCancel}>
             ×
           </button>
@@ -137,8 +142,8 @@ export function CharacterSelector({
             <div className="loading-state">
               <p>
                 {importing
-                  ? importMessage || "Processing..."
-                  : "Loading characters..."}
+                  ? importMessage || t('selector.processing')
+                  : t('characters.loading')}
               </p>
               {importing && (
                 <div
@@ -148,7 +153,7 @@ export function CharacterSelector({
                     color: "#666",
                   }}
                 >
-                  Please wait, this may take a few seconds...
+                  {t('selector.importWait')}
                 </div>
               )}
             </div>
@@ -157,15 +162,15 @@ export function CharacterSelector({
           {error && !importing && (
             <div className="error-state">
               <p style={{ color: "#dc3545" }}>{error}</p>
-              <button onClick={loadCharacters}>Retry</button>
+              <button onClick={loadCharacters}>{t('selector.retry')}</button>
             </div>
           )}
 
           {!loading && !error && characters.length === 0 && (
             <div className="empty-state">
-              <p>No characters created yet</p>
+              <p>{t('characters.empty')}</p>
               <button className="primary" onClick={onCreateNew}>
-                Create First Investigator
+                {t('selector.createFirst')}
               </button>
             </div>
           )}
@@ -186,12 +191,12 @@ export function CharacterSelector({
                       <div className="character-card-header">
                         <h3>{char.name}</h3>
                         <span className="character-occupation">
-                          {char.occupation || "Unknown Occupation"}
+                          {char.occupation || t('characters.unknownOccupation')}
                         </span>
                       </div>
 
                       <div className="character-card-body">
-                        {char.age && <p>Age: {char.age}</p>}
+                        {char.age && <p>{t('selector.age')} {char.age}</p>}
 
                         {status && (
                           <div className="character-status">
@@ -222,10 +227,10 @@ export function CharacterSelector({
 
               <div className="modal-actions">
                 <button onClick={onCreateNew} className="secondary">
-                  Create New Character
+                  {t('selector.createNew')}
                 </button>
                 <button onClick={onCancel} className="tertiary">
-                  Done
+                  {t('selector.done')}
                 </button>
                 <button
                   onClick={handleConfirm}
@@ -233,8 +238,8 @@ export function CharacterSelector({
                   disabled={!selectedId || importing}
                 >
                   {importing
-                    ? "Importing data..."
-                    : "Start Game with This Character"}
+                    ? t('selector.importing')
+                    : t('selector.startGame')}
                 </button>
               </div>
             </>

@@ -7,6 +7,7 @@ import React, {
   useRef,
 } from "react";
 import { useNavigate } from "react-router-dom";
+import { useTranslation } from "react-i18next";
 import { authFetch } from "../utils/authFetch";
 import type { DiceRollInfo } from "../components/DiceAnimation";
 
@@ -63,9 +64,12 @@ const GameSessionContext = createContext<GameSessionContextType | undefined>(
 export const GameSessionProvider: React.FC<{ children: React.ReactNode }> = ({
   children,
 }) => {
+  const { t } = useTranslation(["game", "checkpoint", "common"]);
   const navigate = useNavigate();
   const [sessionId, setSessionId] = useState<string>("");
-  const [characterName, setCharacterName] = useState<string>("Investigator");
+  const [characterName, setCharacterName] = useState<string>(
+    t("game:session.defaultCharacter")
+  );
   const [currentModuleName, setCurrentModuleName] = useState<string>("");
   const [selectedModName, setSelectedModName] = useState<string>("");
   const [conversationHistory, setConversationHistory] = useState<
@@ -83,12 +87,12 @@ export const GameSessionProvider: React.FC<{ children: React.ReactNode }> = ({
 
   const clearSession = useCallback(() => {
     setSessionId("");
-    setCharacterName("Investigator");
+    setCharacterName(t("game:session.defaultCharacter"));
     setCurrentModuleName("");
     setSelectedModName("");
     setConversationHistory(null);
     setModuleIntroduction(null);
-  }, []);
+  }, [t]);
 
   // Start a new game
   const startNewGame = useCallback(
@@ -114,14 +118,16 @@ export const GameSessionProvider: React.FC<{ children: React.ReactNode }> = ({
           setConversationHistory(null);
           navigate("/game");
         } else {
-          alert("Failed to initialize game: " + (data.error || "Unknown error"));
+          alert(
+            `${t("game:errors.initFailed")}: ${data.error || t("common:error.generic")}`
+          );
         }
       } catch (error) {
         console.error("Error initializing game:", error);
-        alert("Network error, unable to initialize game");
+        alert(t("common:error.network"));
       }
     },
-    [navigate]
+    [navigate, t]
   );
 
   // Load from checkpoint
@@ -163,21 +169,28 @@ export const GameSessionProvider: React.FC<{ children: React.ReactNode }> = ({
           // Don't show module introduction when loading checkpoint
           setModuleIntroduction(null);
 
-          const languageLabel = language === "zh" ? "Chinese" : "English";
+          const languageLabel =
+            language === "zh"
+              ? t("game:session.language.chinese")
+              : t("game:session.language.english");
           alert(
-            `Checkpoint loaded successfully!\nLanguage restored: ${languageLabel}\n`
+            `${t("checkpoint:success.loaded")}\n${t("game:session.languageRestored", { language: languageLabel })}\n`
           );
 
           navigate("/game");
         } else {
-          alert("Failed to load checkpoint: " + (data.error || "Unknown error"));
+          alert(
+            `${t("checkpoint:errors.loadFailed")}: ${
+              data.error || t("common:error.generic")
+            }`
+          );
         }
       } catch (error) {
         console.error("Error loading checkpoint:", error);
-        alert("Network error, unable to load checkpoint");
+        alert(t("common:error.network"));
       }
     },
-    [navigate]
+    [navigate, t]
   );
 
   // Restore latest session on mount

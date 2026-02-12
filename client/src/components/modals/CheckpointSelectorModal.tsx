@@ -1,4 +1,5 @@
 import React, { useState } from "react";
+import { useTranslation } from "react-i18next";
 
 interface Checkpoint {
   checkpointId: string;
@@ -24,6 +25,7 @@ interface CheckpointSelectorModalProps {
 export const CheckpointSelectorModal: React.FC<
   CheckpointSelectorModalProps
 > = ({ open, onClose, checkpoints, loadingCheckpoints, onLoad, onDelete, onBatchDelete }) => {
+  const { t } = useTranslation('checkpoint');
   const [batchMode, setBatchMode] = useState(false);
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
 
@@ -66,7 +68,7 @@ export const CheckpointSelectorModal: React.FC<
     if (selectedIds.size === 0) return;
 
     const confirmed = window.confirm(
-      `Are you sure you want to delete ${selectedIds.size} checkpoint(s)?\n\nThis action cannot be undone.`
+      t('confirmBatchDelete', { count: selectedIds.size })
     );
 
     if (!confirmed) return;
@@ -86,9 +88,13 @@ export const CheckpointSelectorModal: React.FC<
       <div className="fixed left-[50%] top-[50%] z-50 translate-x-[-50%] translate-y-[-50%] max-w-[800px] max-h-[80vh] w-[90%] overflow-y-auto rounded-3xl p-12 supports-[backdrop-filter]:backdrop-blur-lg border border-white/50 bg-white/80 shadow-[0_30px_80px_rgba(15,23,42,0.25)] supports-[backdrop-filter]:bg-white/55">
         <div className="flex justify-between items-center mb-6">
           <h2 className="text-2xl font-semibold m-0">
-            {batchMode ? "Batch Delete Checkpoints" : "Select Checkpoint"}
+            {batchMode ? t('batchDeleteTitle') : t('select')}
           </h2>
-          <button onClick={onClose} className="close-button" aria-label="Close">
+          <button
+            onClick={onClose}
+            className="close-button"
+            aria-label={t('common:button.close')}
+          >
             ×
           </button>
         </div>
@@ -118,7 +124,7 @@ export const CheckpointSelectorModal: React.FC<
                   e.currentTarget.style.transform = "translateY(0)";
                 }}
               >
-                🗑️ Batch Delete
+                🗑️ {t('batchDelete')}
               </button>
             ) : (
               <>
@@ -136,7 +142,7 @@ export const CheckpointSelectorModal: React.FC<
                     transition: "all 0.2s",
                   }}
                 >
-                  {selectedIds.size === checkpoints.length ? "Deselect All" : "Select All"}
+                  {selectedIds.size === checkpoints.length ? t('deselectAll') : t('selectAll')}
                 </button>
                 <button
                   onClick={handleBatchDelete}
@@ -153,7 +159,7 @@ export const CheckpointSelectorModal: React.FC<
                     transition: "all 0.2s",
                   }}
                 >
-                  Delete Selected ({selectedIds.size})
+                  {t('deleteSelected', { count: selectedIds.size })}
                 </button>
                 <button
                   onClick={handleCloseBatchMode}
@@ -169,7 +175,7 @@ export const CheckpointSelectorModal: React.FC<
                     transition: "all 0.2s",
                   }}
                 >
-                  Cancel
+                  {t('cancel')}
                 </button>
               </>
             )}
@@ -177,9 +183,9 @@ export const CheckpointSelectorModal: React.FC<
         )}
 
         {loadingCheckpoints ? (
-          <p>Loading checkpoint list...</p>
+          <p>{t('loading')}</p>
         ) : checkpoints.length === 0 ? (
-          <p style={{ color: "#666" }}>No checkpoints available</p>
+          <p style={{ color: "#666" }}>{t('empty')}</p>
         ) : (
           <div
             style={{
@@ -222,11 +228,7 @@ export const CheckpointSelectorModal: React.FC<
                         opacity: 0.9,
                       }}
                     >
-                      ({modCheckpoints.length}{" "}
-                      {modCheckpoints.length === 1
-                        ? "checkpoint"
-                        : "checkpoints"}
-                      )
+                      ({modCheckpoints.length} {t('title', { count: modCheckpoints.length })})
                     </span>
                   </div>
 
@@ -285,14 +287,14 @@ export const CheckpointSelectorModal: React.FC<
                               flex: 1,
                             }}
                           >
-                            {checkpoint.checkpointName || "Unnamed Checkpoint"}
+                            {checkpoint.checkpointName || t('unnamed')}
                           </div>
                         {!batchMode && (
                           <button
                             onClick={(e) =>
                               onDelete(
                                 checkpoint.checkpointId,
-                                checkpoint.checkpointName || "Unnamed Checkpoint",
+                                checkpoint.checkpointName || t('unnamed'),
                                 e
                               )
                             }
@@ -331,7 +333,7 @@ export const CheckpointSelectorModal: React.FC<
                             e.currentTarget.style.boxShadow =
                               "0 2px 4px rgba(0, 0, 0, 0.2)";
                           }}
-                          title="Delete checkpoint"
+                          title={t('delete')}
                         >
                           ×
                         </button>
@@ -339,10 +341,10 @@ export const CheckpointSelectorModal: React.FC<
                       </div>
                       <div style={{ fontSize: "0.85rem", color: "#666" }}>
                         {checkpoint.currentSceneName &&
-                          `Scene: ${checkpoint.currentSceneName}`}
+                          `${t('scene')} ${checkpoint.currentSceneName}`}
                         {checkpoint.currentLocation &&
-                          ` | Location: ${checkpoint.currentLocation}`}
-                        {checkpoint.gameDay && ` | Day ${checkpoint.gameDay}`}
+                          ` | ${t('location')} ${checkpoint.currentLocation}`}
+                        {checkpoint.gameDay && ` | ${t('day')} ${checkpoint.gameDay}`}
                         {checkpoint.gameTime && ` | ${checkpoint.gameTime}`}
                       </div>
                       <div

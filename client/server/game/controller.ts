@@ -443,46 +443,47 @@ export function updateSessionLanguage(
     const serverState = ServerState.getInstance();
     const dynamicGameState = serverState.getDynamicGameState(userId);
 
-    if (!dynamicGameState) {
-      res.status(400).json({ error: "No active game session" });
-      return;
+    // If there's an active game session, update its metadata
+    if (dynamicGameState && dynamicGameState.sessionId) {
+      const sessionId = dynamicGameState.sessionId;
+
+      // Update session metadata with new language
+      const db = DatabaseManager.getInstance().getDatabase();
+      const database = db.getDatabase();
+
+      const existingSession = database
+        .prepare(`
+          SELECT metadata FROM sessions WHERE session_id = ?
+        `)
+        .get(sessionId) as { metadata: string | null } | undefined;
+
+      const metadata = existingSession?.metadata
+        ? JSON.parse(existingSession.metadata)
+        : {};
+      metadata.language = language;
+
+      database
+        .prepare(`
+          UPDATE sessions SET metadata = ? WHERE session_id = ?
+        `)
+        .run(JSON.stringify(metadata), sessionId);
+
+      console.log(
+        `[${new Date().toISOString()}] Session language updated: ${language} for session ${sessionId}`
+      );
+    } else {
+      // No active session, but still accept the language change
+      // The frontend will store it in localStorage and use it when a session is created
+      console.log(
+        `[${new Date().toISOString()}] Language preference set to ${language} for user ${userId} (no active session)`
+      );
     }
-
-    const sessionId = dynamicGameState.sessionId;
-    if (!sessionId) {
-      res.status(400).json({ error: "No session ID found" });
-      return;
-    }
-
-    // Update session metadata with new language
-    const db = DatabaseManager.getInstance().getDatabase();
-    const database = db.getDatabase();
-
-    const existingSession = database
-      .prepare(`
-        SELECT metadata FROM sessions WHERE session_id = ?
-      `)
-      .get(sessionId) as { metadata: string | null } | undefined;
-
-    const metadata = existingSession?.metadata
-      ? JSON.parse(existingSession.metadata)
-      : {};
-    metadata.language = language;
-
-    database
-      .prepare(`
-        UPDATE sessions SET metadata = ? WHERE session_id = ?
-      `)
-      .run(JSON.stringify(metadata), sessionId);
-
-    console.log(
-      `[${new Date().toISOString()}] Session language updated: ${language} for session ${sessionId}`
-    );
 
     res.json({
       success: true,
       language,
       message: "Language preference updated",
+      hasActiveSession: !!dynamicGameState,
       timestamp: new Date().toISOString(),
     });
   } catch (error) {

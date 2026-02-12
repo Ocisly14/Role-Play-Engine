@@ -1,4 +1,5 @@
 import React from "react";
+import { useTranslation } from "react-i18next";
 import { IdentitySection } from "./IdentitySection";
 import { AttributesSection } from "./AttributesSection";
 import { SkillsSection } from "./SkillsSection";
@@ -70,9 +71,10 @@ export const CharacterForm: React.FC<CharacterFormProps> = ({
   handleCreateCharacter,
   onCancel,
 }) => {
+  const { t } = useTranslation('character');
   return (
     <div className="sheet">
-      <h1>TaleCraft AI Agent</h1>
+      <h1>{t('form.appTitle')}</h1>
       <form
         onSubmit={(e) => {
           e.preventDefault();
@@ -90,7 +92,7 @@ export const CharacterForm: React.FC<CharacterFormProps> = ({
               onClick={onCancel}
               style={{ background: "#eee" }}
             >
-              ← Back
+              ← {t('form.back')}
             </button>
           )}
         </div>
@@ -182,7 +184,7 @@ export const CharacterForm: React.FC<CharacterFormProps> = ({
                 color: "#f5f1e8",
               }}
             >
-              Clear Message
+              {t('form.clearMessage')}
             </button>
           )}
           <button
@@ -190,7 +192,7 @@ export const CharacterForm: React.FC<CharacterFormProps> = ({
             type="submit"
             disabled={saving}
           >
-            {saving ? "Creating..." : "🎲 Create Character"}
+            {saving ? t('form.submitting') : `🎲 ${t('form.submit')}`}
           </button>
         </div>
       </form>

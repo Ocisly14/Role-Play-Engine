@@ -1,5 +1,6 @@
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
+import { useTranslation } from "react-i18next";
 import Homes from "./Homes";
 import { ModManager } from "../components/ModManager";
 import { CheckpointSelectorModal } from "../components/modals/CheckpointSelectorModal";
@@ -9,6 +10,7 @@ import { useAppSettings } from "../contexts/AppSettingsContext";
 import { authFetch } from "../utils/authFetch";
 
 export const HomePage: React.FC = () => {
+  const { t } = useTranslation(['checkpoint', 'common']);
   const navigate = useNavigate();
   const gameSession = useGameSession();
   const { language, handleLanguageChange } = useAppSettings();
@@ -33,12 +35,12 @@ export const HomePage: React.FC = () => {
         setCheckpoints(data.checkpoints || []);
       } else {
         alert(
-          "Failed to load checkpoint list: " + (data.error || "Unknown error")
+          t('checkpoint:errors.loadFailed') + ": " + (data.error || t('common:error.generic'))
         );
       }
     } catch (error) {
       console.error("Error loading checkpoints:", error);
-      alert("Network error, unable to load checkpoint list");
+      alert(t('common:error.network'));
     } finally {
       setLoadingCheckpoints(false);
     }
@@ -53,7 +55,7 @@ export const HomePage: React.FC = () => {
     e.stopPropagation();
 
     const confirmed = window.confirm(
-      `Are you sure you want to delete checkpoint "${checkpointName || "Unnamed Checkpoint"}"?\n\nThis action cannot be undone.`
+      t('checkpoint:confirmDeleteNamed', { name: checkpointName || t('checkpoint:unnamed') })
     );
 
     if (!confirmed) {
@@ -72,12 +74,12 @@ export const HomePage: React.FC = () => {
         await handleContinueGame();
       } else {
         alert(
-          "Failed to delete checkpoint: " + (data.error || "Unknown error")
+          t('checkpoint:errors.deleteFailed') + ": " + (data.error || t('common:error.generic'))
         );
       }
     } catch (error) {
       console.error("Error deleting checkpoint:", error);
-      alert("Network error, unable to delete checkpoint");
+      alert(t('common:error.network'));
     }
   };
 
@@ -95,15 +97,15 @@ export const HomePage: React.FC = () => {
       const data = await response.json();
 
       if (response.ok && data.success) {
-        alert(data.message || `Successfully deleted ${data.deletedCount} checkpoint(s)`);
+        alert(data.message || t('checkpoint:success.batchDeleted', { count: data.deletedCount }));
         // Refresh checkpoint list
         await handleContinueGame();
       } else {
-        alert("Failed to delete checkpoints: " + (data.error || "Unknown error"));
+        alert(t('checkpoint:errors.deleteFailed') + ": " + (data.error || t('common:error.generic')));
       }
     } catch (error) {
       console.error("Error batch deleting checkpoints:", error);
-      alert("Network error, unable to delete checkpoints");
+      alert(t('common:error.network'));
     }
   };
 

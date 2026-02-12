@@ -1,4 +1,5 @@
 import React, { createContext, useContext, useState, useEffect, useCallback } from "react";
+import i18n from "../i18n/config.js";
 import { authFetch } from "../utils/authFetch";
 
 interface AppSettingsContextType {
@@ -23,9 +24,15 @@ export const AppSettingsProvider: React.FC<{ children: React.ReactNode }> = ({
 
   const [currentBackground, setCurrentBackground] = useState<string>("");
 
-  // Persist language to localStorage
+  // Initialize i18n language on mount
+  useEffect(() => {
+    i18n.changeLanguage(language);
+  }, []);
+
+  // Persist language to localStorage and sync with i18next
   useEffect(() => {
     localStorage.setItem("app.language", language);
+    i18n.changeLanguage(language);
   }, [language]);
 
   // Handler to update language both locally and on server

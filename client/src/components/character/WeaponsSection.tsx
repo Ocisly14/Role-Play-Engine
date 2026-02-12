@@ -1,4 +1,5 @@
 import React from "react";
+import { useTranslation } from "react-i18next";
 
 interface WeaponsSectionProps {
   form: Record<string, string>;
@@ -11,6 +12,7 @@ export const WeaponsSection: React.FC<WeaponsSectionProps> = ({
   onChange,
   weaponsList,
 }) => {
+  const { t } = useTranslation('character');
   const weapons = [0, 1, 2].map((i) => ({
     name: form[`weapon_${i}_name`] || "",
     skill: form[`weapon_${i}_skill`] || "",
@@ -28,16 +30,16 @@ export const WeaponsSection: React.FC<WeaponsSectionProps> = ({
 
   return (
     <>
-      <div className="section-title">Weapons</div>
+      <div className="section-title">{t('weapons.title')}</div>
       <table>
         <tbody>
           <tr>
-            <th>Weapon</th>
-            <th>Skill</th>
-            <th>Damage</th>
-            <th>Range</th>
-            <th>Attk/Rd</th>
-            <th>Ammo</th>
+            <th>{t('weapons.weaponHeader')}</th>
+            <th>{t('weapons.skillHeader')}</th>
+            <th>{t('weapons.damage')}</th>
+            <th>{t('weapons.range')}</th>
+            <th>{t('weapons.attacksHeader')}</th>
+            <th>{t('weapons.ammo')}</th>
           </tr>
           {weapons.map((w, i) => (
             <tr className="weapon-row" key={i}>
@@ -73,7 +75,7 @@ export const WeaponsSection: React.FC<WeaponsSectionProps> = ({
                   }}
                   style={{ width: "100%", padding: "4px" }}
                 >
-                  <option value="">-- Select Weapon --</option>
+                  <option value="">{t('weapons.selectWeapon')}</option>
                   {weaponsList.map((weapon) => (
                     <option key={weapon.name} value={weapon.name}>
                       {weapon.name}
@@ -134,13 +136,13 @@ export const WeaponsSection: React.FC<WeaponsSectionProps> = ({
         </tbody>
       </table>
 
-      <div className="section-title">Items & Equipment</div>
+      <div className="section-title">{t('weapons.itemsTitle')}</div>
       <table>
         <tbody>
           <tr>
-            <th>Item Name</th>
-            <th style={{ width: "100px" }}>Quantity</th>
-            <th>Description</th>
+            <th>{t('weapons.itemName')}</th>
+            <th style={{ width: "100px" }}>{t('weapons.quantity')}</th>
+            <th>{t('weapons.description')}</th>
           </tr>
           {items.map((item, i) => (
             <tr className="item-row" key={i}>

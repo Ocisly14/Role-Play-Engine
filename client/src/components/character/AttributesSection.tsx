@@ -1,4 +1,5 @@
 import React from "react";
+import { useTranslation } from "react-i18next";
 
 interface AttributesSectionProps {
   form: Record<string, string>;
@@ -7,15 +8,15 @@ interface AttributesSectionProps {
 }
 
 const ATTRIBUTES = [
-  { key: "STR", label: "Strength" },
-  { key: "CON", label: "Constitution" },
-  { key: "DEX", label: "Dexterity" },
-  { key: "APP", label: "Appearance" },
-  { key: "POW", label: "Power" },
-  { key: "SIZ", label: "Size" },
-  { key: "INT", label: "Intelligence" },
-  { key: "EDU", label: "Education" },
-  { key: "LCK", label: "Luck" },
+  { key: "STR" },
+  { key: "CON" },
+  { key: "DEX" },
+  { key: "APP" },
+  { key: "POW" },
+  { key: "SIZ" },
+  { key: "INT" },
+  { key: "EDU" },
+  { key: "LCK" },
 ];
 
 export const AttributesSection: React.FC<AttributesSectionProps> = ({
@@ -23,10 +24,11 @@ export const AttributesSection: React.FC<AttributesSectionProps> = ({
   onChange,
   onRandomize,
 }) => {
+  const { t } = useTranslation('character');
   return (
     <>
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-        <div className="section-title">Attributes</div>
+        <div className="section-title">{t('attributes.title')}</div>
         <button
           type="button"
           onClick={onRandomize}
@@ -40,7 +42,7 @@ export const AttributesSection: React.FC<AttributesSectionProps> = ({
             fontWeight: "bold",
           }}
         >
-          🎲 Random Attributes
+          🎲 {t('attributes.randomButton')}
         </button>
       </div>
 
@@ -48,7 +50,7 @@ export const AttributesSection: React.FC<AttributesSectionProps> = ({
         <thead>
           <tr>
             {ATTRIBUTES.map((attr) => (
-              <th key={attr.key}>{attr.label}</th>
+              <th key={attr.key}>{t(`attributes.${attr.key}`)}</th>
             ))}
           </tr>
         </thead>
@@ -71,11 +73,11 @@ export const AttributesSection: React.FC<AttributesSectionProps> = ({
         </tbody>
       </table>
 
-      <h3>Derived Attributes</h3>
+      <h3>{t('attributes.derived')}</h3>
       <table>
         <tbody>
           <tr>
-            <th>HP</th>
+            <th>{t('attributes.HP')}</th>
             <td>
               <input
                 name="HP"
@@ -86,7 +88,7 @@ export const AttributesSection: React.FC<AttributesSectionProps> = ({
                 onChange={(e) => onChange("HP", e.target.value)}
               />
             </td>
-            <th>Sanity</th>
+            <th>{t('attributes.SAN')}</th>
             <td>
               <input
                 name="SAN"
@@ -97,7 +99,7 @@ export const AttributesSection: React.FC<AttributesSectionProps> = ({
                 onChange={(e) => onChange("SAN", e.target.value)}
               />
             </td>
-            <th>MP</th>
+            <th>{t('attributes.MP')}</th>
             <td>
               <input
                 name="MP"
@@ -108,7 +110,7 @@ export const AttributesSection: React.FC<AttributesSectionProps> = ({
                 onChange={(e) => onChange("MP", e.target.value)}
               />
             </td>
-            <th>Luck</th>
+            <th>{t('attributes.LUCK')}</th>
             <td>
               <input
                 name="LUCK"
@@ -121,7 +123,7 @@ export const AttributesSection: React.FC<AttributesSectionProps> = ({
             </td>
           </tr>
           <tr>
-            <th>Move</th>
+            <th>{t('attributes.MOV')}</th>
             <td>
               <input
                 name="MOV"
@@ -132,7 +134,7 @@ export const AttributesSection: React.FC<AttributesSectionProps> = ({
                 onChange={(e) => onChange("MOV", e.target.value)}
               />
             </td>
-            <th>Build</th>
+            <th>{t('attributes.BUILD')}</th>
             <td>
               <input
                 name="BUILD"
@@ -142,7 +144,7 @@ export const AttributesSection: React.FC<AttributesSectionProps> = ({
                 onChange={(e) => onChange("BUILD", e.target.value)}
               />
             </td>
-            <th>Damage Bonus</th>
+            <th>{t('attributes.DB')}</th>
             <td>
               <input
                 name="DB"
@@ -152,7 +154,7 @@ export const AttributesSection: React.FC<AttributesSectionProps> = ({
                 onChange={(e) => onChange("DB", e.target.value)}
               />
             </td>
-            <th>Armor</th>
+            <th>{t('attributes.ARMOR')}</th>
             <td>
               <input
                 name="ARMOR"

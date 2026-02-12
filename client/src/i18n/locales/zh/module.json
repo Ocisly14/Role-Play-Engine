@@ -1,0 +1,233 @@
+{
+  "title": "模组",
+  "select": "选择模组",
+  "chooseAdventure": "选择您的冒险",
+  "selectScenario": "选择一个场景开始您的调查",
+  "createStory": "创建您自己的故事",
+  "createStoryDesc": "使用AI设计您自己的TaleCraft冒险",
+  "startAdventure": "开始冒险",
+  "manage": "管理模组",
+  "upload": "上传模组",
+  "delete": "删除模组",
+  "loading": "加载模组中...",
+  "uploading": "上传模组中...",
+  "deleting": "删除中...",
+  "empty": "没有可用的模组",
+  "emptyDescription": "上传一个模组以开始您的调查",
+  "name": "模组名称",
+  "description": "描述",
+  "author": "作者",
+  "version": "版本",
+  "createdAt": "创建于: {{date}}",
+  "scenarios": "{{count}}个场景",
+  "scenarios_plural": "{{count}}个场景",
+  "npcs": "{{count}}个NPC",
+  "npcs_plural": "{{count}}个NPC",
+  "details": "模组详情",
+  "background": "背景",
+  "storyOutline": "故事大纲",
+  "keeperGuidance": "守密人指引",
+  "initialGameTime": "初始游戏时间",
+  "selectModule": "选择此模组",
+  "uploadInstructions": {
+    "title": "上传模组说明",
+    "step1": "准备您的模组文件夹,结构如下:",
+    "step2": "module_digest.json - 模组元数据",
+    "step3": "[模组名]_npc/ - NPC配置文件(JSON或文档)",
+    "step4": "[模组名]_Scenarios/ - 场景文件(JSON或文档)",
+    "step5": "将文件夹压缩为ZIP文件",
+    "step6": "点击上传按钮并选择您的ZIP文件",
+    "supportedFormats": "支持的格式: JSON、DOCX、PDF",
+    "maxSize": "最大大小: 50MB"
+  },
+  "validation": {
+    "invalidFormat": "模组格式无效",
+    "missingDigest": "缺少module_digest.json文件",
+    "fileTooLarge": "文件大小超过50MB限制",
+    "invalidZip": "无效的ZIP文件"
+  },
+  "success": {
+    "uploaded": "模组上传成功",
+    "deleted": "模组删除成功",
+    "loaded": "模组加载成功"
+  },
+  "errors": {
+    "uploadFailed": "模组上传失败",
+    "deleteFailed": "模组删除失败",
+    "loadFailed": "模组加载失败",
+    "notFound": "模组未找到",
+    "corrupted": "模组数据已损坏"
+  },
+  "confirmDelete": "确定要删除模组\"{{name}}\"吗?\\n\\n这将删除所有关联的场景和NPC。",
+  "intro": {
+    "title": "模组介绍",
+    "closeAria": "关闭",
+    "backToSelection": "返回模组选择",
+    "nextSelectCharacter": "下一步: 选择角色"
+  },
+  "moduleLoad": {
+    "stages": {
+      "initializing": "初始化中",
+      "generatingIntro": "正在生成导言叙述",
+      "complete": "完成"
+    },
+    "messages": {
+      "initializing": "初始化中...",
+      "generatingIntro": "正在生成模组导言叙述...",
+      "ready": "已就绪"
+    },
+    "errors": {
+      "noLoadResult": "服务器未返回加载结果"
+    }
+  },
+  "storyCreator": {
+    "title": "创建你自己的故事",
+    "subtitle": "设计你自己的冒险",
+    "createStoryAlt": "创建故事",
+    "closeAria": "关闭",
+    "defaultModuleName": "生成模组",
+    "ideaLabel": "你的故事设想",
+    "ideaPlaceholder": "描述你的故事构想... 表面之下潜藏着什么谜团? 调查员将面临何种恐怖? 你可以详细描述，也可以简要概述。",
+    "ideaHint": "为你自己的故事创建一个独特世界。",
+    "generateButton": "生成世界",
+    "length": {
+      "title": "故事长度",
+      "short": {
+        "label": "短篇故事",
+        "description": "单一主线，较少场景与NPC"
+      },
+      "medium": {
+        "label": "中篇故事",
+        "description": "多条线索，适中场景与角色"
+      },
+      "long": {
+        "label": "长篇战役",
+        "description": "完整战役，丰富场景与NPC"
+      }
+    },
+    "setting": {
+      "title": "故事设定",
+      "small_town": {
+        "label": "小镇",
+        "description": "关系紧密的乡村社区，隐藏着深层秘密"
+      },
+      "city": {
+        "label": "城市",
+        "description": "离奇现象潜伏于日常之中的都市"
+      },
+      "academic": {
+        "label": "学术场景",
+        "description": "藏有禁忌知识的大学或研究机构"
+      },
+      "isolated": {
+        "label": "孤立地区",
+        "description": "与文明隔绝的偏远地点"
+      },
+      "single_structure": {
+        "label": "单一建筑",
+        "description": "拥有黑暗历史的宅邸、酒店或建筑"
+      },
+      "route": {
+        "label": "旅途路线",
+        "description": "穿越危险或神秘地带的旅程"
+      }
+    },
+    "quota": {
+      "title": "生成配额",
+      "exhausted": "配额已用尽",
+      "chancesLeft": "剩余 {{count}} 次",
+      "initialRule": "你总计有 {{total}} 次生成机会 - 中篇最多 {{medium}} 次，长篇最多 {{large}} 次。短篇不受额外限制。",
+      "weeklyRule": "你每周有 {{total}} 次生成机会 - 中篇最多 {{medium}} 次，长篇最多 {{large}} 次。短篇不受额外限制。",
+      "limitReached": "已达上限",
+      "available": "可用 {{count}} 次",
+      "initialRefresh": "初始配额 · 每周配额(4次/周)将在以下时间后解锁",
+      "weeklyRefresh": "每7天刷新一次"
+    },
+    "progress": {
+      "generating": "生成中...",
+      "starting": "开始生成...",
+      "startingGeneration": "正在开始世界生成...",
+      "mayTakeTime": "这可能需要最多10分钟。正在为你的故事创建独特世界...",
+      "stages": {
+        "macro_scene": "构建世界结构",
+        "npc_builder": "创建角色",
+        "persistence": "保存文件",
+        "complete": "完成!",
+        "error": "错误",
+        "processing": "处理中..."
+      }
+    },
+    "errors": {
+      "http": "HTTP错误! 状态码: {{status}}",
+      "noResponseBody": "响应体为空",
+      "generationFailed": "生成失败",
+      "ideaRequired": "请输入你的故事设想"
+    }
+  },
+  "manager": {
+    "title": "模组管理器",
+    "tabs": {
+      "library": "我的库",
+      "shared": "共享库",
+      "deleted": "已删除"
+    },
+    "actions": {
+      "selectAll": "全选",
+      "clear": "清除",
+      "deleteSelected": "删除选中",
+      "restoreSelected": "恢复选中",
+      "share": "共享",
+      "unshare": "取消共享",
+      "delete": "删除",
+      "add": "添加",
+      "added": "已添加",
+      "restore": "恢复",
+      "search": "搜索",
+      "cancel": "取消"
+    },
+    "status": {
+      "shared": "已共享",
+      "loading": "加载模组中...",
+      "loadingShared": "加载共享模组中...",
+      "loadingDeleted": "加载已删除模组中...",
+      "loadingIntro": "加载介绍中...",
+      "noModules": "您的库中没有模组。",
+      "noShared": "未找到共享模组。",
+      "noDeleted": "没有已删除的模组。",
+      "noSelection": "未选择模组"
+    },
+    "search": {
+      "placeholder": "搜索共享模组..."
+    },
+    "deleted": {
+      "deletedAt": "删除于",
+      "day": "天",
+      "days": "天",
+      "left": "剩余"
+    },
+    "preview": {
+      "storyIntro": "故事介绍",
+      "creationGuide": "📝 角色创建指南",
+      "noIntro": "没有故事介绍。",
+      "noGuide": "没有角色创建指南。",
+      "noPreview": "该模组没有可用的介绍。"
+    },
+    "confirm": {
+      "shareTitle": "共享模组",
+      "shareMessage": "共享\"{{modName}}\"将使其对所有用户可搜索。其他人可以将其添加到他们的库中。您可以稍后取消共享。",
+      "deleteTitle": "删除模组",
+      "deleteMessage": "删除\"{{modName}}\"将从您的库中移除它。如果模组已共享,则仅删除您的库条目。如果未共享,则会移至已删除区域保留7天后永久删除。",
+      "bulkDeleteTitle": "删除模组",
+      "bulkDeleteMessage": "删除{{count}}个模组将从您的库中移除它们。共享模组仅从您的库中移除。未共享模组移至已删除区域保留7天后永久删除。"
+    },
+    "errors": {
+      "shareFailed": "共享模组失败",
+      "unshareFailed": "取消共享模组失败",
+      "deleteFailed": "删除模组失败",
+      "bulkDeleteFailed": "删除模组失败",
+      "addFailed": "添加模组失败",
+      "restoreFailed": "恢复模组失败",
+      "bulkRestoreFailed": "恢复模组失败"
+    }
+  }
+}

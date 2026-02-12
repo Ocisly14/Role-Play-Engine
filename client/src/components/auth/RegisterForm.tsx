@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useRef } from "react";
+import { useTranslation } from "react-i18next";
 import { useAuth } from "../../contexts/AuthContext";
 import { api } from "../../services/api";
 import { useNavigate } from "react-router-dom";
@@ -6,6 +7,7 @@ import { useNavigate } from "react-router-dom";
 const RESEND_COOLDOWN_SECONDS = 60;
 
 export function RegisterForm() {
+  const { t } = useTranslation('auth');
   const [step, setStep] = useState<"form" | "verify">("form");
   const [email, setEmail] = useState("");
   const [username, setUsername] = useState("");
@@ -51,12 +53,12 @@ export function RegisterForm() {
     setError("");
 
     if (password !== confirmPassword) {
-      setError("Passwords do not match");
+      setError(t('register.errors.passwordMismatch'));
       return;
     }
 
     if (password.length < 8) {
-      setError("Password must be at least 8 characters long");
+      setError(t('register.errors.passwordTooShort'));
       return;
     }
 
@@ -67,7 +69,7 @@ export function RegisterForm() {
       setStep("verify");
       startCooldown();
     } catch (err: any) {
-      setError(err.response?.data?.error || "Registration failed");
+      setError(err.response?.data?.error || t('register.errors.registrationFailed'));
     } finally {
       setLoading(false);
     }
@@ -84,7 +86,7 @@ export function RegisterForm() {
       setSuccess(true);
       setTimeout(() => navigate("/login"), 3000);
     } catch (err: any) {
-      setError(err.response?.data?.error || "Verification failed");
+      setError(err.response?.data?.error || t('register.verify.invalid'));
     } finally {
       setLoading(false);
     }
@@ -98,10 +100,10 @@ export function RegisterForm() {
     try {
       await api.post("/auth/resend-verification", { email });
       setVerificationCode("");
-      setResendMessage("A new verification code has been sent.");
+      setResendMessage(t('register.verify.resend'));
       startCooldown();
     } catch (err: any) {
-      setError(err.response?.data?.error || "Failed to resend code");
+      setError(err.response?.data?.error || t('register.verify.invalid'));
     } finally {
       setLoading(false);
     }
@@ -110,9 +112,9 @@ export function RegisterForm() {
   if (success) {
     return (
       <div className="success-message-container">
-        <h2>Email Verified!</h2>
-        <p>Your account has been activated successfully.</p>
-        <p>Redirecting to login page...</p>
+        <h2>{t('register.verify.success')}</h2>
+        <p>{t('register.verify.successMessage')}</p>
+        <p>{t('common:loading.pleaseWait')}</p>
       </div>
     );
   }
@@ -131,7 +133,7 @@ export function RegisterForm() {
         >
           <img
             src="/asset/icon.png"
-            alt="Call of Cthulhu"
+            alt={t('register.title')}
             style={{
               width: "80px",
               height: "80px",
@@ -139,13 +141,13 @@ export function RegisterForm() {
             }}
           />
         </div>
-        <h2>Verify Your Email</h2>
+        <h2>{t('register.verify.title')}</h2>
         <p style={{ textAlign: "center", color: "#aaa", marginBottom: "8px" }}>
-          We sent a 5-digit verification code to <strong>{email}</strong>
+          {t('register.verify.description', { email })}
         </p>
         <form onSubmit={handleVerify}>
           <div className="form-group">
-            <label htmlFor="verificationCode">Verification Code *</label>
+            <label htmlFor="verificationCode">{t('register.verify.code')}</label>
             <input
               id="verificationCode"
               type="text"
@@ -160,7 +162,7 @@ export function RegisterForm() {
               disabled={loading}
               maxLength={5}
               pattern="\d{5}"
-              placeholder="Enter 5-digit code"
+              placeholder={t('register.verify.codePlaceholder')}
               autoComplete="one-time-code"
               autoFocus
             />
@@ -184,13 +186,13 @@ export function RegisterForm() {
             type="submit"
             disabled={loading || verificationCode.length < 5}
           >
-            {loading ? "Verifying..." : "Verify"}
+            {loading ? t('register.verify.submitting') : t('register.verify.submit')}
           </button>
 
           <div className="form-links">
             {resendCooldown > 0 ? (
               <span style={{ color: "#666" }}>
-                Resend code in {resendCooldown}s
+                {t('register.verify.resendCooldown', { seconds: resendCooldown })}
               </span>
             ) : (
               <a
@@ -200,7 +202,7 @@ export function RegisterForm() {
                   handleResend();
                 }}
               >
-                Didn't receive the code? Resend
+                {t('register.verify.resend')}
               </a>
             )}
           </div>
@@ -222,7 +224,7 @@ export function RegisterForm() {
       >
         <img
           src="/asset/icon.png"
-          alt="Call of Cthulhu"
+          alt={t('register.title')}
           style={{
             width: "80px",
             height: "80px",
@@ -230,10 +232,10 @@ export function RegisterForm() {
           }}
         />
       </div>
-      <h2>Create Account</h2>
+      <h2>{t('register.title')}</h2>
       <form onSubmit={handleRegister}>
         <div className="form-group">
-          <label htmlFor="email">Email *</label>
+          <label htmlFor="email">{t('register.email')}</label>
           <input
             id="email"
             type="email"
@@ -245,7 +247,7 @@ export function RegisterForm() {
         </div>
 
         <div className="form-group">
-          <label htmlFor="username">Username (optional)</label>
+          <label htmlFor="username">{t('register.username')}</label>
           <input
             id="username"
             type="text"
@@ -257,7 +259,7 @@ export function RegisterForm() {
         </div>
 
         <div className="form-group">
-          <label htmlFor="password">Password *</label>
+          <label htmlFor="password">{t('register.password')}</label>
           <input
             id="password"
             type="password"
@@ -268,12 +270,12 @@ export function RegisterForm() {
             minLength={8}
           />
           <small>
-            At least 8 characters with uppercase, lowercase, and numbers
+            {t('register.passwordHint')}
           </small>
         </div>
 
         <div className="form-group">
-          <label htmlFor="confirmPassword">Confirm Password *</label>
+          <label htmlFor="confirmPassword">{t('register.confirmPassword')}</label>
           <input
             id="confirmPassword"
             type="password"
@@ -285,7 +287,7 @@ export function RegisterForm() {
         </div>
 
         <div className="form-group">
-          <label htmlFor="referralCode">Referral Code *</label>
+          <label htmlFor="referralCode">{t('register.referralCode')}</label>
           <input
             id="referralCode"
             type="text"
@@ -302,18 +304,18 @@ export function RegisterForm() {
             disabled={loading}
             maxLength={5}
             pattern="[A-Z0-9]{5}"
-            placeholder="Enter 5-character code"
+            placeholder={t('register.verify.codePlaceholder')}
           />
         </div>
 
         {error && <div className="error-message">{error}</div>}
 
         <button type="submit" disabled={loading}>
-          {loading ? "Registering..." : "Register"}
+          {loading ? t('register.submitting') : t('register.submit')}
         </button>
 
         <div className="form-links">
-          <a href="/login">Already have an account? Login</a>
+          <a href="/login">{t('register.haveAccount')}</a>
         </div>
       </form>
     </div>

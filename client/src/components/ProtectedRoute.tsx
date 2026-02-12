@@ -1,5 +1,6 @@
 import React from "react";
 import { Navigate, useLocation } from "react-router-dom";
+import { useTranslation } from "react-i18next";
 import { useAuth } from "../contexts/AuthContext";
 
 interface ProtectedRouteProps {
@@ -13,11 +14,12 @@ export function ProtectedRoute({
   requireEmailVerified = false,
   requiredRoles = [],
 }: ProtectedRouteProps) {
+  const { t } = useTranslation("common");
   const { user, loading } = useAuth();
   const location = useLocation();
 
   if (loading) {
-    return <div>Loading...</div>;
+    return <div>{t("loading.loading")}</div>;
   }
 
   if (!user) {

@@ -5,6 +5,7 @@
  */
 
 import { useState, useEffect, useMemo, useRef } from "react";
+import { useTranslation } from "react-i18next";
 
 /** Structured dice roll info (matches backend DiceRollInfo) */
 export interface DiceRollInfo {
@@ -119,6 +120,7 @@ export function DiceAnimation({
   diceRolls,
   onAnimationComplete,
 }: DiceAnimationProps) {
+  const { t } = useTranslation("game");
   const [isAnimating, setIsAnimating] = useState(true);
   const [animationCompleted, setAnimationCompleted] = useState(false);
   const animationTimerRef = useRef<number | null>(null);
@@ -191,11 +193,26 @@ export function DiceAnimation({
     return null;
   }
 
+  const getSuccessLabel = (success?: string): string => {
+    switch (success) {
+      case "success":
+        return t("dice.success");
+      case "failure":
+        return t("dice.failure");
+      case "critical":
+        return t("dice.critical");
+      case "fumble":
+        return t("dice.fumble");
+      default:
+        return success ?? "";
+    }
+  };
+
   return (
     <div className="dice-animation-container">
       <div className="dice-animation-header">
         <span className="dice-icon">🎲</span>
-        <span className="dice-label">Dice Roll</span>
+        <span className="dice-label">{t("dice.roll")}</span>
       </div>
       <div className="dice-rolls-container">
         {parsedRolls.map((roll, index) => (
@@ -214,7 +231,7 @@ export function DiceAnimation({
                 <span
                   className={`dice-roll-success dice-roll-success--${roll.success}`}
                 >
-                  {roll.success}
+                  {getSuccessLabel(roll.success)}
                 </span>
               )}
             </div>

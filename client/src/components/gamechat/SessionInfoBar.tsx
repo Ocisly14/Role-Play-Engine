@@ -3,6 +3,7 @@
  */
 
 import React from "react";
+import { useTranslation } from "react-i18next";
 
 interface SessionInfoBarProps {
   characterName: string;
@@ -17,10 +18,11 @@ export const SessionInfoBar: React.FC<SessionInfoBarProps> = ({
   saveMessage,
   onSaveCheckpoint,
 }) => {
+  const { t } = useTranslation('game');
   return (
     <div className="session-info-bar">
       <div className="character-info backdrop-blur-sm bg-white/50 border border-slate-200 shadow-md rounded-lg px-3 py-1.5 h-9 flex items-center">
-        <span className="character-label">Playing as:</span>
+        <span className="character-label">{t('session.playingAs')}</span>
         <span className="character-value">{characterName}</span>
       </div>
       <div className="save-checkpoint-section">
@@ -28,9 +30,9 @@ export const SessionInfoBar: React.FC<SessionInfoBarProps> = ({
           className="save-checkpoint-btn backdrop-blur-md bg-white/50 border border-slate-200 shadow-md rounded-xl px-3 py-1.5 text-sm hover:bg-white/70 hover:border-slate-300 hover:-translate-y-0.5 transition-all h-9"
           onClick={onSaveCheckpoint}
           disabled={isSaving}
-          title="Save current game progress"
+          title={t('session.saveTitle')}
         >
-          {isSaving ? "💾 Saving..." : "💾 Save"}
+          {isSaving ? `💾 ${t('session.saving')}` : `💾 ${t('session.save')}`}
         </button>
         {saveMessage && (
           <span

@@ -1,0 +1,196 @@
+{
+  "session": {
+    "playingAs": "Playing as:",
+    "title": "TaleCraft AI Agent",
+    "titleWithModule": "TaleCraft AI Agent - {{module}}",
+    "backToHome": "Back to Home",
+    "restoringSession": "Restoring game session...",
+    "loadingSession": "Loading game session...",
+    "defaultCharacter": "Investigator",
+    "languageRestored": "Language restored: {{language}}",
+    "language": {
+      "english": "English",
+      "chinese": "Chinese"
+    },
+    "save": "Save",
+    "saving": "Saving...",
+    "saveTitle": "Save current game progress",
+    "saveSuccess": "Game saved successfully",
+    "saveFailed": "Failed to save game",
+    "load": "Load",
+    "loading": "Loading...",
+    "loadSuccess": "Game loaded successfully",
+    "loadFailed": "Failed to load game",
+    "quit": "Quit Game",
+    "quitConfirm": "Are you sure you want to quit? Unsaved progress will be lost.",
+    "menu": "Menu",
+    "characterSheet": "Character Sheet",
+    "inventory": "Inventory",
+    "notes": "Notes"
+  },
+  "input": {
+    "placeholder": "Type your message here...",
+    "placeholderEnded": "The story has ended.",
+    "placeholderWithSkill": "Type your action ({{skill}} selected)...",
+    "suggestedSkills": "Suggested Skills",
+    "auto": "auto",
+    "chooseSkill": "Choose skill",
+    "send": "Send",
+    "sendMessage": "Send Message",
+    "sending": "Sending...",
+    "processing": "Processing...",
+    "gameEnded": "Game Ended",
+    "selectSkill": "Select Skill",
+    "clearSkill": "Clear Skill",
+    "tooLong": "Message is too long (max {{max}} characters)"
+  },
+  "skillModal": {
+    "title": "Skill Check Required",
+    "description": "Your action requires a skill check.",
+    "yourAction": "Your Action",
+    "selectedSkill": "Selected Skill",
+    "chooseSkill": "Choose one skill for this check:",
+    "search": "Search skills...",
+    "skillValue": "{{value}}%",
+    "close": "Close",
+    "noResults": "No skills found",
+    "categories": {
+      "all": "All Skills",
+      "combat": "Combat",
+      "investigation": "Investigation",
+      "social": "Social",
+      "knowledge": "Knowledge",
+      "other": "Other"
+    }
+  },
+  "messages": {
+    "system": "System",
+    "keeper": "Keeper",
+    "player": "You",
+    "npc": "{{name}}",
+    "typing": "Keeper is typing...",
+    "contemplating": "The Keeper contemplates...",
+    "processingAction": "Processing your action...",
+    "error": "Message failed to send",
+    "errorPrefix": "Error:",
+    "retry": "Retry",
+    "timestamp": "{{time}}",
+    "welcome": "Welcome to Call of Cthulhu!",
+    "welcomePrompt": "Describe your investigator's actions to begin the adventure...",
+    "sceneImage": "Scene image",
+    "day": "Day"
+  },
+  "dice": {
+    "roll": "Roll",
+    "rolled": "{{name}} rolled {{dice}}",
+    "result": "Result: {{result}}",
+    "success": "Success!",
+    "failure": "Failure",
+    "critical": "Critical Success!",
+    "fumble": "Fumble!",
+    "damage": "Damage: {{amount}}"
+  },
+  "clues": {
+    "discovered": "Clue Discovered",
+    "title": "{{title}}",
+    "description": "{{description}}",
+    "viewAll": "View All Clues"
+  },
+  "time": {
+    "day": "Day {{day}}",
+    "time": "{{time}}",
+    "advanced": "Time advanced to {{time}}"
+  },
+  "errors": {
+    "sessionNotFound": "Game session not found",
+    "connectionLost": "Connection to server lost",
+    "reconnecting": "Reconnecting...",
+    "reconnected": "Reconnected to server",
+    "actionFailed": "Action failed",
+    "invalidAction": "Invalid action",
+    "initFailed": "Failed to initialize game"
+  },
+  "sidebar": {
+    "tabs": {
+      "status": "Character Status",
+      "notes": "Notes",
+      "clues": "Discovered Clues",
+      "map": "Map"
+    },
+    "noData": "No data",
+    "dayNumber": "Day {{day}}",
+    "dayUnknown": "Day --",
+    "errors": {
+      "fetchGameStateFailed": "Failed to fetch game state",
+      "invalidGameState": "Invalid game state response",
+      "loadFailed": "Load failed"
+    },
+    "status": {
+      "basicAttributes": "Basic Attributes",
+      "viewCharacterTitle": "View full character sheet",
+      "viewCharacter": "View Character",
+      "hp": "HP:",
+      "mp": "MP:",
+      "san": "SAN:",
+      "luck": "LUCK:",
+      "currentStatus": "Current Status",
+      "location": "Location:",
+      "time": "Time:",
+      "day": "Day:",
+      "unknown": "Unknown",
+      "statusEffects": "Status Effects",
+      "noStatusEffects": "No status effects",
+      "weapons": "Weapons",
+      "dmg": "DMG:",
+      "range": "Range:",
+      "attacks": "Attacks:",
+      "ammo": "Ammo:",
+      "noWeapons": "No weapons",
+      "inventory": "Inventory",
+      "noItems": "No items"
+    },
+    "memo": {
+      "title": "Memo Pad",
+      "hint": "Write your own notes here. New entries auto-save when you add them.",
+      "errorPrefix": "Memo error:",
+      "gameDay": "Game day",
+      "allDays": "All days",
+      "location": "Location",
+      "allLocations": "All locations",
+      "search": "Search",
+      "searchPlaceholder": "Search notes...",
+      "newNotePlaceholder": "Write a new note...",
+      "addNote": "Add Note",
+      "noteNumber": "Note {{number}}",
+      "noNotesMatchFilters": "No notes match the current filters",
+      "noNotesYet": "No notes yet",
+      "errors": {
+        "fetchFailed": "Failed to fetch memos",
+        "invalidResponse": "Invalid memo response",
+        "saveFailed": "Failed to save memo",
+        "updateFailed": "Failed to update memo",
+        "deleteFailed": "Failed to delete memo"
+      }
+    },
+    "clues": {
+      "title": "Important Clues",
+      "types": {
+        "scenario": "Scenario Clue",
+        "npc": "NPC Clue",
+        "secret": "Secret"
+      },
+      "discoveredBy": "Discovered by: {{name}}",
+      "method": "Method: {{method}}",
+      "difficulty": "Difficulty: {{difficulty}}",
+      "noClues": "No clues"
+    },
+    "map": {
+      "macroMap": "Macro Map",
+      "macroMapAlt": "Macro Map",
+      "macroMapUnavailable": "Macro map not available (module was created without GOOGLE_API_KEY)",
+      "currentScene": "Current Scene",
+      "sceneName": "Scene Name:"
+    }
+  },
+  "sceneTransition": "Scene Transition..."
+}

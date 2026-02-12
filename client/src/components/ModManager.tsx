@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from "react";
+import { useTranslation } from "react-i18next";
 import { authFetch } from "../utils/authFetch";
 
 type LibraryMod = {
@@ -26,6 +27,7 @@ interface ModManagerProps {
 }
 
 export function ModManager({ onClose }: ModManagerProps) {
+  const { t } = useTranslation('module');
   const [tab, setTab] = useState<"library" | "shared" | "deleted">("library");
   const [libraryMods, setLibraryMods] = useState<LibraryMod[]>([]);
   const [sharedMods, setSharedMods] = useState<SharedMod[]>([]);
@@ -161,7 +163,7 @@ export function ModManager({ onClose }: ModManagerProps) {
       });
       const data = await response.json();
       if (!response.ok) {
-        throw new Error(data.error || "Failed to share module");
+        throw new Error(data.error || t('manager.errors.shareFailed'));
       }
       await fetchLibrary();
       if (tab === "shared") {
@@ -181,7 +183,7 @@ export function ModManager({ onClose }: ModManagerProps) {
       });
       const data = await response.json();
       if (!response.ok) {
-        throw new Error(data.error || "Failed to unshare module");
+        throw new Error(data.error || t('manager.errors.unshareFailed'));
       }
       await fetchLibrary();
       if (tab === "shared") {
@@ -201,7 +203,7 @@ export function ModManager({ onClose }: ModManagerProps) {
       });
       const data = await response.json();
       if (!response.ok) {
-        throw new Error(data.error || "Failed to delete module");
+        throw new Error(data.error || t('manager.errors.deleteFailed'));
       }
       await fetchLibrary();
       if (tab === "shared") {
@@ -218,9 +220,9 @@ export function ModManager({ onClose }: ModManagerProps) {
   const confirmShare = (modName: string) => {
     setConfirmState({
       open: true,
-      title: "Share Module",
-      message: `Sharing "${modName}" will make it searchable to all users. Others can add it to their library. You can unshare later.`,
-      confirmLabel: "Share",
+      title: t('manager.confirm.shareTitle'),
+      message: t('manager.confirm.shareMessage', { modName }),
+      confirmLabel: t('manager.actions.share'),
       onConfirm: async () => {
         await handleShare(modName);
       },
@@ -230,12 +232,9 @@ export function ModManager({ onClose }: ModManagerProps) {
   const confirmRemove = (modName: string) => {
     setConfirmState({
       open: true,
-      title: "Delete Module",
-      message:
-        `Deleting "${modName}" will remove it from your library. ` +
-        `If the module is shared, only your library entry is removed. ` +
-        `If it is not shared, it will move to Deleted for 7 days before permanent removal.`,
-      confirmLabel: "Delete",
+      title: t('manager.confirm.deleteTitle'),
+      message: t('manager.confirm.deleteMessage', { modName }),
+      confirmLabel: t('manager.actions.delete'),
       onConfirm: async () => {
         await handleRemove(modName);
       },
@@ -266,17 +265,14 @@ export function ModManager({ onClose }: ModManagerProps) {
       (name) => selectedLibrary[name]
     );
     if (modNames.length === 0) {
-      alert("No modules selected");
+      alert(t('manager.status.noSelection'));
       return;
     }
     setConfirmState({
       open: true,
-      title: "Delete Modules",
-      message:
-        `Deleting ${modNames.length} module(s) will remove them from your library. ` +
-        `Shared modules are removed only from your library. ` +
-        `Unshared modules move to Deleted for 7 days before permanent removal.`,
-      confirmLabel: "Delete",
+      title: t('manager.confirm.bulkDeleteTitle'),
+      message: t('manager.confirm.bulkDeleteMessage', { count: modNames.length }),
+      confirmLabel: t('manager.actions.delete'),
       onConfirm: async () => {
         try {
           const response = await authFetch("/api/mods/delete-bulk", {
@@ -286,7 +282,7 @@ export function ModManager({ onClose }: ModManagerProps) {
           });
           const data = await response.json();
           if (!response.ok) {
-            throw new Error(data.error || "Failed to delete modules");
+            throw new Error(data.error || t('manager.errors.bulkDeleteFailed'));
           }
           await fetchLibrary();
           await fetchDeleted();
@@ -306,7 +302,7 @@ export function ModManager({ onClose }: ModManagerProps) {
       });
       const data = await response.json();
       if (!response.ok) {
-        throw new Error(data.error || "Failed to add module");
+        throw new Error(data.error || t('manager.errors.addFailed'));
       }
       await fetchLibrary();
       await fetchShared();
@@ -324,7 +320,7 @@ export function ModManager({ onClose }: ModManagerProps) {
       });
       const data = await response.json();
       if (!response.ok) {
-        throw new Error(data.error || "Failed to restore module");
+        throw new Error(data.error || t('manager.errors.restoreFailed'));
       }
       await fetchDeleted();
       await fetchLibrary();
@@ -357,7 +353,7 @@ export function ModManager({ onClose }: ModManagerProps) {
       (name) => selectedDeleted[name]
     );
     if (modNames.length === 0) {
-      alert("No modules selected");
+      alert(t('manager.status.noSelection'));
       return;
     }
     try {
@@ -368,7 +364,7 @@ export function ModManager({ onClose }: ModManagerProps) {
       });
       const data = await response.json();
       if (!response.ok) {
-        throw new Error(data.error || "Failed to restore modules");
+        throw new Error(data.error || t('manager.errors.bulkRestoreFailed'));
       }
       await fetchDeleted();
       await fetchLibrary();
@@ -382,11 +378,11 @@ export function ModManager({ onClose }: ModManagerProps) {
       <div className="mod-manager-overlay">
         <div className="mod-manager-modal">
           <div className="mod-manager-header">
-            <h2>Module Manager</h2>
+            <h2>{t('manager.title')}</h2>
             <button
               onClick={onClose}
               className="close-button"
-              aria-label="Close"
+              aria-label={t('common:button.close')}
             >
               ×
             </button>
@@ -400,7 +396,7 @@ export function ModManager({ onClose }: ModManagerProps) {
                 setPreviewMod(null);
               }}
             >
-              My Library
+              {t('manager.tabs.library')}
             </button>
             <button
               className={`tab-button ${tab === "shared" ? "active" : ""}`}
@@ -410,7 +406,7 @@ export function ModManager({ onClose }: ModManagerProps) {
                 fetchShared();
               }}
             >
-              Shared Library
+              {t('manager.tabs.shared')}
             </button>
             <button
               className={`tab-button ${tab === "deleted" ? "active" : ""}`}
@@ -420,7 +416,7 @@ export function ModManager({ onClose }: ModManagerProps) {
                 fetchDeleted();
               }}
             >
-              Deleted
+              {t('manager.tabs.deleted')}
             </button>
           </div>
 
@@ -433,26 +429,26 @@ export function ModManager({ onClose }: ModManagerProps) {
                       className="btn-secondary"
                       onClick={handleSelectAllLibrary}
                     >
-                      Select All
+                      {t('manager.actions.selectAll')}
                     </button>
                     <button
                       className="btn-secondary"
                       onClick={handleClearLibrarySelection}
                     >
-                      Clear
+                      {t('manager.actions.clear')}
                     </button>
                     <button
                       className="btn-primary"
                       onClick={handleRemoveSelected}
                     >
-                      Delete Selected
+                      {t('manager.actions.deleteSelected')}
                     </button>
                   </div>
                 )}
                 {loadingLibrary ? (
-                  <p>Loading modules...</p>
+                  <p>{t('manager.status.loading')}</p>
                 ) : libraryMods.length === 0 ? (
-                  <p style={{ color: "#666" }}>No modules in your library.</p>
+                  <p style={{ color: "#666" }}>{t('manager.status.noModules')}</p>
                 ) : (
                   <div className="mod-list">
                     {libraryMods.map((mod) => (
@@ -472,7 +468,7 @@ export function ModManager({ onClose }: ModManagerProps) {
                             </span>
                           </div>
                           {mod.shared && (
-                            <span className="mod-badge">Shared</span>
+                            <span className="mod-badge">{t('manager.status.shared')}</span>
                           )}
                         </div>
                         <div className="mod-actions">
@@ -481,7 +477,7 @@ export function ModManager({ onClose }: ModManagerProps) {
                               className="btn-secondary"
                               onClick={() => confirmShare(mod.name)}
                             >
-                              Share
+                              {t('manager.actions.share')}
                             </button>
                           )}
                           {mod.shared && mod.isOwner && (
@@ -489,14 +485,14 @@ export function ModManager({ onClose }: ModManagerProps) {
                               className="btn-secondary"
                               onClick={() => handleUnshare(mod.name)}
                             >
-                              Unshare
+                              {t('manager.actions.unshare')}
                             </button>
                           )}
                           <button
                             className="btn-secondary"
                             onClick={() => confirmRemove(mod.name)}
                           >
-                            Delete
+                            {t('manager.actions.delete')}
                           </button>
                         </div>
                       </div>
@@ -513,17 +509,17 @@ export function ModManager({ onClose }: ModManagerProps) {
                     type="text"
                     value={searchQuery}
                     onChange={(e) => setSearchQuery(e.target.value)}
-                    placeholder="Search shared modules..."
+                    placeholder={t('manager.search.placeholder')}
                   />
                   <button className="btn-primary" onClick={fetchShared}>
-                    Search
+                    {t('manager.actions.search')}
                   </button>
                 </div>
 
                 {loadingShared ? (
-                  <p>Loading shared modules...</p>
+                  <p>{t('manager.status.loadingShared')}</p>
                 ) : sharedMods.length === 0 ? (
-                  <p style={{ color: "#666" }}>No shared modules found.</p>
+                  <p style={{ color: "#666" }}>{t('manager.status.noShared')}</p>
                 ) : (
                   <div className="mod-list">
                     {sharedMods.map((mod) => (
@@ -542,7 +538,7 @@ export function ModManager({ onClose }: ModManagerProps) {
                             onClick={() => handleAdd(mod.name)}
                             disabled={mod.inLibrary}
                           >
-                            {mod.inLibrary ? "Added" : "Add"}
+                            {mod.inLibrary ? t('manager.actions.added') : t('manager.actions.add')}
                           </button>
                         </div>
                       </div>
@@ -560,26 +556,26 @@ export function ModManager({ onClose }: ModManagerProps) {
                       className="btn-secondary"
                       onClick={handleSelectAllDeleted}
                     >
-                      Select All
+                      {t('manager.actions.selectAll')}
                     </button>
                     <button
                       className="btn-secondary"
                       onClick={handleClearDeletedSelection}
                     >
-                      Clear
+                      {t('manager.actions.clear')}
                     </button>
                     <button
                       className="btn-primary"
                       onClick={handleRestoreSelected}
                     >
-                      Restore Selected
+                      {t('manager.actions.restoreSelected')}
                     </button>
                   </div>
                 )}
                 {loadingDeleted ? (
-                  <p>Loading deleted modules...</p>
+                  <p>{t('manager.status.loadingDeleted')}</p>
                 ) : deletedMods.length === 0 ? (
-                  <p style={{ color: "#666" }}>No deleted modules.</p>
+                  <p style={{ color: "#666" }}>{t('manager.status.noDeleted')}</p>
                 ) : (
                   <div className="mod-list">
                     {deletedMods.map((mod) => (
@@ -594,10 +590,10 @@ export function ModManager({ onClose }: ModManagerProps) {
                             <span className="mod-title">{mod.name}</span>
                           </label>
                           <div className="mod-meta">
-                            Deleted at{" "}
+                            {t('manager.deleted.deletedAt')}{" "}
                             {new Date(mod.deletedAt).toLocaleString()} ·{" "}
-                            {mod.daysLeft} day{mod.daysLeft === 1 ? "" : "s"}{" "}
-                            left
+                            {mod.daysLeft} {mod.daysLeft === 1 ? t('manager.deleted.day') : t('manager.deleted.days')}{" "}
+                            {t('manager.deleted.left')}
                           </div>
                         </div>
                         <div className="mod-actions">
@@ -605,7 +601,7 @@ export function ModManager({ onClose }: ModManagerProps) {
                             className="btn-secondary"
                             onClick={() => handleRestore(mod.name)}
                           >
-                            Restore
+                            {t('manager.actions.restore')}
                           </button>
                         </div>
                       </div>
@@ -899,37 +895,37 @@ export function ModManager({ onClose }: ModManagerProps) {
                   setPreviewMod(null);
                   setPreviewIntro(null);
                 }}
-                aria-label="Close"
+                aria-label={t('common:button.close')}
               >
                 ×
               </button>
             </div>
             {loadingPreview ? (
               <p style={{ color: "#666", margin: "20px 0" }}>
-                Loading introduction...
+                {t('manager.status.loadingIntro')}
               </p>
             ) : previewIntro ? (
               <>
                 <div className="preview-section">
-                  <h4 className="preview-section-title">Story Introduction</h4>
+                  <h4 className="preview-section-title">{t('manager.preview.storyIntro')}</h4>
                   <div className="preview-content">
                     {previewIntro.introduction ||
-                      "No story introduction available."}
+                      t('manager.preview.noIntro')}
                   </div>
                 </div>
                 <div className="preview-section">
                   <h4 className="preview-section-title">
-                    📝 Character Creation Guide
+                    {t('manager.preview.creationGuide')}
                   </h4>
                   <div className="preview-content">
                     {previewIntro.moduleNotes ||
-                      "No character creation guide available."}
+                      t('manager.preview.noGuide')}
                   </div>
                 </div>
               </>
             ) : (
               <p style={{ color: "#666", margin: "20px 0" }}>
-                No introduction available for this module.
+                {t('manager.preview.noPreview')}
               </p>
             )}
           </div>
@@ -948,7 +944,7 @@ export function ModManager({ onClose }: ModManagerProps) {
                   setConfirmState((prev) => ({ ...prev, open: false }))
                 }
               >
-                Cancel
+                {t('manager.actions.cancel')}
               </button>
               <button
                 className="btn-primary"

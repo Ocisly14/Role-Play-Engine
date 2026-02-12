@@ -1,7 +1,9 @@
 import React, { useState } from "react";
+import { useTranslation } from "react-i18next";
 import { api } from "../../services/api";
 
 export function ForgotPasswordForm() {
+  const { t } = useTranslation('auth');
   const [email, setEmail] = useState("");
   const [error, setError] = useState("");
   const [success, setSuccess] = useState(false);
@@ -25,13 +27,12 @@ export function ForgotPasswordForm() {
   if (success) {
     return (
       <div className="success-message-container">
-        <h2>Check Your Email</h2>
+        <h2>{t('forgotPassword.checkEmail')}</h2>
         <p>
-          If an account with this email exists, we've sent a password reset
-          link.
+          {t('forgotPassword.checkEmailMessage')}
         </p>
         <div className="form-links" style={{ marginTop: "16px" }}>
-          <a href="/login">Back to Login</a>
+          <a href="/login">{t('forgotPassword.backToLogin')}</a>
         </div>
       </div>
     );
@@ -50,7 +51,7 @@ export function ForgotPasswordForm() {
       >
         <img
           src="/asset/icon.png"
-          alt="Call of Cthulhu"
+          alt={t('forgotPassword.title')}
           style={{
             width: "80px",
             height: "80px",
@@ -58,13 +59,13 @@ export function ForgotPasswordForm() {
           }}
         />
       </div>
-      <h2>Forgot Password</h2>
+      <h2>{t('forgotPassword.title')}</h2>
       <p style={{ textAlign: "center", color: "#aaa", marginBottom: "16px" }}>
-        Enter your email and we'll send you a link to reset your password.
+        {t('forgotPassword.description')}
       </p>
       <form onSubmit={handleSubmit}>
         <div className="form-group">
-          <label htmlFor="email">Email</label>
+          <label htmlFor="email">{t('login.email')}</label>
           <input
             id="email"
             type="email"
@@ -78,11 +79,11 @@ export function ForgotPasswordForm() {
         {error && <div className="error-message">{error}</div>}
 
         <button type="submit" disabled={loading}>
-          {loading ? "Sending..." : "Send Reset Link"}
+          {loading ? t('forgotPassword.submitting') : t('forgotPassword.submit')}
         </button>
 
         <div className="form-links">
-          <a href="/login">Back to Login</a>
+          <a href="/login">{t('forgotPassword.backToLogin')}</a>
         </div>
       </form>
     </div>

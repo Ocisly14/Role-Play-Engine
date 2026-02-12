@@ -5,6 +5,7 @@
  */
 
 import { useState, useEffect, useRef } from "react";
+import { useTranslation } from "react-i18next";
 import { CharacterSheetModal } from "./CharacterSheetModal";
 import { authFetch } from "../utils/authFetch";
 
@@ -117,6 +118,7 @@ export function GameSidebar({
   apiBaseUrl = "/api",
   refreshTrigger,
 }: GameSidebarProps) {
+  const { t } = useTranslation(["game", "common"]);
   const [activeTab, setActiveTab] = useState<TabType>("status");
   const [gameState, setGameState] = useState<GameState | null>(null);
   const [loading, setLoading] = useState(true);
@@ -152,7 +154,7 @@ export function GameSidebar({
           `${apiBaseUrl}/memos?sessionId=${encodeURIComponent(sessionId)}`
         );
         if (!response.ok) {
-          throw new Error("Failed to fetch memos");
+          throw new Error(t("game:sidebar.memo.errors.fetchFailed"));
         }
         const data = await response.json();
         if (data.success && Array.isArray(data.memos)) {
@@ -175,11 +177,13 @@ export function GameSidebar({
           );
           setMemoError(null);
         } else {
-          throw new Error("Invalid memo response");
+          throw new Error(t("game:sidebar.memo.errors.invalidResponse"));
         }
       } catch (err) {
         console.error("Error fetching memos:", err);
-        setMemoError(err instanceof Error ? err.message : "Unknown error");
+        setMemoError(
+          err instanceof Error ? err.message : t("common:error.generic")
+        );
       } finally {
         setMemoLoading(false);
       }
@@ -187,7 +191,7 @@ export function GameSidebar({
 
     fetchMemos();
     setMemoDraft("");
-  }, [apiBaseUrl, sessionId]);
+  }, [apiBaseUrl, sessionId, t]);
 
   useEffect(() => {
     return () => {
@@ -218,7 +222,7 @@ export function GameSidebar({
         }),
       });
       if (!response.ok) {
-        throw new Error("Failed to save memo");
+        throw new Error(t("game:sidebar.memo.errors.saveFailed"));
       }
       const data = await response.json();
       if (data.success && data.memo) {
@@ -235,11 +239,13 @@ export function GameSidebar({
         setMemoDraft("");
         setMemoError(null);
       } else {
-        throw new Error("Invalid memo response");
+        throw new Error(t("game:sidebar.memo.errors.invalidResponse"));
       }
     } catch (err) {
       console.error("Error saving memo:", err);
-      setMemoError(err instanceof Error ? err.message : "Unknown error");
+      setMemoError(
+        err instanceof Error ? err.message : t("common:error.generic")
+      );
     }
   };
 
@@ -254,12 +260,14 @@ export function GameSidebar({
         }
       );
       if (!response.ok) {
-        throw new Error("Failed to update memo");
+        throw new Error(t("game:sidebar.memo.errors.updateFailed"));
       }
       setMemoError(null);
     } catch (err) {
       console.error("Error updating memo:", err);
-      setMemoError(err instanceof Error ? err.message : "Unknown error");
+      setMemoError(
+        err instanceof Error ? err.message : t("common:error.generic")
+      );
     }
   };
 
@@ -293,12 +301,14 @@ export function GameSidebar({
         }
       );
       if (!response.ok) {
-        throw new Error("Failed to delete memo");
+        throw new Error(t("game:sidebar.memo.errors.deleteFailed"));
       }
       setMemoError(null);
     } catch (err) {
       console.error("Error deleting memo:", err);
-      setMemoError(err instanceof Error ? err.message : "Unknown error");
+      setMemoError(
+        err instanceof Error ? err.message : t("common:error.generic")
+      );
     }
   };
 
@@ -314,7 +324,7 @@ export function GameSidebar({
         const response = await authFetch(`${apiBaseUrl}/gamestate`);
 
         if (!response.ok) {
-          throw new Error("Failed to fetch game state");
+          throw new Error(t("game:sidebar.errors.fetchGameStateFailed"));
         }
 
         const data = await response.json();
@@ -323,11 +333,11 @@ export function GameSidebar({
           setGameState(data.gameState);
           setError(null);
         } else {
-          throw new Error("Invalid game state response");
+          throw new Error(t("game:sidebar.errors.invalidGameState"));
         }
       } catch (err) {
         console.error("Error fetching game state:", err);
-        setError(err instanceof Error ? err.message : "Unknown error");
+        setError(err instanceof Error ? err.message : t("common:error.generic"));
       } finally {
         // Clear loading state and mark as no longer initial load
         if (isInitialLoadRef.current) {
@@ -338,7 +348,7 @@ export function GameSidebar({
     };
 
     fetchGameState();
-  }, [apiBaseUrl, sessionId, refreshTrigger]); // Refetch when refreshTrigger changes
+  }, [apiBaseUrl, sessionId, refreshTrigger, t]); // Refetch when refreshTrigger changes
 
   const memoDayOptions = Array.from(
     new Set(
@@ -390,25 +400,25 @@ export function GameSidebar({
           className={`sidebar-tab backdrop-blur-sm bg-white/50 border border-slate-200 shadow-md rounded-lg hover:bg-white/70 transition-all ${activeTab === "status" ? "active" : ""}`}
           onClick={() => setActiveTab("status")}
         >
-          Character Status
+          {t("game:sidebar.tabs.status")}
         </button>
         <button
           className={`sidebar-tab backdrop-blur-sm bg-white/50 border border-slate-200 shadow-md rounded-lg hover:bg-white/70 transition-all ${activeTab === "notes" ? "active" : ""}`}
           onClick={() => setActiveTab("notes")}
         >
-          Notes
+          {t("game:sidebar.tabs.notes")}
         </button>
         <button
           className={`sidebar-tab backdrop-blur-sm bg-white/50 border border-slate-200 shadow-md rounded-lg hover:bg-white/70 transition-all ${activeTab === "clues" ? "active" : ""}`}
           onClick={() => setActiveTab("clues")}
         >
-          Discovered Clues
+          {t("game:sidebar.tabs.clues")}
         </button>
         <button
           className={`sidebar-tab backdrop-blur-sm bg-white/50 border border-slate-200 shadow-md rounded-lg hover:bg-white/70 transition-all ${activeTab === "map" ? "active" : ""}`}
           onClick={() => setActiveTab("map")}
         >
-          Map
+          {t("game:sidebar.tabs.map")}
         </button>
       </div>
 
@@ -417,10 +427,10 @@ export function GameSidebar({
         {activeTab === "status" && (
           <div className="tab-panel status-panel">
             {loading ? (
-              <p className="empty-state">Loading...</p>
+              <p className="empty-state">{t("common:loading.loading")}</p>
             ) : error ? (
               <p className="empty-state" style={{ color: "#c41e3a" }}>
-                Load failed: {error}
+                {t("game:sidebar.errors.loadFailed")}: {error}
               </p>
             ) : gameState ? (
               <>
@@ -433,39 +443,49 @@ export function GameSidebar({
                       marginBottom: "12px",
                     }}
                   >
-                    <h3 style={{ margin: 0 }}>Basic Attributes</h3>
+                    <h3 style={{ margin: 0 }}>
+                      {t("game:sidebar.status.basicAttributes")}
+                    </h3>
                     <button
                       className="view-character-btn-sidebar"
                       onClick={() => setShowCharacterSheet(true)}
-                      title="View full character sheet"
+                      title={t("game:sidebar.status.viewCharacterTitle")}
                     >
-                      View Character
+                      {t("game:sidebar.status.viewCharacter")}
                     </button>
                   </div>
                   <div className="status-grid">
                     <div className="status-item">
-                      <span className="status-label">HP:</span>
+                      <span className="status-label">
+                        {t("game:sidebar.status.hp")}
+                      </span>
                       <span className="status-value">
                         {gameState.playerCharacter.status.hp}/
                         {gameState.playerCharacter.status.maxHp}
                       </span>
                     </div>
                     <div className="status-item">
-                      <span className="status-label">MP:</span>
+                      <span className="status-label">
+                        {t("game:sidebar.status.mp")}
+                      </span>
                       <span className="status-value">
                         {gameState.playerCharacter.status.mp || 0}/
                         {gameState.playerCharacter.status.mp || 0}
                       </span>
                     </div>
                     <div className="status-item">
-                      <span className="status-label">SAN:</span>
+                      <span className="status-label">
+                        {t("game:sidebar.status.san")}
+                      </span>
                       <span className="status-value">
                         {gameState.playerCharacter.status.sanity}/
                         {gameState.playerCharacter.status.maxSanity}
                       </span>
                     </div>
                     <div className="status-item">
-                      <span className="status-label">LUCK:</span>
+                      <span className="status-label">
+                        {t("game:sidebar.status.luck")}
+                      </span>
                       <span className="status-value">
                         {gameState.playerCharacter.status.luck}
                       </span>
@@ -474,31 +494,40 @@ export function GameSidebar({
                 </div>
 
                 <div className="status-section">
-                  <h3>Current Status</h3>
+                  <h3>{t("game:sidebar.status.currentStatus")}</h3>
                   <div className="status-list">
                     <div className="status-item-full">
-                      <span className="status-label">Location:</span>
+                      <span className="status-label">
+                        {t("game:sidebar.status.location")}
+                      </span>
                       <span className="status-value">
-                        {gameState.currentScenario?.name || "Unknown"}
+                        {gameState.currentScenario?.name ||
+                          t("game:sidebar.status.unknown")}
                       </span>
                     </div>
                     <div className="status-item-full">
-                      <span className="status-label">Time:</span>
+                      <span className="status-label">
+                        {t("game:sidebar.status.time")}
+                      </span>
                       <span className="status-value">
                         {gameState.timeOfDay || "--"}
                       </span>
                     </div>
                     <div className="status-item-full">
-                      <span className="status-label">Day:</span>
+                      <span className="status-label">
+                        {t("game:sidebar.status.day")}
+                      </span>
                       <span className="status-value">
-                        Day {gameState.gameDay}
+                        {t("game:sidebar.dayNumber", {
+                          day: gameState.gameDay,
+                        })}
                       </span>
                     </div>
                   </div>
                 </div>
 
                 <div className="status-section">
-                  <h3>Status Effects</h3>
+                  <h3>{t("game:sidebar.status.statusEffects")}</h3>
                   <div className="status-effects">
                     {gameState.playerCharacter.status.conditions.length > 0 ? (
                       <ul style={{ margin: 0, paddingLeft: "20px" }}>
@@ -509,13 +538,15 @@ export function GameSidebar({
                         )}
                       </ul>
                     ) : (
-                      <p className="empty-state">No status effects</p>
+                      <p className="empty-state">
+                        {t("game:sidebar.status.noStatusEffects")}
+                      </p>
                     )}
                   </div>
                 </div>
 
                 <div className="status-section">
-                  <h3>Weapons</h3>
+                  <h3>{t("game:sidebar.status.weapons")}</h3>
                   <div className="weapons-list">
                     {gameState.playerCharacter.weapons &&
                     gameState.playerCharacter.weapons.length > 0 ? (
@@ -556,16 +587,25 @@ export function GameSidebar({
                                 }}
                               >
                                 {weapon.damage && (
-                                  <span>DMG: {weapon.damage}</span>
+                                  <span>
+                                    {t("game:sidebar.status.dmg")} {weapon.damage}
+                                  </span>
                                 )}
                                 {weapon.range && (
-                                  <span>Range: {weapon.range}</span>
+                                  <span>
+                                    {t("game:sidebar.status.range")} {weapon.range}
+                                  </span>
                                 )}
                                 {weapon.attacks && (
-                                  <span>Attacks: {weapon.attacks}</span>
+                                  <span>
+                                    {t("game:sidebar.status.attacks")}{" "}
+                                    {weapon.attacks}
+                                  </span>
                                 )}
                                 {weapon.ammo !== undefined && (
-                                  <span>Ammo: {weapon.ammo}</span>
+                                  <span>
+                                    {t("game:sidebar.status.ammo")} {weapon.ammo}
+                                  </span>
                                 )}
                               </div>
                             </div>
@@ -573,13 +613,15 @@ export function GameSidebar({
                         )}
                       </div>
                     ) : (
-                      <p className="empty-state">No weapons</p>
+                      <p className="empty-state">
+                        {t("game:sidebar.status.noWeapons")}
+                      </p>
                     )}
                   </div>
                 </div>
 
                 <div className="status-section">
-                  <h3>Inventory</h3>
+                  <h3>{t("game:sidebar.status.inventory")}</h3>
                   <div className="inventory-list">
                     {gameState.playerCharacter.inventory &&
                     gameState.playerCharacter.inventory.length > 0 ? (
@@ -631,13 +673,15 @@ export function GameSidebar({
                         )}
                       </div>
                     ) : (
-                      <p className="empty-state">No items</p>
+                      <p className="empty-state">
+                        {t("game:sidebar.status.noItems")}
+                      </p>
                     )}
                   </div>
                 </div>
               </>
             ) : (
-              <p className="empty-state">No data</p>
+              <p className="empty-state">{t("game:sidebar.noData")}</p>
             )}
           </div>
         )}
@@ -646,19 +690,18 @@ export function GameSidebar({
           <div className="tab-panel notes-panel">
             <div className="clues-section">
               <div className="memo-header">
-                <h3>Memo Pad</h3>
+                <h3>{t("game:sidebar.memo.title")}</h3>
               </div>
               <p className="memo-hint">
-                Write your own notes here. New entries auto-save when you add
-                them.
+                {t("game:sidebar.memo.hint")}
               </p>
               {memoError && (
                 <p className="empty-state" style={{ color: "#c41e3a" }}>
-                  Memo error: {memoError}
+                  {t("game:sidebar.memo.errorPrefix")} {memoError}
                 </p>
               )}
               {memoLoading ? (
-                <p className="empty-state">Loading...</p>
+                <p className="empty-state">{t("common:loading.loading")}</p>
               ) : (
                 <>
                   <div className="memo-filters">
@@ -667,7 +710,7 @@ export function GameSidebar({
                         className="memo-filter-label"
                         htmlFor="memo-day-filter"
                       >
-                        Game day
+                        {t("game:sidebar.memo.gameDay")}
                       </label>
                       <select
                         id="memo-day-filter"
@@ -677,10 +720,12 @@ export function GameSidebar({
                           setMemoDayFilter(event.target.value)
                         }
                       >
-                        <option value="all">All days</option>
+                        <option value="all">
+                          {t("game:sidebar.memo.allDays")}
+                        </option>
                         {memoDayOptions.map((day) => (
                           <option key={day} value={String(day)}>
-                            Day {day}
+                            {t("game:sidebar.dayNumber", { day })}
                           </option>
                         ))}
                       </select>
@@ -690,7 +735,7 @@ export function GameSidebar({
                         className="memo-filter-label"
                         htmlFor="memo-location-filter"
                       >
-                        Location
+                        {t("game:sidebar.memo.location")}
                       </label>
                       <select
                         id="memo-location-filter"
@@ -700,7 +745,9 @@ export function GameSidebar({
                           setMemoLocationFilter(event.target.value)
                         }
                       >
-                        <option value="all">All locations</option>
+                        <option value="all">
+                          {t("game:sidebar.memo.allLocations")}
+                        </option>
                         {memoLocationOptions.map((location) => (
                           <option key={location} value={location}>
                             {location}
@@ -713,13 +760,13 @@ export function GameSidebar({
                         className="memo-filter-label"
                         htmlFor="memo-search"
                       >
-                        Search
+                        {t("game:sidebar.memo.search")}
                       </label>
                       <input
                         id="memo-search"
                         className="memo-filter-input"
                         type="search"
-                        placeholder="Search notes..."
+                        placeholder={t("game:sidebar.memo.searchPlaceholder")}
                         value={memoQuery}
                         onChange={(event) => setMemoQuery(event.target.value)}
                       />
@@ -729,7 +776,7 @@ export function GameSidebar({
                     <textarea
                       className="memo-input"
                       rows={3}
-                      placeholder="Write a new note..."
+                      placeholder={t("game:sidebar.memo.newNotePlaceholder")}
                       value={memoDraft}
                       onChange={(event) => setMemoDraft(event.target.value)}
                     />
@@ -738,7 +785,7 @@ export function GameSidebar({
                       onClick={addMemo}
                       disabled={!memoDraft.trim() || !sessionId}
                     >
-                      Add Note
+                      {t("game:sidebar.memo.addNote")}
                     </button>
                   </div>
                   <div className="memo-list">
@@ -747,12 +794,16 @@ export function GameSidebar({
                         filteredMemoItems.map((item, idx) => (
                           <div key={item.id} className="memo-item">
                             <div className="memo-item-header">
-                              <span>Note {idx + 1}</span>
+                              <span>
+                                {t("game:sidebar.memo.noteNumber", {
+                                  number: idx + 1,
+                                })}
+                              </span>
                               <button
                                 className="memo-btn memo-btn-ghost"
                                 onClick={() => removeMemo(item.id)}
                               >
-                                Delete
+                                {t("common:button.delete")}
                               </button>
                             </div>
                             {(item.gameDay ||
@@ -760,8 +811,10 @@ export function GameSidebar({
                               item.location) && (
                               <div className="memo-item-meta">
                                 {item.gameDay
-                                  ? `Day ${item.gameDay}`
-                                  : "Day --"}
+                                  ? t("game:sidebar.dayNumber", {
+                                      day: item.gameDay,
+                                    })
+                                  : t("game:sidebar.dayUnknown")}
                                 {item.gameTime ? ` · ${item.gameTime}` : ""}
                                 {item.location ? ` · ${item.location}` : ""}
                               </div>
@@ -778,11 +831,13 @@ export function GameSidebar({
                         ))
                       ) : (
                         <p className="empty-state">
-                          No notes match the current filters
+                          {t("game:sidebar.memo.noNotesMatchFilters")}
                         </p>
                       )
                     ) : (
-                      <p className="empty-state">No notes yet</p>
+                      <p className="empty-state">
+                        {t("game:sidebar.memo.noNotesYet")}
+                      </p>
                     )}
                   </div>
                 </>
@@ -794,14 +849,14 @@ export function GameSidebar({
         {activeTab === "clues" && (
           <div className="tab-panel clues-panel">
             {loading ? (
-              <p className="empty-state">Loading...</p>
+              <p className="empty-state">{t("common:loading.loading")}</p>
             ) : error ? (
               <p className="empty-state" style={{ color: "#c41e3a" }}>
-                Load failed: {error}
+                {t("game:sidebar.errors.loadFailed")}: {error}
               </p>
             ) : gameState ? (
               <div className="clues-section">
-                <h3>Important Clues</h3>
+                <h3>{t("game:sidebar.clues.title")}</h3>
                 <div className="clues-list">
                   {gameState.discoveredClues.length > 0 ? (
                     <div
@@ -835,10 +890,10 @@ export function GameSidebar({
                             >
                               (
                               {clue.type === "scenario"
-                                ? "Scenario Clue"
+                                ? t("game:sidebar.clues.types.scenario")
                                 : clue.type === "npc"
-                                  ? "NPC Clue"
-                                  : "Secret"}
+                                  ? t("game:sidebar.clues.types.npc")
+                                  : t("game:sidebar.clues.types.secret")}
                               )
                             </span>
                           </div>
@@ -852,21 +907,30 @@ export function GameSidebar({
                             {clue.text}
                           </div>
                           <div style={{ fontSize: "0.75rem", color: "#999" }}>
-                            Discovered by: {clue.discoveredBy}
-                            {clue.method && ` | Method: ${clue.method}`}
+                            {t("game:sidebar.clues.discoveredBy", {
+                              name: clue.discoveredBy,
+                            })}
+                            {clue.method &&
+                              ` | ${t("game:sidebar.clues.method", {
+                                method: clue.method,
+                              })}`}
                             {clue.difficulty &&
-                              ` | Difficulty: ${clue.difficulty}`}
+                              ` | ${t("game:sidebar.clues.difficulty", {
+                                difficulty: clue.difficulty,
+                              })}`}
                           </div>
                         </div>
                       ))}
                     </div>
                   ) : (
-                    <p className="empty-state">No clues</p>
+                    <p className="empty-state">
+                      {t("game:sidebar.clues.noClues")}
+                    </p>
                   )}
                 </div>
               </div>
             ) : (
-              <p className="empty-state">No data</p>
+              <p className="empty-state">{t("game:sidebar.noData")}</p>
             )}
           </div>
         )}
@@ -875,10 +939,10 @@ export function GameSidebar({
         {activeTab === "map" && (
           <div className="tab-panel map-panel">
             {loading ? (
-              <p className="empty-state">Loading...</p>
+              <p className="empty-state">{t("common:loading.loading")}</p>
             ) : error ? (
               <p className="empty-state" style={{ color: "#c41e3a" }}>
-                Load failed: {error}
+                {t("game:sidebar.errors.loadFailed")}: {error}
               </p>
             ) : gameState ? (
               <>
@@ -886,11 +950,11 @@ export function GameSidebar({
                 {gameState.moduleName &&
                 gameState.moduleDigest?.macroMapPath ? (
                   <div className="status-section">
-                    <h3>Macro Map</h3>
+                    <h3>{t("game:sidebar.map.macroMap")}</h3>
                     <div className="map-display">
                       <img
                         src={`${apiBaseUrl}/maps/${gameState.moduleDigest.macroMapPath}`}
-                        alt="Macro Map"
+                        alt={t("game:sidebar.map.macroMapAlt")}
                         style={{
                           width: "100%",
                           height: "auto",
@@ -915,8 +979,7 @@ export function GameSidebar({
                 ) : gameState.moduleName ? (
                   <div className="status-section">
                     <p className="empty-state">
-                      Macro map not available (module was created without
-                      GOOGLE_API_KEY)
+                      {t("game:sidebar.map.macroMapUnavailable")}
                     </p>
                   </div>
                 ) : null}
@@ -924,18 +987,24 @@ export function GameSidebar({
                 {/* Current Scene Info */}
                 {gameState.currentScenario && (
                   <div className="status-section">
-                    <h3>Current Scene</h3>
+                    <h3>{t("game:sidebar.map.currentScene")}</h3>
                     <div className="status-list">
                       <div className="status-item-full">
-                        <span className="status-label">Scene Name:</span>
+                        <span className="status-label">
+                          {t("game:sidebar.map.sceneName")}
+                        </span>
                         <span className="status-value">
-                          {gameState.currentScenario.name || "Unknown"}
+                          {gameState.currentScenario.name ||
+                            t("game:sidebar.status.unknown")}
                         </span>
                       </div>
                       <div className="status-item-full">
-                        <span className="status-label">Location:</span>
+                        <span className="status-label">
+                          {t("game:sidebar.status.location")}
+                        </span>
                         <span className="status-value">
-                          {gameState.currentScenario.location || "Unknown"}
+                          {gameState.currentScenario.location ||
+                            t("game:sidebar.status.unknown")}
                         </span>
                       </div>
                     </div>
@@ -943,7 +1012,7 @@ export function GameSidebar({
                 )}
               </>
             ) : (
-              <p className="empty-state">No data</p>
+              <p className="empty-state">{t("game:sidebar.noData")}</p>
             )}
           </div>
         )}
