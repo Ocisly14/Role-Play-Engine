@@ -6,7 +6,8 @@
 import { randomUUID } from "crypto";
 import fs from "fs";
 import path from "path";
-import type { CoCDatabase } from "../database/schema.js";
+import type { CoCDatabaseAdapter } from "../database/CoCDatabaseAdapter.js";
+import { getPrismaClient } from "../database/prismaClient.js";
 import { resolveEmailId, scopeId } from "../database/userContext.js";
 import type {
   ScenarioProfile,
@@ -24,12 +25,12 @@ import { ScenarioDocumentParser } from "./scenarioDocumentParser.js";
  * Scenario Loader class
  */
 export class ScenarioLoader {
-  private db: CoCDatabase;
+  private db: any;
   private parser: ScenarioDocumentParser;
   private emailId?: string;
 
   constructor(
-    db: CoCDatabase,
+    db: any,
     parser?: ScenarioDocumentParser,
     options?: { emailId?: string }
   ) {
@@ -49,10 +50,10 @@ export class ScenarioLoader {
   /**
    * Check if any files in directory have changed since last load
    */
-  private checkForChanges(dirPath: string): {
+  private async checkForChanges(dirPath: string): Promise<{
     hasChanges: boolean;
     currentFiles: Map<string, number>;
-  } {
+  }> {
     if (!fs.existsSync(dirPath)) {
       return { hasChanges: false, currentFiles: new Map() };
     }
@@ -70,7 +71,7 @@ export class ScenarioLoader {
     }
 
     // Check if we have existing scenarios
-    const existingScenarios = this.getAllScenarios();
+    const existingScenarios = await this.getAllScenarios();
 
     // If no scenarios exist, we need to load
     if (existingScenarios.length === 0) {
@@ -201,9 +202,9 @@ export class ScenarioLoader {
 
     // Check for file changes unless forced reload
     if (!forceReload) {
-      const { hasChanges } = this.checkForJSONChanges(dirPath);
+      const { hasChanges } = await this.checkForJSONChanges(dirPath);
       if (!hasChanges) {
-        const existingScenarios = this.getAllScenarios();
+        const existingScenarios = await this.getAllScenarios();
         console.log(
           `No changes detected. Using ${existingScenarios.length} existing scenarios from database.`
         );
@@ -267,7 +268,7 @@ export class ScenarioLoader {
             }
 
             const scenarioProfile = this.convertToScenarioProfile(parsedData);
-            this.saveScenarioToDatabase(scenarioProfile);
+            await this.saveScenarioToDatabase(scenarioProfile);
             scenarioProfiles.push(scenarioProfile);
             console.log(`    ✓ 已加载场景: ${scenarioProfile.name}`);
           } catch (error) {
@@ -295,10 +296,10 @@ export class ScenarioLoader {
   /**
    * Check if any JSON files in directory have changed since last load
    */
-  private checkForJSONChanges(dirPath: string): {
+  private async checkForJSONChanges(dirPath: string): Promise<{
     hasChanges: boolean;
     currentFiles: Map<string, number>;
-  } {
+  }> {
     if (!fs.existsSync(dirPath)) {
       return { hasChanges: false, currentFiles: new Map() };
     }
@@ -316,7 +317,7 @@ export class ScenarioLoader {
     }
 
     // Check if we have existing scenarios
-    const existingScenarios = this.getAllScenarios();
+    const existingScenarios = await this.getAllScenarios();
 
     // If no scenarios exist, we need to load
     if (existingScenarios.length === 0) {
@@ -360,9 +361,9 @@ export class ScenarioLoader {
 
     // Check for file changes unless forced reload
     if (!forceReload) {
-      const { hasChanges } = this.checkForChanges(dirPath);
+      const { hasChanges } = await this.checkForChanges(dirPath);
       if (!hasChanges) {
-        const existingScenarios = this.getAllScenarios();
+        const existingScenarios = await this.getAllScenarios();
         console.log(
           `No changes detected. Using ${existingScenarios.length} existing scenarios from database.`
         );
@@ -386,7 +387,7 @@ export class ScenarioLoader {
     for (const parsedData of parsedScenarios) {
       try {
         const scenarioProfile = this.convertToScenarioProfile(parsedData);
-        this.saveScenarioToDatabase(scenarioProfile);
+        await this.saveScenarioToDatabase(scenarioProfile);
         scenarioProfiles.push(scenarioProfile);
         console.log(
           `✓ Loaded Scenario: ${scenarioProfile.name} (${scenarioProfile.id})`
@@ -562,71 +563,36 @@ export class ScenarioLoader {
   /**
    * Save scenario to database
    */
-  private saveScenarioToDatabase(scenario: ScenarioProfile): void {
-    const database = this.db.getDatabase();
-    const hasCategoryColumn = this.db.hasColumn("scenarios", "category");
-    const hasTimeOrderColumn = this.db.hasColumn(
-      "scenario_snapshots",
-      "time_order"
-    );
+  private async saveScenarioToDatabase(scenario: ScenarioProfile): Promise<void> {
+    const prisma = getPrismaClient();
     const emailId = this.getEmailId();
-    const hasScenarioEmailId = this.db.hasColumn("scenarios", "email_id");
-    const hasSnapshotEmailId = this.db.hasColumn(
-      "scenario_snapshots",
-      "email_id"
-    );
-    const hasCharacterEmailId = this.db.hasColumn(
-      "scenario_characters",
-      "email_id"
-    );
-    const hasClueEmailId = this.db.hasColumn("scenario_clues", "email_id");
-    const hasConditionEmailId = this.db.hasColumn(
-      "scenario_conditions",
-      "email_id"
-    );
 
-    this.db.transaction(() => {
-      // Insert or update scenario (including scenario-level permanent_changes and map_image_path)
-      const scenarioColumns = [
-        "scenario_id",
-        "name",
-        "description",
-        "tags",
-        "connections",
-        "permanent_changes",
-        "metadata",
-        "map_image_path",
-      ];
-      const scenarioValues: any[] = [
-        scenario.id,
-        scenario.name,
-        scenario.description,
-        JSON.stringify(scenario.tags),
-        JSON.stringify(scenario.connections),
-        scenario.snapshot.permanentChanges
-          ? JSON.stringify(scenario.snapshot.permanentChanges)
-          : null,
-        JSON.stringify(scenario.metadata),
-        scenario.mapImagePath || null,
-      ];
-
-      if (hasCategoryColumn) {
-        // Backward compatibility: older DBs may have category
-        scenarioColumns.splice(2, 0, "category");
-        scenarioValues.splice(2, 0, "location");
-      }
-      if (hasScenarioEmailId) {
-        scenarioColumns.push("email_id");
-        scenarioValues.push(emailId || null);
-      }
-
-      const scenarioStmt = database.prepare(
-        `INSERT OR REPLACE INTO scenarios (${scenarioColumns.join(", ")}) VALUES (${scenarioColumns
-          .map(() => "?")
-          .join(", ")})`
-      );
-
-      scenarioStmt.run(...scenarioValues);
+    await prisma.$transaction(async (tx) => {
+      // Upsert scenario
+      await tx.scenario.upsert({
+        where: { scenarioId: scenario.id },
+        update: {
+          name: scenario.name,
+          description: scenario.description,
+          tags: scenario.tags,
+          connections: scenario.connections,
+          permanentChanges: (scenario.snapshot.permanentChanges || undefined) as any,
+          metadata: scenario.metadata,
+          mapImagePath: scenario.mapImagePath || null,
+          emailId: emailId || null,
+        },
+        create: {
+          scenarioId: scenario.id,
+          name: scenario.name,
+          description: scenario.description,
+          tags: scenario.tags,
+          connections: scenario.connections,
+          permanentChanges: (scenario.snapshot.permanentChanges || undefined) as any,
+          metadata: scenario.metadata,
+          mapImagePath: scenario.mapImagePath || null,
+          emailId: emailId || null,
+        },
+      });
 
       // Get all snapshots to save (support multiple snapshots)
       const allSnapshots: ScenarioSnapshot[] = (scenario as any)
@@ -636,168 +602,101 @@ export class ScenarioLoader {
       // Snapshots are read-only original definitions - never delete or update existing ones
       for (const snapshot of allSnapshots) {
         // Check if snapshot already exists
-        const existingSnapshot = database
-          .prepare(
-            `SELECT snapshot_id FROM scenario_snapshots WHERE snapshot_id = ?${hasSnapshotEmailId && emailId ? " AND email_id = ?" : ""}`
-          )
-          .get(
-            ...(hasSnapshotEmailId && emailId
-              ? [snapshot.id, emailId]
-              : [snapshot.id])
-          );
+        const existingSnapshot = await tx.scenarioSnapshot.findFirst({
+          where: {
+            snapshotId: snapshot.id,
+            ...(emailId ? { emailId } : {}),
+          },
+          select: { snapshotId: true },
+        });
 
         // Only insert if snapshot doesn't exist (snapshot is read-only original definition)
         if (!existingSnapshot) {
-          // Insert snapshot (with time_restriction field)
-          const snapshotColumns = [
-            "snapshot_id",
-            "scenario_id",
-            "snapshot_name",
-            "location",
-            "description",
-            "events",
-            "exits",
-            "keeper_notes",
-            "time_restriction",
-            "show_map",
-          ];
-          const snapshotValues: any[] = [
-            snapshot.id,
-            scenario.id,
-            snapshot.name,
-            snapshot.location,
-            snapshot.description,
-            JSON.stringify(snapshot.events),
-            JSON.stringify(snapshot.exits),
-            snapshot.keeperNotes || null,
-            snapshot.timeRestriction || null,
-            snapshot.showMap === false ? 0 : 1,
-          ];
-          if (hasSnapshotEmailId) {
-            snapshotColumns.push("email_id");
-            snapshotValues.push(emailId || null);
-          }
-
-          const snapshotStmt = database.prepare(
-            `INSERT INTO scenario_snapshots (${snapshotColumns.join(", ")}) VALUES (${snapshotColumns
-              .map(() => "?")
-              .join(", ")})`
-          );
-          snapshotStmt.run(...snapshotValues);
+          // Insert snapshot
+          await tx.scenarioSnapshot.create({
+            data: {
+              snapshotId: snapshot.id,
+              scenarioId: scenario.id,
+              snapshotName: snapshot.name,
+              location: snapshot.location,
+              description: snapshot.description,
+              events: snapshot.events,
+              exits: snapshot.exits,
+              keeperNotes: snapshot.keeperNotes || null,
+              timeRestriction: snapshot.timeRestriction || null,
+              showMap: snapshot.showMap !== false,
+              emailId: emailId || null,
+            },
+          });
 
           // Insert characters for this snapshot (only on first creation)
           if (snapshot.characters.length > 0) {
-            const charColumns = [
-              "id",
-              "snapshot_id",
-              "character_name",
-              "character_role",
-              "character_status",
-              "character_location",
-              "character_notes",
-            ];
-            if (hasCharacterEmailId) {
-              charColumns.push("email_id");
-            }
-            const charStmt = database.prepare(
-              `INSERT OR IGNORE INTO scenario_characters (${charColumns.join(", ")}) VALUES (${charColumns
-                .map(() => "?")
-                .join(", ")})`
-            );
-
             for (const char of snapshot.characters) {
-              const charValues: any[] = [
-                char.id,
-                snapshot.id,
-                char.name,
-                char.role,
-                char.status,
-                char.location || null,
-                char.notes || null,
-              ];
-              if (hasCharacterEmailId) {
-                charValues.push(emailId || null);
+              try {
+                await tx.scenarioCharacter.create({
+                  data: {
+                    id: char.id,
+                    snapshotId: snapshot.id,
+                    characterName: char.name,
+                    characterRole: char.role,
+                    characterStatus: char.status,
+                    characterLocation: char.location || null,
+                    characterNotes: char.notes || null,
+                    emailId: emailId || null,
+                  },
+                });
+              } catch (e: any) {
+                // P2002: Unique constraint violation (equivalent to INSERT OR IGNORE)
+                if (e.code !== "P2002") throw e;
               }
-              charStmt.run(...charValues);
             }
           }
 
           // Insert clues for this snapshot (only on first creation)
           if (snapshot.clues.length > 0) {
-            const clueColumns = [
-              "clue_id",
-              "snapshot_id",
-              "clue_text",
-              "category",
-              "difficulty",
-              "clue_location",
-              "discovery_method",
-              "reveals",
-              "discovered",
-              "discovery_details",
-            ];
-            if (hasClueEmailId) {
-              clueColumns.push("email_id");
-            }
-            const clueStmt = database.prepare(
-              `INSERT OR IGNORE INTO scenario_clues (${clueColumns.join(", ")}) VALUES (${clueColumns
-                .map(() => "?")
-                .join(", ")})`
-            );
-
             for (const clue of snapshot.clues) {
-              const clueValues: any[] = [
-                clue.id,
-                snapshot.id,
-                clue.clueText,
-                clue.category,
-                clue.difficulty,
-                clue.location,
-                clue.discoveryMethod || null,
-                JSON.stringify(clue.reveals),
-                clue.discovered ? 1 : 0,
-                clue.discoveryDetails
-                  ? JSON.stringify(clue.discoveryDetails)
-                  : null,
-              ];
-              if (hasClueEmailId) {
-                clueValues.push(emailId || null);
+              try {
+                await tx.scenarioClue.create({
+                  data: {
+                    clueId: clue.id,
+                    snapshotId: snapshot.id,
+                    clueText: clue.clueText,
+                    category: clue.category,
+                    difficulty: clue.difficulty,
+                    clueLocation: clue.location,
+                    discoveryMethod: clue.discoveryMethod || null,
+                    reveals: clue.reveals,
+                    discovered: clue.discovered || false,
+                    discoveryDetails: (clue.discoveryDetails || undefined) as any,
+                    emailId: emailId || null,
+                  },
+                });
+              } catch (e: any) {
+                // P2002: Unique constraint violation (equivalent to INSERT OR IGNORE)
+                if (e.code !== "P2002") throw e;
               }
-              clueStmt.run(...clueValues);
             }
           }
 
           // Insert conditions for this snapshot (only on first creation)
           if (snapshot.conditions.length > 0) {
-            const condColumns = [
-              "condition_id",
-              "snapshot_id",
-              "condition_type",
-              "description",
-              "mechanical_effect",
-            ];
-            if (hasConditionEmailId) {
-              condColumns.push("email_id");
-            }
-            const condStmt = database.prepare(
-              `INSERT OR IGNORE INTO scenario_conditions (${condColumns.join(", ")}) VALUES (${condColumns
-                .map(() => "?")
-                .join(", ")})`
-            );
-
             for (const cond of snapshot.conditions) {
               const condId = `${snapshot.id}-cond-${randomUUID().slice(0, 8)}`;
-              const condValues: any[] = [
-                condId,
-                snapshot.id,
-                cond.type,
-                cond.description,
-                cond.mechanicalEffect || null,
-              ];
-              if (hasConditionEmailId) {
-                condValues.push(emailId || null);
+              try {
+                await tx.scenarioCondition.create({
+                  data: {
+                    conditionId: condId,
+                    snapshotId: snapshot.id,
+                    conditionType: cond.type,
+                    description: cond.description,
+                    mechanicalEffect: cond.mechanicalEffect || null,
+                    emailId: emailId || null,
+                  },
+                });
+              } catch (e: any) {
+                // P2002: Unique constraint violation (equivalent to INSERT OR IGNORE)
+                if (e.code !== "P2002") throw e;
               }
-              condStmt.run(...condValues);
             }
           }
         } else {
@@ -811,50 +710,30 @@ export class ScenarioLoader {
   /**
    * Get a scenario from the database by ID
    */
-  getScenarioById(scenarioId: string): ScenarioProfile | null {
-    const database = this.db.getDatabase();
+  async getScenarioById(scenarioId: string): Promise<ScenarioProfile | null> {
+    const prisma = getPrismaClient();
     const scopedScenarioId = this.scopeScenarioId(scenarioId);
     const emailId = this.getEmailId();
-    const hasScenarioEmailId = this.db.hasColumn("scenarios", "email_id");
-    const hasSnapshotEmailId = this.db.hasColumn(
-      "scenario_snapshots",
-      "email_id"
-    );
-    const hasCharacterEmailId = this.db.hasColumn(
-      "scenario_characters",
-      "email_id"
-    );
-    const hasClueEmailId = this.db.hasColumn("scenario_clues", "email_id");
-    const hasConditionEmailId = this.db.hasColumn(
-      "scenario_conditions",
-      "email_id"
-    );
 
     // Get scenario data
-    const scenario = database
-      .prepare(
-        `SELECT * FROM scenarios WHERE scenario_id = ?${hasScenarioEmailId && emailId ? " AND email_id = ?" : ""}`
-      )
-      .get(
-        ...(hasScenarioEmailId && emailId
-          ? [scopedScenarioId, emailId]
-          : [scopedScenarioId])
-      ) as any;
+    const scenario = await prisma.scenario.findFirst({
+      where: {
+        scenarioId: scopedScenarioId,
+        ...(emailId ? { emailId } : {}),
+      },
+    });
 
     if (!scenario) {
       return null;
     }
 
     // Get snapshot (single snapshot per scenario)
-    const snap = database
-      .prepare(
-        `SELECT * FROM scenario_snapshots WHERE scenario_id = ?${hasSnapshotEmailId && emailId ? " AND email_id = ?" : ""} LIMIT 1`
-      )
-      .get(
-        ...(hasSnapshotEmailId && emailId
-          ? [scopedScenarioId, emailId]
-          : [scopedScenarioId])
-      ) as any;
+    const snap = await prisma.scenarioSnapshot.findFirst({
+      where: {
+        scenarioId: scopedScenarioId,
+        ...(emailId ? { emailId } : {}),
+      },
+    });
 
     if (!snap) {
       console.warn(`No snapshot found for scenario ${scenarioId}`);
@@ -862,92 +741,81 @@ export class ScenarioLoader {
     }
 
     // Get characters for this snapshot
-    const characters = database
-      .prepare(
-        `SELECT * FROM scenario_characters WHERE snapshot_id = ?${hasCharacterEmailId && emailId ? " AND email_id = ?" : ""}`
-      )
-      .all(
-        ...(hasCharacterEmailId && emailId
-          ? [snap.snapshot_id, emailId]
-          : [snap.snapshot_id])
-      ) as any[];
+    const characters = await prisma.scenarioCharacter.findMany({
+      where: {
+        snapshotId: snap.snapshotId,
+        ...(emailId ? { emailId } : {}),
+      },
+    });
 
     // Get clues for this snapshot
-    const clues = database
-      .prepare(
-        `SELECT * FROM scenario_clues WHERE snapshot_id = ?${hasClueEmailId && emailId ? " AND email_id = ?" : ""}`
-      )
-      .all(
-        ...(hasClueEmailId && emailId
-          ? [snap.snapshot_id, emailId]
-          : [snap.snapshot_id])
-      ) as any[];
+    const clues = await prisma.scenarioClue.findMany({
+      where: {
+        snapshotId: snap.snapshotId,
+        ...(emailId ? { emailId } : {}),
+      },
+    });
 
     // Get conditions for this snapshot
-    const conditions = database
-      .prepare(
-        `SELECT * FROM scenario_conditions WHERE snapshot_id = ?${hasConditionEmailId && emailId ? " AND email_id = ?" : ""}`
-      )
-      .all(
-        ...(hasConditionEmailId && emailId
-          ? [snap.snapshot_id, emailId]
-          : [snap.snapshot_id])
-      ) as any[];
+    const conditions = await prisma.scenarioCondition.findMany({
+      where: {
+        snapshotId: snap.snapshotId,
+        ...(emailId ? { emailId } : {}),
+      },
+    });
 
     const snapshot: ScenarioSnapshot = {
-      id: snap.snapshot_id,
-      name: snap.snapshot_name,
+      id: snap.snapshotId,
+      name: snap.snapshotName || "",
       location: snap.location,
       description: snap.description,
-      mapImagePath: scenario.map_image_path || undefined,
+      mapImagePath: scenario.mapImagePath || undefined,
       showMap:
-        snap.show_map === null || snap.show_map === undefined
+        snap.showMap === null || snap.showMap === undefined
           ? true
-          : snap.show_map === 1,
+          : snap.showMap,
       characters: characters.map((c) => ({
         id: c.id,
-        name: c.character_name,
-        role: c.character_role,
-        status: c.character_status,
-        location: c.character_location,
-        notes: c.character_notes,
+        name: c.characterName,
+        role: c.characterRole,
+        status: c.characterStatus,
+        location: c.characterLocation || undefined,
+        notes: c.characterNotes || undefined,
       })),
       clues: clues.map((c) => ({
-        id: c.clue_id,
-        clueText: c.clue_text,
-        category: c.category,
-        difficulty: c.difficulty,
-        location: c.clue_location,
-        discoveryMethod: c.discovery_method,
-        reveals: c.reveals ? JSON.parse(c.reveals) : [],
-        discovered: c.discovered === 1,
-        discoveryDetails: c.discovery_details
-          ? JSON.parse(c.discovery_details)
+        id: c.clueId,
+        clueText: c.clueText,
+        category: c.category as ScenarioClue["category"],
+        difficulty: c.difficulty as ScenarioClue["difficulty"],
+        location: c.clueLocation,
+        discoveryMethod: c.discoveryMethod || undefined,
+        reveals: (c.reveals as any[]) || [],
+        discovered: c.discovered,
+        discoveryDetails: c.discoveryDetails
+          ? (c.discoveryDetails as any)
           : undefined,
       })),
       conditions: conditions.map((c) => ({
-        type: c.condition_type,
+        type: c.conditionType as ScenarioCondition["type"],
         description: c.description,
-        mechanicalEffect: c.mechanical_effect,
+        mechanicalEffect: c.mechanicalEffect || undefined,
       })),
-      events: snap.events ? JSON.parse(snap.events) : [],
-      exits: snap.exits ? JSON.parse(snap.exits) : [],
-      permanentChanges: scenario.permanent_changes
-        ? JSON.parse(scenario.permanent_changes)
-        : [],
-      keeperNotes: snap.keeper_notes,
-      timeRestriction: snap.time_restriction || undefined,
+      events: (snap.events as any[]) || [],
+      exits: (snap.exits as any[]) || [],
+      permanentChanges: (scenario.permanentChanges as any[]) || [],
+      keeperNotes: snap.keeperNotes || undefined,
+      timeRestriction: snap.timeRestriction || undefined,
     };
 
     const scenarioProfile: ScenarioProfile = {
-      id: scenario.scenario_id,
+      id: scenario.scenarioId,
       name: scenario.name,
       description: scenario.description,
       snapshot,
-      mapImagePath: scenario.map_image_path || undefined,
-      tags: JSON.parse(scenario.tags || "[]"),
-      connections: JSON.parse(scenario.connections || "[]"),
-      metadata: JSON.parse(scenario.metadata),
+      mapImagePath: scenario.mapImagePath || undefined,
+      tags: (scenario.tags as any[]) || [],
+      connections: (scenario.connections as any[]) || [],
+      metadata: scenario.metadata as any,
     };
 
     return scenarioProfile;
@@ -956,28 +824,29 @@ export class ScenarioLoader {
   /**
    * Get all scenarios from the database
    */
-  getAllScenarios(): ScenarioProfile[] {
-    const database = this.db.getDatabase();
+  async getAllScenarios(): Promise<ScenarioProfile[]> {
+    const prisma = getPrismaClient();
     const emailId = this.getEmailId();
-    const hasEmailIdColumn = this.db.hasColumn("scenarios", "email_id");
 
-    let sql = "SELECT scenario_id FROM scenarios";
-    const params: any[] = [];
-    if (hasEmailIdColumn && emailId) {
-      sql += " WHERE email_id = ?";
-      params.push(emailId);
+    const scenarios = await prisma.scenario.findMany({
+      where: emailId ? { emailId } : {},
+      select: { scenarioId: true },
+    });
+
+    const results: ScenarioProfile[] = [];
+    for (const s of scenarios) {
+      const scenario = await this.getScenarioById(s.scenarioId);
+      if (scenario) {
+        results.push(scenario);
+      }
     }
-    const scenarios = database.prepare(sql).all(...params) as any[];
-
-    return scenarios
-      .map((s) => this.getScenarioById(s.scenario_id))
-      .filter((scenario) => scenario !== null) as ScenarioProfile[];
+    return results;
   }
 
   /**
    * Find initial scenario by scanning scenario directory for files containing "initial_scenario" in filename
    */
-  findInitialScenarioByFileName(scenarioDir: string): ScenarioProfile | null {
+  async findInitialScenarioByFileName(scenarioDir: string): Promise<ScenarioProfile | null> {
     if (!fs.existsSync(scenarioDir)) {
       return null;
     }
@@ -1021,7 +890,7 @@ export class ScenarioLoader {
       }
 
       // Find the scenario in loaded scenarios by name
-      const allScenarios = this.getAllScenarios();
+      const allScenarios = await this.getAllScenarios();
       const foundScenario = allScenarios.find(
         (s) => s.name.toLowerCase().trim() === scenarioName.toLowerCase().trim()
       );
@@ -1050,45 +919,48 @@ export class ScenarioLoader {
    * Search scenarios based on query with fuzzy matching
    * Returns only the best matching scenario
    */
-  searchScenarios(query: ScenarioQuery): ScenarioSearchResult {
-    const database = this.db.getDatabase();
-    let sqlQuery = `SELECT scenario_id, name FROM scenarios WHERE 1=1`;
-    const params: any[] = [];
+  async searchScenarios(query: ScenarioQuery): Promise<ScenarioSearchResult> {
+    const prisma = getPrismaClient();
     const emailId = this.getEmailId();
-    const hasEmailIdColumn = this.db.hasColumn("scenarios", "email_id");
-    if (hasEmailIdColumn && emailId) {
-      sqlQuery += " AND email_id = ?";
-      params.push(emailId);
+
+    // Build where clause
+    const whereConditions: any[] = [];
+    if (emailId) {
+      whereConditions.push({ emailId });
     }
 
     if (query.name) {
-      // Use very loose matching - match if ANY word from search term appears
-      // Then use scoring to find the best match
       const searchTerm = query.name.trim().toLowerCase();
       const words = searchTerm.split(/\s+/).filter((w) => w.length > 0);
 
       if (words.length > 0) {
         // Match if any word appears (very loose, will filter by score later)
-        const wordConditions = words
-          .map(() => `LOWER(name) LIKE ?`)
-          .join(" OR ");
-        sqlQuery += ` AND (${wordConditions})`;
-        words.forEach((word) => params.push(`%${word}%`));
+        whereConditions.push({
+          OR: words.map((word) => ({
+            name: { contains: word, mode: "insensitive" as const },
+          })),
+        });
       } else {
-        // Fallback: simple contains match
-        sqlQuery += ` AND LOWER(name) LIKE ?`;
-        params.push(`%${searchTerm}%`);
+        whereConditions.push({
+          name: { contains: searchTerm, mode: "insensitive" as const },
+        });
       }
     }
 
+    // Note: tag filtering with JSONB uses string_contains for simplicity.
+    // For exact array element matching, raw query would be needed.
     if (query.tags && query.tags.length > 0) {
       for (const tag of query.tags) {
-        sqlQuery += ` AND tags LIKE ?`;
-        params.push(`%"${tag}"%`);
+        whereConditions.push({
+          tags: { string_contains: `"${tag}"` },
+        });
       }
     }
 
-    const results = database.prepare(sqlQuery).all(params) as any[];
+    const results = await prisma.scenario.findMany({
+      where: whereConditions.length > 0 ? { AND: whereConditions } : {},
+      select: { scenarioId: true, name: true },
+    });
 
     if (results.length === 0) {
       return {
@@ -1163,7 +1035,7 @@ export class ScenarioLoader {
     }
 
     // Return only the best matching scenario
-    const bestScenario = this.getScenarioById(bestMatch.scenario_id);
+    const bestScenario = await this.getScenarioById(bestMatch.scenarioId);
     const scenarios = bestScenario ? [bestScenario] : [];
 
     return {
@@ -1175,36 +1047,32 @@ export class ScenarioLoader {
   /**
    * Check if scenario already exists in database
    */
-  scenarioExists(scenarioId: string): boolean {
-    const database = this.db.getDatabase();
+  async scenarioExists(scenarioId: string): Promise<boolean> {
+    const prisma = getPrismaClient();
     const scopedScenarioId = this.scopeScenarioId(scenarioId);
     const emailId = this.getEmailId();
-    const hasEmailIdColumn = this.db.hasColumn("scenarios", "email_id");
-    const result = database
-      .prepare(
-        `SELECT COUNT(*) as count FROM scenarios WHERE scenario_id = ?${hasEmailIdColumn && emailId ? " AND email_id = ?" : ""}`
-      )
-      .get(
-        ...(hasEmailIdColumn && emailId
-          ? [scopedScenarioId, emailId]
-          : [scopedScenarioId])
-      ) as any;
-    return result.count > 0;
+
+    const count = await prisma.scenario.count({
+      where: {
+        scenarioId: scopedScenarioId,
+        ...(emailId ? { emailId } : {}),
+      },
+    });
+    return count > 0;
   }
 
   /**
    * Mark a clue as discovered
    */
-  discoverClue(
+  async discoverClue(
     clueId: string,
     discoveredBy: string,
     method: string,
     timestamp: string = new Date().toISOString()
-  ): void {
-    const database = this.db.getDatabase();
+  ): Promise<void> {
+    const prisma = getPrismaClient();
     const emailId = this.getEmailId();
     const scopedClueId = scopeId(clueId, emailId);
-    const hasClueEmailId = this.db.hasColumn("scenario_clues", "email_id");
 
     const discoveryDetails = {
       discoveredBy,
@@ -1212,78 +1080,68 @@ export class ScenarioLoader {
       method,
     };
 
-    database
-      .prepare(`
-            UPDATE scenario_clues 
-            SET discovered = 1, discovery_details = ?
-            WHERE clue_id = ?${hasClueEmailId && emailId ? " AND email_id = ?" : ""}
-        `)
-      .run(
-        ...(hasClueEmailId && emailId
-          ? [JSON.stringify(discoveryDetails), scopedClueId, emailId]
-          : [JSON.stringify(discoveryDetails), scopedClueId])
-      );
+    await prisma.scenarioClue.updateMany({
+      where: {
+        clueId: scopedClueId,
+        ...(emailId ? { emailId } : {}),
+      },
+      data: {
+        discovered: true,
+        discoveryDetails: discoveryDetails,
+      },
+    });
   }
 
   /**
    * Get undiscovered clues for a scenario or snapshot
    */
-  getUndiscoveredClues(
+  async getUndiscoveredClues(
     scenarioId?: string,
     snapshotId?: string
-  ): ScenarioClue[] {
-    const database = this.db.getDatabase();
+  ): Promise<ScenarioClue[]> {
+    const prisma = getPrismaClient();
     const emailId = this.getEmailId();
-    const hasClueEmailId = this.db.hasColumn("scenario_clues", "email_id");
-    const hasSnapshotEmailId = this.db.hasColumn(
-      "scenario_snapshots",
-      "email_id"
-    );
 
-    let query: string;
-    let params: any[];
+    let results: any[];
 
     if (snapshotId) {
       const scopedSnapshotId = scopeId(snapshotId, emailId);
-      query = `
-                SELECT * FROM scenario_clues 
-                WHERE snapshot_id = ? AND discovered = 0${hasClueEmailId && emailId ? " AND email_id = ?" : ""}
-            `;
-      params =
-        hasClueEmailId && emailId
-          ? [scopedSnapshotId, emailId]
-          : [scopedSnapshotId];
+      results = await prisma.scenarioClue.findMany({
+        where: {
+          snapshotId: scopedSnapshotId,
+          discovered: false,
+          ...(emailId ? { emailId } : {}),
+        },
+      });
     } else if (scenarioId) {
       const scopedScenarioId = this.scopeScenarioId(scenarioId);
-      query = `
-                SELECT sc.* FROM scenario_clues sc
-                JOIN scenario_snapshots ss ON sc.snapshot_id = ss.snapshot_id
-                WHERE ss.scenario_id = ? AND sc.discovered = 0${hasClueEmailId && emailId ? " AND sc.email_id = ?" : ""}${hasSnapshotEmailId && emailId ? " AND ss.email_id = ?" : ""}
-            `;
-      if (hasClueEmailId && emailId && hasSnapshotEmailId) {
-        params = [scopedScenarioId, emailId, emailId];
-      } else if (hasClueEmailId && emailId) {
-        params = [scopedScenarioId, emailId];
-      } else if (hasSnapshotEmailId && emailId) {
-        params = [scopedScenarioId, emailId];
-      } else {
-        params = [scopedScenarioId];
-      }
+      results = await prisma.scenarioClue.findMany({
+        where: {
+          snapshot: {
+            scenarioId: scopedScenarioId,
+            ...(emailId ? { emailId } : {}),
+          },
+          discovered: false,
+          ...(emailId ? { emailId } : {}),
+        },
+      });
     } else {
-      query = `SELECT * FROM scenario_clues WHERE discovered = 0${hasClueEmailId && emailId ? " AND email_id = ?" : ""}`;
-      params = hasClueEmailId && emailId ? [emailId] : [];
+      results = await prisma.scenarioClue.findMany({
+        where: {
+          discovered: false,
+          ...(emailId ? { emailId } : {}),
+        },
+      });
     }
 
-    const results = database.prepare(query).all(params) as any[];
-
     return results.map((c) => ({
-      id: c.clue_id,
-      clueText: c.clue_text,
+      id: c.clueId,
+      clueText: c.clueText,
       category: c.category,
       difficulty: c.difficulty,
-      location: c.clue_location,
-      discoveryMethod: c.discovery_method,
-      reveals: c.reveals ? JSON.parse(c.reveals) : [],
+      location: c.clueLocation,
+      discoveryMethod: c.discoveryMethod || undefined,
+      reveals: (c.reveals as any[]) || [],
       discovered: false,
     }));
   }

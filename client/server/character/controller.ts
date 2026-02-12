@@ -1,6 +1,6 @@
 /// <reference path="../types/express.d.ts" />
 import type { Request, Response } from "express";
-import { DatabaseManager } from "../core/DatabaseManager.js";
+import { getPrismaClient } from "../../../src/shared/agents/memory/database/prismaClient.js";
 import { generateRandomAttributes } from "../../../src/shared/agents/character/characterBuilder.js";
 import { prepareCharacterForDB, parseCharacterFromDB } from "./service.js";
 
@@ -39,7 +39,7 @@ export function generateRandomAttrs(req: Request, res: Response): void {
  * Create/save a new character
  * POST /api/character
  */
-export function createCharacter(req: Request, res: Response): void {
+export async function createCharacter(req: Request, res: Response): Promise<void> {
   try {
     const characterData = req.body;
 
@@ -48,25 +48,33 @@ export function createCharacter(req: Request, res: Response): void {
       return;
     }
 
-    const db = DatabaseManager.getInstance().getDatabase();
-    const database = db.getDatabase();
+    const prisma = getPrismaClient();
 
     // Prepare character data for database
     const dbCharacter = prepareCharacterForDB(characterData);
     dbCharacter.email_id = req.user!.email;
 
-    // Insert into database
-    const insertStmt = database.prepare(`
-      INSERT INTO characters (
-        character_id, name, attributes, status, inventory, skills, notes,
-        is_npc, occupation, age, appearance, personality, background, goals, secrets, email_id
-      ) VALUES (
-        @character_id, @name, @attributes, @status, @inventory, @skills, @notes,
-        @is_npc, @occupation, @age, @appearance, @personality, @background, @goals, @secrets, @email_id
-      )
-    `);
-
-    insertStmt.run(dbCharacter);
+    // Insert into database using Prisma
+    await prisma.character.create({
+      data: {
+        characterId: dbCharacter.character_id,
+        name: dbCharacter.name,
+        attributes: dbCharacter.attributes ? JSON.parse(dbCharacter.attributes) : {},
+        status: dbCharacter.status ? JSON.parse(dbCharacter.status) : {},
+        inventory: dbCharacter.inventory ? JSON.parse(dbCharacter.inventory) : null,
+        skills: dbCharacter.skills ? JSON.parse(dbCharacter.skills) : null,
+        notes: dbCharacter.notes,
+        isNpc: Boolean(dbCharacter.is_npc),
+        occupation: dbCharacter.occupation,
+        age: dbCharacter.age ? Number(dbCharacter.age) : null,
+        appearance: dbCharacter.appearance,
+        personality: dbCharacter.personality,
+        background: dbCharacter.background,
+        goals: dbCharacter.goals ? JSON.parse(dbCharacter.goals) : null,
+        secrets: dbCharacter.secrets ? JSON.parse(dbCharacter.secrets) : null,
+        emailId: dbCharacter.email_id,
+      },
+    });
 
     console.log(
       `[${new Date().toISOString()}] Character created: ${characterData.identity.name} (${dbCharacter.character_id})`
@@ -92,23 +100,37 @@ export function createCharacter(req: Request, res: Response): void {
  * Get all characters
  * GET /api/characters
  */
-export function getAllCharacters(req: Request, res: Response): void {
+export async function getAllCharacters(req: Request, res: Response): Promise<void> {
   try {
-    const db = DatabaseManager.getInstance().getDatabase();
-    const database = db.getDatabase();
+    const prisma = getPrismaClient();
 
-    const characters = database
-      .prepare(`
-      SELECT character_id, name, occupation, age, is_npc, appearance
-      FROM characters
-      WHERE (is_npc = 0 OR is_npc IS NULL) AND email_id = ?
-      ORDER BY updated_at DESC
-    `)
-      .all(req.user!.email);
+    const characters = await prisma.character.findMany({
+      where: {
+        isNpc: false,
+        emailId: req.user!.email,
+      },
+      select: {
+        characterId: true,
+        name: true,
+        occupation: true,
+        age: true,
+        isNpc: true,
+        appearance: true,
+      },
+      orderBy: { updatedAt: "desc" },
+    });
 
+    // Map to match original column names for frontend compatibility
     res.json({
       success: true,
-      characters: characters,
+      characters: characters.map((c) => ({
+        character_id: c.characterId,
+        name: c.name,
+        occupation: c.occupation,
+        age: c.age,
+        is_npc: c.isNpc ? 1 : 0,
+        appearance: c.appearance,
+      })),
     });
   } catch (error) {
     console.error("Error fetching characters:", error);
@@ -120,21 +142,15 @@ export function getAllCharacters(req: Request, res: Response): void {
  * Get a single character by ID
  * GET /api/character/:characterId
  */
-export function getCharacterById(req: Request, res: Response): void {
+export async function getCharacterById(req: Request, res: Response): Promise<void> {
   try {
     const { characterId } = req.params;
 
-    const db = DatabaseManager.getInstance().getDatabase();
-    const database = db.getDatabase();
+    const prisma = getPrismaClient();
 
-    // Get character from database
-    const character = database
-      .prepare(`
-      SELECT *
-      FROM characters
-      WHERE character_id = ? AND email_id = ?
-    `)
-      .get(characterId, req.user!.email);
+    const character = await prisma.character.findFirst({
+      where: { characterId, emailId: req.user!.email },
+    });
 
     if (!character) {
       res.status(404).json({
@@ -144,8 +160,33 @@ export function getCharacterById(req: Request, res: Response): void {
       return;
     }
 
+    // Convert Prisma result to match the format parseCharacterFromDB expects
+    const dbRow: any = {
+      character_id: character.characterId,
+      name: character.name,
+      attributes: JSON.stringify(character.attributes),
+      status: JSON.stringify(character.status),
+      inventory: character.inventory ? JSON.stringify(character.inventory) : null,
+      skills: character.skills ? JSON.stringify(character.skills) : null,
+      notes: character.notes,
+      is_npc: character.isNpc ? 1 : 0,
+      occupation: character.occupation,
+      age: character.age,
+      gender: character.gender,
+      appearance: character.appearance,
+      personality: character.personality,
+      background: character.background,
+      goals: character.goals ? JSON.stringify(character.goals) : null,
+      secrets: character.secrets ? JSON.stringify(character.secrets) : null,
+      current_location: character.currentLocation,
+      email_id: character.emailId,
+      updated_at: character.updatedAt?.toISOString(),
+      instantiated_from: character.instantiatedFrom,
+      inherits_knowledge: character.inheritsKnowledge ? JSON.stringify(character.inheritsKnowledge) : null,
+    };
+
     // Parse character data
-    const parsedCharacter = parseCharacterFromDB(character);
+    const parsedCharacter = parseCharacterFromDB(dbRow);
 
     res.json({
       success: true,

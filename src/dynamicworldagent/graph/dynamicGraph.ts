@@ -4,9 +4,14 @@
  * Uses DynamicWorld-specific agents and includes DynamicGameState
  */
 
-import { END, START, StateGraph, interrupt } from "@langchain/langgraph";
-import { SqliteSaver } from "@langchain/langgraph-checkpoint-sqlite";
-import type { CoCDatabase } from "../../shared/agents/memory/database/index.js";
+import {
+  END,
+  MemorySaver,
+  START,
+  StateGraph,
+  interrupt,
+} from "@langchain/langgraph";
+import type { CoCDatabase, CoCDatabaseAdapter } from "../../shared/agents/memory/database/index.js";
 import type { BaseMessage } from "@langchain/core/messages";
 import { HumanMessage, AIMessage } from "@langchain/core/messages";
 import type { ScenarioLoader } from "../../shared/agents/memory/scenarioloader/index.js";
@@ -74,7 +79,7 @@ export interface DynamicGraphState {
  * Build Dynamic Graph for DynamicWorld modules
  */
 export const buildDynamicGraph = (
-  db: CoCDatabase,
+  db: CoCDatabase | CoCDatabaseAdapter,
   scenarioLoader: ScenarioLoader
 ) => {
   const orchestrator = new OrchestratorAgent();
@@ -85,7 +90,7 @@ export const buildDynamicGraph = (
   const turnManager = new TurnManager(db);
 
   // Create checkpointer for saving/resuming graph state
-  const checkpointer = SqliteSaver.fromConnString(":memory:");
+  const checkpointer = new MemorySaver();
 
   // Helper function to create DynamicGameStateManager with db for snapshot management
   const createDGSMWithDb = (state: DynamicGameState) =>
@@ -1020,7 +1025,7 @@ export const buildDynamicGraph = (
  * This graph is used by WebSocket periodic checks to trigger simulate queries
  */
 export const buildDynamicListenerGraph = (
-  db: CoCDatabase,
+  db: CoCDatabase | CoCDatabaseAdapter,
   scenarioLoader: ScenarioLoader
 ) => {
   const directorAgent = new DirectorAgent(scenarioLoader, db);
@@ -1112,6 +1117,9 @@ export const buildDynamicListenerGraph = (
       const characterInput = `[系统] 场景推进检查 - 当前场景: ${currentState.currentScenario?.name || "未知"}`;
 
       // Create a new turn record for the simulated query
+      if (currentState.sessionId) {
+        await db.preloadSessionTurns(currentState.sessionId);
+      }
       const newTurnId = turnManager.createTurnFromGameState(
         currentState.sessionId || "",
         characterInput,

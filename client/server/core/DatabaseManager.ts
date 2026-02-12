@@ -1,18 +1,20 @@
 import {
-  CoCDatabase,
-  seedDatabase,
-} from "../../../src/shared/agents/memory/database/index.js";
-import { configureTokenUsageDatabase } from "../../../src/models/index.js";
-import path from "path";
-import fs from "fs";
+  getPrismaClient,
+  disconnectPrisma,
+  type PrismaClient,
+} from "../../../src/shared/agents/memory/database/prismaClient.js";
+import { CoCDatabaseAdapter } from "../../../src/shared/agents/memory/database/CoCDatabaseAdapter.js";
+import { seedDatabase } from "../../../src/shared/agents/memory/database/seedData.js";
 
 /**
  * Singleton class to manage database lifecycle
- * Eliminates repetitive database initialization code across 15+ endpoints
+ * Uses Prisma ORM + PostgreSQL
  */
 export class DatabaseManager {
   private static instance: DatabaseManager | null = null;
-  private db: CoCDatabase | null = null;
+  private db: CoCDatabaseAdapter | null = null;
+  private prisma: PrismaClient | null = null;
+  private initialized: boolean = false;
 
   private constructor() {}
 
@@ -27,38 +29,80 @@ export class DatabaseManager {
   }
 
   /**
-   * Get or initialize database (lazy initialization)
-   * Creates data directory if it doesn't exist
+   * Get or initialize Prisma Client (lazy initialization)
+   *
+   * NOTE: This is now synchronous for backward compatibility.
+   * Initialization tasks (seeding) will be handled on first database access.
    */
-  public getDatabase(): CoCDatabase {
+  public getDatabase(): CoCDatabaseAdapter {
     if (!this.db) {
-      const dataDir = path.join(process.cwd(), "data");
-      if (!fs.existsSync(dataDir)) {
-        fs.mkdirSync(dataDir, { recursive: true });
+      this.db = new CoCDatabaseAdapter();
+      this.prisma = this.db.getDatabase();
+
+      // Run initialization tasks asynchronously (fire-and-forget)
+      if (!this.initialized) {
+        this.initializeAsync().catch((error) => {
+          console.error("Failed to initialize database:", error);
+        });
+        this.initialized = true;
       }
-      this.db = new CoCDatabase();
-      seedDatabase(this.db);
-      configureTokenUsageDatabase(this.db);
-      console.log("✅ Database initialized");
+
+      console.log("✅ Prisma Client initialized");
     }
     return this.db;
+  }
+
+  /**
+   * Async initialization tasks (seeding, configuration)
+   * Runs in background on first database access
+   */
+  private async initializeAsync(): Promise<void> {
+    if (!this.prisma) return;
+
+    try {
+      await seedDatabase();
+
+      console.log("✅ Database initialization tasks completed");
+    } catch (error) {
+      console.error("Database initialization error:", error);
+      throw error;
+    }
   }
 
   /**
    * Check if database is initialized
    */
   public isInitialized(): boolean {
-    return this.db !== null;
+    return this.db !== null && this.initialized;
   }
 
   /**
    * Close database connection (for graceful shutdown)
    */
-  public close(): void {
+  public async close(): Promise<void> {
     if (this.db) {
       this.db.close();
       this.db = null;
-      console.log("Database connection closed");
     }
+
+    if (this.prisma) {
+      await disconnectPrisma();
+      this.prisma = null;
+      this.initialized = false;
+      console.log("Prisma Client disconnected");
+    }
+  }
+
+  /**
+   * Get Prisma client directly for code paths that use Prisma models.
+   */
+  public getPrisma(): PrismaClient {
+    if (!this.prisma) {
+      this.prisma = getPrismaClient();
+    }
+    if (!this.db) {
+      this.getDatabase();
+    }
+    return this.prisma;
   }
 }

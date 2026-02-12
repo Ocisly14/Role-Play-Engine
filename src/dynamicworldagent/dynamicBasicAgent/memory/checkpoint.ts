@@ -3,12 +3,13 @@
  * Saves complete game state to database before major updates
  */
 
-import type { CoCDatabase } from "../../../shared/agents/memory/database/index.js";
+import type { CoCDatabase, CoCDatabaseAdapter } from "../../../shared/agents/memory/database/index.js";
 import type { DynamicGameState } from "../../state/index.js";
 import type { DynamicScenarioSnapshot } from "../../world_builder/types.js";
 import { randomUUID } from "crypto";
 import { resolveEmailId } from "../../../shared/agents/memory/database/userContext.js";
 import { TurnManager } from "./turnManager.js";
+import { getPrismaClient } from "../../../shared/agents/memory/database/prismaClient.js";
 
 /**
  * Save DynamicGameState checkpoint to database
@@ -20,13 +21,15 @@ import { TurnManager } from "./turnManager.js";
  * @param description - Optional description for the checkpoint
  * @returns Checkpoint ID if successful, null if failed
  */
-export function saveDynamicGameStateCheckpoint(
-  db: CoCDatabase,
+export async function saveDynamicGameStateCheckpoint(
+  db: CoCDatabase | CoCDatabaseAdapter,
   dynamicState: DynamicGameState,
   checkpointType: "auto" | "manual" | "scene_transition" = "auto",
   description?: string
-): string | null {
+): Promise<string | null> {
   try {
+    const prisma = getPrismaClient();
+
     // Generate checkpoint ID based on type
     let checkpointId: string;
     if (checkpointType === "manual") {
@@ -39,31 +42,40 @@ export function saveDynamicGameStateCheckpoint(
 
     // Serialize DynamicGameState to JSON
     // Convert Sets to Arrays for JSON serialization
-    const serializableState = serializeDynamicGameState(dynamicState, db);
+    const serializableState = await serializeDynamicGameState(dynamicState, db);
 
     // Attach conversation history and player memos so the checkpoint is self-contained
+    await db.preloadSessionTurns(dynamicState.sessionId);
     const turnManager = new TurnManager(db);
     serializableState.conversationHistory = turnManager.getConversation(
       dynamicState.sessionId
     );
     try {
-      const database = db.getDatabase();
-      serializableState.playerMemos = database
-        .prepare(
-          `SELECT memo_id, email_id, text, game_day, game_time, location, created_at, updated_at
-         FROM player_memos WHERE session_id = ? ORDER BY created_at ASC`
-        )
-        .all(dynamicState.sessionId);
+      const memos = await prisma.playerMemo.findMany({
+        where: { sessionId: dynamicState.sessionId },
+        orderBy: { createdAt: "asc" },
+        select: {
+          memoId: true,
+          emailId: true,
+          text: true,
+          gameDay: true,
+          gameTime: true,
+          location: true,
+          createdAt: true,
+          updatedAt: true,
+        },
+      });
+      serializableState.playerMemos = memos;
     } catch (error) {
       serializableState.playerMemos = [];
     }
 
     // Save language setting from session metadata to checkpoint
     try {
-      const database = db.getDatabase();
-      const session = database
-        .prepare(`SELECT metadata FROM sessions WHERE session_id = ?`)
-        .get(dynamicState.sessionId) as { metadata: string | null } | undefined;
+      const session = await prisma.session.findUnique({
+        where: { sessionId: dynamicState.sessionId },
+        select: { metadata: true },
+      });
 
       console.log(`[Checkpoint Save] Session found:`, !!session);
       console.log(`[Checkpoint Save] Session metadata:`, session?.metadata);
@@ -72,25 +84,23 @@ export function saveDynamicGameStateCheckpoint(
 
       if (session) {
         if (session.metadata) {
-          try {
-            const metadata = JSON.parse(session.metadata);
-            console.log(`[Checkpoint Save] Parsed metadata:`, metadata);
-            if (metadata.language === "en" || metadata.language === "zh") {
-              languageToSave = metadata.language;
-              console.log(`[Checkpoint Save] Found language in metadata: ${languageToSave}`);
-            } else {
-              console.log(`[Checkpoint Save] No valid language in metadata, using default: ${languageToSave}`);
-            }
-          } catch (parseError) {
-            console.warn(`[Checkpoint Save] Failed to parse metadata JSON, using default language:`, parseError);
+          // Prisma returns JSONB already parsed - no JSON.parse needed
+          const metadata = session.metadata as Record<string, any>;
+          console.log(`[Checkpoint Save] Parsed metadata:`, metadata);
+          if (metadata.language === "en" || metadata.language === "zh") {
+            languageToSave = metadata.language;
+            console.log(`[Checkpoint Save] Found language in metadata: ${languageToSave}`);
+          } else {
+            console.log(`[Checkpoint Save] No valid language in metadata, using default: ${languageToSave}`);
           }
         } else {
           console.log(`[Checkpoint Save] Session metadata is NULL, initializing with default language: ${languageToSave}`);
           // Initialize metadata for existing sessions that don't have it
           const newMetadata = { language: languageToSave };
-          database
-            .prepare(`UPDATE sessions SET metadata = ? WHERE session_id = ?`)
-            .run(JSON.stringify(newMetadata), dynamicState.sessionId);
+          await prisma.session.update({
+            where: { sessionId: dynamicState.sessionId },
+            data: { metadata: newMetadata },
+          });
           console.log(`[Checkpoint Save] Initialized session metadata with language: ${languageToSave}`);
         }
       } else {
@@ -106,22 +116,29 @@ export function saveDynamicGameStateCheckpoint(
       serializableState.language = "zh"; // Fallback to default
     }
 
-    // Save to database using existing checkpoint infrastructure
-    db.saveCheckpoint(
-      checkpointId,
-      dynamicState.sessionId,
-      checkpointName,
-      serializableState,
-      checkpointType,
-      description || generateCheckpointDescription(dynamicState, checkpointType)
-    );
+    // Save to database using Prisma
+    // Extract metadata for quick queries
+    const currentSceneName = dynamicState.currentScenario?.name || null;
+    const isAutoCheckpoint = checkpointType === "auto";
+
+    await prisma.gameCheckpoint.create({
+      data: {
+        checkpointId,
+        sessionId: dynamicState.sessionId,
+        checkpointName,
+        gameState: serializableState,
+        currentSceneName,
+        isAutoCheckpoint,
+        turnNumber: dynamicState.turnsInCurrentScene || 0,
+      },
+    });
 
     console.log(
-      `💾 [Checkpoint] Saved ${checkpointType} checkpoint: ${checkpointName} (${checkpointId})`
+      `\u{1F4BE} [Checkpoint] Saved ${checkpointType} checkpoint: ${checkpointName} (${checkpointId})`
     );
     return checkpointId;
   } catch (error) {
-    console.error(`❌ [Checkpoint] Failed to save checkpoint:`, error);
+    console.error(`\u274C [Checkpoint] Failed to save checkpoint:`, error);
     // Don't throw - checkpoint failure shouldn't block game updates
     return null;
   }
@@ -131,10 +148,10 @@ export function saveDynamicGameStateCheckpoint(
  * Serialize DynamicGameState for database storage
  * Converts Sets to Arrays and ensures all data is JSON-serializable
  */
-function serializeDynamicGameState(
+async function serializeDynamicGameState(
   state: DynamicGameState,
-  db: CoCDatabase
-): any {
+  db: CoCDatabase | CoCDatabaseAdapter
+): Promise<any> {
   // Convert Sets to Arrays
   const revealedTruthEvents = Array.from(state.revealedTruthEvents);
   const activatedKnowledgeHolders = Array.from(state.activatedKnowledgeHolders);
@@ -145,7 +162,7 @@ function serializeDynamicGameState(
   // Only save the latest snapshot for each scenario in checkpoint
   // Historical snapshots are saved to database separately
   const updatedDynamicScenarioSnapshots: Record<string, any> = {};
-  state.updatedDynamicScenarioSnapshots.forEach((snapshots, scenarioId) => {
+  for (const [scenarioId, snapshots] of state.updatedDynamicScenarioSnapshots) {
     // Only save the latest snapshot (last in array) to checkpoint
     if (snapshots.length > 0) {
       const latestSnapshot = snapshots[snapshots.length - 1];
@@ -160,10 +177,10 @@ function serializeDynamicGameState(
       // Save historical snapshots (all except the latest) to database
       if (snapshots.length > 1) {
         const historicalSnapshots = snapshots.slice(0, -1); // All except the last one
-        saveHistoricalSnapshotsToDatabase(db, scenarioId, historicalSnapshots);
+        await saveHistoricalSnapshotsToDatabase(db, scenarioId, historicalSnapshots);
       }
     }
-  });
+  }
 
   // Convert Date objects to ISO strings
   const serializedState = {
@@ -236,225 +253,127 @@ function generateCheckpointDescription(
  * Save historical snapshots to database
  * These are snapshots that are not the latest (all except the last one)
  */
-function saveHistoricalSnapshotsToDatabase(
-  db: CoCDatabase,
+async function saveHistoricalSnapshotsToDatabase(
+  db: CoCDatabase | CoCDatabaseAdapter,
   scenarioId: string,
   historicalSnapshots: DynamicScenarioSnapshot[]
-): void {
+): Promise<void> {
   try {
-    const database = db.getDatabase();
+    const prisma = getPrismaClient();
     const emailId = resolveEmailId();
-    const hasInitialSnapshot = db.hasColumn(
-      "scenario_snapshots",
-      "initial_snapshot"
-    );
-    const hasGameTime = db.hasColumn("scenario_snapshots", "game_time");
-    const hasDynamicHistorical = db.hasColumn(
-      "scenario_snapshots",
-      "is_dynamic_historical"
-    );
-    const hasSnapshotEmailId = db.hasColumn("scenario_snapshots", "email_id");
-    const hasCharacterEmailId = db.hasColumn("scenario_characters", "email_id");
-    const hasClueEmailId = db.hasColumn("scenario_clues", "email_id");
-    const hasConditionEmailId = db.hasColumn("scenario_conditions", "email_id");
 
     for (const snapshot of historicalSnapshots) {
       // Generate a unique snapshot ID for historical snapshot
       const historicalSnapshotId = `hist-${scenarioId}-${Date.now()}-${randomUUID().slice(0, 8)}`;
 
       // Check if snapshot already exists
-      const existing = database
-        .prepare(
-          `SELECT snapshot_id FROM scenario_snapshots WHERE snapshot_id = ?${hasSnapshotEmailId && emailId ? " AND email_id = ?" : ""}`
-        )
-        .get(
-          ...(hasSnapshotEmailId && emailId
-            ? [historicalSnapshotId, emailId]
-            : [historicalSnapshotId])
-        );
+      const existing = await prisma.scenarioSnapshot.findUnique({
+        where: { snapshotId: historicalSnapshotId },
+        select: { snapshotId: true },
+      });
 
       if (existing) {
         continue; // Skip if already exists
       }
 
       // Insert snapshot
-      if (hasInitialSnapshot && hasGameTime && hasDynamicHistorical) {
-        const snapshotStmt = database.prepare(`
-          INSERT INTO scenario_snapshots (
-            snapshot_id, scenario_id, snapshot_name, location, description,
-            events, exits, keeper_notes, time_restriction, show_map,
-            initial_snapshot, game_time, is_dynamic_historical
-          ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-        `);
-
-        snapshotStmt.run(
-          historicalSnapshotId,
+      await prisma.scenarioSnapshot.create({
+        data: {
+          snapshotId: historicalSnapshotId,
           scenarioId,
-          snapshot.name || `Historical snapshot for ${scenarioId}`,
-          snapshot.location,
-          snapshot.description,
-          JSON.stringify([]), // events removed
-          JSON.stringify([]), // exits removed
-          snapshot.keeperNotes || null,
-          snapshot.timeRestriction || null,
-          snapshot.showMap === false ? 0 : 1,
-          0, // initial_snapshot = false
-          snapshot.gameTime || null,
-          1 // is_dynamic_historical = true
-        );
-      } else if (hasInitialSnapshot && hasGameTime) {
-        const snapshotStmt = database.prepare(`
-          INSERT INTO scenario_snapshots (
-            snapshot_id, scenario_id, snapshot_name, location, description,
-            events, exits, keeper_notes, time_restriction, show_map,
-            initial_snapshot, game_time
-          ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-        `);
-
-        snapshotStmt.run(
-          historicalSnapshotId,
-          scenarioId,
-          snapshot.name || `Historical snapshot for ${scenarioId}`,
-          snapshot.location,
-          snapshot.description,
-          JSON.stringify([]),
-          JSON.stringify([]),
-          snapshot.keeperNotes || null,
-          snapshot.timeRestriction || null,
-          snapshot.showMap === false ? 0 : 1,
-          0,
-          snapshot.gameTime || null
-        );
-      } else {
-        const snapshotStmt = database.prepare(`
-          INSERT INTO scenario_snapshots (
-            snapshot_id, scenario_id, snapshot_name, location, description,
-            events, exits, keeper_notes, time_restriction, show_map
-          ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-        `);
-
-        snapshotStmt.run(
-          historicalSnapshotId,
-          scenarioId,
-          snapshot.name || `Historical snapshot for ${scenarioId}`,
-          snapshot.location,
-          snapshot.description,
-          JSON.stringify([]),
-          JSON.stringify([]),
-          snapshot.keeperNotes || null,
-          snapshot.timeRestriction || null,
-          snapshot.showMap === false ? 0 : 1
-        );
-      }
-      if (hasSnapshotEmailId && emailId) {
-        database
-          .prepare(
-            "UPDATE scenario_snapshots SET email_id = ? WHERE snapshot_id = ?"
-          )
-          .run(emailId, historicalSnapshotId);
-      }
+          snapshotName: snapshot.name || `Historical snapshot for ${scenarioId}`,
+          location: snapshot.location,
+          description: snapshot.description,
+          events: [], // events removed
+          exits: [], // exits removed
+          keeperNotes: snapshot.keeperNotes || null,
+          timeRestriction: snapshot.timeRestriction || null,
+          showMap: snapshot.showMap !== false,
+          initialSnapshot: false,
+          gameTime: snapshot.gameTime || null,
+          isDynamicHistorical: true,
+          emailId: emailId || null,
+        },
+      });
 
       // Insert characters if present
       if (snapshot.characters && snapshot.characters.length > 0) {
-        const charStmt = database.prepare(`
-          INSERT OR IGNORE INTO scenario_characters (
-            id, snapshot_id, character_name, character_role, character_status,
-            character_location, character_notes
-          ) VALUES (?, ?, ?, ?, ?, ?, ?)
-        `);
-
         for (const char of snapshot.characters) {
           const charId =
             char.id ||
             `${historicalSnapshotId}-char-${randomUUID().slice(0, 8)}`;
-          charStmt.run(
-            charId,
-            historicalSnapshotId,
-            char.name,
-            char.role,
-            char.status,
-            char.location || null,
-            char.notes || null
-          );
-          if (hasCharacterEmailId && emailId) {
-            database
-              .prepare(
-                "UPDATE scenario_characters SET email_id = ? WHERE id = ?"
-              )
-              .run(emailId, charId);
-          }
+
+          await prisma.scenarioCharacter.upsert({
+            where: { id: charId },
+            update: {},
+            create: {
+              id: charId,
+              snapshotId: historicalSnapshotId,
+              characterName: char.name,
+              characterRole: char.role,
+              characterStatus: char.status,
+              characterLocation: char.location || null,
+              characterNotes: char.notes || null,
+              emailId: emailId || null,
+            },
+          });
         }
       }
 
       // Insert clues if present
       if (snapshot.clues && snapshot.clues.length > 0) {
-        const clueStmt = database.prepare(`
-          INSERT OR IGNORE INTO scenario_clues (
-            clue_id, snapshot_id, clue_text, category, difficulty,
-            clue_location, discovery_method, reveals, discovered, discovery_details
-          ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-        `);
-
         for (const clue of snapshot.clues) {
           const clueId =
             clue.id ||
             `${historicalSnapshotId}-clue-${randomUUID().slice(0, 8)}`;
-          clueStmt.run(
-            clueId,
-            historicalSnapshotId,
-            clue.clueText,
-            clue.category,
-            clue.difficulty,
-            clue.location,
-            clue.discoveryMethod || null,
-            JSON.stringify(clue.reveals || []),
-            clue.discovered ? 1 : 0,
-            clue.discoveryDetails ? JSON.stringify(clue.discoveryDetails) : null
-          );
-          if (hasClueEmailId && emailId) {
-            database
-              .prepare(
-                "UPDATE scenario_clues SET email_id = ? WHERE clue_id = ?"
-              )
-              .run(emailId, clueId);
-          }
+
+          await prisma.scenarioClue.upsert({
+            where: { clueId },
+            update: {},
+            create: {
+              clueId,
+              snapshotId: historicalSnapshotId,
+              clueText: clue.clueText,
+              category: clue.category,
+              difficulty: clue.difficulty,
+              clueLocation: clue.location,
+              discoveryMethod: clue.discoveryMethod || null,
+              reveals: clue.reveals || [],
+              discovered: clue.discovered || false,
+              discoveryDetails: clue.discoveryDetails || undefined,
+              emailId: emailId || null,
+            },
+          });
         }
       }
 
       // Insert conditions if present
       if (snapshot.conditions && snapshot.conditions.length > 0) {
-        const conditionStmt = database.prepare(`
-          INSERT OR IGNORE INTO scenario_conditions (
-            condition_id, snapshot_id, condition_type, description, mechanical_effect
-          ) VALUES (?, ?, ?, ?, ?)
-        `);
-
         for (const condition of snapshot.conditions) {
           const conditionId = `${historicalSnapshotId}-cond-${randomUUID().slice(0, 8)}`;
-          conditionStmt.run(
-            conditionId,
-            historicalSnapshotId,
-            condition.type,
-            condition.description,
-            condition.mechanicalEffect || null
-          );
-          if (hasConditionEmailId && emailId) {
-            database
-              .prepare(
-                "UPDATE scenario_conditions SET email_id = ? WHERE condition_id = ?"
-              )
-              .run(emailId, conditionId);
-          }
+
+          await prisma.scenarioCondition.upsert({
+            where: { conditionId },
+            update: {},
+            create: {
+              conditionId,
+              snapshotId: historicalSnapshotId,
+              conditionType: condition.type,
+              description: condition.description,
+              mechanicalEffect: condition.mechanicalEffect || null,
+              emailId: emailId || null,
+            },
+          });
         }
       }
     }
 
     console.log(
-      `💾 [Checkpoint] Saved ${historicalSnapshots.length} historical snapshots to database for scenario ${scenarioId}`
+      `\u{1F4BE} [Checkpoint] Saved ${historicalSnapshots.length} historical snapshots to database for scenario ${scenarioId}`
     );
   } catch (error) {
     console.error(
-      `❌ [Checkpoint] Failed to save historical snapshots to database:`,
+      `\u274C [Checkpoint] Failed to save historical snapshots to database:`,
       error
     );
     // Don't throw - snapshot save failure shouldn't block checkpoint save

@@ -1,4 +1,4 @@
-import type { CoCDatabase } from "../../../src/shared/agents/memory/database/index.js";
+import type { CoCDatabase, CoCDatabaseAdapter } from "../../../src/shared/agents/memory/database/index.js";
 import { ScenarioLoader } from "../../../src/shared/agents/memory/scenarioloader/index.js";
 import {
   buildDynamicGraph,
@@ -30,7 +30,7 @@ export class GraphManager {
    * Initialize DynamicWorld system (graphs)
    * @param db - Database instance
    */
-  public async initialize(db: CoCDatabase): Promise<void> {
+  public async initialize(db: CoCDatabase | CoCDatabaseAdapter): Promise<void> {
     if (this.dynamicGraph) {
       console.log("✅ DynamicWorld system already initialized");
       return;

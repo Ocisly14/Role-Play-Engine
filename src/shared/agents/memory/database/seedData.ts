@@ -3,26 +3,22 @@
  * Loads default rules, skills, weapons, and sanity triggers
  */
 
-import type { CoCDatabase } from "./schema.js";
+import { getPrismaClient } from "./prismaClient.js";
 import bcrypt from "bcryptjs";
 import { randomUUID } from "crypto";
 
-export function seedDatabase(db: CoCDatabase): void {
-  const database = db.getDatabase();
+export async function seedDatabase(): Promise<void> {
+  const prisma = getPrismaClient();
 
   // Check if game data already seeded
-  const count = database
-    .prepare("SELECT COUNT(*) as count FROM skills")
-    .get() as { count: number };
+  const count = await prisma.skill.count();
 
-  if (count.count === 0) {
+  if (count === 0) {
     console.log("Seeding database with CoC 7e rules...");
 
-    db.transaction(() => {
-      seedSkills(database);
-      seedWeapons(database);
-      seedSanityTriggers(database);
-    });
+    await seedSkills();
+    await seedWeapons();
+    await seedSanityTriggers();
 
     console.log("Game data seeding complete!");
   } else {
@@ -30,14 +26,11 @@ export function seedDatabase(db: CoCDatabase): void {
   }
 
   // Always check and create default admin if needed (independent of game data)
-  seedDefaultAdmin(database);
+  await seedDefaultAdmin();
 }
 
-function seedSkills(db: any): void {
-  const insertSkill = db.prepare(`
-        INSERT INTO skills (name, base_value, description, category, uncommon, examples)
-        VALUES (?, ?, ?, ?, ?, ?)
-    `);
+async function seedSkills(): Promise<void> {
+  const prisma = getPrismaClient();
 
   const skills = [
     // Interpersonal & Social Skills
@@ -356,14 +349,21 @@ function seedSkills(db: any): void {
     ],
   ];
 
-  skills.forEach((skill) => insertSkill.run(...skill));
+  await prisma.skill.createMany({
+    data: skills.map(([name, baseValue, description, category, uncommon, examples]) => ({
+      name: name as string,
+      baseValue: baseValue as number,
+      description: description as string,
+      category: category as string,
+      uncommon: (uncommon as number) === 1,
+      examples: examples as any,
+    })),
+    skipDuplicates: true,
+  });
 }
 
-function seedWeapons(db: any): void {
-  const insertWeapon = db.prepare(`
-        INSERT INTO weapons (name, skill, damage, range, attacks_per_round, ammo, malfunction, era)
-        VALUES (?, ?, ?, ?, ?, ?, ?, ?)
-    `);
+async function seedWeapons(): Promise<void> {
+  const prisma = getPrismaClient();
 
   const weapons = [
     // ===== MELEE WEAPONS =====
@@ -1091,14 +1091,23 @@ function seedWeapons(db: any): void {
     ],
   ];
 
-  weapons.forEach((weapon) => insertWeapon.run(...weapon));
+  await prisma.weapon.createMany({
+    data: weapons.map(([name, skill, damage, range, attacksPerRound, ammo, malfunction, era]) => ({
+      name: name as string,
+      skill: skill as string,
+      damage: damage as string,
+      range: range as string,
+      attacksPerRound: attacksPerRound as number,
+      ammo: ammo as number | null,
+      malfunction: malfunction as number | null,
+      era: era as string | null,
+    })),
+    skipDuplicates: true,
+  });
 }
 
-function seedSanityTriggers(db: any): void {
-  const insertTrigger = db.prepare(`
-        INSERT INTO sanity_triggers (trigger, sanity_loss, description)
-        VALUES (?, ?, ?)
-    `);
+async function seedSanityTriggers(): Promise<void> {
+  const prisma = getPrismaClient();
 
   const triggers = [
     // Common horrors
@@ -1135,18 +1144,28 @@ function seedSanityTriggers(db: any): void {
     ["Strange noises in the dark", "0/1d3", null],
   ];
 
-  triggers.forEach((trigger) => insertTrigger.run(...trigger));
+  await prisma.sanityTrigger.createMany({
+    data: triggers.map(([trigger, sanityLoss, description]) => ({
+      trigger: trigger as string,
+      sanityLoss: sanityLoss as string,
+      description: description as string | null,
+    })),
+    skipDuplicates: true,
+  });
 }
 
 /**
  * Seed default admin user
  * Creates test@test.com with password "test" for development/demo purposes
  */
-function seedDefaultAdmin(db: any): void {
+async function seedDefaultAdmin(): Promise<void> {
+  const prisma = getPrismaClient();
+
   // Check if admin already exists
-  const existingAdmin = db
-    .prepare("SELECT id FROM users WHERE email = ?")
-    .get("test@test.com");
+  const existingAdmin = await prisma.user.findUnique({
+    where: { email: "test@test.com" },
+    select: { id: true },
+  });
 
   if (existingAdmin) {
     console.log("Default admin already exists, skipping...");
@@ -1158,21 +1177,17 @@ function seedDefaultAdmin(db: any): void {
   const userId = randomUUID();
   const passwordHash = bcrypt.hashSync("test", 10);
 
-  const insertUser = db.prepare(`
-    INSERT INTO users (
-      id, email, username, password_hash, is_email_verified, is_active, role, created_at, updated_at
-    ) VALUES (?, ?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
-  `);
+  await prisma.user.create({
+    data: {
+      id: userId,
+      email: "test@test.com",
+      username: "admin",
+      passwordHash,
+      isEmailVerified: true,
+      isActive: true,
+      role: "ADMIN",
+    },
+  });
 
-  insertUser.run(
-    userId,
-    "test@test.com",
-    "admin",
-    passwordHash,
-    1, // is_email_verified: true
-    1, // is_active: true
-    "ADMIN" // role: ADMIN
-  );
-
-  console.log("✅ Default admin user created successfully!");
+  console.log("Default admin user created successfully!");
 }

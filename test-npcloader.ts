@@ -190,7 +190,7 @@ async function testNPCLoader() {
 
       // Test retrieval
       logger.debug("Testing NPC retrieval from database...");
-      const retrievedNPC = npcLoader.getNPCById(firstNPC.id);
+      const retrievedNPC = await npcLoader.getNPCById(firstNPC.id);
       if (retrievedNPC) {
         logger.success(`✓ Successfully retrieved NPC: ${retrievedNPC.name}`);
       } else {
@@ -198,13 +198,13 @@ async function testNPCLoader() {
       }
 
       // Test existence check
-      const exists = npcLoader.npcExists(firstNPC.id);
+      const exists = await npcLoader.npcExists(firstNPC.id);
       logger.success(
         `✓ NPC existence check: ${exists ? "Found" : "Not found"}`
       );
 
       // Test getting all NPCs
-      const allNPCs = npcLoader.getAllNPCs();
+      const allNPCs = await npcLoader.getAllNPCs();
       logger.success(`✓ Retrieved ${allNPCs.length} total NPCs from database`);
     } else {
       logger.warn("No NPCs were successfully processed");

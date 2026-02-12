@@ -9,7 +9,7 @@
  * - Library downloads (addSharedMod) are never quota-gated.
  */
 
-import type { CoCDatabase } from "../../../src/shared/agents/memory/database/index.js";
+import { getPrismaClient } from "../../../src/shared/agents/memory/database/prismaClient.js";
 import { randomUUID } from "crypto";
 
 const INITIAL_QUOTA_TOTAL = 3;
@@ -37,34 +37,27 @@ export interface QuotaStatus {
  * Check whether the user may generate a module of the given story length.
  * Returns immediately — no side effects.
  */
-export function checkGenerationQuota(
-  db: CoCDatabase,
+export async function checkGenerationQuota(
   email: string,
   storyLength: string
-): QuotaCheckResult {
-  const database = db.getDatabase();
+): Promise<QuotaCheckResult> {
+  const prisma = getPrismaClient();
 
-  const totalAllTime = (
-    database
-      .prepare("SELECT COUNT(*) as cnt FROM mod_generations WHERE email_id = ?")
-      .get(email) as { cnt: number }
-  ).cnt;
+  const totalAllTime = await prisma.modGeneration.count({
+    where: { emailId: email },
+  });
 
   if (totalAllTime < INITIAL_QUOTA_TOTAL) {
     // Still consuming the one-time initial grant — sub-caps counted all-time
-    return checkSubCaps(db, email, storyLength, null);
+    return checkSubCaps(email, storyLength, null);
   }
 
   // Initial grant exhausted → enforce rolling weekly quota
-  const weekAgo = new Date(Date.now() - SEVEN_DAYS_MS).toISOString();
+  const weekAgo = new Date(Date.now() - SEVEN_DAYS_MS);
 
-  const weeklyTotal = (
-    database
-      .prepare(
-        "SELECT COUNT(*) as cnt FROM mod_generations WHERE email_id = ? AND generated_at >= ?"
-      )
-      .get(email, weekAgo) as { cnt: number }
-  ).cnt;
+  const weeklyTotal = await prisma.modGeneration.count({
+    where: { emailId: email, generatedAt: { gte: weekAgo } },
+  });
 
   if (weeklyTotal >= WEEKLY_QUOTA_TOTAL) {
     return {
@@ -74,36 +67,34 @@ export function checkGenerationQuota(
     };
   }
 
-  return checkSubCaps(db, email, storyLength, weekAgo);
+  return checkSubCaps(email, storyLength, weekAgo);
 }
 
 /**
  * Check medium / large sub-caps within a period.
- * @param sinceIso  null = all-time (initial-grant phase); otherwise the start of the weekly window.
+ * @param since  null = all-time (initial-grant phase); otherwise the start of the weekly window.
  */
-function checkSubCaps(
-  db: CoCDatabase,
+async function checkSubCaps(
   email: string,
   storyLength: string,
-  sinceIso: string | null
-): QuotaCheckResult {
-  const database = db.getDatabase();
-  const timeClause = sinceIso ? " AND generated_at >= ?" : "";
-  const params: unknown[] = sinceIso ? [email, sinceIso] : [email];
+  since: Date | null
+): Promise<QuotaCheckResult> {
+  const prisma = getPrismaClient();
+  const timeFilter = since ? { gte: since } : undefined;
 
   if (storyLength === "medium") {
-    const count = (
-      database
-        .prepare(
-          `SELECT COUNT(*) as cnt FROM mod_generations WHERE email_id = ? AND story_length = 'medium'${timeClause}`
-        )
-        .get(...params) as { cnt: number }
-    ).cnt;
+    const count = await prisma.modGeneration.count({
+      where: {
+        emailId: email,
+        storyLength: "medium",
+        ...(timeFilter ? { generatedAt: timeFilter } : {}),
+      },
+    });
 
     if (count >= MEDIUM_LIMIT) {
       return {
         allowed: false,
-        reason: sinceIso
+        reason: since
           ? "Weekly medium-story limit reached (max 2). You can still generate a short story this week."
           : "Medium-story limit reached (max 2). You can still generate a short story.",
       };
@@ -111,18 +102,18 @@ function checkSubCaps(
   }
 
   if (storyLength === "long") {
-    const count = (
-      database
-        .prepare(
-          `SELECT COUNT(*) as cnt FROM mod_generations WHERE email_id = ? AND story_length = 'long'${timeClause}`
-        )
-        .get(...params) as { cnt: number }
-    ).cnt;
+    const count = await prisma.modGeneration.count({
+      where: {
+        emailId: email,
+        storyLength: "long",
+        ...(timeFilter ? { generatedAt: timeFilter } : {}),
+      },
+    });
 
     if (count >= LARGE_LIMIT) {
       return {
         allowed: false,
-        reason: sinceIso
+        reason: since
           ? "Weekly long-story limit reached (max 1). You can still generate a short or medium story this week."
           : "Long-story limit reached (max 1). You can still generate a short or medium story.",
       };
@@ -135,31 +126,21 @@ function checkSubCaps(
 /**
  * Return the current quota snapshot for the given user (read-only).
  */
-export function getQuotaStatus(db: CoCDatabase, email: string): QuotaStatus {
-  const database = db.getDatabase();
+export async function getQuotaStatus(email: string): Promise<QuotaStatus> {
+  const prisma = getPrismaClient();
 
-  const totalAllTime = (
-    database
-      .prepare("SELECT COUNT(*) as cnt FROM mod_generations WHERE email_id = ?")
-      .get(email) as { cnt: number }
-  ).cnt;
+  const totalAllTime = await prisma.modGeneration.count({
+    where: { emailId: email },
+  });
 
   if (totalAllTime < INITIAL_QUOTA_TOTAL) {
     // Initial-grant phase — sub-caps counted across all time
-    const mediumUsed = (
-      database
-        .prepare(
-          "SELECT COUNT(*) as cnt FROM mod_generations WHERE email_id = ? AND story_length = 'medium'"
-        )
-        .get(email) as { cnt: number }
-    ).cnt;
-    const largeUsed = (
-      database
-        .prepare(
-          "SELECT COUNT(*) as cnt FROM mod_generations WHERE email_id = ? AND story_length = 'long'"
-        )
-        .get(email) as { cnt: number }
-    ).cnt;
+    const mediumUsed = await prisma.modGeneration.count({
+      where: { emailId: email, storyLength: "medium" },
+    });
+    const largeUsed = await prisma.modGeneration.count({
+      where: { emailId: email, storyLength: "long" },
+    });
 
     return {
       phase: "initial",
@@ -173,29 +154,17 @@ export function getQuotaStatus(db: CoCDatabase, email: string): QuotaStatus {
   }
 
   // Weekly phase — rolling 7-day window
-  const weekAgo = new Date(Date.now() - SEVEN_DAYS_MS).toISOString();
+  const weekAgo = new Date(Date.now() - SEVEN_DAYS_MS);
 
-  const weeklyTotal = (
-    database
-      .prepare(
-        "SELECT COUNT(*) as cnt FROM mod_generations WHERE email_id = ? AND generated_at >= ?"
-      )
-      .get(email, weekAgo) as { cnt: number }
-  ).cnt;
-  const weeklyMedium = (
-    database
-      .prepare(
-        "SELECT COUNT(*) as cnt FROM mod_generations WHERE email_id = ? AND story_length = 'medium' AND generated_at >= ?"
-      )
-      .get(email, weekAgo) as { cnt: number }
-  ).cnt;
-  const weeklyLarge = (
-    database
-      .prepare(
-        "SELECT COUNT(*) as cnt FROM mod_generations WHERE email_id = ? AND story_length = 'long' AND generated_at >= ?"
-      )
-      .get(email, weekAgo) as { cnt: number }
-  ).cnt;
+  const weeklyTotal = await prisma.modGeneration.count({
+    where: { emailId: email, generatedAt: { gte: weekAgo } },
+  });
+  const weeklyMedium = await prisma.modGeneration.count({
+    where: { emailId: email, storyLength: "medium", generatedAt: { gte: weekAgo } },
+  });
+  const weeklyLarge = await prisma.modGeneration.count({
+    where: { emailId: email, storyLength: "long", generatedAt: { gte: weekAgo } },
+  });
 
   return {
     phase: "weekly",
@@ -212,15 +181,18 @@ export function getQuotaStatus(db: CoCDatabase, email: string): QuotaStatus {
  * Persist a successful module-generation event.  Call only after the module
  * has been registered to the user's library.
  */
-export function recordGeneration(
-  db: CoCDatabase,
+export async function recordGeneration(
   email: string,
   moduleName: string,
   storyLength: string
-): void {
-  db.getDatabase()
-    .prepare(
-      "INSERT INTO mod_generations (id, email_id, module_name, story_length) VALUES (?, ?, ?, ?)"
-    )
-    .run(randomUUID(), email, moduleName, storyLength);
+): Promise<void> {
+  const prisma = getPrismaClient();
+  await prisma.modGeneration.create({
+    data: {
+      id: randomUUID(),
+      emailId: email,
+      moduleName,
+      storyLength,
+    },
+  });
 }

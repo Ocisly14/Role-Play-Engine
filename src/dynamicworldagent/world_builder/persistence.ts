@@ -5,7 +5,7 @@
 
 import path from "path";
 import fs from "fs/promises";
-import type { CoCDatabase } from "../../shared/agents/memory/database/index.js";
+import type { CoCDatabase, CoCDatabaseAdapter } from "../../shared/agents/memory/database/index.js";
 import type {
   MacroSceneStructure,
   TruthEvent,
@@ -21,12 +21,13 @@ import type {
 import type { ActionLogEntry } from "../../shared/agents/models/gameTypes.js";
 import type { DynamicNPCProfile } from "./types.js";
 import { randomUUID } from "crypto";
+import { getPrismaClient } from "../../shared/agents/memory/database/prismaClient.js";
 
 /**
  * Save world generation results to database
  */
 export async function saveWorldToDatabase(
-  db: CoCDatabase,
+  db: CoCDatabase | CoCDatabaseAdapter,
   moduleName: string,
   macroScene: MacroSceneStructure,
   truthTimeline: TruthEvent[],
@@ -39,156 +40,122 @@ export async function saveWorldToDatabase(
   startingScene: StartingSceneSelection | null,
   otherScenarioNpcAssignments: ScenarioNpcAssignments[]
 ): Promise<void> {
-  // 1. Update module_backgrounds table with all world data
-  const stmt = db.getDatabase().prepare(`
-    UPDATE module_backgrounds
-    SET macro_scene_structure = ?,
-        truth_timeline = ?,
-        knowledge_matrix = ?,
-        red_herrings = ?,
-        historical_mythos = ?,
-        end_state_definition = ?
-    WHERE title = ?
-  `);
+  const prisma = getPrismaClient();
 
-  stmt.run(
-    JSON.stringify(macroScene),
-    JSON.stringify(truthTimeline),
-    JSON.stringify(knowledgeMatrix),
-    JSON.stringify(redHerrings),
-    JSON.stringify(mythosEvents),
-    JSON.stringify(endState),
-    moduleName
-  );
+  // 1. Update module_backgrounds table with all world data
+  await prisma.moduleBackground.updateMany({
+    where: { title: moduleName },
+    data: {
+      macroSceneStructure: macroScene as any,
+      truthTimeline: truthTimeline as any,
+      knowledgeMatrix: knowledgeMatrix as any,
+      redHerrings: redHerrings as any,
+      historicalMythos: mythosEvents as any,
+      endStateDefinition: endState as any,
+    },
+  });
 
   // 2. Insert NPCs into characters table
   for (const npc of npcs) {
     // Check if NPC already exists
-    const existing = db
-      .getDatabase()
-      .prepare(
-        `SELECT character_id FROM characters WHERE name = ? AND is_npc = 1`
-      )
-      .get(npc.name);
+    const existing = await prisma.character.findFirst({
+      where: { name: npc.name, isNpc: true },
+      select: { characterId: true },
+    });
+
+    const npcData = {
+      occupation: npc.occupation || null,
+      age: npc.age || null,
+      gender: npc.gender || null,
+      appearance: npc.appearance || null,
+      personality: npc.personality || null,
+      background: npc.background || null,
+      attributes: npc.attributes as any,
+      status: npc.status as any,
+      skills: npc.skills as any,
+      inventory: npc.inventory as any,
+      goals: (npc.goals || []) as any,
+      secrets: (npc.secrets || []) as any,
+      notes: npc.notes || null,
+      currentLocation: null, // currentLocation removed - location tracked via actionLog
+      instantiatedFrom: npc.instantiatedFrom || null,
+      inheritsKnowledge: (npc.inheritsKnowledge || []) as any,
+    };
 
     if (existing) {
       // Update existing NPC
-      const updateStmt = db.getDatabase().prepare(`
-        UPDATE characters
-        SET occupation = ?,
-            age = ?,
-            gender = ?,
-            appearance = ?,
-            personality = ?,
-            background = ?,
-            attributes = ?,
-            status = ?,
-            skills = ?,
-            inventory = ?,
-            goals = ?,
-            secrets = ?,
-            notes = ?,
-            current_location = ?,
-            instantiated_from = ?,
-            inherits_knowledge = ?
-        WHERE character_id = ?
-      `);
-
-      updateStmt.run(
-        npc.occupation || null,
-        npc.age || null,
-        npc.gender || null,
-        npc.appearance || null,
-        npc.personality || null,
-        npc.background || null,
-        JSON.stringify(npc.attributes),
-        JSON.stringify(npc.status),
-        JSON.stringify(npc.skills),
-        JSON.stringify(npc.inventory),
-        JSON.stringify(npc.goals || []),
-        JSON.stringify(npc.secrets || []),
-        npc.notes || null,
-        null, // currentLocation removed - location tracked via actionLog
-        npc.instantiatedFrom || null,
-        JSON.stringify(npc.inheritsKnowledge || []),
-        (existing as any).character_id
-      );
+      await prisma.character.update({
+        where: { characterId: existing.characterId },
+        data: npcData,
+      });
     } else {
       // Insert new NPC
-      const insertStmt = db.getDatabase().prepare(`
-        INSERT INTO characters (
-          character_id, name, occupation, age, gender, appearance, personality, background,
-          attributes, status, skills, inventory, goals, secrets, notes, is_npc, current_location,
-          instantiated_from, inherits_knowledge
-        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 1, ?, ?, ?)
-      `);
-
-      insertStmt.run(
-        npc.id,
-        npc.name,
-        npc.occupation || null,
-        npc.age || null,
-        npc.gender || null,
-        npc.appearance || null,
-        npc.personality || null,
-        npc.background || null,
-        JSON.stringify(npc.attributes),
-        JSON.stringify(npc.status),
-        JSON.stringify(npc.skills),
-        JSON.stringify(npc.inventory),
-        JSON.stringify(npc.goals || []),
-        JSON.stringify(npc.secrets || []),
-        npc.notes || null,
-        null, // currentLocation removed - location tracked via actionLog
-        npc.instantiatedFrom || null,
-        JSON.stringify(npc.inheritsKnowledge || [])
-      );
+      await prisma.character.create({
+        data: {
+          characterId: npc.id,
+          name: npc.name,
+          isNpc: true,
+          ...npcData,
+        },
+      });
     }
 
     // Insert NPC clues
     for (const clue of npc.clues || []) {
-      const clueStmt = db.getDatabase().prepare(`
-        INSERT OR REPLACE INTO npc_clues (
-          id, npc_id, clue_text, category, difficulty, revealed, related_to
-        ) VALUES (?, ?, ?, ?, ?, ?, ?)
-      `);
-
-      clueStmt.run(
-        clue.id,
-        npc.id,
-        clue.clueText,
-        clue.category || null,
-        clue.difficulty || null,
-        clue.revealed ? 1 : 0,
-        JSON.stringify(clue.relatedTo || [])
-      );
+      await prisma.npcClue.upsert({
+        where: { id: clue.id },
+        update: {
+          npcId: npc.id,
+          clueText: clue.clueText,
+          category: clue.category || null,
+          difficulty: clue.difficulty || null,
+          revealed: clue.revealed ? true : false,
+          relatedTo: (clue.relatedTo || []) as any,
+        },
+        create: {
+          id: clue.id,
+          npcId: npc.id,
+          clueText: clue.clueText,
+          category: clue.category || null,
+          difficulty: clue.difficulty || null,
+          revealed: clue.revealed ? true : false,
+          relatedTo: (clue.relatedTo || []) as any,
+        },
+      });
     }
 
     // Insert NPC relationships
     for (const rel of npc.relationships || []) {
-      const relStmt = db.getDatabase().prepare(`
-        INSERT OR REPLACE INTO npc_relationships (
-          id, source_id, target_id, target_name, relationship_type, attitude, description, history
-        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?)
-      `);
+      // Skip relationships without a valid targetId (FK constraint requires it)
+      if (!rel.targetId) continue;
 
       const relId = `${npc.id}_${rel.targetName}`;
-      relStmt.run(
-        relId,
-        npc.id,
-        rel.targetId || null,
-        rel.targetName,
-        rel.relationshipType,
-        rel.attitude,
-        rel.description || null,
-        rel.history || null
-      );
+      await prisma.npcRelationship.upsert({
+        where: { id: relId },
+        update: {
+          sourceId: npc.id,
+          targetId: rel.targetId,
+          targetName: rel.targetName,
+          relationshipType: rel.relationshipType,
+          attitude: rel.attitude,
+          description: rel.description || null,
+          history: rel.history || null,
+        },
+        create: {
+          id: relId,
+          sourceId: npc.id,
+          targetId: rel.targetId,
+          targetName: rel.targetName,
+          relationshipType: rel.relationshipType,
+          attitude: rel.attitude,
+          description: rel.description || null,
+          history: rel.history || null,
+        },
+      });
     }
   }
 
   if (scenarios.length > 0) {
-    const database = db.getDatabase();
-    const hasMapImagePath = db.hasColumn("scenarios", "map_image_path");
     const now = new Date().toISOString();
     const scenarioByName = new Map(
       scenarios.map((scenario) => [scenario.name.toLowerCase(), scenario])
@@ -215,160 +182,121 @@ export async function saveWorldToDatabase(
         gameSystem: "CoC 7e",
       };
 
-      const scenarioColumns = [
-        "scenario_id",
-        "name",
-        "description",
-        "tags",
-        "connections",
-        "metadata",
-        "source_place_id",
-      ];
-      const scenarioValues: any[] = [
-        scenario.id,
-        scenario.name,
-        scenario.description,
-        JSON.stringify(scenario.tags || []),
-        JSON.stringify(scenarioConnections(scenario)),
-        JSON.stringify(metadata),
-        scenario.sourcePlaceId || null,
-      ];
-
-      if (hasMapImagePath) {
-        scenarioColumns.push("map_image_path");
-        scenarioValues.push(null);
-      }
-
-      const scenarioStmt = database.prepare(
-        `INSERT OR REPLACE INTO scenarios (${scenarioColumns.join(", ")}) VALUES (${scenarioColumns
-          .map(() => "?")
-          .join(", ")})`
-      );
-      scenarioStmt.run(...scenarioValues);
+      await prisma.scenario.upsert({
+        where: { scenarioId: scenario.id },
+        update: {
+          name: scenario.name,
+          description: scenario.description,
+          tags: (scenario.tags || []) as any,
+          connections: scenarioConnections(scenario) as any,
+          metadata: metadata as any,
+          sourcePlaceId: scenario.sourcePlaceId || null,
+          mapImagePath: null,
+        },
+        create: {
+          scenarioId: scenario.id,
+          name: scenario.name,
+          description: scenario.description,
+          tags: (scenario.tags || []) as any,
+          connections: scenarioConnections(scenario) as any,
+          metadata: metadata as any,
+          sourcePlaceId: scenario.sourcePlaceId || null,
+          mapImagePath: null,
+        },
+      });
     }
 
     if (startingScene?.snapshot) {
       const snapshot = startingScene.snapshot;
-      const snapshotExists = database
-        .prepare(
-          "SELECT snapshot_id FROM scenario_snapshots WHERE snapshot_id = ?"
-        )
-        .get(snapshot.id);
+      const snapshotExists = await prisma.scenarioSnapshot.findUnique({
+        where: { snapshotId: snapshot.id },
+        select: { snapshotId: true },
+      });
 
       if (!snapshotExists) {
-        const hasInitialSnapshot = db.hasColumn(
-          "scenario_snapshots",
-          "initial_snapshot"
-        );
-        const hasGameTime = db.hasColumn("scenario_snapshots", "game_time");
-
-        if (hasInitialSnapshot && hasGameTime) {
-          const snapshotStmt = database.prepare(
-            `INSERT INTO scenario_snapshots (
-              snapshot_id, scenario_id, snapshot_name, location, description, events, exits,
-              keeper_notes, time_restriction, show_map, initial_snapshot, game_time
-            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
-          );
-
-          snapshotStmt.run(
-            snapshot.id,
-            startingScene.scenarioId,
-            snapshot.name,
-            snapshot.location,
-            snapshot.description,
-            JSON.stringify([]), // events removed - tracked via actionResults
-            JSON.stringify([]), // exits removed - connections are scenario-level data
-            snapshot.keeperNotes || null,
-            snapshot.timeRestriction || null,
-            snapshot.showMap === false ? 0 : 1,
-            1, // initial_snapshot = true for starting scene
-            snapshot.gameTime || null
-          );
-        } else {
-          const snapshotStmt = database.prepare(
-            `INSERT INTO scenario_snapshots (
-              snapshot_id, scenario_id, snapshot_name, location, description, events, exits,
-              keeper_notes, time_restriction, show_map
-            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
-          );
-
-          snapshotStmt.run(
-            snapshot.id,
-            startingScene.scenarioId,
-            snapshot.name,
-            snapshot.location,
-            snapshot.description,
-            JSON.stringify([]), // events removed - tracked via actionResults
-            JSON.stringify([]), // exits removed - connections are scenario-level data
-            snapshot.keeperNotes || null,
-            snapshot.timeRestriction || null,
-            snapshot.showMap === false ? 0 : 1
-          );
-        }
+        // All columns exist in PostgreSQL - no need for hasColumn checks
+        await prisma.scenarioSnapshot.create({
+          data: {
+            snapshotId: snapshot.id,
+            scenarioId: startingScene.scenarioId,
+            snapshotName: snapshot.name,
+            location: snapshot.location,
+            description: snapshot.description,
+            events: [] as any, // events removed - tracked via actionResults
+            exits: [] as any, // exits removed - connections are scenario-level data
+            keeperNotes: snapshot.keeperNotes || null,
+            timeRestriction: snapshot.timeRestriction || null,
+            showMap: snapshot.showMap !== false,
+            initialSnapshot: true, // initial_snapshot = true for starting scene
+            gameTime: snapshot.gameTime || null,
+          },
+        });
 
         if (snapshot.characters?.length) {
-          const charStmt = database.prepare(`
-            INSERT OR IGNORE INTO scenario_characters (
-              id, snapshot_id, character_name, character_role, character_status,
-              character_location, character_notes
-            ) VALUES (?, ?, ?, ?, ?, ?, ?)
-          `);
-
           for (const char of snapshot.characters) {
-            charStmt.run(
-              char.id,
-              snapshot.id,
-              char.name,
-              char.role,
-              char.status,
-              char.location || null,
-              char.notes || null
-            );
+            // Use createMany-style skip: try/catch to handle duplicates (INSERT OR IGNORE equivalent)
+            try {
+              await prisma.scenarioCharacter.create({
+                data: {
+                  id: char.id,
+                  snapshotId: snapshot.id,
+                  characterName: char.name,
+                  characterRole: char.role,
+                  characterStatus: char.status,
+                  characterLocation: char.location || null,
+                  characterNotes: char.notes || null,
+                },
+              });
+            } catch (e: any) {
+              // Skip duplicate key errors (equivalent to INSERT OR IGNORE)
+              if (e?.code !== "P2002") throw e;
+            }
           }
         }
 
         if (snapshot.clues?.length) {
-          const clueStmt = database.prepare(`
-            INSERT OR IGNORE INTO scenario_clues (
-              clue_id, snapshot_id, clue_text, category, difficulty,
-              clue_location, discovery_method, reveals, discovered, discovery_details
-            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-          `);
-
           for (const clue of snapshot.clues) {
-            clueStmt.run(
-              clue.id,
-              snapshot.id,
-              clue.clueText,
-              clue.category,
-              clue.difficulty,
-              clue.location,
-              clue.discoveryMethod || null,
-              JSON.stringify(clue.reveals || []),
-              clue.discovered ? 1 : 0,
-              clue.discoveryDetails
-                ? JSON.stringify(clue.discoveryDetails)
-                : null
-            );
+            try {
+              await prisma.scenarioClue.create({
+                data: {
+                  clueId: clue.id,
+                  snapshotId: snapshot.id,
+                  clueText: clue.clueText,
+                  category: clue.category,
+                  difficulty: clue.difficulty,
+                  clueLocation: clue.location,
+                  discoveryMethod: clue.discoveryMethod || null,
+                  reveals: (clue.reveals || []) as any,
+                  discovered: clue.discovered ? true : false,
+                  discoveryDetails: clue.discoveryDetails
+                    ? (clue.discoveryDetails as any)
+                    : null,
+                },
+              });
+            } catch (e: any) {
+              // Skip duplicate key errors (equivalent to INSERT OR IGNORE)
+              if (e?.code !== "P2002") throw e;
+            }
           }
         }
 
         if (snapshot.conditions?.length) {
-          const conditionStmt = database.prepare(`
-            INSERT OR IGNORE INTO scenario_conditions (
-              condition_id, snapshot_id, condition_type, description, mechanical_effect
-            ) VALUES (?, ?, ?, ?, ?)
-          `);
-
           for (const condition of snapshot.conditions) {
             const conditionId = `${snapshot.id}-cond-${randomUUID().slice(0, 8)}`;
-            conditionStmt.run(
-              conditionId,
-              snapshot.id,
-              condition.type,
-              condition.description,
-              condition.mechanicalEffect || null
-            );
+            try {
+              await prisma.scenarioCondition.create({
+                data: {
+                  conditionId,
+                  snapshotId: snapshot.id,
+                  conditionType: condition.type,
+                  description: condition.description,
+                  mechanicalEffect: condition.mechanicalEffect || null,
+                },
+              });
+            } catch (e: any) {
+              // Skip duplicate key errors (equivalent to INSERT OR IGNORE)
+              if (e?.code !== "P2002") throw e;
+            }
           }
         }
       }

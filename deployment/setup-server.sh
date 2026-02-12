@@ -72,7 +72,7 @@ fi
 echo ""
 
 log "Step 4/8: Installing build tools..."
-sudo apt install -y build-essential python3 sqlite3
+sudo apt install -y build-essential python3
 log "Build tools installed ✓"
 echo ""
 

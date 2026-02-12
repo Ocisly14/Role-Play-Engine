@@ -1,4 +1,5 @@
-import type { CoCDatabase } from "../../../src/shared/agents/memory/database/index.js";
+// Type import - not used in this file
+// import type { CoCDatabase } from "../../../src/shared/agents/memory/database/index.js";
 
 /**
  * Prepare character data for database insertion

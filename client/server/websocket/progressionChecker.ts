@@ -1,12 +1,13 @@
-import type { WSClient } from "./WebSocketManager.js";
 import { WebSocket } from "ws";
-import { ServerState } from "../core/ServerState.js";
-import { DatabaseManager } from "../core/DatabaseManager.js";
-import { notifyClients } from "./notifier.js";
 import {
-  runWithTokenContext,
   getCurrentUsageTotals,
+  runWithTokenContext,
 } from "../../../src/models/index.js";
+import { getPrismaClient } from "../../../src/shared/agents/memory/database/prismaClient.js";
+import { DatabaseManager } from "../core/DatabaseManager.js";
+import { ServerState } from "../core/ServerState.js";
+import type { WSClient } from "./WebSocketManager.js";
+import { notifyClients } from "./notifier.js";
 
 const CHECK_INTERVAL_MS = 60000; // Check every 60 seconds
 const IDLE_MINUTES_BEFORE_SIMULATE = 5; // Trigger virtual query after this many minutes idle
@@ -23,21 +24,29 @@ export async function checkAndTriggerSimulate(
   sessionId: string,
   clients: Map<string, WSClient>
 ): Promise<boolean> {
-  const resolveEmail = (): string | undefined => {
-    const db = DatabaseManager.getInstance().getDatabase().getDatabase();
-    const row = db
-      .prepare(`
-      SELECT c.email_id
-      FROM game_turns gt
-      JOIN characters c ON c.character_id = gt.character_id
-      WHERE gt.session_id = ? AND c.email_id IS NOT NULL
-      LIMIT 1
-    `)
-      .get(sessionId) as { email_id?: string } | undefined;
-    return row?.email_id;
+  const resolveEmail = async (): Promise<string | undefined> => {
+    const prisma = getPrismaClient();
+
+    const session = await prisma.session.findUnique({
+      where: { sessionId },
+      select: { characterId: true },
+    });
+    if (!session?.characterId) {
+      return undefined;
+    }
+
+    const character = await prisma.character.findUnique({
+      where: { characterId: session.characterId },
+      select: { emailId: true, isNpc: true },
+    });
+    if (!character || character.isNpc || !character.emailId) {
+      return undefined;
+    }
+
+    return character.emailId;
   };
 
-  const email = resolveEmail();
+  const email = await resolveEmail();
   const runner = async () => {
     const serverState = ServerState.getInstance();
     const dbManager = DatabaseManager.getInstance();
@@ -108,6 +117,7 @@ export async function checkAndTriggerSimulate(
 
       const dynamicTurnManager = new DynamicTurnManager(db);
       const systemInput = "[系统] 调查员似乎陷入了僵局，守秘人给出了提示。";
+      await db.preloadSessionTurns(sessionId);
       const newTurnId = dynamicTurnManager.createTurnFromGameState(
         sessionId,
         systemInput,
@@ -204,6 +214,6 @@ export function stopProgressionChecker(): void {
   if (progressionCheckInterval) {
     clearInterval(progressionCheckInterval);
     progressionCheckInterval = null;
-    console.log(`🛑 [WebSocket] Progression checker stopped`);
+    console.log("🛑 [WebSocket] Progression checker stopped");
   }
 }

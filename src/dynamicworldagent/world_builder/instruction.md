@@ -31,7 +31,7 @@ The world builder creates a complete module package in `data/Mods/[ModuleName]/`
 - `module_digest.json` - Module notes, guidance, limitations, introduction
 
 ### Database Persistence
-All data is also saved to SQLite database (`data/db.sqlite`):
+All data is also saved to PostgreSQL (via Prisma models):
 - `module_backgrounds` table - Macro scene, truth timeline, knowledge matrix
 - `characters` table - NPC profiles
 - `scenarios` + `scenario_snapshots` tables - Scenario data

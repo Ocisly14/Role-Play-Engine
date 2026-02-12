@@ -146,7 +146,7 @@ export async function getModuleIntroduction(
         const moduleLoader = new ModuleLoader(db, undefined, {
           emailId: emailId,
         });
-        const modules = moduleLoader.getAllModules();
+        const modules = await moduleLoader.getAllModules();
         const normalizedModName = modName.trim().toLowerCase();
         const module =
           modules.find(
@@ -205,7 +205,7 @@ export async function getModuleIntroduction(
         await moduleLoader.loadModuleFromJSON(moduleDigestPath);
       }
 
-      const modules = moduleLoader.getAllModules();
+      const modules = await moduleLoader.getAllModules();
       if (modules.length === 0) {
         res.status(404).json({ error: "No module data found" });
         return;
@@ -249,7 +249,7 @@ export async function getModuleIntroduction(
  * List shared modules (searchable)
  * GET /api/mods/shared
  */
-export function getSharedMods(req: Request, res: Response): void {
+export async function getSharedMods(req: Request, res: Response): Promise<void> {
   try {
     const email = req.user?.email;
     if (!email) {
@@ -258,8 +258,7 @@ export function getSharedMods(req: Request, res: Response): void {
     }
 
     const query = typeof req.query.q === "string" ? req.query.q : undefined;
-    const db = DatabaseManager.getInstance().getDatabase();
-    const mods = listSharedMods(db, email, query);
+    const mods = await listSharedMods(email, query);
 
     res.json({ success: true, mods });
   } catch (error) {
@@ -276,7 +275,7 @@ export function getSharedMods(req: Request, res: Response): void {
  * Share a module (owner only)
  * POST /api/mods/share
  */
-export function shareMod(req: Request, res: Response): void {
+export async function shareMod(req: Request, res: Response): Promise<void> {
   try {
     const email = req.user?.email;
     const { modName } = req.body;
@@ -290,8 +289,7 @@ export function shareMod(req: Request, res: Response): void {
       return;
     }
 
-    const db = DatabaseManager.getInstance().getDatabase();
-    shareModule(db, email, modName);
+    await shareModule(email, modName);
 
     res.json({ success: true, shared: true });
   } catch (error) {
@@ -306,7 +304,7 @@ export function shareMod(req: Request, res: Response): void {
  * Unshare a module (owner only)
  * POST /api/mods/unshare
  */
-export function unshareMod(req: Request, res: Response): void {
+export async function unshareMod(req: Request, res: Response): Promise<void> {
   try {
     const email = req.user?.email;
     const { modName } = req.body;
@@ -320,8 +318,7 @@ export function unshareMod(req: Request, res: Response): void {
       return;
     }
 
-    const db = DatabaseManager.getInstance().getDatabase();
-    unshareModule(db, email, modName);
+    await unshareModule(email, modName);
 
     res.json({ success: true, shared: false });
   } catch (error) {
@@ -336,7 +333,7 @@ export function unshareMod(req: Request, res: Response): void {
  * Remove module from user's library
  * POST /api/mods/remove
  */
-export function removeMod(req: Request, res: Response): void {
+export async function removeMod(req: Request, res: Response): Promise<void> {
   try {
     const email = req.user?.email;
     const { modName } = req.body;
@@ -350,8 +347,7 @@ export function removeMod(req: Request, res: Response): void {
       return;
     }
 
-    const db = DatabaseManager.getInstance().getDatabase();
-    const result = removeModuleFromLibrary(db, email, modName);
+    const result = await removeModuleFromLibrary(email, modName);
 
     res.json({ success: true, removed: true, trashed: result.trashed });
   } catch (error) {
@@ -366,7 +362,7 @@ export function removeMod(req: Request, res: Response): void {
  * Remove multiple modules from user's library
  * POST /api/mods/remove-bulk
  */
-export function removeModsBulk(req: Request, res: Response): void {
+export async function removeModsBulk(req: Request, res: Response): Promise<void> {
   try {
     const email = req.user?.email;
     const { modNames } = req.body as { modNames?: string[] };
@@ -380,11 +376,12 @@ export function removeModsBulk(req: Request, res: Response): void {
       return;
     }
 
-    const db = DatabaseManager.getInstance().getDatabase();
-    const results = modNames.map((modName) =>
-      typeof modName === "string"
-        ? removeModuleFromLibrary(db, email, modName)
-        : { trashed: false }
+    const results = await Promise.all(
+      modNames.map((modName) =>
+        typeof modName === "string"
+          ? removeModuleFromLibrary(email, modName)
+          : Promise.resolve({ trashed: false })
+      )
     );
     const trashedCount = results.filter((r) => r.trashed).length;
 
@@ -401,7 +398,7 @@ export function removeModsBulk(req: Request, res: Response): void {
  * Add shared module to user's library
  * POST /api/mods/add
  */
-export function addSharedMod(req: Request, res: Response): void {
+export async function addSharedMod(req: Request, res: Response): Promise<void> {
   try {
     const email = req.user?.email;
     const { modName } = req.body;
@@ -415,8 +412,7 @@ export function addSharedMod(req: Request, res: Response): void {
       return;
     }
 
-    const db = DatabaseManager.getInstance().getDatabase();
-    addSharedModuleToLibrary(db, email, modName);
+    await addSharedModuleToLibrary(email, modName);
 
     res.json({ success: true, added: true });
   } catch (error) {
@@ -431,7 +427,7 @@ export function addSharedMod(req: Request, res: Response): void {
  * List deleted modules for current user
  * GET /api/mods/deleted
  */
-export function getDeletedMods(req: Request, res: Response): void {
+export async function getDeletedMods(req: Request, res: Response): Promise<void> {
   try {
     const email = req.user?.email;
     if (!email) {
@@ -439,8 +435,7 @@ export function getDeletedMods(req: Request, res: Response): void {
       return;
     }
 
-    const db = DatabaseManager.getInstance().getDatabase();
-    const mods = listDeletedMods(db, email);
+    const mods = await listDeletedMods(email);
 
     res.json({ success: true, mods });
   } catch (error) {
@@ -457,7 +452,7 @@ export function getDeletedMods(req: Request, res: Response): void {
  * Restore a deleted module (owner only)
  * POST /api/mods/restore
  */
-export function restoreMod(req: Request, res: Response): void {
+export async function restoreMod(req: Request, res: Response): Promise<void> {
   try {
     const email = req.user?.email;
     const { modName } = req.body;
@@ -471,8 +466,7 @@ export function restoreMod(req: Request, res: Response): void {
       return;
     }
 
-    const db = DatabaseManager.getInstance().getDatabase();
-    restoreDeletedModule(db, email, modName);
+    await restoreDeletedModule(email, modName);
 
     res.json({ success: true, restored: true });
   } catch (error) {
@@ -487,7 +481,7 @@ export function restoreMod(req: Request, res: Response): void {
  * Restore multiple deleted modules
  * POST /api/mods/restore-bulk
  */
-export function restoreModsBulk(req: Request, res: Response): void {
+export async function restoreModsBulk(req: Request, res: Response): Promise<void> {
   try {
     const email = req.user?.email;
     const { modNames } = req.body as { modNames?: string[] };
@@ -501,10 +495,9 @@ export function restoreModsBulk(req: Request, res: Response): void {
       return;
     }
 
-    const db = DatabaseManager.getInstance().getDatabase();
     for (const modName of modNames) {
       if (typeof modName !== "string") continue;
-      restoreDeletedModule(db, email, modName);
+      await restoreDeletedModule(email, modName);
     }
 
     res.json({ success: true, restored: true });
@@ -520,7 +513,7 @@ export function restoreModsBulk(req: Request, res: Response): void {
  * Get current generation quota status for the authenticated user
  * GET /api/mods/quota
  */
-export function getModQuota(req: Request, res: Response): void {
+export async function getModQuota(req: Request, res: Response): Promise<void> {
   try {
     const email = req.user?.email;
     if (!email) {
@@ -528,8 +521,7 @@ export function getModQuota(req: Request, res: Response): void {
       return;
     }
 
-    const db = DatabaseManager.getInstance().getDatabase();
-    const quota = getQuotaStatus(db, email);
+    const quota = await getQuotaStatus(email);
 
     res.json({ success: true, quota });
   } catch (error) {

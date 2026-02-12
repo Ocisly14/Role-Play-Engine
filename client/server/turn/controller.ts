@@ -1,9 +1,9 @@
 /// <reference path="../types/express.d.ts" />
 import type { Request, Response } from "express";
-import type Database from "better-sqlite3";
 import { DatabaseManager } from "../core/DatabaseManager.js";
 import { GraphManager } from "../core/GraphManager.js";
 import { ServerState } from "../core/ServerState.js";
+import { getPrismaClient } from "../../../src/shared/agents/memory/database/prismaClient.js";
 import { TurnManager as DynamicTurnManager } from "../../../src/dynamicworldagent/dynamicBasicAgent/memory/turnManager.js";
 import type { DynamicGameState } from "../../../src/dynamicworldagent/state/index.js";
 import { HumanMessage } from "@langchain/core/messages";
@@ -94,8 +94,9 @@ export async function createTurn(req: Request, res: Response): Promise<void> {
     }
 
     const db = DatabaseManager.getInstance().getDatabase();
-    const database = db.getDatabase();
+    const prisma = getPrismaClient();
     const dynamicTurnManager = new DynamicTurnManager(db);
+    await db.preloadSessionTurns(dynamicGameState.sessionId);
 
     // Check if this is resuming an interrupted turn (skill selection)
     let turnId: string | undefined;
@@ -103,31 +104,23 @@ export async function createTurn(req: Request, res: Response): Promise<void> {
 
     if (normalizedSkill) {
       // Look for a recent turn with requires_skill_selection status for this session
-      const skillSelectionTurn = database
-        .prepare(`
-        SELECT * FROM game_turns
-        WHERE session_id = ? AND status = 'requires_skill_selection'
-        ORDER BY turn_number DESC
-        LIMIT 1
-      `)
-        .get(dynamicGameState.sessionId) as any;
+      const skillSelectionTurn = await prisma.gameTurn.findFirst({
+        where: { sessionId: dynamicGameState.sessionId, status: "requires_skill_selection" },
+        orderBy: { turnNumber: "desc" },
+      });
 
       if (skillSelectionTurn) {
         console.log(
-          `🔄 [${new Date().toISOString()}] Resuming interrupted turn ${skillSelectionTurn.turn_id} with selected skill: ${normalizedSkill}`
+          `🔄 [${new Date().toISOString()}] Resuming interrupted turn ${skillSelectionTurn.turnId} with selected skill: ${normalizedSkill}`
         );
         isResumingTurn = true;
-        turnId = skillSelectionTurn.turn_id;
+        turnId = skillSelectionTurn.turnId;
 
         // Move the interrupted turn back to processing before resuming graph execution.
-        database
-          .prepare(`
-          UPDATE game_turns
-          SET status = 'processing',
-              error_message = NULL
-          WHERE turn_id = ?
-        `)
-          .run(turnId);
+        await prisma.gameTurn.update({
+          where: { turnId },
+          data: { status: "processing", errorMessage: null },
+        });
       }
     }
 
@@ -454,16 +447,13 @@ export async function getTurnStatus(
 ): Promise<void> {
   try {
     const { turnId } = req.params;
-    const db = DatabaseManager.getInstance().getDatabase();
-    const database = db.getDatabase();
 
-    if (!isTurnOwnedByUser(turnId, req.user!.email, database)) {
+    if (!(await isTurnOwnedByUser(turnId, req.user!.email))) {
       res.status(404).json({ error: "Turn not found" });
       return;
     }
 
-    const dynamicTurnManager = new DynamicTurnManager(db);
-    let turn: any = dynamicTurnManager.getTurn(turnId);
+    let turn: any = await getTurnById(turnId);
 
     const waitForCompletion = req.query.wait === "true";
     const maxWaitTime = 60000; // 60 seconds
@@ -474,8 +464,7 @@ export async function getTurnStatus(
     if (waitForCompletion) {
       while (Date.now() - startTime < maxWaitTime) {
         // Re-fetch turn to get latest status
-        const dynamicTurnManager = new DynamicTurnManager(db);
-        turn = dynamicTurnManager.getTurn(turnId);
+        turn = await getTurnById(turnId);
 
         if (!turn) {
           res.status(404).json({ error: "Turn not found" });
@@ -543,22 +532,21 @@ export async function getConversation(
 
     const { sessionId } = req.params;
     const userId = req.user!.userId;
-    const database = db.getDatabase();
     const serverState = ServerState.getInstance();
 
     if (
-      !isSessionOwnedByUser(
+      !(await isSessionOwnedByUser(
         sessionId,
         userId,
         req.user!.email,
-        database,
         serverState
-      )
+      ))
     ) {
       res.status(404).json({ error: "Session not found" });
       return;
     }
     const limit = parseInt(req.query.limit as string) || 50;
+    await db.preloadSessionTurns(sessionId);
 
     const conversation = turnManager.getConversation(sessionId, limit);
 
@@ -583,17 +571,15 @@ export async function getTurnHistory(
 
     const { sessionId } = req.params;
     const userId = req.user!.userId;
-    const database = db.getDatabase();
     const serverState = ServerState.getInstance();
 
     if (
-      !isSessionOwnedByUser(
+      !(await isSessionOwnedByUser(
         sessionId,
         userId,
         req.user!.email,
-        database,
         serverState
-      )
+      ))
     ) {
       res.status(404).json({ error: "Session not found" });
       return;
@@ -602,6 +588,7 @@ export async function getTurnHistory(
     const after = req.query.after
       ? parseInt(req.query.after as string)
       : undefined;
+    await db.preloadSessionTurns(sessionId);
 
     const turns = turnManager.getHistory(sessionId, limit, after);
 
@@ -641,33 +628,37 @@ export async function getLatestSession(
       return;
     }
 
-    const db = DatabaseManager.getInstance().getDatabase().getDatabase();
-    const row = db
-      .prepare(`
-      SELECT
-        gt.session_id AS sessionId,
-        gt.character_id AS characterId,
-        gt.character_name AS characterName,
-        MAX(gt.created_at) AS lastTurnAt
-      FROM game_turns gt
-      JOIN characters c ON c.character_id = gt.character_id
-      WHERE c.email_id = ?
-      GROUP BY gt.session_id
-      ORDER BY MAX(gt.created_at) DESC
-      LIMIT 1
-    `)
-      .get(req.user!.email) as
-      | {
-          sessionId: string;
-          characterId: string | null;
-          characterName: string | null;
-          lastTurnAt: string;
+    const prisma = getPrismaClient();
+    const ownedCharacterIds = await getOwnedCharacterIds(req.user!.email);
+    if (ownedCharacterIds.length === 0) {
+      res.json({ success: true, session: null });
+      return;
+    }
+
+    // Find the most recent turn for this user across all sessions
+    const latestTurn = await prisma.gameTurn.findFirst({
+      where: { characterId: { in: ownedCharacterIds } },
+      orderBy: { createdAt: "desc" },
+      select: {
+        sessionId: true,
+        characterId: true,
+        characterName: true,
+        createdAt: true,
+      },
+    });
+
+    const row = latestTurn
+      ? {
+          sessionId: latestTurn.sessionId,
+          characterId: latestTurn.characterId,
+          characterName: latestTurn.characterName,
+          lastTurnAt: latestTurn.createdAt.toISOString(),
         }
-      | undefined;
+      : null;
 
     res.json({
       success: true,
-      session: row ?? null,
+      session: row,
     });
   } catch (error) {
     console.error("Error fetching latest session:", error);
@@ -675,45 +666,90 @@ export async function getLatestSession(
   }
 }
 
-function isTurnOwnedByUser(
+async function isTurnOwnedByUser(
   turnId: string,
-  email: string,
-  db: Database.Database
-): boolean {
-  const row = db
-    .prepare(`
-    SELECT 1
-    FROM game_turns gt
-    JOIN characters c ON c.character_id = gt.character_id
-    WHERE gt.turn_id = ? AND c.email_id = ?
-    LIMIT 1
-  `)
-    .get(turnId, email);
+  email: string
+): Promise<boolean> {
+  const prisma = getPrismaClient();
+  const ownedCharacterIds = await getOwnedCharacterIds(email);
+  if (ownedCharacterIds.length === 0) {
+    return false;
+  }
 
-  return Boolean(row);
+  const turn = await prisma.gameTurn.findFirst({
+    where: { turnId, characterId: { in: ownedCharacterIds } },
+    select: { turnId: true },
+  });
+  return Boolean(turn);
 }
 
-function isSessionOwnedByUser(
+async function getTurnById(turnId: string): Promise<any | null> {
+  const prisma = getPrismaClient();
+  const turn = await prisma.gameTurn.findUnique({
+    where: { turnId },
+  });
+  if (!turn) {
+    return null;
+  }
+
+  return {
+    turnId: turn.turnId,
+    sessionId: turn.sessionId,
+    turnNumber: turn.turnNumber,
+    characterInput: turn.characterInput,
+    characterId: turn.characterId,
+    characterName: turn.characterName,
+    actionAnalysis: turn.actionAnalysis,
+    actionResults: turn.actionResults,
+    directorDecision: turn.directorDecision,
+    keeperNarrative: turn.keeperNarrative,
+    clueRevelations: turn.clueRevelations,
+    sceneId: turn.sceneId,
+    sceneName: turn.sceneName,
+    location: turn.location,
+    status: turn.status,
+    errorMessage: turn.errorMessage,
+    startedAt: turn.startedAt.toISOString(),
+    completedAt: turn.completedAt?.toISOString() ?? null,
+    createdAt: turn.createdAt.toISOString(),
+    isSimulated: turn.isSimulated,
+    gameDay: turn.gameDay,
+    gameTime: turn.gameTime,
+  };
+}
+
+async function isSessionOwnedByUser(
   sessionId: string,
   userId: string,
   email: string,
-  db: Database.Database,
   serverState: ServerState
-): boolean {
+): Promise<boolean> {
   const active = serverState.getDynamicGameState(userId);
   if (active?.sessionId === sessionId) {
     return true;
   }
 
-  const row = db
-    .prepare(`
-    SELECT 1
-    FROM game_turns gt
-    JOIN characters c ON c.character_id = gt.character_id
-    WHERE gt.session_id = ? AND c.email_id = ?
-    LIMIT 1
-  `)
-    .get(sessionId, email);
+  const prisma = getPrismaClient();
+  const ownedCharacterIds = await getOwnedCharacterIds(email);
+  if (ownedCharacterIds.length === 0) {
+    return false;
+  }
 
-  return Boolean(row);
+  const turn = await prisma.gameTurn.findFirst({
+    where: { sessionId, characterId: { in: ownedCharacterIds } },
+    select: { turnId: true },
+  });
+  return Boolean(turn);
+}
+
+async function getOwnedCharacterIds(email: string): Promise<string[]> {
+  const prisma = getPrismaClient();
+  const rows = await prisma.character.findMany({
+    where: {
+      emailId: email,
+      isNpc: false,
+    },
+    select: { characterId: true },
+  });
+  return rows.map((row) => row.characterId);
 }

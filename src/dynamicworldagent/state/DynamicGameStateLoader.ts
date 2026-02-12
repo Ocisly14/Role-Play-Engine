@@ -4,7 +4,8 @@
  */
 
 import path from "path";
-import type { CoCDatabase } from "../../shared/agents/memory/database/index.js";
+import type { CoCDatabase, CoCDatabaseAdapter } from "../../shared/agents/memory/database/index.js";
+import { getPrismaClient } from "../../shared/agents/memory/database/prismaClient.js";
 import { WorldModuleLoader } from "../world_builder/worldModuleLoader.js";
 import type { DynamicGameState } from "./DynamicGameState.js";
 import {
@@ -19,6 +20,7 @@ import type {
 import type { DynamicScenarioSnapshot } from "../world_builder/types.js";
 import { NPCLoader } from "../../shared/agents/character/npcloader/index.js";
 import { resolveEmailId } from "../../shared/agents/memory/database/userContext.js";
+import type { ScenarioClue, ScenarioCondition } from "../../shared/agents/models/scenarioTypes.js";
 
 /**
  * Convert NPCProfile (from multiagent system) to DynamicNPCProfile (for DynamicWorld system)
@@ -44,40 +46,36 @@ function convertCharacterProfileToDynamic(
  * Load DynamicGameState from database
  */
 export async function loadDynamicGameStateFromDatabase(
-  db: CoCDatabase,
+  db: CoCDatabase | CoCDatabaseAdapter,
   moduleName: string,
   emailId?: string
 ): Promise<DynamicGameState | null> {
-  const database = db.getDatabase();
+  const prisma = getPrismaClient();
   const resolvedEmailId = resolveEmailId(emailId);
-  const hasModuleEmailId = db.hasColumn("module_backgrounds", "email_id");
 
   // Check if module exists in database
-  const moduleData = database
-    .prepare(`
-    SELECT
-      module_id,
-      title,
-      keeper_guidance,
-      module_limitations,
-      module_notes,
-      introduction,
-      global_trigger,
-      macro_scene_structure,
-      truth_timeline,
-      knowledge_matrix,
-      red_herrings,
-      historical_mythos,
-      end_state_definition,
-      macro_map_path
-    FROM module_backgrounds
-    WHERE title = ?${hasModuleEmailId && resolvedEmailId ? " AND email_id = ?" : ""}
-  `)
-    .get(
-      ...(hasModuleEmailId && resolvedEmailId
-        ? [moduleName, resolvedEmailId]
-        : [moduleName])
-    ) as any;
+  const moduleData = await prisma.moduleBackground.findFirst({
+    where: {
+      title: moduleName,
+      ...(resolvedEmailId ? { emailId: resolvedEmailId } : {}),
+    },
+    select: {
+      moduleId: true,
+      title: true,
+      keeperGuidance: true,
+      moduleLimitations: true,
+      moduleNotes: true,
+      introduction: true,
+      globalTrigger: true,
+      macroSceneStructure: true,
+      truthTimeline: true,
+      knowledgeMatrix: true,
+      redHerrings: true,
+      historicalMythos: true,
+      endStateDefinition: true,
+      macroMapPath: true,
+    },
+  });
 
   if (!moduleData) {
     console.warn(
@@ -124,30 +122,26 @@ export async function loadDynamicGameStateFromDatabase(
   try {
     // Load module digest
     if (
-      moduleData.keeper_guidance ||
-      moduleData.module_limitations ||
-      moduleData.module_notes ||
+      moduleData.keeperGuidance ||
+      moduleData.moduleLimitations ||
+      moduleData.moduleNotes ||
       moduleData.introduction
     ) {
       const moduleDigest: any = {
-        moduleNotes: moduleData.module_notes || "",
-        keeperGuidance: moduleData.keeper_guidance || "",
-        moduleLimitations: moduleData.module_limitations || "",
+        moduleNotes: moduleData.moduleNotes || "",
+        keeperGuidance: moduleData.keeperGuidance || "",
+        moduleLimitations: moduleData.moduleLimitations || "",
         introduction: moduleData.introduction || "",
       };
 
-      // Parse globalTrigger if present
-      if (moduleData.global_trigger) {
-        try {
-          moduleDigest.globalTrigger = JSON.parse(moduleData.global_trigger);
-        } catch (e) {
-          console.warn(`[DynamicGameState] Failed to parse global_trigger:`, e);
-        }
+      // Add globalTrigger if present (already parsed as JSON by Prisma)
+      if (moduleData.globalTrigger) {
+        moduleDigest.globalTrigger = moduleData.globalTrigger;
       }
 
       // Add macroMapPath if present
-      if (moduleData.macro_map_path) {
-        moduleDigest.macroMapPath = moduleData.macro_map_path;
+      if (moduleData.macroMapPath) {
+        moduleDigest.macroMapPath = moduleData.macroMapPath;
       }
 
       manager.loadWorldData({
@@ -155,75 +149,64 @@ export async function loadDynamicGameStateFromDatabase(
       });
     }
 
-    // Load macro scene
-    if (moduleData.macro_scene_structure) {
-      const macroScene = JSON.parse(moduleData.macro_scene_structure);
-      manager.loadWorldData({ macroScene });
+    // Load macro scene (already parsed as JSON by Prisma)
+    if (moduleData.macroSceneStructure) {
+      manager.loadWorldData({ macroScene: moduleData.macroSceneStructure as any });
     }
 
-    // Load truth timeline
-    if (moduleData.truth_timeline) {
-      const truthTimeline = JSON.parse(moduleData.truth_timeline);
-      manager.loadWorldData({ truthTimeline });
+    // Load truth timeline (already parsed as JSON by Prisma)
+    if (moduleData.truthTimeline) {
+      manager.loadWorldData({ truthTimeline: moduleData.truthTimeline as any });
     }
 
-    // Load knowledge matrix
-    if (moduleData.knowledge_matrix) {
-      const knowledgeMatrix = JSON.parse(moduleData.knowledge_matrix);
-      manager.loadWorldData({ knowledgeMatrix });
+    // Load knowledge matrix (already parsed as JSON by Prisma)
+    if (moduleData.knowledgeMatrix) {
+      manager.loadWorldData({ knowledgeMatrix: moduleData.knowledgeMatrix as any });
     }
 
-    // Load red herrings
-    if (moduleData.red_herrings) {
-      const redHerrings = JSON.parse(moduleData.red_herrings);
-      manager.loadWorldData({ redHerrings });
+    // Load red herrings (already parsed as JSON by Prisma)
+    if (moduleData.redHerrings) {
+      manager.loadWorldData({ redHerrings: moduleData.redHerrings as any });
     }
 
-    // Load mythos events
-    if (moduleData.historical_mythos) {
-      const mythosEvents = JSON.parse(moduleData.historical_mythos);
-      manager.loadWorldData({ mythosEvents });
+    // Load mythos events (already parsed as JSON by Prisma)
+    if (moduleData.historicalMythos) {
+      manager.loadWorldData({ mythosEvents: moduleData.historicalMythos as any });
     }
 
-    // Load end state
-    if (moduleData.end_state_definition) {
-      const endState = JSON.parse(moduleData.end_state_definition);
-      manager.loadWorldData({ endState });
+    // Load end state (already parsed as JSON by Prisma)
+    if (moduleData.endStateDefinition) {
+      manager.loadWorldData({ endState: moduleData.endStateDefinition as any });
     }
 
     // Load scenario outlines from database (including connections)
-    const hasScenarioEmailId = db.hasColumn("scenarios", "email_id");
-    const scenarioRows = database
-      .prepare(`
-      SELECT scenario_id, name, description, tags, connections, source_place_id
-      FROM scenarios${hasScenarioEmailId && resolvedEmailId ? " WHERE email_id = ?" : ""}
-    `)
-      .all(
-        ...(hasScenarioEmailId && resolvedEmailId ? [resolvedEmailId] : [])
-      ) as any[];
+    const scenarioRows = await prisma.scenario.findMany({
+      where: {
+        ...(resolvedEmailId ? { emailId: resolvedEmailId } : {}),
+      },
+      select: {
+        scenarioId: true,
+        name: true,
+        description: true,
+        tags: true,
+        connections: true,
+        sourcePlaceId: true,
+      },
+    });
 
     // Get knowledge matrix to look up sourcePlaceName
     const knowledgeMatrix = manager.getState().knowledgeMatrix || [];
 
     const scenarioOutlines = scenarioRows.map((row) => {
-      let connections: any[] = [];
-      try {
-        if (row.connections) {
-          connections = JSON.parse(row.connections);
-        }
-      } catch (e) {
-        console.warn(
-          `[DynamicGameState] Failed to parse connections for scenario ${row.scenario_id}:`,
-          e
-        );
-      }
+      // Prisma returns JSON fields already parsed
+      const connections: any[] = Array.isArray(row.connections) ? row.connections : [];
 
       // Find sourcePlaceName from knowledgeMatrix if sourcePlaceId exists
       let sourcePlaceName: string | undefined = undefined;
-      if (row.source_place_id) {
+      if (row.sourcePlaceId) {
         const knowledgeHolder = knowledgeMatrix.find(
           (holder) =>
-            holder.id === row.source_place_id && holder.holderType === "PLACE"
+            holder.id === row.sourcePlaceId && holder.holderType === "PLACE"
         );
         if (knowledgeHolder) {
           sourcePlaceName = knowledgeHolder.holderName;
@@ -232,12 +215,12 @@ export async function loadDynamicGameStateFromDatabase(
 
       // Convert database format to ScenarioOutline format
       return {
-        id: row.scenario_id,
+        id: row.scenarioId,
         name: row.name,
         description: row.description || "",
-        sourcePlaceId: row.source_place_id || undefined,
+        sourcePlaceId: row.sourcePlaceId || undefined,
         sourcePlaceName: sourcePlaceName,
-        tags: row.tags ? JSON.parse(row.tags) : [],
+        tags: Array.isArray(row.tags) ? (row.tags as string[]) : [],
         evidence: [], // Database doesn't store evidence, set to empty array
         clues: [], // Database doesn't store clues, set to empty array
         connections: connections.map((conn: any) => {
@@ -245,15 +228,15 @@ export async function loadDynamicGameStateFromDatabase(
           const targetScenario = scenarioRows.find(
             (s) =>
               s.name === conn.scenarioName ||
-              s.scenario_id === conn.scenarioName ||
-              s.scenario_id === conn.scenarioId ||
+              s.scenarioId === conn.scenarioName ||
+              s.scenarioId === conn.scenarioId ||
               s.name === conn.scenarioId
           );
           return {
             scenarioName:
               targetScenario?.name || conn.scenarioName || conn.scenarioId,
             scenarioId:
-              targetScenario?.scenario_id ||
+              targetScenario?.scenarioId ||
               conn.scenarioId ||
               conn.scenarioName,
             relationshipType: conn.relationshipType,
@@ -287,7 +270,7 @@ export async function loadDynamicGameStateFromDatabase(
  * Load DynamicGameState from WorldModuleLoader
  */
 export async function loadDynamicGameStateFromModuleLoader(
-  db: CoCDatabase,
+  db: CoCDatabase | CoCDatabaseAdapter,
   moduleName: string,
   emailId?: string
 ): Promise<DynamicGameState | null> {
@@ -364,7 +347,7 @@ export async function loadDynamicGameStateFromModuleLoader(
  * Only loads DynamicWorld-specific data, not runtime data
  */
 export async function loadDynamicGameState(
-  db: CoCDatabase,
+  db: CoCDatabase | CoCDatabaseAdapter,
   moduleName: string,
   emailId?: string
 ): Promise<DynamicGameState | null> {
@@ -392,7 +375,7 @@ export async function loadDynamicGameState(
  * This creates a fully initialized state ready for gameplay
  */
 export async function initializeCompleteDynamicGameState(
-  db: CoCDatabase,
+  db: CoCDatabase | CoCDatabaseAdapter,
   params: {
     sessionId: string;
     moduleName: string;
@@ -400,30 +383,43 @@ export async function initializeCompleteDynamicGameState(
     emailId?: string;
   }
 ): Promise<DynamicGameState | null> {
-  const database = db.getDatabase();
+  const prisma = getPrismaClient();
   const resolvedEmailId = resolveEmailId(params.emailId);
 
   // 1. Load player character
   let playerCharacter: DynamicCharacterProfile;
   if (params.characterId) {
-    const character = database
-      .prepare(`
-      SELECT character_id, name, attributes, status, skills, inventory, notes,
-             occupation, age, gender, appearance, personality, background
-      FROM characters
-      WHERE character_id = ? AND is_npc = 0
-    `)
-      .get(params.characterId) as any;
+    const character = await prisma.character.findFirst({
+      where: {
+        characterId: params.characterId,
+        isNpc: false,
+      },
+      select: {
+        characterId: true,
+        name: true,
+        attributes: true,
+        status: true,
+        skills: true,
+        inventory: true,
+        notes: true,
+        occupation: true,
+        age: true,
+        gender: true,
+        appearance: true,
+        personality: true,
+        background: true,
+      },
+    });
 
     if (!character) {
       throw new Error("Character not found");
     }
 
-    // Parse character data
-    const parsedAttributes = JSON.parse(character.attributes);
-    const parsedStatus = JSON.parse(character.status);
-    const parsedSkillsRaw = JSON.parse(character.skills);
-    const parsedInventory = JSON.parse(character.inventory);
+    // Prisma returns JSON fields already parsed
+    const parsedAttributes = character.attributes as any;
+    const parsedStatus = character.status as any;
+    const parsedSkillsRaw = (character.skills || {}) as any;
+    const parsedInventory = (character.inventory || []) as any;
 
     let parsedNotes: any = {};
     try {
@@ -447,7 +443,7 @@ export async function initializeCompleteDynamicGameState(
     }
 
     playerCharacter = {
-      id: character.character_id,
+      id: character.characterId,
       name: character.name,
       attributes: parsedAttributes,
       status: parsedStatus,
@@ -522,156 +518,150 @@ export async function initializeCompleteDynamicGameState(
   let timeOfDay = "08:00";
   const initialSnapshotsMap = new Map<string, DynamicScenarioSnapshot[]>();
 
-  // Helper function to build a snapshot from database row
-  const buildSnapshotFromRow = (snapshotRow: any): DynamicScenarioSnapshot => {
-    const hasCharacterEmailId = db.hasColumn("scenario_characters", "email_id");
-    const hasClueEmailId = db.hasColumn("scenario_clues", "email_id");
-    const hasConditionEmailId = db.hasColumn("scenario_conditions", "email_id");
-
+  // Helper function to build a snapshot from a Prisma result (async due to Prisma queries)
+  const buildSnapshotFromRow = async (snapshotRow: any): Promise<DynamicScenarioSnapshot> => {
     // Load snapshot characters
-    const snapshotCharacters = database
-      .prepare(`
-      SELECT id, character_name, character_role, character_status,
-             character_location, character_notes
-      FROM scenario_characters
-      WHERE snapshot_id = ?${resolvedEmailId && hasCharacterEmailId ? " AND email_id = ?" : ""}
-    `)
-      .all(
-        ...(resolvedEmailId && hasCharacterEmailId
-          ? [snapshotRow.snapshot_id, resolvedEmailId]
-          : [snapshotRow.snapshot_id])
-      );
+    const snapshotCharacters = await prisma.scenarioCharacter.findMany({
+      where: {
+        snapshotId: snapshotRow.snapshotId,
+        ...(resolvedEmailId ? { emailId: resolvedEmailId } : {}),
+      },
+      select: {
+        id: true,
+        characterName: true,
+        characterRole: true,
+        characterStatus: true,
+        characterLocation: true,
+        characterNotes: true,
+      },
+    });
 
     // Load snapshot clues
-    const snapshotClues = database
-      .prepare(`
-      SELECT clue_id, clue_text, category, difficulty, clue_location,
-             discovery_method, reveals, discovered, discovery_details
-      FROM scenario_clues
-      WHERE snapshot_id = ?${resolvedEmailId && hasClueEmailId ? " AND email_id = ?" : ""}
-    `)
-      .all(
-        ...(resolvedEmailId && hasClueEmailId
-          ? [snapshotRow.snapshot_id, resolvedEmailId]
-          : [snapshotRow.snapshot_id])
-      );
+    const snapshotClues = await prisma.scenarioClue.findMany({
+      where: {
+        snapshotId: snapshotRow.snapshotId,
+        ...(resolvedEmailId ? { emailId: resolvedEmailId } : {}),
+      },
+      select: {
+        clueId: true,
+        clueText: true,
+        category: true,
+        difficulty: true,
+        clueLocation: true,
+        discoveryMethod: true,
+        reveals: true,
+        discovered: true,
+        discoveryDetails: true,
+      },
+    });
 
     // Load snapshot conditions
-    const snapshotConditions = database
-      .prepare(`
-      SELECT condition_id, condition_type, description, mechanical_effect
-      FROM scenario_conditions
-      WHERE snapshot_id = ?${resolvedEmailId && hasConditionEmailId ? " AND email_id = ?" : ""}
-    `)
-      .all(
-        ...(resolvedEmailId && hasConditionEmailId
-          ? [snapshotRow.snapshot_id, resolvedEmailId]
-          : [snapshotRow.snapshot_id])
-      );
+    const snapshotConditions = await prisma.scenarioCondition.findMany({
+      where: {
+        snapshotId: snapshotRow.snapshotId,
+        ...(resolvedEmailId ? { emailId: resolvedEmailId } : {}),
+      },
+      select: {
+        conditionId: true,
+        conditionType: true,
+        description: true,
+        mechanicalEffect: true,
+      },
+    });
 
     const sceneImage =
-      snapshotRow.scene_image_path != null &&
-      String(snapshotRow.scene_image_path).trim() !== ""
-        ? { path: String(snapshotRow.scene_image_path).trim() }
+      snapshotRow.sceneImagePath != null &&
+      String(snapshotRow.sceneImagePath).trim() !== ""
+        ? { path: String(snapshotRow.sceneImagePath).trim() }
         : undefined;
 
     return {
-      id: snapshotRow.snapshot_id,
-      name: snapshotRow.snapshot_name || snapshotRow.scenario_name,
+      id: snapshotRow.snapshotId,
+      name: snapshotRow.snapshotName || snapshotRow.scenario?.name,
       location: snapshotRow.location,
       description: snapshotRow.description,
-      gameTime: snapshotRow.game_time || undefined,
-      showMap: snapshotRow.show_map === 1,
+      gameTime: snapshotRow.gameTime || undefined,
+      showMap: snapshotRow.showMap === true,
       sceneImage,
-      characters: (snapshotCharacters as any[]).map((char) => ({
+      characters: snapshotCharacters.map((char) => ({
         id: char.id,
-        name: char.character_name,
-        role: char.character_role,
-        status: char.character_status,
-        location: char.character_location || undefined,
-        notes: char.character_notes || undefined,
+        name: char.characterName,
+        role: char.characterRole,
+        status: char.characterStatus,
+        location: char.characterLocation || undefined,
+        notes: char.characterNotes || undefined,
       })),
-      clues: (snapshotClues as any[]).map((clue) => ({
-        id: clue.clue_id,
-        clueText: clue.clue_text,
-        category: clue.category,
-        difficulty: clue.difficulty,
-        location: clue.clue_location,
-        discoveryMethod: clue.discovery_method || undefined,
-        reveals: clue.reveals ? JSON.parse(clue.reveals) : [],
-        discovered: clue.discovered === 1,
-        discoveryDetails: clue.discovery_details
-          ? JSON.parse(clue.discovery_details)
+      clues: snapshotClues.map((clue) => ({
+        id: clue.clueId,
+        clueText: clue.clueText,
+        category: clue.category as ScenarioClue["category"],
+        difficulty: clue.difficulty as ScenarioClue["difficulty"],
+        location: clue.clueLocation,
+        discoveryMethod: clue.discoveryMethod || undefined,
+        // Prisma returns JSON fields already parsed
+        reveals: clue.reveals ? (clue.reveals as any[]) : [],
+        discovered: clue.discovered === true,
+        discoveryDetails: clue.discoveryDetails
+          ? (clue.discoveryDetails as any)
           : undefined,
       })),
-      conditions: (snapshotConditions as any[]).map((cond) => ({
-        type: cond.condition_type,
+      conditions: snapshotConditions.map((cond) => ({
+        type: cond.conditionType as ScenarioCondition["type"],
         description: cond.description,
-        mechanicalEffect: cond.mechanical_effect || undefined,
+        mechanicalEffect: cond.mechanicalEffect || undefined,
       })),
-      keeperNotes: snapshotRow.keeper_notes || undefined,
-      timeRestriction: snapshotRow.time_restriction || undefined,
+      keeperNotes: snapshotRow.keeperNotes || undefined,
+      timeRestriction: snapshotRow.timeRestriction || undefined,
     };
   };
 
-  // Load all initial snapshots (one per scenario)
-  const hasSceneImagePath = db.hasColumn(
-    "scenario_snapshots",
-    "scene_image_path"
-  );
-  const sceneImagePathCol = hasSceneImagePath ? ", ss.scene_image_path" : "";
-  const hasSnapshotEmailId = db.hasColumn("scenario_snapshots", "email_id");
-  const hasScenarioEmailId = db.hasColumn("scenarios", "email_id");
-  const initialSnapshotParams: any[] = [];
-  let initialSnapshotWhere = "ss.initial_snapshot = 1";
-  if (resolvedEmailId && hasSnapshotEmailId) {
-    initialSnapshotWhere += " AND ss.email_id = ?";
-    initialSnapshotParams.push(resolvedEmailId);
-  } else if (resolvedEmailId && hasScenarioEmailId) {
-    initialSnapshotWhere += " AND s.email_id = ?";
-    initialSnapshotParams.push(resolvedEmailId);
-  }
-
-  const allInitialSnapshots = database
-    .prepare(`
-    SELECT
-      ss.snapshot_id, ss.scenario_id, ss.snapshot_name, ss.location,
-      ss.description, ss.events, ss.keeper_notes,
-      ss.time_restriction, ss.show_map, ss.game_time${sceneImagePathCol},
-      s.name as scenario_name
-    FROM scenario_snapshots ss
-    JOIN scenarios s ON ss.scenario_id = s.scenario_id
-    WHERE ${initialSnapshotWhere}
-    ORDER BY ss.scenario_id
-  `)
-    .all(...initialSnapshotParams) as any[];
+  // Load all initial snapshots (one per scenario) with related scenario name
+  const allInitialSnapshots = await prisma.scenarioSnapshot.findMany({
+    where: {
+      initialSnapshot: true,
+      ...(resolvedEmailId
+        ? {
+            OR: [
+              { emailId: resolvedEmailId },
+              { scenario: { emailId: resolvedEmailId } },
+            ],
+          }
+        : {}),
+    },
+    include: {
+      scenario: {
+        select: { name: true },
+      },
+    },
+    orderBy: { scenarioId: "asc" },
+  });
 
   // Build snapshots and group by scenario_id
   for (const snapshotRow of allInitialSnapshots) {
-    const snapshot = buildSnapshotFromRow(snapshotRow);
+    const snapshot = await buildSnapshotFromRow(snapshotRow);
 
     // Store in map (one snapshot per scenario for initial snapshots)
-    if (!initialSnapshotsMap.has(snapshotRow.scenario_id)) {
-      initialSnapshotsMap.set(snapshotRow.scenario_id, []);
+    if (!initialSnapshotsMap.has(snapshotRow.scenarioId)) {
+      initialSnapshotsMap.set(snapshotRow.scenarioId, []);
     }
-    initialSnapshotsMap.get(snapshotRow.scenario_id)!.push(snapshot);
+    initialSnapshotsMap.get(snapshotRow.scenarioId)!.push(snapshot);
   }
 
   // Set the first initial snapshot as currentScenario (for player's starting scene)
   if (allInitialSnapshots.length > 0) {
     const firstInitialSnapshot = allInitialSnapshots[0];
-    currentScenario = buildSnapshotFromRow(firstInitialSnapshot);
+    currentScenario = await buildSnapshotFromRow(firstInitialSnapshot);
 
     console.log(
-      `[DynamicGameState] Found initial snapshot: ${firstInitialSnapshot.snapshot_name || firstInitialSnapshot.scenario_name} (${firstInitialSnapshot.location})`
+      `[DynamicGameState] Found initial snapshot: ${firstInitialSnapshot.snapshotName || firstInitialSnapshot.scenario?.name} (${firstInitialSnapshot.location})`
     );
 
     // Parse game time from snapshot
-    if (firstInitialSnapshot.game_time) {
+    if (firstInitialSnapshot.gameTime) {
       console.log(
-        `[DynamicGameState] Loading game time from snapshot: "${firstInitialSnapshot.game_time}"`
+        `[DynamicGameState] Loading game time from snapshot: "${firstInitialSnapshot.gameTime}"`
       );
-      const parsedTime = parseInitialGameTime(firstInitialSnapshot.game_time);
+      const parsedTime = parseInitialGameTime(firstInitialSnapshot.gameTime);
       if (parsedTime) {
         if (parsedTime.gameDay !== undefined) {
           gameDay = parsedTime.gameDay;
@@ -681,7 +671,7 @@ export async function initializeCompleteDynamicGameState(
         console.log(`[DynamicGameState] Set timeOfDay to: ${timeOfDay}`);
       } else {
         console.warn(
-          `[DynamicGameState] Failed to parse game_time: "${firstInitialSnapshot.game_time}", using defaults: Day ${gameDay}, ${timeOfDay}`
+          `[DynamicGameState] Failed to parse game_time: "${firstInitialSnapshot.gameTime}", using defaults: Day ${gameDay}, ${timeOfDay}`
         );
       }
     } else {
@@ -696,10 +686,10 @@ export async function initializeCompleteDynamicGameState(
   );
 
   // 3. Load all NPCs from database (not just current scenario)
-  const npcLoader = new NPCLoader(db, undefined, undefined, {
+  const npcLoader = new NPCLoader(db as any, undefined, undefined, {
     emailId: resolvedEmailId,
   });
-  const allNPCs = npcLoader.getAllNPCs();
+  const allNPCs = await npcLoader.getAllNPCs();
 
   // Convert all NPCs to DynamicNPCProfile format
   const npcCharacters: DynamicNPCProfile[] = allNPCs.map((npc) =>
@@ -754,9 +744,24 @@ export async function initializeCompleteDynamicGameState(
     updatedDynamicScenarioSnapshots: mergedSnapshots,
   };
 
-  // Create session record in database
+  // Create session record in database via Prisma upsert
   // This is required for checkpoint saves to work correctly
-  db.ensureSessionExists(params.sessionId, completeState);
+  const modName = completeState.moduleName || null;
+  await prisma.session.upsert({
+    where: { sessionId: params.sessionId },
+    create: {
+      sessionId: params.sessionId,
+      modName,
+      characterId: completeState.playerCharacter?.id || null,
+      characterName: completeState.playerCharacter?.name || null,
+      status: "active",
+      metadata: {},
+    },
+    update: {
+      lastActivityAt: new Date(),
+      modName: modName || undefined,
+    },
+  });
 
   console.log(
     `[DynamicGameState] Initialized complete state for module "${params.moduleName}" and created session record`

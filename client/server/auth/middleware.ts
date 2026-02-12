@@ -3,18 +3,7 @@ import type { Request, Response, NextFunction } from "express";
 import { generateAccessToken, verifyToken } from "./jwt.js";
 import { runWithTokenContext } from "../../../src/models/index.js";
 import { authDbService } from "./db-service.js";
-import Database from "better-sqlite3";
-import { CoCDatabase } from "../../../src/shared/agents/memory/database/schema.js";
-
-// Database instance
-let dbInstance: CoCDatabase | null = null;
-
-function getDB(): Database.Database {
-  if (!dbInstance) {
-    dbInstance = new CoCDatabase();
-  }
-  return dbInstance.getDatabase();
-}
+import { getPrismaClient } from "../../../src/shared/agents/memory/database/prismaClient.js";
 
 // Authentication middleware
 export async function authenticate(
@@ -36,23 +25,20 @@ export async function authenticate(
     const payload = verifyToken(token);
 
     // Check if user exists and is active
-    const db = getDB();
-    const user = db
-      .prepare(`
-      SELECT id, email, role, is_active
-      FROM users
-      WHERE id = ?
-    `)
-      .get(payload.userId) as any;
+    const prisma = getPrismaClient();
+    const user = await prisma.user.findUnique({
+      where: { id: payload.userId },
+      select: { id: true, email: true, role: true, isActive: true },
+    });
 
-    if (!user || !user.is_active) {
+    if (!user || !user.isActive) {
       return res.status(401).json({ error: "Invalid user" });
     }
 
     // Sliding session: touch refresh token if provided
     const refreshTokenHeader = req.headers["x-refresh-token"];
     if (typeof refreshTokenHeader === "string" && refreshTokenHeader) {
-      authDbService.touchRefreshToken(refreshTokenHeader, payload.email);
+      await authDbService.touchRefreshToken(refreshTokenHeader, payload.email);
     }
 
     // Issue a fresh access token for sliding expiration

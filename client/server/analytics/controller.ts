@@ -15,10 +15,10 @@ export async function getDailyAnalytics(req: Request, res: Response) {
     const days = Math.min(Number(req.query.days) || 30, 365); // Cap at 1 year
 
     // Get today's stats (calculates if not exists)
-    const todayStats = getTodayStats();
+    const todayStats = await getTodayStats();
 
     // Get historical stats
-    const historicalStats = getHistoricalStats(days);
+    const historicalStats = await getHistoricalStats(days);
 
     return res.json({
       today: todayStats,
@@ -42,13 +42,13 @@ export async function refreshAnalytics(req: Request, res: Response) {
     const today = new Date().toISOString().split('T')[0];
 
     // Calculate fresh stats
-    const stats = calculateDailyStats(today);
+    const stats = await calculateDailyStats(today);
 
     // Save to database
-    saveDailyStats(stats);
+    await saveDailyStats(stats);
 
     // Get the saved record
-    const todayStats = getTodayStats();
+    const todayStats = await getTodayStats();
 
     return res.json({
       success: true,

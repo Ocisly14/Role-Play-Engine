@@ -11,7 +11,7 @@ import type {
   ActionAnalysis,
 } from "../../../shared/state/index.js";
 import { actionRules } from "../../../shared/rules/index.js";
-import type { CoCDatabase } from "../../../shared/agents/memory/database/index.js";
+import type { CoCDatabase, CoCDatabaseAdapter } from "../../../shared/agents/memory/database/index.js";
 import type { DynamicScenarioSnapshot } from "../../world_builder/types.js";
 import {
   GameHistoryRag,
@@ -52,7 +52,7 @@ export const injectActionTypeRules = (
  * Real queries have actionAnalysis set by the Orchestrator Agent.
  */
 export const extractRecentConversationHistory = async (
-  db: CoCDatabase | undefined,
+  db: CoCDatabase | CoCDatabaseAdapter | undefined,
   sessionId: string,
   limit = 1
 ): Promise<
@@ -108,7 +108,7 @@ export const extractRecentConversationHistory = async (
  * Combines keyword matching with semantic similarity for better retrieval
  */
 export const retrieveRelevantHistory = async (
-  db: CoCDatabase | undefined,
+  db: CoCDatabase | CoCDatabaseAdapter | undefined,
   sessionId: string,
   query: string,
   options: {
@@ -172,7 +172,7 @@ export const retrieveRelevantHistory = async (
 export const enrichMemoryContext = async (
   gameState: DynamicGameState,
   actionAnalysis: ActionAnalysis | null,
-  db?: CoCDatabase,
+  db?: CoCDatabase | CoCDatabaseAdapter,
   characterInput?: string,
   language?: "en" | "zh"
 ): Promise<DynamicGameState> => {

@@ -5,7 +5,7 @@
  * which record each complete interaction cycle from character input to keeper narrative.
  */
 
-import type { CoCDatabase } from "../../../shared/agents/memory/database/index.js";
+import type { CoCDatabase, CoCDatabaseAdapter } from "../../../shared/agents/memory/database/index.js";
 import type { DynamicGameState } from "../../state/index.js";
 import { randomUUID } from "crypto";
 import { GameHistoryRag } from "../../../rag/gameHistoryRag.js";
@@ -77,10 +77,10 @@ export interface GameTurn {
 }
 
 export class TurnManager {
-  private db: CoCDatabase;
+  private db: CoCDatabase | CoCDatabaseAdapter;
   private ragManager: GameHistoryRag;
 
-  constructor(db: CoCDatabase) {
+  constructor(db: CoCDatabase | CoCDatabaseAdapter) {
     this.db = db;
     this.ragManager = new GameHistoryRag(db);
   }

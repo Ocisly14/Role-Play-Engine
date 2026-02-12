@@ -1,9 +1,10 @@
-import type { CoCDatabase } from "../../../src/shared/agents/memory/database/index.js";
+import type { CoCDatabase, CoCDatabaseAdapter } from "../../../src/shared/agents/memory/database/index.js";
 import { ScenarioLoader } from "../../../src/shared/agents/memory/scenarioloader/index.js";
 import { NPCLoader } from "../../../src/shared/agents/character/npcloader/index.js";
 import { ModuleLoader } from "../../../src/shared/agents/memory/moduleloader/index.js";
 import { WorldModuleLoader } from "../../../src/dynamicworldagent/world_builder/worldModuleLoader.js";
 import { registerModuleForUser } from "./library.js";
+import { getPrismaClient } from "../../../src/shared/agents/memory/database/prismaClient.js";
 import path from "path";
 import fs from "fs";
 
@@ -35,12 +36,12 @@ function isWorldBuilderModule(modPath: string): boolean {
  * @param onProgress - Optional progress callback for SSE
  */
 export async function loadMod(
-  db: CoCDatabase,
+  db: CoCDatabase | CoCDatabaseAdapter,
   modName: string,
   emailId?: string,
   onProgress?: ProgressCallback
 ): Promise<any> {
-  clearExistingModData(db, emailId);
+  await clearExistingModData(emailId);
 
   const modsDir = path.join(process.cwd(), "data", "Mods");
   const modPath = path.join(modsDir, modName);
@@ -77,7 +78,7 @@ export async function loadMod(
     );
 
     if (emailId) {
-      registerModuleForUser(db, emailId, modName);
+      await registerModuleForUser(emailId, modName);
     }
 
     return {
@@ -171,7 +172,7 @@ export async function loadMod(
   );
 
   if (emailId) {
-    registerModuleForUser(db, emailId, modName);
+    await registerModuleForUser(emailId, modName);
   }
 
   return {
@@ -185,77 +186,22 @@ export async function loadMod(
   };
 }
 
-function clearExistingModData(db: CoCDatabase, emailId?: string): void {
+async function clearExistingModData(emailId?: string): Promise<void> {
   if (!emailId) throw new Error("emailId is required for clearExistingModData");
 
-  const database = db.getDatabase();
-  db.transaction(() => {
-    const hasScenarioEmailId = db.hasColumn("scenarios", "email_id");
-    const hasSnapshotEmailId = db.hasColumn("scenario_snapshots", "email_id");
-    const hasScenarioCharactersEmailId = db.hasColumn(
-      "scenario_characters",
-      "email_id"
-    );
-    const hasScenarioCluesEmailId = db.hasColumn("scenario_clues", "email_id");
-    const hasScenarioConditionsEmailId = db.hasColumn(
-      "scenario_conditions",
-      "email_id"
-    );
-    const hasModuleEmailId = db.hasColumn("module_backgrounds", "email_id");
-    const hasNpcRelEmailId = db.hasColumn("npc_relationships", "email_id");
-    const hasNpcClueEmailId = db.hasColumn("npc_clues", "email_id");
-    const hasCharacterEmailId = db.hasColumn("characters", "email_id");
-    const hasRelationshipsEmailId = db.hasColumn("relationships", "email_id");
+  const prisma = getPrismaClient();
 
-    database
-      .prepare(
-        `DELETE FROM scenario_clues${hasScenarioCluesEmailId ? " WHERE email_id = ?" : ""}`
-      )
-      .run(...(hasScenarioCluesEmailId ? [emailId] : []));
-    database
-      .prepare(
-        `DELETE FROM scenario_conditions${hasScenarioConditionsEmailId ? " WHERE email_id = ?" : ""}`
-      )
-      .run(...(hasScenarioConditionsEmailId ? [emailId] : []));
-    database
-      .prepare(
-        `DELETE FROM scenario_characters${hasScenarioCharactersEmailId ? " WHERE email_id = ?" : ""}`
-      )
-      .run(...(hasScenarioCharactersEmailId ? [emailId] : []));
-    database
-      .prepare(
-        `DELETE FROM scenario_snapshots${hasSnapshotEmailId ? " WHERE email_id = ?" : ""}`
-      )
-      .run(...(hasSnapshotEmailId ? [emailId] : []));
-    database
-      .prepare(
-        `DELETE FROM scenarios${hasScenarioEmailId ? " WHERE email_id = ?" : ""}`
-      )
-      .run(...(hasScenarioEmailId ? [emailId] : []));
-    database
-      .prepare(
-        `DELETE FROM module_backgrounds${hasModuleEmailId ? " WHERE email_id = ?" : ""}`
-      )
-      .run(...(hasModuleEmailId ? [emailId] : []));
-    database
-      .prepare(
-        `DELETE FROM npc_relationships${hasNpcRelEmailId ? " WHERE email_id = ?" : ""}`
-      )
-      .run(...(hasNpcRelEmailId ? [emailId] : []));
-    database
-      .prepare(
-        `DELETE FROM npc_clues${hasNpcClueEmailId ? " WHERE email_id = ?" : ""}`
-      )
-      .run(...(hasNpcClueEmailId ? [emailId] : []));
-    database
-      .prepare(
-        `DELETE FROM relationships${hasRelationshipsEmailId ? " WHERE email_id = ?" : ""}`
-      )
-      .run(...(hasRelationshipsEmailId ? [emailId] : []));
-    database
-      .prepare(
-        `DELETE FROM characters WHERE is_npc = 1${hasCharacterEmailId ? " AND email_id = ?" : ""}`
-      )
-      .run(...(hasCharacterEmailId ? [emailId] : []));
-  });
+  // Delete in FK-respecting order within a transaction
+  await prisma.$transaction([
+    prisma.scenarioClue.deleteMany({ where: { emailId } }),
+    prisma.scenarioCondition.deleteMany({ where: { emailId } }),
+    prisma.scenarioCharacter.deleteMany({ where: { emailId } }),
+    prisma.scenarioSnapshot.deleteMany({ where: { emailId } }),
+    prisma.scenario.deleteMany({ where: { emailId } }),
+    prisma.moduleBackground.deleteMany({ where: { emailId } }),
+    prisma.npcRelationship.deleteMany({ where: { emailId } }),
+    prisma.npcClue.deleteMany({ where: { emailId } }),
+    prisma.relationship.deleteMany({ where: { emailId } }),
+    prisma.character.deleteMany({ where: { isNpc: true, emailId } }),
+  ]);
 }

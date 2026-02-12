@@ -1,5 +1,5 @@
 import { AsyncLocalStorage } from "async_hooks";
-import { CoCDatabase } from "../shared/agents/memory/database/schema.js";
+import { CoCDatabaseAdapter } from "../shared/agents/memory/database/CoCDatabaseAdapter.js";
 import { ModelClass, ModelProviderName } from "./types.js";
 
 export type TokenUsageContext = {
@@ -23,10 +23,10 @@ type TokenUsageRecord = TokenUsageTotals & {
 };
 
 const storage = new AsyncLocalStorage<TokenUsageContext>();
-let tokenUsageDb: CoCDatabase | null = null;
+let tokenUsageDb: CoCDatabaseAdapter | null = null;
 const tokenUsageWrapped = Symbol.for("coc.tokenUsageWrapped");
 
-export function configureTokenUsageDatabase(db: CoCDatabase): void {
+export function configureTokenUsageDatabase(db: CoCDatabaseAdapter): void {
   tokenUsageDb = db;
 }
 
@@ -53,10 +53,10 @@ export function getCurrentUsageTotals(): TokenUsageTotals | null {
   };
 }
 
-function getUsageDb(): CoCDatabase | null {
+function getUsageDb(): CoCDatabaseAdapter | null {
   if (tokenUsageDb) return tokenUsageDb;
   try {
-    tokenUsageDb = new CoCDatabase();
+    tokenUsageDb = new CoCDatabaseAdapter();
     return tokenUsageDb;
   } catch (error) {
     console.warn("[TokenUsage] Failed to initialize database:", error);

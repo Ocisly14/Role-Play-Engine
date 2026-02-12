@@ -30,10 +30,12 @@ import type {
   DynamicNPCProfile,
   DynamicScenarioSnapshot,
 } from "../world_builder/types.js";
-import type { CoCDatabase } from "../../shared/agents/memory/database/index.js";
+import type { CoCDatabase, CoCDatabaseAdapter } from "../../shared/agents/memory/database/index.js";
+import type { ScenarioClue, ScenarioCondition } from "../../shared/agents/models/scenarioTypes.js";
 import { InventoryUtils } from "../../shared/agents/models/gameTypes.js";
 import { randomUUID } from "crypto";
 import { resolveEmailId } from "../../shared/agents/memory/database/userContext.js";
+import { getPrismaClient } from "../../shared/agents/memory/database/prismaClient.js";
 
 /**
  * Temporary Info for Dynamic World
@@ -214,9 +216,9 @@ export const initialDynamicGameState = (params: {
  */
 export class DynamicGameStateManager {
   private state: DynamicGameState;
-  private db: CoCDatabase | null;
+  private db: any;
 
-  constructor(state: DynamicGameState, db?: CoCDatabase) {
+  constructor(state: DynamicGameState, db?: any) {
     this.state = state;
     this.db = db || null;
   }
@@ -224,7 +226,7 @@ export class DynamicGameStateManager {
   /**
    * Set database instance for snapshot management
    */
-  setDb(db: CoCDatabase): void {
+  setDb(db: any): void {
     this.db = db;
   }
 
@@ -729,58 +731,49 @@ export class DynamicGameStateManager {
    * Load historical snapshots from database for a scenario
    * Only loads snapshots that are marked as dynamic historical and are at or before checkpoint time
    */
-  private static loadHistoricalSnapshotsFromDatabase(
-    db: CoCDatabase,
+  private static async loadHistoricalSnapshotsFromDatabase(
+    db: CoCDatabase | CoCDatabaseAdapter,
     scenarioId: string,
     checkpointGameDay: number,
     checkpointTimeOfDay: string
-  ): DynamicScenarioSnapshot[] {
+  ): Promise<DynamicScenarioSnapshot[]> {
     try {
-      const database = db.getDatabase();
+      const prisma = getPrismaClient();
       const emailId = resolveEmailId();
-      const hasDynamicHistorical = db.hasColumn(
-        "scenario_snapshots",
-        "is_dynamic_historical"
-      );
-      const hasGameTime = db.hasColumn("scenario_snapshots", "game_time");
-      const hasSnapshotEmailId = db.hasColumn("scenario_snapshots", "email_id");
-      const hasCharacterEmailId = db.hasColumn(
-        "scenario_characters",
-        "email_id"
-      );
-      const hasClueEmailId = db.hasColumn("scenario_clues", "email_id");
-      const hasConditionEmailId = db.hasColumn(
-        "scenario_conditions",
-        "email_id"
-      );
-
-      if (!hasDynamicHistorical || !hasGameTime) {
-        return []; // Cannot load if columns don't exist
-      }
 
       // Query all historical snapshots for this scenario
-      // We'll filter by gameTime in TypeScript since SQL string comparison may not work correctly
-      const snapshotRows = database
-        .prepare(`
-        SELECT * FROM scenario_snapshots
-        WHERE scenario_id = ? 
-          AND is_dynamic_historical = 1${hasSnapshotEmailId && emailId ? " AND email_id = ?" : ""}
-        ORDER BY game_time ASC, created_at ASC
-      `)
-        .all(
-          ...(hasSnapshotEmailId && emailId
-            ? [scenarioId, emailId]
-            : [scenarioId])
-        ) as any[];
+      // Include related characters, clues, and conditions
+      const snapshotRows = await prisma.scenarioSnapshot.findMany({
+        where: {
+          scenarioId,
+          isDynamicHistorical: true,
+          ...(emailId ? { emailId } : {}),
+        },
+        include: {
+          characters: {
+            where: emailId ? { emailId } : {},
+          },
+          clues: {
+            where: emailId ? { emailId } : {},
+          },
+          conditions: {
+            where: emailId ? { emailId } : {},
+          },
+        },
+        orderBy: [
+          { gameTime: "asc" },
+          { createdAt: "asc" },
+        ],
+      });
 
       const checkpointTime = `Day ${checkpointGameDay}, ${checkpointTimeOfDay}`;
       const historicalSnapshots: DynamicScenarioSnapshot[] = [];
 
       for (const row of snapshotRows) {
         // Filter by checkpoint gameTime
-        if (row.game_time) {
+        if (row.gameTime) {
           const comparison = this.compareGameTime(
-            row.game_time,
+            row.gameTime,
             checkpointTime
           );
           if (comparison !== null && comparison > 0) {
@@ -788,81 +781,41 @@ export class DynamicGameStateManager {
             continue;
           }
         }
-        // If game_time is null, keep it (assume it's before checkpoint)
-        // Load characters, clues, conditions for this snapshot
-        const characters = database
-          .prepare(`
-          SELECT id, character_name, character_role, character_status,
-                 character_location, character_notes
-          FROM scenario_characters
-          WHERE snapshot_id = ?${hasCharacterEmailId && emailId ? " AND email_id = ?" : ""}
-        `)
-          .all(
-            ...(hasCharacterEmailId && emailId
-              ? [row.snapshot_id, emailId]
-              : [row.snapshot_id])
-          ) as any[];
-
-        const clues = database
-          .prepare(`
-          SELECT clue_id, clue_text, category, difficulty, clue_location,
-                 discovery_method, reveals, discovered, discovery_details
-          FROM scenario_clues
-          WHERE snapshot_id = ?${hasClueEmailId && emailId ? " AND email_id = ?" : ""}
-        `)
-          .all(
-            ...(hasClueEmailId && emailId
-              ? [row.snapshot_id, emailId]
-              : [row.snapshot_id])
-          ) as any[];
-
-        const conditions = database
-          .prepare(`
-          SELECT condition_id, condition_type, description, mechanical_effect
-          FROM scenario_conditions
-          WHERE snapshot_id = ?${hasConditionEmailId && emailId ? " AND email_id = ?" : ""}
-        `)
-          .all(
-            ...(hasConditionEmailId && emailId
-              ? [row.snapshot_id, emailId]
-              : [row.snapshot_id])
-          ) as any[];
+        // If gameTime is null, keep it (assume it's before checkpoint)
 
         // Build snapshot object
         const snapshot: DynamicScenarioSnapshot = {
-          id: row.snapshot_id,
-          name: row.snapshot_name || `Historical snapshot for ${scenarioId}`,
+          id: row.snapshotId,
+          name: row.snapshotName || `Historical snapshot for ${scenarioId}`,
           location: row.location,
           description: row.description,
-          gameTime: row.game_time || undefined,
-          showMap: row.show_map === 1,
-          keeperNotes: row.keeper_notes || undefined,
-          timeRestriction: row.time_restriction || undefined,
-          characters: characters.map((char) => ({
+          gameTime: row.gameTime || undefined,
+          showMap: row.showMap === true,
+          keeperNotes: row.keeperNotes || undefined,
+          timeRestriction: row.timeRestriction || undefined,
+          characters: row.characters.map((char) => ({
             id: char.id,
-            name: char.character_name,
-            role: char.character_role,
-            status: char.character_status,
-            location: char.character_location || undefined,
-            notes: char.character_notes || undefined,
+            name: char.characterName,
+            role: char.characterRole,
+            status: char.characterStatus,
+            location: char.characterLocation || undefined,
+            notes: char.characterNotes || undefined,
           })),
-          clues: clues.map((clue) => ({
-            id: clue.clue_id,
-            clueText: clue.clue_text,
-            category: clue.category,
-            difficulty: clue.difficulty,
-            location: clue.clue_location,
-            discoveryMethod: clue.discovery_method || undefined,
-            reveals: clue.reveals ? JSON.parse(clue.reveals) : [],
-            discovered: clue.discovered === 1,
-            discoveryDetails: clue.discovery_details
-              ? JSON.parse(clue.discovery_details)
-              : undefined,
+          clues: row.clues.map((clue) => ({
+            id: clue.clueId,
+            clueText: clue.clueText,
+            category: clue.category as ScenarioClue["category"],
+            difficulty: clue.difficulty as ScenarioClue["difficulty"],
+            location: clue.clueLocation,
+            discoveryMethod: clue.discoveryMethod || undefined,
+            reveals: (clue.reveals as any[]) || [],
+            discovered: clue.discovered === true,
+            discoveryDetails: (clue.discoveryDetails as any) || undefined,
           })),
-          conditions: conditions.map((cond) => ({
-            type: cond.condition_type,
+          conditions: row.conditions.map((cond) => ({
+            type: cond.conditionType as ScenarioCondition["type"],
             description: cond.description,
-            mechanicalEffect: cond.mechanical_effect || undefined,
+            mechanicalEffect: cond.mechanicalEffect || undefined,
           })),
         };
 
@@ -872,7 +825,7 @@ export class DynamicGameStateManager {
       return historicalSnapshots;
     } catch (error) {
       console.error(
-        `❌ [DynamicGameState] Failed to load historical snapshots from database:`,
+        `[DynamicGameState] Failed to load historical snapshots from database:`,
         error
       );
       return [];
@@ -1567,10 +1520,10 @@ export class DynamicGameStateManager {
   /**
    * Save old snapshot to database
    */
-  private saveOldSnapshotToDatabase(
+  private async saveOldSnapshotToDatabase(
     scenarioId: string,
     snapshot: DynamicScenarioSnapshot
-  ): void {
+  ): Promise<void> {
     if (!this.db) {
       console.warn(
         `[DynamicGameState] Cannot save old snapshot to database: no database instance provided`
@@ -1579,31 +1532,17 @@ export class DynamicGameStateManager {
     }
 
     try {
-      const database = this.db.getDatabase();
+      const prisma = getPrismaClient();
       const emailId = resolveEmailId();
-      const hasEmailIdColumn = this.db.hasColumn(
-        "scenario_snapshots",
-        "email_id"
-      );
-      const hasCharacterEmailId = this.db.hasColumn(
-        "scenario_characters",
-        "email_id"
-      );
-      const hasClueEmailId = this.db.hasColumn("scenario_clues", "email_id");
-      const hasConditionEmailId = this.db.hasColumn(
-        "scenario_conditions",
-        "email_id"
-      );
 
       // Generate a unique snapshot ID for historical snapshot
       const historicalSnapshotId = `hist-${scenarioId}-${Date.now()}-${randomUUID().slice(0, 8)}`;
 
       // Check if snapshot already exists (shouldn't happen for historical snapshots, but check anyway)
-      const existing = database
-        .prepare(
-          `SELECT snapshot_id FROM scenario_snapshots WHERE snapshot_id = ?`
-        )
-        .get(historicalSnapshotId);
+      const existing = await prisma.scenarioSnapshot.findUnique({
+        where: { snapshotId: historicalSnapshotId },
+        select: { snapshotId: true },
+      });
 
       if (existing) {
         console.warn(
@@ -1612,174 +1551,75 @@ export class DynamicGameStateManager {
         return;
       }
 
-      // Check database columns
-      const hasInitialSnapshot = this.db.hasColumn(
-        "scenario_snapshots",
-        "initial_snapshot"
-      );
-      const hasGameTime = this.db.hasColumn("scenario_snapshots", "game_time");
-      const hasDynamicHistorical = this.db.hasColumn(
-        "scenario_snapshots",
-        "is_dynamic_historical"
-      );
-
-      // Insert snapshot
-      if (hasInitialSnapshot && hasGameTime && hasDynamicHistorical) {
-        const snapshotStmt = database.prepare(`
-          INSERT INTO scenario_snapshots (
-            snapshot_id, scenario_id, snapshot_name, location, description,
-            events, exits, keeper_notes, time_restriction, show_map,
-            initial_snapshot, game_time, is_dynamic_historical${hasEmailIdColumn ? ", email_id" : ""}
-          ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?${hasEmailIdColumn ? ", ?" : ""})
-        `);
-
-        snapshotStmt.run(
-          historicalSnapshotId,
+      // Insert snapshot with all related data in a transaction
+      await prisma.scenarioSnapshot.create({
+        data: {
+          snapshotId: historicalSnapshotId,
           scenarioId,
-          snapshot.name || `Historical snapshot for ${scenarioId}`,
-          snapshot.location,
-          snapshot.description,
-          JSON.stringify([]), // events removed
-          JSON.stringify([]), // exits removed
-          snapshot.keeperNotes || null,
-          snapshot.timeRestriction || null,
-          snapshot.showMap === false ? 0 : 1,
-          0, // initial_snapshot = false for historical snapshots
-          snapshot.gameTime || null,
-          1, // is_dynamic_historical = true for dynamic historical snapshots
-          ...(hasEmailIdColumn ? [emailId ?? null] : [])
-        );
-      } else if (hasInitialSnapshot && hasGameTime) {
-        const snapshotStmt = database.prepare(`
-          INSERT INTO scenario_snapshots (
-            snapshot_id, scenario_id, snapshot_name, location, description,
-            events, exits, keeper_notes, time_restriction, show_map,
-            initial_snapshot, game_time${hasEmailIdColumn ? ", email_id" : ""}
-          ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?${hasEmailIdColumn ? ", ?" : ""})
-        `);
-
-        snapshotStmt.run(
-          historicalSnapshotId,
-          scenarioId,
-          snapshot.name || `Historical snapshot for ${scenarioId}`,
-          snapshot.location,
-          snapshot.description,
-          JSON.stringify([]), // events removed
-          JSON.stringify([]), // exits removed
-          snapshot.keeperNotes || null,
-          snapshot.timeRestriction || null,
-          snapshot.showMap === false ? 0 : 1,
-          0, // initial_snapshot = false for historical snapshots
-          snapshot.gameTime || null,
-          ...(hasEmailIdColumn ? [emailId ?? null] : [])
-        );
-      } else {
-        const snapshotStmt = database.prepare(`
-          INSERT INTO scenario_snapshots (
-            snapshot_id, scenario_id, snapshot_name, location, description,
-            events, exits, keeper_notes, time_restriction, show_map${hasEmailIdColumn ? ", email_id" : ""}
-          ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?${hasEmailIdColumn ? ", ?" : ""})
-        `);
-
-        snapshotStmt.run(
-          historicalSnapshotId,
-          scenarioId,
-          snapshot.name || `Historical snapshot for ${scenarioId}`,
-          snapshot.location,
-          snapshot.description,
-          JSON.stringify([]), // events removed
-          JSON.stringify([]), // exits removed
-          snapshot.keeperNotes || null,
-          snapshot.timeRestriction || null,
-          snapshot.showMap === false ? 0 : 1,
-          ...(hasEmailIdColumn ? [emailId ?? null] : [])
-        );
-      }
-
-      // Insert characters if present
-      if (snapshot.characters && snapshot.characters.length > 0) {
-        const charStmt = database.prepare(`
-          INSERT OR IGNORE INTO scenario_characters (
-            id, snapshot_id, character_name, character_role, character_status,
-            character_location, character_notes${hasCharacterEmailId ? ", email_id" : ""}
-          ) VALUES (?, ?, ?, ?, ?, ?, ?${hasCharacterEmailId ? ", ?" : ""})
-        `);
-
-        for (const char of snapshot.characters) {
-          const charId =
-            char.id ||
-            `${historicalSnapshotId}-char-${randomUUID().slice(0, 8)}`;
-          charStmt.run(
-            charId,
-            historicalSnapshotId,
-            char.name,
-            char.role,
-            char.status,
-            char.location || null,
-            char.notes || null,
-            ...(hasCharacterEmailId ? [emailId ?? null] : [])
-          );
-        }
-      }
-
-      // Insert clues if present
-      if (snapshot.clues && snapshot.clues.length > 0) {
-        const clueStmt = database.prepare(`
-          INSERT OR IGNORE INTO scenario_clues (
-            clue_id, snapshot_id, clue_text, category, difficulty,
-            clue_location, discovery_method, reveals, discovered, discovery_details${hasClueEmailId ? ", email_id" : ""}
-          ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?${hasClueEmailId ? ", ?" : ""})
-        `);
-
-        for (const clue of snapshot.clues) {
-          const clueId =
-            clue.id ||
-            `${historicalSnapshotId}-clue-${randomUUID().slice(0, 8)}`;
-          clueStmt.run(
-            clueId,
-            historicalSnapshotId,
-            clue.clueText,
-            clue.category,
-            clue.difficulty,
-            clue.location,
-            clue.discoveryMethod || null,
-            JSON.stringify(clue.reveals || []),
-            clue.discovered ? 1 : 0,
-            clue.discoveryDetails
-              ? JSON.stringify(clue.discoveryDetails)
-              : null,
-            ...(hasClueEmailId ? [emailId ?? null] : [])
-          );
-        }
-      }
-
-      // Insert conditions if present
-      if (snapshot.conditions && snapshot.conditions.length > 0) {
-        const conditionStmt = database.prepare(`
-          INSERT OR IGNORE INTO scenario_conditions (
-            condition_id, snapshot_id, condition_type, description, mechanical_effect${hasConditionEmailId ? ", email_id" : ""}
-          ) VALUES (?, ?, ?, ?, ?${hasConditionEmailId ? ", ?" : ""})
-        `);
-
-        for (const condition of snapshot.conditions) {
-          const conditionId = `${historicalSnapshotId}-cond-${randomUUID().slice(0, 8)}`;
-          conditionStmt.run(
-            conditionId,
-            historicalSnapshotId,
-            condition.type,
-            condition.description,
-            condition.mechanicalEffect || null,
-            ...(hasConditionEmailId ? [emailId ?? null] : [])
-          );
-        }
-      }
+          snapshotName: snapshot.name || `Historical snapshot for ${scenarioId}`,
+          location: snapshot.location,
+          description: snapshot.description,
+          events: [],
+          exits: [],
+          keeperNotes: snapshot.keeperNotes || null,
+          timeRestriction: snapshot.timeRestriction || null,
+          showMap: snapshot.showMap !== false,
+          initialSnapshot: false,
+          gameTime: snapshot.gameTime || null,
+          isDynamicHistorical: true,
+          emailId: emailId ?? null,
+          // Create related characters
+          characters: snapshot.characters && snapshot.characters.length > 0
+            ? {
+                create: snapshot.characters.map((char) => ({
+                  id: char.id || `${historicalSnapshotId}-char-${randomUUID().slice(0, 8)}`,
+                  characterName: char.name,
+                  characterRole: char.role,
+                  characterStatus: char.status,
+                  characterLocation: char.location || null,
+                  characterNotes: char.notes || null,
+                  emailId: emailId ?? null,
+                })),
+              }
+            : undefined,
+          // Create related clues
+          clues: snapshot.clues && snapshot.clues.length > 0
+            ? {
+                create: snapshot.clues.map((clue) => ({
+                  clueId: clue.id || `${historicalSnapshotId}-clue-${randomUUID().slice(0, 8)}`,
+                  clueText: clue.clueText,
+                  category: clue.category,
+                  difficulty: clue.difficulty,
+                  clueLocation: clue.location,
+                  discoveryMethod: clue.discoveryMethod || null,
+                  reveals: clue.reveals || [],
+                  discovered: clue.discovered === true,
+                  discoveryDetails: (clue.discoveryDetails || undefined) as any,
+                  emailId: emailId ?? null,
+                })),
+              }
+            : undefined,
+          // Create related conditions
+          conditions: snapshot.conditions && snapshot.conditions.length > 0
+            ? {
+                create: snapshot.conditions.map((condition) => ({
+                  conditionId: `${historicalSnapshotId}-cond-${randomUUID().slice(0, 8)}`,
+                  conditionType: condition.type,
+                  description: condition.description,
+                  mechanicalEffect: condition.mechanicalEffect || null,
+                  emailId: emailId ?? null,
+                })),
+              }
+            : undefined,
+        },
+      });
 
       console.log(
-        `💾 [DynamicGameState] Saved old snapshot to database: ${historicalSnapshotId} for scenario ${scenarioId}`
+        `[DynamicGameState] Saved old snapshot to database: ${historicalSnapshotId} for scenario ${scenarioId}`
       );
     } catch (error) {
       console.error(
-        `❌ [DynamicGameState] Failed to save old snapshot to database:`,
+        `[DynamicGameState] Failed to save old snapshot to database:`,
         error
       );
       // Don't throw - snapshot save failure shouldn't block game updates
@@ -1791,10 +1631,10 @@ export class DynamicGameStateManager {
    * Automatically adds timestamp if not present
    * Keeps only the latest 2 snapshots in state, saves older ones to database
    */
-  setUpdatedDynamicScenarioSnapshot(
+  async setUpdatedDynamicScenarioSnapshot(
     scenarioId: string,
     snapshot: DynamicScenarioSnapshot
-  ): void {
+  ): Promise<void> {
     // Add timestamp if not present
     const snapshotWithTimestamp: DynamicScenarioSnapshot = {
       ...snapshot,
@@ -1812,7 +1652,7 @@ export class DynamicGameStateManager {
       // Save all snapshots except the latest 2
       const snapshotsToSave = snapshots.slice(0, snapshots.length - 2);
       for (const oldSnapshot of snapshotsToSave) {
-        this.saveOldSnapshotToDatabase(scenarioId, oldSnapshot);
+        await this.saveOldSnapshotToDatabase(scenarioId, oldSnapshot);
       }
 
       // Keep only the latest 2 snapshots

@@ -7,6 +7,53 @@ interface UseCharacterCreationProps {
   onCharacterCreated?: (characterId: string) => void;
 }
 
+const OCCUPATIONAL_ATTRIBUTES = [
+  "STR",
+  "CON",
+  "DEX",
+  "APP",
+  "POW",
+  "SIZ",
+  "INT",
+  "EDU",
+] as const;
+
+function calculateOccupationalPointsFromExpression(
+  occupation: any,
+  form: Record<string, string>
+): number {
+  const expression = occupation?.suggested_occupational_points?.expression;
+  if (typeof expression !== "string" || expression.trim().length === 0) {
+    return 0;
+  }
+
+  // Allow only simple math expressions with known attribute identifiers.
+  if (!/^[A-Z0-9+\-*/().\s]+$/.test(expression)) {
+    return 0;
+  }
+
+  let evaluated = expression;
+  for (const attr of OCCUPATIONAL_ATTRIBUTES) {
+    const attrValue = Number(form[attr] ?? 0) || 0;
+    evaluated = evaluated.replace(new RegExp(`\\b${attr}\\b`, "g"), String(attrValue));
+  }
+
+  // After substitution, only numeric math symbols should remain.
+  if (!/^[0-9+\-*/().\s]+$/.test(evaluated)) {
+    return 0;
+  }
+
+  try {
+    const value = Number(Function(`"use strict"; return (${evaluated});`)());
+    if (!Number.isFinite(value)) {
+      return 0;
+    }
+    return Math.floor(value);
+  } catch {
+    return 0;
+  }
+}
+
 export const useCharacterCreation = ({
   onCharacterCreated,
 }: UseCharacterCreationProps = {}) => {
@@ -78,17 +125,43 @@ export const useCharacterCreation = ({
 
   // Update skill points when occupation or attributes change
   useEffect(() => {
-    if (selectedOccupation && form.EDU) {
-      const eduValue = Number(form.EDU) || 0;
-      const occupationalPoints = eduValue * selectedOccupation.skillPointMultiplier;
-      setOccupationalPoints(occupationalPoints);
+    if (selectedOccupation) {
+      setOccupationalPoints(
+        calculateOccupationalPointsFromExpression(selectedOccupation, form)
+      );
+    } else {
+      setOccupationalPoints(0);
     }
 
-    if (form.INT) {
-      const intValue = Number(form.INT) || 0;
-      setInterestPoints(intValue * 2);
+    const intValue = Number(form.INT) || 0;
+    setInterestPoints(intValue * 2);
+  }, [selectedOccupation, form]);
+
+  // Keep selectedOccupation in sync with form value and loaded occupation list.
+  useEffect(() => {
+    const formOccupation = (form.occupation || "").trim();
+    if (!formOccupation) {
+      if (selectedOccupation) {
+        setSelectedOccupation(null);
+      }
+      return;
     }
-  }, [selectedOccupation, form.EDU, form.INT]);
+
+    const normalized = formOccupation.toLowerCase();
+    const matched = occupations.find((occ) => {
+      const en = typeof occ.name_en === "string" ? occ.name_en.trim().toLowerCase() : "";
+      const zh = typeof occ.name_zh === "string" ? occ.name_zh.trim().toLowerCase() : "";
+      return en === normalized || zh === normalized;
+    });
+
+    if (!matched) {
+      return;
+    }
+
+    if (!selectedOccupation || selectedOccupation.id !== matched.id) {
+      setSelectedOccupation(matched);
+    }
+  }, [form.occupation, occupations, selectedOccupation]);
 
   // Handle form changes
   const onChange = useCallback((key: string, value: string) => {
@@ -96,10 +169,19 @@ export const useCharacterCreation = ({
   }, []);
 
   // Handle occupation selection
-  const handleOccupationSelect = useCallback((occupation: any) => {
-    setSelectedOccupation(occupation);
-    onChange("occupation", occupation.name);
-  }, [onChange]);
+  const handleOccupationSelect = useCallback(
+    (occupation: any) => {
+      if (!occupation) {
+        setSelectedOccupation(null);
+        onChange("occupation", "");
+        return;
+      }
+
+      setSelectedOccupation(occupation);
+      onChange("occupation", occupation.name_en || occupation.name_zh || "");
+    },
+    [onChange]
+  );
 
   // Calculate skills state
   const skillsState = useMemo(() => {
@@ -128,8 +210,8 @@ export const useCharacterCreation = ({
     return {
       occupationalUsed,
       interestUsed,
-      occupationalRemaining: Math.max(0, occupationalPoints - occupationalUsed),
-      interestRemaining: Math.max(0, interestPoints - interestUsed),
+      occupationalRemaining: occupationalPoints - occupationalUsed,
+      interestRemaining: interestPoints - interestUsed,
     };
   }, [skillsState, occupationalPoints, interestPoints]);
 

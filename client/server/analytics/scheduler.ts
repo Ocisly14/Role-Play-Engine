@@ -16,15 +16,15 @@ function getMillisecondsUntilMidnight(): number {
 /**
  * Save analytics for the previous day
  */
-function saveYesterdayAnalytics(): void {
+async function saveYesterdayAnalytics(): Promise<void> {
   try {
     const yesterday = new Date();
     yesterday.setDate(yesterday.getDate() - 1);
     const dateStr = yesterday.toISOString().split('T')[0];
 
     console.log(`[Analytics Scheduler] Calculating stats for ${dateStr}...`);
-    const stats = calculateDailyStats(dateStr);
-    saveDailyStats(stats);
+    const stats = await calculateDailyStats(dateStr);
+    await saveDailyStats(stats);
     console.log(`[Analytics Scheduler] Stats saved for ${dateStr}`);
   } catch (error) {
     console.error("[Analytics Scheduler] Error saving analytics:", error);

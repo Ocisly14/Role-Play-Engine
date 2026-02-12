@@ -101,7 +101,7 @@ const wsManager = new WebSocketManager(server);
  * Update admin user roles based on ADMIN_EMAIL environment variable
  * This runs on every server startup to ensure admin users have the correct role
  */
-function updateAdminUserRoles() {
+async function updateAdminUserRoles() {
   try {
     const adminEmails = (process.env.ADMIN_EMAIL || "")
       .split(",")
@@ -113,15 +113,18 @@ function updateAdminUserRoles() {
       return;
     }
 
-    const db = DatabaseManager.getInstance().getDatabase();
-    const database = db.getDatabase();
+    const prisma = DatabaseManager.getInstance().getPrisma();
 
     for (const email of adminEmails) {
-      const result = database
-        .prepare(`UPDATE users SET role = 'ADMIN' WHERE LOWER(email) = ? AND role != 'ADMIN'`)
-        .run(email);
+      const result = await prisma.user.updateMany({
+        where: {
+          email: { equals: email, mode: 'insensitive' },
+          role: { not: 'ADMIN' },
+        },
+        data: { role: 'ADMIN' },
+      });
 
-      if (result.changes > 0) {
+      if (result.count > 0) {
         console.log(`✅ Updated user ${email} to ADMIN role`);
       }
     }
@@ -131,13 +134,13 @@ function updateAdminUserRoles() {
 }
 
 // Start server
-server.listen(PORT, () => {
+server.listen(PORT, async () => {
   console.log(`🚀 Server running on http://localhost:${PORT}`);
   console.log(`🔌 WebSocket server ready on ws://localhost:${PORT}/ws`);
   console.log("✅ Frontend server ready (lazy initialization)");
 
   // Update admin user roles on startup
-  updateAdminUserRoles();
+  await updateAdminUserRoles();
 
   // Start analytics scheduler
   startDailyScheduler();
@@ -145,17 +148,16 @@ server.listen(PORT, () => {
   if (process.env.SKIP_EMBEDDING_WARMUP !== "true") {
     LocalEmbeddingManager.getInstance()
       .warmup(["en", "zh"])
-      .then(() => {
+      .then(async () => {
         console.log("✅ Local embedding model warmed up");
         if (process.env.SKIP_SKILL_EMBEDDING_WARMUP === "true") {
           return;
         }
         try {
-          const db = DatabaseManager.getInstance().getDatabase();
-          const database = db.getDatabase();
-          const skills = database
-            .prepare("SELECT name, description FROM skills")
-            .all() as Array<{ name: string; description: string }>;
+          const prisma = DatabaseManager.getInstance().getPrisma();
+          const skills = await prisma.skill.findMany({
+            select: { name: true, description: true },
+          });
           if (skills.length === 0) {
             console.warn("⚠️  Skill embedding warmup skipped: no skills found");
             return;

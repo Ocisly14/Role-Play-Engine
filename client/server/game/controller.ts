@@ -3,6 +3,7 @@ import type { Request, Response } from "express";
 import { DatabaseManager } from "../core/DatabaseManager.js";
 import { GraphManager } from "../core/GraphManager.js";
 import { ServerState } from "../core/ServerState.js";
+import { getPrismaClient } from "../../../src/shared/agents/memory/database/prismaClient.js";
 import { getClientIp, generateSessionIdFromIp } from "../utils/sessionUtils.js";
 import { initializeWorldBuilderGameState } from "./service.js";
 import type { DynamicGameState } from "../../../src/dynamicworldagent/state/index.js";
@@ -57,13 +58,11 @@ export async function startGame(req: Request, res: Response): Promise<void> {
       return;
     }
 
-    const database = db.getDatabase();
-    const ownedCharacter = database
-      .prepare(`
-      SELECT character_id FROM characters
-      WHERE character_id = ? AND email_id = ? AND is_npc = 0
-    `)
-      .get(characterId, userEmail);
+    const prisma = getPrismaClient();
+    const ownedCharacter = await prisma.character.findFirst({
+      where: { characterId, emailId: userEmail, isNpc: false },
+      select: { characterId: true },
+    });
 
     if (!ownedCharacter) {
       res.status(403).json({ error: "Character not found" });
@@ -112,14 +111,11 @@ export async function startGame(req: Request, res: Response): Promise<void> {
     if (moduleIntroduction && moduleIntroduction.introduction) {
       try {
         // Check if introduction turn already exists for this session
-        const database = db.getDatabase();
-        const sessionId = dynamicGameState?.sessionId || "";
-        const existingIntro = database
-          .prepare(`
-          SELECT turn_id FROM game_turns
-          WHERE session_id = ? AND turn_number = 0 AND character_input = ''
-        `)
-          .get(sessionId);
+        const introSessionId = dynamicGameState?.sessionId || "";
+        const existingIntro = await prisma.gameTurn.findFirst({
+          where: { sessionId: introSessionId, turnNumber: 0, characterInput: "" },
+          select: { turnId: true },
+        });
 
         if (!existingIntro) {
           // Generate unique turn ID
@@ -134,23 +130,22 @@ export async function startGame(req: Request, res: Response): Promise<void> {
             dynamicGameState?.playerCharacter.name || "";
 
           // Create a special turn with turnNumber 0 for introduction
-          // Save initial game time from module's initialGameTime
-          database
-            .prepare(`
-            INSERT INTO game_turns (
-              turn_id, session_id, turn_number, character_input, character_id, character_name,
-              keeper_narrative, status, started_at, completed_at, created_at, game_day, game_time
-            ) VALUES (?, ?, 0, '', ?, ?, ?, 'completed', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP, ?, ?)
-          `)
-            .run(
-              introTurnId,
-              sessionId,
-              playerCharacterId,
-              playerCharacterName,
-              moduleIntroduction.introduction,
-              initialGameDay ?? null,
-              initialGameTime ?? null
-            );
+          await prisma.gameTurn.create({
+            data: {
+              turnId: introTurnId,
+              sessionId: introSessionId,
+              turnNumber: 0,
+              characterInput: "",
+              characterId: playerCharacterId,
+              characterName: playerCharacterName,
+              keeperNarrative: moduleIntroduction.introduction,
+              status: "completed",
+              startedAt: new Date(),
+              completedAt: new Date(),
+              gameDay: initialGameDay,
+              gameTime: initialGameTime,
+            },
+          });
 
           console.log(
             `[${new Date().toISOString()}] Introduction turn created: ${introTurnId} with game time: Day ${initialGameDay}, ${initialGameTime}`
@@ -173,23 +168,22 @@ export async function startGame(req: Request, res: Response): Promise<void> {
     // Save language to session metadata
     if (finalSessionId) {
       try {
-        const database = db.getDatabase();
-        const existingSession = database
-          .prepare(`
-          SELECT metadata FROM sessions WHERE session_id = ?
-        `)
-          .get(finalSessionId) as { metadata: string | null } | undefined;
+        const existingSession = await prisma.session.findUnique({
+          where: { sessionId: finalSessionId },
+          select: { metadata: true },
+        });
 
         const metadata = existingSession?.metadata
-          ? JSON.parse(existingSession.metadata)
+          ? (typeof existingSession.metadata === "string"
+              ? JSON.parse(existingSession.metadata)
+              : existingSession.metadata)
           : {};
         metadata.language = language;
 
-        database
-          .prepare(`
-          UPDATE sessions SET metadata = ? WHERE session_id = ?
-        `)
-          .run(JSON.stringify(metadata), finalSessionId);
+        await prisma.session.update({
+          where: { sessionId: finalSessionId },
+          data: { metadata },
+        });
 
         console.log(
           `[${new Date().toISOString()}] Session language saved: ${language}`
@@ -308,9 +302,9 @@ export async function importGameData(
     const npcLoader = new NPCLoader(db);
     const moduleLoader = new ModuleLoader(db);
 
-    const scenarios = scenarioLoader.getAllScenarios();
-    const npcs = npcLoader.getAllNPCs();
-    const modules = moduleLoader.getAllModules();
+    const scenarios = await scenarioLoader.getAllScenarios();
+    const npcs = await npcLoader.getAllNPCs();
+    const modules = await moduleLoader.getAllModules();
 
     const scenariosLoaded = scenarios.length;
     const npcsLoaded = npcs.length;
@@ -367,7 +361,7 @@ function serializeDynamicGameState(state: any): any {
   // Convert Map to object
   if (serialized.updatedDynamicScenarioSnapshots instanceof Map) {
     const snapshotsObj: Record<string, any[]> = {};
-    serialized.updatedDynamicScenarioSnapshots.forEach((value, key) => {
+    serialized.updatedDynamicScenarioSnapshots.forEach((value: any[], key: string) => {
       snapshotsObj[key] = value;
     });
     serialized.updatedDynamicScenarioSnapshots = snapshotsObj;
@@ -426,10 +420,10 @@ export function getGameState(req: Request, res: Response): void {
  * Update session language preference
  * POST /api/game/update-language
  */
-export function updateSessionLanguage(
+export async function updateSessionLanguage(
   req: Request,
   res: Response
-): void {
+): Promise<void> {
   try {
     const userId = req.user!.userId;
     const { language: rawLanguage } = req.body;
@@ -448,25 +442,24 @@ export function updateSessionLanguage(
       const sessionId = dynamicGameState.sessionId;
 
       // Update session metadata with new language
-      const db = DatabaseManager.getInstance().getDatabase();
-      const database = db.getDatabase();
+      const prisma = getPrismaClient();
 
-      const existingSession = database
-        .prepare(`
-          SELECT metadata FROM sessions WHERE session_id = ?
-        `)
-        .get(sessionId) as { metadata: string | null } | undefined;
+      const existingSession = await prisma.session.findUnique({
+        where: { sessionId },
+        select: { metadata: true },
+      });
 
       const metadata = existingSession?.metadata
-        ? JSON.parse(existingSession.metadata)
+        ? (typeof existingSession.metadata === "string"
+            ? JSON.parse(existingSession.metadata)
+            : existingSession.metadata)
         : {};
       metadata.language = language;
 
-      database
-        .prepare(`
-          UPDATE sessions SET metadata = ? WHERE session_id = ?
-        `)
-        .run(JSON.stringify(metadata), sessionId);
+      await prisma.session.update({
+        where: { sessionId },
+        data: { metadata },
+      });
 
       console.log(
         `[${new Date().toISOString()}] Session language updated: ${language} for session ${sessionId}`

@@ -6,8 +6,9 @@
 import { randomUUID } from "crypto";
 import fs from "fs";
 import path from "path";
-import type { CoCDatabase } from "../database/schema.js";
+import type { CoCDatabaseAdapter } from "../database/CoCDatabaseAdapter.js";
 import { resolveEmailId } from "../database/userContext.js";
+import { getPrismaClient } from "../database/prismaClient.js";
 import type {
   ModuleBackground,
   ParsedModuleData,
@@ -15,25 +16,18 @@ import type {
 import { ModuleDocumentParser } from "./moduleDocumentParser.js";
 
 export class ModuleLoader {
-  private db: CoCDatabase;
+  private db: CoCDatabaseAdapter;
   private parser: ModuleDocumentParser;
   private emailId?: string;
 
   constructor(
-    db: CoCDatabase,
+    db: CoCDatabaseAdapter,
     parser?: ModuleDocumentParser,
     options?: { emailId?: string }
   ) {
     this.db = db;
     this.parser = parser || new ModuleDocumentParser();
     this.emailId = options?.emailId;
-  }
-
-  /**
-   * Get database instance for column checks
-   */
-  private get dbInstance(): CoCDatabase {
-    return this.db;
   }
 
   private getEmailId(): string | undefined {
@@ -43,10 +37,10 @@ export class ModuleLoader {
   /**
    * Check if any files in directory have changed since last load
    */
-  private checkForChanges(dirPath: string): {
+  private async checkForChanges(dirPath: string): Promise<{
     hasChanges: boolean;
     currentFiles: Map<string, number>;
-  } {
+  }> {
     if (!fs.existsSync(dirPath)) {
       return { hasChanges: false, currentFiles: new Map() };
     }
@@ -64,7 +58,7 @@ export class ModuleLoader {
     }
 
     // Check if we have existing modules in database
-    const existingModules = this.getAllModules();
+    const existingModules = await this.getAllModules();
 
     // If no modules exist, we need to load
     if (existingModules.length === 0) {
@@ -94,10 +88,10 @@ export class ModuleLoader {
   /**
    * Check if any JSON files in directory have changed since last load
    */
-  private checkForJSONChanges(dirPath: string): {
+  private async checkForJSONChanges(dirPath: string): Promise<{
     hasChanges: boolean;
     currentFiles: Map<string, number>;
-  } {
+  }> {
     if (!fs.existsSync(dirPath)) {
       return { hasChanges: false, currentFiles: new Map() };
     }
@@ -115,7 +109,7 @@ export class ModuleLoader {
     }
 
     // Check if we have existing modules
-    const existingModules = this.getAllModules();
+    const existingModules = await this.getAllModules();
 
     // If no modules exist, we need to load
     if (existingModules.length === 0) {
@@ -192,7 +186,7 @@ export class ModuleLoader {
             `  [${i + 1}/${modules.length}] Saving module: ${parsed.title}`
           );
           const moduleRecord = this.convertToModuleBackground(parsed);
-          this.saveModuleToDatabase(moduleRecord);
+          await this.saveModuleToDatabase(moduleRecord);
           moduleRecords.push(moduleRecord);
           console.log(`    ✓ Saved module: ${moduleRecord.title}`);
         } catch (error) {
@@ -226,9 +220,9 @@ export class ModuleLoader {
 
     // Check for file changes unless forced reload
     if (!forceReload) {
-      const { hasChanges } = this.checkForJSONChanges(dirPath);
+      const { hasChanges } = await this.checkForJSONChanges(dirPath);
       if (!hasChanges) {
-        const existingModules = this.getAllModules();
+        const existingModules = await this.getAllModules();
         console.log(
           `No changes detected. Using ${existingModules.length} existing modules from database.`
         );
@@ -308,39 +302,30 @@ export class ModuleLoader {
   /**
    * Get all modules from database
    */
-  getAllModules(): ModuleBackground[] {
-    const database = this.db.getDatabase();
+  async getAllModules(): Promise<ModuleBackground[]> {
+    const prisma = getPrismaClient();
     const emailId = this.getEmailId();
-    const hasEmailIdColumn = this.dbInstance.hasColumn(
-      "module_backgrounds",
-      "email_id"
-    );
-    let sql = "SELECT * FROM module_backgrounds";
-    const params: any[] = [];
-    if (hasEmailIdColumn && emailId) {
-      sql += " WHERE email_id = ?";
-      params.push(emailId);
-    }
-    const modules = database.prepare(sql).all(...params) as any[];
 
-    return modules.map((row) => {
+    const rows = await prisma.moduleBackground.findMany({
+      where: emailId ? { emailId } : {},
+    });
+
+    return rows.map((row) => {
       const module: ModuleBackground = {
-        id: row.module_id,
+        id: row.moduleId,
         title: row.title,
-        background: row.background,
-        storyOutline: row.story_outline,
-        moduleNotes: row.module_notes,
-        keeperGuidance: row.keeper_guidance,
-        moduleLimitations: row.module_limitations,
-        initialGameTime: row.initial_game_time,
-        initialScenarioNPCs: row.initial_scenario_npcs
-          ? JSON.parse(row.initial_scenario_npcs)
+        background: row.background ?? undefined,
+        storyOutline: row.storyOutline ?? undefined,
+        moduleNotes: row.moduleNotes ?? undefined,
+        keeperGuidance: row.keeperGuidance ?? undefined,
+        moduleLimitations: row.moduleLimitations ?? undefined,
+        initialGameTime: row.initialGameTime ?? undefined,
+        initialScenarioNPCs: row.initialScenarioNpcs
+          ? (row.initialScenarioNpcs as any[])
           : [],
-        tags: JSON.parse(row.tags || "[]"),
+        tags: row.tags ? (row.tags as any[]) : [],
       };
 
-      // Load introduction if it exists in database
-      // (Note: This field may not exist in older database schemas)
       if (row.introduction) {
         module.introduction = row.introduction;
       }
@@ -366,9 +351,9 @@ export class ModuleLoader {
 
     // Check for file changes unless forced reload
     if (!forceReload) {
-      const { hasChanges } = this.checkForChanges(dirPath);
+      const { hasChanges } = await this.checkForChanges(dirPath);
       if (!hasChanges) {
-        const existingModules = this.getAllModules();
+        const existingModules = await this.getAllModules();
         console.log(
           `No changes detected. Using ${existingModules.length} existing modules from database.`
         );
@@ -442,74 +427,43 @@ export class ModuleLoader {
       .replace(/[^\w-]/g, "")}-${randomUUID().slice(0, 8)}`;
   }
 
-  private saveModuleToDatabase(module: ModuleBackground): void {
-    const database = this.db.getDatabase();
+  private async saveModuleToDatabase(module: ModuleBackground): Promise<void> {
+    const prisma = getPrismaClient();
     const emailId = this.getEmailId();
-    const hasInitialGameTime = this.dbInstance.hasColumn(
-      "module_backgrounds",
-      "initial_game_time"
-    );
-    const hasIntroduction = this.dbInstance.hasColumn(
-      "module_backgrounds",
-      "introduction"
-    );
-    const hasInitialScenarioNPCs = this.dbInstance.hasColumn(
-      "module_backgrounds",
-      "initial_scenario_npcs"
-    );
-    const hasEmailIdColumn = this.dbInstance.hasColumn(
-      "module_backgrounds",
-      "email_id"
-    );
 
-    const columns = [
-      "module_id",
-      "title",
-      "background",
-      "story_outline",
-      "module_notes",
-      "keeper_guidance",
-      "module_limitations",
-      "tags",
-    ];
-    const values: any[] = [
-      module.id,
-      module.title,
-      module.background || null,
-      module.storyOutline || null,
-      module.moduleNotes || null,
-      module.keeperGuidance || null,
-      module.moduleLimitations || null,
-      JSON.stringify(module.tags || []),
-    ];
-
-    if (hasInitialGameTime) {
-      columns.push("initial_game_time");
-      values.push(module.initialGameTime || null);
-    }
-    if (hasInitialScenarioNPCs) {
-      columns.push("initial_scenario_npcs");
-      values.push(
-        module.initialScenarioNPCs
-          ? JSON.stringify(module.initialScenarioNPCs)
-          : null
-      );
-    }
-    if (hasIntroduction) {
-      columns.push("introduction");
-      values.push(module.introduction || null);
-    }
-    if (hasEmailIdColumn) {
-      columns.push("email_id");
-      values.push(emailId || null);
-    }
-
-    const stmt = database.prepare(
-      `INSERT OR REPLACE INTO module_backgrounds (${columns.join(", ")}) VALUES (${columns
-        .map(() => "?")
-        .join(", ")})`
-    );
-
-    stmt.run(...values);
+    await prisma.moduleBackground.upsert({
+      where: { moduleId: module.id },
+      update: {
+        title: module.title,
+        background: module.background || null,
+        storyOutline: module.storyOutline || null,
+        moduleNotes: module.moduleNotes || null,
+        keeperGuidance: module.keeperGuidance || null,
+        moduleLimitations: module.moduleLimitations || null,
+        tags: (module.tags || []) as any,
+        initialGameTime: module.initialGameTime || null,
+        initialScenarioNpcs: module.initialScenarioNPCs
+          ? (module.initialScenarioNPCs as any)
+          : null,
+        introduction: module.introduction || null,
+        emailId: emailId || null,
+      },
+      create: {
+        moduleId: module.id,
+        title: module.title,
+        background: module.background || null,
+        storyOutline: module.storyOutline || null,
+        moduleNotes: module.moduleNotes || null,
+        keeperGuidance: module.keeperGuidance || null,
+        moduleLimitations: module.moduleLimitations || null,
+        tags: (module.tags || []) as any,
+        initialGameTime: module.initialGameTime || null,
+        initialScenarioNpcs: module.initialScenarioNPCs
+          ? (module.initialScenarioNPCs as any)
+          : null,
+        introduction: module.introduction || null,
+        emailId: emailId || null,
+      },
+    });
   }
 }

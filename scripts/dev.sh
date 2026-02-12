@@ -28,9 +28,9 @@ if [ ! -d "node_modules" ]; then
     pnpm install
 fi
 
-# Clean and rebuild better-sqlite3 if needed
-echo -e "${BLUE}🔧 Rebuilding native dependencies...${NC}"
-pnpm rebuild better-sqlite3
+# Ensure Prisma client is generated
+echo -e "${BLUE}🔧 Generating Prisma client...${NC}"
+pnpm prisma:generate
 
 # Start development server
 echo -e "${GREEN}🎯 Starting development server...${NC}"

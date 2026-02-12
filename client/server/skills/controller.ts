@@ -1,7 +1,7 @@
 /// <reference path="../types/express.d.ts" />
 import type { Request, Response } from "express";
 import { ServerState } from "../core/ServerState.js";
-import { DatabaseManager } from "../core/DatabaseManager.js";
+import { getPrismaClient } from "../../../src/shared/agents/memory/database/prismaClient.js";
 import { suggestSkillsFromInput } from "./skillMatcher.js";
 import { getSkillNameZh } from "./skillDescriptions.js";
 
@@ -37,14 +37,17 @@ export async function suggestSkills(
     // Resolve language from request first, then session metadata.
     let sessionLanguage: "en" | "zh" | undefined;
     try {
-      const db = DatabaseManager.getInstance().getDatabase().getDatabase();
+      const prisma = getPrismaClient();
       const sessionId = dynamicGameState.sessionId;
       if (sessionId) {
-        const session = db
-          .prepare(`SELECT metadata FROM sessions WHERE session_id = ?`)
-          .get(sessionId) as { metadata?: string } | undefined;
+        const session = await prisma.session.findUnique({
+          where: { sessionId },
+          select: { metadata: true },
+        });
         if (session?.metadata) {
-          const metadata = JSON.parse(session.metadata);
+          const metadata = typeof session.metadata === "string"
+            ? JSON.parse(session.metadata)
+            : session.metadata;
           if (metadata.language === "en" || metadata.language === "zh") {
             sessionLanguage = metadata.language;
           }

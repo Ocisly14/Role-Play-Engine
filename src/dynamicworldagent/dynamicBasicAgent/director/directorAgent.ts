@@ -8,7 +8,7 @@ import { composeTemplate } from "../../../template.js";
 import type { ScenarioCharacter } from "../../../shared/agents/models/scenarioTypes.js";
 import type { DynamicScenarioSnapshot } from "../../world_builder/types.js";
 import { ScenarioLoader } from "../../../shared/agents/memory/scenarioloader/index.js";
-import type { CoCDatabase } from "../../../shared/agents/memory/database/index.js";
+import type { CoCDatabase, CoCDatabaseAdapter } from "../../../shared/agents/memory/database/index.js";
 import type { DynamicGameState } from "../../state/index.js";
 import { DynamicGameStateManager } from "../../state/index.js";
 import type {
@@ -29,6 +29,7 @@ import {
 import * as fs from "fs";
 import * as path from "path";
 import { saveDynamicGameStateCheckpoint } from "../memory/checkpoint.js";
+import { getPrismaClient } from "../../../shared/agents/memory/database/prismaClient.js";
 
 interface DirectorRuntime {
   modelProvider: ModelProviderName;
@@ -48,9 +49,9 @@ const createRuntime = (): DirectorRuntime => ({
  */
 export class DirectorAgent {
   private scenarioLoader: ScenarioLoader;
-  private db: CoCDatabase;
+  private db: CoCDatabase | CoCDatabaseAdapter;
 
-  constructor(scenarioLoader: ScenarioLoader, db: CoCDatabase) {
+  constructor(scenarioLoader: ScenarioLoader, db: CoCDatabase | CoCDatabaseAdapter) {
     this.scenarioLoader = scenarioLoader;
     this.db = db;
   }
@@ -199,14 +200,14 @@ export class DirectorAgent {
     // Step 3: Save all snapshots to state (using scenarioId as key)
     // Ensure gameStateManager has db for snapshot management
     gameStateManager.setDb(this.db);
-    gameStateManager.setUpdatedDynamicScenarioSnapshot(
+    await gameStateManager.setUpdatedDynamicScenarioSnapshot(
       targetScenarioOutline.id,
       targetSnapshot
     );
 
-    backgroundSnapshots.forEach((snapshot, scenarioId) => {
-      gameStateManager.setUpdatedDynamicScenarioSnapshot(scenarioId, snapshot);
-    });
+    for (const [scenarioId, snapshot] of backgroundSnapshots) {
+      await gameStateManager.setUpdatedDynamicScenarioSnapshot(scenarioId, snapshot);
+    }
 
     console.log(`   ✓ Saved all snapshots to state`);
 
@@ -361,7 +362,7 @@ export class DirectorAgent {
       snapshot: DynamicScenarioSnapshot;
     }>
   > {
-    const allScenarios = this.scenarioLoader.getAllScenarios();
+    const allScenarios = await this.scenarioLoader.getAllScenarios();
 
     const scenariosWithLatestSnapshots: Array<{
       scenarioId: string;
@@ -388,7 +389,7 @@ export class DirectorAgent {
 
       // If no updated snapshot, get initial snapshot from scenarioLoader
       if (!snapshot) {
-        const scenarioProfile = this.scenarioLoader.getScenarioById(
+        const scenarioProfile = await this.scenarioLoader.getScenarioById(
           scenario.id
         );
         if (scenarioProfile && scenarioProfile.snapshot) {
@@ -897,7 +898,7 @@ export class DirectorAgent {
       const currentGameTime = `Day ${dynamicState.gameDay}, ${dynamicState.timeOfDay}`;
 
       // Get all scenarios (including current one for context, but will exclude it in output)
-      const allScenarios = this.scenarioLoader.getAllScenarios();
+      const allScenarios = await this.scenarioLoader.getAllScenarios();
 
       // Build scenario outline map for quick lookup
       const scenarioOutlineMap = new Map(
@@ -909,7 +910,7 @@ export class DirectorAgent {
 
       for (const scenario of allScenarios) {
         // Get the scenario's initial snapshot (with full details: clues, conditions)
-        const scenarioProfile = this.scenarioLoader.getScenarioById(
+        const scenarioProfile = await this.scenarioLoader.getScenarioById(
           scenario.id
         );
         if (!scenarioProfile || !scenarioProfile.snapshot) continue;
@@ -1237,17 +1238,11 @@ export class DirectorAgent {
 
         if (targetScenarioOutline) {
           // Update connections in database
-          const database = this.db.getDatabase();
-          const updateStmt = database.prepare(`
-            UPDATE scenarios
-            SET connections = ?
-            WHERE scenario_id = ?
-          `);
-
-          updateStmt.run(
-            JSON.stringify(modifiedConnections),
-            targetScenarioOutline.id
-          );
+          const prisma = getPrismaClient();
+          await prisma.scenario.update({
+            where: { scenarioId: targetScenarioOutline.id },
+            data: { connections: modifiedConnections as any },
+          });
 
           // Update in-memory scenarioOutline
           // Convert relationshipType to ScenarioConnectionType and add scenarioId
@@ -1364,7 +1359,7 @@ export class DirectorAgent {
     const currentScenarioId = currentScenario?.id || null;
 
     // Save checkpoint before scenario update
-    saveDynamicGameStateCheckpoint(
+    await saveDynamicGameStateCheckpoint(
       this.db,
       dynamicState,
       "auto",
@@ -1575,7 +1570,7 @@ export class DirectorAgent {
 
           // Save to state (no database save)
           // db is already set at the beginning of this method
-          gameStateManager.setUpdatedDynamicScenarioSnapshot(
+          await gameStateManager.setUpdatedDynamicScenarioSnapshot(
             item.scenarioId,
             snapshotWithUnifiedTime
           );

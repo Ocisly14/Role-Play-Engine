@@ -1,7 +1,7 @@
 import { WebSocketServer, WebSocket } from "ws";
 import http from "http";
 import { ServerState } from "../core/ServerState.js";
-import { DatabaseManager } from "../core/DatabaseManager.js";
+import { getPrismaClient } from "../../../src/shared/agents/memory/database/prismaClient.js";
 import { verifyToken } from "../auth/jwt.js";
 import { handleClientMessage } from "./handlers.js";
 import {
@@ -41,19 +41,20 @@ export class WebSocketManager {
    * Setup WebSocket connection event handlers
    */
   private setupConnectionHandling(): void {
-    this.wss.on("connection", (ws: WebSocket, req) => {
+    this.wss.on("connection", async (ws: WebSocket, req) => {
       const sessionId = this.extractSessionId(req);
       const token = this.extractToken(req);
       const creds = token ? this.verifyTokenCreds(token) : null;
       const userId = creds?.userId ?? null;
       const email = creds?.email ?? null;
 
-      if (
-        !sessionId ||
-        !userId ||
-        !email ||
-        !this.isSessionOwnedByUser(sessionId, userId, email)
-      ) {
+      if (!sessionId || !userId || !email) {
+        ws.close();
+        return;
+      }
+
+      const owned = await this.isSessionOwnedByUser(sessionId, userId, email);
+      if (!owned) {
         ws.close();
         return;
       }
@@ -158,29 +159,36 @@ export class WebSocketManager {
     }
   }
 
-  private isSessionOwnedByUser(
+  private async isSessionOwnedByUser(
     sessionId: string,
     userId: string,
     email: string
-  ): boolean {
+  ): Promise<boolean> {
     const serverState = ServerState.getInstance();
     const activeState = serverState.getDynamicGameState(userId);
     if (activeState?.sessionId === sessionId) {
       return true;
     }
 
-    const db = DatabaseManager.getInstance().getDatabase().getDatabase();
-    const row = db
-      .prepare(`
-      SELECT 1
-      FROM game_turns gt
-      JOIN characters c ON c.character_id = gt.character_id
-      WHERE gt.session_id = ? AND c.email_id = ?
-      LIMIT 1
-    `)
-      .get(sessionId, email);
+    const prisma = getPrismaClient();
+    const ownedCharacters = await prisma.character.findMany({
+      where: { emailId: email, isNpc: false },
+      select: { characterId: true },
+    });
+    const ownedCharacterIds = ownedCharacters.map((row) => row.characterId);
+    if (ownedCharacterIds.length === 0) {
+      return false;
+    }
 
-    return Boolean(row);
+    const turn = await prisma.gameTurn.findFirst({
+      where: {
+        sessionId,
+        characterId: { in: ownedCharacterIds },
+      },
+      select: { turnId: true },
+    });
+
+    return Boolean(turn);
   }
 
   /**

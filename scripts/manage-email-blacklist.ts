@@ -3,98 +3,89 @@
  * Manage disposable email domain blacklist
  * Usage:
  *   pnpm tsx scripts/manage-email-blacklist.ts list
- *   pnpm tsx scripts/manage-email-blacklist.ts add domain.com "reason"
+ *   pnpm tsx scripts/manage-email-blacklist.ts add domain.com
  *   pnpm tsx scripts/manage-email-blacklist.ts remove domain.com
  *   pnpm tsx scripts/manage-email-blacklist.ts check email@example.com
  */
 
-import Database from "better-sqlite3";
-import path from "path";
+import { PrismaClient } from "@prisma/client";
 import { randomUUID } from "crypto";
 
-const dbPath = path.join(process.cwd(), "data", "coc_game.db");
+const prisma = new PrismaClient();
 
-function listDomains() {
-  const db = new Database(dbPath, { readonly: true });
-  const domains = db
-    .prepare("SELECT domain, reason, created_at FROM disposable_email_domains ORDER BY domain")
-    .all() as Array<{ domain: string; reason: string; created_at: string }>;
+async function listDomains() {
+  const domains = await prisma.disposableEmailDomain.findMany({
+    orderBy: { domain: "asc" },
+    select: { domain: true, createdAt: true },
+  });
 
   console.log(`\n📋 黑名单域名列表 (共 ${domains.length} 个):\n`);
   domains.forEach((d, i) => {
     console.log(`${i + 1}. ${d.domain}`);
-    if (d.reason) {
-      console.log(`   理由: ${d.reason}`);
-    }
+    console.log(`   创建时间: ${d.createdAt.toISOString()}`);
   });
   console.log();
-  db.close();
 }
 
-function addDomain(domain: string, reason?: string) {
-  const db = new Database(dbPath);
-  domain = domain.toLowerCase();
+async function addDomain(domain: string) {
+  const normalized = domain.toLowerCase();
 
   try {
-    db.prepare(
-      "INSERT INTO disposable_email_domains (id, domain, reason) VALUES (?, ?, ?)"
-    ).run(randomUUID(), domain, reason || "Manually added");
-
-    console.log(`✅ 已添加域名: ${domain}`);
+    await prisma.disposableEmailDomain.create({
+      data: {
+        id: randomUUID(),
+        domain: normalized,
+      },
+    });
+    console.log(`✅ 已添加域名: ${normalized}`);
   } catch (error: any) {
-    if (error.message.includes("UNIQUE")) {
-      console.log(`⚠️  域名已存在: ${domain}`);
-    } else {
-      throw error;
+    if (error?.code === "P2002") {
+      console.log(`⚠️  域名已存在: ${normalized}`);
+      return;
     }
+    throw error;
   }
-  db.close();
 }
 
-function removeDomain(domain: string) {
-  const db = new Database(dbPath);
-  domain = domain.toLowerCase();
+async function removeDomain(domain: string) {
+  const normalized = domain.toLowerCase();
 
-  const result = db
-    .prepare("DELETE FROM disposable_email_domains WHERE domain = ?")
-    .run(domain);
+  const result = await prisma.disposableEmailDomain.deleteMany({
+    where: { domain: normalized },
+  });
 
-  if (result.changes > 0) {
-    console.log(`✅ 已移除域名: ${domain}`);
+  if (result.count > 0) {
+    console.log(`✅ 已移除域名: ${normalized}`);
   } else {
-    console.log(`⚠️  域名不存在: ${domain}`);
+    console.log(`⚠️  域名不存在: ${normalized}`);
   }
-  db.close();
 }
 
-function checkEmail(email: string) {
-  const db = new Database(dbPath, { readonly: true });
+async function checkEmail(email: string) {
   const domain = email.split("@")[1]?.toLowerCase();
 
   if (!domain) {
     console.log("❌ 无效的邮箱格式");
-    db.close();
     return;
   }
 
-  const blacklisted = db
-    .prepare("SELECT domain, reason FROM disposable_email_domains WHERE domain = ?")
-    .get(domain) as { domain: string; reason: string } | undefined;
+  const blacklisted = await prisma.disposableEmailDomain.findUnique({
+    where: { domain },
+    select: { domain: true },
+  });
 
   if (blacklisted) {
     console.log(`\n❌ 该邮箱域名在黑名单中:`);
     console.log(`   邮箱: ${email}`);
-    console.log(`   域名: ${domain}`);
-    console.log(`   理由: ${blacklisted.reason}\n`);
+    console.log(`   域名: ${domain}\n`);
   } else {
     console.log(`\n✅ 该邮箱域名不在黑名单中:`);
     console.log(`   邮箱: ${email}`);
     console.log(`   域名: ${domain}\n`);
   }
-  db.close();
 }
 
-function main() {
+async function main() {
   const args = process.argv.slice(2);
   const command = args[0];
 
@@ -102,13 +93,13 @@ function main() {
     console.log(`
 用法:
   pnpm tsx scripts/manage-email-blacklist.ts list
-  pnpm tsx scripts/manage-email-blacklist.ts add <domain> [reason]
+  pnpm tsx scripts/manage-email-blacklist.ts add <domain>
   pnpm tsx scripts/manage-email-blacklist.ts remove <domain>
   pnpm tsx scripts/manage-email-blacklist.ts check <email>
 
 示例:
   pnpm tsx scripts/manage-email-blacklist.ts list
-  pnpm tsx scripts/manage-email-blacklist.ts add spam.com "垃圾邮件域名"
+  pnpm tsx scripts/manage-email-blacklist.ts add spam.com
   pnpm tsx scripts/manage-email-blacklist.ts remove spam.com
   pnpm tsx scripts/manage-email-blacklist.ts check user@passmail.net
     `);
@@ -118,28 +109,28 @@ function main() {
   try {
     switch (command) {
       case "list":
-        listDomains();
+        await listDomains();
         break;
       case "add":
         if (!args[1]) {
           console.log("❌ 请提供域名");
           process.exit(1);
         }
-        addDomain(args[1], args[2]);
+        await addDomain(args[1]);
         break;
       case "remove":
         if (!args[1]) {
           console.log("❌ 请提供域名");
           process.exit(1);
         }
-        removeDomain(args[1]);
+        await removeDomain(args[1]);
         break;
       case "check":
         if (!args[1]) {
           console.log("❌ 请提供邮箱地址");
           process.exit(1);
         }
-        checkEmail(args[1]);
+        await checkEmail(args[1]);
         break;
       default:
         console.log(`❌ 未知命令: ${command}`);
@@ -148,6 +139,8 @@ function main() {
   } catch (error) {
     console.error("❌ 错误:", (error as Error).message);
     process.exit(1);
+  } finally {
+    await prisma.$disconnect();
   }
 }
 

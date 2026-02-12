@@ -15,7 +15,7 @@ const router = express.Router();
 router.get("/*", (req, res) => {
   try {
     // Get the relative path from the URL
-    const relativePath = req.params[0]; // Everything after /maps/
+    const relativePath = (req.params as Record<string, string>)[0] || ""; // Everything after /maps/
 
     console.log("[Maps API] Request received for:", relativePath);
     console.log("[Maps API] Full URL:", req.url);

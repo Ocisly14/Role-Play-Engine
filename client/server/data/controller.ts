@@ -1,6 +1,6 @@
 import type { Request, Response } from "express";
-import { DatabaseManager } from "../core/DatabaseManager.js";
 import { listUserLibrary } from "../mod/library.js";
+import { getPrismaClient } from "../../../src/shared/agents/memory/database/prismaClient.js";
 import path from "path";
 import fs from "fs";
 
@@ -40,20 +40,31 @@ export function getOccupations(req: Request, res: Response): void {
  * Get all weapons from database
  * GET /api/weapons
  */
-export function getWeapons(req: Request, res: Response): void {
+export async function getWeapons(req: Request, res: Response): Promise<void> {
   try {
-    const db = DatabaseManager.getInstance().getDatabase();
-    const database = db.getDatabase();
-
-    const weapons = database.prepare(`
-      SELECT name, skill, damage, range, attacks_per_round, ammo
-      FROM weapons
-      ORDER BY name
-    `).all();
+    const prisma = getPrismaClient();
+    const weapons = await prisma.weapon.findMany({
+      orderBy: { name: "asc" },
+      select: {
+        name: true,
+        skill: true,
+        damage: true,
+        range: true,
+        attacksPerRound: true,
+        ammo: true,
+      },
+    });
 
     res.json({
       success: true,
-      weapons: weapons,
+      weapons: weapons.map((w) => ({
+        name: w.name,
+        skill: w.skill,
+        damage: w.damage,
+        range: w.range,
+        attacks_per_round: w.attacksPerRound,
+        ammo: w.ammo,
+      })),
     });
   } catch (error) {
     console.error("Error fetching weapons:", error);
@@ -65,16 +76,16 @@ export function getWeapons(req: Request, res: Response): void {
  * Get all available mods
  * GET /api/mods
  */
-export function getMods(req: Request, res: Response): void {
+export async function getMods(req: Request, res: Response): Promise<void> {
   try {
     const modsDir = path.join(process.cwd(), "data", "Mods");
-    const db = DatabaseManager.getInstance().getDatabase();
     const email = req.user?.email;
     if (!email) {
       res.status(401).json({ error: "Authentication required" });
       return;
     }
-    const mods = listUserLibrary(db, email).map((mod) => ({
+    const library = await listUserLibrary(email);
+    const mods = library.map((mod) => ({
       name: mod.name,
       path: path.join(modsDir, mod.name),
       shared: mod.shared,

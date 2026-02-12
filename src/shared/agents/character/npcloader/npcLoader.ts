@@ -8,7 +8,8 @@ import fs from "fs";
 import path from "path";
 import { ChatGoogleGenerativeAI } from "@langchain/google-genai";
 import { ChatOpenAI } from "@langchain/openai";
-import type { CoCDatabase } from "../../memory/database/schema.js";
+import type { CoCDatabaseAdapter } from "../../memory/database/CoCDatabaseAdapter.js";
+import { getPrismaClient } from "../../memory/database/prismaClient.js";
 import { resolveEmailId, scopeId } from "../../memory/database/userContext.js";
 import type {
   CharacterAttributes,
@@ -100,13 +101,13 @@ function calculateMovement(attributes: CharacterAttributes): number {
  * NPC Loader class
  */
 export class NPCLoader {
-  private db: CoCDatabase;
+  private db: CoCDatabaseAdapter;
   private parser: NPCDocumentParser;
   private mergeModel: ChatOpenAI | ChatGoogleGenerativeAI;
   private emailId?: string;
 
   constructor(
-    db: CoCDatabase,
+    db: CoCDatabaseAdapter,
     parser?: NPCDocumentParser,
     mergeModel?: ChatOpenAI | ChatGoogleGenerativeAI,
     options?: { emailId?: string }
@@ -125,7 +126,7 @@ export class NPCLoader {
    * Merge already-stored NPCs in the DB (by similar names) and rewrite them.
    */
   async mergeExistingNPCs(): Promise<NPCProfile[]> {
-    const existing = this.getAllNPCs();
+    const existing = await this.getAllNPCs();
     if (existing.length === 0) {
       console.log("No existing NPCs found to merge.");
       return [];
@@ -138,35 +139,26 @@ export class NPCLoader {
     const mergedParsed = await this.mergeSimilarNPCs(parsed);
 
     // Wipe and reinsert
-    const database = this.db.getDatabase();
-    this.db.transaction(() => {
-      const emailId = this.getEmailId();
-      const hasClueEmailId = this.db.hasColumn("npc_clues", "email_id");
-      const hasRelEmailId = this.db.hasColumn("npc_relationships", "email_id");
-      const hasCharacterEmailId = this.db.hasColumn("characters", "email_id");
+    const prisma = getPrismaClient();
+    const emailId = this.getEmailId();
 
-      database
-        .prepare(
-          `DELETE FROM npc_clues${hasClueEmailId && emailId ? " WHERE email_id = ?" : ""}`
-        )
-        .run(...(hasClueEmailId && emailId ? [emailId] : []));
-      database
-        .prepare(
-          `DELETE FROM npc_relationships${hasRelEmailId && emailId ? " WHERE email_id = ?" : ""}`
-        )
-        .run(...(hasRelEmailId && emailId ? [emailId] : []));
-      database
-        .prepare(
-          `DELETE FROM characters WHERE is_npc = 1${hasCharacterEmailId && emailId ? " AND email_id = ?" : ""}`
-        )
-        .run(...(hasCharacterEmailId && emailId ? [emailId] : []));
+    await prisma.$transaction(async (tx) => {
+      const clueWhere = emailId ? { emailId } : {};
+      const relWhere = emailId ? { emailId } : {};
+      const charWhere = emailId
+        ? { isNpc: true, emailId }
+        : { isNpc: true };
+
+      await tx.npcClue.deleteMany({ where: clueWhere });
+      await tx.npcRelationship.deleteMany({ where: relWhere });
+      await tx.character.deleteMany({ where: charWhere });
     });
     console.log("Cleared existing NPC data from DB.");
 
     const profiles: NPCProfile[] = [];
     for (const parsedData of mergedParsed) {
       const profile = this.convertToNPCProfile(parsedData);
-      this.saveNPCToDatabase(profile);
+      await this.saveNPCToDatabase(profile);
       profiles.push(profile);
     }
 
@@ -179,7 +171,7 @@ export class NPCLoader {
    * Useful for catching cross-language/variant names missed by heuristic clustering.
    */
   async mergeWithLLMSuggestedGroups(): Promise<NPCProfile[]> {
-    const existing = this.getAllNPCs();
+    const existing = await this.getAllNPCs();
     if (existing.length === 0) {
       console.log("No existing NPCs found to merge.");
       return [];
@@ -253,35 +245,26 @@ export class NPCLoader {
     }
 
     // Rewrite DB
-    const database = this.db.getDatabase();
-    this.db.transaction(() => {
-      const emailId = this.getEmailId();
-      const hasClueEmailId = this.db.hasColumn("npc_clues", "email_id");
-      const hasRelEmailId = this.db.hasColumn("npc_relationships", "email_id");
-      const hasCharacterEmailId = this.db.hasColumn("characters", "email_id");
+    const prisma = getPrismaClient();
+    const emailId = this.getEmailId();
 
-      database
-        .prepare(
-          `DELETE FROM npc_clues${hasClueEmailId && emailId ? " WHERE email_id = ?" : ""}`
-        )
-        .run(...(hasClueEmailId && emailId ? [emailId] : []));
-      database
-        .prepare(
-          `DELETE FROM npc_relationships${hasRelEmailId && emailId ? " WHERE email_id = ?" : ""}`
-        )
-        .run(...(hasRelEmailId && emailId ? [emailId] : []));
-      database
-        .prepare(
-          `DELETE FROM characters WHERE is_npc = 1${hasCharacterEmailId && emailId ? " AND email_id = ?" : ""}`
-        )
-        .run(...(hasCharacterEmailId && emailId ? [emailId] : []));
+    await prisma.$transaction(async (tx) => {
+      const clueWhere = emailId ? { emailId } : {};
+      const relWhere = emailId ? { emailId } : {};
+      const charWhere = emailId
+        ? { isNpc: true, emailId }
+        : { isNpc: true };
+
+      await tx.npcClue.deleteMany({ where: clueWhere });
+      await tx.npcRelationship.deleteMany({ where: relWhere });
+      await tx.character.deleteMany({ where: charWhere });
     });
     console.log("Rewrote DB with LLM-suggested merges.");
 
     const profiles: NPCProfile[] = [];
     for (const parsed of mergedParsed) {
       const profile = this.convertToNPCProfile(parsed);
-      this.saveNPCToDatabase(profile);
+      await this.saveNPCToDatabase(profile);
       profiles.push(profile);
     }
 
@@ -292,10 +275,10 @@ export class NPCLoader {
   /**
    * Check if any files in directory have changed since last load
    */
-  private checkForChanges(dirPath: string): {
+  private async checkForChanges(dirPath: string): Promise<{
     hasChanges: boolean;
     currentFiles: Map<string, number>;
-  } {
+  }> {
     if (!fs.existsSync(dirPath)) {
       return { hasChanges: false, currentFiles: new Map() };
     }
@@ -313,7 +296,7 @@ export class NPCLoader {
     }
 
     // Check if we have cached file info
-    const existingNPCs = this.getAllNPCs();
+    const existingNPCs = await this.getAllNPCs();
 
     // If no NPCs exist, we need to load
     if (existingNPCs.length === 0) {
@@ -367,9 +350,9 @@ export class NPCLoader {
 
     // Check for file changes unless forced reload
     if (!forceReload) {
-      const { hasChanges } = this.checkForJSONChanges(dirPath);
+      const { hasChanges } = await this.checkForJSONChanges(dirPath);
       if (!hasChanges) {
-        const existingNPCs = this.getAllNPCs();
+        const existingNPCs = await this.getAllNPCs();
         console.log(
           `No changes detected. Using ${existingNPCs.length} existing NPCs from database.`
         );
@@ -428,7 +411,7 @@ export class NPCLoader {
       const parsedData = allParsedNPCs[i];
       try {
         const npcProfile = this.convertToNPCProfile(parsedData);
-        this.saveNPCToDatabase(npcProfile);
+        await this.saveNPCToDatabase(npcProfile);
         npcProfiles.push(npcProfile);
         console.log(
           `  [${i + 1}/${allParsedNPCs.length}] ✓ 已保存NPC: ${npcProfile.name}`
@@ -453,10 +436,10 @@ export class NPCLoader {
   /**
    * Check if any JSON files in directory have changed since last load
    */
-  private checkForJSONChanges(dirPath: string): {
+  private async checkForJSONChanges(dirPath: string): Promise<{
     hasChanges: boolean;
     currentFiles: Map<string, number>;
-  } {
+  }> {
     if (!fs.existsSync(dirPath)) {
       return { hasChanges: false, currentFiles: new Map() };
     }
@@ -474,7 +457,7 @@ export class NPCLoader {
     }
 
     // Check if we have existing NPCs
-    const existingNPCs = this.getAllNPCs();
+    const existingNPCs = await this.getAllNPCs();
 
     // If no NPCs exist, we need to load
     if (existingNPCs.length === 0) {
@@ -518,9 +501,9 @@ export class NPCLoader {
 
     // Check for file changes unless forced reload
     if (!forceReload) {
-      const { hasChanges } = this.checkForChanges(dirPath);
+      const { hasChanges } = await this.checkForChanges(dirPath);
       if (!hasChanges) {
-        const existingNPCs = this.getAllNPCs();
+        const existingNPCs = await this.getAllNPCs();
         console.log(
           `No changes detected. Using ${existingNPCs.length} existing NPCs from database.`
         );
@@ -549,7 +532,7 @@ export class NPCLoader {
       const parsedData = dedupedNPCs[i];
       try {
         const npcProfile = this.convertToNPCProfile(parsedData);
-        this.saveNPCToDatabase(npcProfile);
+        await this.saveNPCToDatabase(npcProfile);
         npcProfiles.push(npcProfile);
         console.log(
           `  [${i + 1}/${dedupedNPCs.length}] ✓ 已保存NPC: ${npcProfile.name}`
@@ -984,91 +967,87 @@ Return ONLY JSON array, no extra text.`;
   /**
    * Save NPC to database
    */
-  private saveNPCToDatabase(npc: NPCProfile): void {
-    const database = this.db.getDatabase();
+  private async saveNPCToDatabase(npc: NPCProfile): Promise<void> {
+    const prisma = getPrismaClient();
     const emailId = this.getEmailId();
-    const hasCharacterEmailId = this.db.hasColumn("characters", "email_id");
-    const hasClueEmailId = this.db.hasColumn("npc_clues", "email_id");
-    const hasRelationshipEmailId = this.db.hasColumn(
-      "npc_relationships",
-      "email_id"
-    );
 
-    this.db.transaction(() => {
-      // Insert or update character
-      const stmt = database.prepare(`
-                INSERT OR REPLACE INTO characters (
-                    character_id, name, attributes, status, inventory, skills, notes,
-                    is_npc, occupation, age, gender, appearance, personality, background, goals, secrets, current_location,
-                    ${hasCharacterEmailId ? "email_id, " : ""}updated_at
-                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ${hasCharacterEmailId ? "?, " : ""}CURRENT_TIMESTAMP)
-            `);
-
-      stmt.run(
-        npc.id,
-        npc.name,
-        JSON.stringify(npc.attributes),
-        JSON.stringify(npc.status),
-        JSON.stringify(npc.inventory),
-        JSON.stringify(npc.skills),
-        npc.notes || null,
-        1, // is_npc = true
-        npc.occupation || null,
-        npc.age || null,
-        npc.gender || null,
-        npc.appearance || null,
-        npc.personality || null,
-        npc.background || null,
-        JSON.stringify(npc.goals),
-        JSON.stringify(npc.secrets),
-        npc.currentLocation || null,
-        ...(hasCharacterEmailId ? [emailId ?? null] : [])
-      );
+    await prisma.$transaction(async (tx) => {
+      // Upsert character (INSERT OR REPLACE equivalent)
+      await tx.character.upsert({
+        where: { characterId: npc.id },
+        update: {
+          name: npc.name,
+          attributes: npc.attributes,
+          status: npc.status,
+          inventory: npc.inventory as any,
+          skills: npc.skills,
+          notes: npc.notes || null,
+          isNpc: true,
+          occupation: npc.occupation || null,
+          age: npc.age || null,
+          gender: npc.gender || null,
+          appearance: npc.appearance || null,
+          personality: npc.personality || null,
+          background: npc.background || null,
+          goals: npc.goals,
+          secrets: npc.secrets,
+          currentLocation: npc.currentLocation || null,
+          emailId: emailId ?? null,
+          updatedAt: new Date(),
+        },
+        create: {
+          characterId: npc.id,
+          name: npc.name,
+          attributes: npc.attributes,
+          status: npc.status,
+          inventory: npc.inventory as any,
+          skills: npc.skills,
+          notes: npc.notes || null,
+          isNpc: true,
+          occupation: npc.occupation || null,
+          age: npc.age || null,
+          gender: npc.gender || null,
+          appearance: npc.appearance || null,
+          personality: npc.personality || null,
+          background: npc.background || null,
+          goals: npc.goals,
+          secrets: npc.secrets,
+          currentLocation: npc.currentLocation || null,
+          emailId: emailId ?? null,
+        },
+      });
 
       // Delete existing clues and relationships for this NPC
-      database
-        .prepare(
-          `DELETE FROM npc_clues WHERE npc_id = ?${hasClueEmailId && emailId ? " AND email_id = ?" : ""}`
-        )
-        .run(...(hasClueEmailId && emailId ? [npc.id, emailId] : [npc.id]));
-      database
-        .prepare(
-          `DELETE FROM npc_relationships WHERE source_id = ?${hasRelationshipEmailId && emailId ? " AND email_id = ?" : ""}`
-        )
-        .run(
-          ...(hasRelationshipEmailId && emailId ? [npc.id, emailId] : [npc.id])
-        );
+      const clueWhere = emailId
+        ? { npcId: npc.id, emailId }
+        : { npcId: npc.id };
+      await tx.npcClue.deleteMany({ where: clueWhere });
+
+      const relWhere = emailId
+        ? { sourceId: npc.id, emailId }
+        : { sourceId: npc.id };
+      await tx.npcRelationship.deleteMany({ where: relWhere });
 
       // Insert clues
       if (npc.clues.length > 0) {
-        const clueStmt = database.prepare(`
-                    INSERT INTO npc_clues (
-                        id, npc_id, clue_text, category, difficulty, revealed, related_to${hasClueEmailId ? ", email_id" : ""}
-                    ) VALUES (?, ?, ?, ?, ?, ?, ?${hasClueEmailId ? ", ?" : ""})
-                `);
-
         for (const clue of npc.clues) {
-          clueStmt.run(
-            clue.id,
-            npc.id,
-            clue.clueText,
-            clue.category || null,
-            clue.difficulty || null,
-            clue.revealed ? 1 : 0,
-            clue.relatedTo ? JSON.stringify(clue.relatedTo) : null,
-            ...(hasClueEmailId ? [emailId ?? null] : [])
-          );
+          await tx.npcClue.create({
+            data: {
+              id: clue.id,
+              npcId: npc.id,
+              clueText: clue.clueText,
+              category: clue.category || null,
+              difficulty: clue.difficulty || null,
+              revealed: clue.revealed,
+              relatedTo: (clue.relatedTo as any) ?? null,
+              emailId: emailId ?? null,
+            },
+          });
         }
       }
 
       // Insert relationships
       if (npc.relationships.length > 0) {
-        const relStmt = database.prepare(`
-                    INSERT INTO npc_relationships (
-                        id, source_id, target_id, target_name, relationship_type, attitude, description, history${hasRelationshipEmailId ? ", email_id" : ""}
-                    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?${hasRelationshipEmailId ? ", ?" : ""})
-                `);
-
         const seenTargets = new Set<string>();
         for (const rel of npc.relationships) {
           const targetId = rel.targetId || this.slugify(rel.targetName);
@@ -1078,17 +1057,49 @@ Return ONLY JSON array, no extra text.`;
           seenTargets.add(targetId);
 
           const relId = `${npc.id}-rel-${targetId}`;
-          relStmt.run(
-            relId,
-            npc.id,
-            targetId,
-            rel.targetName,
-            rel.relationshipType,
-            rel.attitude,
-            rel.description || null,
-            rel.history || null,
-            ...(hasRelationshipEmailId ? [emailId ?? null] : [])
-          );
+
+          // Check if target character exists (FK constraint)
+          const targetExists = await tx.character.findUnique({
+            where: { characterId: targetId },
+            select: { characterId: true },
+          });
+
+          if (!targetExists) {
+            // Create a minimal placeholder character for the target
+            // so the FK constraint is satisfied
+            try {
+              await tx.character.create({
+                data: {
+                  characterId: targetId,
+                  name: rel.targetName,
+                  attributes: {},
+                  status: {},
+                  isNpc: true,
+                  emailId: emailId ?? null,
+                },
+              });
+            } catch {
+              // If creation fails (e.g., race condition), skip this relationship
+              console.warn(
+                `Skipping relationship ${relId}: could not create placeholder for target "${rel.targetName}"`
+              );
+              continue;
+            }
+          }
+
+          await tx.npcRelationship.create({
+            data: {
+              id: relId,
+              sourceId: npc.id,
+              targetId,
+              targetName: rel.targetName,
+              relationshipType: rel.relationshipType,
+              attitude: rel.attitude,
+              description: rel.description || null,
+              history: rel.history || null,
+              emailId: emailId ?? null,
+            },
+          });
         }
       }
     });
@@ -1107,92 +1118,82 @@ Return ONLY JSON array, no extra text.`;
   /**
    * Get an NPC from the database by ID
    */
-  getNPCById(npcId: string): NPCProfile | null {
-    const database = this.db.getDatabase();
+  async getNPCById(npcId: string): Promise<NPCProfile | null> {
+    const prisma = getPrismaClient();
     const scopedNpcId = scopeId(npcId, this.getEmailId());
     const emailId = this.getEmailId();
-    const hasCharacterEmailId = this.db.hasColumn("characters", "email_id");
-    const hasClueEmailId = this.db.hasColumn("npc_clues", "email_id");
-    const hasRelationshipEmailId = this.db.hasColumn(
-      "npc_relationships",
-      "email_id"
-    );
 
     // Get character data
-    const character = database
-      .prepare(`
-            SELECT * FROM characters WHERE character_id = ? AND is_npc = 1${hasCharacterEmailId && emailId ? " AND email_id = ?" : ""}
-        `)
-      .get(
-        ...(hasCharacterEmailId && emailId
-          ? [scopedNpcId, emailId]
-          : [scopedNpcId])
-      ) as any;
+    const charWhere = emailId
+      ? { characterId: scopedNpcId, isNpc: true, emailId }
+      : { characterId: scopedNpcId, isNpc: true };
+
+    const character = await prisma.character.findFirst({
+      where: charWhere,
+    });
 
     if (!character) {
       return null;
     }
 
     // Get clues
-    const clues = database
-      .prepare(`
-            SELECT * FROM npc_clues WHERE npc_id = ?${hasClueEmailId && emailId ? " AND email_id = ?" : ""}
-        `)
-      .all(
-        ...(hasClueEmailId && emailId ? [scopedNpcId, emailId] : [scopedNpcId])
-      ) as any[];
+    const clueWhere = emailId
+      ? { npcId: scopedNpcId, emailId }
+      : { npcId: scopedNpcId };
+
+    const clues = await prisma.npcClue.findMany({
+      where: clueWhere,
+    });
 
     // Get relationships
-    const relationships = database
-      .prepare(`
-            SELECT * FROM npc_relationships WHERE source_id = ?${hasRelationshipEmailId && emailId ? " AND email_id = ?" : ""}
-        `)
-      .all(
-        ...(hasRelationshipEmailId && emailId
-          ? [scopedNpcId, emailId]
-          : [scopedNpcId])
-      ) as any[];
+    const relWhere = emailId
+      ? { sourceId: scopedNpcId, emailId }
+      : { sourceId: scopedNpcId };
 
-    // Build NPC profile
+    const relationships = await prisma.npcRelationship.findMany({
+      where: relWhere,
+    });
+
+    // Build NPC profile - Prisma returns JSON fields already parsed
     const npcProfile: NPCProfile = {
-      id: character.character_id,
+      id: character.characterId,
       name: character.name,
-      attributes: JSON.parse(character.attributes),
-      status: JSON.parse(character.status),
+      attributes: character.attributes as CharacterAttributes,
+      status: character.status as CharacterStatus,
       inventory: InventoryUtils.normalizeInventory(
-        JSON.parse(character.inventory || "[]")
+        (character.inventory ?? []) as unknown as InventoryItem[]
       ),
-      skills: JSON.parse(character.skills || "{}"),
-      notes: character.notes,
-      occupation: character.occupation,
-      age: character.age,
-      gender: character.gender,
-      appearance: character.appearance,
-      personality: character.personality,
-      background: character.background,
-      goals: JSON.parse(character.goals || "[]"),
-      secrets: JSON.parse(character.secrets || "[]"),
-      currentLocation: character.current_location || undefined,
-      instantiatedFrom: character.instantiated_from || undefined,
-      inheritsKnowledge: character.inherits_knowledge
-        ? JSON.parse(character.inherits_knowledge)
+      skills: (character.skills ?? {}) as Record<string, number>,
+      notes: character.notes ?? undefined,
+      occupation: character.occupation ?? undefined,
+      age: character.age ?? undefined,
+      gender: character.gender ?? undefined,
+      appearance: character.appearance ?? undefined,
+      personality: character.personality ?? undefined,
+      background: character.background ?? undefined,
+      goals: (character.goals ?? []) as string[],
+      secrets: (character.secrets ?? []) as string[],
+      currentLocation: character.currentLocation ?? undefined,
+      instantiatedFrom: character.instantiatedFrom ?? undefined,
+      inheritsKnowledge: character.inheritsKnowledge
+        ? (character.inheritsKnowledge as any)
         : undefined,
       clues: clues.map((c) => ({
         id: c.id,
-        clueText: c.clue_text,
-        category: c.category,
-        difficulty: c.difficulty,
-        revealed: c.revealed === 1,
-        relatedTo: c.related_to ? JSON.parse(c.related_to) : undefined,
-      })),
+        clueText: c.clueText,
+        category: (c.category ?? undefined) as NPCClue["category"],
+        difficulty: (c.difficulty ?? undefined) as NPCClue["difficulty"],
+        revealed: c.revealed,
+        relatedTo: c.relatedTo ? (c.relatedTo as any) : undefined,
+      })) as NPCClue[],
       relationships: relationships.map((r) => ({
-        targetId: r.target_id,
-        targetName: r.target_name,
-        relationshipType: r.relationship_type,
+        targetId: r.targetId,
+        targetName: r.targetName,
+        relationshipType: r.relationshipType as NPCRelationship["relationshipType"],
         attitude: r.attitude,
-        description: r.description,
-        history: r.history,
-      })),
+        description: r.description ?? undefined,
+        history: r.history ?? undefined,
+      })) as NPCRelationship[],
       isNPC: true,
     };
 
@@ -1202,42 +1203,45 @@ Return ONLY JSON array, no extra text.`;
   /**
    * Get all NPCs from the database
    */
-  getAllNPCs(): NPCProfile[] {
-    const database = this.db.getDatabase();
+  async getAllNPCs(): Promise<NPCProfile[]> {
+    const prisma = getPrismaClient();
     const emailId = this.getEmailId();
-    const hasEmailIdColumn = this.db.hasColumn("characters", "email_id");
 
-    let sql = "SELECT character_id FROM characters WHERE is_npc = 1";
-    const params: any[] = [];
-    if (hasEmailIdColumn && emailId) {
-      sql += " AND email_id = ?";
-      params.push(emailId);
+    const charWhere = emailId
+      ? { isNpc: true, emailId }
+      : { isNpc: true };
+
+    const characters = await prisma.character.findMany({
+      where: charWhere,
+      select: { characterId: true },
+    });
+
+    const results: NPCProfile[] = [];
+    for (const c of characters) {
+      const npc = await this.getNPCById(c.characterId);
+      if (npc) {
+        results.push(npc);
+      }
     }
-    const characters = database.prepare(sql).all(...params) as any[];
-
-    return characters
-      .map((c) => this.getNPCById(c.character_id))
-      .filter((npc) => npc !== null) as NPCProfile[];
+    return results;
   }
 
   /**
    * Check if NPC already exists in database
    */
-  npcExists(npcId: string): boolean {
-    const database = this.db.getDatabase();
+  async npcExists(npcId: string): Promise<boolean> {
+    const prisma = getPrismaClient();
     const scopedNpcId = scopeId(npcId, this.getEmailId());
     const emailId = this.getEmailId();
-    const hasEmailIdColumn = this.db.hasColumn("characters", "email_id");
-    const result = database
-      .prepare(`
-            SELECT COUNT(*) as count FROM characters WHERE character_id = ? AND is_npc = 1${hasEmailIdColumn && emailId ? " AND email_id = ?" : ""}
-        `)
-      .get(
-        ...(hasEmailIdColumn && emailId
-          ? [scopedNpcId, emailId]
-          : [scopedNpcId])
-      ) as any;
-    return result.count > 0;
+
+    const charWhere = emailId
+      ? { characterId: scopedNpcId, isNpc: true, emailId }
+      : { characterId: scopedNpcId, isNpc: true };
+
+    const count = await prisma.character.count({
+      where: charWhere,
+    });
+    return count > 0;
   }
 
   /**

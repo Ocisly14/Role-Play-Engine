@@ -1,0 +1,705 @@
+// Prisma schema for CoC Multi-Agent System
+// PostgreSQL database with 35+ tables
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// =====================================================
+// REFERENCE DATA (Rules, Skills, Weapons, Sanity)
+// =====================================================
+
+model Rule {
+  id           String   @id
+  category     String
+  title        String
+  description  String
+  mechanics    String?
+  examples     Json?    @db.JsonB
+  relatedRules Json?    @map("related_rules") @db.JsonB
+  tags         Json?    @db.JsonB
+  createdAt    DateTime @default(now()) @map("created_at")
+
+  @@index([category])
+  @@index([title])
+  @@map("rules")
+}
+
+model Skill {
+  name        String   @id
+  baseValue   Int      @map("base_value")
+  description String
+  category    String
+  uncommon    Boolean  @default(false)
+  examples    Json?    @db.JsonB
+  createdAt   DateTime @default(now()) @map("created_at")
+
+  @@index([category])
+  @@map("skills")
+}
+
+model Weapon {
+  name            String   @id
+  skill           String
+  damage          String
+  range           String
+  attacksPerRound Int      @map("attacks_per_round")
+  ammo            Int?
+  malfunction     Int?
+  era             String?
+  createdAt       DateTime @default(now()) @map("created_at")
+
+  @@map("weapons")
+}
+
+model SanityTrigger {
+  trigger     String   @id
+  sanityLoss  String   @map("sanity_loss")
+  description String?
+  createdAt   DateTime @default(now()) @map("created_at")
+
+  @@map("sanity_triggers")
+}
+
+// =====================================================
+// USERS & AUTHENTICATION
+// =====================================================
+
+model User {
+  id              String    @id
+  email           String    @unique
+  username        String?   @unique
+  passwordHash    String    @map("password_hash")
+  isEmailVerified Boolean   @default(false) @map("is_email_verified")
+  isActive        Boolean   @default(true) @map("is_active")
+  role            String    @default("USER")
+  createdAt       DateTime  @default(now()) @map("created_at")
+  updatedAt       DateTime  @default(now()) @map("updated_at")
+  lastLoginAt     DateTime? @map("last_login_at")
+
+  userSessions         UserSession[]
+  emailVerifications   EmailVerification[]
+  passwordResets       PasswordReset[]
+  refreshTokens        RefreshToken[]
+  referralCodeUses     ReferralCodeUse[]
+  createdReferralCodes ReferralCode[]      @relation("CreatedReferralCodes")
+  usedReferralCodes    ReferralCode[]      @relation("UsedReferralCodes")
+
+  @@index([email])
+  @@index([username])
+  @@map("users")
+}
+
+model UserSession {
+  id          String   @id
+  userId      String   @map("user_id")
+  token       String   @unique
+  userAgent   String?  @map("user_agent")
+  ipAddress   String?  @map("ip_address")
+  expiresAt   DateTime @map("expires_at")
+  createdAt   DateTime @default(now()) @map("created_at")
+  lastUsedAt  DateTime @default(now()) @map("last_used_at")
+  isRevoked   Boolean  @default(false) @map("is_revoked")
+  revokedAt   DateTime? @map("revoked_at")
+  revokeReason String?  @map("revoke_reason")
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([token])
+  @@index([expiresAt])
+  @@map("user_sessions")
+}
+
+model EmailVerification {
+  id        String   @id
+  userId    String   @map("user_id")
+  code      String
+  expiresAt DateTime @map("expires_at")
+  createdAt DateTime @default(now()) @map("created_at")
+  verified  Boolean  @default(false)
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([code])
+  @@map("email_verifications")
+}
+
+model PasswordReset {
+  id        String   @id
+  userId    String   @map("user_id")
+  token     String   @unique
+  expiresAt DateTime @map("expires_at")
+  createdAt DateTime @default(now()) @map("created_at")
+  used      Boolean  @default(false)
+  usedAt    DateTime? @map("used_at")
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([token])
+  @@map("password_resets")
+}
+
+model RefreshToken {
+  id        String    @id
+  userId    String    @map("user_id")
+  token     String    @unique
+  expiresAt DateTime  @map("expires_at")
+  createdAt DateTime  @default(now()) @map("created_at")
+  revokedAt DateTime? @map("revoked_at")
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([token])
+  @@map("refresh_tokens")
+}
+
+model ReferralCode {
+  id            String   @id
+  code          String   @unique
+  maxUses       Int?     @map("max_uses")
+  expiresAt     DateTime? @map("expires_at")
+  description   String?
+  createdAt     DateTime @default(now()) @map("created_at")
+  createdByUserId String? @map("created_by_user_id")
+  usedByUserId    String? @map("used_by_user_id")
+
+  createdBy User?             @relation("CreatedReferralCodes", fields: [createdByUserId], references: [id])
+  usedBy    User?             @relation("UsedReferralCodes", fields: [usedByUserId], references: [id])
+  uses      ReferralCodeUse[]
+
+  @@index([code])
+  @@map("referral_codes")
+}
+
+model ReferralCodeUse {
+  id             String   @id
+  referralCodeId String   @map("referral_code_id")
+  userId         String   @map("user_id")
+  usedAt         DateTime @default(now()) @map("used_at")
+
+  referralCode ReferralCode @relation(fields: [referralCodeId], references: [id], onDelete: Cascade)
+  user         User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([referralCodeId])
+  @@index([userId])
+  @@map("referral_code_uses")
+}
+
+model DisposableEmailDomain {
+  id        String   @id
+  domain    String   @unique
+  createdAt DateTime @default(now()) @map("created_at")
+
+  @@map("disposable_email_domains")
+}
+
+// =====================================================
+// CHARACTERS (Players & NPCs)
+// =====================================================
+
+model Character {
+  characterId        String    @id @map("character_id")
+  name               String
+  attributes         Json      @db.JsonB
+  status             Json      @db.JsonB
+  inventory          Json?     @db.JsonB
+  skills             Json?     @db.JsonB
+  notes              String?
+  isNpc              Boolean   @default(false) @map("is_npc")
+  occupation         String?
+  age                Int?
+  gender             String?
+  appearance         String?
+  personality        String?
+  background         String?
+  goals              Json?     @db.JsonB
+  secrets            Json?     @db.JsonB
+  currentLocation    String?   @map("current_location")
+  updatedAt          DateTime  @default(now()) @map("updated_at")
+  instantiatedFrom   String?   @map("instantiated_from")
+  inheritsKnowledge  Json?     @map("inherits_knowledge") @db.JsonB
+  emailId            String?   @map("email_id")
+
+  npcClues              NpcClue[]
+  sourceRelationships   NpcRelationship[] @relation("SourceCharacter")
+  targetRelationships   NpcRelationship[] @relation("TargetCharacter")
+
+  @@index([name])
+  @@index([isNpc])
+  @@index([emailId])
+  @@map("characters")
+}
+
+model NpcClue {
+  id         String   @id
+  npcId      String   @map("npc_id")
+  clueText   String   @map("clue_text")
+  category   String?
+  difficulty String?
+  revealed   Boolean  @default(false)
+  relatedTo  Json?    @map("related_to") @db.JsonB
+  createdAt  DateTime @default(now()) @map("created_at")
+  emailId    String?  @map("email_id")
+
+  npc Character @relation(fields: [npcId], references: [characterId], onDelete: Cascade)
+
+  @@index([npcId])
+  @@index([revealed])
+  @@index([emailId])
+  @@map("npc_clues")
+}
+
+model NpcRelationship {
+  id               String   @id
+  sourceId         String   @map("source_id")
+  targetId         String   @map("target_id")
+  targetName       String   @map("target_name")
+  relationshipType String   @map("relationship_type")
+  attitude         Int      @default(0)
+  description      String?
+  history          String?
+  createdAt        DateTime @default(now()) @map("created_at")
+  emailId          String?  @map("email_id")
+
+  source Character @relation("SourceCharacter", fields: [sourceId], references: [characterId], onDelete: Cascade)
+  target Character @relation("TargetCharacter", fields: [targetId], references: [characterId], onDelete: Cascade)
+
+  @@unique([sourceId, targetId])
+  @@index([sourceId])
+  @@index([targetId])
+  @@index([emailId])
+  @@map("npc_relationships")
+}
+
+// =====================================================
+// MODULES & MODULE MANAGEMENT
+// =====================================================
+
+model ModuleBackground {
+  moduleId              String   @id @map("module_id")
+  title                 String
+  background            String?
+  storyOutline          String?  @map("story_outline")
+  moduleNotes           String?  @map("module_notes")
+  keeperGuidance        String?  @map("keeper_guidance")
+  moduleLimitations     String?  @map("module_limitations")
+  initialGameTime       String?  @map("initial_game_time")
+  initialScenarioNpcs   Json?    @map("initial_scenario_npcs") @db.JsonB
+  introduction          String?
+  tags                  Json?    @db.JsonB
+  emailId               String?  @map("email_id")
+  macroSceneStructure   Json?    @map("macro_scene_structure") @db.JsonB
+  truthTimeline         Json?    @map("truth_timeline") @db.JsonB
+  knowledgeMatrix       Json?    @map("knowledge_matrix") @db.JsonB
+  redHerrings           Json?    @map("red_herrings") @db.JsonB
+  historicalMythos      Json?    @map("historical_mythos") @db.JsonB
+  globalTrigger         Json?    @map("global_trigger") @db.JsonB
+  endStateDefinition    Json?    @map("end_state_definition") @db.JsonB
+  macroMapPath          String?  @map("macro_map_path")
+  // Note: searchVector will be added as String? type for tsvector compatibility
+  // Actual tsvector type will be handled via raw SQL after migration
+
+  @@index([emailId])
+  @@map("module_backgrounds")
+}
+
+model ModCatalog {
+  moduleName  String    @id @map("module_name")
+  ownerEmail  String    @map("owner_email")
+  shared      Boolean   @default(false)
+  createdAt   DateTime  @default(now()) @map("created_at")
+  deletedAt   DateTime? @map("deleted_at")
+
+  @@index([ownerEmail], name: "idx_mod_catalog_owner")
+  @@index([shared], name: "idx_mod_catalog_shared")
+  @@index([deletedAt], name: "idx_mod_catalog_deleted")
+  @@map("mod_catalog")
+}
+
+model UserMod {
+  emailId    String   @map("email_id")
+  moduleName String   @map("module_name")
+  addedAt    DateTime @default(now()) @map("added_at")
+
+  @@id([emailId, moduleName])
+  @@index([emailId], name: "idx_user_mods_email")
+  @@index([moduleName], name: "idx_user_mods_module")
+  @@map("user_mods")
+}
+
+model UserModBootstrap {
+  emailId        String   @id @map("email_id")
+  bootstrappedAt DateTime @default(now()) @map("bootstrapped_at")
+
+  @@map("user_mods_bootstrap")
+}
+
+model UserModDeleted {
+  emailId    String   @map("email_id")
+  moduleName String   @map("module_name")
+  deletedAt  DateTime @default(now()) @map("deleted_at")
+
+  @@id([emailId, moduleName])
+  @@index([emailId], name: "idx_user_mods_deleted_email")
+  @@index([moduleName], name: "idx_user_mods_deleted_module")
+  @@map("user_mods_deleted")
+}
+
+model ModGeneration {
+  id           String   @id
+  emailId      String   @map("email_id")
+  moduleName   String   @map("module_name")
+  storyLength  String   @map("story_length")
+  generatedAt  DateTime @default(now()) @map("generated_at")
+
+  @@index([emailId], name: "idx_mod_generations_email")
+  @@index([emailId, generatedAt], name: "idx_mod_generations_email_time")
+  @@map("mod_generations")
+}
+
+// =====================================================
+// SCENARIOS & LOCATIONS
+// =====================================================
+
+model Scenario {
+  scenarioId       String              @id @map("scenario_id")
+  name             String
+  description      String
+  tags             Json?               @db.JsonB
+  connections      Json?               @db.JsonB
+  permanentChanges Json?               @map("permanent_changes") @db.JsonB
+  metadata         Json                @db.JsonB
+  createdAt        DateTime            @default(now()) @map("created_at")
+  emailId          String?             @map("email_id")
+  mapImagePath     String?             @map("map_image_path")
+  sourcePlaceId    String?             @map("source_place_id")
+  // Note: searchVector for FTS will be handled via raw SQL
+
+  snapshots ScenarioSnapshot[]
+
+  @@index([name])
+  @@index([emailId])
+  @@map("scenarios")
+}
+
+model ScenarioSnapshot {
+  snapshotId          String              @id @map("snapshot_id")
+  scenarioId          String              @map("scenario_id")
+  snapshotName        String?             @map("snapshot_name")
+  location            String
+  description         String
+  events              Json?               @db.JsonB
+  exits               Json?               @db.JsonB
+  keeperNotes         String?             @map("keeper_notes")
+  timeRestriction     String?             @map("time_restriction")
+  showMap             Boolean?            @map("show_map")
+  createdAt           DateTime            @default(now()) @map("created_at")
+  emailId             String?             @map("email_id")
+  initialSnapshot     Boolean             @default(false) @map("initial_snapshot")
+  gameTime            String?             @map("game_time")
+  isDynamicHistorical Boolean             @default(false) @map("is_dynamic_historical")
+  sceneImagePath      String?             @map("scene_image_path")
+
+  scenario   Scenario            @relation(fields: [scenarioId], references: [scenarioId], onDelete: Cascade)
+  characters ScenarioCharacter[]
+  clues      ScenarioClue[]
+  conditions ScenarioCondition[]
+
+  @@index([scenarioId])
+  @@index([emailId])
+  @@index([scenarioId, isDynamicHistorical, gameTime])
+  @@map("scenario_snapshots")
+}
+
+model ScenarioCharacter {
+  id               String   @id
+  snapshotId       String   @map("snapshot_id")
+  characterName    String   @map("character_name")
+  characterRole    String   @map("character_role")
+  characterStatus  String   @map("character_status")
+  characterLocation String? @map("character_location")
+  characterNotes   String?  @map("character_notes")
+  createdAt        DateTime @default(now()) @map("created_at")
+  emailId          String?  @map("email_id")
+
+  snapshot ScenarioSnapshot @relation(fields: [snapshotId], references: [snapshotId], onDelete: Cascade)
+
+  @@index([snapshotId])
+  @@index([characterName])
+  @@index([emailId])
+  @@map("scenario_characters")
+}
+
+model ScenarioClue {
+  clueId           String   @id @map("clue_id")
+  snapshotId       String   @map("snapshot_id")
+  clueText         String   @map("clue_text")
+  category         String
+  difficulty       String
+  clueLocation     String   @map("clue_location")
+  discoveryMethod  String?  @map("discovery_method")
+  reveals          Json?    @db.JsonB
+  discovered       Boolean  @default(false)
+  discoveryDetails Json?    @map("discovery_details") @db.JsonB
+  createdAt        DateTime @default(now()) @map("created_at")
+  emailId          String?  @map("email_id")
+
+  snapshot ScenarioSnapshot @relation(fields: [snapshotId], references: [snapshotId], onDelete: Cascade)
+
+  @@index([snapshotId])
+  @@index([clueLocation])
+  @@index([discovered])
+  @@index([emailId])
+  @@map("scenario_clues")
+}
+
+model ScenarioCondition {
+  conditionId      String   @id @map("condition_id")
+  snapshotId       String   @map("snapshot_id")
+  conditionType    String   @map("condition_type")
+  description      String
+  mechanicalEffect String?  @map("mechanical_effect")
+  createdAt        DateTime @default(now()) @map("created_at")
+  emailId          String?  @map("email_id")
+
+  snapshot ScenarioSnapshot @relation(fields: [snapshotId], references: [snapshotId], onDelete: Cascade)
+
+  @@index([snapshotId])
+  @@index([conditionType])
+  @@index([emailId])
+  @@map("scenario_conditions")
+}
+
+// =====================================================
+// SESSIONS & GAMEPLAY
+// =====================================================
+
+model Session {
+  sessionId       String    @id @map("session_id")
+  modName         String?   @map("mod_name")
+  characterId     String?   @map("character_id")
+  characterName   String?   @map("character_name")
+  startedAt       DateTime  @default(now()) @map("started_at")
+  lastActivityAt  DateTime  @default(now()) @map("last_activity_at")
+  status          String    @default("active")
+  metadata        Json?     @db.JsonB
+  createdAt       DateTime  @default(now()) @map("created_at")
+  parentSessionId String?   @map("parent_session_id")
+  subId           Int?      @map("sub_id")
+
+  turns       GameTurn[]
+  checkpoints GameCheckpoint[]
+
+  @@index([status])
+  @@index([startedAt])
+  @@index([parentSessionId])
+  @@index([parentSessionId, subId])
+  @@map("sessions")
+}
+
+model GameTurn {
+  turnId           String    @id @map("turn_id")
+  sessionId        String    @map("session_id")
+  turnNumber       Int       @map("turn_number")
+  characterInput   String    @map("character_input")
+  characterId      String?   @map("character_id")
+  characterName    String?   @map("character_name")
+  actionAnalysis   Json?     @map("action_analysis") @db.JsonB
+  actionResults    Json?     @map("action_results") @db.JsonB
+  directorDecision Json?     @map("director_decision") @db.JsonB
+  keeperNarrative  String?   @map("keeper_narrative")
+  clueRevelations  Json?     @map("clue_revelations") @db.JsonB
+  sceneId          String?   @map("scene_id")
+  sceneName        String?   @map("scene_name")
+  location         String?
+  status           String    @default("processing")
+  errorMessage     String?   @map("error_message")
+  startedAt        DateTime  @map("started_at")
+  completedAt      DateTime? @map("completed_at")
+  createdAt        DateTime  @default(now()) @map("created_at")
+  isSimulated      Boolean   @default(false) @map("is_simulated")
+  gameDay          Int?      @map("game_day")
+  gameTime         String?   @map("game_time")
+
+  session Session @relation(fields: [sessionId], references: [sessionId], onDelete: Cascade)
+
+  @@index([sessionId])
+  @@index([status])
+  @@index([sessionId, turnNumber])
+  @@index([startedAt])
+  @@map("game_turns")
+}
+
+model GameEvent {
+  id          Int      @id @default(autoincrement())
+  eventType   String   @map("event_type")
+  sessionId   String   @map("session_id")
+  timestamp   DateTime
+  details     Json     @db.JsonB
+  characterId String?  @map("character_id")
+  location    String?
+  tags        Json?    @db.JsonB
+  createdAt   DateTime @default(now()) @map("created_at")
+  // Note: searchVector for FTS will be handled via raw SQL
+
+  @@index([sessionId])
+  @@index([eventType])
+  @@index([timestamp])
+  @@index([characterId])
+  @@map("game_events")
+}
+
+model Discovery {
+  id          Int      @id @default(autoincrement())
+  clueId      String   @map("clue_id")
+  sessionId   String   @map("session_id")
+  discoverer  String
+  method      String
+  timestamp   DateTime
+  description String?
+  createdAt   DateTime @default(now()) @map("created_at")
+
+  @@index([sessionId])
+  @@index([clueId])
+  @@map("discoveries")
+}
+
+model Relationship {
+  id          Int      @id @default(autoincrement())
+  characterId String   @map("character_id")
+  npcId       String   @map("npc_id")
+  value       Int      @default(0)
+  sessionId   String   @map("session_id")
+  lastUpdated DateTime @map("last_updated")
+  notes       String?
+  createdAt   DateTime @default(now()) @map("created_at")
+  emailId     String?  @map("email_id")
+
+  @@unique([characterId, npcId, sessionId])
+  @@index([characterId])
+  @@index([npcId])
+  @@index([emailId])
+  @@map("relationships")
+}
+
+model GameCheckpoint {
+  checkpointId       String   @id @map("checkpoint_id")
+  sessionId          String   @map("session_id")
+  turnNumber         Int      @map("turn_number")
+  checkpointName     String?  @map("checkpoint_name")
+  gameState          Json     @map("game_state") @db.JsonB
+  currentSceneName   String?  @map("current_scene_name")
+  isAutoCheckpoint   Boolean  @default(false) @map("is_auto_checkpoint")
+  createdAt          DateTime @default(now()) @map("created_at")
+
+  session Session @relation(fields: [sessionId], references: [sessionId], onDelete: Cascade)
+
+  @@index([sessionId])
+  @@index([sessionId, currentSceneName])
+  @@index([sessionId, turnNumber])
+  @@index([isAutoCheckpoint])
+  @@map("game_checkpoints")
+}
+
+// =====================================================
+// ANALYTICS & TRACKING
+// =====================================================
+
+model UserTokenUsage {
+  id           String   @id
+  emailId      String   @map("email_id")
+  provider     String
+  modelName    String   @map("model_name")
+  modelClass   String   @map("model_class")
+  operation    String
+  inputTokens  Int      @default(0) @map("input_tokens")
+  outputTokens Int      @default(0) @map("output_tokens")
+  totalTokens  Int      @default(0) @map("total_tokens")
+  createdAt    DateTime @default(now()) @map("created_at")
+
+  @@index([emailId])
+  @@index([createdAt])
+  @@index([modelName, modelClass])
+  @@map("user_token_usage")
+}
+
+model DailyAnalytics {
+  id                         String   @id
+  statDate                   DateTime @unique @map("stat_date") @db.Date
+  loginUsersCount            Int      @default(0) @map("login_users_count")
+  activeUsersCount           Int      @default(0) @map("active_users_count")
+  newUsersCount              Int      @default(0) @map("new_users_count")
+  totalMessagesCount         Int      @default(0) @map("total_messages_count")
+  avgMessagesPerActiveUser   Float    @default(0.0) @map("avg_messages_per_active_user")
+  newModsShortCount          Int      @default(0) @map("new_mods_short_count")
+  newModsMediumCount         Int      @default(0) @map("new_mods_medium_count")
+  newModsLongCount           Int      @default(0) @map("new_mods_long_count")
+  totalNewModsCount          Int      @default(0) @map("total_new_mods_count")
+  createdAt                  DateTime @default(now()) @map("created_at")
+  updatedAt                  DateTime @default(now()) @map("updated_at")
+
+  @@index([statDate])
+  @@map("daily_analytics")
+}
+
+model PlayerMemo {
+  memoId    String   @id @map("memo_id")
+  sessionId String   @map("session_id")
+  emailId   String   @map("email_id")
+  text      String
+  gameDay   Int?     @map("game_day")
+  gameTime  String?  @map("game_time")
+  location  String?
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @default(now()) @map("updated_at")
+
+  @@index([sessionId])
+  @@index([emailId])
+  @@map("player_memos")
+}
+
+// =====================================================
+// EMBEDDINGS & RAG (Vector Similarity Search)
+// =====================================================
+
+model ActionLogEmbedding {
+  id        String   @id
+  sessionId String   @map("session_id")
+  turnId    String   @map("turn_id")
+  actionLog Json     @map("action_log") @db.JsonB
+  embedding Bytes
+  createdAt DateTime @default(now()) @map("created_at")
+  emailId   String?  @map("email_id")
+  // Note: searchVector for BM25 FTS will be handled via raw SQL
+
+  @@index([sessionId])
+  @@index([turnId])
+  @@index([emailId])
+  @@map("action_log_embeddings")
+}
+
+model TurnEmbedding {
+  id        String   @id
+  sessionId String   @map("session_id")
+  turnId    String   @map("turn_id")
+  userInput String   @map("user_input")
+  narrative String
+  embedding Bytes
+  createdAt DateTime @default(now()) @map("created_at")
+  emailId   String?  @map("email_id")
+  // Note: searchVector for BM25 FTS will be handled via raw SQL
+
+  @@index([sessionId])
+  @@index([turnId])
+  @@index([emailId])
+  @@map("turn_embeddings")
+}

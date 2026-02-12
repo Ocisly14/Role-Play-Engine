@@ -12,9 +12,10 @@ import {
   ModelClass,
   generateText,
 } from "../../../models/index.js";
-import type { CoCDatabase } from "../../../shared/agents/memory/database/index.js";
+import type { CoCDatabase, CoCDatabaseAdapter } from "../../../shared/agents/memory/database/index.js";
 import { extractRecentConversationHistory } from "../memory/memoryAgent.js";
 import { resolveEmailId } from "../../../shared/agents/memory/database/userContext.js";
+import { getPrismaClient } from "../../../shared/agents/memory/database/prismaClient.js";
 
 interface OrchestratorRuntime {
   modelProvider: ModelProviderName;
@@ -38,7 +39,7 @@ export class OrchestratorAgent {
   async processInput(
     input: string,
     gameStateManager: DynamicGameStateManager,
-    db?: CoCDatabase,
+    db?: CoCDatabase | CoCDatabaseAdapter,
     selectedSkill?: string | null
   ): Promise<string> {
     const runtime = createRuntime();
@@ -64,26 +65,20 @@ export class OrchestratorAgent {
     if (db && dynamicState.currentScenario?.id) {
       // Try to get scenario_id from database using snapshot_id
       try {
-        const database = db.getDatabase();
+        const prisma = getPrismaClient();
         const emailId = resolveEmailId();
-        const hasSnapshotEmailId = db.hasColumn(
-          "scenario_snapshots",
-          "email_id"
-        );
-        const snapshotRow = database
-          .prepare(
-            `SELECT scenario_id FROM scenario_snapshots WHERE snapshot_id = ?${hasSnapshotEmailId && emailId ? " AND email_id = ?" : ""}`
-          )
-          .get(
-            ...(hasSnapshotEmailId && emailId
-              ? [dynamicState.currentScenario.id, emailId]
-              : [dynamicState.currentScenario.id])
-          ) as { scenario_id: string } | undefined;
+        const snapshotRow = await prisma.scenarioSnapshot.findFirst({
+          where: {
+            snapshotId: dynamicState.currentScenario.id,
+            ...(emailId ? { emailId } : {}),
+          },
+          select: { scenarioId: true },
+        });
 
         if (snapshotRow) {
           // Find scenario outline by scenario_id
           scenarioOutline = dynamicState.scenarioOutlines.find(
-            (outline) => outline.id === snapshotRow.scenario_id
+            (outline) => outline.id === snapshotRow.scenarioId
           );
         }
       } catch (error) {

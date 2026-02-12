@@ -1,15 +1,5 @@
-import Database from "better-sqlite3";
-import { CoCDatabase } from "../../../src/shared/agents/memory/database/schema.js";
+import { getPrismaClient } from "../../../src/shared/agents/memory/database/prismaClient.js";
 import { randomUUID } from "node:crypto";
-
-let dbInstance: CoCDatabase | null = null;
-
-function getDB(): Database.Database {
-  if (!dbInstance) {
-    dbInstance = new CoCDatabase();
-  }
-  return dbInstance.getDatabase();
-}
 
 export interface DailyStats {
   id: string;
@@ -28,105 +18,179 @@ export interface DailyStats {
 }
 
 /**
+ * Build start-of-day and start-of-next-day Date objects for a date string (YYYY-MM-DD).
+ */
+function dayRange(dateStr: string): { dayStart: Date; nextDay: Date } {
+  const dayStart = new Date(`${dateStr}T00:00:00.000Z`);
+  const nextDay = new Date(dayStart);
+  nextDay.setUTCDate(nextDay.getUTCDate() + 1);
+  return { dayStart, nextDay };
+}
+
+/**
+ * Convert a Prisma DailyAnalytics row into the legacy DailyStats shape.
+ */
+function toDailyStats(row: {
+  id: string;
+  statDate: Date;
+  loginUsersCount: number;
+  activeUsersCount: number;
+  newUsersCount: number;
+  totalMessagesCount: number;
+  avgMessagesPerActiveUser: number;
+  newModsShortCount: number;
+  newModsMediumCount: number;
+  newModsLongCount: number;
+  totalNewModsCount: number;
+  createdAt: Date;
+  updatedAt: Date;
+}): DailyStats {
+  return {
+    id: row.id,
+    stat_date: row.statDate.toISOString().split("T")[0],
+    login_users_count: row.loginUsersCount,
+    active_users_count: row.activeUsersCount,
+    new_users_count: row.newUsersCount,
+    total_messages_count: row.totalMessagesCount,
+    avg_messages_per_active_user: row.avgMessagesPerActiveUser,
+    new_mods_short_count: row.newModsShortCount,
+    new_mods_medium_count: row.newModsMediumCount,
+    new_mods_long_count: row.newModsLongCount,
+    total_new_mods_count: row.totalNewModsCount,
+    created_at: row.createdAt.toISOString(),
+    updated_at: row.updatedAt.toISOString(),
+  };
+}
+
+/**
  * Calculate daily statistics for a specific date
  */
-export function calculateDailyStats(date: string): Omit<DailyStats, 'id' | 'created_at' | 'updated_at'> {
-  const db = getDB();
+export async function calculateDailyStats(
+  date: string
+): Promise<Omit<DailyStats, "id" | "created_at" | "updated_at">> {
+  const prisma = getPrismaClient();
+  const { dayStart, nextDay } = dayRange(date);
 
   // Login users: users who logged in on this date
-  const loginUsersResult = db
-    .prepare(
-      `SELECT COUNT(DISTINCT id) as count
-       FROM users
-       WHERE DATE(last_login_at) = ?`
-    )
-    .get(date) as { count: number };
-
-  const login_users_count = loginUsersResult.count;
+  const login_users_count = await prisma.user.count({
+    where: {
+      lastLoginAt: {
+        gte: dayStart,
+        lt: nextDay,
+      },
+    },
+  });
 
   // Active users: users who sent messages on this date
   // Join users -> characters -> game_turns
-  const activeUsersResult = db
-    .prepare(
-      `SELECT COUNT(DISTINCT u.id) as count
-       FROM users u
-       INNER JOIN characters c ON c.email_id = u.email
-       INNER JOIN game_turns gt ON gt.character_id = c.character_id
-       WHERE DATE(gt.started_at) = ? AND gt.is_simulated = 0`
-    )
-    .get(date) as { count: number };
+  const activeUsersRows = await prisma.gameTurn.findMany({
+    where: {
+      startedAt: {
+        gte: dayStart,
+        lt: nextDay,
+      },
+      isSimulated: false,
+      characterId: { not: null },
+    },
+    select: {
+      characterId: true,
+    },
+  });
 
-  const active_users_count = activeUsersResult.count;
+  // Collect distinct character IDs from turns
+  const activeCharacterIds = [
+    ...new Set(
+      activeUsersRows
+        .map((r) => r.characterId)
+        .filter((id): id is string => id !== null)
+    ),
+  ];
+
+  // Find distinct users (via email) for those characters
+  let active_users_count = 0;
+  if (activeCharacterIds.length > 0) {
+    const characters = await prisma.character.findMany({
+      where: {
+        characterId: { in: activeCharacterIds },
+        emailId: { not: null },
+      },
+      select: { emailId: true },
+    });
+
+    const activeEmails = new Set(characters.map((c) => c.emailId));
+
+    const activeUsers = await prisma.user.count({
+      where: {
+        email: { in: [...activeEmails].filter((e): e is string => e !== null) },
+      },
+    });
+
+    active_users_count = activeUsers;
+  }
 
   // New users: users created on this date
-  const newUsersResult = db
-    .prepare(
-      `SELECT COUNT(*) as count
-       FROM users
-       WHERE DATE(created_at) = ?`
-    )
-    .get(date) as { count: number };
-
-  const new_users_count = newUsersResult.count;
+  const new_users_count = await prisma.user.count({
+    where: {
+      createdAt: {
+        gte: dayStart,
+        lt: nextDay,
+      },
+    },
+  });
 
   // Total messages: non-simulated turns on this date
-  const messagesResult = db
-    .prepare(
-      `SELECT COUNT(*) as count
-       FROM game_turns
-       WHERE DATE(started_at) = ? AND is_simulated = 0`
-    )
-    .get(date) as { count: number };
-
-  const total_messages_count = messagesResult.count;
+  const total_messages_count = await prisma.gameTurn.count({
+    where: {
+      startedAt: {
+        gte: dayStart,
+        lt: nextDay,
+      },
+      isSimulated: false,
+    },
+  });
 
   // Average messages per active user
   const avg_messages_per_active_user =
     active_users_count > 0 ? total_messages_count / active_users_count : 0;
 
   // Module generation statistics
-  // Check if mod_generations table exists first
   let new_mods_short_count = 0;
   let new_mods_medium_count = 0;
   let new_mods_long_count = 0;
   let total_new_mods_count = 0;
 
   try {
-    const tableExists = db
-      .prepare(
-        `SELECT name FROM sqlite_master WHERE type='table' AND name='mod_generations'`
-      )
-      .get() as { name: string } | undefined;
+    const modStats = await prisma.modGeneration.groupBy({
+      by: ["storyLength"],
+      where: {
+        generatedAt: {
+          gte: dayStart,
+          lt: nextDay,
+        },
+      },
+      _count: {
+        id: true,
+      },
+    });
 
-    if (tableExists) {
-      const modStats = db
-        .prepare(
-          `SELECT story_length, COUNT(*) as count
-           FROM mod_generations
-           WHERE DATE(generated_at) = ?
-           GROUP BY story_length`
-        )
-        .all(date) as Array<{ story_length: string; count: number }>;
+    for (const stat of modStats) {
+      const count = stat._count.id;
+      total_new_mods_count += count;
 
-      for (const stat of modStats) {
-        const count = stat.count;
-        total_new_mods_count += count;
-
-        switch (stat.story_length) {
-          case "short":
-            new_mods_short_count = count;
-            break;
-          case "medium":
-            new_mods_medium_count = count;
-            break;
-          case "long":
-            new_mods_long_count = count;
-            break;
-        }
+      switch (stat.storyLength) {
+        case "short":
+          new_mods_short_count = count;
+          break;
+        case "medium":
+          new_mods_medium_count = count;
+          break;
+        case "long":
+          new_mods_long_count = count;
+          break;
       }
     }
   } catch (error) {
-    // Table doesn't exist or query failed - keep zeros
+    // Query failed - keep zeros
     console.warn("Module generation stats unavailable:", error);
   }
 
@@ -147,103 +211,87 @@ export function calculateDailyStats(date: string): Omit<DailyStats, 'id' | 'crea
 /**
  * Save or update daily statistics to database
  */
-export function saveDailyStats(stats: Omit<DailyStats, 'id' | 'created_at' | 'updated_at'>): void {
-  const db = getDB();
+export async function saveDailyStats(
+  stats: Omit<DailyStats, "id" | "created_at" | "updated_at">
+): Promise<void> {
+  const prisma = getPrismaClient();
+  const statDate = new Date(`${stats.stat_date}T00:00:00.000Z`);
 
-  // Check if record exists for this date
-  const existing = db
-    .prepare(`SELECT id FROM daily_analytics WHERE stat_date = ?`)
-    .get(stats.stat_date) as { id: string } | undefined;
-
-  if (existing) {
-    // Update existing record
-    db.prepare(
-      `UPDATE daily_analytics SET
-        login_users_count = ?,
-        active_users_count = ?,
-        new_users_count = ?,
-        total_messages_count = ?,
-        avg_messages_per_active_user = ?,
-        new_mods_short_count = ?,
-        new_mods_medium_count = ?,
-        new_mods_long_count = ?,
-        total_new_mods_count = ?,
-        updated_at = CURRENT_TIMESTAMP
-       WHERE stat_date = ?`
-    ).run(
-      stats.login_users_count,
-      stats.active_users_count,
-      stats.new_users_count,
-      stats.total_messages_count,
-      stats.avg_messages_per_active_user,
-      stats.new_mods_short_count,
-      stats.new_mods_medium_count,
-      stats.new_mods_long_count,
-      stats.total_new_mods_count,
-      stats.stat_date
-    );
-  } else {
-    // Insert new record
-    db.prepare(
-      `INSERT INTO daily_analytics (
-        id, stat_date, login_users_count, active_users_count, new_users_count,
-        total_messages_count, avg_messages_per_active_user,
-        new_mods_short_count, new_mods_medium_count, new_mods_long_count, total_new_mods_count
-      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
-    ).run(
-      randomUUID(),
-      stats.stat_date,
-      stats.login_users_count,
-      stats.active_users_count,
-      stats.new_users_count,
-      stats.total_messages_count,
-      stats.avg_messages_per_active_user,
-      stats.new_mods_short_count,
-      stats.new_mods_medium_count,
-      stats.new_mods_long_count,
-      stats.total_new_mods_count
-    );
-  }
+  await prisma.dailyAnalytics.upsert({
+    where: { statDate },
+    update: {
+      loginUsersCount: stats.login_users_count,
+      activeUsersCount: stats.active_users_count,
+      newUsersCount: stats.new_users_count,
+      totalMessagesCount: stats.total_messages_count,
+      avgMessagesPerActiveUser: stats.avg_messages_per_active_user,
+      newModsShortCount: stats.new_mods_short_count,
+      newModsMediumCount: stats.new_mods_medium_count,
+      newModsLongCount: stats.new_mods_long_count,
+      totalNewModsCount: stats.total_new_mods_count,
+      updatedAt: new Date(),
+    },
+    create: {
+      id: randomUUID(),
+      statDate,
+      loginUsersCount: stats.login_users_count,
+      activeUsersCount: stats.active_users_count,
+      newUsersCount: stats.new_users_count,
+      totalMessagesCount: stats.total_messages_count,
+      avgMessagesPerActiveUser: stats.avg_messages_per_active_user,
+      newModsShortCount: stats.new_mods_short_count,
+      newModsMediumCount: stats.new_mods_medium_count,
+      newModsLongCount: stats.new_mods_long_count,
+      totalNewModsCount: stats.total_new_mods_count,
+    },
+  });
 }
 
 /**
  * Get historical statistics for the last N days
  * Returns data for the past N days, filling in missing days with calculated stats
  */
-export function getHistoricalStats(days: number): DailyStats[] {
-  const db = getDB();
+export async function getHistoricalStats(days: number): Promise<DailyStats[]> {
+  const prisma = getPrismaClient();
+
+  // Calculate the cutoff date: N days ago from now
+  const cutoffDate = new Date();
+  cutoffDate.setUTCDate(cutoffDate.getUTCDate() - days);
+  cutoffDate.setUTCHours(0, 0, 0, 0);
 
   // Get stats for the past N days
-  const stats = db
-    .prepare(
-      `SELECT * FROM daily_analytics
-       WHERE stat_date >= DATE('now', '-' || ? || ' days')
-       ORDER BY stat_date DESC`
-    )
-    .all(days) as DailyStats[];
+  const rows = await prisma.dailyAnalytics.findMany({
+    where: {
+      statDate: { gte: cutoffDate },
+    },
+    orderBy: { statDate: "desc" },
+  });
+
+  const stats: DailyStats[] = rows.map(toDailyStats);
 
   // If we have fewer records than requested days, fill in missing days
   if (stats.length < days) {
-    const existingDates = new Set(stats.map(s => s.stat_date));
+    const existingDates = new Set(stats.map((s) => s.stat_date));
     const today = new Date();
 
     for (let i = 0; i < days; i++) {
       const date = new Date(today);
       date.setDate(date.getDate() - i);
-      const dateString = date.toISOString().split('T')[0];
+      const dateString = date.toISOString().split("T")[0];
 
       if (!existingDates.has(dateString)) {
         // Calculate stats for this missing day
-        const calculatedStats = calculateDailyStats(dateString);
-        saveDailyStats(calculatedStats);
+        const calculatedStats = await calculateDailyStats(dateString);
+        await saveDailyStats(calculatedStats);
 
         // Retrieve the saved record
-        const saved = db
-          .prepare(`SELECT * FROM daily_analytics WHERE stat_date = ?`)
-          .get(dateString) as DailyStats;
+        const statDate = new Date(`${dateString}T00:00:00.000Z`);
+        const saved = await prisma.dailyAnalytics.findUnique({
+          where: { statDate },
+        });
 
         if (saved) {
-          stats.push(saved);
+          stats.push(toDailyStats(saved));
         }
       }
     }
@@ -258,27 +306,28 @@ export function getHistoricalStats(days: number): DailyStats[] {
 /**
  * Get or calculate today's statistics
  */
-export function getTodayStats(): DailyStats {
-  const db = getDB();
-  const today = new Date().toISOString().split('T')[0];
+export async function getTodayStats(): Promise<DailyStats> {
+  const prisma = getPrismaClient();
+  const today = new Date().toISOString().split("T")[0];
+  const statDate = new Date(`${today}T00:00:00.000Z`);
 
   // Try to get existing stats
-  const existing = db
-    .prepare(`SELECT * FROM daily_analytics WHERE stat_date = ?`)
-    .get(today) as DailyStats | undefined;
+  const existing = await prisma.dailyAnalytics.findUnique({
+    where: { statDate },
+  });
 
   if (existing) {
-    return existing;
+    return toDailyStats(existing);
   }
 
   // Calculate and save new stats
-  const stats = calculateDailyStats(today);
-  saveDailyStats(stats);
+  const stats = await calculateDailyStats(today);
+  await saveDailyStats(stats);
 
   // Retrieve the saved record
-  const saved = db
-    .prepare(`SELECT * FROM daily_analytics WHERE stat_date = ?`)
-    .get(today) as DailyStats;
+  const saved = await prisma.dailyAnalytics.findUnique({
+    where: { statDate },
+  });
 
-  return saved;
+  return toDailyStats(saved!);
 }

@@ -6,7 +6,11 @@
 
 import fs from "fs";
 import path from "path";
-import type { CoCDatabase } from "../../shared/agents/memory/database/schema.js";
+import type {
+  CoCDatabase,
+  CoCDatabaseAdapter,
+} from "../../shared/agents/memory/database/index.js";
+import { getPrismaClient } from "../../shared/agents/memory/database/prismaClient.js";
 import {
   resolveEmailId,
   scopeArray,
@@ -66,10 +70,10 @@ interface ScenarioFilePayload {
 }
 
 export class WorldModuleLoader {
-  private db: CoCDatabase;
+  private db: CoCDatabase | CoCDatabaseAdapter;
   private emailId?: string;
 
-  constructor(db: CoCDatabase, options?: { emailId?: string }) {
+  constructor(db: CoCDatabase | CoCDatabaseAdapter, options?: { emailId?: string }) {
     this.db = db;
     this.emailId = options?.emailId;
   }
@@ -85,10 +89,10 @@ export class WorldModuleLoader {
   /**
    * Check if module directory has changed since last load
    */
-  private checkForChanges(moduleDir: string): {
+  private async checkForChanges(moduleDir: string): Promise<{
     hasChanges: boolean;
     timestamp: number;
-  } {
+  }> {
     const timestampFile = path.join(moduleDir, ".last_world_load_timestamp");
     const currentTime = Date.now();
 
@@ -130,20 +134,15 @@ export class WorldModuleLoader {
 
     // Check if we have existing data in database
     const emailId = this.getEmailId();
-    const hasEmailIdColumn = this.db.hasColumn(
-      "module_backgrounds",
-      "email_id"
-    );
-    const existing = this.db
-      .getDatabase()
-      .prepare(
-        `SELECT module_id FROM module_backgrounds WHERE title = ?${hasEmailIdColumn && emailId ? " AND email_id = ?" : ""}`
-      )
-      .get(
-        ...(hasEmailIdColumn && emailId
-          ? [path.basename(moduleDir), emailId]
-          : [path.basename(moduleDir)])
-      );
+    const prisma = getPrismaClient();
+
+    const existing = await prisma.moduleBackground.findFirst({
+      where: {
+        title: path.basename(moduleDir),
+        ...(emailId ? { emailId } : {}),
+      },
+      select: { moduleId: true },
+    });
 
     if (!existing) {
       return { hasChanges: true, timestamp: currentTime };
@@ -189,7 +188,7 @@ export class WorldModuleLoader {
 
     // Check for changes unless forced reload
     if (!forceReload) {
-      const { hasChanges } = this.checkForChanges(moduleDir);
+      const { hasChanges } = await this.checkForChanges(moduleDir);
       if (!hasChanges) {
         console.log(
           `No changes detected for module "${moduleName}". Skipping reload.`
@@ -199,7 +198,7 @@ export class WorldModuleLoader {
       }
     }
 
-    console.log(`📦 Loading world module: ${moduleName}`);
+    console.log(`Loading world module: ${moduleName}`);
 
     try {
       // 1. Load module digest
@@ -208,7 +207,7 @@ export class WorldModuleLoader {
       const moduleDigest = this.loadJSON<ModuleDigest & { title: string }>(
         moduleDigestFile
       );
-      console.log(`    ✓ Module digest loaded: ${moduleDigest.title}`);
+      console.log(`    Module digest loaded: ${moduleDigest.title}`);
 
       // 2. Load macro scene (includes mythos events and end state)
       console.log(`  [2/7] Loading macro_scene.json...`);
@@ -219,9 +218,9 @@ export class WorldModuleLoader {
         endState: EndStateDefinition;
       }>(macroSceneFile);
       console.log(
-        `    ✓ Macro scene loaded: ${macroSceneData.macroScene.locationName}`
+        `    Macro scene loaded: ${macroSceneData.macroScene.locationName}`
       );
-      console.log(`    ✓ Mythos events: ${macroSceneData.mythosEvents.length}`);
+      console.log(`    Mythos events: ${macroSceneData.mythosEvents.length}`);
 
       // 3. Load truth timeline
       console.log(`  [3/7] Loading truth_timeline.json...`);
@@ -230,7 +229,7 @@ export class WorldModuleLoader {
         truthTimelineFile
       );
       console.log(
-        `    ✓ Truth events: ${truthTimelineData.truthTimeline.length}`
+        `    Truth events: ${truthTimelineData.truthTimeline.length}`
       );
 
       // 4. Load knowledge matrix and red herrings
@@ -241,10 +240,10 @@ export class WorldModuleLoader {
         redHerrings: RedHerring[];
       }>(knowledgeMatrixFile);
       console.log(
-        `    ✓ Knowledge holders: ${knowledgeMatrixData.knowledgeMatrix.length}`
+        `    Knowledge holders: ${knowledgeMatrixData.knowledgeMatrix.length}`
       );
       console.log(
-        `    ✓ Red herrings: ${knowledgeMatrixData.redHerrings.length}`
+        `    Red herrings: ${knowledgeMatrixData.redHerrings.length}`
       );
 
       // 5. Load scenario outlines
@@ -253,19 +252,19 @@ export class WorldModuleLoader {
       const scenariosData = this.loadJSON<{ scenarios: ScenarioOutline[] }>(
         scenariosFile
       );
-      console.log(`    ✓ Scenario outlines: ${scenariosData.scenarios.length}`);
+      console.log(`    Scenario outlines: ${scenariosData.scenarios.length}`);
 
       // 6. Load scenario snapshots from individual files
       console.log(`  [6/7] Loading scenario snapshots...`);
       const scenariosDir = path.join(moduleDir, `${moduleName}_Scenarios`);
       const scenarioSnapshots = this.loadDynamicScenarioSnapshots(scenariosDir);
-      console.log(`    ✓ Scenario snapshots loaded: ${scenarioSnapshots.size}`);
+      console.log(`    Scenario snapshots loaded: ${scenarioSnapshots.size}`);
 
       // 7. Load NPCs from individual files
       console.log(`  [7/7] Loading NPCs...`);
       const npcsDir = path.join(moduleDir, `${moduleName}_npc`);
       const npcs = this.loadNPCs(npcsDir);
-      console.log(`    ✓ NPCs loaded: ${npcs.length}`);
+      console.log(`    NPCs loaded: ${npcs.length}`);
 
       const loadedModule: LoadedWorldModule = {
         moduleName,
@@ -290,7 +289,7 @@ export class WorldModuleLoader {
         },
       };
 
-      console.log(`\n✅ World module loaded successfully: ${moduleName}`);
+      console.log(`\nWorld module loaded successfully: ${moduleName}`);
       console.log(`   - Truth events: ${loadedModule.truthTimeline.length}`);
       console.log(
         `   - Knowledge holders: ${loadedModule.knowledgeMatrix.length}`
@@ -301,7 +300,7 @@ export class WorldModuleLoader {
 
       return loadedModule;
     } catch (error) {
-      console.error(`✗ Failed to load world module from ${moduleDir}:`, error);
+      console.error(`Failed to load world module from ${moduleDir}:`, error);
       throw error;
     }
   }
@@ -319,21 +318,21 @@ export class WorldModuleLoader {
       return null;
     }
 
-    console.log(`\n💾 Saving world module to database: ${module.moduleName}`);
+    console.log(`\nSaving world module to database: ${module.moduleName}`);
 
     try {
       // Save to database
-      this.saveToDatabase(module);
+      await this.saveToDatabase(module);
 
       // Update timestamp
-      const { timestamp } = this.checkForChanges(moduleDir);
+      const { timestamp } = await this.checkForChanges(moduleDir);
       this.updateLastLoadTimestamp(moduleDir, timestamp);
 
-      console.log(`✅ World module saved to database: ${module.moduleName}\n`);
+      console.log(`World module saved to database: ${module.moduleName}\n`);
 
       return module;
     } catch (error) {
-      console.error(`✗ Failed to save world module to database:`, error);
+      console.error(`Failed to save world module to database:`, error);
       throw error;
     }
   }
@@ -375,7 +374,7 @@ export class WorldModuleLoader {
           loadedModules.push(module);
         }
       } catch (error) {
-        console.error(`  ✗ Failed to load module ${dir}:`, error);
+        console.error(`  Failed to load module ${dir}:`, error);
       }
     }
 
@@ -413,7 +412,7 @@ export class WorldModuleLoader {
     const snapshots = new Map<string, DynamicScenarioSnapshot>();
 
     if (!fs.existsSync(scenariosDir)) {
-      console.warn(`    ⚠️  Scenarios directory not found: ${scenariosDir}`);
+      console.warn(`    Scenarios directory not found: ${scenariosDir}`);
       return snapshots;
     }
 
@@ -439,7 +438,7 @@ export class WorldModuleLoader {
           }
         }
       } catch (error) {
-        console.warn(`    ⚠️  Failed to load scenario file ${file}:`, error);
+        console.warn(`    Failed to load scenario file ${file}:`, error);
       }
     }
 
@@ -453,7 +452,7 @@ export class WorldModuleLoader {
     const npcs: DynamicNPCProfile[] = [];
 
     if (!fs.existsSync(npcsDir)) {
-      console.warn(`    ⚠️  NPCs directory not found: ${npcsDir}`);
+      console.warn(`    NPCs directory not found: ${npcsDir}`);
       return npcs;
     }
 
@@ -467,13 +466,13 @@ export class WorldModuleLoader {
 
         // Validate required NPC fields
         if (!npc.id || !npc.name) {
-          console.warn(`    ⚠️  Invalid NPC in ${file}: missing id or name`);
+          console.warn(`    Invalid NPC in ${file}: missing id or name`);
           continue;
         }
 
         npcs.push(npc);
       } catch (error) {
-        console.warn(`    ⚠️  Failed to load NPC file ${file}:`, error);
+        console.warn(`    Failed to load NPC file ${file}:`, error);
       }
     }
 
@@ -483,43 +482,37 @@ export class WorldModuleLoader {
   /**
    * Save loaded world module to database
    */
-  private saveToDatabase(module: LoadedWorldModule): void {
-    const database = this.db.getDatabase();
-
+  private async saveToDatabase(module: LoadedWorldModule): Promise<void> {
     // 1. Save module background
     console.log(`  [1/4] Saving module background...`);
-    this.saveModuleBackground(module);
+    await this.saveModuleBackground(module);
 
     // 2. Save NPCs
     console.log(`  [2/4] Saving ${module.npcs.length} NPCs...`);
-    this.saveNPCs(module.npcs);
+    await this.saveNPCs(module.npcs);
 
     // 3. Save scenarios
     console.log(`  [3/4] Saving ${module.scenarios.length} scenarios...`);
-    this.saveScenarios(module);
+    await this.saveScenarios(module);
 
     // 4. Save scenario snapshots
     console.log(
       `  [4/4] Saving ${module.scenarioSnapshots.size} scenario snapshots...`
     );
-    this.saveDynamicScenarioSnapshots(module);
+    await this.saveDynamicScenarioSnapshots(module);
 
-    console.log(`  ✓ All data saved to database`);
+    console.log(`  All data saved to database`);
   }
 
   /**
    * Save module background to database
    */
-  private saveModuleBackground(module: LoadedWorldModule): void {
-    const database = this.db.getDatabase();
+  private async saveModuleBackground(module: LoadedWorldModule): Promise<void> {
+    const prisma = getPrismaClient();
     const moduleId = this.scopeId(
       `module-${module.moduleName.toLowerCase().replace(/\s+/g, "-")}`
     );
     const emailId = this.getEmailId();
-    const hasEmailIdColumn = this.db.hasColumn(
-      "module_backgrounds",
-      "email_id"
-    );
 
     // Generate background from macro scene
     const background = `${module.macroScene.locationName} - ${module.macroScene.settingType || "setting"}. ${module.macroScene.economicCore}`;
@@ -530,7 +523,7 @@ export class WorldModuleLoader {
       .join("\n");
 
     // Get initial game time from first scenario snapshot (usually starting scene)
-    let initialGameTime = null;
+    let initialGameTime: string | null = null;
     const firstSnapshot = module.scenarioSnapshots.values().next().value;
     if (firstSnapshot?.gameTime) {
       initialGameTime = firstSnapshot.gameTime;
@@ -552,294 +545,243 @@ export class WorldModuleLoader {
       ...module.mythosEvents.map((e) => e.mythosEntityInvolved.toLowerCase()),
     ];
 
-    // Check column availability
-    const hasInitialGameTime = this.db.hasColumn(
-      "module_backgrounds",
-      "initial_game_time"
-    );
-    const hasIntroduction = this.db.hasColumn(
-      "module_backgrounds",
-      "introduction"
-    );
-    const hasInitialScenarioNPCs = this.db.hasColumn(
-      "module_backgrounds",
-      "initial_scenario_npcs"
-    );
-
-    if (hasInitialGameTime && hasIntroduction && hasInitialScenarioNPCs) {
-      const stmt = database.prepare(`
-        INSERT OR REPLACE INTO module_backgrounds (
-          module_id, title, background, story_outline, module_notes,
-          keeper_guidance, module_limitations, initial_game_time,
-          initial_scenario_npcs, introduction, tags
-        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-      `);
-
-      stmt.run(
-        moduleId,
-        module.moduleName,
+    await prisma.moduleBackground.upsert({
+      where: { moduleId },
+      update: {
+        title: module.moduleName,
         background,
         storyOutline,
-        module.moduleDigest.moduleNotes,
-        module.moduleDigest.keeperGuidance,
-        module.moduleDigest.moduleLimitations,
+        moduleNotes: module.moduleDigest.moduleNotes,
+        keeperGuidance: module.moduleDigest.keeperGuidance,
+        moduleLimitations: module.moduleDigest.moduleLimitations,
         initialGameTime,
-        JSON.stringify(initialScenarioNPCs),
-        module.moduleDigest.introduction,
-        JSON.stringify(tags)
-      );
-    } else if (hasInitialGameTime && hasInitialScenarioNPCs) {
-      const stmt = database.prepare(`
-        INSERT OR REPLACE INTO module_backgrounds (
-          module_id, title, background, story_outline, module_notes,
-          keeper_guidance, module_limitations, initial_game_time,
-          initial_scenario_npcs, tags
-        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-      `);
-
-      stmt.run(
+        initialScenarioNpcs: initialScenarioNPCs,
+        introduction: module.moduleDigest.introduction,
+        tags,
+        emailId: emailId || null,
+        truthTimeline: module.truthTimeline as any,
+        knowledgeMatrix: module.knowledgeMatrix as any,
+        redHerrings: module.redHerrings as any,
+        historicalMythos: module.mythosEvents as any,
+        endStateDefinition: module.endState as any,
+        macroSceneStructure: module.macroScene as any,
+        globalTrigger: (module.moduleDigest.globalTrigger || undefined) as any,
+        macroMapPath: module.moduleDigest.macroMapPath || null,
+      },
+      create: {
         moduleId,
-        module.moduleName,
+        title: module.moduleName,
         background,
         storyOutline,
-        module.moduleDigest.moduleNotes,
-        module.moduleDigest.keeperGuidance,
-        module.moduleDigest.moduleLimitations,
+        moduleNotes: module.moduleDigest.moduleNotes,
+        keeperGuidance: module.moduleDigest.keeperGuidance,
+        moduleLimitations: module.moduleDigest.moduleLimitations,
         initialGameTime,
-        JSON.stringify(initialScenarioNPCs),
-        JSON.stringify(tags)
-      );
-    } else if (hasInitialGameTime) {
-      const stmt = database.prepare(`
-        INSERT OR REPLACE INTO module_backgrounds (
-          module_id, title, background, story_outline, module_notes,
-          keeper_guidance, module_limitations, initial_game_time, tags
-        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
-      `);
-
-      stmt.run(
-        moduleId,
-        module.moduleName,
-        background,
-        storyOutline,
-        module.moduleDigest.moduleNotes,
-        module.moduleDigest.keeperGuidance,
-        module.moduleDigest.moduleLimitations,
-        initialGameTime,
-        JSON.stringify(tags)
-      );
-    } else {
-      const stmt = database.prepare(`
-        INSERT OR REPLACE INTO module_backgrounds (
-          module_id, title, background, story_outline, module_notes,
-          keeper_guidance, module_limitations, tags
-        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?)
-      `);
-
-      stmt.run(
-        moduleId,
-        module.moduleName,
-        background,
-        storyOutline,
-        module.moduleDigest.moduleNotes,
-        module.moduleDigest.keeperGuidance,
-        module.moduleDigest.moduleLimitations,
-        JSON.stringify(tags)
-      );
-    }
-
-    if (hasEmailIdColumn && emailId) {
-      database
-        .prepare(
-          "UPDATE module_backgrounds SET email_id = ? WHERE module_id = ?"
-        )
-        .run(emailId, moduleId);
-    }
-
-    // Save extended world data (truth timeline, knowledge matrix, etc.) if columns exist
-    if (this.db.hasColumn("module_backgrounds", "truth_timeline")) {
-      const updateStmt = database.prepare(`
-        UPDATE module_backgrounds
-        SET truth_timeline = ?,
-            knowledge_matrix = ?,
-            red_herrings = ?,
-            historical_mythos = ?,
-            end_state_definition = ?,
-            macro_scene_structure = ?,
-            global_trigger = ?,
-            macro_map_path = ?
-        WHERE module_id = ?
-      `);
-
-      updateStmt.run(
-        JSON.stringify(module.truthTimeline),
-        JSON.stringify(module.knowledgeMatrix),
-        JSON.stringify(module.redHerrings),
-        JSON.stringify(module.mythosEvents),
-        JSON.stringify(module.endState),
-        JSON.stringify(module.macroScene),
-        module.moduleDigest.globalTrigger
-          ? JSON.stringify(module.moduleDigest.globalTrigger)
-          : null,
-        module.moduleDigest.macroMapPath || null,
-        moduleId
-      );
-    }
+        initialScenarioNpcs: initialScenarioNPCs,
+        introduction: module.moduleDigest.introduction,
+        tags,
+        emailId: emailId || null,
+        truthTimeline: module.truthTimeline as any,
+        knowledgeMatrix: module.knowledgeMatrix as any,
+        redHerrings: module.redHerrings as any,
+        historicalMythos: module.mythosEvents as any,
+        endStateDefinition: module.endState as any,
+        macroSceneStructure: module.macroScene as any,
+        globalTrigger: (module.moduleDigest.globalTrigger || undefined) as any,
+        macroMapPath: module.moduleDigest.macroMapPath || null,
+      },
+    });
   }
 
   /**
    * Save NPCs to database
    */
-  private saveNPCs(npcs: DynamicNPCProfile[]): void {
-    const database = this.db.getDatabase();
+  private async saveNPCs(npcs: DynamicNPCProfile[]): Promise<void> {
+    const prisma = getPrismaClient();
     const emailId = this.getEmailId();
-    const hasCharacterEmailId = this.db.hasColumn("characters", "email_id");
-    const hasClueEmailId = this.db.hasColumn("npc_clues", "email_id");
-    const hasRelationshipEmailId = this.db.hasColumn(
-      "npc_relationships",
-      "email_id"
-    );
+    const scopedNpcIds = new Set(npcs.map((npc) => this.scopeId(npc.id)));
 
+    // Pass 1: ensure all NPC characters exist before writing dependent rows.
     for (const npc of npcs) {
       const npcId = this.scopeId(npc.id);
-      // Check if NPC already exists
-      const existing = database
-        .prepare(`SELECT character_id FROM characters WHERE character_id = ?`)
-        .get(npcId);
 
-      if (existing) {
-        // Update existing NPC
-        const updateStmt = database.prepare(`
-          UPDATE characters
-          SET name = ?, occupation = ?, age = ?, gender = ?, appearance = ?,
-              personality = ?, background = ?, attributes = ?, status = ?,
-              skills = ?, inventory = ?, goals = ?, secrets = ?, notes = ?,
-              current_location = ?, instantiated_from = ?, inherits_knowledge = ?
-          WHERE character_id = ?
-        `);
+      await prisma.character.upsert({
+        where: { characterId: npcId },
+        update: {
+          name: npc.name,
+          occupation: npc.occupation || null,
+          age: npc.age || null,
+          gender: npc.gender || null,
+          appearance: npc.appearance || null,
+          personality: npc.personality || null,
+          background: npc.background || null,
+          attributes: npc.attributes,
+          status: npc.status,
+          skills: npc.skills,
+          inventory: npc.inventory as any,
+          goals: npc.goals || [],
+          secrets: npc.secrets || [],
+          notes: npc.notes || null,
+          currentLocation: null, // currentLocation removed - location tracked via actionLog
+          instantiatedFrom: npc.instantiatedFrom || null,
+          inheritsKnowledge: npc.inheritsKnowledge || [],
+          emailId: emailId || null,
+        },
+        create: {
+          characterId: npcId,
+          name: npc.name,
+          occupation: npc.occupation || null,
+          age: npc.age || null,
+          gender: npc.gender || null,
+          appearance: npc.appearance || null,
+          personality: npc.personality || null,
+          background: npc.background || null,
+          attributes: npc.attributes,
+          status: npc.status,
+          skills: npc.skills,
+          inventory: npc.inventory as any,
+          goals: npc.goals || [],
+          secrets: npc.secrets || [],
+          notes: npc.notes || null,
+          isNpc: true,
+          currentLocation: null, // currentLocation removed - location tracked via actionLog
+          instantiatedFrom: npc.instantiatedFrom || null,
+          inheritsKnowledge: npc.inheritsKnowledge || [],
+          emailId: emailId || null,
+        },
+      });
+    }
 
-        updateStmt.run(
-          npc.name,
-          npc.occupation || null,
-          npc.age || null,
-          npc.gender || null,
-          npc.appearance || null,
-          npc.personality || null,
-          npc.background || null,
-          JSON.stringify(npc.attributes),
-          JSON.stringify(npc.status),
-          JSON.stringify(npc.skills),
-          JSON.stringify(npc.inventory),
-          JSON.stringify(npc.goals || []),
-          JSON.stringify(npc.secrets || []),
-          npc.notes || null,
-          null, // currentLocation removed - location tracked via actionLog
-          npc.instantiatedFrom || null,
-          JSON.stringify(npc.inheritsKnowledge || []),
-          npcId
-        );
-      } else {
-        // Insert new NPC
-        const insertStmt = database.prepare(`
-          INSERT INTO characters (
-            character_id, name, occupation, age, gender, appearance, personality,
-            background, attributes, status, skills, inventory, goals, secrets,
-            notes, is_npc, current_location, instantiated_from, inherits_knowledge
-          ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 1, ?, ?, ?)
-        `);
+    // Pass 2: save clues (depends on NPC character existing).
+    for (const npc of npcs) {
+      const npcId = this.scopeId(npc.id);
 
-        insertStmt.run(
-          npcId,
-          npc.name,
-          npc.occupation || null,
-          npc.age || null,
-          npc.gender || null,
-          npc.appearance || null,
-          npc.personality || null,
-          npc.background || null,
-          JSON.stringify(npc.attributes),
-          JSON.stringify(npc.status),
-          JSON.stringify(npc.skills),
-          JSON.stringify(npc.inventory),
-          JSON.stringify(npc.goals || []),
-          JSON.stringify(npc.secrets || []),
-          npc.notes || null,
-          null, // currentLocation removed - location tracked via actionLog
-          npc.instantiatedFrom || null,
-          JSON.stringify(npc.inheritsKnowledge || [])
-        );
-      }
-      if (hasCharacterEmailId && emailId) {
-        database
-          .prepare("UPDATE characters SET email_id = ? WHERE character_id = ?")
-          .run(emailId, npcId);
-      }
-
-      // Save NPC clues
       if (npc.clues && npc.clues.length > 0) {
         for (const clue of npc.clues) {
           const clueId = this.scopeId(clue.id);
-          const clueStmt = database.prepare(`
-            INSERT OR REPLACE INTO npc_clues (
-              id, npc_id, clue_text, category, difficulty, revealed, related_to
-            ) VALUES (?, ?, ?, ?, ?, ?, ?)
-          `);
 
-          clueStmt.run(
-            clueId,
-            npcId,
-            clue.clueText,
-            clue.category || null,
-            clue.difficulty || null,
-            clue.revealed ? 1 : 0,
-            JSON.stringify(clue.relatedTo || [])
-          );
-          if (hasClueEmailId && emailId) {
-            database
-              .prepare("UPDATE npc_clues SET email_id = ? WHERE id = ?")
-              .run(emailId, clueId);
-          }
+          await prisma.npcClue.upsert({
+            where: { id: clueId },
+            update: {
+              npcId: npcId,
+              clueText: clue.clueText,
+              category: clue.category || null,
+              difficulty: clue.difficulty || null,
+              revealed: clue.revealed ? true : false,
+              relatedTo: clue.relatedTo || [],
+              emailId: emailId || null,
+            },
+            create: {
+              id: clueId,
+              npcId: npcId,
+              clueText: clue.clueText,
+              category: clue.category || null,
+              difficulty: clue.difficulty || null,
+              revealed: clue.revealed ? true : false,
+              relatedTo: clue.relatedTo || [],
+              emailId: emailId || null,
+            },
+          });
         }
       }
+    }
 
-      // Save NPC relationships
+    // Collect relationship targets that are not in this NPC batch.
+    const externalTargetIds = new Set<string>();
+    for (const npc of npcs) {
+      if (!npc.relationships || npc.relationships.length === 0) continue;
+      for (const rel of npc.relationships) {
+        const rawTargetId =
+          typeof rel.targetId === "string" ? rel.targetId.trim() : "";
+        if (!rawTargetId) continue;
+        const scopedTargetId = this.scopeId(rawTargetId);
+        if (!scopedNpcIds.has(scopedTargetId)) {
+          externalTargetIds.add(scopedTargetId);
+        }
+      }
+    }
+
+    const existingExternalTargetIds = new Set<string>();
+    if (externalTargetIds.size > 0) {
+      const existingTargets = await prisma.character.findMany({
+        where: { characterId: { in: Array.from(externalTargetIds) } },
+        select: { characterId: true },
+      });
+      for (const row of existingTargets) {
+        existingExternalTargetIds.add(row.characterId);
+      }
+    }
+
+    // Pass 3: save relationships (requires source and target characters to exist).
+    let skippedRelationships = 0;
+    for (const npc of npcs) {
+      const npcId = this.scopeId(npc.id);
+
       if (npc.relationships && npc.relationships.length > 0) {
         for (const rel of npc.relationships) {
-          const relStmt = database.prepare(`
-            INSERT OR REPLACE INTO npc_relationships (
-              id, source_id, target_id, target_name, relationship_type,
-              attitude, description, history
-            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?)
-          `);
+          const rawTargetId =
+            typeof rel.targetId === "string" ? rel.targetId.trim() : "";
+          if (!rawTargetId) {
+            skippedRelationships++;
+            console.warn(
+              `[WorldModuleLoader] Skip relationship with empty targetId: ${npc.name} -> ${rel.targetName || "unknown"}`
+            );
+            continue;
+          }
+          const targetId = this.scopeId(rawTargetId);
+          const targetExists =
+            scopedNpcIds.has(targetId) ||
+            existingExternalTargetIds.has(targetId);
+          if (!targetExists) {
+            skippedRelationships++;
+            console.warn(
+              `[WorldModuleLoader] Skip relationship, target character not found: ${npc.name} -> ${rel.targetName} (${targetId})`
+            );
+            continue;
+          }
 
           const relId = this.scopeId(`${npc.id}_${rel.targetName}`);
-          relStmt.run(
-            relId,
-            npcId,
-            rel.targetId ? this.scopeId(rel.targetId) : null,
-            rel.targetName,
-            rel.relationshipType,
-            rel.attitude,
-            rel.description || null,
-            rel.history || null
-          );
-          if (hasRelationshipEmailId && emailId) {
-            database
-              .prepare("UPDATE npc_relationships SET email_id = ? WHERE id = ?")
-              .run(emailId, relId);
-          }
+
+          await prisma.npcRelationship.upsert({
+            where: { id: relId },
+            update: {
+              sourceId: npcId,
+              targetId,
+              targetName: rel.targetName,
+              relationshipType: rel.relationshipType,
+              attitude: rel.attitude,
+              description: rel.description || null,
+              history: rel.history || null,
+              emailId: emailId || null,
+            },
+            create: {
+              id: relId,
+              sourceId: npcId,
+              targetId,
+              targetName: rel.targetName,
+              relationshipType: rel.relationshipType,
+              attitude: rel.attitude,
+              description: rel.description || null,
+              history: rel.history || null,
+              emailId: emailId || null,
+            },
+          });
         }
       }
+    }
+
+    if (skippedRelationships > 0) {
+      console.warn(
+        `[WorldModuleLoader] Skipped ${skippedRelationships} unresolved NPC relationships`
+      );
     }
   }
 
   /**
    * Save scenarios to database
    */
-  private saveScenarios(module: LoadedWorldModule): void {
-    const database = this.db.getDatabase();
-    const hasMapImagePath = this.db.hasColumn("scenarios", "map_image_path");
-    const hasScenarioEmailId = this.db.hasColumn("scenarios", "email_id");
+  private async saveScenarios(module: LoadedWorldModule): Promise<void> {
+    const prisma = getPrismaClient();
     const emailId = this.getEmailId();
     const now = new Date().toISOString();
 
@@ -874,75 +816,51 @@ export class WorldModuleLoader {
         };
       });
 
-      const scenarioColumns = [
-        "scenario_id",
-        "name",
-        "description",
-        "tags",
-        "connections",
-        "metadata",
-        "source_place_id",
-      ];
-      const scenarioValues: any[] = [
-        scopedScenarioId,
-        scenario.name,
-        scenario.description,
-        JSON.stringify(scenario.tags || []),
-        JSON.stringify(connections),
-        JSON.stringify(metadata),
-        scenario.sourcePlaceId || null,
-      ];
-
-      if (hasMapImagePath) {
-        scenarioColumns.push("map_image_path");
-        scenarioValues.push(null);
-      }
-      if (hasScenarioEmailId) {
-        scenarioColumns.push("email_id");
-        scenarioValues.push(emailId || null);
-      }
-
-      const scenarioStmt = database.prepare(
-        `INSERT OR REPLACE INTO scenarios (${scenarioColumns.join(", ")}) VALUES (${scenarioColumns
-          .map(() => "?")
-          .join(", ")})`
-      );
-      scenarioStmt.run(...scenarioValues);
+      await prisma.scenario.upsert({
+        where: { scenarioId: scopedScenarioId },
+        update: {
+          name: scenario.name,
+          description: scenario.description,
+          tags: scenario.tags || [],
+          connections,
+          metadata,
+          sourcePlaceId: scenario.sourcePlaceId || null,
+          mapImagePath: null,
+          emailId: emailId || null,
+        },
+        create: {
+          scenarioId: scopedScenarioId,
+          name: scenario.name,
+          description: scenario.description,
+          tags: scenario.tags || [],
+          connections,
+          metadata,
+          sourcePlaceId: scenario.sourcePlaceId || null,
+          mapImagePath: null,
+          emailId: emailId || null,
+        },
+      });
     }
   }
 
   /**
    * Save scenario snapshots to database
    */
-  private saveDynamicScenarioSnapshots(module: LoadedWorldModule): void {
-    const database = this.db.getDatabase();
+  private async saveDynamicScenarioSnapshots(module: LoadedWorldModule): Promise<void> {
+    const prisma = getPrismaClient();
     const emailId = this.getEmailId();
-    const hasSnapshotEmailId = this.db.hasColumn(
-      "scenario_snapshots",
-      "email_id"
-    );
-    const hasCharacterEmailId = this.db.hasColumn(
-      "scenario_characters",
-      "email_id"
-    );
-    const hasClueEmailId = this.db.hasColumn("scenario_clues", "email_id");
-    const hasConditionEmailId = this.db.hasColumn(
-      "scenario_conditions",
-      "email_id"
-    );
 
     for (const [snapshotId, snapshot] of module.scenarioSnapshots.entries()) {
       const scopedSnapshotId = this.scopeId(snapshotId);
+
       // Check if snapshot exists
-      const existing = database
-        .prepare(
-          `SELECT snapshot_id FROM scenario_snapshots WHERE snapshot_id = ?${hasSnapshotEmailId && emailId ? " AND email_id = ?" : ""}`
-        )
-        .get(
-          ...(hasSnapshotEmailId && emailId
-            ? [scopedSnapshotId, emailId]
-            : [scopedSnapshotId])
-        );
+      const existing = await prisma.scenarioSnapshot.findFirst({
+        where: {
+          snapshotId: scopedSnapshotId,
+          ...(emailId ? { emailId } : {}),
+        },
+        select: { snapshotId: true },
+      });
 
       if (existing) {
         continue; // Skip existing snapshots
@@ -955,183 +873,109 @@ export class WorldModuleLoader {
       const scenarioId = scenario?.id || snapshotId;
       const scopedScenarioId = this.scopeId(scenarioId);
 
-      // Insert snapshot
-      const hasInitialSnapshot = this.db.hasColumn(
-        "scenario_snapshots",
-        "initial_snapshot"
-      );
-      const hasGameTime = this.db.hasColumn("scenario_snapshots", "game_time");
-      const hasSceneImagePath = this.db.hasColumn(
-        "scenario_snapshots",
-        "scene_image_path"
-      );
       const sceneImagePath = (snapshot as any).sceneImage?.path || null;
 
-      if (hasInitialSnapshot && hasGameTime) {
-        const cols = [
-          "snapshot_id",
-          "scenario_id",
-          "snapshot_name",
-          "location",
-          "description",
-          "events",
-          "exits",
-          "keeper_notes",
-          "time_restriction",
-          "show_map",
-          "initial_snapshot",
-          "game_time",
-        ];
-        if (hasSceneImagePath) cols.push("scene_image_path");
-        if (hasSnapshotEmailId) cols.push("email_id");
-        const placeholders = cols.map(() => "?").join(", ");
-        const snapshotStmt = database.prepare(
-          `INSERT INTO scenario_snapshots (${cols.join(", ")}) VALUES (${placeholders})`
-        );
-
-        const vals: any[] = [
-          scopedSnapshotId,
-          scopedScenarioId,
-          snapshot.name,
-          snapshot.location,
-          snapshot.description,
-          JSON.stringify([]), // events removed - tracked via actionResults
-          JSON.stringify([]), // exits removed - connections are scenario-level data
-          snapshot.keeperNotes || null,
-          snapshot.timeRestriction || null,
-          snapshot.showMap === false ? 0 : 1,
-          (snapshot as any).initialSnapshot ? 1 : 0,
-          (snapshot as any).gameTime || null,
-        ];
-        if (hasSceneImagePath) vals.push(sceneImagePath);
-        if (hasSnapshotEmailId) vals.push(emailId || null);
-        snapshotStmt.run(...vals);
-      } else {
-        const cols = [
-          "snapshot_id",
-          "scenario_id",
-          "snapshot_name",
-          "location",
-          "description",
-          "events",
-          "exits",
-          "keeper_notes",
-          "time_restriction",
-          "show_map",
-        ];
-        if (hasSceneImagePath) cols.push("scene_image_path");
-        if (hasSnapshotEmailId) cols.push("email_id");
-        const placeholders = cols.map(() => "?").join(", ");
-        const snapshotStmt = database.prepare(
-          `INSERT INTO scenario_snapshots (${cols.join(", ")}) VALUES (${placeholders})`
-        );
-
-        const vals: any[] = [
-          scopedSnapshotId,
-          scopedScenarioId,
-          snapshot.name,
-          snapshot.location,
-          snapshot.description,
-          JSON.stringify([]),
-          JSON.stringify([]),
-          snapshot.keeperNotes || null,
-          snapshot.timeRestriction || null,
-          snapshot.showMap === false ? 0 : 1,
-        ];
-        if (hasSceneImagePath) vals.push(sceneImagePath);
-        if (hasSnapshotEmailId) vals.push(emailId || null);
-        snapshotStmt.run(...vals);
-      }
+      // Insert snapshot
+      await prisma.scenarioSnapshot.create({
+        data: {
+          snapshotId: scopedSnapshotId,
+          scenarioId: scopedScenarioId,
+          snapshotName: snapshot.name,
+          location: snapshot.location,
+          description: snapshot.description,
+          events: [], // events removed - tracked via actionResults
+          exits: [], // exits removed - connections are scenario-level data
+          keeperNotes: snapshot.keeperNotes || null,
+          timeRestriction: snapshot.timeRestriction || null,
+          showMap: snapshot.showMap !== false,
+          initialSnapshot: (snapshot as any).initialSnapshot ? true : false,
+          gameTime: (snapshot as any).gameTime || null,
+          sceneImagePath,
+          emailId: emailId || null,
+        },
+      });
 
       // Insert characters
       if (snapshot.characters && snapshot.characters.length > 0) {
-        const charStmt = database.prepare(`
-          INSERT OR IGNORE INTO scenario_characters (
-            id, snapshot_id, character_name, character_role, character_status,
-            character_location, character_notes
-          ) VALUES (?, ?, ?, ?, ?, ?, ?)
-        `);
-
         for (const char of snapshot.characters) {
           const rawCharId =
             char.id ||
             `${scopedSnapshotId}-char-${Math.random().toString(36).slice(2, 10)}`;
           const scopedCharId = scopeId(rawCharId, emailId);
-          charStmt.run(
-            scopedCharId,
-            scopedSnapshotId,
-            char.name,
-            char.role,
-            char.status,
-            char.location || null,
-            char.notes || null
-          );
-          if (hasCharacterEmailId && emailId) {
-            database
-              .prepare(
-                "UPDATE scenario_characters SET email_id = ? WHERE id = ?"
-              )
-              .run(emailId, scopedCharId);
+
+          try {
+            await prisma.scenarioCharacter.create({
+              data: {
+                id: scopedCharId,
+                snapshotId: scopedSnapshotId,
+                characterName: char.name,
+                characterRole: char.role,
+                characterStatus: char.status,
+                characterLocation: char.location || null,
+                characterNotes: char.notes || null,
+                emailId: emailId || null,
+              },
+            });
+          } catch (error: any) {
+            // P2002: Unique constraint violation - ignore duplicates
+            if (error?.code !== "P2002") {
+              throw error;
+            }
           }
         }
       }
 
       // Insert clues
       if (snapshot.clues && snapshot.clues.length > 0) {
-        const clueStmt = database.prepare(`
-          INSERT OR IGNORE INTO scenario_clues (
-            clue_id, snapshot_id, clue_text, category, difficulty,
-            clue_location, discovery_method, reveals, discovered, discovery_details
-          ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-        `);
-
         for (const clue of snapshot.clues) {
           const scopedClueId = scopeId(clue.id, emailId);
-          clueStmt.run(
-            scopedClueId,
-            scopedSnapshotId,
-            clue.clueText,
-            clue.category,
-            clue.difficulty,
-            clue.location,
-            clue.discoveryMethod || null,
-            JSON.stringify(scopeArray(clue.reveals || [], emailId)),
-            clue.discovered ? 1 : 0,
-            clue.discoveryDetails ? JSON.stringify(clue.discoveryDetails) : null
-          );
-          if (hasClueEmailId && emailId) {
-            database
-              .prepare(
-                "UPDATE scenario_clues SET email_id = ? WHERE clue_id = ?"
-              )
-              .run(emailId, scopedClueId);
+
+          try {
+            await prisma.scenarioClue.create({
+              data: {
+                clueId: scopedClueId,
+                snapshotId: scopedSnapshotId,
+                clueText: clue.clueText,
+                category: clue.category,
+                difficulty: clue.difficulty,
+                clueLocation: clue.location,
+                discoveryMethod: clue.discoveryMethod || null,
+                reveals: scopeArray(clue.reveals || [], emailId),
+                discovered: clue.discovered ? true : false,
+                discoveryDetails: (clue.discoveryDetails || undefined) as any,
+                emailId: emailId || null,
+              },
+            });
+          } catch (error: any) {
+            // P2002: Unique constraint violation - ignore duplicates
+            if (error?.code !== "P2002") {
+              throw error;
+            }
           }
         }
       }
 
       // Insert conditions
       if (snapshot.conditions && snapshot.conditions.length > 0) {
-        const conditionStmt = database.prepare(`
-          INSERT OR IGNORE INTO scenario_conditions (
-            condition_id, snapshot_id, condition_type, description, mechanical_effect
-          ) VALUES (?, ?, ?, ?, ?)
-        `);
-
         for (const condition of snapshot.conditions) {
           const conditionId = `${scopedSnapshotId}-cond-${Math.random().toString(36).slice(2, 10)}`;
-          conditionStmt.run(
-            conditionId,
-            scopedSnapshotId,
-            condition.type,
-            condition.description,
-            condition.mechanicalEffect || null
-          );
-          if (hasConditionEmailId && emailId) {
-            database
-              .prepare(
-                "UPDATE scenario_conditions SET email_id = ? WHERE condition_id = ?"
-              )
-              .run(emailId, conditionId);
+
+          try {
+            await prisma.scenarioCondition.create({
+              data: {
+                conditionId,
+                snapshotId: scopedSnapshotId,
+                conditionType: condition.type,
+                description: condition.description,
+                mechanicalEffect: condition.mechanicalEffect || null,
+                emailId: emailId || null,
+              },
+            });
+          } catch (error: any) {
+            // P2002: Unique constraint violation - ignore duplicates
+            if (error?.code !== "P2002") {
+              throw error;
+            }
           }
         }
       }

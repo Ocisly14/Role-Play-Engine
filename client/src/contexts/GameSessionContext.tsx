@@ -203,7 +203,13 @@ export const GameSessionProvider: React.FC<{ children: React.ReactNode }> = ({
 
     try {
       const response = await authFetch("/api/sessions/latest");
-      const data = await response.json();
+      const raw = await response.text();
+      let data: any = {};
+      try {
+        data = raw ? JSON.parse(raw) : {};
+      } catch {
+        console.error("Invalid JSON from /api/sessions/latest:", raw);
+      }
 
       if (response.ok && data.success && data.session?.sessionId) {
         console.log("Restored session:", data.session.sessionId);

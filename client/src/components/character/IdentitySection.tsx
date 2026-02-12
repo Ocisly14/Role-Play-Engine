@@ -52,7 +52,7 @@ export const IdentitySection: React.FC<IdentitySectionProps> = ({
                   const selected = occupations.find(
                     (occ) => occ.name_en === occupationName
                   );
-                  onSelectOccupation(selected);
+                  onSelectOccupation(selected || null);
                 }}
                 style={{ width: "100%", padding: "4px" }}
               >

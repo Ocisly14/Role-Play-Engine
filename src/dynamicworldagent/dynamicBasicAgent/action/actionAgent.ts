@@ -209,7 +209,7 @@ export class ActionAgent {
     const diceUsed = parsed.diceUsed || [];
 
     // Return final result
-    return this.buildFinalResult(
+    return await this.buildFinalResult(
       dynamicState,
       character,
       parsed,
@@ -558,7 +558,7 @@ export class ActionAgent {
   /**
    * Unified method to build final result for any character action
    */
-  private buildFinalResult(
+  private async buildFinalResult(
     dynamicState: DynamicGameState,
     character: DynamicCharacterProfile,
     parsed: any,
@@ -568,7 +568,7 @@ export class ActionAgent {
       npcResponse?: NPCResponseAnalysis;
     },
     gameStateManager: DynamicGameStateManager
-  ): DynamicGameState {
+  ): Promise<DynamicGameState> {
     const { isNPC, npcResponse } = options;
 
     // Apply the state update from LLM result
@@ -617,7 +617,7 @@ export class ActionAgent {
       );
 
       if (this.scenarioLoader) {
-        const searchResult = this.scenarioLoader.searchScenarios({
+        const searchResult = await this.scenarioLoader.searchScenarios({
           name: targetSceneName,
         });
 

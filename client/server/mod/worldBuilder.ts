@@ -78,7 +78,7 @@ export async function generateWorld(
     }
 
     const db = DatabaseManager.getInstance().getDatabase();
-    const quotaCheck = checkGenerationQuota(db, email, selectedStoryLength);
+    const quotaCheck = await checkGenerationQuota(email, selectedStoryLength);
     if (!quotaCheck.allowed) {
       res.write(
         `data: ${JSON.stringify({
@@ -121,9 +121,8 @@ export async function generateWorld(
       );
       const worldLoader = new WorldModuleLoader(db, { emailId: email });
       await worldLoader.loadAndSaveWorldModule(moduleDir, true);
-      registerModuleForUser(db, email, result.macroScene.moduleName);
-      recordGeneration(
-        db,
+      await registerModuleForUser(email, result.macroScene.moduleName);
+      await recordGeneration(
         email,
         result.macroScene.moduleName,
         selectedStoryLength
@@ -250,8 +249,7 @@ export async function generateScene(
         });
         await worldLoader.loadAndSaveWorldModule(moduleDir, true);
         if (req.user?.email) {
-          registerModuleForUser(
-            db,
+          await registerModuleForUser(
             req.user.email,
             result.macroScene.moduleName
           );
@@ -356,7 +354,7 @@ export async function generateNpcs(req: Request, res: Response): Promise<void> {
       });
       await worldLoader.loadAndSaveWorldModule(moduleDir, true);
       if (req.user?.email) {
-        registerModuleForUser(db, req.user.email, result.macroScene.moduleName);
+        await registerModuleForUser(req.user.email, result.macroScene.moduleName);
       }
       console.log(
         `✅ [World Builder API] NPC updates persisted to DB for user`

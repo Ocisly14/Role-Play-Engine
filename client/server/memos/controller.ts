@@ -1,13 +1,13 @@
 /// <reference path="../types/express.d.ts" />
 import type { Request, Response } from "express";
 import { randomUUID } from "crypto";
-import { DatabaseManager } from "../core/DatabaseManager.js";
+import { getPrismaClient } from "../../../src/shared/agents/memory/database/prismaClient.js";
 
 /**
  * List memos for a session
  * GET /api/memos?sessionId=...
  */
-export function listMemos(req: Request, res: Response): void {
+export async function listMemos(req: Request, res: Response): Promise<void> {
   try {
     const sessionId =
       typeof req.query.sessionId === "string" ? req.query.sessionId : "";
@@ -18,28 +18,31 @@ export function listMemos(req: Request, res: Response): void {
       return;
     }
 
-    const db = DatabaseManager.getInstance().getDatabase();
-    const database = db.getDatabase();
-
-    const memos = database
-      .prepare(`
-      SELECT memo_id, text, game_day, game_time, location, created_at, updated_at
-      FROM player_memos
-      WHERE session_id = ? AND email_id = ?
-      ORDER BY created_at ASC
-    `)
-      .all(sessionId, email);
+    const prisma = getPrismaClient();
+    const memos = await prisma.playerMemo.findMany({
+      where: { sessionId, emailId: email },
+      orderBy: { createdAt: "asc" },
+      select: {
+        memoId: true,
+        text: true,
+        gameDay: true,
+        gameTime: true,
+        location: true,
+        createdAt: true,
+        updatedAt: true,
+      },
+    });
 
     res.json({
       success: true,
-      memos: memos.map((memo: any) => ({
-        id: memo.memo_id,
+      memos: memos.map((memo) => ({
+        id: memo.memoId,
         text: memo.text,
-        gameDay: memo.game_day ?? null,
-        gameTime: memo.game_time ?? null,
+        gameDay: memo.gameDay ?? null,
+        gameTime: memo.gameTime ?? null,
         location: memo.location ?? null,
-        createdAt: memo.created_at,
-        updatedAt: memo.updated_at,
+        createdAt: memo.createdAt,
+        updatedAt: memo.updatedAt,
       })),
     });
   } catch (error) {
@@ -52,7 +55,7 @@ export function listMemos(req: Request, res: Response): void {
  * Create memo
  * POST /api/memos
  */
-export function createMemo(req: Request, res: Response): void {
+export async function createMemo(req: Request, res: Response): Promise<void> {
   try {
     const { sessionId, text, gameDay, gameTime, location } = req.body ?? {};
     const email = req.user!.email;
@@ -68,42 +71,30 @@ export function createMemo(req: Request, res: Response): void {
     }
 
     const memoId = `memo-${randomUUID()}`;
-    const db = DatabaseManager.getInstance().getDatabase();
-    const database = db.getDatabase();
+    const prisma = getPrismaClient();
 
-    database
-      .prepare(`
-      INSERT INTO player_memos (memo_id, session_id, email_id, text, game_day, game_time, location)
-      VALUES (?, ?, ?, ?, ?, ?, ?)
-    `)
-      .run(
+    const memo = await prisma.playerMemo.create({
+      data: {
         memoId,
         sessionId,
-        email,
-        text.trim(),
-        typeof gameDay === "number" ? gameDay : null,
-        typeof gameTime === "string" ? gameTime : null,
-        typeof location === "string" ? location : null
-      );
-
-    const memo = database
-      .prepare(`
-      SELECT memo_id, text, game_day, game_time, location, created_at, updated_at
-      FROM player_memos
-      WHERE memo_id = ? AND email_id = ?
-    `)
-      .get(memoId, email) as any;
+        emailId: email,
+        text: text.trim(),
+        gameDay: typeof gameDay === "number" ? gameDay : null,
+        gameTime: typeof gameTime === "string" ? gameTime : null,
+        location: typeof location === "string" ? location : null,
+      },
+    });
 
     res.json({
       success: true,
       memo: {
-        id: memo.memo_id,
+        id: memo.memoId,
         text: memo.text,
-        gameDay: memo.game_day ?? null,
-        gameTime: memo.game_time ?? null,
+        gameDay: memo.gameDay ?? null,
+        gameTime: memo.gameTime ?? null,
         location: memo.location ?? null,
-        createdAt: memo.created_at,
-        updatedAt: memo.updated_at,
+        createdAt: memo.createdAt,
+        updatedAt: memo.updatedAt,
       },
     });
   } catch (error) {
@@ -116,7 +107,7 @@ export function createMemo(req: Request, res: Response): void {
  * Update memo
  * PUT /api/memos/:memoId
  */
-export function updateMemo(req: Request, res: Response): void {
+export async function updateMemo(req: Request, res: Response): Promise<void> {
   try {
     const { memoId } = req.params;
     const { text } = req.body ?? {};
@@ -132,21 +123,20 @@ export function updateMemo(req: Request, res: Response): void {
       return;
     }
 
-    const db = DatabaseManager.getInstance().getDatabase();
-    const database = db.getDatabase();
+    const prisma = getPrismaClient();
+    const existing = await prisma.playerMemo.findFirst({
+      where: { memoId, emailId: email },
+    });
 
-    const result = database
-      .prepare(`
-      UPDATE player_memos
-      SET text = ?, updated_at = CURRENT_TIMESTAMP
-      WHERE memo_id = ? AND email_id = ?
-    `)
-      .run(text.trim(), memoId, email);
-
-    if (result.changes === 0) {
+    if (!existing) {
       res.status(404).json({ error: "Memo not found" });
       return;
     }
+
+    await prisma.playerMemo.update({
+      where: { memoId },
+      data: { text: text.trim(), updatedAt: new Date() },
+    });
 
     res.json({ success: true });
   } catch (error) {
@@ -159,7 +149,7 @@ export function updateMemo(req: Request, res: Response): void {
  * Delete memo
  * DELETE /api/memos/:memoId
  */
-export function deleteMemo(req: Request, res: Response): void {
+export async function deleteMemo(req: Request, res: Response): Promise<void> {
   try {
     const { memoId } = req.params;
     const email = req.user!.email;
@@ -169,20 +159,17 @@ export function deleteMemo(req: Request, res: Response): void {
       return;
     }
 
-    const db = DatabaseManager.getInstance().getDatabase();
-    const database = db.getDatabase();
+    const prisma = getPrismaClient();
+    const existing = await prisma.playerMemo.findFirst({
+      where: { memoId, emailId: email },
+    });
 
-    const result = database
-      .prepare(`
-      DELETE FROM player_memos
-      WHERE memo_id = ? AND email_id = ?
-    `)
-      .run(memoId, email);
-
-    if (result.changes === 0) {
+    if (!existing) {
       res.status(404).json({ error: "Memo not found" });
       return;
     }
+
+    await prisma.playerMemo.delete({ where: { memoId } });
 
     res.json({ success: true });
   } catch (error) {
