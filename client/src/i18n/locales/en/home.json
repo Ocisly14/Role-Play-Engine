@@ -69,6 +69,7 @@
   "analytics": {
     "title": "Analytics Dashboard",
     "todaySummary": "Today's Summary ({{date}})",
+    "recent48hSummary": "Recent 48 Hours ({{start}} - {{end}})",
     "actions": {
       "refresh": "Refresh",
       "refreshing": "Refreshing..."
@@ -84,7 +85,10 @@
       "messages": "Messages",
       "totalMessages": "Total Messages",
       "avgMsgsPerUser": "Avg Msgs/User",
-      "newMods": "New Mods"
+      "newMods": "New Mods",
+      "newModsShort": "New Short Mods",
+      "newModsMedium": "New Medium Mods",
+      "newModsLong": "New Long Mods"
     },
     "charts": {
       "userActivity": "User Activity Trends",

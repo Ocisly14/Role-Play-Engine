@@ -4,6 +4,7 @@ import {
   saveDailyStats,
   getHistoricalStats,
   getTodayStats,
+  getRecentWindowStats,
 } from "./service.js";
 
 /**
@@ -19,10 +20,12 @@ export async function getDailyAnalytics(req: Request, res: Response) {
 
     // Get historical stats
     const historicalStats = await getHistoricalStats(days);
+    const recent48h = await getRecentWindowStats(48);
 
     return res.json({
       today: todayStats,
       history: historicalStats,
+      recent48h,
     });
   } catch (error) {
     console.error("Error fetching daily analytics:", error);

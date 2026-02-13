@@ -17,6 +17,20 @@ export interface DailyStats {
   updated_at: string;
 }
 
+export interface WindowStats {
+  window_start: string;
+  window_end: string;
+  login_users_count: number;
+  active_users_count: number;
+  new_users_count: number;
+  total_messages_count: number;
+  avg_messages_per_active_user: number;
+  new_mods_short_count: number;
+  new_mods_medium_count: number;
+  new_mods_long_count: number;
+  total_new_mods_count: number;
+}
+
 /**
  * Build start-of-day and start-of-next-day Date objects for a date string (YYYY-MM-DD).
  */
@@ -209,6 +223,140 @@ export async function calculateDailyStats(
 }
 
 /**
+ * Calculate aggregate statistics within a rolling N-hour window ending now.
+ */
+export async function getRecentWindowStats(hours: number): Promise<WindowStats> {
+  const prisma = getPrismaClient();
+  const window_end = new Date();
+  const window_start = new Date(window_end.getTime() - hours * 60 * 60 * 1000);
+
+  const login_users_count = await prisma.user.count({
+    where: {
+      lastLoginAt: {
+        gte: window_start,
+        lt: window_end,
+      },
+    },
+  });
+
+  const activeUsersRows = await prisma.gameTurn.findMany({
+    where: {
+      startedAt: {
+        gte: window_start,
+        lt: window_end,
+      },
+      isSimulated: false,
+      characterId: { not: null },
+    },
+    select: {
+      characterId: true,
+    },
+  });
+
+  const activeCharacterIds = [
+    ...new Set(
+      activeUsersRows
+        .map((r) => r.characterId)
+        .filter((id): id is string => id !== null)
+    ),
+  ];
+
+  let active_users_count = 0;
+  if (activeCharacterIds.length > 0) {
+    const characters = await prisma.character.findMany({
+      where: {
+        characterId: { in: activeCharacterIds },
+        emailId: { not: null },
+      },
+      select: { emailId: true },
+    });
+
+    const activeEmails = new Set(characters.map((c) => c.emailId));
+
+    active_users_count = await prisma.user.count({
+      where: {
+        email: { in: [...activeEmails].filter((e): e is string => e !== null) },
+      },
+    });
+  }
+
+  const new_users_count = await prisma.user.count({
+    where: {
+      createdAt: {
+        gte: window_start,
+        lt: window_end,
+      },
+    },
+  });
+
+  const total_messages_count = await prisma.gameTurn.count({
+    where: {
+      startedAt: {
+        gte: window_start,
+        lt: window_end,
+      },
+      isSimulated: false,
+    },
+  });
+
+  const avg_messages_per_active_user =
+    active_users_count > 0 ? total_messages_count / active_users_count : 0;
+
+  let new_mods_short_count = 0;
+  let new_mods_medium_count = 0;
+  let new_mods_long_count = 0;
+  let total_new_mods_count = 0;
+
+  try {
+    const modStats = await prisma.modGeneration.groupBy({
+      by: ["storyLength"],
+      where: {
+        generatedAt: {
+          gte: window_start,
+          lt: window_end,
+        },
+      },
+      _count: {
+        id: true,
+      },
+    });
+
+    for (const stat of modStats) {
+      const count = stat._count.id;
+      total_new_mods_count += count;
+
+      switch (stat.storyLength) {
+        case "short":
+          new_mods_short_count = count;
+          break;
+        case "medium":
+          new_mods_medium_count = count;
+          break;
+        case "long":
+          new_mods_long_count = count;
+          break;
+      }
+    }
+  } catch (error) {
+    console.warn("Recent module generation stats unavailable:", error);
+  }
+
+  return {
+    window_start: window_start.toISOString(),
+    window_end: window_end.toISOString(),
+    login_users_count,
+    active_users_count,
+    new_users_count,
+    total_messages_count,
+    avg_messages_per_active_user,
+    new_mods_short_count,
+    new_mods_medium_count,
+    new_mods_long_count,
+    total_new_mods_count,
+  };
+}
+
+/**
  * Save or update daily statistics to database
  */
 export async function saveDailyStats(
@@ -248,6 +396,90 @@ export async function saveDailyStats(
 }
 
 /**
+ * Increment module-generation counters on the matching daily snapshot row.
+ * This keeps daily module counts available even before the next scheduler run.
+ */
+export async function incrementDailyModGenerationCount(
+  storyLength: string,
+  generatedAt: Date = new Date()
+): Promise<void> {
+  const prisma = getPrismaClient();
+  const statDateString = generatedAt.toISOString().split("T")[0];
+  const statDate = new Date(`${statDateString}T00:00:00.000Z`);
+
+  const baseCreate = {
+    id: randomUUID(),
+    statDate,
+    loginUsersCount: 0,
+    activeUsersCount: 0,
+    newUsersCount: 0,
+    totalMessagesCount: 0,
+    avgMessagesPerActiveUser: 0,
+    newModsShortCount: 0,
+    newModsMediumCount: 0,
+    newModsLongCount: 0,
+    totalNewModsCount: 1,
+  };
+
+  if (storyLength === "short") {
+    await prisma.dailyAnalytics.upsert({
+      where: { statDate },
+      update: {
+        newModsShortCount: { increment: 1 },
+        totalNewModsCount: { increment: 1 },
+        updatedAt: new Date(),
+      },
+      create: {
+        ...baseCreate,
+        newModsShortCount: 1,
+      },
+    });
+    return;
+  }
+
+  if (storyLength === "medium") {
+    await prisma.dailyAnalytics.upsert({
+      where: { statDate },
+      update: {
+        newModsMediumCount: { increment: 1 },
+        totalNewModsCount: { increment: 1 },
+        updatedAt: new Date(),
+      },
+      create: {
+        ...baseCreate,
+        newModsMediumCount: 1,
+      },
+    });
+    return;
+  }
+
+  if (storyLength === "long") {
+    await prisma.dailyAnalytics.upsert({
+      where: { statDate },
+      update: {
+        newModsLongCount: { increment: 1 },
+        totalNewModsCount: { increment: 1 },
+        updatedAt: new Date(),
+      },
+      create: {
+        ...baseCreate,
+        newModsLongCount: 1,
+      },
+    });
+    return;
+  }
+
+  await prisma.dailyAnalytics.upsert({
+    where: { statDate },
+    update: {
+      totalNewModsCount: { increment: 1 },
+      updatedAt: new Date(),
+    },
+    create: baseCreate,
+  });
+}
+
+/**
  * Get historical statistics for the last N days
  * Returns data for the past N days, filling in missing days with calculated stats
  */
@@ -272,11 +504,12 @@ export async function getHistoricalStats(days: number): Promise<DailyStats[]> {
   // If we have fewer records than requested days, fill in missing days
   if (stats.length < days) {
     const existingDates = new Set(stats.map((s) => s.stat_date));
-    const today = new Date();
+    const todayUtc = new Date();
+    todayUtc.setUTCHours(0, 0, 0, 0);
 
     for (let i = 0; i < days; i++) {
-      const date = new Date(today);
-      date.setDate(date.getDate() - i);
+      const date = new Date(todayUtc);
+      date.setUTCDate(date.getUTCDate() - i);
       const dateString = date.toISOString().split("T")[0];
 
       if (!existingDates.has(dateString)) {
@@ -311,16 +544,7 @@ export async function getTodayStats(): Promise<DailyStats> {
   const today = new Date().toISOString().split("T")[0];
   const statDate = new Date(`${today}T00:00:00.000Z`);
 
-  // Try to get existing stats
-  const existing = await prisma.dailyAnalytics.findUnique({
-    where: { statDate },
-  });
-
-  if (existing) {
-    return toDailyStats(existing);
-  }
-
-  // Calculate and save new stats
+  // Recalculate today's snapshot on each request to keep data current.
   const stats = await calculateDailyStats(today);
   await saveDailyStats(stats);
 

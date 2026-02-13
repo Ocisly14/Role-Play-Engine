@@ -11,6 +11,7 @@
 
 import { getPrismaClient } from "../../../src/shared/agents/memory/database/prismaClient.js";
 import { randomUUID } from "crypto";
+import { incrementDailyModGenerationCount } from "../analytics/service.js";
 
 const INITIAL_QUOTA_TOTAL = 3;
 const WEEKLY_QUOTA_TOTAL = 4;
@@ -187,12 +188,21 @@ export async function recordGeneration(
   storyLength: string
 ): Promise<void> {
   const prisma = getPrismaClient();
+  const generatedAt = new Date();
+
   await prisma.modGeneration.create({
     data: {
       id: randomUUID(),
       emailId: email,
       moduleName,
       storyLength,
+      generatedAt,
     },
   });
+
+  try {
+    await incrementDailyModGenerationCount(storyLength, generatedAt);
+  } catch (error) {
+    console.warn("[Analytics] Failed to increment daily mod generation count:", error);
+  }
 }

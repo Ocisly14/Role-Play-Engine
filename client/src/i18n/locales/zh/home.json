@@ -69,6 +69,7 @@
   "analytics": {
     "title": "数据看板",
     "todaySummary": "今日汇总 ({{date}})",
+    "recent48hSummary": "最近48小时 ({{start}} - {{end}})",
     "actions": {
       "refresh": "刷新",
       "refreshing": "刷新中..."
@@ -84,7 +85,10 @@
       "messages": "消息数",
       "totalMessages": "消息总量",
       "avgMsgsPerUser": "人均消息",
-      "newMods": "新增模组"
+      "newMods": "新增模组",
+      "newModsShort": "新增短篇模组",
+      "newModsMedium": "新增中篇模组",
+      "newModsLong": "新增长篇模组"
     },
     "charts": {
       "userActivity": "用户活跃趋势",

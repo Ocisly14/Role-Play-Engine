@@ -30,6 +30,20 @@ interface DailyStats {
   updated_at: string;
 }
 
+interface WindowStats {
+  window_start: string;
+  window_end: string;
+  login_users_count: number;
+  active_users_count: number;
+  new_users_count: number;
+  total_messages_count: number;
+  avg_messages_per_active_user: number;
+  new_mods_short_count: number;
+  new_mods_medium_count: number;
+  new_mods_long_count: number;
+  total_new_mods_count: number;
+}
+
 interface AnalyticsProps {
   onClose: () => void;
 }
@@ -37,6 +51,7 @@ interface AnalyticsProps {
 export function Analytics({ onClose }: AnalyticsProps) {
   const { t, i18n } = useTranslation(["home", "common"]);
   const [stats, setStats] = useState<DailyStats[]>([]);
+  const [recent48h, setRecent48h] = useState<WindowStats | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -49,6 +64,7 @@ export function Analytics({ onClose }: AnalyticsProps) {
       setLoading(true);
       const response = await api.get("/analytics/daily?days=30");
       setStats(response.data.history || []);
+      setRecent48h(response.data.recent48h || null);
       setError(null);
     } catch (err: any) {
       setError(err.response?.data?.error || t("home:analytics.errors.loadFailed"));
@@ -117,6 +133,14 @@ export function Analytics({ onClose }: AnalyticsProps) {
     metricLabels[value as keyof typeof metricLabels] || value;
 
   const todayStats = stats[0];
+  const formatDateTime = (isoString: string): string =>
+    new Date(isoString).toLocaleString(dateLocale, {
+      month: "short",
+      day: "numeric",
+      hour: "2-digit",
+      minute: "2-digit",
+      hour12: i18n.language !== "zh",
+    });
 
   return (
     <div
@@ -321,6 +345,79 @@ export function Analytics({ onClose }: AnalyticsProps) {
                       label={t("home:analytics.metrics.newMods")}
                       value={todayStats.total_new_mods_count}
                       color="#ec4899"
+                    />
+                  </div>
+                </div>
+              )}
+
+              {/* Recent 48 Hours Summary Cards */}
+              {recent48h && (
+                <div style={{ marginBottom: "32px" }}>
+                  <h3
+                    style={{
+                      fontSize: "18px",
+                      fontWeight: "700",
+                      marginBottom: "16px",
+                      fontFamily: "var(--serif)",
+                      color: "var(--title)",
+                    }}
+                  >
+                    {t("home:analytics.recent48hSummary", {
+                      start: formatDateTime(recent48h.window_start),
+                      end: formatDateTime(recent48h.window_end),
+                    })}
+                  </h3>
+                  <div
+                    style={{
+                      display: "grid",
+                      gridTemplateColumns: "repeat(auto-fit, minmax(200px, 1fr))",
+                      gap: "16px",
+                    }}
+                  >
+                    <StatCard
+                      label={t("home:analytics.metrics.loginUsers")}
+                      value={recent48h.login_users_count}
+                      color="#3b82f6"
+                    />
+                    <StatCard
+                      label={t("home:analytics.metrics.activeUsers")}
+                      value={recent48h.active_users_count}
+                      color="#10b981"
+                    />
+                    <StatCard
+                      label={t("home:analytics.metrics.newUsers")}
+                      value={recent48h.new_users_count}
+                      color="#8b5cf6"
+                    />
+                    <StatCard
+                      label={t("home:analytics.metrics.totalMessages")}
+                      value={recent48h.total_messages_count}
+                      color="#f59e0b"
+                    />
+                    <StatCard
+                      label={t("home:analytics.metrics.avgMsgsPerUser")}
+                      value={recent48h.avg_messages_per_active_user.toFixed(1)}
+                      color="#06b6d4"
+                    />
+                    <StatCard
+                      label={t("home:analytics.metrics.newMods")}
+                      value={recent48h.total_new_mods_count}
+                      color="#ec4899"
+                    />
+                    <StatCard
+                      label={t("home:analytics.metrics.newModsShort")}
+                      value={recent48h.new_mods_short_count}
+                      color="#22c55e"
+                    />
+                    <StatCard
+                      label={t("home:analytics.metrics.newModsMedium")}
+                      value={recent48h.new_mods_medium_count}
+                      color="#f97316"
+                    />
+                    <StatCard
+                      label={t("home:analytics.metrics.newModsLong")}
+                      value={recent48h.new_mods_long_count}
+                      color="#ef4444"
                     />
                   </div>
                 </div>

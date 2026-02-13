@@ -18,8 +18,11 @@ function getMillisecondsUntilMidnight(): number {
  */
 async function saveYesterdayAnalytics(): Promise<void> {
   try {
-    const yesterday = new Date();
-    yesterday.setDate(yesterday.getDate() - 1);
+    const now = new Date();
+    const yesterday = new Date(
+      Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate())
+    );
+    yesterday.setUTCDate(yesterday.getUTCDate() - 1);
     const dateStr = yesterday.toISOString().split('T')[0];
 
     console.log(`[Analytics Scheduler] Calculating stats for ${dateStr}...`);
