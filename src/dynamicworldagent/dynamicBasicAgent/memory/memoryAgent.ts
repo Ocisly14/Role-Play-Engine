@@ -85,11 +85,11 @@ export const extractRecentConversationHistory = async (
       turnNumber: turn.turnNumber,
       characterInput: turn.characterInput,
       keeperNarrative: turn.keeperNarrative,
-      actionAnalysis: turn.actionAnalysis || null, // null indicates simulate query
+      isSimulated: turn.isSimulated ?? false,
     }));
 
     if (result.length > 0) {
-      const simulateCount = result.filter((t) => !t.actionAnalysis).length;
+      const simulateCount = result.filter((t) => t.isSimulated).length;
       const realCount = result.length - simulateCount;
       console.log(
         `📜 [Memory Agent] 提取了 ${result.length} 轮历史对话 (Turn #${result[0]?.turnNumber} 到 Turn #${result[result.length - 1]?.turnNumber}), 其中真实轮数: ${realCount}, simulate轮数: ${simulateCount}`

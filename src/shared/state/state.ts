@@ -129,7 +129,9 @@ export interface ActionResult {
   scenarioChanges?: string[]; // List of permanent changes made to the scenario
 }
 
-/** Build DiceRollInfo[] from action results for frontend display */
+/** Build DiceRollInfo[] from action results for frontend display
+ * Splits multi-dice rolls (e.g., with penalty/bonus) into separate entries for animation
+ */
 export function buildDiceRollInfos(
   actionResults: ActionResult[],
   options?: {
@@ -148,7 +150,28 @@ export function buildDiceRollInfos(
         (isOpposed && opposedRollCharacter
           ? opposedRollCharacter
           : result.character);
-      infos.push(parseDiceRollInfo(rollCharacter, roll));
+
+      // Check if this roll contains multiple dice (penalty/bonus format)
+      // Format: "Dr. Smith: 1d100[0]: 45, 1d100[1]: 82(penalty),(Spot Hidden 60% use highest 82 = failure)"
+      const diceMatches = [...roll.matchAll(/(\d+d\d+\[\d+\]:\s*\d+(?:\(penalty\)|\(bonus\))?)/gi)];
+
+      if (diceMatches.length > 1) {
+        // Multi-dice roll - create separate DiceRollInfo for each die
+        for (const match of diceMatches) {
+          const diceStr = match[1]; // e.g., "1d100[0]: 45" or "1d100[1]: 82(penalty)"
+          const singleDiceRoll = `${rollCharacter}: ${diceStr}`;
+          infos.push({
+            character: rollCharacter,
+            roll: singleDiceRoll,
+            skill: undefined,
+            success: undefined,
+            penalty: diceStr.includes("(penalty)") ? "penalty" : diceStr.includes("(bonus)") ? "bonus" : undefined,
+          });
+        }
+      } else {
+        // Single dice roll - use original logic
+        infos.push(parseDiceRollInfo(rollCharacter, roll));
+      }
     }
   }
   return infos;

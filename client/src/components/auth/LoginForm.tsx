@@ -7,7 +7,7 @@ import { api } from "../../services/api";
 const RESEND_COOLDOWN_SECONDS = 60;
 
 export function LoginForm() {
-  const { t } = useTranslation('auth');
+  const { t } = useTranslation("auth");
   const [step, setStep] = useState<"login" | "verify">("login");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -18,6 +18,7 @@ export function LoginForm() {
   const [resendMessage, setResendMessage] = useState("");
   const [resendCooldown, setResendCooldown] = useState(0);
   const [showCommunityModal, setShowCommunityModal] = useState(false);
+  const [showChangelogModal, setShowChangelogModal] = useState(false);
   const cooldownRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
   const { login } = useAuth();
@@ -28,8 +29,91 @@ export function LoginForm() {
   };
 
   const handleCloseCommunityModal = () => {
+    setShowChangelogModal(false);
     setShowCommunityModal(false);
     navigate("/");
+  };
+
+  const handleOpenChangelogModal = () => {
+    setShowChangelogModal(true);
+  };
+
+  const handleCloseChangelogModal = () => {
+    setShowChangelogModal(false);
+  };
+
+  const renderCommunityModal = () => {
+    if (!showCommunityModal) {
+      return null;
+    }
+
+    return (
+      <div className="fixed inset-0 z-50 bg-black/50 backdrop-blur-sm supports-[backdrop-filter]:bg-black/30 supports-[backdrop-filter]:backdrop-blur-sm flex items-center justify-center p-5">
+        <div className="w-[92%] max-w-[560px] rounded-3xl p-8 border border-white/50 bg-white/85 shadow-[0_30px_80px_rgba(15,23,42,0.25)] supports-[backdrop-filter]:bg-white/65 supports-[backdrop-filter]:backdrop-blur-lg">
+          <h3 className="text-2xl font-semibold mb-3 text-slate-900">
+            {t("communityInvite.title")}
+          </h3>
+          <p className="text-lg leading-relaxed text-slate-700 whitespace-pre-line mb-4">
+            {t("communityInvite.description")}
+          </p>
+          <div className="space-y-2 mb-6 text-lg leading-relaxed text-slate-800">
+            <p>
+              <strong>{t("communityInvite.qqLabel")}</strong> 1084747456
+            </p>
+            <p>
+              <strong>{t("communityInvite.discordLabel")}</strong>{" "}
+              <a
+                href="https://discord.gg/ZwArUWx5"
+                target="_blank"
+                rel="noreferrer"
+                className="text-blue-700 underline"
+              >
+                https://discord.gg/ZwArUWx5
+              </a>
+            </p>
+          </div>
+          <div className="flex items-center justify-between">
+            <button type="button" onClick={handleOpenChangelogModal}>
+              {t("changelog.button")}
+            </button>
+            <button type="button" onClick={handleCloseCommunityModal}>
+              {t("communityInvite.continue")}
+            </button>
+          </div>
+        </div>
+
+        {showChangelogModal && (
+          <div className="fixed inset-0 z-[60] bg-black/55 flex items-center justify-center p-5">
+            <div className="w-[96%] max-w-[860px] max-h-[82vh] rounded-3xl border border-white/60 bg-white/95 shadow-[0_36px_100px_rgba(15,23,42,0.35)] overflow-hidden">
+              <div className="px-8 py-5 border-b border-slate-200 flex items-center justify-between gap-4">
+                <h3 className="text-2xl font-semibold text-slate-900">
+                  {t("changelog.title")}
+                </h3>
+                <button type="button" onClick={handleCloseChangelogModal}>
+                  {t("changelog.close")}
+                </button>
+              </div>
+
+              <div className="px-8 py-6 max-h-[62vh] overflow-y-auto">
+                <article className="rounded-2xl border border-slate-200 bg-slate-50 p-5">
+                  <div className="flex items-center justify-between mb-3 gap-3">
+                    <p className="text-base font-semibold text-slate-900">
+                      {t("changelog.entry20260213Date")}
+                    </p>
+                    <span className="inline-flex items-center rounded-full bg-emerald-100 px-3 py-1 text-xs font-semibold text-emerald-800">
+                      {t("changelog.latest")}
+                    </span>
+                  </div>
+                  <p className="text-base leading-relaxed text-slate-700">
+                    {t("changelog.entry20260213Content")}
+                  </p>
+                </article>
+              </div>
+            </div>
+          </div>
+        )}
+      </div>
+    );
   };
 
   // Start or reset the countdown timer
@@ -65,12 +149,15 @@ export function LoginForm() {
       handleLoginSuccess();
     } catch (err: any) {
       // Check if error is EMAIL_NOT_VERIFIED
-      if (err.response?.status === 403 && err.response?.data?.code === "EMAIL_NOT_VERIFIED") {
+      if (
+        err.response?.status === 403 &&
+        err.response?.data?.code === "EMAIL_NOT_VERIFIED"
+      ) {
         setStep("verify");
         startCooldown();
         setError("");
       } else {
-        setError(err.response?.data?.error || t('login.error'));
+        setError(err.response?.data?.error || t("login.error"));
       }
     } finally {
       setLoading(false);
@@ -92,7 +179,7 @@ export function LoginForm() {
 
       handleLoginSuccess();
     } catch (err: any) {
-      setError(err.response?.data?.error || t('register.verify.invalid'));
+      setError(err.response?.data?.error || t("register.verify.invalid"));
     } finally {
       setLoading(false);
     }
@@ -106,10 +193,10 @@ export function LoginForm() {
     try {
       await api.post("/auth/resend-verification", { email });
       setVerificationCode("");
-      setResendMessage(t('register.verify.resend'));
+      setResendMessage(t("register.verify.resend"));
       startCooldown();
     } catch (err: any) {
-      setError(err.response?.data?.error || t('register.verify.invalid'));
+      setError(err.response?.data?.error || t("register.verify.invalid"));
     } finally {
       setLoading(false);
     }
@@ -131,7 +218,7 @@ export function LoginForm() {
           >
             <img
               src="/asset/icon.png"
-              alt={t('register.verify.title')}
+              alt={t("register.verify.title")}
               style={{
                 width: "80px",
                 height: "80px",
@@ -139,13 +226,17 @@ export function LoginForm() {
               }}
             />
           </div>
-          <h2>{t('register.verify.title')}</h2>
-          <p style={{ textAlign: "center", color: "#aaa", marginBottom: "8px" }}>
-            {t('register.verify.description', { email })}
+          <h2>{t("register.verify.title")}</h2>
+          <p
+            style={{ textAlign: "center", color: "#aaa", marginBottom: "8px" }}
+          >
+            {t("register.verify.description", { email })}
           </p>
           <form onSubmit={handleVerify}>
             <div className="form-group">
-              <label htmlFor="verificationCode">{t('register.verify.code')}</label>
+              <label htmlFor="verificationCode">
+                {t("register.verify.code")}
+              </label>
               <input
                 id="verificationCode"
                 type="text"
@@ -160,7 +251,7 @@ export function LoginForm() {
                 disabled={loading}
                 maxLength={5}
                 pattern="\d{5}"
-                placeholder={t('register.verify.codePlaceholder')}
+                placeholder={t("register.verify.codePlaceholder")}
                 autoComplete="one-time-code"
                 autoFocus
               />
@@ -184,13 +275,17 @@ export function LoginForm() {
               type="submit"
               disabled={loading || verificationCode.length < 5}
             >
-              {loading ? t('register.verify.submitting') : t('register.verify.submit')}
+              {loading
+                ? t("register.verify.submitting")
+                : t("register.verify.submit")}
             </button>
 
             <div className="form-links">
               {resendCooldown > 0 ? (
                 <span style={{ color: "#666" }}>
-                  {t('register.verify.resendCooldown', { seconds: resendCooldown })}
+                  {t("register.verify.resendCooldown", {
+                    seconds: resendCooldown,
+                  })}
                 </span>
               ) : (
                 <a
@@ -200,7 +295,7 @@ export function LoginForm() {
                     handleResend();
                   }}
                 >
-                  {t('register.verify.resend')}
+                  {t("register.verify.resend")}
                 </a>
               )}
               <a
@@ -212,44 +307,12 @@ export function LoginForm() {
                   setError("");
                 }}
               >
-                {t('common:actions.back')}
+                {t("common:actions.back")}
               </a>
             </div>
           </form>
         </div>
-        {showCommunityModal && (
-          <div className="fixed inset-0 z-50 bg-black/50 backdrop-blur-sm supports-[backdrop-filter]:bg-black/30 supports-[backdrop-filter]:backdrop-blur-sm flex items-center justify-center p-5">
-            <div className="w-[92%] max-w-[560px] rounded-3xl p-8 border border-white/50 bg-white/85 shadow-[0_30px_80px_rgba(15,23,42,0.25)] supports-[backdrop-filter]:bg-white/65 supports-[backdrop-filter]:backdrop-blur-lg">
-              <h3 className="text-2xl font-semibold mb-3 text-slate-900">
-                {t('communityInvite.title')}
-              </h3>
-              <p className="text-lg leading-relaxed text-slate-700 whitespace-pre-line mb-4">
-                {t('communityInvite.description')}
-              </p>
-              <div className="space-y-2 mb-6 text-lg leading-relaxed text-slate-800">
-                <p>
-                  <strong>{t('communityInvite.qqLabel')}</strong> 1084747456
-                </p>
-                <p>
-                  <strong>{t('communityInvite.discordLabel')}</strong>{" "}
-                  <a
-                    href="https://discord.gg/ZwArUWx5"
-                    target="_blank"
-                    rel="noreferrer"
-                    className="text-blue-700 underline"
-                  >
-                    https://discord.gg/ZwArUWx5
-                  </a>
-                </p>
-              </div>
-              <div className="flex justify-end">
-                <button type="button" onClick={handleCloseCommunityModal}>
-                  {t('communityInvite.continue')}
-                </button>
-              </div>
-            </div>
-          </div>
-        )}
+        {renderCommunityModal()}
       </>
     );
   }
@@ -268,7 +331,7 @@ export function LoginForm() {
         >
           <img
             src="/asset/icon.png"
-            alt={t('login.title')}
+            alt={t("login.title")}
             style={{
               width: "80px",
               height: "80px",
@@ -276,10 +339,10 @@ export function LoginForm() {
             }}
           />
         </div>
-        <h2>{t('login.title')}</h2>
+        <h2>{t("login.title")}</h2>
         <form onSubmit={handleSubmit}>
           <div className="form-group">
-            <label htmlFor="email">{t('login.email')}</label>
+            <label htmlFor="email">{t("login.email")}</label>
             <input
               id="email"
               type="email"
@@ -291,7 +354,7 @@ export function LoginForm() {
           </div>
 
           <div className="form-group">
-            <label htmlFor="password">{t('login.password')}</label>
+            <label htmlFor="password">{t("login.password")}</label>
             <input
               id="password"
               type="password"
@@ -310,55 +373,23 @@ export function LoginForm() {
                 onChange={(e) => setRememberMe(e.target.checked)}
                 disabled={loading}
               />
-              {t('login.rememberMe')}
+              {t("login.rememberMe")}
             </label>
           </div>
 
           {error && <div className="error-message">{error}</div>}
 
           <button type="submit" disabled={loading}>
-            {loading ? t('login.submitting') : t('login.submit')}
+            {loading ? t("login.submitting") : t("login.submit")}
           </button>
 
           <div className="form-links">
-            <a href="/forgot-password">{t('login.forgotPassword')}</a>
-            <a href="/register">{t('login.createAccount')}</a>
+            <a href="/forgot-password">{t("login.forgotPassword")}</a>
+            <a href="/register">{t("login.createAccount")}</a>
           </div>
         </form>
       </div>
-      {showCommunityModal && (
-        <div className="fixed inset-0 z-50 bg-black/50 backdrop-blur-sm supports-[backdrop-filter]:bg-black/30 supports-[backdrop-filter]:backdrop-blur-sm flex items-center justify-center p-5">
-          <div className="w-[92%] max-w-[560px] rounded-3xl p-8 border border-white/50 bg-white/85 shadow-[0_30px_80px_rgba(15,23,42,0.25)] supports-[backdrop-filter]:bg-white/65 supports-[backdrop-filter]:backdrop-blur-lg">
-            <h3 className="text-2xl font-semibold mb-3 text-slate-900">
-              {t('communityInvite.title')}
-            </h3>
-            <p className="text-lg leading-relaxed text-slate-700 whitespace-pre-line mb-4">
-              {t('communityInvite.description')}
-            </p>
-            <div className="space-y-2 mb-6 text-lg leading-relaxed text-slate-800">
-              <p>
-                <strong>{t('communityInvite.qqLabel')}</strong> 1084747456
-              </p>
-              <p>
-                <strong>{t('communityInvite.discordLabel')}</strong>{" "}
-                <a
-                  href="https://discord.gg/ZwArUWx5"
-                  target="_blank"
-                  rel="noreferrer"
-                  className="text-blue-700 underline"
-                >
-                  https://discord.gg/ZwArUWx5
-                </a>
-              </p>
-            </div>
-            <div className="flex justify-end">
-              <button type="button" onClick={handleCloseCommunityModal}>
-                {t('communityInvite.continue')}
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
+      {renderCommunityModal()}
     </>
   );
 }
