@@ -1,18 +1,49 @@
-import React, { useState } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { useTranslation } from "react-i18next";
 import { useAuth } from "../../contexts/AuthContext";
 import { useNavigate } from "react-router-dom";
+import { api } from "../../services/api";
+
+const RESEND_COOLDOWN_SECONDS = 60;
 
 export function LoginForm() {
   const { t } = useTranslation('auth');
+  const [step, setStep] = useState<"login" | "verify">("login");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [rememberMe, setRememberMe] = useState(false);
+  const [verificationCode, setVerificationCode] = useState("");
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
+  const [resendMessage, setResendMessage] = useState("");
+  const [resendCooldown, setResendCooldown] = useState(0);
+  const cooldownRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
-  const { login } = useAuth();
+  const { login, refreshAuth } = useAuth();
   const navigate = useNavigate();
+
+  // Start or reset the countdown timer
+  const startCooldown = () => {
+    setResendCooldown(RESEND_COOLDOWN_SECONDS);
+    if (cooldownRef.current) clearInterval(cooldownRef.current);
+    cooldownRef.current = setInterval(() => {
+      setResendCooldown((prev) => {
+        if (prev <= 1) {
+          clearInterval(cooldownRef.current!);
+          cooldownRef.current = null;
+          return 0;
+        }
+        return prev - 1;
+      });
+    }, 1000);
+  };
+
+  // Clean up interval on unmount
+  useEffect(() => {
+    return () => {
+      if (cooldownRef.current) clearInterval(cooldownRef.current);
+    };
+  }, []);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -23,11 +54,161 @@ export function LoginForm() {
       await login(email, password, rememberMe);
       navigate("/"); // Navigate to home after successful login
     } catch (err: any) {
-      setError(err.response?.data?.error || t('login.error'));
+      // Check if error is EMAIL_NOT_VERIFIED
+      if (err.response?.status === 403 && err.response?.data?.code === "EMAIL_NOT_VERIFIED") {
+        setStep("verify");
+        startCooldown();
+        setError("");
+      } else {
+        setError(err.response?.data?.error || t('login.error'));
+      }
     } finally {
       setLoading(false);
     }
   };
+
+  const handleVerify = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setError("");
+    setResendMessage("");
+    setLoading(true);
+
+    try {
+      // Verify the code first
+      await api.post("/auth/verify-code", { email, code: verificationCode });
+
+      // After verification succeeds, login with the saved credentials
+      await login(email, password, rememberMe);
+
+      // Navigate to home
+      navigate("/");
+    } catch (err: any) {
+      setError(err.response?.data?.error || t('register.verify.invalid'));
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleResend = async () => {
+    setError("");
+    setResendMessage("");
+    setLoading(true);
+
+    try {
+      await api.post("/auth/resend-verification", { email });
+      setVerificationCode("");
+      setResendMessage(t('register.verify.resend'));
+      startCooldown();
+    } catch (err: any) {
+      setError(err.response?.data?.error || t('register.verify.invalid'));
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Show verification step if email not verified
+  if (step === "verify") {
+    return (
+      <div className="login-form-container">
+        <div
+          style={{
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            gap: "16px",
+            marginBottom: "8px",
+          }}
+        >
+          <img
+            src="/asset/icon.png"
+            alt={t('register.verify.title')}
+            style={{
+              width: "80px",
+              height: "80px",
+              filter: "drop-shadow(2px 2px 4px rgba(0, 0, 0, 0.3))",
+            }}
+          />
+        </div>
+        <h2>{t('register.verify.title')}</h2>
+        <p style={{ textAlign: "center", color: "#aaa", marginBottom: "8px" }}>
+          {t('register.verify.description', { email })}
+        </p>
+        <form onSubmit={handleVerify}>
+          <div className="form-group">
+            <label htmlFor="verificationCode">{t('register.verify.code')}</label>
+            <input
+              id="verificationCode"
+              type="text"
+              inputMode="numeric"
+              value={verificationCode}
+              onChange={(e) =>
+                setVerificationCode(
+                  e.target.value.replace(/\D/g, "").slice(0, 5)
+                )
+              }
+              required
+              disabled={loading}
+              maxLength={5}
+              pattern="\d{5}"
+              placeholder={t('register.verify.codePlaceholder')}
+              autoComplete="one-time-code"
+              autoFocus
+            />
+          </div>
+
+          {error && <div className="error-message">{error}</div>}
+          {resendMessage && (
+            <div
+              style={{
+                color: "#6c757d",
+                fontSize: "14px",
+                textAlign: "center",
+                marginBottom: "8px",
+              }}
+            >
+              {resendMessage}
+            </div>
+          )}
+
+          <button
+            type="submit"
+            disabled={loading || verificationCode.length < 5}
+          >
+            {loading ? t('register.verify.submitting') : t('register.verify.submit')}
+          </button>
+
+          <div className="form-links">
+            {resendCooldown > 0 ? (
+              <span style={{ color: "#666" }}>
+                {t('register.verify.resendCooldown', { seconds: resendCooldown })}
+              </span>
+            ) : (
+              <a
+                href="#"
+                onClick={(e) => {
+                  e.preventDefault();
+                  handleResend();
+                }}
+              >
+                {t('register.verify.resend')}
+              </a>
+            )}
+            <a
+              href="#"
+              onClick={(e) => {
+                e.preventDefault();
+                setStep("login");
+                setVerificationCode("");
+                setError("");
+              }}
+            >
+              {t('common:actions.back')}
+            </a>
+          </div>
+        </form>
+      </div>
+    );
+  }
 
   return (
     <div className="login-form-container">

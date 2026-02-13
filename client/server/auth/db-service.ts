@@ -159,8 +159,15 @@ export const authDbService = {
       throw new Error("Account is disabled");
     }
 
+    // If email not verified, send verification code and return special status
     if (!user.isEmailVerified) {
-      throw new Error("Email not verified. Please verify your email first.");
+      await this.sendEmailVerification(data.email);
+
+      // Throw special error with email_not_verified type
+      const error: any = new Error("Email not verified. A verification code has been sent to your email.");
+      error.code = "EMAIL_NOT_VERIFIED";
+      error.email = data.email;
+      throw error;
     }
 
     // Update last login time
@@ -198,7 +205,7 @@ export const authDbService = {
     };
   },
 
-  // Send email verification code
+  // Send email verification code (for existing users)
   async sendEmailVerification(email: string) {
     const prisma = getPrismaClient();
 

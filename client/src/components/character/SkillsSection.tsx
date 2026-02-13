@@ -1,5 +1,6 @@
 import React from "react";
 import { useTranslation } from "react-i18next";
+import { useSkillTranslation } from "../../hooks/useSkillTranslation";
 
 interface Skill {
   name: string;
@@ -33,7 +34,21 @@ export const SkillsSection: React.FC<SkillsSectionProps> = ({
   occupationalPoints,
   interestPoints,
 }) => {
-  const { t } = useTranslation('character');
+  const { t } = useTranslation("character");
+  const { translateSkill } = useSkillTranslation();
+
+  const valueColumnStyle: React.CSSProperties = {
+    width: "104px",
+    minWidth: "104px",
+    whiteSpace: "nowrap",
+  };
+
+  const totalColumnStyle: React.CSSProperties = {
+    width: "88px",
+    minWidth: "88px",
+    whiteSpace: "nowrap",
+  };
+
   return (
     <>
       <div className="section-title">{t('skills.title')}</div>
@@ -186,7 +201,7 @@ export const SkillsSection: React.FC<SkillsSectionProps> = ({
                       fontSize: "0.85rem",
                     }}
                   >
-                    {skill}
+                    {translateSkill(skill)}
                   </span>
                 )
               )}
@@ -195,13 +210,7 @@ export const SkillsSection: React.FC<SkillsSectionProps> = ({
         )}
 
       {/* Skills Grid - Two Columns */}
-      <div
-        style={{
-          display: "grid",
-          gridTemplateColumns: "1fr 1fr",
-          gap: "20px",
-        }}
-      >
+      <div className="skills-two-columns">
         {/* Left Column */}
         <div>
           {[
@@ -232,10 +241,10 @@ export const SkillsSection: React.FC<SkillsSectionProps> = ({
                 <table className="skills-table">
                   <thead>
                     <tr>
-                      <th style={{ textAlign: "left" }}>{t('skills.skillName')}</th>
-                      <th style={{ width: "80px" }}>{t('skills.occupationalColumn')}</th>
-                      <th style={{ width: "80px" }}>{t('skills.interestColumn')}</th>
-                      <th style={{ width: "80px" }}>{t('skills.total')}</th>
+                      <th style={{ textAlign: "left" }}>{t("skills.skillName")}</th>
+                      <th style={valueColumnStyle}>{t("skills.occupationalColumn")}</th>
+                      <th style={valueColumnStyle}>{t("skills.interestColumn")}</th>
+                      <th style={totalColumnStyle}>{t("skills.total")}</th>
                     </tr>
                   </thead>
                   <tbody>
@@ -260,7 +269,7 @@ export const SkillsSection: React.FC<SkillsSectionProps> = ({
                           }}
                         >
                           <td className="skill-name-cell">
-                            <span>{skill.name}</span>
+                            <span>{translateSkill(skill.name)}</span>
                             <span
                               className="skill-base"
                               style={{ marginLeft: "8px", color: "#999" }}
@@ -268,7 +277,7 @@ export const SkillsSection: React.FC<SkillsSectionProps> = ({
                               ({skill.base})
                             </span>
                           </td>
-                          <td className="skill-value-cell">
+                          <td className="skill-value-cell" style={valueColumnStyle}>
                             <input
                               type="number"
                               min="0"
@@ -284,7 +293,7 @@ export const SkillsSection: React.FC<SkillsSectionProps> = ({
                               style={{ width: "100%" }}
                             />
                           </td>
-                          <td className="skill-value-cell">
+                          <td className="skill-value-cell" style={valueColumnStyle}>
                             <input
                               type="number"
                               min="0"
@@ -300,6 +309,7 @@ export const SkillsSection: React.FC<SkillsSectionProps> = ({
                           <td
                             className="skill-value-cell"
                             style={{
+                              ...totalColumnStyle,
                               textAlign: "center",
                               fontWeight: "bold",
                               backgroundColor: "#f0f0f0",
@@ -322,17 +332,17 @@ export const SkillsSection: React.FC<SkillsSectionProps> = ({
           {[
             {
               key: "physical",
-              label: "Physical & Stealth Skills",
+              labelKey: "categories.physicalStealth",
               categories: ["Physical", "Stealth"],
             },
             {
               key: "technical-medical",
-              label: "Technical & Medical Skills",
+              labelKey: "categories.technicalMedical",
               categories: ["Technical", "Medical"],
             },
             {
               key: "special",
-              label: "Special Skills",
+              labelKey: "categories.special",
               categories: ["Status", "Mythos"],
             },
           ].map((group) => {
@@ -351,10 +361,10 @@ export const SkillsSection: React.FC<SkillsSectionProps> = ({
                 <table className="skills-table">
                   <thead>
                     <tr>
-                      <th style={{ textAlign: "left" }}>{t('skills.skillName')}</th>
-                      <th style={{ width: "80px" }}>{t('skills.occupationalColumn')}</th>
-                      <th style={{ width: "80px" }}>{t('skills.interestColumn')}</th>
-                      <th style={{ width: "80px" }}>{t('skills.total')}</th>
+                      <th style={{ textAlign: "left" }}>{t("skills.skillName")}</th>
+                      <th style={valueColumnStyle}>{t("skills.occupationalColumn")}</th>
+                      <th style={valueColumnStyle}>{t("skills.interestColumn")}</th>
+                      <th style={totalColumnStyle}>{t("skills.total")}</th>
                     </tr>
                   </thead>
                   <tbody>
@@ -379,7 +389,7 @@ export const SkillsSection: React.FC<SkillsSectionProps> = ({
                           }}
                         >
                           <td className="skill-name-cell">
-                            <span>{skill.name}</span>
+                            <span>{translateSkill(skill.name)}</span>
                             <span
                               className="skill-base"
                               style={{ marginLeft: "8px", color: "#999" }}
@@ -387,7 +397,7 @@ export const SkillsSection: React.FC<SkillsSectionProps> = ({
                               ({skill.base})
                             </span>
                           </td>
-                          <td className="skill-value-cell">
+                          <td className="skill-value-cell" style={valueColumnStyle}>
                             <input
                               type="number"
                               min="0"
@@ -403,7 +413,7 @@ export const SkillsSection: React.FC<SkillsSectionProps> = ({
                               style={{ width: "100%" }}
                             />
                           </td>
-                          <td className="skill-value-cell">
+                          <td className="skill-value-cell" style={valueColumnStyle}>
                             <input
                               type="number"
                               min="0"
@@ -419,6 +429,7 @@ export const SkillsSection: React.FC<SkillsSectionProps> = ({
                           <td
                             className="skill-value-cell"
                             style={{
+                              ...totalColumnStyle,
                               textAlign: "center",
                               fontWeight: "bold",
                               backgroundColor: "#f0f0f0",
