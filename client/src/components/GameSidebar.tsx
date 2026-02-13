@@ -13,6 +13,10 @@ interface GameSidebarProps {
   sessionId: string;
   apiBaseUrl?: string;
   refreshTrigger?: number; // When this changes, refresh game state
+  // New props for mobile drawer
+  isMobile?: boolean;
+  isOpen?: boolean;
+  onClose?: () => void;
 }
 
 type TabType = "status" | "notes" | "clues" | "map";
@@ -117,6 +121,9 @@ export function GameSidebar({
   sessionId,
   apiBaseUrl = "/api",
   refreshTrigger,
+  isMobile = false,
+  isOpen = true,
+  onClose,
 }: GameSidebarProps) {
   const { t } = useTranslation(["game", "common"]);
   const [activeTab, setActiveTab] = useState<TabType>("status");
@@ -383,8 +390,15 @@ export function GameSidebar({
     return true;
   });
 
+  // Determine drawer state classes for mobile
+  const drawerClass = isMobile
+    ? isOpen
+      ? 'sidebar-drawer-open'
+      : 'sidebar-drawer-closed'
+    : '';
+
   return (
-    <div className="game-sidebar backdrop-blur-sm border border-slate-200 shadow-md rounded-lg">
+    <div className={`game-sidebar backdrop-blur-sm border border-slate-200 shadow-md rounded-lg ${drawerClass}`}>
       {/* Character Sheet Modal */}
       {showCharacterSheet && (
         <CharacterSheetModal
@@ -392,6 +406,17 @@ export function GameSidebar({
           apiBaseUrl={apiBaseUrl}
           onClose={() => setShowCharacterSheet(false)}
         />
+      )}
+
+      {/* Close button - only visible on mobile */}
+      {isMobile && (
+        <button
+          className="sidebar-close-btn"
+          onClick={onClose}
+          aria-label={t("game:sidebar.close")}
+        >
+          ×
+        </button>
       )}
 
       {/* Tab Headers */}

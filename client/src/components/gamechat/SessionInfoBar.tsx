@@ -32,7 +32,10 @@ export const SessionInfoBar: React.FC<SessionInfoBarProps> = ({
           disabled={isSaving}
           title={t('session.saveTitle')}
         >
-          {isSaving ? `💾 ${t('session.saving')}` : `💾 ${t('session.save')}`}
+          <span className="save-btn-icon">💾</span>
+          <span className="save-btn-text">
+            {isSaving ? t('session.saving') : t('session.save')}
+          </span>
         </button>
         {saveMessage && (
           <span

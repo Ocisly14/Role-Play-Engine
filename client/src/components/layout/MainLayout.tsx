@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { Outlet } from "react-router-dom";
+import { Outlet, useLocation } from "react-router-dom";
 import { useAuth } from "../../contexts/AuthContext";
 import { useGameSession } from "../../hooks/useGameSession";
 import { UserMenu } from "./UserMenu";
@@ -10,6 +10,7 @@ export const MainLayout: React.FC = () => {
   const gameSession = useGameSession();
   const { sessionId, isRestoringSession, restoreLatestSession } = gameSession;
   const [showAnalytics, setShowAnalytics] = useState(false);
+  const location = useLocation();
 
   // Restore latest session when user logs in
   useEffect(() => {
@@ -26,13 +27,18 @@ export const MainLayout: React.FC = () => {
     }
   };
 
+  // Hide UserMenu on game page (mobile only)
+  const isGamePage = location.pathname === "/game";
+
   return (
     <>
-      <UserMenu
-        user={user}
-        onLogout={handleLogout}
-        onShowAnalytics={() => setShowAnalytics(true)}
-      />
+      <div className={isGamePage ? "hide-user-menu-mobile" : ""}>
+        <UserMenu
+          user={user}
+          onLogout={handleLogout}
+          onShowAnalytics={() => setShowAnalytics(true)}
+        />
+      </div>
 
       <Outlet />
 
