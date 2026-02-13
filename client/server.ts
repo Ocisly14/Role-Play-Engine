@@ -26,6 +26,7 @@ import { WebSocketManager } from "./server/websocket/WebSocketManager.js";
 import { LocalEmbeddingManager } from "../src/rag/localEmbeddingManager.js";
 import { warmupSkillEmbeddings } from "./server/skills/skillMatcher.js";
 import { startDailyScheduler, stopDailyScheduler } from "./server/analytics/scheduler.js";
+import { syncReferralCodes } from "./server/auth/referral-sync.js";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -145,6 +146,9 @@ server.listen(PORT, async () => {
 
   // Update admin user roles on startup
   await updateAdminUserRoles();
+
+  // Sync referral codes from environment variables
+  await syncReferralCodes();
 
   // Start analytics scheduler
   startDailyScheduler();
