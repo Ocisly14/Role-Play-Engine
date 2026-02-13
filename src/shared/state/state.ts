@@ -111,7 +111,7 @@ export interface DirectorDecision {
 /** Structured dice roll info for frontend display (character, skill, penalty) */
 export interface DiceRollInfo {
   character: string; // Who rolled (player or NPC name)
-  roll: string; // Original roll string e.g. "1d100[0]: 67 (Brawling 50% = failure)"
+  roll: string; // Original roll string e.g. "Investigator John: 1d100[0]: 67 (Brawling 50% = failure)"
   skill?: string; // Extracted skill e.g. "Brawling 50%"
   success?: "success" | "failure" | "critical" | "fumble"; // For skill checks
   penalty?: string; // e.g. "penalty die", "-20", "bonus die"
@@ -141,18 +141,36 @@ export function buildDiceRollInfos(
   for (const result of actionResults || []) {
     const rolls = result.diceRolls || [];
     for (const roll of rolls) {
-      const isOpposed = /^\s*1d100_opposed\[\d+\]\s*:/i.test(roll);
+      const isOpposed = /\b1d100_opposed\[\d+\]\s*:/i.test(roll);
+      const actorFromRoll = extractRollCharacter(roll);
       const rollCharacter =
-        isOpposed && opposedRollCharacter
+        actorFromRoll ||
+        (isOpposed && opposedRollCharacter
           ? opposedRollCharacter
-          : result.character;
+          : result.character);
       infos.push(parseDiceRollInfo(rollCharacter, roll));
     }
   }
   return infos;
 }
 
-/** Parse skill, success, penalty from dice roll string. Format: "1d100[0]: 67 (Brawling 50% = failure)" */
+/** Extract actor name from roll prefix. Format: "Actor Name: 1d100[0]: ..." */
+function extractRollCharacter(roll: string): string | null {
+  if (!roll || typeof roll !== "string") return null;
+  const diceAt = roll.search(/\b(?:1d100_opposed|\d+d\d+)\[\d+\]\s*:/i);
+  if (diceAt <= 0) return null;
+  const candidate = roll
+    .slice(0, diceAt)
+    .replace(/[:\s]+$/g, "")
+    .trim();
+  return candidate.length > 0 ? candidate : null;
+}
+
+/** Parse skill, success, penalty from dice roll string.
+ * Supports both old and new formats:
+ * - Old: "Investigator John: 1d100[0]: 67 (Brawling 50% = failure)"
+ * - New: "Dr. Smith: 1d100[0]: 45, 1d100[1]: 82(penalty),(Spot Hidden 60% use highest 82 = failure)"
+ */
 function parseDiceRollInfo(character: string, roll: string): DiceRollInfo {
   const info: DiceRollInfo = { character, roll };
 
@@ -170,20 +188,31 @@ function parseDiceRollInfo(character: string, roll: string): DiceRollInfo {
   if (successMatch) {
     info.success = successMatch[1].toLowerCase() as DiceRollInfo["success"];
   }
-  // Penalty: "penalty die", "bonus die", "-20", "(-20)"
-  const penaltyMatch = content.match(
+
+  // Penalty/Bonus detection - check entire roll string, not just last parentheses
+  // New format: "1d100[1]: 82(penalty)" or "1d100[1]: 34(bonus)"
+  // Old format: "(Spot Hidden 60% penalty die = failure)"
+  const newFormatPenaltyMatch = roll.match(/\(penalty\)/i);
+  const newFormatBonusMatch = roll.match(/\(bonus\)/i);
+  const oldFormatPenaltyMatch = content.match(
     /(?:penalty\s+die|bonus\s+die|-\s*\d+\s*%?|\(\s*-\s*\d+\s*\))/i
   );
-  if (penaltyMatch) {
-    info.penalty = penaltyMatch[0].trim();
+
+  if (newFormatPenaltyMatch) {
+    info.penalty = "penalty";
+  } else if (newFormatBonusMatch) {
+    info.penalty = "bonus";
+  } else if (oldFormatPenaltyMatch) {
+    info.penalty = oldFormatPenaltyMatch[0].trim();
   }
+
   // Skill: part before "=" or penalty. Match "SkillName XX%" or "purpose" (damage, etc.)
   const beforeEquals = content
     .replace(/\s*=\s*(success|failure|critical|fumble)\s*$/i, "")
     .trim();
   const skillPart = beforeEquals
     .replace(
-      /(?:penalty\s+die|bonus\s+die|-\s*\d+\s*%?|\(\s*-\s*\d+\s*\)).*/gi,
+      /(?:penalty\s+die|bonus\s+die|-\s*\d+\s*%?|\(\s*-\s*\d+\s*\)|use\s+(?:highest|lowest)\s+\d+).*/gi,
       ""
     )
     .trim();

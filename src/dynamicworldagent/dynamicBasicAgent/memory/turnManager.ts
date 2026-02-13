@@ -393,7 +393,7 @@ export class TurnManager {
 
   private isOpposedRoll(roll?: string | null): boolean {
     if (!roll || typeof roll !== "string") return false;
-    return /^\s*1d100_opposed\[\d+\]\s*:/i.test(roll);
+    return /\b1d100_opposed\[\d+\]\s*:/i.test(roll);
   }
 
   getConversation(

@@ -246,8 +246,11 @@ export function GameChat({
         processedTurnIdsRef.current.add(turn.turnId);
       }
 
+      // Only show dice rolls from the main action (first actionResult)
+      // NPC response dice rolls are not displayed to avoid clutter
+      const mainActionResults = turn.actionResults?.slice(0, 1) || [];
       const allDiceRolls = buildDiceRollInfos(
-        turn.actionResults || [],
+        mainActionResults,
         characterName
       );
 

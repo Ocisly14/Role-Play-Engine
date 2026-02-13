@@ -49,6 +49,7 @@ Your task is to determine if the action succeeds in enabling this scene change:
 `
       : skillSelectionMode === "auto"
         ? `SKILL POLICY:
+- It is auto skill selection mode.
 - No player-selected skill is provided.
 - Analyze the user input to determine whether it is normal behavior or a specific skill use.
 - If it is normal behavior, do not use any dice.
@@ -100,17 +101,24 @@ USAGE:
 - You can choose to use these dice OR not use any if the action doesn't require dice
 - When you use a die, record which die you used (including which result from the array, e.g., "1d100[0]: 67") and the result in your response
 
-🚨 CRITICAL: If no skill is chosen by the user, DO NOT select any dice. Always use empty array "diceUsed": [] when no skill is selected.
+🚨 CRITICAL: If no skill is chosen by the user, DO NOT select any dice. Always use empty array "diceUsed": [] when no skill is selected. Unless the skill selection mode is "auto".
 
 !!! Important: Always follow the 7th edition rules of Call of Cthulhu.
 
 DiceUsed field:
 - Record ONLY the dice you actually used from the pre-rolled dice
-- Format: "[dice_name][index]: [result] ([skill/purpose] [penalty if any] = [success/failure])"
-- Examples: "1d100[0]: 67 (Brawl 50% = success)", "1d100[1]: 82 (Spot Hidden 60% penalty die = failure)", "1d6[2]: 4 (knife damage)"
-- For opposed checks, the second roll MUST use dice_name exactly "1d100_opposed", e.g. "1d100_opposed[0]: 82 (Brawling 25% = failure)"
-- When penalty dice or bonus dice apply, include "penalty die" or "bonus die" in parentheses, e.g. "(Perception 25% penalty die = failure)"
-- When a percentage penalty applies (e.g. -20%), include it: "(Drive Auto 50% -20 = failure)"
+- Format: "[character name]: [dice results...](penalty/bonus for each extra die),(skill/purpose use highest/lowest [value] = success/failure/N/A)"
+- Always include WHO is making the check before each dice record.
+- IMPORTANT: When selecting multiple dice, always select in order starting from index 0 (e.g., [0], [0,1], [0,1,2], etc.)
+- Examples:
+  - Normal roll: "John: 1d100[0]: 67 (Brawl 50% = success)"
+  - 1 Penalty die: "Dr. Smith: 1d100[0]: 45, 1d100[1]: 82(penalty),(Spot Hidden 60% use highest 82 = failure)"
+  - 2 Penalty dice: "John: 1d100[0]: 45, 1d100[1]: 82(penalty), 1d100[2]: 67(penalty),(Listen 50% use highest 82 = failure)"
+  - 1 Bonus die: "John: 1d100[0]: 82, 1d100[1]: 34(bonus),(Stealth 55% use lowest 34 = success)"
+  - 2 Bonus dice: "John: 1d100[0]: 82, 1d100[1]: 34(bonus), 1d100[2]: 56(bonus),(Stealth 55% use lowest 34 = success)"
+  - Damage: "John: 1d6[0]: 4 (knife damage = 4)"
+- When penalty/bonus dice apply: Mark EACH extra die with (penalty) or (bonus), then specify which value is used for the check
+- When a percentage penalty applies (e.g. -20%), include it: "(Drive Auto 50% -20 = )"
 - If no dice needed, use empty array: "diceUsed": []
 
 Include "scenarioUpdate" if the action permanently changes the environment. "scenarioUpdate" can include:
@@ -203,6 +211,7 @@ ${JSON.stringify(sceneNPCs, null, 2)}
 
 ## 🎲 Dice Interpretation (CoC 7e)
 
+### Basic Success Levels
 - Prefer explicit labels in dice results (success/failure/critical/fumble). If labels conflict, trust the numeric roll.
 - **Critical success**: roll is 01.
 - **Extreme success**: roll ≤ (skill ÷ 5).
@@ -211,6 +220,11 @@ ${JSON.stringify(sceneNPCs, null, 2)}
 - **Failure**: roll > skill.
 - **Fumble**: roll 96–100 if skill < 50; roll 100 if skill ≥ 50.
 - If only "success" is provided without level, treat as regular unless roll/skill allows a higher tier.
+
+### Penalty Die and Bonus Die
+- **Penalty Die**: Select multiple 1d100 results (2 for one penalty die, 3 for two penalty dice, etc.) and use the **HIGHEST** value for the check.
+- **Bonus Die**: Select multiple 1d100 results (2 for one bonus die, 3 for two bonus dice, etc.) and use the **LOWEST** value for the check.
+- Whether to use penalty or bonus die is determined by the situation of the scene and character's status. Normally, one dice is enough for deciding the success or failure.
 
 ## 📋 ActionLog Requirements
 
@@ -240,11 +254,12 @@ Return ONLY valid JSON in this exact structure:
 {
   "diceUsed": [
     // Array of dice you actually used (empty array if no dice needed)
-    // Format: "[dice_name][index]: [result] ([skill%] [penalty if any] = [success/failure/N/A])"
-    // Include "penalty die", "bonus die", or "-20" etc. when applicable
-    "1d100[0]: 67 (Brawling 50% = failure)",
-    "1d100[1]: 82 (Spot Hidden 60% penalty die = failure)",
-    "1d3[1]: 2 + 1 (DB) = 3 (unarmed damage)"
+    // Select penalty/bonus dice when applicable
+    // Format: Mark each extra die with (penalty) or (bonus), then specify which value is used
+    // Always select dice in order starting from index 0
+    "John: 1d100[0]: 67 (Brawling 50% = failure)",
+    "Dr. Smith: 1d100[1]: 45, 1d100[2]: 82(penalty),(Spot Hidden 60% use highest 82 = failure)",
+    "John: 1d3[0]: 2 + 1 (DB) = 3 (unarmed damage = 3)"
   ],
 
   "actionLog": [
@@ -309,7 +324,6 @@ ${
       "responseType": "social",
       "executionOrder": 1,
       "diceUsed": [  // Optional: Dice rolls if NPC action requires skill checks
-        "1d100[index]: 45 (Persuade 50% = success)"
       ],
       "actionLog": [  // Required: At least one actionLog entry
         {
