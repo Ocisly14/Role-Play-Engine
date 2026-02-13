@@ -96,6 +96,8 @@ export interface GenerationOptions {
   modelClass?: ModelClass;
   customSystemPrompt?: string;
   maxRetries?: number;
+  fallbackToLargeOnFailure?: boolean;
+  largeFallbackRetries?: number;
   images?: ImageInput[];
   onToken?: (token: string) => void;
   userId?: string;
