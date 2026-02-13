@@ -3,6 +3,7 @@ import { useTranslation } from "react-i18next";
 
 interface AttributesSectionProps {
   form: Record<string, string>;
+  derivedAttributes: Record<string, string | number>;
   onChange: (key: string, value: string) => void;
   onRandomize: () => void;
 }
@@ -19,28 +20,32 @@ const ATTRIBUTES = [
   { key: "LCK" },
 ];
 
+const DERIVED_ATTRIBUTES = [
+  { key: "HP", type: "number", min: "1", placeholder: "10" },
+  { key: "SAN", type: "number", min: "0", placeholder: "60" },
+  { key: "MP", type: "number", min: "0", placeholder: "10" },
+  { key: "LUCK", type: "number", min: "0", placeholder: "50" },
+  { key: "MOV", type: "number", min: "1", placeholder: "8" },
+  { key: "BUILD", type: "text", placeholder: "0" },
+  { key: "DB", type: "text", placeholder: "0" },
+  { key: "ARMOR", type: "text", placeholder: "0" },
+] as const;
+
 export const AttributesSection: React.FC<AttributesSectionProps> = ({
   form,
+  derivedAttributes,
   onChange,
   onRandomize,
 }) => {
   const { t } = useTranslation('character');
   return (
     <>
-      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+      <div className="attributes-header">
         <div className="section-title">{t('attributes.title')}</div>
         <button
           type="button"
           onClick={onRandomize}
-          style={{
-            padding: "8px 16px",
-            backgroundColor: "#8b7355",
-            color: "#f5f1e8",
-            border: "none",
-            borderRadius: "4px",
-            cursor: "pointer",
-            fontWeight: "bold",
-          }}
+          className="attributes-random-btn"
         >
           🎲 {t('attributes.randomButton')}
         </button>
@@ -73,97 +78,29 @@ export const AttributesSection: React.FC<AttributesSectionProps> = ({
         </tbody>
       </table>
 
-      <h3>{t('attributes.derived')}</h3>
+      <div className="section-title">{t('attributes.derived')}</div>
       <table>
+        <thead>
+          <tr>
+            {DERIVED_ATTRIBUTES.map((attr) => (
+              <th key={attr.key}>{t(`attributes.${attr.key}`)}</th>
+            ))}
+          </tr>
+        </thead>
         <tbody>
           <tr>
-            <th>{t('attributes.HP')}</th>
-            <td>
-              <input
-                name="HP"
-                type="number"
-                min="1"
-                placeholder="10"
-                value={form.HP || ""}
-                onChange={(e) => onChange("HP", e.target.value)}
-              />
-            </td>
-            <th>{t('attributes.SAN')}</th>
-            <td>
-              <input
-                name="SAN"
-                type="number"
-                min="0"
-                placeholder="60"
-                value={form.SAN || ""}
-                onChange={(e) => onChange("SAN", e.target.value)}
-              />
-            </td>
-            <th>{t('attributes.MP')}</th>
-            <td>
-              <input
-                name="MP"
-                type="number"
-                min="0"
-                placeholder="10"
-                value={form.MP || ""}
-                onChange={(e) => onChange("MP", e.target.value)}
-              />
-            </td>
-            <th>{t('attributes.LUCK')}</th>
-            <td>
-              <input
-                name="LUCK"
-                type="number"
-                min="0"
-                placeholder="50"
-                value={form.LUCK || ""}
-                onChange={(e) => onChange("LUCK", e.target.value)}
-              />
-            </td>
-          </tr>
-          <tr>
-            <th>{t('attributes.MOV')}</th>
-            <td>
-              <input
-                name="MOV"
-                type="number"
-                min="1"
-                placeholder="8"
-                value={form.MOV || ""}
-                onChange={(e) => onChange("MOV", e.target.value)}
-              />
-            </td>
-            <th>{t('attributes.BUILD')}</th>
-            <td>
-              <input
-                name="BUILD"
-                type="text"
-                placeholder="0"
-                value={form.BUILD || ""}
-                onChange={(e) => onChange("BUILD", e.target.value)}
-              />
-            </td>
-            <th>{t('attributes.DB')}</th>
-            <td>
-              <input
-                name="DB"
-                type="text"
-                placeholder="0"
-                value={form.DB || ""}
-                onChange={(e) => onChange("DB", e.target.value)}
-              />
-            </td>
-            <th>{t('attributes.ARMOR')}</th>
-            <td>
-              <input
-                name="ARMOR"
-                type="text"
-                placeholder="0"
-                value={form.ARMOR || ""}
-                onChange={(e) => onChange("ARMOR", e.target.value)}
-              />
-            </td>
+            {DERIVED_ATTRIBUTES.map((attr) => (
+              <td key={attr.key}>
+                <input
+                  name={attr.key}
+                  type={attr.type}
+                  min={attr.min}
+                  placeholder={attr.placeholder}
+                  value={derivedAttributes[attr.key] ?? ""}
+                  readOnly
+                />
+              </td>
+            ))}
           </tr>
         </tbody>
       </table>

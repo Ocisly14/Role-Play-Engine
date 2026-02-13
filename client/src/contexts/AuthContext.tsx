@@ -39,10 +39,23 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }, []);
 
   const refreshAuth = async () => {
+    const accessToken = localStorage.getItem("accessToken");
+    const refreshToken = localStorage.getItem("refreshToken");
+
+    // Skip auth check if no tokens exist
+    if (!accessToken && !refreshToken) {
+      setUser(null);
+      setLoading(false);
+      return;
+    }
+
     try {
       const response = await api.get("/auth/me");
       setUser(response.data.user);
     } catch (error) {
+      // Clear invalid/expired tokens
+      localStorage.removeItem("accessToken");
+      localStorage.removeItem("refreshToken");
       setUser(null);
     } finally {
       setLoading(false);

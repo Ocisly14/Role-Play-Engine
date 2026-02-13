@@ -18,6 +18,108 @@ const OCCUPATIONAL_ATTRIBUTES = [
   "EDU",
 ] as const;
 
+type DerivedAttributes = {
+  HP: number | "";
+  SAN: number | "";
+  MP: number | "";
+  LUCK: number | "";
+  MOV: number | "";
+  BUILD: number | "";
+  DB: string;
+  ARMOR: string;
+};
+
+const DERIVED_ATTRIBUTE_KEYS = new Set([
+  "HP",
+  "SAN",
+  "MP",
+  "LUCK",
+  "MOV",
+  "BUILD",
+  "DB",
+  "ARMOR",
+]);
+
+function getNumericAttributeValue(
+  form: Record<string, string>,
+  key: string
+): number | null {
+  const value = Number(form[key]);
+  if (!Number.isFinite(value) || value <= 0) {
+    return null;
+  }
+  return value;
+}
+
+function calculateDerivedAttributes(form: Record<string, string>): DerivedAttributes {
+  const STR = getNumericAttributeValue(form, "STR");
+  const CON = getNumericAttributeValue(form, "CON");
+  const DEX = getNumericAttributeValue(form, "DEX");
+  const POW = getNumericAttributeValue(form, "POW");
+  const SIZ = getNumericAttributeValue(form, "SIZ");
+  const LCK = getNumericAttributeValue(form, "LCK");
+
+  const HP = CON !== null && SIZ !== null ? Math.floor((CON + SIZ) / 10) : "";
+  const MP = POW !== null ? Math.floor(POW / 5) : "";
+  const SAN = POW !== null ? POW : "";
+  const LUCK = LCK !== null ? LCK : "";
+
+  let MOV: number | "" = "";
+  if (STR !== null && DEX !== null && SIZ !== null) {
+    MOV = 8;
+    if (DEX < SIZ && STR < SIZ) {
+      MOV = 7;
+    } else if (DEX >= SIZ && STR >= SIZ) {
+      MOV = 9;
+    }
+  }
+
+  let BUILD: number | "" = "";
+  let DB = "";
+  if (STR !== null && SIZ !== null) {
+    const buildSum = STR + SIZ;
+    if (buildSum >= 2 && buildSum <= 64) {
+      BUILD = -2;
+      DB = "-2";
+    } else if (buildSum >= 65 && buildSum <= 84) {
+      BUILD = -1;
+      DB = "-1";
+    } else if (buildSum >= 85 && buildSum <= 124) {
+      BUILD = 0;
+      DB = "0";
+    } else if (buildSum >= 125 && buildSum <= 164) {
+      BUILD = 1;
+      DB = "+1d4";
+    } else if (buildSum >= 165 && buildSum <= 204) {
+      BUILD = 2;
+      DB = "+1d6";
+    } else if (buildSum >= 205 && buildSum <= 284) {
+      BUILD = 3;
+      DB = "+2d6";
+    } else if (buildSum >= 285 && buildSum <= 364) {
+      BUILD = 4;
+      DB = "+3d6";
+    } else if (buildSum >= 365 && buildSum <= 444) {
+      BUILD = 5;
+      DB = "+4d6";
+    } else if (buildSum >= 445) {
+      BUILD = 6;
+      DB = "+5d6";
+    }
+  }
+
+  return {
+    HP,
+    SAN,
+    MP,
+    LUCK,
+    MOV,
+    BUILD,
+    DB,
+    ARMOR: "-",
+  };
+}
+
 function calculateOccupationalPointsFromExpression(
   occupation: any,
   form: Record<string, string>
@@ -165,6 +267,9 @@ export const useCharacterCreation = ({
 
   // Handle form changes
   const onChange = useCallback((key: string, value: string) => {
+    if (DERIVED_ATTRIBUTE_KEYS.has(key)) {
+      return;
+    }
     setForm((prev) => ({ ...prev, [key]: value }));
   }, []);
 
@@ -215,6 +320,11 @@ export const useCharacterCreation = ({
     };
   }, [skillsState, occupationalPoints, interestPoints]);
 
+  const derivedAttributes = useMemo(
+    () => calculateDerivedAttributes(form),
+    [form]
+  );
+
   // Prepare weapons data
   const weapons = [0, 1, 2].map((i) => ({
     name: form[`weapon_${i}_name`] || "",
@@ -260,14 +370,17 @@ export const useCharacterCreation = ({
         "LCK",
       ].reduce((acc, key) => ({ ...acc, [key]: Number(form[key]) || 0 }), {}),
       derived: {
-        HP: Number(form.HP) || 0,
-        SAN: Number(form.SAN) || 0,
-        MP: Number(form.MP) || 0,
-        LUCK: Number(form.LUCK) || 0,
-        MOV: Number(form.MOV) || 0,
-        BUILD: form.BUILD,
-        DB: form.DB,
-        ARMOR: form.ARMOR,
+        HP: Number(derivedAttributes.HP) || 0,
+        SAN: Number(derivedAttributes.SAN) || 0,
+        MP: Number(derivedAttributes.MP) || 0,
+        LUCK: Number(derivedAttributes.LUCK) || 0,
+        MOV: Number(derivedAttributes.MOV) || 0,
+        BUILD:
+          typeof derivedAttributes.BUILD === "number"
+            ? derivedAttributes.BUILD
+            : 0,
+        DB: derivedAttributes.DB || "0",
+        ARMOR: derivedAttributes.ARMOR || "-",
       },
       skills: skillsState.reduce(
         (acc, s) => ({
@@ -294,7 +407,7 @@ export const useCharacterCreation = ({
         backstory: form.backstory,
       },
     }),
-    [form, skillsState, weapons, items]
+    [form, skillsState, weapons, items, derivedAttributes]
   );
 
   // Handle random attribute generation
@@ -400,6 +513,7 @@ export const useCharacterCreation = ({
     weapons,
 
     // Attributes
+    derivedAttributes,
     showAttributeSelector,
     setShowAttributeSelector,
     attributeOptions,

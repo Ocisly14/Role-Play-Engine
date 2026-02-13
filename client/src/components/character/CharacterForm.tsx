@@ -9,6 +9,7 @@ import { AttributeSelectorModal } from "../modals/AttributeSelectorModal";
 
 interface CharacterFormProps {
   form: Record<string, string>;
+  derivedAttributes: Record<string, string | number>;
   onChange: (key: string, value: string) => void;
 
   // Occupation
@@ -50,6 +51,7 @@ interface CharacterFormProps {
 
 export const CharacterForm: React.FC<CharacterFormProps> = ({
   form,
+  derivedAttributes,
   onChange,
   occupations,
   selectedOccupation,
@@ -111,6 +113,7 @@ export const CharacterForm: React.FC<CharacterFormProps> = ({
         {/* Attributes Section */}
         <AttributesSection
           form={form}
+          derivedAttributes={derivedAttributes}
           onChange={onChange}
           onRandomize={handleRandomizeAttributes}
         />
