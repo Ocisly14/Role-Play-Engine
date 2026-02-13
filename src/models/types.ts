@@ -94,6 +94,7 @@ export interface GenerationOptions {
   runtime: any; // CoC runtime interface
   context: string;
   modelClass?: ModelClass;
+  providerOverride?: ModelProviderName;
   customSystemPrompt?: string;
   maxRetries?: number;
   fallbackToLargeOnFailure?: boolean;

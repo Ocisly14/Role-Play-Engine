@@ -157,8 +157,30 @@ export class DirectorAgent {
 
     // Step 1: Unified update - validates target + generates all snapshots (complete target + simplified background)
     console.log(`\n🔄 [Director Agent] Updating scenarios for scene switch...`);
-    const updateResult =
+    let updateResult =
       await this.updateScenariosForSceneSwitch(gameStateManager);
+
+    if (!updateResult) {
+      const currentProvider =
+        (process.env.MODEL_PROVIDER as ModelProviderName) ||
+        ModelProviderName.OPENAI;
+      const canFallbackToOpenAI =
+        currentProvider !== ModelProviderName.OPENAI &&
+        Boolean(process.env.OPENAI_API_KEY?.trim());
+
+      if (canFallbackToOpenAI) {
+        console.warn(
+          `   ⚠️ Scene switch validation failed with ${currentProvider}, retrying scene switch generation with openai...`
+        );
+        updateResult = await this.updateScenariosForSceneSwitch(gameStateManager, {
+          providerOverride: ModelProviderName.OPENAI,
+        });
+
+        if (updateResult) {
+          console.log(`   ✓ OpenAI scene switch retry succeeded`);
+        }
+      }
+    }
 
     if (!updateResult) {
       // Validation failed, clear scene change request and return
@@ -863,7 +885,10 @@ export class DirectorAgent {
    * Update scenarios for scene switch - unified method that generates both complete target snapshot and simplified background snapshots
    */
   async updateScenariosForSceneSwitch(
-    gameStateManager: DynamicGameStateManager
+    gameStateManager: DynamicGameStateManager,
+    options?: {
+      providerOverride?: ModelProviderName;
+    }
   ): Promise<{
     validatedTargetSceneName: string;
     targetSnapshot: DynamicScenarioSnapshot;
@@ -1020,10 +1045,18 @@ export class DirectorAgent {
         `   🤖 Calling LLM to generate unified snapshots (1 complete target + ${allScenariosData.length - 1} simplified background)...`
       );
 
+      const providerForCall =
+        options?.providerOverride ||
+        ((process.env.MODEL_PROVIDER as ModelProviderName) ||
+          runtime.modelProvider ||
+          ModelProviderName.OPENAI);
+      console.log(`   🤖 Scene switch generation provider: ${providerForCall}`);
+
       const response = await generateText({
         runtime,
         context: prompt,
         modelClass: ModelClass.LARGE,
+        providerOverride: options?.providerOverride,
       });
 
       // Parse LLM response

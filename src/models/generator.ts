@@ -224,6 +224,7 @@ export async function generateText(
     runtime,
     context,
     modelClass = ModelClass.MEDIUM,
+    providerOverride,
     customSystemPrompt,
     maxRetries = 3,
     fallbackToLargeOnFailure = true,
@@ -235,7 +236,10 @@ export async function generateText(
   // Get provider from environment variable, runtime, or default to OpenAI
   const envProvider = process.env.MODEL_PROVIDER as ModelProviderName;
   const provider =
-    envProvider || runtime.modelProvider || ModelProviderName.OPENAI;
+    providerOverride ||
+    envProvider ||
+    runtime.modelProvider ||
+    ModelProviderName.OPENAI;
 
   // Resolve effective model class
   const effectiveModelClass = resolveModelClass(runtime, modelClass);
@@ -252,14 +256,6 @@ export async function generateText(
       content: customSystemPrompt,
     });
   }
-
-  // Build user content (may need to download images for Google)
-  const userContent = await buildUserContent(provider, context, images);
-
-  messages.push({
-    role: "user",
-    content: userContent,
-  });
 
   const phases: Array<{
     modelClass: ModelClass;
@@ -285,14 +281,6 @@ export async function generateText(
     });
   }
 
-  const totalPlannedAttempts = phases.reduce(
-    (sum, phase) => sum + phase.retries,
-    0
-  );
-  let globalAttempt = 0;
-  let lastErrorMessage = "Unknown error";
-  let lastAttemptedModelClass: ModelClass = effectiveModelClass;
-
   const toErrorMessage = (error: unknown): string => {
     if (error instanceof Error && typeof error.message === "string") {
       return error.message;
@@ -305,124 +293,143 @@ export async function generateText(
     }
   };
 
-  const invokeModel = async (chatModel: any): Promise<string> => {
-    if (
-      onToken &&
-      provider === ModelProviderName.GOOGLE &&
-      typeof chatModel.stream === "function"
-    ) {
-      let fullContent = "";
-      const stream = await chatModel.stream(messages);
+  const runWithProvider = async (
+    providerForRun: ModelProviderName
+  ): Promise<string> => {
+    const totalPlannedAttempts = phases.reduce(
+      (sum, phase) => sum + phase.retries,
+      0
+    );
+    let globalAttempt = 0;
+    let lastErrorMessage = "Unknown error";
+    let lastAttemptedModelClass: ModelClass = effectiveModelClass;
 
-      for await (const chunk of stream) {
-        const content =
-          (chunk as any)?.content ?? (chunk as any)?.message?.content ?? "";
-        const text =
-          typeof content === "string"
-            ? content
-            : Array.isArray(content)
-              ? content.map((part: any) => part?.text ?? "").join("")
-              : String(content ?? "");
+    const userContent = await buildUserContent(providerForRun, context, images);
+    const providerMessages = [...messages];
+    providerMessages.push({
+      role: "user" as const,
+      content: userContent,
+    });
 
-        if (text) {
-          fullContent += text;
-          onToken(text);
+    const invokeModel = async (chatModel: any): Promise<string> => {
+      if (
+        onToken &&
+        providerForRun === ModelProviderName.GOOGLE &&
+        typeof chatModel.stream === "function"
+      ) {
+        let fullContent = "";
+        const stream = await chatModel.stream(providerMessages);
+
+        for await (const chunk of stream) {
+          const content =
+            (chunk as any)?.content ?? (chunk as any)?.message?.content ?? "";
+          const text =
+            typeof content === "string"
+              ? content
+              : Array.isArray(content)
+                ? content.map((part: any) => part?.text ?? "").join("")
+                : String(content ?? "");
+
+          if (text) {
+            fullContent += text;
+            onToken(text);
+          }
         }
+
+        if (!fullContent) {
+          throw new Error("Empty response from model");
+        }
+
+        console.log(
+          `✅ Generated text successfully (${fullContent.length} characters)`
+        );
+        return fullContent;
       }
 
-      if (!fullContent) {
+      const response = await chatModel.invoke(providerMessages);
+      const content = (response as any)?.content;
+      const responseText =
+        typeof content === "string"
+          ? content
+          : Array.isArray(content)
+            ? content.map((part: any) => part?.text ?? "").join("")
+            : "";
+
+      if (!responseText) {
         throw new Error("Empty response from model");
       }
 
       console.log(
-        `✅ Generated text successfully (${fullContent.length} characters)`
+        `✅ Generated text successfully (${responseText.length} characters)`
       );
-      return fullContent;
-    }
+      return responseText;
+    };
 
-    const response = await chatModel.invoke(messages);
-    const content = (response as any)?.content;
-    const responseText =
-      typeof content === "string"
-        ? content
-        : Array.isArray(content)
-          ? content.map((part: any) => part?.text ?? "").join("")
-          : "";
-
-    if (!responseText) {
-      throw new Error("Empty response from model");
-    }
-
-    console.log(
-      `✅ Generated text successfully (${responseText.length} characters)`
-    );
-    return responseText;
-  };
-
-  for (const phase of phases) {
-    if (phase.label === "large_fallback") {
-      console.warn(
-        `⚠️ Primary model failed. Switching to ${provider}/${phase.modelClass} fallback (${phase.retries} retries).`
-      );
-    }
-
-    const chatModel = createChatModel(provider, phase.modelClass, {
-      streaming: provider === ModelProviderName.GOOGLE && Boolean(onToken),
-      operation: options.operation,
-      userId: options.userId,
-    });
-
-    for (let attempt = 1; attempt <= phase.retries; attempt++) {
-      globalAttempt += 1;
-      lastAttemptedModelClass = phase.modelClass;
-
-      try {
-        console.log(
-          `🤖 Generating text (attempt ${globalAttempt}/${totalPlannedAttempts}, phase ${phase.label} ${attempt}/${phase.retries}) using ${provider}/${phase.modelClass}`
+    for (const phase of phases) {
+      if (phase.label === "large_fallback") {
+        console.warn(
+          `⚠️ Primary model failed. Switching to ${providerForRun}/${phase.modelClass} fallback (${phase.retries} retries).`
         );
-        return await invokeModel(chatModel);
-      } catch (error) {
-        lastErrorMessage = toErrorMessage(error);
-        console.error(
-          `❌ Generation attempt ${globalAttempt} failed (${provider}/${phase.modelClass}):`,
-          error
-        );
+      }
 
-        if (attempt < phase.retries) {
-          const delay = Math.pow(2, attempt) * 1000; // Exponential backoff
-          await new Promise((resolve) => setTimeout(resolve, delay));
+      const chatModel = createChatModel(providerForRun, phase.modelClass, {
+        streaming: providerForRun === ModelProviderName.GOOGLE && Boolean(onToken),
+        operation: options.operation,
+        userId: options.userId,
+      });
+
+      for (let attempt = 1; attempt <= phase.retries; attempt++) {
+        globalAttempt += 1;
+        lastAttemptedModelClass = phase.modelClass;
+
+        try {
+          console.log(
+            `🤖 Generating text (attempt ${globalAttempt}/${totalPlannedAttempts}, phase ${phase.label} ${attempt}/${phase.retries}) using ${providerForRun}/${phase.modelClass}`
+          );
+          return await invokeModel(chatModel);
+        } catch (error) {
+          lastErrorMessage = toErrorMessage(error);
+          console.error(
+            `❌ Generation attempt ${globalAttempt} failed (${providerForRun}/${phase.modelClass}):`,
+            error
+          );
+
+          if (attempt < phase.retries) {
+            const delay = Math.pow(2, attempt) * 1000; // Exponential backoff
+            await new Promise((resolve) => setTimeout(resolve, delay));
+          }
         }
       }
     }
-  }
 
-  if (lastAttemptedModelClass === ModelClass.LARGE) {
-    console.warn(
-      `⚠️ ${provider}/${ModelClass.LARGE} exhausted retries. Waiting 30s before one final attempt.`
+    throw new Error(
+      `Failed to generate text after ${totalPlannedAttempts} attempts with ${providerForRun}: ${lastErrorMessage}`
     );
-    await new Promise((resolve) => setTimeout(resolve, 30000));
+  };
 
-    const finalLargeModel = createChatModel(provider, ModelClass.LARGE, {
-      streaming: provider === ModelProviderName.GOOGLE && Boolean(onToken),
-      operation: options.operation,
-      userId: options.userId,
-    });
+  try {
+    return await runWithProvider(provider);
+  } catch (primaryError) {
+    const primaryErrorMessage = toErrorMessage(primaryError);
+    const canFallbackToOpenAI =
+      provider !== ModelProviderName.OPENAI &&
+      Boolean(process.env.OPENAI_API_KEY?.trim());
+
+    if (!canFallbackToOpenAI) {
+      throw primaryError;
+    }
+
+    console.warn(
+      `⚠️ ${provider} exhausted retry limits. Switching provider fallback to openai...`
+    );
 
     try {
-      console.log(
-        `🤖 Generating text (final attempt after 30s) using ${provider}/${ModelClass.LARGE}`
-      );
-      return await invokeModel(finalLargeModel);
-    } catch (error) {
-      lastErrorMessage = toErrorMessage(error);
-      console.error(
-        `❌ Final attempt failed (${provider}/${ModelClass.LARGE}):`,
-        error
+      return await runWithProvider(ModelProviderName.OPENAI);
+    } catch (openaiError) {
+      const openaiErrorMessage = toErrorMessage(openaiError);
+      throw new Error(
+        `Primary provider failed (${provider}): ${primaryErrorMessage}; OpenAI fallback failed: ${openaiErrorMessage}`
       );
     }
   }
-
-  throw new Error(
-    `Failed to generate text after ${totalPlannedAttempts}${lastAttemptedModelClass === ModelClass.LARGE ? " + final large retry" : ""} attempts: ${lastErrorMessage}`
-  );
 }
