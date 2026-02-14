@@ -1,6 +1,8 @@
 import {
   getScenarioUpdateTemplate,
-  getPlayerSceneSwitchTemplate,
+  getNpcActionTimelineTemplate,
+  getTargetSnapshotFromTimelineTemplate,
+  getBackgroundSimplifiedSnapshotsTemplate,
   getGlobalTriggerEventCheckTemplate,
   getStuckHintNarrativeTemplate,
 } from "./directorTemplate.js";
@@ -197,8 +199,9 @@ export class DirectorAgent {
     } = updateResult;
 
     console.log(`   ✓ Validated target scene: ${validatedTargetSceneName}`);
+    console.log(`   ✓ Generated complete target snapshot`);
     console.log(
-      `   ✓ Generated complete target snapshot + ${backgroundSnapshots.size} background snapshots`
+      `   ✓ Background simplified snapshots scheduled asynchronously`
     );
     if (modifiedConnections) {
       console.log(
@@ -219,7 +222,7 @@ export class DirectorAgent {
       return;
     }
 
-    // Step 3: Save all snapshots to state (using scenarioId as key)
+    // Step 3: Save target snapshot to state (using scenarioId as key)
     // Ensure gameStateManager has db for snapshot management
     gameStateManager.setDb(this.db);
     await gameStateManager.setUpdatedDynamicScenarioSnapshot(
@@ -227,11 +230,16 @@ export class DirectorAgent {
       targetSnapshot
     );
 
-    for (const [scenarioId, snapshot] of backgroundSnapshots) {
-      await gameStateManager.setUpdatedDynamicScenarioSnapshot(scenarioId, snapshot);
+    if (backgroundSnapshots.size > 0) {
+      for (const [scenarioId, snapshot] of backgroundSnapshots) {
+        await gameStateManager.setUpdatedDynamicScenarioSnapshot(
+          scenarioId,
+          snapshot
+        );
+      }
     }
 
-    console.log(`   ✓ Saved all snapshots to state`);
+    console.log(`   ✓ Saved target snapshot to state`);
 
     // Step 4: Execute scene transition using the UPDATED complete snapshot
     console.log(`\n🔄 [Executing Scene Transition]:`);
@@ -881,8 +889,184 @@ export class DirectorAgent {
     }
   }
 
+  private parseModelJson<T>(response: string, label: string): T | null {
+    try {
+      const jsonMatch = response.match(/\{[\s\S]*\}/);
+      if (jsonMatch) {
+        return JSON.parse(jsonMatch[0]) as T;
+      }
+      return JSON.parse(response) as T;
+    } catch (error) {
+      console.error(`❌ Failed to parse ${label} response as JSON:`, error);
+      console.error(`Raw ${label} response:`, response);
+      return null;
+    }
+  }
+
+  private getLatestActionLogAtOrBefore(
+    actionLog: ActionLogEntry[] | undefined,
+    cutoffGameTime: string
+  ): ActionLogEntry | null {
+    if (!actionLog || actionLog.length === 0) {
+      return null;
+    }
+
+    for (let i = actionLog.length - 1; i >= 0; i--) {
+      const entry = actionLog[i];
+      if (!entry.time || !entry.location) {
+        continue;
+      }
+      if (this.isTimeBeforeOrEqual(entry.time, cutoffGameTime)) {
+        return entry;
+      }
+    }
+
+    return null;
+  }
+
+  private getPlayerActionLogInWindow(
+    playerActionLog: ActionLogEntry[] | undefined,
+    previousSnapshotTime: string | undefined,
+    currentGameTime: string
+  ): ActionLogEntry[] {
+    if (!playerActionLog || playerActionLog.length === 0) {
+      return [];
+    }
+
+    const filtered = playerActionLog.filter((entry) => {
+      if (!entry.time || !entry.location || !entry.summary) {
+        return false;
+      }
+      if (!this.isTimeBeforeOrEqual(entry.time, currentGameTime)) {
+        return false;
+      }
+      if (!previousSnapshotTime) {
+        return true;
+      }
+      return this.isTimeAfter(entry.time, previousSnapshotTime);
+    });
+
+    filtered.sort((a, b) => {
+      const timeA = this.parseGameTimeFromSnapshot(a.time);
+      const timeB = this.parseGameTimeFromSnapshot(b.time);
+      if (!timeA || !timeB) return 0;
+      if (timeA.gameDay !== timeB.gameDay) {
+        return timeA.gameDay - timeB.gameDay;
+      }
+      const [hA, mA] = timeA.timeOfDay.split(":").map(Number);
+      const [hB, mB] = timeB.timeOfDay.split(":").map(Number);
+      return hA * 60 + mA - (hB * 60 + mB);
+    });
+
+    return filtered;
+  }
+
+  private buildLightweightCharactersForScene(
+    sceneLocation: string,
+    currentGameTime: string,
+    npcs: DynamicNPCProfile[]
+  ): ScenarioCharacter[] {
+    const characters: ScenarioCharacter[] = [];
+    const normalizedSceneLocation = sceneLocation.toLowerCase().trim();
+
+    for (const npc of npcs) {
+      const latestEntry = this.getLatestActionLogAtOrBefore(
+        npc.actionLog,
+        currentGameTime
+      );
+      if (!latestEntry || !latestEntry.location) {
+        continue;
+      }
+
+      if (latestEntry.location.toLowerCase().trim() !== normalizedSceneLocation) {
+        continue;
+      }
+
+      const lightweight = this.convertToLightweightScenarioCharacter({
+        id: npc.id,
+        name: npc.name,
+        role: "npc",
+        status: "active",
+        location: latestEntry.location,
+        notes: latestEntry.summary,
+      });
+
+      characters.push(lightweight);
+    }
+
+    return characters;
+  }
+
+  private async getLatestScenarioSnapshot(
+    scenarioId: string,
+    dynamicState: DynamicGameState
+  ): Promise<DynamicScenarioSnapshot | null> {
+    const updatedSnapshots =
+      dynamicState.updatedDynamicScenarioSnapshots.get(scenarioId);
+    if (updatedSnapshots && updatedSnapshots.length > 0) {
+      return updatedSnapshots[updatedSnapshots.length - 1];
+    }
+
+    const scenarioProfile = await this.scenarioLoader.getScenarioById(scenarioId);
+    return scenarioProfile?.snapshot || null;
+  }
+
+  private async applyScenarioConnectionsUpdate(
+    dynamicState: DynamicGameState,
+    scenarioName: string,
+    modifiedConnections: Array<{
+      scenarioName: string;
+      relationshipType: string;
+      description?: string;
+      blocked?: boolean;
+      blockReason?: string | null;
+    }>
+  ): Promise<void> {
+    if (!modifiedConnections || modifiedConnections.length === 0) {
+      return;
+    }
+
+    const targetScenarioOutline = dynamicState.scenarioOutlines.find(
+      (outline) => outline.name === scenarioName
+    );
+
+    if (!targetScenarioOutline) {
+      console.warn(
+        `   ⚠️ Target scenario outline not found for connection update: ${scenarioName}`
+      );
+      return;
+    }
+
+    const prisma = getPrismaClient();
+    await prisma.scenario.update({
+      where: { scenarioId: targetScenarioOutline.id },
+      data: { connections: modifiedConnections as any },
+    });
+
+    const convertedConnections = modifiedConnections.map((conn) => {
+      const linkedScenario = dynamicState.scenarioOutlines.find(
+        (outline) =>
+          outline.name === conn.scenarioName || outline.id === conn.scenarioName
+      );
+
+      return {
+        scenarioName: linkedScenario?.name || conn.scenarioName,
+        scenarioId: linkedScenario?.id || conn.scenarioName,
+        relationshipType: conn.relationshipType as ScenarioConnectionType,
+        description: conn.description,
+        blocked: conn.blocked,
+        blockReason: conn.blockReason ?? undefined,
+      };
+    });
+
+    targetScenarioOutline.connections = convertedConnections;
+  }
+
   /**
-   * Update scenarios for scene switch - unified method that generates both complete target snapshot and simplified background snapshots
+   * Update scenarios for scene switch in 3 phases:
+   * 1) Generate background NPC action timeline + merge deltas
+   * 2) Generate target snapshot + optional global trigger
+   * 3) Trigger background simplified snapshot updates asynchronously
    */
   async updateScenariosForSceneSwitch(
     gameStateManager: DynamicGameStateManager,
@@ -903,6 +1087,8 @@ export class DirectorAgent {
   } | null> {
     console.log(`\n🔄 [Director Agent] Updating scenarios for scene switch...`);
 
+    gameStateManager.setDb(this.db);
+
     const dynamicState = gameStateManager.getState();
     const sceneChangeRequest = dynamicState.temporaryInfo.sceneChangeRequest;
     const currentScenario = dynamicState.currentScenario;
@@ -919,151 +1105,282 @@ export class DirectorAgent {
     console.log(`   📍 Current scenario: ${currentScenarioName}`);
 
     try {
-      // Build current game time
       const currentGameTime = `Day ${dynamicState.gameDay}, ${dynamicState.timeOfDay}`;
+      const runtime = createRuntime();
 
-      // Get all scenarios (including current one for context, but will exclude it in output)
       const allScenarios = await this.scenarioLoader.getAllScenarios();
-
-      // Build scenario outline map for quick lookup
       const scenarioOutlineMap = new Map(
         dynamicState.scenarioOutlines.map((outline) => [outline.id, outline])
       );
 
-      // Build comprehensive scenario data with NPCs, clues, conditions for ALL scenarios
-      const allScenariosData = [];
+      const allScenariosData: Array<{
+        scenarioId: string;
+        scenarioName: string;
+        sourcePlaceId: string | null;
+        sourcePlaceName: string | null;
+        connections: unknown[];
+        snapshot: {
+          id: string;
+          name: string;
+          location: string;
+          description: string;
+          clues: unknown[];
+          conditions: unknown[];
+          previousGameTime: string | null;
+        };
+      }> = [];
 
       for (const scenario of allScenarios) {
-        // Get the scenario's initial snapshot (with full details: clues, conditions)
-        const scenarioProfile = await this.scenarioLoader.getScenarioById(
-          scenario.id
-        );
-        if (!scenarioProfile || !scenarioProfile.snapshot) continue;
-        const initialSnapshot = scenarioProfile.snapshot;
-
-        // Get NPCs for this scenario
-        const npcsInScenario = this.getNPCsForScenario(
-          initialSnapshot.location,
+        const latestSnapshot = await this.getLatestScenarioSnapshot(
           scenario.id,
-          dynamicState.npcCharacters,
-          initialSnapshot.gameTime, // Previous snapshot time
-          currentGameTime // Current game time
+          dynamicState
         );
+        if (!latestSnapshot) {
+          continue;
+        }
 
-        // Get scenario outline for knowledge holder references and connections
         const scenarioOutline = scenarioOutlineMap.get(scenario.id);
-
         allScenariosData.push({
           scenarioId: scenario.id,
           scenarioName: scenario.name,
           sourcePlaceId: scenarioOutline?.sourcePlaceId || null,
           sourcePlaceName: scenarioOutline?.sourcePlaceName || null,
-          connections: scenarioOutline?.connections || [], // Scenario-level connections (NOT snapshot data)
+          connections: scenarioOutline?.connections || [],
           snapshot: {
-            id: initialSnapshot.id,
-            name: initialSnapshot.name,
-            location: initialSnapshot.location,
-            description: initialSnapshot.description,
-            clues: initialSnapshot.clues || [], // FULL clues for target scene
-            conditions: initialSnapshot.conditions || [], // FULL conditions
-            previousGameTime: initialSnapshot.gameTime || null,
+            id: latestSnapshot.id,
+            name: latestSnapshot.name,
+            location: latestSnapshot.location,
+            description: latestSnapshot.description,
+            clues: latestSnapshot.clues || [],
+            conditions: latestSnapshot.conditions || [],
+            previousGameTime: latestSnapshot.gameTime || null,
           },
-          characters: npcsInScenario,
-          currentGameTime: currentGameTime,
         });
       }
 
-      // Serialize scenarios to JSON for template injection
-      const allScenariosJson = JSON.stringify(allScenariosData, null, 2);
-
-      // Get player's current scenario outline for sourcePlaceId, sourcePlaceName, and connections
-      const playerScenarioOutline = currentScenario?.id
-        ? scenarioOutlineMap.get(currentScenario.id)
-        : null;
-
-      // Find target scenario info for template
       const targetScenarioData = allScenariosData.find(
-        (s) => s.scenarioName === sceneChangeRequest.targetSceneName
+        (s) =>
+          s.scenarioName === sceneChangeRequest.targetSceneName ||
+          s.scenarioId === sceneChangeRequest.targetSceneName
       );
 
-      // Build template context
-      const templateContext = {
-        sceneChangeRequest: {
-          targetSceneName: sceneChangeRequest.targetSceneName,
-          reason: sceneChangeRequest.reason,
-          timestamp:
-            sceneChangeRequest.timestamp?.toISOString() ||
-            new Date().toISOString(),
-        },
-        currentScenarioName,
-        playerCurrentScene: currentScenario
-          ? {
-              name: currentScenario.name,
-              location: currentScenario.location,
-              description: currentScenario.description || null,
-              sourcePlaceId: playerScenarioOutline?.sourcePlaceId || null,
-              sourcePlaceName: playerScenarioOutline?.sourcePlaceName || null,
-              connections: playerScenarioOutline?.connections || [],
-            }
-          : null,
-        targetScene: targetScenarioData
-          ? {
-              id: targetScenarioData.scenarioId,
-              name: targetScenarioData.scenarioName,
-            }
-          : null,
-        allScenariosJson,
+      if (!targetScenarioData) {
+        console.error(
+          `   ❌ Target scenario "${sceneChangeRequest.targetSceneName}" not found in scenario list`
+        );
+        return null;
+      }
+
+      const previousSnapshotTime =
+        targetScenarioData.snapshot.previousGameTime ||
+        currentScenario?.gameTime ||
+        currentGameTime;
+
+      const currentSceneLocation = currentScenario?.location?.toLowerCase().trim();
+      const excludedNpcIds = new Set<string>();
+
+      if (currentSceneLocation) {
+        for (const npc of dynamicState.npcCharacters) {
+          const latest = this.getLatestActionLogAtOrBefore(
+            npc.actionLog,
+            currentGameTime
+          );
+          if (
+            latest?.location &&
+            latest.location.toLowerCase().trim() === currentSceneLocation
+          ) {
+            excludedNpcIds.add(npc.id);
+          }
+        }
+      }
+
+      const backgroundNpcs = dynamicState.npcCharacters
+        .filter((npc) => !excludedNpcIds.has(npc.id))
+        .map((npc) => ({
+          ...npc,
+          actionLog: npc.actionLog || [],
+        }));
+
+      console.log(
+        `   📋 Phase 1: Generating timeline for ${backgroundNpcs.length} background NPCs...`
+      );
+
+      const phase1Context = {
         currentGameDay: dynamicState.gameDay,
         currentTimeOfDay: dynamicState.timeOfDay,
+        previousSnapshotTime,
+        currentGameTime,
         truthTimelineJson: JSON.stringify(dynamicState.truthTimeline, null, 2),
-        knowledgeMatrixJson: JSON.stringify(
-          dynamicState.knowledgeMatrix,
+        knowledgeMatrixJson: JSON.stringify(dynamicState.knowledgeMatrix, null, 2),
+        playerCurrentSceneJson: JSON.stringify(
+          currentScenario
+            ? {
+                id: currentScenario.id,
+                name: currentScenario.name,
+                location: currentScenario.location,
+              }
+            : null,
           null,
           2
         ),
-        previousGlobalTrigger: dynamicState.globalTrigger,
-        previousGlobalTriggerJson: dynamicState.globalTrigger
-          ? JSON.stringify(dynamicState.globalTrigger, null, 2)
-          : null,
-        endStateJson: dynamicState.endState
-          ? JSON.stringify(dynamicState.endState, null, 2)
-          : "null",
+        allScenariosJson: JSON.stringify(allScenariosData, null, 2),
+        backgroundNpcsJson: JSON.stringify(backgroundNpcs, null, 2),
       };
 
-      // Generate unified snapshots using LLM
-      const runtime = createRuntime();
-      const template = getPlayerSceneSwitchTemplate();
-
-      const prompt = composeTemplate(
-        template,
+      const phase1Prompt = composeTemplate(
+        getNpcActionTimelineTemplate(),
         { dynamicGameState: dynamicState },
-        templateContext,
+        phase1Context,
         "handlebars"
       );
 
-      console.log(
-        `   🤖 Calling LLM to generate unified snapshots (1 complete target + ${allScenariosData.length - 1} simplified background)...`
-      );
-
-      const providerForCall =
-        options?.providerOverride ||
-        ((process.env.MODEL_PROVIDER as ModelProviderName) ||
-          runtime.modelProvider ||
-          ModelProviderName.OPENAI);
-      console.log(`   🤖 Scene switch generation provider: ${providerForCall}`);
-
-      const response = await generateText({
+      const phase1Response = await generateText({
         runtime,
-        context: prompt,
+        context: phase1Prompt,
         modelClass: ModelClass.LARGE,
         providerOverride: options?.providerOverride,
       });
 
-      // Parse LLM response
-      let parsedResponse: {
-        updatedSnapshots?: Array<{
+      type TimelineNpcUpdate = {
+        id: string;
+        actionLog?: ActionLogEntry[];
+        statusDelta?: Partial<CharacterStatus>;
+        inventoryDelta?: { add?: InventoryItem[]; remove?: InventoryItem[] };
+      };
+      type TimelineBucket = {
+        time?: string;
+        npcActionLogUpdates?: TimelineNpcUpdate[];
+      };
+      const parsedTimeline = this.parseModelJson<{
+        actionTimeline?: TimelineBucket[];
+      }>(phase1Response, "Phase 1 timeline");
+
+      if (!parsedTimeline?.actionTimeline || parsedTimeline.actionTimeline.length === 0) {
+        console.error(`   ❌ Phase 1 response missing actionTimeline`);
+        return null;
+      }
+
+      const cleanedTimeline: TimelineBucket[] = [];
+      let mergedNpcUpdates = 0;
+
+      for (const bucket of parsedTimeline.actionTimeline) {
+        if (!bucket?.time || !this.isTimeBeforeOrEqual(bucket.time, currentGameTime)) {
+          continue;
+        }
+
+        const cleanedNpcUpdates: TimelineNpcUpdate[] = [];
+        const updates = bucket.npcActionLogUpdates || [];
+        for (const update of updates) {
+          if (!update?.id || excludedNpcIds.has(update.id)) {
+            continue;
+          }
+
+          const npc = this.findNPCById(dynamicState.npcCharacters, update.id);
+          if (!npc) {
+            console.warn(`   ⚠️ NPC "${update.id}" not found, skipping timeline update`);
+            continue;
+          }
+
+          const validActionLog = (update.actionLog || []).filter((entry) => {
+            if (!entry.time || !entry.location || !entry.summary) {
+              return false;
+            }
+            if (!this.isTimeBeforeOrEqual(entry.time, currentGameTime)) {
+              return false;
+            }
+            if (previousSnapshotTime && !this.isTimeAfter(entry.time, previousSnapshotTime)) {
+              return false;
+            }
+            return true;
+          });
+
+          if (
+            validActionLog.length === 0 &&
+            !update.statusDelta &&
+            !update.inventoryDelta
+          ) {
+            continue;
+          }
+
+          this.mergeCharacterDeltaToNPC(npc, {
+            actionLog: validActionLog,
+            status: update.statusDelta,
+            inventory: update.inventoryDelta,
+          });
+
+          cleanedNpcUpdates.push({
+            id: update.id,
+            actionLog: validActionLog,
+            statusDelta: update.statusDelta,
+            inventoryDelta: update.inventoryDelta,
+          });
+          mergedNpcUpdates += 1;
+        }
+
+        if (cleanedNpcUpdates.length > 0) {
+          cleanedTimeline.push({
+            time: bucket.time,
+            npcActionLogUpdates: cleanedNpcUpdates,
+          });
+        }
+      }
+
+      console.log(`   ✓ Phase 1 merged updates for ${mergedNpcUpdates} NPC entries`);
+
+      const playerActionWindow = this.getPlayerActionLogInWindow(
+        dynamicState.playerCharacter.actionLog,
+        previousSnapshotTime,
+        currentGameTime
+      );
+
+      console.log(`   📋 Phase 2: Generating target scene snapshot...`);
+
+      const phase2Context = {
+        currentGameDay: dynamicState.gameDay,
+        currentTimeOfDay: dynamicState.timeOfDay,
+        previousSnapshotTime,
+        currentGameTime,
+        targetSceneJson: JSON.stringify(
+          {
+            scenarioId: targetScenarioData.scenarioId,
+            scenarioName: targetScenarioData.scenarioName,
+            location: targetScenarioData.snapshot.location,
+            connections: targetScenarioData.connections,
+          },
+          null,
+          2
+        ),
+        targetBaselineSnapshotJson: JSON.stringify(targetScenarioData.snapshot, null, 2),
+        actionTimelineJson: JSON.stringify({ actionTimeline: cleanedTimeline }, null, 2),
+        playerActionWindowJson: JSON.stringify(playerActionWindow, null, 2),
+        truthTimelineJson: JSON.stringify(dynamicState.truthTimeline, null, 2),
+        knowledgeMatrixJson: JSON.stringify(dynamicState.knowledgeMatrix, null, 2),
+        endStateJson: dynamicState.endState
+          ? JSON.stringify(dynamicState.endState, null, 2)
+          : "null",
+        previousGlobalTrigger: dynamicState.globalTrigger,
+        previousGlobalTriggerJson: dynamicState.globalTrigger
+          ? JSON.stringify(dynamicState.globalTrigger, null, 2)
+          : null,
+      };
+
+      const phase2Prompt = composeTemplate(
+        getTargetSnapshotFromTimelineTemplate(),
+        { dynamicGameState: dynamicState },
+        phase2Context,
+        "handlebars"
+      );
+
+      const phase2Response = await generateText({
+        runtime,
+        context: phase2Prompt,
+        modelClass: ModelClass.LARGE,
+        providerOverride: options?.providerOverride,
+      });
+
+      const parsedPhase2 = this.parseModelJson<{
+        targetSnapshot?: {
           scenarioId: string;
-          isTargetScene?: boolean;
           snapshot: DynamicScenarioSnapshot;
           connections?: Array<{
             scenarioName: string;
@@ -1072,7 +1389,7 @@ export class DirectorAgent {
             blocked?: boolean;
             blockReason?: string | null;
           }>;
-        }>;
+        };
         globalTrigger?: {
           timeRestriction?: string;
           timeReason?: string;
@@ -1080,289 +1397,92 @@ export class DirectorAgent {
           eventReasons?: string[];
           keeperNotes?: string;
         };
-      };
+      }>(phase2Response, "Phase 2 target snapshot");
 
-      try {
-        const jsonMatch = response.match(/\{[\s\S]*\}/);
-        if (jsonMatch) {
-          parsedResponse = JSON.parse(jsonMatch[0]);
-        } else {
-          parsedResponse = JSON.parse(response);
-        }
-      } catch (error) {
-        console.error("❌ Failed to parse LLM response as JSON:", error);
-        console.error("Raw response:", response);
+      if (!parsedPhase2?.targetSnapshot?.snapshot) {
+        console.error(`   ❌ Phase 2 response missing targetSnapshot`);
         return null;
       }
 
-      // Validate response structure
-      if (
-        !parsedResponse.updatedSnapshots ||
-        parsedResponse.updatedSnapshots.length === 0
-      ) {
-        console.error(`❌ LLM response missing updatedSnapshots array`);
-        console.error(
-          `   Full parsed response:`,
-          JSON.stringify(parsedResponse, null, 2)
-        );
-        return null;
-      }
+      const modifiedConnections = parsedPhase2.targetSnapshot.connections || null;
+      const validatedTargetSceneName =
+        parsedPhase2.targetSnapshot.snapshot.name || targetScenarioData.scenarioName;
 
-      // Extract target scene from updatedSnapshots (marked with isTargetScene: true)
-      const targetSceneItem = parsedResponse.updatedSnapshots.find(
-        (item) => item.isTargetScene === true
-      );
-
-      if (!targetSceneItem) {
-        console.error(
-          `❌ No target scene found in updatedSnapshots (isTargetScene: true)`
-        );
-        console.error(
-          `   Available scenes:`,
-          parsedResponse.updatedSnapshots.map((s) => ({
-            scenarioId: s.scenarioId,
-            isTargetScene: s.isTargetScene,
-            name: s.snapshot.name,
-          }))
-        );
-        return null;
-      }
-
-      // Extract background snapshots (all non-target scenes)
-      const backgroundSnapshotsArray = parsedResponse.updatedSnapshots.filter(
-        (item) => !item.isTargetScene
-      );
-
-      // Get validated target scene name from the snapshot
-      const validatedTargetSceneName = targetSceneItem.snapshot.name;
-      const modifiedConnections = targetSceneItem.connections || null;
-
-      // Ensure target snapshot has unified time and type
       const targetSnapshot: DynamicScenarioSnapshot = {
-        ...targetSceneItem.snapshot,
+        ...parsedPhase2.targetSnapshot.snapshot,
+        id:
+          parsedPhase2.targetSnapshot.snapshot.id || targetScenarioData.snapshot.id,
+        name:
+          parsedPhase2.targetSnapshot.snapshot.name ||
+          targetScenarioData.snapshot.name,
+        location:
+          parsedPhase2.targetSnapshot.snapshot.location ||
+          targetScenarioData.snapshot.location,
+        description:
+          parsedPhase2.targetSnapshot.snapshot.description ||
+          targetScenarioData.snapshot.description,
         gameTime: currentGameTime,
-        snapshotType: "complete", // Target snapshot is always complete
+        snapshotType: "complete",
+        clues: Array.isArray(parsedPhase2.targetSnapshot.snapshot.clues)
+          ? parsedPhase2.targetSnapshot.snapshot.clues
+          : (targetScenarioData.snapshot.clues as DynamicScenarioSnapshot["clues"]),
+        conditions: Array.isArray(parsedPhase2.targetSnapshot.snapshot.conditions)
+          ? parsedPhase2.targetSnapshot.snapshot.conditions
+          : (targetScenarioData.snapshot
+              .conditions as DynamicScenarioSnapshot["conditions"]),
+        characters: this.buildLightweightCharactersForScene(
+          parsedPhase2.targetSnapshot.snapshot.location ||
+            targetScenarioData.snapshot.location,
+          currentGameTime,
+          dynamicState.npcCharacters
+        ),
       };
 
-      console.log(`   ✓ Validated target scene: ${validatedTargetSceneName}`);
-
-      // Merge character deltas from target snapshot to actual NPCs
-      if (targetSnapshot.characters) {
-        for (const char of targetSnapshot.characters) {
-          const charWithActionLog = char as ScenarioCharacter & {
-            actionLog?: ActionLogEntry[];
-            status?: Partial<CharacterStatus>;
-            inventory?:
-              | { add?: InventoryItem[]; remove?: InventoryItem[] }
-              | InventoryItem[];
-            relationships?: NPCRelationship[];
-          };
-
-          // Merge delta to actual NPC in gameState (with fuzzy matching)
-          const npc = this.findNPCById(
-            dynamicState.npcCharacters,
-            char.id,
-            char.name
-          );
-          if (npc) {
-            this.mergeCharacterDeltaToNPC(npc, {
-              status: charWithActionLog.status,
-              inventory: charWithActionLog.inventory,
-              relationships: charWithActionLog.relationships,
-              actionLog: charWithActionLog.actionLog,
-            });
-            console.log(
-              `   ✓ Merged delta updates to NPC: ${npc.name} (${npc.id})`
-            );
-          } else {
-            console.warn(
-              `   ⚠️ NPC "${char.id}"${char.name ? ` (${char.name})` : ""} not found in gameState, skipping delta merge`
-            );
-          }
-        }
-      }
-
-      // Convert target snapshot characters to lightweight format after merging deltas
-      if (targetSnapshot.characters) {
-        targetSnapshot.characters = targetSnapshot.characters.map((char) =>
-          this.convertToLightweightScenarioCharacter(char as any)
-        );
-      }
-
-      // Use target snapshot directly (no database save)
-      const savedTargetSnapshot = targetSnapshot;
-
-      // Process background snapshots
-      const backgroundSnapshotsMap = new Map<string, DynamicScenarioSnapshot>();
-
-      if (backgroundSnapshotsArray.length > 0) {
-        console.log(
-          `   📋 Processing ${backgroundSnapshotsArray.length} background snapshots...`
-        );
-
-        for (const item of backgroundSnapshotsArray) {
-          // Merge actionLog from background snapshot characters to actual NPCs
-          if (item.snapshot.characters) {
-            for (const char of item.snapshot.characters) {
-              const charWithActionLog = char as ScenarioCharacter & {
-                actionLog?: ActionLogEntry[];
-              };
-
-              // Validate actionLog entries
-              if (charWithActionLog.actionLog) {
-                // Filter out invalid entries
-                charWithActionLog.actionLog = charWithActionLog.actionLog.filter(
-                  (logEntry) => logEntry.time && logEntry.location && logEntry.summary
-                );
-
-                // Merge actionLog to actual NPC in gameState
-                const npc = this.findNPCById(
-                  dynamicState.npcCharacters,
-                  char.id,
-                  char.name
-                );
-                if (npc && charWithActionLog.actionLog.length > 0) {
-                  this.mergeCharacterDeltaToNPC(npc, {
-                    actionLog: charWithActionLog.actionLog,
-                  });
-                  console.log(
-                    `   ✓ Merged actionLog to background NPC: ${npc.name} (${npc.id})`
-                  );
-                } else if (!npc) {
-                  console.warn(
-                    `   ⚠️ Background NPC "${char.id}"${char.name ? ` (${char.name})` : ""} not found in gameState, skipping actionLog merge`
-                  );
-                }
-              }
-            }
-          }
-
-          // Convert background snapshot characters to lightweight format after merging actionLogs
-          if (item.snapshot.characters) {
-            item.snapshot.characters = item.snapshot.characters.map((char) =>
-              this.convertToLightweightScenarioCharacter(char as any)
-            );
-          }
-
-          // Ensure snapshot uses unified time and type
-          const bgSnapshot: DynamicScenarioSnapshot = {
-            ...item.snapshot,
-            gameTime: currentGameTime,
-            snapshotType: "simplified", // Background snapshots are simplified
-          };
-
-          // Add to map (no database save)
-          backgroundSnapshotsMap.set(item.scenarioId, bgSnapshot);
-
-          console.log(
-            `   ✓ Processed background snapshot for scenario ${item.scenarioId}`
-          );
-        }
-      }
-
-      // Handle modified connections if present
       if (modifiedConnections && modifiedConnections.length > 0) {
-        console.log(`   🔗 Updating scenario connections...`);
-
-        // Find target scenario in scenarioOutlines
-        const targetScenarioOutline = dynamicState.scenarioOutlines.find(
-          (outline) => outline.name === validatedTargetSceneName
+        await this.applyScenarioConnectionsUpdate(
+          dynamicState,
+          validatedTargetSceneName,
+          modifiedConnections
         );
-
-        if (targetScenarioOutline) {
-          // Update connections in database
-          const prisma = getPrismaClient();
-          await prisma.scenario.update({
-            where: { scenarioId: targetScenarioOutline.id },
-            data: { connections: modifiedConnections as any },
-          });
-
-          // Update in-memory scenarioOutline
-          // Convert relationshipType to ScenarioConnectionType and add scenarioId
-          const convertedConnections = modifiedConnections.map((conn) => {
-            // Find target scenario to get ID
-            const targetScenario = dynamicState.scenarioOutlines.find(
-              (outline) =>
-                outline.name === conn.scenarioName ||
-                outline.id === conn.scenarioName
-            );
-            return {
-              scenarioName: targetScenario?.name || conn.scenarioName,
-              scenarioId: targetScenario?.id || conn.scenarioName,
-              relationshipType: conn.relationshipType as ScenarioConnectionType,
-              description: conn.description,
-              blocked: conn.blocked,
-              blockReason: conn.blockReason ?? undefined,
-            };
-          });
-          targetScenarioOutline.connections = convertedConnections;
-
-          console.log(
-            `   ✓ Updated connections for ${validatedTargetSceneName}`
-          );
-
-          // Log blocked connections if any
-          const blockedConnections = modifiedConnections.filter(
-            (c) => c.blocked
-          );
-          if (blockedConnections.length > 0) {
-            console.log(`   ⚠️ Blocked connections:`);
-            blockedConnections.forEach((c) => {
-              console.log(
-                `      - ${c.scenarioName}: ${c.blockReason || "blocked"}`
-              );
-            });
-          }
-        }
+        console.log(
+          `   ✓ Updated ${modifiedConnections.length} connections for target scene`
+        );
       }
 
-      // Save global trigger condition
-      if (parsedResponse.globalTrigger) {
-        gameStateManager.setGlobalTrigger(parsedResponse.globalTrigger);
+      if (parsedPhase2.globalTrigger) {
+        gameStateManager.setGlobalTrigger(parsedPhase2.globalTrigger);
         console.log(`   ✓ Saved global trigger condition`);
-        if (parsedResponse.globalTrigger.timeRestriction) {
-          console.log(
-            `     - Time: ${parsedResponse.globalTrigger.timeRestriction}`
-          );
-          if (parsedResponse.globalTrigger.timeReason) {
-            console.log(
-              `       Reason: ${parsedResponse.globalTrigger.timeReason}`
-            );
-          }
-        }
-        if (
-          parsedResponse.globalTrigger.events &&
-          parsedResponse.globalTrigger.events.length > 0
-        ) {
-          console.log(
-            `     - Events: ${parsedResponse.globalTrigger.events.join(", ")}`
-          );
-          if (
-            parsedResponse.globalTrigger.eventReasons &&
-            parsedResponse.globalTrigger.eventReasons.length > 0
-          ) {
-            parsedResponse.globalTrigger.eventReasons.forEach(
-              (reason, index) => {
-                console.log(`       Event ${index + 1} reason: ${reason}`);
-              }
-            );
-          }
-        }
       }
+
+      const scenesToUpdateInBackground = allScenariosData.filter(
+        (scene) => scene.scenarioId !== targetScenarioData.scenarioId
+      );
+
+      void this
+        .updateBackgroundSimplifiedSnapshotsForSceneSwitch(
+          gameStateManager,
+          currentGameTime,
+          previousSnapshotTime,
+          scenesToUpdateInBackground,
+          cleanedTimeline,
+          playerActionWindow,
+          options
+        )
+        .catch((error) => {
+          console.error(
+            `   ❌ Background simplified snapshot update failed:`,
+            error
+          );
+        });
 
       console.log(`✅ [Director Agent] Scene switch update completed`);
-      console.log(`   - Target: ${validatedTargetSceneName} (complete)`);
-      console.log(
-        `   - Background: ${backgroundSnapshotsMap.size} scenarios (simplified)`
-      );
-      if (modifiedConnections) {
-        console.log(`   - Connections: ${modifiedConnections.length} updated`);
-      }
+      console.log(`   - Target: ${validatedTargetSceneName} (complete snapshot)`);
+      console.log(`   - Timeline merged updates: ${mergedNpcUpdates}`);
 
       return {
         validatedTargetSceneName,
-        targetSnapshot: savedTargetSnapshot,
-        backgroundSnapshots: backgroundSnapshotsMap,
+        targetSnapshot,
+        backgroundSnapshots: new Map(),
         modifiedConnections,
       };
     } catch (error) {
@@ -1372,6 +1492,156 @@ export class DirectorAgent {
       );
       return null;
     }
+  }
+
+  private async updateBackgroundSimplifiedSnapshotsForSceneSwitch(
+    gameStateManager: DynamicGameStateManager,
+    currentGameTime: string,
+    previousSnapshotTime: string,
+    scenesToUpdate: Array<{
+      scenarioId: string;
+      scenarioName: string;
+      sourcePlaceId: string | null;
+      sourcePlaceName: string | null;
+      connections: unknown[];
+      snapshot: {
+        id: string;
+        name: string;
+        location: string;
+        description: string;
+        clues: unknown[];
+        conditions: unknown[];
+        previousGameTime: string | null;
+      };
+    }>,
+    cleanedTimeline: Array<{
+      time?: string;
+      npcActionLogUpdates?: Array<{
+        id: string;
+        actionLog?: ActionLogEntry[];
+        statusDelta?: Partial<CharacterStatus>;
+        inventoryDelta?: { add?: InventoryItem[]; remove?: InventoryItem[] };
+      }>;
+    }>,
+    playerActionWindow: ActionLogEntry[],
+    options?: {
+      providerOverride?: ModelProviderName;
+    }
+  ): Promise<void> {
+    if (scenesToUpdate.length === 0) {
+      return;
+    }
+
+    const dynamicState = gameStateManager.getState();
+    const runtime = createRuntime();
+    const templateContext = {
+      currentGameDay: dynamicState.gameDay,
+      currentTimeOfDay: dynamicState.timeOfDay,
+      previousSnapshotTime,
+      currentGameTime,
+      scenesToUpdateJson: JSON.stringify(
+        scenesToUpdate.map((scene) => ({
+          scenarioId: scene.scenarioId,
+          scenarioName: scene.scenarioName,
+          location: scene.snapshot.location,
+          connections: scene.connections,
+        })),
+        null,
+        2
+      ),
+      baselineSnapshotsJson: JSON.stringify(
+        scenesToUpdate.map((scene) => ({
+          scenarioId: scene.scenarioId,
+          snapshot: scene.snapshot,
+        })),
+        null,
+        2
+      ),
+      actionTimelineJson: JSON.stringify({ actionTimeline: cleanedTimeline }, null, 2),
+      playerActionWindowJson: JSON.stringify(playerActionWindow, null, 2),
+      truthTimelineJson: JSON.stringify(dynamicState.truthTimeline, null, 2),
+      knowledgeMatrixJson: JSON.stringify(dynamicState.knowledgeMatrix, null, 2),
+    };
+
+    const prompt = composeTemplate(
+      getBackgroundSimplifiedSnapshotsTemplate(),
+      { dynamicGameState: dynamicState },
+      templateContext,
+      "handlebars"
+    );
+
+    const response = await generateText({
+      runtime,
+      context: prompt,
+      modelClass: ModelClass.LARGE,
+      providerOverride: options?.providerOverride,
+    });
+
+    const parsed = this.parseModelJson<{
+      updatedSimplifiedSnapshots?: Array<{
+        scenarioId: string;
+        snapshot: Partial<DynamicScenarioSnapshot>;
+        connections?: Array<{
+          scenarioName: string;
+          relationshipType: string;
+          description?: string;
+          blocked?: boolean;
+          blockReason?: string | null;
+        }>;
+      }>;
+    }>(response, "Phase 3 simplified snapshots");
+
+    if (!parsed?.updatedSimplifiedSnapshots?.length) {
+      console.log(`   ℹ️ Phase 3 returned no simplified snapshot updates`);
+      return;
+    }
+
+    let updatedCount = 0;
+    for (const item of parsed.updatedSimplifiedSnapshots) {
+      const baseline = scenesToUpdate.find((scene) => scene.scenarioId === item.scenarioId);
+      if (!baseline) {
+        continue;
+      }
+
+      const latestSnapshot = await this.getLatestScenarioSnapshot(
+        item.scenarioId,
+        dynamicState
+      );
+      if (!latestSnapshot) {
+        continue;
+      }
+
+      const updatedSnapshot: DynamicScenarioSnapshot = {
+        ...latestSnapshot,
+        description: item.snapshot.description || latestSnapshot.description,
+        clues: Array.isArray(item.snapshot.clues)
+          ? item.snapshot.clues
+          : latestSnapshot.clues,
+        conditions: Array.isArray(item.snapshot.conditions)
+          ? item.snapshot.conditions
+          : latestSnapshot.conditions,
+        gameTime: currentGameTime,
+        snapshotType: "simplified",
+      };
+
+      await gameStateManager.setUpdatedDynamicScenarioSnapshot(
+        item.scenarioId,
+        updatedSnapshot
+      );
+      updatedCount += 1;
+
+      if (item.connections && item.connections.length > 0) {
+        await this.applyScenarioConnectionsUpdate(
+          dynamicState,
+          baseline.scenarioName,
+          item.connections
+        );
+      }
+    }
+
+    console.log(
+      `   ✓ Phase 3 background simplified snapshot updates: ${updatedCount}`
+    );
   }
 
   /**

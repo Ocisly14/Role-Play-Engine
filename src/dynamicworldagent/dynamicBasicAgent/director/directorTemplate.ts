@@ -218,6 +218,398 @@ Return ONLY valid JSON in this exact structure:
 }
 
 /**
+ * Scene Switch Phase 1 Template - Generate background NPC action timeline only
+ */
+export function getNpcActionTimelineTemplate(): string {
+  return `# Director Agent - Scene Switch Phase 1 (Background NPC Action Timeline)
+
+Generate only background NPC action timeline updates for the current scene switch.
+
+## Current Game Time
+- Day: {{currentGameDay}}
+- Time: {{currentTimeOfDay}}
+
+## Time Window
+- previousSnapshotTime: {{previousSnapshotTime}}
+- currentGameTime: {{currentGameTime}}
+
+## Truth Timeline
+\`\`\`json
+{{truthTimelineJson}}
+\`\`\`
+
+## Knowledge Matrix
+\`\`\`json
+{{knowledgeMatrixJson}}
+\`\`\`
+
+## Player Current Scene
+\`\`\`json
+{{playerCurrentSceneJson}}
+\`\`\`
+
+## Scenarios (with connections + latest baseline snapshots)
+\`\`\`json
+{{allScenariosJson}}
+\`\`\`
+
+## NPC Profiles For Timeline Generation
+
+IMPORTANT:
+- These NPCs are already filtered. They exclude player and NPCs in player's current scene.
+- Use exact NPC id/name from input.
+
+\`\`\`json
+{{backgroundNpcsJson}}
+\`\`\`
+
+## Hard Rules
+- Generate only background world progression action timeline.
+- Do NOT generate player actions.
+- Do NOT regenerate actions for NPCs currently in player's current scene.
+- Actions must follow knowledge/goals/personality/secrets and remain coherent across NPCs.
+- Actions must be time-sequenced, realistic, and within the time window.
+- Base actions on the NPC's goals, personality, and secrets (from full profile + knowledge matrix).
+- Actions should be chronologically ordered with specific times progressing toward current game time.
+- Only include actions that have impact on scene/location, world state, or other NPCs.
+- Include important actions they took but failed as well.
+- Exclude routine/mundane actions that don't affect story progression.
+- NPC can ONLY move between scenarios that are connected (from connections data); they may attempt to break blocked restrictions logically.
+- Movement between scenarios takes realistic time based on relationship type (adjacent/nearby/distant), time of day, and conditions.
+- If an NPC needs to move to a non-adjacent location, they must pass through connected intermediate locations.
+- Time gaps in actionLog must be realistic; do not teleport or move unrealistically fast.
+- IMPORTANT: If an action has a target (character/object/location), include the target in summary.
+- Multiple characters rule: if an action involves multiple characters, create separate entries for each involved character perspective:
+  - For NPC A: "Attacked NPC B with a knife, dealing 3 damage"
+  - For NPC B: "Was attacked by NPC A, taking 3 damage"
+- Historical actionLog is read-only context; output only new incremental entries.
+
+## One-Shot Example
+
+### Example Input (abridged)
+\`\`\`json
+{
+  "previousSnapshotTime": "Day 2, 13:00",
+  "currentGameTime": "Day 2, 16:00",
+  "playerCurrentScene": { "name": "Town Hall", "location": "Town Hall" },
+  "backgroundNpcs": [
+    { "id": "npc-jack-harper", "name": "Jack Harper", "goals": ["Find ritual evidence"] },
+    { "id": "npc-dr-chen", "name": "Dr. Chen", "goals": ["Conceal key ritual details"] }
+  ]
+}
+\`\`\`
+
+### Example Output
+\`\`\`json
+{
+  "actionTimeline": [
+    {
+      "time": "Day 2, 14:00",
+      "npcActionLogUpdates": [
+        {
+          "id": "npc-jack-harper",
+          "actionLog": [
+            {
+              "time": "Day 2, 14:00",
+              "location": "Town Hall Annex",
+              "summary": "Confronted Dr. Chen about the ritual ledger and was refused access, escalating tension"
+            }
+          ],
+          "statusDelta": {
+            "sanity": -1
+          }
+        },
+        {
+          "id": "npc-dr-chen",
+          "actionLog": [
+            {
+              "time": "Day 2, 14:00",
+              "location": "Town Hall Annex",
+              "summary": "Was confronted by Jack Harper about the ritual ledger and denied access to protect hidden records"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "time": "Day 2, 15:30",
+      "npcActionLogUpdates": [
+        {
+          "id": "npc-dr-chen",
+          "actionLog": [
+            {
+              "time": "Day 2, 15:30",
+              "location": "Archive Room",
+              "summary": "Locked the archive room and relocated the ritual ledger to prevent further investigation"
+            }
+          ],
+          "inventoryDelta": {
+            "add": [{ "name": "ritual ledger", "quantity": 1 }]
+          }
+        }
+      ]
+    }
+  ]
+}
+\`\`\`
+
+## Output JSON Schema
+Return ONLY valid JSON:
+\`\`\`json
+{
+  "actionTimeline": [
+    {
+      "time": "Day X, HH:MM",
+      "npcActionLogUpdates": [
+        {
+          "id": "npc-id",
+          "actionLog": [
+            {
+              "time": "Day X, HH:MM",
+              "location": "specific location",
+              "summary": "what they did and impact"
+            }
+          ],
+          "statusDelta": {
+            "hp": -2,
+            "sanity": -5
+          },
+          "inventoryDelta": {
+            "add": [{ "name": "key", "quantity": 1 }],
+            "remove": [{ "name": "flashlight" }]
+          }
+        }
+      ]
+    }
+  ]
+}
+\`\`\`
+
+Notes:
+- statusDelta and inventoryDelta are optional and must be incremental only.
+- Do not output fields not present in the schema.
+
+Generate now.`;
+}
+
+/**
+ * Scene Switch Phase 2 Template - Generate target scene snapshot + optional global trigger
+ */
+export function getTargetSnapshotFromTimelineTemplate(): string {
+  return `# Director Agent - Scene Switch Phase 2 (Target Snapshot + Optional Global Trigger)
+
+Generate only the target scene snapshot and optional global trigger.
+
+## Current Game Time
+- Day: {{currentGameDay}}
+- Time: {{currentTimeOfDay}}
+
+## Time Window
+- previousSnapshotTime: {{previousSnapshotTime}}
+- currentGameTime: {{currentGameTime}}
+
+## Target Scene
+\`\`\`json
+{{targetSceneJson}}
+\`\`\`
+
+## Target Scene Baseline Snapshot (previous)
+\`\`\`json
+{{targetBaselineSnapshotJson}}
+\`\`\`
+
+## Full Action Timeline (from Phase 1)
+\`\`\`json
+{{actionTimelineJson}}
+\`\`\`
+
+## Player ActionLog in Time Window
+\`\`\`json
+{{playerActionWindowJson}}
+\`\`\`
+
+## Truth Timeline
+\`\`\`json
+{{truthTimelineJson}}
+\`\`\`
+
+## Knowledge Matrix
+\`\`\`json
+{{knowledgeMatrixJson}}
+\`\`\`
+
+## End State
+\`\`\`json
+{{endStateJson}}
+\`\`\`
+
+## Previous Global Trigger
+{{#if previousGlobalTrigger}}
+\`\`\`json
+{{previousGlobalTriggerJson}}
+\`\`\`
+{{else}}
+null
+{{/if}}
+
+## Hard Rules
+- Generate targetSnapshot for target scene only.
+- Generate a COMPLETE, DETAILED snapshot with all required fields.
+- targetSnapshot must include: description, gameTime, clues, conditions, keeperNotes, showMap (if needed), and optional connections update.
+- description must be full atmospheric narrative including lighting, sounds, smells, weather, ambiance, and what happened in the time window.
+- clues must be full ScenarioClue objects (id, clueText, category, difficulty, location, discoveryMethod, reveals, discovered, discoveryDetails when applicable).
+- conditions must be full ScenarioCondition objects (type, description, mechanicalEffect when applicable).
+- keeperNotes should include concise GM-facing notes about scene progression and hidden implications.
+- Characters are managed by system post-processing; do not generate status/inventory/relationships/actionLog deltas here.
+- clues and conditions must be inferred from BOTH NPC timeline + player action log in this window.
+- Scenario Connections Update for Target Scene (CRITICAL):
+  - Based on action timeline, determine whether target scene connections changed.
+  - Consider whether NPC actions logically unlocked/locked doors, opened/closed passages, or discovered/blocked paths.
+  - Consider time-based deterioration (e.g., collapsed paths, weakened bridges) and environmental incidents from scene events (e.g., fire, flooding, barricades).
+  - Use blocked=true when a connection is physically blocked/locked.
+  - Provide blockReason when blocked is true (clear concrete reason).
+- globalTrigger is optional.
+- If globalTrigger is output, it must follow progressive escalation based on:
+  - endState (especially pointOfNoReturn),
+  - previousGlobalTrigger (if present),
+  - latest action developments.
+- globalTrigger.timeRestriction, if output, should be a reasonable future time ("Day X, HH:MM").
+
+## Output JSON Schema
+Return ONLY valid JSON:
+\`\`\`json
+{
+  "targetSnapshot": {
+    "scenarioId": "target-scene-id",
+    "snapshot": {
+      "id": "snapshot-id",
+      "name": "scene name",
+      "location": "scene location",
+      "description": "updated scene description",
+      "gameTime": "Day X, HH:MM",
+      "showMap": false,
+      "clues": [],
+      "conditions": [],
+      "keeperNotes": "optional notes"
+    },
+    "connections": [
+      {
+        "scenarioName": "Other Scene",
+        "relationshipType": "leads_to",
+        "description": "optional",
+        "blocked": false,
+        "blockReason": null
+      }
+    ]
+  },
+  "globalTrigger": {
+    "timeRestriction": "Day X, HH:MM",
+    "timeReason": "reason",
+    "events": ["event1", "event2"],
+    "eventReasons": ["reason1", "reason2"]
+  }
+}
+\`\`\`
+
+Notes:
+- globalTrigger can be omitted.
+- Do not output extra fields.
+
+Generate now.`;
+}
+
+/**
+ * Scene Switch Phase 3 Template - Generate simplified snapshots for non-target scenes in background
+ */
+export function getBackgroundSimplifiedSnapshotsTemplate(): string {
+  return `# Director Agent - Scene Switch Phase 3 (Background Simplified Snapshots)
+
+Generate simplified snapshots for non-target scenes only.
+
+## Current Game Time
+- Day: {{currentGameDay}}
+- Time: {{currentTimeOfDay}}
+
+## Time Window
+- previousSnapshotTime: {{previousSnapshotTime}}
+- currentGameTime: {{currentGameTime}}
+
+## Non-Target Scenes To Update
+\`\`\`json
+{{scenesToUpdateJson}}
+\`\`\`
+
+## Baseline Snapshots For Those Scenes
+\`\`\`json
+{{baselineSnapshotsJson}}
+\`\`\`
+
+## Full Action Timeline
+\`\`\`json
+{{actionTimelineJson}}
+\`\`\`
+
+## Player ActionLog in Time Window
+\`\`\`json
+{{playerActionWindowJson}}
+\`\`\`
+
+## Truth Timeline
+\`\`\`json
+{{truthTimelineJson}}
+\`\`\`
+
+## Knowledge Matrix
+\`\`\`json
+{{knowledgeMatrixJson}}
+\`\`\`
+
+## Hard Rules
+- Update non-target scenes only.
+- Produce simplified snapshots only.
+- Each updated snapshot must include:
+  - description
+  - clues
+  - connections
+  - gameTime = currentGameTime
+- Do NOT generate globalTrigger.
+- Do NOT generate character action/delta fields.
+- If a scene has no meaningful changes in this window, it may be omitted.
+
+## Output JSON Schema
+Return ONLY valid JSON:
+\`\`\`json
+{
+  "updatedSimplifiedSnapshots": [
+    {
+      "scenarioId": "scene-id",
+      "snapshot": {
+        "id": "snapshot-id",
+        "name": "scene name",
+        "location": "scene location",
+        "description": "simplified updated description",
+        "gameTime": "Day X, HH:MM",
+        "clues": [],
+        "conditions": []
+      },
+      "connections": [
+        {
+          "scenarioName": "Other Scene",
+          "relationshipType": "leads_to",
+          "description": "optional",
+          "blocked": false,
+          "blockReason": null
+        }
+      ]
+    }
+  ]
+}
+\`\`\`
+
+Generate now.`;
+}
+
+/**
  * Player Scene Switch Template - for generating complete target snapshot + simplified background snapshots during scene transitions
  */
 export function getPlayerSceneSwitchTemplate(): string {
