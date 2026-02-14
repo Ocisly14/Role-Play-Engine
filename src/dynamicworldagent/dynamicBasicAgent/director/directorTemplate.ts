@@ -468,12 +468,112 @@ null
   - Consider time-based deterioration (e.g., collapsed paths, weakened bridges) and environmental incidents from scene events (e.g., fire, flooding, barricades).
   - Use blocked=true when a connection is physically blocked/locked.
   - Provide blockReason when blocked is true (clear concrete reason).
-- globalTrigger is optional.
-- If globalTrigger is output, it must follow progressive escalation based on:
-  - endState (especially pointOfNoReturn),
-  - previousGlobalTrigger (if present),
-  - latest action developments.
-- globalTrigger.timeRestriction, if output, should be a reasonable future time ("Day X, HH:MM").
+  - Output \`targetSnapshot.connections\` ONLY if you determine that the connections state changed; otherwise omit the field.
+- Global Trigger (Optional):
+  - You MAY generate a globalTrigger for future story progression based on:
+    - new NPC actionLogs timeline,
+    - endState definition,
+    - predicted important future time/events.
+  - Only generate globalTrigger if there are significant future events or time-sensitive developments.
+  - If current actions do not indicate important upcoming events, you may omit globalTrigger entirely.
+- Global Trigger Guidance:
+  - Progressive Escalation:
+    - Analyze endState event chain toward catastrophe.
+    - Identify where previous globalTrigger (if any) sits in that chain.
+    - Determine the NEXT meaningful step (intermediate escalation or final game-ending step).
+  - Impact Priority:
+    - Trigger must have strong impact on story progression.
+  - Trigger Structure (if generated):
+    - timeRestriction: future time point in "Day X, HH:MM"
+    - timeReason: why this time matters
+    - events: trigger event descriptions
+    - eventReasons: one reason per event
+
+## One-Shot Example
+
+### Example Input (abridged)
+\`\`\`json
+{
+  "currentGameTime": "Day 2, 18:00",
+  "targetScene": { "scenarioId": "SCN_3", "name": "Harbor Warehouse" },
+  "targetBaselineSnapshot": {
+    "description": "A damp warehouse with sealed crates and a salt-heavy air.",
+    "clues": [],
+    "conditions": [{ "type": "lighting", "description": "Dim bulbs", "mechanicalEffect": "Hard to notice details" }]
+  },
+  "actionTimeline": {
+    "actionTimeline": [
+      {
+        "time": "Day 2, 17:20",
+        "npcActionLogUpdates": [
+          {
+            "id": "npc-dock-foreman",
+            "actionLog": [
+              {
+                "time": "Day 2, 17:20",
+                "location": "Harbor Warehouse",
+                "summary": "Locked the south shutter to delay witnesses from entering the warehouse"
+              }
+            ]
+          }
+        ]
+      }
+    ]
+  }
+}
+\`\`\`
+
+### Example Output
+\`\`\`json
+{
+  "targetSnapshot": {
+    "scenarioId": "SCN_3",
+    "snapshot": {
+      "id": "SCN_3_snap_002",
+      "name": "Harbor Warehouse",
+      "location": "Harbor Warehouse",
+      "description": "The warehouse air is thick with diesel and seawater. A newly secured south shutter rattles in the wind, forcing movement through the narrow east aisle where fresh boot marks cut across spilled salt.",
+      "gameTime": "Day 2, 18:00",
+      "showMap": false,
+      "clues": [
+        {
+          "id": "clue_warehouse_ledger",
+          "clueText": "A wet shipping ledger lists an unscheduled midnight transfer.",
+          "category": "document",
+          "difficulty": "regular",
+          "location": "Office desk drawer",
+          "discoveryMethod": "Investigation",
+          "reveals": ["T7"],
+          "discovered": false
+        }
+      ],
+      "conditions": [
+        {
+          "type": "lighting",
+          "description": "Two bulbs are out, leaving the south side in heavy shadow.",
+          "mechanicalEffect": "Hard (-20%) Spot Hidden near shutter"
+        }
+      ],
+      "keeperNotes": "The shutter lock indicates premeditated containment, not random weather damage."
+    },
+    "connections": [
+      {
+        "scenarioName": "Harbor Pier",
+        "relationshipType": "leads_to",
+        "description": "South shutter access to pier",
+        "blocked": true,
+        "blockReason": "Foreman locked the south shutter from inside"
+      }
+    ]
+  },
+  "globalTrigger": {
+    "timeRestriction": "Day 2, 23:30",
+    "timeReason": "Shipment staging reaches irreversible phase near midnight",
+    "events": ["Contraband transfer crew assembles at Harbor Pier"],
+    "eventReasons": ["Signals escalation from concealment to execution"]
+  }
+}
+\`\`\`
 
 ## Output JSON Schema
 Return ONLY valid JSON:
@@ -512,6 +612,7 @@ Return ONLY valid JSON:
 \`\`\`
 
 Notes:
+- Include \`targetSnapshot.connections\` only when you determine that the connections state changed; otherwise omit it.
 - globalTrigger can be omitted.
 - Do not output extra fields.
 
@@ -570,11 +671,115 @@ Generate simplified snapshots for non-target scenes only.
 - Each updated snapshot must include:
   - description
   - clues
-  - connections
+  - conditions
   - gameTime = currentGameTime
+- Output \`connections\` ONLY when connection state changed in this time window; otherwise omit.
+- clues guidance:
+  - Derive clues from baseline clues + time-window changes caused by NPC/player actions.
+  - Keep clue objects structurally valid (id, clueText, category, difficulty, location, discoveryMethod, reveals, discovered, discoveryDetails when applicable).
+  - Do not invent clues that conflict with truthTimeline/knowledgeMatrix.
+- conditions guidance:
+  - Derive conditions from environment changes in the time window (e.g., lighting, weather, sound, access constraints, damage aftermath).
+  - Keep condition objects structurally valid (type, description, mechanicalEffect when applicable).
+  - If no meaningful condition changes occurred, preserve baseline conditions instead of fabricating noise.
 - Do NOT generate globalTrigger.
 - Do NOT generate character action/delta fields.
 - If a scene has no meaningful changes in this window, it may be omitted.
+
+## One-Shot Example
+
+### Example Input (abridged)
+\`\`\`json
+{
+  "currentGameTime": "Day 2, 18:00",
+  "scenesToUpdate": [
+    { "scenarioId": "SCN_5", "scenarioName": "Old Chapel" }
+  ],
+  "baselineSnapshots": [
+    {
+      "scenarioId": "SCN_5",
+      "snapshot": {
+        "description": "A cold chapel with cracked stained glass.",
+        "clues": [],
+        "conditions": [
+          { "type": "lighting", "description": "Low candlelight", "mechanicalEffect": "Hard Spot Hidden" }
+        ],
+        "gameTime": "Day 2, 15:00"
+      }
+    }
+  ],
+  "actionTimeline": {
+    "actionTimeline": [
+      {
+        "time": "Day 2, 16:40",
+        "npcActionLogUpdates": [
+          {
+            "id": "npc-caretaker",
+            "actionLog": [
+              {
+                "time": "Day 2, 16:40",
+                "location": "Old Chapel",
+                "summary": "Barred the west door after hearing footsteps outside"
+              }
+            ]
+          }
+        ]
+      }
+    ]
+  }
+}
+\`\`\`
+
+### Example Output
+\`\`\`json
+{
+  "updatedSimplifiedSnapshots": [
+    {
+      "scenarioId": "SCN_5",
+      "snapshot": {
+        "id": "SCN_5_snap_004",
+        "name": "Old Chapel",
+        "location": "Old Chapel",
+        "description": "The chapel remains bitterly cold, but the west aisle is now partially blocked by hastily stacked pews and rope, channeling movement toward the altar side.",
+        "gameTime": "Day 2, 18:00",
+        "clues": [
+          {
+            "id": "clue_chapel_rope_fibers",
+            "clueText": "Fresh rope fibers and splinters suggest the west door was reinforced recently.",
+            "category": "physical",
+            "difficulty": "regular",
+            "location": "West door frame",
+            "discoveryMethod": "Spot Hidden",
+            "reveals": ["T9"],
+            "discovered": false
+          }
+        ],
+        "conditions": [
+          {
+            "type": "other",
+            "description": "West access is narrowed by improvised barricade",
+            "mechanicalEffect": "Movement tests near west aisle become Hard"
+          },
+          {
+            "type": "lighting",
+            "description": "Low candlelight",
+            "mechanicalEffect": "Hard Spot Hidden"
+          }
+        ]
+      },
+      "connections": [
+        {
+          "scenarioName": "Chapel Yard",
+          "relationshipType": "leads_to",
+          "description": "West door to yard",
+          "blocked": true,
+          "blockReason": "Caretaker reinforced west door with rope and pews"
+        }
+      ]
+    }
+  ]
+}
+\`\`\`
 
 ## Output JSON Schema
 Return ONLY valid JSON:
@@ -605,6 +810,9 @@ Return ONLY valid JSON:
   ]
 }
 \`\`\`
+
+Notes:
+- For each scene item, include \`connections\` only if you determine that the connections state changed; otherwise omit \`connections\`.
 
 Generate now.`;
 }

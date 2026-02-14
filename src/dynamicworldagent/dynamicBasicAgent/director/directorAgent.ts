@@ -1237,7 +1237,7 @@ export class DirectorAgent {
       const phase1Response = await generateText({
         runtime,
         context: phase1Prompt,
-        modelClass: ModelClass.LARGE,
+        modelClass: ModelClass.MEDIUM,
         providerOverride: options?.providerOverride,
       });
 
@@ -1294,11 +1294,8 @@ export class DirectorAgent {
             return true;
           });
 
-          if (
-            validActionLog.length === 0 &&
-            !update.statusDelta &&
-            !update.inventoryDelta
-          ) {
+          // Apply delta only when there is at least one valid actionLog entry in window
+          if (validActionLog.length === 0) {
             continue;
           }
 
@@ -1331,6 +1328,21 @@ export class DirectorAgent {
         dynamicState.playerCharacter.actionLog,
         previousSnapshotTime,
         currentGameTime
+      );
+
+      const scenesToUpdateInBackground = allScenariosData.filter(
+        (scene) => scene.scenarioId !== targetScenarioData.scenarioId
+      );
+
+      // Phase 3 runs in parallel with Phase 2
+      const phase3Promise = this.updateBackgroundSimplifiedSnapshotsForSceneSwitch(
+        gameStateManager,
+        currentGameTime,
+        previousSnapshotTime,
+        scenesToUpdateInBackground,
+        cleanedTimeline,
+        playerActionWindow,
+        options
       );
 
       console.log(`   📋 Phase 2: Generating target scene snapshot...`);
@@ -1374,7 +1386,7 @@ export class DirectorAgent {
       const phase2Response = await generateText({
         runtime,
         context: phase2Prompt,
-        modelClass: ModelClass.LARGE,
+        modelClass: ModelClass.MEDIUM,
         providerOverride: options?.providerOverride,
       });
 
@@ -1454,26 +1466,12 @@ export class DirectorAgent {
         console.log(`   ✓ Saved global trigger condition`);
       }
 
-      const scenesToUpdateInBackground = allScenariosData.filter(
-        (scene) => scene.scenarioId !== targetScenarioData.scenarioId
-      );
-
-      void this
-        .updateBackgroundSimplifiedSnapshotsForSceneSwitch(
-          gameStateManager,
-          currentGameTime,
-          previousSnapshotTime,
-          scenesToUpdateInBackground,
-          cleanedTimeline,
-          playerActionWindow,
-          options
-        )
-        .catch((error) => {
-          console.error(
-            `   ❌ Background simplified snapshot update failed:`,
-            error
-          );
-        });
+      // Wait for phase 3 completion before returning to avoid mid-save inconsistency
+      try {
+        await phase3Promise;
+      } catch (error) {
+        console.error(`   ❌ Background simplified snapshot update failed:`, error);
+      }
 
       console.log(`✅ [Director Agent] Scene switch update completed`);
       console.log(`   - Target: ${validatedTargetSceneName} (complete snapshot)`);
@@ -1573,7 +1571,7 @@ export class DirectorAgent {
     const response = await generateText({
       runtime,
       context: prompt,
-      modelClass: ModelClass.LARGE,
+      modelClass: ModelClass.MEDIUM,
       providerOverride: options?.providerOverride,
     });
 
