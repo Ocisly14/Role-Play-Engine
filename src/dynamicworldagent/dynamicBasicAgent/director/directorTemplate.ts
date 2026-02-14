@@ -92,10 +92,6 @@ IMPORTANT:
       "personality": "Nervous, evasive"
     }
   ],
-  "allScenarios": [
-    { "scenarioId": "SCN_6", "scenarioName": "Pier Office", "connections": ["Starlight Pier & Reception"] },
-    { "scenarioId": "SCN_4", "scenarioName": "Starlight Pier & Reception", "connections": ["Pier Office"] }
-  ]
 }
 \`\`\`
 
@@ -140,31 +136,6 @@ IMPORTANT:
           "inventoryDelta": {
             "add": [{ "name": "manifest key", "quantity": 1 }]
           }
-        }
-      ]
-    }
-  ],
-  "SuddenActionLogs": [
-    {
-      "id": "npc-harbor-foreman",
-      "actionLog": [
-        {
-          "time": "Day 3, 21:50",
-          "location": "Starlight Pier & Reception",
-          "summary": "Entered Starlight Pier & Reception and publicly accused the investigators of trespassing to intimidate witnesses"
-        }
-      ],
-      "statusDelta": {
-        "sanity": -1
-      }
-    },
-    {
-      "id": "npc-night-clerk",
-      "actionLog": [
-        {
-          "time": "Day 3, 21:50",
-          "location": "Starlight Pier & Reception",
-          "summary": "Entered Starlight Pier & Reception and quietly marked the investigators' faces and gear details for courier identification"
         }
       ]
     }
@@ -289,6 +260,7 @@ IMPORTANT:
 - OPTIONAL extra output: \`SuddenActionLogs\`
   - This field is OPTIONAL.
   - Use it only when a background NPC should enter player's current scene at the current game time.
+  - Each SuddenActionLogs item must contain ONLY: \`id\`, \`name\`, \`actionLog\`.
   - Each selected NPC must:
     - realistically move into player's current scene, and
     - perform exactly one impactful action there.
@@ -302,6 +274,10 @@ IMPORTANT:
   "previousSnapshotTime": "Day 2, 13:00",
   "currentGameTime": "Day 2, 16:00",
   "playerCurrentScene": { "name": "Town Hall", "location": "Town Hall" },
+    "previousGlobalTrigger": {
+    "timeRestriction": "Day 4, 01:00",
+    "events": ["Ritual couriers assemble at the pier office"]
+  },
   "backgroundNpcs": [
     { "id": "npc-jack-harper", "name": "Jack Harper", "goals": ["Find ritual evidence"] },
     { "id": "npc-dr-chen", "name": "Dr. Chen", "goals": ["Conceal key ritual details"] }
@@ -356,6 +332,30 @@ IMPORTANT:
         }
       ]
     }
+  ],
+  "SuddenActionLogs": [
+    {
+      "id": "npc-jack-harper",
+      "name": "Jack Harper",
+      "actionLog": [
+        {
+          "time": "Day 2, 15:50",
+          "location": "Town Hall",
+          "summary": "Entered Town Hall and publicly accused the investigators of evidence tampering to pressure nearby witnesses"
+        }
+      ]
+    },
+    {
+      "id": "npc-dr-chen",
+      "name": "Dr. Chen",
+      "actionLog": [
+        {
+          "time": "Day 2, 15:50",
+          "location": "Town Hall",
+          "summary": "Entered Town Hall and demanded immediate closure of the records wing to block investigator access"
+        }
+      ]
+    }
   ]
 }
 \`\`\`
@@ -387,12 +387,26 @@ Return ONLY valid JSON:
         }
       ]
     }
+  ],
+  "SuddenActionLogs": [
+    {
+      "id": "npc-id",
+      "name": "NPC Name",
+      "actionLog": [
+        {
+          "time": "Day X, HH:MM",
+          "location": "player current scene location",
+          "summary": "entered player scene and performed one impactful action"
+        }
+      ]
+    }
   ]
 }
 \`\`\`
 
 Notes:
 - statusDelta and inventoryDelta are optional and must be incremental only.
+- SuddenActionLogs is optional. If present, each NPC entry must contain only \`id\`, \`name\`, \`actionLog\` and exactly one in-window action in player's current scene.
 - Do not output fields not present in the schema.
 
 Generate now.`;

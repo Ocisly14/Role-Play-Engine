@@ -28,6 +28,8 @@ type NarrativeStreamHandlers = {
   }) => void;
   onSceneChangeStart?: () => void;
   onSceneChangeEnd?: () => void;
+  onWorldlineUpdateStart?: () => void;
+  onWorldlineUpdateEnd?: () => void;
   onNarrativeStart?: () => void;
   onNarrativeDelta?: (delta: string) => void;
   onNarrativeEnd?: () => void;
@@ -278,6 +280,20 @@ function buildNarrativeStreamHandlers(params: {
     onSceneChangeEnd: () => {
       send({
         type: "scene_change_end",
+        turnId: params.turnId,
+        timestamp: new Date().toISOString(),
+      });
+    },
+    onWorldlineUpdateStart: () => {
+      send({
+        type: "worldline_update_start",
+        turnId: params.turnId,
+        timestamp: new Date().toISOString(),
+      });
+    },
+    onWorldlineUpdateEnd: () => {
+      send({
+        type: "worldline_update_end",
         turnId: params.turnId,
         timestamp: new Date().toISOString(),
       });

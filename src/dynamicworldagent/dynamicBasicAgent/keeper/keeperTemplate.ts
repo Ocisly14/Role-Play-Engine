@@ -91,6 +91,12 @@ You are a writer, responsible for writing a narrative of the game.
   {{else}}
   No actions occurred this turn.
   {{/if}}
+
+  {{#if hasSuddenActionLogs}}
+  ### Sudden NPC Ingress Logs
+  These logs are immediate interruptions in the investigator's current scene. Reflect them in this turn's narrative.
+  {{suddenActionLogsJson}}
+  {{/if}}
   
   ### Characters
   Investigator: {{playerCharacterJson}}
@@ -149,6 +155,13 @@ You are a writer, responsible for writing a narrative of the game.
     * Can directly perceive (sees, hears, smells in the current moment)
     * Discovers through successful actions (only after action results confirm success)
   - NEVER reveal: hidden information, events elsewhere, NPC internal thoughts, undiscovered secrets, undiscovered clues, meta-knowledge
+
+  {{#if hasSuddenActionLogs}}
+  ### Hard Rule — Sudden NPC Intrusion
+  - You MUST narrate that the listed NPCs suddenly enter/intrude into the current scene.
+  - Their immediate behavior MUST match the corresponding sudden action logs.
+  - Do not invent conflicting actions or motivations.
+  {{/if}}
   
   ### Narrative Continuity
   - Focus on current input - do not repeat or summarize previous narratives

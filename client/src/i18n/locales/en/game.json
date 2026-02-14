@@ -192,5 +192,6 @@
       "sceneName": "Scene Name:"
     }
   },
-  "sceneTransition": "Scene Transition..."
+  "sceneTransition": "Scene Transition...",
+  "worldlineTransition": "Worldline Update..."
 }

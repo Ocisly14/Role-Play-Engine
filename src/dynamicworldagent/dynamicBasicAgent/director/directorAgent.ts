@@ -1818,13 +1818,18 @@ export class DirectorAgent {
         statusDelta?: Partial<CharacterStatus>;
         inventoryDelta?: { add?: InventoryItem[]; remove?: InventoryItem[] };
       };
+      type SuddenActionNpcUpdate = {
+        id: string;
+        name?: string;
+        actionLog?: ActionLogEntry[];
+      };
       type TimelineBucket = {
         time?: string;
         npcActionLogUpdates?: TimelineNpcUpdate[];
       };
       const parsedTimeline = this.parseModelJson<{
         actionTimeline?: TimelineBucket[];
-        SuddenActionLogs?: TimelineNpcUpdate[];
+        SuddenActionLogs?: SuddenActionNpcUpdate[];
       }>(phase1Response, "Non-player Phase 1 timeline");
       if (
         !parsedTimeline ||
@@ -1904,6 +1909,11 @@ export class DirectorAgent {
         }
       }
 
+      const suddenActionLogsForKeeper: Array<{
+        id: string;
+        name: string;
+        actionLog: ActionLogEntry[];
+      }> = [];
       let suddenMergedNpcUpdates = 0;
       if (parsedTimeline.SuddenActionLogs && parsedTimeline.SuddenActionLogs.length > 0) {
         const currentSceneLocationNormalized = currentScenario?.location
@@ -1954,12 +1964,26 @@ export class DirectorAgent {
 
           this.mergeCharacterDeltaToNPC(npc, {
             actionLog: validActionLog,
-            status: update.statusDelta,
-            inventory: update.inventoryDelta,
+          });
+
+          suddenActionLogsForKeeper.push({
+            id: npc.id,
+            name:
+              (typeof update.name === "string" && update.name.trim()) || npc.name,
+            actionLog: validActionLog,
           });
           suddenMergedNpcUpdates += 1;
         }
       }
+
+      dynamicState.temporaryInfo.contextualData =
+        dynamicState.temporaryInfo.contextualData || {};
+      dynamicState.temporaryInfo.contextualData.suddenActionLogs =
+        suddenActionLogsForKeeper;
+      dynamicState.temporaryInfo.contextualData.suddenActionLogsGameTime =
+        currentGameTime;
+      dynamicState.temporaryInfo.contextualData.suddenActionLogsTurnInScene =
+        dynamicState.turnsInCurrentScene;
 
       console.log(
         `   ✓ Phase 1 merged updates for ${mergedNpcUpdates} NPC entries (+${suddenMergedNpcUpdates} sudden)`

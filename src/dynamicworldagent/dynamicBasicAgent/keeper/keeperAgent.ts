@@ -201,6 +201,38 @@ export class KeeperAgent {
         score: number;
         metadata: Record<string, any>;
       }>) || [];
+    const suddenActionLogsRaw =
+      (dynamicState.temporaryInfo.contextualData?.suddenActionLogs as Array<{
+        id: string;
+        name?: string;
+        actionLog?: ActionLogEntry[];
+      }>) || [];
+    const suddenActionLogsTurnInScene = Number(
+      dynamicState.temporaryInfo.contextualData?.suddenActionLogsTurnInScene
+    );
+    const hasFreshSuddenActionLogs =
+      suddenActionLogsTurnInScene === dynamicState.turnsInCurrentScene;
+    const suddenActionLogs = hasFreshSuddenActionLogs
+      ? suddenActionLogsRaw
+          .map((entry) => ({
+            id: entry.id,
+            name: entry.name,
+            actionLog: (entry.actionLog || []).filter(
+              (log) => !!log?.location && !!log?.summary
+            ),
+          }))
+          .filter((entry) => entry.id && entry.actionLog.length > 0)
+      : [];
+    const hasSuddenActionLogs = suddenActionLogs.length > 0;
+    const clearSuddenActionLogsContext = () => {
+      if (!dynamicState.temporaryInfo.contextualData) {
+        dynamicState.temporaryInfo.contextualData = {};
+      }
+      dynamicState.temporaryInfo.contextualData.suddenActionLogs = [];
+      dynamicState.temporaryInfo.contextualData.suddenActionLogsGameTime = null;
+      dynamicState.temporaryInfo.contextualData.suddenActionLogsTurnInScene =
+        null;
+    };
 
     // 8. Calculate current turn number
     // Current turn is the next turn after the latest in history
@@ -254,6 +286,10 @@ export class KeeperAgent {
       scenarioContextJson: this.safeStringify(completeScenarioInfo),
       playerCharacterJson: this.safeStringify(playerCharacterComplete),
       actionRelatedNpcsJson: this.safeStringify(actionRelatedNpcs),
+      hasSuddenActionLogs,
+      suddenActionLogsJson: hasSuddenActionLogs
+        ? this.safeStringify(suddenActionLogs)
+        : null,
       previousScenarioJson: previousScenarioInfo
         ? this.safeStringify(previousScenarioInfo)
         : "null",
@@ -301,6 +337,7 @@ export class KeeperAgent {
           }
           console.warn("Failed to extract JSON from keeper response");
           console.warn("Response content:", response);
+          clearSuddenActionLogsContext();
           return {
             narrative: response,
             clueRevelations: {
@@ -343,6 +380,7 @@ export class KeeperAgent {
           console.log("✓ Extracted narrative from incomplete JSON");
         }
 
+        clearSuddenActionLogsContext();
         return {
           narrative: fallbackNarrative,
           clueRevelations: {
@@ -381,6 +419,7 @@ export class KeeperAgent {
     // Cleanup happens in entry node for real input only
     const finalGameState = updatedGameState;
 
+    clearSuddenActionLogsContext();
     return {
       narrative: parsedResponse.narrative || response,
       clueRevelations: parsedResponse.clueRevelations || {

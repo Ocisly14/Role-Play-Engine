@@ -69,6 +69,8 @@ export interface DynamicGraphState {
     }) => void;
     onSceneChangeStart?: () => void;
     onSceneChangeEnd?: () => void;
+    onWorldlineUpdateStart?: () => void;
+    onWorldlineUpdateEnd?: () => void;
     onNarrativeStart?: () => void;
     onNarrativeDelta?: (delta: string) => void;
     onNarrativeEnd?: () => void;
@@ -702,6 +704,7 @@ export const buildDynamicGraph = (
     console.log("\n🎯 [Dynamic Game End Check] 检查游戏是否结束...");
     const dgsm = new DynamicGameStateManager(state.dynamicGameState);
     const currentState = dgsm.getState();
+    const stream = state.stream;
 
     // Check 1: Character HP/Sanity
     const playerStatus = currentState.playerCharacter.status;
@@ -762,6 +765,7 @@ export const buildDynamicGraph = (
           `   ℹ️  场景更新完成后，如果生成新的 global trigger，将自动替换旧的`
         );
 
+        stream?.onWorldlineUpdateStart?.();
         directorAgent
           .updateNonPlayerScenarios(dgsm)
           .then(() => {
@@ -777,9 +781,11 @@ export const buildDynamicGraph = (
                 `   ✓ [后台任务] 场景更新完成，未生成新的 global trigger（已清除旧的）`
               );
             }
+            stream?.onWorldlineUpdateEnd?.();
           })
           .catch((error) => {
             console.error(`   ❌ [后台任务] 场景更新失败:`, error);
+            stream?.onWorldlineUpdateEnd?.();
           });
 
         // Return immediately without waiting for scenario update
@@ -1337,6 +1343,7 @@ export const buildDynamicListenerGraph = (
     console.log("\n🎯 [Dynamic Listener Game End Check] 检查游戏是否结束...");
     const dgsm = new DynamicGameStateManager(state.dynamicGameState);
     const currentState = dgsm.getState();
+    const stream = state.stream;
 
     // Check 1: Character HP/Sanity
     const playerStatus = currentState.playerCharacter.status;
@@ -1397,6 +1404,7 @@ export const buildDynamicListenerGraph = (
           `   ℹ️  场景更新完成后，如果生成新的 global trigger，将自动替换旧的`
         );
 
+        stream?.onWorldlineUpdateStart?.();
         directorAgent
           .updateNonPlayerScenarios(dgsm)
           .then(() => {
@@ -1412,9 +1420,11 @@ export const buildDynamicListenerGraph = (
                 `   ✓ [后台任务] 场景更新完成，未生成新的 global trigger（已清除旧的）`
               );
             }
+            stream?.onWorldlineUpdateEnd?.();
           })
           .catch((error) => {
             console.error(`   ❌ [后台任务] 场景更新失败:`, error);
+            stream?.onWorldlineUpdateEnd?.();
           });
 
         // Return immediately without waiting for scenario update

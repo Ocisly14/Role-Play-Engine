@@ -192,5 +192,6 @@
       "sceneName": "场景名:"
     }
   },
-  "sceneTransition": "场景转换中..."
+  "sceneTransition": "场景转换中...",
+  "worldlineTransition": "世界线变更中..."
 }

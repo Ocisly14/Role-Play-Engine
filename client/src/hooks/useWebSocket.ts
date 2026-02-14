@@ -6,6 +6,7 @@ import { useEffect, useRef } from "react";
 import type { Message, PendingDiceRolls, WebSocketMessage } from "../types/gamechat";
 import type { DiceRollInfo } from "../components/DiceAnimation";
 import { filterDiceRollsForPlayer } from "../components/gamechat/utils";
+import type { SceneTransitionKind } from "./useSceneTransition";
 
 export interface UseWebSocketParams {
   sessionId: string | null;
@@ -22,9 +23,9 @@ export interface UseWebSocketParams {
   setPendingDiceRolls: React.Dispatch<React.SetStateAction<PendingDiceRolls | null>>;
   setShowingDiceAnimation: React.Dispatch<React.SetStateAction<boolean>>;
   setDiceAnimationCompleted: React.Dispatch<React.SetStateAction<boolean>>;
-  setIsSceneChanging: React.Dispatch<React.SetStateAction<boolean>>;
+  startSceneChanging: (kind: SceneTransitionKind) => void;
   setIsSending: React.Dispatch<React.SetStateAction<boolean>>;
-  clearSceneChanging: () => void;
+  clearSceneChanging: (kind?: SceneTransitionKind | "fallback") => void;
 }
 
 export function useWebSocket({
@@ -42,7 +43,7 @@ export function useWebSocket({
   setPendingDiceRolls,
   setShowingDiceAnimation,
   setDiceAnimationCompleted,
-  setIsSceneChanging,
+  startSceneChanging,
   setIsSending,
   clearSceneChanging,
 }: UseWebSocketParams): void {
@@ -287,16 +288,20 @@ export function useWebSocket({
 
               // Clear all loading states to prevent frontend from getting stuck
               setIsSending(false);
-              clearSceneChanging();
+              clearSceneChanging("fallback");
 
               // Refresh game state
               if (fetchGameEndingRef.current) {
                 fetchGameEndingRef.current();
               }
             } else if (message.type === "scene_change_start") {
-              setIsSceneChanging(true);
+              startSceneChanging("scene");
             } else if (message.type === "scene_change_end") {
-              clearSceneChanging();
+              clearSceneChanging("scene");
+            } else if (message.type === "worldline_update_start") {
+              startSceneChanging("worldline");
+            } else if (message.type === "worldline_update_end") {
+              clearSceneChanging("worldline");
             } else if (message.type === "scene_image") {
               if (onNarrativeCompleteRef.current) {
                 onNarrativeCompleteRef.current();
@@ -453,7 +458,7 @@ export function useWebSocket({
     setPendingDiceRolls,
     setShowingDiceAnimation,
     setDiceAnimationCompleted,
-    setIsSceneChanging,
+    startSceneChanging,
     setIsSending,
     clearSceneChanging,
   ]);

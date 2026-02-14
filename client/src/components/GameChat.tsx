@@ -72,7 +72,12 @@ export function GameChat({
     handleInputAreaMouseLeave,
   } = useInputCollapse({ inputValue });
 
-  const { isSceneChanging, setIsSceneChanging, clearSceneChanging } =
+  const {
+    isSceneChanging,
+    sceneChangingTextKey,
+    startSceneChanging,
+    clearSceneChanging,
+  } =
     useSceneTransition();
 
   const { updateLastSavedTurnNumber, triggerAutoSave } = useAutoSave({
@@ -146,7 +151,7 @@ export function GameChat({
     setPendingDiceRolls,
     setShowingDiceAnimation,
     setDiceAnimationCompleted,
-    setIsSceneChanging,
+    startSceneChanging,
     setIsSending,
     clearSceneChanging,
   });
@@ -580,7 +585,7 @@ export function GameChat({
           <div className="rounded-2xl border border-white/60 bg-white/30 px-6 py-4 backdrop-blur-xl shadow-[0_12px_34px_rgba(15,23,42,0.3)] flex items-center gap-3">
             <div className="w-5 h-5 border-2 border-slate-600 border-t-transparent rounded-full animate-spin" />
             <span className="text-base text-slate-800 font-medium">
-              {t('sceneTransition')}
+              {t(sceneChangingTextKey)}
             </span>
           </div>
         </div>
