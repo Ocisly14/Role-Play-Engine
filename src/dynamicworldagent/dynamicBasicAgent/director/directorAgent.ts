@@ -158,7 +158,6 @@ export class DirectorAgent {
     }
 
     // Step 1: Unified update - validates target + generates all snapshots (complete target + simplified background)
-    console.log(`\n🔄 [Director Agent] Updating scenarios for scene switch...`);
     let updateResult =
       await this.updateScenariosForSceneSwitch(gameStateManager);
 
@@ -200,9 +199,7 @@ export class DirectorAgent {
 
     console.log(`   ✓ Validated target scene: ${validatedTargetSceneName}`);
     console.log(`   ✓ Generated complete target snapshot`);
-    console.log(
-      `   ✓ Background simplified snapshots scheduled asynchronously`
-    );
+    console.log(`   ✓ Background simplified snapshots completed`);
     if (modifiedConnections) {
       console.log(
         `   ✓ Updated ${modifiedConnections.length} connections for target scene`
@@ -242,10 +239,6 @@ export class DirectorAgent {
     console.log(`   ✓ Saved target snapshot to state`);
 
     // Step 4: Execute scene transition using the UPDATED complete snapshot
-    console.log(`\n🔄 [Executing Scene Transition]:`);
-    console.log(`   To: ${targetSnapshot.name}`);
-    console.log(`   Location: ${targetSnapshot.location}`);
-
     await this.executeSceneTransition(
       targetSnapshot,
       validatedTargetSceneName,
@@ -1066,7 +1059,7 @@ export class DirectorAgent {
    * Update scenarios for scene switch in 3 phases:
    * 1) Generate background NPC action timeline + merge deltas
    * 2) Generate target snapshot + optional global trigger
-   * 3) Trigger background simplified snapshot updates asynchronously
+   * 3) Generate and apply background simplified snapshot updates
    */
   async updateScenariosForSceneSwitch(
     gameStateManager: DynamicGameStateManager,
@@ -1330,9 +1323,20 @@ export class DirectorAgent {
         currentGameTime
       );
 
-      const scenesToUpdateInBackground = allScenariosData.filter(
-        (scene) => scene.scenarioId !== targetScenarioData.scenarioId
-      );
+      const currentSceneId = currentScenario?.id || null;
+      const currentSceneName = currentScenario?.name || null;
+      const scenesToUpdateInBackground = allScenariosData.filter((scene) => {
+        if (scene.scenarioId === targetScenarioData.scenarioId) {
+          return false;
+        }
+        if (currentSceneId && scene.scenarioId === currentSceneId) {
+          return false;
+        }
+        if (currentSceneName && scene.scenarioName === currentSceneName) {
+          return false;
+        }
+        return true;
+      });
 
       // Phase 3 runs in parallel with Phase 2
       const phase3Promise = this.updateBackgroundSimplifiedSnapshotsForSceneSwitch(
