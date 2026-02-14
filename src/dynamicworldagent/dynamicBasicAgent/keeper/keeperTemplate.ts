@@ -65,6 +65,21 @@ You are a writer, responsible for writing a narrative of the game.
   {{scenarioContextJson}}
   {{/if}}
 
+  {{#if hasWorldlineSceneUpdate}}
+  ### Background Worldline Scene Update (Current Scene)
+  **Previous Current-Scene Snapshot (before update):**
+  {{worldlinePreviousSnapshotJson}}
+
+  **Updated Current-Scene Snapshot (after update):**
+  {{worldlineUpdatedSnapshotJson}}
+
+  **SuddenActionLogs:**
+  {{worldlineSuddenActionLogsJson}}
+
+  **Reaction NPC ActionLogs:**
+  {{worldlineReactionNpcActionLogsJson}}
+  {{/if}}
+
   {{#if keeperGuidance}}
   ### Keeper Guidance
   {{keeperGuidance}}
@@ -161,6 +176,14 @@ You are a writer, responsible for writing a narrative of the game.
   - You MUST narrate that the listed NPCs suddenly enter/intrude into the current scene.
   - Their immediate behavior MUST match the corresponding sudden action logs.
   - Do not invent conflicting actions or motivations.
+  {{/if}}
+
+  {{#if hasWorldlineSceneUpdate}}
+  ### Hard Rule — Worldline Scene Update Integration
+  - You MUST integrate the current scene update into this turn's narrative.
+  - Reflect concrete differences between previous and updated scene snapshots in what the investigator now perceives.
+  - If sudden/reaction logs are provided, narrate those NPC intrusions and reactions consistently with the logs.
+  - Treat the updated current-scene snapshot as the latest ground truth.
   {{/if}}
   
   ### Narrative Continuity

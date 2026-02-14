@@ -1059,6 +1059,16 @@ export class DynamicGameStateManager {
   }
 
   /**
+   * Refresh current scenario snapshot without triggering scene-transition side effects.
+   * Unlike updateCurrentScenario(), this does NOT reset scenario time state or turn counter.
+   */
+  refreshCurrentScenarioSnapshot(snapshot: DynamicScenarioSnapshot): void {
+    this.state.currentScenario = snapshot;
+    this.updateNpcLocationsForScenario(snapshot);
+    this.state.lastUpdated = new Date();
+  }
+
+  /**
    * Normalize name (for fuzzy matching)
    */
   private normalizeName(name: string): string {
