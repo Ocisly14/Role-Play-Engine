@@ -1,223 +1,4 @@
 /**
- * Scenario Update Template - for updating non-player scenario snapshots
- */
-export function getScenarioUpdateTemplate(): string {
-  return `# Director Agent - Scenario Update Generation
-
-Generate simplified snapshots for all non-player scenarios based on current game state, NPC actions, and time progression.
-
-## ⏰ Current Game Time
-**Day**: {{currentGameDay}}
-**Time**: {{currentTimeOfDay}}
-
-## 📚 Knowledge Matrix & Truth Timeline
-
-The following data provides the complete world context:
-
-### Truth Timeline (Objective Reality)
-\`\`\`json
-{{truthTimelineJson}}
-\`\`\`
-
-### Knowledge Matrix (Who/What Knows What)
-\`\`\`json
-{{knowledgeMatrixJson}}
-\`\`\`
-
-## 📍 Player Current Scene
-{{#if playerCurrentScene}}
-**Scene**: {{playerCurrentScene.name}}
-**Location**: {{playerCurrentScene.location}}
-{{#if playerCurrentScene.description}}
-**Description**: {{playerCurrentScene.description}}
-{{/if}}
-{{#if playerCurrentScene.sourcePlaceId}}
-**Source Place ID**: {{playerCurrentScene.sourcePlaceId}} (Knowledge holder PLACE ID)
-{{/if}}
-{{#if playerCurrentScene.sourcePlaceName}}
-**Source Place Name**: {{playerCurrentScene.sourcePlaceName}}
-{{/if}}
-{{#if playerCurrentScene.connections}}
-**Connections**: 
-{{#each playerCurrentScene.connections}}
-- **{{this.scenarioName}}** ({{this.relationshipType}}): {{this.description}}{{#if this.blocked}} [BLOCKED: {{this.blockReason}}]{{/if}}
-{{/each}}
-{{/if}}
-{{else}}
-*No current scene*
-{{/if}}
-
-## 🎬 Scenarios to Update
-
-The following JSON contains all scenarios that need to be updated, with their current snapshots, full NPC information, and scenario-level connections:
-
-\`\`\`json
-{{scenariosToUpdateJson}}
-\`\`\`
-
-**Note**: Each scenario includes a "connections" field showing how scenarios are connected.
-
-## 🔗 ID Mapping Reference
-
-**IMPORTANT**: Each scenario and NPC has ID fields that link them to the knowledge matrix and truth timeline:
-
-### Scenario IDs
-- **sourcePlaceId**: Links to a PLACE holder in the knowledge matrix (e.g., "PLAC_7", "PLAC_11")
-
-### NPC IDs
-- **instantiatedFrom**: Links to a ROLE or ORGANIZATION holder in the knowledge matrix (e.g., "ROLE_5", "ORGA_1")
-- **inheritsKnowledge**: Array of truth event IDs this NPC knows (e.g., ["T1", "T5"])
-
-## 🎯 Your Task
-
-Generate simplified snapshots for each scenario above.
-
-**⚠️ CRITICAL - Exclude Player's Current Scene**:
-- Do NOT generate a snapshot for the player's current scene ({{playerCurrentScene.name}})
-
-Each snapshot should:
-
-1. **Description**: Describe what has happened in the scene since the last update (from previousGameTime to currentGameTime) - a descriptive narrative timeline of changes/events
-   
-2. **ActionLog Generation - CRITICAL**:
-   - **IMPORTANT**: The NPCs' actions should based on the things they know and the things they want to do, and they can know more about the world by taking actions. The NPCs's actions should be coherent with other NPCs' actions.
-   - Generate a **time-sequenced series of actions** that the NPC would take from the previous snapshot time to the current time
-   - Base actions on the NPC's **goals, personality, and secrets** (found in their full information and knowledge matrix)
-   - Actions should be **chronologically ordered** with specific times progressing toward the current game time
-   - **Only include actions that have impact** on:
-     - The scene/location itself
-     - The world state
-     - Other NPCs
-   - Include important actions they took but failed as well.
-   - **Exclude routine/mundane actions** that don't affect the story (e.g., "eating lunch", "sleeping")
-   - **Scene Movement Constraints**:
-     - NPC can ONLY move between scenarios that are **connected** (check the "connections" field in scenario data), npc can try to break the blocked restrictions logically.
-     - Movement between scenarios takes **realistic time** based on:
-       - Distance/relationship type (adjacent, nearby, distant)
-       - Time of day and conditions
-     - If an NPC needs to move to a non-adjacent location, they must pass through connected intermediate locations
-     - Time gaps in actionLog must be **realistic** - don't have NPCs teleporting or moving too quickly
-   - Each actionLog entry format: \`{ time: "Day X, HH:MM", location: "specific location", summary: "what they did and its impact" }\`
-   - **IMPORTANT**: If the action has a target (another character, object, or location), INCLUDE the target in the summary (e.g., "Asked Dr. Smith about the ritual", "Examined the ancient tome", "Locked the basement door")
-   - **Multiple Characters**: If an action involves multiple characters (e.g., NPC A attacks NPC B, NPC A talks to NPC B), create separate actionLog entries for EACH involved character with their respective perspectives:
-     - For NPC A: "Attacked NPC B with a knife, dealing 3 damage"
-     - For NPC B: "Was attacked by NPC A, taking 3 damage"
-     - This ensures both characters have accurate records of the interaction in their actionLog
-   - Example of good actionLog with movement:
-     \`\`\`json
-     [
-       { "time": "Day 2, 14:00", "location": "Town Hall", "summary": "Met with the Mayor to discuss the missing persons case, shared information about the witness" },
-       { "time": "Day 2, 15:30", "location": "Town Hall", "summary": "Finished meeting and prepared to visit the Sheriff's Office" },
-       { "time": "Day 2, 16:00", "location": "Sheriff's Office", "summary": "Arrived and discovered evidence of a break-in, found suspicious documents" },
-       { "time": "Day 2, 18:30", "location": "Local Tavern", "summary": "Traveled to tavern and confronted a suspect, causing them to flee" }
-     ]
-     \`\`\`
-
-3. **Characters**: List all NPCs that should be present in the scene at the current time point:
-   - ⚠️ **CRITICAL - DO NOT CREATE NEW NPCs**: You MUST ONLY use NPCs from the input data provided in the "characters" field of each scenario
-   - ⚠️ **CRITICAL - PRESERVE EXACT IDs AND NAMES**:
-     * Use the EXACT character **id** from the input (e.g., if input says "NPC_5", you MUST use "NPC_5", NOT "npc_5", "NPC5", or any variation)
-     * Use the EXACT character **name** from the input (e.g., if input says "张三", you MUST use "张三", NOT "Zhang San", "张先生", or any translation/abbreviation)
-     * DO NOT invent, abbreviate, translate, or modify character IDs or names in any way
-   - **ActionLog**: What they are currently doing (write into the actionLog field) - this is always required
-   - **Note**: For simplified snapshots, DO NOT include status, inventory, or relationships changes - only actionLog is needed
-
-4. **Game Time**: Set the gameTime to the unified current game time (Day {{currentGameDay}}, {{currentTimeOfDay}}) - all snapshots should use this same time
-
-## 🏁 End State Definition
-The following defines the inevitable catastrophic outcome if investigators do not intervene:
-
-\`\`\`json
-{{endStateJson}}
-\`\`\`
-
-**Important**: The endState describes the final catastrophic outcome and its pointOfNoReturn trigger. When generating a new global trigger, you must understand the event chain leading to the endState and determine where the next trigger should be positioned in that chain.
-
-## 🎯 Global Trigger
-
-{{#if previousGlobalTrigger}}
-### Previous Global Trigger (Reference)
-The following is the current global trigger that was set previously. Use this as a reference, but update it based on the new NPC actions and story progression:
-
-\`\`\`json
-{{previousGlobalTriggerJson}}
-\`\`\`
-
-**Note**: You should update or replace this trigger based on the new actionLogs and story developments. The new trigger should reflect the most current and important future events.
-{{else}}
-**No previous global trigger set.**
-{{/if}}
-
-**You MUST generate a global trigger for future story progression based on the NPCs' actionLogs you have generated, the endState definition, and predict the future important time and events.**
-
-**Critical Guidelines for Global Trigger Generation:**
-
-1. **Progressive Escalation**: Analyze the endState to understand the event chain leading to catastrophe
-   - Identify where the previous global trigger (if any) was positioned in this chain
-   - Determine the NEXT step in the progression toward the endState, the intermediate event or the final event that causes the game end.
-
-### Trigger Structure:
-
-1. The most important rule, the trigger you set must have great impact on the story progression.
-1. **timeRestriction** : Future time point in "Day X, HH:MM" format - MUST be at least 12 hours from current time
-2. **timeReason** : Why this specific time matters
-3. **events**: Array of trigger event descriptions (e.g., "Evidence revealed", "NPC completes action")
-4. **eventReasons**: Array of reasons (one per event) explaining why each event is important
-
-**Example:**
-\`\`\`json
-"globalTrigger": {
-  "timeRestriction": "Day 2, 22:00",
-  "timeReason": "The ritual must begin at midnight, giving player limited time to intervene",
-  "events": ["Cult members gather at the church", "Ritual preparations are completed"],
-  "eventReasons": ["Shows the cult's active planning", "Increases urgency and tension"]
-}
-\`\`\`
-
-## 📋 Output Format
-
-Return ONLY valid JSON in this exact structure:
-
-\`\`\`json
-{
-  "updatedSnapshots": [
-    {
-      "scenarioId": "SCN_1",
-      "snapshot": {
-        "id": "SCN_id_(number)",
-        "name": "Scenario Name",
-        "location": "Location",
-        "description": "Describe what happened in the scene from previousGameTime to currentGameTime - a descriptive narrative timeline of changes/events",
-        "gameTime": "Day {{currentGameDay}}, {{currentTimeOfDay}}",
-        "characters": [
-          {
-            "id": "NPC_id",
-            "name": "Character Name",
-            "actionLog": [
-              {
-                "time": "time of the action",
-                "location": "Location",
-                "summary": "What they did (descriptive)"
-              }
-            ]
-          }
-        ]
-      }
-    }
-  ],
-  "globalTrigger": {
-    "timeRestriction": "Day X, HH:MM (at least 12 hours from now)",
-    "timeReason": "Why this specific time point matters",
-    "events": ["Event description 1", "Event description 2"],
-    "eventReasons": ["Why event 1 matters", "Why event 2 matters"]
-  }
-}
-\`\`\`
-
-*Generate the updated snapshots:*`;
-}
-
-/**
  * Scene Switch Phase 1 Template - Generate background NPC action timeline only
  */
 export function getNpcActionTimelineTemplate(): string {
@@ -283,6 +64,235 @@ IMPORTANT:
   - For NPC A: "Attacked NPC B with a knife, dealing 3 damage"
   - For NPC B: "Was attacked by NPC A, taking 3 damage"
 - Historical actionLog is read-only context; output only new incremental entries.
+- For \`actionTimeline\` buckets, \`actionLog\` entries can omit \`time\`; backend will use the parent bucket \`time\`.
+
+## One-Shot Example
+
+### Example Input (abridged)
+\`\`\`json
+{
+  "previousSnapshotTime": "Day 3, 20:00",
+  "currentGameTime": "Day 3, 22:00",
+  "playerCurrentScene": { "id": "SCN_4", "name": "Starlight Pier & Reception", "location": "Starlight Pier & Reception" },
+  "previousGlobalTrigger": {
+    "timeRestriction": "Day 4, 01:00",
+    "events": ["Ritual couriers assemble at the pier office"]
+  },
+  "backgroundNpcs": [
+    {
+      "id": "npc-harbor-foreman",
+      "name": "Mason Pike",
+      "goals": ["Keep shipment routes hidden", "Delay investigators"],
+      "personality": "Controlling, suspicious"
+    },
+    {
+      "id": "npc-night-clerk",
+      "name": "Elias Voss",
+      "goals": ["Report investigator movement to cult handlers"],
+      "personality": "Nervous, evasive"
+    }
+  ],
+  "allScenarios": [
+    { "scenarioId": "SCN_6", "scenarioName": "Pier Office", "connections": ["Starlight Pier & Reception"] },
+    { "scenarioId": "SCN_4", "scenarioName": "Starlight Pier & Reception", "connections": ["Pier Office"] }
+  ]
+}
+\`\`\`
+
+### Example Output
+\`\`\`json
+{
+  "actionTimeline": [
+    {
+      "time": "Day 3, 20:35",
+      "npcActionLogUpdates": [
+        {
+          "id": "npc-night-clerk",
+          "actionLog": [
+            {
+              "location": "Pier Office",
+              "summary": "Copied dock ledger pages naming tonight's courier meeting and hid them inside the office stove"
+            }
+          ]
+        },
+        {
+          "id": "npc-harbor-foreman",
+          "actionLog": [
+            {
+              "location": "Pier Office",
+              "summary": "Was informed by Elias Voss that ledger pages were removed and ordered immediate containment of shipping records"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "time": "Day 3, 21:15",
+      "npcActionLogUpdates": [
+        {
+          "id": "npc-harbor-foreman",
+          "actionLog": [
+            {
+              "location": "Pier Office",
+              "summary": "Locked the rear records cabinet and removed the manifest key to slow investigator access"
+            }
+          ],
+          "inventoryDelta": {
+            "add": [{ "name": "manifest key", "quantity": 1 }]
+          }
+        }
+      ]
+    }
+  ],
+  "SuddenActionLogs": [
+    {
+      "id": "npc-harbor-foreman",
+      "actionLog": [
+        {
+          "time": "Day 3, 21:50",
+          "location": "Starlight Pier & Reception",
+          "summary": "Entered Starlight Pier & Reception and publicly accused the investigators of trespassing to intimidate witnesses"
+        }
+      ],
+      "statusDelta": {
+        "sanity": -1
+      }
+    },
+    {
+      "id": "npc-night-clerk",
+      "actionLog": [
+        {
+          "time": "Day 3, 21:50",
+          "location": "Starlight Pier & Reception",
+          "summary": "Entered Starlight Pier & Reception and quietly marked the investigators' faces and gear details for courier identification"
+        }
+      ]
+    }
+  ]
+}
+\`\`\`
+
+## Output JSON Schema
+Return ONLY valid JSON:
+\`\`\`json
+{
+  "actionTimeline": [
+    {
+      "time": "Day X, HH:MM",
+      "npcActionLogUpdates": [
+        {
+          "id": "npc-id",
+          "actionLog": [
+            {
+              "location": "specific location",
+              "summary": "what they did and impact"
+            }
+          ],
+          "statusDelta": {
+            "hp": -2,
+            "sanity": -5
+          },
+          "inventoryDelta": {
+            "add": [{ "name": "key", "quantity": 1 }],
+            "remove": [{ "name": "flashlight" }]
+          }
+        }
+      ]
+    }
+  ]
+}
+\`\`\`
+
+Notes:
+- statusDelta and inventoryDelta are optional and must be incremental only.
+- Do not output fields not present in the schema.
+
+Generate now.`;
+}
+
+export function getNpcActionTimelineWithPlayerSceneIngressTemplate(): string {
+  return `# Director Agent - Non-Player Phase 1 (Background NPC Timeline + Sudden Ingress)
+
+Generate background NPC action timeline updates, and you MAY additionally output a separate \`SuddenActionLogs\` set.
+
+## Current Game Time
+- Day: {{currentGameDay}}
+- Time: {{currentTimeOfDay}}
+
+## Time Window
+- previousSnapshotTime: {{previousSnapshotTime}}
+- currentGameTime: {{currentGameTime}}
+
+## Global Trigger Reference
+{{#if previousGlobalTrigger}}
+\`\`\`json
+{{previousGlobalTriggerJson}}
+\`\`\`
+{{else}}
+null
+{{/if}}
+
+## Truth Timeline
+\`\`\`json
+{{truthTimelineJson}}
+\`\`\`
+
+## Knowledge Matrix
+\`\`\`json
+{{knowledgeMatrixJson}}
+\`\`\`
+
+## Player Current Scene
+\`\`\`json
+{{playerCurrentSceneJson}}
+\`\`\`
+
+## Scenarios (with connections + latest baseline snapshots)
+\`\`\`json
+{{allScenariosJson}}
+\`\`\`
+
+## NPC Profiles For Timeline Generation
+
+IMPORTANT:
+- These NPCs are already filtered. They exclude player and NPCs in player's current scene.
+- Use exact NPC id/name from input.
+
+\`\`\`json
+{{backgroundNpcsJson}}
+\`\`\`
+
+## Hard Rules
+- Generate only background world progression action timeline.
+- Do NOT generate player actions.
+- Do NOT regenerate actions for NPCs currently in player's current scene.
+- Actions must follow knowledge/goals/personality/secrets and remain coherent across NPCs.
+- Actions must be time-sequenced, realistic, and within the time window.
+- Base actions on the NPC's goals, personality, and secrets (from full profile + knowledge matrix).
+- Actions should be chronologically ordered with specific times progressing toward current game time.
+- Consider globalTrigger when generating actions; the related NPC actions should intent to behave around the globalTrigger events. Towards or against the globalTrigger events.
+- If an event clearly maps to specific NPCs, those NPCs should prioritize preparatory or advancing actions toward that event.
+- Do not force impossible behavior just to match globalTrigger; keep movement, knowledge, and motivation constraints valid.
+- Only include actions that have impact on scene/location, world state, or other NPCs.
+- Include important actions they took but failed as well.
+- Exclude routine/mundane actions that don't affect story progression.
+- NPC can ONLY move between scenarios that are connected (from connections data); they may attempt to break blocked restrictions logically.
+- Movement between scenarios takes realistic time based on relationship type (adjacent/nearby/distant), time of day, and conditions.
+- If an NPC needs to move to a non-adjacent location, they must pass through connected intermediate locations.
+- Time gaps in actionLog must be realistic; do not teleport or move unrealistically fast.
+- IMPORTANT: If an action has a target (character/object/location), include the target in summary.
+- Multiple characters rule: if an action involves multiple characters, create separate entries for each involved character perspective:
+  - For NPC A: "Attacked NPC B with a knife, dealing 3 damage"
+  - For NPC B: "Was attacked by NPC A, taking 3 damage"
+- Historical actionLog is read-only context; output only new incremental entries.
+- For \`actionTimeline\` buckets, \`actionLog\` entries can omit \`time\`; backend will use the parent bucket \`time\`.
+- OPTIONAL extra output: \`SuddenActionLogs\`
+  - This field is OPTIONAL.
+  - Use it only when a background NPC should enter player's current scene at the current game time.
+  - Each selected NPC must:
+    - realistically move into player's current scene, and
+    - perform exactly one impactful action there.
+  - Keep it coherent with goals/personality/secrets/knowledge/globalTrigger.
 
 ## One-Shot Example
 
@@ -310,7 +320,6 @@ IMPORTANT:
           "id": "npc-jack-harper",
           "actionLog": [
             {
-              "time": "Day 2, 14:00",
               "location": "Town Hall Annex",
               "summary": "Confronted Dr. Chen about the ritual ledger and was refused access, escalating tension"
             }
@@ -323,7 +332,6 @@ IMPORTANT:
           "id": "npc-dr-chen",
           "actionLog": [
             {
-              "time": "Day 2, 14:00",
               "location": "Town Hall Annex",
               "summary": "Was confronted by Jack Harper about the ritual ledger and denied access to protect hidden records"
             }
@@ -338,7 +346,6 @@ IMPORTANT:
           "id": "npc-dr-chen",
           "actionLog": [
             {
-              "time": "Day 2, 15:30",
               "location": "Archive Room",
               "summary": "Locked the archive room and relocated the ritual ledger to prevent further investigation"
             }
@@ -365,7 +372,6 @@ Return ONLY valid JSON:
           "id": "npc-id",
           "actionLog": [
             {
-              "time": "Day X, HH:MM",
               "location": "specific location",
               "summary": "what they did and impact"
             }
@@ -625,7 +631,7 @@ Generate now.`;
 export function getBackgroundSimplifiedSnapshotsTemplate(): string {
   return `# Director Agent - Scene Switch Phase 3 (Background Simplified Snapshots)
 
-Generate simplified snapshots for scenes that are neither target scene nor player's current scene.
+Generate simplified snapshots only for scenes listed in "Scenes To Update".
 
 ## Current Game Time
 - Day: {{currentGameDay}}
@@ -635,7 +641,7 @@ Generate simplified snapshots for scenes that are neither target scene nor playe
 - previousSnapshotTime: {{previousSnapshotTime}}
 - currentGameTime: {{currentGameTime}}
 
-## Non-Target / Non-Current Scenes To Update
+## Scenes To Update
 \`\`\`json
 {{scenesToUpdateJson}}
 \`\`\`
@@ -666,7 +672,8 @@ Generate simplified snapshots for scenes that are neither target scene nor playe
 \`\`\`
 
 ## Hard Rules
-- Update scenes that are neither target scene nor player's current scene.
+- Update ONLY scenes provided in "Scenes To Update".
+- Treat "Scenes To Update" as pre-filtered by system logic (it may exclude target/current scene depending on caller).
 - Produce simplified snapshots only.
 - Each updated snapshot must include:
   - description
