@@ -748,15 +748,13 @@ export const buildDynamicGraph = (
 
         return { ...state, dynamicGameState: dgsm.getState() };
       } else {
-        console.log(`   ✓ 全局触发器触发但未导致游戏结束，将在后台更新场景`);
+        console.log(`   ✓ 全局触发器触发但未导致游戏结束，将先更新场景再继续叙事`);
 
         // 不要清除 global trigger！保留它供 updateNonPlayerScenarios 使用作为 previousGlobalTrigger
         // updateNonPlayerScenarios 会生成新的 global trigger 并替换旧的
-        const updatedState = dgsm.getState();
-
-        // Start background scenario update (non-blocking, parallel with keeper generation)
+        // Run worldline update before keeper to ensure keeper sees latest snapshots.
         console.log(
-          `\n🔄 [Global Trigger] 启动后台场景更新任务（与 keeper 并行处理）...`
+          `\n🔄 [Global Trigger] 启动世界线更新任务（keeper 将在更新后继续）...`
         );
         console.log(
           `   ℹ️  保留当前 global trigger 作为 previousGlobalTrigger 供场景更新参考`
@@ -766,31 +764,23 @@ export const buildDynamicGraph = (
         );
 
         stream?.onWorldlineUpdateStart?.();
-        directorAgent
-          .updateNonPlayerScenarios(dgsm)
-          .then(() => {
-            // updateNonPlayerScenarios 内部会处理新的 global trigger 替换
-            // 如果生成了新的 global trigger，它已经通过 gameStateManager.setGlobalTrigger() 设置了
-            const finalState = dgsm.getState();
-            if (finalState.globalTrigger) {
-              console.log(
-                `   ✓ [后台任务] 场景更新完成，已生成新的 global trigger`
-              );
-            } else {
-              console.log(
-                `   ✓ [后台任务] 场景更新完成，未生成新的 global trigger（已清除旧的）`
-              );
-            }
-            stream?.onWorldlineUpdateEnd?.();
-          })
-          .catch((error) => {
-            console.error(`   ❌ [后台任务] 场景更新失败:`, error);
-            stream?.onWorldlineUpdateEnd?.();
-          });
+        try {
+          await directorAgent.updateNonPlayerScenarios(dgsm);
+          const finalState = dgsm.getState();
+          if (finalState.globalTrigger) {
+            console.log(`   ✓ [世界线更新] 场景更新完成，已生成新的 global trigger`);
+          } else {
+            console.log(
+              `   ✓ [世界线更新] 场景更新完成，未生成新的 global trigger（已清除旧的）`
+            );
+          }
+        } catch (error) {
+          console.error(`   ❌ [世界线更新] 场景更新失败:`, error);
+        } finally {
+          stream?.onWorldlineUpdateEnd?.();
+        }
 
-        // Return immediately without waiting for scenario update
-        // Keeper will generate narrative in parallel with scenario update
-        return { ...state, dynamicGameState: updatedState };
+        return { ...state, dynamicGameState: dgsm.getState() };
       }
     } else {
       console.log(`   ✓ 全局触发器未触发，游戏继续`);
@@ -1387,15 +1377,13 @@ export const buildDynamicListenerGraph = (
 
         return { ...state, dynamicGameState: dgsm.getState() };
       } else {
-        console.log(`   ✓ 全局触发器触发但未导致游戏结束，将在后台更新场景`);
+        console.log(`   ✓ 全局触发器触发但未导致游戏结束，将先更新场景再继续叙事`);
 
         // 不要清除 global trigger！保留它供 updateNonPlayerScenarios 使用作为 previousGlobalTrigger
         // updateNonPlayerScenarios 会生成新的 global trigger 并替换旧的
-        const updatedState = dgsm.getState();
-
-        // Start background scenario update (non-blocking, parallel with keeper generation)
+        // Run worldline update before keeper to ensure keeper sees latest snapshots.
         console.log(
-          `\n🔄 [Global Trigger] 启动后台场景更新任务（与 keeper 并行处理）...`
+          `\n🔄 [Global Trigger] 启动世界线更新任务（keeper 将在更新后继续）...`
         );
         console.log(
           `   ℹ️  保留当前 global trigger 作为 previousGlobalTrigger 供场景更新参考`
@@ -1405,31 +1393,23 @@ export const buildDynamicListenerGraph = (
         );
 
         stream?.onWorldlineUpdateStart?.();
-        directorAgent
-          .updateNonPlayerScenarios(dgsm)
-          .then(() => {
-            // updateNonPlayerScenarios 内部会处理新的 global trigger 替换
-            // 如果生成了新的 global trigger，它已经通过 gameStateManager.setGlobalTrigger() 设置了
-            const finalState = dgsm.getState();
-            if (finalState.globalTrigger) {
-              console.log(
-                `   ✓ [后台任务] 场景更新完成，已生成新的 global trigger`
-              );
-            } else {
-              console.log(
-                `   ✓ [后台任务] 场景更新完成，未生成新的 global trigger（已清除旧的）`
-              );
-            }
-            stream?.onWorldlineUpdateEnd?.();
-          })
-          .catch((error) => {
-            console.error(`   ❌ [后台任务] 场景更新失败:`, error);
-            stream?.onWorldlineUpdateEnd?.();
-          });
+        try {
+          await directorAgent.updateNonPlayerScenarios(dgsm);
+          const finalState = dgsm.getState();
+          if (finalState.globalTrigger) {
+            console.log(`   ✓ [世界线更新] 场景更新完成，已生成新的 global trigger`);
+          } else {
+            console.log(
+              `   ✓ [世界线更新] 场景更新完成，未生成新的 global trigger（已清除旧的）`
+            );
+          }
+        } catch (error) {
+          console.error(`   ❌ [世界线更新] 场景更新失败:`, error);
+        } finally {
+          stream?.onWorldlineUpdateEnd?.();
+        }
 
-        // Return immediately without waiting for scenario update
-        // Keeper will generate narrative in parallel with scenario update
-        return { ...state, dynamicGameState: updatedState };
+        return { ...state, dynamicGameState: dgsm.getState() };
       }
     } else {
       console.log(`   ✓ 全局触发器未触发，游戏继续`);

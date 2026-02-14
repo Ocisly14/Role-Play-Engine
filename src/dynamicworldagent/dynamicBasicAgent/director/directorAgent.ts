@@ -1774,6 +1774,21 @@ export class DirectorAgent {
           ...npc,
           actionLog: npc.actionLog || [],
         }));
+      const scenesToUpdateInBackground = allScenariosData.filter((scene) => {
+        if (
+          currentScenario?.name &&
+          scene.scenarioName === currentScenario.name
+        ) {
+          return false;
+        }
+        if (
+          currentSceneLocation &&
+          scene.snapshot.location?.toLowerCase().trim() === currentSceneLocation
+        ) {
+          return false;
+        }
+        return true;
+      });
       console.log(
         `   📋 Phase 1: Generating timeline for ${backgroundNpcs.length} background NPCs...`
       );
@@ -2004,7 +2019,7 @@ export class DirectorAgent {
         gameStateManager,
         currentGameTime,
         previousSnapshotTime,
-        allScenariosData,
+        scenesToUpdateInBackground,
         cleanedTimeline,
         playerActionWindow
       );
@@ -2024,9 +2039,11 @@ export class DirectorAgent {
                 outline.id === currentScenario.id ||
                 outline.name === currentScenario.name
             );
+          const currentScenarioStorageId =
+            currentScenarioOutline?.id || currentScenario.id;
           const currentSceneNpcs = this.getNPCsForScenario(
             currentScenario.location,
-            currentScenario.id,
+            currentScenarioStorageId,
             dynamicState.npcCharacters,
             previousSnapshotTime,
             currentGameTime
@@ -2039,7 +2056,7 @@ export class DirectorAgent {
             currentGameTime,
             currentSceneJson: JSON.stringify(
               {
-                scenarioId: currentScenario.id,
+                scenarioId: currentScenarioStorageId,
                 scenarioName: currentScenario.name,
                 location: currentScenario.location,
                 connections: currentScenarioOutline?.connections || [],
@@ -2176,7 +2193,7 @@ export class DirectorAgent {
             };
 
             await gameStateManager.setUpdatedDynamicScenarioSnapshot(
-              currentScenario.id,
+              currentScenarioStorageId,
               updatedCurrentSnapshot
             );
             gameStateManager.refreshCurrentScenarioSnapshot(updatedCurrentSnapshot);
