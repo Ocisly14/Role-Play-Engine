@@ -98,11 +98,22 @@ export function LoginForm() {
                 <article className="rounded-2xl border border-slate-200 bg-slate-50 p-5">
                   <div className="flex items-center justify-between mb-3 gap-3">
                     <p className="text-base font-semibold text-slate-900">
-                      {t("changelog.entry20260213Date")}
+                      {t("changelog.entry20260214Date")}
                     </p>
                     <span className="inline-flex items-center rounded-full bg-emerald-100 px-3 py-1 text-xs font-semibold text-emerald-800">
                       {t("changelog.latest")}
                     </span>
+                  </div>
+                  <p className="text-base leading-relaxed text-slate-700">
+                    {t("changelog.entry20260214Content")}
+                  </p>
+                </article>
+
+                <article className="mt-4 rounded-2xl border border-slate-200 bg-slate-50 p-5">
+                  <div className="flex items-center justify-between mb-3 gap-3">
+                    <p className="text-base font-semibold text-slate-900">
+                      {t("changelog.entry20260213Date")}
+                    </p>
                   </div>
                   <p className="text-base leading-relaxed text-slate-700">
                     {t("changelog.entry20260213Content")}
