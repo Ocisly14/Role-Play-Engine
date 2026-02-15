@@ -1,12 +1,17 @@
 import {
   getNpcActionTimelineTemplate,
-  getNpcActionTimelineWithPlayerSceneIngressTemplate,
   getTargetSnapshotFromTimelineTemplate,
+  getSceneSwitchBackgroundSimplifiedSnapshotsTemplate,
+} from "./sceneSwitchFlowTemplates.js";
+import {
+  getNpcActionTimelineWithPlayerSceneIngressTemplate,
   getCurrentSceneReactionSnapshotTemplate,
-  getBackgroundSimplifiedSnapshotsTemplate,
+  getNonPlayerBackgroundSimplifiedSnapshotsTemplate,
+} from "./nonPlayerFlowTemplates.js";
+import {
   getGlobalTriggerEventCheckTemplate,
   getStuckHintNarrativeTemplate,
-} from "./directorTemplate.js";
+} from "./directorAuxTemplates.js";
 import { composeTemplate } from "../../../template.js";
 import type { ScenarioCharacter } from "../../../shared/agents/models/scenarioTypes.js";
 import type { DynamicScenarioSnapshot } from "../../world_builder/types.js";
@@ -1387,6 +1392,7 @@ export class DirectorAgent {
         scenesToUpdateInBackground,
         cleanedTimeline,
         playerActionWindow,
+        getSceneSwitchBackgroundSimplifiedSnapshotsTemplate(),
         options
       );
 
@@ -1570,6 +1576,7 @@ export class DirectorAgent {
       }>;
     }>,
     playerActionWindow: ActionLogEntry[],
+    phase3Template: string,
     options?: {
       providerOverride?: ModelProviderName;
     }
@@ -1610,7 +1617,7 @@ export class DirectorAgent {
     };
 
     const prompt = composeTemplate(
-      getBackgroundSimplifiedSnapshotsTemplate(),
+      phase3Template,
       { dynamicGameState: dynamicState },
       templateContext,
       "handlebars"
@@ -2043,7 +2050,8 @@ export class DirectorAgent {
         previousSnapshotTime,
         scenesToUpdateInBackground,
         cleanedTimeline,
-        playerActionWindow
+        playerActionWindow,
+        getNonPlayerBackgroundSimplifiedSnapshotsTemplate()
       );
 
       let reactionMergedNpcUpdates = 0;
