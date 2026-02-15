@@ -28,7 +28,8 @@
     "test:coverage": "vitest --coverage",
     "test:scene-npc": "node test-scene-npc-extraction.mjs",
     "test:npc-builder": "tsx scripts/test-npc-builder.ts",
-    "test:scene-switch": "tsx scripts/test-scene-switch-template.ts"
+    "test:scene-switch": "tsx scripts/test-scene-switch-template.ts",
+    "verify:module-migration": "node --import tsx scripts/verify-module-migration.ts"
   },
   "keywords": [
     "langgraph",

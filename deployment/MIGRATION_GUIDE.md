@@ -187,7 +187,7 @@ tar czf coc-postgres-deploy.tar.gz \
   pnpm-lock.yaml \
   prisma/ \
   scripts/migrate-sqlite-to-postgres.ts \
-  scripts/verify-migration.ts \
+  scripts/verify-module-migration.ts \
   deployment/ecosystem.config.cjs
 
 # 上传到 EC2
@@ -313,7 +313,7 @@ Migrated records:
 
 ```bash
 # 运行验证脚本
-tsx scripts/verify-migration.ts ./data/coc_game.db
+pnpm run verify:module-migration
 ```
 
 **预期输出:**

@@ -746,11 +746,47 @@ export async function initializeCompleteDynamicGameState(
 
   // Create session record in database via Prisma upsert
   // This is required for checkpoint saves to work correctly
+  const moduleNameKey = params.moduleName.trim().toLowerCase();
+  let moduleId: string | null = null;
+  if (resolvedEmailId) {
+    const ownedModule = await prisma.module.findFirst({
+      where: {
+        ownerEmailId: resolvedEmailId,
+        moduleNameNormalized: moduleNameKey,
+      },
+      select: { moduleId: true },
+    });
+    moduleId = ownedModule?.moduleId || null;
+  }
+  if (!moduleId) {
+    const anyModule = await prisma.module.findFirst({
+      where: {
+        moduleNameNormalized: moduleNameKey,
+        status: "active",
+      },
+      select: { moduleId: true },
+      orderBy: { createdAt: "desc" },
+    });
+    moduleId = anyModule?.moduleId || null;
+  }
+  if (!moduleId) {
+    const fallbackModuleBackground = await prisma.moduleBackground.findFirst({
+      where: {
+        title: params.moduleName,
+        ...(resolvedEmailId ? { emailId: resolvedEmailId } : {}),
+      },
+      select: { moduleId: true },
+    });
+    moduleId = fallbackModuleBackground?.moduleId || null;
+  }
+
   const modName = completeState.moduleName || null;
   await prisma.session.upsert({
     where: { sessionId: params.sessionId },
     create: {
       sessionId: params.sessionId,
+      moduleId,
+      emailId: resolvedEmailId || null,
       modName,
       characterId: completeState.playerCharacter?.id || null,
       characterName: completeState.playerCharacter?.name || null,
@@ -759,6 +795,8 @@ export async function initializeCompleteDynamicGameState(
     },
     update: {
       lastActivityAt: new Date(),
+      moduleId,
+      emailId: resolvedEmailId || null,
       modName: modName || undefined,
     },
   });

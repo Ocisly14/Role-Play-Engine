@@ -271,12 +271,15 @@ export async function listCheckpoints(req: Request, res: Response): Promise<void
         return;
       }
 
-      // Fetch checkpoints for this session with session's modName
+      // Fetch checkpoints for this session (module_name comes from moduleId relation first).
       const rawCheckpoints = await prisma.gameCheckpoint.findMany({
         where: { sessionId },
         include: {
           session: {
-            select: { modName: true },
+            select: {
+              modName: true,
+              module: { select: { moduleName: true } },
+            },
           },
         },
         orderBy: { createdAt: "desc" },
@@ -291,7 +294,10 @@ export async function listCheckpoints(req: Request, res: Response): Promise<void
         createdAt: cp.createdAt,
         sessionId: cp.sessionId,
         gameState: cp.gameState,
-        modName: cp.session?.modName || "Unknown Module",
+        modName:
+          cp.session?.module?.moduleName ||
+          cp.session?.modName ||
+          "Unknown Module",
       }));
     } else {
       // Find all sessions owned by the user (via character)
@@ -307,10 +313,15 @@ export async function listCheckpoints(req: Request, res: Response): Promise<void
         return;
       }
 
-      // Find all sessions that belong to the user's characters
+      // Find all sessions that belong to the user (email scope first, character scope fallback).
       const userSessions = await prisma.session.findMany({
         where: {
-          characterId: { in: userCharacterIds },
+          OR: [
+            { emailId: req.user!.email },
+            ...(userCharacterIds.length > 0
+              ? [{ characterId: { in: userCharacterIds } }]
+              : []),
+          ],
         },
         select: { sessionId: true },
       });
@@ -329,7 +340,10 @@ export async function listCheckpoints(req: Request, res: Response): Promise<void
         },
         include: {
           session: {
-            select: { modName: true },
+            select: {
+              modName: true,
+              module: { select: { moduleName: true } },
+            },
           },
         },
         orderBy: { createdAt: "desc" },
@@ -344,7 +358,10 @@ export async function listCheckpoints(req: Request, res: Response): Promise<void
         createdAt: cp.createdAt,
         sessionId: cp.sessionId,
         gameState: cp.gameState,
-        modName: cp.session?.modName || "Unknown Module",
+        modName:
+          cp.session?.module?.moduleName ||
+          cp.session?.modName ||
+          "Unknown Module",
       }));
     }
 
@@ -789,6 +806,31 @@ async function createSessionFromCheckpointData(
       : null;
   const modName =
     typeof gameState?.moduleName === "string" ? gameState.moduleName : null;
+  const modNameNormalized =
+    typeof modName === "string" ? modName.trim().toLowerCase() : null;
+
+  let moduleId: string | null = null;
+  if (modNameNormalized) {
+    const owned = await prisma.module.findFirst({
+      where: {
+        ownerEmailId: ownerEmail,
+        moduleNameNormalized: modNameNormalized,
+      },
+      select: { moduleId: true },
+    });
+    moduleId = owned?.moduleId || null;
+  }
+  if (!moduleId && modNameNormalized) {
+    const shared = await prisma.module.findFirst({
+      where: {
+        moduleNameNormalized: modNameNormalized,
+        status: "active",
+      },
+      select: { moduleId: true },
+      orderBy: { createdAt: "desc" },
+    });
+    moduleId = shared?.moduleId || null;
+  }
 
   const turnsByNumber = new Map<
     number,
@@ -854,6 +896,8 @@ async function createSessionFromCheckpointData(
       characterInput: turn.characterInput,
       characterId,
       characterName,
+      moduleId,
+      emailId: ownerEmail,
       keeperNarrative: turn.keeperNarrative,
       status: "completed",
       startedAt: turn.startedAt,
@@ -886,6 +930,8 @@ async function createSessionFromCheckpointData(
     await tx.session.upsert({
       where: { sessionId },
       update: {
+        moduleId,
+        emailId: ownerEmail,
         modName,
         characterId,
         characterName,
@@ -894,6 +940,8 @@ async function createSessionFromCheckpointData(
       },
       create: {
         sessionId,
+        moduleId,
+        emailId: ownerEmail,
         modName,
         characterId,
         characterName,

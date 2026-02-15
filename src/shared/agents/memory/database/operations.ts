@@ -209,10 +209,17 @@ export class DatabaseOperations {
     currentSceneName?: string;
     isAutoCheckpoint?: boolean;
   }): Promise<void> {
+    const sessionScope = await this.prisma.session.findUnique({
+      where: { sessionId: params.sessionId },
+      select: { moduleId: true, emailId: true },
+    });
+
     await this.prisma.gameCheckpoint.create({
       data: {
         checkpointId: params.checkpointId,
         sessionId: params.sessionId,
+        moduleId: sessionScope?.moduleId || null,
+        emailId: sessionScope?.emailId || null,
         turnNumber: params.turnNumber,
         checkpointName: params.checkpointName,
         gameState: params.gameState,

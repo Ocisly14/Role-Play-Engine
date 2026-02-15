@@ -128,12 +128,18 @@ export async function startGame(req: Request, res: Response): Promise<void> {
           const playerCharacterId = dynamicGameState?.playerCharacter.id || "";
           const playerCharacterName =
             dynamicGameState?.playerCharacter.name || "";
+          const introSession = await prisma.session.findUnique({
+            where: { sessionId: introSessionId },
+            select: { moduleId: true, emailId: true },
+          });
 
           // Create a special turn with turnNumber 0 for introduction
           await prisma.gameTurn.create({
             data: {
               turnId: introTurnId,
               sessionId: introSessionId,
+              moduleId: introSession?.moduleId || null,
+              emailId: introSession?.emailId || userEmail,
               turnNumber: 0,
               characterInput: "",
               characterId: playerCharacterId,

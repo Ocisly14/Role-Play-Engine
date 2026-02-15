@@ -249,24 +249,32 @@ export class CoCDatabaseAdapter {
     this.trackSessionTurn(sessionId, turnId);
 
     // Fire-and-forget - not ideal but maintains compatibility
-    this.prisma.gameTurn.create({
-      data: {
-        turnId,
-        sessionId,
-        turnNumber,
-        characterInput,
-        characterId: characterId || null,
-        characterName: characterName || null,
-        sceneId: sceneId || null,
-        sceneName: sceneName || null,
-        location: location || null,
-        status: "processing",
-        startedAt,
-        isSimulated: isSimulated || false,
-        gameDay: gameDay ?? null,
-        gameTime: gameTime ?? null,
-      },
-    }).catch((error) => {
+    (async () => {
+      const sessionScope = await this.prisma.session.findUnique({
+        where: { sessionId },
+        select: { moduleId: true, emailId: true },
+      });
+      await this.prisma.gameTurn.create({
+        data: {
+          turnId,
+          sessionId,
+          moduleId: sessionScope?.moduleId || null,
+          emailId: sessionScope?.emailId || null,
+          turnNumber,
+          characterInput,
+          characterId: characterId || null,
+          characterName: characterName || null,
+          sceneId: sceneId || null,
+          sceneName: sceneName || null,
+          location: location || null,
+          status: "processing",
+          startedAt,
+          isSimulated: isSimulated || false,
+          gameDay: gameDay ?? null,
+          gameTime: gameTime ?? null,
+        },
+      });
+    })().catch((error) => {
       console.error(`Failed to create turn ${turnId}:`, error);
     });
   }

@@ -3,7 +3,6 @@
  * Loads module briefing data from documents and stores them in the database
  */
 
-import { randomUUID } from "crypto";
 import fs from "fs";
 import path from "path";
 import type { CoCDatabaseAdapter } from "../database/CoCDatabaseAdapter.js";
@@ -402,10 +401,9 @@ export class ModuleLoader {
   private convertToModuleBackground(
     parsed: ParsedModuleData
   ): ModuleBackground {
-    const moduleId = this.generateModuleId(parsed.title);
-
     return {
-      id: moduleId,
+      // The persisted moduleId is resolved in saveModuleToDatabase() via modules table.
+      id: "",
       title: parsed.title,
       background: parsed.background,
       storyOutline: parsed.storyOutline,
@@ -420,19 +418,60 @@ export class ModuleLoader {
     };
   }
 
-  private generateModuleId(title: string): string {
-    return `module-${title
-      .toLowerCase()
-      .replace(/\s+/g, "-")
-      .replace(/[^\w-]/g, "")}-${randomUUID().slice(0, 8)}`;
-  }
-
   private async saveModuleToDatabase(module: ModuleBackground): Promise<void> {
     const prisma = getPrismaClient();
     const emailId = this.getEmailId();
+    const ownerEmailId = emailId || "__system__";
+    const normalizedName = module.title.trim().toLowerCase();
+
+    const moduleRow = await prisma.module.upsert({
+      where: {
+        uq_modules_owner_name_normalized: {
+          ownerEmailId,
+          moduleNameNormalized: normalizedName,
+        },
+      },
+      update: {
+        moduleName: module.title,
+        moduleNameNormalized: normalizedName,
+        status: "active",
+        updatedAt: new Date(),
+      },
+      create: {
+        moduleName: module.title,
+        moduleNameNormalized: normalizedName,
+        ownerEmailId,
+        share: false,
+        status: "active",
+      },
+      select: { moduleId: true },
+    });
+
+    if (emailId) {
+      await prisma.modulePermission.upsert({
+        where: {
+          moduleId_emailId: { moduleId: moduleRow.moduleId, emailId },
+        },
+        update: {
+          role: "owner",
+          canPlay: true,
+          canManage: true,
+          grantedAt: new Date(),
+        },
+        create: {
+          moduleId: moduleRow.moduleId,
+          emailId,
+          role: "owner",
+          canPlay: true,
+          canManage: true,
+        },
+      });
+    }
+
+    module.id = moduleRow.moduleId;
 
     await prisma.moduleBackground.upsert({
-      where: { moduleId: module.id },
+      where: { moduleId: moduleRow.moduleId },
       update: {
         title: module.title,
         background: module.background || null,
@@ -449,7 +488,7 @@ export class ModuleLoader {
         emailId: emailId || null,
       },
       create: {
-        moduleId: module.id,
+        moduleId: moduleRow.moduleId,
         title: module.title,
         background: module.background || null,
         storyOutline: module.storyOutline || null,

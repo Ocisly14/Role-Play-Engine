@@ -10,6 +10,21 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
+enum ModuleStatus {
+  active
+  archived
+}
+
+enum ModuleRole {
+  owner
+  viewer
+}
+
+enum LibrarySource {
+  owned
+  shared_added
+}
+
 // =====================================================
 // REFERENCE DATA (Rules, Skills, Weapons, Sanity)
 // =====================================================
@@ -96,17 +111,17 @@ model User {
 }
 
 model UserSession {
-  id          String   @id
-  userId      String   @map("user_id")
-  token       String   @unique
-  userAgent   String?  @map("user_agent")
-  ipAddress   String?  @map("ip_address")
-  expiresAt   DateTime @map("expires_at")
-  createdAt   DateTime @default(now()) @map("created_at")
-  lastUsedAt  DateTime @default(now()) @map("last_used_at")
-  isRevoked   Boolean  @default(false) @map("is_revoked")
-  revokedAt   DateTime? @map("revoked_at")
-  revokeReason String?  @map("revoke_reason")
+  id           String    @id
+  userId       String    @map("user_id")
+  token        String    @unique
+  userAgent    String?   @map("user_agent")
+  ipAddress    String?   @map("ip_address")
+  expiresAt    DateTime  @map("expires_at")
+  createdAt    DateTime  @default(now()) @map("created_at")
+  lastUsedAt   DateTime  @default(now()) @map("last_used_at")
+  isRevoked    Boolean   @default(false) @map("is_revoked")
+  revokedAt    DateTime? @map("revoked_at")
+  revokeReason String?   @map("revoke_reason")
 
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 
@@ -132,12 +147,12 @@ model EmailVerification {
 }
 
 model PasswordReset {
-  id        String   @id
-  userId    String   @map("user_id")
-  token     String   @unique
-  expiresAt DateTime @map("expires_at")
-  createdAt DateTime @default(now()) @map("created_at")
-  used      Boolean  @default(false)
+  id        String    @id
+  userId    String    @map("user_id")
+  token     String    @unique
+  expiresAt DateTime  @map("expires_at")
+  createdAt DateTime  @default(now()) @map("created_at")
+  used      Boolean   @default(false)
   usedAt    DateTime? @map("used_at")
 
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
@@ -163,14 +178,14 @@ model RefreshToken {
 }
 
 model ReferralCode {
-  id            String   @id
-  code          String   @unique
-  maxUses       Int?     @map("max_uses")
-  expiresAt     DateTime? @map("expires_at")
-  description   String?
-  createdAt     DateTime @default(now()) @map("created_at")
-  createdByUserId String? @map("created_by_user_id")
-  usedByUserId    String? @map("used_by_user_id")
+  id              String    @id
+  code            String    @unique
+  maxUses         Int?      @map("max_uses")
+  expiresAt       DateTime? @map("expires_at")
+  description     String?
+  createdAt       DateTime  @default(now()) @map("created_at")
+  createdByUserId String?   @map("created_by_user_id")
+  usedByUserId    String?   @map("used_by_user_id")
 
   createdBy User?             @relation("CreatedReferralCodes", fields: [createdByUserId], references: [id])
   usedBy    User?             @relation("UsedReferralCodes", fields: [usedByUserId], references: [id])
@@ -207,31 +222,31 @@ model DisposableEmailDomain {
 // =====================================================
 
 model Character {
-  characterId        String    @id @map("character_id")
-  name               String
-  attributes         Json      @db.JsonB
-  status             Json      @db.JsonB
-  inventory          Json?     @db.JsonB
-  skills             Json?     @db.JsonB
-  notes              String?
-  isNpc              Boolean   @default(false) @map("is_npc")
-  occupation         String?
-  age                Int?
-  gender             String?
-  appearance         String?
-  personality        String?
-  background         String?
-  goals              Json?     @db.JsonB
-  secrets            Json?     @db.JsonB
-  currentLocation    String?   @map("current_location")
-  updatedAt          DateTime  @default(now()) @map("updated_at")
-  instantiatedFrom   String?   @map("instantiated_from")
-  inheritsKnowledge  Json?     @map("inherits_knowledge") @db.JsonB
-  emailId            String?   @map("email_id")
+  characterId       String   @id @map("character_id")
+  name              String
+  attributes        Json     @db.JsonB
+  status            Json     @db.JsonB
+  inventory         Json?    @db.JsonB
+  skills            Json?    @db.JsonB
+  notes             String?
+  isNpc             Boolean  @default(false) @map("is_npc")
+  occupation        String?
+  age               Int?
+  gender            String?
+  appearance        String?
+  personality       String?
+  background        String?
+  goals             Json?    @db.JsonB
+  secrets           Json?    @db.JsonB
+  currentLocation   String?  @map("current_location")
+  updatedAt         DateTime @default(now()) @map("updated_at")
+  instantiatedFrom  String?  @map("instantiated_from")
+  inheritsKnowledge Json?    @map("inherits_knowledge") @db.JsonB
+  emailId           String?  @map("email_id")
 
-  npcClues              NpcClue[]
-  sourceRelationships   NpcRelationship[] @relation("SourceCharacter")
-  targetRelationships   NpcRelationship[] @relation("TargetCharacter")
+  npcClues            NpcClue[]
+  sourceRelationships NpcRelationship[] @relation("SourceCharacter")
+  targetRelationships NpcRelationship[] @relation("TargetCharacter")
 
   @@index([name])
   @@index([isNpc])
@@ -285,81 +300,110 @@ model NpcRelationship {
 // =====================================================
 
 model ModuleBackground {
-  moduleId              String   @id @map("module_id")
-  title                 String
-  background            String?
-  storyOutline          String?  @map("story_outline")
-  moduleNotes           String?  @map("module_notes")
-  keeperGuidance        String?  @map("keeper_guidance")
-  moduleLimitations     String?  @map("module_limitations")
-  initialGameTime       String?  @map("initial_game_time")
-  initialScenarioNpcs   Json?    @map("initial_scenario_npcs") @db.JsonB
-  introduction          String?
-  tags                  Json?    @db.JsonB
-  emailId               String?  @map("email_id")
-  macroSceneStructure   Json?    @map("macro_scene_structure") @db.JsonB
-  truthTimeline         Json?    @map("truth_timeline") @db.JsonB
-  knowledgeMatrix       Json?    @map("knowledge_matrix") @db.JsonB
-  redHerrings           Json?    @map("red_herrings") @db.JsonB
-  historicalMythos      Json?    @map("historical_mythos") @db.JsonB
-  globalTrigger         Json?    @map("global_trigger") @db.JsonB
-  endStateDefinition    Json?    @map("end_state_definition") @db.JsonB
-  macroMapPath          String?  @map("macro_map_path")
+  moduleId            String  @id @map("module_id") @db.Uuid
+  title               String
+  background          String?
+  storyOutline        String? @map("story_outline")
+  moduleNotes         String? @map("module_notes")
+  keeperGuidance      String? @map("keeper_guidance")
+  moduleLimitations   String? @map("module_limitations")
+  initialGameTime     String? @map("initial_game_time")
+  initialScenarioNpcs Json?   @map("initial_scenario_npcs") @db.JsonB
+  introduction        String?
+  tags                Json?   @db.JsonB
+  emailId             String? @map("email_id")
+  macroSceneStructure Json?   @map("macro_scene_structure") @db.JsonB
+  truthTimeline       Json?   @map("truth_timeline") @db.JsonB
+  knowledgeMatrix     Json?   @map("knowledge_matrix") @db.JsonB
+  redHerrings         Json?   @map("red_herrings") @db.JsonB
+  historicalMythos    Json?   @map("historical_mythos") @db.JsonB
+  globalTrigger       Json?   @map("global_trigger") @db.JsonB
+  endStateDefinition  Json?   @map("end_state_definition") @db.JsonB
+  macroMapPath        String? @map("macro_map_path")
   // Note: searchVector will be added as String? type for tsvector compatibility
   // Actual tsvector type will be handled via raw SQL after migration
+
+  module Module @relation(fields: [moduleId], references: [moduleId], onDelete: Cascade)
 
   @@index([emailId])
   @@map("module_backgrounds")
 }
 
-model ModCatalog {
-  moduleName  String    @id @map("module_name")
-  ownerEmail  String    @map("owner_email")
-  shared      Boolean   @default(false)
-  createdAt   DateTime  @default(now()) @map("created_at")
-  deletedAt   DateTime? @map("deleted_at")
+model Module {
+  moduleId             String       @id @default(uuid()) @map("module_id") @db.Uuid
+  moduleName           String       @map("module_name")
+  moduleNameNormalized String       @map("module_name_normalized")
+  ownerEmailId         String       @default("__system__") @map("owner_email_id")
+  share                Boolean      @default(false)
+  status               ModuleStatus @default(active)
+  createdAt            DateTime     @default(now()) @map("created_at")
+  updatedAt            DateTime     @default(now()) @map("updated_at")
 
-  @@index([ownerEmail], name: "idx_mod_catalog_owner")
-  @@index([shared], name: "idx_mod_catalog_shared")
-  @@index([deletedAt], name: "idx_mod_catalog_deleted")
-  @@map("mod_catalog")
+  background     ModuleBackground?
+  permissions    ModulePermission[]
+  userLibraries  UserModuleLibrary[]
+  deletedByUsers UserModuleDeleted[]
+  sessions       Session[]
+  turns          GameTurn[]
+  checkpoints    GameCheckpoint[]
+
+  @@unique([ownerEmailId, moduleNameNormalized], name: "uq_modules_owner_name_normalized")
+  @@index([ownerEmailId], name: "idx_modules_owner_email")
+  @@index([share], name: "idx_modules_share")
+  @@index([status], name: "idx_modules_status")
+  @@index([share, status, updatedAt], name: "idx_modules_share_status_updated")
+  @@index([moduleNameNormalized], name: "idx_modules_name_normalized")
+  @@map("modules")
 }
 
-model UserMod {
-  emailId    String   @map("email_id")
-  moduleName String   @map("module_name")
-  addedAt    DateTime @default(now()) @map("added_at")
+model ModulePermission {
+  moduleId  String     @map("module_id") @db.Uuid
+  emailId   String     @map("email_id")
+  role      ModuleRole
+  canPlay   Boolean    @default(true) @map("can_play")
+  canManage Boolean    @default(false) @map("can_manage")
+  grantedAt DateTime   @default(now()) @map("granted_at")
 
-  @@id([emailId, moduleName])
-  @@index([emailId], name: "idx_user_mods_email")
-  @@index([moduleName], name: "idx_user_mods_module")
-  @@map("user_mods")
+  module Module @relation(fields: [moduleId], references: [moduleId], onDelete: Cascade)
+
+  @@id([moduleId, emailId])
+  @@index([emailId], name: "idx_module_permissions_email")
+  @@index([emailId, moduleId], name: "idx_module_permissions_email_module")
+  @@map("module_permissions")
 }
 
-model UserModBootstrap {
-  emailId        String   @id @map("email_id")
-  bootstrappedAt DateTime @default(now()) @map("bootstrapped_at")
+model UserModuleLibrary {
+  emailId  String        @map("email_id")
+  moduleId String        @map("module_id") @db.Uuid
+  source   LibrarySource
+  addedAt  DateTime      @default(now()) @map("added_at")
 
-  @@map("user_mods_bootstrap")
+  module Module @relation(fields: [moduleId], references: [moduleId], onDelete: Cascade)
+
+  @@id([emailId, moduleId])
+  @@index([moduleId], name: "idx_user_module_library_module")
+  @@map("user_module_library")
 }
 
-model UserModDeleted {
-  emailId    String   @map("email_id")
-  moduleName String   @map("module_name")
-  deletedAt  DateTime @default(now()) @map("deleted_at")
+model UserModuleDeleted {
+  emailId   String   @map("email_id")
+  moduleId  String   @map("module_id") @db.Uuid
+  deletedAt DateTime @default(now()) @map("deleted_at")
 
-  @@id([emailId, moduleName])
-  @@index([emailId], name: "idx_user_mods_deleted_email")
-  @@index([moduleName], name: "idx_user_mods_deleted_module")
-  @@map("user_mods_deleted")
+  module Module @relation(fields: [moduleId], references: [moduleId], onDelete: Cascade)
+
+  @@id([emailId, moduleId])
+  @@index([deletedAt], name: "idx_user_module_deleted_deleted_at")
+  @@index([moduleId], name: "idx_user_module_deleted_module")
+  @@map("user_module_deleted")
 }
 
 model ModGeneration {
-  id           String   @id
-  emailId      String   @map("email_id")
-  moduleName   String   @map("module_name")
-  storyLength  String   @map("story_length")
-  generatedAt  DateTime @default(now()) @map("generated_at")
+  id          String   @id
+  emailId     String   @map("email_id")
+  moduleName  String   @map("module_name")
+  storyLength String   @map("story_length")
+  generatedAt DateTime @default(now()) @map("generated_at")
 
   @@index([emailId], name: "idx_mod_generations_email")
   @@index([emailId, generatedAt], name: "idx_mod_generations_email_time")
@@ -371,17 +415,17 @@ model ModGeneration {
 // =====================================================
 
 model Scenario {
-  scenarioId       String              @id @map("scenario_id")
+  scenarioId       String   @id @map("scenario_id")
   name             String
   description      String
-  tags             Json?               @db.JsonB
-  connections      Json?               @db.JsonB
-  permanentChanges Json?               @map("permanent_changes") @db.JsonB
-  metadata         Json                @db.JsonB
-  createdAt        DateTime            @default(now()) @map("created_at")
-  emailId          String?             @map("email_id")
-  mapImagePath     String?             @map("map_image_path")
-  sourcePlaceId    String?             @map("source_place_id")
+  tags             Json?    @db.JsonB
+  connections      Json?    @db.JsonB
+  permanentChanges Json?    @map("permanent_changes") @db.JsonB
+  metadata         Json     @db.JsonB
+  createdAt        DateTime @default(now()) @map("created_at")
+  emailId          String?  @map("email_id")
+  mapImagePath     String?  @map("map_image_path")
+  sourcePlaceId    String?  @map("source_place_id")
   // Note: searchVector for FTS will be handled via raw SQL
 
   snapshots ScenarioSnapshot[]
@@ -392,22 +436,22 @@ model Scenario {
 }
 
 model ScenarioSnapshot {
-  snapshotId          String              @id @map("snapshot_id")
-  scenarioId          String              @map("scenario_id")
-  snapshotName        String?             @map("snapshot_name")
+  snapshotId          String   @id @map("snapshot_id")
+  scenarioId          String   @map("scenario_id")
+  snapshotName        String?  @map("snapshot_name")
   location            String
   description         String
-  events              Json?               @db.JsonB
-  exits               Json?               @db.JsonB
-  keeperNotes         String?             @map("keeper_notes")
-  timeRestriction     String?             @map("time_restriction")
-  showMap             Boolean?            @map("show_map")
-  createdAt           DateTime            @default(now()) @map("created_at")
-  emailId             String?             @map("email_id")
-  initialSnapshot     Boolean             @default(false) @map("initial_snapshot")
-  gameTime            String?             @map("game_time")
-  isDynamicHistorical Boolean             @default(false) @map("is_dynamic_historical")
-  sceneImagePath      String?             @map("scene_image_path")
+  events              Json?    @db.JsonB
+  exits               Json?    @db.JsonB
+  keeperNotes         String?  @map("keeper_notes")
+  timeRestriction     String?  @map("time_restriction")
+  showMap             Boolean? @map("show_map")
+  createdAt           DateTime @default(now()) @map("created_at")
+  emailId             String?  @map("email_id")
+  initialSnapshot     Boolean  @default(false) @map("initial_snapshot")
+  gameTime            String?  @map("game_time")
+  isDynamicHistorical Boolean  @default(false) @map("is_dynamic_historical")
+  sceneImagePath      String?  @map("scene_image_path")
 
   scenario   Scenario            @relation(fields: [scenarioId], references: [scenarioId], onDelete: Cascade)
   characters ScenarioCharacter[]
@@ -421,15 +465,15 @@ model ScenarioSnapshot {
 }
 
 model ScenarioCharacter {
-  id               String   @id
-  snapshotId       String   @map("snapshot_id")
-  characterName    String   @map("character_name")
-  characterRole    String   @map("character_role")
-  characterStatus  String   @map("character_status")
-  characterLocation String? @map("character_location")
-  characterNotes   String?  @map("character_notes")
-  createdAt        DateTime @default(now()) @map("created_at")
-  emailId          String?  @map("email_id")
+  id                String   @id
+  snapshotId        String   @map("snapshot_id")
+  characterName     String   @map("character_name")
+  characterRole     String   @map("character_role")
+  characterStatus   String   @map("character_status")
+  characterLocation String?  @map("character_location")
+  characterNotes    String?  @map("character_notes")
+  createdAt         DateTime @default(now()) @map("created_at")
+  emailId           String?  @map("email_id")
 
   snapshot ScenarioSnapshot @relation(fields: [snapshotId], references: [snapshotId], onDelete: Cascade)
 
@@ -484,23 +528,28 @@ model ScenarioCondition {
 // =====================================================
 
 model Session {
-  sessionId       String    @id @map("session_id")
-  modName         String?   @map("mod_name")
-  characterId     String?   @map("character_id")
-  characterName   String?   @map("character_name")
-  startedAt       DateTime  @default(now()) @map("started_at")
-  lastActivityAt  DateTime  @default(now()) @map("last_activity_at")
-  status          String    @default("active")
-  metadata        Json?     @db.JsonB
-  createdAt       DateTime  @default(now()) @map("created_at")
-  parentSessionId String?   @map("parent_session_id")
-  subId           Int?      @map("sub_id")
+  sessionId       String   @id @map("session_id")
+  moduleId        String?  @map("module_id") @db.Uuid
+  emailId         String?  @map("email_id")
+  modName         String?  @map("mod_name") // Deprecated display field; use moduleId for data relations
+  characterId     String?  @map("character_id")
+  characterName   String?  @map("character_name")
+  startedAt       DateTime @default(now()) @map("started_at")
+  lastActivityAt  DateTime @default(now()) @map("last_activity_at")
+  status          String   @default("active")
+  metadata        Json?    @db.JsonB
+  createdAt       DateTime @default(now()) @map("created_at")
+  parentSessionId String?  @map("parent_session_id")
+  subId           Int?     @map("sub_id")
 
   turns       GameTurn[]
   checkpoints GameCheckpoint[]
+  module      Module?          @relation(fields: [moduleId], references: [moduleId], onDelete: SetNull)
 
   @@index([status])
   @@index([startedAt])
+  @@index([moduleId])
+  @@index([emailId])
   @@index([parentSessionId])
   @@index([parentSessionId, subId])
   @@map("sessions")
@@ -509,6 +558,8 @@ model Session {
 model GameTurn {
   turnId           String    @id @map("turn_id")
   sessionId        String    @map("session_id")
+  moduleId         String?   @map("module_id") @db.Uuid
+  emailId          String?   @map("email_id")
   turnNumber       Int       @map("turn_number")
   characterInput   String    @map("character_input")
   characterId      String?   @map("character_id")
@@ -531,8 +582,11 @@ model GameTurn {
   gameTime         String?   @map("game_time")
 
   session Session @relation(fields: [sessionId], references: [sessionId], onDelete: Cascade)
+  module  Module? @relation(fields: [moduleId], references: [moduleId], onDelete: SetNull)
 
   @@index([sessionId])
+  @@index([moduleId])
+  @@index([emailId])
   @@index([status])
   @@index([sessionId, turnNumber])
   @@index([startedAt])
@@ -592,18 +646,23 @@ model Relationship {
 }
 
 model GameCheckpoint {
-  checkpointId       String   @id @map("checkpoint_id")
-  sessionId          String   @map("session_id")
-  turnNumber         Int      @map("turn_number")
-  checkpointName     String?  @map("checkpoint_name")
-  gameState          Json     @map("game_state") @db.JsonB
-  currentSceneName   String?  @map("current_scene_name")
-  isAutoCheckpoint   Boolean  @default(false) @map("is_auto_checkpoint")
-  createdAt          DateTime @default(now()) @map("created_at")
+  checkpointId     String   @id @map("checkpoint_id")
+  sessionId        String   @map("session_id")
+  moduleId         String?  @map("module_id") @db.Uuid
+  emailId          String?  @map("email_id")
+  turnNumber       Int      @map("turn_number")
+  checkpointName   String?  @map("checkpoint_name")
+  gameState        Json     @map("game_state") @db.JsonB
+  currentSceneName String?  @map("current_scene_name")
+  isAutoCheckpoint Boolean  @default(false) @map("is_auto_checkpoint")
+  createdAt        DateTime @default(now()) @map("created_at")
 
   session Session @relation(fields: [sessionId], references: [sessionId], onDelete: Cascade)
+  module  Module? @relation(fields: [moduleId], references: [moduleId], onDelete: SetNull)
 
   @@index([sessionId])
+  @@index([moduleId])
+  @@index([emailId])
   @@index([sessionId, currentSceneName])
   @@index([sessionId, turnNumber])
   @@index([isAutoCheckpoint])
@@ -633,19 +692,19 @@ model UserTokenUsage {
 }
 
 model DailyAnalytics {
-  id                         String   @id
-  statDate                   DateTime @unique @map("stat_date") @db.Date
-  loginUsersCount            Int      @default(0) @map("login_users_count")
-  activeUsersCount           Int      @default(0) @map("active_users_count")
-  newUsersCount              Int      @default(0) @map("new_users_count")
-  totalMessagesCount         Int      @default(0) @map("total_messages_count")
-  avgMessagesPerActiveUser   Float    @default(0.0) @map("avg_messages_per_active_user")
-  newModsShortCount          Int      @default(0) @map("new_mods_short_count")
-  newModsMediumCount         Int      @default(0) @map("new_mods_medium_count")
-  newModsLongCount           Int      @default(0) @map("new_mods_long_count")
-  totalNewModsCount          Int      @default(0) @map("total_new_mods_count")
-  createdAt                  DateTime @default(now()) @map("created_at")
-  updatedAt                  DateTime @default(now()) @map("updated_at")
+  id                       String   @id
+  statDate                 DateTime @unique @map("stat_date") @db.Date
+  loginUsersCount          Int      @default(0) @map("login_users_count")
+  activeUsersCount         Int      @default(0) @map("active_users_count")
+  newUsersCount            Int      @default(0) @map("new_users_count")
+  totalMessagesCount       Int      @default(0) @map("total_messages_count")
+  avgMessagesPerActiveUser Float    @default(0.0) @map("avg_messages_per_active_user")
+  newModsShortCount        Int      @default(0) @map("new_mods_short_count")
+  newModsMediumCount       Int      @default(0) @map("new_mods_medium_count")
+  newModsLongCount         Int      @default(0) @map("new_mods_long_count")
+  totalNewModsCount        Int      @default(0) @map("total_new_mods_count")
+  createdAt                DateTime @default(now()) @map("created_at")
+  updatedAt                DateTime @default(now()) @map("updated_at")
 
   @@index([statDate])
   @@map("daily_analytics")

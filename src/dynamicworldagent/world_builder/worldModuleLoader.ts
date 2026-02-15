@@ -509,10 +509,54 @@ export class WorldModuleLoader {
    */
   private async saveModuleBackground(module: LoadedWorldModule): Promise<void> {
     const prisma = getPrismaClient();
-    const moduleId = this.scopeId(
-      `module-${module.moduleName.toLowerCase().replace(/\s+/g, "-")}`
-    );
     const emailId = this.getEmailId();
+    const ownerEmailId = emailId || "__system__";
+    const normalizedName = module.moduleName.trim().toLowerCase();
+
+    const moduleRow = await prisma.module.upsert({
+      where: {
+        uq_modules_owner_name_normalized: {
+          ownerEmailId,
+          moduleNameNormalized: normalizedName,
+        },
+      },
+      update: {
+        moduleName: module.moduleName,
+        moduleNameNormalized: normalizedName,
+        status: "active",
+        updatedAt: new Date(),
+      },
+      create: {
+        moduleName: module.moduleName,
+        moduleNameNormalized: normalizedName,
+        ownerEmailId,
+        share: false,
+        status: "active",
+      },
+      select: { moduleId: true, share: true },
+    });
+
+    if (emailId) {
+      await prisma.modulePermission.upsert({
+        where: {
+          moduleId_emailId: { moduleId: moduleRow.moduleId, emailId },
+        },
+        update: {
+          role: "owner",
+          canPlay: true,
+          canManage: true,
+          grantedAt: new Date(),
+        },
+        create: {
+          moduleId: moduleRow.moduleId,
+          emailId,
+          role: "owner",
+          canPlay: true,
+          canManage: true,
+        },
+      });
+    }
+    const moduleId = moduleRow.moduleId;
 
     // Generate background from macro scene
     const background = `${module.macroScene.locationName} - ${module.macroScene.settingType || "setting"}. ${module.macroScene.economicCore}`;
