@@ -955,6 +955,64 @@ export class DirectorAgent {
     return filtered;
   }
 
+  private sanitizeGeneratedActionLogEntries(options: {
+    entries: ActionLogEntry[];
+    currentGameTime: string;
+    previousSnapshotTime?: string;
+    npcLatestActionTime?: string;
+    bucketTime?: string;
+  }): ActionLogEntry[] {
+    const {
+      entries,
+      currentGameTime,
+      previousSnapshotTime,
+      npcLatestActionTime,
+      bucketTime,
+    } = options;
+
+    const prepared = entries
+      .map((entry) => ({
+        ...entry,
+        time: entry.time || bucketTime || "",
+      }))
+      .filter((entry) => !!entry.time && !!entry.location && !!entry.summary);
+
+    prepared.sort((a, b) => {
+      const timeA = this.parseGameTimeFromSnapshot(a.time);
+      const timeB = this.parseGameTimeFromSnapshot(b.time);
+      if (!timeA || !timeB) return 0;
+      if (timeA.gameDay !== timeB.gameDay) {
+        return timeA.gameDay - timeB.gameDay;
+      }
+      const [hA, mA] = timeA.timeOfDay.split(":").map(Number);
+      const [hB, mB] = timeB.timeOfDay.split(":").map(Number);
+      return hA * 60 + mA - (hB * 60 + mB);
+    });
+
+    const valid: ActionLogEntry[] = [];
+    let latestAcceptedTime = npcLatestActionTime;
+
+    for (const entry of prepared) {
+      if (!this.isTimeBeforeOrEqual(entry.time, currentGameTime)) {
+        continue;
+      }
+      if (
+        previousSnapshotTime &&
+        !this.isTimeAfter(entry.time, previousSnapshotTime)
+      ) {
+        continue;
+      }
+      if (latestAcceptedTime && !this.isTimeAfter(entry.time, latestAcceptedTime)) {
+        continue;
+      }
+
+      valid.push(entry);
+      latestAcceptedTime = entry.time;
+    }
+
+    return valid;
+  }
+
   private buildLightweightCharactersForScene(
     sceneLocation: string,
     currentGameTime: string,
@@ -1170,33 +1228,13 @@ export class DirectorAgent {
         currentScenario?.gameTime ||
         currentGameTime;
 
-      const currentSceneLocation = currentScenario?.location?.toLowerCase().trim();
-      const excludedNpcIds = new Set<string>();
-
-      if (currentSceneLocation) {
-        for (const npc of dynamicState.npcCharacters) {
-          const latest = this.getLatestActionLogAtOrBefore(
-            npc.actionLog,
-            currentGameTime
-          );
-          if (
-            latest?.location &&
-            latest.location.toLowerCase().trim() === currentSceneLocation
-          ) {
-            excludedNpcIds.add(npc.id);
-          }
-        }
-      }
-
-      const backgroundNpcs = dynamicState.npcCharacters
-        .filter((npc) => !excludedNpcIds.has(npc.id))
-        .map((npc) => ({
-          ...npc,
-          actionLog: npc.actionLog || [],
-        }));
+      const phase1Npcs = dynamicState.npcCharacters.map((npc) => ({
+        ...npc,
+        actionLog: npc.actionLog || [],
+      }));
 
       console.log(
-        `   📋 Phase 1: Generating timeline for ${backgroundNpcs.length} background NPCs...`
+        `   📋 Phase 1: Generating timeline for ${phase1Npcs.length} NPCs...`
       );
 
       const phase1Context = {
@@ -1222,7 +1260,7 @@ export class DirectorAgent {
           2
         ),
         allScenariosJson: JSON.stringify(allScenariosData, null, 2),
-        backgroundNpcsJson: JSON.stringify(backgroundNpcs, null, 2),
+        phase1NpcsJson: JSON.stringify(phase1Npcs, null, 2),
       };
 
       const phase1Prompt = composeTemplate(
@@ -1269,7 +1307,7 @@ export class DirectorAgent {
         const cleanedNpcUpdates: TimelineNpcUpdate[] = [];
         const updates = bucket.npcActionLogUpdates || [];
         for (const update of updates) {
-          if (!update?.id || excludedNpcIds.has(update.id)) {
+          if (!update?.id) {
             continue;
           }
 
@@ -1278,24 +1316,17 @@ export class DirectorAgent {
             console.warn(`   ⚠️ NPC "${update.id}" not found, skipping timeline update`);
             continue;
           }
-
-          const validActionLog = (update.actionLog || [])
-            .map((entry) => ({
-              ...entry,
-              time: entry.time || bucket.time || "",
-            }))
-            .filter((entry) => {
-              if (!entry.time || !entry.location || !entry.summary) {
-                return false;
-              }
-              if (!this.isTimeBeforeOrEqual(entry.time, currentGameTime)) {
-                return false;
-              }
-              if (previousSnapshotTime && !this.isTimeAfter(entry.time, previousSnapshotTime)) {
-                return false;
-              }
-              return true;
-            });
+          const npcLatestAction = this.getLatestActionLogAtOrBefore(
+            npc.actionLog,
+            currentGameTime
+          );
+          const validActionLog = this.sanitizeGeneratedActionLogEntries({
+            entries: update.actionLog || [],
+            bucketTime: bucket.time,
+            currentGameTime,
+            previousSnapshotTime,
+            npcLatestActionTime: npcLatestAction?.time,
+          });
 
           // Apply delta only when there is at least one valid actionLog entry in window
           if (validActionLog.length === 0) {
@@ -1881,24 +1912,17 @@ export class DirectorAgent {
             console.warn(`   ⚠️ NPC "${update.id}" not found, skipping timeline update`);
             continue;
           }
-
-          const validActionLog = (update.actionLog || [])
-            .map((entry) => ({
-              ...entry,
-              time: entry.time || bucket.time || "",
-            }))
-            .filter((entry) => {
-              if (!entry.time || !entry.location || !entry.summary) {
-                return false;
-              }
-              if (!this.isTimeBeforeOrEqual(entry.time, currentGameTime)) {
-                return false;
-              }
-              if (previousSnapshotTime && !this.isTimeAfter(entry.time, previousSnapshotTime)) {
-                return false;
-              }
-              return true;
-            });
+          const npcLatestAction = this.getLatestActionLogAtOrBefore(
+            npc.actionLog,
+            currentGameTime
+          );
+          const validActionLog = this.sanitizeGeneratedActionLogEntries({
+            entries: update.actionLog || [],
+            bucketTime: bucket.time,
+            currentGameTime,
+            previousSnapshotTime,
+            npcLatestActionTime: npcLatestAction?.time,
+          });
 
           // Apply delta only when there is at least one valid actionLog entry in window
           if (validActionLog.length === 0) {
@@ -1950,18 +1974,16 @@ export class DirectorAgent {
             console.warn(`   ⚠️ NPC "${update.id}" not found, skipping sudden actionLog`);
             continue;
           }
-
-          const validActionLog = (update.actionLog || []).filter((entry) => {
-            if (!entry.time || !entry.location || !entry.summary) {
-              return false;
-            }
-            if (!this.isTimeBeforeOrEqual(entry.time, currentGameTime)) {
-              return false;
-            }
-            if (previousSnapshotTime && !this.isTimeAfter(entry.time, previousSnapshotTime)) {
-              return false;
-            }
-
+          const npcLatestAction = this.getLatestActionLogAtOrBefore(
+            npc.actionLog,
+            currentGameTime
+          );
+          const validActionLog = this.sanitizeGeneratedActionLogEntries({
+            entries: update.actionLog || [],
+            currentGameTime,
+            previousSnapshotTime,
+            npcLatestActionTime: npcLatestAction?.time,
+          }).filter((entry) => {
             if (currentSceneLocationNormalized || currentSceneNameNormalized) {
               const normalizedLocation = entry.location.toLowerCase().trim();
               const matchesCurrentScene =

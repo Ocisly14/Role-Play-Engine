@@ -227,7 +227,7 @@ export async function generateText(
     providerOverride,
     customSystemPrompt,
     maxRetries = 3,
-    fallbackToLargeOnFailure = true,
+    fallbackToLargeOnFailure = false,
     largeFallbackRetries = 3,
     images,
     onToken,

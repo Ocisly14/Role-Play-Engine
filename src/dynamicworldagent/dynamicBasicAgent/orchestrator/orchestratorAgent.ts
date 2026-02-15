@@ -29,6 +29,13 @@ const createRuntime = (): OrchestratorRuntime => ({
   getSetting: (key: string) => process.env[key],
 });
 
+const toDisplayScenarioId = (scenarioId: string): string => {
+  const delimiterIndex = scenarioId.lastIndexOf("::");
+  return delimiterIndex >= 0
+    ? scenarioId.slice(delimiterIndex + 2)
+    : scenarioId;
+};
+
 /**
  * Orchestrator Agent - Routes user queries to appropriate agents
  */
@@ -125,7 +132,7 @@ export class OrchestratorAgent {
     if (connections.length > 0) {
       connections.forEach((conn, index) => {
         console.log(
-          `   ${index + 1}. "${conn.scenarioName}" (ID: ${conn.scenarioId}) [${conn.relationshipType}]`
+          `   ${index + 1}. "${conn.scenarioName}" (ID: ${toDisplayScenarioId(conn.scenarioId)}) [${conn.relationshipType}]`
         );
         if (conn.description)
           console.log(`      Description: ${conn.description}`);

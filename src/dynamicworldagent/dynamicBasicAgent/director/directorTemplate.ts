@@ -1,10 +1,10 @@
 /**
- * Scene Switch Phase 1 Template - Generate background NPC action timeline only
+ * Scene Switch Phase 1 Template - Generate all-NPC action timeline
  */
 export function getNpcActionTimelineTemplate(): string {
-  return `# Director Agent - Scene Switch Phase 1 (Background NPC Action Timeline)
+  return `# Director Agent - Scene Switch Phase 1 (All NPC Action Timeline)
 
-Generate only background NPC action timeline updates for the current scene switch.
+Generate action timeline updates for all NPCs for the current scene switch.
 
 ## Current Game Time
 - Day: {{currentGameDay}}
@@ -37,17 +37,15 @@ Generate only background NPC action timeline updates for the current scene switc
 ## NPC Profiles For Timeline Generation
 
 IMPORTANT:
-- These NPCs are already filtered. They exclude player and NPCs in player's current scene.
+- These NPCs include all NPCs in the session.
 - Use exact NPC id/name from input.
 
 \`\`\`json
-{{backgroundNpcsJson}}
+{{phase1NpcsJson}}
 \`\`\`
 
 ## Hard Rules
-- Generate only background world progression action timeline.
-- Do NOT generate player actions.
-- Do NOT regenerate actions for NPCs currently in player's current scene.
+- Generate world progression action timeline for all NPCs.
 - Actions must follow knowledge/goals/personality/secrets and remain coherent across NPCs.
 - Actions must be time-sequenced, realistic, and within the time window.
 - Base actions on the NPC's goals, personality, and secrets (from full profile + knowledge matrix).
@@ -64,6 +62,8 @@ IMPORTANT:
   - For NPC A: "Attacked NPC B with a knife, dealing 3 damage"
   - For NPC B: "Was attacked by NPC A, taking 3 damage"
 - Historical actionLog is read-only context; output only new incremental entries.
+- For each NPC, every generated actionLog time MUST be strictly later than that NPC's latest existing actionLog time.
+- Never output any actionLog entry at or before that NPC's latest existing actionLog time.
 - For \`actionTimeline\` buckets, \`actionLog\` entries can omit \`time\`; backend will use the parent bucket \`time\`.
 
 ## One-Shot Example
@@ -78,7 +78,7 @@ IMPORTANT:
     "timeRestriction": "Day 4, 01:00",
     "events": ["Ritual couriers assemble at the pier office"]
   },
-  "backgroundNpcs": [
+  "phase1Npcs": [
     {
       "id": "npc-harbor-foreman",
       "name": "Mason Pike",
@@ -259,6 +259,8 @@ IMPORTANT:
   - For NPC A: "Attacked NPC B with a knife, dealing 3 damage"
   - For NPC B: "Was attacked by NPC A, taking 3 damage"
 - Historical actionLog is read-only context; output only new incremental entries.
+- For each NPC, every generated actionLog time MUST be strictly later than that NPC's latest existing actionLog time.
+- Never output any actionLog entry at or before that NPC's latest existing actionLog time.
 - For \`actionTimeline\` buckets, \`actionLog\` entries can omit \`time\`; backend will use the parent bucket \`time\`.
 - OPTIONAL extra output: \`SuddenActionLogs\`
   - This field is OPTIONAL.
