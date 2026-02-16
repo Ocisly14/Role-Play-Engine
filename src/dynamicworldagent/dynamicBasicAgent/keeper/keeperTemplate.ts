@@ -7,10 +7,12 @@ const getLanguageInstruction = (language: "en" | "zh"): string =>
     ? `- Only the \`narrative\` text MUST be in English.
   - Keep JSON keys and structure in English exactly as specified.
   - Non-narrative fields (IDs, names, enum values, and other structured values) MUST remain English/canonical and must not be translated.
+  - Person/character/NPC names in \`narrative\` MUST match input exactly. Do NOT translate, transliterate, localize, or rename them.
   - Do not mix Chinese with English in the \`narrative\` text.`
     : `- Only the \`narrative\` text MUST be in Chinese.
   - Keep JSON keys and structure in English exactly as specified.
   - Non-narrative fields (IDs, names, enum values, and other structured values) MUST remain English/canonical and must not be translated.
+  - \`narrative\` 里的人名/角色名/NPC 名必须与输入完全一致。禁止翻译、音译、本地化或改名。
   - Do not mix English with Chinese in the \`narrative\` text.`;
 
 export function getKeeperTemplate(language: "en" | "zh" = "zh"): string {
@@ -233,9 +235,11 @@ You are a writer, responsible for writing a narrative of the game.
   - Count ALL clue types together: scenarioClues + npcClues + npcSecrets
   - You MUST NOT reveal more than 2 clues total in a single output
   - If multiple clues are eligible, choose the most narratively relevant ones
-  - Prioritize quality over quantity - revealing too many clues overwhelms the player
+  - Prioritize quality over quantity
 
   ### Clue Selection Rules
+  - Relevance gate (HARD RULE): Reveal clues/secrets ONLY when the current successful action is meaningfully related to discovering that information.
+  - If an action succeeds but is unrelated to clue/secret discovery, do NOT reveal any new clue or secret; narrate the concrete success outcome of that action instead.
   - You need to choose whether to reveal a clue or not.
   - **AUTOMATIC** clues: May reveal progressively without specific action success (only if difficulty < Regular).
   - **REGULAR or higher** difficulty: Check if any action is successfully performed by the investigator. Only a successful action can reveal this kind of difficulty clue.
@@ -338,6 +342,7 @@ Generate an epilogue narrative that:
 - Maintain the cosmic horror atmosphere
 - Should be 2-4 paragraphs
 - Can reference specific events from game history but don't repeat them verbatim
+- Any person/character/NPC name must match injected input exactly; do not translate, transliterate, localize, or rename
 - Write all narrative text in **${targetLanguage}**
 - Keep JSON keys in English exactly as defined below
 

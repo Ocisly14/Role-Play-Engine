@@ -349,6 +349,61 @@ ${
 }
 
 /**
+ * Build prompt for relationship updates based on resolved action outcomes.
+ */
+export function buildRelationshipUpdateTemplate(params: {
+  fullGameTime: string;
+  actionResolutionJson: string;
+  relatedNpcsJson: string;
+}): string {
+  return `# Action Agent - Relationship Update
+
+You are updating NPC relationships based on already-resolved action outcomes.
+Use ONLY the provided data. Do not invent unseen events.
+
+## Current Game Time
+${params.fullGameTime}
+
+## Full Action Resolution (current action)
+\`\`\`json
+${params.actionResolutionJson}
+\`\`\`
+
+## Related NPC Profiles (source of relationship updates)
+\`\`\`json
+${params.relatedNpcsJson}
+\`\`\`
+
+## Hard Rules
+- Update relationships ONLY when the resolved action meaningfully affects trust/hostility/loyalty/power dynamics.
+- If the action has no meaningful social impact, return an empty \`relationshipUpdates\` array.
+- Never modify characters not present in inputs.
+- \`sourceNpcId\` MUST be one of the provided related NPC ids.
+- \`targetId\` MUST be one of the provided related NPC ids.
+- Keep names exactly as provided; do not translate, localize, or rename.
+- \`attitude\` must be an integer in [-100, 100].
+- Keep updates minimal and conservative. Do not overreact to minor actions.
+
+## Output Format
+Return ONLY valid JSON:
+\`\`\`json
+{
+  "relationshipUpdates": [
+    {
+      "sourceNpcId": "npc-id",
+      "targetId": "target-character-id",
+      "targetName": "Exact target name from input",
+      "relationshipType": "any short relationship label",
+      "attitude": -20,
+      "description": "optional short description"
+    }
+  ]
+}
+\`\`\`
+`;
+}
+
+/**
  * Get the action type template based on action type
  */
 export function getActionTypeTemplate(

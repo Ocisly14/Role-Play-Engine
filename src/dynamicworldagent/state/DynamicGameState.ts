@@ -32,7 +32,10 @@ import type {
 } from "../world_builder/types.js";
 import type { CoCDatabase, CoCDatabaseAdapter } from "../../shared/agents/memory/database/index.js";
 import type { ScenarioClue, ScenarioCondition } from "../../shared/agents/models/scenarioTypes.js";
-import { InventoryUtils } from "../../shared/agents/models/gameTypes.js";
+import {
+  InventoryUtils,
+  type NPCRelationship,
+} from "../../shared/agents/models/gameTypes.js";
 import { randomUUID } from "crypto";
 import { getPrismaClient } from "../../shared/agents/memory/database/prismaClient.js";
 
@@ -1244,6 +1247,56 @@ export class DynamicGameStateManager {
           );
         }
       }
+    }
+
+    // Update relationships for NPCs if provided
+    if (
+      Array.isArray(updates.relationships) &&
+      Array.isArray(character.relationships)
+    ) {
+      const sanitizedRelationships: NPCRelationship[] = [];
+      for (const rel of updates.relationships) {
+        if (!rel || typeof rel !== "object") continue;
+        const targetId = (rel as any).targetId;
+        const targetName = (rel as any).targetName;
+        const relationshipType = (rel as any).relationshipType;
+        const attitude = (rel as any).attitude;
+        if (
+          typeof targetId !== "string" ||
+          typeof targetName !== "string" ||
+          typeof relationshipType !== "string" ||
+          typeof attitude !== "number"
+        ) {
+          continue;
+        }
+
+        const clampedAttitude = Math.max(-100, Math.min(100, Math.round(attitude)));
+        sanitizedRelationships.push({
+          targetId,
+          targetName,
+          relationshipType: relationshipType as NPCRelationship["relationshipType"],
+          attitude: clampedAttitude,
+          ...(typeof (rel as any).description === "string"
+            ? { description: (rel as any).description }
+            : {}),
+          ...(typeof (rel as any).history === "string"
+            ? { history: (rel as any).history }
+            : {}),
+        });
+      }
+
+      const merged = [...character.relationships];
+      for (const newRel of sanitizedRelationships) {
+        const existingIndex = merged.findIndex(
+          (existingRel) => existingRel.targetId === newRel.targetId
+        );
+        if (existingIndex >= 0) {
+          merged[existingIndex] = newRel;
+        } else {
+          merged.push(newRel);
+        }
+      }
+      character.relationships = merged;
     }
   }
 
