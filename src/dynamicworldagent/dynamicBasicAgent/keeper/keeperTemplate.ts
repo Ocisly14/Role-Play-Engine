@@ -67,10 +67,10 @@ You are a writer, responsible for writing a narrative of the game.
 
   {{#if hasWorldlineSceneUpdate}}
   ### Background Worldline Scene Update (Current Scene)
-  **Previous Current-Scene Snapshot (before update):**
+  **Before (Current Scene - Previous Snapshot):**
   {{worldlinePreviousSnapshotJson}}
 
-  **Updated Current-Scene Snapshot (after update):**
+  **After (Current Scene - Updated Snapshot):**
   {{worldlineUpdatedSnapshotJson}}
 
   **SuddenActionLogs:**
@@ -78,6 +78,8 @@ You are a writer, responsible for writing a narrative of the game.
 
   **Reaction NPC ActionLogs:**
   {{worldlineReactionNpcActionLogsJson}}
+
+  Treat the above as a two-state scene progression (Before → After), and narrate the visible transformation with clear continuity.
   {{/if}}
 
   {{#if keeperGuidance}}
@@ -181,6 +183,7 @@ You are a writer, responsible for writing a narrative of the game.
   {{#if hasWorldlineSceneUpdate}}
   ### Hard Rule — Worldline Scene Update Integration
   - You MUST integrate the current scene update into this turn's narrative.
+  - Treat \`worldlinePreviousSnapshotJson\` and \`worldlineUpdatedSnapshotJson\` as two scene states and narrate the transition from Before → After in-scene.
   - Reflect concrete differences between previous and updated scene snapshots in what the investigator now perceives.
   - If sudden/reaction logs are provided, narrate those NPC intrusions and reactions consistently with the logs.
   - Treat the updated current-scene snapshot as the latest ground truth.

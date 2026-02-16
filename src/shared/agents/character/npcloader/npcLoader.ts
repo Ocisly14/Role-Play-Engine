@@ -11,6 +11,7 @@ import { ChatOpenAI } from "@langchain/openai";
 import type { CoCDatabaseAdapter } from "../../memory/database/CoCDatabaseAdapter.js";
 import { getPrismaClient } from "../../memory/database/prismaClient.js";
 import { resolveEmailId, scopeId } from "../../memory/database/userContext.js";
+import { stripModuleScope } from "../../memory/database/moduleScope.js";
 import type {
   CharacterAttributes,
   CharacterStatus,
@@ -120,6 +121,20 @@ export class NPCLoader {
 
   private getEmailId(): string | undefined {
     return resolveEmailId(this.emailId);
+  }
+
+  private buildNpcIdCandidates(npcId: string): string[] {
+    const normalized = String(npcId || "").trim();
+    if (!normalized) return [];
+    const candidates = [normalized];
+    const emailId = this.getEmailId();
+    if (emailId) {
+      const prefixed = `${emailId}::${normalized}`;
+      if (!candidates.includes(prefixed)) {
+        candidates.push(prefixed);
+      }
+    }
+    return candidates;
   }
 
   /**
@@ -1120,26 +1135,37 @@ Return ONLY JSON array, no extra text.`;
    */
   async getNPCById(npcId: string): Promise<NPCProfile | null> {
     const prisma = getPrismaClient();
-    const scopedNpcId = scopeId(npcId, this.getEmailId());
     const emailId = this.getEmailId();
+    const candidateIds = this.buildNpcIdCandidates(npcId);
+    if (candidateIds.length === 0) {
+      return null;
+    }
 
-    // Get character data
+    // Get character data (prefer exact id match, then fall back to legacy email-scoped id)
     const charWhere = emailId
-      ? { characterId: scopedNpcId, isNpc: true, emailId }
-      : { characterId: scopedNpcId, isNpc: true };
+      ? { characterId: { in: candidateIds }, isNpc: true, emailId }
+      : { characterId: { in: candidateIds }, isNpc: true };
 
-    const character = await prisma.character.findFirst({
+    const characters = await prisma.character.findMany({
       where: charWhere,
+      take: candidateIds.length,
     });
+    const character =
+      candidateIds
+        .map((candidateId) =>
+          characters.find((row) => row.characterId === candidateId)
+        )
+        .find((row) => Boolean(row)) || null;
 
     if (!character) {
       return null;
     }
+    const resolvedNpcId = character.characterId;
 
     // Get clues
     const clueWhere = emailId
-      ? { npcId: scopedNpcId, emailId }
-      : { npcId: scopedNpcId };
+      ? { npcId: resolvedNpcId, emailId }
+      : { npcId: resolvedNpcId };
 
     const clues = await prisma.npcClue.findMany({
       where: clueWhere,
@@ -1147,8 +1173,8 @@ Return ONLY JSON array, no extra text.`;
 
     // Get relationships
     const relWhere = emailId
-      ? { sourceId: scopedNpcId, emailId }
-      : { sourceId: scopedNpcId };
+      ? { sourceId: resolvedNpcId, emailId }
+      : { sourceId: resolvedNpcId };
 
     const relationships = await prisma.npcRelationship.findMany({
       where: relWhere,
@@ -1216,11 +1242,21 @@ Return ONLY JSON array, no extra text.`;
       select: { characterId: true },
     });
 
+    // Prefer non-legacy IDs first; then de-dup legacy/new rows by raw id.
+    const sortedIds = characters
+      .map((c) => c.characterId)
+      .sort((a, b) => Number(a.includes("::")) - Number(b.includes("::")));
+    const seenRawIds = new Set<string>();
     const results: NPCProfile[] = [];
-    for (const c of characters) {
-      const npc = await this.getNPCById(c.characterId);
+    for (const characterId of sortedIds) {
+      const rawId = stripModuleScope(characterId);
+      if (seenRawIds.has(rawId)) {
+        continue;
+      }
+      const npc = await this.getNPCById(characterId);
       if (npc) {
         results.push(npc);
+        seenRawIds.add(rawId);
       }
     }
     return results;
@@ -1231,12 +1267,15 @@ Return ONLY JSON array, no extra text.`;
    */
   async npcExists(npcId: string): Promise<boolean> {
     const prisma = getPrismaClient();
-    const scopedNpcId = scopeId(npcId, this.getEmailId());
     const emailId = this.getEmailId();
+    const candidateIds = this.buildNpcIdCandidates(npcId);
+    if (candidateIds.length === 0) {
+      return false;
+    }
 
     const charWhere = emailId
-      ? { characterId: scopedNpcId, isNpc: true, emailId }
-      : { characterId: scopedNpcId, isNpc: true };
+      ? { characterId: { in: candidateIds }, isNpc: true, emailId }
+      : { characterId: { in: candidateIds }, isNpc: true };
 
     const count = await prisma.character.count({
       where: charWhere,

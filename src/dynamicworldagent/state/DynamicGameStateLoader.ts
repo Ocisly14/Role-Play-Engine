@@ -20,7 +20,11 @@ import type {
 import type { DynamicScenarioSnapshot } from "../world_builder/types.js";
 import { NPCLoader } from "../../shared/agents/character/npcloader/index.js";
 import { resolveEmailId } from "../../shared/agents/memory/database/userContext.js";
-import { resolveModuleIdByName } from "../../shared/agents/memory/database/moduleScope.js";
+import {
+  resolveModuleIdByName,
+  scopeIdByModule,
+  stripModuleScope,
+} from "../../shared/agents/memory/database/moduleScope.js";
 import type { ScenarioClue, ScenarioCondition } from "../../shared/agents/models/scenarioTypes.js";
 
 /**
@@ -30,6 +34,11 @@ import type { ScenarioClue, ScenarioCondition } from "../../shared/agents/models
 function convertNPCProfileToDynamic(npc: NPCProfile): DynamicNPCProfile {
   const { currentLocation, ...rest } = npc;
   return rest as DynamicNPCProfile;
+}
+
+function normalizeIdToModuleScope(id: string, moduleId: string | null): string {
+  if (!moduleId) return id;
+  return scopeIdByModule(stripModuleScope(id), moduleId);
 }
 
 /**
@@ -515,11 +524,11 @@ export async function initializeCompleteDynamicGameState(
     };
   }
 
-  // 2. Load all initial snapshots for all scenarios
+  // 2. Load all baseline snapshots for this module's scenarios
   let currentScenario: DynamicScenarioSnapshot | null = null;
   let gameDay = 1;
   let timeOfDay = "08:00";
-  const initialSnapshotsMap = new Map<string, DynamicScenarioSnapshot[]>();
+  const moduleSnapshotsMap = new Map<string, DynamicScenarioSnapshot[]>();
 
   // Helper function to build a snapshot from a Prisma result (async due to Prisma queries)
   const buildSnapshotFromRow = async (snapshotRow: any): Promise<DynamicScenarioSnapshot> => {
@@ -618,46 +627,55 @@ export async function initializeCompleteDynamicGameState(
     };
   };
 
-  // Load all initial snapshots (one per scenario) with related scenario name
-  const allInitialSnapshots = await prisma.scenarioSnapshot.findMany({
+  // Load all non-historical snapshots for this module.
+  // New-game state should include all module scene snapshots; initialSnapshot only decides start scene.
+  const allModuleSnapshots = await prisma.scenarioSnapshot.findMany({
     where: {
-      initialSnapshot: true,
       ...(scopedModuleId ? { moduleId: scopedModuleId } : {}),
+      isDynamicHistorical: false,
     },
     include: {
       scenario: {
         select: { name: true },
       },
     },
-    orderBy: { scenarioId: "asc" },
+    orderBy: [{ scenarioId: "asc" }, { createdAt: "asc" }],
   });
 
-  // Build snapshots and group by scenario_id
-  for (const snapshotRow of allInitialSnapshots) {
-    const snapshot = await buildSnapshotFromRow(snapshotRow);
+  // Determine player starting snapshot:
+  // 1) first initialSnapshot=true (if present), otherwise
+  // 2) first available module snapshot.
+  const startSnapshotRow =
+    allModuleSnapshots.find((row) => row.initialSnapshot) ||
+    allModuleSnapshots[0] ||
+    null;
 
-    // Store in map (one snapshot per scenario for initial snapshots)
-    if (!initialSnapshotsMap.has(snapshotRow.scenarioId)) {
-      initialSnapshotsMap.set(snapshotRow.scenarioId, []);
+  // Build snapshots and group by scenarioId
+  const snapshotsById = new Map<string, DynamicScenarioSnapshot>();
+  for (const snapshotRow of allModuleSnapshots) {
+    const snapshot = await buildSnapshotFromRow(snapshotRow);
+    snapshotsById.set(snapshotRow.snapshotId, snapshot);
+
+    if (!moduleSnapshotsMap.has(snapshotRow.scenarioId)) {
+      moduleSnapshotsMap.set(snapshotRow.scenarioId, []);
     }
-    initialSnapshotsMap.get(snapshotRow.scenarioId)!.push(snapshot);
+    moduleSnapshotsMap.get(snapshotRow.scenarioId)!.push(snapshot);
   }
 
-  // Set the first initial snapshot as currentScenario (for player's starting scene)
-  if (allInitialSnapshots.length > 0) {
-    const firstInitialSnapshot = allInitialSnapshots[0];
-    currentScenario = await buildSnapshotFromRow(firstInitialSnapshot);
+  // Set player start scene from initial snapshot (or fallback first available snapshot)
+  if (startSnapshotRow) {
+    currentScenario = snapshotsById.get(startSnapshotRow.snapshotId) || null;
 
     console.log(
-      `[DynamicGameState] Found initial snapshot: ${firstInitialSnapshot.snapshotName || firstInitialSnapshot.scenario?.name} (${firstInitialSnapshot.location})`
+      `[DynamicGameState] Start snapshot: ${startSnapshotRow.snapshotName || startSnapshotRow.scenario?.name} (${startSnapshotRow.location})`
     );
 
     // Parse game time from snapshot
-    if (firstInitialSnapshot.gameTime) {
+    if (startSnapshotRow.gameTime) {
       console.log(
-        `[DynamicGameState] Loading game time from snapshot: "${firstInitialSnapshot.gameTime}"`
+        `[DynamicGameState] Loading game time from snapshot: "${startSnapshotRow.gameTime}"`
       );
-      const parsedTime = parseInitialGameTime(firstInitialSnapshot.gameTime);
+      const parsedTime = parseInitialGameTime(startSnapshotRow.gameTime);
       if (parsedTime) {
         if (parsedTime.gameDay !== undefined) {
           gameDay = parsedTime.gameDay;
@@ -667,7 +685,7 @@ export async function initializeCompleteDynamicGameState(
         console.log(`[DynamicGameState] Set timeOfDay to: ${timeOfDay}`);
       } else {
         console.warn(
-          `[DynamicGameState] Failed to parse game_time: "${firstInitialSnapshot.gameTime}", using defaults: Day ${gameDay}, ${timeOfDay}`
+          `[DynamicGameState] Failed to parse game_time: "${startSnapshotRow.gameTime}", using defaults: Day ${gameDay}, ${timeOfDay}`
         );
       }
     } else {
@@ -678,19 +696,38 @@ export async function initializeCompleteDynamicGameState(
   }
 
   console.log(
-    `[DynamicGameState] Loaded ${initialSnapshotsMap.size} initial scenario snapshots`
+    `[DynamicGameState] Loaded ${allModuleSnapshots.length} baseline snapshots across ${moduleSnapshotsMap.size} scenarios`
   );
 
-  // 3. Load all NPCs from database (not just current scenario)
+  // 3. Load all NPCs and normalize legacy ids to module scope.
   const npcLoader = new NPCLoader(db as any, undefined, undefined, {
     emailId: resolvedEmailId,
   });
   const allNPCs = await npcLoader.getAllNPCs();
 
-  // Convert all NPCs to DynamicNPCProfile format
-  const npcCharacters: DynamicNPCProfile[] = allNPCs.map((npc) =>
-    convertNPCProfileToDynamic(npc)
-  );
+  const npcCharacters: DynamicNPCProfile[] = allNPCs
+    .map((npc) => {
+      const normalizedId = normalizeIdToModuleScope(npc.id, scopedModuleId);
+      const dynamicNpc = convertNPCProfileToDynamic(npc);
+      return {
+        ...dynamicNpc,
+        id: normalizedId,
+        clues: Array.isArray(dynamicNpc.clues)
+          ? dynamicNpc.clues.map((clue) => ({
+              ...clue,
+              id: normalizeIdToModuleScope(clue.id, scopedModuleId),
+            }))
+          : [],
+        relationships: Array.isArray(dynamicNpc.relationships)
+          ? dynamicNpc.relationships.map((rel) => ({
+              ...rel,
+              targetId: rel.targetId
+                ? normalizeIdToModuleScope(rel.targetId, scopedModuleId)
+                : rel.targetId,
+            }))
+          : [],
+      };
+    });
 
   console.log(
     `[DynamicGameState] Loaded ${npcCharacters.length} NPCs from database`
@@ -710,16 +747,24 @@ export async function initializeCompleteDynamicGameState(
   }
 
   // 5. Create complete state with runtime data
-  // Merge initial snapshots with any existing snapshots from worldData
+  // Merge module baseline snapshots with any existing in-memory snapshots
   const mergedSnapshots = new Map(worldData.updatedDynamicScenarioSnapshots);
-  // Add initial snapshots (will not overwrite if already exists, but initial snapshots should be first)
-  for (const [scenarioId, snapshots] of initialSnapshotsMap.entries()) {
+  for (const [scenarioId, snapshots] of moduleSnapshotsMap.entries()) {
     if (!mergedSnapshots.has(scenarioId)) {
       mergedSnapshots.set(scenarioId, snapshots);
     } else {
-      // If scenario already has snapshots, prepend initial snapshot to the beginning
+      // Keep baseline snapshots first, then append any runtime snapshots, dedup by snapshot id.
       const existing = mergedSnapshots.get(scenarioId)!;
-      mergedSnapshots.set(scenarioId, [...snapshots, ...existing]);
+      const combined = [...snapshots, ...existing];
+      const deduped: DynamicScenarioSnapshot[] = [];
+      const seen = new Set<string>();
+      for (const item of combined) {
+        if (!seen.has(item.id)) {
+          deduped.push(item);
+          seen.add(item.id);
+        }
+      }
+      mergedSnapshots.set(scenarioId, deduped);
     }
   }
 
@@ -735,8 +780,8 @@ export async function initializeCompleteDynamicGameState(
       sceneStartTime: timeOfDay,
       playerTimeConsumption: {},
     },
-    // Store all initial snapshots in updatedDynamicScenarioSnapshots
-    // This allows Director Agent to access all scenario snapshots without querying database
+    // Store all module baseline snapshots in updatedDynamicScenarioSnapshots.
+    // This allows agents to read all module scenes directly from state.
     updatedDynamicScenarioSnapshots: mergedSnapshots,
   };
 

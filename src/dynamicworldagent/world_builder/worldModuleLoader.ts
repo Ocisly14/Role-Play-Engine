@@ -13,9 +13,11 @@ import type {
 import { getPrismaClient } from "../../shared/agents/memory/database/prismaClient.js";
 import {
   resolveEmailId,
-  scopeId,
 } from "../../shared/agents/memory/database/userContext.js";
-import { scopeIdByModule } from "../../shared/agents/memory/database/moduleScope.js";
+import {
+  scopeIdByModule,
+  stripModuleScope,
+} from "../../shared/agents/memory/database/moduleScope.js";
 import type {
   MacroSceneStructure,
   TruthEvent,
@@ -80,10 +82,6 @@ export class WorldModuleLoader {
 
   private getEmailId(): string | undefined {
     return resolveEmailId(this.emailId);
-  }
-
-  private scopeId(id: string): string {
-    return scopeId(id, this.getEmailId());
   }
 
   private scopeByModule(id: string, moduleId: string): string {
@@ -498,7 +496,7 @@ export class WorldModuleLoader {
 
     // 2. Save NPCs
     console.log(`  [2/4] Saving ${module.npcs.length} NPCs...`);
-    await this.saveNPCs(module.npcs);
+    await this.saveNPCs(module.npcs, moduleId);
 
     // 3. Save scenarios
     console.log(`  [3/4] Saving ${module.scenarios.length} scenarios...`);
@@ -651,14 +649,47 @@ export class WorldModuleLoader {
   /**
    * Save NPCs to database
    */
-  private async saveNPCs(npcs: DynamicNPCProfile[]): Promise<void> {
+  private async saveNPCs(
+    npcs: DynamicNPCProfile[],
+    moduleId: string
+  ): Promise<void> {
     const prisma = getPrismaClient();
     const emailId = this.getEmailId();
-    const scopedNpcIds = new Set(npcs.map((npc) => this.scopeId(npc.id)));
+    const scopedNpcIds = new Set(
+      npcs.map((npc) => this.scopeByModule(npc.id, moduleId))
+    );
 
     // Pass 1: ensure all NPC characters exist before writing dependent rows.
     for (const npc of npcs) {
-      const npcId = this.scopeId(npc.id);
+      const npcId = this.scopeByModule(npc.id, moduleId);
+      const rawNpcId = stripModuleScope(npc.id);
+      const legacyEmailScopedNpcId = emailId ? `${emailId}::${rawNpcId}` : null;
+
+      // Cleanup legacy email-scoped IDs so new state won't expose email prefixes.
+      if (legacyEmailScopedNpcId && legacyEmailScopedNpcId !== npcId) {
+        await prisma.npcRelationship.deleteMany({
+          where: {
+            OR: [
+              { sourceId: legacyEmailScopedNpcId },
+              { targetId: legacyEmailScopedNpcId },
+            ],
+            ...(emailId ? { emailId } : {}),
+          },
+        });
+        await prisma.npcClue.deleteMany({
+          where: {
+            npcId: legacyEmailScopedNpcId,
+            ...(emailId ? { emailId } : {}),
+          },
+        });
+        await prisma.character.deleteMany({
+          where: {
+            characterId: legacyEmailScopedNpcId,
+            isNpc: true,
+            ...(emailId ? { emailId } : {}),
+          },
+        });
+      }
 
       await prisma.character.upsert({
         where: { characterId: npcId },
@@ -709,11 +740,11 @@ export class WorldModuleLoader {
 
     // Pass 2: save clues (depends on NPC character existing).
     for (const npc of npcs) {
-      const npcId = this.scopeId(npc.id);
+      const npcId = this.scopeByModule(npc.id, moduleId);
 
       if (npc.clues && npc.clues.length > 0) {
         for (const clue of npc.clues) {
-          const clueId = this.scopeId(clue.id);
+          const clueId = this.scopeByModule(clue.id, moduleId);
 
           await prisma.npcClue.upsert({
             where: { id: clueId },
@@ -749,7 +780,7 @@ export class WorldModuleLoader {
         const rawTargetId =
           typeof rel.targetId === "string" ? rel.targetId.trim() : "";
         if (!rawTargetId) continue;
-        const scopedTargetId = this.scopeId(rawTargetId);
+        const scopedTargetId = this.scopeByModule(rawTargetId, moduleId);
         if (!scopedNpcIds.has(scopedTargetId)) {
           externalTargetIds.add(scopedTargetId);
         }
@@ -770,7 +801,7 @@ export class WorldModuleLoader {
     // Pass 3: save relationships (requires source and target characters to exist).
     let skippedRelationships = 0;
     for (const npc of npcs) {
-      const npcId = this.scopeId(npc.id);
+      const npcId = this.scopeByModule(npc.id, moduleId);
 
       if (npc.relationships && npc.relationships.length > 0) {
         for (const rel of npc.relationships) {
@@ -783,7 +814,7 @@ export class WorldModuleLoader {
             );
             continue;
           }
-          const targetId = this.scopeId(rawTargetId);
+          const targetId = this.scopeByModule(rawTargetId, moduleId);
           const targetExists =
             scopedNpcIds.has(targetId) ||
             existingExternalTargetIds.has(targetId);
@@ -795,7 +826,10 @@ export class WorldModuleLoader {
             continue;
           }
 
-          const relId = this.scopeId(`${npc.id}_${rel.targetName}`);
+          const relId = this.scopeByModule(
+            `${stripModuleScope(npc.id)}_${rel.targetName}`,
+            moduleId
+          );
 
           await prisma.npcRelationship.upsert({
             where: { id: relId },
