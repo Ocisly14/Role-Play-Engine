@@ -24,6 +24,12 @@ interface ModuleIntroduction {
   moduleNotes: string;
 }
 
+interface LoadCheckpointResult {
+  success: boolean;
+  notice?: string;
+  error?: string;
+}
+
 interface GameSessionContextType {
   // Session data
   sessionId: string;
@@ -45,7 +51,10 @@ interface GameSessionContextType {
     modName: string,
     language: string
   ) => Promise<void>;
-  loadCheckpoint: (checkpointId: string, language: string) => Promise<void>;
+  loadCheckpoint: (
+    checkpointId: string,
+    language: string
+  ) => Promise<LoadCheckpointResult>;
   restoreLatestSession: () => Promise<boolean>;
   clearSession: () => void;
 
@@ -132,7 +141,10 @@ export const GameSessionProvider: React.FC<{ children: React.ReactNode }> = ({
 
   // Load from checkpoint
   const loadCheckpoint = useCallback(
-    async (checkpointId: string, language: string) => {
+    async (
+      checkpointId: string,
+      language: string
+    ): Promise<LoadCheckpointResult> => {
       try {
         const response = await authFetch("/api/checkpoints/load", {
           method: "POST",
@@ -173,24 +185,27 @@ export const GameSessionProvider: React.FC<{ children: React.ReactNode }> = ({
             language === "zh"
               ? t("game:session.language.chinese")
               : t("game:session.language.english");
-          alert(
-            `${t("checkpoint:success.loaded")}\n${t("game:session.languageRestored", { language: languageLabel })}\n`
-          );
-
-          navigate("/game");
+          return {
+            success: true,
+            notice: `${t("checkpoint:success.loaded")}\n${t("game:session.languageRestored", { language: languageLabel })}`,
+          };
         } else {
-          alert(
-            `${t("checkpoint:errors.loadFailed")}: ${
+          return {
+            success: false,
+            error: `${t("checkpoint:errors.loadFailed")}: ${
               data.error || t("common:error.generic")
-            }`
-          );
+            }`,
+          };
         }
       } catch (error) {
         console.error("Error loading checkpoint:", error);
-        alert(t("common:error.network"));
+        return {
+          success: false,
+          error: t("common:error.network"),
+        };
       }
     },
-    [navigate, t]
+    [t]
   );
 
   // Restore latest session on mount

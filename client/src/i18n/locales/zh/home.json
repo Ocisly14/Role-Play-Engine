@@ -37,6 +37,7 @@
     "loadError": "加载角色失败",
     "networkError": "网络错误: 无法连接到服务器",
     "importingData": "导入游戏数据中...",
+    "moduleLoading": "模组加载中...",
     "dataImportComplete": "数据导入完成: {{scenariosLoaded}}个场景,{{npcsLoaded}}个NPC",
     "startingGame": "启动游戏中...",
     "importFailed": "数据导入失败"

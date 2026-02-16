@@ -73,6 +73,7 @@
     },
     "messages": {
       "initializing": "Initializing...",
+      "loadingModule": "Loading module...",
       "generatingIntro": "Generating module introduction narrative...",
       "ready": "Ready"
     },
@@ -162,6 +163,14 @@
       "noResponseBody": "No response body",
       "generationFailed": "Generation failed",
       "ideaRequired": "Please enter your story idea"
+    },
+    "sharePrompt": {
+      "title": "Module Generated",
+      "message": "Your module \"{{moduleName}}\" is ready. Do you want to share it with the community?",
+      "share": "Share and Continue",
+      "skip": "Continue Without Sharing",
+      "sharing": "Sharing...",
+      "shareFailed": "Failed to share module. You can continue without sharing."
     }
   },
   "manager": {

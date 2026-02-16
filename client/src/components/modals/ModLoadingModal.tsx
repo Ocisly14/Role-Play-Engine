@@ -37,7 +37,7 @@ export const ModLoadingModal: React.FC<ModLoadingModalProps> = ({
           <>
             <div className="mb-5">
               <div className="flex justify-between mb-2.5 text-sm text-gray-700">
-                <span>{progress.stage}</span>
+                <span>{t('moduleLoad.messages.loadingModule')}</span>
                 <span>{progress.progress}%</span>
               </div>
               <div className="w-full h-6 bg-gray-300 rounded-xl overflow-hidden border-2 border-gray-400">
@@ -51,7 +51,7 @@ export const ModLoadingModal: React.FC<ModLoadingModalProps> = ({
             </div>
 
             <div className="text-center text-base min-h-[40px] flex items-center justify-center text-gray-700">
-              {progress.message}
+              {t('moduleLoad.messages.loadingModule')}
             </div>
           </>
         )}

@@ -17,6 +17,7 @@ interface CheckpointSelectorModalProps {
   onClose: () => void;
   checkpoints: Checkpoint[];
   loadingCheckpoints: boolean;
+  loadingCheckpoint?: boolean;
   onLoad: (checkpointId: string) => Promise<void>;
   onDelete: (checkpointId: string, checkpointName: string, e: React.MouseEvent) => Promise<void>;
   onBatchDelete: (checkpointIds: string[]) => Promise<void>;
@@ -24,7 +25,16 @@ interface CheckpointSelectorModalProps {
 
 export const CheckpointSelectorModal: React.FC<
   CheckpointSelectorModalProps
-> = ({ open, onClose, checkpoints, loadingCheckpoints, onLoad, onDelete, onBatchDelete }) => {
+> = ({
+  open,
+  onClose,
+  checkpoints,
+  loadingCheckpoints,
+  loadingCheckpoint = false,
+  onLoad,
+  onDelete,
+  onBatchDelete,
+}) => {
   const { t } = useTranslation('checkpoint');
   const [batchMode, setBatchMode] = useState(false);
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
@@ -47,6 +57,7 @@ export const CheckpointSelectorModal: React.FC<
   );
 
   const handleToggleSelect = (checkpointId: string) => {
+    if (loadingCheckpoint) return;
     const newSelected = new Set(selectedIds);
     if (newSelected.has(checkpointId)) {
       newSelected.delete(checkpointId);
@@ -57,6 +68,7 @@ export const CheckpointSelectorModal: React.FC<
   };
 
   const handleSelectAll = () => {
+    if (loadingCheckpoint) return;
     if (selectedIds.size === checkpoints.length) {
       setSelectedIds(new Set());
     } else {
@@ -65,6 +77,7 @@ export const CheckpointSelectorModal: React.FC<
   };
 
   const handleBatchDelete = async () => {
+    if (loadingCheckpoint) return;
     if (selectedIds.size === 0) return;
 
     const confirmed = window.confirm(
@@ -79,6 +92,7 @@ export const CheckpointSelectorModal: React.FC<
   };
 
   const handleCloseBatchMode = () => {
+    if (loadingCheckpoint) return;
     setBatchMode(false);
     setSelectedIds(new Set());
   };
@@ -94,12 +108,13 @@ export const CheckpointSelectorModal: React.FC<
             onClick={onClose}
             className="close-button"
             aria-label={t('common:button.close')}
+            disabled={loadingCheckpoint}
           >
             ×
           </button>
         </div>
 
-        {!loadingCheckpoints && checkpoints.length > 0 && (
+        {!loadingCheckpoints && !loadingCheckpoint && checkpoints.length > 0 && (
           <div style={{ display: "flex", gap: "10px", marginBottom: "20px" }}>
             {!batchMode ? (
               <button
@@ -182,8 +197,8 @@ export const CheckpointSelectorModal: React.FC<
           </div>
         )}
 
-        {loadingCheckpoints ? (
-          <p>{t('loading')}</p>
+        {loadingCheckpoints || loadingCheckpoint ? (
+          <p>{loadingCheckpoint ? t('loadingCheckpoint') : t('loading')}</p>
         ) : checkpoints.length === 0 ? (
           <p style={{ color: "#666" }}>{t('empty')}</p>
         ) : (
@@ -238,16 +253,21 @@ export const CheckpointSelectorModal: React.FC<
                     return (
                       <div
                         key={checkpoint.checkpointId}
-                        onClick={() => batchMode ? handleToggleSelect(checkpoint.checkpointId) : onLoad(checkpoint.checkpointId)}
+                        onClick={() =>
+                          batchMode
+                            ? handleToggleSelect(checkpoint.checkpointId)
+                            : onLoad(checkpoint.checkpointId)
+                        }
                         style={{
                           padding: "15px",
                           border: isSelected ? "2px solid #dc3545" : "2px solid #8b7355",
                           borderRadius: "4px",
-                          cursor: "pointer",
+                          cursor: loadingCheckpoint ? "not-allowed" : "pointer",
                           backgroundColor: isSelected ? "#ffe5e5" : "#fff",
                           transition: "all 0.2s",
                           position: "relative",
                           marginLeft: "15px",
+                          opacity: loadingCheckpoint ? 0.7 : 1,
                         }}
                         onMouseEnter={(e) => {
                           e.currentTarget.style.backgroundColor = isSelected ? "#ffd5d5" : "#f0ebe0";

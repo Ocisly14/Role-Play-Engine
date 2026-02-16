@@ -73,6 +73,7 @@
     },
     "messages": {
       "initializing": "初始化中...",
+      "loadingModule": "模组加载中...",
       "generatingIntro": "正在生成模组导言叙述...",
       "ready": "已就绪"
     },
@@ -162,6 +163,14 @@
       "noResponseBody": "响应体为空",
       "generationFailed": "生成失败",
       "ideaRequired": "请输入你的故事设想"
+    },
+    "sharePrompt": {
+      "title": "模组已生成",
+      "message": "你的模组\"{{moduleName}}\"已生成完成。是否共享到社区？",
+      "share": "共享并继续",
+      "skip": "暂不共享，继续",
+      "sharing": "共享中...",
+      "shareFailed": "共享失败。你可以选择暂不共享并继续。"
     }
   },
   "manager": {

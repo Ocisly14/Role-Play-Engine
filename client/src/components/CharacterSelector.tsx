@@ -73,7 +73,7 @@ export function CharacterSelector({
 
     try {
       setImporting(true);
-      setImportMessage(t('selector.importingData'));
+      setImportMessage(t('selector.moduleLoading'));
 
       // Step 1: Import game data
       const importResponse = await authFetch(`${apiBaseUrl}/game/import-data`, {
@@ -86,18 +86,6 @@ export function CharacterSelector({
       if (!importResponse.ok) {
         throw new Error(importData.error || t('selector.importFailed'));
       }
-
-      setImportMessage(
-        t('selector.dataImportComplete', {
-          scenariosLoaded: importData.scenariosLoaded,
-          npcsLoaded: importData.npcsLoaded
-        })
-      );
-
-      // Small delay to show the message
-      await new Promise((resolve) => setTimeout(resolve, 500));
-
-      setImportMessage(t('selector.startingGame'));
 
       // Step 2: Call the parent handler which will start the game
       onSelectCharacter(selectedId, selectedChar.name);

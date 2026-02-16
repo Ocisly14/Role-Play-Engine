@@ -23,9 +23,9 @@ export const ModSelectionPage: React.FC = () => {
     gameSession.setSelectedModName(modName);
     setLoadingModData(true);
     setModLoadProgress({
-      stage: t("module:moduleLoad.stages.initializing"),
+      stage: t("module:moduleLoad.messages.loadingModule"),
       progress: 0,
-      message: t("module:moduleLoad.messages.initializing"),
+      message: t("module:moduleLoad.messages.loadingModule"),
     });
 
     try {
@@ -96,9 +96,9 @@ export const ModSelectionPage: React.FC = () => {
                   data.message
                 ) {
                   setModLoadProgress({
-                    stage: data.stage,
+                    stage: t("module:moduleLoad.messages.loadingModule"),
                     progress: data.progress,
-                    message: data.message,
+                    message: t("module:moduleLoad.messages.loadingModule"),
                   });
                 }
 
@@ -124,9 +124,9 @@ export const ModSelectionPage: React.FC = () => {
 
       // Step 2: Fetch module introduction
       setModLoadProgress({
-        stage: t("module:moduleLoad.stages.generatingIntro"),
+        stage: t("module:moduleLoad.messages.loadingModule"),
         progress: 90,
-        message: t("module:moduleLoad.messages.generatingIntro"),
+        message: t("module:moduleLoad.messages.loadingModule"),
       });
       const introResponse = await authFetch(
         `/api/module/introduction?modName=${encodeURIComponent(modName)}`
@@ -136,9 +136,9 @@ export const ModSelectionPage: React.FC = () => {
       if (introResponse.ok && introData.success) {
         gameSession.setModuleIntroduction(introData.moduleIntroduction);
         setModLoadProgress({
-          stage: t("module:moduleLoad.stages.complete"),
+          stage: t("module:moduleLoad.messages.loadingModule"),
           progress: 100,
-          message: t("module:moduleLoad.messages.ready"),
+          message: t("module:moduleLoad.messages.loadingModule"),
         });
         setTimeout(() => {
           setLoadingModData(false);

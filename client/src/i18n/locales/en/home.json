@@ -37,6 +37,7 @@
     "loadError": "Failed to load characters",
     "networkError": "Network error: Unable to connect to server",
     "importingData": "Importing game data...",
+    "moduleLoading": "Loading module...",
     "dataImportComplete": "Data import completed: {{scenariosLoaded}} scenarios, {{npcsLoaded}} NPCs",
     "startingGame": "Starting game...",
     "importFailed": "Data import failed"
