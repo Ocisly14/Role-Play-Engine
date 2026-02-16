@@ -14,7 +14,6 @@ import {
 } from "../../../models/index.js";
 import type { CoCDatabase, CoCDatabaseAdapter } from "../../../shared/agents/memory/database/index.js";
 import { extractRecentConversationHistory } from "../memory/memoryAgent.js";
-import { resolveEmailId } from "../../../shared/agents/memory/database/userContext.js";
 import { getPrismaClient } from "../../../shared/agents/memory/database/prismaClient.js";
 
 interface OrchestratorRuntime {
@@ -66,12 +65,8 @@ export class OrchestratorAgent {
       // Try to get scenario_id from database using snapshot_id
       try {
         const prisma = getPrismaClient();
-        const emailId = resolveEmailId();
         const snapshotRow = await prisma.scenarioSnapshot.findFirst({
-          where: {
-            snapshotId: dynamicState.currentScenario.id,
-            ...(emailId ? { emailId } : {}),
-          },
+          where: { snapshotId: dynamicState.currentScenario.id },
           select: { scenarioId: true },
         });
 

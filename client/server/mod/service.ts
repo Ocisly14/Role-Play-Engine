@@ -5,6 +5,7 @@ import { ModuleLoader } from "../../../src/shared/agents/memory/moduleloader/ind
 import { WorldModuleLoader } from "../../../src/dynamicworldagent/world_builder/worldModuleLoader.js";
 import { registerModuleForUser } from "./library.js";
 import { getPrismaClient } from "../../../src/shared/agents/memory/database/prismaClient.js";
+import { resolveModuleIdByName } from "../../../src/shared/agents/memory/database/moduleScope.js";
 import path from "path";
 import fs from "fs";
 
@@ -41,14 +42,17 @@ export async function loadMod(
   emailId?: string,
   onProgress?: ProgressCallback
 ): Promise<any> {
-  await clearExistingModData(emailId);
-
   const modsDir = path.join(process.cwd(), "data", "Mods");
   const modPath = path.join(modsDir, modName);
 
   if (!fs.existsSync(modPath)) {
     throw new Error(`Mod "${modName}" not found`);
   }
+
+  if (emailId) {
+    await registerModuleForUser(emailId, modName);
+  }
+  await clearExistingModData(emailId, modName);
 
   onProgress?.("Initializing", 10, "Initializing loaders...");
 
@@ -77,10 +81,6 @@ export async function loadMod(
       `Loaded ${scenariosLoaded} scenarios, ${npcsLoaded} NPCs, ${modulesLoaded} modules`
     );
 
-    if (emailId) {
-      await registerModuleForUser(emailId, modName);
-    }
-
     return {
       success: true,
       message: `World-builder mod loaded: ${scenariosLoaded} scenarios, ${npcsLoaded} NPCs, ${modulesLoaded} modules`,
@@ -97,6 +97,7 @@ export async function loadMod(
 
   const scenarioLoader = new ScenarioLoader(db, undefined, {
     emailId: emailId,
+    moduleName: modName,
   });
   const npcLoader = new NPCLoader(db, undefined, undefined, {
     emailId: emailId,
@@ -171,10 +172,6 @@ export async function loadMod(
     `Loaded ${scenariosLoaded} scenarios, ${npcsLoaded} NPCs, ${modulesLoaded} modules`
   );
 
-  if (emailId) {
-    await registerModuleForUser(emailId, modName);
-  }
-
   return {
     success: true,
     message: `Mod data loaded: ${scenariosLoaded} scenarios, ${npcsLoaded} NPCs, ${modulesLoaded} modules`,
@@ -186,19 +183,38 @@ export async function loadMod(
   };
 }
 
-async function clearExistingModData(emailId?: string): Promise<void> {
+async function clearExistingModData(
+  emailId?: string,
+  modName?: string
+): Promise<void> {
   if (!emailId) throw new Error("emailId is required for clearExistingModData");
 
   const prisma = getPrismaClient();
+  const moduleId = modName
+    ? await resolveModuleIdByName(modName, emailId)
+    : null;
+  const noMatchModuleId = "00000000-0000-0000-0000-000000000000";
 
   // Delete in FK-respecting order within a transaction
   await prisma.$transaction([
-    prisma.scenarioClue.deleteMany({ where: { emailId } }),
-    prisma.scenarioCondition.deleteMany({ where: { emailId } }),
-    prisma.scenarioCharacter.deleteMany({ where: { emailId } }),
-    prisma.scenarioSnapshot.deleteMany({ where: { emailId } }),
-    prisma.scenario.deleteMany({ where: { emailId } }),
-    prisma.moduleBackground.deleteMany({ where: { emailId } }),
+    prisma.scenarioClue.deleteMany({
+      where: moduleId ? { moduleId } : { moduleId: noMatchModuleId },
+    }),
+    prisma.scenarioCondition.deleteMany({
+      where: moduleId ? { moduleId } : { moduleId: noMatchModuleId },
+    }),
+    prisma.scenarioCharacter.deleteMany({
+      where: moduleId ? { moduleId } : { moduleId: noMatchModuleId },
+    }),
+    prisma.scenarioSnapshot.deleteMany({
+      where: moduleId ? { moduleId } : { moduleId: noMatchModuleId },
+    }),
+    prisma.scenario.deleteMany({
+      where: moduleId ? { moduleId } : { moduleId: noMatchModuleId },
+    }),
+    prisma.moduleBackground.deleteMany({
+      where: moduleId ? { moduleId } : { moduleId: noMatchModuleId },
+    }),
     prisma.npcRelationship.deleteMany({ where: { emailId } }),
     prisma.npcClue.deleteMany({ where: { emailId } }),
     prisma.relationship.deleteMany({ where: { emailId } }),

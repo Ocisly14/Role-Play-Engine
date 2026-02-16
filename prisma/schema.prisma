@@ -346,6 +346,12 @@ model Module {
   sessions       Session[]
   turns          GameTurn[]
   checkpoints    GameCheckpoint[]
+  scenarios      Scenario[]
+  snapshots      ScenarioSnapshot[]
+  scenarioChars  ScenarioCharacter[]
+  scenarioClues  ScenarioClue[]
+  scenarioConds  ScenarioCondition[]
+  memos          PlayerMemo[]
 
   @@unique([ownerEmailId, moduleNameNormalized], name: "uq_modules_owner_name_normalized")
   @@index([ownerEmailId], name: "idx_modules_owner_email")
@@ -415,7 +421,8 @@ model ModGeneration {
 // =====================================================
 
 model Scenario {
-  scenarioId       String   @id @map("scenario_id")
+  scenarioId       String   @map("scenario_id")
+  moduleId         String   @map("module_id") @db.Uuid
   name             String
   description      String
   tags             Json?    @db.JsonB
@@ -423,21 +430,25 @@ model Scenario {
   permanentChanges Json?    @map("permanent_changes") @db.JsonB
   metadata         Json     @db.JsonB
   createdAt        DateTime @default(now()) @map("created_at")
-  emailId          String?  @map("email_id")
   mapImagePath     String?  @map("map_image_path")
   sourcePlaceId    String?  @map("source_place_id")
   // Note: searchVector for FTS will be handled via raw SQL
 
+  module    Module             @relation(fields: [moduleId], references: [moduleId], onDelete: Cascade)
   snapshots ScenarioSnapshot[]
 
+  @@id([moduleId, scenarioId])
   @@index([name])
-  @@index([emailId])
+  @@index([scenarioId], name: "idx_scenarios_scenario_id")
+  @@index([moduleId], name: "idx_scenarios_module")
+  @@index([moduleId, name], name: "idx_scenarios_module_name")
   @@map("scenarios")
 }
 
 model ScenarioSnapshot {
   snapshotId          String   @id @map("snapshot_id")
   scenarioId          String   @map("scenario_id")
+  moduleId            String   @map("module_id") @db.Uuid
   snapshotName        String?  @map("snapshot_name")
   location            String
   description         String
@@ -447,45 +458,48 @@ model ScenarioSnapshot {
   timeRestriction     String?  @map("time_restriction")
   showMap             Boolean? @map("show_map")
   createdAt           DateTime @default(now()) @map("created_at")
-  emailId             String?  @map("email_id")
   initialSnapshot     Boolean  @default(false) @map("initial_snapshot")
   gameTime            String?  @map("game_time")
   isDynamicHistorical Boolean  @default(false) @map("is_dynamic_historical")
   sceneImagePath      String?  @map("scene_image_path")
 
-  scenario   Scenario            @relation(fields: [scenarioId], references: [scenarioId], onDelete: Cascade)
+  scenario   Scenario            @relation(fields: [moduleId, scenarioId], references: [moduleId, scenarioId], onDelete: Cascade)
+  module     Module              @relation(fields: [moduleId], references: [moduleId], onDelete: Cascade)
   characters ScenarioCharacter[]
   clues      ScenarioClue[]
   conditions ScenarioCondition[]
 
   @@index([scenarioId])
-  @@index([emailId])
+  @@index([moduleId], name: "idx_scenario_snapshots_module")
   @@index([scenarioId, isDynamicHistorical, gameTime])
+  @@index([moduleId, scenarioId, isDynamicHistorical, gameTime], name: "idx_scenario_snapshots_module_scope")
   @@map("scenario_snapshots")
 }
 
 model ScenarioCharacter {
   id                String   @id
   snapshotId        String   @map("snapshot_id")
+  moduleId          String   @map("module_id") @db.Uuid
   characterName     String   @map("character_name")
   characterRole     String   @map("character_role")
   characterStatus   String   @map("character_status")
   characterLocation String?  @map("character_location")
   characterNotes    String?  @map("character_notes")
   createdAt         DateTime @default(now()) @map("created_at")
-  emailId           String?  @map("email_id")
 
   snapshot ScenarioSnapshot @relation(fields: [snapshotId], references: [snapshotId], onDelete: Cascade)
+  module   Module           @relation(fields: [moduleId], references: [moduleId], onDelete: Cascade)
 
   @@index([snapshotId])
+  @@index([moduleId], name: "idx_scenario_characters_module")
   @@index([characterName])
-  @@index([emailId])
   @@map("scenario_characters")
 }
 
 model ScenarioClue {
   clueId           String   @id @map("clue_id")
   snapshotId       String   @map("snapshot_id")
+  moduleId         String   @map("module_id") @db.Uuid
   clueText         String   @map("clue_text")
   category         String
   difficulty       String
@@ -495,31 +509,32 @@ model ScenarioClue {
   discovered       Boolean  @default(false)
   discoveryDetails Json?    @map("discovery_details") @db.JsonB
   createdAt        DateTime @default(now()) @map("created_at")
-  emailId          String?  @map("email_id")
 
   snapshot ScenarioSnapshot @relation(fields: [snapshotId], references: [snapshotId], onDelete: Cascade)
+  module   Module           @relation(fields: [moduleId], references: [moduleId], onDelete: Cascade)
 
   @@index([snapshotId])
+  @@index([moduleId], name: "idx_scenario_clues_module")
   @@index([clueLocation])
   @@index([discovered])
-  @@index([emailId])
   @@map("scenario_clues")
 }
 
 model ScenarioCondition {
   conditionId      String   @id @map("condition_id")
   snapshotId       String   @map("snapshot_id")
+  moduleId         String   @map("module_id") @db.Uuid
   conditionType    String   @map("condition_type")
   description      String
   mechanicalEffect String?  @map("mechanical_effect")
   createdAt        DateTime @default(now()) @map("created_at")
-  emailId          String?  @map("email_id")
 
   snapshot ScenarioSnapshot @relation(fields: [snapshotId], references: [snapshotId], onDelete: Cascade)
+  module   Module           @relation(fields: [moduleId], references: [moduleId], onDelete: Cascade)
 
   @@index([snapshotId])
+  @@index([moduleId], name: "idx_scenario_conditions_module")
   @@index([conditionType])
-  @@index([emailId])
   @@map("scenario_conditions")
 }
 
@@ -548,7 +563,7 @@ model Session {
 
   @@index([status])
   @@index([startedAt])
-  @@index([moduleId])
+  @@index([moduleId], name: "idx_player_memos_module")
   @@index([emailId])
   @@index([parentSessionId])
   @@index([parentSessionId, subId])
@@ -713,6 +728,7 @@ model DailyAnalytics {
 model PlayerMemo {
   memoId    String   @id @map("memo_id")
   sessionId String   @map("session_id")
+  moduleId  String?  @map("module_id") @db.Uuid
   emailId   String   @map("email_id")
   text      String
   gameDay   Int?     @map("game_day")
@@ -721,7 +737,10 @@ model PlayerMemo {
   createdAt DateTime @default(now()) @map("created_at")
   updatedAt DateTime @default(now()) @map("updated_at")
 
+  module Module? @relation(fields: [moduleId], references: [moduleId], onDelete: SetNull)
+
   @@index([sessionId])
+  @@index([moduleId])
   @@index([emailId])
   @@map("player_memos")
 }

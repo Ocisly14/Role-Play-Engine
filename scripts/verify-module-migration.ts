@@ -17,7 +17,11 @@ interface CheckResult {
   detail: string;
 }
 
-const TARGET_MIGRATION = "20260215110000_add_module_id_scope_columns";
+const TARGET_MIGRATIONS = [
+  "20260215110000_add_module_id_scope_columns",
+  "20260215143000_scope_scenarios_by_module",
+  "20260215170000_make_scenarios_pk_module_scoped",
+];
 
 const REQUIRED_TABLES = [
   "modules",
@@ -46,6 +50,13 @@ const REQUIRED_FKS = [
   "user_module_library_module_id_fkey",
   "user_module_deleted_module_id_fkey",
   "module_backgrounds_module_id_fkey",
+  "scenarios_module_id_fkey",
+  "scenario_snapshots_module_id_fkey",
+  "scenario_snapshots_module_id_scenario_id_fkey",
+  "scenario_characters_module_id_fkey",
+  "scenario_clues_module_id_fkey",
+  "scenario_conditions_module_id_fkey",
+  "player_memos_module_id_fkey",
   "sessions_module_id_fkey",
   "game_turns_module_id_fkey",
   "game_checkpoints_module_id_fkey",
@@ -79,21 +90,21 @@ function printResult(r: CheckResult): void {
 async function run(): Promise<number> {
   const results: CheckResult[] = [];
 
-  // 1) migration record
-  const migrationApplied = await scalarBool(`
-    SELECT EXISTS (
-      SELECT 1
-      FROM "_prisma_migrations"
-      WHERE "migration_name" = '${TARGET_MIGRATION}'
-    ) AS value
-  `);
-  results.push({
-    name: "Migration Record",
-    status: migrationApplied ? "PASS" : "FAIL",
-    detail: migrationApplied
-      ? `found ${TARGET_MIGRATION}`
-      : `missing ${TARGET_MIGRATION}`,
-  });
+  // 1) migration records
+  for (const migrationName of TARGET_MIGRATIONS) {
+    const migrationApplied = await scalarBool(`
+      SELECT EXISTS (
+        SELECT 1
+        FROM "_prisma_migrations"
+        WHERE "migration_name" = '${migrationName}'
+      ) AS value
+    `);
+    results.push({
+      name: `Migration Record ${migrationName}`,
+      status: migrationApplied ? "PASS" : "FAIL",
+      detail: migrationApplied ? "applied" : "missing",
+    });
+  }
 
   // 2) required tables
   for (const table of REQUIRED_TABLES) {
@@ -185,6 +196,84 @@ async function run(): Promise<number> {
     detail: moduleIdUuid ? "uuid" : "not uuid",
   });
 
+  const scenarioModuleIdUuid = await scalarBool(`
+    SELECT EXISTS (
+      SELECT 1
+      FROM information_schema.columns
+      WHERE table_schema = 'public'
+        AND table_name = 'scenarios'
+        AND column_name = 'module_id'
+        AND udt_name = 'uuid'
+    ) AS value
+  `);
+  results.push({
+    name: "Column scenarios.module_id type",
+    status: scenarioModuleIdUuid ? "PASS" : "FAIL",
+    detail: scenarioModuleIdUuid ? "uuid" : "missing/not uuid",
+  });
+
+  const snapshotModuleIdUuid = await scalarBool(`
+    SELECT EXISTS (
+      SELECT 1
+      FROM information_schema.columns
+      WHERE table_schema = 'public'
+        AND table_name = 'scenario_snapshots'
+        AND column_name = 'module_id'
+        AND udt_name = 'uuid'
+    ) AS value
+  `);
+  results.push({
+    name: "Column scenario_snapshots.module_id type",
+    status: snapshotModuleIdUuid ? "PASS" : "FAIL",
+    detail: snapshotModuleIdUuid ? "uuid" : "missing/not uuid",
+  });
+
+  const scenarioPkColumns = await scalarBool(`
+    SELECT (
+      COALESCE(string_agg(
+        kcu.column_name::text,
+        ',' ORDER BY kcu.ordinal_position
+      ), '')
+      =
+      'module_id,scenario_id'
+    ) AS value
+    FROM information_schema.table_constraints tc
+    JOIN information_schema.key_column_usage kcu
+      ON tc.constraint_name = kcu.constraint_name
+     AND tc.table_schema = kcu.table_schema
+    WHERE tc.table_schema = 'public'
+      AND tc.table_name = 'scenarios'
+      AND tc.constraint_type = 'PRIMARY KEY'
+  `);
+  results.push({
+    name: "Primary Key scenarios(module_id, scenario_id)",
+    status: scenarioPkColumns ? "PASS" : "FAIL",
+    detail: scenarioPkColumns ? "composite PK applied" : "unexpected PK columns",
+  });
+
+  for (const tableName of [
+    "scenarios",
+    "scenario_snapshots",
+    "scenario_characters",
+    "scenario_clues",
+    "scenario_conditions",
+  ]) {
+    const legacyEmailColumnExists = await scalarBool(`
+      SELECT EXISTS (
+        SELECT 1
+        FROM information_schema.columns
+        WHERE table_schema = 'public'
+          AND table_name = '${tableName}'
+          AND column_name = 'email_id'
+      ) AS value
+    `);
+    results.push({
+      name: `Legacy Column ${tableName}.email_id`,
+      status: legacyEmailColumnExists ? "FAIL" : "PASS",
+      detail: legacyEmailColumnExists ? "still exists" : "dropped",
+    });
+  }
+
   const normalizedNotNullViolations = await scalar(`
     SELECT COUNT(*)::bigint AS value
     FROM "modules"
@@ -233,6 +322,19 @@ async function run(): Promise<number> {
       orphanModuleBackground === 0
         ? "none"
         : `${orphanModuleBackground} orphan rows`,
+  });
+
+  const orphanScenarios = await scalar(`
+    SELECT COUNT(*)::bigint AS value
+    FROM "scenarios" s
+    LEFT JOIN "modules" m
+      ON m."module_id" = s."module_id"
+    WHERE m."module_id" IS NULL
+  `);
+  results.push({
+    name: "Orphan scenarios -> modules",
+    status: orphanScenarios === 0 ? "PASS" : "FAIL",
+    detail: orphanScenarios === 0 ? "none" : `${orphanScenarios} orphan rows`,
   });
 
   const orphanPermission = await scalar(`

@@ -8,7 +8,11 @@ import fs from "fs";
 import path from "path";
 import type { CoCDatabaseAdapter } from "../database/CoCDatabaseAdapter.js";
 import { getPrismaClient } from "../database/prismaClient.js";
-import { resolveEmailId, scopeId } from "../database/userContext.js";
+import { resolveEmailId } from "../database/userContext.js";
+import {
+  resolveModuleIdByName,
+  scopeIdByModule,
+} from "../database/moduleScope.js";
 import type {
   ScenarioProfile,
   ScenarioSnapshot,
@@ -28,23 +32,69 @@ export class ScenarioLoader {
   private db: any;
   private parser: ScenarioDocumentParser;
   private emailId?: string;
+  private moduleName?: string;
+  private moduleId?: string;
+  private resolvedModuleId?: string | null;
 
   constructor(
     db: any,
     parser?: ScenarioDocumentParser,
-    options?: { emailId?: string }
+    options?: { emailId?: string; moduleName?: string; moduleId?: string }
   ) {
     this.db = db;
     this.parser = parser || new ScenarioDocumentParser();
     this.emailId = options?.emailId;
+    this.moduleName = options?.moduleName;
+    this.moduleId = options?.moduleId;
   }
 
   private getEmailId(): string | undefined {
     return resolveEmailId(this.emailId);
   }
 
-  private scopeScenarioId(id: string): string {
-    return scopeId(id, this.getEmailId());
+  private async getModuleId(): Promise<string | undefined> {
+    if (this.moduleId) return this.moduleId;
+    if (this.resolvedModuleId !== undefined) {
+      return this.resolvedModuleId || undefined;
+    }
+    if (!this.moduleName) {
+      this.resolvedModuleId = null;
+      return undefined;
+    }
+
+    this.resolvedModuleId = await resolveModuleIdByName(
+      this.moduleName,
+      this.getEmailId()
+    );
+    return this.resolvedModuleId || undefined;
+  }
+
+  private async getScenarioScopeWhere():
+    Promise<Record<string, unknown> | undefined> {
+    const moduleId = await this.getModuleId();
+    if (moduleId) {
+      return { moduleId };
+    }
+    const email = this.getEmailId();
+    if (email) {
+      const prisma = getPrismaClient();
+      const moduleRows = await prisma.modulePermission.findMany({
+        where: { emailId: email },
+        select: { moduleId: true },
+      });
+      const moduleIds = moduleRows.map((row) => row.moduleId);
+      if (moduleIds.length > 0) {
+        return { moduleId: { in: moduleIds } };
+      }
+      return {
+        moduleId: "00000000-0000-0000-0000-000000000000",
+      };
+    }
+    return undefined;
+  }
+
+  private scopeScenarioId(id: string, moduleId?: string): string {
+    return scopeIdByModule(id, moduleId);
   }
 
   /**
@@ -557,7 +607,7 @@ export class ScenarioLoader {
       .toLowerCase()
       .replace(/\s+/g, "-")
       .replace(/[^\w-]/g, "")}-${randomUUID().slice(0, 8)}`;
-    return this.scopeScenarioId(rawId);
+    return rawId;
   }
 
   /**
@@ -565,13 +615,23 @@ export class ScenarioLoader {
    */
   private async saveScenarioToDatabase(scenario: ScenarioProfile): Promise<void> {
     const prisma = getPrismaClient();
-    const emailId = this.getEmailId();
+    const moduleId = await this.getModuleId();
+    if (!moduleId) {
+      throw new Error("moduleId is required for saving scenarios");
+    }
+    const scopedScenarioId = this.scopeScenarioId(scenario.id, moduleId);
 
     await prisma.$transaction(async (tx) => {
       // Upsert scenario
       await tx.scenario.upsert({
-        where: { scenarioId: scenario.id },
+        where: {
+          moduleId_scenarioId: {
+            moduleId,
+            scenarioId: scopedScenarioId,
+          },
+        },
         update: {
+          moduleId,
           name: scenario.name,
           description: scenario.description,
           tags: scenario.tags,
@@ -579,10 +639,10 @@ export class ScenarioLoader {
           permanentChanges: (scenario.snapshot.permanentChanges || undefined) as any,
           metadata: scenario.metadata,
           mapImagePath: scenario.mapImagePath || null,
-          emailId: emailId || null,
         },
         create: {
-          scenarioId: scenario.id,
+          scenarioId: scopedScenarioId,
+          moduleId,
           name: scenario.name,
           description: scenario.description,
           tags: scenario.tags,
@@ -590,7 +650,6 @@ export class ScenarioLoader {
           permanentChanges: (scenario.snapshot.permanentChanges || undefined) as any,
           metadata: scenario.metadata,
           mapImagePath: scenario.mapImagePath || null,
-          emailId: emailId || null,
         },
       });
 
@@ -601,12 +660,10 @@ export class ScenarioLoader {
       // Insert or create all snapshots (only if they don't exist)
       // Snapshots are read-only original definitions - never delete or update existing ones
       for (const snapshot of allSnapshots) {
+        const scopedSnapshotId = this.scopeScenarioId(snapshot.id, moduleId);
         // Check if snapshot already exists
         const existingSnapshot = await tx.scenarioSnapshot.findFirst({
-          where: {
-            snapshotId: snapshot.id,
-            ...(emailId ? { emailId } : {}),
-          },
+          where: { snapshotId: scopedSnapshotId },
           select: { snapshotId: true },
         });
 
@@ -615,8 +672,9 @@ export class ScenarioLoader {
           // Insert snapshot
           await tx.scenarioSnapshot.create({
             data: {
-              snapshotId: snapshot.id,
-              scenarioId: scenario.id,
+              snapshotId: scopedSnapshotId,
+              scenarioId: scopedScenarioId,
+              moduleId,
               snapshotName: snapshot.name,
               location: snapshot.location,
               description: snapshot.description,
@@ -625,7 +683,6 @@ export class ScenarioLoader {
               keeperNotes: snapshot.keeperNotes || null,
               timeRestriction: snapshot.timeRestriction || null,
               showMap: snapshot.showMap !== false,
-              emailId: emailId || null,
             },
           });
 
@@ -635,14 +692,14 @@ export class ScenarioLoader {
               try {
                 await tx.scenarioCharacter.create({
                   data: {
-                    id: char.id,
-                    snapshotId: snapshot.id,
+                    id: this.scopeScenarioId(char.id, moduleId),
+                    snapshotId: scopedSnapshotId,
+                    moduleId,
                     characterName: char.name,
                     characterRole: char.role,
                     characterStatus: char.status,
                     characterLocation: char.location || null,
                     characterNotes: char.notes || null,
-                    emailId: emailId || null,
                   },
                 });
               } catch (e: any) {
@@ -658,8 +715,9 @@ export class ScenarioLoader {
               try {
                 await tx.scenarioClue.create({
                   data: {
-                    clueId: clue.id,
-                    snapshotId: snapshot.id,
+                    clueId: this.scopeScenarioId(clue.id, moduleId),
+                    snapshotId: scopedSnapshotId,
+                    moduleId,
                     clueText: clue.clueText,
                     category: clue.category,
                     difficulty: clue.difficulty,
@@ -668,7 +726,6 @@ export class ScenarioLoader {
                     reveals: clue.reveals,
                     discovered: clue.discovered || false,
                     discoveryDetails: (clue.discoveryDetails || undefined) as any,
-                    emailId: emailId || null,
                   },
                 });
               } catch (e: any) {
@@ -681,16 +738,19 @@ export class ScenarioLoader {
           // Insert conditions for this snapshot (only on first creation)
           if (snapshot.conditions.length > 0) {
             for (const cond of snapshot.conditions) {
-              const condId = `${snapshot.id}-cond-${randomUUID().slice(0, 8)}`;
+              const condId = this.scopeScenarioId(
+                `${snapshot.id}-cond-${randomUUID().slice(0, 8)}`,
+                moduleId
+              );
               try {
                 await tx.scenarioCondition.create({
                   data: {
                     conditionId: condId,
-                    snapshotId: snapshot.id,
+                    snapshotId: scopedSnapshotId,
+                    moduleId,
                     conditionType: cond.type,
                     description: cond.description,
                     mechanicalEffect: cond.mechanicalEffect || null,
-                    emailId: emailId || null,
                   },
                 });
               } catch (e: any) {
@@ -710,16 +770,24 @@ export class ScenarioLoader {
   /**
    * Get a scenario from the database by ID
    */
-  async getScenarioById(scenarioId: string): Promise<ScenarioProfile | null> {
+  async getScenarioById(
+    scenarioId: string,
+    moduleIdOverride?: string
+  ): Promise<ScenarioProfile | null> {
     const prisma = getPrismaClient();
-    const scopedScenarioId = this.scopeScenarioId(scenarioId);
+    const moduleId = moduleIdOverride || (await this.getModuleId());
     const emailId = this.getEmailId();
+    const scopedScenarioId = this.scopeScenarioId(scenarioId, moduleId);
 
     // Get scenario data
     const scenario = await prisma.scenario.findFirst({
       where: {
         scenarioId: scopedScenarioId,
-        ...(emailId ? { emailId } : {}),
+        ...(moduleId
+          ? { moduleId }
+          : emailId
+            ? { module: { permissions: { some: { emailId } } } }
+            : {}),
       },
     });
 
@@ -731,7 +799,7 @@ export class ScenarioLoader {
     const snap = await prisma.scenarioSnapshot.findFirst({
       where: {
         scenarioId: scopedScenarioId,
-        ...(emailId ? { emailId } : {}),
+        ...(moduleId ? { moduleId } : {}),
       },
     });
 
@@ -744,7 +812,7 @@ export class ScenarioLoader {
     const characters = await prisma.scenarioCharacter.findMany({
       where: {
         snapshotId: snap.snapshotId,
-        ...(emailId ? { emailId } : {}),
+        ...(moduleId ? { moduleId } : {}),
       },
     });
 
@@ -752,7 +820,7 @@ export class ScenarioLoader {
     const clues = await prisma.scenarioClue.findMany({
       where: {
         snapshotId: snap.snapshotId,
-        ...(emailId ? { emailId } : {}),
+        ...(moduleId ? { moduleId } : {}),
       },
     });
 
@@ -760,7 +828,7 @@ export class ScenarioLoader {
     const conditions = await prisma.scenarioCondition.findMany({
       where: {
         snapshotId: snap.snapshotId,
-        ...(emailId ? { emailId } : {}),
+        ...(moduleId ? { moduleId } : {}),
       },
     });
 
@@ -826,16 +894,16 @@ export class ScenarioLoader {
    */
   async getAllScenarios(): Promise<ScenarioProfile[]> {
     const prisma = getPrismaClient();
-    const emailId = this.getEmailId();
+    const scopeWhere = await this.getScenarioScopeWhere();
 
     const scenarios = await prisma.scenario.findMany({
-      where: emailId ? { emailId } : {},
-      select: { scenarioId: true },
+      where: scopeWhere ?? {},
+      select: { scenarioId: true, moduleId: true },
     });
 
     const results: ScenarioProfile[] = [];
     for (const s of scenarios) {
-      const scenario = await this.getScenarioById(s.scenarioId);
+      const scenario = await this.getScenarioById(s.scenarioId, s.moduleId);
       if (scenario) {
         results.push(scenario);
       }
@@ -921,12 +989,12 @@ export class ScenarioLoader {
    */
   async searchScenarios(query: ScenarioQuery): Promise<ScenarioSearchResult> {
     const prisma = getPrismaClient();
-    const emailId = this.getEmailId();
+    const scopeWhere = await this.getScenarioScopeWhere();
 
     // Build where clause
     const whereConditions: any[] = [];
-    if (emailId) {
-      whereConditions.push({ emailId });
+    if (scopeWhere) {
+      whereConditions.push(scopeWhere);
     }
 
     if (query.name) {
@@ -959,7 +1027,7 @@ export class ScenarioLoader {
 
     const results = await prisma.scenario.findMany({
       where: whereConditions.length > 0 ? { AND: whereConditions } : {},
-      select: { scenarioId: true, name: true },
+      select: { scenarioId: true, name: true, moduleId: true },
     });
 
     if (results.length === 0) {
@@ -1035,7 +1103,10 @@ export class ScenarioLoader {
     }
 
     // Return only the best matching scenario
-    const bestScenario = await this.getScenarioById(bestMatch.scenarioId);
+    const bestScenario = await this.getScenarioById(
+      bestMatch.scenarioId,
+      bestMatch.moduleId
+    );
     const scenarios = bestScenario ? [bestScenario] : [];
 
     return {
@@ -1049,13 +1120,18 @@ export class ScenarioLoader {
    */
   async scenarioExists(scenarioId: string): Promise<boolean> {
     const prisma = getPrismaClient();
-    const scopedScenarioId = this.scopeScenarioId(scenarioId);
+    const moduleId = await this.getModuleId();
     const emailId = this.getEmailId();
+    const scopedScenarioId = this.scopeScenarioId(scenarioId, moduleId);
 
     const count = await prisma.scenario.count({
       where: {
         scenarioId: scopedScenarioId,
-        ...(emailId ? { emailId } : {}),
+        ...(moduleId
+          ? { moduleId }
+          : emailId
+            ? { module: { permissions: { some: { emailId } } } }
+            : {}),
       },
     });
     return count > 0;
@@ -1071,8 +1147,8 @@ export class ScenarioLoader {
     timestamp: string = new Date().toISOString()
   ): Promise<void> {
     const prisma = getPrismaClient();
-    const emailId = this.getEmailId();
-    const scopedClueId = scopeId(clueId, emailId);
+    const moduleId = await this.getModuleId();
+    const scopedClueId = this.scopeScenarioId(clueId, moduleId);
 
     const discoveryDetails = {
       discoveredBy,
@@ -1083,7 +1159,7 @@ export class ScenarioLoader {
     await prisma.scenarioClue.updateMany({
       where: {
         clueId: scopedClueId,
-        ...(emailId ? { emailId } : {}),
+        ...(moduleId ? { moduleId } : {}),
       },
       data: {
         discovered: true,
@@ -1100,36 +1176,36 @@ export class ScenarioLoader {
     snapshotId?: string
   ): Promise<ScenarioClue[]> {
     const prisma = getPrismaClient();
-    const emailId = this.getEmailId();
+    const moduleId = await this.getModuleId();
 
     let results: any[];
 
     if (snapshotId) {
-      const scopedSnapshotId = scopeId(snapshotId, emailId);
+      const scopedSnapshotId = this.scopeScenarioId(snapshotId, moduleId);
       results = await prisma.scenarioClue.findMany({
         where: {
           snapshotId: scopedSnapshotId,
           discovered: false,
-          ...(emailId ? { emailId } : {}),
+          ...(moduleId ? { moduleId } : {}),
         },
       });
     } else if (scenarioId) {
-      const scopedScenarioId = this.scopeScenarioId(scenarioId);
+      const scopedScenarioId = this.scopeScenarioId(scenarioId, moduleId);
       results = await prisma.scenarioClue.findMany({
         where: {
           snapshot: {
             scenarioId: scopedScenarioId,
-            ...(emailId ? { emailId } : {}),
+            ...(moduleId ? { moduleId } : {}),
           },
           discovered: false,
-          ...(emailId ? { emailId } : {}),
+          ...(moduleId ? { moduleId } : {}),
         },
       });
     } else {
       results = await prisma.scenarioClue.findMany({
         where: {
           discovered: false,
-          ...(emailId ? { emailId } : {}),
+          ...(moduleId ? { moduleId } : {}),
         },
       });
     }

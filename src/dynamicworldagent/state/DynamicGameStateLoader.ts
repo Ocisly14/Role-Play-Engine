@@ -20,6 +20,7 @@ import type {
 import type { DynamicScenarioSnapshot } from "../world_builder/types.js";
 import { NPCLoader } from "../../shared/agents/character/npcloader/index.js";
 import { resolveEmailId } from "../../shared/agents/memory/database/userContext.js";
+import { resolveModuleIdByName } from "../../shared/agents/memory/database/moduleScope.js";
 import type { ScenarioClue, ScenarioCondition } from "../../shared/agents/models/scenarioTypes.js";
 
 /**
@@ -52,13 +53,15 @@ export async function loadDynamicGameStateFromDatabase(
 ): Promise<DynamicGameState | null> {
   const prisma = getPrismaClient();
   const resolvedEmailId = resolveEmailId(emailId);
+  const moduleId = await resolveModuleIdByName(moduleName, resolvedEmailId);
+  if (!moduleId) {
+    console.warn(`[DynamicGameState] Module "${moduleName}" not found in modules table`);
+    return null;
+  }
 
   // Check if module exists in database
-  const moduleData = await prisma.moduleBackground.findFirst({
-    where: {
-      title: moduleName,
-      ...(resolvedEmailId ? { emailId: resolvedEmailId } : {}),
-    },
+  const moduleData = await prisma.moduleBackground.findUnique({
+    where: { moduleId },
     select: {
       moduleId: true,
       title: true,
@@ -181,9 +184,7 @@ export async function loadDynamicGameStateFromDatabase(
 
     // Load scenario outlines from database (including connections)
     const scenarioRows = await prisma.scenario.findMany({
-      where: {
-        ...(resolvedEmailId ? { emailId: resolvedEmailId } : {}),
-      },
+      where: { moduleId },
       select: {
         scenarioId: true,
         name: true,
@@ -385,6 +386,8 @@ export async function initializeCompleteDynamicGameState(
 ): Promise<DynamicGameState | null> {
   const prisma = getPrismaClient();
   const resolvedEmailId = resolveEmailId(params.emailId);
+  const scopedModuleId =
+    (await resolveModuleIdByName(params.moduleName, resolvedEmailId)) || null;
 
   // 1. Load player character
   let playerCharacter: DynamicCharacterProfile;
@@ -524,7 +527,7 @@ export async function initializeCompleteDynamicGameState(
     const snapshotCharacters = await prisma.scenarioCharacter.findMany({
       where: {
         snapshotId: snapshotRow.snapshotId,
-        ...(resolvedEmailId ? { emailId: resolvedEmailId } : {}),
+        ...(scopedModuleId ? { moduleId: scopedModuleId } : {}),
       },
       select: {
         id: true,
@@ -540,7 +543,7 @@ export async function initializeCompleteDynamicGameState(
     const snapshotClues = await prisma.scenarioClue.findMany({
       where: {
         snapshotId: snapshotRow.snapshotId,
-        ...(resolvedEmailId ? { emailId: resolvedEmailId } : {}),
+        ...(scopedModuleId ? { moduleId: scopedModuleId } : {}),
       },
       select: {
         clueId: true,
@@ -559,7 +562,7 @@ export async function initializeCompleteDynamicGameState(
     const snapshotConditions = await prisma.scenarioCondition.findMany({
       where: {
         snapshotId: snapshotRow.snapshotId,
-        ...(resolvedEmailId ? { emailId: resolvedEmailId } : {}),
+        ...(scopedModuleId ? { moduleId: scopedModuleId } : {}),
       },
       select: {
         conditionId: true,
@@ -619,14 +622,7 @@ export async function initializeCompleteDynamicGameState(
   const allInitialSnapshots = await prisma.scenarioSnapshot.findMany({
     where: {
       initialSnapshot: true,
-      ...(resolvedEmailId
-        ? {
-            OR: [
-              { emailId: resolvedEmailId },
-              { scenario: { emailId: resolvedEmailId } },
-            ],
-          }
-        : {}),
+      ...(scopedModuleId ? { moduleId: scopedModuleId } : {}),
     },
     include: {
       scenario: {
@@ -746,39 +742,7 @@ export async function initializeCompleteDynamicGameState(
 
   // Create session record in database via Prisma upsert
   // This is required for checkpoint saves to work correctly
-  const moduleNameKey = params.moduleName.trim().toLowerCase();
-  let moduleId: string | null = null;
-  if (resolvedEmailId) {
-    const ownedModule = await prisma.module.findFirst({
-      where: {
-        ownerEmailId: resolvedEmailId,
-        moduleNameNormalized: moduleNameKey,
-      },
-      select: { moduleId: true },
-    });
-    moduleId = ownedModule?.moduleId || null;
-  }
-  if (!moduleId) {
-    const anyModule = await prisma.module.findFirst({
-      where: {
-        moduleNameNormalized: moduleNameKey,
-        status: "active",
-      },
-      select: { moduleId: true },
-      orderBy: { createdAt: "desc" },
-    });
-    moduleId = anyModule?.moduleId || null;
-  }
-  if (!moduleId) {
-    const fallbackModuleBackground = await prisma.moduleBackground.findFirst({
-      where: {
-        title: params.moduleName,
-        ...(resolvedEmailId ? { emailId: resolvedEmailId } : {}),
-      },
-      select: { moduleId: true },
-    });
-    moduleId = fallbackModuleBackground?.moduleId || null;
-  }
+  const moduleId = scopedModuleId;
 
   const modName = completeState.moduleName || null;
   await prisma.session.upsert({

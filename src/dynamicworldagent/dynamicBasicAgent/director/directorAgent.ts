@@ -1095,8 +1095,19 @@ export class DirectorAgent {
     }
 
     const prisma = getPrismaClient();
-    await prisma.scenario.update({
-      where: { scenarioId: targetScenarioOutline.id },
+    const currentSnapshotScope = dynamicState.currentScenario?.id
+      ? await prisma.scenarioSnapshot.findUnique({
+          where: { snapshotId: dynamicState.currentScenario.id },
+          select: { moduleId: true },
+        })
+      : null;
+    await prisma.scenario.updateMany({
+      where: {
+        scenarioId: targetScenarioOutline.id,
+        ...(currentSnapshotScope?.moduleId
+          ? { moduleId: currentSnapshotScope.moduleId }
+          : {}),
+      },
       data: { connections: modifiedConnections as any },
     });
 

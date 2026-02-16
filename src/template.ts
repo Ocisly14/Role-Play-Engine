@@ -4,8 +4,75 @@ import path from "path";
 import type { DynamicGameState } from "./dynamicworldagent/state/index.js";
 import type { ImageInput } from "./models/types.js";
 import { names, uniqueNamesGenerator } from "unique-names-generator";
+import { stripModuleScope } from "./shared/agents/memory/database/moduleScope.js";
 
 type TemplateContext = Record<string, unknown>;
+const ID_LIKE_KEYS = new Set([
+  "id",
+  "sceneId",
+  "scenarioId",
+  "snapshotId",
+  "characterId",
+  "clueId",
+  "conditionId",
+  "targetId",
+]);
+
+const uuidLike = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+const emailLike = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
+const stripScopedIdIfNeeded = (value: string): string => {
+  const sep = value.indexOf("::");
+  if (sep <= 0) return value;
+  const prefix = value.slice(0, sep);
+  if (emailLike.test(prefix) || uuidLike.test(prefix)) {
+    return stripModuleScope(value);
+  }
+  return value;
+};
+
+const sanitizeTemplateValue = (
+  value: unknown,
+  key?: string,
+  seen: WeakSet<object> = new WeakSet()
+): unknown => {
+  if (typeof value === "string") {
+    return key && ID_LIKE_KEYS.has(key) ? stripScopedIdIfNeeded(value) : value;
+  }
+  if (value === null || value === undefined) return value;
+  if (typeof value !== "object") return value;
+  if (value instanceof Date) return value;
+  if (seen.has(value)) return value;
+  seen.add(value);
+
+  if (Array.isArray(value)) {
+    return value.map((item) => sanitizeTemplateValue(item, key, seen));
+  }
+
+  if (value instanceof Map) {
+    const sanitizedMap = new Map<unknown, unknown>();
+    for (const [k, v] of value.entries()) {
+      const nextKey = typeof k === "string" ? k : key;
+      sanitizedMap.set(k, sanitizeTemplateValue(v, nextKey, seen));
+    }
+    return sanitizedMap;
+  }
+
+  if (value instanceof Set) {
+    const sanitizedSet = new Set<unknown>();
+    for (const item of value.values()) {
+      sanitizedSet.add(sanitizeTemplateValue(item, key, seen));
+    }
+    return sanitizedSet;
+  }
+
+  const obj = value as Record<string, unknown>;
+  const out: Record<string, unknown> = {};
+  for (const [k, v] of Object.entries(obj)) {
+    out[k] = sanitizeTemplateValue(v, k, seen);
+  }
+  return out;
+};
 
 /**
  * CoC State type for template composition
@@ -155,6 +222,7 @@ export const composeTemplate = (
     dynamicGameState: dynamicGameState ?? null,
     ...extraContext,
   };
+  const sanitizedContext = sanitizeTemplateValue(context) as TemplateContext;
 
   // Resolve template function to string
   const templateStr =
@@ -163,12 +231,12 @@ export const composeTemplate = (
   // Use handlebars if specified
   if (templatingEngine === "handlebars") {
     const templateFunction = handlebars.compile(templateStr);
-    return templateFunction(context);
+    return templateFunction(sanitizedContext);
   }
 
   // Default simple replacement
   return templateStr.replace(/{{\s*([^}]+?)\s*}}/g, (_match, rawPath) => {
-    const value = getValueAtPath(context, rawPath);
+    const value = getValueAtPath(sanitizedContext, rawPath);
     return renderValue(value);
   });
 };

@@ -34,7 +34,6 @@ import type { CoCDatabase, CoCDatabaseAdapter } from "../../shared/agents/memory
 import type { ScenarioClue, ScenarioCondition } from "../../shared/agents/models/scenarioTypes.js";
 import { InventoryUtils } from "../../shared/agents/models/gameTypes.js";
 import { randomUUID } from "crypto";
-import { resolveEmailId } from "../../shared/agents/memory/database/userContext.js";
 import { getPrismaClient } from "../../shared/agents/memory/database/prismaClient.js";
 
 /**
@@ -739,7 +738,6 @@ export class DynamicGameStateManager {
   ): Promise<DynamicScenarioSnapshot[]> {
     try {
       const prisma = getPrismaClient();
-      const emailId = resolveEmailId();
 
       // Query all historical snapshots for this scenario
       // Include related characters, clues, and conditions
@@ -747,18 +745,11 @@ export class DynamicGameStateManager {
         where: {
           scenarioId,
           isDynamicHistorical: true,
-          ...(emailId ? { emailId } : {}),
         },
         include: {
-          characters: {
-            where: emailId ? { emailId } : {},
-          },
-          clues: {
-            where: emailId ? { emailId } : {},
-          },
-          conditions: {
-            where: emailId ? { emailId } : {},
-          },
+          characters: true,
+          clues: true,
+          conditions: true,
         },
         orderBy: [
           { gameTime: "asc" },
@@ -1543,7 +1534,24 @@ export class DynamicGameStateManager {
 
     try {
       const prisma = getPrismaClient();
-      const emailId = resolveEmailId();
+      const sessionScope = await prisma.session.findUnique({
+        where: { sessionId: this.state.sessionId },
+        select: { moduleId: true },
+      });
+      const scenarioRow = await prisma.scenario.findFirst({
+        where: {
+          scenarioId,
+          ...(sessionScope?.moduleId ? { moduleId: sessionScope.moduleId } : {}),
+        },
+        select: { moduleId: true },
+      });
+      if (!scenarioRow?.moduleId) {
+        console.warn(
+          `[DynamicGameState] Cannot save snapshot, scenario missing module scope: ${scenarioId}`
+        );
+        return;
+      }
+      const moduleId = scenarioRow.moduleId;
 
       // Generate a unique snapshot ID for historical snapshot
       const historicalSnapshotId = `hist-${scenarioId}-${Date.now()}-${randomUUID().slice(0, 8)}`;
@@ -1566,6 +1574,7 @@ export class DynamicGameStateManager {
         data: {
           snapshotId: historicalSnapshotId,
           scenarioId,
+          moduleId,
           snapshotName: snapshot.name || `Historical snapshot for ${scenarioId}`,
           location: snapshot.location,
           description: snapshot.description,
@@ -1577,18 +1586,17 @@ export class DynamicGameStateManager {
           initialSnapshot: false,
           gameTime: snapshot.gameTime || null,
           isDynamicHistorical: true,
-          emailId: emailId ?? null,
           // Create related characters
           characters: snapshot.characters && snapshot.characters.length > 0
             ? {
                 create: snapshot.characters.map((char) => ({
                   id: char.id || `${historicalSnapshotId}-char-${randomUUID().slice(0, 8)}`,
+                  moduleId,
                   characterName: char.name,
                   characterRole: char.role,
                   characterStatus: char.status,
                   characterLocation: char.location || null,
                   characterNotes: char.notes || null,
-                  emailId: emailId ?? null,
                 })),
               }
             : undefined,
@@ -1597,6 +1605,7 @@ export class DynamicGameStateManager {
             ? {
                 create: snapshot.clues.map((clue) => ({
                   clueId: clue.id || `${historicalSnapshotId}-clue-${randomUUID().slice(0, 8)}`,
+                  moduleId,
                   clueText: clue.clueText,
                   category: clue.category,
                   difficulty: clue.difficulty,
@@ -1605,7 +1614,6 @@ export class DynamicGameStateManager {
                   reveals: clue.reveals || [],
                   discovered: clue.discovered === true,
                   discoveryDetails: (clue.discoveryDetails || undefined) as any,
-                  emailId: emailId ?? null,
                 })),
               }
             : undefined,
@@ -1614,10 +1622,10 @@ export class DynamicGameStateManager {
             ? {
                 create: snapshot.conditions.map((condition) => ({
                   conditionId: `${historicalSnapshotId}-cond-${randomUUID().slice(0, 8)}`,
+                  moduleId,
                   conditionType: condition.type,
                   description: condition.description,
                   mechanicalEffect: condition.mechanicalEffect || null,
-                  emailId: emailId ?? null,
                 })),
               }
             : undefined,

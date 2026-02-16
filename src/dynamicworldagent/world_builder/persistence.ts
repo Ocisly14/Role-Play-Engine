@@ -41,6 +41,17 @@ export async function saveWorldToDatabase(
   otherScenarioNpcAssignments: ScenarioNpcAssignments[]
 ): Promise<void> {
   const prisma = getPrismaClient();
+  const moduleBackground = await prisma.moduleBackground.findFirst({
+    where: { title: moduleName },
+    select: { moduleId: true },
+    orderBy: { moduleId: "asc" },
+  });
+  if (!moduleBackground?.moduleId) {
+    throw new Error(
+      `Cannot resolve module_id for module "${moduleName}" before saving scenarios`
+    );
+  }
+  const moduleId = moduleBackground.moduleId;
 
   // 1. Update module_backgrounds table with all world data
   await prisma.moduleBackground.updateMany({
@@ -183,8 +194,14 @@ export async function saveWorldToDatabase(
       };
 
       await prisma.scenario.upsert({
-        where: { scenarioId: scenario.id },
+        where: {
+          moduleId_scenarioId: {
+            moduleId,
+            scenarioId: scenario.id,
+          },
+        },
         update: {
+          moduleId,
           name: scenario.name,
           description: scenario.description,
           tags: (scenario.tags || []) as any,
@@ -195,6 +212,7 @@ export async function saveWorldToDatabase(
         },
         create: {
           scenarioId: scenario.id,
+          moduleId,
           name: scenario.name,
           description: scenario.description,
           tags: (scenario.tags || []) as any,
@@ -219,6 +237,7 @@ export async function saveWorldToDatabase(
           data: {
             snapshotId: snapshot.id,
             scenarioId: startingScene.scenarioId,
+            moduleId,
             snapshotName: snapshot.name,
             location: snapshot.location,
             description: snapshot.description,
@@ -240,6 +259,7 @@ export async function saveWorldToDatabase(
                 data: {
                   id: char.id,
                   snapshotId: snapshot.id,
+                  moduleId,
                   characterName: char.name,
                   characterRole: char.role,
                   characterStatus: char.status,
@@ -261,6 +281,7 @@ export async function saveWorldToDatabase(
                 data: {
                   clueId: clue.id,
                   snapshotId: snapshot.id,
+                  moduleId,
                   clueText: clue.clueText,
                   category: clue.category,
                   difficulty: clue.difficulty,
@@ -288,6 +309,7 @@ export async function saveWorldToDatabase(
                 data: {
                   conditionId,
                   snapshotId: snapshot.id,
+                  moduleId,
                   conditionType: condition.type,
                   description: condition.description,
                   mechanicalEffect: condition.mechanicalEffect || null,

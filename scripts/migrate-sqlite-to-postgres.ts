@@ -539,12 +539,27 @@ async function migrate() {
     // =====================================================
     // 4. MODULES & SCENARIOS
     // =====================================================
+    const moduleIdByEmail = new Map<string, string>();
+    const moduleIdByName = new Map<string, string>();
+    const scenarioModuleIdById = new Map<string, string>();
+    const snapshotModuleIdById = new Map<string, string>();
+    const sessionModuleIdById = new Map<string, string>();
+    let fallbackModuleId: string | null = null;
 
     // Migrate Module Backgrounds
     if (tables.some(t => t.name === 'module_backgrounds')) {
       log('📦 Migrating module backgrounds...');
       const modules = sqlite.prepare('SELECT * FROM module_backgrounds').all() as any[];
       for (const mod of modules) {
+        if (!fallbackModuleId && typeof mod.module_id === "string") {
+          fallbackModuleId = mod.module_id;
+        }
+        if (typeof mod.title === "string" && mod.title.trim().length > 0) {
+          moduleIdByName.set(mod.title.trim().toLowerCase(), mod.module_id);
+        }
+        if (typeof mod.email_id === "string" && mod.email_id.length > 0) {
+          moduleIdByEmail.set(mod.email_id, mod.module_id);
+        }
         try {
           await prisma.moduleBackground.create({
             data: {
@@ -587,10 +602,23 @@ async function migrate() {
       log('📦 Migrating scenarios...');
       const scenarios = sqlite.prepare('SELECT * FROM scenarios').all() as any[];
       for (const scenario of scenarios) {
+        const resolvedModuleId =
+          (typeof scenario.module_id === "string" && scenario.module_id.length > 0
+            ? scenario.module_id
+            : undefined) ||
+          (typeof scenario.email_id === "string"
+            ? moduleIdByEmail.get(scenario.email_id)
+            : undefined) ||
+          fallbackModuleId;
+        if (!resolvedModuleId) {
+          warn(`  Failed to migrate scenario ${scenario.scenario_id}: missing module_id mapping`);
+          continue;
+        }
         try {
           await prisma.scenario.create({
             data: {
               scenarioId: scenario.scenario_id,
+              moduleId: resolvedModuleId,
               name: scenario.name,
               description: scenario.description,
               tags: scenario.tags ? JSON.parse(scenario.tags) : null,
@@ -598,11 +626,11 @@ async function migrate() {
               permanentChanges: scenario.permanent_changes ? JSON.parse(scenario.permanent_changes) : null,
               metadata: JSON.parse(scenario.metadata || '{}'),
               createdAt: scenario.created_at ? new Date(scenario.created_at) : new Date(),
-              emailId: scenario.email_id,
               mapImagePath: scenario.map_image_path,
               sourcePlaceId: scenario.source_place_id,
             },
           });
+          scenarioModuleIdById.set(scenario.scenario_id, resolvedModuleId);
           stats.scenarios++;
         } catch (e: any) {
           if (e.code === 'P2002') {
@@ -620,11 +648,25 @@ async function migrate() {
       log('📦 Migrating scenario snapshots...');
       const snapshots = sqlite.prepare('SELECT * FROM scenario_snapshots').all() as any[];
       for (const snapshot of snapshots) {
+        const resolvedModuleId =
+          (typeof snapshot.module_id === "string" && snapshot.module_id.length > 0
+            ? snapshot.module_id
+            : undefined) ||
+          scenarioModuleIdById.get(snapshot.scenario_id) ||
+          (typeof snapshot.email_id === "string"
+            ? moduleIdByEmail.get(snapshot.email_id)
+            : undefined) ||
+          fallbackModuleId;
+        if (!resolvedModuleId) {
+          warn(`  Failed to migrate scenario snapshot ${snapshot.snapshot_id}: missing module_id mapping`);
+          continue;
+        }
         try {
           await prisma.scenarioSnapshot.create({
             data: {
               snapshotId: snapshot.snapshot_id,
               scenarioId: snapshot.scenario_id,
+              moduleId: resolvedModuleId,
               snapshotName: snapshot.snapshot_name,
               location: snapshot.location,
               description: snapshot.description,
@@ -634,13 +676,13 @@ async function migrate() {
               timeRestriction: snapshot.time_restriction,
               showMap: snapshot.show_map !== null ? Boolean(snapshot.show_map) : null,
               createdAt: snapshot.created_at ? new Date(snapshot.created_at) : new Date(),
-              emailId: snapshot.email_id,
               initialSnapshot: Boolean(snapshot.initial_snapshot),
               gameTime: snapshot.game_time,
               isDynamicHistorical: Boolean(snapshot.is_dynamic_historical),
               sceneImagePath: snapshot.scene_image_path,
             },
           });
+          snapshotModuleIdById.set(snapshot.snapshot_id, resolvedModuleId);
           stats.scenarioSnapshots++;
         } catch (e: any) {
           if (e.code !== 'P2002') {
@@ -656,18 +698,31 @@ async function migrate() {
       log('📦 Migrating scenario characters...');
       const chars = sqlite.prepare('SELECT * FROM scenario_characters').all() as any[];
       for (const char of chars) {
+        const resolvedModuleId =
+          (typeof char.module_id === "string" && char.module_id.length > 0
+            ? char.module_id
+            : undefined) ||
+          snapshotModuleIdById.get(char.snapshot_id) ||
+          (typeof char.email_id === "string"
+            ? moduleIdByEmail.get(char.email_id)
+            : undefined) ||
+          fallbackModuleId;
+        if (!resolvedModuleId) {
+          warn(`  Failed to migrate scenario character ${char.id}: missing module_id mapping`);
+          continue;
+        }
         try {
           await prisma.scenarioCharacter.create({
             data: {
               id: char.id,
               snapshotId: char.snapshot_id,
+              moduleId: resolvedModuleId,
               characterName: char.character_name,
               characterRole: char.character_role,
               characterStatus: char.character_status,
               characterLocation: char.character_location,
               characterNotes: char.character_notes,
               createdAt: char.created_at ? new Date(char.created_at) : new Date(),
-              emailId: char.email_id,
             },
           });
           stats.scenarioCharacters++;
@@ -685,11 +740,25 @@ async function migrate() {
       log('📦 Migrating scenario clues...');
       const clues = sqlite.prepare('SELECT * FROM scenario_clues').all() as any[];
       for (const clue of clues) {
+        const resolvedModuleId =
+          (typeof clue.module_id === "string" && clue.module_id.length > 0
+            ? clue.module_id
+            : undefined) ||
+          snapshotModuleIdById.get(clue.snapshot_id) ||
+          (typeof clue.email_id === "string"
+            ? moduleIdByEmail.get(clue.email_id)
+            : undefined) ||
+          fallbackModuleId;
+        if (!resolvedModuleId) {
+          warn(`  Failed to migrate scenario clue ${clue.clue_id}: missing module_id mapping`);
+          continue;
+        }
         try {
           await prisma.scenarioClue.create({
             data: {
               clueId: clue.clue_id,
               snapshotId: clue.snapshot_id,
+              moduleId: resolvedModuleId,
               clueText: clue.clue_text,
               category: clue.category,
               difficulty: clue.difficulty,
@@ -699,7 +768,6 @@ async function migrate() {
               discovered: Boolean(clue.discovered),
               discoveryDetails: clue.discovery_details ? JSON.parse(clue.discovery_details) : null,
               createdAt: clue.created_at ? new Date(clue.created_at) : new Date(),
-              emailId: clue.email_id,
             },
           });
           stats.scenarioClues++;
@@ -717,16 +785,29 @@ async function migrate() {
       log('📦 Migrating scenario conditions...');
       const conditions = sqlite.prepare('SELECT * FROM scenario_conditions').all() as any[];
       for (const condition of conditions) {
+        const resolvedModuleId =
+          (typeof condition.module_id === "string" && condition.module_id.length > 0
+            ? condition.module_id
+            : undefined) ||
+          snapshotModuleIdById.get(condition.snapshot_id) ||
+          (typeof condition.email_id === "string"
+            ? moduleIdByEmail.get(condition.email_id)
+            : undefined) ||
+          fallbackModuleId;
+        if (!resolvedModuleId) {
+          warn(`  Failed to migrate scenario condition ${condition.condition_id}: missing module_id mapping`);
+          continue;
+        }
         try {
           await prisma.scenarioCondition.create({
             data: {
               conditionId: condition.condition_id,
               snapshotId: condition.snapshot_id,
+              moduleId: resolvedModuleId,
               conditionType: condition.condition_type,
               description: condition.description,
               mechanicalEffect: condition.mechanical_effect,
               createdAt: condition.created_at ? new Date(condition.created_at) : new Date(),
-              emailId: condition.email_id,
             },
           });
           stats.scenarioConditions++;
@@ -750,10 +831,21 @@ async function migrate() {
       log('📦 Migrating sessions...');
       const sessions = sqlite.prepare('SELECT * FROM sessions').all() as any[];
       for (const session of sessions) {
+        const resolvedModuleId =
+          (typeof session.module_id === "string" && session.module_id.length > 0
+            ? session.module_id
+            : undefined) ||
+          (typeof session.mod_name === "string"
+            ? moduleIdByName.get(session.mod_name.trim().toLowerCase())
+            : undefined) ||
+          fallbackModuleId ||
+          undefined;
         try {
           await prisma.session.create({
             data: {
               sessionId: session.session_id,
+              moduleId: resolvedModuleId || null,
+              emailId: session.email_id || null,
               modName: session.mod_name,
               characterId: session.character_id,
               characterName: session.character_name,
@@ -766,6 +858,9 @@ async function migrate() {
               subId: session.sub_id,
             },
           });
+          if (resolvedModuleId) {
+            sessionModuleIdById.set(session.session_id, resolvedModuleId);
+          }
           stats.sessions++;
         } catch (e: any) {
           if (e.code === 'P2002') {
@@ -908,6 +1003,7 @@ async function migrate() {
             data: {
               memoId: memo.memo_id,
               sessionId: memo.session_id,
+              moduleId: sessionModuleIdById.get(memo.session_id) || null,
               emailId: memo.email_id,
               text: memo.text,
               gameDay: memo.game_day,

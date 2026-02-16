@@ -72,11 +72,16 @@ export async function createMemo(req: Request, res: Response): Promise<void> {
 
     const memoId = `memo-${randomUUID()}`;
     const prisma = getPrismaClient();
+    const sessionScope = await prisma.session.findUnique({
+      where: { sessionId },
+      select: { moduleId: true },
+    });
 
     const memo = await prisma.playerMemo.create({
       data: {
         memoId,
         sessionId,
+        moduleId: sessionScope?.moduleId || null,
         emailId: email,
         text: text.trim(),
         gameDay: typeof gameDay === "number" ? gameDay : null,

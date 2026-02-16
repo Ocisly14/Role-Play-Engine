@@ -13,9 +13,9 @@ import type {
 import { getPrismaClient } from "../../shared/agents/memory/database/prismaClient.js";
 import {
   resolveEmailId,
-  scopeArray,
   scopeId,
 } from "../../shared/agents/memory/database/userContext.js";
+import { scopeIdByModule } from "../../shared/agents/memory/database/moduleScope.js";
 import type {
   MacroSceneStructure,
   TruthEvent,
@@ -84,6 +84,15 @@ export class WorldModuleLoader {
 
   private scopeId(id: string): string {
     return scopeId(id, this.getEmailId());
+  }
+
+  private scopeByModule(id: string, moduleId: string): string {
+    return scopeIdByModule(id, moduleId);
+  }
+
+  private scopeArrayByModule(ids: string[] | undefined, moduleId: string): string[] {
+    if (!ids) return [];
+    return ids.map((id) => this.scopeByModule(id, moduleId));
   }
 
   /**
@@ -485,7 +494,7 @@ export class WorldModuleLoader {
   private async saveToDatabase(module: LoadedWorldModule): Promise<void> {
     // 1. Save module background
     console.log(`  [1/4] Saving module background...`);
-    await this.saveModuleBackground(module);
+    const moduleId = await this.saveModuleBackground(module);
 
     // 2. Save NPCs
     console.log(`  [2/4] Saving ${module.npcs.length} NPCs...`);
@@ -493,13 +502,13 @@ export class WorldModuleLoader {
 
     // 3. Save scenarios
     console.log(`  [3/4] Saving ${module.scenarios.length} scenarios...`);
-    await this.saveScenarios(module);
+    await this.saveScenarios(module, moduleId);
 
     // 4. Save scenario snapshots
     console.log(
       `  [4/4] Saving ${module.scenarioSnapshots.size} scenario snapshots...`
     );
-    await this.saveDynamicScenarioSnapshots(module);
+    await this.saveDynamicScenarioSnapshots(module, moduleId);
 
     console.log(`  All data saved to database`);
   }
@@ -507,7 +516,7 @@ export class WorldModuleLoader {
   /**
    * Save module background to database
    */
-  private async saveModuleBackground(module: LoadedWorldModule): Promise<void> {
+  private async saveModuleBackground(module: LoadedWorldModule): Promise<string> {
     const prisma = getPrismaClient();
     const emailId = this.getEmailId();
     const ownerEmailId = emailId || "__system__";
@@ -635,6 +644,8 @@ export class WorldModuleLoader {
         macroMapPath: module.moduleDigest.macroMapPath || null,
       },
     });
+
+    return moduleId;
   }
 
   /**
@@ -824,9 +835,11 @@ export class WorldModuleLoader {
   /**
    * Save scenarios to database
    */
-  private async saveScenarios(module: LoadedWorldModule): Promise<void> {
+  private async saveScenarios(
+    module: LoadedWorldModule,
+    moduleId: string
+  ): Promise<void> {
     const prisma = getPrismaClient();
-    const emailId = this.getEmailId();
     const now = new Date().toISOString();
 
     const scenarioByName = new Map(
@@ -837,7 +850,7 @@ export class WorldModuleLoader {
     );
 
     for (const scenario of module.scenarios) {
-      const scopedScenarioId = this.scopeId(scenario.id);
+      const scopedScenarioId = this.scopeByModule(scenario.id, moduleId);
       const metadata = {
         createdAt: now,
         updatedAt: now,
@@ -851,7 +864,7 @@ export class WorldModuleLoader {
           connection.scenarioName.toLowerCase()
         );
         const targetScenarioId = targetScenario
-          ? this.scopeId(targetScenario.id)
+          ? this.scopeByModule(targetScenario.id, moduleId)
           : null;
         return {
           scenarioId: targetScenarioId || connection.scenarioName,
@@ -861,8 +874,14 @@ export class WorldModuleLoader {
       });
 
       await prisma.scenario.upsert({
-        where: { scenarioId: scopedScenarioId },
+        where: {
+          moduleId_scenarioId: {
+            moduleId,
+            scenarioId: scopedScenarioId,
+          },
+        },
         update: {
+          moduleId,
           name: scenario.name,
           description: scenario.description,
           tags: scenario.tags || [],
@@ -870,10 +889,10 @@ export class WorldModuleLoader {
           metadata,
           sourcePlaceId: scenario.sourcePlaceId || null,
           mapImagePath: null,
-          emailId: emailId || null,
         },
         create: {
           scenarioId: scopedScenarioId,
+          moduleId,
           name: scenario.name,
           description: scenario.description,
           tags: scenario.tags || [],
@@ -881,7 +900,6 @@ export class WorldModuleLoader {
           metadata,
           sourcePlaceId: scenario.sourcePlaceId || null,
           mapImagePath: null,
-          emailId: emailId || null,
         },
       });
     }
@@ -890,19 +908,18 @@ export class WorldModuleLoader {
   /**
    * Save scenario snapshots to database
    */
-  private async saveDynamicScenarioSnapshots(module: LoadedWorldModule): Promise<void> {
+  private async saveDynamicScenarioSnapshots(
+    module: LoadedWorldModule,
+    moduleId: string
+  ): Promise<void> {
     const prisma = getPrismaClient();
-    const emailId = this.getEmailId();
 
     for (const [snapshotId, snapshot] of module.scenarioSnapshots.entries()) {
-      const scopedSnapshotId = this.scopeId(snapshotId);
+      const scopedSnapshotId = this.scopeByModule(snapshotId, moduleId);
 
       // Check if snapshot exists
       const existing = await prisma.scenarioSnapshot.findFirst({
-        where: {
-          snapshotId: scopedSnapshotId,
-          ...(emailId ? { emailId } : {}),
-        },
+        where: { snapshotId: scopedSnapshotId },
         select: { snapshotId: true },
       });
 
@@ -915,7 +932,7 @@ export class WorldModuleLoader {
         (s) => s.id === snapshot.id || s.name === snapshot.name
       );
       const scenarioId = scenario?.id || snapshotId;
-      const scopedScenarioId = this.scopeId(scenarioId);
+      const scopedScenarioId = this.scopeByModule(scenarioId, moduleId);
 
       const sceneImagePath = (snapshot as any).sceneImage?.path || null;
 
@@ -924,6 +941,7 @@ export class WorldModuleLoader {
         data: {
           snapshotId: scopedSnapshotId,
           scenarioId: scopedScenarioId,
+          moduleId,
           snapshotName: snapshot.name,
           location: snapshot.location,
           description: snapshot.description,
@@ -935,7 +953,6 @@ export class WorldModuleLoader {
           initialSnapshot: (snapshot as any).initialSnapshot ? true : false,
           gameTime: (snapshot as any).gameTime || null,
           sceneImagePath,
-          emailId: emailId || null,
         },
       });
 
@@ -945,19 +962,19 @@ export class WorldModuleLoader {
           const rawCharId =
             char.id ||
             `${scopedSnapshotId}-char-${Math.random().toString(36).slice(2, 10)}`;
-          const scopedCharId = scopeId(rawCharId, emailId);
+          const scopedCharId = this.scopeByModule(rawCharId, moduleId);
 
           try {
             await prisma.scenarioCharacter.create({
               data: {
                 id: scopedCharId,
                 snapshotId: scopedSnapshotId,
+                moduleId,
                 characterName: char.name,
                 characterRole: char.role,
                 characterStatus: char.status,
                 characterLocation: char.location || null,
                 characterNotes: char.notes || null,
-                emailId: emailId || null,
               },
             });
           } catch (error: any) {
@@ -972,22 +989,22 @@ export class WorldModuleLoader {
       // Insert clues
       if (snapshot.clues && snapshot.clues.length > 0) {
         for (const clue of snapshot.clues) {
-          const scopedClueId = scopeId(clue.id, emailId);
+          const scopedClueId = this.scopeByModule(clue.id, moduleId);
 
           try {
             await prisma.scenarioClue.create({
               data: {
                 clueId: scopedClueId,
                 snapshotId: scopedSnapshotId,
+                moduleId,
                 clueText: clue.clueText,
                 category: clue.category,
                 difficulty: clue.difficulty,
                 clueLocation: clue.location,
                 discoveryMethod: clue.discoveryMethod || null,
-                reveals: scopeArray(clue.reveals || [], emailId),
+                reveals: this.scopeArrayByModule(clue.reveals || [], moduleId),
                 discovered: clue.discovered ? true : false,
                 discoveryDetails: (clue.discoveryDetails || undefined) as any,
-                emailId: emailId || null,
               },
             });
           } catch (error: any) {
@@ -1009,10 +1026,10 @@ export class WorldModuleLoader {
               data: {
                 conditionId,
                 snapshotId: scopedSnapshotId,
+                moduleId,
                 conditionType: condition.type,
                 description: condition.description,
                 mechanicalEffect: condition.mechanicalEffect || null,
-                emailId: emailId || null,
               },
             });
           } catch (error: any) {

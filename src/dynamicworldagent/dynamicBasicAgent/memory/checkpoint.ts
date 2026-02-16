@@ -7,7 +7,6 @@ import type { CoCDatabase, CoCDatabaseAdapter } from "../../../shared/agents/mem
 import type { DynamicGameState } from "../../state/index.js";
 import type { DynamicScenarioSnapshot } from "../../world_builder/types.js";
 import { randomUUID } from "crypto";
-import { resolveEmailId } from "../../../shared/agents/memory/database/userContext.js";
 import { TurnManager } from "./turnManager.js";
 import { getPrismaClient } from "../../../shared/agents/memory/database/prismaClient.js";
 
@@ -40,9 +39,18 @@ export async function saveDynamicGameStateCheckpoint(
 
     const checkpointName = generateCheckpointName(dynamicState, checkpointType);
 
+    const sessionScope = await prisma.session.findUnique({
+      where: { sessionId: dynamicState.sessionId },
+      select: { moduleId: true, emailId: true },
+    });
+
     // Serialize DynamicGameState to JSON
     // Convert Sets to Arrays for JSON serialization
-    const serializableState = await serializeDynamicGameState(dynamicState, db);
+    const serializableState = await serializeDynamicGameState(
+      dynamicState,
+      db,
+      sessionScope?.moduleId
+    );
 
     // Attach conversation history and player memos so the checkpoint is self-contained
     await db.preloadSessionTurns(dynamicState.sessionId);
@@ -125,6 +133,8 @@ export async function saveDynamicGameStateCheckpoint(
       data: {
         checkpointId,
         sessionId: dynamicState.sessionId,
+        moduleId: sessionScope?.moduleId || null,
+        emailId: sessionScope?.emailId || null,
         checkpointName,
         gameState: serializableState,
         currentSceneName,
@@ -150,7 +160,8 @@ export async function saveDynamicGameStateCheckpoint(
  */
 async function serializeDynamicGameState(
   state: DynamicGameState,
-  db: CoCDatabase | CoCDatabaseAdapter
+  db: CoCDatabase | CoCDatabaseAdapter,
+  moduleId?: string | null
 ): Promise<any> {
   // Convert Sets to Arrays
   const revealedTruthEvents = Array.from(state.revealedTruthEvents);
@@ -177,7 +188,12 @@ async function serializeDynamicGameState(
       // Save historical snapshots (all except the latest) to database
       if (snapshots.length > 1) {
         const historicalSnapshots = snapshots.slice(0, -1); // All except the last one
-        await saveHistoricalSnapshotsToDatabase(db, scenarioId, historicalSnapshots);
+        await saveHistoricalSnapshotsToDatabase(
+          db,
+          scenarioId,
+          historicalSnapshots,
+          moduleId
+        );
       }
     }
   }
@@ -256,11 +272,25 @@ function generateCheckpointDescription(
 async function saveHistoricalSnapshotsToDatabase(
   db: CoCDatabase | CoCDatabaseAdapter,
   scenarioId: string,
-  historicalSnapshots: DynamicScenarioSnapshot[]
+  historicalSnapshots: DynamicScenarioSnapshot[],
+  moduleIdHint?: string | null
 ): Promise<void> {
   try {
     const prisma = getPrismaClient();
-    const emailId = resolveEmailId();
+    const scenarioRow = await prisma.scenario.findFirst({
+      where: {
+        scenarioId,
+        ...(moduleIdHint ? { moduleId: moduleIdHint } : {}),
+      },
+      select: { moduleId: true },
+    });
+    if (!scenarioRow?.moduleId) {
+      console.warn(
+        `\u{1F4BE} [Checkpoint] Skip saving historical snapshot, scenario missing module scope: ${scenarioId}`
+      );
+      return;
+    }
+    const moduleId = scenarioRow.moduleId;
 
     for (const snapshot of historicalSnapshots) {
       // Generate a unique snapshot ID for historical snapshot
@@ -281,6 +311,7 @@ async function saveHistoricalSnapshotsToDatabase(
         data: {
           snapshotId: historicalSnapshotId,
           scenarioId,
+          moduleId,
           snapshotName: snapshot.name || `Historical snapshot for ${scenarioId}`,
           location: snapshot.location,
           description: snapshot.description,
@@ -292,7 +323,6 @@ async function saveHistoricalSnapshotsToDatabase(
           initialSnapshot: false,
           gameTime: snapshot.gameTime || null,
           isDynamicHistorical: true,
-          emailId: emailId || null,
         },
       });
 
@@ -309,12 +339,12 @@ async function saveHistoricalSnapshotsToDatabase(
             create: {
               id: charId,
               snapshotId: historicalSnapshotId,
+              moduleId,
               characterName: char.name,
               characterRole: char.role,
               characterStatus: char.status,
               characterLocation: char.location || null,
               characterNotes: char.notes || null,
-              emailId: emailId || null,
             },
           });
         }
@@ -333,6 +363,7 @@ async function saveHistoricalSnapshotsToDatabase(
             create: {
               clueId,
               snapshotId: historicalSnapshotId,
+              moduleId,
               clueText: clue.clueText,
               category: clue.category,
               difficulty: clue.difficulty,
@@ -341,7 +372,6 @@ async function saveHistoricalSnapshotsToDatabase(
               reveals: clue.reveals || [],
               discovered: clue.discovered || false,
               discoveryDetails: clue.discoveryDetails || undefined,
-              emailId: emailId || null,
             },
           });
         }
@@ -358,10 +388,10 @@ async function saveHistoricalSnapshotsToDatabase(
             create: {
               conditionId,
               snapshotId: historicalSnapshotId,
+              moduleId,
               conditionType: condition.type,
               description: condition.description,
               mechanicalEffect: condition.mechanicalEffect || null,
-              emailId: emailId || null,
             },
           });
         }

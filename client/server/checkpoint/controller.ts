@@ -914,6 +914,7 @@ async function createSessionFromCheckpointData(
           ? memo.memoId
           : `memo-restore-${randomUUID()}`,
       sessionId,
+      moduleId,
       emailId:
         typeof memo.emailId === "string" && memo.emailId.length > 0
           ? memo.emailId

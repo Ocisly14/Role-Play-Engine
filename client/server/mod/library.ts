@@ -14,54 +14,6 @@ function normalizeModuleNameKey(name: string): string {
   return normalizeModName(name).toLowerCase();
 }
 
-function parseScenarioNames(moduleDir: string, moduleName: string): string[] {
-  const scenarioNames = new Set<string>();
-  const scenariosDir = path.join(moduleDir, `${moduleName}_Scenarios`);
-  const outlineFile = path.join(moduleDir, "scenarios_outline.json");
-
-  const readScenarioFile = (filePath: string) => {
-    try {
-      const raw = fs.readFileSync(filePath, "utf-8");
-      const json = JSON.parse(raw);
-      const items = Array.isArray(json) ? json : [json];
-      for (const item of items) {
-        const name = item?.name || item?.snapshot?.name;
-        if (typeof name === "string" && name.trim()) {
-          scenarioNames.add(name.trim());
-        }
-      }
-    } catch {
-      // ignore parse errors
-    }
-  };
-
-  if (fs.existsSync(outlineFile)) {
-    try {
-      const raw = fs.readFileSync(outlineFile, "utf-8");
-      const json = JSON.parse(raw);
-      const items = Array.isArray(json) ? json : [];
-      for (const item of items) {
-        if (typeof item?.name === "string" && item.name.trim()) {
-          scenarioNames.add(item.name.trim());
-        }
-      }
-    } catch {
-      // ignore parse errors
-    }
-  }
-
-  if (fs.existsSync(scenariosDir)) {
-    const files = fs
-      .readdirSync(scenariosDir)
-      .filter((f) => f.toLowerCase().endsWith(".json"));
-    for (const file of files) {
-      readScenarioFile(path.join(scenariosDir, file));
-    }
-  }
-
-  return Array.from(scenarioNames);
-}
-
 function parseNpcNames(moduleDir: string, moduleName: string): string[] {
   const npcNames = new Set<string>();
   const npcDir = path.join(moduleDir, `${moduleName}_npc`);
@@ -318,65 +270,15 @@ async function cleanModuleDataForOwner(
     where: { moduleId },
   });
 
-  // Legacy cleanup for data that is still keyed by email+name.
-  const scenarioNames = parseScenarioNames(moduleDir, modName);
+  // Scenario base-content is module-scoped.
+  await prisma.scenarioCondition.deleteMany({ where: { moduleId } });
+  await prisma.scenarioClue.deleteMany({ where: { moduleId } });
+  await prisma.scenarioCharacter.deleteMany({ where: { moduleId } });
+  await prisma.scenarioSnapshot.deleteMany({ where: { moduleId } });
+  await prisma.scenario.deleteMany({ where: { moduleId } });
+
+  // Legacy cleanup for NPC data that is still keyed by email+name.
   const npcNames = parseNpcNames(moduleDir, modName);
-
-  if (scenarioNames.length > 0) {
-    const scenarioRows = await prisma.scenario.findMany({
-      where: {
-        name: { in: scenarioNames },
-        emailId: ownerEmail,
-      },
-      select: { scenarioId: true },
-    });
-    const scenarioIds = scenarioRows.map((row) => row.scenarioId);
-    if (scenarioIds.length > 0) {
-      const snapshotRows = await prisma.scenarioSnapshot.findMany({
-        where: {
-          scenarioId: { in: scenarioIds },
-          emailId: ownerEmail,
-        },
-        select: { snapshotId: true },
-      });
-      const snapshotIds = snapshotRows.map((row) => row.snapshotId);
-
-      if (snapshotIds.length > 0) {
-        await prisma.scenarioCharacter.deleteMany({
-          where: {
-            snapshotId: { in: snapshotIds },
-            emailId: ownerEmail,
-          },
-        });
-        await prisma.scenarioClue.deleteMany({
-          where: {
-            snapshotId: { in: snapshotIds },
-            emailId: ownerEmail,
-          },
-        });
-        await prisma.scenarioCondition.deleteMany({
-          where: {
-            snapshotId: { in: snapshotIds },
-            emailId: ownerEmail,
-          },
-        });
-      }
-
-      await prisma.scenarioSnapshot.deleteMany({
-        where: {
-          scenarioId: { in: scenarioIds },
-          emailId: ownerEmail,
-        },
-      });
-
-      await prisma.scenario.deleteMany({
-        where: {
-          scenarioId: { in: scenarioIds },
-          emailId: ownerEmail,
-        },
-      });
-    }
-  }
 
   if (npcNames.length > 0) {
     const npcRows = await prisma.character.findMany({
