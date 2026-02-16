@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
+import { useAuth } from "../contexts/AuthContext";
 import { authFetch } from "../utils/authFetch";
 
 type LibraryMod = {
@@ -22,12 +23,22 @@ type DeletedMod = {
   daysLeft: number;
 };
 
+type AdminCatalogMod = {
+  moduleId: string;
+  name: string;
+  ownerEmail: string | null;
+  shared: boolean;
+  updatedAt: string;
+};
+
 interface ModManagerProps {
   onClose: () => void;
 }
 
 export function ModManager({ onClose }: ModManagerProps) {
   const { t } = useTranslation('module');
+  const { user } = useAuth();
+  const isAdmin = user?.role === "ADMIN";
   const [tab, setTab] = useState<"library" | "shared" | "deleted">("library");
   const [libraryMods, setLibraryMods] = useState<LibraryMod[]>([]);
   const [sharedMods, setSharedMods] = useState<SharedMod[]>([]);
@@ -48,6 +59,10 @@ export function ModManager({ onClose }: ModManagerProps) {
     moduleNotes: string;
   } | null>(null);
   const [loadingPreview, setLoadingPreview] = useState(false);
+  const [adminCatalog, setAdminCatalog] = useState<AdminCatalogMod[]>([]);
+  const [loadingAdminCatalog, setLoadingAdminCatalog] = useState(false);
+  const [selectedAdminModuleId, setSelectedAdminModuleId] = useState("");
+  const [applyingAdminModule, setApplyingAdminModule] = useState(false);
   const hasLibrarySelection = Object.values(selectedLibrary).some(Boolean);
   const hasDeletedSelection = Object.values(selectedDeleted).some(Boolean);
   const [confirmState, setConfirmState] = useState<{
@@ -67,6 +82,12 @@ export function ModManager({ onClose }: ModManagerProps) {
   useEffect(() => {
     fetchLibrary();
   }, []);
+
+  useEffect(() => {
+    if (isAdmin) {
+      fetchAdminCatalog();
+    }
+  }, [isAdmin]);
 
   const fetchLibrary = async () => {
     try {
@@ -130,6 +151,34 @@ export function ModManager({ onClose }: ModManagerProps) {
       console.error("Error fetching deleted mods:", error);
     } finally {
       setLoadingDeleted(false);
+    }
+  };
+
+  const fetchAdminCatalog = async () => {
+    try {
+      setLoadingAdminCatalog(true);
+      const response = await authFetch("/api/mods/admin/catalog");
+      if (response.status === 403) {
+        return;
+      }
+      const data = await response.json();
+      if (!response.ok) {
+        throw new Error(data.error || t('manager.admin.loadFailed'));
+      }
+
+      const mods: AdminCatalogMod[] = data.mods || [];
+      setAdminCatalog(mods);
+      if (
+        selectedAdminModuleId &&
+        mods.some((mod) => mod.moduleId === selectedAdminModuleId)
+      ) {
+        return;
+      }
+      setSelectedAdminModuleId(mods[0]?.moduleId || "");
+    } catch (error) {
+      console.error("Error fetching admin module catalog:", error);
+    } finally {
+      setLoadingAdminCatalog(false);
     }
   };
 
@@ -373,6 +422,53 @@ export function ModManager({ onClose }: ModManagerProps) {
     }
   };
 
+  const handleAddModuleToAllUsers = () => {
+    if (!selectedAdminModuleId) {
+      alert(t('manager.admin.noSelection'));
+      return;
+    }
+
+    const selectedMod = adminCatalog.find(
+      (mod) => mod.moduleId === selectedAdminModuleId
+    );
+    const selectedName = selectedMod?.name || selectedAdminModuleId;
+
+    setConfirmState({
+      open: true,
+      title: t('manager.admin.confirmTitle'),
+      message: t('manager.admin.confirmMessage', {
+        modName: selectedName,
+      }),
+      confirmLabel: t('manager.admin.applyButton'),
+      onConfirm: async () => {
+        try {
+          setApplyingAdminModule(true);
+          const response = await authFetch("/api/mods/admin/add-to-all", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ moduleId: selectedAdminModuleId }),
+          });
+          const data = await response.json();
+          if (!response.ok) {
+            throw new Error(data.error || t('manager.admin.applyFailed'));
+          }
+
+          alert(
+            t('manager.admin.successMessage', {
+              moduleName: data.moduleName || selectedName,
+              count: data.affectedUsers || 0,
+            })
+          );
+          await fetchLibrary();
+        } catch (error) {
+          alert((error as Error).message);
+        } finally {
+          setApplyingAdminModule(false);
+        }
+      },
+    });
+  };
+
   return (
     <>
       <div className="mod-manager-overlay">
@@ -423,6 +519,43 @@ export function ModManager({ onClose }: ModManagerProps) {
           <div className="mod-manager-content">
             {tab === "library" && (
               <>
+                {isAdmin && (
+                  <div className="admin-bulk-panel">
+                    <div className="admin-bulk-title">
+                      {t('manager.admin.title')}
+                    </div>
+                    <div className="admin-bulk-controls">
+                      <select
+                        className="admin-module-select"
+                        value={selectedAdminModuleId}
+                        onChange={(e) => setSelectedAdminModuleId(e.target.value)}
+                        disabled={loadingAdminCatalog || applyingAdminModule}
+                      >
+                        <option value="">
+                          {t('manager.admin.selectPlaceholder')}
+                        </option>
+                        {adminCatalog.map((mod) => (
+                          <option key={mod.moduleId} value={mod.moduleId}>
+                            {mod.name} ({mod.moduleId.slice(0, 8)}...)
+                          </option>
+                        ))}
+                      </select>
+                      <button
+                        className="btn-primary"
+                        onClick={handleAddModuleToAllUsers}
+                        disabled={
+                          loadingAdminCatalog ||
+                          applyingAdminModule ||
+                          adminCatalog.length === 0
+                        }
+                      >
+                        {applyingAdminModule
+                          ? t('manager.admin.applyingButton')
+                          : t('manager.admin.applyButton')}
+                      </button>
+                    </div>
+                  </div>
+                )}
                 {hasLibrarySelection && (
                   <div className="deleted-actions">
                     <button
@@ -718,6 +851,33 @@ export function ModManager({ onClose }: ModManagerProps) {
           gap: 8px;
           margin-bottom: 12px;
           flex-wrap: wrap;
+        }
+        .admin-bulk-panel {
+          border: 1px solid rgba(107, 90, 69, 0.35);
+          background: rgba(255, 255, 255, 0.72);
+          border-radius: 10px;
+          padding: 12px;
+          margin-bottom: 12px;
+        }
+        .admin-bulk-title {
+          font-weight: 700;
+          color: #4b3d2f;
+          margin-bottom: 10px;
+        }
+        .admin-bulk-controls {
+          display: flex;
+          gap: 8px;
+          align-items: center;
+          flex-wrap: wrap;
+        }
+        .admin-module-select {
+          flex: 1;
+          min-width: 240px;
+          padding: 8px 10px;
+          border-radius: 6px;
+          border: 1px solid rgba(203, 213, 225, 0.9);
+          background: rgba(255, 255, 255, 0.92);
+          color: #3d2f1f;
         }
         .shared-search {
           display: flex;

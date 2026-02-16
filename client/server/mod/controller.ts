@@ -1,22 +1,24 @@
 /// <reference path="../types/express.d.ts" />
 import type { Request, Response } from "express";
-import { DatabaseManager } from "../core/DatabaseManager.js";
-import { loadMod } from "./service.js";
-import { ModuleLoader } from "../../../src/shared/agents/memory/moduleloader/index.js";
+import fs from "node:fs";
+import path from "node:path";
 import { WorldModuleLoader } from "../../../src/dynamicworldagent/world_builder/worldModuleLoader.js";
+import { ModuleLoader } from "../../../src/shared/agents/memory/moduleloader/index.js";
+import { DatabaseManager } from "../core/DatabaseManager.js";
 import { isNameSimilar } from "../utils/stringUtils.js";
 import {
+  addModuleToAllUsers,
+  addSharedModuleToLibrary,
+  listActiveModulesForAdmin,
+  listDeletedMods,
   listSharedMods,
+  removeModuleFromLibrary,
+  restoreDeletedModule,
   shareModule,
   unshareModule,
-  removeModuleFromLibrary,
-  addSharedModuleToLibrary,
-  listDeletedMods,
-  restoreDeletedModule,
 } from "./library.js";
 import { getQuotaStatus } from "./quotaManager.js";
-import path from "path";
-import fs from "fs";
+import { loadMod } from "./service.js";
 
 /**
  * Check if a module is a world-builder generated module
@@ -92,7 +94,7 @@ export async function loadModData(req: Request, res: Response): Promise<void> {
     }
   } catch (error) {
     console.error("Error loading mod data:", error);
-    const errorMessage = "Failed to load mod data: " + (error as Error).message;
+    const errorMessage = `Failed to load mod data: ${(error as Error).message}`;
     if (useSSE) {
       res.write(
         `data: ${JSON.stringify({ stage: "Error", progress: 0, message: errorMessage })}\n\n`
@@ -237,11 +239,9 @@ export async function getModuleIntroduction(
     }
   } catch (error) {
     console.error("Error getting module introduction:", error);
-    res
-      .status(500)
-      .json({
-        error: "Failed to get module introduction: " + (error as Error).message,
-      });
+    res.status(500).json({
+      error: `Failed to get module introduction: ${(error as Error).message}`,
+    });
   }
 }
 
@@ -249,7 +249,10 @@ export async function getModuleIntroduction(
  * List shared modules (searchable)
  * GET /api/mods/shared
  */
-export async function getSharedMods(req: Request, res: Response): Promise<void> {
+export async function getSharedMods(
+  req: Request,
+  res: Response
+): Promise<void> {
   try {
     const email = req.user?.email;
     if (!email) {
@@ -263,11 +266,9 @@ export async function getSharedMods(req: Request, res: Response): Promise<void> 
     res.json({ success: true, mods });
   } catch (error) {
     console.error("Error listing shared mods:", error);
-    res
-      .status(500)
-      .json({
-        error: "Failed to list shared mods: " + (error as Error).message,
-      });
+    res.status(500).json({
+      error: `Failed to list shared mods: ${(error as Error).message}`,
+    });
   }
 }
 
@@ -296,7 +297,7 @@ export async function shareMod(req: Request, res: Response): Promise<void> {
     console.error("Error sharing mod:", error);
     res
       .status(500)
-      .json({ error: "Failed to share mod: " + (error as Error).message });
+      .json({ error: `Failed to share mod: ${(error as Error).message}` });
   }
 }
 
@@ -325,7 +326,7 @@ export async function unshareMod(req: Request, res: Response): Promise<void> {
     console.error("Error unsharing mod:", error);
     res
       .status(500)
-      .json({ error: "Failed to unshare mod: " + (error as Error).message });
+      .json({ error: `Failed to unshare mod: ${(error as Error).message}` });
   }
 }
 
@@ -354,7 +355,7 @@ export async function removeMod(req: Request, res: Response): Promise<void> {
     console.error("Error removing mod:", error);
     res
       .status(500)
-      .json({ error: "Failed to remove mod: " + (error as Error).message });
+      .json({ error: `Failed to remove mod: ${(error as Error).message}` });
   }
 }
 
@@ -362,7 +363,10 @@ export async function removeMod(req: Request, res: Response): Promise<void> {
  * Remove multiple modules from user's library
  * POST /api/mods/remove-bulk
  */
-export async function removeModsBulk(req: Request, res: Response): Promise<void> {
+export async function removeModsBulk(
+  req: Request,
+  res: Response
+): Promise<void> {
   try {
     const email = req.user?.email;
     const { modNames } = req.body as { modNames?: string[] };
@@ -390,7 +394,7 @@ export async function removeModsBulk(req: Request, res: Response): Promise<void>
     console.error("Error removing mods:", error);
     res
       .status(500)
-      .json({ error: "Failed to remove mods: " + (error as Error).message });
+      .json({ error: `Failed to remove mods: ${(error as Error).message}` });
   }
 }
 
@@ -419,7 +423,87 @@ export async function addSharedMod(req: Request, res: Response): Promise<void> {
     console.error("Error adding shared mod:", error);
     res
       .status(500)
-      .json({ error: "Failed to add shared mod: " + (error as Error).message });
+      .json({ error: `Failed to add shared mod: ${(error as Error).message}` });
+  }
+}
+
+/**
+ * List active modules with IDs for admin tools
+ * GET /api/mods/admin/catalog
+ */
+export async function getAdminModsCatalog(
+  req: Request,
+  res: Response
+): Promise<void> {
+  try {
+    if (req.user?.role !== "ADMIN") {
+      res.status(403).json({ error: "Admin permission required" });
+      return;
+    }
+
+    const mods = await listActiveModulesForAdmin();
+    res.json({ success: true, mods });
+  } catch (error) {
+    console.error("Error listing admin module catalog:", error);
+    res.status(500).json({
+      error: `Failed to list module catalog: ${(error as Error).message}`,
+    });
+  }
+}
+
+/**
+ * Add one selected module to every active user's library (admin only)
+ * POST /api/mods/admin/add-to-all
+ */
+export async function addModToAllUsers(
+  req: Request,
+  res: Response
+): Promise<void> {
+  try {
+    if (req.user?.role !== "ADMIN") {
+      res.status(403).json({ error: "Admin permission required" });
+      return;
+    }
+
+    const { moduleId, modName } = req.body as {
+      moduleId?: string;
+      modName?: string;
+    };
+
+    if (
+      (typeof moduleId !== "string" || !moduleId.trim()) &&
+      (typeof modName !== "string" || !modName.trim())
+    ) {
+      res.status(400).json({ error: "moduleId or modName is required" });
+      return;
+    }
+
+    const result = await addModuleToAllUsers({
+      moduleId: typeof moduleId === "string" ? moduleId : undefined,
+      modName: typeof modName === "string" ? modName : undefined,
+    });
+
+    res.json({
+      success: true,
+      moduleId: result.moduleId,
+      moduleName: result.moduleName,
+      totalUsers: result.totalUsers,
+      affectedUsers: result.affectedUsers,
+    });
+  } catch (error) {
+    console.error("Error adding module to all users:", error);
+    const message = (error as Error).message;
+    const statusCode = message.includes("required")
+      ? 400
+      : message.includes("Multiple modules")
+        ? 400
+        : message.includes("not found")
+          ? 404
+          : 500;
+
+    res.status(statusCode).json({
+      error: `Failed to add module to all users: ${message}`,
+    });
   }
 }
 
@@ -427,7 +511,10 @@ export async function addSharedMod(req: Request, res: Response): Promise<void> {
  * List deleted modules for current user
  * GET /api/mods/deleted
  */
-export async function getDeletedMods(req: Request, res: Response): Promise<void> {
+export async function getDeletedMods(
+  req: Request,
+  res: Response
+): Promise<void> {
   try {
     const email = req.user?.email;
     if (!email) {
@@ -440,11 +527,9 @@ export async function getDeletedMods(req: Request, res: Response): Promise<void>
     res.json({ success: true, mods });
   } catch (error) {
     console.error("Error listing deleted mods:", error);
-    res
-      .status(500)
-      .json({
-        error: "Failed to list deleted mods: " + (error as Error).message,
-      });
+    res.status(500).json({
+      error: `Failed to list deleted mods: ${(error as Error).message}`,
+    });
   }
 }
 
@@ -473,7 +558,7 @@ export async function restoreMod(req: Request, res: Response): Promise<void> {
     console.error("Error restoring mod:", error);
     res
       .status(500)
-      .json({ error: "Failed to restore mod: " + (error as Error).message });
+      .json({ error: `Failed to restore mod: ${(error as Error).message}` });
   }
 }
 
@@ -481,7 +566,10 @@ export async function restoreMod(req: Request, res: Response): Promise<void> {
  * Restore multiple deleted modules
  * POST /api/mods/restore-bulk
  */
-export async function restoreModsBulk(req: Request, res: Response): Promise<void> {
+export async function restoreModsBulk(
+  req: Request,
+  res: Response
+): Promise<void> {
   try {
     const email = req.user?.email;
     const { modNames } = req.body as { modNames?: string[] };
@@ -505,7 +593,7 @@ export async function restoreModsBulk(req: Request, res: Response): Promise<void
     console.error("Error restoring mods:", error);
     res
       .status(500)
-      .json({ error: "Failed to restore mods: " + (error as Error).message });
+      .json({ error: `Failed to restore mods: ${(error as Error).message}` });
   }
 }
 
@@ -526,10 +614,8 @@ export async function getModQuota(req: Request, res: Response): Promise<void> {
     res.json({ success: true, quota });
   } catch (error) {
     console.error("Error getting quota status:", error);
-    res
-      .status(500)
-      .json({
-        error: "Failed to get quota status: " + (error as Error).message,
-      });
+    res.status(500).json({
+      error: `Failed to get quota status: ${(error as Error).message}`,
+    });
   }
 }

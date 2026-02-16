@@ -208,6 +208,18 @@
     "search": {
       "placeholder": "搜索共享模组..."
     },
+    "admin": {
+      "title": "管理员：添加模组到所有用户",
+      "selectPlaceholder": "请选择模组...",
+      "applyButton": "添加到所有用户",
+      "applyingButton": "执行中...",
+      "confirmTitle": "添加模组到所有用户",
+      "confirmMessage": "该操作会把\"{{modName}}\"加入所有有效用户的模组库。是否继续？",
+      "successMessage": "\"{{moduleName}}\"已添加到{{count}}个用户。",
+      "noSelection": "请先选择一个模组。",
+      "loadFailed": "加载管理员模组列表失败",
+      "applyFailed": "添加模组到所有用户失败"
+    },
     "deleted": {
       "deletedAt": "删除于",
       "day": "天",

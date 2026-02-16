@@ -1,6 +1,6 @@
+import fs from "node:fs";
+import path from "node:path";
 import { getPrismaClient } from "../../../src/shared/agents/memory/database/prismaClient.js";
-import path from "path";
-import fs from "fs";
 
 const modsDir = path.join(process.cwd(), "data", "Mods");
 const SYSTEM_OWNER_EMAIL = "__system__";
@@ -82,6 +82,52 @@ async function resolveAccessibleModuleForUser(email: string, modName: string) {
   });
 
   return permission?.module || null;
+}
+
+async function resolveActiveModuleForAdminSelection(params: {
+  moduleId?: string;
+  modName?: string;
+}) {
+  const prisma = getPrismaClient();
+  const moduleId = params.moduleId?.trim();
+  const modName = params.modName?.trim();
+
+  if (moduleId) {
+    const byId = await prisma.module.findFirst({
+      where: {
+        moduleId,
+        status: "active",
+      },
+    });
+    if (!byId) {
+      throw new Error("Module not found or not active");
+    }
+    return byId;
+  }
+
+  if (!modName) {
+    throw new Error("moduleId or modName is required");
+  }
+
+  const normalized = normalizeModuleNameKey(modName);
+  const matched = await prisma.module.findMany({
+    where: {
+      moduleNameNormalized: normalized,
+      status: "active",
+    },
+    orderBy: { updatedAt: "desc" },
+    take: 2,
+  });
+
+  if (matched.length === 0) {
+    throw new Error("Module not found or not active");
+  }
+  if (matched.length > 1) {
+    throw new Error(
+      "Multiple modules share this name. Please specify moduleId."
+    );
+  }
+  return matched[0];
 }
 
 async function ensureModuleEntry(modName: string, ownerEmail: string) {
@@ -304,7 +350,11 @@ async function cleanModuleDataForOwner(
         where: { npcId: { in: npcIds }, emailId: ownerEmail },
       });
       await prisma.character.deleteMany({
-        where: { characterId: { in: npcIds }, isNpc: true, emailId: ownerEmail },
+        where: {
+          characterId: { in: npcIds },
+          isNpc: true,
+          emailId: ownerEmail,
+        },
       });
     }
   }
@@ -383,7 +433,9 @@ export async function ensureLegacyLibraryEntries(email: string): Promise<void> {
 
 export async function cleanupExpiredDeletedMods(): Promise<void> {
   const prisma = getPrismaClient();
-  const cutoff = new Date(Date.now() - TRASH_RETENTION_DAYS * 24 * 60 * 60 * 1000);
+  const cutoff = new Date(
+    Date.now() - TRASH_RETENTION_DAYS * 24 * 60 * 60 * 1000
+  );
 
   await prisma.userModuleDeleted.deleteMany({
     where: { deletedAt: { lte: cutoff } },
@@ -442,9 +494,7 @@ export async function cleanupExpiredDeletedMods(): Promise<void> {
   }
 }
 
-export async function listUserLibrary(
-  email: string
-): Promise<
+export async function listUserLibrary(email: string): Promise<
   Array<{
     name: string;
     shared: boolean;
@@ -508,13 +558,130 @@ export async function listSharedMods(
 
   return modules.map((m) => ({
     name: m.moduleName,
-    ownerEmail:
-      m.ownerEmailId === SYSTEM_OWNER_EMAIL ? "" : m.ownerEmailId,
+    ownerEmail: m.ownerEmailId === SYSTEM_OWNER_EMAIL ? "" : m.ownerEmailId,
     inLibrary: inLibrary.has(m.moduleId),
   }));
 }
 
-export async function shareModule(email: string, modName: string): Promise<void> {
+export async function listActiveModulesForAdmin(): Promise<
+  Array<{
+    moduleId: string;
+    name: string;
+    ownerEmail: string | null;
+    shared: boolean;
+    updatedAt: string;
+  }>
+> {
+  await cleanupExpiredDeletedMods();
+  const prisma = getPrismaClient();
+  const modules = await prisma.module.findMany({
+    where: { status: "active" },
+    select: {
+      moduleId: true,
+      moduleName: true,
+      ownerEmailId: true,
+      share: true,
+      updatedAt: true,
+    },
+    orderBy: [{ moduleNameNormalized: "asc" }, { updatedAt: "desc" }],
+  });
+
+  return modules.map((module) => ({
+    moduleId: module.moduleId,
+    name: module.moduleName,
+    ownerEmail:
+      module.ownerEmailId === SYSTEM_OWNER_EMAIL ? null : module.ownerEmailId,
+    shared: module.share,
+    updatedAt: module.updatedAt.toISOString(),
+  }));
+}
+
+export async function addModuleToAllUsers(params: {
+  moduleId?: string;
+  modName?: string;
+}): Promise<{
+  moduleId: string;
+  moduleName: string;
+  totalUsers: number;
+  affectedUsers: number;
+}> {
+  const prisma = getPrismaClient();
+  const module = await resolveActiveModuleForAdminSelection(params);
+  const users = await prisma.user.findMany({
+    where: { isActive: true },
+    select: { email: true },
+  });
+
+  await prisma.$transaction(async (tx) => {
+    for (const user of users) {
+      const isOwner = module.ownerEmailId === user.email;
+      const role = isOwner ? "owner" : "viewer";
+      const source = isOwner ? "owned" : "shared_added";
+      const now = new Date();
+
+      await tx.modulePermission.upsert({
+        where: {
+          moduleId_emailId: {
+            moduleId: module.moduleId,
+            emailId: user.email,
+          },
+        },
+        update: {
+          role,
+          canPlay: true,
+          canManage: isOwner,
+          grantedAt: now,
+        },
+        create: {
+          moduleId: module.moduleId,
+          emailId: user.email,
+          role,
+          canPlay: true,
+          canManage: isOwner,
+          grantedAt: now,
+        },
+      });
+
+      await tx.userModuleLibrary.upsert({
+        where: {
+          emailId_moduleId: {
+            emailId: user.email,
+            moduleId: module.moduleId,
+          },
+        },
+        update: {
+          source,
+          addedAt: now,
+        },
+        create: {
+          emailId: user.email,
+          moduleId: module.moduleId,
+          source,
+          addedAt: now,
+        },
+      });
+
+      await tx.userModuleDeleted.deleteMany({
+        where: {
+          emailId: user.email,
+          moduleId: module.moduleId,
+        },
+      });
+    }
+  });
+
+  return {
+    moduleId: module.moduleId,
+    moduleName: module.moduleName,
+    totalUsers: users.length,
+    affectedUsers: users.length,
+  };
+}
+
+export async function shareModule(
+  email: string,
+  modName: string
+): Promise<void> {
   const prisma = getPrismaClient();
   const normalized = normalizeModName(modName);
   let owned = await resolveOwnedModule(email, normalized);
@@ -545,7 +712,10 @@ export async function shareModule(email: string, modName: string): Promise<void>
   await ensureUserModuleLibraryLink(email, owned.moduleId, "owned");
 }
 
-export async function unshareModule(email: string, modName: string): Promise<void> {
+export async function unshareModule(
+  email: string,
+  modName: string
+): Promise<void> {
   const prisma = getPrismaClient();
   const owned = await resolveOwnedModule(email, modName);
   if (!owned) {
@@ -642,9 +812,7 @@ export async function addSharedModuleToLibrary(
   await clearUserModuleDeleted(email, shared.moduleId);
 }
 
-export async function listDeletedMods(
-  email: string
-): Promise<
+export async function listDeletedMods(email: string): Promise<
   Array<{
     name: string;
     deletedAt: string;

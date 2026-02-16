@@ -208,6 +208,18 @@
     "search": {
       "placeholder": "Search shared modules..."
     },
+    "admin": {
+      "title": "Admin: Add Module To All Users",
+      "selectPlaceholder": "Select a module...",
+      "applyButton": "Add To All Users",
+      "applyingButton": "Applying...",
+      "confirmTitle": "Apply Module To All Users",
+      "confirmMessage": "This will add \"{{modName}}\" to every active user's module library. Continue?",
+      "successMessage": "\"{{moduleName}}\" added to {{count}} users.",
+      "noSelection": "Please select a module first.",
+      "loadFailed": "Failed to load admin module catalog",
+      "applyFailed": "Failed to add module to all users"
+    },
     "deleted": {
       "deletedAt": "Deleted at",
       "day": "day",
