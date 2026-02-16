@@ -15,6 +15,83 @@ type ProgressCallback = (
   message: string
 ) => void;
 
+async function purgeMissingModFromDatabase(
+  modName: string,
+  emailId?: string
+): Promise<void> {
+  if (!emailId) return;
+
+  const prisma = getPrismaClient();
+  const normalized = modName.trim().toLowerCase();
+
+  await prisma.$transaction(async (tx) => {
+    const ownedModules = await tx.module.findMany({
+      where: {
+        ownerEmailId: emailId,
+        moduleNameNormalized: normalized,
+      },
+      select: { moduleId: true },
+    });
+
+    if (ownedModules.length > 0) {
+      const moduleIds = ownedModules.map((module) => module.moduleId);
+      await tx.userModuleDeleted.deleteMany({
+        where: { moduleId: { in: moduleIds } },
+      });
+      await tx.userModuleLibrary.deleteMany({
+        where: { moduleId: { in: moduleIds } },
+      });
+      await tx.modulePermission.deleteMany({
+        where: { moduleId: { in: moduleIds } },
+      });
+      await tx.module.deleteMany({
+        where: { moduleId: { in: moduleIds } },
+      });
+      await tx.modGeneration.deleteMany({
+        where: {
+          emailId,
+          moduleName: modName,
+        },
+      });
+      return;
+    }
+
+    const accessibleModuleRows = await tx.modulePermission.findMany({
+      where: {
+        emailId,
+        module: {
+          moduleNameNormalized: normalized,
+        },
+      },
+      select: { moduleId: true },
+    });
+
+    if (accessibleModuleRows.length === 0) {
+      return;
+    }
+
+    const moduleIds = accessibleModuleRows.map((row) => row.moduleId);
+    await tx.userModuleDeleted.deleteMany({
+      where: {
+        emailId,
+        moduleId: { in: moduleIds },
+      },
+    });
+    await tx.userModuleLibrary.deleteMany({
+      where: {
+        emailId,
+        moduleId: { in: moduleIds },
+      },
+    });
+    await tx.modulePermission.deleteMany({
+      where: {
+        emailId,
+        moduleId: { in: moduleIds },
+      },
+    });
+  });
+}
+
 /**
  * Check if a module is a world-builder generated module
  */
@@ -46,6 +123,7 @@ export async function loadMod(
   const modPath = path.join(modsDir, modName);
 
   if (!fs.existsSync(modPath)) {
+    await purgeMissingModFromDatabase(modName, emailId);
     throw new Error(`Mod "${modName}" not found`);
   }
 

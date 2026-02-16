@@ -110,7 +110,7 @@ export class ModuleDigestAgent {
     const response = await generateText({
       runtime: this.runtime,
       context: prompt,
-      modelClass: ModelClass.LARGE,
+      modelClass: ModelClass.MEDIUM,
     });
 
     const parsed = parseJSONResponse(response);

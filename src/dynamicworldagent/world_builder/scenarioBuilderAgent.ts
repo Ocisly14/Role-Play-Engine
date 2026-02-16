@@ -94,7 +94,7 @@ export class ScenarioBuilderAgent {
     const response = await generateText({
       runtime: this.runtime,
       context: prompt,
-      modelClass: ModelClass.LARGE,
+      modelClass: ModelClass.MEDIUM,
     });
 
     try {
@@ -330,7 +330,7 @@ export class ScenarioBuilderAgent {
     const response = await generateText({
       runtime: this.runtime,
       context: prompt,
-      modelClass: ModelClass.LARGE,
+      modelClass: ModelClass.MEDIUM,
     });
 
     try {
@@ -368,13 +368,11 @@ export class ScenarioBuilderAgent {
       const resolvedStartingScene: StartingSceneSelection = {
         scenarioId: selectedScenario.id,
         scenarioName: selectedScenario.name,
-        selectionReason:
-          startingScene?.selectionReason || "Fallback selection.",
         snapshot: startingScene?.snapshot as StartingSceneSelection["snapshot"],
       };
 
       const snapshot = resolvedStartingScene.snapshot || {
-        id: `${selectedScenario.id}-snapshot`,
+        id: selectedScenario.id,
         name: selectedScenario.name,
         location: selectedScenario.name,
         description: selectedScenario.description,
@@ -384,13 +382,18 @@ export class ScenarioBuilderAgent {
         events: [],
       };
 
-      snapshot.name = snapshot.name || selectedScenario.name;
-      snapshot.id = snapshot.id || `${selectedScenario.id}-snapshot`;
-
+      // Enforce starting snapshot identity to match the selected scenario exactly.
+      if (snapshot.id !== selectedScenario.id) {
+        console.warn(
+          `Starting snapshot id "${snapshot.id}" does not match scenario id "${selectedScenario.id}", overriding.`
+        );
+        snapshot.id = selectedScenario.id;
+      }
       if (snapshot.name !== selectedScenario.name) {
         console.warn(
-          `Starting snapshot name "${snapshot.name}" does not match scenario "${selectedScenario.name}"`
+          `Starting snapshot name "${snapshot.name}" does not match scenario "${selectedScenario.name}", overriding.`
         );
+        snapshot.name = selectedScenario.name;
       }
 
       snapshot.characters = Array.isArray(snapshot.characters)

@@ -278,7 +278,6 @@ export interface ScenarioClueSeed {
 export interface ScenarioNpcAssignment {
   id: string;
   name: string;
-  occupation?: string;
   activity: string;
 }
 
@@ -291,7 +290,7 @@ export interface ScenarioNpcAssignments {
 export interface StartingSceneSelection {
   scenarioId: string;
   scenarioName: string;
-  selectionReason: string;
+  selectionReason?: string;
   snapshot: DynamicScenarioSnapshot;
 }
 

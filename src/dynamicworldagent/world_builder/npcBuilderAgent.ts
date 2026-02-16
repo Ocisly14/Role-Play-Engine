@@ -217,7 +217,7 @@ export class NPCBuilderAgent {
     const response1 = await generateText({
       runtime: this.runtime,
       context: prompt1,
-      modelClass: ModelClass.LARGE,
+      modelClass: ModelClass.MEDIUM,
     });
 
     let step1Npcs: NPCBasicInfoStep1[];
@@ -268,7 +268,7 @@ export class NPCBuilderAgent {
     const response2 = await generateText({
       runtime: this.runtime,
       context: prompt2,
-      modelClass: ModelClass.LARGE,
+      modelClass: ModelClass.MEDIUM,
     });
 
     interface Step2Item {
@@ -426,7 +426,7 @@ export class NPCBuilderAgent {
     const response = await generateText({
       runtime: this.runtime,
       context: prompt,
-      modelClass: ModelClass.LARGE,
+      modelClass: ModelClass.MEDIUM,
     });
 
     try {

@@ -87,7 +87,7 @@ export class MacroSceneAgent {
     const response = await generateText({
       runtime: this.runtime,
       context: prompt,
-      modelClass: ModelClass.LARGE,
+      modelClass: ModelClass.MEDIUM,
     });
 
     try {
@@ -138,7 +138,7 @@ export class MacroSceneAgent {
     const response = await generateText({
       runtime: this.runtime,
       context: prompt,
-      modelClass: ModelClass.LARGE,
+      modelClass: ModelClass.MEDIUM,
     });
 
     try {
@@ -192,7 +192,7 @@ export class MacroSceneAgent {
     const response = await generateText({
       runtime: this.runtime,
       context: prompt,
-      modelClass: ModelClass.LARGE,
+      modelClass: ModelClass.MEDIUM,
     });
 
     try {
@@ -207,17 +207,6 @@ export class MacroSceneAgent {
       for (const event of truthEvents) {
         if (!event.id || !event.event) {
           throw new Error("Truth event missing required fields (id, event)");
-        }
-
-        // Warning: check for potential names (capitalized words that aren't at sentence start)
-        const suspiciousNames = event.event.match(
-          /(?<!^|\. )[A-Z][a-z]+ [A-Z][a-z]+/g
-        );
-        if (suspiciousNames) {
-          console.warn(
-            `⚠️ Potential names found in truth event ${event.id}: ${suspiciousNames.join(", ")}`
-          );
-          console.warn(`   Event: ${event.event}`);
         }
       }
 
@@ -261,7 +250,7 @@ export class MacroSceneAgent {
     const response = await generateText({
       runtime: this.runtime,
       context: prompt,
-      modelClass: ModelClass.LARGE,
+      modelClass: ModelClass.MEDIUM,
     });
 
     try {
@@ -322,7 +311,7 @@ export class MacroSceneAgent {
     const response = await generateText({
       runtime: this.runtime,
       context: prompt,
-      modelClass: ModelClass.LARGE,
+      modelClass: ModelClass.MEDIUM,
     });
 
     try {
@@ -372,7 +361,7 @@ export class MacroSceneAgent {
     const response = await generateText({
       runtime: this.runtime,
       context: prompt,
-      modelClass: ModelClass.LARGE,
+      modelClass: ModelClass.MEDIUM,
     });
 
     try {
