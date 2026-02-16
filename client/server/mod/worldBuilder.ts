@@ -13,6 +13,24 @@ import { checkGenerationQuota, recordGeneration } from "./quotaManager.js";
 import path from "path";
 import fs from "fs";
 
+function normalizeProgressEvent(
+  stage: string,
+  progress: number,
+  message: string
+): { stage: string; progress: number; message: string } {
+  // WorldBuilderService emits an internal "complete" before DB persistence.
+  // Keep "complete" reserved for controller-level final completion.
+  if (stage === "complete") {
+    return {
+      stage: "persistence",
+      progress: Math.min(progress, 95),
+      message: "Finalizing and saving to database...",
+    };
+  }
+
+  return { stage, progress, message };
+}
+
 /**
  * Generate world content for a module
  * POST /api/module/generate-world
@@ -107,7 +125,8 @@ export async function generateWorld(
       creativePrompt.trim(),
       selectedStoryLength,
       (stage, progress, message) => {
-        res.write(`data: ${JSON.stringify({ stage, progress, message })}\n\n`);
+        const event = normalizeProgressEvent(stage, progress, message);
+        res.write(`data: ${JSON.stringify(event)}\n\n`);
       }
     );
 
@@ -229,7 +248,8 @@ export async function generateScene(
       selectedSettingType as any,
       creativePrompt.trim(),
       (stage, progress, message) => {
-        res.write(`data: ${JSON.stringify({ stage, progress, message })}\n\n`);
+        const event = normalizeProgressEvent(stage, progress, message);
+        res.write(`data: ${JSON.stringify(event)}\n\n`);
       }
     );
 
@@ -336,7 +356,8 @@ export async function generateNpcs(req: Request, res: Response): Promise<void> {
     const result = await service.generateNpcsForModule(
       moduleName.trim(),
       (stage, progress, message) => {
-        res.write(`data: ${JSON.stringify({ stage, progress, message })}\n\n`);
+        const event = normalizeProgressEvent(stage, progress, message);
+        res.write(`data: ${JSON.stringify(event)}\n\n`);
       }
     );
 

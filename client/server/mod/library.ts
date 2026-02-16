@@ -516,7 +516,19 @@ export async function listSharedMods(
 
 export async function shareModule(email: string, modName: string): Promise<void> {
   const prisma = getPrismaClient();
-  const owned = await resolveOwnedModule(email, modName);
+  const normalized = normalizeModName(modName);
+  let owned = await resolveOwnedModule(email, normalized);
+
+  // Generation-complete UI can race slightly ahead of library registration.
+  // If module files already exist, self-heal by registering first.
+  if (!owned) {
+    const moduleDir = path.join(modsDir, normalized);
+    if (fs.existsSync(moduleDir)) {
+      await registerModuleForUser(email, normalized);
+      owned = await resolveOwnedModule(email, normalized);
+    }
+  }
+
   if (!owned) {
     throw new Error("Module not found in library");
   }
