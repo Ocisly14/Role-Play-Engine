@@ -774,6 +774,38 @@ export const buildDynamicGraph = (
               `   ✓ [世界线更新] 场景更新完成，未生成新的 global trigger（已清除旧的）`
             );
           }
+
+          const hasWorldlineCurrentSceneUpdate = Boolean(
+            finalState.temporaryInfo.contextualData?.worldlineSceneUpdate
+              ?.updatedSnapshot
+          );
+          if (hasWorldlineCurrentSceneUpdate && finalState.currentScenario) {
+            const currentScenario = finalState.currentScenario;
+            void generateSceneImage(currentScenario, finalState)
+              .then((result) => {
+                if (!result) return;
+                currentScenario.sceneImage = {
+                  path: result.path,
+                  mimeType: result.mimeType,
+                  generatedAt: new Date().toISOString(),
+                };
+                stream?.onSceneImage?.({
+                  imagePath: result.path,
+                  mimeType: result.mimeType,
+                  sceneName: currentScenario.name,
+                  location: currentScenario.location,
+                  gameDay: finalState.gameDay ?? null,
+                  gameTime: finalState.timeOfDay ?? null,
+                  timestamp: new Date().toISOString(),
+                });
+              })
+              .catch((error) => {
+                console.warn(
+                  "[Global Trigger] Worldline scene image generation failed:",
+                  error
+                );
+              });
+          }
         } catch (error) {
           console.error(`   ❌ [世界线更新] 场景更新失败:`, error);
         } finally {
@@ -1402,6 +1434,38 @@ export const buildDynamicListenerGraph = (
             console.log(
               `   ✓ [世界线更新] 场景更新完成，未生成新的 global trigger（已清除旧的）`
             );
+          }
+
+          const hasWorldlineCurrentSceneUpdate = Boolean(
+            finalState.temporaryInfo.contextualData?.worldlineSceneUpdate
+              ?.updatedSnapshot
+          );
+          if (hasWorldlineCurrentSceneUpdate && finalState.currentScenario) {
+            const currentScenario = finalState.currentScenario;
+            void generateSceneImage(currentScenario, finalState)
+              .then((result) => {
+                if (!result) return;
+                currentScenario.sceneImage = {
+                  path: result.path,
+                  mimeType: result.mimeType,
+                  generatedAt: new Date().toISOString(),
+                };
+                stream?.onSceneImage?.({
+                  imagePath: result.path,
+                  mimeType: result.mimeType,
+                  sceneName: currentScenario.name,
+                  location: currentScenario.location,
+                  gameDay: finalState.gameDay ?? null,
+                  gameTime: finalState.timeOfDay ?? null,
+                  timestamp: new Date().toISOString(),
+                });
+              })
+              .catch((error) => {
+                console.warn(
+                  "[Listener Global Trigger] Worldline scene image generation failed:",
+                  error
+                );
+              });
           }
         } catch (error) {
           console.error(`   ❌ [世界线更新] 场景更新失败:`, error);
