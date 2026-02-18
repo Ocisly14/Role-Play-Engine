@@ -20,15 +20,15 @@ The following defines the inevitable outcome if no intervention occurs:
 
 **Note**: The endState contains the pointOfNoReturn trigger. If the global trigger events align with or directly cause the point of no return to be reached, this will cause game end.
 
-## 📋 New ActionLog Entries (Last 3 Turns)
+## 📋 Recent ActionLog Entries (Last 1 Hour of Game Time)
 
-The following are **newly added** actionLog entries from the most recent 3 turns (not all historical actionLog, only the new entries added in these turns):
+The following are actionLog entries from the **last 1 hour of in-game time** (capped at 10 entries per character):
 
 \`\`\`json
 {{recentActionLogsJson}}
 \`\`\`
 
-**Note**: These are only the actionLog entries that were created/added during the last 3 game turns, representing the most recent character activities.
+**Note**: These entries cover the most recent 1 hour of in-game time, with at most 10 entries per player or NPC, representing the most recent character activities.
 
 ## 🎬 Task
 

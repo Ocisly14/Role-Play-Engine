@@ -118,6 +118,7 @@ export class KeeperAgent {
     characterInput: string,
     gameStateManager: DynamicGameStateManager,
     language: "en" | "zh" = "zh",
+    selectedSkill?: string | null,
     options?: { onNarrativeDelta?: (delta: string) => void }
   ): Promise<{
     narrative: string;
@@ -329,6 +330,7 @@ export class KeeperAgent {
       previousScenarioJson: previousScenarioInfo
         ? this.safeStringify(previousScenarioInfo)
         : "null",
+      selectedSkill: selectedSkill || null,
     };
 
     // Use template and LLM to generate narrative and clue revelations

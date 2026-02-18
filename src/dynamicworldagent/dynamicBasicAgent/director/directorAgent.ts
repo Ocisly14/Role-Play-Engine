@@ -695,6 +695,29 @@ export class DirectorAgent {
   }
 
   /**
+   * Subtract N minutes from a game time string (format: "Day N, HH:MM").
+   * Handles day boundaries (e.g. Day 2, 00:30 - 60 min = Day 1, 23:30).
+   * Returns the resulting game time string.
+   */
+  private subtractMinutesFromGameTime(gameTime: string, minutes: number): string {
+    const t = this.parseGameTimeFromSnapshot(gameTime);
+    if (!t) return gameTime;
+    const [h, m] = t.timeOfDay.split(":").map(Number);
+    let totalMinutes = h * 60 + m - minutes;
+    let day = t.gameDay;
+    while (totalMinutes < 0) {
+      totalMinutes += 24 * 60;
+      day -= 1;
+    }
+    if (day < 1) day = 1;
+    const rh = Math.floor(totalMinutes / 60);
+    const rm = totalMinutes % 60;
+    const hh = String(rh).padStart(2, "0");
+    const mm = String(rm).padStart(2, "0");
+    return `Day ${day}, ${hh}:${mm}`;
+  }
+
+  /**
    * Find NPC by ID with fuzzy matching fallback
    * 1st priority: Exact match (case-sensitive)
    * 2nd priority: Fuzzy match (case-insensitive, normalized)
@@ -2432,35 +2455,13 @@ export class DirectorAgent {
           actionResults?: any[];
         }>) || [];
 
-      const recentTurns = conversationHistory.slice(-3);
-      if (recentTurns.length > 0) {
+      if (true) {
         const currentGameTime = `Day ${dynamicState.gameDay}, ${dynamicState.timeOfDay}`;
-        let earliestTime: string | null = null;
-
-        // Find earliest time from actionResults in recent turns
-        for (const turn of recentTurns) {
-          if (turn.actionResults && turn.actionResults.length > 0) {
-            for (const result of turn.actionResults) {
-              const resultTime =
-                result.gameTime ||
-                `Day ${dynamicState.gameDay}, ${result.timeOfDay || dynamicState.timeOfDay}`;
-              if (
-                !earliestTime ||
-                this.isTimeBeforeOrEqual(resultTime, earliestTime)
-              ) {
-                earliestTime = resultTime;
-              }
-            }
-          }
-        }
-
-        if (!earliestTime) {
-          earliestTime = currentGameTime;
-        }
+        // Use a 1-hour game time window instead of turn count
+        const earliestTime = this.subtractMinutesFromGameTime(currentGameTime, 60);
 
         // Extract actionLog entries from all characters
         const recentActionLogs: Array<{
-          turnNumber: number;
           characterId: string;
           characterName: string;
           actionLog: ActionLogEntry[];
@@ -2483,18 +2484,19 @@ export class DirectorAgent {
           })),
         ];
 
-        // Filter actionLog entries within the time range
+        // Filter actionLog entries within the last 1 hour, capped at 10 per character
         for (const character of allCharacters) {
-          const filteredActionLog = character.actionLog.filter((entry) => {
-            return (
-              this.isTimeBeforeOrEqual(earliestTime, entry.time) &&
-              this.isTimeBeforeOrEqual(entry.time, currentGameTime)
-            );
-          });
+          const filteredActionLog = character.actionLog
+            .filter((entry) => {
+              return (
+                this.isTimeBeforeOrEqual(earliestTime, entry.time) &&
+                this.isTimeBeforeOrEqual(entry.time, currentGameTime)
+              );
+            })
+            .slice(-10);
 
           if (filteredActionLog.length > 0) {
             recentActionLogs.push({
-              turnNumber: recentTurns[0]?.turnNumber || 0,
               characterId: character.id,
               characterName: character.name,
               actionLog: filteredActionLog,
@@ -2640,46 +2642,15 @@ export class DirectorAgent {
         actionResults?: any[];
       }>) || [];
 
-    // Get recent 3 turns (including current turn)
-    const recentTurns = conversationHistory.slice(-3);
-    if (recentTurns.length === 0) {
-      console.log(`   ℹ️  No recent turns found`);
-      return false;
-    }
-
-    // Calculate time range for recent 3 turns
-    // Get the earliest time from recent turns' actionResults
+    // Use a 1-hour game time window instead of turn count
     const currentGameTime = `Day ${dynamicState.gameDay}, ${dynamicState.timeOfDay}`;
-    let earliestTime: string | null = null;
+    const earliestTime = this.subtractMinutesFromGameTime(currentGameTime, 60);
 
-    // Find earliest time from actionResults in recent turns
-    for (const turn of recentTurns) {
-      if (turn.actionResults && turn.actionResults.length > 0) {
-        for (const result of turn.actionResults) {
-          const resultTime =
-            result.gameTime ||
-            `Day ${dynamicState.gameDay}, ${result.timeOfDay || dynamicState.timeOfDay}`;
-          if (
-            !earliestTime ||
-            this.isTimeBeforeOrEqual(resultTime, earliestTime)
-          ) {
-            earliestTime = resultTime;
-          }
-        }
-      }
-    }
-
-    // If no time found in actionResults, use current time as fallback
-    if (!earliestTime) {
-      earliestTime = currentGameTime;
-    }
-
-    console.log(`   📅 Time range: ${earliestTime} to ${currentGameTime}`);
+    console.log(`   📅 Time range: ${earliestTime} to ${currentGameTime} (last 1 hour)`);
 
     // Extract actionLog entries directly from all characters' actionLog
-    // Filter entries that fall within the time range of recent 3 turns
+    // Filter entries that fall within the last 1 hour of game time
     const recentActionLogs: Array<{
-      turnNumber: number;
       characterId: string;
       characterName: string;
       actionLog: ActionLogEntry[];
@@ -2703,19 +2674,19 @@ export class DirectorAgent {
       })),
     ];
 
-    // Filter actionLog entries within the time range
+    // Filter actionLog entries within the last 1 hour, capped at 10 per character
     for (const character of allCharacters) {
-      const filteredActionLog = character.actionLog.filter((entry) => {
-        // Include entries that are within the time range (earliestTime to currentGameTime)
-        return (
-          this.isTimeBeforeOrEqual(earliestTime, entry.time) &&
-          this.isTimeBeforeOrEqual(entry.time, currentGameTime)
-        );
-      });
+      const filteredActionLog = character.actionLog
+        .filter((entry) => {
+          return (
+            this.isTimeBeforeOrEqual(earliestTime, entry.time) &&
+            this.isTimeBeforeOrEqual(entry.time, currentGameTime)
+          );
+        })
+        .slice(-10);
 
       if (filteredActionLog.length > 0) {
         recentActionLogs.push({
-          turnNumber: recentTurns[0]?.turnNumber || 0,
           characterId: character.id,
           characterName: character.name,
           actionLog: filteredActionLog,
@@ -2725,13 +2696,13 @@ export class DirectorAgent {
 
     if (recentActionLogs.length === 0) {
       console.log(
-        `   ℹ️  No recent actionLog entries found in the last 3 turns`
+        `   ℹ️  No recent actionLog entries found in the last 1 hour of game time`
       );
       return false;
     }
 
     console.log(
-      `   📋 Found ${recentActionLogs.length} characters with actionLog entries in recent 3 turns`
+      `   📋 Found ${recentActionLogs.length} characters with actionLog entries in last 1 hour of game time`
     );
 
     // Prepare template context

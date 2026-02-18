@@ -970,6 +970,7 @@ export const buildDynamicGraph = (
         userInput,
         dgsm,
         language,
+        state.selectedSkill ?? null,
         {
           onNarrativeDelta: shouldStream ? stream?.onNarrativeDelta : undefined,
         }
@@ -1606,7 +1607,8 @@ export const buildDynamicListenerGraph = (
       const result = await keeperAgent.generateNarrative(
         userInput,
         dgsm,
-        language
+        language,
+        state.selectedSkill ?? null
       );
 
       // Use the updated state from result (which includes all keeper updates)

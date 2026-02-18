@@ -100,6 +100,9 @@ You are a writer, responsible for writing a narrative of the game.
   - Tension: {{tension}} / 10
 
   ### Action Results
+  {{#if selectedSkill}}
+  **Player's Selected Skill**: {{selectedSkill}}
+  {{/if}}
   {{#if allActionResultsDetailed}}
   {{#each allActionResultsDetailed}}
   Action {{@index}} — {{character}}
@@ -166,6 +169,7 @@ You are a writer, responsible for writing a narrative of the game.
   3.1 If this turn contains a fumble, optionally damage one eligible scenario clue instead of revealing it
   4. How tension should adjust (1-10)
   5. Use successLevel from actionLog when present; if missing, infer outcome from dice results and context.
+  6. **Skill-Driven Narrative**: When a skill is listed under "Player's Selected Skill", the action description must be grounded in the *nature of that skill* — what the investigator does and what the outcome feels like must match how that skill works. For example: Spot Hidden means the investigator *sees* something (describe the visual detail); Charm means the NPC is *willingly* won over and acts of their own accord; Intimidate means the NPC is *scared or coerced* and complies out of fear. Never let the wrong mechanism bleed through (e.g., a Charm success must not read like a threat).
 
   ### Perspective & Information Limits (CRITICAL)
   - Write EXCLUSIVELY from the investigator's second-person perspective
