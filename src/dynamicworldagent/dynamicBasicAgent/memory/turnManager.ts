@@ -88,11 +88,11 @@ export class TurnManager {
   /**
    * Create a new turn when character sends input
    */
-  createTurn(input: TurnInput): string {
+  async createTurn(input: TurnInput): Promise<string> {
     const turnId = `turn-${Date.now()}-${randomUUID().slice(0, 8)}`;
     const turnNumber = this.db.getNextTurnNumber(input.sessionId);
 
-    this.db.createTurn(
+    await this.db.createTurn(
       turnId,
       input.sessionId,
       turnNumber,
@@ -115,12 +115,12 @@ export class TurnManager {
   /**
    * Create turn from current game state
    */
-  createTurnFromGameState(
+  async createTurnFromGameState(
     sessionId: string,
     characterInput: string,
     gameState: DynamicGameState,
     isSimulated?: boolean
-  ): string {
+  ): Promise<string> {
     return this.createTurn({
       sessionId,
       characterInput,

@@ -118,7 +118,7 @@ export async function checkAndTriggerSimulate(
       const dynamicTurnManager = new DynamicTurnManager(db);
       const systemInput = "[系统] 调查员似乎陷入了僵局，守秘人给出了提示。";
       await db.preloadSessionTurns(sessionId);
-      const newTurnId = dynamicTurnManager.createTurnFromGameState(
+      const newTurnId = await dynamicTurnManager.createTurnFromGameState(
         sessionId,
         systemInput,
         dynamicGameState,

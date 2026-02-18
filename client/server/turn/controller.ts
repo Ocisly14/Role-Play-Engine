@@ -128,7 +128,7 @@ export async function createTurn(req: Request, res: Response): Promise<void> {
 
     // Create new turn if not resuming
     if (!turnId) {
-      turnId = dynamicTurnManager.createTurnFromGameState(
+      turnId = await dynamicTurnManager.createTurnFromGameState(
         dynamicGameState.sessionId,
         message,
         dynamicGameState

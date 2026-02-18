@@ -1149,7 +1149,7 @@ export const buildDynamicListenerGraph = (
       if (currentState.sessionId) {
         await db.preloadSessionTurns(currentState.sessionId);
       }
-      const newTurnId = turnManager.createTurnFromGameState(
+      const newTurnId = await turnManager.createTurnFromGameState(
         currentState.sessionId || "",
         characterInput,
         currentState,

@@ -205,10 +205,9 @@ export class CoCDatabaseAdapter {
   // =====================================================
 
   /**
-   * Create a new turn
-   * WARNING: This is now async internally but maintains sync interface for compatibility
+   * Create a new turn - writes to cache and awaits Prisma write before returning
    */
-  createTurn(
+  async createTurn(
     turnId: string,
     sessionId: string,
     turnNumber: number,
@@ -221,7 +220,7 @@ export class CoCDatabaseAdapter {
     isSimulated?: boolean,
     gameDay?: number | null,
     gameTime?: string | null
-  ): void {
+  ): Promise<void> {
     const startedAt = new Date();
     this.turnCache.set(turnId, {
       turnId,
@@ -248,34 +247,29 @@ export class CoCDatabaseAdapter {
     });
     this.trackSessionTurn(sessionId, turnId);
 
-    // Fire-and-forget - not ideal but maintains compatibility
-    (async () => {
-      const sessionScope = await this.prisma.session.findUnique({
-        where: { sessionId },
-        select: { moduleId: true, emailId: true },
-      });
-      await this.prisma.gameTurn.create({
-        data: {
-          turnId,
-          sessionId,
-          moduleId: sessionScope?.moduleId || null,
-          emailId: sessionScope?.emailId || null,
-          turnNumber,
-          characterInput,
-          characterId: characterId || null,
-          characterName: characterName || null,
-          sceneId: sceneId || null,
-          sceneName: sceneName || null,
-          location: location || null,
-          status: "processing",
-          startedAt,
-          isSimulated: isSimulated || false,
-          gameDay: gameDay ?? null,
-          gameTime: gameTime ?? null,
-        },
-      });
-    })().catch((error) => {
-      console.error(`Failed to create turn ${turnId}:`, error);
+    const sessionScope = await this.prisma.session.findUnique({
+      where: { sessionId },
+      select: { moduleId: true, emailId: true },
+    });
+    await this.prisma.gameTurn.create({
+      data: {
+        turnId,
+        sessionId,
+        moduleId: sessionScope?.moduleId || null,
+        emailId: sessionScope?.emailId || null,
+        turnNumber,
+        characterInput,
+        characterId: characterId || null,
+        characterName: characterName || null,
+        sceneId: sceneId || null,
+        sceneName: sceneName || null,
+        location: location || null,
+        status: "processing",
+        startedAt,
+        isSimulated: isSimulated || false,
+        gameDay: gameDay ?? null,
+        gameTime: gameTime ?? null,
+      },
     });
   }
 
