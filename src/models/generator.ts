@@ -50,6 +50,35 @@ export function getEndpoint(provider: ModelProviderName): string | undefined {
   return models[provider]?.endpoint;
 }
 
+function isOpenAIFixedParameterModel(modelName: string): boolean {
+  const normalizedModelName = modelName.toLowerCase();
+  return (
+    normalizedModelName.startsWith("gpt-5") ||
+    normalizedModelName.startsWith("o1") ||
+    normalizedModelName.startsWith("o3") ||
+    normalizedModelName.startsWith("o4")
+  );
+}
+
+function getOpenAITokenConfig(
+  modelName: string,
+  maxOutputTokens?: number
+): Record<string, unknown> {
+  if (maxOutputTokens === undefined) {
+    return {};
+  }
+
+  if (isOpenAIFixedParameterModel(modelName)) {
+    return {
+      modelKwargs: {
+        max_completion_tokens: maxOutputTokens,
+      },
+    };
+  }
+
+  return { maxTokens: maxOutputTokens };
+}
+
 /**
  * Download image from URL and convert to base64 data URL
  */
@@ -153,7 +182,7 @@ async function buildUserContent(
 export function createChatModel(
   provider: ModelProviderName,
   modelClass: ModelClass,
-  options?: { streaming?: boolean; operation?: string; userId?: string }
+  options?: { streaming?: boolean; operation?: string; userId?: string; temperature?: number }
 ): any {
   const settings = getModelSettings(provider, modelClass);
   const endpoint = getEndpoint(provider);
@@ -164,25 +193,35 @@ export function createChatModel(
     );
   }
 
+  const temperature = options?.temperature ?? settings.temperature;
+
   let model: any;
 
   switch (provider) {
-    case ModelProviderName.OPENAI:
+    case ModelProviderName.OPENAI: {
+      const openAITokenConfig = getOpenAITokenConfig(
+        settings.name,
+        settings.maxOutputTokens
+      );
+      const openAITemperatureConfig = isOpenAIFixedParameterModel(settings.name)
+        ? {}
+        : { temperature };
       model = new ChatOpenAI({
         modelName: settings.name,
-        temperature: settings.temperature,
-        maxTokens: settings.maxOutputTokens,
+        ...openAITemperatureConfig,
         openAIApiKey: process.env.OPENAI_API_KEY,
         configuration: {
           baseURL: endpoint,
         },
+        ...openAITokenConfig,
       });
       break;
+    }
 
     case ModelProviderName.ANTHROPIC:
       model = new ChatAnthropic({
         modelName: settings.name,
-        temperature: settings.temperature,
+        temperature,
         maxTokens: settings.maxOutputTokens,
         anthropicApiKey: process.env.ANTHROPIC_API_KEY,
         clientOptions: {
@@ -194,7 +233,7 @@ export function createChatModel(
     case ModelProviderName.GOOGLE:
       model = new ChatGoogleGenerativeAI({
         modelName: settings.name,
-        temperature: settings.temperature,
+        temperature,
         maxOutputTokens: settings.maxOutputTokens,
         apiKey: process.env.GOOGLE_API_KEY,
         streaming: options?.streaming ?? false,
@@ -231,6 +270,7 @@ export async function generateText(
     largeFallbackRetries = 3,
     images,
     onToken,
+    temperature,
   } = options;
 
   // Get provider from environment variable, runtime, or default to OpenAI
@@ -359,8 +399,9 @@ export async function generateText(
         throw new Error("Empty response from model");
       }
 
+      const inputTokens = (response as any).usage_metadata?.input_tokens ?? "?";
       console.log(
-        `✅ Generated text successfully (${responseText.length} characters)`
+        `✅ Generated text successfully (${responseText.length} characters, input tokens: ${inputTokens})`
       );
       return responseText;
     };
@@ -375,6 +416,7 @@ export async function generateText(
       const chatModel = createChatModel(providerForRun, phase.modelClass, {
         streaming: providerForRun === ModelProviderName.GOOGLE && Boolean(onToken),
         operation: options.operation,
+        temperature,
         userId: options.userId,
       });
 

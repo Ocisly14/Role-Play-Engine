@@ -381,6 +381,9 @@ export class ActionAgent {
     const sceneNPCs = !isNPC
       ? this.extractSceneNPCsForAction(dynamicState)
       : null;
+    const targetIntent = !isNPC
+      ? (dynamicState.temporaryInfo.currentActionAnalysis?.target?.intent ?? "")
+      : "";
 
     // Build system prompt using template
     const baseSystemPrompt = buildActionSystemPrompt(
@@ -392,6 +395,7 @@ export class ActionAgent {
       sceneNPCs,
       !isNPC ? (selectedSkill ?? null) : null,
       !isNPC ? skillSelectionMode : undefined,
+      targetIntent,
       language
     );
 
@@ -601,22 +605,17 @@ export class ActionAgent {
 
   /**
    * Filter character profile to remove unnecessary fields for action context
-   * Removes: age, gender, appearance, personality, backstory, background, goals, secrets,
-   * clues, instantiatedFrom, inheritsKnowledge, actionLog
+   * Removes: appearance, backstory, background, clues, instantiatedFrom,
+   * inheritsKnowledge, actionLog
    * Keeps: occupation, notes, and all core fields (id, name, attributes, status, inventory, skills, weapons, derivedAttributes, etc.)
    */
   private filterCharacterForContext(
     character: DynamicCharacterProfile
   ): Partial<DynamicCharacterProfile> {
     const {
-      age,
-      gender,
       appearance,
-      personality,
       backstory,
       background,
-      goals,
-      secrets,
       clues,
       instantiatedFrom,
       inheritsKnowledge,
@@ -676,12 +675,17 @@ export class ActionAgent {
       out.push({
         id: filtered.id,
         name: filtered.name,
+        age: filtered.age ?? null,
+        gender: filtered.gender ?? null,
+        personality: filtered.personality ?? null,
         attributes: filtered.attributes,
         status: filtered.status,
         skills: filtered.skills,
         inventory: filtered.inventory || [],
         occupation: filtered.occupation || null,
         notes: filtered.notes || null,
+        goals: npc.goals || [],
+        secrets: npc.secrets || [],
         relationships: npc.relationships || [],
         last3ActionLog: last3ActionLog, // Add last 3 actionLog entries
       });
@@ -1163,7 +1167,7 @@ export class ActionAgent {
           }
 
           console.log(
-            `   ✓ NPC ${npc.name} response processed: ${npcResponse.summary}`
+            `   ✓ NPC ${npc.name} response processed: ${npcResponse.responseDescription}`
           );
         }
 

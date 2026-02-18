@@ -103,4 +103,5 @@ export interface GenerationOptions {
   onToken?: (token: string) => void;
   userId?: string;
   operation?: string;
+  temperature?: number;
 }

@@ -32,7 +32,7 @@ interface Runtime {
 
 const createRuntime = (): Runtime => ({
   modelProvider:
-    (process.env.MODEL_PROVIDER as ModelProviderName) ||
+    (process.env.WORLD_BUILDER_MODEL_PROVIDER as ModelProviderName) ||
     ModelProviderName.OPENAI,
   getSetting: (key: string) => process.env[key],
 });
@@ -93,6 +93,7 @@ export class ScenarioBuilderAgent {
     progressCallback?.("Calling AI for scenario outlines...");
     const response = await generateText({
       runtime: this.runtime,
+      providerOverride: this.runtime.modelProvider,
       context: prompt,
       modelClass: ModelClass.MEDIUM,
     });
@@ -329,6 +330,7 @@ export class ScenarioBuilderAgent {
     progressCallback?.("Calling AI for starting scene snapshot...");
     const response = await generateText({
       runtime: this.runtime,
+      providerOverride: this.runtime.modelProvider,
       context: prompt,
       modelClass: ModelClass.MEDIUM,
     });

@@ -99,6 +99,16 @@ You are a writer, responsible for writing a narrative of the game.
   - Time: {{fullGameTime}}
   - Tension: {{tension}} / 10
 
+  {{#if hasActionTargetInfo}}
+  ### Action Target
+  {{#if actionTargetName}}
+  - Target: {{actionTargetName}}
+  {{/if}}
+  {{#if actionTargetIntent}}
+  - Target Intent: {{actionTargetIntent}}
+  {{/if}}
+  {{/if}}
+
   ### Action Results
   {{#if selectedSkill}}
   **Player's Selected Skill**: {{selectedSkill}}

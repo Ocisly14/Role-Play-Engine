@@ -169,7 +169,12 @@ export class KeeperAgent {
 
     // 2.2. Get interaction partner name (if action targets an NPC)
     const actionAnalysis = dynamicState.temporaryInfo.currentActionAnalysis;
-    const interactionPartnerName = actionAnalysis?.target?.name || null;
+    const actionTargetName = actionAnalysis?.target?.name || null;
+    const actionTargetIntent = actionAnalysis?.target?.intent?.trim()
+      ? actionAnalysis.target.intent.trim()
+      : null;
+    const hasActionTargetInfo = Boolean(actionTargetName || actionTargetIntent);
+    const interactionPartnerName = actionTargetName;
 
     // 3. Get complete attributes of NPCs involved in action results
     const actionRelatedNpcs = this.extractActionRelatedNpcs(
@@ -299,6 +304,9 @@ export class KeeperAgent {
       sceneChangeRequest: sceneChangeRequestForNarrative, // Scene change request (without timestamp)
       conversationHistory, // Recent conversation history (for {{#each}} loop)
       relevantHistory, // RAG-retrieved relevant history (for {{#each}} loop)
+      hasActionTargetInfo,
+      actionTargetName,
+      actionTargetIntent,
       currentTurnNumber, // Current turn number
       isFirstRealTurn, // Boolean flag for turn 1 detection
       keeperGuidance: dynamicState.keeperGuidance || null, // Module-specific keeper guidance

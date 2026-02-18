@@ -42,7 +42,7 @@ interface Runtime {
 
 const createRuntime = (): Runtime => ({
   modelProvider:
-    (process.env.MODEL_PROVIDER as ModelProviderName) ||
+    (process.env.WORLD_BUILDER_MODEL_PROVIDER as ModelProviderName) ||
     ModelProviderName.OPENAI,
   getSetting: (key: string) => process.env[key],
 });
@@ -216,6 +216,7 @@ export class NPCBuilderAgent {
 
     const response1 = await generateText({
       runtime: this.runtime,
+      providerOverride: this.runtime.modelProvider,
       context: prompt1,
       modelClass: ModelClass.MEDIUM,
     });
@@ -267,6 +268,7 @@ export class NPCBuilderAgent {
 
     const response2 = await generateText({
       runtime: this.runtime,
+      providerOverride: this.runtime.modelProvider,
       context: prompt2,
       modelClass: ModelClass.MEDIUM,
     });
@@ -425,6 +427,7 @@ export class NPCBuilderAgent {
 
     const response = await generateText({
       runtime: this.runtime,
+      providerOverride: this.runtime.modelProvider,
       context: prompt,
       modelClass: ModelClass.MEDIUM,
     });

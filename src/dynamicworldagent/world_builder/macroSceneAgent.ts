@@ -36,7 +36,7 @@ interface Runtime {
 
 const createRuntime = (): Runtime => ({
   modelProvider:
-    (process.env.MODEL_PROVIDER as ModelProviderName) ||
+    (process.env.WORLD_BUILDER_MODEL_PROVIDER as ModelProviderName) ||
     ModelProviderName.OPENAI,
   getSetting: (key: string) => process.env[key],
 });
@@ -57,10 +57,18 @@ function parseJSONResponse(response: string): any {
 }
 
 export class MacroSceneAgent {
+  private static readonly GOOGLE_PHASE1_TEMPERATURE = 1.2;
   private runtime: Runtime;
 
   constructor() {
     this.runtime = createRuntime();
+  }
+
+  private getPhaseOneTemperature(): number | undefined {
+    if (this.runtime.modelProvider === ModelProviderName.GOOGLE) {
+      return MacroSceneAgent.GOOGLE_PHASE1_TEMPERATURE;
+    }
+    return undefined;
   }
 
   /**
@@ -86,8 +94,10 @@ export class MacroSceneAgent {
     progressCallback?.("Calling AI for town structure...");
     const response = await generateText({
       runtime: this.runtime,
+      providerOverride: this.runtime.modelProvider,
       context: prompt,
       modelClass: ModelClass.MEDIUM,
+      temperature: this.getPhaseOneTemperature(),
     });
 
     try {
@@ -137,8 +147,10 @@ export class MacroSceneAgent {
     progressCallback?.("Calling AI for historical mythos...");
     const response = await generateText({
       runtime: this.runtime,
+      providerOverride: this.runtime.modelProvider,
       context: prompt,
       modelClass: ModelClass.MEDIUM,
+      temperature: this.getPhaseOneTemperature(),
     });
 
     try {
@@ -191,8 +203,10 @@ export class MacroSceneAgent {
     progressCallback?.("Calling AI for truth timeline...");
     const response = await generateText({
       runtime: this.runtime,
+      providerOverride: this.runtime.modelProvider,
       context: prompt,
       modelClass: ModelClass.MEDIUM,
+      temperature: this.getPhaseOneTemperature(),
     });
 
     try {
@@ -249,8 +263,10 @@ export class MacroSceneAgent {
     progressCallback?.("Calling AI for knowledge matrix...");
     const response = await generateText({
       runtime: this.runtime,
+      providerOverride: this.runtime.modelProvider,
       context: prompt,
       modelClass: ModelClass.MEDIUM,
+      temperature: this.getPhaseOneTemperature(),
     });
 
     try {
@@ -310,8 +326,10 @@ export class MacroSceneAgent {
     progressCallback?.("Calling AI for red herrings...");
     const response = await generateText({
       runtime: this.runtime,
+      providerOverride: this.runtime.modelProvider,
       context: prompt,
       modelClass: ModelClass.MEDIUM,
+      temperature: this.getPhaseOneTemperature(),
     });
 
     try {
@@ -360,8 +378,10 @@ export class MacroSceneAgent {
     progressCallback?.("Calling AI for end state...");
     const response = await generateText({
       runtime: this.runtime,
+      providerOverride: this.runtime.modelProvider,
       context: prompt,
       modelClass: ModelClass.MEDIUM,
+      temperature: this.getPhaseOneTemperature(),
     });
 
     try {

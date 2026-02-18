@@ -17,6 +17,7 @@ export function buildActionSystemPrompt(
   sceneNPCs?: any[] | null,
   selectedSkill?: string | null,
   skillSelectionMode?: "auto" | "manual",
+  targetIntent?: string | null,
   outputLanguage: "en" | "zh" = "zh"
 ): string {
   // Check if there's a valid scene change request from orchestrator
@@ -69,6 +70,14 @@ ${
   originalUserInput && !isNPC
     ? `## User Input
 User input: ${originalUserInput}
+
+`
+    : ""
+}${
+  !isNPC && targetIntent
+    ? `## Orchestrator Target Intent
+Target intent: ${targetIntent}
+- This intent is parsed by Orchestrator and should be used as additional context when resolving this action.
 
 `
     : ""

@@ -121,6 +121,8 @@ export function getMacroSceneStep1Template(
 
   return `You are a writer for a CoC game.
 
+**CREATIVE MANDATE**: Be bold and original. Craft a story that feels fresh and unexpected—avoid generic CoC tropes (stock Cthulhu cults, standard haunted mansions, Miskatonic-by-default settings). Draw inspiration from diversified cultures, historical eras, scientific frontiers, or genre mashups. Surprise players with something they have never encountered before in a CoC game.
+
 # MACRO SCENE GENERATION - STEP 1:
 
 ## User Creative Prompt
@@ -278,6 +280,8 @@ export function getTruthTimelineTemplateForSetting(
   const truthEventsSentence = getStoryLengthTruthEventsSentence(storyLength);
   return `You are a writer for a CoC game.
 
+**CREATIVE MANDATE**: Be bold and original. Craft a story that feels fresh and unexpected—avoid generic CoC tropes (stock Cthulhu cults, standard haunted mansions, Miskatonic-by-default settings). Draw inspiration from diversified cultures, historical eras, scientific frontiers, or genre mashups. Surprise players with something they have never encountered before in a CoC game.
+
 # TRUTH TIMELINE GENERATION - CURRENT EVENTS
 
 ## What is Truth Timeline?
@@ -405,6 +409,8 @@ export function getKnowledgeMatrixTemplate(
   const storyGuidance = getStoryLengthKnowledgeMatrixGuidance(storyLength);
   return `You are a writer for a CoC game.
 
+**CREATIVE MANDATE**: Be bold and original. Craft a story that feels fresh and unexpected—avoid generic CoC tropes (stock Cthulhu cults, standard haunted mansions, Miskatonic-by-default settings). Draw inspiration from diversified cultures, historical eras, scientific frontiers, or genre mashups. Surprise players with something they have never encountered before in a CoC game.
+
 # KNOWLEDGE MATRIX GENERATION
 
 ## What is Knowledge Matrix?
@@ -516,6 +522,8 @@ export function getRedHerringsTemplate(
   const redHerringsSentence = getStoryLengthRedHerringsSentence(storyLength);
   return `You are a writer for a CoC game.
 
+**CREATIVE MANDATE**: Be bold and original. Craft a story that feels fresh and unexpected—avoid generic CoC tropes (stock Cthulhu cults, standard haunted mansions, Miskatonic-by-default settings). Draw inspiration from diversified cultures, historical eras, scientific frontiers, or genre mashups. Surprise players with something they have never encountered before in a CoC game.
+
 # RED HERRINGS GENERATION
 
 ## What are Red Herrings?
@@ -609,6 +617,8 @@ export function getHistoricalMythosTemplateForSetting(
   _settingType: MacroSceneSettingType
 ): string {
   return `You are a writer for a CoC game.
+
+**CREATIVE MANDATE**: Be bold and original. Craft a story that feels fresh and unexpected—avoid generic CoC tropes (stock Cthulhu cults, standard haunted mansions, Miskatonic-by-default settings). Draw inspiration from diversified cultures, historical eras, scientific frontiers, or genre mashups. Surprise players with something they have never encountered before in a CoC game.
 
 # MACRO SCENE GENERATION - STEP 2: Historical Mythos Layer
 

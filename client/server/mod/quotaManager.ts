@@ -42,6 +42,10 @@ export async function checkGenerationQuota(
   email: string,
   storyLength: string
 ): Promise<QuotaCheckResult> {
+  if (email === process.env.ADMIN_EMAIL) {
+    return { allowed: true };
+  }
+
   const prisma = getPrismaClient();
 
   const totalAllTime = await prisma.modGeneration.count({
@@ -128,6 +132,18 @@ async function checkSubCaps(
  * Return the current quota snapshot for the given user (read-only).
  */
 export async function getQuotaStatus(email: string): Promise<QuotaStatus> {
+  if (email === process.env.ADMIN_EMAIL) {
+    return {
+      phase: "initial",
+      totalUsed: 0,
+      totalLimit: 9999,
+      mediumUsed: 0,
+      mediumLimit: 9999,
+      largeUsed: 0,
+      largeLimit: 9999,
+    };
+  }
+
   const prisma = getPrismaClient();
 
   const totalAllTime = await prisma.modGeneration.count({
