@@ -114,7 +114,7 @@
     "tabs": {
       "status": "Character Status",
       "notes": "Notes",
-      "knowledge": "Knowledge Q&A",
+      "knowledge": "Pensieve",
       "clues": "Discovered Clues",
       "map": "Map"
     },
@@ -186,23 +186,25 @@
       "noClues": "No clues"
     },
     "knowledge": {
-      "title": "Session Knowledge Q&A",
-      "hint": "Ask questions about what happened in this session. The answer is based on turn records and revealed clues.",
-      "queryPlaceholder": "Ask about clues, NPC actions, or past turns...",
-      "ask": "Ask",
-      "asking": "Asking...",
-      "answerTitle": "Answer",
-      "citationsTitle": "Evidence",
+      "title": "Pensieve",
+      "hint": "Gaze into the shimmering basin and awaken the memories of this adventure...",
+      "queryPlaceholder": "Whisper your uncertainty, and the past shall surface...",
+      "ask": "Gaze",
+      "asking": "Memories stirring...",
+      "you": "Investigator",
+      "assistant": "Pensieve",
+      "answerTitle": "Memory Revealed",
+      "citationsTitle": "Memory Fragments",
       "referenceClues": "Show discovered clues",
       "turnNumber": "Turn {{turn}}",
       "turnUnknown": "Turn unknown",
       "citationTypes": {
-        "turn": "Turn Record",
-        "clue": "Revealed Clue"
+        "turn": "Past Memory",
+        "clue": "Clue Imprint"
       },
       "errors": {
-        "askFailed": "Failed to ask question",
-        "invalidResponse": "Invalid answer response"
+        "askFailed": "The memory lies beyond reach, the ripples fade",
+        "invalidResponse": "The Pensieve offers no response"
       }
     },
     "map": {

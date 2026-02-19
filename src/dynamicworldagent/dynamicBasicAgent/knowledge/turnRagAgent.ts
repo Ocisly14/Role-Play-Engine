@@ -4,7 +4,7 @@ import type { GameTurn } from "../memory/turnManager.js";
 import {
   SessionRagService,
   type SessionRagChunkInput,
-} from "../../../rag/sessionRagService.js";
+} from "./sessionRagService.js";
 
 type ClueChunkDraft = {
   sourceName: string;

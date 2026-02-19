@@ -1,4 +1,4 @@
-import { generateText, ModelClass } from "../models/index.js";
+import { generateText, ModelClass } from "../../../models/index.js";
 import {
   RagQueryRewriter,
   type RagQueryRewriteOutput,
@@ -8,6 +8,12 @@ import {
   type RetrievedSessionRagChunk,
 } from "./sessionRagService.js";
 
+export interface RecentTurn {
+  turnNumber: number;
+  playerInput: string;
+  keeperNarrative: string;
+}
+
 export interface SessionRagQaRequest {
   sessionId: string;
   question: string;
@@ -16,6 +22,7 @@ export interface SessionRagQaRequest {
   sceneName?: string | null;
   sceneLocation?: string | null;
   npcNames?: string[];
+  recentTurns?: RecentTurn[];
 }
 
 export interface SessionRagCitation {
@@ -75,12 +82,13 @@ export class SessionRagQaService {
       sceneLocation: request.sceneLocation,
       npcNames: request.npcNames,
       language,
+      recentTurns: request.recentTurns,
     });
 
     const retrieved = await this.ragService.searchHybrid({
       sessionId: request.sessionId,
       ragQuery: rewrite.ragQuery,
-      topK: request.topK ?? 8,
+      topK: request.topK ?? 4,
       semanticWeight: 0.7,
       bm25Weight: 0.3,
     });
@@ -101,32 +109,52 @@ export class SessionRagQaService {
     }
 
     const evidenceBlock = buildEvidenceBlock(retrieved);
-    const answerPrompt = `You are a session-memory QA assistant.
+
+    const recentTurns = request.recentTurns ?? [];
+    const recentTurnsBlock =
+      recentTurns.length > 0
+        ? recentTurns
+            .map(
+              (t) =>
+                `[Turn ${t.turnNumber}]\nPlayer: ${t.playerInput}\nKeeper: ${t.keeperNarrative}`
+            )
+            .join("\n\n")
+        : null;
+
+    const answerPrompt = `You are a session-memory assistant for a Call of Cthulhu RPG game.
+Answer the player's question primarily based on the Retrieved Evidence below.
 
 Rules:
-1. Answer ONLY using provided evidence.
-2. If evidence is insufficient, say so explicitly.
-3. Do not add facts not present in evidence.
-4. Keep the answer concise and practical.
-5. Respond in ${language === "en" ? "English" : "Chinese"}.
+1. Retrieved Evidence is the primary source of truth. Base your answer on it.
+2. Recent Turns are provided only as conversational context to help you understand references or pronouns in the question — do NOT treat them as the answer source.
+3. Answer ONLY using provided context. Do not invent facts.
+4. If evidence is insufficient, say so explicitly.
+5. Always include relevant details: WHO was involved (character/NPC names), WHERE it happened (location), and WHAT happened (actions and outcomes).
+6. Keep the answer concise but informative — 2 to 4 sentences.
+7. Respond in ${language === "en" ? "English" : "Chinese"}.
+8. Do NOT include source tags like [E1], [E2] in your answer.
 
-User Question:
+Player Question:
 ${question}
-
-Retrieved Query:
-${rewrite.ragQuery}
-
-Evidence:
+${
+  recentTurnsBlock
+    ? `
+Recent Turns (for context only, last ${recentTurns.length} turns):
+${recentTurnsBlock}
+`
+    : ""
+}
+Retrieved Evidence (primary source):
 ${evidenceBlock}
 
-Now provide the final answer only.`;
+Answer:`;
 
     let answer: string;
     try {
       answer = (await generateText({
         runtime: {},
         context: answerPrompt,
-        modelClass: ModelClass.MEDIUM,
+        modelClass: ModelClass.SMALL,
         operation: "rag_answer",
         temperature: 0.2,
       })).trim();

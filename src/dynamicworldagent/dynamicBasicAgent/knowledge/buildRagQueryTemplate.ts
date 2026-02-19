@@ -1,9 +1,16 @@
+export interface RecentTurnContext {
+  turnNumber: number;
+  playerInput: string;
+  keeperNarrative: string;
+}
+
 export interface BuildRagQueryTemplateInput {
   question: string;
   sceneName?: string | null;
   sceneLocation?: string | null;
   npcNames?: string[];
   language?: "en" | "zh";
+  recentTurns?: RecentTurnContext[];
 }
 
 /**
@@ -16,6 +23,7 @@ export function buildRagQueryTemplate({
   sceneLocation,
   npcNames = [],
   language = "zh",
+  recentTurns = [],
 }: BuildRagQueryTemplateInput): string {
   const dedupedNpcNames = Array.from(
     new Set(
@@ -27,18 +35,29 @@ export function buildRagQueryTemplate({
 
   const outputLang = language === "en" ? "English" : "Chinese";
 
+  const recentTurnsBlock =
+    recentTurns.length > 0
+      ? recentTurns
+          .map((t) => `[Turn ${t.turnNumber}]\nPlayer: ${t.playerInput}\nKeeper: ${t.keeperNarrative}`)
+          .join("\n")
+      : "(none)";
+
   return `You rewrite player questions for retrieval.
 
 Rules:
 1. Keep intent unchanged.
-2. Inject relevant scene/NPC names when useful.
-3. Do NOT invent entities not listed below.
-4. Return STRICT JSON only.
-5. Do NOT answer the question.
-6. Output ragQuery in ${outputLang}.
+2. Use Recent Turns to understand conversational context and resolve pronouns or references.
+3. Inject relevant scene/NPC names when useful.
+4. Do NOT invent entities not listed below.
+5. Return STRICT JSON only.
+6. Do NOT answer the question.
+7. Output ragQuery in ${outputLang}.
 
 Question:
 ${question}
+
+Recent Turns (for context only):
+${recentTurnsBlock}
 
 Known Scene:
 - sceneName: ${sceneName || ""}

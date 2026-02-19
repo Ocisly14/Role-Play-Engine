@@ -583,6 +583,28 @@ export async function loadCheckpointData(
       `[${new Date().toISOString()}] Checkpoint loaded: ${checkpointId} → session ${newSessionId}`
     );
 
+    // Copy RAG chunks from old session to new session in background
+    const oldSessionId = checkpointRecord.sessionId;
+    void (async () => {
+      try {
+        await prisma.$executeRaw`
+          INSERT INTO session_rag_chunks (
+            id, session_id, turn_id, turn_number, chunk_type, role,
+            content, metadata, source_key, embedding, language, email_id, created_at
+          )
+          SELECT
+            gen_random_uuid()::text, ${newSessionId}, turn_id, turn_number, chunk_type, role,
+            content, metadata, source_key, embedding, language, email_id, NOW()
+          FROM session_rag_chunks
+          WHERE session_id = ${oldSessionId}
+          ON CONFLICT (session_id, source_key) DO NOTHING
+        `;
+        console.log(`[Checkpoint RAG] Copied RAG chunks ${oldSessionId} → ${newSessionId}`);
+      } catch (error) {
+        console.warn("[Checkpoint RAG] Failed to copy RAG chunks:", error);
+      }
+    })();
+
     // Only return necessary data to frontend (reduce network payload)
     res.json({
       success: true,

@@ -2,7 +2,10 @@
 import type { Request, Response } from "express";
 import { ServerState } from "../core/ServerState.js";
 import { getPrismaClient } from "../../../src/shared/agents/memory/database/prismaClient.js";
-import { SessionRagQaService } from "../../../src/rag/sessionRagQaService.js";
+import {
+  SessionRagQaService,
+  type RecentTurn,
+} from "../../../src/dynamicworldagent/dynamicBasicAgent/knowledge/sessionRagQaService.js";
 
 const qaService = new SessionRagQaService();
 
@@ -57,6 +60,32 @@ export async function askRag(req: Request, res: Response): Promise<void> {
       )
     ).slice(0, 30);
 
+    // Fetch last 5 turns for recent context
+    let recentTurns: RecentTurn[] = [];
+    try {
+      const prisma = getPrismaClient();
+      const rows = await prisma.gameTurn.findMany({
+        where: { sessionId, status: "completed" },
+        orderBy: { turnNumber: "desc" },
+        take: 5,
+        select: {
+          turnNumber: true,
+          characterInput: true,
+          keeperNarrative: true,
+        },
+      });
+      recentTurns = rows
+        .reverse()
+        .filter((r) => r.characterInput && r.keeperNarrative)
+        .map((r) => ({
+          turnNumber: r.turnNumber,
+          playerInput: r.characterInput!,
+          keeperNarrative: r.keeperNarrative!,
+        }));
+    } catch (err) {
+      console.warn("[RAG] Failed to fetch recent turns:", err);
+    }
+
     const result = await qaService.ask({
       sessionId,
       question: question.trim(),
@@ -65,6 +94,7 @@ export async function askRag(req: Request, res: Response): Promise<void> {
       sceneName,
       sceneLocation,
       npcNames,
+      recentTurns,
     });
 
     res.json({

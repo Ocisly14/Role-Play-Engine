@@ -56,7 +56,7 @@ export const MessageList = React.memo<MessageListProps>(({
         filter: isSceneChanging ? "blur(8px)" : "none",
         transition: "filter 0.5s ease-in-out, padding-bottom 0.5s ease-in-out",
         pointerEvents: isSceneChanging ? "none" : "auto",
-        paddingBottom: isInputCollapsed ? "80px" : "500px",
+        paddingBottom: isInputCollapsed ? "80px" : "100px",
       }}
     >
       {messages.length === 0 && (

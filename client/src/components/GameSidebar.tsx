@@ -147,18 +147,12 @@ export function GameSidebar({
   const [memoLocationFilter, setMemoLocationFilter] = useState("all");
   const [memoQuery, setMemoQuery] = useState("");
   const [knowledgeQuery, setKnowledgeQuery] = useState("");
-  const [knowledgeAnswer, setKnowledgeAnswer] = useState("");
+  const [knowledgeMessages, setKnowledgeMessages] = useState<
+    Array<{ role: "user" | "assistant"; content: string }>
+  >([]);
   const [knowledgeError, setKnowledgeError] = useState<string | null>(null);
   const [knowledgeLoading, setKnowledgeLoading] = useState(false);
-  const [knowledgeCitations, setKnowledgeCitations] = useState<
-    Array<{
-      chunkId: string;
-      turnNumber: number | null;
-      chunkType: "turn" | "clue";
-      snippet: string;
-      score: number;
-    }>
-  >([]);
+  const knowledgeChatEndRef = useRef<HTMLDivElement>(null);
   const isInitialLoadRef = useRef(true);
   const memoSaveTimers = useRef<Record<string, number>>({});
 
@@ -336,9 +330,16 @@ export function GameSidebar({
     const trimmed = knowledgeQuery.trim();
     if (!trimmed || !sessionId) return;
 
+    setKnowledgeQuery("");
+    setKnowledgeMessages((prev) => [...prev, { role: "user", content: trimmed }]);
+    setKnowledgeError(null);
+
+    setTimeout(() => {
+      knowledgeChatEndRef.current?.scrollIntoView({ behavior: "smooth" });
+    }, 0);
+
     try {
       setKnowledgeLoading(true);
-      setKnowledgeError(null);
 
       const response = await authFetch(`${apiBaseUrl}/rag/ask`, {
         method: "POST",
@@ -346,7 +347,7 @@ export function GameSidebar({
         body: JSON.stringify({
           sessionId,
           question: trimmed,
-          topK: 8,
+          topK: 4,
           language: i18n.language?.startsWith("en") ? "en" : "zh",
         }),
       });
@@ -360,19 +361,20 @@ export function GameSidebar({
         throw new Error(t("game:sidebar.knowledge.errors.invalidResponse"));
       }
 
-      setKnowledgeAnswer(data.answer);
-      setKnowledgeCitations(
-        Array.isArray(data.citations) ? data.citations : []
-      );
+      setKnowledgeMessages((prev) => [
+        ...prev,
+        { role: "assistant", content: data.answer },
+      ]);
     } catch (err) {
       console.error("Error asking session knowledge:", err);
       setKnowledgeError(
         err instanceof Error ? err.message : t("common:error.generic")
       );
-      setKnowledgeAnswer("");
-      setKnowledgeCitations([]);
     } finally {
       setKnowledgeLoading(false);
+      setTimeout(() => {
+        knowledgeChatEndRef.current?.scrollIntoView({ behavior: "smooth" });
+      }, 0);
     }
   };
 
@@ -929,197 +931,97 @@ export function GameSidebar({
         )}
 
         {activeTab === "knowledge" && (
-          <div className="tab-panel clues-panel">
-            {loading ? (
-              <p className="empty-state">{t("common:loading.loading")}</p>
-            ) : error ? (
-              <p className="empty-state" style={{ color: "#c41e3a" }}>
-                {t("game:sidebar.errors.loadFailed")}: {error}
-              </p>
-            ) : gameState ? (
-              <div className="clues-section">
-                <h3>{t("game:sidebar.knowledge.title")}</h3>
-                <p style={{ marginTop: "0", color: "#666", fontSize: "0.85rem" }}>
-                  {t("game:sidebar.knowledge.hint")}
-                </p>
+          <div
+            className="tab-panel"
+            style={{ display: "flex", flexDirection: "column", height: "100%", padding: 0, overflow: "hidden" }}
+          >
+            {/* Chat message history */}
+            <div className="messages-scroll-area" style={{ flex: 1, paddingBottom: "12px" }}>
+              {knowledgeMessages.length === 0 && (
+                <div className="empty-chat-prompt">
+                  <p>{t("game:sidebar.knowledge.hint")}</p>
+                </div>
+              )}
 
-                {knowledgeError && (
-                  <p className="empty-state" style={{ color: "#c41e3a" }}>
-                    {knowledgeError}
-                  </p>
-                )}
-
-                <textarea
-                  value={knowledgeQuery}
-                  onChange={(event) => setKnowledgeQuery(event.target.value)}
-                  placeholder={t("game:sidebar.knowledge.queryPlaceholder")}
-                  style={{
-                    width: "100%",
-                    minHeight: "64px",
-                    resize: "vertical",
-                    border: "1px solid #ddd",
-                    borderRadius: "4px",
-                    padding: "8px",
-                    fontSize: "0.9rem",
-                    marginBottom: "8px",
-                  }}
-                />
-
-                <button
-                  type="button"
-                  onClick={askKnowledge}
-                  disabled={knowledgeLoading || !knowledgeQuery.trim()}
-                  style={{
-                    width: "100%",
-                    marginBottom: "12px",
-                    padding: "8px 10px",
-                    border: "1px solid var(--accent)",
-                    borderRadius: "4px",
-                    background: "#fff",
-                    cursor:
-                      knowledgeLoading || !knowledgeQuery.trim()
-                        ? "not-allowed"
-                        : "pointer",
-                  }}
-                >
-                  {knowledgeLoading
-                    ? t("game:sidebar.knowledge.asking")
-                    : t("game:sidebar.knowledge.ask")}
-                </button>
-
-                {knowledgeAnswer && (
+              {knowledgeMessages.map((msg, idx) => (
+                <div key={idx} className={`chat-message ${msg.role === "user" ? "character" : "keeper"}`}>
+                  <div className="message-meta">
+                    <span className="sender-name">
+                      {msg.role === "user" ? `📝 ${t("game:sidebar.knowledge.you")}` : `🔍 ${t("game:sidebar.knowledge.assistant")}`}
+                    </span>
+                  </div>
                   <div
-                    style={{
-                      marginBottom: "12px",
-                      padding: "10px",
-                      border: "1px solid #ddd",
-                      borderRadius: "4px",
-                      backgroundColor: "#fff",
-                    }}
+                    className={`message-text backdrop-blur-sm border border-slate-200 shadow-md rounded-lg px-[18px] py-[14px] ${
+                      msg.role === "user" ? "bg-[rgba(232,220,196,0.5)]" : "bg-white/50"
+                    }`}
                   >
-                    <div
-                      style={{
-                        fontSize: "0.8rem",
-                        color: "#666",
-                        marginBottom: "6px",
-                        fontWeight: "bold",
-                      }}
-                    >
-                      {t("game:sidebar.knowledge.answerTitle")}
-                    </div>
-                    <div style={{ whiteSpace: "pre-wrap", fontSize: "0.9rem" }}>
-                      {knowledgeAnswer}
-                    </div>
+                    {msg.content}
                   </div>
-                )}
+                </div>
+              ))}
 
-                {knowledgeCitations.length > 0 && (
-                  <div style={{ marginBottom: "12px" }}>
-                    <div
-                      style={{
-                        fontSize: "0.8rem",
-                        color: "#666",
-                        marginBottom: "6px",
-                        fontWeight: "bold",
-                      }}
-                    >
-                      {t("game:sidebar.knowledge.citationsTitle")}
-                    </div>
-                    <div
-                      style={{
-                        display: "flex",
-                        flexDirection: "column",
-                        gap: "8px",
-                      }}
-                    >
-                      {knowledgeCitations.map((citation) => (
-                        <div
-                          key={citation.chunkId}
-                          style={{
-                            padding: "8px",
-                            backgroundColor: "#fff",
-                            border: "1px solid #ddd",
-                            borderRadius: "4px",
-                          }}
-                        >
-                          <div
-                            style={{
-                              fontWeight: "bold",
-                              marginBottom: "4px",
-                              fontSize: "0.8rem",
-                            }}
-                          >
-                            {citation.chunkType === "clue"
-                              ? t("game:sidebar.knowledge.citationTypes.clue")
-                              : t("game:sidebar.knowledge.citationTypes.turn")}
-                            <span
-                              style={{
-                                marginLeft: "8px",
-                                fontSize: "0.8rem",
-                                color: "#666",
-                                fontWeight: "normal",
-                              }}
-                            >
-                              {citation.turnNumber != null
-                                ? t("game:sidebar.knowledge.turnNumber", {
-                                    turn: citation.turnNumber,
-                                  })
-                                : t("game:sidebar.knowledge.turnUnknown")}
-                            </span>
-                          </div>
-                          <div
-                            style={{
-                              fontSize: "0.85rem",
-                              color: "#333",
-                            }}
-                          >
-                            {citation.snippet}
-                          </div>
-                        </div>
-                      ))}
-                    </div>
+              {knowledgeLoading && (
+                <div className="chat-message keeper loading">
+                  <div className="message-meta">
+                    <span className="sender-name">🔍 {t("game:sidebar.knowledge.assistant")}</span>
                   </div>
-                )}
+                  <div className="message-text backdrop-blur-sm bg-white/50 border border-slate-200 shadow-md rounded-lg px-[18px] py-[14px]">
+                    <span className="typing-indicator">
+                      <span>•</span>
+                      <span>•</span>
+                      <span>•</span>
+                    </span>
+                  </div>
+                </div>
+              )}
 
-                <details>
-                  <summary style={{ cursor: "pointer", color: "#666" }}>
-                    {t("game:sidebar.knowledge.referenceClues")}
-                  </summary>
-                  <div className="clues-list" style={{ marginTop: "8px" }}>
-                    {gameState.discoveredClues.length > 0 ? (
-                      <div
-                        style={{
-                          display: "flex",
-                          flexDirection: "column",
-                          gap: "8px",
-                        }}
-                      >
-                        {gameState.discoveredClues.map((clue, idx) => (
-                          <div
-                            key={idx}
-                            style={{
-                              padding: "8px",
-                              backgroundColor: "#fff",
-                              border: "1px solid #ddd",
-                              borderRadius: "4px",
-                              fontSize: "0.85rem",
-                            }}
-                          >
-                            <strong>{clue.sourceName}</strong>: {clue.text}
-                          </div>
-                        ))}
-                      </div>
-                    ) : (
-                      <p className="empty-state">
-                        {t("game:sidebar.clues.noClues")}
-                      </p>
-                    )}
+              {knowledgeError && (
+                <div className="error-message">
+                  {knowledgeError}
+                </div>
+              )}
+
+              <div ref={knowledgeChatEndRef} />
+            </div>
+
+            {/* Input area */}
+            <div className="px-2 pb-2 pt-1">
+              <div
+                className="rounded-3xl border border-white/30 backdrop-blur-md shadow-[0_5px_13px_rgba(15,23,42,0.55)] px-2 pb-2 pt-2"
+              >
+                <form
+                  onSubmit={(e) => { e.preventDefault(); askKnowledge(); }}
+                  className="relative overflow-hidden rounded-2xl border border-white/50 shadow-[0_6px_15px_rgba(15,23,42,0.25)] bg-white/80 supports-[backdrop-filter]:bg-white/55 supports-[backdrop-filter]:backdrop-blur-2xl"
+                >
+                  <textarea
+                    className="select-none text-sm placeholder:text-muted-foreground focus-visible:outline-none disabled:cursor-not-allowed disabled:opacity-50 w-full min-h-[64px] resize-none rounded-md bg-transparent border-0 py-2 px-3 shadow-none focus-visible:ring-0"
+                    value={knowledgeQuery}
+                    onChange={(e) => setKnowledgeQuery(e.target.value)}
+                    onKeyDown={(e) => {
+                      if (e.key === "Enter" && !e.shiftKey) {
+                        e.preventDefault();
+                        askKnowledge();
+                      }
+                    }}
+                    placeholder={t("game:sidebar.knowledge.queryPlaceholder")}
+                    disabled={knowledgeLoading}
+                  />
+                  <div className="flex items-center p-1.5 pt-0">
+                    <button
+                      type="submit"
+                      disabled={knowledgeLoading || !knowledgeQuery.trim()}
+                      className="inline-flex items-center justify-center whitespace-nowrap font-medium transition-all focus-visible:outline-none disabled:pointer-events-none disabled:opacity-50 backdrop-blur-md bg-white/50 border border-slate-200 text-slate-900 shadow-md hover:bg-white/70 hover:border-slate-300 hover:-translate-y-0.5 rounded-xl px-3 text-xs ml-auto gap-0.5 h-[30px]"
+                    >
+                      {t("game:sidebar.knowledge.ask")}
+                      <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="size-3.5">
+                        <path d="M14.536 21.686a.5.5 0 0 0 .937-.024l6.5-19a.496.496 0 0 0-.635-.635l-19 6.5a.5.5 0 0 0-.024.937l7.93 3.18a2 2 0 0 1 1.112 1.11z" />
+                        <path d="m21.854 2.147-10.94 10.939" />
+                      </svg>
+                    </button>
                   </div>
-                </details>
+                </form>
               </div>
-            ) : (
-              <p className="empty-state">{t("game:sidebar.noData")}</p>
-            )}
+            </div>
           </div>
         )}
 

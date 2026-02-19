@@ -1,9 +1,10 @@
-import { generateText, ModelClass } from "../models/index.js";
+import { generateText, ModelClass } from "../../../models/index.js";
 import {
   buildRagQueryTemplate,
   type BuildRagQueryTemplateInput,
-} from "./templates/buildRagQueryTemplate.js";
+} from "./buildRagQueryTemplate.js";
 
+export type { RecentTurnContext } from "./buildRagQueryTemplate.js";
 export interface RagQueryRewriteInput
   extends BuildRagQueryTemplateInput {}
 
