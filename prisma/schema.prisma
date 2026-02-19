@@ -781,3 +781,25 @@ model TurnEmbedding {
   @@index([emailId])
   @@map("turn_embeddings")
 }
+
+model SessionRagChunk {
+  id         String   @id
+  sessionId  String   @map("session_id")
+  turnId     String?  @map("turn_id")
+  turnNumber Int?     @map("turn_number")
+  chunkType  String   @map("chunk_type")
+  role       String?
+  content    String
+  metadata   Json?    @db.JsonB
+  sourceKey  String   @map("source_key")
+  embedding  Bytes
+  language   String?
+  createdAt  DateTime @default(now()) @map("created_at")
+  emailId    String?  @map("email_id")
+
+  @@index([sessionId, createdAt], map: "idx_session_rag_chunks_session_created")
+  @@index([sessionId, chunkType], map: "idx_session_rag_chunks_session_type")
+  @@index([sessionId, turnNumber], map: "idx_session_rag_chunks_session_turn")
+  @@unique([sessionId, sourceKey], map: "session_rag_chunks_session_source_key_key")
+  @@map("session_rag_chunks")
+}

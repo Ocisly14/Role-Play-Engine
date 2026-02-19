@@ -19,6 +19,7 @@ import mapRoutes from "./server/maps/routes.js";
 import memoRoutes from "./server/memos/routes.js";
 import skillRoutes from "./server/skills/routes.js";
 import analyticsRoutes from "./server/analytics/routes.js";
+import ragRoutes from "./server/rag/routes.js";
 
 // Import managers
 import { DatabaseManager } from "./server/core/DatabaseManager.js";
@@ -77,6 +78,7 @@ app.use("/api", checkpointRoutes); // /api/checkpoints/*
 app.use("/api", memoRoutes); // /api/memos
 app.use("/api", skillRoutes); // /api/skills/*
 app.use("/api", analyticsRoutes); // /api/analytics/*
+app.use("/api", ragRoutes); // /api/rag/*
 
 // SPA fallback (must be after API routes)
 app.get("*", (_req, res) => {

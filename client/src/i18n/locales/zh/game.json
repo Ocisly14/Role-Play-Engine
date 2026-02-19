@@ -114,6 +114,7 @@
     "tabs": {
       "status": "角色状态",
       "notes": "笔记",
+      "knowledge": "知识问答",
       "clues": "已发现线索",
       "map": "地图"
     },
@@ -183,6 +184,26 @@
       "method": "方式: {{method}}",
       "difficulty": "难度: {{difficulty}}",
       "noClues": "暂无线索"
+    },
+    "knowledge": {
+      "title": "会话知识问答",
+      "hint": "可询问本局中发生过的事情。回答基于回合记录与已揭示线索。",
+      "queryPlaceholder": "询问线索、NPC行动或历史回合...",
+      "ask": "提问",
+      "asking": "查询中...",
+      "answerTitle": "回答",
+      "citationsTitle": "证据",
+      "referenceClues": "显示已发现线索",
+      "turnNumber": "第{{turn}}轮",
+      "turnUnknown": "轮次未知",
+      "citationTypes": {
+        "turn": "回合记录",
+        "clue": "已揭示线索"
+      },
+      "errors": {
+        "askFailed": "提问失败",
+        "invalidResponse": "回答结果无效"
+      }
     },
     "map": {
       "macroMap": "宏观地图",

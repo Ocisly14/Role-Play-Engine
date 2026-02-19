@@ -19,7 +19,7 @@ interface GameSidebarProps {
   onClose?: () => void;
 }
 
-type TabType = "status" | "notes" | "clues" | "map";
+type TabType = "status" | "notes" | "knowledge" | "map";
 
 interface Weapon {
   name: string;
@@ -125,7 +125,7 @@ export function GameSidebar({
   isOpen = true,
   onClose,
 }: GameSidebarProps) {
-  const { t } = useTranslation(["game", "common"]);
+  const { t, i18n } = useTranslation(["game", "common"]);
   const [activeTab, setActiveTab] = useState<TabType>("status");
   const [gameState, setGameState] = useState<GameState | null>(null);
   const [loading, setLoading] = useState(true);
@@ -146,6 +146,19 @@ export function GameSidebar({
   const [memoDayFilter, setMemoDayFilter] = useState("all");
   const [memoLocationFilter, setMemoLocationFilter] = useState("all");
   const [memoQuery, setMemoQuery] = useState("");
+  const [knowledgeQuery, setKnowledgeQuery] = useState("");
+  const [knowledgeAnswer, setKnowledgeAnswer] = useState("");
+  const [knowledgeError, setKnowledgeError] = useState<string | null>(null);
+  const [knowledgeLoading, setKnowledgeLoading] = useState(false);
+  const [knowledgeCitations, setKnowledgeCitations] = useState<
+    Array<{
+      chunkId: string;
+      turnNumber: number | null;
+      chunkType: "turn" | "clue";
+      snippet: string;
+      score: number;
+    }>
+  >([]);
   const isInitialLoadRef = useRef(true);
   const memoSaveTimers = useRef<Record<string, number>>({});
 
@@ -319,6 +332,50 @@ export function GameSidebar({
     }
   };
 
+  const askKnowledge = async () => {
+    const trimmed = knowledgeQuery.trim();
+    if (!trimmed || !sessionId) return;
+
+    try {
+      setKnowledgeLoading(true);
+      setKnowledgeError(null);
+
+      const response = await authFetch(`${apiBaseUrl}/rag/ask`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          sessionId,
+          question: trimmed,
+          topK: 8,
+          language: i18n.language?.startsWith("en") ? "en" : "zh",
+        }),
+      });
+
+      if (!response.ok) {
+        throw new Error(t("game:sidebar.knowledge.errors.askFailed"));
+      }
+
+      const data = await response.json();
+      if (!data?.success || typeof data.answer !== "string") {
+        throw new Error(t("game:sidebar.knowledge.errors.invalidResponse"));
+      }
+
+      setKnowledgeAnswer(data.answer);
+      setKnowledgeCitations(
+        Array.isArray(data.citations) ? data.citations : []
+      );
+    } catch (err) {
+      console.error("Error asking session knowledge:", err);
+      setKnowledgeError(
+        err instanceof Error ? err.message : t("common:error.generic")
+      );
+      setKnowledgeAnswer("");
+      setKnowledgeCitations([]);
+    } finally {
+      setKnowledgeLoading(false);
+    }
+  };
+
   // Fetch game state from backend
   useEffect(() => {
     const fetchGameState = async () => {
@@ -434,10 +491,10 @@ export function GameSidebar({
           {t("game:sidebar.tabs.notes")}
         </button>
         <button
-          className={`sidebar-tab backdrop-blur-sm bg-white/50 border border-slate-200 shadow-md rounded-lg hover:bg-white/70 transition-all ${activeTab === "clues" ? "active" : ""}`}
-          onClick={() => setActiveTab("clues")}
+          className={`sidebar-tab backdrop-blur-sm bg-white/50 border border-slate-200 shadow-md rounded-lg hover:bg-white/70 transition-all ${activeTab === "knowledge" ? "active" : ""}`}
+          onClick={() => setActiveTab("knowledge")}
         >
-          {t("game:sidebar.tabs.clues")}
+          {t("game:sidebar.tabs.knowledge")}
         </button>
         <button
           className={`sidebar-tab backdrop-blur-sm bg-white/50 border border-slate-200 shadow-md rounded-lg hover:bg-white/70 transition-all ${activeTab === "map" ? "active" : ""}`}
@@ -871,7 +928,7 @@ export function GameSidebar({
           </div>
         )}
 
-        {activeTab === "clues" && (
+        {activeTab === "knowledge" && (
           <div className="tab-panel clues-panel">
             {loading ? (
               <p className="empty-state">{t("common:loading.loading")}</p>
@@ -881,30 +938,120 @@ export function GameSidebar({
               </p>
             ) : gameState ? (
               <div className="clues-section">
-                <h3>{t("game:sidebar.clues.title")}</h3>
-                <div className="clues-list">
-                  {gameState.discoveredClues.length > 0 ? (
+                <h3>{t("game:sidebar.knowledge.title")}</h3>
+                <p style={{ marginTop: "0", color: "#666", fontSize: "0.85rem" }}>
+                  {t("game:sidebar.knowledge.hint")}
+                </p>
+
+                {knowledgeError && (
+                  <p className="empty-state" style={{ color: "#c41e3a" }}>
+                    {knowledgeError}
+                  </p>
+                )}
+
+                <textarea
+                  value={knowledgeQuery}
+                  onChange={(event) => setKnowledgeQuery(event.target.value)}
+                  placeholder={t("game:sidebar.knowledge.queryPlaceholder")}
+                  style={{
+                    width: "100%",
+                    minHeight: "64px",
+                    resize: "vertical",
+                    border: "1px solid #ddd",
+                    borderRadius: "4px",
+                    padding: "8px",
+                    fontSize: "0.9rem",
+                    marginBottom: "8px",
+                  }}
+                />
+
+                <button
+                  type="button"
+                  onClick={askKnowledge}
+                  disabled={knowledgeLoading || !knowledgeQuery.trim()}
+                  style={{
+                    width: "100%",
+                    marginBottom: "12px",
+                    padding: "8px 10px",
+                    border: "1px solid var(--accent)",
+                    borderRadius: "4px",
+                    background: "#fff",
+                    cursor:
+                      knowledgeLoading || !knowledgeQuery.trim()
+                        ? "not-allowed"
+                        : "pointer",
+                  }}
+                >
+                  {knowledgeLoading
+                    ? t("game:sidebar.knowledge.asking")
+                    : t("game:sidebar.knowledge.ask")}
+                </button>
+
+                {knowledgeAnswer && (
+                  <div
+                    style={{
+                      marginBottom: "12px",
+                      padding: "10px",
+                      border: "1px solid #ddd",
+                      borderRadius: "4px",
+                      backgroundColor: "#fff",
+                    }}
+                  >
+                    <div
+                      style={{
+                        fontSize: "0.8rem",
+                        color: "#666",
+                        marginBottom: "6px",
+                        fontWeight: "bold",
+                      }}
+                    >
+                      {t("game:sidebar.knowledge.answerTitle")}
+                    </div>
+                    <div style={{ whiteSpace: "pre-wrap", fontSize: "0.9rem" }}>
+                      {knowledgeAnswer}
+                    </div>
+                  </div>
+                )}
+
+                {knowledgeCitations.length > 0 && (
+                  <div style={{ marginBottom: "12px" }}>
+                    <div
+                      style={{
+                        fontSize: "0.8rem",
+                        color: "#666",
+                        marginBottom: "6px",
+                        fontWeight: "bold",
+                      }}
+                    >
+                      {t("game:sidebar.knowledge.citationsTitle")}
+                    </div>
                     <div
                       style={{
                         display: "flex",
                         flexDirection: "column",
-                        gap: "10px",
+                        gap: "8px",
                       }}
                     >
-                      {gameState.discoveredClues.map((clue, idx) => (
+                      {knowledgeCitations.map((citation) => (
                         <div
-                          key={idx}
+                          key={citation.chunkId}
                           style={{
-                            padding: "10px",
+                            padding: "8px",
                             backgroundColor: "#fff",
                             border: "1px solid #ddd",
                             borderRadius: "4px",
                           }}
                         >
                           <div
-                            style={{ fontWeight: "bold", marginBottom: "5px" }}
+                            style={{
+                              fontWeight: "bold",
+                              marginBottom: "4px",
+                              fontSize: "0.8rem",
+                            }}
                           >
-                            {clue.sourceName}
+                            {citation.chunkType === "clue"
+                              ? t("game:sidebar.knowledge.citationTypes.clue")
+                              : t("game:sidebar.knowledge.citationTypes.turn")}
                             <span
                               style={{
                                 marginLeft: "8px",
@@ -913,46 +1060,62 @@ export function GameSidebar({
                                 fontWeight: "normal",
                               }}
                             >
-                              (
-                              {clue.type === "scenario"
-                                ? t("game:sidebar.clues.types.scenario")
-                                : clue.type === "npc"
-                                  ? t("game:sidebar.clues.types.npc")
-                                  : t("game:sidebar.clues.types.secret")}
-                              )
+                              {citation.turnNumber != null
+                                ? t("game:sidebar.knowledge.turnNumber", {
+                                    turn: citation.turnNumber,
+                                  })
+                                : t("game:sidebar.knowledge.turnUnknown")}
                             </span>
                           </div>
                           <div
                             style={{
-                              fontSize: "0.9rem",
+                              fontSize: "0.85rem",
                               color: "#333",
-                              marginBottom: "5px",
                             }}
                           >
-                            {clue.text}
-                          </div>
-                          <div style={{ fontSize: "0.75rem", color: "#999" }}>
-                            {t("game:sidebar.clues.discoveredBy", {
-                              name: clue.discoveredBy,
-                            })}
-                            {clue.method &&
-                              ` | ${t("game:sidebar.clues.method", {
-                                method: clue.method,
-                              })}`}
-                            {clue.difficulty &&
-                              ` | ${t("game:sidebar.clues.difficulty", {
-                                difficulty: clue.difficulty,
-                              })}`}
+                            {citation.snippet}
                           </div>
                         </div>
                       ))}
                     </div>
-                  ) : (
-                    <p className="empty-state">
-                      {t("game:sidebar.clues.noClues")}
-                    </p>
-                  )}
-                </div>
+                  </div>
+                )}
+
+                <details>
+                  <summary style={{ cursor: "pointer", color: "#666" }}>
+                    {t("game:sidebar.knowledge.referenceClues")}
+                  </summary>
+                  <div className="clues-list" style={{ marginTop: "8px" }}>
+                    {gameState.discoveredClues.length > 0 ? (
+                      <div
+                        style={{
+                          display: "flex",
+                          flexDirection: "column",
+                          gap: "8px",
+                        }}
+                      >
+                        {gameState.discoveredClues.map((clue, idx) => (
+                          <div
+                            key={idx}
+                            style={{
+                              padding: "8px",
+                              backgroundColor: "#fff",
+                              border: "1px solid #ddd",
+                              borderRadius: "4px",
+                              fontSize: "0.85rem",
+                            }}
+                          >
+                            <strong>{clue.sourceName}</strong>: {clue.text}
+                          </div>
+                        ))}
+                      </div>
+                    ) : (
+                      <p className="empty-state">
+                        {t("game:sidebar.clues.noClues")}
+                      </p>
+                    )}
+                  </div>
+                </details>
               </div>
             ) : (
               <p className="empty-state">{t("game:sidebar.noData")}</p>

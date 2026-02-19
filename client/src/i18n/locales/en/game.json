@@ -114,6 +114,7 @@
     "tabs": {
       "status": "Character Status",
       "notes": "Notes",
+      "knowledge": "Knowledge Q&A",
       "clues": "Discovered Clues",
       "map": "Map"
     },
@@ -183,6 +184,26 @@
       "method": "Method: {{method}}",
       "difficulty": "Difficulty: {{difficulty}}",
       "noClues": "No clues"
+    },
+    "knowledge": {
+      "title": "Session Knowledge Q&A",
+      "hint": "Ask questions about what happened in this session. The answer is based on turn records and revealed clues.",
+      "queryPlaceholder": "Ask about clues, NPC actions, or past turns...",
+      "ask": "Ask",
+      "asking": "Asking...",
+      "answerTitle": "Answer",
+      "citationsTitle": "Evidence",
+      "referenceClues": "Show discovered clues",
+      "turnNumber": "Turn {{turn}}",
+      "turnUnknown": "Turn unknown",
+      "citationTypes": {
+        "turn": "Turn Record",
+        "clue": "Revealed Clue"
+      },
+      "errors": {
+        "askFailed": "Failed to ask question",
+        "invalidResponse": "Invalid answer response"
+      }
     },
     "map": {
       "macroMap": "Macro Map",

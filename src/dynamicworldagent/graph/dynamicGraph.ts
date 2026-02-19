@@ -46,6 +46,7 @@ import { KeeperAgent } from "../dynamicBasicAgent/keeper/keeperAgent.js";
 import { DirectorAgent } from "../dynamicBasicAgent/director/directorAgent.js";
 import { generateSceneImage } from "../visual/sceneImage.js";
 import { generateMapOnSceneSwitch } from "../visual/mapImage.js";
+import { TurnRagAgent } from "../dynamicBasicAgent/knowledge/turnRagAgent.js";
 
 /**
  * Dynamic Graph State - Uses only DynamicGameState (no GameState)
@@ -95,6 +96,7 @@ export const buildDynamicGraph = (
   const keeperAgent = new KeeperAgent();
   const directorAgent = new DirectorAgent(scenarioLoader, db);
   const turnManager = new TurnManager(db);
+  const turnRagAgent = new TurnRagAgent();
 
   // Create checkpointer for saving/resuming graph state
   const checkpointer = new MemorySaver();
@@ -1003,8 +1005,6 @@ export const buildDynamicGraph = (
     };
   });
 
-  graph.addEdge("epilogueKeeper" as any, END);
-
   // Keeper: generate narrative
   graph.addNode("keeper", async (state: DynamicGraphState) => {
     console.log("📖 [Dynamic Keeper Agent] 开始生成叙述...");
@@ -1122,7 +1122,32 @@ export const buildDynamicGraph = (
     };
   });
 
-  graph.addEdge("keeper" as any, END);
+  graph.addNode("ragRecorder", async (state: DynamicGraphState) => {
+    if (!state.turnId) return state;
+
+    const turn = turnManager.getTurn(state.turnId);
+    if (!turn) return state;
+
+    void turnRagAgent
+      .recordTurn({
+        turn,
+        dynamicGameState: state.dynamicGameState,
+        language: state.language,
+      })
+      .catch((error) => {
+        console.warn("[Dynamic RAG Recorder] Failed to record turn RAG:", {
+          turnId: state.turnId,
+          sessionId: state.dynamicGameState?.sessionId,
+          error,
+        });
+      });
+
+    return state;
+  });
+
+  graph.addEdge("epilogueKeeper" as any, "ragRecorder" as any);
+  graph.addEdge("keeper" as any, "ragRecorder" as any);
+  graph.addEdge("ragRecorder" as any, END);
 
   graph.addEdge(START, "entry" as any);
 
@@ -1142,6 +1167,7 @@ export const buildDynamicListenerGraph = (
   const characterAgent = new CharacterAgent();
   const actionAgent = new ActionAgent(scenarioLoader);
   const keeperAgent = new KeeperAgent();
+  const turnRagAgent = new TurnRagAgent();
 
   const listenerGraph = new StateGraph<DynamicGraphState>({
     channels: {
@@ -1673,8 +1699,6 @@ export const buildDynamicListenerGraph = (
     };
   });
 
-  listenerGraph.addEdge("epilogueKeeper" as any, END);
-
   // Keeper node
   listenerGraph.addNode("keeper", async (state: DynamicGraphState) => {
     console.log("📖 [Dynamic Listener Keeper Agent] 开始生成叙述...");
@@ -1750,7 +1774,32 @@ export const buildDynamicListenerGraph = (
     };
   });
 
-  listenerGraph.addEdge("keeper" as any, END);
+  listenerGraph.addNode("ragRecorder", async (state: DynamicGraphState) => {
+    if (!state.turnId) return state;
+
+    const turn = turnManager.getTurn(state.turnId);
+    if (!turn) return state;
+
+    void turnRagAgent
+      .recordTurn({
+        turn,
+        dynamicGameState: state.dynamicGameState,
+        language: state.language,
+      })
+      .catch((error) => {
+        console.warn("[Dynamic Listener RAG Recorder] Failed to record turn RAG:", {
+          turnId: state.turnId,
+          sessionId: state.dynamicGameState?.sessionId,
+          error,
+        });
+      });
+
+    return state;
+  });
+
+  listenerGraph.addEdge("epilogueKeeper" as any, "ragRecorder" as any);
+  listenerGraph.addEdge("keeper" as any, "ragRecorder" as any);
+  listenerGraph.addEdge("ragRecorder" as any, END);
   listenerGraph.addEdge(START, "entry" as any);
 
   return listenerGraph.compile();
