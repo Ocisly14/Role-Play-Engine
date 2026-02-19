@@ -121,24 +121,29 @@ export function getMacroSceneStep1Template(
 
   return `You are a writer for a CoC game.
 
+════════════════════════════════════════════════════════
+🔴 SUPREME DIRECTIVE — READ THIS BEFORE ANYTHING ELSE 🔴
+════════════════════════════════════════════════════════
+USER QUERY (absolute mandate):
+{{userPrompt}}
+
+This query is the SINGLE HIGHEST AUTHORITY for all content you generate.
+Every location, atmosphere, theme, character, and event MUST be directly
+grounded in and consistent with the user's stated intent.
+
+Rules that CANNOT be broken:
+1. If the user names a LOCATION → you MUST use that exact location. No substitutions.
+2. If the user specifies a STYLE / TONE → every output element MUST reflect it.
+3. If the user specifies THEMES → they MUST appear in the generated content.
+4. If ANY conflict arises between the user query and genre conventions, setting
+   type defaults, or example content → the user query WINS, always.
+5. Do NOT import locations, organizations, or atmospheres from generic CoC
+   templates if they contradict what the user asked for.
+════════════════════════════════════════════════════════
+
 **CREATIVE MANDATE**: Be bold and original. Craft a story that feels fresh and unexpected—avoid generic CoC tropes (stock Cthulhu cults, standard haunted mansions, Miskatonic-by-default settings). Draw inspiration from diversified cultures, historical eras, scientific frontiers, or genre mashups. Surprise players with something they have never encountered before in a CoC game.
 
 # MACRO SCENE GENERATION - STEP 1:
-
-## User Creative Prompt
-{{userPrompt}}
-
-**CRITICAL - ABSOLUTE PRIORITY**:
-- This user prompt is the PRIMARY and MANDATORY source of intent
-- Your output MUST be grounded in this prompt
-- If the user specifies a LOCATION (e.g., "Hawaii", "Tokyo", "Amazon rainforest"), you MUST use that exact location
-- If the user specifies a STYLE/TONE (e.g., "beautiful nature", "urban decay", "academic mystery"), you MUST reflect that style
-- If the user specifies THEMES (e.g., "murder cases", "missing persons", "supernatural phenomena"), you MUST incorporate those themes
-
-**NEVER**:
-- Ignore the user's specified location in favor of generic examples
-- Override the user's style preferences with setting type defaults
-- Generate content that contradicts the user's explicit requirements
 
 ## Setting Type Overview
 
@@ -280,6 +285,24 @@ export function getTruthTimelineTemplateForSetting(
   const truthEventsSentence = getStoryLengthTruthEventsSentence(storyLength);
   return `You are a writer for a CoC game.
 
+════════════════════════════════════════════════════════
+🔴 SUPREME DIRECTIVE — READ THIS BEFORE ANYTHING ELSE 🔴
+════════════════════════════════════════════════════════
+USER QUERY (absolute mandate):
+{{userPrompt}}
+
+This query is the SINGLE HIGHEST AUTHORITY for all content you generate.
+Every truth event — its location, atmosphere, and thematic content — MUST be
+directly grounded in and consistent with the user's stated intent.
+
+Rules that CANNOT be broken:
+1. All events MUST occur in the location specified by the user. No substitutions.
+2. Events MUST reflect the style / atmosphere the user requested.
+3. Events MUST align with the themes the user requested (e.g., "murder cases" → violent deaths are required).
+4. NEVER generate events that would only make sense in a different location or climate.
+5. If ANY conflict arises between the user query and genre conventions → the user query WINS, always.
+════════════════════════════════════════════════════════
+
 **CREATIVE MANDATE**: Be bold and original. Craft a story that feels fresh and unexpected—avoid generic CoC tropes (stock Cthulhu cults, standard haunted mansions, Miskatonic-by-default settings). Draw inspiration from diversified cultures, historical eras, scientific frontiers, or genre mashups. Surprise players with something they have never encountered before in a CoC game.
 
 # TRUTH TIMELINE GENERATION - CURRENT EVENTS
@@ -303,15 +326,6 @@ These are the events that will unfold during the scenario.
 ❌ BAD: "Marcus Webb activated the ritual site"
 ❌ BAD: "The mayor covered up the incident"
 ❌ BAD: "Sarah discovered the truth about her father"
-
-## User Creative Prompt
-{{userPrompt}}
-
-**CRITICAL - ABSOLUTE PRIORITY**:
-- All truth events MUST occur in the location specified by the user's prompt
-- Events MUST reflect the style/atmosphere requested by the user (e.g., if user wants "beautiful nature", events should contrast horror against natural beauty)
-- Events MUST align with the themes the user requested (e.g., "murder cases" requires human deaths and violence)
-- NEVER generate events that would only make sense in a different location or climate
 
 ## Setting Context
 The macro scene structure:
@@ -618,21 +632,30 @@ export function getHistoricalMythosTemplateForSetting(
 ): string {
   return `You are a writer for a CoC game.
 
+════════════════════════════════════════════════════════
+🔴 SUPREME DIRECTIVE — READ THIS BEFORE ANYTHING ELSE 🔴
+════════════════════════════════════════════════════════
+USER QUERY (absolute mandate):
+{{userPrompt}}
+
+This query is the SINGLE HIGHEST AUTHORITY for all content you generate.
+Every historical event, mythos entity, location, and long-term residue MUST be
+directly grounded in and consistent with the user's stated intent.
+
+Rules that CANNOT be broken:
+1. If the user names a LOCATION → all historical events must occur in or relate to that exact location.
+2. If the user specifies a STYLE / ATMOSPHERE → historical events must enhance that atmosphere, never contradict it.
+3. If the user specifies THEMES → historical events must connect to those themes.
+4. If ANY conflict arises between the user query and genre conventions or example content → the user query WINS, always.
+5. Do NOT place historical events in unrelated locations or use generic mythos frameworks that don't fit the user's request.
+════════════════════════════════════════════════════════
+
 **CREATIVE MANDATE**: Be bold and original. Craft a story that feels fresh and unexpected—avoid generic CoC tropes (stock Cthulhu cults, standard haunted mansions, Miskatonic-by-default settings). Draw inspiration from diversified cultures, historical eras, scientific frontiers, or genre mashups. Surprise players with something they have never encountered before in a CoC game.
 
 # MACRO SCENE GENERATION - STEP 2: Historical Mythos Layer
 
 ## Objective
 Define the historical mythos intrusions that created the foundation for the current scenario.
-
-## User Creative Prompt
-{{userPrompt}}
-
-**CRITICAL - ABSOLUTE PRIORITY**:
-- This user prompt is the PRIMARY source of creative intent
-- If the user specified a LOCATION, all historical events must occur in or relate to that exact location
-- If the user specified a STYLE/ATMOSPHERE (e.g., "beautiful nature", "tropical paradise"), historical events should enhance that atmosphere with horror, not contradict it
-- If the user specified THEMES, historical events must connect to those themes
 
 ## Setting Context
 {{macroSceneJson}}

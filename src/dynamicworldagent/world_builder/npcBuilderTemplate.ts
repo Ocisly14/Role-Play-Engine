@@ -160,52 +160,26 @@ Generate goals, secrets, relationships, and mythosAwareness for each NPC now.`;
 }
 
 /**
- * Step 4: Fill Core Identity and Inventory
+ * Step 4: Fill Core Identity and Inventory (batch version)
+ * Accepts multiple NPCs at once and returns an array of identities.
  */
-export function getNPCIdentityTemplate(): string {
+export function getNPCIdentityBatchTemplate(): string {
   return `You are a writer for a CoC game.
 
-# NPC CORE IDENTITY GENERATION
-
-## NPC Basic Info
-- **Name**: {{name}}
-- **Occupation**: {{occupation}}
-- **Age**: {{age}}
-- **Gender**: {{gender}}
-- **Background**: {{background}}
-- **Goals**: {{goals}}
-- **Secrets**: {{secrets}}
-- **Mythos Awareness**: {{mythosAwareness}}
-- **Instantiated From**: {{instantiatedFrom}}
-
-## Generated Attributes (for reference only)
-{{attributesJson}}
+# NPC CORE IDENTITY GENERATION (BATCH)
 
 ## Truth Timeline (Objective Reality)
 The actual events that occurred, regardless of who knows them:
 {{truthTimelineJson}}
 
-## This NPC's Bound Knowledge Holders
-The specific knowledge holders this NPC is connected to:
-{{boundKnowledgeHoldersJson}}
-
-**CRITICAL**: This NPC can ONLY know truth events listed in their bound holders' "knows" or "containsEvidence" fields.
-- Apply "distortion" level when generating clues (e.g., partial_amnesia = fragmented/confused memories)
-- Consider "reliability" when determining accuracy of information
-- DO NOT give this NPC knowledge beyond what their bound holders possess
-- All outputs MUST remain grounded in the injected truth timeline and bound knowledge holders
-
-## Relevant Red Herrings
-False beliefs this NPC might have encountered or believe:
-{{relevantRedHerringsJson}}
-
-**Note**: This NPC may believe some red herrings, especially if:
-- They lack direct knowledge of truth events
-- Their knowledge is distorted (partial_amnesia, misinterpretation)
-- They've been exposed to official reports, media, or medical records
+## NPCs to Generate
+Each NPC below includes their basic info, attributes, bound knowledge holders, and relevant red herrings.
+{{npcsJson}}
 
 ## Task
-Based on the NPC's background, bound knowledge holders, and exposure to information, generate:
+For **each NPC** in the list above, generate their core identity in the **exact same order**.
+
+For each NPC:
 
 ### 1. Personality
 2-3 sentences describing their temperament, social style, and psychological state.
@@ -246,39 +220,36 @@ Each clue:
 - If NPC has "none" mythos awareness, they may mostly believe red herrings
 - If NPC has "partial" awareness, mix truth fragments with confusion/red herrings
 - Do NOT introduce unrelated places, organizations, or events not implied by the injected context
+- Each NPC MUST only know truth events listed in their own bound holders' "knows" or "containsEvidence" fields
 
 ## Output Format
-Return ONLY valid JSON:
+Return ONLY valid JSON with a top-level "npcs" array in the **same order** as the input:
 
 \`\`\`json
 {
-  "personality": "Webb is withdrawn and defensive, speaking in clipped sentences. He chain-smokes and avoids eye contact. When the old tunnels are mentioned, he becomes visibly anxious and finds excuses to leave conversations.",
-  "appearance": "A stocky man with weathered features and prematurely gray hair. Wears faded work clothes even though he's retired. Has a noticeable tremor in his hands.",
-  "inventory": [
-    { "name": "Flask of whiskey", "quantity": 1, "properties": { "description": "Half-empty, always on him" } },
-    { "name": "Old construction badge", "quantity": 1, "properties": { "description": "From the tunnel project, keeps it hidden" } },
-    { "name": "Sealed envelope", "quantity": 1, "properties": { "description": "Monthly payment instructions, never opens them" } },
-    { "name": "Lucky rabbit's foot", "quantity": 1, "properties": { "description": "Obsessively touches it when nervous" } }
-  ],
-  "clues": [
+  "npcs": [
     {
-      "id": "clue-webb-1",
-      "clueText": "The excavation team found strange carvings in the tunnel, deep ones that predated the town. Management ordered them covered up and the workers sworn to secrecy.",
-      "category": "knowledge",
-      "difficulty": "hard",
-      "relatedTo": ["T1"]
-    },
-    {
-      "id": "clue-webb-2",
-      "clueText": "Three university people came down after we found it. Only two came back up. The company paid us all off to forget we ever saw the third one.",
-      "category": "secret",
-      "difficulty": "extreme",
-      "relatedTo": ["T2"]
+      "name": "Marcus Webb",
+      "personality": "Webb is withdrawn and defensive, speaking in clipped sentences. He chain-smokes and avoids eye contact. When the old tunnels are mentioned, he becomes visibly anxious.",
+      "appearance": "A stocky man with weathered features and prematurely gray hair. Wears faded work clothes even though he's retired. Has a noticeable tremor in his hands.",
+      "inventory": [
+        { "name": "Flask of whiskey", "quantity": 1, "properties": { "description": "Half-empty, always on him" } },
+        { "name": "Old construction badge", "quantity": 1, "properties": { "description": "From the tunnel project, keeps it hidden" } }
+      ],
+      "clues": [
+        {
+          "id": "clue-webb-1",
+          "clueText": "The excavation team found strange carvings in the tunnel, deep ones that predated the town.",
+          "category": "knowledge",
+          "difficulty": "hard",
+          "relatedTo": ["T1"]
+        }
+      ],
+      "notes": "Deeply traumatized by T2. Will only reveal secrets under extreme duress."
     }
-  ],
-  "notes": "Deeply traumatized by T2. Will only reveal clue-webb-2 under extreme duress or if investigators can prove they already know parts of the truth."
+  ]
 }
 \`\`\`
 
-Generate the NPC identity now.`;
+Generate the identity for all NPCs now. The output array MUST have the same length and order as the input.`;
 }

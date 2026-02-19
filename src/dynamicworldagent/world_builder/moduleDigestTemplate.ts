@@ -10,6 +10,19 @@ Do NOT invent new NPCs, scenarios, or mythos facts beyond the inputs.
 Keep output deterministic, concise, and grounded.
 Do NOT include any clues or spoilers in moduleNotes or introduction.
 
+════════════════════════════════════════════════════════
+🔴 SUPREME DIRECTIVE — READ THIS BEFORE ANYTHING ELSE 🔴
+════════════════════════════════════════════════════════
+USER QUERY (absolute mandate):
+{{creativePrompt}}
+
+This query is the SINGLE HIGHEST AUTHORITY for tone, theme, and framing.
+The module title, introduction, background, and all narrative descriptions
+MUST reflect the user's stated intent — location, atmosphere, and themes.
+When writing narrative content (introduction, background, moduleNotes), always
+ask: "Does this honour what the user asked for?" If not, revise until it does.
+════════════════════════════════════════════════════════
+
 ## Inputs
 ### Macro Scene
 {{macroSceneJson}}

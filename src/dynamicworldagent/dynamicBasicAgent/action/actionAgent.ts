@@ -20,11 +20,7 @@ import {
   isTimeAfter,
   getLatestActionLogEntryWithLocation,
 } from "../../utils/gameTime.js";
-import {
-  buildActionSystemPrompt,
-  buildRelationshipUpdateTemplate,
-  getActionTypeTemplate,
-} from "./actionTemplate.js";
+import { buildActionSystemPrompt } from "./actionTemplate.js";
 
 /**
  * Action Agent class - handles action resolution and skill checks
@@ -119,217 +115,77 @@ export class ActionAgent {
     }
   }
 
-  private collectRelatedNpcsForRelationshipUpdate(
-    dynamicState: DynamicGameState,
-    character: DynamicCharacterProfile,
-    targetCharacter: DynamicCharacterProfile | null | undefined,
-    parsed: Record<string, unknown>
-  ): DynamicNPCProfile[] {
-    const relatedNpcIds = new Set<string>();
-
-    const actingNpc = dynamicState.npcCharacters.find((npc) => npc.id === character.id);
-    if (actingNpc) {
-      relatedNpcIds.add(actingNpc.id);
-    }
-
-    if (targetCharacter) {
-      const targetNpc = dynamicState.npcCharacters.find(
-        (npc) => npc.id === targetCharacter.id
-      );
-      if (targetNpc) {
-        relatedNpcIds.add(targetNpc.id);
-      }
-    }
-
-    if (Array.isArray(parsed.actionLog)) {
-      for (const logEntry of parsed.actionLog) {
-        if (!logEntry || typeof logEntry !== "object") continue;
-        const characterId = (logEntry as Record<string, unknown>).characterId;
-        if (typeof characterId !== "string") continue;
-        const npc = dynamicState.npcCharacters.find((n) => n.id === characterId);
-        if (npc) {
-          relatedNpcIds.add(npc.id);
-        }
-      }
-    }
-
-    if (Array.isArray(parsed.npcResponses)) {
-      for (const response of parsed.npcResponses) {
-        if (!response || typeof response !== "object") continue;
-        const npcId = (response as Record<string, unknown>).npcId;
-        if (typeof npcId !== "string") continue;
-        const npc = dynamicState.npcCharacters.find((n) => n.id === npcId);
-        if (npc) {
-          relatedNpcIds.add(npc.id);
-        }
-      }
-    }
-
-    return dynamicState.npcCharacters.filter((npc) => relatedNpcIds.has(npc.id));
-  }
-
-  private async updateRelationshipsFromAction(
-    runtime: any,
-    gameStateManager: DynamicGameStateManager,
-    params: {
-      parsed: Record<string, unknown>;
-      character: DynamicCharacterProfile;
-      targetCharacter?: DynamicCharacterProfile | null;
-    }
-  ): Promise<void> {
+  /**
+   * Apply relationship changes already embedded in the main action parsed response.
+   * Replaces the old separate LLM call for relationship updates.
+   */
+  private applyRelationshipChangesFromParsed(
+    parsed: Record<string, unknown>,
+    gameStateManager: DynamicGameStateManager
+  ): void {
     try {
-      const dynamicState = gameStateManager.getState();
-      const relatedNpcs = this.collectRelatedNpcsForRelationshipUpdate(
-        dynamicState,
-        params.character,
-        params.targetCharacter,
-        params.parsed
-      );
-
-      if (relatedNpcs.length === 0) {
-        return;
-      }
-
-      const prompt = buildRelationshipUpdateTemplate({
-        fullGameTime: `Day ${dynamicState.gameDay}, ${dynamicState.timeOfDay}`,
-        actionResolutionJson: JSON.stringify(params.parsed, null, 2),
-        relatedNpcsJson: JSON.stringify(
-          relatedNpcs.map((npc) => ({
-            id: npc.id,
-            name: npc.name,
-            status: npc.status,
-            goals: npc.goals || [],
-            personality: npc.personality || null,
-            relationships: npc.relationships || [],
-            last3ActionLog: (npc.actionLog || []).slice(-3),
-          })),
-          null,
-          2
-        ),
-      });
-
-      const response = await generateText({
-        runtime,
-        context: prompt,
-        modelClass: ModelClass.MEDIUM,
-      });
-      const parsedUpdate = this.parseJsonFromModelResponse(
-        response,
-        "relationship update"
-      );
-      if (!parsedUpdate) {
-        return;
-      }
-
-      const rawUpdates = parsedUpdate.relationshipUpdates;
+      const rawUpdates = parsed.relationshipChanges;
       if (!Array.isArray(rawUpdates) || rawUpdates.length === 0) {
         return;
       }
 
-      const relatedNpcById = new Map<string, { id: string; name: string }>();
-      for (const npc of relatedNpcs) {
-        relatedNpcById.set(npc.id, { id: npc.id, name: npc.name });
-      }
+      const dynamicState = gameStateManager.getState();
+      const allNpcs = dynamicState.npcCharacters;
 
-      const mergedPerSource = new Map<string, Map<string, NPCRelationship>>();
+      const npcById = new Map<string, DynamicNPCProfile>();
+      for (const npc of allNpcs) {
+        npcById.set(npc.id, npc);
+      }
+      // Also allow player as a target
+      const playerChar = dynamicState.playerCharacter;
+
+      // Group raw updates by sourceNpcId
+      const updatesBySource = new Map<string, NPCRelationship[]>();
 
       for (const item of rawUpdates) {
         if (!item || typeof item !== "object") continue;
         const raw = item as Record<string, unknown>;
         const sourceNpcId = raw.sourceNpcId;
         const targetId = raw.targetId;
-        if (typeof sourceNpcId !== "string" || typeof targetId !== "string") {
-          continue;
-        }
+        if (typeof sourceNpcId !== "string" || typeof targetId !== "string") continue;
+        if (!npcById.has(sourceNpcId)) continue;
+        if (sourceNpcId === targetId) continue;
 
-        const sourceNpc = relatedNpcs.find((npc) => npc.id === sourceNpcId);
-        if (!sourceNpc) {
-          continue;
-        }
-        if (sourceNpcId === targetId) {
-          continue;
-        }
+        const targetName =
+          typeof raw.targetName === "string" && raw.targetName.trim()
+            ? raw.targetName.trim()
+            : (npcById.get(targetId)?.name ?? playerChar.name);
 
-        const targetCharacter = relatedNpcById.get(targetId);
-        if (!targetCharacter) {
-          continue;
-        }
-
-        const existing = sourceNpc.relationships.find(
-          (rel) => rel.targetId === targetId
-        );
-        const relationshipType =
-          typeof raw.relationshipType === "string" &&
-          raw.relationshipType.trim().length > 0
-            ? raw.relationshipType.trim()
-            : existing?.relationshipType || "neutral";
-        const attitude =
-          this.clampAttitude(raw.attitude) ?? existing?.attitude ?? 0;
-        const description =
-          typeof raw.description === "string" && raw.description.trim().length > 0
-            ? raw.description.trim()
-            : existing?.description;
-
-        const nextRelationship: NPCRelationship = {
-          targetId: targetCharacter.id,
-          targetName: targetCharacter.name,
-          relationshipType:
-            relationshipType as unknown as NPCRelationship["relationshipType"],
-          attitude,
-          ...(description ? { description } : {}),
-          ...(existing?.history ? { history: existing.history } : {}),
+        const rel: NPCRelationship = {
+          targetId,
+          targetName,
+          relationshipType: (
+            typeof raw.relationshipType === "string" && raw.relationshipType.trim()
+              ? raw.relationshipType.trim()
+              : "neutral"
+          ) as NPCRelationship["relationshipType"],
+          attitude: this.clampAttitude(raw.attitude) ?? 0,
+          ...(typeof raw.description === "string" && raw.description.trim()
+            ? { description: raw.description.trim() }
+            : {}),
         };
 
-        if (!mergedPerSource.has(sourceNpcId)) {
-          mergedPerSource.set(sourceNpcId, new Map<string, NPCRelationship>());
+        if (!updatesBySource.has(sourceNpcId)) {
+          updatesBySource.set(sourceNpcId, []);
         }
-        mergedPerSource.get(sourceNpcId)?.set(targetId, nextRelationship);
+        updatesBySource.get(sourceNpcId)!.push(rel);
       }
 
-      if (mergedPerSource.size === 0) {
-        return;
-      }
+      if (updatesBySource.size === 0) return;
 
-      const npcCharactersUpdate: Array<{
-        id: string;
-        name: string;
-        relationships: NPCRelationship[];
-      }> = [];
+      const npcCharactersUpdate = [...updatesBySource.entries()].map(
+        ([id, relationships]) => ({ id, name: npcById.get(id)!.name, relationships })
+      );
 
-      for (const [sourceNpcId, updatesByTarget] of mergedPerSource.entries()) {
-        const sourceNpc = dynamicState.npcCharacters.find(
-          (npc) => npc.id === sourceNpcId
-        );
-        if (!sourceNpc) continue;
-
-        const mergedRelationships = [...(sourceNpc.relationships || [])];
-        for (const newRel of updatesByTarget.values()) {
-          const existingIndex = mergedRelationships.findIndex(
-            (rel) => rel.targetId === newRel.targetId
-          );
-          if (existingIndex >= 0) {
-            mergedRelationships[existingIndex] = newRel;
-          } else {
-            mergedRelationships.push(newRel);
-          }
-        }
-
-        npcCharactersUpdate.push({
-          id: sourceNpc.id,
-          name: sourceNpc.name,
-          relationships: mergedRelationships,
-        });
-      }
-
-      if (npcCharactersUpdate.length === 0) {
-        return;
-      }
-
-      gameStateManager.applyActionUpdate({
-        npcCharacters: npcCharactersUpdate,
-      });
+      // updateCharacter() in applyActionUpdate handles the upsert merge by targetId
+      gameStateManager.applyActionUpdate({ npcCharacters: npcCharactersUpdate });
       console.log(
-        `   ✓ Relationship updates applied: ${rawUpdates.length} -> ${npcCharactersUpdate.length} NPCs`
+        `   ✓ Relationship updates applied: ${rawUpdates.length} changes across ${npcCharactersUpdate.length} NPCs`
       );
     } catch (error) {
       console.warn(
@@ -399,13 +255,7 @@ export class ActionAgent {
       language
     );
 
-    const actionTypeTemplate = getActionTypeTemplate(
-      dynamicState,
-      isNPC,
-      npcResponse
-    );
-
-    const systemPrompt = baseSystemPrompt + actionTypeTemplate;
+    const systemPrompt = baseSystemPrompt;
 
     // Single call - no tool loop needed with pre-rolled dice
     const context = this.buildContext(
@@ -1295,14 +1145,12 @@ export class ActionAgent {
     // Note: Target character actionLog should be generated by LLM if the action affects them
     // The LLM can include actionLog entries for target characters in the response if needed
 
-    await this.updateRelationshipsFromAction(runtime, gameStateManager, {
-      parsed:
-        parsed && typeof parsed === "object"
-          ? (parsed as Record<string, unknown>)
-          : {},
-      character,
-      targetCharacter,
-    });
+    this.applyRelationshipChangesFromParsed(
+      parsed && typeof parsed === "object"
+        ? (parsed as Record<string, unknown>)
+        : {},
+      gameStateManager
+    );
 
     // Return the updated game state
     return gameStateManager.getState();

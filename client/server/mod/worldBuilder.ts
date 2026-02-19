@@ -12,6 +12,8 @@ import { registerModuleForUser } from "./library.js";
 import { checkGenerationQuota, recordGeneration } from "./quotaManager.js";
 import path from "path";
 import fs from "fs";
+import { acquireSlot } from "../../../src/shared/globalRateLimiter.js";
+
 
 function normalizeProgressEvent(
   stage: string,
@@ -108,6 +110,8 @@ export async function generateWorld(
       res.end();
       return;
     }
+
+    await acquireSlot();
 
     console.log(`\n🌍 [World Builder API] Request received`);
     console.log(`   Setting Type: ${selectedSettingType}`);
@@ -236,6 +240,8 @@ export async function generateScene(
         ? settingType
         : "small_town";
 
+    await acquireSlot();
+
     console.log(`\n🌍 [World Builder API] Scene request received`);
     console.log(`   Setting Type: ${selectedSettingType}`);
     console.log(
@@ -347,6 +353,8 @@ export async function generateNpcs(req: Request, res: Response): Promise<void> {
       res.end();
       return;
     }
+
+    await acquireSlot();
 
     console.log(`\n👥 [World Builder API] NPC request received`);
     console.log(`   Module: ${moduleName}`);

@@ -10,6 +10,7 @@ import {
 } from "../../models/index.js";
 import { composeTemplate } from "../../template.js";
 import { generateRandomAttributes } from "../../shared/agents/character/characterBuilder.js";
+import { getAvailableSlots } from "../../shared/globalRateLimiter.js";
 import { allocateSkillPoints } from "./skillAllocator.js";
 import fs from "fs";
 import path from "path";
@@ -32,7 +33,7 @@ import type { StoryLength } from "./storyLengthConfig.js";
 import {
   getNPCInstantiationTemplate,
   getNPCGoalsSecretsRelationshipsMythosTemplate,
-  getNPCIdentityTemplate,
+  getNPCIdentityBatchTemplate,
 } from "./npcBuilderTemplate.js";
 
 interface Runtime {
@@ -364,64 +365,100 @@ export class NPCBuilderAgent {
   }
 
   /**
-   * Step 4: Fill core identity and inventory via LLM
+   * Step 4: Fill core identity and inventory via LLM (batch version)
+   * Processes multiple NPCs in a single API call.
    */
-  async fillIdentityAndInventory(
-    npcBasicInfo: NPCBasicInfo,
-    attributes: CharacterAttributes,
-    skills: Record<string, number>,
+  async fillIdentityAndInventoryBatch(
+    batch: Array<{
+      npcBasicInfo: NPCBasicInfo;
+      attributes: CharacterAttributes;
+      skills: Record<string, number>;
+    }>,
     truthTimeline: TruthEvent[],
     allKnowledgeHolders: KnowledgeHolder[],
     allRedHerrings: RedHerring[],
     progressCallback?: ProgressCallback
-  ): Promise<Partial<DynamicNPCProfile>> {
-    progressCallback?.(`Generating identity for ${npcBasicInfo.name}...`);
+  ): Promise<Array<Partial<DynamicNPCProfile>>> {
+    const names = batch.map((b) => b.npcBasicInfo.name).join(", ");
+    progressCallback?.(`Generating identities for: ${names}...`);
 
-    // Filter bound knowledge holders (only those this NPC is connected to)
-    const boundKnowledgeHolders = allKnowledgeHolders.filter(
-      (holder) =>
-        holder.id === npcBasicInfo.instantiatedFrom ||
-        (npcBasicInfo.inheritsKnowledge || []).some(
-          (eventId) =>
-            (holder.knows || []).includes(eventId) ||
-            (holder.containsEvidence || []).includes(eventId)
-        )
-    );
+    const maxRetries = 3;
+    for (let attempt = 1; attempt <= maxRetries; attempt++) {
+      try {
+        const result = await this._fillIdentityAndInventoryBatchOnce(
+          batch,
+          truthTimeline,
+          allKnowledgeHolders,
+          allRedHerrings
+        );
+        return result;
+      } catch (error) {
+        if (attempt < maxRetries) {
+          console.warn(
+            `Batch identity attempt ${attempt}/${maxRetries} failed for [${names}]: ${(error as Error).message}. Retrying...`
+          );
+        } else {
+          console.error(`Batch identity all ${maxRetries} attempts failed for [${names}].`);
+          throw error;
+        }
+      }
+    }
+    // unreachable
+    throw new Error("Unreachable");
+  }
 
-    // Filter relevant red herrings (those that contradict or relate to NPC's known events)
-    const npcKnownEvents = npcBasicInfo.inheritsKnowledge || [];
-    const relevantRedHerrings = allRedHerrings.filter(
-      (rh) =>
-        rh.contradictsEvents?.some((eventId) =>
-          npcKnownEvents.includes(eventId)
-        ) ||
-        // Also include general red herrings that anyone might encounter
-        ["MEDIA_RUMOR", "OFFICIAL_REPORT"].includes(rh.sourceType)
-    );
+  private async _fillIdentityAndInventoryBatchOnce(
+    batch: Array<{
+      npcBasicInfo: NPCBasicInfo;
+      attributes: CharacterAttributes;
+      skills: Record<string, number>;
+    }>,
+    truthTimeline: TruthEvent[],
+    allKnowledgeHolders: KnowledgeHolder[],
+    allRedHerrings: RedHerring[]
+  ): Promise<Array<Partial<DynamicNPCProfile>>> {
+    const npcsPayload = batch.map(({ npcBasicInfo, attributes, skills }) => {
+      const boundKnowledgeHolders = allKnowledgeHolders.filter(
+        (holder) =>
+          holder.id === npcBasicInfo.instantiatedFrom ||
+          (npcBasicInfo.inheritsKnowledge || []).some(
+            (eventId) =>
+              (holder.knows || []).includes(eventId) ||
+              (holder.containsEvidence || []).includes(eventId)
+          )
+      );
 
-    const template = getNPCIdentityTemplate();
+      const npcKnownEvents = npcBasicInfo.inheritsKnowledge || [];
+      const relevantRedHerrings = allRedHerrings.filter(
+        (rh) =>
+          rh.contradictsEvents?.some((eventId) =>
+            npcKnownEvents.includes(eventId)
+          ) || ["MEDIA_RUMOR", "OFFICIAL_REPORT"].includes(rh.sourceType)
+      );
+
+      return {
+        name: npcBasicInfo.name,
+        occupation: npcBasicInfo.occupation,
+        age: npcBasicInfo.age,
+        gender: npcBasicInfo.gender,
+        background: npcBasicInfo.background,
+        goals: npcBasicInfo.goals,
+        secrets: npcBasicInfo.secrets,
+        mythosAwareness: npcBasicInfo.mythosAwareness,
+        instantiatedFrom: npcBasicInfo.instantiatedFrom || "Unknown",
+        attributes,
+        boundKnowledgeHolders,
+        relevantRedHerrings,
+      };
+    });
+
+    const template = getNPCIdentityBatchTemplate();
     const prompt = composeTemplate(
       template,
       {},
       {
-        name: npcBasicInfo.name,
-        occupation: npcBasicInfo.occupation,
-        age: npcBasicInfo.age.toString(),
-        gender: npcBasicInfo.gender,
-        background: npcBasicInfo.background,
-        goals: JSON.stringify(npcBasicInfo.goals),
-        secrets: JSON.stringify(npcBasicInfo.secrets),
-        mythosAwareness: npcBasicInfo.mythosAwareness,
-        instantiatedFrom: npcBasicInfo.instantiatedFrom || "Unknown",
-        attributesJson: JSON.stringify(attributes, null, 2),
-        skillsJson: JSON.stringify(skills, null, 2),
         truthTimelineJson: JSON.stringify(truthTimeline, null, 2),
-        boundKnowledgeHoldersJson: JSON.stringify(
-          boundKnowledgeHolders,
-          null,
-          2
-        ),
-        relevantRedHerringsJson: JSON.stringify(relevantRedHerrings, null, 2),
+        npcsJson: JSON.stringify(npcsPayload, null, 2),
       }
     );
 
@@ -434,21 +471,29 @@ export class NPCBuilderAgent {
 
     try {
       const parsed = parseJSONResponse(response);
+      const results: Array<{ name?: string } & Record<string, unknown>> =
+        parsed.npcs || parsed;
 
-      return {
-        personality: parsed.personality,
-        appearance: parsed.appearance,
-        inventory: parsed.inventory || [],
-        clues: parsed.clues || [],
-        notes: parsed.notes,
-      };
+      if (!Array.isArray(results) || results.length !== batch.length) {
+        throw new Error(
+          `Batch identity count mismatch: expected ${batch.length}, got ${Array.isArray(results) ? results.length : "non-array"}`
+        );
+      }
+
+      return results.map((r) => ({
+        personality: r.personality as string | undefined,
+        appearance: r.appearance as string | undefined,
+        inventory: (r.inventory as DynamicNPCProfile["inventory"]) || [],
+        clues: (r.clues as DynamicNPCProfile["clues"]) || [],
+        notes: r.notes as string | undefined,
+      }));
     } catch (error) {
-      console.error(
-        `Failed to parse identity for ${npcBasicInfo.name}:`,
-        error
-      );
+      const batchNames = batch.map((b) => b.npcBasicInfo.name).join(", ");
+      console.error(`Failed to parse batch identity for [${batchNames}]:`, error);
       console.error("Response:", response.substring(0, 500));
-      throw new Error(`Failed to fill identity: ${(error as Error).message}`);
+      throw new Error(
+        `Failed to fill batch identity: ${(error as Error).message}`
+      );
     }
   }
 
@@ -477,118 +522,162 @@ export class NPCBuilderAgent {
 
     console.log(`   Generated ${npcBasics.length} NPC templates`);
 
-    // Steps 2-4: For each NPC, generate attributes, skills, and identity
+    // Steps 2-4: Generate attributes + skills for all NPCs (sync), then batch identity calls
+    const batchSize = 4;
+
+    // Prepare all NPC data (steps 2-3 are synchronous)
+    const prepared = npcBasics.map((npcBasicRaw, index) => {
+      const npcBasic = { ...npcBasicRaw };
+      const mappedOccupation = mapOccupationToList(
+        npcBasic.occupation,
+        occupationNames
+      );
+      if (mappedOccupation !== npcBasic.occupation) {
+        console.log(
+          `   ↪ Mapped occupation "${npcBasic.occupation}" -> "${mappedOccupation}"`
+        );
+        npcBasic.occupation = mappedOccupation;
+      }
+
+      const generatedAttrs = this.generateAttributes(npcBasic);
+      const attributes: CharacterAttributes = {
+        STR: generatedAttrs.STR,
+        CON: generatedAttrs.CON,
+        DEX: generatedAttrs.DEX,
+        APP: generatedAttrs.APP,
+        POW: generatedAttrs.POW,
+        SIZ: generatedAttrs.SIZ,
+        INT: generatedAttrs.INT,
+        EDU: generatedAttrs.EDU,
+      };
+      const skills = this.allocateSkills(npcBasic, attributes);
+
+      return { index, npcBasic, generatedAttrs, attributes, skills };
+    });
+
+    // Split into batches
+    const batches: (typeof prepared)[] = [];
+    for (let i = 0; i < prepared.length; i += batchSize) {
+      batches.push(prepared.slice(i, i + batchSize));
+    }
+
+    // Step 4: Process batches with dynamic concurrency driven by global rate limit
+    const MAX_CONCURRENT_BATCHES = 8; // absolute ceiling per generation
     const npcs: DynamicNPCProfile[] = new Array(npcBasics.length);
-    const concurrencyLimit = 4;
-    let currentIndex = 0;
+    let batchIndex = 0;
+    let activeWorkers = 0;
+    // Signal channel: resolved when any worker finishes
+    let notifyFn: (() => void) | null = null;
+    const waitForAny = () =>
+      new Promise<void>((r) => {
+        notifyFn = r;
+      });
+    const releaseOne = () => {
+      const fn = notifyFn;
+      notifyFn = null;
+      fn?.();
+    };
 
-    const worker = async () => {
-      while (true) {
-        const index = currentIndex;
-        currentIndex += 1;
-
-        if (index >= npcBasics.length) {
-          return;
-        }
-
-        const npcBasic = { ...npcBasics[index] };
-        const mappedOccupation = mapOccupationToList(
-          npcBasic.occupation,
-          occupationNames
-        );
-        if (mappedOccupation !== npcBasic.occupation) {
-          console.log(
-            `   ↪ Mapped occupation "${npcBasic.occupation}" -> "${mappedOccupation}"`
-          );
-          npcBasic.occupation = mappedOccupation;
-        }
+    const runBatch = async (bi: number): Promise<void> => {
+      try {
+        const batch = batches[bi]!;
         progressCallback?.(
-          `Processing NPC ${index + 1}/${npcBasics.length}: ${npcBasic.name}`
+          `Processing NPCs ${batch[0]!.index + 1}-${batch[batch.length - 1]!.index + 1}/${npcBasics.length}: ${batch.map((b) => b.npcBasic.name).join(", ")}`
         );
 
-        // Step 2: Generate attributes
-        const generatedAttrs = this.generateAttributes(npcBasic);
-        const attributes: CharacterAttributes = {
-          STR: generatedAttrs.STR,
-          CON: generatedAttrs.CON,
-          DEX: generatedAttrs.DEX,
-          APP: generatedAttrs.APP,
-          POW: generatedAttrs.POW,
-          SIZ: generatedAttrs.SIZ,
-          INT: generatedAttrs.INT,
-          EDU: generatedAttrs.EDU,
-        };
-
-        // Step 3: Allocate skills
-        const skills = this.allocateSkills(npcBasic, attributes);
-
-        // Step 4: Fill identity and inventory
-        const identity = await this.fillIdentityAndInventory(
-          npcBasic,
-          attributes,
-          skills,
+        const identities = await this.fillIdentityAndInventoryBatch(
+          batch.map((b) => ({
+            npcBasicInfo: b.npcBasic,
+            attributes: b.attributes,
+            skills: b.skills,
+          })),
           truthTimeline,
           knowledgeHolders,
           redHerrings,
           progressCallback
         );
 
-        // Assemble complete NPC profile
-        const relationships: NPCRelationship[] = (
-          npcBasic.relationships || []
-        ).map((relationship) => ({
-          targetName: relationship.targetName,
-          relationshipType: normalizeRelationshipType(
-            relationship.relationshipType
-          ),
-          attitude: relationship.attitude,
-          description: relationship.description,
-          targetId: relationship.targetName
-            ? makeNpcId(relationship.targetName)
-            : "unknown",
-        }));
+        for (let i = 0; i < batch.length; i++) {
+          const { index, npcBasic, generatedAttrs, attributes, skills } =
+            batch[i]!;
+          const identity = identities[i]!;
 
-        const npc: DynamicNPCProfile = {
-          id: makeNpcId(npcBasic.name),
-          name: npcBasic.name,
-          occupation: npcBasic.occupation,
-          age: npcBasic.age,
-          gender: npcBasic.gender,
-          appearance: identity.appearance || "Not described",
-          personality: identity.personality || "Not described",
-          background: npcBasic.background,
-          goals: npcBasic.goals,
-          secrets: npcBasic.secrets,
-          attributes,
-          status: {
-            hp: generatedAttrs.HP,
-            maxHp: generatedAttrs.HP,
-            sanity: generatedAttrs.SAN,
-            maxSanity: 99,
-            luck: generatedAttrs.LUCK || 50,
-            mp: generatedAttrs.MP,
-            conditions: [],
-            damageBonus: generatedAttrs.DB,
-            build: generatedAttrs.BUILD,
-            mov: generatedAttrs.MOV,
-          },
-          skills,
-          inventory: identity.inventory || [],
-          clues: identity.clues || [],
-          relationships,
-          notes: identity.notes,
-          isNPC: true,
-          // Preserve DynamicWorld specific fields from Step 1
-          instantiatedFrom: npcBasic.instantiatedFrom,
-          inheritsKnowledge: npcBasic.inheritsKnowledge,
-        };
+          const relationships: NPCRelationship[] = (
+            npcBasic.relationships || []
+          ).map((relationship) => ({
+            targetName: relationship.targetName,
+            relationshipType: normalizeRelationshipType(
+              relationship.relationshipType
+            ),
+            attitude: relationship.attitude,
+            description: relationship.description,
+            targetId: relationship.targetName
+              ? makeNpcId(relationship.targetName)
+              : "unknown",
+          }));
 
-        npcs[index] = npc;
+          npcs[index] = {
+            id: makeNpcId(npcBasic.name),
+            name: npcBasic.name,
+            occupation: npcBasic.occupation,
+            age: npcBasic.age,
+            gender: npcBasic.gender,
+            appearance: identity.appearance || "Not described",
+            personality: identity.personality || "Not described",
+            background: npcBasic.background,
+            goals: npcBasic.goals,
+            secrets: npcBasic.secrets,
+            attributes,
+            status: {
+              hp: generatedAttrs.HP,
+              maxHp: generatedAttrs.HP,
+              sanity: generatedAttrs.SAN,
+              maxSanity: 99,
+              luck: generatedAttrs.LUCK || 50,
+              mp: generatedAttrs.MP,
+              conditions: [],
+              damageBonus: generatedAttrs.DB,
+              build: generatedAttrs.BUILD,
+              mov: generatedAttrs.MOV,
+            },
+            skills,
+            inventory: identity.inventory || [],
+            clues: identity.clues || [],
+            relationships,
+            notes: identity.notes,
+            isNPC: true,
+            instantiatedFrom: npcBasic.instantiatedFrom,
+            inheritsKnowledge: npcBasic.inheritsKnowledge,
+          };
+        }
+      } finally {
+        activeWorkers--;
+        releaseOne();
       }
     };
 
-    const workerCount = Math.min(concurrencyLimit, npcBasics.length);
-    await Promise.all(Array.from({ length: workerCount }, () => worker()));
+    const allPromises: Promise<void>[] = [];
+
+    while (batchIndex < batches.length) {
+      // Target concurrency = available global slots, capped at MAX_CONCURRENT_BATCHES, min 1
+      const target = Math.max(
+        1,
+        Math.min(getAvailableSlots(), MAX_CONCURRENT_BATCHES)
+      );
+
+      // Launch as many batches as the target allows
+      while (activeWorkers < target && batchIndex < batches.length) {
+        activeWorkers++;
+        allPromises.push(runBatch(batchIndex++));
+      }
+
+      // If there are still batches queued, wait for a worker to finish before re-checking
+      if (batchIndex < batches.length) {
+        await waitForAny();
+      }
+    }
+
+    await Promise.all(allPromises);
 
     console.log("✅ [NPC Builder Agent] NPC generation complete");
     console.log(`   Final count: ${npcs.length} NPCs`);
