@@ -230,7 +230,9 @@ export function StoryCreator({
       }
     } catch (err) {
       console.error("Error generating world:", err);
-      setError((err as Error).message || t("storyCreator.errors.generationFailed"));
+      setError(
+        (err as Error).message || t("storyCreator.errors.generationFailed")
+      );
       setIsGenerating(false);
     }
   };
@@ -244,8 +246,16 @@ export function StoryCreator({
     switch (stage) {
       case "macro_scene":
         return t("storyCreator.progress.stages.macro_scene");
+      case "scenario_builder":
+        return t("storyCreator.progress.stages.scenario_builder");
       case "npc_builder":
         return t("storyCreator.progress.stages.npc_builder");
+      case "scenario_snapshot":
+        return t("storyCreator.progress.stages.scenario_snapshot");
+      case "map_generation":
+        return t("storyCreator.progress.stages.map_generation");
+      case "module_digest":
+        return t("storyCreator.progress.stages.module_digest");
       case "persistence":
         return t("storyCreator.progress.stages.persistence");
       case "complete":
@@ -270,9 +280,7 @@ export function StoryCreator({
               />
               <div className="header-text">
                 <h2>{t("storyCreator.title")}</h2>
-                <p className="header-subtitle">
-                  {t("storyCreator.subtitle")}
-                </p>
+                <p className="header-subtitle">{t("storyCreator.subtitle")}</p>
               </div>
             </div>
             <button
@@ -429,9 +437,7 @@ export function StoryCreator({
                       className="form-textarea"
                       rows={8}
                     />
-                    <p className="form-hint">
-                      {t("storyCreator.ideaHint")}
-                    </p>
+                    <p className="form-hint">{t("storyCreator.ideaHint")}</p>
                   </div>
                 </>
 
@@ -475,9 +481,7 @@ export function StoryCreator({
                 </div>
 
                 <div className="progress-info">
-                  <p>
-                    {t("storyCreator.progress.mayTakeTime")}
-                  </p>
+                  <p>{t("storyCreator.progress.mayTakeTime")}</p>
                 </div>
               </div>
             )}

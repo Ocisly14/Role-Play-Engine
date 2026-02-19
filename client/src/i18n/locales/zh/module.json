@@ -151,7 +151,11 @@
       "mayTakeTime": "这可能需要最多10分钟。正在为你的故事创建独特世界...",
       "stages": {
         "macro_scene": "构建世界结构",
+        "scenario_builder": "设计场景",
         "npc_builder": "创建角色",
+        "scenario_snapshot": "准备起始场景",
+        "map_generation": "绘制宏观地图",
+        "module_digest": "编写模组摘要",
         "persistence": "保存文件",
         "complete": "完成!",
         "error": "错误",

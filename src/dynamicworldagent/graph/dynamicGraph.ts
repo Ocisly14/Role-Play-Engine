@@ -11,7 +11,10 @@ import {
   StateGraph,
   interrupt,
 } from "@langchain/langgraph";
-import type { CoCDatabase, CoCDatabaseAdapter } from "../../shared/agents/memory/database/index.js";
+import type {
+  CoCDatabase,
+  CoCDatabaseAdapter,
+} from "../../shared/agents/memory/database/index.js";
 import type { BaseMessage } from "@langchain/core/messages";
 import { HumanMessage, AIMessage } from "@langchain/core/messages";
 import type { ScenarioLoader } from "../../shared/agents/memory/scenarioloader/index.js";
@@ -689,8 +692,41 @@ export const buildDynamicGraph = (
           // Follow the same fire-and-forget + in-place mutation pattern as generateSceneImage above
           const prevScenario = updatedState.temporaryInfo.previousScenario;
           const moduleDigest = updatedState.moduleDigest; // capture ref before async, like currentScenario
-          const getConns = (id: string) =>
-            updatedState.scenarioOutlines.find((o) => o.id === id)?.connections ?? [];
+          const resolveScenarioIdFromSnapshot = (
+            snapshotId: string
+          ): string | null => {
+            for (const [
+              scenarioId,
+              snapshots,
+            ] of updatedState.updatedDynamicScenarioSnapshots.entries()) {
+              if (
+                (snapshots || []).some((snapshot) => snapshot.id === snapshotId)
+              ) {
+                return scenarioId;
+              }
+            }
+            return null;
+          };
+
+          const getConns = (id: string, name?: string) => {
+            const byIdOrName = updatedState.scenarioOutlines.find(
+              (outline) => outline.id === id || (name && outline.name === name)
+            );
+            if (byIdOrName) {
+              return byIdOrName.connections || [];
+            }
+
+            const scenarioId = resolveScenarioIdFromSnapshot(id);
+            if (!scenarioId) {
+              return [];
+            }
+
+            return (
+              updatedState.scenarioOutlines.find(
+                (outline) => outline.id === scenarioId
+              )?.connections || []
+            );
+          };
 
           if (prevScenario && currentScenario) {
             void generateMapOnSceneSwitch(
@@ -698,12 +734,12 @@ export const buildDynamicGraph = (
               {
                 name: prevScenario.name,
                 description: prevScenario.description,
-                connections: getConns(prevScenario.id),
+                connections: getConns(prevScenario.id, prevScenario.name),
               },
               {
                 name: currentScenario.name,
                 description: currentScenario.description,
-                connections: getConns(currentScenario.id),
+                connections: getConns(currentScenario.id, currentScenario.name),
               },
               moduleDigest?.macroMapPath
             )
@@ -788,7 +824,9 @@ export const buildDynamicGraph = (
 
         return { ...state, dynamicGameState: dgsm.getState() };
       } else {
-        console.log(`   ✓ 全局触发器触发但未导致游戏结束，将先更新场景再继续叙事`);
+        console.log(
+          `   ✓ 全局触发器触发但未导致游戏结束，将先更新场景再继续叙事`
+        );
 
         // 不要清除 global trigger！保留它供 updateNonPlayerScenarios 使用作为 previousGlobalTrigger
         // updateNonPlayerScenarios 会生成新的 global trigger 并替换旧的
@@ -808,7 +846,9 @@ export const buildDynamicGraph = (
           await directorAgent.updateNonPlayerScenarios(dgsm);
           const finalState = dgsm.getState();
           if (finalState.globalTrigger) {
-            console.log(`   ✓ [世界线更新] 场景更新完成，已生成新的 global trigger`);
+            console.log(
+              `   ✓ [世界线更新] 场景更新完成，已生成新的 global trigger`
+            );
           } else {
             console.log(
               `   ✓ [世界线更新] 场景更新完成，未生成新的 global trigger（已清除旧的）`
@@ -1450,7 +1490,9 @@ export const buildDynamicListenerGraph = (
 
         return { ...state, dynamicGameState: dgsm.getState() };
       } else {
-        console.log(`   ✓ 全局触发器触发但未导致游戏结束，将先更新场景再继续叙事`);
+        console.log(
+          `   ✓ 全局触发器触发但未导致游戏结束，将先更新场景再继续叙事`
+        );
 
         // 不要清除 global trigger！保留它供 updateNonPlayerScenarios 使用作为 previousGlobalTrigger
         // updateNonPlayerScenarios 会生成新的 global trigger 并替换旧的
@@ -1470,7 +1512,9 @@ export const buildDynamicListenerGraph = (
           await directorAgent.updateNonPlayerScenarios(dgsm);
           const finalState = dgsm.getState();
           if (finalState.globalTrigger) {
-            console.log(`   ✓ [世界线更新] 场景更新完成，已生成新的 global trigger`);
+            console.log(
+              `   ✓ [世界线更新] 场景更新完成，已生成新的 global trigger`
+            );
           } else {
             console.log(
               `   ✓ [世界线更新] 场景更新完成，未生成新的 global trigger（已清除旧的）`

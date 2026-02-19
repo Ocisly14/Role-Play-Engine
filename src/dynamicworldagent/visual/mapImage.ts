@@ -193,9 +193,11 @@ ${fmtScene(targetScene)}
 
 7. **VISUAL CONNECTIONS**: Draw paths, corridors, roads, or passages between connected locations as appropriate. Blocked or locked connections may be shown with a barrier symbol or broken line.
 
-8. **NO HIDDEN LOCATIONS**: Do not add any location not listed above or not already present on the existing map.
+8. **MANDATORY TARGET CONNECTION COVERAGE**: You MUST render all connections listed in the target scene snapshot on the map. Every target-scene connection should be visually represented between "${targetScene.name}" and the connected location.
 
-9. **Style**: Maintain the same artistic style as the reference image – realistic, high detail, Lovecraftian mystery atmosphere.
+9. **NO HIDDEN LOCATIONS**: Do not add any location not listed above or not already present on the existing map.
+
+10. **Style**: Maintain the same artistic style as the reference image – realistic, high detail, Lovecraftian mystery atmosphere.
 
 Generate a single cohesive updated map image that integrates the new scene naturally with the existing map.
 `.trim();

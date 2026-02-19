@@ -151,7 +151,11 @@
       "mayTakeTime": "This may take up to 10 minutes. Creating a unique world for your own story...",
       "stages": {
         "macro_scene": "Building World Structure",
+        "scenario_builder": "Designing Scenarios",
         "npc_builder": "Creating Characters",
+        "scenario_snapshot": "Preparing Starting Scene",
+        "map_generation": "Drawing Macro Map",
+        "module_digest": "Writing Module Digest",
         "persistence": "Saving Files",
         "complete": "Complete!",
         "error": "Error",

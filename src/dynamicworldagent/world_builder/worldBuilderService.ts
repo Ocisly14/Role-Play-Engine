@@ -25,6 +25,55 @@ export type WorldBuilderProgressCallback = (
   message: string
 ) => void;
 
+type ParallelTask = "scenario_builder" | "npc_builder";
+
+const clamp = (value: number, min: number, max: number): number =>
+  Math.max(min, Math.min(max, value));
+
+function createMonotonicProgressEmitter(
+  progressCallback?: WorldBuilderProgressCallback
+): (stage: string, progress: number, message: string) => void {
+  let highestProgress = 0;
+
+  return (stage: string, progress: number, message: string) => {
+    const normalized = clamp(progress, 0, 100);
+    highestProgress = Math.max(highestProgress, normalized);
+    progressCallback?.(stage, highestProgress, message);
+  };
+}
+
+function createParallelProgressReporter(
+  emitProgress: (stage: string, progress: number, message: string) => void,
+  start: number,
+  end: number
+): {
+  report: (task: ParallelTask, completion: number, message: string) => void;
+  complete: (task: ParallelTask, message: string) => void;
+} {
+  const completionByTask: Record<ParallelTask, number> = {
+    scenario_builder: 0,
+    npc_builder: 0,
+  };
+
+  const push = (task: ParallelTask, completion: number, message: string) => {
+    const normalizedCompletion = clamp(completion, 0, 1);
+    completionByTask[task] = Math.max(
+      completionByTask[task],
+      normalizedCompletion
+    );
+
+    const totalCompletion =
+      (completionByTask.scenario_builder + completionByTask.npc_builder) / 2;
+    const progress = start + (end - start) * totalCompletion;
+    emitProgress(task, progress, message);
+  };
+
+  return {
+    report: push,
+    complete: (task: ParallelTask, message: string) => push(task, 1, message),
+  };
+}
+
 /**
  * World Builder Service - Main entry point
  */
@@ -58,108 +107,130 @@ export class WorldBuilderService {
     );
 
     try {
+      const emitProgress = createMonotonicProgressEmitter(progressCallback);
+
       // ========== PHASE 1: MACRO SCENE AGENT (Steps 1-6, progress 5→40) ==========
-      progressCallback?.(
-        "macro_scene",
-        5,
-        `Generating ${settingType} structure...`
-      );
+      emitProgress("macro_scene", 5, `Generating ${settingType} structure...`);
 
       const macroScene = await this.macroSceneAgent.generateTownStructure(
         settingType,
         creativePrompt,
-        (msg) => progressCallback?.("macro_scene", 8, msg),
+        (msg) => emitProgress("macro_scene", 8, msg),
         storyLength
       );
-      progressCallback?.(
+      emitProgress(
         "macro_scene",
         8,
         `Town structure: ${macroScene.locationName}`
       );
 
-      progressCallback?.("macro_scene", 10, "Generating historical mythos ...");
+      emitProgress("macro_scene", 10, "Generating historical mythos ...");
       const mythosEvents = await this.macroSceneAgent.generateHistoricalMythos(
         macroScene,
         creativePrompt,
-        (msg) => progressCallback?.("macro_scene", 12, msg)
+        (msg) => emitProgress("macro_scene", 12, msg)
       );
-      progressCallback?.("macro_scene", 12, `Historical mythos completed`);
+      emitProgress("macro_scene", 12, `Historical mythos completed`);
 
-      progressCallback?.("macro_scene", 15, "Generating mysteries...");
+      emitProgress("macro_scene", 15, "Generating mysteries...");
       const truthTimeline = await this.macroSceneAgent.generateTruthTimeline(
         macroScene,
         mythosEvents,
         creativePrompt,
-        (msg) => progressCallback?.("macro_scene", 18, msg),
+        (msg) => emitProgress("macro_scene", 18, msg),
         storyLength
       );
-      progressCallback?.("macro_scene", 18, `Mysteries completed`);
+      emitProgress("macro_scene", 18, `Mysteries completed`);
 
-      progressCallback?.("macro_scene", 22, "Generating knowledge matrix...");
+      emitProgress("macro_scene", 22, "Generating knowledge matrix...");
       const knowledgeMatrix =
         await this.macroSceneAgent.generateKnowledgeMatrix(
           macroScene,
           mythosEvents,
           truthTimeline,
-          (msg) => progressCallback?.("macro_scene", 25, msg),
+          (msg) => emitProgress("macro_scene", 25, msg),
           storyLength
         );
-      progressCallback?.("macro_scene", 25, `Knowledge matrix completed`);
+      emitProgress("macro_scene", 25, `Knowledge matrix completed`);
 
-      progressCallback?.("macro_scene", 28, "Generating wisps of truth...");
+      emitProgress("macro_scene", 28, "Generating wisps of truth...");
       const redHerrings = await this.macroSceneAgent.generateRedHerrings(
         mythosEvents,
         truthTimeline,
         knowledgeMatrix,
-        (msg) => progressCallback?.("macro_scene", 32, msg),
+        (msg) => emitProgress("macro_scene", 32, msg),
         storyLength
       );
-      progressCallback?.("macro_scene", 32, `Wisps of truth completed`);
+      emitProgress("macro_scene", 32, `Wisps of truth completed`);
 
-      progressCallback?.("macro_scene", 35, "Generating doomsday ...");
+      emitProgress("macro_scene", 35, "Generating doomsday ...");
       const endState = await this.macroSceneAgent.generateEndState(
         macroScene,
         mythosEvents,
         truthTimeline,
-        (msg) => progressCallback?.("macro_scene", 40, msg)
+        (msg) => emitProgress("macro_scene", 40, msg)
       );
-      progressCallback?.("macro_scene", 40, `World generation complete`);
+      emitProgress("macro_scene", 40, `World generation complete`);
 
       const moduleName = macroScene.moduleName;
 
-      // ========== PHASE 2: SCENARIO BUILDER AGENT (45→60) ==========
-      progressCallback?.("scenario_builder", 45, "Generating scenarios ...");
+      // ========== PHASE 2-3: SCENARIO + NPC BUILDERS (parallel, shared 45→75) ==========
+      const parallelProgress = createParallelProgressReporter(
+        emitProgress,
+        45,
+        75
+      );
+      parallelProgress.report(
+        "scenario_builder",
+        0,
+        "Generating scenarios ..."
+      );
+      parallelProgress.report(
+        "npc_builder",
+        0,
+        "Generating NPCs from flesh and blood..."
+      );
 
-      const scenarios = await this.scenarioBuilderAgent.generate(
+      const scenarioPromise = this.scenarioBuilderAgent.generate(
         macroScene,
         truthTimeline,
         knowledgeMatrix,
         (msg) => {
-          progressCallback?.(
-            "scenario_builder",
-            msg.includes("Calling AI") ? 48 : 55,
-            msg
-          );
+          if (msg.includes("Calling AI")) {
+            parallelProgress.report("scenario_builder", 0.35, msg);
+            return;
+          }
+          if (msg.includes("generated")) {
+            parallelProgress.report("scenario_builder", 0.85, msg);
+            return;
+          }
+          parallelProgress.report("scenario_builder", 0.6, msg);
         }
-      );
-
-      progressCallback?.("scenario_builder", 60, `Scenarios completed`);
-
-      // ========== PHASE 3: NPC BUILDER AGENT (65→75) ==========
-      progressCallback?.(
-        "npc_builder",
-        65,
-        "Generating NPCs from flesh and blood..."
       );
 
       const npcProgressCallback = (msg: string) => {
         const m = msg.match(/Processing NPC (\d+)\/(\d+)/);
-        const pct = m
-          ? 65 + Math.round((Number(m[1]) / Number(m[2])) * 10)
-          : 70;
-        progressCallback?.("npc_builder", Math.min(75, pct), msg);
+        if (m) {
+          const processed = Number(m[1]);
+          const total = Number(m[2]);
+          if (total > 0) {
+            parallelProgress.report(
+              "npc_builder",
+              0.2 + (processed / total) * 0.75,
+              msg
+            );
+            return;
+          }
+        }
+
+        if (msg.includes("Instantiated")) {
+          parallelProgress.report("npc_builder", 0.2, msg);
+          return;
+        }
+
+        parallelProgress.report("npc_builder", 0.1, msg);
       };
-      const npcs = await this.npcBuilderAgent.generateBatch(
+      const npcPromise = this.npcBuilderAgent.generateBatch(
         macroScene,
         truthTimeline,
         knowledgeMatrix,
@@ -168,10 +239,15 @@ export class WorldBuilderService {
         npcProgressCallback
       );
 
-      progressCallback?.("npc_builder", 75, `NPCs completed`);
+      const [scenarios, npcs] = await Promise.all([
+        scenarioPromise,
+        npcPromise,
+      ]);
+      parallelProgress.complete("scenario_builder", "Scenarios completed");
+      parallelProgress.complete("npc_builder", "NPCs completed");
 
       // ========== PHASE 4: STARTING SCENE SNAPSHOT (78→79) ==========
-      progressCallback?.(
+      emitProgress(
         "scenario_snapshot",
         78,
         "Selecting the start of all evils..."
@@ -184,11 +260,11 @@ export class WorldBuilderService {
           knowledgeMatrix,
           scenarios,
           npcs,
-          (msg) => progressCallback?.("scenario_snapshot", 79, msg)
+          (msg) => emitProgress("scenario_snapshot", 79, msg)
         );
 
       // ========== PHASE 4.5: MACRO MAP GENERATION (79→81) ==========
-      progressCallback?.("map_generation", 80, "Generating macro map...");
+      emitProgress("map_generation", 80, "Generating macro map...");
 
       let macroMapPath: string | undefined = undefined;
       if (process.env.GOOGLE_API_KEY) {
@@ -199,17 +275,20 @@ export class WorldBuilderService {
             (s) => s.id === startingScene.scenarioId
           );
           if (startingOutline) {
-            const mapResult = await generateMapImageFromScenarios(
-              moduleName,
-              [startingOutline]
-            );
+            const mapResult = await generateMapImageFromScenarios(moduleName, [
+              startingOutline,
+            ]);
             if (mapResult) {
               macroMapPath = mapResult.path;
-              console.log(`   ✓ Starting-scene macro map generated: ${macroMapPath}`);
-              progressCallback?.("map_generation", 81, "Macro map generated.");
+              console.log(
+                `   ✓ Starting-scene macro map generated: ${macroMapPath}`
+              );
+              emitProgress("map_generation", 81, "Macro map generated.");
             }
           } else {
-            console.warn("   ⚠️  Starting scene outline not found, skipping macro map generation");
+            console.warn(
+              "   ⚠️  Starting scene outline not found, skipping macro map generation"
+            );
           }
         } catch (error) {
           console.warn("   ⚠️  Failed to generate macro map:", error);
@@ -222,11 +301,7 @@ export class WorldBuilderService {
       }
 
       // ========== PHASE 5: MODULE DIGEST (82→...) ==========
-      progressCallback?.(
-        "module_digest",
-        82,
-        "Generating the whips of the Lord..."
-      );
+      emitProgress("module_digest", 82, "Generating the whips of the Lord...");
 
       const moduleDigest = await this.moduleDigestAgent.generate(
         macroScene,
@@ -246,7 +321,7 @@ export class WorldBuilderService {
       );
 
       // ========== PHASE 6: PERSISTENCE ==========
-      progressCallback?.("persistence", 90, "Saving the world ...");
+      emitProgress("persistence", 90, "Saving the world ...");
 
       const generatedFiles = await saveWorldToJSON(
         moduleName,
@@ -262,7 +337,7 @@ export class WorldBuilderService {
         otherScenarioNpcAssignments
       );
 
-      progressCallback?.("complete", 100, "Time to face the unknown!");
+      emitProgress("complete", 100, "Time to face the unknown!");
 
       console.log("✅ [World Builder Service] Generation successful");
       console.log(`   Module: ${macroScene.moduleName}`);
