@@ -10,9 +10,15 @@ export interface GeneratedImage {
   prompt: string;
 }
 
+export interface ImageInput {
+  mimeType: string;
+  base64Data: string;
+}
+
 export interface ImageGenerationOptions {
   model?: string;
   aspectRatio?: string;
+  referenceImages?: ImageInput[];
 }
 
 export async function generateGeminiImage(
@@ -33,11 +39,17 @@ export async function generateGeminiImage(
   const aspectRatio =
     options.aspectRatio || process.env.GOOGLE_IMAGE_ASPECT_RATIO || "16:9";
 
+  const requestParts: any[] = [];
+  for (const img of options.referenceImages ?? []) {
+    requestParts.push({ inlineData: { mimeType: img.mimeType, data: img.base64Data } });
+  }
+  requestParts.push({ text: prompt });
+
   const body = {
     contents: [
       {
         role: "user",
-        parts: [{ text: prompt }],
+        parts: requestParts,
       },
     ],
     generationConfig: {

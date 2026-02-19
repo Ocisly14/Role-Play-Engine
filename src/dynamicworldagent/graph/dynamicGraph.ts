@@ -42,6 +42,7 @@ import { CharacterAgent } from "../dynamicBasicAgent/character/characterAgent.js
 import { KeeperAgent } from "../dynamicBasicAgent/keeper/keeperAgent.js";
 import { DirectorAgent } from "../dynamicBasicAgent/director/directorAgent.js";
 import { generateSceneImage } from "../visual/sceneImage.js";
+import { generateMapOnSceneSwitch } from "../visual/mapImage.js";
 
 /**
  * Dynamic Graph State - Uses only DynamicGameState (no GameState)
@@ -74,6 +75,7 @@ export interface DynamicGraphState {
     onNarrativeStart?: () => void;
     onNarrativeDelta?: (delta: string) => void;
     onNarrativeEnd?: () => void;
+    onMapUpdate?: (payload: { macroMapPath: string; mimeType: string }) => void;
   };
 }
 
@@ -682,6 +684,44 @@ export const buildDynamicGraph = (
                 error
               );
             });
+
+          // Incrementally update the macro map: add the newly entered scene
+          // Follow the same fire-and-forget + in-place mutation pattern as generateSceneImage above
+          const prevScenario = updatedState.temporaryInfo.previousScenario;
+          const moduleDigest = updatedState.moduleDigest; // capture ref before async, like currentScenario
+          const getConns = (id: string) =>
+            updatedState.scenarioOutlines.find((o) => o.id === id)?.connections ?? [];
+
+          if (prevScenario && currentScenario) {
+            void generateMapOnSceneSwitch(
+              updatedState.moduleName,
+              {
+                name: prevScenario.name,
+                description: prevScenario.description,
+                connections: getConns(prevScenario.id),
+              },
+              {
+                name: currentScenario.name,
+                description: currentScenario.description,
+                connections: getConns(currentScenario.id),
+              },
+              moduleDigest?.macroMapPath
+            )
+              .then((mapResult) => {
+                if (!mapResult) return;
+                // Mutate in place via captured ref — same pattern as currentScenario.sceneImage above
+                if (moduleDigest) {
+                  moduleDigest.macroMapPath = mapResult.path;
+                }
+                stream?.onMapUpdate?.({
+                  macroMapPath: mapResult.path,
+                  mimeType: mapResult.mimeType,
+                });
+              })
+              .catch((err) => {
+                console.warn("[Dynamic Director] Map update failed:", err);
+              });
+          }
         }
       }
 

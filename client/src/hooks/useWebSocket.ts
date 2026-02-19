@@ -306,6 +306,12 @@ export function useWebSocket({
               if (onNarrativeCompleteRef.current) {
                 onNarrativeCompleteRef.current();
               }
+            } else if (message.type === "map_update") {
+              // Macro map was incrementally updated after a scene switch –
+              // trigger a sidebar refresh so the new map is fetched from the server.
+              if (onNarrativeCompleteRef.current) {
+                onNarrativeCompleteRef.current();
+              }
             } else if (message.type === "simulate_triggered") {
               console.log("[WebSocket] Simulate triggered:", message);
               // Handle simulated narrative

@@ -193,14 +193,23 @@ export class WorldBuilderService {
       let macroMapPath: string | undefined = undefined;
       if (process.env.GOOGLE_API_KEY) {
         try {
-          const mapResult = await generateMapImageFromScenarios(
-            moduleName,
-            scenarios
+          // Only generate map for the starting scene – additional scenes are
+          // added incrementally as the player switches scenes during gameplay.
+          const startingOutline = scenarios.find(
+            (s) => s.id === startingScene.scenarioId
           );
-          if (mapResult) {
-            macroMapPath = mapResult.path;
-            console.log(`   ✓ Macro map generated: ${macroMapPath}`);
-            progressCallback?.("map_generation", 81, "Macro map generated.");
+          if (startingOutline) {
+            const mapResult = await generateMapImageFromScenarios(
+              moduleName,
+              [startingOutline]
+            );
+            if (mapResult) {
+              macroMapPath = mapResult.path;
+              console.log(`   ✓ Starting-scene macro map generated: ${macroMapPath}`);
+              progressCallback?.("map_generation", 81, "Macro map generated.");
+            }
+          } else {
+            console.warn("   ⚠️  Starting scene outline not found, skipping macro map generation");
           }
         } catch (error) {
           console.warn("   ⚠️  Failed to generate macro map:", error);

@@ -33,6 +33,7 @@ type NarrativeStreamHandlers = {
   onNarrativeStart?: () => void;
   onNarrativeDelta?: (delta: string) => void;
   onNarrativeEnd?: () => void;
+  onMapUpdate?: (payload: { macroMapPath: string; mimeType: string }) => void;
 };
 
 /**
@@ -337,6 +338,15 @@ function buildNarrativeStreamHandlers(params: {
           });
         }
       : undefined,
+    onMapUpdate: (payload) => {
+      send({
+        type: "map_update",
+        turnId: params.turnId,
+        macroMapPath: payload.macroMapPath,
+        mimeType: payload.mimeType,
+        timestamp: new Date().toISOString(),
+      });
+    },
   };
 }
 

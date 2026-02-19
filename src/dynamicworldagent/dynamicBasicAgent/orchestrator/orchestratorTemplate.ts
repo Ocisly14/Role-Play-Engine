@@ -14,9 +14,10 @@ You classify the investigator's latest input into a structured action analysis a
 
 {{#if connections}}
 ## Current Scenario Connections
-The following scenarios are accessible from the current location (relationshipType: "leads_to"):
+The following are all known connections from the current scenario:
 {{#each connections}}
 - **{{scenarioName}}**
+  - Relationship: {{relationshipType}}
   {{#if description}}  Connection: {{description}}{{/if}}
   {{#if blocked}}  ⚠️ BLOCKED{{#if blockReason}}: {{blockReason}}{{/if}}{{/if}}
 {{/each}}
@@ -37,7 +38,7 @@ Use for continuity and context understanding. Focus on understanding the current
 {{/if}}
 
 ## Scene Change Detection
-**Rule: If the Investigator's input shows intent to go to another scene AND there's a matching scene name in connections AND it's not blocked, set sceneChangeRequest.shouldChange = true**
+**Rule: If the Investigator's input shows intent to go to another scene AND there's a matching scene name in connections, set sceneChangeRequest.shouldChange = true**
 
 1. Determine if the input indicates intent to move to a different location/scenario (e.g., "I'll go to ...", "I want to go to ...", "去...", "前往...", "我想去...")
 2. If it's a scene change request:

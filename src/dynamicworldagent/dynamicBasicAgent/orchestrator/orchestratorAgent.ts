@@ -12,7 +12,10 @@ import {
   ModelClass,
   generateText,
 } from "../../../models/index.js";
-import type { CoCDatabase, CoCDatabaseAdapter } from "../../../shared/agents/memory/database/index.js";
+import type {
+  CoCDatabase,
+  CoCDatabaseAdapter,
+} from "../../../shared/agents/memory/database/index.js";
 import { extractRecentConversationHistory } from "../memory/memoryAgent.js";
 import { getPrismaClient } from "../../../shared/agents/memory/database/prismaClient.js";
 
@@ -90,10 +93,7 @@ export class OrchestratorAgent {
         (outline) => outline.name === dynamicState.currentScenario?.name
       );
     }
-    const rawConnections =
-      scenarioOutline?.connections?.filter(
-        (conn) => conn.relationshipType === "leads_to"
-      ) || [];
+    const rawConnections = scenarioOutline?.connections || [];
 
     // Enrich connections with target scenario details
     const connections = rawConnections.map((conn) => {
@@ -129,7 +129,7 @@ export class OrchestratorAgent {
             `      ⚠️ BLOCKED: ${conn.blockReason || "No reason specified"}`
           );
         } else {
-          console.log(`      ✓ Accessible`);
+          console.log(`      ✓ Not blocked`);
         }
         console.log(`      → Resolved to: "${conn.scenarioName}"`);
       });
