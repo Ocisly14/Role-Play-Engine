@@ -3,6 +3,8 @@ import { ModelClass } from "../../../models/types.js";
 import type { DynamicGameStateManager } from "../../state/index.js";
 import { buildBattleKeeperSystemPrompt } from "./battleKeeperTemplate.js";
 import type { CombatActionAResult } from "./combatActionAgentA.js";
+import { withCombatSkillDefaults } from "./combatSkillDefaults.js";
+import type { ActionResult } from "../../../shared/state/index.js";
 
 /**
  * Battle Keeper Agent - Generates combat-focused narrative
@@ -58,7 +60,7 @@ export class BattleKeeperAgent {
         name: player.name,
         status: player.status,
         attributes: player.attributes,
-        skills: player.skills,
+        skills: withCombatSkillDefaults(player.skills, player.attributes),
       },
       null,
       2
@@ -74,7 +76,10 @@ export class BattleKeeperAgent {
         personality: npc.personality,
         status: npc.status,
         attributes: (npc as any).attributes ?? {},
-        skills: (npc as any).skills ?? [],
+        skills: withCombatSkillDefaults(
+          (npc as any).skills,
+          (npc as any).attributes
+        ),
         weapons: (npc as any).weapons ?? [],
       }));
 
@@ -107,10 +112,19 @@ export class BattleKeeperAgent {
     if (actionResult) {
       ctx += `\n=== COMBAT ACTION RESULTS (this round) ===\n${JSON.stringify(
         {
+          diceUsed: actionResult.diceUsed,
           actionLog: actionResult.actionLog,
+          stateUpdate: actionResult.stateUpdate,
+          timeElapsedMinutes: actionResult.timeElapsedMinutes,
           combatEnded: actionResult.combatEnded,
           combatEndReason: actionResult.combatEndReason,
         },
+        null,
+        2
+      )}\n`;
+
+      ctx += `\n=== OUTCOME CONSTRAINTS (MUST FOLLOW) ===\n${JSON.stringify(
+        this.buildCombatOutcomeConstraints(actionResult),
         null,
         2
       )}\n`;
@@ -121,6 +135,76 @@ export class BattleKeeperAgent {
     }
 
     return ctx;
+  }
+
+  private buildCombatOutcomeConstraints(
+    actionResult: CombatActionAResult
+  ): Record<string, unknown> {
+    const diceOutcomes = (actionResult.diceUsed || []).map((entry) => {
+      const actorMatch = String(entry).match(/^([^:]+):/);
+      const levelMatches = String(entry).match(
+        /\b(critical|extreme|hard|regular|failure|fumble)\b/gi
+      );
+      const outcome = levelMatches
+        ? levelMatches[levelMatches.length - 1]!.toLowerCase()
+        : "unknown";
+      return {
+        actor: actorMatch?.[1]?.trim() || "Unknown",
+        outcome,
+        raw: entry,
+      };
+    });
+
+    const npcHpDeltas = (actionResult.stateUpdate?.npcCharacters || []).map(
+      (npc) => ({
+        id: npc.id,
+        name: npc.name,
+        hpDelta: npc.status?.hp ?? 0,
+      })
+    );
+
+    return {
+      diceOutcomes,
+      actionSuccessLevels: (actionResult.actionLog || []).map((entry) => ({
+        characterId: entry.characterId,
+        successLevel: entry.successLevel || "unknown",
+        summary: entry.summary,
+      })),
+      hpDeltas: {
+        player: actionResult.stateUpdate?.playerCharacter?.status?.hp ?? 0,
+        npcs: npcHpDeltas,
+      },
+      rules: [
+        "If outcome is failure/fumble, narrate failed action rather than successful effect.",
+        "Only narrate concrete injury when hpDelta is negative for that character.",
+        "Do not invent additional damage not present in hpDeltas.",
+      ],
+    };
+  }
+
+  private formatEntryActionContext(actionResults: ActionResult[]): string {
+    const compactResults = (actionResults || []).map((result) => ({
+      character: result.character,
+      result: result.result,
+      location: result.location,
+      gameTime: result.gameTime,
+      timeElapsedMinutes: result.timeElapsedMinutes || 0,
+      timeConsumption: result.timeConsumption,
+      diceRolls: result.diceRolls || [],
+    }));
+
+    return JSON.stringify(
+      {
+        actionResults: compactResults,
+        rules: [
+          "Treat diceRolls as resolved outcomes.",
+          "If roll text contains '= failure' or '= fumble', describe failed attempt.",
+          "Do not narrate injury unless state updates/logs support actual damage.",
+        ],
+      },
+      null,
+      2
+    );
   }
 
   async generateCombatNarrative(
@@ -154,7 +238,7 @@ export class BattleKeeperAgent {
 
   async generateEntryNarrative(
     dgsm: DynamicGameStateManager,
-    actionSummary: string,
+    actionResults: ActionResult[],
     playerInput: string,
     language: "en" | "zh",
     onNarrativeDelta?: (delta: string) => void
@@ -167,7 +251,7 @@ export class BattleKeeperAgent {
       dgsm,
       combatState?.participantNpcIds ?? [],
       null,
-      `Initial combat context: ${actionSummary}`
+      `Initial combat context: ${this.formatEntryActionContext(actionResults)}`
     );
     const fullPrompt = systemPrompt + context;
 

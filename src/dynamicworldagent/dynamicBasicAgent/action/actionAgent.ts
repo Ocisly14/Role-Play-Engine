@@ -23,6 +23,7 @@ import {
 } from "../../utils/gameTime.js";
 import type { DynamicCharacterProfile } from "../../world_builder/types.js";
 import type { DynamicNPCProfile } from "../../world_builder/types.js";
+import { withAllSkillDefaults } from "../skillDefaults.js";
 import { buildActionSystemPrompt } from "./actionTemplate.js";
 
 /**
@@ -509,7 +510,13 @@ export class ActionAgent {
       ...filteredCharacter
     } = character as any;
 
-    return filteredCharacter;
+    return {
+      ...filteredCharacter,
+      skills: withAllSkillDefaults(
+        filteredCharacter.skills,
+        filteredCharacter.attributes
+      ),
+    };
   }
 
   /**
@@ -880,6 +887,10 @@ export class ActionAgent {
       character: character.name,
       result:
         parsed.summary ||
+        (Array.isArray(parsed.actionLog) &&
+        typeof parsed.actionLog[0]?.summary === "string"
+          ? parsed.actionLog[0].summary
+          : undefined) ||
         (isNPC && npcResponse?.responseDescription) ||
         "performed an action",
       diceRolls: toolLogs.map((log) => log), // toolLogs already contain "expression -> result" format

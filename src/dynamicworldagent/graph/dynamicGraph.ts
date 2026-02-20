@@ -1037,6 +1037,9 @@ export const buildDynamicGraph = (
         dgsm.setPendingNpcActions(result.pendingNpcActions);
         dgsm.setContextualData("combatNpcAttackNarrative", result.narrative);
         dgsm.setContextualData("combatEnded", result.combatEnded);
+        if (state.turnId && typeof result.narrative === "string") {
+          turnManager.updateNarrative(state.turnId, result.narrative);
+        }
         if (useNpcOpeningPending) {
           dgsm.setContextualData("openingPendingNpcActions", null);
           console.log(
@@ -1128,8 +1131,6 @@ export const buildDynamicGraph = (
 
     // Get action results from normal pipeline for narrative context
     const actionResults = gs.temporaryInfo.actionResults;
-    const actionSummary =
-      actionResults.map((r) => r.result).join("; ") || "Combat begins";
 
     try {
       // Do NOT stream here: combatActionB will generate NPC counter-attacks next.
@@ -1138,7 +1139,7 @@ export const buildDynamicGraph = (
       const userInput = latestHumanMessage(state.messages);
       const narrative = await battleKeeper.generateEntryNarrative(
         dgsm,
-        actionSummary,
+        actionResults,
         userInput,
         language,
         undefined

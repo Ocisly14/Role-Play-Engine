@@ -3,6 +3,7 @@ import { ModelClass } from "../../../models/types.js";
 import type { PendingNpcAction } from "../../state/DynamicGameState.js";
 import type { DynamicGameStateManager } from "../../state/index.js";
 import { buildCombatActionBSystemPrompt } from "./combatActionAgentBTemplate.js";
+import { withCombatSkillDefaults } from "./combatSkillDefaults.js";
 
 export interface CombatActionBResult {
   narrative: string;
@@ -44,7 +45,7 @@ export class CombatActionAgentB {
         name: npc.name,
         attributes: npc.attributes,
         status: npc.status,
-        skills: npc.skills,
+        skills: withCombatSkillDefaults(npc.skills, npc.attributes),
         inventory: npc.inventory || [],
         weapons: (npc as any).weapons || [],
         personality: npc.personality,
@@ -57,7 +58,7 @@ export class CombatActionAgentB {
       name: player.name,
       attributes: player.attributes,
       status: player.status,
-      skills: player.skills,
+      skills: withCombatSkillDefaults(player.skills, player.attributes),
       inventory: player.inventory || [],
       weapons: (player as any).weapons || [],
       recentActionLog: (player.actionLog || []).slice(-5),

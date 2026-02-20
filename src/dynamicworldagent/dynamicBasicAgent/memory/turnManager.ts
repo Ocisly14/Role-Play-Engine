@@ -157,7 +157,12 @@ export class TurnManager {
    * Update in-progress turn with latest narrative text (without completing turn)
    */
   updateNarrative(turnId: string, keeperNarrative: string): void {
-    this.db.updateTurnNarrative(turnId, keeperNarrative);
+    const current = this.getTurn(turnId);
+    const mergedNarrative = this.mergeNarrative(
+      current?.keeperNarrative,
+      keeperNarrative
+    );
+    this.db.updateTurnNarrative(turnId, mergedNarrative);
   }
 
   /**
@@ -181,9 +186,15 @@ export class TurnManager {
     output: TurnOutput,
     language?: "en" | "zh"
   ): void {
+    const current = this.getTurn(turnId);
+    const mergedNarrative = this.mergeNarrative(
+      current?.keeperNarrative,
+      output.keeperNarrative
+    );
+
     this.db.completeTurn(
       turnId,
-      output.keeperNarrative,
+      mergedNarrative,
       output.clueRevelations,
       output.gameDay,
       output.gameTime
@@ -192,11 +203,30 @@ export class TurnManager {
     console.log(`✓ Turn completed: ${turnId}`);
 
     // Trigger embedding asynchronously (non-blocking)
-    this.embedTurnAsync(turnId, output.keeperNarrative, language).catch(
+    this.embedTurnAsync(turnId, mergedNarrative, language).catch(
       (error) => {
         console.error(`[TurnManager] Failed to embed turn ${turnId}:`, error);
       }
     );
+  }
+
+  private mergeNarrative(
+    existing: string | null | undefined,
+    incoming: string | null | undefined
+  ): string {
+    const currentText =
+      typeof existing === "string" ? existing.trim() : "";
+    const incomingText =
+      typeof incoming === "string" ? incoming.trim() : "";
+
+    if (!incomingText) return currentText;
+    if (!currentText) return incomingText;
+
+    if (currentText === incomingText) return currentText;
+    if (currentText.endsWith(incomingText)) return currentText;
+    if (incomingText.includes(currentText)) return incomingText;
+
+    return `${currentText}\n\n${incomingText}`;
   }
 
   /**

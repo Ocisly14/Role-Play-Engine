@@ -19,6 +19,14 @@ Weave all of it into an immediate, vivid narrative.
 ${playerInput}
 (Use this to understand the player's intent and perspective when crafting the narrative)
 
+## OUTCOME CONSISTENCY RULES (STRICT)
+- Treat injected action results as ground truth: dice outcomes, actionLog success levels, and HP deltas must drive the narration.
+- If a check is failure/fumble, describe a failed attempt (miss, deflection, hesitation, bad positioning, etc.) rather than a successful hit/effect.
+- Do NOT describe injury to a character unless the injected stateUpdate indicates HP loss (negative delta) for that character this round.
+- If no HP loss is recorded for a supposed hit, narrate it as a near miss, glancing impact, blocked blow, or ineffective strike.
+- Never invent kills, knockouts, or decisive wounds that are not supported by injected combat result data.
+- If combatEndReason is present, align the ending description with it exactly.
+
 ## STYLE REQUIREMENTS
 - 2nd person ("you swing your fist", "the bullet grazes your shoulder")
 - Short punchy sentences during action; longer sentences for aftermath and emotion
