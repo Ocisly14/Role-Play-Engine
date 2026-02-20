@@ -293,6 +293,8 @@ You are a writer, responsible for writing a narrative of the game.
   ${getLanguageInstruction(language)}
   - Complete the entire JSON structure - do not stop mid-generation
   - Do not include any kinds of id or index in the narrative.
+  - **MANDATORY FORMAT**: The \`narrative\` field MUST be written in **Markdown format**. Use headings, bold, italic, blockquotes, horizontal rules, and other Markdown elements as appropriate to enhance readability and atmosphere.
+  - **Markdown bold rule**: Bold markers \`**\` MUST NOT be adjacent to punctuation characters (quotes, parentheses, brackets, etc.) on the "inside" edge. Specifically: do not start bold with a quote (\`**"text"\`→broken) and do not end bold with punctuation followed by normal text (\`**text（note）** 继续\`→broken). Always keep punctuation OUTSIDE the bold markers: \`"**text**"\`, \`**text**（note）\`.
   `;
 }
 
@@ -364,6 +366,7 @@ Generate an epilogue narrative that:
 - Any person/character/NPC name must match injected input exactly; do not translate, transliterate, localize, or rename
 - Write all narrative text in **${targetLanguage}**
 - Keep JSON keys in English exactly as defined below
+- **MANDATORY FORMAT**: The \`narrative\` field MUST be written in **Markdown format**. Use headings, bold, italic, blockquotes, and other Markdown elements as appropriate to enhance readability and atmosphere.
 
 ## 📋 Output Format
 
