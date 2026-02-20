@@ -179,25 +179,27 @@ ${fmtScene(targetScene)}
 
 ## REQUIREMENTS
 
-1. **MINIMIZE CHANGES TO EXISTING LOCATIONS**: Keep every location that already appears on the reference map as close to its original visual representation as possible. Avoid unnecessary repositioning or redrawing. However, if the actual spatial relationship between locations demands an adjustment (e.g., to correctly place the new scene relative to existing ones, or to reflect an updated connection), small layout tweaks are acceptable.
+1. The current map is what the player has seen so far. You are adding a new location(target scene) to the map. You can move existing locations to make room for the new scene, but keep th connections between locations consistent.
 
-2. **ADAPTIVE RESCALING FOR CLARITY**: You may uniformly scale (zoom in/out) the existing map content from the reference image when needed to fit the new scene and keep the composition readable. Prefer global scaling over individually moving old locations. Keep relative positions and topology between existing locations consistent.
+2. **ADAPTIVE RESCALING FOR CLARITY**: You may uniformly scale (zoom in/out) the existing map content from the reference image when needed to fit the new scene and keep the composition readable. Keep relative positions and topology between existing locations consistent.
 
 3. **REFLECT CONNECTION CHANGES**: If the connections listed above differ from what is shown on the reference map (new paths opened, old passages blocked, etc.), update the visual connections accordingly on the map.
 
-4. **FINAL MAP QUALITY TAKES PRIORITY**: The final map's readability, coherence, and visual quality are the top priority. You may modify existing map content when necessary to achieve a clearer and more harmonious final result.
+3. **FINAL MAP QUALITY TAKES PRIORITY**: The final map's readability, coherence, and visual quality are the top priority. You may modify existing map content when necessary to achieve a clearer and more harmonious final result.
 
 5. **ADD TARGET SCENE**: Add "${targetScene.name}" as a new distinct visual element. Position it to truthfully reflect its geographic or narrative relationship with "${currentScene.name}" and any other connected locations.
 
 6. **LABEL ALL LOCATIONS**: Every location on the map (both existing and newly added) must be clearly labeled with its name in legible text. Use a consistent font style that fits the Lovecraftian aesthetic (e.g., aged serif lettering). Labels should be placed near their corresponding location without obscuring important visual details.
 
-7. **VISUAL CONNECTIONS**: Draw paths, corridors, roads, or passages between connected locations as appropriate. Blocked or locked connections may be shown with a barrier symbol or broken line.
+7. **VISUAL CONNECTIONS**: Draw paths, corridors, roads, or passages between connected locations as appropriate.
 
 8. **MANDATORY TARGET CONNECTION COVERAGE**: You MUST render all connections listed in the target scene snapshot on the map. Every target-scene connection should be visually represented between "${targetScene.name}" and the connected location.
 
 9. **NO HIDDEN LOCATIONS**: Do not add any location not listed above or not already present on the existing map.
 
 10. **Style**: Maintain the same artistic style as the reference image – realistic, high detail, Lovecraftian mystery atmosphere.
+
+11. **FULL REDRAW ALLOWED**: If the reference map is too cluttered or visually chaotic to accommodate the new scene cleanly, you may completely redraw the map from scratch. However, every location already present on the reference map AND the new target scene must all appear in the redrawn version, with all their connections preserved.
 
 Generate a single cohesive updated map image that integrates the new scene naturally with the existing map.
 `.trim();

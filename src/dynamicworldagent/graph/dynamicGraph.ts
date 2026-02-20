@@ -792,15 +792,7 @@ export const buildDynamicGraph = (
     console.log(`   Player Status: HP=${hp}, Sanity=${sanity}`);
 
     if (hp <= 0 || sanity <= 0) {
-      const reason = hp <= 0 ? "HP归零" : "Sanity归零";
-      console.log(`\n🏁 [Game End] 角色状态导致游戏结束！`);
-      console.log(`   原因: ${reason}`);
-
-      // Store game end reason in state for epilogue
-      currentState.temporaryInfo.contextualData =
-        currentState.temporaryInfo.contextualData || {};
-      currentState.temporaryInfo.contextualData.gameEndReason = reason;
-
+      console.log(`\n🏁 [Game End] 角色状态导致游戏结束！(${hp <= 0 ? "HP归零" : "Sanity归零"})`);
       return { ...state, dynamicGameState: currentState };
     }
 
@@ -810,21 +802,17 @@ export const buildDynamicGraph = (
 
     if (triggerResult.triggered) {
       console.log(`\n🎯 [Global Trigger] 全局触发器已触发！`);
-      console.log(`   原因: ${triggerResult.reason || "未知"}`);
 
       if (triggerResult.causesGameEnd) {
         console.log(`\n🏁 [Game End] 全局触发器导致游戏结束！`);
 
-        // Store game end reason
-        currentState.temporaryInfo.contextualData =
-          currentState.temporaryInfo.contextualData || {};
-        currentState.temporaryInfo.contextualData.gameEndReason =
-          triggerResult.reason || "全局触发器触发";
-
-        // Clear the trigger since it has been fulfilled
+        // Clear the trigger and mark game end for router
         dgsm.setGlobalTrigger(null);
+        const gs = dgsm.getState();
+        gs.temporaryInfo.contextualData = gs.temporaryInfo.contextualData || {};
+        gs.temporaryInfo.contextualData.globalTriggerEnded = true;
 
-        return { ...state, dynamicGameState: dgsm.getState() };
+        return { ...state, dynamicGameState: gs };
       } else {
         console.log(
           `   ✓ 全局触发器触发但未导致游戏结束，将先更新场景再继续叙事`
@@ -918,10 +906,8 @@ export const buildDynamicGraph = (
         return "epilogueKeeper";
       }
 
-      // Check if global trigger caused game end
-      const gameEndReason =
-        currentState.temporaryInfo.contextualData?.gameEndReason;
-      if (gameEndReason) {
+      // Check if global trigger caused game end (globalTrigger cleared when causesGameEnd=true)
+      if (currentState.temporaryInfo.contextualData?.globalTriggerEnded) {
         console.log("🔀 [Game End Router] → epilogueKeeper (全局触发器)");
         return "epilogueKeeper";
       }
@@ -1482,15 +1468,7 @@ export const buildDynamicListenerGraph = (
     console.log(`   Player Status: HP=${hp}, Sanity=${sanity}`);
 
     if (hp <= 0 || sanity <= 0) {
-      const reason = hp <= 0 ? "HP归零" : "Sanity归零";
-      console.log(`\n🏁 [Game End] 角色状态导致游戏结束！`);
-      console.log(`   原因: ${reason}`);
-
-      // Store game end reason in state for epilogue
-      currentState.temporaryInfo.contextualData =
-        currentState.temporaryInfo.contextualData || {};
-      currentState.temporaryInfo.contextualData.gameEndReason = reason;
-
+      console.log(`\n🏁 [Game End] 角色状态导致游戏结束！(${hp <= 0 ? "HP归零" : "Sanity归零"})`);
       return { ...state, dynamicGameState: currentState };
     }
 
@@ -1500,21 +1478,17 @@ export const buildDynamicListenerGraph = (
 
     if (triggerResult.triggered) {
       console.log(`\n🎯 [Global Trigger] 全局触发器已触发！`);
-      console.log(`   原因: ${triggerResult.reason || "未知"}`);
 
       if (triggerResult.causesGameEnd) {
         console.log(`\n🏁 [Game End] 全局触发器导致游戏结束！`);
 
-        // Store game end reason
-        currentState.temporaryInfo.contextualData =
-          currentState.temporaryInfo.contextualData || {};
-        currentState.temporaryInfo.contextualData.gameEndReason =
-          triggerResult.reason || "全局触发器触发";
-
-        // Clear the trigger since it has been fulfilled
+        // Clear the trigger and mark game end for router
         dgsm.setGlobalTrigger(null);
+        const gs = dgsm.getState();
+        gs.temporaryInfo.contextualData = gs.temporaryInfo.contextualData || {};
+        gs.temporaryInfo.contextualData.globalTriggerEnded = true;
 
-        return { ...state, dynamicGameState: dgsm.getState() };
+        return { ...state, dynamicGameState: gs };
       } else {
         console.log(
           `   ✓ 全局触发器触发但未导致游戏结束，将先更新场景再继续叙事`

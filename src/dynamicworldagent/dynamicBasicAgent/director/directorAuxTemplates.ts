@@ -65,15 +65,13 @@ Return ONLY valid JSON:
 \`\`\`json
 {
   "triggered": true,
-  "causesGameEnd": false,
-  "reason": "Event description or null if not triggered"
+  "causesGameEnd": false
 }
 \`\`\`
 
 **Fields:**
 - **triggered**: boolean - Whether the global trigger events have occurred
 - **causesGameEnd**: boolean - Whether this trigger causes the game to end (only true if triggered AND aligns with pointOfNoReturn)
-- **reason**: string | null - Brief description of what triggered (e.g., "时间限制到达", "事件已完成", "Point of no return reached") or null if not triggered
 
 *Analyze:*`;
 }

@@ -2415,11 +2415,11 @@ export class DirectorAgent {
   /**
    * Check global trigger and determine if it causes game end
    * Combines time check and event check, and determines if trigger causes game end
-   * @returns { triggered: boolean, causesGameEnd: boolean, reason?: string }
+   * @returns { triggered: boolean, causesGameEnd: boolean }
    */
   async checkGlobalTriggerAndGameEnd(
     gameStateManager: DynamicGameStateManager
-  ): Promise<{ triggered: boolean; causesGameEnd: boolean; reason?: string }> {
+  ): Promise<{ triggered: boolean; causesGameEnd: boolean }> {
     const dynamicState = gameStateManager.getState();
     const globalTrigger = dynamicState.globalTrigger;
     const endState = dynamicState.endState;
@@ -2434,179 +2434,118 @@ export class DirectorAgent {
     );
 
     let triggered = false;
-    let triggerReason = "";
 
     // Check 1: Time restriction
     const timeReached = this.checkGlobalTriggerTime(gameStateManager);
     if (timeReached) {
       triggered = true;
-      triggerReason = "时间限制到达";
     }
 
     // Check 2: Events (only if time not reached)
     if (!triggered && globalTrigger.events && globalTrigger.events.length > 0) {
-      // Get recent actionLog entries for event check
-      const conversationHistory =
-        (dynamicState.temporaryInfo.contextualData
-          ?.conversationHistory as Array<{
-          turnNumber: number;
-          characterInput: string;
-          keeperNarrative: string | null;
-          actionResults?: any[];
-        }>) || [];
+      const currentGameTime = `Day ${dynamicState.gameDay}, ${dynamicState.timeOfDay}`;
+      const earliestTime = this.subtractMinutesFromGameTime(currentGameTime, 60);
 
-      if (true) {
-        const currentGameTime = `Day ${dynamicState.gameDay}, ${dynamicState.timeOfDay}`;
-        // Use a 1-hour game time window instead of turn count
-        const earliestTime = this.subtractMinutesFromGameTime(currentGameTime, 60);
+      const allCharacters: Array<{
+        id: string;
+        name: string;
+        actionLog: ActionLogEntry[];
+      }> = [
+        {
+          id: dynamicState.playerCharacter.id,
+          name: dynamicState.playerCharacter.name,
+          actionLog: dynamicState.playerCharacter.actionLog || [],
+        },
+        ...dynamicState.npcCharacters.map((npc) => ({
+          id: npc.id,
+          name: npc.name,
+          actionLog: npc.actionLog || [],
+        })),
+      ];
 
-        // Extract actionLog entries from all characters
-        const recentActionLogs: Array<{
-          characterId: string;
-          characterName: string;
-          actionLog: ActionLogEntry[];
-        }> = [];
+      const recentActionLogs: Array<{
+        characterId: string;
+        characterName: string;
+        actionLog: ActionLogEntry[];
+      }> = [];
 
-        const allCharacters: Array<{
-          id: string;
-          name: string;
-          actionLog: ActionLogEntry[];
-        }> = [
-          {
-            id: dynamicState.playerCharacter.id,
-            name: dynamicState.playerCharacter.name,
-            actionLog: dynamicState.playerCharacter.actionLog || [],
-          },
-          ...dynamicState.npcCharacters.map((npc) => ({
-            id: npc.id,
-            name: npc.name,
-            actionLog: npc.actionLog || [],
-          })),
-        ];
+      for (const character of allCharacters) {
+        const filteredActionLog = character.actionLog
+          .filter((entry) => {
+            return (
+              this.isTimeBeforeOrEqual(earliestTime, entry.time) &&
+              this.isTimeBeforeOrEqual(entry.time, currentGameTime)
+            );
+          })
+          .slice(-10);
 
-        // Filter actionLog entries within the last 1 hour, capped at 10 per character
-        for (const character of allCharacters) {
-          const filteredActionLog = character.actionLog
-            .filter((entry) => {
-              return (
-                this.isTimeBeforeOrEqual(earliestTime, entry.time) &&
-                this.isTimeBeforeOrEqual(entry.time, currentGameTime)
-              );
-            })
-            .slice(-10);
-
-          if (filteredActionLog.length > 0) {
-            recentActionLogs.push({
-              characterId: character.id,
-              characterName: character.name,
-              actionLog: filteredActionLog,
-            });
-          }
+        if (filteredActionLog.length > 0) {
+          recentActionLogs.push({
+            characterId: character.id,
+            characterName: character.name,
+            actionLog: filteredActionLog,
+          });
         }
+      }
 
-        if (recentActionLogs.length > 0) {
-          // Use unified template to check events and game end
-          const runtime = createRuntime();
-          const template = getGlobalTriggerEventCheckTemplate();
+      if (recentActionLogs.length > 0) {
+        const runtime = createRuntime();
+        const template = getGlobalTriggerEventCheckTemplate();
 
-          const templateContext = {
-            globalTriggerJson: JSON.stringify(globalTrigger, null, 2),
-            endStateJson: endState ? JSON.stringify(endState, null, 2) : "null",
-            recentActionLogsJson: JSON.stringify(recentActionLogs, null, 2),
-          };
+        const templateContext = {
+          globalTriggerJson: JSON.stringify(globalTrigger, null, 2),
+          endStateJson: endState ? JSON.stringify(endState, null, 2) : "null",
+          recentActionLogsJson: JSON.stringify(recentActionLogs, null, 2),
+        };
 
-          const prompt = composeTemplate(
-            template,
-            { dynamicGameState: dynamicState },
-            templateContext,
-            "handlebars"
-          );
+        const prompt = composeTemplate(
+          template,
+          { dynamicGameState: dynamicState },
+          templateContext,
+          "handlebars"
+        );
 
+        try {
+          const response = await generateText({
+            runtime,
+            context: prompt,
+            modelClass: ModelClass.SMALL,
+          });
+
+          let parsed: { triggered: boolean; causesGameEnd: boolean };
           try {
-            const response = await generateText({
-              runtime,
-              context: prompt,
-              modelClass: ModelClass.SMALL,
-            });
-
-            // Parse response
-            let parsed: {
-              triggered: boolean;
-              causesGameEnd: boolean;
-              reason?: string;
-            };
-            try {
-              const jsonMatch = response.match(/\{[\s\S]*\}/);
-              if (jsonMatch) {
-                parsed = JSON.parse(jsonMatch[0]);
-              } else {
-                parsed = JSON.parse(response);
-              }
-            } catch (error) {
-              console.error(
-                "   ❌ Failed to parse trigger check response:",
-                error
-              );
-              return { triggered: false, causesGameEnd: false };
-            }
-
-            if (parsed.triggered) {
-              triggered = true;
-              triggerReason = parsed.reason || "事件已完成";
-
-              if (parsed.causesGameEnd) {
-                console.log(
-                  `   ✅ Global trigger triggered AND causes game end`
-                );
-                console.log(`      Reason: ${triggerReason}`);
-                return {
-                  triggered: true,
-                  causesGameEnd: true,
-                  reason: triggerReason,
-                };
-              } else {
-                console.log(
-                  `   ✅ Global trigger triggered but does NOT cause game end`
-                );
-                console.log(`      Reason: ${triggerReason}`);
-                return {
-                  triggered: true,
-                  causesGameEnd: false,
-                  reason: triggerReason,
-                };
-              }
-            }
+            const jsonMatch = response.match(/\{[\s\S]*\}/);
+            parsed = JSON.parse(jsonMatch ? jsonMatch[0] : response);
           } catch (error) {
-            console.error("   ❌ Error checking global trigger events:", error);
+            console.error("   ❌ Failed to parse trigger check response:", error);
             return { triggered: false, causesGameEnd: false };
           }
+
+          if (parsed.triggered) {
+            console.log(`   ✅ Global trigger triggered${parsed.causesGameEnd ? " AND causes game end" : " but does NOT cause game end"}`);
+            return { triggered: true, causesGameEnd: parsed.causesGameEnd };
+          }
+        } catch (error) {
+          console.error("   ❌ Error checking global trigger events:", error);
+          return { triggered: false, causesGameEnd: false };
         }
       }
     }
 
     // If time reached, check if it causes game end
     if (triggered && timeReached) {
-      // Check if time trigger aligns with point of no return
       if (endState && endState.pointOfNoReturn.type === "time") {
         const pointOfNoReturnReached = gameStateManager.checkPointOfNoReturn(
           dynamicState.gameDay,
           dynamicState.timeOfDay
         );
         if (pointOfNoReturnReached) {
-          console.log(
-            `   ✅ Global trigger time reached AND causes game end (point of no return)`
-          );
-          return {
-            triggered: true,
-            causesGameEnd: true,
-            reason: triggerReason,
-          };
+          console.log(`   ✅ Global trigger time reached AND causes game end (point of no return)`);
+          return { triggered: true, causesGameEnd: true };
         }
       }
-      console.log(
-        `   ✅ Global trigger time reached but does NOT cause game end`
-      );
-      return { triggered: true, causesGameEnd: false, reason: triggerReason };
+      console.log(`   ✅ Global trigger time reached but does NOT cause game end`);
+      return { triggered: true, causesGameEnd: false };
     }
 
     return { triggered: false, causesGameEnd: false };
