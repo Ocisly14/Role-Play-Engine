@@ -2,7 +2,7 @@
  * Hook for managing dice animation state and completion
  */
 
-import { useState, useRef, useEffect, useCallback } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import type { Message, PendingDiceRolls } from "../types/gamechat";
 
 export interface UseDiceAnimationParams {
@@ -15,7 +15,9 @@ export interface UseDiceAnimationParams {
 
 export interface UseDiceAnimationResult {
   pendingDiceRolls: PendingDiceRolls | null;
-  setPendingDiceRolls: React.Dispatch<React.SetStateAction<PendingDiceRolls | null>>;
+  setPendingDiceRolls: React.Dispatch<
+    React.SetStateAction<PendingDiceRolls | null>
+  >;
   showingDiceAnimation: boolean;
   setShowingDiceAnimation: React.Dispatch<React.SetStateAction<boolean>>;
   diceAnimationCompleted: boolean;
@@ -92,7 +94,9 @@ export function useDiceAnimation({
   // Add completed dice animation message to messages array
   useEffect(() => {
     if (diceAnimationCompleted && pendingDiceRolls) {
-      console.log(`[useDiceAnimation] Adding completed dice animation to messages`);
+      console.log(
+        `[useDiceAnimation] Adding completed dice animation to messages`
+      );
 
       if (pendingDiceRolls.isStreaming) {
         const turnId = pendingDiceRolls.turnId;

@@ -3,38 +3,37 @@
  * Implements 5-step NPC generation following truth-first principles
  */
 
-import {
-  generateText,
-  ModelClass,
-  ModelProviderName,
-} from "../../models/index.js";
-import { composeTemplate } from "../../template.js";
-import { generateRandomAttributes } from "../../shared/agents/character/characterBuilder.js";
-import { getAvailableSlots } from "../../shared/globalRateLimiter.js";
-import { allocateSkillPoints } from "./skillAllocator.js";
 import fs from "fs";
 import path from "path";
+import {
+  ModelClass,
+  ModelProviderName,
+  generateText,
+} from "../../models/index.js";
+import { generateRandomAttributes } from "../../shared/agents/character/characterBuilder.js";
 import type {
-  MacroSceneStructure,
-  TruthEvent,
+  CharacterAttributes,
+  NPCRelationship,
+} from "../../shared/agents/models/gameTypes.js";
+import { getAvailableSlots } from "../../shared/globalRateLimiter.js";
+import { composeTemplate } from "../../template.js";
+import {
+  getNPCGoalsSecretsRelationshipsMythosTemplate,
+  getNPCIdentityBatchTemplate,
+  getNPCInstantiationTemplate,
+} from "./npcBuilderTemplate.js";
+import { allocateSkillPoints } from "./skillAllocator.js";
+import type {
+  DynamicNPCProfile,
   KnowledgeHolder,
-  RedHerring,
+  MacroSceneStructure,
   MythosEvent,
   NPCBasicInfo,
   NPCBasicInfoStep1,
   ProgressCallback,
-  DynamicNPCProfile,
+  RedHerring,
+  TruthEvent,
 } from "./types.js";
-import type {
-  NPCRelationship,
-  CharacterAttributes,
-} from "../../shared/agents/models/gameTypes.js";
-import type { StoryLength } from "./storyLengthConfig.js";
-import {
-  getNPCInstantiationTemplate,
-  getNPCGoalsSecretsRelationshipsMythosTemplate,
-  getNPCIdentityBatchTemplate,
-} from "./npcBuilderTemplate.js";
 
 interface Runtime {
   modelProvider: ModelProviderName;
@@ -398,7 +397,9 @@ export class NPCBuilderAgent {
             `Batch identity attempt ${attempt}/${maxRetries} failed for [${names}]: ${(error as Error).message}. Retrying...`
           );
         } else {
-          console.error(`Batch identity all ${maxRetries} attempts failed for [${names}].`);
+          console.error(
+            `Batch identity all ${maxRetries} attempts failed for [${names}].`
+          );
           throw error;
         }
       }
@@ -489,7 +490,10 @@ export class NPCBuilderAgent {
       }));
     } catch (error) {
       const batchNames = batch.map((b) => b.npcBasicInfo.name).join(", ");
-      console.error(`Failed to parse batch identity for [${batchNames}]:`, error);
+      console.error(
+        `Failed to parse batch identity for [${batchNames}]:`,
+        error
+      );
       console.error("Response:", response.substring(0, 500));
       throw new Error(
         `Failed to fill batch identity: ${(error as Error).message}`

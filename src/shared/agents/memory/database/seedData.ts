@@ -3,9 +3,9 @@
  * Loads default rules, skills, weapons, and sanity triggers
  */
 
-import { getPrismaClient } from "./prismaClient.js";
-import bcrypt from "bcryptjs";
 import { randomUUID } from "crypto";
+import bcrypt from "bcryptjs";
+import { getPrismaClient } from "./prismaClient.js";
 
 export async function seedDatabase(): Promise<void> {
   const prisma = getPrismaClient();
@@ -350,14 +350,16 @@ async function seedSkills(): Promise<void> {
   ];
 
   await prisma.skill.createMany({
-    data: skills.map(([name, baseValue, description, category, uncommon, examples]) => ({
-      name: name as string,
-      baseValue: baseValue as number,
-      description: description as string,
-      category: category as string,
-      uncommon: (uncommon as number) === 1,
-      examples: examples as any,
-    })),
+    data: skills.map(
+      ([name, baseValue, description, category, uncommon, examples]) => ({
+        name: name as string,
+        baseValue: baseValue as number,
+        description: description as string,
+        category: category as string,
+        uncommon: (uncommon as number) === 1,
+        examples: examples as any,
+      })
+    ),
     skipDuplicates: true,
   });
 }
@@ -1092,16 +1094,27 @@ async function seedWeapons(): Promise<void> {
   ];
 
   await prisma.weapon.createMany({
-    data: weapons.map(([name, skill, damage, range, attacksPerRound, ammo, malfunction, era]) => ({
-      name: name as string,
-      skill: skill as string,
-      damage: damage as string,
-      range: range as string,
-      attacksPerRound: attacksPerRound as number,
-      ammo: ammo as number | null,
-      malfunction: malfunction as number | null,
-      era: era as string | null,
-    })),
+    data: weapons.map(
+      ([
+        name,
+        skill,
+        damage,
+        range,
+        attacksPerRound,
+        ammo,
+        malfunction,
+        era,
+      ]) => ({
+        name: name as string,
+        skill: skill as string,
+        damage: damage as string,
+        range: range as string,
+        attacksPerRound: attacksPerRound as number,
+        ammo: ammo as number | null,
+        malfunction: malfunction as number | null,
+        era: era as string | null,
+      })
+    ),
     skipDuplicates: true,
   });
 }

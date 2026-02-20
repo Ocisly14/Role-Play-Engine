@@ -1,4 +1,4 @@
-import React from "react";
+import type React from "react";
 import { useTranslation } from "react-i18next";
 import { useSkillTranslation } from "../../hooks/useSkillTranslation";
 
@@ -51,7 +51,7 @@ export const SkillsSection: React.FC<SkillsSectionProps> = ({
 
   return (
     <>
-      <div className="section-title">{t('skills.title')}</div>
+      <div className="section-title">{t("skills.title")}</div>
 
       {/* Skill Points Display */}
       <div
@@ -68,7 +68,7 @@ export const SkillsSection: React.FC<SkillsSectionProps> = ({
       >
         <div>
           <strong style={{ color: "#8b7355", fontSize: "1rem" }}>
-            {t('skills.occupational')}
+            {t("skills.occupational")}
           </strong>
           <div
             style={{
@@ -81,10 +81,10 @@ export const SkillsSection: React.FC<SkillsSectionProps> = ({
               marginTop: "4px",
             }}
           >
-            {t('skills.remaining')} {skillPointsUsage.occupationalRemaining}
+            {t("skills.remaining")} {skillPointsUsage.occupationalRemaining}
           </div>
           <div style={{ fontSize: "0.9rem", color: "#666", marginTop: "4px" }}>
-            {t('skills.totalLabel')} {occupationalPoints} | {t('skills.used')}{" "}
+            {t("skills.totalLabel")} {occupationalPoints} | {t("skills.used")}{" "}
             {skillPointsUsage.occupationalUsed}
           </div>
           {selectedOccupation &&
@@ -108,29 +108,28 @@ export const SkillsSection: React.FC<SkillsSectionProps> = ({
                 fontWeight: "bold",
               }}
             >
-              {t('skills.pointsExceeded')}
+              {t("skills.pointsExceeded")}
             </div>
           )}
         </div>
         <div>
           <strong style={{ color: "#8b7355", fontSize: "1rem" }}>
-            {t('skills.interest')}
+            {t("skills.interest")}
           </strong>
           <div
             style={{
               fontSize: "1.5rem",
               fontWeight: "bold",
               color:
-                skillPointsUsage.interestRemaining < 0
-                  ? "#c41e3a"
-                  : "#3d2817",
+                skillPointsUsage.interestRemaining < 0 ? "#c41e3a" : "#3d2817",
               marginTop: "4px",
             }}
           >
-            {t('skills.remaining')} {skillPointsUsage.interestRemaining}
+            {t("skills.remaining")} {skillPointsUsage.interestRemaining}
           </div>
           <div style={{ fontSize: "0.9rem", color: "#666", marginTop: "4px" }}>
-            {t('skills.totalLabel')} {interestPoints} | {t('skills.used')} {skillPointsUsage.interestUsed}
+            {t("skills.totalLabel")} {interestPoints} | {t("skills.used")}{" "}
+            {skillPointsUsage.interestUsed}
           </div>
           <div style={{ fontSize: "0.75rem", color: "#999", marginTop: "2px" }}>
             (INT × 2)
@@ -144,7 +143,7 @@ export const SkillsSection: React.FC<SkillsSectionProps> = ({
                 fontWeight: "bold",
               }}
             >
-              {t('skills.pointsExceeded')}
+              {t("skills.pointsExceeded")}
             </div>
           )}
         </div>
@@ -162,7 +161,7 @@ export const SkillsSection: React.FC<SkillsSectionProps> = ({
           color: "#2c5f75",
         }}
       >
-        <strong>{t('skills.tip')}</strong> {t('skills.tipText')}
+        <strong>{t("skills.tip")}</strong> {t("skills.tipText")}
       </div>
 
       {/* Recommended Skills */}
@@ -179,7 +178,9 @@ export const SkillsSection: React.FC<SkillsSectionProps> = ({
             }}
           >
             <strong style={{ color: "#8b7355" }}>
-              {t('skills.recommended', { occupation: selectedOccupation.name_en })}
+              {t("skills.recommended", {
+                occupation: selectedOccupation.name_en,
+              })}
             </strong>
             <div
               style={{
@@ -224,7 +225,11 @@ export const SkillsSection: React.FC<SkillsSectionProps> = ({
               labelKey: "categories.investigationCriminal",
               categories: ["Investigation", "Criminal"],
             },
-            { key: "combat", labelKey: "categories.combat", categories: ["Combat"] },
+            {
+              key: "combat",
+              labelKey: "categories.combat",
+              categories: ["Combat"],
+            },
           ].map((group) => {
             const groupSkills = skillsState.filter((s) =>
               group.categories.includes(s.category)
@@ -237,13 +242,21 @@ export const SkillsSection: React.FC<SkillsSectionProps> = ({
                 className="skill-category"
                 style={{ marginBottom: "20px" }}
               >
-                <h4 className="skill-category-title">{t(`skills.${group.labelKey}`)}</h4>
+                <h4 className="skill-category-title">
+                  {t(`skills.${group.labelKey}`)}
+                </h4>
                 <table className="skills-table">
                   <thead>
                     <tr>
-                      <th style={{ textAlign: "left" }}>{t("skills.skillName")}</th>
-                      <th style={valueColumnStyle}>{t("skills.occupationalColumn")}</th>
-                      <th style={valueColumnStyle}>{t("skills.interestColumn")}</th>
+                      <th style={{ textAlign: "left" }}>
+                        {t("skills.skillName")}
+                      </th>
+                      <th style={valueColumnStyle}>
+                        {t("skills.occupationalColumn")}
+                      </th>
+                      <th style={valueColumnStyle}>
+                        {t("skills.interestColumn")}
+                      </th>
                       <th style={totalColumnStyle}>{t("skills.total")}</th>
                     </tr>
                   </thead>
@@ -254,9 +267,11 @@ export const SkillsSection: React.FC<SkillsSectionProps> = ({
                           skill.name
                         );
                       const baseValue =
-                        parseInt(skill.base.replace("%", "")) || 0;
-                      const occValue = parseInt(skill.occupationalValue) || 0;
-                      const intValue = parseInt(skill.interestValue) || 0;
+                        Number.parseInt(skill.base.replace("%", "")) || 0;
+                      const occValue =
+                        Number.parseInt(skill.occupationalValue) || 0;
+                      const intValue =
+                        Number.parseInt(skill.interestValue) || 0;
                       const totalValue = baseValue + occValue + intValue;
 
                       return (
@@ -277,7 +292,10 @@ export const SkillsSection: React.FC<SkillsSectionProps> = ({
                               ({skill.base})
                             </span>
                           </td>
-                          <td className="skill-value-cell" style={valueColumnStyle}>
+                          <td
+                            className="skill-value-cell"
+                            style={valueColumnStyle}
+                          >
                             <input
                               type="number"
                               min="0"
@@ -293,7 +311,10 @@ export const SkillsSection: React.FC<SkillsSectionProps> = ({
                               style={{ width: "100%" }}
                             />
                           </td>
-                          <td className="skill-value-cell" style={valueColumnStyle}>
+                          <td
+                            className="skill-value-cell"
+                            style={valueColumnStyle}
+                          >
                             <input
                               type="number"
                               min="0"
@@ -301,7 +322,10 @@ export const SkillsSection: React.FC<SkillsSectionProps> = ({
                               placeholder="0"
                               value={skill.interestValue}
                               onChange={(e) =>
-                                onChange(`skill_int_${skill.name}`, e.target.value)
+                                onChange(
+                                  `skill_int_${skill.name}`,
+                                  e.target.value
+                                )
                               }
                               style={{ width: "100%" }}
                             />
@@ -357,13 +381,21 @@ export const SkillsSection: React.FC<SkillsSectionProps> = ({
                 className="skill-category"
                 style={{ marginBottom: "20px" }}
               >
-                <h4 className="skill-category-title">{t(`skills.${group.labelKey}`)}</h4>
+                <h4 className="skill-category-title">
+                  {t(`skills.${group.labelKey}`)}
+                </h4>
                 <table className="skills-table">
                   <thead>
                     <tr>
-                      <th style={{ textAlign: "left" }}>{t("skills.skillName")}</th>
-                      <th style={valueColumnStyle}>{t("skills.occupationalColumn")}</th>
-                      <th style={valueColumnStyle}>{t("skills.interestColumn")}</th>
+                      <th style={{ textAlign: "left" }}>
+                        {t("skills.skillName")}
+                      </th>
+                      <th style={valueColumnStyle}>
+                        {t("skills.occupationalColumn")}
+                      </th>
+                      <th style={valueColumnStyle}>
+                        {t("skills.interestColumn")}
+                      </th>
                       <th style={totalColumnStyle}>{t("skills.total")}</th>
                     </tr>
                   </thead>
@@ -374,9 +406,11 @@ export const SkillsSection: React.FC<SkillsSectionProps> = ({
                           skill.name
                         );
                       const baseValue =
-                        parseInt(skill.base.replace("%", "")) || 0;
-                      const occValue = parseInt(skill.occupationalValue) || 0;
-                      const intValue = parseInt(skill.interestValue) || 0;
+                        Number.parseInt(skill.base.replace("%", "")) || 0;
+                      const occValue =
+                        Number.parseInt(skill.occupationalValue) || 0;
+                      const intValue =
+                        Number.parseInt(skill.interestValue) || 0;
                       const totalValue = baseValue + occValue + intValue;
 
                       return (
@@ -397,7 +431,10 @@ export const SkillsSection: React.FC<SkillsSectionProps> = ({
                               ({skill.base})
                             </span>
                           </td>
-                          <td className="skill-value-cell" style={valueColumnStyle}>
+                          <td
+                            className="skill-value-cell"
+                            style={valueColumnStyle}
+                          >
                             <input
                               type="number"
                               min="0"
@@ -413,7 +450,10 @@ export const SkillsSection: React.FC<SkillsSectionProps> = ({
                               style={{ width: "100%" }}
                             />
                           </td>
-                          <td className="skill-value-cell" style={valueColumnStyle}>
+                          <td
+                            className="skill-value-cell"
+                            style={valueColumnStyle}
+                          >
                             <input
                               type="number"
                               min="0"
@@ -421,7 +461,10 @@ export const SkillsSection: React.FC<SkillsSectionProps> = ({
                               placeholder="0"
                               value={skill.interestValue}
                               onChange={(e) =>
-                                onChange(`skill_int_${skill.name}`, e.target.value)
+                                onChange(
+                                  `skill_int_${skill.name}`,
+                                  e.target.value
+                                )
                               }
                               style={{ width: "100%" }}
                             />

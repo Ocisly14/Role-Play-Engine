@@ -3,11 +3,12 @@
  */
 
 import {
-  generateText,
   ModelClass,
   ModelProviderName,
+  generateText,
 } from "../../models/index.js";
 import { composeTemplate } from "../../template.js";
+import { getModuleDigestTemplate } from "./moduleDigestTemplate.js";
 import type {
   EndStateDefinition,
   KnowledgeHolder,
@@ -18,7 +19,6 @@ import type {
   TruthEvent,
 } from "./types.js";
 import type { DynamicNPCProfile } from "./types.js";
-import { getModuleDigestTemplate } from "./moduleDigestTemplate.js";
 
 interface Runtime {
   modelProvider: ModelProviderName;

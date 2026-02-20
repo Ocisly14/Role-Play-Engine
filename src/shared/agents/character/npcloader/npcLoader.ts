@@ -6,12 +6,17 @@
 import { randomUUID } from "crypto";
 import fs from "fs";
 import path from "path";
-import { ChatGoogleGenerativeAI } from "@langchain/google-genai";
-import { ChatOpenAI } from "@langchain/openai";
+import type { ChatGoogleGenerativeAI } from "@langchain/google-genai";
+import type { ChatOpenAI } from "@langchain/openai";
+import {
+  ModelClass,
+  ModelProviderName,
+  createChatModel,
+} from "../../../../models/index.js";
 import type { CoCDatabaseAdapter } from "../../memory/database/CoCDatabaseAdapter.js";
+import { stripModuleScope } from "../../memory/database/moduleScope.js";
 import { getPrismaClient } from "../../memory/database/prismaClient.js";
 import { resolveEmailId, scopeId } from "../../memory/database/userContext.js";
-import { stripModuleScope } from "../../memory/database/moduleScope.js";
 import type {
   CharacterAttributes,
   CharacterStatus,
@@ -22,11 +27,6 @@ import type {
   ParsedNPCData,
 } from "../../models/gameTypes.js";
 import { InventoryUtils } from "../../models/gameTypes.js";
-import {
-  createChatModel,
-  ModelClass,
-  ModelProviderName,
-} from "../../../../models/index.js";
 import { NPCDocumentParser } from "./npcDocumentParser.js";
 
 /**
@@ -160,9 +160,7 @@ export class NPCLoader {
     await prisma.$transaction(async (tx) => {
       const clueWhere = emailId ? { emailId } : {};
       const relWhere = emailId ? { emailId } : {};
-      const charWhere = emailId
-        ? { isNpc: true, emailId }
-        : { isNpc: true };
+      const charWhere = emailId ? { isNpc: true, emailId } : { isNpc: true };
 
       await tx.npcClue.deleteMany({ where: clueWhere });
       await tx.npcRelationship.deleteMany({ where: relWhere });
@@ -266,9 +264,7 @@ export class NPCLoader {
     await prisma.$transaction(async (tx) => {
       const clueWhere = emailId ? { emailId } : {};
       const relWhere = emailId ? { emailId } : {};
-      const charWhere = emailId
-        ? { isNpc: true, emailId }
-        : { isNpc: true };
+      const charWhere = emailId ? { isNpc: true, emailId } : { isNpc: true };
 
       await tx.npcClue.deleteMany({ where: clueWhere });
       await tx.npcRelationship.deleteMany({ where: relWhere });
@@ -325,7 +321,7 @@ export class NPCLoader {
 
     if (fs.existsSync(lastLoadFile)) {
       try {
-        lastLoadTime = parseInt(fs.readFileSync(lastLoadFile, "utf8"));
+        lastLoadTime = Number.parseInt(fs.readFileSync(lastLoadFile, "utf8"));
       } catch {
         // If we can't read the timestamp, assume changes
         return { hasChanges: true, currentFiles };
@@ -485,7 +481,7 @@ export class NPCLoader {
 
     if (fs.existsSync(lastLoadFile)) {
       try {
-        lastLoadTime = parseInt(fs.readFileSync(lastLoadFile, "utf8"));
+        lastLoadTime = Number.parseInt(fs.readFileSync(lastLoadFile, "utf8"));
       } catch {
         return { hasChanges: true, currentFiles };
       }
@@ -1215,7 +1211,8 @@ Return ONLY JSON array, no extra text.`;
       relationships: relationships.map((r) => ({
         targetId: r.targetId,
         targetName: r.targetName,
-        relationshipType: r.relationshipType as NPCRelationship["relationshipType"],
+        relationshipType:
+          r.relationshipType as NPCRelationship["relationshipType"],
         attitude: r.attitude,
         description: r.description ?? undefined,
         history: r.history ?? undefined,
@@ -1233,9 +1230,7 @@ Return ONLY JSON array, no extra text.`;
     const prisma = getPrismaClient();
     const emailId = this.getEmailId();
 
-    const charWhere = emailId
-      ? { isNpc: true, emailId }
-      : { isNpc: true };
+    const charWhere = emailId ? { isNpc: true, emailId } : { isNpc: true };
 
     const characters = await prisma.character.findMany({
       where: charWhere,

@@ -4,7 +4,7 @@
  * Shows character, skill, penalty, and dice result.
  */
 
-import { useState, useEffect, useMemo, useRef } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 
 /** Structured dice roll info (matches backend DiceRollInfo) */
@@ -68,27 +68,27 @@ function parseDiceRoll(roll: string): {
   if (match) {
     return {
       expression: `${match[1]}d${match[2]}`,
-      result: parseInt(match[3], 10),
+      result: Number.parseInt(match[3], 10),
       diceType: `d${match[2]}`,
-      numDice: parseInt(match[1], 10),
+      numDice: Number.parseInt(match[1], 10),
     };
   }
   match = roll.match(/^(\d+)d(\d+)\s*->\s*(\d+)$/);
   if (match) {
     return {
       expression: `${match[1]}d${match[2]}`,
-      result: parseInt(match[3], 10),
+      result: Number.parseInt(match[3], 10),
       diceType: `d${match[2]}`,
-      numDice: parseInt(match[1], 10),
+      numDice: Number.parseInt(match[1], 10),
     };
   }
   match = roll.match(/(\d+)d(\d+)(?:\[\d+\])?:\s*(\d+)/);
   if (match) {
     return {
       expression: `${match[1]}d${match[2]}`,
-      result: parseInt(match[3], 10),
+      result: Number.parseInt(match[3], 10),
       diceType: `d${match[2]}`,
-      numDice: parseInt(match[1], 10),
+      numDice: Number.parseInt(match[1], 10),
     };
   }
   const exprMatch = roll.match(/(\d+)d(\d+)/);
@@ -96,9 +96,9 @@ function parseDiceRoll(roll: string): {
   if (exprMatch && resultMatch) {
     return {
       expression: `${exprMatch[1]}d${exprMatch[2]}`,
-      result: parseInt(resultMatch[1], 10),
+      result: Number.parseInt(resultMatch[1], 10),
       diceType: `d${exprMatch[2]}`,
-      numDice: parseInt(exprMatch[1], 10),
+      numDice: Number.parseInt(exprMatch[1], 10),
     };
   }
   const fallbackMatch = roll.match(/(\d+)$/);
@@ -108,9 +108,9 @@ function parseDiceRoll(roll: string): {
       expression: fallbackExpr
         ? `${fallbackExpr[1]}d${fallbackExpr[2]}`
         : "1d100",
-      result: parseInt(fallbackMatch[1], 10),
+      result: Number.parseInt(fallbackMatch[1], 10),
       diceType: fallbackExpr ? `d${fallbackExpr[2]}` : "d100",
-      numDice: fallbackExpr ? parseInt(fallbackExpr[1], 10) : 1,
+      numDice: fallbackExpr ? Number.parseInt(fallbackExpr[1], 10) : 1,
     };
   }
   return { expression: roll, result: 0, diceType: "d100", numDice: 1 };

@@ -1,4 +1,5 @@
-import React, { useState } from "react";
+import type React from "react";
+import { useState } from "react";
 import { useTranslation } from "react-i18next";
 import { useNavigate } from "react-router-dom";
 import { StoryCreator } from "../components/StoryCreator";
@@ -31,12 +32,12 @@ export const StoryCreatorPage: React.FC = () => {
         body: JSON.stringify({ modName: generatedModuleName }),
       });
 
-      const data: { error?: string } = await response
-        .json()
-        .catch(() => ({}));
+      const data: { error?: string } = await response.json().catch(() => ({}));
 
       if (!response.ok) {
-        throw new Error(data.error || t("storyCreator.sharePrompt.shareFailed"));
+        throw new Error(
+          data.error || t("storyCreator.sharePrompt.shareFailed")
+        );
       }
 
       setGeneratedModuleName(null);

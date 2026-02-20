@@ -23,7 +23,7 @@ async function saveYesterdayAnalytics(): Promise<void> {
       Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate())
     );
     yesterday.setUTCDate(yesterday.getUTCDate() - 1);
-    const dateStr = yesterday.toISOString().split('T')[0];
+    const dateStr = yesterday.toISOString().split("T")[0];
 
     console.log(`[Analytics Scheduler] Calculating stats for ${dateStr}...`);
     const stats = await calculateDailyStats(dateStr);
@@ -48,7 +48,9 @@ export function startDailyScheduler(): void {
   // Check environment variable
   const enabled = process.env.ENABLE_ANALYTICS_SCHEDULER !== "false"; // Default enabled
   if (!enabled) {
-    console.log("[Analytics Scheduler] Disabled via ENABLE_ANALYTICS_SCHEDULER");
+    console.log(
+      "[Analytics Scheduler] Disabled via ENABLE_ANALYTICS_SCHEDULER"
+    );
     return;
   }
 
@@ -64,9 +66,12 @@ export function startDailyScheduler(): void {
     saveYesterdayAnalytics();
 
     // Then run every 24 hours
-    schedulerInterval = setInterval(() => {
-      saveYesterdayAnalytics();
-    }, 24 * 60 * 60 * 1000);
+    schedulerInterval = setInterval(
+      () => {
+        saveYesterdayAnalytics();
+      },
+      24 * 60 * 60 * 1000
+    );
   }, msUntilMidnight);
 
   console.log("[Analytics Scheduler] Started successfully");

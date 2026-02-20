@@ -12,15 +12,15 @@
  */
 
 import "dotenv/config";
-import fs from "fs/promises";
 import path from "path";
+import fs from "fs/promises";
 import { NPCBuilderAgent } from "../src/dynamicworldagent/world_builder/npcBuilderAgent.js";
 import type {
-  MacroSceneStructure,
-  TruthEvent,
   KnowledgeHolder,
-  RedHerring,
+  MacroSceneStructure,
   MythosEvent,
+  RedHerring,
+  TruthEvent,
 } from "../src/dynamicworldagent/world_builder/types.js";
 
 const MODULE_NAME = "鸦栖堡的冰封安魂曲 (The Frozen Requiem of Ravenscroft)";

@@ -13,10 +13,10 @@ const parseDiceExpression = (
     throw new Error(`Invalid dice expression: ${expression}`);
   }
 
-  const count = parseInt(match[1] || "1");
-  const sides = parseInt(match[2]);
+  const count = Number.parseInt(match[1] || "1");
+  const sides = Number.parseInt(match[2]);
   const modifierSign = match[4] || "+";
-  const modifierValue = parseInt(match[5] || "0");
+  const modifierValue = Number.parseInt(match[5] || "0");
   const modifier = modifierSign === "+" ? modifierValue : -modifierValue;
 
   return { count, sides, modifier };

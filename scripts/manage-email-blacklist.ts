@@ -8,8 +8,8 @@
  *   pnpm tsx scripts/manage-email-blacklist.ts check email@example.com
  */
 
-import { PrismaClient } from "@prisma/client";
 import { randomUUID } from "crypto";
+import { PrismaClient } from "@prisma/client";
 
 const prisma = new PrismaClient();
 

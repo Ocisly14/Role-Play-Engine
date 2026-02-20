@@ -4,16 +4,15 @@
  * Handles world generation requests via SSE
  */
 
+import fs from "fs";
+import path from "path";
 import type { Request, Response } from "express";
 import { WorldBuilderService } from "../../../src/dynamicworldagent/world_builder/worldBuilderService.js";
 import { WorldModuleLoader } from "../../../src/dynamicworldagent/world_builder/worldModuleLoader.js";
+import { acquireSlot } from "../../../src/shared/globalRateLimiter.js";
 import { DatabaseManager } from "../core/DatabaseManager.js";
 import { registerModuleForUser } from "./library.js";
 import { checkGenerationQuota, recordGeneration } from "./quotaManager.js";
-import path from "path";
-import fs from "fs";
-import { acquireSlot } from "../../../src/shared/globalRateLimiter.js";
-
 
 function normalizeProgressEvent(
   stage: string,
@@ -383,7 +382,10 @@ export async function generateNpcs(req: Request, res: Response): Promise<void> {
       });
       await worldLoader.loadAndSaveWorldModule(moduleDir, true);
       if (req.user?.email) {
-        await registerModuleForUser(req.user.email, result.macroScene.moduleName);
+        await registerModuleForUser(
+          req.user.email,
+          result.macroScene.moduleName
+        );
       }
       console.log(
         `✅ [World Builder API] NPC updates persisted to DB for user`

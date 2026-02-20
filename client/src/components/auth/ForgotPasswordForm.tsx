@@ -1,9 +1,10 @@
-import React, { useState } from "react";
+import type React from "react";
+import { useState } from "react";
 import { useTranslation } from "react-i18next";
 import { api } from "../../services/api";
 
 export function ForgotPasswordForm() {
-  const { t } = useTranslation('auth');
+  const { t } = useTranslation("auth");
   const [email, setEmail] = useState("");
   const [error, setError] = useState("");
   const [success, setSuccess] = useState(false);
@@ -27,12 +28,10 @@ export function ForgotPasswordForm() {
   if (success) {
     return (
       <div className="success-message-container">
-        <h2>{t('forgotPassword.checkEmail')}</h2>
-        <p>
-          {t('forgotPassword.checkEmailMessage')}
-        </p>
+        <h2>{t("forgotPassword.checkEmail")}</h2>
+        <p>{t("forgotPassword.checkEmailMessage")}</p>
         <div className="form-links" style={{ marginTop: "16px" }}>
-          <a href="/login">{t('forgotPassword.backToLogin')}</a>
+          <a href="/login">{t("forgotPassword.backToLogin")}</a>
         </div>
       </div>
     );
@@ -51,7 +50,7 @@ export function ForgotPasswordForm() {
       >
         <img
           src="/asset/icon.png"
-          alt={t('forgotPassword.title')}
+          alt={t("forgotPassword.title")}
           style={{
             width: "80px",
             height: "80px",
@@ -59,13 +58,13 @@ export function ForgotPasswordForm() {
           }}
         />
       </div>
-      <h2>{t('forgotPassword.title')}</h2>
+      <h2>{t("forgotPassword.title")}</h2>
       <p style={{ textAlign: "center", color: "#aaa", marginBottom: "16px" }}>
-        {t('forgotPassword.description')}
+        {t("forgotPassword.description")}
       </p>
       <form onSubmit={handleSubmit}>
         <div className="form-group">
-          <label htmlFor="email">{t('login.email')}</label>
+          <label htmlFor="email">{t("login.email")}</label>
           <input
             id="email"
             type="email"
@@ -79,11 +78,13 @@ export function ForgotPasswordForm() {
         {error && <div className="error-message">{error}</div>}
 
         <button type="submit" disabled={loading}>
-          {loading ? t('forgotPassword.submitting') : t('forgotPassword.submit')}
+          {loading
+            ? t("forgotPassword.submitting")
+            : t("forgotPassword.submit")}
         </button>
 
         <div className="form-links">
-          <a href="/login">{t('forgotPassword.backToLogin')}</a>
+          <a href="/login">{t("forgotPassword.backToLogin")}</a>
         </div>
       </form>
     </div>

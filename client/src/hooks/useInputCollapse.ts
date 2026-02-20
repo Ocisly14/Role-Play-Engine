@@ -2,7 +2,7 @@
  * Hook for managing input area collapse/expand behavior
  */
 
-import { useState, useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 
 export interface UseInputCollapseParams {
   inputValue: string;

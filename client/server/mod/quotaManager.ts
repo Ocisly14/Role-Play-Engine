@@ -9,8 +9,8 @@
  * - Library downloads (addSharedMod) are never quota-gated.
  */
 
-import { getPrismaClient } from "../../../src/shared/agents/memory/database/prismaClient.js";
 import { randomUUID } from "crypto";
+import { getPrismaClient } from "../../../src/shared/agents/memory/database/prismaClient.js";
 import { incrementDailyModGenerationCount } from "../analytics/service.js";
 
 const INITIAL_QUOTA_TOTAL = 3;
@@ -177,10 +177,18 @@ export async function getQuotaStatus(email: string): Promise<QuotaStatus> {
     where: { emailId: email, generatedAt: { gte: weekAgo } },
   });
   const weeklyMedium = await prisma.modGeneration.count({
-    where: { emailId: email, storyLength: "medium", generatedAt: { gte: weekAgo } },
+    where: {
+      emailId: email,
+      storyLength: "medium",
+      generatedAt: { gte: weekAgo },
+    },
   });
   const weeklyLarge = await prisma.modGeneration.count({
-    where: { emailId: email, storyLength: "long", generatedAt: { gte: weekAgo } },
+    where: {
+      emailId: email,
+      storyLength: "long",
+      generatedAt: { gte: weekAgo },
+    },
   });
 
   return {
@@ -219,6 +227,9 @@ export async function recordGeneration(
   try {
     await incrementDailyModGenerationCount(storyLength, generatedAt);
   } catch (error) {
-    console.warn("[Analytics] Failed to increment daily mod generation count:", error);
+    console.warn(
+      "[Analytics] Failed to increment daily mod generation count:",
+      error
+    );
   }
 }

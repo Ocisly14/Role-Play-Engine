@@ -1,5 +1,5 @@
-import { useTranslation } from 'react-i18next';
-import { getSkillNameZh } from '../lib/skillNames.js';
+import { useTranslation } from "react-i18next";
+import { getSkillNameZh } from "../lib/skillNames.js";
 
 /**
  * Hook to translate skill names based on current language
@@ -14,7 +14,7 @@ export function useSkillTranslation() {
    * @returns Translated skill name (or original if translation not available)
    */
   const translateSkill = (skillNameEn: string): string => {
-    return i18n.language === 'zh' ? getSkillNameZh(skillNameEn) : skillNameEn;
+    return i18n.language === "zh" ? getSkillNameZh(skillNameEn) : skillNameEn;
   };
 
   /**
@@ -30,7 +30,7 @@ export function useSkillTranslation() {
     translateSkill,
     translateSkills,
     language: i18n.language,
-    isEnglish: i18n.language === 'en',
-    isChinese: i18n.language === 'zh',
+    isEnglish: i18n.language === "en",
+    isChinese: i18n.language === "zh",
   };
 }

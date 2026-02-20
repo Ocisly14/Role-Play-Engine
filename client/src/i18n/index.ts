@@ -1,2 +1,2 @@
-import './config.js';
-export { default } from './config.js';
+import "./config.js";
+export { default } from "./config.js";

@@ -1,15 +1,15 @@
-import React, {
+import type React from "react";
+import {
   createContext,
-  useContext,
-  useState,
   useCallback,
-  useEffect,
+  useContext,
   useRef,
+  useState,
 } from "react";
-import { useNavigate } from "react-router-dom";
 import { useTranslation } from "react-i18next";
-import { authFetch } from "../utils/authFetch";
+import { useNavigate } from "react-router-dom";
 import type { DiceRollInfo } from "../components/DiceAnimation";
+import { authFetch } from "../utils/authFetch";
 
 interface Message {
   role: "character" | "keeper";

@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { authFetch } from "../utils/authFetch";
 
@@ -20,7 +20,7 @@ export function ModSelector({
   onCancel,
   onCreateStory,
 }: ModSelectorProps) {
-  const { t } = useTranslation('module');
+  const { t } = useTranslation("module");
   const [mods, setMods] = useState<Mod[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -43,11 +43,11 @@ export function ModSelector({
           setSelectedMod(data.mods[0].name);
         }
       } else {
-        setError(data.error || t('errors.loadFailed'));
+        setError(data.error || t("errors.loadFailed"));
       }
     } catch (err) {
       console.error("Error fetching mods:", err);
-      setError(t('common:error.network'));
+      setError(t("common:error.network"));
     } finally {
       setLoading(false);
     }
@@ -65,11 +65,11 @@ export function ModSelector({
         <div className="mod-selector-overlay">
           <div className="mod-selector-modal">
             <div className="modal-header">
-              <h2>{t('select')}</h2>
+              <h2>{t("select")}</h2>
             </div>
             <div className="modal-content">
               <div className="loading-state">
-                <p>{t('loading')}</p>
+                <p>{t("loading")}</p>
               </div>
             </div>
           </div>
@@ -126,7 +126,7 @@ export function ModSelector({
         <div className="mod-selector-overlay">
           <div className="mod-selector-modal">
             <div className="modal-header">
-              <h2>{t('select')}</h2>
+              <h2>{t("select")}</h2>
               <button onClick={onCancel} className="close-button">
                 ×
               </button>
@@ -146,10 +146,10 @@ export function ModSelector({
                 </div>
                 <div className="modal-actions">
                   <button onClick={onCancel} className="secondary">
-                    {t('common:button.cancel')}
+                    {t("common:button.cancel")}
                   </button>
                   <button onClick={fetchMods} className="primary">
-                    {t('common:button.retry')}
+                    {t("common:button.retry")}
                   </button>
                 </div>
               </div>
@@ -209,20 +209,18 @@ export function ModSelector({
             <div className="modal-header-content">
               <img
                 src="/asset/icon.png"
-                alt={t('chooseAdventure')}
+                alt={t("chooseAdventure")}
                 className="header-icon"
               />
               <div className="header-text">
-                <h2>{t('chooseAdventure')}</h2>
-                <p className="header-subtitle">
-                  {t('selectScenario')}
-                </p>
+                <h2>{t("chooseAdventure")}</h2>
+                <p className="header-subtitle">{t("selectScenario")}</p>
               </div>
             </div>
             <button
               onClick={onCancel}
               className="close-button"
-              aria-label={t('common:button.close')}
+              aria-label={t("common:button.close")}
             >
               ×
             </button>
@@ -238,9 +236,9 @@ export function ModSelector({
                   <div className="mod-card-inner">
                     <div className="mod-card-icon">✨</div>
                     <div className="mod-card-content">
-                      <h3 className="mod-card-title">{t('createStory')}</h3>
+                      <h3 className="mod-card-title">{t("createStory")}</h3>
                       <p className="mod-card-subtitle">
-                        {t('createStoryDesc')}
+                        {t("createStoryDesc")}
                       </p>
                     </div>
                   </div>
@@ -291,14 +289,14 @@ export function ModSelector({
             </div>
             <div className="modal-footer">
               <button onClick={onCancel} className="btn-secondary">
-                {t('common:button.cancel')}
+                {t("common:button.cancel")}
               </button>
               <button
                 onClick={handleSelect}
                 className="btn-primary"
                 disabled={!selectedMod}
               >
-                {t('startAdventure')} →
+                {t("startAdventure")} →
               </button>
             </div>
           </div>

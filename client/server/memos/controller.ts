@@ -1,6 +1,6 @@
+import { randomUUID } from "crypto";
 /// <reference path="../types/express.d.ts" />
 import type { Request, Response } from "express";
-import { randomUUID } from "crypto";
 import { getPrismaClient } from "../../../src/shared/agents/memory/database/prismaClient.js";
 
 /**

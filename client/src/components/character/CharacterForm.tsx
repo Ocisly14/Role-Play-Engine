@@ -1,11 +1,11 @@
-import React from "react";
+import type React from "react";
 import { useTranslation } from "react-i18next";
-import { IdentitySection } from "./IdentitySection";
+import { AttributeSelectorModal } from "../modals/AttributeSelectorModal";
 import { AttributesSection } from "./AttributesSection";
+import { IdentitySection } from "./IdentitySection";
+import { NotesSection } from "./NotesSection";
 import { SkillsSection } from "./SkillsSection";
 import { WeaponsSection } from "./WeaponsSection";
-import { NotesSection } from "./NotesSection";
-import { AttributeSelectorModal } from "../modals/AttributeSelectorModal";
 
 interface CharacterFormProps {
   form: Record<string, string>;
@@ -42,7 +42,9 @@ interface CharacterFormProps {
   // Saving
   saving: boolean;
   saveMessage: { type: "success" | "error"; text: string } | null;
-  setSaveMessage: (message: { type: "success" | "error"; text: string } | null) => void;
+  setSaveMessage: (
+    message: { type: "success" | "error"; text: string } | null
+  ) => void;
   handleCreateCharacter: () => void;
 
   // Navigation
@@ -73,10 +75,10 @@ export const CharacterForm: React.FC<CharacterFormProps> = ({
   handleCreateCharacter,
   onCancel,
 }) => {
-  const { t } = useTranslation('character');
+  const { t } = useTranslation("character");
   return (
     <div className="sheet">
-      <h1>{t('form.appTitle')}</h1>
+      <h1>{t("form.appTitle")}</h1>
       <form
         onSubmit={(e) => {
           e.preventDefault();
@@ -94,7 +96,7 @@ export const CharacterForm: React.FC<CharacterFormProps> = ({
               onClick={onCancel}
               style={{ background: "#eee" }}
             >
-              ← {t('form.back')}
+              ← {t("form.back")}
             </button>
           )}
         </div>
@@ -187,15 +189,11 @@ export const CharacterForm: React.FC<CharacterFormProps> = ({
                 color: "#f5f1e8",
               }}
             >
-              {t('form.clearMessage')}
+              {t("form.clearMessage")}
             </button>
           )}
-          <button
-            className="pill-btn"
-            type="submit"
-            disabled={saving}
-          >
-            {saving ? t('form.submitting') : `🎲 ${t('form.submit')}`}
+          <button className="pill-btn" type="submit" disabled={saving}>
+            {saving ? t("form.submitting") : `🎲 ${t("form.submit")}`}
           </button>
         </div>
       </form>

@@ -1,4 +1,5 @@
-import React, { useState, useEffect } from "react";
+import type React from "react";
+import { useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { authFetch } from "../../utils/authFetch";
 
@@ -31,13 +32,16 @@ interface AttributeSelectorModalProps {
   initialOptions?: AttributeOption[];
 }
 
-export const AttributeSelectorModal: React.FC<
-  AttributeSelectorModalProps
-> = ({ open, onClose, onSelectAttributes, age, initialOptions = [] }) => {
+export const AttributeSelectorModal: React.FC<AttributeSelectorModalProps> = ({
+  open,
+  onClose,
+  onSelectAttributes,
+  age,
+  initialOptions = [],
+}) => {
   const { t } = useTranslation(["character", "common"]);
-  const [attributeOptions, setAttributeOptions] = useState<AttributeOption[]>(
-    initialOptions
-  );
+  const [attributeOptions, setAttributeOptions] =
+    useState<AttributeOption[]>(initialOptions);
 
   useEffect(() => {
     setAttributeOptions(initialOptions);
@@ -256,7 +260,9 @@ export const AttributeSelectorModal: React.FC<
                     paddingBottom: "8px",
                   }}
                 >
-                  {t("character:attributes.selector.setLabel", { id: option.id })}
+                  {t("character:attributes.selector.setLabel", {
+                    id: option.id,
+                  })}
                 </div>
 
                 <table style={{ width: "100%", fontSize: "0.85rem" }}>

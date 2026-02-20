@@ -1,9 +1,9 @@
-import handlebars from "handlebars";
 import fs from "fs";
 import path from "path";
+import handlebars from "handlebars";
+import { names, uniqueNamesGenerator } from "unique-names-generator";
 import type { DynamicGameState } from "./dynamicworldagent/state/index.js";
 import type { ImageInput } from "./models/types.js";
-import { names, uniqueNamesGenerator } from "unique-names-generator";
 import { stripModuleScope } from "./shared/agents/memory/database/moduleScope.js";
 
 type TemplateContext = Record<string, unknown>;
@@ -18,7 +18,8 @@ const ID_LIKE_KEYS = new Set([
   "targetId",
 ]);
 
-const uuidLike = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+const uuidLike =
+  /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
 const emailLike = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
 const stripScopedIdIfNeeded = (value: string): string => {

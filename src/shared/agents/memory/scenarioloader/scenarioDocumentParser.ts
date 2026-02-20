@@ -5,14 +5,14 @@
 
 import fs from "fs";
 import path from "path";
-import { ChatOpenAI } from "@langchain/openai";
-import { ChatGoogleGenerativeAI } from "@langchain/google-genai";
+import type { ChatGoogleGenerativeAI } from "@langchain/google-genai";
+import type { ChatOpenAI } from "@langchain/openai";
 import mammoth from "mammoth";
 import pdfParse from "pdf-parse";
 import {
-  createChatModel,
-  ModelProviderName,
   ModelClass,
+  ModelProviderName,
+  createChatModel,
 } from "../../../../models/index.js";
 import type {
   ParsedScenarioData,
@@ -335,7 +335,7 @@ Do not include any additional text, explanations, or markdown formatting.`;
           );
         }
 
-        let parsedData = JSON.parse(jsonText);
+        const parsedData = JSON.parse(jsonText);
 
         // Ensure we always return an array
         const scenariosArray: ParsedScenarioData[] = Array.isArray(parsedData)

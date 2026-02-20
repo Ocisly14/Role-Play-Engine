@@ -1,16 +1,16 @@
-import React, { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
 import {
-  LineChart,
-  Line,
-  BarChart,
   Bar,
+  BarChart,
+  CartesianGrid,
+  Legend,
+  Line,
+  LineChart,
+  ResponsiveContainer,
+  Tooltip,
   XAxis,
   YAxis,
-  CartesianGrid,
-  Tooltip,
-  Legend,
-  ResponsiveContainer,
 } from "recharts";
 import { api } from "../services/api";
 
@@ -67,7 +67,9 @@ export function Analytics({ onClose }: AnalyticsProps) {
       setRecent48h(response.data.recent48h || null);
       setError(null);
     } catch (err: any) {
-      setError(err.response?.data?.error || t("home:analytics.errors.loadFailed"));
+      setError(
+        err.response?.data?.error || t("home:analytics.errors.loadFailed")
+      );
       console.error("Analytics fetch error:", err);
     } finally {
       setLoading(false);
@@ -312,7 +314,8 @@ export function Analytics({ onClose }: AnalyticsProps) {
                   <div
                     style={{
                       display: "grid",
-                      gridTemplateColumns: "repeat(auto-fit, minmax(200px, 1fr))",
+                      gridTemplateColumns:
+                        "repeat(auto-fit, minmax(200px, 1fr))",
                       gap: "16px",
                     }}
                   >
@@ -370,7 +373,8 @@ export function Analytics({ onClose }: AnalyticsProps) {
                   <div
                     style={{
                       display: "grid",
-                      gridTemplateColumns: "repeat(auto-fit, minmax(200px, 1fr))",
+                      gridTemplateColumns:
+                        "repeat(auto-fit, minmax(200px, 1fr))",
                       gap: "16px",
                     }}
                   >
@@ -441,8 +445,15 @@ export function Analytics({ onClose }: AnalyticsProps) {
                     <CartesianGrid strokeDasharray="3 3" />
                     <XAxis dataKey="date" />
                     <YAxis />
-                    <Tooltip formatter={(value, name) => [value, formatMetric(String(name))]} />
-                    <Legend formatter={(value) => formatMetric(String(value))} />
+                    <Tooltip
+                      formatter={(value, name) => [
+                        value,
+                        formatMetric(String(name)),
+                      ]}
+                    />
+                    <Legend
+                      formatter={(value) => formatMetric(String(value))}
+                    />
                     <Line
                       type="monotone"
                       dataKey="loginUsers"
@@ -483,8 +494,15 @@ export function Analytics({ onClose }: AnalyticsProps) {
                     <CartesianGrid strokeDasharray="3 3" />
                     <XAxis dataKey="date" />
                     <YAxis />
-                    <Tooltip formatter={(value, name) => [value, formatMetric(String(name))]} />
-                    <Legend formatter={(value) => formatMetric(String(value))} />
+                    <Tooltip
+                      formatter={(value, name) => [
+                        value,
+                        formatMetric(String(name)),
+                      ]}
+                    />
+                    <Legend
+                      formatter={(value) => formatMetric(String(value))}
+                    />
                     <Line
                       type="monotone"
                       dataKey="messages"
@@ -520,8 +538,15 @@ export function Analytics({ onClose }: AnalyticsProps) {
                       <CartesianGrid strokeDasharray="3 3" />
                       <XAxis dataKey="date" />
                       <YAxis />
-                      <Tooltip formatter={(value, name) => [value, formatMetric(String(name))]} />
-                      <Legend formatter={(value) => formatMetric(String(value))} />
+                      <Tooltip
+                        formatter={(value, name) => [
+                          value,
+                          formatMetric(String(name)),
+                        ]}
+                      />
+                      <Legend
+                        formatter={(value) => formatMetric(String(value))}
+                      />
                       <Bar dataKey="short" fill="#10b981" />
                       <Bar dataKey="medium" fill="#f59e0b" />
                       <Bar dataKey="long" fill="#ef4444" />

@@ -1,22 +1,24 @@
+import {
+  GameHistoryRag,
+  type RelevantHistoryItem,
+} from "../../../rag/gameHistoryRag.js";
+import type {
+  CoCDatabase,
+  CoCDatabaseAdapter,
+} from "../../../shared/agents/memory/database/index.js";
+import { actionRules } from "../../../shared/rules/index.js";
+import type {
+  ActionAnalysis,
+  ActionType,
+} from "../../../shared/state/index.js";
 /**
  * Memory Agent helpers
  * This module owns state-side helpers for memory workflows.
  */
 import {
-  DynamicGameStateManager,
   type DynamicGameState,
+  DynamicGameStateManager,
 } from "../../state/index.js";
-import type {
-  ActionType,
-  ActionAnalysis,
-} from "../../../shared/state/index.js";
-import { actionRules } from "../../../shared/rules/index.js";
-import type { CoCDatabase, CoCDatabaseAdapter } from "../../../shared/agents/memory/database/index.js";
-import type { DynamicScenarioSnapshot } from "../../world_builder/types.js";
-import {
-  GameHistoryRag,
-  type RelevantHistoryItem,
-} from "../../../rag/gameHistoryRag.js";
 
 /**
  * Inject action-type-specific rules into temporary rules so downstream agents can apply them.
@@ -250,7 +252,7 @@ export const enrichMemoryContext = async (
     relevantHistory = rawRelevantHistory.filter((item) => {
       if (item.type === "turn" && item.metadata.turnId) {
         // Extract turn number from turnId (format: "turn_123" or "123")
-        const turnNumber = parseInt(
+        const turnNumber = Number.parseInt(
           item.metadata.turnId.replace(/^turn_/, ""),
           10
         );

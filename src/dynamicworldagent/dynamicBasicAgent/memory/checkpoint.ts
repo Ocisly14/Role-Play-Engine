@@ -3,12 +3,15 @@
  * Saves complete game state to database before major updates
  */
 
-import type { CoCDatabase, CoCDatabaseAdapter } from "../../../shared/agents/memory/database/index.js";
+import { randomUUID } from "crypto";
+import type {
+  CoCDatabase,
+  CoCDatabaseAdapter,
+} from "../../../shared/agents/memory/database/index.js";
+import { getPrismaClient } from "../../../shared/agents/memory/database/prismaClient.js";
 import type { DynamicGameState } from "../../state/index.js";
 import type { DynamicScenarioSnapshot } from "../../world_builder/types.js";
-import { randomUUID } from "crypto";
 import { TurnManager } from "./turnManager.js";
-import { getPrismaClient } from "../../../shared/agents/memory/database/prismaClient.js";
 
 /**
  * Save DynamicGameState checkpoint to database
@@ -97,27 +100,39 @@ export async function saveDynamicGameStateCheckpoint(
           console.log(`[Checkpoint Save] Parsed metadata:`, metadata);
           if (metadata.language === "en" || metadata.language === "zh") {
             languageToSave = metadata.language;
-            console.log(`[Checkpoint Save] Found language in metadata: ${languageToSave}`);
+            console.log(
+              `[Checkpoint Save] Found language in metadata: ${languageToSave}`
+            );
           } else {
-            console.log(`[Checkpoint Save] No valid language in metadata, using default: ${languageToSave}`);
+            console.log(
+              `[Checkpoint Save] No valid language in metadata, using default: ${languageToSave}`
+            );
           }
         } else {
-          console.log(`[Checkpoint Save] Session metadata is NULL, initializing with default language: ${languageToSave}`);
+          console.log(
+            `[Checkpoint Save] Session metadata is NULL, initializing with default language: ${languageToSave}`
+          );
           // Initialize metadata for existing sessions that don't have it
           const newMetadata = { language: languageToSave };
           await prisma.session.update({
             where: { sessionId: dynamicState.sessionId },
             data: { metadata: newMetadata },
           });
-          console.log(`[Checkpoint Save] Initialized session metadata with language: ${languageToSave}`);
+          console.log(
+            `[Checkpoint Save] Initialized session metadata with language: ${languageToSave}`
+          );
         }
       } else {
-        console.warn(`[Checkpoint Save] Session not found in database, using default language: ${languageToSave}`);
+        console.warn(
+          `[Checkpoint Save] Session not found in database, using default language: ${languageToSave}`
+        );
       }
 
       // Save language to checkpoint
       serializableState.language = languageToSave;
-      console.log(`[Checkpoint Save] Saved language to checkpoint: ${languageToSave}`);
+      console.log(
+        `[Checkpoint Save] Saved language to checkpoint: ${languageToSave}`
+      );
     } catch (error) {
       console.warn("Failed to save language setting to checkpoint:", error);
       // Continue without language - not critical
@@ -312,7 +327,8 @@ async function saveHistoricalSnapshotsToDatabase(
           snapshotId: historicalSnapshotId,
           scenarioId,
           moduleId,
-          snapshotName: snapshot.name || `Historical snapshot for ${scenarioId}`,
+          snapshotName:
+            snapshot.name || `Historical snapshot for ${scenarioId}`,
           location: snapshot.location,
           description: snapshot.description,
           events: [], // events removed

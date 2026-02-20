@@ -1,13 +1,16 @@
-import type { CoCDatabase, CoCDatabaseAdapter } from "../../../src/shared/agents/memory/database/index.js";
-import { ScenarioLoader } from "../../../src/shared/agents/memory/scenarioloader/index.js";
-import { NPCLoader } from "../../../src/shared/agents/character/npcloader/index.js";
-import { ModuleLoader } from "../../../src/shared/agents/memory/moduleloader/index.js";
-import { WorldModuleLoader } from "../../../src/dynamicworldagent/world_builder/worldModuleLoader.js";
-import { registerModuleForUser } from "./library.js";
-import { getPrismaClient } from "../../../src/shared/agents/memory/database/prismaClient.js";
-import { resolveModuleIdByName } from "../../../src/shared/agents/memory/database/moduleScope.js";
-import path from "path";
 import fs from "fs";
+import path from "path";
+import { WorldModuleLoader } from "../../../src/dynamicworldagent/world_builder/worldModuleLoader.js";
+import { NPCLoader } from "../../../src/shared/agents/character/npcloader/index.js";
+import type {
+  CoCDatabase,
+  CoCDatabaseAdapter,
+} from "../../../src/shared/agents/memory/database/index.js";
+import { resolveModuleIdByName } from "../../../src/shared/agents/memory/database/moduleScope.js";
+import { getPrismaClient } from "../../../src/shared/agents/memory/database/prismaClient.js";
+import { ModuleLoader } from "../../../src/shared/agents/memory/moduleloader/index.js";
+import { ScenarioLoader } from "../../../src/shared/agents/memory/scenarioloader/index.js";
+import { registerModuleForUser } from "./library.js";
 
 type ProgressCallback = (
   stage: string,

@@ -1,16 +1,17 @@
-import React, { useState } from "react";
-import { useNavigate } from "react-router-dom";
+import type React from "react";
+import { useState } from "react";
 import { useTranslation } from "react-i18next";
-import Homes from "./Homes";
+import { useNavigate } from "react-router-dom";
 import { ModManager } from "../components/ModManager";
-import { CheckpointSelectorModal } from "../components/modals/CheckpointSelectorModal";
 import { LanguageToggle } from "../components/layout/LanguageToggle";
-import { useGameSession } from "../hooks/useGameSession";
+import { CheckpointSelectorModal } from "../components/modals/CheckpointSelectorModal";
 import { useAppSettings } from "../contexts/AppSettingsContext";
+import { useGameSession } from "../hooks/useGameSession";
 import { authFetch } from "../utils/authFetch";
+import Homes from "./Homes";
 
 export const HomePage: React.FC = () => {
-  const { t } = useTranslation(['checkpoint', 'common', 'game']);
+  const { t } = useTranslation(["checkpoint", "common", "game"]);
   const navigate = useNavigate();
   const gameSession = useGameSession();
   const { language, handleLanguageChange } = useAppSettings();
@@ -65,8 +66,7 @@ export const HomePage: React.FC = () => {
           lastError = null;
           break;
         } catch (error) {
-          lastError =
-            error instanceof Error ? error : new Error(String(error));
+          lastError = error instanceof Error ? error : new Error(String(error));
           console.warn(
             `[HomePage] load checkpoints attempt ${attempt}/${maxRetries} failed:`,
             lastError.message
@@ -83,7 +83,7 @@ export const HomePage: React.FC = () => {
       }
     } catch (error) {
       console.error("Error loading checkpoints:", error);
-      alert(t('common:error.network'));
+      alert(t("common:error.network"));
     } finally {
       setLoadingCheckpoints(false);
     }
@@ -98,7 +98,9 @@ export const HomePage: React.FC = () => {
     e.stopPropagation();
 
     const confirmed = window.confirm(
-      t('checkpoint:confirmDeleteNamed', { name: checkpointName || t('checkpoint:unnamed') })
+      t("checkpoint:confirmDeleteNamed", {
+        name: checkpointName || t("checkpoint:unnamed"),
+      })
     );
 
     if (!confirmed) {
@@ -117,12 +119,14 @@ export const HomePage: React.FC = () => {
         await handleContinueGame();
       } else {
         alert(
-          t('checkpoint:errors.deleteFailed') + ": " + (data.error || t('common:error.generic'))
+          t("checkpoint:errors.deleteFailed") +
+            ": " +
+            (data.error || t("common:error.generic"))
         );
       }
     } catch (error) {
       console.error("Error deleting checkpoint:", error);
-      alert(t('common:error.network'));
+      alert(t("common:error.network"));
     }
   };
 
@@ -140,15 +144,22 @@ export const HomePage: React.FC = () => {
       const data = await response.json();
 
       if (response.ok && data.success) {
-        alert(data.message || t('checkpoint:success.batchDeleted', { count: data.deletedCount }));
+        alert(
+          data.message ||
+            t("checkpoint:success.batchDeleted", { count: data.deletedCount })
+        );
         // Refresh checkpoint list
         await handleContinueGame();
       } else {
-        alert(t('checkpoint:errors.deleteFailed') + ": " + (data.error || t('common:error.generic')));
+        alert(
+          t("checkpoint:errors.deleteFailed") +
+            ": " +
+            (data.error || t("common:error.generic"))
+        );
       }
     } catch (error) {
       console.error("Error batch deleting checkpoints:", error);
-      alert(t('common:error.network'));
+      alert(t("common:error.network"));
     }
   };
 

@@ -5,25 +5,37 @@
  */
 
 import type {
-  MacroSceneStructure,
-  TruthEvent,
-  KnowledgeHolder,
-  RedHerring,
-  MythosEvent,
   EndStateDefinition,
-  ScenarioOutline,
+  KnowledgeHolder,
+  MacroSceneStructure,
   ModuleDigest,
+  MythosEvent,
+  RedHerring,
+  ScenarioOutline,
+  TruthEvent,
 } from "../world_builder/types.js";
 
+import { randomUUID } from "crypto";
+import type {
+  CoCDatabase,
+  CoCDatabaseAdapter,
+} from "../../shared/agents/memory/database/index.js";
+import { getPrismaClient } from "../../shared/agents/memory/database/prismaClient.js";
+import {
+  InventoryUtils,
+  type NPCRelationship,
+} from "../../shared/agents/models/gameTypes.js";
+import type {
+  ScenarioClue,
+  ScenarioCondition,
+} from "../../shared/agents/models/scenarioTypes.js";
 import type {
   ActionAnalysis,
   ActionResult,
+  DiscoveredClue,
   GameEndingInfo,
   NPCResponseAnalysis,
-  DirectorDecision,
   SceneChangeRequest,
-  SceneTransitionRejection,
-  DiscoveredClue,
   TimeConsumption,
 } from "../../shared/state/index.js";
 import type {
@@ -31,14 +43,26 @@ import type {
   DynamicNPCProfile,
   DynamicScenarioSnapshot,
 } from "../world_builder/types.js";
-import type { CoCDatabase, CoCDatabaseAdapter } from "../../shared/agents/memory/database/index.js";
-import type { ScenarioClue, ScenarioCondition } from "../../shared/agents/models/scenarioTypes.js";
-import {
-  InventoryUtils,
-  type NPCRelationship,
-} from "../../shared/agents/models/gameTypes.js";
-import { randomUUID } from "crypto";
-import { getPrismaClient } from "../../shared/agents/memory/database/prismaClient.js";
+
+/**
+ * Represents a pending NPC attack that the player must respond to
+ */
+export interface PendingNpcAction {
+  npcId: string;
+  npcName: string;
+  actionNarrative: string; // What NPC will do (narrative, no dice yet)
+  dex: number; // For display ordering only
+}
+
+/**
+ * Tracks the state of an active combat encounter
+ */
+export interface CombatState {
+  round: number;
+  participantNpcIds: string[];
+  initiatedBy: "player" | "npc";
+  pendingNpcActions: PendingNpcAction[] | null; // null = player's attack turn
+}
 
 /**
  * Temporary Info for Dynamic World
@@ -91,6 +115,10 @@ export interface DynamicGameState {
 
   // Game tension
   tension: number;
+
+  // Combat state
+  isBattle: boolean;
+  combatState: CombatState | null;
 
   // Game ending status (used by frontend to lock input after epilogue)
   gameEnding: GameEndingInfo | null;
@@ -175,6 +203,8 @@ export const initialDynamicGameState = (params: {
     playerTimeConsumption: {},
   },
   tension: 1,
+  isBattle: false,
+  combatState: null,
   gameEnding: null,
   keeperGuidance: null,
   moduleLimitations: null,
@@ -423,7 +453,7 @@ export class DynamicGameStateManager {
         pointOfNoReturn.trigger
       );
       if (timeMatch) {
-        const triggerDay = parseInt(timeMatch[1], 10);
+        const triggerDay = Number.parseInt(timeMatch[1], 10);
         const triggerTime = timeMatch[2] + ":" + timeMatch[3];
 
         if (
@@ -640,7 +670,7 @@ export class DynamicGameStateManager {
     const match = gameTime.match(/Day\s*(\d+),\s*(\d{2}:\d{2})/i);
     if (match) {
       return {
-        gameDay: parseInt(match[1], 10),
+        gameDay: Number.parseInt(match[1], 10),
         timeOfDay: match[2],
       };
     }
@@ -759,10 +789,7 @@ export class DynamicGameStateManager {
           clues: true,
           conditions: true,
         },
-        orderBy: [
-          { gameTime: "asc" },
-          { createdAt: "asc" },
-        ],
+        orderBy: [{ gameTime: "asc" }, { createdAt: "asc" }],
       });
 
       const checkpointTime = `Day ${checkpointGameDay}, ${checkpointTimeOfDay}`;
@@ -771,10 +798,7 @@ export class DynamicGameStateManager {
       for (const row of snapshotRows) {
         // Filter by checkpoint gameTime
         if (row.gameTime) {
-          const comparison = this.compareGameTime(
-            row.gameTime,
-            checkpointTime
-          );
+          const comparison = this.compareGameTime(row.gameTime, checkpointTime);
           if (comparison !== null && comparison > 0) {
             // Skip snapshots after checkpoint time
             continue;
@@ -1283,11 +1307,15 @@ export class DynamicGameStateManager {
           continue;
         }
 
-        const clampedAttitude = Math.max(-100, Math.min(100, Math.round(attitude)));
+        const clampedAttitude = Math.max(
+          -100,
+          Math.min(100, Math.round(attitude))
+        );
         sanitizedRelationships.push({
           targetId,
           targetName,
-          relationshipType: relationshipType as NPCRelationship["relationshipType"],
+          relationshipType:
+            relationshipType as NPCRelationship["relationshipType"],
           attitude: clampedAttitude,
           ...(typeof (rel as any).description === "string"
             ? { description: (rel as any).description }
@@ -1607,7 +1635,9 @@ export class DynamicGameStateManager {
       const scenarioRow = await prisma.scenario.findFirst({
         where: {
           scenarioId,
-          ...(sessionScope?.moduleId ? { moduleId: sessionScope.moduleId } : {}),
+          ...(sessionScope?.moduleId
+            ? { moduleId: sessionScope.moduleId }
+            : {}),
         },
         select: { moduleId: true },
       });
@@ -1641,7 +1671,8 @@ export class DynamicGameStateManager {
           snapshotId: historicalSnapshotId,
           scenarioId,
           moduleId,
-          snapshotName: snapshot.name || `Historical snapshot for ${scenarioId}`,
+          snapshotName:
+            snapshot.name || `Historical snapshot for ${scenarioId}`,
           location: snapshot.location,
           description: snapshot.description,
           events: [],
@@ -1653,48 +1684,56 @@ export class DynamicGameStateManager {
           gameTime: snapshot.gameTime || null,
           isDynamicHistorical: true,
           // Create related characters
-          characters: snapshot.characters && snapshot.characters.length > 0
-            ? {
-                create: snapshot.characters.map((char) => ({
-                  id: char.id || `${historicalSnapshotId}-char-${randomUUID().slice(0, 8)}`,
-                  moduleId,
-                  characterName: char.name,
-                  characterRole: char.role,
-                  characterStatus: char.status,
-                  characterLocation: char.location || null,
-                  characterNotes: char.notes || null,
-                })),
-              }
-            : undefined,
+          characters:
+            snapshot.characters && snapshot.characters.length > 0
+              ? {
+                  create: snapshot.characters.map((char) => ({
+                    id:
+                      char.id ||
+                      `${historicalSnapshotId}-char-${randomUUID().slice(0, 8)}`,
+                    moduleId,
+                    characterName: char.name,
+                    characterRole: char.role,
+                    characterStatus: char.status,
+                    characterLocation: char.location || null,
+                    characterNotes: char.notes || null,
+                  })),
+                }
+              : undefined,
           // Create related clues
-          clues: snapshot.clues && snapshot.clues.length > 0
-            ? {
-                create: snapshot.clues.map((clue) => ({
-                  clueId: clue.id || `${historicalSnapshotId}-clue-${randomUUID().slice(0, 8)}`,
-                  moduleId,
-                  clueText: clue.clueText,
-                  category: clue.category,
-                  difficulty: clue.difficulty,
-                  clueLocation: clue.location,
-                  discoveryMethod: clue.discoveryMethod || null,
-                  reveals: clue.reveals || [],
-                  discovered: clue.discovered === true,
-                  discoveryDetails: (clue.discoveryDetails || undefined) as any,
-                })),
-              }
-            : undefined,
+          clues:
+            snapshot.clues && snapshot.clues.length > 0
+              ? {
+                  create: snapshot.clues.map((clue) => ({
+                    clueId:
+                      clue.id ||
+                      `${historicalSnapshotId}-clue-${randomUUID().slice(0, 8)}`,
+                    moduleId,
+                    clueText: clue.clueText,
+                    category: clue.category,
+                    difficulty: clue.difficulty,
+                    clueLocation: clue.location,
+                    discoveryMethod: clue.discoveryMethod || null,
+                    reveals: clue.reveals || [],
+                    discovered: clue.discovered === true,
+                    discoveryDetails: (clue.discoveryDetails ||
+                      undefined) as any,
+                  })),
+                }
+              : undefined,
           // Create related conditions
-          conditions: snapshot.conditions && snapshot.conditions.length > 0
-            ? {
-                create: snapshot.conditions.map((condition) => ({
-                  conditionId: `${historicalSnapshotId}-cond-${randomUUID().slice(0, 8)}`,
-                  moduleId,
-                  conditionType: condition.type,
-                  description: condition.description,
-                  mechanicalEffect: condition.mechanicalEffect || null,
-                })),
-              }
-            : undefined,
+          conditions:
+            snapshot.conditions && snapshot.conditions.length > 0
+              ? {
+                  create: snapshot.conditions.map((condition) => ({
+                    conditionId: `${historicalSnapshotId}-cond-${randomUUID().slice(0, 8)}`,
+                    moduleId,
+                    conditionType: condition.type,
+                    description: condition.description,
+                    mechanicalEffect: condition.mechanicalEffect || null,
+                  })),
+                }
+              : undefined,
         },
       });
 
@@ -1794,6 +1833,44 @@ export class DynamicGameStateManager {
     } | null
   ): void {
     this.state.globalTrigger = trigger;
+    this.state.lastUpdated = new Date();
+  }
+
+  // === Combat State Methods ===
+
+  /**
+   * Enter combat: set isBattle=true and initialize combatState
+   */
+  setCombatState(state: CombatState | null): void {
+    this.state.isBattle = state !== null;
+    this.state.combatState = state;
+    this.state.lastUpdated = new Date();
+  }
+
+  /**
+   * Exit combat: set isBattle=false, combatState=null
+   */
+  exitCombat(): void {
+    this.state.isBattle = false;
+    this.state.combatState = null;
+    this.state.lastUpdated = new Date();
+  }
+
+  /**
+   * Set or clear the pending NPC actions for the current combat round
+   */
+  setPendingNpcActions(actions: PendingNpcAction[] | null): void {
+    if (!this.state.combatState) return;
+    this.state.combatState.pendingNpcActions = actions;
+    this.state.lastUpdated = new Date();
+  }
+
+  /**
+   * Increment the combat round counter
+   */
+  incrementCombatRound(): void {
+    if (!this.state.combatState) return;
+    this.state.combatState.round += 1;
     this.state.lastUpdated = new Date();
   }
 

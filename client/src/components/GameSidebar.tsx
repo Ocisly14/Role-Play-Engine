@@ -4,10 +4,10 @@
  * Displays character information and a player notes memo pad in separate tabs.
  */
 
-import { useState, useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
-import { CharacterSheetModal } from "./CharacterSheetModal";
 import { authFetch } from "../utils/authFetch";
+import { CharacterSheetModal } from "./CharacterSheetModal";
 
 interface GameSidebarProps {
   sessionId: string;
@@ -331,7 +331,10 @@ export function GameSidebar({
     if (!trimmed || !sessionId) return;
 
     setKnowledgeQuery("");
-    setKnowledgeMessages((prev) => [...prev, { role: "user", content: trimmed }]);
+    setKnowledgeMessages((prev) => [
+      ...prev,
+      { role: "user", content: trimmed },
+    ]);
     setKnowledgeError(null);
 
     setTimeout(() => {
@@ -403,7 +406,9 @@ export function GameSidebar({
         }
       } catch (err) {
         console.error("Error fetching game state:", err);
-        setError(err instanceof Error ? err.message : t("common:error.generic"));
+        setError(
+          err instanceof Error ? err.message : t("common:error.generic")
+        );
       } finally {
         // Clear loading state and mark as no longer initial load
         if (isInitialLoadRef.current) {
@@ -452,12 +457,14 @@ export function GameSidebar({
   // Determine drawer state classes for mobile
   const drawerClass = isMobile
     ? isOpen
-      ? 'sidebar-drawer-open'
-      : 'sidebar-drawer-closed'
-    : '';
+      ? "sidebar-drawer-open"
+      : "sidebar-drawer-closed"
+    : "";
 
   return (
-    <div className={`game-sidebar backdrop-blur-sm border border-slate-200 shadow-md rounded-lg ${drawerClass}`}>
+    <div
+      className={`game-sidebar backdrop-blur-sm border border-slate-200 shadow-md rounded-lg ${drawerClass}`}
+    >
       {/* Character Sheet Modal */}
       {showCharacterSheet && (
         <CharacterSheetModal
@@ -672,12 +679,14 @@ export function GameSidebar({
                               >
                                 {weapon.damage && (
                                   <span>
-                                    {t("game:sidebar.status.dmg")} {weapon.damage}
+                                    {t("game:sidebar.status.dmg")}{" "}
+                                    {weapon.damage}
                                   </span>
                                 )}
                                 {weapon.range && (
                                   <span>
-                                    {t("game:sidebar.status.range")} {weapon.range}
+                                    {t("game:sidebar.status.range")}{" "}
+                                    {weapon.range}
                                   </span>
                                 )}
                                 {weapon.attacks && (
@@ -688,7 +697,8 @@ export function GameSidebar({
                                 )}
                                 {weapon.ammo !== undefined && (
                                   <span>
-                                    {t("game:sidebar.status.ammo")} {weapon.ammo}
+                                    {t("game:sidebar.status.ammo")}{" "}
+                                    {weapon.ammo}
                                   </span>
                                 )}
                               </div>
@@ -776,9 +786,7 @@ export function GameSidebar({
               <div className="memo-header">
                 <h3>{t("game:sidebar.memo.title")}</h3>
               </div>
-              <p className="memo-hint">
-                {t("game:sidebar.memo.hint")}
-              </p>
+              <p className="memo-hint">{t("game:sidebar.memo.hint")}</p>
               {memoError && (
                 <p className="empty-state" style={{ color: "#c41e3a" }}>
                   {t("game:sidebar.memo.errorPrefix")} {memoError}
@@ -933,10 +941,19 @@ export function GameSidebar({
         {activeTab === "knowledge" && (
           <div
             className="tab-panel"
-            style={{ display: "flex", flexDirection: "column", height: "100%", padding: 0, overflow: "hidden" }}
+            style={{
+              display: "flex",
+              flexDirection: "column",
+              height: "100%",
+              padding: 0,
+              overflow: "hidden",
+            }}
           >
             {/* Chat message history */}
-            <div className="messages-scroll-area" style={{ flex: 1, paddingBottom: "12px" }}>
+            <div
+              className="messages-scroll-area"
+              style={{ flex: 1, paddingBottom: "12px" }}
+            >
               {knowledgeMessages.length === 0 && (
                 <div className="empty-chat-prompt">
                   <p>{t("game:sidebar.knowledge.hint")}</p>
@@ -944,15 +961,22 @@ export function GameSidebar({
               )}
 
               {knowledgeMessages.map((msg, idx) => (
-                <div key={idx} className={`chat-message ${msg.role === "user" ? "character" : "keeper"}`}>
+                <div
+                  key={idx}
+                  className={`chat-message ${msg.role === "user" ? "character" : "keeper"}`}
+                >
                   <div className="message-meta">
                     <span className="sender-name">
-                      {msg.role === "user" ? `📝 ${t("game:sidebar.knowledge.you")}` : `🔍 ${t("game:sidebar.knowledge.assistant")}`}
+                      {msg.role === "user"
+                        ? `📝 ${t("game:sidebar.knowledge.you")}`
+                        : `🔍 ${t("game:sidebar.knowledge.assistant")}`}
                     </span>
                   </div>
                   <div
                     className={`message-text backdrop-blur-sm border border-slate-200 shadow-md rounded-lg px-[18px] py-[14px] ${
-                      msg.role === "user" ? "bg-[rgba(232,220,196,0.5)]" : "bg-white/50"
+                      msg.role === "user"
+                        ? "bg-[rgba(232,220,196,0.5)]"
+                        : "bg-white/50"
                     }`}
                   >
                     {msg.content}
@@ -963,7 +987,9 @@ export function GameSidebar({
               {knowledgeLoading && (
                 <div className="chat-message keeper loading">
                   <div className="message-meta">
-                    <span className="sender-name">🔍 {t("game:sidebar.knowledge.assistant")}</span>
+                    <span className="sender-name">
+                      🔍 {t("game:sidebar.knowledge.assistant")}
+                    </span>
                   </div>
                   <div className="message-text backdrop-blur-sm bg-white/50 border border-slate-200 shadow-md rounded-lg px-[18px] py-[14px]">
                     <span className="typing-indicator">
@@ -976,9 +1002,7 @@ export function GameSidebar({
               )}
 
               {knowledgeError && (
-                <div className="error-message">
-                  {knowledgeError}
-                </div>
+                <div className="error-message">{knowledgeError}</div>
               )}
 
               <div ref={knowledgeChatEndRef} />
@@ -986,11 +1010,12 @@ export function GameSidebar({
 
             {/* Input area */}
             <div className="px-2 pb-2 pt-1">
-              <div
-                className="rounded-3xl border border-white/30 backdrop-blur-md shadow-[0_5px_13px_rgba(15,23,42,0.55)] px-2 pb-2 pt-2"
-              >
+              <div className="rounded-3xl border border-white/30 backdrop-blur-md shadow-[0_5px_13px_rgba(15,23,42,0.55)] px-2 pb-2 pt-2">
                 <form
-                  onSubmit={(e) => { e.preventDefault(); askKnowledge(); }}
+                  onSubmit={(e) => {
+                    e.preventDefault();
+                    askKnowledge();
+                  }}
                   className="relative overflow-hidden rounded-2xl border border-white/50 shadow-[0_6px_15px_rgba(15,23,42,0.25)] bg-white/80 supports-[backdrop-filter]:bg-white/55 supports-[backdrop-filter]:backdrop-blur-2xl"
                 >
                   <textarea
@@ -1013,7 +1038,18 @@ export function GameSidebar({
                       className="inline-flex items-center justify-center whitespace-nowrap font-medium transition-all focus-visible:outline-none disabled:pointer-events-none disabled:opacity-50 backdrop-blur-md bg-white/50 border border-slate-200 text-slate-900 shadow-md hover:bg-white/70 hover:border-slate-300 hover:-translate-y-0.5 rounded-xl px-3 text-xs ml-auto gap-0.5 h-[30px]"
                     >
                       {t("game:sidebar.knowledge.ask")}
-                      <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="size-3.5">
+                      <svg
+                        xmlns="http://www.w3.org/2000/svg"
+                        width="24"
+                        height="24"
+                        viewBox="0 0 24 24"
+                        fill="none"
+                        stroke="currentColor"
+                        strokeWidth="2"
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        className="size-3.5"
+                      >
                         <path d="M14.536 21.686a.5.5 0 0 0 .937-.024l6.5-19a.496.496 0 0 0-.635-.635l-19 6.5a.5.5 0 0 0-.024.937l7.93 3.18a2 2 0 0 1 1.112 1.11z" />
                         <path d="m21.854 2.147-10.94 10.939" />
                       </svg>

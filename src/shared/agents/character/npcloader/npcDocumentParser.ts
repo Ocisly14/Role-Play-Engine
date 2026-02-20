@@ -5,16 +5,16 @@
 
 import fs from "fs";
 import path from "path";
-import { ChatOpenAI } from "@langchain/openai";
-import { ChatGoogleGenerativeAI } from "@langchain/google-genai";
+import type { ChatGoogleGenerativeAI } from "@langchain/google-genai";
+import type { ChatOpenAI } from "@langchain/openai";
 import mammoth from "mammoth";
 import pdfParse from "pdf-parse";
-import type { ParsedNPCData, InventoryItem } from "../../models/gameTypes.js";
 import {
-  createChatModel,
-  ModelProviderName,
   ModelClass,
+  ModelProviderName,
+  createChatModel,
 } from "../../../../models/index.js";
+import type { InventoryItem, ParsedNPCData } from "../../models/gameTypes.js";
 
 /**
  * Supported document formats

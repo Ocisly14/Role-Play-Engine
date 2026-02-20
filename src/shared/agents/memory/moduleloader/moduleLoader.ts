@@ -5,13 +5,13 @@
 
 import fs from "fs";
 import path from "path";
-import type { CoCDatabaseAdapter } from "../database/CoCDatabaseAdapter.js";
-import { resolveEmailId } from "../database/userContext.js";
-import { getPrismaClient } from "../database/prismaClient.js";
 import type {
   ModuleBackground,
   ParsedModuleData,
 } from "../../models/moduleTypes.js";
+import type { CoCDatabaseAdapter } from "../database/CoCDatabaseAdapter.js";
+import { getPrismaClient } from "../database/prismaClient.js";
+import { resolveEmailId } from "../database/userContext.js";
 import { ModuleDocumentParser } from "./moduleDocumentParser.js";
 
 export class ModuleLoader {
@@ -70,7 +70,7 @@ export class ModuleLoader {
 
     if (fs.existsSync(lastLoadFile)) {
       try {
-        lastLoadTime = parseInt(fs.readFileSync(lastLoadFile, "utf8"));
+        lastLoadTime = Number.parseInt(fs.readFileSync(lastLoadFile, "utf8"));
       } catch {
         return { hasChanges: true, currentFiles };
       }
@@ -121,7 +121,7 @@ export class ModuleLoader {
 
     if (fs.existsSync(lastLoadFile)) {
       try {
-        lastLoadTime = parseInt(fs.readFileSync(lastLoadFile, "utf8"));
+        lastLoadTime = Number.parseInt(fs.readFileSync(lastLoadFile, "utf8"));
       } catch {
         return { hasChanges: true, currentFiles };
       }

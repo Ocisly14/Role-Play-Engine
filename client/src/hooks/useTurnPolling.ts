@@ -5,7 +5,7 @@
  * The server will keep the connection open until the turn is completed.
  */
 
-import { useState, useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 import { authFetch } from "../utils/authFetch";
 
 export interface ActionResult {
@@ -25,7 +25,12 @@ export interface TurnStatus {
   turnNumber: number;
   characterInput: string;
   keeperNarrative: string | null;
-  status: "processing" | "completed" | "error" | "requires_skill_selection";
+  status:
+    | "processing"
+    | "completed"
+    | "error"
+    | "requires_skill_selection"
+    | "requires_combat_response";
   errorMessage: string | null;
   startedAt: string;
   completedAt: string | null;
@@ -47,9 +52,7 @@ export interface UseTurnPollingResult {
   stopPolling: () => void;
 }
 
-export function useTurnPolling(
-  apiBaseUrl: string = "/api"
-): UseTurnPollingResult {
+export function useTurnPolling(apiBaseUrl = "/api"): UseTurnPollingResult {
   const [turn, setTurn] = useState<TurnStatus | null>(null);
   const [isPolling, setIsPolling] = useState(false);
   const [error, setError] = useState<string | null>(null);

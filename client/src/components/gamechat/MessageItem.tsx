@@ -20,67 +20,74 @@ interface MessageItemProps {
   onAnimationComplete?: () => void;
 }
 
-export const MessageItem = React.memo<MessageItemProps>(({
-  role,
-  content,
-  timestamp,
-  characterName,
-  diceRolls,
-  imageUrl,
-  imageCaption,
-  gameDay,
-  gameTime,
-  onAnimationComplete,
-}) => {
-  const { t } = useTranslation('game');
-  return (
-    <div className={`chat-message ${role}`}>
-      <div className="message-meta">
-        <span className="sender-name">
-          {role === "character" ? `📝 ${characterName}` : `🎭 ${t('messages.keeper')}`}
-        </span>
-        <span className="message-timestamp">
-          {gameTime && gameTime !== null && gameTime !== undefined && gameTime !== ""
-            ? `${t('messages.day')} ${gameDay ?? 1}, ${gameTime}`
-            : new Date(timestamp).toLocaleTimeString("en-US", {
-                hour: "2-digit",
-                minute: "2-digit",
-              })}
-        </span>
-      </div>
-      {diceRolls && diceRolls.length > 0 && (
-        <DiceAnimation
-          diceRolls={diceRolls}
-          onAnimationComplete={onAnimationComplete}
-        />
-      )}
-      {imageUrl && (
-        <div className="scene-image-wrapper">
-          <img
-            className="scene-image"
-            src={imageUrl}
-            alt={imageCaption || t('messages.sceneImage')}
+export const MessageItem = React.memo<MessageItemProps>(
+  ({
+    role,
+    content,
+    timestamp,
+    characterName,
+    diceRolls,
+    imageUrl,
+    imageCaption,
+    gameDay,
+    gameTime,
+    onAnimationComplete,
+  }) => {
+    const { t } = useTranslation("game");
+    return (
+      <div className={`chat-message ${role}`}>
+        <div className="message-meta">
+          <span className="sender-name">
+            {role === "character"
+              ? `📝 ${characterName}`
+              : `🎭 ${t("messages.keeper")}`}
+          </span>
+          <span className="message-timestamp">
+            {gameTime &&
+            gameTime !== null &&
+            gameTime !== undefined &&
+            gameTime !== ""
+              ? `${t("messages.day")} ${gameDay ?? 1}, ${gameTime}`
+              : new Date(timestamp).toLocaleTimeString("en-US", {
+                  hour: "2-digit",
+                  minute: "2-digit",
+                })}
+          </span>
+        </div>
+        {diceRolls && diceRolls.length > 0 && (
+          <DiceAnimation
+            diceRolls={diceRolls}
+            onAnimationComplete={onAnimationComplete}
           />
-          {imageCaption && (
-            <div className="scene-image-caption">{imageCaption}</div>
-          )}
-        </div>
-      )}
-      {content && (
-        <div
-          className={`message-text backdrop-blur-sm border border-slate-200 shadow-md rounded-lg px-[18px] py-[14px] ${
-            role === "character"
-              ? "bg-[rgba(232,220,196,0.5)]"
-              : "bg-white/50"
-          }`}
-        >
-          <ReactMarkdown className="markdown-content">
-            {content}
-          </ReactMarkdown>
-        </div>
-      )}
-    </div>
-  );
-});
+        )}
+        {imageUrl && (
+          <div className="scene-image-wrapper">
+            <img
+              className="scene-image"
+              src={imageUrl}
+              alt={imageCaption || t("messages.sceneImage")}
+            />
+            {imageCaption && (
+              <div className="scene-image-caption">{imageCaption}</div>
+            )}
+          </div>
+        )}
+        {content && (
+          <div
+            className={`message-text backdrop-blur-sm border border-slate-200 shadow-md rounded-lg px-[18px] py-[14px] ${
+              role === "character"
+                ? "bg-[rgba(232,220,196,0.5)]"
+                : "bg-white/50"
+            }`}
+          >
+            <ReactMarkdown className="markdown-content">
+              {content}
+            </ReactMarkdown>
+          </div>
+        )}
+      </div>
+    );
+  }
+);
 
 MessageItem.displayName = "MessageItem";

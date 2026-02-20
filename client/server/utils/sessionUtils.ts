@@ -1,5 +1,5 @@
-import type { Request } from "express";
 import { randomUUID } from "crypto";
+import type { Request } from "express";
 
 /**
  * Get client IP address from request

@@ -1,6 +1,5 @@
-import React from "react";
-import { LoginForm } from "../../components/auth/LoginForm";
 import { FrameImage } from "../../components/FrameImage";
+import { LoginForm } from "../../components/auth/LoginForm";
 import { useBackgroundImage } from "../../hooks/useBackgroundImage";
 
 export default function Login() {

@@ -3,9 +3,13 @@
  */
 
 import { useEffect, useRef } from "react";
-import type { Message, PendingDiceRolls, WebSocketMessage } from "../types/gamechat";
 import type { DiceRollInfo } from "../components/DiceAnimation";
 import { filterDiceRollsForPlayer } from "../components/gamechat/utils";
+import type {
+  Message,
+  PendingDiceRolls,
+  WebSocketMessage,
+} from "../types/gamechat";
 import type { SceneTransitionKind } from "./useSceneTransition";
 
 export interface UseWebSocketParams {
@@ -20,7 +24,9 @@ export interface UseWebSocketParams {
   streamingBufferRef: React.MutableRefObject<Map<string, string>>;
   setMessages: React.Dispatch<React.SetStateAction<Message[]>>;
   setStreamingTurnId: React.Dispatch<React.SetStateAction<string | null>>;
-  setPendingDiceRolls: React.Dispatch<React.SetStateAction<PendingDiceRolls | null>>;
+  setPendingDiceRolls: React.Dispatch<
+    React.SetStateAction<PendingDiceRolls | null>
+  >;
   setShowingDiceAnimation: React.Dispatch<React.SetStateAction<boolean>>;
   setDiceAnimationCompleted: React.Dispatch<React.SetStateAction<boolean>>;
   startSceneChanging: (kind: SceneTransitionKind) => void;

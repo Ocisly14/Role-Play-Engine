@@ -1,12 +1,12 @@
-import { generateText, ModelClass } from "../../../models/index.js";
+import { ModelClass, generateText } from "../../../models/index.js";
 import { getPrismaClient } from "../../../shared/agents/memory/database/prismaClient.js";
 import {
-  RagQueryRewriter,
   type RagQueryRewriteOutput,
+  RagQueryRewriter,
 } from "./ragQueryRewriter.js";
 import {
-  SessionRagService,
   type RetrievedSessionRagChunk,
+  SessionRagService,
 } from "./sessionRagService.js";
 
 export interface RecentTurn {
@@ -67,7 +67,11 @@ async function fetchFullNarratives(
   chunks: RetrievedSessionRagChunk[]
 ): Promise<Map<string, FullTurnNarrative>> {
   const turnIdList = Array.from(
-    new Set(chunks.map((c) => parseTurnId(c.sourceKey)).filter((id): id is string => id !== null))
+    new Set(
+      chunks
+        .map((c) => parseTurnId(c.sourceKey))
+        .filter((id): id is string => id !== null)
+    )
   );
   if (turnIdList.length === 0) return new Map();
 
@@ -118,7 +122,8 @@ function buildEvidenceBlock(
           full.gameDay != null ? `Day ${full.gameDay}` : null,
           full.gameTime || null,
         ].filter(Boolean);
-        const timeStr = timeParts.length > 0 ? ` | time: ${timeParts.join(" ")}` : "";
+        const timeStr =
+          timeParts.length > 0 ? ` | time: ${timeParts.join(" ")}` : "";
         return [
           `[Memory${i + 1}]`,
           `turn: ${full.turnNumber}${timeStr}${full.sceneName ? ` | scene: ${full.sceneName}` : ""}${full.location ? ` | location: ${full.location}` : ""}`,
@@ -232,13 +237,15 @@ Answer:`;
 
     let answer: string;
     try {
-      answer = (await generateText({
-        runtime: {},
-        context: answerPrompt,
-        modelClass: ModelClass.SMALL,
-        operation: "rag_answer",
-        temperature: 0.2,
-      })).trim();
+      answer = (
+        await generateText({
+          runtime: {},
+          context: answerPrompt,
+          modelClass: ModelClass.SMALL,
+          operation: "rag_answer",
+          temperature: 0.2,
+        })
+      ).trim();
     } catch (error) {
       console.warn("[SessionRagQaService] answer generation failed", error);
       answer =

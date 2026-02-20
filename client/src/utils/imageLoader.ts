@@ -41,9 +41,6 @@ export async function findAvailableImage(
  * Synchronously returns a default image URL (for CSS or immediate use)
  * The actual format detection happens asynchronously
  */
-export function getDefaultImageUrl(
-  imageName: string,
-  format: string = "png"
-): string {
+export function getDefaultImageUrl(imageName: string, format = "png"): string {
   return `/asset/${imageName}.${format}`;
 }

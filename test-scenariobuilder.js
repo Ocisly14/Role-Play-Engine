@@ -7,15 +7,15 @@
 import { config } from "dotenv";
 config();
 
+import { randomUUID } from "crypto";
 import fs from "fs";
 import path from "path";
-import { randomUUID } from "crypto";
-import { CoCDatabase } from "./dist/src/shared/agents/memory/database/schema.js";
-import { ScenarioBuilderAgent } from "./dist/src/dynamicworldagent/world_builder/scenarioBuilderAgent.js";
 import {
   saveWorldToDatabase,
   saveWorldToJSON,
 } from "./dist/src/dynamicworldagent/world_builder/persistence.js";
+import { ScenarioBuilderAgent } from "./dist/src/dynamicworldagent/world_builder/scenarioBuilderAgent.js";
+import { CoCDatabase } from "./dist/src/shared/agents/memory/database/schema.js";
 
 const logger = {
   info: (msg) => console.log(`ℹ️  ${msg}`),

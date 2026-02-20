@@ -1,8 +1,8 @@
-import { WebSocketServer, WebSocket } from "ws";
-import http from "http";
-import { ServerState } from "../core/ServerState.js";
+import type http from "http";
+import { WebSocket, WebSocketServer } from "ws";
 import { getPrismaClient } from "../../../src/shared/agents/memory/database/prismaClient.js";
 import { verifyToken } from "../auth/jwt.js";
+import { ServerState } from "../core/ServerState.js";
 import { handleClientMessage } from "./handlers.js";
 import {
   startProgressionChecker,

@@ -1,7 +1,7 @@
-import { useState, useMemo, useEffect, useCallback } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
-import { authFetch } from "../utils/authFetch";
 import { SKILLS } from "../constants/skills";
+import { authFetch } from "../utils/authFetch";
 
 interface UseCharacterCreationProps {
   onCharacterCreated?: (characterId: string) => void;
@@ -51,7 +51,9 @@ function getNumericAttributeValue(
   return value;
 }
 
-function calculateDerivedAttributes(form: Record<string, string>): DerivedAttributes {
+function calculateDerivedAttributes(
+  form: Record<string, string>
+): DerivedAttributes {
   const STR = getNumericAttributeValue(form, "STR");
   const CON = getNumericAttributeValue(form, "CON");
   const DEX = getNumericAttributeValue(form, "DEX");
@@ -137,7 +139,10 @@ function calculateOccupationalPointsFromExpression(
   let evaluated = expression;
   for (const attr of OCCUPATIONAL_ATTRIBUTES) {
     const attrValue = Number(form[attr] ?? 0) || 0;
-    evaluated = evaluated.replace(new RegExp(`\\b${attr}\\b`, "g"), String(attrValue));
+    evaluated = evaluated.replace(
+      new RegExp(`\\b${attr}\\b`, "g"),
+      String(attrValue)
+    );
   }
 
   // After substitution, only numeric math symbols should remain.
@@ -251,8 +256,10 @@ export const useCharacterCreation = ({
 
     const normalized = formOccupation.toLowerCase();
     const matched = occupations.find((occ) => {
-      const en = typeof occ.name_en === "string" ? occ.name_en.trim().toLowerCase() : "";
-      const zh = typeof occ.name_zh === "string" ? occ.name_zh.trim().toLowerCase() : "";
+      const en =
+        typeof occ.name_en === "string" ? occ.name_en.trim().toLowerCase() : "";
+      const zh =
+        typeof occ.name_zh === "string" ? occ.name_zh.trim().toLowerCase() : "";
       return en === normalized || zh === normalized;
     });
 
@@ -305,8 +312,8 @@ export const useCharacterCreation = ({
     let interestUsed = 0;
 
     skillsState.forEach((skill) => {
-      const occupationalValue = parseInt(skill.occupationalValue) || 0;
-      const interestValue = parseInt(skill.interestValue) || 0;
+      const occupationalValue = Number.parseInt(skill.occupationalValue) || 0;
+      const interestValue = Number.parseInt(skill.interestValue) || 0;
 
       occupationalUsed += occupationalValue;
       interestUsed += interestValue;
@@ -386,11 +393,11 @@ export const useCharacterCreation = ({
         (acc, s) => ({
           ...acc,
           [s.name]: {
-            base: parseInt(s.base.replace("%", "")) || 0,
+            base: Number.parseInt(s.base.replace("%", "")) || 0,
             occupationalPoints: Number(s.occupationalValue) || 0,
             interestPoints: Number(s.interestValue) || 0,
             total:
-              (parseInt(s.base.replace("%", "")) || 0) +
+              (Number.parseInt(s.base.replace("%", "")) || 0) +
               (Number(s.occupationalValue) || 0) +
               (Number(s.interestValue) || 0),
           },
@@ -451,7 +458,10 @@ export const useCharacterCreation = ({
   // Handle character creation
   const handleCreateCharacter = async () => {
     if (!form.name) {
-      setSaveMessage({ type: "error", text: t("character:validation.nameRequired") });
+      setSaveMessage({
+        type: "error",
+        text: t("character:validation.nameRequired"),
+      });
       return;
     }
 

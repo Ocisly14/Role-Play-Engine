@@ -1,7 +1,7 @@
-/// <reference path="../types/express.d.ts" />
-import type { Request, Response } from "express";
 import fs from "node:fs";
 import path from "node:path";
+/// <reference path="../types/express.d.ts" />
+import type { Request, Response } from "express";
 import { WorldModuleLoader } from "../../../src/dynamicworldagent/world_builder/worldModuleLoader.js";
 import { ModuleLoader } from "../../../src/shared/agents/memory/moduleloader/index.js";
 import { DatabaseManager } from "../core/DatabaseManager.js";

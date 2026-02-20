@@ -6,23 +6,22 @@
 import { randomUUID } from "crypto";
 import fs from "fs";
 import path from "path";
-import type { CoCDatabaseAdapter } from "../database/CoCDatabaseAdapter.js";
-import { getPrismaClient } from "../database/prismaClient.js";
-import { resolveEmailId } from "../database/userContext.js";
+import type {
+  ParsedScenarioData,
+  ScenarioCharacter,
+  ScenarioClue,
+  ScenarioCondition,
+  ScenarioProfile,
+  ScenarioQuery,
+  ScenarioSearchResult,
+  ScenarioSnapshot,
+} from "../../models/scenarioTypes.js";
 import {
   resolveModuleIdByName,
   scopeIdByModule,
 } from "../database/moduleScope.js";
-import type {
-  ScenarioProfile,
-  ScenarioSnapshot,
-  ScenarioCharacter,
-  ScenarioClue,
-  ScenarioCondition,
-  ParsedScenarioData,
-  ScenarioQuery,
-  ScenarioSearchResult,
-} from "../../models/scenarioTypes.js";
+import { getPrismaClient } from "../database/prismaClient.js";
+import { resolveEmailId } from "../database/userContext.js";
 import { ScenarioDocumentParser } from "./scenarioDocumentParser.js";
 
 /**
@@ -69,8 +68,9 @@ export class ScenarioLoader {
     return this.resolvedModuleId || undefined;
   }
 
-  private async getScenarioScopeWhere():
-    Promise<Record<string, unknown> | undefined> {
+  private async getScenarioScopeWhere(): Promise<
+    Record<string, unknown> | undefined
+  > {
     const moduleId = await this.getModuleId();
     if (moduleId) {
       return { moduleId };
@@ -134,7 +134,7 @@ export class ScenarioLoader {
 
     if (fs.existsSync(lastLoadFile)) {
       try {
-        lastLoadTime = parseInt(fs.readFileSync(lastLoadFile, "utf8"));
+        lastLoadTime = Number.parseInt(fs.readFileSync(lastLoadFile, "utf8"));
       } catch {
         return { hasChanges: true, currentFiles };
       }
@@ -380,7 +380,7 @@ export class ScenarioLoader {
 
     if (fs.existsSync(lastLoadFile)) {
       try {
-        lastLoadTime = parseInt(fs.readFileSync(lastLoadFile, "utf8"));
+        lastLoadTime = Number.parseInt(fs.readFileSync(lastLoadFile, "utf8"));
       } catch {
         return { hasChanges: true, currentFiles };
       }
@@ -613,7 +613,9 @@ export class ScenarioLoader {
   /**
    * Save scenario to database
    */
-  private async saveScenarioToDatabase(scenario: ScenarioProfile): Promise<void> {
+  private async saveScenarioToDatabase(
+    scenario: ScenarioProfile
+  ): Promise<void> {
     const prisma = getPrismaClient();
     const moduleId = await this.getModuleId();
     if (!moduleId) {
@@ -636,7 +638,8 @@ export class ScenarioLoader {
           description: scenario.description,
           tags: scenario.tags,
           connections: scenario.connections,
-          permanentChanges: (scenario.snapshot.permanentChanges || undefined) as any,
+          permanentChanges: (scenario.snapshot.permanentChanges ||
+            undefined) as any,
           metadata: scenario.metadata,
           mapImagePath: scenario.mapImagePath || null,
         },
@@ -647,7 +650,8 @@ export class ScenarioLoader {
           description: scenario.description,
           tags: scenario.tags,
           connections: scenario.connections,
-          permanentChanges: (scenario.snapshot.permanentChanges || undefined) as any,
+          permanentChanges: (scenario.snapshot.permanentChanges ||
+            undefined) as any,
           metadata: scenario.metadata,
           mapImagePath: scenario.mapImagePath || null,
         },
@@ -725,7 +729,8 @@ export class ScenarioLoader {
                     discoveryMethod: clue.discoveryMethod || null,
                     reveals: clue.reveals,
                     discovered: clue.discovered || false,
-                    discoveryDetails: (clue.discoveryDetails || undefined) as any,
+                    discoveryDetails: (clue.discoveryDetails ||
+                      undefined) as any,
                   },
                 });
               } catch (e: any) {
@@ -914,7 +919,9 @@ export class ScenarioLoader {
   /**
    * Find initial scenario by scanning scenario directory for files containing "initial_scenario" in filename
    */
-  async findInitialScenarioByFileName(scenarioDir: string): Promise<ScenarioProfile | null> {
+  async findInitialScenarioByFileName(
+    scenarioDir: string
+  ): Promise<ScenarioProfile | null> {
     if (!fs.existsSync(scenarioDir)) {
       return null;
     }

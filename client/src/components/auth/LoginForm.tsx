@@ -1,7 +1,8 @@
-import React, { useState, useEffect, useRef } from "react";
+import type React from "react";
+import { useEffect, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
-import { useAuth } from "../../contexts/AuthContext";
 import { useNavigate } from "react-router-dom";
+import { useAuth } from "../../contexts/AuthContext";
 import { api } from "../../services/api";
 
 const RESEND_COOLDOWN_SECONDS = 60;
@@ -52,7 +53,9 @@ export function LoginForm() {
         date: string;
         content: string;
       }>
-    ).slice().sort((a, b) => b.date.localeCompare(a.date));
+    )
+      .slice()
+      .sort((a, b) => b.date.localeCompare(a.date));
     const latest = entries[0];
 
     return (

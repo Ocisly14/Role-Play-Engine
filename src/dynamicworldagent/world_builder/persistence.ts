@@ -3,25 +3,28 @@
  * Handles saving generated world content to database and JSON files
  */
 
+import { randomUUID } from "crypto";
 import path from "path";
 import fs from "fs/promises";
-import type { CoCDatabase, CoCDatabaseAdapter } from "../../shared/agents/memory/database/index.js";
 import type {
-  MacroSceneStructure,
-  TruthEvent,
-  KnowledgeHolder,
-  RedHerring,
-  MythosEvent,
+  CoCDatabase,
+  CoCDatabaseAdapter,
+} from "../../shared/agents/memory/database/index.js";
+import { getPrismaClient } from "../../shared/agents/memory/database/prismaClient.js";
+import type { ActionLogEntry } from "../../shared/agents/models/gameTypes.js";
+import type {
   EndStateDefinition,
+  KnowledgeHolder,
+  MacroSceneStructure,
+  ModuleDigest,
+  MythosEvent,
+  RedHerring,
+  ScenarioNpcAssignments,
   ScenarioOutline,
   StartingSceneSelection,
-  ScenarioNpcAssignments,
-  ModuleDigest,
+  TruthEvent,
 } from "./types.js";
-import type { ActionLogEntry } from "../../shared/agents/models/gameTypes.js";
 import type { DynamicNPCProfile } from "./types.js";
-import { randomUUID } from "crypto";
-import { getPrismaClient } from "../../shared/agents/memory/database/prismaClient.js";
 
 /**
  * Save world generation results to database
@@ -532,7 +535,7 @@ export async function saveWorldToJSON(
     await fs.writeFile(filePath, JSON.stringify([scenarioPayload], null, 2));
   }
 
-  let startingSceneFile: string | null = null;
+  const startingSceneFile: string | null = null;
 
   // 5. Save NPCs to [Module]_npc/ directory
   const npcsDir = path.join(moduleDir, `${moduleName}_npc`);

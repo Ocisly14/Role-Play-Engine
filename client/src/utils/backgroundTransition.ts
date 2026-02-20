@@ -22,7 +22,7 @@ function preloadImage(url: string): Promise<void> {
  */
 export function setBackgroundWithTransition(
   imageUrl: string,
-  useTransition: boolean = true,
+  useTransition = true,
   callback?: () => void
 ): void {
   if (!useTransition) {

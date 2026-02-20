@@ -5,14 +5,14 @@
 
 import fs from "fs";
 import path from "path";
-import { ChatOpenAI } from "@langchain/openai";
-import { ChatGoogleGenerativeAI } from "@langchain/google-genai";
+import type { ChatGoogleGenerativeAI } from "@langchain/google-genai";
+import type { ChatOpenAI } from "@langchain/openai";
 import mammoth from "mammoth";
 import pdfParse from "pdf-parse";
 import {
-  createChatModel,
   ModelClass,
   ModelProviderName,
+  createChatModel,
 } from "../../../../models/index.js";
 import type { ParsedModuleData } from "../../models/moduleTypes.js";
 

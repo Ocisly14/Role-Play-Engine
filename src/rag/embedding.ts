@@ -1,14 +1,14 @@
-import { OpenAIEmbeddings } from "@langchain/openai";
 import { GoogleGenerativeAIEmbeddings } from "@langchain/google-genai";
+import { OpenAIEmbeddings } from "@langchain/openai";
 import { getModelSettings } from "../models/generator.js";
 import {
+  type EmbeddingModelSettings,
   ModelClass,
   ModelProviderName,
-  type EmbeddingModelSettings,
 } from "../models/types.js";
 import {
-  LocalEmbeddingManager,
   type LocalEmbeddingLanguage,
+  LocalEmbeddingManager,
 } from "./localEmbeddingManager.js";
 
 export class EmbeddingClient {

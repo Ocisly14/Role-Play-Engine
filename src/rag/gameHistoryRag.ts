@@ -8,10 +8,13 @@
  * Used by Memory agent to provide relevant historical context to Keeper agent.
  */
 
-import type { ActionLogEntry } from "../shared/agents/models/gameTypes.js";
-import type { CoCDatabase, CoCDatabaseAdapter } from "../shared/agents/memory/database/index.js";
-import { EmbeddingClient } from "./embedding.js";
 import { ModelProviderName } from "../models/types.js";
+import type {
+  CoCDatabase,
+  CoCDatabaseAdapter,
+} from "../shared/agents/memory/database/index.js";
+import type { ActionLogEntry } from "../shared/agents/models/gameTypes.js";
+import { EmbeddingClient } from "./embedding.js";
 
 /** Relevant history item returned from search */
 export interface RelevantHistoryItem {
@@ -39,7 +42,10 @@ export class GameHistoryRag {
   private embedder: EmbeddingClient;
   private db: CoCDatabase | CoCDatabaseAdapter;
 
-  constructor(db: CoCDatabase | CoCDatabaseAdapter, provider?: ModelProviderName) {
+  constructor(
+    db: CoCDatabase | CoCDatabaseAdapter,
+    provider?: ModelProviderName
+  ) {
     this.db = db;
     const modelProvider =
       provider ||

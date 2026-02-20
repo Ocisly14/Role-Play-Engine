@@ -1,5 +1,5 @@
-import { getPrismaClient } from "./prismaClient.js";
 import { createHash } from "crypto";
+import { getPrismaClient } from "./prismaClient.js";
 
 export function normalizeModuleNameKey(name: string): string {
   return name.trim().toLowerCase();

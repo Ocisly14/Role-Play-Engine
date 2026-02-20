@@ -1,9 +1,10 @@
-import React, { useState, useEffect } from "react";
+import type React from "react";
+import { useEffect, useState } from "react";
 import { Outlet, useLocation } from "react-router-dom";
 import { useAuth } from "../../contexts/AuthContext";
 import { useGameSession } from "../../hooks/useGameSession";
-import { UserMenu } from "./UserMenu";
 import { Analytics } from "../Analytics";
+import { UserMenu } from "./UserMenu";
 
 export const MainLayout: React.FC = () => {
   const { user, logout } = useAuth();
@@ -42,9 +43,7 @@ export const MainLayout: React.FC = () => {
 
       <Outlet />
 
-      {showAnalytics && (
-        <Analytics onClose={() => setShowAnalytics(false)} />
-      )}
+      {showAnalytics && <Analytics onClose={() => setShowAnalytics(false)} />}
 
       <style>{`
         .close-button {

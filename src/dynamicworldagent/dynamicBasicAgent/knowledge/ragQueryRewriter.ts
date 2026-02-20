@@ -1,12 +1,11 @@
-import { generateText, ModelClass } from "../../../models/index.js";
+import { ModelClass, generateText } from "../../../models/index.js";
 import {
-  buildRagQueryTemplate,
   type BuildRagQueryTemplateInput,
+  buildRagQueryTemplate,
 } from "./buildRagQueryTemplate.js";
 
 export type { RecentTurnContext } from "./buildRagQueryTemplate.js";
-export interface RagQueryRewriteInput
-  extends BuildRagQueryTemplateInput {}
+export interface RagQueryRewriteInput extends BuildRagQueryTemplateInput {}
 
 export interface RagQueryRewriteOutput {
   ragQuery: string;
@@ -26,7 +25,9 @@ function extractRagQuery(text: string): string | null {
   if (firstBrace < 0 || lastBrace <= firstBrace) return null;
 
   try {
-    const parsed = JSON.parse(candidate.slice(firstBrace, lastBrace + 1)) as { ragQuery?: unknown };
+    const parsed = JSON.parse(candidate.slice(firstBrace, lastBrace + 1)) as {
+      ragQuery?: unknown;
+    };
     return typeof parsed.ragQuery === "string" && parsed.ragQuery.trim()
       ? parsed.ragQuery.trim()
       : null;
@@ -57,7 +58,10 @@ export class RagQueryRewriter {
       const ragQuery = extractRagQuery(raw) ?? rawQuestion;
       return { ragQuery, rawQuestion };
     } catch (error) {
-      console.warn("[RagQueryRewriter] rewrite failed, fallback to raw question", error);
+      console.warn(
+        "[RagQueryRewriter] rewrite failed, fallback to raw question",
+        error
+      );
       return { ragQuery: rawQuestion, rawQuestion };
     }
   }

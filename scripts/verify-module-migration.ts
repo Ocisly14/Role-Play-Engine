@@ -248,7 +248,9 @@ async function run(): Promise<number> {
   results.push({
     name: "Primary Key scenarios(module_id, scenario_id)",
     status: scenarioPkColumns ? "PASS" : "FAIL",
-    detail: scenarioPkColumns ? "composite PK applied" : "unexpected PK columns",
+    detail: scenarioPkColumns
+      ? "composite PK applied"
+      : "unexpected PK columns",
   });
 
   for (const tableName of [
@@ -347,8 +349,7 @@ async function run(): Promise<number> {
   results.push({
     name: "Orphan module_permissions -> modules",
     status: orphanPermission === 0 ? "PASS" : "FAIL",
-    detail:
-      orphanPermission === 0 ? "none" : `${orphanPermission} orphan rows`,
+    detail: orphanPermission === 0 ? "none" : `${orphanPermission} orphan rows`,
   });
 
   const orphanLibrary = await scalar(`
@@ -419,7 +420,9 @@ async function run(): Promise<number> {
         : `${checkpointScopeCoverage} checkpoints missing scope fields`,
   });
 
-  const moduleCount = await scalar(`SELECT COUNT(*)::bigint AS value FROM "modules"`);
+  const moduleCount = await scalar(
+    `SELECT COUNT(*)::bigint AS value FROM "modules"`
+  );
   results.push({
     name: "modules row count",
     status: moduleCount > 0 ? "PASS" : "WARN",

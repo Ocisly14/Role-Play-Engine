@@ -1,5 +1,8 @@
-import type { CoCDatabase, CoCDatabaseAdapter } from "../../../src/shared/agents/memory/database/index.js";
 import type { DynamicGameState } from "../../../src/dynamicworldagent/state/index.js";
+import type {
+  CoCDatabase,
+  CoCDatabaseAdapter,
+} from "../../../src/shared/agents/memory/database/index.js";
 
 /**
  * Initialize game state for world-builder modules (uses initial_snapshot flag)

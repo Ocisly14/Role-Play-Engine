@@ -153,7 +153,9 @@ export function buildDiceRollInfos(
 
       // Check if this roll contains multiple dice (penalty/bonus format)
       // Format: "Dr. Smith: 1d100[0]: 45, 1d100[1]: 82(penalty),(Spot Hidden 60% use highest 82 = failure)"
-      const diceMatches = [...roll.matchAll(/(\d+d\d+\[\d+\]:\s*\d+(?:\(penalty\)|\(bonus\))?)/gi)];
+      const diceMatches = [
+        ...roll.matchAll(/(\d+d\d+\[\d+\]:\s*\d+(?:\(penalty\)|\(bonus\))?)/gi),
+      ];
 
       if (diceMatches.length > 1) {
         // Multi-dice roll - create separate DiceRollInfo for each die
@@ -165,7 +167,11 @@ export function buildDiceRollInfos(
             roll: singleDiceRoll,
             skill: undefined,
             success: undefined,
-            penalty: diceStr.includes("(penalty)") ? "penalty" : diceStr.includes("(bonus)") ? "bonus" : undefined,
+            penalty: diceStr.includes("(penalty)")
+              ? "penalty"
+              : diceStr.includes("(bonus)")
+                ? "bonus"
+                : undefined,
           });
         }
       } else {

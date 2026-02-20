@@ -1,11 +1,11 @@
+import { randomUUID } from "crypto";
 /// <reference path="../types/express.d.ts" />
 import type { Request, Response } from "express";
+import { saveDynamicGameStateCheckpoint } from "../../../src/dynamicworldagent/dynamicBasicAgent/memory/checkpoint.js";
+import { getPrismaClient } from "../../../src/shared/agents/memory/database/prismaClient.js";
 import { DatabaseManager } from "../core/DatabaseManager.js";
 import { GraphManager } from "../core/GraphManager.js";
 import { ServerState } from "../core/ServerState.js";
-import { saveDynamicGameStateCheckpoint } from "../../../src/dynamicworldagent/dynamicBasicAgent/memory/checkpoint.js";
-import { randomUUID } from "crypto";
-import { getPrismaClient } from "../../../src/shared/agents/memory/database/prismaClient.js";
 
 /**
  * Save current game state as checkpoint
@@ -47,11 +47,9 @@ export async function saveCheckpoint(
       console.log(
         `[${new Date().toISOString()}] [Checkpoint Save] ERROR: No game state found for user ${userId}`
       );
-      res
-        .status(400)
-        .json({
-          error: "DynamicWorld game not started. Please start the game first.",
-        });
+      res.status(400).json({
+        error: "DynamicWorld game not started. Please start the game first.",
+      });
       return;
     }
 
@@ -122,20 +120,16 @@ export async function saveCheckpoint(
           console.log(
             `[${new Date().toISOString()}] [Checkpoint Save] Character exists but belongs to different user: ${JSON.stringify(charExists)}`
           );
-          res
-            .status(403)
-            .json({
-              error: `Character not found. Character ${characterName || characterId} may belong to a different user.`,
-            });
+          res.status(403).json({
+            error: `Character not found. Character ${characterName || characterId} may belong to a different user.`,
+          });
         } else {
           console.log(
             `[${new Date().toISOString()}] [Checkpoint Save] Character does not exist in database at all`
           );
-          res
-            .status(403)
-            .json({
-              error: `Character not found. Character ${characterName || characterId} does not exist in database.`,
-            });
+          res.status(403).json({
+            error: `Character not found. Character ${characterName || characterId} does not exist in database.`,
+          });
         }
         return;
       }
@@ -220,16 +214,15 @@ export async function saveCheckpoint(
       success: true,
       checkpointId: checkpointId,
       checkpointName: checkpointName,
-      message: checkpointType === "auto" ? "Auto save successful" : "Save successful",
+      message:
+        checkpointType === "auto" ? "Auto save successful" : "Save successful",
       timestamp: new Date().toISOString(),
     });
   } catch (error) {
     console.error("Error saving checkpoint:", error);
-    res
-      .status(500)
-      .json({
-        error: "Failed to save checkpoint: " + (error as Error).message,
-      });
+    res.status(500).json({
+      error: "Failed to save checkpoint: " + (error as Error).message,
+    });
   }
 }
 
@@ -237,11 +230,14 @@ export async function saveCheckpoint(
  * List all available checkpoints
  * GET /api/checkpoints/list
  */
-export async function listCheckpoints(req: Request, res: Response): Promise<void> {
+export async function listCheckpoints(
+  req: Request,
+  res: Response
+): Promise<void> {
   try {
     const prisma = getPrismaClient();
     const sessionId = req.query.sessionId as string;
-    const limit = parseInt(req.query.limit as string) || 50;
+    const limit = Number.parseInt(req.query.limit as string) || 50;
 
     let checkpoints: any[] = [];
 
@@ -375,7 +371,8 @@ export async function listCheckpoints(req: Request, res: Response): Promise<void
         description: null,
         gameDay: gs?.gameDay ?? null,
         gameTime: gs?.timeOfDay ?? null,
-        currentSceneName: cp.currentSceneName ?? gs?.currentScenario?.name ?? null,
+        currentSceneName:
+          cp.currentSceneName ?? gs?.currentScenario?.name ?? null,
         currentLocation: gs?.currentScenario?.location ?? null,
         playerHp: gs?.playerCharacter?.status?.hp ?? null,
         playerSanity: gs?.playerCharacter?.status?.sanity ?? null,
@@ -391,11 +388,9 @@ export async function listCheckpoints(req: Request, res: Response): Promise<void
     });
   } catch (error) {
     console.error("Error listing checkpoints:", error);
-    res
-      .status(500)
-      .json({
-        error: "Failed to list checkpoints: " + (error as Error).message,
-      });
+    res.status(500).json({
+      error: "Failed to list checkpoints: " + (error as Error).message,
+    });
   }
 }
 
@@ -490,21 +485,31 @@ export async function loadCheckpointData(
     // Restore language from checkpoint's game state (saved when checkpoint was created)
     let restoredLanguage: "en" | "zh" = "zh";
     try {
-      console.log(`[Checkpoint Load] gameStateAny.language:`, gameStateAny.language);
+      console.log(
+        `[Checkpoint Load] gameStateAny.language:`,
+        gameStateAny.language
+      );
 
       // First try to get language from checkpoint's game state
       if (gameStateAny.language === "en" || gameStateAny.language === "zh") {
         restoredLanguage = gameStateAny.language;
-        console.log(`[Checkpoint Load] Language from checkpoint: ${restoredLanguage}`);
+        console.log(
+          `[Checkpoint Load] Language from checkpoint: ${restoredLanguage}`
+        );
       } else {
-        console.log(`[Checkpoint Load] No valid language in checkpoint, trying original session`);
+        console.log(
+          `[Checkpoint Load] No valid language in checkpoint, trying original session`
+        );
         // Fallback: try to get from original session metadata
         const originalSession = await prisma.session.findUnique({
           where: { sessionId: checkpointRecord.sessionId },
           select: { metadata: true },
         });
 
-        console.log(`[Checkpoint Load] Original session metadata:`, originalSession?.metadata);
+        console.log(
+          `[Checkpoint Load] Original session metadata:`,
+          originalSession?.metadata
+        );
 
         if (originalSession?.metadata) {
           const metadata = originalSession.metadata as any;
@@ -513,7 +518,9 @@ export async function loadCheckpointData(
             metadata.language === "en" || metadata.language === "zh"
               ? metadata.language
               : "zh";
-          console.log(`[Checkpoint Load] Language from original session: ${restoredLanguage}`);
+          console.log(
+            `[Checkpoint Load] Language from original session: ${restoredLanguage}`
+          );
         }
       }
 
@@ -537,7 +544,9 @@ export async function loadCheckpointData(
       "../../../src/dynamicworldagent/state/index.js"
     );
     const checkpointGameDay =
-      typeof gameStateAny.gameDay === "number" ? gameStateAny.gameDay : undefined;
+      typeof gameStateAny.gameDay === "number"
+        ? gameStateAny.gameDay
+        : undefined;
     const checkpointTimeOfDay =
       typeof gameStateAny.timeOfDay === "string"
         ? gameStateAny.timeOfDay
@@ -599,7 +608,9 @@ export async function loadCheckpointData(
           WHERE session_id = ${oldSessionId}
           ON CONFLICT (session_id, source_key) DO NOTHING
         `;
-        console.log(`[Checkpoint RAG] Copied RAG chunks ${oldSessionId} → ${newSessionId}`);
+        console.log(
+          `[Checkpoint RAG] Copied RAG chunks ${oldSessionId} → ${newSessionId}`
+        );
       } catch (error) {
         console.warn("[Checkpoint RAG] Failed to copy RAG chunks:", error);
       }
@@ -622,11 +633,9 @@ export async function loadCheckpointData(
     });
   } catch (error) {
     console.error("Error loading checkpoint:", error);
-    res
-      .status(500)
-      .json({
-        error: "Failed to load checkpoint: " + (error as Error).message,
-      });
+    res.status(500).json({
+      error: "Failed to load checkpoint: " + (error as Error).message,
+    });
   }
 }
 
@@ -634,7 +643,10 @@ export async function loadCheckpointData(
  * Delete a checkpoint
  * DELETE /api/checkpoints/:checkpointId
  */
-export async function deleteCheckpoint(req: Request, res: Response): Promise<void> {
+export async function deleteCheckpoint(
+  req: Request,
+  res: Response
+): Promise<void> {
   try {
     const prisma = getPrismaClient();
     const userId = req.user!.userId;
@@ -656,12 +668,9 @@ export async function deleteCheckpoint(req: Request, res: Response): Promise<voi
     });
 
     if (!checkpointRecord || !checkpointRecord.session?.characterId) {
-      res
-        .status(404)
-        .json({
-          error:
-            "Checkpoint not found or you don't have permission to delete it",
-        });
+      res.status(404).json({
+        error: "Checkpoint not found or you don't have permission to delete it",
+      });
       return;
     }
 
@@ -674,12 +683,9 @@ export async function deleteCheckpoint(req: Request, res: Response): Promise<voi
     });
 
     if (!ownerCharacter) {
-      res
-        .status(404)
-        .json({
-          error:
-            "Checkpoint not found or you don't have permission to delete it",
-        });
+      res.status(404).json({
+        error: "Checkpoint not found or you don't have permission to delete it",
+      });
       return;
     }
 
@@ -699,11 +705,9 @@ export async function deleteCheckpoint(req: Request, res: Response): Promise<voi
     });
   } catch (error) {
     console.error("Error deleting checkpoint:", error);
-    res
-      .status(500)
-      .json({
-        error: "Failed to delete checkpoint: " + (error as Error).message,
-      });
+    res.status(500).json({
+      error: "Failed to delete checkpoint: " + (error as Error).message,
+    });
   }
 }
 
@@ -711,14 +715,25 @@ export async function deleteCheckpoint(req: Request, res: Response): Promise<voi
  * Batch delete checkpoints
  * POST /api/checkpoints/batch-delete
  */
-export async function batchDeleteCheckpoints(req: Request, res: Response): Promise<void> {
+export async function batchDeleteCheckpoints(
+  req: Request,
+  res: Response
+): Promise<void> {
   try {
     const prisma = getPrismaClient();
     const userId = req.user!.userId;
     const { checkpointIds } = req.body;
 
-    if (!checkpointIds || !Array.isArray(checkpointIds) || checkpointIds.length === 0) {
-      res.status(400).json({ error: "checkpointIds array is required and must not be empty" });
+    if (
+      !checkpointIds ||
+      !Array.isArray(checkpointIds) ||
+      checkpointIds.length === 0
+    ) {
+      res
+        .status(400)
+        .json({
+          error: "checkpointIds array is required and must not be empty",
+        });
       return;
     }
 
@@ -753,7 +768,9 @@ export async function batchDeleteCheckpoints(req: Request, res: Response): Promi
       select: { characterId: true },
     });
 
-    const ownedCharacterIds = new Set(ownedCharacters.map((c) => c.characterId));
+    const ownedCharacterIds = new Set(
+      ownedCharacters.map((c) => c.characterId)
+    );
 
     // 4. Filter to only checkpoints whose session character is owned by the user
     const ownedCheckpointIds = requestedCheckpoints
@@ -766,7 +783,8 @@ export async function batchDeleteCheckpoints(req: Request, res: Response): Promi
 
     if (ownedCheckpointIds.length !== checkpointIds.length) {
       res.status(403).json({
-        error: "Some checkpoints not found or you don't have permission to delete them",
+        error:
+          "Some checkpoints not found or you don't have permission to delete them",
       });
       return;
     }
@@ -871,7 +889,8 @@ async function createSessionFromCheckpointData(
     if (!message || typeof message !== "object") continue;
 
     const turnNumber =
-      typeof message.turnNumber === "number" && Number.isFinite(message.turnNumber)
+      typeof message.turnNumber === "number" &&
+      Number.isFinite(message.turnNumber)
         ? message.turnNumber
         : 0;
     const existing = turnsByNumber.get(turnNumber) ?? {

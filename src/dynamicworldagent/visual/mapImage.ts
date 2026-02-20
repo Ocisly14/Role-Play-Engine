@@ -3,13 +3,13 @@
  * Generates a single overview map of all scenarios with connections
  */
 
-import type {
-  ScenarioOutline,
-  ScenarioConnection,
-} from "../world_builder/types.js";
-import { generateGeminiImage } from "../../models/imageGenerator.js";
 import path from "path";
 import fs from "fs/promises";
+import { generateGeminiImage } from "../../models/imageGenerator.js";
+import type {
+  ScenarioConnection,
+  ScenarioOutline,
+} from "../world_builder/types.js";
 
 export interface MapImageResult {
   path: string; // Module-relative path, e.g. "Map/[Module Name].png"

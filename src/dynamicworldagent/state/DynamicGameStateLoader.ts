@@ -4,28 +4,34 @@
  */
 
 import path from "path";
-import type { CoCDatabase, CoCDatabaseAdapter } from "../../shared/agents/memory/database/index.js";
+import { NPCLoader } from "../../shared/agents/character/npcloader/index.js";
+import type {
+  CoCDatabase,
+  CoCDatabaseAdapter,
+} from "../../shared/agents/memory/database/index.js";
+import {
+  resolveModuleIdByName,
+  scopeIdByModule,
+  stripModuleScope,
+} from "../../shared/agents/memory/database/moduleScope.js";
 import { getPrismaClient } from "../../shared/agents/memory/database/prismaClient.js";
+import { resolveEmailId } from "../../shared/agents/memory/database/userContext.js";
+import type { NPCProfile } from "../../shared/agents/models/gameTypes.js";
+import type {
+  ScenarioClue,
+  ScenarioCondition,
+} from "../../shared/agents/models/scenarioTypes.js";
+import type {
+  DynamicCharacterProfile,
+  DynamicNPCProfile,
+} from "../world_builder/types.js";
+import type { DynamicScenarioSnapshot } from "../world_builder/types.js";
 import { WorldModuleLoader } from "../world_builder/worldModuleLoader.js";
 import type { DynamicGameState } from "./DynamicGameState.js";
 import {
   DynamicGameStateManager,
   initialDynamicGameState,
 } from "./DynamicGameState.js";
-import type { NPCProfile } from "../../shared/agents/models/gameTypes.js";
-import type {
-  DynamicCharacterProfile,
-  DynamicNPCProfile,
-} from "../world_builder/types.js";
-import type { DynamicScenarioSnapshot } from "../world_builder/types.js";
-import { NPCLoader } from "../../shared/agents/character/npcloader/index.js";
-import { resolveEmailId } from "../../shared/agents/memory/database/userContext.js";
-import {
-  resolveModuleIdByName,
-  scopeIdByModule,
-  stripModuleScope,
-} from "../../shared/agents/memory/database/moduleScope.js";
-import type { ScenarioClue, ScenarioCondition } from "../../shared/agents/models/scenarioTypes.js";
 
 /**
  * Convert NPCProfile (from multiagent system) to DynamicNPCProfile (for DynamicWorld system)
@@ -64,7 +70,9 @@ export async function loadDynamicGameStateFromDatabase(
   const resolvedEmailId = resolveEmailId(emailId);
   const moduleId = await resolveModuleIdByName(moduleName, resolvedEmailId);
   if (!moduleId) {
-    console.warn(`[DynamicGameState] Module "${moduleName}" not found in modules table`);
+    console.warn(
+      `[DynamicGameState] Module "${moduleName}" not found in modules table`
+    );
     return null;
   }
 
@@ -163,7 +171,9 @@ export async function loadDynamicGameStateFromDatabase(
 
     // Load macro scene (already parsed as JSON by Prisma)
     if (moduleData.macroSceneStructure) {
-      manager.loadWorldData({ macroScene: moduleData.macroSceneStructure as any });
+      manager.loadWorldData({
+        macroScene: moduleData.macroSceneStructure as any,
+      });
     }
 
     // Load truth timeline (already parsed as JSON by Prisma)
@@ -173,7 +183,9 @@ export async function loadDynamicGameStateFromDatabase(
 
     // Load knowledge matrix (already parsed as JSON by Prisma)
     if (moduleData.knowledgeMatrix) {
-      manager.loadWorldData({ knowledgeMatrix: moduleData.knowledgeMatrix as any });
+      manager.loadWorldData({
+        knowledgeMatrix: moduleData.knowledgeMatrix as any,
+      });
     }
 
     // Load red herrings (already parsed as JSON by Prisma)
@@ -183,7 +195,9 @@ export async function loadDynamicGameStateFromDatabase(
 
     // Load mythos events (already parsed as JSON by Prisma)
     if (moduleData.historicalMythos) {
-      manager.loadWorldData({ mythosEvents: moduleData.historicalMythos as any });
+      manager.loadWorldData({
+        mythosEvents: moduleData.historicalMythos as any,
+      });
     }
 
     // Load end state (already parsed as JSON by Prisma)
@@ -209,7 +223,9 @@ export async function loadDynamicGameStateFromDatabase(
 
     const scenarioOutlines = scenarioRows.map((row) => {
       // Prisma returns JSON fields already parsed
-      const connections: any[] = Array.isArray(row.connections) ? row.connections : [];
+      const connections: any[] = Array.isArray(row.connections)
+        ? row.connections
+        : [];
 
       // Find sourcePlaceName from knowledgeMatrix if sourcePlaceId exists
       let sourcePlaceName: string | undefined = undefined;
@@ -531,7 +547,9 @@ export async function initializeCompleteDynamicGameState(
   const moduleSnapshotsMap = new Map<string, DynamicScenarioSnapshot[]>();
 
   // Helper function to build a snapshot from a Prisma result (async due to Prisma queries)
-  const buildSnapshotFromRow = async (snapshotRow: any): Promise<DynamicScenarioSnapshot> => {
+  const buildSnapshotFromRow = async (
+    snapshotRow: any
+  ): Promise<DynamicScenarioSnapshot> => {
     // Load snapshot characters
     const snapshotCharacters = await prisma.scenarioCharacter.findMany({
       where: {
@@ -705,29 +723,28 @@ export async function initializeCompleteDynamicGameState(
   });
   const allNPCs = await npcLoader.getAllNPCs();
 
-  const npcCharacters: DynamicNPCProfile[] = allNPCs
-    .map((npc) => {
-      const normalizedId = normalizeIdToModuleScope(npc.id, scopedModuleId);
-      const dynamicNpc = convertNPCProfileToDynamic(npc);
-      return {
-        ...dynamicNpc,
-        id: normalizedId,
-        clues: Array.isArray(dynamicNpc.clues)
-          ? dynamicNpc.clues.map((clue) => ({
-              ...clue,
-              id: normalizeIdToModuleScope(clue.id, scopedModuleId),
-            }))
-          : [],
-        relationships: Array.isArray(dynamicNpc.relationships)
-          ? dynamicNpc.relationships.map((rel) => ({
-              ...rel,
-              targetId: rel.targetId
-                ? normalizeIdToModuleScope(rel.targetId, scopedModuleId)
-                : rel.targetId,
-            }))
-          : [],
-      };
-    });
+  const npcCharacters: DynamicNPCProfile[] = allNPCs.map((npc) => {
+    const normalizedId = normalizeIdToModuleScope(npc.id, scopedModuleId);
+    const dynamicNpc = convertNPCProfileToDynamic(npc);
+    return {
+      ...dynamicNpc,
+      id: normalizedId,
+      clues: Array.isArray(dynamicNpc.clues)
+        ? dynamicNpc.clues.map((clue) => ({
+            ...clue,
+            id: normalizeIdToModuleScope(clue.id, scopedModuleId),
+          }))
+        : [],
+      relationships: Array.isArray(dynamicNpc.relationships)
+        ? dynamicNpc.relationships.map((rel) => ({
+            ...rel,
+            targetId: rel.targetId
+              ? normalizeIdToModuleScope(rel.targetId, scopedModuleId)
+              : rel.targetId,
+          }))
+        : [],
+    };
+  });
 
   console.log(
     `[DynamicGameState] Loaded ${npcCharacters.length} NPCs from database`

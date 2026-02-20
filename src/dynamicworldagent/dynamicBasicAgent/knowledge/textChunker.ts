@@ -10,7 +10,7 @@ function estimateTokens(text: string): number {
     if (
       (cp >= 0x4e00 && cp <= 0x9fff) || // CJK Unified
       (cp >= 0x3400 && cp <= 0x4dbf) || // CJK Extension A
-      (cp >= 0xf900 && cp <= 0xfaff)    // CJK Compatibility
+      (cp >= 0xf900 && cp <= 0xfaff) // CJK Compatibility
     ) {
       cjkCount++;
     }

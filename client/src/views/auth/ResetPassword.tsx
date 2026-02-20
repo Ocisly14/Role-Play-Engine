@@ -1,6 +1,5 @@
-import React from "react";
-import { ResetPasswordForm } from "../../components/auth/ResetPasswordForm";
 import { FrameImage } from "../../components/FrameImage";
+import { ResetPasswordForm } from "../../components/auth/ResetPasswordForm";
 import { useBackgroundImage } from "../../hooks/useBackgroundImage";
 
 export default function ResetPassword() {

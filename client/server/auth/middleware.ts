@@ -1,9 +1,9 @@
 /// <reference path="../types/express.d.ts" />
-import type { Request, Response, NextFunction } from "express";
-import { generateAccessToken, verifyToken } from "./jwt.js";
+import type { NextFunction, Request, Response } from "express";
 import { runWithTokenContext } from "../../../src/models/index.js";
-import { authDbService } from "./db-service.js";
 import { getPrismaClient } from "../../../src/shared/agents/memory/database/prismaClient.js";
+import { authDbService } from "./db-service.js";
+import { generateAccessToken, verifyToken } from "./jwt.js";
 
 // Authentication middleware
 export async function authenticate(

@@ -1,9 +1,12 @@
-import type { CoCDatabase, CoCDatabaseAdapter } from "../../../src/shared/agents/memory/database/index.js";
-import { ScenarioLoader } from "../../../src/shared/agents/memory/scenarioloader/index.js";
 import {
   buildDynamicGraph,
   buildDynamicListenerGraph,
 } from "../../../src/dynamicworldagent/graph/index.js";
+import type {
+  CoCDatabase,
+  CoCDatabaseAdapter,
+} from "../../../src/shared/agents/memory/database/index.js";
+import { ScenarioLoader } from "../../../src/shared/agents/memory/scenarioloader/index.js";
 
 /**
  * Singleton class to manage DynamicWorld graph lifecycle
@@ -54,14 +57,14 @@ export class GraphManager {
   /**
    * Get graph instance (DynamicWorld only)
    */
-  public getGraph(_useDynamic: boolean = true): any {
+  public getGraph(_useDynamic = true): any {
     return this.dynamicGraph;
   }
 
   /**
    * Get listener graph instance (DynamicWorld only)
    */
-  public getListenerGraph(_useDynamic: boolean = true): any {
+  public getListenerGraph(_useDynamic = true): any {
     return this.dynamicListenerGraph;
   }
 

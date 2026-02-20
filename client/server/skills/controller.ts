@@ -1,9 +1,9 @@
 /// <reference path="../types/express.d.ts" />
 import type { Request, Response } from "express";
-import { ServerState } from "../core/ServerState.js";
 import { getPrismaClient } from "../../../src/shared/agents/memory/database/prismaClient.js";
-import { suggestSkillsFromInput } from "./skillMatcher.js";
+import { ServerState } from "../core/ServerState.js";
 import { getSkillNameZh } from "./skillDescriptions.js";
+import { suggestSkillsFromInput } from "./skillMatcher.js";
 
 /**
  * Suggest skills based on user input (semantic matching)
@@ -45,9 +45,10 @@ export async function suggestSkills(
           select: { metadata: true },
         });
         if (session?.metadata) {
-          const metadata = typeof session.metadata === "string"
-            ? JSON.parse(session.metadata)
-            : session.metadata;
+          const metadata =
+            typeof session.metadata === "string"
+              ? JSON.parse(session.metadata)
+              : session.metadata;
           if (metadata.language === "en" || metadata.language === "zh") {
             sessionLanguage = metadata.language;
           }

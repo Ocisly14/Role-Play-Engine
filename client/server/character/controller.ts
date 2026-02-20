@@ -1,8 +1,8 @@
 /// <reference path="../types/express.d.ts" />
 import type { Request, Response } from "express";
-import { getPrismaClient } from "../../../src/shared/agents/memory/database/prismaClient.js";
 import { generateRandomAttributes } from "../../../src/shared/agents/character/characterBuilder.js";
-import { prepareCharacterForDB, parseCharacterFromDB } from "./service.js";
+import { getPrismaClient } from "../../../src/shared/agents/memory/database/prismaClient.js";
+import { parseCharacterFromDB, prepareCharacterForDB } from "./service.js";
 
 /**
  * Generate random character attributes
@@ -26,12 +26,10 @@ export function generateRandomAttrs(req: Request, res: Response): void {
     });
   } catch (error) {
     console.error("Error generating random attributes:", error);
-    res
-      .status(500)
-      .json({
-        error:
-          "Failed to generate random attributes: " + (error as Error).message,
-      });
+    res.status(500).json({
+      error:
+        "Failed to generate random attributes: " + (error as Error).message,
+    });
   }
 }
 
@@ -39,7 +37,10 @@ export function generateRandomAttrs(req: Request, res: Response): void {
  * Create/save a new character
  * POST /api/character
  */
-export async function createCharacter(req: Request, res: Response): Promise<void> {
+export async function createCharacter(
+  req: Request,
+  res: Response
+): Promise<void> {
   try {
     const characterData = req.body;
 
@@ -59,9 +60,13 @@ export async function createCharacter(req: Request, res: Response): Promise<void
       data: {
         characterId: dbCharacter.character_id,
         name: dbCharacter.name,
-        attributes: dbCharacter.attributes ? JSON.parse(dbCharacter.attributes) : {},
+        attributes: dbCharacter.attributes
+          ? JSON.parse(dbCharacter.attributes)
+          : {},
         status: dbCharacter.status ? JSON.parse(dbCharacter.status) : {},
-        inventory: dbCharacter.inventory ? JSON.parse(dbCharacter.inventory) : null,
+        inventory: dbCharacter.inventory
+          ? JSON.parse(dbCharacter.inventory)
+          : null,
         skills: dbCharacter.skills ? JSON.parse(dbCharacter.skills) : null,
         notes: dbCharacter.notes,
         isNpc: Boolean(dbCharacter.is_npc),
@@ -88,11 +93,9 @@ export async function createCharacter(req: Request, res: Response): Promise<void
     });
   } catch (error) {
     console.error("Error creating character:", error);
-    res
-      .status(500)
-      .json({
-        error: "Failed to create character: " + (error as Error).message,
-      });
+    res.status(500).json({
+      error: "Failed to create character: " + (error as Error).message,
+    });
   }
 }
 
@@ -100,7 +103,10 @@ export async function createCharacter(req: Request, res: Response): Promise<void
  * Get all characters
  * GET /api/characters
  */
-export async function getAllCharacters(req: Request, res: Response): Promise<void> {
+export async function getAllCharacters(
+  req: Request,
+  res: Response
+): Promise<void> {
   try {
     const prisma = getPrismaClient();
 
@@ -142,7 +148,10 @@ export async function getAllCharacters(req: Request, res: Response): Promise<voi
  * Get a single character by ID
  * GET /api/character/:characterId
  */
-export async function getCharacterById(req: Request, res: Response): Promise<void> {
+export async function getCharacterById(
+  req: Request,
+  res: Response
+): Promise<void> {
   try {
     const { characterId } = req.params;
 
@@ -166,7 +175,9 @@ export async function getCharacterById(req: Request, res: Response): Promise<voi
       name: character.name,
       attributes: JSON.stringify(character.attributes),
       status: JSON.stringify(character.status),
-      inventory: character.inventory ? JSON.stringify(character.inventory) : null,
+      inventory: character.inventory
+        ? JSON.stringify(character.inventory)
+        : null,
       skills: character.skills ? JSON.stringify(character.skills) : null,
       notes: character.notes,
       is_npc: character.isNpc ? 1 : 0,
@@ -182,7 +193,9 @@ export async function getCharacterById(req: Request, res: Response): Promise<voi
       email_id: character.emailId,
       updated_at: character.updatedAt?.toISOString(),
       instantiated_from: character.instantiatedFrom,
-      inherits_knowledge: character.inheritsKnowledge ? JSON.stringify(character.inheritsKnowledge) : null,
+      inherits_knowledge: character.inheritsKnowledge
+        ? JSON.stringify(character.inheritsKnowledge)
+        : null,
     };
 
     // Parse character data
@@ -194,10 +207,8 @@ export async function getCharacterById(req: Request, res: Response): Promise<voi
     });
   } catch (error) {
     console.error("Error fetching character:", error);
-    res
-      .status(500)
-      .json({
-        error: "Failed to fetch character: " + (error as Error).message,
-      });
+    res.status(500).json({
+      error: "Failed to fetch character: " + (error as Error).message,
+    });
   }
 }

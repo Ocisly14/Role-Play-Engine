@@ -1,7 +1,7 @@
 import { randomUUID } from "crypto";
+import { ModelProviderName } from "../../../models/types.js";
 import { EmbeddingClient } from "../../../rag/embedding.js";
 import { getPrismaClient } from "../../../shared/agents/memory/database/prismaClient.js";
-import { ModelProviderName } from "../../../models/types.js";
 
 export type SessionRagChunkType = "turn" | "clue";
 
@@ -43,7 +43,9 @@ type Bm25Row = {
   bm25Score: number;
 };
 
-function normalizeScores(entries: Array<{ id: string; score: number }>): Map<string, number> {
+function normalizeScores(
+  entries: Array<{ id: string; score: number }>
+): Map<string, number> {
   if (entries.length === 0) return new Map();
 
   const scores = entries.map((entry) => entry.score);
@@ -257,7 +259,10 @@ export class SessionRagService {
 
     const semanticScored = rows
       .map((row) => {
-        const similarity = cosineSimilarity(queryEmbedding, toFloatArray(row.embedding));
+        const similarity = cosineSimilarity(
+          queryEmbedding,
+          toFloatArray(row.embedding)
+        );
         return { id: row.id, score: similarity };
       })
       .sort((a, b) => b.score - a.score)
@@ -282,12 +287,18 @@ export class SessionRagService {
         LIMIT ${candidateK}
       `;
     } catch (error) {
-      console.warn("[SessionRagService] BM25 query failed, fallback semantic only", error);
+      console.warn(
+        "[SessionRagService] BM25 query failed, fallback semantic only",
+        error
+      );
     }
 
     const semanticMap = normalizeScores(semanticScored);
     const bm25Map = normalizeScores(
-      bm25Scored.map((row) => ({ id: row.id, score: Number(row.bm25Score || 0) }))
+      bm25Scored.map((row) => ({
+        id: row.id,
+        score: Number(row.bm25Score || 0),
+      }))
     );
 
     const rowMap = new Map(rows.map((row) => [row.id, row]));

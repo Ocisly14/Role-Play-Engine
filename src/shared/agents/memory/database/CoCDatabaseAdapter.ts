@@ -6,9 +6,9 @@
  * without modification, while using PostgreSQL + Prisma internally.
  */
 
-import { getPrismaClient, type PrismaClient } from "./prismaClient.js";
-import { DatabaseOperations } from "./operations.js";
 import { randomUUID } from "crypto";
+import { DatabaseOperations } from "./operations.js";
+import { type PrismaClient, getPrismaClient } from "./prismaClient.js";
 
 export class CoCDatabaseAdapter {
   private prisma: PrismaClient;
@@ -54,7 +54,10 @@ export class CoCDatabaseAdapter {
       );
   }
 
-  private trackSessionCheckpoint(sessionId: string, checkpointId: string): void {
+  private trackSessionCheckpoint(
+    sessionId: string,
+    checkpointId: string
+  ): void {
     const ids = this.sessionCheckpointIds.get(sessionId) ?? [];
     if (!ids.includes(checkpointId)) {
       ids.push(checkpointId);
@@ -81,7 +84,8 @@ export class CoCDatabaseAdapter {
       status: turn.status,
       errorMessage: turn.errorMessage,
       startedAt: turn.startedAt?.toISOString?.() ?? turn.startedAt,
-      completedAt: turn.completedAt?.toISOString?.() ?? turn.completedAt ?? null,
+      completedAt:
+        turn.completedAt?.toISOString?.() ?? turn.completedAt ?? null,
       createdAt: turn.createdAt?.toISOString?.() ?? turn.createdAt,
       isSimulated: turn.isSimulated,
       gameDay: turn.gameDay,
@@ -168,7 +172,9 @@ export class CoCDatabaseAdapter {
   close(): void {
     // Prisma close is async, but old API is sync
     // We'll handle this in shutdown
-    console.log("CoCDatabaseAdapter: close() called (async close handled separately)");
+    console.log(
+      "CoCDatabaseAdapter: close() called (async close handled separately)"
+    );
   }
 
   /**
@@ -177,7 +183,9 @@ export class CoCDatabaseAdapter {
   transaction<T>(fn: () => T): T {
     // This is a synchronous API, but Prisma transactions are async
     // For now, we'll throw an error - callers should use async version
-    throw new Error("Synchronous transactions not supported. Use async DatabaseOperations.transaction()");
+    throw new Error(
+      "Synchronous transactions not supported. Use async DatabaseOperations.transaction()"
+    );
   }
 
   // =====================================================
@@ -287,15 +295,17 @@ export class CoCDatabaseAdapter {
       actionResults: actionResults ?? null,
     }));
 
-    this.prisma.gameTurn.update({
-      where: { turnId },
-      data: {
-        actionAnalysis: actionAnalysis || null,
-        actionResults: actionResults || undefined,
-      },
-    }).catch((error) => {
-      console.error(`Failed to update turn ${turnId}:`, error);
-    });
+    this.prisma.gameTurn
+      .update({
+        where: { turnId },
+        data: {
+          actionAnalysis: actionAnalysis || null,
+          actionResults: actionResults || undefined,
+        },
+      })
+      .catch((error) => {
+        console.error(`Failed to update turn ${turnId}:`, error);
+      });
   }
 
   /**
@@ -319,19 +329,21 @@ export class CoCDatabaseAdapter {
       completedAt: completedAt.toISOString(),
     }));
 
-    this.prisma.gameTurn.update({
-      where: { turnId },
-      data: {
-        keeperNarrative,
-        clueRevelations: clueRevelations ?? null,
-        gameDay: gameDay ?? null,
-        gameTime: gameTime ?? null,
-        status: "completed",
-        completedAt,
-      },
-    }).catch((error) => {
-      console.error(`Failed to complete turn ${turnId}:`, error);
-    });
+    this.prisma.gameTurn
+      .update({
+        where: { turnId },
+        data: {
+          keeperNarrative,
+          clueRevelations: clueRevelations ?? null,
+          gameDay: gameDay ?? null,
+          gameTime: gameTime ?? null,
+          status: "completed",
+          completedAt,
+        },
+      })
+      .catch((error) => {
+        console.error(`Failed to complete turn ${turnId}:`, error);
+      });
   }
 
   /**
@@ -360,9 +372,37 @@ export class CoCDatabaseAdapter {
       actionAnalysis: actionAnalysis ?? null,
     }));
 
-    this.operations.markTurnRequiresSkillSelection(turnId, actionAnalysis).catch((error) => {
-      console.error(`Failed to mark turn skill selection ${turnId}:`, error);
-    });
+    this.operations
+      .markTurnRequiresSkillSelection(turnId, actionAnalysis)
+      .catch((error) => {
+        console.error(`Failed to mark turn skill selection ${turnId}:`, error);
+      });
+  }
+
+  /**
+   * Mark turn as requiring combat response
+   */
+  markTurnRequiresCombatResponse(
+    turnId: string,
+    npcAttackNarrative: string,
+    pendingNpcActions: any[]
+  ): void {
+    this.updateCachedTurn(turnId, (current) => ({
+      ...current,
+      status: "requires_combat_response",
+      keeperNarrative: npcAttackNarrative,
+      actionResults: pendingNpcActions,
+    }));
+
+    this.operations
+      .markTurnRequiresCombatResponse(
+        turnId,
+        npcAttackNarrative,
+        pendingNpcActions
+      )
+      .catch((error) => {
+        console.error(`Failed to mark turn combat response ${turnId}:`, error);
+      });
   }
 
   /**
@@ -385,7 +425,7 @@ export class CoCDatabaseAdapter {
    */
   getTurnHistory(
     sessionId: string,
-    limit: number = 20,
+    limit = 20,
     afterTurnNumber?: number
   ): any[] {
     const turns = this.getSessionTurns(sessionId);
@@ -396,7 +436,10 @@ export class CoCDatabaseAdapter {
         .slice(0, limit);
     }
     // Default fetch: return latest turns in descending order (legacy behavior).
-    return turns.slice().sort((a, b) => b.turnNumber - a.turnNumber).slice(0, limit);
+    return turns
+      .slice()
+      .sort((a, b) => b.turnNumber - a.turnNumber)
+      .slice(0, limit);
   }
 
   /**
@@ -442,9 +485,7 @@ export class CoCDatabaseAdapter {
       metadata: {
         gameDay: params.gameState?.gameDay ?? null,
         gameTime:
-          params.gameState?.timeOfDay ??
-          params.gameState?.gameTime ??
-          null,
+          params.gameState?.timeOfDay ?? params.gameState?.gameTime ?? null,
       },
     };
     this.checkpointCache.set(params.checkpointId, cached);
@@ -459,7 +500,7 @@ export class CoCDatabaseAdapter {
     return this.checkpointCache.get(checkpointId) ?? null;
   }
 
-  listCheckpoints(sessionId: string, limit: number = 50): any[] {
+  listCheckpoints(sessionId: string, limit = 50): any[] {
     const ids = this.sessionCheckpointIds.get(sessionId) ?? [];
     return ids
       .map((id) => this.checkpointCache.get(id))
@@ -484,8 +525,11 @@ export class CoCDatabaseAdapter {
     });
   }
 
-  cleanupAutoCheckpoints(sessionId: string, keepCount: number = 10): void {
-    const checkpoints = this.listCheckpoints(sessionId, Number.MAX_SAFE_INTEGER);
+  cleanupAutoCheckpoints(sessionId: string, keepCount = 10): void {
+    const checkpoints = this.listCheckpoints(
+      sessionId,
+      Number.MAX_SAFE_INTEGER
+    );
     const auto = checkpoints.filter((cp) => cp.isAutoCheckpoint);
     if (auto.length > keepCount) {
       const toDelete = auto.slice(keepCount);
@@ -494,9 +538,14 @@ export class CoCDatabaseAdapter {
       }
     }
 
-    this.operations.cleanupAutoCheckpoints(sessionId, keepCount).catch((error) => {
-      console.error(`Failed to cleanup auto checkpoints for ${sessionId}:`, error);
-    });
+    this.operations
+      .cleanupAutoCheckpoints(sessionId, keepCount)
+      .catch((error) => {
+        console.error(
+          `Failed to cleanup auto checkpoints for ${sessionId}:`,
+          error
+        );
+      });
   }
 
   // =====================================================
@@ -513,20 +562,24 @@ export class CoCDatabaseAdapter {
   }): void {
     const id = randomUUID();
     // Convert embedding array to Buffer for BLOB storage
-    const embeddingBuffer = Buffer.from(new Float32Array(params.embedding).buffer);
-    this.prisma.turnEmbedding.create({
-      data: {
-        id,
-        sessionId: params.sessionId,
-        turnId: params.turnId,
-        userInput: params.userInput,
-        narrative: params.narrative,
-        embedding: embeddingBuffer,
-        emailId: params.emailId || null,
-      },
-    }).catch((error) => {
-      console.error(`Failed to add turn embedding:`, error);
-    });
+    const embeddingBuffer = Buffer.from(
+      new Float32Array(params.embedding).buffer
+    );
+    this.prisma.turnEmbedding
+      .create({
+        data: {
+          id,
+          sessionId: params.sessionId,
+          turnId: params.turnId,
+          userInput: params.userInput,
+          narrative: params.narrative,
+          embedding: embeddingBuffer,
+          emailId: params.emailId || null,
+        },
+      })
+      .catch((error) => {
+        console.error(`Failed to add turn embedding:`, error);
+      });
   }
 
   addActionLogEmbedding(params: {
@@ -538,19 +591,23 @@ export class CoCDatabaseAdapter {
   }): void {
     const id = randomUUID();
     // Convert embedding array to Buffer for BLOB storage
-    const embeddingBuffer = Buffer.from(new Float32Array(params.embedding).buffer);
-    this.prisma.actionLogEmbedding.create({
-      data: {
-        id,
-        sessionId: params.sessionId,
-        turnId: params.turnId,
-        actionLog: params.actionLog,
-        embedding: embeddingBuffer,
-        emailId: params.emailId || null,
-      },
-    }).catch((error) => {
-      console.error(`Failed to add action log embedding:`, error);
-    });
+    const embeddingBuffer = Buffer.from(
+      new Float32Array(params.embedding).buffer
+    );
+    this.prisma.actionLogEmbedding
+      .create({
+        data: {
+          id,
+          sessionId: params.sessionId,
+          turnId: params.turnId,
+          actionLog: params.actionLog,
+          embedding: embeddingBuffer,
+          emailId: params.emailId || null,
+        },
+      })
+      .catch((error) => {
+        console.error(`Failed to add action log embedding:`, error);
+      });
   }
 
   searchActionLogEmbeddings(params: {
@@ -597,7 +654,9 @@ export class CoCDatabaseAdapter {
   }> {
     // BM25/FTS5 search is not available via Prisma/PostgreSQL adapter
     // Return empty results - hybrid search will fall back to vector-only
-    console.warn("[CoCDatabaseAdapter] searchActionLogsByKeywords not implemented for Prisma adapter");
+    console.warn(
+      "[CoCDatabaseAdapter] searchActionLogsByKeywords not implemented for Prisma adapter"
+    );
     return [];
   }
 
@@ -615,7 +674,9 @@ export class CoCDatabaseAdapter {
   }> {
     // BM25/FTS5 search is not available via Prisma/PostgreSQL adapter
     // Return empty results - hybrid search will fall back to vector-only
-    console.warn("[CoCDatabaseAdapter] searchTurnsByKeywords not implemented for Prisma adapter");
+    console.warn(
+      "[CoCDatabaseAdapter] searchTurnsByKeywords not implemented for Prisma adapter"
+    );
     return [];
   }
 

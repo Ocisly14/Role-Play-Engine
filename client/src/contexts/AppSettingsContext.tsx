@@ -1,4 +1,11 @@
-import React, { createContext, useContext, useState, useEffect, useCallback } from "react";
+import type React from "react";
+import {
+  createContext,
+  useCallback,
+  useContext,
+  useEffect,
+  useState,
+} from "react";
 import i18n from "../i18n/config.js";
 import { authFetch } from "../utils/authFetch";
 
@@ -36,29 +43,26 @@ export const AppSettingsProvider: React.FC<{ children: React.ReactNode }> = ({
   }, [language]);
 
   // Handler to update language both locally and on server
-  const handleLanguageChange = useCallback(
-    async (newLanguage: "en" | "zh") => {
-      // Update local state first for immediate UI feedback
-      setLanguage(newLanguage);
+  const handleLanguageChange = useCallback(async (newLanguage: "en" | "zh") => {
+    // Update local state first for immediate UI feedback
+    setLanguage(newLanguage);
 
-      // Try to update server-side session metadata
-      try {
-        const response = await authFetch("/api/game/update-language", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ language: newLanguage }),
-        });
+    // Try to update server-side session metadata
+    try {
+      const response = await authFetch("/api/game/update-language", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ language: newLanguage }),
+      });
 
-        if (!response.ok) {
-          console.error("Failed to update language on server");
-        }
-      } catch (error) {
-        console.error("Error updating language on server:", error);
-        // Continue anyway - local state is updated
+      if (!response.ok) {
+        console.error("Failed to update language on server");
       }
-    },
-    []
-  );
+    } catch (error) {
+      console.error("Error updating language on server:", error);
+      // Continue anyway - local state is updated
+    }
+  }, []);
 
   const setBackground = useCallback((url: string) => {
     setCurrentBackground(url);

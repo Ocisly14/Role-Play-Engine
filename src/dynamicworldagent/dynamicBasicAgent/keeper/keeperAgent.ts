@@ -1,26 +1,25 @@
-import { getKeeperTemplate, getEpilogueTemplate } from "./keeperTemplate.js";
-import { composeTemplateWithImages } from "../../../template.js";
-import type {
-  ActionResult,
-  ActionAnalysis,
-  DiscoveredClue,
-} from "../../../shared/state/index.js";
+import {
+  ModelClass,
+  ModelProviderName,
+  generateText,
+} from "../../../models/index.js";
 import type {
   ActionLogEntry,
   NPCClue,
 } from "../../../shared/agents/models/gameTypes.js";
 import type { ScenarioClue } from "../../../shared/agents/models/scenarioTypes.js";
-import type { DynamicCharacterProfile } from "../../world_builder/types.js";
-import type { DynamicNPCProfile } from "../../world_builder/types.js";
+import type {
+  ActionResult,
+  DiscoveredClue,
+} from "../../../shared/state/index.js";
+import { composeTemplateWithImages } from "../../../template.js";
 import type {
   DynamicGameState,
   DynamicGameStateManager,
 } from "../../state/index.js";
-import {
-  ModelProviderName,
-  ModelClass,
-  generateText,
-} from "../../../models/index.js";
+import type { DynamicCharacterProfile } from "../../world_builder/types.js";
+import type { DynamicNPCProfile } from "../../world_builder/types.js";
+import { getEpilogueTemplate, getKeeperTemplate } from "./keeperTemplate.js";
 
 interface KeeperRuntime {
   modelProvider: ModelProviderName;
@@ -208,24 +207,23 @@ export class KeeperAgent {
         metadata: Record<string, any>;
       }>) || [];
     const worldlineSceneUpdate =
-      (dynamicState.temporaryInfo.contextualData?.worldlineSceneUpdate as
-        | {
-            previousSnapshot?: unknown;
-            updatedSnapshot?: unknown;
-            suddenActionLogs?: Array<{
-              id: string;
-              name?: string;
-              actionLog?: ActionLogEntry[];
-            }>;
-            reactionNpcActionLogUpdates?: Array<{
-              id: string;
-              name?: string;
-              actionLog?: ActionLogEntry[];
-            }>;
-          }
-        | null) || null;
+      (dynamicState.temporaryInfo.contextualData?.worldlineSceneUpdate as {
+        previousSnapshot?: unknown;
+        updatedSnapshot?: unknown;
+        suddenActionLogs?: Array<{
+          id: string;
+          name?: string;
+          actionLog?: ActionLogEntry[];
+        }>;
+        reactionNpcActionLogUpdates?: Array<{
+          id: string;
+          name?: string;
+          actionLog?: ActionLogEntry[];
+        }>;
+      } | null) || null;
     const hasWorldlineSceneUpdate = Boolean(
-      worldlineSceneUpdate?.previousSnapshot && worldlineSceneUpdate?.updatedSnapshot
+      worldlineSceneUpdate?.previousSnapshot &&
+        worldlineSceneUpdate?.updatedSnapshot
     );
     const suddenActionLogsRaw =
       (dynamicState.temporaryInfo.contextualData?.suddenActionLogs as Array<{
@@ -352,7 +350,7 @@ export class KeeperAgent {
     const narrativeStream = options?.onNarrativeDelta
       ? this.createNarrativeStreamParser(options.onNarrativeDelta)
       : null;
-    let response: string = "";
+    let response = "";
     let parsedResponse: any;
     const maxAttempts = narrativeStream ? 1 : 2; // Avoid duplicate streaming retries
 
@@ -544,7 +542,7 @@ export class KeeperAgent {
       "handlebars"
     );
 
-    let response: string = "";
+    let response = "";
     let parsedResponse: any;
     const maxAttempts = 2;
 
@@ -862,7 +860,7 @@ export class KeeperAgent {
     character: DynamicCharacterProfile,
     currentLocation: string | null = null,
     interactionPartnerName: string | null = null,
-    allowRegularPlusClues: boolean = false
+    allowRegularPlusClues = false
   ) {
     const npcData = character as DynamicNPCProfile;
 
@@ -1182,7 +1180,7 @@ export class KeeperAgent {
               return result;
             }
             if (/^[0-9a-fA-F]{4}$/.test(hex)) {
-              result += String.fromCharCode(parseInt(hex, 16));
+              result += String.fromCharCode(Number.parseInt(hex, 16));
               index += 4;
             } else {
               result += "u";

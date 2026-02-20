@@ -1,6 +1,7 @@
-import React, { useState } from "react";
-import { useNavigate } from "react-router-dom";
+import type React from "react";
+import { useState } from "react";
 import { useTranslation } from "react-i18next";
+import { useNavigate } from "react-router-dom";
 import { ModSelector } from "../components/ModSelector";
 import { ModLoadingModal } from "../components/modals/ModLoadingModal";
 import { useGameSession } from "../hooks/useGameSession";
@@ -54,9 +55,7 @@ export const ModSelectionPage: React.FC = () => {
           }
           try {
             const errorData = JSON.parse(errorBuffer);
-            throw new Error(
-              errorData.error || t("module:errors.loadFailed")
-            );
+            throw new Error(errorData.error || t("module:errors.loadFailed"));
           } catch (e) {
             throw new Error(errorBuffer || t("module:errors.loadFailed"));
           }
@@ -168,10 +167,7 @@ export const ModSelectionPage: React.FC = () => {
         onCreateStory={() => navigate("/story/create")}
       />
 
-      <ModLoadingModal
-        loading={loadingModData}
-        progress={modLoadProgress}
-      />
+      <ModLoadingModal loading={loadingModData} progress={modLoadProgress} />
     </>
   );
 };

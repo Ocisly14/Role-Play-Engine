@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { useAuth } from "../contexts/AuthContext";
 import { authFetch } from "../utils/authFetch";
@@ -36,7 +36,7 @@ interface ModManagerProps {
 }
 
 export function ModManager({ onClose }: ModManagerProps) {
-  const { t } = useTranslation('module');
+  const { t } = useTranslation("module");
   const { user } = useAuth();
   const isAdmin = user?.role === "ADMIN";
   const [tab, setTab] = useState<"library" | "shared" | "deleted">("library");
@@ -163,7 +163,7 @@ export function ModManager({ onClose }: ModManagerProps) {
       }
       const data = await response.json();
       if (!response.ok) {
-        throw new Error(data.error || t('manager.admin.loadFailed'));
+        throw new Error(data.error || t("manager.admin.loadFailed"));
       }
 
       const mods: AdminCatalogMod[] = data.mods || [];
@@ -212,7 +212,7 @@ export function ModManager({ onClose }: ModManagerProps) {
       });
       const data = await response.json();
       if (!response.ok) {
-        throw new Error(data.error || t('manager.errors.shareFailed'));
+        throw new Error(data.error || t("manager.errors.shareFailed"));
       }
       await fetchLibrary();
       if (tab === "shared") {
@@ -232,7 +232,7 @@ export function ModManager({ onClose }: ModManagerProps) {
       });
       const data = await response.json();
       if (!response.ok) {
-        throw new Error(data.error || t('manager.errors.unshareFailed'));
+        throw new Error(data.error || t("manager.errors.unshareFailed"));
       }
       await fetchLibrary();
       if (tab === "shared") {
@@ -252,7 +252,7 @@ export function ModManager({ onClose }: ModManagerProps) {
       });
       const data = await response.json();
       if (!response.ok) {
-        throw new Error(data.error || t('manager.errors.deleteFailed'));
+        throw new Error(data.error || t("manager.errors.deleteFailed"));
       }
       await fetchLibrary();
       if (tab === "shared") {
@@ -269,9 +269,9 @@ export function ModManager({ onClose }: ModManagerProps) {
   const confirmShare = (modName: string) => {
     setConfirmState({
       open: true,
-      title: t('manager.confirm.shareTitle'),
-      message: t('manager.confirm.shareMessage', { modName }),
-      confirmLabel: t('manager.actions.share'),
+      title: t("manager.confirm.shareTitle"),
+      message: t("manager.confirm.shareMessage", { modName }),
+      confirmLabel: t("manager.actions.share"),
       onConfirm: async () => {
         await handleShare(modName);
       },
@@ -281,9 +281,9 @@ export function ModManager({ onClose }: ModManagerProps) {
   const confirmRemove = (modName: string) => {
     setConfirmState({
       open: true,
-      title: t('manager.confirm.deleteTitle'),
-      message: t('manager.confirm.deleteMessage', { modName }),
-      confirmLabel: t('manager.actions.delete'),
+      title: t("manager.confirm.deleteTitle"),
+      message: t("manager.confirm.deleteMessage", { modName }),
+      confirmLabel: t("manager.actions.delete"),
       onConfirm: async () => {
         await handleRemove(modName);
       },
@@ -314,14 +314,16 @@ export function ModManager({ onClose }: ModManagerProps) {
       (name) => selectedLibrary[name]
     );
     if (modNames.length === 0) {
-      alert(t('manager.status.noSelection'));
+      alert(t("manager.status.noSelection"));
       return;
     }
     setConfirmState({
       open: true,
-      title: t('manager.confirm.bulkDeleteTitle'),
-      message: t('manager.confirm.bulkDeleteMessage', { count: modNames.length }),
-      confirmLabel: t('manager.actions.delete'),
+      title: t("manager.confirm.bulkDeleteTitle"),
+      message: t("manager.confirm.bulkDeleteMessage", {
+        count: modNames.length,
+      }),
+      confirmLabel: t("manager.actions.delete"),
       onConfirm: async () => {
         try {
           const response = await authFetch("/api/mods/delete-bulk", {
@@ -331,7 +333,7 @@ export function ModManager({ onClose }: ModManagerProps) {
           });
           const data = await response.json();
           if (!response.ok) {
-            throw new Error(data.error || t('manager.errors.bulkDeleteFailed'));
+            throw new Error(data.error || t("manager.errors.bulkDeleteFailed"));
           }
           await fetchLibrary();
           await fetchDeleted();
@@ -351,7 +353,7 @@ export function ModManager({ onClose }: ModManagerProps) {
       });
       const data = await response.json();
       if (!response.ok) {
-        throw new Error(data.error || t('manager.errors.addFailed'));
+        throw new Error(data.error || t("manager.errors.addFailed"));
       }
       await fetchLibrary();
       await fetchShared();
@@ -369,7 +371,7 @@ export function ModManager({ onClose }: ModManagerProps) {
       });
       const data = await response.json();
       if (!response.ok) {
-        throw new Error(data.error || t('manager.errors.restoreFailed'));
+        throw new Error(data.error || t("manager.errors.restoreFailed"));
       }
       await fetchDeleted();
       await fetchLibrary();
@@ -402,7 +404,7 @@ export function ModManager({ onClose }: ModManagerProps) {
       (name) => selectedDeleted[name]
     );
     if (modNames.length === 0) {
-      alert(t('manager.status.noSelection'));
+      alert(t("manager.status.noSelection"));
       return;
     }
     try {
@@ -413,7 +415,7 @@ export function ModManager({ onClose }: ModManagerProps) {
       });
       const data = await response.json();
       if (!response.ok) {
-        throw new Error(data.error || t('manager.errors.bulkRestoreFailed'));
+        throw new Error(data.error || t("manager.errors.bulkRestoreFailed"));
       }
       await fetchDeleted();
       await fetchLibrary();
@@ -424,7 +426,7 @@ export function ModManager({ onClose }: ModManagerProps) {
 
   const handleAddModuleToAllUsers = () => {
     if (!selectedAdminModuleId) {
-      alert(t('manager.admin.noSelection'));
+      alert(t("manager.admin.noSelection"));
       return;
     }
 
@@ -435,11 +437,11 @@ export function ModManager({ onClose }: ModManagerProps) {
 
     setConfirmState({
       open: true,
-      title: t('manager.admin.confirmTitle'),
-      message: t('manager.admin.confirmMessage', {
+      title: t("manager.admin.confirmTitle"),
+      message: t("manager.admin.confirmMessage", {
         modName: selectedName,
       }),
-      confirmLabel: t('manager.admin.applyButton'),
+      confirmLabel: t("manager.admin.applyButton"),
       onConfirm: async () => {
         try {
           setApplyingAdminModule(true);
@@ -450,11 +452,11 @@ export function ModManager({ onClose }: ModManagerProps) {
           });
           const data = await response.json();
           if (!response.ok) {
-            throw new Error(data.error || t('manager.admin.applyFailed'));
+            throw new Error(data.error || t("manager.admin.applyFailed"));
           }
 
           alert(
-            t('manager.admin.successMessage', {
+            t("manager.admin.successMessage", {
               moduleName: data.moduleName || selectedName,
               count: data.affectedUsers || 0,
             })
@@ -474,11 +476,11 @@ export function ModManager({ onClose }: ModManagerProps) {
       <div className="mod-manager-overlay">
         <div className="mod-manager-modal">
           <div className="mod-manager-header">
-            <h2>{t('manager.title')}</h2>
+            <h2>{t("manager.title")}</h2>
             <button
               onClick={onClose}
               className="close-button"
-              aria-label={t('common:button.close')}
+              aria-label={t("common:button.close")}
             >
               ×
             </button>
@@ -492,7 +494,7 @@ export function ModManager({ onClose }: ModManagerProps) {
                 setPreviewMod(null);
               }}
             >
-              {t('manager.tabs.library')}
+              {t("manager.tabs.library")}
             </button>
             <button
               className={`tab-button ${tab === "shared" ? "active" : ""}`}
@@ -502,7 +504,7 @@ export function ModManager({ onClose }: ModManagerProps) {
                 fetchShared();
               }}
             >
-              {t('manager.tabs.shared')}
+              {t("manager.tabs.shared")}
             </button>
             <button
               className={`tab-button ${tab === "deleted" ? "active" : ""}`}
@@ -512,7 +514,7 @@ export function ModManager({ onClose }: ModManagerProps) {
                 fetchDeleted();
               }}
             >
-              {t('manager.tabs.deleted')}
+              {t("manager.tabs.deleted")}
             </button>
           </div>
 
@@ -522,17 +524,19 @@ export function ModManager({ onClose }: ModManagerProps) {
                 {isAdmin && (
                   <div className="admin-bulk-panel">
                     <div className="admin-bulk-title">
-                      {t('manager.admin.title')}
+                      {t("manager.admin.title")}
                     </div>
                     <div className="admin-bulk-controls">
                       <select
                         className="admin-module-select"
                         value={selectedAdminModuleId}
-                        onChange={(e) => setSelectedAdminModuleId(e.target.value)}
+                        onChange={(e) =>
+                          setSelectedAdminModuleId(e.target.value)
+                        }
                         disabled={loadingAdminCatalog || applyingAdminModule}
                       >
                         <option value="">
-                          {t('manager.admin.selectPlaceholder')}
+                          {t("manager.admin.selectPlaceholder")}
                         </option>
                         {adminCatalog.map((mod) => (
                           <option key={mod.moduleId} value={mod.moduleId}>
@@ -550,8 +554,8 @@ export function ModManager({ onClose }: ModManagerProps) {
                         }
                       >
                         {applyingAdminModule
-                          ? t('manager.admin.applyingButton')
-                          : t('manager.admin.applyButton')}
+                          ? t("manager.admin.applyingButton")
+                          : t("manager.admin.applyButton")}
                       </button>
                     </div>
                   </div>
@@ -562,26 +566,28 @@ export function ModManager({ onClose }: ModManagerProps) {
                       className="btn-secondary"
                       onClick={handleSelectAllLibrary}
                     >
-                      {t('manager.actions.selectAll')}
+                      {t("manager.actions.selectAll")}
                     </button>
                     <button
                       className="btn-secondary"
                       onClick={handleClearLibrarySelection}
                     >
-                      {t('manager.actions.clear')}
+                      {t("manager.actions.clear")}
                     </button>
                     <button
                       className="btn-primary"
                       onClick={handleRemoveSelected}
                     >
-                      {t('manager.actions.deleteSelected')}
+                      {t("manager.actions.deleteSelected")}
                     </button>
                   </div>
                 )}
                 {loadingLibrary ? (
-                  <p>{t('manager.status.loading')}</p>
+                  <p>{t("manager.status.loading")}</p>
                 ) : libraryMods.length === 0 ? (
-                  <p style={{ color: "#666" }}>{t('manager.status.noModules')}</p>
+                  <p style={{ color: "#666" }}>
+                    {t("manager.status.noModules")}
+                  </p>
                 ) : (
                   <div className="mod-list">
                     {libraryMods.map((mod) => (
@@ -601,7 +607,9 @@ export function ModManager({ onClose }: ModManagerProps) {
                             </span>
                           </div>
                           {mod.shared && (
-                            <span className="mod-badge">{t('manager.status.shared')}</span>
+                            <span className="mod-badge">
+                              {t("manager.status.shared")}
+                            </span>
                           )}
                         </div>
                         <div className="mod-actions">
@@ -610,7 +618,7 @@ export function ModManager({ onClose }: ModManagerProps) {
                               className="btn-secondary"
                               onClick={() => confirmShare(mod.name)}
                             >
-                              {t('manager.actions.share')}
+                              {t("manager.actions.share")}
                             </button>
                           )}
                           {mod.shared && mod.isOwner && (
@@ -618,14 +626,14 @@ export function ModManager({ onClose }: ModManagerProps) {
                               className="btn-secondary"
                               onClick={() => handleUnshare(mod.name)}
                             >
-                              {t('manager.actions.unshare')}
+                              {t("manager.actions.unshare")}
                             </button>
                           )}
                           <button
                             className="btn-secondary"
                             onClick={() => confirmRemove(mod.name)}
                           >
-                            {t('manager.actions.delete')}
+                            {t("manager.actions.delete")}
                           </button>
                         </div>
                       </div>
@@ -642,17 +650,19 @@ export function ModManager({ onClose }: ModManagerProps) {
                     type="text"
                     value={searchQuery}
                     onChange={(e) => setSearchQuery(e.target.value)}
-                    placeholder={t('manager.search.placeholder')}
+                    placeholder={t("manager.search.placeholder")}
                   />
                   <button className="btn-primary" onClick={fetchShared}>
-                    {t('manager.actions.search')}
+                    {t("manager.actions.search")}
                   </button>
                 </div>
 
                 {loadingShared ? (
-                  <p>{t('manager.status.loadingShared')}</p>
+                  <p>{t("manager.status.loadingShared")}</p>
                 ) : sharedMods.length === 0 ? (
-                  <p style={{ color: "#666" }}>{t('manager.status.noShared')}</p>
+                  <p style={{ color: "#666" }}>
+                    {t("manager.status.noShared")}
+                  </p>
                 ) : (
                   <div className="mod-list">
                     {sharedMods.map((mod) => (
@@ -671,7 +681,9 @@ export function ModManager({ onClose }: ModManagerProps) {
                             onClick={() => handleAdd(mod.name)}
                             disabled={mod.inLibrary}
                           >
-                            {mod.inLibrary ? t('manager.actions.added') : t('manager.actions.add')}
+                            {mod.inLibrary
+                              ? t("manager.actions.added")
+                              : t("manager.actions.add")}
                           </button>
                         </div>
                       </div>
@@ -689,26 +701,28 @@ export function ModManager({ onClose }: ModManagerProps) {
                       className="btn-secondary"
                       onClick={handleSelectAllDeleted}
                     >
-                      {t('manager.actions.selectAll')}
+                      {t("manager.actions.selectAll")}
                     </button>
                     <button
                       className="btn-secondary"
                       onClick={handleClearDeletedSelection}
                     >
-                      {t('manager.actions.clear')}
+                      {t("manager.actions.clear")}
                     </button>
                     <button
                       className="btn-primary"
                       onClick={handleRestoreSelected}
                     >
-                      {t('manager.actions.restoreSelected')}
+                      {t("manager.actions.restoreSelected")}
                     </button>
                   </div>
                 )}
                 {loadingDeleted ? (
-                  <p>{t('manager.status.loadingDeleted')}</p>
+                  <p>{t("manager.status.loadingDeleted")}</p>
                 ) : deletedMods.length === 0 ? (
-                  <p style={{ color: "#666" }}>{t('manager.status.noDeleted')}</p>
+                  <p style={{ color: "#666" }}>
+                    {t("manager.status.noDeleted")}
+                  </p>
                 ) : (
                   <div className="mod-list">
                     {deletedMods.map((mod) => (
@@ -723,10 +737,13 @@ export function ModManager({ onClose }: ModManagerProps) {
                             <span className="mod-title">{mod.name}</span>
                           </label>
                           <div className="mod-meta">
-                            {t('manager.deleted.deletedAt')}{" "}
+                            {t("manager.deleted.deletedAt")}{" "}
                             {new Date(mod.deletedAt).toLocaleString()} ·{" "}
-                            {mod.daysLeft} {mod.daysLeft === 1 ? t('manager.deleted.day') : t('manager.deleted.days')}{" "}
-                            {t('manager.deleted.left')}
+                            {mod.daysLeft}{" "}
+                            {mod.daysLeft === 1
+                              ? t("manager.deleted.day")
+                              : t("manager.deleted.days")}{" "}
+                            {t("manager.deleted.left")}
                           </div>
                         </div>
                         <div className="mod-actions">
@@ -734,7 +751,7 @@ export function ModManager({ onClose }: ModManagerProps) {
                             className="btn-secondary"
                             onClick={() => handleRestore(mod.name)}
                           >
-                            {t('manager.actions.restore')}
+                            {t("manager.actions.restore")}
                           </button>
                         </div>
                       </div>
@@ -1055,37 +1072,37 @@ export function ModManager({ onClose }: ModManagerProps) {
                   setPreviewMod(null);
                   setPreviewIntro(null);
                 }}
-                aria-label={t('common:button.close')}
+                aria-label={t("common:button.close")}
               >
                 ×
               </button>
             </div>
             {loadingPreview ? (
               <p style={{ color: "#666", margin: "20px 0" }}>
-                {t('manager.status.loadingIntro')}
+                {t("manager.status.loadingIntro")}
               </p>
             ) : previewIntro ? (
               <>
                 <div className="preview-section">
-                  <h4 className="preview-section-title">{t('manager.preview.storyIntro')}</h4>
+                  <h4 className="preview-section-title">
+                    {t("manager.preview.storyIntro")}
+                  </h4>
                   <div className="preview-content">
-                    {previewIntro.introduction ||
-                      t('manager.preview.noIntro')}
+                    {previewIntro.introduction || t("manager.preview.noIntro")}
                   </div>
                 </div>
                 <div className="preview-section">
                   <h4 className="preview-section-title">
-                    {t('manager.preview.creationGuide')}
+                    {t("manager.preview.creationGuide")}
                   </h4>
                   <div className="preview-content">
-                    {previewIntro.moduleNotes ||
-                      t('manager.preview.noGuide')}
+                    {previewIntro.moduleNotes || t("manager.preview.noGuide")}
                   </div>
                 </div>
               </>
             ) : (
               <p style={{ color: "#666", margin: "20px 0" }}>
-                {t('manager.preview.noPreview')}
+                {t("manager.preview.noPreview")}
               </p>
             )}
           </div>
@@ -1104,7 +1121,7 @@ export function ModManager({ onClose }: ModManagerProps) {
                   setConfirmState((prev) => ({ ...prev, open: false }))
                 }
               >
-                {t('manager.actions.cancel')}
+                {t("manager.actions.cancel")}
               </button>
               <button
                 className="btn-primary"

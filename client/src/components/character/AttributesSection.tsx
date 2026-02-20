@@ -1,4 +1,4 @@
-import React from "react";
+import type React from "react";
 import { useTranslation } from "react-i18next";
 
 interface AttributesSectionProps {
@@ -37,17 +37,17 @@ export const AttributesSection: React.FC<AttributesSectionProps> = ({
   onChange,
   onRandomize,
 }) => {
-  const { t } = useTranslation('character');
+  const { t } = useTranslation("character");
   return (
     <>
       <div className="attributes-header">
-        <div className="section-title">{t('attributes.title')}</div>
+        <div className="section-title">{t("attributes.title")}</div>
         <button
           type="button"
           onClick={onRandomize}
           className="attributes-random-btn"
         >
-          🎲 {t('attributes.randomButton')}
+          🎲 {t("attributes.randomButton")}
         </button>
       </div>
 
@@ -78,7 +78,7 @@ export const AttributesSection: React.FC<AttributesSectionProps> = ({
         </tbody>
       </table>
 
-      <div className="section-title">{t('attributes.derived')}</div>
+      <div className="section-title">{t("attributes.derived")}</div>
       <table>
         <thead>
           <tr>

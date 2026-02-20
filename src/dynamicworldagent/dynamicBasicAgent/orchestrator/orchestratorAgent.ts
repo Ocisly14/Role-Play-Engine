@@ -1,23 +1,22 @@
-import { getOrchestratorTemplate } from "./orchestratorTemplate.js";
-import { composeTemplate } from "../../../template.js";
-import type {
-  ActionAnalysis,
-  ActionType,
-  SceneChangeRequest,
-  SceneTransitionRejection,
-} from "../../../shared/state/index.js";
-import type { DynamicGameStateManager } from "../../state/index.js";
 import {
-  ModelProviderName,
   ModelClass,
+  ModelProviderName,
   generateText,
 } from "../../../models/index.js";
 import type {
   CoCDatabase,
   CoCDatabaseAdapter,
 } from "../../../shared/agents/memory/database/index.js";
-import { extractRecentConversationHistory } from "../memory/memoryAgent.js";
 import { getPrismaClient } from "../../../shared/agents/memory/database/prismaClient.js";
+import type {
+  ActionAnalysis,
+  ActionType,
+  SceneChangeRequest,
+} from "../../../shared/state/index.js";
+import { composeTemplate } from "../../../template.js";
+import type { DynamicGameStateManager } from "../../state/index.js";
+import { extractRecentConversationHistory } from "../memory/memoryAgent.js";
+import { getOrchestratorTemplate } from "./orchestratorTemplate.js";
 
 interface OrchestratorRuntime {
   modelProvider: ModelProviderName;

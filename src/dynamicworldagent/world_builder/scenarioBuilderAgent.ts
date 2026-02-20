@@ -4,26 +4,26 @@
  */
 
 import {
-  generateText,
   ModelClass,
   ModelProviderName,
+  generateText,
 } from "../../models/index.js";
 import { composeTemplate } from "../../template.js";
-import type {
-  MacroSceneStructure,
-  TruthEvent,
-  KnowledgeHolder,
-  ScenarioOutline,
-  StartingSceneSelection,
-  ScenarioNpcAssignments,
-  ProgressCallback,
-} from "./types.js";
+import { generateSceneImageFromSnapshot } from "../visual/sceneImage.js";
 import {
   getScenarioBuilderTemplate,
   getStartingSceneSnapshotTemplate,
 } from "./scenarioBuilderTemplate.js";
+import type {
+  KnowledgeHolder,
+  MacroSceneStructure,
+  ProgressCallback,
+  ScenarioNpcAssignments,
+  ScenarioOutline,
+  StartingSceneSelection,
+  TruthEvent,
+} from "./types.js";
 import type { DynamicNPCProfile } from "./types.js";
-import { generateSceneImageFromSnapshot } from "../visual/sceneImage.js";
 
 interface Runtime {
   modelProvider: ModelProviderName;

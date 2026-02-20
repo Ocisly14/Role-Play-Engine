@@ -4,30 +4,30 @@
  */
 
 import {
-  generateText,
   ModelClass,
   ModelProviderName,
+  generateText,
 } from "../../models/index.js";
 import { composeTemplate } from "../../template.js";
-import type {
-  MacroSceneStructure,
-  MacroSceneSettingType,
-  TruthEvent,
-  KnowledgeHolder,
-  RedHerring,
-  MythosEvent,
-  EndStateDefinition,
-  ProgressCallback,
-} from "./types.js";
-import type { StoryLength } from "./storyLengthConfig.js";
 import {
-  getMacroSceneStep1Template,
-  getHistoricalMythosTemplateForSetting,
-  getTruthTimelineTemplateForSetting,
-  getKnowledgeMatrixTemplate,
-  getRedHerringsTemplate,
   getEndStateTemplate,
+  getHistoricalMythosTemplateForSetting,
+  getKnowledgeMatrixTemplate,
+  getMacroSceneStep1Template,
+  getRedHerringsTemplate,
+  getTruthTimelineTemplateForSetting,
 } from "./macroSceneTemplate.js";
+import type { StoryLength } from "./storyLengthConfig.js";
+import type {
+  EndStateDefinition,
+  KnowledgeHolder,
+  MacroSceneSettingType,
+  MacroSceneStructure,
+  MythosEvent,
+  ProgressCallback,
+  RedHerring,
+  TruthEvent,
+} from "./types.js";
 
 interface Runtime {
   modelProvider: ModelProviderName;

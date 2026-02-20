@@ -1,4 +1,4 @@
-import React from "react";
+import type React from "react";
 import { useNavigate } from "react-router-dom";
 import { ModuleIntroModal } from "../components/modals/ModuleIntroModal";
 import { useGameSession } from "../hooks/useGameSession";

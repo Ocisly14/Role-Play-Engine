@@ -18,26 +18,26 @@
  */
 
 import "dotenv/config";
-import fs from "fs/promises";
 import path from "path";
+import fs from "fs/promises";
 import { getPlayerSceneSwitchTemplate } from "../src/dynamicworldagent/dynamicBasicAgent/director/directorTemplate.js";
-import { composeTemplate } from "../src/template.js";
-import {
-  generateText,
-  ModelClass,
-  ModelProviderName,
-} from "../src/models/index.js";
+import type { DynamicGameState } from "../src/dynamicworldagent/state/DynamicGameState.js";
 import type {
-  MacroSceneStructure,
-  TruthEvent,
+  DynamicCharacterProfile,
+  DynamicNPCProfile,
+  DynamicScenarioSnapshot,
   KnowledgeHolder,
+  MacroSceneStructure,
   RedHerring,
   ScenarioOutline,
-  DynamicScenarioSnapshot,
-  DynamicNPCProfile,
-  DynamicCharacterProfile,
+  TruthEvent,
 } from "../src/dynamicworldagent/world_builder/types.js";
-import type { DynamicGameState } from "../src/dynamicworldagent/state/DynamicGameState.js";
+import {
+  ModelClass,
+  ModelProviderName,
+  generateText,
+} from "../src/models/index.js";
+import { composeTemplate } from "../src/template.js";
 
 const MODULE_NAME = "Voyage into the Black";
 const MODULE_DIR = path.join(process.cwd(), "data", "Mods", MODULE_NAME);

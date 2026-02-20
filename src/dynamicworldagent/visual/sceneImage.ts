@@ -1,8 +1,8 @@
-import type { DynamicGameState } from "../state/index.js";
-import type { DynamicScenarioSnapshot } from "../world_builder/types.js";
-import { generateGeminiImage } from "../../models/imageGenerator.js";
 import path from "path";
 import fs from "fs/promises";
+import { generateGeminiImage } from "../../models/imageGenerator.js";
+import type { DynamicGameState } from "../state/index.js";
+import type { DynamicScenarioSnapshot } from "../world_builder/types.js";
 
 export interface SceneImageResult {
   path: string;

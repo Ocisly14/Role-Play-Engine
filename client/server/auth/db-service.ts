@@ -1,6 +1,6 @@
 import crypto from "crypto";
 import { randomUUID } from "crypto";
-import { getPrismaClient, type PrismaClient } from "../../../src/shared/agents/memory/database/prismaClient.js";
+import { getPrismaClient } from "../../../src/shared/agents/memory/database/prismaClient.js";
 import { emailService } from "../email/service.js";
 import { generateAccessToken, generateRefreshToken } from "./jwt.js";
 import { hashPassword, verifyPassword } from "./password.js";
@@ -44,7 +44,7 @@ export const authDbService = {
     // Validate referral code (case-insensitive)
     const referralCodeUpper = data.referralCode.toUpperCase();
     const referral = await prisma.referralCode.findFirst({
-      where: { code: { equals: referralCodeUpper, mode: 'insensitive' } },
+      where: { code: { equals: referralCodeUpper, mode: "insensitive" } },
       include: { uses: true },
     });
 
@@ -75,7 +75,9 @@ export const authDbService = {
       });
 
       if (blacklisted) {
-        throw new Error("Disposable email addresses are not allowed. Please use a permanent email address.");
+        throw new Error(
+          "Disposable email addresses are not allowed. Please use a permanent email address."
+        );
       }
     }
 
@@ -164,7 +166,9 @@ export const authDbService = {
       await this.sendEmailVerification(data.email);
 
       // Throw special error with email_not_verified type
-      const error: any = new Error("Email not verified. A verification code has been sent to your email.");
+      const error: any = new Error(
+        "Email not verified. A verification code has been sent to your email."
+      );
       error.code = "EMAIL_NOT_VERIFIED";
       error.email = data.email;
       throw error;
@@ -231,10 +235,7 @@ export const authDbService = {
       select: { createdAt: true },
     });
 
-    if (
-      recent &&
-      Date.now() - recent.createdAt.getTime() < 60 * 1000
-    ) {
+    if (recent && Date.now() - recent.createdAt.getTime() < 60 * 1000) {
       throw new Error("Please wait before requesting a new code");
     }
 
@@ -533,7 +534,7 @@ export const authDbService = {
     const upper = code.toUpperCase();
 
     const referralCode = await prisma.referralCode.findFirst({
-      where: { code: { equals: upper, mode: 'insensitive' } },
+      where: { code: { equals: upper, mode: "insensitive" } },
       include: {
         uses: {
           include: { user: { select: { email: true } } },
@@ -551,11 +552,13 @@ export const authDbService = {
   },
 
   /** List all referral codes with their usage (emails per code). */
-  async listAllReferralCodeUsage(): Promise<Array<{
-    code: string;
-    emails: string[];
-    count: number;
-  }>> {
+  async listAllReferralCodeUsage(): Promise<
+    Array<{
+      code: string;
+      emails: string[];
+      count: number;
+    }>
+  > {
     const prisma = getPrismaClient();
 
     const codes = await prisma.referralCode.findMany({

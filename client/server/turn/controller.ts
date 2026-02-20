@@ -1,19 +1,19 @@
+import { HumanMessage } from "@langchain/core/messages";
 /// <reference path="../types/express.d.ts" />
 import type { Request, Response } from "express";
+import { TurnManager as DynamicTurnManager } from "../../../src/dynamicworldagent/dynamicBasicAgent/memory/turnManager.js";
+import type { DynamicGameState } from "../../../src/dynamicworldagent/state/index.js";
+import {
+  getCurrentUsageTotals,
+  runWithTokenContext,
+} from "../../../src/models/index.js";
+import { getPrismaClient } from "../../../src/shared/agents/memory/database/prismaClient.js";
+import type { DiceRollInfo } from "../../../src/shared/state/index.js";
 import { DatabaseManager } from "../core/DatabaseManager.js";
 import { GraphManager } from "../core/GraphManager.js";
 import { ServerState } from "../core/ServerState.js";
-import { getPrismaClient } from "../../../src/shared/agents/memory/database/prismaClient.js";
-import { TurnManager as DynamicTurnManager } from "../../../src/dynamicworldagent/dynamicBasicAgent/memory/turnManager.js";
-import type { DynamicGameState } from "../../../src/dynamicworldagent/state/index.js";
-import { HumanMessage } from "@langchain/core/messages";
 import { WebSocketManager } from "../websocket/WebSocketManager.js";
 import { notifyClients } from "../websocket/notifier.js";
-import {
-  runWithTokenContext,
-  getCurrentUsageTotals,
-} from "../../../src/models/index.js";
-import type { DiceRollInfo } from "../../../src/shared/state/index.js";
 
 type NarrativeStreamHandlers = {
   onDiceRolls?: (diceRolls: DiceRollInfo[]) => void;
@@ -60,7 +60,8 @@ export async function createTurn(req: Request, res: Response): Promise<void> {
     const legacyEndedByStatus =
       (playerStatus?.hp ?? 0) <= 0 || (playerStatus?.sanity ?? 0) <= 0;
     const legacyEndedByTrigger =
-      dynamicGameState.temporaryInfo?.contextualData?.globalTriggerEnded === true;
+      dynamicGameState.temporaryInfo?.contextualData?.globalTriggerEnded ===
+      true;
     if (
       dynamicGameState.gameEnding?.isEnded ||
       legacyEndedByStatus ||
@@ -87,7 +88,10 @@ export async function createTurn(req: Request, res: Response): Promise<void> {
       selectedSkill: rawSelectedSkill,
       skillSelectionMode: rawSkillSelectionMode,
       language: rawLanguage,
+      isCombatResponse: rawIsCombatResponse,
     } = req.body ?? {};
+    const isCombatResponse =
+      rawIsCombatResponse === true || rawIsCombatResponse === "true";
     const selectedSkill =
       typeof rawSelectedSkill === "string" ? rawSelectedSkill.trim() : null;
     const normalizedSkill =
@@ -119,14 +123,18 @@ export async function createTurn(req: Request, res: Response): Promise<void> {
     const dynamicTurnManager = new DynamicTurnManager(db);
     await db.preloadSessionTurns(dynamicGameState.sessionId);
 
-    // Check if this is resuming an interrupted turn (skill selection)
+    // Check if this is resuming an interrupted turn (skill selection or combat response)
     let turnId: string | undefined;
     let isResumingTurn = false;
+    let isResumingCombatTurn = false;
 
     if (normalizedSkill) {
       // Look for a recent turn with requires_skill_selection status for this session
       const skillSelectionTurn = await prisma.gameTurn.findFirst({
-        where: { sessionId: dynamicGameState.sessionId, status: "requires_skill_selection" },
+        where: {
+          sessionId: dynamicGameState.sessionId,
+          status: "requires_skill_selection",
+        },
         orderBy: { turnNumber: "desc" },
       });
 
@@ -138,6 +146,31 @@ export async function createTurn(req: Request, res: Response): Promise<void> {
         turnId = skillSelectionTurn.turnId;
 
         // Move the interrupted turn back to processing before resuming graph execution.
+        await prisma.gameTurn.update({
+          where: { turnId },
+          data: { status: "processing", errorMessage: null },
+        });
+      }
+    }
+
+    if (!turnId && isCombatResponse) {
+      // Look for a recent turn with requires_combat_response status for this session
+      const combatTurn = await prisma.gameTurn.findFirst({
+        where: {
+          sessionId: dynamicGameState.sessionId,
+          status: "requires_combat_response",
+        },
+        orderBy: { turnNumber: "desc" },
+      });
+
+      if (combatTurn) {
+        console.log(
+          `⚔️  [${new Date().toISOString()}] Resuming combat turn ${combatTurn.turnId} with player response`
+        );
+        isResumingCombatTurn = true;
+        turnId = combatTurn.turnId;
+
+        // Move back to processing
         await prisma.gameTurn.update({
           where: { turnId },
           data: { status: "processing", errorMessage: null },
@@ -184,7 +217,8 @@ export async function createTurn(req: Request, res: Response): Promise<void> {
           normalizedSkill,
           effectiveSkillSelectionMode,
           language,
-          isResumingTurn
+          isResumingTurn,
+          isResumingCombatTurn
         ).catch((error) => {
           console.error(`Error processing turn ${turnId}:`, error);
           const dynamicTurnManager = new DynamicTurnManager(db);
@@ -379,7 +413,8 @@ async function processGameTurnAsync(
   selectedSkill?: string | null,
   skillSelectionMode?: "auto" | "manual",
   language?: "en" | "zh",
-  resumeFromInterrupt: boolean = false
+  resumeFromInterrupt = false,
+  resumeFromCombatInterrupt = false
 ) {
   try {
     console.log(`[${new Date().toISOString()}] Processing turn ${turnId}...`);
@@ -419,6 +454,7 @@ async function processGameTurnAsync(
       selectedSkill: selectedSkill ?? null,
       skillSelectionMode,
       resumeFromInterrupt: isResumingTurn,
+      resumeFromCombatInterrupt: resumeFromCombatInterrupt,
     };
 
     // Invoke the graph with checkpoint support
@@ -444,9 +480,13 @@ async function processGameTurnAsync(
     // If skill selection is required, the graph will mark the turn and end early
     // In that case, we should NOT update the game state
     const updatedTurn = dynamicTurnManager.getTurn(turnId);
-    if (updatedTurn && updatedTurn.status === "requires_skill_selection") {
+    if (
+      updatedTurn &&
+      (updatedTurn.status === "requires_skill_selection" ||
+        updatedTurn.status === "requires_combat_response")
+    ) {
       console.log(
-        `⏸️  [${new Date().toISOString()}] Turn ${turnId} requires skill selection - game state not updated`
+        `⏸️  [${new Date().toISOString()}] Turn ${turnId} requires ${updatedTurn.status} - game state not updated`
       );
       // Don't update game state, wait for player to select skill
       return;
@@ -518,7 +558,8 @@ export async function getTurnStatus(
         if (
           turn.status === "completed" ||
           turn.status === "error" ||
-          turn.status === "requires_skill_selection"
+          turn.status === "requires_skill_selection" ||
+          turn.status === "requires_combat_response"
         ) {
           console.log(`[getTurnStatus] Turn ${turnId} completed:`, {
             status: turn.status,
@@ -589,7 +630,7 @@ export async function getConversation(
       res.status(404).json({ error: "Session not found" });
       return;
     }
-    const limit = parseInt(req.query.limit as string) || 50;
+    const limit = Number.parseInt(req.query.limit as string) || 50;
     await db.preloadSessionTurns(sessionId);
 
     const conversation = turnManager.getConversation(sessionId, limit);
@@ -628,9 +669,9 @@ export async function getTurnHistory(
       res.status(404).json({ error: "Session not found" });
       return;
     }
-    const limit = parseInt(req.query.limit as string) || 20;
+    const limit = Number.parseInt(req.query.limit as string) || 20;
     const after = req.query.after
-      ? parseInt(req.query.after as string)
+      ? Number.parseInt(req.query.after as string)
       : undefined;
     await db.preloadSessionTurns(sessionId);
 

@@ -1,6 +1,6 @@
 import fs from "fs";
 import path from "path";
-import { FlagEmbedding, EmbeddingModel } from "fastembed";
+import { EmbeddingModel, FlagEmbedding } from "fastembed";
 
 /**
  * Thin wrapper around fastembed's BGE-small-en-v1.5 to match senti-agent's local RAG setup.

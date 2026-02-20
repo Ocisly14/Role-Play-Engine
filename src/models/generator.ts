@@ -3,18 +3,18 @@
  * Handles model selection and text generation with appropriate model classes
  */
 
-import { ChatOpenAI } from "@langchain/openai";
 import { ChatAnthropic } from "@langchain/anthropic";
 import { ChatGoogleGenerativeAI } from "@langchain/google-genai";
+import { ChatOpenAI } from "@langchain/openai";
 import { models } from "./configuration.js";
+import { attachUsageTracking } from "./tokenUsage.js";
 import {
+  type GenerationOptions,
+  type ImageInput,
   ModelClass,
   ModelProviderName,
-  GenerationOptions,
-  ImageInput,
-  ModelSettings,
+  type ModelSettings,
 } from "./types.js";
-import { attachUsageTracking } from "./tokenUsage.js";
 
 /**
  * Model class usage guidelines:
@@ -182,7 +182,12 @@ async function buildUserContent(
 export function createChatModel(
   provider: ModelProviderName,
   modelClass: ModelClass,
-  options?: { streaming?: boolean; operation?: string; userId?: string; temperature?: number }
+  options?: {
+    streaming?: boolean;
+    operation?: string;
+    userId?: string;
+    temperature?: number;
+  }
 ): any {
   const settings = getModelSettings(provider, modelClass);
   const endpoint = getEndpoint(provider);
@@ -414,7 +419,8 @@ export async function generateText(
       }
 
       const chatModel = createChatModel(providerForRun, phase.modelClass, {
-        streaming: providerForRun === ModelProviderName.GOOGLE && Boolean(onToken),
+        streaming:
+          providerForRun === ModelProviderName.GOOGLE && Boolean(onToken),
         operation: options.operation,
         temperature,
         userId: options.userId,

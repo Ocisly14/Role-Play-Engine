@@ -67,7 +67,7 @@ export function CharacterSheetModal({
   apiBaseUrl = "/api",
   onClose,
 }: CharacterSheetModalProps) {
-  const { t } = useTranslation('character');
+  const { t } = useTranslation("character");
   const [character, setCharacter] = useState<CharacterData | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -220,7 +220,7 @@ export function CharacterSheetModal({
       <div className="character-modal-backdrop" onClick={handleBackdropClick}>
         <div className="character-modal-content">
           <p style={{ textAlign: "center", padding: "40px" }}>
-            {t('sheet.loading')}
+            {t("sheet.loading")}
           </p>
         </div>
       </div>
@@ -233,7 +233,7 @@ export function CharacterSheetModal({
             ✕
           </button>
           <p style={{ textAlign: "center", padding: "40px", color: "#c41e3a" }}>
-            {t('sheet.loadError')}: {error}
+            {t("sheet.loadError")}: {error}
           </p>
         </div>
       </div>
@@ -247,37 +247,39 @@ export function CharacterSheetModal({
           </button>
 
           <div className="character-sheet-view">
-            <h1>{t('sheet.title')} - {character.name}</h1>
+            <h1>
+              {t("sheet.title")} - {character.name}
+            </h1>
 
             {/* Identity Section */}
-            <div className="section-title">{t('identity.title')}</div>
+            <div className="section-title">{t("identity.title")}</div>
             <table>
               <tbody>
                 <tr>
-                  <th>{t('identity.era')}</th>
+                  <th>{t("identity.era")}</th>
                   <td>{character.era || "-"}</td>
-                  <th>{t('identity.name')}</th>
+                  <th>{t("identity.name")}</th>
                   <td>{character.name || "-"}</td>
-                  <th>{t('identity.occupation')}</th>
+                  <th>{t("identity.occupation")}</th>
                   <td>{character.occupation || "-"}</td>
                 </tr>
                 <tr>
-                  <th>{t('identity.age')}</th>
+                  <th>{t("identity.age")}</th>
                   <td>{character.age || "-"}</td>
-                  <th>{t('identity.gender')}</th>
+                  <th>{t("identity.gender")}</th>
                   <td>{character.gender || "-"}</td>
-                  <th>{t('identity.residence')}</th>
+                  <th>{t("identity.residence")}</th>
                   <td>{character.residence || "-"}</td>
                 </tr>
                 <tr>
-                  <th>{t('identity.birthplace')}</th>
+                  <th>{t("identity.birthplace")}</th>
                   <td colSpan={5}>{character.birthplace || "-"}</td>
                 </tr>
               </tbody>
             </table>
 
             {/* Attributes Section */}
-            <div className="section-title">{t('attributes.title')}</div>
+            <div className="section-title">{t("attributes.title")}</div>
             <table>
               <tbody>
                 <tr>
@@ -309,43 +311,43 @@ export function CharacterSheetModal({
             <table>
               <tbody>
                 <tr>
-                  <th>{t('attributes.HP')}</th>
+                  <th>{t("attributes.HP")}</th>
                   <td>
                     {character.HP !== undefined && character.maxHP !== undefined
                       ? `${character.HP}/${character.maxHP}`
                       : "-"}
                   </td>
-                  <th>{t('attributes.SAN')}</th>
+                  <th>{t("attributes.SAN")}</th>
                   <td>
                     {character.SAN !== undefined &&
                     character.maxSAN !== undefined
                       ? `${character.SAN}/${character.maxSAN}`
                       : "-"}
                   </td>
-                  <th>{t('attributes.MP')}</th>
+                  <th>{t("attributes.MP")}</th>
                   <td>
                     {character.MP !== undefined && character.maxMP !== undefined
                       ? `${character.MP}/${character.maxMP}`
                       : "-"}
                   </td>
-                  <th>{t('attributes.LUCK')}</th>
+                  <th>{t("attributes.LUCK")}</th>
                   <td>{character.LUCK || "-"}</td>
                 </tr>
                 <tr>
-                  <th>{t('attributes.MOV')}</th>
+                  <th>{t("attributes.MOV")}</th>
                   <td>{character.MOV || "-"}</td>
-                  <th>{t('attributes.BUILD')}</th>
+                  <th>{t("attributes.BUILD")}</th>
                   <td>{character.BUILD || "-"}</td>
-                  <th>{t('attributes.DB')}</th>
+                  <th>{t("attributes.DB")}</th>
                   <td>{character.DB || "-"}</td>
-                  <th>{t('attributes.ARMOR')}</th>
+                  <th>{t("attributes.ARMOR")}</th>
                   <td>{character.ARMOR || "-"}</td>
                 </tr>
               </tbody>
             </table>
 
             {/* Skills Section */}
-            <div className="section-title">{t('skills.title')}</div>
+            <div className="section-title">{t("skills.title")}</div>
             {character.skills && Object.keys(character.skills).length > 0 ? (
               <div className="skills-display-grid">
                 {Object.entries(character.skills)
@@ -359,22 +361,22 @@ export function CharacterSheetModal({
               </div>
             ) : (
               <p style={{ color: "#999", fontStyle: "italic" }}>
-                {t('sheet.noSkills')}
+                {t("sheet.noSkills")}
               </p>
             )}
 
             {/* Weapons Section */}
-            <div className="section-title">{t('weapons.title')}</div>
+            <div className="section-title">{t("weapons.title")}</div>
             {character.weapons && character.weapons.length > 0 ? (
               <table>
                 <tbody>
                   <tr>
-                    <th>{t('weapons.weaponHeader')}</th>
-                    <th>{t('weapons.skillHeader')}</th>
-                    <th>{t('weapons.damage')}</th>
-                    <th>{t('weapons.range')}</th>
-                    <th>{t('weapons.attacksHeader')}</th>
-                    <th>{t('weapons.ammo')}</th>
+                    <th>{t("weapons.weaponHeader")}</th>
+                    <th>{t("weapons.skillHeader")}</th>
+                    <th>{t("weapons.damage")}</th>
+                    <th>{t("weapons.range")}</th>
+                    <th>{t("weapons.attacksHeader")}</th>
+                    <th>{t("weapons.ammo")}</th>
                   </tr>
                   {character.weapons.map((weapon, idx) => (
                     <tr key={idx}>
@@ -390,35 +392,35 @@ export function CharacterSheetModal({
               </table>
             ) : (
               <p style={{ color: "#999", fontStyle: "italic" }}>
-                {t('sheet.noWeapons')}
+                {t("sheet.noWeapons")}
               </p>
             )}
 
             {/* Portrait & Notes Section */}
-            <div className="section-title">{t('notes.title')}</div>
+            <div className="section-title">{t("notes.title")}</div>
             <div className="notes-display-grid">
               <div className="note-section">
-                <h4>{t('notes.appearance')}</h4>
-                <p>{character.appearance || t('sheet.notProvided')}</p>
+                <h4>{t("notes.appearance")}</h4>
+                <p>{character.appearance || t("sheet.notProvided")}</p>
               </div>
               <div className="note-section">
-                <h4>{t('notes.ideology')}</h4>
-                <p>{character.ideology || t('sheet.notProvided')}</p>
+                <h4>{t("notes.ideology")}</h4>
+                <p>{character.ideology || t("sheet.notProvided")}</p>
               </div>
               <div className="note-section">
-                <h4>{t('notes.people')}</h4>
-                <p>{character.people || t('sheet.notProvided')}</p>
+                <h4>{t("notes.people")}</h4>
+                <p>{character.people || t("sheet.notProvided")}</p>
               </div>
               <div className="note-section">
-                <h4>{t('notes.gear')}</h4>
-                <p>{character.gear || t('sheet.notProvided')}</p>
+                <h4>{t("notes.gear")}</h4>
+                <p>{character.gear || t("sheet.notProvided")}</p>
               </div>
             </div>
 
             {/* Background Story */}
-            <div className="section-title">{t('notes.backstory')}</div>
+            <div className="section-title">{t("notes.backstory")}</div>
             <div className="note-section">
-              <p>{character.backstory || t('sheet.notProvided')}</p>
+              <p>{character.backstory || t("sheet.notProvided")}</p>
             </div>
           </div>
         </div>

@@ -1,11 +1,11 @@
 /// <reference path="../types/express.d.ts" />
 import type { Request, Response } from "express";
-import { ServerState } from "../core/ServerState.js";
-import { getPrismaClient } from "../../../src/shared/agents/memory/database/prismaClient.js";
 import {
-  SessionRagQaService,
   type RecentTurn,
+  SessionRagQaService,
 } from "../../../src/dynamicworldagent/dynamicBasicAgent/knowledge/sessionRagQaService.js";
+import { getPrismaClient } from "../../../src/shared/agents/memory/database/prismaClient.js";
+import { ServerState } from "../core/ServerState.js";
 
 const qaService = new SessionRagQaService();
 
@@ -56,7 +56,10 @@ export async function askRag(req: Request, res: Response): Promise<void> {
       new Set(
         (dynamicState?.npcCharacters || [])
           .map((npc) => npc?.name)
-          .filter((name): name is string => typeof name === "string" && name.trim().length > 0)
+          .filter(
+            (name): name is string =>
+              typeof name === "string" && name.trim().length > 0
+          )
       )
     ).slice(0, 30);
     const allScenes = (dynamicState?.scenarioOutlines || [])
@@ -112,7 +115,9 @@ export async function askRag(req: Request, res: Response): Promise<void> {
     });
   } catch (error) {
     console.error("Error in RAG ask endpoint:", error);
-    res.status(500).json({ success: false, error: "Failed to answer question" });
+    res
+      .status(500)
+      .json({ success: false, error: "Failed to answer question" });
   }
 }
 

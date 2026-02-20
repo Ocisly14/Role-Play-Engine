@@ -1,33 +1,36 @@
 import "dotenv/config";
+import fs from "fs";
+import http from "http";
 import path from "path";
 import { fileURLToPath } from "url";
+import cookieParser from "cookie-parser";
 import cors from "cors";
 import express from "express";
-import cookieParser from "cookie-parser";
-import http from "http";
-import fs from "fs";
 
+import analyticsRoutes from "./server/analytics/routes.js";
 // Import all route modules
 import authRoutes from "./server/auth/routes.js";
-import dataRoutes from "./server/data/routes.js";
 import characterRoutes from "./server/character/routes.js";
-import gameRoutes from "./server/game/routes.js";
-import modRoutes from "./server/mod/routes.js";
-import turnRoutes from "./server/turn/routes.js";
 import checkpointRoutes from "./server/checkpoint/routes.js";
+import dataRoutes from "./server/data/routes.js";
+import gameRoutes from "./server/game/routes.js";
 import mapRoutes from "./server/maps/routes.js";
 import memoRoutes from "./server/memos/routes.js";
-import skillRoutes from "./server/skills/routes.js";
-import analyticsRoutes from "./server/analytics/routes.js";
+import modRoutes from "./server/mod/routes.js";
 import ragRoutes from "./server/rag/routes.js";
+import skillRoutes from "./server/skills/routes.js";
+import turnRoutes from "./server/turn/routes.js";
 
+import { LocalEmbeddingManager } from "../src/rag/localEmbeddingManager.js";
+import {
+  startDailyScheduler,
+  stopDailyScheduler,
+} from "./server/analytics/scheduler.js";
+import { syncReferralCodes } from "./server/auth/referral-sync.js";
 // Import managers
 import { DatabaseManager } from "./server/core/DatabaseManager.js";
-import { WebSocketManager } from "./server/websocket/WebSocketManager.js";
-import { LocalEmbeddingManager } from "../src/rag/localEmbeddingManager.js";
 import { warmupSkillEmbeddings } from "./server/skills/skillMatcher.js";
-import { startDailyScheduler, stopDailyScheduler } from "./server/analytics/scheduler.js";
-import { syncReferralCodes } from "./server/auth/referral-sync.js";
+import { WebSocketManager } from "./server/websocket/WebSocketManager.js";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -125,10 +128,10 @@ async function updateAdminUserRoles() {
     for (const email of adminEmails) {
       const result = await prisma.user.updateMany({
         where: {
-          email: { equals: email, mode: 'insensitive' },
-          role: { not: 'ADMIN' },
+          email: { equals: email, mode: "insensitive" },
+          role: { not: "ADMIN" },
         },
-        data: { role: 'ADMIN' },
+        data: { role: "ADMIN" },
       });
 
       if (result.count > 0) {

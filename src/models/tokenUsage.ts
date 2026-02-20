@@ -1,6 +1,6 @@
 import { AsyncLocalStorage } from "async_hooks";
 import { CoCDatabaseAdapter } from "../shared/agents/memory/database/CoCDatabaseAdapter.js";
-import { ModelClass, ModelProviderName } from "./types.js";
+import type { ModelClass, ModelProviderName } from "./types.js";
 
 export type TokenUsageContext = {
   email?: string;

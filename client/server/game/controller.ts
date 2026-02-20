@@ -1,14 +1,14 @@
+import fs from "fs";
+import path from "path";
 /// <reference path="../types/express.d.ts" />
 import type { Request, Response } from "express";
+import type { DynamicGameState } from "../../../src/dynamicworldagent/state/index.js";
+import { getPrismaClient } from "../../../src/shared/agents/memory/database/prismaClient.js";
 import { DatabaseManager } from "../core/DatabaseManager.js";
 import { GraphManager } from "../core/GraphManager.js";
 import { ServerState } from "../core/ServerState.js";
-import { getPrismaClient } from "../../../src/shared/agents/memory/database/prismaClient.js";
-import { getClientIp, generateSessionIdFromIp } from "../utils/sessionUtils.js";
+import { generateSessionIdFromIp, getClientIp } from "../utils/sessionUtils.js";
 import { initializeWorldBuilderGameState } from "./service.js";
-import type { DynamicGameState } from "../../../src/dynamicworldagent/state/index.js";
-import path from "path";
-import fs from "fs";
 
 /**
  * Check if a module is a world-builder generated module
@@ -76,12 +76,9 @@ export async function startGame(req: Request, res: Response): Promise<void> {
     // DynamicWorld only: require WorldBuilder module
     const isWorldBuilder = modName && isWorldBuilderModule(modName);
     if (!isWorldBuilder) {
-      res
-        .status(400)
-        .json({
-          error:
-            "Only World Builder modules are supported in DynamicWorld mode",
-        });
+      res.status(400).json({
+        error: "Only World Builder modules are supported in DynamicWorld mode",
+      });
       return;
     }
 
@@ -113,7 +110,11 @@ export async function startGame(req: Request, res: Response): Promise<void> {
         // Check if introduction turn already exists for this session
         const introSessionId = dynamicGameState?.sessionId || "";
         const existingIntro = await prisma.gameTurn.findFirst({
-          where: { sessionId: introSessionId, turnNumber: 0, characterInput: "" },
+          where: {
+            sessionId: introSessionId,
+            turnNumber: 0,
+            characterInput: "",
+          },
           select: { turnId: true },
         });
 
@@ -180,9 +181,9 @@ export async function startGame(req: Request, res: Response): Promise<void> {
         });
 
         const metadata = existingSession?.metadata
-          ? (typeof existingSession.metadata === "string"
-              ? JSON.parse(existingSession.metadata)
-              : existingSession.metadata)
+          ? typeof existingSession.metadata === "string"
+            ? JSON.parse(existingSession.metadata)
+            : existingSession.metadata
           : {};
         metadata.language = language;
 
@@ -330,11 +331,9 @@ export async function importGameData(
     });
   } catch (error) {
     console.error("Error checking imported data:", error);
-    res
-      .status(500)
-      .json({
-        error: "Failed to check imported data: " + (error as Error).message,
-      });
+    res.status(500).json({
+      error: "Failed to check imported data: " + (error as Error).message,
+    });
   }
 }
 
@@ -367,9 +366,11 @@ function serializeDynamicGameState(state: any): any {
   // Convert Map to object
   if (serialized.updatedDynamicScenarioSnapshots instanceof Map) {
     const snapshotsObj: Record<string, any[]> = {};
-    serialized.updatedDynamicScenarioSnapshots.forEach((value: any[], key: string) => {
-      snapshotsObj[key] = value;
-    });
+    serialized.updatedDynamicScenarioSnapshots.forEach(
+      (value: any[], key: string) => {
+        snapshotsObj[key] = value;
+      }
+    );
     serialized.updatedDynamicScenarioSnapshots = snapshotsObj;
   }
 
@@ -456,9 +457,9 @@ export async function updateSessionLanguage(
       });
 
       const metadata = existingSession?.metadata
-        ? (typeof existingSession.metadata === "string"
-            ? JSON.parse(existingSession.metadata)
-            : existingSession.metadata)
+        ? typeof existingSession.metadata === "string"
+          ? JSON.parse(existingSession.metadata)
+          : existingSession.metadata
         : {};
       metadata.language = language;
 

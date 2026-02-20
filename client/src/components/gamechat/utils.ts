@@ -2,8 +2,8 @@
  * Utility functions for GameChat component
  */
 
-import type { DiceRollInfo } from "../DiceAnimation";
 import type { Message } from "../../types/gamechat";
+import type { DiceRollInfo } from "../DiceAnimation";
 
 /**
  * Normalize a name to lowercase and trim whitespace
@@ -52,7 +52,9 @@ export function buildDiceRollInfos(
 
       // Check if this roll contains multiple dice (penalty/bonus format)
       // Format: "Dr. Smith: 1d100[0]: 45, 1d100[1]: 82(penalty),(Spot Hidden 60% use highest 82 = failure)"
-      const diceMatches = [...roll.matchAll(/(\d+d\d+\[\d+\]:\s*\d+(?:\(penalty\)|\(bonus\))?)/gi)];
+      const diceMatches = [
+        ...roll.matchAll(/(\d+d\d+\[\d+\]:\s*\d+(?:\(penalty\)|\(bonus\))?)/gi),
+      ];
 
       if (diceMatches.length > 1) {
         // Multi-dice roll - create separate DiceRollInfo for each die
@@ -64,7 +66,11 @@ export function buildDiceRollInfos(
             roll: singleDiceRoll,
             skill: undefined,
             success: undefined,
-            penalty: diceStr.includes("(penalty)") ? "penalty" : diceStr.includes("(bonus)") ? "bonus" : undefined,
+            penalty: diceStr.includes("(penalty)")
+              ? "penalty"
+              : diceStr.includes("(bonus)")
+                ? "bonus"
+                : undefined,
           });
         }
       } else {
@@ -112,7 +118,10 @@ export function buildDiceRollInfos(
               ""
             )
             .trim();
-          if (skillPart && (/\d+%\s*$/.test(skillPart) || skillPart.length < 40))
+          if (
+            skillPart &&
+            (/\d+%\s*$/.test(skillPart) || skillPart.length < 40)
+          )
             info.skill = skillPart;
         }
         infos.push(info);
@@ -151,7 +160,8 @@ export function getLatestTurnNumber(messages: Message[]): number | null {
   if (!messages || messages.length === 0) return null;
   let max = Number.NEGATIVE_INFINITY;
   for (const msg of messages) {
-    const num = typeof msg.turnNumber === "number" ? msg.turnNumber : NaN;
+    const num =
+      typeof msg.turnNumber === "number" ? msg.turnNumber : Number.NaN;
     if (Number.isFinite(num) && num > max) {
       max = num;
     }
@@ -162,12 +172,15 @@ export function getLatestTurnNumber(messages: Message[]): number | null {
 /**
  * Get the latest completed turn number (keeper messages only)
  */
-export function getLatestCompletedTurnNumber(messages: Message[]): number | null {
+export function getLatestCompletedTurnNumber(
+  messages: Message[]
+): number | null {
   if (!messages || messages.length === 0) return null;
   let max = Number.NEGATIVE_INFINITY;
   for (const msg of messages) {
     if (msg.role !== "keeper") continue;
-    const num = typeof msg.turnNumber === "number" ? msg.turnNumber : NaN;
+    const num =
+      typeof msg.turnNumber === "number" ? msg.turnNumber : Number.NaN;
     if (Number.isFinite(num) && num > max) {
       max = num;
     }

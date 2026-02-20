@@ -16,8 +16,8 @@
 import { config } from "dotenv";
 config();
 
-import { CoCDatabaseAdapter } from "../src/shared/agents/memory/database/CoCDatabaseAdapter.js";
 import { NPCLoader } from "../src/shared/agents/character/npcloader/index.js";
+import { CoCDatabaseAdapter } from "../src/shared/agents/memory/database/CoCDatabaseAdapter.js";
 
 async function main() {
   if (!process.env.DATABASE_URL) {

@@ -63,7 +63,8 @@ export async function checkAndTriggerSimulate(
     const legacyEndedByStatus =
       (playerStatus?.hp ?? 0) <= 0 || (playerStatus?.sanity ?? 0) <= 0;
     const legacyEndedByTrigger =
-      dynamicGameState.temporaryInfo?.contextualData?.globalTriggerEnded === true;
+      dynamicGameState.temporaryInfo?.contextualData?.globalTriggerEnded ===
+      true;
     if (
       dynamicGameState.gameEnding?.isEnded ||
       legacyEndedByStatus ||

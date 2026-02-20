@@ -3,7 +3,7 @@
  * Default model settings for different providers and sizes
  */
 
-import { ModelClass, ModelProviderName, Models } from "./types.js";
+import { ModelClass, ModelProviderName, type Models } from "./types.js";
 
 export const models: Models = {
   [ModelProviderName.OPENAI]: {

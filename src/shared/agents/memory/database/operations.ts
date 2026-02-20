@@ -5,8 +5,8 @@
  * This layer provides backward-compatible methods on top of Prisma + PostgreSQL.
  */
 
-import type { PrismaClient } from "./prismaClient.js";
 import { randomUUID } from "crypto";
+import type { PrismaClient } from "./prismaClient.js";
 
 export class DatabaseOperations {
   constructor(private prisma: PrismaClient) {}
@@ -27,9 +27,7 @@ export class DatabaseOperations {
    * Transaction wrapper
    * Usage: await operations.transaction(async (tx) => { ... })
    */
-  async transaction<T>(
-    fn: (tx: PrismaClient) => Promise<T>
-  ): Promise<T> {
+  async transaction<T>(fn: (tx: PrismaClient) => Promise<T>): Promise<T> {
     return this.prisma.$transaction(async (tx) => {
       return fn(tx as PrismaClient);
     });
@@ -131,7 +129,7 @@ export class DatabaseOperations {
    */
   async getTurnHistory(
     sessionId: string,
-    limit: number = 20,
+    limit = 20,
     afterTurnNumber?: number
   ): Promise<any[]> {
     const turns = await this.prisma.gameTurn.findMany({
@@ -188,6 +186,24 @@ export class DatabaseOperations {
       data: {
         status: "requires_skill_selection",
         actionAnalysis,
+      },
+    });
+  }
+
+  /**
+   * Mark turn as requiring combat response (player must respond to NPC attacks)
+   */
+  async markTurnRequiresCombatResponse(
+    turnId: string,
+    npcAttackNarrative: string,
+    pendingNpcActions: any[]
+  ): Promise<void> {
+    await this.prisma.gameTurn.update({
+      where: { turnId },
+      data: {
+        status: "requires_combat_response",
+        keeperNarrative: npcAttackNarrative,
+        actionResults: pendingNpcActions as any,
       },
     });
   }
@@ -256,7 +272,7 @@ export class DatabaseOperations {
    * List checkpoints
    * Replacement for: db.listCheckpoints(sessionId, limit)
    */
-  async listCheckpoints(sessionId: string, limit: number = 50): Promise<any[]> {
+  async listCheckpoints(sessionId: string, limit = 50): Promise<any[]> {
     const checkpoints = await this.prisma.gameCheckpoint.findMany({
       where: { sessionId },
       orderBy: { createdAt: "desc" },
@@ -290,7 +306,7 @@ export class DatabaseOperations {
    */
   async cleanupAutoCheckpoints(
     sessionId: string,
-    keepCount: number = 10
+    keepCount = 10
   ): Promise<void> {
     // Get all auto checkpoints for this session, ordered by creation date
     const autoCheckpoints = await this.prisma.gameCheckpoint.findMany({
@@ -327,7 +343,7 @@ export class DatabaseOperations {
   async searchEvents(
     sessionId: string,
     query: string,
-    limit: number = 10
+    limit = 10
   ): Promise<any[]> {
     // Use PostgreSQL full-text search with tsvector
     const results = await this.prisma.$queryRaw<any[]>`
@@ -360,9 +376,7 @@ export class DatabaseOperations {
     const { sessionId, embedding, topK = 5 } = params;
 
     // Convert number array to Buffer for PostgreSQL
-    const embeddingBuffer = Buffer.from(
-      new Float32Array(embedding).buffer
-    );
+    const embeddingBuffer = Buffer.from(new Float32Array(embedding).buffer);
 
     // Use pgvector for similarity search
     // NOTE: This requires pgvector extension to be installed
@@ -378,7 +392,10 @@ export class DatabaseOperations {
 
       return results;
     } catch (error) {
-      console.warn("Vector similarity search failed (pgvector not installed?)", error);
+      console.warn(
+        "Vector similarity search failed (pgvector not installed?)",
+        error
+      );
       // Fallback to manual cosine similarity (slower)
       return this.fallbackSimilaritySearch(sessionId, embedding, topK);
     }
@@ -398,9 +415,7 @@ export class DatabaseOperations {
     const { sessionId, embedding, topK = 5 } = params;
 
     // Convert number array to Buffer for PostgreSQL
-    const embeddingBuffer = Buffer.from(
-      new Float32Array(embedding).buffer
-    );
+    const embeddingBuffer = Buffer.from(new Float32Array(embedding).buffer);
 
     // Use pgvector for similarity search
     try {
@@ -415,7 +430,10 @@ export class DatabaseOperations {
 
       return results;
     } catch (error) {
-      console.warn("Action log vector similarity search failed (pgvector not installed?)", error);
+      console.warn(
+        "Action log vector similarity search failed (pgvector not installed?)",
+        error
+      );
       // Fallback to manual cosine similarity (slower)
       return this.fallbackActionLogSimilaritySearch(sessionId, embedding, topK);
     }

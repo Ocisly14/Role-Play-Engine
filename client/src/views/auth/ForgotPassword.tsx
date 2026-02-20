@@ -1,6 +1,5 @@
-import React from "react";
-import { ForgotPasswordForm } from "../../components/auth/ForgotPasswordForm";
 import { FrameImage } from "../../components/FrameImage";
+import { ForgotPasswordForm } from "../../components/auth/ForgotPasswordForm";
 import { useBackgroundImage } from "../../hooks/useBackgroundImage";
 
 export default function ForgotPassword() {

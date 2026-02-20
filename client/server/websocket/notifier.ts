@@ -1,5 +1,5 @@
-import type { WSClient } from "./WebSocketManager.js";
 import { WebSocket } from "ws";
+import type { WSClient } from "./WebSocketManager.js";
 
 /**
  * Notify WebSocket clients about events

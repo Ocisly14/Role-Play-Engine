@@ -1,6 +1,6 @@
 import { getEndpoint } from "./generator.js";
-import { ModelClass, ModelProviderName } from "./types.js";
 import { normalizeUsageMetadata, recordTokenUsage } from "./tokenUsage.js";
+import { ModelClass, ModelProviderName } from "./types.js";
 
 export interface GeneratedImage {
   mimeType: string;
@@ -41,7 +41,9 @@ export async function generateGeminiImage(
 
   const requestParts: any[] = [];
   for (const img of options.referenceImages ?? []) {
-    requestParts.push({ inlineData: { mimeType: img.mimeType, data: img.base64Data } });
+    requestParts.push({
+      inlineData: { mimeType: img.mimeType, data: img.base64Data },
+    });
   }
   requestParts.push({ text: prompt });
 

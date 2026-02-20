@@ -4,15 +4,14 @@
  */
 
 import type {
+  ActionLogEntry,
   CharacterAttributes,
   CharacterStatus,
   InventoryItem,
-  ActionLogEntry,
   NPCClue,
   NPCRelationship,
 } from "../../shared/agents/models/gameTypes.js";
 import type {
-  ScenarioSnapshot,
   ScenarioCharacter,
   ScenarioClue,
   ScenarioCondition,
@@ -229,7 +228,7 @@ export interface MythosEvent {
 export interface EndStateDefinition {
   summary: string; // 1-3 paragraphs
   catastropheNature: string;
-  winnersAndSurvivors: string[];
+  victoryConditions: string[]; // What investigators must achieve to prevent the catastrophe
   pointOfNoReturn: {
     type: "time" | "condition";
     trigger: string; // e.g., "Day 8 0:00" or "All seals broken"

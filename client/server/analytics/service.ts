@@ -1,5 +1,5 @@
-import { getPrismaClient } from "../../../src/shared/agents/memory/database/prismaClient.js";
 import { randomUUID } from "node:crypto";
+import { getPrismaClient } from "../../../src/shared/agents/memory/database/prismaClient.js";
 
 export interface DailyStats {
   id: string;
@@ -225,7 +225,9 @@ export async function calculateDailyStats(
 /**
  * Calculate aggregate statistics within a rolling N-hour window ending now.
  */
-export async function getRecentWindowStats(hours: number): Promise<WindowStats> {
+export async function getRecentWindowStats(
+  hours: number
+): Promise<WindowStats> {
   const prisma = getPrismaClient();
   const window_end = new Date();
   const window_start = new Date(window_end.getTime() - hours * 60 * 60 * 1000);

@@ -5,28 +5,24 @@
  * for the game chat interface.
  */
 
-import { useState, useEffect, useRef, useCallback } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
-import { useTurnPolling, type TurnStatus } from "../hooks/useTurnPolling";
-import { useInputCollapse } from "../hooks/useInputCollapse";
-import { useSceneTransition } from "../hooks/useSceneTransition";
 import { useAutoSave } from "../hooks/useAutoSave";
 import { useDiceAnimation } from "../hooks/useDiceAnimation";
 import { useGameMessages } from "../hooks/useGameMessages";
+import { useInputCollapse } from "../hooks/useInputCollapse";
+import { useSceneTransition } from "../hooks/useSceneTransition";
 import { useSkillSelection } from "../hooks/useSkillSelection";
+import { type TurnStatus, useTurnPolling } from "../hooks/useTurnPolling";
 import { useWebSocket } from "../hooks/useWebSocket";
+import type { GameChatProps, GameEndingInfo, Message } from "../types/gamechat";
 import { authFetch } from "../utils/authFetch";
-import type {
-  Message,
-  GameEndingInfo,
-  GameState,
-  GameChatProps,
-} from "../types/gamechat";
-import { buildDiceRollInfos } from "./gamechat/utils";
-import { SessionInfoBar } from "./gamechat/SessionInfoBar";
-import { MessageList } from "./gamechat/MessageList";
+import { CombatResponsePanel } from "./gamechat/CombatResponsePanel";
 import { InputArea } from "./gamechat/InputArea";
+import { MessageList } from "./gamechat/MessageList";
+import { SessionInfoBar } from "./gamechat/SessionInfoBar";
 import { SkillSelectionModal } from "./gamechat/SkillSelectionModal";
+import { buildDiceRollInfos } from "./gamechat/utils";
 
 export function GameChat({
   sessionId,
@@ -37,7 +33,7 @@ export function GameChat({
   onNarrativeComplete,
   language = "en",
 }: GameChatProps) {
-  const { t } = useTranslation('game');
+  const { t } = useTranslation("game");
 
   // Local component state
   const [inputValue, setInputValue] = useState("");
@@ -53,6 +49,13 @@ export function GameChat({
     useState(false);
   const [pendingTurnForSkillSelection, setPendingTurnForSkillSelection] =
     useState<TurnStatus | null>(null);
+
+  // Combat response state
+  const [isCombatResponsePanelOpen, setIsCombatResponsePanelOpen] =
+    useState(false);
+  const [pendingTurnForCombatResponse, setPendingTurnForCombatResponse] =
+    useState<TurnStatus | null>(null);
+  const processedCombatTurnsRef = useRef<Set<string>>(new Set());
 
   // Refs
   const processedSkillSelectionTurnsRef = useRef<Set<string>>(new Set());
@@ -77,8 +80,7 @@ export function GameChat({
     sceneChangingTextKey,
     startSceneChanging,
     clearSceneChanging,
-  } =
-    useSceneTransition();
+  } = useSceneTransition();
 
   const { updateLastSavedTurnNumber, triggerAutoSave } = useAutoSave({
     apiBaseUrl,
@@ -195,7 +197,14 @@ export function GameChat({
     } catch (err) {
       console.error("[GameChat] Failed to fetch game state:", err);
     }
-  }, [apiBaseUrl, sessionId, selectedSkill, normalizeSkills, setAvailableSkills, setSelectedSkill]);
+  }, [
+    apiBaseUrl,
+    sessionId,
+    selectedSkill,
+    normalizeSkills,
+    setAvailableSkills,
+    setSelectedSkill,
+  ]);
 
   useEffect(() => {
     fetchGameEndingRef.current = fetchGameEnding;
@@ -230,6 +239,23 @@ export function GameChat({
     }
   }, [turn, stopPolling, availableSkills.length, isSkillSelectionModalOpen]);
 
+  // Handle combat response requirement
+  useEffect(() => {
+    if (turn && turn.status === "requires_combat_response") {
+      setIsSending(false);
+      stopPolling();
+
+      const turnId = turn.turnId || `turn-${turn.turnNumber}`;
+      const alreadyProcessed = processedCombatTurnsRef.current.has(turnId);
+
+      if (!alreadyProcessed && !isCombatResponsePanelOpen) {
+        processedCombatTurnsRef.current.add(turnId);
+        setIsCombatResponsePanelOpen(true);
+        setPendingTurnForCombatResponse(turn);
+      }
+    }
+  }, [turn, stopPolling, isCombatResponsePanelOpen]);
+
   // Handle turn completion
   useEffect(() => {
     if (turn && turn.status === "completed") {
@@ -254,10 +280,7 @@ export function GameChat({
       // Only show dice rolls from the main action (first actionResult)
       // NPC response dice rolls are not displayed to avoid clutter
       const mainActionResults = turn.actionResults?.slice(0, 1) || [];
-      const allDiceRolls = buildDiceRollInfos(
-        mainActionResults,
-        characterName
-      );
+      const allDiceRolls = buildDiceRollInfos(mainActionResults, characterName);
 
       const existingStreamingMessage = turn.turnId
         ? messagesRef.current.find(
@@ -567,6 +590,52 @@ export function GameChat({
     setIsSending(false);
   }, [setSelectedSkill]);
 
+  const handleCombatResponseConfirm = useCallback(
+    async (input: string, selectedSkill: string | null) => {
+      if (!pendingTurnForCombatResponse) return;
+
+      setIsCombatResponsePanelOpen(false);
+      setPendingTurnForCombatResponse(null);
+      setIsSending(true);
+
+      try {
+        const response = await authFetch(`${apiBaseUrl}/turns`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            message: input,
+            selectedSkill: selectedSkill || null,
+            isCombatResponse: true,
+            language,
+          }),
+        });
+
+        const data = await response.json();
+
+        if (!data.success) {
+          throw new Error(data.error || "Failed to send combat response");
+        }
+
+        startPolling(data.turnId);
+      } catch (err) {
+        console.error("Failed to submit combat response:", err);
+        setIsSending(false);
+        setIsCombatResponsePanelOpen(true);
+        alert(
+          "Failed to submit combat response: " +
+            (err instanceof Error ? err.message : "Unknown error")
+        );
+      }
+    },
+    [pendingTurnForCombatResponse, apiBaseUrl, language, startPolling]
+  );
+
+  const handleCombatResponseCancel = useCallback(() => {
+    setIsCombatResponsePanelOpen(false);
+    setPendingTurnForCombatResponse(null);
+    setIsSending(false);
+  }, []);
+
   return (
     <div className="game-chat-container backdrop-blur-sm border border-slate-200 shadow-md rounded-lg">
       <SkillSelectionModal
@@ -577,6 +646,15 @@ export function GameChat({
         setSelectedSkill={setSelectedSkill}
         onConfirm={handleSkillSelectionConfirm}
         onCancel={handleSkillSelectionCancel}
+        language={language}
+      />
+
+      <CombatResponsePanel
+        isOpen={isCombatResponsePanelOpen}
+        pendingTurn={pendingTurnForCombatResponse}
+        availableSkills={availableSkills}
+        onConfirm={handleCombatResponseConfirm}
+        onCancel={handleCombatResponseCancel}
         language={language}
       />
 

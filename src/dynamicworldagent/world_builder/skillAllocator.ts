@@ -3,9 +3,9 @@
  * Allocates occupational and interest skill points following CoC 7e rules
  */
 
-import type { CharacterAttributes } from "../../shared/agents/models/gameTypes.js";
 import fs from "fs";
 import path from "path";
+import type { CharacterAttributes } from "../../shared/agents/models/gameTypes.js";
 
 /** Per-skill cap for occupational skill points */
 const OCCUPATIONAL_SKILL_CAP = 90;

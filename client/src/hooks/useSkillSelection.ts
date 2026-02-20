@@ -2,10 +2,10 @@
  * Hook for managing skill selection and suggestion
  */
 
-import { useState, useEffect, useRef, useCallback } from "react";
-import { authFetch } from "../utils/authFetch";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { getSkillNameZh } from "../lib/skillNames";
 import type { Skill } from "../types/gamechat";
+import { authFetch } from "../utils/authFetch";
 
 export interface UseSkillSelectionParams {
   apiBaseUrl: string;
@@ -26,7 +26,9 @@ export interface UseSkillSelectionResult {
   isSuggesting: boolean;
   isSkillPickerOpen: boolean;
   setIsSkillPickerOpen: React.Dispatch<React.SetStateAction<boolean>>;
-  normalizeSkills: (skills: Record<string, unknown> | undefined | null) => Skill[];
+  normalizeSkills: (
+    skills: Record<string, unknown> | undefined | null
+  ) => Skill[];
 }
 
 export function useSkillSelection({
@@ -138,7 +140,10 @@ export function useSkillSelection({
         );
       } catch (err) {
         if ((err as Error)?.name === "AbortError") return;
-        console.warn("[useSkillSelection] Failed to fetch skill suggestions:", err);
+        console.warn(
+          "[useSkillSelection] Failed to fetch skill suggestions:",
+          err
+        );
         if (requestId === suggestRequestIdRef.current) {
           setSuggestedSkills([]);
         }

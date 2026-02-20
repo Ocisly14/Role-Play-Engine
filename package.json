@@ -31,12 +31,7 @@
     "test:scene-switch": "tsx scripts/test-scene-switch-template.ts",
     "verify:module-migration": "node --import tsx scripts/verify-module-migration.ts"
   },
-  "keywords": [
-    "langgraph",
-    "langchain",
-    "multi-agent",
-    "typescript"
-  ],
+  "keywords": ["langgraph", "langchain", "multi-agent", "typescript"],
   "author": "CoC AI",
   "license": "MIT",
   "dependencies": {

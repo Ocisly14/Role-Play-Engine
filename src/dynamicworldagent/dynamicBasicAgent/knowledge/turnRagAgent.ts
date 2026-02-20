@@ -2,8 +2,8 @@ import { createHash } from "crypto";
 import type { DynamicGameState } from "../../state/index.js";
 import type { GameTurn } from "../memory/turnManager.js";
 import {
-  SessionRagService,
   type SessionRagChunkInput,
+  SessionRagService,
 } from "./sessionRagService.js";
 import { chunkText } from "./textChunker.js";
 
@@ -25,11 +25,12 @@ function shortHash(value: string): string {
 function hasRevealUpdates(clueRevelations: any): boolean {
   if (!clueRevelations || typeof clueRevelations !== "object") return false;
   return (
-    Array.isArray(clueRevelations.scenarioClues) && clueRevelations.scenarioClues.length > 0
-  ) || (
-    Array.isArray(clueRevelations.npcClues) && clueRevelations.npcClues.length > 0
-  ) || (
-    Array.isArray(clueRevelations.npcSecrets) && clueRevelations.npcSecrets.length > 0
+    (Array.isArray(clueRevelations.scenarioClues) &&
+      clueRevelations.scenarioClues.length > 0) ||
+    (Array.isArray(clueRevelations.npcClues) &&
+      clueRevelations.npcClues.length > 0) ||
+    (Array.isArray(clueRevelations.npcSecrets) &&
+      clueRevelations.npcSecrets.length > 0)
   );
 }
 
@@ -42,14 +43,17 @@ function formatActionLogs(actionResults: any[] | null | undefined): string {
   const capped = actionResults.slice(0, 12);
 
   for (const [index, result] of capped.entries()) {
-    const character = typeof result?.character === "string" ? result.character : "Unknown";
-    const location = typeof result?.location === "string" ? result.location : "Unknown";
+    const character =
+      typeof result?.character === "string" ? result.character : "Unknown";
+    const location =
+      typeof result?.location === "string" ? result.location : "Unknown";
     const time = typeof result?.gameTime === "string" ? result.gameTime : "";
     const summary = typeof result?.result === "string" ? result.result : "";
     const cleanedSummary = summary.trim().replace(/\s+/g, " ");
-    const summaryText = cleanedSummary.length > 240
-      ? `${cleanedSummary.slice(0, 240)}...`
-      : cleanedSummary;
+    const summaryText =
+      cleanedSummary.length > 240
+        ? `${cleanedSummary.slice(0, 240)}...`
+        : cleanedSummary;
 
     lines.push(
       `${index + 1}. [${character}]${time ? ` (${time})` : ""} @ ${location} -> ${summaryText || "(no summary)"}`
@@ -57,7 +61,9 @@ function formatActionLogs(actionResults: any[] | null | undefined): string {
   }
 
   if (actionResults.length > capped.length) {
-    lines.push(`... (${actionResults.length - capped.length} more action logs omitted)`);
+    lines.push(
+      `... (${actionResults.length - capped.length} more action logs omitted)`
+    );
   }
 
   return lines.join("\n");
@@ -118,7 +124,9 @@ function collectClueChunkDrafts(
     const clueId = typeof item === "string" ? item : item?.clueId;
     if (!clueId) continue;
 
-    const clue = dynamicGameState.currentScenario?.clues?.find((c) => c.id === clueId);
+    const clue = dynamicGameState.currentScenario?.clues?.find(
+      (c) => c.id === clueId
+    );
     pushDraft({
       sourceName: dynamicGameState.currentScenario?.name || "Unknown Scenario",
       clueType: "scenario",
@@ -153,7 +161,8 @@ function collectClueChunkDrafts(
     : [];
   for (const item of npcSecrets) {
     const npcId = item?.npcId;
-    const secretIndex = typeof item?.secretIndex === "number" ? item.secretIndex : -1;
+    const secretIndex =
+      typeof item?.secretIndex === "number" ? item.secretIndex : -1;
     if (!npcId || secretIndex < 0) continue;
 
     const npc = dynamicGameState.npcCharacters.find((n) => n.id === npcId);

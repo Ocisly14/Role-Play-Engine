@@ -10,8 +10,8 @@ config();
 
 import fs from "fs";
 import path from "path";
-import { CoCDatabase } from "./src/shared/agents/memory/database/schema.js";
 import { NPCLoader } from "./src/shared/agents/character/npcloader/index.js";
+import { CoCDatabase } from "./src/shared/agents/memory/database/schema.js";
 
 // Configure logging for terminal display
 const logger = {

@@ -1,43 +1,43 @@
 import {
-  getNpcActionTimelineTemplate,
-  getTargetSnapshotFromTimelineTemplate,
-  getSceneSwitchBackgroundSimplifiedSnapshotsTemplate,
-} from "./sceneSwitchFlowTemplates.js";
-import {
-  getNpcActionTimelineWithPlayerSceneIngressTemplate,
-  getCurrentSceneReactionSnapshotTemplate,
-  getNonPlayerBackgroundSimplifiedSnapshotsTemplate,
-} from "./nonPlayerFlowTemplates.js";
-import {
-  getGlobalTriggerEventCheckTemplate,
-  getStuckHintNarrativeTemplate,
-} from "./directorAuxTemplates.js";
-import { composeTemplate } from "../../../template.js";
-import type { ScenarioCharacter } from "../../../shared/agents/models/scenarioTypes.js";
-import type { DynamicScenarioSnapshot } from "../../world_builder/types.js";
-import { ScenarioLoader } from "../../../shared/agents/memory/scenarioloader/index.js";
-import type { CoCDatabase, CoCDatabaseAdapter } from "../../../shared/agents/memory/database/index.js";
-import type { DynamicGameState } from "../../state/index.js";
-import { DynamicGameStateManager } from "../../state/index.js";
+  ModelClass,
+  ModelProviderName,
+  generateText,
+} from "../../../models/index.js";
+import type {
+  CoCDatabase,
+  CoCDatabaseAdapter,
+} from "../../../shared/agents/memory/database/index.js";
+import { getPrismaClient } from "../../../shared/agents/memory/database/prismaClient.js";
+import type { ScenarioLoader } from "../../../shared/agents/memory/scenarioloader/index.js";
 import type {
   ActionLogEntry,
   CharacterStatus,
   InventoryItem,
   NPCRelationship,
 } from "../../../shared/agents/models/gameTypes.js";
-import type { DynamicCharacterProfile } from "../../world_builder/types.js";
-import type { DynamicNPCProfile } from "../../world_builder/types.js";
 import { InventoryUtils } from "../../../shared/agents/models/gameTypes.js";
+import type { ScenarioCharacter } from "../../../shared/agents/models/scenarioTypes.js";
+import { composeTemplate } from "../../../template.js";
+import type { DynamicGameState } from "../../state/index.js";
+import type { DynamicGameStateManager } from "../../state/index.js";
+import type { DynamicScenarioSnapshot } from "../../world_builder/types.js";
+import type { DynamicNPCProfile } from "../../world_builder/types.js";
 import type { ScenarioConnectionType } from "../../world_builder/types.js";
-import {
-  ModelProviderName,
-  ModelClass,
-  generateText,
-} from "../../../models/index.js";
-import * as fs from "fs";
-import * as path from "path";
 import { saveDynamicGameStateCheckpoint } from "../memory/checkpoint.js";
-import { getPrismaClient } from "../../../shared/agents/memory/database/prismaClient.js";
+import {
+  getGlobalTriggerEventCheckTemplate,
+  getStuckHintNarrativeTemplate,
+} from "./directorAuxTemplates.js";
+import {
+  getCurrentSceneReactionSnapshotTemplate,
+  getNonPlayerBackgroundSimplifiedSnapshotsTemplate,
+  getNpcActionTimelineWithPlayerSceneIngressTemplate,
+} from "./nonPlayerFlowTemplates.js";
+import {
+  getNpcActionTimelineTemplate,
+  getSceneSwitchBackgroundSimplifiedSnapshotsTemplate,
+  getTargetSnapshotFromTimelineTemplate,
+} from "./sceneSwitchFlowTemplates.js";
 
 interface DirectorRuntime {
   modelProvider: ModelProviderName;
@@ -59,7 +59,10 @@ export class DirectorAgent {
   private scenarioLoader: ScenarioLoader;
   private db: CoCDatabase | CoCDatabaseAdapter;
 
-  constructor(scenarioLoader: ScenarioLoader, db: CoCDatabase | CoCDatabaseAdapter) {
+  constructor(
+    scenarioLoader: ScenarioLoader,
+    db: CoCDatabase | CoCDatabaseAdapter
+  ) {
     this.scenarioLoader = scenarioLoader;
     this.db = db;
   }
@@ -179,9 +182,12 @@ export class DirectorAgent {
         console.warn(
           `   ⚠️ Scene switch validation failed with ${currentProvider}, retrying scene switch generation with openai...`
         );
-        updateResult = await this.updateScenariosForSceneSwitch(gameStateManager, {
-          providerOverride: ModelProviderName.OPENAI,
-        });
+        updateResult = await this.updateScenariosForSceneSwitch(
+          gameStateManager,
+          {
+            providerOverride: ModelProviderName.OPENAI,
+          }
+        );
 
         if (updateResult) {
           console.log(`   ✓ OpenAI scene switch retry succeeded`);
@@ -367,7 +373,7 @@ export class DirectorAgent {
     const match = gameTime.match(/Day\s*(\d+),\s*(\d{2}:\d{2})/i);
     if (match) {
       return {
-        gameDay: parseInt(match[1], 10),
+        gameDay: Number.parseInt(match[1], 10),
         timeOfDay: match[2],
       };
     }
@@ -480,30 +486,34 @@ export class DirectorAgent {
     }
 
     // Determine status string based on character state
-    let statusString = 'active'; // Default status
+    let statusString = "active"; // Default status
 
     // If status is already a string, use it
-    if (typeof char.status === 'string') {
+    if (typeof char.status === "string") {
       statusString = char.status;
     }
     // If status is an object with HP/sanity deltas, infer status
-    else if (char.status && typeof char.status === 'object') {
+    else if (char.status && typeof char.status === "object") {
       const statusObj = char.status as Partial<CharacterStatus>;
 
       // Check for negative HP changes (injuries)
       if (statusObj.hp !== undefined && statusObj.hp < -5) {
-        statusString = 'injured';
+        statusString = "injured";
       } else if (statusObj.hp !== undefined && statusObj.hp < -10) {
-        statusString = 'critically_injured';
+        statusString = "critically_injured";
       }
       // Check for negative sanity changes (mental state)
       else if (statusObj.sanity !== undefined && statusObj.sanity < -5) {
-        statusString = 'shaken';
+        statusString = "shaken";
       } else if (statusObj.sanity !== undefined && statusObj.sanity < -10) {
-        statusString = 'disturbed';
+        statusString = "disturbed";
       }
       // Check for conditions
-      else if (statusObj.conditions && Array.isArray(statusObj.conditions) && statusObj.conditions.length > 0) {
+      else if (
+        statusObj.conditions &&
+        Array.isArray(statusObj.conditions) &&
+        statusObj.conditions.length > 0
+      ) {
         statusString = statusObj.conditions[0]; // Use first condition as status
       }
     }
@@ -512,9 +522,9 @@ export class DirectorAgent {
     return {
       id: char.id,
       name: char.name,
-      role: char.role || 'npc',
+      role: char.role || "npc",
       status: statusString,
-      location: location || 'unknown',
+      location: location || "unknown",
       notes: char.notes,
     };
   }
@@ -699,7 +709,10 @@ export class DirectorAgent {
    * Handles day boundaries (e.g. Day 2, 00:30 - 60 min = Day 1, 23:30).
    * Returns the resulting game time string.
    */
-  private subtractMinutesFromGameTime(gameTime: string, minutes: number): string {
+  private subtractMinutesFromGameTime(
+    gameTime: string,
+    minutes: number
+  ): string {
     const t = this.parseGameTimeFromSnapshot(gameTime);
     if (!t) return gameTime;
     const [h, m] = t.timeOfDay.split(":").map(Number);
@@ -1036,7 +1049,10 @@ export class DirectorAgent {
       ) {
         continue;
       }
-      if (latestAcceptedTime && !this.isTimeAfter(entry.time, latestAcceptedTime)) {
+      if (
+        latestAcceptedTime &&
+        !this.isTimeAfter(entry.time, latestAcceptedTime)
+      ) {
         continue;
       }
 
@@ -1064,7 +1080,9 @@ export class DirectorAgent {
         continue;
       }
 
-      if (latestEntry.location.toLowerCase().trim() !== normalizedSceneLocation) {
+      if (
+        latestEntry.location.toLowerCase().trim() !== normalizedSceneLocation
+      ) {
         continue;
       }
 
@@ -1093,7 +1111,8 @@ export class DirectorAgent {
       return updatedSnapshots[updatedSnapshots.length - 1];
     }
 
-    const scenarioProfile = await this.scenarioLoader.getScenarioById(scenarioId);
+    const scenarioProfile =
+      await this.scenarioLoader.getScenarioById(scenarioId);
     return scenarioProfile?.snapshot || null;
   }
 
@@ -1305,7 +1324,11 @@ export class DirectorAgent {
         previousSnapshotTime,
         currentGameTime,
         truthTimelineJson: JSON.stringify(dynamicState.truthTimeline, null, 2),
-        knowledgeMatrixJson: JSON.stringify(dynamicState.knowledgeMatrix, null, 2),
+        knowledgeMatrixJson: JSON.stringify(
+          dynamicState.knowledgeMatrix,
+          null,
+          2
+        ),
         previousGlobalTrigger: dynamicState.globalTrigger,
         previousGlobalTriggerJson: dynamicState.globalTrigger
           ? JSON.stringify(dynamicState.globalTrigger, null, 2)
@@ -1354,7 +1377,10 @@ export class DirectorAgent {
         actionTimeline?: TimelineBucket[];
       }>(phase1Response, "Phase 1 timeline");
 
-      if (!parsedTimeline?.actionTimeline || parsedTimeline.actionTimeline.length === 0) {
+      if (
+        !parsedTimeline?.actionTimeline ||
+        parsedTimeline.actionTimeline.length === 0
+      ) {
         console.error(`   ❌ Phase 1 response missing actionTimeline`);
         return null;
       }
@@ -1363,7 +1389,10 @@ export class DirectorAgent {
       let mergedNpcUpdates = 0;
 
       for (const bucket of parsedTimeline.actionTimeline) {
-        if (!bucket?.time || !this.isTimeBeforeOrEqual(bucket.time, currentGameTime)) {
+        if (
+          !bucket?.time ||
+          !this.isTimeBeforeOrEqual(bucket.time, currentGameTime)
+        ) {
           continue;
         }
 
@@ -1376,7 +1405,9 @@ export class DirectorAgent {
 
           const npc = this.findNPCById(dynamicState.npcCharacters, update.id);
           if (!npc) {
-            console.warn(`   ⚠️ NPC "${update.id}" not found, skipping timeline update`);
+            console.warn(
+              `   ⚠️ NPC "${update.id}" not found, skipping timeline update`
+            );
             continue;
           }
           const npcLatestAction = this.getLatestActionLogAtOrBefore(
@@ -1419,7 +1450,9 @@ export class DirectorAgent {
         }
       }
 
-      console.log(`   ✓ Phase 1 merged updates for ${mergedNpcUpdates} NPC entries`);
+      console.log(
+        `   ✓ Phase 1 merged updates for ${mergedNpcUpdates} NPC entries`
+      );
 
       const playerActionWindow = this.getPlayerActionLogInWindow(
         dynamicState.playerCharacter.actionLog,
@@ -1443,16 +1476,17 @@ export class DirectorAgent {
       });
 
       // Phase 3 runs in parallel with Phase 2
-      const phase3Promise = this.updateBackgroundSimplifiedSnapshotsForSceneSwitch(
-        gameStateManager,
-        currentGameTime,
-        previousSnapshotTime,
-        scenesToUpdateInBackground,
-        cleanedTimeline,
-        playerActionWindow,
-        getSceneSwitchBackgroundSimplifiedSnapshotsTemplate(),
-        options
-      );
+      const phase3Promise =
+        this.updateBackgroundSimplifiedSnapshotsForSceneSwitch(
+          gameStateManager,
+          currentGameTime,
+          previousSnapshotTime,
+          scenesToUpdateInBackground,
+          cleanedTimeline,
+          playerActionWindow,
+          getSceneSwitchBackgroundSimplifiedSnapshotsTemplate(),
+          options
+        );
 
       console.log(`   📋 Phase 2: Generating target scene snapshot...`);
 
@@ -1471,11 +1505,23 @@ export class DirectorAgent {
           null,
           2
         ),
-        targetBaselineSnapshotJson: JSON.stringify(targetScenarioData.snapshot, null, 2),
-        actionTimelineJson: JSON.stringify({ actionTimeline: cleanedTimeline }, null, 2),
+        targetBaselineSnapshotJson: JSON.stringify(
+          targetScenarioData.snapshot,
+          null,
+          2
+        ),
+        actionTimelineJson: JSON.stringify(
+          { actionTimeline: cleanedTimeline },
+          null,
+          2
+        ),
         playerActionWindowJson: JSON.stringify(playerActionWindow, null, 2),
         truthTimelineJson: JSON.stringify(dynamicState.truthTimeline, null, 2),
-        knowledgeMatrixJson: JSON.stringify(dynamicState.knowledgeMatrix, null, 2),
+        knowledgeMatrixJson: JSON.stringify(
+          dynamicState.knowledgeMatrix,
+          null,
+          2
+        ),
         endStateJson: dynamicState.endState
           ? JSON.stringify(dynamicState.endState, null, 2)
           : "null",
@@ -1526,14 +1572,17 @@ export class DirectorAgent {
         return null;
       }
 
-      const modifiedConnections = parsedPhase2.targetSnapshot.connections || null;
+      const modifiedConnections =
+        parsedPhase2.targetSnapshot.connections || null;
       const validatedTargetSceneName =
-        parsedPhase2.targetSnapshot.snapshot.name || targetScenarioData.scenarioName;
+        parsedPhase2.targetSnapshot.snapshot.name ||
+        targetScenarioData.scenarioName;
 
       const targetSnapshot: DynamicScenarioSnapshot = {
         ...parsedPhase2.targetSnapshot.snapshot,
         id:
-          parsedPhase2.targetSnapshot.snapshot.id || targetScenarioData.snapshot.id,
+          parsedPhase2.targetSnapshot.snapshot.id ||
+          targetScenarioData.snapshot.id,
         name:
           parsedPhase2.targetSnapshot.snapshot.name ||
           targetScenarioData.snapshot.name,
@@ -1547,12 +1596,17 @@ export class DirectorAgent {
         snapshotType: "complete",
         clues: Array.isArray(parsedPhase2.targetSnapshot.snapshot.clues)
           ? parsedPhase2.targetSnapshot.snapshot.clues
-          : (targetScenarioData.snapshot.clues as DynamicScenarioSnapshot["clues"]),
-        conditions: Array.isArray(parsedPhase2.targetSnapshot.snapshot.conditions)
+          : (targetScenarioData.snapshot
+              .clues as DynamicScenarioSnapshot["clues"]),
+        conditions: Array.isArray(
+          parsedPhase2.targetSnapshot.snapshot.conditions
+        )
           ? parsedPhase2.targetSnapshot.snapshot.conditions
           : (targetScenarioData.snapshot
               .conditions as DynamicScenarioSnapshot["conditions"]),
-        characters: Array.isArray(parsedPhase2.targetSnapshot.snapshot.characters)
+        characters: Array.isArray(
+          parsedPhase2.targetSnapshot.snapshot.characters
+        )
           ? (parsedPhase2.targetSnapshot.snapshot
               .characters as DynamicScenarioSnapshot["characters"])
           : this.buildLightweightCharactersForScene(
@@ -1583,11 +1637,16 @@ export class DirectorAgent {
       try {
         await phase3Promise;
       } catch (error) {
-        console.error(`   ❌ Background simplified snapshot update failed:`, error);
+        console.error(
+          `   ❌ Background simplified snapshot update failed:`,
+          error
+        );
       }
 
       console.log(`✅ [Director Agent] Scene switch update completed`);
-      console.log(`   - Target: ${validatedTargetSceneName} (complete snapshot)`);
+      console.log(
+        `   - Target: ${validatedTargetSceneName} (complete snapshot)`
+      );
       console.log(`   - Timeline merged updates: ${mergedNpcUpdates}`);
 
       return {
@@ -1669,10 +1728,18 @@ export class DirectorAgent {
         null,
         2
       ),
-      actionTimelineJson: JSON.stringify({ actionTimeline: cleanedTimeline }, null, 2),
+      actionTimelineJson: JSON.stringify(
+        { actionTimeline: cleanedTimeline },
+        null,
+        2
+      ),
       playerActionWindowJson: JSON.stringify(playerActionWindow, null, 2),
       truthTimelineJson: JSON.stringify(dynamicState.truthTimeline, null, 2),
-      knowledgeMatrixJson: JSON.stringify(dynamicState.knowledgeMatrix, null, 2),
+      knowledgeMatrixJson: JSON.stringify(
+        dynamicState.knowledgeMatrix,
+        null,
+        2
+      ),
     };
 
     const prompt = composeTemplate(
@@ -1710,7 +1777,9 @@ export class DirectorAgent {
 
     let updatedCount = 0;
     for (const item of parsed.updatedSimplifiedSnapshots) {
-      const baseline = scenesToUpdate.find((scene) => scene.scenarioId === item.scenarioId);
+      const baseline = scenesToUpdate.find(
+        (scene) => scene.scenarioId === item.scenarioId
+      );
       if (!baseline) {
         continue;
       }
@@ -1793,7 +1862,9 @@ export class DirectorAgent {
         return;
       }
 
-      console.log(`   📋 Found ${scenariosWithSnapshots.length} scenarios to update`);
+      console.log(
+        `   📋 Found ${scenariosWithSnapshots.length} scenarios to update`
+      );
 
       const currentGameTime = `Day ${dynamicState.gameDay}, ${dynamicState.timeOfDay}`;
       const scenarioOutlineMap = new Map(
@@ -1848,7 +1919,9 @@ export class DirectorAgent {
             )
           : currentGameTime;
 
-      const currentSceneLocation = currentScenario?.location?.toLowerCase().trim();
+      const currentSceneLocation = currentScenario?.location
+        ?.toLowerCase()
+        .trim();
       const excludedNpcIds = new Set<string>();
       if (currentSceneLocation) {
         for (const npc of dynamicState.npcCharacters) {
@@ -1897,7 +1970,11 @@ export class DirectorAgent {
         previousSnapshotTime,
         currentGameTime,
         truthTimelineJson: JSON.stringify(dynamicState.truthTimeline, null, 2),
-        knowledgeMatrixJson: JSON.stringify(dynamicState.knowledgeMatrix, null, 2),
+        knowledgeMatrixJson: JSON.stringify(
+          dynamicState.knowledgeMatrix,
+          null,
+          2
+        ),
         previousGlobalTrigger: dynamicState.globalTrigger,
         previousGlobalTriggerJson: dynamicState.globalTrigger
           ? JSON.stringify(dynamicState.globalTrigger, null, 2)
@@ -1950,7 +2027,8 @@ export class DirectorAgent {
       }>(phase1Response, "Non-player Phase 1 timeline");
       if (
         !parsedTimeline ||
-        ((!parsedTimeline.actionTimeline || parsedTimeline.actionTimeline.length === 0) &&
+        ((!parsedTimeline.actionTimeline ||
+          parsedTimeline.actionTimeline.length === 0) &&
           (!parsedTimeline.SuddenActionLogs ||
             parsedTimeline.SuddenActionLogs.length === 0))
       ) {
@@ -1964,7 +2042,10 @@ export class DirectorAgent {
       let mergedNpcUpdates = 0;
       const normalTimeline = parsedTimeline.actionTimeline || [];
       for (const bucket of normalTimeline) {
-        if (!bucket?.time || !this.isTimeBeforeOrEqual(bucket.time, currentGameTime)) {
+        if (
+          !bucket?.time ||
+          !this.isTimeBeforeOrEqual(bucket.time, currentGameTime)
+        ) {
           continue;
         }
 
@@ -1976,7 +2057,9 @@ export class DirectorAgent {
 
           const npc = this.findNPCById(dynamicState.npcCharacters, update.id);
           if (!npc) {
-            console.warn(`   ⚠️ NPC "${update.id}" not found, skipping timeline update`);
+            console.warn(
+              `   ⚠️ NPC "${update.id}" not found, skipping timeline update`
+            );
             continue;
           }
           const npcLatestAction = this.getLatestActionLogAtOrBefore(
@@ -2025,11 +2108,16 @@ export class DirectorAgent {
         actionLog: ActionLogEntry[];
       }> = [];
       let suddenMergedNpcUpdates = 0;
-      if (parsedTimeline.SuddenActionLogs && parsedTimeline.SuddenActionLogs.length > 0) {
+      if (
+        parsedTimeline.SuddenActionLogs &&
+        parsedTimeline.SuddenActionLogs.length > 0
+      ) {
         const currentSceneLocationNormalized = currentScenario?.location
           ?.toLowerCase()
           .trim();
-        const currentSceneNameNormalized = currentScenario?.name?.toLowerCase().trim();
+        const currentSceneNameNormalized = currentScenario?.name
+          ?.toLowerCase()
+          .trim();
 
         for (const update of parsedTimeline.SuddenActionLogs) {
           if (!update?.id || excludedNpcIds.has(update.id)) {
@@ -2038,7 +2126,9 @@ export class DirectorAgent {
 
           const npc = this.findNPCById(dynamicState.npcCharacters, update.id);
           if (!npc) {
-            console.warn(`   ⚠️ NPC "${update.id}" not found, skipping sudden actionLog`);
+            console.warn(
+              `   ⚠️ NPC "${update.id}" not found, skipping sudden actionLog`
+            );
             continue;
           }
           const npcLatestAction = this.getLatestActionLogAtOrBefore(
@@ -2077,7 +2167,8 @@ export class DirectorAgent {
           suddenActionLogsForKeeper.push({
             id: npc.id,
             name:
-              (typeof update.name === "string" && update.name.trim()) || npc.name,
+              (typeof update.name === "string" && update.name.trim()) ||
+              npc.name,
             actionLog: validActionLog,
           });
           suddenMergedNpcUpdates += 1;
@@ -2103,21 +2194,26 @@ export class DirectorAgent {
         currentGameTime
       );
 
-      console.log(`   📋 Phase 3: Generating simplified background snapshots...`);
-      const phase3Promise = this.updateBackgroundSimplifiedSnapshotsForSceneSwitch(
-        gameStateManager,
-        currentGameTime,
-        previousSnapshotTime,
-        scenesToUpdateInBackground,
-        cleanedTimeline,
-        playerActionWindow,
-        getNonPlayerBackgroundSimplifiedSnapshotsTemplate()
+      console.log(
+        `   📋 Phase 3: Generating simplified background snapshots...`
       );
+      const phase3Promise =
+        this.updateBackgroundSimplifiedSnapshotsForSceneSwitch(
+          gameStateManager,
+          currentGameTime,
+          previousSnapshotTime,
+          scenesToUpdateInBackground,
+          cleanedTimeline,
+          playerActionWindow,
+          getNonPlayerBackgroundSimplifiedSnapshotsTemplate()
+        );
 
       let reactionMergedNpcUpdates = 0;
       if (currentScenario && suddenActionLogsForKeeper.length > 0) {
         try {
-          console.log(`   📋 Phase 2: Updating current scene from sudden logs...`);
+          console.log(
+            `   📋 Phase 2: Updating current scene from sudden logs...`
+          );
           const previousCurrentSceneSnapshot = JSON.parse(
             JSON.stringify(currentScenario)
           ) as DynamicScenarioSnapshot;
@@ -2154,13 +2250,21 @@ export class DirectorAgent {
               null,
               2
             ),
-            currentBaselineSnapshotJson: JSON.stringify(currentScenario, null, 2),
+            currentBaselineSnapshotJson: JSON.stringify(
+              currentScenario,
+              null,
+              2
+            ),
             suddenActionLogsJson: JSON.stringify(
               { SuddenActionLogs: suddenActionLogsForKeeper },
               null,
               2
             ),
-            currentSceneNpcProfilesJson: JSON.stringify(currentSceneNpcs, null, 2),
+            currentSceneNpcProfilesJson: JSON.stringify(
+              currentSceneNpcs,
+              null,
+              2
+            ),
           };
 
           const phase2Prompt = composeTemplate(
@@ -2208,7 +2312,10 @@ export class DirectorAgent {
               if (!update?.id) {
                 continue;
               }
-              const npc = this.findNPCById(dynamicState.npcCharacters, update.id);
+              const npc = this.findNPCById(
+                dynamicState.npcCharacters,
+                update.id
+              );
               if (!npc) {
                 continue;
               }
@@ -2231,11 +2338,17 @@ export class DirectorAgent {
                   ) {
                     return false;
                   }
-                  if (currentSceneLocationNormalized || currentSceneNameNormalized) {
-                    const normalizedLocation = entry.location.toLowerCase().trim();
+                  if (
+                    currentSceneLocationNormalized ||
+                    currentSceneNameNormalized
+                  ) {
+                    const normalizedLocation = entry.location
+                      .toLowerCase()
+                      .trim();
                     const matchesCurrentScene =
                       (currentSceneLocationNormalized &&
-                        normalizedLocation === currentSceneLocationNormalized) ||
+                        normalizedLocation ===
+                          currentSceneLocationNormalized) ||
                       (currentSceneNameNormalized &&
                         normalizedLocation === currentSceneNameNormalized);
                     if (!matchesCurrentScene) {
@@ -2256,11 +2369,12 @@ export class DirectorAgent {
             }
           }
 
-          if (parsedPhase2?.currentSceneUpdate?.snapshot && currentScenario.id) {
-            const modelSnapshot = parsedPhase2.currentSceneUpdate.snapshot as Record<
-              string,
-              unknown
-            >;
+          if (
+            parsedPhase2?.currentSceneUpdate?.snapshot &&
+            currentScenario.id
+          ) {
+            const modelSnapshot = parsedPhase2.currentSceneUpdate
+              .snapshot as Record<string, unknown>;
             const snapshotName =
               typeof modelSnapshot.name === "string"
                 ? modelSnapshot.name.trim()
@@ -2318,9 +2432,12 @@ export class DirectorAgent {
                 currentScenarioStorageId,
                 updatedCurrentSnapshot
               );
-              gameStateManager.refreshCurrentScenarioSnapshot(updatedCurrentSnapshot);
+              gameStateManager.refreshCurrentScenarioSnapshot(
+                updatedCurrentSnapshot
+              );
 
-              const modifiedConnections = parsedPhase2.currentSceneUpdate.connections;
+              const modifiedConnections =
+                parsedPhase2.currentSceneUpdate.connections;
               if (modifiedConnections && modifiedConnections.length > 0) {
                 await this.applyScenarioConnectionsUpdate(
                   dynamicState,
@@ -2350,13 +2467,18 @@ export class DirectorAgent {
           console.error(`   ❌ Phase 2 current scene update failed:`, error);
         }
       } else {
-        console.log(`   ℹ️ Phase 2 skipped (no sudden logs affecting current scene)`);
+        console.log(
+          `   ℹ️ Phase 2 skipped (no sudden logs affecting current scene)`
+        );
       }
 
       try {
         await phase3Promise;
       } catch (error) {
-        console.error(`   ❌ Background simplified snapshot update failed:`, error);
+        console.error(
+          `   ❌ Background simplified snapshot update failed:`,
+          error
+        );
       }
 
       console.log(`✅ [Director Agent] Scenario update completed`);
@@ -2444,7 +2566,10 @@ export class DirectorAgent {
     // Check 2: Events (only if time not reached)
     if (!triggered && globalTrigger.events && globalTrigger.events.length > 0) {
       const currentGameTime = `Day ${dynamicState.gameDay}, ${dynamicState.timeOfDay}`;
-      const earliestTime = this.subtractMinutesFromGameTime(currentGameTime, 60);
+      const earliestTime = this.subtractMinutesFromGameTime(
+        currentGameTime,
+        60
+      );
 
       const allCharacters: Array<{
         id: string;
@@ -2517,12 +2642,17 @@ export class DirectorAgent {
             const jsonMatch = response.match(/\{[\s\S]*\}/);
             parsed = JSON.parse(jsonMatch ? jsonMatch[0] : response);
           } catch (error) {
-            console.error("   ❌ Failed to parse trigger check response:", error);
+            console.error(
+              "   ❌ Failed to parse trigger check response:",
+              error
+            );
             return { triggered: false, causesGameEnd: false };
           }
 
           if (parsed.triggered) {
-            console.log(`   ✅ Global trigger triggered${parsed.causesGameEnd ? " AND causes game end" : " but does NOT cause game end"}`);
+            console.log(
+              `   ✅ Global trigger triggered${parsed.causesGameEnd ? " AND causes game end" : " but does NOT cause game end"}`
+            );
             return { triggered: true, causesGameEnd: parsed.causesGameEnd };
           }
         } catch (error) {
@@ -2540,11 +2670,15 @@ export class DirectorAgent {
           dynamicState.timeOfDay
         );
         if (pointOfNoReturnReached) {
-          console.log(`   ✅ Global trigger time reached AND causes game end (point of no return)`);
+          console.log(
+            `   ✅ Global trigger time reached AND causes game end (point of no return)`
+          );
           return { triggered: true, causesGameEnd: true };
         }
       }
-      console.log(`   ✅ Global trigger time reached but does NOT cause game end`);
+      console.log(
+        `   ✅ Global trigger time reached but does NOT cause game end`
+      );
       return { triggered: true, causesGameEnd: false };
     }
 
@@ -2585,7 +2719,9 @@ export class DirectorAgent {
     const currentGameTime = `Day ${dynamicState.gameDay}, ${dynamicState.timeOfDay}`;
     const earliestTime = this.subtractMinutesFromGameTime(currentGameTime, 60);
 
-    console.log(`   📅 Time range: ${earliestTime} to ${currentGameTime} (last 1 hour)`);
+    console.log(
+      `   📅 Time range: ${earliestTime} to ${currentGameTime} (last 1 hour)`
+    );
 
     // Extract actionLog entries directly from all characters' actionLog
     // Filter entries that fall within the last 1 hour of game time

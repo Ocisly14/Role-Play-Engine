@@ -1,31 +1,32 @@
-import React, { useEffect, useRef, useCallback } from "react";
+import type React from "react";
+import { useCallback, useEffect, useRef } from "react";
 import {
   BrowserRouter,
-  Routes,
-  Route,
-  useLocation,
   Navigate,
+  Route,
+  Routes,
+  useLocation,
 } from "react-router-dom";
+import { ProtectedRoute } from "./components/ProtectedRoute";
+import { MainLayout } from "./components/layout/MainLayout";
+import { AppSettingsProvider } from "./contexts/AppSettingsContext";
 import { AuthProvider } from "./contexts/AuthContext";
 import { GameSessionProvider } from "./contexts/GameSessionContext";
-import { AppSettingsProvider } from "./contexts/AppSettingsContext";
-import { ProtectedRoute } from "./components/ProtectedRoute";
-import Login from "./views/auth/Login";
-import Register from "./views/auth/Register";
-import ForgotPassword from "./views/auth/ForgotPassword";
-import ResetPassword from "./views/auth/ResetPassword";
-import { HomePage } from "./views/HomePage";
+import { useGameSession } from "./hooks/useGameSession";
+import { authFetch } from "./utils/authFetch";
+import { setBackgroundWithTransition } from "./utils/backgroundTransition";
+import { findAvailableImage } from "./utils/imageLoader";
 import { CharacterCreationPage } from "./views/CharacterCreationPage";
 import { CharacterSelectionPage } from "./views/CharacterSelectionPage";
+import { GamePage } from "./views/GamePage";
+import { HomePage } from "./views/HomePage";
 import { ModSelectionPage } from "./views/ModSelectionPage";
 import { ModuleIntroPage } from "./views/ModuleIntroPage";
 import { StoryCreatorPage } from "./views/StoryCreatorPage";
-import { GamePage } from "./views/GamePage";
-import { MainLayout } from "./components/layout/MainLayout";
-import { findAvailableImage } from "./utils/imageLoader";
-import { setBackgroundWithTransition } from "./utils/backgroundTransition";
-import { useGameSession } from "./hooks/useGameSession";
-import { authFetch } from "./utils/authFetch";
+import ForgotPassword from "./views/auth/ForgotPassword";
+import Login from "./views/auth/Login";
+import Register from "./views/auth/Register";
+import ResetPassword from "./views/auth/ResetPassword";
 
 // Background manager component - handles dynamic backgrounds based on game state
 const BackgroundManager: React.FC = () => {
@@ -154,10 +155,7 @@ const AppRoutes: React.FC = () => {
           }
         >
           <Route path="/" element={<HomePage />} />
-          <Route
-            path="/character/create"
-            element={<CharacterCreationPage />}
-          />
+          <Route path="/character/create" element={<CharacterCreationPage />} />
           <Route
             path="/character/select"
             element={<CharacterSelectionPage />}

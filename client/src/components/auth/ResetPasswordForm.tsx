@@ -1,10 +1,11 @@
-import React, { useState } from "react";
-import { useSearchParams, useNavigate } from "react-router-dom";
+import type React from "react";
+import { useState } from "react";
 import { useTranslation } from "react-i18next";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import { api } from "../../services/api";
 
 export function ResetPasswordForm() {
-  const { t } = useTranslation('auth');
+  const { t } = useTranslation("auth");
   const [searchParams] = useSearchParams();
   const token = searchParams.get("token");
   const navigate = useNavigate();
@@ -20,12 +21,12 @@ export function ResetPasswordForm() {
     setError("");
 
     if (newPassword !== confirmPassword) {
-      setError(t('register.errors.passwordMismatch'));
+      setError(t("register.errors.passwordMismatch"));
       return;
     }
 
     if (newPassword.length < 8) {
-      setError(t('register.errors.passwordTooShort'));
+      setError(t("register.errors.passwordTooShort"));
       return;
     }
 
@@ -57,7 +58,7 @@ export function ResetPasswordForm() {
         >
           <img
             src="/asset/icon.png"
-            alt={t('resetPassword.title')}
+            alt={t("resetPassword.title")}
             style={{
               width: "80px",
               height: "80px",
@@ -65,12 +66,12 @@ export function ResetPasswordForm() {
             }}
           />
         </div>
-        <h2>{t('resetPassword.invalidLink')}</h2>
+        <h2>{t("resetPassword.invalidLink")}</h2>
         <p style={{ textAlign: "center", color: "#aaa", marginBottom: "16px" }}>
-          {t('resetPassword.invalidLinkMessage')}
+          {t("resetPassword.invalidLinkMessage")}
         </p>
         <div className="form-links">
-          <a href="/forgot-password">{t('resetPassword.requestNew')}</a>
+          <a href="/forgot-password">{t("resetPassword.requestNew")}</a>
         </div>
       </div>
     );
@@ -79,9 +80,9 @@ export function ResetPasswordForm() {
   if (success) {
     return (
       <div className="success-message-container">
-        <h2>{t('resetPassword.success')}</h2>
-        <p>{t('resetPassword.successMessage')}</p>
-        <p>{t('resetPassword.redirecting')}</p>
+        <h2>{t("resetPassword.success")}</h2>
+        <p>{t("resetPassword.successMessage")}</p>
+        <p>{t("resetPassword.redirecting")}</p>
       </div>
     );
   }
@@ -99,7 +100,7 @@ export function ResetPasswordForm() {
       >
         <img
           src="/asset/icon.png"
-          alt={t('resetPassword.title')}
+          alt={t("resetPassword.title")}
           style={{
             width: "80px",
             height: "80px",
@@ -107,10 +108,10 @@ export function ResetPasswordForm() {
           }}
         />
       </div>
-      <h2>{t('resetPassword.title')}</h2>
+      <h2>{t("resetPassword.title")}</h2>
       <form onSubmit={handleSubmit}>
         <div className="form-group">
-          <label htmlFor="newPassword">{t('resetPassword.newPassword')}</label>
+          <label htmlFor="newPassword">{t("resetPassword.newPassword")}</label>
           <input
             id="newPassword"
             type="password"
@@ -120,11 +121,13 @@ export function ResetPasswordForm() {
             disabled={loading}
             minLength={8}
           />
-          <small>{t('resetPassword.passwordHint')}</small>
+          <small>{t("resetPassword.passwordHint")}</small>
         </div>
 
         <div className="form-group">
-          <label htmlFor="confirmPassword">{t('register.confirmPassword')}</label>
+          <label htmlFor="confirmPassword">
+            {t("register.confirmPassword")}
+          </label>
           <input
             id="confirmPassword"
             type="password"
@@ -138,7 +141,7 @@ export function ResetPasswordForm() {
         {error && <div className="error-message">{error}</div>}
 
         <button type="submit" disabled={loading}>
-          {loading ? t('resetPassword.submitting') : t('resetPassword.submit')}
+          {loading ? t("resetPassword.submitting") : t("resetPassword.submit")}
         </button>
       </form>
     </div>

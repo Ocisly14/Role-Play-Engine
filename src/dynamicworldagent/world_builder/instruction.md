@@ -753,7 +753,11 @@ World structure, mythos history, and inevitable end state.
   "endState": {
     "summary": "If investigators do not intervene, the town will complete the final transformation ritual on the winter solstice...",
     "catastropheNature": "Mass transformation into Deep One hybrids",
-    "winnersAndSurvivors": ["Transformed townspeople", "Deep Ones"],
+    "victoryConditions": [
+      "Destroy the transformation ritual altar before the winter solstice midnight",
+      "Expose the cult leader to federal authorities with sufficient evidence",
+      "Recover and destroy the Deep One pact tome hidden beneath the Marsh estate"
+    ],
     "pointOfNoReturn": {
       "type": "time",
       "trigger": "Day 8 0:00 (Winter solstice midnight)"
@@ -784,7 +788,7 @@ World structure, mythos history, and inevitable end state.
 **EndStateDefinition Fields:**
 - `summary`: 1-3 paragraphs describing the outcome
 - `catastropheNature`: Type of catastrophe/transformation
-- `winnersAndSurvivors`: Who survives or benefits
+- `victoryConditions`: Specific actions investigators must accomplish to prevent the catastrophe
 - `pointOfNoReturn`: When/how the end becomes inevitable
   - `type`: "time" | "condition"
   - `trigger`: Specific trigger condition

@@ -45,15 +45,16 @@ export function buildRagQueryTemplate({
   const recentTurnsBlock =
     recentTurns.length > 0
       ? recentTurns
-          .map((t) => `[Turn ${t.turnNumber}]\nPlayer: ${t.playerInput}\nKeeper: ${t.keeperNarrative}`)
+          .map(
+            (t) =>
+              `[Turn ${t.turnNumber}]\nPlayer: ${t.playerInput}\nKeeper: ${t.keeperNarrative}`
+          )
           .join("\n")
       : "(none)";
 
   const allScenesBlock =
     allScenes.length > 0
-      ? allScenes
-          .map((s) => `- ${s.name}: ${s.description}`)
-          .join("\n")
+      ? allScenes.map((s) => `- ${s.name}: ${s.description}`).join("\n")
       : "- (none)";
 
   return `You are a query rewriting assistant for a Call of Cthulhu RPG session memory retrieval system.

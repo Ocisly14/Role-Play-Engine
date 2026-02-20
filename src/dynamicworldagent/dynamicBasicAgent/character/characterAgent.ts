@@ -1,23 +1,23 @@
-import { ModelClass } from "../../../models/types.js";
 import { generateText } from "../../../models/index.js";
-import {
-  NPCResponseAnalysis,
-  ActionType,
-} from "../../../shared/state/index.js";
+import { ModelClass } from "../../../models/types.js";
 import type { ActionLogEntry } from "../../../shared/agents/models/gameTypes.js";
-import type { DynamicCharacterProfile } from "../../world_builder/types.js";
-import type { DynamicNPCProfile } from "../../world_builder/types.js";
+import type {
+  ActionType,
+  NPCResponseAnalysis,
+} from "../../../shared/state/index.js";
+import { composeTemplateWithImages } from "../../../template.js";
 import type {
   DynamicGameState,
   DynamicGameStateManager,
 } from "../../state/index.js";
 import {
-  isTimeAfter,
   getLatestActionLogEntryWithLocation,
+  isTimeAfter,
 } from "../../utils/gameTime.js";
-import { getCharacterTemplate } from "./characterTemplate.js";
+import type { DynamicCharacterProfile } from "../../world_builder/types.js";
+import type { DynamicNPCProfile } from "../../world_builder/types.js";
 import { getCharacterSimulatedTemplate } from "./characterSimulatedTemplate.js";
-import { composeTemplateWithImages } from "../../../template.js";
+import { getCharacterTemplate } from "./characterTemplate.js";
 
 /**
  * Character Agent class - handles NPC response analysis

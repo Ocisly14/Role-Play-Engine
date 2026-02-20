@@ -1,9 +1,9 @@
-import {
-  getPrismaClient,
-  disconnectPrisma,
-  type PrismaClient,
-} from "../../../src/shared/agents/memory/database/prismaClient.js";
 import { CoCDatabaseAdapter } from "../../../src/shared/agents/memory/database/CoCDatabaseAdapter.js";
+import {
+  type PrismaClient,
+  disconnectPrisma,
+  getPrismaClient,
+} from "../../../src/shared/agents/memory/database/prismaClient.js";
 import { seedDatabase } from "../../../src/shared/agents/memory/database/seedData.js";
 
 /**
@@ -14,7 +14,7 @@ export class DatabaseManager {
   private static instance: DatabaseManager | null = null;
   private db: CoCDatabaseAdapter | null = null;
   private prisma: PrismaClient | null = null;
-  private initialized: boolean = false;
+  private initialized = false;
 
   private constructor() {}
 

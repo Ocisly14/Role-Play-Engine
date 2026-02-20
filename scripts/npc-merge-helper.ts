@@ -12,8 +12,8 @@
 
 import fs from "fs";
 import path from "path";
-import { CoCDatabaseAdapter } from "../src/shared/agents/memory/database/CoCDatabaseAdapter.js";
 import { NPCLoader } from "../src/shared/agents/character/npcloader/index.js";
+import { CoCDatabaseAdapter } from "../src/shared/agents/memory/database/CoCDatabaseAdapter.js";
 import type { NPCProfile } from "../src/shared/agents/models/gameTypes.js";
 
 const outputPath = path.join("data", "npc_merge_prompt.txt");

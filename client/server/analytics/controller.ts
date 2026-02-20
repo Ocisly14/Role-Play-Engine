@@ -1,10 +1,10 @@
 import type { Request, Response } from "express";
 import {
   calculateDailyStats,
-  saveDailyStats,
   getHistoricalStats,
-  getTodayStats,
   getRecentWindowStats,
+  getTodayStats,
+  saveDailyStats,
 } from "./service.js";
 
 /**
@@ -42,7 +42,7 @@ export async function getDailyAnalytics(req: Request, res: Response) {
  */
 export async function refreshAnalytics(req: Request, res: Response) {
   try {
-    const today = new Date().toISOString().split('T')[0];
+    const today = new Date().toISOString().split("T")[0];
 
     // Calculate fresh stats
     const stats = await calculateDailyStats(today);

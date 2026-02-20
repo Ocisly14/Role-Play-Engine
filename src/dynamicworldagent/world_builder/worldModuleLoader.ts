@@ -10,23 +10,21 @@ import type {
   CoCDatabase,
   CoCDatabaseAdapter,
 } from "../../shared/agents/memory/database/index.js";
-import { getPrismaClient } from "../../shared/agents/memory/database/prismaClient.js";
-import {
-  resolveEmailId,
-} from "../../shared/agents/memory/database/userContext.js";
 import {
   scopeIdByModule,
   stripModuleScope,
 } from "../../shared/agents/memory/database/moduleScope.js";
+import { getPrismaClient } from "../../shared/agents/memory/database/prismaClient.js";
+import { resolveEmailId } from "../../shared/agents/memory/database/userContext.js";
 import type {
-  MacroSceneStructure,
-  TruthEvent,
-  KnowledgeHolder,
-  RedHerring,
-  MythosEvent,
   EndStateDefinition,
-  ScenarioOutline,
+  KnowledgeHolder,
+  MacroSceneStructure,
   ModuleDigest,
+  MythosEvent,
+  RedHerring,
+  ScenarioOutline,
+  TruthEvent,
 } from "./types.js";
 import type { DynamicNPCProfile } from "./types.js";
 import type { DynamicScenarioSnapshot } from "./types.js";
@@ -75,7 +73,10 @@ export class WorldModuleLoader {
   private db: CoCDatabase | CoCDatabaseAdapter;
   private emailId?: string;
 
-  constructor(db: CoCDatabase | CoCDatabaseAdapter, options?: { emailId?: string }) {
+  constructor(
+    db: CoCDatabase | CoCDatabaseAdapter,
+    options?: { emailId?: string }
+  ) {
     this.db = db;
     this.emailId = options?.emailId;
   }
@@ -88,7 +89,10 @@ export class WorldModuleLoader {
     return scopeIdByModule(id, moduleId);
   }
 
-  private scopeArrayByModule(ids: string[] | undefined, moduleId: string): string[] {
+  private scopeArrayByModule(
+    ids: string[] | undefined,
+    moduleId: string
+  ): string[] {
     if (!ids) return [];
     return ids.map((id) => this.scopeByModule(id, moduleId));
   }
@@ -159,7 +163,7 @@ export class WorldModuleLoader {
     let lastLoadTime = 0;
     if (fs.existsSync(timestampFile)) {
       try {
-        lastLoadTime = parseInt(fs.readFileSync(timestampFile, "utf8"));
+        lastLoadTime = Number.parseInt(fs.readFileSync(timestampFile, "utf8"));
       } catch {
         return { hasChanges: true, timestamp: currentTime };
       }
@@ -514,7 +518,9 @@ export class WorldModuleLoader {
   /**
    * Save module background to database
    */
-  private async saveModuleBackground(module: LoadedWorldModule): Promise<string> {
+  private async saveModuleBackground(
+    module: LoadedWorldModule
+  ): Promise<string> {
     const prisma = getPrismaClient();
     const emailId = this.getEmailId();
     const ownerEmailId = emailId || "__system__";

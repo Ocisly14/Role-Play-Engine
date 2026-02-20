@@ -10,7 +10,8 @@ function parseGameTime(gameTime) {
   if (gameTime.toLowerCase() === "initial" || !gameTime.includes("Day"))
     return null;
   const match = gameTime.match(/Day\s*(\d+),\s*(\d{2}:\d{2})/i);
-  if (match) return { gameDay: parseInt(match[1], 10), timeOfDay: match[2] };
+  if (match)
+    return { gameDay: Number.parseInt(match[1], 10), timeOfDay: match[2] };
   return null;
 }
 

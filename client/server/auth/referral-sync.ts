@@ -35,7 +35,9 @@ export async function syncReferralCodes(): Promise<void> {
       return;
     }
 
-    console.log(`Found ${codes.length} referral codes in environment variables`);
+    console.log(
+      `Found ${codes.length} referral codes in environment variables`
+    );
 
     // Upsert each code to database
     for (const { code, maxUses } of codes) {
@@ -66,7 +68,9 @@ export async function syncReferralCodes(): Promise<void> {
  * @param value Environment variable value (e.g., "BH6XK" or "BH6XK_10")
  * @returns Parsed code and maxUses, or null if invalid
  */
-function parseReferralCode(value: string): { code: string; maxUses: number | null } | null {
+function parseReferralCode(
+  value: string
+): { code: string; maxUses: number | null } | null {
   const trimmed = value.trim();
 
   // Match "CODE" or "CODE_N" format
@@ -77,7 +81,7 @@ function parseReferralCode(value: string): { code: string; maxUses: number | nul
   }
 
   const code = match[1].toUpperCase();
-  const maxUses = match[2] ? parseInt(match[2], 10) : null;
+  const maxUses = match[2] ? Number.parseInt(match[2], 10) : null;
 
   // Validate code format (5 alphanumeric characters)
   if (!/^[A-Z0-9]{5}$/i.test(code)) {

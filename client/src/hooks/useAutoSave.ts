@@ -2,13 +2,13 @@
  * Hook for managing auto-save functionality
  */
 
-import { useRef, useEffect, useCallback } from "react";
-import { authFetch } from "../utils/authFetch";
-import type { Message } from "../types/gamechat";
+import { useCallback, useEffect, useRef } from "react";
 import {
-  getLatestTurnNumber,
   getLatestCompletedTurnNumber,
+  getLatestTurnNumber,
 } from "../components/gamechat/utils";
+import type { Message } from "../types/gamechat";
+import { authFetch } from "../utils/authFetch";
 
 export interface UseAutoSaveParams {
   apiBaseUrl: string;

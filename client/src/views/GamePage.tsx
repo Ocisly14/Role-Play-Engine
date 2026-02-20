@@ -1,19 +1,21 @@
-import React, { useEffect } from "react";
-import { useNavigate } from "react-router-dom";
+import type React from "react";
+import { useEffect } from "react";
 import { useTranslation } from "react-i18next";
+import { useNavigate } from "react-router-dom";
 import { GameChat } from "../components/GameChat";
 import { GameSidebar } from "../components/GameSidebar";
-import { useGameSession } from "../hooks/useGameSession";
-import { useAppSettings } from "../contexts/AppSettingsContext";
-import { useMobileSidebar } from "../hooks/useMobileSidebar";
 import { SidebarToggleButton } from "../components/layout/SidebarToggleButton";
+import { useAppSettings } from "../contexts/AppSettingsContext";
+import { useGameSession } from "../hooks/useGameSession";
+import { useMobileSidebar } from "../hooks/useMobileSidebar";
 
 export const GamePage: React.FC = () => {
   const { t } = useTranslation("game");
   const navigate = useNavigate();
   const gameSession = useGameSession();
   const { language } = useAppSettings();
-  const { isMobile, isSidebarOpen, toggleSidebar, closeSidebar } = useMobileSidebar();
+  const { isMobile, isSidebarOpen, toggleSidebar, closeSidebar } =
+    useMobileSidebar();
 
   // Redirect to home if no active session
   useEffect(() => {
@@ -27,13 +29,13 @@ export const GamePage: React.FC = () => {
     if (!isMobile) return;
 
     const handleEscape = (e: KeyboardEvent) => {
-      if (e.key === 'Escape' && isSidebarOpen) {
+      if (e.key === "Escape" && isSidebarOpen) {
         closeSidebar();
       }
     };
 
-    document.addEventListener('keydown', handleEscape);
-    return () => document.removeEventListener('keydown', handleEscape);
+    document.addEventListener("keydown", handleEscape);
+    return () => document.removeEventListener("keydown", handleEscape);
   }, [isMobile, isSidebarOpen, closeSidebar]);
 
   // Still restoring session, show loading

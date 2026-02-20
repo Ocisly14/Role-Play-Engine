@@ -2,9 +2,9 @@
  * Hook for managing game messages state and loading
  */
 
-import { useState, useRef, useEffect } from "react";
-import { authFetch } from "../utils/authFetch";
+import { useEffect, useRef, useState } from "react";
 import type { Message } from "../types/gamechat";
+import { authFetch } from "../utils/authFetch";
 
 export interface UseGameMessagesParams {
   sessionId: string;

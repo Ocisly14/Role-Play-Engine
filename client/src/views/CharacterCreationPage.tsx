@@ -1,7 +1,7 @@
-import React from "react";
+import type React from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
-import { useCharacterCreation } from "../hooks/useCharacterCreation";
 import { CharacterForm } from "../components/character/CharacterForm";
+import { useCharacterCreation } from "../hooks/useCharacterCreation";
 
 export const CharacterCreationPage: React.FC = () => {
   const navigate = useNavigate();
@@ -30,10 +30,5 @@ export const CharacterCreationPage: React.FC = () => {
     }
   };
 
-  return (
-    <CharacterForm
-      {...characterCreation}
-      onCancel={handleCancel}
-    />
-  );
+  return <CharacterForm {...characterCreation} onCancel={handleCancel} />;
 };

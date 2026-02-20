@@ -1,10 +1,12 @@
-import React from 'react';
+import type React from "react";
 
 interface SidebarToggleButtonProps {
   onClick: () => void;
 }
 
-export const SidebarToggleButton: React.FC<SidebarToggleButtonProps> = ({ onClick }) => {
+export const SidebarToggleButton: React.FC<SidebarToggleButtonProps> = ({
+  onClick,
+}) => {
   return (
     <button
       onClick={onClick}

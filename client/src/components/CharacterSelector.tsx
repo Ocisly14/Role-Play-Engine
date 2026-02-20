@@ -3,7 +3,7 @@
  * Displays available characters from database and allows user to select one
  */
 
-import { useState, useEffect } from "react";
+import { useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { authFetch } from "../utils/authFetch";
 
@@ -29,7 +29,7 @@ export function CharacterSelector({
   onCancel,
   onCreateNew,
 }: CharacterSelectorProps) {
-  const { t } = useTranslation('home');
+  const { t } = useTranslation("home");
   const [characters, setCharacters] = useState<Character[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -55,11 +55,11 @@ export function CharacterSelector({
           setSelectedId(data.characters[0].character_id);
         }
       } else {
-        setError(t('selector.loadError'));
+        setError(t("selector.loadError"));
       }
     } catch (err) {
       console.error("Error loading characters:", err);
-      setError(t('selector.networkError'));
+      setError(t("selector.networkError"));
     } finally {
       setLoading(false);
     }
@@ -73,7 +73,7 @@ export function CharacterSelector({
 
     try {
       setImporting(true);
-      setImportMessage(t('selector.moduleLoading'));
+      setImportMessage(t("selector.moduleLoading"));
 
       // Step 1: Import game data
       const importResponse = await authFetch(`${apiBaseUrl}/game/import-data`, {
@@ -84,14 +84,14 @@ export function CharacterSelector({
       const importData = await importResponse.json();
 
       if (!importResponse.ok) {
-        throw new Error(importData.error || t('selector.importFailed'));
+        throw new Error(importData.error || t("selector.importFailed"));
       }
 
       // Step 2: Call the parent handler which will start the game
       onSelectCharacter(selectedId, selectedChar.name);
     } catch (err) {
       console.error("Error importing data:", err);
-      setError(err instanceof Error ? err.message : t('selector.importFailed'));
+      setError(err instanceof Error ? err.message : t("selector.importFailed"));
       setImporting(false);
       setImportMessage(null);
     }
@@ -119,7 +119,7 @@ export function CharacterSelector({
     <div className="character-selector-overlay">
       <div className="character-selector-modal">
         <div className="modal-header">
-          <h2>{t('selector.title')}</h2>
+          <h2>{t("selector.title")}</h2>
           <button className="close-button" onClick={onCancel}>
             ×
           </button>
@@ -130,8 +130,8 @@ export function CharacterSelector({
             <div className="loading-state">
               <p>
                 {importing
-                  ? importMessage || t('selector.processing')
-                  : t('characters.loading')}
+                  ? importMessage || t("selector.processing")
+                  : t("characters.loading")}
               </p>
               {importing && (
                 <div
@@ -141,7 +141,7 @@ export function CharacterSelector({
                     color: "#666",
                   }}
                 >
-                  {t('selector.importWait')}
+                  {t("selector.importWait")}
                 </div>
               )}
             </div>
@@ -150,15 +150,15 @@ export function CharacterSelector({
           {error && !importing && (
             <div className="error-state">
               <p style={{ color: "#dc3545" }}>{error}</p>
-              <button onClick={loadCharacters}>{t('selector.retry')}</button>
+              <button onClick={loadCharacters}>{t("selector.retry")}</button>
             </div>
           )}
 
           {!loading && !error && characters.length === 0 && (
             <div className="empty-state">
-              <p>{t('characters.empty')}</p>
+              <p>{t("characters.empty")}</p>
               <button className="primary" onClick={onCreateNew}>
-                {t('selector.createFirst')}
+                {t("selector.createFirst")}
               </button>
             </div>
           )}
@@ -179,12 +179,16 @@ export function CharacterSelector({
                       <div className="character-card-header">
                         <h3>{char.name}</h3>
                         <span className="character-occupation">
-                          {char.occupation || t('characters.unknownOccupation')}
+                          {char.occupation || t("characters.unknownOccupation")}
                         </span>
                       </div>
 
                       <div className="character-card-body">
-                        {char.age && <p>{t('selector.age')} {char.age}</p>}
+                        {char.age && (
+                          <p>
+                            {t("selector.age")} {char.age}
+                          </p>
+                        )}
 
                         {status && (
                           <div className="character-status">
@@ -215,10 +219,10 @@ export function CharacterSelector({
 
               <div className="modal-actions">
                 <button onClick={onCreateNew} className="secondary">
-                  {t('selector.createNew')}
+                  {t("selector.createNew")}
                 </button>
                 <button onClick={onCancel} className="tertiary">
-                  {t('selector.done')}
+                  {t("selector.done")}
                 </button>
                 <button
                   onClick={handleConfirm}
@@ -226,8 +230,8 @@ export function CharacterSelector({
                   disabled={!selectedId || importing}
                 >
                   {importing
-                    ? t('selector.importing')
-                    : t('selector.startGame')}
+                    ? t("selector.importing")
+                    : t("selector.startGame")}
                 </button>
               </div>
             </>

@@ -1,8 +1,8 @@
-import React from "react";
+import type React from "react";
 import { useNavigate } from "react-router-dom";
 import { CharacterSelector } from "../components/CharacterSelector";
-import { useGameSession } from "../hooks/useGameSession";
 import { useAppSettings } from "../contexts/AppSettingsContext";
+import { useGameSession } from "../hooks/useGameSession";
 
 export const CharacterSelectionPage: React.FC = () => {
   const navigate = useNavigate();

@@ -3,14 +3,14 @@
  * Prompt templates for 5-step world generation
  */
 
-import type { MacroSceneSettingType } from "./types.js";
 import type { StoryLength } from "./storyLengthConfig.js";
 import {
-  getStoryLengthMacroGuidance,
-  getStoryLengthTruthEventsSentence,
   getStoryLengthKnowledgeMatrixGuidance,
+  getStoryLengthMacroGuidance,
   getStoryLengthRedHerringsSentence,
+  getStoryLengthTruthEventsSentence,
 } from "./storyLengthConfig.js";
+import type { MacroSceneSettingType } from "./types.js";
 
 /**
  * Get setting-specific guidance for macro scene generation
@@ -768,7 +768,7 @@ Define what WILL happen if investigators do not intervene.
 ### Requirements
 - **Summary**: 1-3 paragraphs describing the catastrophic outcome
 - **Catastrophe Nature**: Type of disaster (awakening, transformation, massacre, etc.)
-- **Winners and Survivors**: Who benefits or survives (if anyone)
+- **Victory Conditions**: 2-4 specific, concrete actions or achievements investigators must accomplish to prevent the catastrophe. Each condition should be independently verifiable (e.g., "Destroy the ritual altar before the ceremony begins", "Expose the cult leader's identity to the town sheriff"). Conditions should be challenging but achievable through investigation and action.
 - **Point of No Return**: Time-based or condition-based trigger
 
 ### Constraints
@@ -785,7 +785,7 @@ Return ONLY valid JSON in this structure:
   "endState": {
     "summary": "string",
     "catastropheNature": "string",
-    "winnersAndSurvivors": ["string"],
+    "victoryConditions": ["string"],
     "pointOfNoReturn": {
       "type": "time|condition",
       "trigger": "string"
@@ -800,9 +800,10 @@ Return ONLY valid JSON in this structure:
   "endState": {
     "summary": "The ritual completes and the entity spreads through the valley. Crops rot overnight and the town falls into a silent trance as the land consumes the living.",
     "catastropheNature": "Regional decay and psychic domination",
-    "winnersAndSurvivors": [
-      "The pact-keepers retain power for a season",
-      "Anyone who leaves the county two days before the event survives"
+    "victoryConditions": [
+      "Destroy the ritual focus object (the obsidian monolith) before the new moon rises",
+      "Expose and neutralize the pact-keeper elder before he completes the binding ceremony",
+      "Retrieve and burn the Tome of the Verdant Hunger, severing the entity's link to the valley"
     ],
     "pointOfNoReturn": {
       "type": "time",

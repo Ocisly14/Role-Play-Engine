@@ -1,6 +1,5 @@
-import React from "react";
-import { RegisterForm } from "../../components/auth/RegisterForm";
 import { FrameImage } from "../../components/FrameImage";
+import { RegisterForm } from "../../components/auth/RegisterForm";
 import { useBackgroundImage } from "../../hooks/useBackgroundImage";
 
 export default function Register() {
