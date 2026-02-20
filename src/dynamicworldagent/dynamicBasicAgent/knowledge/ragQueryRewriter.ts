@@ -10,64 +10,26 @@ export interface RagQueryRewriteInput
 
 export interface RagQueryRewriteOutput {
   ragQuery: string;
-  keywords: string[];
-  entities: {
-    sceneNames: string[];
-    npcNames: string[];
-  };
   rawQuestion: string;
 }
 
-type PartialRewriteOutput = {
-  ragQuery?: unknown;
-  keywords?: unknown;
-  entities?: {
-    sceneNames?: unknown;
-    npcNames?: unknown;
-  };
-};
-
-function extractJsonObject(text: string): string | null {
+function extractRagQuery(text: string): string | null {
   const trimmed = text.trim();
-  if (trimmed.startsWith("{") && trimmed.endsWith("}")) {
-    return trimmed;
-  }
 
+  // Try fenced code block first
   const fencedMatch = trimmed.match(/```(?:json)?\s*([\s\S]*?)```/i);
-  if (fencedMatch?.[1]) {
-    const fenced = fencedMatch[1].trim();
-    if (fenced.startsWith("{") && fenced.endsWith("}")) {
-      return fenced;
-    }
-  }
+  const candidate = fencedMatch?.[1]?.trim() ?? trimmed;
 
-  const firstBrace = trimmed.indexOf("{");
-  const lastBrace = trimmed.lastIndexOf("}");
-  if (firstBrace >= 0 && lastBrace > firstBrace) {
-    return trimmed.slice(firstBrace, lastBrace + 1);
-  }
-
-  return null;
-}
-
-function toStringArray(value: unknown): string[] {
-  if (!Array.isArray(value)) return [];
-  return Array.from(
-    new Set(
-      value
-        .map((item) => (typeof item === "string" ? item.trim() : ""))
-        .filter((item) => item.length > 0)
-    )
-  ).slice(0, 12);
-}
-
-function parseRewriteOutput(raw: string): PartialRewriteOutput | null {
-  const jsonText = extractJsonObject(raw);
-  if (!jsonText) return null;
+  // Find JSON object bounds
+  const firstBrace = candidate.indexOf("{");
+  const lastBrace = candidate.lastIndexOf("}");
+  if (firstBrace < 0 || lastBrace <= firstBrace) return null;
 
   try {
-    const parsed = JSON.parse(jsonText) as PartialRewriteOutput;
-    return parsed;
+    const parsed = JSON.parse(candidate.slice(firstBrace, lastBrace + 1)) as { ragQuery?: unknown };
+    return typeof parsed.ragQuery === "string" && parsed.ragQuery.trim()
+      ? parsed.ragQuery.trim()
+      : null;
   } catch {
     return null;
   }
@@ -76,18 +38,9 @@ function parseRewriteOutput(raw: string): PartialRewriteOutput | null {
 export class RagQueryRewriter {
   async rewrite(input: RagQueryRewriteInput): Promise<RagQueryRewriteOutput> {
     const rawQuestion = input.question.trim();
-    const fallback: RagQueryRewriteOutput = {
-      ragQuery: rawQuestion,
-      keywords: [],
-      entities: {
-        sceneNames: input.sceneName ? [input.sceneName] : [],
-        npcNames: toStringArray(input.npcNames || []),
-      },
-      rawQuestion,
-    };
 
     if (!rawQuestion) {
-      return fallback;
+      return { ragQuery: rawQuestion, rawQuestion };
     }
 
     const prompt = buildRagQueryTemplate(input);
@@ -101,32 +54,11 @@ export class RagQueryRewriter {
         temperature: 0.1,
       });
 
-      const parsed = parseRewriteOutput(raw);
-      if (!parsed) {
-        return fallback;
-      }
-
-      const ragQuery =
-        typeof parsed.ragQuery === "string" && parsed.ragQuery.trim()
-          ? parsed.ragQuery.trim()
-          : rawQuestion;
-
-      const keywords = toStringArray(parsed.keywords);
-      const sceneNames = toStringArray(parsed.entities?.sceneNames);
-      const npcNames = toStringArray(parsed.entities?.npcNames);
-
-      return {
-        ragQuery,
-        keywords,
-        entities: {
-          sceneNames,
-          npcNames,
-        },
-        rawQuestion,
-      };
+      const ragQuery = extractRagQuery(raw) ?? rawQuestion;
+      return { ragQuery, rawQuestion };
     } catch (error) {
       console.warn("[RagQueryRewriter] rewrite failed, fallback to raw question", error);
-      return fallback;
+      return { ragQuery: rawQuestion, rawQuestion };
     }
   }
 }

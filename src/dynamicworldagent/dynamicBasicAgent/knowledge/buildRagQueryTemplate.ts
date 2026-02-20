@@ -4,6 +4,11 @@ export interface RecentTurnContext {
   keeperNarrative: string;
 }
 
+export interface SceneContext {
+  name: string;
+  description: string;
+}
+
 export interface BuildRagQueryTemplateInput {
   question: string;
   sceneName?: string | null;
@@ -11,6 +16,7 @@ export interface BuildRagQueryTemplateInput {
   npcNames?: string[];
   language?: "en" | "zh";
   recentTurns?: RecentTurnContext[];
+  allScenes?: SceneContext[];
 }
 
 /**
@@ -24,6 +30,7 @@ export function buildRagQueryTemplate({
   npcNames = [],
   language = "zh",
   recentTurns = [],
+  allScenes = [],
 }: BuildRagQueryTemplateInput): string {
   const dedupedNpcNames = Array.from(
     new Set(
@@ -42,37 +49,43 @@ export function buildRagQueryTemplate({
           .join("\n")
       : "(none)";
 
-  return `You rewrite player questions for retrieval.
+  const allScenesBlock =
+    allScenes.length > 0
+      ? allScenes
+          .map((s) => `- ${s.name}: ${s.description}`)
+          .join("\n")
+      : "- (none)";
+
+  return `You are a query rewriting assistant for a Call of Cthulhu RPG session memory retrieval system.
+
+Your task: rewrite the player's question into a standalone, retrieval-optimized search query.
 
 Rules:
-1. Keep intent unchanged.
-2. Use Recent Turns to understand conversational context and resolve pronouns or references.
-3. Inject relevant scene/NPC names when useful.
-4. Do NOT invent entities not listed below.
-5. Return STRICT JSON only.
-6. Do NOT answer the question.
+1. Preserve the original intent exactly — do NOT answer or interpret the question.
+2. Resolve all pronouns and ambiguous references using Recent Turns (e.g. "he" → NPC name, "there" → location name).
+3. Make the query self-contained — it must be understandable without any conversation context.
+4. Inject specific entity names (scene, NPC, location) from the context below when they are clearly relevant.
+5. Only use entities listed in the context. Do NOT invent names or facts.
+6. Prefer concrete nouns and key phrases over vague terms.
 7. Output ragQuery in ${outputLang}.
+8. Return STRICT JSON only — no explanation, no markdown.
 
-Question:
+Player Question:
 ${question}
 
-Recent Turns (for context only):
+Recent Turns (use to resolve context and pronouns):
 ${recentTurnsBlock}
 
-Known Scene:
-- sceneName: ${sceneName || ""}
-- sceneLocation: ${sceneLocation || ""}
+Current Scene:
+- Name: ${sceneName || "(unknown)"}
+- Location: ${sceneLocation || "(unknown)"}
+
+All Known Scenes:
+${allScenesBlock}
 
 Known NPCs:
 ${dedupedNpcNames.length > 0 ? dedupedNpcNames.map((name) => `- ${name}`).join("\n") : "- (none)"}
 
-Return JSON schema:
-{
-  "ragQuery": "string",
-  "keywords": ["string"],
-  "entities": {
-    "sceneNames": ["string"],
-    "npcNames": ["string"]
-  }
-}`;
+Return JSON:
+{"ragQuery": "string"}`;
 }

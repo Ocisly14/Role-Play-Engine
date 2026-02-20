@@ -1,4 +1,5 @@
 import { generateText, ModelClass } from "../../../models/index.js";
+import { getPrismaClient } from "../../../shared/agents/memory/database/prismaClient.js";
 import {
   RagQueryRewriter,
   type RagQueryRewriteOutput,
@@ -14,15 +15,20 @@ export interface RecentTurn {
   keeperNarrative: string;
 }
 
+export interface SceneInfo {
+  name: string;
+  description: string;
+}
+
 export interface SessionRagQaRequest {
   sessionId: string;
   question: string;
-  topK?: number;
   language?: "en" | "zh";
   sceneName?: string | null;
   sceneLocation?: string | null;
   npcNames?: string[];
   recentTurns?: RecentTurn[];
+  allScenes?: SceneInfo[];
 }
 
 export interface SessionRagCitation {
@@ -41,18 +47,94 @@ export interface SessionRagQaResponse {
   rewrite: RagQueryRewriteOutput;
 }
 
-function buildEvidenceBlock(chunks: RetrievedSessionRagChunk[]): string {
-  return chunks
-    .map((chunk, index) => {
-      const tag = `E${index + 1}`;
-      return [
-        `[${tag}]`,
-        `turnNumber: ${chunk.turnNumber ?? "unknown"}`,
-        `chunkType: ${chunk.chunkType}`,
-        `content: ${chunk.content}`,
-      ].join("\n");
-    })
-    .join("\n\n");
+/** Extract turnId from sourceKey format: turn:{turnId}:narrative:{i} */
+function parseTurnId(sourceKey: string): string | null {
+  const match = sourceKey.match(/^turn:([^:]+):/);
+  return match?.[1] ?? null;
+}
+
+interface FullTurnNarrative {
+  turnNumber: number;
+  playerInput: string;
+  keeperNarrative: string;
+  sceneName: string | null;
+  location: string | null;
+  gameDay: number | null;
+  gameTime: string | null;
+}
+
+async function fetchFullNarratives(
+  chunks: RetrievedSessionRagChunk[]
+): Promise<Map<string, FullTurnNarrative>> {
+  const turnIdList = Array.from(
+    new Set(chunks.map((c) => parseTurnId(c.sourceKey)).filter((id): id is string => id !== null))
+  );
+  if (turnIdList.length === 0) return new Map();
+
+  const prisma = getPrismaClient();
+  const rows = await prisma.gameTurn.findMany({
+    where: { turnId: { in: turnIdList } },
+    select: {
+      turnId: true,
+      turnNumber: true,
+      characterInput: true,
+      keeperNarrative: true,
+      sceneName: true,
+      location: true,
+      gameDay: true,
+      gameTime: true,
+    },
+  });
+
+  const result = new Map<string, FullTurnNarrative>();
+  for (const r of rows) {
+    if (r.turnId) {
+      result.set(r.turnId, {
+        turnNumber: r.turnNumber,
+        playerInput: r.characterInput ?? "",
+        keeperNarrative: r.keeperNarrative ?? "",
+        sceneName: r.sceneName ?? null,
+        location: r.location ?? null,
+        gameDay: r.gameDay ?? null,
+        gameTime: r.gameTime ?? null,
+      });
+    }
+  }
+  return result;
+}
+
+function buildEvidenceBlock(
+  chunks: RetrievedSessionRagChunk[],
+  fullNarrativeMap: Map<string, FullTurnNarrative>
+): string {
+  if (chunks.length === 0) return "";
+  const entries = chunks.map((chunk, i) => {
+    // For narrative chunks, use the full turn content from DB
+    if (chunk.metadata?.segmentType === "narrative") {
+      const turnId = parseTurnId(chunk.sourceKey);
+      const full = turnId ? fullNarrativeMap.get(turnId) : null;
+      if (full) {
+        const timeParts = [
+          full.gameDay != null ? `Day ${full.gameDay}` : null,
+          full.gameTime || null,
+        ].filter(Boolean);
+        const timeStr = timeParts.length > 0 ? ` | time: ${timeParts.join(" ")}` : "";
+        return [
+          `[Memory${i + 1}]`,
+          `turn: ${full.turnNumber}${timeStr}${full.sceneName ? ` | scene: ${full.sceneName}` : ""}${full.location ? ` | location: ${full.location}` : ""}`,
+          `Player: ${full.playerInput || "(empty)"}`,
+          `Keeper: ${full.keeperNarrative || "(empty)"}`,
+        ].join("\n");
+      }
+    }
+    // For actionlog and clue chunks, use chunk content directly
+    return [
+      `[Memory${i + 1}]`,
+      `turn: ${chunk.turnNumber ?? "unknown"}`,
+      chunk.content,
+    ].join("\n");
+  });
+  return entries.join("\n\n");
 }
 
 function buildCitation(chunk: RetrievedSessionRagChunk): SessionRagCitation {
@@ -83,14 +165,16 @@ export class SessionRagQaService {
       npcNames: request.npcNames,
       language,
       recentTurns: request.recentTurns,
+      allScenes: request.allScenes,
     });
 
     const retrieved = await this.ragService.searchHybrid({
       sessionId: request.sessionId,
       ragQuery: rewrite.ragQuery,
-      topK: request.topK ?? 4,
+      topK: 5,
       semanticWeight: 0.7,
       bm25Weight: 0.3,
+      language,
     });
 
     const citations = retrieved.map(buildCitation);
@@ -99,8 +183,8 @@ export class SessionRagQaService {
       return {
         answer:
           language === "en"
-            ? "I cannot determine this from the current session records."
-            : "基于当前会话记录，我无法确定这个问题的答案。",
+            ? "The mists of memory offer nothing on that. Perhaps it hasn't come to pass yet — or the details were lost to the dark."
+            : "记忆的迷雾中，关于这件事没有留下任何痕迹。也许还未发生，也许细节已消散于黑暗之中。",
         citations,
         retrievedCount: 0,
         ragQuery: rewrite.ragQuery,
@@ -108,7 +192,12 @@ export class SessionRagQaService {
       };
     }
 
-    const evidenceBlock = buildEvidenceBlock(retrieved);
+    const narrativeChunks = retrieved.filter(
+      (c) => c.metadata?.segmentType === "narrative"
+    );
+    const fullNarrativeMap = await fetchFullNarratives(narrativeChunks);
+
+    const evidenceSections = buildEvidenceBlock(retrieved, fullNarrativeMap);
 
     const recentTurns = request.recentTurns ?? [];
     const recentTurnsBlock =
@@ -121,31 +210,23 @@ export class SessionRagQaService {
             .join("\n\n")
         : null;
 
-    const answerPrompt = `You are a session-memory assistant for a Call of Cthulhu RPG game.
-Answer the player's question primarily based on the Retrieved Evidence below.
+    const answerPrompt = `You are the Keeper in a Call of Cthulhu RPG session, helping the player recall what has happened in their adventure.
+
+Speak naturally in the voice of a Keeper recounting past events — immersive, atmospheric, and direct. Do NOT say phrases like "based on the records", "according to the evidence", or "the logs show". Just tell it as it happened.
 
 Rules:
-1. Retrieved Evidence is the primary source of truth. Base your answer on it.
-2. Recent Turns are provided only as conversational context to help you understand references or pronouns in the question — do NOT treat them as the answer source.
-3. Answer ONLY using provided context. Do not invent facts.
-4. If evidence is insufficient, say so explicitly.
-5. Always include relevant details: WHO was involved (character/NPC names), WHERE it happened (location), and WHAT happened (actions and outcomes).
-6. Keep the answer concise but informative — 2 to 4 sentences.
-7. Respond in ${language === "en" ? "English" : "Chinese"}.
-8. Do NOT include source tags like [E1], [E2] in your answer.
+1. Only recall what is supported by the provided memory. Do not invent facts.
+2. If the memory is insufficient to answer, say so briefly and in character.
+3. Always capture: who was involved, where it happened, what occurred.
+4. Keep it concise — 2 to 4 sentences.
+5. Respond in ${language === "en" ? "English" : "Chinese"}.
+6. Do NOT include source tags like [Memory1] in your answer.
 
 Player Question:
 ${question}
-${
-  recentTurnsBlock
-    ? `
-Recent Turns (for context only, last ${recentTurns.length} turns):
-${recentTurnsBlock}
-`
-    : ""
-}
-Retrieved Evidence (primary source):
-${evidenceBlock}
+${recentTurnsBlock ? `\nRecent Turns (context only, last ${recentTurns.length} turns):\n${recentTurnsBlock}\n` : ""}
+Retrieved Evidence:
+${evidenceSections}
 
 Answer:`;
 

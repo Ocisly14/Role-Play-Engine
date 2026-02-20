@@ -59,6 +59,10 @@ export async function askRag(req: Request, res: Response): Promise<void> {
           .filter((name): name is string => typeof name === "string" && name.trim().length > 0)
       )
     ).slice(0, 30);
+    const allScenes = (dynamicState?.scenarioOutlines || [])
+      .filter((s) => s?.name && s?.description)
+      .map((s) => ({ name: s.name, description: s.description }))
+      .slice(0, 50);
 
     // Fetch last 5 turns for recent context
     let recentTurns: RecentTurn[] = [];
@@ -95,6 +99,7 @@ export async function askRag(req: Request, res: Response): Promise<void> {
       sceneLocation,
       npcNames,
       recentTurns,
+      allScenes,
     });
 
     res.json({

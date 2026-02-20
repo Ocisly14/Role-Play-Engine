@@ -47,6 +47,14 @@ export function LoginForm() {
       return null;
     }
 
+    const entries = (
+      t("changelog.entries", { returnObjects: true }) as Array<{
+        date: string;
+        content: string;
+      }>
+    ).slice().sort((a, b) => b.date.localeCompare(a.date));
+    const latest = entries[0];
+
     return (
       <div className="fixed inset-0 z-50 bg-black/50 backdrop-blur-sm supports-[backdrop-filter]:bg-black/30 supports-[backdrop-filter]:backdrop-blur-sm flex items-center justify-center p-5">
         <div className="w-[92%] max-w-[560px] rounded-3xl p-8 border border-white/50 bg-white/85 shadow-[0_30px_80px_rgba(15,23,42,0.25)] supports-[backdrop-filter]:bg-white/65 supports-[backdrop-filter]:backdrop-blur-lg">
@@ -56,7 +64,7 @@ export function LoginForm() {
           <p className="text-lg leading-relaxed text-slate-700 whitespace-pre-line mb-4">
             {t("communityInvite.description")}
           </p>
-          <div className="space-y-2 mb-6 text-lg leading-relaxed text-slate-800">
+          <div className="space-y-2 mb-4 text-lg leading-relaxed text-slate-800">
             <p>
               <strong>{t("communityInvite.qqLabel")}</strong> 1084747456
             </p>
@@ -72,6 +80,21 @@ export function LoginForm() {
               </a>
             </p>
           </div>
+          {latest && (
+            <div className="mb-6 rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-3">
+              <div className="flex items-center gap-2 mb-1">
+                <span className="inline-flex items-center rounded-full bg-emerald-100 px-2 py-0.5 text-xs font-semibold text-emerald-800">
+                  {t("changelog.latest")}
+                </span>
+                <span className="text-sm font-medium text-slate-500">
+                  {latest.date}
+                </span>
+              </div>
+              <p className="text-sm leading-relaxed text-slate-700">
+                {latest.content}
+              </p>
+            </div>
+          )}
           <div className="flex items-center justify-between">
             <button type="button" onClick={handleOpenChangelogModal}>
               {t("changelog.button")}
@@ -95,30 +118,26 @@ export function LoginForm() {
               </div>
 
               <div className="px-8 py-6 max-h-[62vh] overflow-y-auto">
-                <article className="rounded-2xl border border-slate-200 bg-slate-50 p-5">
-                  <div className="flex items-center justify-between mb-3 gap-3">
-                    <p className="text-base font-semibold text-slate-900">
-                      {t("changelog.entry20260214Date")}
+                {entries.map((entry, index) => (
+                  <article
+                    key={entry.date}
+                    className={`${index > 0 ? "mt-4 " : ""}rounded-2xl border border-slate-200 bg-slate-50 p-5`}
+                  >
+                    <div className="flex items-center justify-between mb-3 gap-3">
+                      <p className="text-base font-semibold text-slate-900">
+                        {entry.date}
+                      </p>
+                      {index === 0 && (
+                        <span className="inline-flex items-center rounded-full bg-emerald-100 px-3 py-1 text-xs font-semibold text-emerald-800">
+                          {t("changelog.latest")}
+                        </span>
+                      )}
+                    </div>
+                    <p className="text-base leading-relaxed text-slate-700">
+                      {entry.content}
                     </p>
-                    <span className="inline-flex items-center rounded-full bg-emerald-100 px-3 py-1 text-xs font-semibold text-emerald-800">
-                      {t("changelog.latest")}
-                    </span>
-                  </div>
-                  <p className="text-base leading-relaxed text-slate-700">
-                    {t("changelog.entry20260214Content")}
-                  </p>
-                </article>
-
-                <article className="mt-4 rounded-2xl border border-slate-200 bg-slate-50 p-5">
-                  <div className="flex items-center justify-between mb-3 gap-3">
-                    <p className="text-base font-semibold text-slate-900">
-                      {t("changelog.entry20260213Date")}
-                    </p>
-                  </div>
-                  <p className="text-base leading-relaxed text-slate-700">
-                    {t("changelog.entry20260213Content")}
-                  </p>
-                </article>
+                  </article>
+                ))}
               </div>
             </div>
           </div>

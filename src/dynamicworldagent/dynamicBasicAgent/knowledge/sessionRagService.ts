@@ -205,6 +205,9 @@ export class SessionRagService {
     topK?: number;
     semanticWeight?: number;
     bm25Weight?: number;
+    language?: "en" | "zh";
+    chunkType?: "turn" | "clue";
+    segmentType?: "narrative" | "actionlog";
   }): Promise<RetrievedSessionRagChunk[]> {
     const {
       sessionId,
@@ -212,6 +215,9 @@ export class SessionRagService {
       topK = 8,
       semanticWeight = 0.7,
       bm25Weight = 0.3,
+      language = "zh",
+      chunkType,
+      segmentType,
     } = params;
 
     const query = ragQuery.trim();
@@ -219,10 +225,13 @@ export class SessionRagService {
 
     await this.ensureInfrastructure();
 
-    const queryEmbedding = await this.embedder.embed(query);
+    const queryEmbedding = await this.embedder.embed(query, { language });
     if (!queryEmbedding || queryEmbedding.length === 0) {
       return [];
     }
+
+    const chunkTypeFilter = chunkType ?? null;
+    const segmentTypeFilter = segmentType ?? null;
 
     const rows = await this.prisma.$queryRaw<ChunkRow[]>`
       SELECT
@@ -235,22 +244,24 @@ export class SessionRagService {
         embedding
       FROM session_rag_chunks
       WHERE session_id = ${sessionId}
+        AND language = ${language}
+        AND (${chunkTypeFilter}::text IS NULL OR chunk_type = ${chunkTypeFilter}::text)
+        AND (${segmentTypeFilter}::text IS NULL OR metadata->>'segmentType' = ${segmentTypeFilter}::text)
     `;
 
     if (!rows.length) {
       return [];
     }
 
+    const candidateK = Math.max(topK * 6, 24);
+
     const semanticScored = rows
       .map((row) => {
         const similarity = cosineSimilarity(queryEmbedding, toFloatArray(row.embedding));
-        return {
-          id: row.id,
-          score: similarity,
-        };
+        return { id: row.id, score: similarity };
       })
       .sort((a, b) => b.score - a.score)
-      .slice(0, Math.max(topK * 6, 24));
+      .slice(0, candidateK);
 
     let bm25Scored: Bm25Row[] = [];
     try {
@@ -263,9 +274,12 @@ export class SessionRagService {
           ) AS "bm25Score"
         FROM session_rag_chunks
         WHERE session_id = ${sessionId}
+          AND language = ${language}
+          AND (${chunkTypeFilter}::text IS NULL OR chunk_type = ${chunkTypeFilter}::text)
+          AND (${segmentTypeFilter}::text IS NULL OR metadata->>'segmentType' = ${segmentTypeFilter}::text)
           AND to_tsvector('simple', content) @@ plainto_tsquery('simple', ${query})
         ORDER BY "bm25Score" DESC
-        LIMIT ${Math.max(topK * 6, 24)}
+        LIMIT ${candidateK}
       `;
     } catch (error) {
       console.warn("[SessionRagService] BM25 query failed, fallback semantic only", error);
@@ -273,17 +287,11 @@ export class SessionRagService {
 
     const semanticMap = normalizeScores(semanticScored);
     const bm25Map = normalizeScores(
-      bm25Scored.map((row) => ({
-        id: row.id,
-        score: Number(row.bm25Score || 0),
-      }))
+      bm25Scored.map((row) => ({ id: row.id, score: Number(row.bm25Score || 0) }))
     );
 
     const rowMap = new Map(rows.map((row) => [row.id, row]));
-    const allIds = new Set<string>([
-      ...semanticMap.keys(),
-      ...bm25Map.keys(),
-    ]);
+    const allIds = new Set<string>([...semanticMap.keys(), ...bm25Map.keys()]);
 
     const fused: RetrievedSessionRagChunk[] = [];
     for (const id of allIds) {
@@ -292,8 +300,7 @@ export class SessionRagService {
 
       const semantic = semanticMap.get(id) ?? 0;
       const bm25 = bm25Map.get(id) ?? 0;
-      const typeBoost = row.chunkType === "clue" ? 0.1 : 0;
-      const score = semanticWeight * semantic + bm25Weight * bm25 + typeBoost;
+      const score = semanticWeight * semantic + bm25Weight * bm25;
 
       fused.push({
         id: row.id,

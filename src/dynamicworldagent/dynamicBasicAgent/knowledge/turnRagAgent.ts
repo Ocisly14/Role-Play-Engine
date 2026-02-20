@@ -5,6 +5,10 @@ import {
   SessionRagService,
   type SessionRagChunkInput,
 } from "./sessionRagService.js";
+import { chunkText } from "./textChunker.js";
+
+const CHUNK_MAX_TOKENS = 300;
+const CHUNK_OVERLAP_TOKENS = 60;
 
 type ClueChunkDraft = {
   sourceName: string;
@@ -59,16 +63,26 @@ function formatActionLogs(actionResults: any[] | null | undefined): string {
   return lines.join("\n");
 }
 
-function buildTurnChunkContent(turn: GameTurn): string {
+function buildNarrativeText(turn: GameTurn): string {
   const playerInput = (turn.characterInput || "").trim();
   const narrative = (turn.keeperNarrative || "").trim();
-
+  const timeParts = [
+    turn.gameDay != null ? `Day ${turn.gameDay}` : null,
+    turn.gameTime || null,
+  ].filter(Boolean);
+  const timeStr = timeParts.length > 0 ? ` (${timeParts.join(" ")})` : "";
   return [
-    `Turn #${turn.turnNumber}`,
-    `Player Input:\n${playerInput || "(empty)"}`,
-    `Action Logs:\n${formatActionLogs(turn.actionResults)}`,
-    `Keeper Narrative:\n${narrative || "(empty)"}`,
-  ].join("\n\n");
+    `Turn #${turn.turnNumber}${timeStr}`,
+    `Player: ${playerInput || "(empty)"}`,
+    `Keeper: ${narrative || "(empty)"}`,
+  ].join("\n");
+}
+
+function buildActionLogText(turn: GameTurn): string {
+  return [
+    `Turn #${turn.turnNumber} Action Logs`,
+    formatActionLogs(turn.actionResults),
+  ].join("\n");
 }
 
 function collectClueChunkDrafts(
@@ -183,23 +197,55 @@ export class TurnRagAgent {
     }
 
     const chunks: SessionRagChunkInput[] = [];
+    const meta = {
+      sceneName: turn.sceneName || null,
+      location: turn.location || null,
+      gameDay: turn.gameDay ?? null,
+      gameTime: turn.gameTime ?? null,
+    };
 
-    chunks.push({
-      sessionId: turn.sessionId,
-      turnId: turn.turnId,
-      turnNumber: turn.turnNumber,
-      chunkType: "turn",
-      role: "system",
-      content: buildTurnChunkContent(turn),
-      metadata: {
-        sceneName: turn.sceneName || null,
-        location: turn.location || null,
-        gameDay: turn.gameDay ?? null,
-        gameTime: turn.gameTime ?? null,
-      },
-      sourceKey: `turn:${turn.turnId}`,
-      language,
-    });
+    // input + narrative chunks
+    const narrativeSegments = chunkText(
+      buildNarrativeText(turn),
+      CHUNK_MAX_TOKENS,
+      CHUNK_OVERLAP_TOKENS
+    );
+    for (const [i, segment] of narrativeSegments.entries()) {
+      chunks.push({
+        sessionId: turn.sessionId,
+        turnId: turn.turnId,
+        turnNumber: turn.turnNumber,
+        chunkType: "turn",
+        role: "system",
+        content: segment,
+        metadata: { ...meta, segmentType: "narrative", segmentIndex: i },
+        sourceKey: `turn:${turn.turnId}:narrative:${i}`,
+        language,
+      });
+    }
+
+    // action log chunks
+    const actionLogText = buildActionLogText(turn);
+    if (actionLogText.trim()) {
+      const actionSegments = chunkText(
+        actionLogText,
+        CHUNK_MAX_TOKENS,
+        CHUNK_OVERLAP_TOKENS
+      );
+      for (const [i, segment] of actionSegments.entries()) {
+        chunks.push({
+          sessionId: turn.sessionId,
+          turnId: turn.turnId,
+          turnNumber: turn.turnNumber,
+          chunkType: "turn",
+          role: "system",
+          content: segment,
+          metadata: { ...meta, segmentType: "actionlog", segmentIndex: i },
+          sourceKey: `turn:${turn.turnId}:actionlog:${i}`,
+          language,
+        });
+      }
+    }
 
     const clueDrafts = collectClueChunkDrafts(turn, dynamicGameState);
     for (const draft of clueDrafts) {
