@@ -309,6 +309,25 @@ export class CoCDatabaseAdapter {
   }
 
   /**
+   * Update in-progress turn narrative without changing status
+   */
+  updateTurnNarrative(turnId: string, keeperNarrative: string): void {
+    this.updateCachedTurn(turnId, (current) => ({
+      ...current,
+      keeperNarrative,
+    }));
+
+    this.prisma.gameTurn
+      .update({
+        where: { turnId },
+        data: { keeperNarrative },
+      })
+      .catch((error) => {
+        console.error(`Failed to update turn narrative ${turnId}:`, error);
+      });
+  }
+
+  /**
    * Complete a turn
    */
   completeTurn(
@@ -319,9 +338,11 @@ export class CoCDatabaseAdapter {
     gameTime?: string | null
   ): void {
     const completedAt = new Date();
+    const finalNarrative = keeperNarrative;
+
     this.updateCachedTurn(turnId, (current) => ({
       ...current,
-      keeperNarrative,
+      keeperNarrative: finalNarrative,
       clueRevelations: clueRevelations ?? null,
       gameDay: gameDay ?? null,
       gameTime: gameTime ?? null,
@@ -333,7 +354,7 @@ export class CoCDatabaseAdapter {
       .update({
         where: { turnId },
         data: {
-          keeperNarrative,
+          keeperNarrative: finalNarrative,
           clueRevelations: clueRevelations ?? null,
           gameDay: gameDay ?? null,
           gameTime: gameTime ?? null,
@@ -376,32 +397,6 @@ export class CoCDatabaseAdapter {
       .markTurnRequiresSkillSelection(turnId, actionAnalysis)
       .catch((error) => {
         console.error(`Failed to mark turn skill selection ${turnId}:`, error);
-      });
-  }
-
-  /**
-   * Mark turn as requiring combat response
-   */
-  markTurnRequiresCombatResponse(
-    turnId: string,
-    npcAttackNarrative: string,
-    pendingNpcActions: any[]
-  ): void {
-    this.updateCachedTurn(turnId, (current) => ({
-      ...current,
-      status: "requires_combat_response",
-      keeperNarrative: npcAttackNarrative,
-      actionResults: pendingNpcActions,
-    }));
-
-    this.operations
-      .markTurnRequiresCombatResponse(
-        turnId,
-        npcAttackNarrative,
-        pendingNpcActions
-      )
-      .catch((error) => {
-        console.error(`Failed to mark turn combat response ${turnId}:`, error);
       });
   }
 

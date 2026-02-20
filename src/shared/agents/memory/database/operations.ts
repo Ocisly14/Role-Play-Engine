@@ -190,24 +190,6 @@ export class DatabaseOperations {
     });
   }
 
-  /**
-   * Mark turn as requiring combat response (player must respond to NPC attacks)
-   */
-  async markTurnRequiresCombatResponse(
-    turnId: string,
-    npcAttackNarrative: string,
-    pendingNpcActions: any[]
-  ): Promise<void> {
-    await this.prisma.gameTurn.update({
-      where: { turnId },
-      data: {
-        status: "requires_combat_response",
-        keeperNarrative: npcAttackNarrative,
-        actionResults: pendingNpcActions as any,
-      },
-    });
-  }
-
   // =====================================================
   // CHECKPOINT MANAGEMENT
   // =====================================================

@@ -4,6 +4,8 @@
  * Uses DynamicWorld-specific agents and includes DynamicGameState
  */
 
+import type { BaseMessage } from "@langchain/core/messages";
+import { HumanMessage } from "@langchain/core/messages";
 import {
   END,
   MemorySaver,
@@ -15,39 +17,35 @@ import type {
   CoCDatabase,
   CoCDatabaseAdapter,
 } from "../../shared/agents/memory/database/index.js";
-import type { BaseMessage } from "@langchain/core/messages";
-import { HumanMessage, AIMessage } from "@langchain/core/messages";
 import type { ScenarioLoader } from "../../shared/agents/memory/scenarioloader/index.js";
 import type {
-  ActionAnalysis,
   ActionResult,
   DiceRollInfo,
   GameEndingInfo,
 } from "../../shared/state/index.js";
 import { buildDiceRollInfos } from "../../shared/state/index.js";
-import type { ActionLogEntry } from "../../shared/agents/models/gameTypes.js";
+import { latestHumanMessage } from "../../shared/utils/index.js";
+import { enrichMemoryContext } from "../dynamicBasicAgent/memory/memoryAgent.js";
+import { TurnManager } from "../dynamicBasicAgent/memory/turnManager.js";
+import { loadDynamicGameState } from "../state/DynamicGameStateLoader.js";
 import type { DynamicGameState } from "../state/index.js";
 import {
   DynamicGameStateManager,
   initialDynamicGameState,
 } from "../state/index.js";
-import {
-  contentToString,
-  latestHumanMessage,
-} from "../../shared/utils/index.js";
-import { loadDynamicGameState } from "../state/DynamicGameStateLoader.js";
-import { enrichMemoryContext } from "../dynamicBasicAgent/memory/memoryAgent.js";
-import { TurnManager } from "../dynamicBasicAgent/memory/turnManager.js";
 
-// Import DynamicWorld agents
-import { OrchestratorAgent } from "../dynamicBasicAgent/orchestrator/orchestratorAgent.js";
 import { ActionAgent } from "../dynamicBasicAgent/action/actionAgent.js";
 import { CharacterAgent } from "../dynamicBasicAgent/character/characterAgent.js";
-import { KeeperAgent } from "../dynamicBasicAgent/keeper/keeperAgent.js";
+import { BattleKeeperAgent } from "../dynamicBasicAgent/combat/battleKeeperAgent.js";
+import { CombatActionAgentA } from "../dynamicBasicAgent/combat/combatActionAgentA.js";
+import { CombatActionAgentB } from "../dynamicBasicAgent/combat/combatActionAgentB.js";
 import { DirectorAgent } from "../dynamicBasicAgent/director/directorAgent.js";
-import { generateSceneImage } from "../visual/sceneImage.js";
-import { generateMapOnSceneSwitch } from "../visual/mapImage.js";
+import { KeeperAgent } from "../dynamicBasicAgent/keeper/keeperAgent.js";
 import { TurnRagAgent } from "../dynamicBasicAgent/knowledge/turnRagAgent.js";
+// Import DynamicWorld agents
+import { OrchestratorAgent } from "../dynamicBasicAgent/orchestrator/orchestratorAgent.js";
+import { generateMapOnSceneSwitch } from "../visual/mapImage.js";
+import { generateSceneImage } from "../visual/sceneImage.js";
 
 /**
  * Dynamic Graph State - Uses only DynamicGameState (no GameState)
@@ -124,6 +122,9 @@ export const buildDynamicGraph = (
   const directorAgent = new DirectorAgent(scenarioLoader, db);
   const turnManager = new TurnManager(db);
   const turnRagAgent = new TurnRagAgent();
+  const combatAgentA = new CombatActionAgentA();
+  const combatAgentB = new CombatActionAgentB();
+  const battleKeeper = new BattleKeeperAgent();
 
   // Create checkpointer for saving/resuming graph state
   const checkpointer = new MemorySaver();
@@ -310,11 +311,19 @@ export const buildDynamicGraph = (
   const routeFromEntry = (state: DynamicGraphState): string => {
     const isSimulated = state.isSimulatedQuery ?? false;
     if (isSimulated) {
-      // Temporarily skip simulated queries - they will be handled by Listener Graph
       console.log(
         "🔀 [Dynamic Entry Router] → END (simulated query skipped in main graph)"
       );
       return END;
+    }
+
+    // Combat mode routing: go through memory first so conversationHistory is updated
+    const gs = state.dynamicGameState;
+    if (gs.isBattle) {
+      console.log(
+        "🔀 [Dynamic Entry Router] → memory (player is in combat, update history then combatActionA)"
+      );
+      return "memory";
     }
 
     // Only route to memory when this turn is explicitly a resume from skill-selection interrupt
@@ -332,6 +341,7 @@ export const buildDynamicGraph = (
   graph.addConditionalEdges("entry" as any, routeFromEntry, {
     orchestrator: "orchestrator" as any,
     memory: "memory" as any,
+    combatActionA: "combatActionA" as any,
     [END]: END,
   });
 
@@ -586,6 +596,14 @@ export const buildDynamicGraph = (
       const actionAnalysis = currentState.temporaryInfo.currentActionAnalysis;
       const selectedSkill = state.selectedSkill;
 
+      // Combat mode: skip action agent, go straight to combatActionA
+      if (currentState.isBattle) {
+        console.log(
+          "🔀 [Skill Selection Router] → combatActionA (战斗模式)"
+        );
+        return "combatActionA";
+      }
+
       // Check if skill selection is required and no skill was provided
       if (actionAnalysis?.requiresSkillSelection && !selectedSkill) {
         console.log(
@@ -598,6 +616,7 @@ export const buildDynamicGraph = (
       return "action";
     },
     {
+      combatActionA: "combatActionA" as any,
       skillSelectionRequired: "skillSelectionRequired" as any,
       action: "action" as any,
     }
@@ -640,7 +659,511 @@ export const buildDynamicGraph = (
 
   // After interrupt is resolved (user selected skill), continue to action
   graph.addEdge("skillSelectionRequired" as any, "action" as any);
-  graph.addEdge("action" as any, "director" as any);
+
+  // Route from action: if combat just started this turn, go to combatBattleKeeperEntry; else normal pipeline
+  graph.addConditionalEdges(
+    "action" as any,
+    (state: DynamicGraphState) => {
+      const gs = state.dynamicGameState;
+      // Check if combat JUST started (round === 1 and isBattle is true)
+      if (
+        gs.isBattle &&
+        gs.combatState?.round === 1 &&
+        gs.combatState?.pendingNpcActions === null
+      ) {
+        // Check if this action turn just entered combat (we check action log for combat start)
+        // We use a contextual data flag set by action agent
+        const justEnteredCombat =
+          gs.temporaryInfo.contextualData?.justEnteredCombat === true;
+        if (justEnteredCombat) {
+          console.log(
+            "🔀 [Action Router] → combatBattleKeeperEntry (combat just started)"
+          );
+          return "combatBattleKeeperEntry";
+        }
+      }
+      console.log("🔀 [Action Router] → director (normal pipeline)");
+      return "director";
+    },
+    {
+      combatBattleKeeperEntry: "combatBattleKeeperEntry" as any,
+      director: "director" as any,
+    }
+  );
+
+  // ================== COMBAT NODES ==================
+
+  // Combat Action A: resolve player attack or player defense
+  graph.addNode("combatActionA", async (state: DynamicGraphState) => {
+    console.log("⚔️  [Combat Action Agent A] 处理战斗动作...");
+    const dgsm = createDGSMWithDb(state.dynamicGameState);
+    const gs = dgsm.getState();
+    const userInput = latestHumanMessage(state.messages);
+    const selectedSkill = state.selectedSkill ?? null;
+    const language =
+      state.language === "en" || state.language === "zh"
+        ? state.language
+        : "zh";
+
+    const combatState = gs.combatState;
+    if (!combatState) {
+      console.warn(
+        "⚔️  [Combat Action Agent A] No combat state found, routing to keeper"
+      );
+      return { ...state, dynamicGameState: dgsm.getState() };
+    }
+
+    try {
+      let result;
+      const pendingNpcActions = combatState.pendingNpcActions;
+
+      if (pendingNpcActions !== null && pendingNpcActions.length > 0) {
+        // Player is defending against NPC attacks
+        console.log(
+          `⚔️  [Combat Action Agent A] Mode: DEFEND (${pendingNpcActions.length} NPC attacks)`
+        );
+        result = await combatAgentA.resolvePlayerDefense(
+          dgsm,
+          userInput,
+          selectedSkill,
+          pendingNpcActions,
+          language
+        );
+      } else {
+        // Player is attacking
+        console.log("⚔️  [Combat Action Agent A] Mode: ATTACK");
+        result = await combatAgentA.resolvePlayerAttack(
+          dgsm,
+          userInput,
+          selectedSkill,
+          language
+        );
+      }
+
+      if (result) {
+        combatAgentA.applyResult(dgsm, result);
+        // Store result in contextual data for battleKeeper
+        dgsm.setContextualData("combatActionAResult", result);
+        console.log(
+          `⚔️  [Combat Action Agent A] combatEnded: ${result.combatEnded}`
+        );
+      }
+    } catch (error) {
+      console.error("❌ [Combat Action Agent A] Failed:", error);
+    }
+
+    return { ...state, dynamicGameState: dgsm.getState() };
+  });
+
+  // Combat End Check: check HP/SAN then check LLM combat end judgment
+  graph.addNode("combatEndCheck", async (state: DynamicGraphState) => {
+    console.log("⚔️  [Combat End Check] 检查战斗是否结束...");
+    const dgsm = createDGSMWithDb(state.dynamicGameState);
+    const gs = dgsm.getState();
+    const language =
+      state.language === "en" || state.language === "zh"
+        ? state.language
+        : "zh";
+
+    const playerStatus = gs.playerCharacter.status;
+    const hp = playerStatus.hp ?? 0;
+    const sanity = playerStatus.sanity ?? 0;
+
+    // Layer 1: Immediate HP/SAN check → game over
+    if (hp <= 0 || sanity <= 0) {
+      console.log(
+        `⚔️  [Combat End Check] Player ${hp <= 0 ? "HP" : "SAN"} ≤ 0 → game over`
+      );
+      // Generate defeat narrative before epilogue
+      try {
+        const combatResult =
+          gs.temporaryInfo.contextualData?.combatActionAResult ?? null;
+        const userInput = latestHumanMessage(state.messages);
+        const defeatNarrative = await battleKeeper.generateDefeatNarrative(
+          dgsm,
+          combatResult,
+          userInput,
+          language
+        );
+        dgsm.setContextualData("battleKeeperNarrative", defeatNarrative);
+      } catch (e) {
+        console.warn("⚔️  [Combat End Check] Defeat narrative failed:", e);
+      }
+      dgsm.exitCombat();
+      return { ...state, dynamicGameState: dgsm.getState() };
+    }
+
+    // Layer 2: Check combatEnded from Agent A output (LLM judgment)
+    const combatAResult = gs.temporaryInfo.contextualData
+      ?.combatActionAResult as any;
+    if (combatAResult?.combatEnded === true) {
+      console.log(
+        `⚔️  [Combat End Check] Combat ended: ${combatAResult.combatEndReason}`
+      );
+      dgsm.setContextualData("combatEnded", true);
+      dgsm.setContextualData("combatEndReason", combatAResult.combatEndReason);
+    }
+
+    return { ...state, dynamicGameState: dgsm.getState() };
+  });
+
+  // Conditional routing from combatEndCheck
+  graph.addConditionalEdges(
+    "combatEndCheck" as any,
+    (state: DynamicGraphState) => {
+      const gs = state.dynamicGameState;
+      const playerStatus = gs.playerCharacter.status;
+      const hp = playerStatus.hp ?? 0;
+      const sanity = playerStatus.sanity ?? 0;
+
+      // Game over: player defeated
+      if (hp <= 0 || sanity <= 0) {
+        console.log("🔀 [Combat End Router] → gameEndCheck (player defeated)");
+        return "gameEndCheck";
+      }
+
+      // Combat ended: all enemies down
+      if (gs.temporaryInfo.contextualData?.combatEnded === true) {
+        console.log("🔀 [Combat End Router] → combatBattleKeeper (combat ended)");
+        return "combatBattleKeeper";
+      }
+
+      // Continue combat
+      console.log(
+        "🔀 [Combat End Router] → combatBattleKeeper (round continues)"
+      );
+      return "combatBattleKeeper";
+    },
+    {
+      gameEndCheck: "gameEndCheck" as any,
+      combatBattleKeeper: "combatBattleKeeper" as any,
+    }
+  );
+
+  // Combat Battle Keeper: narrate combat action results
+  graph.addNode("combatBattleKeeper", async (state: DynamicGraphState) => {
+    console.log("📖 [Battle Keeper] 生成战斗叙述...");
+    const dgsm = createDGSMWithDb(state.dynamicGameState);
+    const gs = dgsm.getState();
+    const language =
+      state.language === "en" || state.language === "zh"
+        ? state.language
+        : "zh";
+    const stream = state.stream;
+
+    const combatAResult =
+      gs.temporaryInfo.contextualData?.combatActionAResult ?? null;
+
+    // Only stream immediately when this is the final narrative for this turn:
+    // - combat ended (victory/quit) → exitCombatAndRecord
+    // - player defended (pendingNpcActions was set) → clearPendingAndRecord
+    // When player attacked, NPC will counter-attack via combatActionB next,
+    // so we hold back streaming and let the combined narrative arrive together.
+    const combatEnded =
+      gs.temporaryInfo.contextualData?.combatEnded === true ||
+      gs.temporaryInfo.contextualData?.combatVictory === true;
+    const wasPendingDefend = gs.combatState?.pendingNpcActions !== null;
+    const shouldStream = combatEnded || wasPendingDefend;
+
+    try {
+      if (shouldStream && stream?.onNarrativeStart) stream.onNarrativeStart();
+
+      const userInput = latestHumanMessage(state.messages);
+      const narrative = await battleKeeper.generateCombatNarrative(
+        dgsm,
+        combatAResult,
+        userInput,
+        language,
+        shouldStream ? stream?.onNarrativeDelta : undefined
+      );
+
+      dgsm.setContextualData("battleKeeperNarrative", narrative);
+      if (state.turnId && narrative) {
+        turnManager.updateNarrative(state.turnId, narrative);
+      }
+
+      if (shouldStream && stream?.onNarrativeEnd) stream.onNarrativeEnd();
+      console.log("✅ [Battle Keeper] 战斗叙述生成完成");
+    } catch (error) {
+      console.error("❌ [Battle Keeper] 生成失败:", error);
+      if (shouldStream && stream?.onNarrativeEnd) stream.onNarrativeEnd();
+    }
+
+    return { ...state, dynamicGameState: dgsm.getState() };
+  });
+
+  // Routing after combatBattleKeeper
+  graph.addConditionalEdges(
+    "combatBattleKeeper" as any,
+    (state: DynamicGraphState) => {
+      const gs = state.dynamicGameState;
+
+      // If combat ended (victory or faction quit), exit combat and go to ragRecorder
+      if (
+        gs.temporaryInfo.contextualData?.combatEnded === true ||
+        gs.temporaryInfo.contextualData?.combatVictory === true
+      ) {
+        console.log(
+          "🔀 [Battle Keeper Router] → exitCombatAndRecord (combat ended)"
+        );
+        return "exitCombatAndRecord";
+      }
+
+      // Check if pendingNpcActions was just set (player defended) → clear and end turn
+      const wasPendingDefend = gs.combatState?.pendingNpcActions !== null;
+      if (wasPendingDefend) {
+        console.log(
+          "🔀 [Battle Keeper Router] → clearPendingAndRecord (player defended, round done)"
+        );
+        return "clearPendingAndRecord";
+      }
+
+      // Player just attacked → generate NPC attacks for next response
+      console.log(
+        "🔀 [Battle Keeper Router] → combatActionB (generate NPC attacks)"
+      );
+      return "combatActionB";
+    },
+    {
+      exitCombatAndRecord: "exitCombatAndRecord" as any,
+      clearPendingAndRecord: "clearPendingAndRecord" as any,
+      combatActionB: "combatActionB" as any,
+    }
+  );
+
+  // Exit combat and go to ragRecorder (victory path)
+  graph.addNode("exitCombatAndRecord", async (state: DynamicGraphState) => {
+    console.log("⚔️  [Exit Combat] 战斗结束，退出战斗模式...");
+    const dgsm = createDGSMWithDb(state.dynamicGameState);
+    dgsm.exitCombat();
+
+    // Complete turn with battle narrative
+    const gs = dgsm.getState();
+    const narrative =
+      gs.temporaryInfo.contextualData?.battleKeeperNarrative || "";
+    if (state.turnId && narrative) {
+      try {
+        turnManager.completeTurn(
+          state.turnId,
+          {
+            keeperNarrative: narrative,
+            gameDay: gs.gameDay ?? null,
+            gameTime: gs.timeOfDay ?? null,
+          },
+          state.language
+        );
+      } catch (e) {
+        console.error("❌ [Exit Combat] Failed to complete turn:", e);
+      }
+    }
+
+    return { ...state, dynamicGameState: dgsm.getState() };
+  });
+
+  graph.addEdge("exitCombatAndRecord" as any, "ragRecorder" as any);
+
+  // Clear pending NPC actions after player defends, end this turn
+  graph.addNode("clearPendingAndRecord", async (state: DynamicGraphState) => {
+    console.log("⚔️  [Clear Pending] 清除待处理 NPC 动作，结束本轮...");
+    const dgsm = createDGSMWithDb(state.dynamicGameState);
+    const gs = dgsm.getState();
+
+    // Clear pending NPC actions (player's defense turn is done)
+    dgsm.setPendingNpcActions(null);
+    // Increment round counter for next player attack
+    dgsm.incrementCombatRound();
+
+    // Complete turn with battle narrative
+    const narrative =
+      gs.temporaryInfo.contextualData?.battleKeeperNarrative || "";
+    if (state.turnId && narrative) {
+      try {
+        turnManager.completeTurn(
+          state.turnId,
+          {
+            keeperNarrative: narrative,
+            gameDay: gs.gameDay ?? null,
+            gameTime: gs.timeOfDay ?? null,
+          },
+          state.language
+        );
+      } catch (e) {
+        console.error("❌ [Clear Pending] Failed to complete turn:", e);
+      }
+    }
+
+    return { ...state, dynamicGameState: dgsm.getState() };
+  });
+
+  graph.addEdge("clearPendingAndRecord" as any, "ragRecorder" as any);
+
+  // Combat Action B: generate NPC attack narratives
+  graph.addNode("combatActionB", async (state: DynamicGraphState) => {
+    console.log("⚔️  [Combat Action Agent B] 生成 NPC 攻击叙述...");
+    const dgsm = createDGSMWithDb(state.dynamicGameState);
+    const gs = dgsm.getState();
+    const language =
+      state.language === "en" || state.language === "zh"
+        ? state.language
+        : "zh";
+
+    try {
+      const combatState = gs.combatState;
+      const openingPendingRaw = gs.temporaryInfo.contextualData
+        ?.openingPendingNpcActions as unknown;
+      const openingPending = Array.isArray(openingPendingRaw)
+        ? openingPendingRaw
+        : [];
+      const useNpcOpeningPending =
+        combatState?.round === 1 &&
+        combatState.initiatedBy === "npc" &&
+        openingPending.length > 0;
+
+      const userInput = latestHumanMessage(state.messages);
+      const battleKeeperNarrative =
+        (gs.temporaryInfo.contextualData?.battleKeeperNarrative as string) ?? "";
+      const result = useNpcOpeningPending
+        ? {
+            narrative: openingPending
+              .map((item: any) => item?.actionNarrative)
+              .filter((text: unknown): text is string => typeof text === "string")
+              .join(" "),
+            pendingNpcActions: openingPending,
+            combatEnded: false,
+            combatEndReason: "",
+          }
+        : await combatAgentB.generateNpcActions(dgsm, userInput, battleKeeperNarrative, language);
+      if (result) {
+        dgsm.setPendingNpcActions(result.pendingNpcActions);
+        dgsm.setContextualData("combatNpcAttackNarrative", result.narrative);
+        dgsm.setContextualData("combatEnded", result.combatEnded);
+        if (useNpcOpeningPending) {
+          dgsm.setContextualData("openingPendingNpcActions", null);
+          console.log(
+            `⚔️  [Combat Action Agent B] Using opening pending actions from Action Agent (${result.pendingNpcActions.length})`
+          );
+        }
+        if (result.combatEnded) {
+          dgsm.setContextualData("combatEndReason", result.combatEndReason);
+          console.log(
+            `⚔️  [Combat Action Agent B] Combat ended after attack phase: ${result.combatEndReason}`
+          );
+        } else {
+          console.log(
+            `⚔️  [Combat Action Agent B] Generated ${result.pendingNpcActions.length} NPC attacks`
+          );
+        }
+      }
+    } catch (error) {
+      console.error("❌ [Combat Action Agent B] Failed:", error);
+    }
+
+    return { ...state, dynamicGameState: dgsm.getState() };
+  });
+
+  // Combat NPC Record: NPC attacks generated, complete this turn immediately.
+  // The next player input is a new turn and will consume pendingNpcActions.
+  graph.addNode("combatNpcRecordAndEnd", async (state: DynamicGraphState) => {
+    console.log("🧾 [Combat NPC Record] 记录 NPC 攻击并结束本回合...");
+    const dgsm = createDGSMWithDb(state.dynamicGameState);
+    const gs = dgsm.getState();
+    const entryNarrative =
+      (gs.temporaryInfo.contextualData?.battleKeeperNarrative as string) || "";
+    const npcAttackNarrative =
+      (gs.temporaryInfo.contextualData?.combatNpcAttackNarrative as string) ||
+      "";
+    const combinedNarrative = [entryNarrative, npcAttackNarrative]
+      .filter((text) => typeof text === "string" && text.trim().length > 0)
+      .join("\n\n");
+
+    if (state.turnId) {
+      try {
+        turnManager.completeTurn(
+          state.turnId,
+          {
+            keeperNarrative: combinedNarrative,
+            gameDay: gs.gameDay ?? null,
+            gameTime: gs.timeOfDay ?? null,
+          },
+          state.language
+        );
+      } catch (error) {
+        console.error("❌ [Combat NPC Record] Failed to complete turn:", error);
+      }
+    }
+
+    return { ...state, dynamicGameState: dgsm.getState() };
+  });
+
+  graph.addConditionalEdges(
+    "combatActionB" as any,
+    (state: DynamicGraphState) => {
+      if (state.dynamicGameState.temporaryInfo.contextualData?.combatEnded === true) {
+        console.log("🔀 [Combat B Router] → combatBattleKeeper (combat ended after attack phase)");
+        return "combatBattleKeeper";
+      }
+      console.log("🔀 [Combat B Router] → combatNpcRecordAndEnd");
+      return "combatNpcRecordAndEnd";
+    },
+    {
+      combatBattleKeeper: "combatBattleKeeper" as any,
+      combatNpcRecordAndEnd: "combatNpcRecordAndEnd" as any,
+    }
+  );
+  graph.addEdge("combatNpcRecordAndEnd" as any, "ragRecorder" as any);
+
+  // Combat Battle Keeper Entry: narrate first turn (detection turn) then route to combatActionB
+  graph.addNode("combatBattleKeeperEntry", async (state: DynamicGraphState) => {
+    console.log("📖 [Battle Keeper Entry] 生成战斗开始叙述...");
+    const dgsm = createDGSMWithDb(state.dynamicGameState);
+    const gs = dgsm.getState();
+    const language =
+      state.language === "en" || state.language === "zh"
+        ? state.language
+        : "zh";
+    const stream = state.stream;
+
+    // Clear the justEnteredCombat flag
+    dgsm.setContextualData("justEnteredCombat", false);
+
+    // Get action results from normal pipeline for narrative context
+    const actionResults = gs.temporaryInfo.actionResults;
+    const actionSummary =
+      actionResults.map((r) => r.result).join("; ") || "Combat begins";
+
+    try {
+      // Do NOT stream here: combatActionB will generate NPC counter-attacks next.
+      // The combined narrative (entry + NPC attacks) is finalized at
+      // combatNpcRecordAndEnd when this turn is completed.
+      const userInput = latestHumanMessage(state.messages);
+      const narrative = await battleKeeper.generateEntryNarrative(
+        dgsm,
+        actionSummary,
+        userInput,
+        language,
+        undefined
+      );
+
+      dgsm.setContextualData("battleKeeperNarrative", narrative);
+      if (state.turnId && narrative) {
+        turnManager.updateNarrative(state.turnId, narrative);
+      }
+
+      console.log("✅ [Battle Keeper Entry] 战斗开始叙述完成");
+    } catch (error) {
+      console.error("❌ [Battle Keeper Entry] 生成失败:", error);
+    }
+
+    return { ...state, dynamicGameState: dgsm.getState() };
+  });
+
+  // combatBattleKeeperEntry → combatActionB → combatNpcRecordAndEnd
+  graph.addEdge("combatBattleKeeperEntry" as any, "combatActionB" as any);
+
+  // combatActionA → combatEndCheck
+  graph.addEdge("combatActionA" as any, "combatEndCheck" as any);
+
+  // ================== END COMBAT NODES ==================
 
   // Director: handle scene changes and narrative direction
   graph.addNode("director", async (state: DynamicGraphState) => {
@@ -819,7 +1342,9 @@ export const buildDynamicGraph = (
     console.log(`   Player Status: HP=${hp}, Sanity=${sanity}`);
 
     if (hp <= 0 || sanity <= 0) {
-      console.log(`\n🏁 [Game End] 角色状态导致游戏结束！(${hp <= 0 ? "HP归零" : "Sanity归零"})`);
+      console.log(
+        `\n🏁 [Game End] 角色状态导致游戏结束！(${hp <= 0 ? "HP归零" : "Sanity归零"})`
+      );
       dgsm.setGameEnding(
         buildGameEndingInfo(
           currentState,
@@ -946,7 +1471,9 @@ export const buildDynamicGraph = (
       const sanity = playerStatus.sanity || 0;
 
       if (currentState.gameEnding?.isEnded) {
-        console.log("🔀 [Game End Router] → epilogueKeeper (gameEnding 已标记)");
+        console.log(
+          "🔀 [Game End Router] → epilogueKeeper (gameEnding 已标记)"
+        );
         return "epilogueKeeper";
       }
 
@@ -1518,7 +2045,9 @@ export const buildDynamicListenerGraph = (
     console.log(`   Player Status: HP=${hp}, Sanity=${sanity}`);
 
     if (hp <= 0 || sanity <= 0) {
-      console.log(`\n🏁 [Game End] 角色状态导致游戏结束！(${hp <= 0 ? "HP归零" : "Sanity归零"})`);
+      console.log(
+        `\n🏁 [Game End] 角色状态导致游戏结束！(${hp <= 0 ? "HP归零" : "Sanity归零"})`
+      );
       dgsm.setGameEnding(
         buildGameEndingInfo(
           currentState,
@@ -1834,11 +2363,14 @@ export const buildDynamicListenerGraph = (
         language: state.language,
       })
       .catch((error) => {
-        console.warn("[Dynamic Listener RAG Recorder] Failed to record turn RAG:", {
-          turnId: state.turnId,
-          sessionId: state.dynamicGameState?.sessionId,
-          error,
-        });
+        console.warn(
+          "[Dynamic Listener RAG Recorder] Failed to record turn RAG:",
+          {
+            turnId: state.turnId,
+            sessionId: state.dynamicGameState?.sessionId,
+            error,
+          }
+        );
       });
 
     return state;

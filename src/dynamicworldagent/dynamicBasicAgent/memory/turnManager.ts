@@ -5,13 +5,16 @@
  * which record each complete interaction cycle from character input to keeper narrative.
  */
 
-import type { CoCDatabase, CoCDatabaseAdapter } from "../../../shared/agents/memory/database/index.js";
-import type { DynamicGameState } from "../../state/index.js";
 import { randomUUID } from "crypto";
 import { GameHistoryRag } from "../../../rag/gameHistoryRag.js";
+import type {
+  CoCDatabase,
+  CoCDatabaseAdapter,
+} from "../../../shared/agents/memory/database/index.js";
 import type { ActionLogEntry } from "../../../shared/agents/models/gameTypes.js";
 import { buildDiceRollInfos } from "../../../shared/state/index.js";
 import type { DiceRollInfo } from "../../../shared/state/index.js";
+import type { DynamicGameState } from "../../state/index.js";
 
 export interface TurnInput {
   sessionId: string;
@@ -62,7 +65,11 @@ export interface GameTurn {
   location: string | null;
 
   // Status
-  status: "processing" | "completed" | "error" | "requires_skill_selection";
+  status:
+    | "processing"
+    | "completed"
+    | "error"
+    | "requires_skill_selection";
   errorMessage: string | null;
   startedAt: string;
   completedAt: string | null;
@@ -144,6 +151,13 @@ export class TurnManager {
       processing.actionAnalysis,
       processing.actionResults
     );
+  }
+
+  /**
+   * Update in-progress turn with latest narrative text (without completing turn)
+   */
+  updateNarrative(turnId: string, keeperNarrative: string): void {
+    this.db.updateTurnNarrative(turnId, keeperNarrative);
   }
 
   /**
@@ -482,7 +496,7 @@ export class TurnManager {
           });
         }
 
-        // Add keeper narrative if completed (show for both real and simulated turns)
+        // Add keeper narrative if completed
         if (turn.status === "completed" && turn.keeperNarrative) {
           const keeperMessage: any = {
             role: "keeper",

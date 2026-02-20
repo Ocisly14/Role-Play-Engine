@@ -1,25 +1,28 @@
-import { ModelClass } from "../../../models/types.js";
 import { generateText } from "../../../models/index.js";
-import {
-  ActionResult,
-  ActionAnalysis,
-  NPCResponseAnalysis,
-  ActionType,
-  SceneChangeRequest,
-} from "../../../shared/state/index.js";
+import { ModelClass } from "../../../models/types.js";
+import type { ScenarioLoader } from "../../../shared/agents/memory/scenarioloader/index.js";
 import type {
   ActionLogEntry,
   NPCRelationship,
 } from "../../../shared/agents/models/gameTypes.js";
-import type { DynamicCharacterProfile } from "../../world_builder/types.js";
-import type { DynamicNPCProfile } from "../../world_builder/types.js";
-import type { ScenarioLoader } from "../../../shared/agents/memory/scenarioloader/index.js";
+import type {
+  ActionAnalysis,
+  ActionResult,
+  NPCResponseAnalysis,
+  SceneChangeRequest,
+} from "../../../shared/state/index.js";
+import type {
+  CombatState,
+  PendingNpcAction,
+} from "../../state/DynamicGameState.js";
 import type { DynamicGameState } from "../../state/index.js";
 import { DynamicGameStateManager } from "../../state/index.js";
 import {
-  isTimeAfter,
   getLatestActionLogEntryWithLocation,
+  isTimeAfter,
 } from "../../utils/gameTime.js";
+import type { DynamicCharacterProfile } from "../../world_builder/types.js";
+import type { DynamicNPCProfile } from "../../world_builder/types.js";
 import { buildActionSystemPrompt } from "./actionTemplate.js";
 
 /**
@@ -85,6 +88,33 @@ export class ActionAgent {
     }
   }
 
+  private parseOpeningPendingNpcActions(raw: unknown): PendingNpcAction[] {
+    if (!Array.isArray(raw)) return [];
+    return raw
+      .map((item) => {
+        if (!item || typeof item !== "object") return null;
+        const data = item as Record<string, unknown>;
+        const npcId = data.npcId;
+        const npcName = data.npcName;
+        const actionNarrative = data.actionNarrative;
+        if (
+          typeof npcId !== "string" ||
+          typeof npcName !== "string" ||
+          typeof actionNarrative !== "string"
+        ) {
+          return null;
+        }
+        const cleanedNarrative = actionNarrative.trim();
+        if (!cleanedNarrative) return null;
+        return {
+          npcId,
+          npcName,
+          actionNarrative: cleanedNarrative,
+        } satisfies PendingNpcAction;
+      })
+      .filter((item): item is PendingNpcAction => item !== null);
+  }
+
   private parseJsonFromModelResponse(
     response: string,
     label: string
@@ -147,7 +177,8 @@ export class ActionAgent {
         const raw = item as Record<string, unknown>;
         const sourceNpcId = raw.sourceNpcId;
         const targetId = raw.targetId;
-        if (typeof sourceNpcId !== "string" || typeof targetId !== "string") continue;
+        if (typeof sourceNpcId !== "string" || typeof targetId !== "string")
+          continue;
         if (!npcById.has(sourceNpcId)) continue;
         if (sourceNpcId === targetId) continue;
 
@@ -159,11 +190,10 @@ export class ActionAgent {
         const rel: NPCRelationship = {
           targetId,
           targetName,
-          relationshipType: (
-            typeof raw.relationshipType === "string" && raw.relationshipType.trim()
-              ? raw.relationshipType.trim()
-              : "neutral"
-          ) as NPCRelationship["relationshipType"],
+          relationshipType: (typeof raw.relationshipType === "string" &&
+          raw.relationshipType.trim()
+            ? raw.relationshipType.trim()
+            : "neutral") as NPCRelationship["relationshipType"],
           attitude: this.clampAttitude(raw.attitude) ?? 0,
           ...(typeof raw.description === "string" && raw.description.trim()
             ? { description: raw.description.trim() }
@@ -179,11 +209,17 @@ export class ActionAgent {
       if (updatesBySource.size === 0) return;
 
       const npcCharactersUpdate = [...updatesBySource.entries()].map(
-        ([id, relationships]) => ({ id, name: npcById.get(id)!.name, relationships })
+        ([id, relationships]) => ({
+          id,
+          name: npcById.get(id)!.name,
+          relationships,
+        })
       );
 
       // updateCharacter() in applyActionUpdate handles the upsert merge by targetId
-      gameStateManager.applyActionUpdate({ npcCharacters: npcCharactersUpdate });
+      gameStateManager.applyActionUpdate({
+        npcCharacters: npcCharactersUpdate,
+      });
       console.log(
         `   ✓ Relationship updates applied: ${rawUpdates.length} changes across ${npcCharactersUpdate.length} NPCs`
       );
@@ -375,7 +411,7 @@ export class ActionAgent {
    * Pre-roll common dice expressions
    */
   private preRollDice() {
-    const rollDice = (sides: number, count: number = 1): number[] => {
+    const rollDice = (sides: number, count = 1): number[] => {
       return Array.from(
         { length: count },
         () => Math.floor(Math.random() * sides) + 1
@@ -589,7 +625,7 @@ export class ActionAgent {
     gameStateManager?: DynamicGameStateManager
   ): string {
     const { isNPC, npcResponse } = options;
-    let { targetCharacter } = options;
+    const { targetCharacter } = options;
 
     // Add current game time information for actionLog generation
     const fullGameTime = gameStateManager
@@ -693,6 +729,52 @@ export class ActionAgent {
     // Apply the state update from LLM result
     if (parsed.stateUpdate) {
       gameStateManager.applyActionUpdate(parsed.stateUpdate);
+    }
+
+    // Handle combat entry detection (only for player actions, not NPC reactions)
+    if (!isNPC && parsed.entersCombat === true) {
+      const participantIds: string[] = Array.isArray(
+        parsed.combatParticipantIds
+      )
+        ? (parsed.combatParticipantIds as string[]).filter(
+            (id) => typeof id === "string"
+          )
+        : [];
+      const initiatedBy: CombatState["initiatedBy"] =
+        parsed.combatInitiatedBy === "npc" ? "npc" : "player";
+
+      // Only enter combat if we're not already in battle
+      const currentState = gameStateManager.getState();
+      if (!currentState.isBattle) {
+        gameStateManager.setCombatState({
+          round: 1,
+          participantNpcIds: participantIds,
+          initiatedBy,
+          pendingNpcActions: null,
+        });
+
+        // Reset opening-combat contextual data for this turn
+        gameStateManager.setContextualData("openingPendingNpcActions", null);
+
+        // For NPC-initiated combat, carry opening pending actions from normal action output.
+        if (initiatedBy === "npc") {
+          const openingPending = this.parseOpeningPendingNpcActions(
+            parsed.openingPendingNpcActions
+          );
+          if (openingPending.length > 0) {
+            gameStateManager.setContextualData(
+              "openingPendingNpcActions",
+              openingPending
+            );
+          }
+        }
+
+        // Set flag so the graph can detect this turn just entered combat
+        gameStateManager.setContextualData("justEnteredCombat", true);
+        console.log(
+          `⚔️  [Action Agent] Combat entered! Participants: [${participantIds.join(", ")}], initiated by: ${initiatedBy}`
+        );
+      }
     }
 
     // Handle scene change modification from Action Agent

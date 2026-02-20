@@ -17,7 +17,6 @@ import { type TurnStatus, useTurnPolling } from "../hooks/useTurnPolling";
 import { useWebSocket } from "../hooks/useWebSocket";
 import type { GameChatProps, GameEndingInfo, Message } from "../types/gamechat";
 import { authFetch } from "../utils/authFetch";
-import { CombatResponsePanel } from "./gamechat/CombatResponsePanel";
 import { InputArea } from "./gamechat/InputArea";
 import { MessageList } from "./gamechat/MessageList";
 import { SessionInfoBar } from "./gamechat/SessionInfoBar";
@@ -44,18 +43,12 @@ export function GameChat({
   const [currentGameState, setCurrentGameState] = useState<{
     gameDay?: number;
     timeOfDay?: string;
+    isBattle?: boolean;
   } | null>(null);
   const [isSkillSelectionModalOpen, setIsSkillSelectionModalOpen] =
     useState(false);
   const [pendingTurnForSkillSelection, setPendingTurnForSkillSelection] =
     useState<TurnStatus | null>(null);
-
-  // Combat response state
-  const [isCombatResponsePanelOpen, setIsCombatResponsePanelOpen] =
-    useState(false);
-  const [pendingTurnForCombatResponse, setPendingTurnForCombatResponse] =
-    useState<TurnStatus | null>(null);
-  const processedCombatTurnsRef = useRef<Set<string>>(new Set());
 
   // Refs
   const processedSkillSelectionTurnsRef = useRef<Set<string>>(new Set());
@@ -184,6 +177,7 @@ export function GameChat({
         setCurrentGameState({
           gameDay: data.gameState.gameDay,
           timeOfDay: data.gameState.timeOfDay,
+          isBattle: data.gameState.isBattle === true,
         });
         const skills = normalizeSkills(data.gameState.playerCharacter?.skills);
         setAvailableSkills(skills);
@@ -238,23 +232,6 @@ export function GameChat({
       }
     }
   }, [turn, stopPolling, availableSkills.length, isSkillSelectionModalOpen]);
-
-  // Handle combat response requirement
-  useEffect(() => {
-    if (turn && turn.status === "requires_combat_response") {
-      setIsSending(false);
-      stopPolling();
-
-      const turnId = turn.turnId || `turn-${turn.turnNumber}`;
-      const alreadyProcessed = processedCombatTurnsRef.current.has(turnId);
-
-      if (!alreadyProcessed && !isCombatResponsePanelOpen) {
-        processedCombatTurnsRef.current.add(turnId);
-        setIsCombatResponsePanelOpen(true);
-        setPendingTurnForCombatResponse(turn);
-      }
-    }
-  }, [turn, stopPolling, isCombatResponsePanelOpen]);
 
   // Handle turn completion
   useEffect(() => {
@@ -394,6 +371,15 @@ export function GameChat({
     setIsSending(false);
   }, [isGameEnded, stopPolling]);
 
+  useEffect(() => {
+    if (currentGameState?.isBattle && isSkillAuto) {
+      setIsSkillAuto(false);
+    }
+  }, [currentGameState?.isBattle, isSkillAuto, setIsSkillAuto]);
+
+  const isCombatSkillRequired = currentGameState?.isBattle === true;
+  const canSendInCombat = !isCombatSkillRequired || selectedSkill.trim().length > 0;
+
   // Event handlers
   const handleSendMessage = useCallback(async () => {
     if (!inputValue.trim() || isSending || isGameEnded) return;
@@ -401,6 +387,7 @@ export function GameChat({
     const messageText = inputValue.trim();
     const trimmedSkill = selectedSkill.trim();
     const hasSelectedSkill = trimmedSkill.length > 0;
+    if (isCombatSkillRequired && !hasSelectedSkill) return;
     const skillToSend = hasSelectedSkill ? trimmedSkill : null;
     const skillSelectionMode = hasSelectedSkill
       ? "manual"
@@ -474,6 +461,7 @@ export function GameChat({
     isSending,
     isGameEnded,
     selectedSkill,
+    isCombatSkillRequired,
     isSkillAuto,
     messages,
     currentGameState,
@@ -590,52 +578,6 @@ export function GameChat({
     setIsSending(false);
   }, [setSelectedSkill]);
 
-  const handleCombatResponseConfirm = useCallback(
-    async (input: string, selectedSkill: string | null) => {
-      if (!pendingTurnForCombatResponse) return;
-
-      setIsCombatResponsePanelOpen(false);
-      setPendingTurnForCombatResponse(null);
-      setIsSending(true);
-
-      try {
-        const response = await authFetch(`${apiBaseUrl}/turns`, {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            message: input,
-            selectedSkill: selectedSkill || null,
-            isCombatResponse: true,
-            language,
-          }),
-        });
-
-        const data = await response.json();
-
-        if (!data.success) {
-          throw new Error(data.error || "Failed to send combat response");
-        }
-
-        startPolling(data.turnId);
-      } catch (err) {
-        console.error("Failed to submit combat response:", err);
-        setIsSending(false);
-        setIsCombatResponsePanelOpen(true);
-        alert(
-          "Failed to submit combat response: " +
-            (err instanceof Error ? err.message : "Unknown error")
-        );
-      }
-    },
-    [pendingTurnForCombatResponse, apiBaseUrl, language, startPolling]
-  );
-
-  const handleCombatResponseCancel = useCallback(() => {
-    setIsCombatResponsePanelOpen(false);
-    setPendingTurnForCombatResponse(null);
-    setIsSending(false);
-  }, []);
-
   return (
     <div className="game-chat-container backdrop-blur-sm border border-slate-200 shadow-md rounded-lg">
       <SkillSelectionModal
@@ -646,15 +588,6 @@ export function GameChat({
         setSelectedSkill={setSelectedSkill}
         onConfirm={handleSkillSelectionConfirm}
         onCancel={handleSkillSelectionCancel}
-        language={language}
-      />
-
-      <CombatResponsePanel
-        isOpen={isCombatResponsePanelOpen}
-        pendingTurn={pendingTurnForCombatResponse}
-        availableSkills={availableSkills}
-        onConfirm={handleCombatResponseConfirm}
-        onCancel={handleCombatResponseCancel}
         language={language}
       />
 
@@ -707,6 +640,8 @@ export function GameChat({
         isSending={isSending}
         isPolling={isPolling}
         isGameEnded={isGameEnded}
+        isCombatSkillRequired={isCombatSkillRequired}
+        canSendInCombat={canSendInCombat}
         isInputCollapsed={isInputCollapsed}
         isSceneChanging={isSceneChanging}
         language={language}

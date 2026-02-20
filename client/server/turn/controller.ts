@@ -88,10 +88,7 @@ export async function createTurn(req: Request, res: Response): Promise<void> {
       selectedSkill: rawSelectedSkill,
       skillSelectionMode: rawSkillSelectionMode,
       language: rawLanguage,
-      isCombatResponse: rawIsCombatResponse,
     } = req.body ?? {};
-    const isCombatResponse =
-      rawIsCombatResponse === true || rawIsCombatResponse === "true";
     const selectedSkill =
       typeof rawSelectedSkill === "string" ? rawSelectedSkill.trim() : null;
     const normalizedSkill =
@@ -119,76 +116,18 @@ export async function createTurn(req: Request, res: Response): Promise<void> {
     }
 
     const db = DatabaseManager.getInstance().getDatabase();
-    const prisma = getPrismaClient();
     const dynamicTurnManager = new DynamicTurnManager(db);
     await db.preloadSessionTurns(dynamicGameState.sessionId);
 
-    // Check if this is resuming an interrupted turn (skill selection or combat response)
-    let turnId: string | undefined;
-    let isResumingTurn = false;
-    let isResumingCombatTurn = false;
-
-    if (normalizedSkill) {
-      // Look for a recent turn with requires_skill_selection status for this session
-      const skillSelectionTurn = await prisma.gameTurn.findFirst({
-        where: {
-          sessionId: dynamicGameState.sessionId,
-          status: "requires_skill_selection",
-        },
-        orderBy: { turnNumber: "desc" },
-      });
-
-      if (skillSelectionTurn) {
-        console.log(
-          `🔄 [${new Date().toISOString()}] Resuming interrupted turn ${skillSelectionTurn.turnId} with selected skill: ${normalizedSkill}`
-        );
-        isResumingTurn = true;
-        turnId = skillSelectionTurn.turnId;
-
-        // Move the interrupted turn back to processing before resuming graph execution.
-        await prisma.gameTurn.update({
-          where: { turnId },
-          data: { status: "processing", errorMessage: null },
-        });
-      }
-    }
-
-    if (!turnId && isCombatResponse) {
-      // Look for a recent turn with requires_combat_response status for this session
-      const combatTurn = await prisma.gameTurn.findFirst({
-        where: {
-          sessionId: dynamicGameState.sessionId,
-          status: "requires_combat_response",
-        },
-        orderBy: { turnNumber: "desc" },
-      });
-
-      if (combatTurn) {
-        console.log(
-          `⚔️  [${new Date().toISOString()}] Resuming combat turn ${combatTurn.turnId} with player response`
-        );
-        isResumingCombatTurn = true;
-        turnId = combatTurn.turnId;
-
-        // Move back to processing
-        await prisma.gameTurn.update({
-          where: { turnId },
-          data: { status: "processing", errorMessage: null },
-        });
-      }
-    }
-
-    // Create new turn if not resuming
-    if (!turnId) {
-      turnId = await dynamicTurnManager.createTurnFromGameState(
-        dynamicGameState.sessionId,
-        message,
-        dynamicGameState
-      );
-      console.log(
-        `[${new Date().toISOString()}] Turn created: ${turnId} for message: ${message} (DynamicWorld)`
-      );
-    }
+    // Always create a new turn for every player input.
+    const turnId = await dynamicTurnManager.createTurnFromGameState(
+      dynamicGameState.sessionId,
+      message,
+      dynamicGameState
+    );
+    console.log(
+      `[${new Date().toISOString()}] Turn created: ${turnId} for message: ${message} (DynamicWorld)`
+    );
 
     if (normalizedSkill) {
       console.log(
@@ -216,9 +155,7 @@ export async function createTurn(req: Request, res: Response): Promise<void> {
           userId,
           normalizedSkill,
           effectiveSkillSelectionMode,
-          language,
-          isResumingTurn,
-          isResumingCombatTurn
+          language
         ).catch((error) => {
           console.error(`Error processing turn ${turnId}:`, error);
           const dynamicTurnManager = new DynamicTurnManager(db);
@@ -412,9 +349,7 @@ async function processGameTurnAsync(
   userId: string,
   selectedSkill?: string | null,
   skillSelectionMode?: "auto" | "manual",
-  language?: "en" | "zh",
-  resumeFromInterrupt = false,
-  resumeFromCombatInterrupt = false
+  language?: "en" | "zh"
 ) {
   try {
     console.log(`[${new Date().toISOString()}] Processing turn ${turnId}...`);
@@ -440,12 +375,8 @@ async function processGameTurnAsync(
       timestamp: turn?.startedAt ?? null,
     });
 
-    const isResumingTurn = resumeFromInterrupt;
-
     // Prepare graph state
-    let graphState: any;
-
-    graphState = {
+    const graphState: any = {
       messages: initialMessages,
       dynamicGameState: dynamicGameState,
       turnId: turnId,
@@ -453,25 +384,16 @@ async function processGameTurnAsync(
       language: language || "zh",
       selectedSkill: selectedSkill ?? null,
       skillSelectionMode,
-      resumeFromInterrupt: isResumingTurn,
-      resumeFromCombatInterrupt: resumeFromCombatInterrupt,
     };
 
-    // Invoke the graph with checkpoint support
-    // Use turnId as thread_id to enable resume functionality
+    // Invoke the graph with checkpoint support using this turn's thread_id.
     const graphConfig = {
       configurable: {
         thread_id: turnId,
       },
     };
 
-    if (isResumingTurn) {
-      console.log(
-        `   🔄 Resuming graph execution from checkpoint (thread_id: ${turnId})`
-      );
-    } else {
-      console.log(`   ▶️  Starting new graph execution (thread_id: ${turnId})`);
-    }
+    console.log(`   ▶️  Starting graph execution (thread_id: ${turnId})`);
 
     const result = await graph.invoke(graphState, graphConfig);
 
@@ -480,15 +402,10 @@ async function processGameTurnAsync(
     // If skill selection is required, the graph will mark the turn and end early
     // In that case, we should NOT update the game state
     const updatedTurn = dynamicTurnManager.getTurn(turnId);
-    if (
-      updatedTurn &&
-      (updatedTurn.status === "requires_skill_selection" ||
-        updatedTurn.status === "requires_combat_response")
-    ) {
+    if (updatedTurn?.status === "requires_skill_selection") {
       console.log(
-        `⏸️  [${new Date().toISOString()}] Turn ${turnId} requires ${updatedTurn.status} - game state not updated`
+        `⏸️  [${new Date().toISOString()}] Turn ${turnId} requires skill selection - game state not updated`
       );
-      // Don't update game state, wait for player to select skill
       return;
     }
 
@@ -558,8 +475,7 @@ export async function getTurnStatus(
         if (
           turn.status === "completed" ||
           turn.status === "error" ||
-          turn.status === "requires_skill_selection" ||
-          turn.status === "requires_combat_response"
+          turn.status === "requires_skill_selection"
         ) {
           console.log(`[getTurnStatus] Turn ${turnId} completed:`, {
             status: turn.status,

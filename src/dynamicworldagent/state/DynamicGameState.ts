@@ -51,7 +51,6 @@ export interface PendingNpcAction {
   npcId: string;
   npcName: string;
   actionNarrative: string; // What NPC will do (narrative, no dice yet)
-  dex: number; // For display ordering only
 }
 
 /**

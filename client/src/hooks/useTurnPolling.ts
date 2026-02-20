@@ -29,8 +29,7 @@ export interface TurnStatus {
     | "processing"
     | "completed"
     | "error"
-    | "requires_skill_selection"
-    | "requires_combat_response";
+    | "requires_skill_selection";
   errorMessage: string | null;
   startedAt: string;
   completedAt: string | null;

@@ -1,7 +1,4 @@
-import type {
-  NPCResponseAnalysis,
-  SceneChangeRequest,
-} from "../../../shared/state/index.js";
+import type { SceneChangeRequest } from "../../../shared/state/index.js";
 
 /**
  * Build the base system prompt for action resolution
@@ -111,6 +108,13 @@ USAGE:
 🚨 CRITICAL: If no skill is chosen by the user, DO NOT select any dice. Always use empty array "diceUsed": [] when no skill is selected. Unless the skill selection mode is "auto".
 
 !!! Important: Always follow the 7th edition rules of Call of Cthulhu.
+
+SUSTAINED COMBAT DETECTION:
+- Player-initiated attack rule: if the player attacks and the targeted NPC is likely to retaliate, resist, or continue fighting, treat it as sustained combat (entersCombat: true).
+- NPC-initiated hostility rule: if an NPC proactively attacks/threatens imminent violence against the player, treat it as sustained combat (entersCombat: true, combatInitiatedBy: "npc").
+- Use NPC personality, current status/injuries, tactical position, and short-term goals/motives to judge whether they will fight on, retreat, surrender, or avoid escalation.
+- When entersCombat: true, list the NPC IDs of all combatants in combatParticipantIds.
+- combatInitiatedBy: "player" if the player struck first or declared the attack; "npc" if an NPC turned hostile and attacked without player instigation.
 
 DiceUsed field:
 - Record ONLY the dice you actually used from the pre-rolled dice
@@ -320,6 +324,17 @@ ${
 }
   "timeElapsedMinutes": <estimate the time elapsed in minutes>,
   "timeConsumption": "short", // "short", "medium", "long", "very long"
+  "entersCombat": false,            // true if sustained combat starts this turn
+  "combatParticipantIds": [],       // NPC IDs actively fighting the player (only when entersCombat: true)
+  "combatInitiatedBy": "player",   // "player" or "npc" (only when entersCombat: true)
+  // When entersCombat=true AND combatInitiatedBy="npc", provide the NPC opening attack intents
+  "openingPendingNpcActions": [
+    {
+      "npcId": "npc-id",
+      "npcName": "NPC Name",
+      "actionNarrative": "NPC opening attack intent"
+    }
+  ],
 
   "relationshipChanges": [  // Optional: only when this action meaningfully shifts trust/hostility/loyalty
     {
@@ -365,5 +380,3 @@ ${
 \`\`\`
 `;
 }
-
-

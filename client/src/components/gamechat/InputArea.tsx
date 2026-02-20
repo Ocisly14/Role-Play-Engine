@@ -22,6 +22,8 @@ interface InputAreaProps {
   isSending: boolean;
   isPolling: boolean;
   isGameEnded: boolean;
+  isCombatSkillRequired: boolean;
+  canSendInCombat: boolean;
   isInputCollapsed: boolean;
   isSceneChanging: boolean;
   language: "en" | "zh";
@@ -47,6 +49,8 @@ export const InputArea = React.memo<InputAreaProps>(
     isSending,
     isPolling,
     isGameEnded,
+    isCombatSkillRequired,
+    canSendInCombat,
     isInputCollapsed,
     isSceneChanging,
     language,
@@ -191,7 +195,12 @@ export const InputArea = React.memo<InputAreaProps>(
                                 return next;
                               });
                             }}
-                            disabled={isSending || isPolling || isGameEnded}
+                            disabled={
+                              isSending ||
+                              isPolling ||
+                              isGameEnded ||
+                              isCombatSkillRequired
+                            }
                             aria-label={t("input.auto")}
                           >
                             {t("input.auto")}
@@ -275,11 +284,17 @@ export const InputArea = React.memo<InputAreaProps>(
                     disabled={isSending || isPolling || isGameEnded}
                   />
                   <div className="flex items-center p-1.5 pt-0">
+                    {isCombatSkillRequired && !selectedSkill.trim() && (
+                      <span className="text-[10px] text-amber-700">
+                        {t("input.selectSkill")}
+                      </span>
+                    )}
                     <button
                       type="submit"
                       className="inline-flex items-center justify-center whitespace-nowrap font-medium transition-all focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg]:size-4 [&_svg]:shrink-0 backdrop-blur-md bg-white/50 border border-slate-200 text-slate-900 shadow-md hover:bg-white/70 hover:border-slate-300 hover:-translate-y-0.5 rounded-xl px-3 text-xs ml-auto gap-0.5 h-[30px]"
                       disabled={
                         !inputValue.trim() ||
+                        !canSendInCombat ||
                         isSending ||
                         isPolling ||
                         isGameEnded
