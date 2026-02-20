@@ -56,6 +56,24 @@ export async function createTurn(req: Request, res: Response): Promise<void> {
       return;
     }
 
+    const playerStatus = dynamicGameState.playerCharacter?.status;
+    const legacyEndedByStatus =
+      (playerStatus?.hp ?? 0) <= 0 || (playerStatus?.sanity ?? 0) <= 0;
+    const legacyEndedByTrigger =
+      dynamicGameState.temporaryInfo?.contextualData?.globalTriggerEnded === true;
+    if (
+      dynamicGameState.gameEnding?.isEnded ||
+      legacyEndedByStatus ||
+      legacyEndedByTrigger
+    ) {
+      res.status(409).json({
+        success: false,
+        error: "Game has ended. Please start a new game session.",
+        gameEnding: dynamicGameState.gameEnding,
+      });
+      return;
+    }
+
     const graphManager = GraphManager.getInstance();
 
     // Initialize graph if needed

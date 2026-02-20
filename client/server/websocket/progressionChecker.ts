@@ -59,6 +59,19 @@ export async function checkAndTriggerSimulate(
       return false;
     }
 
+    const playerStatus = dynamicGameState.playerCharacter?.status;
+    const legacyEndedByStatus =
+      (playerStatus?.hp ?? 0) <= 0 || (playerStatus?.sanity ?? 0) <= 0;
+    const legacyEndedByTrigger =
+      dynamicGameState.temporaryInfo?.contextualData?.globalTriggerEnded === true;
+    if (
+      dynamicGameState.gameEnding?.isEnded ||
+      legacyEndedByStatus ||
+      legacyEndedByTrigger
+    ) {
+      return false;
+    }
+
     // Check session ID match
     const sessionIdMatch = dynamicGameState.sessionId === sessionId;
     if (!sessionIdMatch) {

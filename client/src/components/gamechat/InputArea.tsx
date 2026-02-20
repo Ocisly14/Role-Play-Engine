@@ -13,11 +13,11 @@ interface InputAreaProps {
   selectedSkill: string;
   setSelectedSkill: (skill: string) => void;
   isSkillAuto: boolean;
-  setIsSkillAuto: (auto: boolean) => void;
+  setIsSkillAuto: React.Dispatch<React.SetStateAction<boolean>>;
   suggestedSkills: Skill[];
   isSuggesting: boolean;
   isSkillPickerOpen: boolean;
-  setIsSkillPickerOpen: (open: boolean) => void;
+  setIsSkillPickerOpen: React.Dispatch<React.SetStateAction<boolean>>;
   availableSkills: Skill[];
   isSending: boolean;
   isPolling: boolean;
@@ -55,6 +55,10 @@ export const InputArea = React.memo<InputAreaProps>(({
   handleKeyDown,
 }) => {
   const { t } = useTranslation('game');
+  if (isGameEnded) {
+    return null;
+  }
+
   return (
     <div
       className="fixed bottom-0 left-0 right-0 z-30 pointer-events-none px-2 sm:px-0"

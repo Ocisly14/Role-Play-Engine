@@ -22,6 +22,7 @@ import type {
   ActionAnalysis,
   ActionResult,
   DiceRollInfo,
+  GameEndingInfo,
 } from "../../shared/state/index.js";
 import { buildDiceRollInfos } from "../../shared/state/index.js";
 import type { ActionLogEntry } from "../../shared/agents/models/gameTypes.js";
@@ -80,6 +81,32 @@ export interface DynamicGraphState {
     onNarrativeDelta?: (delta: string) => void;
     onNarrativeEnd?: () => void;
     onMapUpdate?: (payload: { macroMapPath: string; mimeType: string }) => void;
+  };
+}
+
+function buildGameEndingInfo(
+  currentState: DynamicGameState,
+  endingType: GameEndingInfo["endingType"],
+  fallbackReason: string
+): GameEndingInfo {
+  const summary = currentState.endState?.summary?.trim();
+  const trigger =
+    currentState.pointOfNoReturnTrigger ||
+    currentState.endState?.pointOfNoReturn?.trigger;
+  const reasonParts = [fallbackReason];
+
+  if (summary) {
+    reasonParts.push(`终局概述：${summary}`);
+  }
+  if (trigger) {
+    reasonParts.push(`触发点：${trigger}`);
+  }
+
+  return {
+    isEnded: true,
+    endingType,
+    reason: reasonParts.join(" "),
+    timestamp: new Date(),
   };
 }
 
@@ -793,6 +820,15 @@ export const buildDynamicGraph = (
 
     if (hp <= 0 || sanity <= 0) {
       console.log(`\n🏁 [Game End] 角色状态导致游戏结束！(${hp <= 0 ? "HP归零" : "Sanity归零"})`);
+      dgsm.setGameEnding(
+        buildGameEndingInfo(
+          currentState,
+          hp <= 0 ? "death" : "failure",
+          hp <= 0
+            ? "调查员生命值归零，已无法继续行动。"
+            : "调查员理智值归零，已无法继续调查。"
+        )
+      );
       return { ...state, dynamicGameState: currentState };
     }
 
@@ -811,6 +847,15 @@ export const buildDynamicGraph = (
         const gs = dgsm.getState();
         gs.temporaryInfo.contextualData = gs.temporaryInfo.contextualData || {};
         gs.temporaryInfo.contextualData.globalTriggerEnded = true;
+        dgsm.setGameEnding(
+          buildGameEndingInfo(
+            gs,
+            gs.endState?.pointOfNoReturn.type === "time"
+              ? "time_limit"
+              : "failure",
+            "全局触发器已推进到不可逆阶段，游戏结束。"
+          )
+        );
 
         return { ...state, dynamicGameState: gs };
       } else {
@@ -899,6 +944,11 @@ export const buildDynamicGraph = (
       const playerStatus = currentState.playerCharacter.status;
       const hp = playerStatus.hp || 0;
       const sanity = playerStatus.sanity || 0;
+
+      if (currentState.gameEnding?.isEnded) {
+        console.log("🔀 [Game End Router] → epilogueKeeper (gameEnding 已标记)");
+        return "epilogueKeeper";
+      }
 
       // Check if character status caused game end
       if (hp <= 0 || sanity <= 0) {
@@ -1469,6 +1519,15 @@ export const buildDynamicListenerGraph = (
 
     if (hp <= 0 || sanity <= 0) {
       console.log(`\n🏁 [Game End] 角色状态导致游戏结束！(${hp <= 0 ? "HP归零" : "Sanity归零"})`);
+      dgsm.setGameEnding(
+        buildGameEndingInfo(
+          currentState,
+          hp <= 0 ? "death" : "failure",
+          hp <= 0
+            ? "调查员生命值归零，已无法继续行动。"
+            : "调查员理智值归零，已无法继续调查。"
+        )
+      );
       return { ...state, dynamicGameState: currentState };
     }
 
@@ -1487,6 +1546,15 @@ export const buildDynamicListenerGraph = (
         const gs = dgsm.getState();
         gs.temporaryInfo.contextualData = gs.temporaryInfo.contextualData || {};
         gs.temporaryInfo.contextualData.globalTriggerEnded = true;
+        dgsm.setGameEnding(
+          buildGameEndingInfo(
+            gs,
+            gs.endState?.pointOfNoReturn.type === "time"
+              ? "time_limit"
+              : "failure",
+            "全局触发器已推进到不可逆阶段，游戏结束。"
+          )
+        );
 
         return { ...state, dynamicGameState: gs };
       } else {
@@ -1576,6 +1644,13 @@ export const buildDynamicListenerGraph = (
       const hp = playerStatus.hp || 0;
       const sanity = playerStatus.sanity || 0;
 
+      if (currentState.gameEnding?.isEnded) {
+        console.log(
+          "🔀 [Listener Game End Router] → epilogueKeeper (gameEnding 已标记)"
+        );
+        return "epilogueKeeper";
+      }
+
       // Check if character status caused game end
       if (hp <= 0 || sanity <= 0) {
         console.log(
@@ -1585,9 +1660,7 @@ export const buildDynamicListenerGraph = (
       }
 
       // Check if global trigger caused game end
-      const gameEndReason =
-        currentState.temporaryInfo.contextualData?.gameEndReason;
-      if (gameEndReason) {
+      if (currentState.temporaryInfo.contextualData?.globalTriggerEnded) {
         console.log(
           "🔀 [Listener Game End Router] → epilogueKeeper (全局触发器)"
         );

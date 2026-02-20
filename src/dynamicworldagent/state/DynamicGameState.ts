@@ -18,6 +18,7 @@ import type {
 import type {
   ActionAnalysis,
   ActionResult,
+  GameEndingInfo,
   NPCResponseAnalysis,
   DirectorDecision,
   SceneChangeRequest,
@@ -90,6 +91,9 @@ export interface DynamicGameState {
 
   // Game tension
   tension: number;
+
+  // Game ending status (used by frontend to lock input after epilogue)
+  gameEnding: GameEndingInfo | null;
 
   // Module guidance (synchronized with moduleDigest)
   keeperGuidance: string | null; // Module keeper guidance (permanent information)
@@ -171,6 +175,7 @@ export const initialDynamicGameState = (params: {
     playerTimeConsumption: {},
   },
   tension: 1,
+  gameEnding: null,
   keeperGuidance: null,
   moduleLimitations: null,
   playerCharacter: params.playerCharacter,
@@ -978,6 +983,14 @@ export class DynamicGameStateManager {
    */
   setContextualData(key: string, value: any): void {
     this.state.temporaryInfo.contextualData[key] = value;
+    this.state.lastUpdated = new Date();
+  }
+
+  /**
+   * Set game ending status
+   */
+  setGameEnding(gameEnding: GameEndingInfo | null): void {
+    this.state.gameEnding = gameEnding;
     this.state.lastUpdated = new Date();
   }
 
