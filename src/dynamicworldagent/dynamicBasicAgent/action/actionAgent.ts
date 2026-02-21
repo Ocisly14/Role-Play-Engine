@@ -497,7 +497,7 @@ export class ActionAgent {
 
   /**
    * Filter character profile to remove unnecessary fields for action context
-   * Removes: appearance, backstory, background, clues, instantiatedFrom,
+   * Removes: backstory, background, clues, instantiatedFrom,
    * inheritsKnowledge, actionLog
    * Keeps: occupation, notes, and all core fields (id, name, attributes, status, inventory, skills, weapons, derivedAttributes, etc.)
    */
@@ -505,7 +505,6 @@ export class ActionAgent {
     character: DynamicCharacterProfile
   ): Partial<DynamicCharacterProfile> {
     const {
-      appearance,
       backstory,
       background,
       clues,
@@ -572,6 +571,7 @@ export class ActionAgent {
       out.push({
         id: filtered.id,
         name: filtered.name,
+        appearance: filtered.appearance ?? null,
         age: filtered.age ?? null,
         gender: filtered.gender ?? null,
         personality: filtered.personality ?? null,

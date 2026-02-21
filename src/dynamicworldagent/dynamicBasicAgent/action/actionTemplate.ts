@@ -287,7 +287,7 @@ Return ONLY valid JSON in this exact structure:
   ],
 
   "stateUpdate": {
-    // Optional: Update character states (HP, sanity, inventory, etc.)
+    // Optional: Update character state/appearance (HP, sanity, inventory, etc based on the result of the action)
     "playerCharacter": {
       "name": "Character Name",  // MUST match the acting character's name
       "status": {
@@ -301,11 +301,12 @@ Return ONLY valid JSON in this exact structure:
         "remove": [{"name": "item name", "quantity": 1}]
       }
     },
-    "npcCharacters": [         // Optional: only if NPC states change
+    "npcCharacters": [         // Optional: only if NPC state/appearance changes
       {
         "id": "npc-id",        // MUST use exact NPC id
         "name": "NPC Name",
-        "status": {"hp": -4, "sanity": 0}
+        "status": {"hp": -4, "sanity": 0},
+        "appearance": "Updated appearance description based on the result of the action (optional)"
       }
     ]
   },
@@ -370,9 +371,10 @@ ${
           "characterId": "npc-id"
         }
       ],
-      "stateUpdate": {  // Optional: NPC state changes
+      "stateUpdate": {  // Optional: NPC state/appearance changes
         "status": {"hp": 0, "sanity": -1},
-        "inventory": {"add": [{"name": "item"}]}
+        "inventory": {"add": [{"name": "item"}]},
+        "appearance": "Updated appearance description based on the result of the action (optional)"
       }
     }
   ]

@@ -1308,6 +1308,14 @@ export class DynamicGameStateManager {
       }
     }
 
+    // Update appearance if provided
+    if (typeof updates.appearance === "string") {
+      const nextAppearance = updates.appearance.trim();
+      if (nextAppearance.length > 0) {
+        character.appearance = nextAppearance;
+      }
+    }
+
     // Update relationships for NPCs if provided
     if (
       Array.isArray(updates.relationships) &&
