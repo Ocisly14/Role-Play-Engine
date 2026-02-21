@@ -150,7 +150,7 @@ You are a writer, responsible for writing a narrative of the game.
 
   {{#if relevantHistory}}
   **Relevant Historical Context** (Retrieved via semantic similarity):
-  These past events and conversations are semantically related to the current action. Use them to create narrative callbacks, recognize patterns, or maintain long-term continuity. Reference naturally when relevant - do NOT force connections.
+  These are facts from events that already happened earlier in this session. If they are relevant to the investigator's input, generate narrative based on them naturally in the narrative.
 
   {{#each relevantHistory}}
   - **{{this.type}}** (similarity: {{this.score}}): {{this.content}}

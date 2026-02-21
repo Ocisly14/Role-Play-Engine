@@ -15,7 +15,10 @@ import type {
 } from "../../../shared/state/index.js";
 import { composeTemplate } from "../../../template.js";
 import type { DynamicGameStateManager } from "../../state/index.js";
-import { extractRecentConversationHistory } from "../memory/memoryAgent.js";
+import {
+  extractRecentConversationHistory,
+  retrieveRelevantHistory,
+} from "../memory/memoryAgent.js";
 import { getOrchestratorTemplate } from "./orchestratorTemplate.js";
 
 interface OrchestratorRuntime {
@@ -41,13 +44,15 @@ export class OrchestratorAgent {
     input: string,
     gameStateManager: DynamicGameStateManager,
     db?: CoCDatabase | CoCDatabaseAdapter,
-    selectedSkill?: string | null
+    selectedSkill?: string | null,
+    language?: "en" | "zh"
   ): Promise<string> {
     const runtime = createRuntime();
     const dynamicState = gameStateManager.getState();
 
     // Get the template
     const template = getOrchestratorTemplate();
+    const effectiveLanguage = language === "en" ? "en" : "zh";
 
     // Extract context from dynamic game state
     const characterName = dynamicState.playerCharacter?.name || "Unknown";
@@ -199,6 +204,67 @@ export class OrchestratorAgent {
         .slice(-3); // Get last 3 turns
     }
 
+    const recentTurnsForRewrite = conversationHistory
+      .filter(
+        (
+          turn
+        ): turn is {
+          turnNumber: number;
+          characterInput: string;
+          keeperNarrative: string;
+        } => typeof turn.keeperNarrative === "string"
+      )
+      .map((turn) => ({
+        turnNumber: turn.turnNumber,
+        playerInput: turn.characterInput,
+        keeperNarrative: turn.keeperNarrative,
+      }));
+
+    const npcNamesList = Array.from(
+      new Set(
+        (dynamicState.npcCharacters || [])
+          .map((npc) => (typeof npc?.name === "string" ? npc.name.trim() : ""))
+          .filter((name) => name.length > 0)
+      )
+    ).slice(0, 30);
+
+    const allScenes = (dynamicState.scenarioOutlines || [])
+      .map((scene) => ({
+        name: scene.name,
+        description: scene.description,
+      }))
+      .filter((scene) => scene.name && scene.description)
+      .slice(0, 50);
+
+    const alpha = effectiveLanguage === "zh" ? 0.1 : 0.3;
+    const relevantHistory = await retrieveRelevantHistory(
+      db,
+      dynamicState.sessionId,
+      input,
+      {
+        topKActionLogs: 15,
+        topKTurns: 3,
+        alpha,
+        language: effectiveLanguage,
+        sceneName: currentScenarioName,
+        sceneLocation: scenarioLocation,
+        npcNames: npcNamesList,
+        recentTurns: recentTurnsForRewrite,
+        allScenes,
+        minScore: 0.7,
+      }
+    );
+
+    // Persist for downstream agents (memory/keeper) so we only retrieve once per turn.
+    gameStateManager.setContextualData("relevantHistory", relevantHistory);
+    gameStateManager.setContextualData("relevantHistoryThreshold", 0.7);
+
+    if (relevantHistory.length > 0) {
+      console.log(
+        `🧠 [Orchestrator Agent] Preloaded ${relevantHistory.length} relevant history items (threshold=0.7)`
+      );
+    }
+
     // Compose the prompt with input and game context
     // Pass DynamicGameState directly to composeTemplate
     // Use Handlebars so {{#if connections}}, {{#each connections}}, etc. render correctly
@@ -212,6 +278,7 @@ export class OrchestratorAgent {
         currentScenarioName,
         npcNames,
         conversationHistory, // Pass conversation history instead of single previousNarrative
+        relevantHistory,
         connections,
         hasSelectedSkill: !!selectedSkill, // Whether player has pre-selected a skill
       },

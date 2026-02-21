@@ -37,6 +37,16 @@ Use for continuity and context understanding. Focus on understanding the current
 {{/each}}
 {{/if}}
 
+{{#if relevantHistory}}
+## Relevant Historical Facts (RAG, score >= 0.7)
+These are previously occurred facts retrieved as highly relevant to the current input.
+Use them for reference disambiguation and impact judgment (including whether skill selection is required), but do not let them override the current input.
+
+{{#each relevantHistory}}
+- **{{this.type}}** (score: {{this.score}}): {{this.content}}
+{{/each}}
+{{/if}}
+
 ## Scene Change Detection
 **Rule: If the Investigator's input shows intent to go to another scene AND there's a matching scene name in connections, set sceneChangeRequest.shouldChange = true**
 

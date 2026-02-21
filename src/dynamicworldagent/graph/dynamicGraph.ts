@@ -363,6 +363,10 @@ export const buildDynamicGraph = (
     const dgsm = new DynamicGameStateManager(state.dynamicGameState);
     const userInput = latestHumanMessage(state.messages);
     const selectedSkill = state.selectedSkill ?? null;
+    const language =
+      state.language === "en" || state.language === "zh"
+        ? state.language
+        : "zh";
     console.log(
       `🎯 [Dynamic Orchestrator Agent] 用户输入: "${userInput.substring(0, 100)}${userInput.length > 100 ? "..." : ""}"`
     );
@@ -375,7 +379,8 @@ export const buildDynamicGraph = (
       userInput,
       dgsm,
       db,
-      selectedSkill
+      selectedSkill,
+      language
     );
 
     console.log("✅ [Dynamic Orchestrator Agent] 分析完成");
@@ -1300,9 +1305,21 @@ export const buildDynamicGraph = (
       return { ...state, dynamicGameState: currentState };
     }
 
-    // Check 2: Global Trigger and Game End
+    // Check 2: Global Trigger and Victory Trigger
     const triggerResult =
       await directorAgent.checkGlobalTriggerAndGameEnd(dgsm);
+
+    if (triggerResult.victoryAchieved) {
+      console.log(`\n🏆 [Victory] 调查员达成了胜利条件！`);
+      dgsm.setGameEnding(
+        buildGameEndingInfo(
+          dgsm.getState(),
+          "victory",
+          "调查员成功阻止了灾难，完成了胜利条件。"
+        )
+      );
+      return { ...state, dynamicGameState: dgsm.getState() };
+    }
 
     if (triggerResult.triggered) {
       console.log(`\n🎯 [Global Trigger] 全局触发器已触发！`);
@@ -2003,9 +2020,21 @@ export const buildDynamicListenerGraph = (
       return { ...state, dynamicGameState: currentState };
     }
 
-    // Check 2: Global Trigger and Game End
+    // Check 2: Global Trigger and Victory Trigger
     const triggerResult =
       await directorAgent.checkGlobalTriggerAndGameEnd(dgsm);
+
+    if (triggerResult.victoryAchieved) {
+      console.log(`\n🏆 [Victory] 调查员达成了胜利条件！`);
+      dgsm.setGameEnding(
+        buildGameEndingInfo(
+          dgsm.getState(),
+          "victory",
+          "调查员成功阻止了灾难，完成了胜利条件。"
+        )
+      );
+      return { ...state, dynamicGameState: dgsm.getState() };
+    }
 
     if (triggerResult.triggered) {
       console.log(`\n🎯 [Global Trigger] 全局触发器已触发！`);

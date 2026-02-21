@@ -1,7 +1,8 @@
 import {
   GameHistoryRag,
-  type RelevantHistoryItem,
+  type RelevantHistoryItem as LegacyRelevantHistoryItem,
 } from "../../../rag/gameHistoryRag.js";
+import { getPrismaClient } from "../../../shared/agents/memory/database/prismaClient.js";
 import type {
   CoCDatabase,
   CoCDatabaseAdapter,
@@ -19,6 +20,122 @@ import {
   type DynamicGameState,
   DynamicGameStateManager,
 } from "../../state/index.js";
+import { RagQueryRewriter } from "../knowledge/ragQueryRewriter.js";
+import {
+  type RetrievedSessionRagChunk,
+  SessionRagService,
+} from "../knowledge/sessionRagService.js";
+
+type RelevantHistoryItem = {
+  type: "action_log" | "turn";
+  content: string;
+  score: number;
+  metadata: {
+    timestamp?: string;
+    location?: string;
+    turnId?: string;
+    turnNumber?: number;
+    ragQuery?: string;
+  };
+};
+
+const ragQueryRewriter = new RagQueryRewriter();
+const sessionRagService = new SessionRagService();
+
+function parseTurnIdFromSourceKey(sourceKey: string): string | null {
+  const match = sourceKey.match(/^turn:([^:]+):/);
+  return match?.[1] ?? null;
+}
+
+function formatTurnForRelevantHistory(
+  turnNumber: number,
+  playerInput: string,
+  keeperNarrative: string
+): string {
+  return [
+    `Turn #${turnNumber}`,
+    `Player: ${playerInput || "(empty)"}`,
+    `Keeper: ${keeperNarrative || "(empty)"}`,
+  ].join("\n");
+}
+
+async function buildFullTurnRelevantHistoryFromChunks(
+  sessionId: string,
+  chunks: RetrievedSessionRagChunk[],
+  topKTurns: number,
+  ragQuery: string
+): Promise<RelevantHistoryItem[]> {
+  const turnScoreMap = new Map<string, number>();
+
+  for (const chunk of chunks) {
+    const turnId = parseTurnIdFromSourceKey(chunk.sourceKey);
+    if (!turnId) continue;
+
+    const existing = turnScoreMap.get(turnId) ?? Number.NEGATIVE_INFINITY;
+    if (chunk.score > existing) {
+      turnScoreMap.set(turnId, chunk.score);
+    }
+  }
+
+  const orderedTurnIds = Array.from(turnScoreMap.entries())
+    .sort((a, b) => b[1] - a[1])
+    .slice(0, topKTurns)
+    .map(([turnId]) => turnId);
+
+  if (orderedTurnIds.length === 0) {
+    return [];
+  }
+
+  const prisma = getPrismaClient();
+  const rows = await prisma.gameTurn.findMany({
+    where: {
+      sessionId,
+      turnId: { in: orderedTurnIds },
+      status: "completed",
+    },
+    select: {
+      turnId: true,
+      turnNumber: true,
+      characterInput: true,
+      keeperNarrative: true,
+      gameDay: true,
+      gameTime: true,
+      location: true,
+    },
+  });
+
+  const rowByTurnId = new Map(rows.map((row) => [row.turnId, row]));
+
+  const fullTurns: RelevantHistoryItem[] = [];
+  for (const turnId of orderedTurnIds) {
+    const row = rowByTurnId.get(turnId);
+    if (!row || !row.keeperNarrative) continue;
+
+    const timestampParts = [
+      row.gameDay != null ? `Day ${row.gameDay}` : null,
+      row.gameTime ?? null,
+    ].filter(Boolean) as string[];
+
+    fullTurns.push({
+      type: "turn",
+      content: formatTurnForRelevantHistory(
+        row.turnNumber,
+        row.characterInput ?? "",
+        row.keeperNarrative
+      ),
+      score: turnScoreMap.get(turnId) ?? 0,
+      metadata: {
+        turnId,
+        turnNumber: row.turnNumber,
+        location: row.location ?? undefined,
+        timestamp: timestampParts.length > 0 ? timestampParts.join(" ") : undefined,
+        ragQuery,
+      },
+    });
+  }
+
+  return fullTurns;
+}
 
 /**
  * Inject action-type-specific rules into temporary rules so downstream agents can apply them.
@@ -122,28 +239,82 @@ export const retrieveRelevantHistory = async (
     topKPerCharacter?: number;
     currentLocation?: string;
     locationBoostFactor?: number;
+    // Query rewrite context (Pensieve-style)
+    language?: "en" | "zh";
+    sceneName?: string;
+    sceneLocation?: string;
+    npcNames?: string[];
+    recentTurns?: Array<{
+      turnNumber: number;
+      playerInput: string;
+      keeperNarrative: string;
+    }>;
+    allScenes?: Array<{
+      name: string;
+      description: string;
+    }>;
   } = {}
 ): Promise<RelevantHistoryItem[]> => {
   if (!db || !query.trim()) return [];
 
-  const { topKActionLogs = 3, topKTurns = 3, alpha = 0.3 } = options;
+  const {
+    topKActionLogs = 3,
+    topKTurns = 3,
+    alpha = 0.3,
+    language = "zh",
+  } = options;
 
   try {
-    const ragManager = new GameHistoryRag(db);
-    const searchResult = await ragManager.searchRelevantHistoryHybrid(
+    // Step 1: Query rewrite (same pattern as Pensieve QA)
+    const rewrite = await ragQueryRewriter.rewrite({
+      question: query,
+      language,
+      sceneName: options.sceneName ?? options.currentLocation ?? null,
+      sceneLocation: options.sceneLocation ?? options.currentLocation ?? null,
+      npcNames: options.npcNames ?? [],
+      recentTurns: options.recentTurns ?? [],
+      allScenes: options.allScenes ?? [],
+    });
+
+    // Step 2: Search chunked session RAG (300/60 chunks are produced by TurnRagAgent)
+    const candidateTopK = Math.max(topKTurns * 6, topKActionLogs * 2, 12);
+    const retrievedChunks = await sessionRagService.searchHybrid({
       sessionId,
-      query,
-      {
-        topKActionLogs,
-        topKTurns,
-        alpha,
-        // NEW: Pass through per-character options
-        targetCharacters: options.targetCharacters,
-        topKPerCharacter: options.topKPerCharacter,
-        currentLocation: options.currentLocation,
-        locationBoostFactor: options.locationBoostFactor,
-      }
+      ragQuery: rewrite.ragQuery,
+      topK: candidateTopK,
+      semanticWeight: 1 - alpha,
+      bm25Weight: alpha,
+      language,
+      chunkType: "turn",
+    });
+
+    // Step 3: If any turn chunk is hit, expand to full turn content
+    const fullTurnResults = await buildFullTurnRelevantHistoryFromChunks(
+      sessionId,
+      retrievedChunks,
+      topKTurns,
+      rewrite.ragQuery
     );
+
+    if (fullTurnResults.length > 0) {
+      console.log(
+        `🔍 [Memory Agent] Retrieved ${fullTurnResults.length} relevant turns via rewritten query + chunk RAG ` +
+          `(query="${query}" -> ragQuery="${rewrite.ragQuery}")`
+      );
+      return fullTurnResults;
+    }
+
+    // Fallback: legacy embedding store (for older sessions without chunk data)
+    const ragManager = new GameHistoryRag(db);
+    const searchResult = await ragManager.searchRelevantHistoryHybrid(sessionId, query, {
+      topKActionLogs,
+      topKTurns,
+      alpha,
+      targetCharacters: options.targetCharacters,
+      topKPerCharacter: options.topKPerCharacter,
+      currentLocation: options.currentLocation,
+      locationBoostFactor: options.locationBoostFactor,
+    });
 
     if (searchResult.items.length > 0) {
       const actionLogCount = searchResult.items.filter(
@@ -156,12 +327,12 @@ export const retrieveRelevantHistory = async (
         ? `per-character mode (${options.targetCharacters.length} chars)`
         : "global mode";
       console.log(
-        `🔍 [Memory Agent] Retrieved ${searchResult.items.length} relevant history items via Hybrid RAG ` +
-          `(${actionLogCount} action logs, ${turnCount} turns, α=${alpha}, ${modeInfo})`
+        `🔍 [Memory Agent] Retrieved ${searchResult.items.length} relevant history items via Legacy Hybrid RAG ` +
+          `(${actionLogCount} action logs, ${turnCount} turns, α=${alpha}, ${modeInfo}, ragQuery="${rewrite.ragQuery}")`
       );
     }
 
-    return searchResult.items;
+    return searchResult.items as LegacyRelevantHistoryItem[] as RelevantHistoryItem[];
   } catch (error) {
     console.warn("[Memory Agent] Failed to retrieve relevant history:", error);
     return [];
@@ -227,6 +398,35 @@ export const enrichMemoryContext = async (
   // Retrieve relevant history using Hybrid RAG (BM25 + Vector) with per-character filtering
   let relevantHistory: RelevantHistoryItem[] = [];
   if (characterInput && characterInput.trim()) {
+    const recentTurnsForRewrite = conversationHistory
+      .filter(
+        (turn): turn is { turnNumber: number; characterInput: string; keeperNarrative: string } =>
+          typeof turn.turnNumber === "number" &&
+          typeof turn.characterInput === "string" &&
+          typeof turn.keeperNarrative === "string"
+      )
+      .map((turn) => ({
+        turnNumber: turn.turnNumber,
+        playerInput: turn.characterInput,
+        keeperNarrative: turn.keeperNarrative,
+      }));
+
+    const npcNames = Array.from(
+      new Set(
+        (gameState.npcCharacters || [])
+          .map((npc) => (typeof npc?.name === "string" ? npc.name.trim() : ""))
+          .filter((name) => name.length > 0)
+      )
+    ).slice(0, 30);
+
+    const allScenes = (gameState.scenarioOutlines || [])
+      .map((scene) => ({
+        name: scene.name,
+        description: scene.description,
+      }))
+      .filter((scene) => scene.name && scene.description)
+      .slice(0, 50);
+
     const rawRelevantHistory = await retrieveRelevantHistory(
       db,
       gameState.sessionId,
@@ -241,6 +441,12 @@ export const enrichMemoryContext = async (
         topKPerCharacter: 5, // Top 5 per character
         currentLocation: currentLocation || undefined,
         locationBoostFactor: 1.2, // 20% boost for matching location
+        language: effectiveLanguage,
+        sceneName: gameState.currentScenario?.name || undefined,
+        sceneLocation: currentLocation || undefined,
+        npcNames,
+        recentTurns: recentTurnsForRewrite,
+        allScenes,
       }
     );
 
@@ -250,12 +456,26 @@ export const enrichMemoryContext = async (
     );
 
     relevantHistory = rawRelevantHistory.filter((item) => {
-      if (item.type === "turn" && item.metadata.turnId) {
-        // Extract turn number from turnId (format: "turn_123" or "123")
-        const turnNumber = Number.parseInt(
-          item.metadata.turnId.replace(/^turn_/, ""),
-          10
-        );
+      if (item.type === "turn") {
+        const turnNumberFromMetadata =
+          typeof item.metadata.turnNumber === "number"
+            ? item.metadata.turnNumber
+            : null;
+
+        // Backward-compatible parsing for legacy turnId values: "turn_123" or "123"
+        const turnNumberFromTurnId =
+          !turnNumberFromMetadata && item.metadata.turnId
+            ? Number.parseInt(item.metadata.turnId.replace(/^turn_/, ""), 10)
+            : null;
+
+        const turnNumber =
+          turnNumberFromMetadata ||
+          (Number.isFinite(turnNumberFromTurnId) ? turnNumberFromTurnId : null);
+
+        if (turnNumber == null) {
+          return true;
+        }
+
         if (conversationTurnNumbers.has(turnNumber)) {
           console.debug(
             `[Memory Agent] Filtered duplicate turn #${turnNumber} from RAG results ` +
