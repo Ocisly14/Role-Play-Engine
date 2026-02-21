@@ -50,6 +50,7 @@ USAGE:
 - NPCs with ≤ 20% max HP remaining may flee (your judgment)
 - Judge if ALL hostile NPCs are neutralized (dead, fled, surrendered). If so, set combatEnded: true
 - Faction awareness: if multiple NPCs fight together, all must be out for combat to end
+- When combatEnded is true, you MUST include all defeated/neutralized enemy NPCs in defeatedNpcs (npcId + npcName).
 
 ## 🎲 Dice Interpretation (CoC 7e)
 
@@ -163,7 +164,13 @@ Respond with ONLY valid JSON (no markdown, no code blocks):
   },
   "timeElapsedMinutes": 1,
   "combatEnded": false,
-  "combatEndReason": ""
+  "combatEndReason": "",
+  "defeatedNpcs": [
+    {
+      "npcId": "npc-id",
+      "npcName": "NPC Name"
+    }
+  ]
 }
 
 IMPORTANT:
@@ -172,5 +179,7 @@ IMPORTANT:
 - successLevel: include ONLY when this entry involves a skill check; omit for pure narrative entries.
 - combatEnded: true only if ALL hostile NPC factions are fully neutralized (dead/fled/surrendered)
 - combatEndReason: brief explanation in ${targetLanguageLabel} if combatEnded is true
+- If combatEnded is true, defeatedNpcs must list all neutralized enemy NPCs (npcId + npcName).
+- If combatEnded is false, defeatedNpcs must be [].
 `;
 }

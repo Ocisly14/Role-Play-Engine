@@ -11,12 +11,39 @@ export interface CombatActionBResult {
   pendingNpcActions: PendingNpcAction[];
   combatEnded: boolean;
   combatEndReason: string;
+  defeatedNpcs: Array<{
+    npcId: string;
+    npcName: string;
+  }>;
 }
 
 /**
  * Combat Action Agent B - Generates NPC attack narratives (no dice, just intent)
  */
 export class CombatActionAgentB {
+  private normalizeDefeatedNpcs(raw: unknown): Array<{
+    npcId: string;
+    npcName: string;
+  }> {
+    if (!Array.isArray(raw)) return [];
+    return raw
+      .map((item) => {
+        if (!item || typeof item !== "object") return null;
+        const npcId = (item as Record<string, unknown>).npcId;
+        const npcName = (item as Record<string, unknown>).npcName;
+        if (typeof npcId !== "string" || typeof npcName !== "string") {
+          return null;
+        }
+        const trimmedId = npcId.trim();
+        const trimmedName = npcName.trim();
+        if (!trimmedId || !trimmedName) return null;
+        return { npcId: trimmedId, npcName: trimmedName };
+      })
+      .filter(
+        (item): item is { npcId: string; npcName: string } => item !== null
+      );
+  }
+
   private parseResponse(response: string): CombatActionBResult | null {
     try {
       let jsonText = response.trim();
@@ -26,7 +53,17 @@ export class CombatActionAgentB {
         const obj = jsonText.match(/\{[\s\S]*\}/);
         if (obj) jsonText = obj[0];
       }
-      return JSON.parse(jsonText) as CombatActionBResult;
+      const parsed = JSON.parse(jsonText) as Partial<CombatActionBResult>;
+      return {
+        narrative: typeof parsed.narrative === "string" ? parsed.narrative : "",
+        pendingNpcActions: Array.isArray(parsed.pendingNpcActions)
+          ? parsed.pendingNpcActions
+          : [],
+        combatEnded: parsed.combatEnded === true,
+        combatEndReason:
+          typeof parsed.combatEndReason === "string" ? parsed.combatEndReason : "",
+        defeatedNpcs: this.normalizeDefeatedNpcs(parsed.defeatedNpcs),
+      };
     } catch {
       return null;
     }

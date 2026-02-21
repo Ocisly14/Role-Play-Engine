@@ -113,6 +113,9 @@ SUSTAINED COMBAT DETECTION:
 - Player-initiated attack rule: if the player attacks and the targeted NPC is likely to retaliate, resist, or continue fighting, treat it as sustained combat (entersCombat: true).
 - NPC-initiated hostility rule: if an NPC proactively attacks/threatens imminent violence against the player, treat it as sustained combat (entersCombat: true, combatInitiatedBy: "npc").
 - Use NPC personality, current status/injuries, tactical position, and short-term goals/motives to judge whether they will fight on, retreat, surrender, or avoid escalation.
+- Defeated NPC bias rule: use the injected "DEFEATED NPC HISTORY". If a target NPC appears in that list, default to NOT entering sustained combat (entersCombat: false).
+- Exception to defeated NPC bias: only set entersCombat: true for previously defeated NPCs when the investigator's action creates immediate major life/safety threat (e.g., lethal strike, execution attempt, fire/explosion, clearly deadly escalation).
+- For non-lethal pressure (questioning, intimidation, warning shots, minor restraint, ordinary confrontation), previously defeated NPCs should generally avoid re-entering combat.
 - When entersCombat: true, list the NPC IDs of all combatants in combatParticipantIds.
 - combatInitiatedBy: "player" if the player struck first or declared the attack; "npc" if an NPC turned hostile and attacked without player instigation.
 

@@ -81,6 +81,7 @@ export interface DynamicGraphState {
     onNarrativeEnd?: () => void;
     onMapUpdate?: (payload: { macroMapPath: string; mimeType: string }) => void;
     onCombatStart?: () => void;
+    onCombatEnd?: () => void;
   };
 }
 
@@ -288,6 +289,7 @@ export const buildDynamicGraph = (
       dgsm.setContextualData("combatEndReason", "");
       dgsm.setContextualData("wasDefenseTurn", false);
       dgsm.setContextualData("justEnteredCombat", false);
+      dgsm.setContextualData("combatDefeatedNpcs", []);
       dgsm.setContextualData("relevantHistory", []);
       dgsm.setContextualData("relevantHistoryThreshold", null);
       dgsm.setContextualData("relevantHistoryQuery", null);
@@ -765,6 +767,10 @@ export const buildDynamicGraph = (
         combatAgentA.applyResult(dgsm, result);
         // Store result in contextual data for Agent B context
         dgsm.setContextualData("combatActionAResult", result);
+        dgsm.setContextualData(
+          "combatDefeatedNpcs",
+          Array.isArray(result.defeatedNpcs) ? result.defeatedNpcs : []
+        );
         console.log(
           `⚔️  [Combat Action Agent A] combatEnded: ${result.combatEnded}`
         );
@@ -933,7 +939,20 @@ export const buildDynamicGraph = (
   graph.addNode("exitCombatAndRecord", async (state: DynamicGraphState) => {
     console.log("⚔️  [Exit Combat] 战斗结束，退出战斗模式...");
     const dgsm = createDGSMWithDb(state.dynamicGameState);
+    const gsBeforeExit = dgsm.getState();
+    const defeatedNpcs =
+      (gsBeforeExit.temporaryInfo.contextualData?.combatDefeatedNpcs as Array<{
+        npcId?: string;
+        npcName?: string;
+      }>) ?? [];
+    const defeatHistory = dgsm.recordDefeatedNpcsFromList(defeatedNpcs);
+    if (defeatHistory.recordedCount > 0) {
+      console.log(
+        `⚔️  [Exit Combat] Recorded defeated NPCs: ${defeatHistory.recordedNpcNames.join(", ")}`
+      );
+    }
     dgsm.exitCombat();
+    state.stream?.onCombatEnd?.();
 
     // Complete turn with battle narrative
     // Combine BattleKeeper narrative (player attack phase) with Agent B narrative (NPC ending phase)
@@ -1018,6 +1037,7 @@ export const buildDynamicGraph = (
             pendingNpcActions: openingPending,
             combatEnded: false,
             combatEndReason: "",
+            defeatedNpcs: [],
           }
         : await combatAgentB.generateNpcActions(dgsm, userInput, agentBContext, language, combatAResult);
       if (result) {
@@ -1035,6 +1055,10 @@ export const buildDynamicGraph = (
         }
         if (result.combatEnded) {
           dgsm.setContextualData("combatEndReason", result.combatEndReason);
+          dgsm.setContextualData(
+            "combatDefeatedNpcs",
+            Array.isArray(result.defeatedNpcs) ? result.defeatedNpcs : []
+          );
           console.log(
             `⚔️  [Combat Action Agent B] Combat ended after attack phase: ${result.combatEndReason}`
           );

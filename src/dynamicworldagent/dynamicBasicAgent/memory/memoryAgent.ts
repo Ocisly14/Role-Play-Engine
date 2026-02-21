@@ -305,33 +305,62 @@ export const retrieveRelevantHistory = async (
         ? fullTurnResults.filter((item) => item.score >= minScore)
         : fullTurnResults;
 
-    if (filteredFullTurnResults.length > 0) {
-      console.log(
-        `🔍 [Memory Agent] Retrieved ${filteredFullTurnResults.length} relevant turns via rewritten query + chunk RAG ` +
-          `(query="${query}" -> ragQuery="${rewrite.ragQuery}"${typeof minScore === "number" ? `, minScore=${minScore}` : ""})`
+    const ragManager = new GameHistoryRag(db);
+    const fetchLegacyItems = async (
+      legacyTopKTurns: number
+    ): Promise<RelevantHistoryItem[]> => {
+      const searchResult = await ragManager.searchRelevantHistoryHybrid(
+        sessionId,
+        query,
+        {
+          topKActionLogs,
+          topKTurns: legacyTopKTurns,
+          alpha,
+          targetCharacters: options.targetCharacters,
+          topKPerCharacter: options.topKPerCharacter,
+          currentLocation: options.currentLocation,
+          locationBoostFactor: options.locationBoostFactor,
+        }
       );
-      return filteredFullTurnResults;
+
+      return (
+        searchResult.items as LegacyRelevantHistoryItem[] as RelevantHistoryItem[]
+      ).filter(
+        (item) =>
+          (includeActionLogs || item.type === "turn") &&
+          (typeof minScore === "number" ? item.score >= minScore : true)
+      );
+    };
+
+    if (filteredFullTurnResults.length > 0) {
+      let mergedItems = filteredFullTurnResults;
+
+      if (includeActionLogs && topKActionLogs > 0) {
+        const supplementalActionLogs = (await fetchLegacyItems(1)).filter(
+          (item) => item.type === "action_log"
+        );
+        if (supplementalActionLogs.length > 0) {
+          mergedItems = [...filteredFullTurnResults, ...supplementalActionLogs].sort(
+            (a, b) => b.score - a.score
+          );
+        }
+      }
+
+      const actionLogCount = mergedItems.filter(
+        (i) => i.type === "action_log"
+      ).length;
+      const turnCount = mergedItems.filter((i) => i.type === "turn").length;
+      console.log(
+        `🔍 [Memory Agent] Retrieved ${mergedItems.length} relevant history items via rewritten query + chunk RAG` +
+          `${includeActionLogs ? " (+ legacy action logs)" : ""} ` +
+          `(${actionLogCount} action logs, ${turnCount} turns, query="${query}" -> ragQuery="${rewrite.ragQuery}"` +
+          `${typeof minScore === "number" ? `, minScore=${minScore}` : ""})`
+      );
+      return mergedItems;
     }
 
     // Fallback: legacy embedding store (for older sessions without chunk data)
-    const ragManager = new GameHistoryRag(db);
-    const searchResult = await ragManager.searchRelevantHistoryHybrid(sessionId, query, {
-      topKActionLogs,
-      topKTurns,
-      alpha,
-      targetCharacters: options.targetCharacters,
-      topKPerCharacter: options.topKPerCharacter,
-      currentLocation: options.currentLocation,
-      locationBoostFactor: options.locationBoostFactor,
-    });
-
-    const legacyItems = (
-      searchResult.items as LegacyRelevantHistoryItem[] as RelevantHistoryItem[]
-    ).filter(
-      (item) =>
-        (includeActionLogs || item.type === "turn") &&
-        (typeof minScore === "number" ? item.score >= minScore : true)
-    );
+    const legacyItems = await fetchLegacyItems(topKTurns);
 
     if (legacyItems.length > 0) {
       const actionLogCount = legacyItems.filter(

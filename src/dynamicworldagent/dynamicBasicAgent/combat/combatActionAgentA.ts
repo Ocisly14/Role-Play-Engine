@@ -25,12 +25,39 @@ export interface CombatActionAResult {
   timeElapsedMinutes: number;
   combatEnded: boolean;
   combatEndReason: string;
+  defeatedNpcs: Array<{
+    npcId: string;
+    npcName: string;
+  }>;
 }
 
 /**
  * Combat Action Agent A - Resolves player attack or player defense against NPC attacks
  */
 export class CombatActionAgentA {
+  private normalizeDefeatedNpcs(raw: unknown): Array<{
+    npcId: string;
+    npcName: string;
+  }> {
+    if (!Array.isArray(raw)) return [];
+    return raw
+      .map((item) => {
+        if (!item || typeof item !== "object") return null;
+        const npcId = (item as Record<string, unknown>).npcId;
+        const npcName = (item as Record<string, unknown>).npcName;
+        if (typeof npcId !== "string" || typeof npcName !== "string") {
+          return null;
+        }
+        const trimmedId = npcId.trim();
+        const trimmedName = npcName.trim();
+        if (!trimmedId || !trimmedName) return null;
+        return { npcId: trimmedId, npcName: trimmedName };
+      })
+      .filter(
+        (item): item is { npcId: string; npcName: string } => item !== null
+      );
+  }
+
   private preRollDice(): Record<string, number[]> {
     const roll = (sides: number, count: number): number[] =>
       Array.from(
@@ -66,7 +93,23 @@ export class CombatActionAgentA {
         const obj = jsonText.match(/\{[\s\S]*\}/);
         if (obj) jsonText = obj[0];
       }
-      return JSON.parse(jsonText) as CombatActionAResult;
+      const parsed = JSON.parse(jsonText) as Partial<CombatActionAResult>;
+      return {
+        diceUsed: Array.isArray(parsed.diceUsed) ? parsed.diceUsed : [],
+        actionLog: Array.isArray(parsed.actionLog) ? parsed.actionLog : [],
+        stateUpdate:
+          parsed.stateUpdate && typeof parsed.stateUpdate === "object"
+            ? parsed.stateUpdate
+            : {},
+        timeElapsedMinutes:
+          typeof parsed.timeElapsedMinutes === "number"
+            ? parsed.timeElapsedMinutes
+            : 1,
+        combatEnded: parsed.combatEnded === true,
+        combatEndReason:
+          typeof parsed.combatEndReason === "string" ? parsed.combatEndReason : "",
+        defeatedNpcs: this.normalizeDefeatedNpcs(parsed.defeatedNpcs),
+      };
     } catch {
       return null;
     }

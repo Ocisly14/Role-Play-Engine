@@ -691,6 +691,30 @@ export class ActionAgent {
       });
     }
 
+    const defeatedNpcHistory = Array.isArray(dynamicState.defeatedNpcHistory)
+      ? dynamicState.defeatedNpcHistory
+          .filter(
+            (entry): entry is { name: string; count: number } =>
+              !!entry &&
+              typeof entry.name === "string" &&
+              typeof entry.count === "number" &&
+              entry.name.trim().length > 0 &&
+              Number.isFinite(entry.count) &&
+              entry.count > 0
+          )
+          .map((entry) => ({
+            name: entry.name.trim(),
+            count: Math.floor(entry.count),
+          }))
+      : [];
+
+    context +=
+      "\n\n=== DEFEATED NPC HISTORY (name + times defeated) ===\n" +
+      (defeatedNpcHistory.length > 0
+        ? JSON.stringify(defeatedNpcHistory, null, 2)
+        : "[]") +
+      "\n=== END DEFEATED NPC HISTORY ===\n";
+
     // Add acting character (filtered to remove unnecessary fields)
     const filteredCharacter = this.filterCharacterForContext(character);
     context +=

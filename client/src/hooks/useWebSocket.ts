@@ -358,22 +358,48 @@ export function useWebSocket({
               if (fetchGameEndingRef.current) {
                 fetchGameEndingRef.current();
               }
-            } else if (message.type === "combat_start") {
-              console.log("[WebSocket] Combat started");
-              const nextTurnNumber =
-                messagesRef.current && messagesRef.current.length > 0
-                  ? Math.max(...messagesRef.current.map((m) => m.turnNumber))
-                  : 0;
-              setMessages((prev) => [
-                ...prev,
-                {
-                  role: "banner" as const,
-                  content: "",
-                  bannerType: "combat_start" as const,
-                  timestamp: message.timestamp || new Date().toISOString(),
-                  turnNumber: nextTurnNumber,
-                },
-              ]);
+            } else if (
+              message.type === "combat_start" ||
+              message.type === "combat_end"
+            ) {
+              const bannerType =
+                message.type === "combat_start"
+                  ? ("combat_start" as const)
+                  : ("combat_end" as const);
+              console.log(
+                `[WebSocket] Combat banner received: ${bannerType}`,
+                message
+              );
+              setMessages((prev) => {
+                const resolvedTurnNumber =
+                  typeof message.turnNumber === "number"
+                    ? message.turnNumber
+                    : prev.length > 0
+                      ? Math.max(...prev.map((m) => m.turnNumber))
+                      : 0;
+
+                const duplicate = prev.some(
+                  (msg) =>
+                    msg.role === "banner" &&
+                    msg.bannerType === bannerType &&
+                    ((message.turnId && msg.turnId === message.turnId) ||
+                      (!message.turnId &&
+                        msg.turnNumber === resolvedTurnNumber))
+                );
+                if (duplicate) return prev;
+
+                return [
+                  ...prev,
+                  {
+                    role: "banner" as const,
+                    content: "",
+                    bannerType,
+                    timestamp: message.timestamp || new Date().toISOString(),
+                    turnNumber: resolvedTurnNumber,
+                    turnId: message.turnId,
+                  },
+                ];
+              });
             } else if (message.type === "pong") {
               // Heartbeat response
               console.log("[WebSocket] Heartbeat received");

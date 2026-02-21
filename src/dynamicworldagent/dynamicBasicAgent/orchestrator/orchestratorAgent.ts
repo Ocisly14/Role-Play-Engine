@@ -242,10 +242,10 @@ export class OrchestratorAgent {
       dynamicState.sessionId,
       input,
       {
-        topKActionLogs: 0,
+        topKActionLogs: 15,
         topKTurns: 3,
         alpha,
-        includeActionLogs: false,
+        includeActionLogs: true,
         language: effectiveLanguage,
         sceneName: currentScenarioName,
         sceneLocation: scenarioLocation,
@@ -256,15 +256,26 @@ export class OrchestratorAgent {
       }
     );
 
+    const relevantHistoryForPrompt = relevantHistory.filter(
+      (item) => item.type === "turn"
+    );
+
     // Persist for downstream agents (memory/keeper) so we only retrieve once per turn.
     gameStateManager.setContextualData("relevantHistory", relevantHistory);
     gameStateManager.setContextualData("relevantHistoryThreshold", 0.7);
     gameStateManager.setContextualData("relevantHistoryQuery", input.trim());
-    gameStateManager.setContextualData("relevantHistoryIncludesActionLogs", false);
+    gameStateManager.setContextualData("relevantHistoryIncludesActionLogs", true);
 
     if (relevantHistory.length > 0) {
       console.log(
         `🧠 [Orchestrator Agent] Preloaded ${relevantHistory.length} relevant history items (threshold=0.7)`
+      );
+    }
+    if (relevantHistory.length > relevantHistoryForPrompt.length) {
+      console.debug(
+        `[Orchestrator Agent] Withheld ${
+          relevantHistory.length - relevantHistoryForPrompt.length
+        } action-log item(s) from orchestrator prompt context`
       );
     }
 
@@ -281,7 +292,7 @@ export class OrchestratorAgent {
         currentScenarioName,
         npcNames,
         conversationHistory, // Pass conversation history instead of single previousNarrative
-        relevantHistory,
+        relevantHistory: relevantHistoryForPrompt,
         connections,
         hasSelectedSkill: !!selectedSkill, // Whether player has pre-selected a skill
       },

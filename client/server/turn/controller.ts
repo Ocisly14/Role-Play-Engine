@@ -35,6 +35,7 @@ type NarrativeStreamHandlers = {
   onNarrativeEnd?: () => void;
   onMapUpdate?: (payload: { macroMapPath: string; mimeType: string }) => void;
   onCombatStart?: () => void;
+  onCombatEnd?: () => void;
 };
 
 /**
@@ -341,6 +342,21 @@ function buildNarrativeStreamHandlers(params: {
       send({
         type: "combat_start",
         turnId: params.turnId,
+        turnNumber: params.turnNumber ?? null,
+        isSimulated: params.isSimulated ?? null,
+        gameDay: params.gameDay ?? null,
+        gameTime: params.gameTime ?? null,
+        timestamp: new Date().toISOString(),
+      });
+    },
+    onCombatEnd: () => {
+      send({
+        type: "combat_end",
+        turnId: params.turnId,
+        turnNumber: params.turnNumber ?? null,
+        isSimulated: params.isSimulated ?? null,
+        gameDay: params.gameDay ?? null,
+        gameTime: params.gameTime ?? null,
         timestamp: new Date().toISOString(),
       });
     },

@@ -385,7 +385,15 @@ export function GameChat({
     prevIsBattleRef.current = curr;
     if (prev === true && curr === false) {
       setMessages((msgs) => {
-        const maxTurnNumber = msgs.length > 0 ? Math.max(...msgs.map((m) => m.turnNumber)) : 0;
+        const maxTurnNumber =
+          msgs.length > 0 ? Math.max(...msgs.map((m) => m.turnNumber)) : 0;
+        const hasCombatEndBanner = msgs.some(
+          (m) =>
+            m.role === "banner" &&
+            m.bannerType === "combat_end" &&
+            m.turnNumber === maxTurnNumber
+        );
+        if (hasCombatEndBanner) return msgs;
         return [
           ...msgs,
           {

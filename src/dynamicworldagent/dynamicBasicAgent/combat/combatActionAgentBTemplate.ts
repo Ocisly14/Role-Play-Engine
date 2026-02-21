@@ -58,6 +58,7 @@ Possible next actions:
 Based on personality, goals, and current status — decide if any faction collectively quits.
 - NPCs who quit should be **excluded** from \`pendingNpcActions\`
 - If ALL enemy NPCs have quit (fled, surrendered, or incapacitated), set \`combatEnded: true\`
+- If \`combatEnded: true\`, you MUST provide \`defeatedNpcs\` with all neutralized enemy NPCs (npcId + npcName)
 
 ---
 
@@ -100,6 +101,12 @@ Respond with ONLY valid JSON (no markdown, no code blocks):
   ],
   "combatEnded": false,
   "combatEndReason": "",
+  "defeatedNpcs": [
+    {
+      "npcId": "npc-id-here",
+      "npcName": "NPC Name"
+    }
+  ],
   "narrative": "A single continuous passage in ${targetLanguageLabel}: first the outcome of this round, then the looming enemy threat. Markdown allowed for dramatic emphasis."
 }
 
@@ -108,6 +115,8 @@ IMPORTANT:
 - narrative MUST be in ${targetLanguageLabel}
 - Only include enemy NPCs still fighting in pendingNpcActions; exclude those who fled/surrendered
 - combatEnded: true when no NPC chooses to Attack; combatEndReason explains why
+- If combatEnded is true, defeatedNpcs must list all neutralized enemy NPCs (npcId + npcName)
+- If combatEnded is false, defeatedNpcs must be []
 - Keep JSON key names in English; the language of NPC IDs and names unchanged from context
 - Do NOT add clue revelations, tension levels, or scene change suggestions
 - Do NOT include any text outside the JSON

@@ -63,6 +63,11 @@ export interface CombatState {
   pendingNpcActions: PendingNpcAction[] | null; // null = player's attack turn
 }
 
+export interface DefeatedNpcHistoryEntry {
+  name: string;
+  count: number;
+}
+
 /**
  * Temporary Info for Dynamic World
  * Contains temporary state that is cleared at the start of each player turn.
@@ -118,6 +123,7 @@ export interface DynamicGameState {
   // Combat state
   isBattle: boolean;
   combatState: CombatState | null;
+  defeatedNpcHistory: DefeatedNpcHistoryEntry[];
 
   // Game ending status (used by frontend to lock input after epilogue)
   gameEnding: GameEndingInfo | null;
@@ -204,6 +210,7 @@ export const initialDynamicGameState = (params: {
   tension: 1,
   isBattle: false,
   combatState: null,
+  defeatedNpcHistory: [],
   gameEnding: null,
   keeperGuidance: null,
   moduleLimitations: null,
@@ -628,6 +635,22 @@ export class DynamicGameStateManager {
       ...data,
       playerCharacter,
       npcCharacters,
+      defeatedNpcHistory: Array.isArray(data.defeatedNpcHistory)
+        ? data.defeatedNpcHistory
+            .map((item: any) => ({
+              name:
+                typeof item?.name === "string"
+                  ? item.name
+                  : String(item?.name ?? "").trim(),
+              count:
+                typeof item?.count === "number" &&
+                Number.isFinite(item.count) &&
+                item.count > 0
+                  ? Math.floor(item.count)
+                  : 0,
+            }))
+            .filter((item: DefeatedNpcHistoryEntry) => item.name.length > 0)
+        : [],
       revealedTruthEvents: new Set(data.revealedTruthEvents || []),
       activatedKnowledgeHolders: new Set(data.activatedKnowledgeHolders || []),
       deployedRedHerrings: new Set(data.deployedRedHerrings || []),
@@ -1843,6 +1866,10 @@ export class DynamicGameStateManager {
   setCombatState(state: CombatState | null): void {
     this.state.isBattle = state !== null;
     this.state.combatState = state;
+    if (state) {
+      this.state.temporaryInfo.contextualData.combatDefeatCountedNpcIds = [];
+      this.state.temporaryInfo.contextualData.combatDefeatCountedNpcNames = [];
+    }
     this.state.lastUpdated = new Date();
   }
 
@@ -1852,7 +1879,101 @@ export class DynamicGameStateManager {
   exitCombat(): void {
     this.state.isBattle = false;
     this.state.combatState = null;
+    delete this.state.temporaryInfo.contextualData.combatDefeatCountedNpcIds;
+    delete this.state.temporaryInfo.contextualData.combatDefeatCountedNpcNames;
     this.state.lastUpdated = new Date();
+  }
+
+  recordDefeatedNpcsFromList(
+    defeatedNpcs: Array<{
+      npcId?: string;
+      npcName?: string;
+      id?: string;
+      name?: string;
+    }>
+  ): {
+    recordedNpcNames: string[];
+    recordedCount: number;
+  } {
+    if (!Array.isArray(defeatedNpcs) || defeatedNpcs.length === 0) {
+      return { recordedNpcNames: [], recordedCount: 0 };
+    }
+
+    const countedNpcIds = new Set(
+      Array.isArray(
+        this.state.temporaryInfo.contextualData?.combatDefeatCountedNpcIds
+      )
+        ? this.state.temporaryInfo.contextualData.combatDefeatCountedNpcIds.filter(
+            (id: unknown): id is string => typeof id === "string"
+          )
+        : []
+    );
+    const countedNpcNames = new Set(
+      Array.isArray(
+        this.state.temporaryInfo.contextualData?.combatDefeatCountedNpcNames
+      )
+        ? this.state.temporaryInfo.contextualData.combatDefeatCountedNpcNames
+            .filter((name: unknown): name is string => typeof name === "string")
+            .map((name: string) => name.trim().toLowerCase())
+        : []
+    );
+
+    const recordedNpcNames: string[] = [];
+    const seenInThisCall = new Set<string>();
+
+    for (const item of defeatedNpcs) {
+      if (!item || typeof item !== "object") continue;
+
+      const npcId =
+        typeof item.npcId === "string"
+          ? item.npcId
+          : typeof item.id === "string"
+            ? item.id
+            : "";
+      const npcNameCandidate =
+        typeof item.npcName === "string"
+          ? item.npcName
+          : typeof item.name === "string"
+            ? item.name
+            : "";
+      const npcName = npcNameCandidate.trim();
+      if (!npcName) continue;
+
+      const normalizedName = npcName.toLowerCase();
+      const thisCallDedupKey = npcId ? `id:${npcId}` : `name:${normalizedName}`;
+      if (seenInThisCall.has(thisCallDedupKey)) continue;
+      seenInThisCall.add(thisCallDedupKey);
+
+      if (npcId && countedNpcIds.has(npcId)) continue;
+      if (!npcId && countedNpcNames.has(normalizedName)) continue;
+
+      const existing = this.state.defeatedNpcHistory.find(
+        (entry) => entry.name.trim().toLowerCase() === normalizedName
+      );
+      if (existing) {
+        existing.count += 1;
+      } else {
+        this.state.defeatedNpcHistory.push({ name: npcName, count: 1 });
+      }
+
+      if (npcId) countedNpcIds.add(npcId);
+      countedNpcNames.add(normalizedName);
+      recordedNpcNames.push(npcName);
+    }
+
+    this.state.temporaryInfo.contextualData.combatDefeatCountedNpcIds =
+      Array.from(countedNpcIds);
+    this.state.temporaryInfo.contextualData.combatDefeatCountedNpcNames =
+      Array.from(countedNpcNames);
+
+    if (recordedNpcNames.length > 0) {
+      this.state.lastUpdated = new Date();
+    }
+
+    return {
+      recordedNpcNames,
+      recordedCount: recordedNpcNames.length,
+    };
   }
 
   /**
