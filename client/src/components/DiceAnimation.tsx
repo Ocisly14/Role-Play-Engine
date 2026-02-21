@@ -14,6 +14,7 @@ export interface DiceRollInfo {
   skill?: string;
   success?: "success" | "failure" | "critical" | "fumble";
   penalty?: string;
+  checkDetail?: string;
 }
 
 interface DiceAnimationProps {
@@ -31,6 +32,7 @@ interface ParsedDiceRoll {
   skill?: string;
   success?: string;
   penalty?: string;
+  checkDetail?: string;
 }
 
 /** Psychology check: do not display dice result (Keeper secret) */
@@ -116,6 +118,15 @@ function parseDiceRoll(roll: string): {
   return { expression: roll, result: 0, diceType: "d100", numDice: 1 };
 }
 
+function extractCheckDetailFromRoll(roll: string): string | undefined {
+  if (!roll) return undefined;
+  const matches = [...roll.matchAll(/\(([^)]+)\)/g)];
+  if (matches.length === 0) return undefined;
+  const content = matches[matches.length - 1][1]?.trim();
+  if (!content || !content.includes("=")) return undefined;
+  return content;
+}
+
 export function DiceAnimation({
   diceRolls,
   onAnimationComplete,
@@ -139,6 +150,7 @@ export function DiceAnimation({
           skill: info.skill,
           success: info.success,
           penalty: info.penalty,
+          checkDetail: info.checkDetail ?? extractCheckDetailFromRoll(info.roll),
         };
       })
       .filter((p) => p.result > 0);
@@ -232,6 +244,11 @@ export function DiceAnimation({
                   className={`dice-roll-success dice-roll-success--${roll.success}`}
                 >
                   {getSuccessLabel(roll.success)}
+                </span>
+              )}
+              {roll.checkDetail && (
+                <span className="dice-roll-check-detail">
+                  ({roll.checkDetail})
                 </span>
               )}
             </div>

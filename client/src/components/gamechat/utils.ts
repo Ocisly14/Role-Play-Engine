@@ -57,6 +57,7 @@ export function buildDiceRollInfos(
       ];
 
       if (diceMatches.length > 1) {
+        const checkDetail = extractCheckDetail(roll);
         // Multi-dice roll - create separate DiceRollInfo for each die
         for (const match of diceMatches) {
           const diceStr = match[1]; // e.g., "1d100[0]: 45" or "1d100[1]: 82(penalty)"
@@ -71,6 +72,7 @@ export function buildDiceRollInfos(
               : diceStr.includes("(bonus)")
                 ? "bonus"
                 : undefined,
+            checkDetail,
           });
         }
       } else {
@@ -79,6 +81,10 @@ export function buildDiceRollInfos(
           character,
           roll,
         };
+        const checkDetail = extractCheckDetail(roll);
+        if (checkDetail) {
+          info.checkDetail = checkDetail;
+        }
         const parenMatches = [...roll.matchAll(/\(([^)]+)\)/g)];
         const content =
           parenMatches.length > 0
@@ -112,12 +118,15 @@ export function buildDiceRollInfos(
           const beforeEquals = content
             .replace(/\s*=\s*(success|failure|critical|fumble)\s*$/i, "")
             .trim();
-          const skillPart = beforeEquals
-            .replace(
-              /(?:penalty\s+die|bonus\s+die|-\s*\d+\s*%?|\(\s*-\s*\d+\s*\)|use\s+(?:highest|lowest)\s+\d+).*/gi,
-              ""
-            )
-            .trim();
+          const explicitPercentSkill = beforeEquals.match(/(.+?\d+%)/);
+          const skillPart = explicitPercentSkill
+            ? explicitPercentSkill[1].trim()
+            : beforeEquals
+                .replace(
+                  /(?:penalty\s+die|bonus\s+die|-\s*\d+\s*%?|\(\s*-\s*\d+\s*\)|use\s+(?:highest|lowest)\s+\d+).*/gi,
+                  ""
+                )
+                .trim();
           if (
             skillPart &&
             (/\d+%\s*$/.test(skillPart) || skillPart.length < 40)
@@ -129,6 +138,15 @@ export function buildDiceRollInfos(
     }
   }
   return infos;
+}
+
+function extractCheckDetail(roll: string): string | undefined {
+  if (!roll) return undefined;
+  const matches = [...roll.matchAll(/\(([^)]+)\)/g)];
+  if (matches.length === 0) return undefined;
+  const content = matches[matches.length - 1][1]?.trim();
+  if (!content || !content.includes("=")) return undefined;
+  return content;
 }
 
 /**

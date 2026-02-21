@@ -2361,6 +2361,12 @@ textarea {
   background: rgba(107, 32, 32, 0.18);
 }
 
+.dice-roll-check-detail {
+  color: #5b4630;
+  font-size: 0.8rem;
+  line-height: 1.3;
+}
+
 .dice-roll-values {
   display: flex;
   align-items: center;

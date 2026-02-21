@@ -115,6 +115,7 @@ export interface DiceRollInfo {
   skill?: string; // Extracted skill e.g. "Brawling 50%"
   success?: "success" | "failure" | "critical" | "fumble"; // For skill checks
   penalty?: string; // e.g. "penalty die", "-20", "bonus die"
+  checkDetail?: string; // Full check detail inside parentheses (without wrapping parentheses)
 }
 
 export interface ActionResult {
@@ -158,6 +159,7 @@ export function buildDiceRollInfos(
       ];
 
       if (diceMatches.length > 1) {
+        const checkDetail = extractCheckDetail(roll);
         // Multi-dice roll - create separate DiceRollInfo for each die
         for (const match of diceMatches) {
           const diceStr = match[1]; // e.g., "1d100[0]: 45" or "1d100[1]: 82(penalty)"
@@ -172,6 +174,7 @@ export function buildDiceRollInfos(
               : diceStr.includes("(bonus)")
                 ? "bonus"
                 : undefined,
+            checkDetail,
           });
         }
       } else {
@@ -202,6 +205,10 @@ function extractRollCharacter(roll: string): string | null {
  */
 function parseDiceRollInfo(character: string, roll: string): DiceRollInfo {
   const info: DiceRollInfo = { character, roll };
+  const checkDetail = extractCheckDetail(roll);
+  if (checkDetail) {
+    info.checkDetail = checkDetail;
+  }
 
   // Match last parentheses group (often contains skill check result): "(Brawling 50% = failure)"
   const parenMatches = roll.matchAll(/\(([^)]+)\)/g);
@@ -239,16 +246,28 @@ function parseDiceRollInfo(character: string, roll: string): DiceRollInfo {
   const beforeEquals = content
     .replace(/\s*=\s*(success|failure|critical|fumble)\s*$/i, "")
     .trim();
-  const skillPart = beforeEquals
-    .replace(
-      /(?:penalty\s+die|bonus\s+die|-\s*\d+\s*%?|\(\s*-\s*\d+\s*\)|use\s+(?:highest|lowest)\s+\d+).*/gi,
-      ""
-    )
-    .trim();
+  const explicitPercentSkill = beforeEquals.match(/(.+?\d+%)/);
+  const skillPart = explicitPercentSkill
+    ? explicitPercentSkill[1].trim()
+    : beforeEquals
+        .replace(
+          /(?:penalty\s+die|bonus\s+die|-\s*\d+\s*%?|\(\s*-\s*\d+\s*\)|use\s+(?:highest|lowest)\s+\d+).*/gi,
+          ""
+        )
+        .trim();
   if (skillPart && (/\d+%\s*$/.test(skillPart) || skillPart.length < 40)) {
     info.skill = skillPart;
   }
   return info;
+}
+
+function extractCheckDetail(roll: string): string | undefined {
+  if (!roll || typeof roll !== "string") return undefined;
+  const matches = [...roll.matchAll(/\(([^)]+)\)/g)];
+  if (matches.length === 0) return undefined;
+  const content = matches[matches.length - 1][1]?.trim();
+  if (!content || !content.includes("=")) return undefined;
+  return content;
 }
 
 export interface AgentResult {
