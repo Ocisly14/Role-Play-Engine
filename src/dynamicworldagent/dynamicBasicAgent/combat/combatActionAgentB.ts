@@ -4,6 +4,7 @@ import type { PendingNpcAction } from "../../state/DynamicGameState.js";
 import type { DynamicGameStateManager } from "../../state/index.js";
 import { buildCombatActionBSystemPrompt } from "./combatActionAgentBTemplate.js";
 import { withCombatSkillDefaults } from "./combatSkillDefaults.js";
+import type { CombatActionAResult } from "./combatActionAgentA.js";
 
 export interface CombatActionBResult {
   narrative: string;
@@ -33,7 +34,8 @@ export class CombatActionAgentB {
 
   private buildContext(
     dgsm: DynamicGameStateManager,
-    combatNpcIds: string[]
+    combatNpcIds: string[],
+    combatAResult?: CombatActionAResult | null
   ): string {
     const state = dgsm.getState();
     const fullGameTime = dgsm.getFullGameTime();
@@ -82,21 +84,58 @@ export class CombatActionAgentB {
             .join("\n\n")
         : "(no prior turns)";
 
-    return (
+    let ctx =
       `\n\n=== CURRENT GAME TIME ===\n${fullGameTime}\n=== END GAME TIME ===\n` +
       `\nCurrent Scene: ${state.currentScenario?.location || "Unknown"}\n` +
       `Scene Description: ${state.currentScenario?.description || ""}\n` +
       `\nPlayer Character:\n${JSON.stringify(playerContext, null, 2)}\n` +
       `\nCombat NPCs:\n${JSON.stringify(combatNpcs, null, 2)}\n` +
-      `\n=== RECENT CONVERSATION (last 3 turns) ===\n${historyBlock}`
-    );
+      `\n=== RECENT CONVERSATION (last 3 turns) ===\n${historyBlock}`;
+
+    if (combatAResult) {
+      ctx += `\n\n=== THIS ROUND ACTION RESULT (from Agent A) ===\n${JSON.stringify(
+        {
+          diceUsed: combatAResult.diceUsed,
+          actionLog: combatAResult.actionLog,
+          hpDeltas: {
+            player: combatAResult.stateUpdate?.playerCharacter?.status?.hp ?? 0,
+            npcs: (combatAResult.stateUpdate?.npcCharacters ?? []).map((npc) => ({
+              id: npc.id,
+              name: npc.name,
+              hpDelta: npc.status?.hp ?? 0,
+            })),
+          },
+          timeElapsedMinutes: combatAResult.timeElapsedMinutes,
+        },
+        null,
+        2
+      )}\n=== END ACTION RESULT ===`;
+    } else {
+      // 进入战斗首轮：注入普通 action agent 的结果作为战斗开始的上下文
+      const entryActionResults = state.temporaryInfo.actionResults || [];
+      if (entryActionResults.length > 0) {
+        ctx += `\n\n=== ENTRY CONTEXT (how combat began this turn) ===\n${JSON.stringify(
+          entryActionResults.map((r) => ({
+            character: r.character,
+            result: r.result,
+            diceRolls: r.diceRolls || [],
+            timeConsumption: r.timeConsumption,
+          })),
+          null,
+          2
+        )}\n=== END ENTRY CONTEXT ===`;
+      }
+    }
+
+    return ctx;
   }
 
   async generateNpcActions(
     dgsm: DynamicGameStateManager,
     playerInput: string,
     keeperNarrative: string,
-    language: "en" | "zh"
+    language: "en" | "zh",
+    combatAResult?: CombatActionAResult | null
   ): Promise<CombatActionBResult | null> {
     const state = dgsm.getState();
     const combatState = state.combatState;
@@ -108,7 +147,7 @@ export class CombatActionAgentB {
       keeperNarrative,
       language
     );
-    const context = this.buildContext(dgsm, combatState.participantNpcIds);
+    const context = this.buildContext(dgsm, combatState.participantNpcIds, combatAResult);
     const fullPrompt = systemPrompt + context;
 
     const response = await generateText({
