@@ -33,6 +33,15 @@ Use for continuity and context understanding. Focus on understanding the current
 {{#each conversationHistory}}
 {{#if this.keeperNarrative}}
 **Turn #{{this.turnNumber}}**: "{{this.characterInput}}" → "{{this.keeperNarrative}}"
+{{#if this.selectedSkill}}
+- Player Skill Selection (historical): {{this.selectedSkill}}
+{{/if}}
+{{#if this.playerActionLogs}}
+- Player Action Logs (historical):
+{{#each this.playerActionLogs}}
+  - {{this}}
+{{/each}}
+{{/if}}
 {{/if}}
 {{/each}}
 {{/if}}
@@ -73,6 +82,7 @@ Use them for reference disambiguation and impact judgment (including whether ski
 Player has selected a skill, set requiresSkillSelection = false
 {{else}}
 Player has NOT selected a skill. Set requiresSkillSelection = true ONLY if the action could have MAJOR impact on NPCs or the scenario (e.g., attacking NPCs, destroying objects, significant confrontations). Otherwise, set false.
+Exception: If recent history shows a similar type of action where the previous dice roll/skill check already succeeded, No need to ask player to select skill again.
 {{/if}}
 
 ## Output (JSON only)

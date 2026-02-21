@@ -14,6 +14,7 @@ export interface BuildRagQueryTemplateInput {
   sceneName?: string | null;
   sceneLocation?: string | null;
   npcNames?: string[];
+  playerName?: string | null;
   language?: "en" | "zh";
   recentTurns?: RecentTurnContext[];
   allScenes?: SceneContext[];
@@ -28,6 +29,7 @@ export function buildRagQueryTemplate({
   sceneName,
   sceneLocation,
   npcNames = [],
+  playerName,
   language = "zh",
   recentTurns = [],
   allScenes = [],
@@ -41,6 +43,10 @@ export function buildRagQueryTemplate({
   ).slice(0, 20);
 
   const outputLang = language === "en" ? "English" : "Chinese";
+  const normalizedPlayerName =
+    typeof playerName === "string" && playerName.trim().length > 0
+      ? playerName.trim()
+      : null;
 
   const recentTurnsBlock =
     recentTurns.length > 0
@@ -68,8 +74,9 @@ Rules:
 4. Inject specific entity names (scene, NPC, location) from the context below when they are clearly relevant.
 5. Only use entities listed in the context. Do NOT invent names or facts.
 6. Prefer concrete nouns and key phrases over vague terms.
-7. Output ragQuery in ${outputLang}.
-8. Return STRICT JSON only — no explanation, no markdown.
+7. If the player refers to self ambiguously, resolve to the Investigator profile when relevant.
+8. Output ragQuery in ${outputLang}.
+9. Return STRICT JSON only — no explanation, no markdown.
 
 Player Question:
 ${question}
@@ -86,6 +93,9 @@ ${allScenesBlock}
 
 Known NPCs:
 ${dedupedNpcNames.length > 0 ? dedupedNpcNames.map((name) => `- ${name}`).join("\n") : "- (none)"}
+
+Investigator Profile:
+- Name: ${normalizedPlayerName || "(unknown)"}
 
 Return JSON:
 {"ragQuery": "string"}`;

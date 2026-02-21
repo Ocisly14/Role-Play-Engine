@@ -52,6 +52,7 @@ export async function askRag(req: Request, res: Response): Promise<void> {
 
     const sceneName = dynamicState?.currentScenario?.name || null;
     const sceneLocation = dynamicState?.currentScenario?.location || null;
+    const playerName = dynamicState?.playerCharacter?.name || null;
     const npcNames = Array.from(
       new Set(
         (dynamicState?.npcCharacters || [])
@@ -101,6 +102,7 @@ export async function askRag(req: Request, res: Response): Promise<void> {
       sceneName,
       sceneLocation,
       npcNames,
+      playerName,
       recentTurns,
       allScenes,
     });

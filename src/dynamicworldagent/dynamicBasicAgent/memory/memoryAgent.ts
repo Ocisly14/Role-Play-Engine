@@ -244,6 +244,7 @@ export const retrieveRelevantHistory = async (
     sceneName?: string;
     sceneLocation?: string;
     npcNames?: string[];
+    playerName?: string;
     recentTurns?: Array<{
       turnNumber: number;
       playerInput: string;
@@ -276,6 +277,7 @@ export const retrieveRelevantHistory = async (
       sceneName: options.sceneName ?? options.currentLocation ?? null,
       sceneLocation: options.sceneLocation ?? options.currentLocation ?? null,
       npcNames: options.npcNames ?? [],
+      playerName: options.playerName ?? null,
       recentTurns: options.recentTurns ?? [],
       allScenes: options.allScenes ?? [],
     });
@@ -507,6 +509,7 @@ export const enrichMemoryContext = async (
             sceneName: gameState.currentScenario?.name || undefined,
             sceneLocation: currentLocation || undefined,
             npcNames,
+            playerName: gameState.playerCharacter?.name || undefined,
             recentTurns: recentTurnsForRewrite,
             allScenes,
             minScore: 0.7,

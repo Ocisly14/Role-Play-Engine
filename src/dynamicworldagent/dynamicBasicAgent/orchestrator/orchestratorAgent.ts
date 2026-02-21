@@ -33,6 +33,97 @@ const createRuntime = (): OrchestratorRuntime => ({
   getSetting: (key: string) => process.env[key],
 });
 
+type HistoricalActionResult = {
+  gameTime?: unknown;
+  location?: unknown;
+  character?: unknown;
+  result?: unknown;
+  diceRolls?: unknown;
+};
+
+function normalizeActionResults(raw: unknown): HistoricalActionResult[] {
+  if (Array.isArray(raw)) return raw as HistoricalActionResult[];
+  if (typeof raw !== "string") return [];
+  try {
+    const parsed = JSON.parse(raw) as unknown;
+    return Array.isArray(parsed) ? (parsed as HistoricalActionResult[]) : [];
+  } catch {
+    return [];
+  }
+}
+
+function extractSkillNamesFromDiceRolls(diceRolls: unknown): string[] {
+  if (!Array.isArray(diceRolls)) return [];
+  const skills: string[] = [];
+  for (const roll of diceRolls) {
+    if (typeof roll !== "string") continue;
+    const match = roll.match(/\(([^()]+?)\s+\d{1,3}%/i);
+    if (!match) continue;
+    const skill = match[1].trim();
+    if (!skill || skills.includes(skill)) continue;
+    skills.push(skill);
+    if (skills.length >= 5) break;
+  }
+  return skills;
+}
+
+function extractHistoricalPlayerSignals(
+  actionResultsRaw: unknown,
+  playerNameRaw: unknown
+): {
+  selectedSkill: string | null;
+  playerActionLogs: string[];
+} {
+  const actionResults = normalizeActionResults(actionResultsRaw);
+  if (actionResults.length === 0) {
+    return { selectedSkill: null, playerActionLogs: [] };
+  }
+
+  const playerName =
+    typeof playerNameRaw === "string" ? playerNameRaw.trim().toLowerCase() : "";
+  const playerResults = actionResults.filter((result) => {
+    const actor =
+      typeof result.character === "string"
+        ? result.character.trim().toLowerCase()
+        : "";
+    if (!playerName) return true;
+    if (!actor) return false;
+    return actor === playerName;
+  });
+
+  const relevantResults = playerResults.length > 0 ? playerResults : actionResults;
+  const detectedSkills: string[] = [];
+  const playerActionLogs: string[] = [];
+
+  for (const result of relevantResults) {
+    const skills = extractSkillNamesFromDiceRolls(result.diceRolls);
+    for (const skill of skills) {
+      if (!detectedSkills.includes(skill)) {
+        detectedSkills.push(skill);
+      }
+    }
+
+    const summary = typeof result.result === "string" ? result.result.trim() : "";
+    if (!summary) continue;
+
+    const time =
+      typeof result.gameTime === "string" && result.gameTime.trim().length > 0
+        ? result.gameTime.trim()
+        : "";
+    const location =
+      typeof result.location === "string" && result.location.trim().length > 0
+        ? result.location.trim()
+        : "";
+    const prefix = [time, location].filter(Boolean).join(" @ ");
+    playerActionLogs.push(prefix ? `${prefix}: ${summary}` : summary);
+  }
+
+  return {
+    selectedSkill: detectedSkills[0] ?? null,
+    playerActionLogs: playerActionLogs.slice(0, 3),
+  };
+}
+
 /**
  * Orchestrator Agent - Routes user queries to appropriate agents
  */
@@ -147,6 +238,8 @@ export class OrchestratorAgent {
       turnNumber: number;
       characterInput: string;
       keeperNarrative: string | null;
+      selectedSkill?: string | null;
+      playerActionLogs?: string[];
     }> = [];
 
     if (db) {
@@ -160,11 +253,19 @@ export class OrchestratorAgent {
         // Filter to only include turns with narrative
         conversationHistory = history
           .filter((turn) => turn.keeperNarrative)
-          .map((turn) => ({
-            turnNumber: turn.turnNumber,
-            characterInput: turn.characterInput,
-            keeperNarrative: turn.keeperNarrative,
-          }));
+          .map((turn) => {
+            const playerSignals = extractHistoricalPlayerSignals(
+              (turn as { actionResults?: unknown }).actionResults,
+              (turn as { characterName?: unknown }).characterName
+            );
+            return {
+              turnNumber: turn.turnNumber,
+              characterInput: turn.characterInput,
+              keeperNarrative: turn.keeperNarrative,
+              selectedSkill: playerSignals.selectedSkill,
+              playerActionLogs: playerSignals.playerActionLogs,
+            };
+          });
 
         if (conversationHistory.length > 0) {
           console.log(
@@ -183,6 +284,8 @@ export class OrchestratorAgent {
             turnNumber: number;
             characterInput: string;
             keeperNarrative: string | null;
+            selectedSkill?: string | null;
+            playerActionLogs?: string[];
           }>) || [];
 
         conversationHistory = fallbackHistory
@@ -197,6 +300,8 @@ export class OrchestratorAgent {
           turnNumber: number;
           characterInput: string;
           keeperNarrative: string | null;
+          selectedSkill?: string | null;
+          playerActionLogs?: string[];
         }>) || [];
 
       conversationHistory = fallbackHistory
@@ -250,6 +355,7 @@ export class OrchestratorAgent {
         sceneName: currentScenarioName,
         sceneLocation: scenarioLocation,
         npcNames: npcNamesList,
+        playerName: dynamicState.playerCharacter?.name || undefined,
         recentTurns: recentTurnsForRewrite,
         allScenes,
         minScore: 0.7,

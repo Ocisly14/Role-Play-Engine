@@ -23,10 +23,12 @@ export interface SceneInfo {
 export interface SessionRagQaRequest {
   sessionId: string;
   question: string;
+  topK?: number;
   language?: "en" | "zh";
   sceneName?: string | null;
   sceneLocation?: string | null;
   npcNames?: string[];
+  playerName?: string | null;
   recentTurns?: RecentTurn[];
   allScenes?: SceneInfo[];
 }
@@ -168,6 +170,7 @@ export class SessionRagQaService {
       sceneName: request.sceneName,
       sceneLocation: request.sceneLocation,
       npcNames: request.npcNames,
+      playerName: request.playerName,
       language,
       recentTurns: request.recentTurns,
       allScenes: request.allScenes,
