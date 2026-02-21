@@ -39,7 +39,7 @@ export const MessageItem = React.memo<MessageItemProps>(
 
     if (role === "banner") {
       const isCombatStart = bannerType === "combat_start";
-      const label = isCombatStart ? t("combat.start", "— 战斗开始 —") : t("combat.end", "— 战斗结束 —");
+      const label = isCombatStart ? t("combat.start") : t("combat.end");
       const color = isCombatStart ? "#c0392b" : "#2c3e50";
       return (
         <div

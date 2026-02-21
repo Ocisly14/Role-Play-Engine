@@ -215,6 +215,10 @@
       "sceneName": "Scene Name:"
     }
   },
+  "combat": {
+    "start": "— Combat Begins —",
+    "end": "— Combat Ends —"
+  },
   "sceneTransition": "Scene Transition...",
   "worldlineTransition": "Worldline Update..."
 }
