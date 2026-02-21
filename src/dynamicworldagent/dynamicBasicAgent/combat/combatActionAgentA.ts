@@ -163,7 +163,7 @@ export class CombatActionAgentA {
     const response = await generateText({
       runtime: {},
       context: fullPrompt,
-      modelClass: ModelClass.SMALL,
+      modelClass: ModelClass.MEDIUM,
     });
 
     return this.parseResponse(response);

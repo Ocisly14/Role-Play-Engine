@@ -358,6 +358,22 @@ export function useWebSocket({
               if (fetchGameEndingRef.current) {
                 fetchGameEndingRef.current();
               }
+            } else if (message.type === "combat_start") {
+              console.log("[WebSocket] Combat started");
+              const nextTurnNumber =
+                messagesRef.current && messagesRef.current.length > 0
+                  ? Math.max(...messagesRef.current.map((m) => m.turnNumber))
+                  : 0;
+              setMessages((prev) => [
+                ...prev,
+                {
+                  role: "banner" as const,
+                  content: "",
+                  bannerType: "combat_start" as const,
+                  timestamp: message.timestamp || new Date().toISOString(),
+                  turnNumber: nextTurnNumber,
+                },
+              ]);
             } else if (message.type === "pong") {
               // Heartbeat response
               console.log("[WebSocket] Heartbeat received");

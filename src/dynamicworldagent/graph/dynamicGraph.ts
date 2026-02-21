@@ -80,6 +80,7 @@ export interface DynamicGraphState {
     onNarrativeDelta?: (delta: string) => void;
     onNarrativeEnd?: () => void;
     onMapUpdate?: (payload: { macroMapPath: string; mimeType: string }) => void;
+    onCombatStart?: () => void;
   };
 }
 
@@ -967,11 +968,12 @@ export const buildDynamicGraph = (
         ? state.language
         : "zh";
 
-    // 进入战斗第一轮：清除 justEnteredCombat 标志
+    // 进入战斗第一轮：清除 justEnteredCombat 标志，并通知前端显示战斗开始 banner
     const isEntryTurn = gs.temporaryInfo.contextualData?.justEnteredCombat === true;
     if (isEntryTurn) {
       dgsm.setContextualData("justEnteredCombat", false);
       console.log("⚔️  [Combat Action Agent B] 进入战斗首轮，清除 justEnteredCombat 标志");
+      state.stream?.onCombatStart?.();
     }
 
     try {

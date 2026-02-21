@@ -5,7 +5,7 @@
 import type { DiceRollInfo } from "../components/DiceAnimation";
 
 export interface Message {
-  role: "character" | "keeper";
+  role: "character" | "keeper" | "banner";
   content: string;
   timestamp: string;
   turnNumber: number;
@@ -16,6 +16,7 @@ export interface Message {
   diceRolls?: Array<string | DiceRollInfo>;
   gameDay?: number | null;
   gameTime?: string | null;
+  bannerType?: "combat_start" | "combat_end";
 }
 
 export interface GameEndingInfo {

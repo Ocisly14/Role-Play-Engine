@@ -99,6 +99,15 @@ function getDefaultDodge(attributes?: CharacterAttributes): number {
 }
 
 /**
+ * Returns the static skill defaults (excluding Dodge which depends on DEX).
+ * Used to inject a single shared reference into prompts instead of repeating
+ * all 65 skills for every character.
+ */
+export function getStaticSkillDefaults(): Record<string, number> {
+  return { ...ALL_SKILL_BASE_DEFAULTS };
+}
+
+/**
  * Ensures context has all baseline CoC skills.
  * Existing values override defaults.
  */

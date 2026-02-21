@@ -23,7 +23,7 @@ import {
 } from "../../utils/gameTime.js";
 import type { DynamicCharacterProfile } from "../../world_builder/types.js";
 import type { DynamicNPCProfile } from "../../world_builder/types.js";
-import { withAllSkillDefaults } from "../skillDefaults.js";
+import { getStaticSkillDefaults } from "../skillDefaults.js";
 import { buildActionSystemPrompt } from "./actionTemplate.js";
 
 /**
@@ -271,8 +271,13 @@ export class ActionAgent {
       dynamicState.temporaryInfo.sceneChangeRequest;
 
     // Extract scene NPCs for player actions (for NPC response analysis)
+    // Exclude the target character to avoid duplicating data already injected as Target NPC
     const sceneNPCs = !isNPC
-      ? this.extractSceneNPCsForAction(dynamicState)
+      ? this.extractSceneNPCsForAction(dynamicState).filter(
+          (npc) =>
+            !targetCharacter ||
+            (npc.id !== targetCharacter.id && npc.name !== targetCharacter.name)
+        )
       : null;
     const targetIntent = !isNPC
       ? (dynamicState.temporaryInfo.currentActionAnalysis?.target?.intent ?? "")
@@ -512,10 +517,9 @@ export class ActionAgent {
 
     return {
       ...filteredCharacter,
-      skills: withAllSkillDefaults(
-        filteredCharacter.skills,
-        filteredCharacter.attributes
-      ),
+      // Only include skills explicitly set in the character file.
+      // Missing skills fall back to the shared default table injected in buildContext.
+      skills: filteredCharacter.skills ?? {},
     };
   }
 
@@ -639,6 +643,12 @@ export class ActionAgent {
       ? gameStateManager.getFullGameTime()
       : `Day ${dynamicState.gameDay}, ${dynamicState.timeOfDay}`;
     let context = `\n\n=== CURRENT GAME TIME ===\n${fullGameTime}\n=== END OF GAME TIME ===\n`;
+
+    // Inject skill defaults once — character skill fields only list explicitly set values.
+    // For any skill not present in a character's skills object, use these base values.
+    // Dodge default = character DEX ÷ 2.
+    const skillDefaults = getStaticSkillDefaults();
+    context += `\n=== DEFAULT SKILL VALUES (for skills not listed in a character's profile) ===\n${JSON.stringify(skillDefaults)}\nDodge: character DEX ÷ 2\n=== END DEFAULT SKILL VALUES ===\n`;
     context += "\n\nCurrent Scenario:\n";
     if (dynamicState.currentScenario) {
       // Find the corresponding scenario outline to get connections

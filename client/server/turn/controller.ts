@@ -34,6 +34,7 @@ type NarrativeStreamHandlers = {
   onNarrativeDelta?: (delta: string) => void;
   onNarrativeEnd?: () => void;
   onMapUpdate?: (payload: { macroMapPath: string; mimeType: string }) => void;
+  onCombatStart?: () => void;
 };
 
 /**
@@ -333,6 +334,13 @@ function buildNarrativeStreamHandlers(params: {
         turnId: params.turnId,
         macroMapPath: payload.macroMapPath,
         mimeType: payload.mimeType,
+        timestamp: new Date().toISOString(),
+      });
+    },
+    onCombatStart: () => {
+      send({
+        type: "combat_start",
+        turnId: params.turnId,
         timestamp: new Date().toISOString(),
       });
     },

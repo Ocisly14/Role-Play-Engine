@@ -8,7 +8,7 @@ import ReactMarkdown from "react-markdown";
 import { DiceAnimation, type DiceRollInfo } from "../DiceAnimation";
 
 interface MessageItemProps {
-  role: "character" | "keeper";
+  role: "character" | "keeper" | "banner";
   content: string;
   timestamp: string;
   characterName: string;
@@ -18,6 +18,7 @@ interface MessageItemProps {
   gameDay?: number | null;
   gameTime?: string | null;
   onAnimationComplete?: () => void;
+  bannerType?: "combat_start" | "combat_end";
 }
 
 export const MessageItem = React.memo<MessageItemProps>(
@@ -32,8 +33,42 @@ export const MessageItem = React.memo<MessageItemProps>(
     gameDay,
     gameTime,
     onAnimationComplete,
+    bannerType,
   }) => {
     const { t } = useTranslation("game");
+
+    if (role === "banner") {
+      const isCombatStart = bannerType === "combat_start";
+      const label = isCombatStart ? t("combat.start", "— 战斗开始 —") : t("combat.end", "— 战斗结束 —");
+      const color = isCombatStart ? "#c0392b" : "#2c3e50";
+      return (
+        <div
+          style={{
+            display: "flex",
+            alignItems: "center",
+            gap: "12px",
+            margin: "16px 0",
+            padding: "0 8px",
+          }}
+        >
+          <div style={{ flex: 1, height: "2px", background: color, opacity: 0.4 }} />
+          <span
+            style={{
+              color,
+              fontSize: "24px",
+              fontWeight: 600,
+              letterSpacing: "0.1em",
+              whiteSpace: "nowrap",
+              opacity: 0.85,
+            }}
+          >
+            {label}
+          </span>
+          <div style={{ flex: 1, height: "2px", background: color, opacity: 0.4 }} />
+        </div>
+      );
+    }
+
     return (
       <div className={`chat-message ${role}`}>
         <div className="message-meta">

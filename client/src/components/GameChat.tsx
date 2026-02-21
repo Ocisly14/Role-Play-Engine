@@ -377,6 +377,29 @@ export function GameChat({
     }
   }, [currentGameState?.isBattle, isSkillAuto, setIsSkillAuto]);
 
+  // 检测战斗结束：isBattle true → false，在最后一条 narrative 之后插入 combat_end banner
+  const prevIsBattleRef = useRef<boolean>(false);
+  useEffect(() => {
+    const curr = currentGameState?.isBattle ?? false;
+    const prev = prevIsBattleRef.current;
+    prevIsBattleRef.current = curr;
+    if (prev === true && curr === false) {
+      setMessages((msgs) => {
+        const maxTurnNumber = msgs.length > 0 ? Math.max(...msgs.map((m) => m.turnNumber)) : 0;
+        return [
+          ...msgs,
+          {
+            role: "banner" as const,
+            content: "",
+            bannerType: "combat_end" as const,
+            timestamp: new Date().toISOString(),
+            turnNumber: maxTurnNumber,
+          },
+        ];
+      });
+    }
+  }, [currentGameState?.isBattle, setMessages]);
+
   const isCombatSkillRequired = currentGameState?.isBattle === true;
   const canSendInCombat = !isCombatSkillRequired || selectedSkill.trim().length > 0;
 

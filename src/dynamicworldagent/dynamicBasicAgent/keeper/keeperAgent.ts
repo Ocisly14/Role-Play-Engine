@@ -897,8 +897,12 @@ export class KeeperAgent {
       // Items
       inventory: character.inventory || [],
 
-      // NOTE: actionLog removed - now provided by RAG relevantHistory
-      // Use relevantHistory from temporaryInfo.contextualData instead
+      // Action log filtered to the current scene
+      actionLog: currentLocation
+        ? (character.actionLog || []).filter(
+            (log) => log.location === currentLocation
+          )
+        : (character.actionLog || []),
 
       // Clues (if NPC)
       clues: this.filterNpcCluesForKeeper(
