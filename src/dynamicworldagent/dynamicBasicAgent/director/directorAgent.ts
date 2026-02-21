@@ -23,6 +23,10 @@ import type { DynamicGameStateManager } from "../../state/index.js";
 import type { DynamicScenarioSnapshot } from "../../world_builder/types.js";
 import type { DynamicNPCProfile } from "../../world_builder/types.js";
 import type { ScenarioConnectionType } from "../../world_builder/types.js";
+import {
+  type RetrievedSessionRagChunk,
+  SessionRagService,
+} from "../knowledge/sessionRagService.js";
 import { saveDynamicGameStateCheckpoint } from "../memory/checkpoint.js";
 import {
   getGlobalTriggerEventCheckTemplate,
@@ -51,6 +55,30 @@ const createRuntime = (): DirectorRuntime => ({
   getSetting: (key: string) => process.env[key],
 });
 
+const TRIGGER_RAG_MIN_SCORE = 0.7;
+
+type TriggerQueryType = "global_event" | "victory_condition";
+
+interface TriggerEvidenceItem {
+  sourceKey: string;
+  turnNumber: number | null;
+  segmentType: "narrative" | "actionlog";
+  score: number;
+  content: string;
+  matchedBy: Array<{
+    queryType: TriggerQueryType;
+    query: string;
+  }>;
+}
+
+interface CurrentTurnActionLogItem {
+  character: string;
+  time: string;
+  location: string;
+  summary: string;
+  source: "actionResults" | "actionResultsDetailed";
+}
+
 /**
  * Director Agent - Story progression and scene transition director
  * Responsible for monitoring game progress and advancing story development
@@ -58,6 +86,7 @@ const createRuntime = (): DirectorRuntime => ({
 export class DirectorAgent {
   private scenarioLoader: ScenarioLoader;
   private db: CoCDatabase | CoCDatabaseAdapter;
+  private sessionRagService: SessionRagService;
 
   constructor(
     scenarioLoader: ScenarioLoader,
@@ -65,6 +94,7 @@ export class DirectorAgent {
   ) {
     this.scenarioLoader = scenarioLoader;
     this.db = db;
+    this.sessionRagService = new SessionRagService();
   }
 
   /**
@@ -2534,21 +2564,231 @@ export class DirectorAgent {
     return timeReached;
   }
 
+  private async searchTriggerChunks(
+    sessionId: string,
+    query: string,
+    segmentType: "narrative" | "actionlog",
+    topK: number
+  ): Promise<RetrievedSessionRagChunk[]> {
+    const searches = await Promise.all([
+      this.sessionRagService.searchHybrid({
+        sessionId,
+        ragQuery: query,
+        topK,
+        semanticWeight: 0.7,
+        bm25Weight: 0.3,
+        language: "zh",
+        chunkType: "turn",
+        segmentType,
+      }),
+      this.sessionRagService.searchHybrid({
+        sessionId,
+        ragQuery: query,
+        topK,
+        semanticWeight: 0.7,
+        bm25Weight: 0.3,
+        language: "en",
+        chunkType: "turn",
+        segmentType,
+      }),
+    ]);
+
+    const deduped = new Map<string, RetrievedSessionRagChunk>();
+    for (const result of searches.flat()) {
+      const key = result.sourceKey || result.id;
+      const existing = deduped.get(key);
+      if (!existing || result.score > existing.score) {
+        deduped.set(key, result);
+      }
+    }
+
+    return Array.from(deduped.values())
+      .filter((item) => item.score >= TRIGGER_RAG_MIN_SCORE)
+      .sort((a, b) => b.score - a.score)
+      .slice(0, topK);
+  }
+
+  private async retrieveTriggerEvidenceFromRag(params: {
+    sessionId: string;
+    globalEvents: string[];
+    victoryConditions: string[];
+  }): Promise<TriggerEvidenceItem[]> {
+    const { sessionId, globalEvents, victoryConditions } = params;
+    const evidenceMap = new Map<string, TriggerEvidenceItem>();
+
+    const queryDefs: Array<{ queryType: TriggerQueryType; query: string }> = [
+      ...globalEvents.map((query) => ({ queryType: "global_event" as const, query })),
+      ...victoryConditions.map((query) => ({
+        queryType: "victory_condition" as const,
+        query,
+      })),
+    ].filter((item) => typeof item.query === "string" && item.query.trim().length > 0);
+
+    for (const def of queryDefs) {
+      const query = def.query.trim();
+      const [narrativeChunks, actionLogChunks] = await Promise.all([
+        this.searchTriggerChunks(sessionId, query, "narrative", 3),
+        this.searchTriggerChunks(sessionId, query, "actionlog", 3),
+      ]);
+
+      const combined = [
+        ...narrativeChunks.map((chunk) => ({
+          chunk,
+          segmentType: "narrative" as const,
+        })),
+        ...actionLogChunks.map((chunk) => ({
+          chunk,
+          segmentType: "actionlog" as const,
+        })),
+      ];
+
+      for (const entry of combined) {
+        const key = entry.chunk.sourceKey || entry.chunk.id;
+        const existing = evidenceMap.get(key);
+
+        if (!existing) {
+          evidenceMap.set(key, {
+            sourceKey: entry.chunk.sourceKey,
+            turnNumber: entry.chunk.turnNumber,
+            segmentType: entry.segmentType,
+            score: entry.chunk.score,
+            content: entry.chunk.content,
+            matchedBy: [{ queryType: def.queryType, query }],
+          });
+          continue;
+        }
+
+        if (entry.chunk.score > existing.score) {
+          existing.score = entry.chunk.score;
+          existing.content = entry.chunk.content;
+          existing.turnNumber = entry.chunk.turnNumber;
+          existing.segmentType = entry.segmentType;
+        }
+
+        if (
+          !existing.matchedBy.some(
+            (m) => m.queryType === def.queryType && m.query === query
+          )
+        ) {
+          existing.matchedBy.push({ queryType: def.queryType, query });
+        }
+      }
+    }
+
+    return Array.from(evidenceMap.values()).sort((a, b) => b.score - a.score);
+  }
+
+  private collectCurrentTurnActionLogs(
+    dynamicState: DynamicGameState
+  ): CurrentTurnActionLogItem[] {
+    const rows: CurrentTurnActionLogItem[] = [];
+    const dedupe = new Set<string>();
+
+    const push = (row: CurrentTurnActionLogItem): void => {
+      const summary = row.summary.trim();
+      if (!summary) return;
+      const key = `${row.character}|${row.time}|${row.location}|${summary}`;
+      if (dedupe.has(key)) return;
+      dedupe.add(key);
+      rows.push({
+        ...row,
+        summary,
+      });
+    };
+
+    const actionResults = dynamicState.temporaryInfo.actionResults || [];
+    for (const result of actionResults) {
+      push({
+        character: result.character || "Unknown",
+        time: result.gameTime || `Day ${dynamicState.gameDay}, ${dynamicState.timeOfDay}`,
+        location:
+          result.location || dynamicState.currentScenario?.location || "Unknown",
+        summary: result.result || "",
+        source: "actionResults",
+      });
+    }
+
+    const detailed = dynamicState.temporaryInfo.actionResultsDetailed || [];
+    for (const item of detailed) {
+      const actor =
+        typeof item.character === "string" && item.character.trim().length > 0
+          ? item.character
+          : "Unknown";
+      const defaultTime = `Day ${dynamicState.gameDay}, ${dynamicState.timeOfDay}`;
+      const defaultLocation = dynamicState.currentScenario?.location || "Unknown";
+
+      const collectFromLogs = (logs: unknown): void => {
+        if (!Array.isArray(logs)) return;
+        for (const rawLog of logs) {
+          if (!rawLog || typeof rawLog !== "object") continue;
+          const log = rawLog as Record<string, unknown>;
+          if (typeof log.summary !== "string" || !log.summary.trim()) continue;
+
+          push({
+            character:
+              typeof log.character === "string" && log.character.trim().length > 0
+                ? log.character
+                : actor,
+            time:
+              typeof log.time === "string" && log.time.trim().length > 0
+                ? log.time
+                : defaultTime,
+            location:
+              typeof log.location === "string" && log.location.trim().length > 0
+                ? log.location
+                : defaultLocation,
+            summary: log.summary,
+            source: "actionResultsDetailed",
+          });
+        }
+      };
+
+      collectFromLogs(item.actionLog);
+
+      if (Array.isArray(item.npcResponses)) {
+        for (const npcResponse of item.npcResponses) {
+          if (!npcResponse || typeof npcResponse !== "object") continue;
+          const response = npcResponse as Record<string, unknown>;
+          collectFromLogs(response.actionLog);
+        }
+      }
+    }
+
+    return rows;
+  }
+
   /**
-   * Check global trigger and determine if it causes game end
-   * Combines time check and event check, and determines if trigger causes game end
-   * @returns { triggered: boolean, causesGameEnd: boolean }
+   * Check global trigger and victory trigger simultaneously
+   * Combines time check and event check for doom, and checks victory conditions
+   * @returns { triggered: boolean, causesGameEnd: boolean, victoryAchieved: boolean }
    */
   async checkGlobalTriggerAndGameEnd(
     gameStateManager: DynamicGameStateManager
-  ): Promise<{ triggered: boolean; causesGameEnd: boolean }> {
+  ): Promise<{
+    triggered: boolean;
+    causesGameEnd: boolean;
+    victoryAchieved: boolean;
+    achievedVictoryCondition: string | null;
+  }> {
     const dynamicState = gameStateManager.getState();
     const globalTrigger = dynamicState.globalTrigger;
     const endState = dynamicState.endState;
+    const victoryTrigger = dynamicState.moduleDigest?.victoryTrigger;
+
+    // Reset trigger-check context every time to avoid stale epilogue evidence.
+    gameStateManager.setContextualData("triggerCheckEvidence", []);
+    gameStateManager.setContextualData("triggerCheckCurrentTurnActionLogs", []);
+    gameStateManager.setContextualData("triggerCheckAchievedVictoryCondition", null);
+    gameStateManager.setContextualData("triggerCheckResult", null);
 
     // If no global trigger, return early
     if (!globalTrigger) {
-      return { triggered: false, causesGameEnd: false };
+      return {
+        triggered: false,
+        causesGameEnd: false,
+        victoryAchieved: false,
+        achievedVictoryCondition: null,
+      };
     }
 
     console.log(
@@ -2563,64 +2803,50 @@ export class DirectorAgent {
       triggered = true;
     }
 
-    // Check 2: Events (only if time not reached)
-    if (!triggered && globalTrigger.events && globalTrigger.events.length > 0) {
-      const currentGameTime = `Day ${dynamicState.gameDay}, ${dynamicState.timeOfDay}`;
-      const earliestTime = this.subtractMinutesFromGameTime(
-        currentGameTime,
-        60
+    // Check 2: Event/condition evidence via RAG
+    const globalEvents = (globalTrigger.events || []).filter(
+      (event): event is string => typeof event === "string" && event.trim().length > 0
+    );
+    const victoryConditions = (victoryTrigger?.conditions || []).filter(
+      (condition): condition is string =>
+        typeof condition === "string" && condition.trim().length > 0
+    );
+
+    const shouldRunEvidenceCheck =
+      (!triggered && globalEvents.length > 0) || victoryConditions.length > 0;
+
+    if (shouldRunEvidenceCheck) {
+      const triggerEvidence = await this.retrieveTriggerEvidenceFromRag({
+        sessionId: dynamicState.sessionId,
+        globalEvents,
+        victoryConditions,
+      });
+      const currentTurnActionLogs = this.collectCurrentTurnActionLogs(dynamicState);
+      gameStateManager.setContextualData("triggerCheckEvidence", triggerEvidence);
+      gameStateManager.setContextualData(
+        "triggerCheckCurrentTurnActionLogs",
+        currentTurnActionLogs
       );
 
-      const allCharacters: Array<{
-        id: string;
-        name: string;
-        actionLog: ActionLogEntry[];
-      }> = [
-        {
-          id: dynamicState.playerCharacter.id,
-          name: dynamicState.playerCharacter.name,
-          actionLog: dynamicState.playerCharacter.actionLog || [],
-        },
-        ...dynamicState.npcCharacters.map((npc) => ({
-          id: npc.id,
-          name: npc.name,
-          actionLog: npc.actionLog || [],
-        })),
-      ];
+      if (triggerEvidence.length > 0 || currentTurnActionLogs.length > 0) {
+        console.log(
+          `   📚 Retrieved ${triggerEvidence.length} deduped trigger evidence chunks from RAG`
+        );
+        console.log(
+          `   🕒 Collected ${currentTurnActionLogs.length} current-turn action logs`
+        );
 
-      const recentActionLogs: Array<{
-        characterId: string;
-        characterName: string;
-        actionLog: ActionLogEntry[];
-      }> = [];
-
-      for (const character of allCharacters) {
-        const filteredActionLog = character.actionLog
-          .filter((entry) => {
-            return (
-              this.isTimeBeforeOrEqual(earliestTime, entry.time) &&
-              this.isTimeBeforeOrEqual(entry.time, currentGameTime)
-            );
-          })
-          .slice(-10);
-
-        if (filteredActionLog.length > 0) {
-          recentActionLogs.push({
-            characterId: character.id,
-            characterName: character.name,
-            actionLog: filteredActionLog,
-          });
-        }
-      }
-
-      if (recentActionLogs.length > 0) {
         const runtime = createRuntime();
         const template = getGlobalTriggerEventCheckTemplate();
 
         const templateContext = {
           globalTriggerJson: JSON.stringify(globalTrigger, null, 2),
           endStateJson: endState ? JSON.stringify(endState, null, 2) : "null",
-          recentActionLogsJson: JSON.stringify(recentActionLogs, null, 2),
+          victoryTriggerJson: victoryTrigger
+            ? JSON.stringify(victoryTrigger, null, 2)
+            : null,
+          triggerEvidenceJson: JSON.stringify(triggerEvidence, null, 2),
+          currentTurnActionLogsJson: JSON.stringify(currentTurnActionLogs, null, 2),
         };
 
         const prompt = composeTemplate(
@@ -2637,7 +2863,12 @@ export class DirectorAgent {
             modelClass: ModelClass.SMALL,
           });
 
-          let parsed: { triggered: boolean; causesGameEnd: boolean };
+          let parsed: {
+            triggered: boolean;
+            causesGameEnd: boolean;
+            victoryAchieved: boolean;
+            achievedVictoryCondition?: string | null;
+          };
           try {
             const jsonMatch = response.match(/\{[\s\S]*\}/);
             parsed = JSON.parse(jsonMatch ? jsonMatch[0] : response);
@@ -2646,18 +2877,49 @@ export class DirectorAgent {
               "   ❌ Failed to parse trigger check response:",
               error
             );
-            return { triggered: false, causesGameEnd: false };
+            return {
+              triggered: false,
+              causesGameEnd: false,
+              victoryAchieved: false,
+              achievedVictoryCondition: null,
+            };
+          }
+
+          if (parsed.victoryAchieved) {
+            console.log(`   🏆 Victory conditions achieved!`);
+            gameStateManager.setContextualData(
+              "triggerCheckAchievedVictoryCondition",
+              parsed.achievedVictoryCondition ?? null
+            );
+            gameStateManager.setContextualData("triggerCheckResult", parsed);
+            return {
+              triggered: parsed.triggered || triggered,
+              causesGameEnd: false,
+              victoryAchieved: true,
+              achievedVictoryCondition: parsed.achievedVictoryCondition ?? null,
+            };
           }
 
           if (parsed.triggered) {
             console.log(
               `   ✅ Global trigger triggered${parsed.causesGameEnd ? " AND causes game end" : " but does NOT cause game end"}`
             );
-            return { triggered: true, causesGameEnd: parsed.causesGameEnd };
+            gameStateManager.setContextualData("triggerCheckResult", parsed);
+            return {
+              triggered: true,
+              causesGameEnd: parsed.causesGameEnd,
+              victoryAchieved: false,
+              achievedVictoryCondition: null,
+            };
           }
         } catch (error) {
           console.error("   ❌ Error checking global trigger events:", error);
-          return { triggered: false, causesGameEnd: false };
+          return {
+            triggered: false,
+            causesGameEnd: false,
+            victoryAchieved: false,
+            achievedVictoryCondition: null,
+          };
         }
       }
     }
@@ -2673,164 +2935,31 @@ export class DirectorAgent {
           console.log(
             `   ✅ Global trigger time reached AND causes game end (point of no return)`
           );
-          return { triggered: true, causesGameEnd: true };
+          return {
+            triggered: true,
+            causesGameEnd: true,
+            victoryAchieved: false,
+            achievedVictoryCondition: null,
+          };
         }
       }
       console.log(
         `   ✅ Global trigger time reached but does NOT cause game end`
       );
-      return { triggered: true, causesGameEnd: false };
+      return {
+        triggered: true,
+        causesGameEnd: false,
+        victoryAchieved: false,
+        achievedVictoryCondition: null,
+      };
     }
 
-    return { triggered: false, causesGameEnd: false };
-  }
-
-  /**
-   * Check if global trigger events have been fulfilled using LLM analysis
-   * Analyzes recent actionLog entries from the last 3 turns
-   * @returns true if events are triggered, false otherwise
-   */
-  async checkGlobalTriggerEvents(
-    gameStateManager: DynamicGameStateManager
-  ): Promise<boolean> {
-    const dynamicState = gameStateManager.getState();
-    const globalTrigger = dynamicState.globalTrigger;
-
-    if (
-      !globalTrigger ||
-      !globalTrigger.events ||
-      globalTrigger.events.length === 0
-    ) {
-      return false;
-    }
-
-    console.log(`\n🔍 [Director Agent] Checking global trigger events...`);
-
-    // Get conversation history from last 3 turns (including current turn)
-    const conversationHistory =
-      (dynamicState.temporaryInfo.contextualData?.conversationHistory as Array<{
-        turnNumber: number;
-        characterInput: string;
-        keeperNarrative: string | null;
-        actionResults?: any[];
-      }>) || [];
-
-    // Use a 1-hour game time window instead of turn count
-    const currentGameTime = `Day ${dynamicState.gameDay}, ${dynamicState.timeOfDay}`;
-    const earliestTime = this.subtractMinutesFromGameTime(currentGameTime, 60);
-
-    console.log(
-      `   📅 Time range: ${earliestTime} to ${currentGameTime} (last 1 hour)`
-    );
-
-    // Extract actionLog entries directly from all characters' actionLog
-    // Filter entries that fall within the last 1 hour of game time
-    const recentActionLogs: Array<{
-      characterId: string;
-      characterName: string;
-      actionLog: ActionLogEntry[];
-    }> = [];
-
-    // Collect all characters (player + NPCs)
-    const allCharacters: Array<{
-      id: string;
-      name: string;
-      actionLog: ActionLogEntry[];
-    }> = [
-      {
-        id: dynamicState.playerCharacter.id,
-        name: dynamicState.playerCharacter.name,
-        actionLog: dynamicState.playerCharacter.actionLog || [],
-      },
-      ...dynamicState.npcCharacters.map((npc) => ({
-        id: npc.id,
-        name: npc.name,
-        actionLog: npc.actionLog || [],
-      })),
-    ];
-
-    // Filter actionLog entries within the last 1 hour, capped at 10 per character
-    for (const character of allCharacters) {
-      const filteredActionLog = character.actionLog
-        .filter((entry) => {
-          return (
-            this.isTimeBeforeOrEqual(earliestTime, entry.time) &&
-            this.isTimeBeforeOrEqual(entry.time, currentGameTime)
-          );
-        })
-        .slice(-10);
-
-      if (filteredActionLog.length > 0) {
-        recentActionLogs.push({
-          characterId: character.id,
-          characterName: character.name,
-          actionLog: filteredActionLog,
-        });
-      }
-    }
-
-    if (recentActionLogs.length === 0) {
-      console.log(
-        `   ℹ️  No recent actionLog entries found in the last 1 hour of game time`
-      );
-      return false;
-    }
-
-    console.log(
-      `   📋 Found ${recentActionLogs.length} characters with actionLog entries in last 1 hour of game time`
-    );
-
-    // Prepare template context
-    const runtime = createRuntime();
-    const template = getGlobalTriggerEventCheckTemplate();
-
-    const templateContext = {
-      globalTriggerJson: JSON.stringify(globalTrigger, null, 2),
-      recentActionLogsJson: JSON.stringify(recentActionLogs, null, 2),
+    return {
+      triggered: false,
+      causesGameEnd: false,
+      victoryAchieved: false,
+      achievedVictoryCondition: null,
     };
-
-    const prompt = composeTemplate(
-      template,
-      { dynamicGameState: dynamicState },
-      templateContext,
-      "handlebars"
-    );
-
-    try {
-      const response = await generateText({
-        runtime,
-        context: prompt,
-        modelClass: ModelClass.SMALL,
-      });
-
-      // Parse response
-      let parsed: { triggered: boolean };
-      try {
-        const jsonMatch = response.match(/\{[\s\S]*\}/);
-        if (jsonMatch) {
-          parsed = JSON.parse(jsonMatch[0]);
-        } else {
-          parsed = JSON.parse(response);
-        }
-      } catch (error) {
-        console.error("   ❌ Failed to parse event check response:", error);
-        return false;
-      }
-
-      if (parsed.triggered) {
-        console.log(`   ✅ Global trigger events have been fulfilled`);
-        if (globalTrigger.events) {
-          console.log(`      Events: ${globalTrigger.events.join(", ")}`);
-        }
-      } else {
-        console.log(`   ⏳ Global trigger events not yet fulfilled`);
-      }
-
-      return parsed.triggered;
-    } catch (error) {
-      console.error("   ❌ Error checking global trigger events:", error);
-      return false;
-    }
   }
 
   /**

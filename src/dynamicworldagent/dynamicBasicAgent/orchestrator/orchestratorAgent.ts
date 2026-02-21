@@ -242,9 +242,10 @@ export class OrchestratorAgent {
       dynamicState.sessionId,
       input,
       {
-        topKActionLogs: 15,
+        topKActionLogs: 0,
         topKTurns: 3,
         alpha,
+        includeActionLogs: false,
         language: effectiveLanguage,
         sceneName: currentScenarioName,
         sceneLocation: scenarioLocation,
@@ -258,6 +259,8 @@ export class OrchestratorAgent {
     // Persist for downstream agents (memory/keeper) so we only retrieve once per turn.
     gameStateManager.setContextualData("relevantHistory", relevantHistory);
     gameStateManager.setContextualData("relevantHistoryThreshold", 0.7);
+    gameStateManager.setContextualData("relevantHistoryQuery", input.trim());
+    gameStateManager.setContextualData("relevantHistoryIncludesActionLogs", false);
 
     if (relevantHistory.length > 0) {
       console.log(
@@ -289,7 +292,7 @@ export class OrchestratorAgent {
     const response = await generateText({
       runtime,
       context: prompt,
-      modelClass: ModelClass.MEDIUM,
+      modelClass: ModelClass.SMALL,
     });
 
     // Parse the response and store action analysis and scene change request

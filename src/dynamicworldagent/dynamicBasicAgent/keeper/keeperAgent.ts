@@ -505,7 +505,7 @@ export class KeeperAgent {
       null // No interaction partner for epilogue
     );
 
-    // Get conversation history (last 5 turns)
+    // Get conversation history (last 1 turn for continuity anchor)
     const conversationHistory =
       (dynamicState.temporaryInfo.contextualData?.conversationHistory as Array<{
         turnNumber: number;
@@ -513,7 +513,7 @@ export class KeeperAgent {
         keeperNarrative: string | null;
       }>) || [];
 
-    const recentHistory = conversationHistory.slice(-5);
+    const recentHistory = conversationHistory.slice(-1);
 
     // Format full game time
     const fullGameTime = `Day ${dynamicState.gameDay}, ${dynamicState.timeOfDay}`;
@@ -533,6 +533,20 @@ export class KeeperAgent {
       fullGameTime,
       playerCharacterJson: this.safeStringify(playerCharacter),
       gameHistoryJson: JSON.stringify(recentHistory, null, 2),
+      gameEndingJson: this.safeStringify(dynamicState.gameEnding || null),
+      achievedVictoryCondition:
+        typeof dynamicState.temporaryInfo.contextualData
+          ?.triggerCheckAchievedVictoryCondition === "string"
+          ? dynamicState.temporaryInfo.contextualData
+              .triggerCheckAchievedVictoryCondition
+          : null,
+      triggerCheckEvidenceJson: this.safeStringify(
+        dynamicState.temporaryInfo.contextualData?.triggerCheckEvidence || []
+      ),
+      triggerCheckCurrentTurnActionLogsJson: this.safeStringify(
+        dynamicState.temporaryInfo.contextualData
+          ?.triggerCheckCurrentTurnActionLogs || []
+      ),
     };
 
     const { content: prompt, images } = composeTemplateWithImages(

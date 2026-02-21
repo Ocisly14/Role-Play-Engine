@@ -253,6 +253,8 @@ export const retrieveRelevantHistory = async (
       name: string;
       description: string;
     }>;
+    minScore?: number;
+    includeActionLogs?: boolean;
   } = {}
 ): Promise<RelevantHistoryItem[]> => {
   if (!db || !query.trim()) return [];
@@ -262,6 +264,8 @@ export const retrieveRelevantHistory = async (
     topKTurns = 3,
     alpha = 0.3,
     language = "zh",
+    minScore,
+    includeActionLogs = true,
   } = options;
 
   try {
@@ -296,12 +300,17 @@ export const retrieveRelevantHistory = async (
       rewrite.ragQuery
     );
 
-    if (fullTurnResults.length > 0) {
+    const filteredFullTurnResults =
+      typeof minScore === "number"
+        ? fullTurnResults.filter((item) => item.score >= minScore)
+        : fullTurnResults;
+
+    if (filteredFullTurnResults.length > 0) {
       console.log(
-        `🔍 [Memory Agent] Retrieved ${fullTurnResults.length} relevant turns via rewritten query + chunk RAG ` +
-          `(query="${query}" -> ragQuery="${rewrite.ragQuery}")`
+        `🔍 [Memory Agent] Retrieved ${filteredFullTurnResults.length} relevant turns via rewritten query + chunk RAG ` +
+          `(query="${query}" -> ragQuery="${rewrite.ragQuery}"${typeof minScore === "number" ? `, minScore=${minScore}` : ""})`
       );
-      return fullTurnResults;
+      return filteredFullTurnResults;
     }
 
     // Fallback: legacy embedding store (for older sessions without chunk data)
@@ -316,23 +325,31 @@ export const retrieveRelevantHistory = async (
       locationBoostFactor: options.locationBoostFactor,
     });
 
-    if (searchResult.items.length > 0) {
-      const actionLogCount = searchResult.items.filter(
+    const legacyItems = (
+      searchResult.items as LegacyRelevantHistoryItem[] as RelevantHistoryItem[]
+    ).filter(
+      (item) =>
+        (includeActionLogs || item.type === "turn") &&
+        (typeof minScore === "number" ? item.score >= minScore : true)
+    );
+
+    if (legacyItems.length > 0) {
+      const actionLogCount = legacyItems.filter(
         (i) => i.type === "action_log"
       ).length;
-      const turnCount = searchResult.items.filter(
+      const turnCount = legacyItems.filter(
         (i) => i.type === "turn"
       ).length;
       const modeInfo = options.targetCharacters?.length
         ? `per-character mode (${options.targetCharacters.length} chars)`
         : "global mode";
       console.log(
-        `🔍 [Memory Agent] Retrieved ${searchResult.items.length} relevant history items via Legacy Hybrid RAG ` +
-          `(${actionLogCount} action logs, ${turnCount} turns, α=${alpha}, ${modeInfo}, ragQuery="${rewrite.ragQuery}")`
+        `🔍 [Memory Agent] Retrieved ${legacyItems.length} relevant history items via Legacy Hybrid RAG ` +
+          `(${actionLogCount} action logs, ${turnCount} turns, α=${alpha}, ${modeInfo}, ragQuery="${rewrite.ragQuery}"${typeof minScore === "number" ? `, minScore=${minScore}` : ""})`
       );
     }
 
-    return searchResult.items as LegacyRelevantHistoryItem[] as RelevantHistoryItem[];
+    return legacyItems;
   } catch (error) {
     console.warn("[Memory Agent] Failed to retrieve relevant history:", error);
     return [];
@@ -427,28 +444,55 @@ export const enrichMemoryContext = async (
       .filter((scene) => scene.name && scene.description)
       .slice(0, 50);
 
-    const rawRelevantHistory = await retrieveRelevantHistory(
-      db,
-      gameState.sessionId,
-      characterInput,
-      {
-        topKActionLogs: 15, // Advisory max (3 chars × 5 per char)
-        topKTurns: 3, // Global turns (unchanged)
-        alpha, // Dynamic: 10% BM25 (中文) or 30% BM25 (英文)
-        // NEW: Per-character options
-        targetCharacters:
-          uniqueCharacters.length > 0 ? uniqueCharacters : undefined,
-        topKPerCharacter: 5, // Top 5 per character
-        currentLocation: currentLocation || undefined,
-        locationBoostFactor: 1.2, // 20% boost for matching location
-        language: effectiveLanguage,
-        sceneName: gameState.currentScenario?.name || undefined,
-        sceneLocation: currentLocation || undefined,
-        npcNames,
-        recentTurns: recentTurnsForRewrite,
-        allScenes,
-      }
-    );
+    const preloadedRelevantHistory =
+      (withRules.temporaryInfo.contextualData?.relevantHistory as RelevantHistoryItem[]) || [];
+    const preloadedRelevantHistoryQuery =
+      typeof withRules.temporaryInfo.contextualData?.relevantHistoryQuery ===
+      "string"
+        ? withRules.temporaryInfo.contextualData.relevantHistoryQuery.trim()
+        : "";
+    const preloadedIncludesActionLogs =
+      withRules.temporaryInfo.contextualData?.relevantHistoryIncludesActionLogs ===
+      true;
+    const currentInput = characterInput.trim();
+    const canReusePreloaded =
+      preloadedRelevantHistory.length > 0 &&
+      preloadedRelevantHistoryQuery.length > 0 &&
+      preloadedRelevantHistoryQuery === currentInput &&
+      preloadedIncludesActionLogs;
+
+    const rawRelevantHistory =
+      canReusePreloaded
+        ? preloadedRelevantHistory
+        : await retrieveRelevantHistory(db, gameState.sessionId, characterInput, {
+            topKActionLogs: 15, // Keeper path keeps action-log recall enabled
+            topKTurns: 3, // Global turns (unchanged)
+            alpha, // Dynamic: 10% BM25 (中文) or 30% BM25 (英文)
+            // NEW: Per-character options
+            targetCharacters:
+              uniqueCharacters.length > 0 ? uniqueCharacters : undefined,
+            topKPerCharacter: 5, // Top 5 per character
+            currentLocation: currentLocation || undefined,
+            locationBoostFactor: 1.2, // 20% boost for matching location
+            language: effectiveLanguage,
+            sceneName: gameState.currentScenario?.name || undefined,
+            sceneLocation: currentLocation || undefined,
+            npcNames,
+            recentTurns: recentTurnsForRewrite,
+            allScenes,
+            minScore: 0.7,
+            includeActionLogs: true,
+          });
+
+    if (canReusePreloaded) {
+      console.log(
+        `🧠 [Memory Agent] Reusing ${preloadedRelevantHistory.length} preloaded relevantHistory from orchestrator (same input query)`
+      );
+    } else if (preloadedRelevantHistory.length > 0) {
+      console.log(
+        "[Memory Agent] Ignored preloaded relevantHistory due to query mismatch or missing action-log coverage; refreshed retrieval"
+      );
+    }
 
     // Deduplicate turns: Remove RAG-retrieved turns that are already in conversationHistory
     const conversationTurnNumbers = new Set(
@@ -510,6 +554,7 @@ export const enrichMemoryContext = async (
         ...withRules.temporaryInfo.contextualData,
         conversationHistory,
         relevantHistory, // Add RAG-retrieved relevant history
+        relevantHistoryIncludesActionLogs: true,
       },
     },
   };

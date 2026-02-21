@@ -288,6 +288,9 @@ export const buildDynamicGraph = (
       dgsm.setContextualData("combatEndReason", "");
       dgsm.setContextualData("wasDefenseTurn", false);
       dgsm.setContextualData("justEnteredCombat", false);
+      dgsm.setContextualData("relevantHistory", []);
+      dgsm.setContextualData("relevantHistoryThreshold", null);
+      dgsm.setContextualData("relevantHistoryQuery", null);
       console.log("   ✓ Cleared per-turn combat contextual data");
 
       // Update timestamp and increment turn counter (only for real input)
@@ -1311,11 +1314,14 @@ export const buildDynamicGraph = (
 
     if (triggerResult.victoryAchieved) {
       console.log(`\n🏆 [Victory] 调查员达成了胜利条件！`);
+      const victoryReason = triggerResult.achievedVictoryCondition
+        ? `调查员成功阻止了灾难，达成胜利条件：${triggerResult.achievedVictoryCondition}`
+        : "调查员成功阻止了灾难，完成了胜利条件。";
       dgsm.setGameEnding(
         buildGameEndingInfo(
           dgsm.getState(),
           "victory",
-          "调查员成功阻止了灾难，完成了胜利条件。"
+          victoryReason
         )
       );
       return { ...state, dynamicGameState: dgsm.getState() };
@@ -1646,10 +1652,24 @@ export const buildDynamicGraph = (
   });
 
   graph.addNode("ragRecorder", async (state: DynamicGraphState) => {
-    if (!state.turnId) return state;
+    const dgsm = new DynamicGameStateManager(state.dynamicGameState);
+    const clearTriggerCheckContext = () => {
+      dgsm.setContextualData("triggerCheckEvidence", []);
+      dgsm.setContextualData("triggerCheckCurrentTurnActionLogs", []);
+      dgsm.setContextualData("triggerCheckAchievedVictoryCondition", null);
+      dgsm.setContextualData("triggerCheckResult", null);
+    };
+
+    if (!state.turnId) {
+      clearTriggerCheckContext();
+      return { ...state, dynamicGameState: dgsm.getState() };
+    }
 
     const turn = turnManager.getTurn(state.turnId);
-    if (!turn) return state;
+    if (!turn) {
+      clearTriggerCheckContext();
+      return { ...state, dynamicGameState: dgsm.getState() };
+    }
 
     void turnRagAgent
       .recordTurn({
@@ -1661,11 +1681,12 @@ export const buildDynamicGraph = (
         console.warn("[Dynamic RAG Recorder] Failed to record turn RAG:", {
           turnId: state.turnId,
           sessionId: state.dynamicGameState?.sessionId,
-          error,
+            error,
         });
       });
 
-    return state;
+    clearTriggerCheckContext();
+    return { ...state, dynamicGameState: dgsm.getState() };
   });
 
   graph.addEdge("epilogueKeeper" as any, "ragRecorder" as any);
@@ -2026,11 +2047,14 @@ export const buildDynamicListenerGraph = (
 
     if (triggerResult.victoryAchieved) {
       console.log(`\n🏆 [Victory] 调查员达成了胜利条件！`);
+      const victoryReason = triggerResult.achievedVictoryCondition
+        ? `调查员成功阻止了灾难，达成胜利条件：${triggerResult.achievedVictoryCondition}`
+        : "调查员成功阻止了灾难，完成了胜利条件。";
       dgsm.setGameEnding(
         buildGameEndingInfo(
           dgsm.getState(),
           "victory",
-          "调查员成功阻止了灾难，完成了胜利条件。"
+          victoryReason
         )
       );
       return { ...state, dynamicGameState: dgsm.getState() };
@@ -2323,10 +2347,24 @@ export const buildDynamicListenerGraph = (
   });
 
   listenerGraph.addNode("ragRecorder", async (state: DynamicGraphState) => {
-    if (!state.turnId) return state;
+    const dgsm = new DynamicGameStateManager(state.dynamicGameState);
+    const clearTriggerCheckContext = () => {
+      dgsm.setContextualData("triggerCheckEvidence", []);
+      dgsm.setContextualData("triggerCheckCurrentTurnActionLogs", []);
+      dgsm.setContextualData("triggerCheckAchievedVictoryCondition", null);
+      dgsm.setContextualData("triggerCheckResult", null);
+    };
+
+    if (!state.turnId) {
+      clearTriggerCheckContext();
+      return { ...state, dynamicGameState: dgsm.getState() };
+    }
 
     const turn = turnManager.getTurn(state.turnId);
-    if (!turn) return state;
+    if (!turn) {
+      clearTriggerCheckContext();
+      return { ...state, dynamicGameState: dgsm.getState() };
+    }
 
     void turnRagAgent
       .recordTurn({
@@ -2345,7 +2383,8 @@ export const buildDynamicListenerGraph = (
         );
       });
 
-    return state;
+    clearTriggerCheckContext();
+    return { ...state, dynamicGameState: dgsm.getState() };
   });
 
   listenerGraph.addEdge("epilogueKeeper" as any, "ragRecorder" as any);

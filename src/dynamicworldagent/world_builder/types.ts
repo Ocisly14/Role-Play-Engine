@@ -368,6 +368,10 @@ export interface ModuleDigest {
     eventReasons?: string[];
     keeperNotes?: string;
   };
+  victoryTrigger?: {
+    conditions: string[]; // Independent observable win checks; satisfying any one condition means victory
+    conditionReasons: string[]; // Why each single condition alone is sufficient to confirm victory
+  };
 }
 
 /**

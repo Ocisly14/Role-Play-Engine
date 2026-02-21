@@ -2,61 +2,66 @@
  * Director auxiliary templates.
  */
 export function getGlobalTriggerEventCheckTemplate(): string {
-  return `# Director Agent - Global Trigger Event Check & Game End Analysis
+  return `# Director Agent - Global Trigger & Victory Trigger Check
 
-Analyze recent game events to determine if global trigger events have been fulfilled, and whether this triggers game end.
+Analyze recent game events to determine:
+1. Whether global trigger events have been fulfilled (doom escalation)
+2. Whether investigators have achieved at least one victory condition (success)
 
 ## 🎯 Global Trigger
 \`\`\`json
 {{globalTriggerJson}}
 \`\`\`
 
-## 🏁 End State Definition
-The following defines the inevitable outcome if no intervention occurs:
+## 🏆 Victory Trigger
+{{#if victoryTriggerJson}}
+\`\`\`json
+{{victoryTriggerJson}}
+\`\`\`
+{{else}}
+*No victory trigger defined for this module.*
+{{/if}}
 
+## 🏁 End State Definition
 \`\`\`json
 {{endStateJson}}
 \`\`\`
 
-**Note**: The endState contains the pointOfNoReturn trigger. If the global trigger events align with or directly cause the point of no return to be reached, this will cause game end.
-
-## 📋 Recent ActionLog Entries (Last 1 Hour of Game Time)
-
-The following are actionLog entries from the **last 1 hour of in-game time** (capped at 10 entries per character):
+## 📚 Retrieved Trigger Evidence (RAG)
 
 \`\`\`json
-{{recentActionLogsJson}}
+{{triggerEvidenceJson}}
 \`\`\`
 
-**Note**: These entries cover the most recent 1 hour of in-game time, with at most 10 entries per player or NPC, representing the most recent character activities.
+## 🕒 Current Turn New ActionLog Entries
+
+\`\`\`json
+{{currentTurnActionLogsJson}}
+\`\`\`
 
 ## 🎬 Task
 
-### Step 1: Check if Global Trigger Events Have Occurred
+### Step 1: Check Global Trigger Events
 
-Determine if the events described in the global trigger have occurred based on these newly added actionLog entries.
+Determine if the events described in the global trigger have occurred.
 
 **Evaluation:**
-- Check if the new actionLog entries provide clear evidence that the trigger events have happened
+- Check if the retrieved trigger evidence and current-turn action logs provide clear evidence that the trigger events have happened
 - Consider logical implications (e.g., if someone left for a destination, they may have arrived)
-- Be strict - only return true if there's solid evidence in the recent activities
+- Be strict — only return true if there is solid evidence
 
-### Step 2: Determine if This Causes Game End
+### Step 2: Determine if Global Trigger Causes Game End
 
-If the global trigger has been triggered, determine if this causes the game to end by checking:
+If the global trigger has been triggered, check if it causes game end:
+- Does it directly fulfill or align with the endState's pointOfNoReturn trigger?
+- Only trigger events that directly fulfill the pointOfNoReturn cause game end
 
-1. **Does the global trigger event align with the pointOfNoReturn trigger?**
-   - Compare the global trigger events with the endState's pointOfNoReturn trigger
-   - If the events directly fulfill or align with the point of no return condition, this causes game end
+### Step 3: Check Victory Conditions
 
-2. **Is the pointOfNoReturn condition now met?**
-   - For time-based triggers: Has the time restriction been reached?
-   - For condition-based triggers: Have the required conditions been fulfilled?
-
-**Important**: 
-- Not all global trigger events cause game end
-- Only trigger events that directly relate to or fulfill the pointOfNoReturn cause game end
-- If the global trigger is just a story progression event (e.g., "NPCs gather", "Evidence revealed") but doesn't fulfill the point of no return, it does NOT cause game end
+If a victory trigger is defined, determine if **ANY ONE** condition has been fulfilled:
+- Check each condition individually against the retrieved trigger evidence and current-turn action logs
+- If at least one condition has solid direct evidence, set victoryAchieved = true
+- Be strict — only count conditions with solid, direct evidence
 
 ## 📋 Output Format
 
@@ -65,13 +70,17 @@ Return ONLY valid JSON:
 \`\`\`json
 {
   "triggered": true,
-  "causesGameEnd": false
+  "causesGameEnd": false,
+  "victoryAchieved": false,
+  "achievedVictoryCondition": null
 }
 \`\`\`
 
 **Fields:**
 - **triggered**: boolean - Whether the global trigger events have occurred
-- **causesGameEnd**: boolean - Whether this trigger causes the game to end (only true if triggered AND aligns with pointOfNoReturn)
+- **causesGameEnd**: boolean - Whether this causes game end (only true if triggered AND aligns with pointOfNoReturn)
+- **victoryAchieved**: boolean - Whether at least one victory condition has been fulfilled (false if no victory trigger defined)
+- **achievedVictoryCondition**: string | null - The exact victory condition text that was fulfilled (must be one item from \`victoryTrigger.conditions\`). Use null if \`victoryAchieved\` is false.
 
 *Analyze:*`;
 }

@@ -125,6 +125,7 @@ export class ModuleDigestAgent {
       introduction: requireString(parsed.introduction, "introduction"),
       macroMapPath: macroMapPath || undefined,
       globalTrigger: parsed.globalTrigger || undefined,
+      victoryTrigger: parsed.victoryTrigger || undefined,
     };
   }
 }

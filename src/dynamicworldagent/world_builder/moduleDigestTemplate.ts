@@ -97,6 +97,34 @@ If endState's pointOfNoReturn is "The ritual completes at midnight on Day 3", yo
 
 **Note**: This trigger represents an intermediate step (preparation phase) that leads toward but is distinct from the final ritual completion (pointOfNoReturn).
 
+## 🏆 Victory Trigger
+
+**You MUST generate a victory trigger based on the endState's victoryConditions. This trigger defines the final observable events that confirm investigators have successfully prevented the catastrophe.**
+
+Each entry in \`conditions\` must be a directly observable in-game event (detectable from actionLog entries) that corresponds to one of the endState's \`victoryConditions\` being fully achieved. Phrased as completed facts: "The ritual altar has been destroyed", "The cult leader has been arrested with evidence".
+
+Victory trigger rules:
+- Each \`conditions\` item MUST be an independent check (standalone and directly verifiable from game evidence).
+- Conditions should represent alternative successful outcomes, not a sequential checklist.
+- **Any ONE condition being fulfilled is enough to count as victory**.
+- \`conditionReasons[i]\` must explain why that single condition alone is sufficient to confirm successful prevention of catastrophe.
+
+**Example:**
+\`\`\`json
+"victoryTrigger": {
+  "conditions": [
+    "The ritual altar has been destroyed before the ceremony begins",
+    "The cult leader has been exposed to authorities with sufficient evidence",
+    "The Tome of the Verdant Hunger has been burned"
+  ],
+  "conditionReasons": [
+    "Destroying the altar severs the entity's anchor point, making the ritual impossible",
+    "Exposing the cult leader collapses the organisation's chain of command before the pointOfNoReturn",
+    "Burning the tome permanently breaks the pact and prevents any future attempt"
+  ]
+}
+\`\`\`
+
 ## Output Format
 Return ONLY valid JSON in this exact structure:
 
@@ -111,6 +139,10 @@ Return ONLY valid JSON in this exact structure:
     "timeReason": "Why this specific time point matters",
     "events": ["Event description 1", "Event description 2"],
     "eventReasons": ["Why event 1 matters", "Why event 2 matters"]
+  },
+  "victoryTrigger": {
+    "conditions": ["Completed victory condition 1", "Completed victory condition 2"],
+    "conditionReasons": ["Why condition 1 confirms victory", "Why condition 2 confirms victory"]
   }
 }
 \`\`\`

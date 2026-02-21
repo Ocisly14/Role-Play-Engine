@@ -323,6 +323,11 @@ The following defines what happened when the point of no return was reached:
 {{endStateJson}}
 \`\`\`
 
+## 🧾 Game Ending Record
+\`\`\`json
+{{gameEndingJson}}
+\`\`\`
+
 ## 🎯 Point of No Return Trigger
 {{pointOfNoReturnTrigger}}
 
@@ -332,8 +337,19 @@ The following defines what happened when the point of no return was reached:
 ## 👤 Investigator's Final State
 {{playerCharacterJson}}
 
-## 📜 Recent Game History (Last 5 Turns)
+## 📜 Recent Game History (Last 1 Turn)
 {{gameHistoryJson}}
+
+{{#if achievedVictoryCondition}}
+## 🏆 Achieved Victory Condition
+{{achievedVictoryCondition}}
+{{/if}}
+
+## 📚 Trigger Check Evidence (RAG Chunks Used This Turn)
+{{triggerCheckEvidenceJson}}
+
+## 🕒 Trigger Check Latest ActionLog (This Turn)
+{{triggerCheckCurrentTurnActionLogsJson}}
 
 ## 🎬 Task
 
@@ -356,6 +372,11 @@ Generate an epilogue narrative that:
    - Emphasize the cosmic horror and inevitability
    - Show that some things are beyond human control
    - Reflect on the cost of knowledge and investigation
+
+5. **Victory-specific requirement**
+   - If \`gameEndingJson.endingType\` is \`"victory"\`, you MUST explicitly state that the investigator won.
+   - If \`achievedVictoryCondition\` is provided, you MUST explicitly reference that condition as the direct basis of victory.
+   - Integrate the Trigger Check evidence and latest action logs naturally (do not quote raw JSON verbatim).
 
 ### Style Guidelines
 - Write from a **third-person omniscient perspective** (unlike normal narrative which is second-person)
