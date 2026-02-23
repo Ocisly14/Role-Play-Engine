@@ -146,6 +146,247 @@ export class ActionAgent {
     }
   }
 
+  private hasRestIntent(text: string): boolean {
+    const normalized = text.trim().toLowerCase();
+    if (!normalized) return false;
+    return /(休息|睡觉|睡覺|小睡|打盹|午睡|补觉|補覺|过夜|過夜|休整|歇会|歇會|眯一会|眯一會|\brest\b|\bsleep\b|\bnap\b|\bpower nap\b|\btake a break\b|\bturn in\b|\bovernight\b)/i.test(
+      normalized
+    );
+  }
+
+  private normalizeDurationText(text: string): string {
+    if (!text) return "";
+    return text
+      .replace(/[０-９]/g, (ch) => String.fromCharCode(ch.charCodeAt(0) - 65248))
+      .replace(/：/g, ":")
+      .replace(/，/g, ",")
+      .replace(/。/g, ".")
+      .replace(/\s+/g, " ")
+      .trim()
+      .toLowerCase();
+  }
+
+  private parseChineseNumber(token: string): number | null {
+    const normalized = token
+      .trim()
+      .replace(/兩/g, "两")
+      .replace(/〇/g, "零")
+      .replace(/[个個余餘多來来约約左右]/g, "");
+    if (!normalized) return null;
+    if (normalized === "半") return 0.5;
+
+    const digitMap: Record<string, number> = {
+      零: 0,
+      一: 1,
+      二: 2,
+      两: 2,
+      三: 3,
+      四: 4,
+      五: 5,
+      六: 6,
+      七: 7,
+      八: 8,
+      九: 9,
+    };
+    const unitMap: Record<string, number> = {
+      十: 10,
+      百: 100,
+    };
+
+    if (normalized.includes("点")) {
+      const [intPartRaw, decimalPartRaw] = normalized.split("点");
+      const intPart = this.parseChineseNumber(intPartRaw || "零");
+      if (intPart === null) return null;
+      const decimalDigits = [...(decimalPartRaw || "")]
+        .map((char) => digitMap[char])
+        .filter((digit) => digit !== undefined);
+      if (decimalDigits.length === 0) return null;
+      const decimalValue = Number(`0.${decimalDigits.join("")}`);
+      return intPart + decimalValue;
+    }
+
+    const allDigits = [...normalized].every((char) => digitMap[char] !== undefined);
+    if (allDigits) {
+      const joined = [...normalized].map((char) => digitMap[char]).join("");
+      const value = Number(joined);
+      return Number.isFinite(value) ? value : null;
+    }
+
+    let result = 0;
+    let current = 0;
+    let seen = false;
+    for (const char of normalized) {
+      if (digitMap[char] !== undefined) {
+        current = digitMap[char];
+        seen = true;
+        continue;
+      }
+      if (unitMap[char] !== undefined) {
+        const unit = unitMap[char];
+        result += (current || 1) * unit;
+        current = 0;
+        seen = true;
+        continue;
+      }
+      return null;
+    }
+
+    if (!seen) return null;
+    return result + current;
+  }
+
+  private parseNumericToken(token: string): number | null {
+    const normalized = token.trim().replace(/[个個余餘多來来约約左右]/g, "");
+    if (!normalized) return null;
+    if (normalized === "半") return 0.5;
+    const asNumber = Number(normalized);
+    if (Number.isFinite(asNumber)) {
+      return asNumber;
+    }
+    return this.parseChineseNumber(normalized);
+  }
+
+  private parseDurationMinutes(text: string): number | null {
+    const normalized = this.normalizeDurationText(text);
+    if (!normalized) return null;
+
+    const hourUnits = "(?:个?\\s*小时|個?\\s*小時|小时|小時|hours?|hrs?|hr|h)";
+    const minuteUnits = "(?:分钟|分鐘|minutes?|mins?|min|m)";
+    const numberToken = "(?:\\d+(?:\\.\\d+)?|[零〇一二两兩三四五六七八九十百半点]+)";
+
+    let working = normalized;
+    let totalMinutes = 0;
+    let matched = false;
+
+    const addMinutes = (value: number | null, multiplier: number): void => {
+      if (value !== null && Number.isFinite(value) && value > 0) {
+        totalMinutes += value * multiplier;
+        matched = true;
+      }
+    };
+
+    const halfAfterHours = new RegExp(`(${numberToken})\\s*${hourUnits}\\s*半`, "gi");
+    working = working.replace(halfAfterHours, (_full, token: string) => {
+      const hours = this.parseNumericToken(token);
+      addMinutes(hours, 60);
+      totalMinutes += 30;
+      matched = true;
+      return " ";
+    });
+
+    const halfBeforeHours = new RegExp(`(${numberToken})\\s*(?:个?\\s*)?半\\s*${hourUnits}`, "gi");
+    working = working.replace(halfBeforeHours, (_full, token: string) => {
+      const hours = this.parseNumericToken(token);
+      addMinutes(hours, 60);
+      totalMinutes += 30;
+      matched = true;
+      return " ";
+    });
+
+    const plainHalfHour = new RegExp(`(^|[^\\w])半\\s*${hourUnits}`, "gi");
+    working = working.replace(plainHalfHour, (_full, prefix: string) => {
+      totalMinutes += 30;
+      matched = true;
+      return `${prefix} `;
+    });
+
+    const hourRegex = new RegExp(`(${numberToken})\\s*${hourUnits}`, "gi");
+    let hourMatch: RegExpExecArray | null;
+    while ((hourMatch = hourRegex.exec(working)) !== null) {
+      const hours = this.parseNumericToken(hourMatch[1]);
+      addMinutes(hours, 60);
+    }
+
+    const minuteRegex = new RegExp(`(${numberToken})\\s*${minuteUnits}`, "gi");
+    let minuteMatch: RegExpExecArray | null;
+    while ((minuteMatch = minuteRegex.exec(working)) !== null) {
+      const minutes = this.parseNumericToken(minuteMatch[1]);
+      addMinutes(minutes, 1);
+    }
+
+    if (matched) {
+      return Math.max(1, Math.min(1440, Math.round(totalMinutes)));
+    }
+
+    if (
+      /(overnight|all night|through the night|sleep until morning|过夜|整晚|一晚|一宿|睡到天亮|睡到早上)/i.test(
+        normalized
+      )
+    ) {
+      return 480;
+    }
+
+    if (/(half day|半天)/i.test(normalized)) {
+      return 720;
+    }
+
+    if (/(all day|full day|整天|全天|一整天|一天)/i.test(normalized)) {
+      return 720;
+    }
+
+    if (
+      /(power nap|nap|short while|for a while|a bit|小睡|午睡|眯一会|眯一會|一会儿|一會兒|一会|一會|片刻|歇会|歇會)/i.test(
+        normalized
+      )
+    ) {
+      return 30;
+    }
+
+    const compactHourMinuteMatch = normalized.match(
+      /(\d{1,2})\s*:\s*(\d{1,2})/
+    );
+    if (compactHourMinuteMatch) {
+      const hours = Number(compactHourMinuteMatch[1]);
+      const minutes = Number(compactHourMinuteMatch[2]);
+      if (
+        Number.isFinite(hours) &&
+        Number.isFinite(minutes) &&
+        hours >= 0 &&
+        minutes >= 0
+      ) {
+        return Math.max(1, Math.min(1440, Math.round(hours * 60 + minutes)));
+      }
+    }
+
+    return null;
+  }
+
+  private resolveRestMinutes(
+    originalUserInput: string | null | undefined,
+    actionAnalysis: ActionAnalysis | null | undefined,
+    parsed: Record<string, unknown>
+  ): number | null {
+    const candidates = [
+      originalUserInput,
+      actionAnalysis?.action,
+      actionAnalysis?.target?.intent,
+    ].filter((value): value is string => typeof value === "string" && value.trim().length > 0);
+
+    const hasRestIntent = candidates.some((value) => this.hasRestIntent(value));
+    if (!hasRestIntent) return null;
+
+    for (const candidate of candidates) {
+      const parsedMinutes = this.parseDurationMinutes(candidate);
+      if (parsedMinutes !== null) {
+        return parsedMinutes;
+      }
+    }
+
+    const modelMinutes = parsed.timeElapsedMinutes;
+    if (typeof modelMinutes === "number" && Number.isFinite(modelMinutes) && modelMinutes > 0) {
+      return Math.max(1, Math.min(1440, Math.round(modelMinutes)));
+    }
+
+    return null;
+  }
+
+  private getRestTimeConsumption(restMinutes: number): ActionResult["timeConsumption"] {
+    if (restMinutes >= 480) return "very long";
+    if (restMinutes >= 240) return "long";
+    if (restMinutes >= 60) return "medium";
+    return "short";
+  }
+
   /**
    * Apply relationship changes already embedded in the main action parsed response.
    * Replaces the old separate LLM call for relationship updates.
@@ -378,7 +619,8 @@ export class ActionAgent {
       parsed,
       diceUsed,
       { isNPC, npcResponse, targetCharacter },
-      gameStateManager
+      gameStateManager,
+      originalUserInput
     );
   }
 
@@ -767,9 +1009,31 @@ export class ActionAgent {
       npcResponse?: NPCResponseAnalysis;
       targetCharacter?: DynamicCharacterProfile | null;
     },
-    gameStateManager: DynamicGameStateManager
+    gameStateManager: DynamicGameStateManager,
+    originalUserInput?: string | null
   ): Promise<DynamicGameState> {
     const { isNPC, npcResponse, targetCharacter } = options;
+    const actionAnalysis = dynamicState.temporaryInfo.currentActionAnalysis;
+    const parsedRecord =
+      parsed && typeof parsed === "object"
+        ? (parsed as Record<string, unknown>)
+        : {};
+    const detectedRestMinutes =
+      !isNPC
+        ? this.resolveRestMinutes(originalUserInput, actionAnalysis, parsedRecord)
+        : null;
+    let restSummary: string | null = null;
+    let restType: "none" | "short" | "long" | null = null;
+    let restHpRestored = 0;
+    let restSanRestored = 0;
+
+    if (!isNPC && detectedRestMinutes !== null) {
+      const restResult = gameStateManager.applyRest(detectedRestMinutes);
+      restSummary = restResult.summary;
+      restType = restResult.restType;
+      restHpRestored = restResult.hpRestored;
+      restSanRestored = restResult.sanRestored;
+    }
 
     // Apply the state update from LLM result
     if (parsed.stateUpdate) {
@@ -920,10 +1184,15 @@ export class ActionAgent {
     const actionResult: ActionResult = {
       timestamp: new Date(),
       gameTime: dynamicState.timeOfDay || "Unknown time",
-      timeElapsedMinutes: parsed.timeElapsedMinutes || 0,
+      timeElapsedMinutes:
+        detectedRestMinutes ??
+        (typeof parsed.timeElapsedMinutes === "number"
+          ? parsed.timeElapsedMinutes
+          : 0),
       location: dynamicState.currentScenario?.location || "Unknown location",
       character: character.name,
       result:
+        restSummary ||
         parsed.summary ||
         (Array.isArray(parsed.actionLog) &&
         typeof parsed.actionLog[0]?.summary === "string"
@@ -932,7 +1201,10 @@ export class ActionAgent {
         (isNPC && npcResponse?.responseDescription) ||
         "performed an action",
       diceRolls: toolLogs.map((log) => log), // toolLogs already contain "expression -> result" format
-      timeConsumption: parsed.timeConsumption || "instant", // Default to instant if not specified
+      timeConsumption:
+        detectedRestMinutes !== null
+          ? this.getRestTimeConsumption(detectedRestMinutes)
+          : parsed.timeConsumption || "instant", // Default to instant if not specified
       scenarioChanges: scenarioChanges.length > 0 ? scenarioChanges : undefined,
     };
 
@@ -946,6 +1218,15 @@ export class ActionAgent {
       isNPC,
       toolLogs
     );
+    if (detectedRestMinutes !== null) {
+      detailedResult.rest = {
+        minutes: detectedRestMinutes,
+        restType,
+        hpRestored: restHpRestored,
+        sanRestored: restSanRestored,
+        summary: restSummary,
+      };
+    }
     gameStateManager.addActionResultDetail(detailedResult);
 
     // Log detailed action result
@@ -1002,7 +1283,9 @@ export class ActionAgent {
         const oldDay = dynamicState.gameDay;
         const oldTime = dynamicState.timeOfDay;
         gameStateManager.updateGameTime(actionResult.timeElapsedMinutes);
-        gameStateManager.addFatigueMinutes(actionResult.timeElapsedMinutes);
+        if (detectedRestMinutes === null) {
+          gameStateManager.addFatigueMinutes(actionResult.timeElapsedMinutes);
+        }
         const updatedState = gameStateManager.getState();
         const newDay = updatedState.gameDay;
         const newTime = updatedState.timeOfDay;

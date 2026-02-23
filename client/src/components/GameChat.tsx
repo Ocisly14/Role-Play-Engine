@@ -527,58 +527,83 @@ export function GameChat({
   );
 
   const handleRest = useCallback(
-    async (restMinutes: number) => {
+    async (restHours: number) => {
       if (isResting || isSending || isGameEnded) return;
+      const hours = Math.max(1, Math.min(24, Math.round(restHours)));
+      const restMessageText =
+        language === "en" ? `Rest for ${hours} hours` : `休息${hours}小时`;
+
       setIsResting(true);
+      setIsSending(true);
+      setIsSkillPickerOpen(false);
+      const nextTurnNumber =
+        messages.length > 0
+          ? Math.max(...messages.map((m) => m.turnNumber)) + 1
+          : 1;
 
       try {
-        const response = await authFetch(`${apiBaseUrl}/rest`, {
+        const userMessage: Message = {
+          role: "character" as const,
+          content: restMessageText,
+          timestamp: new Date().toISOString(),
+          turnNumber: nextTurnNumber,
+          gameDay: currentGameState?.gameDay ?? null,
+          gameTime: currentGameState?.timeOfDay ?? null,
+        };
+        setMessages((prev) => [...prev, userMessage]);
+
+        const response = await authFetch(`${apiBaseUrl}/turns`, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ restMinutes, language }),
+          body: JSON.stringify({
+            message: restMessageText,
+            selectedSkill: null,
+            skillSelectionMode: "manual",
+            language,
+          }),
         });
         const data = await response.json();
 
         if (!data.success) {
-          throw new Error(data.error || "Rest failed");
+          throw new Error(data.error || "Failed to send rest action");
         }
 
-        // Update game state with new time and staminaState immediately
-        setCurrentGameState((prev) => ({
-          ...prev,
-          gameDay: data.gameDay ?? prev?.gameDay,
-          timeOfDay: data.gameTime ?? prev?.timeOfDay,
-          staminaState: data.staminaState ?? prev?.staminaState,
-        }));
-
-        // Add rest result as a placeholder message (with turnId so keeper narrative can update it)
-        const nextTurnNumber =
-          messages.length > 0
-            ? Math.max(...messages.map((m) => m.turnNumber)) + 1
-            : 1;
-        const restMessage: Message = {
-          role: "keeper" as const,
-          content: data.summary ?? "",
-          timestamp: new Date().toISOString(),
-          turnNumber: nextTurnNumber,
-          turnId: data.turnId,
-          gameDay: data.gameDay ?? null,
-          gameTime: data.gameTime ?? null,
-        };
-        setMessages((prev) => [...prev, restMessage]);
-
-        // Block input while Director + Keeper process the rest narrative
-        setIsSending(true);
-        // Poll for the actual Keeper narrative (will update the placeholder message)
+        setSelectedSkill("");
         startPolling(data.turnId);
       } catch (err) {
         console.error("[handleRest] Error:", err);
         setIsSending(false);
+        setMessages((prev) =>
+          prev.filter(
+            (msg) =>
+              !(
+                msg.role === "character" &&
+                msg.content === restMessageText &&
+                msg.turnNumber === nextTurnNumber
+              )
+          )
+        );
+        alert(
+          `Failed to submit rest action: ${err instanceof Error ? err.message : "Unknown error"}`
+        );
       } finally {
         setIsResting(false);
       }
     },
-    [isResting, isSending, isGameEnded, apiBaseUrl, language, messages, setMessages, setIsSending, startPolling]
+    [
+      isResting,
+      isSending,
+      isGameEnded,
+      apiBaseUrl,
+      language,
+      messages,
+      currentGameState,
+      setMessages,
+      setIsSending,
+      setSelectedSkill,
+      startPolling,
+      setIsSkillPickerOpen,
+    ]
   );
 
   const openRestModal = useCallback(() => {
@@ -609,7 +634,7 @@ export function GameChat({
     }
 
     closeRestModal();
-    handleRest(selectedHours * 60);
+    handleRest(selectedHours);
   }, [restShowCustomInput, restCustomHours, restSelectedHours, closeRestModal, handleRest]);
 
   const isRestConfirmDisabled = restShowCustomInput
