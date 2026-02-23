@@ -13,7 +13,8 @@ export function buildActionSystemPrompt(
   selectedSkill?: string | null,
   skillSelectionMode?: "auto" | "manual",
   targetIntent?: string | null,
-  outputLanguage: "en" | "zh" = "zh"
+  outputLanguage: "en" | "zh" = "zh",
+  fatigueActive?: boolean
 ): string {
   // Check if there's a valid scene change request from orchestrator
   const hasValidSceneChangeRequest =
@@ -85,6 +86,17 @@ ${
 Player selected skill: ${selectedSkill}
 - If a skill check is required for this action, you MUST use this skill.
 - If no check is needed, keep diceUsed empty.
+
+`
+    : ""
+}${
+  !isNPC && fatigueActive
+    ? `⚠️ PLAYER FATIGUE STATUS:
+当前角色状态：疲惫。所有玩家技能判定难度提高一个等级。
+Current player status: Fatigued. Increase player skill check difficulty by one level.
+- regular → hard (skill ÷ 2)
+- hard → extreme (skill ÷ 5)
+- extreme → extreme (already at maximum difficulty, no further increase)
 
 `
     : ""
@@ -327,7 +339,7 @@ ${
     : ""
 }
   "timeElapsedMinutes": <estimate the time elapsed in minutes>,
-  "timeConsumption": "short", // "short", "medium", "long", "very long"
+  "timeConsumption": "short", // "instant" | "short" | "medium" | "long" | "very long"
   "entersCombat": false,            // true if sustained combat starts this turn
   "combatParticipantIds": [],       // NPC IDs actively fighting the player (only when entersCombat: true)
   "combatInitiatedBy": "player",   // "player" or "npc" (only when entersCombat: true)

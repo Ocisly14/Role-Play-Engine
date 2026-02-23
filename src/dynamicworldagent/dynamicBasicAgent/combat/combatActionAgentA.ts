@@ -197,7 +197,8 @@ export class CombatActionAgentA {
       selectedSkill,
       playerInput,
       combatState.round,
-      language
+      language,
+      dgsm.isFatigued()
     );
 
     const context = this.buildContext(dgsm, combatState.participantNpcIds);
@@ -232,7 +233,8 @@ export class CombatActionAgentA {
       selectedSkill,
       playerInput,
       combatState.round,
-      language
+      language,
+      dgsm.isFatigued()
     );
 
     const context = this.buildContext(dgsm, combatState.participantNpcIds);

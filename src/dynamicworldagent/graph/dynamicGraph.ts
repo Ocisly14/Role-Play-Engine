@@ -58,6 +58,7 @@ export interface DynamicGraphState {
   resumeFromInterrupt?: boolean; // True only when resuming a skill-selection interruption
   isSimulatedQuery?: boolean; // Track if input is simulated by Director Agent
   simulatedQueryCount?: number; // Safety counter for continuous loop (max 5)
+  isRestAction?: boolean; // True when this turn is a rest action (skips orchestrator/memory/action/character, goes director→keeper)
   language?: "en" | "zh"; // User-selected output language
   selectedSkill?: string | null; // Optional player-selected skill for this turn
   skillSelectionMode?: "auto" | "manual"; // How skill selection should behave for this turn
@@ -194,6 +195,10 @@ export const buildDynamicGraph = (
         value: (left: boolean | undefined, right?: boolean | undefined) =>
           right !== undefined ? right : left,
       },
+      isRestAction: {
+        value: (left: boolean | undefined, right?: boolean | undefined) =>
+          right !== undefined ? right : left,
+      },
       simulatedQueryCount: {
         value: (left: number | undefined, right?: number | undefined) =>
           right !== undefined ? right : left,
@@ -228,10 +233,18 @@ export const buildDynamicGraph = (
   // Entry node: routes based on input type and handles cleanup
   graph.addNode("entry", async (state: DynamicGraphState) => {
     const isSimulated = state.isSimulatedQuery ?? false;
+    const isRest = state.isRestAction ?? false;
 
     if (isSimulated) {
       console.log(
         "🔄 [Dynamic Entry] Simulated query detected - skipping orchestrator & memory"
+      );
+      return state;
+    }
+
+    if (isRest) {
+      console.log(
+        "😴 [Dynamic Entry] Rest action detected - preserving pre-populated state, routing to director"
       );
       return state;
     }
@@ -334,6 +347,15 @@ export const buildDynamicGraph = (
       return END;
     }
 
+    // Rest action: skip all agent processing, go straight to director for scene update
+    const isRest = state.isRestAction ?? false;
+    if (isRest) {
+      console.log(
+        "🔀 [Dynamic Entry Router] → director (rest action: skip orchestrator/memory/action/character)"
+      );
+      return "director";
+    }
+
     // Combat mode routing: go through memory first so conversationHistory is updated
     const gs = state.dynamicGameState;
     if (gs.isBattle) {
@@ -359,6 +381,7 @@ export const buildDynamicGraph = (
     orchestrator: "orchestrator" as any,
     memory: "memory" as any,
     combatActionA: "combatActionA" as any,
+    director: "director" as any,
     [END]: END,
   });
 

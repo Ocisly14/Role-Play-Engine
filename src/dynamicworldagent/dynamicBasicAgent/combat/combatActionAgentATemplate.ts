@@ -11,7 +11,8 @@ export function buildCombatActionASystemPrompt(
   selectedSkill: string | null,
   playerInput: string,
   combatRound: number,
-  outputLanguage: "en" | "zh" = "zh"
+  outputLanguage: "en" | "zh" = "zh",
+  fatigueActive?: boolean
 ): string {
   const targetLanguageLabel = outputLanguage === "en" ? "English" : "Chinese";
 
@@ -24,9 +25,13 @@ export function buildCombatActionASystemPrompt(
     ? `\n## Player-Selected Skill: ${selectedSkill}\nUse this skill for the player's primary action (attack roll or dodge/fight-back roll).\n`
     : "";
 
+  const fatigueSection = fatigueActive
+    ? `\n⚠️ PLAYER FATIGUE STATUS:\n当前角色状态：疲惫。所有玩家技能判定难度提高一个等级。\nCurrent player status: Fatigued. Increase player skill check difficulty by one level.\n- regular → hard (skill ÷ 2)\n- hard → extreme (skill ÷ 5)\n- extreme → extreme (already at maximum difficulty)\n`
+    : "";
+
   return `## Combat Action Agent - Round ${combatRound}
 
-${pendingActionsSection}${skillSection}
+${pendingActionsSection}${skillSection}${fatigueSection}
 ## Combat Round
 Round number: ${combatRound}
 Player input: ${playerInput}

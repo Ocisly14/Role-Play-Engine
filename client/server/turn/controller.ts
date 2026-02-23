@@ -3,6 +3,7 @@ import { HumanMessage } from "@langchain/core/messages";
 import type { Request, Response } from "express";
 import { TurnManager as DynamicTurnManager } from "../../../src/dynamicworldagent/dynamicBasicAgent/memory/turnManager.js";
 import type { DynamicGameState } from "../../../src/dynamicworldagent/state/index.js";
+import { DynamicGameStateManager } from "../../../src/dynamicworldagent/state/index.js";
 import {
   getCurrentUsageTotals,
   runWithTokenContext,
@@ -777,4 +778,269 @@ async function getOwnedCharacterIds(email: string): Promise<string[]> {
     select: { characterId: true },
   });
   return rows.map((row) => row.characterId);
+}
+
+/**
+ * Rest action — bypasses normal LangGraph turn flow.
+ * Flow: apply rest state + advance time → inject fixed action log →
+ *       run Director (scene update) + Keeper (narrative) via graph with isRestAction=true.
+ * POST /api/rest
+ */
+export async function restAction(req: Request, res: Response): Promise<void> {
+  try {
+    const userId = req.user!.userId;
+    const userEmail = req.user!.email;
+    const serverState = ServerState.getInstance();
+    const dynamicGameState = serverState.getDynamicGameState(userId);
+
+    if (!dynamicGameState) {
+      res.status(400).json({ error: "No active game session." });
+      return;
+    }
+
+    if (dynamicGameState.gameEnding?.isEnded) {
+      res.status(409).json({ error: "Game has ended." });
+      return;
+    }
+
+    if (dynamicGameState.isBattle) {
+      res.status(409).json({ error: "Cannot rest during combat." });
+      return;
+    }
+
+    const rawMinutes = req.body?.restMinutes;
+    const restMinutes =
+      typeof rawMinutes === "number" && rawMinutes > 0
+        ? Math.round(rawMinutes)
+        : null;
+
+    if (!restMinutes) {
+      res
+        .status(400)
+        .json({ error: "restMinutes must be a positive number." });
+      return;
+    }
+
+    // Cap at 24 hours to prevent abuse
+    const cappedMinutes = Math.min(restMinutes, 1440);
+
+    const language: "en" | "zh" =
+      req.body?.language === "en" ? "en" : "zh";
+
+    const gsm = new DynamicGameStateManager(dynamicGameState);
+
+    // 1. Apply rest recovery (updates staminaState + player HP/SAN)
+    const restResult = gsm.applyRest(cappedMinutes);
+
+    // 2. Advance game time
+    const oldDay = dynamicGameState.gameDay;
+    const oldTime = dynamicGameState.timeOfDay;
+    gsm.updateGameTime(cappedMinutes);
+
+    const playerName =
+      dynamicGameState.playerCharacter?.name ?? "Investigator";
+    const location =
+      dynamicGameState.currentScenario?.location ?? "Unknown Location";
+    const hours = Math.round(cappedMinutes / 60);
+    const restInput =
+      language === "en"
+        ? `Rest for ${hours} hours`
+        : `休息${hours}小时`;
+
+    // 3. Inject fixed action result + action analysis into temporaryInfo
+    //    so Director and Keeper agents can reference them.
+    const afterTimeState = gsm.getState();
+    const newDay = afterTimeState.gameDay;
+    const newTime = afterTimeState.timeOfDay;
+
+    const actionResult = {
+      timestamp: new Date(),
+      gameTime: `Day ${newDay}, ${newTime}`,
+      timeElapsedMinutes: cappedMinutes,
+      location,
+      character: playerName,
+      result: restResult.summary,
+      diceRolls: [] as string[],
+      timeConsumption: cappedMinutes >= 480 ? ("long" as const) : ("medium" as const),
+    };
+
+    gsm.addActionResult(actionResult);
+    gsm.setActionAnalysis({
+      character: playerName,
+      action: restInput,
+      actionType: "narrative",
+      target: { name: null, intent: "rest" },
+      requiresSkillSelection: false,
+    });
+
+    console.log(
+      `😴 [Rest] ${cappedMinutes} min rest applied. ${oldDay}d ${oldTime} → ${newDay}d ${newTime}. Type: ${restResult.restType}`
+    );
+
+    // 4. Create turn record (processing state)
+    const db = DatabaseManager.getInstance().getDatabase();
+    const dynamicTurnManager = new DynamicTurnManager(db);
+    await db.preloadSessionTurns(dynamicGameState.sessionId);
+
+    const stateWithActionResult = gsm.getState();
+    const turnId = await dynamicTurnManager.createTurnFromGameState(
+      dynamicGameState.sessionId,
+      restInput,
+      stateWithActionResult
+    );
+
+    dynamicTurnManager.updateProcessing(turnId, {
+      actionAnalysis: stateWithActionResult.temporaryInfo.currentActionAnalysis,
+      actionResults: stateWithActionResult.temporaryInfo.actionResults ?? [],
+    });
+
+    console.log(
+      `[${new Date().toISOString()}] Rest turn created: ${turnId}`
+    );
+
+    // Initialize graph if needed
+    const graphManager = GraphManager.getInstance();
+    if (!graphManager.isInitialized()) {
+      await graphManager.initialize(db);
+    }
+
+    // 5. Run Director → Keeper asynchronously via graph with isRestAction=true
+    runWithTokenContext(
+      {
+        email: userEmail,
+        turnId,
+        usageTotals: { input_tokens: 0, output_tokens: 0, total_tokens: 0 },
+      },
+      () => {
+        processRestTurnAsync(
+          turnId,
+          restInput,
+          stateWithActionResult,
+          userId,
+          language
+        ).catch((error) => {
+          console.error(`[restAction] Error processing rest turn ${turnId}:`, error);
+          dynamicTurnManager.markError(turnId, error);
+        });
+      }
+    );
+
+    // 6. Return immediately with turnId (client polls for completion)
+    res.json({
+      success: true,
+      turnId,
+      restType: restResult.restType,
+      restMinutes: cappedMinutes,
+      hpRestored: restResult.hpRestored,
+      sanRestored: restResult.sanRestored,
+      summary: restResult.summary,
+      gameDay: newDay,
+      gameTime: newTime,
+      staminaState: stateWithActionResult.staminaState,
+      status: "processing",
+    });
+  } catch (error) {
+    console.error("[restAction] Error:", error);
+    res
+      .status(500)
+      .json({ error: "Rest action failed: " + (error as Error).message });
+  }
+}
+
+/**
+ * Async processing for rest turns: runs Director + Keeper only (via isRestAction graph route)
+ */
+async function processRestTurnAsync(
+  turnId: string,
+  restInput: string,
+  gameState: DynamicGameState,
+  userId: string,
+  language: "en" | "zh"
+): Promise<void> {
+  try {
+    console.log(`[${new Date().toISOString()}] Processing rest turn ${turnId}...`);
+
+    const serverState = ServerState.getInstance();
+    const graphManager = GraphManager.getInstance();
+    const db = DatabaseManager.getInstance().getDatabase();
+    const graph = graphManager.getGraph(true);
+
+    const dynamicTurnManager = new DynamicTurnManager(db);
+    const turn = dynamicTurnManager.getTurn(turnId);
+
+    const streamHandlers = buildNarrativeStreamHandlers({
+      sessionId: gameState.sessionId,
+      turnId,
+      turnNumber: turn?.turnNumber ?? null,
+      isSimulated: false,
+      gameDay: gameState.gameDay ?? null,
+      gameTime: gameState.timeOfDay ?? null,
+      timestamp: turn?.startedAt ?? null,
+    });
+
+    const graphState: any = {
+      messages: [new HumanMessage(restInput)],
+      dynamicGameState: gameState,
+      turnId,
+      isRestAction: true,
+      stream: streamHandlers ?? undefined,
+      language,
+      selectedSkill: null,
+      skillSelectionMode: "manual",
+    };
+
+    const graphConfig = {
+      configurable: {
+        thread_id: turnId,
+      },
+    };
+
+    console.log(`   ▶️  Starting rest graph execution (thread_id: ${turnId})`);
+
+    const result = await graph.invoke(graphState, graphConfig);
+
+    if (result.dynamicGameState) {
+      serverState.setGameState(userId, result.dynamicGameState);
+
+      // Notify WebSocket clients with final state
+      const wsManager = WebSocketManager.getInstance();
+      if (wsManager) {
+        const clients = wsManager.getClients();
+        const sessionId = result.dynamicGameState.sessionId;
+        if (clients.has(sessionId)) {
+          notifyClients(sessionId, clients, {
+            type: "rest_completed",
+            turnId,
+            gameDay: result.dynamicGameState.gameDay ?? null,
+            gameTime: result.dynamicGameState.timeOfDay ?? null,
+            staminaState: result.dynamicGameState.staminaState,
+            timestamp: new Date().toISOString(),
+          });
+        }
+      }
+    }
+
+    const totals = getCurrentUsageTotals();
+    if (totals && totals.total_tokens > 0) {
+      console.log(
+        `🧮 [Token Usage] Rest turn ${turnId} total: ${totals.total_tokens} (input ${totals.input_tokens}, output ${totals.output_tokens})`
+      );
+    }
+
+    console.log(
+      `[${new Date().toISOString()}] Rest turn ${turnId} completed successfully`
+    );
+  } catch (error) {
+    const totals = getCurrentUsageTotals();
+    if (totals && totals.total_tokens > 0) {
+      console.warn(
+        `🧮 [Token Usage] Rest turn ${turnId} partial: ${totals.total_tokens} (input ${totals.input_tokens}, output ${totals.output_tokens})`
+      );
+    }
+    console.error(
+      `[${new Date().toISOString()}] Rest turn ${turnId} failed:`,
+      error
+    );
+    throw error;
+  }
 }

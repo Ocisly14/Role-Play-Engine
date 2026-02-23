@@ -797,6 +797,11 @@ export async function initializeCompleteDynamicGameState(
       sceneStartTime: timeOfDay,
       playerTimeConsumption: {},
     },
+    // Stamina state: default values for new sessions and backward-compat with old saves
+    staminaState: (worldData as any).staminaState ?? {
+      minutesSinceLastRest: 0,
+      fatigueActive: false,
+    },
     // Store all module baseline snapshots in updatedDynamicScenarioSnapshots.
     // This allows agents to read all module scenes directly from state.
     updatedDynamicScenarioSnapshots: mergedSnapshots,

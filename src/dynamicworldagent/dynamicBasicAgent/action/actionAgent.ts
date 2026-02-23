@@ -284,6 +284,9 @@ export class ActionAgent {
       : "";
 
     // Build system prompt using template
+    const fatigueActive = !isNPC
+      ? gameStateManager.isFatigued()
+      : false;
     const baseSystemPrompt = buildActionSystemPrompt(
       originalUserInput,
       actionDescription,
@@ -294,7 +297,8 @@ export class ActionAgent {
       !isNPC ? (selectedSkill ?? null) : null,
       !isNPC ? skillSelectionMode : undefined,
       targetIntent,
-      language
+      language,
+      fatigueActive
     );
 
     const systemPrompt = baseSystemPrompt;
@@ -998,6 +1002,7 @@ export class ActionAgent {
         const oldDay = dynamicState.gameDay;
         const oldTime = dynamicState.timeOfDay;
         gameStateManager.updateGameTime(actionResult.timeElapsedMinutes);
+        gameStateManager.addFatigueMinutes(actionResult.timeElapsedMinutes);
         const updatedState = gameStateManager.getState();
         const newDay = updatedState.gameDay;
         const newTime = updatedState.timeOfDay;

@@ -579,6 +579,14 @@ export async function loadCheckpointData(
     delete (restoredDynamicGameState as any).subId;
     delete (restoredDynamicGameState as any).language; // Language is stored in session metadata, not game state
 
+    // Backward compatibility: ensure staminaState exists for old checkpoints
+    if (!restoredDynamicGameState.staminaState) {
+      restoredDynamicGameState.staminaState = {
+        minutesSinceLastRest: 0,
+        fatigueActive: false,
+      };
+    }
+
     // Restore game state
     ServerState.getInstance().setGameState(userId, restoredDynamicGameState);
 

@@ -117,6 +117,13 @@ export interface DynamicGameState {
     >;
   };
 
+  // Stamina / fatigue tracking
+  staminaState: {
+    minutesSinceLastRest: number; // Accumulated player-action minutes since last effective rest
+    fatigueActive: boolean; // Whether the player is currently fatigued
+    fatigueStartedAtGameTime?: string; // Game time when fatigue first activated (optional)
+  };
+
   // Game tension
   tension: number;
 
@@ -206,6 +213,10 @@ export const initialDynamicGameState = (params: {
   scenarioTimeState: {
     sceneStartTime: params.timeOfDay ?? "08:00",
     playerTimeConsumption: {},
+  },
+  staminaState: {
+    minutesSinceLastRest: 0,
+    fatigueActive: false,
   },
   tension: 1,
   isBattle: false,
@@ -1426,9 +1437,11 @@ export class DynamicGameStateManager {
         playerTime.lastActionTime = timeConsumption;
         break;
 
-      case "scene":
-        // Scene actions are significant time consumers
-        // Scene action counts as reaching the short-action cap for this scenario
+      case "medium":
+      case "long":
+      case "very long":
+        // Medium/long/very long actions are significant time consumers
+        // They count as reaching the short-action cap for this scenario
         playerTime.totalShortActions = Math.max(
           playerTime.totalShortActions,
           shortActionCap
@@ -1554,6 +1567,116 @@ export class DynamicGameStateManager {
     // Update time in HH:MM format
     this.state.timeOfDay = `${String(newHours).padStart(2, "0")}:${String(newMinutes).padStart(2, "0")}`;
     this.state.lastUpdated = new Date();
+  }
+
+  // =====================================================================
+  // Stamina / Fatigue System
+  // =====================================================================
+
+  /** Fatigue threshold: 6 hours of uninterrupted player-action time */
+  private static readonly FATIGUE_TRIGGER_MINUTES = 360;
+
+  /**
+   * Accumulate player-action minutes toward fatigue.
+   * Call this after every player action that advances game time.
+   */
+  addFatigueMinutes(minutes: number): void {
+    if (!minutes || minutes <= 0) return;
+    const stamina = this.state.staminaState;
+    stamina.minutesSinceLastRest += minutes;
+    if (
+      !stamina.fatigueActive &&
+      stamina.minutesSinceLastRest >= DynamicGameStateManager.FATIGUE_TRIGGER_MINUTES
+    ) {
+      stamina.fatigueActive = true;
+      stamina.fatigueStartedAtGameTime = this.state.timeOfDay;
+      console.log(
+        `😴 [Stamina] Player is now fatigued! Accumulated: ${stamina.minutesSinceLastRest} minutes`
+      );
+    }
+    this.state.lastUpdated = new Date();
+  }
+
+  /** Whether the player is currently fatigued */
+  isFatigued(): boolean {
+    return this.state.staminaState.fatigueActive;
+  }
+
+  /**
+   * Apply rest recovery and return a description of the result.
+   * - < 240 min  → no benefit
+   * - 240-479 min → short rest (clear fatigue)
+   * - >= 480 min  → long rest (clear fatigue + restore HP/SAN)
+   *
+   * Returns a summary string for the fixed action log.
+   */
+  applyRest(restMinutes: number): {
+    restType: "none" | "short" | "long";
+    hpRestored: number;
+    sanRestored: number;
+    summary: string;
+  } {
+    if (restMinutes < 240) {
+      return {
+        restType: "none",
+        hpRestored: 0,
+        sanRestored: 0,
+        summary: `休息了 ${restMinutes} 分钟，时间不足，未能有效恢复（需至少4小时）。`,
+      };
+    }
+
+    const stamina = this.state.staminaState;
+    stamina.fatigueActive = false;
+    stamina.minutesSinceLastRest = 0;
+    delete stamina.fatigueStartedAtGameTime;
+
+    if (restMinutes < 480) {
+      // Short rest: 4–8 h, clears fatigue only
+      this.state.lastUpdated = new Date();
+      const hours = Math.round(restMinutes / 60);
+      return {
+        restType: "short",
+        hpRestored: 0,
+        sanRestored: 0,
+        summary: `进行了 ${hours} 小时的短暂休息，疲劳状态已解除。`,
+      };
+    }
+
+    // Long rest: ≥ 8 h, restore HP and SAN
+    const player = this.state.playerCharacter;
+    const maxHP: number = (player as any).maxHp ?? player.attributes?.siz ?? 10;
+    const initialSAN: number =
+      (player as any).initialSan ?? player.attributes?.pow ?? 50;
+    const recoveryScale = restMinutes / 480;
+
+    const hpGain = Math.ceil(maxHP * 0.3 * recoveryScale);
+    const sanGain = Math.ceil(initialSAN * 0.1 * recoveryScale);
+
+    const currentHP = player.status?.hp ?? maxHP;
+    const currentSAN = player.status?.sanity ?? initialSAN;
+    const newHP = Math.min(maxHP, currentHP + hpGain);
+    const newSAN = Math.min(initialSAN, currentSAN + sanGain);
+
+    const actualHpRestored = newHP - currentHP;
+    const actualSanRestored = newSAN - currentSAN;
+
+    if (player.status) {
+      player.status.hp = newHP;
+      player.status.sanity = newSAN;
+    }
+
+    this.state.lastUpdated = new Date();
+    const hours = Math.round(restMinutes / 60);
+    const restoreDesc =
+      actualHpRestored > 0 || actualSanRestored > 0
+        ? `恢复了 ${actualHpRestored} HP 和 ${actualSanRestored} SAN。`
+        : `HP与SAN已满，无需恢复。`;
+    return {
+      restType: "long",
+      hpRestored: actualHpRestored,
+      sanRestored: actualSanRestored,
+      summary: `进行了 ${hours} 小时的深度休息，疲劳解除。${restoreDesc}`,
+    };
   }
 
   /**

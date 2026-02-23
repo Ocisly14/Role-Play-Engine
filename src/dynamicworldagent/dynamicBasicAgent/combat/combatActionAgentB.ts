@@ -182,7 +182,8 @@ export class CombatActionAgentB {
       combatState.round,
       playerInput,
       keeperNarrative,
-      language
+      language,
+      dgsm.isFatigued()
     );
     const context = this.buildContext(dgsm, combatState.participantNpcIds, combatAResult);
     const fullPrompt = systemPrompt + context;

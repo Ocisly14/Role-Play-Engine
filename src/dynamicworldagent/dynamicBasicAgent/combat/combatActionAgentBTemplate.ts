@@ -6,7 +6,8 @@ export function buildCombatActionBSystemPrompt(
   combatRound: number,
   playerInput: string,
   keeperNarrative: string,
-  outputLanguage: "en" | "zh" = "zh"
+  outputLanguage: "en" | "zh" = "zh",
+  fatigueActive?: boolean
 ): string {
   const targetLanguageLabel = outputLanguage === "en" ? "English" : "Chinese";
 
@@ -14,12 +15,16 @@ export function buildCombatActionBSystemPrompt(
     ? `\n## PRIOR NARRATIVE CONTEXT\n${keeperNarrative}\n(Your narrative must follow on naturally from this — maintain the same tone, momentum, and physical details)`
     : "";
 
+  const fatigueSection = fatigueActive
+    ? `\n⚠️ PLAYER FATIGUE STATUS:\n当前角色状态：疲惫。所有玩家技能判定难度提高一个等级。\nCurrent player status: Fatigued. Increase player skill check difficulty by one level.\n- regular → hard (skill ÷ 2)\n- hard → extreme (skill ÷ 5)\n- extreme → extreme (already at maximum difficulty)\n`
+    : "";
+
   return `## Combat Action Agent B — Round ${combatRound}
 
 You have two responsibilities this round, in order:
 1. **Decide** what each enemy NPC will do next (internal reasoning)
 2. **Narrate** a single passage that covers both what just happened AND what is about to happen
-
+${fatigueSection}
 ## PLAYER INPUT THIS ROUND
 ${playerInput}${keeperNarrativeSection}
 

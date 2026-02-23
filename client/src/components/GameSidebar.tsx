@@ -620,6 +620,35 @@ export function GameSidebar({
                 <div className="status-section">
                   <h3>{t("game:sidebar.status.statusEffects")}</h3>
                   <div className="status-effects">
+                    {/* Fatigue badge from staminaState */}
+                    {gameState.staminaState?.fatigueActive && (
+                      <div
+                        style={{
+                          display: "inline-flex",
+                          alignItems: "center",
+                          gap: "4px",
+                          background: "#fef3c7",
+                          border: "1px solid #f59e0b",
+                          borderRadius: "9999px",
+                          padding: "2px 10px",
+                          fontSize: "12px",
+                          color: "#92400e",
+                          marginBottom: "4px",
+                        }}
+                        title={t("game:sidebar.status.fatiguedDesc")}
+                      >
+                        😴 {t("game:sidebar.status.fatigued")}
+                      </div>
+                    )}
+                    {/* Stamina progress when not fatigued */}
+                    {!gameState.staminaState?.fatigueActive &&
+                      gameState.staminaState?.minutesSinceLastRest > 0 && (
+                        <p style={{ fontSize: "11px", color: "#64748b", margin: "0 0 4px 0" }}>
+                          {t("game:sidebar.status.staminaProgress", {
+                            minutes: gameState.staminaState.minutesSinceLastRest,
+                          })}
+                        </p>
+                      )}
                     {gameState.playerCharacter.status.conditions.length > 0 ? (
                       <ul style={{ margin: 0, paddingLeft: "20px" }}>
                         {gameState.playerCharacter.status.conditions.map(
@@ -628,11 +657,11 @@ export function GameSidebar({
                           )
                         )}
                       </ul>
-                    ) : (
+                    ) : !gameState.staminaState?.fatigueActive ? (
                       <p className="empty-state">
                         {t("game:sidebar.status.noStatusEffects")}
                       </p>
-                    )}
+                    ) : null}
                   </div>
                 </div>
 

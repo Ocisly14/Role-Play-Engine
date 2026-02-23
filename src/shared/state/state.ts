@@ -97,7 +97,12 @@ export interface DiscoveredClue {
   method?: string;
 }
 
-export type TimeConsumption = "instant" | "short" | "scene";
+export type TimeConsumption =
+  | "instant"
+  | "short"
+  | "medium"
+  | "long"
+  | "very long";
 
 export interface DirectorDecision {
   shouldProgress: boolean;

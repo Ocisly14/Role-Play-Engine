@@ -1,5 +1,5 @@
 /**
- * InputArea - Handles message input with skill selection
+ * InputArea - Handles message input with skill selection and rest action
  */
 
 import React from "react";
@@ -27,10 +27,13 @@ interface InputAreaProps {
   isInputCollapsed: boolean;
   isSceneChanging: boolean;
   language: "en" | "zh";
+  isBattle?: boolean;
+  isResting?: boolean;
   handleInputAreaMouseEnter: () => void;
   handleInputAreaMouseLeave: () => void;
   handleSendMessage: () => void;
   handleKeyDown: (e: React.KeyboardEvent<HTMLTextAreaElement>) => void;
+  onOpenRestModal?: () => void;
 }
 
 export const InputArea = React.memo<InputAreaProps>(
@@ -54,15 +57,22 @@ export const InputArea = React.memo<InputAreaProps>(
     isInputCollapsed,
     isSceneChanging,
     language,
+    isBattle = false,
+    isResting = false,
     handleInputAreaMouseEnter,
     handleInputAreaMouseLeave,
     handleSendMessage,
     handleKeyDown,
+    onOpenRestModal,
   }) => {
     const { t } = useTranslation("game");
+
     if (isGameEnded) {
       return null;
     }
+
+    const isRestDisabled =
+      isSending || isPolling || isGameEnded || isBattle || isResting;
 
     return (
       <div
@@ -289,6 +299,38 @@ export const InputArea = React.memo<InputAreaProps>(
                         {t("input.selectSkill")}
                       </span>
                     )}
+
+                    {/* Rest Button */}
+                    {onOpenRestModal && (
+                      <button
+                        type="button"
+                        title={
+                          isBattle
+                            ? t("input.restInCombatDisabled")
+                            : t("input.rest")
+                        }
+                        className="inline-flex items-center justify-center whitespace-nowrap font-medium transition-all focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:pointer-events-none disabled:opacity-50 border shadow-sm hover:-translate-y-0.5 rounded-xl px-3 text-xs gap-1 h-[30px] mr-1.5 backdrop-blur-md bg-white/50 border-slate-200 text-slate-700 hover:bg-white/70 hover:border-slate-300"
+                        disabled={isRestDisabled}
+                        onClick={onOpenRestModal}
+                      >
+                        <svg
+                          xmlns="http://www.w3.org/2000/svg"
+                          width="12"
+                          height="12"
+                          viewBox="0 0 24 24"
+                          fill="none"
+                          stroke="currentColor"
+                          strokeWidth="2"
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          aria-hidden="true"
+                        >
+                          <path d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9Z" />
+                        </svg>
+                        {isResting ? t("input.resting") : t("input.rest")}
+                      </button>
+                    )}
+
                     <button
                       type="submit"
                       className="inline-flex items-center justify-center whitespace-nowrap font-medium transition-all focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg]:size-4 [&_svg]:shrink-0 backdrop-blur-md bg-white/50 border border-slate-200 text-slate-900 shadow-md hover:bg-white/70 hover:border-slate-300 hover:-translate-y-0.5 rounded-xl px-3 text-xs ml-auto gap-0.5 h-[30px]"
