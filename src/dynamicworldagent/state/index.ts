@@ -6,6 +6,8 @@
 export type {
   DynamicGameState,
   DynamicTemporaryInfo,
+  HeartbeatAction,
+  HeartbeatActivatedNarrative,
 } from "./DynamicGameState.js";
 
 export {

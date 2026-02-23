@@ -16,6 +16,7 @@ import { composeTemplateWithImages } from "../../../template.js";
 import type {
   DynamicGameState,
   DynamicGameStateManager,
+  HeartbeatActivatedNarrative,
 } from "../../state/index.js";
 import type { DynamicCharacterProfile } from "../../world_builder/types.js";
 import type { DynamicNPCProfile } from "../../world_builder/types.js";
@@ -206,6 +207,22 @@ export class KeeperAgent {
         score: number;
         metadata: Record<string, any>;
       }>) || [];
+    const heartbeatActivatedNarrativesRaw =
+      (dynamicState.temporaryInfo.contextualData
+        ?.heartbeatActivatedNarratives as HeartbeatActivatedNarrative[]) || [];
+    const heartbeatActivatedNarratives = heartbeatActivatedNarrativesRaw.filter(
+      (item) =>
+        !!item &&
+        typeof item.heartbeatId === "string" &&
+        item.heartbeatId.trim().length > 0 &&
+        typeof item.sourceTurnId === "string" &&
+        item.sourceTurnId.trim().length > 0 &&
+        typeof item.sourceTurnNarrative === "string" &&
+        item.sourceTurnNarrative.trim().length > 0 &&
+        (item.status === "due" || item.status === "overdue")
+    );
+    const hasHeartbeatActivatedNarratives =
+      heartbeatActivatedNarratives.length > 0;
     const worldlineSceneUpdate =
       (dynamicState.temporaryInfo.contextualData?.worldlineSceneUpdate as {
         previousSnapshot?: unknown;
@@ -302,6 +319,10 @@ export class KeeperAgent {
       sceneChangeRequest: sceneChangeRequestForNarrative, // Scene change request (without timestamp)
       conversationHistory, // Recent conversation history (for {{#each}} loop)
       relevantHistory, // RAG-retrieved relevant history (for {{#each}} loop)
+      hasHeartbeatActivatedNarratives,
+      heartbeatActivatedNarrativesJson: hasHeartbeatActivatedNarratives
+        ? this.safeStringify(heartbeatActivatedNarratives)
+        : null,
       hasActionTargetInfo,
       actionTargetName,
       actionTargetIntent,

@@ -802,6 +802,9 @@ export async function initializeCompleteDynamicGameState(
       minutesSinceLastRest: 0,
       fatigueActive: false,
     },
+    heartbeatActions: Array.isArray((worldData as any).heartbeatActions)
+      ? (worldData as any).heartbeatActions
+      : [],
     // Store all module baseline snapshots in updatedDynamicScenarioSnapshots.
     // This allows agents to read all module scenes directly from state.
     updatedDynamicScenarioSnapshots: mergedSnapshots,

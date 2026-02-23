@@ -41,6 +41,7 @@ import { CombatActionAgentA } from "../dynamicBasicAgent/combat/combatActionAgen
 import type { CombatActionAResult } from "../dynamicBasicAgent/combat/combatActionAgentA.js";
 import { CombatActionAgentB } from "../dynamicBasicAgent/combat/combatActionAgentB.js";
 import { DirectorAgent } from "../dynamicBasicAgent/director/directorAgent.js";
+import { HeartbeatAgent } from "../dynamicBasicAgent/heartbeat/heartbeatAgent.js";
 import { KeeperAgent } from "../dynamicBasicAgent/keeper/keeperAgent.js";
 import { TurnRagAgent } from "../dynamicBasicAgent/knowledge/turnRagAgent.js";
 // Import DynamicWorld agents
@@ -61,6 +62,7 @@ export interface DynamicGraphState {
   language?: "en" | "zh"; // User-selected output language
   selectedSkill?: string | null; // Optional player-selected skill for this turn
   skillSelectionMode?: "auto" | "manual"; // How skill selection should behave for this turn
+  isRestAction?: boolean; // True when this turn is a rest action
   stream?: {
     onDiceRolls?: (diceRolls: DiceRollInfo[]) => void;
     onSceneImage?: (payload: {
@@ -123,6 +125,7 @@ export const buildDynamicGraph = (
   const characterAgent = new CharacterAgent();
   const keeperAgent = new KeeperAgent();
   const directorAgent = new DirectorAgent(scenarioLoader, db);
+  const heartbeatAgent = new HeartbeatAgent();
   const turnManager = new TurnManager(db);
   const turnRagAgent = new TurnRagAgent();
   const combatAgentA = new CombatActionAgentA();
@@ -294,6 +297,21 @@ export const buildDynamicGraph = (
       dgsm.setContextualData("relevantHistoryThreshold", null);
       dgsm.setContextualData("relevantHistoryQuery", null);
       console.log("   ✓ Cleared per-turn combat contextual data");
+
+      try {
+        const { dueActions, activatedNarratives } =
+          await heartbeatAgent.evaluateTurnStart(dgsm, { db });
+        console.log(
+          `   ✓ Heartbeat evaluation complete: due=${dueActions.length}, injectedNarratives=${activatedNarratives.length}`
+        );
+      } catch (heartbeatError) {
+        dgsm.setContextualData("heartbeatDueActions", []);
+        dgsm.setContextualData("heartbeatActivatedNarratives", []);
+        console.warn(
+          "   ⚠️  [Dynamic Entry] Heartbeat evaluation failed, fallback to empty context:",
+          heartbeatError
+        );
+      }
 
       // Update timestamp and increment turn counter (only for real input)
       dgsm.updatePlayerInputTime();
@@ -531,7 +549,8 @@ export const buildDynamicGraph = (
         userInput,
         selectedSkill,
         skillSelectionMode,
-        language
+        language,
+        state.turnId ?? null
       );
     } catch (error) {
       console.error(`\n❌ [Dynamic Action Agent] 执行过程中抛出异常:`, error);
@@ -1737,6 +1756,7 @@ export const buildDynamicListenerGraph = (
   const actionAgent = new ActionAgent(scenarioLoader);
   const keeperAgent = new KeeperAgent();
   const turnRagAgent = new TurnRagAgent();
+  const heartbeatAgent = new HeartbeatAgent();
 
   const listenerGraph = new StateGraph<DynamicGraphState>({
     channels: {
@@ -1834,8 +1854,24 @@ export const buildDynamicListenerGraph = (
         `📝 [Dynamic Listener] Created turn ${newTurnId} for simulated query`
       );
 
+      try {
+        const { dueActions, activatedNarratives } =
+          await heartbeatAgent.evaluateTurnStart(dgsm, { db });
+        console.log(
+          `⏰ [Dynamic Listener] Heartbeat evaluated: due=${dueActions.length}, injectedNarratives=${activatedNarratives.length}`
+        );
+      } catch (heartbeatError) {
+        dgsm.setContextualData("heartbeatDueActions", []);
+        dgsm.setContextualData("heartbeatActivatedNarratives", []);
+        console.warn(
+          "⚠️  [Dynamic Listener] Heartbeat evaluation failed, fallback to empty context:",
+          heartbeatError
+        );
+      }
+
       return {
         ...state,
+        dynamicGameState: dgsm.getState(),
         messages: [...(state.messages || []), new HumanMessage(characterInput)],
         isSimulatedQuery: true,
         simulatedQueryCount: (state.simulatedQueryCount || 0) + 1,

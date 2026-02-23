@@ -25,6 +25,33 @@ export function parseGameTime(
 }
 
 /**
+ * Convert "Day N, HH:MM" to absolute minutes from Day 1 00:00.
+ * Returns null when input cannot be parsed.
+ */
+export function toAbsoluteMinutes(gameTime?: string): number | null {
+  const parsed = parseGameTime(gameTime);
+  if (!parsed) return null;
+  const [h, m] = parsed.timeOfDay.split(":").map(Number);
+  if (!Number.isFinite(h) || !Number.isFinite(m)) return null;
+  if (h < 0 || h > 23 || m < 0 || m > 59) return null;
+  return (parsed.gameDay - 1) * 1440 + h * 60 + m;
+}
+
+/**
+ * Returns "to - from" in minutes.
+ * Positive means `to` is later than `from`; negative means overdue.
+ */
+export function diffGameTimeMinutes(
+  fromGameTime?: string,
+  toGameTime?: string
+): number | null {
+  const fromAbs = toAbsoluteMinutes(fromGameTime);
+  const toAbs = toAbsoluteMinutes(toGameTime);
+  if (fromAbs === null || toAbs === null) return null;
+  return toAbs - fromAbs;
+}
+
+/**
  * Returns true if time1 is strictly after time2
  */
 export function isTimeAfter(time1: string, time2: string): boolean {

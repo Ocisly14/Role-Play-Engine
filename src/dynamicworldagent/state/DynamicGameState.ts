@@ -68,6 +68,32 @@ export interface DefeatedNpcHistoryEntry {
   count: number;
 }
 
+export interface HeartbeatAction {
+  heartbeatId: string;
+  scheduledGameTime: string; // "Day N, HH:MM"
+  npcId: string;
+  npcName: string;
+  task: string;
+  location: string;
+  status: "scheduled" | "due" | "overdue" | "completed" | "cancelled";
+  createdAtGameTime: string; // "Day N, HH:MM"
+  triggeredAtGameTime?: string; // first time entering due/overdue
+  sourceTurnId: string; // source turn that created this heartbeat
+}
+
+export interface HeartbeatActivatedNarrative {
+  heartbeatId: string;
+  sourceTurnId: string;
+  sourceTurnNumber?: number | null;
+  sourceTurnNarrative: string;
+  scheduledGameTime: string;
+  status: "due" | "overdue";
+  npcId: string;
+  npcName: string;
+  task: string;
+  location: string;
+}
+
 /**
  * Temporary Info for Dynamic World
  * Contains temporary state that is cleared at the start of each player turn.
@@ -131,6 +157,7 @@ export interface DynamicGameState {
   isBattle: boolean;
   combatState: CombatState | null;
   defeatedNpcHistory: DefeatedNpcHistoryEntry[];
+  heartbeatActions: HeartbeatAction[];
 
   // Game ending status (used by frontend to lock input after epilogue)
   gameEnding: GameEndingInfo | null;
@@ -222,6 +249,7 @@ export const initialDynamicGameState = (params: {
   isBattle: false,
   combatState: null,
   defeatedNpcHistory: [],
+  heartbeatActions: [],
   gameEnding: null,
   keeperGuidance: null,
   moduleLimitations: null,
@@ -662,6 +690,75 @@ export class DynamicGameStateManager {
             }))
             .filter((item: DefeatedNpcHistoryEntry) => item.name.length > 0)
         : [],
+      heartbeatActions: Array.isArray(data.heartbeatActions)
+        ? data.heartbeatActions
+            .map((item: any): HeartbeatAction | null => {
+              if (!item || typeof item !== "object") return null;
+              const heartbeatId =
+                typeof item.heartbeatId === "string" &&
+                item.heartbeatId.trim().length > 0
+                  ? item.heartbeatId.trim()
+                  : `heartbeat-${Date.now()}-${randomUUID().slice(0, 8)}`;
+              const scheduledGameTime =
+                typeof item.scheduledGameTime === "string"
+                  ? item.scheduledGameTime.trim()
+                  : "";
+              const npcId =
+                typeof item.npcId === "string" ? item.npcId.trim() : "";
+              const npcName =
+                typeof item.npcName === "string" ? item.npcName.trim() : "";
+              const task = typeof item.task === "string" ? item.task.trim() : "";
+              const location =
+                typeof item.location === "string" ? item.location.trim() : "";
+              const sourceTurnId =
+                typeof item.sourceTurnId === "string"
+                  ? item.sourceTurnId.trim()
+                  : "";
+              if (
+                !scheduledGameTime ||
+                !npcId ||
+                !npcName ||
+                !task ||
+                !location ||
+                !sourceTurnId
+              ) {
+                return null;
+              }
+              const statusCandidate =
+                typeof item.status === "string" ? item.status.trim() : "";
+              const status: HeartbeatAction["status"] = [
+                "scheduled",
+                "due",
+                "overdue",
+                "completed",
+                "cancelled",
+              ].includes(statusCandidate)
+                ? (statusCandidate as HeartbeatAction["status"])
+                : "scheduled";
+              return {
+                heartbeatId,
+                scheduledGameTime,
+                npcId,
+                npcName,
+                task,
+                location,
+                status,
+                createdAtGameTime:
+                  typeof item.createdAtGameTime === "string" &&
+                  item.createdAtGameTime.trim().length > 0
+                    ? item.createdAtGameTime.trim()
+                    : scheduledGameTime,
+                ...(typeof item.triggeredAtGameTime === "string" &&
+                item.triggeredAtGameTime.trim().length > 0
+                  ? { triggeredAtGameTime: item.triggeredAtGameTime.trim() }
+                  : {}),
+                sourceTurnId,
+              };
+            })
+            .filter((item: HeartbeatAction | null): item is HeartbeatAction =>
+              Boolean(item)
+            )
+        : [],
       revealedTruthEvents: new Set(data.revealedTruthEvents || []),
       activatedKnowledgeHolders: new Set(data.activatedKnowledgeHolders || []),
       deployedRedHerrings: new Set(data.deployedRedHerrings || []),
@@ -1040,6 +1137,68 @@ export class DynamicGameStateManager {
    */
   setContextualData(key: string, value: any): void {
     this.state.temporaryInfo.contextualData[key] = value;
+    this.state.lastUpdated = new Date();
+  }
+
+  setHeartbeatActions(actions: HeartbeatAction[]): void {
+    this.state.heartbeatActions = Array.isArray(actions) ? [...actions] : [];
+    this.state.lastUpdated = new Date();
+  }
+
+  upsertHeartbeatActions(actions: HeartbeatAction[]): void {
+    if (!Array.isArray(actions) || actions.length === 0) return;
+
+    const current = this.state.heartbeatActions || [];
+
+    const findByFingerprint = (incoming: HeartbeatAction): number => {
+      return current.findIndex((existing) => {
+        if (!existing) return false;
+        const isActive =
+          existing.status === "scheduled" ||
+          existing.status === "due" ||
+          existing.status === "overdue";
+        if (!isActive) return false;
+        return (
+          existing.npcId === incoming.npcId &&
+          existing.scheduledGameTime === incoming.scheduledGameTime &&
+          existing.task.trim().toLowerCase() ===
+            incoming.task.trim().toLowerCase() &&
+          existing.location.trim().toLowerCase() ===
+            incoming.location.trim().toLowerCase()
+        );
+      });
+    };
+
+    for (const incoming of actions) {
+      if (!incoming?.heartbeatId) continue;
+      const byIdIndex = current.findIndex(
+        (item) => item.heartbeatId === incoming.heartbeatId
+      );
+      if (byIdIndex >= 0) {
+        current[byIdIndex] = {
+          ...current[byIdIndex],
+          ...incoming,
+        };
+        continue;
+      }
+
+      const byFingerprintIndex = findByFingerprint(incoming);
+      if (byFingerprintIndex >= 0) {
+        const existing = current[byFingerprintIndex];
+        current[byFingerprintIndex] = {
+          ...existing,
+          ...incoming,
+          heartbeatId: existing.heartbeatId,
+          createdAtGameTime: existing.createdAtGameTime,
+          sourceTurnId: existing.sourceTurnId || incoming.sourceTurnId,
+        };
+        continue;
+      }
+
+      current.push(incoming);
+    }
+
+    this.state.heartbeatActions = current;
     this.state.lastUpdated = new Date();
   }
 

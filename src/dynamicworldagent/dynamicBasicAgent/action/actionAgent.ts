@@ -1,3 +1,4 @@
+import { randomUUID } from "crypto";
 import { generateText } from "../../../models/index.js";
 import { ModelClass } from "../../../models/types.js";
 import type { ScenarioLoader } from "../../../shared/agents/memory/scenarioloader/index.js";
@@ -13,12 +14,14 @@ import type {
 } from "../../../shared/state/index.js";
 import type {
   CombatState,
+  HeartbeatAction,
   PendingNpcAction,
 } from "../../state/DynamicGameState.js";
 import type { DynamicGameState } from "../../state/index.js";
 import { DynamicGameStateManager } from "../../state/index.js";
 import {
   getLatestActionLogEntryWithLocation,
+  parseGameTime,
   isTimeAfter,
 } from "../../utils/gameTime.js";
 import type { DynamicCharacterProfile } from "../../world_builder/types.js";
@@ -114,6 +117,243 @@ export class ActionAgent {
         } satisfies PendingNpcAction;
       })
       .filter((item): item is PendingNpcAction => item !== null);
+  }
+
+  private parseHeartbeatDueActionsContext(
+    raw: unknown
+  ): Array<{
+    heartbeatId: string;
+    npcId: string;
+    scheduledGameTime: string;
+    status: "due" | "overdue";
+    npcName: string;
+    task: string;
+    location: string;
+  }> {
+    if (!Array.isArray(raw)) return [];
+    return raw
+      .map((item) => {
+        if (!item || typeof item !== "object") return null;
+        const data = item as Record<string, unknown>;
+        const heartbeatId =
+          typeof data.heartbeatId === "string" ? data.heartbeatId.trim() : "";
+        const npcId = typeof data.npcId === "string" ? data.npcId.trim() : "";
+        const scheduledGameTime =
+          typeof data.scheduledGameTime === "string"
+            ? data.scheduledGameTime.trim()
+            : "";
+        const status = data.status;
+        const npcName = typeof data.npcName === "string" ? data.npcName : "";
+        const task = typeof data.task === "string" ? data.task : "";
+        const location =
+          typeof data.location === "string" ? data.location : "";
+        if (
+          !heartbeatId ||
+          !npcId ||
+          !scheduledGameTime ||
+          (status !== "due" && status !== "overdue") ||
+          !npcName ||
+          !task ||
+          !location
+        ) {
+          return null;
+        }
+        return {
+          heartbeatId,
+          npcId,
+          scheduledGameTime,
+          status,
+          npcName,
+          task,
+          location,
+        } as const;
+      })
+      .filter(
+        (
+          item
+        ): item is {
+          heartbeatId: string;
+          npcId: string;
+          scheduledGameTime: string;
+          status: "due" | "overdue";
+          npcName: string;
+          task: string;
+          location: string;
+        } => item !== null
+      );
+  }
+
+  private extractHeartbeatRelatedNpcs(
+    dynamicState: DynamicGameState,
+    heartbeatDueActions: Array<{
+      heartbeatId: string;
+      npcId: string;
+      scheduledGameTime: string;
+      status: "due" | "overdue";
+      npcName: string;
+      task: string;
+      location: string;
+    }>
+  ): any[] {
+    if (!Array.isArray(heartbeatDueActions) || heartbeatDueActions.length === 0) {
+      return [];
+    }
+
+    const grouped = new Map<string, { npcId: string; npcName: string }>();
+    for (const item of heartbeatDueActions) {
+      const key =
+        item.npcId.trim().length > 0
+          ? `id:${item.npcId.trim()}`
+          : `name:${item.npcName.trim().toLowerCase()}`;
+      if (!grouped.has(key)) {
+        grouped.set(key, {
+          npcId: item.npcId,
+          npcName: item.npcName,
+        });
+      }
+    }
+
+    const out: any[] = [];
+    const seenNpcIds = new Set<string>();
+    for (const group of grouped.values()) {
+      const npc =
+        dynamicState.npcCharacters.find((candidate) => candidate.id === group.npcId) ||
+        dynamicState.npcCharacters.find(
+          (candidate) =>
+            candidate.name.toLowerCase() === group.npcName.toLowerCase()
+        );
+      if (!npc) continue;
+      if (seenNpcIds.has(npc.id)) continue;
+      seenNpcIds.add(npc.id);
+      out.push(this.toActionContextNpc(npc));
+    }
+
+    return out;
+  }
+
+  private parseHeartbeatActionsFromModel(
+    raw: unknown,
+    dynamicState: Readonly<DynamicGameState>,
+    sourceTurnId: string | null | undefined
+  ): HeartbeatAction[] {
+    if (!Array.isArray(raw)) return [];
+    if (!sourceTurnId || sourceTurnId.trim().length === 0) {
+      console.warn(
+        "⚠️ [Action Agent] heartbeatActions returned but sourceTurnId missing; skipping heartbeat persistence."
+      );
+      return [];
+    }
+
+    const currentGameTime = `Day ${dynamicState.gameDay}, ${dynamicState.timeOfDay}`;
+    const npcById = new Map(dynamicState.npcCharacters.map((npc) => [npc.id, npc]));
+    const normalizedTurnId = sourceTurnId.trim();
+
+    return raw
+      .map((item): HeartbeatAction | null => {
+        if (!item || typeof item !== "object") return null;
+        const data = item as Record<string, unknown>;
+        const scheduledGameTime =
+          typeof data.scheduledGameTime === "string"
+            ? data.scheduledGameTime.trim()
+            : "";
+        const npcIdRaw = typeof data.npcId === "string" ? data.npcId.trim() : "";
+        const npcNameRaw =
+          typeof data.npcName === "string" ? data.npcName.trim() : "";
+        const task = typeof data.task === "string" ? data.task.trim() : "";
+        const location =
+          typeof data.location === "string" ? data.location.trim() : "";
+
+        if (!scheduledGameTime || !task || !location) {
+          return null;
+        }
+        if (!parseGameTime(scheduledGameTime)) {
+          return null;
+        }
+
+        let npcId = npcIdRaw;
+        let npcName = npcNameRaw;
+        if (!npcId && npcName) {
+          const npc = dynamicState.npcCharacters.find(
+            (candidate) =>
+              candidate.name.toLowerCase() === npcName.toLowerCase()
+          );
+          if (npc) {
+            npcId = npc.id;
+            npcName = npc.name;
+          }
+        }
+
+        if (!npcId || !npcById.has(npcId)) {
+          return null;
+        }
+        if (!npcName) {
+          npcName = npcById.get(npcId)?.name || npcId;
+        }
+
+        const existingByFingerprint = (dynamicState.heartbeatActions || []).find(
+          (existing) =>
+            (existing.status === "scheduled" ||
+              existing.status === "due" ||
+              existing.status === "overdue") &&
+            existing.npcId === npcId &&
+            existing.scheduledGameTime === scheduledGameTime &&
+            existing.task.trim().toLowerCase() === task.toLowerCase() &&
+            existing.location.trim().toLowerCase() === location.toLowerCase()
+        );
+
+        return {
+          heartbeatId:
+            (typeof data.heartbeatId === "string" &&
+            data.heartbeatId.trim().length > 0
+              ? data.heartbeatId.trim()
+              : existingByFingerprint?.heartbeatId) ||
+            `heartbeat-${Date.now()}-${randomUUID().slice(0, 8)}`,
+          scheduledGameTime,
+          npcId,
+          npcName,
+          task,
+          location,
+          status: "scheduled" as HeartbeatAction["status"],
+          createdAtGameTime:
+            existingByFingerprint?.createdAtGameTime || currentGameTime,
+          sourceTurnId: existingByFingerprint?.sourceTurnId || normalizedTurnId,
+          ...(existingByFingerprint?.triggeredAtGameTime
+            ? { triggeredAtGameTime: existingByFingerprint.triggeredAtGameTime }
+            : {}),
+        };
+      })
+      .filter((item): item is HeartbeatAction => item !== null);
+  }
+
+  private consumeDueHeartbeatActionsFromContext(
+    gameStateManager: DynamicGameStateManager
+  ): void {
+    const state = gameStateManager.getState();
+    const dueRaw = state.temporaryInfo.contextualData?.heartbeatDueActions;
+    if (!Array.isArray(dueRaw) || dueRaw.length === 0) return;
+
+    const dueIds = new Set(
+      dueRaw
+        .map((item) =>
+          item && typeof item === "object" && typeof item.heartbeatId === "string"
+            ? item.heartbeatId.trim()
+            : ""
+        )
+        .filter((id) => id.length > 0)
+    );
+    if (dueIds.size === 0) return;
+
+    const current = Array.isArray(state.heartbeatActions)
+      ? state.heartbeatActions
+      : [];
+    const next = current.filter((item) => !dueIds.has(item.heartbeatId));
+    const removedCount = current.length - next.length;
+    if (removedCount <= 0) return;
+
+    gameStateManager.setHeartbeatActions(next);
+    console.log(
+      `🫀 [Action Agent] Consumed heartbeat actions for this turn: removed=${removedCount}`
+    );
   }
 
   private parseJsonFromModelResponse(
@@ -488,6 +728,7 @@ export class ActionAgent {
       selectedSkill?: string | null;
       skillSelectionMode?: "auto" | "manual";
       language?: "en" | "zh";
+      sourceTurnId?: string | null;
     },
     gameStateManager: DynamicGameStateManager,
     originalUserInput?: string | null
@@ -498,6 +739,7 @@ export class ActionAgent {
       targetCharacter,
       selectedSkill,
       skillSelectionMode,
+      sourceTurnId,
     } = options;
     const language =
       options.language === "en" || options.language === "zh"
@@ -618,7 +860,7 @@ export class ActionAgent {
       character,
       parsed,
       diceUsed,
-      { isNPC, npcResponse, targetCharacter },
+      { isNPC, npcResponse, targetCharacter, sourceTurnId },
       gameStateManager,
       originalUserInput
     );
@@ -630,7 +872,8 @@ export class ActionAgent {
     userMessage: string,
     selectedSkill?: string | null,
     skillSelectionMode?: "auto" | "manual",
-    language?: "en" | "zh"
+    language?: "en" | "zh",
+    currentTurnId?: string | null
   ): Promise<void> {
     const dynamicState = gameStateManager.getState();
     const actionAnalysis = dynamicState.temporaryInfo.currentActionAnalysis;
@@ -650,6 +893,7 @@ export class ActionAgent {
         selectedSkill: selectedSkill ?? null,
         skillSelectionMode,
         language,
+        sourceTurnId: currentTurnId ?? null,
       },
       gameStateManager,
       userMessage // Pass original user input
@@ -768,6 +1012,28 @@ export class ActionAgent {
     };
   }
 
+  private toActionContextNpc(npc: DynamicNPCProfile): Record<string, unknown> {
+    const filtered = this.filterCharacterForContext(npc);
+    return {
+      id: filtered.id,
+      name: filtered.name,
+      appearance: filtered.appearance ?? null,
+      age: filtered.age ?? null,
+      gender: filtered.gender ?? null,
+      personality: filtered.personality ?? null,
+      attributes: filtered.attributes,
+      status: filtered.status,
+      skills: filtered.skills,
+      inventory: filtered.inventory || [],
+      occupation: filtered.occupation || null,
+      notes: filtered.notes || null,
+      goals: npc.goals || [],
+      secrets: npc.secrets || [],
+      relationships: npc.relationships || [],
+      last3ActionLog: (npc.actionLog || []).slice(-3),
+    };
+  }
+
   /**
    * Extract NPCs in current scene for action context
    * Returns filtered NPC information (only essential fields)
@@ -807,31 +1073,7 @@ export class ActionAgent {
       const key = normalizeName(npc.name);
       if (seen.has(key)) return;
       seen.add(key);
-
-      // Filter NPC to only include essential fields
-      const filtered = this.filterCharacterForContext(npc);
-
-      // Get last 3 actionLog entries
-      const last3ActionLog = (npc.actionLog || []).slice(-3);
-
-      out.push({
-        id: filtered.id,
-        name: filtered.name,
-        appearance: filtered.appearance ?? null,
-        age: filtered.age ?? null,
-        gender: filtered.gender ?? null,
-        personality: filtered.personality ?? null,
-        attributes: filtered.attributes,
-        status: filtered.status,
-        skills: filtered.skills,
-        inventory: filtered.inventory || [],
-        occupation: filtered.occupation || null,
-        notes: filtered.notes || null,
-        goals: npc.goals || [],
-        secrets: npc.secrets || [],
-        relationships: npc.relationships || [],
-        last3ActionLog: last3ActionLog, // Add last 3 actionLog entries
-      });
+      out.push(this.toActionContextNpc(npc));
     };
 
     // 1. From scenario.characters: include unless we can prove they "left" (latest actionLog
@@ -878,6 +1120,7 @@ export class ActionAgent {
       isNPC: boolean;
       npcResponse?: NPCResponseAnalysis;
       targetCharacter?: DynamicCharacterProfile | null;
+      sourceTurnId?: string | null;
     },
     gameStateManager?: DynamicGameStateManager
   ): string {
@@ -935,6 +1178,32 @@ export class ActionAgent {
       dynamicState.temporaryInfo.rules.forEach((rule, index) => {
         context += `${index + 1}. ${rule}\n`;
       });
+    }
+
+    const heartbeatDueActions = this.parseHeartbeatDueActionsContext(
+      dynamicState.temporaryInfo.contextualData?.heartbeatDueActions
+    );
+    if (heartbeatDueActions.length > 0 && !isNPC) {
+      context +=
+        "\n\n=== HEARTBEAT DUE ACTIONS ===\n" +
+        JSON.stringify(heartbeatDueActions, null, 2) +
+        "\nRules:\n" +
+        "- These are scheduled appointments/actions that are now due or overdue.\n" +
+        "- Your actionLog should reflect whether the investigator keeps, delays, misses, reschedules, or ignores these items.\n" +
+        "- Do not force player behavior; preserve player agency while maintaining timeline consistency.\n" +
+        "=== END HEARTBEAT DUE ACTIONS ===\n";
+
+      const heartbeatRelatedNpcs = this.extractHeartbeatRelatedNpcs(
+        dynamicState,
+        heartbeatDueActions
+      );
+      if (heartbeatRelatedNpcs.length > 0) {
+        context +=
+          "\n\n=== HEARTBEAT RELATED NPCS (DEDUPED, SAME SHAPE AS SCENE NPCS) ===\n" +
+          JSON.stringify(heartbeatRelatedNpcs, null, 2) +
+          "\nUse this NPC context when resolving due/overdue heartbeat actions.\n" +
+          "=== END HEARTBEAT RELATED NPCS ===\n";
+      }
     }
 
     const defeatedNpcHistory = Array.isArray(dynamicState.defeatedNpcHistory)
@@ -1008,11 +1277,12 @@ export class ActionAgent {
       isNPC: boolean;
       npcResponse?: NPCResponseAnalysis;
       targetCharacter?: DynamicCharacterProfile | null;
+      sourceTurnId?: string | null;
     },
     gameStateManager: DynamicGameStateManager,
     originalUserInput?: string | null
   ): Promise<DynamicGameState> {
-    const { isNPC, npcResponse, targetCharacter } = options;
+    const { isNPC, npcResponse, targetCharacter, sourceTurnId } = options;
     const actionAnalysis = dynamicState.temporaryInfo.currentActionAnalysis;
     const parsedRecord =
       parsed && typeof parsed === "object"
@@ -1038,6 +1308,24 @@ export class ActionAgent {
     // Apply the state update from LLM result
     if (parsed.stateUpdate) {
       gameStateManager.applyActionUpdate(parsed.stateUpdate);
+    }
+
+    if (!isNPC) {
+      // Once due heartbeat actions are injected for this turn and action agent runs,
+      // treat them as consumed and remove from persistent state.
+      this.consumeDueHeartbeatActionsFromContext(gameStateManager);
+
+      const heartbeatActions = this.parseHeartbeatActionsFromModel(
+        parsed.heartbeatActions,
+        gameStateManager.getState(),
+        sourceTurnId ?? null
+      );
+      if (heartbeatActions.length > 0) {
+        gameStateManager.upsertHeartbeatActions(heartbeatActions);
+        console.log(
+          `🫀 [Action Agent] Persisted ${heartbeatActions.length} heartbeat action(s)`
+        );
+      }
     }
 
     // Handle combat entry detection (only for player actions, not NPC reactions)

@@ -177,6 +177,17 @@ Estimate how many minutes this action realistically takes in game time. Consider
 - Very long activities: 6+ hours (sleeping, all-day journeys)
 
 Be realistic and use your judgment. Include "timeElapsedMinutes" in your response.
+
+HEARTBEAT APPOINTMENT DETECTION:
+- If the investigator and an NPC explicitly make a concrete future plan/appointment, output it in "heartbeatActions".
+- The appointment should include: scheduledGameTime, npcId, npcName, task, location.
+- scheduledGameTime must use format "Day N, HH:MM".
+- If no new appointment is made this turn, return empty array: "heartbeatActions": [].
+
+WHEN CONTEXT INCLUDES "HEARTBEAT DUE ACTIONS":
+- Keep narrative/actionLog time-consistent with due/overdue appointments.
+- Reflect whether the investigator follows, delays, misses, reschedules, or ignores those appointments.
+- Do not force investigator behavior.
 ${sceneChangePrompt}
 ${
   !isNPC && sceneNPCs && sceneNPCs.length > 0
@@ -361,10 +372,21 @@ ${
       "attitude": -20,                   // New attitude delta (-100 to 100)
       "description": "Why the attitude changed"
     }
+  ],
+
+  "heartbeatActions": [ // Optional: player action only. Use [] when no new concrete appointment is made.
+    {
+      "scheduledGameTime": "Day 2, 18:20",
+      "npcId": "npc-guard-01",
+      "npcName": "Officer Hale",
+      "task": "Meet at the back alley for key exchange",
+      "location": "Riverside Back Alley"
+    }
   ]
 ${
   !isNPC && sceneNPCs && sceneNPCs.length > 0
     ? `
+  ,
   "npcResponses": [  // Optional: Array of NPC responses (only for player actions)
     {
       "npcName": "NPC name",
