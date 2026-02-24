@@ -101,6 +101,7 @@ export const GameSessionProvider: React.FC<{ children: React.ReactNode }> = ({
     setSelectedModName("");
     setConversationHistory(null);
     setModuleIntroduction(null);
+    hasInitialized.current = false;
   }, [t]);
 
   // Start a new game
@@ -214,6 +215,7 @@ export const GameSessionProvider: React.FC<{ children: React.ReactNode }> = ({
       return false;
     }
 
+    hasInitialized.current = true;
     setIsRestoringSession(true);
 
     try {
@@ -237,7 +239,6 @@ export const GameSessionProvider: React.FC<{ children: React.ReactNode }> = ({
         // Note: /api/sessions/latest doesn't return gameState or conversationHistory
         // Those are only available from /api/checkpoints/load
 
-        hasInitialized.current = true;
         setIsRestoringSession(false);
         return true;
       }

@@ -9,7 +9,8 @@ import { UserMenu } from "./UserMenu";
 export const MainLayout: React.FC = () => {
   const { user, logout } = useAuth();
   const gameSession = useGameSession();
-  const { sessionId, isRestoringSession, restoreLatestSession } = gameSession;
+  const { sessionId, isRestoringSession, restoreLatestSession, clearSession } =
+    gameSession;
   const [showAnalytics, setShowAnalytics] = useState(false);
   const location = useLocation();
 
@@ -23,6 +24,7 @@ export const MainLayout: React.FC = () => {
   const handleLogout = async () => {
     try {
       await logout();
+      clearSession();
     } catch (error) {
       console.error("Error logging out:", error);
     }
