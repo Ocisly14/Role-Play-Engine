@@ -670,7 +670,7 @@ export const TutorialPage: React.FC = () => {
                 <span className="character-label">
                   {t("session.playingAs")}
                 </span>
-                <span className="character-value">林文澜</span>
+                <span className="character-value">大熊</span>
               </div>
               <div className="save-checkpoint-section">
                 <button

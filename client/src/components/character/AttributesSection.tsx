@@ -51,7 +51,7 @@ export const AttributesSection: React.FC<AttributesSectionProps> = ({
         </button>
       </div>
 
-      <table>
+      <table className="attributes-main-table">
         <thead>
           <tr>
             {ATTRIBUTES.map((attr) => (
@@ -63,6 +63,9 @@ export const AttributesSection: React.FC<AttributesSectionProps> = ({
           <tr>
             {ATTRIBUTES.map((attr) => (
               <td key={attr.key}>
+                <span className="mobile-attr-label">
+                  {t(`attributes.${attr.key}`)}
+                </span>
                 <input
                   name={attr.key}
                   type="number"
@@ -79,7 +82,7 @@ export const AttributesSection: React.FC<AttributesSectionProps> = ({
       </table>
 
       <div className="section-title">{t("attributes.derived")}</div>
-      <table>
+      <table className="attributes-derived-table">
         <thead>
           <tr>
             {DERIVED_ATTRIBUTES.map((attr) => (
@@ -91,6 +94,9 @@ export const AttributesSection: React.FC<AttributesSectionProps> = ({
           <tr>
             {DERIVED_ATTRIBUTES.map((attr) => (
               <td key={attr.key}>
+                <span className="mobile-derived-label">
+                  {t(`attributes.${attr.key}`)}
+                </span>
                 <input
                   name={attr.key}
                   type={attr.type}

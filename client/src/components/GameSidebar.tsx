@@ -1112,10 +1112,13 @@ export function GameSidebar({
                           cursor: "pointer",
                         }}
                         onClick={(e) => {
-                          // Optional: Open in modal/full screen
                           const img = e.currentTarget;
+                          if (document.fullscreenElement) {
+                            void document.exitFullscreen();
+                            return;
+                          }
                           if (img.requestFullscreen) {
-                            img.requestFullscreen();
+                            void img.requestFullscreen();
                           }
                         }}
                         onError={(e) => {

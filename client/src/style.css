@@ -707,6 +707,21 @@ h1 {
   outline-offset: 2px;
 }
 
+.mobile-attr-label {
+  display: none;
+  text-align: center;
+}
+
+.mobile-derived-label {
+  display: none;
+  text-align: center;
+}
+
+.mobile-weapon-label {
+  display: none;
+  text-align: center;
+}
+
 table {
   width: 100%;
   border-collapse: collapse;
@@ -731,6 +746,33 @@ th {
   text-transform: uppercase;
   font-size: 0.75rem;
   letter-spacing: 0.5px;
+}
+
+.sheet table thead tr:first-child th {
+  text-align: center;
+}
+
+.sheet table td {
+  text-align: center;
+}
+
+.sheet table td input,
+.sheet table td select {
+  text-align: center;
+}
+
+.sheet table td textarea {
+  text-align: left;
+}
+
+.attributes-main-table td,
+.attributes-derived-table td {
+  text-align: center;
+}
+
+.attributes-main-table input,
+.attributes-derived-table input {
+  text-align: center;
 }
 
 input,
@@ -780,21 +822,22 @@ textarea {
 
 .skills-two-columns {
   display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 20px;
+  grid-template-columns: repeat(2, minmax(0, 470px));
+  justify-content: center;
+  gap: 16px;
 }
 
 @media (max-width: 1200px) {
   .skills-three-columns {
     grid-template-columns: repeat(2, 1fr);
   }
-
-  .skills-two-columns {
-    grid-template-columns: 1fr;
-  }
 }
 
 @media (max-width: 768px) {
+  .skills-two-columns {
+    grid-template-columns: 1fr;
+  }
+
   .attributes-header {
     flex-direction: column;
     align-items: stretch;
@@ -804,8 +847,184 @@ textarea {
     width: 100%;
   }
 
+  .attributes-main-table {
+    border: none;
+    background: transparent;
+  }
+
+  .attributes-main-table thead {
+    display: none;
+  }
+
+  .attributes-main-table tbody {
+    display: block;
+  }
+
+  .attributes-main-table tbody tr {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 6px;
+  }
+
+  .attributes-main-table tbody td {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    border: 1px solid var(--accent);
+    background: #fff;
+    padding: 4px;
+  }
+
+  .attributes-main-table .mobile-attr-label {
+    display: block;
+    color: var(--title);
+    font-size: 0.68rem;
+    font-weight: 700;
+    letter-spacing: 0.2px;
+    text-transform: uppercase;
+  }
+
+  .attributes-main-table input {
+    padding: 2px 4px;
+    font-size: 0.82rem;
+    line-height: 1.1;
+  }
+
+  .attributes-derived-table {
+    border: none;
+    background: transparent;
+  }
+
+  .attributes-derived-table thead {
+    display: none;
+  }
+
+  .attributes-derived-table tbody {
+    display: block;
+  }
+
+  .attributes-derived-table tbody tr {
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 6px;
+  }
+
+  .attributes-derived-table tbody td {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    border: 1px solid var(--accent);
+    background: #fff;
+    padding: 4px;
+  }
+
+  .attributes-derived-table .mobile-derived-label {
+    display: block;
+    color: var(--title);
+    font-size: 0.68rem;
+    font-weight: 700;
+    letter-spacing: 0.2px;
+    text-transform: uppercase;
+  }
+
+  .attributes-derived-table input {
+    padding: 2px 4px;
+    font-size: 0.82rem;
+    line-height: 1.1;
+  }
+
   .skills-three-columns {
     grid-template-columns: 1fr;
+  }
+
+  .weapons-table thead {
+    display: none;
+  }
+
+  .weapons-table tbody {
+    display: block;
+  }
+
+  .weapons-table .weapon-row {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 6px;
+    margin-bottom: 8px;
+    border-bottom: 1px dashed var(--accent);
+    padding-bottom: 8px;
+  }
+
+  .weapons-table .weapon-row td {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    border: 1px solid var(--accent);
+    background: #fff;
+    padding: 4px;
+  }
+
+  .weapons-table .mobile-weapon-label {
+    display: block;
+    color: var(--title);
+    font-size: 0.68rem;
+    font-weight: 700;
+    letter-spacing: 0.2px;
+    text-transform: uppercase;
+  }
+
+  .weapons-table .weapon-row input,
+  .weapons-table .weapon-row select {
+    padding: 2px 4px;
+    font-size: 0.82rem;
+    line-height: 1.1;
+  }
+
+  .skill-category {
+    overflow-x: hidden;
+  }
+
+  .skills-table {
+    min-width: 0;
+    width: 100%;
+    font-size: 0.74rem;
+    table-layout: fixed;
+  }
+
+  .skills-table th,
+  .skills-table td {
+    padding: 3px 4px;
+    font-size: 0.72rem;
+  }
+
+  .skills-table th:nth-child(1),
+  .skills-table td:nth-child(1) {
+    width: 40%;
+  }
+
+  .skills-table th:nth-child(2),
+  .skills-table td:nth-child(2),
+  .skills-table th:nth-child(3),
+  .skills-table td:nth-child(3),
+  .skills-table th:nth-child(4),
+  .skills-table td:nth-child(4) {
+    width: 20%;
+  }
+
+  .skill-name-cell {
+    line-height: 1.1;
+  }
+
+  .skill-name-cell span {
+    word-break: break-word;
+  }
+
+  .skill-base {
+    font-size: 0.64rem;
+  }
+
+  .skill-value-cell input {
+    padding: 2px 0;
+    font-size: 0.74rem;
   }
 }
 
@@ -842,6 +1061,7 @@ textarea {
   padding: 4px 8px;
   border: none;
   border-bottom: 1px solid #eee;
+  text-align: center;
 }
 
 .skills-table tr:last-child td {
@@ -851,10 +1071,26 @@ textarea {
 .skill-name-cell {
   width: auto;
   min-width: 0;
+  text-align: center;
 }
 
 .skill-value-cell {
   width: auto;
+}
+
+.skills-table .skill-col-value {
+  width: 104px;
+  min-width: 104px;
+  white-space: nowrap;
+}
+
+.skills-table .skill-col-total {
+  width: 88px;
+  min-width: 88px;
+  white-space: nowrap;
+  text-align: center;
+  font-weight: 700;
+  background-color: #f0f0f0;
 }
 
 .skill-label {
@@ -865,6 +1101,7 @@ textarea {
 }
 
 .skill-base {
+  display: block;
   color: #888;
   font-size: 0.75rem;
 }
@@ -873,6 +1110,67 @@ textarea {
   width: 100%;
   text-align: center;
   font-weight: 600;
+}
+
+@media (max-width: 768px) {
+  .skills-three-columns {
+    grid-template-columns: 1fr;
+  }
+
+  .skill-category {
+    overflow-x: hidden;
+  }
+
+  .skills-table {
+    min-width: 0;
+    width: 100%;
+    font-size: 0.74rem;
+    table-layout: fixed;
+  }
+
+  .skills-table th,
+  .skills-table td {
+    padding: 3px 4px;
+    font-size: 0.72rem;
+  }
+
+  .skills-table th:nth-child(1),
+  .skills-table td:nth-child(1) {
+    width: 40%;
+  }
+
+  .skills-table th:nth-child(2),
+  .skills-table td:nth-child(2),
+  .skills-table th:nth-child(3),
+  .skills-table td:nth-child(3),
+  .skills-table th:nth-child(4),
+  .skills-table td:nth-child(4) {
+    width: 20%;
+  }
+
+  .skills-table .skill-col-value,
+  .skills-table .skill-col-total {
+    width: auto;
+    min-width: 0;
+    white-space: normal;
+  }
+
+  .skill-name-cell {
+    line-height: 1.1;
+  }
+
+  .skill-name-cell span {
+    word-break: break-word;
+  }
+
+  .skill-base {
+    font-size: 0.64rem;
+  }
+
+  .skill-value-cell input {
+    padding: 2px 0;
+    font-size: 0.74rem;
+  }
 }
 
 /* ──────────────────────────────────────

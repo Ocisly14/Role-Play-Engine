@@ -31,8 +31,8 @@ export const WeaponsSection: React.FC<WeaponsSectionProps> = ({
   return (
     <>
       <div className="section-title">{t("weapons.title")}</div>
-      <table>
-        <tbody>
+      <table className="weapons-table">
+        <thead>
           <tr>
             <th>{t("weapons.weaponHeader")}</th>
             <th>{t("weapons.skillHeader")}</th>
@@ -41,9 +41,14 @@ export const WeaponsSection: React.FC<WeaponsSectionProps> = ({
             <th>{t("weapons.attacksHeader")}</th>
             <th>{t("weapons.ammo")}</th>
           </tr>
+        </thead>
+        <tbody>
           {weapons.map((w, i) => (
             <tr className="weapon-row" key={i}>
               <td>
+                <span className="mobile-weapon-label">
+                  {t("weapons.weaponHeader")}
+                </span>
                 <select
                   name={`weapon_${i}_name`}
                   value={w.name}
@@ -82,6 +87,9 @@ export const WeaponsSection: React.FC<WeaponsSectionProps> = ({
                 </select>
               </td>
               <td>
+                <span className="mobile-weapon-label">
+                  {t("weapons.skillHeader")}
+                </span>
                 <input
                   name={`weapon_${i}_skill`}
                   placeholder={i === 0 ? "Handgun" : "Skill"}
@@ -92,6 +100,9 @@ export const WeaponsSection: React.FC<WeaponsSectionProps> = ({
                 />
               </td>
               <td>
+                <span className="mobile-weapon-label">
+                  {t("weapons.damage")}
+                </span>
                 <input
                   name={`weapon_${i}_damage`}
                   placeholder={i === 0 ? "1d10" : "-"}
@@ -102,6 +113,9 @@ export const WeaponsSection: React.FC<WeaponsSectionProps> = ({
                 />
               </td>
               <td>
+                <span className="mobile-weapon-label">
+                  {t("weapons.range")}
+                </span>
                 <input
                   name={`weapon_${i}_range`}
                   placeholder={i === 0 ? "15" : "-"}
@@ -112,6 +126,9 @@ export const WeaponsSection: React.FC<WeaponsSectionProps> = ({
                 />
               </td>
               <td>
+                <span className="mobile-weapon-label">
+                  {t("weapons.attacksHeader")}
+                </span>
                 <input
                   name={`weapon_${i}_attacks`}
                   placeholder={i === 0 ? "1" : "-"}
@@ -122,6 +139,9 @@ export const WeaponsSection: React.FC<WeaponsSectionProps> = ({
                 />
               </td>
               <td>
+                <span className="mobile-weapon-label">
+                  {t("weapons.ammo")}
+                </span>
                 <input
                   name={`weapon_${i}_ammo`}
                   placeholder={i === 0 ? "6" : "-"}
