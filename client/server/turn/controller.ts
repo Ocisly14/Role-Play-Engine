@@ -632,6 +632,7 @@ export async function getLatestSession(
   res: Response
 ): Promise<void> {
   try {
+    res.setHeader("Cache-Control", "no-store");
     const userId = req.user!.userId;
     const serverState = ServerState.getInstance();
     const activeState = serverState.getDynamicGameState(userId);

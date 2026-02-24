@@ -78,6 +78,7 @@ export async function getWeapons(req: Request, res: Response): Promise<void> {
  */
 export async function getMods(req: Request, res: Response): Promise<void> {
   try {
+    res.setHeader("Cache-Control", "no-store");
     const modsDir = path.join(process.cwd(), "data", "Mods");
     const email = req.user?.email;
     if (!email) {

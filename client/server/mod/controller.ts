@@ -254,6 +254,7 @@ export async function getSharedMods(
   res: Response
 ): Promise<void> {
   try {
+    res.setHeader("Cache-Control", "no-store");
     const email = req.user?.email;
     if (!email) {
       res.status(401).json({ error: "Authentication required" });

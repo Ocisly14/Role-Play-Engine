@@ -6,6 +6,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
+import ReactMarkdown from "react-markdown";
 import { authFetch } from "../utils/authFetch";
 import { CharacterSheetModal } from "./CharacterSheetModal";
 
@@ -999,7 +1000,9 @@ export function GameSidebar({
                         : "bg-white/50"
                     }`}
                   >
-                    {msg.content}
+                    <ReactMarkdown className="markdown-content">
+                      {msg.content}
+                    </ReactMarkdown>
                   </div>
                 </div>
               ))}
