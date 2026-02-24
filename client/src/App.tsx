@@ -23,6 +23,7 @@ import { HomePage } from "./views/HomePage";
 import { ModSelectionPage } from "./views/ModSelectionPage";
 import { ModuleIntroPage } from "./views/ModuleIntroPage";
 import { StoryCreatorPage } from "./views/StoryCreatorPage";
+import { TutorialPage } from "./views/TutorialPage";
 import ForgotPassword from "./views/auth/ForgotPassword";
 import Login from "./views/auth/Login";
 import Register from "./views/auth/Register";
@@ -163,6 +164,7 @@ const AppRoutes: React.FC = () => {
           <Route path="/mod/select" element={<ModSelectionPage />} />
           <Route path="/mod/intro" element={<ModuleIntroPage />} />
           <Route path="/story/create" element={<StoryCreatorPage />} />
+          <Route path="/tutorial" element={<TutorialPage />} />
           <Route path="/game" element={<GamePage />} />
         </Route>
       </Routes>

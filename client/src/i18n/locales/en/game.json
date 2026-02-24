@@ -245,5 +245,74 @@
     "end": "— Combat Ends —"
   },
   "sceneTransition": "Scene Transition...",
-  "worldlineTransition": "Worldline Update..."
+  "worldlineTransition": "Worldline Update...",
+  "tutorial": {
+    "title": "Tutorial: Simulated Investigation",
+    "subtitle": "This is a safe demo UI and will not consume real game progress.",
+    "exit": "Back to Home",
+    "next": "Next",
+    "previous": "Previous",
+    "finish": "Finish Tutorial",
+    "skip": "Skip",
+    "stepCounter": "Step {{current}} / {{total}}",
+    "mock": {
+      "session": "Investigator: Lin Wenlan",
+      "locationTime": "Location: Overwater Reception | Time: Day 1 09:00",
+      "keeperMessage": "You came to Bora Bora for sun, lagoon dives and a break from routines - 2026, servers full of travel posts and curated resort experiences. You chose Azure Kave Resort for its overwater bungalows and easy access to the reef. On your first morning at breakfast you notice the resort is taut: a bungalow has been cordoned off, security and gendarmerie are on-site, and staff move with forced calm. Rumors drift through the lobby - a guest went missing overnight, management is anxious, and charter traffic to the main dock is disrupted. As visitors with time and curiosity, you are pulled into the situation: staff ask you to stay available for statements, fellow guests whisper about odd dreams, and the resort's operations director is managing arrivals and departures.",
+      "systemHint": "Send an action to interact with the world. The system will auto-suggest relevant skills.",
+      "skillSuggest": "Auto-suggested skills:",
+      "statusTitle": "Current Character Status",
+      "knowledgePrompt": "Talk to the Pensieve to quickly recall important events from earlier turns.",
+      "knowledgeQ": "Did we get any clues this morning near the overwater bungalows?",
+      "knowledgeA": "This morning, outside the cordon around Overwater Bungalow 12, Gendarmerie commander Capitaine Marc Gauthier told you that a guest disappeared from Bungalow 12 last night. On the missing guest's bed, you found a torn piece of bedsheet covered with biogenic particles and nacre. This matches reports from some guests who developed fine powder on their skin after strange tidal dreams. They also recorded unusual low-frequency sounds, which are currently being analyzed.",
+      "sceneTransitionInput": "I’m heading to the airport.",
+      "sceneTransitionReply": "The Seaplane Dock and Boarding Walkway\n\nYou avoid the worried, whispering tourists in the lobby and proceed north along the resort’s winding wooden boardwalk. The planks creak softly beneath your steps. The morning sun shines directly onto the lagoon, its glare forcing you to squint slightly. At this hour, you would normally hear the distinctive engine roar of the de Havilland “Twin Otter” seaplane, but now the air holds only the monotonous rhythm of waves slapping against the pontoons.\n\n## The Grounded Airfield\n\nWhen you reach the dock, the quiet stands in stark contrast to the usual bustle. Several seaplanes sit moored on the water, their wooden floats moving with the swell, producing a steady creaking sound. From the dockside operations office, the low hum of silent radio equipment occasionally drifts through the open window, and the air carries the scent of stale coffee. Inside the office, a few staff members—such as Nadia Kere and Jacques Fournier—are buried in piles of disordered paperwork, their expressions unusually anxious.\n\nIn the nearby pilots’ lounge, several pilots sit together, speaking in hushed tones. Pierre Dubois is showing his colleagues his private logbook, tapping certain coordinates on the chart with emphasis. Near the outer railing, a man named Silas Vang watches the movements of a gendarmerie patrol boat in the distance with a cool, appraising gaze.\n\n## An Unexpected Approach\n\nAs you observe the operations at the dock, a figure steps out from the nearby shadows and approaches you with a light stride. He appears to be in his early thirties, with sun-lightened hair and skin tanned from prolonged outdoor activity. He wears a refined set of lightweight designer resort attire, mirrored sunglasses perched on his nose, and a compact camera hanging from his chest.\n\n“This kind of dead silence is unusual here, isn’t it?” Kai Matthews stops a few steps away and speaks in an easy, professionally social tone. “I’m Kai Matthews. It seems it’s not just my influencer clients who are stuck because of this ‘operational adjustment’—even a distinguished gentleman like yourself has to endure nothing but the sound of the waves.”\n\nHe adjusts his sunglasses, their lenses reflecting you and the grounded planes. Though a warm smile rests on his face, you catch a sharp glint of calculation in his eyes—he seems to be assessing who you are, trying to extract some inside information about the lockdown from you."
+    },
+    "steps": {
+      "message": {
+        "title": "Message Box: Send Actions to Drive the Story",
+        "description": "Sending a message here interacts with the world. Use actions like observe, talk, investigate, or move to progress the story."
+      },
+      "messageDemo": {
+        "title": "Auto Input and Skill Suggestions",
+        "description": "After you click Next, the system auto-types “观察周围，看有没有可疑人物” and suggests relevant skills. You can choose a skill check or use direct dialogue to extract secrets and clues."
+      },
+      "sidebar": {
+        "title": "Status Panel: Character, Time, and Location",
+        "description": "The sidebar keeps core context visible: your current character condition, in-game time, and location, so you can evaluate risk and resources at any moment."
+      },
+      "fatigue": {
+        "title": "Fatigue: Penalty After 6 Hours Without Rest",
+        "description": "If you go over 6 hours without rest, you enter the Fatigued state. Skill check difficulty increases by one level, so pacing and recovery matter."
+      },
+      "restButton": {
+        "title": "Rest Button: Recover Through Time",
+        "description": "Use the Rest button next to the input to trigger recovery actions. Spending time on rest can stabilize future checks."
+      },
+      "restPanel": {
+        "title": "Rest Panel: Compare Recovery Outcomes",
+        "description": "Different rest durations provide different benefits. Choose short rest, long rest, or full recovery based on current threat level."
+      },
+      "sceneTransitionInput": {
+        "title": "Scene Transition (1/2): Describe Movement Action",
+        "description": "When the player needs to move to a new location, they only need to describe the action in the input box."
+      },
+      "sceneTransitionResult": {
+        "title": "Scene Transition (2/2): Send and Receive Narrative",
+        "description": "After a brief world update, the player enters a new scene."
+      },
+      "knowledge": {
+        "title": "Pensieve: Recall What Happened Before",
+        "description": "Ask the Pensieve to revisit earlier turns, NPC behavior, and key clues so you do not miss critical information in long sessions."
+      },
+      "map": {
+        "title": "Dynamic Map (1/2): Not Fully Open",
+        "description": "The dynamic map is not fully open at first, and scene transitions update it."
+      },
+      "mapUpdated": {
+        "title": "Dynamic Map (2/2): Updated",
+        "description": "The map has updated, and new location information is now shown on the macro map."
+      }
+    }
+  }
 }
