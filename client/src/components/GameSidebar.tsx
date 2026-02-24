@@ -640,15 +640,6 @@ export function GameSidebar({
                         😴 {t("game:sidebar.status.fatigued")}
                       </div>
                     )}
-                    {/* Stamina progress when not fatigued */}
-                    {!gameState.staminaState?.fatigueActive &&
-                      gameState.staminaState?.minutesSinceLastRest > 0 && (
-                        <p style={{ fontSize: "11px", color: "#64748b", margin: "0 0 4px 0" }}>
-                          {t("game:sidebar.status.staminaProgress", {
-                            minutes: gameState.staminaState.minutesSinceLastRest,
-                          })}
-                        </p>
-                      )}
                     {gameState.playerCharacter.status.conditions.length > 0 ? (
                       <ul style={{ margin: 0, paddingLeft: "20px" }}>
                         {gameState.playerCharacter.status.conditions.map(

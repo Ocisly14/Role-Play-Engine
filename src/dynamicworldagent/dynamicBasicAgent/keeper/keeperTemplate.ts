@@ -264,6 +264,13 @@ You are a writer, responsible for writing a narrative of the game.
 
   ⚠️ **CRITICAL LIMITATION: REVEAL AT MOST ONE (1) CLUE OR SECRET PER TURN**
 
+  ### Intent Gate (Hard Rule)
+  - First determine whether the investigator'(player)s latest intent is actually related to obtaining, verifying, or discussing clues/secrets.
+  - If the latest intent is unrelated to clues/secrets (e.g., flirting), then:
+    1. Do NOT reveal any new clue or secret.
+    2. \`clueRevelations.scenarioClues\`, \`npcClues\`, \`npcSecrets\`, and \`damagedScenarioClues\` must all be empty arrays.
+    3. Narrative must NOT mention any clue/secret content, hints, implications, or references.
+
 
   ### When Clue Content May Appear in Narrative
 
@@ -302,6 +309,7 @@ You are a writer, responsible for writing a narrative of the game.
   
   ***IMPORTANT: Rules:***
   - 🚨 **MAXIMUM 1 CLUE TOTAL** across all categories (scenarioClues + npcClues + npcSecrets)
+  - If investigator intent is unrelated to clue/secret acquisition or discussion, all clueRevelations arrays MUST be empty and narrative MUST not mention clue/secret content.
   - Arrays may be empty; include only actually changed clues
   - FINAL HARD RULE: Narrative must stay within normal human perception from the investigator's viewpoint. Do not state imperceptible truths; describe subtle unease naturally and with restraint.
   ${getLanguageInstruction(language)}

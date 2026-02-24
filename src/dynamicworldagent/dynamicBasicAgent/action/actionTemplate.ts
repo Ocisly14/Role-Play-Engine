@@ -168,6 +168,12 @@ The player can ONLY use items that:
 2. Are explicitly available in the current scene (mentioned in scenario description or conditions)
 If the player attempts to use an item they don't have and isn't available in the scene, the action should fail with an appropriate explanation (e.g., "You don't have [item name]", "There is no [item name] available here").
 
+STATUS CONDITIONS UPDATES:
+- If this action adds/removes/clears temporary status effects (e.g., injured, dazed, poisoned, restrained), write them in "stateUpdate.*.status.conditions".
+- "conditions" must be a string array.
+- Use [] to clear all current conditions for that character.
+- Omit "conditions" when there is no change.
+
 TIME ESTIMATION:
 Estimate how many minutes this action realistically takes in game time. Consider the nature and complexity of the action:
 - Quick actions: 1-10 minutes (glancing, brief conversation, opening doors)
@@ -317,7 +323,8 @@ Return ONLY valid JSON in this exact structure:
         "hp": -3,              // HP change (negative for damage, positive for healing)
         "sanity": 0,           // Sanity change
         "magic": 0,            // Magic points change
-        "luck": 0              // Luck change
+        "luck": 0,             // Luck change
+        "conditions": ["Injured", "Dazed"] // Optional: full conditions list for this character after this action
       },
       "inventory": {           // Optional: only if inventory changes
         "add": [{"name": "item name", "quantity": 1}],
@@ -328,7 +335,7 @@ Return ONLY valid JSON in this exact structure:
       {
         "id": "npc-id",        // MUST use exact NPC id
         "name": "NPC Name",
-        "status": {"hp": -4, "sanity": 0},
+        "status": {"hp": -4, "sanity": 0, "conditions": ["Bleeding"]},
         "appearance": "Updated appearance description based on the result of the action (optional)"
       }
     ]
@@ -406,7 +413,7 @@ ${
         }
       ],
       "stateUpdate": {  // Optional: NPC state/appearance changes
-        "status": {"hp": 0, "sanity": -1},
+        "status": {"hp": 0, "sanity": -1, "conditions": ["Shaken"]},
         "inventory": {"add": [{"name": "item"}]},
         "appearance": "Updated appearance description based on the result of the action (optional)"
       }

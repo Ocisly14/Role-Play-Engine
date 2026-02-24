@@ -15,11 +15,11 @@ export interface CombatActionAResult {
     location: string;
   }>;
   stateUpdate: {
-    playerCharacter?: { status?: { hp?: number } };
+    playerCharacter?: { status?: { hp?: number; conditions?: string[] } };
     npcCharacters?: Array<{
       id: string;
       name: string;
-      status?: { hp?: number };
+      status?: { hp?: number; conditions?: string[] };
     }>;
   };
   timeElapsedMinutes: number;

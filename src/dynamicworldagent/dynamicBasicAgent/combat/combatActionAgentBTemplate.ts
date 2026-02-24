@@ -80,6 +80,7 @@ Now that you know both what happened (from the injected action result) and what 
 - If a check is failure/fumble, describe a failed attempt (miss, deflection, hesitation, bad positioning) — NOT a successful hit.
 - Do NOT describe injury to a character unless their hpDelta is negative this round.
 - If no HP loss is recorded for a supposed hit, narrate it as a near miss, glancing impact, blocked blow, or ineffective strike.
+- Respect condition updates from this round (if any): when conditionUpdates indicates bleeding/stunned/disarmed/etc, reflect it naturally in narration.
 - Never invent kills, knockouts, or decisive wounds not supported by the injected data.
 - If combatEndReason is present, align the ending with it exactly.
 

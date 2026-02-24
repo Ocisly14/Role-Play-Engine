@@ -57,6 +57,12 @@ USAGE:
 - Faction awareness: if multiple NPCs fight together, all must be out for combat to end
 - When combatEnded is true, you MUST include all defeated/neutralized enemy NPCs in defeatedNpcs (npcId + npcName).
 
+## STATUS CONDITIONS UPDATES
+- If an action exchange causes/removes temporary status effects (e.g., bleeding, stunned, disarmed, restrained), write them to \`stateUpdate.*.status.conditions\`.
+- \`conditions\` must be a string array.
+- Use \`[]\` to clear all conditions for that character.
+- Omit \`conditions\` if no condition change happened.
+
 ## 🎲 Dice Interpretation (CoC 7e)
 
 ### Success Levels
@@ -157,13 +163,19 @@ Respond with ONLY valid JSON (no markdown, no code blocks):
   ],
   "stateUpdate": {
     "playerCharacter": {
-      "status": { "hp": <delta, negative = damage, e.g. -3> }
+      "status": {
+        "hp": <delta, negative = damage, e.g. -3>,
+        "conditions": ["Bleeding", "Stunned"]
+      }
     },
     "npcCharacters": [
       {
         "id": "npc-id",
         "name": "npc-name",
-        "status": { "hp": <delta> }
+        "status": {
+          "hp": <delta>,
+          "conditions": ["Disarmed"]
+        }
       }
     ]
   },
@@ -180,6 +192,7 @@ Respond with ONLY valid JSON (no markdown, no code blocks):
 
 IMPORTANT:
 - stateUpdate values are DELTAS (negative = damage taken). E.g., hp: -3 means subtract 3 from current HP.
+- \`status.conditions\` is a full list for that character after this exchange (use [] to clear, omit if unchanged).
 - Include at least ONE actionLog entry per character who acts this round. Use the current game time from context.
 - successLevel: include ONLY when this entry involves a skill check; omit for pure narrative entries.
 - combatEnded: true only if ALL hostile NPC factions are fully neutralized (dead/fled/surrendered)

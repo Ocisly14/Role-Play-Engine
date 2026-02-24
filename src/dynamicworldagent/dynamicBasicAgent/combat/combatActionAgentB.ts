@@ -142,6 +142,16 @@ export class CombatActionAgentB {
               hpDelta: npc.status?.hp ?? 0,
             })),
           },
+          conditionUpdates: {
+            player:
+              combatAResult.stateUpdate?.playerCharacter?.status?.conditions ??
+              null,
+            npcs: (combatAResult.stateUpdate?.npcCharacters ?? []).map((npc) => ({
+              id: npc.id,
+              name: npc.name,
+              conditions: npc.status?.conditions ?? null,
+            })),
+          },
           timeElapsedMinutes: combatAResult.timeElapsedMinutes,
         },
         null,

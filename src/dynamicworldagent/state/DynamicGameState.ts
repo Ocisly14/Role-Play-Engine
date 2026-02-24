@@ -1405,6 +1405,19 @@ export class DynamicGameStateManager {
     // Update status values (hp, sanity, mp, etc.)
     if (updates.status) {
       for (const [key, value] of Object.entries(updates.status)) {
+        if (key === "conditions" && Array.isArray(value)) {
+          const normalizedConditions = Array.from(
+            new Set(
+              value
+                .filter((item): item is string => typeof item === "string")
+                .map((item) => item.trim())
+                .filter((item) => item.length > 0)
+            )
+          );
+          character.status.conditions = normalizedConditions;
+          continue;
+        }
+
         if (typeof value === "number" && key in character.status) {
           // Apply differential update (e.g., hp: -2 means subtract 2)
           character.status[key] += value;
