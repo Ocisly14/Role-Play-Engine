@@ -100,6 +100,92 @@ export async function createCharacter(
 }
 
 /**
+ * Update an existing character
+ * PUT /api/character/:characterId
+ */
+export async function updateCharacter(
+  req: Request,
+  res: Response
+): Promise<void> {
+  try {
+    const { characterId } = req.params;
+    const characterData = req.body;
+
+    if (!characterData || !characterData.identity?.name) {
+      res.status(400).json({ error: "Character name is required" });
+      return;
+    }
+
+    const prisma = getPrismaClient();
+    const existingCharacter = await prisma.character.findFirst({
+      where: {
+        characterId,
+        emailId: req.user!.email,
+        isNpc: false,
+      },
+      select: { characterId: true },
+    });
+
+    if (!existingCharacter) {
+      res.status(404).json({
+        success: false,
+        error: "Character not found",
+      });
+      return;
+    }
+
+    // Reuse the existing mapper and keep the same characterId for updates.
+    const dbCharacter = prepareCharacterForDB({
+      ...characterData,
+      characterId,
+    });
+    dbCharacter.email_id = req.user!.email;
+
+    await prisma.character.update({
+      where: { characterId },
+      data: {
+        name: dbCharacter.name,
+        attributes: dbCharacter.attributes
+          ? JSON.parse(dbCharacter.attributes)
+          : {},
+        status: dbCharacter.status ? JSON.parse(dbCharacter.status) : {},
+        inventory: dbCharacter.inventory
+          ? JSON.parse(dbCharacter.inventory)
+          : null,
+        skills: dbCharacter.skills ? JSON.parse(dbCharacter.skills) : null,
+        notes: dbCharacter.notes,
+        isNpc: Boolean(dbCharacter.is_npc),
+        occupation: dbCharacter.occupation,
+        age: dbCharacter.age ? Number(dbCharacter.age) : null,
+        appearance: dbCharacter.appearance,
+        personality: dbCharacter.personality,
+        background: dbCharacter.background,
+        goals: dbCharacter.goals ? JSON.parse(dbCharacter.goals) : null,
+        secrets: dbCharacter.secrets ? JSON.parse(dbCharacter.secrets) : null,
+        emailId: dbCharacter.email_id,
+        updatedAt: new Date(),
+      },
+    });
+
+    console.log(
+      `[${new Date().toISOString()}] Character updated: ${characterData.identity.name} (${characterId})`
+    );
+
+    res.json({
+      success: true,
+      characterId,
+      message: `Character ${characterData.identity.name} updated successfully.`,
+      timestamp: new Date().toISOString(),
+    });
+  } catch (error) {
+    console.error("Error updating character:", error);
+    res.status(500).json({
+      error: "Failed to update character: " + (error as Error).message,
+    });
+  }
+}
+
+/**
  * Get all characters
  * GET /api/characters
  */

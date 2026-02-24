@@ -7,6 +7,8 @@
 import { useEffect, useState } from "react";
 import { createPortal } from "react-dom";
 import { useTranslation } from "react-i18next";
+import { useNavigate } from "react-router-dom";
+import { useSkillTranslation } from "../hooks/useSkillTranslation";
 import { authFetch } from "../utils/authFetch";
 import "./CharacterSheetModal.css";
 
@@ -67,8 +69,16 @@ export function CharacterSheetModal({
   apiBaseUrl = "/api",
   onClose,
 }: CharacterSheetModalProps) {
-  const { t } = useTranslation("character");
+  const { t, i18n } = useTranslation(["character", "common"]);
+  const { translateSkill } = useSkillTranslation();
+  const navigate = useNavigate();
   const [character, setCharacter] = useState<CharacterData | null>(null);
+  const [resolvedCharacterId, setResolvedCharacterId] = useState<string | null>(
+    characterId || null
+  );
+  const [occupationMap, setOccupationMap] = useState<Record<string, string>>(
+    {}
+  );
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -85,11 +95,9 @@ export function CharacterSheetModal({
           if (data.success && data.character) {
             // Map database character to CharacterData format
             const char: any = data.character;
-            console.log("Raw character data from API:", char);
-            console.log("Occupation from API:", char.occupation);
-            console.log("Skills data:", char.skills);
-            console.log("Weapons data:", char.weapons);
-            console.log("Notes data:", char.notes);
+            setResolvedCharacterId(
+              char.character_id || char.characterId || characterId
+            );
 
             const characterData: CharacterData = {
               name: char.name || "",
@@ -130,11 +138,6 @@ export function CharacterSheetModal({
               backstory: char.notes?.backstory || undefined,
             };
 
-            console.log("Mapped characterData:", characterData);
-            console.log("Mapped occupation:", characterData.occupation);
-            console.log("Mapped skills:", characterData.skills);
-            console.log("Mapped weapons:", characterData.weapons);
-
             setCharacter(characterData);
             setError(null);
           } else {
@@ -152,6 +155,7 @@ export function CharacterSheetModal({
           ) {
             // Map gameState.playerCharacter to our CharacterData format
             const playerChar = data.gameState.playerCharacter;
+            setResolvedCharacterId(playerChar.id || null);
             const characterData: CharacterData = {
               name: playerChar.name || "",
               occupation: playerChar.occupation || undefined,
@@ -205,11 +209,77 @@ export function CharacterSheetModal({
     fetchCharacterData();
   }, [apiBaseUrl, sessionId, characterId]);
 
+  useEffect(() => {
+    if (!i18n.language?.startsWith("zh")) {
+      return;
+    }
+
+    let cancelled = false;
+
+    const fetchOccupationMap = async () => {
+      try {
+        const response = await authFetch(`${apiBaseUrl}/occupations`);
+        const data = await response.json();
+        if (!response.ok || !data.success || !data.occupations?.groups) {
+          return;
+        }
+
+        const nextMap: Record<string, string> = {};
+        data.occupations.groups.forEach((group: any) => {
+          group.occupations?.forEach((occ: any) => {
+            const en = typeof occ.name_en === "string" ? occ.name_en.trim() : "";
+            const zh = typeof occ.name_zh === "string" ? occ.name_zh.trim() : "";
+            if (en && zh) {
+              nextMap[en] = zh;
+            }
+          });
+        });
+
+        if (!cancelled) {
+          setOccupationMap(nextMap);
+        }
+      } catch (err) {
+        console.warn("Failed to load occupation translations:", err);
+      }
+    };
+
+    fetchOccupationMap();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [apiBaseUrl, i18n.language]);
+
   // Handle click on backdrop to close modal
   const handleBackdropClick = (e: React.MouseEvent<HTMLDivElement>) => {
     if (e.target === e.currentTarget) {
       onClose();
     }
+  };
+
+  const handleEdit = () => {
+    if (!resolvedCharacterId) {
+      return;
+    }
+
+    navigate(`/character/create?characterId=${encodeURIComponent(resolvedCharacterId)}`);
+    onClose();
+  };
+
+  const getDisplayOccupation = (occupation?: string): string => {
+    if (!occupation) {
+      return "-";
+    }
+    if (!i18n.language?.startsWith("zh")) {
+      return occupation;
+    }
+    return occupationMap[occupation] || occupation;
+  };
+
+  const renderAttributeHeader = (
+    key: "STR" | "CON" | "DEX" | "APP" | "POW" | "SIZ" | "INT" | "EDU" | "LCK"
+  ): string => {
+    return `${key} (${t(`attributes.${key}`)})`;
   };
 
   // Determine what to render
@@ -242,9 +312,16 @@ export function CharacterSheetModal({
     modalContent = (
       <div className="character-modal-backdrop" onClick={handleBackdropClick}>
         <div className="character-modal-content">
-          <button className="modal-close-btn" onClick={onClose}>
-            ✕
-          </button>
+          <div className="modal-action-buttons">
+            {characterId && resolvedCharacterId && (
+              <button className="modal-edit-btn" onClick={handleEdit}>
+                {t("common:button.edit")}
+              </button>
+            )}
+            <button className="modal-close-btn" onClick={onClose}>
+              ✕
+            </button>
+          </div>
 
           <div className="character-sheet-view">
             <h1>
@@ -261,7 +338,7 @@ export function CharacterSheetModal({
                   <th>{t("identity.name")}</th>
                   <td>{character.name || "-"}</td>
                   <th>{t("identity.occupation")}</th>
-                  <td>{character.occupation || "-"}</td>
+                  <td>{getDisplayOccupation(character.occupation)}</td>
                 </tr>
                 <tr>
                   <th>{t("identity.age")}</th>
@@ -283,15 +360,15 @@ export function CharacterSheetModal({
             <table>
               <tbody>
                 <tr>
-                  <th>STR</th>
-                  <th>CON</th>
-                  <th>DEX</th>
-                  <th>APP</th>
-                  <th>POW</th>
-                  <th>SIZ</th>
-                  <th>INT</th>
-                  <th>EDU</th>
-                  <th>LCK</th>
+                  <th>{renderAttributeHeader("STR")}</th>
+                  <th>{renderAttributeHeader("CON")}</th>
+                  <th>{renderAttributeHeader("DEX")}</th>
+                  <th>{renderAttributeHeader("APP")}</th>
+                  <th>{renderAttributeHeader("POW")}</th>
+                  <th>{renderAttributeHeader("SIZ")}</th>
+                  <th>{renderAttributeHeader("INT")}</th>
+                  <th>{renderAttributeHeader("EDU")}</th>
+                  <th>{renderAttributeHeader("LCK")}</th>
                 </tr>
                 <tr>
                   <td>{character.STR || "-"}</td>
@@ -354,7 +431,9 @@ export function CharacterSheetModal({
                   .sort(([a], [b]) => a.localeCompare(b))
                   .map(([skillName, skillValue]) => (
                     <div key={skillName} className="skill-display-item">
-                      <span className="skill-display-name">{skillName}</span>
+                      <span className="skill-display-name">
+                        {translateSkill(skillName)}
+                      </span>
                       <span className="skill-display-value">{skillValue}</span>
                     </div>
                   ))}
@@ -381,7 +460,9 @@ export function CharacterSheetModal({
                   {character.weapons.map((weapon, idx) => (
                     <tr key={idx}>
                       <td>{weapon.name || "-"}</td>
-                      <td>{weapon.skill || "-"}</td>
+                      <td>
+                        {weapon.skill ? translateSkill(weapon.skill) : "-"}
+                      </td>
                       <td>{weapon.damage || "-"}</td>
                       <td>{weapon.range || "-"}</td>
                       <td>{weapon.attacks || "-"}</td>

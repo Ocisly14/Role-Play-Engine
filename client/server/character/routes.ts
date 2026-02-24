@@ -11,6 +11,7 @@ router.post(
   characterController.generateRandomAttrs
 );
 router.post("/character", characterController.createCharacter);
+router.put("/character/:characterId", characterController.updateCharacter);
 router.get("/characters", characterController.getAllCharacters);
 router.get("/character/:characterId", characterController.getCharacterById);
 

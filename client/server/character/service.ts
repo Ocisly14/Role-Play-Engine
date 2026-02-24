@@ -7,7 +7,9 @@
  * @returns Formatted character data ready for database
  */
 export function prepareCharacterForDB(characterData: any): any {
-  const characterId = `char-${Date.now()}-${Math.random().toString(36).substring(2, 9)}`;
+  const characterId =
+    characterData?.characterId ||
+    `char-${Date.now()}-${Math.random().toString(36).substring(2, 9)}`;
 
   return {
     character_id: characterId,
@@ -136,13 +138,33 @@ export function parseCharacterFromDB(character: any): any {
     });
   }
 
-  // Process skills to extract the value
+  // Process skills: keep numeric totals for display and preserve breakdown for edit mode.
   const processedSkills: any = {};
+  const processedSkillDetails: any = {};
   if (skills) {
     Object.keys(skills).forEach((skillName) => {
       const skillData = skills[skillName];
-      if (typeof skillData === "object" && skillData.value !== undefined) {
-        processedSkills[skillName] = skillData.value;
+      if (typeof skillData === "object" && skillData !== null) {
+        const base = Number(skillData.base);
+        const occupationalPoints = Number(skillData.occupationalPoints);
+        const interestPoints = Number(skillData.interestPoints);
+        const explicitTotal =
+          skillData.value !== undefined ? Number(skillData.value) : Number(skillData.total);
+        const computedTotal =
+          (Number.isFinite(base) ? base : 0) +
+          (Number.isFinite(occupationalPoints) ? occupationalPoints : 0) +
+          (Number.isFinite(interestPoints) ? interestPoints : 0);
+        const total = Number.isFinite(explicitTotal) ? explicitTotal : computedTotal;
+
+        processedSkills[skillName] = total;
+        processedSkillDetails[skillName] = {
+          base: Number.isFinite(base) ? base : 0,
+          occupationalPoints: Number.isFinite(occupationalPoints)
+            ? occupationalPoints
+            : 0,
+          interestPoints: Number.isFinite(interestPoints) ? interestPoints : 0,
+          total,
+        };
       } else {
         processedSkills[skillName] = skillData;
       }
@@ -155,6 +177,7 @@ export function parseCharacterFromDB(character: any): any {
     derived,
     status,
     skills: processedSkills,
+    skillsDetail: processedSkillDetails,
     weapons,
     items,
     notes,

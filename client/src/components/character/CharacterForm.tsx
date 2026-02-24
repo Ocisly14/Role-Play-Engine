@@ -11,6 +11,8 @@ interface CharacterFormProps {
   form: Record<string, string>;
   derivedAttributes: Record<string, string | number>;
   onChange: (key: string, value: string) => void;
+  isEditMode?: boolean;
+  loadingCharacter?: boolean;
 
   // Occupation
   occupations: any[];
@@ -55,6 +57,8 @@ export const CharacterForm: React.FC<CharacterFormProps> = ({
   form,
   derivedAttributes,
   onChange,
+  isEditMode = false,
+  loadingCharacter = false,
   occupations,
   selectedOccupation,
   handleOccupationSelect,
@@ -192,8 +196,18 @@ export const CharacterForm: React.FC<CharacterFormProps> = ({
               {t("form.clearMessage")}
             </button>
           )}
-          <button className="pill-btn" type="submit" disabled={saving}>
-            {saving ? t("form.submitting") : `🎲 ${t("form.submit")}`}
+          <button
+            className="pill-btn"
+            type="submit"
+            disabled={saving || loadingCharacter}
+          >
+            {saving
+              ? isEditMode
+                ? t("form.updating")
+                : t("form.submitting")
+              : loadingCharacter
+                ? t("common:loading.loading")
+                : `🎲 ${isEditMode ? t("form.update") : t("form.submit")}`}
           </button>
         </div>
       </form>

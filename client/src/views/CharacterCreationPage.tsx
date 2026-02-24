@@ -9,9 +9,11 @@ export const CharacterCreationPage: React.FC = () => {
 
   // Check if creating from game flow via URL query param
   const isCreatingFromGameFlow = searchParams.get("fromGame") === "true";
+  const editingCharacterId = searchParams.get("characterId") || undefined;
 
   const characterCreation = useCharacterCreation({
-    onCharacterCreated: (characterId) => {
+    characterId: editingCharacterId,
+    onCharacterCreated: () => {
       if (isCreatingFromGameFlow) {
         // If creating from game flow, navigate back to character selection
         navigate("/character/select");

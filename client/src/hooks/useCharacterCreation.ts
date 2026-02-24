@@ -5,6 +5,7 @@ import { authFetch } from "../utils/authFetch";
 
 interface UseCharacterCreationProps {
   onCharacterCreated?: (characterId: string) => void;
+  characterId?: string;
 }
 
 const OCCUPATIONAL_ATTRIBUTES = [
@@ -161,12 +162,99 @@ function calculateOccupationalPointsFromExpression(
   }
 }
 
+function mapCharacterToForm(character: any): Record<string, string> {
+  const formData: Record<string, string> = {};
+  const notes = character?.notes || {};
+  const attributes = character?.attributes || {};
+  const skills = character?.skills || {};
+  const skillsDetail = character?.skillsDetail || {};
+  const weapons = Array.isArray(character?.weapons) ? character.weapons : [];
+  const items = Array.isArray(character?.items) ? character.items : [];
+
+  formData.name = character?.name || "";
+  formData.occupation = character?.occupation || "";
+  formData.age =
+    typeof character?.age === "number" ? String(character.age) : "";
+  formData.gender = character?.gender || notes.gender || "";
+  formData.era = notes.era || "";
+  formData.residence = notes.residence || "";
+  formData.birthplace = notes.birthplace || "";
+  formData.appearance = notes.appearance || "";
+  formData.ideology = notes.ideology || "";
+  formData.people = notes.people || "";
+  formData.gear = notes.gear || "";
+  formData.backstory = notes.backstory || "";
+
+  for (const key of [
+    "STR",
+    "CON",
+    "DEX",
+    "APP",
+    "POW",
+    "SIZ",
+    "INT",
+    "EDU",
+    "LCK",
+  ]) {
+    const value = Number(attributes[key]);
+    formData[key] = Number.isFinite(value) && value > 0 ? String(value) : "";
+  }
+
+  SKILLS.forEach((skill) => {
+    const detail = skillsDetail[skill.name];
+    const detailOcc = Number(detail?.occupationalPoints);
+    const detailInt = Number(detail?.interestPoints);
+
+    if (Number.isFinite(detailOcc) || Number.isFinite(detailInt)) {
+      const occ = Number.isFinite(detailOcc) ? Math.max(detailOcc, 0) : 0;
+      const int = Number.isFinite(detailInt) ? Math.max(detailInt, 0) : 0;
+      formData[`skill_occ_${skill.name}`] = occ > 0 ? String(occ) : "";
+      formData[`skill_int_${skill.name}`] = int > 0 ? String(int) : "";
+      return;
+    }
+
+    // Backward-compatibility for legacy data without stored breakdown.
+    const skillValue = Number(skills[skill.name]);
+    const base = Number.parseInt(skill.base.replace("%", "")) || 0;
+    const extra = Number.isFinite(skillValue)
+      ? Math.max(skillValue - base, 0)
+      : 0;
+
+    formData[`skill_occ_${skill.name}`] = extra > 0 ? String(extra) : "";
+    formData[`skill_int_${skill.name}`] = "";
+  });
+
+  [0, 1, 2].forEach((index) => {
+    const weapon = weapons[index];
+    formData[`weapon_${index}_name`] = weapon?.name || "";
+    formData[`weapon_${index}_skill`] = weapon?.skill || "";
+    formData[`weapon_${index}_damage`] = weapon?.damage || "";
+    formData[`weapon_${index}_range`] = weapon?.range || "";
+    formData[`weapon_${index}_attacks`] = weapon?.attacks || "";
+    formData[`weapon_${index}_ammo`] = weapon?.ammo || "";
+  });
+
+  [0, 1, 2, 3, 4].forEach((index) => {
+    const item = items[index];
+    formData[`item_${index}_name`] = item?.name || "";
+    formData[`item_${index}_quantity`] =
+      typeof item?.quantity === "number" ? String(item.quantity) : "";
+    formData[`item_${index}_description`] =
+      item?.properties?.description || "";
+  });
+
+  return formData;
+}
+
 export const useCharacterCreation = ({
   onCharacterCreated,
+  characterId,
 }: UseCharacterCreationProps = {}) => {
   const { t } = useTranslation(["character", "common"]);
+  const isEditMode = Boolean(characterId);
   // Form state
   const [form, setForm] = useState<Record<string, string>>({});
+  const [loadingCharacter, setLoadingCharacter] = useState(isEditMode);
 
   // Occupation and skills
   const [occupations, setOccupations] = useState<any[]>([]);
@@ -187,6 +275,44 @@ export const useCharacterCreation = ({
     type: "success" | "error";
     text: string;
   } | null>(null);
+
+  // Load existing character when in edit mode.
+  useEffect(() => {
+    const fetchCharacter = async () => {
+      if (!characterId) {
+        setLoadingCharacter(false);
+        return;
+      }
+
+      setLoadingCharacter(true);
+      setSaveMessage(null);
+
+      try {
+        const response = await authFetch(
+          `/api/character/${encodeURIComponent(characterId)}`
+        );
+        const data = await response.json();
+
+        if (response.ok && data.success && data.character) {
+          setForm(mapCharacterToForm(data.character));
+        } else {
+          throw new Error(data.error || t("common:error.generic"));
+        }
+      } catch (error) {
+        console.error("Error loading character for edit:", error);
+        setSaveMessage({
+          type: "error",
+          text: `${t("character:sheet.loadError")}: ${
+            error instanceof Error ? error.message : t("common:error.generic")
+          }`,
+        });
+      } finally {
+        setLoadingCharacter(false);
+      }
+    };
+
+    fetchCharacter();
+  }, [characterId, t]);
 
   // Fetch occupations on mount
   useEffect(() => {
@@ -455,7 +581,7 @@ export const useCharacterCreation = ({
     setAttributeOptions([]);
   }, []);
 
-  // Handle character creation
+  // Handle character save (create / update)
   const handleCreateCharacter = async () => {
     if (!form.name) {
       setSaveMessage({
@@ -469,8 +595,13 @@ export const useCharacterCreation = ({
     setSaveMessage(null);
 
     try {
-      const response = await authFetch("/api/character", {
-        method: "POST",
+      const endpoint = isEditMode
+        ? `/api/character/${encodeURIComponent(characterId || "")}`
+        : "/api/character";
+      const method = isEditMode ? "PUT" : "POST";
+
+      const response = await authFetch(endpoint, {
+        method,
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(characterData),
       });
@@ -478,7 +609,12 @@ export const useCharacterCreation = ({
       const data = await response.json();
 
       if (response.ok && data.success) {
-        setSaveMessage({ type: "success", text: t("character:form.success") });
+        setSaveMessage({
+          type: "success",
+          text: isEditMode
+            ? t("character:form.updateSuccess")
+            : t("character:form.success"),
+        });
 
         if (onCharacterCreated && data.characterId) {
           onCharacterCreated(data.characterId);
@@ -486,7 +622,9 @@ export const useCharacterCreation = ({
       } else {
         setSaveMessage({
           type: "error",
-          text: `${t("character:form.failed")}: ${
+          text: `${
+            isEditMode ? t("character:form.updateFailed") : t("character:form.failed")
+          }: ${
             data.error || t("common:error.generic")
           }`,
         });
@@ -506,6 +644,8 @@ export const useCharacterCreation = ({
     // Form state
     form,
     onChange,
+    isEditMode,
+    loadingCharacter,
 
     // Occupation
     occupations,
