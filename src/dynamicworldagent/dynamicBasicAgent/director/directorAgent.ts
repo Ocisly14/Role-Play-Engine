@@ -2054,6 +2054,12 @@ export class DirectorAgent {
       const parsedTimeline = this.parseModelJson<{
         actionTimeline?: TimelineBucket[];
         SuddenActionLogs?: SuddenActionNpcUpdate[];
+        globalTrigger?: {
+          timeRestriction?: string;
+          timeReason?: string;
+          events?: string[];
+          eventReasons?: string[];
+        };
       }>(phase1Response, "Non-player Phase 1 timeline");
       if (
         !parsedTimeline ||
@@ -2066,6 +2072,15 @@ export class DirectorAgent {
           `   ❌ Non-player Phase 1 response missing actionTimeline/SuddenActionLogs`
         );
         return;
+      }
+
+      // Always update globalTrigger: replace with new value or clear previous
+      if (parsedTimeline.globalTrigger) {
+        gameStateManager.setGlobalTrigger(parsedTimeline.globalTrigger);
+        console.log(`   ✓ Updated global trigger condition`);
+      } else {
+        gameStateManager.setGlobalTrigger(null);
+        console.log(`   ✓ No significant upcoming events, cleared global trigger`);
       }
 
       const cleanedTimeline: TimelineBucket[] = [];

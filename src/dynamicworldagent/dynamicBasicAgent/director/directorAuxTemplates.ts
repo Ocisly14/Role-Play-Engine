@@ -47,7 +47,6 @@ Determine if the events described in the global trigger have occurred.
 
 **Evaluation:**
 - Check if the retrieved trigger evidence and current-turn action logs provide clear evidence that the trigger events have happened
-- Consider logical implications (e.g., if someone left for a destination, they may have arrived)
 - Be strict — only return true if there is solid evidence
 
 ### Step 2: Determine if Global Trigger Causes Game End
@@ -58,7 +57,7 @@ If the global trigger has been triggered, check if it causes game end:
 
 ### Step 3: Check Victory Conditions
 
-If a victory trigger is defined, determine if **ANY ONE** condition has been fulfilled:
+Determine if **ANY ONE** condition has been fulfilled:
 - Check each condition individually against the retrieved trigger evidence and current-turn action logs
 - If at least one condition has solid direct evidence, set victoryAchieved = true
 - Be strict — only count conditions with solid, direct evidence

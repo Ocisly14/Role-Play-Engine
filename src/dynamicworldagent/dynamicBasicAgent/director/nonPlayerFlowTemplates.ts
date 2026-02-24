@@ -92,6 +92,22 @@ IMPORTANT:
     - realistically move into player's current scene, and
     - perform exactly one impactful action there.
   - Keep it coherent with goals/personality/secrets/knowledge/globalTrigger.
+- Global Trigger (REQUIRED):
+  - You MUST evaluate and output a globalTrigger field based on the NPC action timeline and endState progression.
+  - Generate a new globalTrigger if there are significant future events or time-sensitive developments ahead.
+  - If no significant upcoming events exist, omit the globalTrigger field entirely — the system will clear the previous one.
+- Global Trigger Guidance:
+  - Progressive Escalation:
+    - Analyze endState event chain toward catastrophe.
+    - Identify where previousGlobalTrigger (if any) sits in that chain.
+    - Determine the NEXT meaningful step (intermediate escalation or final game-ending step).
+  - Impact Priority:
+    - Trigger must have strong impact on story progression.
+  - Trigger Structure (if generated):
+    - timeRestriction: future time point in "Day X, HH:MM"
+    - timeReason: why this time matters
+    - events: trigger event descriptions
+    - eventReasons: one reason per event
 
 ## One-Shot Example
 
@@ -183,7 +199,13 @@ IMPORTANT:
         }
       ]
     }
-  ]
+  ],
+  "globalTrigger": {
+    "timeRestriction": "Day 4, 01:00",
+    "timeReason": "Ritual couriers scheduled to assemble at the pier office for final preparations",
+    "events": ["Ritual couriers assemble at the pier office"],
+    "eventReasons": ["Signals transition from concealment to active ritual execution"]
+  }
 }
 \`\`\`
 
@@ -227,14 +249,20 @@ Return ONLY valid JSON:
         }
       ]
     }
-  ]
+  ],
+  "globalTrigger": {
+    "timeRestriction": "Day X, HH:MM",
+    "timeReason": "reason",
+    "events": ["event1", "event2"],
+    "eventReasons": ["reason1", "reason2"]
+  }
 }
 \`\`\`
 
 Notes:
 - statusDelta and inventoryDelta are optional and must be incremental only.
 - SuddenActionLogs is optional. If present, each NPC entry must contain only \`id\`, \`name\`, \`actionLog\` and exactly one in-window action in player's current scene.
-- Do not output fields not present in the schema.
+- globalTrigger can be omitted when no significant future events are identified.
 
 Generate now.`;
 }
