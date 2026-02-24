@@ -1,7 +1,4 @@
-import {
-  buildDynamicGraph,
-  buildDynamicListenerGraph,
-} from "../../../src/dynamicworldagent/graph/index.js";
+import { buildDynamicGraph } from "../../../src/dynamicworldagent/graph/index.js";
 import type {
   CoCDatabase,
   CoCDatabaseAdapter,
@@ -10,13 +7,12 @@ import { ScenarioLoader } from "../../../src/shared/agents/memory/scenarioloader
 
 /**
  * Singleton class to manage DynamicWorld graph lifecycle
- * Manages initialization of graph and listenerGraph
+ * Manages initialization of graph
  */
 export class GraphManager {
   private static instance: GraphManager | null = null;
 
   private dynamicGraph: any = null;
-  private dynamicListenerGraph: any = null;
   private constructor() {}
 
   /**
@@ -45,9 +41,8 @@ export class GraphManager {
 
     const scenarioLoader = new ScenarioLoader(db);
 
-    // Build DynamicWorld graphs
+    // Build DynamicWorld graph
     this.dynamicGraph = buildDynamicGraph(db, scenarioLoader);
-    this.dynamicListenerGraph = buildDynamicListenerGraph(db, scenarioLoader);
 
     console.log(
       `[${new Date().toISOString()}] ✅ DynamicWorld system initialized`
@@ -62,24 +57,10 @@ export class GraphManager {
   }
 
   /**
-   * Get listener graph instance (DynamicWorld only)
-   */
-  public getListenerGraph(_useDynamic = true): any {
-    return this.dynamicListenerGraph;
-  }
-
-  /**
    * Get DynamicWorld graph instance
    */
   public getDynamicGraph(): any {
     return this.dynamicGraph;
-  }
-
-  /**
-   * Get DynamicWorld listener graph instance
-   */
-  public getDynamicListenerGraph(): any {
-    return this.dynamicListenerGraph;
   }
 
   /**

@@ -36,7 +36,6 @@ export interface TurnStatus {
   sceneId: string | null;
   sceneName: string | null;
   location: string | null;
-  isSimulated?: boolean;
   actionResults?: ActionResult[] | null;
   actionAnalysis?: any | null; // For requires_skill_selection status
   gameDay?: number | null;

@@ -635,7 +635,6 @@ export class KeeperAgent {
   /**
    * Clear temporary state content
    * @deprecated Cleanup now happens in entry node for real player input.
-   * Temporary state is preserved across simulated queries during listening loop.
    * Kept for backward compatibility but no longer called.
    */
   private clearTemporaryState(

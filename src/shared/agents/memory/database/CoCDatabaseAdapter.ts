@@ -87,7 +87,6 @@ export class CoCDatabaseAdapter {
       completedAt:
         turn.completedAt?.toISOString?.() ?? turn.completedAt ?? null,
       createdAt: turn.createdAt?.toISOString?.() ?? turn.createdAt,
-      isSimulated: turn.isSimulated,
       gameDay: turn.gameDay,
       gameTime: turn.gameTime,
     };
@@ -225,7 +224,6 @@ export class CoCDatabaseAdapter {
     sceneId?: string | null,
     sceneName?: string | null,
     location?: string | null,
-    isSimulated?: boolean,
     gameDay?: number | null,
     gameTime?: string | null
   ): Promise<void> {
@@ -249,7 +247,6 @@ export class CoCDatabaseAdapter {
       startedAt: startedAt.toISOString(),
       completedAt: null,
       createdAt: startedAt.toISOString(),
-      isSimulated: isSimulated || false,
       gameDay: gameDay ?? null,
       gameTime: gameTime ?? null,
     });
@@ -274,7 +271,6 @@ export class CoCDatabaseAdapter {
         location: location || null,
         status: "processing",
         startedAt,
-        isSimulated: isSimulated || false,
         gameDay: gameDay ?? null,
         gameTime: gameTime ?? null,
       },
@@ -700,7 +696,6 @@ export class CoCDatabaseAdapter {
       started_at: turn.startedAt.toISOString(),
       completed_at: turn.completedAt?.toISOString() || null,
       created_at: turn.createdAt.toISOString(),
-      is_simulated: turn.isSimulated,
       game_day: turn.gameDay,
       game_time: turn.gameTime,
     };

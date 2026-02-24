@@ -318,46 +318,6 @@ export function useWebSocket({
               if (onNarrativeCompleteRef.current) {
                 onNarrativeCompleteRef.current();
               }
-            } else if (message.type === "simulate_triggered") {
-              console.log("[WebSocket] Simulate triggered:", message);
-              // Handle simulated narrative
-              if (message.keeperNarrative) {
-                // Find the latest turn number and add 1 for the simulated turn
-                const latestTurnNumber =
-                  messagesRef.current && messagesRef.current.length > 0
-                    ? Math.max(...messagesRef.current.map((m) => m.turnNumber))
-                    : 0;
-
-                setMessages((prev) => {
-                  // Check if this turn already exists
-                  const existingTurn = prev.find(
-                    (m) => m.turnNumber === latestTurnNumber + 1
-                  );
-                  if (existingTurn) return prev;
-
-                  return [
-                    ...prev,
-                    {
-                      role: "keeper" as const,
-                      content: message.keeperNarrative as string,
-                      timestamp: message.timestamp || new Date().toISOString(),
-                      turnNumber: latestTurnNumber + 1,
-                      turnId: message.turnId,
-                      gameDay: message.gameDay ?? null,
-                      gameTime: message.gameTime ?? null,
-                    },
-                  ];
-                });
-
-                // Trigger sidebar refresh
-                if (onNarrativeCompleteRef.current) {
-                  onNarrativeCompleteRef.current();
-                }
-              }
-              // Refresh game state
-              if (fetchGameEndingRef.current) {
-                fetchGameEndingRef.current();
-              }
             } else if (
               message.type === "combat_start" ||
               message.type === "combat_end"

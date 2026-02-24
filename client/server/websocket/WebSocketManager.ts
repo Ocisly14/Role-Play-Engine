@@ -4,10 +4,6 @@ import { getPrismaClient } from "../../../src/shared/agents/memory/database/pris
 import { verifyToken } from "../auth/jwt.js";
 import { ServerState } from "../core/ServerState.js";
 import { handleClientMessage } from "./handlers.js";
-import {
-  startProgressionChecker,
-  stopProgressionChecker,
-} from "./progressionChecker.js";
 
 export interface WSClient {
   ws: WebSocket;
@@ -108,10 +104,6 @@ export class WebSocketManager {
       console.error(`[WebSocket] Error for client ${sessionId}:`, error)
     );
 
-    // Start progression checker if this is the first client
-    if (this.clients.size === 1) {
-      startProgressionChecker(this.clients);
-    }
   }
 
   /**
@@ -128,10 +120,6 @@ export class WebSocketManager {
     if (currentClient && currentClient.ws === ws) {
       this.clients.delete(sessionId);
 
-      // Stop checker if no clients connected
-      if (this.clients.size === 0) {
-        stopProgressionChecker();
-      }
     }
   }
 
@@ -213,10 +201,6 @@ export class WebSocketManager {
         }
       }
 
-      // Stop checker if no clients
-      if (this.clients.size === 0) {
-        stopProgressionChecker();
-      }
     }, HEARTBEAT_INTERVAL_MS);
   }
 
@@ -238,8 +222,6 @@ export class WebSocketManager {
    * Close WebSocket server and all connections (for graceful shutdown)
    */
   public close(): void {
-    stopProgressionChecker();
-
     // Close all client connections
     for (const [sessionId, client] of this.clients.entries()) {
       if (client.ws.readyState === WebSocket.OPEN) {

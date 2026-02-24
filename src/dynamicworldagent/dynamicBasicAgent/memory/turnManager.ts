@@ -24,7 +24,6 @@ export interface TurnInput {
   sceneId?: string;
   sceneName?: string;
   location?: string;
-  isSimulated?: boolean;
   gameDay?: number | null;
   gameTime?: string | null;
 }
@@ -75,9 +74,6 @@ export interface GameTurn {
   completedAt: string | null;
   createdAt: string;
 
-  // Simulation flag
-  isSimulated?: boolean;
-
   // Game time when turn completed
   gameDay?: number | null;
   gameTime?: string | null;
@@ -109,13 +105,11 @@ export class TurnManager {
       input.sceneId,
       input.sceneName,
       input.location,
-      input.isSimulated,
       input.gameDay,
       input.gameTime
     );
 
-    const turnType = input.isSimulated ? "simulated" : "user";
-    console.log(`✓ Turn created: ${turnId} (Turn #${turnNumber}, ${turnType})`);
+    console.log(`✓ Turn created: ${turnId} (Turn #${turnNumber})`);
     return turnId;
   }
 
@@ -125,8 +119,7 @@ export class TurnManager {
   async createTurnFromGameState(
     sessionId: string,
     characterInput: string,
-    gameState: DynamicGameState,
-    isSimulated?: boolean
+    gameState: DynamicGameState
   ): Promise<string> {
     return this.createTurn({
       sessionId,
@@ -136,7 +129,6 @@ export class TurnManager {
       sceneId: gameState.currentScenario?.id,
       sceneName: gameState.currentScenario?.name,
       location: gameState.currentScenario?.location,
-      isSimulated,
       gameDay: gameState.gameDay ?? null,
       gameTime: gameState.timeOfDay ?? null,
     });
@@ -243,11 +235,6 @@ export class TurnManager {
       const turn = this.getTurn(turnId);
       if (!turn) {
         console.warn(`[TurnManager] Turn ${turnId} not found for embedding`);
-        return;
-      }
-
-      // Skip simulated turns
-      if (turn.isSimulated) {
         return;
       }
 
@@ -514,8 +501,7 @@ export class TurnManager {
         }
       } else {
         // For normal turns, add character input and keeper narrative
-        // Skip character input for simulated queries (only show user input)
-        if (turn.characterInput && !turn.isSimulated) {
+        if (turn.characterInput) {
           conversation.push({
             role: "character",
             content: turn.characterInput,

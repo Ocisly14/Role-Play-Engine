@@ -166,9 +166,6 @@ export const injectActionTypeRules = (
 /**
  * Extract recent conversation history (last N completed turns) from database
  * Directly gets the last N turns by sessionId, no gameTime filtering needed
- * Note: Simulate queries (with actionAnalysis === null) are included in conversationHistory
- * but should not count towards turn statistics (turnsInCurrentScene).
- * Real queries have actionAnalysis set by the Orchestrator Agent.
  */
 export const extractRecentConversationHistory = async (
   db: CoCDatabase | CoCDatabaseAdapter | undefined,
@@ -194,7 +191,6 @@ export const extractRecentConversationHistory = async (
     );
 
     // Filter only completed turns with keeper narrative
-    // Include both real queries (with actionAnalysis) and simulate queries (actionAnalysis === null)
     const completedTurns = turns
       .filter((turn) => turn.status === "completed" && turn.keeperNarrative)
       .slice(0, limit) // Take first N (already sorted DESC, so these are the newest)
@@ -204,14 +200,11 @@ export const extractRecentConversationHistory = async (
       turnNumber: turn.turnNumber,
       characterInput: turn.characterInput,
       keeperNarrative: turn.keeperNarrative,
-      isSimulated: turn.isSimulated ?? false,
     }));
 
     if (result.length > 0) {
-      const simulateCount = result.filter((t) => t.isSimulated).length;
-      const realCount = result.length - simulateCount;
       console.log(
-        `📜 [Memory Agent] 提取了 ${result.length} 轮历史对话 (Turn #${result[0]?.turnNumber} 到 Turn #${result[result.length - 1]?.turnNumber}), 其中真实轮数: ${realCount}, simulate轮数: ${simulateCount}`
+        `📜 [Memory Agent] 提取了 ${result.length} 轮历史对话 (Turn #${result[0]?.turnNumber} 到 Turn #${result[result.length - 1]?.turnNumber})`
       );
     }
 

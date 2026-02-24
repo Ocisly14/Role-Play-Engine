@@ -103,7 +103,6 @@ export async function calculateDailyStats(
         gte: dayStart,
         lt: nextDay,
       },
-      isSimulated: false,
       characterId: { not: null },
     },
     select: {
@@ -152,14 +151,13 @@ export async function calculateDailyStats(
     },
   });
 
-  // Total messages: non-simulated turns on this date
+  // Total messages on this date
   const total_messages_count = await prisma.gameTurn.count({
     where: {
       startedAt: {
         gte: dayStart,
         lt: nextDay,
       },
-      isSimulated: false,
     },
   });
 
@@ -247,7 +245,6 @@ export async function getRecentWindowStats(
         gte: window_start,
         lt: window_end,
       },
-      isSimulated: false,
       characterId: { not: null },
     },
     select: {
@@ -297,7 +294,6 @@ export async function getRecentWindowStats(
         gte: window_start,
         lt: window_end,
       },
-      isSimulated: false,
     },
   });
 

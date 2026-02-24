@@ -5,7 +5,6 @@
  */
 
 import type { BaseMessage } from "@langchain/core/messages";
-import { HumanMessage } from "@langchain/core/messages";
 import {
   END,
   MemorySaver,
@@ -57,8 +56,6 @@ export interface DynamicGraphState {
   dynamicGameState: DynamicGameState; // DynamicWorld state (required, not null)
   turnId?: string; // Current turn being processed
   resumeFromInterrupt?: boolean; // True only when resuming a skill-selection interruption
-  isSimulatedQuery?: boolean; // Track if input is simulated by Director Agent
-  simulatedQueryCount?: number; // Safety counter for continuous loop (max 5)
   language?: "en" | "zh"; // User-selected output language
   selectedSkill?: string | null; // Optional player-selected skill for this turn
   skillSelectionMode?: "auto" | "manual"; // How skill selection should behave for this turn
@@ -193,14 +190,6 @@ export const buildDynamicGraph = (
         value: (left: boolean | undefined, right?: boolean | undefined) =>
           right !== undefined ? right : left,
       },
-      isSimulatedQuery: {
-        value: (left: boolean | undefined, right?: boolean | undefined) =>
-          right !== undefined ? right : left,
-      },
-      simulatedQueryCount: {
-        value: (left: number | undefined, right?: number | undefined) =>
-          right !== undefined ? right : left,
-      },
       language: {
         value: (
           left: DynamicGraphState["language"] | undefined,
@@ -230,15 +219,6 @@ export const buildDynamicGraph = (
 
   // Entry node: routes based on input type and handles cleanup
   graph.addNode("entry", async (state: DynamicGraphState) => {
-    const isSimulated = state.isSimulatedQuery ?? false;
-
-    if (isSimulated) {
-      console.log(
-        "🔄 [Dynamic Entry] Simulated query detected - skipping orchestrator & memory"
-      );
-      return state;
-    }
-
     try {
       const dgsm = new DynamicGameStateManager(state.dynamicGameState);
       const currentState = dgsm.getState();
@@ -261,10 +241,7 @@ export const buildDynamicGraph = (
           `   ✓ Preserving actionAnalysis: ${actionAnalysis.action} (${actionAnalysis.actionType})`
         );
         // Don't clear state when resuming, just return as-is
-        return {
-          ...state,
-          simulatedQueryCount: 0,
-        };
+        return state;
       }
 
       // Real player input (new turn) - clear temporary state from previous round
@@ -330,28 +307,16 @@ export const buildDynamicGraph = (
       return {
         ...state,
         dynamicGameState: dgsm.getState(),
-        simulatedQueryCount: 0, // Reset loop counter on real input
       };
     } catch (error) {
       console.error(`❌ [Dynamic Entry] 清理状态失败:`, error);
       // Return state as-is on error to allow graph to continue
-      return {
-        ...state,
-        simulatedQueryCount: 0,
-      };
+      return state;
     }
   });
 
   // Conditional routing from entry
   const routeFromEntry = (state: DynamicGraphState): string => {
-    const isSimulated = state.isSimulatedQuery ?? false;
-    if (isSimulated) {
-      console.log(
-        "🔀 [Dynamic Entry Router] → END (simulated query skipped in main graph)"
-      );
-      return END;
-    }
-
     // Combat mode routing: go through memory first so conversationHistory is updated
     const gs = state.dynamicGameState;
     if (gs.isBattle) {
@@ -1529,7 +1494,6 @@ export const buildDynamicGraph = (
 
       // Complete turn with epilogue narrative if turnId exists
       if (state.turnId) {
-        const isSimulated = state.isSimulatedQuery ?? false;
         try {
           turnManager.completeTurn(
             state.turnId,
@@ -1541,9 +1505,8 @@ export const buildDynamicGraph = (
             },
             state.language
           );
-          const inputType = isSimulated ? "模拟查询" : "真实输入";
           console.log(
-            `📝 [Dynamic Epilogue Keeper] Turn ${state.turnId} (${inputType}) 已完成 - 游戏结束`
+            `📝 [Dynamic Epilogue Keeper] Turn ${state.turnId} (真实输入) 已完成 - 游戏结束`
           );
           console.log(
             `   Epilogue length: ${result.narrative.length} characters`
@@ -1641,7 +1604,6 @@ export const buildDynamicGraph = (
 
       // Complete turn with keeper narrative if turnId exists
       if (state.turnId) {
-        const isSimulated = state.isSimulatedQuery ?? false;
         try {
           turnManager.completeTurn(
             state.turnId,
@@ -1653,9 +1615,8 @@ export const buildDynamicGraph = (
             },
             state.language
           );
-          const inputType = isSimulated ? "模拟查询" : "真实输入";
           console.log(
-            `📝 [Dynamic Keeper Agent] Turn ${state.turnId} (${inputType}) 已完成并保存到数据库`
+            `📝 [Dynamic Keeper Agent] Turn ${state.turnId} (真实输入) 已完成并保存到数据库`
           );
           console.log(
             `   Keeper narrative length: ${result.narrative.length} characters`
@@ -1740,718 +1701,4 @@ export const buildDynamicGraph = (
   graph.addEdge(START, "entry" as any);
 
   return graph.compile({ checkpointer });
-};
-
-/**
- * Build a separate listener graph for DynamicWorld modules
- * This graph is used by WebSocket periodic checks to trigger simulate queries
- */
-export const buildDynamicListenerGraph = (
-  db: CoCDatabase | CoCDatabaseAdapter,
-  scenarioLoader: ScenarioLoader
-) => {
-  const directorAgent = new DirectorAgent(scenarioLoader, db);
-  const turnManager = new TurnManager(db);
-  const characterAgent = new CharacterAgent();
-  const actionAgent = new ActionAgent(scenarioLoader);
-  const keeperAgent = new KeeperAgent();
-  const turnRagAgent = new TurnRagAgent();
-  const heartbeatAgent = new HeartbeatAgent();
-
-  const listenerGraph = new StateGraph<DynamicGraphState>({
-    channels: {
-      messages: {
-        value: (left: BaseMessage[] | undefined, right?: BaseMessage[]) =>
-          right !== undefined ? right : left || [],
-      },
-      dynamicGameState: {
-        value: (
-          left: DynamicGameState | undefined,
-          right?: DynamicGameState | undefined
-        ) =>
-          right !== undefined
-            ? right
-            : left ||
-              initialDynamicGameState({
-                sessionId: "",
-                moduleName: "",
-                playerCharacter: {
-                  id: "placeholder",
-                  name: "Placeholder",
-                  attributes: {
-                    STR: 50,
-                    CON: 50,
-                    DEX: 50,
-                    APP: 50,
-                    POW: 50,
-                    SIZ: 50,
-                    INT: 50,
-                    EDU: 50,
-                  },
-                  status: {
-                    hp: 10,
-                    maxHp: 10,
-                    sanity: 60,
-                    maxSanity: 99,
-                    luck: 50,
-                    mp: 10,
-                    conditions: [],
-                  },
-                  skills: {},
-                  inventory: [],
-                  notes: "",
-                  actionLog: [],
-                },
-              }),
-      },
-      turnId: {
-        value: (left: string | undefined, right?: string | undefined) =>
-          right !== undefined ? right : left,
-      },
-      isSimulatedQuery: {
-        value: (left: boolean | undefined, right?: boolean | undefined) =>
-          right !== undefined ? right : left,
-      },
-      simulatedQueryCount: {
-        value: (left: number | undefined, right?: number | undefined) =>
-          right !== undefined ? right : left,
-      },
-      language: {
-        value: (
-          left: DynamicGraphState["language"] | undefined,
-          right?: DynamicGraphState["language"]
-        ) => (right !== undefined ? right : left),
-      },
-      stream: {
-        value: (
-          left: DynamicGraphState["stream"] | undefined,
-          right?: DynamicGraphState["stream"]
-        ) => (right !== undefined ? right : left),
-      },
-    },
-  });
-
-  // Entry node for listener graph: check progression and trigger if needed
-  listenerGraph.addNode("entry", async (state: DynamicGraphState) => {
-    const dgsm = new DynamicGameStateManager(state.dynamicGameState);
-
-    if (dgsm.shouldTriggerProgression()) {
-      console.log("⏰ [Dynamic Listener] Progression trigger conditions met");
-      const currentState = dgsm.getState();
-      const characterInput = `[系统] 场景推进检查 - 当前场景: ${currentState.currentScenario?.name || "未知"}`;
-
-      // Create a new turn record for the simulated query
-      if (currentState.sessionId) {
-        await db.preloadSessionTurns(currentState.sessionId);
-      }
-      const newTurnId = await turnManager.createTurnFromGameState(
-        currentState.sessionId || "",
-        characterInput,
-        currentState,
-        true // Mark as simulated query
-      );
-      console.log(
-        `📝 [Dynamic Listener] Created turn ${newTurnId} for simulated query`
-      );
-
-      try {
-        const { dueActions, activatedNarratives } =
-          await heartbeatAgent.evaluateTurnStart(dgsm, { db });
-        console.log(
-          `⏰ [Dynamic Listener] Heartbeat evaluated: due=${dueActions.length}, injectedNarratives=${activatedNarratives.length}`
-        );
-      } catch (heartbeatError) {
-        dgsm.setContextualData("heartbeatDueActions", []);
-        dgsm.setContextualData("heartbeatActivatedNarratives", []);
-        console.warn(
-          "⚠️  [Dynamic Listener] Heartbeat evaluation failed, fallback to empty context:",
-          heartbeatError
-        );
-      }
-
-      return {
-        ...state,
-        dynamicGameState: dgsm.getState(),
-        messages: [...(state.messages || []), new HumanMessage(characterInput)],
-        isSimulatedQuery: true,
-        simulatedQueryCount: (state.simulatedQueryCount || 0) + 1,
-        turnId: newTurnId,
-      };
-    }
-
-    return { ...state, messages: state.messages || [] };
-  });
-
-  listenerGraph.addConditionalEdges(
-    "entry" as any,
-    (state: DynamicGraphState) => {
-      const shouldProceed = state.isSimulatedQuery ?? false;
-      return shouldProceed ? "character" : END;
-    },
-    {
-      character: "character" as any,
-      [END]: END,
-    }
-  );
-
-  // Character node
-  listenerGraph.addNode("character", async (state: DynamicGraphState) => {
-    console.log(
-      "👥 [Dynamic Listener Character Agent] 开始分析 NPC 响应 (Recent Actions)..."
-    );
-    const dgsm = new DynamicGameStateManager(state.dynamicGameState);
-    const runtime = {}; // CharacterAgent expects runtime but only passes through generateText; keep empty placeholder
-
-    try {
-      // Get recent player actionLog (last 15 entries, roughly 3 turns)
-      const dynamicState = dgsm.getState();
-      const playerActionLog = dynamicState.playerCharacter.actionLog || [];
-      const recentActionLog = playerActionLog.slice(-15);
-
-      if (recentActionLog.length === 0) {
-        console.log(
-          "   ⚠️ No recent player actions found, skipping NPC response analysis"
-        );
-        dgsm.setNPCResponseAnalyses([]);
-        const currentState = dgsm.getState();
-        currentState.temporaryInfo.contextualData =
-          currentState.temporaryInfo.contextualData || {};
-        currentState.temporaryInfo.contextualData.hasRespondingNPCs = false;
-        return { ...state, dynamicGameState: dgsm.getState() };
-      }
-
-      const npcResponseAnalyses =
-        await characterAgent.analyzeNPCResponsesFromRecentActions(
-          runtime,
-          dgsm,
-          recentActionLog
-        );
-
-      // Update dynamic state with NPC response analyses
-      dgsm.setNPCResponseAnalyses(npcResponseAnalyses);
-
-      // Check if any NPCs need to respond
-      const hasRespondingNPCs = npcResponseAnalyses.some(
-        (analysis) =>
-          analysis.willRespond &&
-          analysis.responseType &&
-          analysis.responseType !== "none"
-      );
-
-      // Store flag in state to indicate if NPCs need to act
-      const currentState = dgsm.getState();
-      currentState.temporaryInfo.contextualData =
-        currentState.temporaryInfo.contextualData || {};
-      currentState.temporaryInfo.contextualData.hasRespondingNPCs =
-        hasRespondingNPCs;
-
-      if (npcResponseAnalyses.length > 0) {
-        npcResponseAnalyses.forEach((analysis) => {
-          if (analysis.willRespond) {
-            console.log(`   ✓ ${analysis.npcName}: ${analysis.responseType}`);
-          } else {
-            console.log(`   - ${analysis.npcName}: 无响应`);
-          }
-        });
-      }
-
-      if (hasRespondingNPCs) {
-        console.log(
-          `\n📋 [Dynamic Listener Character Agent] 检测到 ${npcResponseAnalyses.filter((a) => a.willRespond && a.responseType && a.responseType !== "none").length} 个 NPC 需要执行动作`
-        );
-      } else {
-        console.log(
-          `\n📋 [Dynamic Listener Character Agent] 没有 NPC 需要执行动作，直接进入 Director`
-        );
-      }
-
-      console.log("✅ [Dynamic Listener Character Agent] NPC 响应分析完成");
-    } catch (error) {
-      console.error(`❌ [Dynamic Listener Character Agent] 分析失败:`, error);
-      // Continue with empty analyses on error
-      dgsm.setNPCResponseAnalyses([]);
-      const currentState = dgsm.getState();
-      currentState.temporaryInfo.contextualData =
-        currentState.temporaryInfo.contextualData || {};
-      currentState.temporaryInfo.contextualData.hasRespondingNPCs = false;
-    }
-
-    return { ...state, dynamicGameState: dgsm.getState() };
-  });
-
-  // Conditional routing: character -> npcAction or director
-  listenerGraph.addConditionalEdges(
-    "character" as any,
-    (state: DynamicGraphState) => {
-      const currentState = state.dynamicGameState;
-      const hasRespondingNPCs =
-        currentState.temporaryInfo.contextualData?.hasRespondingNPCs === true;
-
-      if (hasRespondingNPCs) {
-        console.log("\n🔄 [Dynamic Listener Router] 路由到 NPC Action Agent");
-        return "npcAction";
-      } else {
-        console.log(
-          "\n🔄 [Dynamic Listener Router] 跳过 NPC Action，直接进入 Director"
-        );
-        return "director";
-      }
-    },
-    {
-      npcAction: "npcAction" as any,
-      director: "director" as any,
-    }
-  );
-
-  // NPC Action node
-  listenerGraph.addNode("npcAction", async (state: DynamicGraphState) => {
-    console.log("🤖 [Dynamic Listener NPC Action Agent] 开始执行 NPC 响应...");
-    const dgsm = new DynamicGameStateManager(state.dynamicGameState);
-    const runtime = {};
-    const language =
-      state.language === "en" || state.language === "zh"
-        ? state.language
-        : "zh";
-
-    try {
-      await actionAgent.processNPCActions(runtime, dgsm, language);
-      console.log("✅ [Dynamic Listener NPC Action Agent] NPC 动作处理完成");
-    } catch (error) {
-      console.error(
-        `❌ [Dynamic Listener NPC Action Agent] 处理 NPC 动作时出错:`,
-        error
-      );
-    }
-
-    return { ...state, dynamicGameState: dgsm.getState() };
-  });
-
-  listenerGraph.addEdge("npcAction" as any, "director" as any);
-
-  // Director node
-  listenerGraph.addNode("director", async (state: DynamicGraphState) => {
-    console.log("\n🎬 [Dynamic Listener Director Agent] 处理场景转换请求...");
-    const dgsm = new DynamicGameStateManager(state.dynamicGameState);
-    const currentState = dgsm.getState();
-    const sceneChangeRequest = currentState.temporaryInfo.sceneChangeRequest;
-
-    const stream = state.stream;
-
-    try {
-      if (
-        sceneChangeRequest?.shouldChange &&
-        sceneChangeRequest.targetSceneName
-      ) {
-        const currentCharacterInput = latestHumanMessage(state.messages);
-
-        stream?.onSceneChangeStart?.();
-
-        await directorAgent.handleActionDrivenSceneChange(
-          dgsm,
-          sceneChangeRequest.targetSceneName,
-          sceneChangeRequest.reason,
-          currentCharacterInput
-        );
-
-        stream?.onSceneChangeEnd?.();
-      } else {
-        console.log("   ℹ️  无场景转换请求，跳过场景转换处理");
-      }
-
-      dgsm.clearSceneChangeRequest();
-
-      console.log("✅ [Dynamic Listener Director Agent] 处理完成");
-    } catch (error) {
-      console.error(`❌ [Dynamic Listener Director Agent] 处理失败:`, error);
-      // Clear scene change request even on error to prevent stuck state
-      dgsm.clearSceneChangeRequest();
-    }
-
-    return { ...state, dynamicGameState: dgsm.getState() };
-  });
-
-  listenerGraph.addEdge("director" as any, "gameEndCheck" as any);
-
-  // Game End Check: check character status and global trigger
-  listenerGraph.addNode("gameEndCheck", async (state: DynamicGraphState) => {
-    console.log("\n🎯 [Dynamic Listener Game End Check] 检查游戏是否结束...");
-    const dgsm = new DynamicGameStateManager(state.dynamicGameState);
-    const currentState = dgsm.getState();
-    const stream = state.stream;
-
-    // Check 1: Character HP/Sanity
-    const playerStatus = currentState.playerCharacter.status;
-    const hp = playerStatus.hp || 0;
-    const sanity = playerStatus.sanity || 0;
-
-    console.log(`   Player Status: HP=${hp}, Sanity=${sanity}`);
-
-    if (hp <= 0 || sanity <= 0) {
-      console.log(
-        `\n🏁 [Game End] 角色状态导致游戏结束！(${hp <= 0 ? "HP归零" : "Sanity归零"})`
-      );
-      dgsm.setGameEnding(
-        buildGameEndingInfo(
-          currentState,
-          hp <= 0 ? "death" : "failure",
-          hp <= 0
-            ? "调查员生命值归零，已无法继续行动。"
-            : "调查员理智值归零，已无法继续调查。"
-        )
-      );
-      return { ...state, dynamicGameState: currentState };
-    }
-
-    // Check 2: Global Trigger and Victory Trigger
-    const triggerResult =
-      await directorAgent.checkGlobalTriggerAndGameEnd(dgsm);
-
-    if (triggerResult.victoryAchieved) {
-      console.log(`\n🏆 [Victory] 调查员达成了胜利条件！`);
-      const victoryReason = triggerResult.achievedVictoryCondition
-        ? `调查员成功阻止了灾难，达成胜利条件：${triggerResult.achievedVictoryCondition}`
-        : "调查员成功阻止了灾难，完成了胜利条件。";
-      dgsm.setGameEnding(
-        buildGameEndingInfo(
-          dgsm.getState(),
-          "victory",
-          victoryReason
-        )
-      );
-      return { ...state, dynamicGameState: dgsm.getState() };
-    }
-
-    if (triggerResult.triggered) {
-      console.log(`\n🎯 [Global Trigger] 全局触发器已触发！`);
-
-      if (triggerResult.causesGameEnd) {
-        console.log(`\n🏁 [Game End] 全局触发器导致游戏结束！`);
-
-        // Clear the trigger and mark game end for router
-        dgsm.setGlobalTrigger(null);
-        const gs = dgsm.getState();
-        gs.temporaryInfo.contextualData = gs.temporaryInfo.contextualData || {};
-        gs.temporaryInfo.contextualData.globalTriggerEnded = true;
-        dgsm.setGameEnding(
-          buildGameEndingInfo(
-            gs,
-            gs.endState?.pointOfNoReturn.type === "time"
-              ? "time_limit"
-              : "failure",
-            "全局触发器已推进到不可逆阶段，游戏结束。"
-          )
-        );
-
-        return { ...state, dynamicGameState: gs };
-      } else {
-        console.log(
-          `   ✓ 全局触发器触发但未导致游戏结束，将先更新场景再继续叙事`
-        );
-
-        // 不要清除 global trigger！保留它供 updateNonPlayerScenarios 使用作为 previousGlobalTrigger
-        // updateNonPlayerScenarios 会生成新的 global trigger 并替换旧的
-        // Run worldline update before keeper to ensure keeper sees latest snapshots.
-        console.log(
-          `\n🔄 [Global Trigger] 启动世界线更新任务（keeper 将在更新后继续）...`
-        );
-        console.log(
-          `   ℹ️  保留当前 global trigger 作为 previousGlobalTrigger 供场景更新参考`
-        );
-        console.log(
-          `   ℹ️  场景更新完成后，如果生成新的 global trigger，将自动替换旧的`
-        );
-
-        stream?.onWorldlineUpdateStart?.();
-        try {
-          await directorAgent.updateNonPlayerScenarios(dgsm);
-          const finalState = dgsm.getState();
-          if (finalState.globalTrigger) {
-            console.log(
-              `   ✓ [世界线更新] 场景更新完成，已生成新的 global trigger`
-            );
-          } else {
-            console.log(
-              `   ✓ [世界线更新] 场景更新完成，未生成新的 global trigger（已清除旧的）`
-            );
-          }
-
-          const hasWorldlineCurrentSceneUpdate = Boolean(
-            finalState.temporaryInfo.contextualData?.worldlineSceneUpdate
-              ?.updatedSnapshot
-          );
-          if (hasWorldlineCurrentSceneUpdate && finalState.currentScenario) {
-            const currentScenario = finalState.currentScenario;
-            void generateSceneImage(currentScenario, finalState)
-              .then((result) => {
-                if (!result) return;
-                currentScenario.sceneImage = {
-                  path: result.path,
-                  mimeType: result.mimeType,
-                  generatedAt: new Date().toISOString(),
-                };
-                stream?.onSceneImage?.({
-                  imagePath: result.path,
-                  mimeType: result.mimeType,
-                  sceneName: currentScenario.name,
-                  location: currentScenario.location,
-                  gameDay: finalState.gameDay ?? null,
-                  gameTime: finalState.timeOfDay ?? null,
-                  timestamp: new Date().toISOString(),
-                });
-              })
-              .catch((error) => {
-                console.warn(
-                  "[Listener Global Trigger] Worldline scene image generation failed:",
-                  error
-                );
-              });
-          }
-        } catch (error) {
-          console.error(`   ❌ [世界线更新] 场景更新失败:`, error);
-        } finally {
-          stream?.onWorldlineUpdateEnd?.();
-        }
-
-        return { ...state, dynamicGameState: dgsm.getState() };
-      }
-    } else {
-      console.log(`   ✓ 全局触发器未触发，游戏继续`);
-    }
-
-    return { ...state, dynamicGameState: dgsm.getState() };
-  });
-
-  // Conditional routing: gameEndCheck -> epilogueKeeper or keeper
-  listenerGraph.addConditionalEdges(
-    "gameEndCheck" as any,
-    (state: DynamicGraphState) => {
-      const currentState = state.dynamicGameState;
-      const playerStatus = currentState.playerCharacter.status;
-      const hp = playerStatus.hp || 0;
-      const sanity = playerStatus.sanity || 0;
-
-      if (currentState.gameEnding?.isEnded) {
-        console.log(
-          "🔀 [Listener Game End Router] → epilogueKeeper (gameEnding 已标记)"
-        );
-        return "epilogueKeeper";
-      }
-
-      // Check if character status caused game end
-      if (hp <= 0 || sanity <= 0) {
-        console.log(
-          "🔀 [Listener Game End Router] → epilogueKeeper (角色状态)"
-        );
-        return "epilogueKeeper";
-      }
-
-      // Check if global trigger caused game end
-      if (currentState.temporaryInfo.contextualData?.globalTriggerEnded) {
-        console.log(
-          "🔀 [Listener Game End Router] → epilogueKeeper (全局触发器)"
-        );
-        return "epilogueKeeper";
-      }
-
-      console.log("🔀 [Listener Game End Router] → keeper (游戏继续)");
-      return "keeper";
-    },
-    {
-      epilogueKeeper: "epilogueKeeper" as any,
-      keeper: "keeper" as any,
-    }
-  );
-
-  // Epilogue Keeper: generate ending narrative (后日谈)
-  listenerGraph.addNode("epilogueKeeper", async (state: DynamicGraphState) => {
-    console.log("📜 [Dynamic Listener Epilogue Keeper] 开始生成后日谈叙事...");
-    const dgsm = new DynamicGameStateManager(state.dynamicGameState);
-    const currentState = dgsm.getState();
-    const userInput = latestHumanMessage(state.messages);
-    const language =
-      state.language === "en" || state.language === "zh"
-        ? state.language
-        : "zh";
-
-    try {
-      // Use epilogue generation method
-      const result = await keeperAgent.generateEpilogue(
-        userInput,
-        dgsm,
-        language
-      );
-
-      // Complete turn with epilogue narrative if turnId exists
-      if (state.turnId) {
-        const isSimulated = state.isSimulatedQuery ?? false;
-        try {
-          turnManager.completeTurn(
-            state.turnId,
-            {
-              keeperNarrative: result.narrative,
-              clueRevelations: result.clueRevelations || null,
-              gameDay: currentState.gameDay ?? null,
-              gameTime: currentState.timeOfDay ?? null,
-            },
-            state.language
-          );
-          const inputType = isSimulated ? "模拟查询" : "真实输入";
-          console.log(
-            `📝 [Dynamic Listener Epilogue Keeper] Turn ${state.turnId} (${inputType}) 已完成 - 游戏结束`
-          );
-          console.log(
-            `   Epilogue length: ${result.narrative.length} characters`
-          );
-        } catch (error) {
-          console.error(
-            "❌ [Dynamic Listener Epilogue Keeper] Failed to complete turn:",
-            error
-          );
-          turnManager.markError(state.turnId, error as Error);
-        }
-      }
-
-      console.log("✅ [Dynamic Listener Epilogue Keeper] 后日谈叙事生成完成");
-    } catch (error) {
-      console.error(`❌ [Dynamic Listener Epilogue Keeper] 生成失败:`, error);
-      if (state.turnId) {
-        try {
-          turnManager.markError(state.turnId, error as Error);
-        } catch (markError) {
-          console.error(
-            "❌ [Dynamic Listener Epilogue Keeper] Failed to mark turn error:",
-            markError
-          );
-        }
-      }
-    }
-
-    return {
-      ...state,
-      dynamicGameState: dgsm.getState(),
-    };
-  });
-
-  // Keeper node
-  listenerGraph.addNode("keeper", async (state: DynamicGraphState) => {
-    console.log("📖 [Dynamic Listener Keeper Agent] 开始生成叙述...");
-    const dgsm = new DynamicGameStateManager(state.dynamicGameState);
-    const userInput = latestHumanMessage(state.messages);
-    const language =
-      state.language === "en" || state.language === "zh"
-        ? state.language
-        : "zh";
-
-    let updatedGameState = state.dynamicGameState;
-
-    try {
-      const result = await keeperAgent.generateNarrative(
-        userInput,
-        dgsm,
-        language,
-        state.selectedSkill ?? null
-      );
-
-      // Use the updated state from result (which includes all keeper updates)
-      updatedGameState = result.updatedGameState;
-
-      // Complete turn with keeper narrative if turnId exists
-      if (state.turnId) {
-        const isSimulated = state.isSimulatedQuery ?? false;
-        try {
-          turnManager.completeTurn(
-            state.turnId,
-            {
-              keeperNarrative: result.narrative,
-              clueRevelations: result.clueRevelations,
-              gameDay: updatedGameState?.gameDay ?? null,
-              gameTime: updatedGameState?.timeOfDay ?? null,
-            },
-            state.language
-          );
-          const inputType = isSimulated ? "模拟查询" : "真实输入";
-          console.log(
-            `📝 [Dynamic Listener Keeper Agent] Turn ${state.turnId} (${inputType}) 已完成并保存到数据库`
-          );
-          console.log(
-            `   Keeper narrative length: ${result.narrative.length} characters`
-          );
-        } catch (error) {
-          console.error(
-            "❌ [Dynamic Listener Keeper Agent] Failed to complete turn:",
-            error
-          );
-          turnManager.markError(state.turnId, error as Error);
-        }
-      }
-
-      console.log("✅ [Dynamic Listener Keeper Agent] 叙述生成完成");
-    } catch (error) {
-      console.error(`❌ [Dynamic Listener Keeper Agent] 生成失败:`, error);
-      // Mark turn as error if turnId exists
-      if (state.turnId) {
-        try {
-          turnManager.markError(state.turnId, error as Error);
-        } catch (markError) {
-          console.error(
-            "❌ [Dynamic Listener Keeper Agent] Failed to mark turn error:",
-            markError
-          );
-        }
-      }
-    }
-
-    return {
-      ...state,
-      dynamicGameState: updatedGameState,
-    };
-  });
-
-  listenerGraph.addNode("ragRecorder", async (state: DynamicGraphState) => {
-    const dgsm = new DynamicGameStateManager(state.dynamicGameState);
-    const clearTriggerCheckContext = () => {
-      dgsm.setContextualData("triggerCheckEvidence", []);
-      dgsm.setContextualData("triggerCheckCurrentTurnActionLogs", []);
-      dgsm.setContextualData("triggerCheckAchievedVictoryCondition", null);
-      dgsm.setContextualData("triggerCheckResult", null);
-    };
-
-    if (!state.turnId) {
-      clearTriggerCheckContext();
-      return { ...state, dynamicGameState: dgsm.getState() };
-    }
-
-    const turn = turnManager.getTurn(state.turnId);
-    if (!turn) {
-      clearTriggerCheckContext();
-      return { ...state, dynamicGameState: dgsm.getState() };
-    }
-
-    void turnRagAgent
-      .recordTurn({
-        turn,
-        dynamicGameState: state.dynamicGameState,
-        language: state.language,
-      })
-      .catch((error) => {
-        console.warn(
-          "[Dynamic Listener RAG Recorder] Failed to record turn RAG:",
-          {
-            turnId: state.turnId,
-            sessionId: state.dynamicGameState?.sessionId,
-            error,
-          }
-        );
-      });
-
-    clearTriggerCheckContext();
-    return { ...state, dynamicGameState: dgsm.getState() };
-  });
-
-  listenerGraph.addEdge("epilogueKeeper" as any, "ragRecorder" as any);
-  listenerGraph.addEdge("keeper" as any, "ragRecorder" as any);
-  listenerGraph.addEdge("ragRecorder" as any, END);
-  listenerGraph.addEdge(START, "entry" as any);
-
-  return listenerGraph.compile();
 };

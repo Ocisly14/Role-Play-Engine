@@ -200,11 +200,6 @@ export class TurnRagAgent {
       return;
     }
 
-    // Hard requirement: only record real player turns.
-    if (turn.isSimulated) {
-      return;
-    }
-
     const chunks: SessionRagChunkInput[] = [];
     const meta = {
       sceneName: turn.sceneName || null,

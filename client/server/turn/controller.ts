@@ -185,7 +185,6 @@ function buildNarrativeStreamHandlers(params: {
   sessionId: string;
   turnId: string;
   turnNumber?: number | null;
-  isSimulated?: boolean | null;
   gameDay?: number | null;
   gameTime?: string | null;
   timestamp?: string | null;
@@ -228,7 +227,6 @@ function buildNarrativeStreamHandlers(params: {
       type: "keeper_stream_start",
       turnId: params.turnId,
       turnNumber: params.turnNumber ?? null,
-      isSimulated: params.isSimulated ?? null,
       timestamp: params.timestamp || new Date().toISOString(),
       gameDay: params.gameDay ?? null,
       gameTime: params.gameTime ?? null,
@@ -343,7 +341,6 @@ function buildNarrativeStreamHandlers(params: {
         type: "combat_start",
         turnId: params.turnId,
         turnNumber: params.turnNumber ?? null,
-        isSimulated: params.isSimulated ?? null,
         gameDay: params.gameDay ?? null,
         gameTime: params.gameTime ?? null,
         timestamp: new Date().toISOString(),
@@ -354,7 +351,6 @@ function buildNarrativeStreamHandlers(params: {
         type: "combat_end",
         turnId: params.turnId,
         turnNumber: params.turnNumber ?? null,
-        isSimulated: params.isSimulated ?? null,
         gameDay: params.gameDay ?? null,
         gameTime: params.gameTime ?? null,
         timestamp: new Date().toISOString(),
@@ -393,7 +389,6 @@ async function processGameTurnAsync(
       sessionId: dynamicGameState.sessionId,
       turnId,
       turnNumber: turn?.turnNumber ?? null,
-      isSimulated: turn?.isSimulated ?? null,
       gameDay: turn?.gameDay ?? dynamicGameState.gameDay ?? null,
       gameTime: turn?.gameTime ?? dynamicGameState.timeOfDay ?? null,
       timestamp: turn?.startedAt ?? null,
@@ -737,7 +732,6 @@ async function getTurnById(turnId: string): Promise<any | null> {
     startedAt: turn.startedAt.toISOString(),
     completedAt: turn.completedAt?.toISOString() ?? null,
     createdAt: turn.createdAt.toISOString(),
-    isSimulated: turn.isSimulated,
     gameDay: turn.gameDay,
     gameTime: turn.gameTime,
   };

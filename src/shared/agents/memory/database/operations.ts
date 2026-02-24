@@ -102,7 +102,6 @@ export class DatabaseOperations {
       started_at: turn.startedAt.toISOString(),
       completed_at: turn.completedAt?.toISOString() || null,
       created_at: turn.createdAt.toISOString(),
-      is_simulated: turn.isSimulated,
       game_day: turn.gameDay,
       game_time: turn.gameTime,
     };
@@ -523,7 +522,6 @@ export class DatabaseOperations {
       started_at: turn.startedAt.toISOString(),
       completed_at: turn.completedAt?.toISOString() || null,
       created_at: turn.createdAt.toISOString(),
-      is_simulated: turn.isSimulated,
       game_day: turn.gameDay,
       game_time: turn.gameTime,
     };

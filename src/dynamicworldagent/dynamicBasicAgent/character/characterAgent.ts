@@ -16,93 +16,12 @@ import {
 } from "../../utils/gameTime.js";
 import type { DynamicCharacterProfile } from "../../world_builder/types.js";
 import type { DynamicNPCProfile } from "../../world_builder/types.js";
-import { getCharacterSimulatedTemplate } from "./characterSimulatedTemplate.js";
 import { getCharacterTemplate } from "./characterTemplate.js";
 
 /**
  * Character Agent class - handles NPC response analysis
  */
 export class CharacterAgent {
-  /**
-   * Analyze NPC responses to recent player actions (from Director Agent)
-   * This method is used when the Director detects progression threshold and analyzes recent player actionLog
-   * It doesn't require action results or action analysis
-   */
-  async analyzeNPCResponsesFromRecentActions(
-    runtime: any,
-    gameStateManager: DynamicGameStateManager,
-    recentActionLog: ActionLogEntry[]
-  ): Promise<NPCResponseAnalysis[]> {
-    const dynamicState = gameStateManager.getState();
-    const template = getCharacterSimulatedTemplate();
-
-    // 1. Get current scenario information
-    const scenarioInfo = this.extractScenarioInfo(dynamicState);
-
-    // 2. Get player character information
-    const playerCharacter = this.extractCharacterInfo(
-      dynamicState.playerCharacter
-    );
-
-    // 3. Get NPCs in current scene location (with full details including goals)
-    const sceneNpcs = this.extractSceneNPCs(dynamicState);
-
-    // If no NPCs in scene, return empty array
-    if (sceneNpcs.length === 0) {
-      console.log(
-        "📝 [Character Agent] No NPCs in current scene, skipping analysis"
-      );
-      return [];
-    }
-
-    // If no recent actions, return empty array
-    if (recentActionLog.length === 0) {
-      console.log(
-        "📝 [Character Agent] No recent player actions, skipping analysis"
-      );
-      return [];
-    }
-
-    // Build template context
-    const templateContext = {
-      recentActionLogJson: JSON.stringify(recentActionLog, null, 2),
-      scenarioInfoJson: JSON.stringify(scenarioInfo, null, 2),
-      playerCharacterJson: JSON.stringify(playerCharacter, null, 2),
-      sceneNpcsJson: JSON.stringify(sceneNpcs, null, 2),
-    };
-
-    const { content: context, images } = composeTemplateWithImages(
-      template,
-      { dynamicGameState: dynamicState },
-      templateContext,
-      "handlebars"
-    );
-
-    console.log(
-      "\n🎭 [Character Agent] Analyzing NPC responses to recent player actions..."
-    );
-    console.log(`   Recent actions: ${recentActionLog.length} entries`);
-    console.log(
-      `   Latest actions: ${recentActionLog
-        .slice(-3)
-        .map((a) => `${a.time}: ${a.summary}`)
-        .join("; ")}`
-    );
-    console.log(`   Scene: ${scenarioInfo.location || "Unknown"}`);
-    console.log(`   NPCs to analyze: ${sceneNpcs.length}`);
-
-    // Call LLM
-    const response = await generateText({
-      runtime,
-      context,
-      images,
-      modelClass: ModelClass.SMALL,
-    });
-
-    // Parse and validate response (reuse existing parsing logic)
-    return this.parseNPCResponseAnalyses(response);
-  }
-
   /**
    * Analyze NPC responses to character actions
    */
@@ -618,7 +537,7 @@ export class CharacterAgent {
 
   /**
    * Parse and validate NPC response analyses from LLM response
-   * Shared by both analyzeNPCResponses and analyzeNPCResponsesFromRecentActions
+   * Shared parsing logic for character response analysis.
    */
   private parseNPCResponseAnalyses(response: string): NPCResponseAnalysis[] {
     // Parse JSON response
