@@ -2,6 +2,7 @@ import { Router } from "express";
 import { authenticate } from "../auth/middleware.js";
 import * as roomController from "./room/controller.js";
 import * as gameController from "./game/controller.js";
+import * as turnController from "./turn/controller.js";
 
 const router = Router();
 router.use(authenticate);
@@ -19,5 +20,9 @@ router.post("/rooms/:roomId/start", roomController.startGame);
 // Game lifecycle (Phase 2)
 router.post("/rooms/:roomId/game/init", gameController.initGame);
 router.get("/rooms/:roomId/game/state", gameController.getGameState);
+
+// Turn input collection (Phase 3)
+router.post("/rooms/:roomId/scene-rooms/:sceneRoomId/input", turnController.submitInput);
+router.get("/rooms/:roomId/scene-rooms/:sceneRoomId/round", turnController.getRound);
 
 export { router as multiplayerRoutes };
