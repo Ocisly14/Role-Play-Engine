@@ -1,6 +1,7 @@
 import { Router } from "express";
 import { authenticate } from "../auth/middleware.js";
 import * as roomController from "./room/controller.js";
+import * as gameController from "./game/controller.js";
 
 const router = Router();
 router.use(authenticate);
@@ -14,5 +15,9 @@ router.post("/rooms/:roomId/select-module", roomController.selectModule);
 router.post("/rooms/:roomId/select-character", roomController.selectCharacter);
 router.post("/rooms/:roomId/confirm", roomController.confirmReady);
 router.post("/rooms/:roomId/start", roomController.startGame);
+
+// Game lifecycle (Phase 2)
+router.post("/rooms/:roomId/game/init", gameController.initGame);
+router.get("/rooms/:roomId/game/state", gameController.getGameState);
 
 export { router as multiplayerRoutes };

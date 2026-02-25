@@ -148,12 +148,23 @@ export const MultiplayerRoomWaiting: React.FC = () => {
     setActionError(null);
     setBusy(true);
     try {
-      const res = await authFetch(
+      // Step 1: set room status to "playing"
+      const startRes = await authFetch(
         `/api/multiplayer/rooms/${room.roomId}/start`,
         { method: "POST" }
       );
-      const data = await res.json();
-      if (!data.success) throw new Error(data.error ?? "Failed to start game");
+      const startData = await startRes.json();
+      if (!startData.success) throw new Error(startData.error ?? "Failed to start game");
+
+      // Step 2 (host only): initialise the game state — loads module + characters
+      const initRes = await authFetch(
+        `/api/multiplayer/rooms/${room.roomId}/game/init`,
+        { method: "POST" }
+      );
+      const initData = await initRes.json();
+      if (!initData.success) throw new Error(initData.error ?? "Failed to initialise game");
+
+      console.log("[Multiplayer] Game initialised:", initData);
     } catch (err) {
       setActionError((err as Error).message);
     } finally {
