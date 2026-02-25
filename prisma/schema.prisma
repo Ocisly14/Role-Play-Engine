@@ -713,6 +713,8 @@ model SessionRagChunk {
   turnId     String?  @map("turn_id")
   turnNumber Int?     @map("turn_number")
   chunkType  String   @map("chunk_type")
+  // Multiplayer: scope RAG chunks by sceneRoom (null for single-player sessions)
+  sceneRoomId String? @map("scene_room_id")
   role       String?
   content    String
   metadata   Json?
@@ -726,6 +728,8 @@ model SessionRagChunk {
   @@index([sessionId, createdAt], map: "idx_session_rag_chunks_session_created")
   @@index([sessionId, chunkType], map: "idx_session_rag_chunks_session_type")
   @@index([sessionId, turnNumber], map: "idx_session_rag_chunks_session_turn")
+  @@index([sessionId, sceneRoomId, createdAt], map: "idx_session_rag_chunks_session_room_created")
+  @@index([sessionId, sceneRoomId, chunkType], map: "idx_session_rag_chunks_session_room_type")
   @@map("session_rag_chunks")
 }
 

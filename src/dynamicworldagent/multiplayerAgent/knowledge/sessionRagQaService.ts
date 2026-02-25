@@ -25,6 +25,7 @@ export interface SessionRagQaRequest {
   question: string;
   topK?: number;
   language?: "en" | "zh";
+  sceneRoomId?: string | null;
   sceneName?: string | null;
   sceneLocation?: string | null;
   npcNames?: string[];
@@ -183,6 +184,7 @@ export class SessionRagQaService {
       semanticWeight: 0.7,
       bm25Weight: 0.3,
       language,
+      sceneRoomId: request.sceneRoomId ?? null,
     });
 
     const citations = retrieved.map(buildCitation);

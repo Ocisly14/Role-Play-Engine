@@ -10,6 +10,7 @@ export interface SessionRagChunkInput {
   turnId?: string | null;
   turnNumber?: number | null;
   chunkType: SessionRagChunkType;
+  sceneRoomId?: string | null;
   role?: "character" | "keeper" | "system";
   content: string;
   metadata?: Record<string, unknown> | null;
@@ -110,6 +111,7 @@ export class SessionRagService {
             turn_id TEXT,
             turn_number INTEGER,
             chunk_type TEXT NOT NULL,
+            scene_room_id TEXT,
             role TEXT,
             content TEXT NOT NULL,
             metadata JSONB,
@@ -122,6 +124,10 @@ export class SessionRagService {
         `);
 
         await this.prisma.$executeRawUnsafe(
+          `ALTER TABLE session_rag_chunks ADD COLUMN IF NOT EXISTS scene_room_id TEXT`
+        );
+
+        await this.prisma.$executeRawUnsafe(
           `CREATE UNIQUE INDEX IF NOT EXISTS session_rag_chunks_session_source_key_key ON session_rag_chunks(session_id, source_key)`
         );
         await this.prisma.$executeRawUnsafe(
@@ -129,6 +135,12 @@ export class SessionRagService {
         );
         await this.prisma.$executeRawUnsafe(
           `CREATE INDEX IF NOT EXISTS idx_session_rag_chunks_session_type ON session_rag_chunks(session_id, chunk_type)`
+        );
+        await this.prisma.$executeRawUnsafe(
+          `CREATE INDEX IF NOT EXISTS idx_session_rag_chunks_session_room_created ON session_rag_chunks(session_id, scene_room_id, created_at)`
+        );
+        await this.prisma.$executeRawUnsafe(
+          `CREATE INDEX IF NOT EXISTS idx_session_rag_chunks_session_room_type ON session_rag_chunks(session_id, scene_room_id, chunk_type)`
         );
       })();
     }
@@ -166,6 +178,7 @@ export class SessionRagService {
             turn_id,
             turn_number,
             chunk_type,
+            scene_room_id,
             role,
             content,
             metadata,
@@ -180,6 +193,7 @@ export class SessionRagService {
             ${chunk.turnId ?? null},
             ${chunk.turnNumber ?? null},
             ${chunk.chunkType},
+            ${chunk.sceneRoomId ?? null},
             ${chunk.role ?? null},
             ${content},
             ${metadataJson}::jsonb,
@@ -210,6 +224,7 @@ export class SessionRagService {
     language?: "en" | "zh";
     chunkType?: "turn" | "clue";
     segmentType?: "narrative" | "actionlog";
+    sceneRoomId?: string | null;
   }): Promise<RetrievedSessionRagChunk[]> {
     const {
       sessionId,
@@ -220,6 +235,7 @@ export class SessionRagService {
       language = "zh",
       chunkType,
       segmentType,
+      sceneRoomId,
     } = params;
 
     const query = ragQuery.trim();
@@ -234,6 +250,7 @@ export class SessionRagService {
 
     const chunkTypeFilter = chunkType ?? null;
     const segmentTypeFilter = segmentType ?? null;
+    const sceneRoomIdFilter = sceneRoomId ?? null;
 
     const rows = await this.prisma.$queryRaw<ChunkRow[]>`
       SELECT
@@ -247,6 +264,7 @@ export class SessionRagService {
       FROM session_rag_chunks
       WHERE session_id = ${sessionId}
         AND language = ${language}
+        AND (${sceneRoomIdFilter}::text IS NULL OR scene_room_id = ${sceneRoomIdFilter}::text)
         AND (${chunkTypeFilter}::text IS NULL OR chunk_type = ${chunkTypeFilter}::text)
         AND (${segmentTypeFilter}::text IS NULL OR metadata->>'segmentType' = ${segmentTypeFilter}::text)
     `;
@@ -280,6 +298,7 @@ export class SessionRagService {
         FROM session_rag_chunks
         WHERE session_id = ${sessionId}
           AND language = ${language}
+          AND (${sceneRoomIdFilter}::text IS NULL OR scene_room_id = ${sceneRoomIdFilter}::text)
           AND (${chunkTypeFilter}::text IS NULL OR chunk_type = ${chunkTypeFilter}::text)
           AND (${segmentTypeFilter}::text IS NULL OR metadata->>'segmentType' = ${segmentTypeFilter}::text)
           AND to_tsvector('simple', content) @@ plainto_tsquery('simple', ${query})

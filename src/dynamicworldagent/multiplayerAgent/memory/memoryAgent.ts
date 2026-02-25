@@ -295,6 +295,7 @@ export const retrieveRelevantHistory = async (
       bm25Weight: alpha,
       language,
       chunkType: "turn",
+      sceneRoomId,
     });
 
     // Step 3: If any turn chunk is hit, expand to full turn content

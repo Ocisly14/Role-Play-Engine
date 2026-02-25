@@ -19,6 +19,7 @@ export async function askRag(req: Request, res: Response): Promise<void> {
     const email = req.user!.email;
     const {
       sessionId,
+      sceneRoomId,
       question,
       topK: rawTopK,
       language: rawLanguage,
@@ -40,6 +41,10 @@ export async function askRag(req: Request, res: Response): Promise<void> {
         : 8;
 
     const language = rawLanguage === "en" ? "en" : "zh";
+    const normalizedSceneRoomId =
+      typeof sceneRoomId === "string" && sceneRoomId.trim().length > 0
+        ? sceneRoomId.trim()
+        : null;
 
     const allowed = await isSessionOwnedByUser(sessionId, userId, email);
     if (!allowed) {
@@ -73,7 +78,11 @@ export async function askRag(req: Request, res: Response): Promise<void> {
     try {
       const prisma = getPrismaClient();
       const rows = await prisma.gameTurn.findMany({
-        where: { sessionId, status: "completed" },
+        where: {
+          sessionId,
+          status: "completed",
+          ...(normalizedSceneRoomId ? { sceneRoomId: normalizedSceneRoomId } : {}),
+        },
         orderBy: { turnNumber: "desc" },
         take: 5,
         select: {
@@ -99,6 +108,7 @@ export async function askRag(req: Request, res: Response): Promise<void> {
       question: question.trim(),
       topK,
       language,
+      sceneRoomId: normalizedSceneRoomId,
       sceneName,
       sceneLocation,
       npcNames,

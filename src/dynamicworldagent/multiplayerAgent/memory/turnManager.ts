@@ -50,6 +50,7 @@ export interface GameTurn {
   characterInput: string;
   characterId: string | null;
   characterName: string | null;
+  sceneRoomId?: string | null;
 
   // Processing
   actionAnalysis: any | null;

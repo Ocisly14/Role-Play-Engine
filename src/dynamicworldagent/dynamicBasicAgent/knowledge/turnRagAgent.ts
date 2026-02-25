@@ -220,6 +220,7 @@ export class TurnRagAgent {
         turnId: turn.turnId,
         turnNumber: turn.turnNumber,
         chunkType: "turn",
+        sceneRoomId: turn.sceneRoomId ?? null,
         role: "system",
         content: segment,
         metadata: { ...meta, segmentType: "narrative", segmentIndex: i },
@@ -242,6 +243,7 @@ export class TurnRagAgent {
           turnId: turn.turnId,
           turnNumber: turn.turnNumber,
           chunkType: "turn",
+          sceneRoomId: turn.sceneRoomId ?? null,
           role: "system",
           content: segment,
           metadata: { ...meta, segmentType: "actionlog", segmentIndex: i },
@@ -259,6 +261,7 @@ export class TurnRagAgent {
         turnId: turn.turnId,
         turnNumber: turn.turnNumber,
         chunkType: "clue",
+        sceneRoomId: turn.sceneRoomId ?? null,
         role: "system",
         content: [
           `Reveal Clue`,

@@ -891,6 +891,7 @@ async function createSessionFromCheckpointData(
   // Preferred: copy full turn history from the original session (prevents losing old context and keeps RAG consistent).
   // Scope by checkpoint createdAt (checkpoint.turnNumber is scene-local and NOT safe as a global turn cutoff).
   const turnIdMap = new Map<string, string>(); // oldTurnId -> newTurnId
+  const oldTurnSceneRoomIdMap = new Map<string, string | null>(); // oldTurnId -> old sceneRoomId
   const restoredOldTurnIds: string[] = [];
   let turnRows: any[] = [];
   if (sourceSessionId) {
@@ -906,6 +907,7 @@ async function createSessionFromCheckpointData(
       turnRows = oldTurns.map((t) => {
         const newTurnId = `turn-restore-${sessionId}-${t.turnNumber}-${randomUUID().slice(0, 8)}`;
         turnIdMap.set(t.turnId, newTurnId);
+        oldTurnSceneRoomIdMap.set(t.turnId, t.sceneRoomId ?? null);
         restoredOldTurnIds.push(t.turnId);
         return {
           turnId: newTurnId,
@@ -1105,6 +1107,11 @@ async function createSessionFromCheckpointData(
           turnId: newTurnId,
           turnNumber: chunk.turnNumber ?? null,
           chunkType: chunk.chunkType,
+          sceneRoomId:
+            chunk.sceneRoomId ??
+            (typeof oldTurnId === "string"
+              ? oldTurnSceneRoomIdMap.get(oldTurnId) ?? null
+              : null),
           role: chunk.role ?? null,
           content: chunk.content,
           metadata: chunk.metadata ?? null,
