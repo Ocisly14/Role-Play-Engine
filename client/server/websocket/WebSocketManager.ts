@@ -22,6 +22,9 @@ export class WebSocketManager {
   private wss: WebSocketServer;
   private clients = new Map<string, WSClient>();
 
+  // Multiplayer: Map<sceneRoomId, Map<userId, WSClient>>
+  private multiplayerClients = new Map<string, Map<string, WSClient>>();
+
   constructor(server: http.Server) {
     WebSocketManager.instance = this;
     this.wss = new WebSocketServer({
@@ -209,6 +212,50 @@ export class WebSocketManager {
    */
   public getClients(): Map<string, WSClient> {
     return this.clients;
+  }
+
+  // ─── Multiplayer methods (additive) ──────────────────────────────────────
+
+  /**
+   * Register a multiplayer client for a specific sceneRoom.
+   */
+  public registerMultiplayerClient(
+    sceneRoomId: string,
+    userId: string,
+    client: WSClient
+  ): void {
+    if (!this.multiplayerClients.has(sceneRoomId)) {
+      this.multiplayerClients.set(sceneRoomId, new Map());
+    }
+    this.multiplayerClients.get(sceneRoomId)!.set(userId, client);
+  }
+
+  /**
+   * Remove a multiplayer client from a sceneRoom.
+   */
+  public removeMultiplayerClient(sceneRoomId: string, userId: string): void {
+    this.multiplayerClients.get(sceneRoomId)?.delete(userId);
+    if (this.multiplayerClients.get(sceneRoomId)?.size === 0) {
+      this.multiplayerClients.delete(sceneRoomId);
+    }
+  }
+
+  /**
+   * Get all multiplayer clients for a sceneRoom.
+   */
+  public getMultiplayerClients(sceneRoomId: string): Map<string, WSClient> {
+    return this.multiplayerClients.get(sceneRoomId) ?? new Map();
+  }
+
+  /**
+   * Get all sceneRoom client maps (for broadcasting to all rooms of a room).
+   */
+  public getMultiplayerClientsByRoom(
+    sceneRoomIds: string[]
+  ): Map<string, WSClient>[] {
+    return sceneRoomIds
+      .map((id) => this.multiplayerClients.get(id))
+      .filter((m): m is Map<string, WSClient> => Boolean(m));
   }
 
   /**

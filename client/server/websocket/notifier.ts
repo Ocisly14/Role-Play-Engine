@@ -24,3 +24,29 @@ export function notifyClients(
     }
   }
 }
+
+/**
+ * Broadcast a message to all clients in a multiplayer sceneRoom.
+ * @param sceneRoomId - sceneRoom identifier (for logging only)
+ * @param clients - Map<userId, WSClient> for this sceneRoom
+ * @param message - Message object to broadcast
+ */
+export function notifySceneRoom(
+  sceneRoomId: string,
+  clients: Map<string, WSClient>,
+  message: object
+): void {
+  const payload = JSON.stringify(message);
+  for (const [userId, client] of clients) {
+    if (client.ws.readyState === WebSocket.OPEN) {
+      try {
+        client.ws.send(payload);
+      } catch (error) {
+        console.error(
+          `[WebSocket] Error broadcasting to sceneRoom ${sceneRoomId} user ${userId}:`,
+          error
+        );
+      }
+    }
+  }
+}

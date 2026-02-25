@@ -10,6 +10,7 @@ import express from "express";
 import analyticsRoutes from "./server/analytics/routes.js";
 // Import all route modules
 import authRoutes from "./server/auth/routes.js";
+import { multiplayerRoutes } from "./server/multiplayer/routes.js";
 import characterRoutes from "./server/character/routes.js";
 import checkpointRoutes from "./server/checkpoint/routes.js";
 import dataRoutes from "./server/data/routes.js";
@@ -78,6 +79,7 @@ app.use("/api", gameRoutes); // /api/game/*, /api/gamestate
 app.use("/api", modRoutes); // /api/mod/*, /api/module/*
 app.use("/api", turnRoutes); // /api/turns*, /api/sessions/*
 app.use("/api", checkpointRoutes); // /api/checkpoints/*
+app.use("/api/multiplayer", multiplayerRoutes); // /api/multiplayer/*
 app.use("/api", memoRoutes); // /api/memos
 app.use("/api", skillRoutes); // /api/skills/*
 app.use("/api", analyticsRoutes); // /api/analytics/*

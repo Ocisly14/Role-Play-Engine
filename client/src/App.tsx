@@ -24,6 +24,8 @@ import { ModSelectionPage } from "./views/ModSelectionPage";
 import { ModuleIntroPage } from "./views/ModuleIntroPage";
 import { StoryCreatorPage } from "./views/StoryCreatorPage";
 import { TutorialPage } from "./views/TutorialPage";
+import { MultiplayerLobby } from "./views/MultiplayerLobby";
+import { MultiplayerRoomWaiting } from "./views/MultiplayerRoomWaiting";
 import ForgotPassword from "./views/auth/ForgotPassword";
 import Login from "./views/auth/Login";
 import Register from "./views/auth/Register";
@@ -166,6 +168,8 @@ const AppRoutes: React.FC = () => {
           <Route path="/story/create" element={<StoryCreatorPage />} />
           <Route path="/tutorial" element={<TutorialPage />} />
           <Route path="/game" element={<GamePage />} />
+          <Route path="/multiplayer" element={<MultiplayerLobby />} />
+          <Route path="/multiplayer/room/:roomId" element={<MultiplayerRoomWaiting />} />
         </Route>
       </Routes>
     </>
