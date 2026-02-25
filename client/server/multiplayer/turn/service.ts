@@ -18,7 +18,7 @@ import {
 } from "../../../../src/dynamicworldagent/multiplayerState/MultiplayerDynamicGameState.js";
 import { multiplayerSessionStore } from "../../../../src/dynamicworldagent/multiplayerState/MultiplayerDynamicGameStateLoader.js";
 import { buildMultiplayerGraph } from "../../../../src/dynamicworldagent/multiplayerGraph/index.js";
-import { evaluateAndSplitSceneRooms } from "../../../../src/dynamicworldagent/multiplayerGraph/sceneRoomSplitter.js";
+import { resolveAllMovements } from "../../../../src/dynamicworldagent/multiplayerGraph/sceneRoomMerger.js";
 import { DirectorAgent } from "../../../../src/dynamicworldagent/multiplayerAgent/director/directorAgent.js";
 import { ScenarioLoader } from "../../../../src/shared/agents/memory/scenarioloader/index.js";
 import { generateSceneRoomImage } from "../../../../src/dynamicworldagent/multiplayerVisual/sceneImage.js";
@@ -75,6 +75,14 @@ export async function submitRoundInput(
 
   if (!sceneRoom.memberPlayerIds.includes(userId)) {
     throw new Error("You are not a member of this scene room");
+  }
+
+  // Reject input to frozen rooms (they are historical snapshots, not active)
+  if (sceneRoom.isFrozen) {
+    throw new Error(
+      "This scene room is frozen and no longer accepts input. " +
+        "Your character has been moved to a new scene room."
+    );
   }
 
   // Check game ending
@@ -367,13 +375,13 @@ async function triggerMultiplayerGraph(
 }
 
 // =============================================
-// handlePostRoundSceneSplit — Phase 4
+// handlePostRoundSceneSplit — Freeze-Fork-Merge (Phase 5)
 // =============================================
 
 async function handlePostRoundSceneSplit(
   db: CoCDatabase | CoCDatabaseAdapter,
   roomId: string,
-  sceneRoomId: string,
+  _sceneRoomId: string,
   manager: MultiplayerDynamicGameStateManager,
   wsManager: ReturnType<typeof WebSocketManager.getInstance>
 ): Promise<void> {
@@ -381,82 +389,151 @@ async function handlePostRoundSceneSplit(
     const scenarioLoader = new ScenarioLoader(db);
     const directorAgent = new DirectorAgent(scenarioLoader, db);
 
-    const splitResult = await evaluateAndSplitSceneRooms(
-      manager,
-      sceneRoomId,
-      directorAgent,
-      db
-    );
+    // resolveAllMovements handles ALL active sceneRooms globally:
+    // splits, merges, and cross-room merges — all in one pass.
+    const result = await resolveAllMovements(manager, directorAgent);
 
-    if (!splitResult.splitOccurred) return;
+    if (!result.anyChanges) return;
 
-    // Persist new sceneRooms to DB
     const prisma = getPrismaClient();
-    for (const newRoom of splitResult.newSceneRooms) {
-      const newSceneRoomState = manager.getSceneRoom(newRoom.sceneRoomId);
+    const frozenAt = new Date();
 
-      await prisma.multiplayerSceneRoom.create({
-        data: {
-          sceneRoomId: newRoom.sceneRoomId,
-          roomId,
-          scenarioName: newSceneRoomState?.scenarioName ?? null,
-          snapshotName: newSceneRoomState?.snapshotName ?? null,
-          status: "active",
-          roundNumber: 1,
-        },
-      });
-
-      // Update DB members to point to the new sceneRoom
-      for (const playerId of newRoom.playerIds) {
-        await prisma.multiplayerRoomMember.update({
-          where: { roomId_userId: { roomId, userId: playerId } },
-          data: { currentSceneRoomId: newRoom.sceneRoomId },
+    // ── Persist frozen rooms to DB ──
+    for (const frozenId of result.frozenSceneRoomIds) {
+      try {
+        await prisma.multiplayerSceneRoom.update({
+          where: { sceneRoomId: frozenId },
+          data: { status: "frozen", frozenAt },
         });
+      } catch (e) {
+        console.warn(`[MP Turn] Failed to freeze sceneRoom ${frozenId} in DB:`, e);
       }
     }
 
-    // Broadcast scene_room_split to the original sceneRoom (so all players know)
-    if (wsManager) {
-      const clients = wsManager.getMultiplayerClients(sceneRoomId);
-      notifySceneRoom(sceneRoomId, clients, {
-        type: "scene_room_split",
-        sceneRoomId,
-        remainingPlayerIds: splitResult.remainingPlayerIds,
-        newSceneRooms: splitResult.newSceneRooms.map((r) => ({
-          sceneRoomId: r.sceneRoomId,
-          playerIds: r.playerIds,
-          targetSceneName: r.targetSceneName,
-        })),
-        timestamp: new Date().toISOString(),
-      });
+    // ── Persist new child rooms to DB ──
+    for (const childRoom of result.newChildRooms) {
+      const childState = manager.getSceneRoom(childRoom.sceneRoomId);
+      try {
+        await prisma.multiplayerSceneRoom.create({
+          data: {
+            sceneRoomId: childRoom.sceneRoomId,
+            roomId,
+            scenarioName: childState?.scenarioName ?? null,
+            snapshotName: childState?.snapshotName ?? null,
+            status: "active",
+            roundNumber: 1,
+            parentSceneRoomIds: childRoom.parentSceneRoomIds,
+          },
+        });
+      } catch (e) {
+        console.warn(
+          `[MP Turn] Failed to create child sceneRoom ${childRoom.sceneRoomId} in DB:`, e
+        );
+      }
 
-      // Also notify each new sceneRoom separately
-      for (const newRoom of splitResult.newSceneRooms) {
-        const newClients = wsManager.getMultiplayerClients(newRoom.sceneRoomId);
-        notifySceneRoom(newRoom.sceneRoomId, newClients, {
+      // Update each member's currentSceneRoomId pointer
+      for (const playerId of childRoom.playerIds) {
+        try {
+          await prisma.multiplayerRoomMember.update({
+            where: { roomId_userId: { roomId, userId: playerId } },
+            data: { currentSceneRoomId: childRoom.sceneRoomId },
+          });
+        } catch (e) {
+          console.warn(
+            `[MP Turn] Failed to update member ${playerId} → ${childRoom.sceneRoomId}:`, e
+          );
+        }
+      }
+    }
+
+    // ── WebSocket notifications ──
+    if (wsManager) {
+      const stayerRooms = result.newChildRooms.filter((r) => r.isStayerRoom);
+      const moverRooms = result.newChildRooms.filter((r) => !r.isStayerRoom);
+
+      // Notify each frozen room's clients about what happened
+      for (const frozenId of result.frozenSceneRoomIds) {
+        const frozenClients = wsManager.getMultiplayerClients(frozenId);
+        const stayerChild = stayerRooms.find((r) =>
+          r.parentSceneRoomIds.includes(frozenId)
+        );
+        const moverChildren = moverRooms.filter((r) =>
+          r.parentSceneRoomIds.includes(frozenId)
+        );
+
+        if (moverChildren.length > 0) {
+          // Determine if this is a merge (mover child has multiple parents)
+          const mergedChildren = moverChildren.filter(
+            (r) => r.parentSceneRoomIds.length > 1
+          );
+          const simpleChildren = moverChildren.filter(
+            (r) => r.parentSceneRoomIds.length === 1
+          );
+
+          if (mergedChildren.length > 0) {
+            // Emit scene_room_merged for rooms involved in a cross-room merge
+            for (const merged of mergedChildren) {
+              notifySceneRoom(frozenId, frozenClients, {
+                type: "scene_room_merged",
+                frozenSceneRoomIds: merged.parentSceneRoomIds,
+                mergedChildRoom: {
+                  sceneRoomId: merged.sceneRoomId,
+                  playerIds: merged.playerIds,
+                  targetSceneName: merged.targetSceneName,
+                },
+                timestamp: new Date().toISOString(),
+              });
+            }
+          }
+
+          if (simpleChildren.length > 0 || stayerChild) {
+            // Emit scene_room_split for simple fork (one source)
+            notifySceneRoom(frozenId, frozenClients, {
+              type: "scene_room_split",
+              frozenSceneRoomId: frozenId,
+              stayerChildRoom: stayerChild
+                ? {
+                    sceneRoomId: stayerChild.sceneRoomId,
+                    playerIds: stayerChild.playerIds,
+                  }
+                : null,
+              moverChildRooms: simpleChildren.map((r) => ({
+                sceneRoomId: r.sceneRoomId,
+                playerIds: r.playerIds,
+                targetSceneName: r.targetSceneName,
+              })),
+              timestamp: new Date().toISOString(),
+            });
+          }
+        }
+      }
+
+      // Notify each new child room's clients that they joined
+      for (const childRoom of result.newChildRooms) {
+        const childClients = wsManager.getMultiplayerClients(childRoom.sceneRoomId);
+        notifySceneRoom(childRoom.sceneRoomId, childClients, {
           type: "scene_room_joined",
-          sceneRoomId: newRoom.sceneRoomId,
-          targetSceneName: newRoom.targetSceneName,
-          playerIds: newRoom.playerIds,
+          sceneRoomId: childRoom.sceneRoomId,
+          targetSceneName: childRoom.targetSceneName,
+          playerIds: childRoom.playerIds,
+          isStayerRoom: childRoom.isStayerRoom,
+          parentSceneRoomIds: childRoom.parentSceneRoomIds,
           timestamp: new Date().toISOString(),
         });
 
-        // Generate scene image for each new sceneRoom (fire-and-forget)
+        // Generate scene images for new rooms (fire-and-forget)
         const state = manager.getState();
-        const newSceneRoomState = manager.getSceneRoom(newRoom.sceneRoomId);
-        if (newSceneRoomState?.currentScenario && state.moduleName) {
-          generateSceneRoomImage(
-            newSceneRoomState.currentScenario,
-            state.moduleName
-          )
+        const childState = manager.getSceneRoom(childRoom.sceneRoomId);
+        if (childState?.currentScenario && state.moduleName) {
+          generateSceneRoomImage(childState.currentScenario, state.moduleName)
             .then((imageResult) => {
               if (imageResult && wsManager) {
                 const imgClients = wsManager.getMultiplayerClients(
-                  newRoom.sceneRoomId
+                  childRoom.sceneRoomId
                 );
-                notifySceneRoom(newRoom.sceneRoomId, imgClients, {
+                notifySceneRoom(childRoom.sceneRoomId, imgClients, {
                   type: "scene_image_ready",
-                  sceneRoomId: newRoom.sceneRoomId,
+                  sceneRoomId: childRoom.sceneRoomId,
                   imagePath: imageResult.path,
                   mimeType: imageResult.mimeType,
                   timestamp: new Date().toISOString(),
@@ -465,7 +542,7 @@ async function handlePostRoundSceneSplit(
             })
             .catch((err) => {
               console.warn(
-                `[MP Turn] Scene image for new sceneRoom ${newRoom.sceneRoomId} failed:`,
+                `[MP Turn] Scene image for ${childRoom.sceneRoomId} failed:`,
                 err
               );
             });
@@ -473,8 +550,11 @@ async function handlePostRoundSceneSplit(
       }
     }
 
+    const stayerCount = result.newChildRooms.filter((r) => r.isStayerRoom).length;
+    const moverCount = result.newChildRooms.filter((r) => !r.isStayerRoom).length;
     console.log(
-      `[MP Turn] Scene split: ${splitResult.newSceneRooms.length} new sceneRoom(s) created`
+      `[MP Turn] Movements resolved: ${result.frozenSceneRoomIds.length} frozen, ` +
+        `${stayerCount} stayer child(ren), ${moverCount} mover/merged child(ren)`
     );
   } catch (e) {
     console.error("[MP Turn] handlePostRoundSceneSplit failed:", e);

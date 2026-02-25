@@ -1,16 +1,12 @@
 /**
- * Scene Room Splitter — Phase 4
+ * Scene Room Splitter — Freeze-Fork Implementation
  *
- * After a round completes, reads playerActionAnalyses from each sceneRoom
- * to find players who want to move to a different scene.
+ * Implements the tree-history pattern for scene room splits:
+ * - Parent room is frozen (becomes a historical snapshot)
+ * - Child rooms are created for stayers and movers with parentSceneRoomIds set
  *
- * Groups them by targetSceneName, creates new sceneRooms in the manager,
- * moves players, then calls DirectorAgent.handleActionDrivenSceneChange()
- * per new sceneRoom to generate proper snapshots.
- *
- * All DB writes (creating MultiplayerSceneRoom rows, updating member
- * currentSceneRoomId) are done by the caller (turn service) after this
- * function returns — to keep this module pure in-memory.
+ * Note: For the unified cross-room merge/split entry point used by turn/service.ts,
+ * see sceneRoomMerger.ts → resolveAllMovements().
  */
 
 import { randomUUID } from "crypto";
@@ -21,8 +17,8 @@ import type {
 import type { DirectorAgent } from "../multiplayerAgent/director/directorAgent.js";
 import type { PlayerActionAnalysis } from "../multiplayerAgent/orchestrator/orchestratorAgent.js";
 import {
-  MultiplayerDynamicGameStateManager,
   emptyTemporaryInfo,
+  type MultiplayerDynamicGameStateManager,
 } from "../multiplayerState/MultiplayerDynamicGameState.js";
 
 // =============================================
@@ -32,21 +28,31 @@ import {
 export interface SplitSceneRoom {
   /** New sceneRoomId (UUID) */
   sceneRoomId: string;
-  /** Player IDs moved into this new sceneRoom */
+  /** Player IDs in this new sceneRoom */
   playerIds: string[];
-  /** The target scene name these players are moving to */
+  /** The target scene name (same as parent for stayer rooms) */
   targetSceneName: string;
   /** Reason for the scene change */
   reason: string;
+  /** True if this room was created for players who stayed in the same scene */
+  isStayerRoom: boolean;
+  /** Parent room IDs (single entry for splits) */
+  parentSceneRoomIds: string[];
 }
 
 export interface SceneRoomSplitResult {
-  /** True if at least one new sceneRoom was created */
+  /** True if at least one child room was created */
   splitOccurred: boolean;
-  /** Player IDs that stayed in the original sceneRoom */
-  remainingPlayerIds: string[];
-  /** Info about each newly created sceneRoom */
+  /** The parent sceneRoomId that was frozen; null if no split occurred */
+  frozenSceneRoomId: string | null;
+  /** Child room for players who stayed (null if all players moved) */
+  stayerChildRoom: SplitSceneRoom | null;
+  /** Child rooms for players who moved (one per unique target scene) */
+  moverChildRooms: SplitSceneRoom[];
+  /** All new child rooms (convenience: stayerChildRoom + moverChildRooms, non-null) */
   newSceneRooms: SplitSceneRoom[];
+  /** Player IDs that stayed in the original scene (backward-compat) */
+  remainingPlayerIds: string[];
 }
 
 // =============================================
@@ -57,11 +63,16 @@ export interface SceneRoomSplitResult {
  * Inspect the completed round's playerActionAnalyses and split the sceneRoom
  * if any players requested a scene change.
  *
- * @param manager   In-memory multiplayer game state manager
- * @param sceneRoomId  The sceneRoom that just finished its round
- * @param directorAgent  DirectorAgent instance (needed for scene transition logic)
- * @param db  Database adapter (passed through to director)
- * @returns   Split result describing any new sceneRooms created
+ * Freeze-fork pattern:
+ *  1. Parent room is frozen (historical snapshot)
+ *  2. Stayers → new child room inheriting parent scenario
+ *  3. Movers (grouped by target) → new child room per target + DirectorAgent scene transition
+ *
+ * @param manager       In-memory multiplayer game state manager
+ * @param sceneRoomId   The sceneRoom that just finished its round
+ * @param directorAgent DirectorAgent instance (needed for scene transition logic)
+ * @param _db           Database adapter (passed through to director)
+ * @returns             Split result describing any new child rooms created
  */
 export async function evaluateAndSplitSceneRooms(
   manager: MultiplayerDynamicGameStateManager,
@@ -71,7 +82,28 @@ export async function evaluateAndSplitSceneRooms(
 ): Promise<SceneRoomSplitResult> {
   const sceneRoom = manager.getSceneRoom(sceneRoomId);
   if (!sceneRoom) {
-    return { splitOccurred: false, remainingPlayerIds: [], newSceneRooms: [] };
+    return {
+      splitOccurred: false,
+      frozenSceneRoomId: null,
+      stayerChildRoom: null,
+      moverChildRooms: [],
+      newSceneRooms: [],
+      remainingPlayerIds: [],
+    };
+  }
+
+  if (sceneRoom.isFrozen) {
+    console.warn(
+      `[SceneRoomSplitter] sceneRoom ${sceneRoomId} is already frozen — skipping`
+    );
+    return {
+      splitOccurred: false,
+      frozenSceneRoomId: null,
+      stayerChildRoom: null,
+      moverChildRooms: [],
+      newSceneRooms: [],
+      remainingPlayerIds: [...sceneRoom.memberPlayerIds],
+    };
   }
 
   // Read playerActionAnalyses stored by the Orchestrator node
@@ -100,12 +132,57 @@ export async function evaluateAndSplitSceneRooms(
   if (movingPlayers.length === 0) {
     return {
       splitOccurred: false,
-      remainingPlayerIds: [...sceneRoom.memberPlayerIds],
+      frozenSceneRoomId: null,
+      stayerChildRoom: null,
+      moverChildRooms: [],
       newSceneRooms: [],
+      remainingPlayerIds: [...sceneRoom.memberPlayerIds],
     };
   }
 
-  // Group by target scene name (players heading to the same scene share a sceneRoom)
+  const movingPlayerIds = new Set(movingPlayers.map((m) => m.playerId));
+  const stayerIds = sceneRoom.memberPlayerIds.filter(
+    (id) => !movingPlayerIds.has(id)
+  );
+
+  // ── Freeze the parent room ──
+  manager.freezeSceneRoom(sceneRoomId);
+  console.log(`[SceneRoomSplitter] Frozen parent sceneRoom: ${sceneRoomId}`);
+
+  const newSceneRooms: SplitSceneRoom[] = [];
+  let stayerChildRoom: SplitSceneRoom | null = null;
+
+  // ── Create stayer child room (if there are stayers) ──
+  if (stayerIds.length > 0) {
+    const stayerChildId = randomUUID();
+    manager.createSceneRoom(stayerChildId, stayerIds, {
+      parentSceneRoomIds: [sceneRoomId],
+      currentScenario: sceneRoom.currentScenario,
+      scenarioId: sceneRoom.scenarioId,
+      scenarioName: sceneRoom.scenarioName,
+      snapshotId: sceneRoom.snapshotId,
+      snapshotName: sceneRoom.snapshotName,
+      roundNumber: 1,
+      turnsInCurrentScene: 0,
+    });
+    for (const stayerId of stayerIds) {
+      manager.relocatePlayerToSceneRoom(stayerId, stayerChildId);
+    }
+    console.log(
+      `[SceneRoomSplitter] Stayer child ${stayerChildId} created for ${stayerIds.length} player(s)`
+    );
+    stayerChildRoom = {
+      sceneRoomId: stayerChildId,
+      playerIds: stayerIds,
+      targetSceneName: sceneRoom.scenarioName ?? "",
+      reason: "player(s) remained in current scene",
+      isStayerRoom: true,
+      parentSceneRoomIds: [sceneRoomId],
+    };
+    newSceneRooms.push(stayerChildRoom);
+  }
+
+  // ── Group movers by target scene and create mover child rooms ──
   const groups = new Map<
     string,
     { targetSceneName: string; reason: string; playerIds: string[] }
@@ -123,30 +200,20 @@ export async function evaluateAndSplitSceneRooms(
     }
   }
 
-  const movingPlayerIds = new Set(movingPlayers.map((m) => m.playerId));
-  const remainingPlayerIds = sceneRoom.memberPlayerIds.filter(
-    (id) => !movingPlayerIds.has(id)
-  );
-
-  const newSceneRooms: SplitSceneRoom[] = [];
+  const moverChildRooms: SplitSceneRoom[] = [];
 
   for (const [targetSceneName, group] of groups) {
-    const newSceneRoomId = randomUUID();
+    const moverChildId = randomUUID();
     const { playerIds, reason } = group;
 
-    console.log(
-      `[SceneRoomSplitter] Creating sceneRoom ${newSceneRoomId} for ` +
-        `${playerIds.length} player(s) → "${targetSceneName}"`
-    );
-
-    // Create a new sceneRoom in the manager:
-    // - Inherits current scenario snapshot as departure point
-    // - Primes temporaryInfo.sceneChangeRequest so DirectorAgent sees the request
-    manager.createSceneRoom(newSceneRoomId, [], {
+    manager.createSceneRoom(moverChildId, playerIds, {
+      parentSceneRoomIds: [sceneRoomId],
       currentScenario: sceneRoom.currentScenario,
       scenarioName: sceneRoom.scenarioName,
       snapshotId: sceneRoom.snapshotId,
       snapshotName: sceneRoom.snapshotName,
+      roundNumber: 1,
+      turnsInCurrentScene: 0,
       temporaryInfo: {
         ...emptyTemporaryInfo(),
         sceneChangeRequest: {
@@ -158,17 +225,20 @@ export async function evaluateAndSplitSceneRooms(
       },
     });
 
-    // Move players into the new sceneRoom
     for (const playerId of playerIds) {
-      manager.movePlayerToSceneRoom(playerId, newSceneRoomId);
+      manager.relocatePlayerToSceneRoom(playerId, moverChildId);
     }
 
-    // Run DirectorAgent's scene transition logic — this does LLM calls to
-    // generate a complete snapshot for the target scene and updates the sceneRoom
+    console.log(
+      `[SceneRoomSplitter] Mover child ${moverChildId} created for ` +
+        `${playerIds.length} player(s) → "${targetSceneName}"`
+    );
+
+    // Run DirectorAgent scene transition logic
     try {
       await directorAgent.handleActionDrivenSceneChange(
         manager,
-        newSceneRoomId,
+        moverChildId,
         targetSceneName,
         reason
       );
@@ -180,20 +250,26 @@ export async function evaluateAndSplitSceneRooms(
         `[SceneRoomSplitter] Scene transition failed for "${targetSceneName}":`,
         e
       );
-      // Non-fatal: sceneRoom is created even without a snapshot; next round will retry
     }
 
-    newSceneRooms.push({
-      sceneRoomId: newSceneRoomId,
+    const moverRoom: SplitSceneRoom = {
+      sceneRoomId: moverChildId,
       playerIds,
       targetSceneName,
       reason,
-    });
+      isStayerRoom: false,
+      parentSceneRoomIds: [sceneRoomId],
+    };
+    moverChildRooms.push(moverRoom);
+    newSceneRooms.push(moverRoom);
   }
 
   return {
     splitOccurred: newSceneRooms.length > 0,
-    remainingPlayerIds,
+    frozenSceneRoomId: sceneRoomId,
+    stayerChildRoom,
+    moverChildRooms,
     newSceneRooms,
+    remainingPlayerIds: stayerIds,
   };
 }

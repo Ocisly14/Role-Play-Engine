@@ -830,16 +830,20 @@ model MultiplayerRoomMember {
 }
 
 model MultiplayerSceneRoom {
-  sceneRoomId  String   @id @map("scene_room_id")
-  roomId       String   @map("room_id")
-  scenarioId   String?  @map("scenario_id")
-  scenarioName String?  @map("scenario_name")
-  snapshotId   String?  @map("snapshot_id")
-  snapshotName String?  @map("snapshot_name")
-  status       String   @default("active")
-  roundNumber  Int      @default(1) @map("round_number")
-  createdAt    DateTime @default(now()) @map("created_at")
-  updatedAt    DateTime @updatedAt @map("updated_at")
+  sceneRoomId        String    @id @map("scene_room_id")
+  roomId             String    @map("room_id")
+  scenarioId         String?   @map("scenario_id")
+  scenarioName       String?   @map("scenario_name")
+  snapshotId         String?   @map("snapshot_id")
+  snapshotName       String?   @map("snapshot_name")
+  status             String    @default("active")
+  roundNumber        Int       @default(1) @map("round_number")
+  /// Tree structure: empty = root node; one entry = fork child; multiple = merged child
+  parentSceneRoomIds String[]  @default([]) @map("parent_scene_room_ids")
+  /// Non-null when status = "frozen"
+  frozenAt           DateTime? @map("frozen_at")
+  createdAt          DateTime  @default(now()) @map("created_at")
+  updatedAt          DateTime  @updatedAt @map("updated_at")
 
   room    MultiplayerRoom         @relation(fields: [roomId], references: [roomId], onDelete: Cascade)
   members MultiplayerRoomMember[]

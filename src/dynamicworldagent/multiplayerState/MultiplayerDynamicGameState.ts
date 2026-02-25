@@ -123,6 +123,13 @@ export interface MultiplayerSceneRoomState {
   turnsInCurrentScene: number; // mirrors single-player turnsInCurrentScene
   lastPlayerInputTimeByPlayer: Record<string, string | null>; // playerId → ISO timestamp
   temporaryInfo: MultiplayerTemporaryInfo;
+  // ── Tree structure fields ──
+  /** Empty = root node; one ID = fork child; multiple IDs = merged child */
+  parentSceneRoomIds: string[];
+  /** True when this room is frozen (no longer accepts input) */
+  isFrozen: boolean;
+  /** Timestamp when the room was frozen; null while active */
+  frozenAt: Date | null;
 }
 
 // =============================================
@@ -265,6 +272,9 @@ export function initialMultiplayerDynamicGameState(params: {
       players.map((p) => [p.playerId, null])
     ),
     temporaryInfo: emptyTemporaryInfo(),
+    parentSceneRoomIds: [],
+    isFrozen: false,
+    frozenAt: null,
   };
 
   return {
@@ -378,6 +388,9 @@ export class MultiplayerDynamicGameStateManager {
         playerIds.map((id) => [id, null])
       ),
       temporaryInfo: emptyTemporaryInfo(),
+      parentSceneRoomIds: [],
+      isFrozen: false,
+      frozenAt: null,
       ...initial,
     };
     this.state.sceneRooms[sceneRoomId] = newRoom;
@@ -466,7 +479,7 @@ export class MultiplayerDynamicGameStateManager {
 
   allPlayersSubmittedForSceneRoom(sceneRoomId: string): boolean {
     const room = this.state.sceneRooms[sceneRoomId];
-    if (!room) return false;
+    if (!room || room.isFrozen) return false;
     const submitted = new Set(
       this.getRoundInputsForSceneRoom(sceneRoomId).map((i) => i.playerId)
     );
@@ -480,6 +493,34 @@ export class MultiplayerDynamicGameStateManager {
     this.state.roundInputs = this.state.roundInputs.filter(
       (i) => !memberIds.has(i.playerId)
     );
+    this.state.lastUpdated = new Date();
+  }
+
+  // ---------- Tree structure operations ----------
+
+  /** Freeze a sceneRoom — it can no longer accept inputs and is treated as historical */
+  freezeSceneRoom(sceneRoomId: string): void {
+    const room = this.state.sceneRooms[sceneRoomId];
+    if (!room) return;
+    room.isFrozen = true;
+    room.frozenAt = new Date();
+    this.state.lastUpdated = new Date();
+  }
+
+  /** Return all sceneRooms that are currently active (not frozen) */
+  getActiveSceneRooms(): MultiplayerSceneRoomState[] {
+    return Object.values(this.state.sceneRooms).filter((r) => !r.isFrozen);
+  }
+
+  /**
+   * Relocate a player to a new sceneRoom without modifying the old room's
+   * memberPlayerIds (used when the old room is being frozen as a historical snapshot).
+   * The new room must already have the player in its memberPlayerIds list.
+   */
+  relocatePlayerToSceneRoom(playerId: string, newSceneRoomId: string): void {
+    const player = this.state.players[playerId];
+    if (!player) return;
+    player.currentSceneRoomId = newSceneRoomId;
     this.state.lastUpdated = new Date();
   }
 
