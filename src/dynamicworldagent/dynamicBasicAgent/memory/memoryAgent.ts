@@ -170,7 +170,8 @@ export const injectActionTypeRules = (
 export const extractRecentConversationHistory = async (
   db: CoCDatabase | CoCDatabaseAdapter | undefined,
   sessionId: string,
-  limit = 1
+  limit = 1,
+  sceneRoomId?: string
 ): Promise<
   Array<{
     turnNumber: number;
@@ -187,7 +188,8 @@ export const extractRecentConversationHistory = async (
     const turns = db.getTurnHistory(
       sessionId,
       limit * 3, // Get more turns to account for filtering completed ones
-      undefined // afterTurnNumber
+      undefined, // afterTurnNumber
+      sceneRoomId
     );
 
     // Filter only completed turns with keeper narrative
@@ -255,7 +257,7 @@ export const retrieveRelevantHistory = async (
 
   const {
     topKActionLogs = 3,
-    topKTurns = 3,
+    topKTurns = 5,
     alpha = 0.3,
     language = "zh",
     minScore,
@@ -490,7 +492,7 @@ export const enrichMemoryContext = async (
         ? preloadedRelevantHistory
         : await retrieveRelevantHistory(db, gameState.sessionId, characterInput, {
             topKActionLogs: 15, // Keeper path keeps action-log recall enabled
-            topKTurns: 3, // Global turns (unchanged)
+            topKTurns: 5, // Increase turn recall for better continuity
             alpha, // Dynamic: 10% BM25 (中文) or 30% BM25 (英文)
             // NEW: Per-character options
             targetCharacters:

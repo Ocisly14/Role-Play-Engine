@@ -18,6 +18,11 @@ import {
 } from "../../../../src/dynamicworldagent/multiplayerState/MultiplayerDynamicGameState.js";
 import { multiplayerSessionStore } from "../../../../src/dynamicworldagent/multiplayerState/MultiplayerDynamicGameStateLoader.js";
 import { buildMultiplayerGraph } from "../../../../src/dynamicworldagent/multiplayerGraph/index.js";
+import { evaluateAndSplitSceneRooms } from "../../../../src/dynamicworldagent/multiplayerGraph/sceneRoomSplitter.js";
+import { DirectorAgent } from "../../../../src/dynamicworldagent/multiplayerAgent/director/directorAgent.js";
+import { ScenarioLoader } from "../../../../src/shared/agents/memory/scenarioloader/index.js";
+import { generateSceneRoomImage } from "../../../../src/dynamicworldagent/multiplayerVisual/sceneImage.js";
+import { TurnManager } from "../../../../src/dynamicworldagent/multiplayerAgent/memory/turnManager.js";
 import { WebSocketManager } from "../../websocket/WebSocketManager.js";
 import { notifySceneRoom } from "../../websocket/notifier.js";
 
@@ -189,6 +194,38 @@ async function triggerMultiplayerGraph(
 
   const wsManager = WebSocketManager.getInstance();
 
+  // Persist a per-sceneRoom "turn" record for DB-backed conversationHistory / RAG.
+  // Only create a turn when there is at least one non-empty input.
+  const initialState = manager.getState();
+  const initialSceneRoom = manager.getSceneRoom(sceneRoomId);
+  const effectiveInputs = roundInputs.filter(
+    (i) => i.inputType === "input" && Boolean(i.content?.trim())
+  );
+  const combinedInputForTurn = effectiveInputs
+    .map((i) => {
+      const playerName = initialState.players[i.playerId]?.characterName ?? i.playerId;
+      return `${playerName}: ${i.content?.trim() ?? ""}`;
+    })
+    .join("\n");
+
+  const turnManager = new TurnManager(db);
+  let persistedTurnId: string | null = null;
+  if (combinedInputForTurn) {
+    persistedTurnId = await turnManager.createTurn({
+      sessionId: initialState.sessionId,
+      sceneRoomId,
+      characterInput: combinedInputForTurn,
+      // Multiplayer: aggregated input, no single character identity.
+      characterId: undefined,
+      characterName: undefined,
+      sceneId: initialSceneRoom?.currentScenario?.id ?? undefined,
+      sceneName: initialSceneRoom?.currentScenario?.name ?? undefined,
+      location: initialSceneRoom?.currentScenario?.location ?? undefined,
+      gameDay: initialState.gameDay ?? null,
+      gameTime: initialState.timeOfDay ?? null,
+    });
+  }
+
   // Notify clients that round processing has started
   if (wsManager) {
     const clients = wsManager.getMultiplayerClients(sceneRoomId);
@@ -212,9 +249,24 @@ async function triggerMultiplayerGraph(
     stream,
   };
 
-  const result = await graph.invoke(graphState, {
-    configurable: { thread_id: roundTurnId },
-  });
+  let result: any;
+  try {
+    result = await graph.invoke(graphState, {
+      configurable: { thread_id: roundTurnId },
+    });
+  } catch (err) {
+    if (persistedTurnId) {
+      try {
+        (db as any).markTurnError?.(
+          persistedTurnId,
+          err instanceof Error ? err.message : String(err)
+        );
+      } catch {
+        // non-fatal
+      }
+    }
+    throw err;
+  }
 
   // Replace stored manager with the updated state from graph result
   if (result.dynamicGameState) {
@@ -234,6 +286,24 @@ async function triggerMultiplayerGraph(
     (updatedSceneRoom?.temporaryInfo.contextualData?.diceRolls as
       | unknown[]
       | undefined) ?? [];
+
+  if (persistedTurnId && updatedSceneRoom) {
+    // Store orchestrator analyses + action results for RAG and debugging.
+    turnManager.updateProcessing(persistedTurnId, {
+      actionAnalysis:
+        updatedSceneRoom.temporaryInfo.contextualData?.playerActionAnalyses ?? null,
+      actionResults: updatedSceneRoom.temporaryInfo.actionResults ?? null,
+    });
+    turnManager.completeTurn(
+      persistedTurnId,
+      {
+        keeperNarrative,
+        gameDay: result.dynamicGameState?.gameDay ?? null,
+        gameTime: result.dynamicGameState?.timeOfDay ?? null,
+      },
+      language
+    );
+  }
 
   // Broadcast round complete
   if (wsManager) {
@@ -255,6 +325,160 @@ async function triggerMultiplayerGraph(
   console.log(
     `[MP Turn] Round ${roundTurnId} complete for sceneRoom ${sceneRoomId}`
   );
+
+  // ---- Phase 4: Scene Room Splitting ----
+  // Check if any players requested a scene change; if so, split sceneRooms
+  // and notify clients. This runs after round_complete so clients see the
+  // round result before the scene transition notification.
+  if (updatedManager) {
+    await handlePostRoundSceneSplit(
+      db,
+      roomId,
+      sceneRoomId,
+      updatedManager,
+      wsManager
+    );
+  }
+
+  // ---- Phase 4: Scene Image Generation ----
+  // Generate scene image for the (possibly updated) sceneRoom, fire-and-forget
+  if (updatedManager) {
+    const state = updatedManager.getState();
+    const finalSceneRoom = updatedManager.getSceneRoom(sceneRoomId);
+    if (finalSceneRoom?.currentScenario && state.moduleName) {
+      generateSceneRoomImage(finalSceneRoom.currentScenario, state.moduleName)
+        .then((imageResult) => {
+          if (imageResult && wsManager) {
+            const clients = wsManager.getMultiplayerClients(sceneRoomId);
+            notifySceneRoom(sceneRoomId, clients, {
+              type: "scene_image_ready",
+              sceneRoomId,
+              imagePath: imageResult.path,
+              mimeType: imageResult.mimeType,
+              timestamp: new Date().toISOString(),
+            });
+          }
+        })
+        .catch((err) => {
+          console.warn("[MP Turn] Scene image generation failed:", err);
+        });
+    }
+  }
+}
+
+// =============================================
+// handlePostRoundSceneSplit — Phase 4
+// =============================================
+
+async function handlePostRoundSceneSplit(
+  db: CoCDatabase | CoCDatabaseAdapter,
+  roomId: string,
+  sceneRoomId: string,
+  manager: MultiplayerDynamicGameStateManager,
+  wsManager: ReturnType<typeof WebSocketManager.getInstance>
+): Promise<void> {
+  try {
+    const scenarioLoader = new ScenarioLoader(db);
+    const directorAgent = new DirectorAgent(scenarioLoader, db);
+
+    const splitResult = await evaluateAndSplitSceneRooms(
+      manager,
+      sceneRoomId,
+      directorAgent,
+      db
+    );
+
+    if (!splitResult.splitOccurred) return;
+
+    // Persist new sceneRooms to DB
+    const prisma = getPrismaClient();
+    for (const newRoom of splitResult.newSceneRooms) {
+      const newSceneRoomState = manager.getSceneRoom(newRoom.sceneRoomId);
+
+      await prisma.multiplayerSceneRoom.create({
+        data: {
+          sceneRoomId: newRoom.sceneRoomId,
+          roomId,
+          scenarioName: newSceneRoomState?.scenarioName ?? null,
+          snapshotName: newSceneRoomState?.snapshotName ?? null,
+          status: "active",
+          roundNumber: 1,
+        },
+      });
+
+      // Update DB members to point to the new sceneRoom
+      for (const playerId of newRoom.playerIds) {
+        await prisma.multiplayerRoomMember.update({
+          where: { roomId_userId: { roomId, userId: playerId } },
+          data: { currentSceneRoomId: newRoom.sceneRoomId },
+        });
+      }
+    }
+
+    // Broadcast scene_room_split to the original sceneRoom (so all players know)
+    if (wsManager) {
+      const clients = wsManager.getMultiplayerClients(sceneRoomId);
+      notifySceneRoom(sceneRoomId, clients, {
+        type: "scene_room_split",
+        sceneRoomId,
+        remainingPlayerIds: splitResult.remainingPlayerIds,
+        newSceneRooms: splitResult.newSceneRooms.map((r) => ({
+          sceneRoomId: r.sceneRoomId,
+          playerIds: r.playerIds,
+          targetSceneName: r.targetSceneName,
+        })),
+        timestamp: new Date().toISOString(),
+      });
+
+      // Also notify each new sceneRoom separately
+      for (const newRoom of splitResult.newSceneRooms) {
+        const newClients = wsManager.getMultiplayerClients(newRoom.sceneRoomId);
+        notifySceneRoom(newRoom.sceneRoomId, newClients, {
+          type: "scene_room_joined",
+          sceneRoomId: newRoom.sceneRoomId,
+          targetSceneName: newRoom.targetSceneName,
+          playerIds: newRoom.playerIds,
+          timestamp: new Date().toISOString(),
+        });
+
+        // Generate scene image for each new sceneRoom (fire-and-forget)
+        const state = manager.getState();
+        const newSceneRoomState = manager.getSceneRoom(newRoom.sceneRoomId);
+        if (newSceneRoomState?.currentScenario && state.moduleName) {
+          generateSceneRoomImage(
+            newSceneRoomState.currentScenario,
+            state.moduleName
+          )
+            .then((imageResult) => {
+              if (imageResult && wsManager) {
+                const imgClients = wsManager.getMultiplayerClients(
+                  newRoom.sceneRoomId
+                );
+                notifySceneRoom(newRoom.sceneRoomId, imgClients, {
+                  type: "scene_image_ready",
+                  sceneRoomId: newRoom.sceneRoomId,
+                  imagePath: imageResult.path,
+                  mimeType: imageResult.mimeType,
+                  timestamp: new Date().toISOString(),
+                });
+              }
+            })
+            .catch((err) => {
+              console.warn(
+                `[MP Turn] Scene image for new sceneRoom ${newRoom.sceneRoomId} failed:`,
+                err
+              );
+            });
+        }
+      }
+    }
+
+    console.log(
+      `[MP Turn] Scene split: ${splitResult.newSceneRooms.length} new sceneRoom(s) created`
+    );
+  } catch (e) {
+    console.error("[MP Turn] handlePostRoundSceneSplit failed:", e);
+  }
 }
 
 // =============================================

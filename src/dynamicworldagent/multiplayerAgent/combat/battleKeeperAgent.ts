@@ -1,6 +1,7 @@
 import { generateText } from "../../../models/index.js";
 import { ModelClass } from "../../../models/types.js";
 import type { DynamicGameStateManager } from "../../state/index.js";
+import type { MultiplayerDynamicGameStateManager } from "../../multiplayerState/MultiplayerDynamicGameState.js";
 import { buildBattleKeeperSystemPrompt } from "./battleKeeperTemplate.js";
 import type { CombatActionAResult } from "./combatActionAgentA.js";
 import { withCombatSkillDefaults } from "./combatSkillDefaults.js";
@@ -10,6 +11,78 @@ import type { ActionResult } from "../../../shared/state/index.js";
  * Battle Keeper Agent - Generates combat-focused narrative
  */
 export class BattleKeeperAgent {
+  /**
+   * Multiplayer native wrapper.
+   * Current implementation uses the first player in the sceneRoom as the "active" playerCharacter view.
+   */
+  async generateEntryNarrativeForSceneRoom(
+    manager: MultiplayerDynamicGameStateManager,
+    sceneRoomId: string,
+    actionResults: ActionResult[],
+    playerInput: string,
+    language: "en" | "zh",
+    onNarrativeDelta?: (delta: string) => void
+  ): Promise<string> {
+    const adapter = this.buildManagerAdapter(manager, sceneRoomId);
+    return this.generateEntryNarrative(
+      adapter,
+      actionResults,
+      playerInput,
+      language,
+      onNarrativeDelta
+    );
+  }
+
+  private buildManagerAdapter(
+    manager: MultiplayerDynamicGameStateManager,
+    sceneRoomId: string
+  ): DynamicGameStateManager {
+    const getView = (): any => {
+      const s = manager.getState();
+      const scr = manager.getSceneRoom(sceneRoomId);
+      const playerIds = scr?.memberPlayerIds ?? [];
+      const firstPlayer = s.players[playerIds[0]];
+      const profile: any = firstPlayer?.profile ?? null;
+      if (profile) {
+        if (!profile.id) profile.id = firstPlayer?.characterId ?? profile.id;
+        if (!profile.name) profile.name = firstPlayer?.characterName ?? profile.name;
+      }
+      return {
+        ...s,
+        currentScenario: scr?.currentScenario ?? null,
+        temporaryInfo: scr?.temporaryInfo ?? {
+          rules: [],
+          contextualData: {},
+          actionResults: [],
+          actionResultsDetailed: [],
+          currentActionAnalysis: null,
+          npcResponseAnalyses: [],
+          sceneChangeRequest: null,
+          previousScenario: null,
+        },
+        turnsInCurrentScene: scr?.turnsInCurrentScene ?? 0,
+        playerCharacter: profile,
+        staminaState: firstPlayer?.staminaState ?? {
+          minutesSinceLastRest: 0,
+          fatigueActive: false,
+        },
+      };
+    };
+
+    return {
+      getState: getView,
+      getFullGameTime: () => manager.getFullGameTime(),
+      isFatigued: () => {
+        const scr = manager.getSceneRoom(sceneRoomId);
+        const activePlayerId = scr?.memberPlayerIds?.[0];
+        return activePlayerId ? manager.isFatigued(activePlayerId) : false;
+      },
+      setContextualData: (key: string, value: unknown) =>
+        manager.setContextualData(sceneRoomId, key, value),
+      getContextualData: (key: string) => manager.getContextualData(sceneRoomId, key),
+    } as unknown as DynamicGameStateManager;
+  }
+
   private parseNarrative(response: string): string {
     try {
       let jsonText = response.trim();

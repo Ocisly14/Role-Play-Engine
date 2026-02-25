@@ -73,6 +73,7 @@ export class CoCDatabaseAdapter {
       characterInput: turn.characterInput,
       characterId: turn.characterId,
       characterName: turn.characterName,
+      sceneRoomId: turn.sceneRoomId ?? null,
       actionAnalysis: turn.actionAnalysis,
       actionResults: turn.actionResults,
       directorDecision: turn.directorDecision,
@@ -225,7 +226,8 @@ export class CoCDatabaseAdapter {
     sceneName?: string | null,
     location?: string | null,
     gameDay?: number | null,
-    gameTime?: string | null
+    gameTime?: string | null,
+    sceneRoomId?: string | null
   ): Promise<void> {
     const startedAt = new Date();
     this.turnCache.set(turnId, {
@@ -235,6 +237,7 @@ export class CoCDatabaseAdapter {
       characterInput,
       characterId: characterId || null,
       characterName: characterName || null,
+      sceneRoomId: sceneRoomId || null,
       actionAnalysis: null,
       actionResults: null,
       keeperNarrative: null,
@@ -266,6 +269,7 @@ export class CoCDatabaseAdapter {
         characterInput,
         characterId: characterId || null,
         characterName: characterName || null,
+        sceneRoomId: sceneRoomId || null,
         sceneId: sceneId || null,
         sceneName: sceneName || null,
         location: location || null,
@@ -417,9 +421,12 @@ export class CoCDatabaseAdapter {
   getTurnHistory(
     sessionId: string,
     limit = 20,
-    afterTurnNumber?: number
+    afterTurnNumber?: number,
+    sceneRoomId?: string
   ): any[] {
-    const turns = this.getSessionTurns(sessionId);
+    const turns = this.getSessionTurns(sessionId).filter((turn) =>
+      sceneRoomId ? turn.sceneRoomId === sceneRoomId : true
+    );
     if (typeof afterTurnNumber === "number") {
       // Incremental fetch: return newer turns in ascending order.
       return turns

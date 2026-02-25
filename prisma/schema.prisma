@@ -513,6 +513,8 @@ model GameTurn {
   characterInput   String    @map("character_input")
   characterId      String?   @map("character_id")
   characterName    String?   @map("character_name")
+  // Multiplayer: sceneRoom-scoped turn history (null for single-player sessions)
+  sceneRoomId      String?   @map("scene_room_id")
   actionAnalysis   Json?     @map("action_analysis")
   actionResults    Json?     @map("action_results")
   directorDecision Json?     @map("director_decision")
@@ -539,6 +541,7 @@ model GameTurn {
   @@index([emailId])
   @@index([status])
   @@index([sessionId, turnNumber])
+  @@index([sessionId, sceneRoomId, turnNumber])
   @@index([startedAt])
   @@map("game_turns")
 }

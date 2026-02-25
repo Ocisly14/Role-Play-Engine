@@ -3,9 +3,7 @@
  *
  * Differences from single-player:
  * - Processes ALL player inputs in one LLM call (roundInputs[])
- * - Outputs per-player ActionAnalysis + estimatedMinutes
- * - Validates time divergence: rejects round if any player's estimated time
- *   exceeds others' by >= 60 minutes (unless scene-transition exception)
+ * - Outputs per-player ActionAnalysis
  * - No isSimulatedQuery / simulatedQueryCount
  */
 
@@ -32,6 +30,10 @@ import {
   retrieveRelevantHistory,
 } from "../memory/memoryAgent.js";
 import { getMultiplayerOrchestratorTemplate } from "./orchestratorTemplate.js";
+import {
+  getLatestActionLogEntryWithLocation,
+  isTimeAfter,
+} from "../../utils/gameTime.js";
 
 // =============================================
 // Output types
@@ -42,16 +44,10 @@ export interface PlayerActionAnalysis {
   characterId: string;
   actionAnalysis: ActionAnalysis;
   sceneChangeRequest: SceneChangeRequest | null;
-  /** LLM-estimated minutes for this action (used for divergence check) */
-  estimatedMinutes: number;
 }
 
 export interface MultiRoundValidation {
-  status: "passed" | "rejected";
-  code?: "round_rejected_time_divergence";
-  reason?: string;
-  estimatedMinutesByPlayer?: Record<string, number>;
-  exemptedBySceneTransition?: boolean;
+  status: "passed";
 }
 
 export interface OrchestratorResult {
@@ -110,59 +106,75 @@ function normalizeActionAnalysis(raw: unknown): ActionAnalysis {
 }
 
 // =============================================
-// Time divergence check
-// =============================================
-
-const TIME_DIVERGENCE_THRESHOLD_MINUTES = 60;
-
-function checkTimeDivergence(
-  playerAnalyses: PlayerActionAnalysis[]
-): MultiRoundValidation {
-  if (playerAnalyses.length <= 1) return { status: "passed" };
-
-  const estimated = playerAnalyses.map((p) => p.estimatedMinutes);
-  const sorted = [...estimated].sort((a, b) => a - b);
-  const median = sorted[Math.floor(sorted.length / 2)];
-
-  const estimatedByPlayer: Record<string, number> = {};
-  for (const pa of playerAnalyses) {
-    estimatedByPlayer[pa.playerId] = pa.estimatedMinutes;
-  }
-
-  for (const pa of playerAnalyses) {
-    const diff = pa.estimatedMinutes - median;
-    if (diff >= TIME_DIVERGENCE_THRESHOLD_MINUTES) {
-      const anySceneTransition = playerAnalyses.some(
-        (p) => p.sceneChangeRequest?.shouldChange === true
-      );
-      if (anySceneTransition && pa.sceneChangeRequest?.shouldChange === true) {
-        return {
-          status: "passed",
-          estimatedMinutesByPlayer: estimatedByPlayer,
-          exemptedBySceneTransition: true,
-        };
-      }
-      return {
-        status: "rejected",
-        code: "round_rejected_time_divergence",
-        reason:
-          `玩家 ${pa.playerId} 的行动预计耗时（约 ${pa.estimatedMinutes} 分钟）` +
-          `比本轮其他玩家高出 ${diff} 分钟（超过 60 分钟阈值）。` +
-          `请统一行动节奏，或拆分场景分别处理。`,
-        estimatedMinutesByPlayer: estimatedByPlayer,
-        exemptedBySceneTransition: false,
-      };
-    }
-  }
-
-  return { status: "passed", estimatedMinutesByPlayer: estimatedByPlayer };
-}
-
-// =============================================
 // MultiplayerOrchestratorAgent
 // =============================================
 
 export class MultiplayerOrchestratorAgent {
+  private extractSceneNpcsForOrchestrator(
+    manager: MultiplayerDynamicGameStateManager,
+    sceneRoomId: string
+  ): Array<{ id: string; name: string; status: unknown; recentActionLog: unknown[] }> {
+    const state = manager.getState();
+    const sceneRoom = manager.getSceneRoom(sceneRoomId);
+    const scenario = sceneRoom?.currentScenario;
+    const location = scenario?.location;
+    if (!location) return [];
+
+    const snapshotTime =
+      (scenario as any)?.gameTime ?? `Day ${state.gameDay}, ${state.timeOfDay}`;
+
+    const out: Array<{ id: string; name: string; status: unknown; recentActionLog: unknown[] }> = [];
+    const seen = new Set<string>();
+
+    const add = (npc: any) => {
+      if (!npc?.id || !npc?.name) return;
+      if (seen.has(npc.id)) return;
+      seen.add(npc.id);
+      out.push({
+        id: npc.id,
+        name: npc.name,
+        status: npc.status ?? null,
+        recentActionLog: Array.isArray(npc.actionLog) ? npc.actionLog.slice(-3) : [],
+      });
+    };
+
+    // Prefer scenario snapshot character list as authority.
+    for (const sc of scenario?.characters ?? []) {
+      const npc = state.npcCharacters.find((n) => n?.name === sc?.name) ??
+        state.npcCharacters.find((n) =>
+          typeof n?.name === "string" &&
+          typeof sc?.name === "string" &&
+          n.name.toLowerCase() === sc.name.toLowerCase()
+        );
+      if (!npc) continue;
+      const latest = getLatestActionLogEntryWithLocation(npc.actionLog);
+      if (
+        latest &&
+        isTimeAfter(latest.time, snapshotTime) &&
+        typeof latest.location === "string" &&
+        latest.location.toLowerCase() !== location.toLowerCase()
+      ) {
+        continue;
+      }
+      add(npc);
+    }
+
+    // Include NPCs whose latest actionLog places them here after snapshot time.
+    for (const npc of state.npcCharacters) {
+      const latest = getLatestActionLogEntryWithLocation(npc.actionLog);
+      if (
+        latest &&
+        isTimeAfter(latest.time, snapshotTime) &&
+        typeof latest.location === "string" &&
+        latest.location.toLowerCase() === location.toLowerCase()
+      ) {
+        add(npc);
+      }
+    }
+
+    return out;
+  }
+
   async processRound(
     roundInputs: MultiplayerTurnInput[],
     manager: MultiplayerDynamicGameStateManager,
@@ -212,43 +224,85 @@ export class MultiplayerOrchestratorAgent {
       }
     }
 
-    // Fetch recent conversation history
-    let conversationHistory: any[] = [];
-    try {
-      conversationHistory = await extractRecentConversationHistory(db, state.sessionId);
-    } catch { /* non-fatal */ }
+    // SceneRoom-scoped conversation history (DB-backed; do NOT leak other sceneRooms).
+    const conversationHistory = await extractRecentConversationHistory(
+      db,
+      state.sessionId,
+      3,
+      sceneRoomId
+    );
 
     // Relevant history (combined from all player inputs)
-    const combinedQuery = roundInputs
-      .filter((i) => i.inputType === "input" && i.content)
-      .map((i) => i.content)
-      .join(" ");
+    const effectiveRoundInputs = roundInputs.filter(
+      (i) => i.inputType === "input" && Boolean(i.content?.trim())
+    );
+    const combinedQuery = effectiveRoundInputs.map((i) => i.content?.trim()).join(" ");
     let relevantHistory: any[] = [];
     try {
       if (combinedQuery && db) {
-        const result = await retrieveRelevantHistory(db, state.sessionId, combinedQuery);
+        const result = await retrieveRelevantHistory(db, state.sessionId, combinedQuery, {
+          sceneRoomId,
+          language,
+          sceneName: currentScenario?.name ?? undefined,
+          sceneLocation: currentScenario?.location ?? undefined,
+          npcNames: state.npcCharacters.map((n) => n.name).filter(Boolean),
+          currentLocation: currentScenario?.location ?? undefined,
+          topKTurns: 5,
+        });
         relevantHistory = result ?? [];
       }
     } catch { /* non-fatal */ }
 
-    // Build player context list for the prompt
-    const playerContexts = roundInputs.map((input) => {
-      const player = state.players[input.playerId];
-      return {
-        playerId: input.playerId,
-        characterName: player?.characterName ?? input.playerId,
-        inputType: input.inputType,
-        content: input.content ?? "",
-        selectedSkill: input.selectedSkill ?? null,
-      };
-    });
+    // Build sceneRoom-scoped player injection (ONLY players with input this round; skip/no-input omitted)
+    const inputPlayerIds = new Set(effectiveRoundInputs.map((i) => i.playerId));
+    const scenePlayers = sceneRoom.memberPlayerIds
+      .map((playerId) => {
+        if (!inputPlayerIds.has(playerId)) return null;
+        const player = state.players[playerId];
+        if (!player) return null;
+        const input = effectiveRoundInputs.find((ri) => ri.playerId === playerId);
+        const thisRoundInput = input
+          ? {
+              inputType: "input" as const,
+              content: input.content?.trim() ?? "",
+              selectedSkill: input.selectedSkill ?? null,
+              skillSelectionMode: input.skillSelectionMode ?? "manual",
+            }
+          : null;
+        return {
+          roleType: "player" as const,
+          playerId,
+          characterId: player.characterId,
+          name: player.characterName,
+          // Orchestrator only needs a light view; keep full profile out of the prompt.
+          status: (player.profile as any)?.status ?? null,
+          attributes: (player.profile as any)?.attributes ?? null,
+          ...(thisRoundInput ? { thisRoundInput } : {}),
+        };
+      })
+      .filter(Boolean);
+
+    const roundInputsJson = effectiveRoundInputs
+      .map((i) => ({
+        playerId: i.playerId,
+        characterId: i.characterId,
+        inputType: "input" as const,
+        content: i.content?.trim() ?? "",
+        selectedSkill: i.selectedSkill ?? null,
+        skillSelectionMode: i.skillSelectionMode ?? "manual",
+      }));
+
+    const sceneNpcs = this.extractSceneNpcsForOrchestrator(manager, sceneRoomId);
 
     const templateData = {
+      sceneRoomId,
       currentScenarioName: currentScenario?.name ?? "Unknown Location",
       scenarioLocation: currentScenario?.location ?? "Unknown",
       npcNames: state.npcCharacters.map((n) => n.name).join(", ") || "None",
       connections: connections.length > 0 ? connections : null,
-      players: playerContexts,
+      scenePlayersJson: JSON.stringify(scenePlayers, null, 2),
+      sceneNpcsJson: JSON.stringify(sceneNpcs, null, 2),
+      roundInputsJson: JSON.stringify(roundInputsJson, null, 2),
       conversationHistory: conversationHistory.length > 0 ? conversationHistory : null,
       relevantHistory: relevantHistory.length > 0 ? relevantHistory : null,
       language,
@@ -272,7 +326,7 @@ export class MultiplayerOrchestratorAgent {
     } catch (err) {
       console.error("[MultiplayerOrchestrator] LLM call failed:", err);
       // Fallback: treat all inputs as exploration with no scene change
-      const fallback: PlayerActionAnalysis[] = roundInputs.map((inp) => {
+      const fallback: PlayerActionAnalysis[] = effectiveRoundInputs.map((inp) => {
         const player = state.players[inp.playerId];
         return {
           playerId: inp.playerId,
@@ -285,7 +339,6 @@ export class MultiplayerOrchestratorAgent {
             requiresSkillSelection: false,
           },
           sceneChangeRequest: null,
-          estimatedMinutes: 5,
         };
       });
       return { validation: { status: "passed" }, playerAnalyses: fallback };
@@ -301,25 +354,9 @@ export class MultiplayerOrchestratorAgent {
     }
 
     // Build PlayerActionAnalysis per player
-    const playerAnalyses: PlayerActionAnalysis[] = roundInputs.map((input) => {
+    const playerAnalyses: PlayerActionAnalysis[] = effectiveRoundInputs.map((input) => {
       const player = state.players[input.playerId];
       const found = (parsed.players ?? []).find((p: any) => p.playerId === input.playerId);
-
-      if (input.inputType === "skip") {
-        return {
-          playerId: input.playerId,
-          characterId: input.characterId,
-          actionAnalysis: {
-            character: player?.characterName ?? input.playerId,
-            action: "skip this round",
-            actionType: "narrative" as ActionType,
-            target: { name: null, intent: "skip" },
-            requiresSkillSelection: false,
-          },
-          sceneChangeRequest: null,
-          estimatedMinutes: 0,
-        };
-      }
 
       const actionAnalysis = normalizeActionAnalysis(found?.actionAnalysis ?? {});
       if (player) actionAnalysis.character = player.characterName;
@@ -341,13 +378,10 @@ export class MultiplayerOrchestratorAgent {
         characterId: input.characterId,
         actionAnalysis,
         sceneChangeRequest,
-        estimatedMinutes:
-          typeof found?.estimatedMinutes === "number" ? found.estimatedMinutes : 10,
       };
     });
 
-    // Time divergence validation
-    const validation = checkTimeDivergence(playerAnalyses);
+    const validation: MultiRoundValidation = { status: "passed" };
 
     // Store analyses in sceneRoom temporaryInfo
     const existingTemp = sceneRoom.temporaryInfo;
@@ -359,6 +393,7 @@ export class MultiplayerOrchestratorAgent {
           playerActionAnalyses: Object.fromEntries(
             playerAnalyses.map((pa) => [pa.playerId, pa])
           ),
+          conversationHistory,
           relevantHistory,
         },
       },

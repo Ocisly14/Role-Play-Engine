@@ -204,6 +204,12 @@ export const collectScenarioImages = (state: CoCState): ImageInput[] => {
  * Replaces `{{path.to.value}}` placeholders in a template using state-driven context.
  * This keeps prompts declarative while safely surfacing the latest state to the LLM.
  *
+ * Multiplayer note:
+ * - Template composition is purely a renderer; it does NOT enforce isolation.
+ * - When running native multiplayer with multiple sceneRooms in parallel, callers MUST inject
+ *   sceneRoom-scoped views (current scene snapshot + scene members + per-scene temporaryInfo)
+ *   instead of passing the entire multiplayer state into templates, to avoid cross-scene leakage.
+ *
  * @param template - Template string or function
  * @param state - CoC game state
  * @param extraContext - Additional context variables

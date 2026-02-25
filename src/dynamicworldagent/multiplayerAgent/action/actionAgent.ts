@@ -19,6 +19,10 @@ import type {
 } from "../../state/DynamicGameState.js";
 import type { DynamicGameState } from "../../state/index.js";
 import { DynamicGameStateManager } from "../../state/index.js";
+import type {
+  MultiplayerDynamicGameStateManager,
+  MultiplayerTurnInput,
+} from "../../multiplayerState/MultiplayerDynamicGameState.js";
 import {
   getLatestActionLogEntryWithLocation,
   parseGameTime,
@@ -37,6 +41,253 @@ export class ActionAgent {
 
   constructor(scenarioLoader?: ScenarioLoader) {
     this.scenarioLoader = scenarioLoader;
+  }
+
+  /**
+   * Multiplayer native entrypoint:
+   * - Processes one sceneRoom's round inputs (skip omitted)
+   * - Uses per-player orchestrator analyses (stored in sceneRoom contextualData)
+   * - Does NOT advance global game time per player; instead advances once per round (max minutes)
+   */
+  async processSceneRoomRound(
+    manager: MultiplayerDynamicGameStateManager,
+    sceneRoomId: string,
+    roundInputs: MultiplayerTurnInput[],
+    language: "en" | "zh",
+    roundTurnId?: string | null
+  ): Promise<void> {
+    const state = manager.getState();
+    const sceneRoom = manager.getSceneRoom(sceneRoomId);
+    if (!sceneRoom) {
+      throw new Error(`SceneRoom ${sceneRoomId} not found`);
+    }
+
+    const playerAnalyses: Record<string, any> =
+      (sceneRoom.temporaryInfo.contextualData?.playerActionAnalyses as Record<
+        string,
+        any
+      >) ?? {};
+
+    const roundInputsInjected = roundInputs
+      .filter((ri) => ri.inputType === "input" && Boolean(ri.content?.trim()))
+      .map((ri) => ({
+        playerId: ri.playerId,
+        characterId: ri.characterId,
+        inputType: "input" as const,
+        content: ri.content?.trim() ?? "",
+        selectedSkill: ri.selectedSkill ?? null,
+        skillSelectionMode: ri.skillSelectionMode ?? "manual",
+      }));
+
+    const inputPlayerIds = new Set(roundInputsInjected.map((ri) => ri.playerId));
+
+    // Inject sceneRoom-scoped player context for templates (ONLY players with input; skip/no-input omitted).
+    const scenePlayers = sceneRoom.memberPlayerIds
+      .map((playerId) => {
+        if (!inputPlayerIds.has(playerId)) return null;
+        const p = state.players[playerId];
+        if (!p) return null;
+        const input = roundInputsInjected.find((ri) => ri.playerId === playerId);
+        const thisRoundInput = input
+          ? {
+              inputType: "input" as const,
+              content: input.content ?? "",
+              selectedSkill: input.selectedSkill ?? null,
+              skillSelectionMode: input.skillSelectionMode ?? "manual",
+            }
+          : null;
+        return {
+          roleType: "player" as const,
+          playerId,
+          characterId: p.characterId,
+          name: p.characterName,
+          profile: p.profile,
+          ...(thisRoundInput ? { thisRoundInput } : {}),
+        };
+      })
+      .filter(Boolean);
+
+    manager.setContextualData(sceneRoomId, "scenePlayers", scenePlayers);
+    manager.setContextualData(sceneRoomId, "roundInputs", roundInputsInjected);
+
+    const staged = {
+      elapsedMinutesByPlayer: {} as Record<string, number>,
+      fatigueMinutesByPlayer: {} as Record<string, number>,
+    };
+
+    // Process each player's action (skip omitted).
+    for (const input of roundInputsInjected) {
+      const pa = playerAnalyses[input.playerId];
+      if (!pa?.actionAnalysis) {
+        continue;
+      }
+
+      // Per-player: wire orchestrator analysis + scene change request into the sceneRoom temporaryInfo
+      manager.setCurrentActionAnalysis(sceneRoomId, pa.actionAnalysis ?? null);
+      manager.setSceneChangeRequest(sceneRoomId, pa.sceneChangeRequest ?? null);
+
+      const adapter = this.buildSceneRoomPlayerAdapter(
+        manager,
+        sceneRoomId,
+        input.playerId,
+        staged
+      );
+
+      try {
+        await this.processAction(
+          {},
+          adapter,
+          input.content ?? "",
+          input.selectedSkill ?? null,
+          input.skillSelectionMode ?? "manual",
+          language,
+          roundTurnId ?? null
+        );
+      } catch (e) {
+        console.error(
+          `[MP ActionAgent] Error processing player ${input.playerId}:`,
+          e
+        );
+        // Best-effort: surface as an actionResult
+        const room = manager.getSceneRoom(sceneRoomId);
+        const p = state.players[input.playerId];
+        if (room && p) {
+          manager.addActionResult(sceneRoomId, {
+            timestamp: new Date(),
+            gameTime: manager.getState().timeOfDay,
+            timeElapsedMinutes: 0,
+            location: room.currentScenario?.location ?? "Unknown",
+            character: p.characterName,
+            result: `[错误] ${e instanceof Error ? e.message : String(e)}`,
+            diceRolls: [],
+            timeConsumption: "instant",
+          });
+        }
+      } finally {
+        // Persist any scene-change modification back into per-player analysis (splitter reads this)
+        const room = manager.getSceneRoom(sceneRoomId);
+        const updatedReq = room?.temporaryInfo.sceneChangeRequest ?? null;
+        const stored = (room?.temporaryInfo.contextualData?.playerActionAnalyses as any)?.[
+          input.playerId
+        ];
+        if (stored && typeof stored === "object") {
+          stored.sceneChangeRequest = updatedReq;
+        }
+
+        // Clear per-player temporary wiring (avoid cross-player contamination)
+        manager.setSceneChangeRequest(sceneRoomId, null);
+        manager.setCurrentActionAnalysis(sceneRoomId, null);
+      }
+    }
+
+    // Advance global time once for this sceneRoom round (concurrent actions).
+    const elapsedMinutes = Object.values(staged.elapsedMinutesByPlayer);
+    const roundElapsed = elapsedMinutes.length > 0 ? Math.max(...elapsedMinutes) : 0;
+    if (roundElapsed > 0) {
+      manager.advanceGameTime(roundElapsed);
+    }
+
+    // Apply per-player fatigue minutes (per player action duration).
+    for (const [playerId, minutes] of Object.entries(staged.fatigueMinutesByPlayer)) {
+      manager.addFatigueMinutes(playerId, minutes);
+    }
+  }
+
+  private buildSceneRoomPlayerAdapter(
+    manager: MultiplayerDynamicGameStateManager,
+    sceneRoomId: string,
+    playerId: string,
+    staged: {
+      elapsedMinutesByPlayer: Record<string, number>;
+      fatigueMinutesByPlayer: Record<string, number>;
+    }
+  ): DynamicGameStateManager {
+    const touchSceneRoom = (): void => {
+      // Update lastUpdated without replacing nested objects.
+      manager.updateSceneRoom(sceneRoomId, {});
+    };
+
+    const getView = (): any => {
+      const s = manager.getState();
+      const room = manager.getSceneRoom(sceneRoomId);
+      const p = s.players[playerId];
+      const profile: any = p?.profile ?? null;
+      if (profile) {
+        if (!profile.id) profile.id = p?.characterId ?? profile.id;
+        if (!profile.name) profile.name = p?.characterName ?? profile.name;
+      }
+      return {
+        ...s,
+        playerCharacter: profile,
+        staminaState: p?.staminaState ?? {
+          minutesSinceLastRest: 0,
+          fatigueActive: false,
+        },
+        currentScenario: room?.currentScenario ?? null,
+        turnsInCurrentScene: room?.turnsInCurrentScene ?? 0,
+        temporaryInfo: room?.temporaryInfo ?? {
+          rules: [],
+          contextualData: {},
+          actionResults: [],
+          actionResultsDetailed: [],
+          currentActionAnalysis: null,
+          npcResponseAnalyses: [],
+          sceneChangeRequest: null,
+          previousScenario: null,
+        },
+      };
+    };
+
+    return {
+      getState: getView,
+      getFullGameTime: () => manager.getFullGameTime(),
+      isFatigued: () => manager.isFatigued(playerId),
+      applyRest: (restMinutes: number) => manager.applyRestForPlayer(playerId, restMinutes),
+      setHeartbeatActions: (actions: HeartbeatAction[]) => manager.setHeartbeatActions(actions),
+      upsertHeartbeatActions: (actions: HeartbeatAction[]) => manager.upsertHeartbeatActions(actions),
+      setCombatState: (combatData: CombatState | null) => manager.setCombatState(combatData),
+      setContextualData: (key: string, value: unknown) => {
+        const room = manager.getSceneRoom(sceneRoomId);
+        if (!room) return;
+        room.temporaryInfo.contextualData[key] = value as any;
+        touchSceneRoom();
+      },
+      getContextualData: (key: string) => {
+        const room = manager.getSceneRoom(sceneRoomId);
+        return room?.temporaryInfo.contextualData?.[key];
+      },
+      setSceneChangeRequest: (req: SceneChangeRequest | null) => manager.setSceneChangeRequest(sceneRoomId, req),
+      updateScenarioState: (scenarioUpdates: any) => manager.updateScenarioState(sceneRoomId, scenarioUpdates),
+      addActionResult: (result: ActionResult) => {
+        const room = manager.getSceneRoom(sceneRoomId);
+        if (!room) return;
+        room.temporaryInfo.actionResults.push(result);
+        touchSceneRoom();
+      },
+      addActionResultDetail: (detail: Record<string, unknown>) => {
+        const room = manager.getSceneRoom(sceneRoomId);
+        if (!room) return;
+        room.temporaryInfo.actionResultsDetailed.push(detail);
+        touchSceneRoom();
+      },
+      applyActionUpdate: (stateUpdate: any) => manager.applyPlayerActionUpdate(sceneRoomId, playerId, stateUpdate),
+      updateGameTime: (elapsedMinutes: number) => {
+        if (!elapsedMinutes || elapsedMinutes <= 0) return;
+        staged.elapsedMinutesByPlayer[playerId] =
+          (staged.elapsedMinutesByPlayer[playerId] ?? 0) + elapsedMinutes;
+      },
+      addFatigueMinutes: (minutes: number) => {
+        if (!minutes || minutes <= 0) return;
+        staged.fatigueMinutesByPlayer[playerId] =
+          (staged.fatigueMinutesByPlayer[playerId] ?? 0) + minutes;
+      },
+      // Not meaningful in multiplayer adapter, but ActionAgent expects these to exist.
+      clearActionResults: () => manager.clearActionResults(sceneRoomId),
+      clearNPCResponseAnalyses: () => manager.clearNPCResponseAnalyses(sceneRoomId),
+      clearActionAnalysis: () => manager.clearActionAnalysis(sceneRoomId),
+      clearPreviousScenario: () => {},
+      setDb: (_db: unknown) => {},
+    } as unknown as DynamicGameStateManager;
   }
 
   private clampAttitude(value: unknown): number | null {
@@ -1132,6 +1383,25 @@ export class ActionAgent {
       ? gameStateManager.getFullGameTime()
       : `Day ${dynamicState.gameDay}, ${dynamicState.timeOfDay}`;
     let context = `\n\n=== CURRENT GAME TIME ===\n${fullGameTime}\n=== END OF GAME TIME ===\n`;
+
+    // Multiplayer: inject other players in the same sceneRoom (skip omitted).
+    // This is sceneRoom-scoped data provided by processSceneRoomRound().
+    if (!isNPC) {
+      const scenePlayers = dynamicState.temporaryInfo.contextualData?.scenePlayers;
+      if (Array.isArray(scenePlayers) && scenePlayers.length > 0) {
+        context +=
+          "\n\n=== SCENE PLAYERS (CURRENT SCENE ROOM, SKIP OMITTED) ===\n" +
+          JSON.stringify(scenePlayers, null, 2) +
+          "\n=== END SCENE PLAYERS ===\n";
+      }
+      const roundInputs = dynamicState.temporaryInfo.contextualData?.roundInputs;
+      if (Array.isArray(roundInputs) && roundInputs.length > 0) {
+        context +=
+          "\n\n=== ROUND INPUTS (CURRENT SCENE ROOM, SKIP OMITTED) ===\n" +
+          JSON.stringify(roundInputs, null, 2) +
+          "\n=== END ROUND INPUTS ===\n";
+      }
+    }
 
     // Inject skill defaults once — character skill fields only list explicitly set values.
     // For any skill not present in a character's skills object, use these base values.

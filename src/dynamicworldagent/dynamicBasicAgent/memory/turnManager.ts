@@ -21,6 +21,7 @@ export interface TurnInput {
   characterInput: string;
   characterId?: string;
   characterName?: string;
+  sceneRoomId?: string;
   sceneId?: string;
   sceneName?: string;
   location?: string;
@@ -106,7 +107,8 @@ export class TurnManager {
       input.sceneName,
       input.location,
       input.gameDay,
-      input.gameTime
+      input.gameTime,
+      input.sceneRoomId
     );
 
     console.log(`✓ Turn created: ${turnId} (Turn #${turnNumber})`);

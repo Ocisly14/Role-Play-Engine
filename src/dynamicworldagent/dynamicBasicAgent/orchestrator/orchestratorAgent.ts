@@ -348,7 +348,7 @@ export class OrchestratorAgent {
       input,
       {
         topKActionLogs: 15,
-        topKTurns: 3,
+        topKTurns: 5,
         alpha,
         includeActionLogs: true,
         language: effectiveLanguage,

@@ -20,6 +20,7 @@ import {
   type DynamicGameState,
   DynamicGameStateManager,
 } from "../../state/index.js";
+import type { MultiplayerDynamicGameStateManager } from "../../multiplayerState/MultiplayerDynamicGameState.js";
 import { RagQueryRewriter } from "../knowledge/ragQueryRewriter.js";
 import {
   type RetrievedSessionRagChunk,
@@ -63,7 +64,8 @@ async function buildFullTurnRelevantHistoryFromChunks(
   sessionId: string,
   chunks: RetrievedSessionRagChunk[],
   topKTurns: number,
-  ragQuery: string
+  ragQuery: string,
+  sceneRoomId?: string
 ): Promise<RelevantHistoryItem[]> {
   const turnScoreMap = new Map<string, number>();
 
@@ -79,7 +81,8 @@ async function buildFullTurnRelevantHistoryFromChunks(
 
   const orderedTurnIds = Array.from(turnScoreMap.entries())
     .sort((a, b) => b[1] - a[1])
-    .slice(0, topKTurns)
+    // If we need to filter by sceneRoomId, over-select to avoid returning < topKTurns after filtering.
+    .slice(0, sceneRoomId ? Math.max(topKTurns * 4, topKTurns) : topKTurns)
     .map(([turnId]) => turnId);
 
   if (orderedTurnIds.length === 0) {
@@ -92,6 +95,7 @@ async function buildFullTurnRelevantHistoryFromChunks(
       sessionId,
       turnId: { in: orderedTurnIds },
       status: "completed",
+      ...(sceneRoomId ? { sceneRoomId } : {}),
     },
     select: {
       turnId: true,
@@ -108,6 +112,7 @@ async function buildFullTurnRelevantHistoryFromChunks(
 
   const fullTurns: RelevantHistoryItem[] = [];
   for (const turnId of orderedTurnIds) {
+    if (fullTurns.length >= topKTurns) break;
     const row = rowByTurnId.get(turnId);
     if (!row || !row.keeperNarrative) continue;
 
@@ -170,7 +175,8 @@ export const injectActionTypeRules = (
 export const extractRecentConversationHistory = async (
   db: CoCDatabase | CoCDatabaseAdapter | undefined,
   sessionId: string,
-  limit = 1
+  limit = 1,
+  sceneRoomId?: string
 ): Promise<
   Array<{
     turnNumber: number;
@@ -187,7 +193,8 @@ export const extractRecentConversationHistory = async (
     const turns = db.getTurnHistory(
       sessionId,
       limit * 3, // Get more turns to account for filtering completed ones
-      undefined // afterTurnNumber
+      undefined, // afterTurnNumber
+      sceneRoomId
     );
 
     // Filter only completed turns with keeper narrative
@@ -249,17 +256,20 @@ export const retrieveRelevantHistory = async (
     }>;
     minScore?: number;
     includeActionLogs?: boolean;
+    // Multiplayer: scope history retrieval to a single sceneRoom (prevents cross-room leakage)
+    sceneRoomId?: string;
   } = {}
 ): Promise<RelevantHistoryItem[]> => {
   if (!db || !query.trim()) return [];
 
   const {
     topKActionLogs = 3,
-    topKTurns = 3,
+    topKTurns = 5,
     alpha = 0.3,
     language = "zh",
     minScore,
     includeActionLogs = true,
+    sceneRoomId,
   } = options;
 
   try {
@@ -292,7 +302,8 @@ export const retrieveRelevantHistory = async (
       sessionId,
       retrievedChunks,
       topKTurns,
-      rewrite.ragQuery
+      rewrite.ragQuery,
+      sceneRoomId
     );
 
     const filteredFullTurnResults =
@@ -331,9 +342,39 @@ export const retrieveRelevantHistory = async (
       let mergedItems = filteredFullTurnResults;
 
       if (includeActionLogs && topKActionLogs > 0) {
-        const supplementalActionLogs = (await fetchLegacyItems(1)).filter(
+        let supplementalActionLogs = (await fetchLegacyItems(1)).filter(
           (item) => item.type === "action_log"
         );
+
+        // Multiplayer: ensure action logs also don't leak across sceneRooms.
+        if (sceneRoomId && supplementalActionLogs.length > 0) {
+          const prisma = getPrismaClient();
+          const actionLogTurnIds = Array.from(
+            new Set(
+              supplementalActionLogs
+                .map((i) => (typeof i.metadata?.turnId === "string" ? i.metadata.turnId : null))
+                .filter(Boolean) as string[]
+            )
+          );
+
+          if (actionLogTurnIds.length > 0) {
+            const allowedTurns = await prisma.gameTurn.findMany({
+              where: {
+                sessionId,
+                sceneRoomId,
+                turnId: { in: actionLogTurnIds },
+              },
+              select: { turnId: true },
+            });
+            const allowed = new Set(allowedTurns.map((t) => t.turnId));
+            supplementalActionLogs = supplementalActionLogs.filter((i) =>
+              i.metadata?.turnId ? allowed.has(i.metadata.turnId) : false
+            );
+          } else {
+            supplementalActionLogs = [];
+          }
+        }
+
         if (supplementalActionLogs.length > 0) {
           mergedItems = [...filteredFullTurnResults, ...supplementalActionLogs].sort(
             (a, b) => b.score - a.score
@@ -355,7 +396,36 @@ export const retrieveRelevantHistory = async (
     }
 
     // Fallback: legacy embedding store (for older sessions without chunk data)
-    const legacyItems = await fetchLegacyItems(topKTurns);
+    let legacyItems = await fetchLegacyItems(topKTurns);
+
+    // Multiplayer: ensure fallback items don't leak across sceneRooms.
+    if (sceneRoomId && legacyItems.length > 0) {
+      const prisma = getPrismaClient();
+      const legacyTurnIds = Array.from(
+        new Set(
+          legacyItems
+            .map((i) => (typeof i.metadata?.turnId === "string" ? i.metadata.turnId : null))
+            .filter(Boolean) as string[]
+        )
+      );
+
+      if (legacyTurnIds.length > 0) {
+        const allowedTurns = await prisma.gameTurn.findMany({
+          where: {
+            sessionId,
+            sceneRoomId,
+            turnId: { in: legacyTurnIds },
+          },
+          select: { turnId: true },
+        });
+        const allowed = new Set(allowedTurns.map((t) => t.turnId));
+        legacyItems = legacyItems.filter((i) =>
+          i.metadata?.turnId ? allowed.has(i.metadata.turnId) : false
+        );
+      } else {
+        legacyItems = [];
+      }
+    }
 
     if (legacyItems.length > 0) {
       const actionLogCount = legacyItems.filter(
@@ -490,7 +560,7 @@ export const enrichMemoryContext = async (
         ? preloadedRelevantHistory
         : await retrieveRelevantHistory(db, gameState.sessionId, characterInput, {
             topKActionLogs: 15, // Keeper path keeps action-log recall enabled
-            topKTurns: 3, // Global turns (unchanged)
+            topKTurns: 5, // Increase turn recall for better continuity
             alpha, // Dynamic: 10% BM25 (中文) or 30% BM25 (英文)
             // NEW: Per-character options
             targetCharacters:
@@ -583,4 +653,130 @@ export const enrichMemoryContext = async (
       },
     },
   };
+};
+
+/**
+ * Multiplayer native memory enrichment (sceneRoom-scoped).
+ * - Injects action-type rules for all input players in this sceneRoom (deduped).
+ * - Ensures conversationHistory / relevantHistory are stored in sceneRoom contextualData.
+ * - Does NOT read or write any other sceneRoom's temporaryInfo.
+ */
+export const enrichMemoryContextForSceneRoom = async (
+  manager: MultiplayerDynamicGameStateManager,
+  sceneRoomId: string,
+  db?: CoCDatabase | CoCDatabaseAdapter,
+  combinedCharacterInput?: string,
+  language: "en" | "zh" = "zh"
+): Promise<void> => {
+  const state = manager.getState();
+  const sceneRoom = manager.getSceneRoom(sceneRoomId);
+  if (!sceneRoom) return;
+
+  const contextualData = sceneRoom.temporaryInfo.contextualData ?? {};
+  const playerActionAnalyses =
+    (contextualData.playerActionAnalyses as Record<string, any>) ?? {};
+
+  const uniqueActionTypes = new Set<ActionType>();
+  const targetCharacters: string[] = [];
+
+  for (const pa of Object.values(playerActionAnalyses)) {
+    const actionType = pa?.actionAnalysis?.actionType;
+    if (typeof actionType === "string") {
+      const asType = actionType as ActionType;
+      if (
+        asType === "exploration" ||
+        asType === "social" ||
+        asType === "stealth" ||
+        asType === "combat" ||
+        asType === "chase" ||
+        asType === "mental" ||
+        asType === "environmental" ||
+        asType === "narrative"
+      ) {
+        uniqueActionTypes.add(asType);
+      }
+    }
+    const actorName = pa?.actionAnalysis?.character;
+    if (typeof actorName === "string" && actorName.trim()) {
+      targetCharacters.push(actorName.trim());
+    }
+    const targetName = pa?.actionAnalysis?.target?.name;
+    if (typeof targetName === "string" && targetName.trim()) {
+      targetCharacters.push(targetName.trim());
+    }
+  }
+
+  // Inject action-type rules (deduped).
+  const nextRules = [...(sceneRoom.temporaryInfo.rules ?? [])];
+  for (const actionType of uniqueActionTypes) {
+    const ruleText = actionRules[actionType];
+    if (!ruleText) continue;
+    if (!nextRules.includes(ruleText)) {
+      nextRules.push(ruleText);
+    }
+  }
+
+  // Conversation history: sceneRoom-scoped (do NOT use session-global DB turns; would leak across sceneRooms).
+  const conversationHistory = db
+    ? await extractRecentConversationHistory(db, state.sessionId, 3, sceneRoomId)
+    : [];
+
+  // Relevant history: prefer orchestrator-preloaded relevantHistory.
+  let relevantHistory =
+    (contextualData.relevantHistory as RelevantHistoryItem[]) ?? [];
+  const hasRelevantHistory =
+    Array.isArray(relevantHistory) && relevantHistory.length > 0;
+  const allowReuse = contextualData.relevantHistoryIncludesActionLogs === true;
+
+  if ((!hasRelevantHistory || !allowReuse) && db) {
+    const currentLocation = sceneRoom.currentScenario?.location || undefined;
+    const inputQuery = combinedCharacterInput?.trim() ?? "";
+    if (inputQuery) {
+      const uniqueCharacters = [...new Set(targetCharacters)].slice(0, 12);
+      const npcNames = Array.from(
+        new Set(
+          (state.npcCharacters || [])
+            .map((npc) => (typeof npc?.name === "string" ? npc.name.trim() : ""))
+            .filter((name) => name.length > 0)
+        )
+      ).slice(0, 30);
+
+      // Chinese BM25 is weak due to tokenizer; lower alpha.
+      const alpha = language === "zh" ? 0.1 : 0.3;
+      try {
+        relevantHistory = await retrieveRelevantHistory(db, state.sessionId, inputQuery, {
+          topKActionLogs: 15,
+          topKTurns: 5,
+          alpha,
+          targetCharacters: uniqueCharacters.length > 0 ? uniqueCharacters : undefined,
+          topKPerCharacter: 5,
+          currentLocation,
+          locationBoostFactor: 1.2,
+          language,
+          sceneName: sceneRoom.currentScenario?.name || undefined,
+          sceneLocation: currentLocation,
+          npcNames,
+          // No single playerName in MP; omit to avoid misleading the rewriter.
+          minScore: 0.7,
+          includeActionLogs: true,
+          sceneRoomId,
+        });
+      } catch {
+        relevantHistory = [];
+      }
+    }
+  }
+
+  manager.updateSceneRoom(sceneRoomId, {
+    temporaryInfo: {
+      ...sceneRoom.temporaryInfo,
+      rules: nextRules,
+      contextualData: {
+        ...contextualData,
+        conversationHistory,
+        relevantHistory,
+        relevantHistoryIncludesActionLogs: true,
+      },
+    },
+  });
 };

@@ -6,20 +6,20 @@ import type {
   HeartbeatActivatedNarrative,
   HeartbeatAction,
 } from "../../state/index.js";
-import { DynamicGameStateManager } from "../../state/index.js";
+import { MultiplayerDynamicGameStateManager } from "../../multiplayerState/MultiplayerDynamicGameState.js";
 import { toAbsoluteMinutes } from "../../utils/gameTime.js";
 
 type HeartbeatDb = CoCDatabase | CoCDatabaseAdapter;
 
 /**
- * Heartbeat Agent
+ * Heartbeat Agent (Multiplayer Native)
  * - Checks scheduled heartbeat actions at turn start
  * - Marks actions as due/overdue
  * - Loads source turn narratives for keeper context injection
  */
 export class HeartbeatAgent {
-  private formatCurrentGameTime(dgsm: DynamicGameStateManager): string {
-    const state = dgsm.getState();
+  private formatCurrentGameTime(manager: MultiplayerDynamicGameStateManager): string {
+    const state = manager.getState();
     return `Day ${state.gameDay}, ${state.timeOfDay}`;
   }
 
@@ -66,14 +66,15 @@ export class HeartbeatAgent {
   }
 
   async evaluateTurnStart(
-    dgsm: DynamicGameStateManager,
+    manager: MultiplayerDynamicGameStateManager,
+    sceneRoomId: string,
     deps: { db: HeartbeatDb }
   ): Promise<{
     dueActions: HeartbeatAction[];
     activatedNarratives: HeartbeatActivatedNarrative[];
   }> {
-    const state = dgsm.getState();
-    const nowGameTime = this.formatCurrentGameTime(dgsm);
+    const state = manager.getState();
+    const nowGameTime = this.formatCurrentGameTime(manager);
     const nowMinutes = toAbsoluteMinutes(nowGameTime);
     const originalActions = Array.isArray(state.heartbeatActions)
       ? state.heartbeatActions
@@ -84,8 +85,8 @@ export class HeartbeatAgent {
     const dueActions: HeartbeatAction[] = [];
 
     if (nowMinutes === null) {
-      dgsm.setContextualData("heartbeatDueActions", []);
-      dgsm.setContextualData("heartbeatActivatedNarratives", []);
+      manager.setContextualData(sceneRoomId, "heartbeatDueActions", []);
+      manager.setContextualData(sceneRoomId, "heartbeatActivatedNarratives", []);
       return { dueActions: [], activatedNarratives: [] };
     }
 
@@ -121,11 +122,12 @@ export class HeartbeatAgent {
       }
     }
 
-    dgsm.setHeartbeatActions(updatedActions);
+    manager.setHeartbeatActions(updatedActions);
 
     const activatedNarratives: HeartbeatActivatedNarrative[] = [];
     const sourceTurnCache = new Map<string, any | null>();
-    await this.preloadSessionTurnsIfSupported(deps.db, state.sessionId);
+    const sessionId = manager.getSessionId();
+    await this.preloadSessionTurnsIfSupported(deps.db, sessionId);
 
     for (const action of dueActions) {
       const sourceTurnId = action.sourceTurnId?.trim();
@@ -134,7 +136,7 @@ export class HeartbeatAgent {
       if (!sourceTurnCache.has(sourceTurnId)) {
         sourceTurnCache.set(
           sourceTurnId,
-          this.resolveTurnById(deps.db, state.sessionId, sourceTurnId)
+          this.resolveTurnById(deps.db, sessionId, sourceTurnId)
         );
       }
 
@@ -164,8 +166,9 @@ export class HeartbeatAgent {
       });
     }
 
-    dgsm.setContextualData("heartbeatDueActions", dueActions);
-    dgsm.setContextualData(
+    manager.setContextualData(sceneRoomId, "heartbeatDueActions", dueActions);
+    manager.setContextualData(
+      sceneRoomId,
       "heartbeatActivatedNarratives",
       activatedNarratives
     );

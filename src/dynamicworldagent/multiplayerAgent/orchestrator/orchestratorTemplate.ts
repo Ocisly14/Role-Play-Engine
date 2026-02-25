@@ -8,10 +8,23 @@ export function getMultiplayerOrchestratorTemplate(): string {
 
 You analyze ALL investigators' inputs for this round simultaneously and classify each into a structured action analysis.
 
+## Scene Room
+- sceneRoomId: {{sceneRoomId}}
+
 ## Current Scene
 - Scenario: {{currentScenarioName}}
 - Location: {{scenarioLocation}}
 - Available NPCs: {{npcNames}}
+
+## Scene Players (sceneRoom-scoped, multiple players possible)
+\`\`\`json
+{{{scenePlayersJson}}}
+\`\`\`
+
+## Scene NPCs (sceneRoom-scoped)
+\`\`\`json
+{{{sceneNpcsJson}}}
+\`\`\`
 
 {{#if connections}}
 ## Scene Connections
@@ -20,13 +33,10 @@ You analyze ALL investigators' inputs for this round simultaneously and classify
 {{/each}}
 {{/if}}
 
-## This Round's Player Inputs
-{{#each players}}
-### Player {{playerId}} — {{characterName}}
-- Input type: {{inputType}}
-{{#if content}}- Input: "{{content}}"{{/if}}
-{{#if selectedSkill}}- Pre-selected skill: {{selectedSkill}}{{/if}}
-{{/each}}
+## This Round Inputs (sceneRoom-scoped, skip omitted)
+\`\`\`json
+{{{roundInputsJson}}}
+\`\`\`
 
 {{#if conversationHistory}}
 ## Recent Narrative History (Last 3 Turns)
@@ -50,15 +60,9 @@ exploration | social | stealth | combat | chase | mental | environmental | narra
 ## Scene Change Detection
 If a player's input shows intent to move to another scene AND a matching name exists in Scene Connections, set sceneChangeRequest.shouldChange = true. Use semantic/meaning-based matching, not exact string matching.
 
-## Time Estimation
-For each player, estimate how many minutes this action would take in-game:
-- instant / chat / observe: 0–5 min
-- short exploration / social: 5–30 min
-- long social / detailed search: 30–60 min
-- travel / rest / extended task: 60–240 min
-
 ## Output Format
-Return a JSON object with a "players" array (one entry per player in this round):
+Return a JSON object with a "players" array (one entry per player listed in roundInputsJson only).
+
 
 \`\`\`json
 {
@@ -79,14 +83,12 @@ Return a JSON object with a "players" array (one entry per player in this round)
         "shouldChange": false,
         "targetSceneName": null,
         "reason": ""
-      },
-      "estimatedMinutes": 10
+      }
     }
   ]
 }
 \`\`\`
 
-For skip-type inputs, set action = "skip this round", actionType = "narrative", estimatedMinutes = 0, sceneChangeRequest.shouldChange = false.
 requiresSkillSelection should be true only for high-impact physical/mental/combat actions where the outcome depends heavily on skill level AND no skill has been pre-selected.
 
 Output ONLY the JSON, no extra text.`;

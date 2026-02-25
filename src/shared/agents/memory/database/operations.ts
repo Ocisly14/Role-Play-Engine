@@ -89,6 +89,7 @@ export class DatabaseOperations {
       character_input: turn.characterInput,
       character_id: turn.characterId,
       character_name: turn.characterName,
+      scene_room_id: turn.sceneRoomId ?? null,
       action_analysis: turn.actionAnalysis,
       action_results: turn.actionResults,
       director_decision: turn.directorDecision,
@@ -129,11 +130,13 @@ export class DatabaseOperations {
   async getTurnHistory(
     sessionId: string,
     limit = 20,
-    afterTurnNumber?: number
+    afterTurnNumber?: number,
+    sceneRoomId?: string
   ): Promise<any[]> {
     const turns = await this.prisma.gameTurn.findMany({
       where: {
         sessionId,
+        ...(sceneRoomId ? { sceneRoomId } : {}),
         ...(afterTurnNumber ? { turnNumber: { gt: afterTurnNumber } } : {}),
       },
       orderBy: { turnNumber: "asc" },
@@ -509,6 +512,7 @@ export class DatabaseOperations {
       character_input: turn.characterInput,
       character_id: turn.characterId,
       character_name: turn.characterName,
+      scene_room_id: turn.sceneRoomId ?? null,
       action_analysis: turn.actionAnalysis,
       action_results: turn.actionResults,
       director_decision: turn.directorDecision,

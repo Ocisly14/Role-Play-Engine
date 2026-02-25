@@ -16,10 +16,9 @@ import type {
   CoCDatabaseAdapter,
 } from "../../shared/agents/memory/database/index.js";
 import { ScenarioLoader } from "../../shared/agents/memory/scenarioloader/index.js";
-import type { ActionResult, DiceRollInfo } from "../../shared/state/index.js";
+import type { ActionResult } from "../../shared/state/index.js";
 import {
   MultiplayerDynamicGameStateManager,
-  emptyTemporaryInfo,
 } from "../multiplayerState/MultiplayerDynamicGameState.js";
 import type { MultiplayerDynamicGameState } from "../multiplayerState/MultiplayerDynamicGameState.js";
 import { ActionAgent } from "../multiplayerAgent/action/actionAgent.js";
@@ -30,6 +29,7 @@ import { CombatActionAgentB } from "../multiplayerAgent/combat/combatActionAgent
 import { DirectorAgent } from "../multiplayerAgent/director/directorAgent.js";
 import { HeartbeatAgent } from "../multiplayerAgent/heartbeat/heartbeatAgent.js";
 import { KeeperAgent } from "../multiplayerAgent/keeper/keeperAgent.js";
+import { enrichMemoryContextForSceneRoom } from "../multiplayerAgent/memory/memoryAgent.js";
 import { MultiplayerOrchestratorAgent } from "../multiplayerAgent/orchestrator/orchestratorAgent.js";
 import type { MultiplayerGraphState } from "./MultiplayerGraphState.js";
 
@@ -147,8 +147,8 @@ export const buildMultiplayerGraph = (
     // Heartbeat evaluation
     try {
       await heartbeatAgent.evaluateTurnStart(
-        // Pass a proxy manager that resolves to the correct DGS
-        { getState: () => m.getState(), setContextualData: () => {} } as any,
+        m,
+        state.sceneRoomId,
         { db }
       );
     } catch (e) {
@@ -189,25 +189,6 @@ export const buildMultiplayerGraph = (
       language
     );
 
-    if (result.validation.status === "rejected") {
-      console.warn(
-        `⛔ [MP Orchestrator] Round rejected: ${result.validation.reason}`
-      );
-      // Store rejection info in temporaryInfo so keeper can surface it
-      const sceneRoom = m.getSceneRoom(state.sceneRoomId);
-      if (sceneRoom) {
-        m.updateSceneRoom(state.sceneRoomId, {
-          temporaryInfo: {
-            ...sceneRoom.temporaryInfo,
-            contextualData: {
-              ...sceneRoom.temporaryInfo.contextualData,
-              roundRejection: result.validation,
-            },
-          },
-        });
-      }
-    }
-
     console.log(`✅ [MP Orchestrator] Validation: ${result.validation.status}`);
     return { ...state, dynamicGameState: m.getState() };
   });
@@ -218,8 +199,6 @@ export const buildMultiplayerGraph = (
 
   graph.addNode("memory", async (state: MultiplayerGraphState) => {
     console.log("🧠 [MP Memory] Enriching context...");
-    // Memory agent enriches shared context (rules, RAG) for all players
-    // For Phase 3, we reuse enrichMemoryContext with combined player inputs
     const m = mgr(state);
     const sceneRoom = m.getSceneRoom(state.sceneRoomId);
     const language =
@@ -227,50 +206,22 @@ export const buildMultiplayerGraph = (
 
     if (sceneRoom) {
       try {
-        const { enrichMemoryContext } = await import(
-          "../multiplayerAgent/memory/memoryAgent.js"
-        );
-        // Build combined character input for context enrichment
+        // Build combined character input for context enrichment (sceneRoom-scoped, skip/no-content omitted)
         const combinedInput = state.roundInputs
-          .filter((i) => i.inputType === "input" && i.content)
+          .filter((i) => i.inputType === "input" && Boolean(i.content?.trim()))
           .map((i) => {
             const player = m.getState().players[i.playerId];
-            return `${player?.characterName ?? i.playerId}: ${i.content}`;
+            return `${player?.characterName ?? i.playerId}: ${i.content?.trim() ?? ""}`;
           })
           .join("\n");
 
-        const actionAnalysis =
-          sceneRoom.temporaryInfo.contextualData
-            ?.playerActionAnalyses
-            ? Object.values(sceneRoom.temporaryInfo.contextualData.playerActionAnalyses)[0]
-                ?.actionAnalysis
-            : null;
-
-        const enrichedState = await enrichMemoryContext(
-          m.getState() as any,
-          actionAnalysis,
+        await enrichMemoryContextForSceneRoom(
+          m,
+          state.sceneRoomId,
           db,
           combinedInput,
           language
         );
-        // Apply enriched world data back (enrichMemoryContext returns DynamicGameState-like)
-        // Copy over shared fields that enrichment may have updated
-        const updated = m.getState();
-        updated.scenarioOutlines = (enrichedState as any).scenarioOutlines ?? updated.scenarioOutlines;
-        // Update the sceneRoom temporaryInfo with enriched contextualData
-        const refreshed = m.getSceneRoom(state.sceneRoomId);
-        if (refreshed) {
-          m.updateSceneRoom(state.sceneRoomId, {
-            temporaryInfo: {
-              ...refreshed.temporaryInfo,
-              rules: (enrichedState as any).temporaryInfo?.rules ?? refreshed.temporaryInfo.rules,
-              contextualData: {
-                ...refreshed.temporaryInfo.contextualData,
-                ...(enrichedState as any).temporaryInfo?.contextualData,
-              },
-            },
-          });
-        }
       } catch (e) {
         console.warn("[MP Memory] enrichMemoryContext failed:", e);
       }
@@ -301,58 +252,30 @@ export const buildMultiplayerGraph = (
     const language =
       state.language === "en" || state.language === "zh" ? state.language : "zh";
 
-    const playerAnalyses: Record<string, any> =
-      (sceneRoom.temporaryInfo.contextualData?.playerActionAnalyses as Record<string, any>) ?? {};
-
-    // Process each player's action (skip players are skipped)
-    for (const input of state.roundInputs) {
-      if (input.inputType === "skip") continue;
-
-      const pa = playerAnalyses[input.playerId];
-      if (!pa) continue;
-
-      const player = m.getState().players[input.playerId];
-      if (!player) continue;
-
-      try {
-        // Create a single-player proxy manager for ActionAgent compatibility
-        const singlePlayerProxy = createSinglePlayerProxy(
-          m,
-          state.sceneRoomId,
-          input.playerId
-        );
-
-        await actionAgent.processAction(
-          {},
-          singlePlayerProxy as any,
-          input.content ?? "",
-          input.selectedSkill ?? null,
-          input.skillSelectionMode ?? "manual",
-          language,
-          state.roundTurnId
-        );
-      } catch (e) {
-        console.error(`[MP Action] Error processing player ${input.playerId}:`, e);
-        // Record error result
-        const scr = m.getSceneRoom(state.sceneRoomId);
-        if (scr) {
-          const errResult: ActionResult = {
-            timestamp: new Date(),
-            gameTime: m.getState().timeOfDay,
-            timeElapsedMinutes: 0,
-            location: scr.currentScenario?.location ?? "Unknown",
-            character: player.characterName,
-            result: `[错误] ${e instanceof Error ? e.message : String(e)}`,
-            diceRolls: [],
-            timeConsumption: "instant",
-          };
-          m.updateSceneRoom(state.sceneRoomId, {
-            temporaryInfo: {
-              ...scr.temporaryInfo,
-              actionResults: [...scr.temporaryInfo.actionResults, errResult],
-            },
-          });
-        }
+    try {
+      await actionAgent.processSceneRoomRound(
+        m,
+        state.sceneRoomId,
+        state.roundInputs,
+        language,
+        state.roundTurnId
+      );
+    } catch (e) {
+      console.error(`[MP Action] Error processing sceneRoom ${state.sceneRoomId}:`, e);
+      // Best-effort: record a scene-level error result so keeper can surface it
+      const scr = m.getSceneRoom(state.sceneRoomId);
+      if (scr) {
+        const errResult: ActionResult = {
+          timestamp: new Date(),
+          gameTime: m.getState().timeOfDay,
+          timeElapsedMinutes: 0,
+          location: scr.currentScenario?.location ?? "Unknown",
+          character: "System",
+          result: `[错误] ${e instanceof Error ? e.message : String(e)}`,
+          diceRolls: [],
+          timeConsumption: "instant",
+        };
+        m.addActionResult(state.sceneRoomId, errResult);
       }
     }
 
@@ -373,25 +296,21 @@ export const buildMultiplayerGraph = (
       state.language === "en" || state.language === "zh" ? state.language : "zh";
 
     try {
-      // Use single-player proxy with the first active player for NPC resolution
-      const activePlayerId = sceneRoom.memberPlayerIds[0];
-      if (activePlayerId) {
-        const proxy = createSinglePlayerProxy(m, state.sceneRoomId, activePlayerId);
-        const characterInput = state.roundInputs
-          .filter((i) => i.inputType === "input")
-          .map((i) => i.content ?? "")
-          .join("; ");
-        const npcAnalyses = await characterAgent.analyzeNPCResponses({}, proxy as any, characterInput);
-        // Store NPC response analyses
-        const scr = m.getSceneRoom(state.sceneRoomId);
-        if (scr && Array.isArray(npcAnalyses)) {
-          m.updateSceneRoom(state.sceneRoomId, {
-            temporaryInfo: {
-              ...scr.temporaryInfo,
-              npcResponseAnalyses: npcAnalyses,
-            },
-          });
-        }
+      const npcAnalyses = await characterAgent.analyzeNPCResponses(
+        {},
+        m,
+        state.sceneRoomId,
+        language
+      );
+      // Store NPC response analyses
+      const scr = m.getSceneRoom(state.sceneRoomId);
+      if (scr && Array.isArray(npcAnalyses)) {
+        m.updateSceneRoom(state.sceneRoomId, {
+          temporaryInfo: {
+            ...scr.temporaryInfo,
+            npcResponseAnalyses: npcAnalyses,
+          },
+        });
       }
     } catch (e) {
       console.warn("[MP Character] NPC analysis failed:", e);
@@ -414,11 +333,7 @@ export const buildMultiplayerGraph = (
       state.language === "en" || state.language === "zh" ? state.language : "zh";
 
     try {
-      const activePlayerId = sceneRoom.memberPlayerIds[0];
-      if (activePlayerId) {
-        const proxy = createSinglePlayerProxy(m, state.sceneRoomId, activePlayerId);
-        await directorAgent.checkStoryProgression(proxy as any);
-      }
+      await directorAgent.checkStoryProgression(m, state.sceneRoomId);
     } catch (e) {
       console.warn("[MP Director] evaluation failed:", e);
     }
@@ -440,35 +355,31 @@ export const buildMultiplayerGraph = (
       state.language === "en" || state.language === "zh" ? state.language : "zh";
 
     try {
-      const activePlayerId = sceneRoom.memberPlayerIds[0];
-      if (activePlayerId) {
-        const proxy = createSinglePlayerProxy(m, state.sceneRoomId, activePlayerId);
-        const combinedInput = state.roundInputs
-          .filter((i) => i.inputType === "input")
-          .map((i) => i.content ?? "")
-          .join("\n");
-        const result = await keeperAgent.generateNarrative(
-          combinedInput,
-          proxy as any,
-          language,
-          null,
-          state.stream?.onNarrativeDelta
-            ? { onNarrativeDelta: state.stream.onNarrativeDelta }
-            : undefined
-        );
-        // Store narrative in sceneRoom contextualData so service can broadcast it
-        const scr = m.getSceneRoom(state.sceneRoomId);
-        if (scr && result?.narrative) {
-          m.updateSceneRoom(state.sceneRoomId, {
-            temporaryInfo: {
-              ...scr.temporaryInfo,
-              contextualData: {
-                ...scr.temporaryInfo.contextualData,
-                keeperNarrative: result.narrative,
-              },
+      const combinedInput = state.roundInputs
+        .filter((i) => i.inputType === "input" && Boolean(i.content?.trim()))
+        .map((i) => i.content?.trim() ?? "")
+        .join("\n");
+      const result = await keeperAgent.generateNarrative(
+        combinedInput,
+        m,
+        state.sceneRoomId,
+        language,
+        state.stream?.onNarrativeDelta
+          ? { onNarrativeDelta: state.stream.onNarrativeDelta }
+          : undefined
+      );
+      // Store narrative in sceneRoom contextualData so service can broadcast it
+      const scr = m.getSceneRoom(state.sceneRoomId);
+      if (scr && result?.narrative) {
+        m.updateSceneRoom(state.sceneRoomId, {
+          temporaryInfo: {
+            ...scr.temporaryInfo,
+            contextualData: {
+              ...scr.temporaryInfo.contextualData,
+              keeperNarrative: result.narrative,
             },
-          });
-        }
+          },
+        });
       }
     } catch (e) {
       console.error("[MP Keeper] Narrative generation failed:", e);
@@ -502,11 +413,13 @@ export const buildMultiplayerGraph = (
       .join("\n");
 
     try {
-      const activePlayerId = sceneRoom.memberPlayerIds[0];
-      if (activePlayerId) {
-        const proxy = createSinglePlayerProxy(m, state.sceneRoomId, activePlayerId);
-        await combatAgentA.resolvePlayerAttack(proxy as any, combinedCombatInput, null, language);
-      }
+      await combatAgentA.resolvePlayerAttackForSceneRoom(
+        m,
+        state.sceneRoomId,
+        combinedCombatInput,
+        null,
+        language
+      );
     } catch (e) {
       console.error("[MP CombatActionA] failed:", e);
     }
@@ -543,20 +456,17 @@ export const buildMultiplayerGraph = (
       .join("\n");
 
     try {
-      const activePlayerId = sceneRoom.memberPlayerIds[0];
-      if (activePlayerId) {
-        const proxy = createSinglePlayerProxy(m, state.sceneRoomId, activePlayerId);
-        // Use the narrative from CombatActionA if available
-        const prevNarrative =
-          (sceneRoom.temporaryInfo.contextualData?.combatNarrative as string) ?? "";
-        await combatAgentB.generateNpcActions(
-          proxy as any,
-          combinedCombatInput,
-          prevNarrative,
-          language,
-          null
-        );
-      }
+      // Use the narrative from CombatActionA if available
+      const prevNarrative =
+        (sceneRoom.temporaryInfo.contextualData?.combatNarrative as string) ?? "";
+      await combatAgentB.generateNpcActionsForSceneRoom(
+        m,
+        state.sceneRoomId,
+        combinedCombatInput,
+        prevNarrative,
+        language,
+        null
+      );
     } catch (e) {
       console.error("[MP CombatActionB] failed:", e);
     }
@@ -583,30 +493,27 @@ export const buildMultiplayerGraph = (
       .join("\n");
 
     try {
-      const activePlayerId = sceneRoom.memberPlayerIds[0];
-      if (activePlayerId) {
-        const proxy = createSinglePlayerProxy(m, state.sceneRoomId, activePlayerId);
-        const actionResults = sceneRoom.temporaryInfo.actionResults;
-        const narrative = await battleKeeper.generateEntryNarrative(
-          proxy as any,
-          actionResults,
-          combinedCombatInput,
-          language,
-          state.stream?.onNarrativeDelta
-        );
-        // Store narrative in contextualData
-        const scr = m.getSceneRoom(state.sceneRoomId);
-        if (scr && narrative) {
-          m.updateSceneRoom(state.sceneRoomId, {
-            temporaryInfo: {
-              ...scr.temporaryInfo,
-              contextualData: {
-                ...scr.temporaryInfo.contextualData,
-                keeperNarrative: narrative,
-              },
+      const actionResults = sceneRoom.temporaryInfo.actionResults;
+      const narrative = await battleKeeper.generateEntryNarrativeForSceneRoom(
+        m,
+        state.sceneRoomId,
+        actionResults,
+        combinedCombatInput,
+        language,
+        state.stream?.onNarrativeDelta
+      );
+      // Store narrative in contextualData
+      const scr = m.getSceneRoom(state.sceneRoomId);
+      if (scr && narrative) {
+        m.updateSceneRoom(state.sceneRoomId, {
+          temporaryInfo: {
+            ...scr.temporaryInfo,
+            contextualData: {
+              ...scr.temporaryInfo.contextualData,
+              keeperNarrative: narrative,
             },
-          });
-        }
+          },
+        });
       }
     } catch (e) {
       console.error("[MP BattleKeeper] failed:", e);
@@ -623,117 +530,3 @@ export const buildMultiplayerGraph = (
 
   return graph.compile({ checkpointer });
 };
-
-// =============================================
-// Single-player proxy for reusing existing agents
-//
-// The existing Action/Character/Director/Keeper agents operate on
-// DynamicGameStateManager. Until we rewrite them fully for multiplayer,
-// we create a thin proxy that exposes the correct single-player interface
-// while reading/writing to the sceneRoom's temporaryInfo.
-// =============================================
-
-function createSinglePlayerProxy(
-  m: MultiplayerDynamicGameStateManager,
-  sceneRoomId: string,
-  playerId: string
-): object {
-  const state = m.getState();
-  const player = state.players[playerId];
-  const sceneRoom = m.getSceneRoom(sceneRoomId);
-
-  const singlePlayerState = {
-    ...state,
-    // Map multiplayer fields to single-player equivalents
-    playerCharacter: player?.profile ?? null,
-    currentScenario: sceneRoom?.currentScenario ?? null,
-    turnsInCurrentScene: sceneRoom?.turnsInCurrentScene ?? 0,
-    lastPlayerInputTime: null,
-    staminaState: player?.staminaState ?? {
-      minutesSinceLastRest: 0,
-      fatigueActive: false,
-    },
-    temporaryInfo: sceneRoom?.temporaryInfo ?? {
-      rules: [],
-      contextualData: {},
-      actionResults: [],
-      actionResultsDetailed: [],
-      currentActionAnalysis: null,
-      npcResponseAnalyses: [],
-      sceneChangeRequest: null,
-      previousScenario: null,
-    },
-  };
-
-  // Return a mock DynamicGameStateManager that reads/writes the proxy state
-  return {
-    getState: () => singlePlayerState,
-    // Forward temporaryInfo writes back to the sceneRoom
-    addActionResult: (result: ActionResult) => {
-      const scr = m.getSceneRoom(sceneRoomId);
-      if (!scr) return;
-      m.updateSceneRoom(sceneRoomId, {
-        temporaryInfo: {
-          ...scr.temporaryInfo,
-          actionResults: [...scr.temporaryInfo.actionResults, result],
-        },
-      });
-    },
-    addActionResultDetail: (detail: Record<string, unknown>) => {
-      const scr = m.getSceneRoom(sceneRoomId);
-      if (!scr) return;
-      m.updateSceneRoom(sceneRoomId, {
-        temporaryInfo: {
-          ...scr.temporaryInfo,
-          actionResultsDetailed: [...scr.temporaryInfo.actionResultsDetailed, detail],
-        },
-      });
-    },
-    setContextualData: (key: string, value: unknown) => {
-      const scr = m.getSceneRoom(sceneRoomId);
-      if (!scr) return;
-      m.updateSceneRoom(sceneRoomId, {
-        temporaryInfo: {
-          ...scr.temporaryInfo,
-          contextualData: { ...scr.temporaryInfo.contextualData, [key]: value },
-        },
-      });
-    },
-    getContextualData: (key: string) =>
-      m.getSceneRoom(sceneRoomId)?.temporaryInfo.contextualData?.[key],
-    setNPCResponseAnalyses: (analyses: any[]) => {
-      const scr = m.getSceneRoom(sceneRoomId);
-      if (!scr) return;
-      m.updateSceneRoom(sceneRoomId, {
-        temporaryInfo: { ...scr.temporaryInfo, npcResponseAnalyses: analyses },
-      });
-    },
-    updatePlayerProfile: (updates: any) => {
-      m.updatePlayerProfile(playerId, { profile: { ...player?.profile, ...updates } });
-    },
-    updateGameTime: (gameDay: number, timeOfDay: string) => {
-      m.updateGameTime(gameDay, timeOfDay);
-    },
-    updateNpcCharacters: (npcs: any[]) => {
-      m.updateNpcCharacters(npcs);
-    },
-    addDiscoveredClue: (clue: any) => {
-      m.addDiscoveredClue(clue);
-    },
-    addOrUpdateScenarioSnapshot: (scenarioId: string, snapshot: any) => {
-      m.addOrUpdateScenarioSnapshot(scenarioId, snapshot);
-    },
-    setGameEnding: (ending: any) => {
-      m.setGameEnding(ending);
-    },
-    // Fallback for any other method calls
-    clearActionResults: () => {},
-    clearNPCResponseAnalyses: () => {},
-    clearActionAnalysis: () => {},
-    clearPreviousScenario: () => {},
-    incrementTurnCounter: () => {},
-    getTurnsInCurrentScene: () => sceneRoom?.turnsInCurrentScene ?? 0,
-    updatePlayerInputTime: () => {},
-  };
-}
-

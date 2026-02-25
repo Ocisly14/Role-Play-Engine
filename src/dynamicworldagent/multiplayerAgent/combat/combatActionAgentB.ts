@@ -2,6 +2,7 @@ import { generateText } from "../../../models/index.js";
 import { ModelClass } from "../../../models/types.js";
 import type { PendingNpcAction } from "../../state/DynamicGameState.js";
 import type { DynamicGameStateManager } from "../../state/index.js";
+import type { MultiplayerDynamicGameStateManager } from "../../multiplayerState/MultiplayerDynamicGameState.js";
 import { buildCombatActionBSystemPrompt } from "./combatActionAgentBTemplate.js";
 import { withCombatSkillDefaults } from "./combatSkillDefaults.js";
 import type { CombatActionAResult } from "./combatActionAgentA.js";
@@ -21,6 +22,78 @@ export interface CombatActionBResult {
  * Combat Action Agent B - Generates NPC attack narratives (no dice, just intent)
  */
 export class CombatActionAgentB {
+  /**
+   * Multiplayer native wrapper.
+   * Current implementation uses the first player in the sceneRoom as the "active" playerCharacter view.
+   */
+  async generateNpcActionsForSceneRoom(
+    manager: MultiplayerDynamicGameStateManager,
+    sceneRoomId: string,
+    playerInput: string,
+    keeperNarrative: string,
+    language: "en" | "zh",
+    combatAResult?: CombatActionAResult | null
+  ): Promise<CombatActionBResult | null> {
+    const adapter = this.buildManagerAdapter(manager, sceneRoomId);
+    return this.generateNpcActions(
+      adapter,
+      playerInput,
+      keeperNarrative,
+      language,
+      combatAResult
+    );
+  }
+
+  private buildManagerAdapter(
+    manager: MultiplayerDynamicGameStateManager,
+    sceneRoomId: string
+  ): DynamicGameStateManager {
+    const getView = (): any => {
+      const s = manager.getState();
+      const scr = manager.getSceneRoom(sceneRoomId);
+      const playerIds = scr?.memberPlayerIds ?? [];
+      const firstPlayer = s.players[playerIds[0]];
+      const profile: any = firstPlayer?.profile ?? null;
+      if (profile) {
+        if (!profile.id) profile.id = firstPlayer?.characterId ?? profile.id;
+        if (!profile.name) profile.name = firstPlayer?.characterName ?? profile.name;
+      }
+      return {
+        ...s,
+        currentScenario: scr?.currentScenario ?? null,
+        temporaryInfo: scr?.temporaryInfo ?? {
+          rules: [],
+          contextualData: {},
+          actionResults: [],
+          actionResultsDetailed: [],
+          currentActionAnalysis: null,
+          npcResponseAnalyses: [],
+          sceneChangeRequest: null,
+          previousScenario: null,
+        },
+        turnsInCurrentScene: scr?.turnsInCurrentScene ?? 0,
+        playerCharacter: profile,
+        staminaState: firstPlayer?.staminaState ?? {
+          minutesSinceLastRest: 0,
+          fatigueActive: false,
+        },
+      };
+    };
+
+    return {
+      getState: getView,
+      getFullGameTime: () => manager.getFullGameTime(),
+      isFatigued: () => {
+        const scr = manager.getSceneRoom(sceneRoomId);
+        const activePlayerId = scr?.memberPlayerIds?.[0];
+        return activePlayerId ? manager.isFatigued(activePlayerId) : false;
+      },
+      setContextualData: (key: string, value: unknown) =>
+        manager.setContextualData(sceneRoomId, key, value),
+      getContextualData: (key: string) => manager.getContextualData(sceneRoomId, key),
+    } as unknown as DynamicGameStateManager;
+  }
+
   private normalizeDefeatedNpcs(raw: unknown): Array<{
     npcId: string;
     npcName: string;

@@ -21,6 +21,7 @@ export interface TurnInput {
   characterInput: string;
   characterId?: string;
   characterName?: string;
+  sceneRoomId?: string;
   sceneId?: string;
   sceneName?: string;
   location?: string;
@@ -106,7 +107,8 @@ export class TurnManager {
       input.sceneName,
       input.location,
       input.gameDay,
-      input.gameTime
+      input.gameTime,
+      input.sceneRoomId
     );
 
     console.log(`✓ Turn created: ${turnId} (Turn #${turnNumber})`);
@@ -340,12 +342,14 @@ export class TurnManager {
   getHistory(
     sessionId: string,
     limit = 50,
-    afterTurnNumber?: number
+    afterTurnNumber?: number,
+    sceneRoomId?: string
   ): GameTurn[] {
     return this.db.getTurnHistory(
       sessionId,
       limit,
-      afterTurnNumber
+      afterTurnNumber,
+      sceneRoomId
     ) as GameTurn[];
   }
 
@@ -429,7 +433,8 @@ export class TurnManager {
 
   getConversation(
     sessionId: string,
-    limit = 50
+    limit = 50,
+    sceneRoomId?: string
   ): Array<{
     role: "character" | "keeper";
     content: string;
@@ -439,7 +444,7 @@ export class TurnManager {
     gameDay?: number | null;
     gameTime?: string | null;
   }> {
-    const turns = this.getHistory(sessionId, limit);
+    const turns = this.getHistory(sessionId, limit, undefined, sceneRoomId);
     const conversation: Array<{
       role: "character" | "keeper";
       content: string;

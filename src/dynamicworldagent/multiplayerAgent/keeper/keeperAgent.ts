@@ -18,6 +18,7 @@ import type {
   DynamicGameStateManager,
   HeartbeatActivatedNarrative,
 } from "../../state/index.js";
+import type { MultiplayerDynamicGameStateManager } from "../../multiplayerState/MultiplayerDynamicGameState.js";
 import type { DynamicCharacterProfile } from "../../world_builder/types.js";
 import type { DynamicNPCProfile } from "../../world_builder/types.js";
 import { getEpilogueTemplate, getKeeperTemplate } from "./keeperTemplate.js";
@@ -114,17 +115,99 @@ export class KeeperAgent {
   /**
    * Generate narrative description with clue revelation based on current game state and user query
    */
+  /**
+   * Build a DynamicGameStateManager-compatible adapter from MultiplayerDynamicGameStateManager.
+   * Internal helper — not exported.
+   */
+  private buildManagerAdapter(
+    manager: MultiplayerDynamicGameStateManager,
+    sceneRoomId: string
+  ): DynamicGameStateManager {
+    const getView = (): any => {
+      const s = manager.getState();
+      const scr = manager.getSceneRoom(sceneRoomId);
+      const playerIds = scr?.memberPlayerIds ?? [];
+      const aggregatedActionLog: ActionLogEntry[] = playerIds
+        .flatMap((id) => ((s.players[id]?.profile as any)?.actionLog ?? []) as ActionLogEntry[]);
+      const firstPlayer = s.players[playerIds[0]];
+      return {
+        ...s,
+        currentScenario: scr?.currentScenario ?? null,
+        temporaryInfo: scr?.temporaryInfo ?? {
+          rules: [],
+          contextualData: {},
+          actionResults: [],
+          actionResultsDetailed: [],
+          currentActionAnalysis: null,
+          npcResponseAnalyses: [],
+          sceneChangeRequest: null,
+          previousScenario: null,
+        },
+        turnsInCurrentScene: scr?.turnsInCurrentScene ?? 0,
+        playerCharacter: {
+          ...(firstPlayer?.profile ?? {}),
+          id: firstPlayer?.characterId ?? "",
+          name: playerIds
+            .map((id) => s.players[id]?.characterName)
+            .filter(Boolean)
+            .join(", "),
+          actionLog: aggregatedActionLog,
+        },
+      };
+    };
+
+    return {
+      getState: getView,
+      getFullGameTime: () => manager.getFullGameTime(),
+      updateTension: (level: number) => manager.updateTension(level),
+      clearActionResults: () => manager.clearActionResults(sceneRoomId),
+      clearNPCResponseAnalyses: () => manager.clearNPCResponseAnalyses(sceneRoomId),
+      clearActionAnalysis: () => manager.clearActionAnalysis(sceneRoomId),
+      addDiscoveredClue: (clue: any) => manager.addDiscoveredClue(clue),
+      setContextualData: (key: string, value: any) =>
+        manager.setContextualData(sceneRoomId, key, value),
+      getContextualData: (key: string) =>
+        manager.getContextualData(sceneRoomId, key),
+    } as unknown as DynamicGameStateManager;
+  }
+
   async generateNarrative(
     characterInput: string,
-    gameStateManager: DynamicGameStateManager,
-    language: "en" | "zh" = "zh",
-    selectedSkill?: string | null,
+    managerOrDgsm: MultiplayerDynamicGameStateManager | DynamicGameStateManager,
+    sceneRoomIdOrLanguage: string,
+    languageOrOptions?: "en" | "zh" | { onNarrativeDelta?: (delta: string) => void },
     options?: { onNarrativeDelta?: (delta: string) => void }
   ): Promise<{
     narrative: string;
     clueRevelations: any;
     updatedGameState: DynamicGameState;
   }> {
+    // Overload resolution
+    let gameStateManager: DynamicGameStateManager;
+    let language: "en" | "zh" = "zh";
+    let selectedSkill: string | null = null;
+
+    if ("getSceneRoom" in managerOrDgsm) {
+      // New multiplayer signature: (characterInput, manager, sceneRoomId, language?, options?)
+      const manager = managerOrDgsm as MultiplayerDynamicGameStateManager;
+      const sceneRoomId = sceneRoomIdOrLanguage;
+      language = (typeof languageOrOptions === "string" ? languageOrOptions : "zh") as "en" | "zh";
+      options = typeof languageOrOptions === "object" && !Array.isArray(languageOrOptions)
+        ? languageOrOptions
+        : options;
+      gameStateManager = this.buildManagerAdapter(manager, sceneRoomId);
+    } else {
+      // Old single-player signature: (characterInput, dgsm, language?, selectedSkill?, options?)
+      gameStateManager = managerOrDgsm as DynamicGameStateManager;
+      language = (typeof sceneRoomIdOrLanguage === "string" && (sceneRoomIdOrLanguage === "en" || sceneRoomIdOrLanguage === "zh"))
+        ? sceneRoomIdOrLanguage as "en" | "zh"
+        : "zh";
+      options = typeof languageOrOptions === "object" && !Array.isArray(languageOrOptions)
+        ? languageOrOptions
+        : options;
+      // Note: selectedSkill is not passed in the new multiplayer API; remains null
+    }
+
     const runtime = createRuntime();
     const dynamicState = gameStateManager.getState();
 
@@ -1135,7 +1218,7 @@ export class KeeperAgent {
     updatedGameState: DynamicGameState;
   }> {
     try {
-      const result = await this.generateNarrative(input, gameStateManager);
+      const result = await this.generateNarrative(input, gameStateManager, "zh");
       return result;
     } catch (error) {
       console.error("Error generating narrative:", error);
