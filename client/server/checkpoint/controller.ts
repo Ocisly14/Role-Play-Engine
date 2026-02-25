@@ -419,8 +419,6 @@ export async function loadCheckpointData(
       select: {
         checkpointId: true,
         sessionId: true,
-        turnNumber: true,
-        createdAt: true,
         gameState: true,
         session: {
           select: { characterId: true },
@@ -470,18 +468,13 @@ export async function loadCheckpointData(
     // Generate new session ID — no parent/child relationship needed
     const newSessionId = `session-${randomUUID()}`;
 
-    // Create session and populate with turn history + RAG chunks copied from the original session,
-    // scoped to the checkpoint point in time (prevents leaking future turns).
+    // Create session and populate with saved conversation + memos
     await createSessionFromCheckpointData(
       newSessionId,
       gameStateAny,
       conversationHistory,
       playerMemos,
-      req.user!.email,
-      {
-        sourceSessionId: checkpointRecord.sessionId,
-        cutoffCreatedAt: checkpointRecord.createdAt,
-      }
+      req.user!.email
     );
     const restoredConversation = conversationHistory;
 
@@ -606,6 +599,30 @@ export async function loadCheckpointData(
     console.log(
       `[${new Date().toISOString()}] Checkpoint loaded: ${checkpointId} → session ${newSessionId}`
     );
+
+    // Copy RAG chunks from old session to new session in background
+    const oldSessionId = checkpointRecord.sessionId;
+    void (async () => {
+      try {
+        await prisma.$executeRaw`
+          INSERT INTO session_rag_chunks (
+            id, session_id, turn_id, turn_number, chunk_type, role,
+            content, metadata, source_key, embedding, language, email_id, created_at
+          )
+          SELECT
+            gen_random_uuid()::text, ${newSessionId}, turn_id, turn_number, chunk_type, role,
+            content, metadata, source_key, embedding, language, email_id, NOW()
+          FROM session_rag_chunks
+          WHERE session_id = ${oldSessionId}
+          ON CONFLICT (session_id, source_key) DO NOTHING
+        `;
+        console.log(
+          `[Checkpoint RAG] Copied RAG chunks ${oldSessionId} → ${newSessionId}`
+        );
+      } catch (error) {
+        console.warn("[Checkpoint RAG] Failed to copy RAG chunks:", error);
+      }
+    })();
 
     // Only return necessary data to frontend (reduce network payload)
     res.json({
@@ -823,11 +840,7 @@ async function createSessionFromCheckpointData(
   gameState: any,
   conversationHistory: any[],
   playerMemos: any[],
-  ownerEmail: string,
-  options?: {
-    sourceSessionId?: string;
-    cutoffCreatedAt?: Date;
-  }
+  ownerEmail: string
 ): Promise<void> {
   const prisma = getPrismaClient();
 
@@ -880,131 +893,67 @@ async function createSessionFromCheckpointData(
     }
   >();
 
-  const sourceSessionId =
-    typeof options?.sourceSessionId === "string" && options.sourceSessionId.length > 0
-      ? options.sourceSessionId
-      : null;
-  const cutoffCreatedAt = options?.cutoffCreatedAt instanceof Date
-    ? options.cutoffCreatedAt
-    : null;
+  for (const message of conversationHistory) {
+    if (!message || typeof message !== "object") continue;
 
-  // Preferred: copy full turn history from the original session (prevents losing old context and keeps RAG consistent).
-  // Scope by checkpoint createdAt (checkpoint.turnNumber is scene-local and NOT safe as a global turn cutoff).
-  const turnIdMap = new Map<string, string>(); // oldTurnId -> newTurnId
-  const oldTurnSceneRoomIdMap = new Map<string, string | null>(); // oldTurnId -> old sceneRoomId
-  const restoredOldTurnIds: string[] = [];
-  let turnRows: any[] = [];
-  if (sourceSessionId) {
-    const oldTurns = await prisma.gameTurn.findMany({
-      where: {
-        sessionId: sourceSessionId,
-        ...(cutoffCreatedAt ? { createdAt: { lte: cutoffCreatedAt } } : {}),
-      },
-      orderBy: [{ turnNumber: "asc" }, { createdAt: "asc" }],
-    });
+    const turnNumber =
+      typeof message.turnNumber === "number" &&
+      Number.isFinite(message.turnNumber)
+        ? message.turnNumber
+        : 0;
+    const existing = turnsByNumber.get(turnNumber) ?? {
+      turnNumber,
+      characterInput: "",
+      keeperNarrative: null,
+      startedAt: toDateOrNow(message.timestamp),
+      completedAt: null,
+      gameDay:
+        typeof message.gameDay === "number" && Number.isFinite(message.gameDay)
+          ? message.gameDay
+          : null,
+      gameTime: typeof message.gameTime === "string" ? message.gameTime : null,
+    };
 
-    if (oldTurns.length > 0) {
-      turnRows = oldTurns.map((t) => {
-        const newTurnId = `turn-restore-${sessionId}-${t.turnNumber}-${randomUUID().slice(0, 8)}`;
-        turnIdMap.set(t.turnId, newTurnId);
-        oldTurnSceneRoomIdMap.set(t.turnId, t.sceneRoomId ?? null);
-        restoredOldTurnIds.push(t.turnId);
-        return {
-          turnId: newTurnId,
-          sessionId,
-          moduleId: t.moduleId ?? moduleId,
-          emailId: ownerEmail,
-          turnNumber: t.turnNumber,
-          characterInput: t.characterInput,
-          characterId: t.characterId ?? characterId,
-          characterName: t.characterName ?? characterName,
-          sceneRoomId: t.sceneRoomId ?? null,
-          actionAnalysis: t.actionAnalysis ?? null,
-          actionResults: t.actionResults ?? null,
-          directorDecision: t.directorDecision ?? null,
-          keeperNarrative: t.keeperNarrative ?? null,
-          clueRevelations: t.clueRevelations ?? null,
-          sceneId: t.sceneId ?? null,
-          sceneName: t.sceneName ?? null,
-          location: t.location ?? null,
-          status: t.status,
-          errorMessage: t.errorMessage ?? null,
-          startedAt: t.startedAt,
-          completedAt: t.completedAt ?? null,
-          createdAt: t.createdAt,
-          isSimulated: t.isSimulated ?? false,
-          gameDay: t.gameDay ?? null,
-          gameTime: t.gameTime ?? null,
-        };
-      });
-    }
-  }
+    const role = message.role;
+    const content = typeof message.content === "string" ? message.content : "";
+    const timestamp = toDateOrNow(message.timestamp);
 
-  // Fallback: older checkpoints that don't have a valid source session (or the session has no turns).
-  // Rebuild a minimal turn list from the embedded conversationHistory.
-  if (turnRows.length === 0) {
-    for (const message of conversationHistory) {
-      if (!message || typeof message !== "object") continue;
-
-      const turnNumber =
-        typeof message.turnNumber === "number" &&
-        Number.isFinite(message.turnNumber)
-          ? message.turnNumber
-          : 0;
-      const existing = turnsByNumber.get(turnNumber) ?? {
-        turnNumber,
-        characterInput: "",
-        keeperNarrative: null,
-        startedAt: toDateOrNow(message.timestamp),
-        completedAt: null,
-        gameDay:
-          typeof message.gameDay === "number" && Number.isFinite(message.gameDay)
-            ? message.gameDay
-            : null,
-        gameTime: typeof message.gameTime === "string" ? message.gameTime : null,
-      };
-
-      const role = message.role;
-      const content = typeof message.content === "string" ? message.content : "";
-      const timestamp = toDateOrNow(message.timestamp);
-
-      if (role === "character") {
-        existing.characterInput = content;
-        existing.startedAt = timestamp;
-      } else if (role === "keeper") {
-        existing.keeperNarrative = content;
-        existing.completedAt = timestamp;
-      }
-
-      if (existing.gameDay === null && typeof message.gameDay === "number") {
-        existing.gameDay = message.gameDay;
-      }
-      if (!existing.gameTime && typeof message.gameTime === "string") {
-        existing.gameTime = message.gameTime;
-      }
-
-      turnsByNumber.set(turnNumber, existing);
+    if (role === "character") {
+      existing.characterInput = content;
+      existing.startedAt = timestamp;
+    } else if (role === "keeper") {
+      existing.keeperNarrative = content;
+      existing.completedAt = timestamp;
     }
 
-    turnRows = [...turnsByNumber.values()]
-      .sort((a, b) => a.turnNumber - b.turnNumber)
-      .map((turn) => ({
-        turnId: `turn-restore-${sessionId}-${turn.turnNumber}-${randomUUID().slice(0, 8)}`,
-        sessionId,
-        turnNumber: turn.turnNumber,
-        characterInput: turn.characterInput,
-        characterId,
-        characterName,
-        moduleId,
-        emailId: ownerEmail,
-        keeperNarrative: turn.keeperNarrative,
-        status: "completed",
-        startedAt: turn.startedAt,
-        completedAt: turn.completedAt ?? turn.startedAt,
-        gameDay: turn.gameDay,
-        gameTime: turn.gameTime,
-      }));
+    if (existing.gameDay === null && typeof message.gameDay === "number") {
+      existing.gameDay = message.gameDay;
+    }
+    if (!existing.gameTime && typeof message.gameTime === "string") {
+      existing.gameTime = message.gameTime;
+    }
+
+    turnsByNumber.set(turnNumber, existing);
   }
+
+  const turnRows = [...turnsByNumber.values()]
+    .sort((a, b) => a.turnNumber - b.turnNumber)
+    .map((turn) => ({
+      turnId: `turn-restore-${sessionId}-${turn.turnNumber}-${randomUUID().slice(0, 8)}`,
+      sessionId,
+      turnNumber: turn.turnNumber,
+      characterInput: turn.characterInput,
+      characterId,
+      characterName,
+      moduleId,
+      emailId: ownerEmail,
+      keeperNarrative: turn.keeperNarrative,
+      status: "completed",
+      startedAt: turn.startedAt,
+      completedAt: turn.completedAt ?? turn.startedAt,
+      gameDay: turn.gameDay,
+      gameTime: turn.gameTime,
+    }));
 
   const memoRows = playerMemos
     .filter((memo) => memo && typeof memo === "object")
@@ -1065,141 +1014,4 @@ async function createSessionFromCheckpointData(
       });
     }
   });
-
-  // Copy per-turn RAG material from the original session so RAG works after restore.
-  // This must happen after turns are created so we can rewrite turn_id and source_key.
-  if (sourceSessionId && turnIdMap.size > 0) {
-    try {
-      // Copy chunks only for the restored turns (prevents leakage and avoids relying on chunk timestamps).
-      const oldChunks: any[] = [];
-      const BATCH_IN = 500;
-      for (let i = 0; i < restoredOldTurnIds.length; i += BATCH_IN) {
-        const batch = restoredOldTurnIds.slice(i, i + BATCH_IN);
-        const rows = await prisma.sessionRagChunk.findMany({
-          where: {
-            sessionId: sourceSessionId,
-            turnId: { in: batch },
-          },
-        });
-        oldChunks.push(...rows);
-      }
-
-      const chunkRows: any[] = [];
-      for (const chunk of oldChunks) {
-        const oldTurnId = chunk.turnId;
-        const newTurnId =
-          typeof oldTurnId === "string" ? turnIdMap.get(oldTurnId) ?? null : null;
-
-        // If the chunk is tied to a turn we didn't restore (e.g., beyond cutoff), skip it.
-        if (oldTurnId && !newTurnId) continue;
-
-        let newSourceKey = chunk.sourceKey;
-        if (oldTurnId && newTurnId && typeof newSourceKey === "string") {
-          const prefix = `turn:${oldTurnId}:`;
-          if (newSourceKey.startsWith(prefix)) {
-            newSourceKey = `turn:${newTurnId}:${newSourceKey.slice(prefix.length)}`;
-          }
-        }
-
-        chunkRows.push({
-          id: randomUUID(),
-          sessionId,
-          turnId: newTurnId,
-          turnNumber: chunk.turnNumber ?? null,
-          chunkType: chunk.chunkType,
-          sceneRoomId:
-            chunk.sceneRoomId ??
-            (typeof oldTurnId === "string"
-              ? oldTurnSceneRoomIdMap.get(oldTurnId) ?? null
-              : null),
-          role: chunk.role ?? null,
-          content: chunk.content,
-          metadata: chunk.metadata ?? null,
-          sourceKey: newSourceKey,
-          embedding: chunk.embedding,
-          language: chunk.language ?? null,
-          emailId: chunk.emailId ?? ownerEmail,
-          createdAt: chunk.createdAt,
-        });
-      }
-
-      // Batch insert to avoid oversized queries on large sessions.
-      const BATCH = 500;
-      for (let i = 0; i < chunkRows.length; i += BATCH) {
-        await prisma.sessionRagChunk.createMany({
-          data: chunkRows.slice(i, i + BATCH),
-          skipDuplicates: true,
-        });
-      }
-
-      // Copy legacy embedding stores too (for older retrieval paths), scoped to restored turns.
-      const oldTurnEmbeddings: any[] = [];
-      const oldActionEmbeddings: any[] = [];
-      for (let i = 0; i < restoredOldTurnIds.length; i += BATCH_IN) {
-        const batch = restoredOldTurnIds.slice(i, i + BATCH_IN);
-        const [turnRows, actionRows] = await Promise.all([
-          prisma.turnEmbedding.findMany({
-            where: { sessionId: sourceSessionId, turnId: { in: batch } },
-          }),
-          prisma.actionLogEmbedding.findMany({
-            where: { sessionId: sourceSessionId, turnId: { in: batch } },
-          }),
-        ]);
-        oldTurnEmbeddings.push(...turnRows);
-        oldActionEmbeddings.push(...actionRows);
-      }
-
-      const turnEmbeddingRows = oldTurnEmbeddings
-        .map((row) => {
-          const newTurnId = turnIdMap.get(row.turnId) ?? null;
-          if (!newTurnId) return null;
-          return {
-            id: randomUUID(),
-            sessionId,
-            turnId: newTurnId,
-            userInput: row.userInput,
-            narrative: row.narrative,
-            embedding: row.embedding,
-            createdAt: row.createdAt,
-            emailId: row.emailId ?? ownerEmail,
-          };
-        })
-        .filter(Boolean) as any[];
-
-      const actionEmbeddingRows = oldActionEmbeddings
-        .map((row) => {
-          const newTurnId = turnIdMap.get(row.turnId) ?? null;
-          if (!newTurnId) return null;
-          return {
-            id: randomUUID(),
-            sessionId,
-            turnId: newTurnId,
-            actionLog: row.actionLog,
-            embedding: row.embedding,
-            createdAt: row.createdAt,
-            emailId: row.emailId ?? ownerEmail,
-          };
-        })
-        .filter(Boolean) as any[];
-
-      for (let i = 0; i < turnEmbeddingRows.length; i += BATCH) {
-        await prisma.turnEmbedding.createMany({
-          data: turnEmbeddingRows.slice(i, i + BATCH),
-          skipDuplicates: true,
-        });
-      }
-      for (let i = 0; i < actionEmbeddingRows.length; i += BATCH) {
-        await prisma.actionLogEmbedding.createMany({
-          data: actionEmbeddingRows.slice(i, i + BATCH),
-          skipDuplicates: true,
-        });
-      }
-
-      console.log(
-        `[Checkpoint Restore] Copied turns/RAG chunks/embeddings ${sourceSessionId} → ${sessionId} (turns=${turnRows.length}, chunks=${chunkRows.length})`
-      );
-    } catch (error) {
-      console.warn("[Checkpoint Restore] Failed to copy RAG material:", error);
-    }
-  }
 }
