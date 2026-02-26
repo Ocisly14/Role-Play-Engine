@@ -224,7 +224,7 @@ export class SessionRagService {
     language?: "en" | "zh";
     chunkType?: "turn" | "clue";
     segmentType?: "narrative" | "actionlog";
-    sceneRoomId?: string | null;
+    sceneRoomId?: string | string[] | null;
   }): Promise<RetrievedSessionRagChunk[]> {
     const {
       sessionId,
@@ -250,7 +250,13 @@ export class SessionRagService {
 
     const chunkTypeFilter = chunkType ?? null;
     const segmentTypeFilter = segmentType ?? null;
-    const sceneRoomIdFilter = sceneRoomId ?? null;
+    // Normalize sceneRoomId to string[] | null for SQL ANY()
+    const sceneRoomIdArray: string[] | null =
+      sceneRoomId == null
+        ? null
+        : Array.isArray(sceneRoomId)
+          ? sceneRoomId
+          : [sceneRoomId];
 
     const rows = await this.prisma.$queryRaw<ChunkRow[]>`
       SELECT
@@ -264,7 +270,7 @@ export class SessionRagService {
       FROM session_rag_chunks
       WHERE session_id = ${sessionId}
         AND language = ${language}
-        AND (${sceneRoomIdFilter}::text IS NULL OR scene_room_id = ${sceneRoomIdFilter}::text)
+        AND (${sceneRoomIdArray}::text[] IS NULL OR scene_room_id = ANY(${sceneRoomIdArray}::text[]))
         AND (${chunkTypeFilter}::text IS NULL OR chunk_type = ${chunkTypeFilter}::text)
         AND (${segmentTypeFilter}::text IS NULL OR metadata->>'segmentType' = ${segmentTypeFilter}::text)
     `;
@@ -298,7 +304,7 @@ export class SessionRagService {
         FROM session_rag_chunks
         WHERE session_id = ${sessionId}
           AND language = ${language}
-          AND (${sceneRoomIdFilter}::text IS NULL OR scene_room_id = ${sceneRoomIdFilter}::text)
+          AND (${sceneRoomIdArray}::text[] IS NULL OR scene_room_id = ANY(${sceneRoomIdArray}::text[]))
           AND (${chunkTypeFilter}::text IS NULL OR chunk_type = ${chunkTypeFilter}::text)
           AND (${segmentTypeFilter}::text IS NULL OR metadata->>'segmentType' = ${segmentTypeFilter}::text)
           AND to_tsvector('simple', content) @@ plainto_tsquery('simple', ${query})

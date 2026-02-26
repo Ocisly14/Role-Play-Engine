@@ -29,6 +29,7 @@ import {
   extractRecentConversationHistory,
   retrieveRelevantHistory,
 } from "../memory/memoryAgent.js";
+import { getAncestorSceneRoomIds } from "../../multiplayerState/ancestorChain.js";
 import { getMultiplayerOrchestratorTemplate } from "./orchestratorTemplate.js";
 import {
   getLatestActionLogEntryWithLocation,
@@ -224,12 +225,15 @@ export class MultiplayerOrchestratorAgent {
       }
     }
 
-    // SceneRoom-scoped conversation history (DB-backed; do NOT leak other sceneRooms).
+    // Compute ancestor chain once: [currentId, ...parentIds, ...grandparentIds]
+    const ancestorIds = getAncestorSceneRoomIds(manager, sceneRoomId);
+
+    // SceneRoom-scoped conversation history with ancestor chain (includes frozen parent rooms).
     const conversationHistory = await extractRecentConversationHistory(
       db,
       state.sessionId,
       3,
-      sceneRoomId
+      ancestorIds
     );
 
     // Relevant history (combined from all player inputs)
@@ -241,7 +245,7 @@ export class MultiplayerOrchestratorAgent {
     try {
       if (combinedQuery && db) {
         const result = await retrieveRelevantHistory(db, state.sessionId, combinedQuery, {
-          sceneRoomId,
+          sceneRoomId: ancestorIds,
           language,
           sceneName: currentScenario?.name ?? undefined,
           sceneLocation: currentScenario?.location ?? undefined,

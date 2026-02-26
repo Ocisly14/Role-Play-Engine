@@ -131,12 +131,17 @@ export class DatabaseOperations {
     sessionId: string,
     limit = 20,
     afterTurnNumber?: number,
-    sceneRoomId?: string
+    sceneRoomId?: string | string[]
   ): Promise<any[]> {
+    const sceneRoomFilter = Array.isArray(sceneRoomId)
+      ? { sceneRoomId: { in: sceneRoomId } }
+      : sceneRoomId
+        ? { sceneRoomId }
+        : {};
     const turns = await this.prisma.gameTurn.findMany({
       where: {
         sessionId,
-        ...(sceneRoomId ? { sceneRoomId } : {}),
+        ...sceneRoomFilter,
         ...(afterTurnNumber ? { turnNumber: { gt: afterTurnNumber } } : {}),
       },
       orderBy: { turnNumber: "asc" },

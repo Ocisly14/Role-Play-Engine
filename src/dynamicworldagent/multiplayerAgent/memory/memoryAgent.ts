@@ -21,6 +21,7 @@ import {
   DynamicGameStateManager,
 } from "../../state/index.js";
 import type { MultiplayerDynamicGameStateManager } from "../../multiplayerState/MultiplayerDynamicGameState.js";
+import { getAncestorSceneRoomIds } from "../../multiplayerState/ancestorChain.js";
 import { RagQueryRewriter } from "../knowledge/ragQueryRewriter.js";
 import {
   type RetrievedSessionRagChunk,
@@ -65,7 +66,7 @@ async function buildFullTurnRelevantHistoryFromChunks(
   chunks: RetrievedSessionRagChunk[],
   topKTurns: number,
   ragQuery: string,
-  sceneRoomId?: string
+  sceneRoomId?: string | string[]
 ): Promise<RelevantHistoryItem[]> {
   const turnScoreMap = new Map<string, number>();
 
@@ -95,7 +96,9 @@ async function buildFullTurnRelevantHistoryFromChunks(
       sessionId,
       turnId: { in: orderedTurnIds },
       status: "completed",
-      ...(sceneRoomId ? { sceneRoomId } : {}),
+      ...(sceneRoomId
+        ? { sceneRoomId: Array.isArray(sceneRoomId) ? { in: sceneRoomId } : sceneRoomId }
+        : {}),
     },
     select: {
       turnId: true,
@@ -176,7 +179,7 @@ export const extractRecentConversationHistory = async (
   db: CoCDatabase | CoCDatabaseAdapter | undefined,
   sessionId: string,
   limit = 1,
-  sceneRoomId?: string
+  sceneRoomId?: string | string[]
 ): Promise<
   Array<{
     turnNumber: number;
@@ -256,8 +259,8 @@ export const retrieveRelevantHistory = async (
     }>;
     minScore?: number;
     includeActionLogs?: boolean;
-    // Multiplayer: scope history retrieval to a single sceneRoom (prevents cross-room leakage)
-    sceneRoomId?: string;
+    // Multiplayer: scope history retrieval to a sceneRoom (or ancestor chain). Prevents cross-room leakage.
+    sceneRoomId?: string | string[];
   } = {}
 ): Promise<RelevantHistoryItem[]> => {
   if (!db || !query.trim()) return [];
@@ -359,10 +362,13 @@ export const retrieveRelevantHistory = async (
           );
 
           if (actionLogTurnIds.length > 0) {
+            const sceneRoomFilter = Array.isArray(sceneRoomId)
+              ? { sceneRoomId: { in: sceneRoomId } }
+              : { sceneRoomId };
             const allowedTurns = await prisma.gameTurn.findMany({
               where: {
                 sessionId,
-                sceneRoomId,
+                ...sceneRoomFilter,
                 turnId: { in: actionLogTurnIds },
               },
               select: { turnId: true },
@@ -411,10 +417,13 @@ export const retrieveRelevantHistory = async (
       );
 
       if (legacyTurnIds.length > 0) {
+        const sceneRoomFilter = Array.isArray(sceneRoomId)
+          ? { sceneRoomId: { in: sceneRoomId } }
+          : { sceneRoomId };
         const allowedTurns = await prisma.gameTurn.findMany({
           where: {
             sessionId,
-            sceneRoomId,
+            ...sceneRoomFilter,
             turnId: { in: legacyTurnIds },
           },
           select: { turnId: true },
@@ -673,6 +682,9 @@ export const enrichMemoryContextForSceneRoom = async (
   const sceneRoom = manager.getSceneRoom(sceneRoomId);
   if (!sceneRoom) return;
 
+  // Compute ancestor chain once: [currentId, ...parentIds, ...grandparentIds]
+  const ancestorIds = getAncestorSceneRoomIds(manager, sceneRoomId);
+
   const contextualData = sceneRoom.temporaryInfo.contextualData ?? {};
   const playerActionAnalyses =
     (contextualData.playerActionAnalyses as Record<string, any>) ?? {};
@@ -717,9 +729,9 @@ export const enrichMemoryContextForSceneRoom = async (
     }
   }
 
-  // Conversation history: sceneRoom-scoped (do NOT use session-global DB turns; would leak across sceneRooms).
+  // Conversation history: sceneRoom-scoped with ancestor chain (includes frozen parent rooms).
   const conversationHistory = db
-    ? await extractRecentConversationHistory(db, state.sessionId, 3, sceneRoomId)
+    ? await extractRecentConversationHistory(db, state.sessionId, 3, ancestorIds)
     : [];
 
   // Relevant history: prefer orchestrator-preloaded relevantHistory.
@@ -760,7 +772,7 @@ export const enrichMemoryContextForSceneRoom = async (
           // No single playerName in MP; omit to avoid misleading the rewriter.
           minScore: 0.7,
           includeActionLogs: true,
-          sceneRoomId,
+          sceneRoomId: ancestorIds,
         });
       } catch {
         relevantHistory = [];

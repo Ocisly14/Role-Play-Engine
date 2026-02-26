@@ -422,11 +422,13 @@ export class CoCDatabaseAdapter {
     sessionId: string,
     limit = 20,
     afterTurnNumber?: number,
-    sceneRoomId?: string
+    sceneRoomId?: string | string[]
   ): any[] {
-    const turns = this.getSessionTurns(sessionId).filter((turn) =>
-      sceneRoomId ? turn.sceneRoomId === sceneRoomId : true
-    );
+    const turns = this.getSessionTurns(sessionId).filter((turn) => {
+      if (!sceneRoomId) return true;
+      if (Array.isArray(sceneRoomId)) return sceneRoomId.includes(turn.sceneRoomId);
+      return turn.sceneRoomId === sceneRoomId;
+    });
     if (typeof afterTurnNumber === "number") {
       // Incremental fetch: return newer turns in ascending order.
       return turns
