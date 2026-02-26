@@ -156,6 +156,9 @@ export class KeeperAgent {
 
       return {
         ...s,
+        // Override global time with per-room time
+        gameDay: scr?.gameDay ?? s.gameDay,
+        timeOfDay: scr?.timeOfDay ?? s.timeOfDay,
         currentScenario: scr?.currentScenario ?? null,
         temporaryInfo: {
           ...baseTemporaryInfo,
@@ -177,7 +180,7 @@ export class KeeperAgent {
 
     return {
       getState: getView,
-      getFullGameTime: () => manager.getFullGameTime(),
+      getFullGameTime: () => manager.getSceneRoomFullGameTime(sceneRoomId),
       updateTension: (level: number) => manager.updateTension(level),
       clearActionResults: () => manager.clearActionResults(sceneRoomId),
       clearNPCResponseAnalyses: () => manager.clearNPCResponseAnalyses(sceneRoomId),

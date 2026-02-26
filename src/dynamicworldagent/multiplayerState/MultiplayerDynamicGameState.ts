@@ -149,6 +149,13 @@ export interface MultiplayerSceneRoomState {
   temporaryInfo: MultiplayerTemporaryInfo;
   /** Frozen player inputs awaiting re-injection in subsequent rounds */
   frozenPlayerInputs: FrozenPlayerInput[];
+  /** Players frozen due to time difference — key=playerId, value=player's source room time */
+  timeFrozenPlayers: Record<string, { gameDay: number; timeOfDay: string }>;
+  // ── Per-room time tracking ──
+  /** Current game day for this room (inherited from parent on creation) */
+  gameDay: number;
+  /** Current time of day for this room, "HH:MM" format */
+  timeOfDay: string;
   // ── Tree structure fields ──
   /** Empty = root node; one ID = fork child; multiple IDs = merged child */
   parentSceneRoomIds: string[];
@@ -210,6 +217,8 @@ export interface MultiplayerDynamicGameState {
   // Combat (sceneRoom-level — combat happens inside a specific sceneRoom)
   isBattle: boolean;
   combatState: CombatState | null;
+  /** Tracks which sceneRoom is currently in combat (used for time drift exception) */
+  combatSceneRoomId: string | null;
   defeatedNpcHistory: DefeatedNpcHistoryEntry[];
   heartbeatActions: HeartbeatAction[];
 
@@ -299,6 +308,9 @@ export function initialMultiplayerDynamicGameState(params: {
     ),
     temporaryInfo: emptyTemporaryInfo(),
     frozenPlayerInputs: [],
+    timeFrozenPlayers: {},
+    gameDay,
+    timeOfDay,
     parentSceneRoomIds: [],
     isFrozen: false,
     frozenAt: null,
@@ -323,6 +335,7 @@ export function initialMultiplayerDynamicGameState(params: {
     tension: 0,
     isBattle: false,
     combatState: null,
+    combatSceneRoomId: null,
     defeatedNpcHistory: [],
     heartbeatActions: [],
     gameEnding: null,
@@ -356,6 +369,42 @@ export function initialMultiplayerDynamicGameState(params: {
 
     loadedAt: new Date(),
     lastUpdated: new Date(),
+  };
+}
+
+// =============================================
+// Time drift types & helpers
+// =============================================
+
+export interface TimeDriftInfo {
+  fastestRoomId: string;
+  slowestRoomId: string;
+  /** Absolute drift in minutes between fastest and slowest room */
+  driftMinutes: number;
+  /** Room IDs whose time >= slowest + 2H (should be blocked from input) */
+  blockedRoomIds: string[];
+  /** True when all active rooms are within 1H of each other */
+  allWithinResume: boolean;
+}
+
+/** Convert gameDay + "HH:MM" to absolute minutes since Day 0 00:00. */
+export function toAbsoluteMinutes(gameDay: number, timeOfDay: string): number {
+  const [h, m] = timeOfDay.split(":").map(Number);
+  return (gameDay - 1) * 1440 + h * 60 + m;
+}
+
+/** Convert absolute minutes back to { gameDay, timeOfDay }. */
+export function fromAbsoluteMinutes(absMinutes: number): {
+  gameDay: number;
+  timeOfDay: string;
+} {
+  const gameDay = Math.floor(absMinutes / 1440) + 1;
+  const remainder = absMinutes % 1440;
+  const hours = Math.floor(remainder / 60);
+  const minutes = remainder % 60;
+  return {
+    gameDay,
+    timeOfDay: `${String(hours).padStart(2, "0")}:${String(minutes).padStart(2, "0")}`,
   };
 }
 
@@ -416,10 +465,13 @@ export class MultiplayerDynamicGameStateManager {
       ),
       temporaryInfo: emptyTemporaryInfo(),
       frozenPlayerInputs: [],
+      timeFrozenPlayers: {},
+      gameDay: 1,
+      timeOfDay: "08:00",
       parentSceneRoomIds: [],
       isFrozen: false,
       frozenAt: null,
-      ...initial,
+      ...initial, // caller can override gameDay/timeOfDay with parent room's values
     };
     this.state.sceneRooms[sceneRoomId] = newRoom;
     this.state.lastUpdated = new Date();
@@ -515,8 +567,13 @@ export class MultiplayerDynamicGameStateManager {
     const frozenPlayerIds = new Set(
       (room.frozenPlayerInputs ?? []).map((f) => f.playerId)
     );
+    // Time-frozen players also skip submission
+    const timeFrozenIds = new Set(
+      Object.keys(room.timeFrozenPlayers ?? {})
+    );
     return room.memberPlayerIds.every(
-      (id) => submitted.has(id) || frozenPlayerIds.has(id)
+      (id) =>
+        submitted.has(id) || frozenPlayerIds.has(id) || timeFrozenIds.has(id)
     );
   }
 
@@ -544,6 +601,69 @@ export class MultiplayerDynamicGameStateManager {
   /** Return all sceneRooms that are currently active (not frozen) */
   getActiveSceneRooms(): MultiplayerSceneRoomState[] {
     return Object.values(this.state.sceneRooms).filter((r) => !r.isFrozen);
+  }
+
+  // ---------- Time-frozen player operations ----------
+
+  /** Mark a player as time-frozen in a sceneRoom, recording their source room time. */
+  freezePlayerByTime(
+    sceneRoomId: string,
+    playerId: string,
+    sourceGameDay: number,
+    sourceTimeOfDay: string
+  ): void {
+    const room = this.state.sceneRooms[sceneRoomId];
+    if (!room) return;
+    room.timeFrozenPlayers[playerId] = {
+      gameDay: sourceGameDay,
+      timeOfDay: sourceTimeOfDay,
+    };
+    this.state.lastUpdated = new Date();
+  }
+
+  /** Check if a player is currently time-frozen in a sceneRoom. */
+  isPlayerTimeFrozen(sceneRoomId: string, playerId: string): boolean {
+    const room = this.state.sceneRooms[sceneRoomId];
+    if (!room) return false;
+    return playerId in (room.timeFrozenPlayers ?? {});
+  }
+
+  /**
+   * Check all time-frozen players in a sceneRoom and unfreeze those whose
+   * source time is within 20 minutes of (or behind) the room's current time.
+   * When unfreezing, the room time is set to max(roomTime, playerFrozenTime).
+   * Returns the list of player IDs that were unfrozen this call.
+   */
+  checkAndUnfreezeTimeFrozenPlayers(sceneRoomId: string): string[] {
+    const room = this.state.sceneRooms[sceneRoomId];
+    if (!room) return [];
+    const frozen = room.timeFrozenPlayers ?? {};
+    if (Object.keys(frozen).length === 0) return [];
+
+    const unfrozen: string[] = [];
+    const roomAbsMin = toAbsoluteMinutes(room.gameDay, room.timeOfDay);
+
+    for (const [playerId, frozenTime] of Object.entries(frozen)) {
+      const playerAbsMin = toAbsoluteMinutes(
+        frozenTime.gameDay,
+        frozenTime.timeOfDay
+      );
+      // Unfreeze if room has caught up to within 20 minutes (or surpassed)
+      if (playerAbsMin - roomAbsMin <= 20) {
+        unfrozen.push(playerId);
+        // Set room time to the later of the two
+        const maxAbsMin = Math.max(roomAbsMin, playerAbsMin);
+        const newTime = fromAbsoluteMinutes(maxAbsMin);
+        room.gameDay = newTime.gameDay;
+        room.timeOfDay = newTime.timeOfDay;
+        delete room.timeFrozenPlayers[playerId];
+      }
+    }
+
+    if (unfrozen.length > 0) {
+      this.state.lastUpdated = new Date();
+    }
+    return unfrozen;
   }
 
   /**
@@ -580,6 +700,136 @@ export class MultiplayerDynamicGameStateManager {
     this.state.lastUpdated = new Date();
   }
 
+  // ---------- Per-SceneRoom time operations ----------
+
+  /**
+   * Advance game time for a specific sceneRoom, then sync global time to max of all active rooms.
+   * This replaces the global `advanceGameTime()` for per-room time tracking.
+   */
+  advanceSceneRoomGameTime(sceneRoomId: string, elapsedMinutes: number): void {
+    if (!elapsedMinutes || elapsedMinutes <= 0) return;
+    const room = this.state.sceneRooms[sceneRoomId];
+    if (!room) return;
+
+    const [hours, minutes] = room.timeOfDay.split(":").map(Number);
+    let totalMinutes = hours * 60 + minutes + elapsedMinutes;
+    if (totalMinutes >= 1440) {
+      const daysElapsed = Math.floor(totalMinutes / 1440);
+      room.gameDay += daysElapsed;
+      totalMinutes = totalMinutes % 1440;
+    }
+    const newHours = Math.floor(totalMinutes / 60);
+    const newMinutes = totalMinutes % 60;
+    room.timeOfDay = `${String(newHours).padStart(2, "0")}:${String(newMinutes).padStart(2, "0")}`;
+    this.state.lastUpdated = new Date();
+
+    // Keep global time = max(all active rooms)
+    this.syncGlobalTimeToMax();
+
+    // Check if any time-frozen players can now be unfrozen
+    const unfrozenIds = this.checkAndUnfreezeTimeFrozenPlayers(sceneRoomId);
+    if (unfrozenIds.length > 0) {
+      // Store unfrozen IDs in contextualData so service.ts can send WS notifications
+      const updatedRoom = this.state.sceneRooms[sceneRoomId];
+      if (updatedRoom) {
+        const existing =
+          (updatedRoom.temporaryInfo.contextualData?.unfrozenPlayerIds as string[] | undefined) ?? [];
+        updatedRoom.temporaryInfo.contextualData = {
+          ...updatedRoom.temporaryInfo.contextualData,
+          unfrozenPlayerIds: [...existing, ...unfrozenIds],
+        };
+      }
+      // Re-sync global time since unfreezing may have bumped room time
+      this.syncGlobalTimeToMax();
+    }
+  }
+
+  /**
+   * Set global gameDay/timeOfDay to the maximum time across all active (non-frozen) sceneRooms.
+   * NPC worldline flows and global trigger checks continue to use global time.
+   */
+  syncGlobalTimeToMax(): void {
+    const activeRooms = this.getActiveSceneRooms();
+    if (activeRooms.length === 0) return;
+
+    let maxDay = 0;
+    let maxAbsMinutes = 0;
+    let maxTimeOfDay = "00:00";
+
+    for (const room of activeRooms) {
+      const absMin = toAbsoluteMinutes(room.gameDay, room.timeOfDay);
+      if (absMin > maxAbsMinutes) {
+        maxAbsMinutes = absMin;
+        maxDay = room.gameDay;
+        maxTimeOfDay = room.timeOfDay;
+      }
+    }
+
+    this.state.gameDay = maxDay;
+    this.state.timeOfDay = maxTimeOfDay;
+    this.state.lastUpdated = new Date();
+  }
+
+  /** Get formatted game time for a specific sceneRoom: "Day X, HH:MM" */
+  getSceneRoomFullGameTime(sceneRoomId: string): string {
+    const room = this.state.sceneRooms[sceneRoomId];
+    if (!room) return this.getFullGameTime(); // fallback to global
+    return `Day ${room.gameDay}, ${room.timeOfDay}`;
+  }
+
+  /** Compute time drift information across all active sceneRooms. */
+  getTimeDriftInfo(): TimeDriftInfo {
+    const activeRooms = this.getActiveSceneRooms();
+    if (activeRooms.length <= 1) {
+      return {
+        fastestRoomId: activeRooms[0]?.sceneRoomId ?? "",
+        slowestRoomId: activeRooms[0]?.sceneRoomId ?? "",
+        driftMinutes: 0,
+        blockedRoomIds: [],
+        allWithinResume: true,
+      };
+    }
+
+    let fastestRoom = activeRooms[0];
+    let slowestRoom = activeRooms[0];
+    let fastestAbs = toAbsoluteMinutes(fastestRoom.gameDay, fastestRoom.timeOfDay);
+    let slowestAbs = fastestAbs;
+
+    for (let i = 1; i < activeRooms.length; i++) {
+      const room = activeRooms[i];
+      const abs = toAbsoluteMinutes(room.gameDay, room.timeOfDay);
+      if (abs > fastestAbs) {
+        fastestAbs = abs;
+        fastestRoom = room;
+      }
+      if (abs < slowestAbs) {
+        slowestAbs = abs;
+        slowestRoom = room;
+      }
+    }
+
+    const driftMinutes = fastestAbs - slowestAbs;
+    const BLOCK_THRESHOLD = 120; // 2 hours
+    const RESUME_THRESHOLD = 60; // 1 hour
+
+    // Rooms whose time >= slowest + 2H are blocked
+    const blockedRoomIds: string[] = [];
+    for (const room of activeRooms) {
+      const abs = toAbsoluteMinutes(room.gameDay, room.timeOfDay);
+      if (abs - slowestAbs >= BLOCK_THRESHOLD) {
+        blockedRoomIds.push(room.sceneRoomId);
+      }
+    }
+
+    return {
+      fastestRoomId: fastestRoom.sceneRoomId,
+      slowestRoomId: slowestRoom.sceneRoomId,
+      driftMinutes,
+      blockedRoomIds,
+      allWithinResume: driftMinutes <= RESUME_THRESHOLD,
+    };
+  }
+
   // ---------- Scenario snapshot operations ----------
 
   addOrUpdateScenarioSnapshot(
@@ -614,15 +864,17 @@ export class MultiplayerDynamicGameStateManager {
 
   // ---------- Combat state ----------
 
-  setCombatState(combatData: CombatState | null): void {
+  setCombatState(combatData: CombatState | null, sceneRoomId?: string): void {
     this.state.isBattle = combatData !== null;
     this.state.combatState = combatData;
+    this.state.combatSceneRoomId = combatData !== null ? (sceneRoomId ?? null) : null;
     this.state.lastUpdated = new Date();
   }
 
   exitCombat(): void {
     this.state.isBattle = false;
     this.state.combatState = null;
+    this.state.combatSceneRoomId = null;
     this.state.lastUpdated = new Date();
   }
 
@@ -704,6 +956,7 @@ export class MultiplayerDynamicGameStateManager {
 
   // ---------- Game time (elapsed-minutes version, mirrors single-player) ----------
 
+  /** @deprecated Use advanceSceneRoomGameTime() for per-room time tracking. */
   advanceGameTime(elapsedMinutes: number): void {
     if (!elapsedMinutes || elapsedMinutes <= 0) return;
     const [hours, minutes] = this.state.timeOfDay.split(":").map(Number);

@@ -840,6 +840,10 @@ model MultiplayerSceneRoom {
   roundNumber        Int       @default(1) @map("round_number")
   /// Tree structure: empty = root node; one entry = fork child; multiple = merged child
   parentSceneRoomIds String[]  @default([]) @map("parent_scene_room_ids")
+  /// Per-room game day (independent time tracking)
+  gameDay            Int       @default(1) @map("game_day")
+  /// Per-room time of day "HH:MM" (independent time tracking)
+  timeOfDay          String    @default("08:00") @map("time_of_day")
   /// Non-null when status = "frozen"
   frozenAt           DateTime? @map("frozen_at")
   createdAt          DateTime  @default(now()) @map("created_at")

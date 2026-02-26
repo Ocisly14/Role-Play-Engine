@@ -226,7 +226,7 @@ export class ActionAgent {
       const elapsedMinutes = Object.values(staged.elapsedMinutesByPlayer);
       const roundElapsed = elapsedMinutes.length > 0 ? Math.max(...elapsedMinutes) : 0;
       if (roundElapsed > 0) {
-        manager.advanceGameTime(roundElapsed);
+        manager.advanceSceneRoomGameTime(sceneRoomId, roundElapsed);
       }
       for (const [playerId, minutes] of Object.entries(staged.fatigueMinutesByPlayer)) {
         manager.addFatigueMinutes(playerId, minutes);
@@ -384,15 +384,15 @@ export class ActionAgent {
         originalRoundNumber: existingFrozen?.originalRoundNumber ?? sceneRoom.roundNumber,
         frozenRoundCount: (existingFrozen?.frozenRoundCount ?? 0) + 1,
         lastEstimatedMinutes: this.extractTimeFromModelOutput(outputsByPlayerId[playerId]),
-        actionStartGameTime: existingFrozen?.actionStartGameTime ?? manager.getFullGameTime(),
+        actionStartGameTime: existingFrozen?.actionStartGameTime ?? manager.getSceneRoomFullGameTime(sceneRoomId),
         accumulatedElapsedMinutes: (existingFrozen?.accumulatedElapsedMinutes ?? 0) + roundElapsed,
       });
     }
     manager.updateSceneRoom(sceneRoomId, { frozenPlayerInputs: newFrozenInputs });
 
-    // 8. Advance game time
+    // 8. Advance game time (per-room)
     if (roundElapsed > 0) {
-      manager.advanceGameTime(roundElapsed);
+      manager.advanceSceneRoomGameTime(sceneRoomId, roundElapsed);
     }
 
     // 8. Apply per-player fatigue for fast group only
@@ -667,7 +667,7 @@ export class ActionAgent {
           }))
       : [];
 
-    const fullGameTime = manager.getFullGameTime();
+    const fullGameTime = manager.getSceneRoomFullGameTime(sceneRoomId);
 
     const scenePlayersRaw = baseView.temporaryInfo.contextualData?.scenePlayers;
     const scenePlayersLight = Array.isArray(scenePlayersRaw)
@@ -897,12 +897,12 @@ export class ActionAgent {
 
     return {
       getState: getView,
-      getFullGameTime: () => manager.getFullGameTime(),
+      getFullGameTime: () => manager.getSceneRoomFullGameTime(sceneRoomId),
       isFatigued: () => manager.isFatigued(playerId),
       applyRest: (restMinutes: number) => manager.applyRestForPlayer(playerId, restMinutes),
       setHeartbeatActions: (actions: HeartbeatAction[]) => manager.setHeartbeatActions(actions),
       upsertHeartbeatActions: (actions: HeartbeatAction[]) => manager.upsertHeartbeatActions(actions),
-      setCombatState: (combatData: CombatState | null) => manager.setCombatState(combatData),
+      setCombatState: (combatData: CombatState | null) => manager.setCombatState(combatData, sceneRoomId),
       setContextualData: (key: string, value: unknown) => {
         const room = manager.getSceneRoom(sceneRoomId);
         if (!room) return;

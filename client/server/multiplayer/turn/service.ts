@@ -18,7 +18,7 @@ import {
 } from "../../../../src/dynamicworldagent/multiplayerState/MultiplayerDynamicGameState.js";
 import { multiplayerSessionStore } from "../../../../src/dynamicworldagent/multiplayerState/MultiplayerDynamicGameStateLoader.js";
 import { buildMultiplayerGraph } from "../../../../src/dynamicworldagent/multiplayerGraph/index.js";
-import { resolveAllMovements } from "../../../../src/dynamicworldagent/multiplayerGraph/sceneRoomMerger.js";
+import { resolveAllMovements, type TimeBubbleMergeInfo } from "../../../../src/dynamicworldagent/multiplayerGraph/sceneRoomMerger.js";
 import { generateSceneRoomImage } from "../../../../src/dynamicworldagent/multiplayerVisual/sceneImage.js";
 import { TurnManager } from "../../../../src/dynamicworldagent/multiplayerAgent/memory/turnManager.js";
 import { WebSocketManager } from "../../websocket/WebSocketManager.js";
@@ -41,6 +41,18 @@ export interface RoundStateResult {
   totalCount: number;
   gameDay: number;
   timeOfDay: string;
+  /** Per-sceneRoom game day (independent time tracking) */
+  sceneRoomGameDay: number;
+  /** Per-sceneRoom time of day */
+  sceneRoomTimeOfDay: string;
+  /** True if this room is currently blocked due to time drift */
+  timeDriftBlocked: boolean;
+  /** Time drift in minutes between fastest and slowest active rooms */
+  timeDriftMinutes: number;
+  /** Player IDs that are currently time-frozen in this room */
+  timeFrozenPlayerIds: string[];
+  /** True if the requesting player is time-frozen */
+  isCurrentPlayerTimeFrozen: boolean;
 }
 
 // =============================================
@@ -83,9 +95,31 @@ export async function submitRoundInput(
     );
   }
 
+  // Reject input from players who are time-frozen (waiting for room time to catch up)
+  if (manager.isPlayerTimeFrozen(sceneRoomId, userId)) {
+    const frozenTime = sceneRoom.timeFrozenPlayers?.[userId];
+    throw new Error(
+      "TIME_FROZEN: Your character is adjusting to the local timeline. " +
+        `Waiting for room time to catch up (your time: Day ${frozenTime?.gameDay ?? "?"}, ${frozenTime?.timeOfDay ?? "?"}).`
+    );
+  }
+
   // Check game ending
   if (manager.getState().gameEnding?.isEnded) {
     throw new Error("The game has already ended");
+  }
+
+  // Check time drift — block input for rooms that are too far ahead
+  const driftInfo = manager.getTimeDriftInfo();
+  if (driftInfo.blockedRoomIds.includes(sceneRoomId)) {
+    const state = manager.getState();
+    const isRoomInCombat = state.isBattle && state.combatSceneRoomId === sceneRoomId;
+    if (!isRoomInCombat) {
+      throw new Error(
+        "TIME_DRIFT_BLOCKED: This scene room is too far ahead in time. " +
+        `Waiting for slower rooms to catch up (drift: ${driftInfo.driftMinutes} minutes).`
+      );
+    }
   }
 
   const input: MultiplayerTurnInput = {
@@ -227,8 +261,8 @@ async function triggerMultiplayerGraph(
       sceneId: initialSceneRoom?.currentScenario?.id ?? undefined,
       sceneName: initialSceneRoom?.currentScenario?.name ?? undefined,
       location: initialSceneRoom?.currentScenario?.location ?? undefined,
-      gameDay: initialState.gameDay ?? null,
-      gameTime: initialState.timeOfDay ?? null,
+      gameDay: initialSceneRoom?.gameDay ?? initialState.gameDay ?? null,
+      gameTime: initialSceneRoom?.timeOfDay ?? initialState.timeOfDay ?? null,
     });
   }
 
@@ -300,16 +334,23 @@ async function triggerMultiplayerGraph(
         updatedSceneRoom.temporaryInfo.contextualData?.playerActionAnalyses ?? null,
       actionResults: updatedSceneRoom.temporaryInfo.actionResults ?? null,
     });
+    // Use per-room time for turn record
+    const roomGameDay = updatedSceneRoom.gameDay ?? result.dynamicGameState?.gameDay ?? null;
+    const roomTimeOfDay = updatedSceneRoom.timeOfDay ?? result.dynamicGameState?.timeOfDay ?? null;
     turnManager.completeTurn(
       persistedTurnId,
       {
         keeperNarrative,
-        gameDay: result.dynamicGameState?.gameDay ?? null,
-        gameTime: result.dynamicGameState?.timeOfDay ?? null,
+        gameDay: roomGameDay,
+        gameTime: roomTimeOfDay,
       },
       language
     );
   }
+
+  // Use per-room time for broadcast
+  const broadcastGameDay = updatedSceneRoom?.gameDay ?? result.dynamicGameState?.gameDay;
+  const broadcastTimeOfDay = updatedSceneRoom?.timeOfDay ?? result.dynamicGameState?.timeOfDay;
 
   // Broadcast round complete
   if (wsManager) {
@@ -320,8 +361,8 @@ async function triggerMultiplayerGraph(
       roundTurnId,
       keeperNarrative,
       diceRolls,
-      gameDay: result.dynamicGameState?.gameDay,
-      gameTime: result.dynamicGameState?.timeOfDay,
+      gameDay: broadcastGameDay,
+      gameTime: broadcastTimeOfDay,
       isBattle: result.dynamicGameState?.isBattle ?? false,
       gameEnding: result.dynamicGameState?.gameEnding ?? null,
       timestamp: new Date().toISOString(),
@@ -331,6 +372,30 @@ async function triggerMultiplayerGraph(
   console.log(
     `[MP Turn] Round ${roundTurnId} complete for sceneRoom ${sceneRoomId}`
   );
+
+  // ---- Check for time-unfrozen players ----
+  if (updatedManager && wsManager && updatedSceneRoom) {
+    const unfrozenPlayerIds =
+      (updatedSceneRoom.temporaryInfo.contextualData?.unfrozenPlayerIds as
+        | string[]
+        | undefined) ?? [];
+    if (unfrozenPlayerIds.length > 0) {
+      const clients = wsManager.getMultiplayerClients(sceneRoomId);
+      for (const unfrozenId of unfrozenPlayerIds) {
+        const player = updatedManager.getState().players[unfrozenId];
+        notifySceneRoom(sceneRoomId, clients, {
+          type: "player_time_unfrozen",
+          sceneRoomId,
+          playerId: unfrozenId,
+          playerName: player?.characterName ?? unfrozenId,
+          timestamp: new Date().toISOString(),
+        });
+      }
+      console.log(
+        `[MP Turn] Time-unfrozen players in ${sceneRoomId}: ${unfrozenPlayerIds.join(", ")}`
+      );
+    }
+  }
 
   // ---- Phase 4: Scene Room Splitting ----
   // Check if any players requested a scene change; if so, split sceneRooms
@@ -344,6 +409,37 @@ async function triggerMultiplayerGraph(
       updatedManager,
       wsManager
     );
+  }
+
+  // ---- Time drift broadcast ----
+  // After round completion (and possible scene splits), check drift and notify rooms
+  if (updatedManager && wsManager) {
+    const postDrift = updatedManager.getTimeDriftInfo();
+    if (postDrift.blockedRoomIds.length > 0) {
+      for (const blockedId of postDrift.blockedRoomIds) {
+        const blockedClients = wsManager.getMultiplayerClients(blockedId);
+        notifySceneRoom(blockedId, blockedClients, {
+          type: "time_drift_blocked",
+          sceneRoomId: blockedId,
+          driftMinutes: postDrift.driftMinutes,
+          fastestRoomId: postDrift.fastestRoomId,
+          slowestRoomId: postDrift.slowestRoomId,
+          timestamp: new Date().toISOString(),
+        });
+      }
+    }
+    if (postDrift.allWithinResume && postDrift.driftMinutes > 0) {
+      // All rooms are within 1H — send resume to any room that might have been blocked
+      for (const room of updatedManager.getActiveSceneRooms()) {
+        const resumeClients = wsManager.getMultiplayerClients(room.sceneRoomId);
+        notifySceneRoom(room.sceneRoomId, resumeClients, {
+          type: "time_drift_resumed",
+          sceneRoomId: room.sceneRoomId,
+          driftMinutes: postDrift.driftMinutes,
+          timestamp: new Date().toISOString(),
+        });
+      }
+    }
   }
 
   // ---- Phase 4: Scene Image Generation ----
@@ -406,7 +502,7 @@ async function handlePostRoundSceneSplit(
       }
     }
 
-    // ── Persist new child rooms to DB ──
+    // ── Persist new child rooms to DB (with per-room time) ──
     for (const childRoom of result.newChildRooms) {
       const childState = manager.getSceneRoom(childRoom.sceneRoomId);
       try {
@@ -419,6 +515,8 @@ async function handlePostRoundSceneSplit(
             status: "active",
             roundNumber: 1,
             parentSceneRoomIds: childRoom.parentSceneRoomIds,
+            gameDay: childState?.gameDay ?? 1,
+            timeOfDay: childState?.timeOfDay ?? "08:00",
           },
         });
       } catch (e) {
@@ -550,10 +648,59 @@ async function handlePostRoundSceneSplit(
     const moverCount = result.newChildRooms.filter((r) => !r.isStayerRoom).length;
     console.log(
       `[MP Turn] Movements resolved: ${result.frozenSceneRoomIds.length} frozen, ` +
-        `${stayerCount} stayer child(ren), ${moverCount} mover/merged child(ren)`
+        `${stayerCount} stayer child(ren), ${moverCount} mover/merged child(ren), ` +
+        `${result.timeBubbleMerges.length} time bubble merge(s)`
     );
+
+    // ── Handle time bubble merges ──
+    if (result.timeBubbleMerges.length > 0) {
+      await handleTimeBubbleMerges(
+        db,
+        roomId,
+        manager,
+        result.timeBubbleMerges,
+        wsManager
+      );
+    }
   } catch (e) {
     console.error("[MP Turn] handlePostRoundSceneSplit failed:", e);
+  }
+}
+
+// =============================================
+// handleTimeBubbleMerges — Yog-Sothoth time bubble narrative
+// =============================================
+
+async function handleTimeBubbleMerges(
+  _db: CoCDatabase | CoCDatabaseAdapter,
+  _roomId: string,
+  manager: MultiplayerDynamicGameStateManager,
+  merges: TimeBubbleMergeInfo[],
+  wsManager: ReturnType<typeof WebSocketManager.getInstance>
+): Promise<void> {
+  // DB persistence (frozen rooms, new child rooms, member pointer updates)
+  // is already handled by the main handlePostRoundSceneSplit loop above.
+  // This function only sends WS join notifications.
+
+  for (const merge of merges) {
+    if (wsManager) {
+      const childClients = wsManager.getMultiplayerClients(merge.newChildSceneRoomId);
+      const state = manager.getState();
+      const enteringPlayer = state.players[merge.enteringPlayerId];
+      notifySceneRoom(merge.newChildSceneRoomId, childClients, {
+        type: "player_joined_via_time_bubble",
+        sceneRoomId: merge.newChildSceneRoomId,
+        enteringPlayerId: merge.enteringPlayerId,
+        enteringPlayerName: enteringPlayer?.characterName ?? merge.enteringPlayerId,
+        targetSceneName: merge.targetSceneName,
+        timestamp: new Date().toISOString(),
+      });
+    }
+
+    console.log(
+      `[MP Turn] Time bubble merge: player ${merge.enteringPlayerId} → ` +
+        `"${merge.targetSceneName}" (child room ${merge.newChildSceneRoomId})`
+    );
   }
 }
 
@@ -646,6 +793,7 @@ export async function getRoundState(
 
   const roundInputs = manager.getRoundInputsForSceneRoom(sceneRoomId);
   const state = manager.getState();
+  const driftInfo = manager.getTimeDriftInfo();
 
   return {
     roundNumber: sceneRoom.roundNumber,
@@ -653,5 +801,11 @@ export async function getRoundState(
     totalCount: sceneRoom.memberPlayerIds.length,
     gameDay: state.gameDay,
     timeOfDay: state.timeOfDay,
+    sceneRoomGameDay: sceneRoom.gameDay,
+    sceneRoomTimeOfDay: sceneRoom.timeOfDay,
+    timeDriftBlocked: driftInfo.blockedRoomIds.includes(sceneRoomId),
+    timeDriftMinutes: driftInfo.driftMinutes,
+    timeFrozenPlayerIds: Object.keys(sceneRoom.timeFrozenPlayers ?? {}),
+    isCurrentPlayerTimeFrozen: manager.isPlayerTimeFrozen(sceneRoomId, userId),
   };
 }

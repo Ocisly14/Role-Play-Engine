@@ -155,6 +155,8 @@ export async function evaluateAndSplitSceneRooms(
       scenarioName: sceneRoom.scenarioName,
       snapshotId: sceneRoom.snapshotId,
       snapshotName: sceneRoom.snapshotName,
+      gameDay: sceneRoom.gameDay,
+      timeOfDay: sceneRoom.timeOfDay,
       roundNumber: 1,
       turnsInCurrentScene: 0,
     });
@@ -205,6 +207,8 @@ export async function evaluateAndSplitSceneRooms(
       scenarioName: sceneRoom.scenarioName,
       snapshotId: sceneRoom.snapshotId,
       snapshotName: sceneRoom.snapshotName,
+      gameDay: sceneRoom.gameDay,
+      timeOfDay: sceneRoom.timeOfDay,
       roundNumber: 1,
       turnsInCurrentScene: 0,
     });

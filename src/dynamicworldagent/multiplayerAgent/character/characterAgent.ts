@@ -40,7 +40,7 @@ export class CharacterAgent {
       this.getInvestigatorActionResults(sceneRoom, state);
 
     // 2. Current game time
-    const gameTime = manager.getFullGameTime();
+    const gameTime = manager.getSceneRoomFullGameTime(sceneRoomId);
 
     // 3. Scene snapshot (name, location, description, conditions, connections)
     const sceneSnapshot = this.extractSceneSnapshotForTemplate(sceneRoom, state);

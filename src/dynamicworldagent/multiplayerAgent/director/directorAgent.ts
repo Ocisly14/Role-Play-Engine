@@ -120,6 +120,9 @@ export class DirectorAgent {
       const firstPlayer = s.players[playerIds[0]];
       return {
         ...s,
+        // Override global time with per-room time for room-scoped operations
+        gameDay: scr?.gameDay ?? s.gameDay,
+        timeOfDay: scr?.timeOfDay ?? s.timeOfDay,
         currentScenario: scr?.currentScenario ?? null,
         // Direct reference — mutations to temporaryInfo.* propagate to real state
         temporaryInfo: scr?.temporaryInfo ?? {
@@ -148,7 +151,7 @@ export class DirectorAgent {
     return {
       getState: getView,
       setDb: (db: any) => manager.setDb(db),
-      getFullGameTime: () => manager.getFullGameTime(),
+      getFullGameTime: () => manager.getSceneRoomFullGameTime(sceneRoomId),
       getSessionId: () => manager.getSessionId(),
       getTurnsInCurrentScene: () => manager.getTurnsInCurrentScene(sceneRoomId),
       getProgressionThreshold: () => manager.getProgressionThreshold(),
@@ -443,8 +446,8 @@ export class DirectorAgent {
       });
     }
 
-    // Step 3: Build data context from multiplayer state
-    const currentGameTime = `Day ${state.gameDay}, ${state.timeOfDay}`;
+    // Step 3: Build data context from multiplayer state (use room time)
+    const currentGameTime = `Day ${sceneRoom.gameDay}, ${sceneRoom.timeOfDay}`;
     const runtime = createRuntime();
 
     const allScenariosData = await this.buildAllScenariosDataFromState(state);
@@ -481,8 +484,8 @@ export class DirectorAgent {
     console.log(`   📋 Phase 1: Generating timeline for ${phase1Npcs.length} NPCs...`);
 
     const phase1Context = {
-      currentGameDay: state.gameDay,
-      currentTimeOfDay: state.timeOfDay,
+      currentGameDay: sceneRoom.gameDay,
+      currentTimeOfDay: sceneRoom.timeOfDay,
       previousSnapshotTime,
       currentGameTime,
       truthTimelineJson: JSON.stringify(state.truthTimeline, null, 2),
@@ -608,8 +611,8 @@ export class DirectorAgent {
     console.log(`   📋 Phase 2: Generating ${targetScenariosData.length} target snapshot(s) in one call...`);
 
     const phase2Context = {
-      currentGameDay: state.gameDay,
-      currentTimeOfDay: state.timeOfDay,
+      currentGameDay: sceneRoom.gameDay,
+      currentTimeOfDay: sceneRoom.timeOfDay,
       previousSnapshotTime,
       currentGameTime,
       targetScenesJson: JSON.stringify(

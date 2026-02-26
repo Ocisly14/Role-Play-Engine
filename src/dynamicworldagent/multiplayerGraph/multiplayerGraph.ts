@@ -99,6 +99,7 @@ export const buildMultiplayerGraph = (
     tension: 0,
     isBattle: false,
     combatState: null,
+    combatSceneRoomId: null,
     defeatedNpcHistory: [],
     heartbeatActions: [],
     gameEnding: null,
@@ -158,9 +159,12 @@ export const buildMultiplayerGraph = (
   // ---- ENTRY ----
 
   graph.addNode("entry", async (state: MultiplayerGraphState) => {
-    console.log(`🎭 [MP Entry] sceneRoom=${state.sceneRoomId} round start`);
     const m = mgr(state);
     const sceneRoom = m.getSceneRoom(state.sceneRoomId);
+    const roomTime = sceneRoom
+      ? `Day ${sceneRoom.gameDay}, ${sceneRoom.timeOfDay}`
+      : "(unknown)";
+    console.log(`🎭 [MP Entry] sceneRoom=${state.sceneRoomId} round start (${roomTime})`);
     if (!sceneRoom) {
       console.error(`[MP Entry] sceneRoom ${state.sceneRoomId} not found`);
       return state;
@@ -292,7 +296,7 @@ export const buildMultiplayerGraph = (
       if (scr) {
         const errResult: ActionResult = {
           timestamp: new Date(),
-          gameTime: m.getState().timeOfDay,
+          gameTime: scr.timeOfDay,
           timeElapsedMinutes: 0,
           location: scr.currentScenario?.location ?? "Unknown",
           character: "System",
