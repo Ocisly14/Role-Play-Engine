@@ -1,13 +1,12 @@
 import type { SceneChangeRequest } from "../../../shared/state/index.js";
 
 /**
- * Build the base system prompt for action resolution
+ * Build the base system prompt for action resolution (single-player, player actions only)
  */
 export function buildActionSystemPrompt(
   originalUserInput: string | null | undefined,
   actionDescription: string,
   preRolledDice: Record<string, number[]>,
-  isNPC: boolean,
   existingSceneChangeRequest?: SceneChangeRequest | null,
   sceneNPCs?: any[] | null,
   selectedSkill?: string | null,
@@ -21,9 +20,8 @@ export function buildActionSystemPrompt(
     existingSceneChangeRequest?.shouldChange === true &&
     existingSceneChangeRequest?.targetSceneName;
 
-  // Build base system prompt - only include scene change detection if there's a valid scene change request
   let sceneChangePrompt = "";
-  if (hasValidSceneChangeRequest && !isNPC) {
+  if (hasValidSceneChangeRequest) {
     sceneChangePrompt = `
 SCENE CHANGE REQUEST VALIDATION:
 The orchestrator has already validated a scene change request to "${existingSceneChangeRequest.targetSceneName}".
@@ -37,22 +35,20 @@ Your task is to determine if the action succeeds in enabling this scene change:
 `;
   }
 
-  const usagePolicy = isNPC
-    ? ""
-    : selectedSkill
-      ? `SKILL POLICY:
+  const usagePolicy = selectedSkill
+    ? `SKILL POLICY:
 - A player-selected skill is provided; treat the action as using that skill.
 - If no check is needed, keep diceUsed empty.
 `
-      : skillSelectionMode === "auto"
-        ? `SKILL POLICY:
+    : skillSelectionMode === "auto"
+      ? `SKILL POLICY:
 - It is auto skill selection mode.
 - No player-selected skill is provided.
 - Analyze the user input to determine whether it is normal behavior or a specific skill use.
 - If it is normal behavior, do not use any dice.
 - If it implies a specific skill, choose the appropriate skill and use dice.
 `
-        : `SKILL POLICY:
+      : `SKILL POLICY:
 - No player-selected skill is provided.
 - Do NOT select or infer a skill on the player's behalf.
 - Do NOT perform any skill checks and do NOT use any dice.
@@ -63,14 +59,14 @@ Your task is to determine if the action succeeds in enabling this scene change:
 
   return `
 ${
-  originalUserInput && !isNPC
+  originalUserInput
     ? `## User Input
 User input: ${originalUserInput}
 
 `
     : ""
 }${
-  !isNPC && targetIntent
+  targetIntent
     ? `## Orchestrator Target Intent
 Target intent: ${targetIntent}
 - This intent is parsed by Orchestrator and should be used as additional context when resolving this action.
@@ -81,7 +77,7 @@ Target intent: ${targetIntent}
 Character action: ${actionDescription}
 
 ${
-  !isNPC && selectedSkill
+  selectedSkill
     ? `## Player-Selected Skill
 Player selected skill: ${selectedSkill}
 - If a skill check is required for this action, you MUST use this skill.
@@ -90,7 +86,7 @@ Player selected skill: ${selectedSkill}
 `
     : ""
 }${
-  !isNPC && fatigueActive
+  fatigueActive
     ? `⚠️ PLAYER FATIGUE STATUS:
 当前角色状态：疲惫。所有玩家技能判定难度提高一个等级。
 Current player status: Fatigued. Increase player skill check difficulty by one level.
@@ -150,7 +146,6 @@ DiceUsed field:
 Include "scenarioUpdate" if the action permanently changes the environment. "scenarioUpdate" can include:
 - description: updated scene flavor text
 - conditions: array of environmental condition objects
-${!isNPC ? "" : "\nDo NOT include clues here; the GM determines clue revelations."}
 
 INVENTORY UPDATES:
 If the action involves picking up, dropping, receiving, giving, or losing items, include "inventory" in stateUpdate.playerCharacter or stateUpdate.npcCharacters:
@@ -196,7 +191,7 @@ WHEN CONTEXT INCLUDES "HEARTBEAT DUE ACTIONS":
 - Do not force investigator behavior.
 ${sceneChangePrompt}
 ${
-  !isNPC && sceneNPCs && sceneNPCs.length > 0
+  sceneNPCs && sceneNPCs.length > 0
     ? `
 
 ## 🎭 NPC Response Analysis (Only for Player Actions)
@@ -346,7 +341,7 @@ Return ONLY valid JSON in this exact structure:
     "conditions": [{"type": "lighting", "description": "...", "mechanicalEffect": "..."}]
   },
 ${
-  hasValidSceneChangeRequest && !isNPC
+  hasValidSceneChangeRequest
     ? `
   "sceneChange": {
     "shouldChange": false,     // true if action succeeds in enabling scene change to "${existingSceneChangeRequest.targetSceneName}"
@@ -356,7 +351,7 @@ ${
 `
     : ""
 }
-  "timeElapsedMinutes": <estimate the time elapsed in minutes>,
+  "timeElapsedMinutes": 10,
   "timeConsumption": "short", // "instant" | "short" | "medium" | "long" | "very long"
   "entersCombat": false,            // true if sustained combat starts this turn
   "combatParticipantIds": [],       // NPC IDs actively fighting the player (only when entersCombat: true)
@@ -381,7 +376,7 @@ ${
     }
   ],
 
-  "heartbeatActions": [ // Optional: player action only. Use [] when no new concrete appointment is made.
+  "heartbeatActions": [ // Optional: Use [] when no new concrete appointment is made.
     {
       "scheduledGameTime": "Day 2, 18:20",
       "npcId": "npc-guard-01",
@@ -391,7 +386,7 @@ ${
     }
   ]
 ${
-  !isNPC && sceneNPCs && sceneNPCs.length > 0
+  sceneNPCs && sceneNPCs.length > 0
     ? `
   ,
   "npcResponses": [  // Optional: Array of NPC responses (only for player actions)

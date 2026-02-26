@@ -31,7 +31,9 @@ import {
 import type { DynamicCharacterProfile } from "../../world_builder/types.js";
 import type { DynamicNPCProfile } from "../../world_builder/types.js";
 import { getStaticSkillDefaults } from "../skillDefaults.js";
-import { buildActionSystemPrompt } from "./actionTemplate.js";
+import {
+  buildActionSystemPrompt,
+} from "./actionTemplate.js";
 
 /**
  * Action Agent class - handles action resolution and skill checks
@@ -81,10 +83,10 @@ export class ActionAgent {
 
     const inputPlayerIds = new Set(roundInputsInjected.map((ri) => ri.playerId));
 
-    // Inject sceneRoom-scoped player context for templates (ONLY players with input; skip/no-input omitted).
+    // Inject sceneRoom-scoped player context for templates (ALL players in this sceneRoom;
+    // omitted players are marked so the model must not invent actions for them).
     const scenePlayers = sceneRoom.memberPlayerIds
       .map((playerId) => {
-        if (!inputPlayerIds.has(playerId)) return null;
         const p = state.players[playerId];
         if (!p) return null;
         const input = roundInputsInjected.find((ri) => ri.playerId === playerId);
@@ -102,6 +104,7 @@ export class ActionAgent {
           characterId: p.characterId,
           name: p.characterName,
           profile: p.profile,
+          omittedThisRound: !inputPlayerIds.has(playerId),
           ...(thisRoundInput ? { thisRoundInput } : {}),
         };
       })
@@ -115,14 +118,146 @@ export class ActionAgent {
       fatigueMinutesByPlayer: {} as Record<string, number>,
     };
 
-    // Process each player's action (skip omitted).
+    // One-call round resolution: inject all acting players into ONE prompt, require per-player outputs.
+    // If the batch call fails or returns invalid JSON, fallback to per-player calls for robustness.
+    try {
+      const outputsByPlayerId = await this.resolveSceneRoomRoundWithSingleCall(
+        manager,
+        sceneRoomId,
+        roundInputsInjected,
+        playerAnalyses,
+        language
+      );
+
+      for (const input of roundInputsInjected) {
+        const pa = playerAnalyses[input.playerId];
+        if (!pa?.actionAnalysis) continue;
+
+        // Per-player: wire orchestrator analysis + scene change request into the sceneRoom temporaryInfo
+        manager.setCurrentActionAnalysis(sceneRoomId, pa.actionAnalysis ?? null);
+        manager.setSceneChangeRequest(sceneRoomId, pa.sceneChangeRequest ?? null);
+
+        const adapter = this.buildSceneRoomPlayerAdapter(
+          manager,
+          sceneRoomId,
+          input.playerId,
+          staged
+        );
+
+        try {
+          const rawOutput = outputsByPlayerId[input.playerId];
+          if (!rawOutput || typeof rawOutput !== "object") {
+            const room = manager.getSceneRoom(sceneRoomId);
+            const p = state.players[input.playerId];
+            if (room && p) {
+              manager.addActionResult(sceneRoomId, {
+                timestamp: new Date(),
+                gameTime: manager.getState().timeOfDay,
+                timeElapsedMinutes: 0,
+                location: room.currentScenario?.location ?? "Unknown",
+                character: p.characterName,
+                result: `[错误] Missing action output for player ${input.playerId}`,
+                diceRolls: [],
+                timeConsumption: "instant",
+              });
+            }
+            continue;
+          }
+
+          await this.applyPlayerRoundModelOutput(
+            adapter,
+            rawOutput,
+            input.content ?? "",
+            roundTurnId ?? null
+          );
+        } catch (e) {
+          console.error(
+            `[MP ActionAgent] Error applying model output for player ${input.playerId}:`,
+            e
+          );
+          const room = manager.getSceneRoom(sceneRoomId);
+          const p = state.players[input.playerId];
+          if (room && p) {
+            manager.addActionResult(sceneRoomId, {
+              timestamp: new Date(),
+              gameTime: manager.getState().timeOfDay,
+              timeElapsedMinutes: 0,
+              location: room.currentScenario?.location ?? "Unknown",
+              character: p.characterName,
+              result: `[错误] ${e instanceof Error ? e.message : String(e)}`,
+              diceRolls: [],
+              timeConsumption: "instant",
+            });
+          }
+        } finally {
+          // Persist any scene-change modification back into per-player analysis (splitter reads this)
+          const room = manager.getSceneRoom(sceneRoomId);
+          const updatedReq = room?.temporaryInfo.sceneChangeRequest ?? null;
+          const stored = (room?.temporaryInfo.contextualData?.playerActionAnalyses as any)?.[
+            input.playerId
+          ];
+          if (stored && typeof stored === "object") {
+            stored.sceneChangeRequest = updatedReq;
+          }
+
+          // Clear per-player temporary wiring (avoid cross-player contamination)
+          manager.setSceneChangeRequest(sceneRoomId, null);
+          manager.setCurrentActionAnalysis(sceneRoomId, null);
+        }
+      }
+    } catch (e) {
+      console.warn(
+        `[MP ActionAgent] Batch round resolution failed; falling back to per-player calls:`,
+        e
+      );
+      await this.processSceneRoomRoundPerPlayer(
+        manager,
+        sceneRoomId,
+        roundInputsInjected,
+        playerAnalyses,
+        language,
+        staged,
+        roundTurnId ?? null
+      );
+    }
+
+    // Advance global time once for this sceneRoom round (concurrent actions).
+    const elapsedMinutes = Object.values(staged.elapsedMinutesByPlayer);
+    const roundElapsed = elapsedMinutes.length > 0 ? Math.max(...elapsedMinutes) : 0;
+    if (roundElapsed > 0) {
+      manager.advanceGameTime(roundElapsed);
+    }
+
+    // Apply per-player fatigue minutes (per player action duration).
+    for (const [playerId, minutes] of Object.entries(staged.fatigueMinutesByPlayer)) {
+      manager.addFatigueMinutes(playerId, minutes);
+    }
+  }
+
+  private async processSceneRoomRoundPerPlayer(
+    manager: MultiplayerDynamicGameStateManager,
+    sceneRoomId: string,
+    roundInputsInjected: Array<{
+      playerId: string;
+      characterId: string;
+      inputType: "input";
+      content: string;
+      selectedSkill: string | null;
+      skillSelectionMode: "manual" | "auto";
+    }>,
+    playerAnalyses: Record<string, any>,
+    language: "en" | "zh",
+    staged: {
+      elapsedMinutesByPlayer: Record<string, number>;
+      fatigueMinutesByPlayer: Record<string, number>;
+    },
+    roundTurnId: string | null
+  ): Promise<void> {
+    const state = manager.getState();
     for (const input of roundInputsInjected) {
       const pa = playerAnalyses[input.playerId];
-      if (!pa?.actionAnalysis) {
-        continue;
-      }
+      if (!pa?.actionAnalysis) continue;
 
-      // Per-player: wire orchestrator analysis + scene change request into the sceneRoom temporaryInfo
       manager.setCurrentActionAnalysis(sceneRoomId, pa.actionAnalysis ?? null);
       manager.setSceneChangeRequest(sceneRoomId, pa.sceneChangeRequest ?? null);
 
@@ -148,7 +283,6 @@ export class ActionAgent {
           `[MP ActionAgent] Error processing player ${input.playerId}:`,
           e
         );
-        // Best-effort: surface as an actionResult
         const room = manager.getSceneRoom(sceneRoomId);
         const p = state.players[input.playerId];
         if (room && p) {
@@ -164,7 +298,6 @@ export class ActionAgent {
           });
         }
       } finally {
-        // Persist any scene-change modification back into per-player analysis (splitter reads this)
         const room = manager.getSceneRoom(sceneRoomId);
         const updatedReq = room?.temporaryInfo.sceneChangeRequest ?? null;
         const stored = (room?.temporaryInfo.contextualData?.playerActionAnalyses as any)?.[
@@ -174,23 +307,289 @@ export class ActionAgent {
           stored.sceneChangeRequest = updatedReq;
         }
 
-        // Clear per-player temporary wiring (avoid cross-player contamination)
         manager.setSceneChangeRequest(sceneRoomId, null);
         manager.setCurrentActionAnalysis(sceneRoomId, null);
       }
     }
+  }
 
-    // Advance global time once for this sceneRoom round (concurrent actions).
-    const elapsedMinutes = Object.values(staged.elapsedMinutesByPlayer);
-    const roundElapsed = elapsedMinutes.length > 0 ? Math.max(...elapsedMinutes) : 0;
-    if (roundElapsed > 0) {
-      manager.advanceGameTime(roundElapsed);
+  private makeSceneRoomDynamicStateView(
+    manager: MultiplayerDynamicGameStateManager,
+    sceneRoomId: string,
+    playerIdForView: string
+  ): DynamicGameState {
+    const state = manager.getState();
+    const room = manager.getSceneRoom(sceneRoomId);
+    const p = state.players[playerIdForView];
+    if (!room || !p) {
+      throw new Error(
+        `[MP ActionAgent] Cannot build view: missing sceneRoom=${sceneRoomId} or player=${playerIdForView}`
+      );
     }
 
-    // Apply per-player fatigue minutes (per player action duration).
-    for (const [playerId, minutes] of Object.entries(staged.fatigueMinutesByPlayer)) {
-      manager.addFatigueMinutes(playerId, minutes);
+    const profile: any = p.profile ?? null;
+    if (profile) {
+      if (!profile.id) profile.id = p.characterId ?? profile.id;
+      if (!profile.name) profile.name = p.characterName ?? profile.name;
     }
+
+    return {
+      ...(state as any),
+      playerCharacter: profile,
+      staminaState: p.staminaState ?? {
+        minutesSinceLastRest: 0,
+        fatigueActive: false,
+      },
+      currentScenario: room.currentScenario ?? null,
+      turnsInCurrentScene: room.turnsInCurrentScene ?? 0,
+      temporaryInfo: room.temporaryInfo ?? {
+        rules: [],
+        contextualData: {},
+        actionResults: [],
+        actionResultsDetailed: [],
+        currentActionAnalysis: null,
+        npcResponseAnalyses: [],
+        sceneChangeRequest: null,
+        previousScenario: null,
+      },
+    } as DynamicGameState;
+  }
+
+  private async resolveSceneRoomRoundWithSingleCall(
+    manager: MultiplayerDynamicGameStateManager,
+    sceneRoomId: string,
+    roundInputsInjected: Array<{
+      playerId: string;
+      characterId: string;
+      inputType: "input";
+      content: string;
+      selectedSkill: string | null;
+      skillSelectionMode: "manual" | "auto";
+    }>,
+    playerAnalyses: Record<string, any>,
+    language: "en" | "zh"
+  ): Promise<Record<string, any>> {
+    const state = manager.getState();
+    const room = manager.getSceneRoom(sceneRoomId);
+    if (!room) throw new Error(`SceneRoom ${sceneRoomId} not found`);
+
+    const viewPlayerId =
+      roundInputsInjected[0]?.playerId ??
+      room.memberPlayerIds.find((id) => Boolean(state.players[id])) ??
+      "";
+    if (!viewPlayerId) {
+      throw new Error(`[MP ActionAgent] No player available to build sceneRoom view`);
+    }
+
+    const baseView = this.makeSceneRoomDynamicStateView(
+      manager,
+      sceneRoomId,
+      viewPlayerId
+    );
+
+    const sceneNPCs = this.extractSceneNPCsForAction(baseView);
+    const heartbeatDueActions = this.parseHeartbeatDueActionsContext(
+      baseView.temporaryInfo.contextualData?.heartbeatDueActions
+    );
+    const heartbeatRelatedNpcs =
+      heartbeatDueActions.length > 0
+        ? this.extractHeartbeatRelatedNpcs(baseView, heartbeatDueActions)
+        : [];
+
+    const playerCount = roundInputsInjected.length;
+    const preRolledDice = this.preRollDice(playerCount);
+
+    const roundRequests = roundInputsInjected.map((input) => {
+      const p = state.players[input.playerId];
+      const analysis = playerAnalyses[input.playerId]?.actionAnalysis ?? null;
+      const sceneChangeRequest =
+        playerAnalyses[input.playerId]?.sceneChangeRequest ?? null;
+      const fatigueActive = manager.isFatigued(input.playerId);
+
+      const playerView = this.makeSceneRoomDynamicStateView(
+        manager,
+        sceneRoomId,
+        input.playerId
+      );
+      const targetCharacter = analysis
+        ? this.findTargetCharacter(playerView, analysis)
+        : null;
+
+      return {
+        playerId: input.playerId,
+        characterId: input.characterId,
+        name: p?.characterName ?? input.playerId,
+        fatigueActive,
+        selectedSkill: input.selectedSkill ?? null,
+        skillSelectionMode: input.skillSelectionMode ?? "manual",
+        userInput: input.content ?? "",
+        orchestratorActionAnalysis: analysis,
+        sceneChangeRequest,
+        // dicePoolKey removed — shared dice pool used
+        characterProfile: p?.profile
+          ? this.filterCharacterForContext(p.profile)
+          : null,
+        targetCharacter: targetCharacter
+          ? this.filterCharacterForContext(targetCharacter)
+          : null,
+      };
+    });
+
+    const skillDefaults = getStaticSkillDefaults();
+    const scenarioOutline = baseView.currentScenario
+      ? baseView.scenarioOutlines.find((o) => o.id === baseView.currentScenario?.id)
+      : null;
+
+    const scenarioInfo = baseView.currentScenario
+      ? {
+          name: baseView.currentScenario.name,
+          location: baseView.currentScenario.location,
+          description: baseView.currentScenario.description,
+          conditions: baseView.currentScenario.conditions ?? [],
+          connections: scenarioOutline?.connections ?? [],
+        }
+      : null;
+
+    const defeatedNpcHistory = Array.isArray(baseView.defeatedNpcHistory)
+      ? baseView.defeatedNpcHistory
+          .filter(
+            (entry): entry is { name: string; count: number } =>
+              !!entry &&
+              typeof entry.name === "string" &&
+              typeof entry.count === "number" &&
+              entry.name.trim().length > 0 &&
+              Number.isFinite(entry.count) &&
+              entry.count > 0
+          )
+          .map((entry) => ({
+            name: entry.name.trim(),
+            count: Math.floor(entry.count),
+          }))
+      : [];
+
+    const fullGameTime = manager.getFullGameTime();
+
+    const scenePlayersRaw = baseView.temporaryInfo.contextualData?.scenePlayers;
+    const scenePlayersLight = Array.isArray(scenePlayersRaw)
+      ? scenePlayersRaw.map((sp: any) => ({
+          roleType: sp?.roleType ?? "player",
+          playerId: sp?.playerId ?? null,
+          characterId: sp?.characterId ?? null,
+          name: sp?.name ?? null,
+          omittedThisRound: Boolean(sp?.omittedThisRound),
+          thisRoundInput: sp?.thisRoundInput ?? null,
+        }))
+      : null;
+
+    const prompt =
+      buildActionSystemPrompt(null, "", preRolledDice, null, sceneNPCs, null, "auto", null, language) +
+      `\n\n=== SCENE ROOM CONTEXT (sceneRoomId isolated) ===\n` +
+      JSON.stringify(
+        {
+          sceneRoomId,
+          gameTime: fullGameTime,
+          scenario: scenarioInfo,
+          temporaryRules: baseView.temporaryInfo.rules ?? [],
+          defaultSkillValues: skillDefaults,
+          defeatedNpcHistory,
+          heartbeatDueActions: heartbeatDueActions.length > 0 ? heartbeatDueActions : [],
+          heartbeatRelatedNpcs:
+            heartbeatRelatedNpcs.length > 0 ? heartbeatRelatedNpcs : [],
+          scenePlayers: scenePlayersLight,
+          roundInputs: baseView.temporaryInfo.contextualData?.roundInputs ?? null,
+        },
+        null,
+        2
+      ) +
+      `\n=== END SCENE ROOM CONTEXT ===\n` +
+      `\n\n=== ROUND ACTION REQUESTS (produce output per acting player) ===\n` +
+      JSON.stringify(roundRequests, null, 2) +
+      `\n=== END ROUND ACTION REQUESTS ===\n`;
+
+    const response = await generateText({
+      runtime: {},
+      context: prompt,
+      modelClass: ModelClass.MEDIUM,
+    });
+
+    const parsed = this.parseRoundOutputsFromModel(response);
+    if (Object.keys(parsed).length === 0) {
+      throw new Error("[MP ActionAgent] Empty/invalid batch model output");
+    }
+    return parsed;
+  }
+
+  private parseRoundOutputsFromModel(response: string): Record<string, any> {
+    let jsonText = response.trim();
+
+    const codeBlockMatch = jsonText.match(/```(?:json)?\s*([\s\S]*?)```/i);
+    if (codeBlockMatch) jsonText = codeBlockMatch[1].trim();
+
+    if (!jsonText.startsWith("{") && !jsonText.startsWith("[")) {
+      const jsonObjectMatch = jsonText.match(/\{[\s\S]*\}/);
+      if (jsonObjectMatch) jsonText = jsonObjectMatch[0];
+    }
+
+    let parsed: any = null;
+    try {
+      parsed = JSON.parse(jsonText);
+    } catch (e) {
+      console.warn("[MP ActionAgent] Failed to parse batch JSON:", e);
+      return {};
+    }
+
+    const players = Array.isArray(parsed?.players) ? parsed.players : [];
+    // Top-level diceUsed contains ALL dice rolls (players + NPCs) for the entire round
+    const globalDiceUsed: string[] = Array.isArray(parsed?.diceUsed)
+      ? parsed.diceUsed.filter((d: unknown): d is string => typeof d === "string")
+      : [];
+
+    const out: Record<string, any> = {};
+    for (const entry of players) {
+      if (!entry || typeof entry !== "object") continue;
+      const playerId = (entry as any).playerId;
+      const output = (entry as any).output;
+      if (typeof playerId === "string" && playerId.trim() && output && typeof output === "object") {
+        // Inject global diceUsed into each player's output so downstream consumers can access it
+        if (!Array.isArray(output.diceUsed) || output.diceUsed.length === 0) {
+          output.diceUsed = globalDiceUsed;
+        }
+        out[playerId.trim()] = output;
+      }
+    }
+    return out;
+  }
+
+  private async applyPlayerRoundModelOutput(
+    gameStateManager: DynamicGameStateManager,
+    rawOutput: Record<string, unknown>,
+    originalUserInput: string,
+    currentTurnId: string | null
+  ): Promise<void> {
+    const dynamicState = gameStateManager.getState();
+    const actionAnalysis = dynamicState.temporaryInfo.currentActionAnalysis;
+    const targetCharacter = this.findTargetCharacter(dynamicState, actionAnalysis);
+
+    const parsed = { ...(rawOutput as any) };
+    this.sanitizeSuccessLevels(parsed);
+    const diceUsed = Array.isArray(parsed.diceUsed)
+      ? parsed.diceUsed.filter((d: unknown): d is string => typeof d === "string")
+      : [];
+
+    await this.buildFinalResult(
+      {},
+      dynamicState,
+      dynamicState.playerCharacter,
+      parsed,
+      diceUsed,
+      {
+        isNPC: false,
+        targetCharacter,
+        sourceTurnId: currentTurnId ?? null,
+      },
+      gameStateManager,
+      originalUserInput
+    );
   }
 
   private buildSceneRoomPlayerAdapter(
@@ -1006,30 +1405,24 @@ export class ActionAgent {
 
     // Extract scene NPCs for player actions (for NPC response analysis)
     // Exclude the target character to avoid duplicating data already injected as Target NPC
-    const sceneNPCs = !isNPC
-      ? this.extractSceneNPCsForAction(dynamicState).filter(
-          (npc) =>
-            !targetCharacter ||
-            (npc.id !== targetCharacter.id && npc.name !== targetCharacter.name)
-        )
-      : null;
-    const targetIntent = !isNPC
-      ? (dynamicState.temporaryInfo.currentActionAnalysis?.target?.intent ?? "")
-      : "";
+    const sceneNPCs = this.extractSceneNPCsForAction(dynamicState).filter(
+      (npc) =>
+        !targetCharacter ||
+        (npc.id !== targetCharacter.id && npc.name !== targetCharacter.name)
+    );
+    const targetIntent =
+      dynamicState.temporaryInfo.currentActionAnalysis?.target?.intent ?? "";
 
     // Build system prompt using template
-    const fatigueActive = !isNPC
-      ? gameStateManager.isFatigued()
-      : false;
+    const fatigueActive = gameStateManager.isFatigued();
     const baseSystemPrompt = buildActionSystemPrompt(
       originalUserInput,
       actionDescription,
       preRolledDice,
-      isNPC,
       existingSceneChangeRequest,
       sceneNPCs,
-      !isNPC ? (selectedSkill ?? null) : null,
-      !isNPC ? skillSelectionMode : undefined,
+      selectedSkill ?? null,
+      skillSelectionMode,
       targetIntent,
       language,
       fatigueActive
@@ -1157,7 +1550,8 @@ export class ActionAgent {
   /**
    * Pre-roll common dice expressions
    */
-  private preRollDice() {
+  private preRollDice(playerCount = 1) {
+    const scale = Math.max(1, playerCount);
     const rollDice = (sides: number, count = 1): number[] => {
       return Array.from(
         { length: count },
@@ -1165,37 +1559,31 @@ export class ActionAgent {
       );
     };
 
-    // Pre-roll 1d100: 10 results
-    const d100_results = rollDice(100, 10);
+    const d100_results = rollDice(100, 5 * scale);
+    const d100_opposed_results = rollDice(100, 2 * scale);
+    const d20_results = rollDice(20, 2 * scale);
+    const d10_results = rollDice(10, 2 * scale);
+    const d8_results = rollDice(8, 2 * scale);
+    const d6_results = rollDice(6, 2 * scale);
+    const d4_results = rollDice(4, 2 * scale);
+    const d3_results = rollDice(3, 2 * scale);
 
-    // Pre-roll 1d100_opposed: 5 results
-    const d100_opposed_results = rollDice(100, 5);
-
-    // Pre-roll other dice types: 5 results each
-    const d20_results = rollDice(20, 5);
-    const d10_results = rollDice(10, 5);
-    const d8_results = rollDice(8, 5);
-    const d6_results = rollDice(6, 5);
-    const d4_results = rollDice(4, 5);
-    const d3_results = rollDice(3, 5);
-
-    // For 2d6, roll 5 pairs and sum each pair
     const d6_pairs: number[] = [];
-    for (let i = 0; i < 5; i++) {
+    for (let i = 0; i < 2 * scale; i++) {
       const pair = rollDice(6, 2);
       d6_pairs.push(pair[0] + pair[1]);
     }
 
     return {
-      "1d100": d100_results, // 10 results for single skill checks
-      "1d100_opposed": d100_opposed_results, // 5 results for opposed checks
-      "1d20": d20_results, // 5 results
-      "1d10": d10_results, // 5 results
-      "1d8": d8_results, // 5 results
-      "1d6": d6_results, // 5 results
-      "2d6": d6_pairs, // 5 results (sum of 2d6)
-      "1d4": d4_results, // 5 results
-      "1d3": d3_results, // 5 results
+      "1d100": d100_results,
+      "1d100_opposed": d100_opposed_results,
+      "1d20": d20_results,
+      "1d10": d10_results,
+      "1d8": d8_results,
+      "1d6": d6_results,
+      "2d6": d6_pairs,
+      "1d4": d4_results,
+      "1d3": d3_results,
     };
   }
 
@@ -1224,6 +1612,28 @@ export class ActionAgent {
     // Check if target is player
     if (dynamicState.playerCharacter.name.toLowerCase().includes(targetLower)) {
       return dynamicState.playerCharacter;
+    }
+
+    // Multiplayer: allow targeting another investigator in the same sceneRoom.
+    const scenePlayers = dynamicState.temporaryInfo?.contextualData?.scenePlayers;
+    if (Array.isArray(scenePlayers)) {
+      const match = scenePlayers.find((sp: any) => {
+        if (!sp || typeof sp !== "object") return false;
+        if (typeof sp.name !== "string") return false;
+        if (!sp.profile || typeof sp.profile !== "object") return false;
+        const n = sp.name.toLowerCase();
+        return n.includes(targetLower) || targetLower.includes(n);
+      });
+      if (match?.profile) {
+        const profile: any = match.profile;
+        if (!profile.id && typeof match.characterId === "string") {
+          profile.id = match.characterId;
+        }
+        if (!profile.name && typeof match.name === "string") {
+          profile.name = match.name;
+        }
+        return profile as DynamicCharacterProfile;
+      }
     }
 
     // Check NPCs

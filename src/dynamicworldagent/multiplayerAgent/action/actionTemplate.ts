@@ -1,13 +1,13 @@
 import type { SceneChangeRequest } from "../../../shared/state/index.js";
 
 /**
- * Build the base system prompt for action resolution
+ * Build the base system prompt for multiplayer action resolution.
+ * Only player actions go through this path — no NPC actions.
  */
 export function buildActionSystemPrompt(
   originalUserInput: string | null | undefined,
   actionDescription: string,
   preRolledDice: Record<string, number[]>,
-  isNPC: boolean,
   existingSceneChangeRequest?: SceneChangeRequest | null,
   sceneNPCs?: any[] | null,
   selectedSkill?: string | null,
@@ -23,7 +23,7 @@ export function buildActionSystemPrompt(
 
   // Build base system prompt - only include scene change detection if there's a valid scene change request
   let sceneChangePrompt = "";
-  if (hasValidSceneChangeRequest && !isNPC) {
+  if (hasValidSceneChangeRequest) {
     sceneChangePrompt = `
 SCENE CHANGE REQUEST VALIDATION:
 The orchestrator has already validated a scene change request to "${existingSceneChangeRequest.targetSceneName}".
@@ -37,22 +37,20 @@ Your task is to determine if the action succeeds in enabling this scene change:
 `;
   }
 
-  const usagePolicy = isNPC
-    ? ""
-    : selectedSkill
-      ? `SKILL POLICY:
+  const usagePolicy = selectedSkill
+    ? `SKILL POLICY:
 - A player-selected skill is provided; treat the action as using that skill.
 - If no check is needed, keep diceUsed empty.
 `
-      : skillSelectionMode === "auto"
-        ? `SKILL POLICY:
+    : skillSelectionMode === "auto"
+      ? `SKILL POLICY:
 - It is auto skill selection mode.
 - No player-selected skill is provided.
 - Analyze the user input to determine whether it is normal behavior or a specific skill use.
 - If it is normal behavior, do not use any dice.
 - If it implies a specific skill, choose the appropriate skill and use dice.
 `
-        : `SKILL POLICY:
+      : `SKILL POLICY:
 - No player-selected skill is provided.
 - Do NOT select or infer a skill on the player's behalf.
 - Do NOT perform any skill checks and do NOT use any dice.
@@ -62,15 +60,42 @@ Your task is to determine if the action succeeds in enabling this scene change:
   const targetLanguageLabel = outputLanguage === "en" ? "English" : "Chinese";
 
   return `
+MULTIPLAYER ROUND MODE:
+- You will be given "scenePlayers" and "roundInputs" scoped to that sceneRoomId.
+- Some players may be present in the room but omitted this round. Do NOT invent actions for omitted players.
+
+TASK:
+- For EACH player who has an input in "roundInputs", resolve their action independently using the shared scene context.
+- Do NOT mix up players. Use the correct characterId/name/profile per player.
+- Produce one output object per acting player, wrapped in a "players" array: { "players": [{ "playerId": "...", "output": { ... } }] }.
+
+PER-PLAYER SKILL POLICY:
+- Each player in "roundInputs" may have their own selectedSkill and skillSelectionMode.
+- If a player has selectedSkill set, use that skill for their action.
+- If a player has skillSelectionMode "auto", analyze their input to determine skill use.
+- If a player has skillSelectionMode "manual" and no selectedSkill, do NOT infer a skill for them.
+
+PER-PLAYER FATIGUE POLICY:
+- If fatigueActive is true for a player, increase that player's skill check difficulty by one level:
+  regular → hard (skill ÷ 2), hard → extreme (skill ÷ 5), extreme → extreme.
+
+SCENE CHANGE REQUEST VALIDATION (per player):
+- If a player has an existing sceneChangeRequest validated by orchestrator, you must decide whether their action enables it.
+- Output \`sceneChange\` ONLY for players who have an existing sceneChangeRequest.
+
+PRE-ROLLED DICE:
+- A single shared preRolledDice pool is provided for the entire round.
+- All players and NPCs draw from this same pool.
+
 ${
-  originalUserInput && !isNPC
+  originalUserInput
     ? `## User Input
 User input: ${originalUserInput}
 
 `
     : ""
 }${
-  !isNPC && targetIntent
+  targetIntent
     ? `## Orchestrator Target Intent
 Target intent: ${targetIntent}
 - This intent is parsed by Orchestrator and should be used as additional context when resolving this action.
@@ -81,7 +106,7 @@ Target intent: ${targetIntent}
 Character action: ${actionDescription}
 
 ${
-  !isNPC && selectedSkill
+  selectedSkill
     ? `## Player-Selected Skill
 Player selected skill: ${selectedSkill}
 - If a skill check is required for this action, you MUST use this skill.
@@ -90,9 +115,8 @@ Player selected skill: ${selectedSkill}
 `
     : ""
 }${
-  !isNPC && fatigueActive
+  fatigueActive
     ? `⚠️ PLAYER FATIGUE STATUS:
-当前角色状态：疲惫。所有玩家技能判定难度提高一个等级。
 Current player status: Fatigued. Increase player skill check difficulty by one level.
 - regular → hard (skill ÷ 2)
 - hard → extreme (skill ÷ 5)
@@ -109,10 +133,10 @@ OUTPUT LANGUAGE REQUIREMENT:
 - Keep names/identifiers/location values from context unchanged (do not translate them).
 
 USAGE:
-- Each dice type has multiple pre-rolled results (1d100 has 10, others have 5). Select ONE result from the array for each dice you need.
-- 1d100: Use for single skill checks, attribute checks, luck rolls (compare against character's skill percentage) - select one from 10 available results
-- 1d100_opposed: Use for opposed checks (the second character's roll) - select one from 5 available results
-- 1d3, 1d4, 1d6, 2d6, 1d8, 1d10, 1d20: Use for damage, sanity loss, etc. - select one from 5 available results each
+- A shared dice pool is provided, scaled by number of acting players. Select ONE result from the array for each dice you need.
+- 1d100: Use for single skill checks, attribute checks, luck rolls (compare against character's skill percentage)
+- 1d100_opposed: Use for opposed checks (the second character's roll)
+- 1d3, 1d4, 1d6, 2d6, 1d8, 1d10, 1d20: Use for damage, sanity loss, etc.
 - Dice with modifiers: You can add modifiers to pre-rolled dice (e.g., 1d3+1, 1d6+2 for damage bonus/STR bonus)
 - You can choose to use these dice OR not use any if the action doesn't require dice
 - When you use a die, record which die you used (including which result from the array, e.g., "1d100[0]: 67") and the result in your response
@@ -150,7 +174,6 @@ DiceUsed field:
 Include "scenarioUpdate" if the action permanently changes the environment. "scenarioUpdate" can include:
 - description: updated scene flavor text
 - conditions: array of environmental condition objects
-${!isNPC ? "" : "\nDo NOT include clues here; the GM determines clue revelations."}
 
 INVENTORY UPDATES:
 If the action involves picking up, dropping, receiving, giving, or losing items, include "inventory" in stateUpdate.playerCharacter or stateUpdate.npcCharacters:
@@ -196,12 +219,12 @@ WHEN CONTEXT INCLUDES "HEARTBEAT DUE ACTIONS":
 - Do not force investigator behavior.
 ${sceneChangePrompt}
 ${
-  !isNPC && sceneNPCs && sceneNPCs.length > 0
+  sceneNPCs && sceneNPCs.length > 0
     ? `
 
-## 🎭 NPC Response Analysis (Only for Player Actions)
+## 🎭 NPC Response Analysis
 
-After resolving the player's action, analyze how NPCs in the current scene will respond.
+After resolving each player's action, analyze how NPCs in the current scene will respond.
 
 **IMPORTANT: NPC Perspective Limitation**
 - NPCs act from their own perspective and are NOT omniscient
@@ -291,137 +314,147 @@ ${JSON.stringify(sceneNPCs, null, 2)}
 
 ## 📋 Output Format
 
+MULTIPLAYER OUTPUT: Return one output object per acting player, wrapped in a "players" array.
+Each entry MUST include the player's "playerId" (from roundInputs) and an "output" object.
+All players and NPCs share a single preRolledDice pool.
+
 Return ONLY valid JSON in this exact structure:
 
 \`\`\`json
 {
   "diceUsed": [
-    // Array of dice you actually used (empty array if no dice needed)
+    // ALL dice rolls for the entire round — players AND NPCs combined
     // Select penalty/bonus dice when applicable
     // Format: Mark each extra die with (penalty) or (bonus), then specify which value is used
     // Always select dice in order starting from index 0
+    // Always prefix with character name to identify who rolled
     "John: 1d100[0]: 67 (Brawling 50% = failure)",
-    "Dr. Smith: 1d100[1]: 45, 1d100[2]: 82(penalty),(Spot Hidden 60% use highest 82 = failure)",
-    "John: 1d3[0]: 2 + 1 (DB) = 3 (unarmed damage = 3)"
+    "John: 1d3[0]: 2 + 1 (DB) = 3 (unarmed damage = 3)",
+    "Dr. Smith: 1d100[0]: 45, 1d100[1]: 82(penalty),(Spot Hidden 60% use highest 82 = failure)"
   ],
 
-  "actionLog": [
+  "players": [
     {
-      "time": "Day 1, 14:30",
-      "location": "New York Public Library",
-      "summary": "Searched the bookshelf and found a hidden journal",
-      "successLevel": "regular",
-      "characterId": "character-id-or-npc-id"
-    }
-  ],
+      "playerId": "player-id-from-roundInputs",
+      "output": {
+        "actionLog": [
+          {
+            "time": "Day 1, 14:30",
+            "location": "New York Public Library",
+            "summary": "Searched the bookshelf and found a hidden journal",
+            "successLevel": "regular",
+            "characterId": "character-id-or-npc-id"
+          }
+        ],
 
-  "stateUpdate": {
-    // Optional: Update character state/appearance (HP, sanity, inventory, etc based on the result of the action)
-    "playerCharacter": {
-      "name": "Character Name",  // MUST match the acting character's name
-      "status": {
-        "hp": -3,              // HP change (negative for damage, positive for healing)
-        "sanity": 0,           // Sanity change
-        "magic": 0,            // Magic points change
-        "luck": 0,             // Luck change
-        "conditions": ["Injured", "Dazed"] // Optional: full conditions list for this character after this action
-      },
-      "inventory": {           // Optional: only if inventory changes
-        "add": [{"name": "item name", "quantity": 1}],
-        "remove": [{"name": "item name", "quantity": 1}]
-      }
-    },
-    "npcCharacters": [         // Optional: only if NPC state/appearance changes
-      {
-        "id": "npc-id",        // MUST use exact NPC id
-        "name": "NPC Name",
-        "status": {"hp": -4, "sanity": 0, "conditions": ["Bleeding"]},
-        "appearance": "Updated appearance description based on the result of the action (optional)"
-      }
-    ]
-  },
+        "stateUpdate": {
+          // Optional: Update character state/appearance (HP, sanity, inventory, etc based on the result of the action)
+          "playerCharacter": {
+            "name": "Character Name",  // MUST match the acting character's name
+            "status": {
+              "hp": -3,              // HP change (negative for damage, positive for healing)
+              "sanity": 0,           // Sanity change
+              "magic": 0,            // Magic points change
+              "luck": 0,             // Luck change
+              "conditions": ["Injured", "Dazed"] // Optional: full conditions list for this character after this action
+            },
+            "inventory": {           // Optional: only if inventory changes
+              "add": [{"name": "item name", "quantity": 1}],
+              "remove": [{"name": "item name", "quantity": 1}]
+            }
+          },
+          "npcCharacters": [         // Optional: only if NPC state/appearance changes
+            {
+              "id": "npc-id",        // MUST use exact NPC id
+              "name": "NPC Name",
+              "status": {"hp": -4, "sanity": 0, "conditions": ["Bleeding"]},
+              "appearance": "Updated appearance description based on the result of the action (optional)"
+            }
+          ]
+        },
 
-  "scenarioUpdate": {          // Optional: only if environment permanently changes
-    "description": "Updated scene description",
-    "conditions": [{"type": "lighting", "description": "...", "mechanicalEffect": "..."}]
-  },
+        "scenarioUpdate": {          // Optional: only if environment permanently changes
+          "description": "Updated scene description",
+          "conditions": [{"type": "lighting", "description": "...", "mechanicalEffect": "..."}]
+        },
+
+        // "sceneChange": Include ONLY if this player has a sceneChangeRequest in their roundRequest
+        // {
+        //   "shouldChange": false,     // true if action succeeds in enabling scene change
+        //   "targetSceneName": "target scene name from sceneChangeRequest",
+        //   "reason": "Reason for scene change success or failure"
+        // },
+
+        "timeElapsedMinutes": 10,
+        "timeConsumption": "short", // "instant" | "short" | "medium" | "long" | "very long"
+        "entersCombat": false,            // true if sustained combat starts this turn
+        "combatParticipantIds": [],       // NPC IDs actively fighting the player (only when entersCombat: true)
+        "combatInitiatedBy": "player",   // "player" or "npc" (only when entersCombat: true)
+        // When entersCombat=true AND combatInitiatedBy="npc", provide the NPC opening attack intents
+        "openingPendingNpcActions": [
+          {
+            "npcId": "npc-id",
+            "npcName": "NPC Name",
+            "actionNarrative": "NPC opening attack intent"
+          }
+        ],
+
+        "relationshipChanges": [  // Optional: only when this action meaningfully shifts trust/hostility/loyalty
+          {
+            "sourceNpcId": "npc-id",          // NPC whose relationship changes (MUST be a scene NPC)
+            "targetId": "target-character-id", // Who they feel differently about
+            "targetName": "Exact target name",
+            "relationshipType": "ally",        // Updated relationship label
+            "attitude": -20,                   // New attitude delta (-100 to 100)
+            "description": "Why the attitude changed"
+          }
+        ],
+
+        "heartbeatActions": [ // Optional: Use [] when no new concrete appointment is made.
+          {
+            "scheduledGameTime": "Day 2, 18:20",
+            "npcId": "npc-guard-01",
+            "npcName": "Officer Hale",
+            "task": "Meet at the back alley for key exchange",
+            "location": "Riverside Back Alley"
+          }
+        ]
 ${
-  hasValidSceneChangeRequest && !isNPC
+  sceneNPCs && sceneNPCs.length > 0
     ? `
-  "sceneChange": {
-    "shouldChange": false,     // true if action succeeds in enabling scene change to "${existingSceneChangeRequest.targetSceneName}"
-    "targetSceneName": "${existingSceneChangeRequest.targetSceneName}",   // Use the target from orchestrator
-    "reason": "Reason for scene change success or failure. If blocked, explain why (e.g., 'Door is locked', 'Failed to unlock the door')"
-  },
+        ,
+        "npcResponses": [  // Optional: Array of NPC responses
+          {
+            "npcName": "NPC name",
+            "npcId": "npc-id",
+            "willRespond": true,
+            "responseType": "social",
+            "executionOrder": 1,
+            "diceUsed": [  // Optional: Dice rolls if NPC action requires skill checks
+            ],
+            "actionLog": [  // Required: At least one actionLog entry
+              {
+                "time": "Day 1, 14:30",
+                "location": "Current Location",
+                "summary": "NPC's action summary",
+                "successLevel": "regular",
+                "characterId": "npc-id"
+              }
+            ],
+            "stateUpdate": {  // Optional: NPC state/appearance changes
+              "status": {"hp": 0, "sanity": -1, "conditions": ["Shaken"]},
+              "inventory": {"add": [{"name": "item"}]},
+              "appearance": "Updated appearance description based on the result of the action (optional)"
+            }
+          }
+        ]
 `
     : ""
 }
-  "timeElapsedMinutes": <estimate the time elapsed in minutes>,
-  "timeConsumption": "short", // "instant" | "short" | "medium" | "long" | "very long"
-  "entersCombat": false,            // true if sustained combat starts this turn
-  "combatParticipantIds": [],       // NPC IDs actively fighting the player (only when entersCombat: true)
-  "combatInitiatedBy": "player",   // "player" or "npc" (only when entersCombat: true)
-  // When entersCombat=true AND combatInitiatedBy="npc", provide the NPC opening attack intents
-  "openingPendingNpcActions": [
-    {
-      "npcId": "npc-id",
-      "npcName": "NPC Name",
-      "actionNarrative": "NPC opening attack intent"
-    }
-  ],
-
-  "relationshipChanges": [  // Optional: only when this action meaningfully shifts trust/hostility/loyalty
-    {
-      "sourceNpcId": "npc-id",          // NPC whose relationship changes (MUST be a scene NPC)
-      "targetId": "target-character-id", // Who they feel differently about
-      "targetName": "Exact target name",
-      "relationshipType": "ally",        // Updated relationship label
-      "attitude": -20,                   // New attitude delta (-100 to 100)
-      "description": "Why the attitude changed"
-    }
-  ],
-
-  "heartbeatActions": [ // Optional: player action only. Use [] when no new concrete appointment is made.
-    {
-      "scheduledGameTime": "Day 2, 18:20",
-      "npcId": "npc-guard-01",
-      "npcName": "Officer Hale",
-      "task": "Meet at the back alley for key exchange",
-      "location": "Riverside Back Alley"
-    }
-  ]
-${
-  !isNPC && sceneNPCs && sceneNPCs.length > 0
-    ? `
-  ,
-  "npcResponses": [  // Optional: Array of NPC responses (only for player actions)
-    {
-      "npcName": "NPC name",
-      "npcId": "npc-id",
-      "willRespond": true,
-      "responseType": "social",
-      "executionOrder": 1,
-      "diceUsed": [  // Optional: Dice rolls if NPC action requires skill checks
-      ],
-      "actionLog": [  // Required: At least one actionLog entry
-        {
-          "time": "Day 1, 14:30",
-          "location": "Current Location",
-          "summary": "NPC's action summary",
-          "successLevel": "regular",
-          "characterId": "npc-id"
-        }
-      ],
-      "stateUpdate": {  // Optional: NPC state/appearance changes
-        "status": {"hp": 0, "sanity": -1, "conditions": ["Shaken"]},
-        "inventory": {"add": [{"name": "item"}]},
-        "appearance": "Updated appearance description based on the result of the action (optional)"
       }
     }
+    // ... one entry per acting player in roundInputs
   ]
-`
-    : ""
-}
 }
 \`\`\`
 `;
