@@ -130,18 +130,37 @@ export class KeeperAgent {
       const aggregatedActionLog: ActionLogEntry[] = playerIds
         .flatMap((id) => ((s.players[id]?.profile as any)?.actionLog ?? []) as ActionLogEntry[]);
       const firstPlayer = s.players[playerIds[0]];
+
+      // Merge slow-group results into the view so keeper sees ALL actions
+      const baseTemporaryInfo = scr?.temporaryInfo ?? {
+        rules: [],
+        contextualData: {},
+        actionResults: [],
+        actionResultsDetailed: [],
+        currentActionAnalysis: null,
+        npcResponseAnalyses: [],
+        sceneChangeRequest: null,
+        previousScenario: null,
+        slowGroupActionResults: [],
+        slowGroupActionResultsDetailed: [],
+      };
+
+      const mergedActionResults = [
+        ...(baseTemporaryInfo.actionResults ?? []),
+        ...(baseTemporaryInfo.slowGroupActionResults ?? []),
+      ];
+      const mergedActionResultsDetailed = [
+        ...(baseTemporaryInfo.actionResultsDetailed ?? []),
+        ...(baseTemporaryInfo.slowGroupActionResultsDetailed ?? []),
+      ];
+
       return {
         ...s,
         currentScenario: scr?.currentScenario ?? null,
-        temporaryInfo: scr?.temporaryInfo ?? {
-          rules: [],
-          contextualData: {},
-          actionResults: [],
-          actionResultsDetailed: [],
-          currentActionAnalysis: null,
-          npcResponseAnalyses: [],
-          sceneChangeRequest: null,
-          previousScenario: null,
+        temporaryInfo: {
+          ...baseTemporaryInfo,
+          actionResults: mergedActionResults,
+          actionResultsDetailed: mergedActionResultsDetailed,
         },
         turnsInCurrentScene: scr?.turnsInCurrentScene ?? 0,
         playerCharacter: {
@@ -441,6 +460,22 @@ export class KeeperAgent {
         ? this.safeStringify(previousScenarioInfo)
         : "null",
       selectedSkill: selectedSkill || null,
+      // Time-grouping context for multiplayer
+      ...((): Record<string, unknown> => {
+        const tgInfo = dynamicState.temporaryInfo.contextualData?.timeGroupingInfo as {
+          hasTimeGrouping?: boolean;
+          fastGroupPlayerNames?: string;
+          slowGroupPlayerNames?: string;
+          fastGroupMinutes?: number;
+        } | undefined;
+        if (!tgInfo?.hasTimeGrouping) return {};
+        return {
+          hasTimeGrouping: true,
+          fastGroupPlayerNames: tgInfo.fastGroupPlayerNames ?? "",
+          slowGroupPlayerNames: tgInfo.slowGroupPlayerNames ?? "",
+          fastGroupMinutes: tgInfo.fastGroupMinutes ?? 0,
+        };
+      })(),
     };
 
     // Use template and LLM to generate narrative and clue revelations

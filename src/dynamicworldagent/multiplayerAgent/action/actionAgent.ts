@@ -20,6 +20,7 @@ import type {
 import type { DynamicGameState } from "../../state/index.js";
 import { DynamicGameStateManager } from "../../state/index.js";
 import type {
+  FrozenPlayerInput,
   MultiplayerDynamicGameStateManager,
   MultiplayerTurnInput,
 } from "../../multiplayerState/MultiplayerDynamicGameState.js";
@@ -51,6 +52,62 @@ export class ActionAgent {
    * - Uses per-player orchestrator analyses (stored in sceneRoom contextualData)
    * - Does NOT advance global game time per player; instead advances once per round (max minutes)
    */
+  private extractTimeFromModelOutput(rawOutput: any): number {
+    if (!rawOutput || typeof rawOutput !== "object") return 0;
+    const t = rawOutput.timeElapsedMinutes;
+    return typeof t === "number" && t > 0 ? t : 0;
+  }
+
+  /**
+   * Build a narrative-only ActionResult + detailed record WITHOUT applying state updates.
+   * Used for slow-group players whose actions are shown in the narrative but not mechanically applied.
+   */
+  private buildNarrativeOnlyResult(
+    manager: MultiplayerDynamicGameStateManager,
+    sceneRoomId: string,
+    playerId: string,
+    rawOutput: any,
+    diceUsed: string[]
+  ): { actionResult: ActionResult; detailedResult: Record<string, unknown> } {
+    const state = manager.getState();
+    const room = manager.getSceneRoom(sceneRoomId);
+    const p = state.players[playerId];
+    const character = p?.profile as any;
+
+    const parsed = { ...(rawOutput as any) };
+    this.sanitizeSuccessLevels(parsed);
+
+    const actionResult: ActionResult = {
+      timestamp: new Date(),
+      gameTime: state.timeOfDay || "Unknown time",
+      timeElapsedMinutes:
+        typeof parsed.timeElapsedMinutes === "number"
+          ? parsed.timeElapsedMinutes
+          : 0,
+      location: room?.currentScenario?.location || "Unknown location",
+      character: character?.name ?? p?.characterName ?? playerId,
+      result:
+        parsed.summary ||
+        (Array.isArray(parsed.actionLog) &&
+        typeof parsed.actionLog[0]?.summary === "string"
+          ? parsed.actionLog[0].summary
+          : undefined) ||
+        "performing an extended action",
+      diceRolls: diceUsed,
+      timeConsumption: parsed.timeConsumption || "long",
+      isFrozenPreview: true,
+    };
+
+    const detailedResult = this.buildDetailedActionResult(
+      character ?? { name: p?.characterName ?? playerId },
+      parsed,
+      diceUsed
+    );
+    (detailedResult as any).isFrozenPreview = true;
+
+    return { actionResult, detailedResult };
+  }
+
   async processSceneRoomRound(
     manager: MultiplayerDynamicGameStateManager,
     sceneRoomId: string,
@@ -70,6 +127,7 @@ export class ActionAgent {
         any
       >) ?? {};
 
+    // 1. Filter real inputs from this round
     const roundInputsInjected = roundInputs
       .filter((ri) => ri.inputType === "input" && Boolean(ri.content?.trim()))
       .map((ri) => ({
@@ -78,13 +136,31 @@ export class ActionAgent {
         inputType: "input" as const,
         content: ri.content?.trim() ?? "",
         selectedSkill: ri.selectedSkill ?? null,
-        skillSelectionMode: ri.skillSelectionMode ?? "manual",
+        skillSelectionMode: ri.skillSelectionMode ?? ("manual" as "manual" | "auto"),
       }));
+
+    // 2. Inject frozen inputs for players who did not submit new input this round
+    const submittedPlayerIds = new Set(roundInputsInjected.map((ri) => ri.playerId));
+    const frozenInputs = sceneRoom.frozenPlayerInputs ?? [];
+    for (const frozen of frozenInputs) {
+      if (submittedPlayerIds.has(frozen.playerId)) {
+        // Player submitted new input — their frozen entry will be removed later
+        continue;
+      }
+      // Auto-inject the frozen input
+      roundInputsInjected.push({
+        playerId: frozen.playerId,
+        characterId: frozen.characterId,
+        inputType: "input" as const,
+        content: frozen.content,
+        selectedSkill: frozen.selectedSkill,
+        skillSelectionMode: frozen.skillSelectionMode,
+      });
+    }
 
     const inputPlayerIds = new Set(roundInputsInjected.map((ri) => ri.playerId));
 
-    // Inject sceneRoom-scoped player context for templates (ALL players in this sceneRoom;
-    // omitted players are marked so the model must not invent actions for them).
+    // Build scenePlayers context for templates
     const scenePlayers = sceneRoom.memberPlayerIds
       .map((playerId) => {
         const p = state.players[playerId];
@@ -118,98 +194,25 @@ export class ActionAgent {
       fatigueMinutesByPlayer: {} as Record<string, number>,
     };
 
-    // One-call round resolution: inject all acting players into ONE prompt, require per-player outputs.
-    // If the batch call fails or returns invalid JSON, fallback to per-player calls for robustness.
+    // 3. Resolve all actions with LLM (single call)
+    let parsedResult: {
+      outputsByPlayerId: Record<string, any>;
+      timeGroups: Array<{ groupId: number; estimatedMinutes: number; playerIds: string[] }>;
+    };
     try {
-      const outputsByPlayerId = await this.resolveSceneRoomRoundWithSingleCall(
+      parsedResult = await this.resolveSceneRoomRoundWithSingleCall(
         manager,
         sceneRoomId,
         roundInputsInjected,
         playerAnalyses,
         language
       );
-
-      for (const input of roundInputsInjected) {
-        const pa = playerAnalyses[input.playerId];
-        if (!pa?.actionAnalysis) continue;
-
-        // Per-player: wire orchestrator analysis + scene change request into the sceneRoom temporaryInfo
-        manager.setCurrentActionAnalysis(sceneRoomId, pa.actionAnalysis ?? null);
-        manager.setSceneChangeRequest(sceneRoomId, pa.sceneChangeRequest ?? null);
-
-        const adapter = this.buildSceneRoomPlayerAdapter(
-          manager,
-          sceneRoomId,
-          input.playerId,
-          staged
-        );
-
-        try {
-          const rawOutput = outputsByPlayerId[input.playerId];
-          if (!rawOutput || typeof rawOutput !== "object") {
-            const room = manager.getSceneRoom(sceneRoomId);
-            const p = state.players[input.playerId];
-            if (room && p) {
-              manager.addActionResult(sceneRoomId, {
-                timestamp: new Date(),
-                gameTime: manager.getState().timeOfDay,
-                timeElapsedMinutes: 0,
-                location: room.currentScenario?.location ?? "Unknown",
-                character: p.characterName,
-                result: `[错误] Missing action output for player ${input.playerId}`,
-                diceRolls: [],
-                timeConsumption: "instant",
-              });
-            }
-            continue;
-          }
-
-          await this.applyPlayerRoundModelOutput(
-            adapter,
-            rawOutput,
-            input.content ?? "",
-            roundTurnId ?? null
-          );
-        } catch (e) {
-          console.error(
-            `[MP ActionAgent] Error applying model output for player ${input.playerId}:`,
-            e
-          );
-          const room = manager.getSceneRoom(sceneRoomId);
-          const p = state.players[input.playerId];
-          if (room && p) {
-            manager.addActionResult(sceneRoomId, {
-              timestamp: new Date(),
-              gameTime: manager.getState().timeOfDay,
-              timeElapsedMinutes: 0,
-              location: room.currentScenario?.location ?? "Unknown",
-              character: p.characterName,
-              result: `[错误] ${e instanceof Error ? e.message : String(e)}`,
-              diceRolls: [],
-              timeConsumption: "instant",
-            });
-          }
-        } finally {
-          // Persist any scene-change modification back into per-player analysis (splitter reads this)
-          const room = manager.getSceneRoom(sceneRoomId);
-          const updatedReq = room?.temporaryInfo.sceneChangeRequest ?? null;
-          const stored = (room?.temporaryInfo.contextualData?.playerActionAnalyses as any)?.[
-            input.playerId
-          ];
-          if (stored && typeof stored === "object") {
-            stored.sceneChangeRequest = updatedReq;
-          }
-
-          // Clear per-player temporary wiring (avoid cross-player contamination)
-          manager.setSceneChangeRequest(sceneRoomId, null);
-          manager.setCurrentActionAnalysis(sceneRoomId, null);
-        }
-      }
     } catch (e) {
       console.warn(
         `[MP ActionAgent] Batch round resolution failed; falling back to per-player calls:`,
         e
       );
+      // Fallback: no time grouping, behave like before
       await this.processSceneRoomRoundPerPlayer(
         manager,
         sceneRoomId,
@@ -219,19 +222,200 @@ export class ActionAgent {
         staged,
         roundTurnId ?? null
       );
+
+      const elapsedMinutes = Object.values(staged.elapsedMinutesByPlayer);
+      const roundElapsed = elapsedMinutes.length > 0 ? Math.max(...elapsedMinutes) : 0;
+      if (roundElapsed > 0) {
+        manager.advanceGameTime(roundElapsed);
+      }
+      for (const [playerId, minutes] of Object.entries(staged.fatigueMinutesByPlayer)) {
+        manager.addFatigueMinutes(playerId, minutes);
+      }
+      return;
     }
 
-    // Advance global time once for this sceneRoom round (concurrent actions).
-    const elapsedMinutes = Object.values(staged.elapsedMinutesByPlayer);
-    const roundElapsed = elapsedMinutes.length > 0 ? Math.max(...elapsedMinutes) : 0;
+    const { outputsByPlayerId, timeGroups } = parsedResult;
+
+    // Group 1 = fastest (full resolution). Groups 2+ = slow (narrative only).
+    const fastGroup = timeGroups.find((g) => g.groupId === 1) ?? timeGroups[0];
+    const slowGroups = timeGroups.filter((g) => g.groupId !== (fastGroup?.groupId ?? 1));
+    const fastPlayerIds = new Set(fastGroup?.playerIds ?? []);
+    const slowPlayerIds = new Set(slowGroups.flatMap((g) => g.playerIds));
+
+    console.log(
+      `⏱️  [MP ActionAgent] Time groups from LLM: group1=[${[...fastPlayerIds].join(",")}] (${fastGroup?.estimatedMinutes ?? 0}min)` +
+      (slowGroups.length > 0
+        ? `, slow=[${slowGroups.map((g) => `g${g.groupId}:${g.playerIds.join(",")}`).join("; ")}]`
+        : "")
+    );
+
+    // Store time group result for keeper context
+    manager.setContextualData(sceneRoomId, "timeGroupResult", { timeGroups });
+
+    // 4. FAST GROUP (group 1): apply full results with state mutations
+    for (const input of roundInputsInjected) {
+      if (!fastPlayerIds.has(input.playerId)) continue;
+
+      const pa = playerAnalyses[input.playerId];
+      if (!pa?.actionAnalysis) continue;
+
+      manager.setCurrentActionAnalysis(sceneRoomId, pa.actionAnalysis ?? null);
+      manager.setSceneChangeRequest(sceneRoomId, pa.sceneChangeRequest ?? null);
+
+      const adapter = this.buildSceneRoomPlayerAdapter(
+        manager,
+        sceneRoomId,
+        input.playerId,
+        staged
+      );
+
+      try {
+        const rawOutput = outputsByPlayerId[input.playerId];
+        if (!rawOutput || typeof rawOutput !== "object") {
+          const room = manager.getSceneRoom(sceneRoomId);
+          const p = state.players[input.playerId];
+          if (room && p) {
+            manager.addActionResult(sceneRoomId, {
+              timestamp: new Date(),
+              gameTime: manager.getState().timeOfDay,
+              timeElapsedMinutes: 0,
+              location: room.currentScenario?.location ?? "Unknown",
+              character: p.characterName,
+              result: `[错误] Missing action output for player ${input.playerId}`,
+              diceRolls: [],
+              timeConsumption: "instant",
+            });
+          }
+          continue;
+        }
+
+        await this.applyPlayerRoundModelOutput(
+          adapter,
+          rawOutput,
+          input.content ?? "",
+          roundTurnId ?? null
+        );
+      } catch (e) {
+        console.error(
+          `[MP ActionAgent] Error applying model output for player ${input.playerId}:`,
+          e
+        );
+        const room = manager.getSceneRoom(sceneRoomId);
+        const p = state.players[input.playerId];
+        if (room && p) {
+          manager.addActionResult(sceneRoomId, {
+            timestamp: new Date(),
+            gameTime: manager.getState().timeOfDay,
+            timeElapsedMinutes: 0,
+            location: room.currentScenario?.location ?? "Unknown",
+            character: p.characterName,
+            result: `[错误] ${e instanceof Error ? e.message : String(e)}`,
+            diceRolls: [],
+            timeConsumption: "instant",
+          });
+        }
+      } finally {
+        const room = manager.getSceneRoom(sceneRoomId);
+        const updatedReq = room?.temporaryInfo.sceneChangeRequest ?? null;
+        const stored = (room?.temporaryInfo.contextualData?.playerActionAnalyses as any)?.[
+          input.playerId
+        ];
+        if (stored && typeof stored === "object") {
+          stored.sceneChangeRequest = updatedReq;
+        }
+
+        manager.setSceneChangeRequest(sceneRoomId, null);
+        manager.setCurrentActionAnalysis(sceneRoomId, null);
+      }
+    }
+
+    // 5. SLOW GROUPS (2+): build narrative-only results (no state mutation)
+    const slowActionResults: ActionResult[] = [];
+    const slowActionResultsDetailed: Array<Record<string, unknown>> = [];
+    for (const playerId of slowPlayerIds) {
+      const rawOutput = outputsByPlayerId[playerId];
+      if (!rawOutput || typeof rawOutput !== "object") continue;
+
+      const diceUsed = Array.isArray(rawOutput.diceUsed)
+        ? rawOutput.diceUsed.filter((d: unknown): d is string => typeof d === "string")
+        : [];
+
+      const { actionResult, detailedResult } = this.buildNarrativeOnlyResult(
+        manager,
+        sceneRoomId,
+        playerId,
+        rawOutput,
+        diceUsed
+      );
+      slowActionResults.push(actionResult);
+      slowActionResultsDetailed.push(detailedResult);
+    }
+
+    // Store slow group results in temporaryInfo for keeper narrative
+    if (slowActionResults.length > 0) {
+      const room = manager.getSceneRoom(sceneRoomId);
+      if (room) {
+        manager.updateSceneRoom(sceneRoomId, {
+          temporaryInfo: {
+            ...room.temporaryInfo,
+            slowGroupActionResults: slowActionResults,
+            slowGroupActionResultsDetailed: slowActionResultsDetailed,
+          },
+        });
+      }
+    }
+
+    // 6. Compute time advance from fast group
+    const roundElapsed = fastGroup?.estimatedMinutes ?? 0;
+
+    // 7. Update frozenPlayerInputs: remove fast group entries, add/increment slow group entries
+    const newFrozenInputs: FrozenPlayerInput[] = [];
+    for (const playerId of slowPlayerIds) {
+      const input = roundInputsInjected.find((ri) => ri.playerId === playerId);
+      if (!input) continue;
+
+      const existingFrozen = frozenInputs.find((f) => f.playerId === playerId);
+      newFrozenInputs.push({
+        playerId,
+        characterId: input.characterId,
+        content: input.content,
+        selectedSkill: input.selectedSkill,
+        skillSelectionMode: input.skillSelectionMode,
+        originalRoundNumber: existingFrozen?.originalRoundNumber ?? sceneRoom.roundNumber,
+        frozenRoundCount: (existingFrozen?.frozenRoundCount ?? 0) + 1,
+        lastEstimatedMinutes: this.extractTimeFromModelOutput(outputsByPlayerId[playerId]),
+        actionStartGameTime: existingFrozen?.actionStartGameTime ?? manager.getFullGameTime(),
+        accumulatedElapsedMinutes: (existingFrozen?.accumulatedElapsedMinutes ?? 0) + roundElapsed,
+      });
+    }
+    manager.updateSceneRoom(sceneRoomId, { frozenPlayerInputs: newFrozenInputs });
+
+    // 8. Advance game time
     if (roundElapsed > 0) {
       manager.advanceGameTime(roundElapsed);
     }
 
-    // Apply per-player fatigue minutes (per player action duration).
-    for (const [playerId, minutes] of Object.entries(staged.fatigueMinutesByPlayer)) {
-      manager.addFatigueMinutes(playerId, minutes);
+    // 8. Apply per-player fatigue for fast group only
+    for (const playerId of fastPlayerIds) {
+      const minutes = staged.fatigueMinutesByPlayer[playerId];
+      if (minutes && minutes > 0) {
+        manager.addFatigueMinutes(playerId, minutes);
+      }
     }
+
+    // 9. Store time-grouping info for keeper template context
+    const fastGroupPlayerNames = [...fastPlayerIds]
+      .map((id) => state.players[id]?.characterName ?? id)
+      .join(", ");
+    const slowGroupPlayerNames = [...slowPlayerIds]
+      .map((id) => state.players[id]?.characterName ?? id)
+      .join(", ");
+    manager.setContextualData(sceneRoomId, "timeGroupingInfo", {
+      hasTimeGrouping: slowPlayerIds.size > 0,
+      fastGroupPlayerNames,
+      slowGroupPlayerNames,
+      fastGroupMinutes: fastGroup?.estimatedMinutes ?? 0,
+    });
   }
 
   private async processSceneRoomRoundPerPlayer(
@@ -368,7 +552,10 @@ export class ActionAgent {
     }>,
     playerAnalyses: Record<string, any>,
     language: "en" | "zh"
-  ): Promise<Record<string, any>> {
+  ): Promise<{
+    outputsByPlayerId: Record<string, any>;
+    timeGroups: Array<{ groupId: number; estimatedMinutes: number; playerIds: string[] }>;
+  }> {
     const state = manager.getState();
     const room = manager.getSceneRoom(sceneRoomId);
     if (!room) throw new Error(`SceneRoom ${sceneRoomId} not found`);
@@ -399,6 +586,11 @@ export class ActionAgent {
     const playerCount = roundInputsInjected.length;
     const preRolledDice = this.preRollDice(playerCount);
 
+    // Build a lookup for frozen inputs to annotate round requests
+    const frozenInputLookup = new Map(
+      (room.frozenPlayerInputs ?? []).map((f) => [f.playerId, f])
+    );
+
     const roundRequests = roundInputsInjected.map((input) => {
       const p = state.players[input.playerId];
       const analysis = playerAnalyses[input.playerId]?.actionAnalysis ?? null;
@@ -415,6 +607,8 @@ export class ActionAgent {
         ? this.findTargetCharacter(playerView, analysis)
         : null;
 
+      const frozenInfo = frozenInputLookup.get(input.playerId);
+
       return {
         playerId: input.playerId,
         characterId: input.characterId,
@@ -425,6 +619,12 @@ export class ActionAgent {
         userInput: input.content ?? "",
         orchestratorActionAnalysis: analysis,
         sceneChangeRequest,
+        // Frozen re-injection metadata
+        frozenReinjection: Boolean(frozenInfo),
+        frozenRoundCount: frozenInfo?.frozenRoundCount ?? 0,
+        lastEstimatedMinutes: frozenInfo?.lastEstimatedMinutes ?? 0,
+        actionStartGameTime: frozenInfo?.actionStartGameTime ?? null,
+        accumulatedElapsedMinutes: frozenInfo?.accumulatedElapsedMinutes ?? 0,
         // dicePoolKey removed — shared dice pool used
         characterProfile: p?.profile
           ? this.filterCharacterForContext(p.profile)
@@ -513,13 +713,20 @@ export class ActionAgent {
     });
 
     const parsed = this.parseRoundOutputsFromModel(response);
-    if (Object.keys(parsed).length === 0) {
+    if (Object.keys(parsed.outputsByPlayerId).length === 0) {
       throw new Error("[MP ActionAgent] Empty/invalid batch model output");
     }
     return parsed;
   }
 
-  private parseRoundOutputsFromModel(response: string): Record<string, any> {
+  private parseRoundOutputsFromModel(response: string): {
+    outputsByPlayerId: Record<string, any>;
+    timeGroups: Array<{
+      groupId: number;
+      estimatedMinutes: number;
+      playerIds: string[];
+    }>;
+  } {
     let jsonText = response.trim();
 
     const codeBlockMatch = jsonText.match(/```(?:json)?\s*([\s\S]*?)```/i);
@@ -535,29 +742,81 @@ export class ActionAgent {
       parsed = JSON.parse(jsonText);
     } catch (e) {
       console.warn("[MP ActionAgent] Failed to parse batch JSON:", e);
-      return {};
+      return { outputsByPlayerId: {}, timeGroups: [] };
     }
 
-    const players = Array.isArray(parsed?.players) ? parsed.players : [];
     // Top-level diceUsed contains ALL dice rolls (players + NPCs) for the entire round
     const globalDiceUsed: string[] = Array.isArray(parsed?.diceUsed)
       ? parsed.diceUsed.filter((d: unknown): d is string => typeof d === "string")
       : [];
 
-    const out: Record<string, any> = {};
-    for (const entry of players) {
-      if (!entry || typeof entry !== "object") continue;
-      const playerId = (entry as any).playerId;
-      const output = (entry as any).output;
-      if (typeof playerId === "string" && playerId.trim() && output && typeof output === "object") {
-        // Inject global diceUsed into each player's output so downstream consumers can access it
-        if (!Array.isArray(output.diceUsed) || output.diceUsed.length === 0) {
-          output.diceUsed = globalDiceUsed;
+    const outputsByPlayerId: Record<string, any> = {};
+    const timeGroups: Array<{
+      groupId: number;
+      estimatedMinutes: number;
+      playerIds: string[];
+    }> = [];
+
+    // New format: timeGroups array
+    const rawTimeGroups = Array.isArray(parsed?.timeGroups) ? parsed.timeGroups : null;
+
+    if (rawTimeGroups && rawTimeGroups.length > 0) {
+      for (const group of rawTimeGroups) {
+        if (!group || typeof group !== "object") continue;
+        const groupId = typeof group.groupId === "number" ? group.groupId : timeGroups.length + 1;
+        const estimatedMinutes = typeof group.estimatedMinutes === "number" ? group.estimatedMinutes : 0;
+        const groupPlayerIds: string[] = [];
+
+        const players = Array.isArray(group.players) ? group.players : [];
+        for (const entry of players) {
+          if (!entry || typeof entry !== "object") continue;
+          const playerId = (entry as any).playerId;
+          const output = (entry as any).output;
+          if (typeof playerId === "string" && playerId.trim() && output && typeof output === "object") {
+            if (!Array.isArray(output.diceUsed) || output.diceUsed.length === 0) {
+              output.diceUsed = globalDiceUsed;
+            }
+            outputsByPlayerId[playerId.trim()] = output;
+            groupPlayerIds.push(playerId.trim());
+          }
         }
-        out[playerId.trim()] = output;
+
+        if (groupPlayerIds.length > 0) {
+          timeGroups.push({ groupId, estimatedMinutes, playerIds: groupPlayerIds });
+        }
+      }
+      // Ensure sorted by groupId ascending (1 = fastest)
+      timeGroups.sort((a, b) => a.groupId - b.groupId);
+    } else {
+      // Fallback: old flat "players" array format — treat all as group 1
+      const players = Array.isArray(parsed?.players) ? parsed.players : [];
+      const allIds: string[] = [];
+      for (const entry of players) {
+        if (!entry || typeof entry !== "object") continue;
+        const playerId = (entry as any).playerId;
+        const output = (entry as any).output;
+        if (typeof playerId === "string" && playerId.trim() && output && typeof output === "object") {
+          if (!Array.isArray(output.diceUsed) || output.diceUsed.length === 0) {
+            output.diceUsed = globalDiceUsed;
+          }
+          outputsByPlayerId[playerId.trim()] = output;
+          allIds.push(playerId.trim());
+        }
+      }
+      if (allIds.length > 0) {
+        const totalMinutes = allIds.reduce((sum, id) => {
+          const t = outputsByPlayerId[id]?.timeElapsedMinutes;
+          return sum + (typeof t === "number" ? t : 0);
+        }, 0);
+        timeGroups.push({
+          groupId: 1,
+          estimatedMinutes: allIds.length > 0 ? Math.round(totalMinutes / allIds.length) : 0,
+          playerIds: allIds,
+        });
       }
     }
-    return out;
+
+    return { outputsByPlayerId, timeGroups };
   }
 
   private async applyPlayerRoundModelOutput(
@@ -2438,7 +2697,6 @@ export class ActionAgent {
         : {};
     const detailedResult: Record<string, unknown> = {
       character: character.name,
-      isNPC: false,
       ...parsedObject,
     };
 
@@ -2536,7 +2794,6 @@ export class ActionAgent {
     // Record detailed error output for downstream prompts (keeper)
     const errorDetail: Record<string, unknown> = {
       character: character.name,
-      isNPC: false,
       timeElapsedMinutes: 0,
       timeConsumption: "instant",
       error: errorMessage,

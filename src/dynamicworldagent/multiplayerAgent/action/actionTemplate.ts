@@ -207,6 +207,23 @@ Estimate how many minutes this action realistically takes in game time. Consider
 
 Be realistic and use your judgment. Include "timeElapsedMinutes" in your response.
 
+FROZEN (RE-INJECTED) INPUTS:
+- Some roundRequests may have "frozenReinjection: true" — these are actions from a previous round
+  that were too slow to resolve alongside faster actions.
+- They include: actionStartGameTime (when they started), accumulatedElapsedMinutes (game time already passed),
+  lastEstimatedMinutes (previous total estimate), and frozenRoundCount (how many rounds frozen so far).
+- Re-evaluate them with CURRENT scene context (which may have changed).
+- Estimate the REMAINING timeElapsedMinutes (not the total — subtract accumulatedElapsedMinutes from total estimate).
+- If enough time has accumulated, the action may now complete quickly (small remaining time → joins group 1).
+
+TIME GROUPING RULES:
+- Actions within ~30 minutes of each other belong in the SAME group.
+- A long-time action CAN be interrupted by other players' or NPCs' actions in the same round.
+  If a group-1 action directly affects a slow player (e.g. someone talks to them, attacks them,
+  an NPC confronts them, an explosion happens nearby), the slow player's action is INTERRUPTED.
+  Interrupted actions go into group 1 with a short timeElapsedMinutes reflecting the interruption.
+  Only interrupt when there is a clear causal reason — do not interrupt arbitrarily.
+
 HEARTBEAT APPOINTMENT DETECTION:
 - If the investigator and an NPC explicitly make a concrete future plan/appointment, output it in "heartbeatActions".
 - The appointment should include: scheduledGameTime, npcId, npcName, task, location.
@@ -314,9 +331,13 @@ ${JSON.stringify(sceneNPCs, null, 2)}
 
 ## 📋 Output Format
 
-MULTIPLAYER OUTPUT: Return one output object per acting player, wrapped in a "players" array.
-Each entry MUST include the player's "playerId" (from roundInputs) and an "output" object.
-All players and NPCs share a single preRolledDice pool.
+MULTIPLAYER TIME-GROUPED OUTPUT:
+- Group all acting players by their action's time duration.
+- Players whose timeElapsedMinutes are close together (within ~30 min of the fastest) go into the same group.
+- The FIRST group (Group A) is the fastest. It gets FULL resolution: stateUpdate, npcResponses, scenarioUpdate, combat, etc.
+- Later groups (B, C, ...) are SLOWER actions still in progress. They get ONLY: actionLog, timeElapsedMinutes, timeConsumption. No stateUpdate, no npcResponses, no scenarioUpdate, no combat.
+- If ALL players have similar times, put them all in Group A (single group).
+- All players and NPCs share a single preRolledDice pool.
 
 Return ONLY valid JSON in this exact structure:
 
@@ -333,127 +354,131 @@ Return ONLY valid JSON in this exact structure:
     "Dr. Smith: 1d100[0]: 45, 1d100[1]: 82(penalty),(Spot Hidden 60% use highest 82 = failure)"
   ],
 
-  "players": [
+  "timeGroups": [
     {
-      "playerId": "player-id-from-roundInputs",
-      "output": {
-        "actionLog": [
-          {
-            "time": "Day 1, 14:30",
-            "location": "New York Public Library",
-            "summary": "Searched the bookshelf and found a hidden journal",
-            "successLevel": "regular",
-            "characterId": "character-id-or-npc-id"
-          }
-        ],
+      "groupId": 1,                // 1 = fastest group, 2 = next, 3 = slowest...
+      "estimatedMinutes": 10,    // Average timeElapsedMinutes for this group
+      "players": [
+        {
+          "playerId": "player-id-from-roundInputs",
+          "output": {
+            // === FULL OUTPUT for Group A (fastest group) ===
+            "actionLog": [
+              {
+                "time": "Day 1, 14:30",
+                "location": "New York Public Library",
+                "summary": "Searched the bookshelf and found a hidden journal",
+                "successLevel": "regular",
+                "characterId": "character-id-or-npc-id"
+              }
+            ],
 
-        "stateUpdate": {
-          // Optional: Update character state/appearance (HP, sanity, inventory, etc based on the result of the action)
-          "playerCharacter": {
-            "name": "Character Name",  // MUST match the acting character's name
-            "status": {
-              "hp": -3,              // HP change (negative for damage, positive for healing)
-              "sanity": 0,           // Sanity change
-              "magic": 0,            // Magic points change
-              "luck": 0,             // Luck change
-              "conditions": ["Injured", "Dazed"] // Optional: full conditions list for this character after this action
+            "stateUpdate": {
+              "playerCharacter": {
+                "name": "Character Name",
+                "status": {
+                  "hp": -3,
+                  "sanity": 0,
+                  "magic": 0,
+                  "luck": 0,
+                  "conditions": ["Injured", "Dazed"]
+                },
+                "inventory": {
+                  "add": [{"name": "item name", "quantity": 1}],
+                  "remove": [{"name": "item name", "quantity": 1}]
+                }
+              },
+              "npcCharacters": [
+                {
+                  "id": "npc-id",
+                  "name": "NPC Name",
+                  "status": {"hp": -4, "sanity": 0, "conditions": ["Bleeding"]},
+                  "appearance": "Updated appearance description"
+                }
+              ]
             },
-            "inventory": {           // Optional: only if inventory changes
-              "add": [{"name": "item name", "quantity": 1}],
-              "remove": [{"name": "item name", "quantity": 1}]
-            }
-          },
-          "npcCharacters": [         // Optional: only if NPC state/appearance changes
-            {
-              "id": "npc-id",        // MUST use exact NPC id
-              "name": "NPC Name",
-              "status": {"hp": -4, "sanity": 0, "conditions": ["Bleeding"]},
-              "appearance": "Updated appearance description based on the result of the action (optional)"
-            }
-          ]
-        },
 
-        "scenarioUpdate": {          // Optional: only if environment permanently changes
-          "description": "Updated scene description",
-          "conditions": [{"type": "lighting", "description": "...", "mechanicalEffect": "..."}]
-        },
+            "scenarioUpdate": {
+              "description": "Updated scene description",
+              "conditions": [{"type": "lighting", "description": "...", "mechanicalEffect": "..."}]
+            },
 
-        // "sceneChange": Include ONLY if this player has a sceneChangeRequest in their roundRequest
-        // {
-        //   "shouldChange": false,     // true if action succeeds in enabling scene change
-        //   "targetSceneName": "target scene name from sceneChangeRequest",
-        //   "reason": "Reason for scene change success or failure"
-        // },
+            // "sceneChange": Include ONLY if this player has a sceneChangeRequest in their roundRequest
+            // {
+            //   "shouldChange": false,
+            //   "targetSceneName": "target scene name",
+            //   "reason": "Reason for scene change success or failure"
+            // },
 
-        "timeElapsedMinutes": 10,
-        "timeConsumption": "short", // "instant" | "short" | "medium" | "long" | "very long"
-        "entersCombat": false,            // true if sustained combat starts this turn
-        "combatParticipantIds": [],       // NPC IDs actively fighting the player (only when entersCombat: true)
-        "combatInitiatedBy": "player",   // "player" or "npc" (only when entersCombat: true)
-        // When entersCombat=true AND combatInitiatedBy="npc", provide the NPC opening attack intents
-        "openingPendingNpcActions": [
-          {
-            "npcId": "npc-id",
-            "npcName": "NPC Name",
-            "actionNarrative": "NPC opening attack intent"
-          }
-        ],
+            "timeElapsedMinutes": 10,
+            "timeConsumption": "short",
+            "entersCombat": false,
+            "combatParticipantIds": [],
+            "combatInitiatedBy": "player",
+            "openingPendingNpcActions": [],
 
-        "relationshipChanges": [  // Optional: only when this action meaningfully shifts trust/hostility/loyalty
-          {
-            "sourceNpcId": "npc-id",          // NPC whose relationship changes (MUST be a scene NPC)
-            "targetId": "target-character-id", // Who they feel differently about
-            "targetName": "Exact target name",
-            "relationshipType": "ally",        // Updated relationship label
-            "attitude": -20,                   // New attitude delta (-100 to 100)
-            "description": "Why the attitude changed"
-          }
-        ],
+            "relationshipChanges": [],
 
-        "heartbeatActions": [ // Optional: Use [] when no new concrete appointment is made.
-          {
-            "scheduledGameTime": "Day 2, 18:20",
-            "npcId": "npc-guard-01",
-            "npcName": "Officer Hale",
-            "task": "Meet at the back alley for key exchange",
-            "location": "Riverside Back Alley"
-          }
-        ]
+            "heartbeatActions": []
 ${
   sceneNPCs && sceneNPCs.length > 0
     ? `
-        ,
-        "npcResponses": [  // Optional: Array of NPC responses
-          {
-            "npcName": "NPC name",
-            "npcId": "npc-id",
-            "willRespond": true,
-            "responseType": "social",
-            "executionOrder": 1,
-            "diceUsed": [  // Optional: Dice rolls if NPC action requires skill checks
-            ],
-            "actionLog": [  // Required: At least one actionLog entry
+            ,
+            "npcResponses": [
               {
-                "time": "Day 1, 14:30",
-                "location": "Current Location",
-                "summary": "NPC's action summary",
-                "successLevel": "regular",
-                "characterId": "npc-id"
+                "npcName": "NPC name",
+                "npcId": "npc-id",
+                "willRespond": true,
+                "responseType": "social",
+                "executionOrder": 1,
+                "diceUsed": [],
+                "actionLog": [
+                  {
+                    "time": "Day 1, 14:30",
+                    "location": "Current Location",
+                    "summary": "NPC's action summary",
+                    "successLevel": "regular",
+                    "characterId": "npc-id"
+                  }
+                ],
+                "stateUpdate": {
+                  "status": {"hp": 0, "sanity": -1, "conditions": ["Shaken"]},
+                  "inventory": {"add": [{"name": "item"}]},
+                  "appearance": "Updated appearance"
+                }
               }
-            ],
-            "stateUpdate": {  // Optional: NPC state/appearance changes
-              "status": {"hp": 0, "sanity": -1, "conditions": ["Shaken"]},
-              "inventory": {"add": [{"name": "item"}]},
-              "appearance": "Updated appearance description based on the result of the action (optional)"
-            }
-          }
-        ]
+            ]
 `
     : ""
 }
-      }
+          }
+        }
+      ]
+    },
+    {
+      "groupId": 2,                // Slower group
+      "estimatedMinutes": 180,    // Average timeElapsedMinutes for this group
+      "players": [
+        {
+          "playerId": "slow-player-id",
+          "output": {
+            // === MINIMAL OUTPUT for slow groups (B, C, ...) ===
+            // Only actionLog + time fields. NO stateUpdate, NO npcResponses, NO scenarioUpdate, NO combat.
+            "actionLog": [
+              {
+                "time": "Day 1, 14:30",
+                "location": "Arkham Library",
+                "summary": "Began researching ancient texts about the cult",
+                "characterId": "character-id"
+              }
+            ],
+            "timeElapsedMinutes": 180,
+            "timeConsumption": "long"
+          }
+        }
+      ]
     }
-    // ... one entry per acting player in roundInputs
+    // ... additional groups C, D if needed
   ]
 }
 \`\`\`

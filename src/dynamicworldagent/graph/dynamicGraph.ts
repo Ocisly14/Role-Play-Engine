@@ -537,7 +537,6 @@ export const buildDynamicGraph = (
       dgsm.addActionResult(errorActionResult);
       dgsm.addActionResultDetail({
         character: errorActionResult.character,
-        isNPC: false,
         summary: errorActionResult.result,
         timeElapsedMinutes: 0,
         timeConsumption: "instant",

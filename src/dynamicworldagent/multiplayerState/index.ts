@@ -5,6 +5,7 @@ export type {
   MultiplayerSceneRoomState,
   RestConsensusState,
   MultiplayerDynamicGameState,
+  FrozenPlayerInput,
   // Re-exported from single-player
   CombatState,
   DefeatedNpcHistoryEntry,

@@ -133,6 +133,8 @@ export interface ActionResult {
   diceRolls: string[];
   timeConsumption: TimeConsumption; // Time consumption type of this action
   scenarioChanges?: string[]; // List of permanent changes made to the scenario
+  /** True when this result is a narrative-only preview from a time-grouped slow action */
+  isFrozenPreview?: boolean;
 }
 
 /** Build DiceRollInfo[] from action results for frontend display

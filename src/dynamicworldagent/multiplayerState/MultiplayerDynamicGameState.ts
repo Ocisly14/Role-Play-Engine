@@ -48,6 +48,25 @@ export type {
 };
 
 // =============================================
+// Frozen player input — stored on sceneRoom for time-grouped re-injection
+// =============================================
+
+export interface FrozenPlayerInput {
+  playerId: string;
+  characterId: string;
+  content: string;
+  selectedSkill: string | null;
+  skillSelectionMode: "manual" | "auto";
+  originalRoundNumber: number;
+  frozenRoundCount: number;
+  lastEstimatedMinutes: number;
+  /** Game time when the action was first submitted, e.g. "Day 1, 14:00" */
+  actionStartGameTime: string;
+  /** Total game minutes elapsed since the action started (sum of fast-group advances each round) */
+  accumulatedElapsedMinutes: number;
+}
+
+// =============================================
 // Per-player state (replaces single-player playerCharacter + staminaState)
 // =============================================
 
@@ -91,6 +110,9 @@ export interface MultiplayerTemporaryInfo {
   npcResponseAnalyses: NPCResponseAnalysis[];
   sceneChangeRequest: SceneChangeRequest | null;
   previousScenario: DynamicScenarioSnapshot | null;
+  /** Action results from slow-group players (narrative only, no state mutation) */
+  slowGroupActionResults: ActionResult[];
+  slowGroupActionResultsDetailed: Array<Record<string, unknown>>;
 }
 
 export function emptyTemporaryInfo(): MultiplayerTemporaryInfo {
@@ -103,6 +125,8 @@ export function emptyTemporaryInfo(): MultiplayerTemporaryInfo {
     npcResponseAnalyses: [],
     sceneChangeRequest: null,
     previousScenario: null,
+    slowGroupActionResults: [],
+    slowGroupActionResultsDetailed: [],
   };
 }
 
@@ -123,6 +147,8 @@ export interface MultiplayerSceneRoomState {
   turnsInCurrentScene: number; // mirrors single-player turnsInCurrentScene
   lastPlayerInputTimeByPlayer: Record<string, string | null>; // playerId → ISO timestamp
   temporaryInfo: MultiplayerTemporaryInfo;
+  /** Frozen player inputs awaiting re-injection in subsequent rounds */
+  frozenPlayerInputs: FrozenPlayerInput[];
   // ── Tree structure fields ──
   /** Empty = root node; one ID = fork child; multiple IDs = merged child */
   parentSceneRoomIds: string[];
@@ -272,6 +298,7 @@ export function initialMultiplayerDynamicGameState(params: {
       players.map((p) => [p.playerId, null])
     ),
     temporaryInfo: emptyTemporaryInfo(),
+    frozenPlayerInputs: [],
     parentSceneRoomIds: [],
     isFrozen: false,
     frozenAt: null,
@@ -388,6 +415,7 @@ export class MultiplayerDynamicGameStateManager {
         playerIds.map((id) => [id, null])
       ),
       temporaryInfo: emptyTemporaryInfo(),
+      frozenPlayerInputs: [],
       parentSceneRoomIds: [],
       isFrozen: false,
       frozenAt: null,
@@ -483,7 +511,13 @@ export class MultiplayerDynamicGameStateManager {
     const submitted = new Set(
       this.getRoundInputsForSceneRoom(sceneRoomId).map((i) => i.playerId)
     );
-    return room.memberPlayerIds.every((id) => submitted.has(id));
+    // Frozen players (with pending re-injection) count as auto-submitted
+    const frozenPlayerIds = new Set(
+      (room.frozenPlayerInputs ?? []).map((f) => f.playerId)
+    );
+    return room.memberPlayerIds.every(
+      (id) => submitted.has(id) || frozenPlayerIds.has(id)
+    );
   }
 
   clearRoundInputsForSceneRoom(sceneRoomId: string): void {

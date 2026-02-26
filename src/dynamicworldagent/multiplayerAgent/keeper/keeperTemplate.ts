@@ -99,6 +99,15 @@ You are a writer, responsible for writing a narrative of the game.
   - Time: {{fullGameTime}}
   - Tension: {{tension}} / 10
 
+  {{#if hasTimeGrouping}}
+  ### Time-Grouped Actions
+  - **Fast group (resolved)**: {{fastGroupPlayerNames}} (~{{fastGroupMinutes}} min)
+  - **Slow group (in progress)**: {{slowGroupPlayerNames}} — still ongoing
+  - Narrate fast-group actions fully with their complete outcomes.
+  - For slow-group actions, describe the START of their action but leave it open-ended (e.g., "begins poring over dusty tomes...", "sets off down the road...").
+  - Game clock advanced by {{fastGroupMinutes}} minutes.
+  {{/if}}
+
   {{#if hasActionTargetInfo}}
   ### Action Target
   {{#if actionTargetName}}

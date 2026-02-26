@@ -1755,7 +1755,6 @@ export class ActionAgent {
         : {};
     const detailedResult: Record<string, unknown> = {
       character: character.name,
-      isNPC: false,
       ...parsedObject,
     };
 
@@ -1853,7 +1852,6 @@ export class ActionAgent {
     // Record detailed error output for downstream prompts (keeper)
     const errorDetail: Record<string, unknown> = {
       character: character.name,
-      isNPC: false,
       timeElapsedMinutes: 0,
       timeConsumption: "instant",
       error: errorMessage,
