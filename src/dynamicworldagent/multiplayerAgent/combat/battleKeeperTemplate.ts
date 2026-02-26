@@ -28,7 +28,8 @@ ${playerInput}
 - If combatEndReason is present, align the ending description with it exactly.
 
 ## STYLE REQUIREMENTS
-- 2nd person ("you swing your fist", "the bullet grazes your shoulder")
+- Use 3rd person for all player characters by name (e.g., "John swings his fist", "the bullet grazes Mary's shoulder")
+- When there is only one player character, you MAY use 2nd person ("you swing your fist") instead
 - Short punchy sentences during action; longer sentences for aftermath and emotion
 - Describe what happened and its consequences — who hit whom, how badly, what changed
 - Describe injuries concretely — blood, stumbling, gasping; do not soften

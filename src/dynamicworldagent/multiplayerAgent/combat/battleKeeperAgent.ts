@@ -41,12 +41,21 @@ export class BattleKeeperAgent {
       const s = manager.getState();
       const scr = manager.getSceneRoom(sceneRoomId);
       const playerIds = scr?.memberPlayerIds ?? [];
-      const firstPlayer = s.players[playerIds[0]];
-      const profile: any = firstPlayer?.profile ?? null;
-      if (profile) {
-        if (!profile.id) profile.id = firstPlayer?.characterId ?? profile.id;
-        if (!profile.name) profile.name = firstPlayer?.characterName ?? profile.name;
-      }
+
+      // Build all player profiles for the sceneRoom
+      const allProfiles = playerIds
+        .map((pid) => {
+          const p = s.players[pid];
+          if (!p?.profile) return null;
+          const prof: any = { ...p.profile };
+          if (!prof.id) prof.id = p.characterId ?? prof.id;
+          if (!prof.name) prof.name = p.characterName ?? prof.name;
+          return prof;
+        })
+        .filter(Boolean);
+
+      const firstProfile = allProfiles[0] ?? null;
+
       return {
         ...s,
         currentScenario: scr?.currentScenario ?? null,
@@ -61,8 +70,9 @@ export class BattleKeeperAgent {
           previousScenario: null,
         },
         turnsInCurrentScene: scr?.turnsInCurrentScene ?? 0,
-        playerCharacter: profile,
-        staminaState: firstPlayer?.staminaState ?? {
+        playerCharacter: firstProfile,       // backward compat
+        playerCharacters: allProfiles,        // all players in sceneRoom
+        staminaState: s.players[playerIds[0]]?.staminaState ?? {
           minutesSinceLastRest: 0,
           fatigueActive: false,
         },
@@ -74,8 +84,8 @@ export class BattleKeeperAgent {
       getFullGameTime: () => manager.getFullGameTime(),
       isFatigued: () => {
         const scr = manager.getSceneRoom(sceneRoomId);
-        const activePlayerId = scr?.memberPlayerIds?.[0];
-        return activePlayerId ? manager.isFatigued(activePlayerId) : false;
+        const playerIds = scr?.memberPlayerIds ?? [];
+        return playerIds.some((pid) => manager.isFatigued(pid));
       },
       setContextualData: (key: string, value: unknown) =>
         manager.setContextualData(sceneRoomId, key, value),
@@ -126,18 +136,27 @@ export class BattleKeeperAgent {
         )
       : `{ "location": "Unknown" }`;
 
-    // Full player profile
-    const player = state.playerCharacter;
-    const playerBlock = JSON.stringify(
-      {
+    // Build player characters context (all players in sceneRoom)
+    const allPlayers: any[] = (state as any).playerCharacters ?? [];
+    const playerCharactersBlock = allPlayers.map((player: any) => ({
+      id: player.id,
+      name: player.name,
+      status: player.status,
+      attributes: player.attributes,
+      skills: withCombatSkillDefaults(player.skills, player.attributes),
+    }));
+
+    // Fallback: single-player path
+    if (playerCharactersBlock.length === 0 && state.playerCharacter) {
+      const player = state.playerCharacter;
+      playerCharactersBlock.push({
+        id: player.id,
         name: player.name,
         status: player.status,
         attributes: player.attributes,
         skills: withCombatSkillDefaults(player.skills, player.attributes),
-      },
-      null,
-      2
-    );
+      });
+    }
 
     // Full combat NPC profiles
     const combatNpcs = state.npcCharacters
@@ -178,7 +197,7 @@ export class BattleKeeperAgent {
     let ctx =
       `\n\n=== GAME TIME ===\n${fullGameTime}\n` +
       `\n=== CURRENT SCENE ===\n${sceneBlock}\n` +
-      `\n=== PLAYER CHARACTER ===\n${playerBlock}\n` +
+      `\n=== PLAYER CHARACTERS ===\n${JSON.stringify(playerCharactersBlock, null, 2)}\n` +
       `\n=== COMBAT NPCs ===\n${JSON.stringify(combatNpcs, null, 2)}\n` +
       `\n=== RECENT CONVERSATION (last 3 turns) ===\n${historyBlock}\n`;
 
@@ -236,6 +255,14 @@ export class BattleKeeperAgent {
       })
     );
 
+    const playerHpDeltas = (
+      actionResult.stateUpdate?.playerCharacters || []
+    ).map((pc) => ({
+      id: pc.id,
+      name: pc.name,
+      hpDelta: pc.status?.hp ?? 0,
+    }));
+
     return {
       diceOutcomes,
       actionSuccessLevels: (actionResult.actionLog || []).map((entry) => ({
@@ -244,7 +271,7 @@ export class BattleKeeperAgent {
         summary: entry.summary,
       })),
       hpDeltas: {
-        player: actionResult.stateUpdate?.playerCharacter?.status?.hp ?? 0,
+        players: playerHpDeltas,
         npcs: npcHpDeltas,
       },
       rules: [

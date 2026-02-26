@@ -688,22 +688,38 @@ export const buildMultiplayerGraph = (
     const language =
       state.language === "en" || state.language === "zh" ? state.language : "zh";
 
-    // Combine all player combat inputs into a single combined input
+    // Store roundInputs in contextualData so combat agent adapters can access them
+    m.setContextualData(state.sceneRoomId, "roundInputs", state.roundInputs);
+
+    // Combine all player combat inputs, marking skip vs acting
     const combinedCombatInput = state.roundInputs
       .map((i) => {
         const player = m.getState().players[i.playerId];
-        return `${player?.characterName ?? i.playerId}: ${i.content ?? ""}`;
+        const name = player?.characterName ?? i.playerId;
+        if (i.inputType === "skip" || !i.content?.trim()) {
+          return `${name}: [skipped this round]`;
+        }
+        return `${name}: ${i.content}`;
       })
       .join("\n");
 
     try {
-      await combatAgentA.resolvePlayerAttackForSceneRoom(
+      const result = await combatAgentA.resolvePlayerAttackForSceneRoom(
         m,
         state.sceneRoomId,
         combinedCombatInput,
         null,
         language
       );
+      if (result) {
+        // Apply state updates (HP deltas, conditions, action logs, time)
+        combatAgentA.applyResultForSceneRoom(m, state.sceneRoomId, result);
+        // Store result for downstream agents (routeFromCombatA, combatActionB, battleKeeper)
+        m.setContextualData(state.sceneRoomId, "combatActionAResult", result);
+        if (result.combatEnded) {
+          m.setContextualData(state.sceneRoomId, "combatEnded", true);
+        }
+      }
     } catch (e) {
       console.error("[MP CombatActionA] failed:", e);
     }
@@ -735,7 +751,11 @@ export const buildMultiplayerGraph = (
     const combinedCombatInput = state.roundInputs
       .map((i) => {
         const player = m.getState().players[i.playerId];
-        return `${player?.characterName ?? i.playerId}: ${i.content ?? ""}`;
+        const name = player?.characterName ?? i.playerId;
+        if (i.inputType === "skip" || !i.content?.trim()) {
+          return `${name}: [skipped this round]`;
+        }
+        return `${name}: ${i.content}`;
       })
       .join("\n");
 
@@ -743,13 +763,16 @@ export const buildMultiplayerGraph = (
       // Use the narrative from CombatActionA if available
       const prevNarrative =
         (sceneRoom.temporaryInfo.contextualData?.combatNarrative as string) ?? "";
+      // Pass combatAResult from contextualData
+      const combatAResult =
+        (m.getContextualData(state.sceneRoomId, "combatActionAResult") as import("../multiplayerAgent/combat/combatActionAgentA.js").CombatActionAResult) ?? null;
       await combatAgentB.generateNpcActionsForSceneRoom(
         m,
         state.sceneRoomId,
         combinedCombatInput,
         prevNarrative,
         language,
-        null
+        combatAResult
       );
     } catch (e) {
       console.error("[MP CombatActionB] failed:", e);
@@ -772,7 +795,11 @@ export const buildMultiplayerGraph = (
     const combinedCombatInput = state.roundInputs
       .map((i) => {
         const player = m.getState().players[i.playerId];
-        return `${player?.characterName ?? i.playerId}: ${i.content ?? ""}`;
+        const name = player?.characterName ?? i.playerId;
+        if (i.inputType === "skip" || !i.content?.trim()) {
+          return `${name}: [skipped this round]`;
+        }
+        return `${name}: ${i.content}`;
       })
       .join("\n");
 

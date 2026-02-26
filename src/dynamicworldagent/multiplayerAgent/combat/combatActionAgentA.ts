@@ -16,7 +16,11 @@ export interface CombatActionAResult {
     location: string;
   }>;
   stateUpdate: {
-    playerCharacter?: { status?: { hp?: number; conditions?: string[] } };
+    playerCharacters?: Array<{
+      id: string;
+      name: string;
+      status?: { hp?: number; conditions?: string[] };
+    }>;
     npcCharacters?: Array<{
       id: string;
       name: string;
@@ -77,12 +81,21 @@ export class CombatActionAgentA {
       const s = manager.getState();
       const scr = manager.getSceneRoom(sceneRoomId);
       const playerIds = scr?.memberPlayerIds ?? [];
-      const firstPlayer = s.players[playerIds[0]];
-      const profile: any = firstPlayer?.profile ?? null;
-      if (profile) {
-        if (!profile.id) profile.id = firstPlayer?.characterId ?? profile.id;
-        if (!profile.name) profile.name = firstPlayer?.characterName ?? profile.name;
-      }
+
+      // Build all player profiles for the sceneRoom
+      const allProfiles = playerIds
+        .map((pid) => {
+          const p = s.players[pid];
+          if (!p?.profile) return null;
+          const prof: any = { ...p.profile };
+          if (!prof.id) prof.id = p.characterId ?? prof.id;
+          if (!prof.name) prof.name = p.characterName ?? prof.name;
+          return prof;
+        })
+        .filter(Boolean);
+
+      const firstProfile = allProfiles[0] ?? null;
+
       return {
         ...s,
         currentScenario: scr?.currentScenario ?? null,
@@ -97,8 +110,9 @@ export class CombatActionAgentA {
           previousScenario: null,
         },
         turnsInCurrentScene: scr?.turnsInCurrentScene ?? 0,
-        playerCharacter: profile,
-        staminaState: firstPlayer?.staminaState ?? {
+        playerCharacter: firstProfile,       // backward compat
+        playerCharacters: allProfiles,        // all players in sceneRoom
+        staminaState: s.players[playerIds[0]]?.staminaState ?? {
           minutesSinceLastRest: 0,
           fatigueActive: false,
         },
@@ -110,8 +124,9 @@ export class CombatActionAgentA {
       getFullGameTime: () => manager.getFullGameTime(),
       isFatigued: () => {
         const scr = manager.getSceneRoom(sceneRoomId);
-        const activePlayerId = scr?.memberPlayerIds?.[0];
-        return activePlayerId ? manager.isFatigued(activePlayerId) : false;
+        const playerIds = scr?.memberPlayerIds ?? [];
+        // Conservative: fatigued if ANY player is fatigued
+        return playerIds.some((pid) => manager.isFatigued(pid));
       },
       updateGameTime: (elapsedMinutes: number) => manager.advanceGameTime(elapsedMinutes),
       applyActionUpdate: (_upd: any) => {
@@ -223,17 +238,45 @@ export class CombatActionAgentA {
         recentActionLog: (npc.actionLog || []).slice(-5),
       }));
 
-    const player = state.playerCharacter;
-    const playerContext = {
-      id: player.id,
-      name: player.name,
-      attributes: player.attributes,
-      status: player.status,
-      skills: withCombatSkillDefaults(player.skills, player.attributes),
-      inventory: player.inventory || [],
-      weapons: (player as any).weapons || [],
-      recentActionLog: (player.actionLog || []).slice(-5),
-    };
+    // Build player characters context (all players in sceneRoom)
+    const allPlayers: any[] = (state as any).playerCharacters ?? [];
+    const roundInputs: any[] =
+      (state.temporaryInfo?.contextualData?.roundInputs as any[]) ?? [];
+    const playerCharactersContext = allPlayers.map((player: any) => {
+      // Determine acting vs skipped from roundInputs
+      const input = roundInputs.find(
+        (ri: any) => ri.characterId === player.id || ri.playerId === player.id
+      );
+      const acting =
+        input && input.inputType !== "skip" && Boolean(input.content?.trim());
+      return {
+        id: player.id,
+        name: player.name,
+        role: acting ? "acting" : "skipped this round",
+        attributes: player.attributes,
+        status: player.status,
+        skills: withCombatSkillDefaults(player.skills, player.attributes),
+        inventory: player.inventory || [],
+        weapons: (player as any).weapons || [],
+        recentActionLog: (player.actionLog || []).slice(-5),
+      };
+    });
+
+    // Fallback: if playerCharacters is empty, use single playerCharacter
+    if (playerCharactersContext.length === 0 && state.playerCharacter) {
+      const player = state.playerCharacter;
+      playerCharactersContext.push({
+        id: player.id,
+        name: player.name,
+        role: "acting",
+        attributes: player.attributes,
+        status: player.status,
+        skills: withCombatSkillDefaults(player.skills, player.attributes),
+        inventory: player.inventory || [],
+        weapons: (player as any).weapons || [],
+        recentActionLog: (player.actionLog || []).slice(-5),
+      });
+    }
 
     // Last 3 turns of conversation history (populated by Memory Agent before combat routing)
     const conversationHistory = (
@@ -257,7 +300,7 @@ export class CombatActionAgentA {
     let ctx = `\n\n=== CURRENT GAME TIME ===\n${fullGameTime}\n=== END GAME TIME ===\n`;
     ctx += `\n\nCurrent Scene: ${state.currentScenario?.location || "Unknown"}\n`;
     ctx += `Scene Description: ${state.currentScenario?.description || ""}\n`;
-    ctx += `\n\nPlayer Character:\n${JSON.stringify(playerContext, null, 2)}`;
+    ctx += `\n\nPlayer Characters (player faction):\n${JSON.stringify(playerCharactersContext, null, 2)}`;
     ctx += `\n\nCombat NPCs:\n${JSON.stringify(combatNpcs, null, 2)}`;
     ctx += `\n\nCombat Round: ${state.combatState?.round ?? 1}`;
     ctx += `\n\n=== RECENT CONVERSATION (last 3 turns) ===\n${historyBlock}`;
@@ -337,7 +380,7 @@ export class CombatActionAgentA {
   }
 
   /**
-   * Apply combat action result to game state
+   * Apply combat action result to game state (single-player adapter path)
    */
   applyResult(
     dgsm: DynamicGameStateManager,
@@ -351,6 +394,14 @@ export class CombatActionAgentA {
     const fullTime = dgsm.getFullGameTime();
     const location = state.currentScenario?.location || "Unknown";
 
+    // Collect all player character IDs for log matching
+    const allPlayers: any[] = (state as any).playerCharacters ?? [];
+    const playerIds = new Set(allPlayers.map((p: any) => p.id));
+    // Fallback: single-player path
+    if (playerIds.size === 0 && state.playerCharacter) {
+      playerIds.add(state.playerCharacter.id);
+    }
+
     // Add actionLog entries to characters
     for (const entry of result.actionLog || []) {
       const {
@@ -363,15 +414,20 @@ export class CombatActionAgentA {
       const logTime = time || fullTime;
       const logLocation = entryLocation || location;
 
-      if (characterId === state.playerCharacter.id) {
-        const player = state.playerCharacter;
-        if (!player.actionLog) player.actionLog = [];
-        player.actionLog.push({
-          time: logTime,
-          location: logLocation,
-          summary,
-          successLevel: successLevel as any,
-        });
+      if (playerIds.has(characterId)) {
+        // Find the matching player profile
+        const player =
+          allPlayers.find((p: any) => p.id === characterId) ??
+          state.playerCharacter;
+        if (player) {
+          if (!player.actionLog) player.actionLog = [];
+          player.actionLog.push({
+            time: logTime,
+            location: logLocation,
+            summary,
+            successLevel: successLevel as any,
+          });
+        }
       } else {
         const npc = state.npcCharacters.find((n) => n.id === characterId);
         if (npc) {
@@ -389,6 +445,120 @@ export class CombatActionAgentA {
     // Advance game time for combat rounds (1 minute each round)
     if (result.timeElapsedMinutes > 0) {
       dgsm.updateGameTime(result.timeElapsedMinutes);
+    }
+  }
+
+  /**
+   * Apply combat action result directly to the multiplayer manager (no adapter).
+   * Used by the multiplayer graph node after resolvePlayerAttackForSceneRoom.
+   */
+  applyResultForSceneRoom(
+    manager: MultiplayerDynamicGameStateManager,
+    sceneRoomId: string,
+    result: CombatActionAResult
+  ): void {
+    const scr = manager.getSceneRoom(sceneRoomId);
+    if (!scr) return;
+
+    // Apply HP/condition deltas for each player character
+    if (result.stateUpdate?.playerCharacters) {
+      for (const pc of result.stateUpdate.playerCharacters) {
+        // Find the playerId whose characterId or profile.id matches pc.id
+        const matchedPlayerId = scr.memberPlayerIds.find((pid) => {
+          const p = manager.getState().players[pid];
+          return (
+            p?.characterId === pc.id ||
+            p?.profile?.id === pc.id ||
+            p?.characterName === pc.name
+          );
+        });
+        if (matchedPlayerId && pc.status) {
+          if (pc.status.hp !== undefined && pc.status.hp !== null) {
+            const player = manager.getState().players[matchedPlayerId];
+            if (player?.profile?.status) {
+              (player.profile.status as any).hp = Math.max(
+                0,
+                ((player.profile.status as any).hp ?? 0) + pc.status.hp
+              );
+            }
+          }
+          if (pc.status.conditions !== undefined) {
+            const player = manager.getState().players[matchedPlayerId];
+            if (player?.profile?.status) {
+              (player.profile.status as any).conditions = pc.status.conditions;
+            }
+          }
+        }
+      }
+    }
+
+    // Apply NPC updates
+    if (result.stateUpdate?.npcCharacters) {
+      for (const npcUpd of result.stateUpdate.npcCharacters) {
+        if (npcUpd.status) {
+          manager.applyNpcActionUpdate(npcUpd.id, {
+            hp: npcUpd.status.hp ?? null,
+            conditions: npcUpd.status.conditions,
+          });
+        }
+      }
+    }
+
+    // Add actionLog entries
+    const fullTime = manager.getFullGameTime();
+    const location = scr.currentScenario?.location || "Unknown";
+    const playerCharIds = new Set(
+      scr.memberPlayerIds.map((pid) => {
+        const p = manager.getState().players[pid];
+        return p?.characterId ?? p?.profile?.id ?? "";
+      })
+    );
+
+    for (const entry of result.actionLog || []) {
+      const logTime = entry.time || fullTime;
+      const logLocation = entry.location || location;
+
+      if (playerCharIds.has(entry.characterId)) {
+        // Find the player and push to their profile's actionLog
+        const pid = scr.memberPlayerIds.find((memberId) => {
+          const p = manager.getState().players[memberId];
+          return (
+            p?.characterId === entry.characterId ||
+            p?.profile?.id === entry.characterId
+          );
+        });
+        if (pid) {
+          const player = manager.getState().players[pid];
+          if (player?.profile) {
+            if (!(player.profile as any).actionLog)
+              (player.profile as any).actionLog = [];
+            (player.profile as any).actionLog.push({
+              time: logTime,
+              location: logLocation,
+              summary: entry.summary,
+              successLevel: entry.successLevel as any,
+            });
+          }
+        }
+      } else {
+        const npc = manager
+          .getState()
+          .npcCharacters.find((n) => n.id === entry.characterId);
+        if (npc) {
+          if (!npc.actionLog) npc.actionLog = [];
+          npc.actionLog.push({
+            time: logTime,
+            location: logLocation,
+            summary: entry.summary,
+            successLevel: entry.successLevel as any,
+          });
+        }
+      }
+    }
+
+    // Advance game time
+    if (result.timeElapsedMinutes > 0) {
+      manager.advanceGameTime(result.timeElapsedMinutes);
     }
   }
 }

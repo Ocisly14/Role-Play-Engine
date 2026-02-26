@@ -16,7 +16,7 @@ export function buildCombatActionBSystemPrompt(
     : "";
 
   const fatigueSection = fatigueActive
-    ? `\n⚠️ PLAYER FATIGUE STATUS:\n当前角色状态：疲惫。所有玩家技能判定难度提高一个等级。\nCurrent player status: Fatigued. Increase player skill check difficulty by one level.\n- regular → hard (skill ÷ 2)\n- hard → extreme (skill ÷ 5)\n- extreme → extreme (already at maximum difficulty)\n`
+    ? `\n⚠️ PLAYER FATIGUE STATUS:\n至少一名玩家角色处于疲惫状态。疲惫玩家的技能判定难度提高一个等级。\nAt least one player character is fatigued. Increase fatigued player's skill check difficulty by one level.\n- regular → hard (skill ÷ 2)\n- hard → extreme (skill ÷ 5)\n- extreme → extreme (already at maximum difficulty)\n`
     : "";
 
   return `## Combat Action Agent B — Round ${combatRound}
@@ -33,8 +33,8 @@ ${playerInput}${keeperNarrativeSection}
 ## STEP 1 — IDENTIFY ENEMY FACTION
 
 Read the injected context carefully:
-- The player character and their allies are the **player faction**
-- All other combat NPCs hostile to the player are the **enemy faction**
+- All player characters (listed in "Player Characters (player faction)" in context) and their allied NPCs form the **player faction**
+- All other combat NPCs hostile to the players are the **enemy faction**
 - Use personality, goals, relationships, and recent action log to determine alignment
 - Only include NPCs who are actively hostile to the player faction
 
@@ -50,7 +50,7 @@ For each enemy NPC, decide what they will attempt this round based on:
 - Tactical context (is the player exposed? are they cornered? did they just take damage?)
 
 Possible next actions:
-- **Attack** a specific target (player or player-allied NPC) — most common
+- **Attack** a specific target (a player character or player-allied NPC) — most common
 - **Retreat / Flee** — NPC is badly injured or panicked
 - **Surrender** — NPC gives up; no further action needed
 - **Reposition** — NPC moves tactically but does not attack this round
@@ -85,7 +85,8 @@ Now that you know both what happened (from the injected action result) and what 
 - If combatEndReason is present, align the ending with it exactly.
 
 ### STYLE REQUIREMENTS
-- 2nd person ("you swing your fist", "the bullet grazes your shoulder")
+- Use 3rd person for all player characters by name (e.g., "John swings his fist", "the bullet grazes Mary's shoulder")
+- When there is only one player character, you MAY use 2nd person ("you swing your fist") instead
 - Short punchy sentences during action; longer sentences for aftermath and emotion
 - Describe injuries concretely — blood, stumbling, gasping; do not soften
 - Never mention dice, rolls, success levels, or any game mechanic terminology

@@ -26,7 +26,7 @@ export function buildCombatActionASystemPrompt(
     : "";
 
   const fatigueSection = fatigueActive
-    ? `\n⚠️ PLAYER FATIGUE STATUS:\n当前角色状态：疲惫。所有玩家技能判定难度提高一个等级。\nCurrent player status: Fatigued. Increase player skill check difficulty by one level.\n- regular → hard (skill ÷ 2)\n- hard → extreme (skill ÷ 5)\n- extreme → extreme (already at maximum difficulty)\n`
+    ? `\n⚠️ PLAYER FATIGUE STATUS:\n至少一名玩家角色处于疲惫状态。疲惫玩家的技能判定难度提高一个等级。\nAt least one player character is fatigued. Increase fatigued player's skill check difficulty by one level.\n- regular → hard (skill ÷ 2)\n- hard → extreme (skill ÷ 5)\n- extreme → extreme (already at maximum difficulty)\n`
     : "";
 
   return `## Combat Action Agent - Round ${combatRound}
@@ -50,12 +50,13 @@ USAGE:
 - IMPORTANT: When selecting multiple dice, always select in order starting from index 0
 
 ## RULES
-- If player HP reaches 0: set playerKnockedOut: true
+- If any player character HP reaches 0: that player is knocked out for this combat
 - If NPC HP reaches 0 or below: that NPC is out of combat (dead or incapacitated)
 - NPCs with ≤ 20% max HP remaining may flee (your judgment)
 - Judge if ALL hostile NPCs are neutralized (dead, fled, surrendered). If so, set combatEnded: true
 - Faction awareness: if multiple NPCs fight together, all must be out for combat to end
 - When combatEnded is true, you MUST include all defeated/neutralized enemy NPCs in defeatedNpcs (npcId + npcName).
+- Player faction consists of all player characters plus any allied NPCs.
 
 ## STATUS CONDITIONS UPDATES
 - If an action exchange causes/removes temporary status effects (e.g., bleeding, stunned, disarmed, restrained), write them to \`stateUpdate.*.status.conditions\`.
@@ -95,11 +96,12 @@ ${
 This is the player faction's attack phase. Resolve in this order:
 
 **Step 1 — Identify the player faction**
-The player faction consists of the player plus any NPCs who are allied with the player in this combat.
-Allied NPCs act alongside the player this round: each allied NPC selects a target enemy NPC and makes their own attack.
+The player faction consists of all player characters (listed in "Player Characters (player faction)" in context) plus any NPCs who are allied with the players in this combat.
+Each player character who is "acting" selects a target and attacks. Players who "skipped this round" do NOT attack.
+Allied NPCs act alongside the players this round: each allied NPC selects a target enemy NPC and makes their own attack.
 
 **Step 2 — Resolve each attack in the player faction**
-For each attacker (player or allied NPC):
+For each attacker (acting player character or allied NPC):
 1. Roll their attack skill check (use pre-rolled dice).
 2. The target enemy NPC must respond — choose one:
    - **Dodge**: Roll Dodge skill. If success → the incoming attack misses entirely.
@@ -162,18 +164,22 @@ Respond with ONLY valid JSON (no markdown, no code blocks):
     }
   ],
   "stateUpdate": {
-    "playerCharacter": {
-      "status": {
-        "hp": <delta, negative = damage, e.g. -3>,
-        "conditions": ["Bleeding", "Stunned"]
+    "playerCharacters": [
+      {
+        "id": "player-character-id",
+        "name": "player-character-name",
+        "status": {
+          "hp": "<delta, negative = damage, e.g. -3>",
+          "conditions": ["Bleeding", "Stunned"]
+        }
       }
-    },
+    ],
     "npcCharacters": [
       {
         "id": "npc-id",
         "name": "npc-name",
         "status": {
-          "hp": <delta>,
+          "hp": "<delta>",
           "conditions": ["Disarmed"]
         }
       }
@@ -192,6 +198,7 @@ Respond with ONLY valid JSON (no markdown, no code blocks):
 
 IMPORTANT:
 - stateUpdate values are DELTAS (negative = damage taken). E.g., hp: -3 means subtract 3 from current HP.
+- stateUpdate.playerCharacters is an array — include an entry for EACH player character who takes or deals damage. Use their id and name from the injected context.
 - \`status.conditions\` is a full list for that character after this exchange (use [] to clear, omit if unchanged).
 - Include at least ONE actionLog entry per character who acts this round. Use the current game time from context.
 - successLevel: include ONLY when this entry involves a skill check; omit for pure narrative entries.

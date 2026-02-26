@@ -52,12 +52,21 @@ export class CombatActionAgentB {
       const s = manager.getState();
       const scr = manager.getSceneRoom(sceneRoomId);
       const playerIds = scr?.memberPlayerIds ?? [];
-      const firstPlayer = s.players[playerIds[0]];
-      const profile: any = firstPlayer?.profile ?? null;
-      if (profile) {
-        if (!profile.id) profile.id = firstPlayer?.characterId ?? profile.id;
-        if (!profile.name) profile.name = firstPlayer?.characterName ?? profile.name;
-      }
+
+      // Build all player profiles for the sceneRoom
+      const allProfiles = playerIds
+        .map((pid) => {
+          const p = s.players[pid];
+          if (!p?.profile) return null;
+          const prof: any = { ...p.profile };
+          if (!prof.id) prof.id = p.characterId ?? prof.id;
+          if (!prof.name) prof.name = p.characterName ?? prof.name;
+          return prof;
+        })
+        .filter(Boolean);
+
+      const firstProfile = allProfiles[0] ?? null;
+
       return {
         ...s,
         currentScenario: scr?.currentScenario ?? null,
@@ -72,8 +81,9 @@ export class CombatActionAgentB {
           previousScenario: null,
         },
         turnsInCurrentScene: scr?.turnsInCurrentScene ?? 0,
-        playerCharacter: profile,
-        staminaState: firstPlayer?.staminaState ?? {
+        playerCharacter: firstProfile,       // backward compat
+        playerCharacters: allProfiles,        // all players in sceneRoom
+        staminaState: s.players[playerIds[0]]?.staminaState ?? {
           minutesSinceLastRest: 0,
           fatigueActive: false,
         },
@@ -85,8 +95,8 @@ export class CombatActionAgentB {
       getFullGameTime: () => manager.getFullGameTime(),
       isFatigued: () => {
         const scr = manager.getSceneRoom(sceneRoomId);
-        const activePlayerId = scr?.memberPlayerIds?.[0];
-        return activePlayerId ? manager.isFatigued(activePlayerId) : false;
+        const playerIds = scr?.memberPlayerIds ?? [];
+        return playerIds.some((pid) => manager.isFatigued(pid));
       },
       setContextualData: (key: string, value: unknown) =>
         manager.setContextualData(sceneRoomId, key, value),
@@ -164,17 +174,44 @@ export class CombatActionAgentB {
         recentActionLog: (npc.actionLog || []).slice(-5),
       }));
 
-    const player = state.playerCharacter;
-    const playerContext = {
-      id: player.id,
-      name: player.name,
-      attributes: player.attributes,
-      status: player.status,
-      skills: withCombatSkillDefaults(player.skills, player.attributes),
-      inventory: player.inventory || [],
-      weapons: (player as any).weapons || [],
-      recentActionLog: (player.actionLog || []).slice(-5),
-    };
+    // Build player characters context (all players in sceneRoom)
+    const allPlayers: any[] = (state as any).playerCharacters ?? [];
+    const roundInputs: any[] =
+      (state.temporaryInfo?.contextualData?.roundInputs as any[]) ?? [];
+    const playerCharactersContext = allPlayers.map((player: any) => {
+      const input = roundInputs.find(
+        (ri: any) => ri.characterId === player.id || ri.playerId === player.id
+      );
+      const acting =
+        input && input.inputType !== "skip" && Boolean(input.content?.trim());
+      return {
+        id: player.id,
+        name: player.name,
+        role: acting ? "acting" : "skipped this round",
+        attributes: player.attributes,
+        status: player.status,
+        skills: withCombatSkillDefaults(player.skills, player.attributes),
+        inventory: player.inventory || [],
+        weapons: (player as any).weapons || [],
+        recentActionLog: (player.actionLog || []).slice(-5),
+      };
+    });
+
+    // Fallback: single-player path
+    if (playerCharactersContext.length === 0 && state.playerCharacter) {
+      const player = state.playerCharacter;
+      playerCharactersContext.push({
+        id: player.id,
+        name: player.name,
+        role: "acting",
+        attributes: player.attributes,
+        status: player.status,
+        skills: withCombatSkillDefaults(player.skills, player.attributes),
+        inventory: player.inventory || [],
+        weapons: (player as any).weapons || [],
+        recentActionLog: (player.actionLog || []).slice(-5),
+      });
+    }
 
     const conversationHistory = (
       (state.temporaryInfo.contextualData?.conversationHistory as Array<{
@@ -198,17 +235,33 @@ export class CombatActionAgentB {
       `\n\n=== CURRENT GAME TIME ===\n${fullGameTime}\n=== END GAME TIME ===\n` +
       `\nCurrent Scene: ${state.currentScenario?.location || "Unknown"}\n` +
       `Scene Description: ${state.currentScenario?.description || ""}\n` +
-      `\nPlayer Character:\n${JSON.stringify(playerContext, null, 2)}\n` +
+      `\nPlayer Characters (player faction):\n${JSON.stringify(playerCharactersContext, null, 2)}\n` +
       `\nCombat NPCs:\n${JSON.stringify(combatNpcs, null, 2)}\n` +
       `\n=== RECENT CONVERSATION (last 3 turns) ===\n${historyBlock}`;
 
     if (combatAResult) {
+      // Build per-player HP deltas from playerCharacters array
+      const playerHpDeltas = (combatAResult.stateUpdate?.playerCharacters ?? []).map(
+        (pc) => ({
+          id: pc.id,
+          name: pc.name,
+          hpDelta: pc.status?.hp ?? 0,
+        })
+      );
+      const playerConditionUpdates = (
+        combatAResult.stateUpdate?.playerCharacters ?? []
+      ).map((pc) => ({
+        id: pc.id,
+        name: pc.name,
+        conditions: pc.status?.conditions ?? null,
+      }));
+
       ctx += `\n\n=== THIS ROUND ACTION RESULT (from Agent A) ===\n${JSON.stringify(
         {
           diceUsed: combatAResult.diceUsed,
           actionLog: combatAResult.actionLog,
           hpDeltas: {
-            player: combatAResult.stateUpdate?.playerCharacter?.status?.hp ?? 0,
+            players: playerHpDeltas,
             npcs: (combatAResult.stateUpdate?.npcCharacters ?? []).map((npc) => ({
               id: npc.id,
               name: npc.name,
@@ -216,9 +269,7 @@ export class CombatActionAgentB {
             })),
           },
           conditionUpdates: {
-            player:
-              combatAResult.stateUpdate?.playerCharacter?.status?.conditions ??
-              null,
+            players: playerConditionUpdates,
             npcs: (combatAResult.stateUpdate?.npcCharacters ?? []).map((npc) => ({
               id: npc.id,
               name: npc.name,
