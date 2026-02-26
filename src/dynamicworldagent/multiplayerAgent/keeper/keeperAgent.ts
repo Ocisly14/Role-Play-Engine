@@ -616,17 +616,42 @@ export class KeeperAgent {
   }
 
   /**
-   * Generate epilogue narrative when game ends
+   * Generate epilogue narrative when game ends.
+   *
+   * Overloaded for multiplayer:
+   *   generateEpilogue(characterInput, multiplayerManager, sceneRoomId, language?)
+   * Single-player (original):
+   *   generateEpilogue(characterInput, dgsm, language?)
    */
   async generateEpilogue(
     characterInput: string,
-    gameStateManager: DynamicGameStateManager,
-    language: "en" | "zh" = "zh"
+    managerOrDgsm: MultiplayerDynamicGameStateManager | DynamicGameStateManager,
+    sceneRoomIdOrLanguage?: string,
+    language?: "en" | "zh"
   ): Promise<{
     narrative: string;
     clueRevelations: any;
     updatedGameState: DynamicGameState;
   }> {
+    // Overload resolution (same pattern as generateNarrative)
+    let gameStateManager: DynamicGameStateManager;
+    let resolvedLanguage: "en" | "zh" = "zh";
+
+    if ("getSceneRoom" in managerOrDgsm) {
+      // Multiplayer: (characterInput, manager, sceneRoomId, language?)
+      const manager = managerOrDgsm as MultiplayerDynamicGameStateManager;
+      const sceneRoomId = sceneRoomIdOrLanguage!;
+      resolvedLanguage = language ?? "zh";
+      gameStateManager = this.buildManagerAdapter(manager, sceneRoomId);
+    } else {
+      // Single-player: (characterInput, dgsm, language?)
+      gameStateManager = managerOrDgsm as DynamicGameStateManager;
+      resolvedLanguage =
+        sceneRoomIdOrLanguage === "en" || sceneRoomIdOrLanguage === "zh"
+          ? sceneRoomIdOrLanguage
+          : "zh";
+    }
+
     const runtime = createRuntime();
     const dynamicState = gameStateManager.getState();
 
@@ -658,7 +683,7 @@ export class KeeperAgent {
     const fullGameTime = `Day ${dynamicState.gameDay}, ${dynamicState.timeOfDay}`;
 
     // Use epilogue template
-    const template = getEpilogueTemplate(language);
+    const template = getEpilogueTemplate(resolvedLanguage);
 
     // Get macroScene
     const macroScene = dynamicState.macroScene;

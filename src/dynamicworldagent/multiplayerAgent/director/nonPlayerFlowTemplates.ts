@@ -33,9 +33,9 @@ null
 {{knowledgeMatrixJson}}
 \`\`\`
 
-## Player Current Scene
+## Player Scenes (All Active)
 \`\`\`json
-{{playerCurrentSceneJson}}
+{{playerScenesJson}}
 \`\`\`
 
 ## Scenarios (with connections + latest baseline snapshots)
@@ -46,7 +46,7 @@ null
 ## NPC Profiles For Timeline Generation
 
 IMPORTANT:
-- These NPCs are already filtered. They exclude player and NPCs in player's current scene.
+- These NPCs are already filtered. They exclude NPCs present in ANY player scene listed above.
 - Use exact NPC id/name from input.
 
 \`\`\`json
@@ -56,7 +56,7 @@ IMPORTANT:
 ## Hard Rules
 - Generate only background world progression action timeline.
 - Do NOT generate player actions.
-- Do NOT regenerate actions for NPCs currently in player's current scene.
+- Do NOT regenerate actions for NPCs currently in ANY player scene.
 - Actions must follow knowledge/goals/personality/secrets and remain coherent across NPCs.
 - Actions must be time-sequenced, realistic, and within the time window.
 - Base actions on the NPC's goals, personality, and secrets (from full profile + knowledge matrix).
@@ -86,10 +86,11 @@ IMPORTANT:
 - For \`actionTimeline\` buckets, \`actionLog\` entries can omit \`time\`; backend will use the parent bucket \`time\`.
 - OPTIONAL extra output: \`SuddenActionLogs\`
   - This field is OPTIONAL.
-  - Use it only when a background NPC should enter player's current scene at the current game time.
-  - Each SuddenActionLogs item must contain ONLY: \`id\`, \`name\`, \`actionLog\`.
+  - Use it when a background NPC should enter ANY player scene at the current game time.
+  - Each SuddenActionLogs item must contain: \`id\`, \`name\`, \`targetSceneRoomId\`, \`actionLog\`.
+  - \`targetSceneRoomId\` MUST be the sceneRoomId of the player scene the NPC enters (from the Player Scenes array above).
   - Each selected NPC must:
-    - realistically move into player's current scene, and
+    - realistically move into the targeted player scene, and
     - perform exactly one impactful action there.
   - Keep it coherent with goals/personality/secrets/knowledge/globalTrigger.
 - Global Trigger (REQUIRED):
@@ -116,8 +117,11 @@ IMPORTANT:
 {
   "previousSnapshotTime": "Day 2, 13:00",
   "currentGameTime": "Day 2, 16:00",
-  "playerCurrentScene": { "name": "Town Hall", "location": "Town Hall" },
-    "previousGlobalTrigger": {
+  "playerScenes": [
+    { "sceneRoomId": "room-A", "name": "Town Hall", "location": "Town Hall", "memberPlayerNames": ["Alice"] },
+    { "sceneRoomId": "room-B", "name": "Harbor Warehouse", "location": "Harbor Warehouse", "memberPlayerNames": ["Bob"] }
+  ],
+  "previousGlobalTrigger": {
     "timeRestriction": "Day 4, 01:00",
     "events": ["Ritual couriers assemble at the pier office"]
   },
@@ -180,6 +184,7 @@ IMPORTANT:
     {
       "id": "npc-jack-harper",
       "name": "Jack Harper",
+      "targetSceneRoomId": "room-A",
       "actionLog": [
         {
           "time": "Day 2, 15:50",
@@ -191,11 +196,12 @@ IMPORTANT:
     {
       "id": "npc-dr-chen",
       "name": "Dr. Chen",
+      "targetSceneRoomId": "room-B",
       "actionLog": [
         {
           "time": "Day 2, 15:50",
-          "location": "Town Hall",
-          "summary": "Entered Town Hall and demanded immediate closure of the records wing to block investigator access"
+          "location": "Harbor Warehouse",
+          "summary": "Entered Harbor Warehouse and demanded immediate closure of the records wing to block investigator access"
         }
       ]
     }
@@ -241,10 +247,11 @@ Return ONLY valid JSON:
     {
       "id": "npc-id",
       "name": "NPC Name",
+      "targetSceneRoomId": "scene-room-id",
       "actionLog": [
         {
           "time": "Day X, HH:MM",
-          "location": "player current scene location",
+          "location": "target player scene location",
           "summary": "entered player scene and performed one impactful action"
         }
       ]
@@ -261,7 +268,7 @@ Return ONLY valid JSON:
 
 Notes:
 - statusDelta and inventoryDelta are optional and must be incremental only.
-- SuddenActionLogs is optional. If present, each NPC entry must contain only \`id\`, \`name\`, \`actionLog\` and exactly one in-window action in player's current scene.
+- SuddenActionLogs is optional. If present, each NPC entry must contain \`id\`, \`name\`, \`targetSceneRoomId\`, \`actionLog\` and exactly one in-window action in the targeted player scene.
 - globalTrigger can be omitted when no significant future events are identified.
 
 Generate now.`;
@@ -272,9 +279,9 @@ Generate now.`;
  */
 
 export function getCurrentSceneReactionSnapshotTemplate(): string {
-  return `# Director Agent - Non-Player Phase 2 (Current Scene Reaction Snapshot)
+  return `# Director Agent - Non-Player Phase 2 (Multi-Scene Reaction Snapshots)
 
-Generate an updated COMPLETE snapshot for the current player scene, driven by sudden ingress logs and in-scene NPC reactions.
+Generate updated COMPLETE snapshots for ALL player scenes that received sudden NPC intrusions, driven by sudden ingress logs and in-scene NPC reactions.
 
 ## Current Game Time
 - Day: {{currentGameDay}}
@@ -284,36 +291,22 @@ Generate an updated COMPLETE snapshot for the current player scene, driven by su
 - previousSnapshotTime: {{previousSnapshotTime}}
 - currentGameTime: {{currentGameTime}}
 
-## Current Scene
+## Player Scenes With Intrusions
+Each entry contains the scene info, its baseline snapshot, the sudden action logs targeting it, and the NPC profiles present in that scene.
 \`\`\`json
-{{currentSceneJson}}
-\`\`\`
-
-## Current Scene Baseline Snapshot (previous)
-\`\`\`json
-{{currentBaselineSnapshotJson}}
-\`\`\`
-
-## SuddenActionLogs (from Phase 1)
-\`\`\`json
-{{suddenActionLogsJson}}
-\`\`\`
-
-## Current Scene NPC Full Profiles
-\`\`\`json
-{{currentSceneNpcProfilesJson}}
+{{playerScenesWithIntrusionsJson}}
 \`\`\`
 
 ## Hard Rules
-- Update ONLY the current scene snapshot.
-- Focus on immediate in-scene consequences of SuddenActionLogs and how present NPCs react.
-- Generate a COMPLETE snapshot with fields:
+- Update ONLY the player scenes listed above.
+- For EACH scene, focus on immediate in-scene consequences of its SuddenActionLogs and how present NPCs react.
+- Generate a COMPLETE snapshot per scene with fields:
   - description
   - characters
   - clues
   - conditions
   - keeperNotes
-- characters must be generated from currentGameTime + suddenActionLogs in this window, deciding who is present in current scene.
+- characters must be generated from currentGameTime + suddenActionLogs in this window, deciding who is present in each scene.
 - \`snapshot.characters\` must be present and include scene-presence fields per character:
   - id
   - name
@@ -322,23 +315,23 @@ Generate an updated COMPLETE snapshot for the current player scene, driven by su
   - location
   - notes
 - clues must be full ScenarioClue objects (id, clueText, category, difficulty, location, discoveryMethod, reveals, discovered, discoveryDetails when applicable).
-- clues should be inferred from: current baseline snapshot + suddenActionLogs + reactionNpcActionLogUpdates + current scene NPC reactions in this window.
+- clues should be inferred from: baseline snapshot + suddenActionLogs + reactionNpcActionLogUpdates + scene NPC reactions in this window.
 - conditions must be full ScenarioCondition objects (type, description, mechanicalEffect when applicable).
 - conditions should reflect environmental/mechanical changes caused by sudden intrusion and NPC reactions (e.g., lighting, access pressure, hazards, crowd panic, barricades).
 - If no meaningful clue/condition changes occurred, preserve baseline clues/conditions instead of fabricating noise.
-- Output reaction NPC actions separately in \`reactionNpcActionLogUpdates\`.
+- Output reaction NPC actions separately in \`reactionNpcActionLogUpdates\`, each with a \`sceneRoomId\` field.
 - Each reaction actionLog entry must include:
   - time: "Day X, HH:MM"
   - location
   - summary
 - Reaction action logs must:
   - be in the time window (previousSnapshotTime, currentGameTime],
-  - happen in current scene,
+  - happen in the corresponding scene,
   - be impactful and coherent with goals/personality/knowledge.
 - If an action has a target, include target in summary.
-- If no meaningful reaction happened, output empty \`reactionNpcActionLogUpdates\` and keep snapshot changes minimal.
+- If no meaningful reaction happened for a scene, output empty reactions for it and keep snapshot changes minimal.
 - Connection updates are optional:
-  - Output \`currentSceneUpdate.connections\` ONLY when connection state changed in this window.
+  - Output \`connections\` per scene ONLY when connection state changed in this window.
   - Use \`blocked\` and \`blockReason\` when relevant.
 - Do NOT generate globalTrigger.
 
@@ -349,95 +342,94 @@ Generate an updated COMPLETE snapshot for the current player scene, driven by su
 {
   "previousSnapshotTime": "Day 2, 17:00",
   "currentGameTime": "Day 2, 18:00",
-  "currentScene": {
-    "scenarioId": "SCN_3",
-    "scenarioName": "Harbor Warehouse",
-    "location": "Harbor Warehouse"
-  },
-  "currentBaselineSnapshot": {
-    "description": "A damp warehouse with sealed crates and a salt-heavy air.",
-    "characters": [],
-    "clues": [],
-    "conditions": [
-      {
-        "type": "lighting",
-        "description": "Dim bulbs",
-        "mechanicalEffect": "Hard to notice details"
-      }
-    ]
-  },
-  "suddenActionLogs": {
-    "SuddenActionLogs": [
-      {
-        "id": "npc-dock-foreman",
-        "name": "Mason Pike",
-        "actionLog": [
-          {
-            "time": "Day 2, 17:20",
-            "location": "Harbor Warehouse",
-            "summary": "Entered Harbor Warehouse and locked the south shutter to delay witnesses"
-          }
+  "playerScenesWithIntrusions": [
+    {
+      "sceneRoomId": "room-A",
+      "scenarioId": "SCN_3",
+      "scenarioName": "Harbor Warehouse",
+      "location": "Harbor Warehouse",
+      "connections": [],
+      "baselineSnapshot": {
+        "description": "A damp warehouse with sealed crates and a salt-heavy air.",
+        "characters": [],
+        "clues": [],
+        "conditions": [
+          { "type": "lighting", "description": "Dim bulbs", "mechanicalEffect": "Hard to notice details" }
         ]
-      }
-    ]
-  }
+      },
+      "suddenActionLogs": [
+        {
+          "id": "npc-dock-foreman",
+          "name": "Mason Pike",
+          "actionLog": [
+            { "time": "Day 2, 17:20", "location": "Harbor Warehouse", "summary": "Entered Harbor Warehouse and locked the south shutter to delay witnesses" }
+          ]
+        }
+      ],
+      "sceneNpcProfiles": []
+    }
+  ]
 }
 \`\`\`
 
 ### Example Output
 \`\`\`json
 {
-  "currentSceneUpdate": {
-    "scenarioId": "SCN_3",
-    "snapshot": {
-      "id": "SCN_3_snap_003",
-      "name": "Harbor Warehouse",
-      "location": "Harbor Warehouse",
-      "description": "The warehouse air is thick with diesel and seawater. A newly secured south shutter rattles in the wind, forcing movement through the narrow east aisle where fresh boot marks cut across spilled salt.",
-      "gameTime": "Day 2, 18:00",
-      "characters": [
+  "sceneUpdates": [
+    {
+      "sceneRoomId": "room-A",
+      "scenarioId": "SCN_3",
+      "snapshot": {
+        "id": "SCN_3_snap_003",
+        "name": "Harbor Warehouse",
+        "location": "Harbor Warehouse",
+        "description": "The warehouse air is thick with diesel and seawater. A newly secured south shutter rattles in the wind, forcing movement through the narrow east aisle where fresh boot marks cut across spilled salt.",
+        "gameTime": "Day 2, 18:00",
+        "characters": [
+          {
+            "id": "npc-dock-foreman",
+            "name": "Mason Pike",
+            "role": "other",
+            "status": "alive",
+            "location": "Harbor Warehouse",
+            "notes": "Patrolling near the south shutter with a ring of heavy keys, watching every movement."
+          }
+        ],
+        "clues": [
+          {
+            "id": "clue_warehouse_ledger",
+            "clueText": "A wet shipping ledger lists an unscheduled midnight transfer.",
+            "category": "document",
+            "difficulty": "regular",
+            "location": "Office desk drawer",
+            "discoveryMethod": "Investigation",
+            "reveals": ["T7"],
+            "discovered": false
+          }
+        ],
+        "conditions": [
+          {
+            "type": "lighting",
+            "description": "Two bulbs are out, leaving the south side in heavy shadow.",
+            "mechanicalEffect": "Hard (-20%) Spot Hidden near shutter"
+          }
+        ],
+        "keeperNotes": "The shutter lock creates controlled access, signaling deliberate containment inside the warehouse."
+      },
+      "connections": [
         {
-          "id": "npc-dock-foreman",
-          "name": "Mason Pike",
-          "role": "other",
-          "status": "alive",
-          "location": "Harbor Warehouse",
-          "notes": "Patrolling near the south shutter with a ring of heavy keys, watching every movement."
+          "scenarioName": "Harbor Pier",
+          "relationshipType": "leads_to",
+          "description": "South shutter access to pier",
+          "blocked": true,
+          "blockReason": "Dock foreman locked the south shutter from inside"
         }
-      ],
-      "clues": [
-        {
-          "id": "clue_warehouse_ledger",
-          "clueText": "A wet shipping ledger lists an unscheduled midnight transfer.",
-          "category": "document",
-          "difficulty": "regular",
-          "location": "Office desk drawer",
-          "discoveryMethod": "Investigation",
-          "reveals": ["T7"],
-          "discovered": false
-        }
-      ],
-      "conditions": [
-        {
-          "type": "lighting",
-          "description": "Two bulbs are out, leaving the south side in heavy shadow.",
-          "mechanicalEffect": "Hard (-20%) Spot Hidden near shutter"
-        }
-      ],
-      "keeperNotes": "The shutter lock creates controlled access, signaling deliberate containment inside the warehouse."
-    },
-    "connections": [
-      {
-        "scenarioName": "Harbor Pier",
-        "relationshipType": "leads_to",
-        "description": "South shutter access to pier",
-        "blocked": true,
-        "blockReason": "Dock foreman locked the south shutter from inside"
-      }
-    ]
-  },
+      ]
+    }
+  ],
   "reactionNpcActionLogUpdates": [
     {
+      "sceneRoomId": "room-A",
       "id": "npc-dock-foreman",
       "name": "Mason Pike",
       "actionLog": [
@@ -456,63 +448,67 @@ Generate an updated COMPLETE snapshot for the current player scene, driven by su
 Return ONLY valid JSON:
 \`\`\`json
 {
-  "currentSceneUpdate": {
-    "scenarioId": "current-scene-id",
-    "snapshot": {
-      "id": "snapshot-id",
-      "name": "scene name",
-      "location": "scene location",
-      "description": "updated scene description",
-      "gameTime": "Day X, HH:MM",
-      "characters": [
+  "sceneUpdates": [
+    {
+      "sceneRoomId": "scene-room-id",
+      "scenarioId": "scenario-id",
+      "snapshot": {
+        "id": "snapshot-id",
+        "name": "scene name",
+        "location": "scene location",
+        "description": "updated scene description",
+        "gameTime": "Day X, HH:MM",
+        "characters": [
+          {
+            "id": "npc-id",
+            "name": "NPC Name",
+            "role": "other",
+            "status": "alive",
+            "location": "scene location",
+            "notes": "character notes"
+          }
+        ],
+        "clues": [
+          {
+            "id": "clue-id",
+            "clueText": "clue text",
+            "category": "document",
+            "difficulty": "regular",
+            "location": "specific location",
+            "discoveryMethod": "Investigation",
+            "reveals": ["T7"],
+            "discovered": false
+          }
+        ],
+        "conditions": [
+          {
+            "type": "lighting",
+            "description": "environmental change",
+            "mechanicalEffect": "mechanical impact"
+          }
+        ],
+        "keeperNotes": "optional keeper notes"
+      },
+      "connections": [
         {
-          "id": "npc-elias-thorne",
-          "name": "Elias Thorne",
-          "role": "other",
-          "status": "alive",
-          "location": "Royal Deep Blue Villa",
-          "notes": "Standing guard outside the villa door with a tactical shotgun, enforcing the quarantine and watching the shadows aggressively."
+          "scenarioName": "Other Scene",
+          "relationshipType": "leads_to",
+          "description": "optional",
+          "blocked": false,
+          "blockReason": null
         }
-      ],
-      "clues": [
-        {
-          "id": "clue-id",
-          "clueText": "clue text",
-          "category": "document",
-          "difficulty": "regular",
-          "location": "specific location",
-          "discoveryMethod": "Investigation",
-          "reveals": ["T7"],
-          "discovered": false
-        }
-      ],
-      "conditions": [
-        {
-          "type": "lighting",
-          "description": "environmental change",
-          "mechanicalEffect": "mechanical impact"
-        }
-      ],
-      "keeperNotes": "optional keeper notes"
-    },
-    "connections": [
-      {
-        "scenarioName": "Other Scene",
-        "relationshipType": "leads_to",
-        "description": "optional",
-        "blocked": false,
-        "blockReason": null
-      }
-    ]
-  },
+      ]
+    }
+  ],
   "reactionNpcActionLogUpdates": [
     {
+      "sceneRoomId": "scene-room-id",
       "id": "npc-id",
       "name": "NPC Name",
       "actionLog": [
         {
           "time": "Day X, HH:MM",
-          "location": "current scene location",
+          "location": "scene location",
           "summary": "reaction action and impact"
         }
       ]
@@ -522,7 +518,7 @@ Return ONLY valid JSON:
 \`\`\`
 
 Notes:
-- \`currentSceneUpdate.connections\` is optional and should be omitted when unchanged.
+- \`connections\` per scene update is optional and should be omitted when unchanged.
 - \`reactionNpcActionLogUpdates\` can be empty.
 - Do not output extra fields.
 

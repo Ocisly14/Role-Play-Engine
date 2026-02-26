@@ -14,13 +14,12 @@
  */
 
 import { randomUUID } from "crypto";
-import type { DirectorAgent } from "../multiplayerAgent/director/directorAgent.js";
 import type { PlayerActionAnalysis } from "../multiplayerAgent/orchestrator/orchestratorAgent.js";
 import {
-  emptyTemporaryInfo,
   type MultiplayerDynamicGameStateManager,
   type MultiplayerSceneRoomState,
 } from "../multiplayerState/MultiplayerDynamicGameState.js";
+import type { DynamicScenarioSnapshot } from "../world_builder/types.js";
 
 // =============================================
 // Public types
@@ -71,6 +70,24 @@ function findActiveSceneRoomByScene(
   );
 }
 
+/**
+ * Look up a pre-generated DynamicScenarioSnapshot by scene name.
+ * Returns the latest snapshot for the matching scenario, or null if none found.
+ */
+export function findSnapshotBySceneName(
+  manager: MultiplayerDynamicGameStateManager,
+  targetSceneName: string
+): { scenarioId: string; snapshot: DynamicScenarioSnapshot } | null {
+  const state = manager.getState();
+  const outline = state.scenarioOutlines.find(
+    (o) => o.name.toLowerCase() === targetSceneName.toLowerCase()
+  );
+  if (!outline) return null;
+  const snapshots = state.updatedDynamicScenarioSnapshots.get(outline.id);
+  if (!snapshots || snapshots.length === 0) return null;
+  return { scenarioId: outline.id, snapshot: snapshots[snapshots.length - 1] };
+}
+
 // =============================================
 // resolveAllMovements — unified entry point
 // =============================================
@@ -94,8 +111,7 @@ function findActiveSceneRoomByScene(
  * is cleared to prevent stale data from affecting future rounds.
  */
 export async function resolveAllMovements(
-  manager: MultiplayerDynamicGameStateManager,
-  directorAgent: DirectorAgent
+  manager: MultiplayerDynamicGameStateManager
 ): Promise<ResolveMovementsResult> {
   const activeRooms = manager.getActiveSceneRooms();
 
@@ -249,15 +265,6 @@ export async function resolveAllMovements(
       scenarioName: targetSceneName,
       roundNumber: 1,
       turnsInCurrentScene: 0,
-      temporaryInfo: {
-        ...emptyTemporaryInfo(),
-        sceneChangeRequest: {
-          shouldChange: true,
-          targetSceneName,
-          reason: group.reason,
-          timestamp: new Date(),
-        },
-      },
     });
 
     for (const playerId of allMemberIds) {
@@ -271,21 +278,20 @@ export async function resolveAllMovements(
         `(${parentCount} parent${parentCount > 1 ? "s" : ""})`
     );
 
-    // Run DirectorAgent to generate snapshot for the target scene
-    try {
-      await directorAgent.handleActionDrivenSceneChange(
-        manager,
-        mergedChildId,
-        targetSceneName,
-        group.reason
-      );
+    // Look up pre-generated snapshot and set as current scenario
+    const found = findSnapshotBySceneName(manager, targetSceneName);
+    if (found) {
+      manager.updateCurrentScenario(mergedChildId, {
+        snapshot: found.snapshot,
+        scenarioName: targetSceneName,
+        scenarioId: found.scenarioId,
+      });
       console.log(
         `[SceneRoomMerger] Scene transition complete → "${targetSceneName}"`
       );
-    } catch (e) {
-      console.error(
-        `[SceneRoomMerger] Scene transition failed for "${targetSceneName}":`,
-        e
+    } else {
+      console.warn(
+        `[SceneRoomMerger] No pre-generated snapshot found for "${targetSceneName}"`
       );
     }
 
@@ -326,7 +332,6 @@ export async function mergeSceneRooms(
   manager: MultiplayerDynamicGameStateManager,
   sourceIds: string[],
   targetSceneName: string,
-  directorAgent: DirectorAgent,
   reason = "players converged to the same location"
 ): Promise<SceneRoomMergeResult> {
   if (sourceIds.length === 0) {
@@ -356,30 +361,24 @@ export async function mergeSceneRooms(
     scenarioName: targetSceneName,
     roundNumber: 1,
     turnsInCurrentScene: 0,
-    temporaryInfo: {
-      ...emptyTemporaryInfo(),
-      sceneChangeRequest: {
-        shouldChange: true,
-        targetSceneName,
-        reason,
-        timestamp: new Date(),
-      },
-    },
   });
 
   for (const playerId of uniquePlayerIds) {
     manager.relocatePlayerToSceneRoom(playerId, mergedChildId);
   }
 
-  try {
-    await directorAgent.handleActionDrivenSceneChange(
-      manager,
-      mergedChildId,
-      targetSceneName,
-      reason
+  // Look up pre-generated snapshot and set as current scenario
+  const found = findSnapshotBySceneName(manager, targetSceneName);
+  if (found) {
+    manager.updateCurrentScenario(mergedChildId, {
+      snapshot: found.snapshot,
+      scenarioName: targetSceneName,
+      scenarioId: found.scenarioId,
+    });
+  } else {
+    console.warn(
+      `[SceneRoomMerger] mergeSceneRooms — no pre-generated snapshot for "${targetSceneName}"`
     );
-  } catch (e) {
-    console.error(`[SceneRoomMerger] mergeSceneRooms transition failed:`, e);
   }
 
   const mergedChildRoom: ChildRoomInfo = {

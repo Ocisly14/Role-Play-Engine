@@ -10,16 +10,11 @@
  */
 
 import { randomUUID } from "crypto";
-import type {
-  CoCDatabase,
-  CoCDatabaseAdapter,
-} from "../../shared/agents/memory/database/index.js";
-import type { DirectorAgent } from "../multiplayerAgent/director/directorAgent.js";
 import type { PlayerActionAnalysis } from "../multiplayerAgent/orchestrator/orchestratorAgent.js";
 import {
-  emptyTemporaryInfo,
   type MultiplayerDynamicGameStateManager,
 } from "../multiplayerState/MultiplayerDynamicGameState.js";
+import { findSnapshotBySceneName } from "./sceneRoomMerger.js";
 
 // =============================================
 // Public types
@@ -76,9 +71,7 @@ export interface SceneRoomSplitResult {
  */
 export async function evaluateAndSplitSceneRooms(
   manager: MultiplayerDynamicGameStateManager,
-  sceneRoomId: string,
-  directorAgent: DirectorAgent,
-  _db: CoCDatabase | CoCDatabaseAdapter
+  sceneRoomId: string
 ): Promise<SceneRoomSplitResult> {
   const sceneRoom = manager.getSceneRoom(sceneRoomId);
   if (!sceneRoom) {
@@ -214,15 +207,6 @@ export async function evaluateAndSplitSceneRooms(
       snapshotName: sceneRoom.snapshotName,
       roundNumber: 1,
       turnsInCurrentScene: 0,
-      temporaryInfo: {
-        ...emptyTemporaryInfo(),
-        sceneChangeRequest: {
-          shouldChange: true,
-          targetSceneName,
-          reason,
-          timestamp: new Date(),
-        },
-      },
     });
 
     for (const playerId of playerIds) {
@@ -234,21 +218,20 @@ export async function evaluateAndSplitSceneRooms(
         `${playerIds.length} player(s) → "${targetSceneName}"`
     );
 
-    // Run DirectorAgent scene transition logic
-    try {
-      await directorAgent.handleActionDrivenSceneChange(
-        manager,
-        moverChildId,
-        targetSceneName,
-        reason
-      );
+    // Look up pre-generated snapshot and set as current scenario
+    const found = findSnapshotBySceneName(manager, targetSceneName);
+    if (found) {
+      manager.updateCurrentScenario(moverChildId, {
+        snapshot: found.snapshot,
+        scenarioName: targetSceneName,
+        scenarioId: found.scenarioId,
+      });
       console.log(
         `[SceneRoomSplitter] Scene transition complete → "${targetSceneName}"`
       );
-    } catch (e) {
-      console.error(
-        `[SceneRoomSplitter] Scene transition failed for "${targetSceneName}":`,
-        e
+    } else {
+      console.warn(
+        `[SceneRoomSplitter] No pre-generated snapshot found for "${targetSceneName}"`
       );
     }
 

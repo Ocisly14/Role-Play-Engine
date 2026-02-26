@@ -191,9 +191,9 @@ Generate now.`;
  */
 
 export function getTargetSnapshotFromTimelineTemplate(): string {
-  return `# Director Agent - Scene Switch Phase 2 (Target Snapshot + Optional Global Trigger)
+  return `# Director Agent - Scene Switch Phase 2 (Target Snapshots + Optional Global Trigger)
 
-Generate only the target scene snapshot and optional global trigger.
+Generate COMPLETE snapshots for ALL target scenes listed below, plus an optional global trigger.
 
 ## Current Game Time
 - Day: {{currentGameDay}}
@@ -203,14 +203,14 @@ Generate only the target scene snapshot and optional global trigger.
 - previousSnapshotTime: {{previousSnapshotTime}}
 - currentGameTime: {{currentGameTime}}
 
-## Target Scene
+## Target Scenes
 \`\`\`json
-{{targetSceneJson}}
+{{targetScenesJson}}
 \`\`\`
 
-## Target Scene Baseline Snapshot (previous)
+## Target Scenes Baseline Snapshots (previous, one per target)
 \`\`\`json
-{{targetBaselineSnapshotJson}}
+{{targetBaselineSnapshotsJson}}
 \`\`\`
 
 ## Full Action Timeline (from Phase 1)
@@ -248,11 +248,11 @@ null
 {{/if}}
 
 ## Hard Rules
-- Generate targetSnapshot for target scene only.
-- Generate a COMPLETE, DETAILED snapshot with all required fields.
-- targetSnapshot must include: description, gameTime, characters, clues, conditions, keeperNotes, showMap (if needed), and optional connections update.
+- Generate one entry in the \`targetSnapshots\` array for EACH target scene listed above.
+- Each entry must be a COMPLETE, DETAILED snapshot with all required fields.
+- Each snapshot must include: description, gameTime, characters, clues, conditions, keeperNotes, showMap (if needed), and optional connections update.
 - description must be full atmospheric narrative including lighting, sounds, smells, weather, ambiance, and what happened in the time window.
-- characters must be generated from currentGameTime + actionTimeline in this window, deciding who is currently present in target scene.
+- characters must be generated from currentGameTime + actionTimeline in this window, deciding who is currently present in each target scene.
 - each character item in snapshot.characters must contain:
   - id
   - name
@@ -264,15 +264,15 @@ null
 - conditions must be full ScenarioCondition objects (type, description, mechanicalEffect when applicable).
 - keeperNotes should include concise GM-facing notes about scene progression and hidden implications.
 - clues and conditions must be inferred from BOTH NPC timeline + player action log in this window.
-- Scenario Connections Update for Target Scene (CRITICAL):
-  - Based on action timeline, determine whether target scene connections changed.
+- Scenario Connections Update per Target Scene (CRITICAL):
+  - Based on action timeline, determine whether each target scene's connections changed.
   - Consider whether NPC actions logically unlocked/locked doors, opened/closed passages, or discovered/blocked paths.
   - Consider time-based deterioration (e.g., collapsed paths, weakened bridges) and environmental incidents from scene events (e.g., fire, flooding, barricades).
   - Use blocked=true when a connection is physically blocked/locked.
   - Provide blockReason when blocked is true (clear concrete reason).
-  - Output \`targetSnapshot.connections\` ONLY if you determine that the connections state changed; otherwise omit the field.
-- Global Trigger (Optional):
-  - You MAY generate a globalTrigger for future story progression based on:
+  - Output \`connections\` ONLY if you determine that the connections state changed; otherwise omit the field.
+- Global Trigger (Optional, ONE for all targets):
+  - You MAY generate ONE globalTrigger for future story progression based on:
     - new NPC actionLogs timeline,
     - endState definition,
     - predicted important future time/events.
@@ -297,12 +297,14 @@ null
 \`\`\`json
 {
   "currentGameTime": "Day 2, 18:00",
-  "targetScene": { "scenarioId": "SCN_3", "name": "Harbor Warehouse" },
-  "targetBaselineSnapshot": {
-    "description": "A damp warehouse with sealed crates and a salt-heavy air.",
-    "clues": [],
-    "conditions": [{ "type": "lighting", "description": "Dim bulbs", "mechanicalEffect": "Hard to notice details" }]
-  },
+  "targetScenes": [
+    { "scenarioId": "SCN_3", "scenarioName": "Harbor Warehouse", "location": "Harbor Warehouse", "connections": [] },
+    { "scenarioId": "SCN_5", "scenarioName": "Old Chapel", "location": "Old Chapel", "connections": [] }
+  ],
+  "targetBaselineSnapshots": [
+    { "scenarioId": "SCN_3", "snapshot": { "description": "A damp warehouse with sealed crates.", "clues": [], "conditions": [{ "type": "lighting", "description": "Dim bulbs" }] } },
+    { "scenarioId": "SCN_5", "snapshot": { "description": "A cold chapel with cracked stained glass.", "clues": [], "conditions": [] } }
+  ],
   "actionTimeline": {
     "actionTimeline": [
       {
@@ -310,13 +312,7 @@ null
         "npcActionLogUpdates": [
           {
             "id": "npc-dock-foreman",
-            "actionLog": [
-              {
-                "time": "Day 2, 17:20",
-                "location": "Harbor Warehouse",
-                "summary": "Locked the south shutter to delay witnesses from entering the warehouse"
-              }
-            ]
+            "actionLog": [{ "time": "Day 2, 17:20", "location": "Harbor Warehouse", "summary": "Locked the south shutter" }]
           }
         ]
       }
@@ -328,56 +324,49 @@ null
 ### Example Output
 \`\`\`json
 {
-  "targetSnapshot": {
-    "scenarioId": "SCN_3",
-    "snapshot": {
-      "id": "SCN_3_snap_002",
-      "name": "Harbor Warehouse",
-      "location": "Harbor Warehouse",
-      "description": "The warehouse air is thick with diesel and seawater. A newly secured south shutter rattles in the wind, forcing movement through the narrow east aisle where fresh boot marks cut across spilled salt.",
-      "gameTime": "Day 2, 18:00",
-      "showMap": false,
-      "characters": [
-        {
-          "id": "npc-dock-foreman",
-          "name": "Mason Pike",
-          "role": "other",
-          "status": "alive",
-          "location": "Harbor Warehouse",
-          "notes": "Patrolling near the south shutter with a ring of heavy keys, watching every movement."
-        }
-      ],
-      "clues": [
-        {
-          "id": "clue_warehouse_ledger",
-          "clueText": "A wet shipping ledger lists an unscheduled midnight transfer.",
-          "category": "document",
-          "difficulty": "regular",
-          "location": "Office desk drawer",
-          "discoveryMethod": "Investigation",
-          "reveals": ["T7"],
-          "discovered": false
-        }
-      ],
-      "conditions": [
-        {
-          "type": "lighting",
-          "description": "Two bulbs are out, leaving the south side in heavy shadow.",
-          "mechanicalEffect": "Hard (-20%) Spot Hidden near shutter"
-        }
-      ],
-      "keeperNotes": "The shutter lock indicates premeditated containment, not random weather damage."
+  "targetSnapshots": [
+    {
+      "scenarioId": "SCN_3",
+      "snapshot": {
+        "id": "SCN_3_snap_002",
+        "name": "Harbor Warehouse",
+        "location": "Harbor Warehouse",
+        "description": "The warehouse air is thick with diesel and seawater. A newly secured south shutter rattles in the wind.",
+        "gameTime": "Day 2, 18:00",
+        "showMap": false,
+        "characters": [
+          { "id": "npc-dock-foreman", "name": "Mason Pike", "role": "other", "status": "alive", "location": "Harbor Warehouse", "notes": "Patrolling near the south shutter." }
+        ],
+        "clues": [
+          { "id": "clue_warehouse_ledger", "clueText": "A wet shipping ledger.", "category": "document", "difficulty": "regular", "location": "Office desk drawer", "discoveryMethod": "Investigation", "reveals": ["T7"], "discovered": false }
+        ],
+        "conditions": [
+          { "type": "lighting", "description": "Two bulbs are out.", "mechanicalEffect": "Hard (-20%) Spot Hidden near shutter" }
+        ],
+        "keeperNotes": "The shutter lock indicates premeditated containment."
+      },
+      "connections": [
+        { "scenarioName": "Harbor Pier", "relationshipType": "leads_to", "description": "South shutter access", "blocked": true, "blockReason": "Foreman locked the south shutter" }
+      ]
     },
-    "connections": [
-      {
-        "scenarioName": "Harbor Pier",
-        "relationshipType": "leads_to",
-        "description": "South shutter access to pier",
-        "blocked": true,
-        "blockReason": "Foreman locked the south shutter from inside"
+    {
+      "scenarioId": "SCN_5",
+      "snapshot": {
+        "id": "SCN_5_snap_003",
+        "name": "Old Chapel",
+        "location": "Old Chapel",
+        "description": "The chapel remains bitterly cold. Fading candlelight casts long shadows across the stone floor.",
+        "gameTime": "Day 2, 18:00",
+        "showMap": false,
+        "characters": [],
+        "clues": [],
+        "conditions": [
+          { "type": "lighting", "description": "Low candlelight", "mechanicalEffect": "Hard Spot Hidden" }
+        ],
+        "keeperNotes": "No significant changes since last visit."
       }
-    ]
-  },
+    }
+  ],
   "globalTrigger": {
     "timeRestriction": "Day 2, 23:30",
     "timeReason": "Shipment staging reaches irreversible phase near midnight",
@@ -391,39 +380,28 @@ null
 Return ONLY valid JSON:
 \`\`\`json
 {
-  "targetSnapshot": {
-    "scenarioId": "target-scene-id",
-    "snapshot": {
-      "id": "snapshot-id",
-      "name": "scene name",
-      "location": "scene location",
-      "description": "updated scene description",
-      "gameTime": "Day X, HH:MM",
-      "showMap": false,
-      "characters": [
-        {
-          "id": "npc-id",
-          "name": "NPC Name",
-          "role": "other",
-          "status": "alive",
-          "location": "scene location",
-          "notes": "brief scene-presence note"
-        }
-      ],
-      "clues": [],
-      "conditions": [],
-      "keeperNotes": "optional notes"
-    },
-    "connections": [
-      {
-        "scenarioName": "Other Scene",
-        "relationshipType": "leads_to",
-        "description": "optional",
-        "blocked": false,
-        "blockReason": null
-      }
-    ]
-  },
+  "targetSnapshots": [
+    {
+      "scenarioId": "target-scene-id",
+      "snapshot": {
+        "id": "snapshot-id",
+        "name": "scene name",
+        "location": "scene location",
+        "description": "updated scene description",
+        "gameTime": "Day X, HH:MM",
+        "showMap": false,
+        "characters": [
+          { "id": "npc-id", "name": "NPC Name", "role": "other", "status": "alive", "location": "scene location", "notes": "brief note" }
+        ],
+        "clues": [],
+        "conditions": [],
+        "keeperNotes": "optional notes"
+      },
+      "connections": [
+        { "scenarioName": "Other Scene", "relationshipType": "leads_to", "description": "optional", "blocked": false, "blockReason": null }
+      ]
+    }
+  ],
   "globalTrigger": {
     "timeRestriction": "Day X, HH:MM",
     "timeReason": "reason",
@@ -434,8 +412,9 @@ Return ONLY valid JSON:
 \`\`\`
 
 Notes:
-- Include \`targetSnapshot.connections\` only when you determine that the connections state changed; otherwise omit it.
-- globalTrigger can be omitted.
+- \`targetSnapshots\` array must have exactly one entry per target scene from the input.
+- Per-scene \`connections\` only when changed; otherwise omit.
+- globalTrigger is optional and shared across all targets; omit if no significant upcoming events.
 - Do not output extra fields.
 
 Generate now.`;

@@ -49,5 +49,7 @@ export interface MultiplayerGraphState {
     onNarrativeStart?: () => void;
     onNarrativeDelta?: (delta: string) => void;
     onNarrativeEnd?: () => void;
+    onWorldlineUpdateStart?: () => void;
+    onWorldlineUpdateEnd?: () => void;
   };
 }

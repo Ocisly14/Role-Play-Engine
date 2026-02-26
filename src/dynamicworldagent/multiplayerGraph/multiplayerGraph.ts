@@ -16,10 +16,11 @@ import type {
   CoCDatabaseAdapter,
 } from "../../shared/agents/memory/database/index.js";
 import { ScenarioLoader } from "../../shared/agents/memory/scenarioloader/index.js";
-import type { ActionResult } from "../../shared/state/index.js";
+import type { ActionResult, GameEndingInfo } from "../../shared/state/index.js";
 import {
   MultiplayerDynamicGameStateManager,
 } from "../multiplayerState/MultiplayerDynamicGameState.js";
+import { generateSceneRoomImage } from "../multiplayerVisual/sceneImage.js";
 import type { MultiplayerDynamicGameState } from "../multiplayerState/MultiplayerDynamicGameState.js";
 import { ActionAgent } from "../multiplayerAgent/action/actionAgent.js";
 import { CharacterAgent } from "../multiplayerAgent/character/characterAgent.js";
@@ -32,6 +33,30 @@ import { KeeperAgent } from "../multiplayerAgent/keeper/keeperAgent.js";
 import { enrichMemoryContextForSceneRoom } from "../multiplayerAgent/memory/memoryAgent.js";
 import { MultiplayerOrchestratorAgent } from "../multiplayerAgent/orchestrator/orchestratorAgent.js";
 import type { MultiplayerGraphState } from "./MultiplayerGraphState.js";
+
+// =============================================
+// Helpers
+// =============================================
+
+function buildMultiplayerGameEndingInfo(
+  manager: MultiplayerDynamicGameStateManager,
+  endingType: GameEndingInfo["endingType"],
+  fallbackReason: string
+): GameEndingInfo {
+  const state = manager.getState();
+  const summary = state.endState?.summary?.trim();
+  const trigger =
+    state.pointOfNoReturnTrigger || state.endState?.pointOfNoReturn?.trigger;
+  const reasonParts = [fallbackReason];
+  if (summary) reasonParts.push(`终局概述：${summary}`);
+  if (trigger) reasonParts.push(`触发点：${trigger}`);
+  return {
+    isEnded: true,
+    endingType,
+    reason: reasonParts.join(" "),
+    timestamp: new Date(),
+  };
+}
 
 // =============================================
 // Build graph
@@ -329,10 +354,35 @@ export const buildMultiplayerGraph = (
     const sceneRoom = m.getSceneRoom(state.sceneRoomId);
     if (!sceneRoom) return state;
 
-    const language =
-      state.language === "en" || state.language === "zh" ? state.language : "zh";
+    const stream = state.stream;
 
     try {
+      // 1. Check point of no return
+      const reached = m.checkPointOfNoReturn(
+        m.getState().gameDay,
+        m.getState().timeOfDay
+      );
+      if (reached) {
+        console.log(
+          "⚠️  [MP Director] Point of no return reached!",
+          m.getState().pointOfNoReturnTrigger
+        );
+      }
+
+      // 2. Handle scene changes natively (all targets in one pass)
+      try {
+        const sceneChangeResult = await directorAgent.handleMultiplayerSceneChanges(
+          m, state.sceneRoomId
+        );
+        if (sceneChangeResult.anyChanges) {
+          stream?.onSceneChangeStart?.();
+          stream?.onSceneChangeEnd?.();
+        }
+      } catch (e) {
+        console.warn("[MP Director] Scene change handling failed:", e);
+      }
+
+      // 3. Check story progression (existing)
       await directorAgent.checkStoryProgression(m, state.sceneRoomId);
     } catch (e) {
       console.warn("[MP Director] evaluation failed:", e);
@@ -341,7 +391,237 @@ export const buildMultiplayerGraph = (
     return { ...state, dynamicGameState: m.getState() };
   });
 
-  graph.addEdge("director" as any, "keeper" as any);
+  graph.addEdge("director" as any, "gameEndCheck" as any);
+
+  // ---- GAME END CHECK ----
+
+  graph.addNode("gameEndCheck", async (state: MultiplayerGraphState) => {
+    console.log("\n🎯 [MP Game End Check] Checking if game should end...");
+    const m = mgr(state);
+    const gameState = m.getState();
+    const sceneRoom = m.getSceneRoom(state.sceneRoomId);
+    const stream = state.stream;
+
+    if (!sceneRoom) return state;
+
+    // Check 1: Per-player HP/Sanity — ALL players in this sceneRoom must be incapacitated
+    const memberPlayerIds = sceneRoom.memberPlayerIds;
+    let allIncapacitated = memberPlayerIds.length > 0;
+    let incapReason = "";
+
+    for (const pid of memberPlayerIds) {
+      const player = gameState.players[pid];
+      if (!player) continue;
+      const hp = player.profile.status?.hp ?? 1;
+      const sanity = player.profile.status?.sanity ?? 1;
+      if (hp > 0 && sanity > 0) {
+        allIncapacitated = false;
+        break;
+      }
+      if (hp <= 0) incapReason = "death";
+      else if (sanity <= 0) incapReason = "failure";
+    }
+
+    if (allIncapacitated && memberPlayerIds.length > 0) {
+      console.log(
+        `\n🏁 [MP Game End] All players incapacitated (${incapReason})`
+      );
+      m.setGameEnding(
+        buildMultiplayerGameEndingInfo(
+          m,
+          incapReason === "death" ? "death" : "failure",
+          incapReason === "death"
+            ? "所有调查员生命值归零，已无法继续行动。"
+            : "所有调查员理智值归零，已无法继续调查。"
+        )
+      );
+      return { ...state, dynamicGameState: m.getState() };
+    }
+
+    // Check 2: Global trigger + victory
+    try {
+      const triggerResult =
+        await directorAgent.checkGlobalTriggerAndGameEnd(m, state.sceneRoomId);
+
+      if (triggerResult.victoryAchieved) {
+        console.log(`\n🏆 [MP Victory] Victory conditions achieved!`);
+        const victoryReason = triggerResult.achievedVictoryCondition
+          ? `调查员成功阻止了灾难，达成胜利条件：${triggerResult.achievedVictoryCondition}`
+          : "调查员成功阻止了灾难，完成了胜利条件。";
+        m.setGameEnding(
+          buildMultiplayerGameEndingInfo(m, "victory", victoryReason)
+        );
+        return { ...state, dynamicGameState: m.getState() };
+      }
+
+      if (triggerResult.triggered) {
+        console.log(`\n🎯 [MP Global Trigger] Triggered!`);
+
+        if (triggerResult.causesGameEnd) {
+          console.log(`\n🏁 [MP Game End] Global trigger causes game end`);
+          m.setGlobalTrigger(null);
+          m.setContextualData(
+            state.sceneRoomId,
+            "globalTriggerEnded",
+            true
+          );
+          m.setGameEnding(
+            buildMultiplayerGameEndingInfo(
+              m,
+              gameState.endState?.pointOfNoReturn?.type === "time"
+                ? "time_limit"
+                : "failure",
+              "全局触发器已推进到不可逆阶段，游戏结束。"
+            )
+          );
+          return { ...state, dynamicGameState: m.getState() };
+        }
+
+        // Triggered but does NOT cause game end → worldline update
+        console.log(
+          `   ✓ Trigger fired but game continues — running worldline update`
+        );
+
+        stream?.onWorldlineUpdateStart?.();
+        try {
+          await directorAgent.updateNonPlayerScenarios(m);
+
+          const finalState = m.getState();
+          if (finalState.globalTrigger) {
+            console.log(
+              `   ✓ [Worldline] Update complete, new global trigger generated`
+            );
+          } else {
+            console.log(
+              `   ✓ [Worldline] Update complete, no new global trigger`
+            );
+          }
+
+          // Fire-and-forget scene image for ALL active rooms that received worldline updates
+          for (const room of m.getActiveSceneRooms()) {
+            const worldlineSceneUpdate =
+              room.temporaryInfo.contextualData?.worldlineSceneUpdate as
+                | { updatedSnapshot?: unknown }
+                | undefined;
+            if (!worldlineSceneUpdate?.updatedSnapshot || !room.currentScenario) {
+              continue;
+            }
+            const currentScenario = room.currentScenario;
+            const moduleName = finalState.moduleName;
+            void generateSceneRoomImage(currentScenario, moduleName)
+              .then((result) => {
+                if (!result) return;
+                currentScenario.sceneImage = {
+                  path: result.path,
+                  mimeType: result.mimeType,
+                  generatedAt: new Date().toISOString(),
+                };
+                stream?.onSceneImage?.({
+                  imagePath: result.path,
+                  mimeType: result.mimeType,
+                  sceneName: currentScenario.name,
+                  location: currentScenario.location,
+                  gameDay: finalState.gameDay ?? null,
+                  gameTime: finalState.timeOfDay ?? null,
+                  timestamp: new Date().toISOString(),
+                });
+              })
+              .catch((error) => {
+                console.warn(
+                  `[MP GameEndCheck] Worldline scene image failed for room ${room.sceneRoomId}:`,
+                  error
+                );
+              });
+          }
+        } catch (error) {
+          console.error(`   ❌ [MP Worldline] Update failed:`, error);
+        } finally {
+          stream?.onWorldlineUpdateEnd?.();
+        }
+
+        return { ...state, dynamicGameState: m.getState() };
+      }
+
+      console.log(`   ✓ No trigger fired, game continues`);
+    } catch (e) {
+      console.error("[MP GameEndCheck] Global trigger check failed:", e);
+    }
+
+    return { ...state, dynamicGameState: m.getState() };
+  });
+
+  // Conditional routing: gameEndCheck → epilogueKeeper | keeper
+  graph.addConditionalEdges(
+    "gameEndCheck" as any,
+    (state: MultiplayerGraphState) => {
+      const m = mgr(state);
+      const gameState = m.getState();
+
+      if (gameState.gameEnding?.isEnded) {
+        console.log(
+          "🔀 [MP Game End Router] → epilogueKeeper (gameEnding set)"
+        );
+        return "epilogueKeeper";
+      }
+
+      const scr = m.getSceneRoom(state.sceneRoomId);
+      if (scr?.temporaryInfo.contextualData?.globalTriggerEnded) {
+        console.log(
+          "🔀 [MP Game End Router] → epilogueKeeper (global trigger ended)"
+        );
+        return "epilogueKeeper";
+      }
+
+      console.log("🔀 [MP Game End Router] → keeper (game continues)");
+      return "keeper";
+    },
+    {
+      epilogueKeeper: "epilogueKeeper" as any,
+      keeper: "keeper" as any,
+    }
+  );
+
+  // ---- EPILOGUE KEEPER ----
+
+  graph.addNode("epilogueKeeper", async (state: MultiplayerGraphState) => {
+    console.log("📜 [MP EpilogueKeeper] Generating epilogue narrative...");
+    const m = mgr(state);
+    const language =
+      state.language === "en" || state.language === "zh" ? state.language : "zh";
+    const combinedInput = state.roundInputs
+      .filter((i) => i.inputType === "input" && Boolean(i.content?.trim()))
+      .map((i) => i.content?.trim() ?? "")
+      .join("\n");
+
+    try {
+      const result = await keeperAgent.generateEpilogue(
+        combinedInput,
+        m,
+        state.sceneRoomId,
+        language
+      );
+      // Store narrative in sceneRoom contextualData
+      const scr = m.getSceneRoom(state.sceneRoomId);
+      if (scr && result?.narrative) {
+        m.updateSceneRoom(state.sceneRoomId, {
+          temporaryInfo: {
+            ...scr.temporaryInfo,
+            contextualData: {
+              ...scr.temporaryInfo.contextualData,
+              keeperNarrative: result.narrative,
+            },
+          },
+        });
+      }
+    } catch (e) {
+      console.error("[MP EpilogueKeeper] failed:", e);
+    }
+
+    m.clearRoundInputsForSceneRoom(state.sceneRoomId);
+    return { ...state, dynamicGameState: m.getState() };
+  });
+
+  graph.addEdge("epilogueKeeper" as any, END);
 
   // ---- KEEPER ----
 
