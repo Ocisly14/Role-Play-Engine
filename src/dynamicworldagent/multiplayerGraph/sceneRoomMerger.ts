@@ -122,6 +122,92 @@ export function findSnapshotBySceneName(
   return { scenarioId: outline.id, snapshot: snapshots[snapshots.length - 1] };
 }
 
+/**
+ * Sync scenario clue discovered/damaged state from parent rooms into a child room.
+ * When rooms merge, the child inherits the union of all parent rooms' clue states.
+ */
+function syncScenarioCluesFromParents(
+  manager: MultiplayerDynamicGameStateManager,
+  childRoomId: string,
+  parentRoomIds: string[]
+): void {
+  const childRoom = manager.getSceneRoom(childRoomId);
+  if (!childRoom?.currentScenario?.clues) return;
+
+  const discoveredIds = new Set<string>();
+  const damagedIds = new Set<string>();
+
+  for (const parentId of parentRoomIds) {
+    const parent = manager.getSceneRoom(parentId);
+    if (!parent?.currentScenario?.clues) continue;
+    for (const clue of parent.currentScenario.clues) {
+      if (clue.discovered) discoveredIds.add(clue.id);
+      if (clue.damaged) damagedIds.add(clue.id);
+    }
+  }
+
+  for (const clue of childRoom.currentScenario.clues) {
+    if (discoveredIds.has(clue.id) && !clue.discovered) {
+      clue.discovered = true;
+      clue.discoveryDetails = {
+        discoveredBy: "Room merge sync",
+        discoveredAt: new Date().toISOString(),
+        method: "Room merge sync",
+      };
+    }
+    if (damagedIds.has(clue.id) && !clue.damaged) {
+      clue.damaged = true;
+      clue.damageDetails = {
+        damagedBy: "Room merge sync",
+        damagedAt: new Date().toISOString(),
+        reason: "Damage carried over from parent room",
+      };
+    }
+  }
+}
+
+/**
+ * Merge per-player clue/secret knowledge across all members of a child room.
+ * After a room merge, every player in the room learns the union of all
+ * members' revealed/damaged clue IDs — simulating knowledge sharing.
+ */
+function syncPlayerClueKnowledge(
+  manager: MultiplayerDynamicGameStateManager,
+  childRoomId: string
+): void {
+  const childRoom = manager.getSceneRoom(childRoomId);
+  if (!childRoom) return;
+
+  const state = manager.getState();
+  const memberIds = childRoom.memberPlayerIds;
+  if (memberIds.length <= 1) return;
+
+  // Collect the union of all members' knowledge
+  const unionNpcClueIds = new Set<string>();
+  const unionNpcSecretKeys = new Set<string>();
+  const unionScenarioClueIds = new Set<string>();
+  const unionDamagedScenarioClueIds = new Set<string>();
+
+  for (const pid of memberIds) {
+    const ps = state.players[pid];
+    if (!ps) continue;
+    for (const id of ps.revealedNpcClueIds ?? []) unionNpcClueIds.add(id);
+    for (const key of ps.revealedNpcSecretKeys ?? []) unionNpcSecretKeys.add(key);
+    for (const id of ps.revealedScenarioClueIds ?? []) unionScenarioClueIds.add(id);
+    for (const id of ps.damagedScenarioClueIds ?? []) unionDamagedScenarioClueIds.add(id);
+  }
+
+  // Write the union back to every member
+  for (const pid of memberIds) {
+    const ps = state.players[pid];
+    if (!ps) continue;
+    ps.revealedNpcClueIds = [...unionNpcClueIds];
+    ps.revealedNpcSecretKeys = [...unionNpcSecretKeys];
+    ps.revealedScenarioClueIds = [...unionScenarioClueIds];
+    ps.damagedScenarioClueIds = [...unionDamagedScenarioClueIds];
+  }
+}
+
 // =============================================
 // resolveAllMovements — unified entry point
 // =============================================
@@ -276,6 +362,10 @@ export async function resolveAllMovements(
         for (const playerId of allChildMembers) {
           manager.relocatePlayerToSceneRoom(playerId, newChildId);
         }
+
+        // Sync discovered/damaged clue state from parent rooms
+        syncScenarioCluesFromParents(manager, newChildId, parentIds);
+        syncPlayerClueKnowledge(manager, newChildId);
 
         // Time-freeze entering players whose source time is >20 min ahead of target
         const targetAbsMin = toAbsoluteMinutes(
@@ -541,6 +631,10 @@ export async function resolveAllMovements(
       );
     }
 
+    // Sync discovered/damaged clue state from parent rooms
+    syncScenarioCluesFromParents(manager, mergedChildId, parentIds);
+    syncPlayerClueKnowledge(manager, mergedChildId);
+
     newChildRooms.push({
       sceneRoomId: mergedChildId,
       playerIds: allMemberIds,
@@ -635,6 +729,10 @@ export async function mergeSceneRooms(
       `[SceneRoomMerger] mergeSceneRooms — no pre-generated snapshot for "${targetSceneName}"`
     );
   }
+
+  // Sync discovered/damaged clue state from parent rooms
+  syncScenarioCluesFromParents(manager, mergedChildId, sourceIds);
+  syncPlayerClueKnowledge(manager, mergedChildId);
 
   const mergedChildRoom: ChildRoomInfo = {
     sceneRoomId: mergedChildId,

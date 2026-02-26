@@ -592,10 +592,17 @@ export const buildMultiplayerGraph = (
     const m = mgr(state);
     const language =
       state.language === "en" || state.language === "zh" ? state.language : "zh";
+    // Include player names (same pattern as keeper node)
     const combinedInput = state.roundInputs
       .filter((i) => i.inputType === "input" && Boolean(i.content?.trim()))
-      .map((i) => i.content?.trim() ?? "")
+      .map((i) => {
+        const player = m.getState().players[i.playerId];
+        return `${player?.characterName ?? i.playerId}: ${i.content?.trim() ?? ""}`;
+      })
       .join("\n");
+
+    // Store structured inputs for keeper template
+    m.setContextualData(state.sceneRoomId, "roundInputsForKeeper", state.roundInputs);
 
     try {
       const result = await keeperAgent.generateEpilogue(
@@ -639,10 +646,18 @@ export const buildMultiplayerGraph = (
       state.language === "en" || state.language === "zh" ? state.language : "zh";
 
     try {
+      // Include player names (same pattern as memory/combat nodes)
       const combinedInput = state.roundInputs
         .filter((i) => i.inputType === "input" && Boolean(i.content?.trim()))
-        .map((i) => i.content?.trim() ?? "")
+        .map((i) => {
+          const player = m.getState().players[i.playerId];
+          return `${player?.characterName ?? i.playerId}: ${i.content?.trim() ?? ""}`;
+        })
         .join("\n");
+
+      // Store structured inputs for keeper template
+      m.setContextualData(state.sceneRoomId, "roundInputsForKeeper", state.roundInputs);
+
       const result = await keeperAgent.generateNarrative(
         combinedInput,
         m,

@@ -82,6 +82,14 @@ export interface MultiplayerPlayerState {
     fatigueActive: boolean;
     fatigueStartedAtGameTime?: string;
   };
+  /** NPC clue IDs this player has discovered (format: "npcId:clueId") */
+  revealedNpcClueIds: string[];
+  /** NPC secret keys this player has discovered (format: "npcId:secretIndex") */
+  revealedNpcSecretKeys: string[];
+  /** Scenario clue IDs this player has discovered */
+  revealedScenarioClueIds: string[];
+  /** Scenario clue IDs that were damaged in this player's presence */
+  damagedScenarioClueIds: string[];
 }
 
 // =============================================
@@ -290,7 +298,14 @@ export function initialMultiplayerDynamicGameState(params: {
 
   const playerMap: Record<string, MultiplayerPlayerState> = {};
   for (const p of players) {
-    playerMap[p.playerId] = { ...p, currentSceneRoomId: initialSceneRoomId };
+    playerMap[p.playerId] = {
+      ...p,
+      currentSceneRoomId: initialSceneRoomId,
+      revealedNpcClueIds: p.revealedNpcClueIds ?? [],
+      revealedNpcSecretKeys: p.revealedNpcSecretKeys ?? [],
+      revealedScenarioClueIds: p.revealedScenarioClueIds ?? [],
+      damagedScenarioClueIds: p.damagedScenarioClueIds ?? [],
+    };
   }
 
   const initialSceneRoom: MultiplayerSceneRoomState = {

@@ -9,18 +9,23 @@ import type {
 } from "../../../shared/agents/models/gameTypes.js";
 import type { ScenarioClue } from "../../../shared/agents/models/scenarioTypes.js";
 import type {
+  ActionAnalysis,
   ActionResult,
   DiscoveredClue,
 } from "../../../shared/state/index.js";
 import { composeTemplateWithImages } from "../../../template.js";
+import type { HeartbeatActivatedNarrative } from "../../state/index.js";
 import type {
-  DynamicGameState,
-  DynamicGameStateManager,
-  HeartbeatActivatedNarrative,
-} from "../../state/index.js";
-import type { MultiplayerDynamicGameStateManager } from "../../multiplayerState/MultiplayerDynamicGameState.js";
-import type { DynamicCharacterProfile } from "../../world_builder/types.js";
-import type { DynamicNPCProfile } from "../../world_builder/types.js";
+  MultiplayerDynamicGameStateManager,
+  MultiplayerDynamicGameState,
+  MultiplayerSceneRoomState,
+} from "../../multiplayerState/MultiplayerDynamicGameState.js";
+import type {
+  DynamicCharacterProfile,
+  DynamicNPCProfile,
+  DynamicScenarioSnapshot,
+  ScenarioOutline,
+} from "../../world_builder/types.js";
 import { getEpilogueTemplate, getKeeperTemplate } from "./keeperTemplate.js";
 
 interface KeeperRuntime {
@@ -35,51 +40,106 @@ const createRuntime = (): KeeperRuntime => ({
   getSetting: (key: string) => process.env[key],
 });
 
+interface TargetClueAccess {
+  bestSuccessLevel: string; // "regular" | "hard" | "extreme" | "critical" | "none"
+  hasFumble: boolean;
+  playerNames: string[];
+}
+
+interface PerTargetClueAccessMap {
+  targets: Map<string, TargetClueAccess>; // key = NPC name or "scenario"
+  hasFumble: boolean;
+}
+
 /**
  * Keeper Agent - Game master for narrative generation and storytelling
  */
 export class KeeperAgent {
-  private static readonly SUCCESSFUL_OR_FUMBLE_LEVELS = new Set([
-    "regular",
-    "hard",
-    "extreme",
-    "critical",
-    "fumble",
-  ]);
+  private static readonly SUCCESS_RANK: Record<string, number> = {
+    fumble: 0,
+    failure: 0,
+    regular: 1,
+    hard: 2,
+    extreme: 3,
+    critical: 4,
+  };
 
-  private deriveClueAccessFromTurn(
+  /**
+   * Derive per-target clue access levels from this turn's detailed action results.
+   * Each NPC / scenario target gets an independent best success level.
+   */
+  private derivePerTargetClueAccess(
     detailedResultsRaw: Array<Record<string, unknown>>
-  ): { allowRegularPlus: boolean; hasFumble: boolean } {
-    const levels: string[] = [];
+  ): PerTargetClueAccessMap {
+    const targets = new Map<string, TargetClueAccess>();
+    let globalFumble = false;
 
-    const collectFromActionLogs = (entry: unknown) => {
-      if (!Array.isArray(entry)) return;
-      for (const log of entry) {
-        if (!log || typeof log !== "object") continue;
-        const level = (log as Record<string, unknown>).successLevel;
-        if (typeof level === "string") {
-          levels.push(level.toLowerCase());
-        }
-      }
+    const getOrCreate = (key: string): TargetClueAccess => {
+      if (!targets.has(key))
+        targets.set(key, {
+          bestSuccessLevel: "none",
+          hasFumble: false,
+          playerNames: [],
+        });
+      return targets.get(key)!;
+    };
+
+    const rankOf = (level: string): number =>
+      KeeperAgent.SUCCESS_RANK[level.toLowerCase()] ?? 0;
+
+    const rankToLabel = (rank: number): string => {
+      if (rank >= 4) return "critical";
+      if (rank >= 3) return "extreme";
+      if (rank >= 2) return "hard";
+      if (rank >= 1) return "regular";
+      return "none";
     };
 
     for (const detail of detailedResultsRaw) {
-      collectFromActionLogs(detail.actionLog);
+      const playerName =
+        typeof detail.character === "string" ? detail.character : "Unknown";
+
+      // Collect player's own success levels
+      const playerLevels: string[] = [];
+      if (Array.isArray(detail.actionLog)) {
+        for (const log of detail.actionLog as any[]) {
+          const level = log?.successLevel;
+          if (typeof level === "string") playerLevels.push(level.toLowerCase());
+        }
+      }
+      if (playerLevels.includes("fumble")) globalFumble = true;
+
+      const playerBestRank = playerLevels.reduce(
+        (best, l) => Math.max(best, rankOf(l)),
+        0
+      );
+
+      // All actions contribute to "scenario" target
+      const scenarioTarget = getOrCreate("scenario");
+      if (playerBestRank > rankOf(scenarioTarget.bestSuccessLevel)) {
+        scenarioTarget.bestSuccessLevel = rankToLabel(playerBestRank);
+      }
+      if (playerLevels.includes("fumble")) scenarioTarget.hasFumble = true;
+      if (!scenarioTarget.playerNames.includes(playerName))
+        scenarioTarget.playerNames.push(playerName);
+
+      // NPC interactions contribute to per-NPC targets
       if (Array.isArray(detail.npcResponses)) {
-        for (const npcResponse of detail.npcResponses) {
-          if (!npcResponse || typeof npcResponse !== "object") continue;
-          collectFromActionLogs(
-            (npcResponse as Record<string, unknown>).actionLog
-          );
+        for (const resp of detail.npcResponses as any[]) {
+          const npcName = resp?.npcName || resp?.name || resp?.npcId;
+          if (!npcName) continue;
+          const npcTarget = getOrCreate(npcName);
+          if (playerBestRank > rankOf(npcTarget.bestSuccessLevel)) {
+            npcTarget.bestSuccessLevel = rankToLabel(playerBestRank);
+          }
+          if (playerLevels.includes("fumble")) npcTarget.hasFumble = true;
+          if (!npcTarget.playerNames.includes(playerName))
+            npcTarget.playerNames.push(playerName);
         }
       }
     }
 
-    const allowRegularPlus = levels.some((level) =>
-      KeeperAgent.SUCCESSFUL_OR_FUMBLE_LEVELS.has(level)
-    );
-    const hasFumble = levels.includes("fumble");
-    return { allowRegularPlus, hasFumble };
+    return { targets, hasFumble: globalFumble };
   }
 
   private filterScenarioCluesForKeeper(
@@ -90,8 +150,8 @@ export class KeeperAgent {
     return clues
       .filter((clue) => {
         if (!clue) return false;
-        if (clue.discovered) return true;
         if (clue.damaged) return false;
+        if (clue.discovered) return true;
         if (clue.difficulty === "automatic") return true;
         return allowRegularPlus;
       })
@@ -113,138 +173,55 @@ export class KeeperAgent {
   }
 
   /**
-   * Generate narrative description with clue revelation based on current game state and user query
+   * Generate narrative description with clue revelation based on current game state and user query.
    */
-  /**
-   * Build a DynamicGameStateManager-compatible adapter from MultiplayerDynamicGameStateManager.
-   * Internal helper — not exported.
-   */
-  private buildManagerAdapter(
-    manager: MultiplayerDynamicGameStateManager,
-    sceneRoomId: string
-  ): DynamicGameStateManager {
-    const getView = (): any => {
-      const s = manager.getState();
-      const scr = manager.getSceneRoom(sceneRoomId);
-      const playerIds = scr?.memberPlayerIds ?? [];
-      const aggregatedActionLog: ActionLogEntry[] = playerIds
-        .flatMap((id) => ((s.players[id]?.profile as any)?.actionLog ?? []) as ActionLogEntry[]);
-      const firstPlayer = s.players[playerIds[0]];
-
-      // Merge slow-group results into the view so keeper sees ALL actions
-      const baseTemporaryInfo = scr?.temporaryInfo ?? {
-        rules: [],
-        contextualData: {},
-        actionResults: [],
-        actionResultsDetailed: [],
-        currentActionAnalysis: null,
-        npcResponseAnalyses: [],
-        sceneChangeRequest: null,
-        previousScenario: null,
-        slowGroupActionResults: [],
-        slowGroupActionResultsDetailed: [],
-      };
-
-      const mergedActionResults = [
-        ...(baseTemporaryInfo.actionResults ?? []),
-        ...(baseTemporaryInfo.slowGroupActionResults ?? []),
-      ];
-      const mergedActionResultsDetailed = [
-        ...(baseTemporaryInfo.actionResultsDetailed ?? []),
-        ...(baseTemporaryInfo.slowGroupActionResultsDetailed ?? []),
-      ];
-
-      return {
-        ...s,
-        // Override global time with per-room time
-        gameDay: scr?.gameDay ?? s.gameDay,
-        timeOfDay: scr?.timeOfDay ?? s.timeOfDay,
-        currentScenario: scr?.currentScenario ?? null,
-        temporaryInfo: {
-          ...baseTemporaryInfo,
-          actionResults: mergedActionResults,
-          actionResultsDetailed: mergedActionResultsDetailed,
-        },
-        turnsInCurrentScene: scr?.turnsInCurrentScene ?? 0,
-        playerCharacter: {
-          ...(firstPlayer?.profile ?? {}),
-          id: firstPlayer?.characterId ?? "",
-          name: playerIds
-            .map((id) => s.players[id]?.characterName)
-            .filter(Boolean)
-            .join(", "),
-          actionLog: aggregatedActionLog,
-        },
-      };
-    };
-
-    return {
-      getState: getView,
-      getFullGameTime: () => manager.getSceneRoomFullGameTime(sceneRoomId),
-      updateTension: (level: number) => manager.updateTension(level),
-      clearActionResults: () => manager.clearActionResults(sceneRoomId),
-      clearNPCResponseAnalyses: () => manager.clearNPCResponseAnalyses(sceneRoomId),
-      clearActionAnalysis: () => manager.clearActionAnalysis(sceneRoomId),
-      addDiscoveredClue: (clue: any) => manager.addDiscoveredClue(clue),
-      setContextualData: (key: string, value: any) =>
-        manager.setContextualData(sceneRoomId, key, value),
-      getContextualData: (key: string) =>
-        manager.getContextualData(sceneRoomId, key),
-    } as unknown as DynamicGameStateManager;
-  }
-
   async generateNarrative(
     characterInput: string,
-    managerOrDgsm: MultiplayerDynamicGameStateManager | DynamicGameStateManager,
-    sceneRoomIdOrLanguage: string,
-    languageOrOptions?: "en" | "zh" | { onNarrativeDelta?: (delta: string) => void },
+    manager: MultiplayerDynamicGameStateManager,
+    sceneRoomId: string,
+    language: "en" | "zh" = "zh",
     options?: { onNarrativeDelta?: (delta: string) => void }
-  ): Promise<{
-    narrative: string;
-    clueRevelations: any;
-    updatedGameState: DynamicGameState;
-  }> {
-    // Overload resolution
-    let gameStateManager: DynamicGameStateManager;
-    let language: "en" | "zh" = "zh";
-    let selectedSkill: string | null = null;
+  ): Promise<{ narrative: string; clueRevelations: any }> {
+    const runtime = createRuntime();
+    const state = manager.getState();
+    const sceneRoom = manager.getSceneRoom(sceneRoomId)!;
+    const tempInfo = sceneRoom.temporaryInfo;
 
-    if ("getSceneRoom" in managerOrDgsm) {
-      // New multiplayer signature: (characterInput, manager, sceneRoomId, language?, options?)
-      const manager = managerOrDgsm as MultiplayerDynamicGameStateManager;
-      const sceneRoomId = sceneRoomIdOrLanguage;
-      language = (typeof languageOrOptions === "string" ? languageOrOptions : "zh") as "en" | "zh";
-      options = typeof languageOrOptions === "object" && !Array.isArray(languageOrOptions)
-        ? languageOrOptions
-        : options;
-      gameStateManager = this.buildManagerAdapter(manager, sceneRoomId);
-    } else {
-      // Old single-player signature: (characterInput, dgsm, language?, selectedSkill?, options?)
-      gameStateManager = managerOrDgsm as DynamicGameStateManager;
-      language = (typeof sceneRoomIdOrLanguage === "string" && (sceneRoomIdOrLanguage === "en" || sceneRoomIdOrLanguage === "zh"))
-        ? sceneRoomIdOrLanguage as "en" | "zh"
-        : "zh";
-      options = typeof languageOrOptions === "object" && !Array.isArray(languageOrOptions)
-        ? languageOrOptions
-        : options;
-      // Note: selectedSkill is not passed in the new multiplayer API; remains null
+    // Merge fast + slow group action results
+    const mergedActionResults = [
+      ...(tempInfo.actionResults ?? []),
+      ...(tempInfo.slowGroupActionResults ?? []),
+    ];
+    const mergedDetailedResults = [
+      ...(tempInfo.actionResultsDetailed ?? []),
+      ...(tempInfo.slowGroupActionResultsDetailed ?? []),
+    ];
+
+    // Build NPC clue overlay: union of all active players' revealed IDs
+    const playerIds = sceneRoom.memberPlayerIds;
+    const roomRevealedClueIds = new Set<string>();
+    for (const pid of playerIds) {
+      const ps = state.players[pid];
+      if (!ps) continue;
+      for (const id of ps.revealedNpcClueIds ?? []) roomRevealedClueIds.add(id);
     }
 
-    const runtime = createRuntime();
-    const dynamicState = gameStateManager.getState();
+    const npcCharactersWithRoomState = state.npcCharacters.map((npc: any) => ({
+      ...npc,
+      clues: (npc.clues || []).map((clue: any) => ({
+        ...clue,
+        revealed: clue.revealed || roomRevealedClueIds.has(`${npc.id}:${clue.id}`),
+      })),
+    }));
 
-    // 2. Get all action results (player first, then NPCs in executionOrder; same round fed from character → npcAction flow)
-    const allActionResultsRaw = this.getAllActionResults(dynamicState);
-
-    // Filter out fields not used in template (diceRolls, location)
+    // Filter out diceRolls/location from action results
     const allActionResults: Omit<ActionResult, "diceRolls" | "location">[] =
-      allActionResultsRaw.map(({ diceRolls, location, ...result }) => result);
+      mergedActionResults.map(({ diceRolls, location, ...result }) => result);
 
-    // 2.1 Get full action outputs for keeper prompt
-    const detailedResultsRaw = this.getAllActionResultsDetailed(dynamicState);
+    // Build detailed results for template
     const allActionResultsDetailed =
-      detailedResultsRaw.length > 0
-        ? detailedResultsRaw.map((detail, index) => {
+      mergedDetailedResults.length > 0
+        ? mergedDetailedResults.map((detail, index) => {
             const character =
               typeof detail.character === "string"
                 ? detail.character
@@ -256,24 +233,25 @@ export class KeeperAgent {
           })
         : null;
 
-    const clueAccess = this.deriveClueAccessFromTurn(
-      detailedResultsRaw as Array<Record<string, unknown>>
+    const clueAccessMap = this.derivePerTargetClueAccess(
+      mergedDetailedResults as Array<Record<string, unknown>>
     );
 
-    // 1. Get complete scenario information (with clue filtering by current turn outcomes)
+    // Global gate: true if ANY target has a success
+    const allowRegularPlus = [...clueAccessMap.targets.values()].some(
+      (t) => t.bestSuccessLevel !== "none"
+    );
+
+    // Scenario info
+    const currentScenario = sceneRoom.currentScenario;
     const completeScenarioInfo = this.extractCompleteScenarioInfo(
-      dynamicState,
-      clueAccess.allowRegularPlus
+      currentScenario,
+      state.scenarioOutlines,
+      allowRegularPlus
     );
 
-    // 2.1. Get the latest complete action result (for backward compatibility)
-    const latestCompleteActionResult =
-      allActionResults.length > 0
-        ? allActionResults[allActionResults.length - 1]
-        : null;
-
-    // 2.2. Get interaction partner name (if action targets an NPC)
-    const actionAnalysis = dynamicState.temporaryInfo.currentActionAnalysis;
+    // Action analysis from tempInfo
+    const actionAnalysis = tempInfo.currentActionAnalysis;
     const actionTargetName = actionAnalysis?.target?.name || null;
     const actionTargetIntent = actionAnalysis?.target?.intent?.trim()
       ? actionAnalysis.target.intent.trim()
@@ -281,40 +259,50 @@ export class KeeperAgent {
     const hasActionTargetInfo = Boolean(actionTargetName || actionTargetIntent);
     const interactionPartnerName = actionTargetName;
 
-    // 3. Get complete attributes of NPCs involved in action results
+    // All player names for NPC extraction
+    const allPlayerNames = playerIds
+      .map((id) => state.players[id]?.characterName)
+      .filter(Boolean) as string[];
+    const currentLocation = currentScenario?.location || null;
+
+    // Extract NPCs related to action results
     const actionRelatedNpcs = this.extractActionRelatedNpcs(
-      dynamicState,
+      npcCharactersWithRoomState,
+      allPlayerNames,
+      currentLocation,
+      actionAnalysis,
       allActionResults,
       interactionPartnerName,
-      clueAccess.allowRegularPlus
+      allowRegularPlus
     );
 
-    // 5. Detect scene changes - check if sceneChangeRequest indicates a transition
-    const sceneChangeRequest = dynamicState.temporaryInfo.sceneChangeRequest;
+    // Scene transition detection
+    const sceneChangeRequest = tempInfo.sceneChangeRequest;
     const isTransition = sceneChangeRequest?.shouldChange === true;
     const previousScenarioInfo = isTransition
-      ? this.extractPreviousScenarioInfo(dynamicState)
+      ? this.extractPreviousScenarioInfo(tempInfo.previousScenario, state.scenarioOutlines)
       : null;
 
-    // 7. Get conversation history (from contextualData)
+    // Conversation history
     const conversationHistory =
-      (dynamicState.temporaryInfo.contextualData?.conversationHistory as Array<{
+      (tempInfo.contextualData?.conversationHistory as Array<{
         turnNumber: number;
         characterInput: string;
         keeperNarrative: string | null;
       }>) || [];
 
-    // 7.1. Get relevant history from RAG (from contextualData)
+    // Relevant history from RAG
     const relevantHistory =
-      (dynamicState.temporaryInfo.contextualData?.relevantHistory as Array<{
+      (tempInfo.contextualData?.relevantHistory as Array<{
         type: string;
         content: string;
         score: number;
         metadata: Record<string, any>;
       }>) || [];
+
+    // Heartbeat activated narratives
     const heartbeatActivatedNarrativesRaw =
-      (dynamicState.temporaryInfo.contextualData
-        ?.heartbeatActivatedNarratives as HeartbeatActivatedNarrative[]) || [];
+      (tempInfo.contextualData?.heartbeatActivatedNarratives as HeartbeatActivatedNarrative[]) || [];
     const heartbeatActivatedNarratives = heartbeatActivatedNarrativesRaw.filter(
       (item) =>
         !!item &&
@@ -326,10 +314,11 @@ export class KeeperAgent {
         item.sourceTurnNarrative.trim().length > 0 &&
         (item.status === "due" || item.status === "overdue")
     );
-    const hasHeartbeatActivatedNarratives =
-      heartbeatActivatedNarratives.length > 0;
+    const hasHeartbeatActivatedNarratives = heartbeatActivatedNarratives.length > 0;
+
+    // Worldline scene update
     const worldlineSceneUpdate =
-      (dynamicState.temporaryInfo.contextualData?.worldlineSceneUpdate as {
+      (tempInfo.contextualData?.worldlineSceneUpdate as {
         previousSnapshot?: unknown;
         updatedSnapshot?: unknown;
         suddenActionLogs?: Array<{
@@ -347,17 +336,19 @@ export class KeeperAgent {
       worldlineSceneUpdate?.previousSnapshot &&
         worldlineSceneUpdate?.updatedSnapshot
     );
+
+    // Sudden action logs
     const suddenActionLogsRaw =
-      (dynamicState.temporaryInfo.contextualData?.suddenActionLogs as Array<{
+      (tempInfo.contextualData?.suddenActionLogs as Array<{
         id: string;
         name?: string;
         actionLog?: ActionLogEntry[];
       }>) || [];
     const suddenActionLogsTurnInScene = Number(
-      dynamicState.temporaryInfo.contextualData?.suddenActionLogsTurnInScene
+      tempInfo.contextualData?.suddenActionLogsTurnInScene
     );
     const hasFreshSuddenActionLogs =
-      suddenActionLogsTurnInScene === dynamicState.turnsInCurrentScene;
+      suddenActionLogsTurnInScene === sceneRoom.turnsInCurrentScene;
     const suddenActionLogs = hasFreshSuddenActionLogs
       ? suddenActionLogsRaw
           .map((entry) => ({
@@ -370,43 +361,62 @@ export class KeeperAgent {
           .filter((entry) => entry.id && entry.actionLog.length > 0)
       : [];
     const hasSuddenActionLogs = suddenActionLogs.length > 0;
+
     const clearSuddenActionLogsContext = () => {
-      if (!dynamicState.temporaryInfo.contextualData) {
-        dynamicState.temporaryInfo.contextualData = {};
-      }
-      dynamicState.temporaryInfo.contextualData.suddenActionLogs = [];
-      dynamicState.temporaryInfo.contextualData.suddenActionLogsGameTime = null;
-      dynamicState.temporaryInfo.contextualData.suddenActionLogsTurnInScene =
-        null;
-      dynamicState.temporaryInfo.contextualData.worldlineSceneUpdate = null;
+      manager.setContextualData(sceneRoomId, "suddenActionLogs", []);
+      manager.setContextualData(sceneRoomId, "suddenActionLogsGameTime", null);
+      manager.setContextualData(sceneRoomId, "suddenActionLogsTurnInScene", null);
+      manager.setContextualData(sceneRoomId, "worldlineSceneUpdate", null);
     };
 
-    // 8. Calculate current turn number
-    // Current turn is the next turn after the latest in history
+    // Turn number
     const currentTurnNumber =
       conversationHistory.length > 0
         ? Math.max(...conversationHistory.map((h) => h.turnNumber)) + 1
         : 1;
-
-    // 9. Detect if this is the first real player turn (only true when loading module for the first time)
-    // Simple check: if there's no conversation history, this is the first turn
     const isFirstRealTurn = conversationHistory.length === 0;
 
-    // 获取模板
     const template = getKeeperTemplate(language);
 
-    // Prepare template context (JSON-packed to keep template concise)
-    const currentLocation = dynamicState.currentScenario?.location || null;
-    const playerCharacterComplete = this.extractCompletePlayerCharacter(
-      dynamicState.playerCharacter,
-      currentLocation,
-      interactionPartnerName
+    // Build active player IDs (excluding time-frozen players)
+    const frozenPlayerIds = new Set(
+      Object.keys(sceneRoom.timeFrozenPlayers ?? {})
+    );
+    const activePlayerIds = sceneRoom.memberPlayerIds.filter(
+      (id) => !frozenPlayerIds.has(id)
     );
 
-    // Get full game time
-    const fullGameTime = gameStateManager.getFullGameTime();
+    // Individual player character profiles
+    const allPlayerCharacters = activePlayerIds
+      .map((pid) => {
+        const ps = state.players[pid];
+        if (!ps) return null;
+        return this.extractCompletePlayerCharacter(
+          ps.profile,
+          currentLocation,
+          null
+        );
+      })
+      .filter(Boolean);
 
-    // Filter sceneChangeRequest to only include narrative-relevant fields (exclude timestamp)
+    // Structured per-player inputs from contextualData
+    const roundInputsRaw = tempInfo.contextualData?.roundInputsForKeeper as
+      | Array<{ playerId: string; inputType: string; content?: string }>
+      | undefined;
+    const playerInputs = (roundInputsRaw ?? [])
+      .filter((i) => !frozenPlayerIds.has(i.playerId))
+      .map((i) => ({
+        name: state.players[i.playerId]?.characterName ?? i.playerId,
+        content:
+          i.inputType === "skip" || !i.content?.trim()
+            ? "[No action this round]"
+            : i.content.trim(),
+      }));
+
+    // Full game time
+    const fullGameTime = manager.getSceneRoomFullGameTime(sceneRoomId);
+
+    // Scene change request for narrative
     const sceneChangeRequestForNarrative = sceneChangeRequest
       ? {
           shouldChange: sceneChangeRequest.shouldChange,
@@ -415,15 +425,15 @@ export class KeeperAgent {
         }
       : null;
 
-    const templateContext = {
+    const templateContext: Record<string, unknown> = {
       characterInput,
-      allActionResultsDetailed, // Full action outputs (for {{#each}} loop)
-      fullGameTime: fullGameTime, // Complete display: "Day 1, 08:00 (Morning)"
-      tension: dynamicState.tension,
+      allActionResultsDetailed,
+      fullGameTime,
+      tension: state.tension,
       isTransition,
-      sceneChangeRequest: sceneChangeRequestForNarrative, // Scene change request (without timestamp)
-      conversationHistory, // Recent conversation history (for {{#each}} loop)
-      relevantHistory, // RAG-retrieved relevant history (for {{#each}} loop)
+      sceneChangeRequest: sceneChangeRequestForNarrative,
+      conversationHistory,
+      relevantHistory,
       hasHeartbeatActivatedNarratives,
       heartbeatActivatedNarrativesJson: hasHeartbeatActivatedNarratives
         ? this.safeStringify(heartbeatActivatedNarratives)
@@ -431,14 +441,25 @@ export class KeeperAgent {
       hasActionTargetInfo,
       actionTargetName,
       actionTargetIntent,
-      currentTurnNumber, // Current turn number
-      isFirstRealTurn, // Boolean flag for turn 1 detection
-      keeperGuidance: dynamicState.keeperGuidance || null, // Module-specific keeper guidance
-      allowRegularPlusClues: clueAccess.allowRegularPlus,
-      hasFumbleThisTurn: clueAccess.hasFumble,
-      // JSON string version (used directly in template)
+      currentTurnNumber,
+      isFirstRealTurn,
+      keeperGuidance: state.keeperGuidance || null,
+      hasFumbleThisTurn: clueAccessMap.hasFumble,
+      perTargetClueAccessJson: this.safeStringify(
+        Object.fromEntries(
+          [...clueAccessMap.targets.entries()].map(([k, v]) => [
+            k,
+            {
+              bestSuccessLevel: v.bestSuccessLevel,
+              interactedBy: v.playerNames,
+            },
+          ])
+        )
+      ),
       scenarioContextJson: this.safeStringify(completeScenarioInfo),
-      playerCharacterJson: this.safeStringify(playerCharacterComplete),
+      playerCharacterJson: this.safeStringify(allPlayerCharacters),
+      playerInputs,
+      hasPlayerInputs: playerInputs.length > 0,
       actionRelatedNpcsJson: this.safeStringify(actionRelatedNpcs),
       hasWorldlineSceneUpdate,
       worldlinePreviousSnapshotJson: hasWorldlineSceneUpdate
@@ -462,10 +483,10 @@ export class KeeperAgent {
       previousScenarioJson: previousScenarioInfo
         ? this.safeStringify(previousScenarioInfo)
         : "null",
-      selectedSkill: selectedSkill || null,
+      selectedSkill: null,
       // Time-grouping context for multiplayer
       ...((): Record<string, unknown> => {
-        const tgInfo = dynamicState.temporaryInfo.contextualData?.timeGroupingInfo as {
+        const tgInfo = tempInfo.contextualData?.timeGroupingInfo as {
           hasTimeGrouping?: boolean;
           fastGroupPlayerNames?: string;
           slowGroupPlayerNames?: string;
@@ -481,10 +502,10 @@ export class KeeperAgent {
       })(),
     };
 
-    // Use template and LLM to generate narrative and clue revelations
+    // Compose template with images (pass minimal state for scenario map extraction)
     const { content: prompt, images } = composeTemplateWithImages(
       template,
-      { dynamicGameState: dynamicState },
+      { dynamicGameState: { currentScenario } } as any,
       templateContext,
       "handlebars"
     );
@@ -494,7 +515,7 @@ export class KeeperAgent {
       : null;
     let response = "";
     let parsedResponse: any;
-    const maxAttempts = narrativeStream ? 1 : 2; // Avoid duplicate streaming retries
+    const maxAttempts = narrativeStream ? 1 : 2;
 
     for (let attempt = 1; attempt <= maxAttempts; attempt++) {
       try {
@@ -509,7 +530,6 @@ export class KeeperAgent {
             : undefined,
         });
 
-        // Extract JSON from response (in case LLM wraps it in markdown code blocks)
         const jsonText =
           response.match(/```(?:json)?\s*([\s\S]*?)```/i)?.[1] ||
           response.match(/\{[\s\S]*\}/)?.[0];
@@ -532,7 +552,6 @@ export class KeeperAgent {
               npcSecrets: [],
               damagedScenarioClues: [],
             },
-            updatedGameState: dynamicState,
           };
         }
 
@@ -540,7 +559,7 @@ export class KeeperAgent {
         console.log(
           `✅ Successfully parsed keeper response on attempt ${attempt}`
         );
-        break; // Success, exit retry loop
+        break;
       } catch (error) {
         if (attempt < maxAttempts) {
           console.warn(
@@ -549,11 +568,9 @@ export class KeeperAgent {
           continue;
         }
 
-        // Final attempt failed
         console.error("Failed to parse keeper response as JSON:", error);
         console.warn("Response content:", response);
 
-        // Try to extract narrative from incomplete JSON
         let fallbackNarrative = response;
         const narrativeMatch = response.match(
           /"narrative"\s*:\s*"((?:[^"\\]|\\.)*)"/
@@ -575,35 +592,96 @@ export class KeeperAgent {
             npcSecrets: [],
             damagedScenarioClues: [],
           },
-          updatedGameState: dynamicState,
         };
       }
     }
 
-    // Update clue states in game state
-    const updatedGameState = this.updateClueStates(
-      dynamicState,
+    // Update clue states directly on manager state
+    this.updateClueStates(
+      manager,
+      sceneRoomId,
       parsedResponse.clueRevelations,
-      gameStateManager
+      allPlayerNames,
+      clueAccessMap
     );
 
-    // Update tension (if provided by LLM)
+    // Record clue/secret revelations to each active player in the room
+    if (parsedResponse.clueRevelations) {
+      const newNpcClueKeys: string[] = [];
+      const newNpcSecretKeys: string[] = [];
+      const newScenarioClueIds: string[] = [];
+      const newDamagedScenarioClueIds: string[] = [];
+
+      if (Array.isArray(parsedResponse.clueRevelations.npcClues)) {
+        for (const item of parsedResponse.clueRevelations.npcClues) {
+          if (item?.npcId && item?.clueId) {
+            newNpcClueKeys.push(`${item.npcId}:${item.clueId}`);
+          }
+        }
+      }
+      if (Array.isArray(parsedResponse.clueRevelations.npcSecrets)) {
+        for (const item of parsedResponse.clueRevelations.npcSecrets) {
+          if (item?.npcId != null && item?.secretIndex != null) {
+            newNpcSecretKeys.push(`${item.npcId}:${item.secretIndex}`);
+          }
+        }
+      }
+      if (Array.isArray(parsedResponse.clueRevelations.scenarioClues)) {
+        for (const item of parsedResponse.clueRevelations.scenarioClues) {
+          const clueId = typeof item === "string" ? item : item?.clueId;
+          if (clueId) newScenarioClueIds.push(clueId);
+        }
+      }
+      if (Array.isArray(parsedResponse.clueRevelations.damagedScenarioClues)) {
+        for (const item of parsedResponse.clueRevelations.damagedScenarioClues) {
+          const clueId = typeof item === "string" ? item : item?.clueId;
+          if (clueId) newDamagedScenarioClueIds.push(clueId);
+        }
+      }
+
+      const hasAny =
+        newNpcClueKeys.length > 0 ||
+        newNpcSecretKeys.length > 0 ||
+        newScenarioClueIds.length > 0 ||
+        newDamagedScenarioClueIds.length > 0;
+
+      if (hasAny) {
+        const allState = manager.getState();
+        for (const pid of activePlayerIds) {
+          const ps = allState.players[pid];
+          if (!ps) continue;
+          if (!ps.revealedNpcClueIds) ps.revealedNpcClueIds = [];
+          if (!ps.revealedNpcSecretKeys) ps.revealedNpcSecretKeys = [];
+          if (!ps.revealedScenarioClueIds) ps.revealedScenarioClueIds = [];
+          if (!ps.damagedScenarioClueIds) ps.damagedScenarioClueIds = [];
+          for (const key of newNpcClueKeys) {
+            if (!ps.revealedNpcClueIds.includes(key)) ps.revealedNpcClueIds.push(key);
+          }
+          for (const key of newNpcSecretKeys) {
+            if (!ps.revealedNpcSecretKeys.includes(key)) ps.revealedNpcSecretKeys.push(key);
+          }
+          for (const id of newScenarioClueIds) {
+            if (!ps.revealedScenarioClueIds.includes(id)) ps.revealedScenarioClueIds.push(id);
+          }
+          for (const id of newDamagedScenarioClueIds) {
+            if (!ps.damagedScenarioClueIds.includes(id)) ps.damagedScenarioClueIds.push(id);
+          }
+        }
+      }
+    }
+
+    // Update tension
     if (
       parsedResponse.tensionLevel &&
       typeof parsedResponse.tensionLevel === "number"
     ) {
-      const oldTension = dynamicState.tension;
-      gameStateManager.updateTension(parsedResponse.tensionLevel);
-      const newTension = gameStateManager.getState().tension;
+      const oldTension = state.tension;
+      manager.updateTension(parsedResponse.tensionLevel);
+      const newTension = manager.getState().tension;
       if (oldTension !== newTension) {
         console.log(`🎭 Tension changed: ${oldTension} → ${newTension}`);
       }
     }
-
-    // Note: sceneChangeRequest is now cleared by Director Agent (which runs before Keeper)
-    // Temporary state is now preserved until next real player input
-    // Cleanup happens in entry node for real input only
-    const finalGameState = updatedGameState;
 
     clearSuddenActionLogsContext();
     return {
@@ -614,111 +692,91 @@ export class KeeperAgent {
         npcSecrets: [],
         damagedScenarioClues: [],
       },
-      updatedGameState: finalGameState,
     };
   }
 
   /**
    * Generate epilogue narrative when game ends.
-   *
-   * Overloaded for multiplayer:
-   *   generateEpilogue(characterInput, multiplayerManager, sceneRoomId, language?)
-   * Single-player (original):
-   *   generateEpilogue(characterInput, dgsm, language?)
    */
   async generateEpilogue(
     characterInput: string,
-    managerOrDgsm: MultiplayerDynamicGameStateManager | DynamicGameStateManager,
-    sceneRoomIdOrLanguage?: string,
-    language?: "en" | "zh"
-  ): Promise<{
-    narrative: string;
-    clueRevelations: any;
-    updatedGameState: DynamicGameState;
-  }> {
-    // Overload resolution (same pattern as generateNarrative)
-    let gameStateManager: DynamicGameStateManager;
-    let resolvedLanguage: "en" | "zh" = "zh";
-
-    if ("getSceneRoom" in managerOrDgsm) {
-      // Multiplayer: (characterInput, manager, sceneRoomId, language?)
-      const manager = managerOrDgsm as MultiplayerDynamicGameStateManager;
-      const sceneRoomId = sceneRoomIdOrLanguage!;
-      resolvedLanguage = language ?? "zh";
-      gameStateManager = this.buildManagerAdapter(manager, sceneRoomId);
-    } else {
-      // Single-player: (characterInput, dgsm, language?)
-      gameStateManager = managerOrDgsm as DynamicGameStateManager;
-      resolvedLanguage =
-        sceneRoomIdOrLanguage === "en" || sceneRoomIdOrLanguage === "zh"
-          ? sceneRoomIdOrLanguage
-          : "zh";
-    }
-
+    manager: MultiplayerDynamicGameStateManager,
+    sceneRoomId: string,
+    language: "en" | "zh" = "zh"
+  ): Promise<{ narrative: string; clueRevelations: any }> {
     const runtime = createRuntime();
-    const dynamicState = gameStateManager.getState();
+    const state = manager.getState();
+    const sceneRoom = manager.getSceneRoom(sceneRoomId)!;
 
     // Get endState
-    const endState = dynamicState.endState;
+    const endState = state.endState;
     if (!endState) {
       throw new Error("Cannot generate epilogue: endState is not defined");
     }
 
-    // Get player character information
-    const currentLocation = dynamicState.currentScenario?.location || null;
-    const playerCharacter = this.extractCompletePlayerCharacter(
-      dynamicState.playerCharacter,
-      currentLocation,
-      null // No interaction partner for epilogue
+    // Build player character information for all active players
+    const currentLocation = sceneRoom.currentScenario?.location || null;
+    const frozenPlayerIds = new Set(
+      Object.keys(sceneRoom.timeFrozenPlayers ?? {})
     );
+    const activePlayerIds = sceneRoom.memberPlayerIds.filter(
+      (id) => !frozenPlayerIds.has(id)
+    );
+    const allPlayerCharacters = activePlayerIds
+      .map((pid) => {
+        const ps = state.players[pid];
+        if (!ps) return null;
+        return this.extractCompletePlayerCharacter(
+          ps.profile,
+          currentLocation,
+          null
+        );
+      })
+      .filter(Boolean);
 
-    // Get conversation history (last 1 turn for continuity anchor)
+    // Conversation history (last 1 turn)
     const conversationHistory =
-      (dynamicState.temporaryInfo.contextualData?.conversationHistory as Array<{
+      (sceneRoom.temporaryInfo.contextualData?.conversationHistory as Array<{
         turnNumber: number;
         characterInput: string;
         keeperNarrative: string | null;
       }>) || [];
-
     const recentHistory = conversationHistory.slice(-1);
 
     // Format full game time
-    const fullGameTime = `Day ${dynamicState.gameDay}, ${dynamicState.timeOfDay}`;
+    const fullGameTime = manager.getSceneRoomFullGameTime(sceneRoomId);
 
-    // Use epilogue template
-    const template = getEpilogueTemplate(resolvedLanguage);
-
-    // Get macroScene
-    const macroScene = dynamicState.macroScene;
+    const template = getEpilogueTemplate(language);
+    const macroScene = state.macroScene;
 
     const templateContext = {
       characterInput,
       macroSceneJson: macroScene ? JSON.stringify(macroScene, null, 2) : "null",
       endStateJson: JSON.stringify(endState, null, 2),
       pointOfNoReturnTrigger:
-        dynamicState.pointOfNoReturnTrigger || endState.pointOfNoReturn.trigger,
+        state.pointOfNoReturnTrigger || endState.pointOfNoReturn.trigger,
       fullGameTime,
-      playerCharacterJson: this.safeStringify(playerCharacter),
+      playerCharacterJson: this.safeStringify(allPlayerCharacters),
       gameHistoryJson: JSON.stringify(recentHistory, null, 2),
-      gameEndingJson: this.safeStringify(dynamicState.gameEnding || null),
+      gameEndingJson: this.safeStringify(state.gameEnding || null),
       achievedVictoryCondition:
-        typeof dynamicState.temporaryInfo.contextualData
+        typeof sceneRoom.temporaryInfo.contextualData
           ?.triggerCheckAchievedVictoryCondition === "string"
-          ? dynamicState.temporaryInfo.contextualData
+          ? sceneRoom.temporaryInfo.contextualData
               .triggerCheckAchievedVictoryCondition
           : null,
       triggerCheckEvidenceJson: this.safeStringify(
-        dynamicState.temporaryInfo.contextualData?.triggerCheckEvidence || []
+        sceneRoom.temporaryInfo.contextualData?.triggerCheckEvidence || []
       ),
       triggerCheckCurrentTurnActionLogsJson: this.safeStringify(
-        dynamicState.temporaryInfo.contextualData
+        sceneRoom.temporaryInfo.contextualData
           ?.triggerCheckCurrentTurnActionLogs || []
       ),
     };
 
     const { content: prompt, images } = composeTemplateWithImages(
       template,
-      { dynamicGameState: dynamicState },
+      { dynamicGameState: { currentScenario: sceneRoom.currentScenario } } as any,
       templateContext,
       "handlebars"
     );
@@ -733,10 +791,9 @@ export class KeeperAgent {
           runtime,
           context: prompt,
           images,
-          modelClass: ModelClass.LARGE, // Use large model for epilogue quality
+          modelClass: ModelClass.LARGE,
         });
 
-        // Parse JSON response
         let jsonText = response.trim();
         const codeBlockMatch = jsonText.match(/```(?:json)?\s*([\s\S]*?)```/i);
         if (codeBlockMatch) {
@@ -753,7 +810,7 @@ export class KeeperAgent {
         parsedResponse = JSON.parse(jsonText);
 
         if (parsedResponse.narrative) {
-          break; // Success
+          break;
         }
       } catch (error) {
         if (attempt === maxAttempts) {
@@ -773,53 +830,18 @@ export class KeeperAgent {
 
     return {
       narrative: parsedResponse.narrative || response,
-      clueRevelations: null, // Epilogue doesn't reveal new clues
-      updatedGameState: dynamicState,
+      clueRevelations: null,
     };
   }
 
   /**
-   * Clear temporary state content
-   * @deprecated Cleanup now happens in entry node for real player input.
-   * Kept for backward compatibility but no longer called.
-   */
-  private clearTemporaryState(
-    dynamicState: DynamicGameState,
-    gameStateManager: DynamicGameStateManager
-  ): DynamicGameState {
-    console.log("\n🧹 [Keeper Agent] Clearing temporary state content...");
-
-    // Clear action results
-    gameStateManager.clearActionResults();
-    console.log("   ✓ Cleared action results");
-
-    // Clear NPC response analyses
-    gameStateManager.clearNPCResponseAnalyses();
-    console.log("   ✓ Cleared NPC response analyses");
-
-    // Clear action analysis
-    gameStateManager.clearActionAnalysis();
-    console.log("   ✓ Cleared action analysis");
-
-    // Clear temporary rules
-    const updatedState = gameStateManager.getState();
-    updatedState.temporaryInfo.rules = [];
-    console.log("   ✓ Cleared temporary rules");
-
-    console.log("✅ [Keeper Agent] Temporary state content cleared");
-
-    return updatedState;
-  }
-
-  /**
-   * 1. Extract complete scenario information
+   * Extract complete scenario information.
    */
   private extractCompleteScenarioInfo(
-    dynamicState: DynamicGameState,
-    allowRegularPlusClues: boolean
+    currentScenario: DynamicScenarioSnapshot | null,
+    scenarioOutlines: ScenarioOutline[],
+    allowRegularPlus: boolean
   ) {
-    const currentScenario = dynamicState.currentScenario;
-
     if (!currentScenario) {
       return {
         hasScenario: false,
@@ -827,26 +849,20 @@ export class KeeperAgent {
       };
     }
 
-    // Find connections for current scenario from scenarioOutlines
-    const currentScenarioOutline = dynamicState.scenarioOutlines.find(
+    const currentScenarioOutline = scenarioOutlines.find(
       (outline) =>
         outline.id === currentScenario.id ||
         outline.name === currentScenario.name
     );
     const connections = currentScenarioOutline?.connections || [];
 
-    // Full snapshot minus gameTime and sceneImage, plus scenario-level connections
     const { gameTime, sceneImage, ...snapshot } = currentScenario;
 
     return {
       ...snapshot,
-      clues: this.filterScenarioCluesForKeeper(
-        snapshot.clues,
-        allowRegularPlusClues
-      ),
+      clues: this.filterScenarioCluesForKeeper(snapshot.clues, allowRegularPlus),
       connections: connections.map((conn) => {
-        // Find target scenario to get proper name and id
-        const targetScenario = dynamicState.scenarioOutlines.find(
+        const targetScenario = scenarioOutlines.find(
           (outline) =>
             outline.name === conn.scenarioName ||
             outline.id === conn.scenarioName
@@ -864,25 +880,23 @@ export class KeeperAgent {
   }
 
   /**
-   * Extract previous scenario information (for scene transitions)
-   * Reads from temporaryInfo.previousScenario (saved by Director Agent before scene switch)
+   * Extract previous scenario information (for scene transitions).
    */
-  private extractPreviousScenarioInfo(dynamicState: DynamicGameState) {
-    const previousScenario = dynamicState.temporaryInfo.previousScenario;
-
+  private extractPreviousScenarioInfo(
+    previousScenario: DynamicScenarioSnapshot | null,
+    scenarioOutlines: ScenarioOutline[]
+  ) {
     if (!previousScenario) {
       return null;
     }
 
-    // Find connections for previous scenario from scenarioOutlines
-    const previousScenarioOutline = dynamicState.scenarioOutlines.find(
+    const previousScenarioOutline = scenarioOutlines.find(
       (outline) =>
         outline.id === previousScenario.id ||
         outline.name === previousScenario.name
     );
     const connections = previousScenarioOutline?.connections || [];
 
-    // Return simplified scenario info for previous scene
     return {
       hasScenario: true,
       id: previousScenario.id,
@@ -891,8 +905,7 @@ export class KeeperAgent {
       description: previousScenario.description,
       characters: previousScenario.characters || [],
       connections: connections.map((conn) => {
-        // Find target scenario to get proper name and id
-        const targetScenario = dynamicState.scenarioOutlines.find(
+        const targetScenario = scenarioOutlines.find(
           (outline) =>
             outline.name === conn.scenarioName ||
             outline.id === conn.scenarioName
@@ -926,55 +939,31 @@ export class KeeperAgent {
   }
 
   /**
-   * 2. Get all action results (including player and NPC actions)
-   */
-  private getAllActionResults(dynamicState: DynamicGameState): ActionResult[] {
-    const actionResults = dynamicState.temporaryInfo.actionResults || [];
-
-    // Return complete information for all action results
-    return actionResults.map((result) => ({
-      ...result,
-      diceRolls: result.diceRolls || [],
-    }));
-  }
-
-  /**
-   * Get full action outputs (raw JSON from Action Agent).
-   */
-  private getAllActionResultsDetailed(
-    dynamicState: DynamicGameState
-  ): Array<Record<string, unknown>> {
-    return dynamicState.temporaryInfo.actionResultsDetailed || [];
-  }
-
-  /**
-   * 3. Extract complete attributes of NPCs involved in all action results
-   * @param interactionPartnerName If provided, NPCs will include their interaction history with this character
+   * Extract complete attributes of NPCs involved in all action results.
    */
   private extractActionRelatedNpcs(
-    dynamicState: DynamicGameState,
+    npcCharacters: any[],
+    allPlayerNames: string[],
+    currentLocation: string | null,
+    actionAnalysis: ActionAnalysis | null,
     allActionResults: Omit<ActionResult, "diceRolls" | "location">[],
     interactionPartnerName: string | null = null,
-    allowRegularPlusClues: boolean
+    allowRegularPlus = false
   ) {
     if (!allActionResults || allActionResults.length === 0) {
       return [];
     }
 
-    // Collect related NPC names from all action results (deduplicated)
     const relatedNpcNames = new Set<string>();
-    const playerName = dynamicState.playerCharacter.name;
 
     // Extract related NPCs from all action results
     for (const actionResult of allActionResults) {
-      // Add character from action result (if it's an NPC)
-      if (actionResult.character && actionResult.character !== playerName) {
+      if (actionResult.character && !allPlayerNames.includes(actionResult.character)) {
         relatedNpcNames.add(actionResult.character);
       }
 
-      // Extract possible NPC names from action result text (simple matching)
       if (actionResult.result) {
-        dynamicState.npcCharacters.forEach((npc) => {
+        npcCharacters.forEach((npc: any) => {
           if (
             actionResult.result.toLowerCase().includes(npc.name.toLowerCase())
           ) {
@@ -985,7 +974,6 @@ export class KeeperAgent {
     }
 
     // Get target character from action analysis
-    const actionAnalysis = dynamicState.temporaryInfo.currentActionAnalysis;
     if (actionAnalysis?.target?.name) {
       relatedNpcNames.add(actionAnalysis.target.name);
     }
@@ -995,24 +983,19 @@ export class KeeperAgent {
     const addedNpcIds = new Set<string>();
 
     for (const npcName of relatedNpcNames) {
-      // Find NPC
-      const npc = dynamicState.npcCharacters.find(
-        (n) =>
+      const npc = npcCharacters.find(
+        (n: any) =>
           n.name.toLowerCase() === npcName.toLowerCase() ||
           n.name.toLowerCase().includes(npcName.toLowerCase())
       );
 
       if (npc && !addedNpcIds.has(npc.id)) {
-        // Avoid adding the same NPC twice
         addedNpcIds.add(npc.id);
-        const currentLocation = dynamicState.currentScenario?.location || null;
 
-        // If this NPC is the interaction partner, include player's name to get interaction history
-        // Otherwise just use current location filtering
         const partnerForThisNpc =
           interactionPartnerName &&
           npc.name.toLowerCase().includes(interactionPartnerName.toLowerCase())
-            ? playerName
+            ? allPlayerNames[0] ?? null
             : null;
 
         actionRelatedNpcs.push({
@@ -1021,7 +1004,7 @@ export class KeeperAgent {
             npc,
             currentLocation,
             partnerForThisNpc,
-            allowRegularPlusClues
+            allowRegularPlus
           ),
         });
       }
@@ -1031,41 +1014,30 @@ export class KeeperAgent {
   }
 
   /**
-   * Extract complete character attribute information
-   * @param character Character information
-   * @param currentLocation Current scene location (for filtering action log)
-   * @param interactionPartnerName Optional: if provided, also include action logs involving this partner (from any scene)
+   * Extract complete character attribute information.
    */
   private extractCompleteCharacterAttributes(
     character: DynamicCharacterProfile,
     currentLocation: string | null = null,
     interactionPartnerName: string | null = null,
-    allowRegularPlusClues = false
+    allowRegularPlus = false
   ) {
     const npcData = character as DynamicNPCProfile;
 
-    // NOTE: Action log filtering removed - now handled by RAG semantic search
-    // The RAG system (BM25 + Vector) provides more intelligent retrieval
-    // of relevant historical actions through temporaryInfo.relevantHistory
-
     return {
-      // Basic information
       id: character.id,
       name: character.name,
       isNPC: npcData.isNPC === true,
 
-      // Personal details
       occupation: npcData.occupation || "Unknown",
       age: npcData.age,
       appearance: npcData.appearance || "No description",
       personality: npcData.personality || "Unknown personality",
       background: npcData.background || "Unknown background",
 
-      // Goals and secrets
       goals: npcData.goals || [],
       secrets: npcData.secrets || [],
 
-      // Status (only essential info for narrative)
       status: {
         hp: character.status.hp,
         maxHp: character.status.maxHp,
@@ -1074,38 +1046,24 @@ export class KeeperAgent {
         conditions: character.status.conditions || [],
       },
 
-      // Items
       inventory: character.inventory || [],
 
-      // Action log filtered to the current scene
       actionLog: currentLocation
         ? (character.actionLog || []).filter(
             (log) => log.location === currentLocation
           )
         : (character.actionLog || []),
 
-      // Clues (if NPC)
-      clues: this.filterNpcCluesForKeeper(
-        npcData.clues || [],
-        allowRegularPlusClues
-      ),
+      clues: this.filterNpcCluesForKeeper(npcData.clues || [], allowRegularPlus),
 
-      // Relationships (if NPC)
       relationships: npcData.relationships || [],
 
-      // Notes
       notes: character.notes || "",
     };
   }
 
   /**
-   * Extract complete player character information
-   * @param player Player character information
-   * @param currentLocation Current scene location (retained for backward compatibility)
-   * @param interactionPartnerName Optional: NPC name (retained for backward compatibility)
-   *
-   * NOTE: currentLocation and interactionPartnerName are no longer used for action log filtering
-   * Action history is now provided by RAG semantic search via relevantHistory
+   * Extract complete player character information.
    */
   private extractCompletePlayerCharacter(
     player: DynamicCharacterProfile,
@@ -1120,22 +1078,35 @@ export class KeeperAgent {
   }
 
   /**
-   * Update clue states in game state
+   * Update clue states directly on the multiplayer game state.
    */
   private updateClueStates(
-    dynamicState: DynamicGameState,
+    manager: MultiplayerDynamicGameStateManager,
+    sceneRoomId: string,
     clueRevelations: any,
-    gameStateManager: DynamicGameStateManager
-  ): DynamicGameState {
+    allPlayerNames: string[],
+    clueAccessMap?: PerTargetClueAccessMap
+  ): void {
+    const state = manager.getState();
+    const sceneRoom = manager.getSceneRoom(sceneRoomId);
+    const currentScenario = sceneRoom?.currentScenario;
     const newDiscoveredClues: DiscoveredClue[] = [];
     const damagedScenarioClueIds = new Set<string>();
 
-    // Apply scenario clue damage first: damaged clues cannot be revealed later
+    // Helper: get discoveredBy names from clueAccessMap for a given target key
+    const getDiscoveredBy = (targetKey: string): string => {
+      const targetAccess = clueAccessMap?.targets.get(targetKey);
+      if (targetAccess && targetAccess.playerNames.length > 0) {
+        return targetAccess.playerNames.join(", ");
+      }
+      return allPlayerNames.join(", ") || "Unknown";
+    };
+
+    // Apply scenario clue damage first
     if (
       clueRevelations?.damagedScenarioClues &&
       Array.isArray(clueRevelations.damagedScenarioClues)
     ) {
-      const currentScenario = dynamicState.currentScenario;
       if (currentScenario?.clues) {
         clueRevelations.damagedScenarioClues.forEach(
           (item: string | { clueId: string; reason?: string }) => {
@@ -1149,7 +1120,7 @@ export class KeeperAgent {
             if (!clue || clue.discovered || clue.damaged) return;
             clue.damaged = true;
             clue.damageDetails = {
-              damagedBy: dynamicState.playerCharacter.name,
+              damagedBy: getDiscoveredBy("scenario"),
               damagedAt: new Date().toISOString(),
               reason,
             };
@@ -1164,8 +1135,8 @@ export class KeeperAgent {
       clueRevelations?.scenarioClues &&
       clueRevelations.scenarioClues.length > 0
     ) {
-      const currentScenario = dynamicState.currentScenario;
       if (currentScenario && currentScenario.clues) {
+        const scenarioDiscoveredBy = getDiscoveredBy("scenario");
         clueRevelations.scenarioClues.forEach(
           (item: string | { clueId: string }) => {
             const clueId = typeof item === "string" ? item : item?.clueId;
@@ -1180,17 +1151,16 @@ export class KeeperAgent {
               const discoveredAt = new Date().toISOString();
               clue.discovered = true;
               clue.discoveryDetails = {
-                discoveredBy: dynamicState.playerCharacter.name,
+                discoveredBy: scenarioDiscoveredBy,
                 discoveredAt,
                 method: "Keeper revelation",
               };
 
-              // Create detailed clue info
               newDiscoveredClues.push({
                 text: clue.clueText,
                 type: "scenario",
                 sourceName: currentScenario.name,
-                discoveredBy: dynamicState.playerCharacter.name,
+                discoveredBy: scenarioDiscoveredBy,
                 discoveredAt,
                 category: clue.category,
                 difficulty: clue.difficulty,
@@ -1202,24 +1172,24 @@ export class KeeperAgent {
       }
     }
 
-    // Update NPC clue states
+    // Update NPC clue states (on real global NPC state)
     if (clueRevelations?.npcClues && clueRevelations.npcClues.length > 0) {
       clueRevelations.npcClues.forEach(
         (item: { npcId: string; clueId: string }) => {
-          const npc = dynamicState.npcCharacters.find(
-            (n) => n.id === item.npcId
+          const npc = state.npcCharacters.find(
+            (n: any) => n.id === item.npcId
           );
           if (npc && npc.clues) {
-            const clue = npc.clues.find((c) => c.id === item.clueId);
+            const clue = npc.clues.find((c: any) => c.id === item.clueId);
             if (clue && !clue.revealed) {
               clue.revealed = true;
+              const npcDiscoveredBy = getDiscoveredBy(npc.name);
 
-              // Create detailed clue info
               newDiscoveredClues.push({
                 text: clue.clueText,
                 type: "npc",
                 sourceName: npc.name,
-                discoveredBy: dynamicState.playerCharacter.name,
+                discoveredBy: npcDiscoveredBy,
                 discoveredAt: new Date().toISOString(),
                 category: clue.category as any,
                 difficulty: clue.difficulty as any,
@@ -1231,22 +1201,22 @@ export class KeeperAgent {
       );
     }
 
-    // Handle NPC secret revelations (secrets are string arrays, identified by index)
+    // Handle NPC secret revelations
     if (clueRevelations?.npcSecrets && clueRevelations.npcSecrets.length > 0) {
       clueRevelations.npcSecrets.forEach(
         (item: { npcId: string; secretIndex: number }) => {
-          const npc = dynamicState.npcCharacters.find(
-            (n) => n.id === item.npcId
+          const npc = state.npcCharacters.find(
+            (n: any) => n.id === item.npcId
           );
           if (npc && npc.secrets && npc.secrets[item.secretIndex]) {
             const secret = npc.secrets[item.secretIndex];
+            const npcDiscoveredBy = getDiscoveredBy(npc.name);
 
-            // Create detailed secret info
             newDiscoveredClues.push({
               text: `Secret: ${secret}`,
               type: "secret",
               sourceName: npc.name,
-              discoveredBy: dynamicState.playerCharacter.name,
+              discoveredBy: npcDiscoveredBy,
               discoveredAt: new Date().toISOString(),
               method: "Secret revelation",
             });
@@ -1257,46 +1227,13 @@ export class KeeperAgent {
 
     // Add newly discovered clues to global discovery list
     newDiscoveredClues.forEach((discoveredClue) => {
-      // Check if clue text already exists
-      const exists = dynamicState.discoveredClues.some(
+      const exists = state.discoveredClues.some(
         (c) => c.text === discoveredClue.text
       );
       if (!exists) {
-        dynamicState.discoveredClues.push(discoveredClue);
+        manager.addDiscoveredClue(discoveredClue);
       }
     });
-
-    return gameStateManager.getState();
-  }
-
-  /**
-   * Process input and generate appropriate narrative response
-   */
-  async processInput(
-    input: string,
-    gameStateManager: DynamicGameStateManager
-  ): Promise<{
-    narrative: string;
-    clueRevelations: any;
-    updatedGameState: DynamicGameState;
-  }> {
-    try {
-      const result = await this.generateNarrative(input, gameStateManager, "zh");
-      return result;
-    } catch (error) {
-      console.error("Error generating narrative:", error);
-      return {
-        narrative:
-          "The shadows seem to obscure the scene, making it difficult to discern what transpires... [Keeper Agent Error]",
-        clueRevelations: {
-          scenarioClues: [],
-          npcClues: [],
-          npcSecrets: [],
-          damagedScenarioClues: [],
-        },
-        updatedGameState: gameStateManager.getState(),
-      };
-    }
   }
 
   private createNarrativeStreamParser(onDelta: (delta: string) => void) {

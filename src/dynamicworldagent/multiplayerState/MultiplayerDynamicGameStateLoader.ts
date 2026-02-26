@@ -176,6 +176,10 @@ export async function initializeMultiplayerGameState(
         minutesSinceLastRest: 0,
         fatigueActive: false,
       },
+      revealedNpcClueIds: [],
+      revealedNpcSecretKeys: [],
+      revealedScenarioClueIds: [],
+      damagedScenarioClueIds: [],
     });
   }
 
