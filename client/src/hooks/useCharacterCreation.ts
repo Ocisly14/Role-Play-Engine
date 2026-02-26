@@ -215,7 +215,14 @@ function mapCharacterToForm(character: any): Record<string, string> {
 
     // Backward-compatibility for legacy data without stored breakdown.
     const skillValue = Number(skills[skill.name]);
-    const base = Number.parseInt(skill.base.replace("%", "")) || 0;
+    let base = Number.parseInt(skill.base.replace("%", "")) || 0;
+    if (skill.name === "Dodge") {
+      const dex = Number(attributes.DEX);
+      base = Number.isFinite(dex) && dex > 0 ? Math.floor(dex / 2) : 0;
+    } else if (skill.name === "Language (Own)") {
+      const edu = Number(attributes.EDU);
+      base = Number.isFinite(edu) && edu > 0 ? edu : 0;
+    }
     const extra = Number.isFinite(skillValue)
       ? Math.max(skillValue - base, 0)
       : 0;
@@ -423,13 +430,25 @@ export const useCharacterCreation = ({
 
   // Calculate skills state
   const skillsState = useMemo(() => {
-    return SKILLS.map((skill) => ({
-      name: skill.name,
-      base: skill.base,
-      category: skill.category,
-      occupationalValue: form[`skill_occ_${skill.name}`] || "",
-      interestValue: form[`skill_int_${skill.name}`] || "",
-    }));
+    const dex = Number(form.DEX);
+    const dodgeBase =
+      Number.isFinite(dex) && dex > 0 ? Math.floor(dex / 2) : 0;
+    const edu = Number(form.EDU);
+    const ownLangBase =
+      Number.isFinite(edu) && edu > 0 ? edu : 0;
+
+    return SKILLS.map((skill) => {
+      let base = skill.base;
+      if (skill.name === "Dodge") base = `${dodgeBase}%`;
+      else if (skill.name === "Language (Own)") base = `${ownLangBase}%`;
+      return {
+        name: skill.name,
+        base,
+        category: skill.category,
+        occupationalValue: form[`skill_occ_${skill.name}`] || "",
+        interestValue: form[`skill_int_${skill.name}`] || "",
+      };
+    });
   }, [form]);
 
   // Calculate used skill points
