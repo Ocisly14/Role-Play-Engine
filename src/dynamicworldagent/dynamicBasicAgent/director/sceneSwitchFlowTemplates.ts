@@ -261,6 +261,12 @@ null
   - location
   - notes
 - clues must be full ScenarioClue objects (id, clueText, category, difficulty, location, discoveryMethod, reveals, discovered, discoveryDetails when applicable).
+- **Clue ID & State Stability (CRITICAL)**:
+  - Every clue carried over from baseline MUST keep its original \`id\` unchanged. Do NOT generate new IDs for existing clues.
+  - Do NOT change the \`discovered\` or \`damaged\` fields of baseline clues. These are managed by game mechanics, not by snapshot generation.
+  - NPCs may move a clue to a different scene — update the clue's \`location\` field but keep the same \`id\`.
+  - You may add genuinely new clues (with new IDs) if NPC actions created new evidence. Do not fabricate clues without timeline justification.
+  - If a baseline clue no longer exists in this scene (NPC moved/destroyed it), omit it from this snapshot's clues array — it should appear in the destination scene's snapshot instead, with the same \`id\`.
 - conditions must be full ScenarioCondition objects (type, description, mechanicalEffect when applicable).
 - keeperNotes should include concise GM-facing notes about scene progression and hidden implications.
 - clues and conditions must be inferred from BOTH NPC timeline + player action log in this window.
@@ -501,6 +507,7 @@ Generate simplified snapshots only for scenes listed in "Scenes To Update".
 - clues guidance:
   - Derive clues from baseline clues + time-window changes caused by NPC/player actions.
   - Keep clue objects structurally valid (id, clueText, category, difficulty, location, discoveryMethod, reveals, discovered, discoveryDetails when applicable).
+  - **Clue ID & State Stability (CRITICAL)**: Every baseline clue MUST keep its original \`id\`. Do NOT generate new IDs for existing clues. Do NOT change \`discovered\` or \`damaged\` fields — these are managed by game mechanics. NPCs may move a clue to another scene (update \`location\`, keep same \`id\`). If a clue was removed from this scene by NPC action, omit it — it should appear in the destination scene with the same \`id\`.
   - Do not invent clues that conflict with truthTimeline/knowledgeMatrix.
 - conditions guidance:
   - Derive conditions from environment changes in the time window (e.g., lighting, weather, sound, access constraints, damage aftermath).

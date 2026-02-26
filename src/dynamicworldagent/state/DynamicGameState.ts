@@ -292,6 +292,67 @@ export const initialDynamicGameState = (params: {
   lastUpdated: new Date(),
 });
 
+// =============================================
+// Clue ID stabilization — code-level guard against LLM drift
+// =============================================
+
+/**
+ * Reconcile an incoming snapshot's clues against a baseline snapshot.
+ * - Baseline clues that match by ID keep their discovered/damaged state.
+ * - Baseline clues that lost their ID but match by clueText get re-assigned
+ *   the original ID and state (fuzzy fallback).
+ * - Genuinely new clues (no match) are kept as-is.
+ *
+ * Mutates `incoming.clues` in place.
+ */
+function stabilizeSnapshotClues(
+  incoming: DynamicScenarioSnapshot,
+  baseline: DynamicScenarioSnapshot | null
+): void {
+  if (!baseline?.clues || !incoming.clues) return;
+
+  const baseById = new Map(baseline.clues.map((c) => [c.id, c]));
+  // Secondary index: normalised clueText → clue (for fuzzy match when ID is lost)
+  const baseByText = new Map<string, typeof baseline.clues[number]>();
+  for (const c of baseline.clues) {
+    const key = c.clueText?.trim().toLowerCase();
+    if (key && !baseByText.has(key)) baseByText.set(key, c);
+  }
+
+  const usedBaseIds = new Set<string>();
+
+  for (const clue of incoming.clues) {
+    // 1. Exact ID match
+    let baseClue = baseById.get(clue.id);
+    if (baseClue) {
+      usedBaseIds.add(baseClue.id);
+    } else {
+      // 2. Fuzzy match by clueText
+      const textKey = clue.clueText?.trim().toLowerCase();
+      if (textKey) {
+        baseClue = baseByText.get(textKey);
+        if (baseClue && !usedBaseIds.has(baseClue.id)) {
+          // Restore original ID
+          clue.id = baseClue.id;
+          usedBaseIds.add(baseClue.id);
+        }
+      }
+    }
+
+    // Protect discovered/damaged state — only game mechanics may set these
+    if (baseClue) {
+      if (baseClue.discovered) {
+        clue.discovered = true;
+        if (baseClue.discoveryDetails) clue.discoveryDetails = baseClue.discoveryDetails;
+      }
+      if (baseClue.damaged) {
+        clue.damaged = true;
+        if (baseClue.damageDetails) clue.damageDetails = baseClue.damageDetails;
+      }
+    }
+  }
+}
+
 /**
  * Dynamic Game State Manager
  * Provides methods to manage DynamicWorld-specific state
@@ -2091,6 +2152,10 @@ export class DynamicGameStateManager {
 
     const snapshots =
       this.state.updatedDynamicScenarioSnapshots.get(scenarioId) || [];
+
+    // Stabilize clue IDs against the latest existing snapshot
+    const baseline = snapshots.length > 0 ? snapshots[snapshots.length - 1] : null;
+    stabilizeSnapshotClues(snapshotWithTimestamp, baseline);
 
     // Add the new snapshot first
     snapshots.push(snapshotWithTimestamp);
