@@ -29,6 +29,9 @@ Analyze recent game events to determine:
 
 ## 📚 Retrieved Trigger Evidence (RAG)
 
+Evidence retrieved from game history across **all active scene rooms**.
+Each item includes a \`sceneName\` field indicating where the event occurred.
+
 \`\`\`json
 {{triggerEvidenceJson}}
 \`\`\`
@@ -47,6 +50,8 @@ Determine if the events described in the global trigger have occurred.
 
 **Evaluation:**
 - Check if the retrieved trigger evidence and current-turn action logs provide clear evidence that the trigger events have happened
+- Evidence comes from multiple scene rooms (different player groups in different locations). The \`sceneName\` field shows where each piece of evidence originated.
+- Consider evidence from ALL rooms — global triggers are game-wide.
 - Be strict — only return true if there is solid evidence
 
 ### Step 2: Determine if Global Trigger Causes Game End

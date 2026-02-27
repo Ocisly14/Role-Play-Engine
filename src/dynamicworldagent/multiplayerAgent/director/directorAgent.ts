@@ -26,9 +26,9 @@ import type { DynamicScenarioSnapshot } from "../../world_builder/types.js";
 import type { DynamicNPCProfile } from "../../world_builder/types.js";
 import type { ScenarioConnectionType } from "../../world_builder/types.js";
 import {
-  type RetrievedSessionRagChunk,
-  SessionRagService,
-} from "../knowledge/sessionRagService.js";
+  retrieveTriggerEvidence,
+  type TriggerEvidenceItem,
+} from "../memory/memoryAgent.js";
 import { saveDynamicGameStateCheckpoint } from "../memory/checkpoint.js";
 import {
   getGlobalTriggerEventCheckTemplate,
@@ -57,22 +57,6 @@ const createRuntime = (): DirectorRuntime => ({
   getSetting: (key: string) => process.env[key],
 });
 
-const TRIGGER_RAG_MIN_SCORE = 0.7;
-
-type TriggerQueryType = "global_event" | "victory_condition";
-
-interface TriggerEvidenceItem {
-  sourceKey: string;
-  turnNumber: number | null;
-  segmentType: "narrative" | "actionlog";
-  score: number;
-  content: string;
-  matchedBy: Array<{
-    queryType: TriggerQueryType;
-    query: string;
-  }>;
-}
-
 interface CurrentTurnActionLogItem {
   character: string;
   time: string;
@@ -88,7 +72,6 @@ interface CurrentTurnActionLogItem {
 export class DirectorAgent {
   private scenarioLoader: ScenarioLoader;
   private db: CoCDatabase | CoCDatabaseAdapter;
-  private sessionRagService: SessionRagService;
 
   constructor(
     scenarioLoader: ScenarioLoader,
@@ -96,7 +79,6 @@ export class DirectorAgent {
   ) {
     this.scenarioLoader = scenarioLoader;
     this.db = db;
-    this.sessionRagService = new SessionRagService();
   }
 
   /**
@@ -3309,120 +3291,6 @@ export class DirectorAgent {
     return timeReached;
   }
 
-  private async searchTriggerChunks(
-    sessionId: string,
-    query: string,
-    segmentType: "narrative" | "actionlog",
-    topK: number
-  ): Promise<RetrievedSessionRagChunk[]> {
-    const searches = await Promise.all([
-      this.sessionRagService.searchHybrid({
-        sessionId,
-        ragQuery: query,
-        topK,
-        semanticWeight: 0.7,
-        bm25Weight: 0.3,
-        language: "zh",
-        chunkType: "turn",
-        segmentType,
-      }),
-      this.sessionRagService.searchHybrid({
-        sessionId,
-        ragQuery: query,
-        topK,
-        semanticWeight: 0.7,
-        bm25Weight: 0.3,
-        language: "en",
-        chunkType: "turn",
-        segmentType,
-      }),
-    ]);
-
-    const deduped = new Map<string, RetrievedSessionRagChunk>();
-    for (const result of searches.flat()) {
-      const key = result.sourceKey || result.id;
-      const existing = deduped.get(key);
-      if (!existing || result.score > existing.score) {
-        deduped.set(key, result);
-      }
-    }
-
-    return Array.from(deduped.values())
-      .filter((item) => item.score >= TRIGGER_RAG_MIN_SCORE)
-      .sort((a, b) => b.score - a.score)
-      .slice(0, topK);
-  }
-
-  private async retrieveTriggerEvidenceFromRag(params: {
-    sessionId: string;
-    globalEvents: string[];
-    victoryConditions: string[];
-  }): Promise<TriggerEvidenceItem[]> {
-    const { sessionId, globalEvents, victoryConditions } = params;
-    const evidenceMap = new Map<string, TriggerEvidenceItem>();
-
-    const queryDefs: Array<{ queryType: TriggerQueryType; query: string }> = [
-      ...globalEvents.map((query) => ({ queryType: "global_event" as const, query })),
-      ...victoryConditions.map((query) => ({
-        queryType: "victory_condition" as const,
-        query,
-      })),
-    ].filter((item) => typeof item.query === "string" && item.query.trim().length > 0);
-
-    for (const def of queryDefs) {
-      const query = def.query.trim();
-      const [narrativeChunks, actionLogChunks] = await Promise.all([
-        this.searchTriggerChunks(sessionId, query, "narrative", 3),
-        this.searchTriggerChunks(sessionId, query, "actionlog", 3),
-      ]);
-
-      const combined = [
-        ...narrativeChunks.map((chunk) => ({
-          chunk,
-          segmentType: "narrative" as const,
-        })),
-        ...actionLogChunks.map((chunk) => ({
-          chunk,
-          segmentType: "actionlog" as const,
-        })),
-      ];
-
-      for (const entry of combined) {
-        const key = entry.chunk.sourceKey || entry.chunk.id;
-        const existing = evidenceMap.get(key);
-
-        if (!existing) {
-          evidenceMap.set(key, {
-            sourceKey: entry.chunk.sourceKey,
-            turnNumber: entry.chunk.turnNumber,
-            segmentType: entry.segmentType,
-            score: entry.chunk.score,
-            content: entry.chunk.content,
-            matchedBy: [{ queryType: def.queryType, query }],
-          });
-          continue;
-        }
-
-        if (entry.chunk.score > existing.score) {
-          existing.score = entry.chunk.score;
-          existing.content = entry.chunk.content;
-          existing.turnNumber = entry.chunk.turnNumber;
-          existing.segmentType = entry.segmentType;
-        }
-
-        if (
-          !existing.matchedBy.some(
-            (m) => m.queryType === def.queryType && m.query === query
-          )
-        ) {
-          existing.matchedBy.push({ queryType: def.queryType, query });
-        }
-      }
-    }
-
-    return Array.from(evidenceMap.values()).sort((a, b) => b.score - a.score);
-  }
-
   private collectCurrentTurnActionLogs(
     dynamicState: DynamicGameState
   ): CurrentTurnActionLogItem[] {
@@ -3563,11 +3431,19 @@ export class DirectorAgent {
       (!triggered && globalEvents.length > 0) || victoryConditions.length > 0;
 
     if (shouldRunEvidenceCheck) {
-      const triggerEvidence = await this.retrieveTriggerEvidenceFromRag({
-        sessionId: dynamicState.sessionId,
-        globalEvents,
-        victoryConditions,
-      });
+      // Try pre-fetched evidence from Memory Agent (available during graph pipeline).
+      // Falls back to direct RAG call for rest-unfreeze path (no graph pipeline).
+      const preloaded = dynamicState.temporaryInfo.contextualData
+        ?.triggerEvidence as TriggerEvidenceItem[] | undefined;
+
+      const triggerEvidence: TriggerEvidenceItem[] =
+        preloaded && Array.isArray(preloaded)
+          ? preloaded
+          : await retrieveTriggerEvidence({
+              sessionId: dynamicState.sessionId,
+              globalEvents,
+              victoryConditions,
+            });
       const currentTurnActionLogs = this.collectCurrentTurnActionLogs(dynamicState);
       gameStateManager.setContextualData("triggerCheckEvidence", triggerEvidence);
       gameStateManager.setContextualData(

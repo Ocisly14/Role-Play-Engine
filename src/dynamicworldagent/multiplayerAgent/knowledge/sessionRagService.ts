@@ -23,6 +23,7 @@ export interface RetrievedSessionRagChunk {
   id: string;
   turnNumber: number | null;
   chunkType: SessionRagChunkType;
+  sceneRoomId: string | null;
   content: string;
   metadata: Record<string, unknown> | null;
   sourceKey: string;
@@ -33,6 +34,7 @@ type ChunkRow = {
   id: string;
   turnNumber: number | null;
   chunkType: SessionRagChunkType;
+  sceneRoomId: string | null;
   content: string;
   metadata: Record<string, unknown> | null;
   sourceKey: string;
@@ -263,6 +265,7 @@ export class SessionRagService {
         id,
         turn_number AS "turnNumber",
         chunk_type AS "chunkType",
+        scene_room_id AS "sceneRoomId",
         content,
         metadata,
         source_key AS "sourceKey",
@@ -342,6 +345,7 @@ export class SessionRagService {
         id: row.id,
         turnNumber: row.turnNumber ?? null,
         chunkType: row.chunkType,
+        sceneRoomId: row.sceneRoomId ?? null,
         content: row.content,
         metadata: row.metadata ?? null,
         sourceKey: row.sourceKey,

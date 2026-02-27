@@ -28,6 +28,139 @@ import {
   SessionRagService,
 } from "../knowledge/sessionRagService.js";
 
+// ── Trigger Evidence Types & Retrieval (used by Director) ──
+
+type TriggerQueryType = "global_event" | "victory_condition";
+
+export interface TriggerEvidenceItem {
+  sourceKey: string;
+  turnNumber: number | null;
+  segmentType: "narrative";
+  score: number;
+  content: string;
+  sceneName: string | null;
+  matchedBy: Array<{ queryType: TriggerQueryType; query: string }>;
+}
+
+const TRIGGER_RAG_MIN_SCORE = 0.7;
+
+/**
+ * Search trigger chunks in both languages (zh + en) for a given segment type.
+ * Returns deduped chunks above the minimum score threshold.
+ */
+async function searchTriggerChunks(
+  sessionId: string,
+  query: string,
+  segmentType: "narrative" | "actionlog",
+  topK: number
+): Promise<RetrievedSessionRagChunk[]> {
+  const searches = await Promise.all([
+    sessionRagService.searchHybrid({
+      sessionId,
+      ragQuery: query,
+      topK,
+      semanticWeight: 0.7,
+      bm25Weight: 0.3,
+      language: "zh",
+      chunkType: "turn",
+      segmentType,
+      sceneRoomId: null, // Global scope — search all rooms
+    }),
+    sessionRagService.searchHybrid({
+      sessionId,
+      ragQuery: query,
+      topK,
+      semanticWeight: 0.7,
+      bm25Weight: 0.3,
+      language: "en",
+      chunkType: "turn",
+      segmentType,
+      sceneRoomId: null,
+    }),
+  ]);
+
+  const deduped = new Map<string, RetrievedSessionRagChunk>();
+  for (const result of searches.flat()) {
+    const key = result.sourceKey || result.id;
+    const existing = deduped.get(key);
+    if (!existing || result.score > existing.score) {
+      deduped.set(key, result);
+    }
+  }
+
+  return Array.from(deduped.values())
+    .filter((item) => item.score >= TRIGGER_RAG_MIN_SCORE)
+    .sort((a, b) => b.score - a.score)
+    .slice(0, topK);
+}
+
+/**
+ * Retrieve RAG evidence for global trigger events and victory conditions.
+ * Searches ALL rooms (sceneRoomId=null) because global triggers are game-wide.
+ */
+export async function retrieveTriggerEvidence(params: {
+  sessionId: string;
+  globalEvents: string[];
+  victoryConditions: string[];
+}): Promise<TriggerEvidenceItem[]> {
+  const { sessionId, globalEvents, victoryConditions } = params;
+  const evidenceMap = new Map<string, TriggerEvidenceItem>();
+
+  const queryDefs: Array<{ queryType: TriggerQueryType; query: string }> = [
+    ...globalEvents.map((query) => ({ queryType: "global_event" as const, query })),
+    ...victoryConditions.map((query) => ({
+      queryType: "victory_condition" as const,
+      query,
+    })),
+  ].filter((item) => typeof item.query === "string" && item.query.trim().length > 0);
+
+  for (const def of queryDefs) {
+    const query = def.query.trim();
+    const narrativeChunks = await searchTriggerChunks(sessionId, query, "narrative", 3);
+
+    for (const chunk of narrativeChunks) {
+      const key = chunk.sourceKey || chunk.id;
+      const existing = evidenceMap.get(key);
+      const sceneName =
+        typeof chunk.metadata?.sceneName === "string"
+          ? chunk.metadata.sceneName
+          : null;
+
+      if (!existing) {
+        evidenceMap.set(key, {
+          sourceKey: chunk.sourceKey,
+          turnNumber: chunk.turnNumber,
+          segmentType: "narrative",
+          score: chunk.score,
+          content: chunk.content,
+          sceneName,
+          matchedBy: [{ queryType: def.queryType, query }],
+        });
+        continue;
+      }
+
+      if (chunk.score > existing.score) {
+        existing.score = chunk.score;
+        existing.content = chunk.content;
+        existing.turnNumber = chunk.turnNumber;
+        if (sceneName) existing.sceneName = sceneName;
+      }
+
+      if (
+        !existing.matchedBy.some(
+          (m) => m.queryType === def.queryType && m.query === query
+        )
+      ) {
+        existing.matchedBy.push({ queryType: def.queryType, query });
+      }
+    }
+  }
+
+  return Array.from(evidenceMap.values()).sort((a, b) => b.score - a.score);
+}
+
+// ── Relevant History Types ──
+
 type RelevantHistoryItem = {
   type: "action_log" | "turn";
   content: string;
@@ -832,6 +965,35 @@ export const enrichMemoryContextForSceneRoom = async (
     }
   }
 
+  // ── Trigger evidence (global scope — for director's checkGlobalTriggerAndGameEnd) ──
+  let triggerEvidence: TriggerEvidenceItem[] | undefined;
+  const globalTrigger = state.globalTrigger;
+  const victoryTrigger = state.moduleDigest?.victoryTrigger;
+
+  if (globalTrigger || victoryTrigger) {
+    const globalEvents = (globalTrigger?.events ?? []).filter(
+      (e): e is string => typeof e === "string" && e.trim().length > 0
+    );
+    const victoryConditions = ((victoryTrigger as any)?.conditions ?? []).filter(
+      (c: unknown): c is string => typeof c === "string" && (c as string).trim().length > 0
+    );
+
+    if (globalEvents.length > 0 || victoryConditions.length > 0) {
+      try {
+        triggerEvidence = await retrieveTriggerEvidence({
+          sessionId: state.sessionId,
+          globalEvents,
+          victoryConditions,
+        });
+        console.log(
+          `🔍 [Memory Agent] Retrieved ${triggerEvidence.length} trigger evidence chunk(s) for sceneRoom ${sceneRoomId}`
+        );
+      } catch (err) {
+        console.warn("[Memory] Trigger evidence retrieval failed:", err);
+      }
+    }
+  }
+
   manager.updateSceneRoom(sceneRoomId, {
     temporaryInfo: {
       ...sceneRoom.temporaryInfo,
@@ -842,6 +1004,7 @@ export const enrichMemoryContextForSceneRoom = async (
         relevantHistory,
         relevantHistoryIncludesActionLogs: true,
         retrievedClueContext,
+        ...(triggerEvidence !== undefined ? { triggerEvidence } : {}),
       },
     },
   });
