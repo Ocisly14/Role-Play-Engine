@@ -5,7 +5,7 @@
  * All player inputs must be collected before the graph runs.
  *
  * Pipeline: entry → orchestrator → memory → action → character → director → keeper
- * Combat:   entry → memory → combatActionA → combatEndCheck → combatActionB → battleKeeper
+ * Combat:   entry → memory → combatActionA → [combatActionB] → battleKeeper → gameEndCheck
  *
  * No isSimulatedQuery, no simulatedQueryCount, no messages[].
  */
@@ -361,10 +361,10 @@ export const buildMultiplayerGraph = (
     const stream = state.stream;
 
     try {
-      // 1. Check point of no return
+      // 1. Check point of no return (use room-local time, not global time)
       const reached = m.checkPointOfNoReturn(
-        m.getState().gameDay,
-        m.getState().timeOfDay
+        sceneRoom.gameDay,
+        sceneRoom.timeOfDay
       );
       if (reached) {
         console.log(
@@ -408,27 +408,32 @@ export const buildMultiplayerGraph = (
 
     if (!sceneRoom) return state;
 
-    // Check 1: Per-player HP/Sanity — ALL players in this sceneRoom must be incapacitated
-    const memberPlayerIds = sceneRoom.memberPlayerIds;
-    let allIncapacitated = memberPlayerIds.length > 0;
+    // Check 1: Per-player HP/Sanity — ALL players across ALL active rooms must be incapacitated
+    const allActiveRooms = m.getActiveSceneRooms();
+    let allIncapacitated = true;
     let incapReason = "";
+    let totalPlayers = 0;
 
-    for (const pid of memberPlayerIds) {
-      const player = gameState.players[pid];
-      if (!player) continue;
-      const hp = player.profile.status?.hp ?? 1;
-      const sanity = player.profile.status?.sanity ?? 1;
-      if (hp > 0 && sanity > 0) {
-        allIncapacitated = false;
-        break;
+    for (const room of allActiveRooms) {
+      for (const pid of room.memberPlayerIds) {
+        totalPlayers++;
+        const player = gameState.players[pid];
+        if (!player) continue;
+        const hp = player.profile.status?.hp ?? 1;
+        const sanity = player.profile.status?.sanity ?? 1;
+        if (hp > 0 && sanity > 0) {
+          allIncapacitated = false;
+          break;
+        }
+        if (hp <= 0) incapReason = "death";
+        else if (sanity <= 0) incapReason = "failure";
       }
-      if (hp <= 0) incapReason = "death";
-      else if (sanity <= 0) incapReason = "failure";
+      if (!allIncapacitated) break;
     }
 
-    if (allIncapacitated && memberPlayerIds.length > 0) {
+    if (allIncapacitated && totalPlayers > 0) {
       console.log(
-        `\n🏁 [MP Game End] All players incapacitated (${incapReason})`
+        `\n🏁 [MP Game End] All players across all active rooms incapacitated (${incapReason})`
       );
       m.setGameEnding(
         buildMultiplayerGameEndingInfo(
@@ -439,6 +444,12 @@ export const buildMultiplayerGraph = (
             : "所有调查员理智值归零，已无法继续调查。"
         )
       );
+      return { ...state, dynamicGameState: m.getState() };
+    }
+
+    // Combat path: only HP/Sanity check needed, skip remaining checks
+    if (gameState.isBattle) {
+      console.log("   ✓ [MP Game End Check] Combat path — skipping trigger/victory checks");
       return { ...state, dynamicGameState: m.getState() };
     }
 
@@ -567,7 +578,7 @@ export const buildMultiplayerGraph = (
     return { ...state, dynamicGameState: m.getState() };
   });
 
-  // Conditional routing: gameEndCheck → epilogueKeeper | keeper
+  // Conditional routing: gameEndCheck → epilogueKeeper | keeper | END
   graph.addConditionalEdges(
     "gameEndCheck" as any,
     (state: MultiplayerGraphState) => {
@@ -589,12 +600,19 @@ export const buildMultiplayerGraph = (
         return "epilogueKeeper";
       }
 
+      // Combat path: battleKeeper already generated narrative, skip keeper
+      if (gameState.isBattle) {
+        console.log("🔀 [MP Game End Router] → END (combat path, game continues)");
+        return END;
+      }
+
       console.log("🔀 [MP Game End Router] → keeper (game continues)");
       return "keeper";
     },
     {
       epilogueKeeper: "epilogueKeeper" as any,
       keeper: "keeper" as any,
+      [END]: END,
     }
   );
 
@@ -734,7 +752,7 @@ export const buildMultiplayerGraph = (
       .join("\n");
 
     try {
-      const result = await combatAgentA.resolvePlayerAttackForSceneRoom(
+      const result = await combatAgentA.resolvePlayerAttack(
         m,
         state.sceneRoomId,
         combinedCombatInput,
@@ -796,7 +814,7 @@ export const buildMultiplayerGraph = (
       // Pass combatAResult from contextualData
       const combatAResult =
         (m.getContextualData(state.sceneRoomId, "combatActionAResult") as import("../multiplayerAgent/combat/combatActionAgentA.js").CombatActionAResult) ?? null;
-      await combatAgentB.generateNpcActionsForSceneRoom(
+      await combatAgentB.generateNpcActions(
         m,
         state.sceneRoomId,
         combinedCombatInput,
@@ -835,7 +853,7 @@ export const buildMultiplayerGraph = (
 
     try {
       const actionResults = sceneRoom.temporaryInfo.actionResults;
-      const narrative = await battleKeeper.generateEntryNarrativeForSceneRoom(
+      const narrative = await battleKeeper.generateEntryNarrative(
         m,
         state.sceneRoomId,
         actionResults,
@@ -864,7 +882,7 @@ export const buildMultiplayerGraph = (
     return { ...state, dynamicGameState: m.getState() };
   });
 
-  graph.addEdge("battleKeeper" as any, END);
+  graph.addEdge("battleKeeper" as any, "gameEndCheck" as any);
 
   // ---- Wire start ----
   graph.addEdge(START, "entry" as any);

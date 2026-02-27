@@ -1,7 +1,6 @@
 import { generateText } from "../../../models/index.js";
 import { ModelClass } from "../../../models/types.js";
 import type { PendingNpcAction } from "../../state/DynamicGameState.js";
-import type { DynamicGameStateManager } from "../../state/index.js";
 import type { MultiplayerDynamicGameStateManager } from "../../multiplayerState/MultiplayerDynamicGameState.js";
 import { buildCombatActionASystemPrompt } from "./combatActionAgentATemplate.js";
 import { withCombatSkillDefaults } from "./combatSkillDefaults.js";
@@ -38,105 +37,9 @@ export interface CombatActionAResult {
 
 /**
  * Combat Action Agent A - Resolves player attack or player defense against NPC attacks
+ * Uses MultiplayerDynamicGameStateManager directly (no adapter shim).
  */
 export class CombatActionAgentA {
-  /**
-   * Multiplayer native wrapper.
-   * Current implementation uses the first player in the sceneRoom as the "active" playerCharacter view.
-   */
-  async resolvePlayerAttackForSceneRoom(
-    manager: MultiplayerDynamicGameStateManager,
-    sceneRoomId: string,
-    playerInput: string,
-    selectedSkill: string | null,
-    language: "en" | "zh"
-  ): Promise<CombatActionAResult | null> {
-    const adapter = this.buildManagerAdapter(manager, sceneRoomId);
-    return this.resolvePlayerAttack(adapter, playerInput, selectedSkill, language);
-  }
-
-  async resolvePlayerDefenseForSceneRoom(
-    manager: MultiplayerDynamicGameStateManager,
-    sceneRoomId: string,
-    playerInput: string,
-    selectedSkill: string | null,
-    pendingNpcActions: PendingNpcAction[],
-    language: "en" | "zh"
-  ): Promise<CombatActionAResult | null> {
-    const adapter = this.buildManagerAdapter(manager, sceneRoomId);
-    return this.resolvePlayerDefense(
-      adapter,
-      playerInput,
-      selectedSkill,
-      pendingNpcActions,
-      language
-    );
-  }
-
-  private buildManagerAdapter(
-    manager: MultiplayerDynamicGameStateManager,
-    sceneRoomId: string
-  ): DynamicGameStateManager {
-    const getView = (): any => {
-      const s = manager.getState();
-      const scr = manager.getSceneRoom(sceneRoomId);
-      const playerIds = scr?.memberPlayerIds ?? [];
-
-      // Build all player profiles for the sceneRoom
-      const allProfiles = playerIds
-        .map((pid) => {
-          const p = s.players[pid];
-          if (!p?.profile) return null;
-          const prof: any = { ...p.profile };
-          if (!prof.id) prof.id = p.characterId ?? prof.id;
-          if (!prof.name) prof.name = p.characterName ?? prof.name;
-          return prof;
-        })
-        .filter(Boolean);
-
-      const firstProfile = allProfiles[0] ?? null;
-
-      return {
-        ...s,
-        currentScenario: scr?.currentScenario ?? null,
-        temporaryInfo: scr?.temporaryInfo ?? {
-          rules: [],
-          contextualData: {},
-          actionResults: [],
-          actionResultsDetailed: [],
-          currentActionAnalysis: null,
-          npcResponseAnalyses: [],
-          sceneChangeRequest: null,
-          previousScenario: null,
-        },
-        turnsInCurrentScene: scr?.turnsInCurrentScene ?? 0,
-        playerCharacter: firstProfile,       // backward compat
-        playerCharacters: allProfiles,        // all players in sceneRoom
-        staminaState: s.players[playerIds[0]]?.staminaState ?? {
-          minutesSinceLastRest: 0,
-          fatigueActive: false,
-        },
-      };
-    };
-
-    return {
-      getState: getView,
-      getFullGameTime: () => manager.getFullGameTime(),
-      isFatigued: () => {
-        const scr = manager.getSceneRoom(sceneRoomId);
-        const playerIds = scr?.memberPlayerIds ?? [];
-        // Conservative: fatigued if ANY player is fatigued
-        return playerIds.some((pid) => manager.isFatigued(pid));
-      },
-      updateGameTime: (elapsedMinutes: number) => manager.advanceGameTime(elapsedMinutes),
-      applyActionUpdate: (_upd: any) => {
-        // Combat agents currently only rely on actionLog + time updates; stateUpdate is applied by callers.
-      },
-      setContextualData: (key: string, value: unknown) => manager.setContextualData(sceneRoomId, key, value),
-      getContextualData: (key: string) => manager.getContextualData(sceneRoomId, key),
-    } as unknown as DynamicGameStateManager;
-  }
-
   private normalizeDefeatedNpcs(raw: unknown): Array<{
     npcId: string;
     npcName: string;
@@ -218,15 +121,16 @@ export class CombatActionAgentA {
   }
 
   private buildContext(
-    dgsm: DynamicGameStateManager,
+    manager: MultiplayerDynamicGameStateManager,
+    sceneRoomId: string,
     combatNpcIds: string[]
   ): string {
-    const state = dgsm.getState();
-    const fullGameTime = dgsm.getFullGameTime();
+    const state = manager.getSceneRoomState(sceneRoomId);
+    const fullGameTime = manager.getSceneRoomFullGameTime(sceneRoomId);
 
     const combatNpcs = state.npcCharacters
-      .filter((npc) => combatNpcIds.includes(npc.id))
-      .map((npc) => ({
+      .filter((npc: any) => combatNpcIds.includes(npc.id))
+      .map((npc: any) => ({
         id: npc.id,
         name: npc.name,
         attributes: npc.attributes,
@@ -291,7 +195,7 @@ export class CombatActionAgentA {
       conversationHistory.length > 0
         ? conversationHistory
             .map(
-              (t) =>
+              (t: any) =>
                 `[Turn ${t.turnNumber}]\nPlayer: ${t.characterInput}\nKeeper: ${t.keeperNarrative ?? "(no narrative)"}`
             )
             .join("\n\n")
@@ -309,12 +213,13 @@ export class CombatActionAgentA {
   }
 
   async resolvePlayerAttack(
-    dgsm: DynamicGameStateManager,
+    manager: MultiplayerDynamicGameStateManager,
+    sceneRoomId: string,
     playerInput: string,
     selectedSkill: string | null,
     language: "en" | "zh"
   ): Promise<CombatActionAResult | null> {
-    const state = dgsm.getState();
+    const state = manager.getSceneRoomState(sceneRoomId);
     const combatState = state.combatState;
     if (!combatState) return null;
 
@@ -328,10 +233,10 @@ export class CombatActionAgentA {
       playerInput,
       combatState.round,
       language,
-      dgsm.isFatigued()
+      manager.isAnyPlayerFatigued(sceneRoomId)
     );
 
-    const context = this.buildContext(dgsm, combatState.participantNpcIds);
+    const context = this.buildContext(manager, sceneRoomId, combatState.participantNpcIds);
     const fullPrompt = systemPrompt + context;
 
     const response = await generateText({
@@ -344,13 +249,14 @@ export class CombatActionAgentA {
   }
 
   async resolvePlayerDefense(
-    dgsm: DynamicGameStateManager,
+    manager: MultiplayerDynamicGameStateManager,
+    sceneRoomId: string,
     playerInput: string,
     selectedSkill: string | null,
     pendingNpcActions: PendingNpcAction[],
     language: "en" | "zh"
   ): Promise<CombatActionAResult | null> {
-    const state = dgsm.getState();
+    const state = manager.getSceneRoomState(sceneRoomId);
     const combatState = state.combatState;
     if (!combatState) return null;
 
@@ -364,10 +270,10 @@ export class CombatActionAgentA {
       playerInput,
       combatState.round,
       language,
-      dgsm.isFatigued()
+      manager.isAnyPlayerFatigued(sceneRoomId)
     );
 
-    const context = this.buildContext(dgsm, combatState.participantNpcIds);
+    const context = this.buildContext(manager, sceneRoomId, combatState.participantNpcIds);
     const fullPrompt = systemPrompt + context;
 
     const response = await generateText({
@@ -380,77 +286,8 @@ export class CombatActionAgentA {
   }
 
   /**
-   * Apply combat action result to game state (single-player adapter path)
-   */
-  applyResult(
-    dgsm: DynamicGameStateManager,
-    result: CombatActionAResult
-  ): void {
-    if (result.stateUpdate) {
-      dgsm.applyActionUpdate(result.stateUpdate);
-    }
-
-    const state = dgsm.getState();
-    const fullTime = dgsm.getFullGameTime();
-    const location = state.currentScenario?.location || "Unknown";
-
-    // Collect all player character IDs for log matching
-    const allPlayers: any[] = (state as any).playerCharacters ?? [];
-    const playerIds = new Set(allPlayers.map((p: any) => p.id));
-    // Fallback: single-player path
-    if (playerIds.size === 0 && state.playerCharacter) {
-      playerIds.add(state.playerCharacter.id);
-    }
-
-    // Add actionLog entries to characters
-    for (const entry of result.actionLog || []) {
-      const {
-        characterId,
-        summary,
-        successLevel,
-        time,
-        location: entryLocation,
-      } = entry;
-      const logTime = time || fullTime;
-      const logLocation = entryLocation || location;
-
-      if (playerIds.has(characterId)) {
-        // Find the matching player profile
-        const player =
-          allPlayers.find((p: any) => p.id === characterId) ??
-          state.playerCharacter;
-        if (player) {
-          if (!player.actionLog) player.actionLog = [];
-          player.actionLog.push({
-            time: logTime,
-            location: logLocation,
-            summary,
-            successLevel: successLevel as any,
-          });
-        }
-      } else {
-        const npc = state.npcCharacters.find((n) => n.id === characterId);
-        if (npc) {
-          if (!npc.actionLog) npc.actionLog = [];
-          npc.actionLog.push({
-            time: logTime,
-            location: logLocation,
-            summary,
-            successLevel: successLevel as any,
-          });
-        }
-      }
-    }
-
-    // Advance game time for combat rounds (1 minute each round)
-    if (result.timeElapsedMinutes > 0) {
-      dgsm.updateGameTime(result.timeElapsedMinutes);
-    }
-  }
-
-  /**
    * Apply combat action result directly to the multiplayer manager (no adapter).
-   * Used by the multiplayer graph node after resolvePlayerAttackForSceneRoom.
+   * Used by the multiplayer graph node after resolvePlayerAttack.
    */
   applyResultForSceneRoom(
     manager: MultiplayerDynamicGameStateManager,

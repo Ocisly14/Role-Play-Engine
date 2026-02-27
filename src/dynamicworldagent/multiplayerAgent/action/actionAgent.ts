@@ -18,7 +18,6 @@ import type {
   PendingNpcAction,
 } from "../../state/DynamicGameState.js";
 import type { DynamicGameState } from "../../state/index.js";
-import { DynamicGameStateManager } from "../../state/index.js";
 import type {
   FrozenPlayerInput,
   MultiplayerDynamicGameStateManager,
@@ -35,6 +34,11 @@ import { getStaticSkillDefaults } from "../skillDefaults.js";
 import {
   buildActionSystemPrompt,
 } from "./actionTemplate.js";
+
+type StagedTime = {
+  elapsedMinutesByPlayer: Record<string, number>;
+  fatigueMinutesByPlayer: Record<string, number>;
+};
 
 /**
  * Action Agent class - handles action resolution and skill checks
@@ -79,7 +83,7 @@ export class ActionAgent {
 
     const actionResult: ActionResult = {
       timestamp: new Date(),
-      gameTime: state.timeOfDay || "Unknown time",
+      gameTime: room?.timeOfDay || state.timeOfDay || "Unknown time",
       timeElapsedMinutes:
         typeof parsed.timeElapsedMinutes === "number"
           ? parsed.timeElapsedMinutes
@@ -268,13 +272,6 @@ export class ActionAgent {
       manager.setCurrentActionAnalysis(sceneRoomId, pa.actionAnalysis ?? null);
       manager.setSceneChangeRequest(sceneRoomId, pa.sceneChangeRequest ?? null);
 
-      const adapter = this.buildSceneRoomPlayerAdapter(
-        manager,
-        sceneRoomId,
-        input.playerId,
-        staged
-      );
-
       try {
         const rawOutput = outputsByPlayerId[input.playerId];
         if (!rawOutput || typeof rawOutput !== "object") {
@@ -283,7 +280,7 @@ export class ActionAgent {
           if (room && p) {
             manager.addActionResult(sceneRoomId, {
               timestamp: new Date(),
-              gameTime: manager.getState().timeOfDay,
+              gameTime: room.timeOfDay ?? manager.getState().timeOfDay,
               timeElapsedMinutes: 0,
               location: room.currentScenario?.location ?? "Unknown",
               character: p.characterName,
@@ -296,7 +293,10 @@ export class ActionAgent {
         }
 
         await this.applyPlayerRoundModelOutput(
-          adapter,
+          manager,
+          sceneRoomId,
+          input.playerId,
+          staged,
           rawOutput,
           input.content ?? "",
           roundTurnId ?? null
@@ -311,7 +311,7 @@ export class ActionAgent {
         if (room && p) {
           manager.addActionResult(sceneRoomId, {
             timestamp: new Date(),
-            gameTime: manager.getState().timeOfDay,
+            gameTime: room.timeOfDay ?? manager.getState().timeOfDay,
             timeElapsedMinutes: 0,
             location: room.currentScenario?.location ?? "Unknown",
             character: p.characterName,
@@ -460,17 +460,13 @@ export class ActionAgent {
       manager.setCurrentActionAnalysis(sceneRoomId, pa.actionAnalysis ?? null);
       manager.setSceneChangeRequest(sceneRoomId, pa.sceneChangeRequest ?? null);
 
-      const adapter = this.buildSceneRoomPlayerAdapter(
-        manager,
-        sceneRoomId,
-        input.playerId,
-        staged
-      );
-
       try {
         await this.processAction(
           {},
-          adapter,
+          manager,
+          sceneRoomId,
+          input.playerId,
+          staged,
           input.content ?? "",
           input.selectedSkill ?? null,
           input.skillSelectionMode ?? "manual",
@@ -487,7 +483,7 @@ export class ActionAgent {
         if (room && p) {
           manager.addActionResult(sceneRoomId, {
             timestamp: new Date(),
-            gameTime: manager.getState().timeOfDay,
+            gameTime: room.timeOfDay ?? manager.getState().timeOfDay,
             timeElapsedMinutes: 0,
             location: room.currentScenario?.location ?? "Unknown",
             character: p.characterName,
@@ -835,12 +831,15 @@ export class ActionAgent {
   }
 
   private async applyPlayerRoundModelOutput(
-    gameStateManager: DynamicGameStateManager,
+    manager: MultiplayerDynamicGameStateManager,
+    sceneRoomId: string,
+    playerId: string,
+    staged: StagedTime,
     rawOutput: Record<string, unknown>,
     originalUserInput: string,
     currentTurnId: string | null
   ): Promise<void> {
-    const dynamicState = gameStateManager.getState();
+    const dynamicState = manager.getSceneRoomState(sceneRoomId, playerId);
     const actionAnalysis = dynamicState.temporaryInfo.currentActionAnalysis;
     const targetCharacter = this.findTargetCharacter(dynamicState, actionAnalysis);
 
@@ -860,106 +859,12 @@ export class ActionAgent {
         targetCharacter,
         sourceTurnId: currentTurnId ?? null,
       },
-      gameStateManager,
+      manager,
+      sceneRoomId,
+      playerId,
+      staged,
       originalUserInput
     );
-  }
-
-  private buildSceneRoomPlayerAdapter(
-    manager: MultiplayerDynamicGameStateManager,
-    sceneRoomId: string,
-    playerId: string,
-    staged: {
-      elapsedMinutesByPlayer: Record<string, number>;
-      fatigueMinutesByPlayer: Record<string, number>;
-    }
-  ): DynamicGameStateManager {
-    const touchSceneRoom = (): void => {
-      // Update lastUpdated without replacing nested objects.
-      manager.updateSceneRoom(sceneRoomId, {});
-    };
-
-    const getView = (): any => {
-      const s = manager.getState();
-      const room = manager.getSceneRoom(sceneRoomId);
-      const p = s.players[playerId];
-      const profile: any = p?.profile ?? null;
-      if (profile) {
-        if (!profile.id) profile.id = p?.characterId ?? profile.id;
-        if (!profile.name) profile.name = p?.characterName ?? profile.name;
-      }
-      return {
-        ...s,
-        playerCharacter: profile,
-        staminaState: p?.staminaState ?? {
-          minutesSinceLastRest: 0,
-          fatigueActive: false,
-        },
-        currentScenario: room?.currentScenario ?? null,
-        turnsInCurrentScene: room?.turnsInCurrentScene ?? 0,
-        temporaryInfo: room?.temporaryInfo ?? {
-          rules: [],
-          contextualData: {},
-          actionResults: [],
-          actionResultsDetailed: [],
-          currentActionAnalysis: null,
-          npcResponseAnalyses: [],
-          sceneChangeRequest: null,
-          previousScenario: null,
-        },
-      };
-    };
-
-    return {
-      getState: getView,
-      getFullGameTime: () => manager.getSceneRoomFullGameTime(sceneRoomId),
-      isFatigued: () => manager.isFatigued(playerId),
-      applyRest: (restMinutes: number) => manager.applyRestForPlayer(playerId, restMinutes),
-      setHeartbeatActions: (actions: HeartbeatAction[]) => manager.setHeartbeatActions(actions),
-      upsertHeartbeatActions: (actions: HeartbeatAction[]) => manager.upsertHeartbeatActions(actions),
-      setCombatState: (combatData: CombatState | null) => manager.setCombatState(combatData, sceneRoomId),
-      setContextualData: (key: string, value: unknown) => {
-        const room = manager.getSceneRoom(sceneRoomId);
-        if (!room) return;
-        room.temporaryInfo.contextualData[key] = value as any;
-        touchSceneRoom();
-      },
-      getContextualData: (key: string) => {
-        const room = manager.getSceneRoom(sceneRoomId);
-        return room?.temporaryInfo.contextualData?.[key];
-      },
-      setSceneChangeRequest: (req: SceneChangeRequest | null) => manager.setSceneChangeRequest(sceneRoomId, req),
-      updateScenarioState: (scenarioUpdates: any) => manager.updateScenarioState(sceneRoomId, scenarioUpdates),
-      addActionResult: (result: ActionResult) => {
-        const room = manager.getSceneRoom(sceneRoomId);
-        if (!room) return;
-        room.temporaryInfo.actionResults.push(result);
-        touchSceneRoom();
-      },
-      addActionResultDetail: (detail: Record<string, unknown>) => {
-        const room = manager.getSceneRoom(sceneRoomId);
-        if (!room) return;
-        room.temporaryInfo.actionResultsDetailed.push(detail);
-        touchSceneRoom();
-      },
-      applyActionUpdate: (stateUpdate: any) => manager.applyPlayerActionUpdate(sceneRoomId, playerId, stateUpdate),
-      updateGameTime: (elapsedMinutes: number) => {
-        if (!elapsedMinutes || elapsedMinutes <= 0) return;
-        staged.elapsedMinutesByPlayer[playerId] =
-          (staged.elapsedMinutesByPlayer[playerId] ?? 0) + elapsedMinutes;
-      },
-      addFatigueMinutes: (minutes: number) => {
-        if (!minutes || minutes <= 0) return;
-        staged.fatigueMinutesByPlayer[playerId] =
-          (staged.fatigueMinutesByPlayer[playerId] ?? 0) + minutes;
-      },
-      // Not meaningful in multiplayer adapter, but ActionAgent expects these to exist.
-      clearActionResults: () => manager.clearActionResults(sceneRoomId),
-      clearNPCResponseAnalyses: () => manager.clearNPCResponseAnalyses(sceneRoomId),
-      clearActionAnalysis: () => manager.clearActionAnalysis(sceneRoomId),
-      clearPreviousScenario: () => {},
-      setDb: (_db: unknown) => {},
-    } as unknown as DynamicGameStateManager;
   }
 
   private clampAttitude(value: unknown): number | null {
@@ -1249,9 +1154,11 @@ export class ActionAgent {
   }
 
   private consumeDueHeartbeatActionsFromContext(
-    gameStateManager: DynamicGameStateManager
+    manager: MultiplayerDynamicGameStateManager,
+    sceneRoomId: string,
+    playerId: string
   ): void {
-    const state = gameStateManager.getState();
+    const state = manager.getSceneRoomState(sceneRoomId, playerId);
     const dueRaw = state.temporaryInfo.contextualData?.heartbeatDueActions;
     if (!Array.isArray(dueRaw) || dueRaw.length === 0) return;
 
@@ -1269,11 +1176,11 @@ export class ActionAgent {
     const current = Array.isArray(state.heartbeatActions)
       ? state.heartbeatActions
       : [];
-    const next = current.filter((item) => !dueIds.has(item.heartbeatId));
+    const next = current.filter((item: HeartbeatAction) => !dueIds.has(item.heartbeatId));
     const removedCount = current.length - next.length;
     if (removedCount <= 0) return;
 
-    gameStateManager.setHeartbeatActions(next);
+    manager.setHeartbeatActions(next);
     console.log(
       `🫀 [Action Agent] Consumed heartbeat actions for this turn: removed=${removedCount}`
     );
@@ -1556,7 +1463,9 @@ export class ActionAgent {
    */
   private applyRelationshipChangesFromParsed(
     parsed: Record<string, unknown>,
-    gameStateManager: DynamicGameStateManager
+    manager: MultiplayerDynamicGameStateManager,
+    sceneRoomId: string,
+    playerId: string
   ): void {
     try {
       const rawUpdates = parsed.relationshipChanges;
@@ -1564,7 +1473,7 @@ export class ActionAgent {
         return;
       }
 
-      const dynamicState = gameStateManager.getState();
+      const dynamicState = manager.getSceneRoomState(sceneRoomId, playerId);
       const allNpcs = dynamicState.npcCharacters;
 
       const npcById = new Map<string, DynamicNPCProfile>();
@@ -1622,7 +1531,7 @@ export class ActionAgent {
       );
 
       // updateCharacter() in applyActionUpdate handles the upsert merge by targetId
-      gameStateManager.applyActionUpdate({
+      manager.applyPlayerActionUpdate(sceneRoomId, playerId, {
         npcCharacters: npcCharactersUpdate,
       });
       console.log(
@@ -1651,7 +1560,10 @@ export class ActionAgent {
       language?: "en" | "zh";
       sourceTurnId?: string | null;
     },
-    gameStateManager: DynamicGameStateManager,
+    manager: MultiplayerDynamicGameStateManager,
+    sceneRoomId: string,
+    playerId: string,
+    staged: StagedTime,
     originalUserInput?: string | null
   ): Promise<DynamicGameState> {
     const {
@@ -1683,7 +1595,7 @@ export class ActionAgent {
       dynamicState.temporaryInfo.currentActionAnalysis?.target?.intent ?? "";
 
     // Build system prompt using template
-    const fatigueActive = gameStateManager.isFatigued();
+    const fatigueActive = manager.isFatigued(playerId);
     const baseSystemPrompt = buildActionSystemPrompt(
       originalUserInput,
       actionDescription,
@@ -1704,7 +1616,8 @@ export class ActionAgent {
       dynamicState,
       character,
       { targetCharacter },
-      gameStateManager
+      manager,
+      sceneRoomId
     );
     const fullPrompt = systemPrompt + context;
 
@@ -1758,7 +1671,9 @@ export class ActionAgent {
         character,
         `Invalid JSON response from model: ${error instanceof Error ? error.message : String(error)}`,
         [],
-        gameStateManager
+        manager,
+        sceneRoomId,
+        playerId
       );
     }
 
@@ -1773,21 +1688,27 @@ export class ActionAgent {
       parsed,
       diceUsed,
       { targetCharacter, sourceTurnId },
-      gameStateManager,
+      manager,
+      sceneRoomId,
+      playerId,
+      staged,
       originalUserInput
     );
   }
 
   async processAction(
     runtime: any,
-    gameStateManager: DynamicGameStateManager,
+    manager: MultiplayerDynamicGameStateManager,
+    sceneRoomId: string,
+    playerId: string,
+    staged: StagedTime,
     userMessage: string,
     selectedSkill?: string | null,
     skillSelectionMode?: "auto" | "manual",
     language?: "en" | "zh",
     currentTurnId?: string | null
   ): Promise<void> {
-    const dynamicState = gameStateManager.getState();
+    const dynamicState = manager.getSceneRoomState(sceneRoomId, playerId);
     const actionAnalysis = dynamicState.temporaryInfo.currentActionAnalysis;
     const targetCharacter = this.findTargetCharacter(
       dynamicState,
@@ -1806,7 +1727,10 @@ export class ActionAgent {
         language,
         sourceTurnId: currentTurnId ?? null,
       },
-      gameStateManager,
+      manager,
+      sceneRoomId,
+      playerId,
+      staged,
       userMessage // Pass original user input
     );
 
@@ -2048,13 +1972,14 @@ export class ActionAgent {
       targetCharacter?: DynamicCharacterProfile | null;
       sourceTurnId?: string | null;
     },
-    gameStateManager?: DynamicGameStateManager
+    manager?: MultiplayerDynamicGameStateManager,
+    sceneRoomId?: string
   ): string {
     const { targetCharacter } = options;
 
     // Add current game time information for actionLog generation
-    const fullGameTime = gameStateManager
-      ? gameStateManager.getFullGameTime()
+    const fullGameTime = manager && sceneRoomId
+      ? manager.getSceneRoomFullGameTime(sceneRoomId)
       : `Day ${dynamicState.gameDay}, ${dynamicState.timeOfDay}`;
     let context = `\n\n=== CURRENT GAME TIME ===\n${fullGameTime}\n=== END OF GAME TIME ===\n`;
 
@@ -2206,7 +2131,10 @@ export class ActionAgent {
       targetCharacter?: DynamicCharacterProfile | null;
       sourceTurnId?: string | null;
     },
-    gameStateManager: DynamicGameStateManager,
+    manager: MultiplayerDynamicGameStateManager,
+    sceneRoomId: string,
+    playerId: string,
+    staged: StagedTime,
     originalUserInput?: string | null
   ): Promise<DynamicGameState> {
     const { targetCharacter, sourceTurnId } = options;
@@ -2223,7 +2151,7 @@ export class ActionAgent {
     let restSanRestored = 0;
 
     if (detectedRestMinutes !== null) {
-      const restResult = gameStateManager.applyRest(detectedRestMinutes);
+      const restResult = manager.applyRestForPlayer(playerId, detectedRestMinutes);
       restSummary = restResult.summary;
       restType = restResult.restType;
       restHpRestored = restResult.hpRestored;
@@ -2232,20 +2160,20 @@ export class ActionAgent {
 
     // Apply the state update from LLM result
     if (parsed.stateUpdate) {
-      gameStateManager.applyActionUpdate(parsed.stateUpdate);
+      manager.applyPlayerActionUpdate(sceneRoomId, playerId, parsed.stateUpdate);
     }
 
     // Once due heartbeat actions are injected for this turn and action agent runs,
     // treat them as consumed and remove from persistent state.
-    this.consumeDueHeartbeatActionsFromContext(gameStateManager);
+    this.consumeDueHeartbeatActionsFromContext(manager, sceneRoomId, playerId);
 
     const heartbeatActions = this.parseHeartbeatActionsFromModel(
       parsed.heartbeatActions,
-      gameStateManager.getState(),
+      manager.getSceneRoomState(sceneRoomId, playerId),
       sourceTurnId ?? null
     );
     if (heartbeatActions.length > 0) {
-      gameStateManager.upsertHeartbeatActions(heartbeatActions);
+      manager.upsertHeartbeatActions(heartbeatActions);
       console.log(
         `🫀 [Action Agent] Persisted ${heartbeatActions.length} heartbeat action(s)`
       );
@@ -2264,17 +2192,17 @@ export class ActionAgent {
         parsed.combatInitiatedBy === "npc" ? "npc" : "player";
 
       // Only enter combat if we're not already in battle
-      const currentState = gameStateManager.getState();
+      const currentState = manager.getSceneRoomState(sceneRoomId, playerId);
       if (!currentState.isBattle) {
-        gameStateManager.setCombatState({
+        manager.setCombatState({
           round: 1,
           participantNpcIds: participantIds,
           initiatedBy,
           pendingNpcActions: null,
-        });
+        }, sceneRoomId);
 
         // Reset opening-combat contextual data for this turn
-        gameStateManager.setContextualData("openingPendingNpcActions", null);
+        manager.setContextualData(sceneRoomId, "openingPendingNpcActions", null);
 
         // For NPC-initiated combat, carry opening pending actions from normal action output.
         if (initiatedBy === "npc") {
@@ -2282,7 +2210,8 @@ export class ActionAgent {
             parsed.openingPendingNpcActions
           );
           if (openingPending.length > 0) {
-            gameStateManager.setContextualData(
+            manager.setContextualData(
+              sceneRoomId,
               "openingPendingNpcActions",
               openingPending
             );
@@ -2290,7 +2219,7 @@ export class ActionAgent {
         }
 
         // Set flag so the graph can detect this turn just entered combat
-        gameStateManager.setContextualData("justEnteredCombat", true);
+        manager.setContextualData(sceneRoomId, "justEnteredCombat", true);
         console.log(
           `⚔️  [Action Agent] Combat entered! Participants: [${participantIds.join(", ")}], initiated by: ${initiatedBy}`
         );
@@ -2311,7 +2240,7 @@ export class ActionAgent {
         reason: parsed.sceneChange.reason || currentSceneChangeRequest.reason,
         timestamp: currentSceneChangeRequest.timestamp,
       };
-      gameStateManager.setSceneChangeRequest(updatedRequest);
+      manager.setSceneChangeRequest(sceneRoomId, updatedRequest);
 
       // Player scene change: log the result
       if (parsed.sceneChange.shouldChange) {
@@ -2334,7 +2263,7 @@ export class ActionAgent {
       delete scenarioUpdate.clues;
     }
     if (scenarioUpdate) {
-      gameStateManager.updateScenarioState(scenarioUpdate);
+      manager.updateScenarioState(sceneRoomId, scenarioUpdate);
 
       // Generate scenario change descriptions for action results
       if (scenarioUpdate.description) {
@@ -2376,7 +2305,7 @@ export class ActionAgent {
     };
 
     // Add to action results
-    gameStateManager.addActionResult(actionResult);
+    manager.addActionResult(sceneRoomId, actionResult);
 
     // Record full action output for downstream prompts (keeper)
     const detailedResult = this.buildDetailedActionResult(
@@ -2393,7 +2322,13 @@ export class ActionAgent {
         summary: restSummary,
       };
     }
-    gameStateManager.addActionResultDetail(detailedResult);
+    {
+      const room = manager.getSceneRoom(sceneRoomId);
+      if (room) {
+        room.temporaryInfo.actionResultsDetailed.push(detailedResult);
+        manager.updateSceneRoom(sceneRoomId, {});
+      }
+    }
 
     // Log detailed action result
     console.log(`\n📊 [Action Result] Detailed execution result:`);
@@ -2427,20 +2362,22 @@ export class ActionAgent {
       });
     }
 
-    // Update game time based on elapsed time
+    // Update game time based on elapsed time (staged for multiplayer)
     if (
       actionResult.timeElapsedMinutes &&
       actionResult.timeElapsedMinutes > 0
     ) {
       const oldDay = dynamicState.gameDay;
       const oldTime = dynamicState.timeOfDay;
-      gameStateManager.updateGameTime(actionResult.timeElapsedMinutes);
+      staged.elapsedMinutesByPlayer[playerId] =
+        (staged.elapsedMinutesByPlayer[playerId] ?? 0) + actionResult.timeElapsedMinutes;
       if (detectedRestMinutes === null) {
-        gameStateManager.addFatigueMinutes(actionResult.timeElapsedMinutes);
+        staged.fatigueMinutesByPlayer[playerId] =
+          (staged.fatigueMinutesByPlayer[playerId] ?? 0) + actionResult.timeElapsedMinutes;
       }
-      const updatedState = gameStateManager.getState();
+      const updatedState = manager.getSceneRoomState(sceneRoomId, playerId);
       const newDay = updatedState.gameDay;
-      const fullTime = gameStateManager.getFullGameTime();
+      const fullTime = manager.getSceneRoomFullGameTime(sceneRoomId);
 
       console.log(
         `⏰ Time advanced by ${actionResult.timeElapsedMinutes} minutes (Player action)`
@@ -2469,12 +2406,12 @@ export class ActionAgent {
           `\n🎭 [Action Agent] Processing ${npcResponses.length} NPC responses...`
         );
 
-        const currentState = gameStateManager.getState();
-        const fullGameTime = gameStateManager.getFullGameTime();
+        const currentState = manager.getSceneRoomState(sceneRoomId, playerId);
+        const fullGameTime = manager.getSceneRoomFullGameTime(sceneRoomId);
 
         for (const npcResponse of npcResponses) {
           const npc = currentState.npcCharacters.find(
-            (n) =>
+            (n: DynamicNPCProfile) =>
               n.id === npcResponse.npcId ||
               n.name.toLowerCase() === npcResponse.npcName.toLowerCase()
           );
@@ -2504,7 +2441,7 @@ export class ActionAgent {
             scenarioChanges: undefined,
           };
 
-          gameStateManager.addActionResult(npcActionResult);
+          manager.addActionResult(sceneRoomId, npcActionResult);
 
           // Update NPC state if provided
           if (npcResponse.stateUpdate) {
@@ -2517,14 +2454,14 @@ export class ActionAgent {
                 },
               ],
             };
-            gameStateManager.applyActionUpdate(npcStateUpdate);
+            manager.applyPlayerActionUpdate(sceneRoomId, playerId, npcStateUpdate);
           }
 
           // Add actionLog entries for NPC
           if (npcResponse.actionLog && Array.isArray(npcResponse.actionLog)) {
-            const updatedStateAfterUpdate = gameStateManager.getState();
+            const updatedStateAfterUpdate = manager.getSceneRoomState(sceneRoomId, playerId);
             const npcInState = updatedStateAfterUpdate.npcCharacters.find(
-              (n) => n.id === npc.id
+              (n: DynamicNPCProfile) => n.id === npc.id
             );
 
             if (npcInState) {
@@ -2552,9 +2489,9 @@ export class ActionAgent {
             }
           } else {
             // Fallback: create a basic actionLog entry
-            const updatedStateAfterUpdate = gameStateManager.getState();
+            const updatedStateAfterUpdate = manager.getSceneRoomState(sceneRoomId, playerId);
             const npcInState = updatedStateAfterUpdate.npcCharacters.find(
-              (n) => n.id === npc.id
+              (n: DynamicNPCProfile) => n.id === npc.id
             );
 
             if (npcInState) {
@@ -2589,7 +2526,7 @@ export class ActionAgent {
 
     // Append actionLog entries generated by LLM to the corresponding character
     // LLM generates actionLog entries in the response
-    const updatedState = gameStateManager.getState();
+    const updatedState = manager.getSceneRoomState(sceneRoomId, playerId);
 
     // Get actionLog entries from LLM response and add to the corresponding character based on characterId
     if (parsed.actionLog && Array.isArray(parsed.actionLog)) {
@@ -2605,7 +2542,7 @@ export class ActionAgent {
               targetCharacter = updatedState.playerCharacter;
             } else {
               targetCharacter = updatedState.npcCharacters.find(
-                (npc) => npc.id === logEntry.characterId
+                (npc: DynamicNPCProfile) => npc.id === logEntry.characterId
               );
             }
 
@@ -2655,7 +2592,7 @@ export class ActionAgent {
       }
     } else {
       // Fallback: if LLM didn't generate actionLog, create a basic entry
-      const fullTime = gameStateManager.getFullGameTime();
+      const fullTime = manager.getSceneRoomFullGameTime(sceneRoomId);
 
       // Find the acting character in the current state
       const actorInState: DynamicCharacterProfile | undefined = updatedState.playerCharacter;
@@ -2691,11 +2628,13 @@ export class ActionAgent {
       parsed && typeof parsed === "object"
         ? (parsed as Record<string, unknown>)
         : {},
-      gameStateManager
+      manager,
+      sceneRoomId,
+      playerId
     );
 
     // Return the updated game state
-    return gameStateManager.getState();
+    return manager.getSceneRoomState(sceneRoomId, playerId);
   }
 
   /**
@@ -2771,7 +2710,9 @@ export class ActionAgent {
     character: DynamicCharacterProfile,
     errorMessage: string,
     toolLogs: string[],
-    gameStateManager: DynamicGameStateManager
+    manager: MultiplayerDynamicGameStateManager,
+    sceneRoomId: string,
+    playerId: string
   ): DynamicGameState {
     console.error(`\n❌ [Action Agent] Error handling: ${errorMessage}`);
     console.error(
@@ -2788,8 +2729,6 @@ export class ActionAgent {
       });
     }
 
-    const stateManager = new DynamicGameStateManager(dynamicState);
-
     // Create an error action result to record the failure
     const errorActionResult: ActionResult = {
       timestamp: new Date(),
@@ -2803,8 +2742,8 @@ export class ActionAgent {
       scenarioChanges: [`Error: ${errorMessage}`],
     };
 
-    // Add error result to action results
-    stateManager.addActionResult(errorActionResult);
+    // Add error result to action results (writes to multiplayer manager directly)
+    manager.addActionResult(sceneRoomId, errorActionResult);
 
     // Record detailed error output for downstream prompts (keeper)
     const errorDetail: Record<string, unknown> = {
@@ -2813,7 +2752,13 @@ export class ActionAgent {
       timeConsumption: "instant",
       error: errorMessage,
     };
-    stateManager.addActionResultDetail(errorDetail);
+    {
+      const room = manager.getSceneRoom(sceneRoomId);
+      if (room) {
+        room.temporaryInfo.actionResultsDetailed.push(errorDetail);
+        manager.updateSceneRoom(sceneRoomId, {});
+      }
+    }
 
     console.error(`\n📊 [Action Result] Error result recorded:`);
     console.error(`   Character: ${errorActionResult.character}`);
@@ -2821,7 +2766,7 @@ export class ActionAgent {
     console.error(`   Error: ${errorActionResult.result}`);
 
     // Return valid DynamicGameState with error recorded
-    return stateManager.getState();
+    return manager.getSceneRoomState(sceneRoomId, playerId);
   }
 
 }

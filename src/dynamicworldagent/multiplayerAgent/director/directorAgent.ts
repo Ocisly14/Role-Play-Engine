@@ -19,7 +19,6 @@ import { InventoryUtils } from "../../../shared/agents/models/gameTypes.js";
 import type { ScenarioCharacter } from "../../../shared/agents/models/scenarioTypes.js";
 import { composeTemplate } from "../../../template.js";
 import type { DynamicGameState } from "../../state/index.js";
-import type { DynamicGameStateManager } from "../../state/index.js";
 import type { MultiplayerDynamicGameStateManager } from "../../multiplayerState/MultiplayerDynamicGameState.js";
 import type { PlayerActionAnalysis } from "../orchestrator/orchestratorAgent.js";
 import type { DynamicScenarioSnapshot } from "../../world_builder/types.js";
@@ -82,109 +81,25 @@ export class DirectorAgent {
   }
 
   /**
-   * Build a DynamicGameStateManager-compatible adapter from MultiplayerDynamicGameStateManager.
-   * This is an INTERNAL helper for the DirectorAgent — not exported elsewhere.
-   * Mutations to temporaryInfo propagate because we always reference the live object.
-   */
-  private buildManagerAdapter(
-    manager: MultiplayerDynamicGameStateManager,
-    sceneRoomId: string
-  ): DynamicGameStateManager {
-    const getView = (): any => {
-      const s = manager.getState();
-      const scr = manager.getSceneRoom(sceneRoomId);
-      const playerIds = scr?.memberPlayerIds ?? [];
-
-      // Aggregate action logs from all players (sorted by time)
-      const aggregatedActionLog: ActionLogEntry[] = playerIds
-        .flatMap((id) => ((s.players[id]?.profile as any)?.actionLog ?? []) as ActionLogEntry[]);
-
-      const firstPlayer = s.players[playerIds[0]];
-      return {
-        ...s,
-        // Override global time with per-room time for room-scoped operations
-        gameDay: scr?.gameDay ?? s.gameDay,
-        timeOfDay: scr?.timeOfDay ?? s.timeOfDay,
-        currentScenario: scr?.currentScenario ?? null,
-        // Direct reference — mutations to temporaryInfo.* propagate to real state
-        temporaryInfo: scr?.temporaryInfo ?? {
-          rules: [],
-          contextualData: {},
-          actionResults: [],
-          actionResultsDetailed: [],
-          currentActionAnalysis: null,
-          npcResponseAnalyses: [],
-          sceneChangeRequest: null,
-          previousScenario: null,
-        },
-        turnsInCurrentScene: scr?.turnsInCurrentScene ?? 0,
-        playerCharacter: {
-          ...(firstPlayer?.profile ?? {}),
-          id: firstPlayer?.characterId ?? "",
-          name: playerIds
-            .map((id) => s.players[id]?.characterName)
-            .filter(Boolean)
-            .join(", "),
-          actionLog: aggregatedActionLog,
-        },
-      };
-    };
-
-    return {
-      getState: getView,
-      setDb: (db: any) => manager.setDb(db),
-      getFullGameTime: () => manager.getSceneRoomFullGameTime(sceneRoomId),
-      getSessionId: () => manager.getSessionId(),
-      getTurnsInCurrentScene: () => manager.getTurnsInCurrentScene(sceneRoomId),
-      getProgressionThreshold: () => manager.getProgressionThreshold(),
-      getMinutesSinceLastInput: () => manager.getMinutesSinceLastInput(sceneRoomId),
-      shouldTriggerProgression: () => manager.shouldTriggerProgression(sceneRoomId),
-      incrementConsecutiveTriggers: () => manager.incrementConsecutiveTriggers(),
-      setGlobalTrigger: (t: any) => manager.setGlobalTrigger(t),
-      updateCurrentScenario: (opts: any) => {
-        if (!opts) return;
-        manager.updateCurrentScenario(sceneRoomId, opts);
-        // Also sync the view (next getView() call will reflect it anyway)
-      },
-      setUpdatedDynamicScenarioSnapshot: async (id: string, snapshot: any) => {
-        await manager.setUpdatedDynamicScenarioSnapshot(sceneRoomId, id, snapshot);
-      },
-      clearSceneChangeRequest: () => manager.clearSceneChangeRequest(sceneRoomId),
-      addActionResult: (result: any) => manager.addActionResult(sceneRoomId, result),
-      setGameEnding: (ending: any) => manager.setGameEnding(ending),
-      isFatigued: () => false,
-      setContextualData: (key: string, value: any) =>
-        manager.setContextualData(sceneRoomId, key, value),
-      getContextualData: (key: string) =>
-        manager.getContextualData(sceneRoomId, key),
-      // Stubs for any other manager methods referenced internally
-    } as unknown as DynamicGameStateManager;
-  }
-
-  /**
    * Execute scene transition (shared logic)
    */
   private async executeSceneTransition(
     targetSnapshot: DynamicScenarioSnapshot,
     scenarioName: string,
-    gameStateManager: DynamicGameStateManager
+    manager: MultiplayerDynamicGameStateManager,
+    sceneRoomId: string
   ): Promise<void> {
-    const dynamicState = gameStateManager.getState();
-
     console.log(`\n🔄 [Executing Scene Transition]:`);
     console.log(`   To: ${targetSnapshot.name}`);
     console.log(`   Location: ${targetSnapshot.location}`);
 
     try {
-      // For DynamicWorld, use updateCurrentScenario directly
-      // Checkpoint functionality can be added later if needed
-      gameStateManager.updateCurrentScenario({
+      manager.updateCurrentScenario(sceneRoomId, {
         snapshot: targetSnapshot,
         scenarioName: scenarioName,
       });
-      // Note: Scene change is now tracked via temporaryInfo.sceneChangeRequest
 
-      const updatedState = gameStateManager.getState();
+      const updatedState = manager.getSceneRoomState(sceneRoomId);
 
       console.log(`   ✓ Scene transition completed successfully`);
       console.log(`\n📍 [Post-Transition State]:`);
@@ -217,7 +132,6 @@ export class DirectorAgent {
     reason: string,
     currentCharacterInput?: string
   ): Promise<void> {
-    const gameStateManager = this.buildManagerAdapter(manager, sceneRoomId);
     console.log(
       `\n🎬 [Director Agent] ========================================`
     );
@@ -226,13 +140,16 @@ export class DirectorAgent {
     );
     console.log(`🎬 [Director Agent] ========================================`);
 
-    const dynamicState = gameStateManager.getState();
+    const dynamicState = manager.getSceneRoomState(sceneRoomId);
     const currentScenario = dynamicState.currentScenario;
     const sceneChangeRequest = dynamicState.temporaryInfo.sceneChangeRequest;
 
     // Save current scenario as previousScenario for Keeper to access
     if (currentScenario) {
-      dynamicState.temporaryInfo.previousScenario = { ...currentScenario };
+      const scr = manager.getSceneRoom(sceneRoomId);
+      if (scr) {
+        scr.temporaryInfo.previousScenario = { ...currentScenario };
+      }
       console.log(
         `\n💾 [Director Agent] Saved previous scenario: ${currentScenario.name}`
       );
@@ -264,7 +181,7 @@ export class DirectorAgent {
 
     // Step 1: Unified update - validates target + generates all snapshots (complete target + simplified background)
     let updateResult =
-      await this.updateScenariosForSceneSwitch(gameStateManager);
+      await this.updateScenariosForSceneSwitch(manager, sceneRoomId);
 
     if (!updateResult) {
       const currentProvider =
@@ -279,7 +196,8 @@ export class DirectorAgent {
           `   ⚠️ Scene switch validation failed with ${currentProvider}, retrying scene switch generation with openai...`
         );
         updateResult = await this.updateScenariosForSceneSwitch(
-          gameStateManager,
+          manager,
+          sceneRoomId,
           {
             providerOverride: ModelProviderName.OPENAI,
           }
@@ -294,7 +212,7 @@ export class DirectorAgent {
     if (!updateResult) {
       // Validation failed, clear scene change request and return
       console.error(`   ❌ Scene change validation failed`);
-      gameStateManager.clearSceneChangeRequest();
+      manager.clearSceneChangeRequest(sceneRoomId);
       return;
     }
 
@@ -316,28 +234,29 @@ export class DirectorAgent {
 
     // Step 2: Find target scenario outline to get scenarioId
     const targetScenarioOutline = dynamicState.scenarioOutlines.find(
-      (outline) => outline.name === validatedTargetSceneName
+      (outline: any) => outline.name === validatedTargetSceneName
     );
 
     if (!targetScenarioOutline) {
       console.error(
         `   ❌ Target scenario outline not found for: ${validatedTargetSceneName}`
       );
-      gameStateManager.clearSceneChangeRequest();
+      manager.clearSceneChangeRequest(sceneRoomId);
       return;
     }
 
     // Step 3: Save target snapshot to state (using scenarioId as key)
-    // Ensure gameStateManager has db for snapshot management
-    gameStateManager.setDb(this.db);
-    await gameStateManager.setUpdatedDynamicScenarioSnapshot(
+    manager.setDb(this.db);
+    await manager.setUpdatedDynamicScenarioSnapshot(
+      sceneRoomId,
       targetScenarioOutline.id,
       targetSnapshot
     );
 
     if (backgroundSnapshots.size > 0) {
       for (const [scenarioId, snapshot] of backgroundSnapshots) {
-        await gameStateManager.setUpdatedDynamicScenarioSnapshot(
+        await manager.setUpdatedDynamicScenarioSnapshot(
+          sceneRoomId,
           scenarioId,
           snapshot
         );
@@ -350,11 +269,12 @@ export class DirectorAgent {
     await this.executeSceneTransition(
       targetSnapshot,
       validatedTargetSceneName,
-      gameStateManager
+      manager,
+      sceneRoomId
     );
 
     // Step 5: Clean up scene change request
-    gameStateManager.clearSceneChangeRequest();
+    manager.clearSceneChangeRequest(sceneRoomId);
 
     console.log(`✅ [Director Agent] Scene change completed successfully`);
     console.log(
@@ -1074,13 +994,12 @@ export class DirectorAgent {
     manager: MultiplayerDynamicGameStateManager,
     sceneRoomId: string
   ): Promise<{ shouldTrigger: boolean; recentActionLog: ActionLogEntry[] }> {
-    const gameStateManager = this.buildManagerAdapter(manager, sceneRoomId);
-    const dynamicState = gameStateManager.getState();
+    const dynamicState = manager.getSceneRoomState(sceneRoomId);
 
     // Get metrics
-    const turnsInScene = gameStateManager.getTurnsInCurrentScene();
-    const threshold = gameStateManager.getProgressionThreshold();
-    const minutesSinceInput = gameStateManager.getMinutesSinceLastInput();
+    const turnsInScene = manager.getTurnsInCurrentScene(sceneRoomId);
+    const threshold = manager.getProgressionThreshold();
+    const minutesSinceInput = manager.getMinutesSinceLastInput(sceneRoomId);
 
     console.log(`\n🎬 [Director Agent] Story Progression Check`);
     console.log(`   Turns in scene: ${turnsInScene} / ${threshold}`);
@@ -1091,7 +1010,7 @@ export class DirectorAgent {
     );
 
     // Check if either threshold is reached
-    const shouldTrigger = gameStateManager.shouldTriggerProgression();
+    const shouldTrigger = manager.shouldTriggerProgression(sceneRoomId);
 
     if (!shouldTrigger) {
       if (dynamicState.consecutiveProgressionTriggers >= 3) {
@@ -1105,9 +1024,9 @@ export class DirectorAgent {
     }
 
     // Increment consecutive trigger count
-    gameStateManager.incrementConsecutiveTriggers();
+    manager.incrementConsecutiveTriggers();
     const currentTriggerCount =
-      gameStateManager.getState().consecutiveProgressionTriggers;
+      manager.getState().consecutiveProgressionTriggers;
 
     // Log which condition triggered
     if (turnsInScene >= threshold) {
@@ -1121,7 +1040,7 @@ export class DirectorAgent {
     }
 
     // Get player's actionLog from the last 3 turns
-    const playerActionLog = dynamicState.playerCharacter.actionLog || [];
+    const playerActionLog = dynamicState.playerCharacter?.actionLog || [];
 
     // Get recent conversation history to determine which actionLog entries belong to last 3 turns
     const conversationHistory =
@@ -1134,11 +1053,7 @@ export class DirectorAgent {
 
     // Get last 3 turns
     const last3Turns = conversationHistory.slice(-3);
-    const last3TurnNumbers = new Set(last3Turns.map((t) => t.turnNumber));
 
-    // Filter actionLog entries that belong to the last 3 turns
-    // We'll use a simple approach: get the last N entries where N is roughly the number of actions in 3 turns
-    // Or we can get all actionLog entries and let Character Agent analyze them
     // For simplicity, let's get the last 10-15 entries (assuming 3-5 actions per turn)
     const recentActionLog = playerActionLog.slice(-15);
 
@@ -1149,7 +1064,7 @@ export class DirectorAgent {
       console.log(
         `   Latest actions: ${recentActionLog
           .slice(-3)
-          .map((a) => a.summary)
+          .map((a: any) => a.summary)
           .join("; ")}`
       );
     } else {
@@ -1988,7 +1903,8 @@ export class DirectorAgent {
    * 3) Generate and apply background simplified snapshot updates
    */
   async updateScenariosForSceneSwitch(
-    gameStateManager: DynamicGameStateManager,
+    manager: MultiplayerDynamicGameStateManager,
+    sceneRoomId: string,
     options?: {
       providerOverride?: ModelProviderName;
     }
@@ -2006,9 +1922,9 @@ export class DirectorAgent {
   } | null> {
     console.log(`\n🔄 [Director Agent] Updating scenarios for scene switch...`);
 
-    gameStateManager.setDb(this.db);
+    manager.setDb(this.db);
 
-    const dynamicState = gameStateManager.getState();
+    const dynamicState = manager.getSceneRoomState(sceneRoomId);
     const sceneChangeRequest = dynamicState.temporaryInfo.sceneChangeRequest;
     const currentScenario = dynamicState.currentScenario;
     const currentScenarioName = currentScenario?.name || null;
@@ -2028,7 +1944,7 @@ export class DirectorAgent {
       const runtime = createRuntime();
 
       const scenarioOutlineMap = new Map(
-        dynamicState.scenarioOutlines.map((outline) => [outline.id, outline])
+        dynamicState.scenarioOutlines.map((outline: any) => [outline.id, outline])
       );
 
       const allScenariosData: Array<{
@@ -2112,7 +2028,7 @@ export class DirectorAgent {
         currentScenario?.gameTime ||
         currentGameTime;
 
-      const phase1Npcs = dynamicState.npcCharacters.map((npc) => ({
+      const phase1Npcs = dynamicState.npcCharacters.map((npc: any) => ({
         ...npc,
         actionLog: npc.actionLog || [],
       }));
@@ -2281,7 +2197,8 @@ export class DirectorAgent {
       // Phase 3 runs in parallel with Phase 2
       const phase3Promise =
         this.updateBackgroundSimplifiedSnapshotsForSceneSwitch(
-          gameStateManager,
+          manager,
+          sceneRoomId,
           currentGameTime,
           previousSnapshotTime,
           scenesToUpdateInBackground,
@@ -2434,7 +2351,7 @@ export class DirectorAgent {
       }
 
       if (parsedPhase2?.globalTrigger) {
-        gameStateManager.setGlobalTrigger(parsedPhase2.globalTrigger);
+        manager.setGlobalTrigger(parsedPhase2.globalTrigger);
         console.log(`   ✓ Saved global trigger condition`);
       }
 
@@ -2470,7 +2387,8 @@ export class DirectorAgent {
   }
 
   private async updateBackgroundSimplifiedSnapshotsForSceneSwitch(
-    gameStateManager: DynamicGameStateManager,
+    manager: MultiplayerDynamicGameStateManager,
+    sceneRoomId: string,
     currentGameTime: string,
     previousSnapshotTime: string,
     scenesToUpdate: Array<{
@@ -2508,7 +2426,7 @@ export class DirectorAgent {
       return;
     }
 
-    const dynamicState = gameStateManager.getState();
+    const dynamicState = manager.getSceneRoomState(sceneRoomId);
     const runtime = createRuntime();
     const templateContext = {
       currentGameDay: dynamicState.gameDay,
@@ -2610,7 +2528,8 @@ export class DirectorAgent {
         snapshotType: "simplified",
       };
 
-      await gameStateManager.setUpdatedDynamicScenarioSnapshot(
+      await manager.setUpdatedDynamicScenarioSnapshot(
+        sceneRoomId,
         item.scenarioId,
         updatedSnapshot
       );
@@ -3247,13 +3166,10 @@ export class DirectorAgent {
    * @returns true if current game time >= trigger time, false otherwise
    */
   checkGlobalTriggerTime(
-    managerOrDgsm: MultiplayerDynamicGameStateManager | DynamicGameStateManager,
-    sceneRoomId?: string
+    manager: MultiplayerDynamicGameStateManager,
+    sceneRoomId: string
   ): boolean {
-    const gameStateManager = "getSceneRoom" in managerOrDgsm
-      ? this.buildManagerAdapter(managerOrDgsm as MultiplayerDynamicGameStateManager, sceneRoomId ?? "")
-      : managerOrDgsm as DynamicGameStateManager;
-    const dynamicState = gameStateManager.getState();
+    const dynamicState = manager.getSceneRoomState(sceneRoomId);
     const globalTrigger = dynamicState.globalTrigger;
 
     if (!globalTrigger || !globalTrigger.timeRestriction) {
@@ -3384,17 +3300,16 @@ export class DirectorAgent {
     victoryAchieved: boolean;
     achievedVictoryCondition: string | null;
   }> {
-    const gameStateManager = this.buildManagerAdapter(manager, sceneRoomId);
-    const dynamicState = gameStateManager.getState();
+    const dynamicState = manager.getSceneRoomState(sceneRoomId);
     const globalTrigger = dynamicState.globalTrigger;
     const endState = dynamicState.endState;
     const victoryTrigger = dynamicState.moduleDigest?.victoryTrigger;
 
     // Reset trigger-check context every time to avoid stale epilogue evidence.
-    gameStateManager.setContextualData("triggerCheckEvidence", []);
-    gameStateManager.setContextualData("triggerCheckCurrentTurnActionLogs", []);
-    gameStateManager.setContextualData("triggerCheckAchievedVictoryCondition", null);
-    gameStateManager.setContextualData("triggerCheckResult", null);
+    manager.setContextualData(sceneRoomId, "triggerCheckEvidence", []);
+    manager.setContextualData(sceneRoomId, "triggerCheckCurrentTurnActionLogs", []);
+    manager.setContextualData(sceneRoomId, "triggerCheckAchievedVictoryCondition", null);
+    manager.setContextualData(sceneRoomId, "triggerCheckResult", null);
 
     // If no global trigger, return early
     if (!globalTrigger) {
@@ -3413,17 +3328,17 @@ export class DirectorAgent {
     let triggered = false;
 
     // Check 1: Time restriction
-    const timeReached = this.checkGlobalTriggerTime(gameStateManager);
+    const timeReached = this.checkGlobalTriggerTime(manager, sceneRoomId);
     if (timeReached) {
       triggered = true;
     }
 
     // Check 2: Event/condition evidence via RAG
     const globalEvents = (globalTrigger.events || []).filter(
-      (event): event is string => typeof event === "string" && event.trim().length > 0
+      (event: any): event is string => typeof event === "string" && event.trim().length > 0
     );
     const victoryConditions = (victoryTrigger?.conditions || []).filter(
-      (condition): condition is string =>
+      (condition: any): condition is string =>
         typeof condition === "string" && condition.trim().length > 0
     );
 
@@ -3445,8 +3360,9 @@ export class DirectorAgent {
               victoryConditions,
             });
       const currentTurnActionLogs = this.collectCurrentTurnActionLogs(dynamicState);
-      gameStateManager.setContextualData("triggerCheckEvidence", triggerEvidence);
-      gameStateManager.setContextualData(
+      manager.setContextualData(sceneRoomId, "triggerCheckEvidence", triggerEvidence);
+      manager.setContextualData(
+        sceneRoomId,
         "triggerCheckCurrentTurnActionLogs",
         currentTurnActionLogs
       );
@@ -3510,11 +3426,12 @@ export class DirectorAgent {
 
           if (parsed.victoryAchieved) {
             console.log(`   🏆 Victory conditions achieved!`);
-            gameStateManager.setContextualData(
+            manager.setContextualData(
+              sceneRoomId,
               "triggerCheckAchievedVictoryCondition",
               parsed.achievedVictoryCondition ?? null
             );
-            gameStateManager.setContextualData("triggerCheckResult", parsed);
+            manager.setContextualData(sceneRoomId, "triggerCheckResult", parsed);
             return {
               triggered: parsed.triggered || triggered,
               causesGameEnd: false,
@@ -3527,7 +3444,7 @@ export class DirectorAgent {
             console.log(
               `   ✅ Global trigger triggered${parsed.causesGameEnd ? " AND causes game end" : " but does NOT cause game end"}`
             );
-            gameStateManager.setContextualData("triggerCheckResult", parsed);
+            manager.setContextualData(sceneRoomId, "triggerCheckResult", parsed);
             return {
               triggered: true,
               causesGameEnd: parsed.causesGameEnd,
@@ -3550,7 +3467,7 @@ export class DirectorAgent {
     // If time reached, check if it causes game end
     if (triggered && timeReached) {
       if (endState && endState.pointOfNoReturn.type === "time") {
-        const pointOfNoReturnReached = gameStateManager.checkPointOfNoReturn(
+        const pointOfNoReturnReached = manager.checkPointOfNoReturn(
           dynamicState.gameDay,
           dynamicState.timeOfDay
         );
@@ -3595,8 +3512,7 @@ export class DirectorAgent {
     manager: MultiplayerDynamicGameStateManager,
     sceneRoomId: string
   ): Promise<string | null> {
-    const gameStateManager = this.buildManagerAdapter(manager, sceneRoomId);
-    const dynamicState = gameStateManager.getState();
+    const dynamicState = manager.getSceneRoomState(sceneRoomId);
     const currentScenario = dynamicState.currentScenario;
 
     if (!currentScenario) {
@@ -3609,14 +3525,14 @@ export class DirectorAgent {
     const currentSceneSnapshotJson = JSON.stringify(currentScenario, null, 2);
 
     const currentScenarioOutline = dynamicState.scenarioOutlines.find(
-      (outline) =>
+      (outline: any) =>
         outline.id === currentScenario.id ||
         outline.name === currentScenario.name
     );
     const rawConnections = currentScenarioOutline?.connections || [];
-    const connections = rawConnections.map((conn) => {
+    const connections = rawConnections.map((conn: any) => {
       const targetScenario = dynamicState.scenarioOutlines.find(
-        (outline) =>
+        (outline: any) =>
           outline.name === conn.scenarioName || outline.id === conn.scenarioName
       );
       return {

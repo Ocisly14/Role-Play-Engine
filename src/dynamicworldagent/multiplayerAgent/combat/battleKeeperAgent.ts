@@ -1,6 +1,5 @@
 import { generateText } from "../../../models/index.js";
 import { ModelClass } from "../../../models/types.js";
-import type { DynamicGameStateManager } from "../../state/index.js";
 import type { MultiplayerDynamicGameStateManager } from "../../multiplayerState/MultiplayerDynamicGameState.js";
 import { buildBattleKeeperSystemPrompt } from "./battleKeeperTemplate.js";
 import type { CombatActionAResult } from "./combatActionAgentA.js";
@@ -9,90 +8,9 @@ import type { ActionResult } from "../../../shared/state/index.js";
 
 /**
  * Battle Keeper Agent - Generates combat-focused narrative
+ * Uses MultiplayerDynamicGameStateManager directly (no adapter shim).
  */
 export class BattleKeeperAgent {
-  /**
-   * Multiplayer native wrapper.
-   * Current implementation uses the first player in the sceneRoom as the "active" playerCharacter view.
-   */
-  async generateEntryNarrativeForSceneRoom(
-    manager: MultiplayerDynamicGameStateManager,
-    sceneRoomId: string,
-    actionResults: ActionResult[],
-    playerInput: string,
-    language: "en" | "zh",
-    onNarrativeDelta?: (delta: string) => void
-  ): Promise<string> {
-    const adapter = this.buildManagerAdapter(manager, sceneRoomId);
-    return this.generateEntryNarrative(
-      adapter,
-      actionResults,
-      playerInput,
-      language,
-      onNarrativeDelta
-    );
-  }
-
-  private buildManagerAdapter(
-    manager: MultiplayerDynamicGameStateManager,
-    sceneRoomId: string
-  ): DynamicGameStateManager {
-    const getView = (): any => {
-      const s = manager.getState();
-      const scr = manager.getSceneRoom(sceneRoomId);
-      const playerIds = scr?.memberPlayerIds ?? [];
-
-      // Build all player profiles for the sceneRoom
-      const allProfiles = playerIds
-        .map((pid) => {
-          const p = s.players[pid];
-          if (!p?.profile) return null;
-          const prof: any = { ...p.profile };
-          if (!prof.id) prof.id = p.characterId ?? prof.id;
-          if (!prof.name) prof.name = p.characterName ?? prof.name;
-          return prof;
-        })
-        .filter(Boolean);
-
-      const firstProfile = allProfiles[0] ?? null;
-
-      return {
-        ...s,
-        currentScenario: scr?.currentScenario ?? null,
-        temporaryInfo: scr?.temporaryInfo ?? {
-          rules: [],
-          contextualData: {},
-          actionResults: [],
-          actionResultsDetailed: [],
-          currentActionAnalysis: null,
-          npcResponseAnalyses: [],
-          sceneChangeRequest: null,
-          previousScenario: null,
-        },
-        turnsInCurrentScene: scr?.turnsInCurrentScene ?? 0,
-        playerCharacter: firstProfile,       // backward compat
-        playerCharacters: allProfiles,        // all players in sceneRoom
-        staminaState: s.players[playerIds[0]]?.staminaState ?? {
-          minutesSinceLastRest: 0,
-          fatigueActive: false,
-        },
-      };
-    };
-
-    return {
-      getState: getView,
-      getFullGameTime: () => manager.getFullGameTime(),
-      isFatigued: () => {
-        const scr = manager.getSceneRoom(sceneRoomId);
-        const playerIds = scr?.memberPlayerIds ?? [];
-        return playerIds.some((pid) => manager.isFatigued(pid));
-      },
-      setContextualData: (key: string, value: unknown) =>
-        manager.setContextualData(sceneRoomId, key, value),
-      getContextualData: (key: string) => manager.getContextualData(sceneRoomId, key),
-    } as unknown as DynamicGameStateManager;
-  }
-
   private parseNarrative(response: string): string {
     try {
       let jsonText = response.trim();
@@ -111,13 +29,14 @@ export class BattleKeeperAgent {
   }
 
   private buildContext(
-    dgsm: DynamicGameStateManager,
+    manager: MultiplayerDynamicGameStateManager,
+    sceneRoomId: string,
     combatNpcIds: string[],
     actionResult: CombatActionAResult | null,
     extraContext?: string
   ): string {
-    const state = dgsm.getState();
-    const fullGameTime = dgsm.getFullGameTime();
+    const state = manager.getSceneRoomState(sceneRoomId);
+    const fullGameTime = manager.getSceneRoomFullGameTime(sceneRoomId);
 
     // Full scene info
     const scenario = state.currentScenario;
@@ -160,8 +79,8 @@ export class BattleKeeperAgent {
 
     // Full combat NPC profiles
     const combatNpcs = state.npcCharacters
-      .filter((npc) => combatNpcIds.includes(npc.id))
-      .map((npc) => ({
+      .filter((npc: any) => combatNpcIds.includes(npc.id))
+      .map((npc: any) => ({
         id: npc.id,
         name: npc.name,
         description: (npc as any).description ?? "",
@@ -188,7 +107,7 @@ export class BattleKeeperAgent {
       conversationHistory.length > 0
         ? conversationHistory
             .map(
-              (t) =>
+              (t: any) =>
                 `[Turn ${t.turnNumber}]\nPlayer: ${t.characterInput}\nKeeper: ${t.keeperNarrative ?? "(no narrative)"}`
             )
             .join("\n\n")
@@ -308,19 +227,21 @@ export class BattleKeeperAgent {
   }
 
   async generateCombatNarrative(
-    dgsm: DynamicGameStateManager,
+    manager: MultiplayerDynamicGameStateManager,
+    sceneRoomId: string,
     actionResult: CombatActionAResult,
     playerInput: string,
     language: "en" | "zh",
     onNarrativeDelta?: (delta: string) => void
   ): Promise<string> {
-    const state = dgsm.getState();
+    const state = manager.getSceneRoomState(sceneRoomId);
     const combatState = state.combatState;
     const round = combatState?.round ?? 1;
 
     const systemPrompt = buildBattleKeeperSystemPrompt(round, playerInput, language);
     const context = this.buildContext(
-      dgsm,
+      manager,
+      sceneRoomId,
       combatState?.participantNpcIds ?? [],
       actionResult
     );
@@ -337,18 +258,20 @@ export class BattleKeeperAgent {
   }
 
   async generateEntryNarrative(
-    dgsm: DynamicGameStateManager,
+    manager: MultiplayerDynamicGameStateManager,
+    sceneRoomId: string,
     actionResults: ActionResult[],
     playerInput: string,
     language: "en" | "zh",
     onNarrativeDelta?: (delta: string) => void
   ): Promise<string> {
-    const state = dgsm.getState();
+    const state = manager.getSceneRoomState(sceneRoomId);
     const combatState = state.combatState;
 
     const systemPrompt = buildBattleKeeperSystemPrompt(combatState?.round ?? 1, playerInput, language);
     const context = this.buildContext(
-      dgsm,
+      manager,
+      sceneRoomId,
       combatState?.participantNpcIds ?? [],
       null,
       `Initial combat context: ${this.formatEntryActionContext(actionResults)}`
@@ -366,17 +289,19 @@ export class BattleKeeperAgent {
   }
 
   async generateDefeatNarrative(
-    dgsm: DynamicGameStateManager,
+    manager: MultiplayerDynamicGameStateManager,
+    sceneRoomId: string,
     actionResult: CombatActionAResult | null,
     playerInput: string,
     language: "en" | "zh"
   ): Promise<string> {
-    const state = dgsm.getState();
+    const state = manager.getSceneRoomState(sceneRoomId);
     const combatState = state.combatState;
 
     const systemPrompt = buildBattleKeeperSystemPrompt(combatState?.round ?? 1, playerInput, language);
     const context = this.buildContext(
-      dgsm,
+      manager,
+      sceneRoomId,
       combatState?.participantNpcIds ?? [],
       actionResult
     );

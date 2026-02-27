@@ -526,6 +526,74 @@ export class MultiplayerDynamicGameStateManager {
     this.state.lastUpdated = new Date();
   }
 
+  // ---------- SceneRoom view methods (replaces adapter pattern) ----------
+
+  /**
+   * Return a merged view of global state + room-scoped overrides.
+   * This replaces all `buildManagerAdapter().getView()` closures in multiplayer agents.
+   *
+   * @param sceneRoomId - The scene room to scope the view to
+   * @param playerId - Optional: when provided, `playerCharacter` is scoped to this player;
+   *                   otherwise the first member of the room is used.
+   */
+  getSceneRoomState(sceneRoomId: string, playerId?: string): any {
+    const s = this.state;
+    const scr = this.getSceneRoom(sceneRoomId);
+    const playerIds = scr?.memberPlayerIds ?? [];
+
+    // Build all player profiles for the room
+    const allProfiles = playerIds
+      .map((pid) => {
+        const p = s.players[pid];
+        if (!p?.profile) return null;
+        const prof: any = { ...p.profile };
+        if (!prof.id) prof.id = p.characterId ?? prof.id;
+        if (!prof.name) prof.name = p.characterName ?? prof.name;
+        return prof;
+      })
+      .filter(Boolean);
+
+    // Single player profile (specified playerId or first player)
+    const targetPid = playerId ?? playerIds[0];
+    const targetPlayer = targetPid ? s.players[targetPid] : undefined;
+    const singleProfile = playerId
+      ? allProfiles.find((p: any) => p.id === targetPlayer?.characterId) ?? allProfiles[0]
+      : allProfiles[0];
+
+    // Aggregated action log from all room members
+    const aggregatedActionLog = playerIds.flatMap(
+      (id) => ((s.players[id]?.profile as any)?.actionLog ?? [])
+    );
+
+    return {
+      ...s,
+      // Room-scoped overrides
+      gameDay: scr?.gameDay ?? s.gameDay,
+      timeOfDay: scr?.timeOfDay ?? s.timeOfDay,
+      currentScenario: scr?.currentScenario ?? null,
+      temporaryInfo: scr?.temporaryInfo ?? emptyTemporaryInfo(),
+      turnsInCurrentScene: scr?.turnsInCurrentScene ?? 0,
+      // Player data
+      playerCharacter: singleProfile
+        ? { ...singleProfile, actionLog: aggregatedActionLog }
+        : null,
+      playerCharacters: allProfiles,
+      staminaState: targetPlayer?.staminaState ?? {
+        minutesSinceLastRest: 0,
+        fatigueActive: false,
+      },
+    };
+  }
+
+  /**
+   * Check if ANY player in the sceneRoom is fatigued.
+   * Used by combat agents that need a single boolean for the whole room.
+   */
+  isAnyPlayerFatigued(sceneRoomId: string): boolean {
+    const scr = this.getSceneRoom(sceneRoomId);
+    return (scr?.memberPlayerIds ?? []).some((pid) => this.isFatigued(pid));
+  }
+
   createSceneRoom(
     sceneRoomId: string,
     playerIds: string[],

@@ -1,7 +1,6 @@
 import { generateText } from "../../../models/index.js";
 import { ModelClass } from "../../../models/types.js";
 import type { PendingNpcAction } from "../../state/DynamicGameState.js";
-import type { DynamicGameStateManager } from "../../state/index.js";
 import type { MultiplayerDynamicGameStateManager } from "../../multiplayerState/MultiplayerDynamicGameState.js";
 import { buildCombatActionBSystemPrompt } from "./combatActionAgentBTemplate.js";
 import { withCombatSkillDefaults } from "./combatSkillDefaults.js";
@@ -20,90 +19,9 @@ export interface CombatActionBResult {
 
 /**
  * Combat Action Agent B - Generates NPC attack narratives (no dice, just intent)
+ * Uses MultiplayerDynamicGameStateManager directly (no adapter shim).
  */
 export class CombatActionAgentB {
-  /**
-   * Multiplayer native wrapper.
-   * Current implementation uses the first player in the sceneRoom as the "active" playerCharacter view.
-   */
-  async generateNpcActionsForSceneRoom(
-    manager: MultiplayerDynamicGameStateManager,
-    sceneRoomId: string,
-    playerInput: string,
-    keeperNarrative: string,
-    language: "en" | "zh",
-    combatAResult?: CombatActionAResult | null
-  ): Promise<CombatActionBResult | null> {
-    const adapter = this.buildManagerAdapter(manager, sceneRoomId);
-    return this.generateNpcActions(
-      adapter,
-      playerInput,
-      keeperNarrative,
-      language,
-      combatAResult
-    );
-  }
-
-  private buildManagerAdapter(
-    manager: MultiplayerDynamicGameStateManager,
-    sceneRoomId: string
-  ): DynamicGameStateManager {
-    const getView = (): any => {
-      const s = manager.getState();
-      const scr = manager.getSceneRoom(sceneRoomId);
-      const playerIds = scr?.memberPlayerIds ?? [];
-
-      // Build all player profiles for the sceneRoom
-      const allProfiles = playerIds
-        .map((pid) => {
-          const p = s.players[pid];
-          if (!p?.profile) return null;
-          const prof: any = { ...p.profile };
-          if (!prof.id) prof.id = p.characterId ?? prof.id;
-          if (!prof.name) prof.name = p.characterName ?? prof.name;
-          return prof;
-        })
-        .filter(Boolean);
-
-      const firstProfile = allProfiles[0] ?? null;
-
-      return {
-        ...s,
-        currentScenario: scr?.currentScenario ?? null,
-        temporaryInfo: scr?.temporaryInfo ?? {
-          rules: [],
-          contextualData: {},
-          actionResults: [],
-          actionResultsDetailed: [],
-          currentActionAnalysis: null,
-          npcResponseAnalyses: [],
-          sceneChangeRequest: null,
-          previousScenario: null,
-        },
-        turnsInCurrentScene: scr?.turnsInCurrentScene ?? 0,
-        playerCharacter: firstProfile,       // backward compat
-        playerCharacters: allProfiles,        // all players in sceneRoom
-        staminaState: s.players[playerIds[0]]?.staminaState ?? {
-          minutesSinceLastRest: 0,
-          fatigueActive: false,
-        },
-      };
-    };
-
-    return {
-      getState: getView,
-      getFullGameTime: () => manager.getFullGameTime(),
-      isFatigued: () => {
-        const scr = manager.getSceneRoom(sceneRoomId);
-        const playerIds = scr?.memberPlayerIds ?? [];
-        return playerIds.some((pid) => manager.isFatigued(pid));
-      },
-      setContextualData: (key: string, value: unknown) =>
-        manager.setContextualData(sceneRoomId, key, value),
-      getContextualData: (key: string) => manager.getContextualData(sceneRoomId, key),
-    } as unknown as DynamicGameStateManager;
-  }
-
   private normalizeDefeatedNpcs(raw: unknown): Array<{
     npcId: string;
     npcName: string;
@@ -153,16 +71,17 @@ export class CombatActionAgentB {
   }
 
   private buildContext(
-    dgsm: DynamicGameStateManager,
+    manager: MultiplayerDynamicGameStateManager,
+    sceneRoomId: string,
     combatNpcIds: string[],
     combatAResult?: CombatActionAResult | null
   ): string {
-    const state = dgsm.getState();
-    const fullGameTime = dgsm.getFullGameTime();
+    const state = manager.getSceneRoomState(sceneRoomId);
+    const fullGameTime = manager.getSceneRoomFullGameTime(sceneRoomId);
 
     const combatNpcs = state.npcCharacters
-      .filter((npc) => combatNpcIds.includes(npc.id))
-      .map((npc) => ({
+      .filter((npc: any) => combatNpcIds.includes(npc.id))
+      .map((npc: any) => ({
         id: npc.id,
         name: npc.name,
         attributes: npc.attributes,
@@ -225,7 +144,7 @@ export class CombatActionAgentB {
       conversationHistory.length > 0
         ? conversationHistory
             .map(
-              (t) =>
+              (t: any) =>
                 `[Turn ${t.turnNumber}]\nPlayer: ${t.characterInput}\nKeeper: ${t.keeperNarrative ?? "(no narrative)"}`
             )
             .join("\n\n")
@@ -286,7 +205,7 @@ export class CombatActionAgentB {
       const entryActionResults = state.temporaryInfo.actionResults || [];
       if (entryActionResults.length > 0) {
         ctx += `\n\n=== ENTRY CONTEXT (how combat began this turn) ===\n${JSON.stringify(
-          entryActionResults.map((r) => ({
+          entryActionResults.map((r: any) => ({
             character: r.character,
             result: r.result,
             diceRolls: r.diceRolls || [],
@@ -302,13 +221,14 @@ export class CombatActionAgentB {
   }
 
   async generateNpcActions(
-    dgsm: DynamicGameStateManager,
+    manager: MultiplayerDynamicGameStateManager,
+    sceneRoomId: string,
     playerInput: string,
     keeperNarrative: string,
     language: "en" | "zh",
     combatAResult?: CombatActionAResult | null
   ): Promise<CombatActionBResult | null> {
-    const state = dgsm.getState();
+    const state = manager.getSceneRoomState(sceneRoomId);
     const combatState = state.combatState;
     if (!combatState) return null;
 
@@ -317,9 +237,9 @@ export class CombatActionAgentB {
       playerInput,
       keeperNarrative,
       language,
-      dgsm.isFatigued()
+      manager.isAnyPlayerFatigued(sceneRoomId)
     );
-    const context = this.buildContext(dgsm, combatState.participantNpcIds, combatAResult);
+    const context = this.buildContext(manager, sceneRoomId, combatState.participantNpcIds, combatAResult);
     const fullPrompt = systemPrompt + context;
 
     const response = await generateText({
