@@ -171,22 +171,18 @@ export interface MultiplayerSceneRoomState {
   isFrozen: boolean;
   /** Timestamp when the room was frozen; null while active */
   frozenAt: Date | null;
+  // ── Per-room game state ──
+  /** Game tension level (1-10) for this room */
+  tension: number;
+  /** Whether this room is currently in combat */
+  isBattle: boolean;
+  /** Combat details (round, participants, pending actions); null when not in combat */
+  combatState: CombatState | null;
   // ── Rest-freeze fields ──
   /** True when room is frozen after rest (prevents input, defers trigger check) */
   isRestFrozen?: boolean;
   /** ISO timestamp of when rest-freeze started */
   restFrozenAt?: string;
-}
-
-// =============================================
-// Rest consensus state (per sceneRoom)
-// =============================================
-
-export interface RestConsensusState {
-  phase: "idle" | "voting";
-  votes: Record<string, { decision: "rest" | "continue"; restHours?: number }>;
-  resolvedDecision?: "rest" | "continue";
-  resolvedRestHours?: number;
 }
 
 // =============================================
@@ -207,9 +203,6 @@ export interface MultiplayerDynamicGameState {
   // ===== Round inputs (pending inputs for the current round) =====
   roundInputs: MultiplayerTurnInput[];
 
-  // ===== Rest consensus (per sceneRoom) =====
-  restConsensusBySceneRoom: Record<string, RestConsensusState>;
-
   // ===== Fields aligned with single-player DynamicGameState =====
   sessionId: string; // maps to a multiplayer session record
 
@@ -224,14 +217,7 @@ export interface MultiplayerDynamicGameState {
     >;
   };
 
-  // Game tension
-  tension: number;
-
-  // Combat (sceneRoom-level — combat happens inside a specific sceneRoom)
-  isBattle: boolean;
-  combatState: CombatState | null;
-  /** Tracks which sceneRoom is currently in combat (used for time drift exception) */
-  combatSceneRoomId: string | null;
+  // Combat defeat history (global — NPC defeat is world-level)
   defeatedNpcHistory: DefeatedNpcHistoryEntry[];
   heartbeatActions: HeartbeatAction[];
 
@@ -247,9 +233,6 @@ export interface MultiplayerDynamicGameState {
 
   // Clues (shared)
   discoveredClues: DiscoveredClue[];
-
-  // Progression tracking
-  consecutiveProgressionTriggers: number;
 
   // ===== DynamicWorld-specific data (same as single-player) =====
   moduleDigest: ModuleDigest | null;
@@ -334,6 +317,9 @@ export function initialMultiplayerDynamicGameState(params: {
     parentSceneRoomIds: [],
     isFrozen: false,
     frozenAt: null,
+    tension: 0,
+    isBattle: false,
+    combatState: null,
   };
 
   return {
@@ -342,8 +328,6 @@ export function initialMultiplayerDynamicGameState(params: {
     players: playerMap,
     sceneRooms: { [initialSceneRoomId]: initialSceneRoom },
     roundInputs: [],
-    restConsensusBySceneRoom: {},
-
     sessionId,
     gameDay,
     timeOfDay,
@@ -352,10 +336,6 @@ export function initialMultiplayerDynamicGameState(params: {
       playerTimeConsumption: {},
     },
 
-    tension: 0,
-    isBattle: false,
-    combatState: null,
-    combatSceneRoomId: null,
     defeatedNpcHistory: [],
     heartbeatActions: [],
     gameEnding: null,
@@ -365,7 +345,6 @@ export function initialMultiplayerDynamicGameState(params: {
 
     npcCharacters: [],
     discoveredClues: [],
-    consecutiveProgressionTriggers: 0,
 
     moduleDigest: null,
     macroScene: null,
@@ -573,6 +552,10 @@ export class MultiplayerDynamicGameStateManager {
       currentScenario: scr?.currentScenario ?? null,
       temporaryInfo: scr?.temporaryInfo ?? emptyTemporaryInfo(),
       turnsInCurrentScene: scr?.turnsInCurrentScene ?? 0,
+      // Per-room game state
+      tension: scr?.tension ?? 0,
+      isBattle: scr?.isBattle ?? false,
+      combatState: scr?.combatState ?? null,
       // Player data
       playerCharacter: singleProfile
         ? { ...singleProfile, actionLog: aggregatedActionLog }
@@ -620,6 +603,9 @@ export class MultiplayerDynamicGameStateManager {
       parentSceneRoomIds: [],
       isFrozen: false,
       frozenAt: null,
+      tension: 0,
+      isBattle: false,
+      combatState: null,
       ...initial, // caller can override gameDay/timeOfDay with parent room's values
     };
     this.state.sceneRooms[sceneRoomId] = newRoom;
@@ -1072,40 +1058,45 @@ export class MultiplayerDynamicGameStateManager {
     this.state.lastUpdated = new Date();
   }
 
-  // ---------- Rest consensus ----------
-
-  setRestConsensus(
-    sceneRoomId: string,
-    consensus: RestConsensusState
-  ): void {
-    this.state.restConsensusBySceneRoom[sceneRoomId] = consensus;
-    this.state.lastUpdated = new Date();
-  }
-
-  getRestConsensus(sceneRoomId: string): RestConsensusState | undefined {
-    return this.state.restConsensusBySceneRoom[sceneRoomId];
-  }
-
   // ---------- Combat state ----------
 
-  setCombatState(combatData: CombatState | null, sceneRoomId?: string): void {
-    this.state.isBattle = combatData !== null;
-    this.state.combatState = combatData;
-    this.state.combatSceneRoomId = combatData !== null ? (sceneRoomId ?? null) : null;
+  setCombatState(combatData: CombatState | null, sceneRoomId: string): void {
+    const room = this.state.sceneRooms[sceneRoomId];
+    if (!room) return;
+    room.isBattle = combatData !== null;
+    room.combatState = combatData;
     this.state.lastUpdated = new Date();
   }
 
-  exitCombat(): void {
-    this.state.isBattle = false;
-    this.state.combatState = null;
-    this.state.combatSceneRoomId = null;
+  exitCombat(sceneRoomId: string): void {
+    const room = this.state.sceneRooms[sceneRoomId];
+    if (!room) return;
+    room.isBattle = false;
+    room.combatState = null;
     this.state.lastUpdated = new Date();
+  }
+
+  isSceneRoomInBattle(sceneRoomId: string): boolean {
+    return this.state.sceneRooms[sceneRoomId]?.isBattle ?? false;
+  }
+
+  /** Aggregated actionLog from all players in a sceneRoom */
+  getAggregatedActionLog(sceneRoomId: string): any[] {
+    const room = this.state.sceneRooms[sceneRoomId];
+    if (!room) return [];
+    return room.memberPlayerIds.flatMap(
+      (id) => ((this.state.players[id]?.profile as any)?.actionLog ?? [])
+    );
   }
 
   // ---------- Tension ----------
 
-  updateTension(newTension: number): void {
-    this.state.tension = Math.max(1, Math.min(10, Math.round(newTension)));
+  updateTension(newTension: number, sceneRoomId?: string): void {
+    const clamped = Math.max(1, Math.min(10, Math.round(newTension)));
+    if (sceneRoomId) {
+      const room = this.state.sceneRooms[sceneRoomId];
+      if (room) room.tension = clamped;
+    }
     this.state.lastUpdated = new Date();
   }
 
@@ -1162,19 +1153,6 @@ export class MultiplayerDynamicGameStateManager {
       current.push(incoming);
     }
     this.state.heartbeatActions = current;
-    this.state.lastUpdated = new Date();
-  }
-
-  // ---------- Progression ----------
-
-  incrementConsecutiveTriggers(): void {
-    this.state.consecutiveProgressionTriggers =
-      (this.state.consecutiveProgressionTriggers || 0) + 1;
-    this.state.lastUpdated = new Date();
-  }
-
-  resetConsecutiveTriggers(): void {
-    this.state.consecutiveProgressionTriggers = 0;
     this.state.lastUpdated = new Date();
   }
 
@@ -1800,8 +1778,17 @@ export class MultiplayerDynamicGameStateManager {
             room.lastPlayerInputTimeByPlayer ?? {},
           gameDay: room.gameDay ?? data.gameDay ?? 1,
           timeOfDay: room.timeOfDay ?? data.timeOfDay ?? "08:00",
+          tension: room.tension ?? data.tension ?? 0,
+          isBattle: room.isBattle ?? false,
+          combatState: room.combatState ?? null,
         };
       }
+    }
+
+    // --- Backward compat: migrate global combat state to per-room ---
+    if (data.isBattle === true && data.combatSceneRoomId && sceneRooms[data.combatSceneRoomId]) {
+      sceneRooms[data.combatSceneRoomId].isBattle = true;
+      sceneRooms[data.combatSceneRoomId].combatState = data.combatState ?? null;
     }
 
     // --- players: ensure arrays default properly ---
@@ -1868,7 +1855,6 @@ export class MultiplayerDynamicGameStateManager {
       players,
       sceneRooms,
       roundInputs: [], // ephemeral — always reset
-      restConsensusBySceneRoom: data.restConsensusBySceneRoom ?? {},
 
       sessionId: data.sessionId ?? "",
       gameDay: data.gameDay ?? 1,
@@ -1878,10 +1864,6 @@ export class MultiplayerDynamicGameStateManager {
         playerTimeConsumption: {},
       },
 
-      tension: data.tension ?? 0,
-      isBattle: data.isBattle ?? false,
-      combatState: data.combatState ?? null,
-      combatSceneRoomId: data.combatSceneRoomId ?? null,
       defeatedNpcHistory,
       heartbeatActions,
       gameEnding: data.gameEnding ?? null,
@@ -1894,8 +1876,6 @@ export class MultiplayerDynamicGameStateManager {
       discoveredClues: Array.isArray(data.discoveredClues)
         ? data.discoveredClues
         : [],
-      consecutiveProgressionTriggers:
-        data.consecutiveProgressionTriggers ?? 0,
 
       moduleDigest: data.moduleDigest ?? null,
       macroScene: data.macroScene ?? null,

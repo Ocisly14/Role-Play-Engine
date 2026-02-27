@@ -91,15 +91,10 @@ export const buildMultiplayerGraph = (
     players: {},
     sceneRooms: {},
     roundInputs: [],
-    restConsensusBySceneRoom: {},
     sessionId: "",
     gameDay: 1,
     timeOfDay: "08:00",
     scenarioTimeState: { sceneStartTime: "08:00", playerTimeConsumption: {} },
-    tension: 0,
-    isBattle: false,
-    combatState: null,
-    combatSceneRoomId: null,
     defeatedNpcHistory: [],
     heartbeatActions: [],
     gameEnding: null,
@@ -107,7 +102,6 @@ export const buildMultiplayerGraph = (
     moduleLimitations: null,
     npcCharacters: [],
     discoveredClues: [],
-    consecutiveProgressionTriggers: 0,
     moduleDigest: null,
     macroScene: null,
     truthTimeline: [],
@@ -191,8 +185,8 @@ export const buildMultiplayerGraph = (
   });
 
   const routeFromEntry = (state: MultiplayerGraphState): string => {
-    const gs = state.dynamicGameState;
-    if (gs.isBattle) return "memory";
+    const scr = state.dynamicGameState.sceneRooms[state.sceneRoomId];
+    if (scr?.isBattle) return "memory";
     return "orchestrator";
   };
 
@@ -261,7 +255,8 @@ export const buildMultiplayerGraph = (
 
   // Route memory → combatActionA (combat) or action (normal)
   const routeFromMemory = (state: MultiplayerGraphState): string => {
-    if (state.dynamicGameState.isBattle) return "combatActionA";
+    const scr = state.dynamicGameState.sceneRooms[state.sceneRoomId];
+    if (scr?.isBattle) return "combatActionA";
     return "action";
   };
 
@@ -436,7 +431,8 @@ export const buildMultiplayerGraph = (
     }
 
     // Combat path: only HP/Sanity check needed, skip remaining checks
-    if (gameState.isBattle) {
+    const currentRoom = m.getSceneRoom(state.sceneRoomId);
+    if (currentRoom?.isBattle) {
       console.log("   ✓ [MP Game End Check] Combat path — skipping trigger/victory checks");
       return { ...state, dynamicGameState: m.getState() };
     }
@@ -589,7 +585,8 @@ export const buildMultiplayerGraph = (
       }
 
       // Combat path: battleKeeper already generated narrative, skip keeper
-      if (gameState.isBattle) {
+      const combatRoom = m.getSceneRoom(state.sceneRoomId);
+      if (combatRoom?.isBattle) {
         console.log("🔀 [MP Game End Router] → END (combat path, game continues)");
         return END;
       }

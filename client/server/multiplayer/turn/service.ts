@@ -168,8 +168,7 @@ export async function submitRoundInput(
   // Check time drift — block input for rooms that are too far ahead
   const driftInfo = manager.getTimeDriftInfo();
   if (driftInfo.blockedRoomIds.includes(sceneRoomId)) {
-    const state = manager.getState();
-    const isRoomInCombat = state.isBattle && state.combatSceneRoomId === sceneRoomId;
+    const isRoomInCombat = manager.isSceneRoomInBattle(sceneRoomId);
     if (!isRoomInCombat) {
       throw new Error(
         "TIME_DRIFT_BLOCKED: This scene room is too far ahead in time. " +
@@ -380,11 +379,27 @@ async function triggerMultiplayerGraphCore(
     throw err;
   }
 
-  // Replace stored manager with the updated state from graph result
+  // Replace stored manager with the updated state from graph result,
+  // preserving roundInputs from OTHER sceneRooms submitted during graph execution.
   if (result.dynamicGameState) {
+    const oldManager = multiplayerSessionStore.get(roomId);
+    const preservedInputs: MultiplayerTurnInput[] = [];
+    if (oldManager) {
+      const oldState = oldManager.getState();
+      for (const input of oldState.roundInputs) {
+        const player = oldState.players[input.playerId];
+        if (player && player.currentSceneRoomId !== sceneRoomId) {
+          preservedInputs.push(input);
+        }
+      }
+    }
+
     const newManager = new MultiplayerDynamicGameStateManager(
       result.dynamicGameState
     );
+    for (const input of preservedInputs) {
+      newManager.addRoundInput(input);
+    }
     multiplayerSessionStore.set(roomId, newManager);
   }
 
@@ -460,7 +475,7 @@ async function triggerMultiplayerGraphCore(
       diceRolls,
       gameDay: broadcastGameDay,
       gameTime: broadcastTimeOfDay,
-      isBattle: result.dynamicGameState?.isBattle ?? false,
+      isBattle: result.dynamicGameState?.sceneRooms?.[sceneRoomId]?.isBattle ?? false,
       gameEnding: result.dynamicGameState?.gameEnding ?? null,
       timestamp: new Date().toISOString(),
     });

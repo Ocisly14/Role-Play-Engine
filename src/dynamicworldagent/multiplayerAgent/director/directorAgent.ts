@@ -1424,42 +1424,28 @@ export class DirectorAgent {
     console.log(`   Turns in scene: ${turnsInScene} / ${threshold}`);
     console.log(`   Minutes since input: ${minutesSinceInput} / 3`);
     console.log(`   Tension: ${dynamicState.tension}/10`);
-    console.log(
-      `   Consecutive triggers: ${dynamicState.consecutiveProgressionTriggers} / 3`
-    );
 
-    // Check if either threshold is reached
+    // Check if turn threshold is reached
     const shouldTrigger = manager.shouldTriggerProgression(sceneRoomId);
 
     if (!shouldTrigger) {
-      if (dynamicState.consecutiveProgressionTriggers >= 3) {
-        console.log(
-          `   ⚠️ Max consecutive triggers reached (3), skipping to prevent infinite loop`
-        );
-      } else {
-        console.log(`   ✓ No trigger conditions met`);
-      }
+      console.log(`   ✓ No trigger conditions met`);
       return { shouldTrigger: false, recentActionLog: [] };
     }
-
-    // Increment consecutive trigger count
-    manager.incrementConsecutiveTriggers();
-    const currentTriggerCount =
-      manager.getState().consecutiveProgressionTriggers;
 
     // Log which condition triggered
     if (turnsInScene >= threshold) {
       console.log(
-        `   ⚠️ Turn threshold reached! Getting recent player actions... (trigger ${currentTriggerCount}/3)`
+        `   ⚠️ Turn threshold reached! Getting recent player actions...`
       );
     } else if (minutesSinceInput >= 3) {
       console.log(
-        `   ⚠️ Time threshold reached (3 min idle)! Getting recent player actions... (trigger ${currentTriggerCount}/3)`
+        `   ⚠️ Time threshold reached (3 min idle)! Getting recent player actions...`
       );
     }
 
-    // Get player's actionLog from the last 3 turns
-    const playerActionLog = dynamicState.playerCharacter?.actionLog || [];
+    // Get all players' aggregated actionLog for this sceneRoom
+    const playerActionLog = manager.getAggregatedActionLog(sceneRoomId);
 
     // Get recent conversation history to determine which actionLog entries belong to last 3 turns
     const conversationHistory =
@@ -2599,7 +2585,7 @@ export class DirectorAgent {
       );
 
       const playerActionWindow = this.getPlayerActionLogInWindow(
-        dynamicState.playerCharacter.actionLog,
+        manager.getAggregatedActionLog(sceneRoomId),
         previousSnapshotTime,
         currentGameTime
       );

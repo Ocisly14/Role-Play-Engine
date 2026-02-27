@@ -840,6 +840,10 @@ export class ActionAgent {
     currentTurnId: string | null
   ): Promise<void> {
     const dynamicState = manager.getSceneRoomState(sceneRoomId, playerId);
+    if (!dynamicState.playerCharacter) {
+      console.warn(`[MP ActionAgent] No player profile for playerId=${playerId}, skipping round output`);
+      return;
+    }
     const actionAnalysis = dynamicState.temporaryInfo.currentActionAnalysis;
     const targetCharacter = this.findTargetCharacter(dynamicState, actionAnalysis);
 
@@ -1499,7 +1503,7 @@ export class ActionAgent {
         const targetName =
           typeof raw.targetName === "string" && raw.targetName.trim()
             ? raw.targetName.trim()
-            : (npcById.get(targetId)?.name ?? playerChar.name);
+            : (npcById.get(targetId)?.name ?? playerChar?.name ?? "Unknown");
 
         const rel: NPCRelationship = {
           targetId,
@@ -1709,6 +1713,10 @@ export class ActionAgent {
     currentTurnId?: string | null
   ): Promise<void> {
     const dynamicState = manager.getSceneRoomState(sceneRoomId, playerId);
+    if (!dynamicState.playerCharacter) {
+      console.warn(`[MP ActionAgent] No player profile for playerId=${playerId}, skipping action`);
+      return;
+    }
     const actionAnalysis = dynamicState.temporaryInfo.currentActionAnalysis;
     const targetCharacter = this.findTargetCharacter(
       dynamicState,
@@ -1800,8 +1808,8 @@ export class ActionAgent {
 
     const targetLower = targetName.toLowerCase();
 
-    // Check if target is player
-    if (dynamicState.playerCharacter.name.toLowerCase().includes(targetLower)) {
+    // Check if target is the acting player
+    if (dynamicState.playerCharacter?.name?.toLowerCase().includes(targetLower)) {
       return dynamicState.playerCharacter;
     }
 
@@ -2106,8 +2114,8 @@ export class ActionAgent {
     // Add target character if applicable (filtered to remove unnecessary fields)
     if (targetCharacter) {
       const isPlayerTarget =
-        targetCharacter.id === dynamicState.playerCharacter.id ||
-        targetCharacter.name === dynamicState.playerCharacter.name;
+        targetCharacter.id === character.id ||
+        targetCharacter.name === character.name;
       const filteredTargetCharacter =
         this.filterCharacterForContext(targetCharacter);
       context +=
@@ -2537,8 +2545,8 @@ export class ActionAgent {
           let targetCharacter: DynamicCharacterProfile | undefined;
 
           if (logEntry.characterId) {
-            // Find character by ID
-            if (logEntry.characterId === updatedState.playerCharacter.id) {
+            // Find character by ID — check acting player first, then NPCs
+            if (updatedState.playerCharacter && logEntry.characterId === updatedState.playerCharacter.id) {
               targetCharacter = updatedState.playerCharacter;
             } else {
               targetCharacter = updatedState.npcCharacters.find(

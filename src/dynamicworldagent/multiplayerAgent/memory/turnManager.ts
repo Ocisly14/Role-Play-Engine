@@ -127,8 +127,8 @@ export class TurnManager {
     return this.createTurn({
       sessionId,
       characterInput,
-      characterId: gameState.playerCharacter.id,
-      characterName: gameState.playerCharacter.name,
+      characterId: gameState.playerCharacter?.id,
+      characterName: gameState.playerCharacter?.name,
       sceneId: gameState.currentScenario?.id,
       sceneName: gameState.currentScenario?.name,
       location: gameState.currentScenario?.location,

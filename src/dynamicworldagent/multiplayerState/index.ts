@@ -3,7 +3,6 @@ export type {
   MultiplayerTurnInput,
   MultiplayerTemporaryInfo,
   MultiplayerSceneRoomState,
-  RestConsensusState,
   MultiplayerDynamicGameState,
   FrozenPlayerInput,
   // Re-exported from single-player
