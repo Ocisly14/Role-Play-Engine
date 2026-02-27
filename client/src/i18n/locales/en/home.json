@@ -71,6 +71,8 @@
   "analytics": {
     "title": "Analytics Dashboard",
     "todaySummary": "Today's Summary ({{date}})",
+    "accumulatedSummary": "All-Time Totals",
+    "todayTopUsers": "Today's Top 5 Users (by messages)",
     "recent48hSummary": "Recent 48 Hours ({{start}} - {{end}})",
     "actions": {
       "refresh": "Refresh",
@@ -86,6 +88,8 @@
       "newUsers": "New Users",
       "messages": "Messages",
       "totalMessages": "Total Messages",
+      "accumulatedUsers": "Accumulated Users",
+      "accumulatedMessages": "Accumulated Messages",
       "avgMsgsPerUser": "Avg Msgs/User",
       "newMods": "New Mods",
       "newModsShort": "New Short Mods",

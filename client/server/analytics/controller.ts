@@ -1,8 +1,10 @@
 import type { Request, Response } from "express";
 import {
   calculateDailyStats,
+  getAccumulatedStats,
   getHistoricalStats,
   getRecentWindowStats,
+  getTopUsersByMessagesForDate,
   getTodayStats,
   saveDailyStats,
 } from "./service.js";
@@ -14,6 +16,7 @@ import {
 export async function getDailyAnalytics(req: Request, res: Response) {
   try {
     const days = Math.min(Number(req.query.days) || 30, 365); // Cap at 1 year
+    const today = new Date().toISOString().split("T")[0];
 
     // Get today's stats (calculates if not exists)
     const todayStats = await getTodayStats();
@@ -21,11 +24,15 @@ export async function getDailyAnalytics(req: Request, res: Response) {
     // Get historical stats
     const historicalStats = await getHistoricalStats(days);
     const recent48h = await getRecentWindowStats(48);
+    const accumulated = await getAccumulatedStats();
+    const topUsersToday = await getTopUsersByMessagesForDate(today, 5);
 
     return res.json({
       today: todayStats,
       history: historicalStats,
       recent48h,
+      accumulated,
+      topUsersToday,
     });
   } catch (error) {
     console.error("Error fetching daily analytics:", error);

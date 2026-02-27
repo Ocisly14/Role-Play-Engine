@@ -44,6 +44,17 @@ interface WindowStats {
   total_new_mods_count: number;
 }
 
+interface AccumulatedStats {
+  accumulated_users_count: number;
+  accumulated_messages_count: number;
+}
+
+interface TopUserMessages {
+  email: string;
+  username: string | null;
+  messages_count: number;
+}
+
 interface AnalyticsProps {
   onClose: () => void;
 }
@@ -52,6 +63,8 @@ export function Analytics({ onClose }: AnalyticsProps) {
   const { t, i18n } = useTranslation(["home", "common"]);
   const [stats, setStats] = useState<DailyStats[]>([]);
   const [recent48h, setRecent48h] = useState<WindowStats | null>(null);
+  const [accumulated, setAccumulated] = useState<AccumulatedStats | null>(null);
+  const [topUsersToday, setTopUsersToday] = useState<TopUserMessages[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -65,6 +78,8 @@ export function Analytics({ onClose }: AnalyticsProps) {
       const response = await api.get("/analytics/daily?days=30");
       setStats(response.data.history || []);
       setRecent48h(response.data.recent48h || null);
+      setAccumulated(response.data.accumulated || null);
+      setTopUsersToday(response.data.topUsersToday || []);
       setError(null);
     } catch (err: any) {
       setError(
@@ -295,6 +310,84 @@ export function Analytics({ onClose }: AnalyticsProps) {
             </div>
           ) : (
             <>
+              {/* Accumulated Summary Cards */}
+              {accumulated && (
+                <div style={{ marginBottom: "32px" }}>
+                  <h3
+                    style={{
+                      fontSize: "18px",
+                      fontWeight: "700",
+                      marginBottom: "16px",
+                      fontFamily: "var(--serif)",
+                      color: "var(--title)",
+                    }}
+                  >
+                    {t("home:analytics.accumulatedSummary")}
+                  </h3>
+                  <div
+                    style={{
+                      display: "grid",
+                      gridTemplateColumns:
+                        "repeat(auto-fit, minmax(200px, 1fr))",
+                      gap: "16px",
+                    }}
+                  >
+                    <StatCard
+                      label={t("home:analytics.metrics.accumulatedUsers")}
+                      value={accumulated.accumulated_users_count}
+                      color="#0ea5e9"
+                    />
+                    <StatCard
+                      label={t("home:analytics.metrics.accumulatedMessages")}
+                      value={accumulated.accumulated_messages_count}
+                      color="#f97316"
+                    />
+                  </div>
+                </div>
+              )}
+
+              {/* Today's Top 5 Users */}
+              {topUsersToday.length > 0 && (
+                <div style={{ marginBottom: "32px" }}>
+                  <h3
+                    style={{
+                      fontSize: "18px",
+                      fontWeight: "700",
+                      marginBottom: "16px",
+                      fontFamily: "var(--serif)",
+                      color: "var(--title)",
+                    }}
+                  >
+                    {t("home:analytics.todayTopUsers")}
+                  </h3>
+                  <div
+                    style={{
+                      display: "grid",
+                      gridTemplateColumns:
+                        "repeat(auto-fit, minmax(240px, 1fr))",
+                      gap: "16px",
+                    }}
+                  >
+                    {topUsersToday.slice(0, 5).map((user, index) => {
+                      const name = user.username?.trim();
+                      const displayLabel =
+                        name && name !== user.email
+                          ? `${index + 1}. ${name} (${user.email})`
+                          : `${index + 1}. ${user.email}`;
+
+                      return (
+                        <StatCard
+                          key={`${user.email}-${index}`}
+                          label={displayLabel}
+                          value={user.messages_count}
+                          color="#0ea5e9"
+                        />
+                      );
+                    })}
+                  </div>
+                </div>
+              )}
+
               {/* Today's Summary Cards */}
               {todayStats && (
                 <div style={{ marginBottom: "32px" }}>

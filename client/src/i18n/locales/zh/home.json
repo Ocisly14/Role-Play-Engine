@@ -71,6 +71,8 @@
   "analytics": {
     "title": "数据看板",
     "todaySummary": "今日汇总 ({{date}})",
+    "accumulatedSummary": "累计汇总",
+    "todayTopUsers": "今日消息最多的5个用户",
     "recent48hSummary": "最近48小时 ({{start}} - {{end}})",
     "actions": {
       "refresh": "刷新",
@@ -86,6 +88,8 @@
       "newUsers": "新增用户",
       "messages": "消息数",
       "totalMessages": "消息总量",
+      "accumulatedUsers": "累计用户",
+      "accumulatedMessages": "累计消息",
       "avgMsgsPerUser": "人均消息",
       "newMods": "新增模组",
       "newModsShort": "新增短篇模组",

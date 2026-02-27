@@ -31,6 +31,17 @@ export interface WindowStats {
   total_new_mods_count: number;
 }
 
+export interface AccumulatedStats {
+  accumulated_users_count: number;
+  accumulated_messages_count: number;
+}
+
+export interface TopUserMessages {
+  email: string;
+  username: string | null;
+  messages_count: number;
+}
+
 /**
  * Build start-of-day and start-of-next-day Date objects for a date string (YYYY-MM-DD).
  */
@@ -552,4 +563,69 @@ export async function getTodayStats(): Promise<DailyStats> {
   });
 
   return toDailyStats(saved!);
+}
+
+/**
+ * Get accumulated (all-time) statistics across the whole database.
+ */
+export async function getAccumulatedStats(): Promise<AccumulatedStats> {
+  const prisma = getPrismaClient();
+
+  const accumulated_users_count = await prisma.user.count();
+  const accumulated_messages_count = await prisma.gameTurn.count();
+
+  return {
+    accumulated_users_count,
+    accumulated_messages_count,
+  };
+}
+
+export async function getTopUsersByMessagesForDate(
+  date: string,
+  limit = 5
+): Promise<TopUserMessages[]> {
+  const prisma = getPrismaClient();
+  const { dayStart, nextDay } = dayRange(date);
+
+  const grouped = await prisma.gameTurn.groupBy({
+    by: ["emailId"],
+    where: {
+      startedAt: {
+        gte: dayStart,
+        lt: nextDay,
+      },
+      emailId: { not: null },
+    },
+    _count: {
+      turnId: true,
+    },
+    orderBy: {
+      _count: {
+        turnId: "desc",
+      },
+    },
+    take: limit,
+  });
+
+  const emails = grouped
+    .map((row) => row.emailId)
+    .filter((email): email is string => email !== null);
+
+  const users = await prisma.user.findMany({
+    where: {
+      email: { in: emails },
+    },
+    select: {
+      email: true,
+      username: true,
+    },
+  });
+
+  const usernameByEmail = new Map(users.map((u) => [u.email, u.username]));
+
+  return grouped.map((row) => ({
+    email: row.emailId!,
+    username: usernameByEmail.get(row.emailId!) ?? null,
+    messages_count: row._count.turnId,
+  }));
 }
