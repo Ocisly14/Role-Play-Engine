@@ -16,10 +16,6 @@ import type {
  * Memory Agent helpers
  * This module owns state-side helpers for memory workflows.
  */
-import {
-  type DynamicGameState,
-  DynamicGameStateManager,
-} from "../../state/index.js";
 import type { MultiplayerDynamicGameStateManager } from "../../multiplayerState/MultiplayerDynamicGameState.js";
 import { getAncestorSceneRoomIds } from "../../multiplayerState/ancestorChain.js";
 import { RagQueryRewriter } from "../knowledge/ragQueryRewriter.js";
@@ -280,28 +276,31 @@ async function buildFullTurnRelevantHistoryFromChunks(
 
 /**
  * Inject action-type-specific rules into temporary rules so downstream agents can apply them.
+ * Multiplayer native: writes directly to the sceneRoom via manager.
  */
 export const injectActionTypeRules = (
-  gameState: DynamicGameState,
+  manager: MultiplayerDynamicGameStateManager,
+  sceneRoomId: string,
   actionType?: ActionType
-): DynamicGameState => {
-  if (!actionType) return gameState;
+): void => {
+  if (!actionType) return;
 
   const ruleText = actionRules[actionType];
-  if (!ruleText) return gameState;
+  if (!ruleText) return;
 
-  const manager = new DynamicGameStateManager(gameState);
-  manager.addTemporaryRules({
-    rules: [
-      {
-        title: `${actionType} rules`,
-        description: ruleText,
-      },
-    ],
-    count: 1,
+  const sceneRoom = manager.getSceneRoom(sceneRoomId);
+  if (!sceneRoom) return;
+
+  const formatted = `${actionType} rules: ${ruleText}`;
+  const currentRules = sceneRoom.temporaryInfo.rules ?? [];
+  if (currentRules.includes(formatted)) return;
+
+  manager.updateSceneRoom(sceneRoomId, {
+    temporaryInfo: {
+      ...sceneRoom.temporaryInfo,
+      rules: [...currentRules, formatted],
+    },
   });
-
-  return manager.getState();
 };
 
 /**
@@ -594,34 +593,45 @@ export const retrieveRelevantHistory = async (
 };
 
 /**
- * Enrich game state with action-type rules and conversation history for the memory workflow.
+ * Enrich sceneRoom state with action-type rules and conversation history for the memory workflow.
+ * Multiplayer native: reads/writes through the multiplayer manager.
  */
 export const enrichMemoryContext = async (
-  gameState: DynamicGameState,
+  manager: MultiplayerDynamicGameStateManager,
+  sceneRoomId: string,
   actionAnalysis: ActionAnalysis | null,
   db?: CoCDatabase | CoCDatabaseAdapter,
   characterInput?: string,
   language?: "en" | "zh"
-): Promise<DynamicGameState> => {
-  // First inject the action-type rules
-  const withRules = injectActionTypeRules(
-    gameState,
-    actionAnalysis?.actionType
-  );
+): Promise<void> => {
+  const state = manager.getState();
+  const sceneRoom = manager.getSceneRoom(sceneRoomId);
+  if (!sceneRoom) return;
 
-  // Extract recent conversation history (last 3 turns) and store in contextualData
+  // First inject the action-type rules
+  injectActionTypeRules(manager, sceneRoomId, actionAnalysis?.actionType);
+
+  // Re-read sceneRoom after rule injection
+  const updatedSceneRoom = manager.getSceneRoom(sceneRoomId)!;
+  const ancestorIds = getAncestorSceneRoomIds(manager, sceneRoomId);
+
+  // Extract recent conversation history (last 3 turns, sceneRoom-scoped with ancestor chain)
   const conversationHistory = await extractRecentConversationHistory(
     db,
-    gameState.sessionId,
-    3
+    state.sessionId,
+    3,
+    ancestorIds
   );
 
   // Extract target characters for per-character retrieval
   const targetCharacters: string[] = [];
 
-  // Add player character
-  if (gameState.playerCharacter?.name) {
-    targetCharacters.push(gameState.playerCharacter.name);
+  // Add all member player character names
+  for (const pid of sceneRoom.memberPlayerIds) {
+    const p = state.players[pid];
+    if (p?.characterName) {
+      targetCharacters.push(p.characterName);
+    }
   }
 
   // Add target from action analysis (if available)
@@ -630,8 +640,8 @@ export const enrichMemoryContext = async (
   }
 
   // Add characters from action results (NPCs who acted in current turn)
-  if (gameState.temporaryInfo?.actionResults) {
-    for (const result of gameState.temporaryInfo.actionResults) {
+  if (updatedSceneRoom.temporaryInfo?.actionResults) {
+    for (const result of updatedSceneRoom.temporaryInfo.actionResults) {
       if (result.character && !targetCharacters.includes(result.character)) {
         targetCharacters.push(result.character);
       }
@@ -642,7 +652,7 @@ export const enrichMemoryContext = async (
   const uniqueCharacters = [...new Set(targetCharacters)];
 
   // Get current location for boosting
-  const currentLocation = gameState.currentScenario?.location || null;
+  const currentLocation = sceneRoom.currentScenario?.location || null;
 
   // Adjust BM25 weight based on language
   // Chinese has poor BM25 performance due to FTS5 character-level tokenization
@@ -667,30 +677,29 @@ export const enrichMemoryContext = async (
 
     const npcNames = Array.from(
       new Set(
-        (gameState.npcCharacters || [])
-          .map((npc) => (typeof npc?.name === "string" ? npc.name.trim() : ""))
-          .filter((name) => name.length > 0)
+        (state.npcCharacters || [])
+          .map((npc: any) => (typeof npc?.name === "string" ? npc.name.trim() : ""))
+          .filter((name: string) => name.length > 0)
       )
     ).slice(0, 30);
 
-    const allScenes = (gameState.scenarioOutlines || [])
-      .map((scene) => ({
+    const allScenes = (state.scenarioOutlines || [])
+      .map((scene: any) => ({
         name: scene.name,
         description: scene.description,
       }))
-      .filter((scene) => scene.name && scene.description)
+      .filter((scene: any) => scene.name && scene.description)
       .slice(0, 50);
 
+    const contextualData = updatedSceneRoom.temporaryInfo.contextualData ?? {};
     const preloadedRelevantHistory =
-      (withRules.temporaryInfo.contextualData?.relevantHistory as RelevantHistoryItem[]) || [];
+      (contextualData.relevantHistory as RelevantHistoryItem[]) || [];
     const preloadedRelevantHistoryQuery =
-      typeof withRules.temporaryInfo.contextualData?.relevantHistoryQuery ===
-      "string"
-        ? withRules.temporaryInfo.contextualData.relevantHistoryQuery.trim()
+      typeof contextualData.relevantHistoryQuery === "string"
+        ? (contextualData.relevantHistoryQuery as string).trim()
         : "";
     const preloadedIncludesActionLogs =
-      withRules.temporaryInfo.contextualData?.relevantHistoryIncludesActionLogs ===
-      true;
+      contextualData.relevantHistoryIncludesActionLogs === true;
     const currentInput = characterInput.trim();
     const canReusePreloaded =
       preloadedRelevantHistory.length > 0 &&
@@ -701,25 +710,25 @@ export const enrichMemoryContext = async (
     const rawRelevantHistory =
       canReusePreloaded
         ? preloadedRelevantHistory
-        : await retrieveRelevantHistory(db, gameState.sessionId, characterInput, {
-            topKActionLogs: 15, // Keeper path keeps action-log recall enabled
-            topKTurns: 5, // Increase turn recall for better continuity
-            alpha, // Dynamic: 10% BM25 (中文) or 30% BM25 (英文)
-            // NEW: Per-character options
+        : await retrieveRelevantHistory(db, state.sessionId, characterInput, {
+            topKActionLogs: 15,
+            topKTurns: 5,
+            alpha,
             targetCharacters:
               uniqueCharacters.length > 0 ? uniqueCharacters : undefined,
-            topKPerCharacter: 5, // Top 5 per character
+            topKPerCharacter: 5,
             currentLocation: currentLocation || undefined,
-            locationBoostFactor: 1.2, // 20% boost for matching location
+            locationBoostFactor: 1.2,
             language: effectiveLanguage,
-            sceneName: gameState.currentScenario?.name || undefined,
+            sceneName: sceneRoom.currentScenario?.name || undefined,
             sceneLocation: currentLocation || undefined,
             npcNames,
-            playerName: gameState.playerCharacter?.name || undefined,
+            // No single playerName in MP; omit to avoid misleading the rewriter.
             recentTurns: recentTurnsForRewrite,
             allScenes,
             minScore: 0.7,
             includeActionLogs: true,
+            sceneRoomId: ancestorIds,
           });
 
     if (canReusePreloaded) {
@@ -784,18 +793,19 @@ export const enrichMemoryContext = async (
     }
   }
 
-  return {
-    ...withRules,
+  // Write enriched data via manager
+  const finalSceneRoom = manager.getSceneRoom(sceneRoomId)!;
+  manager.updateSceneRoom(sceneRoomId, {
     temporaryInfo: {
-      ...withRules.temporaryInfo,
+      ...finalSceneRoom.temporaryInfo,
       contextualData: {
-        ...withRules.temporaryInfo.contextualData,
+        ...finalSceneRoom.temporaryInfo.contextualData,
         conversationHistory,
-        relevantHistory, // Add RAG-retrieved relevant history
+        relevantHistory,
         relevantHistoryIncludesActionLogs: true,
       },
     },
-  };
+  });
 };
 
 /**
