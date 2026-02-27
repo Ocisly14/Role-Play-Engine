@@ -442,7 +442,20 @@ export const buildMultiplayerGraph = (
       return { ...state, dynamicGameState: m.getState() };
     }
 
-    // Check 2: Global trigger + victory
+    // Check 2: Rest-freeze guard — defer trigger check when resting in multi-room games
+    const isRestRound =
+      sceneRoom.temporaryInfo?.contextualData?.isRestRound === true;
+    const activeRooms = m.getActiveSceneRooms();
+
+    if (isRestRound && activeRooms.length > 1) {
+      console.log(
+        `💤 [MP Game End Check] Rest round detected with ${activeRooms.length} active rooms — deferring trigger check, rest-freezing sceneRoom ${state.sceneRoomId}`
+      );
+      m.restFreezeSceneRoom(state.sceneRoomId);
+      return { ...state, dynamicGameState: m.getState() };
+    }
+
+    // Check 3: Global trigger + victory
     try {
       const triggerResult =
         await directorAgent.checkGlobalTriggerAndGameEnd(m, state.sceneRoomId);

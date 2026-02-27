@@ -171,6 +171,11 @@ export interface MultiplayerSceneRoomState {
   isFrozen: boolean;
   /** Timestamp when the room was frozen; null while active */
   frozenAt: Date | null;
+  // ── Rest-freeze fields ──
+  /** True when room is frozen after rest (prevents input, defers trigger check) */
+  isRestFrozen?: boolean;
+  /** ISO timestamp of when rest-freeze started */
+  restFrozenAt?: string;
 }
 
 // =============================================
@@ -677,6 +682,72 @@ export class MultiplayerDynamicGameStateManager {
   /** Return all sceneRooms that are currently active (not frozen) */
   getActiveSceneRooms(): MultiplayerSceneRoomState[] {
     return Object.values(this.state.sceneRooms).filter((r) => !r.isFrozen);
+  }
+
+  // ---------- Rest-freeze operations ----------
+
+  /** Freeze a scene room after rest (prevents input, defers trigger check) */
+  restFreezeSceneRoom(sceneRoomId: string): void {
+    const room = this.state.sceneRooms[sceneRoomId];
+    if (!room) return;
+    room.isRestFrozen = true;
+    room.restFrozenAt = new Date().toISOString();
+    this.state.lastUpdated = new Date();
+  }
+
+  /** Unfreeze a rest-frozen scene room */
+  restUnfreezeSceneRoom(sceneRoomId: string): void {
+    const room = this.state.sceneRooms[sceneRoomId];
+    if (!room) return;
+    room.isRestFrozen = false;
+    room.restFrozenAt = undefined;
+    this.state.lastUpdated = new Date();
+  }
+
+  /** Get all rest-frozen scene rooms (active but rest-frozen) */
+  getRestFrozenSceneRooms(): MultiplayerSceneRoomState[] {
+    return this.getActiveSceneRooms().filter((r) => r.isRestFrozen);
+  }
+
+  /** Check if a scene room is rest-frozen */
+  isSceneRoomRestFrozen(sceneRoomId: string): boolean {
+    const room = this.state.sceneRooms[sceneRoomId];
+    return room?.isRestFrozen === true;
+  }
+
+  /**
+   * Check which rest-frozen rooms can be unfrozen.
+   * A room is eligible when its time is within 2H of all non-rest-frozen active rooms.
+   * If all active rooms are rest-frozen, all are eligible (no non-frozen rooms to wait for).
+   */
+  checkRestUnfreezeEligibility(): string[] {
+    const frozenRooms = this.getRestFrozenSceneRooms();
+    if (frozenRooms.length === 0) return [];
+
+    const activeNonFrozen = this.getActiveSceneRooms().filter(
+      (r) => !r.isRestFrozen
+    );
+
+    if (activeNonFrozen.length === 0) {
+      // All active rooms are rest-frozen → unfreeze all
+      return frozenRooms.map((r) => r.sceneRoomId);
+    }
+
+    const BLOCK_THRESHOLD = 120; // 2 hours in minutes
+    const eligible: string[] = [];
+    for (const frozen of frozenRooms) {
+      const frozenMinutes = toAbsoluteMinutes(frozen.gameDay, frozen.timeOfDay);
+      let withinThreshold = true;
+      for (const other of activeNonFrozen) {
+        const otherMinutes = toAbsoluteMinutes(other.gameDay, other.timeOfDay);
+        if (Math.abs(frozenMinutes - otherMinutes) > BLOCK_THRESHOLD) {
+          withinThreshold = false;
+          break;
+        }
+      }
+      if (withinThreshold) eligible.push(frozen.sceneRoomId);
+    }
+    return eligible;
   }
 
   // ---------- Time-frozen player operations ----------

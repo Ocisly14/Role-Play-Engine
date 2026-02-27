@@ -231,6 +231,12 @@ export class ActionAgent {
       for (const [playerId, minutes] of Object.entries(staged.fatigueMinutesByPlayer)) {
         manager.addFatigueMinutes(playerId, minutes);
       }
+
+      // Detect rest-only round (fallback path — all inputs are rest)
+      const allAreRest =
+        roundInputsInjected.length > 0 &&
+        roundInputsInjected.every((ri) => this.hasRestIntent(ri.content ?? ""));
+      manager.setContextualData(sceneRoomId, "isRestRound", allAreRest);
       return;
     }
 
@@ -416,6 +422,15 @@ export class ActionAgent {
       slowGroupPlayerNames,
       fastGroupMinutes: fastGroup?.estimatedMinutes ?? 0,
     });
+
+    // 10. Detect rest-only round for rest-freeze logic
+    const fastGroupInputs = roundInputsInjected.filter((ri) =>
+      fastPlayerIds.has(ri.playerId)
+    );
+    const allFastAreRest =
+      fastGroupInputs.length > 0 &&
+      fastGroupInputs.every((ri) => this.hasRestIntent(ri.content ?? ""));
+    manager.setContextualData(sceneRoomId, "isRestRound", allFastAreRest);
   }
 
   private async processSceneRoomRoundPerPlayer(

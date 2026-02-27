@@ -14,6 +14,7 @@ import type {
 import { getPrismaClient } from "../../../../src/shared/agents/memory/database/prismaClient.js";
 import {
   MultiplayerDynamicGameStateManager,
+  toAbsoluteMinutes,
   type MultiplayerTurnInput,
 } from "../../../../src/dynamicworldagent/multiplayerState/MultiplayerDynamicGameState.js";
 import { multiplayerSessionStore } from "../../../../src/dynamicworldagent/multiplayerState/MultiplayerDynamicGameStateLoader.js";
@@ -21,6 +22,8 @@ import { buildMultiplayerGraph } from "../../../../src/dynamicworldagent/multipl
 import { resolveAllMovements, type TimeBubbleMergeInfo } from "../../../../src/dynamicworldagent/multiplayerGraph/sceneRoomMerger.js";
 import { generateSceneRoomImage } from "../../../../src/dynamicworldagent/multiplayerVisual/sceneImage.js";
 import { TurnManager } from "../../../../src/dynamicworldagent/multiplayerAgent/memory/turnManager.js";
+import { ScenarioLoader } from "../../../../src/shared/agents/memory/scenarioloader/index.js";
+import { DirectorAgent } from "../../../../src/dynamicworldagent/multiplayerAgent/director/directorAgent.js";
 import { WebSocketManager } from "../../websocket/WebSocketManager.js";
 import { notifySceneRoom } from "../../websocket/notifier.js";
 
@@ -92,6 +95,13 @@ export async function submitRoundInput(
     throw new Error(
       "This scene room is frozen and no longer accepts input. " +
         "Your character has been moved to a new scene room."
+    );
+  }
+
+  // Reject input to rest-frozen rooms (waiting for other rooms to catch up)
+  if (manager.isSceneRoomRestFrozen(sceneRoomId)) {
+    throw new Error(
+      "REST_FROZEN: This scene room is resting and waiting for other rooms to catch up."
     );
   }
 
@@ -373,6 +383,23 @@ async function triggerMultiplayerGraph(
     `[MP Turn] Round ${roundTurnId} complete for sceneRoom ${sceneRoomId}`
   );
 
+  // ---- Check for rest-frozen room ----
+  if (updatedManager && wsManager && updatedManager.isSceneRoomRestFrozen(sceneRoomId)) {
+    const restFrozenRoom = updatedManager.getSceneRoom(sceneRoomId);
+    const clients = wsManager.getMultiplayerClients(sceneRoomId);
+    notifySceneRoom(sceneRoomId, clients, {
+      type: "rest_frozen",
+      sceneRoomId,
+      message: "Resting... waiting for other rooms to catch up.",
+      gameDay: restFrozenRoom?.gameDay,
+      timeOfDay: restFrozenRoom?.timeOfDay,
+      timestamp: new Date().toISOString(),
+    });
+    console.log(
+      `[MP Turn] SceneRoom ${sceneRoomId} is rest-frozen after rest round`
+    );
+  }
+
   // ---- Check for time-unfrozen players ----
   if (updatedManager && wsManager && updatedSceneRoom) {
     const unfrozenPlayerIds =
@@ -466,6 +493,115 @@ async function triggerMultiplayerGraph(
         });
     }
   }
+
+  // ---- Rest-unfreeze coordination ----
+  // After every round completes, check if any rest-frozen rooms can now be unfrozen
+  if (updatedManager) {
+    await handleRestUnfreezeCheck(updatedManager, db, wsManager);
+  }
+}
+
+// =============================================
+// handleRestUnfreezeCheck — Unfreeze rest-frozen rooms + run deferred trigger checks
+// =============================================
+
+async function handleRestUnfreezeCheck(
+  manager: MultiplayerDynamicGameStateManager,
+  db: CoCDatabase | CoCDatabaseAdapter,
+  wsManager: ReturnType<typeof WebSocketManager.getInstance>
+): Promise<void> {
+  const eligible = manager.checkRestUnfreezeEligibility();
+  if (eligible.length === 0) return;
+
+  // Sort by time ascending — unfreeze shorter-time rooms first
+  eligible.sort((a, b) => {
+    const roomA = manager.getSceneRoom(a);
+    const roomB = manager.getSceneRoom(b);
+    if (!roomA || !roomB) return 0;
+    const minA = toAbsoluteMinutes(roomA.gameDay, roomA.timeOfDay);
+    const minB = toAbsoluteMinutes(roomB.gameDay, roomB.timeOfDay);
+    return minA - minB;
+  });
+
+  console.log(
+    `[MP Turn] Rest-unfreeze eligible rooms: ${eligible.join(", ")}`
+  );
+
+  const scenarioLoader = new ScenarioLoader(db);
+  const directorAgent = new DirectorAgent(scenarioLoader, db);
+
+  for (const roomId of eligible) {
+    manager.restUnfreezeSceneRoom(roomId);
+
+    // Send WS notification
+    if (wsManager) {
+      const clients = wsManager.getMultiplayerClients(roomId);
+      notifySceneRoom(roomId, clients, {
+        type: "rest_unfrozen",
+        sceneRoomId: roomId,
+        message: "Rest complete. Resuming play.",
+        timestamp: new Date().toISOString(),
+      });
+    }
+
+    console.log(`[MP Turn] Rest-unfrozen sceneRoom ${roomId}`);
+
+    // Run deferred trigger check
+    try {
+      const triggerResult = await directorAgent.checkGlobalTriggerAndGameEnd(
+        manager,
+        roomId
+      );
+
+      if (triggerResult.victoryAchieved) {
+        console.log(
+          `[MP Turn] Deferred trigger check: victory achieved after rest-unfreeze of ${roomId}`
+        );
+        if (wsManager) {
+          for (const room of manager.getActiveSceneRooms()) {
+            const clients = wsManager.getMultiplayerClients(room.sceneRoomId);
+            notifySceneRoom(room.sceneRoomId, clients, {
+              type: "game_ending_update",
+              gameEnding: manager.getState().gameEnding,
+              timestamp: new Date().toISOString(),
+            });
+          }
+        }
+        break; // Don't unfreeze more rooms if game ended
+      }
+
+      if (triggerResult.triggered && triggerResult.causesGameEnd) {
+        console.log(
+          `[MP Turn] Deferred trigger check: game end triggered after rest-unfreeze of ${roomId}`
+        );
+        if (wsManager) {
+          for (const room of manager.getActiveSceneRooms()) {
+            const clients = wsManager.getMultiplayerClients(room.sceneRoomId);
+            notifySceneRoom(room.sceneRoomId, clients, {
+              type: "game_ending_update",
+              gameEnding: manager.getState().gameEnding,
+              timestamp: new Date().toISOString(),
+            });
+          }
+        }
+        break; // Don't unfreeze more rooms if game ended
+      }
+
+      if (triggerResult.triggered) {
+        console.log(
+          `[MP Turn] Deferred trigger check: trigger fired (non-ending) after rest-unfreeze of ${roomId}`
+        );
+      }
+    } catch (e) {
+      console.error(
+        `[MP Turn] Deferred trigger check failed for sceneRoom ${roomId}:`,
+        e
+      );
+    }
+  }
+
+  // Persist updated state back to session store
+  // (manager is already the reference from multiplayerSessionStore, mutations are in-place)
 }
 
 // =============================================
