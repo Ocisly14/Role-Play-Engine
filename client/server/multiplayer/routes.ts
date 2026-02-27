@@ -16,6 +16,7 @@ router.get("/rooms/:roomId/overview", roomController.getRoomOverview);
 router.post("/rooms/:roomId/select-module", roomController.selectModule);
 router.post("/rooms/:roomId/select-character", roomController.selectCharacter);
 router.post("/rooms/:roomId/confirm", roomController.confirmReady);
+router.post("/rooms/:roomId/unconfirm", roomController.unconfirmReady);
 router.post("/rooms/:roomId/start", roomController.startGame);
 
 // Game lifecycle (Phase 2)

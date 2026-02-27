@@ -1,6 +1,8 @@
 import type React from "react";
 import { useEffect, useState } from "react";
+import { useTranslation } from "react-i18next";
 import { useNavigate, useParams } from "react-router-dom";
+import { FrameImage } from "../components/FrameImage";
 import { useAuth } from "../contexts/AuthContext";
 import { useMultiplayerRoom } from "../hooks/useMultiplayerRoom";
 import { authFetch } from "../utils/authFetch";
@@ -16,10 +18,11 @@ interface Mod {
 }
 
 export const MultiplayerRoomWaiting: React.FC = () => {
+  const { t } = useTranslation("home");
   const { roomId } = useParams<{ roomId: string }>();
   const navigate = useNavigate();
   const { user } = useAuth();
-  const { room, loading, error } = useMultiplayerRoom(roomId ?? null);
+  const { room, loading, error, refetch } = useMultiplayerRoom(roomId ?? null);
 
   const [characters, setCharacters] = useState<Character[]>([]);
   const [mods, setMods] = useState<Mod[]>([]);
@@ -48,31 +51,47 @@ export const MultiplayerRoomWaiting: React.FC = () => {
   // Navigate away when game starts
   useEffect(() => {
     if (room?.status === "playing") {
-      // Phase 2 will add the actual game route; for now just log
       console.log("[Multiplayer] Game started, room:", room.roomId);
     }
   }, [room?.status, room?.roomId]);
 
+  // Loading state
   if (loading && !room) {
     return (
-      <div className="min-h-screen bg-gray-900 text-white flex items-center justify-center">
-        <p className="text-gray-400">Loading room…</p>
+      <div className="home">
+        <div className="home-frame">
+          <FrameImage />
+          <div className="fixed left-[50%] top-[50%] z-50 translate-x-[-50%] translate-y-[-50%] max-w-[640px] max-h-[90vh] w-full overflow-y-auto rounded-3xl supports-[backdrop-filter]:backdrop-blur-lg border border-white/50 bg-white/80 shadow-[0_30px_80px_rgba(15,23,42,0.25)] supports-[backdrop-filter]:bg-white/55 flex flex-col">
+            <div className="p-12 text-center">
+              <p style={{ color: "#666" }}>{t("multiplayer.loadingRoom")}</p>
+            </div>
+          </div>
+        </div>
       </div>
     );
   }
 
+  // Error / not found state
   if (error || !room) {
     return (
-      <div className="min-h-screen bg-gray-900 text-white flex items-center justify-center p-4">
-        <div className="text-center space-y-4">
-          <p className="text-red-400">{error ?? "Room not found"}</p>
-          <button
-            type="button"
-            onClick={() => navigate("/multiplayer")}
-            className="text-gray-400 hover:text-white text-sm"
-          >
-            ← Back to Lobby
-          </button>
+      <div className="home">
+        <div className="home-frame">
+          <FrameImage />
+          <div className="fixed left-[50%] top-[50%] z-50 translate-x-[-50%] translate-y-[-50%] max-w-[640px] max-h-[90vh] w-full overflow-y-auto rounded-3xl supports-[backdrop-filter]:backdrop-blur-lg border border-white/50 bg-white/80 shadow-[0_30px_80px_rgba(15,23,42,0.25)] supports-[backdrop-filter]:bg-white/55 flex flex-col">
+            <div className="p-12 text-center space-y-4">
+              <div className="backdrop-blur-sm bg-red-50/60 border border-red-200 rounded-xl p-4">
+                <p style={{ color: "#b91c1c" }}>{error ?? t("multiplayer.roomNotFound")}</p>
+              </div>
+              <button
+                type="button"
+                onClick={() => navigate("/multiplayer")}
+                className="secondary"
+                style={{ width: "100%" }}
+              >
+                {t("multiplayer.backToLobby")}
+              </button>
+            </div>
+          </div>
         </div>
       </div>
     );
@@ -83,8 +102,8 @@ export const MultiplayerRoomWaiting: React.FC = () => {
   const canStart =
     room.isHost && allConfirmed && !!room.moduleName && room.members.length >= 1;
 
-  const handleSelectCharacter = async () => {
-    if (!selectedCharacterId) return;
+  const handleSelectCharacter = async (characterId: string) => {
+    if (!characterId) return;
     setActionError(null);
     setBusy(true);
     try {
@@ -93,11 +112,12 @@ export const MultiplayerRoomWaiting: React.FC = () => {
         {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ characterId: selectedCharacterId }),
+          body: JSON.stringify({ characterId }),
         }
       );
       const data = await res.json();
-      if (!data.success) throw new Error(data.error ?? "Failed to select character");
+      if (!data.success) throw new Error(data.error ?? t("multiplayer.selectCharFailed"));
+      await refetch();
     } catch (err) {
       setActionError((err as Error).message);
     } finally {
@@ -114,7 +134,8 @@ export const MultiplayerRoomWaiting: React.FC = () => {
         { method: "POST" }
       );
       const data = await res.json();
-      if (!data.success) throw new Error(data.error ?? "Failed to confirm");
+      if (!data.success) throw new Error(data.error ?? t("multiplayer.confirmFailed"));
+      await refetch();
     } catch (err) {
       setActionError((err as Error).message);
     } finally {
@@ -122,8 +143,26 @@ export const MultiplayerRoomWaiting: React.FC = () => {
     }
   };
 
-  const handleSelectModule = async () => {
-    if (!selectedModuleName) return;
+  const handleCancelReady = async () => {
+    setActionError(null);
+    setBusy(true);
+    try {
+      const res = await authFetch(
+        `/api/multiplayer/rooms/${room.roomId}/unconfirm`,
+        { method: "POST" }
+      );
+      const data = await res.json();
+      if (!data.success) throw new Error(data.error ?? t("multiplayer.cancelFailed"));
+      await refetch();
+    } catch (err) {
+      setActionError((err as Error).message);
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  const handleSelectModule = async (moduleName: string) => {
+    if (!moduleName) return;
     setActionError(null);
     setBusy(true);
     try {
@@ -132,11 +171,12 @@ export const MultiplayerRoomWaiting: React.FC = () => {
         {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ moduleName: selectedModuleName }),
+          body: JSON.stringify({ moduleName }),
         }
       );
       const data = await res.json();
-      if (!data.success) throw new Error(data.error ?? "Failed to select module");
+      if (!data.success) throw new Error(data.error ?? t("multiplayer.selectModFailed"));
+      await refetch();
     } catch (err) {
       setActionError((err as Error).message);
     } finally {
@@ -148,21 +188,19 @@ export const MultiplayerRoomWaiting: React.FC = () => {
     setActionError(null);
     setBusy(true);
     try {
-      // Step 1: set room status to "playing"
       const startRes = await authFetch(
         `/api/multiplayer/rooms/${room.roomId}/start`,
         { method: "POST" }
       );
       const startData = await startRes.json();
-      if (!startData.success) throw new Error(startData.error ?? "Failed to start game");
+      if (!startData.success) throw new Error(startData.error ?? t("multiplayer.startFailed"));
 
-      // Step 2 (host only): initialise the game state — loads module + characters
       const initRes = await authFetch(
         `/api/multiplayer/rooms/${room.roomId}/game/init`,
         { method: "POST" }
       );
       const initData = await initRes.json();
-      if (!initData.success) throw new Error(initData.error ?? "Failed to initialise game");
+      if (!initData.success) throw new Error(initData.error ?? t("multiplayer.initFailed"));
 
       console.log("[Multiplayer] Game initialised:", initData);
     } catch (err) {
@@ -172,190 +210,209 @@ export const MultiplayerRoomWaiting: React.FC = () => {
     }
   };
 
-  const statusBadge = (status: string) =>
-    status === "confirmed"
-      ? "bg-green-700 text-green-200"
-      : "bg-yellow-800 text-yellow-200";
-
   return (
-    <div className="min-h-screen bg-gray-900 text-white p-4">
-      <div className="max-w-2xl mx-auto space-y-6">
+    <div className="home">
+      <div className="home-frame">
+        <FrameImage />
+        <div className="fixed left-[50%] top-[50%] z-50 translate-x-[-50%] translate-y-[-50%] max-w-[640px] max-h-[90vh] w-full overflow-y-auto rounded-3xl supports-[backdrop-filter]:backdrop-blur-lg border border-white/50 bg-white/80 shadow-[0_30px_80px_rgba(15,23,42,0.25)] supports-[backdrop-filter]:bg-white/55 flex flex-col">
+          <div className="p-12 space-y-6">
 
-        {/* Header */}
-        <div className="flex items-center justify-between">
-          <div>
-            <h1 className="text-2xl font-bold text-yellow-400">Waiting Room</h1>
-            <p className="text-gray-400 text-sm">
-              Status:{" "}
-              <span className="text-white capitalize">{room.status}</span>
-            </p>
-          </div>
-          <div className="text-center">
-            <p className="text-xs text-gray-500 mb-1">Room Code</p>
-            <p className="text-3xl font-mono font-bold tracking-widest text-yellow-300">
-              {room.roomCode}
-            </p>
-          </div>
-        </div>
-
-        {/* Module info */}
-        {room.moduleName && (
-          <div className="bg-gray-800 rounded-lg px-4 py-2 text-sm">
-            <span className="text-gray-400">Module: </span>
-            <span className="text-white font-medium">{room.moduleName}</span>
-          </div>
-        )}
-
-        {/* Error banner */}
-        {actionError && (
-          <div className="bg-red-900/60 border border-red-600 rounded-lg p-3 text-sm text-red-200">
-            {actionError}
-          </div>
-        )}
-
-        {/* Members list */}
-        <div className="bg-gray-800 rounded-xl p-4 space-y-3">
-          <h2 className="text-lg font-semibold text-gray-100">Players</h2>
-          {room.members.map((member) => (
-            <div
-              key={member.id}
-              className="flex items-center justify-between bg-gray-700 rounded-lg px-4 py-3"
-            >
-              <div className="flex items-center gap-3">
-                <span className="text-gray-300 text-sm font-mono">
-                  #{member.seatOrder}
-                </span>
-                <div>
-                  <p className="text-white text-sm font-medium">
-                    {member.userId === user?.id ? "You" : `Player ${member.seatOrder}`}
-                    {member.role === "host" && (
-                      <span className="ml-2 text-yellow-400 text-xs">(Host)</span>
-                    )}
-                  </p>
-                  {member.characterId && (
-                    <p className="text-gray-400 text-xs">Character selected</p>
-                  )}
-                </div>
+            {/* Header */}
+            <div className="flex items-center justify-between">
+              <div>
+                <h1 className="text-2xl font-bold m-0" style={{ color: "var(--title)" }}>
+                  {t("multiplayer.waitingRoom")}
+                </h1>
+                <p className="text-sm mt-1 m-0" style={{ color: "#666" }}>
+                  {t("multiplayer.status")}:{" "}
+                  <span className="capitalize" style={{ color: "var(--title)" }}>{room.status}</span>
+                </p>
               </div>
-              <span
-                className={`text-xs px-2 py-1 rounded-full font-medium ${statusBadge(member.confirmStatus)}`}
-              >
-                {member.confirmStatus}
-              </span>
+              <div className="text-center">
+                <p className="text-xs mb-1 m-0" style={{ color: "#666" }}>{t("multiplayer.roomCode")}</p>
+                <p className="text-3xl font-mono font-bold tracking-widest m-0" style={{ color: "var(--title)" }}>
+                  {room.roomCode}
+                </p>
+              </div>
             </div>
-          ))}
-        </div>
 
-        {/* Player controls: select character + confirm */}
-        {myMember && myMember.confirmStatus !== "confirmed" && (
-          <div className="bg-gray-800 rounded-xl p-4 space-y-3">
-            <h2 className="text-lg font-semibold text-gray-100">Your Character</h2>
-            <div className="flex gap-2">
-              <select
-                value={selectedCharacterId}
-                onChange={(e) => setSelectedCharacterId(e.target.value)}
-                className="flex-1 bg-gray-700 border border-gray-600 rounded-lg px-3 py-2 text-white focus:outline-none focus:border-yellow-500"
-              >
-                <option value="">Select a character…</option>
-                {characters.map((c) => (
-                  <option key={c.character_id} value={c.character_id}>
-                    {c.name}
-                    {c.occupation ? ` — ${c.occupation}` : ""}
-                  </option>
-                ))}
-              </select>
-              <button
-                type="button"
-                onClick={handleSelectCharacter}
-                disabled={busy || !selectedCharacterId}
-                className="bg-gray-600 hover:bg-gray-500 disabled:opacity-50 disabled:cursor-not-allowed text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors"
-              >
-                Select
-              </button>
-            </div>
-            <button
-              type="button"
-              onClick={handleConfirmReady}
-              disabled={busy || !myMember.characterId}
-              className="w-full bg-green-700 hover:bg-green-600 disabled:opacity-50 disabled:cursor-not-allowed text-white font-semibold py-3 rounded-lg transition-colors"
-            >
-              Confirm Ready
-            </button>
-            {!myMember.characterId && (
-              <p className="text-yellow-600 text-xs text-center">
-                Select and save a character before confirming
-              </p>
+            {/* Module info */}
+            {room.moduleName && (
+              <div className="backdrop-blur-sm bg-white/50 border border-slate-200 rounded-lg px-4 py-2 text-sm">
+                <span style={{ color: "#666" }}>{t("multiplayer.module")}: </span>
+                <span className="font-medium" style={{ color: "var(--title)" }}>{room.moduleName}</span>
+              </div>
             )}
-          </div>
-        )}
 
-        {myMember?.confirmStatus === "confirmed" && (
-          <div className="bg-green-900/40 border border-green-700 rounded-xl p-4 text-center">
-            <p className="text-green-300 font-medium">You are ready!</p>
-            <p className="text-gray-400 text-sm mt-1">Waiting for other players…</p>
-          </div>
-        )}
+            {/* Error banner */}
+            {actionError && (
+              <div className="backdrop-blur-sm bg-red-50/60 border border-red-200 rounded-xl p-3 text-sm" style={{ color: "#b91c1c" }}>
+                {actionError}
+              </div>
+            )}
 
-        {/* Host controls: select module + start game */}
-        {room.isHost && (
-          <div className="bg-gray-800 rounded-xl p-4 space-y-3">
-            <h2 className="text-lg font-semibold text-gray-100">Host Controls</h2>
-
-            {/* Module selection */}
-            <div>
-              <p className="text-gray-400 text-sm mb-2">Select Module</p>
-              <div className="flex gap-2">
-                <select
-                  value={selectedModuleName}
-                  onChange={(e) => setSelectedModuleName(e.target.value)}
-                  className="flex-1 bg-gray-700 border border-gray-600 rounded-lg px-3 py-2 text-white focus:outline-none focus:border-yellow-500"
+            {/* Members list */}
+            <div className="backdrop-blur-sm bg-white/50 border border-slate-200 rounded-xl p-4 space-y-3">
+              <h2 className="text-lg font-semibold m-0" style={{ color: "var(--title)" }}>
+                {t("multiplayer.players")}
+              </h2>
+              {room.members.map((member) => (
+                <div
+                  key={member.id}
+                  className="flex items-center justify-between backdrop-blur-sm bg-white/60 border border-slate-200 rounded-lg px-4 py-3"
                 >
-                  <option value="">Choose a module…</option>
-                  {mods.map((m) => (
-                    <option key={m.name} value={m.name}>
-                      {m.name}
+                  <div className="flex items-center gap-3">
+                    <span className="text-sm font-mono" style={{ color: "#666" }}>
+                      #{member.seatOrder}
+                    </span>
+                    <div>
+                      <p className="text-sm font-medium m-0" style={{ color: "var(--title)" }}>
+                        {member.userId === user?.id ? t("multiplayer.you") : `Player ${member.seatOrder}`}
+                        {member.role === "host" && (
+                          <span className="ml-2 text-xs" style={{ color: "var(--accent, #8b6914)" }}>({t("multiplayer.host")})</span>
+                        )}
+                      </p>
+                      {member.characterId && (
+                        <p className="text-xs m-0" style={{ color: "#666" }}>{t("multiplayer.characterSelected")}</p>
+                      )}
+                    </div>
+                  </div>
+                  <span
+                    className={`text-xs px-2 py-1 rounded-full font-medium backdrop-blur-sm ${
+                      member.confirmStatus === "confirmed"
+                        ? "bg-green-50/60 border border-green-200"
+                        : "bg-amber-50/60 border border-amber-200"
+                    }`}
+                    style={{ color: member.confirmStatus === "confirmed" ? "#166534" : "#92400e" }}
+                  >
+                    {member.confirmStatus === "confirmed" ? t("multiplayer.confirmed") : t("multiplayer.pending")}
+                  </span>
+                </div>
+              ))}
+            </div>
+
+            {/* Player controls: select character + confirm */}
+            {myMember && myMember.confirmStatus !== "confirmed" && (
+              <div className="backdrop-blur-sm bg-white/50 border border-slate-200 rounded-xl p-4 space-y-3">
+                <h2 className="text-lg font-semibold m-0" style={{ color: "var(--title)" }}>
+                  {t("multiplayer.yourCharacter")}
+                </h2>
+                <select
+                  value={selectedCharacterId}
+                  onChange={(e) => {
+                    const val = e.target.value;
+                    setSelectedCharacterId(val);
+                    if (val) handleSelectCharacter(val);
+                  }}
+                  disabled={busy}
+                  className="backdrop-blur-sm bg-white/60 border border-slate-200 rounded-xl px-3 py-2 focus:outline-none"
+                  style={{ width: "100%", color: "var(--title)", opacity: busy ? 0.5 : 1 }}
+                >
+                  <option value="">{t("multiplayer.selectCharacter")}</option>
+                  {characters.map((c) => (
+                    <option key={c.character_id} value={c.character_id}>
+                      {c.name}
+                      {c.occupation ? ` — ${c.occupation}` : ""}
                     </option>
                   ))}
                 </select>
                 <button
                   type="button"
-                  onClick={handleSelectModule}
-                  disabled={busy || !selectedModuleName}
-                  className="bg-gray-600 hover:bg-gray-500 disabled:opacity-50 disabled:cursor-not-allowed text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors"
+                  onClick={handleConfirmReady}
+                  disabled={busy || !myMember.characterId}
+                  className="primary"
+                  style={{ width: "100%", opacity: (busy || !myMember.characterId) ? 0.5 : 1 }}
                 >
-                  Set
+                  {t("multiplayer.confirmReady")}
+                </button>
+                {!myMember.characterId && (
+                  <p className="text-xs text-center m-0" style={{ color: "#92400e" }}>
+                    {t("multiplayer.selectCharacterFirst")}
+                  </p>
+                )}
+              </div>
+            )}
+
+            {/* Ready confirmation + cancel */}
+            {myMember?.confirmStatus === "confirmed" && (
+              <div className="backdrop-blur-sm bg-green-50/60 border border-green-200 rounded-xl p-4 space-y-3 text-center">
+                <p className="font-medium m-0" style={{ color: "#166534" }}>{t("multiplayer.youAreReady")}</p>
+                <p className="text-sm m-0" style={{ color: "#666" }}>{t("multiplayer.waitingForPlayers")}</p>
+                <button
+                  type="button"
+                  onClick={handleCancelReady}
+                  disabled={busy}
+                  className="secondary"
+                  style={{ width: "100%", opacity: busy ? 0.5 : 1 }}
+                >
+                  {t("multiplayer.cancelReady")}
                 </button>
               </div>
-            </div>
+            )}
 
-            {/* Start game */}
+            {/* Host controls: select module + start game */}
+            {room.isHost && (
+              <div className="backdrop-blur-sm bg-white/50 border border-slate-200 rounded-xl p-4 space-y-3">
+                <h2 className="text-lg font-semibold m-0" style={{ color: "var(--title)" }}>
+                  {t("multiplayer.hostControls")}
+                </h2>
+
+                {/* Module selection */}
+                <div>
+                  <p className="text-sm mb-2 m-0" style={{ color: "#666" }}>{t("multiplayer.selectModule")}</p>
+                  <select
+                    value={selectedModuleName}
+                    onChange={(e) => {
+                      const val = e.target.value;
+                      setSelectedModuleName(val);
+                      if (val) handleSelectModule(val);
+                    }}
+                    disabled={busy}
+                    className="backdrop-blur-sm bg-white/60 border border-slate-200 rounded-xl px-3 py-2 focus:outline-none"
+                    style={{ width: "100%", color: "var(--title)", opacity: busy ? 0.5 : 1 }}
+                  >
+                    <option value="">{t("multiplayer.chooseModule")}</option>
+                    {mods.map((m) => (
+                      <option key={m.name} value={m.name}>
+                        {m.name}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+
+                {/* Start game */}
+                <button
+                  type="button"
+                  onClick={handleStartGame}
+                  disabled={busy || !canStart}
+                  className="primary"
+                  style={{ width: "100%", opacity: (busy || !canStart) ? 0.5 : 1 }}
+                >
+                  {busy ? "..." : t("multiplayer.startGame")}
+                </button>
+                {!canStart && (
+                  <p className="text-xs text-center m-0" style={{ color: "#666" }}>
+                    {!room.moduleName
+                      ? t("multiplayer.selectModuleFirst")
+                      : !allConfirmed
+                        ? t("multiplayer.waitingAllConfirm")
+                        : ""}
+                  </p>
+                )}
+              </div>
+            )}
+
+            {/* Leave room */}
             <button
               type="button"
-              onClick={handleStartGame}
-              disabled={busy || !canStart}
-              className="w-full bg-yellow-500 hover:bg-yellow-400 disabled:opacity-50 disabled:cursor-not-allowed text-black font-semibold py-3 rounded-lg transition-colors"
+              onClick={() => navigate("/multiplayer")}
+              className="secondary"
+              style={{ width: "100%" }}
             >
-              {busy ? "…" : "Start Game"}
+              {t("multiplayer.leaveRoom")}
             </button>
-            {!canStart && (
-              <p className="text-gray-500 text-xs text-center">
-                {!room.moduleName
-                  ? "Select a module first"
-                  : !allConfirmed
-                    ? "Waiting for all players to confirm"
-                    : ""}
-              </p>
-            )}
           </div>
-        )}
-
-        <button
-          type="button"
-          onClick={() => navigate("/multiplayer")}
-          className="w-full text-gray-500 hover:text-gray-300 text-sm transition-colors"
-        >
-          ← Leave Room
-        </button>
+        </div>
       </div>
     </div>
   );

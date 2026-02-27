@@ -1,9 +1,12 @@
 import type React from "react";
 import { useState } from "react";
+import { useTranslation } from "react-i18next";
 import { useNavigate } from "react-router-dom";
+import { FrameImage } from "../components/FrameImage";
 import { authFetch } from "../utils/authFetch";
 
 export const MultiplayerLobby: React.FC = () => {
+  const { t } = useTranslation("home");
   const navigate = useNavigate();
 
   const [creating, setCreating] = useState(false);
@@ -19,7 +22,7 @@ export const MultiplayerLobby: React.FC = () => {
         method: "POST",
       });
       const data = await res.json();
-      if (!data.success) throw new Error(data.error ?? "Failed to create room");
+      if (!data.success) throw new Error(data.error ?? t("multiplayer.createFailed"));
       navigate(`/multiplayer/room/${data.roomId}`);
     } catch (err) {
       setError((err as Error).message);
@@ -31,7 +34,7 @@ export const MultiplayerLobby: React.FC = () => {
   const handleJoinRoom = async (e: React.FormEvent) => {
     e.preventDefault();
     if (joinCode.trim().length !== 5) {
-      setError("Please enter a 5-digit room code");
+      setError(t("multiplayer.codeInvalid"));
       return;
     }
     setError(null);
@@ -43,7 +46,7 @@ export const MultiplayerLobby: React.FC = () => {
         body: JSON.stringify({ roomCode: joinCode.trim() }),
       });
       const data = await res.json();
-      if (!data.success) throw new Error(data.error ?? "Failed to join room");
+      if (!data.success) throw new Error(data.error ?? t("multiplayer.joinFailed"));
       navigate(`/multiplayer/room/${data.roomId}`);
     } catch (err) {
       setError((err as Error).message);
@@ -53,70 +56,94 @@ export const MultiplayerLobby: React.FC = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gray-900 text-white flex items-center justify-center p-4">
-      <div className="w-full max-w-md space-y-8">
-        <div className="text-center">
-          <h1 className="text-3xl font-bold text-yellow-400 mb-2">
-            Multiplayer
-          </h1>
-          <p className="text-gray-400 text-sm">
-            Create a room or join with a 5-digit code
-          </p>
-        </div>
+    <div className="home">
+      <div className="home-frame">
+        <FrameImage />
+        <div className="fixed left-[50%] top-[50%] z-50 translate-x-[-50%] translate-y-[-50%] max-w-[480px] max-h-[90vh] w-full overflow-y-auto rounded-3xl supports-[backdrop-filter]:backdrop-blur-lg border border-white/50 bg-white/80 shadow-[0_30px_80px_rgba(15,23,42,0.25)] supports-[backdrop-filter]:bg-white/55 flex flex-col">
+          <div className="p-12 space-y-8">
+            {/* Header */}
+            <div className="text-center">
+              <h1 className="text-3xl font-bold mb-2" style={{ color: "var(--title)" }}>
+                {t("multiplayer.title")}
+              </h1>
+              <p className="text-sm" style={{ color: "#666" }}>
+                {t("multiplayer.createRoomDesc")}
+              </p>
+            </div>
 
-        {error && (
-          <div className="bg-red-900/60 border border-red-600 rounded-lg p-3 text-sm text-red-200">
-            {error}
-          </div>
-        )}
+            {/* Error banner */}
+            {error && (
+              <div className="backdrop-blur-sm bg-red-50/60 border border-red-200 rounded-xl p-3 text-sm" style={{ color: "#b91c1c" }}>
+                {error}
+              </div>
+            )}
 
-        {/* Create Room */}
-        <div className="bg-gray-800 rounded-xl p-6 space-y-4">
-          <h2 className="text-lg font-semibold text-gray-100">Create Room</h2>
-          <p className="text-gray-400 text-sm">
-            Start a new session as host. A 5-digit code will be generated for
-            others to join.
-          </p>
-          <button
-            type="button"
-            onClick={handleCreateRoom}
-            disabled={creating}
-            className="w-full bg-yellow-500 hover:bg-yellow-400 disabled:opacity-50 disabled:cursor-not-allowed text-black font-semibold py-3 rounded-lg transition-colors"
-          >
-            {creating ? "Creating…" : "Create Room"}
-          </button>
-        </div>
+            {/* Create Room */}
+            <div className="backdrop-blur-sm bg-white/50 border border-slate-200 rounded-xl p-6 space-y-4">
+              <h2 className="text-lg font-semibold m-0" style={{ color: "var(--title)" }}>
+                {t("multiplayer.createRoom")}
+              </h2>
+              <p className="text-sm m-0" style={{ color: "#666" }}>
+                {t("multiplayer.createRoomDesc")}
+              </p>
+              <button
+                type="button"
+                onClick={handleCreateRoom}
+                disabled={creating}
+                className="primary"
+                style={{ width: "100%", opacity: creating ? 0.5 : 1 }}
+              >
+                {creating ? t("multiplayer.creating") : t("multiplayer.createRoom")}
+              </button>
+            </div>
 
-        {/* Join Room */}
-        <div className="bg-gray-800 rounded-xl p-6 space-y-4">
-          <h2 className="text-lg font-semibold text-gray-100">Join Room</h2>
-          <form onSubmit={handleJoinRoom} className="space-y-3">
-            <input
-              type="text"
-              inputMode="numeric"
-              maxLength={5}
-              value={joinCode}
-              onChange={(e) => setJoinCode(e.target.value.replace(/\D/g, ""))}
-              placeholder="Enter 5-digit code"
-              className="w-full bg-gray-700 border border-gray-600 rounded-lg px-4 py-3 text-center text-xl tracking-widest focus:outline-none focus:border-yellow-500"
-            />
+            {/* Join Room */}
+            <div className="backdrop-blur-sm bg-white/50 border border-slate-200 rounded-xl p-6 space-y-4">
+              <h2 className="text-lg font-semibold m-0" style={{ color: "var(--title)" }}>
+                {t("multiplayer.joinRoom")}
+              </h2>
+              <form onSubmit={handleJoinRoom} className="space-y-3">
+                <input
+                  type="text"
+                  inputMode="numeric"
+                  maxLength={5}
+                  value={joinCode}
+                  onChange={(e) => setJoinCode(e.target.value.replace(/\D/g, ""))}
+                  placeholder={t("multiplayer.codePlaceholder")}
+                  className="backdrop-blur-sm bg-white/60 border border-slate-200 rounded-xl"
+                  style={{
+                    width: "100%",
+                    padding: "12px 16px",
+                    textAlign: "center",
+                    fontSize: "1.25rem",
+                    letterSpacing: "0.2em",
+                    color: "var(--title)",
+                    outline: "none",
+                    boxSizing: "border-box",
+                  }}
+                />
+                <button
+                  type="submit"
+                  disabled={joining || joinCode.trim().length !== 5}
+                  className="primary"
+                  style={{ width: "100%", opacity: (joining || joinCode.trim().length !== 5) ? 0.5 : 1 }}
+                >
+                  {joining ? t("multiplayer.joining") : t("multiplayer.joinRoom")}
+                </button>
+              </form>
+            </div>
+
+            {/* Back button */}
             <button
-              type="submit"
-              disabled={joining || joinCode.trim().length !== 5}
-              className="w-full bg-blue-600 hover:bg-blue-500 disabled:opacity-50 disabled:cursor-not-allowed text-white font-semibold py-3 rounded-lg transition-colors"
+              type="button"
+              onClick={() => navigate("/")}
+              className="secondary"
+              style={{ width: "100%" }}
             >
-              {joining ? "Joining…" : "Join Room"}
+              {t("multiplayer.backToHome")}
             </button>
-          </form>
+          </div>
         </div>
-
-        <button
-          type="button"
-          onClick={() => navigate("/")}
-          className="w-full text-gray-500 hover:text-gray-300 text-sm transition-colors"
-        >
-          ← Back to Home
-        </button>
       </div>
     </div>
   );
