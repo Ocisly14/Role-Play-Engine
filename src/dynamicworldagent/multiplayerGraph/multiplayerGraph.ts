@@ -358,8 +358,6 @@ export const buildMultiplayerGraph = (
     const sceneRoom = m.getSceneRoom(state.sceneRoomId);
     if (!sceneRoom) return state;
 
-    const stream = state.stream;
-
     try {
       // 1. Check point of no return (use room-local time, not global time)
       const reached = m.checkPointOfNoReturn(
@@ -373,18 +371,8 @@ export const buildMultiplayerGraph = (
         );
       }
 
-      // 2. Handle scene changes natively (all targets in one pass)
-      try {
-        const sceneChangeResult = await directorAgent.handleMultiplayerSceneChanges(
-          m, state.sceneRoomId
-        );
-        if (sceneChangeResult.anyChanges) {
-          stream?.onSceneChangeStart?.();
-          stream?.onSceneChangeEnd?.();
-        }
-      } catch (e) {
-        console.warn("[MP Director] Scene change handling failed:", e);
-      }
+      // 2. Scene snapshot generation is now handled by processUnifiedSceneChanges
+      //    in the turn service (after all rooms finish their rounds).
 
       // 3. Check story progression (existing)
       await directorAgent.checkStoryProgression(m, state.sceneRoomId);

@@ -30,6 +30,50 @@ import { WebSocketManager } from "../../websocket/WebSocketManager.js";
 import { notifySceneRoom } from "../../websocket/notifier.js";
 
 // =============================================
+// RoomProcessingQueue — serializes per-room graph execution
+// =============================================
+
+class RoomProcessingQueue {
+  private chains = new Map<string, Promise<void>>();
+  private pendingCount = new Map<string, number>();
+
+  /**
+   * Enqueue a task for a given roomId.  Tasks for the same roomId run
+   * sequentially (chained).  The returned promise resolves/rejects when
+   * the task itself completes.
+   */
+  enqueue(roomId: string, task: () => Promise<void>): Promise<void> {
+    this.pendingCount.set(roomId, (this.pendingCount.get(roomId) ?? 0) + 1);
+
+    const prev = this.chains.get(roomId) ?? Promise.resolve();
+
+    const taskPromise = prev.then(async () => {
+      try {
+        await task();
+      } finally {
+        this.pendingCount.set(
+          roomId,
+          (this.pendingCount.get(roomId) ?? 1) - 1
+        );
+      }
+    });
+
+    // Swallow rejections on the chain so a failed task doesn't block the next.
+    this.chains.set(roomId, taskPromise.catch(() => {}));
+
+    return taskPromise;
+  }
+
+  /** Number of tasks still pending (queued + running) for the given roomId. */
+  getPendingCount(roomId: string): number {
+    return this.pendingCount.get(roomId) ?? 0;
+  }
+}
+
+/** Module-level singleton queue — one per server process. */
+const roomProcessingQueue = new RoomProcessingQueue();
+
+// =============================================
 // Types
 // =============================================
 
@@ -195,31 +239,46 @@ export async function submitRoundInput(
     const language = inputData.language ?? "zh";
     const roundTurnId = randomUUID();
 
-    // Trigger graph asynchronously
-    triggerMultiplayerGraph(
-      db,
-      roomId,
-      sceneRoomId,
-      roundTurnId,
-      [...roundInputs],
-      language
-    ).catch((err) => {
-      console.error(
-        `[MP Turn] Graph execution failed for sceneRoom ${sceneRoomId}:`,
-        err
-      );
-      const wsManager = WebSocketManager.getInstance();
-      if (wsManager) {
-        const clients = wsManager.getMultiplayerClients(sceneRoomId);
-        notifySceneRoom(sceneRoomId, clients, {
-          type: "round_error",
+    // Enqueue graph execution — tasks for the same roomId run sequentially,
+    // preventing concurrent state mutations.  The last task in the queue
+    // runs unified scene processing after all rooms have completed.
+    roomProcessingQueue
+      .enqueue(roomId, async () => {
+        await triggerMultiplayerGraphCore(
+          db,
+          roomId,
           sceneRoomId,
           roundTurnId,
-          error: err instanceof Error ? err.message : String(err),
-          timestamp: new Date().toISOString(),
-        });
-      }
-    });
+          [...roundInputs],
+          language
+        );
+
+        // If this is the last pending task for this roomId, run unified
+        // scene processing which collects movements from ALL rooms.
+        if (roomProcessingQueue.getPendingCount(roomId) <= 1) {
+          const latestManager = multiplayerSessionStore.get(roomId);
+          if (latestManager) {
+            await processUnifiedSceneChanges(roomId, latestManager, db);
+          }
+        }
+      })
+      .catch((err) => {
+        console.error(
+          `[MP Turn] Graph execution failed for sceneRoom ${sceneRoomId}:`,
+          err
+        );
+        const wsManager = WebSocketManager.getInstance();
+        if (wsManager) {
+          const clients = wsManager.getMultiplayerClients(sceneRoomId);
+          notifySceneRoom(sceneRoomId, clients, {
+            type: "round_error",
+            sceneRoomId,
+            roundTurnId,
+            error: err instanceof Error ? err.message : String(err),
+            timestamp: new Date().toISOString(),
+          });
+        }
+      });
 
     return { status: "processing", roundNumber, submittedCount, totalCount };
   }
@@ -228,10 +287,11 @@ export async function submitRoundInput(
 }
 
 // =============================================
-// triggerMultiplayerGraph (async, after all players submit)
+// triggerMultiplayerGraphCore — graph execution + round_complete broadcast
+// Does NOT handle scene splits, time drift, or rest unfreeze.
 // =============================================
 
-async function triggerMultiplayerGraph(
+async function triggerMultiplayerGraphCore(
   db: CoCDatabase | CoCDatabaseAdapter,
   roomId: string,
   sceneRoomId: string,
@@ -450,25 +510,58 @@ async function triggerMultiplayerGraph(
       );
     }
   }
+}
 
-  // ---- Phase 4: Scene Room Splitting ----
-  // Check if any players requested a scene change; if so, split sceneRooms
-  // and notify clients. This runs after round_complete so clients see the
-  // round result before the scene transition notification.
-  if (updatedManager) {
-    await handlePostRoundSceneSplit(
-      db,
-      roomId,
-      sceneRoomId,
-      updatedManager,
-      wsManager
-    );
+// =============================================
+// processUnifiedSceneChanges — runs ONCE after all rooms finish their rounds
+// Collects movements from ALL rooms, generates snapshots in one pass,
+// then performs freeze-fork-merge, time drift, images, rest unfreeze.
+// =============================================
+
+async function processUnifiedSceneChanges(
+  roomId: string,
+  manager: MultiplayerDynamicGameStateManager,
+  db: CoCDatabase | CoCDatabaseAdapter
+): Promise<void> {
+  const wsManager = WebSocketManager.getInstance();
+
+  // ---- Unified scene snapshot generation ----
+  try {
+    const scenarioLoader = new ScenarioLoader(db);
+    const directorAgent = new DirectorAgent(scenarioLoader, db);
+    const sceneChangeResult = await directorAgent.handleUnifiedSceneChanges(manager);
+
+    if (sceneChangeResult.anyChanges) {
+      // Notify rooms with movements that scene change processing happened
+      for (const srId of sceneChangeResult.roomsWithMovements) {
+        if (wsManager) {
+          const clients = wsManager.getMultiplayerClients(srId);
+          notifySceneRoom(srId, clients, {
+            type: "scene_change_processing",
+            sceneRoomId: srId,
+            targetSceneNames: sceneChangeResult.targetSceneNames,
+            timestamp: new Date().toISOString(),
+          });
+        }
+      }
+    }
+  } catch (e) {
+    console.error("[MP Turn] Unified scene change handling failed:", e);
   }
 
+  // ---- Scene Room Splitting (freeze-fork-merge) ----
+  // resolveAllMovements reads pre-generated snapshots from ALL active rooms
+  await handlePostRoundSceneSplit(
+    db,
+    roomId,
+    "_unified_", // not scoped to one sceneRoom
+    manager,
+    wsManager
+  );
+
   // ---- Time drift broadcast ----
-  // After round completion (and possible scene splits), check drift and notify rooms
-  if (updatedManager && wsManager) {
-    const postDrift = updatedManager.getTimeDriftInfo();
+  if (wsManager) {
+    const postDrift = manager.getTimeDriftInfo();
     if (postDrift.blockedRoomIds.length > 0) {
       for (const blockedId of postDrift.blockedRoomIds) {
         const blockedClients = wsManager.getMultiplayerClients(blockedId);
@@ -483,8 +576,7 @@ async function triggerMultiplayerGraph(
       }
     }
     if (postDrift.allWithinResume && postDrift.driftMinutes > 0) {
-      // All rooms are within 1H — send resume to any room that might have been blocked
-      for (const room of updatedManager.getActiveSceneRooms()) {
+      for (const room of manager.getActiveSceneRooms()) {
         const resumeClients = wsManager.getMultiplayerClients(room.sceneRoomId);
         notifySceneRoom(room.sceneRoomId, resumeClients, {
           type: "time_drift_resumed",
@@ -496,36 +588,33 @@ async function triggerMultiplayerGraph(
     }
   }
 
-  // ---- Phase 4: Scene Image Generation ----
-  // Generate scene image for the (possibly updated) sceneRoom, fire-and-forget
-  if (updatedManager) {
-    const state = updatedManager.getState();
-    const finalSceneRoom = updatedManager.getSceneRoom(sceneRoomId);
-    if (finalSceneRoom?.currentScenario && state.moduleName) {
-      generateSceneRoomImage(finalSceneRoom.currentScenario, state.moduleName)
-        .then((imageResult) => {
-          if (imageResult && wsManager) {
-            const clients = wsManager.getMultiplayerClients(sceneRoomId);
-            notifySceneRoom(sceneRoomId, clients, {
-              type: "scene_image_ready",
-              sceneRoomId,
-              imagePath: imageResult.path,
-              mimeType: imageResult.mimeType,
-              timestamp: new Date().toISOString(),
-            });
-          }
-        })
-        .catch((err) => {
-          console.warn("[MP Turn] Scene image generation failed:", err);
-        });
+  // ---- Scene Image Generation (fire-and-forget for all active rooms) ----
+  const state = manager.getState();
+  if (state.moduleName) {
+    for (const room of manager.getActiveSceneRooms()) {
+      if (room.currentScenario) {
+        generateSceneRoomImage(room.currentScenario, state.moduleName)
+          .then((imageResult) => {
+            if (imageResult && wsManager) {
+              const clients = wsManager.getMultiplayerClients(room.sceneRoomId);
+              notifySceneRoom(room.sceneRoomId, clients, {
+                type: "scene_image_ready",
+                sceneRoomId: room.sceneRoomId,
+                imagePath: imageResult.path,
+                mimeType: imageResult.mimeType,
+                timestamp: new Date().toISOString(),
+              });
+            }
+          })
+          .catch((err) => {
+            console.warn(`[MP Turn] Scene image generation failed for ${room.sceneRoomId}:`, err);
+          });
+      }
     }
   }
 
   // ---- Rest-unfreeze coordination ----
-  // After every round completes, check if any rest-frozen rooms can now be unfrozen
-  if (updatedManager) {
-    await handleRestUnfreezeCheck(updatedManager, db, wsManager);
-  }
+  await handleRestUnfreezeCheck(manager, db, wsManager);
 }
 
 // =============================================

@@ -654,7 +654,426 @@ export class DirectorAgent {
   }
 
   // ---------------------------------------------------------------------------
-  // Private helpers for handleMultiplayerSceneChanges
+  // handleUnifiedSceneChanges — cross-room unified scene snapshot generation
+  // ---------------------------------------------------------------------------
+
+  /**
+   * Scan ALL active (non-frozen) scene rooms for movement intentions and
+   * generate ALL target snapshots in one pass.  Called once after every room
+   * in the processing queue has finished its graph core execution.
+   *
+   * Returns the set of target scene names and the set of sceneRoomIds that
+   * contained movements (for WS notification purposes).
+   */
+  async handleUnifiedSceneChanges(
+    manager: MultiplayerDynamicGameStateManager
+  ): Promise<{
+    targetSceneNames: string[];
+    roomsWithMovements: string[];
+    anyChanges: boolean;
+  }> {
+    const state = manager.getState();
+    const activeRooms = manager.getActiveSceneRooms();
+
+    // Step 1: Collect unique target scenes from ALL active rooms
+    const uniqueTargets = new Map<string, { targetSceneName: string; reason: string }>();
+    const roomsWithMovements: string[] = [];
+
+    for (const room of activeRooms) {
+      const contextualData = room.temporaryInfo.contextualData ?? {};
+      const playerActionAnalyses =
+        (contextualData.playerActionAnalyses as Record<string, PlayerActionAnalysis>) ?? {};
+
+      let roomHasMovement = false;
+      for (const pa of Object.values(playerActionAnalyses)) {
+        const scr = pa?.sceneChangeRequest;
+        if (scr?.shouldChange && scr.targetSceneName) {
+          const key = scr.targetSceneName.toLowerCase();
+          if (!uniqueTargets.has(key)) {
+            uniqueTargets.set(key, {
+              targetSceneName: scr.targetSceneName,
+              reason: scr.reason ?? "",
+            });
+          }
+          roomHasMovement = true;
+        }
+      }
+
+      if (roomHasMovement) {
+        roomsWithMovements.push(room.sceneRoomId);
+      }
+    }
+
+    if (uniqueTargets.size === 0) {
+      return { targetSceneNames: [], roomsWithMovements: [], anyChanges: false };
+    }
+
+    const targetSceneNames = [...uniqueTargets.values()].map((t) => t.targetSceneName);
+    console.log(
+      `\n🎬 [MP Director] handleUnifiedSceneChanges — ` +
+        `${uniqueTargets.size} target(s) from ${roomsWithMovements.length} room(s): ` +
+        `${targetSceneNames.join(", ")}`
+    );
+
+    // Step 2: Save previousScenario for each room that has players moving away
+    for (const srId of roomsWithMovements) {
+      const room = manager.getSceneRoom(srId);
+      if (room?.currentScenario) {
+        manager.updateSceneRoom(srId, {
+          temporaryInfo: {
+            ...room.temporaryInfo,
+            previousScenario: { ...room.currentScenario },
+          },
+        });
+      }
+    }
+
+    // Step 3: Build data context — unified across all rooms
+    const runtime = createRuntime();
+    const allScenariosData = await this.buildAllScenariosDataFromState(state);
+
+    // Determine currentGameTime: use MAX game time across all active rooms
+    let maxGameDay = 1;
+    let maxTimeOfDay = "00:00";
+    for (const room of activeRooms) {
+      const roomMin = room.gameDay * 1440 + this.parseTimeToMinutes(room.timeOfDay);
+      const maxMin = maxGameDay * 1440 + this.parseTimeToMinutes(maxTimeOfDay);
+      if (roomMin > maxMin) {
+        maxGameDay = room.gameDay;
+        maxTimeOfDay = room.timeOfDay;
+      }
+    }
+    const currentGameTime = `Day ${maxGameDay}, ${maxTimeOfDay}`;
+
+    // Aggregate playerActionWindow from ALL rooms' members (not just one room)
+    const allPlayerIds = activeRooms.flatMap((r) => r.memberPlayerIds);
+    const playerActionWindow = this.getAggregatedPlayerActionWindow(
+      state,
+      [...new Set(allPlayerIds)],
+      currentGameTime
+    );
+
+    // Build playerCurrentScenes: array of current scenes from all rooms
+    const playerCurrentScenesJson = JSON.stringify(
+      activeRooms
+        .filter((r) => r.currentScenario)
+        .map((r) => ({
+          sceneRoomId: r.sceneRoomId,
+          id: r.currentScenario!.id,
+          name: r.currentScenario!.name,
+          location: r.currentScenario!.location,
+          playerIds: r.memberPlayerIds,
+        })),
+      null,
+      2
+    );
+
+    // Phase 1 NPCs
+    const phase1Npcs = state.npcCharacters.map((npc) => ({
+      ...npc,
+      actionLog: npc.actionLog || [],
+    }));
+
+    // Determine previousSnapshotTime: earliest among all targets' baseline times
+    const targetScenariosData = targetSceneNames
+      .map((name) =>
+        allScenariosData.find(
+          (s) => s.scenarioName === name || s.scenarioId === name
+        )
+      )
+      .filter(Boolean) as typeof allScenariosData;
+
+    let previousSnapshotTime = currentGameTime;
+    // Also consider all rooms' current scenario gameTime as baseline
+    for (const room of activeRooms) {
+      const roomScenarioTime = room.currentScenario?.gameTime;
+      if (roomScenarioTime && this.isTimeBeforeOrEqual(roomScenarioTime, previousSnapshotTime)) {
+        previousSnapshotTime = roomScenarioTime;
+      }
+    }
+    for (const td of targetScenariosData) {
+      const pst = td.snapshot.previousGameTime;
+      if (pst && this.isTimeBeforeOrEqual(pst, previousSnapshotTime)) {
+        previousSnapshotTime = pst;
+      }
+    }
+
+    // Step 4: Phase 1 — NPC Timeline (run ONCE with unified context)
+    console.log(`   📋 Phase 1: Generating timeline for ${phase1Npcs.length} NPCs...`);
+
+    const phase1Context = {
+      currentGameDay: maxGameDay,
+      currentTimeOfDay: maxTimeOfDay,
+      previousSnapshotTime,
+      currentGameTime,
+      truthTimelineJson: JSON.stringify(state.truthTimeline, null, 2),
+      knowledgeMatrixJson: JSON.stringify(state.knowledgeMatrix, null, 2),
+      previousGlobalTrigger: state.globalTrigger,
+      previousGlobalTriggerJson: state.globalTrigger
+        ? JSON.stringify(state.globalTrigger, null, 2)
+        : null,
+      // Unified: pass array of all rooms' current scenes instead of a single scene
+      playerCurrentSceneJson: playerCurrentScenesJson,
+      allScenariosJson: JSON.stringify(allScenariosData, null, 2),
+      phase1NpcsJson: JSON.stringify(phase1Npcs, null, 2),
+    };
+
+    const phase1Prompt = composeTemplate(
+      getNpcActionTimelineTemplate(),
+      { dynamicGameState: state as any },
+      phase1Context,
+      "handlebars"
+    );
+
+    const phase1Response = await generateText({
+      runtime,
+      context: phase1Prompt,
+      modelClass: ModelClass.MEDIUM,
+    });
+    this.logRawActionTimeline("MP Unified Phase 1 timeline", phase1Response);
+
+    type TimelineNpcUpdate = {
+      id: string;
+      actionLog?: ActionLogEntry[];
+      statusDelta?: Partial<CharacterStatus>;
+      inventoryDelta?: { add?: InventoryItem[]; remove?: InventoryItem[] };
+    };
+    type TimelineBucket = {
+      time?: string;
+      npcActionLogUpdates?: TimelineNpcUpdate[];
+    };
+    const parsedTimeline = this.parseModelJson<{
+      actionTimeline?: TimelineBucket[];
+    }>(phase1Response, "MP Unified Phase 1 timeline");
+
+    const cleanedTimeline: TimelineBucket[] = [];
+    let mergedNpcUpdates = 0;
+
+    if (parsedTimeline?.actionTimeline) {
+      for (const bucket of parsedTimeline.actionTimeline) {
+        if (
+          !bucket?.time ||
+          !this.isTimeBeforeOrEqual(bucket.time, currentGameTime)
+        ) {
+          continue;
+        }
+
+        const cleanedNpcUpdates: TimelineNpcUpdate[] = [];
+        for (const update of bucket.npcActionLogUpdates || []) {
+          if (!update?.id) continue;
+
+          const npc = this.findNPCById(state.npcCharacters, update.id);
+          if (!npc) {
+            console.warn(`   ⚠️ NPC "${update.id}" not found, skipping timeline update`);
+            continue;
+          }
+          const npcLatestAction = this.getLatestActionLogAtOrBefore(
+            npc.actionLog,
+            currentGameTime
+          );
+          const validActionLog = this.sanitizeGeneratedActionLogEntries({
+            entries: update.actionLog || [],
+            bucketTime: bucket.time,
+            currentGameTime,
+            previousSnapshotTime,
+            npcLatestActionTime: npcLatestAction?.time,
+          });
+
+          if (validActionLog.length === 0) continue;
+
+          this.mergeCharacterDeltaToNPC(npc, {
+            actionLog: validActionLog,
+            status: update.statusDelta,
+            inventory: update.inventoryDelta,
+          });
+
+          cleanedNpcUpdates.push({
+            id: update.id,
+            actionLog: validActionLog,
+            statusDelta: update.statusDelta,
+            inventoryDelta: update.inventoryDelta,
+          });
+          mergedNpcUpdates += 1;
+        }
+
+        if (cleanedNpcUpdates.length > 0) {
+          cleanedTimeline.push({
+            time: bucket.time,
+            npcActionLogUpdates: cleanedNpcUpdates,
+          });
+        }
+      }
+    }
+
+    console.log(`   ✓ Phase 1 merged updates for ${mergedNpcUpdates} NPC entries`);
+
+    // Step 5: Phase 2 (ALL target snapshots in one LLM call)
+    // Step 6: Phase 3 (background simplified) — parallel with Phase 2
+    const currentSceneIds = new Set(
+      activeRooms
+        .filter((r) => r.currentScenario)
+        .map((r) => r.currentScenario!.id)
+    );
+    const currentSceneNames = new Set(
+      activeRooms
+        .filter((r) => r.currentScenario)
+        .map((r) => r.currentScenario!.name)
+    );
+    const targetSceneNamesLower = new Set(targetSceneNames.map((n) => n.toLowerCase()));
+
+    const scenesToUpdateInBackground = allScenariosData.filter((scene) => {
+      if (targetSceneNamesLower.has(scene.scenarioName.toLowerCase())) return false;
+      if (currentSceneIds.has(scene.scenarioId)) return false;
+      if (currentSceneNames.has(scene.scenarioName)) return false;
+      return true;
+    });
+
+    // Phase 2: single LLM call for ALL targets
+    console.log(`   📋 Phase 2: Generating ${targetScenariosData.length} target snapshot(s) in one call...`);
+
+    const phase2Context = {
+      currentGameDay: maxGameDay,
+      currentTimeOfDay: maxTimeOfDay,
+      previousSnapshotTime,
+      currentGameTime,
+      targetScenesJson: JSON.stringify(
+        targetScenariosData.map((td) => ({
+          scenarioId: td.scenarioId,
+          scenarioName: td.scenarioName,
+          location: td.snapshot.location,
+          connections: td.connections,
+        })),
+        null,
+        2
+      ),
+      targetBaselineSnapshotsJson: JSON.stringify(
+        targetScenariosData.map((td) => ({
+          scenarioId: td.scenarioId,
+          snapshot: td.snapshot,
+        })),
+        null,
+        2
+      ),
+      actionTimelineJson: JSON.stringify({ actionTimeline: cleanedTimeline }, null, 2),
+      playerActionWindowJson: JSON.stringify(playerActionWindow, null, 2),
+      truthTimelineJson: JSON.stringify(state.truthTimeline, null, 2),
+      knowledgeMatrixJson: JSON.stringify(state.knowledgeMatrix, null, 2),
+      endStateJson: state.endState ? JSON.stringify(state.endState, null, 2) : "null",
+      previousGlobalTrigger: state.globalTrigger,
+      previousGlobalTriggerJson: state.globalTrigger
+        ? JSON.stringify(state.globalTrigger, null, 2)
+        : null,
+    };
+
+    const phase2Prompt = composeTemplate(
+      getTargetSnapshotFromTimelineTemplate(),
+      { dynamicGameState: state as any },
+      phase2Context,
+      "handlebars"
+    );
+
+    // Phase 3: runs in parallel with Phase 2
+    const phase3Promise = this.generateBackgroundSnapshotsPhase3(
+      manager,
+      state,
+      currentGameTime,
+      previousSnapshotTime,
+      scenesToUpdateInBackground,
+      cleanedTimeline,
+      playerActionWindow
+    );
+
+    const phase2Response = await generateText({
+      runtime,
+      context: phase2Prompt,
+      modelClass: ModelClass.MEDIUM,
+    });
+    this.logRawActionTimeline("MP Unified Phase 2 target snapshots", phase2Response);
+
+    const parsedPhase2 = this.parseModelJson<{
+      targetSnapshots?: Array<{
+        scenarioId: string;
+        snapshot: DynamicScenarioSnapshot;
+        connections?: Array<{
+          scenarioName: string;
+          relationshipType: string;
+          description?: string;
+          blocked?: boolean;
+          blockReason?: string | null;
+        }>;
+      }>;
+      globalTrigger?: unknown;
+    }>(phase2Response, "MP Unified Phase 2 target snapshots");
+
+    if (parsedPhase2?.targetSnapshots) {
+      const targetDataMap = new Map(
+        targetScenariosData.map((td) => [td.scenarioId, td])
+      );
+
+      for (const item of parsedPhase2.targetSnapshots) {
+        if (!item?.snapshot) continue;
+
+        const baseline = targetDataMap.get(item.scenarioId);
+        const snapshot: DynamicScenarioSnapshot = {
+          ...item.snapshot,
+          id: item.snapshot.id || baseline?.snapshot.id || item.scenarioId,
+          name: item.snapshot.name || baseline?.scenarioName || "",
+          location: item.snapshot.location || baseline?.snapshot.location || "",
+          description: item.snapshot.description || baseline?.snapshot.description || "",
+          gameTime: currentGameTime,
+          snapshotType: "complete",
+          clues: Array.isArray(item.snapshot.clues)
+            ? item.snapshot.clues
+            : (baseline?.snapshot.clues as DynamicScenarioSnapshot["clues"]) ?? [],
+          conditions: Array.isArray(item.snapshot.conditions)
+            ? item.snapshot.conditions
+            : (baseline?.snapshot.conditions as DynamicScenarioSnapshot["conditions"]) ?? [],
+          characters: Array.isArray(item.snapshot.characters)
+            ? (item.snapshot.characters as DynamicScenarioSnapshot["characters"])
+            : this.buildLightweightCharactersForScene(
+                item.snapshot.location || baseline?.snapshot.location || "",
+                currentGameTime,
+                state.npcCharacters
+              ),
+        };
+
+        manager.addOrUpdateScenarioSnapshot(item.scenarioId, snapshot);
+        console.log(`   ✓ Phase 2 snapshot stored for "${snapshot.name}"`);
+
+        if (item.connections && item.connections.length > 0) {
+          this.applyConnectionsUpdateNative(
+            state.scenarioOutlines,
+            snapshot.name || baseline?.scenarioName || "",
+            item.connections
+          );
+        }
+      }
+
+      if (parsedPhase2.globalTrigger) {
+        manager.setGlobalTrigger(parsedPhase2.globalTrigger);
+        console.log(`   ✓ Saved global trigger condition from Phase 2`);
+      }
+    } else {
+      console.error(`   ❌ Phase 2 returned no targetSnapshots`);
+    }
+
+    try {
+      await phase3Promise;
+    } catch (error) {
+      console.error(`   ❌ Phase 3 background simplified snapshot update failed:`, error);
+    }
+
+    console.log(
+      `✅ [MP Director] handleUnifiedSceneChanges complete — ` +
+        `${targetSceneNames.length} target(s) from ${roomsWithMovements.length} room(s), ` +
+        `${mergedNpcUpdates} NPC timeline updates`
+    );
+
+    return { targetSceneNames, roomsWithMovements, anyChanges: true };
+  }
+
+  // ---------------------------------------------------------------------------
+  // Private helpers for handleMultiplayerSceneChanges / handleUnifiedSceneChanges
   // ---------------------------------------------------------------------------
 
   /**
@@ -1420,6 +1839,12 @@ export class DirectorAgent {
     const [h2, m2] = t2.timeOfDay.split(":").map(Number);
 
     return h1 > h2 || (h1 === h2 && m1 > m2);
+  }
+
+  /** Parse "HH:MM" to total minutes (for simple comparisons). */
+  private parseTimeToMinutes(timeOfDay: string): number {
+    const [h, m] = timeOfDay.split(":").map(Number);
+    return (h || 0) * 60 + (m || 0);
   }
 
   /**
