@@ -3,6 +3,7 @@ import path from "path";
 import handlebars from "handlebars";
 import { names, uniqueNamesGenerator } from "unique-names-generator";
 import type { DynamicGameState } from "./dynamicworldagent/state/index.js";
+import type { DynamicScenarioSnapshot } from "./dynamicworldagent/world_builder/types.js";
 import type { ImageInput } from "./models/types.js";
 import { stripModuleScope } from "./shared/agents/memory/database/moduleScope.js";
 
@@ -76,12 +77,26 @@ const sanitizeTemplateValue = (
 };
 
 /**
+ * Multiplayer scene-scoped state — carries only the active sceneRoom's scenario.
+ * Avoids passing the entire multiplayer state into templates (prevents cross-scene leakage).
+ */
+export interface MultiplayerSceneScopedState {
+  /** Discriminator to distinguish from single-player state */
+  multiplayerSceneScope: true;
+  /** The current sceneRoom's scenario snapshot */
+  currentScenario: DynamicScenarioSnapshot | null;
+  [key: string]: unknown;
+}
+
+/**
  * CoC State type for template composition
- * Can be a DynamicGameState directly, or an object containing dynamicGameState
+ * Can be a DynamicGameState directly, an object containing dynamicGameState,
+ * or a multiplayer scene-scoped state.
  */
 export type CoCState =
   | DynamicGameState
-  | { dynamicGameState?: DynamicGameState; [key: string]: any };
+  | { dynamicGameState?: DynamicGameState; [key: string]: any }
+  | MultiplayerSceneScopedState;
 
 // Template function type for dynamic templates
 export type TemplateType = string | ((params: { state: CoCState }) => string);
@@ -186,8 +201,13 @@ const extractDynamicGameState = (state: CoCState): DynamicGameState | null => {
  * Collects scenario images (e.g., map) from the current game state.
  */
 export const collectScenarioImages = (state: CoCState): ImageInput[] => {
-  const dynamicState = extractDynamicGameState(state);
-  const mapImagePath = dynamicState?.currentScenario?.mapImagePath;
+  let mapImagePath: string | undefined;
+  if ("multiplayerSceneScope" in state && state.multiplayerSceneScope) {
+    mapImagePath = state.currentScenario?.mapImagePath;
+  } else {
+    const dynamicState = extractDynamicGameState(state);
+    mapImagePath = dynamicState?.currentScenario?.mapImagePath;
+  }
   if (!mapImagePath) return [];
 
   const resolved = resolveMapImage(mapImagePath);

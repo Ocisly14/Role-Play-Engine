@@ -302,6 +302,183 @@ export async function generateMapOnSceneSwitch(
 }
 
 /**
+ * Build prompt for merging multiple maps into one.
+ * Used when players from different scene rooms converge to the same scene.
+ * All parent maps are sent as reference images so the model can combine them.
+ */
+export function buildMapMergePrompt(
+  parentScenes: Array<{
+    name: string;
+    description: string;
+    connections: ScenarioConnection[];
+  }>,
+  targetScene: {
+    name: string;
+    description: string;
+    connections: ScenarioConnection[];
+  } | null
+): string {
+  const fmtScene = (scene: {
+    name: string;
+    description: string;
+    connections: ScenarioConnection[];
+  }) => {
+    const conns = scene.connections
+      .map((c) => `  → ${c.scenarioName} (${c.relationshipType})`)
+      .join("\n");
+    return `**${scene.name}**\n${scene.description}\n${conns ? `Connections:\n${conns}` : "No connections"}`.trim();
+  };
+
+  const parentSummaries = parentScenes
+    .map((s, i) => `### Map ${i + 1} — ${s.name}\n${fmtScene(s)}`)
+    .join("\n\n");
+
+  const targetSection = targetScene
+    ? `\n## Target Scene (players are converging here — add this to the merged map)\n\n${fmtScene(targetScene)}`
+    : "";
+
+  return `
+# Macro Map Merge Prompt
+
+The attached images are **${parentScenes.length} existing maps** from different player groups exploring different areas of the same world. Merge them into a single cohesive macro map.
+
+## Existing Maps (one per attached image)
+
+${parentSummaries}
+${targetSection}
+
+## REQUIREMENTS
+
+1. **MERGE ALL MAPS**: Combine all locations from every attached reference map into a single cohesive macro map. Every location visible on any reference map must appear in the final result.
+
+2. **ADAPTIVE RESCALING FOR CLARITY**: You may uniformly scale (zoom in/out) content from reference images to fit everything together. Keep relative positions and topology between locations within each source map consistent.
+
+3. **SPATIAL COHERENCE**: Where maps share common locations (same name), align them so the same location appears only once. Use connections and geography to determine the best relative placement of non-overlapping regions.
+
+4. **REFLECT CONNECTION CHANGES**: If the connections listed above differ from what is shown on a reference map, update the visual connections accordingly.
+
+5. **FINAL MAP QUALITY TAKES PRIORITY**: Readability, coherence, and visual quality are the top priority. You may modify content from reference maps when necessary for a clearer result.
+${targetScene ? `\n6. **ADD TARGET SCENE**: Add "${targetScene.name}" as a new distinct visual element if it does not already appear on any reference map. Position it to reflect its geographic or narrative relationships.\n` : ""}
+7. **LABEL ALL LOCATIONS**: Every location must be clearly labeled with its name in legible text. Use a consistent Lovecraftian font style.
+
+8. **VISUAL CONNECTIONS**: Draw paths, corridors, roads, or passages between connected locations as appropriate.
+
+9. **NO HIDDEN LOCATIONS**: Do not add any location not listed above or not already present on reference maps.
+
+10. **Style**: Realistic, high detail, Lovecraftian mystery atmosphere. Maintain a consistent style across merged regions.
+
+11. **FULL REDRAW ALLOWED**: If the reference maps are too inconsistent to merge cleanly, you may completely redraw the map from scratch — but every location from all reference maps${targetScene ? " AND the target scene" : ""} must appear with all connections preserved.
+
+Generate a single cohesive merged map image.
+`.trim();
+}
+
+/**
+ * Generate a merged map from multiple parent scene rooms' maps.
+ * Collects all available parent maps as reference images and asks the
+ * model to produce a single combined map.
+ *
+ * @param moduleName - Module name (for file path resolution)
+ * @param parentScenes - Scene data + mapImagePath for each parent room
+ * @param targetScene - Target scene data (null if converging to an existing parent scene)
+ * @param fallbackMapPath - Global macroMapPath fallback if no parent has a map
+ * @returns MapImageResult or null on failure
+ */
+export async function generateMergedMap(
+  moduleName: string,
+  parentScenes: Array<{
+    name: string;
+    description: string;
+    connections: ScenarioConnection[];
+    mapImagePath?: string | null;
+  }>,
+  targetScene: {
+    name: string;
+    description: string;
+    connections: ScenarioConnection[];
+  } | null,
+  fallbackMapPath?: string
+): Promise<MapImageResult | null> {
+  if (!process.env.GOOGLE_API_KEY) {
+    console.log("   ⚠️  GOOGLE_API_KEY not configured, skipping merged map generation");
+    return null;
+  }
+  if (!moduleName) {
+    console.warn("   ⚠️  Module name missing, skipping merged map generation");
+    return null;
+  }
+
+  try {
+    // Collect all available parent maps as reference images
+    const referenceImages: Array<{ mimeType: string; base64Data: string }> = [];
+
+    const mapPaths = parentScenes
+      .map((s) => s.mapImagePath)
+      .filter((p): p is string => Boolean(p));
+
+    // If no parent has a map, try the fallback
+    if (mapPaths.length === 0 && fallbackMapPath) {
+      mapPaths.push(fallbackMapPath);
+    }
+
+    // Deduplicate paths (parents may share the same map file)
+    const uniquePaths = [...new Set(mapPaths)];
+
+    for (const mapPath of uniquePaths) {
+      const absoluteMapPath = path.join(
+        process.cwd(), "data", "Mods", moduleName, mapPath
+      );
+      try {
+        const imgBuffer = await fs.readFile(absoluteMapPath);
+        const base64Data = imgBuffer.toString("base64");
+        const ext = path.extname(mapPath).toLowerCase().slice(1);
+        const mimeType =
+          ext === "jpg" || ext === "jpeg"
+            ? "image/jpeg"
+            : ext === "webp"
+              ? "image/webp"
+              : "image/png";
+        referenceImages.push({ mimeType, base64Data });
+        console.log(`   ✓ Loaded parent map as reference: ${mapPath}`);
+      } catch {
+        console.warn(`   ⚠️  Could not read parent map (${mapPath}), skipping`);
+      }
+    }
+
+    // Build prompt — if we have reference images use merge prompt,
+    // otherwise fall back to a fresh generation with just the scene list
+    let prompt: string;
+    if (referenceImages.length > 0) {
+      prompt = buildMapMergePrompt(parentScenes, targetScene);
+    } else if (targetScene) {
+      // No maps at all — generate fresh with target scene only
+      prompt = buildMapImagePrompt([
+        targetScene as unknown as ScenarioOutline,
+      ]);
+    } else {
+      console.warn("   ⚠️  No reference maps and no target scene, skipping merged map");
+      return null;
+    }
+
+    const result = await generateGeminiImage(prompt, {
+      referenceImages: referenceImages.length > 0 ? referenceImages : undefined,
+    });
+
+    const relativePath = await saveMapImageToModuleTimestamped(
+      moduleName,
+      result.mimeType,
+      result.base64Data
+    );
+
+    console.log(`   ✓ Merged map saved: ${relativePath}`);
+    return { path: relativePath, mimeType: result.mimeType };
+  } catch (error) {
+    console.error("   ❌ Failed to generate merged map:", error);
+    return null;
+  }
+}
+
+/**
  * Save map image to module directory
  *
  * @param moduleName - Module name

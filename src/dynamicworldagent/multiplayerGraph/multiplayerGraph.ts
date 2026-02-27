@@ -624,7 +624,7 @@ export const buildMultiplayerGraph = (
         state.sceneRoomId,
         language
       );
-      // Store narrative in sceneRoom contextualData
+      // Store narrative + clueRevelations in sceneRoom contextualData
       const scr = m.getSceneRoom(state.sceneRoomId);
       if (scr && result?.narrative) {
         m.updateSceneRoom(state.sceneRoomId, {
@@ -633,6 +633,7 @@ export const buildMultiplayerGraph = (
             contextualData: {
               ...scr.temporaryInfo.contextualData,
               keeperNarrative: result.narrative,
+              clueRevelations: result.clueRevelations ?? null,
             },
           },
         });
@@ -680,7 +681,7 @@ export const buildMultiplayerGraph = (
           ? { onNarrativeDelta: state.stream.onNarrativeDelta }
           : undefined
       );
-      // Store narrative in sceneRoom contextualData so service can broadcast it
+      // Store narrative + clueRevelations in sceneRoom contextualData so service can broadcast/persist
       const scr = m.getSceneRoom(state.sceneRoomId);
       if (scr && result?.narrative) {
         m.updateSceneRoom(state.sceneRoomId, {
@@ -689,6 +690,7 @@ export const buildMultiplayerGraph = (
             contextualData: {
               ...scr.temporaryInfo.contextualData,
               keeperNarrative: result.narrative,
+              clueRevelations: result.clueRevelations ?? null,
             },
           },
         });

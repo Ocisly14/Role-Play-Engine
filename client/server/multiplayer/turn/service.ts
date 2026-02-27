@@ -21,7 +21,9 @@ import { multiplayerSessionStore } from "../../../../src/dynamicworldagent/multi
 import { buildMultiplayerGraph } from "../../../../src/dynamicworldagent/multiplayerGraph/index.js";
 import { resolveAllMovements, type TimeBubbleMergeInfo } from "../../../../src/dynamicworldagent/multiplayerGraph/sceneRoomMerger.js";
 import { generateSceneRoomImage } from "../../../../src/dynamicworldagent/multiplayerVisual/sceneImage.js";
+import { generateMapOnSceneSwitch, generateMergedMap } from "../../../../src/dynamicworldagent/visual/mapImage.js";
 import { TurnManager } from "../../../../src/dynamicworldagent/multiplayerAgent/memory/turnManager.js";
+import { TurnRagAgent } from "../../../../src/dynamicworldagent/multiplayerAgent/knowledge/turnRagAgent.js";
 import { ScenarioLoader } from "../../../../src/shared/agents/memory/scenarioloader/index.js";
 import { DirectorAgent } from "../../../../src/dynamicworldagent/multiplayerAgent/director/directorAgent.js";
 import { WebSocketManager } from "../../websocket/WebSocketManager.js";
@@ -337,6 +339,9 @@ async function triggerMultiplayerGraph(
       | unknown[]
       | undefined) ?? [];
 
+  const clueRevelations =
+    updatedSceneRoom?.temporaryInfo.contextualData?.clueRevelations ?? null;
+
   if (persistedTurnId && updatedSceneRoom) {
     // Store orchestrator analyses + action results for RAG and debugging.
     turnManager.updateProcessing(persistedTurnId, {
@@ -351,11 +356,33 @@ async function triggerMultiplayerGraph(
       persistedTurnId,
       {
         keeperNarrative,
+        clueRevelations,
         gameDay: roomGameDay,
         gameTime: roomTimeOfDay,
       },
       language
     );
+
+    // Record RAG chunks (fire-and-forget) — uses multiplayer state natively
+    if (result.dynamicGameState) {
+      const turnRagAgent = new TurnRagAgent();
+      const turn = turnManager.getTurn(persistedTurnId);
+      if (turn) {
+        void turnRagAgent
+          .recordTurn({
+            turn,
+            multiplayerState: result.dynamicGameState,
+            sceneRoomId,
+            language,
+          })
+          .catch((err) => {
+            console.warn(
+              `[MP Turn] RAG recording failed for turn ${persistedTurnId}:`,
+              err
+            );
+          });
+      }
+    }
   }
 
   // Use per-room time for broadcast
@@ -751,31 +778,128 @@ async function handlePostRoundSceneSplit(
           timestamp: new Date().toISOString(),
         });
 
-        // Generate scene images for new rooms (fire-and-forget)
-        const state = manager.getState();
-        const childState = manager.getSceneRoom(childRoom.sceneRoomId);
-        if (childState?.currentScenario && state.moduleName) {
-          generateSceneRoomImage(childState.currentScenario, state.moduleName)
-            .then((imageResult) => {
-              if (imageResult && wsManager) {
-                const imgClients = wsManager.getMultiplayerClients(
+        // Generate scene images + maps only for mover rooms (stayer rooms keep parent's assets)
+        if (!childRoom.isStayerRoom) {
+          const state = manager.getState();
+          const childState = manager.getSceneRoom(childRoom.sceneRoomId);
+          if (childState?.currentScenario && state.moduleName) {
+            // ── BG generation (fire-and-forget) ──
+            generateSceneRoomImage(childState.currentScenario, state.moduleName)
+              .then((imageResult) => {
+                if (imageResult && wsManager) {
+                  const imgClients = wsManager.getMultiplayerClients(
+                    childRoom.sceneRoomId
+                  );
+                  notifySceneRoom(childRoom.sceneRoomId, imgClients, {
+                    type: "scene_image_ready",
+                    sceneRoomId: childRoom.sceneRoomId,
+                    imagePath: imageResult.path,
+                    mimeType: imageResult.mimeType,
+                    timestamp: new Date().toISOString(),
+                  });
+                }
+              })
+              .catch((err) => {
+                console.warn(
+                  `[MP Turn] Scene image for ${childRoom.sceneRoomId} failed:`,
+                  err
+                );
+              });
+
+            // ── Map generation (fire-and-forget) ──
+            const getConns = (scenarioName: string) => {
+              return state.scenarioOutlines?.find(
+                (o) => o.name === scenarioName
+              )?.connections ?? [];
+            };
+
+            const broadcastMap = (mapResult: { path: string; mimeType: string }) => {
+              const room = manager.getSceneRoom(childRoom.sceneRoomId);
+              if (room?.currentScenario) {
+                room.currentScenario.mapImagePath = mapResult.path;
+              }
+              if (wsManager) {
+                const mapClients = wsManager.getMultiplayerClients(
                   childRoom.sceneRoomId
                 );
-                notifySceneRoom(childRoom.sceneRoomId, imgClients, {
-                  type: "scene_image_ready",
+                notifySceneRoom(childRoom.sceneRoomId, mapClients, {
+                  type: "map_image_ready",
                   sceneRoomId: childRoom.sceneRoomId,
-                  imagePath: imageResult.path,
-                  mimeType: imageResult.mimeType,
+                  mapImagePath: mapResult.path,
+                  mimeType: mapResult.mimeType,
                   timestamp: new Date().toISOString(),
                 });
               }
-            })
-            .catch((err) => {
-              console.warn(
-                `[MP Turn] Scene image for ${childRoom.sceneRoomId} failed:`,
-                err
-              );
-            });
+            };
+
+            const parentIds = childRoom.parentSceneRoomIds;
+
+            if (parentIds.length > 1) {
+              // ── Multi-parent merge: collect ALL parent maps as references ──
+              const parentScenes = parentIds
+                .map((pid) => manager.getSceneRoom(pid))
+                .filter((r) => r?.currentScenario)
+                .map((r) => ({
+                  name: r!.currentScenario!.name,
+                  description: r!.currentScenario!.description,
+                  connections: getConns(r!.currentScenario!.name),
+                  mapImagePath: r!.currentScenario!.mapImagePath ?? null,
+                }));
+
+              // Target scene is the child's scenario (may already be on a parent map)
+              const targetSceneData = {
+                name: childState.currentScenario.name,
+                description: childState.currentScenario.description,
+                connections: getConns(childState.currentScenario.name),
+              };
+
+              generateMergedMap(
+                state.moduleName,
+                parentScenes,
+                targetSceneData,
+                state.moduleDigest?.macroMapPath
+              )
+                .then((mapResult) => {
+                  if (mapResult) broadcastMap(mapResult);
+                })
+                .catch((err) => {
+                  console.warn(
+                    `[MP Turn] Merged map generation for ${childRoom.sceneRoomId} failed:`,
+                    err
+                  );
+                });
+            } else {
+              // ── Single parent: incremental map update ──
+              const parentRoom = parentIds[0] ? manager.getSceneRoom(parentIds[0]) : null;
+              const parentScenario = parentRoom?.currentScenario;
+
+              if (parentScenario) {
+                generateMapOnSceneSwitch(
+                  state.moduleName,
+                  {
+                    name: parentScenario.name,
+                    description: parentScenario.description,
+                    connections: getConns(parentScenario.name),
+                  },
+                  {
+                    name: childState.currentScenario.name,
+                    description: childState.currentScenario.description,
+                    connections: getConns(childState.currentScenario.name),
+                  },
+                  parentScenario.mapImagePath ?? state.moduleDigest?.macroMapPath
+                )
+                  .then((mapResult) => {
+                    if (mapResult) broadcastMap(mapResult);
+                  })
+                  .catch((err) => {
+                    console.warn(
+                      `[MP Turn] Map generation for ${childRoom.sceneRoomId} failed:`,
+                      err
+                    );
+                  });
+              }
+            }
+          }
         }
       }
     }

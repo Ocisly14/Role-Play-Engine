@@ -13,7 +13,7 @@ import type {
   ActionResult,
   DiscoveredClue,
 } from "../../../shared/state/index.js";
-import { composeTemplateWithImages } from "../../../template.js";
+import { composeTemplateWithImages, type MultiplayerSceneScopedState } from "../../../template.js";
 import type { HeartbeatActivatedNarrative } from "../../state/index.js";
 import type {
   MultiplayerDynamicGameStateManager,
@@ -515,10 +515,14 @@ export class KeeperAgent {
       })(),
     };
 
-    // Compose template with images (pass minimal state for scenario map extraction)
+    // Compose template with images (multiplayer scene-scoped state for scenario map extraction)
+    const sceneScopedState: MultiplayerSceneScopedState = {
+      multiplayerSceneScope: true,
+      currentScenario,
+    };
     const { content: prompt, images } = composeTemplateWithImages(
       template,
-      { dynamicGameState: { currentScenario } } as any,
+      sceneScopedState,
       templateContext,
       "handlebars"
     );
@@ -787,9 +791,13 @@ export class KeeperAgent {
       ),
     };
 
+    const epilogueScopedState: MultiplayerSceneScopedState = {
+      multiplayerSceneScope: true,
+      currentScenario: sceneRoom.currentScenario,
+    };
     const { content: prompt, images } = composeTemplateWithImages(
       template,
-      { dynamicGameState: { currentScenario: sceneRoom.currentScenario } } as any,
+      epilogueScopedState,
       templateContext,
       "handlebars"
     );

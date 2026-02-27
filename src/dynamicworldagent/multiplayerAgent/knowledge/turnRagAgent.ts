@@ -1,5 +1,6 @@
 import { createHash } from "crypto";
-import type { DynamicGameState } from "../../state/index.js";
+import type { MultiplayerDynamicGameState } from "../../multiplayerState/MultiplayerDynamicGameState.js";
+import type { DynamicScenarioSnapshot, DynamicNPCProfile } from "../../world_builder/types.js";
 import type { GameTurn } from "../memory/turnManager.js";
 import {
   type SessionRagChunkInput,
@@ -93,7 +94,8 @@ function buildActionLogText(turn: GameTurn): string {
 
 function collectClueChunkDrafts(
   turn: GameTurn,
-  dynamicGameState: DynamicGameState
+  currentScenario: DynamicScenarioSnapshot | null,
+  npcCharacters: DynamicNPCProfile[]
 ): ClueChunkDraft[] {
   const clueRevelations = turn.clueRevelations;
   if (!hasRevealUpdates(clueRevelations)) {
@@ -124,11 +126,11 @@ function collectClueChunkDrafts(
     const clueId = typeof item === "string" ? item : item?.clueId;
     if (!clueId) continue;
 
-    const clue = dynamicGameState.currentScenario?.clues?.find(
+    const clue = currentScenario?.clues?.find(
       (c) => c.id === clueId
     );
     pushDraft({
-      sourceName: dynamicGameState.currentScenario?.name || "Unknown Scenario",
+      sourceName: currentScenario?.name || "Unknown Scenario",
       clueType: "scenario",
       text: clue?.clueText || `Scenario clue ${clueId}`,
       method: clue?.discoveryDetails?.method || "Keeper revelation",
@@ -144,7 +146,7 @@ function collectClueChunkDrafts(
     const clueId = item?.clueId;
     if (!npcId || !clueId) continue;
 
-    const npc = dynamicGameState.npcCharacters.find((n) => n.id === npcId);
+    const npc = npcCharacters.find((n) => n.id === npcId);
     const clue = npc?.clues?.find((c) => c.id === clueId);
 
     pushDraft({
@@ -165,7 +167,7 @@ function collectClueChunkDrafts(
       typeof item?.secretIndex === "number" ? item.secretIndex : -1;
     if (!npcId || secretIndex < 0) continue;
 
-    const npc = dynamicGameState.npcCharacters.find((n) => n.id === npcId);
+    const npc = npcCharacters.find((n) => n.id === npcId);
     const secret = npc?.secrets?.[secretIndex];
     if (!secret || typeof secret !== "string") continue;
 
@@ -188,24 +190,33 @@ export class TurnRagAgent {
     this.ragService = ragService || new SessionRagService();
   }
 
+  /**
+   * Record a multiplayer turn into RAG chunks.
+   * Uses multiplayerState + sceneRoomId natively to resolve currentScenario and NPC data.
+   */
   async recordTurn(params: {
     turn: GameTurn;
-    dynamicGameState: DynamicGameState;
+    multiplayerState: MultiplayerDynamicGameState;
+    sceneRoomId: string;
     language?: "en" | "zh";
   }): Promise<void> {
-    const { turn, dynamicGameState } = params;
+    const { turn, multiplayerState, sceneRoomId } = params;
     const language = params.language === "en" ? "en" : "zh";
 
     if (!turn?.sessionId || !turn?.turnId) {
       return;
     }
 
+    const sceneRoom = multiplayerState.sceneRooms[sceneRoomId];
+    const currentScenario = sceneRoom?.currentScenario ?? null;
+    const npcCharacters = multiplayerState.npcCharacters ?? [];
+
     const chunks: SessionRagChunkInput[] = [];
     const meta = {
-      sceneName: turn.sceneName || null,
-      location: turn.location || null,
-      gameDay: turn.gameDay ?? null,
-      gameTime: turn.gameTime ?? null,
+      sceneName: turn.sceneName || currentScenario?.name || null,
+      location: turn.location || currentScenario?.location || null,
+      gameDay: turn.gameDay ?? sceneRoom?.gameDay ?? null,
+      gameTime: turn.gameTime ?? sceneRoom?.timeOfDay ?? null,
     };
 
     // input + narrative chunks
@@ -220,7 +231,7 @@ export class TurnRagAgent {
         turnId: turn.turnId,
         turnNumber: turn.turnNumber,
         chunkType: "turn",
-        sceneRoomId: turn.sceneRoomId ?? null,
+        sceneRoomId: turn.sceneRoomId ?? sceneRoomId,
         role: "system",
         content: segment,
         metadata: { ...meta, segmentType: "narrative", segmentIndex: i },
@@ -243,7 +254,7 @@ export class TurnRagAgent {
           turnId: turn.turnId,
           turnNumber: turn.turnNumber,
           chunkType: "turn",
-          sceneRoomId: turn.sceneRoomId ?? null,
+          sceneRoomId: turn.sceneRoomId ?? sceneRoomId,
           role: "system",
           content: segment,
           metadata: { ...meta, segmentType: "actionlog", segmentIndex: i },
@@ -253,7 +264,7 @@ export class TurnRagAgent {
       }
     }
 
-    const clueDrafts = collectClueChunkDrafts(turn, dynamicGameState);
+    const clueDrafts = collectClueChunkDrafts(turn, currentScenario, npcCharacters);
     for (const draft of clueDrafts) {
       const sourceKey = `clue:${shortHash(`${draft.clueType}|${draft.sourceName}|${draft.text}`)}`;
       chunks.push({
@@ -261,7 +272,7 @@ export class TurnRagAgent {
         turnId: turn.turnId,
         turnNumber: turn.turnNumber,
         chunkType: "clue",
-        sceneRoomId: turn.sceneRoomId ?? null,
+        sceneRoomId: turn.sceneRoomId ?? sceneRoomId,
         role: "system",
         content: [
           `Reveal Clue`,
