@@ -58,7 +58,15 @@
     "confirmFailed": "Failed to confirm",
     "cancelReady": "Cancel Ready",
     "cancelFailed": "Failed to cancel ready",
-    "selectModFailed": "Failed to select module"
+    "selectModFailed": "Failed to select module",
+    "newOrContinue": "Start Game",
+    "newGame": "New Game",
+    "continueGame": "Continue Game",
+    "noCheckpoints": "No saved games found",
+    "loadCheckpoint": "Load",
+    "checkpointDay": "Day {{day}}",
+    "checkpointTime": "{{time}}",
+    "gameInitializing": "Game is loading..."
   },
   "characters": {
     "title": "Your Characters",

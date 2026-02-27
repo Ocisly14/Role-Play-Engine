@@ -190,6 +190,33 @@ export async function confirmReady(
 }
 
 /**
+ * A player cancels their ready confirmation, reverting to pending.
+ */
+export async function unconfirmReady(
+  roomId: string,
+  userId: string
+): Promise<void> {
+  const prisma = getPrismaClient();
+
+  const member = await prisma.multiplayerRoomMember.findFirst({
+    where: { roomId, userId },
+    select: { id: true, confirmStatus: true },
+  });
+  if (!member) throw new Error("You are not a member of this room");
+
+  const room = await prisma.multiplayerRoom.findUnique({
+    where: { roomId },
+    select: { status: true },
+  });
+  if (room?.status === "playing") throw new Error("Cannot cancel ready after game has started");
+
+  await prisma.multiplayerRoomMember.update({
+    where: { id: member.id },
+    data: { confirmStatus: "pending" },
+  });
+}
+
+/**
  * Host starts the game. All members must be confirmed and module must be set.
  */
 export async function startGame(

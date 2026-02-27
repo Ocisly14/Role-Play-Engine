@@ -17,6 +17,16 @@ interface Mod {
   name: string;
 }
 
+interface CheckpointSummary {
+  checkpointId: string;
+  name: string;
+  createdAt: string;
+  gameDay: number | null;
+  timeOfDay: string | null;
+  playerCount: number;
+  activeScenes: string[];
+}
+
 export const MultiplayerRoomWaiting: React.FC = () => {
   const { t } = useTranslation("home");
   const { roomId } = useParams<{ roomId: string }>();
@@ -30,6 +40,11 @@ export const MultiplayerRoomWaiting: React.FC = () => {
   const [selectedModuleName, setSelectedModuleName] = useState("");
   const [actionError, setActionError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
+
+  // Start game dialog state
+  const [showStartDialog, setShowStartDialog] = useState(false);
+  const [checkpoints, setCheckpoints] = useState<CheckpointSummary[]>([]);
+  const [loadingCheckpoints, setLoadingCheckpoints] = useState(false);
 
   // Fetch characters and mods on mount
   useEffect(() => {
@@ -48,12 +63,12 @@ export const MultiplayerRoomWaiting: React.FC = () => {
       .catch(() => {});
   }, []);
 
-  // Navigate away when game starts
+  // Navigate to game page when room becomes "playing"
   useEffect(() => {
     if (room?.status === "playing") {
-      console.log("[Multiplayer] Game started, room:", room.roomId);
+      navigate(`/multiplayer/game/${room.roomId}`);
     }
-  }, [room?.status, room?.roomId]);
+  }, [room?.status, room?.roomId, navigate]);
 
   // Loading state
   if (loading && !room) {
@@ -184,7 +199,26 @@ export const MultiplayerRoomWaiting: React.FC = () => {
     }
   };
 
-  const handleStartGame = async () => {
+  const handleOpenStartDialog = async () => {
+    setShowStartDialog(true);
+    setLoadingCheckpoints(true);
+    try {
+      const res = await authFetch(
+        `/api/multiplayer/checkpoints/mine?moduleName=${encodeURIComponent(room.moduleName ?? "")}`
+      );
+      const data = await res.json();
+      if (data.success) {
+        setCheckpoints(data.checkpoints ?? []);
+      }
+    } catch {
+      // Not critical — user can still start new game
+    } finally {
+      setLoadingCheckpoints(false);
+    }
+  };
+
+  const handleNewGame = async () => {
+    setShowStartDialog(false);
     setActionError(null);
     setBusy(true);
     try {
@@ -203,6 +237,37 @@ export const MultiplayerRoomWaiting: React.FC = () => {
       if (!initData.success) throw new Error(initData.error ?? t("multiplayer.initFailed"));
 
       console.log("[Multiplayer] Game initialised:", initData);
+    } catch (err) {
+      setActionError((err as Error).message);
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  const handleLoadCheckpoint = async (checkpointId: string) => {
+    setShowStartDialog(false);
+    setActionError(null);
+    setBusy(true);
+    try {
+      const startRes = await authFetch(
+        `/api/multiplayer/rooms/${room.roomId}/start`,
+        { method: "POST" }
+      );
+      const startData = await startRes.json();
+      if (!startData.success) throw new Error(startData.error ?? t("multiplayer.startFailed"));
+
+      const loadRes = await authFetch(
+        `/api/multiplayer/rooms/${room.roomId}/checkpoints/load`,
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ checkpointId }),
+        }
+      );
+      const loadData = await loadRes.json();
+      if (!loadData.success) throw new Error(loadData.error ?? t("multiplayer.initFailed"));
+
+      console.log("[Multiplayer] Checkpoint loaded:", loadData);
     } catch (err) {
       setActionError((err as Error).message);
     } finally {
@@ -383,7 +448,7 @@ export const MultiplayerRoomWaiting: React.FC = () => {
                 {/* Start game */}
                 <button
                   type="button"
-                  onClick={handleStartGame}
+                  onClick={handleOpenStartDialog}
                   disabled={busy || !canStart}
                   className="primary"
                   style={{ width: "100%", opacity: (busy || !canStart) ? 0.5 : 1 }}
@@ -414,6 +479,83 @@ export const MultiplayerRoomWaiting: React.FC = () => {
           </div>
         </div>
       </div>
+
+      {/* New Game / Continue Game dialog */}
+      {showStartDialog && (
+        <div className="fixed inset-0 z-[60] flex items-center justify-center">
+          {/* Backdrop */}
+          <div
+            className="absolute inset-0 bg-black/30 backdrop-blur-sm"
+            onClick={() => setShowStartDialog(false)}
+          />
+          {/* Modal */}
+          <div className="relative z-10 w-full max-w-[420px] mx-4 rounded-3xl supports-[backdrop-filter]:backdrop-blur-lg border border-white/50 bg-white/80 shadow-[0_30px_80px_rgba(15,23,42,0.25)] supports-[backdrop-filter]:bg-white/55 overflow-hidden">
+            <div className="p-8 space-y-4">
+              <h2 className="text-xl font-bold m-0" style={{ color: "var(--title)" }}>
+                {t("multiplayer.newOrContinue")}
+              </h2>
+
+              {/* New Game */}
+              <button
+                type="button"
+                onClick={handleNewGame}
+                disabled={busy}
+                className="primary"
+                style={{ width: "100%", opacity: busy ? 0.5 : 1 }}
+              >
+                {t("multiplayer.newGame")}
+              </button>
+
+              {/* Continue Game — checkpoint list */}
+              <div className="backdrop-blur-sm bg-white/50 border border-slate-200 rounded-xl p-4 space-y-2">
+                <h3 className="text-sm font-semibold m-0" style={{ color: "var(--title)" }}>
+                  {t("multiplayer.continueGame")}
+                </h3>
+                {loadingCheckpoints ? (
+                  <p className="text-xs m-0" style={{ color: "#666" }}>...</p>
+                ) : checkpoints.length === 0 ? (
+                  <p className="text-xs m-0" style={{ color: "#666" }}>
+                    {t("multiplayer.noCheckpoints")}
+                  </p>
+                ) : (
+                  <div className="space-y-1.5 max-h-48 overflow-y-auto">
+                    {checkpoints.map((cp) => (
+                      <button
+                        key={cp.checkpointId}
+                        type="button"
+                        onClick={() => handleLoadCheckpoint(cp.checkpointId)}
+                        disabled={busy}
+                        className="w-full text-left backdrop-blur-sm bg-white/60 border border-slate-200 rounded-lg px-3 py-2 hover:bg-white/80 transition-all"
+                        style={{ opacity: busy ? 0.5 : 1 }}
+                      >
+                        <p className="text-sm font-medium m-0" style={{ color: "var(--title)" }}>
+                          {cp.name}
+                        </p>
+                        <p className="text-xs m-0" style={{ color: "#666" }}>
+                          {cp.gameDay != null && t("multiplayer.checkpointDay", { day: cp.gameDay })}
+                          {cp.timeOfDay && ` ${cp.timeOfDay}`}
+                          {" · "}
+                          {new Date(cp.createdAt).toLocaleDateString()}
+                        </p>
+                      </button>
+                    ))}
+                  </div>
+                )}
+              </div>
+
+              {/* Cancel */}
+              <button
+                type="button"
+                onClick={() => setShowStartDialog(false)}
+                className="secondary"
+                style={{ width: "100%" }}
+              >
+                {t("multiplayer.cancelReady")}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

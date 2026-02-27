@@ -7,6 +7,8 @@
 /// <reference path="../../types/express.d.ts" />
 import type { Request, Response } from "express";
 import { DatabaseManager } from "../../core/DatabaseManager.js";
+import { getPrismaClient } from "../../../../src/shared/agents/memory/database/prismaClient.js";
+import { multiplayerSessionStore } from "../../../../src/dynamicworldagent/multiplayerState/MultiplayerDynamicGameStateLoader.js";
 import { submitRoundInput, getRoundState } from "./service.js";
 
 /**
@@ -98,5 +100,86 @@ export async function getRound(req: Request, res: Response): Promise<void> {
         ? 404
         : 500;
     res.status(status).json({ success: false, error: message });
+  }
+}
+
+/**
+ * GET /api/multiplayer/rooms/:roomId/scene-rooms/:sceneRoomId/turns
+ *
+ * Returns conversation history for a scene room as Message[].
+ */
+export async function getTurnHistory(
+  req: Request,
+  res: Response
+): Promise<void> {
+  try {
+    const { roomId, sceneRoomId } = req.params;
+    const prisma = getPrismaClient();
+
+    // Get manager to find the sessionId
+    const manager = multiplayerSessionStore.get(roomId);
+    if (!manager) {
+      res.status(404).json({ success: false, error: "Game not initialised" });
+      return;
+    }
+
+    const sessionId = manager.getState().sessionId;
+
+    // Fetch turns for this session, optionally filtered by sceneRoomId
+    const turns = await prisma.gameTurn.findMany({
+      where: {
+        sessionId,
+        ...(sceneRoomId !== "all" ? { sceneRoomId } : {}),
+      },
+      orderBy: { turnNumber: "asc" },
+      select: {
+        turnId: true,
+        turnNumber: true,
+        characterInput: true,
+        characterName: true,
+        keeperNarrative: true,
+        status: true,
+        startedAt: true,
+        completedAt: true,
+        gameDay: true,
+        gameTime: true,
+        sceneRoomId: true,
+      },
+    });
+
+    // Convert to Message[] format
+    const messages: any[] = [];
+    for (const turn of turns) {
+      if (turn.characterInput) {
+        messages.push({
+          role: "character",
+          content: turn.characterInput,
+          timestamp: turn.startedAt?.toISOString() ?? new Date().toISOString(),
+          turnNumber: turn.turnNumber,
+          turnId: turn.turnId,
+          gameDay: turn.gameDay,
+          gameTime: turn.gameTime,
+          sceneRoomId: turn.sceneRoomId,
+          characterName: turn.characterName,
+        });
+      }
+      if (turn.keeperNarrative) {
+        messages.push({
+          role: "keeper",
+          content: turn.keeperNarrative,
+          timestamp: turn.completedAt?.toISOString() ?? new Date().toISOString(),
+          turnNumber: turn.turnNumber,
+          turnId: turn.turnId,
+          gameDay: turn.gameDay,
+          gameTime: turn.gameTime,
+          sceneRoomId: turn.sceneRoomId,
+        });
+      }
+    }
+
+    res.json({ success: true, messages });
+  } catch (error) {
+    console.error("[MultiplayerTurn] getTurnHistory error:", error);
+    res.status(500).json({ success: false, error: (error as Error).message });
   }
 }

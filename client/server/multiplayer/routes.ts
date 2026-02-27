@@ -22,10 +22,15 @@ router.post("/rooms/:roomId/start", roomController.startGame);
 // Game lifecycle (Phase 2)
 router.post("/rooms/:roomId/game/init", gameController.initGame);
 router.get("/rooms/:roomId/game/state", gameController.getGameState);
+router.get("/rooms/:roomId/gamestate", gameController.getPlayerState);
 
 // Turn input collection (Phase 3)
 router.post("/rooms/:roomId/scene-rooms/:sceneRoomId/input", turnController.submitInput);
 router.get("/rooms/:roomId/scene-rooms/:sceneRoomId/round", turnController.getRound);
+router.get("/rooms/:roomId/scene-rooms/:sceneRoomId/turns", turnController.getTurnHistory);
+
+// Checkpoint — cross-room listing (must precede :roomId routes)
+router.get("/checkpoints/mine", checkpointController.listMyCheckpoints);
 
 // Checkpoint save/load (host-only for save/load/delete, any member for list)
 router.post("/rooms/:roomId/checkpoints/save", checkpointController.saveCheckpoint);

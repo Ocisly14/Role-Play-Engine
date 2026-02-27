@@ -89,6 +89,21 @@ export async function confirmReady(req: Request, res: Response): Promise<void> {
   }
 }
 
+export async function unconfirmReady(req: Request, res: Response): Promise<void> {
+  try {
+    const userId = req.user!.userId;
+    const { roomId } = req.params;
+
+    await roomService.unconfirmReady(roomId, userId);
+    res.json({ success: true });
+  } catch (error) {
+    console.error("[Multiplayer] unconfirmReady error:", error);
+    const msg = (error as Error).message;
+    const status = msg.includes("not a member") ? 403 : 400;
+    res.status(status).json({ success: false, error: msg });
+  }
+}
+
 export async function startGame(req: Request, res: Response): Promise<void> {
   try {
     const userId = req.user!.userId;

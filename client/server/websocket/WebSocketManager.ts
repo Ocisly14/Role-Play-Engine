@@ -43,6 +43,7 @@ export class WebSocketManager {
     this.wss.on("connection", async (ws: WebSocket, req) => {
       const sessionId = this.extractSessionId(req);
       const token = this.extractToken(req);
+      const sceneRoomId = this.extractParam(req, "sceneRoomId");
       const creds = token ? this.verifyTokenCreds(token) : null;
       const userId = creds?.userId ?? null;
       const email = creds?.email ?? null;
@@ -58,9 +59,22 @@ export class WebSocketManager {
         return;
       }
 
-      console.log(`🔌 [WebSocket] Client connected: ${sessionId}`);
+      console.log(`🔌 [WebSocket] Client connected: ${sessionId}${sceneRoomId ? ` sceneRoom=${sceneRoomId}` : ""}`);
 
       this.handleNewConnection(ws, sessionId);
+
+      // Register as multiplayer client if sceneRoomId provided
+      if (sceneRoomId) {
+        const client = this.clients.get(sessionId);
+        if (client) {
+          this.registerMultiplayerClient(sceneRoomId, userId, client);
+
+          // On close, also remove multiplayer registration
+          ws.on("close", () => {
+            this.removeMultiplayerClient(sceneRoomId, userId);
+          });
+        }
+      }
     });
   }
 
@@ -139,6 +153,12 @@ export class WebSocketManager {
     return req.url?.split("token=")[1]?.split("&")[0] || null;
   }
 
+  private extractParam(req: any, name: string): string | null {
+    const regex = new RegExp(`${name}=([^&]*)`);
+    const match = req.url?.match(regex);
+    return match ? decodeURIComponent(match[1]) : null;
+  }
+
   private verifyTokenCreds(
     token: string
   ): { userId: string; email: string } | null {
@@ -155,6 +175,18 @@ export class WebSocketManager {
     userId: string,
     email: string
   ): Promise<boolean> {
+    // Multiplayer sessions: verify user is a room member
+    if (sessionId.startsWith("mp-session-")) {
+      const prisma = getPrismaClient();
+      // Find a room whose in-memory state has this sessionId
+      // Or just check if user is a member of any multiplayer room
+      const member = await prisma.multiplayerRoomMember.findFirst({
+        where: { userId },
+        select: { roomId: true },
+      });
+      return Boolean(member);
+    }
+
     const serverState = ServerState.getInstance();
     const activeState = serverState.getDynamicGameState(userId);
     if (activeState?.sessionId === sessionId) {

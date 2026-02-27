@@ -58,7 +58,15 @@
     "confirmFailed": "确认失败",
     "cancelReady": "取消准备",
     "cancelFailed": "取消准备失败",
-    "selectModFailed": "模组选择失败"
+    "selectModFailed": "模组选择失败",
+    "newOrContinue": "开始游戏",
+    "newGame": "新游戏",
+    "continueGame": "继续游戏",
+    "noCheckpoints": "没有已保存的游戏",
+    "loadCheckpoint": "加载",
+    "checkpointDay": "第{{day}}天",
+    "checkpointTime": "{{time}}",
+    "gameInitializing": "游戏加载中..."
   },
   "characters": {
     "title": "您的角色",

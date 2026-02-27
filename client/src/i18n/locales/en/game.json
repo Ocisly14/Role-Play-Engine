@@ -43,6 +43,8 @@
     "selectSkill": "Select Skill",
     "clearSkill": "Clear Skill",
     "tooLong": "Message is too long (max {{max}} characters)",
+    "skip": "Skip",
+    "waitingForOthers": "Waiting for others...",
     "rest": "Rest",
     "restDuration": "Choose Rest Duration",
     "rest4h": "4 Hours (Short Rest)",

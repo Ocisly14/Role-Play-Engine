@@ -47,6 +47,69 @@ async function verifyMember(
 }
 
 // ─────────────────────────────────────────────────────────────
+// GET /checkpoints/mine?moduleName=...
+// ─────────────────────────────────────────────────────────────
+
+export async function listMyCheckpoints(
+  req: Request,
+  res: Response
+): Promise<void> {
+  try {
+    const userId = req.user!.userId;
+    const moduleName = req.query.moduleName as string | undefined;
+    const prisma = getPrismaClient();
+
+    const checkpoints = await prisma.multiplayerCheckpoint.findMany({
+      where: {
+        createdBy: userId,
+        ...(moduleName
+          ? { room: { moduleName } }
+          : {}),
+      },
+      orderBy: { createdAt: "desc" },
+      take: 20,
+      select: {
+        checkpointId: true,
+        name: true,
+        createdAt: true,
+        payload: true,
+      },
+    });
+
+    const items = checkpoints.map((cp) => {
+      const payload = cp.payload as any;
+      const activeScenes: string[] = [];
+      if (payload?.sceneRooms && typeof payload.sceneRooms === "object") {
+        for (const room of Object.values(payload.sceneRooms) as any[]) {
+          if (!room.isFrozen && room.currentScenario?.name) {
+            activeScenes.push(room.currentScenario.name);
+          }
+        }
+      }
+      return {
+        checkpointId: cp.checkpointId,
+        name: cp.name,
+        createdAt: cp.createdAt,
+        gameDay: payload?.gameDay ?? null,
+        timeOfDay: payload?.timeOfDay ?? null,
+        activeScenes,
+        playerCount: payload?.players
+          ? Object.keys(payload.players).length
+          : 0,
+      };
+    });
+
+    res.json({ success: true, checkpoints: items });
+  } catch (error) {
+    console.error("[MP Checkpoint] listMyCheckpoints error:", error);
+    res.status(500).json({
+      success: false,
+      error: "Failed to list checkpoints: " + (error as Error).message,
+    });
+  }
+}
+
+// ─────────────────────────────────────────────────────────────
 // POST /rooms/:roomId/checkpoints/save
 // ─────────────────────────────────────────────────────────────
 

@@ -34,6 +34,9 @@ interface InputAreaProps {
   handleSendMessage: () => void;
   handleKeyDown: (e: React.KeyboardEvent<HTMLTextAreaElement>) => void;
   onOpenRestModal?: () => void;
+  // Multiplayer skip
+  onSkip?: () => void;
+  isWaitingForOthers?: boolean;
 }
 
 export const InputArea = React.memo<InputAreaProps>(
@@ -64,6 +67,8 @@ export const InputArea = React.memo<InputAreaProps>(
     handleSendMessage,
     handleKeyDown,
     onOpenRestModal,
+    onSkip,
+    isWaitingForOthers = false,
   }) => {
     const { t } = useTranslation("game");
 
@@ -298,6 +303,26 @@ export const InputArea = React.memo<InputAreaProps>(
                       <span className="text-[10px] text-amber-700">
                         {t("input.selectSkill")}
                       </span>
+                    )}
+
+                    {/* Skip Button (multiplayer) */}
+                    {onSkip && (
+                      <button
+                        type="button"
+                        title={t("input.skip")}
+                        className="inline-flex items-center justify-center whitespace-nowrap font-medium transition-all focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:pointer-events-none disabled:opacity-50 border shadow-sm hover:-translate-y-0.5 rounded-xl px-3 text-xs gap-1 h-[30px] mr-1.5 backdrop-blur-md bg-white/50 border-slate-200 text-slate-700 hover:bg-white/70 hover:border-slate-300"
+                        disabled={
+                          isWaitingForOthers ||
+                          isSending ||
+                          isPolling ||
+                          isGameEnded
+                        }
+                        onClick={onSkip}
+                      >
+                        {isWaitingForOthers
+                          ? t("input.waitingForOthers")
+                          : t("input.skip")}
+                      </button>
                     )}
 
                     {/* Rest Button */}

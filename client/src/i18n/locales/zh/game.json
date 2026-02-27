@@ -43,6 +43,8 @@
     "selectSkill": "选择技能",
     "clearSkill": "清除技能",
     "tooLong": "消息过长(最多{{max}}个字符)",
+    "skip": "跳过",
+    "waitingForOthers": "等待其他玩家...",
     "rest": "休息",
     "restDuration": "选择休息时长",
     "rest4h": "4小时（短休）",
