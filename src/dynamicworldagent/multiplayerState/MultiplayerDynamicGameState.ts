@@ -1665,20 +1665,274 @@ export class MultiplayerDynamicGameStateManager {
 
   toJSON(): Record<string, unknown> {
     const s = this.state;
+
+    // Serialize sceneRooms — handle Date fields and sanitize temporaryInfo
+    const serializedSceneRooms: Record<string, unknown> = {};
+    for (const [k, v] of Object.entries(s.sceneRooms)) {
+      serializedSceneRooms[k] = {
+        ...v,
+        frozenAt:
+          v.frozenAt instanceof Date ? v.frozenAt.toISOString() : v.frozenAt ?? null,
+        temporaryInfo: {
+          rules: [],
+          contextualData: v.temporaryInfo.contextualData
+            ? JSON.parse(JSON.stringify(v.temporaryInfo.contextualData))
+            : {},
+          actionResults: [],
+          actionResultsDetailed: [],
+          currentActionAnalysis: null,
+          npcResponseAnalyses: [],
+          sceneChangeRequest: null,
+          previousScenario: null,
+          slowGroupActionResults: [],
+          slowGroupActionResultsDetailed: [],
+        },
+      };
+    }
+
+    // Serialize updatedDynamicScenarioSnapshots — only latest snapshot per scenario
+    const serializedSnapshots: Record<string, unknown> = {};
+    for (const [scenarioId, snapshots] of s.updatedDynamicScenarioSnapshots) {
+      if (snapshots.length > 0) {
+        const latest = snapshots[snapshots.length - 1];
+        serializedSnapshots[scenarioId] = {
+          ...latest,
+          timestamp: latest.timestamp
+            ? latest.timestamp instanceof Date
+              ? latest.timestamp.toISOString()
+              : latest.timestamp
+            : undefined,
+        };
+      }
+    }
+
     return {
       ...s,
-      sceneRooms: Object.fromEntries(
-        Object.entries(s.sceneRooms).map(([k, v]) => [k, v])
-      ),
+      sceneRooms: serializedSceneRooms,
       revealedTruthEvents: [...s.revealedTruthEvents],
       activatedKnowledgeHolders: [...s.activatedKnowledgeHolders],
       deployedRedHerrings: [...s.deployedRedHerrings],
       mythosRevelations: [...s.mythosRevelations],
-      updatedDynamicScenarioSnapshots: Object.fromEntries(
-        s.updatedDynamicScenarioSnapshots
-      ),
+      updatedDynamicScenarioSnapshots: serializedSnapshots,
       loadedAt: s.loadedAt.toISOString(),
       lastUpdated: s.lastUpdated.toISOString(),
     };
+  }
+
+  // ---------- Deserialization (for checkpoint load) ----------
+
+  /**
+   * Reconstruct a MultiplayerDynamicGameState from a serialized JSON payload
+   * (inverse of `toJSON()`).  Hydrates Sets, Maps, Dates, and resets ephemeral fields.
+   */
+  static deserialize(data: any): MultiplayerDynamicGameState {
+    // --- updatedDynamicScenarioSnapshots: Object → Map<string, DynamicScenarioSnapshot[]> ---
+    const updatedDynamicScenarioSnapshots = new Map<
+      string,
+      DynamicScenarioSnapshot[]
+    >();
+    if (data.updatedDynamicScenarioSnapshots) {
+      if (data.updatedDynamicScenarioSnapshots instanceof Map) {
+        data.updatedDynamicScenarioSnapshots.forEach(
+          (snapshots: any[], scenarioId: string) => {
+            if (snapshots.length > 0) {
+              const latest = snapshots[snapshots.length - 1];
+              updatedDynamicScenarioSnapshots.set(scenarioId, [
+                {
+                  ...latest,
+                  timestamp: latest.timestamp
+                    ? typeof latest.timestamp === "string"
+                      ? new Date(latest.timestamp)
+                      : latest.timestamp
+                    : undefined,
+                },
+              ]);
+            }
+          }
+        );
+      } else {
+        for (const [scenarioId, snapshotData] of Object.entries(
+          data.updatedDynamicScenarioSnapshots as Record<string, any>
+        )) {
+          const latest = Array.isArray(snapshotData)
+            ? snapshotData[snapshotData.length - 1]
+            : snapshotData;
+          if (latest) {
+            updatedDynamicScenarioSnapshots.set(scenarioId, [
+              {
+                ...latest,
+                timestamp: latest.timestamp
+                  ? typeof latest.timestamp === "string"
+                    ? new Date(latest.timestamp)
+                    : latest.timestamp
+                  : undefined,
+              },
+            ]);
+          }
+        }
+      }
+    }
+
+    // --- sceneRooms: hydrate frozenAt (Date|null), reset temporaryInfo ---
+    const sceneRooms: Record<string, MultiplayerSceneRoomState> = {};
+    if (data.sceneRooms && typeof data.sceneRooms === "object") {
+      for (const [sceneRoomId, room] of Object.entries(
+        data.sceneRooms as Record<string, any>
+      )) {
+        sceneRooms[sceneRoomId] = {
+          ...room,
+          frozenAt: room.frozenAt ? new Date(room.frozenAt) : null,
+          temporaryInfo: emptyTemporaryInfo(),
+          frozenPlayerInputs: Array.isArray(room.frozenPlayerInputs)
+            ? room.frozenPlayerInputs
+            : [],
+          timeFrozenPlayers: room.timeFrozenPlayers ?? {},
+          parentSceneRoomIds: Array.isArray(room.parentSceneRoomIds)
+            ? room.parentSceneRoomIds
+            : [],
+          isFrozen: room.isFrozen ?? false,
+          memberPlayerIds: Array.isArray(room.memberPlayerIds)
+            ? room.memberPlayerIds
+            : [],
+          roundNumber: room.roundNumber ?? 1,
+          turnsInCurrentScene: room.turnsInCurrentScene ?? 0,
+          lastPlayerInputTimeByPlayer:
+            room.lastPlayerInputTimeByPlayer ?? {},
+          gameDay: room.gameDay ?? data.gameDay ?? 1,
+          timeOfDay: room.timeOfDay ?? data.timeOfDay ?? "08:00",
+        };
+      }
+    }
+
+    // --- players: ensure arrays default properly ---
+    const players: Record<string, MultiplayerPlayerState> = {};
+    if (data.players && typeof data.players === "object") {
+      for (const [playerId, p] of Object.entries(
+        data.players as Record<string, any>
+      )) {
+        players[playerId] = {
+          ...p,
+          staminaState: p.staminaState ?? {
+            minutesSinceLastRest: 0,
+            fatigueActive: false,
+          },
+          revealedNpcClueIds: Array.isArray(p.revealedNpcClueIds)
+            ? p.revealedNpcClueIds
+            : [],
+          revealedNpcSecretKeys: Array.isArray(p.revealedNpcSecretKeys)
+            ? p.revealedNpcSecretKeys
+            : [],
+          revealedScenarioClueIds: Array.isArray(p.revealedScenarioClueIds)
+            ? p.revealedScenarioClueIds
+            : [],
+          damagedScenarioClueIds: Array.isArray(p.damagedScenarioClueIds)
+            ? p.damagedScenarioClueIds
+            : [],
+        };
+      }
+    }
+
+    // --- defeatedNpcHistory ---
+    const defeatedNpcHistory: DefeatedNpcHistoryEntry[] = Array.isArray(
+      data.defeatedNpcHistory
+    )
+      ? data.defeatedNpcHistory
+          .filter(
+            (e: any) =>
+              e && typeof e.name === "string" && e.name.trim().length > 0
+          )
+          .map((e: any) => ({
+            name: e.name.trim(),
+            count:
+              typeof e.count === "number" && e.count > 0
+                ? Math.floor(e.count)
+                : 0,
+          }))
+      : [];
+
+    // --- heartbeatActions ---
+    const heartbeatActions: HeartbeatAction[] = Array.isArray(
+      data.heartbeatActions
+    )
+      ? data.heartbeatActions.filter(
+          (h: any) =>
+            h &&
+            typeof h.scheduledGameTime === "string" &&
+            typeof h.npcId === "string"
+        )
+      : [];
+
+    const state: MultiplayerDynamicGameState = {
+      roomId: data.roomId ?? "",
+      moduleName: data.moduleName ?? "",
+      players,
+      sceneRooms,
+      roundInputs: [], // ephemeral — always reset
+      restConsensusBySceneRoom: data.restConsensusBySceneRoom ?? {},
+
+      sessionId: data.sessionId ?? "",
+      gameDay: data.gameDay ?? 1,
+      timeOfDay: data.timeOfDay ?? "08:00",
+      scenarioTimeState: data.scenarioTimeState ?? {
+        sceneStartTime: data.timeOfDay ?? "08:00",
+        playerTimeConsumption: {},
+      },
+
+      tension: data.tension ?? 0,
+      isBattle: data.isBattle ?? false,
+      combatState: data.combatState ?? null,
+      combatSceneRoomId: data.combatSceneRoomId ?? null,
+      defeatedNpcHistory,
+      heartbeatActions,
+      gameEnding: data.gameEnding ?? null,
+
+      keeperGuidance: data.keeperGuidance ?? null,
+      moduleLimitations: data.moduleLimitations ?? null,
+      npcCharacters: Array.isArray(data.npcCharacters)
+        ? data.npcCharacters
+        : [],
+      discoveredClues: Array.isArray(data.discoveredClues)
+        ? data.discoveredClues
+        : [],
+      consecutiveProgressionTriggers:
+        data.consecutiveProgressionTriggers ?? 0,
+
+      moduleDigest: data.moduleDigest ?? null,
+      macroScene: data.macroScene ?? null,
+      truthTimeline: Array.isArray(data.truthTimeline)
+        ? data.truthTimeline
+        : [],
+      knowledgeMatrix: Array.isArray(data.knowledgeMatrix)
+        ? data.knowledgeMatrix
+        : [],
+      redHerrings: Array.isArray(data.redHerrings) ? data.redHerrings : [],
+      mythosEvents: Array.isArray(data.mythosEvents)
+        ? data.mythosEvents
+        : [],
+      endState: data.endState ?? null,
+      scenarioOutlines: Array.isArray(data.scenarioOutlines)
+        ? data.scenarioOutlines
+        : [],
+
+      revealedTruthEvents: new Set(data.revealedTruthEvents ?? []),
+      activatedKnowledgeHolders: new Set(
+        data.activatedKnowledgeHolders ?? []
+      ),
+      deployedRedHerrings: new Set(data.deployedRedHerrings ?? []),
+      mythosRevelations: new Set(data.mythosRevelations ?? []),
+
+      pointOfNoReturnReached: data.pointOfNoReturnReached ?? false,
+      pointOfNoReturnTrigger: data.pointOfNoReturnTrigger ?? null,
+
+      updatedDynamicScenarioSnapshots,
+      globalTrigger: data.globalTrigger ?? null,
+
+      loadedAt: data.loadedAt ? new Date(data.loadedAt) : new Date(),
+      lastUpdated: data.lastUpdated
+        ? new Date(data.lastUpdated)
+        : new Date(),
+    };
+
+    return state;
   }
 }

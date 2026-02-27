@@ -59,7 +59,8 @@ export async function saveDynamicGameStateCheckpoint(
     await db.preloadSessionTurns(dynamicState.sessionId);
     const turnManager = new TurnManager(db);
     serializableState.conversationHistory = turnManager.getConversation(
-      dynamicState.sessionId
+      dynamicState.sessionId,
+      Number.MAX_SAFE_INTEGER
     );
     try {
       const memos = await prisma.playerMemo.findMany({

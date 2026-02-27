@@ -444,6 +444,7 @@ export class TurnManager {
     diceRolls?: DiceRollInfo[];
     gameDay?: number | null;
     gameTime?: string | null;
+    sceneRoomId?: string | null;
   }> {
     const turns = this.getHistory(sessionId, limit, undefined, sceneRoomId);
     const conversation: Array<{
@@ -454,6 +455,7 @@ export class TurnManager {
       diceRolls?: DiceRollInfo[];
       gameDay?: number | null;
       gameTime?: string | null;
+      sceneRoomId?: string | null;
     }> = [];
 
     turns.reverse().forEach((turn) => {
@@ -499,6 +501,7 @@ export class TurnManager {
             turnNumber: turn.turnNumber,
             gameDay: turn.gameDay ?? null,
             gameTime: turn.gameTime ?? null,
+            sceneRoomId: turn.sceneRoomId ?? null,
           };
           if (diceRolls.length > 0) {
             keeperMessage.diceRolls = diceRolls;
@@ -515,6 +518,7 @@ export class TurnManager {
             turnNumber: turn.turnNumber,
             gameDay: turn.gameDay ?? null,
             gameTime: turn.gameTime ?? null,
+            sceneRoomId: turn.sceneRoomId ?? null,
           });
         }
 
@@ -527,6 +531,7 @@ export class TurnManager {
             turnNumber: turn.turnNumber,
             gameDay: turn.gameDay ?? null,
             gameTime: turn.gameTime ?? null,
+            sceneRoomId: turn.sceneRoomId ?? null,
           };
           if (diceRolls.length > 0) {
             keeperMessage.diceRolls = diceRolls;

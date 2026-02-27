@@ -28,7 +28,7 @@ import {
   retrieveTriggerEvidence,
   type TriggerEvidenceItem,
 } from "../memory/memoryAgent.js";
-import { saveDynamicGameStateCheckpoint } from "../memory/checkpoint.js";
+import { serializeMultiplayerCheckpoint, generateMultiplayerCheckpointName } from "../memory/checkpoint.js";
 import {
   getGlobalTriggerEventCheckTemplate,
   getStuckHintNarrativeTemplate,
@@ -2988,13 +2988,26 @@ export class DirectorAgent {
     const state = manager.getState();
     const currentGameTime = `Day ${state.gameDay}, ${state.timeOfDay}`;
 
-    // Save checkpoint before scenario update
-    await saveDynamicGameStateCheckpoint(
-      this.db,
-      state as any,
-      "auto",
-      "Before non-player scenario update"
-    );
+    // Save auto-checkpoint before scenario update
+    try {
+      const { getPrismaClient } = await import("../../../shared/agents/memory/database/prismaClient.js");
+      const { randomUUID } = await import("crypto");
+      const prisma = getPrismaClient();
+      const cpPayload = await serializeMultiplayerCheckpoint(manager, this.db);
+      const cpId = `mp-auto-${Date.now()}-${randomUUID().slice(0, 8)}`;
+      const cpName = `Auto Save - ${generateMultiplayerCheckpointName(manager)}`;
+      await prisma.multiplayerCheckpoint.create({
+        data: {
+          checkpointId: cpId,
+          roomId: state.roomId,
+          name: cpName,
+          payload: cpPayload as any,
+          createdBy: "system",
+        },
+      });
+    } catch (cpError) {
+      console.warn("[MP Director] Auto-checkpoint save failed:", cpError);
+    }
 
     try {
       // ── Collect all active player scenes ──
