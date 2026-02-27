@@ -159,6 +159,17 @@ You are a writer, responsible for writing a narrative of the game.
   {{/each}}
   {{/if}}
 
+  {{#if hasRetrievedClues}}
+  ### Previously Discovered Clues (Context-Relevant)
+  The following clues/secrets were previously discovered by the investigator and retrieved because they are relevant to the current player input:
+  \`\`\`json
+  {{retrievedClueContextJson}}
+  \`\`\`
+  - You MAY naturally weave these into your narrative when they connect to what the investigator is doing.
+  - Do NOT re-announce them as new discoveries — they are already known information.
+  - Only reference them when they directly relate to the current action or conversation.
+  {{/if}}
+
   {{#if hasHeartbeatActivatedNarratives}}
   **Activated Heartbeat Source Narratives**:
   These are source turn narratives tied to currently due/overdue heartbeat actions. Keep continuity with them.
@@ -280,7 +291,7 @@ You are a writer, responsible for writing a narrative of the game.
   - **AUTOMATIC** clues: May be revealed without a success roll (only if difficulty < Regular).
   - **REGULAR or higher** difficulty: Requires a successful action result. Do NOT reveal if \`allowRegularPlusClues\` is false.
 
-  **Case B — Player References Discovered Clue**: The investigator's latest input directly mentions or asks about information that is already discovered (\`discovered: true\` / \`revealed: true\` in the injected data). In this case you may incorporate that already-known information naturally into the narrative.
+  **Case B — Player References Previously Discovered Clue**: If the "Previously Discovered Clues (Context-Relevant)" section above contains clues relevant to the investigator's current input, you may incorporate that already-known information naturally into the narrative. Do NOT treat these as new revelations — they are recalled context.
 
   **In all other cases**: Do NOT include any clue content in the narrative — not the text, not a hint, not an allusion. Narrate only the concrete outcome of what the investigator did.
 

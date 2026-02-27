@@ -89,8 +89,8 @@ export class KeeperAgent {
     return clues
       .filter((clue) => {
         if (!clue) return false;
-        if (clue.discovered) return true;
         if (clue.damaged) return false;
+        if (clue.discovered) return false; // Discovered → served via RAG
         if (clue.difficulty === "automatic") return true;
         return allowRegularPlus;
       })
@@ -105,7 +105,7 @@ export class KeeperAgent {
     return clues
       .filter((clue) => {
         if (!clue) return false;
-        if (clue.revealed) return true;
+        if (clue.revealed) return false; // Revealed → served via RAG
         return allowRegularPlus;
       })
       .map((clue) => ({ ...clue }));
@@ -207,6 +207,16 @@ export class KeeperAgent {
         score: number;
         metadata: Record<string, any>;
       }>) || [];
+
+    // 7.2. Get retrieved clue context from RAG (populated by memory agent)
+    const retrievedClueContext =
+      (dynamicState.temporaryInfo.contextualData?.retrievedClueContext as Array<{
+        content: string;
+        score: number;
+        metadata: Record<string, unknown> | null;
+        sourceKey: string;
+      }>) ?? [];
+
     const heartbeatActivatedNarrativesRaw =
       (dynamicState.temporaryInfo.contextualData
         ?.heartbeatActivatedNarratives as HeartbeatActivatedNarrative[]) || [];
@@ -319,6 +329,10 @@ export class KeeperAgent {
       sceneChangeRequest: sceneChangeRequestForNarrative, // Scene change request (without timestamp)
       conversationHistory, // Recent conversation history (for {{#each}} loop)
       relevantHistory, // RAG-retrieved relevant history (for {{#each}} loop)
+      hasRetrievedClues: retrievedClueContext.length > 0,
+      retrievedClueContextJson: retrievedClueContext.length > 0
+        ? this.safeStringify(retrievedClueContext)
+        : null,
       hasHeartbeatActivatedNarratives,
       heartbeatActivatedNarrativesJson: hasHeartbeatActivatedNarratives
         ? this.safeStringify(heartbeatActivatedNarratives)

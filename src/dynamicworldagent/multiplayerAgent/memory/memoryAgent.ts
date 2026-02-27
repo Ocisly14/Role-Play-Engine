@@ -780,6 +780,58 @@ export const enrichMemoryContextForSceneRoom = async (
     }
   }
 
+  // --- Clue RAG: per-player query, max 2 each, deduplicated ---
+  let retrievedClueContext: Array<{
+    content: string;
+    score: number;
+    metadata: Record<string, unknown> | null;
+    sourceKey: string;
+  }> = [];
+
+  // Chinese BM25 weight for clue retrieval (same heuristic as turn retrieval)
+  const clueAlpha = language === "zh" ? 0.1 : 0.3;
+
+  if (db) {
+    const memberInputs = manager.getRoundInputsForSceneRoom(sceneRoomId)
+      .filter((i) => i.inputType === "input" && Boolean(i.content?.trim()));
+    const seenSourceKeys = new Set<string>();
+    const CLUE_THRESHOLD = 0.4;
+    const MAX_PER_PLAYER = 2;
+
+    for (const input of memberInputs) {
+      const query = input.content!.trim();
+      try {
+        const chunks = await sessionRagService.searchHybrid({
+          sessionId: state.sessionId,
+          ragQuery: query,
+          topK: MAX_PER_PLAYER,
+          semanticWeight: 1 - clueAlpha,
+          bm25Weight: clueAlpha,
+          language,
+          chunkType: "clue",
+          sceneRoomId: ancestorIds,
+        });
+        for (const chunk of chunks) {
+          if (chunk.score < CLUE_THRESHOLD) continue;
+          if (seenSourceKeys.has(chunk.sourceKey)) continue;
+          seenSourceKeys.add(chunk.sourceKey);
+          retrievedClueContext.push({
+            content: chunk.content,
+            score: chunk.score,
+            metadata: chunk.metadata,
+            sourceKey: chunk.sourceKey,
+          });
+        }
+      } catch { /* swallow — clue RAG failure is non-fatal */ }
+    }
+
+    if (retrievedClueContext.length > 0) {
+      console.log(
+        `🔎 [Memory Agent] Retrieved ${retrievedClueContext.length} clue RAG chunk(s) for sceneRoom ${sceneRoomId}`
+      );
+    }
+  }
+
   manager.updateSceneRoom(sceneRoomId, {
     temporaryInfo: {
       ...sceneRoom.temporaryInfo,
@@ -789,6 +841,7 @@ export const enrichMemoryContextForSceneRoom = async (
         conversationHistory,
         relevantHistory,
         relevantHistoryIncludesActionLogs: true,
+        retrievedClueContext,
       },
     },
   });

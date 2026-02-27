@@ -574,6 +574,43 @@ export const enrichMemoryContext = async (
     }
   }
 
+  // --- Clue RAG: single player, max 2, with similarity threshold ---
+  let retrievedClueContext: Array<{
+    content: string;
+    score: number;
+    metadata: Record<string, unknown> | null;
+    sourceKey: string;
+  }> = [];
+
+  if (db && characterInput && characterInput.trim()) {
+    try {
+      const clueChunks = await sessionRagService.searchHybrid({
+        sessionId: gameState.sessionId,
+        ragQuery: characterInput.trim(),
+        topK: 2,
+        semanticWeight: 1 - alpha,
+        bm25Weight: alpha,
+        language: effectiveLanguage,
+        chunkType: "clue",
+        sceneRoomId: null,
+      });
+      retrievedClueContext = clueChunks
+        .filter((c) => c.score >= 0.4)
+        .map((c) => ({
+          content: c.content,
+          score: c.score,
+          metadata: c.metadata,
+          sourceKey: c.sourceKey,
+        }));
+
+      if (retrievedClueContext.length > 0) {
+        console.log(
+          `🔎 [Memory Agent] Retrieved ${retrievedClueContext.length} clue RAG chunk(s) for single-player session`
+        );
+      }
+    } catch { /* swallow — clue RAG failure is non-fatal */ }
+  }
+
   return {
     ...withRules,
     temporaryInfo: {
@@ -583,6 +620,7 @@ export const enrichMemoryContext = async (
         conversationHistory,
         relevantHistory, // Add RAG-retrieved relevant history
         relevantHistoryIncludesActionLogs: true,
+        retrievedClueContext,
       },
     },
   };
