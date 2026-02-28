@@ -21,6 +21,7 @@ import type { DynamicGameState } from "../../state/index.js";
 import type {
   FrozenPlayerInput,
   MultiplayerDynamicGameStateManager,
+  MultiplayerHeartbeatAction,
   MultiplayerTurnInput,
 } from "../../multiplayerState/MultiplayerDynamicGameState.js";
 import {
@@ -1180,7 +1181,7 @@ export class ActionAgent {
     const current = Array.isArray(state.heartbeatActions)
       ? state.heartbeatActions
       : [];
-    const next = current.filter((item: HeartbeatAction) => !dueIds.has(item.heartbeatId));
+    const next = current.filter((item: any) => !dueIds.has(item.heartbeatId));
     const removedCount = current.length - next.length;
     if (removedCount <= 0) return;
 
@@ -2175,10 +2176,13 @@ export class ActionAgent {
     // treat them as consumed and remove from persistent state.
     this.consumeDueHeartbeatActionsFromContext(manager, sceneRoomId, playerId);
 
-    const heartbeatActions = this.parseHeartbeatActionsFromModel(
+    const heartbeatActionsRaw = this.parseHeartbeatActionsFromModel(
       parsed.heartbeatActions,
       manager.getSceneRoomState(sceneRoomId, playerId),
       sourceTurnId ?? null
+    );
+    const heartbeatActions: MultiplayerHeartbeatAction[] = heartbeatActionsRaw.map(
+      (a) => ({ ...a, ownerPlayerId: playerId })
     );
     if (heartbeatActions.length > 0) {
       manager.upsertHeartbeatActions(heartbeatActions);

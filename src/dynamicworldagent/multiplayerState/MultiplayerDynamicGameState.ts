@@ -47,6 +47,11 @@ export type {
   PendingNpcAction,
 };
 
+/** Multiplayer extension: tracks which player created the heartbeat */
+export interface MultiplayerHeartbeatAction extends HeartbeatAction {
+  ownerPlayerId: string;
+}
+
 // =============================================
 // Frozen player input — stored on sceneRoom for time-grouped re-injection
 // =============================================
@@ -219,7 +224,7 @@ export interface MultiplayerDynamicGameState {
 
   // Combat defeat history (global — NPC defeat is world-level)
   defeatedNpcHistory: DefeatedNpcHistoryEntry[];
-  heartbeatActions: HeartbeatAction[];
+  heartbeatActions: MultiplayerHeartbeatAction[];
 
   // Game ending
   gameEnding: GameEndingInfo | null;
@@ -1102,16 +1107,16 @@ export class MultiplayerDynamicGameStateManager {
 
   // ---------- Heartbeat ----------
 
-  setHeartbeatActions(actions: HeartbeatAction[]): void {
+  setHeartbeatActions(actions: MultiplayerHeartbeatAction[]): void {
     this.state.heartbeatActions = Array.isArray(actions) ? [...actions] : [];
     this.state.lastUpdated = new Date();
   }
 
-  upsertHeartbeatActions(actions: HeartbeatAction[]): void {
+  upsertHeartbeatActions(actions: MultiplayerHeartbeatAction[]): void {
     if (!Array.isArray(actions) || actions.length === 0) return;
     const current = this.state.heartbeatActions || [];
 
-    const findByFingerprint = (incoming: HeartbeatAction): number =>
+    const findByFingerprint = (incoming: MultiplayerHeartbeatAction): number =>
       current.findIndex((existing) => {
         if (!existing) return false;
         const isActive =
@@ -1838,15 +1843,22 @@ export class MultiplayerDynamicGameStateManager {
       : [];
 
     // --- heartbeatActions ---
-    const heartbeatActions: HeartbeatAction[] = Array.isArray(
+    // Backward compat: old checkpoints may lack ownerPlayerId — default to first player
+    const fallbackOwnerPlayerId = Object.keys(data.players ?? {})[0] ?? "";
+    const heartbeatActions: MultiplayerHeartbeatAction[] = Array.isArray(
       data.heartbeatActions
     )
-      ? data.heartbeatActions.filter(
-          (h: any) =>
-            h &&
-            typeof h.scheduledGameTime === "string" &&
-            typeof h.npcId === "string"
-        )
+      ? data.heartbeatActions
+          .filter(
+            (h: any) =>
+              h &&
+              typeof h.scheduledGameTime === "string" &&
+              typeof h.npcId === "string"
+          )
+          .map((h: any) => ({
+            ...h,
+            ownerPlayerId: h.ownerPlayerId ?? fallbackOwnerPlayerId,
+          }))
       : [];
 
     const state: MultiplayerDynamicGameState = {

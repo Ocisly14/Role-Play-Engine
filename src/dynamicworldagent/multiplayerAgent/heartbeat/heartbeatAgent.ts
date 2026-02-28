@@ -4,8 +4,8 @@ import type {
 } from "../../../shared/agents/memory/database/index.js";
 import type {
   HeartbeatActivatedNarrative,
-  HeartbeatAction,
 } from "../../state/index.js";
+import type { MultiplayerHeartbeatAction } from "../../multiplayerState/MultiplayerDynamicGameState.js";
 import { MultiplayerDynamicGameStateManager } from "../../multiplayerState/MultiplayerDynamicGameState.js";
 import { toAbsoluteMinutes } from "../../utils/gameTime.js";
 
@@ -18,7 +18,12 @@ type HeartbeatDb = CoCDatabase | CoCDatabaseAdapter;
  * - Loads source turn narratives for keeper context injection
  */
 export class HeartbeatAgent {
-  private formatCurrentGameTime(manager: MultiplayerDynamicGameStateManager): string {
+  private formatSceneRoomGameTime(
+    manager: MultiplayerDynamicGameStateManager,
+    sceneRoomId: string
+  ): string {
+    const room = manager.getSceneRoom(sceneRoomId);
+    if (room) return `Day ${room.gameDay}, ${room.timeOfDay}`;
     const state = manager.getState();
     return `Day ${state.gameDay}, ${state.timeOfDay}`;
   }
@@ -70,25 +75,20 @@ export class HeartbeatAgent {
     sceneRoomId: string,
     deps: { db: HeartbeatDb }
   ): Promise<{
-    dueActions: HeartbeatAction[];
+    dueActions: MultiplayerHeartbeatAction[];
     activatedNarratives: HeartbeatActivatedNarrative[];
   }> {
     const state = manager.getState();
-    const nowGameTime = this.formatCurrentGameTime(manager);
-    const nowMinutes = toAbsoluteMinutes(nowGameTime);
-    const originalActions = Array.isArray(state.heartbeatActions)
+    const sceneRoom = manager.getSceneRoom(sceneRoomId);
+    const memberPlayerIds = new Set(sceneRoom?.memberPlayerIds ?? []);
+
+    const originalActions: MultiplayerHeartbeatAction[] = Array.isArray(state.heartbeatActions)
       ? state.heartbeatActions
       : [];
-    const updatedActions: HeartbeatAction[] = originalActions.map((item) => ({
+    const updatedActions: MultiplayerHeartbeatAction[] = originalActions.map((item) => ({
       ...item,
     }));
-    const dueActions: HeartbeatAction[] = [];
-
-    if (nowMinutes === null) {
-      manager.setContextualData(sceneRoomId, "heartbeatDueActions", []);
-      manager.setContextualData(sceneRoomId, "heartbeatActivatedNarratives", []);
-      return { dueActions: [], activatedNarratives: [] };
-    }
+    const dueActions: MultiplayerHeartbeatAction[] = [];
 
     for (const action of updatedActions) {
       if (!action) continue;
@@ -96,11 +96,18 @@ export class HeartbeatAgent {
         continue;
       }
 
+      // Use the owner player's current sceneRoom time for due/overdue evaluation
+      const ownerPlayer = state.players[action.ownerPlayerId];
+      const ownerSceneRoomId = ownerPlayer?.currentSceneRoomId ?? sceneRoomId;
+      const nowGameTime = this.formatSceneRoomGameTime(manager, ownerSceneRoomId);
+      const nowMinutes = toAbsoluteMinutes(nowGameTime);
+      if (nowMinutes === null) continue;
+
       const scheduledMinutes = toAbsoluteMinutes(action.scheduledGameTime);
       if (scheduledMinutes === null) continue;
 
       const deltaMinutes = scheduledMinutes - nowMinutes;
-      let nextStatus: HeartbeatAction["status"] = action.status;
+      let nextStatus: MultiplayerHeartbeatAction["status"] = action.status;
       if (deltaMinutes >= 0 && deltaMinutes <= 10) {
         nextStatus = "due";
       } else if (deltaMinutes < 0) {
@@ -117,7 +124,11 @@ export class HeartbeatAgent {
         }
       }
 
-      if (action.status === "due" || action.status === "overdue") {
+      // Only inject due actions for players in THIS sceneRoom
+      if (
+        (action.status === "due" || action.status === "overdue") &&
+        memberPlayerIds.has(action.ownerPlayerId)
+      ) {
         dueActions.push({ ...action });
       }
     }
