@@ -164,8 +164,17 @@ export const buildMultiplayerGraph = (
       return state;
     }
 
+    // Preserve cached orchestrator result from skill selection pre-check
+    // (clearSceneRoomTemporaryInfo wipes contextualData, so extract first)
+    const cachedOrchestratorResult = sceneRoom.temporaryInfo?.contextualData?.cachedOrchestratorResult;
+
     // Clear per-round temporary info for this sceneRoom
     m.clearSceneRoomTemporaryInfo(state.sceneRoomId);
+
+    // Restore cached orchestrator result so the orchestrator node can skip LLM
+    if (cachedOrchestratorResult) {
+      m.setContextualData(state.sceneRoomId, "cachedOrchestratorResult", cachedOrchestratorResult);
+    }
 
     // Heartbeat evaluation
     try {
@@ -203,6 +212,35 @@ export const buildMultiplayerGraph = (
     const m = mgr(state);
     const language =
       state.language === "en" || state.language === "zh" ? state.language : "zh";
+
+    // Check for cached orchestrator result from two-phase skill selection pre-check
+    const sceneRoom = m.getSceneRoom(state.sceneRoomId);
+    const cachedResult = sceneRoom?.temporaryInfo?.contextualData?.cachedOrchestratorResult;
+
+    if (cachedResult && typeof cachedResult === "object" && "playerAnalyses" in (cachedResult as any)) {
+      console.log("✅ [MP Orchestrator] Using cached result from skill selection pre-check");
+      const typedResult = cachedResult as import("../multiplayerAgent/orchestrator/orchestratorAgent.js").OrchestratorResult;
+
+      // Restore the data that processRound() normally stores in contextualData.
+      // Entry node cleared temporaryInfo, so playerActionAnalyses must be rebuilt.
+      if (sceneRoom) {
+        const playerActionAnalyses = Object.fromEntries(
+          typedResult.playerAnalyses.map((pa) => [pa.playerId, pa])
+        );
+
+        const { cachedOrchestratorResult: _, ...restContextual } = sceneRoom.temporaryInfo.contextualData;
+        m.updateSceneRoom(state.sceneRoomId, {
+          temporaryInfo: {
+            ...sceneRoom.temporaryInfo,
+            contextualData: {
+              ...restContextual,
+              playerActionAnalyses,
+            },
+          },
+        });
+      }
+      return { ...state, dynamicGameState: m.getState() };
+    }
 
     const result = await orchestrator.processRound(
       state.roundInputs,
@@ -585,8 +623,9 @@ export const buildMultiplayerGraph = (
       }
 
       // Combat path: battleKeeper already generated narrative, skip keeper
+      // Check both isBattle (ongoing combat) and combatPathCompleted (combat just ended via battleKeeper)
       const combatRoom = m.getSceneRoom(state.sceneRoomId);
-      if (combatRoom?.isBattle) {
+      if (combatRoom?.isBattle || combatRoom?.temporaryInfo.contextualData?.combatPathCompleted) {
         console.log("🔀 [MP Game End Router] → END (combat path, game continues)");
         return END;
       }
@@ -698,6 +737,21 @@ export const buildMultiplayerGraph = (
           },
         });
       }
+
+      // Extract dice rolls from action results and stream to clients
+      const actionResults = sceneRoom.temporaryInfo.actionResults ?? [];
+      const diceRollInfos: import("../../shared/state/index.js").DiceRollInfo[] = actionResults.flatMap((ar: any) =>
+        (ar.diceRolls ?? []).map((d: any) => ({
+          character: ar.character ?? "unknown",
+          roll: d.roll ?? `${d.skillName ?? d.skill ?? "unknown"}: ${d.rolledValue ?? d.rolled ?? "?"}/${d.targetValue ?? d.target ?? "?"}`,
+          skill: d.skill ?? d.skillName ?? undefined,
+          success: d.success ?? d.result ?? undefined,
+        }))
+      );
+      if (diceRollInfos.length > 0) {
+        m.setContextualData(state.sceneRoomId, "diceRolls", diceRollInfos);
+        state.stream?.onDiceRolls?.(diceRollInfos);
+      }
     } catch (e) {
       console.error("[MP Keeper] Narrative generation failed:", e);
     }
@@ -724,33 +778,95 @@ export const buildMultiplayerGraph = (
     // Store roundInputs in contextualData so combat agent adapters can access them
     m.setContextualData(state.sceneRoomId, "roundInputs", state.roundInputs);
 
-    // Combine all player combat inputs, marking skip vs acting
-    const combinedCombatInput = state.roundInputs
+    // Sort inputs by DEX (descending) for initiative order
+    const sortedInputs = [...state.roundInputs].sort((a, b) => {
+      const dexA = m.getState().players[a.playerId]?.profile?.attributes?.DEX ?? 50;
+      const dexB = m.getState().players[b.playerId]?.profile?.attributes?.DEX ?? 50;
+      return dexB - dexA;
+    });
+
+    // Combine all player combat inputs, marking skip vs acting, with DEX tags
+    const combinedCombatInput = sortedInputs
       .map((i) => {
         const player = m.getState().players[i.playerId];
         const name = player?.characterName ?? i.playerId;
+        const dex = player?.profile?.attributes?.DEX ?? 50;
         if (i.inputType === "skip" || !i.content?.trim()) {
-          return `${name}: [skipped this round]`;
+          return `${name} (DEX: ${dex}): [skipped this round]`;
         }
-        return `${name}: ${i.content}`;
+        return `${name} (DEX: ${dex}): ${i.content}`;
       })
       .join("\n");
 
     try {
-      const result = await combatAgentA.resolvePlayerAttack(
-        m,
-        state.sceneRoomId,
-        combinedCombatInput,
-        null,
-        language
-      );
+      const combatState = sceneRoom.combatState;
+      const pendingNpcActions = combatState?.pendingNpcActions;
+      const isDefenseTurn = Array.isArray(pendingNpcActions) && pendingNpcActions.length > 0;
+
+      // Emit combat_start event on the first attack turn
+      if (combatState && combatState.round <= 1 && !isDefenseTurn) {
+        state.stream?.onCombatStart?.();
+      }
+
+      // Extract selectedSkill from roundInputs (use first non-null skill found)
+      const selectedSkill = state.roundInputs
+        .map((i) => i.selectedSkill)
+        .find((s): s is string => typeof s === "string" && s.trim().length > 0)
+        ?? null;
+
+      let result;
+      if (isDefenseTurn) {
+        console.log(`   🛡️  Defense turn — ${pendingNpcActions.length} pending NPC attacks`);
+        result = await combatAgentA.resolvePlayerDefense(
+          m,
+          state.sceneRoomId,
+          combinedCombatInput,
+          selectedSkill,
+          pendingNpcActions,
+          language
+        );
+      } else {
+        console.log("   ⚔️  Attack turn");
+        result = await combatAgentA.resolvePlayerAttack(
+          m,
+          state.sceneRoomId,
+          combinedCombatInput,
+          selectedSkill,
+          language
+        );
+      }
+
       if (result) {
         // Apply state updates (HP deltas, conditions, action logs, time)
         combatAgentA.applyResultForSceneRoom(m, state.sceneRoomId, result);
         // Store result for downstream agents (routeFromCombatA, combatActionB, battleKeeper)
         m.setContextualData(state.sceneRoomId, "combatActionAResult", result);
+        m.setContextualData(state.sceneRoomId, "wasDefenseTurn", isDefenseTurn);
+
+        // Extract dice rolls from combat result and stream to clients
+        if (result.diceUsed && Array.isArray(result.diceUsed)) {
+          const combatDiceRolls: import("../../shared/state/index.js").DiceRollInfo[] = result.diceUsed.map((d: any) => ({
+            character: d.character ?? "unknown",
+            roll: d.roll ?? `${d.skillName ?? d.skill ?? "combat"}: ${d.rolledValue ?? d.rolled ?? "?"}/${d.targetValue ?? d.target ?? "?"}`,
+            skill: d.skill ?? d.skillName ?? undefined,
+            success: d.success ?? d.result ?? undefined,
+          }));
+          if (combatDiceRolls.length > 0) {
+            m.setContextualData(state.sceneRoomId, "diceRolls", combatDiceRolls);
+            state.stream?.onDiceRolls?.(combatDiceRolls);
+          }
+        }
+
         if (result.combatEnded) {
           m.setContextualData(state.sceneRoomId, "combatEnded", true);
+        }
+        // Record defeated NPCs
+        if (result.defeatedNpcs?.length > 0) {
+          m.recordDefeatedNpcsFromList(state.sceneRoomId, result.defeatedNpcs);
+        }
+        // Increment round after defense turn completes (full attack+defense cycle)
+        if (isDefenseTurn) {
+          m.incrementCombatRound(state.sceneRoomId);
         }
       }
     } catch (e) {
@@ -781,25 +897,33 @@ export const buildMultiplayerGraph = (
     const language =
       state.language === "en" || state.language === "zh" ? state.language : "zh";
 
-    const combinedCombatInput = state.roundInputs
+    // Sort inputs by DEX (descending) for initiative order
+    const sortedInputsB = [...state.roundInputs].sort((a, b) => {
+      const dexA = m.getState().players[a.playerId]?.profile?.attributes?.DEX ?? 50;
+      const dexB = m.getState().players[b.playerId]?.profile?.attributes?.DEX ?? 50;
+      return dexB - dexA;
+    });
+
+    const combinedCombatInput = sortedInputsB
       .map((i) => {
         const player = m.getState().players[i.playerId];
         const name = player?.characterName ?? i.playerId;
+        const dex = player?.profile?.attributes?.DEX ?? 50;
         if (i.inputType === "skip" || !i.content?.trim()) {
-          return `${name}: [skipped this round]`;
+          return `${name} (DEX: ${dex}): [skipped this round]`;
         }
-        return `${name}: ${i.content}`;
+        return `${name} (DEX: ${dex}): ${i.content}`;
       })
       .join("\n");
 
     try {
-      // Use the narrative from CombatActionA if available
+      // Use the narrative from prior combat keeper if available
       const prevNarrative =
         (sceneRoom.temporaryInfo.contextualData?.combatNarrative as string) ?? "";
       // Pass combatAResult from contextualData
       const combatAResult =
         (m.getContextualData(state.sceneRoomId, "combatActionAResult") as import("../multiplayerAgent/combat/combatActionAgentA.js").CombatActionAResult) ?? null;
-      await combatAgentB.generateNpcActions(
+      const result = await combatAgentB.generateNpcActions(
         m,
         state.sceneRoomId,
         combinedCombatInput,
@@ -807,6 +931,26 @@ export const buildMultiplayerGraph = (
         language,
         combatAResult
       );
+
+      if (result) {
+        // Store pending NPC actions — players must defend against these next turn
+        m.setPendingNpcActions(
+          state.sceneRoomId,
+          result.pendingNpcActions?.length ? result.pendingNpcActions : null
+        );
+        // Store NPC attack narrative for keeper context
+        if (result.narrative) {
+          m.setContextualData(state.sceneRoomId, "combatNpcAttackNarrative", result.narrative);
+        }
+        // Record defeated NPCs
+        if (result.defeatedNpcs?.length > 0) {
+          m.recordDefeatedNpcsFromList(state.sceneRoomId, result.defeatedNpcs);
+        }
+        // Mark combat ended if agent B decides so
+        if (result.combatEnded) {
+          m.setContextualData(state.sceneRoomId, "combatEnded", true);
+        }
+      }
     } catch (e) {
       console.error("[MP CombatActionB] failed:", e);
     }
@@ -814,6 +958,7 @@ export const buildMultiplayerGraph = (
     return { ...state, dynamicGameState: m.getState() };
   });
 
+  // combatActionB → battleKeeper always (generates round narrative regardless)
   graph.addEdge("combatActionB" as any, "battleKeeper" as any);
 
   graph.addNode("battleKeeper", async (state: MultiplayerGraphState) => {
@@ -825,39 +970,93 @@ export const buildMultiplayerGraph = (
     const language =
       state.language === "en" || state.language === "zh" ? state.language : "zh";
 
-    const combinedCombatInput = state.roundInputs
+    // Sort inputs by DEX (descending) for initiative order
+    const sortedInputsBK = [...state.roundInputs].sort((a, b) => {
+      const dexA = m.getState().players[a.playerId]?.profile?.attributes?.DEX ?? 50;
+      const dexB = m.getState().players[b.playerId]?.profile?.attributes?.DEX ?? 50;
+      return dexB - dexA;
+    });
+
+    const combinedCombatInput = sortedInputsBK
       .map((i) => {
         const player = m.getState().players[i.playerId];
         const name = player?.characterName ?? i.playerId;
+        const dex = player?.profile?.attributes?.DEX ?? 50;
         if (i.inputType === "skip" || !i.content?.trim()) {
-          return `${name}: [skipped this round]`;
+          return `${name} (DEX: ${dex}): [skipped this round]`;
         }
-        return `${name}: ${i.content}`;
+        return `${name} (DEX: ${dex}): ${i.content}`;
       })
       .join("\n");
 
     try {
-      const actionResults = sceneRoom.temporaryInfo.actionResults;
-      const narrative = await battleKeeper.generateEntryNarrative(
-        m,
-        state.sceneRoomId,
-        actionResults,
-        combinedCombatInput,
-        language,
-        state.stream?.onNarrativeDelta
-      );
+      const combatRound = sceneRoom.combatState?.round ?? 1;
+      const combatEnded = m.getContextualData(state.sceneRoomId, "combatEnded") === true;
+      const combatAResult =
+        (m.getContextualData(state.sceneRoomId, "combatActionAResult") as import("../multiplayerAgent/combat/combatActionAgentA.js").CombatActionAResult) ?? null;
+      let narrative: string | null = null;
+
+      if (combatEnded) {
+        // Combat has ended — generate victory/conclusion narrative
+        narrative = await battleKeeper.generateCombatNarrative(
+          m,
+          state.sceneRoomId,
+          combatAResult,
+          combinedCombatInput,
+          language,
+          state.stream?.onNarrativeDelta
+        );
+      } else if (combatRound <= 1) {
+        // First round — use entry narrative (takes actionResults from the action that started combat)
+        const actionResults = sceneRoom.temporaryInfo.actionResults;
+        narrative = await battleKeeper.generateEntryNarrative(
+          m,
+          state.sceneRoomId,
+          actionResults,
+          combinedCombatInput,
+          language,
+          state.stream?.onNarrativeDelta
+        );
+      } else {
+        // Ongoing combat — use combat narrative with Agent A result
+        narrative = await battleKeeper.generateCombatNarrative(
+          m,
+          state.sceneRoomId,
+          combatAResult,
+          combinedCombatInput,
+          language,
+          state.stream?.onNarrativeDelta
+        );
+      }
+
+      // Append NPC attack narrative from Agent B (if not combat-ended)
+      const npcAttackNarrative =
+        (m.getContextualData(state.sceneRoomId, "combatNpcAttackNarrative") as string) ?? "";
+      const fullNarrative = [narrative, npcAttackNarrative]
+        .filter(Boolean)
+        .join("\n\n");
+
       // Store narrative in contextualData
       const scr = m.getSceneRoom(state.sceneRoomId);
-      if (scr && narrative) {
+      if (scr && fullNarrative) {
         m.updateSceneRoom(state.sceneRoomId, {
           temporaryInfo: {
             ...scr.temporaryInfo,
             contextualData: {
               ...scr.temporaryInfo.contextualData,
-              keeperNarrative: narrative,
+              keeperNarrative: fullNarrative,
             },
           },
         });
+      }
+
+      // Combat exit: if combat ended, clean up combat state
+      if (combatEnded) {
+        console.log("🏁 [MP BattleKeeper] Combat ended — exiting combat");
+        state.stream?.onCombatEnd?.();
+        m.exitCombat(state.sceneRoomId);
+        // Mark that combat path is complete so gameEndCheck routes to END, not keeper
+        m.setContextualData(state.sceneRoomId, "combatPathCompleted", true);
       }
     } catch (e) {
       console.error("[MP BattleKeeper] failed:", e);

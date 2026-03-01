@@ -263,6 +263,9 @@ export class ActionAgent {
     // Store time group result for keeper context
     manager.setContextualData(sceneRoomId, "timeGroupResult", { timeGroups });
 
+    // Consume due heartbeat actions ONCE per room (before per-player loop)
+    this.consumeDueHeartbeatActionsFromContext(manager, sceneRoomId, roundInputsInjected[0]?.playerId ?? "");
+
     // 4. FAST GROUP (group 1): apply full results with state mutations
     for (const input of roundInputsInjected) {
       if (!fastPlayerIds.has(input.playerId)) continue;
@@ -400,9 +403,19 @@ export class ActionAgent {
     // 8. Advance game time (per-room)
     if (roundElapsed > 0) {
       manager.advanceSceneRoomGameTime(sceneRoomId, roundElapsed);
+
+      // Fix stale gameTime: update all ActionResults with the post-advance time
+      const postAdvanceRoom = manager.getSceneRoom(sceneRoomId);
+      if (postAdvanceRoom) {
+        const postAdvanceTime = postAdvanceRoom.timeOfDay ?? manager.getState().timeOfDay;
+        const actionResults = postAdvanceRoom.temporaryInfo.actionResults ?? [];
+        for (const ar of actionResults) {
+          ar.gameTime = postAdvanceTime;
+        }
+      }
     }
 
-    // 8. Apply per-player fatigue for fast group only
+    // 8b. Apply per-player fatigue for fast group only
     for (const playerId of fastPlayerIds) {
       const minutes = staged.fatigueMinutesByPlayer[playerId];
       if (minutes && minutes > 0) {
@@ -454,6 +467,10 @@ export class ActionAgent {
     roundTurnId: string | null
   ): Promise<void> {
     const state = manager.getState();
+
+    // Consume due heartbeat actions ONCE per room (before per-player loop)
+    this.consumeDueHeartbeatActionsFromContext(manager, sceneRoomId, roundInputsInjected[0]?.playerId ?? "");
+
     for (const input of roundInputsInjected) {
       const pa = playerAnalyses[input.playerId];
       if (!pa?.actionAnalysis) continue;
@@ -2172,9 +2189,8 @@ export class ActionAgent {
       manager.applyPlayerActionUpdate(sceneRoomId, playerId, parsed.stateUpdate);
     }
 
-    // Once due heartbeat actions are injected for this turn and action agent runs,
-    // treat them as consumed and remove from persistent state.
-    this.consumeDueHeartbeatActionsFromContext(manager, sceneRoomId, playerId);
+    // Heartbeat consumption is now done once per room before the per-player loop
+    // (see processSceneRoomRound), not per-player here.
 
     const heartbeatActionsRaw = this.parseHeartbeatActionsFromModel(
       parsed.heartbeatActions,

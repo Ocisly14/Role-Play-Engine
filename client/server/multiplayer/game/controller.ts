@@ -46,6 +46,21 @@ export async function getGameState(req: Request, res: Response): Promise<void> {
     }
 
     const s = manager.getState();
+
+    // Verify requesting user is a room member
+    const userId = req.user!.userId;
+    if (!s.players[userId]) {
+      const prisma = getPrismaClient();
+      const membership = await prisma.multiplayerRoomMember.findUnique({
+        where: { roomId_userId: { roomId, userId } },
+        select: { userId: true },
+      });
+      if (!membership) {
+        res.status(403).json({ success: false, error: "Not a member of this room" });
+        return;
+      }
+    }
+
     res.json({
       success: true,
       sessionId: s.sessionId,
@@ -114,6 +129,311 @@ export async function getPlayerState(req: Request, res: Response): Promise<void>
     res.json({ success: true, gameState });
   } catch (error) {
     console.error("[MultiplayerGame] getPlayerState error:", error);
+    res.status(500).json({ success: false, error: (error as Error).message });
+  }
+}
+
+/**
+ * POST /api/multiplayer/rooms/:roomId/game/update-language
+ * Updates the session language preference for the room.
+ */
+export async function updateLanguage(req: Request, res: Response): Promise<void> {
+  try {
+    const { roomId } = req.params;
+    const { language } = req.body ?? {};
+
+    if (language !== "en" && language !== "zh") {
+      res.status(400).json({ success: false, error: "language must be 'en' or 'zh'" });
+      return;
+    }
+
+    const manager = multiplayerSessionStore.get(roomId);
+    if (!manager) {
+      res.status(404).json({ success: false, error: "Game not initialised for this room" });
+      return;
+    }
+
+    // Update session metadata in DB
+    const prisma = getPrismaClient();
+    const sessionId = manager.getState().sessionId;
+    if (sessionId) {
+      const session = await prisma.session.findUnique({
+        where: { sessionId },
+        select: { metadata: true },
+      });
+      const existing = session?.metadata
+        ? typeof session.metadata === "string"
+          ? JSON.parse(session.metadata)
+          : (session.metadata as Record<string, unknown>)
+        : {};
+      await prisma.session.update({
+        where: { sessionId },
+        data: { metadata: JSON.stringify({ ...existing, language }) },
+      });
+    }
+
+    res.json({ success: true, language });
+  } catch (error) {
+    console.error("[MultiplayerGame] updateLanguage error:", error);
+    res.status(500).json({ success: false, error: (error as Error).message });
+  }
+}
+
+/**
+ * POST /api/multiplayer/rooms/:roomId/game/stop
+ * Host-only. Stops/abandons the current game, marks room as ended.
+ */
+export async function stopGame(req: Request, res: Response): Promise<void> {
+  try {
+    const userId = req.user!.userId;
+    const { roomId } = req.params;
+
+    const prisma = getPrismaClient();
+    const room = await prisma.multiplayerRoom.findUnique({
+      where: { roomId },
+      select: { hostUserId: true, status: true },
+    });
+
+    if (!room) {
+      res.status(404).json({ success: false, error: "Room not found" });
+      return;
+    }
+
+    if (room.hostUserId !== userId) {
+      res.status(403).json({ success: false, error: "Only the host can stop the game" });
+      return;
+    }
+
+    if (room.status !== "playing") {
+      res.status(400).json({ success: false, error: "Game is not currently playing" });
+      return;
+    }
+
+    // Update room status in DB
+    await prisma.multiplayerRoom.update({
+      where: { roomId },
+      data: { status: "ended" },
+    });
+
+    // Clear in-memory session
+    multiplayerSessionStore.delete(roomId);
+
+    // Broadcast game_stopped to all scene rooms
+    const { WebSocketManager } = await import("../../websocket/WebSocketManager.js");
+    const { notifySceneRoom } = await import("../../websocket/notifier.js");
+    const wsManager = WebSocketManager.getInstance();
+    if (wsManager) {
+      // Get all scene rooms for this room
+      const sceneRooms = await prisma.multiplayerSceneRoom.findMany({
+        where: { roomId, status: "active" },
+        select: { sceneRoomId: true },
+      });
+      for (const sr of sceneRooms) {
+        const clients = wsManager.getMultiplayerClients(sr.sceneRoomId);
+        notifySceneRoom(sr.sceneRoomId, clients, {
+          type: "game_stopped",
+          roomId,
+          stoppedBy: userId,
+          timestamp: new Date().toISOString(),
+        });
+      }
+    }
+
+    // Mark all active scene rooms as ended
+    await prisma.multiplayerSceneRoom.updateMany({
+      where: { roomId, status: "active" },
+      data: { status: "ended" },
+    });
+
+    res.json({ success: true, message: "Game stopped" });
+  } catch (error) {
+    console.error("[MultiplayerGame] stopGame error:", error);
+    res.status(500).json({ success: false, error: (error as Error).message });
+  }
+}
+
+/**
+ * POST /api/multiplayer/rooms/:roomId/game/skills/suggest
+ * Suggests relevant skills based on player input.
+ */
+export async function suggestSkills(req: Request, res: Response): Promise<void> {
+  try {
+    const userId = req.user!.userId;
+    const { roomId } = req.params;
+    const { input, max, language: rawLanguage } = req.body ?? {};
+
+    if (!input || typeof input !== "string" || !input.trim()) {
+      res.status(400).json({ success: false, error: "input is required" });
+      return;
+    }
+
+    const manager = multiplayerSessionStore.get(roomId);
+    if (!manager) {
+      res.status(404).json({ success: false, error: "Game not initialised for this room" });
+      return;
+    }
+
+    const player = manager.getState().players[userId];
+    if (!player) {
+      res.status(404).json({ success: false, error: "Player not found in game state" });
+      return;
+    }
+
+    const maxSuggestions =
+      typeof max === "number" && Number.isFinite(max) ? max : undefined;
+    const language = rawLanguage === "en" || rawLanguage === "zh" ? rawLanguage : "zh";
+
+    const rawSkills = player.profile?.skills ?? {};
+    const skills = Object.entries(rawSkills)
+      .map(([name, raw]) => {
+        if (typeof raw === "number") return { name, value: raw };
+        if (raw && typeof raw === "object" && "value" in raw && typeof (raw as { value: unknown }).value === "number") {
+          return { name, value: (raw as { value: number }).value };
+        }
+        return null;
+      })
+      .filter((entry): entry is { name: string; value: number } => Boolean(entry));
+
+    if (skills.length === 0) {
+      res.json({ success: true, suggestions: [] });
+      return;
+    }
+
+    const { suggestSkillsFromInput } = await import("../../skills/skillMatcher.js");
+    const { getSkillNameZh } = await import("../../skills/skillDescriptions.js");
+
+    const result = await suggestSkillsFromInput({
+      input: input.trim(),
+      skills,
+      max: maxSuggestions,
+      language,
+    });
+
+    res.json({
+      success: true,
+      language: result.language,
+      suggestions: result.suggestions.map((item) => ({
+        ...item,
+        displayName: result.language === "zh" ? getSkillNameZh(item.name) : item.name,
+      })),
+    });
+  } catch (error) {
+    console.error("[MultiplayerGame] suggestSkills error:", error);
+    res.status(500).json({ success: false, error: (error as Error).message });
+  }
+}
+
+/**
+ * POST /api/multiplayer/rooms/:roomId/game/rag/ask
+ * Ask a question against session RAG memory (multiplayer context).
+ */
+export async function askRag(req: Request, res: Response): Promise<void> {
+  try {
+    const userId = req.user!.userId;
+    const { roomId } = req.params;
+    const { question, sceneRoomId, topK: rawTopK, language: rawLanguage } = req.body ?? {};
+
+    if (!question || typeof question !== "string" || !question.trim()) {
+      res.status(400).json({ success: false, error: "question is required" });
+      return;
+    }
+
+    const manager = multiplayerSessionStore.get(roomId);
+    if (!manager) {
+      res.status(404).json({ success: false, error: "Game not initialised for this room" });
+      return;
+    }
+
+    const state = manager.getState();
+    const player = state.players[userId];
+    if (!player) {
+      res.status(404).json({ success: false, error: "Player not found in game state" });
+      return;
+    }
+
+    const topK =
+      typeof rawTopK === "number" && Number.isFinite(rawTopK)
+        ? Math.max(1, Math.min(20, Math.floor(rawTopK)))
+        : 8;
+    const language = rawLanguage === "en" ? "en" : "zh";
+    const normalizedSceneRoomId =
+      typeof sceneRoomId === "string" && sceneRoomId.trim().length > 0
+        ? sceneRoomId.trim()
+        : player.currentSceneRoomId || null;
+
+    const sceneRoom = normalizedSceneRoomId
+      ? state.sceneRooms[normalizedSceneRoomId]
+      : null;
+    const sceneName = sceneRoom?.currentScenario?.name || null;
+    const sceneLocation = sceneRoom?.currentScenario?.location || null;
+    const playerName = player.characterName || null;
+    const npcNames = Array.from(
+      new Set(
+        (state.npcCharacters || [])
+          .map((npc: any) => npc?.name)
+          .filter((name: unknown): name is string => typeof name === "string" && (name as string).trim().length > 0)
+      )
+    ).slice(0, 30);
+    const allScenes = (state.scenarioOutlines || [])
+      .filter((s: any) => s?.name && s?.description)
+      .map((s: any) => ({ name: s.name, description: s.description }))
+      .slice(0, 50);
+
+    // Fetch last 5 turns for recent context
+    let recentTurns: Array<{ turnNumber: number; playerInput: string; keeperNarrative: string }> = [];
+    try {
+      const prisma2 = getPrismaClient();
+      const rows = await prisma2.gameTurn.findMany({
+        where: {
+          sessionId: state.sessionId,
+          status: "completed",
+          ...(normalizedSceneRoomId ? { sceneRoomId: normalizedSceneRoomId } : {}),
+        },
+        orderBy: { turnNumber: "desc" },
+        take: 5,
+        select: { turnNumber: true, characterInput: true, keeperNarrative: true },
+      });
+      recentTurns = rows
+        .reverse()
+        .filter((r) => r.characterInput && r.keeperNarrative)
+        .map((r) => ({
+          turnNumber: r.turnNumber,
+          playerInput: r.characterInput!,
+          keeperNarrative: r.keeperNarrative!,
+        }));
+    } catch (err) {
+      console.warn("[MP RAG] Failed to fetch recent turns:", err);
+    }
+
+    const { SessionRagQaService } = await import(
+      "../../../../src/dynamicworldagent/dynamicBasicAgent/knowledge/sessionRagQaService.js"
+    );
+    const qaService = new SessionRagQaService();
+
+    const result = await qaService.ask({
+      sessionId: state.sessionId,
+      question: question.trim(),
+      topK,
+      language,
+      sceneRoomId: normalizedSceneRoomId,
+      sceneName,
+      sceneLocation,
+      npcNames: npcNames as string[],
+      playerName,
+      recentTurns,
+      allScenes,
+    });
+
+    res.json({
+      success: true,
+      answer: result.answer,
+      citations: result.citations,
+      retrievedCount: result.retrievedCount,
+      ragQuery: result.ragQuery,
+      rewrite: result.rewrite,
+    });
+  } catch (error) {
+    console.error("[MultiplayerGame] askRag error:", error);
     res.status(500).json({ success: false, error: (error as Error).message });
   }
 }

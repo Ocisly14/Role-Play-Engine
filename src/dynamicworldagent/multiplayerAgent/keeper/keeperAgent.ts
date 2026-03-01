@@ -237,25 +237,44 @@ export class KeeperAgent {
       mergedDetailedResults as Array<Record<string, unknown>>
     );
 
-    // Global gate: true if ANY target has a success
+    // Per-target gating: scenario clues use "scenario" target's success, not ANY target
+    const scenarioAccess = clueAccessMap.targets.get("scenario");
+    const allowRegularPlusForScenario = scenarioAccess
+      ? scenarioAccess.bestSuccessLevel !== "none"
+      : false;
+    // Global gate for NPC clue filtering (any target success unlocks NPC clues)
     const allowRegularPlus = [...clueAccessMap.targets.values()].some(
       (t) => t.bestSuccessLevel !== "none"
     );
 
-    // Scenario info
+    // Scenario info — use scenario-specific access gate
     const currentScenario = sceneRoom.currentScenario;
     const completeScenarioInfo = this.extractCompleteScenarioInfo(
       currentScenario,
       state.scenarioOutlines,
-      allowRegularPlus
+      allowRegularPlusForScenario
     );
 
-    // Action analysis from tempInfo
+    // Action analysis: read per-player analyses from contextualData (set by orchestrator)
+    const playerActionAnalyses = (tempInfo.contextualData?.playerActionAnalyses ?? {}) as
+      Record<string, { playerId: string; actionAnalysis?: { target?: { name?: string; intent?: string } } }>;
+    // Aggregate: collect all unique target names and intents across players
+    const allTargetNames: string[] = [];
+    const allTargetIntents: string[] = [];
+    for (const pa of Object.values(playerActionAnalyses)) {
+      const tName = pa.actionAnalysis?.target?.name?.trim();
+      const tIntent = pa.actionAnalysis?.target?.intent?.trim();
+      if (tName && !allTargetNames.includes(tName)) allTargetNames.push(tName);
+      if (tIntent && !allTargetIntents.includes(tIntent)) allTargetIntents.push(tIntent);
+    }
+    // Fallback to legacy single-player field
     const actionAnalysis = tempInfo.currentActionAnalysis;
-    const actionTargetName = actionAnalysis?.target?.name || null;
-    const actionTargetIntent = actionAnalysis?.target?.intent?.trim()
-      ? actionAnalysis.target.intent.trim()
-      : null;
+    const actionTargetName = allTargetNames.length > 0
+      ? allTargetNames.join(", ")
+      : actionAnalysis?.target?.name || null;
+    const actionTargetIntent = allTargetIntents.length > 0
+      ? allTargetIntents.join("; ")
+      : (actionAnalysis?.target?.intent?.trim() || null);
     const hasActionTargetInfo = Boolean(actionTargetName || actionTargetIntent);
     const interactionPartnerName = actionTargetName;
 
@@ -410,7 +429,7 @@ export class KeeperAgent {
 
     // Structured per-player inputs from contextualData
     const roundInputsRaw = tempInfo.contextualData?.roundInputsForKeeper as
-      | Array<{ playerId: string; inputType: string; content?: string }>
+      | Array<{ playerId: string; inputType: string; content?: string; selectedSkill?: string | null }>
       | undefined;
     const playerInputs = (roundInputsRaw ?? [])
       .filter((i) => !frozenPlayerIds.has(i.playerId))
@@ -496,7 +515,14 @@ export class KeeperAgent {
       previousScenarioJson: previousScenarioInfo
         ? this.safeStringify(previousScenarioInfo)
         : "null",
-      selectedSkill: null,
+      // Extract selectedSkill from roundInputs: collect all non-null skills
+      selectedSkill: (() => {
+        const skills = (roundInputsRaw ?? [])
+          .map((i) => i.selectedSkill)
+          .filter((s): s is string => typeof s === "string" && s.trim().length > 0);
+        if (skills.length === 0) return null;
+        return skills.length === 1 ? skills[0] : skills.join(", ");
+      })(),
       // Time-grouping context for multiplayer
       ...((): Record<string, unknown> => {
         const tgInfo = tempInfo.contextualData?.timeGroupingInfo as {

@@ -18,6 +18,19 @@ export interface MultiplayerWSMessage {
   [key: string]: any;
 }
 
+export interface SkillSelectionRequiredData {
+  roundTurnId: string;
+  sceneRoomId: string;
+  players: Record<string, { requiredBy: string }>;
+}
+
+export interface SkillSelectionUpdateData {
+  sceneRoomId: string;
+  playerId: string;
+  selectedSkill: string;
+  allResolved: boolean;
+}
+
 export interface UseMultiplayerWebSocketParams {
   sessionId: string | null;
   sceneRoomId: string | null;
@@ -36,6 +49,8 @@ export interface UseMultiplayerWebSocketParams {
   >;
   setShowingDiceAnimation: React.Dispatch<React.SetStateAction<boolean>>;
   setDiceAnimationCompleted: React.Dispatch<React.SetStateAction<boolean>>;
+  onSkillSelectionRequired?: (data: SkillSelectionRequiredData) => void;
+  onSkillSelectionUpdate?: (data: SkillSelectionUpdateData) => void;
 }
 
 export function useMultiplayerWebSocket({
@@ -54,12 +69,18 @@ export function useMultiplayerWebSocket({
   setPendingDiceRolls,
   setShowingDiceAnimation,
   setDiceAnimationCompleted,
+  onSkillSelectionRequired,
+  onSkillSelectionUpdate,
 }: UseMultiplayerWebSocketParams): void {
   const wsRef = useRef<WebSocket | null>(null);
   const reconnectTimeoutRef = useRef<number | null>(null);
   const shouldReconnectRef = useRef(true);
   const onNarrativeCompleteRef = useRef(onNarrativeComplete);
   onNarrativeCompleteRef.current = onNarrativeComplete;
+  const onSkillSelectionRequiredRef = useRef(onSkillSelectionRequired);
+  onSkillSelectionRequiredRef.current = onSkillSelectionRequired;
+  const onSkillSelectionUpdateRef = useRef(onSkillSelectionUpdate);
+  onSkillSelectionUpdateRef.current = onSkillSelectionUpdate;
 
   useEffect(() => {
     if (!sessionId || !sceneRoomId || isGameEnded) return;
@@ -335,6 +356,16 @@ export function useMultiplayerWebSocket({
                 });
                 break;
               }
+
+              case "skill_selection_required":
+                console.log("[MP WebSocket] Skill selection required:", msg);
+                onSkillSelectionRequiredRef.current?.(msg as any);
+                break;
+
+              case "skill_selection_update":
+                console.log("[MP WebSocket] Skill selection update:", msg);
+                onSkillSelectionUpdateRef.current?.(msg as any);
+                break;
 
               case "pong":
                 break;

@@ -4,6 +4,7 @@ import * as roomController from "./room/controller.js";
 import * as gameController from "./game/controller.js";
 import * as turnController from "./turn/controller.js";
 import * as checkpointController from "./checkpoint/controller.js";
+import * as memoController from "../memos/controller.js";
 
 const router = Router();
 router.use(authenticate);
@@ -23,11 +24,16 @@ router.post("/rooms/:roomId/start", roomController.startGame);
 router.post("/rooms/:roomId/game/init", gameController.initGame);
 router.get("/rooms/:roomId/game/state", gameController.getGameState);
 router.get("/rooms/:roomId/gamestate", gameController.getPlayerState);
+router.post("/rooms/:roomId/game/update-language", gameController.updateLanguage);
 
 // Turn input collection (Phase 3)
 router.post("/rooms/:roomId/scene-rooms/:sceneRoomId/input", turnController.submitInput);
 router.get("/rooms/:roomId/scene-rooms/:sceneRoomId/round", turnController.getRound);
 router.get("/rooms/:roomId/scene-rooms/:sceneRoomId/turns", turnController.getTurnHistory);
+router.get("/rooms/:roomId/scene-rooms/:sceneRoomId/turns/:turnId/status", turnController.getTurnStatus);
+
+// Skill selection (two-phase commit)
+router.post("/rooms/:roomId/scene-rooms/:sceneRoomId/skill-selection", turnController.submitSkillSelection);
 
 // Checkpoint — cross-room listing (must precede :roomId routes)
 router.get("/checkpoints/mine", checkpointController.listMyCheckpoints);
@@ -37,5 +43,20 @@ router.post("/rooms/:roomId/checkpoints/save", checkpointController.saveCheckpoi
 router.get("/rooms/:roomId/checkpoints", checkpointController.listCheckpoints);
 router.post("/rooms/:roomId/checkpoints/load", checkpointController.loadCheckpoint);
 router.delete("/rooms/:roomId/checkpoints/:checkpointId", checkpointController.deleteCheckpoint);
+
+// Game stop/abandon (host-only)
+router.post("/rooms/:roomId/game/stop", gameController.stopGame);
+
+// Skill suggestion
+router.post("/rooms/:roomId/game/skills/suggest", gameController.suggestSkills);
+
+// Player memos (reuses existing memo CRUD — clients pass sessionId in query/body)
+router.get("/rooms/:roomId/memos", memoController.listMemos);
+router.post("/rooms/:roomId/memos", memoController.createMemo);
+router.put("/rooms/:roomId/memos/:memoId", memoController.updateMemo);
+router.delete("/rooms/:roomId/memos/:memoId", memoController.deleteMemo);
+
+// RAG Q&A
+router.post("/rooms/:roomId/game/rag/ask", gameController.askRag);
 
 export { router as multiplayerRoutes };

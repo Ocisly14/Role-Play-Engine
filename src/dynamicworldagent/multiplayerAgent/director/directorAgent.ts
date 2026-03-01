@@ -124,6 +124,8 @@ export class DirectorAgent {
   /**
    * Handle scene change request initiated by Action Agent
    * Use map data and LLM to validate and select target scene
+   * @deprecated Use handleUnifiedSceneChanges instead. Retained because internal helpers
+   * (updateScenariosForSceneSwitch) are shared with the replacement method.
    */
   async handleActionDrivenSceneChange(
     manager: MultiplayerDynamicGameStateManager,
@@ -1243,9 +1245,12 @@ export class DirectorAgent {
     console.log(`   📋 Phase 3: Generating simplified background snapshots for ${scenesToUpdate.length} scenes...`);
 
     const runtime = createRuntime();
+    // Parse day/time from the already-corrected currentGameTime (max across rooms)
+    const dayMatch = currentGameTime.match(/Day\s+(\d+)/);
+    const timeMatch = currentGameTime.match(/,\s*(\d{1,2}:\d{2})/);
     const templateContext = {
-      currentGameDay: state.gameDay,
-      currentTimeOfDay: state.timeOfDay,
+      currentGameDay: dayMatch ? parseInt(dayMatch[1], 10) : state.gameDay,
+      currentTimeOfDay: timeMatch ? timeMatch[1] : state.timeOfDay,
       previousSnapshotTime,
       currentGameTime,
       scenesToUpdateJson: JSON.stringify(
@@ -2972,7 +2977,19 @@ export class DirectorAgent {
     );
 
     const state = manager.getState();
-    const currentGameTime = `Day ${state.gameDay}, ${state.timeOfDay}`;
+    // Use MAX game time across all active rooms (not stale global time)
+    const activeRooms = manager.getActiveSceneRooms();
+    let maxGameDay = state.gameDay;
+    let maxTimeOfDay = state.timeOfDay;
+    for (const room of activeRooms) {
+      const roomMin = room.gameDay * 1440 + this.parseTimeToMinutes(room.timeOfDay);
+      const maxMin = maxGameDay * 1440 + this.parseTimeToMinutes(maxTimeOfDay);
+      if (roomMin > maxMin) {
+        maxGameDay = room.gameDay;
+        maxTimeOfDay = room.timeOfDay;
+      }
+    }
+    const currentGameTime = `Day ${maxGameDay}, ${maxTimeOfDay}`;
 
     // Save auto-checkpoint before scenario update
     try {
@@ -3631,6 +3648,30 @@ export class DirectorAgent {
     return timeReached;
   }
 
+  /**
+   * Aggregate action logs from ALL active scene rooms for global trigger checking.
+   */
+  private collectCurrentTurnActionLogsAcrossAllRooms(
+    manager: MultiplayerDynamicGameStateManager
+  ): CurrentTurnActionLogItem[] {
+    const activeRooms = manager.getActiveSceneRooms();
+    const allLogs: CurrentTurnActionLogItem[] = [];
+    const dedupe = new Set<string>();
+
+    for (const room of activeRooms) {
+      const roomState = manager.getSceneRoomState(room.sceneRoomId);
+      const roomLogs = this.collectCurrentTurnActionLogs(roomState);
+      for (const log of roomLogs) {
+        const key = `${log.character}|${log.time}|${log.location}|${log.summary}`;
+        if (!dedupe.has(key)) {
+          dedupe.add(key);
+          allLogs.push(log);
+        }
+      }
+    }
+    return allLogs;
+  }
+
   private collectCurrentTurnActionLogs(
     dynamicState: DynamicGameState
   ): CurrentTurnActionLogItem[] {
@@ -3783,7 +3824,7 @@ export class DirectorAgent {
               globalEvents,
               victoryConditions,
             });
-      const currentTurnActionLogs = this.collectCurrentTurnActionLogs(dynamicState);
+      const currentTurnActionLogs = this.collectCurrentTurnActionLogsAcrossAllRooms(manager);
       manager.setContextualData(sceneRoomId, "triggerCheckEvidence", triggerEvidence);
       manager.setContextualData(
         sceneRoomId,

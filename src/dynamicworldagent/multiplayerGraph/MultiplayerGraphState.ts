@@ -51,5 +51,7 @@ export interface MultiplayerGraphState {
     onNarrativeEnd?: () => void;
     onWorldlineUpdateStart?: () => void;
     onWorldlineUpdateEnd?: () => void;
+    onCombatStart?: () => void;
+    onCombatEnd?: () => void;
   };
 }

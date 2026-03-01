@@ -59,12 +59,20 @@ export async function listMyCheckpoints(
     const moduleName = req.query.moduleName as string | undefined;
     const prisma = getPrismaClient();
 
+    // Build where clause — filter by moduleName via roomId lookup (no relation defined)
+    let roomIdFilter: string[] | undefined;
+    if (moduleName) {
+      const rooms = await prisma.multiplayerRoom.findMany({
+        where: { moduleName },
+        select: { roomId: true },
+      });
+      roomIdFilter = rooms.map((r) => r.roomId);
+    }
+
     const checkpoints = await prisma.multiplayerCheckpoint.findMany({
       where: {
         createdBy: userId,
-        ...(moduleName
-          ? { room: { moduleName } }
-          : {}),
+        ...(roomIdFilter ? { roomId: { in: roomIdFilter } } : {}),
       },
       orderBy: { createdAt: "desc" },
       take: 20,

@@ -188,6 +188,18 @@ export interface MultiplayerSceneRoomState {
   isRestFrozen?: boolean;
   /** ISO timestamp of when rest-freeze started */
   restFrozenAt?: string;
+  /** ISO timestamp of when the last round completed for this room */
+  lastRoundCompletedAt?: string;
+  // ── Pending skill selections (two-phase commit) ──
+  /** Set when orchestrator pre-check finds players needing skill selection */
+  pendingSkillSelections?: {
+    roundTurnId: string;
+    players: Record<string, {
+      requiredBy: string;       // orchestrator reason / suggested skill
+      selectedSkill?: string;   // player's choice (filled in phase 2)
+      resolved: boolean;
+    }>;
+  };
 }
 
 // =============================================
@@ -809,6 +821,55 @@ export class MultiplayerDynamicGameStateManager {
     return eligible;
   }
 
+  // ---------- Pending skill selection operations (two-phase commit) ----------
+
+  /** Set pending skill selections for a sceneRoom after orchestrator pre-check */
+  setPendingSkillSelections(
+    sceneRoomId: string,
+    roundTurnId: string,
+    players: Record<string, { requiredBy: string }>
+  ): void {
+    const room = this.state.sceneRooms[sceneRoomId];
+    if (!room) return;
+    room.pendingSkillSelections = {
+      roundTurnId,
+      players: Object.fromEntries(
+        Object.entries(players).map(([pid, v]) => [
+          pid,
+          { requiredBy: v.requiredBy, resolved: false },
+        ])
+      ),
+    };
+    this.state.lastUpdated = new Date();
+  }
+
+  /** Resolve a single player's skill selection; returns true when ALL players are resolved */
+  resolveSkillSelection(
+    sceneRoomId: string,
+    playerId: string,
+    selectedSkill: string
+  ): boolean {
+    const room = this.state.sceneRooms[sceneRoomId];
+    if (!room?.pendingSkillSelections) return true;
+    const entry = room.pendingSkillSelections.players[playerId];
+    if (entry) {
+      entry.selectedSkill = selectedSkill;
+      entry.resolved = true;
+    }
+    this.state.lastUpdated = new Date();
+    return Object.values(room.pendingSkillSelections.players).every(
+      (p) => p.resolved
+    );
+  }
+
+  /** Clear pending skill selections after all resolved (before graph execution) */
+  clearPendingSkillSelections(sceneRoomId: string): void {
+    const room = this.state.sceneRooms[sceneRoomId];
+    if (!room) return;
+    delete room.pendingSkillSelections;
+    this.state.lastUpdated = new Date();
+  }
+
   // ---------- Time-frozen player operations ----------
 
   /** Mark a player as time-frozen in a sceneRoom, recording their source room time. */
@@ -1085,6 +1146,43 @@ export class MultiplayerDynamicGameStateManager {
     return this.state.sceneRooms[sceneRoomId]?.isBattle ?? false;
   }
 
+  incrementCombatRound(sceneRoomId: string): void {
+    const room = this.state.sceneRooms[sceneRoomId];
+    if (!room?.combatState) return;
+    room.combatState.round += 1;
+    this.state.lastUpdated = new Date();
+  }
+
+  setPendingNpcActions(
+    sceneRoomId: string,
+    actions: PendingNpcAction[] | null
+  ): void {
+    const room = this.state.sceneRooms[sceneRoomId];
+    if (!room?.combatState) return;
+    room.combatState.pendingNpcActions = actions;
+    this.state.lastUpdated = new Date();
+  }
+
+  recordDefeatedNpcsFromList(
+    sceneRoomId: string,
+    defeatedNpcs: Array<{ npcId?: string; npcName?: string; id?: string; name?: string }>
+  ): void {
+    if (!Array.isArray(defeatedNpcs) || defeatedNpcs.length === 0) return;
+    for (const npc of defeatedNpcs) {
+      const name = (npc.npcName ?? npc.name ?? "").trim();
+      if (!name) continue;
+      const existing = this.state.defeatedNpcHistory.find(
+        (e) => e.name.toLowerCase() === name.toLowerCase()
+      );
+      if (existing) {
+        existing.count += 1;
+      } else {
+        this.state.defeatedNpcHistory.push({ name, count: 1 });
+      }
+    }
+    this.state.lastUpdated = new Date();
+  }
+
   /** Aggregated actionLog from all players in a sceneRoom */
   getAggregatedActionLog(sceneRoomId: string): any[] {
     const room = this.state.sceneRooms[sceneRoomId];
@@ -1199,6 +1297,15 @@ export class MultiplayerDynamicGameStateManager {
   getMinutesSinceLastInput(sceneRoomId: string): number {
     const room = this.state.sceneRooms[sceneRoomId];
     if (!room) return 0;
+    // Prefer lastRoundCompletedAt (set when round finishes) over individual player times
+    const completedAt = room.lastRoundCompletedAt;
+    if (completedAt) {
+      const completedMs = new Date(completedAt).getTime();
+      if (!Number.isNaN(completedMs)) {
+        return Math.floor((Date.now() - completedMs) / 60000);
+      }
+    }
+    // Fallback to legacy per-player timestamps
     const times = Object.values(room.lastPlayerInputTimeByPlayer).filter(
       Boolean
     ) as string[];

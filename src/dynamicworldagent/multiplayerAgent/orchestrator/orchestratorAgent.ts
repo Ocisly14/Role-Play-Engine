@@ -16,7 +16,6 @@ import type {
   CoCDatabase,
   CoCDatabaseAdapter,
 } from "../../../shared/agents/memory/database/index.js";
-import { getPrismaClient } from "../../../shared/agents/memory/database/prismaClient.js";
 import type {
   ActionAnalysis,
   ActionType,
@@ -190,40 +189,12 @@ export class MultiplayerOrchestratorAgent {
 
     const currentScenario = sceneRoom.currentScenario;
 
-    // Fetch scenario connections from DB
-    let connections: any[] = [];
-    if (currentScenario?.id) {
-      try {
-        const prisma = getPrismaClient();
-        const snapshotRow = await prisma.scenarioSnapshot.findUnique({
-          where: { snapshotId: currentScenario.id },
-          select: { scenarioId: true },
-        });
-        if (snapshotRow?.scenarioId) {
-          const scenarioRow = await prisma.scenario.findFirst({
-            where: { scenarioId: snapshotRow.scenarioId },
-            select: { connections: true },
-          });
-          if (scenarioRow?.connections) {
-            connections = (scenarioRow.connections as any[]).map(
-              (c: Record<string, unknown>) => ({
-                scenarioName:
-                  typeof c.scenarioName === "string" ? c.scenarioName : String(c.scenarioId ?? ""),
-                relationshipType:
-                  typeof c.relationshipType === "string" ? c.relationshipType : "connection",
-                description:
-                  typeof c.description === "string" ? c.description : undefined,
-                blocked: Boolean(c.blocked),
-                blockReason:
-                  typeof c.blockReason === "string" ? c.blockReason : undefined,
-              })
-            );
-          }
-        }
-      } catch (e) {
-        console.warn("[MultiplayerOrchestrator] Failed to load connections:", e);
-      }
-    }
+    // Read connections from in-memory state instead of Prisma
+    const scenarioOutlines = manager.getState().scenarioOutlines ?? [];
+    const currentScenarioOutline = scenarioOutlines.find(
+      (o) => o.name === sceneRoom?.currentScenario?.name
+    );
+    const connections = currentScenarioOutline?.connections ?? [];
 
     // Compute ancestor chain once: [currentId, ...parentIds, ...grandparentIds]
     const ancestorIds = getAncestorSceneRoomIds(manager, sceneRoomId);

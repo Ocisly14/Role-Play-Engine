@@ -393,9 +393,9 @@ export class CombatActionAgentA {
       }
     }
 
-    // Advance game time
+    // Advance per-room game time (not global)
     if (result.timeElapsedMinutes > 0) {
-      manager.advanceGameTime(result.timeElapsedMinutes);
+      manager.advanceSceneRoomGameTime(sceneRoomId, result.timeElapsedMinutes);
     }
   }
 }

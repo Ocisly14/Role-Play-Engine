@@ -28,6 +28,7 @@ import { ScenarioLoader } from "../../../../src/shared/agents/memory/scenarioloa
 import { DirectorAgent } from "../../../../src/dynamicworldagent/multiplayerAgent/director/directorAgent.js";
 import { WebSocketManager } from "../../websocket/WebSocketManager.js";
 import { notifySceneRoom } from "../../websocket/notifier.js";
+import { MultiplayerOrchestratorAgent } from "../../../../src/dynamicworldagent/multiplayerAgent/orchestrator/orchestratorAgent.js";
 
 // =============================================
 // RoomProcessingQueue — serializes per-room graph execution
@@ -36,11 +37,15 @@ import { notifySceneRoom } from "../../websocket/notifier.js";
 class RoomProcessingQueue {
   private chains = new Map<string, Promise<void>>();
   private pendingCount = new Map<string, number>();
+  private drainCallbacks = new Map<string, (() => Promise<void>) | null>();
 
   /**
    * Enqueue a task for a given roomId.  Tasks for the same roomId run
    * sequentially (chained).  The returned promise resolves/rejects when
    * the task itself completes.
+   *
+   * When the last task for a roomId completes and a drain callback is set,
+   * the drain callback is invoked atomically after the count reaches 0.
    */
   enqueue(roomId: string, task: () => Promise<void>): Promise<void> {
     this.pendingCount.set(roomId, (this.pendingCount.get(roomId) ?? 0) + 1);
@@ -51,10 +56,20 @@ class RoomProcessingQueue {
       try {
         await task();
       } finally {
-        this.pendingCount.set(
-          roomId,
-          (this.pendingCount.get(roomId) ?? 1) - 1
-        );
+        const newCount = (this.pendingCount.get(roomId) ?? 1) - 1;
+        this.pendingCount.set(roomId, newCount);
+        // Run drain callback atomically when count reaches 0
+        if (newCount === 0) {
+          const cb = this.drainCallbacks.get(roomId);
+          this.drainCallbacks.delete(roomId);
+          if (cb) {
+            try {
+              await cb();
+            } catch (e) {
+              console.error(`[RoomProcessingQueue] Drain callback error for ${roomId}:`, e);
+            }
+          }
+        }
       }
     });
 
@@ -67,6 +82,14 @@ class RoomProcessingQueue {
   /** Number of tasks still pending (queued + running) for the given roomId. */
   getPendingCount(roomId: string): number {
     return this.pendingCount.get(roomId) ?? 0;
+  }
+
+  /**
+   * Set a callback to run once after ALL currently pending tasks for roomId complete.
+   * Replaces any previously set drain callback.
+   */
+  setDrainCallback(roomId: string, cb: () => Promise<void>): void {
+    this.drainCallbacks.set(roomId, cb);
   }
 }
 
@@ -151,6 +174,14 @@ export async function submitRoundInput(
     );
   }
 
+  // Reject input when skill selection is pending
+  if (sceneRoom.pendingSkillSelections) {
+    throw new Error(
+      "SKILL_SELECTION_PENDING: Skill selection is in progress. " +
+      "Please complete your skill selection before submitting new input."
+    );
+  }
+
   // Reject input from players who are time-frozen (waiting for room time to catch up)
   if (manager.isPlayerTimeFrozen(sceneRoomId, userId)) {
     const frozenTime = sceneRoom.timeFrozenPlayers?.[userId];
@@ -163,6 +194,16 @@ export async function submitRoundInput(
   // Check game ending
   if (manager.getState().gameEnding?.isEnded) {
     throw new Error("The game has already ended");
+  }
+
+  // ---- Basic input validation ----
+  if (inputData.inputType === "input") {
+    if (!inputData.content || !inputData.content.trim()) {
+      throw new Error("VALIDATION: Input content cannot be empty");
+    }
+    if (inputData.content.length > 2000) {
+      throw new Error("VALIDATION: Input content exceeds 2000 character limit");
+    }
   }
 
   // Check time drift — block input for rooms that are too far ahead
@@ -188,6 +229,15 @@ export async function submitRoundInput(
 
   // 1. Add to in-memory manager (idempotent — replaces prior input from same player)
   manager.addRoundInput(input);
+
+  // Store language preference from the first player's submission for this round
+  // (subsequent players' submissions won't overwrite it, ensuring consistency)
+  if (inputData.language) {
+    const existingLang = sceneRoom.temporaryInfo?.contextualData?.roundLanguage;
+    if (!existingLang) {
+      manager.setContextualData(sceneRoomId, "roundLanguage", inputData.language);
+    }
+  }
 
   // 2. Persist to DB
   const prisma = getPrismaClient();
@@ -235,31 +285,124 @@ export async function submitRoundInput(
   const allSubmitted = manager.allPlayersSubmittedForSceneRoom(sceneRoomId);
 
   if (allSubmitted) {
-    const language = inputData.language ?? "zh";
+    // Use language stored from first player's submission (consistent for the room)
+    const storedLang = sceneRoom.temporaryInfo?.contextualData?.roundLanguage as string | undefined;
+    const language: "en" | "zh" =
+      storedLang === "en" || storedLang === "zh" ? storedLang : (inputData.language ?? "zh");
     const roundTurnId = randomUUID();
 
+    // Set drain callback: runs unified scene processing ONCE after ALL
+    // queued graph tasks for this roomId complete (count reaches 0).
+    roomProcessingQueue.setDrainCallback(roomId, async () => {
+      const latestManager = multiplayerSessionStore.get(roomId);
+      if (latestManager) {
+        await processUnifiedSceneChanges(roomId, latestManager, db);
+      }
+    });
+
     // Enqueue graph execution — tasks for the same roomId run sequentially,
-    // preventing concurrent state mutations.  The last task in the queue
-    // runs unified scene processing after all rooms have completed.
+    // preventing concurrent state mutations.
+    // Two-phase commit: run orchestrator pre-check first to detect skill selection needs.
     roomProcessingQueue
       .enqueue(roomId, async () => {
+        const currentManager = multiplayerSessionStore.get(roomId);
+        if (!currentManager) throw new Error(`Manager for room ${roomId} not found`);
+        const currentRoundInputs = [...roundInputs];
+
+        // --- Orchestrator pre-check for skill selection ---
+        const effectiveInputs = currentRoundInputs.filter(
+          (i) => i.inputType === "input" && Boolean(i.content?.trim()) && !i.selectedSkill
+        );
+
+        if (effectiveInputs.length > 0) {
+          try {
+            const orchestratorAgent = new MultiplayerOrchestratorAgent();
+            const orchestratorResult = await orchestratorAgent.processRound(
+              currentRoundInputs,
+              currentManager,
+              sceneRoomId,
+              db,
+              language
+            );
+
+            // Check which players need skill selection
+            const playersNeedingSkill: Record<string, { requiredBy: string }> = {};
+            for (const pa of orchestratorResult.playerAnalyses) {
+              if (
+                pa.actionAnalysis.requiresSkillSelection &&
+                !currentRoundInputs.find((i) => i.playerId === pa.playerId)?.selectedSkill
+              ) {
+                playersNeedingSkill[pa.playerId] = {
+                  requiredBy: pa.actionAnalysis.action || "action requires skill",
+                };
+              }
+            }
+
+            if (Object.keys(playersNeedingSkill).length > 0) {
+              console.log(
+                `[MP Turn] Skill selection required for ${Object.keys(playersNeedingSkill).join(", ")} in sceneRoom ${sceneRoomId}`
+              );
+
+              // Cache orchestrator results in contextualData (will be reused by graph orchestrator node)
+              const sr = currentManager.getSceneRoom(sceneRoomId);
+              if (sr) {
+                currentManager.updateSceneRoom(sceneRoomId, {
+                  temporaryInfo: {
+                    ...sr.temporaryInfo,
+                    contextualData: {
+                      ...sr.temporaryInfo.contextualData,
+                      cachedOrchestratorResult: orchestratorResult,
+                    },
+                  },
+                });
+              }
+
+              // Set pending skill selections
+              currentManager.setPendingSkillSelections(sceneRoomId, roundTurnId, playersNeedingSkill);
+
+              // Notify frontend via WS
+              const wsManager = WebSocketManager.getInstance();
+              if (wsManager) {
+                const clients = wsManager.getMultiplayerClients(sceneRoomId);
+                notifySceneRoom(sceneRoomId, clients, {
+                  type: "skill_selection_required",
+                  roundTurnId,
+                  sceneRoomId,
+                  players: playersNeedingSkill,
+                });
+              }
+
+              return; // Do NOT trigger graph yet — wait for skill selections
+            } else {
+              // No skill selection needed — cache orchestrator result for graph reuse
+              const sr = currentManager.getSceneRoom(sceneRoomId);
+              if (sr) {
+                currentManager.updateSceneRoom(sceneRoomId, {
+                  temporaryInfo: {
+                    ...sr.temporaryInfo,
+                    contextualData: {
+                      ...sr.temporaryInfo.contextualData,
+                      cachedOrchestratorResult: orchestratorResult,
+                    },
+                  },
+                });
+              }
+            }
+          } catch (err) {
+            console.warn("[MP Turn] Orchestrator pre-check failed, proceeding without skill check:", err);
+            // On failure, proceed normally — orchestrator will run again in the graph
+          }
+        }
+
+        // No skill selection needed — proceed with full graph execution
         await triggerMultiplayerGraphCore(
           db,
           roomId,
           sceneRoomId,
           roundTurnId,
-          [...roundInputs],
+          currentRoundInputs,
           language
         );
-
-        // If this is the last pending task for this roomId, run unified
-        // scene processing which collects movements from ALL rooms.
-        if (roomProcessingQueue.getPendingCount(roomId) <= 1) {
-          const latestManager = multiplayerSessionStore.get(roomId);
-          if (latestManager) {
-            await processUnifiedSceneChanges(roomId, latestManager, db);
-          }
-        }
       })
       .catch((err) => {
         console.error(
@@ -283,6 +426,112 @@ export async function submitRoundInput(
   }
 
   return { status: "waiting", roundNumber, submittedCount, totalCount };
+}
+
+// =============================================
+// resolveSkillSelection — Phase 2: player submits their chosen skill
+// =============================================
+
+export async function resolveSkillSelection(
+  db: CoCDatabase | CoCDatabaseAdapter,
+  roomId: string,
+  sceneRoomId: string,
+  playerId: string,
+  selectedSkill: string
+): Promise<{ allResolved: boolean }> {
+  const manager = multiplayerSessionStore.get(roomId);
+  if (!manager) {
+    throw new Error("Game session not found. Has the game been initialized?");
+  }
+
+  const sceneRoom = manager.getSceneRoom(sceneRoomId);
+  if (!sceneRoom) {
+    throw new Error(`SceneRoom ${sceneRoomId} not found`);
+  }
+
+  if (!sceneRoom.pendingSkillSelections) {
+    throw new Error("No pending skill selections for this scene room");
+  }
+
+  if (!sceneRoom.pendingSkillSelections.players[playerId]) {
+    throw new Error("This player does not have a pending skill selection");
+  }
+
+  const allResolved = manager.resolveSkillSelection(sceneRoomId, playerId, selectedSkill);
+
+  // Broadcast update to room
+  const wsManager = WebSocketManager.getInstance();
+  if (wsManager) {
+    const clients = wsManager.getMultiplayerClients(sceneRoomId);
+    notifySceneRoom(sceneRoomId, clients, {
+      type: "skill_selection_update",
+      sceneRoomId,
+      playerId,
+      selectedSkill,
+      allResolved,
+    });
+  }
+
+  if (allResolved) {
+    const pending = sceneRoom.pendingSkillSelections;
+    const roundTurnId = pending.roundTurnId;
+
+    // Merge selected skills into round inputs
+    const roundInputs = manager.getRoundInputsForSceneRoom(sceneRoomId);
+    for (const input of roundInputs) {
+      const playerPending = pending.players[input.playerId];
+      if (playerPending?.selectedSkill) {
+        input.selectedSkill = playerPending.selectedSkill;
+        input.skillSelectionMode = "manual";
+      }
+    }
+
+    // Clear pending state
+    manager.clearPendingSkillSelections(sceneRoomId);
+
+    // Determine language from contextual data
+    const storedLang = sceneRoom.temporaryInfo?.contextualData?.roundLanguage as string | undefined;
+    const language: "en" | "zh" = storedLang === "en" || storedLang === "zh" ? storedLang : "zh";
+
+    // Set drain callback for unified scene processing
+    roomProcessingQueue.setDrainCallback(roomId, async () => {
+      const latestManager = multiplayerSessionStore.get(roomId);
+      if (latestManager) {
+        await processUnifiedSceneChanges(roomId, latestManager, db);
+      }
+    });
+
+    // Trigger graph with cached orchestrator results
+    roomProcessingQueue
+      .enqueue(roomId, async () => {
+        await triggerMultiplayerGraphCore(
+          db,
+          roomId,
+          sceneRoomId,
+          roundTurnId,
+          [...roundInputs],
+          language
+        );
+      })
+      .catch((err) => {
+        console.error(
+          `[MP Turn] Graph execution failed after skill selection for sceneRoom ${sceneRoomId}:`,
+          err
+        );
+        if (wsManager) {
+          const clients = wsManager.getMultiplayerClients(sceneRoomId);
+          notifySceneRoom(sceneRoomId, clients, {
+            type: "round_error",
+            sceneRoomId,
+            roundTurnId,
+            error: err instanceof Error ? err.message : String(err),
+            timestamp: new Date().toISOString(),
+          });
+        }
+      });
+  }
+
+  return { allResolved };
 }
 
 // =============================================
@@ -400,6 +649,10 @@ async function triggerMultiplayerGraphCore(
     for (const input of preservedInputs) {
       newManager.addRoundInput(input);
     }
+    // Record round completion time for minutesSinceLastInput
+    newManager.updateSceneRoom(sceneRoomId, {
+      lastRoundCompletedAt: new Date().toISOString(),
+    });
     multiplayerSessionStore.set(roomId, newManager);
   }
 
@@ -460,6 +713,33 @@ async function triggerMultiplayerGraphCore(
     }
   }
 
+  // ---- Auto-save checkpoint (fire-and-forget) ----
+  try {
+    const cpManager = multiplayerSessionStore.get(roomId);
+    if (cpManager) {
+      const { serializeMultiplayerCheckpoint, generateMultiplayerCheckpointName } = await import(
+        "../../../../src/dynamicworldagent/multiplayerAgent/memory/checkpoint.js"
+      );
+      const payload = await serializeMultiplayerCheckpoint(cpManager, db);
+      const prisma2 = getPrismaClient();
+      // Delete old auto checkpoints to prevent unbounded growth
+      await prisma2.multiplayerCheckpoint.deleteMany({
+        where: { roomId, name: { startsWith: "[Auto]" } },
+      });
+      await prisma2.multiplayerCheckpoint.create({
+        data: {
+          checkpointId: `auto-${randomUUID()}`,
+          roomId,
+          name: `[Auto] ${generateMultiplayerCheckpointName(cpManager)}`,
+          payload: JSON.stringify(payload),
+          createdBy: "system",
+        },
+      });
+    }
+  } catch (e) {
+    console.warn("[MP Turn] Auto-checkpoint failed:", e);
+  }
+
   // Use per-room time for broadcast
   const broadcastGameDay = updatedSceneRoom?.gameDay ?? result.dynamicGameState?.gameDay;
   const broadcastTimeOfDay = updatedSceneRoom?.timeOfDay ?? result.dynamicGameState?.timeOfDay;
@@ -484,6 +764,78 @@ async function triggerMultiplayerGraphCore(
   console.log(
     `[MP Turn] Round ${roundTurnId} complete for sceneRoom ${sceneRoomId}`
   );
+
+  // ---- Broadcast epilogue to other scene rooms when game ends ----
+  if (result.dynamicGameState?.gameEnding?.isEnded && updatedManager && wsManager) {
+    const allActiveRooms = updatedManager.getActiveSceneRooms();
+    const otherRooms = allActiveRooms.filter((r) => r.sceneRoomId !== sceneRoomId);
+
+    if (otherRooms.length > 0) {
+      console.log(
+        `[MP Turn] Game ended — broadcasting epilogue to ${otherRooms.length} other room(s)`
+      );
+
+      for (const otherRoom of otherRooms) {
+        try {
+          const endingRoomNarrative = keeperNarrative || "The story has reached its conclusion.";
+
+          const otherClients = wsManager.getMultiplayerClients(otherRoom.sceneRoomId);
+          notifySceneRoom(otherRoom.sceneRoomId, otherClients, {
+            type: "round_complete",
+            sceneRoomId: otherRoom.sceneRoomId,
+            roundTurnId: `epilogue-${otherRoom.sceneRoomId}`,
+            keeperNarrative: endingRoomNarrative,
+            diceRolls: [],
+            gameDay: otherRoom.gameDay,
+            gameTime: otherRoom.timeOfDay,
+            isBattle: false,
+            gameEnding: result.dynamicGameState.gameEnding,
+            timestamp: new Date().toISOString(),
+          });
+
+          // P2-10: Create turn record + RAG index for epilogue in other rooms
+          try {
+            const epilogueTurnId = await turnManager.createTurn({
+              sessionId: initialState.sessionId,
+              sceneRoomId: otherRoom.sceneRoomId,
+              characterInput: "[Game Ending — Epilogue broadcast]",
+              gameDay: otherRoom.gameDay ?? null,
+              gameTime: otherRoom.timeOfDay ?? null,
+              sceneId: otherRoom.currentScenario?.id ?? undefined,
+              sceneName: otherRoom.currentScenario?.name ?? undefined,
+              location: otherRoom.currentScenario?.location ?? undefined,
+            });
+            if (epilogueTurnId) {
+              turnManager.completeTurn(epilogueTurnId, {
+                keeperNarrative: endingRoomNarrative,
+                gameDay: otherRoom.gameDay ?? null,
+                gameTime: otherRoom.timeOfDay ?? null,
+              }, language);
+              const epilogueTurn = turnManager.getTurn(epilogueTurnId);
+              if (epilogueTurn && result.dynamicGameState) {
+                const turnRagAgent = new TurnRagAgent();
+                void turnRagAgent.recordTurn({
+                  turn: epilogueTurn,
+                  multiplayerState: result.dynamicGameState,
+                  sceneRoomId: otherRoom.sceneRoomId,
+                  language,
+                }).catch((err) => {
+                  console.warn(`[MP Turn] Epilogue RAG for ${otherRoom.sceneRoomId} failed:`, err);
+                });
+              }
+            }
+          } catch (ragErr) {
+            console.warn(`[MP Turn] Epilogue turn/RAG for ${otherRoom.sceneRoomId} failed:`, ragErr);
+          }
+        } catch (e) {
+          console.warn(
+            `[MP Turn] Failed to broadcast epilogue to room ${otherRoom.sceneRoomId}:`,
+            e
+          );
+        }
+      }
+    }
+  }
 
   // ---- Check for rest-frozen room ----
   if (updatedManager && wsManager && updatedManager.isSceneRoomRestFrozen(sceneRoomId)) {
@@ -918,7 +1270,9 @@ async function handlePostRoundSceneSplit(
             };
 
             const broadcastMap = (mapResult: { path: string; mimeType: string }) => {
-              const room = manager.getSceneRoom(childRoom.sceneRoomId);
+              // Fetch latest manager from store (not stale closure capture)
+              const latestMgr = multiplayerSessionStore.get(roomId) ?? manager;
+              const room = latestMgr.getSceneRoom(childRoom.sceneRoomId);
               if (room?.currentScenario) {
                 room.currentScenario.mapImagePath = mapResult.path;
               }
@@ -1132,6 +1486,17 @@ function buildStreamHandlers(sceneRoomId: string, roundTurnId: string) {
     },
     onWorldlineUpdateEnd: () => {
       send({ type: "worldline_update_end", roundTurnId, sceneRoomId });
+    },
+    onCombatStart: () => {
+      send({ type: "combat_start", roundTurnId, sceneRoomId, timestamp: new Date().toISOString() });
+    },
+    onCombatEnd: () => {
+      send({ type: "combat_end", roundTurnId, sceneRoomId, timestamp: new Date().toISOString() });
+    },
+    onDiceRolls: (diceRolls: Array<Record<string, unknown>>) => {
+      if (diceRolls.length > 0) {
+        send({ type: "keeper_dice_rolls", roundTurnId, sceneRoomId, diceRolls, timestamp: new Date().toISOString() });
+      }
     },
   };
 }
