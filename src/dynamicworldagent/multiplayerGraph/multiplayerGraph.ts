@@ -877,9 +877,31 @@ export const buildMultiplayerGraph = (
   });
 
   const routeFromCombatA = (state: MultiplayerGraphState): string => {
-    const contextualData =
-      mgr(state).getSceneRoom(state.sceneRoomId)?.temporaryInfo.contextualData ?? {};
+    const m = mgr(state);
+    const scr = m.getSceneRoom(state.sceneRoomId);
+    const contextualData = scr?.temporaryInfo.contextualData ?? {};
+
+    // Check if combat ended via LLM judgment
     if (contextualData.combatEnded) return "battleKeeper";
+
+    // Check if ALL players in sceneRoom are incapacitated (HP ≤ 0 or SAN ≤ 0)
+    // Skip combatActionB (NPC attacks) — no point attacking dead players
+    if (scr && scr.memberPlayerIds.length > 0) {
+      const gameState = m.getState();
+      const allDown = scr.memberPlayerIds.every((pid) => {
+        const player = gameState.players[pid];
+        if (!player?.profile?.status) return false;
+        const hp = player.profile.status.hp ?? 1;
+        const san = player.profile.status.sanity ?? 1;
+        return hp <= 0 || san <= 0;
+      });
+      if (allDown) {
+        m.setContextualData(state.sceneRoomId, "combatEnded", true);
+        console.log("💀 [MP routeFromCombatA] All players incapacitated — skipping combatActionB");
+        return "battleKeeper";
+      }
+    }
+
     return "combatActionB";
   };
 

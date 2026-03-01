@@ -46,9 +46,9 @@ export class BattleKeeperAgent {
             name: scenario.name,
             location: scenario.location,
             description: scenario.description,
-            objects: (scenario as any).objects ?? [],
-            exits: (scenario as any).exits ?? [],
-            atmosphere: (scenario as any).atmosphere ?? "",
+            objects: scenario.objects ?? [],
+            exits: scenario.exits ?? [],
+            atmosphere: scenario.atmosphere ?? "",
           },
           null,
           2
@@ -56,7 +56,7 @@ export class BattleKeeperAgent {
       : `{ "location": "Unknown" }`;
 
     // Build player characters context (all players in sceneRoom)
-    const allPlayers: any[] = (state as any).playerCharacters ?? [];
+    const allPlayers: any[] = state.playerCharacters ?? [];
     const playerCharactersBlock = allPlayers.map((player: any) => ({
       id: player.id,
       name: player.name,
@@ -83,15 +83,15 @@ export class BattleKeeperAgent {
       .map((npc: any) => ({
         id: npc.id,
         name: npc.name,
-        description: (npc as any).description ?? "",
+        description: npc.description ?? "",
         personality: npc.personality,
         status: npc.status,
-        attributes: (npc as any).attributes ?? {},
+        attributes: npc.attributes ?? {},
         skills: withCombatSkillDefaults(
-          (npc as any).skills,
-          (npc as any).attributes
+          npc.skills,
+          npc.attributes
         ),
-        weapons: (npc as any).weapons ?? [],
+        weapons: npc.weapons ?? [],
       }));
 
     // Last 3 turns of conversation history

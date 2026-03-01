@@ -367,6 +367,74 @@ export function useMultiplayerWebSocket({
                 onSkillSelectionUpdateRef.current?.(msg as any);
                 break;
 
+              case "round_error": {
+                console.error("[MP WebSocket] Round error:", msg.error);
+                setIsWaiting(false);
+                const errorContent = msg.error ?? "An error occurred processing the round.";
+                const maxTurn = messagesRef.current.length > 0
+                  ? Math.max(...messagesRef.current.map((m) => m.turnNumber))
+                  : 0;
+                setMessages((prev) => [
+                  ...prev,
+                  {
+                    role: "keeper" as const,
+                    content: `⚠️ Error: ${errorContent}`,
+                    timestamp: new Date().toISOString(),
+                    turnNumber: maxTurn,
+                  },
+                ]);
+                break;
+              }
+
+              case "scene_room_split":
+              case "scene_room_merged":
+              case "scene_room_joined":
+                // Trigger sidebar refresh so game state updates
+                console.log(`[MP WebSocket] Scene room lifecycle: ${msg.type}`);
+                onNarrativeCompleteRef.current?.();
+                break;
+
+              case "rest_frozen":
+                console.log("[MP WebSocket] Rest frozen:", msg.message);
+                setIsWaiting(true);
+                break;
+
+              case "rest_unfrozen":
+                console.log("[MP WebSocket] Rest unfrozen:", msg.message);
+                setIsWaiting(false);
+                onNarrativeCompleteRef.current?.();
+                break;
+
+              case "scene_change_processing":
+                // Scene transition in progress — sceneTransition hook handles UI
+                break;
+
+              case "game_stopped":
+                console.log("[MP WebSocket] Game stopped by host");
+                setIsGameEnded(true);
+                break;
+
+              case "time_drift_blocked":
+                console.log("[MP WebSocket] Time drift blocked:", msg.driftMinutes, "minutes");
+                setIsWaiting(true);
+                break;
+
+              case "time_drift_resumed":
+                console.log("[MP WebSocket] Time drift resumed");
+                setIsWaiting(false);
+                onNarrativeCompleteRef.current?.();
+                break;
+
+              case "player_time_unfrozen":
+              case "player_joined_via_time_bubble":
+                onNarrativeCompleteRef.current?.();
+                break;
+
+              case "map_image_ready":
+                // Similar to scene_image_ready — trigger sidebar refresh
+                onNarrativeCompleteRef.current?.();
+                break;
+
               case "pong":
                 break;
 

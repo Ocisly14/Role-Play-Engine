@@ -299,7 +299,9 @@ export class MultiplayerOrchestratorAgent {
         modelClass: ModelClass.SMALL,
       });
     } catch (err) {
-      console.error("[MultiplayerOrchestrator] LLM call failed:", err);
+      console.error("[MultiplayerOrchestrator] ❌ LLM call failed — using fallback exploration analysis:", err);
+      // Set flag so downstream agents can detect fallback mode
+      manager.setContextualData(sceneRoomId, "orchestratorUsedFallback", true);
       // Fallback: treat all inputs as exploration with no scene change
       const fallback: PlayerActionAnalysis[] = effectiveRoundInputs.map((inp) => {
         const player = state.players[inp.playerId];
