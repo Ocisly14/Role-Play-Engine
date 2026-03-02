@@ -63,9 +63,16 @@ const BackgroundManager: React.FC = () => {
     initializeBackground();
   }, []);
 
+  // Detect whether we're on a game page (single-player or multiplayer)
+  const isGamePage = location.pathname === "/game";
+  const multiplayerMatch = location.pathname.match(/^\/multiplayer\/game\/([^/]+)/);
+  const isMultiplayerGamePage = !!multiplayerMatch;
+  const multiplayerRoomId = multiplayerMatch?.[1] ?? null;
+  const isAnyGamePage = isGamePage || isMultiplayerGamePage;
+
   // Fetch current scenario sceneImage and set as background when on game page
   useEffect(() => {
-    if (location.pathname !== "/game" || !gameSession.sessionId) {
+    if (!isAnyGamePage || (isGamePage && !gameSession.sessionId)) {
       // Reset to default background when not on game page
       if (currentBackgroundImageRef.current) {
         setDefaultBackground();
@@ -76,7 +83,11 @@ const BackgroundManager: React.FC = () => {
 
     const fetchGameState = async () => {
       try {
-        const response = await authFetch("/api/gamestate");
+        // Choose endpoint based on single-player vs multiplayer
+        const gamestateUrl = isMultiplayerGamePage
+          ? `/api/multiplayer/rooms/${multiplayerRoomId}/gamestate`
+          : "/api/gamestate";
+        const response = await authFetch(gamestateUrl);
         if (!response.ok) {
           return;
         }
@@ -115,13 +126,17 @@ const BackgroundManager: React.FC = () => {
 
     // Cleanup: restore default background when page changes
     return () => {
-      if (location.pathname !== "/game") {
+      if (!isAnyGamePage) {
         setDefaultBackground();
         currentBackgroundImageRef.current = null;
       }
     };
   }, [
     location.pathname,
+    isAnyGamePage,
+    isGamePage,
+    isMultiplayerGamePage,
+    multiplayerRoomId,
     gameSession.sessionId,
     gameSession.sidebarRefreshTrigger,
     gameSession.setCurrentModuleName,

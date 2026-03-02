@@ -218,7 +218,7 @@ export function CharacterSheetModal({
 
     const fetchOccupationMap = async () => {
       try {
-        const response = await authFetch(`${apiBaseUrl}/occupations`);
+        const response = await authFetch("/api/occupations");
         const data = await response.json();
         if (!response.ok || !data.success || !data.occupations?.groups) {
           return;

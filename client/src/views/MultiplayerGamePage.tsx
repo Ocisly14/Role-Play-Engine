@@ -14,9 +14,10 @@ import { useCallback, useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { useNavigate, useParams } from "react-router-dom";
 import { MultiplayerGameChat } from "../components/MultiplayerGameChat";
-import { GameSidebar } from "../components/GameSidebar";
+import { GameSidebar, type RoomPlayerInfo } from "../components/GameSidebar";
 import { SidebarToggleButton } from "../components/layout/SidebarToggleButton";
 import { useAppSettings } from "../contexts/AppSettingsContext";
+import { useAuth } from "../contexts/AuthContext";
 import { useMobileSidebar } from "../hooks/useMobileSidebar";
 import { authFetch } from "../utils/authFetch";
 
@@ -52,6 +53,7 @@ export const MultiplayerGamePage: React.FC = () => {
   const navigate = useNavigate();
   const { roomId } = useParams<{ roomId: string }>();
   const { language } = useAppSettings();
+  const { user } = useAuth();
   const { isMobile, isSidebarOpen, toggleSidebar, closeSidebar } =
     useMobileSidebar();
 
@@ -64,6 +66,9 @@ export const MultiplayerGamePage: React.FC = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [loadError, setLoadError] = useState<string | null>(null);
 
+  // Multiplayer: other players in the scene room
+  const [roomPlayers, setRoomPlayers] = useState<RoomPlayerInfo[]>([]);
+
   // Sidebar refresh trigger (same pattern as GamePage via useGameSession)
   const [sidebarRefreshTrigger, setSidebarRefreshTrigger] = useState(0);
   const triggerSidebarRefresh = useCallback(() => {
@@ -72,7 +77,7 @@ export const MultiplayerGamePage: React.FC = () => {
 
   // Initialize: fetch game state + room overview
   useEffect(() => {
-    if (!roomId) return;
+    if (!roomId || !user?.id) return;
 
     const init = async () => {
       try {
@@ -101,9 +106,8 @@ export const MultiplayerGamePage: React.FC = () => {
         }
         const overview = overviewData.room as RoomOverview;
 
-        // Find current user from localStorage
-        const userJson = localStorage.getItem("user");
-        const userId = userJson ? JSON.parse(userJson)?.id : null;
+        // Find current user from auth context
+        const userId = user?.id ?? null;
 
         const myMember = overview.members.find((m) => m.userId === userId);
         if (myMember?.characterId) {
@@ -116,7 +120,7 @@ export const MultiplayerGamePage: React.FC = () => {
           mySceneRoomId = myMember.currentSceneRoomId;
         } else if (gs.sceneRooms.length > 0) {
           const myRoom = gs.sceneRooms.find((sr) =>
-            sr.memberPlayerIds.includes(userId)
+            sr.memberPlayerIds.includes(userId!)
           );
           mySceneRoomId = myRoom?.sceneRoomId ?? gs.sceneRooms[0].sceneRoomId;
         }
@@ -145,7 +149,44 @@ export const MultiplayerGamePage: React.FC = () => {
     };
 
     init();
-  }, [roomId]);
+  }, [roomId, user?.id]);
+
+  // Fetch room players for sidebar "Players Here" section
+  useEffect(() => {
+    if (!roomId || !sceneRoomId) return;
+    const fetchPlayers = async () => {
+      try {
+        const res = await authFetch(`/api/multiplayer/rooms/${roomId}/game/state`);
+        const data = await res.json();
+        if (data.success || data.sceneRooms) {
+          const currentUserId = user?.id ?? null;
+          const myRoom = (data.sceneRooms as any[])?.find((r: any) =>
+            r.memberPlayerIds?.includes(currentUserId)
+          );
+          if (myRoom && data.players) {
+            const players: RoomPlayerInfo[] = myRoom.memberPlayerIds
+              .map((pid: string) => {
+                const p = data.players[pid];
+                if (!p) return null;
+                return {
+                  characterName: p.characterName || "Unknown",
+                  hp: p.profile?.status?.hp ?? 0,
+                  maxHp: p.profile?.status?.maxHp ?? 1,
+                  san: p.profile?.status?.sanity ?? 0,
+                  maxSan: p.profile?.status?.maxSanity ?? 1,
+                  isCurrentUser: pid === currentUserId,
+                };
+              })
+              .filter(Boolean) as RoomPlayerInfo[];
+            setRoomPlayers(players);
+          }
+        }
+      } catch (err) {
+        console.error("Failed to fetch room players:", err);
+      }
+    };
+    fetchPlayers();
+  }, [roomId, sceneRoomId, sidebarRefreshTrigger]);
 
   // ESC key handler for closing drawer (mirrors GamePage)
   useEffect(() => {
@@ -259,6 +300,7 @@ export const MultiplayerGamePage: React.FC = () => {
           isMobile={isMobile}
           isOpen={isSidebarOpen}
           onClose={closeSidebar}
+          roomPlayers={roomPlayers}
         />
       </div>
     </div>

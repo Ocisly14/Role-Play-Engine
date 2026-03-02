@@ -11,7 +11,7 @@
 import { useCallback, useEffect, useRef } from "react";
 import type { DiceRollInfo } from "../components/DiceAnimation";
 import { filterDiceRollsForPlayer } from "../components/gamechat/utils";
-import type { Message, PendingDiceRolls } from "../types/gamechat";
+import type { Message, PendingDiceRolls, SceneRoomInfo } from "../types/gamechat";
 
 export interface MultiplayerWSMessage {
   type: string;
@@ -51,6 +51,10 @@ export interface UseMultiplayerWebSocketParams {
   setDiceAnimationCompleted: React.Dispatch<React.SetStateAction<boolean>>;
   onSkillSelectionRequired?: (data: SkillSelectionRequiredData) => void;
   onSkillSelectionUpdate?: (data: SkillSelectionUpdateData) => void;
+  roomId?: string;
+  onSceneRoomSplit?: (newRooms: any[]) => void;
+  onSceneRoomMerged?: (survivingRoomId: string, removedRoomId: string) => void;
+  setMessagesForRoom?: (sceneRoomId: string, updater: Message[] | ((prev: Message[]) => Message[])) => void;
 }
 
 export function useMultiplayerWebSocket({
@@ -71,6 +75,10 @@ export function useMultiplayerWebSocket({
   setDiceAnimationCompleted,
   onSkillSelectionRequired,
   onSkillSelectionUpdate,
+  roomId,
+  onSceneRoomSplit,
+  onSceneRoomMerged,
+  setMessagesForRoom,
 }: UseMultiplayerWebSocketParams): void {
   const wsRef = useRef<WebSocket | null>(null);
   const reconnectTimeoutRef = useRef<number | null>(null);
@@ -81,6 +89,12 @@ export function useMultiplayerWebSocket({
   onSkillSelectionRequiredRef.current = onSkillSelectionRequired;
   const onSkillSelectionUpdateRef = useRef(onSkillSelectionUpdate);
   onSkillSelectionUpdateRef.current = onSkillSelectionUpdate;
+  const onSceneRoomSplitRef = useRef(onSceneRoomSplit);
+  onSceneRoomSplitRef.current = onSceneRoomSplit;
+  const onSceneRoomMergedRef = useRef(onSceneRoomMerged);
+  onSceneRoomMergedRef.current = onSceneRoomMerged;
+  const setMessagesForRoomRef = useRef(setMessagesForRoom);
+  setMessagesForRoomRef.current = setMessagesForRoom;
 
   useEffect(() => {
     if (!sessionId || !sceneRoomId || isGameEnded) return;
@@ -93,7 +107,8 @@ export function useMultiplayerWebSocket({
 
     const token = localStorage.getItem("accessToken");
     const tokenParam = token ? `&token=${encodeURIComponent(token)}` : "";
-    const wsPath = `${protocol}//${host}/ws?sessionId=${encodeURIComponent(sessionId)}&sceneRoomId=${encodeURIComponent(sceneRoomId)}${tokenParam}`;
+    const roomIdParam = roomId ? `&roomId=${encodeURIComponent(roomId)}` : "";
+    const wsPath = `${protocol}//${host}/ws?sessionId=${encodeURIComponent(sessionId)}&sceneRoomId=${encodeURIComponent(sceneRoomId)}${tokenParam}${roomIdParam}`;
 
     shouldReconnectRef.current = true;
 
@@ -121,6 +136,15 @@ export function useMultiplayerWebSocket({
           try {
             const msg: MultiplayerWSMessage = JSON.parse(event.data);
 
+            // Route messages to correct room when multi-room is active
+            const targetSetMessages = (eventSceneRoomId: string | undefined, updater: Message[] | ((prev: Message[]) => Message[])) => {
+              if (setMessagesForRoomRef.current && eventSceneRoomId) {
+                setMessagesForRoomRef.current(eventSceneRoomId, updater);
+              } else {
+                setMessages(updater);
+              }
+            };
+
             switch (msg.type) {
               case "connected":
                 console.log("[MP WebSocket] Connection confirmed");
@@ -136,7 +160,7 @@ export function useMultiplayerWebSocket({
                 // Append keeper narrative if present
                 if (msg.keeperNarrative) {
                   const turnNumber = msg.turnNumber ?? 0;
-                  setMessages((prev) => [
+                  targetSetMessages(msg.sceneRoomId, (prev) => [
                     ...prev,
                     {
                       role: "keeper" as const,
@@ -199,7 +223,7 @@ export function useMultiplayerWebSocket({
                 const turnId = msg.turnId;
                 if (!turnId) return;
                 setStreamingTurnId(turnId);
-                setMessages((prev) => {
+                targetSetMessages(msg.sceneRoomId, (prev) => {
                   const existing = prev.find((m) => m.turnId === turnId);
                   if (existing) {
                     return prev.map((m) =>
@@ -239,7 +263,7 @@ export function useMultiplayerWebSocket({
                     streamingBufferRef.current.get(turnId) || "";
                   streamingBufferRef.current.set(turnId, existing + delta);
 
-                  setMessages((prev) => {
+                  targetSetMessages(msg.sceneRoomId, (prev) => {
                     const found = prev.find((m) => m.turnId === turnId);
                     if (found) return prev;
                     const nextTurnNumber =
@@ -263,7 +287,7 @@ export function useMultiplayerWebSocket({
                   return;
                 }
 
-                setMessages((prev) => {
+                targetSetMessages(msg.sceneRoomId, (prev) => {
                   let found = false;
                   const next = prev.map((m) => {
                     if (m.turnId === turnId) {
@@ -296,7 +320,7 @@ export function useMultiplayerWebSocket({
               case "keeper_stream_end": {
                 const turnId = msg.turnId;
                 if (!turnId) return;
-                setMessages((prev) =>
+                targetSetMessages(msg.sceneRoomId, (prev) =>
                   prev.map((m) =>
                     m.turnId === turnId ? { ...m, isStreaming: false } : m
                   )
@@ -327,7 +351,7 @@ export function useMultiplayerWebSocket({
                   msg.type === "combat_start"
                     ? ("combat_start" as const)
                     : ("combat_end" as const);
-                setMessages((prev) => {
+                targetSetMessages(msg.sceneRoomId, (prev) => {
                   const resolvedTurnNumber =
                     typeof msg.turnNumber === "number"
                       ? msg.turnNumber
@@ -374,7 +398,7 @@ export function useMultiplayerWebSocket({
                 const maxTurn = messagesRef.current.length > 0
                   ? Math.max(...messagesRef.current.map((m) => m.turnNumber))
                   : 0;
-                setMessages((prev) => [
+                targetSetMessages(msg.sceneRoomId, (prev) => [
                   ...prev,
                   {
                     role: "keeper" as const,
@@ -386,11 +410,47 @@ export function useMultiplayerWebSocket({
                 break;
               }
 
-              case "scene_room_split":
-              case "scene_room_merged":
+              case "scene_room_split": {
+                console.log(`[MP WebSocket] Scene room split`);
+                const newRooms: SceneRoomInfo[] = [];
+                if (msg.stayerChildRoom) {
+                  newRooms.push({
+                    sceneRoomId: msg.stayerChildRoom.sceneRoomId,
+                    scenarioName: null,
+                    memberPlayerIds: msg.stayerChildRoom.playerIds || [],
+                    roundNumber: 0,
+                    isBattle: false,
+                  });
+                }
+                for (const mover of msg.moverChildRooms || []) {
+                  newRooms.push({
+                    sceneRoomId: mover.sceneRoomId,
+                    scenarioName: mover.targetSceneName || null,
+                    memberPlayerIds: mover.playerIds || [],
+                    roundNumber: 0,
+                    isBattle: false,
+                  });
+                }
+                onSceneRoomSplitRef.current?.(newRooms);
+                onNarrativeCompleteRef.current?.();
+                break;
+              }
+
+              case "scene_room_merged": {
+                console.log(`[MP WebSocket] Scene room merged`);
+                const frozenIds = msg.frozenSceneRoomIds || [];
+                const survivingId = msg.mergedChildRoom?.sceneRoomId;
+                if (survivingId && frozenIds.length > 0) {
+                  for (const removedId of frozenIds) {
+                    onSceneRoomMergedRef.current?.(survivingId, removedId);
+                  }
+                }
+                onNarrativeCompleteRef.current?.();
+                break;
+              }
+
               case "scene_room_joined":
-                // Trigger sidebar refresh so game state updates
-                console.log(`[MP WebSocket] Scene room lifecycle: ${msg.type}`);
+                console.log(`[MP WebSocket] Scene room joined`);
                 onNarrativeCompleteRef.current?.();
                 break;
 

@@ -5,6 +5,7 @@ import * as gameController from "./game/controller.js";
 import * as turnController from "./turn/controller.js";
 import * as checkpointController from "./checkpoint/controller.js";
 import * as memoController from "../memos/controller.js";
+import sceneRoomRoutes from "./sceneroom/routes.js";
 
 const router = Router();
 router.use(authenticate);
@@ -32,6 +33,9 @@ router.get("/rooms/:roomId/scene-rooms/:sceneRoomId/round", turnController.getRo
 router.get("/rooms/:roomId/scene-rooms/:sceneRoomId/turns", turnController.getTurnHistory);
 router.get("/rooms/:roomId/scene-rooms/:sceneRoomId/turns/:turnId/status", turnController.getTurnStatus);
 
+// Scene room listing
+router.use("/rooms/:roomId/scene-rooms-list", sceneRoomRoutes);
+
 // Skill selection (two-phase commit)
 router.post("/rooms/:roomId/scene-rooms/:sceneRoomId/skill-selection", turnController.submitSkillSelection);
 
@@ -47,7 +51,8 @@ router.delete("/rooms/:roomId/checkpoints/:checkpointId", checkpointController.d
 // Game stop/abandon (host-only)
 router.post("/rooms/:roomId/game/stop", gameController.stopGame);
 
-// Skill suggestion
+// Skill suggestion (both paths: frontend hook calls /skills/suggest, keep /game/skills/suggest for compat)
+router.post("/rooms/:roomId/skills/suggest", gameController.suggestSkills);
 router.post("/rooms/:roomId/game/skills/suggest", gameController.suggestSkills);
 
 // Player memos (reuses existing memo CRUD — clients pass sessionId in query/body)
@@ -56,7 +61,8 @@ router.post("/rooms/:roomId/memos", memoController.createMemo);
 router.put("/rooms/:roomId/memos/:memoId", memoController.updateMemo);
 router.delete("/rooms/:roomId/memos/:memoId", memoController.deleteMemo);
 
-// RAG Q&A
+// RAG Q&A (both paths: frontend calls /rag/ask, keep /game/rag/ask for compat)
+router.post("/rooms/:roomId/rag/ask", gameController.askRag);
 router.post("/rooms/:roomId/game/rag/ask", gameController.askRag);
 
 export { router as multiplayerRoutes };

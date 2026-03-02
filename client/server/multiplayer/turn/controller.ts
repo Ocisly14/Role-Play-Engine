@@ -142,10 +142,50 @@ export async function getTurnHistory(
     // Fetch turns for this session, optionally filtered by sceneRoomId
     // Support ?all=true query param to fetch turns across all scene rooms
     const fetchAll = req.query.all === "true" || sceneRoomId === "all";
+
+    // Walk the parent chain to include frozen ancestor rooms' history
+    const sceneRoomIdsToQuery: string[] = [sceneRoomId];
+
+    if (!fetchAll) {
+      const sceneRoom = state.sceneRooms[sceneRoomId];
+      if (sceneRoom) {
+        const visited = new Set<string>([sceneRoomId]);
+        const queue = [...(sceneRoom.parentSceneRoomIds ?? [])];
+
+        while (queue.length > 0) {
+          const parentId = queue.shift()!;
+          if (visited.has(parentId)) continue;
+          visited.add(parentId);
+
+          const parentRoom = state.sceneRooms[parentId];
+          if (!parentRoom) continue;
+
+          // Only include rooms where the requesting player was a member
+          if (parentRoom.memberPlayerIds.includes(userId)) {
+            sceneRoomIdsToQuery.push(parentId);
+          }
+
+          // Continue walking up
+          for (const grandparentId of parentRoom.parentSceneRoomIds ?? []) {
+            if (!visited.has(grandparentId)) {
+              queue.push(grandparentId);
+            }
+          }
+        }
+      }
+    }
+
     const turns = await prisma.gameTurn.findMany({
       where: {
         sessionId,
-        ...(!fetchAll ? { sceneRoomId } : {}),
+        ...(!fetchAll
+          ? {
+              sceneRoomId:
+                sceneRoomIdsToQuery.length === 1
+                  ? sceneRoomIdsToQuery[0]
+                  : { in: sceneRoomIdsToQuery },
+            }
+          : {}),
       },
       orderBy: { turnNumber: "asc" },
       select: {

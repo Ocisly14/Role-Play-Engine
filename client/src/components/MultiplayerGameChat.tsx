@@ -12,12 +12,15 @@
 
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
+import { useAuth } from "../contexts/AuthContext";
 import { useDiceAnimation } from "../hooks/useDiceAnimation";
 import { useInputCollapse } from "../hooks/useInputCollapse";
+import { useMultiplayerSceneRooms } from "../hooks/useMultiplayerSceneRooms";
 import { useMultiplayerWebSocket } from "../hooks/useMultiplayerWebSocket";
 import { useSceneTransition } from "../hooks/useSceneTransition";
 import { useSkillSelection } from "../hooks/useSkillSelection";
 import type { GameEndingInfo, Message } from "../types/gamechat";
+import { SceneRoomTabs } from "./gamechat/SceneRoomTabs";
 import { authFetch } from "../utils/authFetch";
 import { InputArea } from "./gamechat/InputArea";
 import { MessageList } from "./gamechat/MessageList";
@@ -85,6 +88,36 @@ export function MultiplayerGameChat({
   const streamingBufferRef = useRef<Map<string, string>>(new Map());
   const streamingBlockedRef = useRef<Set<string>>(new Set());
 
+  // ── Multi-room tab state ──────────────────────────────
+  const {
+    activeTabId,
+    setActiveTabId,
+    sceneRooms: sceneRoomStates,
+    isViewingOwnRoom,
+    sortedSceneRooms,
+    setMessagesForRoom,
+    handleSceneRoomSplit,
+    handleSceneRoomMerged,
+    saveScrollPosition,
+  } = useMultiplayerSceneRooms({
+    roomId,
+    mySceneRoomId: sceneRoomId,
+    initialMessages: messages,
+  });
+
+  const messageListRef = useRef<HTMLDivElement>(null);
+
+  const handleTabChange = useCallback(
+    (tabId: string) => {
+      // Save current scroll position
+      if (messageListRef.current) {
+        saveScrollPosition(messageListRef.current.scrollTop);
+      }
+      setActiveTabId(tabId);
+    },
+    [saveScrollPosition, setActiveTabId]
+  );
+
   // ── API base paths ──────────────────────────────────
   const apiBaseUrl = `/api/multiplayer/rooms/${roomId}`;
 
@@ -135,15 +168,9 @@ export function MultiplayerGameChat({
     language,
   });
 
-  // ── Current player ID (userId from auth) ──────────
-  const currentPlayerId = (() => {
-    try {
-      const userJson = localStorage.getItem("user");
-      return userJson ? JSON.parse(userJson)?.id ?? null : null;
-    } catch {
-      return null;
-    }
-  })();
+  // ── Current player ID (userId from auth context) ──────────
+  const { user: authUser } = useAuth();
+  const currentPlayerId = authUser?.id ?? null;
 
   // ── WebSocket ──────────────────────────────────────
   useMultiplayerWebSocket({
@@ -162,6 +189,10 @@ export function MultiplayerGameChat({
     setPendingDiceRolls,
     setShowingDiceAnimation,
     setDiceAnimationCompleted,
+    roomId,
+    onSceneRoomSplit: handleSceneRoomSplit,
+    onSceneRoomMerged: handleSceneRoomMerged,
+    setMessagesForRoom,
     onSkillSelectionRequired: useCallback(
       (data) => {
         if (!currentPlayerId) return;
@@ -619,6 +650,13 @@ export function MultiplayerGameChat({
         onSaveCheckpoint={handleSaveCheckpoint}
       />
 
+      <SceneRoomTabs
+        sceneRooms={sortedSceneRooms}
+        activeTabId={activeTabId}
+        mySceneRoomId={sceneRoomId}
+        onTabChange={handleTabChange}
+      />
+
       <MessageList
         messages={messages}
         characterName={characterName}
@@ -635,36 +673,47 @@ export function MultiplayerGameChat({
         isInputCollapsed={isInputCollapsed}
       />
 
-      <InputArea
-        inputValue={inputValue}
-        setInputValue={setInputValue}
-        selectedSkill={selectedSkill}
-        setSelectedSkill={setSelectedSkill}
-        isSkillAuto={isSkillAuto}
-        setIsSkillAuto={setIsSkillAuto}
-        suggestedSkills={suggestedSkills}
-        isSuggesting={isSuggesting}
-        isSkillPickerOpen={isSkillPickerOpen}
-        setIsSkillPickerOpen={setIsSkillPickerOpen}
-        availableSkills={availableSkills}
-        isSending={isSending}
-        isPolling={isWaiting}
-        isGameEnded={isGameEnded}
-        isCombatSkillRequired={isCombatSkillRequired}
-        canSendInCombat={canSendInCombat}
-        isInputCollapsed={isInputCollapsed}
-        isSceneChanging={isSceneChanging}
-        language={language}
-        isBattle={currentGameState?.isBattle ?? false}
-        isResting={isResting}
-        handleInputAreaMouseEnter={handleInputAreaMouseEnter}
-        handleInputAreaMouseLeave={handleInputAreaMouseLeave}
-        handleSendMessage={handleSendMessage}
-        handleKeyDown={handleKeyDown}
-        onOpenRestModal={openRestModal}
-        onSkip={handleSkip}
-        isWaitingForOthers={isWaiting}
-      />
+      {isViewingOwnRoom ? (
+        <InputArea
+          inputValue={inputValue}
+          setInputValue={setInputValue}
+          selectedSkill={selectedSkill}
+          setSelectedSkill={setSelectedSkill}
+          isSkillAuto={isSkillAuto}
+          setIsSkillAuto={setIsSkillAuto}
+          suggestedSkills={suggestedSkills}
+          isSuggesting={isSuggesting}
+          isSkillPickerOpen={isSkillPickerOpen}
+          setIsSkillPickerOpen={setIsSkillPickerOpen}
+          availableSkills={availableSkills}
+          isSending={isSending}
+          isPolling={isWaiting}
+          isGameEnded={isGameEnded}
+          isCombatSkillRequired={isCombatSkillRequired}
+          canSendInCombat={canSendInCombat}
+          isInputCollapsed={isInputCollapsed}
+          isSceneChanging={isSceneChanging}
+          language={language}
+          isBattle={currentGameState?.isBattle ?? false}
+          isResting={isResting}
+          handleInputAreaMouseEnter={handleInputAreaMouseEnter}
+          handleInputAreaMouseLeave={handleInputAreaMouseLeave}
+          handleSendMessage={handleSendMessage}
+          handleKeyDown={handleKeyDown}
+          onOpenRestModal={openRestModal}
+          onSkip={handleSkip}
+          isWaitingForOthers={isWaiting}
+        />
+      ) : (
+        <div className="px-4 py-2.5 bg-black/40 backdrop-blur-sm border-t border-amber-900/30 text-center">
+          <span className="text-amber-400/60 text-sm italic">
+            {t("multiplayer.watchingRoom", {
+              scene: sceneRoomStates.get(activeTabId)?.info.scenarioName || "...",
+              defaultValue: "Watching {{scene}}",
+            })}
+          </span>
+        </div>
+      )}
 
       {/* Rest Modal — identical to GameChat */}
       {restModalOpen && (

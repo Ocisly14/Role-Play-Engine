@@ -14,9 +14,23 @@ import type {
   CoCDatabaseAdapter,
 } from "../../shared/agents/memory/database/index.js";
 import { getPrismaClient } from "../../shared/agents/memory/database/prismaClient.js";
-import { resolveModuleIdByName } from "../../shared/agents/memory/database/moduleScope.js";
+import {
+  resolveModuleIdByName,
+  scopeIdByModule,
+  stripModuleScope,
+} from "../../shared/agents/memory/database/moduleScope.js";
 import { resolveEmailId } from "../../shared/agents/memory/database/userContext.js";
-import type { DynamicCharacterProfile } from "../world_builder/types.js";
+import { NPCLoader } from "../../shared/agents/character/npcloader/index.js";
+import type { NPCProfile } from "../../shared/agents/models/gameTypes.js";
+import type {
+  DynamicCharacterProfile,
+  DynamicNPCProfile,
+  DynamicScenarioSnapshot,
+} from "../world_builder/types.js";
+import type {
+  ScenarioClue,
+  ScenarioCondition,
+} from "../../shared/agents/models/scenarioTypes.js";
 import {
   loadDynamicGameState,
 } from "../state/DynamicGameStateLoader.js";
@@ -26,6 +40,21 @@ import {
   type MultiplayerPlayerState,
   type MultiplayerDynamicGameState,
 } from "./MultiplayerDynamicGameState.js";
+
+// =============================================
+// Helpers: NPC conversion + ID normalisation
+// (mirrors single-player DynamicGameStateLoader)
+// =============================================
+
+function convertNPCProfileToDynamic(npc: NPCProfile): DynamicNPCProfile {
+  const { currentLocation, ...rest } = npc;
+  return rest as DynamicNPCProfile;
+}
+
+function normalizeIdToModuleScope(id: string, moduleId: string | null): string {
+  if (!moduleId) return id;
+  return scopeIdByModule(stripModuleScope(id), moduleId);
+}
 
 // =============================================
 // Helper: load one player character from the DB
@@ -115,6 +144,98 @@ async function loadPlayerCharacterProfile(
 }
 
 // =============================================
+// Helper: build a DynamicScenarioSnapshot from a Prisma row
+// (mirrors single-player DynamicGameStateLoader.buildSnapshotFromRow)
+// =============================================
+
+async function buildSnapshotFromRow(
+  prisma: ReturnType<typeof getPrismaClient>,
+  snapshotRow: any,
+  scopedModuleId: string
+): Promise<DynamicScenarioSnapshot> {
+  const snapshotCharacters = await prisma.scenarioCharacter.findMany({
+    where: { snapshotId: snapshotRow.snapshotId, moduleId: scopedModuleId },
+    select: {
+      id: true,
+      characterName: true,
+      characterRole: true,
+      characterStatus: true,
+      characterLocation: true,
+      characterNotes: true,
+    },
+  });
+
+  const snapshotClues = await prisma.scenarioClue.findMany({
+    where: { snapshotId: snapshotRow.snapshotId, moduleId: scopedModuleId },
+    select: {
+      clueId: true,
+      clueText: true,
+      category: true,
+      difficulty: true,
+      clueLocation: true,
+      discoveryMethod: true,
+      reveals: true,
+      discovered: true,
+      discoveryDetails: true,
+    },
+  });
+
+  const snapshotConditions = await prisma.scenarioCondition.findMany({
+    where: { snapshotId: snapshotRow.snapshotId, moduleId: scopedModuleId },
+    select: {
+      conditionId: true,
+      conditionType: true,
+      description: true,
+      mechanicalEffect: true,
+    },
+  });
+
+  const sceneImage =
+    snapshotRow.sceneImagePath != null &&
+    String(snapshotRow.sceneImagePath).trim() !== ""
+      ? { path: String(snapshotRow.sceneImagePath).trim() }
+      : undefined;
+
+  return {
+    id: snapshotRow.snapshotId,
+    name: snapshotRow.snapshotName || snapshotRow.scenario?.name,
+    location: snapshotRow.location,
+    description: snapshotRow.description,
+    gameTime: snapshotRow.gameTime || undefined,
+    showMap: snapshotRow.showMap === true,
+    sceneImage,
+    characters: snapshotCharacters.map((char) => ({
+      id: char.id,
+      name: char.characterName,
+      role: char.characterRole,
+      status: char.characterStatus,
+      location: char.characterLocation || undefined,
+      notes: char.characterNotes || undefined,
+    })),
+    clues: snapshotClues.map((clue) => ({
+      id: clue.clueId,
+      clueText: clue.clueText,
+      category: clue.category as ScenarioClue["category"],
+      difficulty: clue.difficulty as ScenarioClue["difficulty"],
+      location: clue.clueLocation,
+      discoveryMethod: clue.discoveryMethod || undefined,
+      reveals: clue.reveals ? (clue.reveals as any[]) : [],
+      discovered: clue.discovered === true,
+      discoveryDetails: clue.discoveryDetails
+        ? (clue.discoveryDetails as any)
+        : undefined,
+    })),
+    conditions: snapshotConditions.map((cond) => ({
+      type: cond.conditionType as ScenarioCondition["type"],
+      description: cond.description,
+      mechanicalEffect: cond.mechanicalEffect || undefined,
+    })),
+    keeperNotes: snapshotRow.keeperNotes || undefined,
+    timeRestriction: snapshotRow.timeRestriction || undefined,
+  };
+}
+
+// =============================================
 // initializeMultiplayerGameState
 // =============================================
 
@@ -194,7 +315,10 @@ export async function initializeMultiplayerGameState(
     timeOfDay: params.timeOfDay,
   });
 
-  // 4. Copy world data from worldState into the multiplayer state
+  // 4. Resolve module scope ID (needed for NPC loading + snapshot loading + session record)
+  const scopedModuleId = await resolveModuleIdByName(moduleName, resolvedEmailId);
+
+  // 5. Copy world data from worldState into the multiplayer state
   state.moduleDigest = worldState.moduleDigest;
   state.keeperGuidance = worldState.keeperGuidance;
   state.moduleLimitations = worldState.moduleLimitations;
@@ -205,14 +329,132 @@ export async function initializeMultiplayerGameState(
   state.mythosEvents = worldState.mythosEvents;
   state.endState = worldState.endState;
   state.scenarioOutlines = worldState.scenarioOutlines;
-  state.npcCharacters = worldState.npcCharacters;
   state.globalTrigger = worldState.globalTrigger;
+
+  // 6. Load NPCs via NPCLoader (mirrors single-player initializeCompleteDynamicGameState)
+  const npcLoader = new NPCLoader(db as any, undefined, undefined, {
+    emailId: resolvedEmailId,
+  });
+  const allNPCs = await npcLoader.getAllNPCs();
+
+  state.npcCharacters = allNPCs.map((npc) => {
+    const normalizedId = normalizeIdToModuleScope(npc.id, scopedModuleId);
+    const dynamicNpc = convertNPCProfileToDynamic(npc);
+    return {
+      ...dynamicNpc,
+      id: normalizedId,
+      clues: Array.isArray(dynamicNpc.clues)
+        ? dynamicNpc.clues.map((clue) => ({
+            ...clue,
+            id: normalizeIdToModuleScope(clue.id, scopedModuleId),
+          }))
+        : [],
+      relationships: Array.isArray(dynamicNpc.relationships)
+        ? dynamicNpc.relationships.map((rel) => ({
+            ...rel,
+            targetId: rel.targetId
+              ? normalizeIdToModuleScope(rel.targetId, scopedModuleId)
+              : rel.targetId,
+          }))
+        : [],
+    };
+  });
+
+  console.log(
+    `[MultiplayerLoader] Loaded ${state.npcCharacters.length} NPCs from database`
+  );
 
   // Carry over the game time that the single-player world loader resolved
   // (worldState already has the correct timeOfDay from the module's initialGameTime)
   if (!params.timeOfDay) {
     state.timeOfDay = worldState.timeOfDay;
     state.scenarioTimeState.sceneStartTime = worldState.timeOfDay;
+  }
+
+  // 7. Create session record in database (required for turns, checkpoints, language updates)
+  const prisma = getPrismaClient();
+  await prisma.session.upsert({
+    where: { sessionId },
+    create: {
+      sessionId,
+      moduleId: scopedModuleId || null,
+      emailId: resolvedEmailId || null,
+      modName: moduleName,
+      status: "active",
+      metadata: {},
+    },
+    update: {
+      lastActivityAt: new Date(),
+      moduleId: scopedModuleId || undefined,
+    },
+  });
+
+  console.log(
+    `[MultiplayerLoader] Session record created/updated: ${sessionId}`
+  );
+
+  // 8. Load baseline scenario snapshots and set initial scenario on the sceneRoom
+  //    (mirrors single-player initializeCompleteDynamicGameState logic)
+  if (scopedModuleId) {
+
+    const allModuleSnapshots = await prisma.scenarioSnapshot.findMany({
+      where: { moduleId: scopedModuleId, isDynamicHistorical: false },
+      include: { scenario: { select: { name: true } } },
+      orderBy: [{ scenarioId: "asc" }, { createdAt: "asc" }],
+    });
+
+    const startSnapshotRow =
+      allModuleSnapshots.find((row) => row.initialSnapshot) ||
+      allModuleSnapshots[0] ||
+      null;
+
+    // Build all snapshots
+    for (const snapshotRow of allModuleSnapshots) {
+      const snapshot = await buildSnapshotFromRow(prisma, snapshotRow, scopedModuleId);
+      const existing = state.updatedDynamicScenarioSnapshots.get(snapshotRow.scenarioId) ?? [];
+      existing.push(snapshot);
+      state.updatedDynamicScenarioSnapshots.set(snapshotRow.scenarioId, existing);
+    }
+
+    // Set the initial scenario on the initial sceneRoom
+    if (startSnapshotRow) {
+      const initialScenario = await buildSnapshotFromRow(prisma, startSnapshotRow, scopedModuleId);
+      const sceneRoom = state.sceneRooms[initialSceneRoomId];
+      if (sceneRoom) {
+        sceneRoom.currentScenario = initialScenario;
+        sceneRoom.scenarioId = startSnapshotRow.scenarioId;
+        sceneRoom.scenarioName = startSnapshotRow.snapshotName || startSnapshotRow.scenario?.name || null;
+        sceneRoom.snapshotId = startSnapshotRow.snapshotId;
+        sceneRoom.snapshotName = startSnapshotRow.snapshotName || null;
+      }
+
+      // Parse game time from initial snapshot if not explicitly provided
+      if (!params.timeOfDay && startSnapshotRow.gameTime) {
+        const timeMatch = String(startSnapshotRow.gameTime).match(/(\d{1,2}:\d{2})/);
+        if (timeMatch) {
+          state.timeOfDay = timeMatch[1];
+          state.scenarioTimeState.sceneStartTime = timeMatch[1];
+          if (sceneRoom) {
+            sceneRoom.timeOfDay = timeMatch[1];
+          }
+        }
+        const dayMatch = String(startSnapshotRow.gameTime).match(/Day\s*(\d+)/i);
+        if (dayMatch) {
+          state.gameDay = Number.parseInt(dayMatch[1], 10);
+          if (sceneRoom) {
+            sceneRoom.gameDay = state.gameDay;
+          }
+        }
+      }
+
+      console.log(
+        `[MultiplayerLoader] Initial scenario: ${initialScenario.name} (${initialScenario.location})`
+      );
+    }
+
+    console.log(
+      `[MultiplayerLoader] Loaded ${allModuleSnapshots.length} baseline snapshots across ${state.updatedDynamicScenarioSnapshots.size} scenarios`
+    );
   }
 
   console.log(

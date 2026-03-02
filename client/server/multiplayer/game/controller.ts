@@ -79,6 +79,14 @@ export async function getGameState(req: Request, res: Response): Promise<void> {
           isBattle: sr.isBattle ?? false,
         };
       }),
+      players: Object.fromEntries(
+        Object.entries(s.players).map(([pid, p]) => [pid, {
+          characterName: p.characterName,
+          profile: {
+            status: p.profile.status,
+          },
+        }])
+      ),
     });
   } catch (error) {
     console.error("[MultiplayerGame] getGameState error:", error);
@@ -121,6 +129,7 @@ export async function getPlayerState(req: Request, res: Response): Promise<void>
       timeOfDay: sceneRoom?.timeOfDay ?? state.timeOfDay,
       gameEnding: state.gameEnding,
       moduleName: state.moduleName,
+      moduleDigest: state.moduleDigest ?? null,
       isBattle: sceneRoom?.isBattle ?? false,
       staminaState: player.staminaState,
       npcCharacters: state.npcCharacters ?? [],

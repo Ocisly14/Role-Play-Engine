@@ -44,6 +44,7 @@ export class WebSocketManager {
       const sessionId = this.extractSessionId(req);
       const token = this.extractToken(req);
       const sceneRoomId = this.extractParam(req, "sceneRoomId");
+      const roomId = this.extractParam(req, "roomId");
       const creds = token ? this.verifyTokenCreds(token) : null;
       const userId = creds?.userId ?? null;
       const email = creds?.email ?? null;
@@ -68,6 +69,11 @@ export class WebSocketManager {
         const client = this.clients.get(sessionId);
         if (client) {
           this.registerMultiplayerClient(sceneRoomId, userId, client);
+
+          // Also register for all other active scene rooms so client gets cross-room events
+          if (roomId) {
+            this.registerMultiplayerClientForAllRooms(roomId, userId, client);
+          }
 
           // On close, also remove multiplayer registration
           ws.on("close", () => {
@@ -288,6 +294,44 @@ export class WebSocketManager {
     return sceneRoomIds
       .map((id) => this.multiplayerClients.get(id))
       .filter((m): m is Map<string, WSClient> => Boolean(m));
+  }
+
+  /**
+   * Register a multiplayer client for all active (non-frozen) scene rooms in a game room.
+   */
+  public registerMultiplayerClientForAllRooms(
+    roomId: string,
+    userId: string,
+    client: WSClient
+  ): void {
+    // Dynamic import to avoid circular deps
+    const { multiplayerSessionStore } =
+      require("../../../src/dynamicworldagent/multiplayerState/MultiplayerDynamicGameStateLoader.js");
+    const manager = multiplayerSessionStore.get(roomId);
+    if (!manager) return;
+
+    const state = manager.getState();
+    for (const room of Object.values(state.sceneRooms) as any[]) {
+      if (!room.isFrozen) {
+        this.registerMultiplayerClient(room.sceneRoomId, userId, client);
+      }
+    }
+  }
+
+  /**
+   * Register all existing clients of one scene room into a newly created scene room.
+   * Called when a scene room splits so every connected client receives events from the new room.
+   */
+  public registerAllClientsForNewSceneRoom(
+    existingSceneRoomId: string,
+    newSceneRoomId: string
+  ): void {
+    const existingClients = this.multiplayerClients.get(existingSceneRoomId);
+    if (!existingClients) return;
+
+    for (const [userId, client] of existingClients) {
+      this.registerMultiplayerClient(newSceneRoomId, userId, client);
+    }
   }
 
   /**

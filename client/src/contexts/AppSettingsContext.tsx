@@ -49,14 +49,35 @@ export const AppSettingsProvider: React.FC<{ children: React.ReactNode }> = ({
 
     // Try to update server-side session metadata
     try {
-      const response = await authFetch("/api/game/update-language", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ language: newLanguage }),
-      });
+      // Detect multiplayer context from current URL
+      const multiMatch = window.location.pathname.match(
+        /\/multiplayer\/game\/([^/]+)/
+      );
 
-      if (!response.ok) {
-        console.error("Failed to update language on server");
+      if (multiMatch) {
+        // Multiplayer mode: call the room-scoped endpoint
+        const roomId = multiMatch[1];
+        const response = await authFetch(
+          `/api/multiplayer/rooms/${roomId}/game/update-language`,
+          {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ language: newLanguage }),
+          }
+        );
+        if (!response.ok) {
+          console.error("Failed to update language on multiplayer server");
+        }
+      } else {
+        // Single-player mode
+        const response = await authFetch("/api/game/update-language", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ language: newLanguage }),
+        });
+        if (!response.ok) {
+          console.error("Failed to update language on server");
+        }
       }
     } catch (error) {
       console.error("Error updating language on server:", error);

@@ -65,6 +65,23 @@ export interface Skill {
   displayName?: string;
 }
 
+export interface SceneRoomInfo {
+  sceneRoomId: string;
+  scenarioName: string | null;
+  memberPlayerIds: string[];
+  roundNumber: number;
+  isBattle: boolean;
+  gameDay?: number;
+  timeOfDay?: string;
+}
+
+export interface SceneRoomState {
+  info: SceneRoomInfo;
+  messages: Message[];
+  scrollPosition: number;
+  isLoaded: boolean; // false until turn history is fetched
+}
+
 export interface WebSocketMessage {
   type: string;
   sessionId?: string;

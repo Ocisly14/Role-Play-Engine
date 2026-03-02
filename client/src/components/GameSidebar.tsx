@@ -10,6 +10,15 @@ import ReactMarkdown from "react-markdown";
 import { authFetch } from "../utils/authFetch";
 import { CharacterSheetModal } from "./CharacterSheetModal";
 
+export interface RoomPlayerInfo {
+  characterName: string;
+  hp: number;
+  maxHp: number;
+  san: number;
+  maxSan: number;
+  isCurrentUser: boolean;
+}
+
 interface GameSidebarProps {
   sessionId: string;
   apiBaseUrl?: string;
@@ -18,6 +27,8 @@ interface GameSidebarProps {
   isMobile?: boolean;
   isOpen?: boolean;
   onClose?: () => void;
+  // Multiplayer: other players in the scene room
+  roomPlayers?: RoomPlayerInfo[];
 }
 
 type TabType = "status" | "notes" | "knowledge" | "map";
@@ -125,6 +136,7 @@ export function GameSidebar({
   isMobile = false,
   isOpen = true,
   onClose,
+  roomPlayers,
 }: GameSidebarProps) {
   const { t, i18n } = useTranslation(["game", "common"]);
   const [activeTab, setActiveTab] = useState<TabType>("status");
@@ -484,6 +496,61 @@ export function GameSidebar({
         >
           ×
         </button>
+      )}
+
+      {/* Players Here — multiplayer only */}
+      {roomPlayers && roomPlayers.length > 1 && (
+        <div className="px-3 py-2 border-b border-amber-900/30">
+          <h3 className="text-xs font-semibold text-amber-400/70 uppercase tracking-wider mb-1.5">
+            {t("game:sidebar.playersHere", "Players Here")}
+          </h3>
+          <div className="space-y-1.5">
+            {roomPlayers
+              .filter((p) => !p.isCurrentUser)
+              .map((player) => (
+                <div
+                  key={player.characterName}
+                  className="flex items-center gap-2 px-2 py-1 rounded bg-black/20"
+                >
+                  <span className="text-xs text-amber-200 truncate flex-1 min-w-0">
+                    {player.characterName}
+                  </span>
+                  <div className="flex gap-1.5 flex-shrink-0">
+                    {/* HP bar */}
+                    <div className="flex items-center gap-0.5" title={`HP: ${player.hp}/${player.maxHp}`}>
+                      <span className="text-[10px] text-red-400">HP</span>
+                      <div className="w-10 h-1.5 bg-black/40 rounded-full overflow-hidden">
+                        <div
+                          className="h-full rounded-full transition-all duration-300"
+                          style={{
+                            width: `${Math.max(0, Math.min(100, (player.hp / player.maxHp) * 100))}%`,
+                            backgroundColor:
+                              player.hp / player.maxHp > 0.5
+                                ? "#22c55e"
+                                : player.hp / player.maxHp > 0.25
+                                  ? "#eab308"
+                                  : "#ef4444",
+                          }}
+                        />
+                      </div>
+                    </div>
+                    {/* SAN bar */}
+                    <div className="flex items-center gap-0.5" title={`SAN: ${player.san}/${player.maxSan}`}>
+                      <span className="text-[10px] text-blue-400">SAN</span>
+                      <div className="w-10 h-1.5 bg-black/40 rounded-full overflow-hidden">
+                        <div
+                          className="h-full rounded-full bg-blue-500 transition-all duration-300"
+                          style={{
+                            width: `${Math.max(0, Math.min(100, (player.san / player.maxSan) * 100))}%`,
+                          }}
+                        />
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              ))}
+          </div>
+        </div>
       )}
 
       {/* Tab Headers */}
@@ -1102,7 +1169,7 @@ export function GameSidebar({
                     <h3>{t("game:sidebar.map.macroMap")}</h3>
                     <div className="map-display">
                       <img
-                        src={`${apiBaseUrl}/maps/${gameState.moduleDigest.macroMapPath}`}
+                        src={`/api/maps/${gameState.moduleDigest.macroMapPath}`}
                         alt={t("game:sidebar.map.macroMapAlt")}
                         style={{
                           width: "100%",
