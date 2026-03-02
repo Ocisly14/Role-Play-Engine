@@ -19,6 +19,8 @@ import type { DynamicGameState } from "../../state/index.js";
 export interface TurnInput {
   sessionId: string;
   characterInput: string;
+  /** Optional pre-generated turnId. When omitted a new one is auto-generated. */
+  turnId?: string;
   characterId?: string;
   characterName?: string;
   sceneRoomId?: string;
@@ -94,7 +96,7 @@ export class TurnManager {
    * Create a new turn when character sends input
    */
   async createTurn(input: TurnInput): Promise<string> {
-    const turnId = `turn-${Date.now()}-${randomUUID().slice(0, 8)}`;
+    const turnId = input.turnId ?? `turn-${Date.now()}-${randomUUID().slice(0, 8)}`;
     const turnNumber = this.db.getNextTurnNumber(input.sessionId);
 
     await this.db.createTurn(

@@ -614,6 +614,7 @@ async function triggerMultiplayerGraphCore(
   if (combinedInputForTurn) {
     persistedTurnId = await turnManager.createTurn({
       sessionId: initialState.sessionId,
+      turnId: roundTurnId,
       sceneRoomId,
       characterInput: combinedInputForTurn,
       // Multiplayer: aggregated input, no single character identity.

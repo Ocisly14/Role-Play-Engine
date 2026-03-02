@@ -60,10 +60,6 @@ export interface UseMultiplayerWebSocketParams {
     totalCount: number;
     pendingPlayerNames: string[];
   } | null>>;
-  /** Shared dedup set — both WS and polling add roundTurnIds here */
-  processedRoundsRef?: React.MutableRefObject<Set<string>>;
-  /** Called when WS delivers a round_complete so polling can stop */
-  onRoundComplete?: (roundTurnId: string) => void;
   /** Called when WS reconnects so the caller can re-fetch missed messages */
   onReconnect?: () => void;
 }
@@ -92,8 +88,6 @@ export function useMultiplayerWebSocket({
   setMessagesForRoom,
   currentPlayerId,
   setRoundStatus,
-  processedRoundsRef,
-  onRoundComplete,
   onReconnect,
 }: UseMultiplayerWebSocketParams): void {
   const wsRef = useRef<WebSocket | null>(null);
@@ -118,8 +112,6 @@ export function useMultiplayerWebSocket({
   setRoundStatusRef.current = setRoundStatus;
   const currentPlayerIdRef = useRef(currentPlayerId);
   currentPlayerIdRef.current = currentPlayerId;
-  const onRoundCompleteRef = useRef(onRoundComplete);
-  onRoundCompleteRef.current = onRoundComplete;
   const onReconnectRef = useRef(onReconnect);
   onReconnectRef.current = onReconnect;
 
@@ -259,65 +251,10 @@ export function useMultiplayerWebSocket({
                 break;
 
               case "round_complete": {
-                const roundTurnId = (msg.roundTurnId ?? msg.turnId) as string | undefined;
                 setIsWaiting(false);
                 if (setRoundStatusRef.current) {
                   setRoundStatusRef.current(null);
                 }
-
-                // Dedup: skip if polling already handled this round
-                if (roundTurnId && processedRoundsRef?.current.has(roundTurnId)) {
-                  console.log(`[MP WebSocket] round_complete dedup — ${roundTurnId} already processed by polling`);
-                  break;
-                }
-
-                // Mark as processed so polling won't duplicate
-                if (roundTurnId) {
-                  processedRoundsRef?.current.add(roundTurnId);
-                }
-
-                // Append keeper narrative if present
-                if (msg.keeperNarrative) {
-                  const turnNumber = msg.turnNumber ?? 0;
-                  targetSetMessages(msg.sceneRoomId, (prev) => {
-                    // If streaming already created a message with this turnId, update it
-                    const existingIdx = roundTurnId
-                      ? prev.findIndex((m) => m.turnId === roundTurnId && m.role === "keeper")
-                      : -1;
-                    if (existingIdx >= 0) {
-                      const updated = [...prev];
-                      updated[existingIdx] = {
-                        ...updated[existingIdx],
-                        content: msg.keeperNarrative,
-                        isStreaming: false,
-                        diceRolls: msg.diceRolls,
-                        gameDay: msg.gameDay ?? null,
-                        gameTime: msg.gameTime ?? null,
-                      };
-                      return updated;
-                    }
-                    return [
-                      ...prev,
-                      {
-                        role: "keeper" as const,
-                        content: msg.keeperNarrative,
-                        timestamp: msg.timestamp || new Date().toISOString(),
-                        turnNumber,
-                        turnId: roundTurnId,
-                        gameDay: msg.gameDay ?? null,
-                        gameTime: msg.gameTime ?? null,
-                        diceRolls: msg.diceRolls,
-                      },
-                    ];
-                  });
-                }
-
-                // Notify polling to stop
-                if (roundTurnId) {
-                  onRoundCompleteRef.current?.(roundTurnId);
-                }
-
-                // Trigger sidebar refresh
                 if (onNarrativeCompleteRef.current) {
                   onNarrativeCompleteRef.current();
                 }

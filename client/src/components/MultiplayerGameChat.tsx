@@ -97,9 +97,6 @@ export function MultiplayerGameChat({
   const streamingBufferRef = useRef<Map<string, string>>(new Map());
   const streamingBlockedRef = useRef<Set<string>>(new Set());
 
-  // Dedup ref shared between WS and polling — tracks processed roundTurnIds
-  const processedRoundsRef = useRef<Set<string>>(new Set());
-
   // ── Multi-room tab state ──────────────────────────────
   const {
     activeTabId,
@@ -191,14 +188,6 @@ export function MultiplayerGameChat({
     stopPolling: stopRoundPolling,
   } = useMultiplayerRoundPolling(roomId, sceneRoomId);
 
-  // Called by WS hook when it delivers round_complete — stops polling
-  const handleWsRoundComplete = useCallback(
-    (roundTurnId: string) => {
-      stopRoundPolling();
-    },
-    [stopRoundPolling]
-  );
-
   // Called on WS reconnect — re-fetch turn history to catch missed messages
   const handleWsReconnect = useCallback(async () => {
     if (!sceneRoomId) return;
@@ -255,8 +244,6 @@ export function MultiplayerGameChat({
     setMessagesForRoom,
     currentPlayerId,
     setRoundStatus,
-    processedRoundsRef,
-    onRoundComplete: handleWsRoundComplete,
     onReconnect: handleWsReconnect,
     onSkillSelectionRequired: useCallback(
       (data) => {
@@ -295,40 +282,40 @@ export function MultiplayerGameChat({
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages]);
 
-  // ── Clear dedup ref on sceneRoom change ────────────
-  useEffect(() => {
-    processedRoundsRef.current.clear();
-  }, [sceneRoomId]);
-
-  // ── Handle polling result (fallback for WS) ────────
+  // ── Handle polling result (primary narrative delivery) ────────
   useEffect(() => {
     if (!roundResult || roundResult.status !== "completed") return;
-
     const roundTurnId = roundResult.roundTurnId;
     if (!roundTurnId) return;
 
-    // Dedup: skip if WS already delivered this round
-    if (processedRoundsRef.current.has(roundTurnId)) {
-      console.log(`[MultiplayerGameChat] Polling dedup — ${roundTurnId} already processed by WS`);
-      return;
-    }
-
-    // Mark as processed
-    processedRoundsRef.current.add(roundTurnId);
-
+    stopRoundPolling();
     setIsWaiting(false);
     setIsProcessing(false);
 
-    // Append keeper message if present
     if (roundResult.keeperNarrative) {
       setMessages((prev) => {
-        // Check if a message with this turnId already exists
-        const alreadyExists = prev.some((m) => m.turnId === roundTurnId);
-        if (alreadyExists) return prev;
+        // Case 1: streaming already created a message → update final content
+        const existingIdx = prev.findIndex(
+          (m) => m.turnId === roundTurnId && m.role === "keeper"
+        );
+        if (existingIdx >= 0) {
+          const updated = [...prev];
+          updated[existingIdx] = {
+            ...updated[existingIdx],
+            content: roundResult.keeperNarrative!,
+            isStreaming: false,
+            gameDay: roundResult.gameDay ?? updated[existingIdx].gameDay ?? null,
+            gameTime: roundResult.gameTime ?? updated[existingIdx].gameTime ?? null,
+            diceRolls: roundResult.diceRolls?.length
+              ? roundResult.diceRolls
+              : updated[existingIdx].diceRolls,
+          };
+          return updated;
+        }
 
+        // Case 2: no streaming message → create new
         const turnNumber = roundResult.turnNumber ??
           (prev.length > 0 ? Math.max(...prev.map((m) => m.turnNumber)) + 1 : 1);
-
         return [
           ...prev,
           {
@@ -343,12 +330,15 @@ export function MultiplayerGameChat({
           },
         ];
       });
+
+      setStreamingTurnId((current) =>
+        current === roundTurnId ? null : current
+      );
     }
 
-    // Trigger sidebar refresh + game ending check
     onNarrativeCompleteRef.current?.();
     fetchGameEndingRef.current?.();
-  }, [roundResult, setMessages]);
+  }, [roundResult, setMessages, stopRoundPolling]);
 
   // ── Load turn history on mount ─────────────────────
   useEffect(() => {
