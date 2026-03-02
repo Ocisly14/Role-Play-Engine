@@ -60,13 +60,17 @@ export class WebSocketManager {
         return;
       }
 
-      console.log(`🔌 [WebSocket] Client connected: ${sessionId}${sceneRoomId ? ` sceneRoom=${sceneRoomId}` : ""}`);
+      // For multiplayer, use sessionId:userId as key so multiple players can coexist
+      const isMultiplayer = sessionId.startsWith("multi-");
+      const clientKey = isMultiplayer ? `${sessionId}:${userId}` : sessionId;
 
-      this.handleNewConnection(ws, sessionId);
+      console.log(`🔌 [WebSocket] Client connected: ${clientKey}${sceneRoomId ? ` sceneRoom=${sceneRoomId}` : ""}`);
+
+      this.handleNewConnection(ws, clientKey);
 
       // Register as multiplayer client if sceneRoomId provided
       if (sceneRoomId) {
-        const client = this.clients.get(sessionId);
+        const client = this.clients.get(clientKey);
         if (client) {
           this.registerMultiplayerClient(sceneRoomId, userId, client);
 
@@ -75,9 +79,12 @@ export class WebSocketManager {
             this.registerMultiplayerClientForAllRooms(roomId, userId, client);
           }
 
-          // On close, also remove multiplayer registration
+          // On close, remove multiplayer registration only if this ws is still the current one
           ws.on("close", () => {
-            this.removeMultiplayerClient(sceneRoomId, userId);
+            const current = this.multiplayerClients.get(sceneRoomId)?.get(userId);
+            if (current && current.ws === ws) {
+              this.removeMultiplayerClient(sceneRoomId, userId);
+            }
           });
         }
       }
@@ -182,7 +189,7 @@ export class WebSocketManager {
     email: string
   ): Promise<boolean> {
     // Multiplayer sessions: verify user is a room member
-    if (sessionId.startsWith("mp-session-")) {
+    if (sessionId.startsWith("multi-")) {
       const prisma = getPrismaClient();
       // Find a room whose in-memory state has this sessionId
       // Or just check if user is a member of any multiplayer room
@@ -299,22 +306,27 @@ export class WebSocketManager {
   /**
    * Register a multiplayer client for all active (non-frozen) scene rooms in a game room.
    */
-  public registerMultiplayerClientForAllRooms(
+  public async registerMultiplayerClientForAllRooms(
     roomId: string,
     userId: string,
     client: WSClient
-  ): void {
-    // Dynamic import to avoid circular deps
-    const { multiplayerSessionStore } =
-      require("../../../src/dynamicworldagent/multiplayerState/MultiplayerDynamicGameStateLoader.js");
-    const manager = multiplayerSessionStore.get(roomId);
-    if (!manager) return;
+  ): Promise<void> {
+    try {
+      // Dynamic import to avoid circular deps (ESM — cannot use require)
+      const { multiplayerSessionStore } = await import(
+        "../../../src/dynamicworldagent/multiplayerState/MultiplayerDynamicGameStateLoader.js"
+      );
+      const manager = multiplayerSessionStore.get(roomId);
+      if (!manager) return;
 
-    const state = manager.getState();
-    for (const room of Object.values(state.sceneRooms) as any[]) {
-      if (!room.isFrozen) {
-        this.registerMultiplayerClient(room.sceneRoomId, userId, client);
+      const state = manager.getState();
+      for (const room of Object.values(state.sceneRooms) as any[]) {
+        if (!room.isFrozen) {
+          this.registerMultiplayerClient(room.sceneRoomId, userId, client);
+        }
       }
+    } catch (err) {
+      console.warn("[WebSocket] Failed to register client for all rooms:", err);
     }
   }
 

@@ -130,7 +130,7 @@ export const MultiplayerGamePage: React.FC = () => {
         if (myMember?.characterId) {
           try {
             const charRes = await authFetch(
-              `/api/characters/${myMember.characterId}`
+              `/api/character/${myMember.characterId}`
             );
             const charData = await charRes.json();
             if (charData.success && charData.character?.name) {

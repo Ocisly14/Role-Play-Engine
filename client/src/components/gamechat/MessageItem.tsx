@@ -19,6 +19,8 @@ interface MessageItemProps {
   gameTime?: string | null;
   onAnimationComplete?: () => void;
   bannerType?: "combat_start" | "combat_end";
+  playerName?: string;
+  isSkip?: boolean;
 }
 
 export const MessageItem = React.memo<MessageItemProps>(
@@ -34,6 +36,8 @@ export const MessageItem = React.memo<MessageItemProps>(
     gameTime,
     onAnimationComplete,
     bannerType,
+    playerName,
+    isSkip,
   }) => {
     const { t } = useTranslation("game");
 
@@ -65,6 +69,43 @@ export const MessageItem = React.memo<MessageItemProps>(
             {label}
           </span>
           <div style={{ flex: 1, height: "2px", background: color, opacity: 0.4 }} />
+        </div>
+      );
+    }
+
+    // Other player's message (from WS broadcast): playerName is set
+    const isOtherPlayer = role === "character" && !!playerName;
+
+    if (isOtherPlayer) {
+      // Other player's message — left-aligned, with name label, different bg
+      return (
+        <div className="chat-message character" style={{ alignItems: "flex-start" }}>
+          <div className="message-meta">
+            <span className="sender-name text-blue-700/80">
+              🎭 {playerName}
+            </span>
+            <span className="message-timestamp">
+              {gameTime && gameTime !== ""
+                ? `${t("messages.day")} ${gameDay ?? 1}, ${gameTime}`
+                : new Date(timestamp).toLocaleTimeString("en-US", {
+                    hour: "2-digit",
+                    minute: "2-digit",
+                  })}
+            </span>
+          </div>
+          {isSkip ? (
+            <div className="message-text backdrop-blur-sm border border-slate-200/60 shadow-sm rounded-lg px-[18px] py-[10px] bg-[rgba(200,210,230,0.35)]">
+              <span className="text-slate-500 italic text-sm">
+                {playerName} {t("multiplayer.skippedRound", { defaultValue: "skipped this round" })}
+              </span>
+            </div>
+          ) : content ? (
+            <div className="message-text backdrop-blur-sm border border-blue-200/60 shadow-md rounded-lg px-[18px] py-[14px] bg-[rgba(200,215,240,0.45)]">
+              <ReactMarkdown className="markdown-content">
+                {content}
+              </ReactMarkdown>
+            </div>
+          ) : null}
         </div>
       );
     }
@@ -107,7 +148,13 @@ export const MessageItem = React.memo<MessageItemProps>(
             )}
           </div>
         )}
-        {content && (
+        {isSkip ? (
+          <div className="message-text backdrop-blur-sm border border-slate-200/60 shadow-sm rounded-lg px-[18px] py-[10px] bg-[rgba(232,220,196,0.3)]">
+            <span className="text-slate-500 italic text-sm">
+              {characterName} {t("multiplayer.skippedRound", { defaultValue: "skipped this round" })}
+            </span>
+          </div>
+        ) : content ? (
           <div
             className={`message-text backdrop-blur-sm border border-slate-200 shadow-md rounded-lg px-[18px] py-[14px] ${
               role === "character"
@@ -119,7 +166,7 @@ export const MessageItem = React.memo<MessageItemProps>(
               {content}
             </ReactMarkdown>
           </div>
-        )}
+        ) : null}
       </div>
     );
   }

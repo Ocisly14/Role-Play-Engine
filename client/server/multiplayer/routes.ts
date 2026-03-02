@@ -30,6 +30,7 @@ router.post("/rooms/:roomId/game/update-language", gameController.updateLanguage
 // Turn input collection (Phase 3)
 router.post("/rooms/:roomId/scene-rooms/:sceneRoomId/input", turnController.submitInput);
 router.get("/rooms/:roomId/scene-rooms/:sceneRoomId/round", turnController.getRound);
+router.get("/rooms/:roomId/scene-rooms/:sceneRoomId/round-result", turnController.getRoundResult);
 router.get("/rooms/:roomId/scene-rooms/:sceneRoomId/turns", turnController.getTurnHistory);
 router.get("/rooms/:roomId/scene-rooms/:sceneRoomId/turns/:turnId/status", turnController.getTurnStatus);
 

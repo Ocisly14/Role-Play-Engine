@@ -203,10 +203,14 @@ export async function getTurnHistory(
       },
     });
 
+    // Determine requesting user's character name to distinguish own vs other messages
+    const myCharacterName = state.players[userId]?.characterName ?? null;
+
     // Convert to Message[] format
     const messages: any[] = [];
     for (const turn of turns) {
       if (turn.characterInput) {
+        const isOtherPlayer = myCharacterName && turn.characterName && turn.characterName !== myCharacterName;
         messages.push({
           role: "character",
           content: turn.characterInput,
@@ -216,7 +220,8 @@ export async function getTurnHistory(
           gameDay: turn.gameDay,
           gameTime: turn.gameTime,
           sceneRoomId: turn.sceneRoomId,
-          characterName: turn.characterName,
+          // Set playerName for other players so frontend renders them distinctly
+          ...(isOtherPlayer ? { playerName: turn.characterName } : {}),
         });
       }
       if (turn.keeperNarrative) {
@@ -310,6 +315,140 @@ export async function getTurnStatus(
   } catch (error) {
     console.error("[MultiplayerTurn] getTurnStatus error:", error);
     res.status(500).json({ success: false, error: (error as Error).message });
+  }
+}
+
+/**
+ * GET /api/multiplayer/rooms/:roomId/scene-rooms/:sceneRoomId/round-result?roundNumber=N&wait=true
+ *
+ * Long-polling fallback for receiving round results when WebSocket is unavailable.
+ * If the round has completed, returns the result immediately.
+ * If wait=true, holds the connection checking every 1s for up to 60s.
+ */
+export async function getRoundResult(
+  req: Request,
+  res: Response
+): Promise<void> {
+  try {
+    const { roomId, sceneRoomId } = req.params;
+    const roundNumber = Number(req.query.roundNumber);
+    const shouldWait = req.query.wait === "true";
+
+    if (!Number.isFinite(roundNumber) || roundNumber < 0) {
+      res.status(400).json({ success: false, error: "roundNumber query param is required" });
+      return;
+    }
+
+    const manager = multiplayerSessionStore.get(roomId);
+    if (!manager) {
+      res.status(404).json({ success: false, error: "Game session not found" });
+      return;
+    }
+
+    const sessionId = manager.getState().sessionId;
+    const prisma = getPrismaClient();
+
+    const MAX_WAIT_MS = 60_000;
+    const POLL_INTERVAL_MS = 1_000;
+    const startTime = Date.now();
+
+    const check = async (): Promise<boolean> => {
+      // Check if sceneRoom is frozen (scene split happened)
+      const sceneRoom = manager.getSceneRoom(sceneRoomId);
+      if (sceneRoom?.isFrozen) {
+        res.json({ success: true, status: "scene_changed" });
+        return true;
+      }
+
+      // Check if the round has advanced past the requested roundNumber
+      const currentRoundNumber = sceneRoom?.roundNumber ?? 0;
+      if (currentRoundNumber <= roundNumber) {
+        return false; // Still on the same round — not complete yet
+      }
+
+      // Round advanced — query the latest completed turn for this sceneRoom
+      const turn = await prisma.gameTurn.findFirst({
+        where: { sessionId, sceneRoomId },
+        orderBy: { turnNumber: "desc" },
+        select: {
+          turnId: true,
+          turnNumber: true,
+          keeperNarrative: true,
+          gameDay: true,
+          gameTime: true,
+          completedAt: true,
+          status: true,
+        },
+      });
+
+      if (!turn || turn.status !== "completed") {
+        return false; // Turn exists but not completed yet
+      }
+
+      res.json({
+        success: true,
+        status: "completed",
+        roundTurnId: turn.turnId,
+        keeperNarrative: turn.keeperNarrative ?? null,
+        gameDay: turn.gameDay ?? null,
+        gameTime: turn.gameTime ?? null,
+        turnNumber: turn.turnNumber,
+        diceRolls: [], // Dice rolls are WebSocket-only (not persisted)
+        completedAt: turn.completedAt?.toISOString() ?? null,
+      });
+      return true;
+    };
+
+    // First check — may return immediately
+    if (await check()) return;
+
+    if (!shouldWait) {
+      // No waiting requested — return current status
+      const sceneRoom = manager.getSceneRoom(sceneRoomId);
+      const currentRoundNumber = sceneRoom?.roundNumber ?? 0;
+      const submitted = manager.getRoundInputsForSceneRoom(sceneRoomId).length;
+      const total = sceneRoom?.memberPlayerIds.length ?? 0;
+      res.json({
+        success: true,
+        status: currentRoundNumber <= roundNumber ? "waiting" : "processing",
+        submittedCount: submitted,
+        totalCount: total,
+      });
+      return;
+    }
+
+    // Long-poll loop
+    const interval = setInterval(async () => {
+      try {
+        if (res.writableEnded) {
+          clearInterval(interval);
+          return;
+        }
+        if (await check()) {
+          clearInterval(interval);
+          return;
+        }
+        if (Date.now() - startTime >= MAX_WAIT_MS) {
+          clearInterval(interval);
+          res.json({ success: true, status: "timeout" });
+        }
+      } catch (err) {
+        clearInterval(interval);
+        if (!res.writableEnded) {
+          res.status(500).json({ success: false, error: (err as Error).message });
+        }
+      }
+    }, POLL_INTERVAL_MS);
+
+    // Clean up on client disconnect
+    req.on("close", () => {
+      clearInterval(interval);
+    });
+  } catch (error) {
+    console.error("[MultiplayerTurn] getRoundResult error:", error);
+    if (!res.writableEnded) {
+      res.status(500).json({ success: false, error: (error as Error).message });
+    }
   }
 }
 

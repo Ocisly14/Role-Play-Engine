@@ -406,9 +406,6 @@ export const buildMultiplayerGraph = (
 
       // 2. Scene snapshot generation is now handled by processUnifiedSceneChanges
       //    in the turn service (after all rooms finish their rounds).
-
-      // 3. Check story progression (existing)
-      await directorAgent.checkStoryProgression(m, state.sceneRoomId);
     } catch (e) {
       console.warn("[MP Director] evaluation failed:", e);
     }

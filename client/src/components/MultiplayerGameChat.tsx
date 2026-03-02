@@ -16,6 +16,7 @@ import { useAuth } from "../contexts/AuthContext";
 import { useDiceAnimation } from "../hooks/useDiceAnimation";
 import { useInputCollapse } from "../hooks/useInputCollapse";
 import { useMultiplayerSceneRooms } from "../hooks/useMultiplayerSceneRooms";
+import { useMultiplayerRoundPolling } from "../hooks/useMultiplayerRoundPolling";
 import { useMultiplayerWebSocket } from "../hooks/useMultiplayerWebSocket";
 import { useSceneTransition } from "../hooks/useSceneTransition";
 import { useSkillSelection } from "../hooks/useSkillSelection";
@@ -52,6 +53,7 @@ export function MultiplayerGameChat({
   const [inputValue, setInputValue] = useState("");
   const [isSending, setIsSending] = useState(false);
   const [isWaiting, setIsWaiting] = useState(false);
+  const [isProcessing, setIsProcessing] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
   const [saveMessage, setSaveMessage] = useState<string | null>(null);
   const [isGameEnded, setIsGameEnded] = useState(false);
@@ -76,6 +78,13 @@ export function MultiplayerGameChat({
   const [restCustomHours, setRestCustomHours] = useState("");
   const [restShowCustomInput, setRestShowCustomInput] = useState(false);
 
+  // ── Round progress banner state ──
+  const [roundStatus, setRoundStatus] = useState<{
+    submittedCount: number;
+    totalCount: number;
+    pendingPlayerNames: string[];
+  } | null>(null);
+
   // Messages
   const [messages, setMessages] = useState<Message[]>([]);
   const [streamingTurnId, setStreamingTurnId] = useState<string | null>(null);
@@ -87,6 +96,9 @@ export function MultiplayerGameChat({
   const fetchGameEndingRef = useRef<(() => Promise<void>) | null>(null);
   const streamingBufferRef = useRef<Map<string, string>>(new Map());
   const streamingBlockedRef = useRef<Set<string>>(new Set());
+
+  // Dedup ref shared between WS and polling — tracks processed roundTurnIds
+  const processedRoundsRef = useRef<Set<string>>(new Set());
 
   // ── Multi-room tab state ──────────────────────────────
   const {
@@ -172,7 +184,55 @@ export function MultiplayerGameChat({
   const { user: authUser } = useAuth();
   const currentPlayerId = authUser?.id ?? null;
 
+  // ── Round-result polling (fallback for WS) ─────────
+  const {
+    roundResult,
+    startPolling: startRoundPolling,
+    stopPolling: stopRoundPolling,
+  } = useMultiplayerRoundPolling(roomId, sceneRoomId);
+
+  // Called by WS hook when it delivers round_complete — stops polling
+  const handleWsRoundComplete = useCallback(
+    (roundTurnId: string) => {
+      stopRoundPolling();
+    },
+    [stopRoundPolling]
+  );
+
+  // Called on WS reconnect — re-fetch turn history to catch missed messages
+  const handleWsReconnect = useCallback(async () => {
+    if (!sceneRoomId) return;
+    try {
+      const res = await authFetch(
+        `/api/multiplayer/rooms/${roomId}/scene-rooms/${sceneRoomId}/turns`
+      );
+      const data = await res.json();
+      if (data.success && data.messages) {
+        setMessages(data.messages as Message[]);
+      }
+    } catch {
+      // Non-critical — WS may deliver the updates anyway
+    }
+    // Also refresh game state
+    if (fetchGameEndingRef.current) {
+      fetchGameEndingRef.current();
+    }
+  }, [roomId, sceneRoomId, setMessages]);
+
   // ── WebSocket ──────────────────────────────────────
+  // Wrap setIsWaiting so we can also track isProcessing (keeper actually working)
+  // The WS hook calls setIsWaiting(true) for round_processing, rest_frozen, time_drift_blocked
+  // We only want the "keeper thinking" indicator for round_processing, not for "waiting for players"
+  const wrappedSetIsWaiting: React.Dispatch<React.SetStateAction<boolean>> = useCallback(
+    (value) => {
+      setIsWaiting(value);
+      // When the WS hook sets waiting=true due to round_processing, isProcessing should also be true
+      // When it clears (round_complete/error/stream_end), isProcessing should also clear
+      setIsProcessing(value);
+    },
+    []
+  );
+
   useMultiplayerWebSocket({
     sessionId,
     sceneRoomId,
@@ -180,7 +240,7 @@ export function MultiplayerGameChat({
     characterName,
     messagesRef,
     setMessages,
-    setIsWaiting,
+    setIsWaiting: wrappedSetIsWaiting,
     setIsGameEnded,
     onNarrativeComplete,
     streamingBlockedRef,
@@ -193,6 +253,11 @@ export function MultiplayerGameChat({
     onSceneRoomSplit: handleSceneRoomSplit,
     onSceneRoomMerged: handleSceneRoomMerged,
     setMessagesForRoom,
+    currentPlayerId,
+    setRoundStatus,
+    processedRoundsRef,
+    onRoundComplete: handleWsRoundComplete,
+    onReconnect: handleWsReconnect,
     onSkillSelectionRequired: useCallback(
       (data) => {
         if (!currentPlayerId) return;
@@ -229,6 +294,61 @@ export function MultiplayerGameChat({
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages]);
+
+  // ── Clear dedup ref on sceneRoom change ────────────
+  useEffect(() => {
+    processedRoundsRef.current.clear();
+  }, [sceneRoomId]);
+
+  // ── Handle polling result (fallback for WS) ────────
+  useEffect(() => {
+    if (!roundResult || roundResult.status !== "completed") return;
+
+    const roundTurnId = roundResult.roundTurnId;
+    if (!roundTurnId) return;
+
+    // Dedup: skip if WS already delivered this round
+    if (processedRoundsRef.current.has(roundTurnId)) {
+      console.log(`[MultiplayerGameChat] Polling dedup — ${roundTurnId} already processed by WS`);
+      return;
+    }
+
+    // Mark as processed
+    processedRoundsRef.current.add(roundTurnId);
+
+    setIsWaiting(false);
+    setIsProcessing(false);
+
+    // Append keeper message if present
+    if (roundResult.keeperNarrative) {
+      setMessages((prev) => {
+        // Check if a message with this turnId already exists
+        const alreadyExists = prev.some((m) => m.turnId === roundTurnId);
+        if (alreadyExists) return prev;
+
+        const turnNumber = roundResult.turnNumber ??
+          (prev.length > 0 ? Math.max(...prev.map((m) => m.turnNumber)) + 1 : 1);
+
+        return [
+          ...prev,
+          {
+            role: "keeper" as const,
+            content: roundResult.keeperNarrative!,
+            timestamp: roundResult.completedAt || new Date().toISOString(),
+            turnNumber,
+            turnId: roundTurnId,
+            gameDay: roundResult.gameDay ?? null,
+            gameTime: roundResult.gameTime ?? null,
+            diceRolls: roundResult.diceRolls,
+          },
+        ];
+      });
+    }
+
+    // Trigger sidebar refresh + game ending check
+    onNarrativeCompleteRef.current?.();
+    fetchGameEndingRef.current?.();
+  }, [roundResult, setMessages]);
 
   // ── Load turn history on mount ─────────────────────
   useEffect(() => {
@@ -399,8 +519,12 @@ export function MultiplayerGameChat({
       if (!data.success) throw new Error(data.error || "Failed to send");
 
       setSelectedSkill("");
-      if (data.status === "waiting") {
+      if (data.status === "waiting" || data.status === "processing") {
         setIsWaiting(true);
+        // Start polling as fallback for WS
+        if (typeof data.roundNumber === "number") {
+          startRoundPolling(data.roundNumber);
+        }
       }
       setIsSending(false);
     } catch (err) {
@@ -438,6 +562,7 @@ export function MultiplayerGameChat({
     setMessages,
     setSelectedSkill,
     setIsSkillPickerOpen,
+    startRoundPolling,
   ]);
 
   // ── Skip ───────────────────────────────────────────
@@ -459,8 +584,11 @@ export function MultiplayerGameChat({
       );
       const data = await res.json();
       if (!data.success) throw new Error(data.error || "Failed to skip");
-      if (data.status === "waiting") {
+      if (data.status === "waiting" || data.status === "processing") {
         setIsWaiting(true);
+        if (typeof data.roundNumber === "number") {
+          startRoundPolling(data.roundNumber);
+        }
       }
       setIsSending(false);
     } catch (err) {
@@ -468,7 +596,7 @@ export function MultiplayerGameChat({
       setIsSending(false);
       alert((err as Error).message);
     }
-  }, [isSending, isWaiting, isGameEnded, roomId, sceneRoomId, characterId, language]);
+  }, [isSending, isWaiting, isGameEnded, roomId, sceneRoomId, characterId, language, startRoundPolling]);
 
   // ── Key handler ────────────────────────────────────
   const handleKeyDown = useCallback(
@@ -528,8 +656,11 @@ export function MultiplayerGameChat({
         if (!data.success) throw new Error(data.error || "Failed to send rest action");
 
         setSelectedSkill("");
-        if (data.status === "waiting") {
+        if (data.status === "waiting" || data.status === "processing") {
           setIsWaiting(true);
+          if (typeof data.roundNumber === "number") {
+            startRoundPolling(data.roundNumber);
+          }
         }
       } catch (err) {
         console.error("[handleRest] Error:", err);
@@ -566,6 +697,7 @@ export function MultiplayerGameChat({
       setMessages,
       setSelectedSkill,
       setIsSkillPickerOpen,
+      startRoundPolling,
     ]
   );
 
@@ -664,14 +796,32 @@ export function MultiplayerGameChat({
         pendingDiceRolls={pendingDiceRolls}
         diceAnimationCompleted={diceAnimationCompleted}
         handleDiceAnimationComplete={handleDiceAnimationComplete}
-        isSending={isSending}
-        isPolling={isWaiting}
+        isSending={false}
+        isPolling={isProcessing}
         streamingTurnId={streamingTurnId}
         error={null}
         messagesEndRef={messagesEndRef}
         isSceneChanging={isSceneChanging}
         isInputCollapsed={isInputCollapsed}
       />
+
+      {/* Round progress banner */}
+      {roundStatus && roundStatus.submittedCount < roundStatus.totalCount && (
+        <div className="mx-2 mb-1 px-4 py-2 rounded-lg bg-amber-900/40 border border-amber-700/50 backdrop-blur-sm text-center">
+          <span className="text-amber-200 text-sm font-medium">
+            {roundStatus.submittedCount}/{roundStatus.totalCount}{" "}
+            {t("multiplayer.playersSubmitted", {
+              defaultValue: "players submitted",
+            })}
+          </span>
+          {roundStatus.pendingPlayerNames.length > 0 && (
+            <span className="text-amber-400/70 text-sm ml-2">
+              — {t("multiplayer.waitingFor", { defaultValue: "Waiting for:" })}{" "}
+              {roundStatus.pendingPlayerNames.join(", ")}
+            </span>
+          )}
+        </div>
+      )}
 
       {isViewingOwnRoom ? (
         <InputArea

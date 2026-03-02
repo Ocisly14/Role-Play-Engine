@@ -17,6 +17,8 @@ export interface Message {
   gameDay?: number | null;
   gameTime?: string | null;
   bannerType?: "combat_start" | "combat_end";
+  playerName?: string;
+  isSkip?: boolean;
 }
 
 export interface GameEndingInfo {

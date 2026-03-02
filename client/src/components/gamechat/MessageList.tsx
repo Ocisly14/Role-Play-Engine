@@ -82,6 +82,8 @@ export const MessageList = React.memo<MessageListProps>(
             gameTime={msg.gameTime}
             onAnimationComplete={undefined}
             bannerType={msg.bannerType}
+            playerName={msg.playerName}
+            isSkip={msg.isSkip}
           />
         ))}
 
