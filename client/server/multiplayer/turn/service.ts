@@ -278,6 +278,47 @@ export async function submitRoundInput(
     console.warn("[MP Turn] Failed to persist round input to DB:", e);
   }
 
+  // 2b. Broadcast player_input_submitted so other players see it in real-time
+  try {
+    const wsManager = WebSocketManager.getInstance();
+    if (wsManager) {
+      const clients = wsManager.getMultiplayerClients(sceneRoomId);
+      const playerName =
+        manager.getState().players[userId]?.characterName ?? "Unknown";
+      const allMemberIds = sceneRoom.memberPlayerIds;
+      const currentRoundInputs =
+        manager.getRoundInputsForSceneRoom(sceneRoomId);
+      const submittedPlayerIds = new Set(
+        currentRoundInputs.map((i) => i.playerId)
+      );
+      const pendingPlayerNames = allMemberIds
+        .filter((id) => !submittedPlayerIds.has(id))
+        .map(
+          (id) =>
+            manager.getState().players[id]?.characterName ?? "Unknown"
+        );
+
+      notifySceneRoom(sceneRoomId, clients, {
+        type: "player_input_submitted",
+        sceneRoomId,
+        playerId: userId,
+        playerName,
+        characterId: inputData.characterId,
+        content:
+          inputData.inputType === "skip"
+            ? ""
+            : (inputData.content ?? ""),
+        inputType: inputData.inputType,
+        submittedCount: submittedPlayerIds.size,
+        totalCount: allMemberIds.length,
+        pendingPlayerNames,
+        timestamp: new Date().toISOString(),
+      });
+    }
+  } catch (e) {
+    console.warn("[MP Turn] Failed to broadcast player_input_submitted:", e);
+  }
+
   // 3. Check if all players have submitted
   const roundInputs = manager.getRoundInputsForSceneRoom(sceneRoomId);
   const submittedCount = roundInputs.length;
