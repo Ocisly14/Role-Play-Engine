@@ -332,18 +332,12 @@ export async function submitRoundInput(
       storedLang === "en" || storedLang === "zh" ? storedLang : (inputData.language ?? "zh");
     const roundTurnId = randomUUID();
 
-    // Set drain callback: runs unified scene processing ONCE after ALL
-    // queued graph tasks for this roomId complete (count reaches 0).
-    roomProcessingQueue.setDrainCallback(roomId, async () => {
-      const latestManager = multiplayerSessionStore.get(roomId);
-      if (latestManager) {
-        await processUnifiedSceneChanges(roomId, latestManager, db);
-      }
-    });
-
     // Enqueue graph execution — tasks for the same roomId run sequentially,
     // preventing concurrent state mutations.
     // Two-phase commit: run orchestrator pre-check first to detect skill selection needs.
+    // NOTE: drain callback is set INSIDE the task, only when the graph will actually run.
+    // This prevents processUnifiedSceneChanges from firing prematurely when skill
+    // selection is pending (the task returns early without running the graph).
     roomProcessingQueue
       .enqueue(roomId, async () => {
         const currentManager = multiplayerSessionStore.get(roomId);
@@ -413,7 +407,9 @@ export async function submitRoundInput(
                 });
               }
 
-              return; // Do NOT trigger graph yet — wait for skill selections
+              // Do NOT set drain callback — graph hasn't run yet.
+              // resolveSkillSelection will set the drain callback when it triggers the graph.
+              return;
             } else {
               // No skill selection needed — cache orchestrator result for graph reuse
               const sr = currentManager.getSceneRoom(sceneRoomId);
@@ -435,7 +431,15 @@ export async function submitRoundInput(
           }
         }
 
-        // No skill selection needed — proceed with full graph execution
+        // No skill selection needed — set drain callback and proceed with full graph execution.
+        // Drain runs processUnifiedSceneChanges ONCE after ALL queued tasks complete (count → 0).
+        roomProcessingQueue.setDrainCallback(roomId, async () => {
+          const latestManager = multiplayerSessionStore.get(roomId);
+          if (latestManager) {
+            await processUnifiedSceneChanges(roomId, latestManager, db);
+          }
+        });
+
         await triggerMultiplayerGraphCore(
           db,
           roomId,
@@ -639,7 +643,7 @@ async function triggerMultiplayerGraphCore(
     });
   }
 
-  const stream = buildStreamHandlers(sceneRoomId, roundTurnId);
+  const stream = buildStreamHandlers(sceneRoomId, roundTurnId, roomId);
   const graph = buildMultiplayerGraph(db);
 
   const graphState = {
@@ -773,7 +777,7 @@ async function triggerMultiplayerGraphCore(
           checkpointId: `auto-${randomUUID()}`,
           roomId,
           name: `[Auto] ${generateMultiplayerCheckpointName(cpManager)}`,
-          payload: JSON.stringify(payload),
+          payload: payload as any,
           createdBy: "system",
         },
       });
@@ -1468,12 +1472,24 @@ async function handleTimeBubbleMerges(
 // Streaming handlers for narrative deltas
 // =============================================
 
-function buildStreamHandlers(sceneRoomId: string, roundTurnId: string) {
+function buildStreamHandlers(sceneRoomId: string, roundTurnId: string, roomId?: string) {
   const modelProvider = (process.env.MODEL_PROVIDER || "").toLowerCase();
   const enableStreaming = modelProvider === "google";
   const wsManager = WebSocketManager.getInstance();
 
   if (!wsManager || !enableStreaming) return undefined;
+
+  /** Resolve current gameDay/gameTime from the live manager state. */
+  const getTimeMeta = () => {
+    if (!roomId) return { gameDay: null, gameTime: null };
+    const mgr = multiplayerSessionStore.get(roomId);
+    if (!mgr) return { gameDay: null, gameTime: null };
+    const sr = mgr.getSceneRoom(sceneRoomId);
+    return {
+      gameDay: sr?.gameDay ?? mgr.getState().gameDay ?? null,
+      gameTime: sr?.timeOfDay ?? mgr.getState().timeOfDay ?? null,
+    };
+  };
 
   let pending = "";
   let started = false;
@@ -1537,7 +1553,16 @@ function buildStreamHandlers(sceneRoomId: string, roundTurnId: string) {
     },
     onDiceRolls: (diceRolls: Array<Record<string, unknown>>) => {
       if (diceRolls.length > 0) {
-        send({ type: "keeper_dice_rolls", roundTurnId, sceneRoomId, diceRolls, timestamp: new Date().toISOString() });
+        const tm = getTimeMeta();
+        send({
+          type: "keeper_dice_rolls",
+          roundTurnId,
+          sceneRoomId,
+          diceRolls,
+          timestamp: new Date().toISOString(),
+          gameDay: tm.gameDay,
+          gameTime: tm.gameTime,
+        });
       }
     },
   };

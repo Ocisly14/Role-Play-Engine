@@ -559,6 +559,20 @@ export function MultiplayerGameChat({
   const handleSkip = useCallback(async () => {
     if (isSending || isWaiting || isGameEnded) return;
     setIsSending(true);
+
+    const nextTurnNumber =
+      messages.length > 0
+        ? Math.max(...messages.map((m) => m.turnNumber)) + 1
+        : 1;
+    const skipMessage: Message = {
+      role: "character" as const,
+      content: "",
+      timestamp: new Date().toISOString(),
+      turnNumber: nextTurnNumber,
+      isSkip: true,
+    };
+    setMessages((prev) => [...prev, skipMessage]);
+
     try {
       const res = await authFetch(
         `/api/multiplayer/rooms/${roomId}/scene-rooms/${sceneRoomId}/input`,
@@ -584,9 +598,20 @@ export function MultiplayerGameChat({
     } catch (err) {
       console.error("[MultiplayerGameChat] Skip failed:", err);
       setIsSending(false);
+      // Remove optimistic skip message on failure
+      setMessages((prev) =>
+        prev.filter(
+          (msg) =>
+            !(
+              msg.role === "character" &&
+              msg.isSkip === true &&
+              msg.turnNumber === nextTurnNumber
+            )
+        )
+      );
       alert((err as Error).message);
     }
-  }, [isSending, isWaiting, isGameEnded, roomId, sceneRoomId, characterId, language, startRoundPolling]);
+  }, [isSending, isWaiting, isGameEnded, messages, roomId, sceneRoomId, characterId, language, setMessages, startRoundPolling]);
 
   // ── Key handler ────────────────────────────────────
   const handleKeyDown = useCallback(
@@ -842,7 +867,7 @@ export function MultiplayerGameChat({
           handleKeyDown={handleKeyDown}
           onOpenRestModal={openRestModal}
           onSkip={handleSkip}
-          isWaitingForOthers={isWaiting}
+          isWaitingForOthers={isWaiting && !isProcessing}
         />
       ) : (
         <div className="px-4 py-2.5 bg-black/40 backdrop-blur-sm border-t border-amber-900/30 text-center">

@@ -4,7 +4,7 @@
  * Processes one sceneRoom's round at a time.
  * All player inputs must be collected before the graph runs.
  *
- * Pipeline: entry → orchestrator → memory → action → character → director → keeper
+ * Pipeline: entry → orchestrator → memory → action → director → keeper
  * Combat:   entry → memory → combatActionA → [combatActionB] → battleKeeper → gameEndCheck
  *
  * No isSimulatedQuery, no simulatedQueryCount, no messages[].
@@ -17,13 +17,13 @@ import type {
 } from "../../shared/agents/memory/database/index.js";
 import { ScenarioLoader } from "../../shared/agents/memory/scenarioloader/index.js";
 import type { ActionResult, GameEndingInfo } from "../../shared/state/index.js";
+import { buildDiceRollInfos } from "../../shared/state/index.js";
 import {
   MultiplayerDynamicGameStateManager,
 } from "../multiplayerState/MultiplayerDynamicGameState.js";
 import { generateSceneRoomImage } from "../multiplayerVisual/sceneImage.js";
 import type { MultiplayerDynamicGameState } from "../multiplayerState/MultiplayerDynamicGameState.js";
 import { ActionAgent } from "../multiplayerAgent/action/actionAgent.js";
-import { CharacterAgent } from "../multiplayerAgent/character/characterAgent.js";
 import { BattleKeeperAgent } from "../multiplayerAgent/combat/battleKeeperAgent.js";
 import { CombatActionAgentA } from "../multiplayerAgent/combat/combatActionAgentA.js";
 import { CombatActionAgentB } from "../multiplayerAgent/combat/combatActionAgentB.js";
@@ -69,7 +69,6 @@ export const buildMultiplayerGraph = (
 
   const orchestrator = new MultiplayerOrchestratorAgent();
   const actionAgent = new ActionAgent(scenarioLoader);
-  const characterAgent = new CharacterAgent();
   const keeperAgent = new KeeperAgent();
   const directorAgent = new DirectorAgent(scenarioLoader, db);
   const heartbeatAgent = new HeartbeatAgent();
@@ -344,44 +343,33 @@ export const buildMultiplayerGraph = (
     return { ...state, dynamicGameState: m.getState() };
   });
 
-  graph.addEdge("action" as any, "character" as any);
-
-  // ---- CHARACTER ----
-
-  graph.addNode("character", async (state: MultiplayerGraphState) => {
-    console.log("👥 [MP Character] Determining NPC responses...");
-    const m = mgr(state);
-    const sceneRoom = m.getSceneRoom(state.sceneRoomId);
-    if (!sceneRoom) return state;
-
-    const language =
-      state.language === "en" || state.language === "zh" ? state.language : "zh";
-
-    try {
-      const npcAnalyses = await characterAgent.analyzeNPCResponses(
-        {},
-        m,
-        state.sceneRoomId,
-        language
-      );
-      // Store NPC response analyses
-      const scr = m.getSceneRoom(state.sceneRoomId);
-      if (scr && Array.isArray(npcAnalyses)) {
-        m.updateSceneRoom(state.sceneRoomId, {
-          temporaryInfo: {
-            ...scr.temporaryInfo,
-            npcResponseAnalyses: npcAnalyses,
-          },
-        });
+  // Route from action: if combat just started this turn, go to combatActionB;
+  // otherwise normal pipeline → director (same as single-player)
+  graph.addConditionalEdges(
+    "action" as any,
+    (state: MultiplayerGraphState) => {
+      const scr = state.dynamicGameState.sceneRooms[state.sceneRoomId];
+      if (
+        scr?.isBattle &&
+        scr?.combatState?.round === 1 &&
+        scr?.combatState?.pendingNpcActions === null
+      ) {
+        const justEnteredCombat =
+          scr?.temporaryInfo?.contextualData?.justEnteredCombat === true;
+        if (justEnteredCombat) {
+          console.log(
+            "🔀 [MP Action Router] → combatActionB (combat just started, NPC first-round actions)"
+          );
+          return "combatActionB";
+        }
       }
-    } catch (e) {
-      console.warn("[MP Character] NPC analysis failed:", e);
+      return "director";
+    },
+    {
+      combatActionB: "combatActionB" as any,
+      director: "director" as any,
     }
-
-    return { ...state, dynamicGameState: m.getState() };
-  });
-
-  graph.addEdge("character" as any, "director" as any);
+  );
 
   // ---- DIRECTOR ----
 
@@ -736,15 +724,8 @@ export const buildMultiplayerGraph = (
       }
 
       // Extract dice rolls from action results and stream to clients
-      const actionResults = sceneRoom.temporaryInfo.actionResults ?? [];
-      const diceRollInfos: import("../../shared/state/index.js").DiceRollInfo[] = actionResults.flatMap((ar: any) =>
-        (ar.diceRolls ?? []).map((d: any) => ({
-          character: ar.character ?? "unknown",
-          roll: d.roll ?? `${d.skillName ?? d.skill ?? "unknown"}: ${d.rolledValue ?? d.rolled ?? "?"}/${d.targetValue ?? d.target ?? "?"}`,
-          skill: d.skill ?? d.skillName ?? undefined,
-          success: d.success ?? d.result ?? undefined,
-        }))
-      );
+      const actionResults = (sceneRoom.temporaryInfo.actionResults ?? []) as ActionResult[];
+      const diceRollInfos = buildDiceRollInfos(actionResults);
       if (diceRollInfos.length > 0) {
         m.setContextualData(state.sceneRoomId, "diceRolls", diceRollInfos);
         state.stream?.onDiceRolls?.(diceRollInfos);

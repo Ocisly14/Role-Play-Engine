@@ -104,6 +104,38 @@ export async function getRound(req: Request, res: Response): Promise<void> {
 }
 
 /**
+ * Split a combined multiplayer input string ("Name: content\nName2: content2")
+ * back into individual {name, content} entries.
+ * Uses known player names as delimiters to handle multiline player content.
+ */
+function splitCombinedInput(
+  combined: string,
+  knownNames: string[]
+): Array<{ name: string; content: string }> {
+  const lines = combined.split("\n");
+  const entries: Array<{ name: string; content: string }> = [];
+  let current: { name: string; content: string } | null = null;
+
+  for (const line of lines) {
+    let matched = false;
+    for (const name of knownNames) {
+      if (line.startsWith(`${name}: `)) {
+        if (current) entries.push(current);
+        current = { name, content: line.slice(name.length + 2) };
+        matched = true;
+        break;
+      }
+    }
+    if (!matched && current) {
+      // Continuation of previous player's multiline content
+      current.content += "\n" + line;
+    }
+  }
+  if (current) entries.push(current);
+  return entries;
+}
+
+/**
  * GET /api/multiplayer/rooms/:roomId/scene-rooms/:sceneRoomId/turns
  *
  * Returns conversation history for a scene room as Message[].
@@ -206,23 +238,62 @@ export async function getTurnHistory(
     // Determine requesting user's character name to distinguish own vs other messages
     const myCharacterName = state.players[userId]?.characterName ?? null;
 
+    // Collect known player character names for splitting combined multiplayer inputs
+    const knownPlayerNames = Object.values(state.players)
+      .map((p) => p.characterName)
+      .filter(Boolean) as string[];
+
     // Convert to Message[] format
     const messages: any[] = [];
     for (const turn of turns) {
       if (turn.characterInput) {
-        const isOtherPlayer = myCharacterName && turn.characterName && turn.characterName !== myCharacterName;
-        messages.push({
-          role: "character",
-          content: turn.characterInput,
-          timestamp: turn.startedAt?.toISOString() ?? new Date().toISOString(),
-          turnNumber: turn.turnNumber,
-          turnId: turn.turnId,
-          gameDay: turn.gameDay,
-          gameTime: turn.gameTime,
-          sceneRoomId: turn.sceneRoomId,
-          // Set playerName for other players so frontend renders them distinctly
-          ...(isOtherPlayer ? { playerName: turn.characterName } : {}),
-        });
+        // Multiplayer rounds store combined input ("Name: content\nName2: content2")
+        // with characterName = null.  Split them back into individual messages.
+        if (!turn.characterName && knownPlayerNames.length > 1) {
+          const entries = splitCombinedInput(turn.characterInput, knownPlayerNames);
+          if (entries.length > 1) {
+            // Successfully split — emit one message per player
+            for (const entry of entries) {
+              const isOtherPlayer = myCharacterName && entry.name !== myCharacterName;
+              messages.push({
+                role: "character",
+                content: entry.content,
+                timestamp: turn.startedAt?.toISOString() ?? new Date().toISOString(),
+                turnNumber: turn.turnNumber,
+                turnId: turn.turnId,
+                gameDay: turn.gameDay,
+                gameTime: turn.gameTime,
+                sceneRoomId: turn.sceneRoomId,
+                ...(isOtherPlayer ? { playerName: entry.name } : {}),
+              });
+            }
+          } else {
+            // Could not split — fall back to single message
+            messages.push({
+              role: "character",
+              content: turn.characterInput,
+              timestamp: turn.startedAt?.toISOString() ?? new Date().toISOString(),
+              turnNumber: turn.turnNumber,
+              turnId: turn.turnId,
+              gameDay: turn.gameDay,
+              gameTime: turn.gameTime,
+              sceneRoomId: turn.sceneRoomId,
+            });
+          }
+        } else {
+          const isOtherPlayer = myCharacterName && turn.characterName && turn.characterName !== myCharacterName;
+          messages.push({
+            role: "character",
+            content: turn.characterInput,
+            timestamp: turn.startedAt?.toISOString() ?? new Date().toISOString(),
+            turnNumber: turn.turnNumber,
+            turnId: turn.turnId,
+            gameDay: turn.gameDay,
+            gameTime: turn.gameTime,
+            sceneRoomId: turn.sceneRoomId,
+            ...(isOtherPlayer ? { playerName: turn.characterName } : {}),
+          });
+        }
       }
       if (turn.keeperNarrative) {
         messages.push({

@@ -168,12 +168,14 @@ export const MultiplayerGamePage: React.FC = () => {
               .map((pid: string) => {
                 const p = data.players[pid];
                 if (!p) return null;
+                const san = p.profile?.status?.sanity ?? 0;
                 return {
                   characterName: p.characterName || "Unknown",
                   hp: p.profile?.status?.hp ?? 0,
                   maxHp: p.profile?.status?.maxHp ?? 1,
-                  san: p.profile?.status?.sanity ?? 0,
+                  san,
                   maxSan: p.profile?.status?.maxSanity ?? 1,
+                  initialSan: p.profile?.attributes?.POW ?? (san || 1),
                   isCurrentUser: pid === currentUserId,
                 };
               })

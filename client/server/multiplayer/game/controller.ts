@@ -3,6 +3,29 @@ import { DatabaseManager } from "../../core/DatabaseManager.js";
 import { multiplayerSessionStore } from "../../../../src/dynamicworldagent/multiplayerState/MultiplayerDynamicGameStateLoader.js";
 import { getPrismaClient } from "../../../../src/shared/agents/memory/database/prismaClient.js";
 import { initMultiplayerGame } from "./service.js";
+import { restoreRoomFromCheckpoint } from "../checkpoint/controller.js";
+import type { MultiplayerDynamicGameStateManager } from "../../../../src/dynamicworldagent/multiplayerState/MultiplayerDynamicGameState.js";
+
+/**
+ * Try to auto-restore a room's in-memory state from its latest checkpoint.
+ * Returns the restored manager, or null if no checkpoint is available.
+ */
+async function tryAutoRestore(roomId: string): Promise<MultiplayerDynamicGameStateManager | null> {
+  const prisma = getPrismaClient();
+  const latestCheckpoint = await prisma.multiplayerCheckpoint.findFirst({
+    where: { roomId },
+    orderBy: { createdAt: "desc" },
+    select: { checkpointId: true, payload: true, name: true },
+  });
+
+  if (!latestCheckpoint) return null;
+
+  const result = await restoreRoomFromCheckpoint(roomId, latestCheckpoint);
+  console.log(
+    `[MultiplayerGame] Auto-restored room ${roomId} from checkpoint "${latestCheckpoint.name}"`
+  );
+  return result.manager;
+}
 
 /**
  * POST /api/multiplayer/rooms/:roomId/game/init
@@ -39,7 +62,17 @@ export async function getGameState(req: Request, res: Response): Promise<void> {
   try {
     const { roomId } = req.params;
 
-    const manager = multiplayerSessionStore.get(roomId);
+    let manager = multiplayerSessionStore.get(roomId);
+
+    // Auto-restore: if store is empty after server restart, try latest checkpoint
+    if (!manager) {
+      try {
+        manager = await tryAutoRestore(roomId) ?? undefined;
+      } catch (err) {
+        console.error("[MultiplayerGame] Auto-restore failed:", err);
+      }
+    }
+
     if (!manager) {
       res.status(404).json({ success: false, error: "Game not initialised for this room" });
       return;
@@ -84,6 +117,7 @@ export async function getGameState(req: Request, res: Response): Promise<void> {
           characterName: p.characterName,
           profile: {
             status: p.profile.status,
+            attributes: p.profile.attributes,
           },
         }])
       ),
@@ -103,7 +137,17 @@ export async function getPlayerState(req: Request, res: Response): Promise<void>
     const userId = req.user!.userId;
     const { roomId } = req.params;
 
-    const manager = multiplayerSessionStore.get(roomId);
+    let manager = multiplayerSessionStore.get(roomId);
+
+    // Auto-restore: if store is empty after server restart, try latest checkpoint
+    if (!manager) {
+      try {
+        manager = await tryAutoRestore(roomId) ?? undefined;
+      } catch (err) {
+        console.error("[MultiplayerGame] Auto-restore failed:", err);
+      }
+    }
+
     if (!manager) {
       res.status(404).json({ success: false, error: "Game not initialised for this room" });
       return;

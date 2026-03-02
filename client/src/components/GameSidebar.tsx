@@ -16,6 +16,8 @@ export interface RoomPlayerInfo {
   maxHp: number;
   san: number;
   maxSan: number;
+  /** Initial SAN (= POW attribute). Used as the "full bar" denominator. */
+  initialSan: number;
   isCurrentUser: boolean;
 }
 
@@ -61,6 +63,7 @@ interface CharacterStatus {
 interface CharacterProfile {
   id: string;
   name: string;
+  attributes?: Record<string, number>;
   status: CharacterStatus;
   skills: Record<string, number>;
   occupation?: string;
@@ -500,55 +503,88 @@ export function GameSidebar({
 
       {/* Players Here — multiplayer only */}
       {roomPlayers && roomPlayers.length > 1 && (
-        <div className="px-3 py-2 border-b border-amber-900/30">
-          <h3 className="text-xs font-semibold text-amber-400/70 uppercase tracking-wider mb-1.5">
+        <div className="px-3 py-2.5 border-b border-amber-900/30">
+          <h3 className="text-[10px] font-semibold text-amber-400/60 uppercase tracking-widest mb-2">
             {t("game:sidebar.playersHere", "Players Here")}
           </h3>
-          <div className="space-y-1.5">
+          <div className="space-y-1">
             {roomPlayers
               .filter((p) => !p.isCurrentUser)
-              .map((player) => (
-                <div
-                  key={player.characterName}
-                  className="flex items-center gap-2 px-2 py-1 rounded bg-black/20"
-                >
-                  <span className="text-xs text-amber-200 truncate flex-1 min-w-0">
-                    {player.characterName}
-                  </span>
-                  <div className="flex gap-1.5 flex-shrink-0">
-                    {/* HP bar */}
-                    <div className="flex items-center gap-0.5" title={`HP: ${player.hp}/${player.maxHp}`}>
-                      <span className="text-[10px] text-red-400">HP</span>
-                      <div className="w-10 h-1.5 bg-black/40 rounded-full overflow-hidden">
-                        <div
-                          className="h-full rounded-full transition-all duration-300"
-                          style={{
-                            width: `${Math.max(0, Math.min(100, (player.hp / player.maxHp) * 100))}%`,
-                            backgroundColor:
-                              player.hp / player.maxHp > 0.5
-                                ? "#22c55e"
-                                : player.hp / player.maxHp > 0.25
-                                  ? "#eab308"
-                                  : "#ef4444",
-                          }}
-                        />
+              .map((player) => {
+                const hpPct = Math.max(0, Math.min(100, (player.hp / player.maxHp) * 100));
+                const sanPct = Math.max(0, Math.min(100, (player.san / player.initialSan) * 100));
+                const hpColor = hpPct > 50 ? "#4ade80" : hpPct > 25 ? "#facc15" : "#f87171";
+                const sanColor = sanPct > 50 ? "#60a5fa" : sanPct > 25 ? "#a78bfa" : "#f472b6";
+                return (
+                  <div
+                    key={player.characterName}
+                    className="group relative px-2.5 py-1.5 rounded-lg bg-black/15 hover:bg-black/25 transition-colors duration-200"
+                  >
+                    <div className="flex items-center gap-2.5">
+                      <span className="text-[11px] text-amber-200/90 truncate flex-1 min-w-0 font-medium">
+                        {player.characterName}
+                      </span>
+                      <div className="flex gap-2 flex-shrink-0 items-center">
+                        {/* HP bar */}
+                        <div className="flex items-center gap-1">
+                          <span className="text-[9px] font-semibold uppercase tracking-wide" style={{ color: hpColor, opacity: 0.8 }}>HP</span>
+                          <div className="w-12 h-[5px] rounded-full overflow-hidden" style={{ background: "rgba(0,0,0,0.35)" }}>
+                            <div
+                              className="h-full rounded-full transition-all duration-500 ease-out"
+                              style={{
+                                width: `${hpPct}%`,
+                                background: `linear-gradient(90deg, ${hpColor}cc, ${hpColor})`,
+                                boxShadow: `0 0 4px ${hpColor}66`,
+                              }}
+                            />
+                          </div>
+                        </div>
+                        {/* SAN bar */}
+                        <div className="flex items-center gap-1">
+                          <span className="text-[9px] font-semibold uppercase tracking-wide" style={{ color: sanColor, opacity: 0.8 }}>SAN</span>
+                          <div className="w-12 h-[5px] rounded-full overflow-hidden" style={{ background: "rgba(0,0,0,0.35)" }}>
+                            <div
+                              className="h-full rounded-full transition-all duration-500 ease-out"
+                              style={{
+                                width: `${sanPct}%`,
+                                background: `linear-gradient(90deg, ${sanColor}cc, ${sanColor})`,
+                                boxShadow: `0 0 4px ${sanColor}66`,
+                              }}
+                            />
+                          </div>
+                        </div>
                       </div>
                     </div>
-                    {/* SAN bar */}
-                    <div className="flex items-center gap-0.5" title={`SAN: ${player.san}/${player.maxSan}`}>
-                      <span className="text-[10px] text-blue-400">SAN</span>
-                      <div className="w-10 h-1.5 bg-black/40 rounded-full overflow-hidden">
-                        <div
-                          className="h-full rounded-full bg-blue-500 transition-all duration-300"
-                          style={{
-                            width: `${Math.max(0, Math.min(100, (player.san / player.maxSan) * 100))}%`,
-                          }}
-                        />
+                    {/* Custom tooltip — instant on hover */}
+                    <div className="pointer-events-none absolute left-1/2 -translate-x-1/2 bottom-full mb-1.5 px-3 py-1.5 rounded-lg opacity-0 scale-95 group-hover:opacity-100 group-hover:scale-100 transition-all duration-150 ease-out z-50 whitespace-nowrap"
+                      style={{
+                        background: "rgba(15, 23, 42, 0.92)",
+                        backdropFilter: "blur(8px)",
+                        border: "1px solid rgba(148, 163, 184, 0.15)",
+                        boxShadow: "0 4px 12px rgba(0,0,0,0.4)",
+                      }}
+                    >
+                      <div className="flex items-center gap-3 text-[11px]">
+                        <span style={{ color: hpColor }} className="font-medium">
+                          HP {player.hp}/{player.maxHp}
+                        </span>
+                        <span className="text-slate-600">|</span>
+                        <span style={{ color: sanColor }} className="font-medium">
+                          SAN {player.san}/{player.initialSan}
+                        </span>
                       </div>
+                      {/* Tooltip arrow */}
+                      <div className="absolute left-1/2 -translate-x-1/2 top-full w-0 h-0"
+                        style={{
+                          borderLeft: "5px solid transparent",
+                          borderRight: "5px solid transparent",
+                          borderTop: "5px solid rgba(15, 23, 42, 0.92)",
+                        }}
+                      />
                     </div>
                   </div>
-                </div>
-              ))}
+                );
+              })}
           </div>
         </div>
       )}
@@ -638,7 +674,7 @@ export function GameSidebar({
                       </span>
                       <span className="status-value">
                         {gameState.playerCharacter.status.sanity}/
-                        {gameState.playerCharacter.status.maxSanity}
+                        {gameState.playerCharacter.attributes?.POW ?? gameState.playerCharacter.status.sanity}
                       </span>
                     </div>
                     <div className="status-item">

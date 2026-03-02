@@ -274,6 +274,189 @@ export async function listCheckpoints(
 }
 
 // ─────────────────────────────────────────────────────────────
+// Core restore logic — shared by loadCheckpoint (explicit) and
+// getGameState (auto-restore on server restart).
+// ─────────────────────────────────────────────────────────────
+
+/**
+ * Reads checkpoint payload → deserializes → creates new session → stores manager.
+ * Returns the new manager, sessionId, and restored state metadata.
+ */
+export async function restoreRoomFromCheckpoint(
+  roomId: string,
+  checkpoint: { checkpointId: string; payload: any; name: string },
+): Promise<{ manager: MultiplayerDynamicGameStateManager; sessionId: string }> {
+  const prisma = getPrismaClient();
+
+  // Parse payload (handle both string and object — auto-save may double-encode)
+  const raw = checkpoint.payload;
+  const payload = typeof raw === "string" ? JSON.parse(raw) : raw;
+
+  // 1. Deserialize into a new MultiplayerDynamicGameState
+  const restoredState = MultiplayerDynamicGameStateManager.deserialize(payload);
+
+  // Generate a fresh session ID for the restored game
+  const newSessionId = `mp-session-${randomUUID()}`;
+  restoredState.sessionId = newSessionId;
+  // Keep the roomId aligned with the current room
+  restoredState.roomId = roomId;
+  // Clear ephemeral data
+  restoredState.roundInputs = [];
+
+  const newManager = new MultiplayerDynamicGameStateManager(restoredState);
+
+  // 2. Replace the in-memory store entry
+  multiplayerSessionStore.set(roomId, newManager);
+
+  // 3. Restore conversation history to a new session record
+  const conversationHistory: any[] = payload.conversationHistory ?? [];
+  const restoredLanguage: "en" | "zh" =
+    payload.language === "en" || payload.language === "zh"
+      ? payload.language
+      : "zh";
+
+  await prisma.session.upsert({
+    where: { sessionId: newSessionId },
+    update: {},
+    create: {
+      sessionId: newSessionId,
+      emailId: null,
+      modName: payload.moduleName ?? null,
+      status: "active",
+      metadata: { language: restoredLanguage },
+    },
+  });
+
+  // Bulk-insert turn rows from the saved conversation
+  if (conversationHistory.length > 0) {
+    const turnsByNumber = new Map<
+      number,
+      { characterInput: string; keeperNarrative: string | null; startedAt: Date; completedAt: Date | null; gameDay: number | null; gameTime: string | null; sceneRoomId: string | null }
+    >();
+
+    for (const msg of conversationHistory) {
+      if (!msg || typeof msg !== "object") continue;
+      const turnNumber = typeof msg.turnNumber === "number" ? msg.turnNumber : 0;
+      const existing = turnsByNumber.get(turnNumber) ?? {
+        characterInput: "",
+        keeperNarrative: null,
+        startedAt: toDateOrNow(msg.timestamp),
+        completedAt: null,
+        gameDay: typeof msg.gameDay === "number" ? msg.gameDay : null,
+        gameTime: typeof msg.gameTime === "string" ? msg.gameTime : null,
+        sceneRoomId: typeof msg.sceneRoomId === "string" ? msg.sceneRoomId : null,
+      };
+      if (msg.role === "character") {
+        existing.characterInput = typeof msg.content === "string" ? msg.content : "";
+        existing.startedAt = toDateOrNow(msg.timestamp);
+      } else if (msg.role === "keeper") {
+        existing.keeperNarrative = typeof msg.content === "string" ? msg.content : "";
+        existing.completedAt = toDateOrNow(msg.timestamp);
+      }
+      // Update sceneRoomId if present on this message and not yet set
+      if (!existing.sceneRoomId && typeof msg.sceneRoomId === "string") {
+        existing.sceneRoomId = msg.sceneRoomId;
+      }
+      turnsByNumber.set(turnNumber, existing);
+    }
+
+    const turnRows = [...turnsByNumber.values()]
+      .sort((a, b) => {
+        const aNum = [...turnsByNumber.entries()].find(([, v]) => v === a)?.[0] ?? 0;
+        const bNum = [...turnsByNumber.entries()].find(([, v]) => v === b)?.[0] ?? 0;
+        return aNum - bNum;
+      })
+      .map((turn, idx) => ({
+        turnId: `turn-mprestore-${newSessionId.slice(0, 12)}-${idx}-${randomUUID().slice(0, 8)}`,
+        sessionId: newSessionId,
+        turnNumber: idx,
+        characterInput: turn.characterInput,
+        characterId: null,
+        characterName: null,
+        moduleId: null,
+        emailId: null,
+        keeperNarrative: turn.keeperNarrative,
+        status: "completed",
+        startedAt: turn.startedAt,
+        completedAt: turn.completedAt ?? turn.startedAt,
+        gameDay: turn.gameDay,
+        gameTime: turn.gameTime,
+        sceneRoomId: turn.sceneRoomId,
+      }));
+
+    if (turnRows.length > 0) {
+      await prisma.gameTurn.createMany({ data: turnRows, skipDuplicates: true });
+    }
+  }
+
+  // 4. Update DB sceneRoom records + member pointers
+  for (const [sceneRoomId, scr] of Object.entries(restoredState.sceneRooms)) {
+    await prisma.multiplayerSceneRoom.upsert({
+      where: { sceneRoomId },
+      update: {
+        scenarioId: scr.scenarioId,
+        scenarioName: scr.scenarioName,
+        snapshotId: scr.snapshotId,
+        snapshotName: scr.snapshotName,
+        status: scr.isFrozen ? "frozen" : "active",
+        roundNumber: scr.roundNumber,
+        frozenAt: scr.frozenAt,
+        parentSceneRoomIds: scr.parentSceneRoomIds,
+      },
+      create: {
+        sceneRoomId,
+        roomId,
+        scenarioId: scr.scenarioId,
+        scenarioName: scr.scenarioName,
+        snapshotId: scr.snapshotId,
+        snapshotName: scr.snapshotName,
+        status: scr.isFrozen ? "frozen" : "active",
+        roundNumber: scr.roundNumber,
+        frozenAt: scr.frozenAt,
+        parentSceneRoomIds: scr.parentSceneRoomIds,
+      },
+    });
+  }
+
+  // Update member pointers — place each player in their saved sceneRoom
+  for (const [playerId, playerState] of Object.entries(restoredState.players)) {
+    await prisma.multiplayerRoomMember.updateMany({
+      where: { roomId, userId: playerId },
+      data: { currentSceneRoomId: playerState.currentSceneRoomId },
+    });
+  }
+
+  // 5. Copy RAG chunks from old session to new session (async, non-blocking)
+  const oldSessionId =
+    typeof payload.sessionId === "string" ? payload.sessionId : null;
+  if (oldSessionId) {
+    void (async () => {
+      try {
+        await prisma.$executeRaw`
+          INSERT INTO session_rag_chunks (
+            id, session_id, turn_id, turn_number, chunk_type, scene_room_id,
+            role, content, metadata, source_key, embedding, language, email_id, created_at
+          )
+          SELECT
+            gen_random_uuid()::text, ${newSessionId}, turn_id, turn_number, chunk_type, scene_room_id,
+            role, content, metadata, source_key, embedding, language, email_id, NOW()
+          FROM session_rag_chunks
+          WHERE session_id = ${oldSessionId}
+          ON CONFLICT (session_id, source_key) DO NOTHING
+        `;
+        console.log(
+          `[MP Checkpoint RAG] Copied RAG chunks ${oldSessionId} → ${newSessionId}`
+        );
+      } catch (error) {
+        console.warn("[MP Checkpoint RAG] Failed to copy RAG chunks:", error);
+      }
+    })();
+  }
+
+  return { manager: newManager, sessionId: newSessionId };
+}
+
+// ─────────────────────────────────────────────────────────────
 // POST /rooms/:roomId/checkpoints/load
 // ─────────────────────────────────────────────────────────────
 
@@ -309,171 +492,14 @@ export async function loadCheckpoint(
       return;
     }
 
-    const payload = checkpoint.payload as any;
+    // 3. Restore from checkpoint (shared logic)
+    const { manager: newManager, sessionId: newSessionId } =
+      await restoreRoomFromCheckpoint(roomId, checkpoint);
 
-    // 3. Deserialize into a new MultiplayerDynamicGameState
-    const restoredState = MultiplayerDynamicGameStateManager.deserialize(payload);
-
-    // Generate a fresh session ID for the restored game
-    const newSessionId = `mp-session-${randomUUID()}`;
-    restoredState.sessionId = newSessionId;
-    // Keep the roomId aligned with the current room
-    restoredState.roomId = roomId;
-    // Clear ephemeral data
-    restoredState.roundInputs = [];
-
-    const newManager = new MultiplayerDynamicGameStateManager(restoredState);
-
-    // 4. Replace the in-memory store entry
-    multiplayerSessionStore.set(roomId, newManager);
-
-    // 5. Restore conversation history to a new session record
-    const conversationHistory: any[] = payload.conversationHistory ?? [];
-    const restoredLanguage: "en" | "zh" =
-      payload.language === "en" || payload.language === "zh"
-        ? payload.language
-        : "zh";
-
-    await prisma.session.upsert({
-      where: { sessionId: newSessionId },
-      update: {},
-      create: {
-        sessionId: newSessionId,
-        emailId: null,
-        modName: payload.moduleName ?? null,
-        status: "active",
-        metadata: { language: restoredLanguage },
-      },
-    });
-
-    // Bulk-insert turn rows from the saved conversation
-    if (conversationHistory.length > 0) {
-      const turnsByNumber = new Map<
-        number,
-        { characterInput: string; keeperNarrative: string | null; startedAt: Date; completedAt: Date | null; gameDay: number | null; gameTime: string | null; sceneRoomId: string | null }
-      >();
-
-      for (const msg of conversationHistory) {
-        if (!msg || typeof msg !== "object") continue;
-        const turnNumber = typeof msg.turnNumber === "number" ? msg.turnNumber : 0;
-        const existing = turnsByNumber.get(turnNumber) ?? {
-          characterInput: "",
-          keeperNarrative: null,
-          startedAt: toDateOrNow(msg.timestamp),
-          completedAt: null,
-          gameDay: typeof msg.gameDay === "number" ? msg.gameDay : null,
-          gameTime: typeof msg.gameTime === "string" ? msg.gameTime : null,
-          sceneRoomId: typeof msg.sceneRoomId === "string" ? msg.sceneRoomId : null,
-        };
-        if (msg.role === "character") {
-          existing.characterInput = typeof msg.content === "string" ? msg.content : "";
-          existing.startedAt = toDateOrNow(msg.timestamp);
-        } else if (msg.role === "keeper") {
-          existing.keeperNarrative = typeof msg.content === "string" ? msg.content : "";
-          existing.completedAt = toDateOrNow(msg.timestamp);
-        }
-        // Update sceneRoomId if present on this message and not yet set
-        if (!existing.sceneRoomId && typeof msg.sceneRoomId === "string") {
-          existing.sceneRoomId = msg.sceneRoomId;
-        }
-        turnsByNumber.set(turnNumber, existing);
-      }
-
-      const turnRows = [...turnsByNumber.values()]
-        .sort((a, b) => {
-          const aNum = [...turnsByNumber.entries()].find(([, v]) => v === a)?.[0] ?? 0;
-          const bNum = [...turnsByNumber.entries()].find(([, v]) => v === b)?.[0] ?? 0;
-          return aNum - bNum;
-        })
-        .map((turn, idx) => ({
-          turnId: `turn-mprestore-${newSessionId.slice(0, 12)}-${idx}-${randomUUID().slice(0, 8)}`,
-          sessionId: newSessionId,
-          turnNumber: idx,
-          characterInput: turn.characterInput,
-          characterId: null,
-          characterName: null,
-          moduleId: null,
-          emailId: null,
-          keeperNarrative: turn.keeperNarrative,
-          status: "completed",
-          startedAt: turn.startedAt,
-          completedAt: turn.completedAt ?? turn.startedAt,
-          gameDay: turn.gameDay,
-          gameTime: turn.gameTime,
-          sceneRoomId: turn.sceneRoomId,
-        }));
-
-      if (turnRows.length > 0) {
-        await prisma.gameTurn.createMany({ data: turnRows, skipDuplicates: true });
-      }
-    }
-
-    // 6. Update DB sceneRoom records + member pointers
+    const restoredState = newManager.getState();
     const activeSceneRoomIds = Object.keys(restoredState.sceneRooms);
-    for (const [sceneRoomId, scr] of Object.entries(restoredState.sceneRooms)) {
-      await prisma.multiplayerSceneRoom.upsert({
-        where: { sceneRoomId },
-        update: {
-          scenarioId: scr.scenarioId,
-          scenarioName: scr.scenarioName,
-          snapshotId: scr.snapshotId,
-          snapshotName: scr.snapshotName,
-          status: scr.isFrozen ? "frozen" : "active",
-          roundNumber: scr.roundNumber,
-          frozenAt: scr.frozenAt,
-          parentSceneRoomIds: scr.parentSceneRoomIds,
-        },
-        create: {
-          sceneRoomId,
-          roomId,
-          scenarioId: scr.scenarioId,
-          scenarioName: scr.scenarioName,
-          snapshotId: scr.snapshotId,
-          snapshotName: scr.snapshotName,
-          status: scr.isFrozen ? "frozen" : "active",
-          roundNumber: scr.roundNumber,
-          frozenAt: scr.frozenAt,
-          parentSceneRoomIds: scr.parentSceneRoomIds,
-        },
-      });
-    }
 
-    // Update member pointers — place each player in their saved sceneRoom
-    for (const [playerId, playerState] of Object.entries(restoredState.players)) {
-      await prisma.multiplayerRoomMember.updateMany({
-        where: { roomId, userId: playerId },
-        data: { currentSceneRoomId: playerState.currentSceneRoomId },
-      });
-    }
-
-    // 7. Copy RAG chunks from old session to new session (async, non-blocking)
-    const oldSessionId =
-      typeof payload.sessionId === "string" ? payload.sessionId : null;
-    if (oldSessionId) {
-      void (async () => {
-        try {
-          await prisma.$executeRaw`
-            INSERT INTO session_rag_chunks (
-              id, session_id, turn_id, turn_number, chunk_type, scene_room_id,
-              role, content, metadata, source_key, embedding, language, email_id, created_at
-            )
-            SELECT
-              gen_random_uuid()::text, ${newSessionId}, turn_id, turn_number, chunk_type, scene_room_id,
-              role, content, metadata, source_key, embedding, language, email_id, NOW()
-            FROM session_rag_chunks
-            WHERE session_id = ${oldSessionId}
-            ON CONFLICT (session_id, source_key) DO NOTHING
-          `;
-          console.log(
-            `[MP Checkpoint RAG] Copied RAG chunks ${oldSessionId} → ${newSessionId}`
-          );
-        } catch (error) {
-          console.warn("[MP Checkpoint RAG] Failed to copy RAG chunks:", error);
-        }
-      })();
-    }
-
-    // 8. Broadcast checkpoint_loaded to all active sceneRooms
+    // 4. Broadcast checkpoint_loaded to all active sceneRooms
     try {
       const wsManager = WebSocketManager.getInstance();
       if (wsManager) {
@@ -496,6 +522,14 @@ export async function loadCheckpoint(
     console.log(
       `[MP Checkpoint] Loaded checkpoint "${checkpoint.name}" (${checkpointId}) → session ${newSessionId}`
     );
+
+    // Parse payload to extract language (handle both string and object)
+    const rawPayload = checkpoint.payload as any;
+    const parsedPayload = typeof rawPayload === "string" ? JSON.parse(rawPayload) : rawPayload;
+    const restoredLanguage: "en" | "zh" =
+      parsedPayload?.language === "en" || parsedPayload?.language === "zh"
+        ? parsedPayload.language
+        : "zh";
 
     res.json({
       success: true,
