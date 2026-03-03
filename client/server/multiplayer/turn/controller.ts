@@ -248,6 +248,17 @@ export async function getTurnHistory(
       },
     });
 
+    // Filter out intermediary Phase 1 turns from frozen parent rooms.
+    // These have characterInput but no keeperNarrative — their content was superseded
+    // by child room turns after a scene split. Keep them only if they're from the
+    // current (non-frozen) room (i.e., Phase 2 is still processing).
+    const filteredTurns = turns.filter((turn) => {
+      if (turn.status === "completed") return true;
+      if (turn.sceneRoomId === sceneRoomId) return true;
+      // Processing turn from a parent (frozen) room → superseded by child turns
+      return false;
+    });
+
     // Determine requesting user's character name to distinguish own vs other messages
     const myCharacterName = state.players[userId]?.characterName ?? null;
 
@@ -258,7 +269,7 @@ export async function getTurnHistory(
 
     // Convert to Message[] format
     const messages: any[] = [];
-    for (const turn of turns) {
+    for (const turn of filteredTurns) {
       if (turn.characterInput) {
         // Multiplayer rounds store combined input ("Name: content\nName2: content2")
         // with characterName = null.  Split them back into individual messages.

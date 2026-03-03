@@ -928,14 +928,48 @@ async function triggerNarrativePhase(
   const wsManager = WebSocketManager.getInstance();
   const turnManager = new TurnManager(db);
 
-  const stream = buildStreamHandlers(sceneRoomId, metadata.roundTurnId, roomId);
+  // All players' inputs are passed to every child room — the keeper needs to
+  // describe everyone's actions cohesively.  Each room's keeper gets different
+  // scenario context (current/previous) to produce room-specific narrative.
+  const isChildRoom = sceneRoomId !== metadata.sceneRoomId;
+
+  // ── Determine the correct turnId for streaming and DB persistence ──
+  // For child rooms from a split, create the DB turn EARLY so the streaming
+  // turnId matches the persisted turnId (prevents duplicate display on history re-fetch).
+  let effectiveTurnId = metadata.roundTurnId;
+  let childTurnCreated = false;
+  if (isChildRoom && combinedInputExists(metadata.roundInputs)) {
+    const state = manager.getState();
+    const childSceneRoom = manager.getSceneRoom(sceneRoomId);
+    const combinedInput = metadata.roundInputs
+      .filter((i) => i.inputType === "input" && Boolean(i.content?.trim()))
+      .map((i) => {
+        const playerName = state.players[i.playerId]?.characterName ?? i.playerId;
+        return `${playerName}: ${i.content?.trim() ?? ""}`;
+      })
+      .join("\n");
+
+    effectiveTurnId = await turnManager.createTurn({
+      sessionId: state.sessionId,
+      sceneRoomId,
+      characterInput: combinedInput || "[Scene transition]",
+      sceneId: childSceneRoom?.currentScenario?.id ?? undefined,
+      sceneName: childSceneRoom?.currentScenario?.name ?? undefined,
+      location: childSceneRoom?.currentScenario?.location ?? undefined,
+      gameDay: childSceneRoom?.gameDay ?? state.gameDay ?? null,
+      gameTime: childSceneRoom?.timeOfDay ?? state.timeOfDay ?? null,
+    });
+    childTurnCreated = true;
+  }
+
+  const stream = buildStreamHandlers(sceneRoomId, effectiveTurnId, roomId);
   const graph = buildMultiplayerGraph(db);
 
   const graphState = {
     dynamicGameState: manager.getState(),
     sceneRoomId,
     roundInputs: metadata.roundInputs,
-    roundTurnId: metadata.roundTurnId,
+    roundTurnId: effectiveTurnId,
     language: metadata.language,
     phase: 2 as const,
     stream,
@@ -1050,31 +1084,9 @@ async function triggerNarrativePhase(
   const clueRevelations =
     updatedSceneRoom?.temporaryInfo.contextualData?.clueRevelations ?? null;
 
-  // Determine turn ID: use original if same room, create new if child room
-  let turnId = metadata.persistedTurnId;
-  if (sceneRoomId !== metadata.sceneRoomId && combinedInputExists(metadata.roundInputs)) {
-    // Child room from split — create a new turn record
-    const state = manager.getState();
-    const childSceneRoom = manager.getSceneRoom(sceneRoomId);
-    const combinedInput = metadata.roundInputs
-      .filter((i) => i.inputType === "input" && Boolean(i.content?.trim()))
-      .map((i) => {
-        const playerName = state.players[i.playerId]?.characterName ?? i.playerId;
-        return `${playerName}: ${i.content?.trim() ?? ""}`;
-      })
-      .join("\n");
-
-    turnId = await turnManager.createTurn({
-      sessionId: state.sessionId,
-      sceneRoomId,
-      characterInput: combinedInput || "[Scene transition]",
-      sceneId: childSceneRoom?.currentScenario?.id ?? undefined,
-      sceneName: childSceneRoom?.currentScenario?.name ?? undefined,
-      location: childSceneRoom?.currentScenario?.location ?? undefined,
-      gameDay: childSceneRoom?.gameDay ?? state.gameDay ?? null,
-      gameTime: childSceneRoom?.timeOfDay ?? state.timeOfDay ?? null,
-    });
-  }
+  // Determine turn ID: child rooms already created their turn early (before streaming);
+  // non-split rooms use the original Phase 1 turn.
+  const turnId = childTurnCreated ? effectiveTurnId : metadata.persistedTurnId;
 
   if (turnId && updatedSceneRoom) {
     const roomGameDay = updatedSceneRoom.gameDay ?? result.dynamicGameState?.gameDay ?? null;
@@ -1108,7 +1120,7 @@ async function triggerNarrativePhase(
     notifySceneRoom(sceneRoomId, clients, {
       type: "round_complete",
       sceneRoomId,
-      roundTurnId: metadata.roundTurnId,
+      roundTurnId: effectiveTurnId,
       keeperNarrative,
       diceRolls,
       gameDay: broadcastGameDay,
@@ -1307,8 +1319,14 @@ function copyParentTemporaryInfoToChildren(
 
     // Single parent: deep copy
     if (parentInfos.length === 1) {
+      const cloned = structuredClone(parentInfos[0]);
+      // Stayer rooms stay in the same scene — clear scene-transition context
+      if (child.isStayerRoom) {
+        cloned.sceneChangeRequest = null;
+        cloned.previousScenario = null;
+      }
       manager.updateSceneRoom(child.sceneRoomId, {
-        temporaryInfo: structuredClone(parentInfos[0]),
+        temporaryInfo: cloned,
       });
       continue;
     }
@@ -1320,10 +1338,13 @@ function copyParentTemporaryInfoToChildren(
       actionResultsDetailed: parentInfos.flatMap((p) => p.actionResultsDetailed),
       currentActionAnalysis: parentInfos[0].currentActionAnalysis,
       npcResponseAnalyses: parentInfos.flatMap((p) => p.npcResponseAnalyses),
-      sceneChangeRequest:
-        parentInfos.find((p) => p.sceneChangeRequest)?.sceneChangeRequest ?? null,
-      previousScenario:
-        parentInfos.find((p) => p.previousScenario)?.previousScenario ?? null,
+      // Only mover rooms get scene-transition context
+      sceneChangeRequest: child.isStayerRoom
+        ? null
+        : parentInfos.find((p) => p.sceneChangeRequest)?.sceneChangeRequest ?? null,
+      previousScenario: child.isStayerRoom
+        ? null
+        : parentInfos.find((p) => p.previousScenario)?.previousScenario ?? null,
       slowGroupActionResults: parentInfos.flatMap((p) => p.slowGroupActionResults),
       slowGroupActionResultsDetailed: parentInfos.flatMap(
         (p) => p.slowGroupActionResultsDetailed
@@ -1623,11 +1644,18 @@ async function handlePostRoundSceneSplit(
     }
 
     // ── Migrate WS clients to child rooms so they receive events before frontend reconnects ──
+    // Only register each player for their OWN child room (not all players for all rooms)
+    // to prevent cross-room streaming events causing duplicate narrative display.
     if (wsManager) {
       for (const frozenId of result.frozenSceneRoomIds) {
+        const frozenClients = wsManager.getMultiplayerClients(frozenId);
         for (const childRoom of result.newChildRooms) {
-          if (childRoom.parentSceneRoomIds.includes(frozenId)) {
-            wsManager.registerAllClientsForNewSceneRoom(frozenId, childRoom.sceneRoomId);
+          if (!childRoom.parentSceneRoomIds.includes(frozenId)) continue;
+          for (const playerId of childRoom.playerIds) {
+            const client = frozenClients.get(playerId);
+            if (client) {
+              wsManager.registerMultiplayerClient(childRoom.sceneRoomId, playerId, client);
+            }
           }
         }
       }

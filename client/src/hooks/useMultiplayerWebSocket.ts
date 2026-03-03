@@ -306,10 +306,10 @@ export function useMultiplayerWebSocket({
                 if (!turnId) return;
                 setStreamingTurnId(turnId);
                 targetSetMessages(msg.sceneRoomId, (prev) => {
-                  const existing = prev.find((m) => m.turnId === turnId);
+                  const existing = prev.find((m) => m.turnId === turnId && m.role === "keeper");
                   if (existing) {
                     return prev.map((m) =>
-                      m.turnId === turnId ? { ...m, isStreaming: true } : m
+                      m.turnId === turnId && m.role === "keeper" ? { ...m, isStreaming: true } : m
                     );
                   }
                   const nextTurnNumber =
@@ -346,7 +346,7 @@ export function useMultiplayerWebSocket({
                   streamingBufferRef.current.set(turnId, existing + delta);
 
                   targetSetMessages(msg.sceneRoomId, (prev) => {
-                    const found = prev.find((m) => m.turnId === turnId);
+                    const found = prev.find((m) => m.turnId === turnId && m.role === "keeper");
                     if (found) return prev;
                     const nextTurnNumber =
                       prev.length > 0
@@ -372,7 +372,7 @@ export function useMultiplayerWebSocket({
                 targetSetMessages(msg.sceneRoomId, (prev) => {
                   let found = false;
                   const next = prev.map((m) => {
-                    if (m.turnId === turnId) {
+                    if (m.turnId === turnId && m.role === "keeper") {
                       found = true;
                       return { ...m, content: m.content + delta, isStreaming: true };
                     }
@@ -404,7 +404,7 @@ export function useMultiplayerWebSocket({
                 if (!turnId) return;
                 targetSetMessages(msg.sceneRoomId, (prev) =>
                   prev.map((m) =>
-                    m.turnId === turnId ? { ...m, isStreaming: false } : m
+                    m.turnId === turnId && m.role === "keeper" ? { ...m, isStreaming: false } : m
                   )
                 );
                 setStreamingTurnId((cur) => (cur === turnId ? null : cur));
@@ -651,6 +651,7 @@ export function useMultiplayerWebSocket({
       }
       if (wsRef.current) {
         const ws = wsRef.current;
+        ws.onmessage = null;
         ws.onclose = null;
         ws.onerror = null;
         if (ws.readyState === WebSocket.CONNECTING) {

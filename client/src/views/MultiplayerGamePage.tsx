@@ -18,6 +18,7 @@ import { GameSidebar, type RoomPlayerInfo } from "../components/GameSidebar";
 import { SidebarToggleButton } from "../components/layout/SidebarToggleButton";
 import { useAppSettings } from "../contexts/AppSettingsContext";
 import { useAuth } from "../contexts/AuthContext";
+import { useGameSession } from "../contexts/GameSessionContext";
 import { useMobileSidebar } from "../hooks/useMobileSidebar";
 import { authFetch } from "../utils/authFetch";
 
@@ -56,6 +57,7 @@ export const MultiplayerGamePage: React.FC = () => {
   const { user } = useAuth();
   const { isMobile, isSidebarOpen, toggleSidebar, closeSidebar } =
     useMobileSidebar();
+  const gameSession = useGameSession();
 
   // Core state — fetched on mount
   const [sessionId, setSessionId] = useState<string | null>(null);
@@ -69,11 +71,12 @@ export const MultiplayerGamePage: React.FC = () => {
   // Multiplayer: other players in the scene room
   const [roomPlayers, setRoomPlayers] = useState<RoomPlayerInfo[]>([]);
 
-  // Sidebar refresh trigger (same pattern as GamePage via useGameSession)
+  // Sidebar refresh trigger — also triggers App.tsx BackgroundManager re-fetch
   const [sidebarRefreshTrigger, setSidebarRefreshTrigger] = useState(0);
   const triggerSidebarRefresh = useCallback(() => {
     setSidebarRefreshTrigger((n) => n + 1);
-  }, []);
+    gameSession.triggerSidebarRefresh();
+  }, [gameSession]);
 
   // Handle scene room changes from split/merge events
   const handleSceneRoomChanged = useCallback((newSceneRoomId: string) => {
