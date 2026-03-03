@@ -1420,15 +1420,27 @@ async function processPostNarrative(
       if (room.currentScenario) {
         generateSceneRoomImage(room.currentScenario, state.moduleName)
           .then((imageResult) => {
-            if (imageResult && wsManager) {
-              const clients = wsManager.getMultiplayerClients(room.sceneRoomId);
-              notifySceneRoom(room.sceneRoomId, clients, {
-                type: "scene_image_ready",
-                sceneRoomId: room.sceneRoomId,
-                imagePath: imageResult.path,
-                mimeType: imageResult.mimeType,
-                timestamp: new Date().toISOString(),
-              });
+            if (imageResult) {
+              // Write back to in-memory state so /gamestate API returns it
+              const latestMgr = multiplayerSessionStore.get(roomId) ?? manager;
+              const latestRoom = latestMgr.getSceneRoom(room.sceneRoomId);
+              if (latestRoom?.currentScenario) {
+                latestRoom.currentScenario.sceneImage = {
+                  path: imageResult.path,
+                  mimeType: imageResult.mimeType,
+                  generatedAt: new Date().toISOString(),
+                };
+              }
+              if (wsManager) {
+                const clients = wsManager.getMultiplayerClients(room.sceneRoomId);
+                notifySceneRoom(room.sceneRoomId, clients, {
+                  type: "scene_image_ready",
+                  sceneRoomId: room.sceneRoomId,
+                  imagePath: imageResult.path,
+                  mimeType: imageResult.mimeType,
+                  timestamp: new Date().toISOString(),
+                });
+              }
             }
           })
           .catch((err) => {
@@ -1744,17 +1756,29 @@ async function handlePostRoundSceneSplit(
             // ── BG generation (fire-and-forget) ──
             generateSceneRoomImage(childState.currentScenario, state.moduleName)
               .then((imageResult) => {
-                if (imageResult && wsManager) {
-                  const imgClients = wsManager.getMultiplayerClients(
-                    childRoom.sceneRoomId
-                  );
-                  notifySceneRoom(childRoom.sceneRoomId, imgClients, {
-                    type: "scene_image_ready",
-                    sceneRoomId: childRoom.sceneRoomId,
-                    imagePath: imageResult.path,
-                    mimeType: imageResult.mimeType,
-                    timestamp: new Date().toISOString(),
-                  });
+                if (imageResult) {
+                  // Write back to in-memory state so /gamestate API returns it
+                  const latestMgr = multiplayerSessionStore.get(roomId) ?? manager;
+                  const latestRoom = latestMgr.getSceneRoom(childRoom.sceneRoomId);
+                  if (latestRoom?.currentScenario) {
+                    latestRoom.currentScenario.sceneImage = {
+                      path: imageResult.path,
+                      mimeType: imageResult.mimeType,
+                      generatedAt: new Date().toISOString(),
+                    };
+                  }
+                  if (wsManager) {
+                    const imgClients = wsManager.getMultiplayerClients(
+                      childRoom.sceneRoomId
+                    );
+                    notifySceneRoom(childRoom.sceneRoomId, imgClients, {
+                      type: "scene_image_ready",
+                      sceneRoomId: childRoom.sceneRoomId,
+                      imagePath: imageResult.path,
+                      mimeType: imageResult.mimeType,
+                      timestamp: new Date().toISOString(),
+                    });
+                  }
                 }
               })
               .catch((err) => {
@@ -2023,6 +2047,14 @@ function buildStreamHandlers(sceneRoomId: string, roundTurnId: string, roomId?: 
           gameTime: tm.gameTime,
         });
       }
+    },
+    onSceneImage: (payload: { imagePath: string; mimeType: string; sceneName: string; location: string; gameDay?: number | null; gameTime?: string | null; timestamp?: string }) => {
+      send({
+        type: "scene_image",
+        roundTurnId,
+        sceneRoomId,
+        ...payload,
+      });
     },
   };
 }
