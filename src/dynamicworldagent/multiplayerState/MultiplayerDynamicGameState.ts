@@ -8,7 +8,7 @@ import type {
   CoCDatabase,
   CoCDatabaseAdapter,
 } from "../../shared/agents/memory/database/index.js";
-import { InventoryUtils } from "../../shared/agents/models/gameTypes.js";
+import { InventoryUtils, type ActionLogEntry } from "../../shared/agents/models/gameTypes.js";
 import type {
   EndStateDefinition,
   KnowledgeHolder,
@@ -50,6 +50,13 @@ export type {
 /** Multiplayer extension: tracks which player created the heartbeat */
 export interface MultiplayerHeartbeatAction extends HeartbeatAction {
   ownerPlayerId: string;
+}
+
+/** Per-player action log window — used by Director to inspect player history. */
+export interface PerPlayerActionWindow {
+  playerId: string;
+  characterName: string;
+  actionLog: ActionLogEntry[];
 }
 
 // =============================================
@@ -945,6 +952,16 @@ export class MultiplayerDynamicGameStateManager {
     this.state.lastUpdated = new Date();
   }
 
+  appendPlayerActionLog(playerId: string, entry: ActionLogEntry): void {
+    const player = this.state.players[playerId];
+    if (!player) return;
+    if (!player.profile.actionLog) {
+      player.profile.actionLog = [];
+    }
+    player.profile.actionLog.push(entry);
+    this.state.lastUpdated = new Date();
+  }
+
   // ---------- NPC operations ----------
 
   updateNpcCharacters(npcs: DynamicNPCProfile[]): void {
@@ -1184,12 +1201,20 @@ export class MultiplayerDynamicGameStateManager {
   }
 
   /** Aggregated actionLog from all players in a sceneRoom */
-  getAggregatedActionLog(sceneRoomId: string): any[] {
+  getAggregatedActionLog(sceneRoomId: string): PerPlayerActionWindow[] {
     const room = this.state.sceneRooms[sceneRoomId];
     if (!room) return [];
-    return room.memberPlayerIds.flatMap(
-      (id) => ((this.state.players[id]?.profile as any)?.actionLog ?? [])
-    );
+    const result: PerPlayerActionWindow[] = [];
+    for (const id of room.memberPlayerIds) {
+      const player = this.state.players[id];
+      if (!player?.profile?.actionLog || player.profile.actionLog.length === 0) continue;
+      result.push({
+        playerId: id,
+        characterName: player.characterName,
+        actionLog: [...player.profile.actionLog],
+      });
+    }
+    return result;
   }
 
   // ---------- Tension ----------

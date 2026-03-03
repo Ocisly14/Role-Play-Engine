@@ -18,7 +18,7 @@ import { InventoryUtils } from "../../../shared/agents/models/gameTypes.js";
 import type { ScenarioCharacter } from "../../../shared/agents/models/scenarioTypes.js";
 import { composeTemplate } from "../../../template.js";
 import type { DynamicGameState } from "../../state/index.js";
-import type { MultiplayerDynamicGameStateManager } from "../../multiplayerState/MultiplayerDynamicGameState.js";
+import type { MultiplayerDynamicGameStateManager, PerPlayerActionWindow } from "../../multiplayerState/MultiplayerDynamicGameState.js";
 import type { PlayerActionAnalysis } from "../orchestrator/orchestratorAgent.js";
 import type { DynamicScenarioSnapshot } from "../../world_builder/types.js";
 import type { DynamicNPCProfile } from "../../world_builder/types.js";
@@ -355,13 +355,6 @@ export class DirectorAgent {
 
     const allScenariosData = await this.buildAllScenariosDataFromState(state);
 
-    // Aggregate player action logs from ALL members of the sceneRoom
-    const playerActionWindow = this.getAggregatedPlayerActionWindow(
-      state,
-      sceneRoom.memberPlayerIds,
-      currentGameTime
-    );
-
     // Phase 1 NPCs
     const phase1Npcs = state.npcCharacters.map((npc) => ({
       ...npc,
@@ -382,6 +375,14 @@ export class DirectorAgent {
         previousSnapshotTime = pst;
       }
     }
+
+    // Aggregate player action logs from ALL members of the sceneRoom (filtered by time window)
+    const playerActionWindow = this.getAggregatedPlayerActionWindow(
+      state,
+      sceneRoom.memberPlayerIds,
+      currentGameTime,
+      previousSnapshotTime
+    );
 
     // Step 4: Phase 1 — NPC Timeline (run ONCE)
     console.log(`   📋 Phase 1: Generating timeline for ${phase1Npcs.length} NPCs...`);
@@ -746,14 +747,6 @@ export class DirectorAgent {
     }
     const currentGameTime = `Day ${maxGameDay}, ${maxTimeOfDay}`;
 
-    // Aggregate playerActionWindow from ALL rooms' members (not just one room)
-    const allPlayerIds = activeRooms.flatMap((r) => r.memberPlayerIds);
-    const playerActionWindow = this.getAggregatedPlayerActionWindow(
-      state,
-      [...new Set(allPlayerIds)],
-      currentGameTime
-    );
-
     // Build playerCurrentScenes: array of current scenes from all rooms
     const playerCurrentScenesJson = JSON.stringify(
       activeRooms
@@ -798,6 +791,15 @@ export class DirectorAgent {
         previousSnapshotTime = pst;
       }
     }
+
+    // Aggregate playerActionWindow from ALL rooms' members (filtered by time window)
+    const allPlayerIds = activeRooms.flatMap((r) => r.memberPlayerIds);
+    const playerActionWindow = this.getAggregatedPlayerActionWindow(
+      state,
+      [...new Set(allPlayerIds)],
+      currentGameTime,
+      previousSnapshotTime
+    );
 
     // Step 4: Phase 1 — NPC Timeline (run ONCE with unified context)
     console.log(`   📋 Phase 1: Generating timeline for ${phase1Npcs.length} NPCs...`);
@@ -907,6 +909,13 @@ export class DirectorAgent {
     }
 
     console.log(`   ✓ Phase 1 merged updates for ${mergedNpcUpdates} NPC entries`);
+
+    // Step 4b: Refresh currentScenario.characters for ALL active rooms.
+    // NPC timeline (Phase 1) may have moved NPCs between scenes. Update each room's
+    // character list so downstream consumers (Keeper, frontend, next round) see accurate data.
+    if (mergedNpcUpdates > 0) {
+      this.refreshSceneRoomCharacters(manager, currentGameTime);
+    }
 
     // Step 5: Phase 2 (ALL target snapshots in one LLM call)
     // Step 6: Phase 3 (background simplified) — parallel with Phase 2
@@ -1098,6 +1107,7 @@ export class DirectorAgent {
         description: string;
         clues: unknown[];
         conditions: unknown[];
+        characters: unknown[];
         previousGameTime: string | null;
       };
     }>
@@ -1115,6 +1125,7 @@ export class DirectorAgent {
         description: string;
         clues: unknown[];
         conditions: unknown[];
+        characters: unknown[];
         previousGameTime: string | null;
       };
     }> = [];
@@ -1133,6 +1144,7 @@ export class DirectorAgent {
             description: latestSnapshot.description,
             clues: latestSnapshot.clues || [],
             conditions: latestSnapshot.conditions || [],
+            characters: latestSnapshot.characters || [],
             previousGameTime: latestSnapshot.gameTime || null,
           }
         : {
@@ -1142,6 +1154,7 @@ export class DirectorAgent {
             description: outline.description || "",
             clues: Array.isArray((outline as any).clues) ? (outline as any).clues : [],
             conditions: [],
+            characters: [],
             previousGameTime: null,
           };
 
@@ -1174,31 +1187,47 @@ export class DirectorAgent {
 
   /**
    * Aggregate player action logs from all players in a sceneRoom.
+   * Returns per-player arrays so downstream consumers know which entries
+   * belong to which player (mirrors how NPC actionLogs are keyed by NPC id).
+   * When previousSnapshotTime is provided, filters to (previousSnapshotTime, currentGameTime].
    */
   private getAggregatedPlayerActionWindow(
     state: ReturnType<MultiplayerDynamicGameStateManager["getState"]>,
     memberPlayerIds: string[],
-    currentGameTime: string
-  ): ActionLogEntry[] {
-    const allEntries: ActionLogEntry[] = [];
+    currentGameTime: string,
+    previousSnapshotTime?: string
+  ): PerPlayerActionWindow[] {
+    const result: PerPlayerActionWindow[] = [];
     for (const pid of memberPlayerIds) {
       const player = state.players[pid];
-      if (!player?.profile?.actionLog) continue;
-      allEntries.push(...player.profile.actionLog);
+      if (!player?.profile?.actionLog || player.profile.actionLog.length === 0) continue;
+
+      const filtered = player.profile.actionLog.filter((entry) => {
+        if (!entry.time || !entry.location || !entry.summary) return false;
+        if (!this.isTimeBeforeOrEqual(entry.time, currentGameTime)) return false;
+        if (!previousSnapshotTime) return true;
+        return this.isTimeAfter(entry.time, previousSnapshotTime);
+      });
+
+      if (filtered.length === 0) continue;
+
+      filtered.sort((a, b) => {
+        const timeA = this.parseGameTimeFromSnapshot(a.time);
+        const timeB = this.parseGameTimeFromSnapshot(b.time);
+        if (!timeA || !timeB) return 0;
+        if (timeA.gameDay !== timeB.gameDay) return timeA.gameDay - timeB.gameDay;
+        const [hA, mA] = timeA.timeOfDay.split(":").map(Number);
+        const [hB, mB] = timeB.timeOfDay.split(":").map(Number);
+        return hA * 60 + mA - (hB * 60 + mB);
+      });
+
+      result.push({
+        playerId: pid,
+        characterName: player.characterName,
+        actionLog: filtered,
+      });
     }
-
-    // Sort by time
-    allEntries.sort((a, b) => {
-      const timeA = this.parseGameTimeFromSnapshot(a.time);
-      const timeB = this.parseGameTimeFromSnapshot(b.time);
-      if (!timeA || !timeB) return 0;
-      if (timeA.gameDay !== timeB.gameDay) return timeA.gameDay - timeB.gameDay;
-      const [hA, mA] = timeA.timeOfDay.split(":").map(Number);
-      const [hB, mB] = timeB.timeOfDay.split(":").map(Number);
-      return hA * 60 + mA - (hB * 60 + mB);
-    });
-
-    return allEntries;
+    return result;
   }
 
   /**
@@ -1236,7 +1265,7 @@ export class DirectorAgent {
         inventoryDelta?: { add?: InventoryItem[]; remove?: InventoryItem[] };
       }>;
     }>,
-    playerActionWindow: ActionLogEntry[],
+    playerActionWindow: PerPlayerActionWindow[],
     templateOverride?: string
   ): Promise<void> {
     if (scenesToUpdate.length === 0) return;
@@ -2015,40 +2044,32 @@ export class DirectorAgent {
   }
 
   private getPlayerActionLogInWindow(
-    playerActionLog: ActionLogEntry[] | undefined,
+    playerActionWindows: PerPlayerActionWindow[],
     previousSnapshotTime: string | undefined,
     currentGameTime: string
-  ): ActionLogEntry[] {
-    if (!playerActionLog || playerActionLog.length === 0) {
-      return [];
-    }
+  ): PerPlayerActionWindow[] {
+    return playerActionWindows
+      .map(({ playerId, characterName, actionLog }) => {
+        const filtered = (actionLog || []).filter((entry) => {
+          if (!entry.time || !entry.location || !entry.summary) return false;
+          if (!this.isTimeBeforeOrEqual(entry.time, currentGameTime)) return false;
+          if (!previousSnapshotTime) return true;
+          return this.isTimeAfter(entry.time, previousSnapshotTime);
+        });
 
-    const filtered = playerActionLog.filter((entry) => {
-      if (!entry.time || !entry.location || !entry.summary) {
-        return false;
-      }
-      if (!this.isTimeBeforeOrEqual(entry.time, currentGameTime)) {
-        return false;
-      }
-      if (!previousSnapshotTime) {
-        return true;
-      }
-      return this.isTimeAfter(entry.time, previousSnapshotTime);
-    });
+        filtered.sort((a, b) => {
+          const timeA = this.parseGameTimeFromSnapshot(a.time);
+          const timeB = this.parseGameTimeFromSnapshot(b.time);
+          if (!timeA || !timeB) return 0;
+          if (timeA.gameDay !== timeB.gameDay) return timeA.gameDay - timeB.gameDay;
+          const [hA, mA] = timeA.timeOfDay.split(":").map(Number);
+          const [hB, mB] = timeB.timeOfDay.split(":").map(Number);
+          return hA * 60 + mA - (hB * 60 + mB);
+        });
 
-    filtered.sort((a, b) => {
-      const timeA = this.parseGameTimeFromSnapshot(a.time);
-      const timeB = this.parseGameTimeFromSnapshot(b.time);
-      if (!timeA || !timeB) return 0;
-      if (timeA.gameDay !== timeB.gameDay) {
-        return timeA.gameDay - timeB.gameDay;
-      }
-      const [hA, mA] = timeA.timeOfDay.split(":").map(Number);
-      const [hB, mB] = timeB.timeOfDay.split(":").map(Number);
-      return hA * 60 + mA - (hB * 60 + mB);
-    });
-
-    return filtered;
+        return { playerId, characterName, actionLog: filtered };
+      })
+      .filter(({ actionLog }) => actionLog.length > 0);
   }
 
   private sanitizeGeneratedActionLogEntries(options: {
@@ -2148,6 +2169,108 @@ export class DirectorAgent {
     }
 
     return characters;
+  }
+
+  /**
+   * Refresh currentScenario.characters for ALL active scene rooms using two-pass
+   * cross-validation against npcCharacters[].actionLog.
+   *
+   * Pass 1: Keep NPCs from the existing characters[] unless their actionLog proves they left.
+   * Pass 2: Add NPCs whose actionLog shows they arrived at this scene after snapshot time.
+   *
+   * This is called after Phase 1 NPC timeline merge so that the in-memory state is
+   * accurate for all downstream consumers (Keeper, frontend, next round).
+   */
+  private refreshSceneRoomCharacters(
+    manager: MultiplayerDynamicGameStateManager,
+    currentGameTime: string
+  ): void {
+    const state = manager.getState();
+    const activeRooms = manager.getActiveSceneRooms();
+    let totalRefreshed = 0;
+
+    for (const room of activeRooms) {
+      const scenario = room.currentScenario;
+      if (!scenario?.location) continue;
+
+      const scenarioLocation = scenario.location.toLowerCase().trim();
+      const snapshotTime = (scenario as any).gameTime ?? currentGameTime;
+
+      const validated: ScenarioCharacter[] = [];
+      const seen = new Set<string>();
+
+      // Pass 1: existing characters — keep unless proven to have left
+      for (const sc of scenario.characters ?? []) {
+        const key = sc.name.toLowerCase().trim();
+        if (seen.has(key)) continue;
+
+        const npc = state.npcCharacters.find(
+          (n) => n.name.toLowerCase().trim() === key
+        );
+        if (!npc) {
+          // NPC not in global list — keep the snapshot stub as-is
+          seen.add(key);
+          validated.push(sc);
+          continue;
+        }
+
+        const latest = this.getLatestActionLogAtOrBefore(npc.actionLog, currentGameTime);
+        if (
+          latest &&
+          this.isTimeAfter(latest.time, snapshotTime) &&
+          latest.location.toLowerCase().trim() !== scenarioLocation
+        ) {
+          continue; // NPC left this scene
+        }
+
+        seen.add(key);
+        validated.push({
+          id: npc.id,
+          name: npc.name,
+          role: sc.role ?? "npc",
+          status: sc.status ?? "active",
+          location: sc.location,
+          notes: sc.notes,
+        });
+      }
+
+      // Pass 2: all global NPCs — include if actionLog shows they arrived
+      for (const npc of state.npcCharacters) {
+        const key = npc.name.toLowerCase().trim();
+        if (seen.has(key)) continue;
+
+        const latest = this.getLatestActionLogAtOrBefore(npc.actionLog, currentGameTime);
+        if (
+          latest &&
+          this.isTimeAfter(latest.time, snapshotTime) &&
+          latest.location.toLowerCase().trim() === scenarioLocation
+        ) {
+          seen.add(key);
+          validated.push(
+            this.convertToLightweightScenarioCharacter({
+              id: npc.id,
+              name: npc.name,
+              role: "npc",
+              status: "active",
+              location: latest.location,
+              notes: latest.summary,
+            })
+          );
+        }
+      }
+
+      // Write back only if the list actually changed
+      const oldNames = (scenario.characters ?? []).map((c) => c.name).sort().join(",");
+      const newNames = validated.map((c) => c.name).sort().join(",");
+      if (oldNames !== newNames) {
+        scenario.characters = validated;
+        totalRefreshed++;
+      }
+    }
+
+    if (totalRefreshed > 0) {
+      console.log(`   ✓ Refreshed NPC characters for ${totalRefreshed} scene room(s)`);
+    }
   }
 
   private async getLatestScenarioSnapshot(
@@ -2730,7 +2853,7 @@ export class DirectorAgent {
         inventoryDelta?: { add?: InventoryItem[]; remove?: InventoryItem[] };
       }>;
     }>,
-    playerActionWindow: ActionLogEntry[],
+    playerActionWindow: PerPlayerActionWindow[],
     phase3Template: string,
     options?: {
       providerOverride?: ModelProviderName;
@@ -3230,12 +3353,18 @@ export class DirectorAgent {
         `   ✓ Phase 1 merged updates for ${mergedNpcUpdates} NPC entries (+${suddenMergedNpcUpdates} sudden across ${suddenLogsByRoom.size} room(s))`
       );
 
+      // Refresh scene room characters after NPC movements (background timeline + sudden ingress)
+      if (mergedNpcUpdates > 0 || suddenMergedNpcUpdates > 0) {
+        this.refreshSceneRoomCharacters(manager, currentGameTime);
+      }
+
       // ── Player action window: aggregate from ALL players across ALL active rooms ──
       const allMemberIds = activeSceneRooms.flatMap((r) => r.memberPlayerIds);
       const playerActionWindow = this.getAggregatedPlayerActionWindow(
         state,
         allMemberIds,
-        currentGameTime
+        currentGameTime,
+        previousSnapshotTime
       );
 
       // ── Phase 3: Background simplified snapshots (exclude ALL player scenes) ──

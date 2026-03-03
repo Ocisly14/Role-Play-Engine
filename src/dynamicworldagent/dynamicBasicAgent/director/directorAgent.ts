@@ -1181,6 +1181,7 @@ export class DirectorAgent {
           description: string;
           clues: unknown[];
           conditions: unknown[];
+          characters: unknown[];
           previousGameTime: string | null;
         };
       }> = [];
@@ -1202,6 +1203,7 @@ export class DirectorAgent {
               description: latestSnapshot.description,
               clues: latestSnapshot.clues || [],
               conditions: latestSnapshot.conditions || [],
+              characters: latestSnapshot.characters || [],
               previousGameTime: latestSnapshot.gameTime || null,
             }
           : {
@@ -1213,6 +1215,7 @@ export class DirectorAgent {
                 ? (scenarioOutline as any).clues
                 : [],
               conditions: [],
+              characters: [],
               previousGameTime: currentScenario?.gameTime || null,
             };
 

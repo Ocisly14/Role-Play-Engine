@@ -217,6 +217,16 @@ export async function evaluateAndSplitSceneRooms(
       manager.relocatePlayerToSceneRoom(playerId, moverChildId);
     }
 
+    // Record scene transition in player actionLog (symmetric with NPC tracking)
+    const moveTime = `Day ${sceneRoom.gameDay}, ${sceneRoom.timeOfDay}`;
+    for (const playerId of playerIds) {
+      manager.appendPlayerActionLog(playerId, {
+        time: moveTime,
+        location: targetSceneName,
+        summary: `前往了${targetSceneName}`,
+      });
+    }
+
     console.log(
       `[SceneRoomSplitter] Mover child ${moverChildId} created for ` +
         `${playerIds.length} player(s) → "${targetSceneName}"`

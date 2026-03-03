@@ -26,6 +26,10 @@ import type {
   DynamicScenarioSnapshot,
   ScenarioOutline,
 } from "../../world_builder/types.js";
+import {
+  getLatestActionLogEntryWithLocation,
+  isTimeAfter,
+} from "../../utils/gameTime.js";
 import { getEpilogueTemplate, getKeeperTemplate } from "./keeperTemplate.js";
 
 interface KeeperRuntime {
@@ -49,6 +53,28 @@ interface TargetClueAccess {
 interface PerTargetClueAccessMap {
   targets: Map<string, TargetClueAccess>; // key = NPC name or "scenario"
   hasFumble: boolean;
+}
+
+/** Levenshtein edit distance (used for fuzzy NPC name matching). */
+function levenshtein(a: string, b: string): number {
+  const m = a.length;
+  const n = b.length;
+  const dp: number[][] = Array.from({ length: m + 1 }, () =>
+    Array(n + 1).fill(0)
+  );
+  for (let i = 0; i <= m; i++) dp[i][0] = i;
+  for (let j = 0; j <= n; j++) dp[0][j] = j;
+  for (let i = 1; i <= m; i++) {
+    for (let j = 1; j <= n; j++) {
+      const cost = a[i - 1] === b[j - 1] ? 0 : 1;
+      dp[i][j] = Math.min(
+        dp[i - 1][j] + 1,
+        dp[i][j - 1] + 1,
+        dp[i - 1][j - 1] + cost
+      );
+    }
+  }
+  return dp[m][n];
 }
 
 /**
@@ -254,6 +280,19 @@ export class KeeperAgent {
       state.scenarioOutlines,
       allowRegularPlusForScenario
     );
+
+    // Cross-validate NPC presence: override snapshot's stale characters[] with
+    // actionLog-verified list (mirrors CharacterAgent's two-pass logic).
+    if (currentScenario && completeScenarioInfo && "characters" in completeScenarioInfo) {
+      const roomGameDay = sceneRoom.gameDay ?? state.gameDay;
+      const roomTimeOfDay = sceneRoom.timeOfDay ?? state.timeOfDay;
+      (completeScenarioInfo as any).characters = this.crossValidateSceneNPCs(
+        currentScenario,
+        state.npcCharacters,
+        roomGameDay,
+        roomTimeOfDay
+      );
+    }
 
     // Action analysis: read per-player analyses from contextualData (set by orchestrator)
     const playerActionAnalyses = (tempInfo.contextualData?.playerActionAnalyses ?? {}) as
@@ -913,6 +952,108 @@ export class KeeperAgent {
         };
       }),
     };
+  }
+
+  /**
+   * Cross-validate which NPCs are actually present in the current scene.
+   *
+   * Two-pass logic (mirrors CharacterAgent.extractSceneCharactersForTemplate):
+   *   Pass 1: For each NPC in currentScenario.characters, check actionLog.
+   *           Exclude if latest entry (after snapshot time) shows a different location.
+   *   Pass 2: For all global NPCs not already included, check if actionLog
+   *           shows they ARRIVED at the current scene location after snapshot time.
+   *
+   * Returns a validated ScenarioCharacter[] that replaces the stale snapshot list.
+   */
+  private crossValidateSceneNPCs(
+    currentScenario: DynamicScenarioSnapshot,
+    npcCharacters: DynamicNPCProfile[],
+    gameDay: number,
+    timeOfDay: string
+  ): DynamicScenarioSnapshot["characters"] {
+    const scenarioLocation = currentScenario.location;
+    if (!scenarioLocation) return currentScenario.characters ?? [];
+
+    const snapshotTime =
+      (currentScenario as any).gameTime ??
+      `Day ${gameDay}, ${timeOfDay}`;
+
+    const validated: DynamicScenarioSnapshot["characters"] = [];
+    const seen = new Set<string>();
+
+    const normalize = (name: string) =>
+      name.toLowerCase().replace(/[^a-z0-9\u4e00-\u9fa5]+/g, " ").trim();
+
+    const isSimilar = (a: string, b: string) => {
+      const na = normalize(a);
+      const nb = normalize(b);
+      if (!na || !nb) return false;
+      if (na === nb) return true;
+      const tokensA = na.split(/\s+/);
+      const tokensB = nb.split(/\s+/);
+      if (tokensA[0] && tokensA[0] === tokensB[0]) return true;
+      // Levenshtein similarity >= 80%
+      const dist = levenshtein(na, nb);
+      const maxLen = Math.max(na.length, nb.length);
+      return maxLen > 0 && 1 - dist / maxLen >= 0.8;
+    };
+
+    const alreadyAdded = (name: string) =>
+      validated.some((c) => isSimilar(c.name, name));
+
+    // Pass 1: scenario.characters — exclude only if we can prove they left
+    for (const sc of currentScenario.characters ?? []) {
+      const npc = npcCharacters.find((n) => isSimilar(n.name, sc.name));
+      if (!npc) {
+        // NPC not in global list — keep the snapshot stub as-is
+        if (!seen.has(normalize(sc.name))) {
+          seen.add(normalize(sc.name));
+          validated.push(sc);
+        }
+        continue;
+      }
+      const latest = getLatestActionLogEntryWithLocation(npc.actionLog);
+      if (
+        latest &&
+        isTimeAfter(latest.time, snapshotTime) &&
+        latest.location.toLowerCase() !== scenarioLocation.toLowerCase()
+      ) {
+        continue; // NPC left this scene
+      }
+      if (!seen.has(normalize(npc.name))) {
+        seen.add(normalize(npc.name));
+        validated.push({
+          id: npc.id,
+          name: npc.name,
+          role: sc.role ?? "npc",
+          status: sc.status ?? (typeof npc.status === "string" ? npc.status : "active"),
+          location: sc.location,
+          notes: sc.notes,
+        });
+      }
+    }
+
+    // Pass 2: all global NPCs — include if actionLog shows they arrived
+    for (const npc of npcCharacters) {
+      if (alreadyAdded(npc.name)) continue;
+      const latest = getLatestActionLogEntryWithLocation(npc.actionLog);
+      if (
+        latest &&
+        isTimeAfter(latest.time, snapshotTime) &&
+        latest.location.toLowerCase() === scenarioLocation.toLowerCase()
+      ) {
+        validated.push({
+          id: npc.id,
+          name: npc.name,
+          role: "npc",
+          status: typeof npc.status === "string" ? npc.status : "active",
+          location: latest.location,
+          notes: latest.summary,
+        });
+      }
+    }
+
+    return validated;
   }
 
   /**

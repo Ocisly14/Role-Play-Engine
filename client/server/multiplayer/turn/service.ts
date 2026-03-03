@@ -133,11 +133,12 @@ export interface RoundStateResult {
 
 function setupTwoPhaseDrainCallbacks(
   roomId: string,
+  sceneRoomId: string,
   db: CoCDatabase | CoCDatabaseAdapter,
   phase1Results: Map<string, Phase1Metadata>
 ): void {
-  // Drain 1: after ALL Phase 1 tasks complete
-  roomProcessingQueue.setDrainCallback(roomId, async () => {
+  // Drain: after ALL Phase 1 tasks for this sceneRoom complete
+  roomProcessingQueue.setDrainCallback(sceneRoomId, async () => {
     const mgr = multiplayerSessionStore.get(roomId);
     if (!mgr) return;
 
@@ -202,7 +203,14 @@ function setupTwoPhaseDrainCallbacks(
     // 6. Post-processing (after all Phase 2 tasks complete)
     const latestMgr = multiplayerSessionStore.get(roomId);
     if (latestMgr) {
-      await processPostNarrative(roomId, latestMgr, db);
+      // Collect IDs of rooms processed in this round
+      const processedIds = [...phase1Results.keys()];
+      if (splitResult?.anyChanges) {
+        for (const child of splitResult.newChildRooms) {
+          processedIds.push(child.sceneRoomId);
+        }
+      }
+      await processPostNarrative(roomId, latestMgr, db, processedIds);
     }
   });
 }
@@ -425,14 +433,14 @@ export async function submitRoundInput(
       storedLang === "en" || storedLang === "zh" ? storedLang : (inputData.language ?? "zh");
     const roundTurnId = randomUUID();
 
-    // Enqueue graph execution — tasks for the same roomId run sequentially,
-    // preventing concurrent state mutations.
+    // Enqueue graph execution — tasks for the same sceneRoomId run sequentially,
+    // but different sceneRooms process in parallel after a split.
     // Two-phase commit: run orchestrator pre-check first to detect skill selection needs.
     // NOTE: drain callback is set INSIDE the task, only when the graph will actually run.
     // This prevents processUnifiedSceneChanges from firing prematurely when skill
     // selection is pending (the task returns early without running the graph).
     roomProcessingQueue
-      .enqueue(roomId, async () => {
+      .enqueue(sceneRoomId, async () => {
         const currentManager = multiplayerSessionStore.get(roomId);
         if (!currentManager) throw new Error(`Manager for room ${roomId} not found`);
         const currentRoundInputs = [...roundInputs];
@@ -526,7 +534,7 @@ export async function submitRoundInput(
 
         // No skill selection needed — run Phase 1 (action) and set up two-phase drain callbacks.
         const phase1Results = new Map<string, Phase1Metadata>();
-        setupTwoPhaseDrainCallbacks(roomId, db, phase1Results);
+        setupTwoPhaseDrainCallbacks(roomId, sceneRoomId, db, phase1Results);
 
         const metadata = await triggerActionPhase(
           db,
@@ -629,10 +637,10 @@ export async function resolveSkillSelection(
 
     // Set up two-phase drain callbacks and trigger Phase 1
     const phase1Results = new Map<string, Phase1Metadata>();
-    setupTwoPhaseDrainCallbacks(roomId, db, phase1Results);
+    setupTwoPhaseDrainCallbacks(roomId, sceneRoomId, db, phase1Results);
 
     roomProcessingQueue
-      .enqueue(roomId, async () => {
+      .enqueue(sceneRoomId, async () => {
         const metadata = await triggerActionPhase(
           db,
           roomId,
@@ -676,6 +684,99 @@ interface Phase1Metadata {
   roundTurnId: string;
   /** True when combat completed fully in Phase 1 (battleKeeper ran) — skip Phase 2 */
   isCombatComplete: boolean;
+}
+
+// =============================================
+// mergeGraphResultIntoManager — shared merge helper for Phase 1 & Phase 2
+// Merges sceneRoom-specific + additive global state from graph result
+// into the live manager without replacing it wholesale.
+// =============================================
+
+function mergeGraphResultIntoManager(
+  manager: MultiplayerDynamicGameStateManager,
+  sceneRoomId: string,
+  resultState: any
+): void {
+  // 1. Merge this sceneRoom's state
+  const resultSceneRoom = resultState.sceneRooms?.[sceneRoomId];
+  if (resultSceneRoom) {
+    manager.updateSceneRoom(sceneRoomId, resultSceneRoom);
+  }
+
+  // 2. Merge player states for players in this sceneRoom
+  const sceneRoom = manager.getSceneRoom(sceneRoomId);
+  if (sceneRoom) {
+    for (const playerId of sceneRoom.memberPlayerIds) {
+      const resultPlayer = resultState.players?.[playerId];
+      if (resultPlayer) {
+        const currentState = manager.getState();
+        if (currentState.players[playerId]) {
+          currentState.players[playerId] = resultPlayer;
+        }
+      }
+    }
+  }
+
+  // 3. Merge global state: gameEnding (any room can trigger)
+  if (resultState.gameEnding?.isEnded) {
+    manager.getState().gameEnding = resultState.gameEnding;
+  }
+
+  // 4. Merge discoveredClues (additive — avoid duplicates)
+  if (resultState.discoveredClues?.length) {
+    const existing = manager.getState().discoveredClues ?? [];
+    const existingIds = new Set(existing.map((c: any) => c.id ?? c.name));
+    for (const clue of resultState.discoveredClues) {
+      const clueKey = (clue as any).id ?? (clue as any).name;
+      if (clueKey && !existingIds.has(clueKey)) {
+        existing.push(clue);
+        existingIds.add(clueKey);
+      }
+    }
+    manager.getState().discoveredClues = existing;
+  }
+
+  // 5. Merge DynamicWorld tracking sets (additive)
+  const currentState = manager.getState();
+  if (resultState.revealedTruthEvents?.size) {
+    for (const v of resultState.revealedTruthEvents) currentState.revealedTruthEvents.add(v);
+  }
+  if (resultState.activatedKnowledgeHolders?.size) {
+    for (const v of resultState.activatedKnowledgeHolders) currentState.activatedKnowledgeHolders.add(v);
+  }
+  if (resultState.deployedRedHerrings?.size) {
+    for (const v of resultState.deployedRedHerrings) currentState.deployedRedHerrings.add(v);
+  }
+  if (resultState.mythosRevelations?.size) {
+    for (const v of resultState.mythosRevelations) currentState.mythosRevelations.add(v);
+  }
+
+  // 6. Merge defeated NPC history (additive)
+  if (resultState.defeatedNpcHistory?.length) {
+    const existingNpcs = new Set(
+      (currentState.defeatedNpcHistory ?? []).map((e: any) => e.npcName)
+    );
+    for (const entry of resultState.defeatedNpcHistory) {
+      if (!existingNpcs.has((entry as any).npcName)) {
+        currentState.defeatedNpcHistory.push(entry);
+      }
+    }
+  }
+
+  // 7. Merge point of no return
+  if (resultState.pointOfNoReturnReached && !currentState.pointOfNoReturnReached) {
+    currentState.pointOfNoReturnReached = true;
+    currentState.pointOfNoReturnTrigger = resultState.pointOfNoReturnTrigger;
+  }
+
+  // 8. Clear round inputs for players in this sceneRoom
+  currentState.roundInputs = currentState.roundInputs.filter((input) => {
+    const player = currentState.players[input.playerId];
+    return player && player.currentSceneRoomId !== sceneRoomId;
+  });
+
+  // 9. Update timestamp
+  currentState.lastUpdated = new Date();
 }
 
 // =============================================
@@ -777,30 +878,16 @@ async function triggerActionPhase(
     throw err;
   }
 
-  // Replace stored manager with updated state, preserving other rooms' roundInputs
+  // Merge sceneRoom-specific + additive global changes into the live manager.
+  // This is safe for parallel execution: each sceneRoom modifies its own partition.
   if (result.dynamicGameState) {
-    const oldManager = multiplayerSessionStore.get(roomId);
-    const preservedInputs: MultiplayerTurnInput[] = [];
-    if (oldManager) {
-      const oldState = oldManager.getState();
-      for (const input of oldState.roundInputs) {
-        const player = oldState.players[input.playerId];
-        if (player && player.currentSceneRoomId !== sceneRoomId) {
-          preservedInputs.push(input);
-        }
-      }
+    const currentManager = multiplayerSessionStore.get(roomId);
+    if (currentManager) {
+      mergeGraphResultIntoManager(currentManager, sceneRoomId, result.dynamicGameState);
+      currentManager.updateSceneRoom(sceneRoomId, {
+        lastRoundCompletedAt: new Date().toISOString(),
+      });
     }
-
-    const newManager = new MultiplayerDynamicGameStateManager(
-      result.dynamicGameState
-    );
-    for (const input of preservedInputs) {
-      newManager.addRoundInput(input);
-    }
-    newManager.updateSceneRoom(sceneRoomId, {
-      lastRoundCompletedAt: new Date().toISOString(),
-    });
-    multiplayerSessionStore.set(roomId, newManager);
   }
 
   // Check if combat completed fully in Phase 1
@@ -985,92 +1072,11 @@ async function triggerNarrativePhase(
     throw err;
   }
 
-  // ── Merge only sceneRoom-specific changes back into the shared manager ──
-  // This is safe for parallel execution: Node.js is single-threaded, so the
-  // synchronous merge step after `await graph.invoke()` runs atomically.
+  // ── Merge sceneRoom-specific + additive global changes into the shared manager ──
   if (result.dynamicGameState) {
     const currentManager = multiplayerSessionStore.get(roomId);
     if (currentManager) {
-      // 1. Merge this sceneRoom's state
-      const resultSceneRoom = result.dynamicGameState.sceneRooms?.[sceneRoomId];
-      if (resultSceneRoom) {
-        currentManager.updateSceneRoom(sceneRoomId, resultSceneRoom);
-      }
-
-      // 2. Merge player states for players in this sceneRoom
-      const sceneRoom = currentManager.getSceneRoom(sceneRoomId);
-      if (sceneRoom) {
-        for (const playerId of sceneRoom.memberPlayerIds) {
-          const resultPlayer = result.dynamicGameState.players?.[playerId];
-          if (resultPlayer) {
-            const currentState = currentManager.getState();
-            if (currentState.players[playerId]) {
-              currentState.players[playerId] = resultPlayer;
-            }
-          }
-        }
-      }
-
-      // 3. Merge global state: gameEnding (any room can trigger)
-      if (result.dynamicGameState.gameEnding?.isEnded) {
-        currentManager.getState().gameEnding = result.dynamicGameState.gameEnding;
-      }
-
-      // 4. Merge discoveredClues (additive — avoid duplicates)
-      if (result.dynamicGameState.discoveredClues?.length) {
-        const existing = currentManager.getState().discoveredClues ?? [];
-        const existingIds = new Set(existing.map((c: any) => c.id ?? c.name));
-        for (const clue of result.dynamicGameState.discoveredClues) {
-          const clueKey = (clue as any).id ?? (clue as any).name;
-          if (clueKey && !existingIds.has(clueKey)) {
-            existing.push(clue);
-            existingIds.add(clueKey);
-          }
-        }
-        currentManager.getState().discoveredClues = existing;
-      }
-
-      // 5. Merge DynamicWorld tracking sets (additive)
-      const resultState = result.dynamicGameState;
-      const currentState = currentManager.getState();
-      if (resultState.revealedTruthEvents?.size) {
-        for (const v of resultState.revealedTruthEvents) currentState.revealedTruthEvents.add(v);
-      }
-      if (resultState.activatedKnowledgeHolders?.size) {
-        for (const v of resultState.activatedKnowledgeHolders) currentState.activatedKnowledgeHolders.add(v);
-      }
-      if (resultState.deployedRedHerrings?.size) {
-        for (const v of resultState.deployedRedHerrings) currentState.deployedRedHerrings.add(v);
-      }
-      if (resultState.mythosRevelations?.size) {
-        for (const v of resultState.mythosRevelations) currentState.mythosRevelations.add(v);
-      }
-
-      // 6. Merge defeated NPC history (additive)
-      if (resultState.defeatedNpcHistory?.length) {
-        const existingNpcs = new Set(
-          (currentState.defeatedNpcHistory ?? []).map((e: any) => e.npcName)
-        );
-        for (const entry of resultState.defeatedNpcHistory) {
-          if (!existingNpcs.has((entry as any).npcName)) {
-            currentState.defeatedNpcHistory.push(entry);
-          }
-        }
-      }
-
-      // 7. Merge point of no return
-      if (resultState.pointOfNoReturnReached && !currentState.pointOfNoReturnReached) {
-        currentState.pointOfNoReturnReached = true;
-        currentState.pointOfNoReturnTrigger = resultState.pointOfNoReturnTrigger;
-      }
-
-      // 8. Clear round inputs for players in this sceneRoom
-      currentState.roundInputs = currentState.roundInputs.filter((input) => {
-        const player = currentState.players[input.playerId];
-        return player && player.currentSceneRoomId !== sceneRoomId;
-      });
-
-      currentState.lastUpdated = new Date();
+      mergeGraphResultIntoManager(currentManager, sceneRoomId, result.dynamicGameState);
     }
   }
 
@@ -1302,12 +1308,21 @@ async function handleUnifiedSceneSnapshots(
 // =============================================
 // copyParentTemporaryInfoToChildren — Drain 1, Step 3
 // Copies parent room(s) temporaryInfo to child rooms so Phase 2 has action context.
+// Filters action results / inputs / analyses to only include data for this child room's players.
 // =============================================
 
 function copyParentTemporaryInfoToChildren(
   manager: MultiplayerDynamicGameStateManager,
   splitResult: ResolveMovementsResult
 ): void {
+  const state = manager.getState();
+
+  // Build the full set of all player character names (for distinguishing player vs NPC entries)
+  const allPlayerCharNames = new Set<string>();
+  for (const ps of Object.values(state.players)) {
+    if (ps.characterName) allPlayerCharNames.add(ps.characterName);
+  }
+
   for (const child of splitResult.newChildRooms) {
     const parentInfos = child.parentSceneRoomIds
       .map((pid) => manager.getSceneRoom(pid)?.temporaryInfo)
@@ -1317,27 +1332,96 @@ function copyParentTemporaryInfoToChildren(
 
     if (parentInfos.length === 0) continue;
 
-    // Single parent: deep copy
+    // Build child room's player ID set and character name set
+    const childPlayerIdSet = new Set(child.playerIds);
+    const childPlayerCharNames = new Set<string>();
+    for (const pid of child.playerIds) {
+      const ps = state.players[pid];
+      if (ps?.characterName) childPlayerCharNames.add(ps.characterName);
+    }
+
+    // Helper: keep an action result if it belongs to a child-room player,
+    // or if it's an NPC entry (not any player) and this is a stayer room.
+    const keepActionResult = (character: string): boolean =>
+      childPlayerCharNames.has(character) ||
+      (child.isStayerRoom && !allPlayerCharNames.has(character));
+
+    // Helper: filter contextualData entries scoped to child room players
+    const filterContextualData = (cd: Record<string, unknown>): Record<string, unknown> => {
+      const filtered = { ...cd };
+
+      // roundInputsForKeeper — filter by playerId
+      if (Array.isArray(filtered.roundInputsForKeeper)) {
+        filtered.roundInputsForKeeper = (filtered.roundInputsForKeeper as any[]).filter(
+          (i: any) => childPlayerIdSet.has(i.playerId)
+        );
+      }
+
+      // playerActionAnalyses — filter by playerId keys
+      if (filtered.playerActionAnalyses && typeof filtered.playerActionAnalyses === "object") {
+        const scoped: Record<string, unknown> = {};
+        for (const [key, val] of Object.entries(filtered.playerActionAnalyses as Record<string, unknown>)) {
+          if (childPlayerIdSet.has(key)) scoped[key] = val;
+        }
+        filtered.playerActionAnalyses = scoped;
+      }
+
+      return filtered;
+    };
+
+    // Single parent: deep copy + filter
     if (parentInfos.length === 1) {
       const cloned = structuredClone(parentInfos[0]);
+
       // Stayer rooms stay in the same scene — clear scene-transition context
       if (child.isStayerRoom) {
         cloned.sceneChangeRequest = null;
         cloned.previousScenario = null;
       }
+
+      // Filter action results to this child room's players (+ NPC entries for stayer rooms)
+      cloned.actionResults = cloned.actionResults.filter(
+        (r) => keepActionResult(r.character)
+      );
+      cloned.actionResultsDetailed = cloned.actionResultsDetailed.filter(
+        (r) => keepActionResult(typeof r.character === "string" ? r.character : "")
+      );
+      cloned.slowGroupActionResults = (cloned.slowGroupActionResults ?? []).filter(
+        (r) => keepActionResult(r.character)
+      );
+      cloned.slowGroupActionResultsDetailed = (cloned.slowGroupActionResultsDetailed ?? []).filter(
+        (r) => keepActionResult(typeof r.character === "string" ? r.character : "")
+      );
+
+      // Mover rooms: NPC responses happened at old scene — not relevant
+      if (!child.isStayerRoom) {
+        cloned.npcResponseAnalyses = [];
+      }
+
+      // Filter contextualData (roundInputsForKeeper, playerActionAnalyses)
+      cloned.contextualData = filterContextualData(cloned.contextualData);
+
       manager.updateSceneRoom(child.sceneRoomId, {
         temporaryInfo: cloned,
       });
       continue;
     }
 
-    // Multiple parents (merge): concat arrays, merge contextualData
+    // Multiple parents (merge): concat arrays + filter, merge contextualData
+    const allActionResults = parentInfos.flatMap((p) => p.actionResults);
+    const allActionResultsDetailed = parentInfos.flatMap((p) => p.actionResultsDetailed);
+    const allSlowResults = parentInfos.flatMap((p) => p.slowGroupActionResults);
+    const allSlowDetailed = parentInfos.flatMap((p) => p.slowGroupActionResultsDetailed);
+    const allNpcResponses = parentInfos.flatMap((p) => p.npcResponseAnalyses);
+
     const merged = {
       rules: parentInfos.flatMap((p) => p.rules),
-      actionResults: parentInfos.flatMap((p) => p.actionResults),
-      actionResultsDetailed: parentInfos.flatMap((p) => p.actionResultsDetailed),
+      actionResults: allActionResults.filter((r) => keepActionResult(r.character)),
+      actionResultsDetailed: allActionResultsDetailed.filter(
+        (r) => keepActionResult(typeof r.character === "string" ? r.character : "")
+      ),
       currentActionAnalysis: parentInfos[0].currentActionAnalysis,
-      npcResponseAnalyses: parentInfos.flatMap((p) => p.npcResponseAnalyses),
+      npcResponseAnalyses: child.isStayerRoom ? allNpcResponses : [],
       // Only mover rooms get scene-transition context
       sceneChangeRequest: child.isStayerRoom
         ? null
@@ -1345,23 +1429,27 @@ function copyParentTemporaryInfoToChildren(
       previousScenario: child.isStayerRoom
         ? null
         : parentInfos.find((p) => p.previousScenario)?.previousScenario ?? null,
-      slowGroupActionResults: parentInfos.flatMap((p) => p.slowGroupActionResults),
-      slowGroupActionResultsDetailed: parentInfos.flatMap(
-        (p) => p.slowGroupActionResultsDetailed
+      slowGroupActionResults: allSlowResults.filter((r) => keepActionResult(r.character)),
+      slowGroupActionResultsDetailed: allSlowDetailed.filter(
+        (r) => keepActionResult(typeof r.character === "string" ? r.character : "")
       ),
-      contextualData: Object.assign(
-        {},
-        ...parentInfos.map((p) => p.contextualData)
-      ) as Record<string, unknown>,
+      contextualData: filterContextualData(
+        Object.assign({}, ...parentInfos.map((p) => p.contextualData)) as Record<string, unknown>
+      ),
     };
 
-    // Merge playerActionAnalyses specifically (object keyed by playerId)
+    // Merge playerActionAnalyses (already filtered by filterContextualData above,
+    // but we need to re-merge since Object.assign may have clobbered keys)
     const mergedAnalyses: Record<string, unknown> = {};
     for (const p of parentInfos) {
       const analyses = p.contextualData?.playerActionAnalyses as
         | Record<string, unknown>
         | undefined;
-      if (analyses) Object.assign(mergedAnalyses, analyses);
+      if (analyses) {
+        for (const [key, val] of Object.entries(analyses)) {
+          if (childPlayerIdSet.has(key)) mergedAnalyses[key] = val;
+        }
+      }
     }
     if (Object.keys(mergedAnalyses).length > 0) {
       merged.contextualData.playerActionAnalyses = mergedAnalyses;
@@ -1380,7 +1468,8 @@ function copyParentTemporaryInfoToChildren(
 async function processPostNarrative(
   roomId: string,
   manager: MultiplayerDynamicGameStateManager,
-  db: CoCDatabase | CoCDatabaseAdapter
+  db: CoCDatabase | CoCDatabaseAdapter,
+  processedSceneRoomIds: string[]
 ): Promise<void> {
   const wsManager = WebSocketManager.getInstance();
 
@@ -1413,12 +1502,18 @@ async function processPostNarrative(
     }
   }
 
-  // ---- Scene Image Generation (fire-and-forget for all active rooms) ----
+  // ---- Scene Image Generation (fire-and-forget, only when scene changed or no image yet) ----
   const state = manager.getState();
   if (state.moduleName) {
-    for (const room of manager.getActiveSceneRooms()) {
-      if (room.currentScenario) {
-        generateSceneRoomImage(room.currentScenario, state.moduleName)
+    const processedSet = new Set(processedSceneRoomIds);
+    for (const room of manager.getActiveSceneRooms().filter(r => processedSet.has(r.sceneRoomId))) {
+      // Only generate when: (a) scene actually changed, or (b) no image exists yet
+      const sceneChanged = room.temporaryInfo.previousScenario != null
+        || room.temporaryInfo.sceneChangeRequest != null;
+      const hasImage = room.currentScenario?.sceneImage != null;
+      if (!room.currentScenario || (hasImage && !sceneChanged)) continue;
+
+      generateSceneRoomImage(room.currentScenario, state.moduleName)
           .then((imageResult) => {
             if (imageResult) {
               // Write back to in-memory state so /gamestate API returns it
@@ -1446,7 +1541,6 @@ async function processPostNarrative(
           .catch((err) => {
             console.warn(`[MP Turn] Scene image generation failed for ${room.sceneRoomId}:`, err);
           });
-      }
     }
   }
 

@@ -363,6 +363,16 @@ export async function resolveAllMovements(
           manager.relocatePlayerToSceneRoom(playerId, newChildId);
         }
 
+        // Record scene transition in player actionLog for entering players
+        const moveTime = `Day ${existingRoom.gameDay}, ${existingRoom.timeOfDay}`;
+        for (const enteringPid of group.incomingPlayerIds) {
+          manager.appendPlayerActionLog(enteringPid, {
+            time: moveTime,
+            location: targetSceneName,
+            summary: `到达了${targetSceneName}`,
+          });
+        }
+
         // Sync discovered/damaged clue state from parent rooms
         syncScenarioCluesFromParents(manager, newChildId, parentIds);
         syncPlayerClueKnowledge(manager, newChildId);
@@ -606,6 +616,16 @@ export async function resolveAllMovements(
       manager.relocatePlayerToSceneRoom(playerId, mergedChildId);
     }
 
+    // Record scene transition in player actionLog for incoming players only
+    const mergedMoveTime = `Day ${maxTime.gameDay}, ${maxTime.timeOfDay}`;
+    for (const incomingPid of group.incomingPlayerIds) {
+      manager.appendPlayerActionLog(incomingPid, {
+        time: mergedMoveTime,
+        location: targetSceneName,
+        summary: `到达了${targetSceneName}`,
+      });
+    }
+
     const parentCount = parentIds.length;
     console.log(
       `[SceneRoomMerger] Merged child ${mergedChildId} created for ` +
@@ -714,6 +734,16 @@ export async function mergeSceneRooms(
 
   for (const playerId of uniquePlayerIds) {
     manager.relocatePlayerToSceneRoom(playerId, mergedChildId);
+  }
+
+  // Record scene transition in player actionLog for all converging players
+  const convergeMoveTime = `Day ${maxTime.gameDay}, ${maxTime.timeOfDay}`;
+  for (const playerId of uniquePlayerIds) {
+    manager.appendPlayerActionLog(playerId, {
+      time: convergeMoveTime,
+      location: targetSceneName,
+      summary: `到达了${targetSceneName}`,
+    });
   }
 
   // Look up pre-generated snapshot and set as current scenario
