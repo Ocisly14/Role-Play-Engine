@@ -189,12 +189,51 @@ export class MultiplayerOrchestratorAgent {
 
     const currentScenario = sceneRoom.currentScenario;
 
-    // Read connections from in-memory state instead of Prisma
+    // Read connections from in-memory state — dual id+name lookup (consistent with single-player)
     const scenarioOutlines = manager.getState().scenarioOutlines ?? [];
-    const currentScenarioOutline = scenarioOutlines.find(
-      (o) => o.name === sceneRoom?.currentScenario?.name
+    let currentScenarioOutline = currentScenario?.id
+      ? scenarioOutlines.find((o) => o.id === currentScenario.id)
+      : undefined;
+    if (!currentScenarioOutline && currentScenario?.name) {
+      currentScenarioOutline = scenarioOutlines.find(
+        (o) => o.name === currentScenario.name
+      );
+    }
+    // Enrich connections with resolved target names/IDs
+    const rawConnections = currentScenarioOutline?.connections ?? [];
+    const connections = rawConnections.map((conn) => {
+      const targetOutline = scenarioOutlines.find(
+        (o) => o.name === conn.scenarioName || o.id === conn.scenarioName
+      );
+      return {
+        scenarioName: targetOutline?.name || conn.scenarioName,
+        scenarioId: targetOutline?.id || conn.scenarioName,
+        relationshipType: conn.relationshipType,
+        description: conn.description,
+        blocked: conn.blocked,
+        blockReason: conn.blockReason,
+      };
+    });
+
+    // Log connections for debugging (consistent with single-player)
+    console.log(
+      `\n🔗 [MP Orchestrator] Current scenario connections (${connections.length}):`
     );
-    const connections = currentScenarioOutline?.connections ?? [];
+    if (connections.length > 0) {
+      connections.forEach((conn, index) => {
+        console.log(
+          `   ${index + 1}. "${conn.scenarioName}" (ID: ${conn.scenarioId}) [${conn.relationshipType}]`
+        );
+        if (conn.description) console.log(`      Description: ${conn.description}`);
+        if (conn.blocked) {
+          console.log(`      ⚠️ BLOCKED: ${conn.blockReason || "No reason specified"}`);
+        } else {
+          console.log(`      ✓ Not blocked`);
+        }
+      });
+    } else {
+      console.log(`   (No connections found for current scenario)`);
+    }
 
     // Compute ancestor chain once: [currentId, ...parentIds, ...grandparentIds]
     const ancestorIds = getAncestorSceneRoomIds(manager, sceneRoomId);
@@ -357,6 +396,42 @@ export class MultiplayerOrchestratorAgent {
         sceneChangeRequest,
       };
     });
+
+    // Log per-player scene change detection (consistent with single-player)
+    for (const pa of playerAnalyses) {
+      const playerName = state.players[pa.playerId]?.characterName ?? pa.playerId;
+      const scr = pa.sceneChangeRequest;
+      if (scr) {
+        console.log(
+          `🔍 [MP Orchestrator] ${playerName} sceneChangeRequest: shouldChange=${scr.shouldChange}, targetSceneName="${scr.targetSceneName}", reason="${scr.reason}"`
+        );
+        if (scr.shouldChange && scr.targetSceneName) {
+          // Validate against connections
+          const matchedConn = connections.find(
+            (c) =>
+              c.scenarioName.toLowerCase() === scr.targetSceneName!.toLowerCase() ||
+              c.scenarioId?.toLowerCase() === scr.targetSceneName!.toLowerCase()
+          );
+          if (matchedConn) {
+            if (matchedConn.blocked) {
+              console.log(
+                `   ⚠️ [MP Orchestrator] Target "${scr.targetSceneName}" is BLOCKED: ${matchedConn.blockReason || "No reason"}`
+              );
+            } else {
+              console.log(
+                `   ✅ [MP Orchestrator] Scene change validated: "${scr.targetSceneName}" → "${matchedConn.scenarioName}"`
+              );
+            }
+          } else {
+            console.log(
+              `   ❌ [MP Orchestrator] Target "${scr.targetSceneName}" not found in connections`
+            );
+          }
+        }
+      } else {
+        console.log(`🔍 [MP Orchestrator] ${playerName}: no sceneChangeRequest`);
+      }
+    }
 
     const validation: MultiRoundValidation = { status: "passed" };
 

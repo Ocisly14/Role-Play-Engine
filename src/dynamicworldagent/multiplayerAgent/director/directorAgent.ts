@@ -7,7 +7,6 @@ import type {
   CoCDatabase,
   CoCDatabaseAdapter,
 } from "../../../shared/agents/memory/database/index.js";
-import { getPrismaClient } from "../../../shared/agents/memory/database/prismaClient.js";
 import type { ScenarioLoader } from "../../../shared/agents/memory/scenarioloader/index.js";
 import type {
   ActionLogEntry,
@@ -1358,8 +1357,8 @@ export class DirectorAgent {
   }
 
   /**
-   * Apply connection updates directly to scenarioOutlines array (no adapter).
-   * Also persists to Prisma (same as applyScenarioConnectionsUpdate but without DynamicGameState).
+   * Apply connection updates directly to scenarioOutlines array (in-memory only).
+   * Checkpoint serialization preserves connections; no need to persist to Scenario table.
    */
   private applyConnectionsUpdateNative(
     scenarioOutlines: ReturnType<MultiplayerDynamicGameStateManager["getState"]>["scenarioOutlines"],
@@ -1398,17 +1397,6 @@ export class DirectorAgent {
     });
 
     targetOutline.connections = convertedConnections;
-
-    // Fire-and-forget Prisma update
-    const prisma = getPrismaClient();
-    prisma.scenario
-      .updateMany({
-        where: { scenarioId: targetOutline.id },
-        data: { connections: modifiedConnections as any },
-      })
-      .catch((e: unknown) => {
-        console.warn(`   ⚠️ Prisma connection update failed for ${scenarioName}:`, e);
-      });
   }
 
   /**
@@ -2177,7 +2165,7 @@ export class DirectorAgent {
     return scenarioProfile?.snapshot || null;
   }
 
-  private async applyScenarioConnectionsUpdate(
+  private applyScenarioConnectionsUpdate(
     dynamicState: DynamicGameState,
     scenarioName: string,
     modifiedConnections: Array<{
@@ -2187,7 +2175,7 @@ export class DirectorAgent {
       blocked?: boolean;
       blockReason?: string | null;
     }>
-  ): Promise<void> {
+  ): void {
     if (!modifiedConnections || modifiedConnections.length === 0) {
       return;
     }
@@ -2202,23 +2190,6 @@ export class DirectorAgent {
       );
       return;
     }
-
-    const prisma = getPrismaClient();
-    const currentSnapshotScope = dynamicState.currentScenario?.id
-      ? await prisma.scenarioSnapshot.findUnique({
-          where: { snapshotId: dynamicState.currentScenario.id },
-          select: { moduleId: true },
-        })
-      : null;
-    await prisma.scenario.updateMany({
-      where: {
-        scenarioId: targetScenarioOutline.id,
-        ...(currentSnapshotScope?.moduleId
-          ? { moduleId: currentSnapshotScope.moduleId }
-          : {}),
-      },
-      data: { connections: modifiedConnections as any },
-    });
 
     const convertedConnections = modifiedConnections.map((conn) => {
       const linkedScenario = dynamicState.scenarioOutlines.find(
@@ -2683,7 +2654,7 @@ export class DirectorAgent {
       };
 
       if (modifiedConnections && modifiedConnections.length > 0) {
-        await this.applyScenarioConnectionsUpdate(
+        this.applyScenarioConnectionsUpdate(
           dynamicState,
           validatedTargetSceneName,
           modifiedConnections
@@ -2879,7 +2850,7 @@ export class DirectorAgent {
       updatedCount += 1;
 
       if (item.connections && item.connections.length > 0) {
-        await this.applyScenarioConnectionsUpdate(
+        this.applyScenarioConnectionsUpdate(
           dynamicState,
           baseline.scenarioName,
           item.connections

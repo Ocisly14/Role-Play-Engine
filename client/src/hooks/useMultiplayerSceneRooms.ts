@@ -52,6 +52,56 @@ export function useMultiplayerSceneRooms({
   sceneRoomsRef.current = sceneRooms;
 
   const isViewingOwnRoom = activeTabId === mySceneRoomId;
+  const prevMySceneRoomIdRef = useRef(mySceneRoomId);
+
+  // React to mySceneRoomId changes (from split/merge auto-routing)
+  useEffect(() => {
+    const prevId = prevMySceneRoomIdRef.current;
+    if (prevId === mySceneRoomId) return;
+    prevMySceneRoomIdRef.current = mySceneRoomId;
+
+    setSceneRooms((prev) => {
+      const next = new Map(prev);
+
+      // Copy messages from the frozen parent for seamless transition before history re-fetch
+      const parentMessages = prevId ? (next.get(prevId)?.messages ?? []) : [];
+
+      // Add the new room if it doesn't exist yet
+      if (!next.has(mySceneRoomId)) {
+        next.set(mySceneRoomId, {
+          info: {
+            sceneRoomId: mySceneRoomId,
+            scenarioName: null,
+            memberPlayerIds: [],
+            roundNumber: 0,
+            isBattle: false,
+          },
+          messages: [...parentMessages],
+          scrollPosition: 0,
+          isLoaded: false,
+        });
+      } else {
+        // Room already exists (added by handleSceneRoomSplit) — seed messages if empty
+        const existing = next.get(mySceneRoomId)!;
+        if (existing.messages.length === 0 && parentMessages.length > 0) {
+          next.set(mySceneRoomId, {
+            ...existing,
+            messages: [...parentMessages],
+          });
+        }
+      }
+
+      // Remove the frozen parent room (the old mySceneRoomId)
+      if (prevId && next.has(prevId)) {
+        next.delete(prevId);
+      }
+
+      return next;
+    });
+
+    // Switch active tab to the new room
+    setActiveTabIdRaw(mySceneRoomId);
+  }, [mySceneRoomId]);
 
   // Fetch all active scene rooms on mount
   useEffect(() => {
@@ -157,7 +207,7 @@ export function useMultiplayerSceneRooms({
     []
   );
 
-  // Handle scene room split
+  // Handle scene room split — add child rooms to the Map
   const handleSceneRoomSplit = useCallback(
     (newRooms: SceneRoomInfo[]) => {
       setSceneRooms((prev) => {

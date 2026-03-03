@@ -62,6 +62,8 @@ export interface UseMultiplayerWebSocketParams {
   } | null>>;
   /** Called when WS reconnects so the caller can re-fetch missed messages */
   onReconnect?: () => void;
+  /** Called when the current player's scene room changes due to split/merge */
+  onMySceneRoomChanged?: (newSceneRoomId: string) => void;
 }
 
 export function useMultiplayerWebSocket({
@@ -89,6 +91,7 @@ export function useMultiplayerWebSocket({
   currentPlayerId,
   setRoundStatus,
   onReconnect,
+  onMySceneRoomChanged,
 }: UseMultiplayerWebSocketParams): void {
   const wsRef = useRef<WebSocket | null>(null);
   const reconnectTimeoutRef = useRef<number | null>(null);
@@ -114,6 +117,8 @@ export function useMultiplayerWebSocket({
   currentPlayerIdRef.current = currentPlayerId;
   const onReconnectRef = useRef(onReconnect);
   onReconnectRef.current = onReconnect;
+  const onMySceneRoomChangedRef = useRef(onMySceneRoomChanged);
+  onMySceneRoomChangedRef.current = onMySceneRoomChanged;
 
   useEffect(() => {
     if (!sessionId || !sceneRoomId || isGameEnded) return;
@@ -513,6 +518,17 @@ export function useMultiplayerWebSocket({
                   });
                 }
                 onSceneRoomSplitRef.current?.(newRooms);
+
+                // Detect which child room contains the current player
+                if (currentPlayerIdRef.current) {
+                  const myNewRoom = newRooms.find((r) =>
+                    r.memberPlayerIds.includes(currentPlayerIdRef.current!)
+                  );
+                  if (myNewRoom) {
+                    onMySceneRoomChangedRef.current?.(myNewRoom.sceneRoomId);
+                  }
+                }
+
                 onNarrativeCompleteRef.current?.();
                 break;
               }
@@ -526,6 +542,15 @@ export function useMultiplayerWebSocket({
                     onSceneRoomMergedRef.current?.(survivingId, removedId);
                   }
                 }
+
+                // Detect if current player is in the merged child room
+                if (
+                  currentPlayerIdRef.current &&
+                  msg.mergedChildRoom?.playerIds?.includes(currentPlayerIdRef.current)
+                ) {
+                  onMySceneRoomChangedRef.current?.(msg.mergedChildRoom.sceneRoomId);
+                }
+
                 onNarrativeCompleteRef.current?.();
                 break;
               }

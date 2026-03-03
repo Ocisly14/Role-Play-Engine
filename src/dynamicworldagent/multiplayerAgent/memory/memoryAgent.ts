@@ -1,7 +1,3 @@
-import {
-  GameHistoryRag,
-  type RelevantHistoryItem as LegacyRelevantHistoryItem,
-} from "../../../rag/gameHistoryRag.js";
 import { getPrismaClient } from "../../../shared/agents/memory/database/prismaClient.js";
 import type {
   CoCDatabase,
@@ -447,145 +443,63 @@ export const retrieveRelevantHistory = async (
         ? fullTurnResults.filter((item) => item.score >= minScore)
         : fullTurnResults;
 
-    const ragManager = new GameHistoryRag(db);
-    const fetchLegacyItems = async (
-      legacyTopKTurns: number
-    ): Promise<RelevantHistoryItem[]> => {
-      const searchResult = await ragManager.searchRelevantHistoryHybrid(
+    // Retrieve action log chunks (independent of turn results)
+    let actionLogResults: RelevantHistoryItem[] = [];
+    if (includeActionLogs && topKActionLogs > 0) {
+      const actionLogChunks = await sessionRagService.searchHybrid({
         sessionId,
-        query,
-        {
-          topKActionLogs,
-          topKTurns: legacyTopKTurns,
-          alpha,
-          targetCharacters: options.targetCharacters,
-          topKPerCharacter: options.topKPerCharacter,
-          currentLocation: options.currentLocation,
-          locationBoostFactor: options.locationBoostFactor,
-        }
-      );
+        ragQuery: rewrite.ragQuery,
+        topK: topKActionLogs * 2,
+        semanticWeight: 1 - alpha,
+        bm25Weight: alpha,
+        language,
+        chunkType: "turn",
+        segmentType: "actionlog",
+        sceneRoomId,
+      });
 
-      return (
-        searchResult.items as LegacyRelevantHistoryItem[] as RelevantHistoryItem[]
-      ).filter(
-        (item) =>
-          (includeActionLogs || item.type === "turn") &&
-          (typeof minScore === "number" ? item.score >= minScore : true)
-      );
-    };
+      actionLogResults = actionLogChunks
+        .filter((c) => (typeof minScore === "number" ? c.score >= minScore : true))
+        .slice(0, topKActionLogs)
+        .map((chunk) => {
+          const turnId = parseTurnIdFromSourceKey(chunk.sourceKey);
+          const meta = (chunk.metadata as Record<string, unknown>) ?? {};
+          const timestampParts = [
+            meta.gameDay != null ? `Day ${meta.gameDay}` : null,
+            typeof meta.gameTime === "string" ? meta.gameTime : null,
+          ].filter(Boolean) as string[];
+          return {
+            type: "action_log" as const,
+            content: chunk.content,
+            score: chunk.score,
+            metadata: {
+              turnId: turnId ?? undefined,
+              turnNumber: chunk.turnNumber ?? undefined,
+              location: typeof meta.location === "string" ? meta.location : undefined,
+              timestamp: timestampParts.length > 0 ? timestampParts.join(" ") : undefined,
+              ragQuery: rewrite.ragQuery,
+            },
+          };
+        });
+    }
 
-    if (filteredFullTurnResults.length > 0) {
-      let mergedItems = filteredFullTurnResults;
+    const mergedItems = [...filteredFullTurnResults, ...actionLogResults].sort(
+      (a, b) => b.score - a.score
+    );
 
-      if (includeActionLogs && topKActionLogs > 0) {
-        let supplementalActionLogs = (await fetchLegacyItems(1)).filter(
-          (item) => item.type === "action_log"
-        );
-
-        // Multiplayer: ensure action logs also don't leak across sceneRooms.
-        if (sceneRoomId && supplementalActionLogs.length > 0) {
-          const prisma = getPrismaClient();
-          const actionLogTurnIds = Array.from(
-            new Set(
-              supplementalActionLogs
-                .map((i) => (typeof i.metadata?.turnId === "string" ? i.metadata.turnId : null))
-                .filter(Boolean) as string[]
-            )
-          );
-
-          if (actionLogTurnIds.length > 0) {
-            const sceneRoomFilter = Array.isArray(sceneRoomId)
-              ? { sceneRoomId: { in: sceneRoomId } }
-              : { sceneRoomId };
-            const allowedTurns = await prisma.gameTurn.findMany({
-              where: {
-                sessionId,
-                ...sceneRoomFilter,
-                turnId: { in: actionLogTurnIds },
-              },
-              select: { turnId: true },
-            });
-            const allowed = new Set(allowedTurns.map((t) => t.turnId));
-            supplementalActionLogs = supplementalActionLogs.filter((i) =>
-              i.metadata?.turnId ? allowed.has(i.metadata.turnId) : false
-            );
-          } else {
-            supplementalActionLogs = [];
-          }
-        }
-
-        if (supplementalActionLogs.length > 0) {
-          mergedItems = [...filteredFullTurnResults, ...supplementalActionLogs].sort(
-            (a, b) => b.score - a.score
-          );
-        }
-      }
-
+    if (mergedItems.length > 0) {
       const actionLogCount = mergedItems.filter(
         (i) => i.type === "action_log"
       ).length;
       const turnCount = mergedItems.filter((i) => i.type === "turn").length;
       console.log(
-        `🔍 [Memory Agent] Retrieved ${mergedItems.length} relevant history items via rewritten query + chunk RAG` +
-          `${includeActionLogs ? " (+ legacy action logs)" : ""} ` +
+        `🔍 [Memory Agent] Retrieved ${mergedItems.length} relevant history items via chunk RAG ` +
           `(${actionLogCount} action logs, ${turnCount} turns, query="${query}" -> ragQuery="${rewrite.ragQuery}"` +
           `${typeof minScore === "number" ? `, minScore=${minScore}` : ""})`
       );
-      return mergedItems;
     }
 
-    // Fallback: legacy embedding store (for older sessions without chunk data)
-    let legacyItems = await fetchLegacyItems(topKTurns);
-
-    // Multiplayer: ensure fallback items don't leak across sceneRooms.
-    if (sceneRoomId && legacyItems.length > 0) {
-      const prisma = getPrismaClient();
-      const legacyTurnIds = Array.from(
-        new Set(
-          legacyItems
-            .map((i) => (typeof i.metadata?.turnId === "string" ? i.metadata.turnId : null))
-            .filter(Boolean) as string[]
-        )
-      );
-
-      if (legacyTurnIds.length > 0) {
-        const sceneRoomFilter = Array.isArray(sceneRoomId)
-          ? { sceneRoomId: { in: sceneRoomId } }
-          : { sceneRoomId };
-        const allowedTurns = await prisma.gameTurn.findMany({
-          where: {
-            sessionId,
-            ...sceneRoomFilter,
-            turnId: { in: legacyTurnIds },
-          },
-          select: { turnId: true },
-        });
-        const allowed = new Set(allowedTurns.map((t) => t.turnId));
-        legacyItems = legacyItems.filter((i) =>
-          i.metadata?.turnId ? allowed.has(i.metadata.turnId) : false
-        );
-      } else {
-        legacyItems = [];
-      }
-    }
-
-    if (legacyItems.length > 0) {
-      const actionLogCount = legacyItems.filter(
-        (i) => i.type === "action_log"
-      ).length;
-      const turnCount = legacyItems.filter(
-        (i) => i.type === "turn"
-      ).length;
-      const modeInfo = options.targetCharacters?.length
-        ? `per-character mode (${options.targetCharacters.length} chars)`
-        : "global mode";
-      console.log(
-        `🔍 [Memory Agent] Retrieved ${legacyItems.length} relevant history items via Legacy Hybrid RAG ` +
-          `(${actionLogCount} action logs, ${turnCount} turns, α=${alpha}, ${modeInfo}, ragQuery="${rewrite.ragQuery}"${typeof minScore === "number" ? `, minScore=${minScore}` : ""})`
-      );
-    }
-
-    return legacyItems;
+    return mergedItems;
   } catch (error) {
     console.warn("[Memory Agent] Failed to retrieve relevant history:", error);
     return [];
@@ -872,10 +786,23 @@ export const enrichMemoryContextForSceneRoom = async (
     }
   }
 
-  // Conversation history: sceneRoom-scoped with ancestor chain (includes frozen parent rooms).
-  const conversationHistory = db
-    ? await extractRecentConversationHistory(db, state.sessionId, 3, ancestorIds)
-    : [];
+  // Conversation history: reuse orchestrator-preloaded data if available, otherwise fetch fresh.
+  const preloadedConversationHistory = contextualData.conversationHistory as
+    | Array<{ turnNumber: number; characterInput: string; keeperNarrative: string | null }>
+    | undefined;
+  const hasPreloadedConversationHistory =
+    Array.isArray(preloadedConversationHistory) && preloadedConversationHistory.length > 0;
+
+  const conversationHistory = hasPreloadedConversationHistory
+    ? (() => {
+        console.log(
+          `🧠 [Memory Agent] Reusing ${preloadedConversationHistory.length} preloaded conversationHistory from orchestrator`
+        );
+        return preloadedConversationHistory;
+      })()
+    : db
+      ? await extractRecentConversationHistory(db, state.sessionId, 3, ancestorIds)
+      : [];
 
   // Relevant history: prefer orchestrator-preloaded relevantHistory.
   let relevantHistory =
@@ -884,7 +811,11 @@ export const enrichMemoryContextForSceneRoom = async (
     Array.isArray(relevantHistory) && relevantHistory.length > 0;
   const allowReuse = contextualData.relevantHistoryIncludesActionLogs === true;
 
-  if ((!hasRelevantHistory || !allowReuse) && db) {
+  if (hasRelevantHistory && allowReuse) {
+    console.log(
+      `🧠 [Memory Agent] Reusing ${relevantHistory.length} preloaded relevantHistory from orchestrator`
+    );
+  } else if (db) {
     const currentLocation = sceneRoom.currentScenario?.location || undefined;
     const inputQuery = combinedCharacterInput?.trim() ?? "";
     if (inputQuery) {

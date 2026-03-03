@@ -35,6 +35,7 @@ export interface MultiplayerGameChatProps {
   characterId: string;
   characterName?: string;
   onNarrativeComplete?: () => void;
+  onSceneRoomChanged?: (newSceneRoomId: string) => void;
   language?: "en" | "zh";
 }
 
@@ -45,6 +46,7 @@ export function MultiplayerGameChat({
   characterId,
   characterName = "Investigator",
   onNarrativeComplete,
+  onSceneRoomChanged,
   language = "en",
 }: MultiplayerGameChatProps) {
   const { t } = useTranslation("game");
@@ -245,6 +247,7 @@ export function MultiplayerGameChat({
     currentPlayerId,
     setRoundStatus,
     onReconnect: handleWsReconnect,
+    onMySceneRoomChanged: onSceneRoomChanged,
     onSkillSelectionRequired: useCallback(
       (data) => {
         if (!currentPlayerId) return;

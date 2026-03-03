@@ -143,6 +143,10 @@ export const buildMultiplayerGraph = (
       language: {
         value: (l: any, r?: any) => (r !== undefined ? r : l),
       },
+      phase: {
+        value: (l: number | undefined, r?: number) =>
+          r !== undefined ? r : l ?? undefined,
+      },
       stream: {
         value: (l: any, r?: any) => (r !== undefined ? r : l),
       },
@@ -157,22 +161,42 @@ export const buildMultiplayerGraph = (
     const roomTime = sceneRoom
       ? `Day ${sceneRoom.gameDay}, ${sceneRoom.timeOfDay}`
       : "(unknown)";
-    console.log(`🎭 [MP Entry] sceneRoom=${state.sceneRoomId} round start (${roomTime})`);
+    console.log(`🎭 [MP Entry] sceneRoom=${state.sceneRoomId} phase=${state.phase ?? "full"} round start (${roomTime})`);
     if (!sceneRoom) {
       console.error(`[MP Entry] sceneRoom ${state.sceneRoomId} not found`);
       return state;
     }
 
-    // Preserve cached orchestrator result from skill selection pre-check
+    // Phase 2: pass through to director — no clearing, no round increment
+    if (state.phase === 2) {
+      console.log(`🎭 [MP Entry] Phase 2 — skipping clearing and round increment`);
+      return { ...state, dynamicGameState: m.getState() };
+    }
+
+    // Preserve cached orchestrator result + its preloaded memory data from skill selection pre-check
     // (clearSceneRoomTemporaryInfo wipes contextualData, so extract first)
-    const cachedOrchestratorResult = sceneRoom.temporaryInfo?.contextualData?.cachedOrchestratorResult;
+    const ctxData = sceneRoom.temporaryInfo?.contextualData;
+    const cachedOrchestratorResult = ctxData?.cachedOrchestratorResult;
+    const cachedConversationHistory = ctxData?.conversationHistory;
+    const cachedRelevantHistory = ctxData?.relevantHistory;
+    const cachedRelevantHistoryIncludesActionLogs = ctxData?.relevantHistoryIncludesActionLogs;
 
     // Clear per-round temporary info for this sceneRoom
     m.clearSceneRoomTemporaryInfo(state.sceneRoomId);
 
-    // Restore cached orchestrator result so the orchestrator node can skip LLM
+    // Restore cached orchestrator result + preloaded memory data to avoid duplicate retrieval
     if (cachedOrchestratorResult) {
       m.setContextualData(state.sceneRoomId, "cachedOrchestratorResult", cachedOrchestratorResult);
+      // Also preserve conversation/relevant history fetched during orchestrator pre-check
+      if (cachedConversationHistory) {
+        m.setContextualData(state.sceneRoomId, "conversationHistory", cachedConversationHistory);
+      }
+      if (cachedRelevantHistory) {
+        m.setContextualData(state.sceneRoomId, "relevantHistory", cachedRelevantHistory);
+        if (cachedRelevantHistoryIncludesActionLogs) {
+          m.setContextualData(state.sceneRoomId, "relevantHistoryIncludesActionLogs", true);
+        }
+      }
     }
 
     // Heartbeat evaluation
@@ -193,6 +217,7 @@ export const buildMultiplayerGraph = (
   });
 
   const routeFromEntry = (state: MultiplayerGraphState): string => {
+    if (state.phase === 2) return "director";
     const scr = state.dynamicGameState.sceneRooms[state.sceneRoomId];
     if (scr?.isBattle) return "memory";
     return "orchestrator";
@@ -201,6 +226,7 @@ export const buildMultiplayerGraph = (
   graph.addConditionalEdges("entry" as any, routeFromEntry, {
     orchestrator: "orchestrator" as any,
     memory: "memory" as any,
+    director: "director" as any,
     [END]: END,
   });
 
@@ -219,6 +245,18 @@ export const buildMultiplayerGraph = (
     if (cachedResult && typeof cachedResult === "object" && "playerAnalyses" in (cachedResult as any)) {
       console.log("✅ [MP Orchestrator] Using cached result from skill selection pre-check");
       const typedResult = cachedResult as import("../multiplayerAgent/orchestrator/orchestratorAgent.js").OrchestratorResult;
+
+      // Log cached scene change requests so they are visible in logs
+      const gameState = m.getState();
+      for (const pa of typedResult.playerAnalyses) {
+        const playerName = gameState.players[pa.playerId]?.characterName ?? pa.playerId;
+        const scr = pa.sceneChangeRequest;
+        if (scr?.shouldChange) {
+          console.log(
+            `   🔍 [MP Orchestrator cached] ${playerName}: shouldChange=${scr.shouldChange}, target="${scr.targetSceneName}"`
+          );
+        }
+      }
 
       // Restore the data that processRound() normally stores in contextualData.
       // Entry node cleared temporaryInfo, so playerActionAnalyses must be rebuilt.
@@ -344,11 +382,13 @@ export const buildMultiplayerGraph = (
   });
 
   // Route from action: if combat just started this turn, go to combatActionB;
-  // otherwise normal pipeline → director (same as single-player)
+  // Phase 1: stop after action (except combat entry which completes in Phase 1);
+  // otherwise normal pipeline → director.
   graph.addConditionalEdges(
     "action" as any,
     (state: MultiplayerGraphState) => {
       const scr = state.dynamicGameState.sceneRooms[state.sceneRoomId];
+      // justEnteredCombat takes priority — combat completes fully in Phase 1
       if (
         scr?.isBattle &&
         scr?.combatState?.round === 1 &&
@@ -363,11 +403,18 @@ export const buildMultiplayerGraph = (
           return "combatActionB";
         }
       }
+      // Phase 1: stop here (director + keeper run in Phase 2)
+      if (state.phase === 1) {
+        console.log("🔀 [MP Action Router] → END (Phase 1 complete)");
+        return END;
+      }
+      // Full mode (fallback for non-phased execution): continue to director
       return "director";
     },
     {
       combatActionB: "combatActionB" as any,
       director: "director" as any,
+      [END]: END,
     }
   );
 

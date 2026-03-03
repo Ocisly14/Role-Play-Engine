@@ -75,6 +75,11 @@ export const MultiplayerGamePage: React.FC = () => {
     setSidebarRefreshTrigger((n) => n + 1);
   }, []);
 
+  // Handle scene room changes from split/merge events
+  const handleSceneRoomChanged = useCallback((newSceneRoomId: string) => {
+    setSceneRoomId(newSceneRoomId);
+  }, []);
+
   // Initialize: fetch game state + room overview
   useEffect(() => {
     if (!roomId || !user?.id) return;
@@ -287,6 +292,7 @@ export const MultiplayerGamePage: React.FC = () => {
           characterId={characterId}
           characterName={characterName}
           onNarrativeComplete={triggerSidebarRefresh}
+          onSceneRoomChanged={handleSceneRoomChanged}
           language={language as "en" | "zh"}
         />
 

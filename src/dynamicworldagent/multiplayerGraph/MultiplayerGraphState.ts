@@ -32,6 +32,9 @@ export interface MultiplayerGraphState {
   /** User-selected output language */
   language?: "en" | "zh";
 
+  /** Graph execution phase: 1 = action only, 2 = narrative only */
+  phase?: 1 | 2;
+
   /** Streaming callbacks (optional) */
   stream?: {
     onDiceRolls?: (diceRolls: DiceRollInfo[]) => void;
