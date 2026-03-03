@@ -1842,46 +1842,12 @@ async function handlePostRoundSceneSplit(
           timestamp: new Date().toISOString(),
         });
 
-        // Generate scene images + maps only for mover rooms (stayer rooms keep parent's assets)
+        // Generate maps only for mover rooms (stayer rooms keep parent's assets)
+        // NOTE: BG image generation is handled by processPostNarrative for all processed rooms
         if (!childRoom.isStayerRoom) {
           const state = manager.getState();
           const childState = manager.getSceneRoom(childRoom.sceneRoomId);
           if (childState?.currentScenario && state.moduleName) {
-            // ── BG generation (fire-and-forget) ──
-            generateSceneRoomImage(childState.currentScenario, state.moduleName)
-              .then((imageResult) => {
-                if (imageResult) {
-                  // Write back to in-memory state so /gamestate API returns it
-                  const latestMgr = multiplayerSessionStore.get(roomId) ?? manager;
-                  const latestRoom = latestMgr.getSceneRoom(childRoom.sceneRoomId);
-                  if (latestRoom?.currentScenario) {
-                    latestRoom.currentScenario.sceneImage = {
-                      path: imageResult.path,
-                      mimeType: imageResult.mimeType,
-                      generatedAt: new Date().toISOString(),
-                    };
-                  }
-                  if (wsManager) {
-                    const imgClients = wsManager.getMultiplayerClients(
-                      childRoom.sceneRoomId
-                    );
-                    notifySceneRoom(childRoom.sceneRoomId, imgClients, {
-                      type: "scene_image_ready",
-                      sceneRoomId: childRoom.sceneRoomId,
-                      imagePath: imageResult.path,
-                      mimeType: imageResult.mimeType,
-                      timestamp: new Date().toISOString(),
-                    });
-                  }
-                }
-              })
-              .catch((err) => {
-                console.warn(
-                  `[MP Turn] Scene image for ${childRoom.sceneRoomId} failed:`,
-                  err
-                );
-              });
-
             // ── Map generation (fire-and-forget) ──
             const getConns = (scenarioName: string) => {
               return state.scenarioOutlines?.find(
