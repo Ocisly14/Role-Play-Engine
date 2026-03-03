@@ -13,7 +13,7 @@ import type {
   ActionResult,
   DiscoveredClue,
 } from "../../../shared/state/index.js";
-import { composeTemplateWithImages, type MultiplayerSceneScopedState } from "../../../template.js";
+import { composeTemplate } from "../../../template.js";
 import type { HeartbeatActivatedNarrative } from "../../state/index.js";
 import type {
   MultiplayerDynamicGameStateManager,
@@ -541,14 +541,9 @@ export class KeeperAgent {
       })(),
     };
 
-    // Compose template with images (multiplayer scene-scoped state for scenario map extraction)
-    const sceneScopedState: MultiplayerSceneScopedState = {
-      multiplayerSceneScope: true,
-      currentScenario,
-    };
-    const { content: prompt, images } = composeTemplateWithImages(
+    const prompt = composeTemplate(
       template,
-      sceneScopedState,
+      {},
       templateContext,
       "handlebars"
     );
@@ -565,7 +560,6 @@ export class KeeperAgent {
         response = await generateText({
           runtime,
           context: prompt,
-          images,
           modelClass: ModelClass.MEDIUM,
           maxRetries: narrativeStream ? 1 : undefined,
           onToken: narrativeStream
@@ -817,13 +811,9 @@ export class KeeperAgent {
       ),
     };
 
-    const epilogueScopedState: MultiplayerSceneScopedState = {
-      multiplayerSceneScope: true,
-      currentScenario: sceneRoom.currentScenario,
-    };
-    const { content: prompt, images } = composeTemplateWithImages(
+    const prompt = composeTemplate(
       template,
-      epilogueScopedState,
+      {},
       templateContext,
       "handlebars"
     );
@@ -837,7 +827,6 @@ export class KeeperAgent {
         response = await generateText({
           runtime,
           context: prompt,
-          images,
           modelClass: ModelClass.LARGE,
         });
 

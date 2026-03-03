@@ -94,6 +94,10 @@ export async function getGameState(req: Request, res: Response): Promise<void> {
       }
     }
 
+    // Determine the requesting player's authoritative sceneRoomId
+    const playerState = s.players[userId];
+    const myCurrentSceneRoomId = playerState?.currentSceneRoomId ?? null;
+
     res.json({
       success: true,
       sessionId: s.sessionId,
@@ -102,6 +106,7 @@ export async function getGameState(req: Request, res: Response): Promise<void> {
       timeOfDay: s.timeOfDay,
       isBattle: Object.values(s.sceneRooms).some((sr) => sr.isBattle),
       gameEnding: s.gameEnding,
+      myCurrentSceneRoomId,
       sceneRooms: Object.keys(s.sceneRooms).map((id) => {
         const sr = s.sceneRooms[id];
         return {
@@ -110,11 +115,13 @@ export async function getGameState(req: Request, res: Response): Promise<void> {
           roundNumber: sr.roundNumber,
           memberPlayerIds: sr.memberPlayerIds,
           isBattle: sr.isBattle ?? false,
+          isFrozen: sr.isFrozen ?? false,
         };
       }),
       players: Object.fromEntries(
         Object.entries(s.players).map(([pid, p]) => [pid, {
           characterName: p.characterName,
+          currentSceneRoomId: p.currentSceneRoomId,
           profile: {
             status: p.profile.status,
             attributes: p.profile.attributes,

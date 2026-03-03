@@ -70,6 +70,19 @@ export async function submitInput(req: Request, res: Response): Promise<void> {
     res.json({ success: true, ...result });
   } catch (error) {
     const message = error instanceof Error ? error.message : String(error);
+
+    // Handle WRONG_ROOM errors — return the correct sceneRoomId so the client can redirect
+    const wrongRoomMatch = message.match(/^WRONG_ROOM:([^:]+):/);
+    if (wrongRoomMatch) {
+      res.status(409).json({
+        success: false,
+        error: message,
+        code: "WRONG_ROOM",
+        correctSceneRoomId: wrongRoomMatch[1],
+      });
+      return;
+    }
+
     const status =
       message.includes("not found") || message.includes("not a member")
         ? 404

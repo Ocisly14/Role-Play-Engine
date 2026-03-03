@@ -119,15 +119,28 @@ export const MultiplayerGamePage: React.FC = () => {
           setCharacterId(myMember.characterId);
         }
 
-        // Find which sceneRoom this user belongs to
+        // Find which sceneRoom this user belongs to (priority: game state > DB > memberPlayerIds)
         let mySceneRoomId: string | null = null;
-        if (myMember?.currentSceneRoomId) {
+        // 1. Use authoritative game-state location (player's currentSceneRoomId)
+        if ((gs as any).myCurrentSceneRoomId) {
+          mySceneRoomId = (gs as any).myCurrentSceneRoomId;
+        }
+        // 2. Fall back to DB-persisted currentSceneRoomId
+        else if (myMember?.currentSceneRoomId) {
           mySceneRoomId = myMember.currentSceneRoomId;
-        } else if (gs.sceneRooms.length > 0) {
-          const myRoom = gs.sceneRooms.find((sr) =>
+        }
+        // 3. Fall back to memberPlayerIds scan (only active rooms)
+        else if (gs.sceneRooms.length > 0) {
+          const activeRooms = gs.sceneRooms.filter(
+            (sr) => !(sr as any).isFrozen
+          );
+          const myRoom = activeRooms.find((sr) =>
             sr.memberPlayerIds.includes(userId!)
           );
-          mySceneRoomId = myRoom?.sceneRoomId ?? gs.sceneRooms[0].sceneRoomId;
+          mySceneRoomId =
+            myRoom?.sceneRoomId ??
+            activeRooms[0]?.sceneRoomId ??
+            gs.sceneRooms[0].sceneRoomId;
         }
         setSceneRoomId(mySceneRoomId);
 

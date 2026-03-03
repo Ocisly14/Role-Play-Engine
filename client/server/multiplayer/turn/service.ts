@@ -174,20 +174,36 @@ function setupTwoPhaseDrainCallbacks(
       }
     }
 
-    // 5. Enqueue Phase 2 for each target room
-    for (const { sceneRoomId: srId, metadata } of phase2Rooms) {
-      roomProcessingQueue.enqueue(roomId, async () => {
-        await triggerNarrativePhase(db, roomId, srId, metadata);
-      });
+    // 5. Run Phase 2 for each target room IN PARALLEL
+    //    Each child sceneRoom gets its own narrative generation concurrently.
+    //    State merging is safe because Node.js is single-threaded: the synchronous
+    //    merge step after each `await graph.invoke()` cannot be interrupted.
+    if (phase2Rooms.length > 0) {
+      const phase2Promises = phase2Rooms.map(({ sceneRoomId: srId, metadata }) =>
+        triggerNarrativePhase(db, roomId, srId, metadata).catch((err) => {
+          console.error(`[MP Turn] Phase 2 failed for sceneRoom ${srId}:`, err);
+          // Broadcast error to the specific room's clients
+          const errWsManager = WebSocketManager.getInstance();
+          if (errWsManager) {
+            const clients = errWsManager.getMultiplayerClients(srId);
+            notifySceneRoom(srId, clients, {
+              type: "round_error",
+              sceneRoomId: srId,
+              roundTurnId: metadata.roundTurnId,
+              error: err instanceof Error ? err.message : String(err),
+              timestamp: new Date().toISOString(),
+            });
+          }
+        })
+      );
+      await Promise.all(phase2Promises);
     }
 
-    // 6. Set drain 2 for post-processing
-    roomProcessingQueue.setDrainCallback(roomId, async () => {
-      const latestMgr = multiplayerSessionStore.get(roomId);
-      if (latestMgr) {
-        await processPostNarrative(roomId, latestMgr, db);
-      }
-    });
+    // 6. Post-processing (after all Phase 2 tasks complete)
+    const latestMgr = multiplayerSessionStore.get(roomId);
+    if (latestMgr) {
+      await processPostNarrative(roomId, latestMgr, db);
+    }
   });
 }
 
@@ -223,10 +239,23 @@ export async function submitRoundInput(
     throw new Error("You are not a member of this scene room");
   }
 
+  // ── Location-based routing validation ──
+  // The player's currentSceneRoomId is the authoritative source of their location.
+  // Only allow input to the room the player actually belongs to.
+  const playerState = manager.getState().players[userId];
+  if (playerState && playerState.currentSceneRoomId !== sceneRoomId) {
+    const correctRoomId = playerState.currentSceneRoomId;
+    throw new Error(
+      `WRONG_ROOM:${correctRoomId}: Your character is located in a different scene room. ` +
+        "Redirecting you to the correct room."
+    );
+  }
+
   // Reject input to frozen rooms (they are historical snapshots, not active)
   if (sceneRoom.isFrozen) {
+    const correctRoomId = playerState?.currentSceneRoomId ?? sceneRoomId;
     throw new Error(
-      "This scene room is frozen and no longer accepts input. " +
+      `WRONG_ROOM:${correctRoomId}: This scene room is frozen and no longer accepts input. ` +
         "Your character has been moved to a new scene room."
     );
   }
@@ -922,27 +951,93 @@ async function triggerNarrativePhase(
     throw err;
   }
 
-  // Replace stored manager with updated state, preserving other rooms' roundInputs
+  // ── Merge only sceneRoom-specific changes back into the shared manager ──
+  // This is safe for parallel execution: Node.js is single-threaded, so the
+  // synchronous merge step after `await graph.invoke()` runs atomically.
   if (result.dynamicGameState) {
-    const oldManager = multiplayerSessionStore.get(roomId);
-    const preservedInputs: MultiplayerTurnInput[] = [];
-    if (oldManager) {
-      const oldState = oldManager.getState();
-      for (const input of oldState.roundInputs) {
-        const player = oldState.players[input.playerId];
-        if (player && player.currentSceneRoomId !== sceneRoomId) {
-          preservedInputs.push(input);
+    const currentManager = multiplayerSessionStore.get(roomId);
+    if (currentManager) {
+      // 1. Merge this sceneRoom's state
+      const resultSceneRoom = result.dynamicGameState.sceneRooms?.[sceneRoomId];
+      if (resultSceneRoom) {
+        currentManager.updateSceneRoom(sceneRoomId, resultSceneRoom);
+      }
+
+      // 2. Merge player states for players in this sceneRoom
+      const sceneRoom = currentManager.getSceneRoom(sceneRoomId);
+      if (sceneRoom) {
+        for (const playerId of sceneRoom.memberPlayerIds) {
+          const resultPlayer = result.dynamicGameState.players?.[playerId];
+          if (resultPlayer) {
+            const currentState = currentManager.getState();
+            if (currentState.players[playerId]) {
+              currentState.players[playerId] = resultPlayer;
+            }
+          }
         }
       }
-    }
 
-    const newManager = new MultiplayerDynamicGameStateManager(
-      result.dynamicGameState
-    );
-    for (const input of preservedInputs) {
-      newManager.addRoundInput(input);
+      // 3. Merge global state: gameEnding (any room can trigger)
+      if (result.dynamicGameState.gameEnding?.isEnded) {
+        currentManager.getState().gameEnding = result.dynamicGameState.gameEnding;
+      }
+
+      // 4. Merge discoveredClues (additive — avoid duplicates)
+      if (result.dynamicGameState.discoveredClues?.length) {
+        const existing = currentManager.getState().discoveredClues ?? [];
+        const existingIds = new Set(existing.map((c: any) => c.id ?? c.name));
+        for (const clue of result.dynamicGameState.discoveredClues) {
+          const clueKey = (clue as any).id ?? (clue as any).name;
+          if (clueKey && !existingIds.has(clueKey)) {
+            existing.push(clue);
+            existingIds.add(clueKey);
+          }
+        }
+        currentManager.getState().discoveredClues = existing;
+      }
+
+      // 5. Merge DynamicWorld tracking sets (additive)
+      const resultState = result.dynamicGameState;
+      const currentState = currentManager.getState();
+      if (resultState.revealedTruthEvents?.size) {
+        for (const v of resultState.revealedTruthEvents) currentState.revealedTruthEvents.add(v);
+      }
+      if (resultState.activatedKnowledgeHolders?.size) {
+        for (const v of resultState.activatedKnowledgeHolders) currentState.activatedKnowledgeHolders.add(v);
+      }
+      if (resultState.deployedRedHerrings?.size) {
+        for (const v of resultState.deployedRedHerrings) currentState.deployedRedHerrings.add(v);
+      }
+      if (resultState.mythosRevelations?.size) {
+        for (const v of resultState.mythosRevelations) currentState.mythosRevelations.add(v);
+      }
+
+      // 6. Merge defeated NPC history (additive)
+      if (resultState.defeatedNpcHistory?.length) {
+        const existingNpcs = new Set(
+          (currentState.defeatedNpcHistory ?? []).map((e: any) => e.npcName)
+        );
+        for (const entry of resultState.defeatedNpcHistory) {
+          if (!existingNpcs.has((entry as any).npcName)) {
+            currentState.defeatedNpcHistory.push(entry);
+          }
+        }
+      }
+
+      // 7. Merge point of no return
+      if (resultState.pointOfNoReturnReached && !currentState.pointOfNoReturnReached) {
+        currentState.pointOfNoReturnReached = true;
+        currentState.pointOfNoReturnTrigger = resultState.pointOfNoReturnTrigger;
+      }
+
+      // 8. Clear round inputs for players in this sceneRoom
+      currentState.roundInputs = currentState.roundInputs.filter((input) => {
+        const player = currentState.players[input.playerId];
+        return player && player.currentSceneRoomId !== sceneRoomId;
+      });
+
+      currentState.lastUpdated = new Date();
     }
-    multiplayerSessionStore.set(roomId, newManager);
   }
 
   // Extract keeper narrative from final sceneRoom temporaryInfo

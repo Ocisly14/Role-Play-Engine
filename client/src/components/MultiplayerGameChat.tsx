@@ -362,6 +362,25 @@ export function MultiplayerGameChat({
     loadHistory();
   }, [roomId, sceneRoomId]);
 
+  // ── Verify player's current room matches (location-based routing) ──
+  const verifyPlayerRoom = useCallback(async () => {
+    try {
+      const stateRes = await authFetch(`${apiBaseUrl}/game/state`);
+      if (!stateRes.ok) return;
+      const stateData = await stateRes.json();
+      if (stateData.success && stateData.myCurrentSceneRoomId) {
+        if (stateData.myCurrentSceneRoomId !== sceneRoomId) {
+          console.log(
+            `[MultiplayerGameChat] Room mismatch detected: current=${sceneRoomId}, correct=${stateData.myCurrentSceneRoomId}. Redirecting.`
+          );
+          onSceneRoomChanged?.(stateData.myCurrentSceneRoomId);
+        }
+      }
+    } catch {
+      // Non-critical
+    }
+  }, [apiBaseUrl, sceneRoomId, onSceneRoomChanged]);
+
   // ── Fetch game state (mirrors GameChat.fetchGameEnding) ─
   const fetchGameEnding = useCallback(async () => {
     try {
@@ -389,6 +408,9 @@ export function MultiplayerGameChat({
           setSelectedSkill("");
         }
       }
+
+      // Also verify we're in the correct room after each narrative update
+      await verifyPlayerRoom();
     } catch (err) {
       console.error("[MultiplayerGameChat] Failed to fetch game state:", err);
     }
@@ -398,6 +420,7 @@ export function MultiplayerGameChat({
     normalizeSkills,
     setAvailableSkills,
     setSelectedSkill,
+    verifyPlayerRoom,
   ]);
 
   useEffect(() => {
@@ -509,7 +532,29 @@ export function MultiplayerGameChat({
         }
       );
       const data = await res.json();
-      if (!data.success) throw new Error(data.error || "Failed to send");
+      if (!data.success) {
+        // Handle WRONG_ROOM: auto-redirect to the correct scene room
+        if (data.code === "WRONG_ROOM" && data.correctSceneRoomId) {
+          console.log(
+            `[MultiplayerGameChat] WRONG_ROOM — redirecting to ${data.correctSceneRoomId}`
+          );
+          // Remove the optimistic message
+          setMessages((prev) =>
+            prev.filter(
+              (msg) =>
+                !(
+                  msg.role === "character" &&
+                  msg.content === messageText &&
+                  msg.turnNumber === userMessage.turnNumber
+                )
+            )
+          );
+          setIsSending(false);
+          onSceneRoomChanged?.(data.correctSceneRoomId);
+          return;
+        }
+        throw new Error(data.error || "Failed to send");
+      }
 
       setSelectedSkill("");
       if (data.status === "waiting" || data.status === "processing") {
@@ -590,7 +635,28 @@ export function MultiplayerGameChat({
         }
       );
       const data = await res.json();
-      if (!data.success) throw new Error(data.error || "Failed to skip");
+      if (!data.success) {
+        // Handle WRONG_ROOM: auto-redirect to the correct scene room
+        if (data.code === "WRONG_ROOM" && data.correctSceneRoomId) {
+          console.log(
+            `[MultiplayerGameChat] WRONG_ROOM on skip — redirecting to ${data.correctSceneRoomId}`
+          );
+          setMessages((prev) =>
+            prev.filter(
+              (msg) =>
+                !(
+                  msg.role === "character" &&
+                  msg.isSkip === true &&
+                  msg.turnNumber === nextTurnNumber
+                )
+            )
+          );
+          setIsSending(false);
+          onSceneRoomChanged?.(data.correctSceneRoomId);
+          return;
+        }
+        throw new Error(data.error || "Failed to skip");
+      }
       if (data.status === "waiting" || data.status === "processing") {
         setIsWaiting(true);
         if (typeof data.roundNumber === "number") {
@@ -614,7 +680,7 @@ export function MultiplayerGameChat({
       );
       alert((err as Error).message);
     }
-  }, [isSending, isWaiting, isGameEnded, messages, roomId, sceneRoomId, characterId, language, setMessages, startRoundPolling]);
+  }, [isSending, isWaiting, isGameEnded, messages, roomId, sceneRoomId, characterId, language, setMessages, startRoundPolling, onSceneRoomChanged]);
 
   // ── Key handler ────────────────────────────────────
   const handleKeyDown = useCallback(
