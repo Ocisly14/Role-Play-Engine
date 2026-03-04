@@ -42,13 +42,43 @@ const Homes: React.FC<HomeProps> = ({
   const [mpJoinCode, setMpJoinCode] = useState("");
   const [mpJoining, setMpJoining] = useState(false);
   const [mpError, setMpError] = useState<string | null>(null);
+  const [showCreateModal, setShowCreateModal] = useState(false);
+  const [mpCheckpoints, setMpCheckpoints] = useState<Array<{
+    checkpointId: string;
+    name: string;
+    createdAt: string;
+    gameDay: number | null;
+    timeOfDay: string | null;
+    playerCount: number;
+  }>>([]);
+  const [mpLoadingCheckpoints, setMpLoadingCheckpoints] = useState(false);
 
-  const handleCreateRoom = async () => {
+  const handleOpenCreateModal = async () => {
+    setMpError(null);
+    setShowCreateModal(true);
+    setMpLoadingCheckpoints(true);
+    try {
+      const res = await authFetch("/api/multiplayer/checkpoints/mine");
+      const data = await res.json();
+      if (data.success) {
+        setMpCheckpoints(data.checkpoints ?? []);
+      }
+    } catch {
+      // Non-critical
+    } finally {
+      setMpLoadingCheckpoints(false);
+    }
+  };
+
+  const handleCreateRoom = async (checkpointId?: string) => {
+    setShowCreateModal(false);
     setMpError(null);
     setMpCreating(true);
     try {
       const res = await authFetch("/api/multiplayer/rooms/create", {
         method: "POST",
+        headers: checkpointId ? { "Content-Type": "application/json" } : undefined,
+        body: checkpointId ? JSON.stringify({ checkpointId }) : undefined,
       });
       const data = await res.json();
       if (!data.success) throw new Error(data.error ?? t("multiplayer.createFailed"));
@@ -211,7 +241,7 @@ const Homes: React.FC<HomeProps> = ({
                 </p>
                 <button
                   type="button"
-                  onClick={handleCreateRoom}
+                  onClick={handleOpenCreateModal}
                   disabled={mpCreating}
                   className="primary"
                   style={{ width: "100%", opacity: mpCreating ? 0.5 : 1 }}
@@ -255,6 +285,83 @@ const Homes: React.FC<HomeProps> = ({
                   </button>
                 </form>
               </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* New Game / Continue from Checkpoint Modal */}
+      {showCreateModal && (
+        <div className="fixed inset-0 z-[60] flex items-center justify-center">
+          <div
+            className="absolute inset-0 bg-black/30 backdrop-blur-sm"
+            onClick={() => setShowCreateModal(false)}
+          />
+          <div className="relative z-10 w-full max-w-[420px] mx-4 rounded-3xl supports-[backdrop-filter]:backdrop-blur-lg border border-white/50 bg-white/80 shadow-[0_30px_80px_rgba(15,23,42,0.25)] supports-[backdrop-filter]:bg-white/55 overflow-hidden">
+            <div className="p-8 space-y-4">
+              <h2 className="text-xl font-bold m-0" style={{ color: "var(--title)" }}>
+                {t("multiplayer.newOrContinue")}
+              </h2>
+
+              {/* New Game */}
+              <button
+                type="button"
+                onClick={() => handleCreateRoom()}
+                disabled={mpCreating}
+                className="primary"
+                style={{ width: "100%", opacity: mpCreating ? 0.5 : 1 }}
+              >
+                {t("multiplayer.newGame")}
+              </button>
+
+              {/* Continue from checkpoint */}
+              <div className="backdrop-blur-sm bg-white/50 border border-slate-200 rounded-xl p-4 space-y-2">
+                <h3 className="text-sm font-semibold m-0" style={{ color: "var(--title)" }}>
+                  {t("multiplayer.continueGame")}
+                </h3>
+                {mpLoadingCheckpoints ? (
+                  <p className="text-xs m-0" style={{ color: "#666" }}>...</p>
+                ) : mpCheckpoints.length === 0 ? (
+                  <p className="text-xs m-0" style={{ color: "#666" }}>
+                    {t("multiplayer.noCheckpoints")}
+                  </p>
+                ) : (
+                  <div className="space-y-1.5 max-h-48 overflow-y-auto">
+                    {mpCheckpoints.map((cp) => (
+                      <button
+                        key={cp.checkpointId}
+                        type="button"
+                        onClick={() => handleCreateRoom(cp.checkpointId)}
+                        disabled={mpCreating}
+                        className="w-full text-left backdrop-blur-sm bg-white/60 border border-slate-200 rounded-lg px-3 py-2 hover:bg-white/80 transition-all"
+                        style={{ opacity: mpCreating ? 0.5 : 1 }}
+                      >
+                        <p className="text-sm font-medium m-0" style={{ color: "var(--title)" }}>
+                          {cp.name}
+                        </p>
+                        <p className="text-xs m-0" style={{ color: "#666" }}>
+                          {cp.gameDay != null && t("multiplayer.checkpointDay", { day: cp.gameDay })}
+                          {cp.timeOfDay && ` ${cp.timeOfDay}`}
+                          {" · "}
+                          {cp.playerCount} {t("multiplayer.players")}
+                          {" · "}
+                          {new Date(cp.createdAt).toLocaleDateString()}
+                        </p>
+                      </button>
+                    ))}
+                  </div>
+                )}
+              </div>
+
+              {/* Cancel */}
+              <button
+                type="button"
+                onClick={() => setShowCreateModal(false)}
+                className="secondary"
+                style={{ width: "100%" }}
+              >
+                {t("multiplayer.cancelReady")}
+              </button>
             </div>
           </div>
         </div>

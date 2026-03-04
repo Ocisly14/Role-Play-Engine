@@ -6,6 +6,7 @@ export interface RoomMember {
   userId: string;
   role: string;
   characterId: string | null;
+  characterName: string | null;
   seatOrder: number;
   confirmStatus: string;
   joinedAt: string;
@@ -17,6 +18,8 @@ export interface RoomOverview {
   status: string;
   hostUserId: string;
   moduleName: string | null;
+  sourceCheckpointId: string | null;
+  checkpointPlayerIds: string[] | null;
   createdAt: string;
   members: RoomMember[];
   isHost: boolean;

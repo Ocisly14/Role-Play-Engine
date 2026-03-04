@@ -66,7 +66,11 @@
     "loadCheckpoint": "Load",
     "checkpointDay": "Day {{day}}",
     "checkpointTime": "{{time}}",
-    "gameInitializing": "Game is loading..."
+    "gameInitializing": "Game is loading...",
+    "checkpointMode": "Checkpoint Mode",
+    "checkpointModeDesc": "Characters and module are locked from checkpoint. Waiting for all original players.",
+    "playersJoined": "{{joined}} / {{total}} original players joined",
+    "waitingOriginalPlayers": "All original players must join before starting"
   },
   "characters": {
     "title": "Your Characters",

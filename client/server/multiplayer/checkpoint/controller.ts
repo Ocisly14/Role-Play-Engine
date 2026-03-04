@@ -482,14 +482,26 @@ export async function loadCheckpoint(
       return;
     }
 
-    // 2. Fetch checkpoint
+    // 2. Fetch checkpoint (allow cross-room loading — user may load a checkpoint
+    //    from a previous room with the same module into the current room)
     const checkpoint = await prisma.multiplayerCheckpoint.findUnique({
       where: { checkpointId },
-      select: { checkpointId: true, roomId: true, payload: true, name: true },
+      select: { checkpointId: true, roomId: true, payload: true, name: true, createdBy: true },
     });
-    if (!checkpoint || checkpoint.roomId !== roomId) {
+    if (!checkpoint) {
       res.status(404).json({ success: false, error: "Checkpoint not found" });
       return;
+    }
+    // Verify the current user owns or is a member of the checkpoint
+    if (checkpoint.createdBy !== userId) {
+      const memberRecord = await prisma.multiplayerCheckpointMember.findFirst({
+        where: { checkpointId, userId },
+        select: { id: true },
+      });
+      if (!memberRecord) {
+        res.status(403).json({ success: false, error: "Not authorized to load this checkpoint" });
+        return;
+      }
     }
 
     // 3. Restore from checkpoint (shared logic)

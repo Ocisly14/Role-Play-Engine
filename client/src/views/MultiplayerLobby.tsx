@@ -5,6 +5,16 @@ import { useNavigate } from "react-router-dom";
 import { FrameImage } from "../components/FrameImage";
 import { authFetch } from "../utils/authFetch";
 
+interface CheckpointSummary {
+  checkpointId: string;
+  name: string;
+  createdAt: string;
+  gameDay: number | null;
+  timeOfDay: string | null;
+  playerCount: number;
+  activeScenes: string[];
+}
+
 export const MultiplayerLobby: React.FC = () => {
   const { t } = useTranslation("home");
   const navigate = useNavigate();
@@ -14,12 +24,55 @@ export const MultiplayerLobby: React.FC = () => {
   const [joining, setJoining] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  const handleCreateRoom = async () => {
+  // Create room modal
+  const [showCreateModal, setShowCreateModal] = useState(false);
+  const [checkpoints, setCheckpoints] = useState<CheckpointSummary[]>([]);
+  const [loadingCheckpoints, setLoadingCheckpoints] = useState(false);
+
+  const handleOpenCreateModal = async () => {
+    setError(null);
+    setShowCreateModal(true);
+    setLoadingCheckpoints(true);
+    try {
+      const res = await authFetch("/api/multiplayer/checkpoints/mine");
+      const data = await res.json();
+      if (data.success) {
+        setCheckpoints(data.checkpoints ?? []);
+      }
+    } catch {
+      // Non-critical
+    } finally {
+      setLoadingCheckpoints(false);
+    }
+  };
+
+  const handleNewGame = async () => {
+    setShowCreateModal(false);
     setError(null);
     setCreating(true);
     try {
       const res = await authFetch("/api/multiplayer/rooms/create", {
         method: "POST",
+      });
+      const data = await res.json();
+      if (!data.success) throw new Error(data.error ?? t("multiplayer.createFailed"));
+      navigate(`/multiplayer/room/${data.roomId}`);
+    } catch (err) {
+      setError((err as Error).message);
+    } finally {
+      setCreating(false);
+    }
+  };
+
+  const handleCreateFromCheckpoint = async (checkpointId: string) => {
+    setShowCreateModal(false);
+    setError(null);
+    setCreating(true);
+    try {
+      const res = await authFetch("/api/multiplayer/rooms/create", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ checkpointId }),
       });
       const data = await res.json();
       if (!data.success) throw new Error(data.error ?? t("multiplayer.createFailed"));
@@ -88,7 +141,7 @@ export const MultiplayerLobby: React.FC = () => {
               </p>
               <button
                 type="button"
-                onClick={handleCreateRoom}
+                onClick={handleOpenCreateModal}
                 disabled={creating}
                 className="primary"
                 style={{ width: "100%", opacity: creating ? 0.5 : 1 }}
@@ -145,6 +198,83 @@ export const MultiplayerLobby: React.FC = () => {
           </div>
         </div>
       </div>
+
+      {/* Create Room Modal: New Game / Continue from Checkpoint */}
+      {showCreateModal && (
+        <div className="fixed inset-0 z-[60] flex items-center justify-center">
+          <div
+            className="absolute inset-0 bg-black/30 backdrop-blur-sm"
+            onClick={() => setShowCreateModal(false)}
+          />
+          <div className="relative z-10 w-full max-w-[420px] mx-4 rounded-3xl supports-[backdrop-filter]:backdrop-blur-lg border border-white/50 bg-white/80 shadow-[0_30px_80px_rgba(15,23,42,0.25)] supports-[backdrop-filter]:bg-white/55 overflow-hidden">
+            <div className="p-8 space-y-4">
+              <h2 className="text-xl font-bold m-0" style={{ color: "var(--title)" }}>
+                {t("multiplayer.newOrContinue")}
+              </h2>
+
+              {/* New Game */}
+              <button
+                type="button"
+                onClick={handleNewGame}
+                disabled={creating}
+                className="primary"
+                style={{ width: "100%", opacity: creating ? 0.5 : 1 }}
+              >
+                {t("multiplayer.newGame")}
+              </button>
+
+              {/* Continue from checkpoint */}
+              <div className="backdrop-blur-sm bg-white/50 border border-slate-200 rounded-xl p-4 space-y-2">
+                <h3 className="text-sm font-semibold m-0" style={{ color: "var(--title)" }}>
+                  {t("multiplayer.continueGame")}
+                </h3>
+                {loadingCheckpoints ? (
+                  <p className="text-xs m-0" style={{ color: "#666" }}>...</p>
+                ) : checkpoints.length === 0 ? (
+                  <p className="text-xs m-0" style={{ color: "#666" }}>
+                    {t("multiplayer.noCheckpoints")}
+                  </p>
+                ) : (
+                  <div className="space-y-1.5 max-h-48 overflow-y-auto">
+                    {checkpoints.map((cp) => (
+                      <button
+                        key={cp.checkpointId}
+                        type="button"
+                        onClick={() => handleCreateFromCheckpoint(cp.checkpointId)}
+                        disabled={creating}
+                        className="w-full text-left backdrop-blur-sm bg-white/60 border border-slate-200 rounded-lg px-3 py-2 hover:bg-white/80 transition-all"
+                        style={{ opacity: creating ? 0.5 : 1 }}
+                      >
+                        <p className="text-sm font-medium m-0" style={{ color: "var(--title)" }}>
+                          {cp.name}
+                        </p>
+                        <p className="text-xs m-0" style={{ color: "#666" }}>
+                          {cp.gameDay != null && t("multiplayer.checkpointDay", { day: cp.gameDay })}
+                          {cp.timeOfDay && ` ${cp.timeOfDay}`}
+                          {" · "}
+                          {cp.playerCount} {t("multiplayer.players")}
+                          {" · "}
+                          {new Date(cp.createdAt).toLocaleDateString()}
+                        </p>
+                      </button>
+                    ))}
+                  </div>
+                )}
+              </div>
+
+              {/* Cancel */}
+              <button
+                type="button"
+                onClick={() => setShowCreateModal(false)}
+                className="secondary"
+                style={{ width: "100%" }}
+              >
+                {t("multiplayer.cancelReady")}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

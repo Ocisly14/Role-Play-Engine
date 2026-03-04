@@ -1,10 +1,11 @@
 import type React from "react";
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { useNavigate, useParams } from "react-router-dom";
 import { FrameImage } from "../components/FrameImage";
 import { useAuth } from "../contexts/AuthContext";
-import { useMultiplayerRoom } from "../hooks/useMultiplayerRoom";
+import { useMultiplayerLobbyWs, type RoomWSEvent } from "../hooks/useMultiplayerLobbyWs";
+import type { RoomOverview } from "../hooks/useMultiplayerRoom";
 import { authFetch } from "../utils/authFetch";
 
 interface Character {
@@ -17,23 +18,15 @@ interface Mod {
   name: string;
 }
 
-interface CheckpointSummary {
-  checkpointId: string;
-  name: string;
-  createdAt: string;
-  gameDay: number | null;
-  timeOfDay: string | null;
-  playerCount: number;
-  activeScenes: string[];
-}
-
 export const MultiplayerRoomWaiting: React.FC = () => {
   const { t } = useTranslation("home");
   const { roomId } = useParams<{ roomId: string }>();
   const navigate = useNavigate();
   const { user } = useAuth();
-  const { room, loading, error, refetch } = useMultiplayerRoom(roomId ?? null);
 
+  const [room, setRoom] = useState<RoomOverview | null>(null);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
   const [characters, setCharacters] = useState<Character[]>([]);
   const [mods, setMods] = useState<Mod[]>([]);
   const [selectedCharacterId, setSelectedCharacterId] = useState("");
@@ -41,13 +34,36 @@ export const MultiplayerRoomWaiting: React.FC = () => {
   const [actionError, setActionError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
 
-  // Start game dialog state
-  const [showStartDialog, setShowStartDialog] = useState(false);
-  const [checkpoints, setCheckpoints] = useState<CheckpointSummary[]>([]);
-  const [loadingCheckpoints, setLoadingCheckpoints] = useState(false);
-
-  // Fetch characters and mods on mount
+  // Track whether this user is the host (for auto-navigate logic)
+  const isHostRef = useRef(false);
   useEffect(() => {
+    isHostRef.current = room?.isHost ?? false;
+  }, [room?.isHost]);
+
+  // Fetch room overview
+  const refetch = useCallback(async () => {
+    if (!roomId) return;
+    try {
+      const res = await authFetch(`/api/multiplayer/rooms/${roomId}/overview`);
+      const data = await res.json();
+      if (data.success) {
+        setRoom(data.room as RoomOverview);
+        setError(null);
+      } else {
+        setError(data.error ?? "Failed to load room");
+      }
+    } catch (err) {
+      setError((err as Error).message);
+    }
+  }, [roomId]);
+
+  // Initial fetch + characters + mods
+  useEffect(() => {
+    if (roomId) {
+      setLoading(true);
+      refetch().finally(() => setLoading(false));
+    }
+
     authFetch("/api/characters")
       .then((r) => r.json())
       .then((d) => {
@@ -61,14 +77,23 @@ export const MultiplayerRoomWaiting: React.FC = () => {
         if (d.success) setMods(d.mods as Mod[]);
       })
       .catch(() => {});
-  }, []);
+  }, [roomId, refetch]);
 
-  // Navigate to game page when room becomes "playing"
-  useEffect(() => {
-    if (room?.status === "playing") {
-      navigate(`/multiplayer/game/${room.roomId}`);
-    }
-  }, [room?.status, room?.roomId, navigate]);
+  // WS event handler — refetch on any room change; non-host auto-navigates on game start
+  const handleWsEvent = useCallback(
+    (event: RoomWSEvent) => {
+      if (event.type === "room_game_starting") {
+        if (!isHostRef.current && roomId) {
+          navigate(`/multiplayer/game/${roomId}`);
+        }
+        return;
+      }
+      refetch();
+    },
+    [refetch, navigate, roomId]
+  );
+
+  useMultiplayerLobbyWs({ roomId: roomId ?? null, onEvent: handleWsEvent });
 
   // Loading state
   if (loading && !room) {
@@ -112,10 +137,15 @@ export const MultiplayerRoomWaiting: React.FC = () => {
     );
   }
 
+  const isCheckpointMode = !!room.sourceCheckpointId;
   const myMember = room.members.find((m) => m.userId === user?.id);
   const allConfirmed = room.members.every((m) => m.confirmStatus === "confirmed");
-  const canStart =
-    room.isHost && allConfirmed && !!room.moduleName && room.members.length >= 1;
+
+  const canStart = room.isHost && (
+    isCheckpointMode
+      ? room.checkpointPlayerIds != null && room.members.length >= room.checkpointPlayerIds.length
+      : allConfirmed && !!room.moduleName && room.members.length >= 1
+  );
 
   const handleSelectCharacter = async (characterId: string) => {
     if (!characterId) return;
@@ -199,75 +229,43 @@ export const MultiplayerRoomWaiting: React.FC = () => {
     }
   };
 
-  const handleOpenStartDialog = async () => {
-    setShowStartDialog(true);
-    setLoadingCheckpoints(true);
+  const handleStartGame = async () => {
+    setActionError(null);
+    setBusy(true);
     try {
-      const res = await authFetch(
-        `/api/multiplayer/checkpoints/mine?moduleName=${encodeURIComponent(room.moduleName ?? "")}`
+      // Start game (set room to playing)
+      const startRes = await authFetch(
+        `/api/multiplayer/rooms/${room.roomId}/start`,
+        { method: "POST" }
       );
-      const data = await res.json();
-      if (data.success) {
-        setCheckpoints(data.checkpoints ?? []);
+      const startData = await startRes.json();
+      if (!startData.success) throw new Error(startData.error ?? t("multiplayer.startFailed"));
+
+      if (isCheckpointMode) {
+        // Load from checkpoint
+        const loadRes = await authFetch(
+          `/api/multiplayer/rooms/${room.roomId}/checkpoints/load`,
+          {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ checkpointId: room.sourceCheckpointId }),
+          }
+        );
+        const loadData = await loadRes.json();
+        if (!loadData.success) throw new Error(loadData.error ?? t("multiplayer.initFailed"));
+        console.log("[Multiplayer] Checkpoint loaded:", loadData);
+      } else {
+        // Initialize new game
+        const initRes = await authFetch(
+          `/api/multiplayer/rooms/${room.roomId}/game/init`,
+          { method: "POST" }
+        );
+        const initData = await initRes.json();
+        if (!initData.success) throw new Error(initData.error ?? t("multiplayer.initFailed"));
+        console.log("[Multiplayer] Game initialised:", initData);
       }
-    } catch {
-      // Not critical — user can still start new game
-    } finally {
-      setLoadingCheckpoints(false);
-    }
-  };
 
-  const handleNewGame = async () => {
-    setShowStartDialog(false);
-    setActionError(null);
-    setBusy(true);
-    try {
-      const startRes = await authFetch(
-        `/api/multiplayer/rooms/${room.roomId}/start`,
-        { method: "POST" }
-      );
-      const startData = await startRes.json();
-      if (!startData.success) throw new Error(startData.error ?? t("multiplayer.startFailed"));
-
-      const initRes = await authFetch(
-        `/api/multiplayer/rooms/${room.roomId}/game/init`,
-        { method: "POST" }
-      );
-      const initData = await initRes.json();
-      if (!initData.success) throw new Error(initData.error ?? t("multiplayer.initFailed"));
-
-      console.log("[Multiplayer] Game initialised:", initData);
-    } catch (err) {
-      setActionError((err as Error).message);
-    } finally {
-      setBusy(false);
-    }
-  };
-
-  const handleLoadCheckpoint = async (checkpointId: string) => {
-    setShowStartDialog(false);
-    setActionError(null);
-    setBusy(true);
-    try {
-      const startRes = await authFetch(
-        `/api/multiplayer/rooms/${room.roomId}/start`,
-        { method: "POST" }
-      );
-      const startData = await startRes.json();
-      if (!startData.success) throw new Error(startData.error ?? t("multiplayer.startFailed"));
-
-      const loadRes = await authFetch(
-        `/api/multiplayer/rooms/${room.roomId}/checkpoints/load`,
-        {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ checkpointId }),
-        }
-      );
-      const loadData = await loadRes.json();
-      if (!loadData.success) throw new Error(loadData.error ?? t("multiplayer.initFailed"));
-
-      console.log("[Multiplayer] Checkpoint loaded:", loadData);
+      navigate(`/multiplayer/game/${room.roomId}`);
     } catch (err) {
       setActionError((err as Error).message);
     } finally {
@@ -300,6 +298,26 @@ export const MultiplayerRoomWaiting: React.FC = () => {
                 </p>
               </div>
             </div>
+
+            {/* Checkpoint mode indicator */}
+            {isCheckpointMode && (
+              <div className="backdrop-blur-sm bg-amber-50/60 border border-amber-200 rounded-xl px-4 py-3">
+                <p className="text-sm font-medium m-0" style={{ color: "#92400e" }}>
+                  {t("multiplayer.checkpointMode")}
+                </p>
+                <p className="text-xs mt-1 m-0" style={{ color: "#92400e" }}>
+                  {t("multiplayer.checkpointModeDesc")}
+                </p>
+                {room.checkpointPlayerIds && (
+                  <p className="text-xs mt-1 m-0 font-medium" style={{ color: "#92400e" }}>
+                    {t("multiplayer.playersJoined", {
+                      joined: room.members.length,
+                      total: room.checkpointPlayerIds.length,
+                    })}
+                  </p>
+                )}
+              </div>
+            )}
 
             {/* Module info */}
             {room.moduleName && (
@@ -338,7 +356,9 @@ export const MultiplayerRoomWaiting: React.FC = () => {
                         )}
                       </p>
                       {member.characterId && (
-                        <p className="text-xs m-0" style={{ color: "#666" }}>{t("multiplayer.characterSelected")}</p>
+                        <p className="text-xs m-0" style={{ color: "#666" }}>
+                          {member.characterName ?? t("multiplayer.characterSelected")}
+                        </p>
                       )}
                     </div>
                   </div>
@@ -356,8 +376,8 @@ export const MultiplayerRoomWaiting: React.FC = () => {
               ))}
             </div>
 
-            {/* Player controls: select character + confirm */}
-            {myMember && myMember.confirmStatus !== "confirmed" && (
+            {/* Player controls: select character + confirm (hidden in checkpoint mode) */}
+            {myMember && myMember.confirmStatus !== "confirmed" && !isCheckpointMode && (
               <div className="backdrop-blur-sm bg-white/50 border border-slate-200 rounded-xl p-4 space-y-3">
                 <h2 className="text-lg font-semibold m-0" style={{ color: "var(--title)" }}>
                   {t("multiplayer.yourCharacter")}
@@ -398,8 +418,8 @@ export const MultiplayerRoomWaiting: React.FC = () => {
               </div>
             )}
 
-            {/* Ready confirmation + cancel */}
-            {myMember?.confirmStatus === "confirmed" && (
+            {/* Ready confirmation + cancel (hidden in checkpoint mode) */}
+            {myMember?.confirmStatus === "confirmed" && !isCheckpointMode && (
               <div className="backdrop-blur-sm bg-green-50/60 border border-green-200 rounded-xl p-4 space-y-3 text-center">
                 <p className="font-medium m-0" style={{ color: "#166534" }}>{t("multiplayer.youAreReady")}</p>
                 <p className="text-sm m-0" style={{ color: "#666" }}>{t("multiplayer.waitingForPlayers")}</p>
@@ -415,40 +435,42 @@ export const MultiplayerRoomWaiting: React.FC = () => {
               </div>
             )}
 
-            {/* Host controls: select module + start game */}
+            {/* Host controls */}
             {room.isHost && (
               <div className="backdrop-blur-sm bg-white/50 border border-slate-200 rounded-xl p-4 space-y-3">
                 <h2 className="text-lg font-semibold m-0" style={{ color: "var(--title)" }}>
                   {t("multiplayer.hostControls")}
                 </h2>
 
-                {/* Module selection */}
-                <div>
-                  <p className="text-sm mb-2 m-0" style={{ color: "#666" }}>{t("multiplayer.selectModule")}</p>
-                  <select
-                    value={selectedModuleName}
-                    onChange={(e) => {
-                      const val = e.target.value;
-                      setSelectedModuleName(val);
-                      if (val) handleSelectModule(val);
-                    }}
-                    disabled={busy}
-                    className="backdrop-blur-sm bg-white/60 border border-slate-200 rounded-xl px-3 py-2 focus:outline-none"
-                    style={{ width: "100%", color: "var(--title)", opacity: busy ? 0.5 : 1 }}
-                  >
-                    <option value="">{t("multiplayer.chooseModule")}</option>
-                    {mods.map((m) => (
-                      <option key={m.name} value={m.name}>
-                        {m.name}
-                      </option>
-                    ))}
-                  </select>
-                </div>
+                {/* Module selection (hidden in checkpoint mode) */}
+                {!isCheckpointMode && (
+                  <div>
+                    <p className="text-sm mb-2 m-0" style={{ color: "#666" }}>{t("multiplayer.selectModule")}</p>
+                    <select
+                      value={selectedModuleName}
+                      onChange={(e) => {
+                        const val = e.target.value;
+                        setSelectedModuleName(val);
+                        if (val) handleSelectModule(val);
+                      }}
+                      disabled={busy}
+                      className="backdrop-blur-sm bg-white/60 border border-slate-200 rounded-xl px-3 py-2 focus:outline-none"
+                      style={{ width: "100%", color: "var(--title)", opacity: busy ? 0.5 : 1 }}
+                    >
+                      <option value="">{t("multiplayer.chooseModule")}</option>
+                      {mods.map((m) => (
+                        <option key={m.name} value={m.name}>
+                          {m.name}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                )}
 
-                {/* Start game */}
+                {/* Start game — direct action, no dialog */}
                 <button
                   type="button"
-                  onClick={handleOpenStartDialog}
+                  onClick={handleStartGame}
                   disabled={busy || !canStart}
                   className="primary"
                   style={{ width: "100%", opacity: (busy || !canStart) ? 0.5 : 1 }}
@@ -457,11 +479,13 @@ export const MultiplayerRoomWaiting: React.FC = () => {
                 </button>
                 {!canStart && (
                   <p className="text-xs text-center m-0" style={{ color: "#666" }}>
-                    {!room.moduleName
-                      ? t("multiplayer.selectModuleFirst")
-                      : !allConfirmed
-                        ? t("multiplayer.waitingAllConfirm")
-                        : ""}
+                    {isCheckpointMode
+                      ? t("multiplayer.waitingOriginalPlayers")
+                      : !room.moduleName
+                        ? t("multiplayer.selectModuleFirst")
+                        : !allConfirmed
+                          ? t("multiplayer.waitingAllConfirm")
+                          : ""}
                   </p>
                 )}
               </div>
@@ -479,83 +503,6 @@ export const MultiplayerRoomWaiting: React.FC = () => {
           </div>
         </div>
       </div>
-
-      {/* New Game / Continue Game dialog */}
-      {showStartDialog && (
-        <div className="fixed inset-0 z-[60] flex items-center justify-center">
-          {/* Backdrop */}
-          <div
-            className="absolute inset-0 bg-black/30 backdrop-blur-sm"
-            onClick={() => setShowStartDialog(false)}
-          />
-          {/* Modal */}
-          <div className="relative z-10 w-full max-w-[420px] mx-4 rounded-3xl supports-[backdrop-filter]:backdrop-blur-lg border border-white/50 bg-white/80 shadow-[0_30px_80px_rgba(15,23,42,0.25)] supports-[backdrop-filter]:bg-white/55 overflow-hidden">
-            <div className="p-8 space-y-4">
-              <h2 className="text-xl font-bold m-0" style={{ color: "var(--title)" }}>
-                {t("multiplayer.newOrContinue")}
-              </h2>
-
-              {/* New Game */}
-              <button
-                type="button"
-                onClick={handleNewGame}
-                disabled={busy}
-                className="primary"
-                style={{ width: "100%", opacity: busy ? 0.5 : 1 }}
-              >
-                {t("multiplayer.newGame")}
-              </button>
-
-              {/* Continue Game — checkpoint list */}
-              <div className="backdrop-blur-sm bg-white/50 border border-slate-200 rounded-xl p-4 space-y-2">
-                <h3 className="text-sm font-semibold m-0" style={{ color: "var(--title)" }}>
-                  {t("multiplayer.continueGame")}
-                </h3>
-                {loadingCheckpoints ? (
-                  <p className="text-xs m-0" style={{ color: "#666" }}>...</p>
-                ) : checkpoints.length === 0 ? (
-                  <p className="text-xs m-0" style={{ color: "#666" }}>
-                    {t("multiplayer.noCheckpoints")}
-                  </p>
-                ) : (
-                  <div className="space-y-1.5 max-h-48 overflow-y-auto">
-                    {checkpoints.map((cp) => (
-                      <button
-                        key={cp.checkpointId}
-                        type="button"
-                        onClick={() => handleLoadCheckpoint(cp.checkpointId)}
-                        disabled={busy}
-                        className="w-full text-left backdrop-blur-sm bg-white/60 border border-slate-200 rounded-lg px-3 py-2 hover:bg-white/80 transition-all"
-                        style={{ opacity: busy ? 0.5 : 1 }}
-                      >
-                        <p className="text-sm font-medium m-0" style={{ color: "var(--title)" }}>
-                          {cp.name}
-                        </p>
-                        <p className="text-xs m-0" style={{ color: "#666" }}>
-                          {cp.gameDay != null && t("multiplayer.checkpointDay", { day: cp.gameDay })}
-                          {cp.timeOfDay && ` ${cp.timeOfDay}`}
-                          {" · "}
-                          {new Date(cp.createdAt).toLocaleDateString()}
-                        </p>
-                      </button>
-                    ))}
-                  </div>
-                )}
-              </div>
-
-              {/* Cancel */}
-              <button
-                type="button"
-                onClick={() => setShowStartDialog(false)}
-                className="secondary"
-                style={{ width: "100%" }}
-              >
-                {t("multiplayer.cancelReady")}
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
     </div>
   );
 };

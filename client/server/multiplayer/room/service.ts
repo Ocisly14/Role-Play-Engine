@@ -8,12 +8,15 @@ export interface RoomOverview {
   status: string;
   hostUserId: string;
   moduleName: string | null;
+  sourceCheckpointId: string | null;
+  checkpointPlayerIds: string[] | null;
   createdAt: Date;
   members: Array<{
     id: string;
     userId: string;
     role: string;
     characterId: string | null;
+    characterName: string | null;
     seatOrder: number;
     confirmStatus: string;
     joinedAt: Date;
@@ -23,13 +26,37 @@ export interface RoomOverview {
 
 /**
  * Create a new multiplayer room and add the creator as host.
+ * If checkpointId is provided, creates a checkpoint-mode room with locked module/characters.
  */
 export async function createRoom(
-  hostUserId: string
+  hostUserId: string,
+  checkpointId?: string
 ): Promise<{ roomId: string; roomCode: string }> {
   const prisma = getPrismaClient();
   const roomId = randomUUID();
   const roomCode = await generateUniqueRoomCode();
+
+  let moduleName: string | null = null;
+  let hostCharacterId: string | null = null;
+
+  if (checkpointId) {
+    const checkpoint = await prisma.multiplayerCheckpoint.findUnique({
+      where: { checkpointId },
+      select: { payload: true },
+    });
+    if (!checkpoint) throw new Error("Checkpoint not found");
+
+    const payload = (typeof checkpoint.payload === "string"
+      ? JSON.parse(checkpoint.payload)
+      : checkpoint.payload) as any;
+
+    const players: Record<string, any> = payload?.players ?? {};
+    if (!players[hostUserId]) {
+      throw new Error("You are not a player in this checkpoint");
+    }
+    moduleName = payload?.moduleName ?? null;
+    hostCharacterId = players[hostUserId]?.characterId ?? null;
+  }
 
   await prisma.$transaction(async (tx) => {
     await tx.multiplayerRoom.create({
@@ -38,6 +65,8 @@ export async function createRoom(
         roomCode,
         hostUserId,
         status: "waiting",
+        moduleName,
+        sourceCheckpointId: checkpointId ?? null,
       },
     });
 
@@ -48,7 +77,8 @@ export async function createRoom(
         userId: hostUserId,
         role: "host",
         seatOrder: 1,
-        confirmStatus: "pending",
+        characterId: hostCharacterId,
+        confirmStatus: checkpointId ? "confirmed" : "pending",
       },
     });
   });
@@ -81,8 +111,30 @@ export async function joinRoom(
 
   const alreadyJoined = room.members.some((m) => m.userId === userId);
   if (alreadyJoined) {
-    // Idempotent: return room if already a member
     return { roomId: room.roomId };
+  }
+
+  // Checkpoint mode: only original players can join
+  let characterId: string | null = null;
+  let confirmStatus: "pending" | "confirmed" = "pending";
+
+  if (room.sourceCheckpointId) {
+    const checkpoint = await prisma.multiplayerCheckpoint.findUnique({
+      where: { checkpointId: room.sourceCheckpointId },
+      select: { payload: true },
+    });
+    if (!checkpoint) throw new Error("Source checkpoint not found");
+
+    const payload = (typeof checkpoint.payload === "string"
+      ? JSON.parse(checkpoint.payload)
+      : checkpoint.payload) as any;
+    const players: Record<string, any> = payload?.players ?? {};
+
+    if (!players[userId]) {
+      throw new Error("Only original players can join this room");
+    }
+    characterId = players[userId]?.characterId ?? null;
+    confirmStatus = "confirmed";
   }
 
   const maxSeat =
@@ -95,7 +147,8 @@ export async function joinRoom(
       userId,
       role: "player",
       seatOrder: maxSeat,
-      confirmStatus: "pending",
+      characterId,
+      confirmStatus,
     },
   });
 
@@ -114,10 +167,11 @@ export async function selectModule(
 
   const room = await prisma.multiplayerRoom.findUnique({
     where: { roomId },
-    select: { hostUserId: true, status: true },
+    select: { hostUserId: true, status: true, sourceCheckpointId: true },
   });
 
   if (!room) throw new Error("Room not found");
+  if (room.sourceCheckpointId) throw new Error("Cannot change module in checkpoint mode");
   if (room.hostUserId !== hostUserId) throw new Error("Only the host can select a module");
   if (room.status !== "waiting" && room.status !== "ready") {
     throw new Error("Cannot change module after game has started");
@@ -138,6 +192,13 @@ export async function selectCharacter(
   characterId: string
 ): Promise<void> {
   const prisma = getPrismaClient();
+
+  // Block in checkpoint mode
+  const roomCheck = await prisma.multiplayerRoom.findUnique({
+    where: { roomId },
+    select: { sourceCheckpointId: true },
+  });
+  if (roomCheck?.sourceCheckpointId) throw new Error("Cannot change character in checkpoint mode");
 
   // Verify character belongs to this user
   const character = await prisma.character.findFirst({
@@ -175,6 +236,12 @@ export async function confirmReady(
 ): Promise<void> {
   const prisma = getPrismaClient();
 
+  const roomCheck = await prisma.multiplayerRoom.findUnique({
+    where: { roomId },
+    select: { sourceCheckpointId: true },
+  });
+  if (roomCheck?.sourceCheckpointId) throw new Error("Cannot manually confirm in checkpoint mode");
+
   const member = await prisma.multiplayerRoomMember.findFirst({
     where: { roomId, userId },
     select: { id: true, characterId: true },
@@ -198,17 +265,18 @@ export async function unconfirmReady(
 ): Promise<void> {
   const prisma = getPrismaClient();
 
+  const room = await prisma.multiplayerRoom.findUnique({
+    where: { roomId },
+    select: { status: true, sourceCheckpointId: true },
+  });
+  if (room?.sourceCheckpointId) throw new Error("Cannot cancel ready in checkpoint mode");
+  if (room?.status === "playing") throw new Error("Cannot cancel ready after game has started");
+
   const member = await prisma.multiplayerRoomMember.findFirst({
     where: { roomId, userId },
     select: { id: true, confirmStatus: true },
   });
   if (!member) throw new Error("You are not a member of this room");
-
-  const room = await prisma.multiplayerRoom.findUnique({
-    where: { roomId },
-    select: { status: true },
-  });
-  if (room?.status === "playing") throw new Error("Cannot cancel ready after game has started");
 
   await prisma.multiplayerRoomMember.update({
     where: { id: member.id },
@@ -237,13 +305,33 @@ export async function startGame(
   if (room.status === "playing") throw new Error("Game already started");
   if (!room.moduleName) throw new Error("Host must select a module before starting");
 
-  const unconfirmed = room.members.filter((m) => m.confirmStatus !== "confirmed");
-  if (unconfirmed.length > 0) {
-    throw new Error(`Waiting for ${unconfirmed.length} player(s) to confirm their character`);
-  }
+  // Checkpoint mode: all original players must be present
+  if (room.sourceCheckpointId) {
+    const checkpoint = await prisma.multiplayerCheckpoint.findUnique({
+      where: { checkpointId: room.sourceCheckpointId },
+      select: { payload: true },
+    });
+    if (checkpoint) {
+      const payload = (typeof checkpoint.payload === "string"
+        ? JSON.parse(checkpoint.payload)
+        : checkpoint.payload) as any;
+      const originalPlayerIds = Object.keys(payload?.players ?? {});
+      const currentUserIds = new Set(room.members.map((m) => m.userId));
+      const missing = originalPlayerIds.filter((id) => !currentUserIds.has(id));
+      if (missing.length > 0) {
+        throw new Error(`Waiting for ${missing.length} original player(s) to join`);
+      }
+    }
+  } else {
+    // Normal mode: all must be confirmed with characters
+    const unconfirmed = room.members.filter((m) => m.confirmStatus !== "confirmed");
+    if (unconfirmed.length > 0) {
+      throw new Error(`Waiting for ${unconfirmed.length} player(s) to confirm their character`);
+    }
 
-  if (room.members.some((m) => !m.characterId)) {
-    throw new Error("All players must select a character before starting");
+    if (room.members.some((m) => !m.characterId)) {
+      throw new Error("All players must select a character before starting");
+    }
   }
 
   await prisma.multiplayerRoom.update({
@@ -284,14 +372,50 @@ export async function getRoomOverview(
   const isMember = room.members.some((m) => m.userId === userId);
   if (!isMember) throw new Error("You are not a member of this room");
 
+  // Batch-fetch character names for members that have a characterId
+  const characterIds = room.members
+    .map((m) => m.characterId)
+    .filter((id): id is string => id != null);
+
+  const characterNameMap = new Map<string, string>();
+  if (characterIds.length > 0) {
+    const chars = await prisma.character.findMany({
+      where: { characterId: { in: characterIds } },
+      select: { characterId: true, name: true },
+    });
+    for (const c of chars) {
+      characterNameMap.set(c.characterId, c.name);
+    }
+  }
+
+  // Get checkpoint player IDs if in checkpoint mode
+  let checkpointPlayerIds: string[] | null = null;
+  if (room.sourceCheckpointId) {
+    const checkpoint = await prisma.multiplayerCheckpoint.findUnique({
+      where: { checkpointId: room.sourceCheckpointId },
+      select: { payload: true },
+    });
+    if (checkpoint) {
+      const payload = (typeof checkpoint.payload === "string"
+        ? JSON.parse(checkpoint.payload)
+        : checkpoint.payload) as any;
+      checkpointPlayerIds = Object.keys(payload?.players ?? {});
+    }
+  }
+
   return {
     roomId: room.roomId,
     roomCode: room.roomCode,
     status: room.status,
     hostUserId: room.hostUserId,
     moduleName: room.moduleName,
+    sourceCheckpointId: room.sourceCheckpointId,
+    checkpointPlayerIds,
     createdAt: room.createdAt,
-    members: room.members,
+    members: room.members.map((m) => ({
+      ...m,
+      characterName: m.characterId ? (characterNameMap.get(m.characterId) ?? null) : null,
+    })),
     isHost: room.hostUserId === userId,
   };
 }

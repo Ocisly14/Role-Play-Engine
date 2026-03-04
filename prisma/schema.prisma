@@ -795,11 +795,12 @@ model MultiplayerRoom {
   roomId     String     @id @map("room_id")
   roomCode   String     @unique @map("room_code")
   hostUserId String     @map("host_user_id")
-  moduleName String?    @map("module_name")
-  status     RoomStatus @default(waiting)
-  createdAt  DateTime   @default(now()) @map("created_at")
-  updatedAt  DateTime   @updatedAt @map("updated_at")
-  metadata   Json?      @db.JsonB
+  moduleName         String?    @map("module_name")
+  sourceCheckpointId String?    @map("source_checkpoint_id")
+  status             RoomStatus @default(waiting)
+  createdAt          DateTime   @default(now()) @map("created_at")
+  updatedAt          DateTime   @updatedAt @map("updated_at")
+  metadata           Json?      @db.JsonB
 
   members    MultiplayerRoomMember[]
   sceneRooms MultiplayerSceneRoom[]

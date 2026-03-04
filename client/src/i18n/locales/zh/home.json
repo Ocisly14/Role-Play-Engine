@@ -66,7 +66,11 @@
     "loadCheckpoint": "加载",
     "checkpointDay": "第{{day}}天",
     "checkpointTime": "{{time}}",
-    "gameInitializing": "游戏加载中..."
+    "gameInitializing": "游戏加载中...",
+    "checkpointMode": "存档模式",
+    "checkpointModeDesc": "角色与模组已从存档锁定，等待所有原始玩家加入。",
+    "playersJoined": "{{joined}} / {{total}} 名原始玩家已加入",
+    "waitingOriginalPlayers": "所有原始玩家必须加入后才能开始"
   },
   "characters": {
     "title": "您的角色",

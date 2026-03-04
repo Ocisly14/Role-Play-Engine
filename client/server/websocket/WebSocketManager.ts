@@ -25,6 +25,9 @@ export class WebSocketManager {
   // Multiplayer: Map<sceneRoomId, Map<userId, WSClient>>
   private multiplayerClients = new Map<string, Map<string, WSClient>>();
 
+  // Room-level (waiting lobby): Map<roomId, Map<userId, WSClient>>
+  private roomClients = new Map<string, Map<string, WSClient>>();
+
   constructor(server: http.Server) {
     WebSocketManager.instance = this;
     this.wss = new WebSocketServer({
@@ -49,7 +52,37 @@ export class WebSocketManager {
       const userId = creds?.userId ?? null;
       const email = creds?.email ?? null;
 
-      if (!sessionId || !userId || !email) {
+      if (!userId || !email) {
+        ws.close();
+        return;
+      }
+
+      // Room-level connection (waiting lobby): roomId but no sessionId
+      if (roomId && !sessionId) {
+        const isMember = await this.isRoomMember(roomId, userId);
+        if (!isMember) {
+          ws.close();
+          return;
+        }
+
+        const clientKey = `room:${roomId}:${userId}`;
+        console.log(`🔌 [WebSocket] Room client connected: ${clientKey}`);
+        this.handleNewConnection(ws, clientKey);
+
+        const client = this.clients.get(clientKey);
+        if (client) {
+          this.registerRoomClient(roomId, userId, client);
+          ws.on("close", () => {
+            const current = this.roomClients.get(roomId)?.get(userId);
+            if (current && current.ws === ws) {
+              this.removeRoomClient(roomId, userId);
+            }
+          });
+        }
+        return;
+      }
+
+      if (!sessionId) {
         ws.close();
         return;
       }
@@ -344,6 +377,51 @@ export class WebSocketManager {
     for (const [userId, client] of existingClients) {
       this.registerMultiplayerClient(newSceneRoomId, userId, client);
     }
+  }
+
+  // ─── Room-level (waiting lobby) methods ──────────────────────────────
+
+  /**
+   * Register a client for a room-level (waiting lobby) connection.
+   */
+  public registerRoomClient(
+    roomId: string,
+    userId: string,
+    client: WSClient
+  ): void {
+    if (!this.roomClients.has(roomId)) {
+      this.roomClients.set(roomId, new Map());
+    }
+    this.roomClients.get(roomId)!.set(userId, client);
+  }
+
+  /**
+   * Remove a client from a room-level connection.
+   */
+  public removeRoomClient(roomId: string, userId: string): void {
+    this.roomClients.get(roomId)?.delete(userId);
+    if (this.roomClients.get(roomId)?.size === 0) {
+      this.roomClients.delete(roomId);
+    }
+  }
+
+  /**
+   * Get all clients connected to a room (waiting lobby).
+   */
+  public getRoomClients(roomId: string): Map<string, WSClient> {
+    return this.roomClients.get(roomId) ?? new Map();
+  }
+
+  private async isRoomMember(
+    roomId: string,
+    userId: string
+  ): Promise<boolean> {
+    const prisma = getPrismaClient();
+    const member = await prisma.multiplayerRoomMember.findFirst({
+      where: { roomId, userId },
+      select: { id: true },
+    });
+    return Boolean(member);
   }
 
   /**
