@@ -42,9 +42,6 @@ ask: "Does this honour the story elements?" If not, revise until it does.
 ### Initial Snapshot (full)
 {{initialSnapshotJson}}
 
-### Story Elements
-{{storyElements}}
-
 ### End State Definition
 The following defines the inevitable catastrophic outcome if investigators do not intervene:
 
