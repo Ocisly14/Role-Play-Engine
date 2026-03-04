@@ -13,14 +13,14 @@ Do NOT include any clues or spoilers in moduleNotes or introduction.
 ════════════════════════════════════════════════════════
 🔴 SUPREME DIRECTIVE — READ THIS BEFORE ANYTHING ELSE 🔴
 ════════════════════════════════════════════════════════
-USER QUERY (absolute mandate):
-{{creativePrompt}}
+STORY ELEMENTS (absolute mandate):
+{{storyElements}}
 
-This query is the SINGLE HIGHEST AUTHORITY for tone, theme, and framing.
+These structured story elements are the SINGLE HIGHEST AUTHORITY for tone, theme, and framing.
 The module title, introduction, background, and all narrative descriptions
-MUST reflect the user's stated intent — location, atmosphere, and themes.
+MUST reflect the era, tone, theme, genre, and creative direction defined above.
 When writing narrative content (introduction, background, moduleNotes), always
-ask: "Does this honour what the user asked for?" If not, revise until it does.
+ask: "Does this honour the story elements?" If not, revise until it does.
 ════════════════════════════════════════════════════════
 
 ## Inputs
@@ -42,8 +42,8 @@ ask: "Does this honour what the user asked for?" If not, revise until it does.
 ### Initial Snapshot (full)
 {{initialSnapshotJson}}
 
-### User Prompt
-{{creativePrompt}}
+### Story Elements
+{{storyElements}}
 
 ### End State Definition
 The following defines the inevitable catastrophic outcome if investigators do not intervene:

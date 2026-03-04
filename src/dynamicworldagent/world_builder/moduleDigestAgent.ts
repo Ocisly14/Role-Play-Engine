@@ -16,6 +16,7 @@ import type {
   ModuleDigest,
   ScenarioOutline,
   StartingSceneSelection,
+  StructuredStoryElements,
   TruthEvent,
 } from "./types.js";
 import type { DynamicNPCProfile } from "./types.js";
@@ -65,7 +66,7 @@ export class ModuleDigestAgent {
     npcs: DynamicNPCProfile[],
     scenarios: ScenarioOutline[],
     startingScene: StartingSceneSelection | null,
-    creativePrompt: string,
+    storyElements: StructuredStoryElements,
     endState: EndStateDefinition,
     macroMapPath?: string
   ): Promise<ModuleDigest> {
@@ -102,7 +103,7 @@ export class ModuleDigestAgent {
           null,
           2
         ),
-        creativePrompt,
+        storyElements: JSON.stringify(storyElements, null, 2),
         endStateJson: JSON.stringify(endState, null, 2),
       }
     );
