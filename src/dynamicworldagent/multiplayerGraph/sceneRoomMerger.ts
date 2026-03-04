@@ -344,7 +344,13 @@ export async function resolveAllMovements(
         const parentIds = [...new Set([...sourceRoomIds, existingRoom.sceneRoomId])];
         const newChildId = randomUUID();
 
-        // Child inherits target room's scenario and time (the ongoing game)
+        // Compute max time across all parent rooms (source + target)
+        const tbParentRooms = parentIds
+          .map((id) => manager.getSceneRoom(id))
+          .filter((r): r is MultiplayerSceneRoomState => r != null);
+        const tbMaxTime = getMaxRoomTime(tbParentRooms);
+
+        // Child inherits target room's scenario, uses max time across all parents
         manager.createSceneRoom(newChildId, allChildMembers, {
           parentSceneRoomIds: parentIds,
           currentScenario: existingRoom.currentScenario,
@@ -352,8 +358,8 @@ export async function resolveAllMovements(
           scenarioName: existingRoom.scenarioName,
           snapshotId: existingRoom.snapshotId,
           snapshotName: existingRoom.snapshotName,
-          gameDay: existingRoom.gameDay,
-          timeOfDay: existingRoom.timeOfDay,
+          gameDay: tbMaxTime.gameDay,
+          timeOfDay: tbMaxTime.timeOfDay,
           roundNumber: 1,
           turnsInCurrentScene: 0,
         });
@@ -364,7 +370,7 @@ export async function resolveAllMovements(
         }
 
         // Record scene transition in player actionLog for entering players
-        const moveTime = `Day ${existingRoom.gameDay}, ${existingRoom.timeOfDay}`;
+        const moveTime = `Day ${tbMaxTime.gameDay}, ${tbMaxTime.timeOfDay}`;
         for (const enteringPid of group.incomingPlayerIds) {
           manager.appendPlayerActionLog(enteringPid, {
             time: moveTime,
@@ -377,7 +383,7 @@ export async function resolveAllMovements(
         syncScenarioCluesFromParents(manager, newChildId, parentIds);
         syncPlayerClueKnowledge(manager, newChildId);
 
-        // Time-freeze entering players whose source time is >20 min ahead of target
+        // Time-freeze entering players whose source time is >20 min ahead of target room
         const targetAbsMin = toAbsoluteMinutes(
           existingRoom.gameDay,
           existingRoom.timeOfDay

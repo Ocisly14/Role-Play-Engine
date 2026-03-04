@@ -321,7 +321,7 @@ export class WebSocketManager {
 
       const state = manager.getState();
       for (const room of Object.values(state.sceneRooms) as any[]) {
-        if (!room.isFrozen && room.memberPlayerIds?.includes(userId)) {
+        if (!room.isFrozen) {
           this.registerMultiplayerClient(room.sceneRoomId, userId, client);
         }
       }

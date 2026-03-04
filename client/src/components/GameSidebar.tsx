@@ -1198,14 +1198,14 @@ export function GameSidebar({
               </p>
             ) : gameState ? (
               <>
-                {/* Macro Map (DynamicWorld modules only) */}
+                {/* Macro Map — prefer per-scene dynamic map, fallback to module static map */}
                 {gameState.moduleName &&
-                gameState.moduleDigest?.macroMapPath ? (
+                (gameState.currentScenario?.mapImagePath || gameState.moduleDigest?.macroMapPath) ? (
                   <div className="status-section">
                     <h3>{t("game:sidebar.map.macroMap")}</h3>
                     <div className="map-display">
                       <img
-                        src={`/api/maps/${gameState.moduleDigest.macroMapPath}`}
+                        src={`/api/maps/${gameState.currentScenario?.mapImagePath ?? gameState.moduleDigest.macroMapPath}`}
                         alt={t("game:sidebar.map.macroMapAlt")}
                         style={{
                           width: "100%",

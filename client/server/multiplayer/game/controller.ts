@@ -167,7 +167,12 @@ export async function getPlayerState(req: Request, res: Response): Promise<void>
       return;
     }
 
-    const sceneRoom = state.sceneRooms[player.currentSceneRoomId];
+    // Support optional ?sceneRoomId query param for viewing other rooms' data
+    const viewSceneRoomId = req.query.sceneRoomId as string | undefined;
+    const targetSceneRoomId = viewSceneRoomId && state.sceneRooms[viewSceneRoomId]
+      ? viewSceneRoomId
+      : player.currentSceneRoomId;
+    const sceneRoom = state.sceneRooms[targetSceneRoomId];
 
     // Build a GameState-compatible response for GameSidebar
     const gameState: Record<string, any> = {

@@ -3,7 +3,6 @@
  * Loads NPC data from documents and stores them in the database
  */
 
-import { randomUUID } from "crypto";
 import fs from "fs";
 import path from "path";
 import type { ChatGoogleGenerativeAI } from "@langchain/google-genai";
@@ -972,7 +971,7 @@ Return ONLY JSON array, no extra text.`;
    * Generate a unique ID for an NPC based on their name
    */
   private generateNPCId(name: string): string {
-    return `npc-${name.toLowerCase().replace(/\s+/g, "-")}-${randomUUID().slice(0, 8)}`;
+    return `npc-${name.toLowerCase().replace(/\s+/g, "-")}`;
   }
 
   /**

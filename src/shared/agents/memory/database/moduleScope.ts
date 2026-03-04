@@ -1,18 +1,11 @@
-import { createHash } from "crypto";
 import { getPrismaClient } from "./prismaClient.js";
 
 export function normalizeModuleNameKey(name: string): string {
   return name.trim().toLowerCase();
 }
 
-export function scopeIdByModule(id: string, moduleId?: string | null): string {
-  const raw = stripModuleScope(id);
-  if (!moduleId) return raw;
-  // Preserve legacy module/email-prefixed IDs for backward compatibility.
-  if (id.includes("::")) return id;
-  const suffix = createHash("sha1").update(moduleId).digest("hex").slice(0, 8);
-  const scopedSuffix = `__${suffix}`;
-  return raw.endsWith(scopedSuffix) ? raw : `${raw}${scopedSuffix}`;
+export function scopeIdByModule(id: string, _moduleId?: string | null): string {
+  return stripModuleScope(id);
 }
 
 export function stripModuleScope(id: string): string {

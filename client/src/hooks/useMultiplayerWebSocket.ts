@@ -204,8 +204,8 @@ export function useMultiplayerWebSocket({
                 const content = msg.content as string;
                 const inputType = msg.inputType as "input" | "skip";
 
-                // Update round status banner
-                if (setRoundStatusRef.current) {
+                // Update round status banner (only for own room)
+                if (setRoundStatusRef.current && eventSceneRoomId === currentSceneRoomIdRef.current) {
                   setRoundStatusRef.current({
                     submittedCount: msg.submittedCount as number,
                     totalCount: msg.totalCount as number,
@@ -249,6 +249,8 @@ export function useMultiplayerWebSocket({
               }
 
               case "round_processing":
+                // Only affect UI state for own room (ignore other rooms' processing)
+                if (msg.sceneRoomId && msg.sceneRoomId !== currentSceneRoomIdRef.current) break;
                 setIsWaiting(true);
                 if (setRoundStatusRef.current) {
                   setRoundStatusRef.current(null);
@@ -256,6 +258,8 @@ export function useMultiplayerWebSocket({
                 break;
 
               case "round_complete": {
+                // Only affect UI state for own room
+                if (msg.sceneRoomId && msg.sceneRoomId !== currentSceneRoomIdRef.current) break;
                 setIsWaiting(false);
                 if (setRoundStatusRef.current) {
                   setRoundStatusRef.current(null);

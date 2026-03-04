@@ -13,6 +13,7 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { useAuth } from "../contexts/AuthContext";
+import { useGameSession } from "../hooks/useGameSession";
 import { useDiceAnimation } from "../hooks/useDiceAnimation";
 import { useInputCollapse } from "../hooks/useInputCollapse";
 import { useMultiplayerSceneRooms } from "../hooks/useMultiplayerSceneRooms";
@@ -50,6 +51,7 @@ export function MultiplayerGameChat({
   language = "en",
 }: MultiplayerGameChatProps) {
   const { t } = useTranslation("game");
+  const gameSession = useGameSession();
 
   // ── Local component state (mirrors GameChat) ──────────────
   const [inputValue, setInputValue] = useState("");
@@ -105,6 +107,7 @@ export function MultiplayerGameChat({
     setActiveTabId,
     sceneRooms: sceneRoomStates,
     isViewingOwnRoom,
+    activeRoomMessages,
     sortedSceneRooms,
     setMessagesForRoom,
     handleSceneRoomSplit,
@@ -118,6 +121,9 @@ export function MultiplayerGameChat({
 
   const messageListRef = useRef<HTMLDivElement>(null);
 
+  // Messages to display: own room uses real-time flat state, other rooms use per-room Map
+  const displayMessages = isViewingOwnRoom ? messages : activeRoomMessages;
+
   const handleTabChange = useCallback(
     (tabId: string) => {
       // Save current scroll position
@@ -125,8 +131,12 @@ export function MultiplayerGameChat({
         saveScrollPosition(messageListRef.current.scrollTop);
       }
       setActiveTabId(tabId);
+      // Update context so BackgroundManager can fetch the viewed room's scene image
+      gameSession.setViewedMultiplayerSceneRoomId(
+        tabId === sceneRoomId ? null : tabId
+      );
     },
-    [saveScrollPosition, setActiveTabId]
+    [saveScrollPosition, setActiveTabId, sceneRoomId, gameSession]
   );
 
   // ── API base paths ──────────────────────────────────
@@ -271,6 +281,13 @@ export function MultiplayerGameChat({
     ),
   });
 
+  // ── Reset viewed scene room on unmount ─────────────
+  useEffect(() => {
+    return () => {
+      gameSession.setViewedMultiplayerSceneRoomId(null);
+    };
+  }, []);
+
   // ── Ref syncing ────────────────────────────────────
   useEffect(() => {
     messagesRef.current = messages;
@@ -280,10 +297,10 @@ export function MultiplayerGameChat({
     onNarrativeCompleteRef.current = onNarrativeComplete;
   }, [onNarrativeComplete]);
 
-  // Auto-scroll on new messages
+  // Auto-scroll on new messages or tab switch
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
-  }, [messages]);
+  }, [displayMessages]);
 
   // ── Handle polling result (primary narrative delivery) ────────
   useEffect(() => {
@@ -874,15 +891,15 @@ export function MultiplayerGameChat({
       />
 
       <MessageList
-        messages={messages}
+        messages={displayMessages}
         characterName={characterName}
-        showingDiceAnimation={showingDiceAnimation}
-        pendingDiceRolls={pendingDiceRolls}
-        diceAnimationCompleted={diceAnimationCompleted}
+        showingDiceAnimation={isViewingOwnRoom ? showingDiceAnimation : false}
+        pendingDiceRolls={isViewingOwnRoom ? pendingDiceRolls : []}
+        diceAnimationCompleted={isViewingOwnRoom ? diceAnimationCompleted : false}
         handleDiceAnimationComplete={handleDiceAnimationComplete}
         isSending={false}
-        isPolling={isProcessing}
-        streamingTurnId={streamingTurnId}
+        isPolling={isViewingOwnRoom ? isProcessing : false}
+        streamingTurnId={isViewingOwnRoom ? streamingTurnId : null}
         error={null}
         messagesEndRef={messagesEndRef}
         isSceneChanging={isSceneChanging}

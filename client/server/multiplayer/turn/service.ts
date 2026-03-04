@@ -1750,18 +1750,15 @@ async function handlePostRoundSceneSplit(
     }
 
     // ── Migrate WS clients to child rooms so they receive events before frontend reconnects ──
-    // Only register each player for their OWN child room (not all players for all rooms)
-    // to prevent cross-room streaming events causing duplicate narrative display.
+    // Register ALL players from frozen rooms to ALL child rooms, so every player
+    // can observe other rooms' narratives when switching tabs.
     if (wsManager) {
       for (const frozenId of result.frozenSceneRoomIds) {
         const frozenClients = wsManager.getMultiplayerClients(frozenId);
         for (const childRoom of result.newChildRooms) {
           if (!childRoom.parentSceneRoomIds.includes(frozenId)) continue;
-          for (const playerId of childRoom.playerIds) {
-            const client = frozenClients.get(playerId);
-            if (client) {
-              wsManager.registerMultiplayerClient(childRoom.sceneRoomId, playerId, client);
-            }
+          for (const [playerId, client] of frozenClients) {
+            wsManager.registerMultiplayerClient(childRoom.sceneRoomId, playerId, client);
           }
         }
       }

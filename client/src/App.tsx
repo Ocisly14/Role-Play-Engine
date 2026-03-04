@@ -84,9 +84,15 @@ const BackgroundManager: React.FC = () => {
     const fetchGameState = async () => {
       try {
         // Choose endpoint based on single-player vs multiplayer
-        const gamestateUrl = isMultiplayerGamePage
-          ? `/api/multiplayer/rooms/${multiplayerRoomId}/gamestate`
-          : "/api/gamestate";
+        let gamestateUrl: string;
+        if (isMultiplayerGamePage) {
+          const viewedRoom = gameSession.viewedMultiplayerSceneRoomId;
+          gamestateUrl = viewedRoom
+            ? `/api/multiplayer/rooms/${multiplayerRoomId}/gamestate?sceneRoomId=${encodeURIComponent(viewedRoom)}`
+            : `/api/multiplayer/rooms/${multiplayerRoomId}/gamestate`;
+        } else {
+          gamestateUrl = "/api/gamestate";
+        }
         const response = await authFetch(gamestateUrl);
         if (!response.ok) {
           return;
@@ -139,6 +145,7 @@ const BackgroundManager: React.FC = () => {
     multiplayerRoomId,
     gameSession.sessionId,
     gameSession.sidebarRefreshTrigger,
+    gameSession.viewedMultiplayerSceneRoomId,
     gameSession.setCurrentModuleName,
     setDefaultBackground,
   ]);

@@ -275,8 +275,8 @@ export async function getTurnHistory(
         // with characterName = null.  Split them back into individual messages.
         if (!turn.characterName && knownPlayerNames.length > 1) {
           const entries = splitCombinedInput(turn.characterInput, knownPlayerNames);
-          if (entries.length > 1) {
-            // Successfully split — emit one message per player
+          if (entries.length >= 1) {
+            // Split succeeded (1 or more entries) — emit one message per player
             for (const entry of entries) {
               const isOtherPlayer = myCharacterName && entry.name !== myCharacterName;
               messages.push({
@@ -292,7 +292,7 @@ export async function getTurnHistory(
               });
             }
           } else {
-            // Could not split — fall back to single message
+            // Could not split at all — fall back to single message
             messages.push({
               role: "character",
               content: turn.characterInput,
