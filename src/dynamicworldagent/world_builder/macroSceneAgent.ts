@@ -26,6 +26,7 @@ import type {
   MythosEvent,
   ProgressCallback,
   RedHerring,
+  StructuredStoryElements,
   TruthEvent,
 } from "./types.js";
 
@@ -76,7 +77,7 @@ export class MacroSceneAgent {
    */
   async generateTownStructure(
     settingType: MacroSceneSettingType = "small_town",
-    creativePrompt: string,
+    storyElements: StructuredStoryElements,
     progressCallback?: ProgressCallback,
     storyLength: StoryLength = "medium"
   ): Promise<MacroSceneStructure> {
@@ -87,7 +88,7 @@ export class MacroSceneAgent {
       template,
       {},
       {
-        userPrompt: creativePrompt,
+        storyElements: JSON.stringify(storyElements, null, 2),
       }
     );
 
@@ -127,7 +128,7 @@ export class MacroSceneAgent {
    */
   async generateHistoricalMythos(
     macroScene: MacroSceneStructure,
-    creativePrompt: string,
+    storyElements: StructuredStoryElements,
     progressCallback?: ProgressCallback
   ): Promise<MythosEvent[]> {
     progressCallback?.("Generating historical mythos layer...");
@@ -140,7 +141,7 @@ export class MacroSceneAgent {
       {},
       {
         macroSceneJson: JSON.stringify(macroScene, null, 2),
-        userPrompt: creativePrompt,
+        storyElements: JSON.stringify(storyElements, null, 2),
       }
     );
 
@@ -180,7 +181,7 @@ export class MacroSceneAgent {
   async generateTruthTimeline(
     macroScene: MacroSceneStructure,
     mythosEvents: MythosEvent[],
-    creativePrompt: string,
+    storyElements: StructuredStoryElements,
     progressCallback?: ProgressCallback,
     storyLength: StoryLength = "medium"
   ): Promise<TruthEvent[]> {
@@ -196,7 +197,7 @@ export class MacroSceneAgent {
       {
         macroSceneJson: JSON.stringify(macroScene, null, 2),
         mythosEventsJson: JSON.stringify(mythosEvents, null, 2),
-        userPrompt: creativePrompt,
+        storyElements: JSON.stringify(storyElements, null, 2),
       }
     );
 
@@ -408,7 +409,7 @@ export class MacroSceneAgent {
    */
   async generate(
     settingType: MacroSceneSettingType = "small_town",
-    creativePrompt: string,
+    creativePromptOrElements: string | StructuredStoryElements,
     progressCallback?: ProgressCallback
   ): Promise<{
     macroScene: MacroSceneStructure;
@@ -418,24 +419,36 @@ export class MacroSceneAgent {
     redHerrings: RedHerring[];
     endState: EndStateDefinition;
   }> {
+    const storyElements: StructuredStoryElements =
+      typeof creativePromptOrElements === "string"
+        ? {
+            era: "",
+            worldbuilding: "",
+            genre: [],
+            tone: "",
+            theme: "",
+            refinedPrompt: creativePromptOrElements,
+          }
+        : creativePromptOrElements;
+
     console.log(
       `\n🌍 [Macro Scene Agent] Starting world generation for ${settingType}...`
     );
     console.log(
-      `   Creative Prompt: ${creativePrompt.substring(0, 100)}${creativePrompt.length > 100 ? "..." : ""}`
+      `   Creative Prompt: ${storyElements.refinedPrompt.substring(0, 100)}${storyElements.refinedPrompt.length > 100 ? "..." : ""}`
     );
 
     // Step 1: Setting structure (adaptive to setting type)
     const macroScene = await this.generateTownStructure(
       settingType,
-      creativePrompt,
+      storyElements,
       progressCallback
     );
 
     // Step 2: Historical mythos layer (foundation for current events)
     const mythosEvents = await this.generateHistoricalMythos(
       macroScene,
-      creativePrompt,
+      storyElements,
       progressCallback
     );
 
@@ -443,7 +456,7 @@ export class MacroSceneAgent {
     const truthTimeline = await this.generateTruthTimeline(
       macroScene,
       mythosEvents,
-      creativePrompt,
+      storyElements,
       progressCallback
     );
 

@@ -124,21 +124,23 @@ export function getMacroSceneStep1Template(
 ════════════════════════════════════════════════════════
 🔴 SUPREME DIRECTIVE — READ THIS BEFORE ANYTHING ELSE 🔴
 ════════════════════════════════════════════════════════
-USER QUERY (absolute mandate):
-{{userPrompt}}
+STORY ELEMENTS (absolute mandate):
+{{storyElements}}
 
-This query is the SINGLE HIGHEST AUTHORITY for all content you generate.
+These structured story elements are the SINGLE HIGHEST AUTHORITY for all content you generate.
 Every location, atmosphere, theme, character, and event MUST be directly
-grounded in and consistent with the user's stated intent.
+grounded in and consistent with the story elements above.
 
 Rules that CANNOT be broken:
-1. If the user names a LOCATION → you MUST use that exact location. No substitutions.
-2. If the user specifies a STYLE / TONE → every output element MUST reflect it.
-3. If the user specifies THEMES → they MUST appear in the generated content.
-4. If ANY conflict arises between the user query and genre conventions, setting
-   type defaults, or example content → the user query WINS, always.
-5. Do NOT import locations, organizations, or atmospheres from generic CoC
-   templates if they contradict what the user asked for.
+1. If the elements name a LOCATION → you MUST use that exact location. No substitutions.
+2. The TONE field dictates the style / atmosphere → every output element MUST reflect it.
+3. The THEME field MUST appear in the generated content.
+4. The ERA field dictates the time period → all content must be historically consistent.
+5. The GENRE field(s) dictate narrative conventions to follow.
+6. If ANY conflict arises between the story elements and setting type defaults
+   or example content → the story elements WIN, always.
+7. Do NOT import locations, organizations, or atmospheres from generic CoC
+   templates if they contradict the story elements.
 ════════════════════════════════════════════════════════
 
 **CREATIVE MANDATE**: Be bold and original. Craft a story that feels fresh and unexpected—avoid generic CoC tropes (stock Cthulhu cults, standard haunted mansions, Miskatonic-by-default settings). Draw inspiration from diversified cultures, historical eras, scientific frontiers, or genre mashups. Surprise players with something they have never encountered before in a CoC game.
@@ -288,19 +290,20 @@ export function getTruthTimelineTemplateForSetting(
 ════════════════════════════════════════════════════════
 🔴 SUPREME DIRECTIVE — READ THIS BEFORE ANYTHING ELSE 🔴
 ════════════════════════════════════════════════════════
-USER QUERY (absolute mandate):
-{{userPrompt}}
+STORY ELEMENTS (absolute mandate):
+{{storyElements}}
 
-This query is the SINGLE HIGHEST AUTHORITY for all content you generate.
+These structured story elements are the SINGLE HIGHEST AUTHORITY for all content you generate.
 Every truth event — its location, atmosphere, and thematic content — MUST be
-directly grounded in and consistent with the user's stated intent.
+directly grounded in and consistent with the story elements above.
 
 Rules that CANNOT be broken:
-1. All events MUST occur in the location specified by the user. No substitutions.
-2. Events MUST reflect the style / atmosphere the user requested.
-3. Events MUST align with the themes the user requested (e.g., "murder cases" → violent deaths are required).
-4. NEVER generate events that would only make sense in a different location or climate.
-5. If ANY conflict arises between the user query and genre conventions → the user query WINS, always.
+1. All events MUST occur in the location defined in the story elements. No substitutions.
+2. Events MUST reflect the TONE defined in the story elements.
+3. Events MUST align with the THEME and GENRE (e.g., if theme involves murder → violent deaths are required).
+4. The ERA field dictates the time period → all events must be historically consistent.
+5. NEVER generate events that would only make sense in a different location or climate.
+6. If ANY conflict arises between the story elements and genre conventions → the story elements WIN, always.
 ════════════════════════════════════════════════════════
 
 **CREATIVE MANDATE**: Be bold and original. Craft a story that feels fresh and unexpected—avoid generic CoC tropes (stock Cthulhu cults, standard haunted mansions, Miskatonic-by-default settings). Draw inspiration from diversified cultures, historical eras, scientific frontiers, or genre mashups. Surprise players with something they have never encountered before in a CoC game.
@@ -635,19 +638,20 @@ export function getHistoricalMythosTemplateForSetting(
 ════════════════════════════════════════════════════════
 🔴 SUPREME DIRECTIVE — READ THIS BEFORE ANYTHING ELSE 🔴
 ════════════════════════════════════════════════════════
-USER QUERY (absolute mandate):
-{{userPrompt}}
+STORY ELEMENTS (absolute mandate):
+{{storyElements}}
 
-This query is the SINGLE HIGHEST AUTHORITY for all content you generate.
+These structured story elements are the SINGLE HIGHEST AUTHORITY for all content you generate.
 Every historical event, mythos entity, location, and long-term residue MUST be
-directly grounded in and consistent with the user's stated intent.
+directly grounded in and consistent with the story elements above.
 
 Rules that CANNOT be broken:
-1. If the user names a LOCATION → all historical events must occur in or relate to that exact location.
-2. If the user specifies a STYLE / ATMOSPHERE → historical events must enhance that atmosphere, never contradict it.
-3. If the user specifies THEMES → historical events must connect to those themes.
-4. If ANY conflict arises between the user query and genre conventions or example content → the user query WINS, always.
-5. Do NOT place historical events in unrelated locations or use generic mythos frameworks that don't fit the user's request.
+1. If the elements name a LOCATION → all historical events must occur in or relate to that exact location.
+2. The TONE field dictates the atmosphere → historical events must enhance it, never contradict it.
+3. The THEME field defines thematic direction → historical events must connect to it.
+4. The ERA field dictates the time period → historical context must be consistent.
+5. If ANY conflict arises between the story elements and genre conventions or example content → the story elements WIN, always.
+6. Do NOT place historical events in unrelated locations or use generic mythos frameworks that don't fit the story elements.
 ════════════════════════════════════════════════════════
 
 **CREATIVE MANDATE**: Be bold and original. Craft a story that feels fresh and unexpected—avoid generic CoC tropes (stock Cthulhu cults, standard haunted mansions, Miskatonic-by-default settings). Draw inspiration from diversified cultures, historical eras, scientific frontiers, or genre mashups. Surprise players with something they have never encountered before in a CoC game.
