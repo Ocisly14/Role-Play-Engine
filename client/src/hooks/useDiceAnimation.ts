@@ -113,10 +113,10 @@ export function useDiceAnimation({
 
         if (turnId) {
           setMessages((prev) => {
-            const hasMessage = prev.some((msg) => msg.turnId === turnId);
-            const next = hasMessage
+            const hasKeeperMessage = prev.some((msg) => msg.turnId === turnId && msg.role === "keeper");
+            const next = hasKeeperMessage
               ? prev.map((msg) =>
-                  msg.turnId === turnId
+                  msg.turnId === turnId && msg.role === "keeper"
                     ? {
                         ...msg,
                         content: msg.content + buffered,

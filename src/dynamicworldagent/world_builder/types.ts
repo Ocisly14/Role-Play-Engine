@@ -375,6 +375,25 @@ export interface ModuleDigest {
 }
 
 /**
+ * Structured Story Elements - Extracted from user creative prompt
+ * Used as structured input for all downstream world generation agents
+ */
+export interface StructuredStoryElements {
+  /** Time period / era, e.g. "1920s Prohibition-era New England" */
+  era: string;
+  /** World rules: magic/science systems, political structure, civilizations, religion */
+  worldbuilding: string;
+  /** Story genres, e.g. ["horror", "mystery", "adventure"] */
+  genre: string[];
+  /** Overall tone / atmosphere, e.g. "dark, oppressive, paranoid" */
+  tone: string;
+  /** Core thematic idea, e.g. "humanity's insignificance before cosmic entities" */
+  theme: string;
+  /** All elements synthesized into a precise English creative brief */
+  refinedPrompt: string;
+}
+
+/**
  * Progress Callback - For reporting generation progress
  */
 export type ProgressCallback = (message: string) => void;
