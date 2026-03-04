@@ -12,6 +12,7 @@ import type {
   NPCResponseAnalysis,
   SceneChangeRequest,
 } from "../../../shared/state/index.js";
+import { filterDiceForCharacter } from "../../../shared/state/index.js";
 import type {
   CombatState,
   HeartbeatAction,
@@ -80,7 +81,7 @@ export class ActionAgent {
     const character = p?.profile as any;
 
     const parsed = { ...(rawOutput as any) };
-    this.sanitizeSuccessLevels(parsed);
+    this.sanitizeSuccessLevels(parsed, character?.name ?? p?.characterName);
 
     const actionResult: ActionResult = {
       timestamp: new Date(),
@@ -741,14 +742,20 @@ export class ActionAgent {
       modelClass: ModelClass.MEDIUM,
     });
 
-    const parsed = this.parseRoundOutputsFromModel(response);
+    const playerIdToCharacterName = new Map<string, string>();
+    for (const input of roundInputsInjected) {
+      const p = state.players[input.playerId];
+      if (p?.characterName) playerIdToCharacterName.set(input.playerId, p.characterName);
+    }
+
+    const parsed = this.parseRoundOutputsFromModel(response, playerIdToCharacterName);
     if (Object.keys(parsed.outputsByPlayerId).length === 0) {
       throw new Error("[MP ActionAgent] Empty/invalid batch model output");
     }
     return parsed;
   }
 
-  private parseRoundOutputsFromModel(response: string): {
+  private parseRoundOutputsFromModel(response: string, playerIdToCharacterName?: Map<string, string>): {
     outputsByPlayerId: Record<string, any>;
     timeGroups: Array<{
       groupId: number;
@@ -803,7 +810,12 @@ export class ActionAgent {
           const output = (entry as any).output;
           if (typeof playerId === "string" && playerId.trim() && output && typeof output === "object") {
             if (!Array.isArray(output.diceUsed) || output.diceUsed.length === 0) {
-              output.diceUsed = globalDiceUsed;
+              const charName = playerIdToCharacterName?.get(playerId.trim());
+              if (charName && globalDiceUsed.length > 0) {
+                output.diceUsed = filterDiceForCharacter(globalDiceUsed, charName);
+              } else {
+                output.diceUsed = [];
+              }
             }
             outputsByPlayerId[playerId.trim()] = output;
             groupPlayerIds.push(playerId.trim());
@@ -826,7 +838,12 @@ export class ActionAgent {
         const output = (entry as any).output;
         if (typeof playerId === "string" && playerId.trim() && output && typeof output === "object") {
           if (!Array.isArray(output.diceUsed) || output.diceUsed.length === 0) {
-            output.diceUsed = globalDiceUsed;
+            const charName = playerIdToCharacterName?.get(playerId.trim());
+            if (charName && globalDiceUsed.length > 0) {
+              output.diceUsed = filterDiceForCharacter(globalDiceUsed, charName);
+            } else {
+              output.diceUsed = [];
+            }
           }
           outputsByPlayerId[playerId.trim()] = output;
           allIds.push(playerId.trim());
@@ -866,7 +883,7 @@ export class ActionAgent {
     const targetCharacter = this.findTargetCharacter(dynamicState, actionAnalysis);
 
     const parsed = { ...(rawOutput as any) };
-    this.sanitizeSuccessLevels(parsed);
+    this.sanitizeSuccessLevels(parsed, dynamicState.playerCharacter?.name);
     const diceUsed = Array.isArray(parsed.diceUsed)
       ? parsed.diceUsed.filter((d: unknown): d is string => typeof d === "string")
       : [];
@@ -921,8 +938,11 @@ export class ActionAgent {
     });
   }
 
-  private sanitizeSuccessLevels(parsed: Record<string, unknown>): void {
-    const playerUsedSkill = this.hasSkillCheckFromDice(parsed.diceUsed);
+  private sanitizeSuccessLevels(parsed: Record<string, unknown>, playerCharacterName?: string | null): void {
+    const diceForPlayer = playerCharacterName && Array.isArray(parsed.diceUsed)
+      ? filterDiceForCharacter(parsed.diceUsed as string[], playerCharacterName)
+      : parsed.diceUsed;
+    const playerUsedSkill = this.hasSkillCheckFromDice(diceForPlayer);
     parsed.actionLog = this.sanitizeActionLogsBySkillUsage(
       parsed.actionLog,
       playerUsedSkill
@@ -1672,7 +1692,7 @@ export class ActionAgent {
 
       parsed = JSON.parse(jsonText);
       if (parsed && typeof parsed === "object") {
-        this.sanitizeSuccessLevels(parsed as Record<string, unknown>);
+        this.sanitizeSuccessLevels(parsed as Record<string, unknown>, character.name);
       }
     } catch (error) {
       console.error(`❌ [Action Agent] JSON parsing error:`, error);
@@ -2556,6 +2576,13 @@ export class ActionAgent {
     // LLM generates actionLog entries in the response
     const updatedState = manager.getSceneRoomState(sceneRoomId, playerId);
 
+    // Filter dice to only this player's rolls for accurate skill-check detection
+    const playerDiceForSkillCheck: unknown = (() => {
+      if (!character.name || !Array.isArray(parsed.diceUsed)) return parsed.diceUsed;
+      const filtered = filterDiceForCharacter(parsed.diceUsed as string[], character.name);
+      return filtered.length > 0 ? filtered : parsed.diceUsed;
+    })();
+
     // Get actionLog entries from LLM response and add to the corresponding character based on characterId
     if (parsed.actionLog && Array.isArray(parsed.actionLog)) {
       // Process each actionLog entry and add to the corresponding character based on characterId
@@ -2603,7 +2630,7 @@ export class ActionAgent {
             location: logEntry.location,
             summary: logEntry.summary,
             successLevel:
-              this.hasSkillCheckFromDice(parsed.diceUsed) &&
+              this.hasSkillCheckFromDice(playerDiceForSkillCheck) &&
               typeof logEntry.successLevel === "string"
                 ? logEntry.successLevel
                 : undefined,
@@ -2638,7 +2665,7 @@ export class ActionAgent {
           time: fullTime,
           location: locationName,
           summary: actionResult.result,
-          successLevel: this.hasSkillCheckFromDice(parsed.diceUsed)
+          successLevel: this.hasSkillCheckFromDice(playerDiceForSkillCheck)
             ? "unknown"
             : undefined,
         };

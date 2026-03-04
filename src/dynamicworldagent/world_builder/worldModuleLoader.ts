@@ -579,9 +579,10 @@ export class WorldModuleLoader {
       .map((s, i) => `${i + 1}. ${s.name}: ${s.description}`)
       .join("\n");
 
-    // Get initial game time from first scenario snapshot (usually starting scene)
+    // Get initial game time from the snapshot marked as initialSnapshot, falling back to the first one
     let initialGameTime: string | null = null;
-    const firstSnapshot = module.scenarioSnapshots.values().next().value;
+    const allSnapshots = [...module.scenarioSnapshots.values()];
+    const firstSnapshot = allSnapshots.find(s => (s as any).initialSnapshot) || allSnapshots[0] || null;
     if (firstSnapshot?.gameTime) {
       initialGameTime = firstSnapshot.gameTime;
     }

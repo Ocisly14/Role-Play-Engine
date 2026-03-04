@@ -271,7 +271,8 @@ export function useMultiplayerWebSocket({
               }
 
               case "keeper_dice_rolls": {
-                // In multiplayer, show ALL dice rolls (all players in the scene room)
+                // Only show dice rolls for own scene room
+                if (msg.sceneRoomId && msg.sceneRoomId !== currentSceneRoomIdRef.current) break;
                 const diceRolls = msg.diceRolls as Array<string | DiceRollInfo> | undefined;
                 const turnId = (msg.roundTurnId ?? msg.turnId) as string | undefined;
                 if (!diceRolls || diceRolls.length === 0) return;
@@ -308,7 +309,10 @@ export function useMultiplayerWebSocket({
               case "keeper_stream_start": {
                 const turnId = (msg.roundTurnId ?? msg.turnId) as string | undefined;
                 if (!turnId) return;
-                setStreamingTurnId(turnId);
+                // Only update streaming state for own room
+                if (!msg.sceneRoomId || msg.sceneRoomId === currentSceneRoomIdRef.current) {
+                  setStreamingTurnId(turnId);
+                }
                 targetSetMessages(msg.sceneRoomId, (prev) => {
                   const existing = prev.find((m) => m.turnId === turnId && m.role === "keeper");
                   if (existing) {
@@ -411,10 +415,13 @@ export function useMultiplayerWebSocket({
                     m.turnId === turnId && m.role === "keeper" ? { ...m, isStreaming: false } : m
                   )
                 );
-                setStreamingTurnId((cur) => (cur === turnId ? null : cur));
-                setIsWaiting(false);
-                if (onNarrativeCompleteRef.current) {
-                  onNarrativeCompleteRef.current();
+                // Only update UI state for own room
+                if (!msg.sceneRoomId || msg.sceneRoomId === currentSceneRoomIdRef.current) {
+                  setStreamingTurnId((cur) => (cur === turnId ? null : cur));
+                  setIsWaiting(false);
+                  if (onNarrativeCompleteRef.current) {
+                    onNarrativeCompleteRef.current();
+                  }
                 }
                 break;
               }

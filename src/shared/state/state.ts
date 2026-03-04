@@ -194,7 +194,7 @@ export function buildDiceRollInfos(
 }
 
 /** Extract actor name from roll prefix. Format: "Actor Name: 1d100[0]: ..." */
-function extractRollCharacter(roll: string): string | null {
+export function extractRollCharacter(roll: string): string | null {
   if (!roll || typeof roll !== "string") return null;
   const diceAt = roll.search(/\b(?:1d100_opposed|\d+d\d+)\[\d+\]\s*:/i);
   if (diceAt <= 0) return null;
@@ -203,6 +203,28 @@ function extractRollCharacter(roll: string): string | null {
     .replace(/[:\s]+$/g, "")
     .trim();
   return candidate.length > 0 ? candidate : null;
+}
+
+/** Split a combined diceUsed array into per-character buckets (keyed by lowercase name). */
+export function splitDiceByCharacter(diceUsed: string[]): Map<string, string[]> {
+  const result = new Map<string, string[]>();
+  for (const dice of diceUsed) {
+    const character = extractRollCharacter(dice);
+    const key = character ? character.toLowerCase() : "__unattributed__";
+    const bucket = result.get(key);
+    if (bucket) { bucket.push(dice); } else { result.set(key, [dice]); }
+  }
+  return result;
+}
+
+/** Filter a diceUsed array to only rolls belonging to a specific character. */
+export function filterDiceForCharacter(diceUsed: string[], characterName: string): string[] {
+  if (!characterName || !diceUsed || diceUsed.length === 0) return [];
+  const targetLower = characterName.toLowerCase();
+  return diceUsed.filter((dice) => {
+    const rollChar = extractRollCharacter(dice);
+    return rollChar !== null && rollChar.toLowerCase() === targetLower;
+  });
 }
 
 /** Parse skill, success, penalty from dice roll string.

@@ -14,6 +14,7 @@ import {
   createAndStoreMultiplayerSession,
   multiplayerSessionStore,
 } from "../../../../src/dynamicworldagent/multiplayerState/MultiplayerDynamicGameStateLoader.js";
+import { resolveModuleIdByName } from "../../../../src/shared/agents/memory/database/moduleScope.js";
 
 export interface MultiplayerGameInitResult {
   sessionId: string;
@@ -44,6 +45,7 @@ export async function initMultiplayerGame(
           characterId: true,
           role: true,
           confirmStatus: true,
+          user: { select: { email: true } },
         },
       },
     },
@@ -122,6 +124,46 @@ export async function initMultiplayerGame(
   const initialSceneRoomId = Object.keys(state.sceneRooms)[0];
   if (!initialSceneRoomId) {
     throw new Error("Failed to create initial scene room — state.sceneRooms is empty");
+  }
+
+  // 4b. Auto-grant module access to all non-host members
+  //     so they don't get errors when they haven't added the module to their library
+  const moduleId = await resolveModuleIdByName(room.moduleName, hostEmail);
+  if (moduleId) {
+    const nonHostMembers = room.members.filter((m) => m.userId !== hostUserId);
+    for (const member of nonHostMembers) {
+      const memberEmail = member.user.email;
+      try {
+        await prisma.modulePermission.upsert({
+          where: { moduleId_emailId: { moduleId, emailId: memberEmail } },
+          update: {},
+          create: {
+            moduleId,
+            emailId: memberEmail,
+            role: "viewer",
+            canPlay: true,
+            canManage: false,
+          },
+        });
+        await prisma.userModuleLibrary.upsert({
+          where: { emailId_moduleId: { emailId: memberEmail, moduleId } },
+          update: {},
+          create: {
+            emailId: memberEmail,
+            moduleId,
+            source: "shared_added",
+          },
+        });
+      } catch (err) {
+        console.warn(
+          `[MultiplayerGame] Failed to grant module access to ${memberEmail}:`,
+          err
+        );
+      }
+    }
+    console.log(
+      `[MultiplayerGame] Module access granted to ${nonHostMembers.length} non-host member(s)`
+    );
   }
 
   // 5. Persist the initial sceneRoom record to DB so polling can see it

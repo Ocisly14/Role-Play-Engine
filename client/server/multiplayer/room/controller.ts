@@ -130,7 +130,9 @@ export async function startGame(req: Request, res: Response): Promise<void> {
 
     await roomService.startGame(roomId, userId);
     res.json({ success: true });
-    broadcastToRoom(roomId, { type: "room_game_starting" });
+    // NOTE: room_game_starting is broadcast from game/controller.ts (initGame)
+    // or checkpoint/controller.ts (loadCheckpoint) AFTER the game state is ready,
+    // so non-host players don't navigate before the state exists.
   } catch (error) {
     console.error("[Multiplayer] startGame error:", error);
     const msg = (error as Error).message;

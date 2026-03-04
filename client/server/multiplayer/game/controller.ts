@@ -4,7 +4,18 @@ import { multiplayerSessionStore } from "../../../../src/dynamicworldagent/multi
 import { getPrismaClient } from "../../../../src/shared/agents/memory/database/prismaClient.js";
 import { initMultiplayerGame } from "./service.js";
 import { restoreRoomFromCheckpoint } from "../checkpoint/controller.js";
+import { WebSocketManager } from "../../websocket/WebSocketManager.js";
+import { notifyRoom } from "../../websocket/notifier.js";
 import type { MultiplayerDynamicGameStateManager } from "../../../../src/dynamicworldagent/multiplayerState/MultiplayerDynamicGameState.js";
+
+function broadcastToRoom(roomId: string, message: object): void {
+  const wsMgr = WebSocketManager.getInstance();
+  if (!wsMgr) return;
+  const clients = wsMgr.getRoomClients(roomId);
+  if (clients.size > 0) {
+    notifyRoom(roomId, clients, message);
+  }
+}
 
 /**
  * Try to auto-restore a room's in-memory state from its latest checkpoint.
@@ -40,6 +51,10 @@ export async function initGame(req: Request, res: Response): Promise<void> {
 
     const db = DatabaseManager.getInstance().getDatabase();
     const result = await initMultiplayerGame(db, roomId, userId, email);
+
+    // Broadcast room_game_starting AFTER the game state is ready,
+    // so non-host players can safely navigate and fetch state.
+    broadcastToRoom(roomId, { type: "room_game_starting" });
 
     res.status(201).json({ success: true, ...result });
   } catch (error) {

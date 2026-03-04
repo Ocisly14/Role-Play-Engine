@@ -12,6 +12,7 @@ import type {
   NPCResponseAnalysis,
   SceneChangeRequest,
 } from "../../../shared/state/index.js";
+import { filterDiceForCharacter } from "../../../shared/state/index.js";
 import type {
   CombatState,
   HeartbeatAction,
@@ -71,8 +72,11 @@ export class ActionAgent {
     });
   }
 
-  private sanitizeSuccessLevels(parsed: Record<string, unknown>): void {
-    const playerUsedSkill = this.hasSkillCheckFromDice(parsed.diceUsed);
+  private sanitizeSuccessLevels(parsed: Record<string, unknown>, playerCharacterName?: string | null): void {
+    const diceForPlayer = playerCharacterName && Array.isArray(parsed.diceUsed)
+      ? filterDiceForCharacter(parsed.diceUsed as string[], playerCharacterName)
+      : parsed.diceUsed;
+    const playerUsedSkill = this.hasSkillCheckFromDice(diceForPlayer);
     parsed.actionLog = this.sanitizeActionLogsBySkillUsage(
       parsed.actionLog,
       playerUsedSkill
@@ -814,7 +818,7 @@ export class ActionAgent {
 
       parsed = JSON.parse(jsonText);
       if (parsed && typeof parsed === "object") {
-        this.sanitizeSuccessLevels(parsed as Record<string, unknown>);
+        this.sanitizeSuccessLevels(parsed as Record<string, unknown>, character.name);
       }
     } catch (error) {
       console.error(`❌ [Action Agent] JSON parsing error:`, error);
@@ -1634,6 +1638,13 @@ export class ActionAgent {
     // LLM generates actionLog entries in the response
     const updatedState = gameStateManager.getState();
 
+    // Filter dice to only this player's rolls for accurate skill-check detection
+    const playerDiceForSkillCheck: unknown = (() => {
+      if (!character.name || !Array.isArray(parsed.diceUsed)) return parsed.diceUsed;
+      const filtered = filterDiceForCharacter(parsed.diceUsed as string[], character.name);
+      return filtered.length > 0 ? filtered : parsed.diceUsed;
+    })();
+
     // Get actionLog entries from LLM response and add to the corresponding character based on characterId
     if (parsed.actionLog && Array.isArray(parsed.actionLog)) {
       // Process each actionLog entry and add to the corresponding character based on characterId
@@ -1681,7 +1692,7 @@ export class ActionAgent {
             location: logEntry.location,
             summary: logEntry.summary,
             successLevel:
-              this.hasSkillCheckFromDice(parsed.diceUsed) &&
+              this.hasSkillCheckFromDice(playerDiceForSkillCheck) &&
               typeof logEntry.successLevel === "string"
                 ? logEntry.successLevel
                 : undefined,
@@ -1716,7 +1727,7 @@ export class ActionAgent {
           time: fullTime,
           location: locationName,
           summary: actionResult.result,
-          successLevel: this.hasSkillCheckFromDice(parsed.diceUsed)
+          successLevel: this.hasSkillCheckFromDice(playerDiceForSkillCheck)
             ? "unknown"
             : undefined,
         };

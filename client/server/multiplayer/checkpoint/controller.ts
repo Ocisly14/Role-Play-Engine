@@ -11,7 +11,7 @@ import {
 } from "../../../../src/dynamicworldagent/multiplayerAgent/memory/checkpoint.js";
 import { DatabaseManager } from "../../core/DatabaseManager.js";
 import { WebSocketManager } from "../../websocket/WebSocketManager.js";
-import { notifySceneRoom } from "../../websocket/notifier.js";
+import { notifySceneRoom, notifyRoom } from "../../websocket/notifier.js";
 
 // ─────────────────────────────────────────────────────────────
 // Helpers
@@ -511,7 +511,20 @@ export async function loadCheckpoint(
     const restoredState = newManager.getState();
     const activeSceneRoomIds = Object.keys(restoredState.sceneRooms);
 
-    // 4. Broadcast checkpoint_loaded to all active sceneRooms
+    // 4a. Broadcast room_game_starting so non-host players navigate to game page
+    try {
+      const wsManager0 = WebSocketManager.getInstance();
+      if (wsManager0) {
+        const roomClients = wsManager0.getRoomClients(roomId);
+        if (roomClients.size > 0) {
+          notifyRoom(roomId, roomClients, { type: "room_game_starting" });
+        }
+      }
+    } catch (wsError) {
+      console.warn("[MP Checkpoint] room_game_starting broadcast failed:", wsError);
+    }
+
+    // 4b. Broadcast checkpoint_loaded to all active sceneRooms
     try {
       const wsManager = WebSocketManager.getInstance();
       if (wsManager) {
