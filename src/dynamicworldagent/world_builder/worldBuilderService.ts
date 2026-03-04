@@ -10,6 +10,7 @@ import { MacroSceneAgent } from "./macroSceneAgent.js";
 import { ModuleDigestAgent } from "./moduleDigestAgent.js";
 import { NPCBuilderAgent } from "./npcBuilderAgent.js";
 import { saveModuleDigestToJSON, saveWorldToJSON } from "./persistence.js";
+import { PromptStructurizerAgent } from "./promptStructurizerAgent.js";
 import { ScenarioBuilderAgent } from "./scenarioBuilderAgent.js";
 import type { StoryLength } from "./storyLengthConfig.js";
 import type { MacroSceneSettingType, WorldGenerationResult } from "./types.js";
@@ -82,12 +83,14 @@ export class WorldBuilderService {
   private scenarioBuilderAgent: ScenarioBuilderAgent;
   private npcBuilderAgent: NPCBuilderAgent;
   private moduleDigestAgent: ModuleDigestAgent;
+  private promptStructurizerAgent: PromptStructurizerAgent;
 
   constructor() {
     this.macroSceneAgent = new MacroSceneAgent();
     this.scenarioBuilderAgent = new ScenarioBuilderAgent();
     this.npcBuilderAgent = new NPCBuilderAgent();
     this.moduleDigestAgent = new ModuleDigestAgent();
+    this.promptStructurizerAgent = new PromptStructurizerAgent();
   }
 
   /**
@@ -109,12 +112,21 @@ export class WorldBuilderService {
     try {
       const emitProgress = createMonotonicProgressEmitter(progressCallback);
 
+      // ========== PHASE 0: PROMPT STRUCTURIZER (progress 0→5) ==========
+      emitProgress("prompt_structurizer", 1, "Analyzing creative prompt...");
+
+      const storyElements = await this.promptStructurizerAgent.structurize(
+        creativePrompt
+      );
+
+      emitProgress("prompt_structurizer", 5, "Story elements extracted");
+
       // ========== PHASE 1: MACRO SCENE AGENT (Steps 1-6, progress 5→40) ==========
       emitProgress("macro_scene", 5, `Generating ${settingType} structure...`);
 
       const macroScene = await this.macroSceneAgent.generateTownStructure(
         settingType,
-        creativePrompt,
+        storyElements,
         (msg) => emitProgress("macro_scene", 8, msg),
         storyLength
       );
@@ -127,7 +139,7 @@ export class WorldBuilderService {
       emitProgress("macro_scene", 10, "Generating historical mythos ...");
       const mythosEvents = await this.macroSceneAgent.generateHistoricalMythos(
         macroScene,
-        creativePrompt,
+        storyElements,
         (msg) => emitProgress("macro_scene", 12, msg)
       );
       emitProgress("macro_scene", 12, `Historical mythos completed`);
@@ -136,7 +148,7 @@ export class WorldBuilderService {
       const truthTimeline = await this.macroSceneAgent.generateTruthTimeline(
         macroScene,
         mythosEvents,
-        creativePrompt,
+        storyElements,
         (msg) => emitProgress("macro_scene", 18, msg),
         storyLength
       );
@@ -310,7 +322,7 @@ export class WorldBuilderService {
         npcs,
         scenarios,
         startingScene,
-        creativePrompt,
+        storyElements,
         endState,
         macroMapPath // Pass map path to digest
       );
