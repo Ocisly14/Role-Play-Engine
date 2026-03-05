@@ -515,15 +515,23 @@ export async function listUserLibrary(email: string): Promise<
     orderBy: { addedAt: "desc" },
   });
 
-  return rows.map((row) => ({
-    name: row.module.moduleName,
-    shared: row.module.share,
-    ownerEmail:
-      row.module.ownerEmailId === SYSTEM_OWNER_EMAIL
-        ? null
-        : row.module.ownerEmailId,
-    isOwner: row.module.ownerEmailId === email,
-  }));
+  const seen = new Set<string>();
+  return rows
+    .filter((row) => {
+      const key = row.module.moduleName.toLowerCase();
+      if (seen.has(key)) return false;
+      seen.add(key);
+      return true;
+    })
+    .map((row) => ({
+      name: row.module.moduleName,
+      shared: row.module.share,
+      ownerEmail:
+        row.module.ownerEmailId === SYSTEM_OWNER_EMAIL
+          ? null
+          : row.module.ownerEmailId,
+      isOwner: row.module.ownerEmailId === email,
+    }));
 }
 
 export async function listSharedMods(

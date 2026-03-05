@@ -27,6 +27,16 @@ import type {
 import type { DynamicNPCProfile } from "./types.js";
 
 /**
+ * Create a module-scoped snapshot ID to avoid PK collisions across modules.
+ * Uses first 8 chars of moduleId as prefix.
+ */
+function moduleSnapshotId(moduleId: string, rawId: string): string {
+  const prefix = `m${moduleId.slice(0, 8)}_`;
+  if (rawId.startsWith(prefix)) return rawId;
+  return `${prefix}${rawId}`;
+}
+
+/**
  * Save world generation results to database
  */
 export async function saveWorldToDatabase(
@@ -229,8 +239,9 @@ export async function saveWorldToDatabase(
 
     if (startingScene?.snapshot) {
       const snapshot = startingScene.snapshot;
+      const scopedSnapshotId = moduleSnapshotId(moduleId, snapshot.id);
       const snapshotExists = await prisma.scenarioSnapshot.findUnique({
-        where: { snapshotId: snapshot.id },
+        where: { snapshotId: scopedSnapshotId },
         select: { snapshotId: true },
       });
 
@@ -238,7 +249,7 @@ export async function saveWorldToDatabase(
         // All columns exist in PostgreSQL - no need for hasColumn checks
         await prisma.scenarioSnapshot.create({
           data: {
-            snapshotId: snapshot.id,
+            snapshotId: scopedSnapshotId,
             scenarioId: startingScene.scenarioId,
             moduleId,
             snapshotName: snapshot.name,
@@ -260,8 +271,8 @@ export async function saveWorldToDatabase(
             try {
               await prisma.scenarioCharacter.create({
                 data: {
-                  id: char.id,
-                  snapshotId: snapshot.id,
+                  id: moduleSnapshotId(moduleId, char.id),
+                  snapshotId: scopedSnapshotId,
                   moduleId,
                   characterName: char.name,
                   characterRole: char.role,
@@ -282,8 +293,8 @@ export async function saveWorldToDatabase(
             try {
               await prisma.scenarioClue.create({
                 data: {
-                  clueId: clue.id,
-                  snapshotId: snapshot.id,
+                  clueId: moduleSnapshotId(moduleId, clue.id),
+                  snapshotId: scopedSnapshotId,
                   moduleId,
                   clueText: clue.clueText,
                   category: clue.category,
@@ -306,12 +317,12 @@ export async function saveWorldToDatabase(
 
         if (snapshot.conditions?.length) {
           for (const condition of snapshot.conditions) {
-            const conditionId = `${snapshot.id}-cond-${randomUUID().slice(0, 8)}`;
+            const conditionId = `${scopedSnapshotId}-cond-${randomUUID().slice(0, 8)}`;
             try {
               await prisma.scenarioCondition.create({
                 data: {
                   conditionId,
-                  snapshotId: snapshot.id,
+                  snapshotId: scopedSnapshotId,
                   moduleId,
                   conditionType: condition.type,
                   description: condition.description,

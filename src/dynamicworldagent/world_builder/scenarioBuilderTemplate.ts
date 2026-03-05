@@ -4,7 +4,17 @@
  */
 
 export function getScenarioBuilderTemplate(): string {
-  return `You are a writer for a CoC game.
+  return `You are a writer for a tabletop RPG scenario.
+
+════════════════════════════════════════════════════════
+🔴 SUPREME DIRECTIVE — READ THIS BEFORE ANYTHING ELSE 🔴
+════════════════════════════════════════════════════════
+STORY ELEMENTS (absolute mandate):
+{{storyElements}}
+
+These structured story elements are the SINGLE HIGHEST AUTHORITY for all content you generate.
+All scenarios MUST be consistent with the story elements above — genre, tone, theme, era, and worldbuilding.
+════════════════════════════════════════════════════════
 
 # SCENARIO OUTLINES GENERATION
 
@@ -82,16 +92,26 @@ Return ONLY valid JSON in this exact structure:
 }
 
 /**
- * Step X: Select starting scene and build a snapshot
+ * Select starting scene and build a snapshot (NO NPC assignments)
  */
 export function getStartingSceneSnapshotTemplate(): string {
-  return `You are a writer for a CoC game.
+  return `You are a writer for a tabletop RPG scenario.
+
+════════════════════════════════════════════════════════
+🔴 SUPREME DIRECTIVE — READ THIS BEFORE ANYTHING ELSE 🔴
+════════════════════════════════════════════════════════
+STORY ELEMENTS (absolute mandate):
+{{storyElements}}
+
+These structured story elements are the SINGLE HIGHEST AUTHORITY for all content you generate.
+The starting scene MUST be consistent with the story elements above — genre, tone, theme, era, and worldbuilding.
+════════════════════════════════════════════════════════
 
 # STARTING SCENE SELECTION + SNAPSHOT
 
 ## Objective
 Pick the best starting scene for investigators and generate a full scene snapshot.
-Then assign every other NPC to a scenario with a short note of what they are doing there.
+Do NOT assign NPCs — that will be handled in a separate step.
 
 ## Inputs
 ### Macro Scene
@@ -106,26 +126,18 @@ Then assign every other NPC to a scenario with a short note of what they are doi
 ### All Scenarios (outlines)
 {{scenariosJson}}
 
-### All NPCs (id, name, occupation, age, gender, appearance, personality, background, goals, secrets)
-{{npcsJson}}
-
 ## Requirements
 - Choose exactly ONE scenario from the provided list as the starting scene.
-- Generate a ScenarioSnapshot for that starting scene (use the schema from ScenarioSnapshot).
-- The snapshot must include: id, name, location, description, gameTime, characters, clues, conditions, events.
+- Generate a ScenarioSnapshot for that starting scene.
+- The snapshot must include: id, name, location, description, gameTime, clues, conditions, events.
 - "snapshot.id" MUST be exactly the same as the selected "startingScene.scenarioId" (no suffix/prefix/renaming).
 - "snapshot.name" MUST be exactly the same as the selected "startingScene.scenarioName".
 - "gameTime" should follow a standard format like "Day <N>, HH:MM" (e.g., "Day 1, 08:00").
-- Populate snapshot.characters with NPCs present in the starting scene.
 - Expand the starting scenario's "clues" into fully formatted snapshot.clues entries.
   - Every scenario clue must map to at least one snapshot clue.
   - Preserve the original clueText meaning while adding category/difficulty/location/discovered.
-- Every NPC MUST be accounted for:
-  - If in the starting snapshot, do NOT assign them elsewhere.
-  - Otherwise, assign them to a scenario in the "otherScenarioNpcAssignments" list.
-- Include ALL non-starting scenarios in "otherScenarioNpcAssignments" (empty npc lists are allowed).
-- For each assigned NPC, add a short "activity" note describing what they are doing in that scenario.
-- Do NOT invent new scenarios or NPCs beyond the provided input.
+- Do NOT include characters/NPCs in the snapshot — leave "characters" as an empty array.
+- Do NOT invent new scenarios beyond the provided input.
 - Keep the output grounded in the macro scene and truth timeline.
 
 ## Output Format
@@ -141,17 +153,8 @@ Return ONLY valid JSON in this exact structure:
       "name": "Scenario Name",
       "location": "Primary location",
       "description": "Detailed description of the scene.",
-      "gameTime": "<GAME_TIME>",
-      "characters": [
-        {
-          "id": "NPC_1",
-          "name": "Character Name",
-          "role": "witness",
-          "status": "alive",
-          "location": "Specific spot in the scene",
-          "notes": "What they are doing or how they appear."
-        }
-      ],
+      "gameTime": "Day 1, 08:00",
+      "characters": [],
       "clues": [
         {
           "id": "CLUE_1",
@@ -174,14 +177,74 @@ Return ONLY valid JSON in this exact structure:
       ],
       "keeperNotes": "Private note for the GM."
     }
-  },
+  }
+}
+\`\`\`
+`;
+}
+
+/**
+ * Assign all NPCs to scenarios (separate step after starting scene snapshot)
+ */
+export function getNpcAssignmentTemplate(): string {
+  return `You are a writer for a tabletop RPG scenario.
+
+════════════════════════════════════════════════════════
+🔴 SUPREME DIRECTIVE — READ THIS BEFORE ANYTHING ELSE 🔴
+════════════════════════════════════════════════════════
+STORY ELEMENTS (absolute mandate):
+{{storyElements}}
+
+These structured story elements are the SINGLE HIGHEST AUTHORITY for all content you generate.
+NPC assignments MUST be consistent with the story elements above — genre, tone, theme, era, and worldbuilding.
+════════════════════════════════════════════════════════
+
+# NPC SCENARIO ASSIGNMENT
+
+## Objective
+Assign every NPC to exactly one scenario. For NPCs in the starting scene, add them to the starting snapshot's characters list. For all others, assign them to another scenario with an activity note.
+
+## Inputs
+### Starting Scene
+{{startingSceneJson}}
+
+### All Scenarios (outlines)
+{{scenariosJson}}
+
+### All NPCs
+{{npcsJson}}
+
+## Requirements
+- Every NPC MUST be assigned to exactly ONE scenario — no duplicates, no omissions.
+- For NPCs assigned to the starting scene: populate "startingSceneCharacters" with full character entries.
+- For NPCs assigned to other scenarios: populate "otherScenarioNpcAssignments" with scenario + NPC + activity.
+- Include ALL non-starting scenarios in "otherScenarioNpcAssignments" (empty npc lists are allowed).
+- For each assigned NPC, add a short "activity" note describing what they are doing in that scenario.
+- NPC placement should make narrative sense based on their occupation, background, goals, and secrets.
+- Do NOT invent new scenarios or NPCs beyond the provided input.
+
+## Output Format
+Return ONLY valid JSON in this exact structure:
+
+\`\`\`json
+{
+  "startingSceneCharacters": [
+    {
+      "id": "npc-character-name",
+      "name": "Character Name",
+      "role": "witness",
+      "status": "alive",
+      "location": "Specific spot in the starting scene",
+      "notes": "What they are doing or how they appear."
+    }
+  ],
   "otherScenarioNpcAssignments": [
     {
       "scenarioId": "SCN_2",
       "scenarioName": "Other Scenario",
       "npcs": [
         {
-          "id": "NPC_2",
+          "id": "npc-character-name",
           "name": "Character Name",
           "activity": "What this NPC is doing here right now."
         }

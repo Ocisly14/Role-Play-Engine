@@ -11,19 +11,21 @@ import {
 import { composeTemplate } from "../../template.js";
 import { generateSceneImageFromSnapshot } from "../visual/sceneImage.js";
 import {
+  getNpcAssignmentTemplate,
   getScenarioBuilderTemplate,
   getStartingSceneSnapshotTemplate,
 } from "./scenarioBuilderTemplate.js";
 import type {
+  DynamicNPCProfile,
   KnowledgeHolder,
   MacroSceneStructure,
   ProgressCallback,
   ScenarioNpcAssignments,
   ScenarioOutline,
   StartingSceneSelection,
+  StructuredStoryElements,
   TruthEvent,
 } from "./types.js";
-import type { DynamicNPCProfile } from "./types.js";
 
 interface Runtime {
   modelProvider: ModelProviderName;
@@ -63,6 +65,7 @@ export class ScenarioBuilderAgent {
     macroScene: MacroSceneStructure,
     truthTimeline: TruthEvent[],
     knowledgeMatrix: KnowledgeHolder[],
+    storyElements?: StructuredStoryElements,
     progressCallback?: ProgressCallback
   ): Promise<ScenarioOutline[]> {
     progressCallback?.("Generating scenario outlines from place holders...");
@@ -87,6 +90,9 @@ export class ScenarioBuilderAgent {
         macroSceneJson: JSON.stringify(macroScene, null, 2),
         truthTimelineJson: JSON.stringify(truthTimeline, null, 2),
         knowledgeMatrixJson: JSON.stringify(knowledgeMatrix, null, 2),
+        storyElements: storyElements
+          ? JSON.stringify(storyElements, null, 2)
+          : "",
       }
     );
 
@@ -286,17 +292,17 @@ export class ScenarioBuilderAgent {
     }
   }
 
+  /**
+   * Phase 4a: Select starting scene and generate snapshot (NO NPC assignments)
+   */
   async generateStartingSceneSnapshot(
     macroScene: MacroSceneStructure,
     truthTimeline: TruthEvent[],
     knowledgeMatrix: KnowledgeHolder[],
     scenarios: ScenarioOutline[],
-    npcs: DynamicNPCProfile[],
+    storyElements?: StructuredStoryElements,
     progressCallback?: ProgressCallback
-  ): Promise<{
-    startingScene: StartingSceneSelection;
-    otherScenarioNpcAssignments: ScenarioNpcAssignments[];
-  }> {
+  ): Promise<StartingSceneSelection> {
     progressCallback?.("Selecting starting scene and generating snapshot...");
 
     const template = getStartingSceneSnapshotTemplate();
@@ -308,22 +314,9 @@ export class ScenarioBuilderAgent {
         truthTimelineJson: JSON.stringify(truthTimeline, null, 2),
         knowledgeMatrixJson: JSON.stringify(knowledgeMatrix, null, 2),
         scenariosJson: JSON.stringify(scenarios, null, 2),
-        npcsJson: JSON.stringify(
-          npcs.map((npc) => ({
-            id: npc.id,
-            name: npc.name,
-            occupation: npc.occupation,
-            age: npc.age,
-            gender: npc.gender,
-            appearance: npc.appearance,
-            personality: npc.personality,
-            background: npc.background,
-            goals: npc.goals,
-            secrets: npc.secrets,
-          })),
-          null,
-          2
-        ),
+        storyElements: storyElements
+          ? JSON.stringify(storyElements, null, 2)
+          : "",
       }
     );
 
@@ -340,10 +333,6 @@ export class ScenarioBuilderAgent {
       const startingScene = parsed.startingScene as
         | StartingSceneSelection
         | undefined;
-      const otherScenarioNpcAssignments =
-        (parsed.otherScenarioNpcAssignments as
-          | ScenarioNpcAssignments[]
-          | undefined) || [];
 
       if (!startingScene) {
         console.warn("Missing startingScene; falling back to first scenario.");
@@ -406,14 +395,6 @@ export class ScenarioBuilderAgent {
         ? snapshot.conditions
         : [];
 
-      for (const char of snapshot.characters) {
-        if (!char.id || !char.name || !char.role || !char.status) {
-          console.warn(
-            "Scenario snapshot character missing id/name/role/status"
-          );
-        }
-      }
-
       for (const clue of snapshot.clues) {
         if (!clue.id) {
           clue.id = `${snapshot.id}-clue-${Math.random().toString(36).slice(2, 8)}`;
@@ -435,30 +416,154 @@ export class ScenarioBuilderAgent {
         }
       }
 
+      // Generate scene image if available
+      if (process.env.GOOGLE_API_KEY) {
+        progressCallback?.("Generating starting scene image...");
+        try {
+          const imageResult = await generateSceneImageFromSnapshot(
+            snapshot,
+            macroScene.moduleName
+          );
+          if (imageResult) {
+            snapshot.sceneImage = {
+              path: imageResult.path,
+              mimeType: imageResult.mimeType,
+              generatedAt: new Date().toISOString(),
+            };
+            progressCallback?.("Starting scene image generated.");
+          }
+        } catch (error) {
+          console.warn("Failed to generate starting scene image:", error);
+        }
+      }
+
+      progressCallback?.(
+        `Starting scene snapshot generated: ${resolvedStartingScene.scenarioName}`
+      );
+
+      return {
+        ...resolvedStartingScene,
+        snapshot,
+      };
+    } catch (error) {
+      console.error("Failed to parse starting scene snapshot response:", error);
+      console.error("Response:", response.substring(0, 500));
+      throw new Error(
+        `Failed to generate starting scene snapshot: ${(error as Error).message}`
+      );
+    }
+  }
+
+  /**
+   * Phase 4b: Assign all NPCs to scenarios
+   */
+  async assignNpcsToScenarios(
+    startingScene: StartingSceneSelection,
+    scenarios: ScenarioOutline[],
+    npcs: DynamicNPCProfile[],
+    storyElements?: StructuredStoryElements,
+    progressCallback?: ProgressCallback
+  ): Promise<{
+    startingSceneCharacters: StartingSceneSelection["snapshot"]["characters"];
+    otherScenarioNpcAssignments: ScenarioNpcAssignments[];
+  }> {
+    progressCallback?.("Assigning NPCs to scenarios...");
+
+    const template = getNpcAssignmentTemplate();
+    const prompt = composeTemplate(
+      template,
+      {},
+      {
+        startingSceneJson: JSON.stringify(
+          {
+            scenarioId: startingScene.scenarioId,
+            scenarioName: startingScene.scenarioName,
+          },
+          null,
+          2
+        ),
+        scenariosJson: JSON.stringify(scenarios, null, 2),
+        storyElements: storyElements
+          ? JSON.stringify(storyElements, null, 2)
+          : "",
+        npcsJson: JSON.stringify(
+          npcs.map((npc) => ({
+            id: npc.id,
+            name: npc.name,
+            occupation: npc.occupation,
+            age: npc.age,
+            gender: npc.gender,
+            appearance: npc.appearance,
+            personality: npc.personality,
+            background: npc.background,
+            goals: npc.goals,
+            secrets: npc.secrets,
+          })),
+          null,
+          2
+        ),
+      }
+    );
+
+    progressCallback?.("Calling AI for NPC assignments...");
+    const response = await generateText({
+      runtime: this.runtime,
+      providerOverride: this.runtime.modelProvider,
+      context: prompt,
+      modelClass: ModelClass.MEDIUM,
+    });
+
+    try {
+      const parsed = parseJSONResponse(response);
+      const startingSceneCharacters = Array.isArray(
+        parsed.startingSceneCharacters
+      )
+        ? parsed.startingSceneCharacters
+        : [];
+      const otherScenarioNpcAssignments = Array.isArray(
+        parsed.otherScenarioNpcAssignments
+      )
+        ? (parsed.otherScenarioNpcAssignments as ScenarioNpcAssignments[])
+        : [];
+
+      // Validate and reconcile
+      const scenarioById = new Map(
+        scenarios.map((scenario) => [scenario.id, scenario])
+      );
+      const scenarioByName = new Map(
+        scenarios.map((scenario) => [scenario.name.toLowerCase(), scenario])
+      );
       const npcById = new Map(npcs.map((npc) => [npc.id, npc]));
       const npcByName = new Map(
         npcs.map((npc) => [npc.name.toLowerCase(), npc])
       );
       const accountedNpcIds = new Set<string>();
 
-      for (const char of snapshot.characters) {
+      // Validate starting scene characters
+      for (const char of startingSceneCharacters) {
+        if (!char.id || !char.name || !char.role || !char.status) {
+          console.warn(
+            "Starting scene character missing id/name/role/status"
+          );
+        }
         const npc =
           (char.id && npcById.get(char.id)) ||
           (char.name && npcByName.get(char.name.toLowerCase()));
         if (!npc) {
           console.warn(
-            `Snapshot character "${char.name}" does not match any NPC`
+            `Starting scene character "${char.name}" does not match any NPC`
           );
           continue;
         }
         accountedNpcIds.add(npc.id);
       }
 
+      // Validate other scenario assignments
       const nonStartingScenarioIds = scenarios
-        .filter((scenario) => scenario.id !== selectedScenario.id)
+        .filter((scenario) => scenario.id !== startingScene.scenarioId)
         .map((scenario) => scenario.id);
       const assignmentScenarioIds = new Set(
-        otherScenarioNpcAssignments.map((assignment) => assignment.scenarioId)
+        otherScenarioNpcAssignments.map((a) => a.scenarioId)
       );
 
       const missingAssignments = nonStartingScenarioIds.filter(
@@ -484,10 +589,7 @@ export class ScenarioBuilderAgent {
         assignment.scenarioId = scenario.id;
         assignment.scenarioName = scenario.name;
 
-        if (
-          assignment.scenarioId === selectedScenario.id &&
-          assignment.npcs?.length
-        ) {
+        if (assignment.scenarioId === startingScene.scenarioId && assignment.npcs?.length) {
           console.warn("Starting scene NPCs assigned to other scenarios");
         }
 
@@ -517,30 +619,6 @@ export class ScenarioBuilderAgent {
         );
       }
 
-      progressCallback?.(
-        `Starting scene snapshot generated: ${resolvedStartingScene.scenarioName}`
-      );
-
-      if (process.env.GOOGLE_API_KEY) {
-        progressCallback?.("Generating starting scene image...");
-        try {
-          const imageResult = await generateSceneImageFromSnapshot(
-            snapshot,
-            macroScene.moduleName
-          );
-          if (imageResult) {
-            snapshot.sceneImage = {
-              path: imageResult.path,
-              mimeType: imageResult.mimeType,
-              generatedAt: new Date().toISOString(),
-            };
-            progressCallback?.("Starting scene image generated.");
-          }
-        } catch (error) {
-          console.warn("Failed to generate starting scene image:", error);
-        }
-      }
-
       const completedAssignments = [
         ...otherScenarioNpcAssignments,
         ...missingAssignments.map((scenarioId) => {
@@ -553,18 +631,19 @@ export class ScenarioBuilderAgent {
         }),
       ];
 
+      progressCallback?.(
+        `NPC assignment complete: ${startingSceneCharacters.length} in starting scene, ${accountedNpcIds.size - startingSceneCharacters.length} elsewhere`
+      );
+
       return {
-        startingScene: {
-          ...resolvedStartingScene,
-          snapshot,
-        },
+        startingSceneCharacters,
         otherScenarioNpcAssignments: completedAssignments,
       };
     } catch (error) {
-      console.error("Failed to parse starting scene snapshot response:", error);
+      console.error("Failed to parse NPC assignment response:", error);
       console.error("Response:", response.substring(0, 500));
       throw new Error(
-        `Failed to generate starting scene snapshot: ${(error as Error).message}`
+        `Failed to assign NPCs to scenarios: ${(error as Error).message}`
       );
     }
   }

@@ -32,6 +32,7 @@ import type {
   NPCBasicInfoStep1,
   ProgressCallback,
   RedHerring,
+  StructuredStoryElements,
   TruthEvent,
 } from "./types.js";
 
@@ -194,6 +195,7 @@ export class NPCBuilderAgent {
     knowledgeHolders: KnowledgeHolder[],
     redHerrings: RedHerring[],
     truthTimeline: TruthEvent[],
+    storyElements?: StructuredStoryElements,
     progressCallback?: ProgressCallback
   ): Promise<NPCBasicInfo[]> {
     progressCallback?.("Instantiating NPCs from knowledge holders...");
@@ -211,6 +213,9 @@ export class NPCBuilderAgent {
         macroSceneJson: JSON.stringify(macroScene, null, 2),
         truthTimelineJson: JSON.stringify(truthTimeline, null, 2),
         occupationsJson: JSON.stringify(occupationNames, null, 2),
+        storyElements: storyElements
+          ? JSON.stringify(storyElements, null, 2)
+          : "",
       }
     );
 
@@ -263,6 +268,9 @@ export class NPCBuilderAgent {
         redHerringsJson: JSON.stringify(redHerrings, null, 2),
         macroSceneJson: JSON.stringify(macroScene, null, 2),
         truthTimelineJson: JSON.stringify(truthTimeline, null, 2),
+        storyElements: storyElements
+          ? JSON.stringify(storyElements, null, 2)
+          : "",
       }
     );
 
@@ -376,6 +384,7 @@ export class NPCBuilderAgent {
     truthTimeline: TruthEvent[],
     allKnowledgeHolders: KnowledgeHolder[],
     allRedHerrings: RedHerring[],
+    storyElements?: StructuredStoryElements,
     progressCallback?: ProgressCallback
   ): Promise<Array<Partial<DynamicNPCProfile>>> {
     const names = batch.map((b) => b.npcBasicInfo.name).join(", ");
@@ -388,7 +397,8 @@ export class NPCBuilderAgent {
           batch,
           truthTimeline,
           allKnowledgeHolders,
-          allRedHerrings
+          allRedHerrings,
+          storyElements
         );
         return result;
       } catch (error) {
@@ -416,7 +426,8 @@ export class NPCBuilderAgent {
     }>,
     truthTimeline: TruthEvent[],
     allKnowledgeHolders: KnowledgeHolder[],
-    allRedHerrings: RedHerring[]
+    allRedHerrings: RedHerring[],
+    storyElements?: StructuredStoryElements
   ): Promise<Array<Partial<DynamicNPCProfile>>> {
     const npcsPayload = batch.map(({ npcBasicInfo, attributes, skills }) => {
       const boundKnowledgeHolders = allKnowledgeHolders.filter(
@@ -460,6 +471,9 @@ export class NPCBuilderAgent {
       {
         truthTimelineJson: JSON.stringify(truthTimeline, null, 2),
         npcsJson: JSON.stringify(npcsPayload, null, 2),
+        storyElements: storyElements
+          ? JSON.stringify(storyElements, null, 2)
+          : "",
       }
     );
 
@@ -510,6 +524,7 @@ export class NPCBuilderAgent {
     knowledgeHolders: KnowledgeHolder[],
     redHerrings: RedHerring[],
     mythosEvents: MythosEvent[],
+    storyElements?: StructuredStoryElements,
     progressCallback?: ProgressCallback
   ): Promise<DynamicNPCProfile[]> {
     console.log("\n👥 [NPC Builder Agent] Starting NPC generation...");
@@ -521,6 +536,7 @@ export class NPCBuilderAgent {
       knowledgeHolders,
       redHerrings,
       truthTimeline,
+      storyElements,
       progressCallback
     );
 
@@ -598,6 +614,7 @@ export class NPCBuilderAgent {
           truthTimeline,
           knowledgeHolders,
           redHerrings,
+          storyElements,
           progressCallback
         );
 

@@ -5,7 +5,7 @@
 
 export function getModuleDigestTemplate(): string {
   return `
-You are a writer for a CoC game. Produce a module digest using ONLY the provided inputs.
+You are a writer for a tabletop RPG scenario. Produce a module digest using ONLY the provided inputs.
 Do NOT invent new NPCs, scenarios, or mythos facts beyond the inputs.
 Keep output deterministic, concise, and grounded.
 Do NOT include any clues or spoilers in moduleNotes or introduction.

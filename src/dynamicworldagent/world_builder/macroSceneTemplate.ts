@@ -119,7 +119,7 @@ export function getMacroSceneStep1Template(
   const guidance = getSettingGuidance(settingType);
   const storyGuidance = getStoryLengthMacroGuidance(storyLength);
 
-  return `You are a writer for a CoC game.
+  return `You are a writer for a tabletop RPG scenario.
 
 ════════════════════════════════════════════════════════
 🔴 SUPREME DIRECTIVE — READ THIS BEFORE ANYTHING ELSE 🔴
@@ -139,11 +139,11 @@ Rules that CANNOT be broken:
 5. The GENRE field(s) dictate narrative conventions to follow.
 6. If ANY conflict arises between the story elements and setting type defaults
    or example content → the story elements WIN, always.
-7. Do NOT import locations, organizations, or atmospheres from generic CoC
+7. Do NOT import locations, organizations, or atmospheres from generic
    templates if they contradict the story elements.
 ════════════════════════════════════════════════════════
 
-**CREATIVE MANDATE**: Be bold and original. Craft a story that feels fresh and unexpected—avoid generic CoC tropes (stock Cthulhu cults, standard haunted mansions, Miskatonic-by-default settings). Draw inspiration from diversified cultures, historical eras, scientific frontiers, or genre mashups. Surprise players with something they have never encountered before in a CoC game.
+**CREATIVE MANDATE**: Be bold and original. Craft a story that feels fresh and unexpected — avoid genre clichés and overused tropes. Draw inspiration from diverse cultures, historical eras, scientific frontiers, or genre mashups. Surprise players with something they have never encountered before.
 
 # MACRO SCENE GENERATION - STEP 1:
 
@@ -167,7 +167,7 @@ Create the static structural skeleton of the setting based on the user's creativ
 Generate the setting structure with the following components:
 
 ### 1. Module Title & Location Name
-- **Module Title (moduleName)**: Create a CoC-style module name that evokes mystery and dread
+- **Module Title (moduleName)**: Create an evocative module title that suits the genre and tone
 - **Location Name (locationName)**: The actual location name as specified or implied by the user's prompt
 
 ### 2. Geographic Layout
@@ -208,7 +208,7 @@ Return ONLY valid JSON in this exact structure:
 \`\`\`json
 {
   "macroScene": {
-    "moduleName": "string (CoC-style module title)",
+    "moduleName": "string (evocative module title)",
     "locationName": "string (actual location name)",
     "settingType": "${settingType}",
     "geographicLayout": {
@@ -285,7 +285,7 @@ export function getTruthTimelineTemplateForSetting(
   storyLength: StoryLength = "medium"
 ): string {
   const truthEventsSentence = getStoryLengthTruthEventsSentence(storyLength);
-  return `You are a writer for a CoC game.
+  return `You are a writer for a tabletop RPG scenario.
 
 ════════════════════════════════════════════════════════
 🔴 SUPREME DIRECTIVE — READ THIS BEFORE ANYTHING ELSE 🔴
@@ -306,7 +306,7 @@ Rules that CANNOT be broken:
 6. If ANY conflict arises between the story elements and genre conventions → the story elements WIN, always.
 ════════════════════════════════════════════════════════
 
-**CREATIVE MANDATE**: Be bold and original. Craft a story that feels fresh and unexpected—avoid generic CoC tropes (stock Cthulhu cults, standard haunted mansions, Miskatonic-by-default settings). Draw inspiration from diversified cultures, historical eras, scientific frontiers, or genre mashups. Surprise players with something they have never encountered before in a CoC game.
+**CREATIVE MANDATE**: Be bold and original. Craft a story that feels fresh and unexpected — avoid genre clichés and overused tropes. Draw inspiration from diverse cultures, historical eras, scientific frontiers, or genre mashups. Surprise players with something they have never encountered before.
 
 # TRUTH TIMELINE GENERATION - CURRENT EVENTS
 
@@ -357,7 +357,7 @@ Generate events that:
 - Are grounded in the user's creative prompt and the macro scene context
 - Reflect the natural consequences of the historical mythos events
 - Fit the environmental, social, and economic realities of the setting
-- Create mystery and escalating tension appropriate to Call of Cthulhu
+- Create mystery and escalating tension appropriate to the genre
 - Use objective descriptions without specific names or social narratives
 
 ## Before You Generate - Final Checklist
@@ -424,9 +424,20 @@ export function getKnowledgeMatrixTemplate(
   storyLength: StoryLength = "medium"
 ): string {
   const storyGuidance = getStoryLengthKnowledgeMatrixGuidance(storyLength);
-  return `You are a writer for a CoC game.
+  return `You are a writer for a tabletop RPG scenario.
 
-**CREATIVE MANDATE**: Be bold and original. Craft a story that feels fresh and unexpected—avoid generic CoC tropes (stock Cthulhu cults, standard haunted mansions, Miskatonic-by-default settings). Draw inspiration from diversified cultures, historical eras, scientific frontiers, or genre mashups. Surprise players with something they have never encountered before in a CoC game.
+════════════════════════════════════════════════════════
+🔴 SUPREME DIRECTIVE — READ THIS BEFORE ANYTHING ELSE 🔴
+════════════════════════════════════════════════════════
+STORY ELEMENTS (absolute mandate):
+{{storyElements}}
+
+These structured story elements are the SINGLE HIGHEST AUTHORITY for all content you generate.
+Every knowledge holder, place, object, and organization MUST be consistent with the
+story elements above — genre, tone, theme, era, and worldbuilding.
+════════════════════════════════════════════════════════
+
+**CREATIVE MANDATE**: Be bold and original. Craft a story that feels fresh and unexpected — avoid genre clichés and overused tropes. Draw inspiration from diverse cultures, historical eras, scientific frontiers, or genre mashups. Surprise players with something they have never encountered before.
 
 # KNOWLEDGE MATRIX GENERATION
 
@@ -537,9 +548,19 @@ export function getRedHerringsTemplate(
   storyLength: StoryLength = "medium"
 ): string {
   const redHerringsSentence = getStoryLengthRedHerringsSentence(storyLength);
-  return `You are a writer for a CoC game.
+  return `You are a writer for a tabletop RPG scenario.
 
-**CREATIVE MANDATE**: Be bold and original. Craft a story that feels fresh and unexpected—avoid generic CoC tropes (stock Cthulhu cults, standard haunted mansions, Miskatonic-by-default settings). Draw inspiration from diversified cultures, historical eras, scientific frontiers, or genre mashups. Surprise players with something they have never encountered before in a CoC game.
+════════════════════════════════════════════════════════
+🔴 SUPREME DIRECTIVE — READ THIS BEFORE ANYTHING ELSE 🔴
+════════════════════════════════════════════════════════
+STORY ELEMENTS (absolute mandate):
+{{storyElements}}
+
+These structured story elements are the SINGLE HIGHEST AUTHORITY for all content you generate.
+Every red herring MUST be consistent with the story elements above — genre, tone, theme, era, and worldbuilding.
+════════════════════════════════════════════════════════
+
+**CREATIVE MANDATE**: Be bold and original. Craft a story that feels fresh and unexpected — avoid genre clichés and overused tropes. Draw inspiration from diverse cultures, historical eras, scientific frontiers, or genre mashups. Surprise players with something they have never encountered before.
 
 # RED HERRINGS GENERATION
 
@@ -633,7 +654,7 @@ Generate the red herrings now.`;
 export function getHistoricalMythosTemplateForSetting(
   _settingType: MacroSceneSettingType
 ): string {
-  return `You are a writer for a CoC game.
+  return `You are a writer for a tabletop RPG scenario.
 
 ════════════════════════════════════════════════════════
 🔴 SUPREME DIRECTIVE — READ THIS BEFORE ANYTHING ELSE 🔴
@@ -654,7 +675,7 @@ Rules that CANNOT be broken:
 6. Do NOT place historical events in unrelated locations or use generic mythos frameworks that don't fit the story elements.
 ════════════════════════════════════════════════════════
 
-**CREATIVE MANDATE**: Be bold and original. Craft a story that feels fresh and unexpected—avoid generic CoC tropes (stock Cthulhu cults, standard haunted mansions, Miskatonic-by-default settings). Draw inspiration from diversified cultures, historical eras, scientific frontiers, or genre mashups. Surprise players with something they have never encountered before in a CoC game.
+**CREATIVE MANDATE**: Be bold and original. Craft a story that feels fresh and unexpected — avoid genre clichés and overused tropes. Draw inspiration from diverse cultures, historical eras, scientific frontiers, or genre mashups. Surprise players with something they have never encountered before.
 
 # MACRO SCENE GENERATION - STEP 2: Historical Mythos Layer
 
@@ -673,7 +694,7 @@ These events shape the current situation and will influence the truth timeline g
 ### Requirements for Each Historical Event
 - **Date/Period**: When it occurred (must be in the past, not current events)
 - **Event Description**: Objective description of mythos intrusion
-- **Mythos Entity/Phenomenon**: What mythos element was involved (choose appropriate entities from Call of Cthulhu lore)
+- **Mythos Entity/Phenomenon**: What mythos element was involved (choose appropriate entities consistent with the worldbuilding in story elements)
 - **Immediate Consequences**: What happened right after the event
 - **Long-Term Residue**: How it STILL affects the setting today
   - Corrupted bloodlines, cursed locations, forbidden knowledge
@@ -748,7 +769,17 @@ Generate the historical mythos events now.`;
  * Step 6: End State Definition
  */
 export function getEndStateTemplate(): string {
-  return `You are a writer for a CoC game.
+  return `You are a writer for a tabletop RPG scenario.
+
+════════════════════════════════════════════════════════
+🔴 SUPREME DIRECTIVE — READ THIS BEFORE ANYTHING ELSE 🔴
+════════════════════════════════════════════════════════
+STORY ELEMENTS (absolute mandate):
+{{storyElements}}
+
+These structured story elements are the SINGLE HIGHEST AUTHORITY for all content you generate.
+The end state MUST be consistent with the story elements above — genre, tone, theme, era, and worldbuilding.
+════════════════════════════════════════════════════════
 
 # MACRO SCENE GENERATION - STEP 6: End State Definition
 
@@ -777,7 +808,7 @@ Define what WILL happen if investigators do not intervene.
 
 ### Constraints
 - Must be deterministic (not dependent on investigator actions)
-- Must be mythos-consistent with Call of Cthulhu lore
+- Must be consistent with the worldbuilding in story elements
 - Should be dire enough to justify intervention
 - Must remain within the injected setting and continuity
 - Must align with the user prompt and injected macro scene, mythos events, and truth timeline

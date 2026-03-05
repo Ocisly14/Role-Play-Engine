@@ -245,6 +245,7 @@ export class MacroSceneAgent {
     macroScene: MacroSceneStructure,
     mythosEvents: MythosEvent[],
     truthTimeline: TruthEvent[],
+    storyElements: StructuredStoryElements,
     progressCallback?: ProgressCallback,
     storyLength: StoryLength = "medium"
   ): Promise<KnowledgeHolder[]> {
@@ -258,6 +259,7 @@ export class MacroSceneAgent {
         macroSceneJson: JSON.stringify(macroScene, null, 2),
         mythosEventsJson: JSON.stringify(mythosEvents, null, 2),
         truthTimelineJson: JSON.stringify(truthTimeline, null, 2),
+        storyElements: JSON.stringify(storyElements, null, 2),
       }
     );
 
@@ -308,6 +310,7 @@ export class MacroSceneAgent {
     mythosEvents: MythosEvent[],
     truthTimeline: TruthEvent[],
     knowledgeMatrix: KnowledgeHolder[],
+    storyElements: StructuredStoryElements,
     progressCallback?: ProgressCallback,
     storyLength: StoryLength = "medium"
   ): Promise<RedHerring[]> {
@@ -321,6 +324,7 @@ export class MacroSceneAgent {
         mythosEventsJson: JSON.stringify(mythosEvents, null, 2),
         truthTimelineJson: JSON.stringify(truthTimeline, null, 2),
         knowledgeMatrixJson: JSON.stringify(knowledgeMatrix, null, 2),
+        storyElements: JSON.stringify(storyElements, null, 2),
       }
     );
 
@@ -361,6 +365,7 @@ export class MacroSceneAgent {
     macroScene: MacroSceneStructure,
     mythosEvents: MythosEvent[],
     truthTimeline: TruthEvent[],
+    storyElements: StructuredStoryElements,
     progressCallback?: ProgressCallback
   ): Promise<EndStateDefinition> {
     progressCallback?.("Generating end state definition...");
@@ -373,6 +378,7 @@ export class MacroSceneAgent {
         macroSceneJson: JSON.stringify(macroScene, null, 2),
         mythosEventsJson: JSON.stringify(mythosEvents, null, 2),
         truthTimelineJson: JSON.stringify(truthTimeline, null, 2),
+        storyElements: JSON.stringify(storyElements, null, 2),
       }
     );
 
@@ -465,6 +471,7 @@ export class MacroSceneAgent {
       macroScene,
       mythosEvents,
       truthTimeline,
+      storyElements,
       progressCallback
     );
 
@@ -473,6 +480,7 @@ export class MacroSceneAgent {
       mythosEvents,
       truthTimeline,
       knowledgeMatrix,
+      storyElements,
       progressCallback
     );
 
@@ -481,6 +489,7 @@ export class MacroSceneAgent {
       macroScene,
       mythosEvents,
       truthTimeline,
+      storyElements,
       progressCallback
     );
 

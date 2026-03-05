@@ -58,7 +58,7 @@ export class PromptStructurizerAgent {
       runtime: this.runtime,
       providerOverride: this.runtime.modelProvider,
       context: prompt,
-      modelClass: ModelClass.SMALL,
+      modelClass: ModelClass.MEDIUM,
     });
 
     try {

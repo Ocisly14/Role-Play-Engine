@@ -13,7 +13,7 @@ import { saveModuleDigestToJSON, saveWorldToJSON } from "./persistence.js";
 import { PromptStructurizerAgent } from "./promptStructurizerAgent.js";
 import { ScenarioBuilderAgent } from "./scenarioBuilderAgent.js";
 import type { StoryLength } from "./storyLengthConfig.js";
-import type { MacroSceneSettingType, WorldGenerationResult } from "./types.js";
+import type { MacroSceneSettingType, ScenarioNpcAssignments, WorldGenerationResult } from "./types.js";
 
 export type { StoryLength };
 
@@ -160,6 +160,7 @@ export class WorldBuilderService {
           macroScene,
           mythosEvents,
           truthTimeline,
+          storyElements,
           (msg) => emitProgress("macro_scene", 25, msg),
           storyLength
         );
@@ -170,6 +171,7 @@ export class WorldBuilderService {
         mythosEvents,
         truthTimeline,
         knowledgeMatrix,
+        storyElements,
         (msg) => emitProgress("macro_scene", 32, msg),
         storyLength
       );
@@ -180,6 +182,7 @@ export class WorldBuilderService {
         macroScene,
         mythosEvents,
         truthTimeline,
+        storyElements,
         (msg) => emitProgress("macro_scene", 40, msg)
       );
       emitProgress("macro_scene", 40, `World generation complete`);
@@ -207,6 +210,7 @@ export class WorldBuilderService {
         macroScene,
         truthTimeline,
         knowledgeMatrix,
+        storyElements,
         (msg) => {
           if (msg.includes("Calling AI")) {
             parallelProgress.report("scenario_builder", 0.35, msg);
@@ -248,6 +252,7 @@ export class WorldBuilderService {
         knowledgeMatrix,
         redHerrings,
         mythosEvents,
+        storyElements,
         npcProgressCallback
       );
 
@@ -258,22 +263,41 @@ export class WorldBuilderService {
       parallelProgress.complete("scenario_builder", "Scenarios completed");
       parallelProgress.complete("npc_builder", "NPCs completed");
 
-      // ========== PHASE 4: STARTING SCENE SNAPSHOT (78→79) ==========
+      // ========== PHASE 4a: STARTING SCENE SNAPSHOT (78→80) ==========
       emitProgress(
         "scenario_snapshot",
         78,
         "Selecting the start of all evils..."
       );
 
-      const { startingScene, otherScenarioNpcAssignments } =
+      const startingScene =
         await this.scenarioBuilderAgent.generateStartingSceneSnapshot(
           macroScene,
           truthTimeline,
           knowledgeMatrix,
           scenarios,
-          npcs,
+          storyElements,
           (msg) => emitProgress("scenario_snapshot", 79, msg)
         );
+
+      // ========== PHASE 4b: NPC ASSIGNMENT (80→82) ==========
+      emitProgress(
+        "npc_assignment",
+        80,
+        "Assigning NPCs to scenarios..."
+      );
+
+      const { startingSceneCharacters, otherScenarioNpcAssignments } =
+        await this.scenarioBuilderAgent.assignNpcsToScenarios(
+          startingScene,
+          scenarios,
+          npcs,
+          storyElements,
+          (msg) => emitProgress("npc_assignment", 82, msg)
+        );
+
+      // Merge starting scene characters into the snapshot
+      startingScene.snapshot.characters = startingSceneCharacters;
 
       // ========== PHASE 4.5: MACRO MAP GENERATION (79→81) ==========
       emitProgress("map_generation", 80, "Generating macro map...");
@@ -437,6 +461,7 @@ export class WorldBuilderService {
       macroScene,
       truthTimeline,
       knowledgeMatrix,
+      undefined,
       (msg) => {
         progressCallback?.("scenario_builder", 60, msg);
       }
@@ -454,17 +479,19 @@ export class WorldBuilderService {
       "Selecting starting scene and generating snapshot..."
     );
 
-    const { startingScene, otherScenarioNpcAssignments } =
+    const startingScene =
       await this.scenarioBuilderAgent.generateStartingSceneSnapshot(
         macroScene,
         truthTimeline,
         knowledgeMatrix,
         scenarios,
-        [],
+        undefined,
         (msg) => {
           progressCallback?.("scenario_snapshot", 72, msg);
         }
       );
+
+    const otherScenarioNpcAssignments: ScenarioNpcAssignments[] = [];
 
     progressCallback?.("persistence", 80, "Generating JSON files...");
 
@@ -571,6 +598,7 @@ export class WorldBuilderService {
       knowledgeMatrix,
       redHerrings,
       mythosEvents,
+      undefined,
       (msg) => {
         progressCallback?.("npc_builder", 60, msg);
       }

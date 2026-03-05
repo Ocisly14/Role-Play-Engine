@@ -328,23 +328,35 @@ export async function restoreRoomFromCheckpoint(
   });
 
   // Bulk-insert turn rows from the saved conversation
+  // Key by "turnNumber:sceneRoomId" to avoid collisions across sceneRooms
   if (conversationHistory.length > 0) {
-    const turnsByNumber = new Map<
-      number,
-      { characterInput: string; keeperNarrative: string | null; startedAt: Date; completedAt: Date | null; gameDay: number | null; gameTime: string | null; sceneRoomId: string | null }
-    >();
+    interface TurnBucket {
+      originalTurnNumber: number;
+      characterInput: string;
+      keeperNarrative: string | null;
+      startedAt: Date;
+      completedAt: Date | null;
+      gameDay: number | null;
+      gameTime: string | null;
+      sceneRoomId: string | null;
+    }
+    const turnBuckets = new Map<string, TurnBucket>();
 
     for (const msg of conversationHistory) {
       if (!msg || typeof msg !== "object") continue;
       const turnNumber = typeof msg.turnNumber === "number" ? msg.turnNumber : 0;
-      const existing = turnsByNumber.get(turnNumber) ?? {
+      const sceneRoomId = typeof msg.sceneRoomId === "string" ? msg.sceneRoomId : null;
+      const bucketKey = `${turnNumber}:${sceneRoomId ?? ""}`;
+
+      const existing = turnBuckets.get(bucketKey) ?? {
+        originalTurnNumber: turnNumber,
         characterInput: "",
         keeperNarrative: null,
         startedAt: toDateOrNow(msg.timestamp),
         completedAt: null,
         gameDay: typeof msg.gameDay === "number" ? msg.gameDay : null,
         gameTime: typeof msg.gameTime === "string" ? msg.gameTime : null,
-        sceneRoomId: typeof msg.sceneRoomId === "string" ? msg.sceneRoomId : null,
+        sceneRoomId,
       };
       if (msg.role === "character") {
         existing.characterInput = typeof msg.content === "string" ? msg.content : "";
@@ -353,19 +365,11 @@ export async function restoreRoomFromCheckpoint(
         existing.keeperNarrative = typeof msg.content === "string" ? msg.content : "";
         existing.completedAt = toDateOrNow(msg.timestamp);
       }
-      // Update sceneRoomId if present on this message and not yet set
-      if (!existing.sceneRoomId && typeof msg.sceneRoomId === "string") {
-        existing.sceneRoomId = msg.sceneRoomId;
-      }
-      turnsByNumber.set(turnNumber, existing);
+      turnBuckets.set(bucketKey, existing);
     }
 
-    const turnRows = [...turnsByNumber.values()]
-      .sort((a, b) => {
-        const aNum = [...turnsByNumber.entries()].find(([, v]) => v === a)?.[0] ?? 0;
-        const bNum = [...turnsByNumber.entries()].find(([, v]) => v === b)?.[0] ?? 0;
-        return aNum - bNum;
-      })
+    const turnRows = [...turnBuckets.values()]
+      .sort((a, b) => a.originalTurnNumber - b.originalTurnNumber)
       .map((turn, idx) => ({
         turnId: `turn-mprestore-${newSessionId.slice(0, 12)}-${idx}-${randomUUID().slice(0, 8)}`,
         sessionId: newSessionId,
@@ -388,6 +392,11 @@ export async function restoreRoomFromCheckpoint(
       await prisma.gameTurn.createMany({ data: turnRows, skipDuplicates: true });
     }
   }
+
+  // 3b. Hydrate CoCDatabaseAdapter turn cache so getNextTurnNumber() works
+  //     when new turns are created after restore
+  const db = DatabaseManager.getInstance().getDatabase();
+  await db.preloadSessionTurns(newSessionId);
 
   // 4. Update DB sceneRoom records + member pointers
   for (const [sceneRoomId, scr] of Object.entries(restoredState.sceneRooms)) {

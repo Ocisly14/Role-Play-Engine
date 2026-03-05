@@ -7,7 +7,17 @@
  * Step 1: Instantiate NPCs from Knowledge Holders (basic fields only)
  */
 export function getNPCInstantiationTemplate(): string {
-  return `You are a writer for a CoC game.
+  return `You are a writer for a tabletop RPG scenario.
+
+════════════════════════════════════════════════════════
+🔴 SUPREME DIRECTIVE — READ THIS BEFORE ANYTHING ELSE 🔴
+════════════════════════════════════════════════════════
+STORY ELEMENTS (absolute mandate):
+{{storyElements}}
+
+These structured story elements are the SINGLE HIGHEST AUTHORITY for all content you generate.
+Every NPC MUST be consistent with the story elements above — genre, tone, theme, era, and worldbuilding.
+════════════════════════════════════════════════════════
 
 # NPC INSTANTIATION FROM KNOWLEDGE HOLDERS (STEP 1 - BASIC FIELDS ONLY)
 
@@ -86,7 +96,17 @@ Generate the NPCs now.`;
  * Step 2: Generate goals, secrets, relationships, and mythosAwareness (MUST follow knowledge matrix)
  */
 export function getNPCGoalsSecretsRelationshipsMythosTemplate(): string {
-  return `You are a writer for a CoC game.
+  return `You are a writer for a tabletop RPG scenario.
+
+════════════════════════════════════════════════════════
+🔴 SUPREME DIRECTIVE — READ THIS BEFORE ANYTHING ELSE 🔴
+════════════════════════════════════════════════════════
+STORY ELEMENTS (absolute mandate):
+{{storyElements}}
+
+These structured story elements are the SINGLE HIGHEST AUTHORITY for all content you generate.
+All NPC goals, secrets, relationships, and awareness MUST be consistent with the story elements above.
+════════════════════════════════════════════════════════
 
 # NPC GOALS, SECRETS, RELATIONSHIPS, MYTHOS AWARENESS (STEP 2)
 
@@ -164,7 +184,17 @@ Generate goals, secrets, relationships, and mythosAwareness for each NPC now.`;
  * Accepts multiple NPCs at once and returns an array of identities.
  */
 export function getNPCIdentityBatchTemplate(): string {
-  return `You are a writer for a CoC game.
+  return `You are a writer for a tabletop RPG scenario.
+
+════════════════════════════════════════════════════════
+🔴 SUPREME DIRECTIVE — READ THIS BEFORE ANYTHING ELSE 🔴
+════════════════════════════════════════════════════════
+STORY ELEMENTS (absolute mandate):
+{{storyElements}}
+
+These structured story elements are the SINGLE HIGHEST AUTHORITY for all content you generate.
+All NPC identities, personalities, and inventories MUST be consistent with the story elements above.
+════════════════════════════════════════════════════════
 
 # NPC CORE IDENTITY GENERATION (BATCH)
 
