@@ -1084,7 +1084,7 @@ export class DirectorAgent {
 
     const prisma = getPrismaClient();
     const currentSnapshotScope = dynamicState.currentScenario?.id
-      ? await prisma.scenarioSnapshot.findUnique({
+      ? await prisma.scenarioSnapshot.findFirst({
           where: { snapshotId: dynamicState.currentScenario.id },
           select: { moduleId: true },
         })

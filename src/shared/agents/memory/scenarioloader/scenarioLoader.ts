@@ -667,7 +667,7 @@ export class ScenarioLoader {
         const scopedSnapshotId = this.scopeScenarioId(snapshot.id, moduleId);
         // Check if snapshot already exists
         const existingSnapshot = await tx.scenarioSnapshot.findFirst({
-          where: { snapshotId: scopedSnapshotId },
+          where: { snapshotId: scopedSnapshotId, moduleId },
           select: { snapshotId: true },
         });
 

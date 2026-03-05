@@ -314,7 +314,7 @@ async function saveHistoricalSnapshotsToDatabase(
 
       // Check if snapshot already exists
       const existing = await prisma.scenarioSnapshot.findUnique({
-        where: { snapshotId: historicalSnapshotId },
+        where: { moduleId_snapshotId: { moduleId, snapshotId: historicalSnapshotId } },
         select: { snapshotId: true },
       });
 

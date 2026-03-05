@@ -2040,7 +2040,7 @@ export class DynamicGameStateManager {
 
       // Check if snapshot already exists (shouldn't happen for historical snapshots, but check anyway)
       const existing = await prisma.scenarioSnapshot.findUnique({
-        where: { snapshotId: historicalSnapshotId },
+        where: { moduleId_snapshotId: { moduleId, snapshotId: historicalSnapshotId } },
         select: { snapshotId: true },
       });
 

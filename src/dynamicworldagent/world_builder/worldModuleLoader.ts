@@ -956,13 +956,11 @@ export class WorldModuleLoader {
     const prisma = getPrismaClient();
 
     for (const [snapshotId, snapshot] of module.scenarioSnapshots.entries()) {
-      // Use module-scoped snapshot ID to avoid PK collisions across modules
-      const rawId = this.scopeByModule(snapshotId, moduleId);
-      const scopedSnapshotId = `m${moduleId.slice(0, 8)}_${rawId}`;
+      const scopedSnapshotId = this.scopeByModule(snapshotId, moduleId);
 
-      // Check if snapshot exists (by module-scoped ID)
+      // Check if snapshot exists for this module (compound PK)
       const existing = await prisma.scenarioSnapshot.findFirst({
-        where: { snapshotId: scopedSnapshotId },
+        where: { moduleId, snapshotId: scopedSnapshotId },
         select: { snapshotId: true },
       });
 

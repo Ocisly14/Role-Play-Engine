@@ -391,7 +391,7 @@ model Scenario {
 }
 
 model ScenarioSnapshot {
-  snapshotId          String              @id @map("snapshot_id")
+  snapshotId          String              @map("snapshot_id")
   scenarioId          String              @map("scenario_id")
   snapshotName        String?             @map("snapshot_name")
   location            String
@@ -413,6 +413,7 @@ model ScenarioSnapshot {
   module              Module              @relation(fields: [moduleId], references: [moduleId], onDelete: Cascade)
   scenario            Scenario            @relation(fields: [moduleId, scenarioId], references: [moduleId, scenarioId], onDelete: Cascade)
 
+  @@id([moduleId, snapshotId])
   @@index([scenarioId])
   @@index([moduleId], map: "idx_scenario_snapshots_module")
   @@index([scenarioId, isDynamicHistorical, gameTime])
@@ -431,7 +432,7 @@ model ScenarioCharacter {
   createdAt         DateTime         @default(now()) @map("created_at")
   moduleId          String           @map("module_id") @db.Uuid
   module            Module           @relation(fields: [moduleId], references: [moduleId], onDelete: Cascade)
-  snapshot          ScenarioSnapshot @relation(fields: [snapshotId], references: [snapshotId], onDelete: Cascade)
+  snapshot          ScenarioSnapshot @relation(fields: [moduleId, snapshotId], references: [moduleId, snapshotId], onDelete: Cascade)
 
   @@index([snapshotId])
   @@index([moduleId], map: "idx_scenario_characters_module")
@@ -453,7 +454,7 @@ model ScenarioClue {
   createdAt        DateTime         @default(now()) @map("created_at")
   moduleId         String           @map("module_id") @db.Uuid
   module           Module           @relation(fields: [moduleId], references: [moduleId], onDelete: Cascade)
-  snapshot         ScenarioSnapshot @relation(fields: [snapshotId], references: [snapshotId], onDelete: Cascade)
+  snapshot         ScenarioSnapshot @relation(fields: [moduleId, snapshotId], references: [moduleId, snapshotId], onDelete: Cascade)
 
   @@index([snapshotId])
   @@index([moduleId], map: "idx_scenario_clues_module")
@@ -471,7 +472,7 @@ model ScenarioCondition {
   createdAt        DateTime         @default(now()) @map("created_at")
   moduleId         String           @map("module_id") @db.Uuid
   module           Module           @relation(fields: [moduleId], references: [moduleId], onDelete: Cascade)
-  snapshot         ScenarioSnapshot @relation(fields: [snapshotId], references: [snapshotId], onDelete: Cascade)
+  snapshot         ScenarioSnapshot @relation(fields: [moduleId, snapshotId], references: [moduleId, snapshotId], onDelete: Cascade)
 
   @@index([snapshotId])
   @@index([moduleId], map: "idx_scenario_conditions_module")
