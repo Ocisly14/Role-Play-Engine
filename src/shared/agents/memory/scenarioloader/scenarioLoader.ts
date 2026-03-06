@@ -657,70 +657,44 @@ export class ScenarioLoader {
         },
       });
 
-      // Get all snapshots to save (support multiple snapshots)
+      // Get all scenes to save (support multiple scenes from parsed data)
       const allSnapshots: ScenarioSnapshot[] = (scenario as any)
         .__allSnapshots || [scenario.snapshot];
 
-      // Insert or create all snapshots (only if they don't exist)
-      // Snapshots are read-only original definitions - never delete or update existing ones
+      // Insert or create all scenes (only if they don't exist)
+      // Scenes are read-only original definitions - never delete or update existing ones
       for (const snapshot of allSnapshots) {
-        const scopedSnapshotId = this.scopeScenarioId(snapshot.id, moduleId);
-        // Check if snapshot already exists
-        const existingSnapshot = await tx.scenarioSnapshot.findFirst({
-          where: { snapshotId: scopedSnapshotId, moduleId },
-          select: { snapshotId: true },
+        const scopedSceneId = this.scopeScenarioId(snapshot.id, moduleId);
+        // Check if scene already exists
+        const existingScene = await tx.scene.findFirst({
+          where: { sceneId: scopedSceneId, moduleId },
+          select: { sceneId: true },
         });
 
-        // Only insert if snapshot doesn't exist (snapshot is read-only original definition)
-        if (!existingSnapshot) {
-          // Insert snapshot
-          await tx.scenarioSnapshot.create({
+        // Only insert if scene doesn't exist (scene is read-only original definition)
+        if (!existingScene) {
+          // Insert scene
+          await tx.scene.create({
             data: {
-              snapshotId: scopedSnapshotId,
+              sceneId: scopedSceneId,
               scenarioId: scopedScenarioId,
               moduleId,
-              snapshotName: snapshot.name,
-              location: snapshot.location,
+              name: snapshot.name,
               description: snapshot.description,
               events: snapshot.events,
-              exits: snapshot.exits,
-              keeperNotes: snapshot.keeperNotes || null,
-              timeRestriction: snapshot.timeRestriction || null,
-              showMap: snapshot.showMap !== false,
             },
           });
 
-          // Insert characters for this snapshot (only on first creation)
-          if (snapshot.characters.length > 0) {
-            for (const char of snapshot.characters) {
-              try {
-                await tx.scenarioCharacter.create({
-                  data: {
-                    id: this.scopeScenarioId(char.id, moduleId),
-                    snapshotId: scopedSnapshotId,
-                    moduleId,
-                    characterName: char.name,
-                    characterRole: char.role,
-                    characterStatus: char.status,
-                    characterLocation: char.location || null,
-                    characterNotes: char.notes || null,
-                  },
-                });
-              } catch (e: any) {
-                // P2002: Unique constraint violation (equivalent to INSERT OR IGNORE)
-                if (e.code !== "P2002") throw e;
-              }
-            }
-          }
+          // Characters no longer stored per-scene — derived from npcLocations
 
-          // Insert clues for this snapshot (only on first creation)
+          // Insert clues for this scene (only on first creation)
           if (snapshot.clues.length > 0) {
             for (const clue of snapshot.clues) {
               try {
                 await tx.scenarioClue.create({
                   data: {
                     clueId: this.scopeScenarioId(clue.id, moduleId),
-                    snapshotId: scopedSnapshotId,
+                    sceneId: scopedSceneId,
                     moduleId,
                     clueText: clue.clueText,
                     category: clue.category,
@@ -740,7 +714,7 @@ export class ScenarioLoader {
             }
           }
 
-          // Insert conditions for this snapshot (only on first creation)
+          // Insert conditions for this scene (only on first creation)
           if (snapshot.conditions.length > 0) {
             for (const cond of snapshot.conditions) {
               const condId = this.scopeScenarioId(
@@ -751,7 +725,7 @@ export class ScenarioLoader {
                 await tx.scenarioCondition.create({
                   data: {
                     conditionId: condId,
-                    snapshotId: scopedSnapshotId,
+                    sceneId: scopedSceneId,
                     moduleId,
                     conditionType: cond.type,
                     description: cond.description,
@@ -765,8 +739,8 @@ export class ScenarioLoader {
             }
           }
         } else {
-          // Snapshot already exists - skip completely (preserve original definition)
-          // Game state changes are saved in checkpoints, not in snapshots
+          // Scene already exists - skip completely (preserve original definition)
+          // Game state changes are saved in checkpoints, not in scenes
         }
       }
     });
@@ -800,62 +774,44 @@ export class ScenarioLoader {
       return null;
     }
 
-    // Get snapshot (single snapshot per scenario)
-    const snap = await prisma.scenarioSnapshot.findFirst({
+    // Get scene (single scene per scenario)
+    const sceneRow = await prisma.scene.findFirst({
       where: {
         scenarioId: scopedScenarioId,
         ...(moduleId ? { moduleId } : {}),
       },
     });
 
-    if (!snap) {
-      console.warn(`No snapshot found for scenario ${scenarioId}`);
+    if (!sceneRow) {
+      console.warn(`No scene found for scenario ${scenarioId}`);
       return null;
     }
 
-    // Get characters for this snapshot
-    const characters = await prisma.scenarioCharacter.findMany({
-      where: {
-        snapshotId: snap.snapshotId,
-        ...(moduleId ? { moduleId } : {}),
-      },
-    });
-
-    // Get clues for this snapshot
+    // Get clues for this scene
     const clues = await prisma.scenarioClue.findMany({
       where: {
-        snapshotId: snap.snapshotId,
+        sceneId: sceneRow.sceneId,
         ...(moduleId ? { moduleId } : {}),
       },
     });
 
-    // Get conditions for this snapshot
+    // Get conditions for this scene
     const conditions = await prisma.scenarioCondition.findMany({
       where: {
-        snapshotId: snap.snapshotId,
+        sceneId: sceneRow.sceneId,
         ...(moduleId ? { moduleId } : {}),
       },
     });
 
     const snapshot: ScenarioSnapshot = {
-      id: snap.snapshotId,
-      name: snap.snapshotName || "",
-      location: snap.location,
-      description: snap.description,
+      id: sceneRow.sceneId,
+      name: sceneRow.name || "",
+      location: sceneRow.name, // location = name in simplified model
+      description: sceneRow.description,
       mapImagePath: scenario.mapImagePath || undefined,
-      showMap:
-        snap.showMap === null || snap.showMap === undefined
-          ? true
-          : snap.showMap,
-      characters: characters.map((c) => ({
-        id: c.id,
-        name: c.characterName,
-        role: c.characterRole,
-        status: c.characterStatus,
-        location: c.characterLocation || undefined,
-        notes: c.characterNotes || undefined,
-      })),
-      clues: clues.map((c) => ({
+      showMap: scenario.showMap !== false,
+      characters: [], // characters removed — derived from npcLocations
+      clues: clues.map((c: any) => ({
         id: c.clueId,
         clueText: c.clueText,
         category: c.category as ScenarioClue["category"],
@@ -873,11 +829,11 @@ export class ScenarioLoader {
         description: c.description,
         mechanicalEffect: c.mechanicalEffect || undefined,
       })),
-      events: (snap.events as any[]) || [],
-      exits: (snap.exits as any[]) || [],
+      events: (sceneRow.events as any[]) || [],
+      exits: [],
       permanentChanges: (scenario.permanentChanges as any[]) || [],
-      keeperNotes: snap.keeperNotes || undefined,
-      timeRestriction: snap.timeRestriction || undefined,
+      keeperNotes: undefined,
+      timeRestriction: scenario.timeRestriction || undefined,
     };
 
     const scenarioProfile: ScenarioProfile = {
@@ -1188,10 +1144,10 @@ export class ScenarioLoader {
     let results: any[];
 
     if (snapshotId) {
-      const scopedSnapshotId = this.scopeScenarioId(snapshotId, moduleId);
+      const scopedSceneId = this.scopeScenarioId(snapshotId, moduleId);
       results = await prisma.scenarioClue.findMany({
         where: {
-          snapshotId: scopedSnapshotId,
+          sceneId: scopedSceneId,
           discovered: false,
           ...(moduleId ? { moduleId } : {}),
         },
@@ -1200,7 +1156,7 @@ export class ScenarioLoader {
       const scopedScenarioId = this.scopeScenarioId(scenarioId, moduleId);
       results = await prisma.scenarioClue.findMany({
         where: {
-          snapshot: {
+          scene: {
             scenarioId: scopedScenarioId,
             ...(moduleId ? { moduleId } : {}),
           },

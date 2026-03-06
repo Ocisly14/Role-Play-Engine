@@ -298,10 +298,9 @@ model Module {
   background           ModuleBackground?
   permissions          ModulePermission[]
   memos                PlayerMemo[]
-  scenarioChars        ScenarioCharacter[]
   scenarioClues        ScenarioClue[]
   scenarioConds        ScenarioCondition[]
-  snapshots            ScenarioSnapshot[]
+  scenes               Scene[]
   scenarios            Scenario[]
   sessions             Session[]
   deletedByUsers       UserModuleDeleted[]
@@ -370,19 +369,21 @@ model ModGeneration {
 }
 
 model Scenario {
-  scenarioId       String             @map("scenario_id")
+  scenarioId       String    @map("scenario_id")
   name             String
   description      String
   tags             Json?
   connections      Json?
-  permanentChanges Json?              @map("permanent_changes")
+  permanentChanges Json?     @map("permanent_changes")
   metadata         Json
-  createdAt        DateTime           @default(now()) @map("created_at")
-  mapImagePath     String?            @map("map_image_path")
-  sourcePlaceId    String?            @map("source_place_id")
-  moduleId         String             @map("module_id") @db.Uuid
-  snapshots        ScenarioSnapshot[]
-  module           Module             @relation(fields: [moduleId], references: [moduleId], onDelete: Cascade)
+  createdAt        DateTime  @default(now()) @map("created_at")
+  mapImagePath     String?   @map("map_image_path")
+  sourcePlaceId    String?   @map("source_place_id")
+  showMap          Boolean?  @map("show_map")
+  timeRestriction  String?   @map("time_restriction")
+  moduleId         String    @map("module_id") @db.Uuid
+  scenes           Scene[]
+  module           Module    @relation(fields: [moduleId], references: [moduleId], onDelete: Cascade)
 
   @@id([moduleId, scenarioId])
   @@index([name])
@@ -392,73 +393,48 @@ model Scenario {
   @@map("scenarios")
 }
 
-model ScenarioSnapshot {
-  snapshotId          String              @map("snapshot_id")
-  scenarioId          String              @map("scenario_id")
-  snapshotName        String?             @map("snapshot_name")
-  location            String
-  description         String
-  events              Json?
-  exits               Json?
-  keeperNotes         String?             @map("keeper_notes")
-  timeRestriction     String?             @map("time_restriction")
-  showMap             Boolean?            @map("show_map")
-  createdAt           DateTime            @default(now()) @map("created_at")
-  initialSnapshot     Boolean             @default(false) @map("initial_snapshot")
-  gameTime            String?             @map("game_time")
-  isDynamicHistorical Boolean             @default(false) @map("is_dynamic_historical")
-  sceneImagePath      String?             @map("scene_image_path")
-  moduleId            String              @map("module_id") @db.Uuid
-  characters          ScenarioCharacter[]
-  clues               ScenarioClue[]
-  conditions          ScenarioCondition[]
-  module              Module              @relation(fields: [moduleId], references: [moduleId], onDelete: Cascade)
-  scenario            Scenario            @relation(fields: [moduleId, scenarioId], references: [moduleId, scenarioId], onDelete: Cascade)
+model Scene {
+  sceneId        String             @map("scene_id")
+  scenarioId     String             @map("scenario_id")
+  name           String
+  description    String
+  domain         String?
+  items          Json?
+  events         Json?
+  initialScene   Boolean            @default(false) @map("initial_scene")
+  gameTime       String?            @map("game_time")
+  sceneImagePath String?            @map("scene_image_path")
+  createdAt      DateTime           @default(now()) @map("created_at")
+  moduleId       String             @map("module_id") @db.Uuid
+  clues          ScenarioClue[]
+  conditions     ScenarioCondition[]
+  module         Module             @relation(fields: [moduleId], references: [moduleId], onDelete: Cascade)
+  scenario       Scenario           @relation(fields: [moduleId, scenarioId], references: [moduleId, scenarioId], onDelete: Cascade)
 
-  @@id([moduleId, snapshotId])
+  @@id([moduleId, sceneId])
   @@index([scenarioId])
-  @@index([moduleId], map: "idx_scenario_snapshots_module")
-  @@index([scenarioId, isDynamicHistorical, gameTime])
-  @@index([moduleId, scenarioId, isDynamicHistorical, gameTime], map: "idx_scenario_snapshots_module_scope")
-  @@map("scenario_snapshots")
-}
-
-model ScenarioCharacter {
-  id                String           @id
-  snapshotId        String           @map("snapshot_id")
-  characterName     String           @map("character_name")
-  characterRole     String           @map("character_role")
-  characterStatus   String           @map("character_status")
-  characterLocation String?          @map("character_location")
-  characterNotes    String?          @map("character_notes")
-  createdAt         DateTime         @default(now()) @map("created_at")
-  moduleId          String           @map("module_id") @db.Uuid
-  module            Module           @relation(fields: [moduleId], references: [moduleId], onDelete: Cascade)
-  snapshot          ScenarioSnapshot @relation(fields: [moduleId, snapshotId], references: [moduleId, snapshotId], onDelete: Cascade)
-
-  @@index([snapshotId])
-  @@index([moduleId], map: "idx_scenario_characters_module")
-  @@index([characterName])
-  @@map("scenario_characters")
+  @@index([moduleId], map: "idx_scenes_module")
+  @@index([moduleId, scenarioId], map: "idx_scenes_module_scenario")
+  @@map("scenes")
 }
 
 model ScenarioClue {
-  clueId           String           @id @map("clue_id")
-  snapshotId       String           @map("snapshot_id")
-  clueText         String           @map("clue_text")
-  category         String
-  difficulty       String
-  clueLocation     String           @map("clue_location")
-  discoveryMethod  String?          @map("discovery_method")
-  reveals          Json?
-  discovered       Boolean          @default(false)
-  discoveryDetails Json?            @map("discovery_details")
-  createdAt        DateTime         @default(now()) @map("created_at")
-  moduleId         String           @map("module_id") @db.Uuid
-  module           Module           @relation(fields: [moduleId], references: [moduleId], onDelete: Cascade)
-  snapshot         ScenarioSnapshot @relation(fields: [moduleId, snapshotId], references: [moduleId, snapshotId], onDelete: Cascade)
+  clueId          String   @id @map("clue_id")
+  sceneId         String   @map("scene_id")
+  clueText        String   @map("clue_text")
+  category        String
+  difficulty      String
+  clueLocation    String   @map("clue_location")
+  discoveryMethod String?  @map("discovery_method")
+  reveals         Json?
+  discovered      Boolean  @default(false)
+  discoveryDetails Json?   @map("discovery_details")
+  createdAt       DateTime @default(now()) @map("created_at")
+  moduleId        String   @map("module_id") @db.Uuid
+  module          Module   @relation(fields: [moduleId], references: [moduleId], onDelete: Cascade)
+  scene           Scene    @relation(fields: [moduleId, sceneId], references: [moduleId, sceneId], onDelete: Cascade)
 
-  @@index([snapshotId])
+  @@index([sceneId])
   @@index([moduleId], map: "idx_scenario_clues_module")
   @@index([clueLocation])
   @@index([discovered])
@@ -466,17 +442,17 @@ model ScenarioClue {
 }
 
 model ScenarioCondition {
-  conditionId      String           @id @map("condition_id")
-  snapshotId       String           @map("snapshot_id")
-  conditionType    String           @map("condition_type")
+  conditionId      String   @id @map("condition_id")
+  sceneId          String   @map("scene_id")
+  conditionType    String   @map("condition_type")
   description      String
-  mechanicalEffect String?          @map("mechanical_effect")
-  createdAt        DateTime         @default(now()) @map("created_at")
-  moduleId         String           @map("module_id") @db.Uuid
-  module           Module           @relation(fields: [moduleId], references: [moduleId], onDelete: Cascade)
-  snapshot         ScenarioSnapshot @relation(fields: [moduleId, snapshotId], references: [moduleId, snapshotId], onDelete: Cascade)
+  mechanicalEffect String?  @map("mechanical_effect")
+  createdAt        DateTime @default(now()) @map("created_at")
+  moduleId         String   @map("module_id") @db.Uuid
+  module           Module   @relation(fields: [moduleId], references: [moduleId], onDelete: Cascade)
+  scene            Scene    @relation(fields: [moduleId, sceneId], references: [moduleId, sceneId], onDelete: Cascade)
 
-  @@index([snapshotId])
+  @@index([sceneId])
   @@index([moduleId], map: "idx_scenario_conditions_module")
   @@index([conditionType])
   @@map("scenario_conditions")
@@ -841,8 +817,8 @@ model MultiplayerSceneRoom {
   roomId             String    @map("room_id")
   scenarioId         String?   @map("scenario_id")
   scenarioName       String?   @map("scenario_name")
-  snapshotId         String?   @map("snapshot_id")
-  snapshotName       String?   @map("snapshot_name")
+  sceneId            String?   @map("scene_id")
+  sceneName          String?   @map("scene_name")
   status             String    @default("active")
   roundNumber        Int       @default(1) @map("round_number")
   /// Tree structure: empty = root node; one entry = fork child; multiple = merged child

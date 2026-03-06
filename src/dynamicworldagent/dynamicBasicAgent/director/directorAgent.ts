@@ -74,10 +74,10 @@ export class DirectorAgent {
   }
 
   /**
-   * Parse game time from snapshot gameTime string or actionLog time
+   * Parse game time from a gameTime string or actionLog time
    * Format: "Day N, HH:MM" or "initial" or other formats
    */
-  private parseGameTimeFromSnapshot(
+  private parseGameTime(
     gameTime?: string
   ): { gameDay: number; timeOfDay: string } | null {
     if (!gameTime) return null;
@@ -112,8 +112,8 @@ export class DirectorAgent {
     const currentGameTime = `Day ${dynamicState.gameDay}, ${dynamicState.timeOfDay}`;
     const triggerTime = globalTrigger.timeRestriction;
 
-    const currentTime = this.parseGameTimeFromSnapshot(currentGameTime);
-    const targetTime = this.parseGameTimeFromSnapshot(triggerTime);
+    const currentTime = this.parseGameTime(currentGameTime);
+    const targetTime = this.parseGameTime(triggerTime);
 
     if (!currentTime || !targetTime) {
       console.warn(

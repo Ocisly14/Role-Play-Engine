@@ -248,7 +248,7 @@ export class DynamicGameStateManager {
   }
 
   /**
-   * Set database instance for snapshot management
+   * Set database instance for scene management
    */
   setDb(db: any): void {
     this.db = db;
@@ -547,9 +547,9 @@ export class DynamicGameStateManager {
   /**
    * Deserialize state from storage (converts Arrays back to Sets, Objects back to Maps, ISO strings back to Dates)
    * @param data - Serialized state data
-   * @param checkpointGameDay - Optional: filter snapshots by checkpoint game day
-   * @param checkpointTimeOfDay - Optional: filter snapshots by checkpoint time of day
-   * @param db - Optional: database instance (not used for snapshot loading, only kept for backward compatibility)
+   * @param checkpointGameDay - Optional: filter scenes by checkpoint game day
+   * @param checkpointTimeOfDay - Optional: filter scenes by checkpoint time of day
+   * @param db - Optional: database instance (kept for backward compatibility)
    */
   static deserialize(
     data: any,

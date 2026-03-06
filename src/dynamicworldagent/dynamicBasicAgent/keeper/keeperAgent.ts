@@ -140,25 +140,6 @@ export class KeeperAgent {
         sourceKey: string;
       }>) ?? [];
 
-    const worldlineSceneUpdate =
-      (dynamicState.temporaryInfo.contextualData?.worldlineSceneUpdate as {
-        previousSnapshot?: unknown;
-        updatedSnapshot?: unknown;
-        suddenActionLogs?: Array<{
-          id: string;
-          name?: string;
-          actionLog?: ActionLogEntry[];
-        }>;
-        reactionNpcActionLogUpdates?: Array<{
-          id: string;
-          name?: string;
-          actionLog?: ActionLogEntry[];
-        }>;
-      } | null) || null;
-    const hasWorldlineSceneUpdate = Boolean(
-      worldlineSceneUpdate?.previousSnapshot &&
-        worldlineSceneUpdate?.updatedSnapshot
-    );
     const suddenActionLogsRaw =
       (dynamicState.temporaryInfo.contextualData?.suddenActionLogs as Array<{
         id: string;
@@ -190,7 +171,6 @@ export class KeeperAgent {
       dynamicState.temporaryInfo.contextualData.suddenActionLogsGameTime = null;
       dynamicState.temporaryInfo.contextualData.suddenActionLogsTurnInScene =
         null;
-      dynamicState.temporaryInfo.contextualData.worldlineSceneUpdate = null;
     };
 
     // 9. Extract discovered clues from player actions (tick processor already handled discovery)
@@ -236,21 +216,6 @@ export class KeeperAgent {
       scenarioContextJson: this.safeStringify(completeScenarioInfo),
       playerCharacterJson: this.safeStringify(playerCharacterComplete),
       actionRelatedNpcsJson: this.safeStringify(actionRelatedNpcs),
-      hasWorldlineSceneUpdate,
-      worldlinePreviousSnapshotJson: hasWorldlineSceneUpdate
-        ? this.safeStringify(worldlineSceneUpdate?.previousSnapshot || null)
-        : null,
-      worldlineUpdatedSnapshotJson: hasWorldlineSceneUpdate
-        ? this.safeStringify(worldlineSceneUpdate?.updatedSnapshot || null)
-        : null,
-      worldlineSuddenActionLogsJson: hasWorldlineSceneUpdate
-        ? this.safeStringify(worldlineSceneUpdate?.suddenActionLogs || [])
-        : null,
-      worldlineReactionNpcActionLogsJson: hasWorldlineSceneUpdate
-        ? this.safeStringify(
-            worldlineSceneUpdate?.reactionNpcActionLogUpdates || []
-          )
-        : null,
       hasSuddenActionLogs,
       suddenActionLogsJson: hasSuddenActionLogs
         ? this.safeStringify(suddenActionLogs)

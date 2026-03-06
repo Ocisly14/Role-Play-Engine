@@ -68,18 +68,18 @@ export class OrchestratorAgent {
     let scenarioOutline: (typeof dynamicState.scenarioOutlines)[0] | undefined;
 
     if (db && dynamicState.currentSceneId) {
-      // Try to get scenario_id from database using snapshot_id
+      // Try to get scenario_id from database using scene_id
       try {
         const prisma = getPrismaClient();
-        const snapshotRow = await prisma.scenarioSnapshot.findFirst({
-          where: { snapshotId: dynamicState.currentSceneId },
+        const sceneRow = await prisma.scene.findFirst({
+          where: { sceneId: dynamicState.currentSceneId },
           select: { scenarioId: true },
         });
 
-        if (snapshotRow) {
+        if (sceneRow) {
           // Find scenario outline by scenario_id
           scenarioOutline = dynamicState.scenarioOutlines.find(
-            (outline) => outline.id === snapshotRow.scenarioId
+            (outline) => outline.id === sceneRow.scenarioId
           );
         }
       } catch (error) {

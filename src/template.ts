@@ -12,7 +12,7 @@ const ID_LIKE_KEYS = new Set([
   "id",
   "sceneId",
   "scenarioId",
-  "snapshotId",
+  "sceneId",
   "characterId",
   "clueId",
   "conditionId",
@@ -237,7 +237,7 @@ export const collectScenarioImages = (state: CoCState): ImageInput[] => {
  * Multiplayer note:
  * - Template composition is purely a renderer; it does NOT enforce isolation.
  * - When running native multiplayer with multiple sceneRooms in parallel, callers MUST inject
- *   sceneRoom-scoped views (current scene snapshot + scene members + per-scene temporaryInfo)
+ *   sceneRoom-scoped views (current scene + scene members + per-scene temporaryInfo)
  *   instead of passing the entire multiplayer state into templates, to avoid cross-scene leakage.
  *
  * @param template - Template string or function

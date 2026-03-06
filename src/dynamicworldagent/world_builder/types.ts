@@ -213,7 +213,7 @@ export interface EndStateDefinition {
 }
 
 /**
- * Scenario connection definition (name-based, no snapshots yet)
+ * Scenario connection definition (name-based)
  */
 export type ScenarioConnectionType =
   | "leads_to"
@@ -231,7 +231,7 @@ export interface ScenarioConnection {
 }
 
 /**
- * Scenario Outline - generated from place holders, no snapshot yet
+ * Scenario Outline - generated from place holders
  */
 export interface ScenarioOutline {
   id: string;
@@ -243,7 +243,7 @@ export interface ScenarioOutline {
   evidence?: string[];
   clues?: ScenarioClueSeed[];
   connections: ScenarioConnection[];
-  // Moved from DynamicScenarioSnapshot:
+  // UI/scheduling fields:
   showMap?: boolean;
   mapImagePath?: string;
   estimatedShortActions?: number;

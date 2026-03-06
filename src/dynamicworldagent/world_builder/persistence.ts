@@ -229,27 +229,23 @@ export async function saveWorldToDatabase(
 
     if (startingScene?.scene) {
       const scene = startingScene.scene;
-      const snapshotExists = await prisma.scenarioSnapshot.findUnique({
-        where: { moduleId_snapshotId: { moduleId, snapshotId: scene.id } },
-        select: { snapshotId: true },
+      const sceneExists = await prisma.scene.findUnique({
+        where: { moduleId_sceneId: { moduleId, sceneId: scene.id } },
+        select: { sceneId: true },
       });
 
-      if (!snapshotExists) {
-        // All columns exist in PostgreSQL - no need for hasColumn checks
-        await prisma.scenarioSnapshot.create({
+      if (!sceneExists) {
+        await prisma.scene.create({
           data: {
-            snapshotId: scene.id,
+            sceneId: scene.id,
             scenarioId: startingScene.scenarioId,
             moduleId,
-            snapshotName: scene.name,
-            location: scene.name, // DynamicScene uses name as location
+            name: scene.name,
             description: scene.description,
+            domain: scene.domain || null,
+            items: (scene.items || []) as any,
             events: scene.events as any,
-            exits: [] as any, // exits removed - connections are scenario-level data
-            keeperNotes: null,
-            timeRestriction: null,
-            showMap: true,
-            initialSnapshot: true, // initial_snapshot = true for starting scene
+            initialScene: true,
             gameTime: null,
           },
         });
@@ -262,7 +258,7 @@ export async function saveWorldToDatabase(
               await prisma.scenarioClue.create({
                 data: {
                   clueId: clue.id,
-                  snapshotId: scene.id,
+                  sceneId: scene.id,
                   moduleId,
                   clueText: clue.clueText,
                   category: clue.category,
@@ -290,7 +286,7 @@ export async function saveWorldToDatabase(
               await prisma.scenarioCondition.create({
                 data: {
                   conditionId,
-                  snapshotId: scene.id,
+                  sceneId: scene.id,
                   moduleId,
                   conditionType: condition.type,
                   description: condition.description,
@@ -381,14 +377,14 @@ export async function saveWorldToJSON(
     )
   );
 
-  // 4. Save scenario outlines (no snapshots yet)
+  // 4. Save scenario outlines
   const scenariosFile = path.join(moduleDir, "scenarios_outline.json");
   await fs.writeFile(
     scenariosFile,
     JSON.stringify(
       {
         scenarios,
-        note: "Scenario outlines derived from knowledge matrix places. Snapshots not generated yet.",
+        note: "Scenario outlines derived from knowledge matrix places. Scenes not generated yet.",
       },
       null,
       2
@@ -435,31 +431,26 @@ export async function saveWorldToJSON(
     const assignment = assignmentsByScenarioId.get(scenario.id);
     const isStartingScene = startingScene?.scenarioId === scenario.id;
 
-    // Generate snapshot for all scenarios
-    let snapshot;
+    // Generate scene data for all scenarios
+    let sceneData;
     if (isStartingScene && startingScene?.scene) {
       // Use LLM-generated scene for starting scene
       const scene = startingScene.scene;
-      snapshot = {
+      sceneData = {
         id: scene.id,
         name: scene.name,
-        gameTime: undefined as string | undefined,
-        location: scene.name,
         description: scene.description,
-        showMap: true,
-        characters: [], // NPCs are managed separately
+        domain: scene.domain,
+        items: scene.items,
         clues: scene.clues,
         conditions: scene.conditions,
-        keeperNotes: undefined as string | undefined,
-        estimatedShortActions: undefined as number | undefined,
-        timeRestriction: undefined as string | undefined,
         sceneImage: scene.sceneImage,
-        initialSnapshot: true,
+        events: scene.events,
+        initialScene: true,
       };
     } else {
-      // Create basic snapshot structure for non-starting scenarios
-      const assignedNpcs = assignment?.npcs || [];
-      const snapshotClues = (scenario.clues || []).map((clue, index) => ({
+      // Create basic scene structure for non-starting scenarios
+      const sceneClues = (scenario.clues || []).map((clue, index) => ({
         id: `${scenario.id}-clue-${index + 1}`,
         clueText: clue.clueText,
         category: "environment" as const,
@@ -468,26 +459,15 @@ export async function saveWorldToJSON(
         discovered: false,
       }));
 
-      const snapshotCharacters = assignedNpcs.map((npc) => ({
-        id: npc.id,
-        name: npc.name,
-        role: "other" as const,
-        status: "alive" as const,
-        location: scenario.name,
-        notes: npc.activity || "",
-      }));
-
-      snapshot = {
+      sceneData = {
         id: scenario.id,
         name: scenario.name,
-        gameTime: undefined, // gameTime is no longer stored in DynamicScene
-        location: scenario.name,
         description: scenario.description,
-        characters: snapshotCharacters,
-        clues: snapshotClues,
+        clues: sceneClues,
         conditions: [],
+        items: [],
         events: [],
-        initialSnapshot: false,
+        initialScene: false,
       };
     }
 
@@ -496,7 +476,7 @@ export async function saveWorldToJSON(
       description: scenario.description,
       evidence: scenario.evidence || [],
       clues: scenario.clues || [],
-      snapshot,
+      scene: sceneData,
       tags: scenario.tags || [],
       connections: scenario.connections || [],
       npcAssignments: assignment?.npcs || [],

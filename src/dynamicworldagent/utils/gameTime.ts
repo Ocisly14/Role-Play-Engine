@@ -1,7 +1,7 @@
 /**
  * Shared game-time parsing and comparison for DynamicWorld.
- * Used to decide if an NPC's latest actionLog is "after" the scenario snapshot time
- * (e.g. NPC has left or arrived since the snapshot).
+ * Used to decide if an NPC's latest actionLog is "after" the scene time
+ * (e.g. NPC has left or arrived since the scene was loaded).
  */
 
 /**

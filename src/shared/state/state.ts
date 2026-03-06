@@ -106,7 +106,7 @@ export type TimeConsumption =
 
 export interface DirectorDecision {
   shouldProgress: boolean;
-  targetSnapshotId?: string; // Specific scene snapshot ID to progress to
+  targetSceneId?: string; // Specific scene ID to progress to
   estimatedShortActions?: number | null; // Estimated number of short actions executable in target scene
   increaseShortActionCapBy?: number | null; // When not progressing, increase current scene short action cap
   reasoning: string; // Reason for progression

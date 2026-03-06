@@ -71,8 +71,8 @@ export class ModuleDigestAgent {
     macroMapPath?: string
   ): Promise<ModuleDigest> {
     const template = getModuleDigestTemplate();
-    const startingSnapshotId = startingScene?.scene?.id;
-    const startingSnapshotName = startingScene?.scene?.name;
+    const startingSceneId = startingScene?.scene?.id;
+    const startingSceneName = startingScene?.scene?.name;
     const prompt = composeTemplate(
       template,
       {},
@@ -85,12 +85,12 @@ export class ModuleDigestAgent {
           null,
           2
         ),
-        scenarioSnapshotsBriefJson: JSON.stringify(
+        sceneBriefJson: JSON.stringify(
           scenarios.map((scenario) => {
             if (startingScene && scenario.id === startingScene.scenarioId) {
               return {
-                id: startingSnapshotId || scenario.id,
-                name: startingSnapshotName || scenario.name,
+                id: startingSceneId || scenario.id,
+                name: startingSceneName || scenario.name,
               };
             }
             return { id: scenario.id, name: scenario.name };
@@ -98,7 +98,7 @@ export class ModuleDigestAgent {
           null,
           2
         ),
-        initialSnapshotJson: JSON.stringify(
+        initialSceneJson: JSON.stringify(
           startingScene?.scene ?? null,
           null,
           2

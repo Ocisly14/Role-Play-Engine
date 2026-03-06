@@ -546,14 +546,14 @@ export async function initializeCompleteDynamicGameState(
   let timeOfDay = "08:00";
   const scenesMap = new Map<string, DynamicScene>();
 
-  // Helper function to build a DynamicScene from a Prisma snapshot row
+  // Helper function to build a DynamicScene from a Prisma scene row
   const buildSceneFromRow = async (
-    snapshotRow: any
+    sceneRow: any
   ): Promise<DynamicScene> => {
-    // Load snapshot clues
-    const snapshotClues = await prisma.scenarioClue.findMany({
+    // Load scene clues
+    const sceneClues = await prisma.scenarioClue.findMany({
       where: {
-        snapshotId: snapshotRow.snapshotId,
+        sceneId: sceneRow.sceneId,
         ...(scopedModuleId ? { moduleId: scopedModuleId } : {}),
       },
       select: {
@@ -569,10 +569,10 @@ export async function initializeCompleteDynamicGameState(
       },
     });
 
-    // Load snapshot conditions
-    const snapshotConditions = await prisma.scenarioCondition.findMany({
+    // Load scene conditions
+    const sceneConditions = await prisma.scenarioCondition.findMany({
       where: {
-        snapshotId: snapshotRow.snapshotId,
+        sceneId: sceneRow.sceneId,
         ...(scopedModuleId ? { moduleId: scopedModuleId } : {}),
       },
       select: {
@@ -584,19 +584,19 @@ export async function initializeCompleteDynamicGameState(
     });
 
     const sceneImage =
-      snapshotRow.sceneImagePath != null &&
-      String(snapshotRow.sceneImagePath).trim() !== ""
-        ? { path: String(snapshotRow.sceneImagePath).trim() }
+      sceneRow.sceneImagePath != null &&
+      String(sceneRow.sceneImagePath).trim() !== ""
+        ? { path: String(sceneRow.sceneImagePath).trim() }
         : undefined;
 
     return {
-      id: snapshotRow.scenarioId,
-      name: snapshotRow.snapshotName || snapshotRow.scenario?.name,
-      description: snapshotRow.description,
-      domain: undefined,
-      items: [],
+      id: sceneRow.scenarioId,
+      name: sceneRow.name || sceneRow.scenario?.name,
+      description: sceneRow.description,
+      domain: sceneRow.domain || undefined,
+      items: Array.isArray(sceneRow.items) ? sceneRow.items : [],
       sceneImage,
-      clues: snapshotClues.map((clue) => ({
+      clues: sceneClues.map((clue) => ({
         id: clue.clueId,
         clueText: clue.clueText,
         category: clue.category as ScenarioClue["category"],
@@ -610,7 +610,7 @@ export async function initializeCompleteDynamicGameState(
           ? (clue.discoveryDetails as any)
           : undefined,
       })),
-      conditions: snapshotConditions.map((cond) => ({
+      conditions: sceneConditions.map((cond) => ({
         type: cond.conditionType as ScenarioCondition["type"],
         description: cond.description,
         mechanicalEffect: cond.mechanicalEffect || undefined,
@@ -619,12 +619,11 @@ export async function initializeCompleteDynamicGameState(
     };
   };
 
-  // Load all non-historical snapshots for this module.
-  // New-game state should include all module scenes; initialSnapshot only decides start scene.
-  const allModuleSnapshots = await prisma.scenarioSnapshot.findMany({
+  // Load all scenes for this module.
+  // initialScene only decides start scene.
+  const allModuleScenes = await prisma.scene.findMany({
     where: {
       ...(scopedModuleId ? { moduleId: scopedModuleId } : {}),
-      isDynamicHistorical: false,
     },
     include: {
       scenario: {
@@ -634,38 +633,38 @@ export async function initializeCompleteDynamicGameState(
     orderBy: [{ scenarioId: "asc" }, { createdAt: "asc" }],
   });
 
-  // Determine player starting snapshot:
-  // 1) first initialSnapshot=true (if present), otherwise
-  // 2) first available module snapshot.
-  const startSnapshotRow =
-    allModuleSnapshots.find((row) => row.initialSnapshot) ||
-    allModuleSnapshots[0] ||
+  // Determine player starting scene:
+  // 1) first initialScene=true (if present), otherwise
+  // 2) first available module scene.
+  const startSceneRow =
+    allModuleScenes.find((row) => row.initialScene) ||
+    allModuleScenes[0] ||
     null;
 
   // Build scenes — flat Map keyed by scenarioId (one scene per ID)
-  for (const snapshotRow of allModuleSnapshots) {
-    const sceneId = snapshotRow.scenarioId;
+  for (const sceneRow of allModuleScenes) {
+    const sceneId = sceneRow.scenarioId;
     // Only keep the first (baseline) scene per scenarioId
     if (!scenesMap.has(sceneId)) {
-      const scene = await buildSceneFromRow(snapshotRow);
+      const scene = await buildSceneFromRow(sceneRow);
       scenesMap.set(sceneId, scene);
     }
   }
 
-  // Set player start scene from initial snapshot
-  if (startSnapshotRow) {
-    currentSceneId = startSnapshotRow.scenarioId;
+  // Set player start scene
+  if (startSceneRow) {
+    currentSceneId = startSceneRow.scenarioId;
 
     console.log(
-      `[DynamicGameState] Start scene: ${startSnapshotRow.snapshotName || startSnapshotRow.scenario?.name} (${startSnapshotRow.scenarioId})`
+      `[DynamicGameState] Start scene: ${startSceneRow.name || startSceneRow.scenario?.name} (${startSceneRow.scenarioId})`
     );
 
-    // Parse game time from snapshot
-    if (startSnapshotRow.gameTime) {
+    // Parse game time from scene
+    if (startSceneRow.gameTime) {
       console.log(
-        `[DynamicGameState] Loading game time from snapshot: "${startSnapshotRow.gameTime}"`
+        `[DynamicGameState] Loading game time from scene: "${startSceneRow.gameTime}"`
       );
-      const parsedTime = parseInitialGameTime(startSnapshotRow.gameTime);
+      const parsedTime = parseInitialGameTime(startSceneRow.gameTime);
       if (parsedTime) {
         if (parsedTime.gameDay !== undefined) {
           gameDay = parsedTime.gameDay;
@@ -675,18 +674,18 @@ export async function initializeCompleteDynamicGameState(
         console.log(`[DynamicGameState] Set timeOfDay to: ${timeOfDay}`);
       } else {
         console.warn(
-          `[DynamicGameState] Failed to parse game_time: "${startSnapshotRow.gameTime}", using defaults: Day ${gameDay}, ${timeOfDay}`
+          `[DynamicGameState] Failed to parse game_time: "${startSceneRow.gameTime}", using defaults: Day ${gameDay}, ${timeOfDay}`
         );
       }
     } else {
       console.log(
-        `[DynamicGameState] No game_time in snapshot, using defaults: Day ${gameDay}, ${timeOfDay}`
+        `[DynamicGameState] No game_time in scene, using defaults: Day ${gameDay}, ${timeOfDay}`
       );
     }
   }
 
   console.log(
-    `[DynamicGameState] Loaded ${scenesMap.size} scenes from ${allModuleSnapshots.length} snapshot rows`
+    `[DynamicGameState] Loaded ${scenesMap.size} scenes from ${allModuleScenes.length} scene rows`
   );
 
   // 3. Load all NPCs and normalize legacy ids to module scope.

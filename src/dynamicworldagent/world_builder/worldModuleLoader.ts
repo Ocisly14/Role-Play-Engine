@@ -950,9 +950,8 @@ export class WorldModuleLoader {
   }
 
   /**
-   * Save DynamicScene objects to database (stored in scenarioSnapshot rows).
+   * Save DynamicScene objects to database.
    * Characters are no longer saved per-scene — they live on NPCs.
-   * keeperNotes, timeRestriction, showMap, initialSnapshot stay on ScenarioOutline / are removed.
    */
   private async saveDynamicScenes(
     module: LoadedWorldModule,
@@ -961,12 +960,12 @@ export class WorldModuleLoader {
     const prisma = getPrismaClient();
 
     for (const [sceneId, scene] of module.scenes.entries()) {
-      const scopedSnapshotId = this.scopeByModule(sceneId, moduleId);
+      const scopedSceneId = this.scopeByModule(sceneId, moduleId);
 
-      // Check if snapshot row already exists for this module (compound PK)
-      const existing = await prisma.scenarioSnapshot.findFirst({
-        where: { moduleId, snapshotId: scopedSnapshotId },
-        select: { snapshotId: true },
+      // Check if scene row already exists for this module (compound PK)
+      const existing = await prisma.scene.findFirst({
+        where: { moduleId, sceneId: scopedSceneId },
+        select: { sceneId: true },
       });
 
       if (existing) {
@@ -982,17 +981,17 @@ export class WorldModuleLoader {
 
       const sceneImagePath = scene.sceneImage?.path || null;
 
-      // Insert snapshot row for the scene
-      await prisma.scenarioSnapshot.create({
+      // Insert scene row
+      await prisma.scene.create({
         data: {
-          snapshotId: scopedSnapshotId,
+          sceneId: scopedSceneId,
           scenarioId: scopedScenarioId,
           moduleId,
-          snapshotName: scene.name,
-          location: scene.name, // scenes use name as location
+          name: scene.name,
           description: scene.description,
-          events: [], // events tracked via actionResults
-          exits: [], // connections are scenario-level data
+          domain: scene.domain || null,
+          items: (scene.items || []) as any,
+          events: (scene.events || []) as any,
           sceneImagePath,
         },
       });
@@ -1006,7 +1005,7 @@ export class WorldModuleLoader {
             await prisma.scenarioClue.create({
               data: {
                 clueId: scopedClueId,
-                snapshotId: scopedSnapshotId,
+                sceneId: scopedSceneId,
                 moduleId,
                 clueText: clue.clueText,
                 category: clue.category,
@@ -1030,13 +1029,13 @@ export class WorldModuleLoader {
       // Insert conditions
       if (scene.conditions && scene.conditions.length > 0) {
         for (const condition of scene.conditions) {
-          const conditionId = `${scopedSnapshotId}-cond-${Math.random().toString(36).slice(2, 10)}`;
+          const conditionId = `${scopedSceneId}-cond-${Math.random().toString(36).slice(2, 10)}`;
 
           try {
             await prisma.scenarioCondition.create({
               data: {
                 conditionId,
-                snapshotId: scopedSnapshotId,
+                sceneId: scopedSceneId,
                 moduleId,
                 conditionType: condition.type,
                 description: condition.description,

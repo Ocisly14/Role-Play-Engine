@@ -11,9 +11,9 @@ import type { DynamicNPCProfile } from "../../world_builder/types.js";
  */
 export class CharacterAgent {
   /**
-   * Scene snapshot for template: name, location, description, conditions, connections.
+   * Scene data for template: name, location, description, conditions, connections.
    */
-  extractSceneSnapshotForTemplate(dynamicState: DynamicGameState): {
+  extractSceneForTemplate(dynamicState: DynamicGameState): {
     name: string;
     location: string;
     description: string;
