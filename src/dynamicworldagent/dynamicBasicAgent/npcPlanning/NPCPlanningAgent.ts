@@ -10,7 +10,7 @@ import {
   buildRelationshipUpdatePrompt,
 } from "./NPCPlanningTemplate.js";
 import type {
-  NpcPlanNode,
+  PlanNode,
   RevisePlansContext,
   CharacterAction,
 } from "./types.js";
@@ -126,7 +126,7 @@ export class NPCPlanningAgent {
 
         const nodes = parseJsonResponse<any[]>(response);
         // Inject characterId + characterName into each node
-        const enrichedNodes: NpcPlanNode[] = nodes.map((node) => ({
+        const enrichedNodes: PlanNode[] = nodes.map((node) => ({
           ...node,
           nodeId: node.nodeId || randomUUID(),
           characterId: npc.id,
@@ -187,7 +187,7 @@ export class NPCPlanningAgent {
     });
 
     const parsed = parseJsonResponse<{
-      revisedNodes: NpcPlanNode[];
+      revisedNodes: PlanNode[];
       shouldUpdateLongTermIntent: boolean;
       updatedLongTermIntent?: string;
     }>(response);
@@ -316,14 +316,14 @@ export class NPCPlanningAgent {
     sessionId: string,
     npcId: string,
     gameDay: number
-  ): Promise<NpcPlanNode[]> {
+  ): Promise<PlanNode[]> {
     const plan = await this.prisma.npcDailyPlan.findUnique({
       where: {
         sessionId_npcId_gameDay: { sessionId, npcId, gameDay },
       },
     });
     if (!plan) return [];
-    const nodes = plan.nodes as unknown as NpcPlanNode[];
+    const nodes = plan.nodes as unknown as PlanNode[];
     return nodes.filter((n) => n.status === "pending");
   }
 
@@ -342,14 +342,14 @@ export class NPCPlanningAgent {
     gameDay: number,
     upToTime: string,
     dgsm: DynamicGameStateManager
-  ): Promise<NpcPlanNode[]> {
+  ): Promise<PlanNode[]> {
     const plans = await this.prisma.npcDailyPlan.findMany({
       where: { sessionId, gameDay },
     });
 
-    const dueNodes: NpcPlanNode[] = [];
+    const dueNodes: PlanNode[] = [];
     for (const plan of plans) {
-      const nodes = plan.nodes as unknown as NpcPlanNode[];
+      const nodes = plan.nodes as unknown as PlanNode[];
       for (const node of nodes) {
         if (node.status === "pending" && node.gameTime <= upToTime) {
           dueNodes.push(node);
@@ -370,7 +370,7 @@ export class NPCPlanningAgent {
       where: { sessionId_npcId_gameDay: { sessionId, npcId, gameDay } },
     });
     if (!plan) return;
-    const nodes = plan.nodes as unknown as NpcPlanNode[];
+    const nodes = plan.nodes as unknown as PlanNode[];
     // Remove completed node from pending list
     const remaining = nodes.filter((n) => n.nodeId !== nodeId);
     await this.prisma.npcDailyPlan.update({
