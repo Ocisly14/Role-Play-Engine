@@ -91,16 +91,16 @@ interface NpcPlanNode {
 | 节点类型 | 副作用 |
 |---|---|
 | `routine` / `movement` | 无 |
-| `character_interaction` | 按 `characterInteractionPayload` 转移物品/线索/信息到 `targetCharacterId` |
-| `object_interaction` | 按 `objectInteractionPayload.action` 增减 NPC inventory（pickup → 添加，place/destroy → 移除） |
-| `scene_interaction` | 把 `outcome` 追加到 `location` 场景的 ScenarioCondition；若有 `sceneConnectionEffect`：更新连接 `blocked` 状态 + 把 `outcome` 追加到该连接的 `conditions` |
+| `character_interaction` | 按 payload 更新 `npcInventories` / `npcDiscoveredClues` / NPC knowledge state |
+| `object_interaction` | 按 `objectInteractionPayload.action` 更新 `npcInventories`（pickup → 添加，place/destroy → 移除） |
+| `scene_interaction` | 追加 outcome 到 `scenarioConditions[location]`；若有 `sceneConnectionEffect`：更新 `connectionStates` |
 
 **character_interaction payload 处理：**
 
 | transferType | On success |
 |---|---|
-| `item` | Remove itemId from NPC inventory → add to target inventory |
-| `clue` | Remove clueId from NPC discoveredClues → add to target discoveredClues |
+| `item` | `npcInventories[npcId]` 移除 itemId → `npcInventories[targetId]` 添加 |
+| `clue` | `npcDiscoveredClues[npcId]` 移除 clueId → `npcDiscoveredClues[targetId]` 添加 |
 | `information` | Write `informationContent` to target NPC knowledge state → Small LLM yes/no gate: does this information meaningfully change target's plan? yes → `revisePlans(targetNpcId, impactTrigger)` |
 
 ### NPCRelationship
@@ -182,6 +182,42 @@ NPC 当前所在场景存于 `DynamicGameState.npcLocations: Record<npcId, scena
 - `movement` 节点完成时更新
 - TickProcessor 所有位置检查均读此字段
 
+### DynamicGameState 运行时可变状态
+
+**原则：原模组数据（NPC profile、场景、物品、线索）永远只读，所有运行时变化只写 DynamicGameState。**
+
+```typescript
+// DynamicGameState — 完整运行时状态
+npcLocations:         Record<npcId, scenarioId>
+// movement 节点完成时更新；初始值从 NPC profile 加载
+
+npcStats:             Record<npcId, { hp: number; san: number }>
+// combat → 更新 hp；mental → 更新 san；初始值从 NPC profile 加载
+
+npcInventories:       Record<npcId, string[]>   // itemIds
+// object_interaction / character_interaction(item) 增减；初始值从 NPC profile 加载
+
+npcDiscoveredClues:   Record<npcId, string[]>   // clueIds
+// character_interaction(clue) 转移；初始值从 NPC profile 加载
+
+npcRelationshipGraph: Record<npcId, Record<targetNpcId, { score: number; note: string }>>
+// character_interaction 完成后由小 LLM 更新；初始值从模组 relationships 配置构建
+
+scenarioConditions:   Record<scenarioId, string[]>
+// scene_interaction 成功后追加 outcome；初始为空（不复制模组原始 conditions）
+// 读取场景状态时：模组原始 snapshot.conditions（只读）+ scenarioConditions[id]（运行时追加）
+
+connectionStates:     ScenarioConnectionState[]
+// scene_interaction 的 sceneConnectionEffect 修改；初始从模组场景连接构建
+```
+
+**Snapshot 变为只读：** `updatedDynamicScenarioSnapshots` 不再持续更新。
+- NPC 位置变化 → `npcLocations`（不改 snapshot.characters[].location）
+- 场景条件变化 → `scenarioConditions`（不改 snapshot.conditions）
+- `npcCharacters[]` 保留为只读 profile（personality、skills、secret），inventory / clues / relationships 运行时变化剥离到上方各字段
+
+所有字段游戏开始时从模组加载初始值，之后只读模组、只写 DynamicGameState。
+
 ---
 
 ### Impact Levels
@@ -205,7 +241,7 @@ Examples:
 
 ## Node Type Execution Logic
 
-### TickProcessor (pure state machine, no LLM)
+### TickProcessor (no LLM calls；使用 RAG / EmbeddingClient 做 semantic match)
 
 两个 RAG 查询表（均用 EmbeddingClient 做 semantic match）：
 - **Skill RAG**：actionTypeSkillMap 候选技能 → 匹配 NPC 实际技能值
@@ -234,7 +270,10 @@ actionType = "combat" AND targetCharacterId:
   比较成功等级 (critical > hard > regular > fail)
   攻击方等级 > 防御方 → 命中
     damage = 武器伤害骰 + damage bonus (STR+SIZ 查表)
-    update target.HP；HP ≤ 0 → target 状态改为 incapacitated
+    update DynamicGameState.npcStats[targetId].hp
+    hp ≤ 0 → target 状态改为 incapacitated
+    characterInteractionPayload 存在？
+      → itemId 在 target inventory 里？Yes → 转移给攻击方；No → 跳过（不触发失败）
 
 actionType = "social" AND targetCharacterId:
   行动方 d100 vs Skill RAG 匹配最佳社交技能
@@ -249,7 +288,7 @@ actionType = "mental":
   NPC d100 vs SAN 值
   Horror RAG: 用 node.action 描述 semantic match → 匹配最近恐怖源条目
     → 取 sanLossMin（成功时扣）/ sanLossMax（失败时扣）
-  update NPC.SAN
+  update DynamicGameState.npcStats[npcId].san
 
 其余 actionType (exploration / stealth / environmental / narrative):
   Skill RAG 匹配最佳技能 → d100 → 成功/失败
@@ -271,6 +310,7 @@ actionType = "mental":
 
   → type = "object_interaction"
        NPC at node.location? No → failed (reason: "location_mismatch")
+       objectInteractionPayload.itemId exists in scene? No → failed (reason: "object_not_found")
        luck-based random check (see below) → failed (reason: "bad_luck")
        apply objectInteractionPayload side effects (inventory update) → completed
 
@@ -327,10 +367,13 @@ Player Input
   ↓ after gameTime advances
 
 [TickProcessor]
-  - Scan all NPC daily plans for due nodes
-  - Execute each node (routine / movement / character_interaction / object_interaction / scene_interaction)
-  - Apply side effects per type (inventory, scene state)
-  - On failure: generate failureReason string → immediately call NPCPlanningAgent.revisePlans()
+  - Scan all NPC daily plans for due nodes → 放入优先级队列（gameTime ASC, DEX DESC）
+  - 偶遇扫描：对每个场景内的 NPC 对检查 npcRelationshipGraph
+      score ≥ 60 → 插入临时友好 character_interaction 节点到队列
+      score ≤ -60 → 插入临时对抗性 character_interaction 节点到队列
+  - 逐个出队执行，每次执行后立即更新世界状态
+  - Apply side effects per type (inventory / scene state / hp / san)
+  - On failure: generate failureReason → immediately call NPCPlanningAgent.revisePlans()
   - Output: CharacterAction[] (NPCs)
 
   ↓
@@ -349,11 +392,15 @@ Player Input
     impact=3 → all NPCs globally are candidates
 
   For each candidate NPC:
-    → Small LLM yes/no gate:
-        Input: NPC long-term intent + remaining pending nodes + triggering CharacterAction
-        Question: "Does this event meaningfully change what this NPC should do next?"
-        yes → call NPCPlanningAgent.revisePlans(dgsm, npcId, { trigger: ImpactTrigger })
-        no  → skip
+    → Small LLM yes/no gate（同一 call 输出两项）:
+        Input: NPC longTermIntent + pendingNodes + triggeringAction
+        Output: {
+          shouldRevise: boolean,
+          witnessEntry: string  // 如 "目击威尔伯·惠特利 试图偷取古籍 成功"
+        }
+        → 始终写入：NPC.actionLog.append("Day{n} HH:MM [location] - " + witnessEntry)
+        → shouldRevise = true → call NPCPlanningAgent.revisePlans(dgsm, npcId, { trigger: ImpactTrigger })
+        → shouldRevise = false → 仅记录，计划不变
 
   ↓
 
@@ -402,8 +449,13 @@ Character Memory =
 
 **actionLog 格式：**
 ```
+// 自己执行的节点（TickProcessor 拼接）
 "Day1 08:00 [图书馆] - 前往图书馆查阅古籍 成功"
 "Day1 10:30 [图书馆] - 尝试说服馆长 失败: skill_roll_failed (Persuade 45, rolled 67)"
+
+// 目击/感知到的事件（yes/no gate 小模型生成）
+"Day1 14:00 [图书馆] - 目击威尔伯·惠特利 试图偷取古籍 成功"
+"Day1 16:30 [街道] - 听到远处传来枪声"
 ```
 
 - 节点执行完成/失败后，outcome 追加到 NPC 档案的 `actionLog`
@@ -411,7 +463,7 @@ Character Memory =
 - `revisePlans` 和 `generateDailyPlans` 读 `actionLog` 作为历史上下文
 - KeeperAgent 读 `actionLog` 描述 NPC 行为
 
-**Relationship updates** are handled inside `revisePlans`: the agent reads `actionLog`, infers relationship changes (trust/hostility/dependency), and updates `NPCRelationship[]` in the same LLM call. No separate relationship trigger mechanism needed.
+**Relationship updates** are handled by a dedicated small LLM call after each `character_interaction`, writing to `DynamicGameState.npcRelationshipGraph`. Original module config is never modified.
 
 ---
 
@@ -622,7 +674,18 @@ src/dynamicworldagent/dynamicBasicAgent/npcPlanning/
 - `action/actionAgent.ts` — output `CharacterAction`, handle player-NPC interactions, remove passive NPC response generation
 
 ### Modified
-- `state/DynamicGameState.ts` — remove `heartbeatActions`; add `npcLocations: Record<npcId, scenarioId>`; add `connectionStates: ScenarioConnectionState[]`; no in-memory plan storage (plans live in DB)
+- `state/DynamicGameState.ts`:
+  - **Remove**: `heartbeatActions` (replaced by TickProcessor + NpcDailyPlan)
+  - **Remove**: `updatedDynamicScenarioSnapshots` — snapshot 不再持续更新，变为只读模组初始数据；运行时场景状态改用 `scenarioConditions`
+  - **Add** full runtime state block（所有字段游戏开始时从模组加载初始值，之后只写 DynamicGameState）:
+    - `npcLocations: Record<npcId, scenarioId>` — NPC 当前位置（原来散落在 snapshot.characters[].location）
+    - `npcStats: Record<npcId, { hp: number; san: number }>` — 运行时 HP/SAN（原来无独立存储）
+    - `npcInventories: Record<npcId, string[]>` — 运行时 inventory（原来直接在 npcCharacters[] 里改）
+    - `npcDiscoveredClues: Record<npcId, string[]>` — 运行时线索（原来直接在 npcCharacters[] 里改）
+    - `npcRelationshipGraph: Record<npcId, Record<targetNpcId, { score: number; note: string }>>` — 关系图（原来在 npcCharacters[].relationships 里改）
+    - `scenarioConditions: Record<scenarioId, string[]>` — 运行时场景条件（原来通过 mutate snapshot.conditions）
+    - `connectionStates: ScenarioConnectionState[]` — 场景连接状态
+  - **Keep**: `npcCharacters: DynamicNPCProfile[]` 作为只读 profile（personality、skills、secret 等），剥离 inventory / clues / relationships 的运行时写入
 - `prisma/schema.prisma` — add `NpcLongTermIntent`, `NpcDailyPlan`, `NpcActionLog` tables
 - `director/directorAgent.ts` — major simplification: remove NPC timeline generation, scene snapshot generation, global RAG trigger checks; keep only game ending condition checks
 
