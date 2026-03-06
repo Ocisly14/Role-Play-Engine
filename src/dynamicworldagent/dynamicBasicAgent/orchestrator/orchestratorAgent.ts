@@ -8,11 +8,6 @@ import type {
   CoCDatabaseAdapter,
 } from "../../../shared/agents/memory/database/index.js";
 import { getPrismaClient } from "../../../shared/agents/memory/database/prismaClient.js";
-import type {
-  ActionAnalysis,
-  ActionType,
-  SceneChangeRequest,
-} from "../../../shared/state/index.js";
 import { composeTemplate } from "../../../template.js";
 import type { DynamicGameStateManager } from "../../state/index.js";
 import {
@@ -135,7 +130,7 @@ export class OrchestratorAgent {
     input: string,
     gameStateManager: DynamicGameStateManager,
     db?: CoCDatabase | CoCDatabaseAdapter,
-    selectedSkill?: string | null,
+    _selectedSkill?: string | null,
     language?: "en" | "zh"
   ): Promise<string> {
     const runtime = createRuntime();
@@ -406,7 +401,6 @@ export class OrchestratorAgent {
         conversationHistory, // Pass conversation history instead of single previousNarrative
         relevantHistory: relevantHistoryForPrompt,
         connections,
-        hasSelectedSkill: !!selectedSkill, // Whether player has pre-selected a skill
       },
       "handlebars"
     );
@@ -418,7 +412,7 @@ export class OrchestratorAgent {
       modelClass: ModelClass.SMALL,
     });
 
-    // Parse the simplified response: { requiresSkillSelection, playerNode }
+    // Parse the simplified 3-field response: { targetScenarioName?, targetNpcId?, impact }
     try {
       const jsonText =
         response.match(/```(?:json)?\s*([\s\S]*?)```/i)?.[1] ||
@@ -426,71 +420,36 @@ export class OrchestratorAgent {
 
       if (!jsonText) {
         console.warn(
-          "⚠️ [Orchestrator Agent] Failed to extract JSON from orchestrator response"
+          "[Orchestrator Agent] Failed to extract JSON from orchestrator response"
         );
         console.warn("Raw response:", response.substring(0, 500));
       } else {
-        const parsedResponse = JSON.parse(jsonText);
-        const playerNode = parsedResponse.playerNode;
-        const requiresSkillSelection = Boolean(
-          parsedResponse.requiresSkillSelection
-        );
+        const parsed = JSON.parse(jsonText);
 
-        // Store playerNode (fill gameTime from state since LLM doesn't output it)
-        if (playerNode) {
-          playerNode.gameTime = dynamicState.timeOfDay || "08:00";
-          playerNode.location = dynamicState.currentScenario?.id || "";
-          gameStateManager.setPlayerNode(playerNode);
-        }
-
-        // Derive actionAnalysis from playerNode for backward compatibility
-        const npcTarget = playerNode?.targetCharacterId
-          ? dynamicState.npcCharacters?.find(
-              (npc) => npc.id === playerNode.targetCharacterId
-            )
-          : null;
-
-        const actionAnalysis: ActionAnalysis = {
-          character: characterName,
-          action: input,
-          actionType: (playerNode?.actionType as ActionType) || "narrative",
-          target: {
-            name: npcTarget?.name ?? playerNode?.targetScenarioName ?? null,
-            intent: "",
-          },
-          requiresSkillSelection,
-        };
-        gameStateManager.setActionAnalysis(actionAnalysis);
-
-        // Derive sceneChangeRequest from playerNode.type === "movement"
-        if (
-          playerNode?.type === "movement" &&
-          playerNode.targetScenarioName
-        ) {
-          const sceneChangeRequest: SceneChangeRequest = {
-            shouldChange: true,
-            targetSceneName: playerNode.targetScenarioName,
-            reason: "Scene change via movement",
-            timestamp: new Date(),
-          };
-          gameStateManager.setSceneChangeRequest(sceneChangeRequest);
-          console.log(
-            `✅ [Orchestrator Agent] Scene change: → ${playerNode.targetScenarioName}`
-          );
-        } else {
-          gameStateManager.clearSceneChangeRequest();
-        }
+        // Store simplified orchestrator output for downstream PlayerPlanAgent
+        gameStateManager.setContextualData("orchestratorOutput", {
+          targetScenarioName: parsed.targetScenarioName ?? null,
+          targetNpcId: parsed.targetNpcId ?? null,
+          impact: parsed.impact ?? 0,
+        });
 
         console.log(
-          `✅ [Orchestrator Agent] playerNode: type=${playerNode?.type}, actionType=${playerNode?.actionType}, requiresSkillSelection=${requiresSkillSelection}`
+          `[Orchestrator Agent] Output: targetScenarioName=${parsed.targetScenarioName ?? "(none)"}, targetNpcId=${parsed.targetNpcId ?? "(none)"}, impact=${parsed.impact ?? 0}`
         );
       }
     } catch (error) {
       console.warn(
-        "❌ [Orchestrator Agent] Failed to parse orchestrator response:",
+        "[Orchestrator Agent] Failed to parse orchestrator response:",
         error
       );
       console.warn("Response content:", response.substring(0, 500));
+
+      // Store fallback output so downstream agents have something to work with
+      gameStateManager.setContextualData("orchestratorOutput", {
+        targetScenarioName: null,
+        targetNpcId: null,
+        impact: 0,
+      });
     }
 
     return response;

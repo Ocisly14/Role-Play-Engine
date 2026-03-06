@@ -1,10 +1,12 @@
 /**
- * Orchestrator Agent Template - classify investigator input into a structured playerNode.
+ * Orchestrator Agent Template - simplified to 3-field output for tick-based planning.
+ *
+ * Output: { targetScenarioName?, targetNpcId?, impact }
  */
 export function getOrchestratorTemplate(): string {
   return `# Orchestrator Agent
 
-You classify the investigator's latest input into a structured playerNode. Do NOT route to other agents; only return the JSON.
+You analyze the investigator's latest input and produce a small JSON describing movement intent, NPC target, and impact level. Do NOT route to other agents; only return the JSON.
 
 ## Game Context
 - Character: {{characterName}}
@@ -56,135 +58,78 @@ Use for continuity and context understanding. Focus on understanding the current
 {{#if relevantHistory}}
 ## Relevant Historical Facts (RAG, score >= 0.7)
 These are previously occurred facts retrieved as highly relevant to the current input.
-Use them for reference disambiguation and impact judgment (including whether skill selection is required), but do not let them override the current input.
+Use them for reference disambiguation and impact judgment, but do not let them override the current input.
 
 {{#each relevantHistory}}
 - **{{this.type}}** (score: {{this.score}}): {{this.content}}
 {{/each}}
 {{/if}}
 
-## Node Type Rules
+## Decision Guide
 
-### type: "movement"
-Set when the investigator wants to go to another scene (e.g., "I'll go to ...", "去...", "前往...").
+### 1. Movement Detection
+If the investigator wants to go to another scene (e.g., "I'll go to ...", "去...", "前往..."):
 - Check if the target is in "Current Scenario Connections" above using **SEMANTIC matching** (meaning-based, not literal):
   * "度假村保安办公室" ≈ "Resort Security Office" ✅
   * "Town Hall" ≈ "市政厅" ✅
-- If matched: set type = "movement" and targetScenarioName = the exact name from connections list
-- If NOT matched (no connection or blocked): set type = "routine" instead (the movement cannot happen)
+- If matched and NOT blocked: set targetScenarioName to the **exact name** from the connections list
+- If NOT matched or blocked: omit targetScenarioName (the movement cannot happen)
 
-### type: "character_interaction"
-Set when the investigator interacts with a specific NPC. Set targetCharacterId to the NPC's id.
+### 2. NPC Targeting
+If the investigator is interacting with a specific NPC from the Available NPCs list:
+- Set targetNpcId to the NPC's **id** (not name)
+- Use semantic matching for NPC name resolution (e.g., "talk to the bartender" → match closest NPC)
+- If no specific NPC is targeted, omit targetNpcId
 
-### type: "object_interaction" / "scene_interaction"
-Set for interacting with objects or the environment.
-
-### type: "routine"
-Default for general actions that don't fit the above categories.
-
-## Action Types
-- exploration | social | stealth | combat | chase | mental | environmental | narrative
-
-## Time Estimation
-Estimate how long the player's action takes:
-- instant (1-10 min): glancing, brief conversation, opening doors
-- short (10-30 min): searching a room, examining clues, simple conversation
-- medium (30-120 min): combat, lengthy negotiation, research session
-- long (120-360 min): long distance travel, surveillance, extended tasks
-- very long (360+ min): sleeping, all-day journeys
-
-## Skill Selection Requirement
-{{#if hasSelectedSkill}}
-Player has selected a skill, set requiresSkillSelection = false
-{{else}}
-Player has NOT selected a skill. Set requiresSkillSelection = true ONLY if the action could have MAJOR impact on NPCs or the scenario (e.g., attacking NPCs, destroying objects, significant confrontations). Otherwise, set false.
-Exception: If recent history shows a similar type of action where the previous dice roll/skill check already succeeded, no need to ask player to select skill again.
-{{/if}}
+### 3. Impact Level
+Rate how significant the action is on a 0-3 scale:
+- **0**: Passive / routine — looking around, idle conversation, reading, waiting
+- **1**: Minor interaction — asking questions, examining objects, simple searches
+- **2**: Significant action — confrontation, breaking into places, using specialized skills, risky social maneuvers
+- **3**: Critical / dangerous — combat, major plot decisions, actions with irreversible consequences
 
 ## Output (JSON only)
 
-Return ONE of the following structures based on the detected type:
+Return exactly one JSON object. Omit fields that do not apply (do NOT set them to null).
 
-### type: "movement"
 \`\`\`json
 {
-  "requiresSkillSelection": false,
-  "playerNode": {
-    "type": "movement",
-    "actionType": "exploration",
-    "targetScenarioName": "exact scenario name from connections",
-    "impact": 0,
-    "timeAdvanceMinutes": 30
-  }
+  "targetScenarioName": "exact scenario name from connections (omit if not moving)",
+  "targetNpcId": "NPC id from Available NPCs (omit if not interacting with specific NPC)",
+  "impact": 0
 }
 \`\`\`
 
-### type: "character_interaction"
-\`\`\`json
-{
-  "requiresSkillSelection": true,
-  "playerNode": {
-    "type": "character_interaction",
-    "actionType": "social",
-    "targetCharacterId": "npc id from Available NPCs list",
-    "characterInteractionPayload": {
-      "transferType": "item | clue | information",
-      "itemId": "(only when transferType=item)",
-      "clueId": "(only when transferType=clue)",
-      "informationContent": "(only when transferType=information)"
-    },
-    "impact": 1,
-    "timeAdvanceMinutes": 15
-  }
-}
-\`\`\`
-Note: characterInteractionPayload is optional. Omit it for plain conversation without transfers.
+### Examples
 
-### type: "object_interaction"
+Moving to a connected scene:
 \`\`\`json
 {
-  "requiresSkillSelection": false,
-  "playerNode": {
-    "type": "object_interaction",
-    "actionType": "exploration",
-    "objectInteractionPayload": {
-      "action": "pickup | place | use | inspect | destroy",
-      "itemId": "(target item id if known)"
-    },
-    "impact": 0,
-    "timeAdvanceMinutes": 15
-  }
+  "targetScenarioName": "Resort Security Office",
+  "impact": 0
 }
 \`\`\`
 
-### type: "scene_interaction"
+Talking to a specific NPC:
 \`\`\`json
 {
-  "requiresSkillSelection": false,
-  "playerNode": {
-    "type": "scene_interaction",
-    "actionType": "exploration",
-    "sceneConnectionEffect": {
-      "targetScenarioId": "affected scenario id",
-      "action": "block | unblock"
-    },
-    "impact": 0,
-    "timeAdvanceMinutes": 15
-  }
+  "targetNpcId": "npc_bartender_01",
+  "impact": 1
 }
 \`\`\`
-Note: sceneConnectionEffect is optional. Only include when the action affects passage between scenes.
 
-### type: "routine"
+General exploration with no specific target:
 \`\`\`json
 {
-  "requiresSkillSelection": false,
-  "playerNode": {
-    "type": "routine",
-    "actionType": "narrative",
-    "impact": 0,
-    "timeAdvanceMinutes": 15
-  }
+  "impact": 1
+}
+\`\`\`
+
+Attacking an NPC:
+\`\`\`json
+{
+  "targetNpcId": "npc_guard_02",
+  "impact": 3
 }
 \`\`\``;
 }
