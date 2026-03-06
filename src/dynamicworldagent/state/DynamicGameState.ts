@@ -30,12 +30,8 @@ import type {
   ScenarioCondition as LegacyScenarioCondition,
 } from "../../shared/agents/models/scenarioTypes.js";
 import type {
-  ActionAnalysis,
-  ActionResult,
   DiscoveredClue,
   GameEndingInfo,
-  NPCResponseAnalysis,
-  SceneChangeRequest,
   TimeConsumption,
 } from "../../shared/state/index.js";
 import type {
@@ -43,25 +39,6 @@ import type {
   DynamicNPCProfile,
   DynamicScenarioSnapshot,
 } from "../world_builder/types.js";
-
-/**
- * Represents a pending NPC attack that the player must respond to
- */
-export interface PendingNpcAction {
-  npcId: string;
-  npcName: string;
-  actionNarrative: string; // What NPC will do (narrative, no dice yet)
-}
-
-/**
- * Tracks the state of an active combat encounter
- */
-export interface CombatState {
-  round: number;
-  participantNpcIds: string[];
-  initiatedBy: "player" | "npc";
-  pendingNpcActions: PendingNpcAction[] | null; // null = player's attack turn
-}
 
 export interface DefeatedNpcHistoryEntry {
   name: string;
@@ -85,20 +62,10 @@ export interface DynamicTemporaryInfo {
   rules: string[];
   /** Contextual data for agents (e.g., conversation history) */
   contextualData: Record<string, any>;
-  /** Action results from Action Agent */
-  actionResults: ActionResult[];
-  /** Full action outputs from Action Agent (raw JSON response + actor metadata) */
-  actionResultsDetailed: Array<Record<string, unknown>>;
-  /** Current action analysis from Orchestrator Agent */
-  currentActionAnalysis: ActionAnalysis | null;
-  /** NPC response analyses from Character Agent */
-  npcResponseAnalyses: NPCResponseAnalysis[];
-  /** Scene change request from Orchestrator Agent, modified by Action Agent */
-  sceneChangeRequest: SceneChangeRequest | null;
   /** Previous scenario snapshot (saved before scene switch for Keeper narrative) */
   previousScenario: DynamicScenarioSnapshot | null;
-  /** Player node from Orchestrator (tick-plan system) */
-  playerNode: import("../dynamicBasicAgent/npcPlanning/types.js").OrchestratorPlayerNode | null;
+  /** Player plan nodes from Orchestrator (tick-plan system) */
+  playerNodes: import("../dynamicBasicAgent/npcPlanning/types.js").PlanNode[];
   /** All character actions from TickProcessor (player + NPC) */
   characterActions: import("../dynamicBasicAgent/npcPlanning/types.js").CharacterAction[];
 }
@@ -138,9 +105,7 @@ export interface DynamicGameState {
   // Game tension
   tension: number;
 
-  // Combat state
-  isBattle: boolean;
-  combatState: CombatState | null;
+  // Defeated NPC tracking
   defeatedNpcHistory: DefeatedNpcHistoryEntry[];
 
   // Game ending status (used by frontend to lock input after epilogue)
@@ -239,8 +204,6 @@ export const initialDynamicGameState = (params: {
     fatigueActive: false,
   },
   tension: 1,
-  isBattle: false,
-  combatState: null,
   defeatedNpcHistory: [],
   gameEnding: null,
   keeperGuidance: null,
@@ -254,13 +217,8 @@ export const initialDynamicGameState = (params: {
   temporaryInfo: {
     rules: [],
     contextualData: {},
-    actionResults: [],
-    actionResultsDetailed: [],
-    currentActionAnalysis: null,
-    npcResponseAnalyses: [],
-    sceneChangeRequest: null,
     previousScenario: null,
-    playerNode: null,
+    playerNodes: [],
     characterActions: [],
   },
 
@@ -994,22 +952,20 @@ export class DynamicGameStateManager {
   // === Runtime State Management Methods (similar to GameStateManager) ===
 
   /**
-   * Clear action results
+   * Clear temporary action state (plan nodes + character actions)
    */
   clearActionResults(): void {
-    this.state.temporaryInfo.actionResults = [];
-    this.state.temporaryInfo.actionResultsDetailed = [];
-    this.state.temporaryInfo.playerNode = null;
+    this.state.temporaryInfo.playerNodes = [];
     this.state.temporaryInfo.characterActions = [];
     this.state.lastUpdated = new Date();
   }
 
-  setPlayerNode(node: import("../dynamicBasicAgent/npcPlanning/types.js").OrchestratorPlayerNode | null): void {
-    this.state.temporaryInfo.playerNode = node;
+  setPlayerNodes(nodes: import("../dynamicBasicAgent/npcPlanning/types.js").PlanNode[]): void {
+    this.state.temporaryInfo.playerNodes = nodes;
   }
 
-  getPlayerNode(): import("../dynamicBasicAgent/npcPlanning/types.js").OrchestratorPlayerNode | null {
-    return this.state.temporaryInfo.playerNode;
+  getPlayerNodes(): import("../dynamicBasicAgent/npcPlanning/types.js").PlanNode[] {
+    return this.state.temporaryInfo.playerNodes;
   }
 
   setCharacterActions(actions: import("../dynamicBasicAgent/npcPlanning/types.js").CharacterAction[]): void {
@@ -1018,22 +974,6 @@ export class DynamicGameStateManager {
 
   getCharacterActions(): import("../dynamicBasicAgent/npcPlanning/types.js").CharacterAction[] {
     return this.state.temporaryInfo.characterActions;
-  }
-
-  /**
-   * Clear NPC response analyses
-   */
-  clearNPCResponseAnalyses(): void {
-    this.state.temporaryInfo.npcResponseAnalyses = [];
-    this.state.lastUpdated = new Date();
-  }
-
-  /**
-   * Clear action analysis
-   */
-  clearActionAnalysis(): void {
-    this.state.temporaryInfo.currentActionAnalysis = null;
-    this.state.lastUpdated = new Date();
   }
 
   /**
@@ -1085,62 +1025,6 @@ export class DynamicGameStateManager {
    */
   getTurnsInCurrentScene(): number {
     return this.state.turnsInCurrentScene;
-  }
-
-  /**
-   * Set action results
-   */
-  setActionResults(results: ActionResult[]): void {
-    this.state.temporaryInfo.actionResults = results;
-    this.state.lastUpdated = new Date();
-  }
-
-  /**
-   * Add detailed action result to temporary storage
-   */
-  addActionResultDetail(detail: Record<string, unknown>): void {
-    if (!detail) return;
-    this.state.temporaryInfo.actionResultsDetailed.push(detail);
-
-    // Keep only the most recent 10 detailed action results to avoid memory bloat
-    if (this.state.temporaryInfo.actionResultsDetailed.length > 10) {
-      this.state.temporaryInfo.actionResultsDetailed =
-        this.state.temporaryInfo.actionResultsDetailed.slice(-10);
-    }
-
-    this.state.lastUpdated = new Date();
-  }
-
-  /**
-   * Set action analysis
-   */
-  setActionAnalysis(analysis: ActionAnalysis | null): void {
-    this.state.temporaryInfo.currentActionAnalysis = analysis;
-    this.state.lastUpdated = new Date();
-  }
-
-  /**
-   * Set NPC response analyses
-   */
-  setNPCResponseAnalyses(analyses: NPCResponseAnalysis[]): void {
-    this.state.temporaryInfo.npcResponseAnalyses = analyses;
-    this.state.lastUpdated = new Date();
-  }
-
-  /**
-   * Set scene change request (from Orchestrator, modified by Action Agent)
-   */
-  setSceneChangeRequest(request: SceneChangeRequest | null): void {
-    this.state.temporaryInfo.sceneChangeRequest = request;
-    this.state.lastUpdated = new Date();
-  }
-
-  /**
-   * Clear scene change request
-   */
-  clearSceneChangeRequest(): void {
-    this.state.temporaryInfo.sceneChangeRequest = null;
-    this.state.lastUpdated = new Date();
   }
 
   /**
@@ -1501,29 +1385,6 @@ export class DynamicGameStateManager {
       }
       character.relationships = merged;
     }
-  }
-
-  /**
-   * Add action result to temporary storage and update player time consumption
-   */
-  addActionResult(actionResult: ActionResult): void {
-    if (!actionResult) return;
-
-    // Update player time consumption
-    this.updatePlayerTimeConsumption(
-      actionResult.character,
-      actionResult.timeConsumption
-    );
-
-    this.state.temporaryInfo.actionResults.push(actionResult);
-
-    // Keep only the most recent 10 action results to avoid memory bloat
-    if (this.state.temporaryInfo.actionResults.length > 10) {
-      this.state.temporaryInfo.actionResults =
-        this.state.temporaryInfo.actionResults.slice(-10);
-    }
-
-    this.state.lastUpdated = new Date();
   }
 
   /**
@@ -2111,142 +1972,6 @@ export class DynamicGameStateManager {
     } | null
   ): void {
     this.state.globalTrigger = trigger;
-    this.state.lastUpdated = new Date();
-  }
-
-  // === Combat State Methods ===
-
-  /**
-   * Enter combat: set isBattle=true and initialize combatState
-   */
-  setCombatState(state: CombatState | null): void {
-    this.state.isBattle = state !== null;
-    this.state.combatState = state;
-    if (state) {
-      this.state.temporaryInfo.contextualData.combatDefeatCountedNpcIds = [];
-      this.state.temporaryInfo.contextualData.combatDefeatCountedNpcNames = [];
-    }
-    this.state.lastUpdated = new Date();
-  }
-
-  /**
-   * Exit combat: set isBattle=false, combatState=null
-   */
-  exitCombat(): void {
-    this.state.isBattle = false;
-    this.state.combatState = null;
-    delete this.state.temporaryInfo.contextualData.combatDefeatCountedNpcIds;
-    delete this.state.temporaryInfo.contextualData.combatDefeatCountedNpcNames;
-    this.state.lastUpdated = new Date();
-  }
-
-  recordDefeatedNpcsFromList(
-    defeatedNpcs: Array<{
-      npcId?: string;
-      npcName?: string;
-      id?: string;
-      name?: string;
-    }>
-  ): {
-    recordedNpcNames: string[];
-    recordedCount: number;
-  } {
-    if (!Array.isArray(defeatedNpcs) || defeatedNpcs.length === 0) {
-      return { recordedNpcNames: [], recordedCount: 0 };
-    }
-
-    const countedNpcIds = new Set(
-      Array.isArray(
-        this.state.temporaryInfo.contextualData?.combatDefeatCountedNpcIds
-      )
-        ? this.state.temporaryInfo.contextualData.combatDefeatCountedNpcIds.filter(
-            (id: unknown): id is string => typeof id === "string"
-          )
-        : []
-    );
-    const countedNpcNames = new Set(
-      Array.isArray(
-        this.state.temporaryInfo.contextualData?.combatDefeatCountedNpcNames
-      )
-        ? this.state.temporaryInfo.contextualData.combatDefeatCountedNpcNames
-            .filter((name: unknown): name is string => typeof name === "string")
-            .map((name: string) => name.trim().toLowerCase())
-        : []
-    );
-
-    const recordedNpcNames: string[] = [];
-    const seenInThisCall = new Set<string>();
-
-    for (const item of defeatedNpcs) {
-      if (!item || typeof item !== "object") continue;
-
-      const npcId =
-        typeof item.npcId === "string"
-          ? item.npcId
-          : typeof item.id === "string"
-            ? item.id
-            : "";
-      const npcNameCandidate =
-        typeof item.npcName === "string"
-          ? item.npcName
-          : typeof item.name === "string"
-            ? item.name
-            : "";
-      const npcName = npcNameCandidate.trim();
-      if (!npcName) continue;
-
-      const normalizedName = npcName.toLowerCase();
-      const thisCallDedupKey = npcId ? `id:${npcId}` : `name:${normalizedName}`;
-      if (seenInThisCall.has(thisCallDedupKey)) continue;
-      seenInThisCall.add(thisCallDedupKey);
-
-      if (npcId && countedNpcIds.has(npcId)) continue;
-      if (!npcId && countedNpcNames.has(normalizedName)) continue;
-
-      const existing = this.state.defeatedNpcHistory.find(
-        (entry) => entry.name.trim().toLowerCase() === normalizedName
-      );
-      if (existing) {
-        existing.count += 1;
-      } else {
-        this.state.defeatedNpcHistory.push({ name: npcName, count: 1 });
-      }
-
-      if (npcId) countedNpcIds.add(npcId);
-      countedNpcNames.add(normalizedName);
-      recordedNpcNames.push(npcName);
-    }
-
-    this.state.temporaryInfo.contextualData.combatDefeatCountedNpcIds =
-      Array.from(countedNpcIds);
-    this.state.temporaryInfo.contextualData.combatDefeatCountedNpcNames =
-      Array.from(countedNpcNames);
-
-    if (recordedNpcNames.length > 0) {
-      this.state.lastUpdated = new Date();
-    }
-
-    return {
-      recordedNpcNames,
-      recordedCount: recordedNpcNames.length,
-    };
-  }
-
-  /**
-   * Set or clear the pending NPC actions for the current combat round
-   */
-  setPendingNpcActions(actions: PendingNpcAction[] | null): void {
-    if (!this.state.combatState) return;
-    this.state.combatState.pendingNpcActions = actions;
-    this.state.lastUpdated = new Date();
-  }
-
-  /**
-   * Increment the combat round counter
-   */
-  incrementCombatRound(): void {
-    if (!this.state.combatState) return;
-    this.state.combatState.round += 1;
     this.state.lastUpdated = new Date();
   }
 
