@@ -159,6 +159,29 @@ Output:
 
 ---
 
+### SceneCondition
+
+```typescript
+interface SceneCondition {
+  description: string          // 叙事描述，注入 KeeperAgent / NPCPlanningAgent
+  mechanicalEffect?: {
+    skillPenalty?: Array<{ skill: string; delta: number }>  // 如 [{ skill: "Spot Hidden", delta: -20 }]
+    blocked?: boolean           // 封锁该场景入口（与 connectionStates 协同）
+  }
+}
+```
+
+**TickProcessor 执行节点时：**
+1. 读取 `snapshot.initialConditions`（只读）+ `scenarioConditions[location]`（运行时）
+2. 合并所有 `mechanicalEffect.skillPenalty`，叠加到当次骰子判定值
+3. `blocked=true` 的 condition 等同于 `connectionStates` blocked（movement 节点失败）
+
+**`scene_interaction` 成功后追加的 condition：**
+- TickProcessor 拼接 `description = outcome`
+- `mechanicalEffect` 由 NPCPlanningAgent 在生成节点时指定（可选）；无则纯叙事
+
+---
+
 ### ScenarioConnectionState
 
 场景间通行状态，存于 `DynamicGameState`，TickProcessor 读写：
@@ -203,15 +226,31 @@ npcDiscoveredClues:   Record<npcId, string[]>   // clueIds
 npcRelationshipGraph: Record<npcId, Record<targetNpcId, { score: number; note: string }>>
 // character_interaction 完成后由小 LLM 更新；初始值从模组 relationships 配置构建
 
-scenarioConditions:   Record<scenarioId, string[]>
-// scene_interaction 成功后追加 outcome；初始为空（不复制模组原始 conditions）
-// 读取场景状态时：模组原始 snapshot.conditions（只读）+ scenarioConditions[id]（运行时追加）
+scenarioConditions:   Record<scenarioId, SceneCondition[]>
+// scene_interaction 成功后追加；初始为空（不复制模组原始 conditions）
+// 读取场景状态时：snapshot.initialConditions（只读基线）+ scenarioConditions[id]（运行时追加）
+// TickProcessor 执行节点前读取当前场景所有 SceneCondition，叠加 mechanicalEffect
 
 connectionStates:     ScenarioConnectionState[]
 // scene_interaction 的 sceneConnectionEffect 修改；初始从模组场景连接构建
 ```
 
-**Snapshot 变为只读：** `updatedDynamicScenarioSnapshots` 不再持续更新。
+**Snapshot 简化为只读静态定义：**
+
+```typescript
+interface DynamicScenarioSnapshot {
+  id: string
+  name: string
+  description: string
+  clues: ScenarioClue[]           // 线索定义（存在什么），discovered 状态在 npcDiscoveredClues
+  initialConditions: SceneCondition[] // 只读基线条件，含可选 mechanicalEffect
+  keeperNotes?: string
+  sceneImage?: { path: string }
+  showMap?: boolean
+}
+```
+
+`updatedDynamicScenarioSnapshots` 不再持续更新。
 - NPC 位置变化 → `npcLocations`（不改 snapshot.characters[].location）
 - 场景条件变化 → `scenarioConditions`（不改 snapshot.conditions）
 - `npcCharacters[]` 保留为只读 profile（personality、skills、secret），inventory / clues / relationships 运行时变化剥离到上方各字段
@@ -247,12 +286,43 @@ Examples:
 - **Skill RAG**：actionTypeSkillMap 候选技能 → 匹配 NPC 实际技能值
 - **Horror RAG**：CoC 规则书 + 模组恐怖源条目（怪物/事件/场景）→ 每条含 `sanLossMin` / `sanLossMax`
 
-**执行顺序：优先级队列**
-```
-所有到期节点（prevTime < node.gameTime <= newTime）放入优先级队列
-排序规则：gameTime ASC，同时间则 DEX DESC
-逐个出队执行，每次执行后立即更新世界状态
-后续节点读取最新状态 → 冲突天然消解（先到先得，后到者 failed → revisePlans）
+**执行结构（TypeScript async/await，串行保证状态一致性）：**
+
+```typescript
+async function runTick(
+  playerNode: NpcPlanNode,
+  dgsm: DynamicGameStateManager
+): Promise<CharacterAction[]> {
+  const actions: CharacterAction[] = []
+
+  // 1. 构建优先级队列：玩家 node + 所有 due NPC nodes
+  //    排序：gameTime ASC，同时间则 DEX DESC
+  const queue = buildPriorityQueue(playerNode, getDueNpcNodes(dgsm))
+
+  // 2. 偶遇扫描：同场景 NPC 对，score ≥ 60 或 ≤ -60 → 插入临时节点
+  scanUnplannedEncounters(queue, dgsm)
+
+  // 3. 串行执行，每次 await 保证状态已更新再执行下一个
+  while (queue.length > 0) {
+    const node = queue.dequeue()
+
+    // 读当前场景 SceneCondition → 合并 skillPenalty
+    const penalties = getScenePenalties(node.location, dgsm)
+
+    // RAG 技能匹配（async）+ 骰子判定 + 类型执行 + 副作用写入
+    const result = await executeNode(node, penalties, dgsm)
+    actions.push(result)
+
+    // 失败立即触发 revisePlans（await，修订完再继续队列）
+    if (result.status === "failed") {
+      await npcPlanningAgent.revisePlans(dgsm, node.characterId, {
+        trigger: { type: "failure", failureReason: result.failureReason, ... }
+      })
+    }
+  }
+
+  return actions  // CharacterAction[]（玩家 + NPC 统一）
+}
 ```
 
 ```
@@ -356,51 +426,85 @@ node.status = "failed"
 
 ## Turn Execution Flow
 
+### 时间推进机制（Orchestrator 驱动）
+
+Orchestrator 在解析玩家意图时同步推断 `timeAdvanceMinutes`，沿用现有 ActionAgent 的时间分级：
+
+| 等级 | 时间消耗 | 典型行动 |
+|---|---|---|
+| `instant` | 1–10 min | 扫视、简短对话、开门 |
+| `short` | 10–30 min | 搜索房间、查看线索、简单交谈 |
+| `medium` | 30–120 min | 战斗、长时间谈判、研究文献 |
+| `long` | 2–6 hours | 长途移动、监视、延伸任务 |
+| `very long` | 6+ hours | 睡眠、全天旅程 |
+
+Orchestrator 输出额外字段：
+```typescript
+{
+  timeAdvanceMinutes: number,                                          // 具体分钟数
+  timeConsumption: "instant" | "short" | "medium" | "long" | "very long"
+}
+```
+
+`newGameTime = currentGameTime + timeAdvanceMinutes`
+
+**getDueNpcNodes**：取所有 `gameTime ≤ newGameTime` 且 `status = "pending"` 的 NPC 节点，与玩家节点一同进入优先级队列。玩家节点的 `gameTime` 设为 `newGameTime`（行动完成时刻）。
+
+---
+
 ```
 Player Input
   ↓
-[ActionAgent] (rewritten)
-  - Resolve player action + player-NPC direct interactions
-  - Advance gameTime
-  - Output: CharacterAction (player)
+[Orchestrator] (扩展)
+  - 解读玩家自然语言意图
+  - 推断 timeAdvanceMinutes + timeConsumption（按行动性质估算）
+  - 输出结构化 player node：
+      { type, actionType?, location, targetCharacterId?, impact,
+        gameTime: newGameTime,
+        characterInteractionPayload?, objectInteractionPayload?,
+        sceneConnectionEffect? }
+  - 检测场景切换请求
 
-  ↓ after gameTime advances
+  ↓
 
 [TickProcessor]
-  - Scan all NPC daily plans for due nodes → 放入优先级队列（gameTime ASC, DEX DESC）
+  - 玩家 node（来自 Orchestrator）+ 所有 NPC due nodes → 优先级队列（gameTime ASC, DEX DESC）
   - 偶遇扫描：对每个场景内的 NPC 对检查 npcRelationshipGraph
       score ≥ 60 → 插入临时友好 character_interaction 节点到队列
       score ≤ -60 → 插入临时对抗性 character_interaction 节点到队列
-  - 逐个出队执行，每次执行后立即更新世界状态
-  - Apply side effects per type (inventory / scene state / hp / san)
-  - On failure: generate failureReason → immediately call NPCPlanningAgent.revisePlans()
-  - Output: CharacterAction[] (NPCs)
 
-  ↓
+  - 按 5 分钟 bucket 交替执行（bucket 间串行，bucket 内并行 impact gate）：
 
-[NPCPlanningAgent.revisePlans()] — failure-driven, per failed NPC
-  trigger: FailureTrigger { failureReason, action, gameTime }
-  - Revise remaining pending nodes based on failure
-  - Does NOT modify completed/failed history
+    LOOP 每个 5 分钟 bucket（按时间顺序）：
 
-  ↓
+      [1] 执行本 bucket 内所有节点（串行，gameTime ASC, DEX DESC）
+            - 读当前场景 SceneCondition → 合并 skillPenalty
+            - RAG 技能匹配 + 骰子判定 + 类型执行 + 副作用写入
+            - 节点失败 → 生成 failureReason
+                         → 立即 revisePlans()（FailureTrigger，不经 gate）
+            - 收集本 bucket 产生的所有 impact > 0 事件
 
-[Impact Propagation + Revision Gate]
-  For each CharacterAction (player + NPC):
-    impact=1 → targetCharacterId is candidate
-    impact=2 → all NPCs in same scene are candidates
-    impact=3 → all NPCs globally are candidates
+      [2] Impact Gate（本 bucket 事件处理完后）
+            - 按 impact 等级确定候选 NPC：
+                impact=1 → targetCharacterId
+                impact=2 → 当前场景 + 临近场景所有 NPC
+                impact=3 → 全局所有 NPC
+            - 同一 NPC 在本 bucket 被多个事件命中 → 合并为一条输入
 
-  For each candidate NPC:
-    → Small LLM yes/no gate（同一 call 输出两项）:
-        Input: NPC longTermIntent + pendingNodes + triggeringAction
-        Output: {
-          shouldRevise: boolean,
-          witnessEntry: string  // 如 "目击威尔伯·惠特利 试图偷取古籍 成功"
-        }
-        → 始终写入：NPC.actionLog.append("Day{n} HH:MM [location] - " + witnessEntry)
-        → shouldRevise = true → call NPCPlanningAgent.revisePlans(dgsm, npcId, { trigger: ImpactTrigger })
-        → shouldRevise = false → 仅记录，计划不变
+            → 一次批量 LLM 调用（本 bucket 所有候选 NPC）：
+                Input:  [ { npcId, longTermIntent, pendingNodes, triggeringEvents[] }, ... ]
+                Output: [ { npcId, shouldRevise, witnessEntry }, ... ]
+
+            → 对每个 NPC（并行）：
+                始终写入：actionLog.append("Day{n} HH:MM [location] - " + witnessEntry)
+                shouldRevise=true → revisePlans()（ImpactTrigger）
+                shouldRevise=false → 仅记录，计划不变
+
+            → 等待本 bucket 所有 revisePlans 完成（更新 pendingNodes）
+
+    END LOOP（进入下一 bucket，读取已更新的 pendingNodes）
+
+  - Output: CharacterAction[]（玩家 + NPC 统一输出）
 
   ↓
 
@@ -670,8 +774,11 @@ src/dynamicworldagent/dynamicBasicAgent/npcPlanning/
 └── tickProcessor.ts         # pure state machine; uses Skill RAG + Horror RAG
 ```
 
+### Deleted (additional)
+- `action/actionAgent.ts` — 职责全部拆分：intent 解析 → Orchestrator，执行解析 → TickProcessor
+
 ### Rewritten
-- `action/actionAgent.ts` — output `CharacterAction`, handle player-NPC interactions, remove passive NPC response generation
+- `orchestrator/orchestratorAgent.ts` — 扩展输出：新增 player node 结构（type / actionType / payloads）+ gameTime 推进 + 场景切换检测；不再只输出 ActionAnalysis
 
 ### Modified
 - `state/DynamicGameState.ts`:
