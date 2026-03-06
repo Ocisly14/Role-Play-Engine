@@ -198,47 +198,52 @@ Return a single JSON object. No extra text. Always write in English.
 
 export interface ImpactGateParams {
   bucketTime: string;
-  candidates: Array<{
+  candidate: {
     npcId: string;
     npcName: string;
+    currentLocation: string;
     longTermIntent: string;
     pendingNodesSummary: string;
     triggeringEvents: string;
-  }>;
+  };
   language: string;
 }
 
 export function buildImpactGatePrompt(params: ImpactGateParams): string {
-  const candidateBlock = params.candidates
-    .map((c, i) => `### Candidate ${i + 1}: ${c.npcName} (${c.npcId})
-- Long-term intent: ${c.longTermIntent}
-- Pending plan summary: ${c.pendingNodesSummary}
-- Triggering events witnessed: ${c.triggeringEvents}`)
-    .join("\n\n");
+  const c = params.candidate;
 
   return `You are the Game Master for a Call of Cthulhu tabletop RPG.
 
 ## Task
-For each NPC candidate below, determine:
-1. A brief witness entry describing what they perceived (for their memory log).
-2. Whether witnessing these events should cause them to revise their current plan.
+Determine how the NPC "${c.npcName}" perceives the following events, and whether they should revise their current plan.
 
-## Time Bucket: ${params.bucketTime}
+## Time: ${params.bucketTime}
 
-## Candidates
-${candidateBlock}
+## NPC: ${c.npcName}
+- Current location: ${c.currentLocation}
+- Long-term intent: ${c.longTermIntent}
+- Pending plan: ${c.pendingNodesSummary || "No pending plans."}
+
+## Events Witnessed
+Each event has an impact level indicating proximity:
+- impact 1: directly targeted (private, one-on-one)
+- impact 2: same or adjacent scene (visible/audible)
+- impact 3: global event (heard about, not directly witnessed)
+
+${c.triggeringEvents}
+
+## Instructions
+1. Write a brief witness entry from this NPC's perspective — what they perceived and how.
+2. Decide whether these events should cause the NPC to revise their current plan. Only set shouldRevise=true if the events meaningfully conflict with or alter the NPC's goals or immediate plans.
 
 ## Output
-Return a JSON array with one entry per candidate. No extra text. Always write in English.
+Return a single JSON object. No extra text. Always write in English.
 
 \`\`\`json
-[
-  {
-    "npcId": "the npc id",
-    "shouldRevise": false,
-    "witnessEntry": "Brief description of what this NPC perceived."
-  }
-]
+{
+  "shouldRevise": false,
+  "witnessEntry": "Brief description of what this NPC perceived."
+}
 \`\`\``;
 }
 

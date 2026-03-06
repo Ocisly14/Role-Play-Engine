@@ -1000,91 +1000,129 @@ export async function runTick(
     // Impact gate: collect impact > 0 events from this bucket
     const impactEvents = bucketActions.filter((a) => a.impact > 0);
     if (impactEvents.length > 0) {
-      // Determine candidate NPCs per impact level
-      const candidateNpcIds = new Set<string>();
+      // Build per-character impact event map (characterId → events that affect them)
+      const characterEventsMap = new Map<string, Array<{ event: CharacterAction; impact: number }>>();
+      const playerScene = state.currentScenario?.id;
+      const playerId = state.playerCharacter?.id;
+
+      const addEventForCharacter = (charId: string, event: CharacterAction, impact: number) => {
+        if (charId === event.characterId) return; // skip actor
+        if (!characterEventsMap.has(charId)) characterEventsMap.set(charId, []);
+        const existing = characterEventsMap.get(charId)!;
+        // Keep highest impact if same event appears multiple times
+        const idx = existing.findIndex((e) => e.event === event);
+        if (idx >= 0) {
+          if (impact > existing[idx].impact) existing[idx].impact = impact;
+        } else {
+          existing.push({ event, impact });
+        }
+      };
+
       for (const event of impactEvents) {
-        if (event.impact === 1 && event.targetCharacterId) {
-          candidateNpcIds.add(event.targetCharacterId);
-        } else if (event.impact === 2) {
-          // All NPCs in same scene or adjacent
+        if (event.impact >= 1 && event.targetCharacterId) {
+          addEventForCharacter(event.targetCharacterId, event, 1);
+        }
+        if (event.impact >= 2) {
           const eventScene = event.location;
           for (const npc of state.npcCharacters) {
             const npcLoc = dgsm.getNpcLocation(npc.id);
             if (npcLoc === eventScene) {
-              candidateNpcIds.add(npc.id);
+              addEventForCharacter(npc.id, event, 2);
+            } else {
+              const isAdjacent = state.connectionStates.some(
+                (c) =>
+                  !c.blocked &&
+                  ((c.fromScenarioId === eventScene && c.toScenarioId === npcLoc) ||
+                    (c.toScenarioId === eventScene && c.fromScenarioId === npcLoc))
+              );
+              if (isAdjacent) addEventForCharacter(npc.id, event, 2);
             }
-            // Check adjacent scenes
-            const isAdjacent = state.connectionStates.some(
-              (c) =>
-                !c.blocked &&
-                ((c.fromScenarioId === eventScene && c.toScenarioId === npcLoc) ||
-                  (c.toScenarioId === eventScene && c.fromScenarioId === npcLoc))
-            );
-            if (isAdjacent) candidateNpcIds.add(npc.id);
           }
-        } else if (event.impact === 3) {
+          if (playerId && playerScene) {
+            if (playerScene === eventScene) {
+              addEventForCharacter(playerId, event, 2);
+            } else {
+              const playerAdjacent = state.connectionStates.some(
+                (c) =>
+                  !c.blocked &&
+                  ((c.fromScenarioId === eventScene && c.toScenarioId === playerScene) ||
+                    (c.toScenarioId === eventScene && c.fromScenarioId === playerScene))
+              );
+              if (playerAdjacent) addEventForCharacter(playerId, event, 2);
+            }
+          }
+        }
+        if (event.impact >= 3) {
           for (const npc of state.npcCharacters) {
-            candidateNpcIds.add(npc.id);
+            addEventForCharacter(npc.id, event, 3);
           }
+          if (playerId) addEventForCharacter(playerId, event, 3);
         }
       }
 
-      // Remove NPCs who were the actors of these events
-      for (const event of impactEvents) {
-        candidateNpcIds.delete(event.characterId);
-      }
-      // Remove player characters
-      for (const playerId of playerCharacterIds) {
-        candidateNpcIds.delete(playerId);
-      }
+      // Separate player from NPC candidates
+      const playerEvents = playerId ? characterEventsMap.get(playerId) : undefined;
+      if (playerId) characterEventsMap.delete(playerId);
 
-      if (candidateNpcIds.size > 0) {
-        const candidates = await Promise.all(
-          [...candidateNpcIds].map(async (npcId) => {
+      // NPC candidates → one LLM call per NPC, all in parallel
+      if (characterEventsMap.size > 0) {
+        await Promise.all(
+          [...characterEventsMap.entries()].map(async ([npcId, npcEvents]) => {
             const npc = state.npcCharacters.find((n) => n.id === npcId);
             const longTermIntent = await npcPlanningAgent.getLongTermIntent(sessionId, npcId);
             const pendingNodes = await npcPlanningAgent.getPendingNodes(sessionId, npcId, gameDay);
-            const relevantEvents = impactEvents
-              .map((e) => `${e.characterName}: ${e.outcome}`)
-              .join("; ");
+            const triggeringEvents = npcEvents
+              .map((e) => `[impact ${e.impact}] ${e.event.characterName}: ${e.event.outcome}`)
+              .join("\n");
 
-            return {
-              npcId,
-              npcName: npc?.name ?? npcId,
-              longTermIntent,
-              pendingNodesSummary: pendingNodes.map((n) => `${n.gameTime} ${n.action}`).join("; "),
-              triggeringEvents: relevantEvents,
-            };
-          })
-        );
+            const result = await npcPlanningAgent.runImpactGateForNpc(
+              {
+                npcId,
+                npcName: npc?.name ?? npcId,
+                currentLocation: dgsm.getNpcLocation(npcId) ?? "unknown",
+                longTermIntent,
+                pendingNodesSummary: pendingNodes.map((n) => `${n.gameTime} ${n.action}`).join("; "),
+                triggeringEvents,
+              },
+              bucketTime,
+              language
+            );
 
-        const gateResults = await npcPlanningAgent.runImpactGate(sessionId, bucketTime, candidates, language);
-
-        // Process gate results in parallel
-        await Promise.all(
-          gateResults.map(async (result) => {
             // Always log witness entry
             const logEntry = `Day${gameDay} ${bucketTime} [witness] - ${result.witnessEntry}`;
-            const npcLoc = dgsm.getNpcLocation(result.npcId) ?? "unknown";
-            await npcPlanningAgent.appendMemoryLog(sessionId, result.npcId, logEntry, gameDay, bucketTime, npcLoc);
+            const npcLoc = dgsm.getNpcLocation(npcId) ?? "unknown";
+            await npcPlanningAgent.appendMemoryLog(sessionId, npcId, logEntry, gameDay, bucketTime, npcLoc);
 
             if (result.shouldRevise) {
-              const longTermIntent = await npcPlanningAgent.getLongTermIntent(sessionId, result.npcId);
-              const memoryLog = await npcPlanningAgent.getMemoryLog(sessionId, result.npcId, gameDay);
-              const pendingNodes = await npcPlanningAgent.getPendingNodes(sessionId, result.npcId, gameDay);
-              const triggeringAction = impactEvents[0]; // Use first event as trigger
-              await npcPlanningAgent.revisePlans(dgsm, sessionId, result.npcId, {
+              const memoryLog = await npcPlanningAgent.getMemoryLog(sessionId, npcId, gameDay);
+              // Find the highest-impact triggering action for revision context
+              const sortedEvents = [...npcEvents].sort((a, b) => b.impact - a.impact);
+              await npcPlanningAgent.revisePlans(dgsm, sessionId, npcId, {
                 longTermIntent,
                 memoryLog,
                 pendingNodes,
                 trigger: {
                   type: "impact",
-                  triggeringAction,
+                  triggeringAction: sortedEvents[0].event,
                 },
               }, language);
             }
           })
         );
+      }
+
+      // Player witness: store impact events for KeeperAgent narration
+      if (playerEvents && playerEvents.length > 0) {
+        const playerWitnessEvents = playerEvents.map((e) => ({
+          characterName: e.event.characterName,
+          action: e.event.action,
+          outcome: e.event.outcome,
+          location: e.event.location,
+          gameTime: e.event.gameTime,
+          impact: e.impact,
+        }));
+        const existing = (dgsm.getContextualData("playerWitnessEvents") as any[]) ?? [];
+        dgsm.setContextualData("playerWitnessEvents", [...existing, ...playerWitnessEvents]);
       }
     }
 

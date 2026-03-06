@@ -213,21 +213,19 @@ export class NPCPlanningAgent {
     }
   }
 
-  async runImpactGate(
-    sessionId: string,
-    bucketTime: string,
-    candidates: Array<{
+  async runImpactGateForNpc(
+    candidate: {
       npcId: string;
       npcName: string;
+      currentLocation: string;
       longTermIntent: string;
       pendingNodesSummary: string;
       triggeringEvents: string;
-    }>,
+    },
+    bucketTime: string,
     language: string = "en"
-  ): Promise<Array<{ npcId: string; shouldRevise: boolean; witnessEntry: string }>> {
-    if (candidates.length === 0) return [];
-
-    const prompt = buildImpactGatePrompt({ bucketTime, candidates, language });
+  ): Promise<{ shouldRevise: boolean; witnessEntry: string }> {
+    const prompt = buildImpactGatePrompt({ bucketTime, candidate, language });
 
     const response = await generateText({
       runtime: this.runtime,
@@ -235,9 +233,7 @@ export class NPCPlanningAgent {
       modelClass: ModelClass.SMALL,
     });
 
-    return parseJsonResponse<
-      Array<{ npcId: string; shouldRevise: boolean; witnessEntry: string }>
-    >(response);
+    return parseJsonResponse<{ shouldRevise: boolean; witnessEntry: string }>(response);
   }
 
   async updateRelationshipViaLLM(
