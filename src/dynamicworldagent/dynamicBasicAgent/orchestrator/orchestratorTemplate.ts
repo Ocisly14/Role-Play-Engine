@@ -9,9 +9,7 @@ export function getOrchestratorTemplate(): string {
 You analyze the investigator's latest input and produce a small JSON describing movement intent, NPC target, and impact level. Do NOT route to other agents; only return the JSON.
 
 ## Game Context
-- Character: {{characterName}}
 - Current Scenario: {{currentScenarioName}}
-- Location: {{scenarioLocation}}
 {{#if npcList}}
 - Available NPCs:
 {{#each npcList}}
@@ -22,13 +20,9 @@ You analyze the investigator's latest input and produce a small JSON describing 
 {{/if}}
 
 {{#if connections}}
-## Current Scenario Connections
-The following are all known connections from the current scenario:
+## Connected Scenes
 {{#each connections}}
-- **{{scenarioName}}**
-  - Relationship: {{relationshipType}}
-  {{#if description}}  Connection: {{description}}{{/if}}
-  {{#if blocked}}  ⚠️ BLOCKED{{#if blockReason}}: {{blockReason}}{{/if}}{{/if}}
+- {{scenarioName}}
 {{/each}}
 {{/if}}
 
@@ -42,26 +36,7 @@ Use for continuity and context understanding. Focus on understanding the current
 {{#each conversationHistory}}
 {{#if this.keeperNarrative}}
 **Turn #{{this.turnNumber}}**: "{{this.characterInput}}" → "{{this.keeperNarrative}}"
-{{#if this.selectedSkill}}
-- Player Skill Selection (historical): {{this.selectedSkill}}
 {{/if}}
-{{#if this.playerActionLogs}}
-- Player Action Logs (historical):
-{{#each this.playerActionLogs}}
-  - {{this}}
-{{/each}}
-{{/if}}
-{{/if}}
-{{/each}}
-{{/if}}
-
-{{#if relevantHistory}}
-## Relevant Historical Facts (RAG, score >= 0.7)
-These are previously occurred facts retrieved as highly relevant to the current input.
-Use them for reference disambiguation and impact judgment, but do not let them override the current input.
-
-{{#each relevantHistory}}
-- **{{this.type}}** (score: {{this.score}}): {{this.content}}
 {{/each}}
 {{/if}}
 
@@ -69,11 +44,11 @@ Use them for reference disambiguation and impact judgment, but do not let them o
 
 ### 1. Movement Detection
 If the investigator wants to go to another scene (e.g., "I'll go to ...", "去...", "前往..."):
-- Check if the target is in "Current Scenario Connections" above using **SEMANTIC matching** (meaning-based, not literal):
+- Use **SEMANTIC matching** to find the target in "Connected Scenes" (meaning-based, not literal):
   * "度假村保安办公室" ≈ "Resort Security Office" ✅
   * "Town Hall" ≈ "市政厅" ✅
-- If matched and NOT blocked: set targetScenarioName to the **exact name** from the connections list
-- If NOT matched or blocked: omit targetScenarioName (the movement cannot happen)
+- If matched: set targetScenarioName to the **exact name** from the list
+- If not matched: omit targetScenarioName
 
 ### 2. NPC Targeting
 If the investigator is interacting with a specific NPC from the Available NPCs list:
@@ -82,11 +57,16 @@ If the investigator is interacting with a specific NPC from the Available NPCs l
 - If no specific NPC is targeted, omit targetNpcId
 
 ### 3. Impact Level
-Rate how significant the action is on a 0-3 scale:
-- **0**: Passive / routine — looking around, idle conversation, reading, waiting
-- **1**: Minor interaction — asking questions, examining objects, simple searches
-- **2**: Significant action — confrontation, breaking into places, using specialized skills, risky social maneuvers
-- **3**: Critical / dangerous — combat, major plot decisions, actions with irreversible consequences
+Impact determines **who in the game world perceives and is affected by** the action. Rate on a 0-3 scale based on observability and consequence scope:
+
+- **0 — Private / unnoticed**: Only the acting character knows. No one else perceives or reacts.
+  Examples: thinking, reading a book alone, checking personal belongings, quietly observing from afar, writing notes, resting, recalling memories
+- **1 — Targeted / one-on-one**: Only the specific target character perceives it. A private exchange between two people.
+  Examples: whispering to someone, passing a note, pickpocketing a specific person, private conversation, discreetly handing over an item, subtle gesture to one person
+- **2 — Local / scene-wide**: Everyone present in the current scene perceives it. The action is visible, audible, or otherwise noticeable to bystanders.
+  Examples: speaking loudly, firing a gun, breaking down a door, starting a fight, searching a room openly, casting a spell with visible effects, screaming, playing music, knocking over furniture, an explosion
+- **3 — Global / far-reaching**: The entire game world is affected. The consequences ripple beyond the current scene.
+  Examples: triggering a town-wide alarm, completing a summoning ritual, causing a building collapse, broadcasting over radio/PA system, actions that fundamentally alter the story state for all characters
 
 ## Output (JSON only)
 
@@ -97,39 +77,6 @@ Return exactly one JSON object. Omit fields that do not apply (do NOT set them t
   "targetScenarioName": "exact scenario name from connections (omit if not moving)",
   "targetNpcId": "NPC id from Available NPCs (omit if not interacting with specific NPC)",
   "impact": 0
-}
-\`\`\`
-
-### Examples
-
-Moving to a connected scene:
-\`\`\`json
-{
-  "targetScenarioName": "Resort Security Office",
-  "impact": 0
-}
-\`\`\`
-
-Talking to a specific NPC:
-\`\`\`json
-{
-  "targetNpcId": "npc_bartender_01",
-  "impact": 1
-}
-\`\`\`
-
-General exploration with no specific target:
-\`\`\`json
-{
-  "impact": 1
-}
-\`\`\`
-
-Attacking an NPC:
-\`\`\`json
-{
-  "targetNpcId": "npc_guard_02",
-  "impact": 3
 }
 \`\`\``;
 }

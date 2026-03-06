@@ -22,18 +22,18 @@ export function buildPlayerPlanPrompt(params: PlayerPlanParams): string {
   const lang = params.language?.toLowerCase() ?? "en";
   const isZh = lang.startsWith("zh");
 
-  if (isZh) {
-    return buildPlayerPlanPromptZh(params);
-  }
-  return buildPlayerPlanPromptEn(params);
-}
+  const languageInstruction = isZh
+    ? `Write the "action" field in Chinese. All JSON keys and enum values must remain in English.`
+    : `Write the "action" field in English. All JSON keys and enum values must remain in English.`;
 
-function buildPlayerPlanPromptEn(params: PlayerPlanParams): string {
   return `You are the Game Master for a Call of Cthulhu tabletop RPG.
 
 ## Task
 Decompose the player's natural language input into 1 or more structured PlanNode actions (JSON array).
 Each node represents a discrete action the player character performs.
+
+## Language
+${languageInstruction}
 
 ## Player Input
 "${params.playerInput}"
@@ -74,45 +74,100 @@ ${params.conversationHistory || "No prior conversation."}
 Day ${params.gameDay}, ${params.currentGameTime}
 
 ## Node Type Reference
-- "routine": Simple action, no skill check. Examples: eating, resting, reading something in hand.
-- "movement": Move to a connected scene. Use targetScenarioId from orchestrator hints. Will fail if path is blocked.
-- "character_interaction": Talk to or interact with an NPC. Requires targetCharacterId. Include characterInteractionPayload if transferring item/clue/information.
-- "object_interaction": Interact with a physical object. Include objectInteractionPayload.
-- "scene_interaction": Search, investigate, or modify the environment. Include sceneConnectionEffect if changing a connection (e.g., unlocking a door).
+- **"routine"**: Self-contained action, no interaction target. Examples: eating, resting, reading something already in hand, thinking, recalling memories.
+- **"movement"**: Move to a connected scene. Set location to the target scenarioId. Blocked paths are handled by the execution engine — just express the intent.
+- **"character_interaction"**: Interact with a specific NPC. Requires targetCharacterId. Include characterInteractionPayload if transferring item/clue/information.
+- **"object_interaction"**: Interact with a physical object in the scene. Include objectInteractionPayload (pickup/place/use/inspect/destroy).
+- **"scene_interaction"**: Search, investigate, or modify the environment/scene itself. Include sceneConnectionEffect if changing a connection (e.g., unlocking/barricading a door).
 
-## When to Assign actionType (skill check)
-Assign an actionType ONLY when the outcome is uncertain and requires a skill roll. Omit actionType when the action should auto-succeed.
+## The 8 ActionType Categories
 
-Guidelines:
-- **Friendly NPC + casual conversation** → NO actionType (auto-succeed)
-- **Hostile/suspicious NPC + persuasion/deception** → actionType: "social"
-- **Attacking someone** → actionType: "combat"
-- **Automatic or obvious clue** (difficulty: "automatic") → NO actionType
-- **Hidden/hard clue + active search** → actionType: "exploration"
-- **Sneaking past a guard** → actionType: "stealth"
-- **Running away or chasing** → actionType: "chase"
-- **Sanity check, resisting fear** → actionType: "mental"
-- **Surviving harsh conditions** → actionType: "environmental"
-- **Simple movement to connected scene** → NO actionType
-- **Movement requiring physical effort (climbing, swimming)** → actionType: "exploration" or "environmental"
+actionType represents the **kind of skill check** required. When present, the execution engine auto-selects the best matching skill and rolls d100. When omitted, the action auto-succeeds.
+
+### exploration
+**Finding hidden things, gathering information, researching, analyzing.**
+Triggered by: actively searching for concealed clues, picking locks to access hidden areas, deciphering foreign texts, appraising artifacts, forensic analysis, library research, tracking footprints.
+Typical skills: Spot Hidden, Listen, Library Use, Locksmith, Navigate, Track, Science (*), Language (Other).
+
+### social
+**Influencing, persuading, deceiving, intimidating another character.**
+Triggered by: convincing a reluctant NPC, lying, negotiating, bargaining, seduction, leveraging authority, reading someone's true intentions.
+Typical skills: Charm, Fast Talk, Persuade, Intimidate, Psychology, Credit Rating, Disguise.
+
+### combat
+**Physical violence — attacking, defending, restraining.**
+Triggered by: punching, shooting, stabbing, throwing objects at someone, grappling, setting up traps intended to harm.
+Both attacker and defender roll. Damage applies to HP on hit.
+Typical skills: Fighting (*), Firearms (*), Throw, Dodge.
+
+### stealth
+**Acting undetected — sneaking, hiding, pickpocketing, infiltrating.**
+Triggered by: sneaking past guards, hiding in shadows, planting/stealing items without notice, forging documents, bypassing security systems.
+Typical skills: Stealth, Sleight of Hand, Disguise, Locksmith.
+
+### chase
+**Pursuit or escape — running, driving, climbing under pressure.**
+Triggered by: fleeing from danger, chasing a suspect, vehicle pursuit, swimming to escape.
+Both pursuer and quarry roll. Higher success wins.
+Typical skills: Drive Auto, Climb, Swim, Jump, Dodge, Ride, Pilot (*).
+
+### mental
+**Sanity resistance — confronting cosmic horror, resisting psychological trauma.**
+Triggered by: witnessing something horrifying, reading blasphemous texts, encountering Mythos entities, resisting madness.
+Rolls against SAN stat. Failure causes sanity loss.
+Typical skills: Psychology, Psychoanalysis, Occult, Cthulhu Mythos.
+
+### environmental
+**Surviving harsh conditions — physical endurance, wilderness hazards, emergency medicine.**
+Triggered by: crossing a raging river, surviving extreme cold/heat, treating wounds in the field, navigating without landmarks, handling toxic substances.
+Typical skills: Survival (*), First Aid, Medicine, Navigate, Climb, Swim.
+
+### narrative
+**Key story moments — interpreting lore, performing rituals, making dramatic speeches.**
+Triggered by: decoding ancient manuscripts, performing a ritual, delivering a critical speech, creative problem-solving through art or writing.
+Typical skills: History, Occult, Language (*), Art/Craft (*), Psychology, Law.
+
+## When to Assign actionType (Core Decision)
+
+**Principle: actionType = uncertain outcome requiring a dice roll. No actionType = guaranteed success.**
+
+Consider these three factors together to decide:
+
+### 1. NPC Relationship
+The "Relationship with Target NPC" section provides a score from -100 (nemesis) to 100 (devoted ally) and a description. Use both the score and the description to judge the NPC's willingness to cooperate:
+- Higher score → NPC is more cooperative → routine requests auto-succeed, only unreasonable or sensitive demands need a social roll
+- Lower score → NPC is more resistant → even simple requests may require a social roll
+- The description provides context (e.g., "suspects the player of theft") — use it to judge what the NPC would or wouldn't agree to willingly
+
+### 2. Scene Context
+Read the Scene Conditions and Scene Description to judge environmental difficulty:
+- Dangerous or hazardous conditions may require environmental or exploration rolls for physical actions
+- Restricted or guarded areas may require stealth or exploration rolls
+- The scene context tells you whether an otherwise simple action becomes risky
+
+### 3. Player Roleplay Quality
+The quality of the player's description affects **difficulty level**, not whether actionType is assigned. An action that inherently requires a roll always gets actionType, regardless of how well the player describes it. But a detailed, clever approach earns easier difficulty, while a vague or reckless approach earns harder difficulty.
 
 ## Difficulty Rules (only when actionType is present)
-The difficulty reflects both the inherent challenge AND the quality of the player's roleplay:
-- "regular": Player gave a detailed, clever approach OR the task is straightforward
-- "hard": Player gave a vague description OR the task is moderately challenging
-- "extreme": Player's approach is reckless/poorly planned OR the task is very difficult
-- Consider NPC hostility, clue hiddenness, environmental danger when setting difficulty
 
-## Clue Discovery
-When the player is attempting to find or examine something, check the available clues list. If a specific clue matches what they're looking for:
-- Include it in the node's objectInteractionPayload or characterInteractionPayload (by clue ID)
-- Set actionType based on the clue's difficulty (automatic clues need no actionType)
+Difficulty reflects **both** the inherent challenge **and** the quality of the player's approach:
+
+- **"regular"**: Player described a detailed, clever, or well-reasoned approach; OR the task is inherently straightforward.
+- **"hard"**: Player gave a vague or generic description (e.g., "I try to convince him"); OR the task is moderately challenging; OR the NPC is somewhat uncooperative.
+- **"extreme"**: Player's approach is reckless, poorly planned, or contradicts common sense; OR the task is very difficult; OR the NPC is deeply hostile.
+
+Use the relationship score, scene conditions, and player approach holistically — a clever approach against a hostile NPC might still be "hard", while a vague approach in a safe situation might only be "regular".
 
 ## Impact Levels
-- 0: Private action, nobody else perceives it
-- 1: Only the target character perceives it
-- 2: All characters in the current scene perceive it
-- 3: All characters globally perceive it
+Impact determines **who in the game world perceives and is affected by** the action:
+- **0 — Private / unnoticed**: Only the acting character knows. No one else perceives or reacts.
+  Examples: thinking, reading alone, checking belongings, observing from afar, writing notes, resting
+- **1 — Targeted / one-on-one**: Only the specific target character perceives it. A private exchange.
+  Examples: whispering, passing a note, pickpocketing someone, private conversation, discreet item handoff
+- **2 — Local / scene-wide**: Everyone in the current scene perceives it. Visible/audible to bystanders.
+  Examples: speaking loudly, firing a gun, breaking a door, starting a fight, searching a room openly, screaming
+- **3 — Global / far-reaching**: The entire game world is affected. Consequences ripple beyond the scene.
+  Examples: triggering a town alarm, summoning ritual, building collapse, radio broadcast
 
 ## Time Advance
 Estimate realistic minutes for each action:
@@ -147,125 +202,4 @@ Return a JSON array of PlanNode objects. No extra text outside the JSON.
 \`\`\`
 
 Only include optional fields (actionType, difficulty, targetCharacterId, payloads, sceneConnectionEffect) when relevant. Omit them otherwise.`;
-}
-
-function buildPlayerPlanPromptZh(params: PlayerPlanParams): string {
-  return `你是一个克苏鲁的呼唤桌面角色扮演游戏的守秘人（Game Master）。
-
-## 任务
-将玩家的自然语言输入分解为1个或多个结构化的PlanNode行动（JSON数组）。
-每个节点代表玩家角色执行的一个独立动作。
-
-## 玩家输入
-"${params.playerInput}"
-
-## 玩家角色
-${params.playerProfile}
-
-## 当前场景
-- 场景ID: ${params.currentScenarioId}
-- 名称: ${params.currentScenarioName}
-- 描述: ${params.currentScenarioDescription}
-
-## 场景条件
-${params.sceneConditions || "无。"}
-
-## 当前场景可用线索
-${params.scenarioClues || "没有可用线索。"}
-
-## 相连场景
-${params.connections || "无连接。"}
-
-## 场景中的NPC
-${params.sceneNpcs || "没有NPC在场。"}
-
-## 目标NPC（如适用）
-${params.targetNpcProfile || "不适用"}
-
-## 与目标NPC的关系
-${params.targetNpcRelationship || "不适用"}
-
-## 协调器提示
-${params.orchestratorHints || "无。"}
-
-## 近期对话历史
-${params.conversationHistory || "没有先前的对话。"}
-
-## 当前时间
-第${params.gameDay}天，${params.currentGameTime}
-
-## 节点类型参考
-- "routine": 简单动作，无需技能检定。例如：吃饭、休息、阅读手中的东西。
-- "movement": 移动到相连的场景。使用协调器提示中的targetScenarioId。如果路径被阻挡则失败。
-- "character_interaction": 与NPC交谈或互动。需要targetCharacterId。如果涉及转移物品/线索/信息，需包含characterInteractionPayload。
-- "object_interaction": 与物理对象互动。需包含objectInteractionPayload。
-- "scene_interaction": 搜索、调查或修改环境。如果改变连接状态（如开锁），需包含sceneConnectionEffect。
-
-## 何时分配actionType（技能检定）
-仅当结果不确定且需要技能掷骰时才分配actionType。当动作应自动成功时省略actionType。
-
-指导原则：
-- **友好NPC + 日常对话** → 不需要actionType（自动成功）
-- **敌对/怀疑NPC + 说服/欺骗** → actionType: "social"
-- **攻击某人** → actionType: "combat"
-- **自动或明显的线索**（difficulty: "automatic"）→ 不需要actionType
-- **隐藏/困难线索 + 主动搜索** → actionType: "exploration"
-- **潜行通过守卫** → actionType: "stealth"
-- **逃跑或追逐** → actionType: "chase"
-- **理智检定、抵抗恐惧** → actionType: "mental"
-- **在恶劣条件下生存** → actionType: "environmental"
-- **简单移动到相连场景** → 不需要actionType
-- **需要体力的移动（攀爬、游泳）** → actionType: "exploration" 或 "environmental"
-
-## 难度规则（仅当存在actionType时）
-难度反映了固有挑战性和玩家角色扮演的质量：
-- "regular": 玩家给出了详细、巧妙的方法，或任务比较简单
-- "hard": 玩家描述模糊，或任务具有中等挑战性
-- "extreme": 玩家的方法鲁莽/计划不周，或任务非常困难
-- 在设定难度时考虑NPC敌意、线索隐蔽程度、环境危险
-
-## 线索发现
-当玩家试图寻找或检查某物时，检查可用线索列表。如果特定线索与他们寻找的内容匹配：
-- 在节点的objectInteractionPayload或characterInteractionPayload中包含它（通过线索ID）
-- 根据线索的难度设定actionType（自动线索不需要actionType）
-
-## 影响等级
-- 0: 私密行动，无人察觉
-- 1: 仅目标角色察觉
-- 2: 当前场景中所有角色察觉
-- 3: 全局所有角色察觉
-
-## 时间推进
-估算每个动作的合理分钟数：
-- 快速动作（瞥一眼、拾取）: 5
-- 简短对话: 10-15
-- 详细调查: 15-30
-- 场景间移动: 15-30
-- 长时间活动: 30-60
-
-## 输出
-返回PlanNode对象的JSON数组。JSON外不要有其他文本。
-
-\`\`\`json
-[
-  {
-    "nodeId": "unique-id",
-    "gameTime": "HH:MM",
-    "action": "玩家所做的事情的描述",
-    "location": "${params.currentScenarioId}",
-    "type": "routine|movement|character_interaction|object_interaction|scene_interaction",
-    "actionType": "exploration|social|combat|stealth|chase|mental|environmental|narrative（如无需技能检定则省略）",
-    "difficulty": "regular|hard|extreme（仅当存在actionType时）",
-    "impact": 0,
-    "timeAdvanceMinutes": 15,
-    "targetCharacterId": "npc id（仅用于character_interaction）",
-    "characterInteractionPayload": { "transferType": "item|clue|information", "itemId": "", "clueId": "", "informationContent": "" },
-    "objectInteractionPayload": { "action": "pickup|place|use|inspect|destroy", "itemId": "" },
-    "sceneConnectionEffect": { "targetScenarioId": "...", "action": "block|unblock" },
-    "status": "pending"
-  }
-]
-\`\`\`
-
-仅在相关时包含可选字段（actionType、difficulty、targetCharacterId、payload、sceneConnectionEffect）。否则省略它们。`;
 }

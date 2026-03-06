@@ -53,6 +53,18 @@ export interface PlanNode {
   outcome?: string;
 }
 
+export interface DiscoveredClueEntry {
+  clueId: string;
+  clueText: string;
+  source: "scene" | "npc";
+  sourceId: string;       // scenarioId or npcId
+  sourceName: string;     // scenario name or NPC name
+  difficulty: "automatic" | "regular" | "hard" | "extreme";
+  similarity: number;     // semantic match score
+}
+
+export type SuccessLevel = "critical" | "hard" | "regular" | "fail";
+
 export interface CharacterAction {
   characterId: string;
   characterName: string;
@@ -64,10 +76,12 @@ export interface CharacterAction {
   impact: 0 | 1 | 2 | 3;
   isPlayer?: boolean;
   difficulty?: "regular" | "hard" | "extreme" | "luck_only";
+  successLevel?: SuccessLevel;
   status: "completed" | "failed";
   outcome: string;
   failureReason?: FailureReason;
   targetCharacterId?: string;
+  discoveredClues?: DiscoveredClueEntry[];
 }
 
 export type FailureReason =
@@ -92,7 +106,7 @@ export type ImpactTrigger = {
 
 export interface RevisePlansContext {
   longTermIntent: string;
-  actionLog: string[];
+  memoryLog: string[];
   pendingNodes: PlanNode[];
   trigger: FailureTrigger | ImpactTrigger;
 }

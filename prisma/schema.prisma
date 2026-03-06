@@ -501,7 +501,7 @@ model Session {
   module             Module?          @relation(fields: [moduleId], references: [moduleId])
   npcLongTermIntents NpcLongTermIntent[]
   npcDailyPlans      NpcDailyPlan[]
-  npcActionLogs      NpcActionLog[]
+  npcMemoryLogs      NpcMemoryLog[]
 
   @@index([status])
   @@index([startedAt])
@@ -945,7 +945,7 @@ model NpcDailyPlan {
   @@map("npc_daily_plans")
 }
 
-model NpcActionLog {
+model NpcMemoryLog {
   id        String   @id @default(uuid()) @db.Uuid
   sessionId String   @map("session_id")
   npcId     String   @map("npc_id")
@@ -958,5 +958,5 @@ model NpcActionLog {
   session   Session  @relation(fields: [sessionId], references: [sessionId], onDelete: Cascade)
 
   @@index([sessionId, npcId])
-  @@map("npc_action_logs")
+  @@map("npc_memory_logs")
 }

@@ -28,96 +28,6 @@ const createRuntime = (): OrchestratorRuntime => ({
   getSetting: (key: string) => process.env[key],
 });
 
-type HistoricalActionResult = {
-  gameTime?: unknown;
-  location?: unknown;
-  character?: unknown;
-  result?: unknown;
-  diceRolls?: unknown;
-};
-
-function normalizeActionResults(raw: unknown): HistoricalActionResult[] {
-  if (Array.isArray(raw)) return raw as HistoricalActionResult[];
-  if (typeof raw !== "string") return [];
-  try {
-    const parsed = JSON.parse(raw) as unknown;
-    return Array.isArray(parsed) ? (parsed as HistoricalActionResult[]) : [];
-  } catch {
-    return [];
-  }
-}
-
-function extractSkillNamesFromDiceRolls(diceRolls: unknown): string[] {
-  if (!Array.isArray(diceRolls)) return [];
-  const skills: string[] = [];
-  for (const roll of diceRolls) {
-    if (typeof roll !== "string") continue;
-    const match = roll.match(/\(([^()]+?)\s+\d{1,3}%/i);
-    if (!match) continue;
-    const skill = match[1].trim();
-    if (!skill || skills.includes(skill)) continue;
-    skills.push(skill);
-    if (skills.length >= 5) break;
-  }
-  return skills;
-}
-
-function extractHistoricalPlayerSignals(
-  actionResultsRaw: unknown,
-  playerNameRaw: unknown
-): {
-  selectedSkill: string | null;
-  playerActionLogs: string[];
-} {
-  const actionResults = normalizeActionResults(actionResultsRaw);
-  if (actionResults.length === 0) {
-    return { selectedSkill: null, playerActionLogs: [] };
-  }
-
-  const playerName =
-    typeof playerNameRaw === "string" ? playerNameRaw.trim().toLowerCase() : "";
-  const playerResults = actionResults.filter((result) => {
-    const actor =
-      typeof result.character === "string"
-        ? result.character.trim().toLowerCase()
-        : "";
-    if (!playerName) return true;
-    if (!actor) return false;
-    return actor === playerName;
-  });
-
-  const relevantResults = playerResults.length > 0 ? playerResults : actionResults;
-  const detectedSkills: string[] = [];
-  const playerActionLogs: string[] = [];
-
-  for (const result of relevantResults) {
-    const skills = extractSkillNamesFromDiceRolls(result.diceRolls);
-    for (const skill of skills) {
-      if (!detectedSkills.includes(skill)) {
-        detectedSkills.push(skill);
-      }
-    }
-
-    const summary = typeof result.result === "string" ? result.result.trim() : "";
-    if (!summary) continue;
-
-    const time =
-      typeof result.gameTime === "string" && result.gameTime.trim().length > 0
-        ? result.gameTime.trim()
-        : "";
-    const location =
-      typeof result.location === "string" && result.location.trim().length > 0
-        ? result.location.trim()
-        : "";
-    const prefix = [time, location].filter(Boolean).join(" @ ");
-    playerActionLogs.push(prefix ? `${prefix}: ${summary}` : summary);
-  }
-
-  return {
-    selectedSkill: detectedSkills[0] ?? null,
-    playerActionLogs: playerActionLogs.slice(0, 3),
-  };
-}
 
 /**
  * Orchestrator Agent - Routes user queries to appropriate agents
@@ -141,13 +51,10 @@ export class OrchestratorAgent {
     const effectiveLanguage = language === "en" ? "en" : "zh";
 
     // Extract context from dynamic game state
-    const characterName = dynamicState.playerCharacter?.name || "Unknown";
     const scenarioLocation =
       dynamicState.currentScenario?.location || "Unknown location";
     const currentScenarioName =
       dynamicState.currentScenario?.name || "Unknown scenario";
-    const npcNames =
-      dynamicState.npcCharacters?.map((npc) => npc.name).join(", ") || "None";
     const npcList =
       dynamicState.npcCharacters?.map((npc) => ({
         id: npc.id,
@@ -190,47 +97,20 @@ export class OrchestratorAgent {
     }
     const rawConnections = scenarioOutline?.connections || [];
 
-    // Enrich connections with target scenario details
+    // Resolve connection names (template only needs scenarioName)
     const connections = rawConnections.map((conn) => {
-      // Find target scenario outline by name or id
       const targetScenario = dynamicState.scenarioOutlines.find(
         (outline) =>
           outline.name === conn.scenarioName || outline.id === conn.scenarioName
       );
-
       return {
-        scenarioName: targetScenario?.name || conn.scenarioName, // Use actual name from outline if found
-        scenarioId: targetScenario?.id || conn.scenarioName, // Include ID
-        relationshipType: conn.relationshipType,
-        description: conn.description,
-        blocked: conn.blocked,
-        blockReason: conn.blockReason,
+        scenarioName: targetScenario?.name || conn.scenarioName,
       };
     });
 
-    // Log connections for debugging
     console.log(
-      `\n🔗 [Orchestrator Agent] Current scenario connections (${connections.length}):`
+      `\n🔗 [Orchestrator Agent] Connected scenes (${connections.length}): ${connections.map((c) => c.scenarioName).join(", ") || "(none)"}`
     );
-    if (connections.length > 0) {
-      connections.forEach((conn, index) => {
-        console.log(
-          `   ${index + 1}. "${conn.scenarioName}" (ID: ${conn.scenarioId}) [${conn.relationshipType}]`
-        );
-        if (conn.description)
-          console.log(`      Description: ${conn.description}`);
-        if (conn.blocked) {
-          console.log(
-            `      ⚠️ BLOCKED: ${conn.blockReason || "No reason specified"}`
-          );
-        } else {
-          console.log(`      ✓ Not blocked`);
-        }
-        console.log(`      → Resolved to: "${conn.scenarioName}"`);
-      });
-    } else {
-      console.log(`   (No connections found for current scenario)`);
-    }
 
     // Get conversation history directly from database to extract previous narrative
     // This ensures we get the latest completed turns even if memory agent hasn't run yet
@@ -238,8 +118,6 @@ export class OrchestratorAgent {
       turnNumber: number;
       characterInput: string;
       keeperNarrative: string | null;
-      selectedSkill?: string | null;
-      playerActionLogs?: string[];
     }> = [];
 
     if (db) {
@@ -253,19 +131,11 @@ export class OrchestratorAgent {
         // Filter to only include turns with narrative
         conversationHistory = history
           .filter((turn) => turn.keeperNarrative)
-          .map((turn) => {
-            const playerSignals = extractHistoricalPlayerSignals(
-              (turn as { actionResults?: unknown }).actionResults,
-              (turn as { characterName?: unknown }).characterName
-            );
-            return {
-              turnNumber: turn.turnNumber,
-              characterInput: turn.characterInput,
-              keeperNarrative: turn.keeperNarrative,
-              selectedSkill: playerSignals.selectedSkill,
-              playerActionLogs: playerSignals.playerActionLogs,
-            };
-          });
+          .map((turn) => ({
+            turnNumber: turn.turnNumber,
+            characterInput: turn.characterInput,
+            keeperNarrative: turn.keeperNarrative,
+          }));
 
         if (conversationHistory.length > 0) {
           console.log(
@@ -284,8 +154,6 @@ export class OrchestratorAgent {
             turnNumber: number;
             characterInput: string;
             keeperNarrative: string | null;
-            selectedSkill?: string | null;
-            playerActionLogs?: string[];
           }>) || [];
 
         conversationHistory = fallbackHistory
@@ -362,10 +230,6 @@ export class OrchestratorAgent {
       }
     );
 
-    const relevantHistoryForPrompt = relevantHistory.filter(
-      (item) => item.type === "turn"
-    );
-
     // Persist for downstream agents (memory/keeper) so we only retrieve once per turn.
     gameStateManager.setContextualData("relevantHistory", relevantHistory);
     gameStateManager.setContextualData("relevantHistoryThreshold", 0.7);
@@ -377,13 +241,6 @@ export class OrchestratorAgent {
         `🧠 [Orchestrator Agent] Preloaded ${relevantHistory.length} relevant history items (threshold=0.7)`
       );
     }
-    if (relevantHistory.length > relevantHistoryForPrompt.length) {
-      console.debug(
-        `[Orchestrator Agent] Withheld ${
-          relevantHistory.length - relevantHistoryForPrompt.length
-        } action-log item(s) from orchestrator prompt context`
-      );
-    }
 
     // Compose the prompt with input and game context
     // Pass DynamicGameState directly to composeTemplate
@@ -393,13 +250,9 @@ export class OrchestratorAgent {
       dynamicState,
       {
         input,
-        characterName,
-        scenarioLocation,
         currentScenarioName,
-        npcNames,
         npcList,
-        conversationHistory, // Pass conversation history instead of single previousNarrative
-        relevantHistory: relevantHistoryForPrompt,
+        conversationHistory,
         connections,
       },
       "handlebars"

@@ -45,7 +45,7 @@ export class NPCPlanningAgent {
 
     await Promise.all(
       npcs.map(async (npc) => {
-        const npcProfile = this.formatNpcProfile(npc, truthTimelineRaw);
+        const npcProfile = this.formatNpcProfile(npc);
         const prompt = buildGenerateLongTermIntentPrompt({
           npcName: npc.name,
           npcProfile,
@@ -91,15 +91,13 @@ export class NPCPlanningAgent {
   ): Promise<void> {
     const state = dgsm.getState();
     const npcs = state.npcCharacters;
-    const truthTimelineRaw = state.truthTimeline ?? [];
 
     await Promise.all(
       npcs.map(async (npc) => {
         const longTermIntent = await this.getLongTermIntent(sessionId, npc.id);
-        const actionLog = await this.getActionLog(sessionId, npc.id);
-        const npcProfile = this.formatNpcProfile(npc, truthTimelineRaw);
+        const memoryLog = await this.getMemoryLog(sessionId, npc.id);
+        const npcProfile = this.formatNpcProfile(npc);
         const relationships = this.formatRelationships(dgsm, npc.id);
-        const npcLocations = this.formatNpcLocations(dgsm);
         const sceneMap = this.formatSceneMap(dgsm);
         const scenarioConditions = this.formatScenarioConditions(dgsm);
 
@@ -108,9 +106,8 @@ export class NPCPlanningAgent {
           npcId: npc.id,
           npcProfile,
           longTermIntent,
-          actionLog: actionLog.join("\n"),
+          memoryLog: memoryLog.join("\n"),
           relationships,
-          npcLocations,
           sceneMap,
           scenarioConditions,
           gameDay,
@@ -172,9 +169,9 @@ export class NPCPlanningAgent {
 
     const prompt = buildRevisePlansPrompt({
       npcName: npc.name,
-      npcProfile: this.formatNpcProfile(npc, state.truthTimeline ?? []),
+      npcProfile: this.formatNpcProfile(npc),
       longTermIntent: context.longTermIntent,
-      actionLog: context.actionLog.join("\n"),
+      memoryLog: context.memoryLog.join("\n"),
       pendingNodes: JSON.stringify(context.pendingNodes, null, 2),
       triggerDescription,
       language,
@@ -245,26 +242,32 @@ export class NPCPlanningAgent {
 
   async updateRelationshipViaLLM(
     dgsm: DynamicGameStateManager,
-    npcAId: string,
-    npcBId: string,
+    characterAId: string,
+    characterBId: string,
     interactionOutcome: string,
     language: string = "en"
-  ): Promise<void> {
+  ): Promise<{ scoreDelta: number; newScore: number; note: string } | null> {
     const state = dgsm.getState();
-    const npcA = state.npcCharacters.find((n) => n.id === npcAId);
-    const npcB = state.npcCharacters.find((n) => n.id === npcBId);
-    if (!npcA || !npcB) return;
 
-    const current = dgsm.getRelationship(npcAId, npcBId) ?? {
+    // Look up both characters — could be NPC or player
+    const findCharacter = (id: string) => {
+      if (state.playerCharacter?.id === id) return state.playerCharacter;
+      return state.npcCharacters.find((n) => n.id === id);
+    };
+    const charA = findCharacter(characterAId);
+    const charB = findCharacter(characterBId);
+    if (!charA || !charB) return null;
+
+    const current = dgsm.getRelationship(characterAId, characterBId) ?? {
       score: 0,
       note: "",
     };
 
     const prompt = buildRelationshipUpdatePrompt({
-      npcAName: npcA.name,
-      npcAProfile: this.formatNpcProfile(npcA, state.truthTimeline ?? []),
-      npcBName: npcB.name,
-      npcBProfile: this.formatNpcProfile(npcB, state.truthTimeline ?? []),
+      npcAName: charA.name,
+      npcAProfile: this.formatRelationshipProfile(charA),
+      npcBName: charB.name,
+      npcBProfile: this.formatRelationshipProfile(charB),
       currentScore: current.score,
       currentNote: current.note,
       interactionOutcome,
@@ -280,10 +283,12 @@ export class NPCPlanningAgent {
     const parsed = parseJsonResponse<{ scoreDelta: number; note: string }>(
       response
     );
-    dgsm.updateRelationship(npcAId, npcBId, parsed.scoreDelta, parsed.note);
+    dgsm.updateRelationship(characterAId, characterBId, parsed.scoreDelta, parsed.note);
+    const updated = dgsm.getRelationship(characterAId, characterBId);
+    return { scoreDelta: parsed.scoreDelta, newScore: updated?.score ?? 0, note: parsed.note };
   }
 
-  async appendActionLog(
+  async appendMemoryLog(
     sessionId: string,
     npcId: string,
     entry: string,
@@ -291,7 +296,7 @@ export class NPCPlanningAgent {
     gameTime: string,
     location: string
   ): Promise<void> {
-    await this.prisma.npcActionLog.create({
+    await this.prisma.npcMemoryLog.create({
       data: {
         sessionId,
         npcId,
@@ -303,9 +308,11 @@ export class NPCPlanningAgent {
     });
   }
 
-  async getActionLog(sessionId: string, npcId: string): Promise<string[]> {
-    const logs = await this.prisma.npcActionLog.findMany({
-      where: { sessionId, npcId },
+  async getMemoryLog(sessionId: string, npcId: string, gameDay?: number): Promise<string[]> {
+    const where: any = { sessionId, npcId };
+    if (gameDay !== undefined) where.gameDay = gameDay;
+    const logs = await this.prisma.npcMemoryLog.findMany({
+      where,
       orderBy: { createdAt: "asc" },
       select: { entry: true },
     });
@@ -381,37 +388,22 @@ export class NPCPlanningAgent {
 
   // === Private helpers ===
 
-  private formatNpcProfile(npc: any, truthTimeline?: any[]): string {
+  private formatNpcProfile(npc: any): string {
     const parts = [`Name: ${npc.name}`];
     if (npc.occupation) parts.push(`Occupation: ${npc.occupation}`);
     if (npc.personality) parts.push(`Personality: ${npc.personality}`);
     if (npc.background) parts.push(`Background: ${npc.background}`);
     if (npc.goals?.length) parts.push(`Goals: ${npc.goals.join(", ")}`);
     if (npc.secrets?.length) parts.push(`Secrets: ${npc.secrets.join(", ")}`);
-    if (npc.skills) {
-      const topSkills = Object.entries(npc.skills as Record<string, number>)
-        .sort(([, a], [, b]) => b - a)
-        .slice(0, 10)
-        .map(([k, v]) => `${k}: ${v}`)
-        .join(", ");
-      parts.push(`Key Skills: ${topSkills}`);
-    }
-    // Clues this NPC carries
-    if (npc.clues?.length) {
-      const clueLines = npc.clues
-        .map((c: any) => `  - [${c.category ?? "info"}] ${c.clueText}${c.revealed ? " (revealed)" : ""}`)
-        .join("\n");
-      parts.push(`Clues:\n${clueLines}`);
-    }
-    // Truth events this NPC knows about
-    if (npc.inheritsKnowledge?.length && truthTimeline?.length) {
-      const knownIds = new Set(npc.inheritsKnowledge as string[]);
-      const knownTruths = truthTimeline
-        .filter((t: any) => knownIds.has(t.id))
-        .map((t: any) => `  - ${t.time ?? ""}: ${t.event}`)
-        .join("\n");
-      if (knownTruths) parts.push(`Known Truth Events:\n${knownTruths}`);
-    }
+    return parts.join("\n");
+  }
+
+  private formatRelationshipProfile(character: any): string {
+    const parts = [`Name: ${character.name}`];
+    if (character.occupation) parts.push(`Occupation: ${character.occupation}`);
+    if (character.personality) parts.push(`Personality: ${character.personality}`);
+    if (character.background) parts.push(`Background: ${character.background}`);
+    if (character.backstory) parts.push(`Backstory: ${character.backstory}`);
     return parts.join("\n");
   }
 
@@ -430,28 +422,35 @@ export class NPCPlanningAgent {
       .join("\n");
   }
 
-  private formatNpcLocations(dgsm: DynamicGameStateManager): string {
-    const locs = dgsm.getState().npcLocations;
-    const npcs = dgsm.getState().npcCharacters;
-    if (Object.keys(locs).length === 0) return "No location data.";
-    return Object.entries(locs)
-      .map(([npcId, scenarioId]) => {
-        const npc = npcs.find((n) => n.id === npcId);
-        return `- ${npc?.name ?? npcId}: ${scenarioId}`;
-      })
-      .join("\n");
-  }
-
   private formatSceneMap(dgsm: DynamicGameStateManager): string {
     const state = dgsm.getState();
+    const outlines = state.scenarioOutlines ?? [];
     const connections = state.connectionStates;
-    if (connections.length === 0) return "No connection data.";
-    return connections
-      .map(
-        (c) =>
-          `${c.fromScenarioId} ↔ ${c.toScenarioId}${c.blocked ? " [BLOCKED]" : ""}${c.conditions.length > 0 ? ` (${c.conditions[c.conditions.length - 1]})` : ""}`
-      )
-      .join("\n");
+
+    // Scene directory: id → name + short description
+    const sceneParts: string[] = [];
+    const nameById = new Map<string, string>();
+    for (const s of outlines) {
+      nameById.set(s.id, s.name);
+      sceneParts.push(`- ${s.id} "${s.name}": ${s.description}`);
+    }
+
+    // Connection graph with names
+    const connParts: string[] = [];
+    for (const c of connections) {
+      const fromName = nameById.get(c.fromScenarioId) ?? c.fromScenarioId;
+      const toName = nameById.get(c.toScenarioId) ?? c.toScenarioId;
+      let line = `${fromName} (${c.fromScenarioId}) ↔ ${toName} (${c.toScenarioId})`;
+      if (c.blocked) line += " [BLOCKED]";
+      if (c.conditions.length > 0) line += ` (${c.conditions[c.conditions.length - 1]})`;
+      connParts.push(line);
+    }
+
+    if (sceneParts.length === 0 && connParts.length === 0) return "No scene data.";
+    const parts: string[] = [];
+    if (sceneParts.length > 0) parts.push("Scenes:\n" + sceneParts.join("\n"));
+    if (connParts.length > 0) parts.push("Connections:\n" + connParts.join("\n"));
+    return parts.join("\n\n");
   }
 
   private formatScenarioConditions(dgsm: DynamicGameStateManager): string {

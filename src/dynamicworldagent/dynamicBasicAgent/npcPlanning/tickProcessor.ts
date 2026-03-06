@@ -1,4 +1,6 @@
 import type { ActionType } from "../../../shared/state/index.js";
+import { EmbeddingClient } from "../../../rag/embedding.js";
+import { ModelProviderName } from "../../../models/types.js";
 import type { DynamicGameStateManager } from "../../state/DynamicGameState.js";
 import type { NPCPlanningAgent } from "./NPCPlanningAgent.js";
 import { ACTION_TYPE_SKILL_MAP } from "./actionTypeSkillMap.js";
@@ -8,6 +10,8 @@ import type {
   CharacterAction,
   FailureReason,
   SceneCondition,
+  DiscoveredClueEntry,
+  SuccessLevel,
 } from "./types.js";
 
 // ==================== Time helpers ====================
@@ -32,8 +36,6 @@ function getBucketLabel(bucketMinutes: number): string {
 function rollD100(): number {
   return Math.floor(Math.random() * 100) + 1;
 }
-
-type SuccessLevel = "critical" | "hard" | "regular" | "fail";
 
 function getSuccessLevel(roll: number, skillValue: number): SuccessLevel {
   if (roll === 1) return "critical";
@@ -222,9 +224,9 @@ function resolveSkillRoll(
   node: PlanNode,
   adjustedSkills: Record<string, number>,
   dgsm: DynamicGameStateManager
-): { failed: boolean; reason?: string; detail?: string } {
+): { failed: boolean; reason?: string; detail?: string; successLevel: SuccessLevel } {
   const actionType = node.actionType;
-  if (!actionType) return { failed: false };
+  if (!actionType) return { failed: false, successLevel: "regular" };
 
   const state = dgsm.getState();
   const difficulty = getNodeDifficulty(node, dgsm);
@@ -249,6 +251,7 @@ function resolveSkillRoll(
     if (SUCCESS_RANK[attackLevel] <= SUCCESS_RANK[defendLevel]) {
       return {
         failed: true,
+        successLevel: attackLevel,
         reason: `${attackSkill?.skill ?? "Attack"} ${attackValue}, rolled ${attackRoll} (${attackLevel}) vs Dodge ${defenderDodge}, rolled ${defendRoll} (${defendLevel})`,
         detail: "skill_roll_failed",
       };
@@ -261,7 +264,7 @@ function resolveSkillRoll(
     const totalDamage = weaponDamage + bonusDamage;
     dgsm.updateNpcHp(node.targetCharacterId, -totalDamage);
 
-    return { failed: false, detail: `Hit for ${totalDamage} damage (${attackSkill?.skill ?? "Attack"} ${attackRoll}/${attackValue})` };
+    return { failed: false, successLevel: attackLevel, detail: `Hit for ${totalDamage} damage (${attackSkill?.skill ?? "Attack"} ${attackRoll}/${attackValue})` };
   }
 
   if (actionType === "social" && node.targetCharacterId) {
@@ -280,11 +283,12 @@ function resolveSkillRoll(
     if (SUCCESS_RANK[actorLevel] <= SUCCESS_RANK[targetLevel]) {
       return {
         failed: true,
+        successLevel: actorLevel,
         reason: `${socialSkill?.skill ?? "Social"} ${socialValue}, rolled ${actorRoll} (${actorLevel}) vs Psychology ${psychValue}, rolled ${targetRoll} (${targetLevel})`,
         detail: "skill_roll_failed",
       };
     }
-    return { failed: false };
+    return { failed: false, successLevel: actorLevel };
   }
 
   if (actionType === "chase" && node.targetCharacterId) {
@@ -305,11 +309,12 @@ function resolveSkillRoll(
     if (SUCCESS_RANK[chaserLevel] <= SUCCESS_RANK[targetLevel]) {
       return {
         failed: true,
+        successLevel: chaserLevel,
         reason: `${chaserSkill?.skill ?? "Chase"} ${chaserValue}, rolled ${chaserRoll} (${chaserLevel}) vs ${targetChaseSkill?.skill ?? "Flee"} ${targetValue}, rolled ${targetRoll} (${targetLevel})`,
         detail: "skill_roll_failed",
       };
     }
-    return { failed: false };
+    return { failed: false, successLevel: chaserLevel };
   }
 
   if (actionType === "mental") {
@@ -324,18 +329,18 @@ function resolveSkillRoll(
     const level = getSuccessLevelWithDifficulty(roll, sanValue, effectiveDifficulty);
 
     if (level === "fail") {
-      // Failed SAN check
       const sanLoss = horror.sanLossMax;
       dgsm.updateNpcSan(node.characterId, -sanLoss);
       return {
         failed: true,
+        successLevel: "fail",
         reason: `SAN ${sanValue}, rolled ${roll} (difficulty: ${effectiveDifficulty}), lost ${sanLoss} sanity`,
         detail: "skill_roll_failed",
       };
     } else {
       const sanLoss = horror.sanLossMin;
       if (sanLoss > 0) dgsm.updateNpcSan(node.characterId, -sanLoss);
-      return { failed: false, detail: `SAN check passed (${roll}/${sanValue}, difficulty: ${effectiveDifficulty}), lost ${sanLoss} sanity` };
+      return { failed: false, successLevel: level, detail: `SAN check passed (${roll}/${sanValue}, difficulty: ${effectiveDifficulty}), lost ${sanLoss} sanity` };
     }
   }
 
@@ -350,11 +355,240 @@ function resolveSkillRoll(
   if (level === "fail") {
     return {
       failed: true,
+      successLevel: "fail",
       reason: `${bestSkill?.skill ?? actionType} ${skillValue}, rolled ${roll} (difficulty: ${effectiveDifficulty})`,
       detail: "skill_roll_failed",
     };
   }
-  return { failed: false, detail: `${bestSkill?.skill ?? actionType} ${roll}/${skillValue} (${level}, difficulty: ${effectiveDifficulty})` };
+  return { failed: false, successLevel: level, detail: `${bestSkill?.skill ?? actionType} ${roll}/${skillValue} (${level}, difficulty: ${effectiveDifficulty})` };
+}
+
+// ==================== Clue Discovery ====================
+
+const CLUE_DIFFICULTY_RANK: Record<string, number> = {
+  automatic: 0,
+  regular: 1,
+  hard: 2,
+  extreme: 3,
+};
+
+/** success level → max clue difficulty rank discoverable */
+const SUCCESS_TO_MAX_CLUE_RANK: Record<SuccessLevel, number> = {
+  critical: 3, // extreme
+  hard: 2,     // hard
+  regular: 1,  // regular
+  fail: 0,     // automatic only
+};
+
+/** Only these actionTypes can trigger non-automatic clue discovery */
+const CLUE_DISCOVERY_ACTION_TYPES = new Set<string>([
+  "exploration", "social", "stealth", "narrative",
+]);
+
+const CLUE_SIMILARITY_THRESHOLD = 0.7;
+
+// Lazy embedding client singleton
+let _embeddingClient: EmbeddingClient | null = null;
+function getEmbeddingClient(): EmbeddingClient {
+  if (!_embeddingClient) {
+    const provider = (process.env.MODEL_PROVIDER as ModelProviderName) || ModelProviderName.OPENAI;
+    _embeddingClient = new EmbeddingClient(provider);
+  }
+  return _embeddingClient;
+}
+
+function cosineSimilarity(a: number[], b: number[]): number {
+  if (!a.length || !b.length || a.length !== b.length) return 0;
+  let dot = 0, normA = 0, normB = 0;
+  for (let i = 0; i < a.length; i++) {
+    dot += a[i] * b[i];
+    normA += a[i] * a[i];
+    normB += b[i] * b[i];
+  }
+  const denom = Math.sqrt(normA) * Math.sqrt(normB);
+  return denom === 0 ? 0 : dot / denom;
+}
+
+interface ClueCandidate {
+  clueId: string;
+  clueText: string;
+  difficulty: string;
+  source: "scene" | "npc";
+  sourceId: string;
+  sourceName: string;
+}
+
+/**
+ * Discover clues after a successful action.
+ *
+ * - Scene clues: triggered by scene_interaction / object_interaction
+ * - NPC clues + secrets: triggered by character_interaction
+ * - Only exploration/social/stealth/narrative actionTypes unlock non-automatic clues
+ * - Filters by success level → clue difficulty
+ * - Semantic match with 0.7 threshold, prioritizes highest difficulty first
+ */
+async function discoverClues(
+  node: PlanNode,
+  successLevel: SuccessLevel,
+  dgsm: DynamicGameStateManager,
+  language: string
+): Promise<DiscoveredClueEntry[]> {
+  const state = dgsm.getState();
+  const scenario = state.currentScenario;
+
+  // Determine max discoverable difficulty rank
+  let maxRank: number;
+  if (node.actionType && CLUE_DISCOVERY_ACTION_TYPES.has(node.actionType)) {
+    // Qualifying actionType → use success level
+    maxRank = SUCCESS_TO_MAX_CLUE_RANK[successLevel] ?? 0;
+  } else if (
+    !node.actionType &&
+    node.type === "character_interaction" &&
+    node.targetCharacterId
+  ) {
+    // No actionType + character_interaction → NPC relationship score determines max clue rank
+    const rel = dgsm.getRelationship(node.characterId, node.targetCharacterId);
+    const score = rel?.score ?? 0;
+    if (score >= 80) maxRank = 3;      // extreme
+    else if (score >= 70) maxRank = 2; // hard
+    else if (score >= 60) maxRank = 1; // regular
+    else maxRank = 0;                  // automatic only
+  } else {
+    // No qualifying actionType, not NPC interaction → automatic only
+    maxRank = 0;
+  }
+
+  // Collect candidates based on node type
+  const candidates: ClueCandidate[] = [];
+
+  if (
+    (node.type === "scene_interaction" || node.type === "object_interaction") &&
+    scenario?.clues
+  ) {
+    for (const clue of scenario.clues) {
+      if (clue.discovered || clue.damaged) continue;
+      const rank = CLUE_DIFFICULTY_RANK[clue.difficulty] ?? 1;
+      if (rank > maxRank) continue;
+      candidates.push({
+        clueId: clue.id,
+        clueText: clue.clueText,
+        difficulty: clue.difficulty,
+        source: "scene",
+        sourceId: scenario.id,
+        sourceName: scenario.name,
+      });
+    }
+  }
+
+  if (node.type === "character_interaction" && node.targetCharacterId) {
+    const npc = state.npcCharacters.find((n) => n.id === node.targetCharacterId);
+    if (npc) {
+      // NPC clues
+      if (npc.clues) {
+        for (const clue of npc.clues) {
+          if (clue.revealed) continue;
+          const rank = CLUE_DIFFICULTY_RANK[clue.difficulty ?? "regular"] ?? 1;
+          if (rank > maxRank) continue;
+          candidates.push({
+            clueId: clue.id,
+            clueText: clue.clueText,
+            difficulty: clue.difficulty ?? "regular",
+            source: "npc",
+            sourceId: npc.id,
+            sourceName: npc.name,
+          });
+        }
+      }
+      // NPC secrets (treated as "hard" difficulty)
+      if (npc.secrets) {
+        const hardRank = CLUE_DIFFICULTY_RANK["hard"];
+        if (hardRank <= maxRank) {
+          for (let i = 0; i < npc.secrets.length; i++) {
+            const alreadyKnown = state.discoveredClues.some(
+              (dc) => dc.text === npc.secrets![i] || dc.text === `Secret: ${npc.secrets![i]}`
+            );
+            if (alreadyKnown) continue;
+            candidates.push({
+              clueId: `${npc.id}_secret_${i}`,
+              clueText: npc.secrets[i],
+              difficulty: "hard",
+              source: "npc",
+              sourceId: npc.id,
+              sourceName: npc.name,
+            });
+          }
+        }
+      }
+    }
+  }
+
+  if (candidates.length === 0) return [];
+
+  // Split automatic (always discovered) vs non-automatic (need semantic match)
+  const automaticResults: DiscoveredClueEntry[] = [];
+  const matchCandidates: ClueCandidate[] = [];
+
+  for (const c of candidates) {
+    if (c.difficulty === "automatic") {
+      automaticResults.push({
+        clueId: c.clueId,
+        clueText: c.clueText,
+        source: c.source,
+        sourceId: c.sourceId,
+        sourceName: c.sourceName,
+        difficulty: "automatic",
+        similarity: 1.0,
+      });
+    } else {
+      matchCandidates.push(c);
+    }
+  }
+
+  if (matchCandidates.length === 0) return automaticResults;
+
+  // Semantic match: embed action, compare against each candidate
+  try {
+    const embedClient = getEmbeddingClient();
+    const lang = (language?.startsWith("zh") ? "zh" : "en") as "zh" | "en";
+    const actionEmbedding = await embedClient.embed(node.action, { language: lang });
+    if (!actionEmbedding.length) return automaticResults;
+
+    // Sort candidates by difficulty descending (hardest first) before matching
+    matchCandidates.sort(
+      (a, b) => (CLUE_DIFFICULTY_RANK[b.difficulty] ?? 0) - (CLUE_DIFFICULTY_RANK[a.difficulty] ?? 0)
+    );
+
+    const matched: DiscoveredClueEntry[] = [];
+    for (const c of matchCandidates) {
+      const clueEmbedding = await embedClient.embed(c.clueText, { language: lang });
+      if (!clueEmbedding.length) continue;
+
+      const sim = cosineSimilarity(actionEmbedding, clueEmbedding);
+      if (sim >= CLUE_SIMILARITY_THRESHOLD) {
+        matched.push({
+          clueId: c.clueId,
+          clueText: c.clueText,
+          source: c.source,
+          sourceId: c.sourceId,
+          sourceName: c.sourceName,
+          difficulty: c.difficulty as DiscoveredClueEntry["difficulty"],
+          similarity: sim,
+        });
+      }
+    }
+
+    // Already sorted by difficulty desc; break ties by similarity desc
+    matched.sort((a, b) => {
+      const diffDelta = (CLUE_DIFFICULTY_RANK[b.difficulty] ?? 0) - (CLUE_DIFFICULTY_RANK[a.difficulty] ?? 0);
+      if (diffDelta !== 0) return diffDelta;
+      return b.similarity - a.similarity;
+    });
+
+    return [...automaticResults, ...matched];
+  } catch (error) {
+    console.warn("[TickProcessor] Clue discovery embedding failed:", error);
+    return automaticResults;
+  }
 }
 
 // ==================== Execute single node ====================
@@ -374,6 +608,35 @@ function executeNode(
   const penalties = getScenePenalties(node.location, dgsm);
   const adjustedSkills = applyPenalties(npcSkills, penalties);
 
+  let resolvedSuccessLevel: SuccessLevel | undefined;
+  let lastRollDetail: string | undefined; // skill roll detail from resolveSkillRoll
+
+  // Build rich outcome string with skill + payload context
+  const buildOutcome = (status: "completed" | "failed", reason?: string): string => {
+    const parts: string[] = [node.action];
+    // Skill roll info
+    if (lastRollDetail) {
+      parts.push(`[${lastRollDetail}]`);
+    } else if (reason) {
+      parts.push(`[${reason}]`);
+    }
+    // Payload context
+    if (node.type === "character_interaction" && node.characterInteractionPayload) {
+      const p = node.characterInteractionPayload;
+      if (p.transferType === "item" && p.itemId) parts.push(`(item: ${p.itemId})`);
+      else if (p.transferType === "clue" && p.clueId) parts.push(`(clue: ${p.clueId})`);
+      else if (p.transferType === "information" && p.informationContent) parts.push(`(info: ${p.informationContent})`);
+    } else if (node.type === "object_interaction" && node.objectInteractionPayload) {
+      const p = node.objectInteractionPayload;
+      parts.push(`(${p.action}${p.itemId ? `: ${p.itemId}` : ""})`);
+    } else if (node.type === "scene_interaction" && node.sceneConnectionEffect) {
+      const e = node.sceneConnectionEffect;
+      parts.push(`(${e.action} connection to ${e.targetScenarioId})`);
+    }
+    parts.push(status === "completed" ? "succeeded" : "failed");
+    return parts.join(" ");
+  };
+
   const makeAction = (
     status: "completed" | "failed",
     outcome: string,
@@ -389,6 +652,7 @@ function executeNode(
     impact: node.impact,
     isPlayer: node.isPlayer,
     difficulty,
+    successLevel: resolvedSuccessLevel,
     status,
     outcome,
     failureReason,
@@ -399,71 +663,80 @@ function executeNode(
 
   if (node.type === "routine") {
     if (npcLocation && npcLocation !== node.location) {
-      return makeAction("failed", `${node.action} failed: not at expected location`, "location_mismatch");
+      return makeAction("failed", buildOutcome("failed", "not at expected location"), "location_mismatch");
     }
     // actionType present? → skill roll
     if (node.actionType) {
       const rollResult = resolveSkillRoll(node, adjustedSkills, dgsm);
+      resolvedSuccessLevel = rollResult.successLevel;
       if (rollResult.failed) {
-        return makeAction("failed", `${node.action} failed: ${rollResult.reason}`, "skill_roll_failed");
+        lastRollDetail = rollResult.reason;
+        return makeAction("failed", buildOutcome("failed", rollResult.reason), "skill_roll_failed");
       }
+      lastRollDetail = rollResult.detail;
     }
-    return makeAction("completed", `${node.action} succeeded`);
+    return makeAction("completed", buildOutcome("completed"));
   }
 
   if (node.type === "movement") {
     const fromLocation = npcLocation ?? node.location;
     if (dgsm.isConnectionBlocked(fromLocation, node.location)) {
-      return makeAction("failed", `${node.action} failed: path blocked`, "location_blocked");
+      return makeAction("failed", buildOutcome("failed", "path blocked"), "location_blocked");
     }
     // Check scene conditions for blocked
     const targetConditions = dgsm.getSceneConditions(node.location);
     const isBlocked = targetConditions.some((c) => c.mechanicalEffect?.blocked);
     if (isBlocked) {
-      return makeAction("failed", `${node.action} failed: destination blocked`, "location_blocked");
+      return makeAction("failed", buildOutcome("failed", "destination blocked"), "location_blocked");
     }
     dgsm.setNpcLocation(node.characterId, node.location);
-    return makeAction("completed", `${node.action} succeeded`);
+    return makeAction("completed", buildOutcome("completed"));
   }
 
   if (node.type === "character_interaction") {
     if (npcLocation && npcLocation !== node.location) {
-      return makeAction("failed", `${node.action} failed: not at expected location`, "location_mismatch");
+      return makeAction("failed", buildOutcome("failed", "not at expected location"), "location_mismatch");
     }
     if (node.targetCharacterId) {
       const targetLocation = dgsm.getNpcLocation(node.targetCharacterId);
       // Player character doesn't have npcLocation entry — skip check for player
       if (targetLocation && targetLocation !== node.location) {
-        return makeAction("failed", `${node.action} failed: target not present`, "target_absent");
+        return makeAction("failed", buildOutcome("failed", "target not present"), "target_absent");
       }
     }
 
     // For NPC nodes with luck_only difficulty: skip actionType skill roll, only do luck-based roll
     if (!node.isPlayer && difficulty === "luck_only") {
       if (Math.random() < luckFailureRate(luck)) {
-        return makeAction("failed", `${node.action} failed: bad luck (luck=${luck})`, "bad_luck");
+        return makeAction("failed", buildOutcome("failed", `bad luck (luck=${luck})`), "bad_luck");
       }
     } else if (node.isPlayer) {
       // Player nodes: skip luck-based failure check entirely
       // Only do skill roll if actionType present
       if (node.actionType) {
         const rollResult = resolveSkillRoll(node, adjustedSkills, dgsm);
+        resolvedSuccessLevel = rollResult.successLevel;
         if (rollResult.failed) {
-          return makeAction("failed", `${node.action} failed: ${rollResult.reason}`, "skill_roll_failed");
+          lastRollDetail = rollResult.reason;
+          return makeAction("failed", buildOutcome("failed", rollResult.reason), "skill_roll_failed");
         }
+        lastRollDetail = rollResult.detail;
       }
     } else {
       // NPC nodes (non-luck_only): existing logic
       // Luck-based failure (only when no actionType)
       if (!node.actionType && Math.random() < luckFailureRate(luck)) {
-        return makeAction("failed", `${node.action} failed: bad luck (luck=${luck})`, "bad_luck");
+        return makeAction("failed", buildOutcome("failed", `bad luck (luck=${luck})`), "bad_luck");
       }
       // Skill roll if actionType present
       if (node.actionType) {
         const rollResult = resolveSkillRoll(node, adjustedSkills, dgsm);
+        resolvedSuccessLevel = rollResult.successLevel;
         if (rollResult.failed) {
-          return makeAction("failed", `${node.action} failed: ${rollResult.reason}`, "skill_roll_failed");
+          lastRollDetail = rollResult.reason;
+          return makeAction("failed", buildOutcome("failed", rollResult.reason), "skill_roll_failed");
         }
+        lastRollDetail = rollResult.detail;
       }
     }
 
@@ -478,37 +751,40 @@ function executeNode(
       }
       // "information" transfer: no mechanical side effect here; impact gate handles plan revision
     }
-    return makeAction("completed", `${node.action} succeeded`);
+    return makeAction("completed", buildOutcome("completed"));
   }
 
   if (node.type === "object_interaction") {
     if (npcLocation && npcLocation !== node.location) {
-      return makeAction("failed", `${node.action} failed: not at expected location`, "location_mismatch");
+      return makeAction("failed", buildOutcome("failed", "not at expected location"), "location_mismatch");
     }
 
     if (node.isPlayer) {
-      // Player nodes: skip luck-based failure, only skill roll
       if (node.actionType) {
         const rollResult = resolveSkillRoll(node, adjustedSkills, dgsm);
+        resolvedSuccessLevel = rollResult.successLevel;
         if (rollResult.failed) {
-          return makeAction("failed", `${node.action} failed: ${rollResult.reason}`, "skill_roll_failed");
+          lastRollDetail = rollResult.reason;
+          return makeAction("failed", buildOutcome("failed", rollResult.reason), "skill_roll_failed");
         }
+        lastRollDetail = rollResult.detail;
       }
     } else if (difficulty === "luck_only") {
-      // NPC luck_only: skip actionType skill roll, only luck-based
       if (Math.random() < luckFailureRate(luck)) {
-        return makeAction("failed", `${node.action} failed: bad luck (luck=${luck})`, "bad_luck");
+        return makeAction("failed", buildOutcome("failed", `bad luck (luck=${luck})`), "bad_luck");
       }
     } else {
-      // NPC: existing logic
       if (!node.actionType && Math.random() < luckFailureRate(luck)) {
-        return makeAction("failed", `${node.action} failed: bad luck (luck=${luck})`, "bad_luck");
+        return makeAction("failed", buildOutcome("failed", `bad luck (luck=${luck})`), "bad_luck");
       }
       if (node.actionType) {
         const rollResult = resolveSkillRoll(node, adjustedSkills, dgsm);
+        resolvedSuccessLevel = rollResult.successLevel;
         if (rollResult.failed) {
-          return makeAction("failed", `${node.action} failed: ${rollResult.reason}`, "skill_roll_failed");
+          lastRollDetail = rollResult.reason;
+          return makeAction("failed", buildOutcome("failed", rollResult.reason), "skill_roll_failed");
         }
+        lastRollDetail = rollResult.detail;
       }
     }
 
@@ -521,44 +797,46 @@ function executeNode(
         dgsm.removeItemFromNpc(node.characterId, payload.itemId);
       }
     }
-    return makeAction("completed", `${node.action} succeeded`);
+    return makeAction("completed", buildOutcome("completed"));
   }
 
   if (node.type === "scene_interaction") {
     if (npcLocation && npcLocation !== node.location) {
-      return makeAction("failed", `${node.action} failed: not at expected location`, "location_mismatch");
+      return makeAction("failed", buildOutcome("failed", "not at expected location"), "location_mismatch");
     }
 
     if (node.isPlayer) {
-      // Player nodes: skip luck-based failure, only skill roll
       if (node.actionType) {
         const rollResult = resolveSkillRoll(node, adjustedSkills, dgsm);
+        resolvedSuccessLevel = rollResult.successLevel;
         if (rollResult.failed) {
-          return makeAction("failed", `${node.action} failed: ${rollResult.reason}`, "skill_roll_failed");
+          lastRollDetail = rollResult.reason;
+          return makeAction("failed", buildOutcome("failed", rollResult.reason), "skill_roll_failed");
         }
+        lastRollDetail = rollResult.detail;
       }
     } else if (difficulty === "luck_only") {
-      // NPC luck_only: skip actionType skill roll, only luck-based
       if (Math.random() < luckFailureRate(luck)) {
-        return makeAction("failed", `${node.action} failed: bad luck (luck=${luck})`, "bad_luck");
+        return makeAction("failed", buildOutcome("failed", `bad luck (luck=${luck})`), "bad_luck");
       }
     } else {
-      // NPC: existing logic
       if (!node.actionType && Math.random() < luckFailureRate(luck)) {
-        return makeAction("failed", `${node.action} failed: bad luck (luck=${luck})`, "bad_luck");
+        return makeAction("failed", buildOutcome("failed", `bad luck (luck=${luck})`), "bad_luck");
       }
       if (node.actionType) {
         const rollResult = resolveSkillRoll(node, adjustedSkills, dgsm);
+        resolvedSuccessLevel = rollResult.successLevel;
         if (rollResult.failed) {
-          return makeAction("failed", `${node.action} failed: ${rollResult.reason}`, "skill_roll_failed");
+          lastRollDetail = rollResult.reason;
+          return makeAction("failed", buildOutcome("failed", rollResult.reason), "skill_roll_failed");
         }
+        lastRollDetail = rollResult.detail;
       }
     }
 
     // Append outcome as scene condition
-    const outcome = `${node.action} succeeded`;
+    const outcome = buildOutcome("completed");
     dgsm.appendSceneCondition(node.location, { description: outcome });
-    // Apply connection effect if present
     if (node.sceneConnectionEffect) {
       const effect = node.sceneConnectionEffect;
       const blocked = effect.action === "block";
@@ -568,7 +846,7 @@ function executeNode(
   }
 
   // Fallback
-  return makeAction("completed", `${node.action} succeeded`);
+  return makeAction("completed", buildOutcome("completed"));
 }
 
 // ==================== Main runTick ====================
@@ -652,26 +930,62 @@ export async function runTick(
         // (the skip logic above handles player nodes)
       }
 
+      // On character_interaction success → update relationship (before logging so we can include delta)
+      let relationshipChange: string | undefined;
+      if (action.status === "completed" && node.type === "character_interaction" && node.targetCharacterId) {
+        const relResult = await npcPlanningAgent.updateRelationshipViaLLM(dgsm, node.characterId, node.targetCharacterId, action.outcome, language);
+        if (relResult) {
+          const sign = relResult.scoreDelta >= 0 ? "+" : "";
+          relationshipChange = `[relationship ${sign}${relResult.scoreDelta} → ${relResult.newScore}, ${relResult.note}]`;
+        }
+      }
+
       // Log NPC actions (not player)
       if (!node.isPlayer) {
-        const logEntry = `Day${gameDay} ${action.gameTime} [${action.location}] - ${action.outcome}`;
-        await npcPlanningAgent.appendActionLog(sessionId, node.characterId, logEntry, gameDay, action.gameTime, action.location);
+        let logEntry = `Day${gameDay} ${action.gameTime} [${action.location}] - ${action.outcome}`;
+        if (relationshipChange) logEntry += ` ${relationshipChange}`;
+        await npcPlanningAgent.appendMemoryLog(sessionId, node.characterId, logEntry, gameDay, action.gameTime, action.location);
         await npcPlanningAgent.markNodeCompleted(sessionId, node.characterId, gameDay, node.nodeId, action.outcome);
       }
 
-      // On character_interaction success → update relationship
-      if (action.status === "completed" && node.type === "character_interaction" && node.targetCharacterId) {
-        await npcPlanningAgent.updateRelationshipViaLLM(dgsm, node.characterId, node.targetCharacterId, action.outcome, language);
+      // Clue discovery — only for player's successful nodes
+      if (action.status === "completed" && node.isPlayer) {
+        const effectiveSuccess: SuccessLevel = action.successLevel ?? "regular";
+        const clues = await discoverClues(node, effectiveSuccess, dgsm, language);
+        if (clues.length > 0) {
+          action.discoveredClues = clues;
+          // Mark scene clues as discovered
+          for (const entry of clues) {
+            if (entry.source === "scene") {
+              dgsm.markScenarioClueDiscovered(entry.clueId, node.characterName);
+            } else if (entry.source === "npc") {
+              dgsm.markNpcClueRevealed(entry.sourceId, entry.clueId);
+            }
+            // Add to global discoveredClues list
+            dgsm.addDiscoveredClue({
+              text: entry.clueText,
+              type: entry.source === "scene" ? "scenario" : entry.clueId.includes("_secret_") ? "secret" : "npc",
+              sourceName: entry.sourceName,
+              discoveredBy: node.characterName,
+              discoveredAt: new Date().toISOString(),
+              difficulty: entry.difficulty,
+              method: node.action,
+            });
+          }
+          console.log(
+            `[TickProcessor] Player discovered ${clues.length} clue(s): ${clues.map((c) => `[${c.difficulty}] ${c.clueText.slice(0, 40)}`).join("; ")}`
+          );
+        }
       }
 
       // On failure → immediate revisePlans (no gate) — NPC only
       if (action.status === "failed" && !node.isPlayer) {
         const longTermIntent = await npcPlanningAgent.getLongTermIntent(sessionId, node.characterId);
-        const actionLog = await npcPlanningAgent.getActionLog(sessionId, node.characterId);
+        const memoryLog = await npcPlanningAgent.getMemoryLog(sessionId, node.characterId, gameDay);
         const pendingNodes = await npcPlanningAgent.getPendingNodes(sessionId, node.characterId, gameDay);
         await npcPlanningAgent.revisePlans(dgsm, sessionId, node.characterId, {
           longTermIntent,
-          actionLog,
+          memoryLog,
           pendingNodes,
           trigger: {
             type: "failure",
@@ -752,16 +1066,16 @@ export async function runTick(
             // Always log witness entry
             const logEntry = `Day${gameDay} ${bucketTime} [witness] - ${result.witnessEntry}`;
             const npcLoc = dgsm.getNpcLocation(result.npcId) ?? "unknown";
-            await npcPlanningAgent.appendActionLog(sessionId, result.npcId, logEntry, gameDay, bucketTime, npcLoc);
+            await npcPlanningAgent.appendMemoryLog(sessionId, result.npcId, logEntry, gameDay, bucketTime, npcLoc);
 
             if (result.shouldRevise) {
               const longTermIntent = await npcPlanningAgent.getLongTermIntent(sessionId, result.npcId);
-              const actionLog = await npcPlanningAgent.getActionLog(sessionId, result.npcId);
+              const memoryLog = await npcPlanningAgent.getMemoryLog(sessionId, result.npcId, gameDay);
               const pendingNodes = await npcPlanningAgent.getPendingNodes(sessionId, result.npcId, gameDay);
               const triggeringAction = impactEvents[0]; // Use first event as trigger
               await npcPlanningAgent.revisePlans(dgsm, sessionId, result.npcId, {
                 longTermIntent,
-                actionLog,
+                memoryLog,
                 pendingNodes,
                 trigger: {
                   type: "impact",

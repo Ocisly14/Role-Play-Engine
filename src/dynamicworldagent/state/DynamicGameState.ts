@@ -2036,6 +2036,34 @@ export class DynamicGameStateManager {
     }
   }
 
+  markScenarioClueDiscovered(clueId: string, discoveredBy: string): void {
+    if (!this.state.currentScenario?.clues) return;
+    const clue = this.state.currentScenario.clues.find((c) => c.id === clueId);
+    if (clue && !clue.discovered) {
+      clue.discovered = true;
+      clue.discoveryDetails = {
+        discoveredBy,
+        discoveredAt: new Date().toISOString(),
+        method: "tick_discovery",
+      };
+    }
+  }
+
+  markNpcClueRevealed(npcId: string, clueId: string): void {
+    const npc = this.state.npcCharacters.find((n) => n.id === npcId);
+    if (!npc?.clues) return;
+    // Handle regular NPC clues
+    const clue = npc.clues.find((c) => c.id === clueId);
+    if (clue) clue.revealed = true;
+  }
+
+  addDiscoveredClue(clue: DiscoveredClue): void {
+    const exists = this.state.discoveredClues.some((c) => c.text === clue.text);
+    if (!exists) {
+      this.state.discoveredClues.push(clue);
+    }
+  }
+
   getRelationship(npcId: string, targetId: string): { score: number; note: string } | undefined {
     return this.state.npcRelationshipGraph[npcId]?.[targetId];
   }
