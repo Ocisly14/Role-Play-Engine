@@ -4,9 +4,8 @@ import type { NPCPlanningAgent } from "./NPCPlanningAgent.js";
 import { ACTION_TYPE_SKILL_MAP } from "./actionTypeSkillMap.js";
 import { BASELINE_HORROR_SOURCES } from "./horrorSourceData.js";
 import type {
-  NpcPlanNode,
+  PlanNode,
   CharacterAction,
-  OrchestratorPlayerNode,
   FailureReason,
   SceneCondition,
 } from "./types.js";
@@ -44,12 +43,48 @@ function getSuccessLevel(roll: number, skillValue: number): SuccessLevel {
   return "fail";
 }
 
+function getSuccessLevelWithDifficulty(
+  roll: number,
+  skillValue: number,
+  difficulty: "regular" | "hard" | "extreme"
+): SuccessLevel {
+  if (roll === 1) return "critical";
+  const threshold =
+    difficulty === "extreme" ? Math.floor(skillValue / 5)
+    : difficulty === "hard" ? Math.floor(skillValue / 2)
+    : skillValue;
+  if (roll <= threshold) return "regular";
+  return "fail";
+}
+
 const SUCCESS_RANK: Record<SuccessLevel, number> = {
   critical: 3,
   hard: 2,
   regular: 1,
   fail: 0,
 };
+
+// ==================== Difficulty derivation ====================
+
+function getNodeDifficulty(
+  node: PlanNode,
+  dgsm: DynamicGameStateManager
+): "regular" | "hard" | "extreme" | "luck_only" {
+  // Player nodes: use explicit difficulty from LLM
+  if (node.isPlayer) return node.difficulty ?? "regular";
+
+  // NPC scene interactions: always regular
+  if (node.type !== "character_interaction") return "regular";
+  if (!node.targetCharacterId) return "regular";
+
+  // NPC character interactions: derive from relationship score
+  const rel = dgsm.getRelationship(node.characterId, node.targetCharacterId);
+  const score = rel?.score ?? 0;
+  if (score >= 70) return "luck_only";
+  if (score >= 30) return "regular";
+  if (score >= -30) return "hard";
+  return "extreme";
+}
 
 // ==================== Skill RAG (keyword overlap) ====================
 
@@ -184,7 +219,7 @@ function applyPenalties(
 // ==================== Skill Roll Resolution ====================
 
 function resolveSkillRoll(
-  node: NpcPlanNode,
+  node: PlanNode,
   adjustedSkills: Record<string, number>,
   dgsm: DynamicGameStateManager
 ): { failed: boolean; reason?: string; detail?: string } {
@@ -192,13 +227,14 @@ function resolveSkillRoll(
   if (!actionType) return { failed: false };
 
   const state = dgsm.getState();
+  const difficulty = getNodeDifficulty(node, dgsm);
 
   // Get NPC profile for attributes
   const npc = state.npcCharacters.find((n) => n.id === node.characterId);
   const npcAttrs = npc?.attributes ?? { STR: 50, DEX: 50, INT: 50, POW: 50, CON: 50, SIZ: 50, APP: 50, EDU: 50 };
 
   if (actionType === "combat" && node.targetCharacterId) {
-    // Opposed roll: attacker vs defender Dodge
+    // Opposed roll: attacker vs defender Dodge — difficulty doesn't directly apply
     const attackSkill = selectBestSkill(node.action, actionType, adjustedSkills);
     const attackValue = attackSkill?.value ?? npcAttrs.STR;
 
@@ -229,7 +265,7 @@ function resolveSkillRoll(
   }
 
   if (actionType === "social" && node.targetCharacterId) {
-    // Opposed roll: actor social skill vs target Psychology
+    // Opposed roll: actor social skill vs target Psychology — difficulty doesn't directly apply
     const socialSkill = selectBestSkill(node.action, actionType, adjustedSkills);
     const socialValue = socialSkill?.value ?? npcAttrs.APP;
 
@@ -252,7 +288,7 @@ function resolveSkillRoll(
   }
 
   if (actionType === "chase" && node.targetCharacterId) {
-    // Opposed roll: both use best chase skill
+    // Opposed roll: both use best chase skill — difficulty doesn't directly apply
     const chaserSkill = selectBestSkill(node.action, actionType, adjustedSkills);
     const chaserValue = chaserSkill?.value ?? npcAttrs.DEX;
 
@@ -277,48 +313,54 @@ function resolveSkillRoll(
   }
 
   if (actionType === "mental") {
-    // SAN roll + horror source match
+    // SAN roll + horror source match — use difficulty for SAN check
     const npcStats = dgsm.getNpcStats(node.characterId);
     const sanValue = npcStats?.san ?? npc?.status?.sanity ?? 50;
     const roll = rollD100();
     const horror = matchHorrorSource(node.action);
 
-    if (roll > sanValue) {
+    // Apply difficulty to the SAN threshold
+    const effectiveDifficulty = difficulty === "luck_only" ? "extreme" : difficulty;
+    const level = getSuccessLevelWithDifficulty(roll, sanValue, effectiveDifficulty);
+
+    if (level === "fail") {
       // Failed SAN check
       const sanLoss = horror.sanLossMax;
       dgsm.updateNpcSan(node.characterId, -sanLoss);
       return {
         failed: true,
-        reason: `SAN ${sanValue}, rolled ${roll}, lost ${sanLoss} sanity`,
+        reason: `SAN ${sanValue}, rolled ${roll} (difficulty: ${effectiveDifficulty}), lost ${sanLoss} sanity`,
         detail: "skill_roll_failed",
       };
     } else {
       const sanLoss = horror.sanLossMin;
       if (sanLoss > 0) dgsm.updateNpcSan(node.characterId, -sanLoss);
-      return { failed: false, detail: `SAN check passed (${roll}/${sanValue}), lost ${sanLoss} sanity` };
+      return { failed: false, detail: `SAN check passed (${roll}/${sanValue}, difficulty: ${effectiveDifficulty}), lost ${sanLoss} sanity` };
     }
   }
 
   // Single roll for remaining actionTypes (exploration, stealth, environmental, narrative)
+  // Use difficulty-aware check
+  const effectiveDifficulty = difficulty === "luck_only" ? "extreme" : difficulty;
   const bestSkill = selectBestSkill(node.action, actionType, adjustedSkills);
   const skillValue = bestSkill?.value ?? npcAttrs.INT;
   const roll = rollD100();
-  const level = getSuccessLevel(roll, skillValue);
+  const level = getSuccessLevelWithDifficulty(roll, skillValue, effectiveDifficulty);
 
   if (level === "fail") {
     return {
       failed: true,
-      reason: `${bestSkill?.skill ?? actionType} ${skillValue}, rolled ${roll}`,
+      reason: `${bestSkill?.skill ?? actionType} ${skillValue}, rolled ${roll} (difficulty: ${effectiveDifficulty})`,
       detail: "skill_roll_failed",
     };
   }
-  return { failed: false, detail: `${bestSkill?.skill ?? actionType} ${roll}/${skillValue} (${level})` };
+  return { failed: false, detail: `${bestSkill?.skill ?? actionType} ${roll}/${skillValue} (${level}, difficulty: ${effectiveDifficulty})` };
 }
 
 // ==================== Execute single node ====================
 
 function executeNode(
-  node: NpcPlanNode,
+  node: PlanNode,
   dgsm: DynamicGameStateManager
 ): CharacterAction {
   const state = dgsm.getState();
@@ -326,6 +368,7 @@ function executeNode(
   const npc = state.npcCharacters.find((n) => n.id === node.characterId);
   const npcSkills = npc?.skills ?? {};
   const luck = npc?.status?.luck ?? 50;
+  const difficulty = getNodeDifficulty(node, dgsm);
 
   // Scene penalties
   const penalties = getScenePenalties(node.location, dgsm);
@@ -344,6 +387,8 @@ function executeNode(
     type: node.type,
     actionType: node.actionType,
     impact: node.impact,
+    isPlayer: node.isPlayer,
+    difficulty,
     status,
     outcome,
     failureReason,
@@ -392,17 +437,36 @@ function executeNode(
         return makeAction("failed", `${node.action} failed: target not present`, "target_absent");
       }
     }
-    // Luck-based failure (only when no actionType)
-    if (!node.actionType && Math.random() < luckFailureRate(luck)) {
-      return makeAction("failed", `${node.action} failed: bad luck (luck=${luck})`, "bad_luck");
-    }
-    // Skill roll if actionType present
-    if (node.actionType) {
-      const rollResult = resolveSkillRoll(node, adjustedSkills, dgsm);
-      if (rollResult.failed) {
-        return makeAction("failed", `${node.action} failed: ${rollResult.reason}`, "skill_roll_failed");
+
+    // For NPC nodes with luck_only difficulty: skip actionType skill roll, only do luck-based roll
+    if (!node.isPlayer && difficulty === "luck_only") {
+      if (Math.random() < luckFailureRate(luck)) {
+        return makeAction("failed", `${node.action} failed: bad luck (luck=${luck})`, "bad_luck");
+      }
+    } else if (node.isPlayer) {
+      // Player nodes: skip luck-based failure check entirely
+      // Only do skill roll if actionType present
+      if (node.actionType) {
+        const rollResult = resolveSkillRoll(node, adjustedSkills, dgsm);
+        if (rollResult.failed) {
+          return makeAction("failed", `${node.action} failed: ${rollResult.reason}`, "skill_roll_failed");
+        }
+      }
+    } else {
+      // NPC nodes (non-luck_only): existing logic
+      // Luck-based failure (only when no actionType)
+      if (!node.actionType && Math.random() < luckFailureRate(luck)) {
+        return makeAction("failed", `${node.action} failed: bad luck (luck=${luck})`, "bad_luck");
+      }
+      // Skill roll if actionType present
+      if (node.actionType) {
+        const rollResult = resolveSkillRoll(node, adjustedSkills, dgsm);
+        if (rollResult.failed) {
+          return makeAction("failed", `${node.action} failed: ${rollResult.reason}`, "skill_roll_failed");
+        }
       }
     }
+
     // Apply side effects
     if (node.characterInteractionPayload && node.targetCharacterId) {
       const payload = node.characterInteractionPayload;
@@ -421,16 +485,33 @@ function executeNode(
     if (npcLocation && npcLocation !== node.location) {
       return makeAction("failed", `${node.action} failed: not at expected location`, "location_mismatch");
     }
-    // Luck-based failure (only when no actionType)
-    if (!node.actionType && Math.random() < luckFailureRate(luck)) {
-      return makeAction("failed", `${node.action} failed: bad luck (luck=${luck})`, "bad_luck");
-    }
-    if (node.actionType) {
-      const rollResult = resolveSkillRoll(node, adjustedSkills, dgsm);
-      if (rollResult.failed) {
-        return makeAction("failed", `${node.action} failed: ${rollResult.reason}`, "skill_roll_failed");
+
+    if (node.isPlayer) {
+      // Player nodes: skip luck-based failure, only skill roll
+      if (node.actionType) {
+        const rollResult = resolveSkillRoll(node, adjustedSkills, dgsm);
+        if (rollResult.failed) {
+          return makeAction("failed", `${node.action} failed: ${rollResult.reason}`, "skill_roll_failed");
+        }
+      }
+    } else if (difficulty === "luck_only") {
+      // NPC luck_only: skip actionType skill roll, only luck-based
+      if (Math.random() < luckFailureRate(luck)) {
+        return makeAction("failed", `${node.action} failed: bad luck (luck=${luck})`, "bad_luck");
+      }
+    } else {
+      // NPC: existing logic
+      if (!node.actionType && Math.random() < luckFailureRate(luck)) {
+        return makeAction("failed", `${node.action} failed: bad luck (luck=${luck})`, "bad_luck");
+      }
+      if (node.actionType) {
+        const rollResult = resolveSkillRoll(node, adjustedSkills, dgsm);
+        if (rollResult.failed) {
+          return makeAction("failed", `${node.action} failed: ${rollResult.reason}`, "skill_roll_failed");
+        }
       }
     }
+
     // Apply side effects
     if (node.objectInteractionPayload) {
       const payload = node.objectInteractionPayload;
@@ -447,15 +528,33 @@ function executeNode(
     if (npcLocation && npcLocation !== node.location) {
       return makeAction("failed", `${node.action} failed: not at expected location`, "location_mismatch");
     }
-    if (!node.actionType && Math.random() < luckFailureRate(luck)) {
-      return makeAction("failed", `${node.action} failed: bad luck (luck=${luck})`, "bad_luck");
-    }
-    if (node.actionType) {
-      const rollResult = resolveSkillRoll(node, adjustedSkills, dgsm);
-      if (rollResult.failed) {
-        return makeAction("failed", `${node.action} failed: ${rollResult.reason}`, "skill_roll_failed");
+
+    if (node.isPlayer) {
+      // Player nodes: skip luck-based failure, only skill roll
+      if (node.actionType) {
+        const rollResult = resolveSkillRoll(node, adjustedSkills, dgsm);
+        if (rollResult.failed) {
+          return makeAction("failed", `${node.action} failed: ${rollResult.reason}`, "skill_roll_failed");
+        }
+      }
+    } else if (difficulty === "luck_only") {
+      // NPC luck_only: skip actionType skill roll, only luck-based
+      if (Math.random() < luckFailureRate(luck)) {
+        return makeAction("failed", `${node.action} failed: bad luck (luck=${luck})`, "bad_luck");
+      }
+    } else {
+      // NPC: existing logic
+      if (!node.actionType && Math.random() < luckFailureRate(luck)) {
+        return makeAction("failed", `${node.action} failed: bad luck (luck=${luck})`, "bad_luck");
+      }
+      if (node.actionType) {
+        const rollResult = resolveSkillRoll(node, adjustedSkills, dgsm);
+        if (rollResult.failed) {
+          return makeAction("failed", `${node.action} failed: ${rollResult.reason}`, "skill_roll_failed");
+        }
       }
     }
+
     // Append outcome as scene condition
     const outcome = `${node.action} succeeded`;
     dgsm.appendSceneCondition(node.location, { description: outcome });
@@ -475,7 +574,7 @@ function executeNode(
 // ==================== Main runTick ====================
 
 export async function runTick(
-  playerNode: OrchestratorPlayerNode & { characterId: string; characterName: string },
+  playerNodes: PlanNode[],
   dgsm: DynamicGameStateManager,
   npcPlanningAgent: NPCPlanningAgent,
   sessionId: string,
@@ -485,34 +584,17 @@ export async function runTick(
   const gameDay = state.gameDay;
   const currentTime = state.timeOfDay;
 
-  // Calculate new game time
+  // Calculate new game time based on max player timeAdvanceMinutes
+  const maxPlayerAdvance = playerNodes.reduce((max, n) => Math.max(max, n.timeAdvanceMinutes), 0);
   const currentMinutes = timeToMinutes(currentTime);
-  const newMinutes = currentMinutes + playerNode.timeAdvanceMinutes;
+  const newMinutes = currentMinutes + maxPlayerAdvance;
   const newTime = getBucketLabel(Math.min(newMinutes, 1439)); // cap at 23:59
 
   // 1. Get all due NPC nodes
   const dueNpcNodes = await npcPlanningAgent.getDueNpcNodes(sessionId, gameDay, newTime, dgsm);
 
-  // 2. Build player NpcPlanNode
-  const playerPlanNode: NpcPlanNode = {
-    nodeId: `player-${Date.now()}`,
-    characterId: playerNode.characterId,
-    characterName: playerNode.characterName,
-    gameTime: newTime,
-    action: "player action",
-    location: playerNode.location ?? "",
-    type: playerNode.type,
-    actionType: playerNode.actionType,
-    impact: playerNode.impact,
-    targetCharacterId: playerNode.targetCharacterId,
-    characterInteractionPayload: playerNode.characterInteractionPayload,
-    objectInteractionPayload: playerNode.objectInteractionPayload,
-    sceneConnectionEffect: playerNode.sceneConnectionEffect,
-    status: "pending",
-  };
-
-  // Merge all nodes
-  const allNodes = [...dueNpcNodes, playerPlanNode];
+  // Merge all nodes: NPC nodes + player nodes
+  const allNodes: PlanNode[] = [...dueNpcNodes, ...playerNodes];
 
   // Sort by gameTime ASC, then DEX DESC
   allNodes.sort((a, b) => {
@@ -528,8 +610,11 @@ export async function runTick(
   // 3. Scan unplanned encounters (same-scene NPC pairs with |score| >= 60)
   scanUnplannedEncounters(allNodes, dgsm);
 
+  // Collect player character IDs for identification
+  const playerCharacterIds = new Set(playerNodes.map((n) => n.characterId));
+
   // 4. Group into 5-minute buckets
-  const buckets = new Map<number, NpcPlanNode[]>();
+  const buckets = new Map<number, PlanNode[]>();
   for (const node of allNodes) {
     const bucket = minutesToBucket(timeToMinutes(node.gameTime));
     if (!buckets.has(bucket)) buckets.set(bucket, []);
@@ -539,20 +624,36 @@ export async function runTick(
   const allActions: CharacterAction[] = [];
   const sortedBucketKeys = [...buckets.keys()].sort((a, b) => a - b);
 
+  // Track player failure state for cascade
+  let playerFailed = false;
+
   // 5. Execute each bucket sequentially
   for (const bucketKey of sortedBucketKeys) {
     const bucketNodes = buckets.get(bucketKey)!;
     const bucketTime = getBucketLabel(bucketKey);
     const bucketActions: CharacterAction[] = [];
+    let playerFailedInBucket = false;
 
     // Execute all nodes in this bucket serially
     for (const node of bucketNodes) {
+      // If player already failed, skip subsequent player nodes
+      if ((playerFailed || playerFailedInBucket) && node.isPlayer) {
+        continue;
+      }
+
       const action = executeNode(node, dgsm);
       bucketActions.push(action);
       allActions.push(action);
 
+      // Check if a player node just failed
+      if (action.status === "failed" && node.isPlayer) {
+        playerFailedInBucket = true;
+        // Continue executing remaining NPC nodes in this bucket
+        // (the skip logic above handles player nodes)
+      }
+
       // Log NPC actions (not player)
-      if (node.characterId !== playerNode.characterId) {
+      if (!node.isPlayer) {
         const logEntry = `Day${gameDay} ${action.gameTime} [${action.location}] - ${action.outcome}`;
         await npcPlanningAgent.appendActionLog(sessionId, node.characterId, logEntry, gameDay, action.gameTime, action.location);
         await npcPlanningAgent.markNodeCompleted(sessionId, node.characterId, gameDay, node.nodeId, action.outcome);
@@ -563,8 +664,8 @@ export async function runTick(
         await npcPlanningAgent.updateRelationshipViaLLM(dgsm, node.characterId, node.targetCharacterId, action.outcome, language);
       }
 
-      // On failure → immediate revisePlans (no gate)
-      if (action.status === "failed" && node.characterId !== playerNode.characterId) {
+      // On failure → immediate revisePlans (no gate) — NPC only
+      if (action.status === "failed" && !node.isPlayer) {
         const longTermIntent = await npcPlanningAgent.getLongTermIntent(sessionId, node.characterId);
         const actionLog = await npcPlanningAgent.getActionLog(sessionId, node.characterId);
         const pendingNodes = await npcPlanningAgent.getPendingNodes(sessionId, node.characterId, gameDay);
@@ -618,8 +719,10 @@ export async function runTick(
       for (const event of impactEvents) {
         candidateNpcIds.delete(event.characterId);
       }
-      // Remove player
-      candidateNpcIds.delete(playerNode.characterId);
+      // Remove player characters
+      for (const playerId of playerCharacterIds) {
+        candidateNpcIds.delete(playerId);
+      }
 
       if (candidateNpcIds.size > 0) {
         const candidates = await Promise.all(
@@ -670,10 +773,23 @@ export async function runTick(
         );
       }
     }
+
+    // If a player failed in this bucket, set global flag and break out of outer bucket loop
+    if (playerFailedInBucket) {
+      playerFailed = true;
+      break;
+    }
   }
 
-  // 6. Advance game time
-  dgsm.updateGameTime(playerNode.timeAdvanceMinutes);
+  // 6. Advance game time: sum timeAdvanceMinutes from all successfully executed player nodes
+  const successfulPlayerAdvance = allActions
+    .filter((a) => a.isPlayer && a.status === "completed")
+    .reduce((sum, a) => {
+      const matchingNode = playerNodes.find((n) => n.characterId === a.characterId && n.action === a.action);
+      return sum + (matchingNode?.timeAdvanceMinutes ?? 0);
+    }, 0);
+  const timeAdvance = successfulPlayerAdvance > 0 ? successfulPlayerAdvance : maxPlayerAdvance;
+  dgsm.updateGameTime(timeAdvance);
 
   return allActions;
 }
@@ -681,7 +797,7 @@ export async function runTick(
 // ==================== Unplanned encounters ====================
 
 function scanUnplannedEncounters(
-  queue: NpcPlanNode[],
+  queue: PlanNode[],
   dgsm: DynamicGameStateManager
 ): void {
   const state = dgsm.getState();
@@ -732,6 +848,7 @@ function scanUnplannedEncounters(
             type: "character_interaction",
             actionType: isFriendly ? "social" : "combat",
             impact: 2,
+            timeAdvanceMinutes: 0,
             targetCharacterId: idB,
             status: "pending",
           });
