@@ -30,7 +30,6 @@ import {
 import { serializeMultiplayerCheckpoint, generateMultiplayerCheckpointName } from "../memory/checkpoint.js";
 import {
   getGlobalTriggerEventCheckTemplate,
-  getStuckHintNarrativeTemplate,
 } from "./directorAuxTemplates.js";
 import {
   getCurrentSceneReactionSnapshotTemplate,
@@ -3992,101 +3991,6 @@ export class DirectorAgent {
       victoryAchieved: false,
       achievedVictoryCondition: null,
     };
-  }
-
-  /**
-   * Generate a stuck-hint narrative when the player appears stuck.
-   * Builds context (game time, tension, current scene snapshot, connections, last 3 inputs/narratives),
-   * calls the stuck-hint template and LLM, parses { "narrative": string } and returns the narrative.
-   * @returns The hint narrative string, or null if no current scenario, parse failure, or LLM error.
-   */
-  async generateStuckHintNarrative(
-    manager: MultiplayerDynamicGameStateManager,
-    sceneRoomId: string
-  ): Promise<string | null> {
-    const dynamicState = manager.getSceneRoomState(sceneRoomId);
-    const currentScenario = dynamicState.currentScenario;
-
-    if (!currentScenario) {
-      return null;
-    }
-
-    const gameTime = `Day ${dynamicState.gameDay}, ${dynamicState.timeOfDay}`;
-    const tension = dynamicState.tension;
-
-    const currentSceneSnapshotJson = JSON.stringify(currentScenario, null, 2);
-
-    const currentScenarioOutline = dynamicState.scenarioOutlines.find(
-      (outline: any) =>
-        outline.id === currentScenario.id ||
-        outline.name === currentScenario.name
-    );
-    const rawConnections = currentScenarioOutline?.connections || [];
-    const connections = rawConnections.map((conn: any) => {
-      const targetScenario = dynamicState.scenarioOutlines.find(
-        (outline: any) =>
-          outline.name === conn.scenarioName || outline.id === conn.scenarioName
-      );
-      return {
-        scenarioName: targetScenario?.name ?? conn.scenarioName,
-        relationshipType: conn.relationshipType,
-        description: conn.description,
-        blocked: conn.blocked,
-        blockReason: conn.blockReason,
-      };
-    });
-    const scenarioConnectionsJson = JSON.stringify(connections, null, 2);
-
-    const conversationHistory =
-      (dynamicState.temporaryInfo.contextualData?.conversationHistory as Array<{
-        turnNumber: number;
-        characterInput: string;
-        keeperNarrative: string | null;
-      }>) ?? [];
-    const recentTurns = conversationHistory.slice(-3).map((t) => ({
-      turnNumber: t.turnNumber,
-      characterInput: t.characterInput,
-      keeperNarrative: t.keeperNarrative,
-    }));
-
-    const runtime = createRuntime();
-    const template = getStuckHintNarrativeTemplate();
-    const templateContext = {
-      gameTime,
-      tension,
-      currentSceneSnapshotJson,
-      scenarioConnectionsJson,
-      recentTurns,
-    };
-
-    const prompt = composeTemplate(
-      template,
-      { dynamicGameState: dynamicState },
-      templateContext,
-      "handlebars"
-    );
-
-    try {
-      const response = await generateText({
-        runtime,
-        context: prompt,
-        modelClass: ModelClass.SMALL,
-      });
-
-      const jsonMatch = response.match(/\{[\s\S]*\}/);
-      const raw = jsonMatch ? jsonMatch[0] : response;
-      const parsed = JSON.parse(raw) as { narrative?: string };
-      if (typeof parsed.narrative === "string") {
-        return parsed.narrative;
-      }
-      return null;
-    } catch (error) {
-      console.error(
-        "[Director Agent] generateStuckHintNarrative failed:",
-        error
-      );
-      return null;
-    }
   }
 
   /**

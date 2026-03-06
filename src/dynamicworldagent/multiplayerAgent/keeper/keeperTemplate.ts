@@ -103,7 +103,6 @@ You are a writer, responsible for writing a unified narrative of the game.
   
   ### Game State
   - Time: {{fullGameTime}}
-  - Tension: {{tension}} / 10
 
   {{#if hasTimeGrouping}}
   ### Time-Grouped Actions
@@ -208,8 +207,7 @@ You are a writer, responsible for writing a unified narrative of the game.
   ### Core Decision Logic
   1. What has *just changed* because of the latest action(s)
   2. Whether a scene transition, failed transition, or continuation applies
-  3. How tension should adjust (1-10)
-  4. Use successLevel from actionLog when present; if missing, infer outcome from dice results and context.
+  3. Use successLevel from actionLog when present; if missing, infer outcome from dice results and context.
   5. **Skill-Driven Narrative**: When a skill is listed under "Player's Selected Skill", the action description must be grounded in the *nature of that skill* — what the investigator does and what the outcome feels like must match how that skill works. For example: Spot Hidden means the investigator *sees* something (describe the visual detail); Charm means the NPC is *willingly* won over and acts of their own accord; Intimidate means the NPC is *scared or coerced* and complies out of fear. Never let the wrong mechanism bleed through (e.g., a Charm success must not read like a threat).
 
   ### Perspective & Information Limits (CRITICAL)
@@ -265,7 +263,6 @@ You are a writer, responsible for writing a unified narrative of the game.
 
   - Sensory detail over exposition
   - Subtle over explicit
-  - Intensity matches current tension level
   - NPC dialogue appears naturally (only what investigators hear)
   - NPCs react, hesitate, deflect, mislead - never dump lore unnaturally
 
@@ -276,7 +273,7 @@ You are a writer, responsible for writing a unified narrative of the game.
   
   {{#if isFirstRealTurn}}
   **Initial Snapshot Requirements**:
-  Provide full introduction: physical description, sensory details, notable objects, ALL connections to other locations, present NPCs, mood/tension, and each investigator's starting position.
+  Provide full introduction: physical description, sensory details, notable objects, ALL connections to other locations, present NPCs, mood, and each investigator's starting position.
   {{/if}}
 
   {{#if isTransition}}
@@ -336,7 +333,6 @@ You are a writer, responsible for writing a unified narrative of the game.
   
   {
     "narrative": "Immersive in-world narrative text...",
-    "tensionLevel": <number 1-10>,
     "clueRevelations": {
       "scenarioClues": [{ "clueId": "clue-id" }],
       "npcClues": [{ "npcId": "npc-id", "clueId": "clue-id" }],

@@ -184,8 +184,6 @@ export interface MultiplayerSceneRoomState {
   /** Timestamp when the room was frozen; null while active */
   frozenAt: Date | null;
   // ── Per-room game state ──
-  /** Game tension level (1-10) for this room */
-  tension: number;
   /** Whether this room is currently in combat */
   isBattle: boolean;
   /** Combat details (round, participants, pending actions); null when not in combat */
@@ -341,7 +339,6 @@ export function initialMultiplayerDynamicGameState(params: {
     parentSceneRoomIds: [],
     isFrozen: false,
     frozenAt: null,
-    tension: 0,
     isBattle: false,
     combatState: null,
   };
@@ -577,7 +574,6 @@ export class MultiplayerDynamicGameStateManager {
       temporaryInfo: scr?.temporaryInfo ?? emptyTemporaryInfo(),
       turnsInCurrentScene: scr?.turnsInCurrentScene ?? 0,
       // Per-room game state
-      tension: scr?.tension ?? 0,
       isBattle: scr?.isBattle ?? false,
       combatState: scr?.combatState ?? null,
       // Player data
@@ -627,7 +623,6 @@ export class MultiplayerDynamicGameStateManager {
       parentSceneRoomIds: [],
       isFrozen: false,
       frozenAt: null,
-      tension: 0,
       isBattle: false,
       combatState: null,
       ...initial, // caller can override gameDay/timeOfDay with parent room's values
@@ -1217,17 +1212,6 @@ export class MultiplayerDynamicGameStateManager {
     return result;
   }
 
-  // ---------- Tension ----------
-
-  updateTension(newTension: number, sceneRoomId?: string): void {
-    const clamped = Math.max(1, Math.min(10, Math.round(newTension)));
-    if (sceneRoomId) {
-      const room = this.state.sceneRooms[sceneRoomId];
-      if (room) room.tension = clamped;
-    }
-    this.state.lastUpdated = new Date();
-  }
-
   // ---------- Heartbeat ----------
 
   setHeartbeatActions(actions: MultiplayerHeartbeatAction[]): void {
@@ -1313,38 +1297,6 @@ export class MultiplayerDynamicGameStateManager {
 
   getTurnsInCurrentScene(sceneRoomId: string): number {
     return this.state.sceneRooms[sceneRoomId]?.turnsInCurrentScene ?? 0;
-  }
-
-  getProgressionThreshold(): number {
-    return 5;
-  }
-
-  getMinutesSinceLastInput(sceneRoomId: string): number {
-    const room = this.state.sceneRooms[sceneRoomId];
-    if (!room) return 0;
-    // Prefer lastRoundCompletedAt (set when round finishes) over individual player times
-    const completedAt = room.lastRoundCompletedAt;
-    if (completedAt) {
-      const completedMs = new Date(completedAt).getTime();
-      if (!Number.isNaN(completedMs)) {
-        return Math.floor((Date.now() - completedMs) / 60000);
-      }
-    }
-    // Fallback to legacy per-player timestamps
-    const times = Object.values(room.lastPlayerInputTimeByPlayer).filter(
-      Boolean
-    ) as string[];
-    if (times.length === 0) return 0;
-    const latestIso = times.sort().pop()!;
-    const latestMs = new Date(latestIso).getTime();
-    if (Number.isNaN(latestMs)) return 0;
-    return Math.floor((Date.now() - latestMs) / 60000);
-  }
-
-  shouldTriggerProgression(sceneRoomId: string): boolean {
-    return (
-      this.getTurnsInCurrentScene(sceneRoomId) >= this.getProgressionThreshold()
-    );
   }
 
   // ---------- A2: SceneRoom scene switching ----------
@@ -1915,7 +1867,6 @@ export class MultiplayerDynamicGameStateManager {
             room.lastPlayerInputTimeByPlayer ?? {},
           gameDay: room.gameDay ?? data.gameDay ?? 1,
           timeOfDay: room.timeOfDay ?? data.timeOfDay ?? "08:00",
-          tension: room.tension ?? data.tension ?? 0,
           isBattle: room.isBattle ?? false,
           combatState: room.combatState ?? null,
         };

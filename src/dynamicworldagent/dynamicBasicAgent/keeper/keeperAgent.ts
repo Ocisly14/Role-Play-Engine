@@ -277,7 +277,6 @@ export class KeeperAgent {
       // Player actions this turn (for {{#each}} loop)
       playerActionsJson: playerActions.length > 0 ? playerActions : null,
       fullGameTime: fullGameTime, // Complete display: "Day 1, 08:00 (Morning)"
-      tension: dynamicState.tension,
       isTransition,
       conversationHistory, // Recent conversation history (for {{#each}} loop)
       relevantHistory, // RAG-retrieved relevant history (for {{#each}} loop)
@@ -434,18 +433,7 @@ export class KeeperAgent {
       gameStateManager
     );
 
-    // Update tension (if provided by LLM)
-    if (
-      parsedResponse.tensionLevel &&
-      typeof parsedResponse.tensionLevel === "number"
-    ) {
-      const oldTension = dynamicState.tension;
-      gameStateManager.updateTension(parsedResponse.tensionLevel);
-      const newTension = gameStateManager.getState().tension;
-      if (oldTension !== newTension) {
-        console.log(`🎭 Tension changed: ${oldTension} → ${newTension}`);
-      }
-    }
+
 
     // Temporary state is preserved until next real player input
     // Cleanup happens in entry node for real input only

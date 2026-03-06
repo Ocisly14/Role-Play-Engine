@@ -496,7 +496,6 @@ export class KeeperAgent {
       characterInput,
       allActionResultsDetailed,
       fullGameTime,
-      tension: sceneRoom.tension ?? 0,
       isTransition,
       sceneChangeRequest: sceneChangeRequestForNarrative,
       conversationHistory,
@@ -746,18 +745,7 @@ export class KeeperAgent {
       }
     }
 
-    // Update tension
-    if (
-      parsedResponse.tensionLevel &&
-      typeof parsedResponse.tensionLevel === "number"
-    ) {
-      const oldTension = sceneRoom.tension ?? 0;
-      manager.updateTension(parsedResponse.tensionLevel, sceneRoomId);
-      const newTension = manager.getSceneRoom(sceneRoomId)?.tension ?? oldTension;
-      if (oldTension !== newTension) {
-        console.log(`🎭 Tension changed: ${oldTension} → ${newTension}`);
-      }
-    }
+
 
     clearSuddenActionLogsContext();
     return {

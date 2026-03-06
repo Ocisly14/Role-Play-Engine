@@ -102,9 +102,6 @@ export interface DynamicGameState {
     fatigueStartedAtGameTime?: string; // Game time when fatigue first activated (optional)
   };
 
-  // Game tension
-  tension: number;
-
   // Defeated NPC tracking
   defeatedNpcHistory: DefeatedNpcHistoryEntry[];
 
@@ -123,7 +120,6 @@ export interface DynamicGameState {
   discoveredClues: DiscoveredClue[];
   turnsInCurrentScene: number;
   lastPlayerInputTime: Date | null;
-  consecutiveProgressionTriggers: number; // Track consecutive progression triggers (max 3)
 
   // Temporary info (cleared at start of each player turn)
   temporaryInfo: DynamicTemporaryInfo;
@@ -203,7 +199,6 @@ export const initialDynamicGameState = (params: {
     minutesSinceLastRest: 0,
     fatigueActive: false,
   },
-  tension: 1,
   defeatedNpcHistory: [],
   gameEnding: null,
   keeperGuidance: null,
@@ -213,7 +208,6 @@ export const initialDynamicGameState = (params: {
   discoveredClues: [],
   turnsInCurrentScene: 0,
   lastPlayerInputTime: null,
-  consecutiveProgressionTriggers: 0,
   temporaryInfo: {
     rules: [],
     contextualData: {},
@@ -730,7 +724,6 @@ export class DynamicGameStateManager {
           ? new Date(data.lastPlayerInputTime)
           : data.lastPlayerInputTime
         : null,
-      consecutiveProgressionTriggers: data.consecutiveProgressionTriggers ?? 0,
     };
   }
 
@@ -985,30 +978,10 @@ export class DynamicGameStateManager {
   }
 
   /**
-   * Update player input timestamp (resets consecutive progression triggers)
+   * Update player input timestamp
    */
   updatePlayerInputTime(): void {
     this.state.lastPlayerInputTime = new Date();
-    this.state.lastUpdated = new Date();
-    // Reset consecutive triggers when player provides input
-    this.state.consecutiveProgressionTriggers = 0;
-  }
-
-  /**
-   * Only update lastPlayerInputTime, without resetting consecutiveProgressionTriggers.
-   * Used after a stuck-hint so the next hint is 5 min later, while still counting toward the max-3 limit.
-   */
-  touchIdleTimerOnly(): void {
-    this.state.lastPlayerInputTime = new Date();
-    this.state.lastUpdated = new Date();
-  }
-
-  /**
-   * Increment consecutive progression trigger count
-   */
-  incrementConsecutiveTriggers(): void {
-    this.state.consecutiveProgressionTriggers =
-      (this.state.consecutiveProgressionTriggers || 0) + 1;
     this.state.lastUpdated = new Date();
   }
 
@@ -1470,58 +1443,6 @@ export class DynamicGameStateManager {
   }
 
   /**
-   * Get minutes since last player input
-   */
-  getMinutesSinceLastInput(): number {
-    if (!this.state.lastPlayerInputTime) {
-      return 0;
-    }
-    const now = new Date();
-    const diffMs = now.getTime() - this.state.lastPlayerInputTime.getTime();
-    return Math.floor(diffMs / 60000); // Convert to minutes
-  }
-
-  /**
-   * Calculate dynamic threshold based on tension
-   * Lower tension = higher threshold (slower progression)
-   * Higher tension = lower threshold (faster progression)
-   */
-  getProgressionThreshold(): number {
-    const tension = this.state.tension;
-    if (tension <= 3) return 5; // Low tension (1-3): 5 turns
-    if (tension <= 6) return 4; // Medium tension (4-6): 4 turns
-    if (tension <= 8) return 3; // High tension (7-8): 3 turns
-    return 2; // Critical tension (9-10): 2 turns
-  }
-
-  /**
-   * Check if progression should trigger based on turn count OR time elapsed
-   * @returns true if either condition is met AND consecutive triggers < 3
-   */
-  shouldTriggerProgression(): boolean {
-    // Check if already reached max consecutive triggers (3)
-    if (this.state.consecutiveProgressionTriggers >= 3) {
-      return false;
-    }
-
-    // Check turn count threshold
-    const turnsInScene = this.getTurnsInCurrentScene();
-    const threshold = this.getProgressionThreshold();
-
-    if (turnsInScene >= threshold) {
-      return true;
-    }
-
-    // Check time threshold (3 minutes)
-    const minutesSinceInput = this.getMinutesSinceLastInput();
-    if (minutesSinceInput >= 3) {
-      return true;
-    }
-
-    return false;
-  }
-
-  /**
    * Update game time based on elapsed time in minutes
    */
   updateGameTime(elapsedMinutes: number): void {
@@ -1682,15 +1603,6 @@ export class DynamicGameStateManager {
   getFullGameTime(): string {
     const timeDesc = this.getTimeOfDayDescription();
     return `Day ${this.state.gameDay}, ${this.state.timeOfDay} (${timeDesc})`;
-  }
-
-  /**
-   * Update tension level (1-10 scale)
-   */
-  updateTension(newTension: number): void {
-    // Clamp between 1 and 10
-    this.state.tension = Math.max(1, Math.min(10, Math.round(newTension)));
-    this.state.lastUpdated = new Date();
   }
 
   /**
