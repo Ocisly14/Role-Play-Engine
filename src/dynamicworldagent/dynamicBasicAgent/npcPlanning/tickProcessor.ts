@@ -15,6 +15,7 @@ import type {
   TickResult,
   PlayerWitnessEvent,
 } from "./types.js";
+import { type SessionRagChunkInput, SessionRagService } from "../knowledge/sessionRagService.js";
 
 // ==================== Time helpers ====================
 
@@ -873,6 +874,39 @@ function executeNode(
   return makeAction("completed", buildOutcome("completed"));
 }
 
+// ==================== Clue RAG embedding ====================
+
+function embedDiscoveredClues(
+  clues: DiscoveredClueEntry[],
+  dgsm: DynamicGameStateManager,
+  language: string
+): void {
+  if (clues.length === 0) return;
+  const ragService = new SessionRagService();
+  const state = dgsm.getState();
+  const ragChunks: SessionRagChunkInput[] = clues.map((entry) => ({
+    sessionId: state.sessionId,
+    chunkType: "clue" as const,
+    role: "system" as const,
+    content: [
+      "Clue Discovered",
+      `Type: ${entry.source}`,
+      `Source: ${entry.sourceName}`,
+      `Content: ${entry.clueText}`,
+    ].join("\n"),
+    metadata: {
+      clueType: entry.source,
+      sourceName: entry.sourceName,
+      discoveredAt: `Day ${state.gameDay}, ${state.timeOfDay}`,
+    },
+    sourceKey: `clue:${entry.clueId}`,
+    language,
+  }));
+  void ragService.upsertChunks(ragChunks).catch((err) =>
+    console.error("[TickProcessor] Failed to embed clue:", err)
+  );
+}
+
 // ==================== Main runTick ====================
 
 export async function runTick(
@@ -978,6 +1012,7 @@ export async function runTick(
         const clues = await discoverClues(node, effectiveSuccess, dgsm, language);
         if (clues.length > 0) {
           action.discoveredClues = clues;
+          embedDiscoveredClues(clues, dgsm, language);
           // Mark scene clues as discovered
           for (const entry of clues) {
             if (entry.source === "scene") {
@@ -1268,6 +1303,7 @@ export async function resumeTick(
         const clues = await discoverClues(node, effectiveSuccess, dgsm, language);
         if (clues.length > 0) {
           action.discoveredClues = clues;
+          embedDiscoveredClues(clues, dgsm, language);
           for (const entry of clues) {
             if (entry.source === "scene") {
               dgsm.markScenarioClueDiscovered(entry.clueId, node.characterName);

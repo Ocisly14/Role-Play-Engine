@@ -9,7 +9,6 @@ import type {
 import { resolveModuleIdByName } from "../../../src/shared/agents/memory/database/moduleScope.js";
 import { getPrismaClient } from "../../../src/shared/agents/memory/database/prismaClient.js";
 import { ModuleLoader } from "../../../src/shared/agents/memory/moduleloader/index.js";
-import { ScenarioLoader } from "../../../src/shared/agents/memory/scenarioloader/index.js";
 import { registerModuleForUser } from "./library.js";
 
 type ProgressCallback = (
@@ -176,10 +175,6 @@ export async function loadMod(
   // Regular module loading (old format)
   console.log(`Loading regular module: ${modName}`);
 
-  const scenarioLoader = new ScenarioLoader(db, undefined, {
-    emailId: emailId,
-    moduleName: modName,
-  });
   const npcLoader = new NPCLoader(db, undefined, undefined, {
     emailId: emailId,
   });
@@ -192,9 +187,6 @@ export async function loadMod(
     .filter((dirent) => dirent.isDirectory())
     .map((dirent) => dirent.name);
 
-  const scenarioDirs = subdirs.filter((name) =>
-    name.toLowerCase().includes("scenario")
-  );
   const npcDirs = subdirs.filter((name) => name.toLowerCase().includes("npc"));
   const backgroundDirs = subdirs.filter(
     (name) =>
@@ -202,21 +194,8 @@ export async function loadMod(
       name.toLowerCase().includes("module")
   );
 
-  let scenariosLoaded = 0;
   let npcsLoaded = 0;
   let modulesLoaded = 0;
-
-  // Load scenarios
-  if (scenarioDirs.length > 0) {
-    onProgress?.("Loading Scenarios", 30, "Loading scenario data...");
-    for (const dir of scenarioDirs) {
-      const scenarios = await scenarioLoader.loadScenariosFromJSONDirectory(
-        path.join(modPath, dir),
-        false
-      );
-      scenariosLoaded += scenarios.length;
-    }
-  }
 
   // Load NPCs
   if (npcDirs.length > 0) {
@@ -250,13 +229,13 @@ export async function loadMod(
   onProgress?.(
     "Complete",
     100,
-    `Loaded ${scenariosLoaded} scenarios, ${npcsLoaded} NPCs, ${modulesLoaded} modules`
+    `Loaded ${npcsLoaded} NPCs, ${modulesLoaded} modules`
   );
 
   return {
     success: true,
-    message: `Mod data loaded: ${scenariosLoaded} scenarios, ${npcsLoaded} NPCs, ${modulesLoaded} modules`,
-    scenariosLoaded,
+    message: `Mod data loaded: ${npcsLoaded} NPCs, ${modulesLoaded} modules`,
+    scenariosLoaded: 0,
     npcsLoaded,
     modulesLoaded,
     timestamp: new Date().toISOString(),

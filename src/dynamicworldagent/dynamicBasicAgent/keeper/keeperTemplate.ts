@@ -56,7 +56,7 @@ You are a writer, responsible for writing a narrative of the game.
   **🔄 SCENE TRANSITION COMPLETED**
 
   **Previous Scene (Before Transition)**:
-  {{previousScenarioJson}}
+  {{previousSceneJson}}
 
   **Current Scene (After Transition)**:
   {{scenarioContextJson}}

@@ -78,7 +78,6 @@ export class CoCDatabaseAdapter {
       actionResults: turn.actionResults,
       directorDecision: turn.directorDecision,
       keeperNarrative: turn.keeperNarrative,
-      clueRevelations: turn.clueRevelations,
       sceneId: turn.sceneId,
       sceneName: turn.sceneName,
       location: turn.location,
@@ -241,7 +240,6 @@ export class CoCDatabaseAdapter {
       actionAnalysis: null,
       actionResults: null,
       keeperNarrative: null,
-      clueRevelations: null,
       sceneId: sceneId || null,
       sceneName: sceneName || null,
       location: location || null,
@@ -333,7 +331,6 @@ export class CoCDatabaseAdapter {
   completeTurn(
     turnId: string,
     keeperNarrative: string,
-    clueRevelations?: any,
     gameDay?: number | null,
     gameTime?: string | null
   ): void {
@@ -343,7 +340,6 @@ export class CoCDatabaseAdapter {
     this.updateCachedTurn(turnId, (current) => ({
       ...current,
       keeperNarrative: finalNarrative,
-      clueRevelations: clueRevelations ?? null,
       gameDay: gameDay ?? null,
       gameTime: gameTime ?? null,
       status: "completed",
@@ -355,7 +351,6 @@ export class CoCDatabaseAdapter {
         where: { turnId },
         data: {
           keeperNarrative: finalNarrative,
-          clueRevelations: clueRevelations ?? null,
           gameDay: gameDay ?? null,
           gameTime: gameTime ?? null,
           status: "completed",
@@ -696,7 +691,6 @@ export class CoCDatabaseAdapter {
       action_results: turn.actionResults,
       director_decision: turn.directorDecision,
       keeper_narrative: turn.keeperNarrative,
-      clue_revelations: turn.clueRevelations,
       scene_id: turn.sceneId,
       scene_name: turn.sceneName,
       location: turn.location,

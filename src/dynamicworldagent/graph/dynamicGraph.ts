@@ -824,7 +824,6 @@ export const buildDynamicGraph = (
             state.turnId,
             {
               keeperNarrative: result.narrative,
-              clueRevelations: null,
               gameDay: currentState.gameDay ?? null,
               gameTime: currentState.timeOfDay ?? null,
             },
@@ -909,7 +908,6 @@ export const buildDynamicGraph = (
             state.turnId,
             {
               keeperNarrative: result.narrative,
-              clueRevelations: null,
               gameDay: updatedGameState?.gameDay ?? null,
               gameTime: updatedGameState?.timeOfDay ?? null,
             },

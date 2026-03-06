@@ -85,8 +85,8 @@ export class KeeperAgent {
     const isTransition =
       playerActionLocation != null &&
       playerActionLocation !== dynamicState.currentSceneId;
-    const previousScenarioInfo = isTransition
-      ? this.extractPreviousScenarioInfo(dynamicState, playerActionLocation!)
+    const previousSceneInfo = isTransition
+      ? this.extractPreviousSceneInfo(dynamicState, playerActionLocation!)
       : null;
 
     // 7. Filter NPC actions by impact for narrative inclusion
@@ -220,8 +220,8 @@ export class KeeperAgent {
       suddenActionLogsJson: hasSuddenActionLogs
         ? this.safeStringify(suddenActionLogs)
         : null,
-      previousScenarioJson: previousScenarioInfo
-        ? this.safeStringify(previousScenarioInfo)
+      previousSceneJson: previousSceneInfo
+        ? this.safeStringify(previousSceneInfo)
         : "null",
       selectedSkill: selectedSkill || null,
       hasNpcActions,
@@ -509,7 +509,7 @@ export class KeeperAgent {
    * Extract previous scenario information (for scene transitions)
    * Looks up scenario by ID from scenarioOutlines
    */
-  private extractPreviousScenarioInfo(
+  private extractPreviousSceneInfo(
     dynamicState: DynamicGameState,
     previousSceneId: string
   ) {

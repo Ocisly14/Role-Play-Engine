@@ -37,7 +37,6 @@ export interface TurnProcessing {
 
 export interface TurnOutput {
   keeperNarrative: string;
-  clueRevelations?: any;
   gameDay?: number | null;
   gameTime?: string | null;
 }
@@ -58,7 +57,6 @@ export interface GameTurn {
 
   // Output
   keeperNarrative: string | null;
-  clueRevelations: any | null;
 
   // Context
   sceneId: string | null;
@@ -189,7 +187,6 @@ export class TurnManager {
     this.db.completeTurn(
       turnId,
       mergedNarrative,
-      output.clueRevelations,
       output.gameDay,
       output.gameTime
     );
