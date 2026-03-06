@@ -27,7 +27,7 @@ import type {
   TruthEvent,
 } from "./types.js";
 import type { DynamicNPCProfile } from "./types.js";
-import type { DynamicScenarioSnapshot } from "./types.js";
+import type { DynamicScene } from "./types.js";
 
 /**
  * Complete world module data loaded from all JSON files
@@ -42,7 +42,7 @@ export interface LoadedWorldModule {
   knowledgeMatrix: KnowledgeHolder[];
   redHerrings: RedHerring[];
   scenarios: ScenarioOutline[];
-  scenarioSnapshots: Map<string, DynamicScenarioSnapshot>; // scenarioId -> snapshot
+  scenes: Map<string, DynamicScene>; // scenarioId -> scene
   npcs: DynamicNPCProfile[];
   files: {
     truthTimelineFile: string;
@@ -57,13 +57,14 @@ export interface LoadedWorldModule {
 
 /**
  * Scenario file payload (array format with single entry)
+ * Note: JSON files on disk still use the "snapshot" key for the scene data.
  */
 interface ScenarioFilePayload {
   name: string;
   description: string;
   evidence?: string[];
   clues?: any[];
-  snapshot: DynamicScenarioSnapshot;
+  snapshot: any; // raw JSON — mapped to DynamicScene during load
   tags?: string[];
   connections?: any[];
   npcAssignments?: any[];
@@ -265,11 +266,11 @@ export class WorldModuleLoader {
       );
       console.log(`    Scenario outlines: ${scenariosData.scenarios.length}`);
 
-      // 6. Load scenario snapshots from individual files
-      console.log(`  [6/7] Loading scenario snapshots...`);
+      // 6. Load scenes from individual scenario files
+      console.log(`  [6/7] Loading scenes...`);
       const scenariosDir = path.join(moduleDir, `${moduleName}_Scenarios`);
-      const scenarioSnapshots = this.loadDynamicScenarioSnapshots(scenariosDir);
-      console.log(`    Scenario snapshots loaded: ${scenarioSnapshots.size}`);
+      const scenes = this.loadDynamicScenes(scenariosDir);
+      console.log(`    Scenes loaded: ${scenes.size}`);
 
       // 7. Load NPCs from individual files
       console.log(`  [7/7] Loading NPCs...`);
@@ -287,7 +288,7 @@ export class WorldModuleLoader {
         knowledgeMatrix: knowledgeMatrixData.knowledgeMatrix,
         redHerrings: knowledgeMatrixData.redHerrings,
         scenarios: scenariosData.scenarios,
-        scenarioSnapshots,
+        scenes,
         npcs,
         files: {
           truthTimelineFile,
@@ -415,16 +416,17 @@ export class WorldModuleLoader {
   }
 
   /**
-   * Load scenario snapshots from individual scenario files
+   * Load scenes from individual scenario files.
+   * JSON files on disk still use the "snapshot" key — we map to DynamicScene.
    */
-  private loadDynamicScenarioSnapshots(
+  private loadDynamicScenes(
     scenariosDir: string
-  ): Map<string, DynamicScenarioSnapshot> {
-    const snapshots = new Map<string, DynamicScenarioSnapshot>();
+  ): Map<string, DynamicScene> {
+    const scenes = new Map<string, DynamicScene>();
 
     if (!fs.existsSync(scenariosDir)) {
       console.warn(`    Scenarios directory not found: ${scenariosDir}`);
-      return snapshots;
+      return scenes;
     }
 
     const files = fs
@@ -444,8 +446,19 @@ export class WorldModuleLoader {
 
         for (const scenario of scenarios) {
           if (scenario.snapshot) {
-            const snapshot = scenario.snapshot;
-            snapshots.set(snapshot.id, snapshot);
+            const raw = scenario.snapshot;
+            const scene: DynamicScene = {
+              id: raw.id,
+              name: raw.name,
+              description: raw.description || "",
+              domain: raw.domain,
+              items: raw.items || [],
+              clues: raw.clues || [],
+              conditions: raw.conditions || [],
+              sceneImage: raw.sceneImage,
+              events: [],
+            };
+            scenes.set(scene.id, scene);
           }
         }
       } catch (error) {
@@ -453,7 +466,7 @@ export class WorldModuleLoader {
       }
     }
 
-    return snapshots;
+    return scenes;
   }
 
   /**
@@ -506,11 +519,11 @@ export class WorldModuleLoader {
     console.log(`  [3/4] Saving ${module.scenarios.length} scenarios...`);
     await this.saveScenarios(module, moduleId);
 
-    // 4. Save scenario snapshots
+    // 4. Save scenes (as scenario snapshots in DB)
     console.log(
-      `  [4/4] Saving ${module.scenarioSnapshots.size} scenario snapshots...`
+      `  [4/4] Saving ${module.scenes.size} scenes...`
     );
-    await this.saveDynamicScenarioSnapshots(module, moduleId);
+    await this.saveDynamicScenes(module, moduleId);
 
     console.log(`  All data saved to database`);
   }
@@ -579,21 +592,11 @@ export class WorldModuleLoader {
       .map((s, i) => `${i + 1}. ${s.name}: ${s.description}`)
       .join("\n");
 
-    // Get initial game time from the snapshot marked as initialSnapshot, falling back to the first one
-    let initialGameTime: string | null = null;
-    const allSnapshots = [...module.scenarioSnapshots.values()];
-    const firstSnapshot = allSnapshots.find(s => (s as any).initialSnapshot) || allSnapshots[0] || null;
-    if (firstSnapshot?.gameTime) {
-      initialGameTime = firstSnapshot.gameTime;
-    }
+    // Get initial game time from module digest (scenes no longer carry gameTime)
+    const initialGameTime: string | null = null;
 
-    // Get initial scenario NPCs from starting scene
-    const initialScenarioNPCs: string[] = [];
-    if (firstSnapshot?.characters) {
-      initialScenarioNPCs.push(
-        ...firstSnapshot.characters.map((c: any) => c.name)
-      );
-    }
+    // Characters are no longer stored on scenes; initial NPC names come from module.npcs
+    const initialScenarioNPCs: string[] = module.npcs.map((npc) => npc.name);
 
     // Auto-generate tags
     const tags = [
@@ -947,89 +950,56 @@ export class WorldModuleLoader {
   }
 
   /**
-   * Save scenario snapshots to database
+   * Save DynamicScene objects to database (stored in scenarioSnapshot rows).
+   * Characters are no longer saved per-scene — they live on NPCs.
+   * keeperNotes, timeRestriction, showMap, initialSnapshot stay on ScenarioOutline / are removed.
    */
-  private async saveDynamicScenarioSnapshots(
+  private async saveDynamicScenes(
     module: LoadedWorldModule,
     moduleId: string
   ): Promise<void> {
     const prisma = getPrismaClient();
 
-    for (const [snapshotId, snapshot] of module.scenarioSnapshots.entries()) {
-      const scopedSnapshotId = this.scopeByModule(snapshotId, moduleId);
+    for (const [sceneId, scene] of module.scenes.entries()) {
+      const scopedSnapshotId = this.scopeByModule(sceneId, moduleId);
 
-      // Check if snapshot exists for this module (compound PK)
+      // Check if snapshot row already exists for this module (compound PK)
       const existing = await prisma.scenarioSnapshot.findFirst({
         where: { moduleId, snapshotId: scopedSnapshotId },
         select: { snapshotId: true },
       });
 
       if (existing) {
-        continue; // Skip existing snapshots
+        continue; // Skip existing rows
       }
 
-      // Find corresponding scenario
+      // Find corresponding scenario outline
       const scenario = module.scenarios.find(
-        (s) => s.id === snapshot.id || s.name === snapshot.name
+        (s) => s.id === scene.id || s.name === scene.name
       );
-      const scenarioId = scenario?.id || snapshotId;
+      const scenarioId = scenario?.id || sceneId;
       const scopedScenarioId = this.scopeByModule(scenarioId, moduleId);
 
-      const sceneImagePath = (snapshot as any).sceneImage?.path || null;
+      const sceneImagePath = scene.sceneImage?.path || null;
 
-      // Insert snapshot
+      // Insert snapshot row for the scene
       await prisma.scenarioSnapshot.create({
         data: {
           snapshotId: scopedSnapshotId,
           scenarioId: scopedScenarioId,
           moduleId,
-          snapshotName: snapshot.name,
-          location: snapshot.location,
-          description: snapshot.description,
-          events: [], // events removed - tracked via actionResults
-          exits: [], // exits removed - connections are scenario-level data
-          keeperNotes: snapshot.keeperNotes || null,
-          timeRestriction: snapshot.timeRestriction || null,
-          showMap: snapshot.showMap !== false,
-          initialSnapshot: (snapshot as any).initialSnapshot ? true : false,
-          gameTime: (snapshot as any).gameTime || null,
+          snapshotName: scene.name,
+          location: scene.name, // scenes use name as location
+          description: scene.description,
+          events: [], // events tracked via actionResults
+          exits: [], // connections are scenario-level data
           sceneImagePath,
         },
       });
 
-      // Insert characters
-      if (snapshot.characters && snapshot.characters.length > 0) {
-        for (const char of snapshot.characters) {
-          const rawCharId =
-            char.id ||
-            `${scopedSnapshotId}-char-${Math.random().toString(36).slice(2, 10)}`;
-          const scopedCharId = this.scopeByModule(rawCharId, moduleId);
-
-          try {
-            await prisma.scenarioCharacter.create({
-              data: {
-                id: scopedCharId,
-                snapshotId: scopedSnapshotId,
-                moduleId,
-                characterName: char.name,
-                characterRole: char.role,
-                characterStatus: char.status,
-                characterLocation: char.location || null,
-                characterNotes: char.notes || null,
-              },
-            });
-          } catch (error: any) {
-            // P2002: Unique constraint violation - ignore duplicates
-            if (error?.code !== "P2002") {
-              throw error;
-            }
-          }
-        }
-      }
-
       // Insert clues
-      if (snapshot.clues && snapshot.clues.length > 0) {
-        for (const clue of snapshot.clues) {
+      if (scene.clues && scene.clues.length > 0) {
+        for (const clue of scene.clues) {
           const scopedClueId = this.scopeByModule(clue.id, moduleId);
 
           try {
@@ -1058,8 +1028,8 @@ export class WorldModuleLoader {
       }
 
       // Insert conditions
-      if (snapshot.conditions && snapshot.conditions.length > 0) {
-        for (const condition of snapshot.conditions) {
+      if (scene.conditions && scene.conditions.length > 0) {
+        for (const condition of scene.conditions) {
           const conditionId = `${scopedSnapshotId}-cond-${Math.random().toString(36).slice(2, 10)}`;
 
           try {

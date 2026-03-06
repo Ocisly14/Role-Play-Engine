@@ -223,9 +223,6 @@ export const buildDynamicGraph = (
       dgsm.setPlayerNodes([]);
       console.log("   Cleared player nodes");
 
-      dgsm.clearPreviousScenario();
-      console.log("   Cleared previous scenario");
-
       // Clear per-turn contextual data to prevent stale values bleeding across turns
       dgsm.setContextualData("relevantHistory", []);
       dgsm.setContextualData("relevantHistoryThreshold", null);
@@ -560,7 +557,7 @@ export const buildDynamicGraph = (
     const dgsm = new DynamicGameStateManager(state.dynamicGameState);
     const currentState = dgsm.getState();
     const stream = state.stream;
-    const beforeScenarioId = currentState.currentScenario?.id;
+    const beforeSceneId = currentState.currentSceneId;
 
     try {
       // Check point of no return
@@ -577,21 +574,23 @@ export const buildDynamicGraph = (
 
       // Detect scene change from characterActions (movement nodes executed by TickProcessor)
       const afterState = dgsm.getState();
-      const currentScenario = afterState.currentScenario;
+      const currentScene = afterState.currentSceneId
+        ? afterState.scenes.get(afterState.currentSceneId) ?? null
+        : null;
       const sceneChanged =
-        currentScenario &&
-        currentScenario.id &&
-        currentScenario.id !== beforeScenarioId;
+        currentScene &&
+        afterState.currentSceneId &&
+        afterState.currentSceneId !== beforeSceneId;
 
       if (sceneChanged) {
         stream?.onSceneChangeStart?.();
         stream?.onSceneChangeEnd?.();
 
-        void generateSceneImage(currentScenario, afterState)
+        void generateSceneImage(currentScene, afterState)
           .then((result) => {
             if (!result) return;
-            if (currentScenario) {
-              currentScenario.sceneImage = {
+            if (currentScene) {
+              currentScene.sceneImage = {
                 path: result.path,
                 mimeType: result.mimeType,
                 generatedAt: new Date().toISOString(),
@@ -600,8 +599,8 @@ export const buildDynamicGraph = (
             stream?.onSceneImage?.({
               imagePath: result.path,
               mimeType: result.mimeType,
-              sceneName: currentScenario.name,
-              location: currentScenario.location,
+              sceneName: currentScene.name,
+              location: currentScene.name,
               gameDay: afterState.gameDay ?? null,
               gameTime: afterState.timeOfDay ?? null,
               timestamp: new Date().toISOString(),
@@ -615,23 +614,11 @@ export const buildDynamicGraph = (
           });
 
         // Incrementally update the macro map
-        const prevScenario = afterState.temporaryInfo.previousScenario;
+        const prevSceneId = beforeSceneId;
+        const prevScene = prevSceneId
+          ? afterState.scenes.get(prevSceneId) ?? null
+          : null;
         const moduleDigest = afterState.moduleDigest;
-        const resolveScenarioIdFromSnapshot = (
-          snapshotId: string
-        ): string | null => {
-          for (const [
-            scenarioId,
-            snapshots,
-          ] of afterState.updatedDynamicScenarioSnapshots.entries()) {
-            if (
-              (snapshots || []).some((snapshot) => snapshot.id === snapshotId)
-            ) {
-              return scenarioId;
-            }
-          }
-          return null;
-        };
 
         const getConns = (id: string, name?: string) => {
           const byIdOrName = afterState.scenarioOutlines.find(
@@ -640,27 +627,26 @@ export const buildDynamicGraph = (
           if (byIdOrName) {
             return byIdOrName.connections || [];
           }
-          const scenarioId = resolveScenarioIdFromSnapshot(id);
-          if (!scenarioId) return [];
+          // scenes Map is keyed by scenarioId directly, no resolution needed
           return (
             afterState.scenarioOutlines.find(
-              (outline) => outline.id === scenarioId
+              (outline) => outline.id === id
             )?.connections || []
           );
         };
 
-        if (prevScenario && currentScenario) {
+        if (prevScene && currentScene) {
           void generateMapOnSceneSwitch(
             afterState.moduleName,
             {
-              name: prevScenario.name,
-              description: prevScenario.description,
-              connections: getConns(prevScenario.id, prevScenario.name),
+              name: prevScene.name,
+              description: prevScene.description,
+              connections: getConns(prevSceneId!, prevScene.name),
             },
             {
-              name: currentScenario.name,
-              description: currentScenario.description,
-              connections: getConns(currentScenario.id, currentScenario.name),
+              name: currentScene.name,
+              description: currentScene.description,
+              connections: getConns(afterState.currentSceneId!, currentScene.name),
             },
             moduleDigest?.macroMapPath
           )

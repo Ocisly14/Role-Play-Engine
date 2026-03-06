@@ -51,10 +51,11 @@ export class OrchestratorAgent {
     const effectiveLanguage = language === "en" ? "en" : "zh";
 
     // Extract context from dynamic game state
+    const currentScene = dynamicState.scenes.get(dynamicState.currentSceneId ?? "");
     const scenarioLocation =
-      dynamicState.currentScenario?.location || "Unknown location";
+      currentScene?.name || "Unknown location";
     const currentScenarioName =
-      dynamicState.currentScenario?.name || "Unknown scenario";
+      currentScene?.name || "Unknown scenario";
     const npcList =
       dynamicState.npcCharacters?.map((npc) => ({
         id: npc.id,
@@ -62,16 +63,16 @@ export class OrchestratorAgent {
       })) || [];
 
     // Get scenario connections for scene change validation
-    // Note: currentScenario.id is snapshot_id, not scenario_id
+    // Note: currentSceneId maps to a scene in the scenes Map
     // We need to find the corresponding scenario outline to get connections
     let scenarioOutline: (typeof dynamicState.scenarioOutlines)[0] | undefined;
 
-    if (db && dynamicState.currentScenario?.id) {
+    if (db && dynamicState.currentSceneId) {
       // Try to get scenario_id from database using snapshot_id
       try {
         const prisma = getPrismaClient();
         const snapshotRow = await prisma.scenarioSnapshot.findFirst({
-          where: { snapshotId: dynamicState.currentScenario.id },
+          where: { snapshotId: dynamicState.currentSceneId },
           select: { scenarioId: true },
         });
 
@@ -90,9 +91,9 @@ export class OrchestratorAgent {
     }
 
     // Fallback: match by name if database query failed or db not available
-    if (!scenarioOutline && dynamicState.currentScenario?.name) {
+    if (!scenarioOutline && currentScene?.name) {
       scenarioOutline = dynamicState.scenarioOutlines.find(
-        (outline) => outline.name === dynamicState.currentScenario?.name
+        (outline) => outline.name === currentScene?.name
       );
     }
     const rawConnections = scenarioOutline?.connections || [];

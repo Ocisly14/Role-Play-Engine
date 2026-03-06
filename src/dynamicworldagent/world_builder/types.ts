@@ -12,7 +12,6 @@ import type {
   NPCRelationship,
 } from "../../shared/agents/models/gameTypes.js";
 import type {
-  ScenarioCharacter,
   ScenarioClue,
   ScenarioCondition,
 } from "../../shared/agents/models/scenarioTypes.js";
@@ -79,44 +78,22 @@ export interface DynamicNPCProfile extends DynamicCharacterProfile {
   inheritsKnowledge?: string[]; // Truth event IDs from knowledge holder
 }
 
-/**
- * Dynamic World Scenario Snapshot - Simplified version for DynamicWorld system
- * Removes events (tracked via actionResults) and exits (replaced by scenario-level connections)
- */
-export interface DynamicScenarioSnapshot {
+export interface DynamicScene {
   id: string;
-  /** Scenario name */
   name: string;
-  /** Narrative game time for this snapshot (e.g., "Day 1, 08:00") */
-  gameTime?: string;
-  /** System timestamp when this snapshot was created */
-  timestamp?: Date;
-  /** Snapshot type: "complete" (with clues, conditions, full character data) or "simplified" (description and actionLog only) */
-  snapshotType?: "complete" | "simplified";
-  /** Primary location */
-  location: string;
-  /** Detailed description */
   description: string;
-  /** Whether the map should be shown for this scene */
-  showMap?: boolean;
-  /** Module-relative path to map image (inherited from parent ScenarioProfile) */
-  mapImagePath?: string;
-  /** Generated scene image metadata */
-  sceneImage?: SceneImage;
-  /** Characters present */
-  characters: ScenarioCharacter[];
-  /** Available clues */
+  domain?: string;
+  items: SceneItem[];
   clues: ScenarioClue[];
-  /** Environmental conditions */
   conditions: ScenarioCondition[];
-  /** Keeper notes */
-  keeperNotes?: string;
-  /** Estimated short actions the scene can accommodate (runtime-only, set by Director) */
-  estimatedShortActions?: number;
-  /** Time restriction for this snapshot (e.g., "day1 evening", "day2 (after)") - optional */
-  timeRestriction?: string;
-  /** Whether this is the initial snapshot for the starting scene */
-  initialSnapshot?: boolean;
+  sceneImage?: SceneImage;
+  events: string[];
+}
+
+export interface SceneItem {
+  id: string;
+  name: string;
+  description?: string;
 }
 
 export interface SceneImage {
@@ -266,6 +243,11 @@ export interface ScenarioOutline {
   evidence?: string[];
   clues?: ScenarioClueSeed[];
   connections: ScenarioConnection[];
+  // Moved from DynamicScenarioSnapshot:
+  showMap?: boolean;
+  mapImagePath?: string;
+  estimatedShortActions?: number;
+  timeRestriction?: string;
 }
 
 export interface ScenarioClueSeed {
@@ -290,7 +272,7 @@ export interface StartingSceneSelection {
   scenarioId: string;
   scenarioName: string;
   selectionReason?: string;
-  snapshot: DynamicScenarioSnapshot;
+  scene: DynamicScene;
 }
 
 /**

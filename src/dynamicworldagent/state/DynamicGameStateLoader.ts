@@ -24,8 +24,8 @@ import type {
 import type {
   DynamicCharacterProfile,
   DynamicNPCProfile,
+  DynamicScene,
 } from "../world_builder/types.js";
-import type { DynamicScenarioSnapshot } from "../world_builder/types.js";
 import { WorldModuleLoader } from "../world_builder/worldModuleLoader.js";
 import type { DynamicGameState } from "./DynamicGameState.js";
 import {
@@ -540,32 +540,16 @@ export async function initializeCompleteDynamicGameState(
     };
   }
 
-  // 2. Load all baseline snapshots for this module's scenarios
-  let currentScenario: DynamicScenarioSnapshot | null = null;
+  // 2. Load all baseline scenes for this module's scenarios
+  let currentSceneId: string | null = null;
   let gameDay = 1;
   let timeOfDay = "08:00";
-  const moduleSnapshotsMap = new Map<string, DynamicScenarioSnapshot[]>();
+  const scenesMap = new Map<string, DynamicScene>();
 
-  // Helper function to build a snapshot from a Prisma result (async due to Prisma queries)
-  const buildSnapshotFromRow = async (
+  // Helper function to build a DynamicScene from a Prisma snapshot row
+  const buildSceneFromRow = async (
     snapshotRow: any
-  ): Promise<DynamicScenarioSnapshot> => {
-    // Load snapshot characters
-    const snapshotCharacters = await prisma.scenarioCharacter.findMany({
-      where: {
-        snapshotId: snapshotRow.snapshotId,
-        ...(scopedModuleId ? { moduleId: scopedModuleId } : {}),
-      },
-      select: {
-        id: true,
-        characterName: true,
-        characterRole: true,
-        characterStatus: true,
-        characterLocation: true,
-        characterNotes: true,
-      },
-    });
-
+  ): Promise<DynamicScene> => {
     // Load snapshot clues
     const snapshotClues = await prisma.scenarioClue.findMany({
       where: {
@@ -606,21 +590,12 @@ export async function initializeCompleteDynamicGameState(
         : undefined;
 
     return {
-      id: snapshotRow.snapshotId,
+      id: snapshotRow.scenarioId,
       name: snapshotRow.snapshotName || snapshotRow.scenario?.name,
-      location: snapshotRow.location,
       description: snapshotRow.description,
-      gameTime: snapshotRow.gameTime || undefined,
-      showMap: snapshotRow.showMap === true,
+      domain: undefined,
+      items: [],
       sceneImage,
-      characters: snapshotCharacters.map((char) => ({
-        id: char.id,
-        name: char.characterName,
-        role: char.characterRole,
-        status: char.characterStatus,
-        location: char.characterLocation || undefined,
-        notes: char.characterNotes || undefined,
-      })),
       clues: snapshotClues.map((clue) => ({
         id: clue.clueId,
         clueText: clue.clueText,
@@ -640,13 +615,12 @@ export async function initializeCompleteDynamicGameState(
         description: cond.description,
         mechanicalEffect: cond.mechanicalEffect || undefined,
       })),
-      keeperNotes: snapshotRow.keeperNotes || undefined,
-      timeRestriction: snapshotRow.timeRestriction || undefined,
+      events: [],
     };
   };
 
   // Load all non-historical snapshots for this module.
-  // New-game state should include all module scene snapshots; initialSnapshot only decides start scene.
+  // New-game state should include all module scenes; initialSnapshot only decides start scene.
   const allModuleSnapshots = await prisma.scenarioSnapshot.findMany({
     where: {
       ...(scopedModuleId ? { moduleId: scopedModuleId } : {}),
@@ -668,24 +642,22 @@ export async function initializeCompleteDynamicGameState(
     allModuleSnapshots[0] ||
     null;
 
-  // Build snapshots and group by scenarioId
-  const snapshotsById = new Map<string, DynamicScenarioSnapshot>();
+  // Build scenes — flat Map keyed by scenarioId (one scene per ID)
   for (const snapshotRow of allModuleSnapshots) {
-    const snapshot = await buildSnapshotFromRow(snapshotRow);
-    snapshotsById.set(snapshotRow.snapshotId, snapshot);
-
-    if (!moduleSnapshotsMap.has(snapshotRow.scenarioId)) {
-      moduleSnapshotsMap.set(snapshotRow.scenarioId, []);
+    const sceneId = snapshotRow.scenarioId;
+    // Only keep the first (baseline) scene per scenarioId
+    if (!scenesMap.has(sceneId)) {
+      const scene = await buildSceneFromRow(snapshotRow);
+      scenesMap.set(sceneId, scene);
     }
-    moduleSnapshotsMap.get(snapshotRow.scenarioId)!.push(snapshot);
   }
 
-  // Set player start scene from initial snapshot (or fallback first available snapshot)
+  // Set player start scene from initial snapshot
   if (startSnapshotRow) {
-    currentScenario = snapshotsById.get(startSnapshotRow.snapshotId) || null;
+    currentSceneId = startSnapshotRow.scenarioId;
 
     console.log(
-      `[DynamicGameState] Start snapshot: ${startSnapshotRow.snapshotName || startSnapshotRow.scenario?.name} (${startSnapshotRow.location})`
+      `[DynamicGameState] Start scene: ${startSnapshotRow.snapshotName || startSnapshotRow.scenario?.name} (${startSnapshotRow.scenarioId})`
     );
 
     // Parse game time from snapshot
@@ -714,7 +686,7 @@ export async function initializeCompleteDynamicGameState(
   }
 
   console.log(
-    `[DynamicGameState] Loaded ${allModuleSnapshots.length} baseline snapshots across ${moduleSnapshotsMap.size} scenarios`
+    `[DynamicGameState] Loaded ${scenesMap.size} scenes from ${allModuleSnapshots.length} snapshot rows`
   );
 
   // 3. Load all NPCs and normalize legacy ids to module scope.
@@ -764,24 +736,11 @@ export async function initializeCompleteDynamicGameState(
   }
 
   // 5. Create complete state with runtime data
-  // Merge module baseline snapshots with any existing in-memory snapshots
-  const mergedSnapshots = new Map(worldData.updatedDynamicScenarioSnapshots);
-  for (const [scenarioId, snapshots] of moduleSnapshotsMap.entries()) {
-    if (!mergedSnapshots.has(scenarioId)) {
-      mergedSnapshots.set(scenarioId, snapshots);
-    } else {
-      // Keep baseline snapshots first, then append any runtime snapshots, dedup by snapshot id.
-      const existing = mergedSnapshots.get(scenarioId)!;
-      const combined = [...snapshots, ...existing];
-      const deduped: DynamicScenarioSnapshot[] = [];
-      const seen = new Set<string>();
-      for (const item of combined) {
-        if (!seen.has(item.id)) {
-          deduped.push(item);
-          seen.add(item.id);
-        }
-      }
-      mergedSnapshots.set(scenarioId, deduped);
+  // Merge module baseline scenes with any existing in-memory scenes (flat map, one per ID)
+  const mergedScenes = new Map(worldData.scenes);
+  for (const [sceneId, scene] of scenesMap.entries()) {
+    if (!mergedScenes.has(sceneId)) {
+      mergedScenes.set(sceneId, scene);
     }
   }
 
@@ -790,7 +749,7 @@ export async function initializeCompleteDynamicGameState(
     sessionId: params.sessionId,
     playerCharacter,
     npcCharacters,
-    currentScenario,
+    currentSceneId,
     gameDay,
     timeOfDay,
     scenarioTimeState: {
@@ -802,33 +761,20 @@ export async function initializeCompleteDynamicGameState(
       minutesSinceLastRest: 0,
       fatigueActive: false,
     },
-    // Store all module baseline snapshots in updatedDynamicScenarioSnapshots.
+    // Store all module scenes in the flat scenes map.
     // This allows agents to read all module scenes directly from state.
-    updatedDynamicScenarioSnapshots: mergedSnapshots,
+    scenes: mergedScenes,
   };
 
   // Initialize NPC Planning runtime state from module data
   if (npcCharacters.length > 0) {
-    // Build NPC-to-scenario location map from snapshots
-    const npcLocationFromSnapshot: Record<string, string> = {};
-    for (const [scenarioId, snapshots] of mergedSnapshots.entries()) {
-      const snapshot = snapshots[snapshots.length - 1];
-      if (snapshot?.characters) {
-        for (const char of snapshot.characters) {
-          if (!npcLocationFromSnapshot[char.id]) {
-            npcLocationFromSnapshot[char.id] = scenarioId;
-          }
-        }
-      }
-    }
-
     const defaultScenarioId =
-      currentScenario?.id ??
+      currentSceneId ??
       completeState.scenarioOutlines?.[0]?.id ??
       "unknown";
 
     for (const npc of npcCharacters) {
-      // npcLocations: from snapshot character assignment or actionLog
+      // npcLocations: from NPC actionLog or default to starting scene
       if (!completeState.npcLocations[npc.id]) {
         const actionLog = npc.actionLog ?? [];
         let lastLog: { location?: string } | undefined;
@@ -836,7 +782,6 @@ export async function initializeCompleteDynamicGameState(
           if (actionLog[i].location) { lastLog = actionLog[i]; break; }
         }
         completeState.npcLocations[npc.id] =
-          npcLocationFromSnapshot[npc.id] ??
           lastLog?.location ??
           defaultScenarioId;
       }

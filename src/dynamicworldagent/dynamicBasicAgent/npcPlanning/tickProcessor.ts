@@ -444,7 +444,7 @@ async function discoverClues(
   language: string
 ): Promise<DiscoveredClueEntry[]> {
   const state = dgsm.getState();
-  const scenario = state.currentScenario;
+  const scene = dgsm.getCurrentScene();
 
   // Determine max discoverable difficulty rank
   let maxRank: number;
@@ -473,9 +473,9 @@ async function discoverClues(
 
   if (
     (node.type === "scene_interaction" || node.type === "object_interaction") &&
-    scenario?.clues
+    scene?.clues
   ) {
-    for (const clue of scenario.clues) {
+    for (const clue of scene.clues) {
       if (clue.discovered || clue.damaged) continue;
       const rank = CLUE_DIFFICULTY_RANK[clue.difficulty] ?? 1;
       if (rank > maxRank) continue;
@@ -484,8 +484,8 @@ async function discoverClues(
         clueText: clue.clueText,
         difficulty: clue.difficulty,
         source: "scene",
-        sourceId: scenario.id,
-        sourceName: scenario.name,
+        sourceId: scene.id,
+        sourceName: scene.name,
       });
     }
   }
@@ -803,8 +803,22 @@ function executeNode(
       const payload = node.objectInteractionPayload;
       if (payload.action === "pickup" && payload.itemId) {
         dgsm.addItemToNpc(node.characterId, payload.itemId);
-      } else if ((payload.action === "place" || payload.action === "destroy") && payload.itemId) {
+        const scene = dgsm.getCurrentScene();
+        if (scene) {
+          scene.items = scene.items.filter(i => i.id !== payload.itemId);
+        }
+      } else if (payload.action === "place" && payload.itemId) {
         dgsm.removeItemFromNpc(node.characterId, payload.itemId);
+        const scene = dgsm.getCurrentScene();
+        if (scene) {
+          scene.items.push({ id: payload.itemId, name: payload.itemId });
+        }
+      } else if (payload.action === "destroy" && payload.itemId) {
+        dgsm.removeItemFromNpc(node.characterId, payload.itemId);
+        const scene = dgsm.getScene(node.location);
+        if (scene) {
+          scene.events.push(`${node.characterName} destroyed ${payload.itemId}`);
+        }
       }
     }
     return makeAction("completed", buildOutcome("completed"));
@@ -990,13 +1004,21 @@ export async function runTick(
 
       // Fumble → damage a random undiscovered scene clue
       if (node.isPlayer && action.successLevel === "fumble") {
-        const scenario = dgsm.getState().currentScenario;
-        const damageable = scenario?.clues?.filter((c) => !c.discovered && !c.damaged) ?? [];
+        const scene = dgsm.getCurrentScene();
+        const damageable = scene?.clues?.filter((c) => !c.discovered && !c.damaged) ?? [];
         if (damageable.length > 0) {
           const victim = damageable[Math.floor(Math.random() * damageable.length)];
           dgsm.damageScenarioClue(victim.id, node.characterName, `Fumbled: ${node.action}`);
-          action.damagedClue = { clueId: victim.id, sourceName: scenario!.name };
+          action.damagedClue = { clueId: victim.id, sourceName: scene!.name };
           console.log(`[TickProcessor] Fumble damaged clue: ${victim.clueText.slice(0, 40)}`);
+        }
+      }
+
+      // Scene event logging for high-impact completed NPC actions
+      if (action.status === "completed" && action.impact >= 2 && !node.isPlayer) {
+        const scene = dgsm.getScene(node.location);
+        if (scene) {
+          scene.events.push(`${node.characterName}: ${action.outcome}`);
         }
       }
 
@@ -1024,7 +1046,7 @@ export async function runTick(
     if (impactEvents.length > 0) {
       // Build per-character impact event map (characterId → events that affect them)
       const characterEventsMap = new Map<string, Array<{ event: CharacterAction; impact: number }>>();
-      const playerScene = state.currentScenario?.id;
+      const playerScene = state.currentSceneId;
       const playerId = state.playerCharacter?.id;
 
       const addEventForCharacter = (charId: string, event: CharacterAction, impact: number) => {
@@ -1267,13 +1289,21 @@ export async function resumeTick(
 
       // Fumble → damage a random undiscovered scene clue
       if (node.isPlayer && action.successLevel === "fumble") {
-        const scenario = dgsm.getState().currentScenario;
-        const damageable = scenario?.clues?.filter((c) => !c.discovered && !c.damaged) ?? [];
+        const scene = dgsm.getCurrentScene();
+        const damageable = scene?.clues?.filter((c) => !c.discovered && !c.damaged) ?? [];
         if (damageable.length > 0) {
           const victim = damageable[Math.floor(Math.random() * damageable.length)];
           dgsm.damageScenarioClue(victim.id, node.characterName, `Fumbled: ${node.action}`);
-          action.damagedClue = { clueId: victim.id, sourceName: scenario!.name };
+          action.damagedClue = { clueId: victim.id, sourceName: scene!.name };
           console.log(`[TickProcessor] Fumble damaged clue: ${victim.clueText.slice(0, 40)}`);
+        }
+      }
+
+      // Scene event logging for high-impact completed NPC actions
+      if (action.status === "completed" && action.impact >= 2 && !node.isPlayer) {
+        const scene = dgsm.getScene(node.location);
+        if (scene) {
+          scene.events.push(`${node.characterName}: ${action.outcome}`);
         }
       }
 
@@ -1299,7 +1329,7 @@ export async function resumeTick(
     const impactEvents = bucketActions.filter((a) => a.impact > 0);
     if (impactEvents.length > 0) {
       const characterEventsMap = new Map<string, Array<{ event: CharacterAction; impact: number }>>();
-      const playerScene = state.currentScenario?.id;
+      const playerScene = state.currentSceneId;
       const playerId = state.playerCharacter?.id;
 
       const addEventForCharacter = (charId: string, event: CharacterAction, impact: number) => {

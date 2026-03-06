@@ -1,9 +1,5 @@
 import type { ActionLogEntry } from "../../../shared/agents/models/gameTypes.js";
 import type { DynamicGameState } from "../../state/index.js";
-import {
-  getLatestActionLogEntryWithLocation,
-  isTimeAfter,
-} from "../../utils/gameTime.js";
 import type { DynamicCharacterProfile } from "../../world_builder/types.js";
 import type { DynamicNPCProfile } from "../../world_builder/types.js";
 
@@ -24,101 +20,44 @@ export class CharacterAgent {
     conditionsJson: string;
     connectionsJson: string;
   } | null {
-    const scenario = dynamicState.currentScenario;
-    if (!scenario) return null;
+    const currentSceneId = dynamicState.currentSceneId;
+    if (!currentSceneId) return null;
+
+    const scene = dynamicState.scenes.get(currentSceneId);
+    if (!scene) return null;
 
     const outline = dynamicState.scenarioOutlines.find(
-      (o) => o.id === scenario.id
+      (o) => o.id === currentSceneId
     );
-    const conditions = scenario.conditions || [];
+    const conditions = scene.conditions || [];
     const connections = outline?.connections || [];
 
     return {
-      name: scenario.name ?? "",
-      location: scenario.location ?? "",
-      description: scenario.description ?? "",
+      name: scene.name ?? "",
+      location: currentSceneId,
+      description: scene.description ?? "",
       conditionsJson: JSON.stringify(conditions, null, 2),
       connectionsJson: JSON.stringify(connections, null, 2),
     };
   }
 
   /**
-   * Characters in scene for template: name, status, location, age, gender, appearance,
-   * personality, goals, secrets, background, inventory, relationship only.
-   * No actionLog -> use scenario.characters as authority; exclude left, include arrived.
+   * Characters in scene for template: id, name, role, status, location.
+   * NPC presence is derived from npcLocations (single source of truth).
    */
   extractSceneCharactersForTemplate(dynamicState: DynamicGameState): any[] {
-    const scenario = dynamicState.currentScenario;
-    if (!scenario?.location) return [];
+    const currentSceneId = dynamicState.currentSceneId;
+    if (!currentSceneId) return [];
 
-    const scenarioLocation = scenario.location;
-    const snapshotTime =
-      scenario.gameTime ??
-      `Day ${dynamicState.gameDay}, ${dynamicState.timeOfDay}`;
-    const out: any[] = [];
-    const seen = new Set<string>();
-
-    const add = (
-      npc: DynamicCharacterProfile,
-      locationInScene: string | null,
-      scenarioStatus?: string
-    ) => {
-      const key = this.normalizeName(npc.name);
-      if (seen.has(key)) return;
-      seen.add(key);
-      const npcProfile = npc as DynamicNPCProfile;
-      out.push({
+    return dynamicState.npcCharacters
+      .filter(npc => dynamicState.npcLocations[npc.id] === currentSceneId)
+      .map(npc => ({
+        id: npc.id,
         name: npc.name,
-        status: scenarioStatus ?? npc.status,
-        location: locationInScene ?? scenarioLocation,
-        age: npcProfile.age ?? null,
-        gender: (npcProfile as { gender?: string }).gender ?? null,
-        appearance: npcProfile.appearance ?? null,
-        personality: npcProfile.personality ?? null,
-        goals: npcProfile.goals ?? [],
-        secrets: npcProfile.secrets ?? [],
-        background: npcProfile.background ?? null,
-        inventory: npc.inventory ?? [],
-        relationship: npcProfile.relationships ?? [],
-      });
-    };
-
-    const alreadyAdded = (name: string) =>
-      out.some((c) => this.isNameSimilar(c.name, name));
-
-    // 1. From scenario.characters: exclude only if we can prove they left.
-    for (const sc of scenario.characters || []) {
-      const npc = dynamicState.npcCharacters.find((n) =>
-        this.isNameSimilar(n.name, sc.name)
-      );
-      if (!npc) continue;
-      const latest = getLatestActionLogEntryWithLocation(npc.actionLog);
-      if (
-        latest &&
-        isTimeAfter(latest.time, snapshotTime) &&
-        latest.location.toLowerCase() !== scenarioLocation.toLowerCase()
-      ) {
-        continue; // left, don't add
-      }
-      add(npc, sc.location ?? null, sc.status);
-    }
-
-    // 2. From all NPCs: include only if actionLog shows arrived.
-    for (const npc of dynamicState.npcCharacters) {
-      if (alreadyAdded(npc.name)) continue;
-      const latest = getLatestActionLogEntryWithLocation(
-        (npc as DynamicNPCProfile).actionLog
-      );
-      if (
-        latest &&
-        isTimeAfter(latest.time, snapshotTime) &&
-        latest.location.toLowerCase() === scenarioLocation.toLowerCase()
-      ) {
-        add(npc, latest.location, undefined);
-      }
-    }
-
-    return out;
+        role: npc.occupation || "unknown",
+        status: npc.status || "active",
+        location: currentSceneId,
+      }));
   }
 
   /**
@@ -151,27 +90,39 @@ export class CharacterAgent {
    * Extract scenario information
    */
   extractScenarioInfo(dynamicState: DynamicGameState): any {
-    const currentScenario = dynamicState.currentScenario;
-
-    if (!currentScenario) {
+    const currentSceneId = dynamicState.currentSceneId;
+    if (!currentSceneId) {
       return {
         hasScenario: false,
         message: "No current scenario loaded",
       };
     }
 
+    const scene = dynamicState.scenes.get(currentSceneId);
+    if (!scene) {
+      return {
+        hasScenario: false,
+        message: "No current scene found",
+      };
+    }
+
     const scenarioOutline = dynamicState.scenarioOutlines.find(
-      (outline) => outline.id === currentScenario.id
+      (outline) => outline.id === currentSceneId
     );
 
+    // Characters in scene derived from npcLocations
+    const sceneCharacters = dynamicState.npcCharacters
+      .filter(npc => dynamicState.npcLocations[npc.id] === currentSceneId)
+      .map(npc => ({ id: npc.id, name: npc.name, status: npc.status }));
+
     return {
-      id: currentScenario.id,
-      name: currentScenario.name,
-      location: currentScenario.location,
-      description: currentScenario.description,
-      characters: currentScenario.characters || [],
-      clues: currentScenario.clues || [],
-      conditions: currentScenario.conditions || [],
+      id: currentSceneId,
+      name: scene.name,
+      location: currentSceneId,
+      description: scene.description,
+      characters: sceneCharacters,
+      clues: scene.clues || [],
+      conditions: scene.conditions || [],
       connections: scenarioOutline?.connections || [],
     };
   }
@@ -192,97 +143,25 @@ export class CharacterAgent {
   }
 
   /**
-   * Extract NPCs in current scene location.
-   * - If NPC has no actionLog (or no entry with time+location), use scenario.characters as the authority.
-   * - From scenario.characters: exclude only when latest actionLog is after snapshot time and location !== current scene (left).
-   * - From all NPCs: include when latest actionLog is after snapshot time and location === current scene (arrived).
+   * Extract NPCs in current scene.
+   * NPC presence is derived from npcLocations (single source of truth).
    */
   extractSceneNPCs(dynamicState: DynamicGameState): any[] {
-    const currentScenario = dynamicState.currentScenario;
+    const currentSceneId = dynamicState.currentSceneId;
+    if (!currentSceneId) return [];
 
-    if (!currentScenario || !currentScenario.location) {
-      return [];
-    }
-
-    const scenarioLocation = currentScenario.location;
-    const snapshotTime =
-      currentScenario.gameTime ??
-      `Day ${dynamicState.gameDay}, ${dynamicState.timeOfDay}`;
-    const sceneNpcs: any[] = [];
-    let addedBySnapshot = 0;
-    let excludedLeft = 0;
-    let addedByArrived = 0;
+    const sceneNpcs = dynamicState.npcCharacters
+      .filter(npc => dynamicState.npcLocations[npc.id] === currentSceneId);
 
     console.log(
-      `\n[Extract Scene NPCs] Current location: "${scenarioLocation}"`
-    );
-    console.log(`[Extract Scene NPCs] Snapshot time: "${snapshotTime}"`);
-    console.log(
-      `[Extract Scene NPCs] Scenario characters list: ${currentScenario.characters?.map((c) => c.name).join(", ") || "none"}`
+      `\n[Extract Scene NPCs] Current scene: "${currentSceneId}"`
     );
     console.log(
       `[Extract Scene NPCs] Total NPCs in game: ${dynamicState.npcCharacters.length}`
     );
-
-    const alreadyInScene = (name: string) =>
-      sceneNpcs.some((sn) => this.isNameSimilar(sn.name, name));
-
-    // 1. From scenario.characters: include unless we can prove they "left".
-    for (const scenarioChar of currentScenario.characters || []) {
-      const matchingNpc = dynamicState.npcCharacters.find((npc) =>
-        this.isNameSimilar(npc.name, scenarioChar.name)
-      );
-
-      if (!matchingNpc) {
-        console.log(
-          `   No match found for scenario character: "${scenarioChar.name}"`
-        );
-        continue;
-      }
-
-      const latest = getLatestActionLogEntryWithLocation(matchingNpc.actionLog);
-      if (
-        latest &&
-        isTimeAfter(latest.time, snapshotTime) &&
-        latest.location.toLowerCase() !== scenarioLocation.toLowerCase()
-      ) {
-        console.log(
-          `   Excluded (left): "${matchingNpc.name}" (latest: ${latest.location} at ${latest.time})`
-        );
-        excludedLeft++;
-        continue;
-      }
-
-      sceneNpcs.push(this.extractNPCInfo(matchingNpc));
-      console.log(`   Added from scenario.characters: "${matchingNpc.name}"`);
-      addedBySnapshot++;
-    }
-
-    // 2. From all NPCs: include only if actionLog shows they "arrived".
-    for (const npc of dynamicState.npcCharacters) {
-      if (alreadyInScene(npc.name)) continue;
-
-      const latest = getLatestActionLogEntryWithLocation(
-        (npc as DynamicNPCProfile).actionLog
-      );
-      if (
-        latest &&
-        isTimeAfter(latest.time, snapshotTime) &&
-        latest.location.toLowerCase() === scenarioLocation.toLowerCase()
-      ) {
-        sceneNpcs.push(this.extractNPCInfo(npc));
-        console.log(
-          `   Added by actionLog (arrived): "${npc.name}" (location: "${latest.location}" at ${latest.time})`
-        );
-        addedByArrived++;
-      }
-    }
-
-    console.log(`\n[Extract Scene NPCs] Summary:`);
-    console.log(`   From scenario.characters (not left): ${addedBySnapshot}`);
-    console.log(`   Excluded (left): ${excludedLeft}`);
-    console.log(`   From actionLog (arrived): ${addedByArrived}`);
-    console.log(`   Total NPCs in scene: ${sceneNpcs.length}\n`);
+    console.log(
+      `[Extract Scene NPCs] NPCs in scene: ${sceneNpcs.length} — ${sceneNpcs.map(n => n.name).join(", ") || "none"}\n`
+    );
 
     return sceneNpcs;
   }

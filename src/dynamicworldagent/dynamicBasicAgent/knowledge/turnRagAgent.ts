@@ -117,6 +117,7 @@ function collectClueChunkDrafts(
     });
   };
 
+  const currentScene = dynamicGameState.scenes.get(dynamicGameState.currentSceneId ?? "");
   const scenarioClues = Array.isArray(clueRevelations?.scenarioClues)
     ? clueRevelations.scenarioClues
     : [];
@@ -124,11 +125,11 @@ function collectClueChunkDrafts(
     const clueId = typeof item === "string" ? item : item?.clueId;
     if (!clueId) continue;
 
-    const clue = dynamicGameState.currentScenario?.clues?.find(
-      (c) => c.id === clueId
+    const clue = currentScene?.clues?.find(
+      (c: { id: string }) => c.id === clueId
     );
     pushDraft({
-      sourceName: dynamicGameState.currentScenario?.name || "Unknown Scenario",
+      sourceName: currentScene?.name || "Unknown Scenario",
       clueType: "scenario",
       text: clue?.clueText || `Scenario clue ${clueId}`,
       method: clue?.discoveryDetails?.method || "Keeper revelation",

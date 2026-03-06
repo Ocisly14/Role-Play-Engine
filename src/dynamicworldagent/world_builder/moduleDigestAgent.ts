@@ -71,8 +71,8 @@ export class ModuleDigestAgent {
     macroMapPath?: string
   ): Promise<ModuleDigest> {
     const template = getModuleDigestTemplate();
-    const startingSnapshotId = startingScene?.snapshot?.id;
-    const startingSnapshotName = startingScene?.snapshot?.name;
+    const startingSnapshotId = startingScene?.scene?.id;
+    const startingSnapshotName = startingScene?.scene?.name;
     const prompt = composeTemplate(
       template,
       {},
@@ -99,7 +99,7 @@ export class ModuleDigestAgent {
           2
         ),
         initialSnapshotJson: JSON.stringify(
-          startingScene?.snapshot ?? null,
+          startingScene?.scene ?? null,
           null,
           2
         ),

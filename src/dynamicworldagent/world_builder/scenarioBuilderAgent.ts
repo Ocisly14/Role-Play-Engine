@@ -9,14 +9,15 @@ import {
   generateText,
 } from "../../models/index.js";
 import { composeTemplate } from "../../template.js";
-import { generateSceneImageFromSnapshot } from "../visual/sceneImage.js";
+import { generateSceneImageFromScene } from "../visual/sceneImage.js";
 import {
   getNpcAssignmentTemplate,
   getScenarioBuilderTemplate,
-  getStartingSceneSnapshotTemplate,
+  getStartingSceneTemplate,
 } from "./scenarioBuilderTemplate.js";
 import type {
   DynamicNPCProfile,
+  DynamicScene,
   KnowledgeHolder,
   MacroSceneStructure,
   ProgressCallback,
@@ -293,9 +294,9 @@ export class ScenarioBuilderAgent {
   }
 
   /**
-   * Phase 4a: Select starting scene and generate snapshot (NO NPC assignments)
+   * Phase 4a: Select starting scene and generate scene (NO NPC assignments)
    */
-  async generateStartingSceneSnapshot(
+  async generateStartingScene(
     macroScene: MacroSceneStructure,
     truthTimeline: TruthEvent[],
     knowledgeMatrix: KnowledgeHolder[],
@@ -303,9 +304,9 @@ export class ScenarioBuilderAgent {
     storyElements?: StructuredStoryElements,
     progressCallback?: ProgressCallback
   ): Promise<StartingSceneSelection> {
-    progressCallback?.("Selecting starting scene and generating snapshot...");
+    progressCallback?.("Selecting starting scene and generating scene...");
 
-    const template = getStartingSceneSnapshotTemplate();
+    const template = getStartingSceneTemplate();
     const prompt = composeTemplate(
       template,
       {},
@@ -320,7 +321,7 @@ export class ScenarioBuilderAgent {
       }
     );
 
-    progressCallback?.("Calling AI for starting scene snapshot...");
+    progressCallback?.("Calling AI for starting scene...");
     const response = await generateText({
       runtime: this.runtime,
       providerOverride: this.runtime.modelProvider,
@@ -356,63 +357,44 @@ export class ScenarioBuilderAgent {
         throw new Error("No scenarios available to select starting scene.");
       }
 
-      const resolvedStartingScene: StartingSceneSelection = {
-        scenarioId: selectedScenario.id,
-        scenarioName: selectedScenario.name,
-        snapshot: startingScene?.snapshot as StartingSceneSelection["snapshot"],
-      };
-
-      const snapshot = resolvedStartingScene.snapshot || {
+      // Build scene from LLM output, falling back to scenario outline defaults
+      const parsedScene = (startingScene as any)?.scene;
+      const scene: DynamicScene = {
         id: selectedScenario.id,
         name: selectedScenario.name,
-        location: selectedScenario.name,
-        description: selectedScenario.description,
-        characters: [],
-        clues: [],
-        conditions: [],
-        events: [],
+        description: parsedScene?.description || selectedScenario.description,
+        domain: parsedScene?.domain,
+        items: parsedScene?.items || [],
+        clues: (parsedScene?.clues || []).map((c: any) => ({
+          id: c.id || `clue_${crypto.randomUUID().slice(0, 8)}`,
+          clueText: c.clueText || "Unspecified clue",
+          category: c.category || "environment",
+          difficulty: c.difficulty || "regular",
+          location: c.location || selectedScenario.name,
+          discovered: false,
+        })),
+        conditions: parsedScene?.conditions || [],
+        sceneImage: undefined,
+        events: parsedScene?.events || [],
       };
 
-      // Enforce starting snapshot identity to match the selected scenario exactly.
-      if (snapshot.id !== selectedScenario.id) {
+      // Enforce starting scene identity to match the selected scenario exactly.
+      if (scene.id !== selectedScenario.id) {
         console.warn(
-          `Starting snapshot id "${snapshot.id}" does not match scenario id "${selectedScenario.id}", overriding.`
+          `Starting scene id "${scene.id}" does not match scenario id "${selectedScenario.id}", overriding.`
         );
-        snapshot.id = selectedScenario.id;
+        scene.id = selectedScenario.id;
       }
-      if (snapshot.name !== selectedScenario.name) {
+      if (scene.name !== selectedScenario.name) {
         console.warn(
-          `Starting snapshot name "${snapshot.name}" does not match scenario "${selectedScenario.name}", overriding.`
+          `Starting scene name "${scene.name}" does not match scenario "${selectedScenario.name}", overriding.`
         );
-        snapshot.name = selectedScenario.name;
+        scene.name = selectedScenario.name;
       }
 
-      snapshot.characters = Array.isArray(snapshot.characters)
-        ? snapshot.characters
-        : [];
-      snapshot.clues = Array.isArray(snapshot.clues) ? snapshot.clues : [];
-      snapshot.conditions = Array.isArray(snapshot.conditions)
-        ? snapshot.conditions
-        : [];
-
-      for (const clue of snapshot.clues) {
-        if (!clue.id) {
-          clue.id = `${snapshot.id}-clue-${Math.random().toString(36).slice(2, 8)}`;
-        }
-        if (!clue.clueText) {
-          clue.clueText = "Unspecified clue";
-        }
-        clue.category = clue.category || "environment";
-        clue.difficulty = clue.difficulty || "regular";
-        clue.location = clue.location || snapshot.location;
-        if (typeof clue.discovered !== "boolean") {
-          clue.discovered = false;
-        }
-      }
-
-      for (const condition of snapshot.conditions) {
+      for (const condition of scene.conditions) {
         if (!condition.type || !condition.description) {
-          console.warn("Scenario snapshot condition missing type/description");
+          console.warn("Scene condition missing type/description");
         }
       }
 
@@ -420,12 +402,12 @@ export class ScenarioBuilderAgent {
       if (process.env.GOOGLE_API_KEY) {
         progressCallback?.("Generating starting scene image...");
         try {
-          const imageResult = await generateSceneImageFromSnapshot(
-            snapshot,
+          const imageResult = await generateSceneImageFromScene(
+            scene,
             macroScene.moduleName
           );
           if (imageResult) {
-            snapshot.sceneImage = {
+            scene.sceneImage = {
               path: imageResult.path,
               mimeType: imageResult.mimeType,
               generatedAt: new Date().toISOString(),
@@ -438,18 +420,19 @@ export class ScenarioBuilderAgent {
       }
 
       progressCallback?.(
-        `Starting scene snapshot generated: ${resolvedStartingScene.scenarioName}`
+        `Starting scene generated: ${selectedScenario.name}`
       );
 
       return {
-        ...resolvedStartingScene,
-        snapshot,
+        scenarioId: selectedScenario.id,
+        scenarioName: selectedScenario.name,
+        scene,
       };
     } catch (error) {
-      console.error("Failed to parse starting scene snapshot response:", error);
+      console.error("Failed to parse starting scene response:", error);
       console.error("Response:", response.substring(0, 500));
       throw new Error(
-        `Failed to generate starting scene snapshot: ${(error as Error).message}`
+        `Failed to generate starting scene: ${(error as Error).message}`
       );
     }
   }
@@ -464,7 +447,14 @@ export class ScenarioBuilderAgent {
     storyElements?: StructuredStoryElements,
     progressCallback?: ProgressCallback
   ): Promise<{
-    startingSceneCharacters: StartingSceneSelection["snapshot"]["characters"];
+    startingSceneCharacters: Array<{
+      id: string;
+      name: string;
+      role: string;
+      status: string;
+      location?: string;
+      notes?: string;
+    }>;
     otherScenarioNpcAssignments: ScenarioNpcAssignments[];
   }> {
     progressCallback?.("Assigning NPCs to scenarios...");

@@ -416,7 +416,8 @@ export const enrichMemoryContext = async (
   const uniqueCharacters = [...new Set(targetCharacters)];
 
   // Get current location for boosting
-  const currentLocation = gameState.currentScenario?.location || null;
+  const currentScene = gameState.scenes.get(gameState.currentSceneId ?? "");
+  const currentLocation = currentScene?.name || null;
 
   // Adjust BM25 weight based on language
   // Chinese has poor BM25 performance due to FTS5 character-level tokenization
@@ -486,7 +487,7 @@ export const enrichMemoryContext = async (
             currentLocation: currentLocation || undefined,
             locationBoostFactor: 1.2, // 20% boost for matching location
             language: effectiveLanguage,
-            sceneName: gameState.currentScenario?.name || undefined,
+            sceneName: currentScene?.name || undefined,
             sceneLocation: currentLocation || undefined,
             npcNames,
             playerName: gameState.playerCharacter?.name || undefined,

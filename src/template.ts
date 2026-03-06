@@ -3,7 +3,7 @@ import path from "path";
 import handlebars from "handlebars";
 import { names, uniqueNamesGenerator } from "unique-names-generator";
 import type { DynamicGameState } from "./dynamicworldagent/state/index.js";
-import type { DynamicScenarioSnapshot } from "./dynamicworldagent/world_builder/types.js";
+import type { DynamicScene } from "./dynamicworldagent/world_builder/types.js";
 import type { ImageInput } from "./models/types.js";
 import { stripModuleScope } from "./shared/agents/memory/database/moduleScope.js";
 
@@ -77,14 +77,16 @@ const sanitizeTemplateValue = (
 };
 
 /**
- * Multiplayer scene-scoped state — carries only the active sceneRoom's scenario.
+ * Multiplayer scene-scoped state — carries only the active sceneRoom's scene.
  * Avoids passing the entire multiplayer state into templates (prevents cross-scene leakage).
  */
 export interface MultiplayerSceneScopedState {
   /** Discriminator to distinguish from single-player state */
   multiplayerSceneScope: true;
-  /** The current sceneRoom's scenario snapshot */
-  currentScenario: DynamicScenarioSnapshot | null;
+  /** The current sceneRoom's scene */
+  currentScene: DynamicScene | null;
+  /** Map image path (from ScenarioOutline, provided by caller) */
+  mapImagePath?: string;
   [key: string]: unknown;
 }
 
@@ -199,14 +201,22 @@ const extractDynamicGameState = (state: CoCState): DynamicGameState | null => {
 
 /**
  * Collects scenario images (e.g., map) from the current game state.
+ * mapImagePath is now on ScenarioOutline, not on the scene itself.
  */
 export const collectScenarioImages = (state: CoCState): ImageInput[] => {
   let mapImagePath: string | undefined;
   if ("multiplayerSceneScope" in state && state.multiplayerSceneScope) {
-    mapImagePath = state.currentScenario?.mapImagePath;
+    // Multiplayer: caller provides mapImagePath directly on the scoped state
+    mapImagePath = state.mapImagePath as string | undefined;
   } else {
+    // Single-player: look up mapImagePath from ScenarioOutline matching currentSceneId
     const dynamicState = extractDynamicGameState(state);
-    mapImagePath = dynamicState?.currentScenario?.mapImagePath;
+    if (dynamicState?.currentSceneId) {
+      const outline = dynamicState.scenarioOutlines?.find(
+        (o) => o.id === dynamicState.currentSceneId
+      );
+      mapImagePath = outline?.mapImagePath;
+    }
   }
   if (!mapImagePath) return [];
 

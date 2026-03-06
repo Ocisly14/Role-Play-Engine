@@ -15,20 +15,13 @@ import type {
   TruthEvent,
 } from "../world_builder/types.js";
 
-import { randomUUID } from "crypto";
 import type {
   CoCDatabase,
-  CoCDatabaseAdapter,
 } from "../../shared/agents/memory/database/index.js";
-import { getPrismaClient } from "../../shared/agents/memory/database/prismaClient.js";
 import {
   InventoryUtils,
   type NPCRelationship,
 } from "../../shared/agents/models/gameTypes.js";
-import type {
-  ScenarioClue,
-  ScenarioCondition as LegacyScenarioCondition,
-} from "../../shared/agents/models/scenarioTypes.js";
 import type {
   DiscoveredClue,
   GameEndingInfo,
@@ -37,7 +30,7 @@ import type {
 import type {
   DynamicCharacterProfile,
   DynamicNPCProfile,
-  DynamicScenarioSnapshot,
+  DynamicScene,
 } from "../world_builder/types.js";
 
 export interface DefeatedNpcHistoryEntry {
@@ -62,8 +55,6 @@ export interface DynamicTemporaryInfo {
   rules: string[];
   /** Contextual data for agents (e.g., conversation history) */
   contextualData: Record<string, any>;
-  /** Previous scenario snapshot (saved before scene switch for Keeper narrative) */
-  previousScenario: DynamicScenarioSnapshot | null;
   /** Player plan nodes from Orchestrator (tick-plan system) */
   playerNodes: import("../dynamicBasicAgent/npcPlanning/types.js").PlanNode[];
   /** All character actions from TickProcessor (player + NPC) */
@@ -78,8 +69,9 @@ export interface DynamicGameState {
   // === Session & Runtime Data (from old GameState) ===
   sessionId: string;
 
-  // Current scenario
-  currentScenario: DynamicScenarioSnapshot | null;
+  // Current scene
+  currentSceneId: string | null;
+  scenes: Map<string, DynamicScene>;
 
   // Time management
   gameDay: number; // Day number in game
@@ -151,8 +143,6 @@ export interface DynamicGameState {
   pointOfNoReturnReached: boolean;
   pointOfNoReturnTrigger: string | null; // The actual trigger value when reached
 
-  // Updated scenario snapshots (simplified versions for non-player scenarios)
-  updatedDynamicScenarioSnapshots: Map<string, DynamicScenarioSnapshot[]>; // key: scenarioId, value: 所有历史 snapshot 的数组（按时间顺序）
   globalTrigger: {
     timeRestriction?: string;
     timeReason?: string;
@@ -188,7 +178,8 @@ export const initialDynamicGameState = (params: {
 }): DynamicGameState => ({
   // Session & Runtime Data
   sessionId: params.sessionId,
-  currentScenario: null,
+  currentSceneId: null,
+  scenes: new Map(),
   gameDay: params.gameDay ?? 1,
   timeOfDay: params.timeOfDay ?? "08:00",
   scenarioTimeState: {
@@ -211,7 +202,6 @@ export const initialDynamicGameState = (params: {
   temporaryInfo: {
     rules: [],
     contextualData: {},
-    previousScenario: null,
     playerNodes: [],
     characterActions: [],
   },
@@ -232,7 +222,6 @@ export const initialDynamicGameState = (params: {
   mythosRevelations: new Set(),
   pointOfNoReturnReached: false,
   pointOfNoReturnTrigger: null,
-  updatedDynamicScenarioSnapshots: new Map(),
   globalTrigger: null,
   npcLocations: {},
   npcStats: {},
@@ -244,67 +233,6 @@ export const initialDynamicGameState = (params: {
   loadedAt: new Date(),
   lastUpdated: new Date(),
 });
-
-// =============================================
-// Clue ID stabilization — code-level guard against LLM drift
-// =============================================
-
-/**
- * Reconcile an incoming snapshot's clues against a baseline snapshot.
- * - Baseline clues that match by ID keep their discovered/damaged state.
- * - Baseline clues that lost their ID but match by clueText get re-assigned
- *   the original ID and state (fuzzy fallback).
- * - Genuinely new clues (no match) are kept as-is.
- *
- * Mutates `incoming.clues` in place.
- */
-function stabilizeSnapshotClues(
-  incoming: DynamicScenarioSnapshot,
-  baseline: DynamicScenarioSnapshot | null
-): void {
-  if (!baseline?.clues || !incoming.clues) return;
-
-  const baseById = new Map(baseline.clues.map((c) => [c.id, c]));
-  // Secondary index: normalised clueText → clue (for fuzzy match when ID is lost)
-  const baseByText = new Map<string, typeof baseline.clues[number]>();
-  for (const c of baseline.clues) {
-    const key = c.clueText?.trim().toLowerCase();
-    if (key && !baseByText.has(key)) baseByText.set(key, c);
-  }
-
-  const usedBaseIds = new Set<string>();
-
-  for (const clue of incoming.clues) {
-    // 1. Exact ID match
-    let baseClue = baseById.get(clue.id);
-    if (baseClue) {
-      usedBaseIds.add(baseClue.id);
-    } else {
-      // 2. Fuzzy match by clueText
-      const textKey = clue.clueText?.trim().toLowerCase();
-      if (textKey) {
-        baseClue = baseByText.get(textKey);
-        if (baseClue && !usedBaseIds.has(baseClue.id)) {
-          // Restore original ID
-          clue.id = baseClue.id;
-          usedBaseIds.add(baseClue.id);
-        }
-      }
-    }
-
-    // Protect discovered/damaged state — only game mechanics may set these
-    if (baseClue) {
-      if (baseClue.discovered) {
-        clue.discovered = true;
-        if (baseClue.discoveryDetails) clue.discoveryDetails = baseClue.discoveryDetails;
-      }
-      if (baseClue.damaged) {
-        clue.damaged = true;
-        if (baseClue.damageDetails) clue.damageDetails = baseClue.damageDetails;
-      }
-    }
-  }
-}
 
 /**
  * Dynamic Game State Manager
@@ -331,6 +259,39 @@ export class DynamicGameStateManager {
    */
   getState(): Readonly<DynamicGameState> {
     return this.state;
+  }
+
+  // === Scene helpers ===
+
+  /**
+   * Get the current scene (resolved from currentSceneId + scenes map)
+   */
+  getCurrentScene(): DynamicScene | null {
+    if (!this.state.currentSceneId) return null;
+    return this.state.scenes.get(this.state.currentSceneId) ?? null;
+  }
+
+  /**
+   * Get a scene by ID
+   */
+  getScene(sceneId: string): DynamicScene | null {
+    return this.state.scenes.get(sceneId) ?? null;
+  }
+
+  /**
+   * Set the current scene ID (the scene data must already exist in scenes map)
+   */
+  setCurrentSceneId(sceneId: string): void {
+    this.state.currentSceneId = sceneId;
+    this.state.lastUpdated = new Date();
+  }
+
+  /**
+   * Insert or replace a scene in the scenes map
+   */
+  updateScene(sceneId: string, scene: DynamicScene): void {
+    this.state.scenes.set(sceneId, scene);
+    this.state.lastUpdated = new Date();
   }
 
   /**
@@ -560,11 +521,18 @@ export class DynamicGameStateManager {
   }
 
   /**
-   * Serialize state for storage (converts Sets to Arrays)
+   * Serialize state for storage (converts Sets to Arrays, Maps to Objects)
    */
   serialize(): any {
+    // Convert scenes Map to plain object
+    const scenesObj: Record<string, DynamicScene> = {};
+    this.state.scenes.forEach((scene, id) => {
+      scenesObj[id] = scene;
+    });
+
     return {
       ...this.state,
+      scenes: scenesObj,
       revealedTruthEvents: Array.from(this.state.revealedTruthEvents),
       activatedKnowledgeHolders: Array.from(
         this.state.activatedKnowledgeHolders
@@ -589,61 +557,15 @@ export class DynamicGameStateManager {
     checkpointTimeOfDay?: string,
     db?: CoCDatabase
   ): DynamicGameState {
-    // Convert updatedDynamicScenarioSnapshots from object back to Map
-    // Only loads the latest snapshot per scenario (historical snapshots remain in database)
-    const updatedDynamicScenarioSnapshots = new Map<
-      string,
-      DynamicScenarioSnapshot[]
-    >();
-    if (data.updatedDynamicScenarioSnapshots) {
-      if (data.updatedDynamicScenarioSnapshots instanceof Map) {
-        // Already a Map (legacy format with all snapshots)
-        // For backward compatibility, only take the latest snapshot
-        data.updatedDynamicScenarioSnapshots.forEach(
-          (snapshots: any[], scenarioId: string) => {
-            if (snapshots.length > 0) {
-              // Only take the latest snapshot
-              const latestSnapshot = snapshots[snapshots.length - 1];
-              const processedSnapshot = {
-                ...latestSnapshot,
-                timestamp: latestSnapshot.timestamp
-                  ? typeof latestSnapshot.timestamp === "string"
-                    ? new Date(latestSnapshot.timestamp)
-                    : latestSnapshot.timestamp
-                  : undefined,
-              };
-              updatedDynamicScenarioSnapshots.set(scenarioId, [
-                processedSnapshot,
-              ]);
-            }
-          }
-        );
+    // Convert scenes from object back to Map
+    const scenes = new Map<string, DynamicScene>();
+    if (data.scenes) {
+      if (data.scenes instanceof Map) {
+        data.scenes.forEach((scene: DynamicScene, id: string) => scenes.set(id, scene));
       } else {
-        // Object format from JSON - new format: only latest snapshot per scenario
-        Object.entries(data.updatedDynamicScenarioSnapshots).forEach(
-          ([scenarioId, snapshotData]: [string, any]) => {
-            // Latest snapshot from checkpoint (single snapshot, not array)
-            const latestSnapshot: any = Array.isArray(snapshotData)
-              ? snapshotData[snapshotData.length - 1]
-              : snapshotData;
-            const processedLatestSnapshot = {
-              ...latestSnapshot,
-              timestamp: latestSnapshot.timestamp
-                ? typeof latestSnapshot.timestamp === "string"
-                  ? new Date(latestSnapshot.timestamp)
-                  : latestSnapshot.timestamp
-                : undefined,
-            };
-
-            // Only load the latest snapshot (no historical snapshots)
-            // Historical snapshots remain in database but are not loaded into state
-            if (processedLatestSnapshot) {
-              updatedDynamicScenarioSnapshots.set(scenarioId, [
-                processedLatestSnapshot,
-              ]);
-            }
-          }
-        );
+        Object.entries(data.scenes).forEach(([id, scene]) => {
+          scenes.set(id, scene as DynamicScene);
+        });
       }
     }
 
@@ -708,7 +630,8 @@ export class DynamicGameStateManager {
       activatedKnowledgeHolders: new Set(data.activatedKnowledgeHolders || []),
       deployedRedHerrings: new Set(data.deployedRedHerrings || []),
       mythosRevelations: new Set(data.mythosRevelations || []),
-      updatedDynamicScenarioSnapshots,
+      currentSceneId: data.currentSceneId ?? null,
+      scenes,
       loadedAt: data.loadedAt
         ? typeof data.loadedAt === "string"
           ? new Date(data.loadedAt)
@@ -780,37 +703,6 @@ export class DynamicGameStateManager {
   }
 
   /**
-   * Filter snapshots by checkpoint game time
-   * Only keeps snapshots that were created at or before the checkpoint time
-   */
-  private static filterSnapshotsByGameTime(
-    snapshots: DynamicScenarioSnapshot[],
-    checkpointGameDay: number,
-    checkpointTimeOfDay: string
-  ): DynamicScenarioSnapshot[] {
-    const checkpointTime = `Day ${checkpointGameDay}, ${checkpointTimeOfDay}`;
-
-    return snapshots.filter((snapshot) => {
-      if (!snapshot.gameTime) {
-        // If snapshot has no gameTime, keep it (assume it's before checkpoint)
-        return true;
-      }
-
-      const comparison = this.compareGameTime(
-        snapshot.gameTime,
-        checkpointTime
-      );
-      if (comparison === null) {
-        // Cannot compare, keep it to be safe
-        return true;
-      }
-
-      // Keep snapshots at or before checkpoint time
-      return comparison <= 0;
-    });
-  }
-
-  /**
    * Filter actionLog entries by checkpoint game time
    * Only keeps actionLog entries that occurred at or before the checkpoint time
    */
@@ -839,102 +731,12 @@ export class DynamicGameStateManager {
   }
 
   /**
-   * Load historical snapshots from database for a scenario
-   * Only loads snapshots that are marked as dynamic historical and are at or before checkpoint time
-   */
-  private static async loadHistoricalSnapshotsFromDatabase(
-    db: CoCDatabase | CoCDatabaseAdapter,
-    scenarioId: string,
-    checkpointGameDay: number,
-    checkpointTimeOfDay: string
-  ): Promise<DynamicScenarioSnapshot[]> {
-    try {
-      const prisma = getPrismaClient();
-
-      // Query all historical snapshots for this scenario
-      // Include related characters, clues, and conditions
-      const snapshotRows = await prisma.scenarioSnapshot.findMany({
-        where: {
-          scenarioId,
-          isDynamicHistorical: true,
-        },
-        include: {
-          characters: true,
-          clues: true,
-          conditions: true,
-        },
-        orderBy: [{ gameTime: "asc" }, { createdAt: "asc" }],
-      });
-
-      const checkpointTime = `Day ${checkpointGameDay}, ${checkpointTimeOfDay}`;
-      const historicalSnapshots: DynamicScenarioSnapshot[] = [];
-
-      for (const row of snapshotRows) {
-        // Filter by checkpoint gameTime
-        if (row.gameTime) {
-          const comparison = this.compareGameTime(row.gameTime, checkpointTime);
-          if (comparison !== null && comparison > 0) {
-            // Skip snapshots after checkpoint time
-            continue;
-          }
-        }
-        // If gameTime is null, keep it (assume it's before checkpoint)
-
-        // Build snapshot object
-        const snapshot: DynamicScenarioSnapshot = {
-          id: row.snapshotId,
-          name: row.snapshotName || `Historical snapshot for ${scenarioId}`,
-          location: row.location,
-          description: row.description,
-          gameTime: row.gameTime || undefined,
-          showMap: row.showMap === true,
-          keeperNotes: row.keeperNotes || undefined,
-          timeRestriction: row.timeRestriction || undefined,
-          characters: row.characters.map((char) => ({
-            id: char.id,
-            name: char.characterName,
-            role: char.characterRole,
-            status: char.characterStatus,
-            location: char.characterLocation || undefined,
-            notes: char.characterNotes || undefined,
-          })),
-          clues: row.clues.map((clue) => ({
-            id: clue.clueId,
-            clueText: clue.clueText,
-            category: clue.category as ScenarioClue["category"],
-            difficulty: clue.difficulty as ScenarioClue["difficulty"],
-            location: clue.clueLocation,
-            discoveryMethod: clue.discoveryMethod || undefined,
-            reveals: (clue.reveals as any[]) || [],
-            discovered: clue.discovered === true,
-            discoveryDetails: (clue.discoveryDetails as any) || undefined,
-          })),
-          conditions: row.conditions.map((cond) => ({
-            type: cond.conditionType as LegacyScenarioCondition["type"],
-            description: cond.description,
-            mechanicalEffect: cond.mechanicalEffect || undefined,
-          })),
-        };
-
-        historicalSnapshots.push(snapshot);
-      }
-
-      return historicalSnapshots;
-    } catch (error) {
-      console.error(
-        `[DynamicGameState] Failed to load historical snapshots from database:`,
-        error
-      );
-      return [];
-    }
-  }
-
-  /**
    * Create a copy of the state
    */
   clone(): DynamicGameState {
     return {
       ...this.state,
+      scenes: new Map(this.state.scenes),
       revealedTruthEvents: new Set(this.state.revealedTruthEvents),
       activatedKnowledgeHolders: new Set(this.state.activatedKnowledgeHolders),
       deployedRedHerrings: new Set(this.state.deployedRedHerrings),
@@ -967,14 +769,6 @@ export class DynamicGameStateManager {
 
   getCharacterActions(): import("../dynamicBasicAgent/npcPlanning/types.js").CharacterAction[] {
     return this.state.temporaryInfo.characterActions;
-  }
-
-  /**
-   * Clear previous scenario (saved for scene transition narrative)
-   */
-  clearPreviousScenario(): void {
-    this.state.temporaryInfo.previousScenario = null;
-    this.state.lastUpdated = new Date();
   }
 
   /**
@@ -1063,37 +857,15 @@ export class DynamicGameStateManager {
   }
 
   /**
-   * Update current scenario and manage visited scenarios history
+   * Switch to a different scene by ID (scene data must already be in the scenes map).
+   * Resets time consumption state for the new scene.
    */
-  updateCurrentScenario(
-    scenarioData: {
-      snapshot: DynamicScenarioSnapshot;
-      scenarioName: string;
-    } | null
-  ): void {
-    if (!scenarioData) return;
+  switchToScene(sceneId: string): void {
+    this.state.currentSceneId = sceneId;
 
-    const newScenario = scenarioData.snapshot;
-
-    // Set new current scenario
-    this.state.currentScenario = newScenario;
-
-    // Automatically update NPC locations in the scene
-    this.updateNpcLocationsForScenario(newScenario);
-
-    // Reset time consumption state for any scenario update
+    // Reset time consumption state for any scene switch
     this.resetScenarioTimeState();
 
-    this.state.lastUpdated = new Date();
-  }
-
-  /**
-   * Refresh current scenario snapshot without triggering scene-transition side effects.
-   * Unlike updateCurrentScenario(), this does NOT reset scenario time state or turn counter.
-   */
-  refreshCurrentScenarioSnapshot(snapshot: DynamicScenarioSnapshot): void {
-    this.state.currentScenario = snapshot;
-    this.updateNpcLocationsForScenario(snapshot);
     this.state.lastUpdated = new Date();
   }
 
@@ -1153,22 +925,6 @@ export class DynamicGameStateManager {
     if (maxLen === 0) return false;
     const similarity = 1 - dist / maxLen;
     return similarity >= 0.8; // 80% similarity threshold
-  }
-
-  /**
-   * Note: NPC locations are now tracked via actionLog, not currentLocation
-   * This method is kept for compatibility but no longer updates currentLocation
-   */
-  private updateNpcLocationsForScenario(
-    scenario: DynamicScenarioSnapshot
-  ): void {
-    if (!scenario || !scenario.characters || scenario.characters.length === 0) {
-      return;
-    }
-
-    // NPC locations are tracked via actionLog entries, not currentLocation
-    // The Director Agent will add appropriate actionLog entries when NPCs move between scenes
-    // This method is kept for compatibility but does nothing
   }
 
   /**
@@ -1407,10 +1163,14 @@ export class DynamicGameStateManager {
   }
 
   /**
-   * Short action cap for the current scenario; default to 3 if undefined
+   * Short action cap for the current scenario; default to 3 if undefined.
+   * Reads estimatedShortActions from the matching ScenarioOutline.
    */
   private getScenarioShortActionCap(): number {
-    return this.state.currentScenario?.estimatedShortActions || 3;
+    const sceneId = this.state.currentSceneId;
+    if (!sceneId) return 3;
+    const outline = this.state.scenarioOutlines.find((o) => o.id === sceneId);
+    return outline?.estimatedShortActions || 3;
   }
 
   /**
@@ -1606,14 +1366,15 @@ export class DynamicGameStateManager {
   }
 
   /**
-   * Update current scenario based on player actions
+   * Update current scene based on player actions
    */
   updateScenarioState(scenarioUpdates: any): void {
-    if (!scenarioUpdates || !this.state.currentScenario) return;
+    const currentScene = this.getCurrentScene();
+    if (!scenarioUpdates || !currentScene) return;
 
-    // Update scenario description if provided
+    // Update scene description if provided
     if (scenarioUpdates.description) {
-      this.state.currentScenario.description = scenarioUpdates.description;
+      currentScene.description = scenarioUpdates.description;
     }
 
     // Update environmental conditions
@@ -1622,16 +1383,16 @@ export class DynamicGameStateManager {
       Array.isArray(scenarioUpdates.conditions)
     ) {
       for (const newCondition of scenarioUpdates.conditions) {
-        const existingIndex = this.state.currentScenario.conditions.findIndex(
+        const existingIndex = currentScene.conditions.findIndex(
           (condition) => condition.type === newCondition.type
         );
 
         if (existingIndex >= 0) {
           // Update existing condition
-          this.state.currentScenario.conditions[existingIndex] = newCondition;
+          currentScene.conditions[existingIndex] = newCondition;
         } else {
           // Add new condition
-          this.state.currentScenario.conditions.push(newCondition);
+          currentScene.conditions.push(newCondition);
         }
       }
     }
@@ -1639,236 +1400,24 @@ export class DynamicGameStateManager {
     // Update clue states
     if (scenarioUpdates.clues && Array.isArray(scenarioUpdates.clues)) {
       for (const clueUpdate of scenarioUpdates.clues) {
-        const existingIndex = this.state.currentScenario.clues.findIndex(
+        const existingIndex = currentScene.clues.findIndex(
           (clue) => clue.id === clueUpdate.id
         );
 
         if (existingIndex >= 0) {
           // Update existing clue
-          this.state.currentScenario.clues[existingIndex] = {
-            ...this.state.currentScenario.clues[existingIndex],
+          currentScene.clues[existingIndex] = {
+            ...currentScene.clues[existingIndex],
             ...clueUpdate,
           };
         } else if (clueUpdate.id) {
           // Add new clue
-          this.state.currentScenario.clues.push(clueUpdate);
+          currentScene.clues.push(clueUpdate);
         }
       }
     }
 
     this.state.lastUpdated = new Date();
-  }
-
-  /**
-   * Save old snapshot to database
-   */
-  private async saveOldSnapshotToDatabase(
-    scenarioId: string,
-    snapshot: DynamicScenarioSnapshot
-  ): Promise<void> {
-    if (!this.db) {
-      console.warn(
-        `[DynamicGameState] Cannot save old snapshot to database: no database instance provided`
-      );
-      return;
-    }
-
-    try {
-      const prisma = getPrismaClient();
-      const sessionScope = await prisma.session.findUnique({
-        where: { sessionId: this.state.sessionId },
-        select: { moduleId: true },
-      });
-      const scenarioRow = await prisma.scenario.findFirst({
-        where: {
-          scenarioId,
-          ...(sessionScope?.moduleId
-            ? { moduleId: sessionScope.moduleId }
-            : {}),
-        },
-        select: { moduleId: true },
-      });
-      if (!scenarioRow?.moduleId) {
-        console.warn(
-          `[DynamicGameState] Cannot save snapshot, scenario missing module scope: ${scenarioId}`
-        );
-        return;
-      }
-      const moduleId = scenarioRow.moduleId;
-
-      // Generate a unique snapshot ID for historical snapshot
-      const historicalSnapshotId = `hist-${scenarioId}-${Date.now()}-${randomUUID().slice(0, 8)}`;
-
-      // Check if snapshot already exists (shouldn't happen for historical snapshots, but check anyway)
-      const existing = await prisma.scenarioSnapshot.findUnique({
-        where: { moduleId_snapshotId: { moduleId, snapshotId: historicalSnapshotId } },
-        select: { snapshotId: true },
-      });
-
-      if (existing) {
-        console.warn(
-          `[DynamicGameState] Historical snapshot ${historicalSnapshotId} already exists, skipping`
-        );
-        return;
-      }
-
-      // Insert snapshot with all related data in a transaction
-      await prisma.scenarioSnapshot.create({
-        data: {
-          snapshotId: historicalSnapshotId,
-          scenarioId,
-          moduleId,
-          snapshotName:
-            snapshot.name || `Historical snapshot for ${scenarioId}`,
-          location: snapshot.location,
-          description: snapshot.description,
-          events: [],
-          exits: [],
-          keeperNotes: snapshot.keeperNotes || null,
-          timeRestriction: snapshot.timeRestriction || null,
-          showMap: snapshot.showMap !== false,
-          initialSnapshot: false,
-          gameTime: snapshot.gameTime || null,
-          isDynamicHistorical: true,
-          // Create related characters
-          characters:
-            snapshot.characters && snapshot.characters.length > 0
-              ? {
-                  create: snapshot.characters.map((char) => ({
-                    id:
-                      char.id ||
-                      `${historicalSnapshotId}-char-${randomUUID().slice(0, 8)}`,
-                    moduleId,
-                    characterName: char.name,
-                    characterRole: char.role,
-                    characterStatus: char.status,
-                    characterLocation: char.location || null,
-                    characterNotes: char.notes || null,
-                  })),
-                }
-              : undefined,
-          // Create related clues
-          clues:
-            snapshot.clues && snapshot.clues.length > 0
-              ? {
-                  create: snapshot.clues.map((clue) => ({
-                    clueId:
-                      clue.id ||
-                      `${historicalSnapshotId}-clue-${randomUUID().slice(0, 8)}`,
-                    moduleId,
-                    clueText: clue.clueText,
-                    category: clue.category,
-                    difficulty: clue.difficulty,
-                    clueLocation: clue.location,
-                    discoveryMethod: clue.discoveryMethod || null,
-                    reveals: clue.reveals || [],
-                    discovered: clue.discovered === true,
-                    discoveryDetails: (clue.discoveryDetails ||
-                      undefined) as any,
-                  })),
-                }
-              : undefined,
-          // Create related conditions
-          conditions:
-            snapshot.conditions && snapshot.conditions.length > 0
-              ? {
-                  create: snapshot.conditions.map((condition) => ({
-                    conditionId: `${historicalSnapshotId}-cond-${randomUUID().slice(0, 8)}`,
-                    moduleId,
-                    conditionType: condition.type,
-                    description: condition.description,
-                    mechanicalEffect: condition.mechanicalEffect || null,
-                  })),
-                }
-              : undefined,
-        },
-      });
-
-      console.log(
-        `[DynamicGameState] Saved old snapshot to database: ${historicalSnapshotId} for scenario ${scenarioId}`
-      );
-    } catch (error) {
-      console.error(
-        `[DynamicGameState] Failed to save old snapshot to database:`,
-        error
-      );
-      // Don't throw - snapshot save failure shouldn't block game updates
-    }
-  }
-
-  /**
-   * Add updated scenario snapshot (appends to history, does not overwrite)
-   * Automatically adds timestamp if not present
-   * Keeps only the latest 2 snapshots in state, saves older ones to database
-   */
-  async setUpdatedDynamicScenarioSnapshot(
-    scenarioId: string,
-    snapshot: DynamicScenarioSnapshot
-  ): Promise<void> {
-    // Add timestamp if not present
-    const snapshotWithTimestamp: DynamicScenarioSnapshot = {
-      ...snapshot,
-      timestamp: snapshot.timestamp || new Date(),
-    };
-
-    const snapshots =
-      this.state.updatedDynamicScenarioSnapshots.get(scenarioId) || [];
-
-    // Stabilize clue IDs against the latest existing snapshot
-    const baseline = snapshots.length > 0 ? snapshots[snapshots.length - 1] : null;
-    stabilizeSnapshotClues(snapshotWithTimestamp, baseline);
-
-    // Add the new snapshot first
-    snapshots.push(snapshotWithTimestamp);
-
-    // If we have more than 2 snapshots, save the oldest ones to database and remove them
-    if (snapshots.length > 2) {
-      // Save all snapshots except the latest 2
-      const snapshotsToSave = snapshots.slice(0, snapshots.length - 2);
-      for (const oldSnapshot of snapshotsToSave) {
-        await this.saveOldSnapshotToDatabase(scenarioId, oldSnapshot);
-      }
-
-      // Keep only the latest 2 snapshots
-      const latestTwo = snapshots.slice(-2);
-      snapshots.length = 0;
-      snapshots.push(...latestTwo);
-    }
-
-    this.state.updatedDynamicScenarioSnapshots.set(scenarioId, snapshots);
-    this.state.lastUpdated = new Date();
-  }
-
-  /**
-   * Get latest updated scenario snapshot by scenario ID
-   */
-  getUpdatedDynamicScenarioSnapshot(
-    scenarioId: string
-  ): DynamicScenarioSnapshot | null {
-    const snapshots =
-      this.state.updatedDynamicScenarioSnapshots.get(scenarioId);
-    if (!snapshots || snapshots.length === 0) {
-      return null;
-    }
-    // Return the latest snapshot (last in array)
-    return snapshots[snapshots.length - 1];
-  }
-
-  /**
-   * Get all historical snapshots for a scenario
-   */
-  getHistoricalSnapshots(scenarioId: string): DynamicScenarioSnapshot[] {
-    return this.state.updatedDynamicScenarioSnapshots.get(scenarioId) || [];
-  }
-
-  /**
-   * Get all updated scenario snapshots (returns Map with arrays)
-   */
-  getAllUpdatedDynamicScenarioSnapshots(): Map<
-    string,
-    DynamicScenarioSnapshot[]
-  > {
-    return this.state.updatedDynamicScenarioSnapshots;
   }
 
   /**
@@ -1949,8 +1498,9 @@ export class DynamicGameStateManager {
   }
 
   markScenarioClueDiscovered(clueId: string, discoveredBy: string): void {
-    if (!this.state.currentScenario?.clues) return;
-    const clue = this.state.currentScenario.clues.find((c) => c.id === clueId);
+    const scene = this.getCurrentScene();
+    if (!scene?.clues) return;
+    const clue = scene.clues.find((c) => c.id === clueId);
     if (clue && !clue.discovered) {
       clue.discovered = true;
       clue.discoveryDetails = {
@@ -1962,8 +1512,9 @@ export class DynamicGameStateManager {
   }
 
   damageScenarioClue(clueId: string, damagedBy: string, reason: string): void {
-    if (!this.state.currentScenario?.clues) return;
-    const clue = this.state.currentScenario.clues.find((c) => c.id === clueId);
+    const scene = this.getCurrentScene();
+    if (!scene?.clues) return;
+    const clue = scene.clues.find((c) => c.id === clueId);
     if (clue && !clue.discovered && !clue.damaged) {
       clue.damaged = true;
       clue.damageDetails = {

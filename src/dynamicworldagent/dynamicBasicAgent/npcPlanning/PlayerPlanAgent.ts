@@ -42,7 +42,7 @@ export class PlayerPlanAgent {
     const state = dgsm.getState();
     const lang = language ?? "en";
     const player = state.playerCharacter;
-    const currentScenario = state.currentScenario;
+    const currentScenario = state.scenes.get(state.currentSceneId ?? "") ?? null;
 
     // Build player profile string
     const playerProfile = this.formatPlayerProfile(player);

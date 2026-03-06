@@ -1,6 +1,6 @@
 /**
  * Scenario Builder Agent Templates
- * Prompt templates for scenario outline generation (no snapshots yet)
+ * Prompt templates for scenario outline generation and starting scene
  */
 
 export function getScenarioBuilderTemplate(): string {
@@ -92,9 +92,9 @@ Return ONLY valid JSON in this exact structure:
 }
 
 /**
- * Select starting scene and build a snapshot (NO NPC assignments)
+ * Select starting scene and build a DynamicScene (NO NPC assignments)
  */
-export function getStartingSceneSnapshotTemplate(): string {
+export function getStartingSceneTemplate(): string {
   return `You are a writer for a tabletop RPG scenario.
 
 ════════════════════════════════════════════════════════
@@ -107,10 +107,10 @@ These structured story elements are the SINGLE HIGHEST AUTHORITY for all content
 The starting scene MUST be consistent with the story elements above — genre, tone, theme, era, and worldbuilding.
 ════════════════════════════════════════════════════════
 
-# STARTING SCENE SELECTION + SNAPSHOT
+# STARTING SCENE SELECTION
 
 ## Objective
-Pick the best starting scene for investigators and generate a full scene snapshot.
+Pick the best starting scene for investigators and generate a full DynamicScene.
 Do NOT assign NPCs — that will be handled in a separate step.
 
 ## Inputs
@@ -128,15 +128,16 @@ Do NOT assign NPCs — that will be handled in a separate step.
 
 ## Requirements
 - Choose exactly ONE scenario from the provided list as the starting scene.
-- Generate a ScenarioSnapshot for that starting scene.
-- The snapshot must include: id, name, location, description, gameTime, clues, conditions, events.
-- "snapshot.id" MUST be exactly the same as the selected "startingScene.scenarioId" (no suffix/prefix/renaming).
-- "snapshot.name" MUST be exactly the same as the selected "startingScene.scenarioName".
-- "gameTime" should follow a standard format like "Day <N>, HH:MM" (e.g., "Day 1, 08:00").
-- Expand the starting scenario's "clues" into fully formatted snapshot.clues entries.
-  - Every scenario clue must map to at least one snapshot clue.
+- Generate a DynamicScene for that starting scene.
+- The scene must include: id, name, description, domain, items, clues, conditions, events.
+- "scene.id" MUST be exactly the same as the selected "startingScene.scenarioId" (no suffix/prefix/renaming).
+- "scene.name" MUST be exactly the same as the selected "startingScene.scenarioName".
+- "domain" is an optional thematic label for the scene (e.g., "urban", "wilderness", "underground").
+- "items" lists notable interactable objects in the scene (id + name + optional description).
+- Expand the starting scenario's "clues" into fully formatted scene.clues entries.
+  - Every scenario clue must map to at least one scene clue.
   - Preserve the original clueText meaning while adding category/difficulty/location/discovered.
-- Do NOT include characters/NPCs in the snapshot — leave "characters" as an empty array.
+- Do NOT include characters/NPCs in the scene — NPCs are managed separately.
 - Do NOT invent new scenarios beyond the provided input.
 - Keep the output grounded in the macro scene and truth timeline.
 
@@ -148,13 +149,18 @@ Return ONLY valid JSON in this exact structure:
   "startingScene": {
     "scenarioId": "SCN_1",
     "scenarioName": "Scenario Name",
-    "snapshot": {
+    "scene": {
       "id": "SCN_1",
       "name": "Scenario Name",
-      "location": "Primary location",
       "description": "Detailed description of the scene.",
-      "gameTime": "Day 1, 08:00",
-      "characters": [],
+      "domain": "urban",
+      "items": [
+        {
+          "id": "item_1",
+          "name": "Old Newspaper",
+          "description": "A crumpled newspaper from last week."
+        }
+      ],
       "clues": [
         {
           "id": "CLUE_1",
@@ -174,8 +180,7 @@ Return ONLY valid JSON in this exact structure:
       ],
       "events": [
         "A notable ongoing or imminent event in this scene."
-      ],
-      "keeperNotes": "Private note for the GM."
+      ]
     }
   }
 }
@@ -184,7 +189,7 @@ Return ONLY valid JSON in this exact structure:
 }
 
 /**
- * Assign all NPCs to scenarios (separate step after starting scene snapshot)
+ * Assign all NPCs to scenarios (separate step after starting scene generation)
  */
 export function getNpcAssignmentTemplate(): string {
   return `You are a writer for a tabletop RPG scenario.
@@ -202,7 +207,7 @@ NPC assignments MUST be consistent with the story elements above — genre, tone
 # NPC SCENARIO ASSIGNMENT
 
 ## Objective
-Assign every NPC to exactly one scenario. For NPCs in the starting scene, add them to the starting snapshot's characters list. For all others, assign them to another scenario with an activity note.
+Assign every NPC to exactly one scenario. For NPCs in the starting scene, add them to the "startingSceneCharacters" list. For all others, assign them to another scenario with an activity note.
 
 ## Inputs
 ### Starting Scene

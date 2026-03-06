@@ -227,10 +227,10 @@ export async function saveWorldToDatabase(
       });
     }
 
-    if (startingScene?.snapshot) {
-      const snapshot = startingScene.snapshot;
+    if (startingScene?.scene) {
+      const scene = startingScene.scene;
       const snapshotExists = await prisma.scenarioSnapshot.findUnique({
-        where: { moduleId_snapshotId: { moduleId, snapshotId: snapshot.id } },
+        where: { moduleId_snapshotId: { moduleId, snapshotId: scene.id } },
         select: { snapshotId: true },
       });
 
@@ -238,52 +238,31 @@ export async function saveWorldToDatabase(
         // All columns exist in PostgreSQL - no need for hasColumn checks
         await prisma.scenarioSnapshot.create({
           data: {
-            snapshotId: snapshot.id,
+            snapshotId: scene.id,
             scenarioId: startingScene.scenarioId,
             moduleId,
-            snapshotName: snapshot.name,
-            location: snapshot.location,
-            description: snapshot.description,
-            events: [] as any, // events removed - tracked via actionResults
+            snapshotName: scene.name,
+            location: scene.name, // DynamicScene uses name as location
+            description: scene.description,
+            events: scene.events as any,
             exits: [] as any, // exits removed - connections are scenario-level data
-            keeperNotes: snapshot.keeperNotes || null,
-            timeRestriction: snapshot.timeRestriction || null,
-            showMap: snapshot.showMap !== false,
+            keeperNotes: null,
+            timeRestriction: null,
+            showMap: true,
             initialSnapshot: true, // initial_snapshot = true for starting scene
-            gameTime: snapshot.gameTime || null,
+            gameTime: null,
           },
         });
 
-        if (snapshot.characters?.length) {
-          for (const char of snapshot.characters) {
-            // Use createMany-style skip: try/catch to handle duplicates (INSERT OR IGNORE equivalent)
-            try {
-              await prisma.scenarioCharacter.create({
-                data: {
-                  id: char.id,
-                  snapshotId: snapshot.id,
-                  moduleId,
-                  characterName: char.name,
-                  characterRole: char.role,
-                  characterStatus: char.status,
-                  characterLocation: char.location || null,
-                  characterNotes: char.notes || null,
-                },
-              });
-            } catch (e: any) {
-              // Skip duplicate key errors (equivalent to INSERT OR IGNORE)
-              if (e?.code !== "P2002") throw e;
-            }
-          }
-        }
+        // NPCs are no longer stored in the scene — they are managed separately.
 
-        if (snapshot.clues?.length) {
-          for (const clue of snapshot.clues) {
+        if (scene.clues?.length) {
+          for (const clue of scene.clues) {
             try {
               await prisma.scenarioClue.create({
                 data: {
                   clueId: clue.id,
-                  snapshotId: snapshot.id,
+                  snapshotId: scene.id,
                   moduleId,
                   clueText: clue.clueText,
                   category: clue.category,
@@ -304,14 +283,14 @@ export async function saveWorldToDatabase(
           }
         }
 
-        if (snapshot.conditions?.length) {
-          for (const condition of snapshot.conditions) {
-            const conditionId = `${snapshot.id}-cond-${randomUUID().slice(0, 8)}`;
+        if (scene.conditions?.length) {
+          for (const condition of scene.conditions) {
+            const conditionId = `${scene.id}-cond-${randomUUID().slice(0, 8)}`;
             try {
               await prisma.scenarioCondition.create({
                 data: {
                   conditionId,
-                  snapshotId: snapshot.id,
+                  snapshotId: scene.id,
                   moduleId,
                   conditionType: condition.type,
                   description: condition.description,
@@ -458,22 +437,23 @@ export async function saveWorldToJSON(
 
     // Generate snapshot for all scenarios
     let snapshot;
-    if (isStartingScene && startingScene?.snapshot) {
-      // Use LLM-generated snapshot for starting scene
+    if (isStartingScene && startingScene?.scene) {
+      // Use LLM-generated scene for starting scene
+      const scene = startingScene.scene;
       snapshot = {
-        id: startingScene.snapshot.id,
-        name: startingScene.snapshot.name,
-        gameTime: startingScene.snapshot.gameTime,
-        location: startingScene.snapshot.location,
-        description: startingScene.snapshot.description,
-        showMap: startingScene.snapshot.showMap,
-        characters: startingScene.snapshot.characters,
-        clues: startingScene.snapshot.clues,
-        conditions: startingScene.snapshot.conditions,
-        keeperNotes: startingScene.snapshot.keeperNotes,
-        estimatedShortActions: startingScene.snapshot.estimatedShortActions,
-        timeRestriction: startingScene.snapshot.timeRestriction,
-        sceneImage: startingScene.snapshot.sceneImage,
+        id: scene.id,
+        name: scene.name,
+        gameTime: undefined as string | undefined,
+        location: scene.name,
+        description: scene.description,
+        showMap: true,
+        characters: [], // NPCs are managed separately
+        clues: scene.clues,
+        conditions: scene.conditions,
+        keeperNotes: undefined as string | undefined,
+        estimatedShortActions: undefined as number | undefined,
+        timeRestriction: undefined as string | undefined,
+        sceneImage: scene.sceneImage,
         initialSnapshot: true,
       };
     } else {
@@ -500,7 +480,7 @@ export async function saveWorldToJSON(
       snapshot = {
         id: scenario.id,
         name: scenario.name,
-        gameTime: startingScene?.snapshot?.gameTime,
+        gameTime: undefined, // gameTime is no longer stored in DynamicScene
         location: scenario.name,
         description: scenario.description,
         characters: snapshotCharacters,

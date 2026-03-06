@@ -129,9 +129,9 @@ export class TurnManager {
       characterInput,
       characterId: gameState.playerCharacter.id,
       characterName: gameState.playerCharacter.name,
-      sceneId: gameState.currentScenario?.id,
-      sceneName: gameState.currentScenario?.name,
-      location: gameState.currentScenario?.location,
+      sceneId: gameState.currentSceneId ?? undefined,
+      sceneName: gameState.scenes.get(gameState.currentSceneId ?? "")?.name,
+      location: gameState.scenes.get(gameState.currentSceneId ?? "")?.name,
       gameDay: gameState.gameDay ?? null,
       gameTime: gameState.timeOfDay ?? null,
     });

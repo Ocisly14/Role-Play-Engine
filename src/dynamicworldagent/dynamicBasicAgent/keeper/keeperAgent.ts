@@ -58,7 +58,10 @@ export class KeeperAgent {
     const playerActions = characterActions.filter((a) => a.isPlayer);
     const allNpcActions = characterActions.filter((a) => !a.isPlayer);
 
-    // 2. Get complete scenario information
+    // 2. Get current scene from state manager
+    const currentScene = gameStateManager.getCurrentScene();
+
+    // 3. Get complete scenario information
     const completeScenarioInfo = this.extractCompleteScenarioInfo(dynamicState);
 
     // 4. Extract action target name (used for NPC profile extraction)
@@ -76,18 +79,18 @@ export class KeeperAgent {
       interactionPartnerName
     );
 
-    // 6. Detect scene transition by comparing player action location vs current scenario
+    // 6. Detect scene transition by comparing player action location vs current scene
     const playerActionLocation =
       playerActions.length > 0 ? playerActions[0].location : null;
     const isTransition =
       playerActionLocation != null &&
-      playerActionLocation !== dynamicState.currentScenario?.id;
+      playerActionLocation !== dynamicState.currentSceneId;
     const previousScenarioInfo = isTransition
       ? this.extractPreviousScenarioInfo(dynamicState, playerActionLocation!)
       : null;
 
     // 7. Filter NPC actions by impact for narrative inclusion
-    const playerScene = dynamicState.currentScenario?.id ?? "";
+    const playerScene = dynamicState.currentSceneId ?? "";
     const relevantNpcActions = allNpcActions.filter((action) => {
       if (action.impact === 3) return true;
       if (
@@ -203,7 +206,7 @@ export class KeeperAgent {
     const template = getKeeperTemplate(language);
 
     // Prepare template context (JSON-packed to keep template concise)
-    const currentLocation = dynamicState.currentScenario?.location || null;
+    const currentLocation = currentScene?.name || null;
     const playerCharacterComplete = this.extractCompletePlayerCharacter(
       dynamicState.playerCharacter,
       currentLocation,
@@ -263,6 +266,8 @@ export class KeeperAgent {
       hasPlayerWitnessEvents: (options?.witnessEvents?.length ?? 0) > 0,
       playerWitnessEvents: options?.witnessEvents ?? null,
       isWitnessInterrupt: options?.isWitnessInterrupt ?? false,
+      hasSceneEvents: (currentScene?.events?.length ?? 0) > 0,
+      sceneEvents: currentScene?.events ?? [],
     };
 
     // Use template and LLM to generate narrative and clue revelations
@@ -380,7 +385,8 @@ export class KeeperAgent {
     }
 
     // Get player character information
-    const currentLocation = dynamicState.currentScenario?.location || null;
+    const currentScene = gameStateManager.getCurrentScene();
+    const currentLocation = currentScene?.name || null;
     const playerCharacter = this.extractCompletePlayerCharacter(
       dynamicState.playerCharacter,
       currentLocation,
@@ -497,63 +503,15 @@ export class KeeperAgent {
    * 1. Extract complete scenario information
    */
   private extractCompleteScenarioInfo(dynamicState: DynamicGameState) {
-    const currentScenario = dynamicState.currentScenario;
-
-    if (!currentScenario) {
-      return {
-        hasScenario: false,
-        message: "No current scenario loaded",
-      };
+    const scene = dynamicState.scenes.get(dynamicState.currentSceneId ?? "");
+    if (!scene) {
+      return { hasScenario: false, message: "No current scene loaded" };
     }
 
-    // Find connections for current scenario from scenarioOutlines
-    const currentScenarioOutline = dynamicState.scenarioOutlines.find(
-      (outline) =>
-        outline.id === currentScenario.id ||
-        outline.name === currentScenario.name
-    );
-    const connections = currentScenarioOutline?.connections || [];
-
-    // Full snapshot minus gameTime, sceneImage, and clues (clue discovery handled by tick)
-    const { gameTime, sceneImage, clues, ...snapshot } = currentScenario;
-
-    return {
-      ...snapshot,
-      connections: connections.map((conn) => {
-        // Find target scenario to get proper name and id
-        const targetScenario = dynamicState.scenarioOutlines.find(
-          (outline) =>
-            outline.name === conn.scenarioName ||
-            outline.id === conn.scenarioName
-        );
-        return {
-          scenarioName: targetScenario?.name || conn.scenarioName,
-          scenarioId: targetScenario?.id || conn.scenarioName,
-          relationshipType: conn.relationshipType,
-          description: conn.description,
-          blocked: conn.blocked,
-          blockReason: conn.blockReason,
-        };
-      }),
-    };
-  }
-
-  /**
-   * Extract previous scenario information (for scene transitions)
-   * Looks up scenario by ID from scenarioOutlines
-   */
-  private extractPreviousScenarioInfo(
-    dynamicState: DynamicGameState,
-    previousScenarioId: string
-  ) {
-    const outline = dynamicState.scenarioOutlines.find(
-      (o) => o.id === previousScenarioId
-    );
-    if (!outline) return null;
-
-    const connections = (outline.connections || []).map((conn) => {
+    const outline = dynamicState.scenarioOutlines.find(o => o.id === scene.id);
+    const connections = (outline?.connections || []).map(conn => {
       const target = dynamicState.scenarioOutlines.find(
-        (o) => o.name === conn.scenarioName || o.id === conn.scenarioName
+        o => o.name === conn.scenarioName || o.id === conn.scenarioName
       );
       return {
         scenarioName: target?.name || conn.scenarioName,
@@ -565,13 +523,49 @@ export class KeeperAgent {
       };
     });
 
+    const presentNpcs = dynamicState.npcCharacters
+      .filter(npc => dynamicState.npcLocations[npc.id] === scene.id)
+      .map(npc => ({ id: npc.id, name: npc.name }));
+
     return {
-      id: outline.id,
-      name: outline.name,
-      location: outline.name,
-      description: outline.description,
+      id: scene.id,
+      name: scene.name,
+      description: scene.description,
+      domain: scene.domain,
+      conditions: scene.conditions,
+      items: scene.items,
+      events: scene.events,
       connections,
+      presentNpcs,
     };
+  }
+
+  /**
+   * Extract previous scenario information (for scene transitions)
+   * Looks up scenario by ID from scenarioOutlines
+   */
+  private extractPreviousScenarioInfo(
+    dynamicState: DynamicGameState,
+    previousSceneId: string
+  ) {
+    const outline = dynamicState.scenarioOutlines.find(o => o.id === previousSceneId);
+    if (!outline) return null;
+
+    const connections = (outline.connections || []).map(conn => {
+      const target = dynamicState.scenarioOutlines.find(
+        o => o.name === conn.scenarioName || o.id === conn.scenarioName
+      );
+      return {
+        scenarioName: target?.name || conn.scenarioName,
+        scenarioId: target?.id || conn.scenarioName,
+        relationshipType: conn.relationshipType,
+        description: conn.description,
+        blocked: conn.blocked,
+        blockReason: conn.blockReason,
+      };
+    });
+
+    return { id: outline.id, name: outline.name, description: outline.description, connections };
   }
 
   /**
@@ -619,7 +613,8 @@ export class KeeperAgent {
     }
 
     // Build NPC profiles for all collected IDs
-    const currentLocation = dynamicState.currentScenario?.location || null;
+    const currentScene = dynamicState.scenes.get(dynamicState.currentSceneId ?? "");
+    const currentLocation = currentScene?.name || null;
     for (const npcId of addedNpcIds) {
       const npc = dynamicState.npcCharacters.find((n) => n.id === npcId);
       if (!npc) continue;

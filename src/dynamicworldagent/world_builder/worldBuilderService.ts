@@ -263,7 +263,7 @@ export class WorldBuilderService {
       parallelProgress.complete("scenario_builder", "Scenarios completed");
       parallelProgress.complete("npc_builder", "NPCs completed");
 
-      // ========== PHASE 4a: STARTING SCENE SNAPSHOT (78→80) ==========
+      // ========== PHASE 4a: STARTING SCENE (78→80) ==========
       emitProgress(
         "scenario_snapshot",
         78,
@@ -271,7 +271,7 @@ export class WorldBuilderService {
       );
 
       const startingScene =
-        await this.scenarioBuilderAgent.generateStartingSceneSnapshot(
+        await this.scenarioBuilderAgent.generateStartingScene(
           macroScene,
           truthTimeline,
           knowledgeMatrix,
@@ -296,8 +296,8 @@ export class WorldBuilderService {
           (msg) => emitProgress("npc_assignment", 82, msg)
         );
 
-      // Merge starting scene characters into the snapshot
-      startingScene.snapshot.characters = startingSceneCharacters;
+      // Note: startingSceneCharacters are managed separately from the scene.
+      // They are passed through to persistence via otherScenarioNpcAssignments / startingSceneCharacters.
 
       // ========== PHASE 4.5: MACRO MAP GENERATION (79→81) ==========
       emitProgress("map_generation", 80, "Generating macro map...");
@@ -476,11 +476,11 @@ export class WorldBuilderService {
     progressCallback?.(
       "scenario_snapshot",
       70,
-      "Selecting starting scene and generating snapshot..."
+      "Selecting starting scene and generating scene..."
     );
 
     const startingScene =
-      await this.scenarioBuilderAgent.generateStartingSceneSnapshot(
+      await this.scenarioBuilderAgent.generateStartingScene(
         macroScene,
         truthTimeline,
         knowledgeMatrix,

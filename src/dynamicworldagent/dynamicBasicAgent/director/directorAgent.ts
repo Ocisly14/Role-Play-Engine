@@ -260,7 +260,10 @@ export class DirectorAgent {
 
     const characterActions = dynamicState.temporaryInfo.characterActions || [];
     const defaultTime = `Day ${dynamicState.gameDay}, ${dynamicState.timeOfDay}`;
-    const defaultLocation = dynamicState.currentScenario?.location || "Unknown";
+    const currentScene = dynamicState.currentSceneId
+      ? dynamicState.scenes.get(dynamicState.currentSceneId)
+      : null;
+    const defaultLocation = currentScene?.name || "Unknown";
 
     for (const action of characterActions) {
       const summary = (action.outcome || action.action || "").trim();
