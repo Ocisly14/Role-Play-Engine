@@ -39,8 +39,13 @@ function rollD100(): number {
   return Math.floor(Math.random() * 100) + 1;
 }
 
+function isFumble(roll: number, skillValue: number): boolean {
+  return skillValue < 50 ? roll >= 96 : roll === 100;
+}
+
 function getSuccessLevel(roll: number, skillValue: number): SuccessLevel {
   if (roll === 1) return "critical";
+  if (isFumble(roll, skillValue)) return "fumble";
   if (roll <= Math.floor(skillValue / 5)) return "hard";
   if (roll <= Math.floor(skillValue / 2)) return "hard";
   if (roll <= skillValue) return "regular";
@@ -53,6 +58,7 @@ function getSuccessLevelWithDifficulty(
   difficulty: "regular" | "hard" | "extreme"
 ): SuccessLevel {
   if (roll === 1) return "critical";
+  if (isFumble(roll, skillValue)) return "fumble";
   const threshold =
     difficulty === "extreme" ? Math.floor(skillValue / 5)
     : difficulty === "hard" ? Math.floor(skillValue / 2)
@@ -66,6 +72,7 @@ const SUCCESS_RANK: Record<SuccessLevel, number> = {
   hard: 2,
   regular: 1,
   fail: 0,
+  fumble: -1,
 };
 
 // ==================== Difficulty derivation ====================
@@ -330,12 +337,12 @@ function resolveSkillRoll(
     const effectiveDifficulty = difficulty === "luck_only" ? "extreme" : difficulty;
     const level = getSuccessLevelWithDifficulty(roll, sanValue, effectiveDifficulty);
 
-    if (level === "fail") {
+    if (level === "fail" || level === "fumble") {
       const sanLoss = horror.sanLossMax;
       dgsm.updateNpcSan(node.characterId, -sanLoss);
       return {
         failed: true,
-        successLevel: "fail",
+        successLevel: level,
         reason: `SAN ${sanValue}, rolled ${roll} (difficulty: ${effectiveDifficulty}), lost ${sanLoss} sanity`,
         detail: "skill_roll_failed",
       };
@@ -354,10 +361,10 @@ function resolveSkillRoll(
   const roll = rollD100();
   const level = getSuccessLevelWithDifficulty(roll, skillValue, effectiveDifficulty);
 
-  if (level === "fail") {
+  if (level === "fail" || level === "fumble") {
     return {
       failed: true,
-      successLevel: "fail",
+      successLevel: level,
       reason: `${bestSkill?.skill ?? actionType} ${skillValue}, rolled ${roll} (difficulty: ${effectiveDifficulty})`,
       detail: "skill_roll_failed",
     };
@@ -380,6 +387,7 @@ const SUCCESS_TO_MAX_CLUE_RANK: Record<SuccessLevel, number> = {
   hard: 2,     // hard
   regular: 1,  // regular
   fail: 0,     // automatic only
+  fumble: -1,  // no clues, may damage one
 };
 
 /** Only these actionTypes can trigger non-automatic clue discovery */
@@ -980,6 +988,18 @@ export async function runTick(
         }
       }
 
+      // Fumble → damage a random undiscovered scene clue
+      if (node.isPlayer && action.successLevel === "fumble") {
+        const scenario = dgsm.getState().currentScenario;
+        const damageable = scenario?.clues?.filter((c) => !c.discovered && !c.damaged) ?? [];
+        if (damageable.length > 0) {
+          const victim = damageable[Math.floor(Math.random() * damageable.length)];
+          dgsm.damageScenarioClue(victim.id, node.characterName, `Fumbled: ${node.action}`);
+          action.damagedClue = { clueId: victim.id, sourceName: scenario!.name };
+          console.log(`[TickProcessor] Fumble damaged clue: ${victim.clueText.slice(0, 40)}`);
+        }
+      }
+
       // On failure → immediate revisePlans (no gate) — NPC only
       if (action.status === "failed" && !node.isPlayer) {
         const longTermIntent = await npcPlanningAgent.getLongTermIntent(sessionId, node.characterId);
@@ -1242,6 +1262,18 @@ export async function resumeTick(
               method: node.action,
             });
           }
+        }
+      }
+
+      // Fumble → damage a random undiscovered scene clue
+      if (node.isPlayer && action.successLevel === "fumble") {
+        const scenario = dgsm.getState().currentScenario;
+        const damageable = scenario?.clues?.filter((c) => !c.discovered && !c.damaged) ?? [];
+        if (damageable.length > 0) {
+          const victim = damageable[Math.floor(Math.random() * damageable.length)];
+          dgsm.damageScenarioClue(victim.id, node.characterName, `Fumbled: ${node.action}`);
+          action.damagedClue = { clueId: victim.id, sourceName: scenario!.name };
+          console.log(`[TickProcessor] Fumble damaged clue: ${victim.clueText.slice(0, 40)}`);
         }
       }
 

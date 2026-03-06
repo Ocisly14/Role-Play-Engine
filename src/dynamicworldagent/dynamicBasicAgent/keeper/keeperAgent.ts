@@ -5,10 +5,7 @@ import {
 } from "../../../models/index.js";
 import type {
   ActionLogEntry,
-  NPCClue,
 } from "../../../shared/agents/models/gameTypes.js";
-import type { ScenarioClue } from "../../../shared/agents/models/scenarioTypes.js";
-import type { DiscoveredClue } from "../../../shared/state/index.js";
 import { composeTemplateWithImages } from "../../../template.js";
 import type {
   DynamicGameState,
@@ -36,53 +33,7 @@ const createRuntime = (): KeeperRuntime => ({
  */
 export class KeeperAgent {
   /**
-   * Derive clue access from CharacterAction[] results.
-   * If any player action completed with an actionType (i.e. a skill check was involved), allow regular+ clues.
-   * CharacterAction doesn't track fumble explicitly, so hasFumble is always false.
-   */
-  private deriveClueAccessFromCharacterActions(
-    playerActions: CharacterAction[]
-  ): { allowRegularPlus: boolean; hasFumble: boolean } {
-    const allowRegularPlus = playerActions.some(
-      (a) => a.status === "completed" && a.actionType
-    );
-    // CharacterAction doesn't have fumble concept
-    const hasFumble = false;
-    return { allowRegularPlus, hasFumble };
-  }
-
-  private filterScenarioCluesForKeeper(
-    clues: ScenarioClue[] | undefined,
-    allowRegularPlus: boolean
-  ): ScenarioClue[] {
-    if (!Array.isArray(clues)) return [];
-    return clues
-      .filter((clue) => {
-        if (!clue) return false;
-        if (clue.damaged) return false;
-        if (clue.discovered) return false; // Discovered → served via RAG
-        if (clue.difficulty === "automatic") return true;
-        return allowRegularPlus;
-      })
-      .map((clue) => ({ ...clue }));
-  }
-
-  private filterNpcCluesForKeeper(
-    clues: NPCClue[] | undefined,
-    allowRegularPlus: boolean
-  ): NPCClue[] {
-    if (!Array.isArray(clues)) return [];
-    return clues
-      .filter((clue) => {
-        if (!clue) return false;
-        if (clue.revealed) return false; // Revealed → served via RAG
-        return allowRegularPlus;
-      })
-      .map((clue) => ({ ...clue }));
-  }
-
-  /**
-   * Generate narrative description with clue revelation based on current game state and user query
+   * Generate narrative based on current game state and user query
    */
   async generateNarrative(
     characterInput: string,
@@ -96,7 +47,6 @@ export class KeeperAgent {
     }
   ): Promise<{
     narrative: string;
-    clueRevelations: any;
     updatedGameState: DynamicGameState;
   }> {
     const runtime = createRuntime();
@@ -108,39 +58,32 @@ export class KeeperAgent {
     const playerActions = characterActions.filter((a) => a.isPlayer);
     const allNpcActions = characterActions.filter((a) => !a.isPlayer);
 
-    // 2. Derive clue access from player actions
-    const clueAccess = this.deriveClueAccessFromCharacterActions(playerActions);
+    // 2. Get complete scenario information
+    const completeScenarioInfo = this.extractCompleteScenarioInfo(dynamicState);
 
-    // 3. Get complete scenario information (with clue filtering by current turn outcomes)
-    const completeScenarioInfo = this.extractCompleteScenarioInfo(
-      dynamicState,
-      clueAccess.allowRegularPlus
-    );
-
-    // 4. Extract action target info from player actions
+    // 4. Extract action target name (used for NPC profile extraction)
     const targetAction = playerActions.find((a) => a.targetCharacterId);
-    const actionTargetName = targetAction
+    const interactionPartnerName = targetAction
       ? dynamicState.npcCharacters.find(
           (n) => n.id === targetAction.targetCharacterId
         )?.name ?? null
       : null;
-    const hasActionTargetInfo = Boolean(actionTargetName);
-    const interactionPartnerName = actionTargetName;
 
     // 5. Get complete attributes of NPCs involved in character actions
     const actionRelatedNpcs = this.extractActionRelatedNpcsFromCharacterActions(
       dynamicState,
       characterActions,
-      interactionPartnerName,
-      clueAccess.allowRegularPlus
+      interactionPartnerName
     );
 
-    // 6. Detect scene transition from movement actions
-    const isTransition = playerActions.some(
-      (a) => a.type === "movement" && a.status === "completed"
-    );
+    // 6. Detect scene transition by comparing player action location vs current scenario
+    const playerActionLocation =
+      playerActions.length > 0 ? playerActions[0].location : null;
+    const isTransition =
+      playerActionLocation != null &&
+      playerActionLocation !== dynamicState.currentScenario?.id;
     const previousScenarioInfo = isTransition
-      ? this.extractPreviousScenarioInfo(dynamicState)
+      ? this.extractPreviousScenarioInfo(dynamicState, playerActionLocation!)
       : null;
 
     // 7. Filter NPC actions by impact for narrative inclusion
@@ -247,16 +190,14 @@ export class KeeperAgent {
       dynamicState.temporaryInfo.contextualData.worldlineSceneUpdate = null;
     };
 
-    // 9. Calculate current turn number
-    // Current turn is the next turn after the latest in history
-    const currentTurnNumber =
-      conversationHistory.length > 0
-        ? Math.max(...conversationHistory.map((h) => h.turnNumber)) + 1
-        : 1;
+    // 9. Extract discovered clues from player actions (tick processor already handled discovery)
+    const discoveredCluesThisTurn = playerActions
+      .flatMap((a) => (a.discoveredClues ?? []).map((c) => ({ ...c, sourceName: c.sourceName })))
+      .filter((c) => c.clueText);
 
-    // 10. Detect if this is the first real player turn (only true when loading module for the first time)
-    // Simple check: if there's no conversation history, this is the first turn
-    const isFirstRealTurn = conversationHistory.length === 0;
+    // 10. Extract damaged clue from fumble (if any)
+    const damagedClueAction = playerActions.find((a) => a.damagedClue);
+    const hasDamagedClueThisTurn = Boolean(damagedClueAction?.damagedClue);
 
     // Get template
     const template = getKeeperTemplate(language);
@@ -284,13 +225,10 @@ export class KeeperAgent {
       retrievedClueContextJson: retrievedClueContext.length > 0
         ? this.safeStringify(retrievedClueContext)
         : null,
-      hasActionTargetInfo,
-      actionTargetName,
-      currentTurnNumber, // Current turn number
-      isFirstRealTurn, // Boolean flag for turn 1 detection
-      keeperGuidance: dynamicState.keeperGuidance || null, // Module-specific keeper guidance
-      allowRegularPlusClues: clueAccess.allowRegularPlus,
-      hasFumbleThisTurn: clueAccess.hasFumble,
+      // Clues discovered this turn by tick processor
+      hasDiscoveredCluesThisTurn: discoveredCluesThisTurn.length > 0,
+      discoveredCluesThisTurn,
+      hasDamagedClueThisTurn,
       // JSON string version (used directly in template)
       scenarioContextJson: this.safeStringify(completeScenarioInfo),
       playerCharacterJson: this.safeStringify(playerCharacterComplete),
@@ -372,12 +310,6 @@ export class KeeperAgent {
           clearSuddenActionLogsContext();
           return {
             narrative: response,
-            clueRevelations: {
-              scenarioClues: [],
-              npcClues: [],
-              npcSecrets: [],
-              damagedScenarioClues: [],
-            },
             updatedGameState: dynamicState,
           };
         }
@@ -415,40 +347,15 @@ export class KeeperAgent {
         clearSuddenActionLogsContext();
         return {
           narrative: fallbackNarrative,
-          clueRevelations: {
-            scenarioClues: [],
-            npcClues: [],
-            npcSecrets: [],
-            damagedScenarioClues: [],
-          },
           updatedGameState: dynamicState,
         };
       }
     }
 
-    // Update clue states in game state
-    const updatedGameState = this.updateClueStates(
-      dynamicState,
-      parsedResponse.clueRevelations,
-      gameStateManager
-    );
-
-
-
-    // Temporary state is preserved until next real player input
-    // Cleanup happens in entry node for real input only
-    const finalGameState = updatedGameState;
-
     clearSuddenActionLogsContext();
     return {
       narrative: parsedResponse.narrative || response,
-      clueRevelations: parsedResponse.clueRevelations || {
-        scenarioClues: [],
-        npcClues: [],
-        npcSecrets: [],
-        damagedScenarioClues: [],
-      },
-      updatedGameState: finalGameState,
+      updatedGameState: dynamicState,
     };
   }
 
@@ -461,7 +368,6 @@ export class KeeperAgent {
     language: "en" | "zh" = "zh"
   ): Promise<{
     narrative: string;
-    clueRevelations: any;
     updatedGameState: DynamicGameState;
   }> {
     const runtime = createRuntime();
@@ -582,7 +488,6 @@ export class KeeperAgent {
 
     return {
       narrative: parsedResponse.narrative || response,
-      clueRevelations: null, // Epilogue doesn't reveal new clues
       updatedGameState: dynamicState,
     };
   }
@@ -591,10 +496,7 @@ export class KeeperAgent {
   /**
    * 1. Extract complete scenario information
    */
-  private extractCompleteScenarioInfo(
-    dynamicState: DynamicGameState,
-    allowRegularPlusClues: boolean
-  ) {
+  private extractCompleteScenarioInfo(dynamicState: DynamicGameState) {
     const currentScenario = dynamicState.currentScenario;
 
     if (!currentScenario) {
@@ -612,15 +514,11 @@ export class KeeperAgent {
     );
     const connections = currentScenarioOutline?.connections || [];
 
-    // Full snapshot minus gameTime and sceneImage, plus scenario-level connections
-    const { gameTime, sceneImage, ...snapshot } = currentScenario;
+    // Full snapshot minus gameTime, sceneImage, and clues (clue discovery handled by tick)
+    const { gameTime, sceneImage, clues, ...snapshot } = currentScenario;
 
     return {
       ...snapshot,
-      clues: this.filterScenarioCluesForKeeper(
-        snapshot.clues,
-        allowRegularPlusClues
-      ),
       connections: connections.map((conn) => {
         // Find target scenario to get proper name and id
         const targetScenario = dynamicState.scenarioOutlines.find(
@@ -642,63 +540,37 @@ export class KeeperAgent {
 
   /**
    * Extract previous scenario information (for scene transitions)
-   * Reads from temporaryInfo.previousScenario (saved by Director Agent before scene switch)
+   * Looks up scenario by ID from scenarioOutlines
    */
-  private extractPreviousScenarioInfo(dynamicState: DynamicGameState) {
-    const previousScenario = dynamicState.temporaryInfo.previousScenario;
-
-    if (!previousScenario) {
-      return null;
-    }
-
-    // Find connections for previous scenario from scenarioOutlines
-    const previousScenarioOutline = dynamicState.scenarioOutlines.find(
-      (outline) =>
-        outline.id === previousScenario.id ||
-        outline.name === previousScenario.name
+  private extractPreviousScenarioInfo(
+    dynamicState: DynamicGameState,
+    previousScenarioId: string
+  ) {
+    const outline = dynamicState.scenarioOutlines.find(
+      (o) => o.id === previousScenarioId
     );
-    const connections = previousScenarioOutline?.connections || [];
+    if (!outline) return null;
 
-    // Return simplified scenario info for previous scene
+    const connections = (outline.connections || []).map((conn) => {
+      const target = dynamicState.scenarioOutlines.find(
+        (o) => o.name === conn.scenarioName || o.id === conn.scenarioName
+      );
+      return {
+        scenarioName: target?.name || conn.scenarioName,
+        scenarioId: target?.id || conn.scenarioName,
+        relationshipType: conn.relationshipType,
+        description: conn.description,
+        blocked: conn.blocked,
+        blockReason: conn.blockReason,
+      };
+    });
+
     return {
-      hasScenario: true,
-      id: previousScenario.id,
-      name: previousScenario.name,
-      location: previousScenario.location,
-      description: previousScenario.description,
-      characters: previousScenario.characters || [],
-      connections: connections.map((conn) => {
-        // Find target scenario to get proper name and id
-        const targetScenario = dynamicState.scenarioOutlines.find(
-          (outline) =>
-            outline.name === conn.scenarioName ||
-            outline.id === conn.scenarioName
-        );
-        return {
-          scenarioName: targetScenario?.name || conn.scenarioName,
-          scenarioId: targetScenario?.id || conn.scenarioName,
-          relationshipType: conn.relationshipType,
-          description: conn.description,
-          blocked: conn.blocked,
-          blockReason: conn.blockReason,
-        };
-      }),
-      clues: (previousScenario.clues || []).map((clue) => ({
-        id: clue.id,
-        clueText: clue.clueText,
-        location: clue.location,
-        category: clue.category,
-        difficulty: clue.difficulty,
-        reveals: clue.reveals,
-        discovered: clue.discovered,
-        damaged: clue.damaged,
-        ...(clue.damaged && clue.damageDetails
-          ? { damageDetails: clue.damageDetails }
-          : {}),
-        ...(clue.discovered && clue.discoveryDetails
-          ? { discoveryDetails: clue.discoveryDetails }
-          : {}),
-      })),
+      id: outline.id,
+      name: outline.name,
+      location: outline.name,
+      description: outline.description,
+      connections,
     };
   }
 
@@ -710,8 +582,7 @@ export class KeeperAgent {
   private extractActionRelatedNpcsFromCharacterActions(
     dynamicState: DynamicGameState,
     characterActions: CharacterAction[],
-    interactionPartnerName: string | null = null,
-    allowRegularPlusClues: boolean
+    interactionPartnerName: string | null = null
   ) {
     if (!characterActions || characterActions.length === 0) {
       return [];
@@ -764,8 +635,7 @@ export class KeeperAgent {
         character: this.extractCompleteCharacterAttributes(
           npc,
           currentLocation,
-          partnerForThisNpc,
-          allowRegularPlusClues
+          partnerForThisNpc
         ),
       });
     }
@@ -782,8 +652,7 @@ export class KeeperAgent {
   private extractCompleteCharacterAttributes(
     character: DynamicCharacterProfile,
     currentLocation: string | null = null,
-    interactionPartnerName: string | null = null,
-    allowRegularPlusClues = false
+    interactionPartnerName: string | null = null
   ) {
     const npcData = character as DynamicNPCProfile;
 
@@ -827,12 +696,6 @@ export class KeeperAgent {
           )
         : (character.actionLog || []),
 
-      // Clues (if NPC)
-      clues: this.filterNpcCluesForKeeper(
-        npcData.clues || [],
-        allowRegularPlusClues
-      ),
-
       // Relationships (if NPC)
       relationships: npcData.relationships || [],
 
@@ -863,156 +726,6 @@ export class KeeperAgent {
   }
 
   /**
-   * Update clue states in game state
-   */
-  private updateClueStates(
-    dynamicState: DynamicGameState,
-    clueRevelations: any,
-    gameStateManager: DynamicGameStateManager
-  ): DynamicGameState {
-    const newDiscoveredClues: DiscoveredClue[] = [];
-    const damagedScenarioClueIds = new Set<string>();
-
-    // Apply scenario clue damage first: damaged clues cannot be revealed later
-    if (
-      clueRevelations?.damagedScenarioClues &&
-      Array.isArray(clueRevelations.damagedScenarioClues)
-    ) {
-      const currentScenario = dynamicState.currentScenario;
-      if (currentScenario?.clues) {
-        clueRevelations.damagedScenarioClues.forEach(
-          (item: string | { clueId: string; reason?: string }) => {
-            const clueId = typeof item === "string" ? item : item?.clueId;
-            const reason =
-              typeof item === "object" && item?.reason
-                ? item.reason
-                : "Clue destroyed by fumble";
-            if (!clueId) return;
-            const clue = currentScenario.clues.find((c) => c.id === clueId);
-            if (!clue || clue.discovered || clue.damaged) return;
-            clue.damaged = true;
-            clue.damageDetails = {
-              damagedBy: dynamicState.playerCharacter.name,
-              damagedAt: new Date().toISOString(),
-              reason,
-            };
-            damagedScenarioClueIds.add(clueId);
-          }
-        );
-      }
-    }
-
-    // Update scenario clue states
-    if (
-      clueRevelations?.scenarioClues &&
-      clueRevelations.scenarioClues.length > 0
-    ) {
-      const currentScenario = dynamicState.currentScenario;
-      if (currentScenario && currentScenario.clues) {
-        clueRevelations.scenarioClues.forEach(
-          (item: string | { clueId: string }) => {
-            const clueId = typeof item === "string" ? item : item?.clueId;
-            if (!clueId) return;
-            const clue = currentScenario.clues.find((c) => c.id === clueId);
-            if (
-              clue &&
-              !clue.discovered &&
-              !clue.damaged &&
-              !damagedScenarioClueIds.has(clueId)
-            ) {
-              const discoveredAt = new Date().toISOString();
-              clue.discovered = true;
-              clue.discoveryDetails = {
-                discoveredBy: dynamicState.playerCharacter.name,
-                discoveredAt,
-                method: "Keeper revelation",
-              };
-
-              // Create detailed clue info
-              newDiscoveredClues.push({
-                text: clue.clueText,
-                type: "scenario",
-                sourceName: currentScenario.name,
-                discoveredBy: dynamicState.playerCharacter.name,
-                discoveredAt,
-                category: clue.category,
-                difficulty: clue.difficulty,
-                method: "Keeper revelation",
-              });
-            }
-          }
-        );
-      }
-    }
-
-    // Update NPC clue states
-    if (clueRevelations?.npcClues && clueRevelations.npcClues.length > 0) {
-      clueRevelations.npcClues.forEach(
-        (item: { npcId: string; clueId: string }) => {
-          const npc = dynamicState.npcCharacters.find(
-            (n) => n.id === item.npcId
-          );
-          if (npc && npc.clues) {
-            const clue = npc.clues.find((c) => c.id === item.clueId);
-            if (clue && !clue.revealed) {
-              clue.revealed = true;
-
-              // Create detailed clue info
-              newDiscoveredClues.push({
-                text: clue.clueText,
-                type: "npc",
-                sourceName: npc.name,
-                discoveredBy: dynamicState.playerCharacter.name,
-                discoveredAt: new Date().toISOString(),
-                category: clue.category as any,
-                difficulty: clue.difficulty as any,
-                method: "Social interaction",
-              });
-            }
-          }
-        }
-      );
-    }
-
-    // Handle NPC secret revelations (secrets are string arrays, identified by index)
-    if (clueRevelations?.npcSecrets && clueRevelations.npcSecrets.length > 0) {
-      clueRevelations.npcSecrets.forEach(
-        (item: { npcId: string; secretIndex: number }) => {
-          const npc = dynamicState.npcCharacters.find(
-            (n) => n.id === item.npcId
-          );
-          if (npc && npc.secrets && npc.secrets[item.secretIndex]) {
-            const secret = npc.secrets[item.secretIndex];
-
-            // Create detailed secret info
-            newDiscoveredClues.push({
-              text: `Secret: ${secret}`,
-              type: "secret",
-              sourceName: npc.name,
-              discoveredBy: dynamicState.playerCharacter.name,
-              discoveredAt: new Date().toISOString(),
-              method: "Secret revelation",
-            });
-          }
-        }
-      );
-    }
-
-    // Add newly discovered clues to global discovery list
-    newDiscoveredClues.forEach((discoveredClue) => {
-      // Check if clue text already exists
-      const exists = dynamicState.discoveredClues.some(
-        (c) => c.text === discoveredClue.text
-      );
-      if (!exists) {
-        dynamicState.discoveredClues.push(discoveredClue);
-      }
-    });
-
-    return gameStateManager.getState();
-  }
-
-  /**
    * Process input and generate appropriate narrative response
    */
   async processInput(
@@ -1020,7 +733,6 @@ export class KeeperAgent {
     gameStateManager: DynamicGameStateManager
   ): Promise<{
     narrative: string;
-    clueRevelations: any;
     updatedGameState: DynamicGameState;
   }> {
     try {
@@ -1031,12 +743,6 @@ export class KeeperAgent {
       return {
         narrative:
           "The shadows seem to obscure the scene, making it difficult to discern what transpires... [Keeper Agent Error]",
-        clueRevelations: {
-          scenarioClues: [],
-          npcClues: [],
-          npcSecrets: [],
-          damagedScenarioClues: [],
-        },
         updatedGameState: gameStateManager.getState(),
       };
     }

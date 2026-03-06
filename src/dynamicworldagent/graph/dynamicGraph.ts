@@ -838,7 +838,7 @@ export const buildDynamicGraph = (
             state.turnId,
             {
               keeperNarrative: result.narrative,
-              clueRevelations: result.clueRevelations || null,
+              clueRevelations: null,
               gameDay: currentState.gameDay ?? null,
               gameTime: currentState.timeOfDay ?? null,
             },
@@ -914,14 +914,6 @@ export const buildDynamicGraph = (
         }
       );
 
-      // TODO: Update dynamicGameState based on keeper narrative
-      // For example, mark truth events as revealed, deploy red herrings, etc.
-      if (result.clueRevelations) {
-        // Process clue revelations and update dynamic state
-        // This would need to be implemented based on specific requirements
-      }
-
-      // Use the updated state from result (which includes all keeper updates)
       updatedGameState = result.updatedGameState;
 
       // Complete turn with keeper narrative if turnId exists
@@ -931,7 +923,7 @@ export const buildDynamicGraph = (
             state.turnId,
             {
               keeperNarrative: result.narrative,
-              clueRevelations: result.clueRevelations,
+              clueRevelations: null,
               gameDay: updatedGameState?.gameDay ?? null,
               gameTime: updatedGameState?.timeOfDay ?? null,
             },

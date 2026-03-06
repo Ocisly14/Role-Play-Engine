@@ -84,20 +84,8 @@ You are a writer, responsible for writing a narrative of the game.
   Treat the above as a two-state scene progression (Before → After), and narrate the visible transformation with clear continuity.
   {{/if}}
 
-  {{#if keeperGuidance}}
-  ### Keeper Guidance
-  {{keeperGuidance}}
-  {{/if}}
-
   ### Game State
   - Time: {{fullGameTime}}
-
-  {{#if hasActionTargetInfo}}
-  ### Action Target
-  {{#if actionTargetName}}
-  - Target: {{actionTargetName}}
-  {{/if}}
-  {{/if}}
 
   ### Player Actions This Turn
   {{#if selectedSkill}}
@@ -160,10 +148,18 @@ You are a writer, responsible for writing a narrative of the game.
   - Only reference them when they directly relate to the current action or conversation.
   {{/if}}
 
-  ### Clue Availability (Engine-Gated)
-  - Regular/Hard/Extreme clues are injected this turn: {{allowRegularPlusClues}}
-  - Fumble occurred this turn: {{hasFumbleThisTurn}}
-  - Clues marked as damaged are unavailable and MUST NOT be revealed.
+  {{#if hasDiscoveredCluesThisTurn}}
+  ### Clues Discovered This Turn
+  The tick engine has already determined which clues were discovered through the investigator's actions. Weave these naturally into the narrative as things the investigator finds or learns.
+  {{#each discoveredCluesThisTurn}}
+  - **[{{this.difficulty}}]** {{this.clueText}} (source: {{this.sourceName}})
+  {{/each}}
+  {{/if}}
+
+  {{#if hasDamagedClueThisTurn}}
+  ### Evidence Damaged
+  The investigator's fumble has destroyed or rendered unusable a piece of evidence at this location. Narrate that the investigator accidentally damaged or ruined something — describe the physical destruction naturally (e.g., knocked over, broke, tore, smudged) without revealing what the evidence contained.
+  {{/if}}
 
   {{#if hasNpcActions}}
   ### NPC Activities This Turn
@@ -185,10 +181,6 @@ You are a writer, responsible for writing a narrative of the game.
   {{else}}
   **Context**: These events happened during the investigator's action, which has already completed. Weave them naturally into the narrative as things the investigator noticed along the way, after describing the action's outcome.
   {{/if}}
-  {{/if}}
-
-  {{#if isFirstRealTurn}}
-  **INITIAL SNAPSHOT (Turn {{currentTurnNumber}})** - Provide complete introduction to the starting scenario.
   {{/if}}
 
   ==================================================
@@ -253,11 +245,6 @@ You are a writer, responsible for writing a narrative of the game.
   - If the investigator's latest input does NOT mention scene observation/description, DO NOT proactively inject connection information.
   - When included, describe only connections that are currently perceivable from the investigator's viewpoint.
   
-  {{#if isFirstRealTurn}}
-  **Initial Snapshot Requirements**:
-  Provide full introduction: physical description, sensory details, notable objects, ALL connections to other locations, present NPCs, mood/atmosphere, investigator's position.
-  {{/if}}
-
   {{#if isTransition}}
   **Scene Transition Narrative**:
   Structure in three phases:
@@ -267,57 +254,16 @@ You are a writer, responsible for writing a narrative of the game.
   {{/if}}
 
   ==================================================
-  SECTION 4 — CLUE REVELATION
+  SECTION 4 — OUTPUT FORMAT
   ==================================================
 
-  ⚠️ **CRITICAL LIMITATION: REVEAL AT MOST ONE (1) CLUE OR SECRET PER TURN**
-
-  ### Intent Gate (Hard Rule)
-  - First determine whether the investigator'(player)s latest intent is actually related to obtaining, verifying, or discussing clues/secrets.
-  - If the latest intent is unrelated to clues/secrets (e.g., flirting), then:
-    1. Do NOT reveal any new clue or secret.
-    2. \`clueRevelations.scenarioClues\`, \`npcClues\`, \`npcSecrets\`, and \`damagedScenarioClues\` must all be empty arrays.
-    3. Narrative must NOT mention any clue/secret content, hints, implications, or references.
-
-
-  ### When Clue Content May Appear in Narrative
-
-  Clue content (discovered or undiscovered) may appear in the narrative ONLY in these two cases:
-
-  **Case A — Active Discovery**: The investigator's input is a deliberate attempt to find/investigate something, AND the player action status is "completed". In this case you may reveal at most one relevant clue and embed it naturally into the narrative.
-  - **AUTOMATIC** clues: May be revealed without a success roll (only if difficulty < Regular).
-  - **REGULAR or higher** difficulty: Requires a completed player action. Do NOT reveal if \`allowRegularPlusClues\` is false.
-
-  **Case B — Player References Previously Discovered Clue**: If the "Previously Discovered Clues (Context-Relevant)" section above contains clues relevant to the investigator's current input, you may incorporate that already-known information naturally into the narrative. Do NOT treat these as new revelations — they are recalled context.
-
-  **In all other cases**: Do NOT include any clue content in the narrative — not the text, not a hint, not an allusion. Narrate only the concrete outcome of what the investigator did.
-
-  ### Additional Rules
-  - On fumble turns, you may damage at most ONE scenario clue via \`damagedScenarioClues\`.
-  - Damaged clues (\`damaged: true\`) can never be revealed under any circumstance.
-
-  **REMINDER**: Maximum 1 clue total per turn across all categories!
-  
-  ==================================================
-  SECTION 5 — OUTPUT FORMAT
-  ==================================================
-  
   Respond ONLY with the following JSON:
-  
+
   {
-    "narrative": "Immersive in-world narrative text...",
-    "clueRevelations": {
-      "scenarioClues": [{ "clueId": "clue-id" }],
-      "npcClues": [{ "npcId": "npc-id", "clueId": "clue-id" }],
-      "npcSecrets": [{ "npcId": "npc-id", "secretIndex": 0 }],
-      "damagedScenarioClues": [{ "clueId": "clue-id", "reason": "Destroyed during failed handling" }]
-    }
+    "narrative": "Immersive in-world narrative text..."
   }
-  
+
   ***IMPORTANT: Rules:***
-  - 🚨 **MAXIMUM 1 CLUE TOTAL** across all categories (scenarioClues + npcClues + npcSecrets)
-  - If investigator intent is unrelated to clue/secret acquisition or discussion, all clueRevelations arrays MUST be empty and narrative MUST not mention clue/secret content.
-  - Arrays may be empty; include only actually changed clues
   - FINAL HARD RULE: Narrative must stay within normal human perception from the investigator's viewpoint. Do not state imperceptible truths; describe subtle unease naturally and with restraint.
   ${getLanguageInstruction(language)}
   - Complete the entire JSON structure - do not stop mid-generation

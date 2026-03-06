@@ -63,7 +63,7 @@ export interface DiscoveredClueEntry {
   similarity: number;     // semantic match score
 }
 
-export type SuccessLevel = "critical" | "hard" | "regular" | "fail";
+export type SuccessLevel = "critical" | "hard" | "regular" | "fail" | "fumble";
 
 export interface CharacterAction {
   characterId: string;
@@ -82,6 +82,7 @@ export interface CharacterAction {
   failureReason?: FailureReason;
   targetCharacterId?: string;
   discoveredClues?: DiscoveredClueEntry[];
+  damagedClue?: { clueId: string; sourceName: string };
 }
 
 export type FailureReason =

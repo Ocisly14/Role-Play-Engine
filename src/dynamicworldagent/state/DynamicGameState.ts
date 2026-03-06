@@ -1961,6 +1961,19 @@ export class DynamicGameStateManager {
     }
   }
 
+  damageScenarioClue(clueId: string, damagedBy: string, reason: string): void {
+    if (!this.state.currentScenario?.clues) return;
+    const clue = this.state.currentScenario.clues.find((c) => c.id === clueId);
+    if (clue && !clue.discovered && !clue.damaged) {
+      clue.damaged = true;
+      clue.damageDetails = {
+        damagedBy,
+        damagedAt: new Date().toISOString(),
+        reason,
+      };
+    }
+  }
+
   markNpcClueRevealed(npcId: string, clueId: string): void {
     const npc = this.state.npcCharacters.find((n) => n.id === npcId);
     if (!npc?.clues) return;
