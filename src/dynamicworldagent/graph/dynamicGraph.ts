@@ -23,6 +23,7 @@ import type {
   GameEndingInfo,
 } from "../../shared/state/index.js";
 import { buildDiceRollInfos } from "../../shared/state/index.js";
+import { getPrismaClient } from "../../shared/agents/memory/database/prismaClient.js";
 import { latestHumanMessage } from "../../shared/utils/index.js";
 import { enrichMemoryContext } from "../dynamicBasicAgent/memory/memoryAgent.js";
 import { TurnManager } from "../dynamicBasicAgent/memory/turnManager.js";
@@ -40,8 +41,9 @@ import { CombatActionAgentA } from "../dynamicBasicAgent/combat/combatActionAgen
 import type { CombatActionAResult } from "../dynamicBasicAgent/combat/combatActionAgentA.js";
 import { CombatActionAgentB } from "../dynamicBasicAgent/combat/combatActionAgentB.js";
 import { DirectorAgent } from "../dynamicBasicAgent/director/directorAgent.js";
-import { HeartbeatAgent } from "../dynamicBasicAgent/heartbeat/heartbeatAgent.js";
 import { KeeperAgent } from "../dynamicBasicAgent/keeper/keeperAgent.js";
+import { NPCPlanningAgent } from "../dynamicBasicAgent/npcPlanning/NPCPlanningAgent.js";
+import { runTick } from "../dynamicBasicAgent/npcPlanning/tickProcessor.js";
 import { TurnRagAgent } from "../dynamicBasicAgent/knowledge/turnRagAgent.js";
 // Import DynamicWorld agents
 import { OrchestratorAgent } from "../dynamicBasicAgent/orchestrator/orchestratorAgent.js";
@@ -122,7 +124,8 @@ export const buildDynamicGraph = (
   const characterAgent = new CharacterAgent();
   const keeperAgent = new KeeperAgent();
   const directorAgent = new DirectorAgent(scenarioLoader, db);
-  const heartbeatAgent = new HeartbeatAgent();
+  const prisma = getPrismaClient();
+  const npcPlanningAgent = new NPCPlanningAgent(prisma, {});
   const turnManager = new TurnManager(db);
   const turnRagAgent = new TurnRagAgent();
   const combatAgentA = new CombatActionAgentA();
@@ -274,21 +277,6 @@ export const buildDynamicGraph = (
       dgsm.setContextualData("relevantHistoryThreshold", null);
       dgsm.setContextualData("relevantHistoryQuery", null);
       console.log("   ✓ Cleared per-turn combat contextual data");
-
-      try {
-        const { dueActions, activatedNarratives } =
-          await heartbeatAgent.evaluateTurnStart(dgsm, { db });
-        console.log(
-          `   ✓ Heartbeat evaluation complete: due=${dueActions.length}, injectedNarratives=${activatedNarratives.length}`
-        );
-      } catch (heartbeatError) {
-        dgsm.setContextualData("heartbeatDueActions", []);
-        dgsm.setContextualData("heartbeatActivatedNarratives", []);
-        console.warn(
-          "   ⚠️  [Dynamic Entry] Heartbeat evaluation failed, fallback to empty context:",
-          heartbeatError
-        );
-      }
 
       // Update timestamp and increment turn counter (only for real input)
       dgsm.updatePlayerInputTime();
@@ -545,6 +533,29 @@ export const buildDynamicGraph = (
     }
 
     console.log("✅ [Dynamic Action Agent] 动作执行完成");
+
+    // Run TickProcessor if playerNode was set by Orchestrator
+    const playerNodeSpec = dgsm.getPlayerNode();
+    if (playerNodeSpec) {
+      try {
+        const playerChar = dgsm.getState().playerCharacter;
+        const characterActions = await runTick(
+          {
+            ...playerNodeSpec,
+            characterId: playerChar?.id ?? "player",
+            characterName: playerChar?.name ?? "Investigator",
+          },
+          dgsm,
+          npcPlanningAgent,
+          dgsm.getState().sessionId,
+          language
+        );
+        dgsm.setCharacterActions(characterActions);
+        console.log(`🎬 [TickProcessor] ${characterActions.length} character action(s) executed`);
+      } catch (error) {
+        console.error(`❌ [TickProcessor] Error:`, error);
+      }
+    }
 
     // Update turn with action results if turnId exists
     if (state.turnId) {
@@ -1359,73 +1370,9 @@ export const buildDynamicGraph = (
         return { ...state, dynamicGameState: gs };
       } else {
         console.log(
-          `   ✓ 全局触发器触发但未导致游戏结束，将先更新场景再继续叙事`
+          `   ✓ 全局触发器触发但未导致游戏结束，继续叙事`
         );
-
-        // 不要清除 global trigger！保留它供 updateNonPlayerScenarios 使用作为 previousGlobalTrigger
-        // updateNonPlayerScenarios 会生成新的 global trigger 并替换旧的
-        // Run worldline update before keeper to ensure keeper sees latest snapshots.
-        console.log(
-          `\n🔄 [Global Trigger] 启动世界线更新任务（keeper 将在更新后继续）...`
-        );
-        console.log(
-          `   ℹ️  保留当前 global trigger 作为 previousGlobalTrigger 供场景更新参考`
-        );
-        console.log(
-          `   ℹ️  场景更新完成后，如果生成新的 global trigger，将自动替换旧的`
-        );
-
-        stream?.onWorldlineUpdateStart?.();
-        try {
-          await directorAgent.updateNonPlayerScenarios(dgsm);
-          const finalState = dgsm.getState();
-          if (finalState.globalTrigger) {
-            console.log(
-              `   ✓ [世界线更新] 场景更新完成，已生成新的 global trigger`
-            );
-          } else {
-            console.log(
-              `   ✓ [世界线更新] 场景更新完成，未生成新的 global trigger（已清除旧的）`
-            );
-          }
-
-          const hasWorldlineCurrentSceneUpdate = Boolean(
-            finalState.temporaryInfo.contextualData?.worldlineSceneUpdate
-              ?.updatedSnapshot
-          );
-          if (hasWorldlineCurrentSceneUpdate && finalState.currentScenario) {
-            const currentScenario = finalState.currentScenario;
-            void generateSceneImage(currentScenario, finalState)
-              .then((result) => {
-                if (!result) return;
-                currentScenario.sceneImage = {
-                  path: result.path,
-                  mimeType: result.mimeType,
-                  generatedAt: new Date().toISOString(),
-                };
-                stream?.onSceneImage?.({
-                  imagePath: result.path,
-                  mimeType: result.mimeType,
-                  sceneName: currentScenario.name,
-                  location: currentScenario.location,
-                  gameDay: finalState.gameDay ?? null,
-                  gameTime: finalState.timeOfDay ?? null,
-                  timestamp: new Date().toISOString(),
-                });
-              })
-              .catch((error) => {
-                console.warn(
-                  "[Global Trigger] Worldline scene image generation failed:",
-                  error
-                );
-              });
-          }
-        } catch (error) {
-          console.error(`   ❌ [世界线更新] 场景更新失败:`, error);
-        } finally {
-          stream?.onWorldlineUpdateEnd?.();
-        }
-
+        // NPC scene updates now handled by TickProcessor
         return { ...state, dynamicGameState: dgsm.getState() };
       }
     } else {

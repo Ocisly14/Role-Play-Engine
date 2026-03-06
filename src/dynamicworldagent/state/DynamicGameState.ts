@@ -27,7 +27,7 @@ import {
 } from "../../shared/agents/models/gameTypes.js";
 import type {
   ScenarioClue,
-  ScenarioCondition,
+  ScenarioCondition as LegacyScenarioCondition,
 } from "../../shared/agents/models/scenarioTypes.js";
 import type {
   ActionAnalysis,
@@ -68,30 +68,11 @@ export interface DefeatedNpcHistoryEntry {
   count: number;
 }
 
-export interface HeartbeatAction {
-  heartbeatId: string;
-  scheduledGameTime: string; // "Day N, HH:MM"
-  npcId: string;
-  npcName: string;
-  task: string;
-  location: string;
-  status: "scheduled" | "due" | "overdue" | "completed" | "cancelled";
-  createdAtGameTime: string; // "Day N, HH:MM"
-  triggeredAtGameTime?: string; // first time entering due/overdue
-  sourceTurnId: string; // source turn that created this heartbeat
-}
-
-export interface HeartbeatActivatedNarrative {
-  heartbeatId: string;
-  sourceTurnId: string;
-  sourceTurnNumber?: number | null;
-  sourceTurnNarrative: string;
-  scheduledGameTime: string;
-  status: "due" | "overdue";
-  npcId: string;
-  npcName: string;
-  task: string;
-  location: string;
+export interface ScenarioConnectionState {
+  fromScenarioId: string;
+  toScenarioId: string;
+  blocked: boolean;
+  conditions: string[];
 }
 
 /**
@@ -116,6 +97,10 @@ export interface DynamicTemporaryInfo {
   sceneChangeRequest: SceneChangeRequest | null;
   /** Previous scenario snapshot (saved before scene switch for Keeper narrative) */
   previousScenario: DynamicScenarioSnapshot | null;
+  /** Player node from Orchestrator (tick-plan system) */
+  playerNode: import("../dynamicBasicAgent/npcPlanning/types.js").OrchestratorPlayerNode | null;
+  /** All character actions from TickProcessor (player + NPC) */
+  characterActions: import("../dynamicBasicAgent/npcPlanning/types.js").CharacterAction[];
 }
 
 /**
@@ -157,7 +142,6 @@ export interface DynamicGameState {
   isBattle: boolean;
   combatState: CombatState | null;
   defeatedNpcHistory: DefeatedNpcHistoryEntry[];
-  heartbeatActions: HeartbeatAction[];
 
   // Game ending status (used by frontend to lock input after epilogue)
   gameEnding: GameEndingInfo | null;
@@ -216,6 +200,15 @@ export interface DynamicGameState {
     keeperNotes?: string;
   } | null; // 全局触发条件
 
+  // NPC Planning System runtime state
+  npcLocations: Record<string, string>;
+  npcStats: Record<string, { hp: number; san: number }>;
+  npcInventories: Record<string, string[]>;
+  npcDiscoveredClues: Record<string, string[]>;
+  npcRelationshipGraph: Record<string, Record<string, { score: number; note: string }>>;
+  scenarioConditions: Record<string, import("../dynamicBasicAgent/npcPlanning/types.js").SceneCondition[]>;
+  connectionStates: ScenarioConnectionState[];
+
   // Metadata
   loadedAt: Date; // When this state was loaded
   lastUpdated: Date; // Last time state was updated
@@ -249,7 +242,6 @@ export const initialDynamicGameState = (params: {
   isBattle: false,
   combatState: null,
   defeatedNpcHistory: [],
-  heartbeatActions: [],
   gameEnding: null,
   keeperGuidance: null,
   moduleLimitations: null,
@@ -268,6 +260,8 @@ export const initialDynamicGameState = (params: {
     npcResponseAnalyses: [],
     sceneChangeRequest: null,
     previousScenario: null,
+    playerNode: null,
+    characterActions: [],
   },
 
   // DynamicWorld-Specific Data
@@ -288,6 +282,13 @@ export const initialDynamicGameState = (params: {
   pointOfNoReturnTrigger: null,
   updatedDynamicScenarioSnapshots: new Map(),
   globalTrigger: null,
+  npcLocations: {},
+  npcStats: {},
+  npcInventories: {},
+  npcDiscoveredClues: {},
+  npcRelationshipGraph: {},
+  scenarioConditions: {},
+  connectionStates: [],
   loadedAt: new Date(),
   lastUpdated: new Date(),
 });
@@ -751,75 +752,6 @@ export class DynamicGameStateManager {
             }))
             .filter((item: DefeatedNpcHistoryEntry) => item.name.length > 0)
         : [],
-      heartbeatActions: Array.isArray(data.heartbeatActions)
-        ? data.heartbeatActions
-            .map((item: any): HeartbeatAction | null => {
-              if (!item || typeof item !== "object") return null;
-              const heartbeatId =
-                typeof item.heartbeatId === "string" &&
-                item.heartbeatId.trim().length > 0
-                  ? item.heartbeatId.trim()
-                  : `heartbeat-${Date.now()}-${randomUUID().slice(0, 8)}`;
-              const scheduledGameTime =
-                typeof item.scheduledGameTime === "string"
-                  ? item.scheduledGameTime.trim()
-                  : "";
-              const npcId =
-                typeof item.npcId === "string" ? item.npcId.trim() : "";
-              const npcName =
-                typeof item.npcName === "string" ? item.npcName.trim() : "";
-              const task = typeof item.task === "string" ? item.task.trim() : "";
-              const location =
-                typeof item.location === "string" ? item.location.trim() : "";
-              const sourceTurnId =
-                typeof item.sourceTurnId === "string"
-                  ? item.sourceTurnId.trim()
-                  : "";
-              if (
-                !scheduledGameTime ||
-                !npcId ||
-                !npcName ||
-                !task ||
-                !location ||
-                !sourceTurnId
-              ) {
-                return null;
-              }
-              const statusCandidate =
-                typeof item.status === "string" ? item.status.trim() : "";
-              const status: HeartbeatAction["status"] = [
-                "scheduled",
-                "due",
-                "overdue",
-                "completed",
-                "cancelled",
-              ].includes(statusCandidate)
-                ? (statusCandidate as HeartbeatAction["status"])
-                : "scheduled";
-              return {
-                heartbeatId,
-                scheduledGameTime,
-                npcId,
-                npcName,
-                task,
-                location,
-                status,
-                createdAtGameTime:
-                  typeof item.createdAtGameTime === "string" &&
-                  item.createdAtGameTime.trim().length > 0
-                    ? item.createdAtGameTime.trim()
-                    : scheduledGameTime,
-                ...(typeof item.triggeredAtGameTime === "string" &&
-                item.triggeredAtGameTime.trim().length > 0
-                  ? { triggeredAtGameTime: item.triggeredAtGameTime.trim() }
-                  : {}),
-                sourceTurnId,
-              };
-            })
-            .filter((item: HeartbeatAction | null): item is HeartbeatAction =>
-              Boolean(item)
-            )
-        : [],
       revealedTruthEvents: new Set(data.revealedTruthEvents || []),
       activatedKnowledgeHolders: new Set(data.activatedKnowledgeHolders || []),
       deployedRedHerrings: new Set(data.deployedRedHerrings || []),
@@ -1027,7 +959,7 @@ export class DynamicGameStateManager {
             discoveryDetails: (clue.discoveryDetails as any) || undefined,
           })),
           conditions: row.conditions.map((cond) => ({
-            type: cond.conditionType as ScenarioCondition["type"],
+            type: cond.conditionType as LegacyScenarioCondition["type"],
             description: cond.description,
             mechanicalEffect: cond.mechanicalEffect || undefined,
           })),
@@ -1067,7 +999,25 @@ export class DynamicGameStateManager {
   clearActionResults(): void {
     this.state.temporaryInfo.actionResults = [];
     this.state.temporaryInfo.actionResultsDetailed = [];
+    this.state.temporaryInfo.playerNode = null;
+    this.state.temporaryInfo.characterActions = [];
     this.state.lastUpdated = new Date();
+  }
+
+  setPlayerNode(node: import("../dynamicBasicAgent/npcPlanning/types.js").OrchestratorPlayerNode | null): void {
+    this.state.temporaryInfo.playerNode = node;
+  }
+
+  getPlayerNode(): import("../dynamicBasicAgent/npcPlanning/types.js").OrchestratorPlayerNode | null {
+    return this.state.temporaryInfo.playerNode;
+  }
+
+  setCharacterActions(actions: import("../dynamicBasicAgent/npcPlanning/types.js").CharacterAction[]): void {
+    this.state.temporaryInfo.characterActions = actions;
+  }
+
+  getCharacterActions(): import("../dynamicBasicAgent/npcPlanning/types.js").CharacterAction[] {
+    return this.state.temporaryInfo.characterActions;
   }
 
   /**
@@ -1198,68 +1148,6 @@ export class DynamicGameStateManager {
    */
   setContextualData(key: string, value: any): void {
     this.state.temporaryInfo.contextualData[key] = value;
-    this.state.lastUpdated = new Date();
-  }
-
-  setHeartbeatActions(actions: HeartbeatAction[]): void {
-    this.state.heartbeatActions = Array.isArray(actions) ? [...actions] : [];
-    this.state.lastUpdated = new Date();
-  }
-
-  upsertHeartbeatActions(actions: HeartbeatAction[]): void {
-    if (!Array.isArray(actions) || actions.length === 0) return;
-
-    const current = this.state.heartbeatActions || [];
-
-    const findByFingerprint = (incoming: HeartbeatAction): number => {
-      return current.findIndex((existing) => {
-        if (!existing) return false;
-        const isActive =
-          existing.status === "scheduled" ||
-          existing.status === "due" ||
-          existing.status === "overdue";
-        if (!isActive) return false;
-        return (
-          existing.npcId === incoming.npcId &&
-          existing.scheduledGameTime === incoming.scheduledGameTime &&
-          existing.task.trim().toLowerCase() ===
-            incoming.task.trim().toLowerCase() &&
-          existing.location.trim().toLowerCase() ===
-            incoming.location.trim().toLowerCase()
-        );
-      });
-    };
-
-    for (const incoming of actions) {
-      if (!incoming?.heartbeatId) continue;
-      const byIdIndex = current.findIndex(
-        (item) => item.heartbeatId === incoming.heartbeatId
-      );
-      if (byIdIndex >= 0) {
-        current[byIdIndex] = {
-          ...current[byIdIndex],
-          ...incoming,
-        };
-        continue;
-      }
-
-      const byFingerprintIndex = findByFingerprint(incoming);
-      if (byFingerprintIndex >= 0) {
-        const existing = current[byFingerprintIndex];
-        current[byFingerprintIndex] = {
-          ...existing,
-          ...incoming,
-          heartbeatId: existing.heartbeatId,
-          createdAtGameTime: existing.createdAtGameTime,
-          sourceTurnId: existing.sourceTurnId || incoming.sourceTurnId,
-        };
-        continue;
-      }
-
-      current.push(incoming);
-    }
-
-    this.state.heartbeatActions = current;
     this.state.lastUpdated = new Date();
   }
 
@@ -2373,5 +2261,96 @@ export class DynamicGameStateManager {
     keeperNotes?: string;
   } | null {
     return this.state.globalTrigger;
+  }
+
+  // === NPC Planning System helpers ===
+
+  getNpcLocation(npcId: string): string | undefined {
+    return this.state.npcLocations[npcId];
+  }
+
+  setNpcLocation(npcId: string, scenarioId: string): void {
+    this.state.npcLocations[npcId] = scenarioId;
+  }
+
+  getNpcStats(npcId: string): { hp: number; san: number } | undefined {
+    return this.state.npcStats[npcId];
+  }
+
+  updateNpcHp(npcId: string, delta: number): void {
+    if (!this.state.npcStats[npcId]) return;
+    this.state.npcStats[npcId].hp = Math.max(0, this.state.npcStats[npcId].hp + delta);
+  }
+
+  updateNpcSan(npcId: string, delta: number): void {
+    if (!this.state.npcStats[npcId]) return;
+    this.state.npcStats[npcId].san = Math.max(0, this.state.npcStats[npcId].san + delta);
+  }
+
+  getNpcInventory(npcId: string): string[] {
+    return this.state.npcInventories[npcId] ?? [];
+  }
+
+  addItemToNpc(npcId: string, itemId: string): void {
+    if (!this.state.npcInventories[npcId]) this.state.npcInventories[npcId] = [];
+    this.state.npcInventories[npcId].push(itemId);
+  }
+
+  removeItemFromNpc(npcId: string, itemId: string): void {
+    if (!this.state.npcInventories[npcId]) return;
+    this.state.npcInventories[npcId] = this.state.npcInventories[npcId].filter(id => id !== itemId);
+  }
+
+  transferClue(fromNpcId: string, toNpcId: string, clueId: string): void {
+    if (!this.state.npcDiscoveredClues[toNpcId]) this.state.npcDiscoveredClues[toNpcId] = [];
+    if (!this.state.npcDiscoveredClues[toNpcId].includes(clueId)) {
+      this.state.npcDiscoveredClues[toNpcId].push(clueId);
+    }
+    if (this.state.npcDiscoveredClues[fromNpcId]) {
+      this.state.npcDiscoveredClues[fromNpcId] = this.state.npcDiscoveredClues[fromNpcId].filter(id => id !== clueId);
+    }
+  }
+
+  getRelationship(npcId: string, targetId: string): { score: number; note: string } | undefined {
+    return this.state.npcRelationshipGraph[npcId]?.[targetId];
+  }
+
+  updateRelationship(npcId: string, targetId: string, scoreDelta: number, note: string): void {
+    if (!this.state.npcRelationshipGraph[npcId]) this.state.npcRelationshipGraph[npcId] = {};
+    const current = this.state.npcRelationshipGraph[npcId][targetId] ?? { score: 0, note: "" };
+    const newScore = Math.max(-100, Math.min(100, current.score + scoreDelta));
+    this.state.npcRelationshipGraph[npcId][targetId] = { score: newScore, note };
+    if (!this.state.npcRelationshipGraph[targetId]) this.state.npcRelationshipGraph[targetId] = {};
+    this.state.npcRelationshipGraph[targetId][npcId] = { score: newScore, note };
+  }
+
+  getSceneConditions(scenarioId: string): import("../dynamicBasicAgent/npcPlanning/types.js").SceneCondition[] {
+    return this.state.scenarioConditions[scenarioId] ?? [];
+  }
+
+  appendSceneCondition(scenarioId: string, condition: import("../dynamicBasicAgent/npcPlanning/types.js").SceneCondition): void {
+    if (!this.state.scenarioConditions[scenarioId]) this.state.scenarioConditions[scenarioId] = [];
+    this.state.scenarioConditions[scenarioId].push(condition);
+  }
+
+  isConnectionBlocked(fromId: string, toId: string): boolean {
+    const conn = this.state.connectionStates.find(
+      c => (c.fromScenarioId === fromId && c.toScenarioId === toId) ||
+           (c.fromScenarioId === toId && c.toScenarioId === fromId)
+    );
+    return conn?.blocked ?? false;
+  }
+
+  setConnectionBlocked(fromId: string, toId: string, blocked: boolean, reason: string): void {
+    let conn = this.state.connectionStates.find(
+      c => (c.fromScenarioId === fromId && c.toScenarioId === toId) ||
+           (c.fromScenarioId === toId && c.toScenarioId === fromId)
+    );
+    if (!conn) {
+      conn = { fromScenarioId: fromId, toScenarioId: toId, blocked, conditions: [] };
+      this.state.connectionStates.push(conn);
+    }
+    conn.blocked = blocked;
+    conn.conditions.push(reason);
   }
 }

@@ -170,16 +170,18 @@ You are a writer, responsible for writing a narrative of the game.
   - Only reference them when they directly relate to the current action or conversation.
   {{/if}}
 
-  {{#if hasHeartbeatActivatedNarratives}}
-  **Activated Heartbeat Source Narratives**:
-  These are source turn narratives tied to currently due/overdue heartbeat actions. Keep continuity with them.
-  {{heartbeatActivatedNarrativesJson}}
-  {{/if}}
-
   ### Clue Availability (Engine-Gated)
   - Regular/Hard/Extreme clues are injected this turn: {{allowRegularPlusClues}}
   - Fumble occurred this turn: {{hasFumbleThisTurn}}
   - Clues marked as damaged are unavailable and MUST NOT be revealed.
+
+  {{#if hasNpcActions}}
+  ### NPC Activities This Turn
+  These are autonomous NPC actions that occurred during this tick. Weave observable ones naturally into the narrative from the investigator's perspective. Only narrate what the investigator can perceive.
+  \`\`\`json
+  {{npcActionsJson}}
+  \`\`\`
+  {{/if}}
 
   {{#if isFirstRealTurn}}
   **INITIAL SNAPSHOT (Turn {{currentTurnNumber}})** - Provide complete introduction to the starting scenario.
@@ -224,13 +226,6 @@ You are a writer, responsible for writing a narrative of the game.
   - Treat the updated current-scene snapshot as the latest ground truth.
   {{/if}}
 
-  {{#if hasHeartbeatActivatedNarratives}}
-  ### Hard Rule — Heartbeat Continuity
-  - If heartbeat source narratives are provided, your narration MUST stay consistent with those prior commitments.
-  - When status is overdue, naturally reflect delay/missed-window consequences in tone and NPC reactions.
-  - Do not invent impossible retroactive changes to the source turn facts.
-  {{/if}}
-  
   ### Narrative Continuity
   - Focus on current input - do not repeat or summarize previous narratives
   - Create natural transitions referencing previous context when relevant

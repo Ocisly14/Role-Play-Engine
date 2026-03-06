@@ -16,7 +16,6 @@ import { composeTemplateWithImages } from "../../../template.js";
 import type {
   DynamicGameState,
   DynamicGameStateManager,
-  HeartbeatActivatedNarrative,
 } from "../../state/index.js";
 import type { DynamicCharacterProfile } from "../../world_builder/types.js";
 import type { DynamicNPCProfile } from "../../world_builder/types.js";
@@ -217,22 +216,6 @@ export class KeeperAgent {
         sourceKey: string;
       }>) ?? [];
 
-    const heartbeatActivatedNarrativesRaw =
-      (dynamicState.temporaryInfo.contextualData
-        ?.heartbeatActivatedNarratives as HeartbeatActivatedNarrative[]) || [];
-    const heartbeatActivatedNarratives = heartbeatActivatedNarrativesRaw.filter(
-      (item) =>
-        !!item &&
-        typeof item.heartbeatId === "string" &&
-        item.heartbeatId.trim().length > 0 &&
-        typeof item.sourceTurnId === "string" &&
-        item.sourceTurnId.trim().length > 0 &&
-        typeof item.sourceTurnNarrative === "string" &&
-        item.sourceTurnNarrative.trim().length > 0 &&
-        (item.status === "due" || item.status === "overdue")
-    );
-    const hasHeartbeatActivatedNarratives =
-      heartbeatActivatedNarratives.length > 0;
     const worldlineSceneUpdate =
       (dynamicState.temporaryInfo.contextualData?.worldlineSceneUpdate as {
         previousSnapshot?: unknown;
@@ -297,6 +280,35 @@ export class KeeperAgent {
     // Simple check: if there's no conversation history, this is the first turn
     const isFirstRealTurn = conversationHistory.length === 0;
 
+    // 10. Filter NPC CharacterActions by impact for narrative inclusion
+    const characterActions = gameStateManager.getCharacterActions();
+    const playerCharacterId = dynamicState.playerCharacter?.id ?? "";
+    const playerScene =
+      dynamicState.currentScenario?.id ?? "";
+    const relevantNpcActions = characterActions.filter((action) => {
+      if (action.characterId === playerCharacterId) return false;
+      if (action.impact === 3) return true;
+      if (
+        action.impact === 1 &&
+        action.targetCharacterId === playerCharacterId
+      )
+        return true;
+      if (action.impact === 2) {
+        const npcScene = action.location;
+        const adjacent = (dynamicState.connectionStates ?? []).some(
+          (c) =>
+            !c.blocked &&
+            ((c.fromScenarioId === playerScene &&
+              c.toScenarioId === npcScene) ||
+              (c.toScenarioId === playerScene &&
+                c.fromScenarioId === npcScene))
+        );
+        return npcScene === playerScene || adjacent;
+      }
+      return false;
+    });
+    const hasNpcActions = relevantNpcActions.length > 0;
+
     // 获取模板
     const template = getKeeperTemplate(language);
 
@@ -333,10 +345,6 @@ export class KeeperAgent {
       retrievedClueContextJson: retrievedClueContext.length > 0
         ? this.safeStringify(retrievedClueContext)
         : null,
-      hasHeartbeatActivatedNarratives,
-      heartbeatActivatedNarrativesJson: hasHeartbeatActivatedNarratives
-        ? this.safeStringify(heartbeatActivatedNarratives)
-        : null,
       hasActionTargetInfo,
       actionTargetName,
       actionTargetIntent,
@@ -372,6 +380,10 @@ export class KeeperAgent {
         ? this.safeStringify(previousScenarioInfo)
         : "null",
       selectedSkill: selectedSkill || null,
+      hasNpcActions,
+      npcActionsJson: hasNpcActions
+        ? this.safeStringify(relevantNpcActions)
+        : null,
     };
 
     // Use template and LLM to generate narrative and clue revelations

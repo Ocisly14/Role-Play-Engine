@@ -802,13 +802,101 @@ export async function initializeCompleteDynamicGameState(
       minutesSinceLastRest: 0,
       fatigueActive: false,
     },
-    heartbeatActions: Array.isArray((worldData as any).heartbeatActions)
-      ? (worldData as any).heartbeatActions
-      : [],
     // Store all module baseline snapshots in updatedDynamicScenarioSnapshots.
     // This allows agents to read all module scenes directly from state.
     updatedDynamicScenarioSnapshots: mergedSnapshots,
   };
+
+  // Initialize NPC Planning runtime state from module data
+  if (npcCharacters.length > 0) {
+    // Build NPC-to-scenario location map from snapshots
+    const npcLocationFromSnapshot: Record<string, string> = {};
+    for (const [scenarioId, snapshots] of mergedSnapshots.entries()) {
+      const snapshot = snapshots[snapshots.length - 1];
+      if (snapshot?.characters) {
+        for (const char of snapshot.characters) {
+          if (!npcLocationFromSnapshot[char.id]) {
+            npcLocationFromSnapshot[char.id] = scenarioId;
+          }
+        }
+      }
+    }
+
+    const defaultScenarioId =
+      currentScenario?.id ??
+      completeState.scenarioOutlines?.[0]?.id ??
+      "unknown";
+
+    for (const npc of npcCharacters) {
+      // npcLocations: from snapshot character assignment or actionLog
+      if (!completeState.npcLocations[npc.id]) {
+        const actionLog = npc.actionLog ?? [];
+        let lastLog: { location?: string } | undefined;
+        for (let i = actionLog.length - 1; i >= 0; i--) {
+          if (actionLog[i].location) { lastLog = actionLog[i]; break; }
+        }
+        completeState.npcLocations[npc.id] =
+          npcLocationFromSnapshot[npc.id] ??
+          lastLog?.location ??
+          defaultScenarioId;
+      }
+
+      // npcStats: from NPC profile status
+      if (!completeState.npcStats[npc.id]) {
+        completeState.npcStats[npc.id] = {
+          hp: npc.status?.hp ?? npc.attributes?.con ?? 10,
+          san: npc.status?.sanity ?? npc.attributes?.pow ?? 50,
+        };
+      }
+
+      // npcInventories: from NPC profile inventory
+      if (!completeState.npcInventories[npc.id]) {
+        completeState.npcInventories[npc.id] = Array.isArray(npc.inventory)
+          ? npc.inventory.map((item) =>
+              typeof item === "string" ? item : item.name ?? String(item)
+            )
+          : [];
+      }
+
+      // npcDiscoveredClues: start empty
+      if (!completeState.npcDiscoveredClues[npc.id]) {
+        completeState.npcDiscoveredClues[npc.id] = [];
+      }
+
+      // npcRelationshipGraph: from NPC profile relationships
+      if (!completeState.npcRelationshipGraph[npc.id]) {
+        const rels: Record<string, { score: number; note: string }> = {};
+        for (const rel of npc.relationships ?? []) {
+          if (rel.targetId) {
+            rels[rel.targetId] = {
+              score: (rel as any).score ?? 0,
+              note: (rel as any).note ?? rel.attitude ?? "",
+            };
+          }
+        }
+        completeState.npcRelationshipGraph[npc.id] = rels;
+      }
+    }
+
+    // connectionStates: from scenario outlines
+    if (completeState.connectionStates.length === 0) {
+      const scenarioOutlines = completeState.scenarioOutlines ?? [];
+      for (const outline of scenarioOutlines) {
+        for (const conn of outline.connections ?? []) {
+          completeState.connectionStates.push({
+            fromScenarioId: outline.id,
+            toScenarioId: conn.scenarioId ?? conn.scenarioName,
+            blocked: conn.blocked ?? false,
+            conditions: [],
+          });
+        }
+      }
+    }
+
+    console.log(
+      `[DynamicGameState] Initialized NPC planning runtime state for ${npcCharacters.length} NPCs`
+    );
+  }
 
   // Create session record in database via Prisma upsert
   // This is required for checkpoint saves to work correctly

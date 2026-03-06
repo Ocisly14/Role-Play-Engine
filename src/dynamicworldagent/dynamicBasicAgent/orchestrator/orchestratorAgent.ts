@@ -153,6 +153,11 @@ export class OrchestratorAgent {
       dynamicState.currentScenario?.name || "Unknown scenario";
     const npcNames =
       dynamicState.npcCharacters?.map((npc) => npc.name).join(", ") || "None";
+    const npcList =
+      dynamicState.npcCharacters?.map((npc) => ({
+        id: npc.id,
+        name: npc.name,
+      })) || [];
 
     // Get scenario connections for scene change validation
     // Note: currentScenario.id is snapshot_id, not scenario_id
@@ -397,6 +402,7 @@ export class OrchestratorAgent {
         scenarioLocation,
         currentScenarioName,
         npcNames,
+        npcList,
         conversationHistory, // Pass conversation history instead of single previousNarrative
         relevantHistory: relevantHistoryForPrompt,
         connections,
@@ -412,9 +418,8 @@ export class OrchestratorAgent {
       modelClass: ModelClass.SMALL,
     });
 
-    // Parse the response and store action analysis and scene change request
+    // Parse the simplified response: { requiresSkillSelection, playerNode }
     try {
-      // Extract JSON from response (in case LLM wraps it in markdown code blocks)
       const jsonText =
         response.match(/```(?:json)?\s*([\s\S]*?)```/i)?.[1] ||
         response.match(/\{[\s\S]*\}/)?.[0];
@@ -426,89 +431,68 @@ export class OrchestratorAgent {
         console.warn("Raw response:", response.substring(0, 500));
       } else {
         const parsedResponse = JSON.parse(jsonText);
+        const playerNode = parsedResponse.playerNode;
+        const requiresSkillSelection = Boolean(
+          parsedResponse.requiresSkillSelection
+        );
 
-        // Debug: Log the parsed sceneChangeRequest
-        if (parsedResponse.sceneChangeRequest) {
-          console.log(
-            `\n🔍 [Orchestrator Agent] Parsed sceneChangeRequest:`,
-            JSON.stringify(parsedResponse.sceneChangeRequest, null, 2)
-          );
-        } else {
-          console.log(
-            `\n⚠️ [Orchestrator Agent] No sceneChangeRequest in parsed response`
-          );
+        // Store playerNode (fill gameTime from state since LLM doesn't output it)
+        if (playerNode) {
+          playerNode.gameTime = dynamicState.timeOfDay || "08:00";
+          playerNode.location = dynamicState.currentScenario?.id || "";
+          gameStateManager.setPlayerNode(playerNode);
         }
 
-        // Store action analysis
-        if (parsedResponse.actionAnalysis) {
-          const normalizedActionAnalysis = this.normalizeActionAnalysis(
-            parsedResponse.actionAnalysis,
-            characterName
-          );
-          gameStateManager.setActionAnalysis(normalizedActionAnalysis);
-        }
+        // Derive actionAnalysis from playerNode for backward compatibility
+        const npcTarget = playerNode?.targetCharacterId
+          ? dynamicState.npcCharacters?.find(
+              (npc) => npc.id === playerNode.targetCharacterId
+            )
+          : null;
 
-        // Handle scene change request - store in temporaryInfo
-        if (parsedResponse.sceneChangeRequest) {
-          const sceneChangeReq = parsedResponse.sceneChangeRequest;
+        const actionAnalysis: ActionAnalysis = {
+          character: characterName,
+          action: input,
+          actionType: (playerNode?.actionType as ActionType) || "narrative",
+          target: {
+            name: npcTarget?.name ?? playerNode?.targetScenarioName ?? null,
+            intent: "",
+          },
+          requiresSkillSelection,
+        };
+        gameStateManager.setActionAnalysis(actionAnalysis);
 
+        // Derive sceneChangeRequest from playerNode.type === "movement"
+        if (
+          playerNode?.type === "movement" &&
+          playerNode.targetScenarioName
+        ) {
+          const sceneChangeRequest: SceneChangeRequest = {
+            shouldChange: true,
+            targetSceneName: playerNode.targetScenarioName,
+            reason: "Scene change via movement",
+            timestamp: new Date(),
+          };
+          gameStateManager.setSceneChangeRequest(sceneChangeRequest);
           console.log(
-            `🔍 [Orchestrator Agent] Checking sceneChangeRequest: shouldChange=${sceneChangeReq.shouldChange}, targetSceneName="${sceneChangeReq.targetSceneName}"`
+            `✅ [Orchestrator Agent] Scene change: → ${playerNode.targetScenarioName}`
           );
-
-          if (sceneChangeReq.shouldChange && sceneChangeReq.targetSceneName) {
-            // Valid scene change request - store in temporaryInfo
-            const sceneChangeRequest: SceneChangeRequest = {
-              shouldChange: true,
-              targetSceneName: sceneChangeReq.targetSceneName,
-              reason: sceneChangeReq.reason || "Scene change requested",
-              timestamp: new Date(),
-            };
-            gameStateManager.setSceneChangeRequest(sceneChangeRequest);
-            console.log(
-              `✅ [Orchestrator Agent] Scene change request validated: ${sceneChangeReq.targetSceneName}`
-            );
-          } else {
-            // No valid scene change request - clear any existing request
-            console.log(
-              `❌ [Orchestrator Agent] Scene change request invalid: shouldChange=${sceneChangeReq.shouldChange}, targetSceneName="${sceneChangeReq.targetSceneName}"`
-            );
-            gameStateManager.clearSceneChangeRequest();
-          }
         } else {
-          // No sceneChangeRequest in response - clear any existing request
-          console.log(
-            `⚠️ [Orchestrator Agent] No sceneChangeRequest field in response - clearing any existing request`
-          );
           gameStateManager.clearSceneChangeRequest();
         }
+
+        console.log(
+          `✅ [Orchestrator Agent] playerNode: type=${playerNode?.type}, actionType=${playerNode?.actionType}, requiresSkillSelection=${requiresSkillSelection}`
+        );
       }
     } catch (error) {
       console.warn(
-        "❌ [Orchestrator Agent] Failed to parse orchestrator response for action analysis:",
+        "❌ [Orchestrator Agent] Failed to parse orchestrator response:",
         error
       );
       console.warn("Response content:", response.substring(0, 500));
     }
 
     return response;
-  }
-
-  private normalizeActionAnalysis(
-    rawAnalysis: any,
-    fallbackCharacterName: string
-  ): ActionAnalysis {
-    const actionType = rawAnalysis.actionType as ActionType | undefined;
-    return {
-      character:
-        rawAnalysis.character || rawAnalysis.player || fallbackCharacterName,
-      action: rawAnalysis.action || "",
-      actionType: actionType || "narrative",
-      target: {
-        name: rawAnalysis.target?.name ?? null,
-        intent: rawAnalysis.target?.intent || "",
-      },
-      requiresSkillSelection: Boolean(rawAnalysis.requiresSkillSelection),
-    };
   }
 }

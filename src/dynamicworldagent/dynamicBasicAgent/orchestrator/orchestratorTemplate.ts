@@ -1,16 +1,23 @@
 /**
- * Action Analysis Agent Template - classify investigator input into action analysis and check scene change requests.
+ * Orchestrator Agent Template - classify investigator input into a structured playerNode.
  */
 export function getOrchestratorTemplate(): string {
-  return `# Action Analysis Agent
+  return `# Orchestrator Agent
 
-You classify the investigator's latest input into a structured action analysis and check if it's a scene change request. Do NOT route to other agents; only return the analysis JSON.
+You classify the investigator's latest input into a structured playerNode. Do NOT route to other agents; only return the JSON.
 
 ## Game Context
 - Character: {{characterName}}
 - Current Scenario: {{currentScenarioName}}
 - Location: {{scenarioLocation}}
-- Available NPCs: {{npcNames}}
+{{#if npcList}}
+- Available NPCs:
+{{#each npcList}}
+  - {{name}} (id: {{id}})
+{{/each}}
+{{else}}
+- Available NPCs: None
+{{/if}}
 
 {{#if connections}}
 ## Current Scenario Connections
@@ -56,48 +63,128 @@ Use them for reference disambiguation and impact judgment (including whether ski
 {{/each}}
 {{/if}}
 
-## Scene Change Detection
-**Rule: If the Investigator's input shows intent to go to another scene AND there's a matching scene name in connections, set sceneChangeRequest.shouldChange = true**
+## Node Type Rules
 
-1. Determine if the input indicates intent to move to a different location/scenario (e.g., "I'll go to ...", "I want to go to ...", "去...", "前往...", "我想去...")
-2. If it's a scene change request:
-   - Check if the target scenario is in the "Current Scenario Connections" list above
-   - **CRITICAL - Semantic Matching (Approximate Match is OK)**: When matching scene names, use **SEMANTIC/MEANING-based matching**, NOT literal string matching:
-     * Match by MEANING, not exact words
-     * Examples of valid matches:
-       - "度假村保安办公室" ≈ "Resort Security Office" ✅ (same meaning: security office)
-       - "安保办公室" ≈ "Security Office" ✅ (same meaning)
-       - "Town Hall" ≈ "市政厅" ✅ (same meaning)
-       - "Sheriff's Office" ≈ "警长办公室" ✅ (same meaning)
-     * If the player's target and a connection name refer to the same physical location (regardless of language or exact wording), treat it as a MATCH
-   - If target IS in connections (semantic match): set sceneChangeRequest.shouldChange = true and use the exact scenario name from the connections list as targetSceneName
-   - If target is NOT in connections: set sceneChangeRequest.shouldChange = false and provide reason (e.g., "Target location is not accessible from here", "No connection to that location")
-3. If it's NOT a scene change request: set sceneChangeRequest.shouldChange = false
+### type: "movement"
+Set when the investigator wants to go to another scene (e.g., "I'll go to ...", "去...", "前往...").
+- Check if the target is in "Current Scenario Connections" above using **SEMANTIC matching** (meaning-based, not literal):
+  * "度假村保安办公室" ≈ "Resort Security Office" ✅
+  * "Town Hall" ≈ "市政厅" ✅
+- If matched: set type = "movement" and targetScenarioName = the exact name from connections list
+- If NOT matched (no connection or blocked): set type = "routine" instead (the movement cannot happen)
+
+### type: "character_interaction"
+Set when the investigator interacts with a specific NPC. Set targetCharacterId to the NPC's id.
+
+### type: "object_interaction" / "scene_interaction"
+Set for interacting with objects or the environment.
+
+### type: "routine"
+Default for general actions that don't fit the above categories.
 
 ## Action Types
 - exploration | social | stealth | combat | chase | mental | environmental | narrative
+
+## Time Estimation
+Estimate how long the player's action takes:
+- instant (1-10 min): glancing, brief conversation, opening doors
+- short (10-30 min): searching a room, examining clues, simple conversation
+- medium (30-120 min): combat, lengthy negotiation, research session
+- long (120-360 min): long distance travel, surveillance, extended tasks
+- very long (360+ min): sleeping, all-day journeys
 
 ## Skill Selection Requirement
 {{#if hasSelectedSkill}}
 Player has selected a skill, set requiresSkillSelection = false
 {{else}}
 Player has NOT selected a skill. Set requiresSkillSelection = true ONLY if the action could have MAJOR impact on NPCs or the scenario (e.g., attacking NPCs, destroying objects, significant confrontations). Otherwise, set false.
-Exception: If recent history shows a similar type of action where the previous dice roll/skill check already succeeded, No need to ask player to select skill again.
+Exception: If recent history shows a similar type of action where the previous dice roll/skill check already succeeded, no need to ask player to select skill again.
 {{/if}}
 
 ## Output (JSON only)
+
+Return ONE of the following structures based on the detected type:
+
+### type: "movement"
+\`\`\`json
 {
-  "actionAnalysis": {
-    "character": "character name",
-    "action": "what action the character wants to perform",
-    "actionType": "exploration|social|stealth|combat|chase|mental|environmental|narrative",
-    "target": { "name": "target name if applicable", "intent": "what the character wants to achieve" },
-    "requiresSkillSelection": (true or false)
-  },
-  "sceneChangeRequest": {
-    "shouldChange": (true or false),
-    "targetSceneName": "target scene name if applicable",
-    "reason": "Reason for scene change or staying"
+  "requiresSkillSelection": false,
+  "playerNode": {
+    "type": "movement",
+    "actionType": "exploration",
+    "targetScenarioName": "exact scenario name from connections",
+    "impact": 0,
+    "timeAdvanceMinutes": 30
   }
-}`;
+}
+\`\`\`
+
+### type: "character_interaction"
+\`\`\`json
+{
+  "requiresSkillSelection": true,
+  "playerNode": {
+    "type": "character_interaction",
+    "actionType": "social",
+    "targetCharacterId": "npc id from Available NPCs list",
+    "characterInteractionPayload": {
+      "transferType": "item | clue | information",
+      "itemId": "(only when transferType=item)",
+      "clueId": "(only when transferType=clue)",
+      "informationContent": "(only when transferType=information)"
+    },
+    "impact": 1,
+    "timeAdvanceMinutes": 15
+  }
+}
+\`\`\`
+Note: characterInteractionPayload is optional. Omit it for plain conversation without transfers.
+
+### type: "object_interaction"
+\`\`\`json
+{
+  "requiresSkillSelection": false,
+  "playerNode": {
+    "type": "object_interaction",
+    "actionType": "exploration",
+    "objectInteractionPayload": {
+      "action": "pickup | place | use | inspect | destroy",
+      "itemId": "(target item id if known)"
+    },
+    "impact": 0,
+    "timeAdvanceMinutes": 15
+  }
+}
+\`\`\`
+
+### type: "scene_interaction"
+\`\`\`json
+{
+  "requiresSkillSelection": false,
+  "playerNode": {
+    "type": "scene_interaction",
+    "actionType": "exploration",
+    "sceneConnectionEffect": {
+      "targetScenarioId": "affected scenario id",
+      "action": "block | unblock"
+    },
+    "impact": 0,
+    "timeAdvanceMinutes": 15
+  }
+}
+\`\`\`
+Note: sceneConnectionEffect is optional. Only include when the action affects passage between scenes.
+
+### type: "routine"
+\`\`\`json
+{
+  "requiresSkillSelection": false,
+  "playerNode": {
+    "type": "routine",
+    "actionType": "narrative",
+    "impact": 0,
+    "timeAdvanceMinutes": 15
+  }
+}
+\`\`\``;
 }

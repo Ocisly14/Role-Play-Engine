@@ -306,6 +306,8 @@ model Module {
   sessions             Session[]
   deletedByUsers       UserModuleDeleted[]
   userLibraries        UserModuleLibrary[]
+  npcLongTermIntents   NpcLongTermIntent[]
+  npcDailyPlans        NpcDailyPlan[]
 
   @@unique([ownerEmailId, moduleNameNormalized], name: "uq_modules_owner_name_normalized", map: "uq_modules_owner_name_normalized")
   @@index([ownerEmailId], map: "idx_modules_owner_email")
@@ -494,9 +496,12 @@ model Session {
   subId           Int?             @map("sub_id")
   moduleId        String?          @map("module_id") @db.Uuid
   emailId         String?          @map("email_id")
-  checkpoints     GameCheckpoint[]
-  turns           GameTurn[]
-  module          Module?          @relation(fields: [moduleId], references: [moduleId])
+  checkpoints        GameCheckpoint[]
+  turns              GameTurn[]
+  module             Module?          @relation(fields: [moduleId], references: [moduleId])
+  npcLongTermIntents NpcLongTermIntent[]
+  npcDailyPlans      NpcDailyPlan[]
+  npcActionLogs      NpcActionLog[]
 
   @@index([status])
   @@index([startedAt])
@@ -903,4 +908,55 @@ model MultiplayerCheckpointMember {
   @@unique([checkpointId, userId])
   @@index([userId])
   @@map("multiplayer_checkpoint_members")
+}
+
+model NpcLongTermIntent {
+  id        String   @id @default(uuid()) @db.Uuid
+  sessionId String   @map("session_id")
+  moduleId  String   @map("module_id") @db.Uuid
+  npcId     String   @map("npc_id")
+  npcName   String   @map("npc_name")
+  intent    String
+  updatedAt DateTime @updatedAt @map("updated_at")
+  createdAt DateTime @default(now()) @map("created_at")
+
+  session   Session  @relation(fields: [sessionId], references: [sessionId], onDelete: Cascade)
+  module    Module   @relation(fields: [moduleId], references: [moduleId], onDelete: Cascade)
+
+  @@index([sessionId])
+  @@map("npc_long_term_intents")
+}
+
+model NpcDailyPlan {
+  id          String   @id @default(uuid()) @db.Uuid
+  sessionId   String   @map("session_id")
+  moduleId    String   @map("module_id") @db.Uuid
+  npcId       String   @map("npc_id")
+  npcName     String   @map("npc_name")
+  gameDay     Int      @map("game_day")
+  nodes       Json
+  generatedAt DateTime @default(now()) @map("generated_at")
+
+  session     Session  @relation(fields: [sessionId], references: [sessionId], onDelete: Cascade)
+  module      Module   @relation(fields: [moduleId], references: [moduleId], onDelete: Cascade)
+
+  @@unique([sessionId, npcId, gameDay])
+  @@index([sessionId, gameDay])
+  @@map("npc_daily_plans")
+}
+
+model NpcActionLog {
+  id        String   @id @default(uuid()) @db.Uuid
+  sessionId String   @map("session_id")
+  npcId     String   @map("npc_id")
+  gameDay   Int      @map("game_day")
+  gameTime  String   @map("game_time")
+  location  String
+  entry     String
+  createdAt DateTime @default(now()) @map("created_at")
+
+  session   Session  @relation(fields: [sessionId], references: [sessionId], onDelete: Cascade)
+
+  @@index([sessionId, npcId])
+  @@map("npc_action_logs")
 }
