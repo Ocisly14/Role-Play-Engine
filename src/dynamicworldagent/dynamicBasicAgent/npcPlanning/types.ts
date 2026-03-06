@@ -1,6 +1,6 @@
 import type { ActionType } from "../../../shared/state/index.js";
 
-export type NpcPlanNodeType =
+export type PlanNodeType =
   | "routine"
   | "movement"
   | "character_interaction"
@@ -32,16 +32,19 @@ export interface SceneConnectionEffect {
   action: "block" | "unblock";
 }
 
-export interface NpcPlanNode {
+export interface PlanNode {
   nodeId: string;
   characterId: string;
   characterName: string;
   gameTime: string;
   action: string;
   location: string;
-  type: NpcPlanNodeType;
+  type: PlanNodeType;
   actionType?: ActionType;
   impact: 0 | 1 | 2 | 3;
+  difficulty?: "regular" | "hard" | "extreme";
+  isPlayer?: boolean;
+  timeAdvanceMinutes: number;
   targetCharacterId?: string;
   characterInteractionPayload?: CharacterInteractionPayload;
   objectInteractionPayload?: ObjectInteractionPayload;
@@ -56,9 +59,11 @@ export interface CharacterAction {
   gameTime: string;
   action: string;
   location: string;
-  type: NpcPlanNodeType;
+  type: PlanNodeType;
   actionType?: ActionType;
   impact: 0 | 1 | 2 | 3;
+  isPlayer?: boolean;
+  difficulty?: "regular" | "hard" | "extreme" | "luck_only";
   status: "completed" | "failed";
   outcome: string;
   failureReason?: FailureReason;
@@ -88,28 +93,7 @@ export type ImpactTrigger = {
 export interface RevisePlansContext {
   longTermIntent: string;
   actionLog: string[];
-  pendingNodes: NpcPlanNode[];
+  pendingNodes: PlanNode[];
   trigger: FailureTrigger | ImpactTrigger;
 }
 
-export type TimeConsumptionLevel =
-  | "instant"
-  | "short"
-  | "medium"
-  | "long"
-  | "very long";
-
-export interface OrchestratorPlayerNode {
-  type: NpcPlanNodeType;
-  actionType?: ActionType;
-  location?: string;
-  targetCharacterId?: string;
-  targetScenarioName?: string;
-  impact: 0 | 1 | 2 | 3;
-  gameTime?: string;
-  timeAdvanceMinutes: number;
-  timeConsumption?: TimeConsumptionLevel;
-  characterInteractionPayload?: CharacterInteractionPayload;
-  objectInteractionPayload?: ObjectInteractionPayload;
-  sceneConnectionEffect?: SceneConnectionEffect;
-}
