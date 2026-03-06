@@ -1,6 +1,6 @@
 export type {
-  NpcPlanNode,
-  NpcPlanNodeType,
+  PlanNode,
+  PlanNodeType,
   CharacterAction,
   CharacterInteractionPayload,
   ObjectInteractionPayload,
@@ -9,8 +9,6 @@ export type {
   FailureTrigger,
   ImpactTrigger,
   RevisePlansContext,
-  OrchestratorPlayerNode,
-  TimeConsumptionLevel,
   FailureReason,
 } from "./types.js";
 
