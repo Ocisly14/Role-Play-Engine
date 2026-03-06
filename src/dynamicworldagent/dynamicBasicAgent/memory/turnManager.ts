@@ -144,7 +144,7 @@ export class TurnManager {
     this.db.updateTurnProcessing(
       turnId,
       null, // actionAnalysis (legacy, no longer used)
-      processing.characterActions ?? null
+      (processing.characterActions as any[] | undefined) ?? undefined
     );
   }
 

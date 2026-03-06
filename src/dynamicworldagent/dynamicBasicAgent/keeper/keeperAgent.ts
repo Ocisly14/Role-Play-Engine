@@ -592,38 +592,6 @@ export class KeeperAgent {
     };
   }
 
-  /**
-   * Clear temporary state content
-   * @deprecated Cleanup now happens in entry node for real player input.
-   * Kept for backward compatibility but no longer called.
-   */
-  private clearTemporaryState(
-    dynamicState: DynamicGameState,
-    gameStateManager: DynamicGameStateManager
-  ): DynamicGameState {
-    console.log("\n🧹 [Keeper Agent] Clearing temporary state content...");
-
-    // Clear action results
-    gameStateManager.clearActionResults();
-    console.log("   ✓ Cleared action results");
-
-    // Clear NPC response analyses
-    gameStateManager.clearNPCResponseAnalyses();
-    console.log("   ✓ Cleared NPC response analyses");
-
-    // Clear action analysis
-    gameStateManager.clearActionAnalysis();
-    console.log("   ✓ Cleared action analysis");
-
-    // Clear temporary rules
-    const updatedState = gameStateManager.getState();
-    updatedState.temporaryInfo.rules = [];
-    console.log("   ✓ Cleared temporary rules");
-
-    console.log("✅ [Keeper Agent] Temporary state content cleared");
-
-    return updatedState;
-  }
 
   /**
    * 1. Extract complete scenario information

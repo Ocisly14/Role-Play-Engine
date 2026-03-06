@@ -87,7 +87,7 @@ function buildNarrativeText(turn: GameTurn): string {
 function buildActionLogText(turn: GameTurn): string {
   return [
     `Turn #${turn.turnNumber} Action Logs`,
-    formatActionLogs(turn.actionResults),
+    formatActionLogs((turn as any).characterActions ?? (turn as any).actionResults),
   ].join("\n");
 }
 

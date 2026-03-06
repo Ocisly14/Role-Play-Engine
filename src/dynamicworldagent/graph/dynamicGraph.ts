@@ -217,14 +217,11 @@ export const buildDynamicGraph = (
         "[Dynamic Entry] Real player input - clearing temporary state"
       );
 
-      dgsm.clearActionResults();
-      console.log("   Cleared action results");
+      dgsm.setCharacterActions([]);
+      console.log("   Cleared character actions");
 
-      dgsm.clearNPCResponseAnalyses();
-      console.log("   Cleared NPC response analyses");
-
-      dgsm.clearActionAnalysis();
-      console.log("   Cleared action analysis");
+      dgsm.setPlayerNodes([]);
+      console.log("   Cleared player nodes");
 
       dgsm.clearPreviousScenario();
       console.log("   Cleared previous scenario");
@@ -307,31 +304,14 @@ export const buildDynamicGraph = (
 
     console.log("✅ [Dynamic Orchestrator Agent] 分析完成");
 
-    // Log detailed action analysis
-    const actionAnalysis = dgsm.getState().temporaryInfo.currentActionAnalysis;
-    const sceneChangeRequest = dgsm.getState().temporaryInfo.sceneChangeRequest;
-    if (actionAnalysis) {
-      console.log("\n📋 [Dynamic Action Analysis] 详细分析结果:");
-      console.log(`   Character: ${actionAnalysis.character}`);
-      console.log(`   Action: ${actionAnalysis.action}`);
-      console.log(`   Action Type: ${actionAnalysis.actionType}`);
-      console.log(`   Target: ${actionAnalysis.target.name || "N/A"}`);
-      console.log(`   Target Intent: ${actionAnalysis.target.intent || "N/A"}`);
-      if (actionAnalysis.requiresSkillSelection) {
-        console.log(`   ⚠️  Requires Skill Selection: Yes`);
-      }
-      if (sceneChangeRequest) {
-        console.log(
-          `   SceneChangeRequest: ${sceneChangeRequest.shouldChange ? "Yes" : "No"}${sceneChangeRequest.targetSceneName ? ` -> ${sceneChangeRequest.targetSceneName}` : ""}`
-        );
-      } else {
-        console.log(`   SceneChangeRequest: No`);
-      }
-    } else {
-      console.log("⚠️  [Dynamic Action Analysis] 未生成分析结果");
+    // Log orchestrator output
+    const orchestratorOutput = dgsm.getState().temporaryInfo.contextualData?.orchestratorOutput;
+    if (orchestratorOutput) {
+      console.log("\n📋 [Dynamic Orchestrator Output]:");
+      console.log(`   targetScenarioName: ${orchestratorOutput.targetScenarioName ?? "(none)"}`);
+      console.log(`   targetNpcId: ${orchestratorOutput.targetNpcId ?? "(none)"}`);
+      console.log(`   impact: ${orchestratorOutput.impact}`);
     }
-
-    // Note: action analysis is no longer stored in turns (replaced by characterActions from TickProcessor)
 
     return { ...state, dynamicGameState: dgsm.getState() };
   });
@@ -532,140 +512,114 @@ export const buildDynamicGraph = (
         );
       }
 
-      const sceneChangeRequest = currentState.temporaryInfo.sceneChangeRequest;
+      // Detect scene change from characterActions (movement nodes executed by TickProcessor)
+      const afterState = dgsm.getState();
+      const currentScenario = afterState.currentScenario;
+      const sceneChanged =
+        currentScenario &&
+        currentScenario.id &&
+        currentScenario.id !== beforeScenarioId;
 
-      if (
-        sceneChangeRequest?.shouldChange &&
-        sceneChangeRequest.targetSceneName
-      ) {
-        const currentCharacterInput = latestHumanMessage(state.messages);
-
+      if (sceneChanged) {
         stream?.onSceneChangeStart?.();
-
-        await directorAgent.handleActionDrivenSceneChange(
-          dgsm,
-          sceneChangeRequest.targetSceneName,
-          sceneChangeRequest.reason,
-          currentCharacterInput
-        );
-
         stream?.onSceneChangeEnd?.();
 
-        const updatedState = dgsm.getState();
-        const currentScenario = updatedState.currentScenario;
-        const sceneChanged =
-          currentScenario &&
-          currentScenario.id &&
-          currentScenario.id !== beforeScenarioId;
-
-        if (sceneChanged) {
-          void generateSceneImage(currentScenario, updatedState)
-            .then((result) => {
-              if (!result) return;
-              if (currentScenario) {
-                currentScenario.sceneImage = {
-                  path: result.path,
-                  mimeType: result.mimeType,
-                  generatedAt: new Date().toISOString(),
-                };
-              }
-              stream?.onSceneImage?.({
-                imagePath: result.path,
+        void generateSceneImage(currentScenario, afterState)
+          .then((result) => {
+            if (!result) return;
+            if (currentScenario) {
+              currentScenario.sceneImage = {
+                path: result.path,
                 mimeType: result.mimeType,
-                sceneName: currentScenario.name,
-                location: currentScenario.location,
-                gameDay: updatedState.gameDay ?? null,
-                gameTime: updatedState.timeOfDay ?? null,
-                timestamp: new Date().toISOString(),
+                generatedAt: new Date().toISOString(),
+              };
+            }
+            stream?.onSceneImage?.({
+              imagePath: result.path,
+              mimeType: result.mimeType,
+              sceneName: currentScenario.name,
+              location: currentScenario.location,
+              gameDay: afterState.gameDay ?? null,
+              gameTime: afterState.timeOfDay ?? null,
+              timestamp: new Date().toISOString(),
+            });
+          })
+          .catch((error) => {
+            console.warn(
+              "[Dynamic Director] Scene image generation failed:",
+              error
+            );
+          });
+
+        // Incrementally update the macro map
+        const prevScenario = afterState.temporaryInfo.previousScenario;
+        const moduleDigest = afterState.moduleDigest;
+        const resolveScenarioIdFromSnapshot = (
+          snapshotId: string
+        ): string | null => {
+          for (const [
+            scenarioId,
+            snapshots,
+          ] of afterState.updatedDynamicScenarioSnapshots.entries()) {
+            if (
+              (snapshots || []).some((snapshot) => snapshot.id === snapshotId)
+            ) {
+              return scenarioId;
+            }
+          }
+          return null;
+        };
+
+        const getConns = (id: string, name?: string) => {
+          const byIdOrName = afterState.scenarioOutlines.find(
+            (outline) => outline.id === id || (name && outline.name === name)
+          );
+          if (byIdOrName) {
+            return byIdOrName.connections || [];
+          }
+          const scenarioId = resolveScenarioIdFromSnapshot(id);
+          if (!scenarioId) return [];
+          return (
+            afterState.scenarioOutlines.find(
+              (outline) => outline.id === scenarioId
+            )?.connections || []
+          );
+        };
+
+        if (prevScenario && currentScenario) {
+          void generateMapOnSceneSwitch(
+            afterState.moduleName,
+            {
+              name: prevScenario.name,
+              description: prevScenario.description,
+              connections: getConns(prevScenario.id, prevScenario.name),
+            },
+            {
+              name: currentScenario.name,
+              description: currentScenario.description,
+              connections: getConns(currentScenario.id, currentScenario.name),
+            },
+            moduleDigest?.macroMapPath
+          )
+            .then((mapResult) => {
+              if (!mapResult) return;
+              if (moduleDigest) {
+                moduleDigest.macroMapPath = mapResult.path;
+              }
+              stream?.onMapUpdate?.({
+                macroMapPath: mapResult.path,
+                mimeType: mapResult.mimeType,
               });
             })
-            .catch((error) => {
-              console.warn(
-                "[Dynamic Director] Scene image generation failed:",
-                error
-              );
+            .catch((err) => {
+              console.warn("[Dynamic Director] Map update failed:", err);
             });
-
-          // Incrementally update the macro map: add the newly entered scene
-          // Follow the same fire-and-forget + in-place mutation pattern as generateSceneImage above
-          const prevScenario = updatedState.temporaryInfo.previousScenario;
-          const moduleDigest = updatedState.moduleDigest; // capture ref before async, like currentScenario
-          const resolveScenarioIdFromSnapshot = (
-            snapshotId: string
-          ): string | null => {
-            for (const [
-              scenarioId,
-              snapshots,
-            ] of updatedState.updatedDynamicScenarioSnapshots.entries()) {
-              if (
-                (snapshots || []).some((snapshot) => snapshot.id === snapshotId)
-              ) {
-                return scenarioId;
-              }
-            }
-            return null;
-          };
-
-          const getConns = (id: string, name?: string) => {
-            const byIdOrName = updatedState.scenarioOutlines.find(
-              (outline) => outline.id === id || (name && outline.name === name)
-            );
-            if (byIdOrName) {
-              return byIdOrName.connections || [];
-            }
-
-            const scenarioId = resolveScenarioIdFromSnapshot(id);
-            if (!scenarioId) {
-              return [];
-            }
-
-            return (
-              updatedState.scenarioOutlines.find(
-                (outline) => outline.id === scenarioId
-              )?.connections || []
-            );
-          };
-
-          if (prevScenario && currentScenario) {
-            void generateMapOnSceneSwitch(
-              updatedState.moduleName,
-              {
-                name: prevScenario.name,
-                description: prevScenario.description,
-                connections: getConns(prevScenario.id, prevScenario.name),
-              },
-              {
-                name: currentScenario.name,
-                description: currentScenario.description,
-                connections: getConns(currentScenario.id, currentScenario.name),
-              },
-              moduleDigest?.macroMapPath
-            )
-              .then((mapResult) => {
-                if (!mapResult) return;
-                // Mutate in place via captured ref — same pattern as currentScenario.sceneImage above
-                if (moduleDigest) {
-                  moduleDigest.macroMapPath = mapResult.path;
-                }
-                stream?.onMapUpdate?.({
-                  macroMapPath: mapResult.path,
-                  mimeType: mapResult.mimeType,
-                });
-              })
-              .catch((err) => {
-                console.warn("[Dynamic Director] Map update failed:", err);
-              });
-          }
         }
       }
-
-      dgsm.clearSceneChangeRequest();
 
       console.log("✅ [Dynamic Director Agent] 处理完成");
     } catch (error) {
       console.error(`❌ [Dynamic Director Agent] 处理失败:`, error);
-      // Clear scene change request even on error to prevent stuck state
-      dgsm.clearSceneChangeRequest();
     }
 
     return { ...state, dynamicGameState: dgsm.getState() };
