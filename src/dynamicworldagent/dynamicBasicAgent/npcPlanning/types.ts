@@ -111,3 +111,24 @@ export interface RevisePlansContext {
   trigger: FailureTrigger | ImpactTrigger;
 }
 
+export interface PlayerWitnessEvent {
+  characterName: string;
+  action: string;
+  outcome: string;
+  location: string;
+  gameTime: string;
+  impact: number;
+}
+
+export type TickResult =
+  | { type: "completed"; actions: CharacterAction[] }
+  | {
+      type: "player_interrupt";
+      actions: CharacterAction[];
+      witnessEvents: PlayerWitnessEvent[];
+      /** Remaining bucket keys + nodes to resume if player chooses continue */
+      remainingBuckets: Array<{ bucketKey: number; nodes: PlanNode[] }>;
+      /** Game day at time of interrupt */
+      gameDay: number;
+    };
+

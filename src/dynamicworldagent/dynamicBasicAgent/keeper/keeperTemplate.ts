@@ -174,6 +174,20 @@ You are a writer, responsible for writing a narrative of the game.
   \`\`\`
   {{/if}}
 
+  {{#if hasPlayerWitnessEvents}}
+  ### Events Witnessed During Action
+  The following events occurred around the investigator during this turn's action.
+  Impact indicates proximity: 1 = directly targeted (private), 2 = same/adjacent scene (visible/audible), 3 = distant but heard/felt.
+  {{#each playerWitnessEvents}}
+  - **[Impact {{this.impact}}]** {{this.characterName}} at {{this.location}}, {{this.gameTime}}: {{this.outcome}}
+  {{/each}}
+  {{#if isWitnessInterrupt}}
+  **⚡ MID-ACTION INTERRUPTION**: The investigator perceived these events while still in the middle of acting. Narrate the sudden perception objectively — describe only what the investigator sees, hears, or feels. Do NOT decide how the investigator reacts or what they do next.
+  {{else}}
+  **Context**: These events happened during the investigator's action, which has already completed. Weave them naturally into the narrative as things the investigator noticed along the way, after describing the action's outcome.
+  {{/if}}
+  {{/if}}
+
   {{#if isFirstRealTurn}}
   **INITIAL SNAPSHOT (Turn {{currentTurnNumber}})** - Provide complete introduction to the starting scenario.
   {{/if}}

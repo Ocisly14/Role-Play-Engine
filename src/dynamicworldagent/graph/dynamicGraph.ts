@@ -35,9 +35,9 @@ import { DirectorAgent } from "../dynamicBasicAgent/director/directorAgent.js";
 import { KeeperAgent } from "../dynamicBasicAgent/keeper/keeperAgent.js";
 import { PlayerPlanAgent } from "../dynamicBasicAgent/npcPlanning/PlayerPlanAgent.js";
 import { NPCPlanningAgent } from "../dynamicBasicAgent/npcPlanning/NPCPlanningAgent.js";
-import { runTick } from "../dynamicBasicAgent/npcPlanning/tickProcessor.js";
+import { runTick, resumeTick } from "../dynamicBasicAgent/npcPlanning/tickProcessor.js";
 import { ACTION_TYPE_SKILL_MAP } from "../dynamicBasicAgent/npcPlanning/actionTypeSkillMap.js";
-import type { PlanNode } from "../dynamicBasicAgent/npcPlanning/types.js";
+import type { PlanNode, TickResult } from "../dynamicBasicAgent/npcPlanning/types.js";
 import { TurnRagAgent } from "../dynamicBasicAgent/knowledge/turnRagAgent.js";
 // Import DynamicWorld agents
 import { OrchestratorAgent } from "../dynamicBasicAgent/orchestrator/orchestratorAgent.js";
@@ -457,18 +457,81 @@ export const buildDynamicGraph = (
     const pendingPlayerNodes = playerNodes.filter((n: PlanNode) => n.status === "pending");
 
     try {
-      const characterActions = await runTick(
-        pendingPlayerNodes,
-        dgsm,
-        npcPlanningAgent,
-        dgsm.getState().sessionId,
-        language
-      );
+      // Check if we're resuming from a player witness interrupt
+      const pendingInterrupt = dgsm.getContextualData("pendingTickInterrupt") as {
+        remainingBuckets: Array<{ bucketKey: number; nodes: PlanNode[] }>;
+        previousActions: any[];
+      } | null;
+      const playerContinueChoice = dgsm.getContextualData("playerWitnessChoice") as string | null;
 
-      // Store results
+      let tickResult: TickResult;
+
+      if (pendingInterrupt && playerContinueChoice === "continue") {
+        // Player chose to continue — resume tick from where we left off
+        dgsm.setContextualData("pendingTickInterrupt", null);
+        dgsm.setContextualData("playerWitnessChoice", null);
+        console.log("[TickExecutionLoop] Resuming tick after player chose to continue");
+        tickResult = await resumeTick(
+          pendingInterrupt.remainingBuckets,
+          pendingInterrupt.previousActions,
+          dgsm,
+          npcPlanningAgent,
+          dgsm.getState().sessionId,
+          pendingPlayerNodes,
+          language
+        );
+      } else if (pendingInterrupt && playerContinueChoice === "interrupt") {
+        // Player chose to interrupt — stop here, use actions so far
+        dgsm.setContextualData("pendingTickInterrupt", null);
+        dgsm.setContextualData("playerWitnessChoice", null);
+        console.log("[TickExecutionLoop] Player chose to interrupt, stopping tick");
+        tickResult = { type: "completed", actions: pendingInterrupt.previousActions };
+      } else {
+        // Normal execution
+        tickResult = await runTick(
+          pendingPlayerNodes,
+          dgsm,
+          npcPlanningAgent,
+          dgsm.getState().sessionId,
+          language
+        );
+      }
+
+      // Store executed actions
       const existingActions = dgsm.getCharacterActions() || [];
-      dgsm.setCharacterActions([...existingActions, ...characterActions]);
-      console.log(`[TickExecutionLoop] ${characterActions.length} character action(s) executed`);
+      dgsm.setCharacterActions([...existingActions, ...tickResult.actions]);
+      console.log(`[TickExecutionLoop] ${tickResult.actions.length} character action(s) executed`);
+
+      // Handle player interrupt — generate witness narrative via Keeper, then pause
+      if (tickResult.type === "player_interrupt") {
+        // Save interrupt state for resume
+        dgsm.setContextualData("pendingTickInterrupt", {
+          remainingBuckets: tickResult.remainingBuckets,
+          previousActions: tickResult.actions,
+        });
+
+        // Generate witness narrative via KeeperAgent (full template)
+        const userInput = latestHumanMessage(state.messages);
+        const witnessResult = await keeperAgent.generateNarrative(
+          userInput,
+          dgsm,
+          language,
+          state.selectedSkill ?? null,
+          {
+            onNarrativeDelta: state.stream?.onNarrativeDelta,
+            witnessEvents: tickResult.witnessEvents,
+            isWitnessInterrupt: true,
+          }
+        );
+
+        console.log(`[TickExecutionLoop] Player witness interrupt — ${tickResult.witnessEvents.length} event(s)`);
+        interrupt({
+          type: "player_witness",
+          witnessEvents: tickResult.witnessEvents,
+          witnessNarrative: witnessResult.narrative,
+          requiresPlayerChoice: true,
+        });
+      }
     } catch (error) {
       console.error("[TickExecutionLoop] Error:", error);
     }
@@ -836,6 +899,9 @@ export const buildDynamicGraph = (
         stream?.onNarrativeStart?.();
       }
 
+      // Inject player witness events from tick processor (if any, non-interrupt)
+      const playerWitnessEvents = (dgsm.getContextualData("playerWitnessEvents") as any[]) ?? [];
+
       const result = await keeperAgent.generateNarrative(
         userInput,
         dgsm,
@@ -843,6 +909,8 @@ export const buildDynamicGraph = (
         state.selectedSkill ?? null,
         {
           onNarrativeDelta: shouldStream ? stream?.onNarrativeDelta : undefined,
+          witnessEvents: playerWitnessEvents.length > 0 ? playerWitnessEvents : undefined,
+          isWitnessInterrupt: false,
         }
       );
 

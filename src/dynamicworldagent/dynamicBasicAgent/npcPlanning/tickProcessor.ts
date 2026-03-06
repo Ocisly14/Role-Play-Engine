@@ -12,6 +12,8 @@ import type {
   SceneCondition,
   DiscoveredClueEntry,
   SuccessLevel,
+  TickResult,
+  PlayerWitnessEvent,
 } from "./types.js";
 
 // ==================== Time helpers ====================
@@ -857,7 +859,7 @@ export async function runTick(
   npcPlanningAgent: NPCPlanningAgent,
   sessionId: string,
   language: string = "en"
-): Promise<CharacterAction[]> {
+): Promise<TickResult> {
   const state = dgsm.getState();
   const gameDay = state.gameDay;
   const currentTime = state.timeOfDay;
@@ -1111,9 +1113,9 @@ export async function runTick(
         );
       }
 
-      // Player witness: store impact events for KeeperAgent narration
+      // Player witness: interrupt tick execution so player can decide
       if (playerEvents && playerEvents.length > 0) {
-        const playerWitnessEvents = playerEvents.map((e) => ({
+        const playerWitnessEvents: PlayerWitnessEvent[] = playerEvents.map((e) => ({
           characterName: e.event.characterName,
           action: e.event.action,
           outcome: e.event.outcome,
@@ -1121,8 +1123,24 @@ export async function runTick(
           gameTime: e.event.gameTime,
           impact: e.impact,
         }));
+
+        // Also store in contextualData for KeeperAgent
         const existing = (dgsm.getContextualData("playerWitnessEvents") as any[]) ?? [];
         dgsm.setContextualData("playerWitnessEvents", [...existing, ...playerWitnessEvents]);
+
+        // Collect remaining buckets (after current one)
+        const currentIdx = sortedBucketKeys.indexOf(bucketKey);
+        const remainingBuckets = sortedBucketKeys
+          .slice(currentIdx + 1)
+          .map((k) => ({ bucketKey: k, nodes: buckets.get(k)! }));
+
+        return {
+          type: "player_interrupt",
+          actions: allActions,
+          witnessEvents: playerWitnessEvents,
+          remainingBuckets,
+          gameDay,
+        };
       }
     }
 
@@ -1143,7 +1161,218 @@ export async function runTick(
   const timeAdvance = successfulPlayerAdvance > 0 ? successfulPlayerAdvance : maxPlayerAdvance;
   dgsm.updateGameTime(timeAdvance);
 
-  return allActions;
+  return { type: "completed", actions: allActions };
+}
+
+// ==================== Resume after player interrupt ====================
+
+export async function resumeTick(
+  remainingBuckets: Array<{ bucketKey: number; nodes: PlanNode[] }>,
+  previousActions: CharacterAction[],
+  dgsm: DynamicGameStateManager,
+  npcPlanningAgent: NPCPlanningAgent,
+  sessionId: string,
+  playerNodes: PlanNode[],
+  language: string = "en"
+): Promise<TickResult> {
+  const state = dgsm.getState();
+  const gameDay = state.gameDay;
+  const allActions: CharacterAction[] = [...previousActions];
+  const playerCharacterIds = new Set(playerNodes.map((n) => n.characterId));
+  let playerFailed = false;
+
+  // Rebuild buckets map for impact gate reuse
+  const buckets = new Map<number, PlanNode[]>();
+  for (const { bucketKey, nodes } of remainingBuckets) {
+    buckets.set(bucketKey, nodes);
+  }
+  const sortedBucketKeys = remainingBuckets.map((b) => b.bucketKey);
+
+  for (const bucketKey of sortedBucketKeys) {
+    const bucketNodes = buckets.get(bucketKey)!;
+    const bucketTime = getBucketLabel(bucketKey);
+    const bucketActions: CharacterAction[] = [];
+    let playerFailedInBucket = false;
+
+    for (const node of bucketNodes) {
+      if ((playerFailed || playerFailedInBucket) && node.isPlayer) continue;
+
+      const action = executeNode(node, dgsm);
+      bucketActions.push(action);
+      allActions.push(action);
+
+      if (action.status === "failed" && node.isPlayer) {
+        playerFailedInBucket = true;
+      }
+
+      let relationshipChange: string | undefined;
+      if (action.status === "completed" && node.type === "character_interaction" && node.targetCharacterId) {
+        const relResult = await npcPlanningAgent.updateRelationshipViaLLM(dgsm, node.characterId, node.targetCharacterId, action.outcome, language);
+        if (relResult) {
+          const sign = relResult.scoreDelta >= 0 ? "+" : "";
+          relationshipChange = `[relationship ${sign}${relResult.scoreDelta} → ${relResult.newScore}, ${relResult.note}]`;
+        }
+      }
+
+      if (!node.isPlayer) {
+        let logEntry = `Day${gameDay} ${action.gameTime} [${action.location}] - ${action.outcome}`;
+        if (relationshipChange) logEntry += ` ${relationshipChange}`;
+        await npcPlanningAgent.appendMemoryLog(sessionId, node.characterId, logEntry, gameDay, action.gameTime, action.location);
+        await npcPlanningAgent.markNodeCompleted(sessionId, node.characterId, gameDay, node.nodeId, action.outcome);
+      }
+
+      if (action.status === "completed" && node.isPlayer) {
+        const effectiveSuccess: SuccessLevel = action.successLevel ?? "regular";
+        const clues = await discoverClues(node, effectiveSuccess, dgsm, language);
+        if (clues.length > 0) {
+          action.discoveredClues = clues;
+          for (const entry of clues) {
+            if (entry.source === "scene") {
+              dgsm.markScenarioClueDiscovered(entry.clueId, node.characterName);
+            } else if (entry.source === "npc") {
+              dgsm.markNpcClueRevealed(entry.sourceId, entry.clueId);
+            }
+            dgsm.addDiscoveredClue({
+              text: entry.clueText,
+              type: entry.source === "scene" ? "scenario" : entry.clueId.includes("_secret_") ? "secret" : "npc",
+              sourceName: entry.sourceName,
+              discoveredBy: node.characterName,
+              discoveredAt: new Date().toISOString(),
+              difficulty: entry.difficulty,
+              method: node.action,
+            });
+          }
+        }
+      }
+
+      if (action.status === "failed" && !node.isPlayer) {
+        const longTermIntent = await npcPlanningAgent.getLongTermIntent(sessionId, node.characterId);
+        const memoryLog = await npcPlanningAgent.getMemoryLog(sessionId, node.characterId, gameDay);
+        const pendingNodes = await npcPlanningAgent.getPendingNodes(sessionId, node.characterId, gameDay);
+        await npcPlanningAgent.revisePlans(dgsm, sessionId, node.characterId, {
+          longTermIntent,
+          memoryLog,
+          pendingNodes,
+          trigger: {
+            type: "failure",
+            failureReason: action.failureReason!,
+            action: action.action,
+            gameTime: action.gameTime,
+          },
+        }, language);
+      }
+    }
+
+    // Impact gate (same logic as runTick)
+    const impactEvents = bucketActions.filter((a) => a.impact > 0);
+    if (impactEvents.length > 0) {
+      const characterEventsMap = new Map<string, Array<{ event: CharacterAction; impact: number }>>();
+      const playerScene = state.currentScenario?.id;
+      const playerId = state.playerCharacter?.id;
+
+      const addEventForCharacter = (charId: string, event: CharacterAction, impact: number) => {
+        if (charId === event.characterId) return;
+        if (!characterEventsMap.has(charId)) characterEventsMap.set(charId, []);
+        const existing = characterEventsMap.get(charId)!;
+        const idx = existing.findIndex((e) => e.event === event);
+        if (idx >= 0) {
+          if (impact > existing[idx].impact) existing[idx].impact = impact;
+        } else {
+          existing.push({ event, impact });
+        }
+      };
+
+      for (const event of impactEvents) {
+        if (event.impact >= 1 && event.targetCharacterId) addEventForCharacter(event.targetCharacterId, event, 1);
+        if (event.impact >= 2) {
+          const eventScene = event.location;
+          for (const npc of state.npcCharacters) {
+            const npcLoc = dgsm.getNpcLocation(npc.id);
+            if (npcLoc === eventScene) addEventForCharacter(npc.id, event, 2);
+            else {
+              const isAdjacent = state.connectionStates.some((c) => !c.blocked && ((c.fromScenarioId === eventScene && c.toScenarioId === npcLoc) || (c.toScenarioId === eventScene && c.fromScenarioId === npcLoc)));
+              if (isAdjacent) addEventForCharacter(npc.id, event, 2);
+            }
+          }
+          if (playerId && playerScene) {
+            if (playerScene === eventScene) addEventForCharacter(playerId, event, 2);
+            else {
+              const playerAdjacent = state.connectionStates.some((c) => !c.blocked && ((c.fromScenarioId === eventScene && c.toScenarioId === playerScene) || (c.toScenarioId === eventScene && c.fromScenarioId === playerScene)));
+              if (playerAdjacent) addEventForCharacter(playerId, event, 2);
+            }
+          }
+        }
+        if (event.impact >= 3) {
+          for (const npc of state.npcCharacters) addEventForCharacter(npc.id, event, 3);
+          if (playerId) addEventForCharacter(playerId, event, 3);
+        }
+      }
+
+      const playerEvents = playerId ? characterEventsMap.get(playerId) : undefined;
+      if (playerId) characterEventsMap.delete(playerId);
+
+      if (characterEventsMap.size > 0) {
+        await Promise.all(
+          [...characterEventsMap.entries()].map(async ([npcId, npcEvents]) => {
+            const npc = state.npcCharacters.find((n) => n.id === npcId);
+            const longTermIntent = await npcPlanningAgent.getLongTermIntent(sessionId, npcId);
+            const pendingNodes = await npcPlanningAgent.getPendingNodes(sessionId, npcId, gameDay);
+            const triggeringEvents = npcEvents.map((e) => `[impact ${e.impact}] ${e.event.characterName}: ${e.event.outcome}`).join("\n");
+
+            const result = await npcPlanningAgent.runImpactGateForNpc(
+              { npcId, npcName: npc?.name ?? npcId, currentLocation: dgsm.getNpcLocation(npcId) ?? "unknown", longTermIntent, pendingNodesSummary: pendingNodes.map((n) => `${n.gameTime} ${n.action}`).join("; "), triggeringEvents },
+              bucketTime, language
+            );
+
+            const logEntry = `Day${gameDay} ${bucketTime} [witness] - ${result.witnessEntry}`;
+            await npcPlanningAgent.appendMemoryLog(sessionId, npcId, logEntry, gameDay, bucketTime, dgsm.getNpcLocation(npcId) ?? "unknown");
+
+            if (result.shouldRevise) {
+              const memoryLog = await npcPlanningAgent.getMemoryLog(sessionId, npcId, gameDay);
+              const sortedEvents = [...npcEvents].sort((a, b) => b.impact - a.impact);
+              await npcPlanningAgent.revisePlans(dgsm, sessionId, npcId, {
+                longTermIntent, memoryLog, pendingNodes,
+                trigger: { type: "impact", triggeringAction: sortedEvents[0].event },
+              }, language);
+            }
+          })
+        );
+      }
+
+      // Player interrupt again if needed
+      if (playerEvents && playerEvents.length > 0) {
+        const playerWitnessEvents: PlayerWitnessEvent[] = playerEvents.map((e) => ({
+          characterName: e.event.characterName, action: e.event.action, outcome: e.event.outcome,
+          location: e.event.location, gameTime: e.event.gameTime, impact: e.impact,
+        }));
+        const existingWitness = (dgsm.getContextualData("playerWitnessEvents") as any[]) ?? [];
+        dgsm.setContextualData("playerWitnessEvents", [...existingWitness, ...playerWitnessEvents]);
+
+        const currentIdx = sortedBucketKeys.indexOf(bucketKey);
+        const nextBuckets = sortedBucketKeys.slice(currentIdx + 1).map((k) => ({ bucketKey: k, nodes: buckets.get(k)! }));
+
+        return { type: "player_interrupt", actions: allActions, witnessEvents: playerWitnessEvents, remainingBuckets: nextBuckets, gameDay };
+      }
+    }
+
+    if (playerFailedInBucket) {
+      playerFailed = true;
+      break;
+    }
+  }
+
+  // Advance game time
+  const maxPlayerAdvance = playerNodes.reduce((max, n) => Math.max(max, n.timeAdvanceMinutes), 0);
+  const successfulPlayerAdvance = allActions
+    .filter((a) => a.isPlayer && a.status === "completed")
+    .reduce((sum, a) => {
+      const matchingNode = playerNodes.find((n) => n.characterId === a.characterId && n.action === a.action);
+      return sum + (matchingNode?.timeAdvanceMinutes ?? 0);
+    }, 0);
+  const timeAdvance = successfulPlayerAdvance > 0 ? successfulPlayerAdvance : maxPlayerAdvance;
+  dgsm.updateGameTime(timeAdvance);
+
+  return { type: "completed", actions: allActions };
 }
 
 // ==================== Unplanned encounters ====================

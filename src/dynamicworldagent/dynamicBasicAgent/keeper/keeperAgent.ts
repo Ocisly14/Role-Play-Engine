@@ -16,7 +16,7 @@ import type {
 } from "../../state/index.js";
 import type { DynamicCharacterProfile } from "../../world_builder/types.js";
 import type { DynamicNPCProfile } from "../../world_builder/types.js";
-import type { CharacterAction } from "../npcPlanning/types.js";
+import type { CharacterAction, PlayerWitnessEvent } from "../npcPlanning/types.js";
 import { getEpilogueTemplate, getKeeperTemplate } from "./keeperTemplate.js";
 
 interface KeeperRuntime {
@@ -89,7 +89,11 @@ export class KeeperAgent {
     gameStateManager: DynamicGameStateManager,
     language: "en" | "zh" = "zh",
     selectedSkill?: string | null,
-    options?: { onNarrativeDelta?: (delta: string) => void }
+    options?: {
+      onNarrativeDelta?: (delta: string) => void;
+      witnessEvents?: PlayerWitnessEvent[];
+      isWitnessInterrupt?: boolean;
+    }
   ): Promise<{
     narrative: string;
     clueRevelations: any;
@@ -319,6 +323,9 @@ export class KeeperAgent {
       npcActionsJson: hasNpcActions
         ? this.safeStringify(relevantNpcActions)
         : null,
+      hasPlayerWitnessEvents: (options?.witnessEvents?.length ?? 0) > 0,
+      playerWitnessEvents: options?.witnessEvents ?? null,
+      isWitnessInterrupt: options?.isWitnessInterrupt ?? false,
     };
 
     // Use template and LLM to generate narrative and clue revelations
