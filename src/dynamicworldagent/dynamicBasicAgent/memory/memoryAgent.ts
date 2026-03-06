@@ -8,10 +8,6 @@ import type {
   CoCDatabaseAdapter,
 } from "../../../shared/agents/memory/database/index.js";
 import { actionRules } from "../../../shared/rules/index.js";
-import type {
-  ActionAnalysis,
-  ActionType,
-} from "../../../shared/state/index.js";
 /**
  * Memory Agent helpers
  * This module owns state-side helpers for memory workflows.
@@ -138,26 +134,24 @@ async function buildFullTurnRelevantHistoryFromChunks(
 }
 
 /**
- * Inject action-type-specific rules into temporary rules so downstream agents can apply them.
+ * Inject all action-type rules into temporary rules so downstream agents can apply them.
+ * Since Memory runs before PlayerPlanAgent, there is no known actionType yet.
+ * We load every rule category so TickProcessor and other agents have them available.
  */
-export const injectActionTypeRules = (
-  gameState: DynamicGameState,
-  actionType?: ActionType
+export const injectAllActionRules = (
+  gameState: DynamicGameState
 ): DynamicGameState => {
-  if (!actionType) return gameState;
+  const ruleEntries = Object.entries(actionRules).map(([actionType, ruleText]) => ({
+    title: `${actionType} rules`,
+    description: ruleText,
+  }));
 
-  const ruleText = actionRules[actionType];
-  if (!ruleText) return gameState;
+  if (ruleEntries.length === 0) return gameState;
 
   const manager = new DynamicGameStateManager(gameState);
   manager.addTemporaryRules({
-    rules: [
-      {
-        title: `${actionType} rules`,
-        description: ruleText,
-      },
-    ],
-    count: 1,
+    rules: ruleEntries,
+    count: ruleEntries.length,
   });
 
   return manager.getState();
@@ -177,7 +171,6 @@ export const extractRecentConversationHistory = async (
     turnNumber: number;
     characterInput: string;
     keeperNarrative: string | null;
-    actionAnalysis?: any | null;
   }>
 > => {
   if (!db) return [];
@@ -388,16 +381,12 @@ export const retrieveRelevantHistory = async (
  */
 export const enrichMemoryContext = async (
   gameState: DynamicGameState,
-  actionAnalysis: ActionAnalysis | null,
   db?: CoCDatabase | CoCDatabaseAdapter,
   characterInput?: string,
   language?: "en" | "zh"
 ): Promise<DynamicGameState> => {
-  // First inject the action-type rules
-  const withRules = injectActionTypeRules(
-    gameState,
-    actionAnalysis?.actionType
-  );
+  // Inject all action-type rules (no specific actionType known at this stage)
+  const withRules = injectAllActionRules(gameState);
 
   // Extract recent conversation history (last 3 turns) and store in contextualData
   const conversationHistory = await extractRecentConversationHistory(
@@ -414,16 +403,11 @@ export const enrichMemoryContext = async (
     targetCharacters.push(gameState.playerCharacter.name);
   }
 
-  // Add target from action analysis (if available)
-  if (actionAnalysis?.target?.name) {
-    targetCharacters.push(actionAnalysis.target.name);
-  }
-
-  // Add characters from action results (NPCs who acted in current turn)
-  if (gameState.temporaryInfo?.actionResults) {
-    for (const result of gameState.temporaryInfo.actionResults) {
-      if (result.character && !targetCharacters.includes(result.character)) {
-        targetCharacters.push(result.character);
+  // Add characters from character actions (NPCs who acted in current turn)
+  if (gameState.temporaryInfo?.characterActions) {
+    for (const action of gameState.temporaryInfo.characterActions) {
+      if (action.characterName && !targetCharacters.includes(action.characterName)) {
+        targetCharacters.push(action.characterName);
       }
     }
   }

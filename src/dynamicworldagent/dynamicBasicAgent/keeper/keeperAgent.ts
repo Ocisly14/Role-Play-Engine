@@ -8,10 +8,7 @@ import type {
   NPCClue,
 } from "../../../shared/agents/models/gameTypes.js";
 import type { ScenarioClue } from "../../../shared/agents/models/scenarioTypes.js";
-import type {
-  ActionResult,
-  DiscoveredClue,
-} from "../../../shared/state/index.js";
+import type { DiscoveredClue } from "../../../shared/state/index.js";
 import { composeTemplateWithImages } from "../../../template.js";
 import type {
   DynamicGameState,
@@ -19,6 +16,7 @@ import type {
 } from "../../state/index.js";
 import type { DynamicCharacterProfile } from "../../world_builder/types.js";
 import type { DynamicNPCProfile } from "../../world_builder/types.js";
+import type { CharacterAction } from "../npcPlanning/types.js";
 import { getEpilogueTemplate, getKeeperTemplate } from "./keeperTemplate.js";
 
 interface KeeperRuntime {
@@ -37,46 +35,19 @@ const createRuntime = (): KeeperRuntime => ({
  * Keeper Agent - Game master for narrative generation and storytelling
  */
 export class KeeperAgent {
-  private static readonly SUCCESSFUL_OR_FUMBLE_LEVELS = new Set([
-    "regular",
-    "hard",
-    "extreme",
-    "critical",
-    "fumble",
-  ]);
-
-  private deriveClueAccessFromTurn(
-    detailedResultsRaw: Array<Record<string, unknown>>
+  /**
+   * Derive clue access from CharacterAction[] results.
+   * If any player action completed with an actionType (i.e. a skill check was involved), allow regular+ clues.
+   * CharacterAction doesn't track fumble explicitly, so hasFumble is always false.
+   */
+  private deriveClueAccessFromCharacterActions(
+    playerActions: CharacterAction[]
   ): { allowRegularPlus: boolean; hasFumble: boolean } {
-    const levels: string[] = [];
-
-    const collectFromActionLogs = (entry: unknown) => {
-      if (!Array.isArray(entry)) return;
-      for (const log of entry) {
-        if (!log || typeof log !== "object") continue;
-        const level = (log as Record<string, unknown>).successLevel;
-        if (typeof level === "string") {
-          levels.push(level.toLowerCase());
-        }
-      }
-    };
-
-    for (const detail of detailedResultsRaw) {
-      collectFromActionLogs(detail.actionLog);
-      if (Array.isArray(detail.npcResponses)) {
-        for (const npcResponse of detail.npcResponses) {
-          if (!npcResponse || typeof npcResponse !== "object") continue;
-          collectFromActionLogs(
-            (npcResponse as Record<string, unknown>).actionLog
-          );
-        }
-      }
-    }
-
-    const allowRegularPlus = levels.some((level) =>
-      KeeperAgent.SUCCESSFUL_OR_FUMBLE_LEVELS.has(level)
+    const allowRegularPlus = playerActions.some(
+      (a) => a.status === "completed" && a.actionType
     );
-    const hasFumble = levels.includes("fumble");
+    // CharacterAction doesn't have fumble concept
+    const hasFumble = false;
     return { allowRegularPlus, hasFumble };
   }
 
@@ -127,70 +98,73 @@ export class KeeperAgent {
     const runtime = createRuntime();
     const dynamicState = gameStateManager.getState();
 
-    // 2. Get all action results (player first, then NPCs in executionOrder; same round fed from character → npcAction flow)
-    const allActionResultsRaw = this.getAllActionResults(dynamicState);
+    // 1. Get CharacterActions from tick processor
+    const characterActions = gameStateManager.getCharacterActions();
+    const playerCharacterId = dynamicState.playerCharacter?.id ?? "";
+    const playerActions = characterActions.filter((a) => a.isPlayer);
+    const allNpcActions = characterActions.filter((a) => !a.isPlayer);
 
-    // Filter out fields not used in template (diceRolls, location)
-    const allActionResults: Omit<ActionResult, "diceRolls" | "location">[] =
-      allActionResultsRaw.map(({ diceRolls, location, ...result }) => result);
+    // 2. Derive clue access from player actions
+    const clueAccess = this.deriveClueAccessFromCharacterActions(playerActions);
 
-    // 2.1 Get full action outputs for keeper prompt
-    const detailedResultsRaw = this.getAllActionResultsDetailed(dynamicState);
-    const allActionResultsDetailed =
-      detailedResultsRaw.length > 0
-        ? detailedResultsRaw.map((detail, index) => {
-            const character =
-              typeof detail.character === "string"
-                ? detail.character
-                : `Action ${index}`;
-            return {
-              character,
-              actionResultJson: this.safeStringify(detail),
-            };
-          })
-        : null;
-
-    const clueAccess = this.deriveClueAccessFromTurn(
-      detailedResultsRaw as Array<Record<string, unknown>>
-    );
-
-    // 1. Get complete scenario information (with clue filtering by current turn outcomes)
+    // 3. Get complete scenario information (with clue filtering by current turn outcomes)
     const completeScenarioInfo = this.extractCompleteScenarioInfo(
       dynamicState,
       clueAccess.allowRegularPlus
     );
 
-    // 2.1. Get the latest complete action result (for backward compatibility)
-    const latestCompleteActionResult =
-      allActionResults.length > 0
-        ? allActionResults[allActionResults.length - 1]
-        : null;
-
-    // 2.2. Get interaction partner name (if action targets an NPC)
-    const actionAnalysis = dynamicState.temporaryInfo.currentActionAnalysis;
-    const actionTargetName = actionAnalysis?.target?.name || null;
-    const actionTargetIntent = actionAnalysis?.target?.intent?.trim()
-      ? actionAnalysis.target.intent.trim()
+    // 4. Extract action target info from player actions
+    const targetAction = playerActions.find((a) => a.targetCharacterId);
+    const actionTargetName = targetAction
+      ? dynamicState.npcCharacters.find(
+          (n) => n.id === targetAction.targetCharacterId
+        )?.name ?? null
       : null;
-    const hasActionTargetInfo = Boolean(actionTargetName || actionTargetIntent);
+    const hasActionTargetInfo = Boolean(actionTargetName);
     const interactionPartnerName = actionTargetName;
 
-    // 3. Get complete attributes of NPCs involved in action results
-    const actionRelatedNpcs = this.extractActionRelatedNpcs(
+    // 5. Get complete attributes of NPCs involved in character actions
+    const actionRelatedNpcs = this.extractActionRelatedNpcsFromCharacterActions(
       dynamicState,
-      allActionResults,
+      characterActions,
       interactionPartnerName,
       clueAccess.allowRegularPlus
     );
 
-    // 5. Detect scene changes - check if sceneChangeRequest indicates a transition
-    const sceneChangeRequest = dynamicState.temporaryInfo.sceneChangeRequest;
-    const isTransition = sceneChangeRequest?.shouldChange === true;
+    // 6. Detect scene transition from movement actions
+    const isTransition = playerActions.some(
+      (a) => a.type === "movement" && a.status === "completed"
+    );
     const previousScenarioInfo = isTransition
       ? this.extractPreviousScenarioInfo(dynamicState)
       : null;
 
-    // 7. Get conversation history (from contextualData)
+    // 7. Filter NPC actions by impact for narrative inclusion
+    const playerScene = dynamicState.currentScenario?.id ?? "";
+    const relevantNpcActions = allNpcActions.filter((action) => {
+      if (action.impact === 3) return true;
+      if (
+        action.impact === 1 &&
+        action.targetCharacterId === playerCharacterId
+      )
+        return true;
+      if (action.impact === 2) {
+        const npcScene = action.location;
+        const adjacent = (dynamicState.connectionStates ?? []).some(
+          (c) =>
+            !c.blocked &&
+            ((c.fromScenarioId === playerScene &&
+              c.toScenarioId === npcScene) ||
+              (c.toScenarioId === playerScene &&
+                c.fromScenarioId === npcScene))
+        );
+        return npcScene === playerScene || adjacent;
+      }
+      return false;
+    });
+    const hasNpcActions = relevantNpcActions.length > 0;
+
+    // 8. Get conversation history (from contextualData)
     const conversationHistory =
       (dynamicState.temporaryInfo.contextualData?.conversationHistory as Array<{
         turnNumber: number;
@@ -198,7 +172,7 @@ export class KeeperAgent {
         keeperNarrative: string | null;
       }>) || [];
 
-    // 7.1. Get relevant history from RAG (from contextualData)
+    // 8.1. Get relevant history from RAG (from contextualData)
     const relevantHistory =
       (dynamicState.temporaryInfo.contextualData?.relevantHistory as Array<{
         type: string;
@@ -207,7 +181,7 @@ export class KeeperAgent {
         metadata: Record<string, any>;
       }>) || [];
 
-    // 7.2. Get retrieved clue context from RAG (populated by memory agent)
+    // 8.2. Get retrieved clue context from RAG (populated by memory agent)
     const retrievedClueContext =
       (dynamicState.temporaryInfo.contextualData?.retrievedClueContext as Array<{
         content: string;
@@ -269,47 +243,18 @@ export class KeeperAgent {
       dynamicState.temporaryInfo.contextualData.worldlineSceneUpdate = null;
     };
 
-    // 8. Calculate current turn number
+    // 9. Calculate current turn number
     // Current turn is the next turn after the latest in history
     const currentTurnNumber =
       conversationHistory.length > 0
         ? Math.max(...conversationHistory.map((h) => h.turnNumber)) + 1
         : 1;
 
-    // 9. Detect if this is the first real player turn (only true when loading module for the first time)
+    // 10. Detect if this is the first real player turn (only true when loading module for the first time)
     // Simple check: if there's no conversation history, this is the first turn
     const isFirstRealTurn = conversationHistory.length === 0;
 
-    // 10. Filter NPC CharacterActions by impact for narrative inclusion
-    const characterActions = gameStateManager.getCharacterActions();
-    const playerCharacterId = dynamicState.playerCharacter?.id ?? "";
-    const playerScene =
-      dynamicState.currentScenario?.id ?? "";
-    const relevantNpcActions = characterActions.filter((action) => {
-      if (action.characterId === playerCharacterId) return false;
-      if (action.impact === 3) return true;
-      if (
-        action.impact === 1 &&
-        action.targetCharacterId === playerCharacterId
-      )
-        return true;
-      if (action.impact === 2) {
-        const npcScene = action.location;
-        const adjacent = (dynamicState.connectionStates ?? []).some(
-          (c) =>
-            !c.blocked &&
-            ((c.fromScenarioId === playerScene &&
-              c.toScenarioId === npcScene) ||
-              (c.toScenarioId === playerScene &&
-                c.fromScenarioId === npcScene))
-        );
-        return npcScene === playerScene || adjacent;
-      }
-      return false;
-    });
-    const hasNpcActions = relevantNpcActions.length > 0;
-
-    // 获取模板
+    // Get template
     const template = getKeeperTemplate(language);
 
     // Prepare template context (JSON-packed to keep template concise)
@@ -323,22 +268,13 @@ export class KeeperAgent {
     // Get full game time
     const fullGameTime = gameStateManager.getFullGameTime();
 
-    // Filter sceneChangeRequest to only include narrative-relevant fields (exclude timestamp)
-    const sceneChangeRequestForNarrative = sceneChangeRequest
-      ? {
-          shouldChange: sceneChangeRequest.shouldChange,
-          targetSceneName: sceneChangeRequest.targetSceneName,
-          reason: sceneChangeRequest.reason,
-        }
-      : null;
-
     const templateContext = {
       characterInput,
-      allActionResultsDetailed, // Full action outputs (for {{#each}} loop)
+      // Player actions this turn (for {{#each}} loop)
+      playerActionsJson: playerActions.length > 0 ? playerActions : null,
       fullGameTime: fullGameTime, // Complete display: "Day 1, 08:00 (Morning)"
       tension: dynamicState.tension,
       isTransition,
-      sceneChangeRequest: sceneChangeRequestForNarrative, // Scene change request (without timestamp)
       conversationHistory, // Recent conversation history (for {{#each}} loop)
       relevantHistory, // RAG-retrieved relevant history (for {{#each}} loop)
       hasRetrievedClues: retrievedClueContext.length > 0,
@@ -347,7 +283,6 @@ export class KeeperAgent {
         : null,
       hasActionTargetInfo,
       actionTargetName,
-      actionTargetIntent,
       currentTurnNumber, // Current turn number
       isFirstRealTurn, // Boolean flag for turn 1 detection
       keeperGuidance: dynamicState.keeperGuidance || null, // Module-specific keeper guidance
@@ -505,8 +440,7 @@ export class KeeperAgent {
       }
     }
 
-    // Note: sceneChangeRequest is now cleared by Director Agent (which runs before Keeper)
-    // Temporary state is now preserved until next real player input
+    // Temporary state is preserved until next real player input
     // Cleanup happens in entry node for real input only
     const finalGameState = updatedGameState;
 
@@ -806,105 +740,71 @@ export class KeeperAgent {
   }
 
   /**
-   * 2. Get all action results (including player and NPC actions)
-   */
-  private getAllActionResults(dynamicState: DynamicGameState): ActionResult[] {
-    const actionResults = dynamicState.temporaryInfo.actionResults || [];
-
-    // Return complete information for all action results
-    return actionResults.map((result) => ({
-      ...result,
-      diceRolls: result.diceRolls || [],
-    }));
-  }
-
-  /**
-   * Get full action outputs (raw JSON from Action Agent).
-   */
-  private getAllActionResultsDetailed(
-    dynamicState: DynamicGameState
-  ): Array<Record<string, unknown>> {
-    return dynamicState.temporaryInfo.actionResultsDetailed || [];
-  }
-
-  /**
-   * 3. Extract complete attributes of NPCs involved in all action results
+   * Extract complete attributes of NPCs involved in CharacterActions
+   * Collects NPC IDs from all character actions (both player-targeted and NPC actors)
    * @param interactionPartnerName If provided, NPCs will include their interaction history with this character
    */
-  private extractActionRelatedNpcs(
+  private extractActionRelatedNpcsFromCharacterActions(
     dynamicState: DynamicGameState,
-    allActionResults: Omit<ActionResult, "diceRolls" | "location">[],
+    characterActions: CharacterAction[],
     interactionPartnerName: string | null = null,
     allowRegularPlusClues: boolean
   ) {
-    if (!allActionResults || allActionResults.length === 0) {
+    if (!characterActions || characterActions.length === 0) {
       return [];
     }
 
-    // Collect related NPC names from all action results (deduplicated)
-    const relatedNpcNames = new Set<string>();
     const playerName = dynamicState.playerCharacter.name;
-
-    // Extract related NPCs from all action results
-    for (const actionResult of allActionResults) {
-      // Add character from action result (if it's an NPC)
-      if (actionResult.character && actionResult.character !== playerName) {
-        relatedNpcNames.add(actionResult.character);
-      }
-
-      // Extract possible NPC names from action result text (simple matching)
-      if (actionResult.result) {
-        dynamicState.npcCharacters.forEach((npc) => {
-          if (
-            actionResult.result.toLowerCase().includes(npc.name.toLowerCase())
-          ) {
-            relatedNpcNames.add(npc.name);
-          }
-        });
-      }
-    }
-
-    // Get target character from action analysis
-    const actionAnalysis = dynamicState.temporaryInfo.currentActionAnalysis;
-    if (actionAnalysis?.target?.name) {
-      relatedNpcNames.add(actionAnalysis.target.name);
-    }
-
-    // Find related NPCs and get complete attributes
-    const actionRelatedNpcs = [];
     const addedNpcIds = new Set<string>();
+    const actionRelatedNpcs = [];
 
-    for (const npcName of relatedNpcNames) {
-      // Find NPC
-      const npc = dynamicState.npcCharacters.find(
-        (n) =>
-          n.name.toLowerCase() === npcName.toLowerCase() ||
-          n.name.toLowerCase().includes(npcName.toLowerCase())
-      );
-
-      if (npc && !addedNpcIds.has(npc.id)) {
-        // Avoid adding the same NPC twice
-        addedNpcIds.add(npc.id);
-        const currentLocation = dynamicState.currentScenario?.location || null;
-
-        // If this NPC is the interaction partner, include player's name to get interaction history
-        // Otherwise just use current location filtering
-        const partnerForThisNpc =
-          interactionPartnerName &&
-          npc.name.toLowerCase().includes(interactionPartnerName.toLowerCase())
-            ? playerName
-            : null;
-
-        actionRelatedNpcs.push({
-          source: "action_related",
-          character: this.extractCompleteCharacterAttributes(
-            npc,
-            currentLocation,
-            partnerForThisNpc,
-            allowRegularPlusClues
-          ),
-        });
+    // Collect NPC IDs from character actions
+    for (const action of characterActions) {
+      // Add NPC actors (non-player characters performing actions)
+      if (!action.isPlayer && !addedNpcIds.has(action.characterId)) {
+        addedNpcIds.add(action.characterId);
       }
+      // Add target NPCs from player actions
+      if (action.isPlayer && action.targetCharacterId) {
+        if (!addedNpcIds.has(action.targetCharacterId)) {
+          addedNpcIds.add(action.targetCharacterId);
+        }
+      }
+    }
+
+    // Also add interaction partner by name if specified
+    if (interactionPartnerName) {
+      const partnerNpc = dynamicState.npcCharacters.find(
+        (n) =>
+          n.name.toLowerCase() === interactionPartnerName.toLowerCase() ||
+          n.name.toLowerCase().includes(interactionPartnerName.toLowerCase())
+      );
+      if (partnerNpc && !addedNpcIds.has(partnerNpc.id)) {
+        addedNpcIds.add(partnerNpc.id);
+      }
+    }
+
+    // Build NPC profiles for all collected IDs
+    const currentLocation = dynamicState.currentScenario?.location || null;
+    for (const npcId of addedNpcIds) {
+      const npc = dynamicState.npcCharacters.find((n) => n.id === npcId);
+      if (!npc) continue;
+
+      const partnerForThisNpc =
+        interactionPartnerName &&
+        npc.name.toLowerCase().includes(interactionPartnerName.toLowerCase())
+          ? playerName
+          : null;
+
+      actionRelatedNpcs.push({
+        source: "action_related",
+        character: this.extractCompleteCharacterAttributes(
+          npc,
+          currentLocation,
+          partnerForThisNpc,
+          allowRegularPlusClues
+        ),
+      });
     }
 
     return actionRelatedNpcs;

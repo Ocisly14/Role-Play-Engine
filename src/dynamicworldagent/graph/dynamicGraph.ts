@@ -18,11 +18,8 @@ import type {
 } from "../../shared/agents/memory/database/index.js";
 import type { ScenarioLoader } from "../../shared/agents/memory/scenarioloader/index.js";
 import type {
-  ActionResult,
-  DiceRollInfo,
   GameEndingInfo,
 } from "../../shared/state/index.js";
-import { buildDiceRollInfos } from "../../shared/state/index.js";
 import { getPrismaClient } from "../../shared/agents/memory/database/prismaClient.js";
 import { latestHumanMessage } from "../../shared/utils/index.js";
 import { enrichMemoryContext } from "../dynamicBasicAgent/memory/memoryAgent.js";
@@ -34,16 +31,13 @@ import {
   initialDynamicGameState,
 } from "../state/index.js";
 
-import { ActionAgent } from "../dynamicBasicAgent/action/actionAgent.js";
-import { CharacterAgent } from "../dynamicBasicAgent/character/characterAgent.js";
-import { BattleKeeperAgent } from "../dynamicBasicAgent/combat/battleKeeperAgent.js";
-import { CombatActionAgentA } from "../dynamicBasicAgent/combat/combatActionAgentA.js";
-import type { CombatActionAResult } from "../dynamicBasicAgent/combat/combatActionAgentA.js";
-import { CombatActionAgentB } from "../dynamicBasicAgent/combat/combatActionAgentB.js";
 import { DirectorAgent } from "../dynamicBasicAgent/director/directorAgent.js";
 import { KeeperAgent } from "../dynamicBasicAgent/keeper/keeperAgent.js";
+import { PlayerPlanAgent } from "../dynamicBasicAgent/npcPlanning/PlayerPlanAgent.js";
 import { NPCPlanningAgent } from "../dynamicBasicAgent/npcPlanning/NPCPlanningAgent.js";
 import { runTick } from "../dynamicBasicAgent/npcPlanning/tickProcessor.js";
+import { ACTION_TYPE_SKILL_MAP } from "../dynamicBasicAgent/npcPlanning/actionTypeSkillMap.js";
+import type { PlanNode } from "../dynamicBasicAgent/npcPlanning/types.js";
 import { TurnRagAgent } from "../dynamicBasicAgent/knowledge/turnRagAgent.js";
 // Import DynamicWorld agents
 import { OrchestratorAgent } from "../dynamicBasicAgent/orchestrator/orchestratorAgent.js";
@@ -60,10 +54,8 @@ export interface DynamicGraphState {
   resumeFromInterrupt?: boolean; // True only when resuming a skill-selection interruption
   language?: "en" | "zh"; // User-selected output language
   selectedSkill?: string | null; // Optional player-selected skill for this turn
-  skillSelectionMode?: "auto" | "manual"; // How skill selection should behave for this turn
-  isRestAction?: boolean; // True when this turn is a rest action
   stream?: {
-    onDiceRolls?: (diceRolls: DiceRollInfo[]) => void;
+    onDiceRolls?: (diceRolls: unknown[]) => void;
     onSceneImage?: (payload: {
       imagePath: string;
       mimeType: string;
@@ -81,8 +73,6 @@ export interface DynamicGraphState {
     onNarrativeDelta?: (delta: string) => void;
     onNarrativeEnd?: () => void;
     onMapUpdate?: (payload: { macroMapPath: string; mimeType: string }) => void;
-    onCombatStart?: () => void;
-    onCombatEnd?: () => void;
   };
 }
 
@@ -120,24 +110,16 @@ export const buildDynamicGraph = (
   scenarioLoader: ScenarioLoader
 ) => {
   const orchestrator = new OrchestratorAgent();
-  const actionAgent = new ActionAgent(scenarioLoader);
-  const characterAgent = new CharacterAgent();
   const keeperAgent = new KeeperAgent();
   const directorAgent = new DirectorAgent(scenarioLoader, db);
   const prisma = getPrismaClient();
   const npcPlanningAgent = new NPCPlanningAgent(prisma, {});
+  const playerPlanAgent = new PlayerPlanAgent({});
   const turnManager = new TurnManager(db);
   const turnRagAgent = new TurnRagAgent();
-  const combatAgentA = new CombatActionAgentA();
-  const combatAgentB = new CombatActionAgentB();
-  const battleKeeper = new BattleKeeperAgent();
 
   // Create checkpointer for saving/resuming graph state
   const checkpointer = new MemorySaver();
-
-  // Helper function to create DynamicGameStateManager with db for snapshot management
-  const createDGSMWithDb = (state: DynamicGameState) =>
-    new DynamicGameStateManager(state, db);
 
   const graph = new StateGraph<DynamicGraphState>({
     channels: {
@@ -205,12 +187,6 @@ export const buildDynamicGraph = (
           right?: string | null | undefined
         ) => (right !== undefined ? right : left),
       },
-      skillSelectionMode: {
-        value: (
-          left: DynamicGraphState["skillSelectionMode"] | undefined,
-          right?: DynamicGraphState["skillSelectionMode"]
-        ) => (right !== undefined ? right : left),
-      },
       stream: {
         value: (
           left: DynamicGraphState["stream"] | undefined,
@@ -220,28 +196,17 @@ export const buildDynamicGraph = (
     },
   });
 
-  // Entry node: routes based on input type and handles cleanup
+  // Entry node: clears temporary state for new player turn
   graph.addNode("entry", async (state: DynamicGraphState) => {
     try {
       const dgsm = new DynamicGameStateManager(state.dynamicGameState);
-      const currentState = dgsm.getState();
 
-      // Check if this is resuming from an interrupt (has actionAnalysis but no results yet)
-      const actionAnalysis = currentState.temporaryInfo.currentActionAnalysis;
-      const hasNoActionResults =
-        !currentState.temporaryInfo.actionResults ||
-        currentState.temporaryInfo.actionResults.length === 0;
-      const isResuming =
-        state.resumeFromInterrupt === true &&
-        actionAnalysis !== null &&
-        hasNoActionResults;
+      // Check if this is resuming from a skill-selection interrupt
+      const isResuming = state.resumeFromInterrupt === true;
 
       if (isResuming) {
         console.log(
-          "🔄 [Dynamic Entry] Resuming from interrupt - preserving state"
-        );
-        console.log(
-          `   ✓ Preserving actionAnalysis: ${actionAnalysis.action} (${actionAnalysis.actionType})`
+          "[Dynamic Entry] Resuming from interrupt - preserving state"
         );
         // Don't clear state when resuming, just return as-is
         return state;
@@ -249,47 +214,39 @@ export const buildDynamicGraph = (
 
       // Real player input (new turn) - clear temporary state from previous round
       console.log(
-        "👤 [Dynamic Entry] Real player input - clearing temporary state"
+        "[Dynamic Entry] Real player input - clearing temporary state"
       );
 
       dgsm.clearActionResults();
-      console.log("   ✓ Cleared action results");
+      console.log("   Cleared action results");
 
       dgsm.clearNPCResponseAnalyses();
-      console.log("   ✓ Cleared NPC response analyses");
+      console.log("   Cleared NPC response analyses");
 
       dgsm.clearActionAnalysis();
-      console.log("   ✓ Cleared action analysis");
+      console.log("   Cleared action analysis");
 
       dgsm.clearPreviousScenario();
-      console.log("   ✓ Cleared previous scenario");
+      console.log("   Cleared previous scenario");
 
-      // Clear per-turn combat contextual data to prevent stale values bleeding across turns
-      dgsm.setContextualData("battleKeeperNarrative", "");
-      dgsm.setContextualData("combatNpcAttackNarrative", "");
-      dgsm.setContextualData("combatActionAResult", null);
-      dgsm.setContextualData("combatEnded", false);
-      dgsm.setContextualData("combatEndReason", "");
-      dgsm.setContextualData("wasDefenseTurn", false);
-      dgsm.setContextualData("justEnteredCombat", false);
-      dgsm.setContextualData("combatDefeatedNpcs", []);
+      // Clear per-turn contextual data to prevent stale values bleeding across turns
       dgsm.setContextualData("relevantHistory", []);
       dgsm.setContextualData("relevantHistoryThreshold", null);
       dgsm.setContextualData("relevantHistoryQuery", null);
-      console.log("   ✓ Cleared per-turn combat contextual data");
+      console.log("   Cleared per-turn contextual data");
 
       // Update timestamp and increment turn counter (only for real input)
       dgsm.updatePlayerInputTime();
       console.log(
-        `   ✓ Updated player input timestamp: ${new Date().toISOString()}`
+        `   Updated player input timestamp: ${new Date().toISOString()}`
       );
 
       dgsm.incrementTurnCounter();
       const currentTurn = dgsm.getTurnsInCurrentScene();
-      console.log(`   ✓ Turn counter incremented to: ${currentTurn}`);
+      console.log(`   Turn counter incremented to: ${currentTurn}`);
 
       console.log(
-        "✅ [Dynamic Entry] Temporary state cleared for new player turn"
+        "[Dynamic Entry] Temporary state cleared for new player turn"
       );
 
       return {
@@ -297,7 +254,7 @@ export const buildDynamicGraph = (
         dynamicGameState: dgsm.getState(),
       };
     } catch (error) {
-      console.error(`❌ [Dynamic Entry] 清理状态失败:`, error);
+      console.error(`[Dynamic Entry] Failed to clear state:`, error);
       // Return state as-is on error to allow graph to continue
       return state;
     }
@@ -305,33 +262,21 @@ export const buildDynamicGraph = (
 
   // Conditional routing from entry
   const routeFromEntry = (state: DynamicGraphState): string => {
-    // Combat mode routing: go through memory first so conversationHistory is updated
-    const gs = state.dynamicGameState;
-    if (gs.isBattle) {
-      console.log(
-        "🔀 [Dynamic Entry Router] → memory (player is in combat, update history then combatActionA)"
-      );
-      return "memory";
-    }
-
-    // Only route to memory when this turn is explicitly a resume from skill-selection interrupt
+    // When resuming from skill-selection interrupt, skip orchestrator and go to memory
     if (state.resumeFromInterrupt === true) {
       console.log(
-        "🔀 [Dynamic Entry Router] → memory (resuming from interrupt, skip orchestrator)"
+        "[Dynamic Entry Router] -> memory (resuming from interrupt, skip orchestrator)"
       );
       return "memory";
     }
 
-    console.log("🔀 [Dynamic Entry Router] → orchestrator (full pipeline)");
+    console.log("[Dynamic Entry Router] -> orchestrator (full pipeline)");
     return "orchestrator";
   };
 
   graph.addConditionalEdges("entry" as any, routeFromEntry, {
     orchestrator: "orchestrator" as any,
     memory: "memory" as any,
-    combatActionA: "combatActionA" as any,
-    director: "director" as any,
-    [END]: END,
   });
 
   // Orchestrator: analyze user input and write actionAnalysis into state
@@ -386,16 +331,7 @@ export const buildDynamicGraph = (
       console.log("⚠️  [Dynamic Action Analysis] 未生成分析结果");
     }
 
-    // Update turn with action analysis if turnId exists
-    if (state.turnId) {
-      try {
-        turnManager.updateProcessing(state.turnId, {
-          actionAnalysis: actionAnalysis,
-        });
-      } catch (error) {
-        console.error("Failed to update turn with action analysis:", error);
-      }
-    }
+    // Note: action analysis is no longer stored in turns (replaced by characterActions from TickProcessor)
 
     return { ...state, dynamicGameState: dgsm.getState() };
   });
@@ -437,7 +373,6 @@ export const buildDynamicGraph = (
 
     // Enrich memory context with DynamicGameState information
     const characterInput = latestHumanMessage(state.messages);
-    const actionAnalysis = currentState.temporaryInfo.currentActionAnalysis;
     const language =
       state.language === "en" || state.language === "zh"
         ? state.language
@@ -445,7 +380,6 @@ export const buildDynamicGraph = (
 
     const enrichedState = await enrichMemoryContext(
       currentState,
-      actionAnalysis,
       db,
       characterInput,
       language
@@ -465,675 +399,117 @@ export const buildDynamicGraph = (
     };
   });
 
-  // Action: execute action agent using current game state
-  graph.addNode("action", async (state: DynamicGraphState) => {
-    console.log("⚡ [Dynamic Action Agent] 开始执行动作...");
-    const dgsm = new DynamicGameStateManager(state.dynamicGameState);
-    const runtime = {}; // ActionAgent expects runtime but only passes through generateText; keep empty placeholder
-    const userInput = latestHumanMessage(state.messages);
-    const selectedSkill = state.selectedSkill ?? null;
-    const skillSelectionMode = state.skillSelectionMode ?? "manual";
-    const language =
-      state.language === "en" || state.language === "zh"
-        ? state.language
-        : "zh";
-
-    // Log input context
-    const actionAnalysis = dgsm.getState().temporaryInfo.currentActionAnalysis;
-    if (actionAnalysis) {
-      console.log(
-        `⚡ [Dynamic Action Agent] 动作分析: ${actionAnalysis.action} (类型: ${actionAnalysis.actionType})`
-      );
-      console.log(
-        `⚡ [Dynamic Action Agent] 角色: ${actionAnalysis.character}, 目标: ${actionAnalysis.target.name || "N/A"}`
-      );
-    }
-    if (selectedSkill) {
-      console.log(`⚡ [Dynamic Action Agent] 玩家选择技能: ${selectedSkill}`);
-    }
-    if (!selectedSkill && skillSelectionMode === "auto") {
-      console.log(`⚡ [Dynamic Action Agent] 技能选择模式: auto`);
-    }
-
-    try {
-      await actionAgent.processAction(
-        runtime,
-        dgsm,
-        userInput,
-        selectedSkill,
-        skillSelectionMode,
-        language,
-        state.turnId ?? null
-      );
-    } catch (error) {
-      console.error(`\n❌ [Dynamic Action Agent] 执行过程中抛出异常:`, error);
-      const currentState = dgsm.getState();
-      const errorActionResult: ActionResult = {
-        timestamp: new Date(),
-        gameTime: currentState.timeOfDay || "Unknown time",
-        timeElapsedMinutes: 0,
-        location: currentState.currentScenario?.location || "Unknown location",
-        character:
-          actionAnalysis?.character || currentState.playerCharacter.name,
-        result: `[异常] Action Agent 执行失败: ${error instanceof Error ? error.message : String(error)}`,
-        diceRolls: [],
-        timeConsumption: "instant",
-        scenarioChanges: [
-          `异常: ${error instanceof Error ? error.message : String(error)}`,
-        ],
-      };
-      dgsm.addActionResult(errorActionResult);
-      dgsm.addActionResultDetail({
-        character: errorActionResult.character,
-        summary: errorActionResult.result,
-        timeElapsedMinutes: 0,
-        timeConsumption: "instant",
-        error: error instanceof Error ? error.message : String(error),
-      });
-    }
-
-    console.log("✅ [Dynamic Action Agent] 动作执行完成");
-
-    // Run TickProcessor if playerNode was set by Orchestrator
-    const playerNodeSpec = dgsm.getPlayerNode();
-    if (playerNodeSpec) {
-      try {
-        const playerChar = dgsm.getState().playerCharacter;
-        const characterActions = await runTick(
-          {
-            ...playerNodeSpec,
-            characterId: playerChar?.id ?? "player",
-            characterName: playerChar?.name ?? "Investigator",
-          },
-          dgsm,
-          npcPlanningAgent,
-          dgsm.getState().sessionId,
-          language
-        );
-        dgsm.setCharacterActions(characterActions);
-        console.log(`🎬 [TickProcessor] ${characterActions.length} character action(s) executed`);
-      } catch (error) {
-        console.error(`❌ [TickProcessor] Error:`, error);
-      }
-    }
-
-    // Update turn with action results if turnId exists
-    if (state.turnId) {
-      try {
-        const actionResults = dgsm.getState().temporaryInfo.actionResults;
-        if (actionResults && actionResults.length > 0) {
-          turnManager.updateProcessing(state.turnId, {
-            actionResults: actionResults,
-          });
-        }
-      } catch (error) {
-        console.error(`❌ [Dynamic Action Agent] 更新 turn 失败:`, error);
-      }
-    }
-
-    return { ...state, dynamicGameState: dgsm.getState() };
-  });
-
   graph.addEdge("orchestrator" as any, "memory" as any);
 
-  // Add skill selection check node
-  graph.addNode("skillSelectionCheck", async (state: DynamicGraphState) => {
-    console.log("🎯 [Skill Selection Check] 检查是否需要技能选择...");
+  // PlayerPlanAgent: generate structured PlanNode[] from player input
+  graph.addNode("playerPlanAgent", async (state: DynamicGraphState) => {
+    console.log("[PlayerPlanAgent] Generating player plan nodes...");
     const dgsm = new DynamicGameStateManager(state.dynamicGameState);
-    const currentState = dgsm.getState();
-    const actionAnalysis = currentState.temporaryInfo.currentActionAnalysis;
-    const selectedSkill = state.selectedSkill;
-
-    if (actionAnalysis?.requiresSkillSelection) {
-      console.log(
-        `   ⚠️  Action requires skill selection: ${actionAnalysis.action}`
-      );
-
-      if (selectedSkill) {
-        console.log(`   ✓ Player has selected skill: ${selectedSkill}`);
-        console.log(`   → Continuing to action execution`);
-      } else {
-        console.log(`   ⚠️  No skill selected - pausing execution`);
-        console.log(`   → Will mark turn as requires_skill_selection`);
-      }
-    } else {
-      console.log(`   ✓ No skill selection required`);
-    }
-
-    return state;
-  });
-
-  // Conditional routing: memory → skillSelectionCheck → action or skillSelectionRequired
-  graph.addEdge("memory" as any, "skillSelectionCheck" as any);
-
-  graph.addConditionalEdges(
-    "skillSelectionCheck" as any,
-    (state: DynamicGraphState) => {
-      const currentState = state.dynamicGameState;
-      const actionAnalysis = currentState.temporaryInfo.currentActionAnalysis;
-      const selectedSkill = state.selectedSkill;
-
-      // Combat mode: skip action agent, go straight to combatActionA
-      if (currentState.isBattle) {
-        console.log(
-          "🔀 [Skill Selection Router] → combatActionA (战斗模式)"
-        );
-        return "combatActionA";
-      }
-
-      // Check if skill selection is required and no skill was provided
-      if (actionAnalysis?.requiresSkillSelection && !selectedSkill) {
-        console.log(
-          "🔀 [Skill Selection Router] → skillSelectionRequired (需要技能选择)"
-        );
-        return "skillSelectionRequired";
-      }
-
-      console.log("🔀 [Skill Selection Router] → action (继续执行)");
-      return "action";
-    },
-    {
-      combatActionA: "combatActionA" as any,
-      skillSelectionRequired: "skillSelectionRequired" as any,
-      action: "action" as any,
-    }
-  );
-
-  // Add skillSelectionRequired node (interrupts graph execution to wait for skill selection)
-  graph.addNode("skillSelectionRequired", async (state: DynamicGraphState) => {
-    console.log("⏸️  [Skill Selection Required] 暂停执行，等待玩家选择技能...");
-    const dgsm = new DynamicGameStateManager(state.dynamicGameState);
-    const currentState = dgsm.getState();
-    const actionAnalysis = currentState.temporaryInfo.currentActionAnalysis;
-
-    // Mark turn as requiring skill selection
-    if (state.turnId && actionAnalysis) {
-      try {
-        turnManager.markRequiresSkillSelection(state.turnId, actionAnalysis);
-        console.log(
-          `   ✓ Turn ${state.turnId} marked as requires_skill_selection`
-        );
-        console.log(`   Action: ${actionAnalysis.action}`);
-        console.log(`   Action Type: ${actionAnalysis.actionType}`);
-      } catch (error) {
-        console.error("   ❌ Failed to mark turn:", error);
-      }
-    }
-
-    // Interrupt the graph to wait for user skill selection
-    // The graph will resume when the user provides selectedSkill
-    console.log(
-      "   🔄 Interrupting graph execution - waiting for skill selection"
-    );
-    interrupt({
-      action: actionAnalysis?.action,
-      actionType: actionAnalysis?.actionType,
-      requiresSkillSelection: true,
-    });
-
-    return state;
-  });
-
-  // After interrupt is resolved (user selected skill), continue to action
-  graph.addEdge("skillSelectionRequired" as any, "action" as any);
-
-  // Route from action: if combat just started this turn, go directly to combatActionB; else normal pipeline
-  graph.addConditionalEdges(
-    "action" as any,
-    (state: DynamicGraphState) => {
-      const gs = state.dynamicGameState;
-      // Check if combat JUST started (round === 1 and isBattle is true)
-      if (
-        gs.isBattle &&
-        gs.combatState?.round === 1 &&
-        gs.combatState?.pendingNpcActions === null
-      ) {
-        const justEnteredCombat =
-          gs.temporaryInfo.contextualData?.justEnteredCombat === true;
-        if (justEnteredCombat) {
-          console.log(
-            "🔀 [Action Router] → combatActionB (战斗开始，Agent B 一次处理进入叙述 + NPC 首轮行动)"
-          );
-          return "combatActionB";
-        }
-      }
-      console.log("🔀 [Action Router] → director (normal pipeline)");
-      return "director";
-    },
-    {
-      combatActionB: "combatActionB" as any,
-      director: "director" as any,
-    }
-  );
-
-  // ================== COMBAT NODES ==================
-
-  // Combat Action A: resolve player attack or player defense
-  graph.addNode("combatActionA", async (state: DynamicGraphState) => {
-    console.log("⚔️  [Combat Action Agent A] 处理战斗动作...");
-    const dgsm = createDGSMWithDb(state.dynamicGameState);
-    const gs = dgsm.getState();
     const userInput = latestHumanMessage(state.messages);
+    const language = state.language ?? "zh";
     const selectedSkill = state.selectedSkill ?? null;
-    const language =
-      state.language === "en" || state.language === "zh"
-        ? state.language
-        : "zh";
 
-    const combatState = gs.combatState;
-    if (!combatState) {
-      console.warn(
-        "⚔️  [Combat Action Agent A] No combat state found, routing to keeper"
-      );
-      return { ...state, dynamicGameState: dgsm.getState() };
-    }
+    const orchestratorOutput = dgsm.getState().temporaryInfo.contextualData?.orchestratorOutput ?? {
+      targetScenarioName: null,
+      targetNpcId: null,
+      impact: 0,
+    };
 
     try {
-      let result;
-      const pendingNpcActions = combatState.pendingNpcActions;
-
-      const isDefenseTurn = pendingNpcActions !== null && pendingNpcActions.length > 0;
-      dgsm.setContextualData("wasDefenseTurn", isDefenseTurn);
-
-      if (isDefenseTurn) {
-        // Player is defending against NPC attacks
-        console.log(
-          `⚔️  [Combat Action Agent A] Mode: DEFEND (${pendingNpcActions!.length} NPC attacks)`
-        );
-        result = await combatAgentA.resolvePlayerDefense(
-          dgsm,
-          userInput,
-          selectedSkill,
-          pendingNpcActions!,
-          language
-        );
-      } else {
-        // Player is attacking
-        console.log("⚔️  [Combat Action Agent A] Mode: ATTACK");
-        result = await combatAgentA.resolvePlayerAttack(
-          dgsm,
-          userInput,
-          selectedSkill,
-          language
-        );
-      }
-
-      if (result) {
-        combatAgentA.applyResult(dgsm, result);
-        // Store result in contextual data for Agent B context
-        dgsm.setContextualData("combatActionAResult", result);
-        dgsm.setContextualData(
-          "combatDefeatedNpcs",
-          Array.isArray(result.defeatedNpcs) ? result.defeatedNpcs : []
-        );
-        console.log(
-          `⚔️  [Combat Action Agent A] combatEnded: ${result.combatEnded}`
-        );
-
-        // 将 diceUsed 发送给前端展示骰子动画
-        if (result.diceUsed && result.diceUsed.length > 0) {
-          const diceRollInfos = buildDiceRollInfos([
-            {
-              character: gs.playerCharacter.name,
-              diceRolls: result.diceUsed,
-              timestamp: new Date(),
-              gameTime: gs.timeOfDay || "",
-              location: gs.currentScenario?.location || "",
-              result: "",
-              timeConsumption: "instant",
-            },
-          ]);
-          if (diceRollInfos.length > 0) {
-            state.stream?.onDiceRolls?.(diceRollInfos);
-            console.log(`⚔️  [Combat Action Agent A] 发送 ${diceRollInfos.length} 个骰子结果给前端`);
-          }
-        }
-      }
-    } catch (error) {
-      console.error("❌ [Combat Action Agent A] Failed:", error);
-    }
-
-    return { ...state, dynamicGameState: dgsm.getState() };
-  });
-
-  // Combat End Check: check HP/SAN then check LLM combat end judgment
-  graph.addNode("combatEndCheck", async (state: DynamicGraphState) => {
-    console.log("⚔️  [Combat End Check] 检查战斗是否结束...");
-    const dgsm = createDGSMWithDb(state.dynamicGameState);
-    const gs = dgsm.getState();
-    const language =
-      state.language === "en" || state.language === "zh"
-        ? state.language
-        : "zh";
-
-    const playerStatus = gs.playerCharacter.status;
-    const hp = playerStatus.hp ?? 0;
-    const sanity = playerStatus.sanity ?? 0;
-
-    // Layer 1: Immediate HP/SAN check → game over
-    if (hp <= 0 || sanity <= 0) {
-      console.log(
-        `⚔️  [Combat End Check] Player ${hp <= 0 ? "HP" : "SAN"} ≤ 0 → game over`
-      );
-      // Generate defeat narrative before epilogue
-      try {
-        const combatResult =
-          gs.temporaryInfo.contextualData?.combatActionAResult ?? null;
-        const userInput = latestHumanMessage(state.messages);
-        const defeatNarrative = await battleKeeper.generateDefeatNarrative(
-          dgsm,
-          combatResult,
-          userInput,
-          language
-        );
-        dgsm.setContextualData("battleKeeperNarrative", defeatNarrative);
-      } catch (e) {
-        console.warn("⚔️  [Combat End Check] Defeat narrative failed:", e);
-      }
-      dgsm.exitCombat();
-      return { ...state, dynamicGameState: dgsm.getState() };
-    }
-
-    // Layer 2: Check combatEnded from Agent A output (LLM judgment)
-    const combatAResult = gs.temporaryInfo.contextualData
-      ?.combatActionAResult as any;
-    if (combatAResult?.combatEnded === true) {
-      console.log(
-        `⚔️  [Combat End Check] Combat ended: ${combatAResult.combatEndReason}`
-      );
-      dgsm.setContextualData("combatEnded", true);
-      dgsm.setContextualData("combatEndReason", combatAResult.combatEndReason);
-    }
-
-    return { ...state, dynamicGameState: dgsm.getState() };
-  });
-
-  // Conditional routing from combatEndCheck
-  graph.addConditionalEdges(
-    "combatEndCheck" as any,
-    (state: DynamicGraphState) => {
-      const gs = state.dynamicGameState;
-      const playerStatus = gs.playerCharacter.status;
-      const hp = playerStatus.hp ?? 0;
-      const sanity = playerStatus.sanity ?? 0;
-
-      // Game over: player defeated
-      if (hp <= 0 || sanity <= 0) {
-        console.log("🔀 [Combat End Router] → gameEndCheck (player defeated)");
-        return "gameEndCheck";
-      }
-
-      // Combat ended by Agent A: use BattleKeeper for final narrative
-      if (gs.temporaryInfo.contextualData?.combatEnded === true) {
-        console.log("🔀 [Combat End Router] → combatBattleKeeper (Agent A: combat ended)");
-        return "combatBattleKeeper";
-      }
-
-      // Continue combat: skip BattleKeeper, Agent B generates narrative directly
-      console.log(
-        "🔀 [Combat End Router] → combatActionB (round continues, skipping BattleKeeper)"
-      );
-      return "combatActionB";
-    },
-    {
-      gameEndCheck: "gameEndCheck" as any,
-      combatBattleKeeper: "combatBattleKeeper" as any,
-      combatActionB: "combatActionB" as any,
-    }
-  );
-
-  // Combat Battle Keeper: narrate combat action results
-  graph.addNode("combatBattleKeeper", async (state: DynamicGraphState) => {
-    console.log("📖 [Battle Keeper] 生成战斗叙述...");
-    const dgsm = createDGSMWithDb(state.dynamicGameState);
-    const gs = dgsm.getState();
-    const language =
-      state.language === "en" || state.language === "zh"
-        ? state.language
-        : "zh";
-    const stream = state.stream;
-
-    const combatAResult =
-      gs.temporaryInfo.contextualData?.combatActionAResult ?? null;
-
-    // BattleKeeper is only called when Agent A judges combat ended → always stream immediately.
-    const shouldStream = true;
-
-    try {
-      if (shouldStream && stream?.onNarrativeStart) stream.onNarrativeStart();
-
-      const userInput = latestHumanMessage(state.messages);
-      const narrative = await battleKeeper.generateCombatNarrative(
-        dgsm,
-        combatAResult,
+      const playerNodes = await playerPlanAgent.generatePlayerNodes(
         userInput,
-        language,
-        shouldStream ? stream?.onNarrativeDelta : undefined
+        dgsm,
+        orchestratorOutput,
+        selectedSkill,
+        language
       );
 
-      dgsm.setContextualData("battleKeeperNarrative", narrative);
-      if (state.turnId && narrative) {
-        turnManager.updateNarrative(state.turnId, narrative);
-      }
-
-      if (shouldStream && stream?.onNarrativeEnd) stream.onNarrativeEnd();
-      console.log("✅ [Battle Keeper] 战斗叙述生成完成");
+      dgsm.setPlayerNodes(playerNodes);
+      console.log(`[PlayerPlanAgent] Generated ${playerNodes.length} player node(s)`);
     } catch (error) {
-      console.error("❌ [Battle Keeper] 生成失败:", error);
-      if (shouldStream && stream?.onNarrativeEnd) stream.onNarrativeEnd();
+      console.error("[PlayerPlanAgent] Failed:", error);
+      dgsm.setPlayerNodes([]);
     }
 
     return { ...state, dynamicGameState: dgsm.getState() };
   });
 
-  // Routing after combatBattleKeeper
-  // BattleKeeper is now only called when Agent A judges combat ended → always exit combat
-  graph.addEdge("combatBattleKeeper" as any, "exitCombatAndRecord" as any);
+  graph.addEdge("memory" as any, "playerPlanAgent" as any);
 
-  // Exit combat and go to ragRecorder (victory path)
-  graph.addNode("exitCombatAndRecord", async (state: DynamicGraphState) => {
-    console.log("⚔️  [Exit Combat] 战斗结束，退出战斗模式...");
-    const dgsm = createDGSMWithDb(state.dynamicGameState);
-    const gsBeforeExit = dgsm.getState();
-    const defeatedNpcs =
-      (gsBeforeExit.temporaryInfo.contextualData?.combatDefeatedNpcs as Array<{
-        npcId?: string;
-        npcName?: string;
-      }>) ?? [];
-    const defeatHistory = dgsm.recordDefeatedNpcsFromList(defeatedNpcs);
-    if (defeatHistory.recordedCount > 0) {
-      console.log(
-        `⚔️  [Exit Combat] Recorded defeated NPCs: ${defeatHistory.recordedNpcNames.join(", ")}`
-      );
-    }
-    dgsm.exitCombat();
-    state.stream?.onCombatEnd?.();
+  // TickExecutionLoop: execute all player + NPC nodes via TickProcessor
+  graph.addNode("tickExecutionLoop", async (state: DynamicGraphState) => {
+    console.log("[TickExecutionLoop] Executing tick...");
+    const dgsm = new DynamicGameStateManager(state.dynamicGameState);
+    const language = state.language ?? "zh";
+    const selectedSkill = state.selectedSkill ?? null;
+    const playerNodes = dgsm.getPlayerNodes();
 
-    // Complete turn with battle narrative
-    // Combine BattleKeeper narrative (player attack phase) with Agent B narrative (NPC ending phase)
-    const gs = dgsm.getState();
-    const battleKeeperNarrative =
-      (gs.temporaryInfo.contextualData?.battleKeeperNarrative as string) || "";
-    const npcAttackNarrative =
-      (gs.temporaryInfo.contextualData?.combatNpcAttackNarrative as string) || "";
-    const narrative = [battleKeeperNarrative, npcAttackNarrative]
-      .filter((t) => t.trim().length > 0)
-      .join("\n\n");
-    if (state.turnId && narrative) {
-      try {
-        turnManager.completeTurn(
-          state.turnId,
-          {
-            keeperNarrative: narrative,
-            gameDay: gs.gameDay ?? null,
-            gameTime: gs.timeOfDay ?? null,
-          },
-          state.language
-        );
-      } catch (e) {
-        console.error("❌ [Exit Combat] Failed to complete turn:", e);
-      }
+    if (playerNodes.length === 0) {
+      console.log("[TickExecutionLoop] No player nodes to execute");
+      return { ...state, dynamicGameState: dgsm.getState() };
     }
 
-    return { ...state, dynamicGameState: dgsm.getState() };
-  });
+    // Find first pending player node that needs skill selection
+    const nextNodeNeedingSkill = playerNodes.find(
+      (n: PlanNode) => n.status === "pending" && n.actionType
+    );
 
-  graph.addEdge("exitCombatAndRecord" as any, "ragRecorder" as any);
+    if (nextNodeNeedingSkill && !selectedSkill) {
+      // Interrupt for skill selection
+      const candidates = ACTION_TYPE_SKILL_MAP[nextNodeNeedingSkill.actionType!] ?? [];
+      const playerSkills = dgsm.getState().playerCharacter?.skills ?? {};
+      const skillEntries = candidates
+        .filter((s: string) => playerSkills[s] !== undefined)
+        .map((s: string) => ({ name: s, value: playerSkills[s] }));
 
-  // Combat Action B: generate NPC attack narratives
-  graph.addNode("combatActionB", async (state: DynamicGraphState) => {
-    console.log("⚔️  [Combat Action Agent B] 生成 NPC 攻击叙述...");
-    const dgsm = createDGSMWithDb(state.dynamicGameState);
-    const gs = dgsm.getState();
-    const language =
-      state.language === "en" || state.language === "zh"
-        ? state.language
-        : "zh";
-
-    // 进入战斗第一轮：清除 justEnteredCombat 标志，并通知前端显示战斗开始 banner
-    const isEntryTurn = gs.temporaryInfo.contextualData?.justEnteredCombat === true;
-    if (isEntryTurn) {
-      dgsm.setContextualData("justEnteredCombat", false);
-      console.log("⚔️  [Combat Action Agent B] 进入战斗首轮，清除 justEnteredCombat 标志");
-      state.stream?.onCombatStart?.();
+      console.log(`[TickExecutionLoop] Interrupting for skill selection on node: ${nextNodeNeedingSkill.action}`);
+      interrupt({
+        action: nextNodeNeedingSkill.action,
+        actionType: nextNodeNeedingSkill.actionType,
+        difficulty: nextNodeNeedingSkill.difficulty,
+        availableSkills: skillEntries,
+        requiresSkillSelection: true,
+      });
+      // Graph will resume with selectedSkill populated
     }
+
+    // Execute all player + NPC nodes via TickProcessor
+    const pendingPlayerNodes = playerNodes.filter((n: PlanNode) => n.status === "pending");
 
     try {
-      const combatState = dgsm.getState().combatState;
-      const openingPendingRaw = gs.temporaryInfo.contextualData
-        ?.openingPendingNpcActions as unknown;
-      const openingPending = Array.isArray(openingPendingRaw)
-        ? openingPendingRaw
-        : [];
-      const useNpcOpeningPending =
-        combatState?.round === 1 &&
-        combatState.initiatedBy === "npc" &&
-        openingPending.length > 0;
+      const characterActions = await runTick(
+        pendingPlayerNodes,
+        dgsm,
+        npcPlanningAgent,
+        dgsm.getState().sessionId,
+        language
+      );
 
-      const userInput = latestHumanMessage(state.messages);
-      const battleKeeperNarrative =
-        (gs.temporaryInfo.contextualData?.battleKeeperNarrative as string) ?? "";
-      const combatAResult =
-        (gs.temporaryInfo.contextualData?.combatActionAResult as CombatActionAResult | null | undefined) ?? null;
-      // 普通回合：用 Agent A 的 actionLog 摘要作为 keeperNarrative 备用
-      // 进入首轮：actionResults 已通过 buildContext 中的 ENTRY CONTEXT 块注入，agentBContext 留空即可
-      const agentBContext =
-        battleKeeperNarrative ||
-        (combatAResult?.actionLog
-          ?.map((e) => e.summary)
-          .filter(Boolean)
-          .join(" ") ?? "");
-      const result = useNpcOpeningPending
-        ? {
-            narrative: openingPending
-              .map((item: any) => item?.actionNarrative)
-              .filter((text: unknown): text is string => typeof text === "string")
-              .join(" "),
-            pendingNpcActions: openingPending,
-            combatEnded: false,
-            combatEndReason: "",
-            defeatedNpcs: [],
-          }
-        : await combatAgentB.generateNpcActions(dgsm, userInput, agentBContext, language, combatAResult);
-      if (result) {
-        dgsm.setPendingNpcActions(result.pendingNpcActions);
-        dgsm.setContextualData("combatNpcAttackNarrative", result.narrative);
-        dgsm.setContextualData("combatEnded", result.combatEnded);
-        if (state.turnId && typeof result.narrative === "string") {
-          turnManager.updateNarrative(state.turnId, result.narrative);
-        }
-        if (useNpcOpeningPending) {
-          dgsm.setContextualData("openingPendingNpcActions", null);
-          console.log(
-            `⚔️  [Combat Action Agent B] Using opening pending actions from Action Agent (${result.pendingNpcActions.length})`
-          );
-        }
-        if (result.combatEnded) {
-          dgsm.setContextualData("combatEndReason", result.combatEndReason);
-          dgsm.setContextualData(
-            "combatDefeatedNpcs",
-            Array.isArray(result.defeatedNpcs) ? result.defeatedNpcs : []
-          );
-          console.log(
-            `⚔️  [Combat Action Agent B] Combat ended after attack phase: ${result.combatEndReason}`
-          );
-        } else {
-          console.log(
-            `⚔️  [Combat Action Agent B] Generated ${result.pendingNpcActions.length} NPC attacks`
-          );
-        }
-      }
+      // Store results
+      const existingActions = dgsm.getCharacterActions() || [];
+      dgsm.setCharacterActions([...existingActions, ...characterActions]);
+      console.log(`[TickExecutionLoop] ${characterActions.length} character action(s) executed`);
     } catch (error) {
-      console.error("❌ [Combat Action Agent B] Failed:", error);
+      console.error("[TickExecutionLoop] Error:", error);
     }
 
-    return { ...state, dynamicGameState: dgsm.getState() };
+    // Check if more player nodes need skill selection (multi-node interrupt)
+    const remainingNodes = dgsm.getPlayerNodes().filter(
+      (n: PlanNode) => n.status === "pending" && n.actionType
+    );
+
+    // If there are remaining nodes that need skill, the next invocation will handle them
+    // Clear selectedSkill so next iteration can ask again
+    const updatedState = { ...state, dynamicGameState: dgsm.getState() };
+    if (remainingNodes.length > 0) {
+      updatedState.selectedSkill = null; // Reset for next interrupt
+    }
+
+    return updatedState;
   });
 
-  // Combat NPC Record: complete this turn immediately.
-  // Handles both attack turns (Agent A attacked, Agent B generated NPC counter-attacks)
-  // and defense turns (Agent A defended, Agent B generated next round NPC actions).
-  graph.addNode("combatNpcRecordAndEnd", async (state: DynamicGraphState) => {
-    console.log("🧾 [Combat NPC Record] 记录并结束本回合...");
-    const dgsm = createDGSMWithDb(state.dynamicGameState);
-    const gs = dgsm.getState();
-
-    // Defense turns: clear old resolved pendingNpcActions and increment round
-    const wasDefenseTurn = gs.temporaryInfo.contextualData?.wasDefenseTurn === true;
-    if (wasDefenseTurn) {
-      dgsm.incrementCombatRound();
-      console.log("⚔️  [Combat NPC Record] Defense turn completed, round incremented");
-    }
-
-    const entryNarrative =
-      (gs.temporaryInfo.contextualData?.battleKeeperNarrative as string) || "";
-    const npcAttackNarrative =
-      (gs.temporaryInfo.contextualData?.combatNpcAttackNarrative as string) ||
-      "";
-    const combinedNarrative = [entryNarrative, npcAttackNarrative]
-      .filter((text) => typeof text === "string" && text.trim().length > 0)
-      .join("\n\n");
-
-    if (state.turnId) {
-      try {
-        turnManager.completeTurn(
-          state.turnId,
-          {
-            keeperNarrative: combinedNarrative,
-            gameDay: gs.gameDay ?? null,
-            gameTime: gs.timeOfDay ?? null,
-          },
-          state.language
-        );
-      } catch (error) {
-        console.error("❌ [Combat NPC Record] Failed to complete turn:", error);
-      }
-    }
-
-    return { ...state, dynamicGameState: dgsm.getState() };
-  });
-
-  graph.addConditionalEdges(
-    "combatActionB" as any,
-    (state: DynamicGraphState) => {
-      if (state.dynamicGameState.temporaryInfo.contextualData?.combatEnded === true) {
-        console.log("🔀 [Combat B Router] → exitCombatAndRecord (combat ended, using Agent B narrative)");
-        return "exitCombatAndRecord";
-      }
-      console.log("🔀 [Combat B Router] → combatNpcRecordAndEnd");
-      return "combatNpcRecordAndEnd";
-    },
-    {
-      exitCombatAndRecord: "exitCombatAndRecord" as any,
-      combatNpcRecordAndEnd: "combatNpcRecordAndEnd" as any,
-    }
-  );
-  graph.addEdge("combatNpcRecordAndEnd" as any, "ragRecorder" as any);
-
-  // combatActionA → combatEndCheck
-  graph.addEdge("combatActionA" as any, "combatEndCheck" as any);
-
-  // ================== END COMBAT NODES ==================
+  graph.addEdge("playerPlanAgent" as any, "tickExecutionLoop" as any);
+  graph.addEdge("tickExecutionLoop" as any, "director" as any);
 
   // Director: handle scene changes and narrative direction
   graph.addNode("director", async (state: DynamicGraphState) => {
@@ -1489,7 +865,7 @@ export const buildDynamicGraph = (
 
   // Keeper: generate narrative
   graph.addNode("keeper", async (state: DynamicGraphState) => {
-    console.log("📖 [Dynamic Keeper Agent] 开始生成叙述...");
+    console.log("[Dynamic Keeper Agent] Generating narrative...");
     const dgsm = new DynamicGameStateManager(state.dynamicGameState);
     const userInput = latestHumanMessage(state.messages);
     const language =
@@ -1497,33 +873,11 @@ export const buildDynamicGraph = (
         ? state.language
         : "zh";
     const stream = state.stream;
-    const actionResults = (dgsm.getState().temporaryInfo.actionResults ||
-      []) as ActionResult[];
-    const actionAnalysis = dgsm.getState().temporaryInfo.currentActionAnalysis;
-    const opposedRollTarget = actionAnalysis?.target?.name || null;
-    const playerName = dgsm.getState().playerCharacter?.name || null;
-    const playerNameNormalized = playerName
-      ? playerName.trim().toLowerCase()
-      : null;
-    const playerActionResults = actionResults.filter((result) => {
-      if (!playerNameNormalized) return true;
-      const resultCharacter = result.character
-        ? result.character.trim().toLowerCase()
-        : null;
-      return !!resultCharacter && resultCharacter === playerNameNormalized;
-    });
-    const diceRollInfos = buildDiceRollInfos(playerActionResults, {
-      opposedRollCharacter: opposedRollTarget,
-    });
     const shouldStream = Boolean(stream?.onNarrativeDelta);
 
     let updatedGameState = state.dynamicGameState;
 
     try {
-      if (diceRollInfos.length > 0) {
-        stream?.onDiceRolls?.(diceRollInfos);
-      }
-
       if (shouldStream) {
         stream?.onNarrativeStart?.();
       }

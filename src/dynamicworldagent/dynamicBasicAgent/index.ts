@@ -4,7 +4,7 @@
  */
 
 export { OrchestratorAgent } from "./orchestrator/orchestratorAgent.js";
-export { ActionAgent } from "./action/actionAgent.js";
+export { PlayerPlanAgent } from "./npcPlanning/PlayerPlanAgent.js";
 export { CharacterAgent } from "./character/characterAgent.js";
 export { DirectorAgent } from "./director/directorAgent.js";
 export { KeeperAgent } from "./keeper/keeperAgent.js";

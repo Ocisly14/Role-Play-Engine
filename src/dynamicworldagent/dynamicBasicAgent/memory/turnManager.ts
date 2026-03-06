@@ -12,8 +12,10 @@ import type {
   CoCDatabaseAdapter,
 } from "../../../shared/agents/memory/database/index.js";
 import type { ActionLogEntry } from "../../../shared/agents/models/gameTypes.js";
-import { buildDiceRollInfos } from "../../../shared/state/index.js";
-import type { DiceRollInfo } from "../../../shared/state/index.js";
+import {
+  buildDiceRollInfos,
+  type DiceRollInfo,
+} from "../../../shared/state/index.js";
 import type { DynamicGameState } from "../../state/index.js";
 
 export interface TurnInput {
@@ -30,8 +32,7 @@ export interface TurnInput {
 }
 
 export interface TurnProcessing {
-  actionAnalysis?: any;
-  actionResults?: any[];
+  characterActions?: import("../../dynamicBasicAgent/npcPlanning/types.js").CharacterAction[];
 }
 
 export interface TurnOutput {
@@ -53,8 +54,7 @@ export interface GameTurn {
   sceneRoomId?: string | null;
 
   // Processing
-  actionAnalysis: any | null;
-  actionResults: any[] | null;
+  characterActions: any[] | null;
 
   // Output
   keeperNarrative: string | null;
@@ -143,8 +143,8 @@ export class TurnManager {
   updateProcessing(turnId: string, processing: TurnProcessing): void {
     this.db.updateTurnProcessing(
       turnId,
-      processing.actionAnalysis,
-      processing.actionResults
+      null, // actionAnalysis (legacy, no longer used)
+      processing.characterActions ?? null
     );
   }
 
@@ -168,8 +168,7 @@ export class TurnManager {
     gameState: DynamicGameState
   ): void {
     this.updateProcessing(turnId, {
-      actionAnalysis: gameState.temporaryInfo.currentActionAnalysis,
-      actionResults: gameState.temporaryInfo.actionResults,
+      characterActions: gameState.temporaryInfo.characterActions,
     });
   }
 
@@ -255,17 +254,15 @@ export class TurnManager {
         effectiveLanguage
       );
 
-      // Embed action logs if available
-      if (turn.actionResults && Array.isArray(turn.actionResults)) {
-        for (const actionResult of turn.actionResults) {
-          // Extract action log from action result
+      // Embed action logs from characterActions if available
+      if (turn.characterActions && Array.isArray(turn.characterActions)) {
+        for (const charAction of turn.characterActions) {
           const actionLog: ActionLogEntry = {
-            time: actionResult.gameTime || turn.gameTime || "",
-            location: actionResult.location || turn.location || "",
-            character:
-              actionResult.character || turn.characterName || undefined,
-            summary: actionResult.result || "",
-            successLevel: this.extractSuccessLevel(actionResult),
+            time: charAction.gameTime || turn.gameTime || "",
+            location: charAction.location || turn.location || "",
+            character: charAction.characterName || turn.characterName || undefined,
+            summary: charAction.outcome || charAction.action || "",
+            successLevel: charAction.status === "completed" ? "regular" : "failure",
           };
 
           await this.ragManager.embedActionLog(
@@ -285,31 +282,6 @@ export class TurnManager {
       console.error(`[TurnManager] Error embedding turn ${turnId}:`, error);
       throw error;
     }
-  }
-
-  /**
-   * Extract success level from action result
-   */
-  private extractSuccessLevel(
-    actionResult: any
-  ): ActionLogEntry["successLevel"] {
-    if (!actionResult.diceRolls || !Array.isArray(actionResult.diceRolls)) {
-      return "unknown";
-    }
-
-    // Try to parse success level from dice roll strings
-    for (const roll of actionResult.diceRolls) {
-      if (typeof roll === "string") {
-        if (roll.includes("critical")) return "critical";
-        if (roll.includes("extreme")) return "extreme";
-        if (roll.includes("hard")) return "hard";
-        if (roll.includes("success")) return "regular";
-        if (roll.includes("failure")) return "failure";
-        if (roll.includes("fumble")) return "fumble";
-      }
-    }
-
-    return "unknown";
   }
 
   /**
@@ -454,20 +426,23 @@ export class TurnManager {
     }> = [];
 
     turns.reverse().forEach((turn) => {
-      // Extract dice rolls from actionResults if available
+      // Extract dice rolls from legacy actionResults if available (backward compatibility)
+      // CharacterAction[] (new format) does not carry dice roll data
       const diceRolls: DiceRollInfo[] = [];
       const playerNameNormalized = this.normalizeName(turn.characterName);
-      if (turn.actionResults && Array.isArray(turn.actionResults)) {
+      const legacyActionResults = (turn as any).actionResults;
+      if (legacyActionResults && Array.isArray(legacyActionResults)) {
+        const legacyActionAnalysis = (turn as any).actionAnalysis;
         const opposedRollTarget =
-          turn.actionAnalysis &&
-          typeof turn.actionAnalysis === "object" &&
-          turn.actionAnalysis.target &&
-          typeof turn.actionAnalysis.target === "object" &&
-          typeof turn.actionAnalysis.target.name === "string"
-            ? turn.actionAnalysis.target.name
+          legacyActionAnalysis &&
+          typeof legacyActionAnalysis === "object" &&
+          legacyActionAnalysis.target &&
+          typeof legacyActionAnalysis.target === "object" &&
+          typeof legacyActionAnalysis.target.name === "string"
+            ? legacyActionAnalysis.target.name
             : null;
 
-        const allDiceRollInfos = buildDiceRollInfos(turn.actionResults, {
+        const allDiceRollInfos = buildDiceRollInfos(legacyActionResults, {
           opposedRollCharacter: opposedRollTarget,
         });
 

@@ -11,7 +11,6 @@ import type { ScenarioLoader } from "../../../shared/agents/memory/scenarioloade
 import { composeTemplate } from "../../../template.js";
 import type { DynamicGameState } from "../../state/index.js";
 import type { DynamicGameStateManager } from "../../state/index.js";
-import type { DynamicScenarioSnapshot } from "../../world_builder/types.js";
 import {
   type RetrievedSessionRagChunk,
   SessionRagService,
@@ -54,7 +53,7 @@ interface CurrentTurnActionLogItem {
   time: string;
   location: string;
   summary: string;
-  source: "actionResults" | "actionResultsDetailed";
+  source: "characterActions";
 }
 
 /**
@@ -73,140 +72,6 @@ export class DirectorAgent {
     this.scenarioLoader = scenarioLoader;
     this.db = db;
     this.sessionRagService = new SessionRagService();
-  }
-
-  /**
-   * Execute scene transition (shared logic)
-   */
-  private async executeSceneTransition(
-    targetSnapshot: DynamicScenarioSnapshot,
-    scenarioName: string,
-    gameStateManager: DynamicGameStateManager
-  ): Promise<void> {
-    const dynamicState = gameStateManager.getState();
-
-    console.log(`\n🔄 [Executing Scene Transition]:`);
-    console.log(`   To: ${targetSnapshot.name}`);
-    console.log(`   Location: ${targetSnapshot.location}`);
-
-    try {
-      gameStateManager.updateCurrentScenario({
-        snapshot: targetSnapshot,
-        scenarioName: scenarioName,
-      });
-
-      const updatedState = gameStateManager.getState();
-
-      console.log(`   ✓ Scene transition completed successfully`);
-      console.log(`\n📍 [Post-Transition State]:`);
-      console.log(
-        `   Current Scene: ${updatedState.currentScenario?.name || "None"}`
-      );
-      console.log(`   Scene ID: ${updatedState.currentScenario?.id || "None"}`);
-      console.log(
-        `   Location: ${updatedState.currentScenario?.location || "None"}`
-      );
-
-      console.log(`\n✅ [Director Agent] Scene transition completed`);
-      console.log(
-        `🎬 [Director Agent] ========================================\n`
-      );
-    } catch (error) {
-      console.error(`   ❌ Scene transition failed:`, error);
-      throw error;
-    }
-  }
-
-  /**
-   * Handle scene change request initiated by Action Agent.
-   * Looks up existing snapshot for the target scene and executes the transition.
-   */
-  async handleActionDrivenSceneChange(
-    gameStateManager: DynamicGameStateManager,
-    targetSceneName: string,
-    reason: string,
-    currentCharacterInput?: string
-  ): Promise<void> {
-    console.log(
-      `\n🎬 [Director Agent] ========================================`
-    );
-    console.log(
-      `🎬 [Director Agent] Starting to process Action-driven scene transition`
-    );
-    console.log(`🎬 [Director Agent] ========================================`);
-
-    const dynamicState = gameStateManager.getState();
-    const currentScenario = dynamicState.currentScenario;
-    const sceneChangeRequest = dynamicState.temporaryInfo.sceneChangeRequest;
-
-    // Save current scenario as previousScenario for Keeper to access
-    if (currentScenario) {
-      dynamicState.temporaryInfo.previousScenario = { ...currentScenario };
-      console.log(
-        `\n💾 [Director Agent] Saved previous scenario: ${currentScenario.name}`
-      );
-    }
-
-    if (!sceneChangeRequest?.shouldChange) {
-      console.log(`   ⚠️  No scene change request found, skipping transition`);
-      return;
-    }
-
-    console.log(`\n🎯 [Scene Transition Request]:`);
-    console.log(`   Target Scene Name: ${targetSceneName}`);
-    console.log(`   Transition Reason: ${reason}`);
-
-    // Find target scenario from outlines
-    const targetScenarioOutline = dynamicState.scenarioOutlines.find(
-      (outline) =>
-        outline.name === targetSceneName || outline.id === targetSceneName
-    );
-
-    if (!targetScenarioOutline) {
-      console.error(
-        `   ❌ Target scenario not found in outlines: ${targetSceneName}`
-      );
-      gameStateManager.clearSceneChangeRequest();
-      return;
-    }
-
-    // Get existing snapshot for target scene
-    const targetSnapshot = await this.getLatestScenarioSnapshot(
-      targetScenarioOutline.id,
-      dynamicState
-    );
-
-    if (!targetSnapshot) {
-      console.error(
-        `   ❌ No snapshot found for target scenario: ${targetSceneName}`
-      );
-      gameStateManager.clearSceneChangeRequest();
-      return;
-    }
-
-    console.log(`   ✓ Found target snapshot: ${targetScenarioOutline.name}`);
-
-    // Save snapshot to state
-    gameStateManager.setDb(this.db);
-    await gameStateManager.setUpdatedDynamicScenarioSnapshot(
-      targetScenarioOutline.id,
-      targetSnapshot
-    );
-
-    // Execute scene transition
-    await this.executeSceneTransition(
-      targetSnapshot,
-      targetScenarioOutline.name,
-      gameStateManager
-    );
-
-    // Clean up scene change request
-    gameStateManager.clearSceneChangeRequest();
-
-    console.log(`✅ [Director Agent] Scene change completed successfully`);
-    console.log(
-      `🎬 [Director Agent] ========================================\n`
-    );
   }
 
   /**
@@ -231,21 +96,6 @@ export class DirectorAgent {
     }
 
     return null;
-  }
-
-  private async getLatestScenarioSnapshot(
-    scenarioId: string,
-    dynamicState: DynamicGameState
-  ): Promise<DynamicScenarioSnapshot | null> {
-    const updatedSnapshots =
-      dynamicState.updatedDynamicScenarioSnapshots.get(scenarioId);
-    if (updatedSnapshots && updatedSnapshots.length > 0) {
-      return updatedSnapshots[updatedSnapshots.length - 1];
-    }
-
-    const scenarioProfile =
-      await this.scenarioLoader.getScenarioById(scenarioId);
-    return scenarioProfile?.snapshot || null;
   }
 
   /**
@@ -409,74 +259,29 @@ export class DirectorAgent {
     const rows: CurrentTurnActionLogItem[] = [];
     const dedupe = new Set<string>();
 
-    const push = (row: CurrentTurnActionLogItem): void => {
-      const summary = row.summary.trim();
-      if (!summary) return;
-      const key = `${row.character}|${row.time}|${row.location}|${summary}`;
-      if (dedupe.has(key)) return;
+    const characterActions = dynamicState.temporaryInfo.characterActions || [];
+    const defaultTime = `Day ${dynamicState.gameDay}, ${dynamicState.timeOfDay}`;
+    const defaultLocation = dynamicState.currentScenario?.location || "Unknown";
+
+    for (const action of characterActions) {
+      const summary = (action.outcome || action.action || "").trim();
+      if (!summary) continue;
+
+      const character = action.characterName || "Unknown";
+      const time = action.gameTime || defaultTime;
+      const location = action.location || defaultLocation;
+
+      const key = `${character}|${time}|${location}|${summary}`;
+      if (dedupe.has(key)) continue;
       dedupe.add(key);
+
       rows.push({
-        ...row,
+        character,
+        time,
+        location,
         summary,
+        source: "characterActions",
       });
-    };
-
-    const actionResults = dynamicState.temporaryInfo.actionResults || [];
-    for (const result of actionResults) {
-      push({
-        character: result.character || "Unknown",
-        time: result.gameTime || `Day ${dynamicState.gameDay}, ${dynamicState.timeOfDay}`,
-        location:
-          result.location || dynamicState.currentScenario?.location || "Unknown",
-        summary: result.result || "",
-        source: "actionResults",
-      });
-    }
-
-    const detailed = dynamicState.temporaryInfo.actionResultsDetailed || [];
-    for (const item of detailed) {
-      const actor =
-        typeof item.character === "string" && item.character.trim().length > 0
-          ? item.character
-          : "Unknown";
-      const defaultTime = `Day ${dynamicState.gameDay}, ${dynamicState.timeOfDay}`;
-      const defaultLocation = dynamicState.currentScenario?.location || "Unknown";
-
-      const collectFromLogs = (logs: unknown): void => {
-        if (!Array.isArray(logs)) return;
-        for (const rawLog of logs) {
-          if (!rawLog || typeof rawLog !== "object") continue;
-          const log = rawLog as Record<string, unknown>;
-          if (typeof log.summary !== "string" || !log.summary.trim()) continue;
-
-          push({
-            character:
-              typeof log.character === "string" && log.character.trim().length > 0
-                ? log.character
-                : actor,
-            time:
-              typeof log.time === "string" && log.time.trim().length > 0
-                ? log.time
-                : defaultTime,
-            location:
-              typeof log.location === "string" && log.location.trim().length > 0
-                ? log.location
-                : defaultLocation,
-            summary: log.summary,
-            source: "actionResultsDetailed",
-          });
-        }
-      };
-
-      collectFromLogs(item.actionLog);
-
-      if (Array.isArray(item.npcResponses)) {
-        for (const npcResponse of item.npcResponses) {
-          if (!npcResponse || typeof npcResponse !== "object") continue;
-          const response = npcResponse as Record<string, unknown>;
-          collectFromLogs(response.actionLog);
-        }
-      }
     }
 
     return rows;
