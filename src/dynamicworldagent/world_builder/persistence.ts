@@ -175,17 +175,10 @@ export async function saveWorldToDatabase(
       scenarios.map((scenario) => [scenario.name.toLowerCase(), scenario])
     );
 
-    const scenarioConnections = (scenario: ScenarioOutline) =>
-      (scenario.connections || []).map((connection) => {
-        const targetScenario = scenarioByName.get(
-          connection.scenarioName.toLowerCase()
-        );
-        return {
-          scenarioId: targetScenario?.id || connection.scenarioName,
-          relationshipType: connection.relationshipType,
-          description: connection.description,
-        };
-      });
+    const scenarioConnections = (_scenario: ScenarioOutline) => {
+      // ScenarioOutline no longer has connections — connections are at sub-scene level
+      return [] as any[];
+    };
 
     for (const scenario of scenarios) {
       const metadata = {
@@ -207,7 +200,7 @@ export async function saveWorldToDatabase(
           moduleId,
           name: scenario.name,
           description: scenario.description,
-          tags: (scenario.tags || []) as any,
+          tags: [] as any,
           connections: scenarioConnections(scenario) as any,
           metadata: metadata as any,
           sourcePlaceId: scenario.sourcePlaceId || null,
@@ -218,7 +211,7 @@ export async function saveWorldToDatabase(
           moduleId,
           name: scenario.name,
           description: scenario.description,
-          tags: (scenario.tags || []) as any,
+          tags: [] as any,
           connections: scenarioConnections(scenario) as any,
           metadata: metadata as any,
           sourcePlaceId: scenario.sourcePlaceId || null,
@@ -242,7 +235,7 @@ export async function saveWorldToDatabase(
             moduleId,
             name: scene.name,
             description: scene.description,
-            domain: scene.domain || null,
+            domain: null,
             items: (scene.items || []) as any,
             events: scene.events as any,
             initialScene: true,
@@ -440,31 +433,25 @@ export async function saveWorldToJSON(
         id: scene.id,
         name: scene.name,
         description: scene.description,
-        domain: scene.domain,
+        parentLocationId: scene.parentLocationId,
         items: scene.items,
         clues: scene.clues,
         conditions: scene.conditions,
+        connections: scene.connections,
         sceneImage: scene.sceneImage,
         events: scene.events,
         initialScene: true,
       };
     } else {
       // Create basic scene structure for non-starting scenarios
-      const sceneClues = (scenario.clues || []).map((clue, index) => ({
-        id: `${scenario.id}-clue-${index + 1}`,
-        clueText: clue.clueText,
-        category: "environment" as const,
-        difficulty: "regular" as const,
-        location: scenario.name,
-        discovered: false,
-      }));
-
       sceneData = {
         id: scenario.id,
         name: scenario.name,
         description: scenario.description,
-        clues: sceneClues,
+        parentLocationId: "",
+        clues: [],
         conditions: [],
+        connections: [],
         items: [],
         events: [],
         initialScene: false,
@@ -474,11 +461,7 @@ export async function saveWorldToJSON(
     const scenarioPayload: any = {
       name: scenario.name,
       description: scenario.description,
-      evidence: scenario.evidence || [],
-      clues: scenario.clues || [],
       scene: sceneData,
-      tags: scenario.tags || [],
-      connections: scenario.connections || [],
       npcAssignments: assignment?.npcs || [],
     };
 

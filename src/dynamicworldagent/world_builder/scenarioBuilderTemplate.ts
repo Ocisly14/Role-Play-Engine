@@ -189,6 +189,63 @@ Return ONLY valid JSON in this exact structure:
 }
 
 /**
+ * Generate macro locations from setting + story premise (inverted pipeline)
+ */
+export function buildMacroLocationPrompt(params: {
+  settingDescription: string;
+  storyPremise: string;
+  macroLocationRange: [number, number];
+  subSceneRange: [number, number];
+}): string {
+  return `You are a world-builder for a tabletop RPG scenario.
+
+# MACRO LOCATION GENERATION
+
+## Objective
+Generate a list of macro locations (buildings, areas, landmarks) that form the physical world of the scenario. These are ONLY physical locations — no clues, no evidence, no NPC assignments.
+
+## Setting
+${params.settingDescription}
+
+## Story Premise (for thematic guidance)
+${params.storyPremise}
+
+## Constraints
+- Generate between ${params.macroLocationRange[0]} and ${params.macroLocationRange[1]} macro locations.
+- Each location must have a "subSceneCount" between ${params.subSceneRange[0]} and ${params.subSceneRange[1]}.
+  - Exception: road/street/path locations should have subSceneCount: 1.
+- Include a mix of:
+  - **Investigation-relevant locations** suggested by the story premise (e.g., a library, a crime scene, a suspicious warehouse).
+  - **Residential locations** where people live (houses, inns, boarding houses, apartments).
+  - **Commercial/public locations** that make the setting feel alive (shops, churches, town halls, pubs, markets).
+  - **Road/street locations** (subSceneCount: 1) that connect buildings and areas — at least 1-2 of these.
+- The world should feel realistic, lived-in, and appropriate for the era and setting.
+- Do NOT include any clues, evidence, NPC assignments, or story events — just physical locations.
+- Each location id should follow the pattern "SCN_1", "SCN_2", etc.
+
+## Output Format
+Return ONLY valid JSON in this exact structure:
+
+\`\`\`json
+[
+  {
+    "id": "SCN_1",
+    "name": "Location Name",
+    "description": "A short, evocative description of this location.",
+    "subSceneCount": 3
+  },
+  {
+    "id": "SCN_2",
+    "name": "Main Street",
+    "description": "The central thoroughfare connecting the town square to the harbor.",
+    "subSceneCount": 1
+  }
+]
+\`\`\`
+`;
+}
+
+/**
  * Assign all NPCs to scenarios (separate step after starting scene generation)
  */
 export function getNpcAssignmentTemplate(): string {

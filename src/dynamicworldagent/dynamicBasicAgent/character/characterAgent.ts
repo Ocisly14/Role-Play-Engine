@@ -30,7 +30,7 @@ export class CharacterAgent {
       (o) => o.id === currentSceneId
     );
     const conditions = scene.conditions || [];
-    const connections = outline?.connections || [];
+    const connections = scene.connections || [];
 
     return {
       name: scene.name ?? "",
@@ -123,7 +123,7 @@ export class CharacterAgent {
       characters: sceneCharacters,
       clues: scene.clues || [],
       conditions: scene.conditions || [],
-      connections: scenarioOutline?.connections || [],
+      connections: scene.connections || [],
     };
   }
 

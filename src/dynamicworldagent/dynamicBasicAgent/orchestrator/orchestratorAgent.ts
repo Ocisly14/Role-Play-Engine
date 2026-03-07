@@ -96,16 +96,11 @@ export class OrchestratorAgent {
         (outline) => outline.name === currentScene?.name
       );
     }
-    const rawConnections = scenarioOutline?.connections || [];
-
-    // Resolve connection names (template only needs scenarioName)
-    const connections = rawConnections.map((conn) => {
-      const targetScenario = dynamicState.scenarioOutlines.find(
-        (outline) =>
-          outline.name === conn.scenarioName || outline.id === conn.scenarioName
-      );
+    // Get connections from the current scene (sub-scene level)
+    const connections = (currentScene?.connections || []).map((connId) => {
+      const connScene = dynamicState.scenes.get(connId);
       return {
-        scenarioName: targetScenario?.name || conn.scenarioName,
+        scenarioName: connScene?.name || connId,
       };
     });
 

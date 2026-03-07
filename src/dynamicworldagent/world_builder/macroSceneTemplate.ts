@@ -10,7 +10,13 @@ import {
   getStoryLengthRedHerringsSentence,
   getStoryLengthTruthEventsSentence,
 } from "./storyLengthConfig.js";
-import type { MacroSceneSettingType } from "./types.js";
+import type {
+  EndStateDefinition,
+  MacroSceneSettingType,
+  MacroSceneStructure,
+  MythosEvent,
+  StructuredStoryElements,
+} from "./types.js";
 
 /**
  * Get setting-specific guidance for macro scene generation
@@ -282,9 +288,21 @@ export function getTruthTimelineTemplate(
 
 export function getTruthTimelineTemplateForSetting(
   settingType: MacroSceneSettingType,
-  storyLength: StoryLength = "medium"
+  storyLength: StoryLength = "medium",
+  scenesContext?: string
 ): string {
   const truthEventsSentence = getStoryLengthTruthEventsSentence(storyLength);
+
+  const scenesContextSection = scenesContext
+    ? `
+
+## Existing Scenes & Locations
+The following scenes and macro locations already exist in the world. Truth events should
+reference these real locations when describing WHERE events occurred:
+${scenesContext}
+`
+    : "";
+
   return `You are a writer for a tabletop RPG scenario.
 
 ════════════════════════════════════════════════════════
@@ -339,7 +357,7 @@ The macro scene structure:
 ## Historical Mythos Context
 The historical mythos events that created the foundation for current events:
 {{mythosEventsJson}}
-
+${scenesContextSection}
 ## Task
 ${truthEventsSentence}
 Each event should be a discrete point in the cause-effect chain.
@@ -421,9 +439,21 @@ Generate the truth timeline now.`;
  * Step 4: Knowledge Matrix (Abstract Holders, NOT NPCs)
  */
 export function getKnowledgeMatrixTemplate(
-  storyLength: StoryLength = "medium"
+  storyLength: StoryLength = "medium",
+  scenesContext?: string
 ): string {
   const storyGuidance = getStoryLengthKnowledgeMatrixGuidance(storyLength);
+
+  const scenesContextSection = scenesContext
+    ? `
+
+## Existing Scenes & Locations
+The following scenes and macro locations already exist in the world. PLACE-type knowledge
+holders should reference these real locations when appropriate:
+${scenesContext}
+`
+    : "";
+
   return `You are a writer for a tabletop RPG scenario.
 
 ════════════════════════════════════════════════════════
@@ -468,7 +498,7 @@ The historical events that shaped the present:
 
 ## Truth Timeline (Current Events)
 {{truthTimelineJson}}
-
+${scenesContextSection}
 ${storyGuidance}
 
 ## Task
@@ -545,9 +575,21 @@ Generate the knowledge matrix now.`;
  * Step 5: Red Herrings (False but Plausible Explanations)
  */
 export function getRedHerringsTemplate(
-  storyLength: StoryLength = "medium"
+  storyLength: StoryLength = "medium",
+  scenesContext?: string
 ): string {
   const redHerringsSentence = getStoryLengthRedHerringsSentence(storyLength);
+
+  const scenesContextSection = scenesContext
+    ? `
+
+## Existing Scenes & Locations
+The following scenes and macro locations already exist in the world. Red herrings should
+reference these real locations when describing where evidence or rumors originate:
+${scenesContext}
+`
+    : "";
+
   return `You are a writer for a tabletop RPG scenario.
 
 ════════════════════════════════════════════════════════
@@ -588,7 +630,7 @@ The historical events that may have been covered up or rationalized:
 
 ## Knowledge Matrix (for Reference)
 {{knowledgeMatrixJson}}
-
+${scenesContextSection}
 ## Task
 ${redHerringsSentence}
 
@@ -849,4 +891,60 @@ Return ONLY valid JSON in this structure:
 \`\`\`
 
 Generate the end state definition now.`;
+}
+
+/**
+ * Story Premise Prompt - Generates a 1-2 paragraph narrative seed
+ * describing the mystery and themes without detailed plot specifics.
+ */
+export function buildStoryPremisePrompt(params: {
+  macroScene: MacroSceneStructure;
+  mythosEvents: MythosEvent[];
+  endState: EndStateDefinition;
+  storyElements?: StructuredStoryElements;
+}): string {
+  const { macroScene, mythosEvents, endState, storyElements } = params;
+
+  const storyElementsSection = storyElements
+    ? `
+## Story Elements
+${JSON.stringify(storyElements, null, 2)}
+`
+    : "";
+
+  return `You are a writer for a tabletop RPG scenario.
+
+# STORY PREMISE GENERATION
+${storyElementsSection}
+## Objective
+Write a concise 1-2 paragraph story premise that captures the essence of this mystery scenario.
+The premise should describe the general atmosphere, the kind of mystery at play, and the thematic
+undercurrents — but it must NOT name specific NPCs, specific locations (beyond the setting itself),
+or lay out detailed plot points.
+
+Think of this as the "back of the book" summary that sets the mood and stakes without spoilers.
+
+## Setting Context
+${JSON.stringify(macroScene, null, 2)}
+
+## Historical Mythos Events
+${JSON.stringify(mythosEvents, null, 2)}
+
+## End State (What Happens If No Intervention)
+${JSON.stringify(endState, null, 2)}
+
+## Requirements
+1. Write 1-2 paragraphs only — no bullet points, no headers, just prose.
+2. Capture the mystery: what kind of investigation is this? What is at stake?
+3. Convey the atmosphere and tone appropriate to the setting.
+4. Hint at the historical forces at work without revealing specifics.
+5. Do NOT name specific NPCs, specific buildings, or specific plot events.
+6. Do NOT list clues, locations to visit, or investigation steps.
+7. The premise should make a reader want to play this scenario.
+
+## Output Format
+Return ONLY the prose text — no JSON, no markdown formatting, no code blocks.
+Just the 1-2 paragraph story premise.
+
+Generate the story premise now.`;
 }

@@ -620,19 +620,13 @@ export const buildDynamicGraph = (
           : null;
         const moduleDigest = afterState.moduleDigest;
 
-        const getConns = (id: string, name?: string) => {
-          const byIdOrName = afterState.scenarioOutlines.find(
-            (outline) => outline.id === id || (name && outline.name === name)
-          );
-          if (byIdOrName) {
-            return byIdOrName.connections || [];
-          }
-          // scenes Map is keyed by scenarioId directly, no resolution needed
-          return (
-            afterState.scenarioOutlines.find(
-              (outline) => outline.id === id
-            )?.connections || []
-          );
+        const getConns = (id: string, _name?: string) => {
+          // Connections now live on DynamicScene, not ScenarioOutline
+          const scene = afterState.scenes.get(id);
+          return (scene?.connections || []).map(connId => ({
+            scenarioName: afterState.scenes.get(connId)?.name || connId,
+            relationshipType: "leads_to" as const,
+          }));
         };
 
         if (prevScene && currentScene) {

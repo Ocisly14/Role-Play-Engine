@@ -65,8 +65,8 @@ export function buildMapImagePrompt(
   // Build scenario summary
   const scenarioSummaries = scenarioOutlines
     .map((scenario) => {
-      const connections = scenario.connections
-        .map((conn) => `  → ${conn.scenarioName} (${conn.relationshipType})`)
+      const connections = ((scenario as any).connections || [])
+        .map((conn: any) => `  → ${conn.scenarioName || conn} (${conn.relationshipType || "connected"})`)
         .join("\n");
 
       return `

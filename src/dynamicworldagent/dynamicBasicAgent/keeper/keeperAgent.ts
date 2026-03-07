@@ -100,14 +100,8 @@ export class KeeperAgent {
         return true;
       if (action.impact === 2) {
         const npcScene = action.location;
-        const adjacent = (dynamicState.connectionStates ?? []).some(
-          (c) =>
-            !c.blocked &&
-            ((c.fromScenarioId === playerScene &&
-              c.toScenarioId === npcScene) ||
-              (c.toScenarioId === playerScene &&
-                c.fromScenarioId === npcScene))
-        );
+        const playerSceneObj = dynamicState.scenes.get(playerScene);
+        const adjacent = playerSceneObj?.connections?.includes(npcScene) ?? false;
         return npcScene === playerScene || adjacent;
       }
       return false;
@@ -473,18 +467,12 @@ export class KeeperAgent {
       return { hasScenario: false, message: "No current scene loaded" };
     }
 
-    const outline = dynamicState.scenarioOutlines.find(o => o.id === scene.id);
-    const connections = (outline?.connections || []).map(conn => {
-      const target = dynamicState.scenarioOutlines.find(
-        o => o.name === conn.scenarioName || o.id === conn.scenarioName
-      );
+    const connections = (scene.connections || []).map(connId => {
+      const connScene = dynamicState.scenes.get(connId);
       return {
-        scenarioName: target?.name || conn.scenarioName,
-        scenarioId: target?.id || conn.scenarioName,
-        relationshipType: conn.relationshipType,
-        description: conn.description,
-        blocked: conn.blocked,
-        blockReason: conn.blockReason,
+        sceneId: connId,
+        sceneName: connScene?.name || connId,
+        description: connScene?.description || "",
       };
     });
 
@@ -496,7 +484,7 @@ export class KeeperAgent {
       id: scene.id,
       name: scene.name,
       description: scene.description,
-      domain: scene.domain,
+      parentLocationId: scene.parentLocationId,
       conditions: scene.conditions,
       items: scene.items,
       events: scene.events,
@@ -513,24 +501,18 @@ export class KeeperAgent {
     dynamicState: DynamicGameState,
     previousSceneId: string
   ) {
-    const outline = dynamicState.scenarioOutlines.find(o => o.id === previousSceneId);
-    if (!outline) return null;
+    const prevScene = dynamicState.scenes.get(previousSceneId);
+    if (!prevScene) return null;
 
-    const connections = (outline.connections || []).map(conn => {
-      const target = dynamicState.scenarioOutlines.find(
-        o => o.name === conn.scenarioName || o.id === conn.scenarioName
-      );
+    const connections = (prevScene.connections || []).map(connId => {
+      const connScene = dynamicState.scenes.get(connId);
       return {
-        scenarioName: target?.name || conn.scenarioName,
-        scenarioId: target?.id || conn.scenarioName,
-        relationshipType: conn.relationshipType,
-        description: conn.description,
-        blocked: conn.blocked,
-        blockReason: conn.blockReason,
+        sceneId: connId,
+        sceneName: connScene?.name || connId,
       };
     });
 
-    return { id: outline.id, name: outline.name, description: outline.description, connections };
+    return { id: prevScene.id, name: prevScene.name, description: prevScene.description, connections };
   }
 
   /**

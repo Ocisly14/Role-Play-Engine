@@ -205,15 +205,13 @@ export async function loadDynamicGameStateFromDatabase(
       manager.loadWorldData({ endState: moduleData.endStateDefinition as any });
     }
 
-    // Load scenario outlines from database (including connections)
+    // Load scenario outlines from database
     const scenarioRows = await prisma.scenario.findMany({
       where: { moduleId },
       select: {
         scenarioId: true,
         name: true,
         description: true,
-        tags: true,
-        connections: true,
         sourcePlaceId: true,
       },
     });
@@ -221,12 +219,18 @@ export async function loadDynamicGameStateFromDatabase(
     // Get knowledge matrix to look up sourcePlaceName
     const knowledgeMatrix = manager.getState().knowledgeMatrix || [];
 
-    const scenarioOutlines = scenarioRows.map((row) => {
-      // Prisma returns JSON fields already parsed
-      const connections: any[] = Array.isArray(row.connections)
-        ? row.connections
-        : [];
+    // Count scenes per scenario for subSceneCount
+    const sceneCountByScenario = new Map<string, number>();
+    const sceneCounts = await prisma.scene.groupBy({
+      by: ["scenarioId"],
+      where: { ...(moduleId ? { moduleId } : {}) },
+      _count: { sceneId: true },
+    });
+    for (const sc of sceneCounts) {
+      sceneCountByScenario.set(sc.scenarioId, sc._count.sceneId);
+    }
 
+    const scenarioOutlines = scenarioRows.map((row) => {
       // Find sourcePlaceName from knowledgeMatrix if sourcePlaceId exists
       let sourcePlaceName: string | undefined = undefined;
       if (row.sourcePlaceId) {
@@ -240,37 +244,14 @@ export async function loadDynamicGameStateFromDatabase(
       }
 
       // Convert database format to ScenarioOutline format
+      // ScenarioOutline is a pure container: no connections, no clues.
       return {
         id: row.scenarioId,
         name: row.name,
         description: row.description || "",
         sourcePlaceId: row.sourcePlaceId || undefined,
         sourcePlaceName: sourcePlaceName,
-        tags: Array.isArray(row.tags) ? (row.tags as string[]) : [],
-        evidence: [], // Database doesn't store evidence, set to empty array
-        clues: [], // Database doesn't store clues, set to empty array
-        connections: connections.map((conn: any) => {
-          // Find target scenario to resolve name and id
-          const targetScenario = scenarioRows.find(
-            (s) =>
-              s.name === conn.scenarioName ||
-              s.scenarioId === conn.scenarioName ||
-              s.scenarioId === conn.scenarioId ||
-              s.name === conn.scenarioId
-          );
-          return {
-            scenarioName:
-              targetScenario?.name || conn.scenarioName || conn.scenarioId,
-            scenarioId:
-              targetScenario?.scenarioId ||
-              conn.scenarioId ||
-              conn.scenarioName,
-            relationshipType: conn.relationshipType,
-            description: conn.description,
-            blocked: conn.blocked,
-            blockReason: conn.blockReason,
-          };
-        }),
+        subSceneCount: sceneCountByScenario.get(row.scenarioId) ?? 0,
       };
     });
 
@@ -361,6 +342,19 @@ export async function loadDynamicGameStateFromModuleLoader(
     endState: loadedModule.endState,
     scenarioOutlines: loadedModule.scenarios,
   });
+
+  // Load transport edges from the module (file-based loader provides them)
+  // Use type assertion to bypass Readonly — we are still in the initialization phase
+  if (loadedModule.transportEdges && loadedModule.transportEdges.length > 0) {
+    (manager.getState() as DynamicGameState).transportEdges = loadedModule.transportEdges;
+  }
+
+  // Load scenes from the module into state
+  if (loadedModule.scenes && loadedModule.scenes.size > 0) {
+    for (const [sceneId, scene] of loadedModule.scenes.entries()) {
+      manager.updateScene(sceneId, scene);
+    }
+  }
 
   console.log(
     `[DynamicGameState] Loaded state for module "${moduleName}" from files`
@@ -593,7 +587,8 @@ export async function initializeCompleteDynamicGameState(
       id: sceneRow.scenarioId,
       name: sceneRow.name || sceneRow.scenario?.name,
       description: sceneRow.description,
-      domain: sceneRow.domain || undefined,
+      parentLocationId: sceneRow.parentLocationId || sceneRow.domain || "",
+      connections: Array.isArray(sceneRow.connections) ? sceneRow.connections : [],
       items: Array.isArray(sceneRow.items) ? sceneRow.items : [],
       sceneImage,
       clues: sceneClues.map((clue) => ({
@@ -822,17 +817,14 @@ export async function initializeCompleteDynamicGameState(
       }
     }
 
-    // connectionStates: from scenario outlines
-    if (completeState.connectionStates.length === 0) {
-      const scenarioOutlines = completeState.scenarioOutlines ?? [];
-      for (const outline of scenarioOutlines) {
-        for (const conn of outline.connections ?? []) {
-          completeState.connectionStates.push({
-            fromScenarioId: outline.id,
-            toScenarioId: conn.scenarioId ?? conn.scenarioName,
-            blocked: conn.blocked ?? false,
-            conditions: [],
-          });
+    // blockedConnections: initially empty — all connections are open at game start
+    // Static connections are defined on DynamicScene.connections
+
+    // Build npcResidences from ScenarioOutline.residents
+    for (const outline of completeState.scenarioOutlines ?? []) {
+      if (outline.residents) {
+        for (const npcId of outline.residents) {
+          completeState.npcResidences[npcId] = outline.id;
         }
       }
     }

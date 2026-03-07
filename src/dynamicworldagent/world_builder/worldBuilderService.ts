@@ -1,19 +1,43 @@
 /**
  * World Builder Service - Main orchestrator for world generation
- * Coordinates Macro Scene Agent and NPC Builder Agent
+ * Implements the inverted pipeline: world first, then story.
+ *
+ * Pipeline phases:
+ *   0. Prompt Structurizer
+ *   1. Setting Seed (macroScene, mythosEvents, endState, storyPremise)
+ *   2. Macro Locations (ScenarioOutline[])
+ *   3. Transport Network (outdoor scenes + TransportEdge[])
+ *   4. Sub-Scene Generation (DynamicScene[] per macro location, parallel)
+ *   5. Graph Assembly (merged scene graph, validated connectivity)
+ *   6-8. Story Weaving (TruthEvent[], KnowledgeHolder[], RedHerring[])
+ *   9. NPC Generation
+ *  10. Clue Placement (clues distributed to scenes + NPCs)
+ *  11. Starting Scene Selection (TODO)
+ *  12. Module Digest + Persistence
  */
 
 import path from "path";
 import fs from "fs/promises";
 import { generateMapImageFromScenarios } from "../visual/mapImage.js";
+import { assembleSceneGraph } from "./graphAssembly.js";
+import { CluePlacementAgent } from "./cluePlacementAgent.js";
 import { MacroSceneAgent } from "./macroSceneAgent.js";
 import { ModuleDigestAgent } from "./moduleDigestAgent.js";
-import { NPCBuilderAgent } from "./npcBuilderAgent.js";
+import { getModuleSizeConfig } from "./moduleSizeConfig.js";
+import { NPCBuilderAgent, assignResidences } from "./npcBuilderAgent.js";
 import { saveModuleDigestToJSON, saveWorldToJSON } from "./persistence.js";
 import { PromptStructurizerAgent } from "./promptStructurizerAgent.js";
 import { ScenarioBuilderAgent } from "./scenarioBuilderAgent.js";
+import { SceneGraphBuilder } from "./sceneGraphBuilder.js";
 import type { StoryLength } from "./storyLengthConfig.js";
-import type { MacroSceneSettingType, ScenarioNpcAssignments, WorldGenerationResult } from "./types.js";
+import { SubSceneBuilder } from "./subSceneBuilder.js";
+import type {
+  DynamicScene,
+  MacroSceneSettingType,
+  ScenarioNpcAssignments,
+  TransportEdge,
+  WorldGenerationResult,
+} from "./types.js";
 
 export type { StoryLength };
 
@@ -25,8 +49,6 @@ export type WorldBuilderProgressCallback = (
   progress: number,
   message: string
 ) => void;
-
-type ParallelTask = "scenario_builder" | "npc_builder";
 
 const clamp = (value: number, min: number, max: number): number =>
   Math.max(min, Math.min(max, value));
@@ -43,38 +65,6 @@ function createMonotonicProgressEmitter(
   };
 }
 
-function createParallelProgressReporter(
-  emitProgress: (stage: string, progress: number, message: string) => void,
-  start: number,
-  end: number
-): {
-  report: (task: ParallelTask, completion: number, message: string) => void;
-  complete: (task: ParallelTask, message: string) => void;
-} {
-  const completionByTask: Record<ParallelTask, number> = {
-    scenario_builder: 0,
-    npc_builder: 0,
-  };
-
-  const push = (task: ParallelTask, completion: number, message: string) => {
-    const normalizedCompletion = clamp(completion, 0, 1);
-    completionByTask[task] = Math.max(
-      completionByTask[task],
-      normalizedCompletion
-    );
-
-    const totalCompletion =
-      (completionByTask.scenario_builder + completionByTask.npc_builder) / 2;
-    const progress = start + (end - start) * totalCompletion;
-    emitProgress(task, progress, message);
-  };
-
-  return {
-    report: push,
-    complete: (task: ParallelTask, message: string) => push(task, 1, message),
-  };
-}
-
 /**
  * World Builder Service - Main entry point
  */
@@ -84,6 +74,9 @@ export class WorldBuilderService {
   private npcBuilderAgent: NPCBuilderAgent;
   private moduleDigestAgent: ModuleDigestAgent;
   private promptStructurizerAgent: PromptStructurizerAgent;
+  private sceneGraphBuilder: SceneGraphBuilder;
+  private subSceneBuilder: SubSceneBuilder;
+  private cluePlacementAgent: CluePlacementAgent;
 
   constructor() {
     this.macroSceneAgent = new MacroSceneAgent();
@@ -91,10 +84,14 @@ export class WorldBuilderService {
     this.npcBuilderAgent = new NPCBuilderAgent();
     this.moduleDigestAgent = new ModuleDigestAgent();
     this.promptStructurizerAgent = new PromptStructurizerAgent();
+    this.sceneGraphBuilder = new SceneGraphBuilder();
+    this.subSceneBuilder = new SubSceneBuilder();
+    this.cluePlacementAgent = new CluePlacementAgent();
   }
 
   /**
-   * Generate complete world content
+   * Generate complete world content using the inverted pipeline:
+   * world first (setting -> locations -> scenes -> graph), then story, then NPCs + clues.
    */
   async generateWorld(
     settingType: MacroSceneSettingType = "small_town",
@@ -102,7 +99,7 @@ export class WorldBuilderService {
     storyLength: StoryLength = "medium",
     progressCallback?: WorldBuilderProgressCallback
   ): Promise<WorldGenerationResult> {
-    console.log("\n🌍🏗️ [World Builder Service] Starting world generation...");
+    console.log("\n[World Builder Service] Starting world generation (inverted pipeline)...");
     console.log(`   Setting Type: ${settingType}`);
     console.log(`   Story Length: ${storyLength}`);
     console.log(
@@ -112,7 +109,7 @@ export class WorldBuilderService {
     try {
       const emitProgress = createMonotonicProgressEmitter(progressCallback);
 
-      // ========== PHASE 0: PROMPT STRUCTURIZER (progress 0→5) ==========
+      // ========== PHASE 0: PROMPT STRUCTURIZER (progress 0->5) ==========
       emitProgress("prompt_structurizer", 1, "Analyzing creative prompt...");
 
       const storyElements = await this.promptStructurizerAgent.structurize(
@@ -121,132 +118,157 @@ export class WorldBuilderService {
 
       emitProgress("prompt_structurizer", 5, "Story elements extracted");
 
-      // ========== PHASE 1: MACRO SCENE AGENT (Steps 1-6, progress 5→40) ==========
-      emitProgress("macro_scene", 5, `Generating ${settingType} structure...`);
+      // ========== PHASE 1: SETTING SEED (progress 5->15) ==========
+      emitProgress("setting_seed", 5, `Generating ${settingType} setting seed...`);
 
-      const macroScene = await this.macroSceneAgent.generateTownStructure(
-        settingType,
-        storyElements,
-        (msg) => emitProgress("macro_scene", 8, msg),
-        storyLength
-      );
-      emitProgress(
-        "macro_scene",
-        8,
-        `Town structure: ${macroScene.locationName}`
-      );
-
-      emitProgress("macro_scene", 10, "Generating historical mythos ...");
-      const mythosEvents = await this.macroSceneAgent.generateHistoricalMythos(
-        macroScene,
-        storyElements,
-        (msg) => emitProgress("macro_scene", 12, msg)
-      );
-      emitProgress("macro_scene", 12, `Historical mythos completed`);
-
-      emitProgress("macro_scene", 15, "Generating mysteries...");
-      const truthTimeline = await this.macroSceneAgent.generateTruthTimeline(
-        macroScene,
-        mythosEvents,
-        storyElements,
-        (msg) => emitProgress("macro_scene", 18, msg),
-        storyLength
-      );
-      emitProgress("macro_scene", 18, `Mysteries completed`);
-
-      emitProgress("macro_scene", 22, "Generating knowledge matrix...");
-      const knowledgeMatrix =
-        await this.macroSceneAgent.generateKnowledgeMatrix(
-          macroScene,
-          mythosEvents,
-          truthTimeline,
+      const { macroScene, mythosEvents, endState, storyPremise } =
+        await this.macroSceneAgent.generateSettingSeed(
+          settingType,
           storyElements,
-          (msg) => emitProgress("macro_scene", 25, msg),
-          storyLength
+          (msg) => emitProgress("setting_seed", 10, msg)
         );
-      emitProgress("macro_scene", 25, `Knowledge matrix completed`);
 
-      emitProgress("macro_scene", 28, "Generating wisps of truth...");
-      const redHerrings = await this.macroSceneAgent.generateRedHerrings(
-        mythosEvents,
-        truthTimeline,
-        knowledgeMatrix,
-        storyElements,
-        (msg) => emitProgress("macro_scene", 32, msg),
-        storyLength
+      emitProgress(
+        "setting_seed",
+        15,
+        `Setting seed complete: ${macroScene.locationName}`
       );
-      emitProgress("macro_scene", 32, `Wisps of truth completed`);
-
-      emitProgress("macro_scene", 35, "Generating doomsday ...");
-      const endState = await this.macroSceneAgent.generateEndState(
-        macroScene,
-        mythosEvents,
-        truthTimeline,
-        storyElements,
-        (msg) => emitProgress("macro_scene", 40, msg)
-      );
-      emitProgress("macro_scene", 40, `World generation complete`);
 
       const moduleName = macroScene.moduleName;
+      const moduleSize = getModuleSizeConfig(storyLength);
 
-      // ========== PHASE 2-3: SCENARIO + NPC BUILDERS (parallel, shared 45→75) ==========
-      const parallelProgress = createParallelProgressReporter(
-        emitProgress,
-        45,
-        75
-      );
-      parallelProgress.report(
-        "scenario_builder",
-        0,
-        "Generating scenarios ..."
-      );
-      parallelProgress.report(
-        "npc_builder",
-        0,
-        "Generating NPCs from flesh and blood..."
-      );
+      // ========== PHASE 2: MACRO LOCATIONS (progress 15->25) ==========
+      emitProgress("macro_locations", 15, "Generating macro locations...");
 
-      const scenarioPromise = this.scenarioBuilderAgent.generate(
+      const macroLocations = await this.scenarioBuilderAgent.generateMacroLocations(
         macroScene,
-        truthTimeline,
-        knowledgeMatrix,
+        storyPremise,
+        moduleSize,
         storyElements,
-        (msg) => {
-          if (msg.includes("Calling AI")) {
-            parallelProgress.report("scenario_builder", 0.35, msg);
-            return;
-          }
-          if (msg.includes("generated")) {
-            parallelProgress.report("scenario_builder", 0.85, msg);
-            return;
-          }
-          parallelProgress.report("scenario_builder", 0.6, msg);
-        }
+        (msg) => emitProgress("macro_locations", 20, msg)
       );
+
+      emitProgress(
+        "macro_locations",
+        25,
+        `Macro locations generated: ${macroLocations.length} locations`
+      );
+
+      // ========== PHASE 3: TRANSPORT NETWORK (progress 25->30) ==========
+      emitProgress("transport_network", 25, "Generating transport network...");
+
+      const { outdoorScenes, transportEdges, outdoorMacroLocation } =
+        await this.sceneGraphBuilder.generateTransportNetwork(
+          macroLocations,
+          macroScene,
+          storyPremise,
+          (msg) => emitProgress("transport_network", 28, msg)
+        );
+
+      emitProgress(
+        "transport_network",
+        30,
+        `Transport network: ${outdoorScenes.length} outdoor scenes, ${transportEdges.length} edges`
+      );
+
+      // Build streetScenesByLocation Map for sub-scene generation
+      const streetScenesByLocation = new Map<string, Array<{ id: string; name: string }>>();
+      for (const edge of transportEdges) {
+        const streetScene = outdoorScenes.find((s) => s.id === edge.streetSceneId);
+        if (!streetScene) continue;
+        const streetInfo = { id: streetScene.id, name: streetScene.name };
+
+        // Map from both fromLocationId and toLocationId
+        for (const locId of [edge.fromLocationId, edge.toLocationId]) {
+          const existing = streetScenesByLocation.get(locId) || [];
+          // Avoid duplicates
+          if (!existing.some((s) => s.id === streetInfo.id)) {
+            existing.push(streetInfo);
+            streetScenesByLocation.set(locId, existing);
+          }
+        }
+      }
+
+      // ========== PHASE 4: SUB-SCENE GENERATION (progress 30->40) ==========
+      emitProgress("sub_scenes", 30, "Generating sub-scenes for all locations...");
+
+      const subScenesByLocation = await this.subSceneBuilder.generateAllSubScenes(
+        macroLocations,
+        macroScene,
+        streetScenesByLocation
+      );
+
+      emitProgress(
+        "sub_scenes",
+        40,
+        `Sub-scenes generated for ${subScenesByLocation.size} locations`
+      );
+
+      // ========== PHASE 5: GRAPH ASSEMBLY (progress 40->42) ==========
+      emitProgress("graph_assembly", 40, "Assembling scene graph...");
+
+      const graphResult = assembleSceneGraph(
+        macroLocations,
+        subScenesByLocation,
+        outdoorScenes,
+        outdoorMacroLocation,
+        transportEdges
+      );
+
+      // Log assembly errors as warnings (don't fail)
+      if (graphResult.errors.length > 0) {
+        for (const error of graphResult.errors) {
+          console.warn(`   [Graph Assembly] ${error}`);
+        }
+      }
+
+      const allScenes = graphResult.allScenes;
+      const scenarios = graphResult.scenarioOutlines;
+
+      emitProgress(
+        "graph_assembly",
+        42,
+        `Scene graph assembled: ${allScenes.size} scenes, ${scenarios.length} locations`
+      );
+
+      // ========== PHASE 6-8: STORY WEAVING (progress 42->60) ==========
+      emitProgress("story_weaving", 42, "Weaving story into the world...");
+
+      const { truthTimeline, knowledgeMatrix, redHerrings } =
+        await this.macroSceneAgent.generateStoryInWorld(
+          macroScene,
+          mythosEvents,
+          endState,
+          storyPremise,
+          scenarios,
+          allScenes,
+          storyElements,
+          (msg) => emitProgress("story_weaving", 52, msg)
+        );
+
+      emitProgress(
+        "story_weaving",
+        60,
+        `Story woven: ${truthTimeline.length} truth events, ${knowledgeMatrix.length} knowledge holders, ${redHerrings.length} red herrings`
+      );
+
+      // ========== PHASE 9: NPC GENERATION (progress 60->78) ==========
+      emitProgress("npc_builder", 60, "Generating NPCs from flesh and blood...");
 
       const npcProgressCallback = (msg: string) => {
-        const m = msg.match(/Processing NPC (\d+)\/(\d+)/);
+        const m = msg.match(/Processing NPC(?:s)? (\d+)/);
         if (m) {
-          const processed = Number(m[1]);
-          const total = Number(m[2]);
-          if (total > 0) {
-            parallelProgress.report(
-              "npc_builder",
-              0.2 + (processed / total) * 0.75,
-              msg
-            );
-            return;
-          }
-        }
-
-        if (msg.includes("Instantiated")) {
-          parallelProgress.report("npc_builder", 0.2, msg);
+          emitProgress("npc_builder", 65, msg);
           return;
         }
-
-        parallelProgress.report("npc_builder", 0.1, msg);
+        if (msg.includes("Instantiated")) {
+          emitProgress("npc_builder", 63, msg);
+          return;
+        }
+        emitProgress("npc_builder", 68, msg);
       };
-      const npcPromise = this.npcBuilderAgent.generateBatch(
+
+      const npcs = await this.npcBuilderAgent.generateBatch(
         macroScene,
         truthTimeline,
         knowledgeMatrix,
@@ -256,88 +278,55 @@ export class WorldBuilderService {
         npcProgressCallback
       );
 
-      const [scenarios, npcs] = await Promise.all([
-        scenarioPromise,
-        npcPromise,
-      ]);
-      parallelProgress.complete("scenario_builder", "Scenarios completed");
-      parallelProgress.complete("npc_builder", "NPCs completed");
+      // Assign residences based on ScenarioOutline.residents
+      assignResidences(npcs, scenarios);
 
-      // ========== PHASE 4a: STARTING SCENE (78→80) ==========
-      emitProgress(
-        "scenario_snapshot",
-        78,
-        "Selecting the start of all evils..."
+      emitProgress("npc_builder", 78, `NPCs generated: ${npcs.length}`);
+
+      // ========== PHASE 10: CLUE PLACEMENT (progress 78->85) ==========
+      emitProgress("clue_placement", 78, "Distributing clues across scenes and NPCs...");
+
+      await this.cluePlacementAgent.placeClues(
+        truthTimeline,
+        knowledgeMatrix,
+        allScenes,
+        npcs,
+        scenarios,
+        (msg) => emitProgress("clue_placement", 82, msg)
       );
 
-      const startingScene =
-        await this.scenarioBuilderAgent.generateStartingScene(
-          macroScene,
-          truthTimeline,
-          knowledgeMatrix,
-          scenarios,
-          storyElements,
-          (msg) => emitProgress("scenario_snapshot", 79, msg)
-        );
+      emitProgress("clue_placement", 85, "Clue placement complete");
 
-      // ========== PHASE 4b: NPC ASSIGNMENT (80→82) ==========
-      emitProgress(
-        "npc_assignment",
-        80,
-        "Assigning NPCs to scenarios..."
-      );
+      // ========== PHASE 11: STARTING SCENE (progress 85->87) ==========
+      // TODO: Starting scene selection is deprecated in the inverted pipeline.
+      // In the future, the first scene will be determined by the game init flow.
+      emitProgress("starting_scene", 85, "Starting scene selection (skipped — TODO)");
+      const startingScene = null;
+      emitProgress("starting_scene", 87, "Starting scene: deferred to game init");
 
-      const { startingSceneCharacters, otherScenarioNpcAssignments } =
-        await this.scenarioBuilderAgent.assignNpcsToScenarios(
-          startingScene,
-          scenarios,
-          npcs,
-          storyElements,
-          (msg) => emitProgress("npc_assignment", 82, msg)
-        );
+      // ========== PHASE 12: MODULE DIGEST + PERSISTENCE (progress 87->100) ==========
+      emitProgress("module_digest", 87, "Generating the whips of the Lord...");
 
-      // Note: startingSceneCharacters are managed separately from the scene.
-      // They are passed through to persistence via otherScenarioNpcAssignments / startingSceneCharacters.
-
-      // ========== PHASE 4.5: MACRO MAP GENERATION (79→81) ==========
-      emitProgress("map_generation", 80, "Generating macro map...");
-
+      // Generate macro map for the first scenario
       let macroMapPath: string | undefined = undefined;
       if (process.env.GOOGLE_API_KEY) {
         try {
-          // Only generate map for the starting scene – additional scenes are
-          // added incrementally as the player switches scenes during gameplay.
-          const startingOutline = scenarios.find(
-            (s) => s.id === startingScene.scenarioId
-          );
-          if (startingOutline) {
+          const firstOutline = scenarios[0];
+          if (firstOutline) {
             const mapResult = await generateMapImageFromScenarios(moduleName, [
-              startingOutline,
+              firstOutline,
             ]);
             if (mapResult) {
               macroMapPath = mapResult.path;
               console.log(
-                `   ✓ Starting-scene macro map generated: ${macroMapPath}`
+                `   Macro map generated: ${macroMapPath}`
               );
-              emitProgress("map_generation", 81, "Macro map generated.");
             }
-          } else {
-            console.warn(
-              "   ⚠️  Starting scene outline not found, skipping macro map generation"
-            );
           }
         } catch (error) {
-          console.warn("   ⚠️  Failed to generate macro map:", error);
-          // Non-fatal: continue without map
+          console.warn("   Failed to generate macro map:", error);
         }
-      } else {
-        console.log(
-          "   ⚠️  GOOGLE_API_KEY not configured, skipping macro map generation"
-        );
       }
-
-      // ========== PHASE 5: MODULE DIGEST (82→...) ==========
-      emitProgress("module_digest", 82, "Generating the whips of the Lord...");
 
       const moduleDigest = await this.moduleDigestAgent.generate(
         macroScene,
@@ -348,7 +337,7 @@ export class WorldBuilderService {
         startingScene,
         storyElements,
         endState,
-        macroMapPath // Pass map path to digest
+        macroMapPath
       );
 
       const moduleDigestFile = await saveModuleDigestToJSON(
@@ -356,10 +345,11 @@ export class WorldBuilderService {
         moduleDigest
       );
 
-      // ========== PHASE 6: PERSISTENCE ==========
-      emitProgress("persistence", 90, "Saving the world ...");
+      emitProgress("persistence", 92, "Saving the world...");
 
-      const generatedFiles = await saveWorldToJSON(
+      // Save using the existing persistence function.
+      // Pass adapted parameters — the persistence function will be updated in Task 12.
+      const generatedFilesBase = await saveWorldToJSON(
         moduleName,
         macroScene,
         truthTimeline,
@@ -370,38 +360,80 @@ export class WorldBuilderService {
         scenarios,
         npcs,
         startingScene,
-        otherScenarioNpcAssignments
+        [] // No NPC assignments in the inverted pipeline — residences are on NPC objects
+      );
+
+      // Save scenes to individual JSON files
+      const scenesDir = path.join(
+        process.cwd(),
+        "data",
+        "Mods",
+        moduleName,
+        `${moduleName}_Scenes`
+      );
+      await fs.mkdir(scenesDir, { recursive: true });
+
+      for (const [sceneId, scene] of allScenes) {
+        const fileName = `${sceneId.replace(/[^a-zA-Z0-9_-]/g, "_")}.json`;
+        const filePath = path.join(scenesDir, fileName);
+        await fs.writeFile(filePath, JSON.stringify(scene, null, 2));
+      }
+
+      // Save transport edges
+      const moduleDir = path.join(process.cwd(), "data", "Mods", moduleName);
+      const transportFile = path.join(moduleDir, "transport_edges.json");
+      await fs.writeFile(
+        transportFile,
+        JSON.stringify(
+          {
+            transportEdges,
+            note: "Transport edges connecting macro locations via outdoor street scenes.",
+          },
+          null,
+          2
+        )
       );
 
       emitProgress("complete", 100, "Time to face the unknown!");
 
-      console.log("✅ [World Builder Service] Generation successful");
-      console.log(`   Module: ${macroScene.moduleName}`);
+      console.log("[World Builder Service] Generation successful (inverted pipeline)");
+      console.log(`   Module: ${moduleName}`);
       console.log(`   Location: ${macroScene.locationName}`);
-      console.log(`   NPCs: ${npcs.length}`);
+      console.log(`   Scenarios: ${scenarios.length}`);
+      console.log(`   Scenes: ${allScenes.size}`);
+      console.log(`   Transport edges: ${transportEdges.length}`);
       console.log(`   Truth events: ${truthTimeline.length}`);
       console.log(`   Knowledge holders: ${knowledgeMatrix.length}`);
-      console.log(`   Scenarios: ${scenarios.length}`);
-      console.log(`   Files: ${Object.keys(generatedFiles).length} generated`);
+      console.log(`   Red herrings: ${redHerrings.length}`);
+      console.log(`   NPCs: ${npcs.length}`);
 
       return {
         macroScene,
-        truthTimeline,
-        knowledgeMatrix,
-        redHerrings,
+        storyPremise,
         mythosEvents,
         endState,
         scenarios,
+        scenes: allScenes,
+        transportEdges,
+        truthTimeline,
+        knowledgeMatrix,
+        redHerrings,
         startingScene,
-        otherScenarioNpcAssignments,
         npcs,
         generatedFiles: {
-          ...generatedFiles,
+          macroSceneFile: generatedFilesBase.macroSceneFile,
+          scenariosFile: generatedFilesBase.scenariosFile,
+          scenesDir,
+          transportFile,
+          truthTimelineFile: generatedFilesBase.truthTimelineFile,
+          knowledgeMatrixFile: generatedFilesBase.knowledgeMatrixFile,
+          startingSceneFile: generatedFilesBase.startingSceneFile,
+          npcsDir: generatedFilesBase.npcsDir,
           moduleDigestFile,
         },
       };
     } catch (error) {
-      console.error("❌ [World Builder Service] Generation failed:", error);
+      console.error("[World Builder Service] Generation failed:", error);
       progressCallback?.("error", 0, `Error: ${(error as Error).message}`);
       throw error;
     }
@@ -409,13 +441,14 @@ export class WorldBuilderService {
 
   /**
    * Generate scene-only content (macro scene + mythos + truth + knowledge + red herrings + end state)
+   * @deprecated Use generateWorld() with the inverted pipeline instead.
    */
   async generateScene(
     settingType: MacroSceneSettingType = "small_town",
     creativePrompt: string,
     progressCallback?: WorldBuilderProgressCallback
   ): Promise<WorldGenerationResult> {
-    console.log("\n🌍🏗️ [World Builder Service] Starting scene generation...");
+    console.log("\n[World Builder Service] Starting scene generation (legacy)...");
     console.log(`   Setting Type: ${settingType}`);
     console.log(
       `   Creative Prompt: ${creativePrompt.substring(0, 150)}${creativePrompt.length > 150 ? "..." : ""}`
@@ -511,7 +544,7 @@ export class WorldBuilderService {
 
     progressCallback?.("complete", 100, "Scene generation complete!");
 
-    console.log("✅ [World Builder Service] Scene generation successful");
+    console.log("[World Builder Service] Scene generation successful (legacy)");
     console.log(`   Module: ${moduleName}`);
     console.log(`   Location: ${macroScene.locationName}`);
     console.log(`   Truth events: ${truthTimeline.length}`);
@@ -521,17 +554,21 @@ export class WorldBuilderService {
 
     return {
       macroScene,
+      storyPremise: "",
       truthTimeline,
       knowledgeMatrix,
       redHerrings,
       mythosEvents,
       endState,
       scenarios,
+      scenes: new Map<string, DynamicScene>(),
+      transportEdges: [] as TransportEdge[],
       startingScene,
-      otherScenarioNpcAssignments,
       npcs: [],
       generatedFiles: {
         ...generatedFiles,
+        scenesDir: "",
+        transportFile: "",
         moduleDigestFile: null,
       },
     };
@@ -539,13 +576,14 @@ export class WorldBuilderService {
 
   /**
    * Generate NPCs for an existing module JSON bundle
+   * @deprecated Use generateWorld() with the inverted pipeline instead.
    */
   async generateNpcsForModule(
     moduleName: string,
     progressCallback?: WorldBuilderProgressCallback
   ): Promise<WorldGenerationResult> {
     console.log(
-      "\n👥 [World Builder Service] Starting NPC generation for module..."
+      "\n[World Builder Service] Starting NPC generation for module (legacy)..."
     );
     console.log(`   Module: ${moduleName}`);
 
@@ -628,23 +666,27 @@ export class WorldBuilderService {
 
     progressCallback?.("complete", 100, "NPC generation complete!");
 
-    console.log("✅ [World Builder Service] NPC generation successful");
+    console.log("[World Builder Service] NPC generation successful (legacy)");
     console.log(`   Module: ${moduleName}`);
     console.log(`   NPCs: ${npcs.length}`);
 
     return {
       macroScene,
+      storyPremise: "",
       truthTimeline,
       knowledgeMatrix,
       redHerrings,
       mythosEvents,
       endState,
       scenarios,
+      scenes: new Map<string, DynamicScene>(),
+      transportEdges: [] as TransportEdge[],
       startingScene: null,
-      otherScenarioNpcAssignments: [],
       npcs,
       generatedFiles: {
         ...generatedFiles,
+        scenesDir: "",
+        transportFile: "",
         moduleDigestFile: null,
       },
     };

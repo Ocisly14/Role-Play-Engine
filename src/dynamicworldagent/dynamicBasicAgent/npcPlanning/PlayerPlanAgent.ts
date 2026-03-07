@@ -207,26 +207,16 @@ export class PlayerPlanAgent {
   ): string {
     if (!currentScenarioId) return "";
 
-    // Find the scenario outline for the current scene
-    const outline = state.scenarioOutlines?.find(
-      (o: any) => o.id === currentScenarioId
-    );
-    if (!outline?.connections?.length) return "";
+    // Get connections from the current scene (sub-scene level)
+    const currentScene = state.scenes?.get(currentScenarioId);
+    if (!currentScene?.connections?.length) return "";
 
-    // Also check connectionStates for blocked status
-    const connectionStates = state.connectionStates ?? [];
-
-    return outline.connections
-      .map((conn: any) => {
-        const blocked = connectionStates.some(
-          (cs: any) =>
-            cs.blocked &&
-            ((cs.fromScenarioId === currentScenarioId &&
-              cs.toScenarioId === (conn.scenarioId ?? conn.scenarioName)) ||
-              (cs.toScenarioId === currentScenarioId &&
-                cs.fromScenarioId === (conn.scenarioId ?? conn.scenarioName)))
-        );
-        return `- ${conn.scenarioName}${conn.scenarioId ? ` (${conn.scenarioId})` : ""}: ${conn.relationshipType}${conn.description ? ` — ${conn.description}` : ""}${blocked ? " [BLOCKED]" : ""}${conn.blocked ? " [BLOCKED]" : ""}`;
+    return currentScene.connections
+      .map((connId: string) => {
+        const connScene = state.scenes?.get(connId);
+        const blocked = state.blockedConnections?.has(`${currentScenarioId}::${connId}`) ||
+          state.blockedConnections?.has(`${connId}::${currentScenarioId}`);
+        return `- ${connScene?.name ?? connId} (${connId})${blocked ? " [BLOCKED]" : ""}`;
       })
       .join("\n");
   }

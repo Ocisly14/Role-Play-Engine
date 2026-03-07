@@ -98,7 +98,7 @@ export class NPCPlanningAgent {
         const memoryLog = await this.getMemoryLog(sessionId, npc.id);
         const npcProfile = this.formatNpcProfile(npc);
         const relationships = this.formatRelationships(dgsm, npc.id);
-        const sceneMap = this.formatSceneMap(dgsm);
+        const sceneMap = this.formatSceneMap(dgsm, npc.id);
         const scenarioConditions = this.formatScenarioConditions(dgsm);
 
         const prompt = buildGenerateDailyPlanPrompt({
@@ -418,35 +418,66 @@ export class NPCPlanningAgent {
       .join("\n");
   }
 
-  private formatSceneMap(dgsm: DynamicGameStateManager): string {
+  private formatSceneMap(dgsm: DynamicGameStateManager, npcId: string): string {
     const state = dgsm.getState();
-    const outlines = state.scenarioOutlines ?? [];
-    const connections = state.connectionStates;
+    const npcLocation = state.npcLocations[npcId];
+    const currentScene = npcLocation ? state.scenes.get(npcLocation) : null;
 
-    // Scene directory: id → name + short description
-    const sceneParts: string[] = [];
-    const nameById = new Map<string, string>();
-    for (const s of outlines) {
-      nameById.set(s.id, s.name);
-      sceneParts.push(`- ${s.id} "${s.name}": ${s.description}`);
-    }
-
-    // Connection graph with names
-    const connParts: string[] = [];
-    for (const c of connections) {
-      const fromName = nameById.get(c.fromScenarioId) ?? c.fromScenarioId;
-      const toName = nameById.get(c.toScenarioId) ?? c.toScenarioId;
-      let line = `${fromName} (${c.fromScenarioId}) ↔ ${toName} (${c.toScenarioId})`;
-      if (c.blocked) line += " [BLOCKED]";
-      if (c.conditions.length > 0) line += ` (${c.conditions[c.conditions.length - 1]})`;
-      connParts.push(line);
-    }
-
-    if (sceneParts.length === 0 && connParts.length === 0) return "No scene data.";
     const parts: string[] = [];
-    if (sceneParts.length > 0) parts.push("Scenes:\n" + sceneParts.join("\n"));
-    if (connParts.length > 0) parts.push("Connections:\n" + connParts.join("\n"));
-    return parts.join("\n\n");
+
+    // 1. Current scene + connections
+    if (currentScene) {
+      parts.push(`Current Scene: ${currentScene.id} "${currentScene.name}" — ${currentScene.description}`);
+
+      const connScenes = currentScene.connections
+        .map((id) => state.scenes.get(id))
+        .filter(Boolean)
+        .map((s) => `  - ${s!.id} "${s!.name}": ${s!.description}`);
+      if (connScenes.length > 0) {
+        parts.push("Connected Scenes:\n" + connScenes.join("\n"));
+      }
+    }
+
+    // 2. Current macro location
+    const currentMacro = currentScene
+      ? (state.scenarioOutlines ?? []).find((o) => o.id === currentScene.parentLocationId)
+      : null;
+    if (currentMacro) {
+      parts.push(`Current Location: ${currentMacro.id} "${currentMacro.name}"`);
+    }
+
+    // 3. Nearby macro locations via transport edges
+    if (currentScene) {
+      const parentId = currentScene.parentLocationId;
+      const nearbyEdges = state.transportEdges.filter(
+        (e) => e.fromLocationId === parentId || e.toLocationId === parentId
+      );
+      const nearbyLocations = nearbyEdges.map((e) => {
+        const targetId = e.fromLocationId === parentId ? e.toLocationId : e.fromLocationId;
+        const target = (state.scenarioOutlines ?? []).find((o) => o.id === targetId);
+        return `  - ${targetId} "${target?.name ?? targetId}" (~${e.travelTimeMinutes} min via ${e.streetSceneId})`;
+      });
+      if (nearbyLocations.length > 0) {
+        parts.push("Nearby Locations:\n" + nearbyLocations.join("\n"));
+      }
+    }
+
+    // 4. NPC residence
+    const residence = state.npcResidences[npcId];
+    if (residence) {
+      const residenceMacro = (state.scenarioOutlines ?? []).find((o) => o.id === residence);
+      parts.push(`Home/Residence: ${residence} "${residenceMacro?.name ?? residence}"`);
+    }
+
+    // 5. Fallback: list all macro locations if no scene graph
+    if (parts.length === 0) {
+      const outlines = state.scenarioOutlines ?? [];
+      if (outlines.length > 0) {
+        parts.push("Locations:\n" + outlines.map((s) => `- ${s.id} "${s.name}": ${s.description}`).join("\n"));
+      }
+    }
+
+    return parts.join("\n\n") || "No scene data.";
   }
 
   private formatScenarioConditions(dgsm: DynamicGameStateManager): string {

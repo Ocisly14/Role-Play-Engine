@@ -32,6 +32,7 @@ import type {
   NPCBasicInfoStep1,
   ProgressCallback,
   RedHerring,
+  ScenarioOutline,
   StructuredStoryElements,
   TruthEvent,
 } from "./types.js";
@@ -704,5 +705,24 @@ export class NPCBuilderAgent {
     console.log(`   Final count: ${npcs.length} NPCs`);
 
     return npcs;
+  }
+}
+
+/**
+ * Assign residence to NPCs based on ScenarioOutline.residents arrays.
+ * Simple code function, no LLM needed.
+ */
+export function assignResidences(
+  npcs: DynamicNPCProfile[],
+  scenarios: ScenarioOutline[]
+): void {
+  for (const scenario of scenarios) {
+    if (!scenario.residents?.length) continue;
+    for (const npcId of scenario.residents) {
+      const npc = npcs.find((n) => n.id === npcId);
+      if (npc) {
+        npc.residence = scenario.id;
+      }
+    }
   }
 }

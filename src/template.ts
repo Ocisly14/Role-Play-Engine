@@ -215,7 +215,7 @@ export const collectScenarioImages = (state: CoCState): ImageInput[] => {
       const outline = dynamicState.scenarioOutlines?.find(
         (o) => o.id === dynamicState.currentSceneId
       );
-      mapImagePath = outline?.mapImagePath;
+      mapImagePath = (outline as any)?.mapImagePath;
     }
   }
   if (!mapImagePath) return [];

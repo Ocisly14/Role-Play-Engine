@@ -24,6 +24,7 @@ import type {
   MythosEvent,
   RedHerring,
   ScenarioOutline,
+  TransportEdge,
   TruthEvent,
 } from "./types.js";
 import type { DynamicNPCProfile } from "./types.js";
@@ -44,6 +45,8 @@ export interface LoadedWorldModule {
   scenarios: ScenarioOutline[];
   scenes: Map<string, DynamicScene>; // scenarioId -> scene
   npcs: DynamicNPCProfile[];
+  transportEdges: TransportEdge[];
+  storyPremise: string;
   files: {
     truthTimelineFile: string;
     knowledgeMatrixFile: string;
@@ -115,6 +118,7 @@ export class WorldModuleLoader {
       "macro_scene.json",
       "scenarios_outline.json",
       "module_digest.json",
+      "transport_edges.json",
     ];
 
     let latestMtime = 0;
@@ -214,7 +218,7 @@ export class WorldModuleLoader {
 
     try {
       // 1. Load module digest
-      console.log(`  [1/7] Loading module_digest.json...`);
+      console.log(`  [1/9] Loading module_digest.json...`);
       const moduleDigestFile = path.join(moduleDir, "module_digest.json");
       const moduleDigest = this.loadJSON<ModuleDigest & { title: string }>(
         moduleDigestFile
@@ -222,7 +226,7 @@ export class WorldModuleLoader {
       console.log(`    Module digest loaded: ${moduleDigest.title}`);
 
       // 2. Load macro scene (includes mythos events and end state)
-      console.log(`  [2/7] Loading macro_scene.json...`);
+      console.log(`  [2/9] Loading macro_scene.json...`);
       const macroSceneFile = path.join(moduleDir, "macro_scene.json");
       const macroSceneData = this.loadJSON<{
         macroScene: MacroSceneStructure;
@@ -235,7 +239,7 @@ export class WorldModuleLoader {
       console.log(`    Mythos events: ${macroSceneData.mythosEvents.length}`);
 
       // 3. Load truth timeline
-      console.log(`  [3/7] Loading truth_timeline.json...`);
+      console.log(`  [3/9] Loading truth_timeline.json...`);
       const truthTimelineFile = path.join(moduleDir, "truth_timeline.json");
       const truthTimelineData = this.loadJSON<{ truthTimeline: TruthEvent[] }>(
         truthTimelineFile
@@ -245,7 +249,7 @@ export class WorldModuleLoader {
       );
 
       // 4. Load knowledge matrix and red herrings
-      console.log(`  [4/7] Loading knowledge_matrix.json...`);
+      console.log(`  [4/9] Loading knowledge_matrix.json...`);
       const knowledgeMatrixFile = path.join(moduleDir, "knowledge_matrix.json");
       const knowledgeMatrixData = this.loadJSON<{
         knowledgeMatrix: KnowledgeHolder[];
@@ -259,21 +263,36 @@ export class WorldModuleLoader {
       );
 
       // 5. Load scenario outlines
-      console.log(`  [5/7] Loading scenarios_outline.json...`);
+      console.log(`  [5/9] Loading scenarios_outline.json...`);
       const scenariosFile = path.join(moduleDir, "scenarios_outline.json");
       const scenariosData = this.loadJSON<{ scenarios: ScenarioOutline[] }>(
         scenariosFile
       );
       console.log(`    Scenario outlines: ${scenariosData.scenarios.length}`);
 
-      // 6. Load scenes from individual scenario files
-      console.log(`  [6/7] Loading scenes...`);
+      // 6. Load transport network (may not exist for old modules)
+      let transportEdges: TransportEdge[] = [];
+      let storyPremise = "";
+      const transportFile = path.join(moduleDir, "transport_edges.json");
+      if (fs.existsSync(transportFile)) {
+        const transportData = this.loadJSON<{
+          transportEdges: TransportEdge[];
+          storyPremise?: string;
+        }>(transportFile);
+        transportEdges = transportData.transportEdges || [];
+        storyPremise = transportData.storyPremise || "";
+      }
+      // storyPremise may also live in macro_scene.json
+      storyPremise = (macroSceneData as any).storyPremise || storyPremise;
+
+      // 7. Load scenes from individual scenario files
+      console.log(`  [7/9] Loading scenes...`);
       const scenariosDir = path.join(moduleDir, `${moduleName}_Scenarios`);
       const scenes = this.loadDynamicScenes(scenariosDir);
       console.log(`    Scenes loaded: ${scenes.size}`);
 
-      // 7. Load NPCs from individual files
-      console.log(`  [7/7] Loading NPCs...`);
+      // 8. Load NPCs from individual files
+      console.log(`  [8/9] Loading NPCs...`);
       const npcsDir = path.join(moduleDir, `${moduleName}_npc`);
       const npcs = this.loadNPCs(npcsDir);
       console.log(`    NPCs loaded: ${npcs.length}`);
@@ -290,6 +309,8 @@ export class WorldModuleLoader {
         scenarios: scenariosData.scenarios,
         scenes,
         npcs,
+        transportEdges,
+        storyPremise,
         files: {
           truthTimelineFile,
           knowledgeMatrixFile,
@@ -417,7 +438,9 @@ export class WorldModuleLoader {
 
   /**
    * Load scenes from individual scenario files.
-   * JSON files on disk still use the "snapshot" key — we map to DynamicScene.
+   * Supports two formats:
+   *   - New format: individual DynamicScene JSON objects (with parentLocationId/connections)
+   *   - Old format: ScenarioFilePayload with "snapshot" key
    */
   private loadDynamicScenes(
     scenariosDir: string
@@ -439,7 +462,26 @@ export class WorldModuleLoader {
         const content = fs.readFileSync(filePath, "utf8");
         const data = JSON.parse(content);
 
-        // Handle array format (single entry per file)
+        // New format: individual DynamicScene objects or arrays of them
+        if (data.parentLocationId !== undefined || data.connections !== undefined) {
+          // New scene graph format — direct DynamicScene
+          const scene: DynamicScene = {
+            id: data.id,
+            name: data.name,
+            description: data.description || "",
+            parentLocationId: data.parentLocationId || "",
+            items: data.items || [],
+            clues: data.clues || [],
+            conditions: data.conditions || [],
+            connections: data.connections || [],
+            sceneImage: data.sceneImage,
+            events: data.events || [],
+          };
+          scenes.set(scene.id, scene);
+          continue;
+        }
+
+        // Old format: array of ScenarioFilePayload with snapshot key
         const scenarios: ScenarioFilePayload[] = Array.isArray(data)
           ? data
           : [data];
@@ -451,10 +493,11 @@ export class WorldModuleLoader {
               id: raw.id,
               name: raw.name,
               description: raw.description || "",
-              domain: raw.domain,
+              parentLocationId: raw.parentLocationId || "",
               items: raw.items || [],
               clues: raw.clues || [],
               conditions: raw.conditions || [],
+              connections: raw.connections || [],
               sceneImage: raw.sceneImage,
               events: [],
             };
@@ -886,13 +929,6 @@ export class WorldModuleLoader {
     const prisma = getPrismaClient();
     const now = new Date().toISOString();
 
-    const scenarioByName = new Map(
-      module.scenarios.map((scenario) => [
-        scenario.name.toLowerCase(),
-        scenario,
-      ])
-    );
-
     for (const scenario of module.scenarios) {
       const scopedScenarioId = this.scopeByModule(scenario.id, moduleId);
       const metadata = {
@@ -903,20 +939,8 @@ export class WorldModuleLoader {
         gameSystem: "CoC 7e",
       };
 
-      const connections = (scenario.connections || []).map((connection) => {
-        const targetScenario = scenarioByName.get(
-          connection.scenarioName.toLowerCase()
-        );
-        const targetScenarioId = targetScenario
-          ? this.scopeByModule(targetScenario.id, moduleId)
-          : null;
-        return {
-          scenarioId: targetScenarioId || connection.scenarioName,
-          relationshipType: connection.relationshipType,
-          description: connection.description,
-        };
-      });
-
+      // ScenarioOutline no longer has connections or tags —
+      // connections are at sub-scene level via DynamicScene.connections
       await prisma.scenario.upsert({
         where: {
           moduleId_scenarioId: {
@@ -928,8 +952,8 @@ export class WorldModuleLoader {
           moduleId,
           name: scenario.name,
           description: scenario.description,
-          tags: scenario.tags || [],
-          connections,
+          tags: [],
+          connections: [],
           metadata,
           sourcePlaceId: scenario.sourcePlaceId || null,
           mapImagePath: null,
@@ -939,8 +963,8 @@ export class WorldModuleLoader {
           moduleId,
           name: scenario.name,
           description: scenario.description,
-          tags: scenario.tags || [],
-          connections,
+          tags: [],
+          connections: [],
           metadata,
           sourcePlaceId: scenario.sourcePlaceId || null,
           mapImagePath: null,
@@ -989,7 +1013,7 @@ export class WorldModuleLoader {
           moduleId,
           name: scene.name,
           description: scene.description,
-          domain: scene.domain || null,
+          domain: null,
           items: (scene.items || []) as any,
           events: (scene.events || []) as any,
           sceneImagePath,

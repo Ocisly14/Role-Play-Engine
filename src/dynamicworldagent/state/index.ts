@@ -6,7 +6,6 @@
 export type {
   DynamicGameState,
   DynamicTemporaryInfo,
-  ScenarioConnectionState,
   DefeatedNpcHistoryEntry,
 } from "./DynamicGameState.js";
 

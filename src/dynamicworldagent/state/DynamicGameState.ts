@@ -31,18 +31,12 @@ import type {
   DynamicCharacterProfile,
   DynamicNPCProfile,
   DynamicScene,
+  TransportEdge,
 } from "../world_builder/types.js";
 
 export interface DefeatedNpcHistoryEntry {
   name: string;
   count: number;
-}
-
-export interface ScenarioConnectionState {
-  fromScenarioId: string;
-  toScenarioId: string;
-  blocked: boolean;
-  conditions: string[];
 }
 
 /**
@@ -158,7 +152,9 @@ export interface DynamicGameState {
   npcDiscoveredClues: Record<string, string[]>;
   npcRelationshipGraph: Record<string, Record<string, { score: number; note: string }>>;
   scenarioConditions: Record<string, import("../dynamicBasicAgent/npcPlanning/types.js").SceneCondition[]>;
-  connectionStates: ScenarioConnectionState[];
+  blockedConnections: Map<string, string>;  // "sceneA::sceneB" -> reason
+  npcResidences: Record<string, string>;    // npcId -> macroLocationId
+  transportEdges: TransportEdge[];
 
   // Metadata
   loadedAt: Date; // When this state was loaded
@@ -229,7 +225,9 @@ export const initialDynamicGameState = (params: {
   npcDiscoveredClues: {},
   npcRelationshipGraph: {},
   scenarioConditions: {},
-  connectionStates: [],
+  blockedConnections: new Map(),
+  npcResidences: {},
+  transportEdges: [],
   loadedAt: new Date(),
   lastUpdated: new Date(),
 });
@@ -530,9 +528,18 @@ export class DynamicGameStateManager {
       scenesObj[id] = scene;
     });
 
+    // Convert blockedConnections Map to plain object
+    const blockedConnsObj: Record<string, string> = {};
+    this.state.blockedConnections.forEach((reason, key) => {
+      blockedConnsObj[key] = reason;
+    });
+
     return {
       ...this.state,
       scenes: scenesObj,
+      blockedConnections: blockedConnsObj,
+      npcResidences: this.state.npcResidences,
+      transportEdges: this.state.transportEdges,
       revealedTruthEvents: Array.from(this.state.revealedTruthEvents),
       activatedKnowledgeHolders: Array.from(
         this.state.activatedKnowledgeHolders
@@ -606,6 +613,16 @@ export class DynamicGameStateManager {
       });
     }
 
+    // Reconstruct blockedConnections Map
+    const blockedConnections = new Map<string, string>();
+    if (data.blockedConnections) {
+      if (data.blockedConnections instanceof Map) {
+        data.blockedConnections.forEach((v: string, k: string) => blockedConnections.set(k, v));
+      } else {
+        Object.entries(data.blockedConnections).forEach(([k, v]) => blockedConnections.set(k, v as string));
+      }
+    }
+
     return {
       ...data,
       playerCharacter,
@@ -632,6 +649,9 @@ export class DynamicGameStateManager {
       mythosRevelations: new Set(data.mythosRevelations || []),
       currentSceneId: data.currentSceneId ?? null,
       scenes,
+      blockedConnections,
+      npcResidences: data.npcResidences ?? {},
+      transportEdges: data.transportEdges ?? [],
       loadedAt: data.loadedAt
         ? typeof data.loadedAt === "string"
           ? new Date(data.loadedAt)
@@ -737,6 +757,7 @@ export class DynamicGameStateManager {
     return {
       ...this.state,
       scenes: new Map(this.state.scenes),
+      blockedConnections: new Map(this.state.blockedConnections),
       revealedTruthEvents: new Set(this.state.revealedTruthEvents),
       activatedKnowledgeHolders: new Set(this.state.activatedKnowledgeHolders),
       deployedRedHerrings: new Set(this.state.deployedRedHerrings),
@@ -1170,7 +1191,7 @@ export class DynamicGameStateManager {
     const sceneId = this.state.currentSceneId;
     if (!sceneId) return 3;
     const outline = this.state.scenarioOutlines.find((o) => o.id === sceneId);
-    return outline?.estimatedShortActions || 3;
+    return 3; // estimatedShortActions removed from ScenarioOutline
   }
 
   /**
@@ -1563,23 +1584,19 @@ export class DynamicGameStateManager {
   }
 
   isConnectionBlocked(fromId: string, toId: string): boolean {
-    const conn = this.state.connectionStates.find(
-      c => (c.fromScenarioId === fromId && c.toScenarioId === toId) ||
-           (c.fromScenarioId === toId && c.toScenarioId === fromId)
-    );
-    return conn?.blocked ?? false;
+    const key1 = `${fromId}::${toId}`;
+    const key2 = `${toId}::${fromId}`;
+    return this.state.blockedConnections.has(key1) || this.state.blockedConnections.has(key2);
   }
 
   setConnectionBlocked(fromId: string, toId: string, blocked: boolean, reason: string): void {
-    let conn = this.state.connectionStates.find(
-      c => (c.fromScenarioId === fromId && c.toScenarioId === toId) ||
-           (c.fromScenarioId === toId && c.toScenarioId === fromId)
-    );
-    if (!conn) {
-      conn = { fromScenarioId: fromId, toScenarioId: toId, blocked, conditions: [] };
-      this.state.connectionStates.push(conn);
+    const key = `${fromId}::${toId}`;
+    if (blocked) {
+      this.state.blockedConnections.set(key, reason);
+    } else {
+      this.state.blockedConnections.delete(key);
+      this.state.blockedConnections.delete(`${toId}::${fromId}`);
     }
-    conn.blocked = blocked;
-    conn.conditions.push(reason);
+    this.state.lastUpdated = new Date();
   }
 }

@@ -10,6 +10,7 @@ import {
 } from "../../models/index.js";
 import { composeTemplate } from "../../template.js";
 import {
+  buildStoryPremisePrompt,
   getEndStateTemplate,
   getHistoricalMythosTemplateForSetting,
   getKnowledgeMatrixTemplate,
@@ -19,6 +20,7 @@ import {
 } from "./macroSceneTemplate.js";
 import type { StoryLength } from "./storyLengthConfig.js";
 import type {
+  DynamicScene,
   EndStateDefinition,
   KnowledgeHolder,
   MacroSceneSettingType,
@@ -26,6 +28,7 @@ import type {
   MythosEvent,
   ProgressCallback,
   RedHerring,
+  ScenarioOutline,
   StructuredStoryElements,
   TruthEvent,
 } from "./types.js";
@@ -183,13 +186,15 @@ export class MacroSceneAgent {
     mythosEvents: MythosEvent[],
     storyElements: StructuredStoryElements,
     progressCallback?: ProgressCallback,
-    storyLength: StoryLength = "medium"
+    storyLength: StoryLength = "medium",
+    scenesContext?: string
   ): Promise<TruthEvent[]> {
     progressCallback?.("Generating truth timeline (current events)...");
 
     const template = getTruthTimelineTemplateForSetting(
       macroScene.settingType ?? "small_town",
-      storyLength
+      storyLength,
+      scenesContext
     );
     const prompt = composeTemplate(
       template,
@@ -247,11 +252,12 @@ export class MacroSceneAgent {
     truthTimeline: TruthEvent[],
     storyElements: StructuredStoryElements,
     progressCallback?: ProgressCallback,
-    storyLength: StoryLength = "medium"
+    storyLength: StoryLength = "medium",
+    scenesContext?: string
   ): Promise<KnowledgeHolder[]> {
     progressCallback?.("Generating knowledge matrix (abstract holders)...");
 
-    const template = getKnowledgeMatrixTemplate(storyLength);
+    const template = getKnowledgeMatrixTemplate(storyLength, scenesContext);
     const prompt = composeTemplate(
       template,
       {},
@@ -312,11 +318,12 @@ export class MacroSceneAgent {
     knowledgeMatrix: KnowledgeHolder[],
     storyElements: StructuredStoryElements,
     progressCallback?: ProgressCallback,
-    storyLength: StoryLength = "medium"
+    storyLength: StoryLength = "medium",
+    scenesContext?: string
   ): Promise<RedHerring[]> {
     progressCallback?.("Generating red herrings (false trails)...");
 
-    const template = getRedHerringsTemplate(storyLength);
+    const template = getRedHerringsTemplate(storyLength, scenesContext);
     const prompt = composeTemplate(
       template,
       {},
@@ -364,7 +371,7 @@ export class MacroSceneAgent {
   async generateEndState(
     macroScene: MacroSceneStructure,
     mythosEvents: MythosEvent[],
-    truthTimeline: TruthEvent[],
+    truthTimeline: TruthEvent[] | undefined,
     storyElements: StructuredStoryElements,
     progressCallback?: ProgressCallback
   ): Promise<EndStateDefinition> {
@@ -377,7 +384,7 @@ export class MacroSceneAgent {
       {
         macroSceneJson: JSON.stringify(macroScene, null, 2),
         mythosEventsJson: JSON.stringify(mythosEvents, null, 2),
-        truthTimelineJson: JSON.stringify(truthTimeline, null, 2),
+        truthTimelineJson: JSON.stringify(truthTimeline ?? [], null, 2),
         storyElements: JSON.stringify(storyElements, null, 2),
       }
     );
@@ -411,7 +418,228 @@ export class MacroSceneAgent {
   }
 
   /**
-   * Main entry point - runs all 6 steps sequentially
+   * Generate a 1-2 paragraph story premise from the setting seed, mythos, and end state.
+   * The premise describes the mystery and themes without detailed plot, NPCs, or clue specifics.
+   */
+  private async generateStoryPremise(
+    macroScene: MacroSceneStructure,
+    mythosEvents: MythosEvent[],
+    endState: EndStateDefinition,
+    storyElements?: StructuredStoryElements
+  ): Promise<string> {
+    const prompt = buildStoryPremisePrompt({
+      macroScene,
+      mythosEvents,
+      endState,
+      storyElements,
+    });
+
+    const response = await generateText({
+      runtime: this.runtime,
+      providerOverride: this.runtime.modelProvider,
+      context: prompt,
+      modelClass: ModelClass.MEDIUM,
+      temperature: this.getPhaseOneTemperature(),
+    });
+
+    // The response should be plain prose — strip any accidental markdown fencing
+    return response
+      .replace(/^```[\s\S]*?\n/, "")
+      .replace(/\n```\s*$/, "")
+      .trim();
+  }
+
+  /**
+   * Phase 1 entry point — generates the setting seed (world structure, mythos, end state, premise).
+   * Run BEFORE scenes are created. Produces the foundation that downstream scene builders consume.
+   */
+  async generateSettingSeed(
+    settingType: MacroSceneSettingType = "small_town",
+    creativePromptOrElements: string | StructuredStoryElements,
+    progressCallback?: ProgressCallback
+  ): Promise<{
+    macroScene: MacroSceneStructure;
+    mythosEvents: MythosEvent[];
+    endState: EndStateDefinition;
+    storyPremise: string;
+  }> {
+    const storyElements: StructuredStoryElements =
+      typeof creativePromptOrElements === "string"
+        ? {
+            era: "",
+            worldbuilding: "",
+            genre: [],
+            tone: "",
+            theme: "",
+            refinedPrompt: creativePromptOrElements,
+          }
+        : creativePromptOrElements;
+
+    console.log(
+      `\n[Macro Scene Agent] Starting setting seed generation for ${settingType}...`
+    );
+
+    // Step 1: Setting structure
+    progressCallback?.("Phase 1/4: Generating setting structure...");
+    const macroScene = await this.generateTownStructure(
+      settingType,
+      storyElements,
+      progressCallback
+    );
+
+    // Step 2: Historical mythos layer
+    progressCallback?.("Phase 2/4: Generating historical mythos...");
+    const mythosEvents = await this.generateHistoricalMythos(
+      macroScene,
+      storyElements,
+      progressCallback
+    );
+
+    // Step 3: End state (what happens if investigators don't intervene)
+    progressCallback?.("Phase 3/4: Generating end state...");
+    const endState = await this.generateEndState(
+      macroScene,
+      mythosEvents,
+      undefined, // No truth timeline yet — that comes after scenes
+      storyElements,
+      progressCallback
+    );
+
+    // Step 4: Story premise (narrative seed)
+    progressCallback?.("Phase 4/4: Generating story premise...");
+    const storyPremise = await this.generateStoryPremise(
+      macroScene,
+      mythosEvents,
+      endState,
+      storyElements
+    );
+
+    console.log("[Macro Scene Agent] Setting seed generation complete");
+    console.log(`   Setting: ${macroScene.locationName} (${settingType})`);
+    console.log(`   Historical mythos events: ${mythosEvents.length}`);
+    console.log(`   Story premise: ${storyPremise.substring(0, 80)}...`);
+
+    return { macroScene, mythosEvents, endState, storyPremise };
+  }
+
+  /**
+   * Build a textual summary of all existing scenes and macro locations
+   * for injection into downstream prompts.
+   */
+  private buildScenesContext(
+    scenarios: ScenarioOutline[],
+    scenes: Map<string, DynamicScene>
+  ): string {
+    const lines: string[] = [];
+
+    for (const scenario of scenarios) {
+      lines.push(`### Macro Location: ${scenario.name} (id: ${scenario.id})`);
+      lines.push(`   Description: ${scenario.description}`);
+
+      // Collect sub-scenes belonging to this scenario
+      const subScenes: DynamicScene[] = [];
+      for (const scene of scenes.values()) {
+        if (scene.parentLocationId === scenario.id) {
+          subScenes.push(scene);
+        }
+      }
+
+      if (subScenes.length > 0) {
+        lines.push("   Sub-scenes:");
+        for (const scene of subScenes) {
+          lines.push(`     - ${scene.name} (id: ${scene.id}): ${scene.description}`);
+        }
+      }
+      lines.push("");
+    }
+
+    return lines.join("\n");
+  }
+
+  /**
+   * Phase 6-8 entry point — generates story-layer elements WITH scene context.
+   * Run AFTER scenes and macro locations exist. Produces truth timeline,
+   * knowledge matrix, and red herrings that reference real locations.
+   */
+  async generateStoryInWorld(
+    macroScene: MacroSceneStructure,
+    mythosEvents: MythosEvent[],
+    endState: EndStateDefinition,
+    storyPremise: string,
+    scenarios: ScenarioOutline[],
+    scenes: Map<string, DynamicScene>,
+    creativePromptOrElements: string | StructuredStoryElements,
+    progressCallback?: ProgressCallback
+  ): Promise<{
+    truthTimeline: TruthEvent[];
+    knowledgeMatrix: KnowledgeHolder[];
+    redHerrings: RedHerring[];
+  }> {
+    const storyElements: StructuredStoryElements =
+      typeof creativePromptOrElements === "string"
+        ? {
+            era: "",
+            worldbuilding: "",
+            genre: [],
+            tone: "",
+            theme: "",
+            refinedPrompt: creativePromptOrElements,
+          }
+        : creativePromptOrElements;
+
+    console.log(
+      "\n[Macro Scene Agent] Starting story-in-world generation (with scene context)..."
+    );
+
+    // Build scene context string for prompt injection
+    const scenesContext = this.buildScenesContext(scenarios, scenes);
+
+    // Step 1: Truth timeline (with scene context)
+    progressCallback?.("Story phase 1/3: Generating truth timeline with scene context...");
+    const truthTimeline = await this.generateTruthTimeline(
+      macroScene,
+      mythosEvents,
+      storyElements,
+      progressCallback,
+      "medium",
+      scenesContext
+    );
+
+    // Step 2: Knowledge matrix (with scene context)
+    progressCallback?.("Story phase 2/3: Generating knowledge matrix with scene context...");
+    const knowledgeMatrix = await this.generateKnowledgeMatrix(
+      macroScene,
+      mythosEvents,
+      truthTimeline,
+      storyElements,
+      progressCallback,
+      "medium",
+      scenesContext
+    );
+
+    // Step 3: Red herrings (with scene context)
+    progressCallback?.("Story phase 3/3: Generating red herrings with scene context...");
+    const redHerrings = await this.generateRedHerrings(
+      mythosEvents,
+      truthTimeline,
+      knowledgeMatrix,
+      storyElements,
+      progressCallback,
+      "medium",
+      scenesContext
+    );
+
+    console.log("[Macro Scene Agent] Story-in-world generation complete");
+    console.log(`   Truth events: ${truthTimeline.length}`);
+    console.log(`   Knowledge holders: ${knowledgeMatrix.length}`);
+    console.log(`   Red herrings: ${redHerrings.length}`);
+
+    return { truthTimeline, knowledgeMatrix, redHerrings };
+  }
+
+  /**
+   * @deprecated Use generateSettingSeed() + generateStoryInWorld() instead.
+   * Main entry point - runs all 6 steps sequentially (legacy monolithic generation).
    */
   async generate(
     settingType: MacroSceneSettingType = "small_town",

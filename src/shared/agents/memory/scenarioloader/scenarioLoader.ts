@@ -151,6 +151,8 @@ export class ScenarioLoader {
       id: sceneRow.sceneId,
       name: sceneRow.name || scenario.name,
       description: sceneRow.description,
+      parentLocationId: (sceneRow as any).parentLocationId || "",
+      connections: Array.isArray((sceneRow as any).connections) ? (sceneRow as any).connections : [],
       items: [],
       clues: clues.map((c: any) => ({
         id: c.clueId,

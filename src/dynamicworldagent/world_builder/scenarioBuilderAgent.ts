@@ -10,7 +10,9 @@ import {
 } from "../../models/index.js";
 import { composeTemplate } from "../../template.js";
 import { generateSceneImageFromScene } from "../visual/sceneImage.js";
+import type { ModuleSizeConfig } from "./moduleSizeConfig.js";
 import {
+  buildMacroLocationPrompt,
   getNpcAssignmentTemplate,
   getScenarioBuilderTemplate,
   getStartingSceneTemplate,
@@ -46,7 +48,8 @@ const createRuntime = (): Runtime => ({
 function parseJSONResponse(response: string): any {
   const jsonText =
     response.match(/```(?:json)?\s*([\s\S]*?)```/i)?.[1] ||
-    response.match(/\{[\s\S]*\}/)?.[0];
+    response.match(/\{[\s\S]*\}/)?.[0] ||
+    response.match(/\[[\s\S]*\]/)?.[0];
 
   if (!jsonText) {
     throw new Error("Failed to extract JSON from response");
@@ -62,6 +65,124 @@ export class ScenarioBuilderAgent {
     this.runtime = createRuntime();
   }
 
+  /**
+   * Generate macro locations from setting + story premise (inverted pipeline).
+   * Produces ScenarioOutline[] with id, name, description, and subSceneCount.
+   * No clues, evidence, or NPC assignments — just physical locations.
+   */
+  async generateMacroLocations(
+    macroScene: MacroSceneStructure,
+    storyPremise: string,
+    moduleSize: ModuleSizeConfig,
+    storyElements?: StructuredStoryElements,
+    progressCallback?: ProgressCallback
+  ): Promise<ScenarioOutline[]> {
+    progressCallback?.("Generating macro locations from setting + story premise...");
+
+    // Build setting description from macroScene
+    const settingParts: string[] = [];
+    settingParts.push(`Module: ${macroScene.moduleName}`);
+    settingParts.push(`Location: ${macroScene.locationName}`);
+    if (macroScene.settingType) {
+      settingParts.push(`Setting type: ${macroScene.settingType}`);
+    }
+    if (macroScene.geographicLayout) {
+      const geo = macroScene.geographicLayout;
+      if (geo.naturalFeatures?.length) {
+        settingParts.push(`Natural features: ${geo.naturalFeatures.join(", ")}`);
+      }
+      if (geo.artificialStructures?.length) {
+        settingParts.push(`Structures: ${geo.artificialStructures.join(", ")}`);
+      }
+      if (geo.keyLocations?.length) {
+        settingParts.push(`Key locations: ${geo.keyLocations.join(", ")}`);
+      }
+    }
+    if (macroScene.economicCore) {
+      settingParts.push(`Economic base: ${macroScene.economicCore}`);
+    }
+    if (storyElements) {
+      settingParts.push(`Era: ${storyElements.era}`);
+      settingParts.push(`Tone: ${storyElements.tone}`);
+      settingParts.push(`Genre: ${storyElements.genre.join(", ")}`);
+      if (storyElements.worldbuilding) {
+        settingParts.push(`Worldbuilding: ${storyElements.worldbuilding}`);
+      }
+    }
+
+    const settingDescription = settingParts.join("\n");
+
+    const prompt = buildMacroLocationPrompt({
+      settingDescription,
+      storyPremise,
+      macroLocationRange: moduleSize.macroLocationCount,
+      subSceneRange: moduleSize.subSceneRange,
+    });
+
+    progressCallback?.("Calling AI for macro locations...");
+    const response = await generateText({
+      runtime: this.runtime,
+      providerOverride: this.runtime.modelProvider,
+      context: prompt,
+      modelClass: ModelClass.MEDIUM,
+    });
+
+    try {
+      const parsed = parseJSONResponse(response);
+      const locations: any[] = Array.isArray(parsed)
+        ? parsed
+        : parsed.locations || parsed.scenarios || [];
+
+      if (!Array.isArray(locations) || locations.length === 0) {
+        throw new Error("Response must contain a non-empty array of locations");
+      }
+
+      // Validate each location
+      const scenarios: ScenarioOutline[] = [];
+      for (let i = 0; i < locations.length; i++) {
+        const loc = locations[i];
+
+        if (!loc.id || !loc.name || !loc.description) {
+          console.warn(
+            `Macro location at index ${i} missing required fields (id/name/description), skipping.`
+          );
+          continue;
+        }
+
+        const subSceneCount =
+          typeof loc.subSceneCount === "number" && loc.subSceneCount >= 1
+            ? loc.subSceneCount
+            : moduleSize.subSceneRange[0];
+
+        scenarios.push({
+          id: loc.id,
+          name: loc.name,
+          description: loc.description,
+          subSceneCount,
+        });
+      }
+
+      if (scenarios.length === 0) {
+        throw new Error("No valid macro locations after validation");
+      }
+
+      progressCallback?.(
+        `Macro locations generated: ${scenarios.length} locations`
+      );
+      return scenarios;
+    } catch (error) {
+      console.error("Failed to parse macro location response:", error);
+      console.error("Response:", response.substring(0, 500));
+      throw new Error(
+        `Failed to generate macro locations: ${(error as Error).message}`
+      );
+    }
+  }
+
+  /**
+   * @deprecated Use generateMacroLocations() instead. This method relies on
+   * truth timeline + knowledge matrix which don't exist yet in the inverted pipeline.
+   */
   async generate(
     macroScene: MacroSceneStructure,
     truthTimeline: TruthEvent[],
@@ -168,11 +289,11 @@ export class ScenarioBuilderAgent {
             entry.name?.trim().toLowerCase() === place.holderName.toLowerCase()
         );
         if (!scenario) continue;
-        const scenarioEvidence = scenario.evidence || [];
+        const scenarioEvidence = (scenario as any).evidence || [];
         const missingEvidence = place.containsEvidence.filter(
           (evidence) =>
             !scenarioEvidence.some(
-              (entry) =>
+              (entry: any) =>
                 entry.trim().toLowerCase() === evidence.trim().toLowerCase()
             )
         );
@@ -182,10 +303,10 @@ export class ScenarioBuilderAgent {
           );
         }
 
-        const scenarioClues = scenario.clues || [];
+        const scenarioClues = (scenario as any).clues || [];
         const missingClues = place.containsEvidence.filter((evidence) => {
           const needle = evidence.trim().toLowerCase();
-          return !scenarioClues.some((clue) => {
+          return !scenarioClues.some((clue: any) => {
             const clueText = clue?.clueText?.toLowerCase?.() || "";
             const evidenceRef = clue?.evidenceRef?.toLowerCase?.() || "";
             return clueText.includes(needle) || evidenceRef.includes(needle);
@@ -211,14 +332,14 @@ export class ScenarioBuilderAgent {
       for (const scenario of scenarios as ScenarioOutline[]) {
         const sourceName = scenario?.name?.trim();
         if (!sourceName) continue;
-        const clues = scenario?.clues || [];
+        const clues = (scenario as any)?.clues || [];
         for (const clue of clues) {
           if (!clue?.clueText) {
             console.warn(`Scenario "${sourceName}" clue missing clueText`);
           }
         }
         const sourceKey = sourceName.toLowerCase();
-        const connections = scenario?.connections || [];
+        const connections = (scenario as any)?.connections || [];
 
         for (const connection of connections) {
           const targetName = connection?.scenarioName?.trim();
@@ -295,6 +416,7 @@ export class ScenarioBuilderAgent {
 
   /**
    * Phase 4a: Select starting scene and generate scene (NO NPC assignments)
+   * @deprecated Starting scene selection moves to a later phase in the inverted pipeline.
    */
   async generateStartingScene(
     macroScene: MacroSceneStructure,
@@ -363,7 +485,8 @@ export class ScenarioBuilderAgent {
         id: selectedScenario.id,
         name: selectedScenario.name,
         description: parsedScene?.description || selectedScenario.description,
-        domain: parsedScene?.domain,
+        parentLocationId: parsedScene?.parentLocationId || "",
+        connections: parsedScene?.connections || [],
         items: parsedScene?.items || [],
         clues: (parsedScene?.clues || []).map((c: any) => ({
           id: c.id || `clue_${crypto.randomUUID().slice(0, 8)}`,
@@ -439,6 +562,7 @@ export class ScenarioBuilderAgent {
 
   /**
    * Phase 4b: Assign all NPCs to scenarios
+   * @deprecated NPC assignment moves to a later phase in the inverted pipeline.
    */
   async assignNpcsToScenarios(
     startingScene: StartingSceneSelection,
