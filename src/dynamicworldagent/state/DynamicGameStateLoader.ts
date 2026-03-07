@@ -213,6 +213,7 @@ export async function loadDynamicGameStateFromDatabase(
         name: true,
         description: true,
         sourcePlaceId: true,
+        residents: true,
       },
     });
 
@@ -251,6 +252,7 @@ export async function loadDynamicGameStateFromDatabase(
         description: row.description || "",
         sourcePlaceId: row.sourcePlaceId || undefined,
         sourcePlaceName: sourcePlaceName,
+        residents: Array.isArray(row.residents) ? row.residents as string[] : undefined,
         subSceneCount: sceneCountByScenario.get(row.scenarioId) ?? 0,
       };
     });
@@ -587,7 +589,7 @@ export async function initializeCompleteDynamicGameState(
       id: sceneRow.scenarioId,
       name: sceneRow.name || sceneRow.scenario?.name,
       description: sceneRow.description,
-      parentLocationId: sceneRow.parentLocationId || sceneRow.domain || "",
+      parentLocationId: sceneRow.parentLocationId || "",
       connections: Array.isArray(sceneRow.connections) ? sceneRow.connections : [],
       items: Array.isArray(sceneRow.items) ? sceneRow.items : [],
       sceneImage,

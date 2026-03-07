@@ -175,11 +175,6 @@ export async function saveWorldToDatabase(
       scenarios.map((scenario) => [scenario.name.toLowerCase(), scenario])
     );
 
-    const scenarioConnections = (_scenario: ScenarioOutline) => {
-      // ScenarioOutline no longer has connections — connections are at sub-scene level
-      return [] as any[];
-    };
-
     for (const scenario of scenarios) {
       const metadata = {
         createdAt: now,
@@ -200,8 +195,8 @@ export async function saveWorldToDatabase(
           moduleId,
           name: scenario.name,
           description: scenario.description,
-          tags: [] as any,
-          connections: scenarioConnections(scenario) as any,
+          residents: (scenario.residents || []) as any,
+          subSceneCount: scenario.subSceneCount ?? null,
           metadata: metadata as any,
           sourcePlaceId: scenario.sourcePlaceId || null,
           mapImagePath: null,
@@ -211,8 +206,8 @@ export async function saveWorldToDatabase(
           moduleId,
           name: scenario.name,
           description: scenario.description,
-          tags: [] as any,
-          connections: scenarioConnections(scenario) as any,
+          residents: (scenario.residents || []) as any,
+          subSceneCount: scenario.subSceneCount ?? null,
           metadata: metadata as any,
           sourcePlaceId: scenario.sourcePlaceId || null,
           mapImagePath: null,
@@ -235,7 +230,8 @@ export async function saveWorldToDatabase(
             moduleId,
             name: scene.name,
             description: scene.description,
-            domain: null,
+            parentLocationId: scene.parentLocationId || null,
+            connections: (scene.connections || []) as any,
             items: (scene.items || []) as any,
             events: scene.events as any,
             initialScene: true,

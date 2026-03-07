@@ -939,8 +939,6 @@ export class WorldModuleLoader {
         gameSystem: "CoC 7e",
       };
 
-      // ScenarioOutline no longer has connections or tags —
-      // connections are at sub-scene level via DynamicScene.connections
       await prisma.scenario.upsert({
         where: {
           moduleId_scenarioId: {
@@ -952,8 +950,8 @@ export class WorldModuleLoader {
           moduleId,
           name: scenario.name,
           description: scenario.description,
-          tags: [],
-          connections: [],
+          residents: (scenario.residents || []) as any,
+          subSceneCount: scenario.subSceneCount ?? null,
           metadata,
           sourcePlaceId: scenario.sourcePlaceId || null,
           mapImagePath: null,
@@ -963,8 +961,8 @@ export class WorldModuleLoader {
           moduleId,
           name: scenario.name,
           description: scenario.description,
-          tags: [],
-          connections: [],
+          residents: (scenario.residents || []) as any,
+          subSceneCount: scenario.subSceneCount ?? null,
           metadata,
           sourcePlaceId: scenario.sourcePlaceId || null,
           mapImagePath: null,
@@ -1013,7 +1011,8 @@ export class WorldModuleLoader {
           moduleId,
           name: scene.name,
           description: scene.description,
-          domain: null,
+          parentLocationId: scene.parentLocationId || null,
+          connections: (scene.connections || []) as any,
           items: (scene.items || []) as any,
           events: (scene.events || []) as any,
           sceneImagePath,

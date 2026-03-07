@@ -372,8 +372,8 @@ model Scenario {
   scenarioId       String    @map("scenario_id")
   name             String
   description      String
-  tags             Json?
-  connections      Json?
+  residents        Json?
+  subSceneCount    Int?     @map("sub_scene_count")
   permanentChanges Json?     @map("permanent_changes")
   metadata         Json
   createdAt        DateTime  @default(now()) @map("created_at")
@@ -398,7 +398,8 @@ model Scene {
   scenarioId     String             @map("scenario_id")
   name           String
   description    String
-  domain         String?
+  parentLocationId String?  @map("parent_location_id")
+  connections      Json?
   items          Json?
   events         Json?
   initialScene   Boolean            @default(false) @map("initial_scene")
