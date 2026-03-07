@@ -85,8 +85,13 @@ Build a realistic full-day schedule that reflects this NPC's nature, occupation,
 - Anchor intent-driven actions at realistic times — don't schedule a break-in during broad daylight if the NPC would logically wait for cover of darkness.
 
 ### Movement & Location
-- Use "movement" nodes to change scenes. The NPC must be at the correct location before interacting.
-- Only move to connected scenes. If a path is blocked, plan an alternative.
+- Use "movement" nodes to change scenes. Set "location" to the destination scene ID.
+- **Movement actionType rules:**
+  - Connected path with NO blocked connections → **OMIT actionType** (auto-succeed, the system pathfinds)
+  - Connected path but a connection is BLOCKED → read the block reason. If the obstacle can plausibly be overcome with a skill (e.g. locked door → Locksmith, barricade → environmental), **SET actionType**. If the block is impassable (e.g. collapsed building, magically sealed), do NOT attempt — plan an alternative route or give up.
+  - No connection exists (creative movement: jumping from window, climbing walls, swimming across) → **SET actionType** (e.g. environmental, chase). Skill check required.
+- To go home, move to a scene in your residence location.
+- Travel time between buildings varies (shown in Nearby Locations).
 - Check other NPC locations — if you need to interact with someone, ensure you're in the same scene at the right time.
 
 ### When to Set actionType
@@ -97,7 +102,7 @@ Set actionType **only** when the outcome is genuinely uncertain and requires a s
 
 ## Node Type Reference
 - **"routine"**: Self-contained action, no interaction target. Examples: eating, resting, reading, working, sleeping, thinking.
-- **"movement"**: Move to a connected scene. Set location to the target scenarioId.
+- **"movement"**: Move to a destination scene. Set location to the target scene ID. Omit actionType for normal unblocked movement; set actionType when path is blocked (if skill can overcome it) or for creative movement.
 - **"character_interaction"**: Interact with a specific character. Requires targetCharacterId. Include characterInteractionPayload if transferring item/clue/information.
 - **"object_interaction"**: Interact with a physical object. Include objectInteractionPayload (pickup/place/use/inspect/destroy).
 - **"scene_interaction"**: Search, investigate, or modify the environment. Include sceneConnectionEffect if changing a connection.
@@ -107,9 +112,9 @@ Set actionType **only** when the outcome is genuinely uncertain and requires a s
 - **social**: Influencing, persuading, deceiving, intimidating
 - **combat**: Physical violence — attacking, defending, restraining
 - **stealth**: Acting undetected — sneaking, hiding, pickpocketing
-- **chase**: Pursuit or escape
+- **chase**: Pursuit or escape — running, driving, climbing under pressure
 - **mental**: Sanity resistance — confronting cosmic horror
-- **environmental**: Surviving harsh conditions, emergency medicine
+- **environmental**: Surviving harsh conditions, emergency medicine, creative movement (climbing, jumping, swimming)
 - **narrative**: Interpreting lore, performing rituals, dramatic speeches
 
 ## Impact Levels
@@ -118,9 +123,13 @@ Impact determines **who perceives and is affected by** the action:
   Examples: thinking, reading alone, checking belongings, observing from afar, writing notes, resting
 - **1 — Targeted / one-on-one**: Only the specific target character perceives it. A private exchange.
   Examples: whispering, passing a note, pickpocketing someone, private conversation, discreet item handoff
-- **2 — Local / scene-wide**: Everyone in the current scene perceives it. Visible/audible to bystanders.
+- **2 — Sub-scene / room-wide**: Everyone in the current room or sub-scene perceives it. Visible/audible to bystanders in the same room.
   Examples: speaking loudly, firing a gun, breaking a door, starting a fight, searching a room openly, screaming
-- **3 — Global / far-reaching**: The entire game world is affected. Consequences ripple beyond the scene.
+- **3 — Building / macro-location-wide**: Everyone in the same building or macro location perceives it (all rooms/floors).
+  Examples: fire alarm, shouting down a stairwell, smoke filling the building, event audible throughout
+- **4 — Neighborhood**: Perceived at the current building and nearby buildings within walking distance.
+  Examples: explosion heard across the block, gunshot echoing through nearby streets, building collapse, large fire
+- **5 — Global / far-reaching**: The entire game world is affected. Consequences ripple everywhere.
   Examples: triggering a town alarm, summoning ritual, building collapse, radio broadcast
 
 ## Output
@@ -227,8 +236,10 @@ Determine how the NPC "${c.npcName}" perceives the following events, and whether
 ## Events Witnessed
 Each event has an impact level indicating proximity:
 - impact 1: directly targeted (private, one-on-one)
-- impact 2: same or adjacent scene (visible/audible)
-- impact 3: global event (heard about, not directly witnessed)
+- impact 2: same room/sub-scene (directly witnessed)
+- impact 3: same building (heard/felt through walls or floors)
+- impact 4: nearby area (distant sound, visible smoke, rumor from next door)
+- impact 5: global event (news, supernatural disturbance, widespread effect)
 
 ${c.triggeringEvents}
 

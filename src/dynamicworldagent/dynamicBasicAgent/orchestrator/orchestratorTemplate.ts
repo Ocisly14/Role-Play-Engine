@@ -57,16 +57,20 @@ If the investigator is interacting with a specific NPC from the Available NPCs l
 - If no specific NPC is targeted, omit targetNpcId
 
 ### 3. Impact Level
-Impact determines **who in the game world perceives and is affected by** the action. Rate on a 0-3 scale based on observability and consequence scope:
+Impact determines **who in the game world perceives and is affected by** the action. Rate on a 0-5 scale based on observability and consequence scope:
 
 - **0 — Private / unnoticed**: Only the acting character knows. No one else perceives or reacts.
   Examples: thinking, reading a book alone, checking personal belongings, quietly observing from afar, writing notes, resting, recalling memories
 - **1 — Targeted / one-on-one**: Only the specific target character perceives it. A private exchange between two people.
   Examples: whispering to someone, passing a note, pickpocketing a specific person, private conversation, discreetly handing over an item, subtle gesture to one person
-- **2 — Local / scene-wide**: Everyone present in the current scene perceives it. The action is visible, audible, or otherwise noticeable to bystanders.
-  Examples: speaking loudly, firing a gun, breaking down a door, starting a fight, searching a room openly, casting a spell with visible effects, screaming, playing music, knocking over furniture, an explosion
-- **3 — Global / far-reaching**: The entire game world is affected. The consequences ripple beyond the current scene.
-  Examples: triggering a town-wide alarm, completing a summoning ritual, causing a building collapse, broadcasting over radio/PA system, actions that fundamentally alter the story state for all characters
+- **2 — Sub-scene / room-wide**: Everyone present in the same room or sub-scene perceives it.
+  Examples: speaking loudly, firing a gun, breaking down a door, starting a fight, searching a room openly, screaming, knocking over furniture
+- **3 — Building / macro-location-wide**: Everyone in the same building or macro location perceives it (all sub-scenes within the building).
+  Examples: fire alarm, shouting down a stairwell, an event audible throughout a building, smoke filling all floors
+- **4 — Neighborhood**: Perceived across the immediate area — the current building and nearby buildings within walking distance.
+  Examples: explosion heard across the block, gunshot echoing through nearby streets, a building collapse, large fire with visible smoke
+- **5 — Global / far-reaching**: The entire game world is affected. The consequences ripple everywhere.
+  Examples: triggering a town-wide alarm, completing a summoning ritual, radio/PA broadcast, earthquake, actions that fundamentally alter the story state for all characters
 
 ## Output (JSON only)
 

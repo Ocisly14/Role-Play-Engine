@@ -41,7 +41,7 @@ export interface PlanNode {
   location: string;
   type: PlanNodeType;
   actionType?: ActionType;
-  impact: 0 | 1 | 2 | 3;
+  impact: 0 | 1 | 2 | 3 | 4 | 5;
   difficulty?: "regular" | "hard" | "extreme";
   isPlayer?: boolean;
   timeAdvanceMinutes: number;
@@ -73,7 +73,7 @@ export interface CharacterAction {
   location: string;
   type: PlanNodeType;
   actionType?: ActionType;
-  impact: 0 | 1 | 2 | 3;
+  impact: 0 | 1 | 2 | 3 | 4 | 5;
   isPlayer?: boolean;
   difficulty?: "regular" | "hard" | "extreme" | "luck_only";
   successLevel?: SuccessLevel;

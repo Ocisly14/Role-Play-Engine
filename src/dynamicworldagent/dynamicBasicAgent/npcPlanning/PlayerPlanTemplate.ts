@@ -75,7 +75,7 @@ Day ${params.gameDay}, ${params.currentGameTime}
 
 ## Node Type Reference
 - **"routine"**: Self-contained action, no interaction target. Examples: eating, resting, reading something already in hand, thinking, recalling memories.
-- **"movement"**: Move to a connected scene. Set location to the target scenarioId. Blocked paths are handled by the execution engine — just express the intent.
+- **"movement"**: Move to a destination scene. Set location to the target scene ID. Omit actionType for normal unblocked movement; set actionType when path is blocked (if skill can overcome it) or for creative movement (climbing, jumping, swimming).
 - **"character_interaction"**: Interact with a specific NPC. Requires targetCharacterId. Include characterInteractionPayload if transferring item/clue/information.
 - **"object_interaction"**: Interact with a physical object in the scene. Include objectInteractionPayload (pickup/place/use/inspect/destroy).
 - **"scene_interaction"**: Search, investigate, or modify the environment/scene itself. Include sceneConnectionEffect if changing a connection (e.g., unlocking/barricading a door).
@@ -109,7 +109,7 @@ Typical skills: Stealth, Sleight of Hand, Disguise, Locksmith.
 **Pursuit or escape — running, driving, climbing under pressure.**
 Triggered by: fleeing from danger, chasing a suspect, vehicle pursuit, swimming to escape.
 Both pursuer and quarry roll. Higher success wins.
-Typical skills: Drive Auto, Climb, Swim, Jump, Dodge, Ride, Pilot (*).
+Typical skills: Drive Auto, Climb, Swim, Jump, Dodge, Ride, Pilot (*), Operate Heavy Machinery.
 
 ### mental
 **Sanity resistance — confronting cosmic horror, resisting psychological trauma.**
@@ -118,9 +118,9 @@ Rolls against SAN stat. Failure causes sanity loss.
 Typical skills: Psychology, Psychoanalysis, Occult, Cthulhu Mythos.
 
 ### environmental
-**Surviving harsh conditions — physical endurance, wilderness hazards, emergency medicine.**
-Triggered by: crossing a raging river, surviving extreme cold/heat, treating wounds in the field, navigating without landmarks, handling toxic substances.
-Typical skills: Survival (*), First Aid, Medicine, Navigate, Climb, Swim.
+**Surviving harsh conditions, physical endurance, wilderness hazards, emergency medicine, and creative movement.**
+Triggered by: crossing a raging river, surviving extreme cold/heat, treating wounds in the field, navigating without landmarks, handling toxic substances, climbing walls, jumping between rooftops, swimming across a lake, breaking through obstacles.
+Typical skills: Survival (*), First Aid, Medicine, Navigate, Climb, Swim, Jump, Electrical Repair, Mechanical Repair.
 
 ### narrative
 **Key story moments — interpreting lore, performing rituals, making dramatic speeches.**
@@ -130,6 +130,11 @@ Typical skills: History, Occult, Language (*), Art/Craft (*), Psychology, Law.
 ## When to Assign actionType (Core Decision)
 
 **Principle: actionType = uncertain outcome requiring a dice roll. No actionType = guaranteed success.**
+
+### Movement-specific rules
+- Moving along an unblocked connected path → **OMIT actionType**
+- Moving through a BLOCKED connection → read the block reason. If a skill can overcome it (locked door → Locksmith, barricade → environmental), **SET actionType**. If impassable (collapsed building, magically sealed), do NOT attempt.
+- Creative movement with no connection (jumping, climbing, swimming) → **SET actionType** (e.g. environmental, chase)
 
 Consider these three factors together to decide:
 
@@ -164,10 +169,14 @@ Impact determines **who in the game world perceives and is affected by** the act
   Examples: thinking, reading alone, checking belongings, observing from afar, writing notes, resting
 - **1 — Targeted / one-on-one**: Only the specific target character perceives it. A private exchange.
   Examples: whispering, passing a note, pickpocketing someone, private conversation, discreet item handoff
-- **2 — Local / scene-wide**: Everyone in the current scene perceives it. Visible/audible to bystanders.
+- **2 — Sub-scene / room-wide**: Everyone in the current room or sub-scene perceives it. Visible/audible to bystanders.
   Examples: speaking loudly, firing a gun, breaking a door, starting a fight, searching a room openly, screaming
-- **3 — Global / far-reaching**: The entire game world is affected. Consequences ripple beyond the scene.
-  Examples: triggering a town alarm, summoning ritual, building collapse, radio broadcast
+- **3 — Building / macro-location-wide**: Everyone in the same building or macro location perceives it (all rooms/floors).
+  Examples: fire alarm, shouting down a stairwell, smoke filling the building, event audible throughout
+- **4 — Neighborhood**: Perceived at the current building and nearby buildings within walking distance.
+  Examples: explosion heard across the block, gunshot echoing, building collapse, large fire
+- **5 — Global / far-reaching**: The entire game world is affected. Consequences ripple everywhere.
+  Examples: triggering a town alarm, summoning ritual, radio broadcast, earthquake
 
 ## Time Advance
 Estimate realistic minutes for each action:
