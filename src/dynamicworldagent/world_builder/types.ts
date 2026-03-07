@@ -76,16 +76,18 @@ export interface DynamicNPCProfile extends DynamicCharacterProfile {
   // DynamicWorld specific fields
   instantiatedFrom?: string; // Knowledge holder ID that this NPC represents
   inheritsKnowledge?: string[]; // Truth event IDs from knowledge holder
+  residence?: string; // macroLocationId -- derived from ScenarioOutline.residents
 }
 
 export interface DynamicScene {
   id: string;
   name: string;
   description: string;
-  domain?: string;
+  parentLocationId: string;
   items: SceneItem[];
   clues: ScenarioClue[];
   conditions: ScenarioCondition[];
+  connections: string[];
   sceneImage?: SceneImage;
   events: string[];
 }
@@ -231,7 +233,8 @@ export interface ScenarioConnection {
 }
 
 /**
- * Scenario Outline - generated from place holders
+ * Scenario Outline - Macro location container for sub-scenes
+ * Pure container: no connections, no clues. Grouping framework for DynamicScene instances.
  */
 export interface ScenarioOutline {
   id: string;
@@ -239,15 +242,20 @@ export interface ScenarioOutline {
   description: string;
   sourcePlaceId?: string;
   sourcePlaceName?: string;
-  tags?: string[];
-  evidence?: string[];
-  clues?: ScenarioClueSeed[];
-  connections: ScenarioConnection[];
-  // UI/scheduling fields:
-  showMap?: boolean;
-  mapImagePath?: string;
-  estimatedShortActions?: number;
-  timeRestriction?: string;
+  residents?: string[];
+  subSceneCount: number;
+  entrySceneId?: string;
+}
+
+/**
+ * Transport Edge - Connects two macro locations via a street/outdoor scene
+ * Carries travel time for tick processor pathfinding
+ */
+export interface TransportEdge {
+  fromLocationId: string;
+  toLocationId: string;
+  streetSceneId: string;
+  travelTimeMinutes: number;
 }
 
 export interface ScenarioClueSeed {
@@ -317,20 +325,24 @@ export interface NPCBasicInfo {
  */
 export interface WorldGenerationResult {
   macroScene: MacroSceneStructure;
-  truthTimeline: TruthEvent[];
-  knowledgeMatrix: KnowledgeHolder[];
-  redHerrings: RedHerring[];
+  storyPremise: string;
   mythosEvents: MythosEvent[];
   endState: EndStateDefinition;
   scenarios: ScenarioOutline[];
+  scenes: Map<string, DynamicScene>;
+  transportEdges: TransportEdge[];
+  truthTimeline: TruthEvent[];
+  knowledgeMatrix: KnowledgeHolder[];
+  redHerrings: RedHerring[];
   startingScene: StartingSceneSelection | null;
-  otherScenarioNpcAssignments: ScenarioNpcAssignments[];
   npcs: DynamicNPCProfile[];
   generatedFiles: {
-    truthTimelineFile: string;
-    knowledgeMatrixFile: string;
     macroSceneFile: string;
     scenariosFile: string;
+    scenesDir: string;
+    transportFile: string;
+    truthTimelineFile: string;
+    knowledgeMatrixFile: string;
     startingSceneFile: string | null;
     npcsDir: string;
     moduleDigestFile?: string | null;
