@@ -192,16 +192,15 @@ Module size controls scale:
 ```typescript
 interface ModuleSizeConfig {
   size: "small" | "medium" | "large";
-  macroLocationCount: [number, number];     // [min, max]
+  macroLocationCount: [number, number];     // [min, max] (buildings only, excludes roads)
   subSceneRange: [number, number];          // per macro location
-  outdoorSceneRange: [number, number];      // street/connector scenes
   totalSceneCap: number;                    // soft upper bound
 }
 
 const MODULE_SIZE_CONFIGS = {
-  small:  { macroLocationCount: [4, 6],   subSceneRange: [1, 3], outdoorSceneRange: [2, 4],  totalSceneCap: 25  },
-  medium: { macroLocationCount: [7, 12],  subSceneRange: [2, 4], outdoorSceneRange: [3, 6],  totalSceneCap: 50  },
-  large:  { macroLocationCount: [13, 20], subSceneRange: [2, 5], outdoorSceneRange: [5, 10], totalSceneCap: 80  },
+  small:  { macroLocationCount: [4, 6],   subSceneRange: [1, 3], totalSceneCap: 25  },
+  medium: { macroLocationCount: [7, 12],  subSceneRange: [2, 4], totalSceneCap: 50  },
+  large:  { macroLocationCount: [13, 20], subSceneRange: [2, 5], totalSceneCap: 80  },
 };
 ```
 
@@ -364,11 +363,13 @@ Movement node output:
 
 Scale is controlled by module size (small/medium/large), consistent with existing module system:
 
-| Size | Macro Locations | Sub-Scenes/Location | Outdoor Scenes | Total Cap |
-|---|---|---|---|---|
-| Small | 4-6 | 1-3 | 2-4 | ~25 |
-| Medium | 7-12 | 2-4 | 3-6 | ~50 |
-| Large | 13-20 | 2-5 | 5-10 | ~80 |
+| Size | Macro Locations | Sub-Scenes/Location | Total Cap |
+|---|---|---|---|
+| Small | 4-6 | 1-3 | ~25 |
+| Medium | 7-12 | 2-4 | ~50 |
+| Large | 13-20 | 2-5 | ~80 |
+
+Road/street scene count is determined by the sceneGraphBuilder based on macro location layout — not configured separately.
 
 ---
 
