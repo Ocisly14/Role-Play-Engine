@@ -1,0 +1,69 @@
+{
+  "id": "SCN_6_SUB_1",
+  "name": "木屋外观",
+  "description": "新月街B大道尽头，一栋二层木屋掩映在枯黄的杂草之间。屋前的花园早已无人打理，灌木和野草疯长到齐腰高，几株本该修剪整齐的观赏植物已经彻底野化，枝条横斜地伸向小径。一段短短的木阶梯通往门前的走廊，阶梯边缘的木板因长年风吹日晒而翘起开裂，踩上去发出沉闷的吱呀声。走廊的栏杆上残留着褪色的白漆，有几处已经剥落露出灰褐色的木质。大门半掩着，门框周围挂着几缕干枯的蛛丝。整座木屋的外墙板材呈现出一种不均匀的灰白色，那是阳光和雨水常年交替侵蚀留下的痕迹。从建筑的体量和残存的装饰线条来看，这里曾经是一处讲究的别墅，但如今只剩下沉默的荒废。十二月末的冷风穿过花园的枯枝，发出细碎的呜咽声。",
+  "parentLocationId": "SCN_6",
+  "items": [
+    {
+      "id": "ITEM_SCN6_1",
+      "name": "Bruno Galilei的别克汽车",
+      "description": "一辆别克牌汽车停在木屋前，驾驶位上坐着Bruno Galilei的遗体，身体还系着安全带。他的身体像是干尸一样，水分似乎被某种不可思议的东西抽干了，脖子上有一处咬痕——两个直径约1厘米的血洞。"
+    },
+    {
+      "id": "ITEM_SCN6_2",
+      "name": "Bruno的手机",
+      "description": "Bruno的遗体手中紧握着他的手机，屏幕上显示一条未编辑完的短信，只写了一个人名：'是卢奇菲罗……'"
+    },
+    {
+      "id": "ITEM_SCN6_3",
+      "name": "驯鹿酒吧案资料与物证",
+      "description": "副驾驶座上放着驯鹿酒吧案的资料与物证，除了Bruno和调查员没人在意它们。"
+    }
+  ],
+  "clues": [
+    {
+      "id": "CLUE_SCN6_1",
+      "clueText": "Bruno Galilei的遗体呈现出极其诡异的死状——全身水分被抽干如同干尸，脖子上有两个直径约1厘米的圆形血洞。这种可怖的死法使死亡时间无法推断。",
+      "category": "physical",
+      "difficulty": "automatic",
+      "location": "别克汽车驾驶座",
+      "discoveryMethod": "检查Bruno的遗体",
+      "reveals": ["Bruno的死因非常诡异，涉及超自然力量"],
+      "discovered": false
+    },
+    {
+      "id": "CLUE_SCN6_2",
+      "clueText": "Bruno手机上有一条未编辑完的短信，内容只有一个人名：'是卢奇菲罗……'。这条短信是Jenny Florence（卢奇菲罗）事先编辑好的定时发送短信。",
+      "category": "document",
+      "difficulty": "automatic",
+      "location": "Bruno手中的手机",
+      "discoveryMethod": "查看Bruno手中的手机",
+      "reveals": ["Bruno临死前试图传达关于卢奇菲罗的信息", "Bruno在与调查员分开前曾收到过一条短信"],
+      "discovered": false
+    },
+    {
+      "id": "CLUE_SCN6_3",
+      "clueText": "询问Lux Lynch和其他警察局的人，他们都表示并不知道Bruno有回到办公室的事情。Bruno在某个时间点独自来到了这座木屋，却再也没有离开。",
+      "category": "witness",
+      "difficulty": "regular",
+      "location": "向警察局方面询问可得",
+      "discoveryMethod": "询问Lux Lynch或其他警察局人员",
+      "reveals": ["Bruno独自前往木屋，没有告知同事"],
+      "discovered": false
+    }
+  ],
+  "conditions": [
+    {
+      "type": "weather",
+      "description": "2003年12月末的加利福尼亚卡森德拉镇，天气阴冷。",
+      "mechanicalEffect": ""
+    },
+    {
+      "type": "other",
+      "description": "木屋周围杂草丛生，花园荒废，显示已长时间无人居住打理。",
+      "mechanicalEffect": ""
+    }
+  ],
+  "connections": ["SCN_6_SUB_2"],
+  "events": []
+}

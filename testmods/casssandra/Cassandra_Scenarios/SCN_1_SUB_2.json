@@ -1,0 +1,54 @@
+{
+  "id": "SCN_1_SUB_2",
+  "name": "停尸间",
+  "description": "沿着地下楼梯走下去，温度骤然下降了好几度，空气变得阴冷而沉滞。停尸间的门是一扇厚重的不锈钢推门，推开时金属铰链发出一声沉闷的呻吟。房间内部面积不大，三面墙壁上嵌着金属抽屉式的冷藏柜，每个柜门上贴着手写的标签纸，有些已经泛黄卷边。地面是灰色的水磨石，中央有一张不锈钢解剖台，台面上的排水槽泛着暗淡的金属光泽。头顶的荧光灯管发出惨白而稳定的光，将每一个角落都照得无处遁形。福尔马林的气味浓重得几乎凝成实质，刺得鼻腔发酸，混着一丝若有若无的腐甜味道。墙角立着一个铁皮档案柜，里面按日期归档着记录。冷藏柜的压缩机持续运转，低沉而规律的嗡鸣是这个房间里唯一的声响。",
+  "parentLocationId": "SCN_1",
+  "items": [
+    {
+      "id": "ITEM_SCN1_3",
+      "name": "尸体档案记录",
+      "description": "停尸间的档案柜，记录着每具尸体的入库时间、转运情况等信息"
+    },
+    {
+      "id": "ITEM_SCN1_4",
+      "name": "冷藏柜",
+      "description": "金属抽屉式冷藏柜，用于保存尸体，部分抽屉已空置"
+    }
+  ],
+  "clues": [
+    {
+      "id": "CLUE_SCN1_4",
+      "clueText": "Jenny Florence（卢奇菲罗）的尸体不在停尸间，已被运往焚化厂。医院档案显示尸体转运时间就在不久前，由院长Vincent Galenus亲自运送。",
+      "category": "document",
+      "difficulty": "regular",
+      "location": "停尸间档案记录",
+      "discoveryMethod": "查阅停尸间的尸体档案记录",
+      "reveals": ["尸体被紧急转移到焚化厂", "Vincent Galenus亲自参与了尸体转运，行为可疑"],
+      "discovered": false
+    },
+    {
+      "id": "CLUE_SCN1_5",
+      "clueText": "如果调查员需要寻找其他相关遗体，也会发现同样的结果——尸体均已被转运。",
+      "category": "observation",
+      "difficulty": "regular",
+      "location": "停尸间冷藏柜",
+      "discoveryMethod": "检查冷藏柜中的尸体存放情况",
+      "reveals": ["有人在系统性地销毁尸体证据"],
+      "discovered": false
+    }
+  ],
+  "conditions": [
+    {
+      "type": "temperature",
+      "description": "停尸间内温度极低，冷气从冷藏柜中散发出来",
+      "mechanicalEffect": ""
+    },
+    {
+      "type": "smell",
+      "description": "弥漫着福尔马林和消毒液的刺鼻气味",
+      "mechanicalEffect": ""
+    }
+  ],
+  "connections": ["SCN_1_SUB_1", "SCN_1_SUB_5"],
+  "events": []
+}

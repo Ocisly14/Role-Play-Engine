@@ -1,0 +1,64 @@
+{
+  "id": "SCN_17_SUB_1",
+  "name": "教堂主殿",
+  "description": "教堂不大，但非常庄严。四米高的橡木大门厚重古朴，还未踏入便令人心存敬畏。整座建筑呈十字型布局，两侧排列着年代久远的木质长椅，椅面被磨得光滑发亮。阳光透过狭长的彩色玻璃窗洒入殿内，在灰白色的石板地面上投下斑斓的光影——那些玻璃上描绘着圣经故事的场景，色彩历经岁月仍然鲜艳。教堂最深处矗立着一座耶稣受难的雕像，面容哀恸，以无声的悲悯注视着每一位来访者。雕像后方是通往钟楼的入口，钟楼背后还有一面更为巨大的彩色玻璃。整个主殿弥漫着蜡烛燃烧后的淡淡烟熏气息，与陈旧木头和石灰的味道交织在一起。殿内安静得近乎肃穆，只有偶尔的风声穿过玻璃窗缝隙，以及脚步踏在石板上的清晰回响。",
+  "parentLocationId": "SCN_17",
+  "items": [
+    {
+      "id": "ITEM_SCN17_1",
+      "name": "耶稣受难雕像",
+      "description": "一座精雕细刻的耶稣受难雕像，位于教堂最深处的祭坛中央。雕像面容哀恸，双臂展开钉于十字架上，工艺精湛。雕像底座刻有拉丁文铭文。"
+    },
+    {
+      "id": "ITEM_SCN17_2",
+      "name": "巨大的彩色玻璃",
+      "description": "钟楼后方的一面大型彩色玻璃窗，描绘着圣经中的场景。阳光透过玻璃时，会在殿内投下五彩斑斓的光影。"
+    },
+    {
+      "id": "ITEM_SCN17_3",
+      "name": "圣经",
+      "description": "放在祭坛上的一本古旧圣经，Constantine Frollo经常在此处诵读。书页泛黄，边角磨损，显示出频繁使用的痕迹。"
+    }
+  ],
+  "clues": [
+    {
+      "id": "CLUE_SCN17_1",
+      "clueText": "教堂某些角落偶尔能看到一些不寻常的小型黑色蜘蛛出没。这些蜘蛛看起来小巧袖珍，但与普通蜘蛛有明显不同——它们散发着一种不自然的冰冷感。",
+      "category": "observation",
+      "difficulty": "hard",
+      "location": "教堂主殿角落与暗处",
+      "discoveryMethod": "仔细搜索教堂各处角落，或在已知Constantine Frollo与蜘蛛的关联后再次来到教堂",
+      "reveals": ["教堂内存在不寻常的蜘蛛活动", "可能与Constantine Frollo有关", "暗示教堂内隐藏着某种通道"],
+      "discovered": false
+    },
+    {
+      "id": "CLUE_SCN17_2",
+      "clueText": "Constantine Frollo声称教堂内的大钟由Marks White亲手制造，时间绝对不会出错。但若调查员再次前来，可能发现钟的时间出现了差错——这暗示着卡森德拉镇隐藏着某种与时间有关的秘密。",
+      "category": "observation",
+      "difficulty": "regular",
+      "location": "教堂主殿（可观察到钟楼方向）",
+      "discoveryMethod": "多次拜访教堂后对比时间，或仔细观察时钟",
+      "reveals": ["大钟被人拨动过", "卡森德拉镇存在某种与时间相关的异常"],
+      "discovered": false
+    }
+  ],
+  "conditions": [
+    {
+      "type": "lighting",
+      "description": "彩色玻璃窗将日光过滤成斑斓的色彩，殿内光线柔和而庄严。夜晚则只有蜡烛提供微弱的照明，阴影在墙壁和廊柱间摇曳。",
+      "mechanicalEffect": ""
+    },
+    {
+      "type": "smell",
+      "description": "蜡烛燃烧后的淡淡烟熏气息与陈旧木头的味道交织在一起，偶尔还能嗅到一丝不易察觉的寒冷气味。",
+      "mechanicalEffect": ""
+    },
+    {
+      "type": "sound",
+      "description": "教堂内非常安静，只有偶尔的风声穿过彩色玻璃窗的缝隙。脚步声在石板地面上会产生清晰的回响。",
+      "mechanicalEffect": ""
+    }
+  ],
+  "connections": ["SCN_17_SUB_2", "SCN_17_SUB_3", "SCN_17_SUB_4"],
+  "events": []
+}

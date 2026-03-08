@@ -1,0 +1,54 @@
+{
+  "id": "SCN_5_SUB_1",
+  "name": "马塞尔的廉租房",
+  "description": "推开那扇掉漆的薄木门，一股霉味混着廉价烟草的气息扑面而来。这间不足二十平米的廉租房塞下了一个人生活的全部——一张弹簧外露的单人床紧贴墙角，床单泛黄起球；对面是一张摇晃的折叠桌，桌面满是烟烫的焦痕和杯底的水渍圆环。头顶的日光灯管闪烁不定，发出细微的电流嗡鸣。地板是劣质的复合材料，每踩一步都发出令人牙酸的嘎吱声。薄如纸板的隔墙毫无隔音可言，隔壁电视机的声响清晰可闻。窗户只有一扇，铝合金框已经变形，缝隙间塞着发黑的旧报纸，十二月的寒风依然从中渗入，吹得墙角堆放的塑料袋窸窣作响。水槽边堆着未洗的餐具，龙头滴水的节奏单调而持久。整间屋子弥漫着一种停滞的、被生活压垮后放弃挣扎的沉闷气息。",
+  "parentLocationId": "SCN_5",
+  "items": [
+    {
+      "id": "ITEM_SCN5_1",
+      "name": "简陋的家具",
+      "description": "廉租房内简单的桌椅和床铺，陈旧但勉强维持生活所需"
+    },
+    {
+      "id": "ITEM_SCN5_2",
+      "name": "Marcel Gwynplaine的个人物品",
+      "description": "散落在房间里的一些个人物品，可能包含关于他日常生活的信息"
+    }
+  ],
+  "clues": [
+    {
+      "id": "CLUE_SCN5_1",
+      "clueText": "Marcel Gwynplaine是一名普通的失业人员，住在廉租房中，经济状况拮据。警方已调查过其身份，未发现特别之处。",
+      "category": "observation",
+      "difficulty": "automatic",
+      "location": "廉租房内部",
+      "discoveryMethod": "观察房间的整体环境和生活状态",
+      "reveals": ["Marcel Gwynplaine表面上只是一个普通的失业者"],
+      "discovered": false
+    },
+    {
+      "id": "CLUE_SCN5_2",
+      "clueText": "在驯鹿酒吧凶杀案当晚，含有'魔鬼呼吸'的酒杯原本应该是给Marcel Gwynplaine的，是酒吧弄错了酒单。这意味着Marcel Gwynplaine才是药物的原定目标。",
+      "category": "witness",
+      "difficulty": "regular",
+      "location": "通过与Marcel Gwynplaine交谈或回忆案件细节获知",
+      "discoveryMethod": "综合酒吧老板Lutz Emilion的证词与案件物证分析",
+      "reveals": ["有人想要对Marcel Gwynplaine下药", "Marcel Gwynplaine可能知道某些令人想要灭口的信息"],
+      "discovered": false
+    }
+  ],
+  "conditions": [
+    {
+      "type": "lighting",
+      "description": "廉租房内光线昏暗，只有一盏老旧的台灯勉强照亮房间",
+      "mechanicalEffect": ""
+    },
+    {
+      "type": "temperature",
+      "description": "房间里暖气不足，冬季的寒意从门窗缝隙中渗入",
+      "mechanicalEffect": ""
+    }
+  ],
+  "connections": [],
+  "events": []
+}

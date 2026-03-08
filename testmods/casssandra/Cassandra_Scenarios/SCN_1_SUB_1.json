@@ -1,0 +1,64 @@
+{
+  "id": "SCN_1_SUB_1",
+  "name": "医院大厅",
+  "description": "推开星辰医院的玻璃门，一股混合着消毒水和陈旧地板蜡的气味扑面而来。大厅不算宽敞，米白色的瓷砖地面上布满了细小的裂纹，头顶的日光灯管有一根在微微闪烁，发出若有若无的嗡嗡声。右侧是一排塑料候诊椅，扶手上的漆已经磨得发亮，靠墙立着一台老旧的自动售货机，玻璃面板后面的零食看起来已经在那里待了很久。前台的接待窗口半开着，桌上散落着几份表格和一只搪瓷杯。墙上挂着一幅褪色的加州风光海报和一块白板，上面用马克笔写着一些排班信息，字迹潦草。走廊通向医院深处，绿色的指示牌标注着各科室的方向。整座建筑透着一种小镇医院特有的松散气氛——不算破旧，但也谈不上精心打理，仿佛一切都在按照最低限度的惯性运转着。",
+  "parentLocationId": "SCN_1",
+  "items": [
+    {
+      "id": "ITEM_SCN1_1",
+      "name": "医院档案",
+      "description": "医院的患者与尸体档案记录系统，可以查阅尸体转运等信息"
+    },
+    {
+      "id": "ITEM_SCN1_2",
+      "name": "监控屏幕",
+      "description": "大厅角落的监控显示屏，可以观察到各处走廊的画面，但存在监控死角"
+    }
+  ],
+  "clues": [
+    {
+      "id": "CLUE_SCN1_1",
+      "clueText": "这家医院拥有远超其规模的反黑客系统，有人专门对网络安全系统做了加强。药品管理室和实验室两处区域格外可疑。",
+      "category": "knowledge",
+      "difficulty": "hard",
+      "location": "医院网络系统",
+      "discoveryMethod": "通过Simon Laplace尝试入侵医院系统后得知",
+      "reveals": ["医院存在不可告人的秘密", "Vincent Galenus参与了某些隐秘活动"],
+      "discovered": false
+    },
+    {
+      "id": "CLUE_SCN1_2",
+      "clueText": "进入药品管理室和实验室需要院长Vincent Galenus的ID卡。通过复制ID卡可以获取进入权限，但必须及时归还原卡，否则会触发警报。",
+      "category": "observation",
+      "difficulty": "regular",
+      "location": "医院大厅公告与门禁系统",
+      "discoveryMethod": "观察门禁系统或向工作人员打听",
+      "reveals": ["需要获取Vincent Galenus的ID卡"],
+      "discovered": false
+    },
+    {
+      "id": "CLUE_SCN1_3",
+      "clueText": "医院管理松散，调查员可以伪装成警察进入调查尸体，医院人员不会产生怀疑。如果乔装失败也可以另想办法进入，难度不大。",
+      "category": "observation",
+      "difficulty": "automatic",
+      "location": "医院大厅",
+      "discoveryMethod": "观察医院工作人员的态度和管理状态",
+      "reveals": [],
+      "discovered": false
+    }
+  ],
+  "conditions": [
+    {
+      "type": "lighting",
+      "description": "医院内部灯光明亮，走廊里弥漫着消毒水的气味",
+      "mechanicalEffect": ""
+    },
+    {
+      "type": "other",
+      "description": "医院管理松散，人员来往稀疏，伪装进入相对容易",
+      "mechanicalEffect": "伪装类技能（如乔装）的难度降低"
+    }
+  ],
+  "connections": ["SCN_1_SUB_2", "SCN_1_SUB_3", "SCN_1_SUB_4", "SCN_1_SUB_5", "SCN_1_SUB_6"],
+  "events": []
+}

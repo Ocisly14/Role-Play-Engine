@@ -1,0 +1,80 @@
+{
+  "id": "SCN_13_SUB_2",
+  "name": "办公室",
+  "description": "一间不大的办公室藏在厂区深处，木质门板因年久而微微变形，推开时发出干涩的吱呀声。室内陈设简朴但收拾得颇为整洁：一张老式橡木办公桌靠墙而立，桌面擦拭得很干净，台灯的暖黄灯光在桌面上投出一小片圆形亮区。桌后的转椅皮面已经磨出了光泽，扶手上留有常年握持的痕迹。靠窗的书架上排列着一些书籍，旁边整齐地码放着数本厚实的剪报集，纸页泛黄、边角翘起，看得出经过长期的翻阅与积累。办公桌上散落着几份报纸。窗户半开着，薄薄的窗帘被穿堂风轻轻拂动，送进来一丝远处厂区里混合着酒精与铁锈的凉意。墙面上挂着几帧褪色的老照片和一张经营执照，相框玻璃上蒙着一层细细的灰。整个房间安静而沉闷，只有台灯灯丝偶尔发出的细微嗡鸣。",
+  "parentLocationId": "SCN_13",
+  "items": [
+    {
+      "id": "ITEM_SCN13_4",
+      "name": "书籍",
+      "description": "办公室书架上摆放着一些书籍，内容涉及酿酒技术和商业管理等方面"
+    },
+    {
+      "id": "ITEM_SCN13_5",
+      "name": "剪报集",
+      "description": "威廉精心保存的数本剪报集，按照时间顺序排列着各种新闻报道的剪报，涵盖多年来的社会新闻"
+    },
+    {
+      "id": "ITEM_SCN13_6",
+      "name": "桌上的报纸",
+      "description": "办公桌上放着一份几周前的报纸，还有一些散落的旧报纸和剪报"
+    }
+  ],
+  "clues": [
+    {
+      "id": "CLUE_SCN13_4",
+      "clueText": "剪报集中有一则Peter William（彼得·威廉）的讣告，记录了老威廉的去世。这份讣告被夹在其中一本剪报集的显眼位置。",
+      "category": "document",
+      "difficulty": "automatic",
+      "location": "威廉的办公室剪报集",
+      "discoveryMethod": "翻阅剪报集",
+      "reveals": [
+        "老威廉于2002年在医院去世，死因与帕德里奇的人体实验可能存在联系"
+      ],
+      "discovered": false
+    },
+    {
+      "id": "CLUE_SCN13_5",
+      "clueText": "从一本剪报集中掉落出一张年代为1988年的报纸剪报，报道了1988年的一场暴动事件。这段线索涉及Simon Laplace（西蒙）不为人知的过去。",
+      "category": "document",
+      "difficulty": "regular",
+      "location": "威廉的办公室剪报集",
+      "discoveryMethod": "仔细翻阅剪报集时从中掉落",
+      "reveals": [
+        "1988年发生过一场暴动",
+        "Simon Laplace的过去与这场暴动有关联"
+      ],
+      "discovered": false
+    },
+    {
+      "id": "CLUE_SCN13_6",
+      "clueText": "桌上一份几周前的报纸报道了太平洋的鱼群异动现象：有人声称看到了圣经中的海中巨兽利维坦；另有海军和游船遭受鲨鱼袭击的消息；多个州对沙滩实行了管制。",
+      "category": "document",
+      "difficulty": "automatic",
+      "location": "威廉的办公室桌上",
+      "discoveryMethod": "阅读桌上的报纸",
+      "reveals": [
+        "太平洋海域出现异常活动",
+        "鱼群异动和鲨鱼袭击与深潜者的活动有关",
+        "这可能是卡森德拉灾难的预兆"
+      ],
+      "discovered": false
+    }
+  ],
+  "conditions": [
+    {
+      "type": "lighting",
+      "description": "办公室内光线昏暗，主要靠一盏台灯和窗户透进的有限光线照明",
+      "mechanicalEffect": ""
+    },
+    {
+      "type": "smell",
+      "description": "空气中混合着纸张陈旧的气味和远处酒窖飘来的淡淡酒精味",
+      "mechanicalEffect": ""
+    }
+  ],
+  "connections": [
+    "SCN_13_SUB_1"
+  ],
+  "events": []
+}

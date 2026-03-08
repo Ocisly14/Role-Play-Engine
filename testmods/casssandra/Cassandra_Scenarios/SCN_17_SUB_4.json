@@ -1,0 +1,69 @@
+{
+  "id": "SCN_17_SUB_4",
+  "name": "地下赌场",
+  "description": "从教堂主殿通过一条隐蔽的通道向下，石阶越走越深，空气也越来越闷热浑浊，最终进入了教堂地下的一处秘密赌场。赌场的空间出人意料地宽敞，头顶悬挂着几盏昏黄的灯泡，将整个地下室映照得忽明忽暗。赌场内摆满了各式各样的赌桌——轮盘、扑克、骰子应有尽有，桌面上散落着筹码和纸牌，周围椅子的皮面磨损严重。吆五喝六声此起彼伏，骰子碰撞声、筹码堆叠声和粗犷的笑声交织在一起，喧嚣得令人耳鸣。一角设有简易的酒水吧台，摆放着各种廉价烈酒瓶，玻璃杯上沾满了指纹。空气混浊不堪，浓烈的烟草味、酒精味和汗水的气味层层叠叠，几乎令人窒息。门口站着身材魁梧的看守，面无表情地审视着每一个进出的人。墙壁是粗糙的砖石结构，没有窗户，让人完全感受不到外面的昼夜更替。",
+  "parentLocationId": "SCN_17",
+  "items": [
+    {
+      "id": "ITEM_SCN17_7",
+      "name": "赌桌",
+      "description": "赌场内摆放的各式赌桌，包括轮盘、扑克和骰子等。桌面上散落着筹码和扑克牌，周围的椅子上有不少磨损痕迹。"
+    },
+    {
+      "id": "ITEM_SCN17_8",
+      "name": "酒水吧台",
+      "description": "赌场一角的简易吧台，摆放着各种廉价烈酒瓶。这里为赌客们提供酒水，让他们在酒精的刺激下更加肆无忌惮地下注。"
+    }
+  ],
+  "clues": [
+    {
+      "id": "CLUE_SCN17_6",
+      "clueText": "这个地下赌场由Ben Cleo的黑手党经营，主事人Kovind（绰号'老虎'）负责管理。教堂上方的神父Constantine Frollo以及前任神父都包庇保护着这里——教堂与黑手党之间存在某种隐秘的合作关系。",
+      "category": "observation",
+      "difficulty": "automatic",
+      "location": "地下赌场",
+      "discoveryMethod": "进入地下赌场后即可感知",
+      "reveals": ["Ben Cleo的黑手党在教堂地下经营赌场", "Constantine Frollo与黑手党存在某种合作", "Kovind是赌场的主事人"],
+      "discovered": false
+    },
+    {
+      "id": "CLUE_SCN17_7",
+      "clueText": "每周一晚上这里会举行一场秘密赌局。2003年12月22日（周一）案发当晚，Ben Cleo正是在这里参加赌局——这与他声称的'在教堂做祷告'形成矛盾，但也为他提供了真正的不在场证明。",
+      "category": "witness",
+      "difficulty": "hard",
+      "location": "地下赌场",
+      "discoveryMethod": "与Ben Cleo达成合作后从他口中得知，或通过与赌场内的人交谈",
+      "reveals": ["Ben Cleo案发当晚在赌场而非祷告", "Ben Cleo有隐瞒真实行踪的动机"],
+      "discovered": false
+    },
+    {
+      "id": "CLUE_SCN17_8",
+      "clueText": "Kovind手中掌握着一些Nancy Charlotte的'不光彩'照片作为把柄。Nancy曾被人引诱到这里赌博并输掉一大笔钱，被Kovind胁迫拍摄了轻浮的照片。",
+      "category": "witness",
+      "difficulty": "hard",
+      "location": "地下赌场·Kovind处",
+      "discoveryMethod": "与Kovind交涉或在与Ben Cleo合作后追问",
+      "reveals": ["Nancy Charlotte有赌博的嗜好", "Kovind利用照片敲诈Nancy", "Nancy被人故意引诱到赌场"],
+      "discovered": false
+    }
+  ],
+  "conditions": [
+    {
+      "type": "lighting",
+      "description": "赌场内光线昏暗，只有几盏悬挂的黄色灯泡提供微弱照明，将赌客们的面孔映照得忽明忽暗。",
+      "mechanicalEffect": ""
+    },
+    {
+      "type": "smell",
+      "description": "空气混浊不堪，混杂着浓烈的烟草味、酒精味和汗水的气味，令人窒息。",
+      "mechanicalEffect": ""
+    },
+    {
+      "type": "sound",
+      "description": "赌客们的吆五喝六声此起彼伏，骰子碰撞声、筹码堆叠声和粗犷的笑声交织在一起，十分嘈杂。",
+      "mechanicalEffect": "在此处进行聆听检定难度增加。"
+    }
+  ],
+  "connections": ["SCN_17_SUB_1"],
+  "events": []
+}

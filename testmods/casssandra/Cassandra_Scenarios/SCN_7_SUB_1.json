@@ -1,0 +1,48 @@
+{
+  "id": "SCN_7_SUB_1",
+  "name": "下水道入口",
+  "description": "掀开新月街B大道路面上锈迹斑斑的铸铁井盖，一股浓烈的腐臭气息扑面而来，令人几乎窒息。顺着湿滑的铁梯向下攀爬，脚下踩到的每一级横档都覆满了黏腻的苔藓。下方是一条典型的城镇下水道通道——拱形砖壁上渗出暗色水渍，灰绿色的污水在脚下的沟渠中湍急流淌，发出沉闷的回响。潮湿的空气里混杂着铁锈与腐败的气味，黑暗在手电光柱的尽头密不透风地聚拢。这条下水道与城镇的其他排水管道别无二致，除了污水之外似乎什么也没有。要想深入探索，必须先设法关闭前方的污水闸门，否则湍急的水流将完全阻断去路。",
+  "parentLocationId": "SCN_7",
+  "items": [],
+  "clues": [
+    {
+      "id": "CLUE_SCN7_1",
+      "clueText": "下水道的闸门系统可以被远程控制。据Simon调查，位于新月街B大道的污水处理系统每隔一段时间都会被有人刻意关闭一小会，最后一次更改日期是12月17日。",
+      "category": "knowledge",
+      "difficulty": "regular",
+      "location": "通过Simon的黑客调查获取",
+      "discoveryMethod": "向Simon Laplace询问关于下水道的事情，等待他的调查结果",
+      "reveals": ["有人定期关闭闸门进入下水道深处", "最后一次操作是12月17日（与Marcel目击脸上有胎记的西装男子从下水道爬出的时间吻合）"],
+      "discovered": false
+    },
+    {
+      "id": "CLUE_SCN7_2",
+      "clueText": "关闭闸门后，下水道内壁的深处可以发现一扇不易察觉的暗门。",
+      "category": "physical",
+      "difficulty": "hard",
+      "location": "下水道深处",
+      "discoveryMethod": "在闸门关闭后仔细搜索下水道墙壁",
+      "reveals": ["下水道内藏有秘密空间"],
+      "discovered": false
+    }
+  ],
+  "conditions": [
+    {
+      "type": "smell",
+      "description": "下水道内弥漫着浓烈的污水臭味，令人作呕。",
+      "mechanicalEffect": "长时间停留可能需要通过体质检定以避免呕吐。"
+    },
+    {
+      "type": "lighting",
+      "description": "下水道内几乎没有光源，必须自备照明工具。",
+      "mechanicalEffect": "无照明工具时，所有需要视觉的技能检定极度困难。"
+    },
+    {
+      "type": "other",
+      "description": "闸门未关闭时，污水湍急流过通道，无法安全深入。",
+      "mechanicalEffect": "闸门开启状态下无法前往暗门区域。"
+    }
+  ],
+  "connections": ["SCN_7_SUB_2"],
+  "events": []
+}

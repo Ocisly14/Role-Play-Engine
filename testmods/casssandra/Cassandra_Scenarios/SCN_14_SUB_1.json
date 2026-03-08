@@ -1,0 +1,70 @@
+{
+  "id": "SCN_14_SUB_1",
+  "name": "珊德拉的小屋·店面",
+  "description": "卡森德拉旧街上一间不起眼的烟草小店，门楣上挂着褪色的木质招牌，上面用花体字写着「珊德拉的小屋」。推门而入，铜铃叮当作响，一股醇厚的烟草香气扑面而来——雪茄的木质底韵、烟斗丝的蜜甜、混合烟草的辛辣，在暖色壁灯的映照下交织成一层看不见的芳香帷幕。店面不大，左侧是一排深色胡桃木展柜，玻璃罩下整齐陈列着各产地的雪茄，从古巴到多米尼加，标签用娟秀的手写体注明产地与风味。右侧靠墙的木架上摆满了锡罐装的烟斗丝和各式卷烟，铜质烟灰缸和木质烟盒穿插其间作为装饰。柜台是一块打磨光滑的橡木板面，上面放着一台老式收银机和一只插着干花的陶瓶。头顶的吊扇缓缓转动，搅散着烟草的余韵。地板是磨得发亮的老松木，每一步都发出细微的吱呀声。整间店铺透着一种老派的、不慌不忙的温暖，仿佛时间在这里流淌得格外缓慢。",
+  "parentLocationId": "SCN_14",
+  "items": [
+    {
+      "id": "ITEM_SCN14_1",
+      "name": "雪茄和香烟",
+      "description": "店内陈列着各式各样的雪茄和香烟，品质上佳，Bruno Galilei称赞这里的雪茄是他抽过最好的"
+    },
+    {
+      "id": "ITEM_SCN14_2",
+      "name": "围裙和店铺陈设",
+      "description": "店铺布置温馨朴素，柜台后方的架子上整齐摆放着各种品牌的烟草制品"
+    },
+    {
+      "id": "ITEM_SCN14_3",
+      "name": "电话",
+      "description": "珊德拉用来联系他人的电话，她一直试图联系Bruno Galilei但打不通"
+    }
+  ],
+  "clues": [
+    {
+      "id": "CLUE_SCN14_1",
+      "clueText": "Shandra Hernandez与Bruno Galilei的关系非常亲密。从两人的交谈来看，他们之间的关系远超普通的店主和顾客。Bruno经常在空闲时来这里。",
+      "category": "observation",
+      "difficulty": "automatic",
+      "location": "珊德拉的小屋店内",
+      "discoveryMethod": "观察珊德拉谈及布鲁诺时的神态和语气",
+      "reveals": [
+        "珊德拉对布鲁诺有特殊的感情"
+      ],
+      "discovered": false
+    },
+    {
+      "id": "CLUE_SCN14_2",
+      "clueText": "珊德拉一直打不通Bruno Galilei的电话，对此十分焦急。她想了解Bruno的情况，这表明两人之间的联系突然中断。",
+      "category": "witness",
+      "difficulty": "automatic",
+      "location": "珊德拉的小屋",
+      "discoveryMethod": "路过此处时珊德拉主动向调查员招手询问",
+      "reveals": [
+        "布鲁诺可能已经出事"
+      ],
+      "discovered": false
+    }
+  ],
+  "conditions": [
+    {
+      "type": "smell",
+      "description": "店内弥漫着浓郁的烟草香味，混合着雪茄和各种香烟的独特气息，令人感到一种温暖朴实的氛围",
+      "mechanicalEffect": ""
+    },
+    {
+      "type": "lighting",
+      "description": "暖色壁灯和头顶缓转的吊扇营造出柔和、舒适的光线，橡木柜台和胡桃木展柜在灯光下泛着温润的光泽",
+      "mechanicalEffect": ""
+    },
+    {
+      "type": "sound",
+      "description": "老松木地板踩上去会发出细微的吱呀声，门口的铜铃在有人进出时叮当作响，吊扇的叶片在头顶缓缓切割空气",
+      "mechanicalEffect": ""
+    }
+  ],
+  "connections": [
+    "SCN_14_SUB_2"
+  ],
+  "events": []
+}

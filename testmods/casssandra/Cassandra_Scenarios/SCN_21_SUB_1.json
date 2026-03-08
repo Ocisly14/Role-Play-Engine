@@ -1,0 +1,74 @@
+{
+  "id": "SCN_21_SUB_1",
+  "name": "月台",
+  "description": "卡森德拉火车站的月台极为简陋，窄窄的站台上只摆着几张开裂变形的木质长椅，涂漆早已剥落殆尽。一块锈迹斑斑的站牌孤零零地竖在站台尽头，上面「卡森德拉」几个字被经年的风雨侵蚀得模糊不清，铁锈顺着支架蔓延，在混凝土地面上留下暗褐色的水渍。站台一侧有一间低矮的铁路值班小屋，灰白色的外墙上爬满了干枯的藤蔓，窗玻璃蒙着一层厚厚的灰尘。冬日的寒风毫无阻隔地掠过站台，夹带着铁轨上金属与机油混合的气味。头顶几盏昏黄的路灯摇摇欲坠，灯罩上积满了飞蛾的残骸。整个月台弥漫着一种久无人问的荒败气息，仿佛这座小镇最不被在意的角落。",
+  "parentLocationId": "SCN_21",
+  "items": [
+    {
+      "id": "ITEM_SCN21_1",
+      "name": "锈迹斑斑的站牌",
+      "description": "月台上竖立的一块老旧站牌，挂满了铁锈。'卡森德拉'几个字已经被风雨侵蚀得模糊不清，显示着这座火车站漫长的历史。"
+    },
+    {
+      "id": "ITEM_SCN21_2",
+      "name": "破旧的长椅",
+      "description": "月台上摆放的几张木质长椅，木板已经开裂变形，涂漆剥落殆尽。这是等待火车的旅客唯一可以歇脚的地方。"
+    },
+    {
+      "id": "ITEM_SCN21_3",
+      "name": "Haran的工作小屋",
+      "description": "月台一侧的一间小型值班室，从外面看与普通的铁路工作间无异。里面堆放着各种工具和记录簿。这间小屋隐藏着通往黑手党总部的秘密通道入口。"
+    }
+  ],
+  "clues": [
+    {
+      "id": "CLUE_SCN21_1",
+      "clueText": "火车站月台就是黑手党所说的'码头'。通过Haran Greenwood的工作小屋可以进入隐藏在其后的Ben Cleo黑手党总部。只有在从Nancy Charlotte处得知'码头'这一暗语后，才能有目的地调查这里。",
+      "category": "knowledge",
+      "difficulty": "hard",
+      "location": "月台·Haran的工作小屋",
+      "discoveryMethod": "需先从Nancy Charlotte或其他知情人处得知'码头'的含义，然后仔细搜索月台和工作小屋",
+      "reveals": ["火车站月台即是'码头'", "黑手党总部隐藏在月台之下", "Haran Greenwood是黑手党总部入口的守卫"],
+      "discovered": false
+    },
+    {
+      "id": "CLUE_SCN21_2",
+      "clueText": "Haran Greenwood保管着货物往来的记录。11月的记录尚未整理，但9至10月份的非黑手党包裹信息可以提供给调查员查看。通过火车站向外界订货大约需要5到7天到货，急需物品只适合在卡森德拉本地购买。",
+      "category": "document",
+      "difficulty": "regular",
+      "location": "Haran的工作小屋·记录簿",
+      "discoveryMethod": "与Haran交涉或在与Ben Cleo合作后获取查阅权限",
+      "reveals": ["可通过货物记录追查可疑的物资往来", "黑手党对货物往来只做记录不追究用途"],
+      "discovered": false
+    },
+    {
+      "id": "CLUE_SCN21_3",
+      "clueText": "卡森德拉火车站原本建在地下——当年这里还是一片山岭的时候便已存在。Haran从那时起就在这里工作了，他见证了火车站从地下改建到地上的整个过程。",
+      "category": "witness",
+      "difficulty": "regular",
+      "location": "月台",
+      "discoveryMethod": "与Haran交谈了解火车站的历史",
+      "reveals": ["卡森德拉镇下方存在古老的地下建筑", "火车站的地下结构可能仍然保留"],
+      "discovered": false
+    }
+  ],
+  "conditions": [
+    {
+      "type": "lighting",
+      "description": "月台上只有几盏昏黄的路灯提供照明，夜间大部分区域笼罩在阴影中。",
+      "mechanicalEffect": ""
+    },
+    {
+      "type": "other",
+      "description": "整个月台设施简陋陈旧，站牌锈迹斑斑，长椅破旧不堪。与城镇中心的热闹相比，这里显得冷清而被遗忘。",
+      "mechanicalEffect": ""
+    },
+    {
+      "type": "sound",
+      "description": "偶尔有火车经过时的汽笛声和铁轨震动声打破寂静，平时只有风声和Haran偶尔的咳嗽声。",
+      "mechanicalEffect": ""
+    }
+  ],
+  "connections": ["SCN_21_SUB_2", "SCN_21_SUB_3"],
+  "events": []
+}

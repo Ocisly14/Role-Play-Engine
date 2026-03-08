@@ -1,0 +1,121 @@
+{
+  "id": "SCN_16_SUB_1",
+  "name": "一层大厅",
+  "description": "驯鹿酒吧的一层大厅，是卡森德拉南新街上远近闻名的老牌酒吧，镇上几乎无人不知。推门而入，一股混合着波本威士忌、麦芽啤酒和老橡木的气味扑面而来。大厅是典型的美式酒吧风格：正对面是一条深色实木吧台，台面被无数酒杯打磨得发亮，后方高架上密密排列着各式烈酒和精酿。大厅中央散布着数张厚重的圆桌，靠墙一侧则是皮质卡座，座椅已被磨出岁月的纹路。最引人注目的是墙壁上悬挂的数副巨大驯鹿角，在暖黄色壁灯的映照下投射出粗犷的剪影。天花板的木质横梁间挂着几盏锻铁吊灯，灯光偏暗偏暖，角落里更是昏沉。脚下的木地板踩上去微微作响。大厅后方通往洗手间的走廊安静而狭窄——这里近期发生过一起凶杀案，这件事在镇上已经人尽皆知。",
+  "parentLocationId": "SCN_16",
+  "items": [
+    {
+      "id": "ITEM_SCN16_1",
+      "name": "吧台",
+      "description": "酒吧的主吧台，Taran Emilion通常在这里调酒。吧台后方的架子上摆放着各式酒类"
+    },
+    {
+      "id": "ITEM_SCN16_2",
+      "name": "驯鹿角装饰",
+      "description": "墙壁上装饰着驯鹿角，是酒吧标志性的装饰元素"
+    },
+    {
+      "id": "ITEM_SCN16_3",
+      "name": "圆桌和卡座",
+      "description": "大厅内摆放着多张圆桌和靠墙的卡座，供客人饮酒和聚会使用"
+    },
+    {
+      "id": "ITEM_SCN16_4",
+      "name": "已损坏的监控设备",
+      "description": "酒吧内的监控设施在案发前几天损坏，尚未修理，因此无法查看案发时的视频记录。监控由Ben Cleo的下属安装"
+    },
+    {
+      "id": "ITEM_SCN16_5",
+      "name": "洗手间",
+      "description": "案发地点——受害人的尸体在女厕所内被发现。目前已被酒吧老板塔兰和卢泽清扫干净"
+    }
+  ],
+  "clues": [
+    {
+      "id": "CLUE_SCN16_1",
+      "clueText": "酒吧的监控设施在案件发生前几天损坏了还没来得及修理，导致无法查看案发时的店内视频。附近的摄像头也有死角，不能正确反映酒吧的人员进出情况。",
+      "category": "physical",
+      "difficulty": "automatic",
+      "location": "驯鹿酒吧一层大厅",
+      "discoveryMethod": "询问酒吧老板或检查监控设备",
+      "reveals": [
+        "监控损坏不是巧合，实际上是Martin Gin（马丁·琴）所为",
+        "Ben Cleo的手下安装的监控留有特殊的死角"
+      ],
+      "discovered": false
+    },
+    {
+      "id": "CLUE_SCN16_2",
+      "clueText": "酒吧老板Taran Emilion和Lutz Emilion是两兄弟，他们声称对凶杀案一无所知，两人看起来受到了惊吓。Lutz Emilion证实受害人杯中的酒实际上是弄错了单子——那杯本该是给Marcel Gwynplaine（马塞尔）的。",
+      "category": "witness",
+      "difficulty": "automatic",
+      "location": "驯鹿酒吧一层大厅吧台",
+      "discoveryMethod": "询问酒吧老板关于案发经过",
+      "reveals": [
+        "受害人杯中的致幻药物原本是针对Marcel Gwynplaine的",
+        "酒单被调换过"
+      ],
+      "discovered": false
+    },
+    {
+      "id": "CLUE_SCN16_3",
+      "clueText": "酒吧门店是Ben Cleo的产业，受黑手党庇护。监控设施完全由本的下属安装，酒吧老板兄弟俩无权过问。",
+      "category": "knowledge",
+      "difficulty": "regular",
+      "location": "驯鹿酒吧一层大厅",
+      "discoveryMethod": "深入调查酒吧的所有权或从其他渠道了解",
+      "reveals": [
+        "酒吧与黑手党有密切关联",
+        "Ben Cleo对酒吧的监控有完全的掌控权"
+      ],
+      "discovered": false
+    },
+    {
+      "id": "CLUE_SCN16_4",
+      "clueText": "案发时间是12月22日周一晚上8点左右。受害人是一名黑人女性，身穿深蓝色名贵大衣，全身上下没有打斗痕迹，当场死亡。致命伤：一颗.357口径子弹击中心脏，后背还插着一把折刀。",
+      "category": "physical",
+      "difficulty": "automatic",
+      "location": "驯鹿酒吧一层洗手间（已清扫）",
+      "discoveryMethod": "回顾Bruno Galilei提供的案件资料",
+      "reveals": [
+        ".357口径与Ben Cleo的镶金沙漠之鹰口径相同",
+        "折刀属于Philip Scaletta"
+      ],
+      "discovered": false
+    },
+    {
+      "id": "CLUE_SCN16_5",
+      "clueText": "受害人酒杯中发现了强烈的致幻药物'魔鬼呼吸'，提取自南美植物波拉切洛。幸运的是受害人还未来得及饮用。",
+      "category": "physical",
+      "difficulty": "automatic",
+      "location": "驯鹿酒吧一层大厅（受害人座位处）",
+      "discoveryMethod": "检查Bruno Galilei保管的物证",
+      "reveals": [
+        "魔鬼呼吸可以使人丧失自主意识",
+        "原本这杯酒是给Marcel Gwynplaine的"
+      ],
+      "discovered": false
+    }
+  ],
+  "conditions": [
+    {
+      "type": "lighting",
+      "description": "酒吧内灯光昏暗偏暖，营造出典型的美式酒吧氛围，部分角落光线不足",
+      "mechanicalEffect": "酒吧内部分区域光线暗淡，侦查检定可能受到影响"
+    },
+    {
+      "type": "sound",
+      "description": "营业时酒吧内通常播放着背景音乐，混合着客人们的交谈声和酒杯碰撞声",
+      "mechanicalEffect": ""
+    },
+    {
+      "type": "smell",
+      "description": "空气中混合着酒精、烟草和木质装饰的气味",
+      "mechanicalEffect": ""
+    }
+  ],
+  "connections": [
+    "SCN_16_SUB_2"
+  ],
+  "events": []
+}

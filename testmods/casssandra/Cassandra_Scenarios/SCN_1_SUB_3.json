@@ -1,0 +1,69 @@
+{
+  "id": "SCN_1_SUB_3",
+  "name": "实验室",
+  "description": "实验室的门是一扇带有电子门禁的厚重防火门，门框边缘嵌着刷卡感应器，上方指示灯闪烁着红色。室内灯光是医用级别的惨白色，将每件物品的轮廓都勾勒得异常清晰。靠墙排列着几台大型仪器，外壳崭新锃亮，与这座老旧医院格格不入。一个玻璃隔间占据了房间一角，玻璃门上贴着醒目的黄黑色生化标识。实验台是厚实的不锈钢材质，台面上摆放着试管架、离心机和显微镜，旁边散落着注射器和密封的样本容器。空气中飘浮着化学药剂的刺鼻气味，混杂着某种难以辨识的、略带腥气的生物味道。通风管道在天花板上方发出细微的气流声。地面铺着防静电地砖，干净得近乎刻意。整间实验室给人一种与这座小镇医院完全不匹配的精密感。",
+  "parentLocationId": "SCN_1",
+  "items": [
+    {
+      "id": "ITEM_SCN1_5",
+      "name": "新型医疗器械",
+      "description": "一批崭新的医疗器械，上面印着产地来自波士顿，与这家偏远小镇医院的规模极不相称"
+    },
+    {
+      "id": "ITEM_SCN1_6",
+      "name": "注射器和蜘蛛样本",
+      "description": "工作台上放着一些注射器和蜘蛛样本，表明这里正在进行某种与蜘蛛有关的实验"
+    },
+    {
+      "id": "ITEM_SCN1_7",
+      "name": "实验档案",
+      "description": "一份实验相关的档案，记载着实验数据和进度"
+    }
+  ],
+  "clues": [
+    {
+      "id": "CLUE_SCN1_6",
+      "clueText": "实验室内有一批来自波士顿的全新医疗器械，远超这家小镇医院应有的设备水平。",
+      "category": "physical",
+      "difficulty": "regular",
+      "location": "实验室器械区",
+      "discoveryMethod": "检查医疗器械上的产地标签",
+      "reveals": ["有外部资金支持实验室的运作", "实验室在进行不属于正常医疗范畴的活动"],
+      "discovered": false
+    },
+    {
+      "id": "CLUE_SCN1_7",
+      "clueText": "工作台上的注射器和蜘蛛样本表明，这里正在进行某种与蜘蛛相关的秘密实验。隔间玻璃门上贴有生化标识符号。",
+      "category": "physical",
+      "difficulty": "regular",
+      "location": "实验室工作台",
+      "discoveryMethod": "检查工作台上的实验器材和样本",
+      "reveals": ["医院与蜘蛛相关的异常活动有关联", "可能涉及Constantine Frollo和阿特拉克-纳克亚的蜘蛛"],
+      "discovered": false
+    },
+    {
+      "id": "CLUE_SCN1_8",
+      "clueText": "实验室中可以找到一份档案，记载了实验的相关数据。",
+      "category": "document",
+      "difficulty": "regular",
+      "location": "实验室档案柜",
+      "discoveryMethod": "搜索实验室内的文件和档案",
+      "reveals": ["Vincent Galenus在进行人体实验"],
+      "discovered": false
+    }
+  ],
+  "conditions": [
+    {
+      "type": "lighting",
+      "description": "实验室内灯光惨白，生化标识在玻璃门上格外醒目",
+      "mechanicalEffect": ""
+    },
+    {
+      "type": "smell",
+      "description": "空气中混合着化学药剂和某种奇异的生物气味",
+      "mechanicalEffect": ""
+    }
+  ],
+  "connections": ["SCN_1_SUB_1", "SCN_1_SUB_5"],
+  "events": []
+}

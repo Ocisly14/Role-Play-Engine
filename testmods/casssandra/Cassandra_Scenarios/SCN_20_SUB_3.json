@@ -1,0 +1,53 @@
+{
+  "id": "SCN_20_SUB_3",
+  "name": "森林深处",
+  "description": "从伐木场废墟延伸出的泥径蜿蜒没入森林，几步之后便被枯枝落叶与蕨类植物吞没殆尽。越往深处走，树木越发密集粗壮，巨大的树冠层层叠叠地遮蔽了天空，即使是白天，林间也暗如黄昏，只有零星的光斑从枝叶缝隙中漏下。脚下的泥土湿软黏腻，每一步都发出沉闷的吮吸声。空气潮重得近乎凝固，泥土的腥气与腐叶的酸臭浓烈刺鼻，深吸一口便觉得肺叶发沉。四周安静得极不正常——没有鸟鸣，没有虫声，只有偶尔从远处传来的枯枝折断声在寂静中格外清晰。粗壮的树根盘虬错节地裸露在地表，黑色的苔藓覆盖着一切，树干间的间距越来越窄，仿佛森林本身正在收拢合围。一种原始的、来自本能深处的不安感在心底蔓延开来——这片森林太过幽深茂密，贸然深入绝无可能全身而退。",
+  "parentLocationId": "SCN_20",
+  "items": [],
+  "clues": [
+    {
+      "id": "CLUE_SCN20_4",
+      "clueText": "森林深处有某种大型生物活动的痕迹——地面上留有不属于任何已知动物的巨大足迹，周围的树干上有异常的抓痕和黏液残留。这些痕迹暗示着某种可怕的存在栖息于此。",
+      "category": "physical",
+      "difficulty": "regular",
+      "location": "森林小路周围",
+      "discoveryMethod": "沿小路深入森林后观察地面和树木",
+      "reveals": ["森林深处栖息着某种可怕的非人存在", "此地极其危险"],
+      "discovered": false
+    },
+    {
+      "id": "CLUE_SCN20_5",
+      "clueText": "拥有克苏鲁神话知识的调查员可能辨认出这些痕迹属于Shub-Niggurath的眷属——Gofern Hupadego，一种由人类通过不完整的仪式被转化而成的怪物。2002年失踪的两名富商Isaiah Arbar和David Campbell很可能就是被转化为这种怪物的受害者。",
+      "category": "knowledge",
+      "difficulty": "extreme",
+      "location": "森林深处",
+      "discoveryMethod": "使用克苏鲁神话技能辨认痕迹，或结合富商失踪和Shub-Niggurath崇拜的线索推断",
+      "reveals": ["失踪的富商被转化为Shub-Niggurath的眷属", "仪式转化的后果是不可逆的"],
+      "discovered": false
+    }
+  ],
+  "conditions": [
+    {
+      "type": "lighting",
+      "description": "遮天蔽日的树冠将阳光几乎完全隔绝，即使白天森林深处也如同黄昏般昏暗。越深入越黑暗。",
+      "mechanicalEffect": "侦查类技能难度大幅增加，需要照明工具。"
+    },
+    {
+      "type": "other",
+      "description": "森林极为茂密，小路几乎被植被完全吞没。贸然深入极有可能迷失方向，尸骨无存。",
+      "mechanicalEffect": "深入森林需要导航或求生检定，失败则迷路。此区域极度危险。"
+    },
+    {
+      "type": "smell",
+      "description": "空气潮湿沉闷，弥漫着泥土的腥味与腐叶的酸臭，越深入气味越浓烈，偶尔还能嗅到一股不明来源的腥臭。",
+      "mechanicalEffect": ""
+    },
+    {
+      "type": "sound",
+      "description": "四周静得诡异，偶尔传来树枝折断的声响。有时能听到远处似乎有某种大型生物移动的沉重脚步声。",
+      "mechanicalEffect": "聆听检定成功可提前察觉危险靠近。"
+    }
+  ],
+  "connections": ["SCN_20_SUB_1"],
+  "events": []
+}

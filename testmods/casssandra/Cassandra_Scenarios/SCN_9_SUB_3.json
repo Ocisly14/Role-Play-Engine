@@ -1,0 +1,74 @@
+{
+  "id": "SCN_9_SUB_3",
+  "name": "二楼私人空间",
+  "description": "沿着后厅尽头的木质楼梯上到二楼，楼梯踏板在脚下发出沉闷的咯吱声。二楼走廊铺着深灰色的短绒地毯，墙壁上挂着几幅装裱简朴的植物素描。走廊尽头的一间房门半开着，里面的景象与楼下花店的田园风格判若两个世界——房间里并排摆放着三台大尺寸液晶显示器，屏幕上闪烁着密密麻麻的字符和色块，幽蓝的光芒映在天花板上不停跳动。显示器下方的长桌上堆叠着数台黑色机箱，指示灯明灭不定，散热风扇持续发出低沉的嗡鸣，让整个房间像是一台巨大机器的内脏在缓慢运转。桌面边缘散落着几卷网线、一把螺丝刀和几块裸露电路板的小型设备。房间角落还竖着一个半人高的黑色机柜，透过网孔面板可以看到里面密集排列的端口和闪烁的绿灯。窗帘被厚重的遮光布拉得严严实实，将十二月的日光完全挡在外面，唯一的光源就是那些永不熄灭的屏幕。走廊另一侧是盥洗室和两间卧室，卧室的门紧闭着，门缝下透出微弱的光。整个二楼弥漫着电子元件微微发烫的塑胶气味，混着地毯上淡淡的灰尘味道。",
+  "parentLocationId": "SCN_9",
+  "items": [
+    {
+      "id": "ITEM_SCN9_3",
+      "name": "黑客工作站",
+      "description": "多台显示器、高性能主机和各种网络设备组成的专业黑客工作站。Simon通过这些设备监测卡森德拉的信息网络，控制部分公共设施，并可以帮助调查员进行各种电子信息的破解和调查。"
+    },
+    {
+      "id": "ITEM_SCN9_4",
+      "name": "ID卡复制机器",
+      "description": "Simon准备的一台小型设备，可以用来复制ID卡。他会告诉调查员，如果需要进入星辰医院的药品管理室和实验室，需要得到院长Vincent Galenus的ID卡，将卡插入卡槽后就可以复制一张一模一样的卡。"
+    },
+    {
+      "id": "ITEM_SCN9_5",
+      "name": "帕德里奇的秘密文件图片",
+      "description": "Simon翻到的一份帕德里奇的秘密文件的图片。在与调查员达成合作后，Simon会将此文件分享给调查员。"
+    }
+  ],
+  "clues": [
+    {
+      "id": "CLUE_SCN9_3",
+      "clueText": "Simon是一名黑客，他通过自己的监测网络了解信息和控制部分卡森德拉的公共设施。他可以为调查员提供许多黑客工作相关的帮助，但首先要求调查员对他的身份绝对保密——如果调查员对任何人提起Simon是个黑客，Simon必死无疑。",
+      "category": "knowledge",
+      "difficulty": "automatic",
+      "location": "西蒙的工作室",
+      "discoveryMethod": "与Simon合作后获取",
+      "reveals": ["Simon拥有强大的黑客能力", "Simon的身份一旦暴露就会遭到杀害", "Simon可以帮助调查员破解电子信息"],
+      "discovered": false
+    },
+    {
+      "id": "CLUE_SCN9_4",
+      "clueText": "Simon告诉调查员，星辰医院有着不可能有的严密反黑客系统，很显然是有人对这个系统做了加强。如果强行入侵，会有触发警报的危险。有两处地方显得非常可疑——药品管理室和实验室。要进入这两个地方，需要取得院长Vincent Galenus的ID卡进行复制。",
+      "category": "knowledge",
+      "difficulty": "automatic",
+      "location": "西蒙的工作室",
+      "discoveryMethod": "请求Simon帮忙黑入星辰医院系统后获取",
+      "reveals": ["星辰医院的网络安全被刻意加强", "药品管理室和实验室隐藏着秘密", "需要Vincent Galenus的ID卡才能进入"],
+      "discovered": false
+    },
+    {
+      "id": "CLUE_SCN9_5",
+      "clueText": "Simon提供了一些关于帕德里奇的信息：他看到了帕德里奇的文件，经历过卡森德拉的黑客交锋。Simon还分享了一份他翻到的帕德里奇的秘密文件图片。",
+      "category": "document",
+      "difficulty": "automatic",
+      "location": "西蒙的工作室",
+      "discoveryMethod": "与Simon达成合作后获取",
+      "reveals": ["帕德里奇有不可告人的秘密", "卡森德拉存在多方黑客势力的交锋"],
+      "discovered": false
+    }
+  ],
+  "conditions": [
+    {
+      "type": "lighting",
+      "description": "工作室内被多台显示器的光芒照亮，屏幕上滚动着各种数据和监控画面，投射出幽蓝色的光影。",
+      "mechanicalEffect": ""
+    },
+    {
+      "type": "sound",
+      "description": "房间里充满了电子设备持续运转的嗡嗡声和散热风扇的低鸣。",
+      "mechanicalEffect": ""
+    },
+    {
+      "type": "temperature",
+      "description": "由于大量电子设备散热，工作室内温度比其他房间略高。",
+      "mechanicalEffect": ""
+    }
+  ],
+  "connections": ["SCN_9_SUB_2"],
+  "events": []
+}
