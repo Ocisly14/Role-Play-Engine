@@ -44,7 +44,32 @@ export interface DailyPlanParams {
   gameDay: number;
   currentTime: string;
   language: string;
+  /** Registry-generated prompt listing all registered node types */
+  handlerPrompt?: string;
+  /** Registry-generated prompt from WorldFeature.planningPrompt (field schemas) */
+  featurePlanningPrompt?: string;
 }
+
+/**
+ * Default hardcoded node type + actionType reference for NPC planning.
+ * Used as fallback when no registry-generated handlerPrompt is provided.
+ */
+const DEFAULT_NPC_NODE_TYPE_REFERENCE = `## Node Type Reference
+- **"routine"**: Self-contained action, no interaction target. Examples: eating, resting, reading, working, sleeping, thinking.
+- **"movement"**: Move to a destination scene. Set location to the target scene ID. Omit actionType for normal unblocked movement; set actionType when path is blocked (if skill can overcome it) or for creative movement.
+- **"character_interaction"**: Interact with a specific character. Requires targetCharacterId. Include characterInteractionPayload if transferring item/clue/information.
+- **"object_interaction"**: Interact with a physical object. Include objectInteractionPayload (pickup/place/use/inspect/destroy).
+- **"scene_interaction"**: Search, investigate, or modify the environment. Include sceneConnectionEffect if changing a connection.
+
+## ActionType Categories (optional — set when skill roll is needed)
+- **exploration**: Finding hidden things, researching, analyzing
+- **social**: Influencing, persuading, deceiving, intimidating
+- **combat**: Physical violence — attacking, defending, restraining
+- **stealth**: Acting undetected — sneaking, hiding, pickpocketing
+- **chase**: Pursuit or escape — running, driving, climbing under pressure
+- **mental**: Sanity resistance — confronting cosmic horror
+- **environmental**: Surviving harsh conditions, emergency medicine, creative movement (climbing, jumping, swimming)
+- **narrative**: Interpreting lore, performing rituals, dramatic speeches`;
 
 export function buildGenerateDailyPlanPrompt(params: DailyPlanParams): string {
   return `You are the Game Master for a Call of Cthulhu tabletop RPG.
@@ -100,37 +125,9 @@ Set actionType **only** when the outcome is genuinely uncertain and requires a s
 - Searching for hidden things, persuading reluctant NPCs, sneaking, picking locks, combat → **set actionType**
 - High relationship score (>60) means simple requests auto-succeed; only set actionType for unreasonable or sensitive demands.
 
-## Node Type Reference
-- **"routine"**: Self-contained action, no interaction target. Examples: eating, resting, reading, working, sleeping, thinking.
-- **"movement"**: Move to a destination scene. Set location to the target scene ID. Omit actionType for normal unblocked movement; set actionType when path is blocked (if skill can overcome it) or for creative movement.
-- **"character_interaction"**: Interact with a specific character. Requires targetCharacterId. Include characterInteractionPayload if transferring item/clue/information.
-- **"object_interaction"**: Interact with a physical object. Include objectInteractionPayload (pickup/place/use/inspect/destroy).
-- **"scene_interaction"**: Search, investigate, or modify the environment. Include sceneConnectionEffect if changing a connection.
+${params.handlerPrompt || DEFAULT_NPC_NODE_TYPE_REFERENCE}
 
-## ActionType Categories (optional — set when skill roll is needed)
-- **exploration**: Finding hidden things, researching, analyzing
-- **social**: Influencing, persuading, deceiving, intimidating
-- **combat**: Physical violence — attacking, defending, restraining
-- **stealth**: Acting undetected — sneaking, hiding, pickpocketing
-- **chase**: Pursuit or escape — running, driving, climbing under pressure
-- **mental**: Sanity resistance — confronting cosmic horror
-- **environmental**: Surviving harsh conditions, emergency medicine, creative movement (climbing, jumping, swimming)
-- **narrative**: Interpreting lore, performing rituals, dramatic speeches
-
-## Impact Levels
-Impact determines **who perceives and is affected by** the action:
-- **0 — Private / unnoticed**: Only the acting character knows. No one else perceives or reacts.
-  Examples: thinking, reading alone, checking belongings, observing from afar, writing notes, resting
-- **1 — Targeted / one-on-one**: Only the specific target character perceives it. A private exchange.
-  Examples: whispering, passing a note, pickpocketing someone, private conversation, discreet item handoff
-- **2 — Sub-scene / room-wide**: Everyone in the current room or sub-scene perceives it. Visible/audible to bystanders in the same room.
-  Examples: speaking loudly, firing a gun, breaking a door, starting a fight, searching a room openly, screaming
-- **3 — Building / macro-location-wide**: Everyone in the same building or macro location perceives it (all rooms/floors).
-  Examples: fire alarm, shouting down a stairwell, smoke filling the building, event audible throughout
-- **4 — Neighborhood**: Perceived at the current building and nearby buildings within walking distance.
-  Examples: explosion heard across the block, gunshot echoing through nearby streets, building collapse, large fire
-- **5 — Global / far-reaching**: The entire game world is affected. Consequences ripple everywhere.
-  Examples: triggering a town alarm, summoning ritual, building collapse, radio broadcast
+${params.featurePlanningPrompt || ""}
 
 ## Output
 Return a JSON array of nodes. No extra text. Always write in English.

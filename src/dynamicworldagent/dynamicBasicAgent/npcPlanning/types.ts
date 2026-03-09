@@ -1,11 +1,14 @@
 import type { ActionType } from "../../../shared/state/index.js";
 
-export type PlanNodeType =
+export type BuiltinNodeType =
   | "routine"
   | "movement"
   | "character_interaction"
   | "object_interaction"
   | "scene_interaction";
+
+/** Open to plugin extensions — accepts any string, with IDE hints for built-in types */
+export type PlanNodeType = BuiltinNodeType | (string & {});
 
 export interface SceneCondition {
   description: string;

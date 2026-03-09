@@ -14,6 +14,7 @@ import type {
   RevisePlansContext,
   CharacterAction,
 } from "./types.js";
+import type { GameEngineRegistry } from "../../engine/registry.js";
 
 function parseJsonResponse<T>(raw: string): T {
   let text = raw.trim();
@@ -87,7 +88,8 @@ export class NPCPlanningAgent {
     sessionId: string,
     moduleId: string,
     gameDay: number,
-    language: string = "en"
+    language: string = "en",
+    registry?: GameEngineRegistry
   ): Promise<void> {
     const state = dgsm.getState();
     const npcs = state.npcCharacters;
@@ -113,6 +115,8 @@ export class NPCPlanningAgent {
           gameDay,
           currentTime: state.timeOfDay,
           language,
+          handlerPrompt: registry?.buildHandlerPrompt(),
+          featurePlanningPrompt: registry?.buildFeaturePlanningPrompt(),
         });
 
         const response = await generateText({

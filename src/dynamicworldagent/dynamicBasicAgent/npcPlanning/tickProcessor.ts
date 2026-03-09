@@ -1,96 +1,18 @@
-import type { ActionType } from "../../../shared/state/index.js";
 import { EmbeddingClient } from "../../../rag/embedding.js";
 import { ModelProviderName } from "../../../models/types.js";
 import type { DynamicGameStateManager } from "../../state/DynamicGameState.js";
 import type { NPCPlanningAgent } from "./NPCPlanningAgent.js";
-import { ACTION_TYPE_SKILL_MAP } from "./actionTypeSkillMap.js";
-import { BASELINE_HORROR_SOURCES } from "./horrorSourceData.js";
 import type {
   PlanNode,
   CharacterAction,
-  FailureReason,
-  SceneCondition,
   DiscoveredClueEntry,
   SuccessLevel,
   TickResult,
   PlayerWitnessEvent,
 } from "./types.js";
-import type { DynamicScene, TransportEdge } from "../../world_builder/types.js";
 import { type SessionRagChunkInput, SessionRagService } from "../knowledge/sessionRagService.js";
-
-// ==================== Scene graph pathfinding ====================
-
-/**
- * BFS pathfinding between sub-scenes.
- * Returns ordered scene IDs [from, hop1, ..., to], or null if unreachable.
- */
-function findPath(
-  fromSceneId: string,
-  toSceneId: string,
-  scenes: Map<string, DynamicScene>,
-  blockedConnections: Map<string, string>
-): string[] | null {
-  if (fromSceneId === toSceneId) return [fromSceneId];
-
-  const visited = new Set<string>();
-  const queue: Array<{ sceneId: string; path: string[] }> = [
-    { sceneId: fromSceneId, path: [fromSceneId] },
-  ];
-
-  while (queue.length > 0) {
-    const { sceneId, path } = queue.shift()!;
-    if (visited.has(sceneId)) continue;
-    visited.add(sceneId);
-
-    const scene = scenes.get(sceneId);
-    if (!scene) continue;
-
-    for (const connId of scene.connections) {
-      if (visited.has(connId)) continue;
-
-      const key1 = `${sceneId}::${connId}`;
-      const key2 = `${connId}::${sceneId}`;
-      if (blockedConnections.has(key1) || blockedConnections.has(key2)) continue;
-
-      const newPath = [...path, connId];
-      if (connId === toSceneId) return newPath;
-      queue.push({ sceneId: connId, path: newPath });
-    }
-  }
-
-  return null;
-}
-
-/**
- * Calculate total travel time for a path in minutes.
- * Internal hops (same parentLocationId) = 1 min each.
- * Cross-location hops use TransportEdge travel times.
- */
-function calculateTravelTime(
-  path: string[],
-  scenes: Map<string, DynamicScene>,
-  transportEdges: TransportEdge[]
-): number {
-  let totalMinutes = 0;
-  for (let i = 0; i < path.length - 1; i++) {
-    const from = scenes.get(path[i]);
-    const to = scenes.get(path[i + 1]);
-    if (!from || !to) continue;
-
-    if (from.parentLocationId === to.parentLocationId) {
-      totalMinutes += 1;
-    } else {
-      const edge = transportEdges.find(
-        (e) =>
-          (e.streetSceneId === from.id || e.streetSceneId === to.id) &&
-          ((e.fromLocationId === from.parentLocationId && e.toLocationId === to.parentLocationId) ||
-           (e.fromLocationId === to.parentLocationId && e.toLocationId === from.parentLocationId))
-      );
-      totalMinutes += edge?.travelTimeMinutes ?? 5;
-    }
-  }
-  return totalMinutes;
-}
+import type { GameEngineRegistry } from "../../engine/registry.js";
+import type { ExecutionContext, TickRuntimeContext } from "../../engine/types.js";
 
 // ==================== Time helpers ====================
 
@@ -109,345 +31,6 @@ function getBucketLabel(bucketMinutes: number): string {
   return `${String(h).padStart(2, "0")}:${String(m).padStart(2, "0")}`;
 }
 
-// ==================== Dice ====================
-
-function rollD100(): number {
-  return Math.floor(Math.random() * 100) + 1;
-}
-
-function isFumble(roll: number, skillValue: number): boolean {
-  return skillValue < 50 ? roll >= 96 : roll === 100;
-}
-
-function getSuccessLevel(roll: number, skillValue: number): SuccessLevel {
-  if (roll === 1) return "critical";
-  if (isFumble(roll, skillValue)) return "fumble";
-  if (roll <= Math.floor(skillValue / 5)) return "hard";
-  if (roll <= Math.floor(skillValue / 2)) return "hard";
-  if (roll <= skillValue) return "regular";
-  return "fail";
-}
-
-function getSuccessLevelWithDifficulty(
-  roll: number,
-  skillValue: number,
-  difficulty: "regular" | "hard" | "extreme"
-): SuccessLevel {
-  if (roll === 1) return "critical";
-  if (isFumble(roll, skillValue)) return "fumble";
-  const threshold =
-    difficulty === "extreme" ? Math.floor(skillValue / 5)
-    : difficulty === "hard" ? Math.floor(skillValue / 2)
-    : skillValue;
-  if (roll <= threshold) return "regular";
-  return "fail";
-}
-
-const SUCCESS_RANK: Record<SuccessLevel, number> = {
-  critical: 3,
-  hard: 2,
-  regular: 1,
-  fail: 0,
-  fumble: -1,
-};
-
-// ==================== Difficulty derivation ====================
-
-function getNodeDifficulty(
-  node: PlanNode,
-  dgsm: DynamicGameStateManager
-): "regular" | "hard" | "extreme" | "luck_only" {
-  // Player nodes: use explicit difficulty from LLM
-  if (node.isPlayer) return node.difficulty ?? "regular";
-
-  // NPC scene interactions: always regular
-  if (node.type !== "character_interaction") return "regular";
-  if (!node.targetCharacterId) return "regular";
-
-  // NPC character interactions: derive from relationship score
-  const rel = dgsm.getRelationship(node.characterId, node.targetCharacterId);
-  const score = rel?.score ?? 0;
-  if (score >= 70) return "luck_only";
-  if (score >= 30) return "regular";
-  if (score >= -30) return "hard";
-  return "extreme";
-}
-
-// ==================== Skill RAG (keyword overlap) ====================
-
-function selectBestSkill(
-  actionDesc: string,
-  actionType: ActionType,
-  npcSkills: Record<string, number>
-): { skill: string; value: number } | null {
-  const candidates = ACTION_TYPE_SKILL_MAP[actionType] ?? [];
-  const words = actionDesc.toLowerCase().split(/\s+/);
-
-  let best: { skill: string; value: number; score: number } | null = null;
-
-  for (const skillName of candidates) {
-    const value = npcSkills[skillName];
-    if (value === undefined) continue;
-
-    const skillWords = skillName.toLowerCase().split(/[\s/()]+/);
-    let overlap = 0;
-    for (const sw of skillWords) {
-      if (sw.length >= 3 && words.some((w) => w.includes(sw))) overlap++;
-    }
-    // Prefer higher skill value as tiebreaker
-    const score = overlap * 1000 + value;
-    if (!best || score > best.score) {
-      best = { skill: skillName, value, score };
-    }
-  }
-
-  // Fallback: if no keyword match, pick highest-value candidate
-  if (!best) {
-    for (const skillName of candidates) {
-      const value = npcSkills[skillName];
-      if (value !== undefined && (!best || value > best.value)) {
-        best = { skill: skillName, value, score: value };
-      }
-    }
-  }
-
-  return best ? { skill: best.skill, value: best.value } : null;
-}
-
-// ==================== Horror RAG (keyword overlap) ====================
-
-function matchHorrorSource(actionDesc: string): { sanLossMin: number; sanLossMax: number } {
-  const words = actionDesc.toLowerCase().split(/\s+/);
-  let bestMatch: (typeof BASELINE_HORROR_SOURCES)[number] | null = null;
-  let bestScore = 0;
-
-  for (const source of BASELINE_HORROR_SOURCES) {
-    const sourceWords = source.description.toLowerCase().split(/\s+/);
-    let overlap = 0;
-    for (const sw of sourceWords) {
-      if (sw.length >= 3 && words.some((w) => w.includes(sw))) overlap++;
-    }
-    if (overlap > bestScore) {
-      bestScore = overlap;
-      bestMatch = source;
-    }
-  }
-
-  return bestMatch ?? { sanLossMin: 0, sanLossMax: 1 };
-}
-
-// ==================== Luck failure ====================
-
-function luckFailureRate(luck: number): number {
-  return 0.025 + (100 - luck) * 0.0005;
-}
-
-// ==================== Damage bonus table (STR + SIZ) ====================
-
-function getDamageBonus(str: number, siz: number): string {
-  const total = str + siz;
-  if (total <= 64) return "-2";
-  if (total <= 84) return "-1";
-  if (total <= 124) return "0";
-  if (total <= 164) return "+1d4";
-  if (total <= 204) return "+1d6";
-  return "+2d6";
-}
-
-function rollDamageBonus(db: string): number {
-  if (db === "0") return 0;
-  const sign = db.startsWith("-") ? -1 : 1;
-  const diceMatch = db.match(/(\d+)d(\d+)/);
-  if (diceMatch) {
-    const count = parseInt(diceMatch[1]);
-    const sides = parseInt(diceMatch[2]);
-    let total = 0;
-    for (let i = 0; i < count; i++) {
-      total += Math.floor(Math.random() * sides) + 1;
-    }
-    return sign * total;
-  }
-  const flat = parseInt(db);
-  return isNaN(flat) ? 0 : flat;
-}
-
-// ==================== Scene penalties ====================
-
-function getScenePenalties(
-  location: string,
-  dgsm: DynamicGameStateManager
-): Map<string, number> {
-  const penalties = new Map<string, number>();
-  const conditions: SceneCondition[] = dgsm.getSceneConditions(location);
-  for (const cond of conditions) {
-    if (cond.mechanicalEffect?.skillPenalty) {
-      for (const p of cond.mechanicalEffect.skillPenalty) {
-        penalties.set(p.skill, (penalties.get(p.skill) ?? 0) + p.delta);
-      }
-    }
-  }
-  return penalties;
-}
-
-function applyPenalties(
-  skills: Record<string, number>,
-  penalties: Map<string, number>
-): Record<string, number> {
-  if (penalties.size === 0) return skills;
-  const adjusted = { ...skills };
-  for (const [skill, delta] of penalties) {
-    if (adjusted[skill] !== undefined) {
-      adjusted[skill] = Math.max(1, adjusted[skill] + delta);
-    }
-  }
-  return adjusted;
-}
-
-// ==================== Skill Roll Resolution ====================
-
-function resolveSkillRoll(
-  node: PlanNode,
-  adjustedSkills: Record<string, number>,
-  dgsm: DynamicGameStateManager
-): { failed: boolean; reason?: string; detail?: string; successLevel: SuccessLevel } {
-  const actionType = node.actionType;
-  if (!actionType) return { failed: false, successLevel: "regular" };
-
-  const state = dgsm.getState();
-  const difficulty = getNodeDifficulty(node, dgsm);
-
-  // Get NPC profile for attributes
-  const npc = state.npcCharacters.find((n) => n.id === node.characterId);
-  const npcAttrs = npc?.attributes ?? { STR: 50, DEX: 50, INT: 50, POW: 50, CON: 50, SIZ: 50, APP: 50, EDU: 50 };
-
-  if (actionType === "combat" && node.targetCharacterId) {
-    // Opposed roll: attacker vs defender Dodge — difficulty doesn't directly apply
-    const attackSkill = selectBestSkill(node.action, actionType, adjustedSkills);
-    const attackValue = attackSkill?.value ?? npcAttrs.STR;
-
-    const defender = state.npcCharacters.find((n) => n.id === node.targetCharacterId);
-    const defenderDodge = defender?.skills?.["Dodge"] ?? Math.floor((defender?.attributes?.DEX ?? 50) / 2);
-
-    const attackRoll = rollD100();
-    const defendRoll = rollD100();
-    const attackLevel = getSuccessLevel(attackRoll, attackValue);
-    const defendLevel = getSuccessLevel(defendRoll, defenderDodge);
-
-    if (SUCCESS_RANK[attackLevel] <= SUCCESS_RANK[defendLevel]) {
-      return {
-        failed: true,
-        successLevel: attackLevel,
-        reason: `${attackSkill?.skill ?? "Attack"} ${attackValue}, rolled ${attackRoll} (${attackLevel}) vs Dodge ${defenderDodge}, rolled ${defendRoll} (${defendLevel})`,
-        detail: "skill_roll_failed",
-      };
-    }
-
-    // Hit: apply damage
-    const db = npc?.status?.damageBonus ?? getDamageBonus(npcAttrs.STR, npcAttrs.SIZ);
-    const weaponDamage = Math.floor(Math.random() * 6) + 1; // default 1d6
-    const bonusDamage = rollDamageBonus(db);
-    const totalDamage = weaponDamage + bonusDamage;
-    dgsm.updateNpcHp(node.targetCharacterId, -totalDamage);
-
-    return { failed: false, successLevel: attackLevel, detail: `Hit for ${totalDamage} damage (${attackSkill?.skill ?? "Attack"} ${attackRoll}/${attackValue})` };
-  }
-
-  if (actionType === "social" && node.targetCharacterId) {
-    // Opposed roll: actor social skill vs target Psychology — difficulty doesn't directly apply
-    const socialSkill = selectBestSkill(node.action, actionType, adjustedSkills);
-    const socialValue = socialSkill?.value ?? npcAttrs.APP;
-
-    const target = state.npcCharacters.find((n) => n.id === node.targetCharacterId);
-    const psychValue = target?.skills?.["Psychology"] ?? Math.floor((target?.attributes?.INT ?? 50) / 2);
-
-    const actorRoll = rollD100();
-    const targetRoll = rollD100();
-    const actorLevel = getSuccessLevel(actorRoll, socialValue);
-    const targetLevel = getSuccessLevel(targetRoll, psychValue);
-
-    if (SUCCESS_RANK[actorLevel] <= SUCCESS_RANK[targetLevel]) {
-      return {
-        failed: true,
-        successLevel: actorLevel,
-        reason: `${socialSkill?.skill ?? "Social"} ${socialValue}, rolled ${actorRoll} (${actorLevel}) vs Psychology ${psychValue}, rolled ${targetRoll} (${targetLevel})`,
-        detail: "skill_roll_failed",
-      };
-    }
-    return { failed: false, successLevel: actorLevel };
-  }
-
-  if (actionType === "chase" && node.targetCharacterId) {
-    // Opposed roll: both use best chase skill — difficulty doesn't directly apply
-    const chaserSkill = selectBestSkill(node.action, actionType, adjustedSkills);
-    const chaserValue = chaserSkill?.value ?? npcAttrs.DEX;
-
-    const target = state.npcCharacters.find((n) => n.id === node.targetCharacterId);
-    const targetSkills = target?.skills ?? {};
-    const targetChaseSkill = selectBestSkill("flee escape run", "chase", targetSkills);
-    const targetValue = targetChaseSkill?.value ?? (target?.attributes?.DEX ?? 50);
-
-    const chaserRoll = rollD100();
-    const targetRoll = rollD100();
-    const chaserLevel = getSuccessLevel(chaserRoll, chaserValue);
-    const targetLevel = getSuccessLevel(targetRoll, targetValue);
-
-    if (SUCCESS_RANK[chaserLevel] <= SUCCESS_RANK[targetLevel]) {
-      return {
-        failed: true,
-        successLevel: chaserLevel,
-        reason: `${chaserSkill?.skill ?? "Chase"} ${chaserValue}, rolled ${chaserRoll} (${chaserLevel}) vs ${targetChaseSkill?.skill ?? "Flee"} ${targetValue}, rolled ${targetRoll} (${targetLevel})`,
-        detail: "skill_roll_failed",
-      };
-    }
-    return { failed: false, successLevel: chaserLevel };
-  }
-
-  if (actionType === "mental") {
-    // SAN roll + horror source match — use difficulty for SAN check
-    const npcStats = dgsm.getNpcStats(node.characterId);
-    const sanValue = npcStats?.san ?? npc?.status?.sanity ?? 50;
-    const roll = rollD100();
-    const horror = matchHorrorSource(node.action);
-
-    // Apply difficulty to the SAN threshold
-    const effectiveDifficulty = difficulty === "luck_only" ? "extreme" : difficulty;
-    const level = getSuccessLevelWithDifficulty(roll, sanValue, effectiveDifficulty);
-
-    if (level === "fail" || level === "fumble") {
-      const sanLoss = horror.sanLossMax;
-      dgsm.updateNpcSan(node.characterId, -sanLoss);
-      return {
-        failed: true,
-        successLevel: level,
-        reason: `SAN ${sanValue}, rolled ${roll} (difficulty: ${effectiveDifficulty}), lost ${sanLoss} sanity`,
-        detail: "skill_roll_failed",
-      };
-    } else {
-      const sanLoss = horror.sanLossMin;
-      if (sanLoss > 0) dgsm.updateNpcSan(node.characterId, -sanLoss);
-      return { failed: false, successLevel: level, detail: `SAN check passed (${roll}/${sanValue}, difficulty: ${effectiveDifficulty}), lost ${sanLoss} sanity` };
-    }
-  }
-
-  // Single roll for remaining actionTypes (exploration, stealth, environmental, narrative)
-  // Use difficulty-aware check
-  const effectiveDifficulty = difficulty === "luck_only" ? "extreme" : difficulty;
-  const bestSkill = selectBestSkill(node.action, actionType, adjustedSkills);
-  const skillValue = bestSkill?.value ?? npcAttrs.INT;
-  const roll = rollD100();
-  const level = getSuccessLevelWithDifficulty(roll, skillValue, effectiveDifficulty);
-
-  if (level === "fail" || level === "fumble") {
-    return {
-      failed: true,
-      successLevel: level,
-      reason: `${bestSkill?.skill ?? actionType} ${skillValue}, rolled ${roll} (difficulty: ${effectiveDifficulty})`,
-      detail: "skill_roll_failed",
-    };
-  }
-  return { failed: false, successLevel: level, detail: `${bestSkill?.skill ?? actionType} ${roll}/${skillValue} (${level}, difficulty: ${effectiveDifficulty})` };
-}
-
 // ==================== Clue Discovery ====================
 
 const CLUE_DIFFICULTY_RANK: Record<string, number> = {
@@ -457,7 +40,7 @@ const CLUE_DIFFICULTY_RANK: Record<string, number> = {
   extreme: 3,
 };
 
-/** success level → max clue difficulty rank discoverable */
+/** success level -> max clue difficulty rank discoverable */
 const SUCCESS_TO_MAX_CLUE_RANK: Record<SuccessLevel, number> = {
   critical: 3, // extreme
   hard: 2,     // hard
@@ -510,7 +93,7 @@ interface ClueCandidate {
  * - Scene clues: triggered by scene_interaction / object_interaction
  * - NPC clues + secrets: triggered by character_interaction
  * - Only exploration/social/stealth/narrative actionTypes unlock non-automatic clues
- * - Filters by success level → clue difficulty
+ * - Filters by success level -> clue difficulty
  * - Semantic match with 0.7 threshold, prioritizes highest difficulty first
  */
 async function discoverClues(
@@ -525,14 +108,14 @@ async function discoverClues(
   // Determine max discoverable difficulty rank
   let maxRank: number;
   if (node.actionType && CLUE_DISCOVERY_ACTION_TYPES.has(node.actionType)) {
-    // Qualifying actionType → use success level
+    // Qualifying actionType -> use success level
     maxRank = SUCCESS_TO_MAX_CLUE_RANK[successLevel] ?? 0;
   } else if (
     !node.actionType &&
     node.type === "character_interaction" &&
     node.targetCharacterId
   ) {
-    // No actionType + character_interaction → NPC relationship score determines max clue rank
+    // No actionType + character_interaction -> NPC relationship score determines max clue rank
     const rel = dgsm.getRelationship(node.characterId, node.targetCharacterId);
     const score = rel?.score ?? 0;
     if (score >= 80) maxRank = 3;      // extreme
@@ -540,7 +123,7 @@ async function discoverClues(
     else if (score >= 60) maxRank = 1; // regular
     else maxRank = 0;                  // automatic only
   } else {
-    // No qualifying actionType, not NPC interaction → automatic only
+    // No qualifying actionType, not NPC interaction -> automatic only
     maxRank = 0;
   }
 
@@ -677,491 +260,6 @@ async function discoverClues(
   }
 }
 
-// ==================== Scene‑graph helpers ====================
-
-function findNeighborMacroLocations(
-  fromLocationId: string,
-  transportEdges: TransportEdge[],
-  maxTravelMinutes: number
-): string[] {
-  const visited = new Map<string, number>();
-  visited.set(fromLocationId, 0);
-  const queue: Array<{ locationId: string; travelTime: number }> = [
-    { locationId: fromLocationId, travelTime: 0 },
-  ];
-  while (queue.length > 0) {
-    const { locationId, travelTime } = queue.shift()!;
-    for (const edge of transportEdges) {
-      let neighbor: string | null = null;
-      if (edge.fromLocationId === locationId) neighbor = edge.toLocationId;
-      else if (edge.toLocationId === locationId) neighbor = edge.fromLocationId;
-      if (!neighbor) continue;
-      const newTime = travelTime + edge.travelTimeMinutes;
-      if (newTime > maxTravelMinutes) continue;
-      if (visited.has(neighbor) && visited.get(neighbor)! <= newTime) continue;
-      visited.set(neighbor, newTime);
-      queue.push({ locationId: neighbor, travelTime: newTime });
-    }
-  }
-  visited.delete(fromLocationId);
-  return [...visited.keys()];
-}
-
-function getParentLocationId(
-  sceneId: string,
-  dgsm: DynamicGameStateManager
-): string | null {
-  const scene = dgsm.getScene(sceneId);
-  return scene?.parentLocationId ?? null;
-}
-
-// ==================== Shared impact gate ====================
-
-const NEIGHBORHOOD_TRAVEL_MINUTES = 15;
-
-async function runImpactGate(
-  bucketActions: CharacterAction[],
-  state: ReturnType<DynamicGameStateManager["getState"]>,
-  dgsm: DynamicGameStateManager,
-  npcPlanningAgent: NPCPlanningAgent,
-  sessionId: string,
-  gameDay: number,
-  bucketTime: string,
-  language: string
-): Promise<{ playerEvents?: Array<{ event: CharacterAction; impact: number }> }> {
-  const impactEvents = bucketActions.filter((a) => a.impact > 0);
-  if (impactEvents.length === 0) return {};
-
-  const characterEventsMap = new Map<string, Array<{ event: CharacterAction; impact: number }>>();
-  const playerScene = state.currentSceneId;
-  const playerId = state.playerCharacter?.id;
-
-  const addEventForCharacter = (charId: string, event: CharacterAction, impact: number) => {
-    if (charId === event.characterId) return;
-    if (!characterEventsMap.has(charId)) characterEventsMap.set(charId, []);
-    const existing = characterEventsMap.get(charId)!;
-    const idx = existing.findIndex((e) => e.event === event);
-    if (idx >= 0) {
-      if (impact > existing[idx].impact) existing[idx].impact = impact;
-    } else {
-      existing.push({ event, impact });
-    }
-  };
-
-  const allCharacterIds = [
-    ...state.npcCharacters.map((n) => n.id),
-    ...(playerId ? [playerId] : []),
-  ];
-
-  const getCharLocation = (charId: string): string | undefined => {
-    if (charId === playerId) return playerScene ?? undefined;
-    return dgsm.getNpcLocation(charId);
-  };
-
-  for (const event of impactEvents) {
-    // Level 1: targeted
-    if (event.impact >= 1 && event.targetCharacterId) {
-      addEventForCharacter(event.targetCharacterId, event, 1);
-    }
-
-    // Level 2: same sub-scene
-    if (event.impact >= 2) {
-      for (const charId of allCharacterIds) {
-        if (getCharLocation(charId) === event.location) {
-          addEventForCharacter(charId, event, 2);
-        }
-      }
-    }
-
-    // Level 3: same macro location (all sub-scenes in building)
-    if (event.impact >= 3) {
-      const eventParent = getParentLocationId(event.location, dgsm);
-      if (eventParent) {
-        for (const charId of allCharacterIds) {
-          const charLoc = getCharLocation(charId);
-          if (charLoc && getParentLocationId(charLoc, dgsm) === eventParent) {
-            addEventForCharacter(charId, event, 3);
-          }
-        }
-      }
-    }
-
-    // Level 4: neighborhood (≤15 min travel on transport network)
-    if (event.impact >= 4) {
-      const eventParent = getParentLocationId(event.location, dgsm);
-      if (eventParent && state.transportEdges) {
-        const neighbors = findNeighborMacroLocations(eventParent, state.transportEdges, NEIGHBORHOOD_TRAVEL_MINUTES);
-        for (const charId of allCharacterIds) {
-          const charLoc = getCharLocation(charId);
-          if (charLoc) {
-            const charParent = getParentLocationId(charLoc, dgsm);
-            if (charParent && neighbors.includes(charParent)) {
-              addEventForCharacter(charId, event, 4);
-            }
-          }
-        }
-      }
-    }
-
-    // Level 5: global
-    if (event.impact >= 5) {
-      for (const charId of allCharacterIds) {
-        addEventForCharacter(charId, event, 5);
-      }
-    }
-  }
-
-  // Separate player from NPC candidates
-  const playerEvents = playerId ? characterEventsMap.get(playerId) : undefined;
-  if (playerId) characterEventsMap.delete(playerId);
-
-  // NPC candidates → one LLM call per NPC, all in parallel
-  if (characterEventsMap.size > 0) {
-    await Promise.all(
-      [...characterEventsMap.entries()].map(async ([npcId, npcEvents]) => {
-        const npc = state.npcCharacters.find((n) => n.id === npcId);
-        const longTermIntent = await npcPlanningAgent.getLongTermIntent(sessionId, npcId);
-        const pendingNodes = await npcPlanningAgent.getPendingNodes(sessionId, npcId, gameDay);
-        const triggeringEvents = npcEvents
-          .map((e) => `[impact ${e.impact}] ${e.event.characterName}: ${e.event.outcome}`)
-          .join("\n");
-
-        const result = await npcPlanningAgent.runImpactGateForNpc(
-          {
-            npcId,
-            npcName: npc?.name ?? npcId,
-            currentLocation: dgsm.getNpcLocation(npcId) ?? "unknown",
-            longTermIntent,
-            pendingNodesSummary: pendingNodes.map((n) => `${n.gameTime} ${n.action}`).join("; "),
-            triggeringEvents,
-          },
-          bucketTime,
-          language
-        );
-
-        const logEntry = `Day${gameDay} ${bucketTime} [witness] - ${result.witnessEntry}`;
-        const npcLoc = dgsm.getNpcLocation(npcId) ?? "unknown";
-        await npcPlanningAgent.appendMemoryLog(sessionId, npcId, logEntry, gameDay, bucketTime, npcLoc);
-
-        if (result.shouldRevise) {
-          const memoryLog = await npcPlanningAgent.getMemoryLog(sessionId, npcId, gameDay);
-          const sortedEvents = [...npcEvents].sort((a, b) => b.impact - a.impact);
-          await npcPlanningAgent.revisePlans(dgsm, sessionId, npcId, {
-            longTermIntent,
-            memoryLog,
-            pendingNodes,
-            trigger: {
-              type: "impact",
-              triggeringAction: sortedEvents[0].event,
-            },
-          }, language);
-        }
-      })
-    );
-  }
-
-  return { playerEvents: playerEvents ?? undefined };
-}
-
-// ==================== Execute single node ====================
-
-function executeNode(
-  node: PlanNode,
-  dgsm: DynamicGameStateManager
-): CharacterAction {
-  const state = dgsm.getState();
-  const npcLocation = dgsm.getNpcLocation(node.characterId);
-  const npc = state.npcCharacters.find((n) => n.id === node.characterId);
-  const npcSkills = npc?.skills ?? {};
-  const luck = npc?.status?.luck ?? 50;
-  const difficulty = getNodeDifficulty(node, dgsm);
-
-  // Scene penalties
-  const penalties = getScenePenalties(node.location, dgsm);
-  const adjustedSkills = applyPenalties(npcSkills, penalties);
-
-  let resolvedSuccessLevel: SuccessLevel | undefined;
-  let lastRollDetail: string | undefined; // skill roll detail from resolveSkillRoll
-
-  // Build rich outcome string with skill + payload context
-  const buildOutcome = (status: "completed" | "failed", reason?: string): string => {
-    const parts: string[] = [node.action];
-    // Skill roll info
-    if (lastRollDetail) {
-      parts.push(`[${lastRollDetail}]`);
-    } else if (reason) {
-      parts.push(`[${reason}]`);
-    }
-    // Payload context
-    if (node.type === "character_interaction" && node.characterInteractionPayload) {
-      const p = node.characterInteractionPayload;
-      if (p.transferType === "item" && p.itemId) parts.push(`(item: ${p.itemId})`);
-      else if (p.transferType === "clue" && p.clueId) parts.push(`(clue: ${p.clueId})`);
-      else if (p.transferType === "information" && p.informationContent) parts.push(`(info: ${p.informationContent})`);
-    } else if (node.type === "object_interaction" && node.objectInteractionPayload) {
-      const p = node.objectInteractionPayload;
-      parts.push(`(${p.action}${p.itemId ? `: ${p.itemId}` : ""})`);
-    } else if (node.type === "scene_interaction" && node.sceneConnectionEffect) {
-      const e = node.sceneConnectionEffect;
-      parts.push(`(${e.action} connection to ${e.targetScenarioId})`);
-    }
-    parts.push(status === "completed" ? "succeeded" : "failed");
-    return parts.join(" ");
-  };
-
-  const makeAction = (
-    status: "completed" | "failed",
-    outcome: string,
-    failureReason?: FailureReason
-  ): CharacterAction => ({
-    characterId: node.characterId,
-    characterName: node.characterName,
-    gameTime: node.gameTime,
-    action: node.action,
-    location: node.location,
-    type: node.type,
-    actionType: node.actionType,
-    impact: node.impact,
-    isPlayer: node.isPlayer,
-    difficulty,
-    successLevel: resolvedSuccessLevel,
-    status,
-    outcome,
-    failureReason,
-    targetCharacterId: node.targetCharacterId,
-  });
-
-  // === Type-specific execution ===
-
-  if (node.type === "routine") {
-    if (npcLocation && npcLocation !== node.location) {
-      return makeAction("failed", buildOutcome("failed", "not at expected location"), "location_mismatch");
-    }
-    // actionType present? → skill roll
-    if (node.actionType) {
-      const rollResult = resolveSkillRoll(node, adjustedSkills, dgsm);
-      resolvedSuccessLevel = rollResult.successLevel;
-      if (rollResult.failed) {
-        lastRollDetail = rollResult.reason;
-        return makeAction("failed", buildOutcome("failed", rollResult.reason), "skill_roll_failed");
-      }
-      lastRollDetail = rollResult.detail;
-    }
-    return makeAction("completed", buildOutcome("completed"));
-  }
-
-  if (node.type === "movement") {
-    const state = dgsm.getState();
-    const fromLocation = npcLocation ?? node.location;
-
-    // Creative movement: single hop with skill check, no pathfinding
-    if (node.actionType) {
-      const rollResult = resolveSkillRoll(node, adjustedSkills, dgsm);
-      resolvedSuccessLevel = rollResult.successLevel;
-      if (rollResult.failed) {
-        lastRollDetail = rollResult.reason;
-        return makeAction("failed", buildOutcome("failed", rollResult.reason), "skill_roll_failed");
-      }
-      lastRollDetail = rollResult.detail;
-      dgsm.setNpcLocation(node.characterId, node.location);
-      return makeAction("completed", buildOutcome("completed", `Creative movement succeeded`));
-    }
-
-    // Normal movement: BFS pathfinding
-    if (state.scenes.size > 0) {
-      const path = findPath(fromLocation, node.location, state.scenes, state.blockedConnections);
-      if (!path) {
-        return makeAction("failed", buildOutcome("failed", "no path available"), "location_blocked");
-      }
-      const travelTime = calculateTravelTime(path, state.scenes, state.transportEdges);
-      dgsm.setNpcLocation(node.characterId, node.location);
-      const hopCount = path.length - 1;
-      return makeAction("completed", buildOutcome("completed", `Traveled ${hopCount} hops in ~${travelTime} min`));
-    }
-
-    // Fallback: no scene graph loaded, use legacy direct movement
-    if (dgsm.isConnectionBlocked(fromLocation, node.location)) {
-      return makeAction("failed", buildOutcome("failed", "path blocked"), "location_blocked");
-    }
-    const targetConditions = dgsm.getSceneConditions(node.location);
-    const isBlocked = targetConditions.some((c) => c.mechanicalEffect?.blocked);
-    if (isBlocked) {
-      return makeAction("failed", buildOutcome("failed", "destination blocked"), "location_blocked");
-    }
-    dgsm.setNpcLocation(node.characterId, node.location);
-    return makeAction("completed", buildOutcome("completed"));
-  }
-
-  if (node.type === "character_interaction") {
-    if (npcLocation && npcLocation !== node.location) {
-      return makeAction("failed", buildOutcome("failed", "not at expected location"), "location_mismatch");
-    }
-    if (node.targetCharacterId) {
-      const targetLocation = dgsm.getNpcLocation(node.targetCharacterId);
-      // Player character doesn't have npcLocation entry — skip check for player
-      if (targetLocation && targetLocation !== node.location) {
-        return makeAction("failed", buildOutcome("failed", "target not present"), "target_absent");
-      }
-    }
-
-    // For NPC nodes with luck_only difficulty: skip actionType skill roll, only do luck-based roll
-    if (!node.isPlayer && difficulty === "luck_only") {
-      if (Math.random() < luckFailureRate(luck)) {
-        return makeAction("failed", buildOutcome("failed", `bad luck (luck=${luck})`), "bad_luck");
-      }
-    } else if (node.isPlayer) {
-      // Player nodes: skip luck-based failure check entirely
-      // Only do skill roll if actionType present
-      if (node.actionType) {
-        const rollResult = resolveSkillRoll(node, adjustedSkills, dgsm);
-        resolvedSuccessLevel = rollResult.successLevel;
-        if (rollResult.failed) {
-          lastRollDetail = rollResult.reason;
-          return makeAction("failed", buildOutcome("failed", rollResult.reason), "skill_roll_failed");
-        }
-        lastRollDetail = rollResult.detail;
-      }
-    } else {
-      // NPC nodes (non-luck_only): existing logic
-      // Luck-based failure (only when no actionType)
-      if (!node.actionType && Math.random() < luckFailureRate(luck)) {
-        return makeAction("failed", buildOutcome("failed", `bad luck (luck=${luck})`), "bad_luck");
-      }
-      // Skill roll if actionType present
-      if (node.actionType) {
-        const rollResult = resolveSkillRoll(node, adjustedSkills, dgsm);
-        resolvedSuccessLevel = rollResult.successLevel;
-        if (rollResult.failed) {
-          lastRollDetail = rollResult.reason;
-          return makeAction("failed", buildOutcome("failed", rollResult.reason), "skill_roll_failed");
-        }
-        lastRollDetail = rollResult.detail;
-      }
-    }
-
-    // Apply side effects
-    if (node.characterInteractionPayload && node.targetCharacterId) {
-      const payload = node.characterInteractionPayload;
-      if (payload.transferType === "item" && payload.itemId) {
-        dgsm.removeItemFromNpc(node.characterId, payload.itemId);
-        dgsm.addItemToNpc(node.targetCharacterId, payload.itemId);
-      } else if (payload.transferType === "clue" && payload.clueId) {
-        dgsm.transferClue(node.characterId, node.targetCharacterId, payload.clueId);
-      }
-      // "information" transfer: no mechanical side effect here; impact gate handles plan revision
-    }
-    return makeAction("completed", buildOutcome("completed"));
-  }
-
-  if (node.type === "object_interaction") {
-    if (npcLocation && npcLocation !== node.location) {
-      return makeAction("failed", buildOutcome("failed", "not at expected location"), "location_mismatch");
-    }
-
-    if (node.isPlayer) {
-      if (node.actionType) {
-        const rollResult = resolveSkillRoll(node, adjustedSkills, dgsm);
-        resolvedSuccessLevel = rollResult.successLevel;
-        if (rollResult.failed) {
-          lastRollDetail = rollResult.reason;
-          return makeAction("failed", buildOutcome("failed", rollResult.reason), "skill_roll_failed");
-        }
-        lastRollDetail = rollResult.detail;
-      }
-    } else if (difficulty === "luck_only") {
-      if (Math.random() < luckFailureRate(luck)) {
-        return makeAction("failed", buildOutcome("failed", `bad luck (luck=${luck})`), "bad_luck");
-      }
-    } else {
-      if (!node.actionType && Math.random() < luckFailureRate(luck)) {
-        return makeAction("failed", buildOutcome("failed", `bad luck (luck=${luck})`), "bad_luck");
-      }
-      if (node.actionType) {
-        const rollResult = resolveSkillRoll(node, adjustedSkills, dgsm);
-        resolvedSuccessLevel = rollResult.successLevel;
-        if (rollResult.failed) {
-          lastRollDetail = rollResult.reason;
-          return makeAction("failed", buildOutcome("failed", rollResult.reason), "skill_roll_failed");
-        }
-        lastRollDetail = rollResult.detail;
-      }
-    }
-
-    // Apply side effects
-    if (node.objectInteractionPayload) {
-      const payload = node.objectInteractionPayload;
-      if (payload.action === "pickup" && payload.itemId) {
-        dgsm.addItemToNpc(node.characterId, payload.itemId);
-        const scene = dgsm.getCurrentScene();
-        if (scene) {
-          scene.items = scene.items.filter(i => i.id !== payload.itemId);
-        }
-      } else if (payload.action === "place" && payload.itemId) {
-        dgsm.removeItemFromNpc(node.characterId, payload.itemId);
-        const scene = dgsm.getCurrentScene();
-        if (scene) {
-          scene.items.push({ id: payload.itemId, name: payload.itemId });
-        }
-      } else if (payload.action === "destroy" && payload.itemId) {
-        dgsm.removeItemFromNpc(node.characterId, payload.itemId);
-        const scene = dgsm.getScene(node.location);
-        if (scene) {
-          scene.events.push(`${node.characterName} destroyed ${payload.itemId}`);
-        }
-      }
-    }
-    return makeAction("completed", buildOutcome("completed"));
-  }
-
-  if (node.type === "scene_interaction") {
-    if (npcLocation && npcLocation !== node.location) {
-      return makeAction("failed", buildOutcome("failed", "not at expected location"), "location_mismatch");
-    }
-
-    if (node.isPlayer) {
-      if (node.actionType) {
-        const rollResult = resolveSkillRoll(node, adjustedSkills, dgsm);
-        resolvedSuccessLevel = rollResult.successLevel;
-        if (rollResult.failed) {
-          lastRollDetail = rollResult.reason;
-          return makeAction("failed", buildOutcome("failed", rollResult.reason), "skill_roll_failed");
-        }
-        lastRollDetail = rollResult.detail;
-      }
-    } else if (difficulty === "luck_only") {
-      if (Math.random() < luckFailureRate(luck)) {
-        return makeAction("failed", buildOutcome("failed", `bad luck (luck=${luck})`), "bad_luck");
-      }
-    } else {
-      if (!node.actionType && Math.random() < luckFailureRate(luck)) {
-        return makeAction("failed", buildOutcome("failed", `bad luck (luck=${luck})`), "bad_luck");
-      }
-      if (node.actionType) {
-        const rollResult = resolveSkillRoll(node, adjustedSkills, dgsm);
-        resolvedSuccessLevel = rollResult.successLevel;
-        if (rollResult.failed) {
-          lastRollDetail = rollResult.reason;
-          return makeAction("failed", buildOutcome("failed", rollResult.reason), "skill_roll_failed");
-        }
-        lastRollDetail = rollResult.detail;
-      }
-    }
-
-    // Append outcome as scene condition
-    const outcome = buildOutcome("completed");
-    dgsm.appendSceneCondition(node.location, { description: outcome });
-    if (node.sceneConnectionEffect) {
-      const effect = node.sceneConnectionEffect;
-      const blocked = effect.action === "block";
-      dgsm.setConnectionBlocked(node.location, effect.targetScenarioId, blocked, outcome);
-    }
-    return makeAction("completed", outcome);
-  }
-
-  // Fallback
-  return makeAction("completed", buildOutcome("completed"));
-}
-
 // ==================== Clue RAG embedding ====================
 
 function embedDiscoveredClues(
@@ -1202,11 +300,24 @@ export async function runTick(
   dgsm: DynamicGameStateManager,
   npcPlanningAgent: NPCPlanningAgent,
   sessionId: string,
-  language: string = "en"
+  language: string = "en",
+  registry: GameEngineRegistry,
+  ctx: ExecutionContext
 ): Promise<TickResult> {
   const state = dgsm.getState();
   const gameDay = state.gameDay;
   const currentTime = state.timeOfDay;
+
+  // Build runtime context for WorldFeature hooks
+  const tickRuntime: TickRuntimeContext = {
+    sessionId, gameDay, language,
+    npcPlanning: npcPlanningAgent,
+  };
+
+  // Fire onTickStart for all registered WorldFeatures
+  for (const feature of registry.getAllFeatures()) {
+    feature.onTickStart?.(dgsm, tickRuntime);
+  }
 
   // Calculate new game time based on max player timeAdvanceMinutes
   const maxPlayerAdvance = playerNodes.reduce((max, n) => Math.max(max, n.timeAdvanceMinutes), 0);
@@ -1265,7 +376,13 @@ export async function runTick(
         continue;
       }
 
-      const action = executeNode(node, dgsm);
+      // Dispatch to registry handler
+      const handler = registry.getHandler(node.type);
+      if (!handler) {
+        console.warn(`[TickProcessor] No handler for node type: ${node.type}, skipping`);
+        continue;
+      }
+      const action = handler.execute(node, dgsm, ctx);
       bucketActions.push(action);
       allActions.push(action);
 
@@ -1276,7 +393,7 @@ export async function runTick(
         // (the skip logic above handles player nodes)
       }
 
-      // On character_interaction success → update relationship (before logging so we can include delta)
+      // On character_interaction success -> update relationship (before logging so we can include delta)
       let relationshipChange: string | undefined;
       if (action.status === "completed" && node.type === "character_interaction" && node.targetCharacterId) {
         const relResult = await npcPlanningAgent.updateRelationshipViaLLM(dgsm, node.characterId, node.targetCharacterId, action.outcome, language);
@@ -1325,7 +442,7 @@ export async function runTick(
         }
       }
 
-      // Fumble → damage a random undiscovered scene clue
+      // Fumble -> damage a random undiscovered scene clue
       if (node.isPlayer && action.successLevel === "fumble") {
         const scene = dgsm.getCurrentScene();
         const damageable = scene?.clues?.filter((c) => !c.discovered && !c.damaged) ?? [];
@@ -1345,7 +462,7 @@ export async function runTick(
         }
       }
 
-      // On failure → immediate revisePlans (no gate) — NPC only
+      // On failure -> immediate revisePlans (no gate) — NPC only
       if (action.status === "failed" && !node.isPlayer) {
         const longTermIntent = await npcPlanningAgent.getLongTermIntent(sessionId, node.characterId);
         const memoryLog = await npcPlanningAgent.getMemoryLog(sessionId, node.characterId, gameDay);
@@ -1364,14 +481,30 @@ export async function runTick(
       }
     }
 
-    // Impact gate
-    const { playerEvents } = await runImpactGate(
-      bucketActions, state, dgsm, npcPlanningAgent, sessionId, gameDay, bucketTime, language
-    );
+    // WorldFeature onBucketEnd hooks (includes impact gate, may inject new nodes)
+    let allPlayerEvents: Array<{ event: CharacterAction; impact: number }> = [];
+    for (const feature of registry.getAllFeatures()) {
+      const result = await feature.onBucketEnd(bucketActions, dgsm, bucketTime, tickRuntime);
+      if (result.newNodes?.length) {
+        for (const newNode of result.newNodes) {
+          const newBucket = minutesToBucket(timeToMinutes(newNode.gameTime));
+          if (!buckets.has(newBucket)) {
+            buckets.set(newBucket, []);
+            const insertIdx = sortedBucketKeys.findIndex(k => k > newBucket);
+            if (insertIdx === -1) sortedBucketKeys.push(newBucket);
+            else sortedBucketKeys.splice(insertIdx, 0, newBucket);
+          }
+          buckets.get(newBucket)!.push(newNode);
+        }
+      }
+      if (result.playerEvents?.length) {
+        allPlayerEvents = allPlayerEvents.concat(result.playerEvents);
+      }
+    }
 
     // Player witness: interrupt tick execution so player can decide
-    if (playerEvents && playerEvents.length > 0) {
-      const playerWitnessEvents: PlayerWitnessEvent[] = playerEvents.map((e) => ({
+    if (allPlayerEvents.length > 0) {
+      const playerWitnessEvents: PlayerWitnessEvent[] = allPlayerEvents.map((e) => ({
         characterName: e.event.characterName,
         action: e.event.action,
         outcome: e.event.outcome,
@@ -1416,6 +549,11 @@ export async function runTick(
   const timeAdvance = successfulPlayerAdvance > 0 ? successfulPlayerAdvance : maxPlayerAdvance;
   dgsm.updateGameTime(timeAdvance);
 
+  // Fire onTickEnd for all registered WorldFeatures
+  for (const feature of registry.getAllFeatures()) {
+    feature.onTickEnd?.(allActions, dgsm, tickRuntime);
+  }
+
   return { type: "completed", actions: allActions };
 }
 
@@ -1428,7 +566,9 @@ export async function resumeTick(
   npcPlanningAgent: NPCPlanningAgent,
   sessionId: string,
   playerNodes: PlanNode[],
-  language: string = "en"
+  language: string = "en",
+  registry: GameEngineRegistry,
+  ctx: ExecutionContext
 ): Promise<TickResult> {
   const state = dgsm.getState();
   const gameDay = state.gameDay;
@@ -1436,7 +576,13 @@ export async function resumeTick(
   const playerCharacterIds = new Set(playerNodes.map((n) => n.characterId));
   let playerFailed = false;
 
-  // Rebuild buckets map for impact gate reuse
+  // Build runtime context for WorldFeature hooks
+  const tickRuntime: TickRuntimeContext = {
+    sessionId, gameDay, language,
+    npcPlanning: npcPlanningAgent,
+  };
+
+  // Rebuild buckets map
   const buckets = new Map<number, PlanNode[]>();
   for (const { bucketKey, nodes } of remainingBuckets) {
     buckets.set(bucketKey, nodes);
@@ -1452,7 +598,13 @@ export async function resumeTick(
     for (const node of bucketNodes) {
       if ((playerFailed || playerFailedInBucket) && node.isPlayer) continue;
 
-      const action = executeNode(node, dgsm);
+      // Dispatch to registry handler
+      const handler = registry.getHandler(node.type);
+      if (!handler) {
+        console.warn(`[TickProcessor] No handler for node type: ${node.type}, skipping`);
+        continue;
+      }
+      const action = handler.execute(node, dgsm, ctx);
       bucketActions.push(action);
       allActions.push(action);
 
@@ -1501,7 +653,7 @@ export async function resumeTick(
         }
       }
 
-      // Fumble → damage a random undiscovered scene clue
+      // Fumble -> damage a random undiscovered scene clue
       if (node.isPlayer && action.successLevel === "fumble") {
         const scene = dgsm.getCurrentScene();
         const damageable = scene?.clues?.filter((c) => !c.discovered && !c.damaged) ?? [];
@@ -1539,14 +691,30 @@ export async function resumeTick(
       }
     }
 
-    // Impact gate
-    const { playerEvents } = await runImpactGate(
-      bucketActions, state, dgsm, npcPlanningAgent, sessionId, gameDay, bucketTime, language
-    );
+    // WorldFeature onBucketEnd hooks (includes impact gate, may inject new nodes)
+    let allPlayerEvents: Array<{ event: CharacterAction; impact: number }> = [];
+    for (const feature of registry.getAllFeatures()) {
+      const result = await feature.onBucketEnd(bucketActions, dgsm, bucketTime, tickRuntime);
+      if (result.newNodes?.length) {
+        for (const newNode of result.newNodes) {
+          const newBucket = minutesToBucket(timeToMinutes(newNode.gameTime));
+          if (!buckets.has(newBucket)) {
+            buckets.set(newBucket, []);
+            const insertIdx = sortedBucketKeys.findIndex(k => k > newBucket);
+            if (insertIdx === -1) sortedBucketKeys.push(newBucket);
+            else sortedBucketKeys.splice(insertIdx, 0, newBucket);
+          }
+          buckets.get(newBucket)!.push(newNode);
+        }
+      }
+      if (result.playerEvents?.length) {
+        allPlayerEvents = allPlayerEvents.concat(result.playerEvents);
+      }
+    }
 
     // Player interrupt again if needed
-    if (playerEvents && playerEvents.length > 0) {
-      const playerWitnessEvents: PlayerWitnessEvent[] = playerEvents.map((e) => ({
+    if (allPlayerEvents.length > 0) {
+      const playerWitnessEvents: PlayerWitnessEvent[] = allPlayerEvents.map((e) => ({
         characterName: e.event.characterName, action: e.event.action, outcome: e.event.outcome,
         location: e.event.location, gameTime: e.event.gameTime, impact: e.impact,
       }));

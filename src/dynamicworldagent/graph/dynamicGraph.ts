@@ -38,6 +38,7 @@ import { NPCPlanningAgent } from "../dynamicBasicAgent/npcPlanning/NPCPlanningAg
 import { runTick, resumeTick } from "../dynamicBasicAgent/npcPlanning/tickProcessor.js";
 import { ACTION_TYPE_SKILL_MAP } from "../dynamicBasicAgent/npcPlanning/actionTypeSkillMap.js";
 import type { PlanNode, TickResult } from "../dynamicBasicAgent/npcPlanning/types.js";
+import { createDefaultRegistry, createExecutionContext } from "../engine/index.js";
 import { TurnRagAgent } from "../dynamicBasicAgent/knowledge/turnRagAgent.js";
 // Import DynamicWorld agents
 import { OrchestratorAgent } from "../dynamicBasicAgent/orchestrator/orchestratorAgent.js";
@@ -117,6 +118,8 @@ export const buildDynamicGraph = (
   const playerPlanAgent = new PlayerPlanAgent({});
   const turnManager = new TurnManager(db);
   const turnRagAgent = new TurnRagAgent();
+  const registry = createDefaultRegistry();
+  const executionCtx = createExecutionContext();
 
   // Create checkpointer for saving/resuming graph state
   const checkpointer = new MemorySaver();
@@ -398,7 +401,8 @@ export const buildDynamicGraph = (
         dgsm,
         orchestratorOutput,
         selectedSkill,
-        language
+        language,
+        registry
       );
 
       dgsm.setPlayerNodes(playerNodes);
@@ -475,7 +479,9 @@ export const buildDynamicGraph = (
           npcPlanningAgent,
           dgsm.getState().sessionId,
           pendingPlayerNodes,
-          language
+          language,
+          registry,
+          executionCtx
         );
       } else if (pendingInterrupt && playerContinueChoice === "interrupt") {
         // Player chose to interrupt — stop here, use actions so far
@@ -490,7 +496,9 @@ export const buildDynamicGraph = (
           dgsm,
           npcPlanningAgent,
           dgsm.getState().sessionId,
-          language
+          language,
+          registry,
+          executionCtx
         );
       }
 

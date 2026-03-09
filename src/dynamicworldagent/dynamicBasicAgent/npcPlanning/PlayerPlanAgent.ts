@@ -1,5 +1,6 @@
 import { randomUUID } from "crypto";
 import { generateText, ModelClass } from "../../../models/index.js";
+import type { GameEngineRegistry } from "../../engine/registry.js";
 import type { DynamicGameStateManager } from "../../state/DynamicGameState.js";
 import { buildPlayerPlanPrompt, type PlayerPlanParams } from "./PlayerPlanTemplate.js";
 import type { PlanNode } from "./types.js";
@@ -37,7 +38,8 @@ export class PlayerPlanAgent {
       impact: 0 | 1 | 2 | 3;
     },
     selectedSkill?: string | null,
-    language?: string
+    language?: string,
+    registry?: GameEngineRegistry
   ): Promise<PlanNode[]> {
     const state = dgsm.getState();
     const lang = language ?? "en";
@@ -87,6 +89,11 @@ export class PlayerPlanAgent {
     // Build orchestrator hints
     const orchestratorHints = this.formatOrchestratorHints(orchestratorOutput, selectedSkill);
 
+    // Build registry-generated dynamic prompt sections
+    const handlerPrompt = registry?.buildHandlerPrompt();
+    const worldStatePrompt = registry?.buildWorldStatePrompt(dgsm);
+    const featurePlanningPrompt = registry?.buildFeaturePlanningPrompt();
+
     const params: PlayerPlanParams = {
       playerInput,
       playerName: player.name,
@@ -105,6 +112,9 @@ export class PlayerPlanAgent {
       currentGameTime: state.timeOfDay,
       gameDay: state.gameDay,
       language: lang,
+      handlerPrompt,
+      worldStatePrompt,
+      featurePlanningPrompt,
     };
 
     const prompt = buildPlayerPlanPrompt(params);
