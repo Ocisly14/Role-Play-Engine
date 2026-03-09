@@ -12,22 +12,33 @@
       "difficulty": "hard",
       "location": "二层书房",
       "discoveryMethod": "仔细搜查二层书房",
-      "reveals": ["木屋曾安装过复杂的电子系统（千维系统）", "设备已被他人取走（阿道夫）"],
+      "reveals": [
+        "木屋曾安装过复杂的电子系统（千维系统）",
+        "设备已被他人取走（阿道夫）"
+      ],
       "discovered": false
     }
   ],
   "conditions": [
     {
       "type": "other",
-      "description": "二层空气更为沉闷，弥漫着灰尘和纸张腐朽的气味，长年密闭导致空气几乎不流通。",
-      "mechanicalEffect": ""
+      "description": "二层空气更为沉闷，弥漫着灰尘和纸张腐朽的气味，长年密闭导致空气几乎不流通。"
     },
     {
       "type": "lighting",
       "description": "二层窗户同样被尘垢遮蔽，走廊和房间里光线昏暗。",
-      "mechanicalEffect": "在昏暗环境下，侦查类技能检定可能受到不利影响。"
+      "mechanicalEffect": {
+        "skillPenalty": [
+          {
+            "skill": "Spot Hidden",
+            "delta": -15
+          }
+        ]
+      }
     }
   ],
-  "connections": ["SCN_6_SUB_2"],
+  "connections": [
+    "SCN_6_SUB_2"
+  ],
   "events": []
 }

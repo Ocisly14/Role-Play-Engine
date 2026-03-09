@@ -45,20 +45,17 @@
   "conditions": [
     {
       "type": "lighting",
-      "description": "彩色玻璃窗将日光过滤成斑斓的色彩，殿内光线柔和而庄严。夜晚则只有蜡烛提供微弱的照明，阴影在墙壁和廊柱间摇曳。",
-      "mechanicalEffect": ""
+      "description": "彩色玻璃窗将日光过滤成斑斓的色彩，殿内光线柔和而庄严。夜晚则只有蜡烛提供微弱的照明，阴影在墙壁和廊柱间摇曳。"
     },
     {
       "type": "smell",
-      "description": "蜡烛燃烧后的淡淡烟熏气息与陈旧木头的味道交织在一起，偶尔还能嗅到一丝不易察觉的寒冷气味。",
-      "mechanicalEffect": ""
+      "description": "蜡烛燃烧后的淡淡烟熏气息与陈旧木头的味道交织在一起，偶尔还能嗅到一丝不易察觉的寒冷气味。"
     },
     {
       "type": "sound",
-      "description": "教堂内非常安静，只有偶尔的风声穿过彩色玻璃窗的缝隙。脚步声在石板地面上会产生清晰的回响。",
-      "mechanicalEffect": ""
+      "description": "教堂内非常安静，只有偶尔的风声穿过彩色玻璃窗的缝隙。脚步声在石板地面上会产生清晰的回响。"
     }
   ],
-  "connections": ["SCN_17_SUB_2", "SCN_17_SUB_3", "SCN_17_SUB_4"],
+  "connections": ["SCN_17_SUB_2", "SCN_17_SUB_3", "SCN_17_SUB_4", "ROAD_3"],
   "events": []
 }

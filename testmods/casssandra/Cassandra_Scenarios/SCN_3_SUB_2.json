@@ -18,7 +18,10 @@
       "difficulty": "automatic",
       "location": "法医工作室",
       "discoveryMethod": "检查法医工作室的档案和记录",
-      "reveals": ["有人系统性地销毁了与案件相关的法医证据", "两起案件之间可能存在关联"],
+      "reveals": [
+        "有人系统性地销毁了与案件相关的法医证据",
+        "两起案件之间可能存在关联"
+      ],
       "discovered": false
     },
     {
@@ -28,22 +31,24 @@
       "difficulty": "automatic",
       "location": "法医工具柜",
       "discoveryMethod": "检查工具柜的锁和连接装置",
-      "reveals": ["无法在不引起注意的情况下使用法医工具"],
+      "reveals": [
+        "无法在不引起注意的情况下使用法医工具"
+      ],
       "discovered": false
     }
   ],
   "conditions": [
     {
       "type": "lighting",
-      "description": "工作室灯光苍白，空荡荡的操作台和空置的证物架显得格外冷清",
-      "mechanicalEffect": ""
+      "description": "工作室灯光苍白，空荡荡的操作台和空置的证物架显得格外冷清"
     },
     {
       "type": "other",
-      "description": "工具柜连接着监控报警系统，强行撬开将立即触发警报",
-      "mechanicalEffect": "撬锁行为将自动触发监控报警"
+      "description": "工具柜连接着监控报警系统，强行撬开将立即触发警报"
     }
   ],
-  "connections": ["SCN_3_SUB_1"],
+  "connections": [
+    "SCN_3_SUB_1"
+  ],
   "events": []
 }

@@ -30,13 +30,11 @@
   "conditions": [
     {
       "type": "lighting",
-      "description": "走廊日光灯照明均匀但略显昏暗，部分灯管老化，光线深浅不一",
-      "mechanicalEffect": ""
+      "description": "走廊日光灯照明均匀但略显昏暗，部分灯管老化，光线深浅不一"
     },
     {
       "type": "sound",
-      "description": "走廊内安静，偶尔传来远处心电监护仪的规律滴声和通风管道的气流声",
-      "mechanicalEffect": ""
+      "description": "走廊内安静，偶尔传来远处心电监护仪的规律滴声和通风管道的气流声"
     }
   ],
   "connections": ["SCN_1_SUB_1", "SCN_1_SUB_2", "SCN_1_SUB_3", "SCN_1_SUB_4", "SCN_1_SUB_6"],

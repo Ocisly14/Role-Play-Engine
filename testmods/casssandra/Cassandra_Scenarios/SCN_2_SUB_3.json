@@ -41,17 +41,17 @@
     {
       "type": "lighting",
       "description": "地下空间一片漆黑，需要自备光源。古老的符文在光线照射下似乎微微泛着幽光。",
-      "mechanicalEffect": "无光源时所有视觉类检定自动失败"
+      "mechanicalEffect": {
+        "skillPenalty": [{ "skill": "Spot Hidden", "delta": -40 }]
+      }
     },
     {
       "type": "temperature",
-      "description": "地下深处寒气逼人，温度远低于地面",
-      "mechanicalEffect": ""
+      "description": "地下深处寒气逼人，温度远低于地面"
     },
     {
       "type": "other",
-      "description": "这里弥漫着一种令人不安的压迫感，空气中似乎有某种古老而邪恶的力量残存",
-      "mechanicalEffect": "初次进入时需要进行理智检定"
+      "description": "这里弥漫着一种令人不安的压迫感，空气中似乎有某种古老而邪恶的力量残存"
     }
   ],
   "connections": ["SCN_2_SUB_1"],

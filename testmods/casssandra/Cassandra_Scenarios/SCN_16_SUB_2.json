@@ -47,12 +47,18 @@
     {
       "type": "lighting",
       "description": "二层隔层的灯光比一层更为昏暗，角落里几乎没有什么光线，营造出一种隐秘幽暗的氛围",
-      "mechanicalEffect": "昏暗的光线可能对侦查检定造成不利影响"
+      "mechanicalEffect": {
+        "skillPenalty": [
+          {
+            "skill": "Spot Hidden",
+            "delta": -15
+          }
+        ]
+      }
     },
     {
       "type": "sound",
-      "description": "一层的背景音乐和交谈声从下方传来，但在二层音量有所降低，可以进行较为私密的对话",
-      "mechanicalEffect": ""
+      "description": "一层的背景音乐和交谈声从下方传来，但在二层音量有所降低，可以进行较为私密的对话"
     }
   ],
   "connections": [

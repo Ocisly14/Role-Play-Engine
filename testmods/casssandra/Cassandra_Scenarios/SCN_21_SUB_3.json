@@ -55,18 +55,15 @@
   "conditions": [
     {
       "type": "lighting",
-      "description": "总部内灯火通明，但没有一扇窗户——完全依靠电力照明。暖色的灯光将整个空间照得透亮。",
-      "mechanicalEffect": ""
+      "description": "总部内灯火通明，但没有一扇窗户——完全依靠电力照明。暖色的灯光将整个空间照得透亮。"
     },
     {
       "type": "smell",
-      "description": "空气中弥漫着雪茄烟和皮革的气味，混合着一丝威士忌酒的醇香。",
-      "mechanicalEffect": ""
+      "description": "空气中弥漫着雪茄烟和皮革的气味，混合着一丝威士忌酒的醇香。"
     },
     {
       "type": "other",
-      "description": "总部内随时有Ben的手下巡逻，气氛紧张而有序。未经许可的行为将立即被制止。",
-      "mechanicalEffect": "在此处的一切行动都在黑手党的监视之下。未经许可的调查可能引发敌意。"
+      "description": "总部内随时有Ben的手下巡逻，气氛紧张而有序。未经许可的行为将立即被制止。"
     }
   ],
   "connections": ["SCN_21_SUB_1"],

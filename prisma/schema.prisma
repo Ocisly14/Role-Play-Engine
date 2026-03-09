@@ -447,7 +447,7 @@ model ScenarioCondition {
   sceneId          String   @map("scene_id")
   conditionType    String   @map("condition_type")
   description      String
-  mechanicalEffect String?  @map("mechanical_effect")
+  mechanicalEffect Json?    @map("mechanical_effect")
   createdAt        DateTime @default(now()) @map("created_at")
   moduleId         String   @map("module_id") @db.Uuid
   module           Module   @relation(fields: [moduleId], references: [moduleId], onDelete: Cascade)

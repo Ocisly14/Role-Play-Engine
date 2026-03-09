@@ -55,13 +55,11 @@
   "conditions": [
     {
       "type": "lighting",
-      "description": "实验室内灯光惨白，生化标识在玻璃门上格外醒目",
-      "mechanicalEffect": ""
+      "description": "实验室内灯光惨白，生化标识在玻璃门上格外醒目"
     },
     {
       "type": "smell",
-      "description": "空气中混合着化学药剂和某种奇异的生物气味",
-      "mechanicalEffect": ""
+      "description": "空气中混合着化学药剂和某种奇异的生物气味"
     }
   ],
   "connections": ["SCN_1_SUB_1", "SCN_1_SUB_5"],

@@ -170,7 +170,11 @@ export class ScenarioLoader {
       conditions: conditions.map((c) => ({
         type: c.conditionType as ScenarioCondition["type"],
         description: c.description,
-        mechanicalEffect: c.mechanicalEffect || undefined,
+        mechanicalEffect: c.mechanicalEffect
+          ? (typeof c.mechanicalEffect === "string"
+              ? undefined
+              : (c.mechanicalEffect as ScenarioCondition["mechanicalEffect"]))
+          : undefined,
       })),
       sceneImage,
       events: (sceneRow.events as any[]) || [],

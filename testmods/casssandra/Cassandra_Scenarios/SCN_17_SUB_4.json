@@ -50,18 +50,23 @@
   "conditions": [
     {
       "type": "lighting",
-      "description": "赌场内光线昏暗，只有几盏悬挂的黄色灯泡提供微弱照明，将赌客们的面孔映照得忽明忽暗。",
-      "mechanicalEffect": ""
+      "description": "赌场内光线昏暗，只有几盏悬挂的黄色灯泡提供微弱照明，将赌客们的面孔映照得忽明忽暗。"
     },
     {
       "type": "smell",
-      "description": "空气混浊不堪，混杂着浓烈的烟草味、酒精味和汗水的气味，令人窒息。",
-      "mechanicalEffect": ""
+      "description": "空气混浊不堪，混杂着浓烈的烟草味、酒精味和汗水的气味，令人窒息。"
     },
     {
       "type": "sound",
       "description": "赌客们的吆五喝六声此起彼伏，骰子碰撞声、筹码堆叠声和粗犷的笑声交织在一起，十分嘈杂。",
-      "mechanicalEffect": "在此处进行聆听检定难度增加。"
+      "mechanicalEffect": {
+        "skillPenalty": [
+          {
+            "skill": "Listen",
+            "delta": -15
+          }
+        ]
+      }
     }
   ],
   "connections": ["SCN_17_SUB_1"],

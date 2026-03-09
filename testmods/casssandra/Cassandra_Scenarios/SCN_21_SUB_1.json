@@ -55,20 +55,17 @@
   "conditions": [
     {
       "type": "lighting",
-      "description": "月台上只有几盏昏黄的路灯提供照明，夜间大部分区域笼罩在阴影中。",
-      "mechanicalEffect": ""
+      "description": "月台上只有几盏昏黄的路灯提供照明，夜间大部分区域笼罩在阴影中。"
     },
     {
       "type": "other",
-      "description": "整个月台设施简陋陈旧，站牌锈迹斑斑，长椅破旧不堪。与城镇中心的热闹相比，这里显得冷清而被遗忘。",
-      "mechanicalEffect": ""
+      "description": "整个月台设施简陋陈旧，站牌锈迹斑斑，长椅破旧不堪。与城镇中心的热闹相比，这里显得冷清而被遗忘。"
     },
     {
       "type": "sound",
-      "description": "偶尔有火车经过时的汽笛声和铁轨震动声打破寂静，平时只有风声和Haran偶尔的咳嗽声。",
-      "mechanicalEffect": ""
+      "description": "偶尔有火车经过时的汽笛声和铁轨震动声打破寂静，平时只有风声和Haran偶尔的咳嗽声。"
     }
   ],
-  "connections": ["SCN_21_SUB_2", "SCN_21_SUB_3"],
+  "connections": ["SCN_21_SUB_2", "SCN_21_SUB_3", "ROAD_4"],
   "events": []
 }

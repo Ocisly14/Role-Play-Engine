@@ -25,20 +25,19 @@
   "conditions": [
     {
       "type": "weather",
-      "description": "墓地位于开阔地带，冬季的寒风在墓碑间呼啸而过，枯黄的野草随风摇摆。天空常年笼罩着灰色的阴云。",
-      "mechanicalEffect": ""
+      "description": "墓地位于开阔地带，冬季的寒风在墓碑间呼啸而过，枯黄的野草随风摇摆。天空常年笼罩着灰色的阴云。"
     },
     {
       "type": "lighting",
-      "description": "墓地没有照明设施，白天依靠自然光线。傍晚和夜间光线昏暗，老树的枝干在地面投下怪异的阴影。",
-      "mechanicalEffect": "夜间调查需要照明工具，侦查类技能难度增加。"
+      "description": "墓地没有照明设施，白天依靠自然光线。傍晚和夜间光线昏暗，老树的枝干在地面投下怪异的阴影。"
     },
     {
       "type": "other",
-      "description": "墓地的氛围萧索压抑，枯树、残碑和呼啸的风声交织在一起，令人不由自主地感到一丝不安。",
-      "mechanicalEffect": ""
+      "description": "墓地的氛围萧索压抑，枯树、残碑和呼啸的风声交织在一起，令人不由自主地感到一丝不安。"
     }
   ],
-  "connections": [],
+  "connections": [
+    "ROAD_10"
+  ],
   "events": []
 }

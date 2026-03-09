@@ -1062,7 +1062,7 @@ export class WorldModuleLoader {
                 moduleId,
                 conditionType: condition.type,
                 description: condition.description,
-                mechanicalEffect: condition.mechanicalEffect || null,
+                mechanicalEffect: condition.mechanicalEffect ?? undefined,
               },
             });
           } catch (error: any) {

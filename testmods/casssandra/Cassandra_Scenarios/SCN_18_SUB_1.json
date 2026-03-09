@@ -60,15 +60,15 @@
   "conditions": [
     {
       "type": "lighting",
-      "description": "店内灯光明亮，货架排列整齐，是一家看起来普普通通的五金店。",
-      "mechanicalEffect": ""
+      "description": "店内灯光明亮，货架排列整齐，是一家看起来普普通通的五金店。"
     },
     {
       "type": "smell",
-      "description": "空气中弥漫着金属和机油的气味，混合着木屑的清香。",
-      "mechanicalEffect": ""
+      "description": "空气中弥漫着金属和机油的气味，混合着木屑的清香。"
     }
   ],
-  "connections": [],
+  "connections": [
+    "ROAD_3"
+  ],
   "events": []
 }

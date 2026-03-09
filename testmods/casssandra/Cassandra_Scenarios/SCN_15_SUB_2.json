@@ -34,18 +34,15 @@
   "conditions": [
     {
       "type": "lighting",
-      "description": "房间内没有自然光源，仅靠显示屏的待机蓝光和角落里的台灯提供照明，整体光线偏暗偏冷",
-      "mechanicalEffect": ""
+      "description": "房间内没有自然光源，仅靠显示屏的待机蓝光和角落里的台灯提供照明，整体光线偏暗偏冷"
     },
     {
       "type": "sound",
-      "description": "服务器机箱的散热风扇持续发出低沉的嗡鸣声，房间因隔音板而异常安静",
-      "mechanicalEffect": ""
+      "description": "服务器机箱的散热风扇持续发出低沉的嗡鸣声，房间因隔音板而异常安静"
     },
     {
       "type": "smell",
-      "description": "空气中弥漫着电子设备运转时散发的微热气味，混合着塑料和金属的淡淡味道",
-      "mechanicalEffect": ""
+      "description": "空气中弥漫着电子设备运转时散发的微热气味，混合着塑料和金属的淡淡味道"
     }
   ],
   "connections": [

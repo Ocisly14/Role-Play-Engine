@@ -12,7 +12,10 @@
       "difficulty": "regular",
       "location": "通过Simon的黑客调查获取",
       "discoveryMethod": "向Simon Laplace询问关于下水道的事情，等待他的调查结果",
-      "reveals": ["有人定期关闭闸门进入下水道深处", "最后一次操作是12月17日（与Marcel目击脸上有胎记的西装男子从下水道爬出的时间吻合）"],
+      "reveals": [
+        "有人定期关闭闸门进入下水道深处",
+        "最后一次操作是12月17日（与Marcel目击脸上有胎记的西装男子从下水道爬出的时间吻合）"
+      ],
       "discovered": false
     },
     {
@@ -22,27 +25,40 @@
       "difficulty": "hard",
       "location": "下水道深处",
       "discoveryMethod": "在闸门关闭后仔细搜索下水道墙壁",
-      "reveals": ["下水道内藏有秘密空间"],
+      "reveals": [
+        "下水道内藏有秘密空间"
+      ],
       "discovered": false
     }
   ],
   "conditions": [
     {
       "type": "smell",
-      "description": "下水道内弥漫着浓烈的污水臭味，令人作呕。",
-      "mechanicalEffect": "长时间停留可能需要通过体质检定以避免呕吐。"
+      "description": "下水道内弥漫着浓烈的污水臭味，令人作呕。"
     },
     {
       "type": "lighting",
       "description": "下水道内几乎没有光源，必须自备照明工具。",
-      "mechanicalEffect": "无照明工具时，所有需要视觉的技能检定极度困难。"
+      "mechanicalEffect": {
+        "skillPenalty": [
+          {
+            "skill": "Spot Hidden",
+            "delta": -30
+          }
+        ]
+      }
     },
     {
       "type": "other",
       "description": "闸门未关闭时，污水湍急流过通道，无法安全深入。",
-      "mechanicalEffect": "闸门开启状态下无法前往暗门区域。"
+      "mechanicalEffect": {
+        "blocked": true
+      }
     }
   ],
-  "connections": ["SCN_7_SUB_2"],
+  "connections": [
+    "SCN_7_SUB_2",
+    "ROAD_8"
+  ],
   "events": []
 }

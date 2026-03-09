@@ -50,15 +50,16 @@
   "conditions": [
     {
       "type": "lighting",
-      "description": "医院内部灯光明亮，走廊里弥漫着消毒水的气味",
-      "mechanicalEffect": ""
+      "description": "医院内部灯光明亮，走廊里弥漫着消毒水的气味"
     },
     {
       "type": "other",
       "description": "医院管理松散，人员来往稀疏，伪装进入相对容易",
-      "mechanicalEffect": "伪装类技能（如乔装）的难度降低"
+      "mechanicalEffect": {
+        "skillPenalty": [{ "skill": "Disguise", "delta": 10 }]
+      }
     }
   ],
-  "connections": ["SCN_1_SUB_2", "SCN_1_SUB_3", "SCN_1_SUB_4", "SCN_1_SUB_5", "SCN_1_SUB_6"],
+  "connections": ["SCN_1_SUB_2", "SCN_1_SUB_3", "SCN_1_SUB_4", "SCN_1_SUB_5", "SCN_1_SUB_6", "ROAD_1"],
   "events": []
 }

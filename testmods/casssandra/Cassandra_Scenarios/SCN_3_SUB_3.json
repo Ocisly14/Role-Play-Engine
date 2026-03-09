@@ -18,7 +18,10 @@
       "difficulty": "regular",
       "location": "档案柜",
       "discoveryMethod": "按年份和案件类型检索卷宗",
-      "reveals": ["驯鹿酒吧案相关人员的住址", "两起案件的官方记录细节"],
+      "reveals": [
+        "驯鹿酒吧案相关人员的住址",
+        "两起案件的官方记录细节"
+      ],
       "discovered": false
     },
     {
@@ -28,22 +31,37 @@
       "difficulty": "hard",
       "location": "档案柜深处",
       "discoveryMethod": "仔细翻阅多年的失踪人口档案并比对年份",
-      "reveals": ["每年冬春季节规律性的女孩失踪暗示着某种周期性的犯罪活动", "2002和2003年缺少报告可能意味着作案模式发生了变化或者受害者来源改变了"],
+      "reveals": [
+        "每年冬春季节规律性的女孩失踪暗示着某种周期性的犯罪活动",
+        "2002和2003年缺少报告可能意味着作案模式发生了变化或者受害者来源改变了"
+      ],
       "discovered": false
     }
   ],
   "conditions": [
     {
       "type": "lighting",
-      "description": "档案室光线不足，高大的档案柜投下大片阴影",
-      "mechanicalEffect": ""
+      "description": "档案室光线不足，高大的档案柜投下大片阴影"
     },
     {
       "type": "other",
       "description": "卷宗数量庞大且摆放不够整齐，详细搜寻需要花费大量时间",
-      "mechanicalEffect": "图书馆使用或侦查检定可加速搜索进度"
+      "mechanicalEffect": {
+        "skillPenalty": [
+          {
+            "skill": "Library Use",
+            "delta": -10
+          },
+          {
+            "skill": "Spot Hidden",
+            "delta": -10
+          }
+        ]
+      }
     }
   ],
-  "connections": ["SCN_3_SUB_1"],
+  "connections": [
+    "SCN_3_SUB_1"
+  ],
   "events": []
 }

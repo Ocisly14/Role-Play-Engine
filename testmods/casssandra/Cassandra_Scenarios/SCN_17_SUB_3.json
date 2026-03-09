@@ -40,18 +40,23 @@
   "conditions": [
     {
       "type": "temperature",
-      "description": "暗门后方弥漫着不自然的刺骨寒气，温度远低于教堂其他区域。这种寒冷仿佛来自另一个维度。",
-      "mechanicalEffect": "长时间停留可能导致体质检定，失败则受到寒冷伤害。"
+      "description": "暗门后方弥漫着不自然的刺骨寒气，温度远低于教堂其他区域。这种寒冷仿佛来自另一个维度。"
     },
     {
       "type": "lighting",
       "description": "暗门后方几乎没有自然光源，唯一的光亮来自蛛网丝线上散发的不属于此世的微弱荧光。",
-      "mechanicalEffect": "需要照明工具才能有效调查。"
+      "mechanicalEffect": {
+        "skillPenalty": [
+          {
+            "skill": "Spot Hidden",
+            "delta": -20
+          }
+        ]
+      }
     },
     {
       "type": "other",
-      "description": "偶尔会有冷蜘蛛从蛛网的缝隙中坠落，虽然体型小巧但仍具有毒性。",
-      "mechanicalEffect": "在此区域停留有被冷蜘蛛咬伤的风险，可能需要闪避检定。"
+      "description": "偶尔会有冷蜘蛛从蛛网的缝隙中坠落，虽然体型小巧但仍具有毒性。"
     }
   ],
   "connections": ["SCN_17_SUB_1"],

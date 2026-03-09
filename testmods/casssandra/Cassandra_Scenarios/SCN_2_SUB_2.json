@@ -35,18 +35,15 @@
   "conditions": [
     {
       "type": "other",
-      "description": "建筑结构极不稳定，随时可能进一步坍塌。修格斯在此栖息，是整个卡森德拉最危险的区域之一。",
-      "mechanicalEffect": "调查员必须通过潜行检定保持安静。失败将惊动修格斯，必须立刻逃离。尝试战斗将导致死亡。"
+      "description": "建筑结构极不稳定，随时可能进一步坍塌。修格斯在此栖息，是整个卡森德拉最危险的区域之一。"
     },
     {
       "type": "sound",
-      "description": "偶尔从废墟深处传来湿滑的蠕动声和沉重的呼吸般的声响",
-      "mechanicalEffect": "听到声响的调查员需要进行理智检定"
+      "description": "偶尔从废墟深处传来湿滑的蠕动声和沉重的呼吸般的声响"
     },
     {
       "type": "smell",
-      "description": "空气中弥漫着腐败和某种不属于自然界的刺鼻气味",
-      "mechanicalEffect": ""
+      "description": "空气中弥漫着腐败和某种不属于自然界的刺鼻气味"
     }
   ],
   "connections": ["SCN_2_SUB_1"],

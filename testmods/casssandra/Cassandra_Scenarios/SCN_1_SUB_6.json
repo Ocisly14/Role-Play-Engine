@@ -30,13 +30,11 @@
   "conditions": [
     {
       "type": "lighting",
-      "description": "护士站区域照明充足，柜台上方有独立的照明灯",
-      "mechanicalEffect": ""
+      "description": "护士站区域照明充足，柜台上方有独立的照明灯"
     },
     {
       "type": "other",
-      "description": "护士站位于走廊中央，是楼层的交通枢纽，视野较为开阔",
-      "mechanicalEffect": ""
+      "description": "护士站位于走廊中央，是楼层的交通枢纽，视野较为开阔"
     }
   ],
   "connections": ["SCN_1_SUB_1", "SCN_1_SUB_5"],

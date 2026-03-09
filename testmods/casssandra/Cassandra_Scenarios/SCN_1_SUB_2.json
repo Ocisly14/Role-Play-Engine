@@ -40,13 +40,11 @@
   "conditions": [
     {
       "type": "temperature",
-      "description": "停尸间内温度极低，冷气从冷藏柜中散发出来",
-      "mechanicalEffect": ""
+      "description": "停尸间内温度极低，冷气从冷藏柜中散发出来"
     },
     {
       "type": "smell",
-      "description": "弥漫着福尔马林和消毒液的刺鼻气味",
-      "mechanicalEffect": ""
+      "description": "弥漫着福尔马林和消毒液的刺鼻气味"
     }
   ],
   "connections": ["SCN_1_SUB_1", "SCN_1_SUB_5"],

@@ -60,15 +60,13 @@
   "conditions": [
     {
       "type": "sound",
-      "description": "店内钟表此起彼伏的滴答声交织在一起，形成一种有节奏的背景音，让人感到时间在这里被精确地度量着",
-      "mechanicalEffect": ""
+      "description": "店内钟表此起彼伏的滴答声交织在一起，形成一种有节奏的背景音，让人感到时间在这里被精确地度量着"
     },
     {
       "type": "lighting",
-      "description": "店面不大，光线来自门窗和工作台上的台灯，展柜中的怀表在灯光下闪烁着金属光泽",
-      "mechanicalEffect": ""
+      "description": "店面不大，光线来自门窗和工作台上的台灯，展柜中的怀表在灯光下闪烁着金属光泽"
     }
   ],
-  "connections": [],
+  "connections": ["ROAD_4"],
   "events": []
 }

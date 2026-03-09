@@ -35,20 +35,17 @@
   "conditions": [
     {
       "type": "smell",
-      "description": "餐厅内弥漫着诱人的食物香气，混合着咖啡和香料的味道，给人温暖舒适的感觉。",
-      "mechanicalEffect": ""
+      "description": "餐厅内弥漫着诱人的食物香气，混合着咖啡和香料的味道，给人温暖舒适的感觉。"
     },
     {
       "type": "sound",
-      "description": "背景中播放着轻柔的拉丁音乐，偶尔伴随着厨房传来的锅碗瓢盆声。",
-      "mechanicalEffect": ""
+      "description": "背景中播放着轻柔的拉丁音乐，偶尔伴随着厨房传来的锅碗瓢盆声。"
     },
     {
       "type": "lighting",
-      "description": "餐厅内灯光柔和温暖，营造出亲密舒适的用餐氛围。",
-      "mechanicalEffect": ""
+      "description": "餐厅内灯光柔和温暖，营造出亲密舒适的用餐氛围。"
     }
   ],
-  "connections": [],
+  "connections": ["ROAD_2"],
   "events": []
 }

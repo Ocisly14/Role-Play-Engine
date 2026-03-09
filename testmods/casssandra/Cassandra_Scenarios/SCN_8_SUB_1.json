@@ -50,10 +50,9 @@
   "conditions": [
     {
       "type": "other",
-      "description": "屋内陈设简陋但不算脏乱，各种小物件被有条理地摆放在不同位置，显示主人虽然生活拮据，但对自己的'收藏品'颇为珍惜。",
-      "mechanicalEffect": ""
+      "description": "屋内陈设简陋但不算脏乱，各种小物件被有条理地摆放在不同位置，显示主人虽然生活拮据，但对自己的'收藏品'颇为珍惜。"
     }
   ],
-  "connections": [],
+  "connections": ["ROAD_9"],
   "events": []
 }

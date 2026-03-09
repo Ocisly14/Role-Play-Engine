@@ -403,15 +403,13 @@ Phase 7 has 5 sub-steps, each a separate LLM call. All sub-steps receive the com
       "npcId": "npc-old-tom",
       "knows": ["T2"],
       "distortion": "partial_amnesia",
-      "reliability": "medium",
-      "willingness": "reluctant"
+      "reliability": "medium"
     },
     {
       "npcId": "npc-harris",
       "knows": ["T1", "T2", "T3", "T4"],
       "distortion": "deliberate_suppression",
-      "reliability": "high",
-      "willingness": "hostile"
+      "reliability": "high"
     },
     {
       "sceneId": "SCN_2_cellar",
@@ -432,7 +430,6 @@ Phase 7 has 5 sub-steps, each a separate LLM call. All sub-steps receive the com
 - `knows` — which truth events this NPC knows about
 - `distortion` — none | partial_amnesia | deliberate_suppression | misinterpretation
 - `reliability` — high | medium | low | encoded
-- `willingness` — cooperative | reluctant | hostile | terrified (how hard to extract info)
 - `containsEvidence` — which truth events left traces here
 - `evidenceType` — physical | document | environment | observation
 

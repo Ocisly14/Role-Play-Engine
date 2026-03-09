@@ -101,21 +101,27 @@
     {
       "type": "lighting",
       "description": "酒吧内灯光昏暗偏暖，营造出典型的美式酒吧氛围，部分角落光线不足",
-      "mechanicalEffect": "酒吧内部分区域光线暗淡，侦查检定可能受到影响"
+      "mechanicalEffect": {
+        "skillPenalty": [
+          {
+            "skill": "Spot Hidden",
+            "delta": -10
+          }
+        ]
+      }
     },
     {
       "type": "sound",
-      "description": "营业时酒吧内通常播放着背景音乐，混合着客人们的交谈声和酒杯碰撞声",
-      "mechanicalEffect": ""
+      "description": "营业时酒吧内通常播放着背景音乐，混合着客人们的交谈声和酒杯碰撞声"
     },
     {
       "type": "smell",
-      "description": "空气中混合着酒精、烟草和木质装饰的气味",
-      "mechanicalEffect": ""
+      "description": "空气中混合着酒精、烟草和木质装饰的气味"
     }
   ],
   "connections": [
-    "SCN_16_SUB_2"
+    "SCN_16_SUB_2",
+    "ROAD_3"
   ],
   "events": []
 }

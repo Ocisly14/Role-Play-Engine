@@ -34,18 +34,15 @@
   "conditions": [
     {
       "type": "smell",
-      "description": "烟草的气味减淡了许多，空气中弥漫着咖啡的焦苦余香和窗台绿植散发的淡淡花香",
-      "mechanicalEffect": ""
+      "description": "烟草的气味减淡了许多，空气中弥漫着咖啡的焦苦余香和窗台绿植散发的淡淡花香"
     },
     {
       "type": "lighting",
-      "description": "窗户透进柔和的自然光，角落的落地灯罩着暗红色灯罩，将后屋笼罩在一层温暖而略带私密的光晕中",
-      "mechanicalEffect": ""
+      "description": "窗户透进柔和的自然光，角落的落地灯罩着暗红色灯罩，将后屋笼罩在一层温暖而略带私密的光晕中"
     },
     {
       "type": "temperature",
-      "description": "后屋比店面更加温暖宜人，窗户隔绝了街道的寒意，小空间里蓄着一层舒适的暖意",
-      "mechanicalEffect": ""
+      "description": "后屋比店面更加温暖宜人，窗户隔绝了街道的寒意，小空间里蓄着一层舒适的暖意"
     }
   ],
   "connections": [

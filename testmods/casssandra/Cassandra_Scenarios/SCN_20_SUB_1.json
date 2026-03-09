@@ -30,20 +30,25 @@
   "conditions": [
     {
       "type": "smell",
-      "description": "空气中弥漫着腐朽木头和铁锈的混合气味，偶尔夹杂着森林深处飘来的潮湿泥土气息。",
-      "mechanicalEffect": ""
+      "description": "空气中弥漫着腐朽木头和铁锈的混合气味，偶尔夹杂着森林深处飘来的潮湿泥土气息。"
     },
     {
       "type": "sound",
-      "description": "除了风穿过废弃机器发出的呜咽声和远处森林中偶尔传来的鸟鸣，这里寂静得令人不安。",
-      "mechanicalEffect": ""
+      "description": "除了风穿过废弃机器发出的呜咽声和远处森林中偶尔传来的鸟鸣，这里寂静得令人不安。"
     },
     {
       "type": "other",
       "description": "地面不平整，散落着腐烂的木头碎片和生锈的金属零件，行走时需要小心脚下。",
-      "mechanicalEffect": "在废墟中快速移动可能需要敏捷检定。"
+      "mechanicalEffect": {
+        "skillPenalty": [
+          {
+            "skill": "Dodge",
+            "delta": -10
+          }
+        ]
+      }
     }
   ],
-  "connections": ["SCN_20_SUB_2", "SCN_20_SUB_3"],
+  "connections": ["SCN_20_SUB_2", "SCN_20_SUB_3", "ROAD_10"],
   "events": []
 }

@@ -45,13 +45,11 @@
   "conditions": [
     {
       "type": "temperature",
-      "description": "药品管理室温度恒定偏低，冷藏设备持续运转发出低沉的嗡鸣声",
-      "mechanicalEffect": ""
+      "description": "药品管理室温度恒定偏低，冷藏设备持续运转发出低沉的嗡鸣声"
     },
     {
       "type": "lighting",
-      "description": "房间深处光线较暗，暗门所在位置不易被察觉",
-      "mechanicalEffect": ""
+      "description": "房间深处光线较暗，暗门所在位置不易被察觉"
     }
   ],
   "connections": ["SCN_1_SUB_1", "SCN_1_SUB_5"],

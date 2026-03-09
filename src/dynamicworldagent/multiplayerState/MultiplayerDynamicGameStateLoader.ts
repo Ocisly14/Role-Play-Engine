@@ -228,7 +228,11 @@ async function buildSnapshotFromRow(
     conditions: snapshotConditions.map((cond) => ({
       type: cond.conditionType as ScenarioCondition["type"],
       description: cond.description,
-      mechanicalEffect: cond.mechanicalEffect || undefined,
+      mechanicalEffect: cond.mechanicalEffect
+        ? (typeof cond.mechanicalEffect === "string"
+            ? undefined
+            : (cond.mechanicalEffect as ScenarioCondition["mechanicalEffect"]))
+        : undefined,
     })),
     keeperNotes: snapshotRow.keeperNotes || undefined,
     timeRestriction: snapshotRow.timeRestriction || undefined,

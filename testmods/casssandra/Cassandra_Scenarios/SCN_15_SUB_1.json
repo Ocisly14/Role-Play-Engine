@@ -78,22 +78,20 @@
   "conditions": [
     {
       "type": "lighting",
-      "description": "客厅内灯光明亮且精心布置，水晶吊灯将暖色光线均匀散布在每个角落，与石榴巷朴素的街道形成鲜明对比",
-      "mechanicalEffect": ""
+      "description": "客厅内灯光明亮且精心布置，水晶吊灯将暖色光线均匀散布在每个角落，与石榴巷朴素的街道形成鲜明对比"
     },
     {
       "type": "smell",
-      "description": "空气中弥漫着昂贵的熏香和精心调配的香水味道，檀木与东方香料的气息沉稳而浓郁",
-      "mechanicalEffect": ""
+      "description": "空气中弥漫着昂贵的熏香和精心调配的香水味道，檀木与东方香料的气息沉稳而浓郁"
     },
     {
       "type": "other",
-      "description": "门廊和客厅天花板边缘可见多个半球形监控摄像头，红色指示灯持续闪烁，来访者会被全程记录",
-      "mechanicalEffect": "任何潜入行为都可能被发现并记录"
+      "description": "门廊和客厅天花板边缘可见多个半球形监控摄像头，红色指示灯持续闪烁，来访者会被全程记录"
     }
   ],
   "connections": [
-    "SCN_15_SUB_2"
+    "SCN_15_SUB_2",
+    "ROAD_5"
   ],
   "events": []
 }

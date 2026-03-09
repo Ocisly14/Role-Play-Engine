@@ -1,0 +1,16 @@
+{
+  "id": "ROAD_7",
+  "name": "新月街A大道南",
+  "description": "从新月街十字路口向西延伸的大道，尽头是警察局。",
+  "parentLocationId": "OUTDOOR",
+  "items": [],
+  "clues": [],
+  "conditions": [
+    {
+      "type": "weather",
+      "description": "露天街道，受天气影响。通往警察局的街道，行人不多。"
+    }
+  ],
+  "connections": ["SCN_3_SUB_1", "ROAD_6", "ROAD_8", "ROAD_9"],
+  "events": []
+}

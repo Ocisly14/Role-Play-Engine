@@ -1,0 +1,25 @@
+{
+  "id": "ROAD_5",
+  "name": "石榴巷",
+  "description": "从星辰大道南端分叉向南延伸的巷道，中段分叉通往日暮大道。南端与卡森德拉南新街交汇，形成三角形路网。",
+  "parentLocationId": "OUTDOOR",
+  "items": [],
+  "clues": [],
+  "conditions": [
+    {
+      "type": "weather",
+      "description": "露天巷道，受天气影响。巷道较窄，两侧建筑遮挡部分风雪。"
+    },
+    {
+      "type": "lighting",
+      "description": "巷道路灯稀疏，夜间光线昏暗。",
+      "mechanicalEffect": {
+        "skillPenalty": [
+          { "skill": "Spot Hidden", "delta": -10 }
+        ]
+      }
+    }
+  ],
+  "connections": ["SCN_15_SUB_1", "ROAD_1", "ROAD_2", "ROAD_3", "ROAD_6", "ROAD_10"],
+  "events": []
+}

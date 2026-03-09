@@ -610,7 +610,11 @@ export async function initializeCompleteDynamicGameState(
       conditions: sceneConditions.map((cond) => ({
         type: cond.conditionType as ScenarioCondition["type"],
         description: cond.description,
-        mechanicalEffect: cond.mechanicalEffect || undefined,
+        mechanicalEffect: cond.mechanicalEffect
+          ? (typeof cond.mechanicalEffect === "string"
+              ? undefined
+              : (cond.mechanicalEffect as ScenarioCondition["mechanicalEffect"]))
+          : undefined,
       })),
       events: [],
     };
@@ -821,6 +825,18 @@ export async function initializeCompleteDynamicGameState(
 
     // blockedConnections: initially empty — all connections are open at game start
     // Static connections are defined on DynamicScene.connections
+
+    // Populate scenarioConditions from scene.conditions so tick processor can read them
+    for (const [sceneId, scene] of completeState.scenes) {
+      if (scene.conditions && scene.conditions.length > 0) {
+        completeState.scenarioConditions[sceneId] = scene.conditions
+          .filter((c) => c.mechanicalEffect)
+          .map((c) => ({
+            description: c.description,
+            mechanicalEffect: c.mechanicalEffect,
+          }));
+      }
+    }
 
     // Build npcResidences from ScenarioOutline.residents
     for (const outline of completeState.scenarioOutlines ?? []) {

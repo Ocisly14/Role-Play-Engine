@@ -41,17 +41,30 @@
     {
       "type": "lighting",
       "description": "工作屋内光线昏暗，唯一的窗户被灰尘覆盖，只有少量自然光透入。",
-      "mechanicalEffect": "需要照明工具才能有效调查壁炉中的灰烬。"
+      "mechanicalEffect": {
+        "skillPenalty": [
+          {
+            "skill": "Spot Hidden",
+            "delta": -20
+          }
+        ]
+      }
     },
     {
       "type": "smell",
-      "description": "屋内弥漫着陈年灰尘和腐朽木头的气味，壁炉附近还有烧焦纸张残留的焦味。",
-      "mechanicalEffect": ""
+      "description": "屋内弥漫着陈年灰尘和腐朽木头的气味，壁炉附近还有烧焦纸张残留的焦味。"
     },
     {
       "type": "other",
       "description": "地面铺着厚厚的灰尘，任何人进入都会留下清晰的脚印。",
-      "mechanicalEffect": "可通过追踪技能检查是否有人近期来过此处。"
+      "mechanicalEffect": {
+        "skillPenalty": [
+          {
+            "skill": "Track",
+            "delta": 15
+          }
+        ]
+      }
     }
   ],
   "connections": ["SCN_20_SUB_1"],

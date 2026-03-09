@@ -1,0 +1,25 @@
+{
+  "id": "ROAD_10",
+  "name": "日暮大道",
+  "description": "从石榴巷中段分叉向东北延伸的大道，中途路过公墓，尽头是森林和废弃的伐木场。",
+  "parentLocationId": "OUTDOOR",
+  "items": [],
+  "clues": [],
+  "conditions": [
+    {
+      "type": "weather",
+      "description": "露天大道，受天气影响。通往森林和伐木场，越往深处越荒凉。"
+    },
+    {
+      "type": "lighting",
+      "description": "大道远端靠近森林处路灯稀少，夜间极为昏暗。",
+      "mechanicalEffect": {
+        "skillPenalty": [
+          { "skill": "Spot Hidden", "delta": -15 }
+        ]
+      }
+    }
+  ],
+  "connections": ["SCN_19_SUB_1", "SCN_20_SUB_1", "ROAD_5"],
+  "events": []
+}

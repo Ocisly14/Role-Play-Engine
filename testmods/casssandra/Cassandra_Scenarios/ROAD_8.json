@@ -1,0 +1,16 @@
+{
+  "id": "ROAD_8",
+  "name": "新月街B大道",
+  "description": "从新月街十字路口向东延伸的大道，沿途有一间二层木屋和地下的下水道系统。",
+  "parentLocationId": "OUTDOOR",
+  "items": [],
+  "clues": [],
+  "conditions": [
+    {
+      "type": "weather",
+      "description": "露天街道，受天气影响。街道两旁有住宅和木屋。"
+    }
+  ],
+  "connections": ["SCN_6_SUB_1", "SCN_7_SUB_1", "ROAD_6", "ROAD_7", "ROAD_9"],
+  "events": []
+}

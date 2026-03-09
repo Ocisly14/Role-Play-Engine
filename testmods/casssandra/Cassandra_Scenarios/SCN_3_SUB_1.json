@@ -23,22 +23,27 @@
       "difficulty": "hard",
       "location": "警察局大厅",
       "discoveryMethod": "观察警局人员的行为举止和权力关系",
-      "reveals": ["卡森德拉的执法机构已被Patrizio von Samsa渗透控制", "Lux Lynch不值得信任"],
+      "reveals": [
+        "卡森德拉的执法机构已被Patrizio von Samsa渗透控制",
+        "Lux Lynch不值得信任"
+      ],
       "discovered": false
     }
   ],
   "conditions": [
     {
       "type": "lighting",
-      "description": "警察局内灯光略显昏暗，日光灯管偶尔闪烁",
-      "mechanicalEffect": ""
+      "description": "警察局内灯光略显昏暗，日光灯管偶尔闪烁"
     },
     {
       "type": "other",
-      "description": "警察局看似平常，但前局长Patrizio von Samsa对此地的掌控使得任何冲突都可能招致危险的后果",
-      "mechanicalEffect": "在警察局内引起冲突可能导致Patrizio von Samsa通过警方对调查员采取行动"
+      "description": "警察局看似平常，但前局长Patrizio von Samsa对此地的掌控使得任何冲突都可能招致危险的后果"
     }
   ],
-  "connections": ["SCN_3_SUB_2", "SCN_3_SUB_3"],
+  "connections": [
+    "SCN_3_SUB_2",
+    "SCN_3_SUB_3",
+    "ROAD_7"
+  ],
   "events": []
 }

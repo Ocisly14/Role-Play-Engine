@@ -28,7 +28,9 @@
       "difficulty": "automatic",
       "location": "别克汽车驾驶座",
       "discoveryMethod": "检查Bruno的遗体",
-      "reveals": ["Bruno的死因非常诡异，涉及超自然力量"],
+      "reveals": [
+        "Bruno的死因非常诡异，涉及超自然力量"
+      ],
       "discovered": false
     },
     {
@@ -38,7 +40,10 @@
       "difficulty": "automatic",
       "location": "Bruno手中的手机",
       "discoveryMethod": "查看Bruno手中的手机",
-      "reveals": ["Bruno临死前试图传达关于卢奇菲罗的信息", "Bruno在与调查员分开前曾收到过一条短信"],
+      "reveals": [
+        "Bruno临死前试图传达关于卢奇菲罗的信息",
+        "Bruno在与调查员分开前曾收到过一条短信"
+      ],
       "discovered": false
     },
     {
@@ -48,22 +53,25 @@
       "difficulty": "regular",
       "location": "向警察局方面询问可得",
       "discoveryMethod": "询问Lux Lynch或其他警察局人员",
-      "reveals": ["Bruno独自前往木屋，没有告知同事"],
+      "reveals": [
+        "Bruno独自前往木屋，没有告知同事"
+      ],
       "discovered": false
     }
   ],
   "conditions": [
     {
       "type": "weather",
-      "description": "2003年12月末的加利福尼亚卡森德拉镇，天气阴冷。",
-      "mechanicalEffect": ""
+      "description": "2003年12月末的加利福尼亚卡森德拉镇，天气阴冷。"
     },
     {
       "type": "other",
-      "description": "木屋周围杂草丛生，花园荒废，显示已长时间无人居住打理。",
-      "mechanicalEffect": ""
+      "description": "木屋周围杂草丛生，花园荒废，显示已长时间无人居住打理。"
     }
   ],
-  "connections": ["SCN_6_SUB_2"],
+  "connections": [
+    "SCN_6_SUB_2",
+    "ROAD_8"
+  ],
   "events": []
 }

@@ -40,20 +40,17 @@
   "conditions": [
     {
       "type": "smell",
-      "description": "空气中弥漫着焦糊的气味和某种不明的腥臭",
-      "mechanicalEffect": ""
+      "description": "空气中弥漫着焦糊的气味和某种不明的腥臭"
     },
     {
       "type": "sound",
-      "description": "四周异常安静，偶尔从坍塌小楼方向传来令人不安的低沉声响",
-      "mechanicalEffect": "调查员必须保持安静，任何大声响动可能惊动修格斯。噪音类检定失败将引发危险遭遇。"
+      "description": "四周异常安静，偶尔从坍塌小楼方向传来令人不安的低沉声响"
     },
     {
       "type": "other",
-      "description": "这是一片危险区域，深潜者祭司曾在此试验控制修格斯并将其遗弃于此",
-      "mechanicalEffect": "所有行动需要通过潜行检定以避免发出噪音"
+      "description": "这是一片危险区域，深潜者祭司曾在此试验控制修格斯并将其遗弃于此"
     }
   ],
-  "connections": ["SCN_2_SUB_2", "SCN_2_SUB_3"],
+  "connections": ["SCN_2_SUB_2", "SCN_2_SUB_3", "ROAD_1"],
   "events": []
 }

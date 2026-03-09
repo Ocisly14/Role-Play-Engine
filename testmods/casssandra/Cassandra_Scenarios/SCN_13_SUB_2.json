@@ -64,13 +64,11 @@
   "conditions": [
     {
       "type": "lighting",
-      "description": "办公室内光线昏暗，主要靠一盏台灯和窗户透进的有限光线照明",
-      "mechanicalEffect": ""
+      "description": "办公室内光线昏暗，主要靠一盏台灯和窗户透进的有限光线照明"
     },
     {
       "type": "smell",
-      "description": "空气中混合着纸张陈旧的气味和远处酒窖飘来的淡淡酒精味",
-      "mechanicalEffect": ""
+      "description": "空气中混合着纸张陈旧的气味和远处酒窖飘来的淡淡酒精味"
     }
   ],
   "connections": [

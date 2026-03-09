@@ -28,7 +28,10 @@
       "difficulty": "hard",
       "location": "照片背面",
       "discoveryMethod": "翻转烧了一半的照片查看背面",
-      "reveals": ["这串数字是连接卢奇菲罗千维系统的密钥", "需要配合卢奇菲罗钱包中的密码才能使用"],
+      "reveals": [
+        "这串数字是连接卢奇菲罗千维系统的密钥",
+        "需要配合卢奇菲罗钱包中的密码才能使用"
+      ],
       "discovered": false
     },
     {
@@ -38,7 +41,11 @@
       "difficulty": "extreme",
       "location": "墙壁暗格内",
       "discoveryMethod": "对墙壁进行极为仔细的搜索",
-      "reveals": ["Martin Gin（鬼手/克莱奥）与此地下据点有关联", "魔鬼呼吸与驯鹿酒吧凶杀案有关", "卢奇菲罗可能截获了原本属于Martin Gin的魔鬼呼吸"],
+      "reveals": [
+        "Martin Gin（鬼手/克莱奥）与此地下据点有关联",
+        "魔鬼呼吸与驯鹿酒吧凶杀案有关",
+        "卢奇菲罗可能截获了原本属于Martin Gin的魔鬼呼吸"
+      ],
       "discovered": false
     },
     {
@@ -48,7 +55,10 @@
       "difficulty": "automatic",
       "location": "整个操作平台空间",
       "discoveryMethod": "进入空间后即可观察到",
-      "reveals": ["有人刻意销毁了这里的一切证据", "破坏者不希望任何人发现这个据点的用途"],
+      "reveals": [
+        "有人刻意销毁了这里的一切证据",
+        "破坏者不希望任何人发现这个据点的用途"
+      ],
       "discovered": false
     },
     {
@@ -58,27 +68,37 @@
       "difficulty": "regular",
       "location": "操作平台各处",
       "discoveryMethod": "观察被毁设备的布局和规模",
-      "reveals": ["这里曾是一个专业黑客的据点", "该黑客拥有覆盖范围广泛的监控能力（卢奇菲罗的千维系统）"],
+      "reveals": [
+        "这里曾是一个专业黑客的据点",
+        "该黑客拥有覆盖范围广泛的监控能力（卢奇菲罗的千维系统）"
+      ],
       "discovered": false
     }
   ],
   "conditions": [
     {
       "type": "smell",
-      "description": "空气中混杂着电子设备烧焦的刺鼻气味和下水道的潮湿腥臭。",
-      "mechanicalEffect": ""
+      "description": "空气中混杂着电子设备烧焦的刺鼻气味和下水道的潮湿腥臭。"
     },
     {
       "type": "lighting",
       "description": "空间内没有任何照明，必须依靠自带光源。烧毁的设备上偶尔有微弱的电火花闪过。",
-      "mechanicalEffect": "需要照明工具才能进行有效调查。"
+      "mechanicalEffect": {
+        "skillPenalty": [
+          {
+            "skill": "Spot Hidden",
+            "delta": -20
+          }
+        ]
+      }
     },
     {
       "type": "other",
-      "description": "空间极为狭小，不足五平方米，地面散落着碎玻璃和烧焦的金属碎片。",
-      "mechanicalEffect": "在此空间内移动需小心，避免被碎片划伤。"
+      "description": "空间极为狭小，不足五平方米，地面散落着碎玻璃和烧焦的金属碎片。"
     }
   ],
-  "connections": ["SCN_7_SUB_1"],
+  "connections": [
+    "SCN_7_SUB_1"
+  ],
   "events": []
 }

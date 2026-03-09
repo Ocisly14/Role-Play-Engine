@@ -19,18 +19,15 @@
   "conditions": [
     {
       "type": "weather",
-      "description": "广场位于开阔地带，冬季寒风直接吹过，没有任何遮挡。体感温度比街道上更低。",
-      "mechanicalEffect": ""
+      "description": "广场位于开阔地带，冬季寒风直接吹过，没有任何遮挡。体感温度比街道上更低。"
     },
     {
       "type": "lighting",
-      "description": "广场上的路灯大多已经损坏，夜间只有少数几盏还在发出微弱的光亮。",
-      "mechanicalEffect": "夜间行动时视野受限。"
+      "description": "广场上的路灯大多已经损坏，夜间只有少数几盏还在发出微弱的光亮。"
     },
     {
       "type": "other",
-      "description": "广场陈旧荒凉，缺少圣诞装饰，与城镇中心的节日气氛形成鲜明对比。行人稀少，显得被遗忘。",
-      "mechanicalEffect": ""
+      "description": "广场陈旧荒凉，缺少圣诞装饰，与城镇中心的节日气氛形成鲜明对比。行人稀少，显得被遗忘。"
     }
   ],
   "connections": ["SCN_21_SUB_1"],

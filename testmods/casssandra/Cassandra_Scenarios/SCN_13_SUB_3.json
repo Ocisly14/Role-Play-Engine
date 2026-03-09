@@ -33,18 +33,15 @@
   "conditions": [
     {
       "type": "temperature",
-      "description": "地下酒窖温度明显低于地面，阴冷潮湿的空气贴在皮肤上令人不适",
-      "mechanicalEffect": ""
+      "description": "地下酒窖温度明显低于地面，阴冷潮湿的空气贴在皮肤上令人不适"
     },
     {
       "type": "lighting",
-      "description": "酒窖内只有入口处一盏昏暗的壁灯，深处几乎完全被黑暗笼罩",
-      "mechanicalEffect": ""
+      "description": "酒窖内只有入口处一盏昏暗的壁灯，深处几乎完全被黑暗笼罩"
     },
     {
       "type": "smell",
-      "description": "浓郁的酒精挥发气味混合着石头的潮腥味和腐朽木料的甜腻气息",
-      "mechanicalEffect": ""
+      "description": "浓郁的酒精挥发气味混合着石头的潮腥味和腐朽木料的甜腻气息"
     }
   ],
   "connections": [

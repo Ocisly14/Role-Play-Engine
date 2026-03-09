@@ -35,15 +35,13 @@
   "conditions": [
     {
       "type": "smell",
-      "description": "花店内弥漫着清新宜人的花香，与卡森德拉其他地方的阴郁气氛形成鲜明对比。",
-      "mechanicalEffect": ""
+      "description": "花店内弥漫着清新宜人的花香，与卡森德拉其他地方的阴郁气氛形成鲜明对比。"
     },
     {
       "type": "lighting",
-      "description": "花店内光线明亮温暖，给人一种舒适安全的感觉。",
-      "mechanicalEffect": ""
+      "description": "花店内光线明亮温暖，给人一种舒适安全的感觉。"
     }
   ],
-  "connections": ["SCN_9_SUB_2"],
+  "connections": ["SCN_9_SUB_2", "ROAD_2"],
   "events": []
 }

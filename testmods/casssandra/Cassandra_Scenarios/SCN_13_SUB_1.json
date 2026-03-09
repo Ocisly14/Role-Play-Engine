@@ -44,18 +44,17 @@
   "conditions": [
     {
       "type": "temperature",
-      "description": "酒厂内部空旷冷清，冬季的寒气在空置厂房中格外明显",
-      "mechanicalEffect": ""
+      "description": "酒厂内部空旷冷清，冬季的寒气在空置厂房中格外明显"
     },
     {
       "type": "smell",
-      "description": "空气中弥漫着伏特加酿造的淡淡酒精气味，混合着尘土和潮湿的味道",
-      "mechanicalEffect": ""
+      "description": "空气中弥漫着伏特加酿造的淡淡酒精气味，混合着尘土和潮湿的味道"
     }
   ],
   "connections": [
     "SCN_13_SUB_2",
-    "SCN_13_SUB_3"
+    "SCN_13_SUB_3",
+    "ROAD_4"
   ],
   "events": []
 }

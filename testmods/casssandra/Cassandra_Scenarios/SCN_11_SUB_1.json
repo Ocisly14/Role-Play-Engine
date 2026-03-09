@@ -55,20 +55,17 @@
   "conditions": [
     {
       "type": "other",
-      "description": "占卜馆大多数时候门都是关着的，只有偶尔才能碰上开门的时候。需要与Simon Laplace同行时，遇到Solomon的概率更大。",
-      "mechanicalEffect": "独自前来时可能无法进入；与Simon同行时更容易见到Solomon。"
+      "description": "占卜馆大多数时候门都是关着的，只有偶尔才能碰上开门的时候。需要与Simon Laplace同行时，遇到Solomon的概率更大。"
     },
     {
       "type": "lighting",
-      "description": "馆内光线昏暗，点着蜡烛，营造出一种神秘的氛围。",
-      "mechanicalEffect": ""
+      "description": "馆内光线昏暗，点着蜡烛，营造出一种神秘的氛围。"
     },
     {
       "type": "smell",
-      "description": "空气中飘荡着某种焚香的气味，混合着旧书纸张的味道。",
-      "mechanicalEffect": ""
+      "description": "空气中飘荡着某种焚香的气味，混合着旧书纸张的味道。"
     }
   ],
-  "connections": [],
+  "connections": ["ROAD_2"],
   "events": []
 }

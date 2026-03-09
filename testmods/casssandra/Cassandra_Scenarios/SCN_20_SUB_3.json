@@ -30,22 +30,34 @@
     {
       "type": "lighting",
       "description": "遮天蔽日的树冠将阳光几乎完全隔绝，即使白天森林深处也如同黄昏般昏暗。越深入越黑暗。",
-      "mechanicalEffect": "侦查类技能难度大幅增加，需要照明工具。"
+      "mechanicalEffect": {
+        "skillPenalty": [
+          {
+            "skill": "Spot Hidden",
+            "delta": -30
+          }
+        ]
+      }
     },
     {
       "type": "other",
       "description": "森林极为茂密，小路几乎被植被完全吞没。贸然深入极有可能迷失方向，尸骨无存。",
-      "mechanicalEffect": "深入森林需要导航或求生检定，失败则迷路。此区域极度危险。"
+      "mechanicalEffect": {
+        "skillPenalty": [
+          {
+            "skill": "Navigate",
+            "delta": -20
+          }
+        ]
+      }
     },
     {
       "type": "smell",
-      "description": "空气潮湿沉闷，弥漫着泥土的腥味与腐叶的酸臭，越深入气味越浓烈，偶尔还能嗅到一股不明来源的腥臭。",
-      "mechanicalEffect": ""
+      "description": "空气潮湿沉闷，弥漫着泥土的腥味与腐叶的酸臭，越深入气味越浓烈，偶尔还能嗅到一股不明来源的腥臭。"
     },
     {
       "type": "sound",
-      "description": "四周静得诡异，偶尔传来树枝折断的声响。有时能听到远处似乎有某种大型生物移动的沉重脚步声。",
-      "mechanicalEffect": "聆听检定成功可提前察觉危险靠近。"
+      "description": "四周静得诡异，偶尔传来树枝折断的声响。有时能听到远处似乎有某种大型生物移动的沉重脚步声。"
     }
   ],
   "connections": ["SCN_20_SUB_1"],

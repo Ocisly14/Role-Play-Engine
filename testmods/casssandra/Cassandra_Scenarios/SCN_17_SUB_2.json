@@ -25,18 +25,15 @@
   "conditions": [
     {
       "type": "other",
-      "description": "通往钟楼的石阶狭窄陡峭，仅容一人通行。攀爬需要一定体力，对腿脚不便者尤其吃力。",
-      "mechanicalEffect": "攀爬石阶可能需要体质或攀爬检定。"
+      "description": "通往钟楼的石阶狭窄陡峭，仅容一人通行。攀爬需要一定体力，对腿脚不便者尤其吃力。"
     },
     {
       "type": "sound",
-      "description": "整点时大钟会敲响，在钟楼内部声音震耳欲聋。平时钟楼内安静异常，只有齿轮运转的细微声响。",
-      "mechanicalEffect": ""
+      "description": "整点时大钟会敲响，在钟楼内部声音震耳欲聋。平时钟楼内安静异常，只有齿轮运转的细微声响。"
     },
     {
       "type": "temperature",
-      "description": "钟楼位于高处，冬季寒风透过圆顶结构的缝隙灌入，温度比主殿低不少。",
-      "mechanicalEffect": ""
+      "description": "钟楼位于高处，冬季寒风透过圆顶结构的缝隙灌入，温度比主殿低不少。"
     }
   ],
   "connections": ["SCN_17_SUB_1"],

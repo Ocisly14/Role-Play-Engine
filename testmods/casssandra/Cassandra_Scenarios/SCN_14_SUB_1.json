@@ -49,22 +49,20 @@
   "conditions": [
     {
       "type": "smell",
-      "description": "店内弥漫着浓郁的烟草香味，混合着雪茄和各种香烟的独特气息，令人感到一种温暖朴实的氛围",
-      "mechanicalEffect": ""
+      "description": "店内弥漫着浓郁的烟草香味，混合着雪茄和各种香烟的独特气息，令人感到一种温暖朴实的氛围"
     },
     {
       "type": "lighting",
-      "description": "暖色壁灯和头顶缓转的吊扇营造出柔和、舒适的光线，橡木柜台和胡桃木展柜在灯光下泛着温润的光泽",
-      "mechanicalEffect": ""
+      "description": "暖色壁灯和头顶缓转的吊扇营造出柔和、舒适的光线，橡木柜台和胡桃木展柜在灯光下泛着温润的光泽"
     },
     {
       "type": "sound",
-      "description": "老松木地板踩上去会发出细微的吱呀声，门口的铜铃在有人进出时叮当作响，吊扇的叶片在头顶缓缓切割空气",
-      "mechanicalEffect": ""
+      "description": "老松木地板踩上去会发出细微的吱呀声，门口的铜铃在有人进出时叮当作响，吊扇的叶片在头顶缓缓切割空气"
     }
   ],
   "connections": [
-    "SCN_14_SUB_2"
+    "SCN_14_SUB_2",
+    "ROAD_4"
   ],
   "events": []
 }

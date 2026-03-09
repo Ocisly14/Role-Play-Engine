@@ -24,20 +24,21 @@
   "conditions": [
     {
       "type": "lighting",
-      "description": "水晶吊灯和壁灯将大堂照得通亮温暖，大理石地面反射着柔和的光泽，与十二月末户外的阴沉天色形成鲜明对比。",
-      "mechanicalEffect": ""
+      "description": "水晶吊灯和壁灯将大堂照得通亮温暖，大理石地面反射着柔和的光泽，与十二月末户外的阴沉天色形成鲜明对比。"
     },
     {
       "type": "temperature",
-      "description": "大堂暖气充足，从室外的刺骨寒风中走进来，会立刻感到一阵舒适的温暖包裹全身。",
-      "mechanicalEffect": ""
+      "description": "大堂暖气充足，从室外的刺骨寒风中走进来，会立刻感到一阵舒适的温暖包裹全身。"
     },
     {
       "type": "smell",
-      "description": "空气中弥漫着檀木香薰的沉稳气息和鲜花的淡淡清甜，偶尔还能隐约捕捉到真皮沙发散发的皮革味道。",
-      "mechanicalEffect": ""
+      "description": "空气中弥漫着檀木香薰的沉稳气息和鲜花的淡淡清甜，偶尔还能隐约捕捉到真皮沙发散发的皮革味道。"
     }
   ],
-  "connections": ["SCN_4_SUB_2", "SCN_4_SUB_3"],
+  "connections": [
+    "SCN_4_SUB_2",
+    "SCN_4_SUB_3",
+    "ROAD_6"
+  ],
   "events": []
 }

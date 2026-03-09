@@ -12,7 +12,12 @@
       "difficulty": "hard",
       "location": "木屋各房间地面",
       "discoveryMethod": "仔细调查地面灰尘中的脚印，比较灰尘厚度",
-      "reveals": ["有三个不同的人在不同时间来过这里", "其中一种脚印与驯鹿酒吧受害人相似", "活动范围规律的脚印属于熟悉此处的人（Simon）", "最新的脚印遍布全屋，是在搜索什么（Martin Gin）"],
+      "reveals": [
+        "有三个不同的人在不同时间来过这里",
+        "其中一种脚印与驯鹿酒吧受害人相似",
+        "活动范围规律的脚印属于熟悉此处的人（Simon）",
+        "最新的脚印遍布全屋，是在搜索什么（Martin Gin）"
+      ],
       "discovered": false
     },
     {
@@ -22,22 +27,34 @@
       "difficulty": "regular",
       "location": "木屋各房间地面",
       "discoveryMethod": "观察脚印的分布模式",
-      "reveals": ["有人对这座木屋非常熟悉，只去固定的几个房间", "另外两人则在全屋搜索"],
+      "reveals": [
+        "有人对这座木屋非常熟悉，只去固定的几个房间",
+        "另外两人则在全屋搜索"
+      ],
       "discovered": false
     }
   ],
   "conditions": [
     {
       "type": "other",
-      "description": "屋内布满灰尘，空气中弥漫着陈旧潮湿的气味，长时间无人居住的痕迹十分明显。",
-      "mechanicalEffect": ""
+      "description": "屋内布满灰尘，空气中弥漫着陈旧潮湿的气味，长时间无人居住的痕迹十分明显。"
     },
     {
       "type": "lighting",
       "description": "屋内光线昏暗，窗户蒙着厚厚的灰尘，白天也只有微弱的自然光透入。",
-      "mechanicalEffect": "在昏暗环境下，侦查类技能检定可能受到不利影响。"
+      "mechanicalEffect": {
+        "skillPenalty": [
+          {
+            "skill": "Spot Hidden",
+            "delta": -15
+          }
+        ]
+      }
     }
   ],
-  "connections": ["SCN_6_SUB_1", "SCN_6_SUB_3"],
+  "connections": [
+    "SCN_6_SUB_1",
+    "SCN_6_SUB_3"
+  ],
   "events": []
 }

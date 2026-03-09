@@ -23,7 +23,9 @@
       "difficulty": "automatic",
       "location": "廉租房内部",
       "discoveryMethod": "观察房间的整体环境和生活状态",
-      "reveals": ["Marcel Gwynplaine表面上只是一个普通的失业者"],
+      "reveals": [
+        "Marcel Gwynplaine表面上只是一个普通的失业者"
+      ],
       "discovered": false
     },
     {
@@ -33,22 +35,25 @@
       "difficulty": "regular",
       "location": "通过与Marcel Gwynplaine交谈或回忆案件细节获知",
       "discoveryMethod": "综合酒吧老板Lutz Emilion的证词与案件物证分析",
-      "reveals": ["有人想要对Marcel Gwynplaine下药", "Marcel Gwynplaine可能知道某些令人想要灭口的信息"],
+      "reveals": [
+        "有人想要对Marcel Gwynplaine下药",
+        "Marcel Gwynplaine可能知道某些令人想要灭口的信息"
+      ],
       "discovered": false
     }
   ],
   "conditions": [
     {
       "type": "lighting",
-      "description": "廉租房内光线昏暗，只有一盏老旧的台灯勉强照亮房间",
-      "mechanicalEffect": ""
+      "description": "廉租房内光线昏暗，只有一盏老旧的台灯勉强照亮房间"
     },
     {
       "type": "temperature",
-      "description": "房间里暖气不足，冬季的寒意从门窗缝隙中渗入",
-      "mechanicalEffect": ""
+      "description": "房间里暖气不足，冬季的寒意从门窗缝隙中渗入"
     }
   ],
-  "connections": [],
+  "connections": [
+    "ROAD_6"
+  ],
   "events": []
 }
