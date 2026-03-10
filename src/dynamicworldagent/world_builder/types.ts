@@ -103,6 +103,8 @@ export interface SceneItem {
     damagedAt: string;
     reason: string;
   };
+  isLightSource?: boolean;
+  lightLevel?: number;
 }
 
 export interface SceneImage {
