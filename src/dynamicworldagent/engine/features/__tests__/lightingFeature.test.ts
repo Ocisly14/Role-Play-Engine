@@ -58,6 +58,11 @@ function createMockDgsm() {
       if (!featureState["weather"]) featureState["weather"] = {};
       featureState["weather"][regionId] = { weatherType, intensity, affectedSceneIds: [] };
     },
+    // Topology (default: null — no outdoor topology)
+    getTopology(): any {
+      return null;
+    },
+
     _featureState: featureState,
     _scenarioConditions: scenarioConditions,
   };
@@ -304,6 +309,116 @@ describe("lightingFeature", () => {
       const shopState = dgsm.getFeatureSceneState("lighting", "shop") as any;
       expect(shopState.lightLevel).toBe(4);
       expect(shopState.sources).toContain("item:lamp");
+    });
+  });
+
+  describe("topology fire light propagation", () => {
+    it("should propagate fire light from scene to parent junction via topology", () => {
+      // Build a simple topology: SCN_A is connected to JUNC_1
+      const junctions = new Map([
+        ["JUNC_1", { id: "JUNC_1", name: "J1", description: "", parentLocationId: "OUTDOOR",
+          connectedSceneIds: ["SCN_A"], items: [], clues: [], conditions: [], events: [] }],
+      ]);
+      const roads = new Map();
+
+      // Build topology maps manually
+      const junctionToRoads = new Map();
+      junctionToRoads.set("JUNC_1", []);
+      const sceneToParent = new Map();
+      sceneToParent.set("SCN_A", { type: "junction", junctionId: "JUNC_1" });
+
+      const topology = { junctions, roads, junctionToRoads, sceneToParent };
+      (dgsm as any).getTopology = () => topology;
+
+      // Add SCN_A as a scene
+      dgsm._addScene({ id: "SCN_A", name: "Scene A", parentLocationId: "OUTDOOR", connections: [], events: [] });
+
+      // Set fire at SCN_A with intensity 3 (triggers fire light spread)
+      dgsm._setFireState("SCN_A", 3);
+
+      lightingFeature.tick!(dgsm as any, createRuntime("00:00"));
+
+      // JUNC_1 should have fire light contribution (as adjacent gets fireLightLevel-1 = 3)
+      const juncLighting = dgsm.getFeatureSceneState("lighting", "JUNC_1") as any;
+      expect(juncLighting).toBeDefined();
+      expect(juncLighting.lightLevel).toBeGreaterThanOrEqual(3);
+    });
+
+    it("should compute lighting for roads and junctions", () => {
+      const junctions = new Map([
+        ["JUNC_1", { id: "JUNC_1", name: "J1", description: "", parentLocationId: "OUTDOOR",
+          connectedSceneIds: [], items: [], clues: [], conditions: [], events: [] }],
+      ]);
+      const roads = new Map([
+        ["ROAD_1", { id: "ROAD_1", name: "R1", description: "", parentLocationId: "OUTDOOR",
+          endpointA: "JUNC_1", endpointB: "JUNC_1", travelTimeMinutes: 10,
+          alongConnections: [], items: [], clues: [], conditions: [], events: [] }],
+      ]);
+
+      const junctionToRoads = new Map();
+      junctionToRoads.set("JUNC_1", [roads.get("ROAD_1")!]);
+      const sceneToParent = new Map();
+
+      const topology = { junctions, roads, junctionToRoads, sceneToParent };
+      (dgsm as any).getTopology = () => topology;
+
+      // Daytime: road and junction should get sun
+      lightingFeature.tick!(dgsm as any, createRuntime("12:00"));
+
+      const roadLighting = dgsm.getFeatureSceneState("lighting", "ROAD_1") as any;
+      expect(roadLighting).toBeDefined();
+      expect(roadLighting.lightLevel).toBeGreaterThanOrEqual(4);
+
+      const juncLighting = dgsm.getFeatureSceneState("lighting", "JUNC_1") as any;
+      expect(juncLighting).toBeDefined();
+      expect(juncLighting.lightLevel).toBeGreaterThanOrEqual(4);
+    });
+
+    it("should propagate fire light from road to junction via topology", () => {
+      const junctions = new Map([
+        ["JUNC_1", { id: "JUNC_1", name: "J1", description: "", parentLocationId: "OUTDOOR",
+          connectedSceneIds: [], items: [], clues: [], conditions: [], events: [] }],
+        ["JUNC_2", { id: "JUNC_2", name: "J2", description: "", parentLocationId: "OUTDOOR",
+          connectedSceneIds: [], items: [], clues: [], conditions: [], events: [] }],
+      ]);
+      const roads = new Map([
+        ["ROAD_1", { id: "ROAD_1", name: "R1", description: "", parentLocationId: "OUTDOOR",
+          endpointA: "JUNC_1", endpointB: "JUNC_2", travelTimeMinutes: 10,
+          alongConnections: [], items: [], clues: [], conditions: [], events: [] }],
+      ]);
+
+      const junctionToRoads = new Map();
+      junctionToRoads.set("JUNC_1", [roads.get("ROAD_1")!]);
+      junctionToRoads.set("JUNC_2", [roads.get("ROAD_1")!]);
+      const sceneToParent = new Map();
+
+      const topology = { junctions, roads, junctionToRoads, sceneToParent };
+      (dgsm as any).getTopology = () => topology;
+
+      // Set fire on ROAD_1 with intensity 4 (fire light spread triggers at >=3)
+      dgsm.setFeatureSceneState("fire", "ROAD_1", { intensity: 4 });
+
+      lightingFeature.tick!(dgsm as any, createRuntime("00:00"));
+
+      // Both junctions should have fire light from the road fire
+      const junc1Lighting = dgsm.getFeatureSceneState("lighting", "JUNC_1") as any;
+      expect(junc1Lighting).toBeDefined();
+      expect(junc1Lighting.lightLevel).toBeGreaterThanOrEqual(3);
+
+      const junc2Lighting = dgsm.getFeatureSceneState("lighting", "JUNC_2") as any;
+      expect(junc2Lighting).toBeDefined();
+      expect(junc2Lighting.lightLevel).toBeGreaterThanOrEqual(3);
+    });
+
+    it("should fall back to scene.connections when no topology", () => {
+      // Default dgsm has getTopology() returning null
+      dgsm._setFireState("alley", 3);
+
+      lightingFeature.tick!(dgsm as any, createRuntime("00:00"));
+
+      // Street is connected to alley — should get fire light via scene.connections fallback
+      const streetState = dgsm.getFeatureSceneState("lighting", "street") as any;
+      expect(streetState.lightLevel).toBe(3); // adjacent fire light level
     });
   });
 });

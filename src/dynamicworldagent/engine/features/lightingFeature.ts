@@ -3,6 +3,7 @@ import type {
   TickRuntimeContext,
 } from "../types.js";
 import type { DynamicGameStateManager } from "../../state/DynamicGameState.js";
+import { getTopologyNeighbors } from "../shared/topologyHelpers.js";
 
 // ===== Types =====
 
@@ -74,20 +75,32 @@ interface FireLightContribution {
 function getFireLightContributions(dgsm: DynamicGameStateManager): FireLightContribution[] {
   const contributions: FireLightContribution[] = [];
   const fireStates = dgsm.getFeatureState("fire");
+  const topology = dgsm.getTopology();
 
-  for (const [sceneId, state] of Object.entries(fireStates)) {
+  for (const [locationId, state] of Object.entries(fireStates)) {
     const fs = state as { intensity: number } | undefined;
     if (!fs || fs.intensity <= 0) continue;
 
     const fireLightLevel = Math.min(fs.intensity + 1, 5);
-    contributions.push({ sceneId, lightLevel: fireLightLevel });
+    contributions.push({ sceneId: locationId, lightLevel: fireLightLevel });
 
+    // Spread fire light to neighbors
     if (fs.intensity >= 3) {
-      const scene = dgsm.getScene(sceneId);
-      if (scene) {
-        const adjacentLevel = fireLightLevel - 1;
-        for (const connId of scene.connections) {
-          contributions.push({ sceneId: connId, lightLevel: adjacentLevel });
+      const adjacentLevel = fireLightLevel - 1;
+
+      if (topology) {
+        // Topology-aware: use topology neighbors
+        const neighbors = getTopologyNeighbors(locationId, topology);
+        for (const neighborId of neighbors) {
+          contributions.push({ sceneId: neighborId, lightLevel: adjacentLevel });
+        }
+      } else {
+        // Fallback: use scene.connections
+        const scene = dgsm.getScene(locationId);
+        if (scene) {
+          for (const connId of scene.connections) {
+            contributions.push({ sceneId: connId, lightLevel: adjacentLevel });
+          }
         }
       }
     }
@@ -219,6 +232,43 @@ function computeSceneLighting(
   };
 }
 
+// ===== Outdoor (Road/Junction) Lighting =====
+
+function computeOutdoorLighting(
+  dgsm: DynamicGameStateManager,
+  locationId: string,
+  parentLocationId: string,
+  sunLevel: number,
+  fireContributions: FireLightContribution[],
+): LightingSceneState {
+  const sources: Array<{ name: string; level: number }> = [];
+
+  // Outdoor: always get sun (with weather modifier)
+  const weatherMod = getWeatherLightModifier(dgsm, parentLocationId);
+  const adjustedSun = Math.max(1, sunLevel + weatherMod);
+  sources.push({ name: "sun", level: adjustedSun });
+
+  if (sunLevel === 1) {
+    sources.push({ name: "moon", level: 2 });
+  }
+
+  // Fire light contributions
+  for (const fc of fireContributions) {
+    if (fc.sceneId === locationId) {
+      sources.push({ name: "fire", level: fc.lightLevel });
+    }
+  }
+
+  const maxLevel = sources.length > 0
+    ? Math.min(5, Math.max(...sources.map(s => s.level)))
+    : 1;
+
+  return {
+    lightLevel: maxLevel,
+    sources: sources.filter(s => s.level === maxLevel).map(s => s.name),
+  };
+}
+
 // ===== Exported Feature =====
 
 export const lightingFeature: WorldFeature = {
@@ -253,10 +303,27 @@ Dark environments impose skill penalties. Blinding light also impairs vision.`,
     const fireContributions = getFireLightContributions(dgsm);
 
     const state = dgsm.getState();
+
+    // Process all scenes
     state.scenes.forEach((_scene: any, sceneId: string) => {
       const lighting = computeSceneLighting(dgsm, sceneId, sunLevel, fireContributions);
       setLightingState(dgsm, sceneId, lighting);
       writeLightingCondition(dgsm, sceneId, lighting.lightLevel);
     });
+
+    // Process roads and junctions (outdoor, always receive sun)
+    const topology = dgsm.getTopology();
+    if (topology) {
+      for (const [roadId, road] of topology.roads) {
+        const lighting = computeOutdoorLighting(dgsm, roadId, road.parentLocationId, sunLevel, fireContributions);
+        setLightingState(dgsm, roadId, lighting);
+        writeLightingCondition(dgsm, roadId, lighting.lightLevel);
+      }
+      for (const [juncId, junc] of topology.junctions) {
+        const lighting = computeOutdoorLighting(dgsm, juncId, junc.parentLocationId, sunLevel, fireContributions);
+        setLightingState(dgsm, juncId, lighting);
+        writeLightingCondition(dgsm, juncId, lighting.lightLevel);
+      }
+    }
   },
 };
