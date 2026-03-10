@@ -1,0 +1,16 @@
+{
+  "id": "JUNC_9",
+  "name": "新月街B东端",
+  "description": "新月街B大道的东端尽头，旁边是一栋二层木屋。街道在此终止，周围是住宅区。",
+  "parentLocationId": "OUTDOOR",
+  "items": [],
+  "clues": [],
+  "conditions": [
+    {
+      "type": "weather",
+      "description": "露天路口，受天气影响。街道尽头，较为安静。"
+    }
+  ],
+  "events": [],
+  "connectedSceneIds": ["SCN_6_SUB_1"]
+}

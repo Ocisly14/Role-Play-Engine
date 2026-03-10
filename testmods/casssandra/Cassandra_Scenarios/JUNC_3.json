@@ -1,0 +1,16 @@
+{
+  "id": "JUNC_3",
+  "name": "北新街端点三岔口",
+  "description": "北新街的尽头，三条道路在此交汇。向东北是北新街，向东是南新街，向西是旧街。路口铺着碎石，角落有一盏昏暗的路灯。",
+  "parentLocationId": "OUTDOOR",
+  "items": [],
+  "clues": [],
+  "conditions": [
+    {
+      "type": "weather",
+      "description": "露天路口，受天气影响。三岔口位置风大。"
+    }
+  ],
+  "events": [],
+  "connectedSceneIds": []
+}

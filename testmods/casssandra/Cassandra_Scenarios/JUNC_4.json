@@ -1,0 +1,16 @@
+{
+  "id": "JUNC_4",
+  "name": "南新街东端三岔口",
+  "description": "南新街的东端，三条道路在此交汇。向西是南新街，向北是石榴巷南段，向东南是新月街A大道北。这里是镇中心区域，白天人来人往。",
+  "parentLocationId": "OUTDOOR",
+  "items": [],
+  "clues": [],
+  "conditions": [
+    {
+      "type": "weather",
+      "description": "露天路口，受天气影响。镇中心区域，稍显热闹。"
+    }
+  ],
+  "events": [],
+  "connectedSceneIds": []
+}

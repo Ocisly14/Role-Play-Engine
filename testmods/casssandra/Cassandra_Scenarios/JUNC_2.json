@@ -1,0 +1,16 @@
+{
+  "id": "JUNC_2",
+  "name": "星辰大道南端三岔口",
+  "description": "星辰大道的南端尽头，三条道路在此交汇。向北是星辰大道，向西南是北新街，向南是石榴巷。路口中央有一棵枯萎的老橡树。",
+  "parentLocationId": "OUTDOOR",
+  "items": [],
+  "clues": [],
+  "conditions": [
+    {
+      "type": "weather",
+      "description": "露天路口，受天气影响。三条道路交汇处，风较大。"
+    }
+  ],
+  "events": [],
+  "connectedSceneIds": []
+}

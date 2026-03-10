@@ -1,0 +1,16 @@
+{
+  "id": "JUNC_10",
+  "name": "新月街C南端",
+  "description": "新月街C大道的南端尽头，旁边是菲利普的住宅。街道在此终止，周围是安静的住宅区。",
+  "parentLocationId": "OUTDOOR",
+  "items": [],
+  "clues": [],
+  "conditions": [
+    {
+      "type": "weather",
+      "description": "露天路口，受天气影响。住宅区尽头，十分安静。"
+    }
+  ],
+  "events": [],
+  "connectedSceneIds": ["SCN_8_SUB_1"]
+}

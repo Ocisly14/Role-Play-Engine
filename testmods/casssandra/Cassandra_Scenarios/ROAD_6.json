@@ -3,6 +3,13 @@
   "name": "新月街A大道北",
   "description": "从石榴巷与南新街交汇处向东南延伸的大道，沿途有帕拉迪尔大酒店和马塞尔家。端点是十字路口。",
   "parentLocationId": "OUTDOOR",
+  "endpointA": "JUNC_4",
+  "endpointB": "JUNC_5",
+  "travelTimeMinutes": 8,
+  "alongConnections": [
+    { "sceneId": "SCN_4_SUB_1", "position": 0.3 },
+    { "sceneId": "SCN_5_SUB_1", "position": 0.7 }
+  ],
   "items": [],
   "clues": [],
   "conditions": [
@@ -11,6 +18,5 @@
       "description": "露天街道，受天气影响。沿途有大酒店，街道较为宽敞。"
     }
   ],
-  "connections": ["SCN_4_SUB_1", "SCN_5_SUB_1", "ROAD_3", "ROAD_5", "ROAD_7", "ROAD_8", "ROAD_9"],
   "events": []
 }

@@ -51,6 +51,6 @@
       "description": "这是一片危险区域，深潜者祭司曾在此试验控制修格斯并将其遗弃于此"
     }
   ],
-  "connections": ["SCN_2_SUB_2", "SCN_2_SUB_3", "ROAD_1"],
+  "connections": ["SCN_2_SUB_2", "SCN_2_SUB_3", "JUNC_1"],
   "events": []
 }

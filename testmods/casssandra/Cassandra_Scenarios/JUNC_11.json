@@ -1,0 +1,25 @@
+{
+  "id": "JUNC_11",
+  "name": "日暮大道东端·森林入口",
+  "description": "日暮大道的东端尽头，前方是茂密的森林。大道在此处变成泥泞的小路，消失在树木之间。空气中弥漫着松木和腐叶的气息。",
+  "parentLocationId": "OUTDOOR",
+  "items": [],
+  "clues": [],
+  "conditions": [
+    {
+      "type": "weather",
+      "description": "露天路口，受天气影响。森林边缘，光线昏暗，空气潮湿。"
+    },
+    {
+      "type": "lighting",
+      "description": "森林入口处几乎没有路灯，夜间极为黑暗。",
+      "mechanicalEffect": {
+        "skillPenalty": [
+          { "skill": "Spot Hidden", "delta": -20 }
+        ]
+      }
+    }
+  ],
+  "events": [],
+  "connectedSceneIds": []
+}

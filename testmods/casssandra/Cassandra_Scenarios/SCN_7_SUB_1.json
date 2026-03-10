@@ -57,8 +57,7 @@
     }
   ],
   "connections": [
-    "SCN_7_SUB_2",
-    "ROAD_8"
+    "SCN_7_SUB_2"
   ],
   "events": []
 }

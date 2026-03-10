@@ -53,8 +53,7 @@
   ],
   "connections": [
     "SCN_13_SUB_2",
-    "SCN_13_SUB_3",
-    "ROAD_4"
+    "SCN_13_SUB_3"
   ],
   "events": []
 }

@@ -1,0 +1,16 @@
+{
+  "id": "JUNC_1",
+  "name": "星辰大道北端",
+  "description": "星辰大道的北端尽头。左手边是焚化厂高耸的烟囱冒着灰烟，空气中弥漫着刺鼻的焦灼味。路面上有几道深深的车辙印，地面覆着一层薄薄的灰尘。",
+  "parentLocationId": "OUTDOOR",
+  "items": [],
+  "clues": [],
+  "conditions": [
+    {
+      "type": "weather",
+      "description": "露天路口，受天气影响。靠近焚化厂，空气质量较差。"
+    }
+  ],
+  "events": [],
+  "connectedSceneIds": ["SCN_2_SUB_1"]
+}

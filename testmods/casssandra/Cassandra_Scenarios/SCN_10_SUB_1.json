@@ -46,6 +46,6 @@
       "description": "餐厅内灯光柔和温暖，营造出亲密舒适的用餐氛围。"
     }
   ],
-  "connections": ["ROAD_2"],
+  "connections": [],
   "events": []
 }

@@ -1,8 +1,16 @@
 {
   "id": "ROAD_4",
   "name": "卡森德拉旧街",
-  "description": "镇子西侧的老街，从北新街端点向西延伸至火车站。沿途有钟表店、酒厂和珊德拉的小屋。",
+  "description": "镇子西侧的老街，从北新街端点向西延伸至火车站。沿途有钟表店和珊德拉的小屋。",
   "parentLocationId": "OUTDOOR",
+  "endpointA": "JUNC_3",
+  "endpointB": "JUNC_7",
+  "travelTimeMinutes": 12,
+  "alongConnections": [
+    { "sceneId": "SCN_12_SUB_1", "position": 0.3 },
+    { "sceneId": "SCN_13_SUB_1", "position": 0.5 },
+    { "sceneId": "SCN_14_SUB_1", "position": 0.7 }
+  ],
   "items": [],
   "clues": [],
   "conditions": [
@@ -11,6 +19,5 @@
       "description": "露天街道，受天气影响。旧街路面不太平整，冬季更加寒冷。"
     }
   ],
-  "connections": ["SCN_12_SUB_1", "SCN_13_SUB_1", "SCN_14_SUB_1", "SCN_21_SUB_1", "ROAD_2", "ROAD_3"],
   "events": []
 }

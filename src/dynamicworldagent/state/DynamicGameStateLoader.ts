@@ -358,6 +358,16 @@ export async function loadDynamicGameStateFromModuleLoader(
     }
   }
 
+  // Load topology if junctions/roads available
+  if (loadedModule.junctions.size > 0 || loadedModule.roads.size > 0) {
+    const { buildTopology } = await import("../world_builder/topologyTypes.js");
+    const topology = buildTopology(loadedModule.junctions, loadedModule.roads);
+    manager.setTopology(topology);
+    console.log(
+      `[DynamicGameState] Built topology: ${loadedModule.junctions.size} junctions, ${loadedModule.roads.size} roads`
+    );
+  }
+
   console.log(
     `[DynamicGameState] Loaded state for module "${moduleName}" from files`
   );

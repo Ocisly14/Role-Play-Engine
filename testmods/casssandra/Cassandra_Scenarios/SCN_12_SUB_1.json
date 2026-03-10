@@ -67,6 +67,6 @@
       "description": "店面不大，光线来自门窗和工作台上的台灯，展柜中的怀表在灯光下闪烁着金属光泽"
     }
   ],
-  "connections": ["ROAD_4"],
+  "connections": [],
   "events": []
 }

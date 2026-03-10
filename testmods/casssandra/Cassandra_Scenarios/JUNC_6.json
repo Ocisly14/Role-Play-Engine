@@ -1,0 +1,16 @@
+{
+  "id": "JUNC_6",
+  "name": "石榴巷与日暮大道分叉",
+  "description": "石榴巷中段的分叉点，向东北方延伸出日暮大道。向北是石榴巷北段通往星辰大道，向南是石榴巷南段通往南新街。分叉处有一块褪色的路标。",
+  "parentLocationId": "OUTDOOR",
+  "items": [],
+  "clues": [],
+  "conditions": [
+    {
+      "type": "weather",
+      "description": "露天路口，受天气影响。巷道分叉处，光线稍暗。"
+    }
+  ],
+  "events": [],
+  "connectedSceneIds": []
+}

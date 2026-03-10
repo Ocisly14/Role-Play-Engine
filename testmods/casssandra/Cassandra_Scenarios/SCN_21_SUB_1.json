@@ -66,6 +66,6 @@
       "description": "偶尔有火车经过时的汽笛声和铁轨震动声打破寂静，平时只有风声和Haran偶尔的咳嗽声。"
     }
   ],
-  "connections": ["SCN_21_SUB_2", "SCN_21_SUB_3", "ROAD_4"],
+  "connections": ["SCN_21_SUB_2", "SCN_21_SUB_3", "JUNC_7"],
   "events": []
 }

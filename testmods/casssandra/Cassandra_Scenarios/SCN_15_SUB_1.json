@@ -90,8 +90,7 @@
     }
   ],
   "connections": [
-    "SCN_15_SUB_2",
-    "ROAD_5"
+    "SCN_15_SUB_2"
   ],
   "events": []
 }

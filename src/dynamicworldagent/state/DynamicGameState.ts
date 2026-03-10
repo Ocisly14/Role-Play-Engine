@@ -33,6 +33,13 @@ import type {
   DynamicScene,
   TransportEdge,
 } from "../world_builder/types.js";
+import type {
+  CharacterPosition,
+  JunctionNode,
+  RoadNode,
+  TownTopology,
+} from "../world_builder/topologyTypes.js";
+import { buildTopology } from "../world_builder/topologyTypes.js";
 
 export interface DefeatedNpcHistoryEntry {
   name: string;
@@ -159,6 +166,12 @@ export interface DynamicGameState {
   npcResidences: Record<string, string>;    // npcId -> macroLocationId
   transportEdges: TransportEdge[];
 
+  // Road & Junction topology (null if module has no JUNC/ROAD files)
+  topology: TownTopology | null;
+
+  // Character positions (player + NPC)
+  characterPositions: Record<string, CharacterPosition>;
+
   // Metadata
   loadedAt: Date; // When this state was loaded
   lastUpdated: Date; // Last time state was updated
@@ -232,6 +245,8 @@ export const initialDynamicGameState = (params: {
   blockedConnections: new Map(),
   npcResidences: {},
   transportEdges: [],
+  topology: null,
+  characterPositions: {},
   loadedAt: new Date(),
   lastUpdated: new Date(),
 });
@@ -538,10 +553,22 @@ export class DynamicGameStateManager {
       blockedConnsObj[key] = reason;
     });
 
+    // Convert topology Maps to plain objects
+    let topologyObj: any = null;
+    if (this.state.topology) {
+      const junctionsObj: Record<string, any> = {};
+      this.state.topology.junctions.forEach((j, id) => { junctionsObj[id] = j; });
+      const roadsObj: Record<string, any> = {};
+      this.state.topology.roads.forEach((r, id) => { roadsObj[id] = r; });
+      topologyObj = { junctions: junctionsObj, roads: roadsObj };
+    }
+
     return {
       ...this.state,
       scenes: scenesObj,
       blockedConnections: blockedConnsObj,
+      topology: topologyObj,
+      characterPositions: this.state.characterPositions,
       npcResidences: this.state.npcResidences,
       transportEdges: this.state.transportEdges,
       revealedTruthEvents: Array.from(this.state.revealedTruthEvents),
@@ -627,6 +654,16 @@ export class DynamicGameStateManager {
       }
     }
 
+    // Reconstruct topology from serialized junctions/roads
+    let topology: TownTopology | null = null;
+    if (data.topology?.junctions && data.topology?.roads) {
+      const junctions = new Map<string, JunctionNode>();
+      Object.entries(data.topology.junctions).forEach(([id, j]) => junctions.set(id, j as JunctionNode));
+      const roads = new Map<string, RoadNode>();
+      Object.entries(data.topology.roads).forEach(([id, r]) => roads.set(id, r as RoadNode));
+      topology = buildTopology(junctions, roads);
+    }
+
     return {
       ...data,
       playerCharacter,
@@ -657,6 +694,8 @@ export class DynamicGameStateManager {
       featureState: data.featureState ?? {},
       npcResidences: data.npcResidences ?? {},
       transportEdges: data.transportEdges ?? [],
+      topology,
+      characterPositions: data.characterPositions ?? {},
       loadedAt: data.loadedAt
         ? typeof data.loadedAt === "string"
           ? new Date(data.loadedAt)
@@ -1630,5 +1669,68 @@ export class DynamicGameStateManager {
       this.state.blockedConnections.delete(`${toId}::${fromId}`);
     }
     this.state.lastUpdated = new Date();
+  }
+
+  // === Topology ===
+
+  getJunction(junctionId: string): JunctionNode | null {
+    return this.state.topology?.junctions.get(junctionId) ?? null;
+  }
+
+  getRoad(roadId: string): RoadNode | null {
+    return this.state.topology?.roads.get(roadId) ?? null;
+  }
+
+  getTopology(): TownTopology | null {
+    return this.state.topology;
+  }
+
+  setTopology(topology: TownTopology): void {
+    this.state.topology = topology;
+    this.state.lastUpdated = new Date();
+  }
+
+  // === Character Position ===
+
+  getCharacterPosition(characterId: string): CharacterPosition | null {
+    return this.state.characterPositions[characterId] ?? null;
+  }
+
+  setCharacterPosition(characterId: string, position: CharacterPosition): void {
+    this.state.characterPositions[characterId] = position;
+    this.state.lastUpdated = new Date();
+  }
+
+  getCharactersAtJunction(junctionId: string): string[] {
+    return Object.entries(this.state.characterPositions)
+      .filter(([_, pos]) => pos.type === "junction" && pos.junctionId === junctionId)
+      .map(([id]) => id);
+  }
+
+  getCharactersOnRoad(roadId: string): Array<{ characterId: string; position: number }> {
+    return Object.entries(this.state.characterPositions)
+      .filter(([_, pos]) => pos.type === "road" && pos.roadId === roadId)
+      .map(([id, pos]) => ({
+        characterId: id,
+        position: (pos as { type: "road"; roadId: string; position: number }).position,
+      }));
+  }
+
+  getCharactersInScene(sceneId: string): string[] {
+    return Object.entries(this.state.characterPositions)
+      .filter(([_, pos]) => pos.type === "scene" && pos.sceneId === sceneId)
+      .map(([id]) => id);
+  }
+
+  /**
+   * Resolve the "location ID" for a character position, for backward compatibility.
+   * Returns the scene/junction/road ID the character is at.
+   */
+  resolveLocationId(position: CharacterPosition): string {
+    switch (position.type) {
+      case "junction": return position.junctionId;
+      case "road": return position.roadId;
+      case "scene": return position.sceneId;
+    }
   }
 }

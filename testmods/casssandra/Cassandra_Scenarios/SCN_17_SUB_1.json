@@ -56,6 +56,6 @@
       "description": "教堂内非常安静，只有偶尔的风声穿过彩色玻璃窗的缝隙。脚步声在石板地面上会产生清晰的回响。"
     }
   ],
-  "connections": ["SCN_17_SUB_2", "SCN_17_SUB_3", "SCN_17_SUB_4", "ROAD_3"],
+  "connections": ["SCN_17_SUB_2", "SCN_17_SUB_3", "SCN_17_SUB_4"],
   "events": []
 }

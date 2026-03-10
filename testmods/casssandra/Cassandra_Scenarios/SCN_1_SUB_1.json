@@ -60,6 +60,6 @@
       }
     }
   ],
-  "connections": ["SCN_1_SUB_2", "SCN_1_SUB_3", "SCN_1_SUB_4", "SCN_1_SUB_5", "SCN_1_SUB_6", "ROAD_1"],
+  "connections": ["SCN_1_SUB_2", "SCN_1_SUB_3", "SCN_1_SUB_4", "SCN_1_SUB_5", "SCN_1_SUB_6"],
   "events": []
 }

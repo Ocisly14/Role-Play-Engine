@@ -120,8 +120,7 @@
     }
   ],
   "connections": [
-    "SCN_16_SUB_2",
-    "ROAD_3"
+    "SCN_16_SUB_2"
   ],
   "events": []
 }

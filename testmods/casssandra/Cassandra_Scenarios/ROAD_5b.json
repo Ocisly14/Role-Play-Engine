@@ -1,8 +1,14 @@
 {
-  "id": "ROAD_5",
-  "name": "石榴巷",
-  "description": "从星辰大道南端分叉向南延伸的巷道，中段分叉通往日暮大道。南端与卡森德拉南新街交汇，形成三角形路网。",
+  "id": "ROAD_5b",
+  "name": "石榴巷南段",
+  "description": "石榴巷的南段，从日暮大道分叉处向南延伸至南新街东端三岔口。沿途有阿道夫的屋子。",
   "parentLocationId": "OUTDOOR",
+  "endpointA": "JUNC_6",
+  "endpointB": "JUNC_4",
+  "travelTimeMinutes": 6,
+  "alongConnections": [
+    { "sceneId": "SCN_15_SUB_1", "position": 0.5 }
+  ],
   "items": [],
   "clues": [],
   "conditions": [
@@ -20,6 +26,5 @@
       }
     }
   ],
-  "connections": ["SCN_15_SUB_1", "ROAD_1", "ROAD_2", "ROAD_3", "ROAD_6", "ROAD_10"],
   "events": []
 }

@@ -3,6 +3,13 @@
   "name": "日暮大道",
   "description": "从石榴巷中段分叉向东北延伸的大道，中途路过公墓，尽头是森林和废弃的伐木场。",
   "parentLocationId": "OUTDOOR",
+  "endpointA": "JUNC_6",
+  "endpointB": "JUNC_11",
+  "travelTimeMinutes": 15,
+  "alongConnections": [
+    { "sceneId": "SCN_19_SUB_1", "position": 0.4 },
+    { "sceneId": "SCN_20_SUB_1", "position": 0.8 }
+  ],
   "items": [],
   "clues": [],
   "conditions": [
@@ -20,6 +27,5 @@
       }
     }
   ],
-  "connections": ["SCN_19_SUB_1", "SCN_20_SUB_1", "ROAD_5"],
   "events": []
 }

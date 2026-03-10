@@ -61,8 +61,7 @@
     }
   ],
   "connections": [
-    "SCN_14_SUB_2",
-    "ROAD_4"
+    "SCN_14_SUB_2"
   ],
   "events": []
 }

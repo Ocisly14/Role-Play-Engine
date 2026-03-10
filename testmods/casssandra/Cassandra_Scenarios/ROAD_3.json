@@ -3,6 +3,14 @@
   "name": "卡森德拉南新街",
   "description": "案发的街道，虽然和卡森北新街只隔着一小段距离，但风格给人一种大相径庭的感觉。沿途有酒吧、教堂和五金店。",
   "parentLocationId": "OUTDOOR",
+  "endpointA": "JUNC_3",
+  "endpointB": "JUNC_4",
+  "travelTimeMinutes": 10,
+  "alongConnections": [
+    { "sceneId": "SCN_16_SUB_1", "position": 0.2 },
+    { "sceneId": "SCN_17_SUB_1", "position": 0.5 },
+    { "sceneId": "SCN_18_SUB_1", "position": 0.8 }
+  ],
   "items": [],
   "clues": [],
   "conditions": [
@@ -11,6 +19,5 @@
       "description": "露天街道，受天气影响。案发所在的街道，近期气氛紧张。"
     }
   ],
-  "connections": ["SCN_16_SUB_1", "SCN_17_SUB_1", "SCN_18_SUB_1", "ROAD_2", "ROAD_4", "ROAD_5", "ROAD_6"],
   "events": []
 }

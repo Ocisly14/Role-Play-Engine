@@ -49,6 +49,6 @@
       }
     }
   ],
-  "connections": ["SCN_20_SUB_2", "SCN_20_SUB_3", "ROAD_10"],
+  "connections": ["SCN_20_SUB_2", "SCN_20_SUB_3"],
   "events": []
 }

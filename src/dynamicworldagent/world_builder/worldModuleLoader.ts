@@ -29,6 +29,7 @@ import type {
 } from "./types.js";
 import type { DynamicNPCProfile } from "./types.js";
 import type { DynamicScene } from "./types.js";
+import type { JunctionNode, RoadNode, AlongConnection } from "./topologyTypes.js";
 
 /**
  * Complete world module data loaded from all JSON files
@@ -46,6 +47,8 @@ export interface LoadedWorldModule {
   scenes: Map<string, DynamicScene>; // scenarioId -> scene
   npcs: DynamicNPCProfile[];
   transportEdges: TransportEdge[];
+  junctions: Map<string, JunctionNode>;
+  roads: Map<string, RoadNode>;
   storyPremise: string;
   files: {
     truthTimelineFile: string;
@@ -291,6 +294,13 @@ export class WorldModuleLoader {
       const scenes = this.loadDynamicScenes(scenariosDir);
       console.log(`    Scenes loaded: ${scenes.size}`);
 
+      // 7b. Load junctions and roads
+      console.log(`  [7b/9] Loading junctions and roads...`);
+      const junctions = this.loadJunctions(scenariosDir);
+      const roads = this.loadRoads(scenariosDir);
+      console.log(`    Junctions loaded: ${junctions.size}`);
+      console.log(`    Roads loaded: ${roads.size}`);
+
       // 8. Load NPCs from individual files
       console.log(`  [8/9] Loading NPCs...`);
       const npcsDir = path.join(moduleDir, `${moduleName}_npc`);
@@ -310,6 +320,8 @@ export class WorldModuleLoader {
         scenes,
         npcs,
         transportEdges,
+        junctions,
+        roads,
         storyPremise,
         files: {
           truthTimelineFile,
@@ -454,13 +466,18 @@ export class WorldModuleLoader {
 
     const files = fs
       .readdirSync(scenariosDir)
-      .filter((f) => f.endsWith(".json"));
+      .filter((f) => f.endsWith(".json") && !f.startsWith("JUNC_"));
 
     for (const file of files) {
       try {
         const filePath = path.join(scenariosDir, file);
         const content = fs.readFileSync(filePath, "utf8");
         const data = JSON.parse(content);
+
+        // Skip new-format ROAD files (handled by loadRoads)
+        if (data.endpointA && data.endpointB) {
+          continue;
+        }
 
         // New format: individual DynamicScene objects or arrays of them
         if (data.parentLocationId !== undefined || data.connections !== undefined) {
@@ -510,6 +527,86 @@ export class WorldModuleLoader {
     }
 
     return scenes;
+  }
+
+  /**
+   * Load junction nodes from JUNC_*.json files.
+   */
+  private loadJunctions(scenariosDir: string): Map<string, JunctionNode> {
+    const junctions = new Map<string, JunctionNode>();
+    if (!fs.existsSync(scenariosDir)) return junctions;
+
+    const files = fs.readdirSync(scenariosDir)
+      .filter((f) => f.startsWith("JUNC_") && f.endsWith(".json"));
+
+    for (const file of files) {
+      try {
+        const filePath = path.join(scenariosDir, file);
+        const data = JSON.parse(fs.readFileSync(filePath, "utf8"));
+        const junction: JunctionNode = {
+          id: data.id,
+          name: data.name,
+          description: data.description || "",
+          parentLocationId: data.parentLocationId || "OUTDOOR",
+          items: data.items || [],
+          clues: data.clues || [],
+          conditions: data.conditions || [],
+          events: data.events || [],
+          connectedSceneIds: data.connectedSceneIds || [],
+        };
+        junctions.set(junction.id, junction);
+      } catch (error) {
+        console.warn(`    Failed to load junction file ${file}:`, error);
+      }
+    }
+    return junctions;
+  }
+
+  /**
+   * Load road nodes from ROAD_*.json files.
+   * Detects new format (has endpointA/endpointB) vs old format (has connections).
+   */
+  private loadRoads(scenariosDir: string): Map<string, RoadNode> {
+    const roads = new Map<string, RoadNode>();
+    if (!fs.existsSync(scenariosDir)) return roads;
+
+    const files = fs.readdirSync(scenariosDir)
+      .filter((f) => f.startsWith("ROAD_") && f.endsWith(".json"));
+
+    for (const file of files) {
+      try {
+        const filePath = path.join(scenariosDir, file);
+        const data = JSON.parse(fs.readFileSync(filePath, "utf8"));
+
+        // Only load new-format roads (with endpointA/B)
+        if (!data.endpointA || !data.endpointB) {
+          // Old format — handled by loadDynamicScenes
+          continue;
+        }
+
+        const road: RoadNode = {
+          id: data.id,
+          name: data.name,
+          description: data.description || "",
+          parentLocationId: data.parentLocationId || "OUTDOOR",
+          endpointA: data.endpointA,
+          endpointB: data.endpointB,
+          travelTimeMinutes: data.travelTimeMinutes ?? 10,
+          alongConnections: (data.alongConnections || []).map((ac: any) => ({
+            sceneId: ac.sceneId,
+            position: ac.position,
+          })),
+          items: data.items || [],
+          clues: data.clues || [],
+          conditions: data.conditions || [],
+          events: data.events || [],
+        };
+        roads.set(road.id, road);
+      } catch (error) {
+        console.warn(`    Failed to load road file ${file}:`, error);
+      }
+    }
+    return roads;
   }
 
   /**

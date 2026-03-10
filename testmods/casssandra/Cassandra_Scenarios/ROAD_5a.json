@@ -1,0 +1,28 @@
+{
+  "id": "ROAD_5a",
+  "name": "石榴巷北段",
+  "description": "石榴巷的北段，从星辰大道南端三岔口向南延伸至日暮大道分叉处。巷道较窄，两侧建筑遮挡部分风雪。",
+  "parentLocationId": "OUTDOOR",
+  "endpointA": "JUNC_2",
+  "endpointB": "JUNC_6",
+  "travelTimeMinutes": 6,
+  "alongConnections": [],
+  "items": [],
+  "clues": [],
+  "conditions": [
+    {
+      "type": "weather",
+      "description": "露天巷道，受天气影响。巷道较窄，两侧建筑遮挡部分风雪。"
+    },
+    {
+      "type": "lighting",
+      "description": "巷道路灯稀疏，夜间光线昏暗。",
+      "mechanicalEffect": {
+        "skillPenalty": [
+          { "skill": "Spot Hidden", "delta": -10 }
+        ]
+      }
+    }
+  ],
+  "events": []
+}

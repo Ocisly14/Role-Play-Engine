@@ -3,6 +3,10 @@
   "name": "新月街C大道",
   "description": "从新月街十字路口向南延伸的大道，沿途有菲利普的住宅。",
   "parentLocationId": "OUTDOOR",
+  "endpointA": "JUNC_5",
+  "endpointB": "JUNC_10",
+  "travelTimeMinutes": 5,
+  "alongConnections": [],
   "items": [],
   "clues": [],
   "conditions": [
@@ -11,6 +15,5 @@
       "description": "露天街道，受天气影响。通往菲利普住宅的安静街道。"
     }
   ],
-  "connections": ["SCN_8_SUB_1", "ROAD_6", "ROAD_7", "ROAD_8"],
   "events": []
 }

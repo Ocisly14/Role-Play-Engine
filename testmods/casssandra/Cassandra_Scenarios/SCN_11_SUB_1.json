@@ -66,6 +66,6 @@
       "description": "空气中飘荡着某种焚香的气味，混合着旧书纸张的味道。"
     }
   ],
-  "connections": ["ROAD_2"],
+  "connections": [],
   "events": []
 }
