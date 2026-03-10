@@ -13,7 +13,6 @@ export interface WeatherRegionState {
   intensity: number;
   ticksInState: number;
   affectedSceneIds: string[];
-  exposureTicks: Record<string, number>;
 }
 
 // ===== Constants =====
@@ -21,8 +20,6 @@ export interface WeatherRegionState {
 const FEATURE_ID = "weather";
 const TICKS_PER_TRANSITION_CHECK = 6;
 const MAX_INTENSITY = 5;
-const HP_DRAIN_INTERVAL = 6;
-const HP_DRAIN_INTENSITY_THRESHOLD = 3;
 const BLOCKING_INTENSITY_THRESHOLD = 4;
 
 const WEATHER_TYPES: WeatherType[] = [
@@ -147,7 +144,6 @@ function createWeatherState(
     intensity: weatherType === "clear" ? 0 : Math.max(1, Math.min(intensity, MAX_INTENSITY)),
     ticksInState: 0,
     affectedSceneIds,
-    exposureTicks: {},
   };
 }
 
@@ -257,58 +253,6 @@ function updateWeatherBlocking(dgsm: DynamicGameStateManager, regionState: Weath
   }
 }
 
-// ===== HP Drain for Extreme Temperatures =====
-
-function processExposureDrain(dgsm: DynamicGameStateManager, regionState: WeatherRegionState): void {
-  const { weatherType, intensity, affectedSceneIds, exposureTicks } = regionState;
-
-  const isExtreme = (weatherType === "extreme_heat" || weatherType === "extreme_cold") && intensity >= HP_DRAIN_INTENSITY_THRESHOLD;
-
-  if (!isExtreme) {
-    regionState.exposureTicks = {};
-    return;
-  }
-
-  const state = dgsm.getState();
-  const charsInRegion: string[] = [];
-
-  if (state.currentSceneId && affectedSceneIds.includes(state.currentSceneId)) {
-    charsInRegion.push("__player__");
-  }
-
-  for (const [npcId, location] of Object.entries(state.npcLocations)) {
-    if (affectedSceneIds.includes(location)) {
-      charsInRegion.push(npcId);
-    }
-  }
-
-  for (const charId of charsInRegion) {
-    exposureTicks[charId] = (exposureTicks[charId] ?? 0) + 1;
-
-    if (exposureTicks[charId] >= HP_DRAIN_INTERVAL) {
-      exposureTicks[charId] = 0;
-
-      const failChance = 0.3 + (intensity - HP_DRAIN_INTENSITY_THRESHOLD) * 0.15;
-      if (Math.random() < failChance) {
-        if (charId === "__player__") {
-          const player = state.playerCharacter;
-          if (player?.status?.hp !== undefined) {
-            (player.status as any).hp = Math.max(0, player.status.hp - 1);
-          }
-        } else {
-          dgsm.updateNpcHp(charId, -1);
-        }
-      }
-    }
-  }
-
-  for (const charId of Object.keys(exposureTicks)) {
-    if (!charsInRegion.includes(charId)) {
-      delete exposureTicks[charId];
-    }
-  }
-}
-
 // ===== Initialization =====
 
 function initWeatherFromPresets(dgsm: DynamicGameStateManager): void {
@@ -349,7 +293,7 @@ function initWeatherFromPresets(dgsm: DynamicGameStateManager): void {
 
 export const weatherFeature: WorldFeature = {
   id: FEATURE_ID,
-  description: "Regional weather system — Markov chain evolution with skill penalties, connection blocking, and HP drain",
+  description: "Regional weather system — Markov chain evolution with skill penalties and connection blocking",
 
   planningPrompt: `## Weather
 Current weather conditions are shown in the state description below.
@@ -393,21 +337,17 @@ Weather affects outdoor scenes only (skill penalties, blocked paths in severe we
         if (newType !== ws.weatherType) {
           ws.weatherType = newType;
           ws.intensity = newType === "clear" ? 0 : 1;
-          ws.exposureTicks = {};
         } else if (ws.weatherType !== "clear") {
           ws.intensity = evolveIntensity(ws.intensity);
           if (ws.intensity <= 0) {
             ws.weatherType = "clear";
             ws.intensity = 0;
-            ws.exposureTicks = {};
           }
         }
 
         writeWeatherConditions(dgsm, ws);
         updateWeatherBlocking(dgsm, ws);
       }
-
-      processExposureDrain(dgsm, ws);
 
       setWeatherState(dgsm, regionId, ws);
     }

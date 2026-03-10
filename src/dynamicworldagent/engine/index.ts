@@ -17,3 +17,4 @@ export { findAffectedCharacters, findAffectedScenes } from "./shared/impactPropa
 export { fireFeature } from "./features/fireFeature.js";
 export { weatherFeature } from "./features/weatherFeature.js";
 export { lightingFeature } from "./features/lightingFeature.js";
+export { staminaFeature } from "./features/staminaFeature.js";
