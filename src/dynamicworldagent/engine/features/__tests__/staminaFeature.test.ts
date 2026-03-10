@@ -61,9 +61,15 @@ function createMockDgsm() {
     _setCurrentScene(sceneId: string) {
       currentSceneId = sceneId;
     },
+    // Topology support for resolveCharacterLocationId
+    getCharacterPosition: (_id: string) => null as any,
+    resolveLocationId: (pos: any) => pos?.junctionId ?? pos?.roadId ?? pos?.sceneId,
+    getNpcLocation: (npcId: string) => npcLocations[npcId] ?? undefined,
+
     _featureState: featureState,
     _playerCharacter: playerCharacter,
     _npcStats: npcStats,
+    _npcLocations: npcLocations,
   };
 }
 
@@ -492,6 +498,52 @@ describe("staminaFeature", () => {
 
       const conditions = dgsm._playerCharacter.status.conditions;
       expect(conditions.some((c: string) => c.includes("[Fatigue]"))).toBe(false);
+    });
+  });
+
+  // ===== CharacterPosition resolution =====
+
+  describe("CharacterPosition resolution", () => {
+    it("should use CharacterPosition for acceleration when available", () => {
+      // Override getCharacterPosition to return a road position for npc1
+      (dgsm as any).getCharacterPosition = (id: string) =>
+        id === "npc1" ? { type: "road", roadId: "ROAD_1", position: 0.5 } : null;
+
+      dgsm._addNpc("npc1", "tavern", 10);
+
+      // Set fire on ROAD_1 (intensity 2 → acceleration)
+      dgsm.setFeatureSceneState("fire", "ROAD_1", { intensity: 2 });
+
+      runTicks(dgsm, runtime, 1);
+
+      const stamina = dgsm.getFeatureSceneState("stamina", "npc1") as any;
+      // With fire acceleration: 5 * 2 = 10 minutes
+      expect(stamina.minutesSinceLastRest).toBe(10);
+    });
+
+    it("should fallback to npcLocations when no CharacterPosition", () => {
+      // Default getCharacterPosition returns null
+      dgsm._addNpc("npc2", "tavern", 10);
+
+      // Set fire on tavern (intensity 2 → acceleration)
+      dgsm.setFeatureSceneState("fire", "tavern", { intensity: 2 });
+
+      runTicks(dgsm, runtime, 1);
+
+      const stamina = dgsm.getFeatureSceneState("stamina", "npc2") as any;
+      // npc2 is at "tavern" via npcLocations, fire at tavern → 2x
+      expect(stamina.minutesSinceLastRest).toBe(10);
+    });
+
+    it("should use currentSceneId for player when no CharacterPosition", () => {
+      // Player at tavern (currentSceneId), no CharacterPosition
+      dgsm.setFeatureSceneState("fire", "tavern", { intensity: 3 });
+
+      runTicks(dgsm, runtime, 1);
+
+      const stamina = dgsm.getFeatureSceneState("stamina", "player-1") as any;
+      // Player at tavern, fire at tavern → 2x
+      expect(stamina.minutesSinceLastRest).toBe(10);
     });
   });
 

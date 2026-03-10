@@ -4,6 +4,7 @@ import type {
 } from "../types.js";
 import type { DynamicGameStateManager } from "../../state/DynamicGameState.js";
 import { applySanityLoss } from "./sanityFeature.js";
+import { resolveCharacterLocationId } from "../shared/topologyHelpers.js";
 
 // ===== Internal types =====
 
@@ -189,36 +190,44 @@ function updateFatigueCondition(
 }
 
 /**
- * Build a list of all tracked characters and their scene locations.
+ * Build a list of all tracked characters and their location IDs.
+ * Uses CharacterPosition when available (topology-aware), falling back to
+ * currentSceneId / npcLocations.
  */
 function getTrackedCharacters(dgsm: DynamicGameStateManager): Array<{
   characterId: string;
-  sceneId: string;
+  locationId: string;
   isPlayer: boolean;
 }> {
   const state = dgsm.getState();
   const result: Array<{
     characterId: string;
-    sceneId: string;
+    locationId: string;
     isPlayer: boolean;
   }> = [];
 
   // Player
-  if (state.playerCharacter?.id && state.currentSceneId) {
-    result.push({
-      characterId: state.playerCharacter.id,
-      sceneId: state.currentSceneId,
-      isPlayer: true,
-    });
+  if (state.playerCharacter?.id) {
+    const locationId = resolveCharacterLocationId(state.playerCharacter.id, dgsm);
+    if (locationId) {
+      result.push({
+        characterId: state.playerCharacter.id,
+        locationId,
+        isPlayer: true,
+      });
+    }
   }
 
   // NPCs
-  for (const [npcId, sceneId] of Object.entries(state.npcLocations)) {
-    result.push({
-      characterId: npcId,
-      sceneId,
-      isPlayer: false,
-    });
+  for (const npc of state.npcCharacters) {
+    const locationId = resolveCharacterLocationId(npc.id, dgsm);
+    if (locationId) {
+      result.push({
+        characterId: npc.id,
+        locationId,
+        isPlayer: false,
+      });
+    }
   }
 
   return result;
@@ -264,7 +273,7 @@ export const staminaFeature: WorldFeature = {
   tick(dgsm: DynamicGameStateManager, runtime: TickRuntimeContext): void {
     const characters = getTrackedCharacters(dgsm);
 
-    for (const { characterId, sceneId, isPlayer } of characters) {
+    for (const { characterId, locationId, isPlayer } of characters) {
       // Get or create stamina state
       let stamina = getStaminaState(dgsm, characterId);
       if (!stamina) {
@@ -276,7 +285,7 @@ export const staminaFeature: WorldFeature = {
       }
 
       // Compute environmental acceleration
-      const multiplier = getAccelerationMultiplier(dgsm, sceneId);
+      const multiplier = getAccelerationMultiplier(dgsm, locationId);
       const effectiveMinutes = runtime.tickDurationMinutes * multiplier;
 
       // Accumulate fatigue
