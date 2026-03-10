@@ -218,7 +218,7 @@ describe("fireFeature", () => {
       // At intensity 1: Spot Hidden -10
       const penalties = fireCond!.mechanicalEffect?.skillPenalty;
       expect(penalties).toBeDefined();
-      const spotHidden = penalties!.find(p => p.skill === "Spot Hidden");
+      const spotHidden = penalties!.find(p => p.skill === "Perception");
       expect(spotHidden).toBeDefined();
       expect(spotHidden!.delta).toBe(-10);
     });

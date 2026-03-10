@@ -90,6 +90,7 @@ export interface DynamicScene {
   connections: string[];
   sceneImage?: SceneImage;
   events: string[];
+  indoor?: boolean;
 }
 
 export interface SceneItem {
@@ -372,6 +373,11 @@ export interface ModuleDigest {
     conditions: string[]; // Independent observable win checks; satisfying any one condition means victory
     conditionReasons: string[]; // Why each single condition alone is sufficient to confirm victory
   };
+  weatherPresets?: Array<{
+    regionId: string;
+    weatherType: "clear" | "rain" | "fog" | "storm" | "snow" | "extreme_heat" | "extreme_cold";
+    intensity: number;
+  }>;
 }
 
 /**

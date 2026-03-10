@@ -69,7 +69,7 @@ const INTENSITY_LABELS = [
 function getSkillPenalties(intensity: number): Array<{ skill: string; delta: number }> {
   const penalties: Array<{ skill: string; delta: number }> = [];
   // Always: Spot Hidden
-  penalties.push({ skill: "Spot Hidden", delta: -10 * intensity });
+  penalties.push({ skill: "Perception", delta: -10 * intensity });
   // At intensity >= 2: Listen
   if (intensity >= 2) {
     penalties.push({ skill: "Listen", delta: -10 * (intensity - 1) });
@@ -109,13 +109,13 @@ function writeAftermathCondition(dgsm: DynamicGameStateManager, sceneId: string,
     // no penalties
   } else if (totalBurnTicks <= 10) {
     description = "[Fire Aftermath] Partial burn damage \u2014 some items destroyed, soot covers surfaces";
-    penalties = [{ skill: "Spot Hidden", delta: -5 }];
+    penalties = [{ skill: "Perception", delta: -5 }];
   } else if (totalBurnTicks <= 20) {
     description = "[Fire Aftermath] Severe burn damage \u2014 structural integrity compromised, many items destroyed";
-    penalties = [{ skill: "Spot Hidden", delta: -10 }];
+    penalties = [{ skill: "Perception", delta: -10 }];
   } else {
     description = "[Fire Aftermath] Scene nearly destroyed by fire \u2014 most items and clues unavailable, structure unsafe";
-    penalties = [{ skill: "Spot Hidden", delta: -20 }];
+    penalties = [{ skill: "Perception", delta: -20 }];
   }
 
   dgsm.appendSceneCondition(sceneId, {

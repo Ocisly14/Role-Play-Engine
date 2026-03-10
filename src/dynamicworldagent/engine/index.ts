@@ -15,3 +15,4 @@ export {
 } from "./handlers/index.js";
 export { findAffectedCharacters, findAffectedScenes } from "./shared/impactPropagation.js";
 export { fireFeature } from "./features/fireFeature.js";
+export { weatherFeature } from "./features/weatherFeature.js";

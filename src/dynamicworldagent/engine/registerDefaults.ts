@@ -7,6 +7,7 @@ import {
   sceneInteractionHandler,
 } from "./handlers/index.js";
 import { fireFeature } from "./features/fireFeature.js";
+import { weatherFeature } from "./features/weatherFeature.js";
 
 export function createDefaultRegistry(): GameEngineRegistry {
   const registry = new GameEngineRegistry();
@@ -17,6 +18,7 @@ export function createDefaultRegistry(): GameEngineRegistry {
   registry.registerHandler(sceneInteractionHandler);
 
   registry.registerFeature(fireFeature);
+  registry.registerFeature(weatherFeature);
 
   return registry;
 }
