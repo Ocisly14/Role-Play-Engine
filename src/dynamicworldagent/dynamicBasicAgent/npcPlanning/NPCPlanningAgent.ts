@@ -14,6 +14,7 @@ import type {
   RevisePlansContext,
   CharacterAction,
 } from "./types.js";
+import { formatSceneItems, formatItemList } from "./itemFormatHelpers.js";
 import type { GameEngineRegistry } from "../../engine/registry.js";
 
 function parseJsonResponse<T>(raw: string): T {
@@ -102,6 +103,10 @@ export class NPCPlanningAgent {
         const relationships = this.formatRelationships(dgsm, npc.id);
         const sceneMap = this.formatSceneMap(dgsm, npc.id);
         const scenarioConditions = this.formatScenarioConditions(dgsm);
+        const npcLocation = state.npcLocations[npc.id];
+        const npcScene = npcLocation ? state.scenes.get(npcLocation) ?? null : null;
+        const sceneItems = formatSceneItems(npcScene);
+        const npcInventory = formatItemList(dgsm.getNpcInventory(npc.id));
 
         const prompt = buildGenerateDailyPlanPrompt({
           npcName: npc.name,
@@ -112,6 +117,8 @@ export class NPCPlanningAgent {
           relationships,
           sceneMap,
           scenarioConditions,
+          sceneItems,
+          npcInventory,
           gameDay,
           currentTime: state.timeOfDay,
           language,
@@ -399,6 +406,9 @@ export class NPCPlanningAgent {
     if (npc.background) parts.push(`Background: ${npc.background}`);
     if (npc.goals?.length) parts.push(`Goals: ${npc.goals.join(", ")}`);
     if (npc.secrets?.length) parts.push(`Secrets: ${npc.secrets.join(", ")}`);
+    if (npc.inventory?.length) {
+      parts.push(`Inventory:\n${formatItemList(npc.inventory)}`);
+    }
     return parts.join("\n");
   }
 

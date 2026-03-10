@@ -41,6 +41,8 @@ export interface DailyPlanParams {
   relationships: string;
   sceneMap: string;
   scenarioConditions: string;
+  sceneItems: string;
+  npcInventory: string;
   gameDay: number;
   currentTime: string;
   language: string;
@@ -157,6 +159,12 @@ ${params.sceneMap}
 
 ## Current Scene Conditions
 ${params.scenarioConditions || "None."}
+
+## Items in Current Scene
+${params.sceneItems || "No items in this scene."}
+
+## NPC Inventory
+${params.npcInventory || "Empty."}
 
 ## Current Time
 Day ${params.gameDay}, ${params.currentTime}
