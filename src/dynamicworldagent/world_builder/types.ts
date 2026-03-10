@@ -96,6 +96,12 @@ export interface SceneItem {
   id: string;
   name: string;
   description?: string;
+  damaged?: boolean;
+  damageDetails?: {
+    damagedBy: string;
+    damagedAt: string;
+    reason: string;
+  };
 }
 
 export interface SceneImage {

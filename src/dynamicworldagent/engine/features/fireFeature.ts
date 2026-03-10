@@ -124,6 +124,40 @@ function writeAftermathCondition(dgsm: DynamicGameStateManager, sceneId: string,
   });
 }
 
+function damageByFire(dgsm: DynamicGameStateManager, sceneId: string, intensity: number): void {
+  const scene = dgsm.getScene(sceneId);
+  if (!scene) return;
+
+  const now = new Date().toISOString();
+  const reason = `Destroyed by fire (intensity ${intensity})`;
+
+  // Damage 20% of undiscovered, undamaged clues
+  const damageableClues = scene.clues?.filter(c => !c.discovered && !c.damaged) ?? [];
+  if (damageableClues.length > 0) {
+    const clueCount = Math.round(damageableClues.length * 0.2);
+    if (clueCount > 0) {
+      const shuffled = [...damageableClues].sort(() => Math.random() - 0.5);
+      for (let i = 0; i < clueCount; i++) {
+        shuffled[i].damaged = true;
+        shuffled[i].damageDetails = { damagedBy: "fire", damagedAt: now, reason };
+      }
+    }
+  }
+
+  // Damage 20% of undamaged items
+  const damageableItems = scene.items?.filter(item => !item.damaged) ?? [];
+  if (damageableItems.length > 0) {
+    const itemCount = Math.round(damageableItems.length * 0.2);
+    if (itemCount > 0) {
+      const shuffled = [...damageableItems].sort(() => Math.random() - 0.5);
+      for (let i = 0; i < itemCount; i++) {
+        shuffled[i].damaged = true;
+        shuffled[i].damageDetails = { damagedBy: "fire", damagedAt: now, reason };
+      }
+    }
+  }
+}
+
 function updateFireBlocking(dgsm: DynamicGameStateManager, sceneId: string, intensity: number): void {
   const scene = dgsm.getScene(sceneId);
   if (!scene) return;
@@ -266,6 +300,9 @@ export const fireFeature: WorldFeature = {
 
         if (fs.phase === "growing") {
           fs.intensity += fs.growthRate;
+          if (fs.intensity > 2) {
+            damageByFire(dgsm, sceneId, fs.intensity);
+          }
           if (fs.intensity >= fs.maxIntensity) {
             fs.intensity = fs.maxIntensity;
             fs.phase = "decaying";

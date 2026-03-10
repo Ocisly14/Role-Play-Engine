@@ -3,6 +3,8 @@ import { fireFeature } from "../fireFeature.js";
 import type { TickRuntimeContext } from "../../types.js";
 import type { PlanNode } from "../../../dynamicBasicAgent/npcPlanning/types.js";
 import type { SceneCondition } from "../../../dynamicBasicAgent/npcPlanning/types.js";
+import type { ScenarioClue } from "../../../../shared/agents/models/scenarioTypes.js";
+import type { SceneItem } from "../../../world_builder/types.js";
 
 // ===== Minimal mock of DynamicGameStateManager =====
 
@@ -11,6 +13,8 @@ interface MockScene {
   name: string;
   connections: string[];
   events: string[];
+  clues?: ScenarioClue[];
+  items?: SceneItem[];
 }
 
 function createMockDgsm() {
@@ -130,6 +134,28 @@ function runTicks(dgsm: MockDgsm, runtime: TickRuntimeContext, count: number): v
   for (let i = 0; i < count; i++) {
     fireFeature.tick!(dgsm as any, runtime);
   }
+}
+
+// ===== Helper: create mock clues =====
+
+function makeClue(id: string, overrides?: Partial<ScenarioClue>): ScenarioClue {
+  return {
+    id,
+    clueText: `Clue ${id}`,
+    category: "physical",
+    difficulty: "regular",
+    location: "warehouse",
+    discovered: false,
+    ...overrides,
+  };
+}
+
+function makeItem(id: string, overrides?: Partial<SceneItem>): SceneItem {
+  return {
+    id,
+    name: `Item ${id}`,
+    ...overrides,
+  };
 }
 
 // ===== Tests =====
@@ -380,6 +406,152 @@ describe("fireFeature", () => {
 
       const result = await fireFeature.propagate!("warehouse", 0, dgsm as any, runtime);
       expect(result.spreadTo).toEqual([]);
+    });
+  });
+
+  // ===== tick -- clue damage =====
+
+  describe("tick -- clue damage", () => {
+    it("should not damage clues when intensity <= 2", () => {
+      const clues = [makeClue("c1"), makeClue("c2"), makeClue("c3"), makeClue("c4"), makeClue("c5")];
+      dgsm._addScene({ id: "lab", name: "Lab", connections: [], events: [], clues });
+
+      const node = makeFireNode("lab");
+      fireFeature.activate!(node, dgsm as any);
+
+      // 2 ticks: intensity 1→2 (still <= 2)
+      runTicks(dgsm, runtime, 2);
+
+      const damaged = clues.filter(c => c.damaged);
+      expect(damaged.length).toBe(0);
+    });
+
+    it("should damage 20% of undiscovered clues when intensity rises above 2", () => {
+      // 10 clues → 20% = 2 damaged per intensity increase
+      const clues = Array.from({ length: 10 }, (_, i) => makeClue(`c${i}`));
+      dgsm._addScene({ id: "lab", name: "Lab", connections: [], events: [], clues });
+
+      const node = makeFireNode("lab");
+      fireFeature.activate!(node, dgsm as any);
+
+      // 4 ticks: intensity 1→2→3 (intensity 3 > 2, triggers damage)
+      runTicks(dgsm, runtime, 4);
+
+      const damaged = clues.filter(c => c.damaged);
+      expect(damaged.length).toBe(2); // round(10 * 0.2) = 2
+      for (const c of damaged) {
+        expect(c.damageDetails?.damagedBy).toBe("fire");
+        expect(c.damageDetails?.reason).toContain("intensity 3");
+      }
+    });
+
+    it("should damage more clues on subsequent intensity increases", () => {
+      const clues = Array.from({ length: 10 }, (_, i) => makeClue(`c${i}`));
+      dgsm._addScene({ id: "lab", name: "Lab", connections: [], events: [], clues });
+
+      const node = makeFireNode("lab");
+      fireFeature.activate!(node, dgsm as any);
+
+      // 4 ticks: intensity 3 → damages 2 of 10 remaining (8 left undamaged)
+      runTicks(dgsm, runtime, 4);
+      expect(clues.filter(c => c.damaged).length).toBe(2);
+
+      // 2 more ticks: intensity 4 → damages round(8 * 0.2) = 2 more
+      runTicks(dgsm, runtime, 2);
+      expect(clues.filter(c => c.damaged).length).toBe(4);
+    });
+
+    it("should skip already discovered clues", () => {
+      const clues = [
+        makeClue("c1", { discovered: true }),
+        makeClue("c2", { discovered: true }),
+        makeClue("c3"),
+        makeClue("c4"),
+        makeClue("c5"),
+      ];
+      dgsm._addScene({ id: "lab", name: "Lab", connections: [], events: [], clues });
+
+      const node = makeFireNode("lab");
+      fireFeature.activate!(node, dgsm as any);
+
+      // Intensity 3: round(3 undiscovered * 0.2) = 1 damaged
+      runTicks(dgsm, runtime, 4);
+
+      const damaged = clues.filter(c => c.damaged);
+      expect(damaged.length).toBe(1);
+      // Discovered clues should not be damaged
+      expect(clues[0].damaged).toBeFalsy();
+      expect(clues[1].damaged).toBeFalsy();
+    });
+
+    it("should not damage when no clues remain", () => {
+      const clues = [makeClue("c1", { damaged: true }), makeClue("c2", { discovered: true })];
+      dgsm._addScene({ id: "lab", name: "Lab", connections: [], events: [], clues });
+
+      const node = makeFireNode("lab");
+      fireFeature.activate!(node, dgsm as any);
+
+      // Should not throw
+      runTicks(dgsm, runtime, 4);
+
+      // No new damage
+      expect(clues.filter(c => c.damaged).length).toBe(1); // only the pre-damaged one
+    });
+  });
+
+  // ===== tick -- item damage =====
+
+  describe("tick -- item damage", () => {
+    it("should damage 20% of undamaged items when intensity rises above 2", () => {
+      const items = Array.from({ length: 10 }, (_, i) => makeItem(`i${i}`));
+      dgsm._addScene({ id: "lab", name: "Lab", connections: [], events: [], items });
+
+      const node = makeFireNode("lab");
+      fireFeature.activate!(node, dgsm as any);
+
+      // 4 ticks: intensity 1→2→3, triggers damage at intensity 3
+      runTicks(dgsm, runtime, 4);
+
+      const damaged = items.filter(it => it.damaged);
+      expect(damaged.length).toBe(2); // round(10 * 0.2)
+      for (const it of damaged) {
+        expect(it.damageDetails?.damagedBy).toBe("fire");
+        expect(it.damageDetails?.reason).toContain("intensity 3");
+      }
+    });
+
+    it("should skip already damaged items", () => {
+      const items = [
+        makeItem("i1", { damaged: true }),
+        makeItem("i2"),
+        makeItem("i3"),
+        makeItem("i4"),
+        makeItem("i5"),
+      ];
+      dgsm._addScene({ id: "lab", name: "Lab", connections: [], events: [], items });
+
+      const node = makeFireNode("lab");
+      fireFeature.activate!(node, dgsm as any);
+
+      // Intensity 3: round(4 undamaged * 0.2) = 1 newly damaged
+      runTicks(dgsm, runtime, 4);
+
+      expect(items.filter(it => it.damaged).length).toBe(2); // 1 pre-damaged + 1 new
+    });
+
+    it("should damage both clues and items together", () => {
+      const clues = Array.from({ length: 5 }, (_, i) => makeClue(`c${i}`));
+      const items = Array.from({ length: 5 }, (_, i) => makeItem(`i${i}`));
+      dgsm._addScene({ id: "lab", name: "Lab", connections: [], events: [], clues, items });
+
+      const node = makeFireNode("lab");
+      fireFeature.activate!(node, dgsm as any);
+
+      // Intensity 3: round(5 * 0.2) = 1 clue, round(5 * 0.2) = 1 item
+      runTicks(dgsm, runtime, 4);
+
+      expect(clues.filter(c => c.damaged).length).toBe(1);
+      expect(items.filter(it => it.damaged).length).toBe(1);
     });
   });
 
