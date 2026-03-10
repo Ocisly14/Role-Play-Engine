@@ -130,9 +130,10 @@ export type TickResult =
       type: "player_interrupt";
       actions: CharacterAction[];
       witnessEvents: PlayerWitnessEvent[];
-      /** Remaining bucket keys + nodes to resume if player chooses continue */
-      remainingBuckets: Array<{ bucketKey: number; nodes: PlanNode[] }>;
-      /** Game day at time of interrupt */
+      /** Minutes remaining after this interrupt */
+      remainingMinutes: number;
+      /** Game-time minute offset to resume from */
+      resumeFromMinutes: number;
       gameDay: number;
     };
 

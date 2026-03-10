@@ -20,8 +20,10 @@ export interface PlayerPlanParams {
   handlerPrompt?: string;
   /** Registry-generated prompt with current world state from all active features */
   worldStatePrompt?: string;
-  /** Registry-generated prompt from WorldFeature.planningPrompt (field schemas + semantics) */
-  featurePlanningPrompt?: string;
+  /** Registry-generated prompt: impact levels + all feature planning prompts */
+  planningPrompt?: string;
+  /** Registry-generated output schema prompt */
+  outputSchemaPrompt?: string;
 }
 
 /**
@@ -81,6 +83,62 @@ Typical skills: Survival (*), First Aid, Medicine, Navigate, Climb, Swim, Jump, 
 **Key story moments — interpreting lore, performing rituals, making dramatic speeches.**
 Triggered by: decoding ancient manuscripts, performing a ritual, delivering a critical speech, creative problem-solving through art or writing.
 Typical skills: History, Occult, Language (*), Art/Craft (*), Psychology, Law.`;
+
+const DEFAULT_PLAYER_OUTPUT_SCHEMA = `## Output
+Return a JSON array of PlanNode objects. No extra text. Always write in English.
+
+Each node is a single flat JSON object combining:
+1. All **Base Fields** (required on every node)
+2. **Type-specific fields** for the chosen \`type\` (see below — omit if type has none)
+
+### Base Fields (every node)
+\`\`\`json
+{
+  "nodeId": "unique-id",
+  "action": "description of what the player does",
+  "location": "sceneId",
+  "type": "routine|movement|character_interaction|object_interaction|scene_interaction",
+  "actionType": "exploration|social|combat|stealth|chase|mental|environmental|narrative (OMIT if no skill check)",
+  "difficulty": "regular|hard|extreme (only when actionType present)",
+  "impact": 0,
+  "timeAdvanceMinutes": 15,
+  "status": "pending"
+}
+\`\`\`
+
+### Type-Specific Additional Fields
+
+**character_interaction** adds:
+- \`"targetCharacterId"\`: (REQUIRED) e.g. \`"npc_dr_morgan"\`
+- \`"characterInteractionPayload"\`: (optional) e.g. \`{"transferType":"item","itemId":"mysterious_letter"}\`
+
+**object_interaction** adds:
+- \`"objectInteractionPayload"\`: (optional) e.g. \`{"action":"pickup","itemId":"ancient_tome"}\`
+
+**scene_interaction** adds:
+- \`"sceneConnectionEffect"\`: (optional) e.g. \`{"targetScenarioId":"basement_entrance","action":"block"}\`
+
+### Complete Example
+\`\`\`json
+[
+  {
+    "nodeId": "ci1",
+    "action": "Hand over the mysterious letter to Dr. Morgan",
+    "location": "hospital_lobby",
+    "type": "character_interaction",
+    "actionType": "social",
+    "difficulty": "regular",
+    "impact": 2,
+    "timeAdvanceMinutes": 10,
+    "status": "pending",
+    "targetCharacterId": "npc_dr_morgan",
+    "characterInteractionPayload": {
+      "transferType": "item",
+      "itemId": "mysterious_letter"
+    }
+  }
+]
+\`\`\``;
 
 export function buildPlayerPlanPrompt(params: PlayerPlanParams): string {
   const lang = params.language?.toLowerCase() ?? "en";
@@ -177,7 +235,7 @@ Difficulty reflects **both** the inherent challenge **and** the quality of the p
 
 Use the relationship score, scene conditions, and player approach holistically — a clever approach against a hostile NPC might still be "hard", while a vague approach in a safe situation might only be "regular".
 
-${params.featurePlanningPrompt || ""}
+${params.planningPrompt || ""}
 
 ## Time Advance
 Estimate realistic minutes for each action:
@@ -187,29 +245,5 @@ Estimate realistic minutes for each action:
 - Travel between scenes: 15-30
 - Extended activity: 30-60
 
-## Output
-Return a JSON array of PlanNode objects. No extra text outside the JSON.
-
-\`\`\`json
-[
-  {
-    "nodeId": "unique-id",
-    "gameTime": "HH:MM",
-    "action": "description of what the player does",
-    "location": "${params.currentScenarioId}",
-    "type": "routine|movement|character_interaction|object_interaction|scene_interaction",
-    "actionType": "exploration|social|combat|stealth|chase|mental|environmental|narrative (OMIT if no skill check needed)",
-    "difficulty": "regular|hard|extreme (only when actionType present)",
-    "impact": 0,
-    "timeAdvanceMinutes": 15,
-    "targetCharacterId": "npc id (only for character_interaction)",
-    "characterInteractionPayload": { "transferType": "item|clue|information", "itemId": "", "clueId": "", "informationContent": "" },
-    "objectInteractionPayload": { "action": "pickup|place|use|inspect|destroy", "itemId": "" },
-    "sceneConnectionEffect": { "targetScenarioId": "...", "action": "block|unblock" },
-    "status": "pending"
-  }
-]
-\`\`\`
-
-Only include optional fields (actionType, difficulty, targetCharacterId, payloads, sceneConnectionEffect) when relevant. Omit them otherwise.`;
+${params.outputSchemaPrompt || DEFAULT_PLAYER_OUTPUT_SCHEMA}`;
 }

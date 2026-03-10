@@ -116,7 +116,11 @@ export class NPCPlanningAgent {
           currentTime: state.timeOfDay,
           language,
           handlerPrompt: registry?.buildHandlerPrompt(),
-          featurePlanningPrompt: registry?.buildFeaturePlanningPrompt(),
+          planningPrompt: registry?.buildPlanningPrompt(),
+          outputSchemaPrompt: registry?.buildOutputSchemaPrompt({
+            isPlayer: false,
+            extraInstructions: "Only generate nodes from current time onward. Use concrete \"HH:MM\" timestamps that reflect realistic timing for each action. Include optional fields only when relevant.",
+          }),
         });
 
         const response = await generateText({

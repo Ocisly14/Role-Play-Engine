@@ -46,8 +46,10 @@ export interface DailyPlanParams {
   language: string;
   /** Registry-generated prompt listing all registered node types */
   handlerPrompt?: string;
-  /** Registry-generated prompt from WorldFeature.planningPrompt (field schemas) */
-  featurePlanningPrompt?: string;
+  /** Registry-generated prompt: impact levels + all feature planning prompts */
+  planningPrompt?: string;
+  /** Registry-generated output schema prompt */
+  outputSchemaPrompt?: string;
 }
 
 /**
@@ -70,6 +72,61 @@ const DEFAULT_NPC_NODE_TYPE_REFERENCE = `## Node Type Reference
 - **mental**: Sanity resistance — confronting cosmic horror
 - **environmental**: Surviving harsh conditions, emergency medicine, creative movement (climbing, jumping, swimming)
 - **narrative**: Interpreting lore, performing rituals, dramatic speeches`;
+
+const DEFAULT_NPC_OUTPUT_SCHEMA = `## Output
+Return a JSON array of PlanNode objects. No extra text. Always write in English.
+Only generate nodes from current time onward. Use concrete "HH:MM" timestamps that reflect realistic timing for each action.
+
+Each node is a single flat JSON object combining:
+1. All **Base Fields** (required on every node)
+2. **Type-specific fields** for the chosen \`type\` (see below — omit if type has none)
+
+### Base Fields (every node)
+\`\`\`json
+{
+  "nodeId": "unique-id",
+  "gameTime": "HH:MM",
+  "action": "description of what the NPC does",
+  "location": "scenarioId where this happens",
+  "type": "routine|movement|character_interaction|object_interaction|scene_interaction",
+  "actionType": "exploration|social|combat|stealth|chase|mental|environmental|narrative (OMIT if no skill roll)",
+  "impact": 0,
+  "status": "pending"
+}
+\`\`\`
+
+### Type-Specific Additional Fields
+
+**character_interaction** adds:
+- \`"targetCharacterId"\`: (REQUIRED) e.g. \`"npc_dr_morgan"\`
+- \`"characterInteractionPayload"\`: (optional) e.g. \`{"transferType":"item","itemId":"mysterious_letter"}\`
+
+**object_interaction** adds:
+- \`"objectInteractionPayload"\`: (optional) e.g. \`{"action":"pickup","itemId":"ancient_tome"}\`
+
+**scene_interaction** adds:
+- \`"sceneConnectionEffect"\`: (optional) e.g. \`{"targetScenarioId":"basement_entrance","action":"block"}\`
+
+### Complete Example
+\`\`\`json
+[
+  {
+    "nodeId": "ci1",
+    "gameTime": "09:00",
+    "action": "Hand over the mysterious letter to Dr. Morgan",
+    "location": "hospital_lobby",
+    "type": "character_interaction",
+    "actionType": "social",
+    "impact": 2,
+    "status": "pending",
+    "targetCharacterId": "npc_dr_morgan",
+    "characterInteractionPayload": {
+      "transferType": "item",
+      "itemId": "mysterious_letter"
+    }
+  }
+]
+\`\`\``;
 
 export function buildGenerateDailyPlanPrompt(params: DailyPlanParams): string {
   return `You are the Game Master for a Call of Cthulhu tabletop RPG.
@@ -127,30 +184,9 @@ Set actionType **only** when the outcome is genuinely uncertain and requires a s
 
 ${params.handlerPrompt || DEFAULT_NPC_NODE_TYPE_REFERENCE}
 
-${params.featurePlanningPrompt || ""}
+${params.planningPrompt || ""}
 
-## Output
-Return a JSON array of nodes. No extra text. Always write in English.
-Only generate nodes from current time onward. Use concrete "HH:MM" timestamps that reflect realistic timing for each action. Include optional fields only when relevant.
-
-\`\`\`json
-[
-  {
-    "nodeId": "unique-id",
-    "gameTime": "HH:MM",
-    "action": "description of what the NPC does",
-    "location": "scenarioId where this happens",
-    "type": "routine|movement|character_interaction|object_interaction|scene_interaction",
-    "actionType": "exploration|social|combat|stealth|chase|mental|environmental|narrative (OMIT if no skill roll)",
-    "impact": 0,
-    "targetCharacterId": "only for character_interaction",
-    "characterInteractionPayload": { "transferType": "item|clue|information", "itemId": "", "clueId": "", "informationContent": "" },
-    "objectInteractionPayload": { "action": "pickup|place|use|inspect|destroy", "itemId": "" },
-    "sceneConnectionEffect": { "targetScenarioId": "", "action": "block|unblock" },
-    "status": "pending"
-  }
-]
-\`\`\``;
+${params.outputSchemaPrompt || DEFAULT_NPC_OUTPUT_SCHEMA}`;
 }
 
 export interface RevisePlansParams {
@@ -231,13 +267,6 @@ Determine how the NPC "${c.npcName}" perceives the following events, and whether
 - Pending plan: ${c.pendingNodesSummary || "No pending plans."}
 
 ## Events Witnessed
-Each event has an impact level indicating proximity:
-- impact 1: directly targeted (private, one-on-one)
-- impact 2: same room/sub-scene (directly witnessed)
-- impact 3: same building (heard/felt through walls or floors)
-- impact 4: nearby area (distant sound, visible smoke, rumor from next door)
-- impact 5: global event (news, supernatural disturbance, widespread effect)
-
 ${c.triggeringEvents}
 
 ## Instructions

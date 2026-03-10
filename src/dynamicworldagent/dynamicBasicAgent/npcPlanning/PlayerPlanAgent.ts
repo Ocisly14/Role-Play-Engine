@@ -92,7 +92,11 @@ export class PlayerPlanAgent {
     // Build registry-generated dynamic prompt sections
     const handlerPrompt = registry?.buildHandlerPrompt();
     const worldStatePrompt = registry?.buildWorldStatePrompt(dgsm);
-    const featurePlanningPrompt = registry?.buildFeaturePlanningPrompt();
+    const planningPrompt = registry?.buildPlanningPrompt();
+    const outputSchemaPrompt = registry?.buildOutputSchemaPrompt({
+      isPlayer: true,
+      extraInstructions: "Only include optional fields (actionType, difficulty, targetCharacterId, payloads, sceneConnectionEffect) when relevant. Omit them otherwise.",
+    });
 
     const params: PlayerPlanParams = {
       playerInput,
@@ -114,7 +118,8 @@ export class PlayerPlanAgent {
       language: lang,
       handlerPrompt,
       worldStatePrompt,
-      featurePlanningPrompt,
+      planningPrompt,
+      outputSchemaPrompt,
     };
 
     const prompt = buildPlayerPlanPrompt(params);

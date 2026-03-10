@@ -35,7 +35,7 @@ import { DirectorAgent } from "../dynamicBasicAgent/director/directorAgent.js";
 import { KeeperAgent } from "../dynamicBasicAgent/keeper/keeperAgent.js";
 import { PlayerPlanAgent } from "../dynamicBasicAgent/npcPlanning/PlayerPlanAgent.js";
 import { NPCPlanningAgent } from "../dynamicBasicAgent/npcPlanning/NPCPlanningAgent.js";
-import { runTick, resumeTick } from "../dynamicBasicAgent/npcPlanning/tickProcessor.js";
+import { runPlayerAction, resumePlayerAction } from "../dynamicBasicAgent/npcPlanning/tickProcessor.js";
 import { ACTION_TYPE_SKILL_MAP } from "../dynamicBasicAgent/npcPlanning/actionTypeSkillMap.js";
 import type { PlanNode, TickResult } from "../dynamicBasicAgent/npcPlanning/types.js";
 import { createDefaultRegistry, createExecutionContext } from "../engine/index.js";
@@ -460,7 +460,8 @@ export const buildDynamicGraph = (
     try {
       // Check if we're resuming from a player witness interrupt
       const pendingInterrupt = dgsm.getContextualData("pendingTickInterrupt") as {
-        remainingBuckets: Array<{ bucketKey: number; nodes: PlanNode[] }>;
+        resumeFromMinutes: number;
+        remainingMinutes: number;
         previousActions: any[];
       } | null;
       const playerContinueChoice = dgsm.getContextualData("playerWitnessChoice") as string | null;
@@ -472,13 +473,14 @@ export const buildDynamicGraph = (
         dgsm.setContextualData("pendingTickInterrupt", null);
         dgsm.setContextualData("playerWitnessChoice", null);
         console.log("[TickExecutionLoop] Resuming tick after player chose to continue");
-        tickResult = await resumeTick(
-          pendingInterrupt.remainingBuckets,
+        tickResult = await resumePlayerAction(
+          pendingPlayerNodes,
           pendingInterrupt.previousActions,
+          pendingInterrupt.resumeFromMinutes,
+          pendingInterrupt.remainingMinutes,
           dgsm,
           npcPlanningAgent,
           dgsm.getState().sessionId,
-          pendingPlayerNodes,
           language,
           registry,
           executionCtx
@@ -491,7 +493,7 @@ export const buildDynamicGraph = (
         tickResult = { type: "completed", actions: pendingInterrupt.previousActions };
       } else {
         // Normal execution
-        tickResult = await runTick(
+        tickResult = await runPlayerAction(
           pendingPlayerNodes,
           dgsm,
           npcPlanningAgent,
@@ -511,7 +513,8 @@ export const buildDynamicGraph = (
       if (tickResult.type === "player_interrupt") {
         // Save interrupt state for resume
         dgsm.setContextualData("pendingTickInterrupt", {
-          remainingBuckets: tickResult.remainingBuckets,
+          resumeFromMinutes: tickResult.resumeFromMinutes,
+          remainingMinutes: tickResult.remainingMinutes,
           previousActions: tickResult.actions,
         });
 

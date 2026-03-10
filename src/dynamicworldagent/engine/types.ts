@@ -28,11 +28,11 @@ export interface NodeHandler {
 
 // ===== World Feature: self-running world system =====
 
-/** Result returned by WorldFeature.onBucketEnd */
+/** Result returned by WorldFeature.onTickEnd */
 export interface WorldFeatureResult {
-  /** New PlanNodes to inject into subsequent buckets */
+  /** New PlanNodes to inject into subsequent ticks */
   newNodes?: PlanNode[];
-  /** Player witness events (used by impact-gate-style features) */
+  /** Player witness events (for interrupt handling) */
   playerEvents?: Array<{ event: CharacterAction; impact: number }>;
 }
 
@@ -63,11 +63,15 @@ export interface NpcPlanningCapability {
   ): Promise<void>;
 }
 
-/** Runtime dependencies passed to WorldFeature lifecycle hooks */
+/** Runtime dependencies passed to WorldFeature hooks */
 export interface TickRuntimeContext {
   sessionId: string;
   gameDay: number;
   language: string;
+  /** Current tick's time label (HH:MM) */
+  tickTime: string;
+  /** Duration of this tick in minutes (usually 5, can be less for final tick) */
+  tickDurationMinutes: number;
   npcPlanning: NpcPlanningCapability;
 }
 
@@ -75,35 +79,42 @@ export interface WorldFeature {
   /** Unique identifier */
   id: string;
 
-  /** Which SceneCondition types this feature manages */
-  conditionTypes: string[];
-
   /** Human-readable description */
   description: string;
 
-  /** Called after each 5-min bucket. May return new PlanNodes and/or player events. */
-  onBucketEnd(
-    bucketActions: CharacterAction[],
-    dgsm: DynamicGameStateManager,
-    bucketTime: string,
-    runtime: TickRuntimeContext
-  ): Promise<WorldFeatureResult>;
-
-  /** Called once at tick start */
-  onTickStart?(dgsm: DynamicGameStateManager, runtime: TickRuntimeContext): void;
-
-  /** Called once at tick end with all actions from the entire tick */
-  onTickEnd?(allActions: CharacterAction[], dgsm: DynamicGameStateManager, runtime: TickRuntimeContext): void;
-
-  /** Generate current state description for LLM context. Return "" to omit from prompt. */
-  stateDescription(dgsm: DynamicGameStateManager): string;
+  /** How many full ticks between settlements (1 = every tick, 2 = every 10 min) */
+  tickInterval: number;
 
   /**
-   * Static prompt section injected into the planning agent prompt.
-   * Describes what PlanNode fields this feature requires and their semantics,
-   * so the LLM knows to output them. Return "" to omit.
+   * Spatial scope of this feature's effects.
+   * A number (0-5) uses the impact level scale.
+   * "dynamic" means scope follows each action's own impact level.
+   */
+  impactScope: number | "dynamic";
+
+  /**
+   * Static prompt section describing this feature's effects.
+   * Injected into the planning agent prompt. Should NOT describe impact levels
+   * (those are handled by the engine). Return "" to omit.
    */
   planningPrompt: string;
+
+  /**
+   * Optional fields this feature adds to every PlanNode output.
+   * Used by the registry to build the output schema prompt.
+   * Return undefined or [] if this feature adds no node fields.
+   */
+  planNodeFields?: Array<{ field: string; type: string; description: string }>;
+
+  /** Generate current state description for LLM context. Return "" to omit. */
+  stateDescription(dgsm: DynamicGameStateManager): string;
+
+  /** Called at tick end. Receives all actions from this tick. */
+  onTickEnd(
+    tickActions: CharacterAction[],
+    dgsm: DynamicGameStateManager,
+    runtime: TickRuntimeContext
+  ): Promise<WorldFeatureResult>;
 }
 
 // ===== Execution Context: shared utilities passed to handlers =====

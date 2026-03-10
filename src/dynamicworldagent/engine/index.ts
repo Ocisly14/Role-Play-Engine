@@ -13,3 +13,4 @@ export {
   sceneInteractionHandler,
 } from "./handlers/index.js";
 export { ImpactGateFeature } from "./features/impactGateFeature.js";
+export { findAffectedCharacters, findAffectedScenes } from "./shared/impactPropagation.js";

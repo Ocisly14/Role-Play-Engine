@@ -21,15 +21,14 @@ function timeToMinutes(hhmm: string): number {
   return h * 60 + m;
 }
 
-function minutesToBucket(minutes: number, bucketSize = 5): number {
-  return Math.floor(minutes / bucketSize) * bucketSize;
-}
-
-function getBucketLabel(bucketMinutes: number): string {
-  const h = Math.floor(bucketMinutes / 60);
-  const m = bucketMinutes % 60;
+function minutesToTimeLabel(minutes: number): string {
+  const clamped = Math.min(minutes, 1439);
+  const h = Math.floor(clamped / 60);
+  const m = clamped % 60;
   return `${String(h).padStart(2, "0")}:${String(m).padStart(2, "0")}`;
 }
+
+const TICK_DURATION_MINUTES = 5;
 
 // ==================== Clue Discovery ====================
 
@@ -293,45 +292,83 @@ function embedDiscoveredClues(
   );
 }
 
-// ==================== Main runTick ====================
+// ==================== Single tick execution ====================
 
-export async function runTick(
-  playerNodes: PlanNode[],
-  dgsm: DynamicGameStateManager,
-  npcPlanningAgent: NPCPlanningAgent,
-  sessionId: string,
-  language: string = "en",
-  registry: GameEngineRegistry,
-  ctx: ExecutionContext
-): Promise<TickResult> {
+interface SingleTickParams {
+  tickStartMinutes: number;
+  tickDurationMinutes: number;
+  playerNodes: PlanNode[];
+  dgsm: DynamicGameStateManager;
+  npcPlanningAgent: NPCPlanningAgent;
+  sessionId: string;
+  language: string;
+  registry: GameEngineRegistry;
+  ctx: ExecutionContext;
+}
+
+interface SingleTickResult {
+  actions: CharacterAction[];
+  playerFailed: boolean;
+  playerEvents: PlayerWitnessEvent[];
+  injectedNodes: PlanNode[];
+}
+
+/**
+ * Execute a single 5-minute tick.
+ *
+ * 1. Fetch NPC nodes due in [tickStart, tickEnd)
+ * 2. Filter player nodes in range
+ * 3. Merge, sort (gameTime ASC, DEX DESC), scan encounters
+ * 4. Execute all nodes via registry handlers
+ * 5. Post-execution: relationship update, NPC memory, clue discovery, fumble damage, scene events, NPC failure revisePlans
+ * 6. Fire eligible features via registry.shouldFeatureFire()
+ * 7. Return tick result
+ */
+async function executeSingleTick(params: SingleTickParams): Promise<SingleTickResult> {
+  const {
+    tickStartMinutes,
+    tickDurationMinutes,
+    playerNodes,
+    dgsm,
+    npcPlanningAgent,
+    sessionId,
+    language,
+    registry,
+    ctx,
+  } = params;
+
   const state = dgsm.getState();
   const gameDay = state.gameDay;
-  const currentTime = state.timeOfDay;
+  const tickEndMinutes = tickStartMinutes + tickDurationMinutes - 1; // inclusive end
+  const tickStartTime = minutesToTimeLabel(tickStartMinutes);
+  const tickEndTime = minutesToTimeLabel(tickEndMinutes);
+  const isFullTick = tickDurationMinutes >= TICK_DURATION_MINUTES;
 
   // Build runtime context for WorldFeature hooks
   const tickRuntime: TickRuntimeContext = {
-    sessionId, gameDay, language,
+    sessionId,
+    gameDay,
+    language,
+    tickTime: tickStartTime,
+    tickDurationMinutes,
     npcPlanning: npcPlanningAgent,
   };
 
-  // Fire onTickStart for all registered WorldFeatures
-  for (const feature of registry.getAllFeatures()) {
-    feature.onTickStart?.(dgsm, tickRuntime);
-  }
+  // 1. Get NPC nodes due up to end of this tick
+  const dueNpcNodes = await npcPlanningAgent.getDueNpcNodes(sessionId, gameDay, tickEndTime, dgsm);
 
-  // Calculate new game time based on max player timeAdvanceMinutes
-  const maxPlayerAdvance = playerNodes.reduce((max, n) => Math.max(max, n.timeAdvanceMinutes), 0);
-  const currentMinutes = timeToMinutes(currentTime);
-  const newMinutes = currentMinutes + maxPlayerAdvance;
-  const newTime = getBucketLabel(Math.min(newMinutes, 1439)); // cap at 23:59
+  // Filter to nodes >= tickStartTime
+  const npcNodesInRange = dueNpcNodes.filter((n) => n.gameTime >= tickStartTime);
 
-  // 1. Get all due NPC nodes
-  const dueNpcNodes = await npcPlanningAgent.getDueNpcNodes(sessionId, gameDay, newTime, dgsm);
+  // 2. Filter player nodes in this tick's time range
+  const playerNodesInRange = playerNodes.filter((n) => {
+    const nodeMinutes = timeToMinutes(n.gameTime);
+    return nodeMinutes >= tickStartMinutes && nodeMinutes <= tickEndMinutes;
+  });
 
-  // Merge all nodes: NPC nodes + player nodes
-  const allNodes: PlanNode[] = [...dueNpcNodes, ...playerNodes];
+  // 3. Merge, sort by gameTime ASC then DEX DESC
+  const allNodes: PlanNode[] = [...npcNodesInRange, ...playerNodesInRange];
 
-  // Sort by gameTime ASC, then DEX DESC
   allNodes.sort((a, b) => {
     const timeDiff = a.gameTime.localeCompare(b.gameTime);
     if (timeDiff !== 0) return timeDiff;
@@ -342,169 +379,137 @@ export async function runTick(
     return dexB - dexA;
   });
 
-  // 3. Scan unplanned encounters (same-scene NPC pairs with |score| >= 60)
+  // Scan unplanned encounters (same-scene NPC pairs with |score| >= 60)
   scanUnplannedEncounters(allNodes, dgsm);
 
-  // Collect player character IDs for identification
-  const playerCharacterIds = new Set(playerNodes.map((n) => n.characterId));
-
-  // 4. Group into 5-minute buckets
-  const buckets = new Map<number, PlanNode[]>();
-  for (const node of allNodes) {
-    const bucket = minutesToBucket(timeToMinutes(node.gameTime));
-    if (!buckets.has(bucket)) buckets.set(bucket, []);
-    buckets.get(bucket)!.push(node);
-  }
-
-  const allActions: CharacterAction[] = [];
-  const sortedBucketKeys = [...buckets.keys()].sort((a, b) => a - b);
-
-  // Track player failure state for cascade
+  // 4. Execute all nodes
+  const tickActions: CharacterAction[] = [];
   let playerFailed = false;
 
-  // 5. Execute each bucket sequentially
-  for (const bucketKey of sortedBucketKeys) {
-    const bucketNodes = buckets.get(bucketKey)!;
-    const bucketTime = getBucketLabel(bucketKey);
-    const bucketActions: CharacterAction[] = [];
-    let playerFailedInBucket = false;
+  for (const node of allNodes) {
+    // If player already failed, skip subsequent player nodes
+    if (playerFailed && node.isPlayer) {
+      continue;
+    }
 
-    // Execute all nodes in this bucket serially
-    for (const node of bucketNodes) {
-      // If player already failed, skip subsequent player nodes
-      if ((playerFailed || playerFailedInBucket) && node.isPlayer) {
-        continue;
-      }
+    // Dispatch to registry handler
+    const handler = registry.getHandler(node.type);
+    if (!handler) {
+      console.warn(`[TickProcessor] No handler for node type: ${node.type}, skipping`);
+      continue;
+    }
+    const action = handler.execute(node, dgsm, ctx);
+    tickActions.push(action);
 
-      // Dispatch to registry handler
-      const handler = registry.getHandler(node.type);
-      if (!handler) {
-        console.warn(`[TickProcessor] No handler for node type: ${node.type}, skipping`);
-        continue;
-      }
-      const action = handler.execute(node, dgsm, ctx);
-      bucketActions.push(action);
-      allActions.push(action);
+    // Check if a player node just failed
+    if (action.status === "failed" && node.isPlayer) {
+      playerFailed = true;
+      // Continue executing remaining NPC nodes (skip logic above handles player nodes)
+    }
 
-      // Check if a player node just failed
-      if (action.status === "failed" && node.isPlayer) {
-        playerFailedInBucket = true;
-        // Continue executing remaining NPC nodes in this bucket
-        // (the skip logic above handles player nodes)
-      }
+    // 5. Post-execution processing
 
-      // On character_interaction success -> update relationship (before logging so we can include delta)
-      let relationshipChange: string | undefined;
-      if (action.status === "completed" && node.type === "character_interaction" && node.targetCharacterId) {
-        const relResult = await npcPlanningAgent.updateRelationshipViaLLM(dgsm, node.characterId, node.targetCharacterId, action.outcome, language);
-        if (relResult) {
-          const sign = relResult.scoreDelta >= 0 ? "+" : "";
-          relationshipChange = `[relationship ${sign}${relResult.scoreDelta} → ${relResult.newScore}, ${relResult.note}]`;
-        }
-      }
-
-      // Log NPC actions (not player)
-      if (!node.isPlayer) {
-        let logEntry = `Day${gameDay} ${action.gameTime} [${action.location}] - ${action.outcome}`;
-        if (relationshipChange) logEntry += ` ${relationshipChange}`;
-        await npcPlanningAgent.appendMemoryLog(sessionId, node.characterId, logEntry, gameDay, action.gameTime, action.location);
-        await npcPlanningAgent.markNodeCompleted(sessionId, node.characterId, gameDay, node.nodeId, action.outcome);
-      }
-
-      // Clue discovery — only for player's successful nodes
-      if (action.status === "completed" && node.isPlayer) {
-        const effectiveSuccess: SuccessLevel = action.successLevel ?? "regular";
-        const clues = await discoverClues(node, effectiveSuccess, dgsm, language);
-        if (clues.length > 0) {
-          action.discoveredClues = clues;
-          embedDiscoveredClues(clues, dgsm, language as "en" | "zh");
-          // Mark scene clues as discovered
-          for (const entry of clues) {
-            if (entry.source === "scene") {
-              dgsm.markScenarioClueDiscovered(entry.clueId, node.characterName);
-            } else if (entry.source === "npc") {
-              dgsm.markNpcClueRevealed(entry.sourceId, entry.clueId);
-            }
-            // Add to global discoveredClues list
-            dgsm.addDiscoveredClue({
-              text: entry.clueText,
-              type: entry.source === "scene" ? "scenario" : entry.clueId.includes("_secret_") ? "secret" : "npc",
-              sourceName: entry.sourceName,
-              discoveredBy: node.characterName,
-              discoveredAt: new Date().toISOString(),
-              difficulty: entry.difficulty,
-              method: node.action,
-            });
-          }
-          console.log(
-            `[TickProcessor] Player discovered ${clues.length} clue(s): ${clues.map((c) => `[${c.difficulty}] ${c.clueText.slice(0, 40)}`).join("; ")}`
-          );
-        }
-      }
-
-      // Fumble -> damage a random undiscovered scene clue
-      if (node.isPlayer && action.successLevel === "fumble") {
-        const scene = dgsm.getCurrentScene();
-        const damageable = scene?.clues?.filter((c) => !c.discovered && !c.damaged) ?? [];
-        if (damageable.length > 0) {
-          const victim = damageable[Math.floor(Math.random() * damageable.length)];
-          dgsm.damageScenarioClue(victim.id, node.characterName, `Fumbled: ${node.action}`);
-          action.damagedClue = { clueId: victim.id, sourceName: scene!.name };
-          console.log(`[TickProcessor] Fumble damaged clue: ${victim.clueText.slice(0, 40)}`);
-        }
-      }
-
-      // Scene event logging for high-impact completed NPC actions
-      if (action.status === "completed" && action.impact >= 2 && !node.isPlayer) {
-        const scene = dgsm.getScene(node.location);
-        if (scene) {
-          scene.events.push(`${node.characterName}: ${action.outcome}`);
-        }
-      }
-
-      // On failure -> immediate revisePlans (no gate) — NPC only
-      if (action.status === "failed" && !node.isPlayer) {
-        const longTermIntent = await npcPlanningAgent.getLongTermIntent(sessionId, node.characterId);
-        const memoryLog = await npcPlanningAgent.getMemoryLog(sessionId, node.characterId, gameDay);
-        const pendingNodes = await npcPlanningAgent.getPendingNodes(sessionId, node.characterId, gameDay);
-        await npcPlanningAgent.revisePlans(dgsm, sessionId, node.characterId, {
-          longTermIntent,
-          memoryLog,
-          pendingNodes,
-          trigger: {
-            type: "failure",
-            failureReason: action.failureReason!,
-            action: action.action,
-            gameTime: action.gameTime,
-          },
-        }, language);
+    // On character_interaction success -> update relationship
+    let relationshipChange: string | undefined;
+    if (action.status === "completed" && node.type === "character_interaction" && node.targetCharacterId) {
+      const relResult = await npcPlanningAgent.updateRelationshipViaLLM(dgsm, node.characterId, node.targetCharacterId, action.outcome, language);
+      if (relResult) {
+        const sign = relResult.scoreDelta >= 0 ? "+" : "";
+        relationshipChange = `[relationship ${sign}${relResult.scoreDelta} → ${relResult.newScore}, ${relResult.note}]`;
       }
     }
 
-    // WorldFeature onBucketEnd hooks (includes impact gate, may inject new nodes)
-    let allPlayerEvents: Array<{ event: CharacterAction; impact: number }> = [];
-    for (const feature of registry.getAllFeatures()) {
-      const result = await feature.onBucketEnd(bucketActions, dgsm, bucketTime, tickRuntime);
-      if (result.newNodes?.length) {
-        for (const newNode of result.newNodes) {
-          const newBucket = minutesToBucket(timeToMinutes(newNode.gameTime));
-          if (!buckets.has(newBucket)) {
-            buckets.set(newBucket, []);
-            const insertIdx = sortedBucketKeys.findIndex(k => k > newBucket);
-            if (insertIdx === -1) sortedBucketKeys.push(newBucket);
-            else sortedBucketKeys.splice(insertIdx, 0, newBucket);
+    // Log NPC actions (not player)
+    if (!node.isPlayer) {
+      let logEntry = `Day${gameDay} ${action.gameTime} [${action.location}] - ${action.outcome}`;
+      if (relationshipChange) logEntry += ` ${relationshipChange}`;
+      await npcPlanningAgent.appendMemoryLog(sessionId, node.characterId, logEntry, gameDay, action.gameTime, action.location);
+      await npcPlanningAgent.markNodeCompleted(sessionId, node.characterId, gameDay, node.nodeId, action.outcome);
+    }
+
+    // Clue discovery — only for player's successful nodes
+    if (action.status === "completed" && node.isPlayer) {
+      const effectiveSuccess: SuccessLevel = action.successLevel ?? "regular";
+      const clues = await discoverClues(node, effectiveSuccess, dgsm, language);
+      if (clues.length > 0) {
+        action.discoveredClues = clues;
+        embedDiscoveredClues(clues, dgsm, language as "en" | "zh");
+        // Mark scene clues as discovered
+        for (const entry of clues) {
+          if (entry.source === "scene") {
+            dgsm.markScenarioClueDiscovered(entry.clueId, node.characterName);
+          } else if (entry.source === "npc") {
+            dgsm.markNpcClueRevealed(entry.sourceId, entry.clueId);
           }
-          buckets.get(newBucket)!.push(newNode);
+          // Add to global discoveredClues list
+          dgsm.addDiscoveredClue({
+            text: entry.clueText,
+            type: entry.source === "scene" ? "scenario" : entry.clueId.includes("_secret_") ? "secret" : "npc",
+            sourceName: entry.sourceName,
+            discoveredBy: node.characterName,
+            discoveredAt: new Date().toISOString(),
+            difficulty: entry.difficulty,
+            method: node.action,
+          });
         }
-      }
-      if (result.playerEvents?.length) {
-        allPlayerEvents = allPlayerEvents.concat(result.playerEvents);
+        console.log(
+          `[TickProcessor] Player discovered ${clues.length} clue(s): ${clues.map((c) => `[${c.difficulty}] ${c.clueText.slice(0, 40)}`).join("; ")}`
+        );
       }
     }
 
-    // Player witness: interrupt tick execution so player can decide
-    if (allPlayerEvents.length > 0) {
-      const playerWitnessEvents: PlayerWitnessEvent[] = allPlayerEvents.map((e) => ({
+    // Fumble -> damage a random undiscovered scene clue
+    if (node.isPlayer && action.successLevel === "fumble") {
+      const scene = dgsm.getCurrentScene();
+      const damageable = scene?.clues?.filter((c) => !c.discovered && !c.damaged) ?? [];
+      if (damageable.length > 0) {
+        const victim = damageable[Math.floor(Math.random() * damageable.length)];
+        dgsm.damageScenarioClue(victim.id, node.characterName, `Fumbled: ${node.action}`);
+        action.damagedClue = { clueId: victim.id, sourceName: scene!.name };
+        console.log(`[TickProcessor] Fumble damaged clue: ${victim.clueText.slice(0, 40)}`);
+      }
+    }
+
+    // Scene event logging for high-impact completed NPC actions
+    if (action.status === "completed" && action.impact >= 2 && !node.isPlayer) {
+      const scene = dgsm.getScene(node.location);
+      if (scene) {
+        scene.events.push(`${node.characterName}: ${action.outcome}`);
+      }
+    }
+
+    // On failure -> immediate revisePlans (no gate) — NPC only
+    if (action.status === "failed" && !node.isPlayer) {
+      const longTermIntent = await npcPlanningAgent.getLongTermIntent(sessionId, node.characterId);
+      const memoryLog = await npcPlanningAgent.getMemoryLog(sessionId, node.characterId, gameDay);
+      const pendingNodes = await npcPlanningAgent.getPendingNodes(sessionId, node.characterId, gameDay);
+      await npcPlanningAgent.revisePlans(dgsm, sessionId, node.characterId, {
+        longTermIntent,
+        memoryLog,
+        pendingNodes,
+        trigger: {
+          type: "failure",
+          failureReason: action.failureReason!,
+          action: action.action,
+          gameTime: action.gameTime,
+        },
+      }, language);
+    }
+  }
+
+  // 6. Fire eligible features via registry.shouldFeatureFire()
+  let allPlayerEvents: PlayerWitnessEvent[] = [];
+  const injectedNodes: PlanNode[] = [];
+
+  for (const feature of registry.getAllFeatures()) {
+    if (!registry.shouldFeatureFire(feature.id, isFullTick)) continue;
+
+    const result = await feature.onTickEnd(tickActions, dgsm, tickRuntime);
+    if (result.newNodes?.length) {
+      injectedNodes.push(...result.newNodes);
+    }
+    if (result.playerEvents?.length) {
+      const witnessEvents: PlayerWitnessEvent[] = result.playerEvents.map((e) => ({
         characterName: e.event.characterName,
         action: e.event.action,
         outcome: e.event.outcome,
@@ -512,34 +517,99 @@ export async function runTick(
         gameTime: e.event.gameTime,
         impact: e.impact,
       }));
+      allPlayerEvents = allPlayerEvents.concat(witnessEvents);
+    }
+  }
 
-      // Also store in contextualData for KeeperAgent
-      const existing = (dgsm.getContextualData("playerWitnessEvents") as any[]) ?? [];
-      dgsm.setContextualData("playerWitnessEvents", [...existing, ...playerWitnessEvents]);
+  // Store witness events in contextualData for KeeperAgent
+  if (allPlayerEvents.length > 0) {
+    const existing = (dgsm.getContextualData("playerWitnessEvents") as any[]) ?? [];
+    dgsm.setContextualData("playerWitnessEvents", [...existing, ...allPlayerEvents]);
+  }
 
-      // Collect remaining buckets (after current one)
-      const currentIdx = sortedBucketKeys.indexOf(bucketKey);
-      const remainingBuckets = sortedBucketKeys
-        .slice(currentIdx + 1)
-        .map((k) => ({ bucketKey: k, nodes: buckets.get(k)! }));
+  return {
+    actions: tickActions,
+    playerFailed,
+    playerEvents: allPlayerEvents,
+    injectedNodes,
+  };
+}
+
+// ==================== Main runPlayerAction ====================
+
+/**
+ * Drives N ticks in a loop for a player action. Replaces the old `runTick`.
+ *
+ * Calculates total minutes from the player action's timeAdvanceMinutes,
+ * loops in TICK_DURATION_MINUTES increments, calls executeSingleTick for each.
+ * Handles player interrupts and player failure, advances game time at the end.
+ */
+export async function runPlayerAction(
+  playerNodes: PlanNode[],
+  dgsm: DynamicGameStateManager,
+  npcPlanningAgent: NPCPlanningAgent,
+  sessionId: string,
+  language: string = "en",
+  registry: GameEngineRegistry,
+  ctx: ExecutionContext
+): Promise<TickResult> {
+  const state = dgsm.getState();
+  const gameDay = state.gameDay;
+  const currentMinutes = timeToMinutes(state.timeOfDay);
+
+  // Calculate total minutes from the player action
+  const maxPlayerAdvance = playerNodes.reduce((max, n) => Math.max(max, n.timeAdvanceMinutes), 0);
+  const totalMinutes = maxPlayerAdvance;
+
+  const allActions: CharacterAction[] = [];
+  let playerFailed = false;
+  let minutesProcessed = 0;
+
+  // Loop in TICK_DURATION_MINUTES increments
+  while (minutesProcessed < totalMinutes) {
+    const remaining = totalMinutes - minutesProcessed;
+    const tickDuration = Math.min(TICK_DURATION_MINUTES, remaining);
+    const tickStartMinutes = currentMinutes + minutesProcessed;
+
+    const tickResult = await executeSingleTick({
+      tickStartMinutes,
+      tickDurationMinutes: tickDuration,
+      playerNodes,
+      dgsm,
+      npcPlanningAgent,
+      sessionId,
+      language,
+      registry,
+      ctx,
+    });
+
+    allActions.push(...tickResult.actions);
+
+    // Handle player interrupt — pause so player can decide
+    if (tickResult.playerEvents.length > 0) {
+      const resumeFromMinutes = tickStartMinutes + tickDuration;
+      const remainingMinutes = totalMinutes - (minutesProcessed + tickDuration);
 
       return {
         type: "player_interrupt",
         actions: allActions,
-        witnessEvents: playerWitnessEvents,
-        remainingBuckets,
+        witnessEvents: tickResult.playerEvents,
+        remainingMinutes,
+        resumeFromMinutes,
         gameDay,
       };
     }
 
-    // If a player failed in this bucket, set global flag and break out of outer bucket loop
-    if (playerFailedInBucket) {
+    // Handle player failure — stop processing further ticks
+    if (tickResult.playerFailed) {
       playerFailed = true;
       break;
     }
+
+    minutesProcessed += tickDuration;
   }
 
-  // 6. Advance game time: sum timeAdvanceMinutes from all successfully executed player nodes
+  // Advance game time: sum timeAdvanceMinutes from all successfully executed player nodes
   const successfulPlayerAdvance = allActions
     .filter((a) => a.isPlayer && a.status === "completed")
     .reduce((sum, a) => {
@@ -549,188 +619,78 @@ export async function runTick(
   const timeAdvance = successfulPlayerAdvance > 0 ? successfulPlayerAdvance : maxPlayerAdvance;
   dgsm.updateGameTime(timeAdvance);
 
-  // Fire onTickEnd for all registered WorldFeatures
-  for (const feature of registry.getAllFeatures()) {
-    feature.onTickEnd?.(allActions, dgsm, tickRuntime);
-  }
-
   return { type: "completed", actions: allActions };
 }
 
 // ==================== Resume after player interrupt ====================
 
-export async function resumeTick(
-  remainingBuckets: Array<{ bucketKey: number; nodes: PlanNode[] }>,
+/**
+ * Resume tick processing from where a player interrupt paused it. Replaces the old `resumeTick`.
+ *
+ * Similar to runPlayerAction but starts from a resumeFromMinutes offset
+ * with a remainingMinutes budget.
+ */
+export async function resumePlayerAction(
+  playerNodes: PlanNode[],
   previousActions: CharacterAction[],
+  resumeFromMinutes: number,
+  remainingMinutes: number,
   dgsm: DynamicGameStateManager,
   npcPlanningAgent: NPCPlanningAgent,
   sessionId: string,
-  playerNodes: PlanNode[],
   language: string = "en",
   registry: GameEngineRegistry,
   ctx: ExecutionContext
 ): Promise<TickResult> {
   const state = dgsm.getState();
   const gameDay = state.gameDay;
+
   const allActions: CharacterAction[] = [...previousActions];
-  const playerCharacterIds = new Set(playerNodes.map((n) => n.characterId));
   let playerFailed = false;
+  let minutesProcessed = 0;
 
-  // Build runtime context for WorldFeature hooks
-  const tickRuntime: TickRuntimeContext = {
-    sessionId, gameDay, language,
-    npcPlanning: npcPlanningAgent,
-  };
+  // Loop in TICK_DURATION_MINUTES increments over the remaining budget
+  while (minutesProcessed < remainingMinutes) {
+    const remaining = remainingMinutes - minutesProcessed;
+    const tickDuration = Math.min(TICK_DURATION_MINUTES, remaining);
+    const tickStartMinutes = resumeFromMinutes + minutesProcessed;
 
-  // Rebuild buckets map
-  const buckets = new Map<number, PlanNode[]>();
-  for (const { bucketKey, nodes } of remainingBuckets) {
-    buckets.set(bucketKey, nodes);
-  }
-  const sortedBucketKeys = remainingBuckets.map((b) => b.bucketKey);
+    const tickResult = await executeSingleTick({
+      tickStartMinutes,
+      tickDurationMinutes: tickDuration,
+      playerNodes,
+      dgsm,
+      npcPlanningAgent,
+      sessionId,
+      language,
+      registry,
+      ctx,
+    });
 
-  for (const bucketKey of sortedBucketKeys) {
-    const bucketNodes = buckets.get(bucketKey)!;
-    const bucketTime = getBucketLabel(bucketKey);
-    const bucketActions: CharacterAction[] = [];
-    let playerFailedInBucket = false;
+    allActions.push(...tickResult.actions);
 
-    for (const node of bucketNodes) {
-      if ((playerFailed || playerFailedInBucket) && node.isPlayer) continue;
+    // Handle player interrupt — pause again
+    if (tickResult.playerEvents.length > 0) {
+      const newResumeFrom = tickStartMinutes + tickDuration;
+      const newRemainingMinutes = remainingMinutes - (minutesProcessed + tickDuration);
 
-      // Dispatch to registry handler
-      const handler = registry.getHandler(node.type);
-      if (!handler) {
-        console.warn(`[TickProcessor] No handler for node type: ${node.type}, skipping`);
-        continue;
-      }
-      const action = handler.execute(node, dgsm, ctx);
-      bucketActions.push(action);
-      allActions.push(action);
-
-      if (action.status === "failed" && node.isPlayer) {
-        playerFailedInBucket = true;
-      }
-
-      let relationshipChange: string | undefined;
-      if (action.status === "completed" && node.type === "character_interaction" && node.targetCharacterId) {
-        const relResult = await npcPlanningAgent.updateRelationshipViaLLM(dgsm, node.characterId, node.targetCharacterId, action.outcome, language);
-        if (relResult) {
-          const sign = relResult.scoreDelta >= 0 ? "+" : "";
-          relationshipChange = `[relationship ${sign}${relResult.scoreDelta} → ${relResult.newScore}, ${relResult.note}]`;
-        }
-      }
-
-      if (!node.isPlayer) {
-        let logEntry = `Day${gameDay} ${action.gameTime} [${action.location}] - ${action.outcome}`;
-        if (relationshipChange) logEntry += ` ${relationshipChange}`;
-        await npcPlanningAgent.appendMemoryLog(sessionId, node.characterId, logEntry, gameDay, action.gameTime, action.location);
-        await npcPlanningAgent.markNodeCompleted(sessionId, node.characterId, gameDay, node.nodeId, action.outcome);
-      }
-
-      if (action.status === "completed" && node.isPlayer) {
-        const effectiveSuccess: SuccessLevel = action.successLevel ?? "regular";
-        const clues = await discoverClues(node, effectiveSuccess, dgsm, language);
-        if (clues.length > 0) {
-          action.discoveredClues = clues;
-          embedDiscoveredClues(clues, dgsm, language as "en" | "zh");
-          for (const entry of clues) {
-            if (entry.source === "scene") {
-              dgsm.markScenarioClueDiscovered(entry.clueId, node.characterName);
-            } else if (entry.source === "npc") {
-              dgsm.markNpcClueRevealed(entry.sourceId, entry.clueId);
-            }
-            dgsm.addDiscoveredClue({
-              text: entry.clueText,
-              type: entry.source === "scene" ? "scenario" : entry.clueId.includes("_secret_") ? "secret" : "npc",
-              sourceName: entry.sourceName,
-              discoveredBy: node.characterName,
-              discoveredAt: new Date().toISOString(),
-              difficulty: entry.difficulty,
-              method: node.action,
-            });
-          }
-        }
-      }
-
-      // Fumble -> damage a random undiscovered scene clue
-      if (node.isPlayer && action.successLevel === "fumble") {
-        const scene = dgsm.getCurrentScene();
-        const damageable = scene?.clues?.filter((c) => !c.discovered && !c.damaged) ?? [];
-        if (damageable.length > 0) {
-          const victim = damageable[Math.floor(Math.random() * damageable.length)];
-          dgsm.damageScenarioClue(victim.id, node.characterName, `Fumbled: ${node.action}`);
-          action.damagedClue = { clueId: victim.id, sourceName: scene!.name };
-          console.log(`[TickProcessor] Fumble damaged clue: ${victim.clueText.slice(0, 40)}`);
-        }
-      }
-
-      // Scene event logging for high-impact completed NPC actions
-      if (action.status === "completed" && action.impact >= 2 && !node.isPlayer) {
-        const scene = dgsm.getScene(node.location);
-        if (scene) {
-          scene.events.push(`${node.characterName}: ${action.outcome}`);
-        }
-      }
-
-      if (action.status === "failed" && !node.isPlayer) {
-        const longTermIntent = await npcPlanningAgent.getLongTermIntent(sessionId, node.characterId);
-        const memoryLog = await npcPlanningAgent.getMemoryLog(sessionId, node.characterId, gameDay);
-        const pendingNodes = await npcPlanningAgent.getPendingNodes(sessionId, node.characterId, gameDay);
-        await npcPlanningAgent.revisePlans(dgsm, sessionId, node.characterId, {
-          longTermIntent,
-          memoryLog,
-          pendingNodes,
-          trigger: {
-            type: "failure",
-            failureReason: action.failureReason!,
-            action: action.action,
-            gameTime: action.gameTime,
-          },
-        }, language);
-      }
+      return {
+        type: "player_interrupt",
+        actions: allActions,
+        witnessEvents: tickResult.playerEvents,
+        remainingMinutes: newRemainingMinutes,
+        resumeFromMinutes: newResumeFrom,
+        gameDay,
+      };
     }
 
-    // WorldFeature onBucketEnd hooks (includes impact gate, may inject new nodes)
-    let allPlayerEvents: Array<{ event: CharacterAction; impact: number }> = [];
-    for (const feature of registry.getAllFeatures()) {
-      const result = await feature.onBucketEnd(bucketActions, dgsm, bucketTime, tickRuntime);
-      if (result.newNodes?.length) {
-        for (const newNode of result.newNodes) {
-          const newBucket = minutesToBucket(timeToMinutes(newNode.gameTime));
-          if (!buckets.has(newBucket)) {
-            buckets.set(newBucket, []);
-            const insertIdx = sortedBucketKeys.findIndex(k => k > newBucket);
-            if (insertIdx === -1) sortedBucketKeys.push(newBucket);
-            else sortedBucketKeys.splice(insertIdx, 0, newBucket);
-          }
-          buckets.get(newBucket)!.push(newNode);
-        }
-      }
-      if (result.playerEvents?.length) {
-        allPlayerEvents = allPlayerEvents.concat(result.playerEvents);
-      }
-    }
-
-    // Player interrupt again if needed
-    if (allPlayerEvents.length > 0) {
-      const playerWitnessEvents: PlayerWitnessEvent[] = allPlayerEvents.map((e) => ({
-        characterName: e.event.characterName, action: e.event.action, outcome: e.event.outcome,
-        location: e.event.location, gameTime: e.event.gameTime, impact: e.impact,
-      }));
-      const existingWitness = (dgsm.getContextualData("playerWitnessEvents") as any[]) ?? [];
-      dgsm.setContextualData("playerWitnessEvents", [...existingWitness, ...playerWitnessEvents]);
-
-      const currentIdx = sortedBucketKeys.indexOf(bucketKey);
-      const nextBuckets = sortedBucketKeys.slice(currentIdx + 1).map((k) => ({ bucketKey: k, nodes: buckets.get(k)! }));
-
-      return { type: "player_interrupt", actions: allActions, witnessEvents: playerWitnessEvents, remainingBuckets: nextBuckets, gameDay };
-    }
-
-    if (playerFailedInBucket) {
+    // Handle player failure — stop processing further ticks
+    if (tickResult.playerFailed) {
       playerFailed = true;
       break;
     }
+
+    minutesProcessed += tickDuration;
   }
 
   // Advance game time
