@@ -178,30 +178,61 @@ function damageByFire(dgsm: DynamicGameStateManager, sceneId: string, intensity:
   }
 }
 
-function updateFireBlocking(dgsm: DynamicGameStateManager, sceneId: string, intensity: number): void {
-  const scene = dgsm.getScene(sceneId);
-  if (!scene) return;
+function updateFireBlocking(dgsm: DynamicGameStateManager, locationId: string, intensity: number): void {
+  const state = dgsm.getState();
 
-  const connectedSceneIds = scene.connections;
+  // Scene-based blocking (existing)
+  const scene = dgsm.getScene(locationId);
+  if (scene) {
+    const connectedSceneIds = scene.connections;
+    if (intensity >= BLOCK_THRESHOLD) {
+      for (const connId of connectedSceneIds) {
+        dgsm.setConnectionBlocked(connId, locationId, true, `Blocked by fire (intensity ${intensity})`);
+      }
+    } else {
+      for (const connId of connectedSceneIds) {
+        const key1 = `${connId}::${locationId}`;
+        const key2 = `${locationId}::${connId}`;
+        if (state.blockedConnections.get(key1)?.startsWith("Blocked by fire")) {
+          dgsm.setConnectionBlocked(connId, locationId, false, "");
+        }
+        if (state.blockedConnections.get(key2)?.startsWith("Blocked by fire")) {
+          dgsm.setConnectionBlocked(locationId, connId, false, "");
+        }
+      }
+    }
+    return;
+  }
+
+  // Topology-based blocking (road/junction)
+  const topology = dgsm.getTopology();
+  if (!topology) return;
+
+  const neighbors: string[] = [];
+  const junction = topology.junctions.get(locationId);
+  if (junction) {
+    const roads = topology.junctionToRoads.get(locationId) ?? [];
+    neighbors.push(...roads.map((r: { id: string }) => r.id), ...junction.connectedSceneIds);
+  }
+  const road = topology.roads.get(locationId);
+  if (road) {
+    neighbors.push(road.endpointA, road.endpointB);
+    neighbors.push(...road.alongConnections.map((a: { sceneId: string }) => a.sceneId));
+  }
 
   if (intensity >= BLOCK_THRESHOLD) {
-    // Block connections INTO this scene from all connected scenes
-    for (const connId of connectedSceneIds) {
-      dgsm.setConnectionBlocked(connId, sceneId, true, `Blocked by fire (intensity ${intensity})`);
+    for (const nId of neighbors) {
+      dgsm.setConnectionBlocked(nId, locationId, true, `Blocked by fire (intensity ${intensity})`);
     }
   } else {
-    // Unblock only connections that were blocked by fire
-    const state = dgsm.getState();
-    for (const connId of connectedSceneIds) {
-      const key1 = `${connId}::${sceneId}`;
-      const key2 = `${sceneId}::${connId}`;
-      const reason1 = state.blockedConnections.get(key1);
-      const reason2 = state.blockedConnections.get(key2);
-      if (reason1 && reason1.startsWith("Blocked by fire")) {
-        dgsm.setConnectionBlocked(connId, sceneId, false, "");
+    for (const nId of neighbors) {
+      const key1 = `${nId}::${locationId}`;
+      const key2 = `${locationId}::${nId}`;
+      if (state.blockedConnections.get(key1)?.startsWith("Blocked by fire")) {
+        dgsm.setConnectionBlocked(nId, locationId, false, "");
       }
-      if (reason2 && reason2.startsWith("Blocked by fire")) {
-        dgsm.setConnectionBlocked(sceneId, connId, false, "");
+      if (state.blockedConnections.get(key2)?.startsWith("Blocked by fire")) {
+        dgsm.setConnectionBlocked(locationId, nId, false, "");
       }
     }
   }
@@ -435,43 +466,93 @@ export const fireFeature: WorldFeature = {
   },
 
   async propagate(
-    sourceSceneId: string,
+    sourceId: string,
     _currentHop: number,
     dgsm: DynamicGameStateManager,
     _runtime: TickRuntimeContext
   ): Promise<PropagationResult> {
-    const sourceState = getFireState(dgsm, sourceSceneId);
+    const sourceState = getFireState(dgsm, sourceId);
     if (!sourceState || sourceState.intensity < sourceState.spreadThreshold) {
       return { spreadTo: [] };
     }
 
-    const scene = dgsm.getScene(sourceSceneId);
-    if (!scene) return { spreadTo: [] };
-
-    const newSceneIds: string[] = [];
+    const topology = dgsm.getTopology();
+    const newIds: string[] = [];
     const state = dgsm.getState();
 
-    for (const connId of scene.connections) {
-      // Skip if already on fire
-      if (getFireState(dgsm, connId)) continue;
+    // Helper: check if connection is blocked by non-fire reason
+    const isNonFireBlocked = (a: string, b: string): boolean => {
+      const reason1 = state.blockedConnections.get(`${a}::${b}`);
+      const reason2 = state.blockedConnections.get(`${b}::${a}`);
+      return (!!reason1 && !reason1.startsWith("Blocked by fire")) ||
+             (!!reason2 && !reason2.startsWith("Blocked by fire"));
+    };
 
-      // Skip if connection is blocked by a non-fire reason
-      const key1 = `${sourceSceneId}::${connId}`;
-      const key2 = `${connId}::${sourceSceneId}`;
-      const reason1 = state.blockedConnections.get(key1);
-      const reason2 = state.blockedConnections.get(key2);
-      const blocked1 = reason1 && !reason1.startsWith("Blocked by fire");
-      const blocked2 = reason2 && !reason2.startsWith("Blocked by fire");
-      if (blocked1 || blocked2) continue;
+    // Helper: ignite a new location
+    const ignite = (targetId: string, position?: number) => {
+      if (getFireState(dgsm, targetId)) return; // already burning
+      if (isNonFireBlocked(sourceId, targetId)) return;
 
-      // Ignite with intensity 1
-      const newFireState = createFireState(1);
-      setFireState(dgsm, connId, newFireState);
-      writeFireCondition(dgsm, connId, 1);
+      if (position !== undefined) {
+        // Road fire with position
+        const newState = createRoadFireState(1, position);
+        setFireState(dgsm, targetId, newState);
+      } else {
+        const newState = createFireState(1);
+        setFireState(dgsm, targetId, newState);
+      }
+      writeFireCondition(dgsm, targetId, 1);
+      newIds.push(targetId);
+    };
 
-      newSceneIds.push(connId);
+    if (topology) {
+      // Topology-aware propagation
+      const road = topology.roads.get(sourceId);
+      const junction = topology.junctions.get(sourceId);
+
+      if (road && isFireRoadState(sourceState)) {
+        // Road fire → spread to endpoint junctions when burnRange reaches endpoint
+        if (sourceState.burnRange.start <= 0.05) ignite(road.endpointA);
+        if (sourceState.burnRange.end >= 0.95) ignite(road.endpointB);
+      } else if (junction) {
+        // Junction fire → spread to connected roads (start fire at junction end)
+        const connectedRoads = topology.junctionToRoads.get(sourceId) ?? [];
+        for (const connRoad of connectedRoads) {
+          const startPos = connRoad.endpointA === sourceId ? 0.0 : 1.0;
+          ignite(connRoad.id, startPos);
+        }
+        // Also spread to directly connected scenes
+        for (const sceneId of junction.connectedSceneIds) {
+          ignite(sceneId);
+        }
+      } else {
+        // Scene fire → spread to parent road/junction
+        const parent = topology.sceneToParent.get(sourceId);
+        if (parent) {
+          if (parent.type === "road") {
+            ignite(parent.roadId, parent.position);
+          } else {
+            ignite(parent.junctionId);
+          }
+        }
+      }
     }
 
-    return { spreadTo: newSceneIds };
+    // Fallback: also spread via scene.connections for scenes without topology
+    if (!topology || (!topology.roads.has(sourceId) && !topology.junctions.has(sourceId) && !topology.sceneToParent.has(sourceId))) {
+      const scene = dgsm.getScene(sourceId);
+      if (scene) {
+        for (const connId of scene.connections) {
+          if (getFireState(dgsm, connId)) continue;
+          if (isNonFireBlocked(sourceId, connId)) continue;
+          const newState = createFireState(1);
+          setFireState(dgsm, connId, newState);
+          writeFireCondition(dgsm, connId, 1);
+          newIds.push(connId);
+        }
+      }
+    }
+
+    return { spreadTo: newIds };
   },
 };

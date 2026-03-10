@@ -31,10 +31,14 @@ Road/Junction as virtual scenes:
 - Junction fire has no position range (point node)
 
 #### Weather Interaction
+- Applies to **road and junction** fire (both outdoor). Scene (building interior) fire unaffected.
 - Rain (intensity >= 2): spread rate reduced (e.g., 50%)
 - Rain (intensity >= 3): spread rate near zero, existing fire may extinguish
+- Rain (intensity >= 4) or storm (>= 3): extinguish outdoor fire entirely
 - Dry/heat weather: spread rate increased (e.g., 150%)
-- Weather queried from same region (parentLocationId) as the road
+- Weather queried from same region (parentLocationId) as the road/junction
+- Road: weather multiplier affects burnRange expansion rate
+- Junction: weather multiplier affects intensity growth rate; multiplier 0 extinguishes
 
 #### Propagation Path (replaces scene.connections)
 - Scene → parent road/junction (via `sceneToParent`)

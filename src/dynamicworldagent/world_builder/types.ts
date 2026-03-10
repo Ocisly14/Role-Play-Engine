@@ -93,10 +93,34 @@ export interface DynamicScene {
   indoor?: boolean;
 }
 
+export interface WeaponStats {
+  skill: string;
+  damage: string;
+  range: string;
+  attacksPerRound: number;
+  ammo?: number;
+  malfunction?: number;
+  era?: string;
+}
+
+export interface ConsumableStats {
+  uses?: number;
+  effect?: string;
+  duration?: number;
+}
+
+export interface ContainerStats {
+  capacity?: number;
+  locked?: boolean;
+  lockDifficulty?: "easy" | "regular" | "hard" | "extreme";
+  contents?: string[];
+}
+
 export interface Item {
   id: string;
   name: string;
   description?: string;
+  type?: "weapon" | "consumable" | "tool" | "lighting" | "container" | "key" | "document" | "other";
   damaged?: boolean;
   damageDetails?: {
     damagedBy: string;
@@ -105,6 +129,9 @@ export interface Item {
   };
   isLightSource?: boolean;
   lightLevel?: number;
+  weaponStats?: WeaponStats;
+  consumableStats?: ConsumableStats;
+  containerStats?: ContainerStats;
 }
 
 export interface SceneImage {

@@ -961,4 +961,147 @@ describe("fireFeature", () => {
       expect(fs).toBeDefined();
     });
   });
+
+  // ===== topology-aware propagation =====
+
+  describe("topology-aware propagation", () => {
+    let topoDgsm: MockDgsm & { getTopology: () => any };
+
+    beforeEach(() => {
+      const base = createMockDgsm();
+
+      // Build topology with proper maps using buildTopology-style construction
+      const junctions = new Map([
+        ["JUNC_1", {
+          id: "JUNC_1", name: "J1", description: "", parentLocationId: "OUTDOOR",
+          connectedSceneIds: ["SCN_A"], items: [], clues: [], conditions: [], events: [],
+        }],
+        ["JUNC_2", {
+          id: "JUNC_2", name: "J2", description: "", parentLocationId: "OUTDOOR",
+          connectedSceneIds: [], items: [], clues: [], conditions: [], events: [],
+        }],
+      ]);
+      const roads = new Map([
+        ["ROAD_1", {
+          id: "ROAD_1", name: "R1", description: "", parentLocationId: "OUTDOOR",
+          endpointA: "JUNC_1", endpointB: "JUNC_2", travelTimeMinutes: 20,
+          alongConnections: [{ sceneId: "SCN_B", position: 0.3 }],
+          items: [], clues: [], conditions: [], events: [],
+        }],
+      ]);
+
+      // Manually build topology with all maps
+      const junctionToRoads = new Map();
+      junctionToRoads.set("JUNC_1", [roads.get("ROAD_1")!]);
+      junctionToRoads.set("JUNC_2", [roads.get("ROAD_1")!]);
+
+      const sceneToParent = new Map();
+      sceneToParent.set("SCN_A", { type: "junction", junctionId: "JUNC_1" });
+      sceneToParent.set("SCN_B", { type: "road", roadId: "ROAD_1", position: 0.3 });
+
+      const topology = { junctions, roads, junctionToRoads, sceneToParent };
+
+      topoDgsm = Object.assign(base, {
+        getTopology: () => topology,
+      });
+
+      topoDgsm._addScene({ id: "SCN_A", name: "Scene A", connections: [], events: [] });
+      topoDgsm._addScene({ id: "SCN_B", name: "Scene B", connections: [], events: [] });
+    });
+
+    it("should spread from scene to parent junction", async () => {
+      // Fire at SCN_A intensity 3 (>= spreadThreshold)
+      topoDgsm.setFeatureSceneState("fire", "SCN_A", {
+        intensity: 3, maxIntensity: 5, growthRate: 1, decayRate: 1,
+        spreadThreshold: 3, phase: "growing" as const, ticksInPhase: 0, totalBurnTicks: 0,
+      });
+
+      const result = await fireFeature.propagate!("SCN_A", 0, topoDgsm as any, runtime);
+      expect(result.spreadTo).toContain("JUNC_1");
+      expect(topoDgsm.getFeatureSceneState("fire", "JUNC_1")).toBeDefined();
+    });
+
+    it("should spread from junction to connected roads with correct position", async () => {
+      topoDgsm.setFeatureSceneState("fire", "JUNC_1", {
+        intensity: 3, maxIntensity: 5, growthRate: 1, decayRate: 1,
+        spreadThreshold: 3, phase: "growing" as const, ticksInPhase: 0, totalBurnTicks: 0,
+      });
+
+      const result = await fireFeature.propagate!("JUNC_1", 0, topoDgsm as any, runtime);
+      expect(result.spreadTo).toContain("ROAD_1");
+
+      // Road fire should have burnRange starting at 0.0 (JUNC_1 is endpointA)
+      const roadFire = topoDgsm.getFeatureSceneState("fire", "ROAD_1") as any;
+      expect(roadFire).toBeDefined();
+      expect(roadFire.burnRange).toBeDefined();
+      expect(roadFire.burnRange.start).toBe(0);
+      expect(roadFire.burnRange.end).toBe(0);
+    });
+
+    it("should spread from junction to connected scenes", async () => {
+      topoDgsm.setFeatureSceneState("fire", "JUNC_1", {
+        intensity: 3, maxIntensity: 5, growthRate: 1, decayRate: 1,
+        spreadThreshold: 3, phase: "growing" as const, ticksInPhase: 0, totalBurnTicks: 0,
+      });
+
+      const result = await fireFeature.propagate!("JUNC_1", 0, topoDgsm as any, runtime);
+      expect(result.spreadTo).toContain("SCN_A");
+    });
+
+    it("should spread from road to endpoint junction when burnRange reaches end", async () => {
+      topoDgsm.setFeatureSceneState("fire", "ROAD_1", {
+        intensity: 3, maxIntensity: 5, growthRate: 1, decayRate: 1,
+        spreadThreshold: 3, phase: "growing" as const, ticksInPhase: 0, totalBurnTicks: 0,
+        burnRange: { start: 0.0, end: 0.96 },
+      });
+
+      const result = await fireFeature.propagate!("ROAD_1", 0, topoDgsm as any, runtime);
+      // burnRange.start <= 0.05 -> spread to endpointA (JUNC_1)
+      expect(result.spreadTo).toContain("JUNC_1");
+      // burnRange.end >= 0.95 -> spread to endpointB (JUNC_2)
+      expect(result.spreadTo).toContain("JUNC_2");
+    });
+
+    it("should NOT spread from road when burnRange hasn't reached endpoints", async () => {
+      topoDgsm.setFeatureSceneState("fire", "ROAD_1", {
+        intensity: 3, maxIntensity: 5, growthRate: 1, decayRate: 1,
+        spreadThreshold: 3, phase: "growing" as const, ticksInPhase: 0, totalBurnTicks: 0,
+        burnRange: { start: 0.3, end: 0.7 },
+      });
+
+      const result = await fireFeature.propagate!("ROAD_1", 0, topoDgsm as any, runtime);
+      expect(result.spreadTo).not.toContain("JUNC_1");
+      expect(result.spreadTo).not.toContain("JUNC_2");
+    });
+
+    it("should spread from scene to parent road with position", async () => {
+      // SCN_B is on ROAD_1 at position 0.3
+      topoDgsm.setFeatureSceneState("fire", "SCN_B", {
+        intensity: 3, maxIntensity: 5, growthRate: 1, decayRate: 1,
+        spreadThreshold: 3, phase: "growing" as const, ticksInPhase: 0, totalBurnTicks: 0,
+      });
+
+      const result = await fireFeature.propagate!("SCN_B", 0, topoDgsm as any, runtime);
+      expect(result.spreadTo).toContain("ROAD_1");
+
+      const roadFire = topoDgsm.getFeatureSceneState("fire", "ROAD_1") as any;
+      expect(roadFire.burnRange.start).toBe(0.3);
+      expect(roadFire.burnRange.end).toBe(0.3);
+    });
+
+    it("should fall back to scene.connections when no topology", async () => {
+      // Use a dgsm without topology
+      const noTopoDgsm = createMockDgsm();
+      noTopoDgsm._addScene({ id: "room1", name: "Room 1", connections: ["room2"], events: [] });
+      noTopoDgsm._addScene({ id: "room2", name: "Room 2", connections: ["room1"], events: [] });
+
+      noTopoDgsm.setFeatureSceneState("fire", "room1", {
+        intensity: 3, maxIntensity: 5, growthRate: 1, decayRate: 1,
+        spreadThreshold: 3, phase: "growing" as const, ticksInPhase: 0, totalBurnTicks: 0,
+      });
+
+      const result = await fireFeature.propagate!("room1", 0, noTopoDgsm as any, runtime);
+      expect(result.spreadTo).toContain("room2");
+    });
+  });
 });
