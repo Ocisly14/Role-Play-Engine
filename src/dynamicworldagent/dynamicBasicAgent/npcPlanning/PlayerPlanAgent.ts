@@ -3,6 +3,7 @@ import { generateText, ModelClass } from "../../../models/index.js";
 import type { GameEngineRegistry } from "../../engine/registry.js";
 import type { DynamicGameStateManager } from "../../state/DynamicGameState.js";
 import { buildPlayerPlanPrompt, type PlayerPlanParams } from "./PlayerPlanTemplate.js";
+import { formatSceneItems, formatItemList } from "./itemFormatHelpers.js";
 import type { PlanNode } from "./types.js";
 
 function parseJsonResponse<T>(raw: string): T {
@@ -60,6 +61,9 @@ export class PlayerPlanAgent {
           .join("\n")
       : "";
 
+    // Build scene items list
+    const sceneItems = formatSceneItems(currentScenario);
+
     // Build connections from scenarioOutlines matching current scenario
     const connections = this.formatConnections(state, currentScenario?.id);
 
@@ -107,6 +111,7 @@ export class PlayerPlanAgent {
       currentScenarioDescription: currentScenario?.description ?? "",
       scenarioClues,
       sceneConditions,
+      sceneItems,
       connections,
       targetNpcProfile,
       targetNpcRelationship,
@@ -190,12 +195,9 @@ export class PlayerPlanAgent {
       parts.push(`Key Skills: ${topSkills}`);
     }
 
-    // Inventory
+    // Inventory (with ids for object_interaction payloads)
     if (player.inventory?.length) {
-      const items = player.inventory
-        .map((item: any) => item.name || item)
-        .join(", ");
-      parts.push(`Inventory: ${items}`);
+      parts.push(`Inventory:\n${formatItemList(player.inventory)}`);
     }
 
     return parts.join("\n");

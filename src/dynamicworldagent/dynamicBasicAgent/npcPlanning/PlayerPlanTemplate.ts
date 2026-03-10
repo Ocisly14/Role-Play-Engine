@@ -7,6 +7,7 @@ export interface PlayerPlanParams {
   currentScenarioDescription: string;
   scenarioClues: string;
   sceneConditions: string;
+  sceneItems: string;
   connections: string;
   targetNpcProfile: string;
   targetNpcRelationship: string;
@@ -175,6 +176,9 @@ ${params.playerProfile}
 
 ## Scene Conditions
 ${params.sceneConditions || "None."}
+
+## Items in Current Scene
+${params.sceneItems || "No items in this scene."}
 
 ${params.worldStatePrompt || ""}
 
