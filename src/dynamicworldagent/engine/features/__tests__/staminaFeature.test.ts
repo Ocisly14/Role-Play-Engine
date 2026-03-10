@@ -50,6 +50,9 @@ function createMockDgsm() {
       if (!npcStats[npcId]) return;
       npcStats[npcId].san = Math.max(0, npcStats[npcId].san + delta);
     },
+    getNpcStats(npcId: string) {
+      return npcStats[npcId] ?? undefined;
+    },
     _addNpc(npcId: string, location: string, hp: number, san = 50) {
       npcLocations[npcId] = location;
       npcStats[npcId] = { hp, san };

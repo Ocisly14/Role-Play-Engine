@@ -3,6 +3,7 @@ import type {
   TickRuntimeContext,
 } from "../types.js";
 import type { DynamicGameStateManager } from "../../state/DynamicGameState.js";
+import { applySanityLoss } from "./sanityFeature.js";
 
 // ===== Internal types =====
 
@@ -137,11 +138,11 @@ function processExhaustionDrain(
         const state = dgsm.getState();
         const player = state.playerCharacter;
         (player.status as any).hp = Math.max(0, player.status.hp - 1);
-        (player.status as any).sanity = Math.max(0, player.status.sanity - sanDrain);
       } else {
         dgsm.updateNpcHp(characterId, -1);
-        dgsm.updateNpcSan(characterId, -sanDrain);
       }
+      // Route SAN drain through sanity feature for insanity trigger checks
+      applySanityLoss(dgsm, characterId, -sanDrain, isPlayer, undefined, undefined, "exhaustion");
     }
   }
 }

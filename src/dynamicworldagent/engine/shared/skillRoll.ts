@@ -12,6 +12,7 @@ import {
   getDamageBonus,
   rollDamageBonus,
 } from "./dice.js";
+import { applySanityLoss } from "../features/sanityFeature.js";
 
 // ==================== Difficulty derivation ====================
 
@@ -210,7 +211,7 @@ export function resolveSkillRoll(
 
     if (level === "fail" || level === "fumble") {
       const sanLoss = horror.sanLossMax;
-      dgsm.updateNpcSan(node.characterId, -sanLoss);
+      applySanityLoss(dgsm, node.characterId, -sanLoss, false, undefined, undefined, node.action);
       return {
         failed: true,
         successLevel: level,
@@ -219,7 +220,7 @@ export function resolveSkillRoll(
       };
     } else {
       const sanLoss = horror.sanLossMin;
-      if (sanLoss > 0) dgsm.updateNpcSan(node.characterId, -sanLoss);
+      if (sanLoss > 0) applySanityLoss(dgsm, node.characterId, -sanLoss, false, undefined, undefined, node.action);
       return { failed: false, successLevel: level, detail: `SAN check passed (${roll}/${sanValue}, difficulty: ${effectiveDifficulty}), lost ${sanLoss} sanity` };
     }
   }

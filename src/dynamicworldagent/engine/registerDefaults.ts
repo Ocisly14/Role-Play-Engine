@@ -10,6 +10,7 @@ import { fireFeature } from "./features/fireFeature.js";
 import { weatherFeature } from "./features/weatherFeature.js";
 import { lightingFeature } from "./features/lightingFeature.js";
 import { staminaFeature } from "./features/staminaFeature.js";
+import { sanityFeature } from "./features/sanityFeature.js";
 
 export function createDefaultRegistry(): GameEngineRegistry {
   const registry = new GameEngineRegistry();
@@ -23,6 +24,7 @@ export function createDefaultRegistry(): GameEngineRegistry {
   registry.registerFeature(weatherFeature);
   registry.registerFeature(lightingFeature);
   registry.registerFeature(staminaFeature);
+  registry.registerFeature(sanityFeature);
 
   return registry;
 }
