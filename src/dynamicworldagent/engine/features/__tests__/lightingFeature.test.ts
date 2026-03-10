@@ -5,7 +5,7 @@ import type { SceneCondition } from "../../../dynamicBasicAgent/npcPlanning/type
 
 // ===== Mock DGSM =====
 
-interface MockSceneItem {
+interface MockItem {
   id: string;
   name: string;
   isLightSource?: boolean;
@@ -20,7 +20,7 @@ interface MockScene {
   connections: string[];
   events: string[];
   indoor?: boolean;
-  items?: MockSceneItem[];
+  items?: MockItem[];
   clues?: any[];
 }
 

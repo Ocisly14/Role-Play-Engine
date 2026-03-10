@@ -84,7 +84,7 @@ export interface DynamicScene {
   name: string;
   description: string;
   parentLocationId: string;
-  items: SceneItem[];
+  items: Item[];
   clues: ScenarioClue[];
   conditions: ScenarioCondition[];
   connections: string[];
@@ -93,7 +93,7 @@ export interface DynamicScene {
   indoor?: boolean;
 }
 
-export interface SceneItem {
+export interface Item {
   id: string;
   name: string;
   description?: string;

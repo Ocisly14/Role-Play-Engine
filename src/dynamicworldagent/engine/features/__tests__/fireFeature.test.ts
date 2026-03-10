@@ -4,7 +4,7 @@ import type { TickRuntimeContext } from "../../types.js";
 import type { PlanNode } from "../../../dynamicBasicAgent/npcPlanning/types.js";
 import type { SceneCondition } from "../../../dynamicBasicAgent/npcPlanning/types.js";
 import type { ScenarioClue } from "../../../../shared/agents/models/scenarioTypes.js";
-import type { SceneItem } from "../../../world_builder/types.js";
+import type { Item } from "../../../world_builder/types.js";
 
 // ===== Minimal mock of DynamicGameStateManager =====
 
@@ -14,7 +14,7 @@ interface MockScene {
   connections: string[];
   events: string[];
   clues?: ScenarioClue[];
-  items?: SceneItem[];
+  items?: Item[];
 }
 
 function createMockDgsm() {
@@ -150,7 +150,7 @@ function makeClue(id: string, overrides?: Partial<ScenarioClue>): ScenarioClue {
   };
 }
 
-function makeItem(id: string, overrides?: Partial<SceneItem>): SceneItem {
+function makeItem(id: string, overrides?: Partial<Item>): Item {
   return {
     id,
     name: `Item ${id}`,
