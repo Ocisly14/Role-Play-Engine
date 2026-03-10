@@ -7,22 +7,32 @@
     {
       "id": "ITEM_SCN8_1",
       "name": "Philip的改造夹克",
-      "description": "一件看起来陈旧的夹克，内侧经过精心改造，加装了多个隐蔽的暗袋和口袋，方便掩饰行动、藏起和带走赃物。这是Philip行窃的得力工具。"
+      "description": "一件看起来陈旧的夹克，内侧经过精心改造，加装了多个隐蔽暗袋，方便藏匿赃物。"
     },
     {
       "id": "ITEM_SCN8_2",
-      "name": "各种'战利品'",
-      "description": "屋内各处摆放着Philip从各处偷来的小物件——手表、钱夹、首饰、小装饰品等。Philip喜欢收藏这些东西，但绝不想与任何人分享。"
+      "name": "偷来的零碎战利品",
+      "description": "屋内各处散落着偷来的手表、钱夹、首饰和小装饰品，大多被随手堆在看得见的地方。"
     },
     {
       "id": "ITEM_SCN8_3",
       "name": "全家福老照片",
-      "description": "一张珍藏在隐蔽处的老照片，是Philip与父亲Charles Scaletta和母亲的全家福。照片中的Charles是一位技艺精湛的魔术师，后来在欧洲巡演中失踪。这是Philip仅有的关于完整家庭的记忆。"
+      "description": "一张被藏在隐蔽处的全家福老照片，记录着Philip与父母还未破碎的旧日生活。"
     },
     {
       "id": "ITEM_SCN8_4",
-      "name": "可供调查员使用的物品",
-      "description": "在菲利普家中可以找到一些实用物品，具体物品由调查员向守密人提出申请决定。"
+      "name": "开锁工具与细钢丝",
+      "description": "抽屉深处塞着一卷细钢丝和几支临时改造的开锁工具，显然是Philip常用的手艺活。"
+    },
+    {
+      "id": "ITEM_SCN8_5",
+      "name": "显像管电视机",
+      "description": "客厅角落那台笨重的显像管电视机屏幕积着灰，机顶上还放着一只空烟盒。"
+    },
+    {
+      "id": "ITEM_SCN8_6",
+      "name": "典当票据",
+      "description": "几张揉皱的典当票夹在杯垫下面，能看出Philip并不总是把到手的东西全部留下。"
     }
   ],
   "clues": [
@@ -33,7 +43,9 @@
       "difficulty": "automatic",
       "location": "屋内各处",
       "discoveryMethod": "进入房间即可注意到",
-      "reveals": ["Philip Scaletta是一个惯偷"],
+      "reveals": [
+        "Philip Scaletta是一个惯偷"
+      ],
       "discovered": false
     },
     {
@@ -43,7 +55,10 @@
       "difficulty": "regular",
       "location": "衣物存放处",
       "discoveryMethod": "仔细检查Philip的旧夹克",
-      "reveals": ["Philip具有精巧的手工技艺，可能与其魔术师父亲有关", "夹克是专门为盗窃设计的工具"],
+      "reveals": [
+        "Philip具有精巧的手工技艺，可能与其魔术师父亲有关",
+        "夹克是专门为盗窃设计的工具"
+      ],
       "discovered": false
     }
   ],
@@ -53,6 +68,8 @@
       "description": "屋内陈设简陋但不算脏乱，各种小物件被有条理地摆放在不同位置，显示主人虽然生活拮据，但对自己的'收藏品'颇为珍惜。"
     }
   ],
-  "connections": ["JUNC_10"],
+  "connections": [
+    "JUNC_10"
+  ],
   "events": []
 }

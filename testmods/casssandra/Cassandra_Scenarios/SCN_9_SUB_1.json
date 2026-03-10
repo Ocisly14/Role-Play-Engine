@@ -7,7 +7,22 @@
     {
       "id": "ITEM_SCN9_1",
       "name": "各式鲜花和绿植",
-      "description": "花店内摆放着精心打理的各种鲜花和绿植，种类繁多，打理得十分用心。这些都是Nancy Charlotte日常悉心照料的。"
+      "description": "花店内摆放着精心打理的鲜花和绿植，花枝修剪整齐，叶面上看不到明显灰尘。"
+    },
+    {
+      "id": "ITEM_SCN9_6",
+      "name": "包装台与花艺剪",
+      "description": "柜台旁的包装台上铺着牛皮纸、缎带和一把擦得发亮的花艺剪，明显经常有人使用。"
+    },
+    {
+      "id": "ITEM_SCN9_7",
+      "name": "收银抽屉与票据本",
+      "description": "收银台下面的抽屉里整齐码着零钱和票据本，账面习惯非常规整。"
+    },
+    {
+      "id": "ITEM_SCN9_8",
+      "name": "粉笔价目板与茶壶",
+      "description": "墙上的粉笔价目板列着当季花材，旁边的小桌上搁着白瓷水壶和几只待客用杯子。"
     }
   ],
   "clues": [
@@ -18,7 +33,9 @@
       "difficulty": "hard",
       "location": "花店整体",
       "discoveryMethod": "观察花店的经营状况和生活水平的不匹配",
-      "reveals": ["花店可能只是Simon和Nancy的身份掩护"],
+      "reveals": [
+        "花店可能只是Simon和Nancy的身份掩护"
+      ],
       "discovered": false
     },
     {
@@ -28,7 +45,10 @@
       "difficulty": "regular",
       "location": "与Nancy交谈时可观察到",
       "discoveryMethod": "注意观察Nancy的手腕和手臂",
-      "reveals": ["Nancy被蜘蛛咬伤，可能与卡森德拉的蜘蛛相关异变有关", "Nancy并不像表面上看起来那么单纯"],
+      "reveals": [
+        "Nancy被蜘蛛咬伤，可能与卡森德拉的蜘蛛相关异变有关",
+        "Nancy并不像表面上看起来那么单纯"
+      ],
       "discovered": false
     }
   ],
@@ -42,6 +62,8 @@
       "description": "花店内光线明亮温暖，给人一种舒适安全的感觉。"
     }
   ],
-  "connections": ["SCN_9_SUB_2"],
+  "connections": [
+    "SCN_9_SUB_2"
+  ],
   "events": []
 }

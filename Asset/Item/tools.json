@@ -280,5 +280,68 @@
     "description": "可快速扫描文件、照片或证件的便携设备，适合在现场备份纸质资料。",
     "type": "tool",
     "era": "2000s"
+  },
+  {
+    "id": "TOOL_KEYCARD_CLONER",
+    "name": "门禁卡复制器",
+    "description": "可读取并复制磁条卡或部分门禁卡数据的小型设备，常用于安保测试或非法潜入。",
+    "type": "tool",
+    "era": "2000s"
+  },
+  {
+    "id": "TOOL_HEART_MONITOR",
+    "name": "心电监护仪",
+    "description": "医院常见的床旁监护设备，可持续显示心率、血氧等生命体征。",
+    "type": "tool",
+    "era": "2000s"
+  },
+  {
+    "id": "TOOL_CENTRIFUGE",
+    "name": "离心机",
+    "description": "实验室用于分离血液或样本的台式离心机，运转时会发出低沉稳定的嗡鸣。",
+    "type": "tool",
+    "era": "2000s"
+  },
+  {
+    "id": "TOOL_SURVEILLANCE_CONSOLE",
+    "name": "监控控制台",
+    "description": "用于切换摄像头画面、调取录像和管理安防设备的控制终端。",
+    "type": "tool",
+    "era": "2000s"
+  },
+  {
+    "id": "TOOL_MANHOLE_HOOK",
+    "name": "井盖拉钩",
+    "description": "用于撬起沉重井盖或检修盖板的金属拉钩，常见于市政和检修人员手中。",
+    "type": "tool",
+    "era": "2000s"
+  },
+  {
+    "id": "TOOL_GATE_CONTROL_BOX",
+    "name": "闸门控制箱",
+    "description": "连接闸门、泵站或地下排水设施的金属控制箱，可用于启闭或维护流体控制系统。",
+    "type": "tool",
+    "era": "2000s"
+  },
+  {
+    "id": "TOOL_SERVER_TOWER",
+    "name": "服务器机箱",
+    "description": "用于持续运行监控、存储或网络任务的服务器机箱，通常伴随稳定的风扇低鸣。",
+    "type": "tool",
+    "era": "2000s"
+  },
+  {
+    "id": "TOOL_MONITOR_ARRAY",
+    "name": "显示屏组",
+    "description": "由多台显示器组成的监控或工作显示阵列，可同时显示多个画面或数据窗口。",
+    "type": "tool",
+    "era": "2000s"
+  },
+  {
+    "id": "TOOL_LUGGAGE_CART",
+    "name": "行李推车",
+    "description": "车站、旅馆或仓储场所常见的金属手推车，可用于搬运行李、箱包或重物。",
+    "type": "tool",
+    "era": "2000s"
   }
 ]

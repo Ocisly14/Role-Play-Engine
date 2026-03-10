@@ -7,9 +7,28 @@
   "endpointB": "JUNC_4",
   "travelTimeMinutes": 6,
   "alongConnections": [
-    { "sceneId": "SCN_15_SUB_1", "position": 0.5 }
+    {
+      "sceneId": "SCN_15_SUB_1",
+      "position": 0.5
+    }
   ],
-  "items": [],
+  "items": [
+    {
+      "id": "ITEM_ROAD5B_1",
+      "name": "电线杆与杂贴",
+      "description": "木质电线杆上贴满了电话号码条和卷边广告纸，风一吹就会哗啦作响。"
+    },
+    {
+      "id": "ITEM_ROAD5B_2",
+      "name": "住户邮箱",
+      "description": "巷道一侧的住户邮箱颜色斑驳，投递口边缘留下了反复拉扯的磨痕。"
+    },
+    {
+      "id": "ITEM_ROAD5B_3",
+      "name": "路边排水栅",
+      "description": "一块长条形排水栅嵌在路面最低处，积着泥水和碎叶。"
+    }
+  ],
   "clues": [],
   "conditions": [
     {
@@ -21,7 +40,10 @@
       "description": "巷道路灯稀疏，夜间光线昏暗。",
       "mechanicalEffect": {
         "skillPenalty": [
-          { "skill": "Spot Hidden", "delta": -10 }
+          {
+            "skill": "Spot Hidden",
+            "delta": -10
+          }
         ]
       }
     }

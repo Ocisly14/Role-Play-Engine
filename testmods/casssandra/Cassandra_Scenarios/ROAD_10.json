@@ -7,10 +7,32 @@
   "endpointB": "JUNC_11",
   "travelTimeMinutes": 15,
   "alongConnections": [
-    { "sceneId": "SCN_19_SUB_1", "position": 0.4 },
-    { "sceneId": "SCN_20_SUB_1", "position": 0.8 }
+    {
+      "sceneId": "SCN_19_SUB_1",
+      "position": 0.4
+    },
+    {
+      "sceneId": "SCN_20_SUB_1",
+      "position": 0.8
+    }
   ],
-  "items": [],
+  "items": [
+    {
+      "id": "ITEM_ROAD10_1",
+      "name": "公墓方向牌",
+      "description": "道路一侧的箭头牌指向公墓和伐木场，白漆字面被雨水冲得发灰。"
+    },
+    {
+      "id": "ITEM_ROAD10_2",
+      "name": "林地木栅",
+      "description": "靠近森林的一段矮木栅断了几截，只剩下零散木桩还立在地里。"
+    },
+    {
+      "id": "ITEM_ROAD10_3",
+      "name": "步道标桩",
+      "description": "通往林地与废弃伐木场的小路旁每隔一段就立着一根编号标桩。"
+    }
+  ],
   "clues": [],
   "conditions": [
     {
@@ -22,7 +44,10 @@
       "description": "大道远端靠近森林处路灯稀少，夜间极为昏暗。",
       "mechanicalEffect": {
         "skillPenalty": [
-          { "skill": "Spot Hidden", "delta": -15 }
+          {
+            "skill": "Spot Hidden",
+            "delta": -15
+          }
         ]
       }
     }

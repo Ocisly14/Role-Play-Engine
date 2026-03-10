@@ -7,11 +7,36 @@
   "endpointB": "JUNC_4",
   "travelTimeMinutes": 10,
   "alongConnections": [
-    { "sceneId": "SCN_16_SUB_1", "position": 0.2 },
-    { "sceneId": "SCN_17_SUB_1", "position": 0.5 },
-    { "sceneId": "SCN_18_SUB_1", "position": 0.8 }
+    {
+      "sceneId": "SCN_16_SUB_1",
+      "position": 0.2
+    },
+    {
+      "sceneId": "SCN_17_SUB_1",
+      "position": 0.5
+    },
+    {
+      "sceneId": "SCN_18_SUB_1",
+      "position": 0.8
+    }
   ],
-  "items": [],
+  "items": [
+    {
+      "id": "ITEM_ROAD3_1",
+      "name": "教堂告示栏",
+      "description": "路边的教堂告示栏里夹着本周弥撒时间与慈善募捐通知。"
+    },
+    {
+      "id": "ITEM_ROAD3_2",
+      "name": "酒吧霓虹牌",
+      "description": "从驯鹿酒吧外墙伸出的霓虹牌白天也能看见轮廓，鹿角形状的灯管有几段已经不亮。"
+    },
+    {
+      "id": "ITEM_ROAD3_3",
+      "name": "五金货箱",
+      "description": "五金店门外堆着几只装钉子和锯条的木箱，箱盖边缘磨得发毛。"
+    }
+  ],
   "clues": [],
   "conditions": [
     {

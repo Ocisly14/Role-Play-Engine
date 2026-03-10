@@ -316,5 +316,32 @@
       "effect": "提供短距离应急照明并快速消耗手机电量",
       "duration": 30
     }
+  },
+  {
+    "id": "LIGHT_INDUSTRIAL_STREET_LAMP",
+    "name": "工业路灯",
+    "description": "高杆工业路灯，常见于厂区、站前广场或市政边缘地带，照明范围较广但灯罩容易积灰。",
+    "type": "lighting",
+    "era": "2000s",
+    "isLightSource": true,
+    "lightLevel": 4
+  },
+  {
+    "id": "LIGHT_PORCH_LAMP",
+    "name": "门廊灯",
+    "description": "安装在住宅或小店门前的门廊灯，用于照亮台阶、邮箱和入口区域。",
+    "type": "lighting",
+    "era": "2000s",
+    "isLightSource": true,
+    "lightLevel": 2
+  },
+  {
+    "id": "LIGHT_DOUBLE_STREET_LAMP",
+    "name": "双头路灯",
+    "description": "拥有两个灯头的道路照明设施，常见于十字路口、广场或较宽阔的街段。",
+    "type": "lighting",
+    "era": "2000s",
+    "isLightSource": true,
+    "lightLevel": 4
   }
 ]

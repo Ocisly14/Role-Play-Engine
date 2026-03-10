@@ -7,10 +7,32 @@
   "endpointB": "JUNC_5",
   "travelTimeMinutes": 8,
   "alongConnections": [
-    { "sceneId": "SCN_4_SUB_1", "position": 0.3 },
-    { "sceneId": "SCN_5_SUB_1", "position": 0.7 }
+    {
+      "sceneId": "SCN_4_SUB_1",
+      "position": 0.3
+    },
+    {
+      "sceneId": "SCN_5_SUB_1",
+      "position": 0.7
+    }
   ],
-  "items": [],
+  "items": [
+    {
+      "id": "ITEM_ROAD6_1",
+      "name": "酒店招牌",
+      "description": "帕拉迪尔大酒店的悬挂牌在街段中部格外显眼，镀金字母在阴天也有些微反光。"
+    },
+    {
+      "id": "ITEM_ROAD6_2",
+      "name": "街边长椅",
+      "description": "人行道旁摆着一张供行人歇脚的木质长椅，椅面有被烟头烫出的圆点。"
+    },
+    {
+      "id": "ITEM_ROAD6_3",
+      "name": "成排路灯",
+      "description": "街道两旁立着成排路灯，到了夜里能把酒店周围照得比周边住区更亮。"
+    }
+  ],
   "clues": [],
   "conditions": [
     {

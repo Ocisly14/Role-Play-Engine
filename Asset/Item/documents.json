@@ -224,5 +224,47 @@
     "description": "银行打印的交易流水或月结单，可用于追查资金往来和活动轨迹。",
     "type": "document",
     "era": "2000s"
+  },
+  {
+    "id": "DOC_SHIFT_SCHEDULE",
+    "name": "排班表",
+    "description": "写有员工姓名、时段和岗位安排的排班表，常见于医院、餐厅或安保岗位。",
+    "type": "document",
+    "era": "2000s"
+  },
+  {
+    "id": "DOC_GUEST_REGISTER",
+    "name": "住客登记簿",
+    "description": "旅馆或酒店前台登记住客信息的册页，通常包含姓名、房号和入住时间。",
+    "type": "document",
+    "era": "2000s"
+  },
+  {
+    "id": "DOC_TRAIN_TIMETABLE",
+    "name": "列车时刻表",
+    "description": "印有班次、到发时间和站台信息的列车时刻表，可用于追查旅客行程。",
+    "type": "document",
+    "era": "2000s"
+  },
+  {
+    "id": "DOC_INVENTORY_SHEET",
+    "name": "库存清单",
+    "description": "记录货品、数量和存放位置的库存清单，常见于仓储、后厨和药品管理场所。",
+    "type": "document",
+    "era": "2000s"
+  },
+  {
+    "id": "DOC_CREMATION_LOG",
+    "name": "焚化记录",
+    "description": "焚化设施的操作记录，通常包含日期、编号、处理对象与值班人员签名。",
+    "type": "document",
+    "era": "2000s"
+  },
+  {
+    "id": "DOC_REPAIR_LEDGER",
+    "name": "维修登记簿",
+    "description": "记录送修时间、物件名称、故障说明和取件状态的登记簿，常见于钟表店或维修铺。",
+    "type": "document",
+    "era": "2000s"
   }
 ]

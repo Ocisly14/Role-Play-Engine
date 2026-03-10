@@ -386,5 +386,80 @@
       "locked": false,
       "contents": []
     }
+  },
+  {
+    "id": "CONT_CASH_BOX",
+    "name": "收银盒",
+    "description": "带隔层的小型金属收银盒，用于存放零钱、票据和临时现金。",
+    "type": "container",
+    "era": "2000s",
+    "containerStats": {
+      "capacity": 5,
+      "locked": true,
+      "lockDifficulty": "easy",
+      "contents": []
+    }
+  },
+  {
+    "id": "CONT_WINE_RACK",
+    "name": "酒架",
+    "description": "用于横放红酒或烈酒瓶的木质酒架，常见于酒窖、餐厅后厅和酒吧储藏区。",
+    "type": "container",
+    "era": "2000s",
+    "containerStats": {
+      "capacity": 12,
+      "locked": false,
+      "contents": []
+    }
+  },
+  {
+    "id": "CONT_SPECIMEN_COOLER",
+    "name": "样本冷藏箱",
+    "description": "用于短时间低温保存样本瓶、试剂或血液样本的小型冷藏箱。",
+    "type": "container",
+    "era": "2000s",
+    "containerStats": {
+      "capacity": 6,
+      "locked": true,
+      "lockDifficulty": "regular",
+      "contents": []
+    }
+  },
+  {
+    "id": "CONT_TOOL_CABINET_LOCKED",
+    "name": "上锁工具柜",
+    "description": "用于集中存放专业器械、法医工具或维修设备的金属柜，通常带有独立锁具。",
+    "type": "container",
+    "era": "2000s",
+    "containerStats": {
+      "capacity": 12,
+      "locked": true,
+      "lockDifficulty": "regular",
+      "contents": []
+    }
+  },
+  {
+    "id": "CONT_EVIDENCE_SHELF",
+    "name": "证物架",
+    "description": "警方或法医部门用于临时摆放编号证物盒、文件袋和取样容器的开放式架子。",
+    "type": "container",
+    "era": "2000s",
+    "containerStats": {
+      "capacity": 10,
+      "locked": false,
+      "contents": []
+    }
+  },
+  {
+    "id": "CONT_INDEX_DRAWER",
+    "name": "索引卡抽屉",
+    "description": "存放按姓名、年份或案件编号分类的索引卡抽屉柜，便于检索纸质档案。",
+    "type": "container",
+    "era": "2000s",
+    "containerStats": {
+      "capacity": 20,
+      "locked": false,
+      "contents": []
+    }
   }
 ]

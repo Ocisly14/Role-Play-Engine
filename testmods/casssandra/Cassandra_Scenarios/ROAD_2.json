@@ -7,11 +7,36 @@
   "endpointB": "JUNC_3",
   "travelTimeMinutes": 10,
   "alongConnections": [
-    { "sceneId": "SCN_11_SUB_1", "position": 0.2 },
-    { "sceneId": "SCN_9_SUB_1", "position": 0.5 },
-    { "sceneId": "SCN_10_SUB_1", "position": 0.8 }
+    {
+      "sceneId": "SCN_11_SUB_1",
+      "position": 0.2
+    },
+    {
+      "sceneId": "SCN_9_SUB_1",
+      "position": 0.5
+    },
+    {
+      "sceneId": "SCN_10_SUB_1",
+      "position": 0.8
+    }
   ],
-  "items": [],
+  "items": [
+    {
+      "id": "ITEM_ROAD2_1",
+      "name": "店铺招牌列",
+      "description": "沿街店铺的招牌高低错落地伸出墙面，花店、餐厅和占卜馆的名字都能在这里看到。"
+    },
+    {
+      "id": "ITEM_ROAD2_2",
+      "name": "公交站长椅",
+      "description": "路边一张漆成蓝色的长椅兼做简易候车点，椅脚被人用砖块垫高了一角。"
+    },
+    {
+      "id": "ITEM_ROAD2_3",
+      "name": "社区布告板",
+      "description": "木框布告板上贴着镇民活动、失物招领和商户优惠海报。"
+    }
+  ],
   "clues": [],
   "conditions": [
     {

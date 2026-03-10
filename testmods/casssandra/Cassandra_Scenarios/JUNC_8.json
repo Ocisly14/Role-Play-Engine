@@ -3,7 +3,23 @@
   "name": "新月街A南西端·警察局前",
   "description": "新月街A大道南的西端尽头，正对面是卡森德拉警察局。路口有一盏明亮的路灯，警察局门前停着一辆警车。",
   "parentLocationId": "OUTDOOR",
-  "items": [],
+  "items": [
+    {
+      "id": "ITEM_JUNC8_1",
+      "name": "警车",
+      "description": "警察局门前停着一辆黑白涂装的警车，车身侧面反射着路灯的冷光。"
+    },
+    {
+      "id": "ITEM_JUNC8_2",
+      "name": "明亮路灯",
+      "description": "路口的高杆路灯亮得过分，把警察局门前一小块区域照得几乎没有阴影。"
+    },
+    {
+      "id": "ITEM_JUNC8_3",
+      "name": "警局公告牌",
+      "description": "警察局外墙边立着公告牌，上面贴着通缉令、社区提醒和临时停车规定。"
+    }
+  ],
   "clues": [],
   "conditions": [
     {
@@ -12,5 +28,7 @@
     }
   ],
   "events": [],
-  "connectedSceneIds": ["SCN_3_SUB_1"]
+  "connectedSceneIds": [
+    "SCN_3_SUB_1"
+  ]
 }

@@ -3,7 +3,23 @@
   "name": "南新街东端三岔口",
   "description": "南新街的东端，三条道路在此交汇。向西是南新街，向北是石榴巷南段，向东南是新月街A大道北。这里是镇中心区域，白天人来人往。",
   "parentLocationId": "OUTDOOR",
-  "items": [],
+  "items": [
+    {
+      "id": "ITEM_JUNC4_1",
+      "name": "镇中心方向牌",
+      "description": "金属方向牌立在路口中央偏北的位置，指示酒店、警察局和教堂的大致方向。"
+    },
+    {
+      "id": "ITEM_JUNC4_2",
+      "name": "公共告示栏",
+      "description": "一块玻璃面公共告示栏镶在墙边，里面夹着镇公所通知和节庆海报。"
+    },
+    {
+      "id": "ITEM_JUNC4_3",
+      "name": "街角长椅",
+      "description": "石基木面的长椅摆在街角，椅面被来往行人磨得发亮。"
+    }
+  ],
   "clues": [],
   "conditions": [
     {

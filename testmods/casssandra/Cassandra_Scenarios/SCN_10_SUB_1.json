@@ -6,8 +6,23 @@
   "items": [
     {
       "id": "ITEM_SCN10_1",
-      "name": "餐厅桌椅和装饰",
-      "description": "温馨的餐厅内摆放着几张精心布置的餐桌，桌上铺着干净的桌布，配有简洁的花瓶装饰。墙上挂着一些带有拉美风情的装饰画。"
+      "name": "餐厅桌椅与陶瓶摆设",
+      "description": "几张擦得发亮的木桌上铺着干净桌布，每张桌中央都摆着插有干花的小陶瓶。"
+    },
+    {
+      "id": "ITEM_SCN10_2",
+      "name": "预约本与点菜单",
+      "description": "柜台边放着一本写满预约名字的厚本子，旁边压着几张被油渍蹭过边缘的点菜单。"
+    },
+    {
+      "id": "ITEM_SCN10_3",
+      "name": "角落收音机",
+      "description": "角落里的老式收音机低声播放着拉丁吉他曲，音质时不时被电流声轻轻打断。"
+    },
+    {
+      "id": "ITEM_SCN10_4",
+      "name": "香料架与咖啡磨",
+      "description": "通往厨房的小架子上摆着孜然、辣椒粉和一只手摇咖啡磨，空气里一直悬着淡淡苦香。"
     }
   ],
   "clues": [
@@ -18,7 +33,10 @@
       "difficulty": "regular",
       "location": "餐厅内，与Helen交谈",
       "discoveryMethod": "向Helen询问关于卢奇菲罗的事情",
-      "reveals": ["Helen认识驯鹿酒吧案的受害人", "案发当晚Helen也在酒吧附近"],
+      "reveals": [
+        "Helen认识驯鹿酒吧案的受害人",
+        "案发当晚Helen也在酒吧附近"
+      ],
       "discovered": false
     },
     {
@@ -28,7 +46,10 @@
       "difficulty": "hard",
       "location": "餐厅内，与Helen深入交谈",
       "discoveryMethod": "聊到Vito和Bruno的关系时可能提及",
-      "reveals": ["Vito和Bruno关系不错", "珊德拉的小屋是Bruno常去的地方"],
+      "reveals": [
+        "Vito和Bruno关系不错",
+        "珊德拉的小屋是Bruno常去的地方"
+      ],
       "discovered": false
     }
   ],

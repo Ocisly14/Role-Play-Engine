@@ -7,12 +7,27 @@
     {
       "id": "ITEM_SCN1_1",
       "name": "医院档案",
-      "description": "医院的患者与尸体档案记录系统，可以查阅尸体转运等信息"
+      "description": "医院的患者与尸体档案记录系统，可以查阅尸体转运等信息。"
     },
     {
       "id": "ITEM_SCN1_2",
       "name": "监控屏幕",
-      "description": "大厅角落的监控显示屏，可以观察到各处走廊的画面，但存在监控死角"
+      "description": "大厅角落的监控显示屏可以观察各处走廊画面，但存在若干监控死角。"
+    },
+    {
+      "id": "ITEM_SCN1_15",
+      "name": "接待窗口与登记表",
+      "description": "半开的接待窗口后散着来访登记表、签字板和一只喝了一半冷咖啡的搪瓷杯。"
+    },
+    {
+      "id": "ITEM_SCN1_16",
+      "name": "候诊椅与自动售货机",
+      "description": "靠墙的一排塑料候诊椅漆面发亮，旁边老旧售货机里还摆着几包过期边缘的零食。"
+    },
+    {
+      "id": "ITEM_SCN1_17",
+      "name": "排班白板与指示牌",
+      "description": "大厅墙上挂着写满潦草字迹的排班白板，下面是一组指向停尸间、病房与实验室方向的绿色指示牌。"
     }
   ],
   "clues": [
@@ -23,7 +38,10 @@
       "difficulty": "hard",
       "location": "医院网络系统",
       "discoveryMethod": "通过Simon Laplace尝试入侵医院系统后得知",
-      "reveals": ["医院存在不可告人的秘密", "Vincent Galenus参与了某些隐秘活动"],
+      "reveals": [
+        "医院存在不可告人的秘密",
+        "Vincent Galenus参与了某些隐秘活动"
+      ],
       "discovered": false
     },
     {
@@ -33,7 +51,9 @@
       "difficulty": "regular",
       "location": "医院大厅公告与门禁系统",
       "discoveryMethod": "观察门禁系统或向工作人员打听",
-      "reveals": ["需要获取Vincent Galenus的ID卡"],
+      "reveals": [
+        "需要获取Vincent Galenus的ID卡"
+      ],
       "discovered": false
     },
     {
@@ -56,10 +76,21 @@
       "type": "other",
       "description": "医院管理松散，人员来往稀疏，伪装进入相对容易",
       "mechanicalEffect": {
-        "skillPenalty": [{ "skill": "Disguise", "delta": 10 }]
+        "skillPenalty": [
+          {
+            "skill": "Disguise",
+            "delta": 10
+          }
+        ]
       }
     }
   ],
-  "connections": ["SCN_1_SUB_2", "SCN_1_SUB_3", "SCN_1_SUB_4", "SCN_1_SUB_5", "SCN_1_SUB_6"],
+  "connections": [
+    "SCN_1_SUB_2",
+    "SCN_1_SUB_3",
+    "SCN_1_SUB_4",
+    "SCN_1_SUB_5",
+    "SCN_1_SUB_6"
+  ],
   "events": []
 }
