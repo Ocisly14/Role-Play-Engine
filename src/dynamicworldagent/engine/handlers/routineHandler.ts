@@ -35,9 +35,11 @@ export const routineHandler: NodeHandler = {
     const npcSkills = npc?.skills ?? {};
     const difficulty = ctx.getNodeDifficulty(node, dgsm);
 
-    // Scene penalties
-    const penalties = ctx.getScenePenalties(node.location, dgsm);
-    const adjustedSkills = ctx.applyPenalties(npcSkills, penalties);
+    // Scene + character penalties
+    const scenePenalties = ctx.getScenePenalties(node.location, dgsm);
+    const charPenalties = ctx.getCharacterPenalties(node.characterId, dgsm);
+    const afterScene = ctx.applyPenalties(npcSkills, scenePenalties);
+    const adjustedSkills = ctx.applyPenalties(afterScene, charPenalties);
 
     let resolvedSuccessLevel: import("../../dynamicBasicAgent/npcPlanning/types.js").SuccessLevel | undefined;
     let lastRollDetail: string | undefined;

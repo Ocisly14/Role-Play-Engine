@@ -119,7 +119,7 @@ export const buildDynamicGraph = (
   const turnManager = new TurnManager(db);
   const turnRagAgent = new TurnRagAgent();
   const registry = createDefaultRegistry();
-  const executionCtx = createExecutionContext();
+  const executionCtx = createExecutionContext(registry);
 
   // Create checkpointer for saving/resuming graph state
   const checkpointer = new MemorySaver();

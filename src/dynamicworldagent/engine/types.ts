@@ -144,6 +144,16 @@ export interface WorldFeature {
   tick?(dgsm: DynamicGameStateManager, runtime: TickRuntimeContext): void;
 
   /**
+   * Return skill modifiers for a specific character based on this feature's state.
+   * Called during skill roll resolution to apply character-level penalties/bonuses.
+   * Use skill name "*" to apply to ALL skills.
+   */
+  getCharacterSkillModifiers?(
+    characterId: string,
+    dgsm: DynamicGameStateManager
+  ): Array<{ skill: string; delta: number }>;
+
+  /**
    * Called once when the tick engine detects this feature's overlay fields on an executed node.
    * Reads overlay field values from the node and writes initial feature state into dgsm
    * (e.g. adding scene conditions, penalties, etc.).
@@ -180,6 +190,9 @@ export interface ExecutionContext {
 
   /** Apply penalties to a skills record */
   applyPenalties(skills: Record<string, number>, penalties: Map<string, number>): Record<string, number>;
+
+  /** Get character-level skill penalties from all active features */
+  getCharacterPenalties(characterId: string, dgsm: DynamicGameStateManager): Map<string, number>;
 
   /** Get difficulty for a node (player explicit or NPC relationship-derived) */
   getNodeDifficulty(node: PlanNode, dgsm: DynamicGameStateManager): "regular" | "hard" | "extreme" | "luck_only";

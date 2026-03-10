@@ -252,6 +252,15 @@ export const staminaFeature: WorldFeature = {
     return lines.length > 0 ? "Character fatigue:\n" + lines.join("\n") : "";
   },
 
+  getCharacterSkillModifiers(characterId: string, dgsm: DynamicGameStateManager): Array<{ skill: string; delta: number }> {
+    const stamina = getStaminaState(dgsm, characterId);
+    if (!stamina || stamina.fatigueLevel === 0) return [];
+
+    // Tired: all skills -10, Exhausted: all skills -20
+    const delta = stamina.fatigueLevel === 1 ? -10 : -20;
+    return [{ skill: "*", delta }];
+  },
+
   tick(dgsm: DynamicGameStateManager, runtime: TickRuntimeContext): void {
     const characters = getTrackedCharacters(dgsm);
 

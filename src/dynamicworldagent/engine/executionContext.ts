@@ -1,4 +1,5 @@
 import type { ExecutionContext } from "./types.js";
+import type { GameEngineRegistry } from "./registry.js";
 import {
   resolveSkillRoll,
   getNodeDifficulty,
@@ -8,7 +9,7 @@ import {
   applyPenalties,
 } from "./shared/index.js";
 
-export function createExecutionContext(): ExecutionContext {
+export function createExecutionContext(registry?: GameEngineRegistry): ExecutionContext {
   return {
     resolveSkillRoll,
     getScenePenalties,
@@ -16,5 +17,9 @@ export function createExecutionContext(): ExecutionContext {
     getNodeDifficulty,
     luckFailureRate,
     selectBestSkill,
+    getCharacterPenalties(characterId, dgsm) {
+      if (!registry) return new Map();
+      return registry.collectCharacterPenalties(characterId, dgsm);
+    },
   };
 }

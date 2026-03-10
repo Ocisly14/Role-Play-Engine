@@ -2,7 +2,8 @@ import type { NodeHandler, ExecutionContext } from "../types.js";
 import type { DynamicGameStateManager } from "../../state/DynamicGameState.js";
 import type { PlanNode, CharacterAction } from "../../dynamicBasicAgent/npcPlanning/types.js";
 import { buildOutcome, makeAction } from "../shared/nodeHelpers.js";
-import { findPath, calculateTravelTime } from "../shared/pathfinding.js";
+import { findPath, calculateTravelTime, findTopologyPath } from "../shared/pathfinding.js";
+import type { CharacterPosition, TownTopology } from "../../world_builder/topologyTypes.js";
 
 export const movementHandler: NodeHandler = {
   type: "movement",
@@ -36,9 +37,11 @@ export const movementHandler: NodeHandler = {
     const npcSkills = npc?.skills ?? {};
     const difficulty = ctx.getNodeDifficulty(node, dgsm);
 
-    // Scene penalties
-    const penalties = ctx.getScenePenalties(node.location, dgsm);
-    const adjustedSkills = ctx.applyPenalties(npcSkills, penalties);
+    // Scene + character penalties
+    const scenePenalties = ctx.getScenePenalties(node.location, dgsm);
+    const charPenalties = ctx.getCharacterPenalties(node.characterId, dgsm);
+    const afterScene = ctx.applyPenalties(npcSkills, scenePenalties);
+    const adjustedSkills = ctx.applyPenalties(afterScene, charPenalties);
 
     let resolvedSuccessLevel: import("../../dynamicBasicAgent/npcPlanning/types.js").SuccessLevel | undefined;
     let lastRollDetail: string | undefined;
@@ -66,6 +69,44 @@ export const movementHandler: NodeHandler = {
         buildOutcome(node, "completed", { reason: "Creative movement succeeded" }),
         { difficulty, successLevel: resolvedSuccessLevel }
       );
+    }
+
+    // Topology-based movement (preferred when topology is loaded)
+    const topology = dgsm.getTopology();
+    if (topology) {
+      const currentPos = dgsm.getCharacterPosition(node.characterId);
+      if (currentPos) {
+        const targetPos = resolveTargetPosition(node.location, topology);
+        if (targetPos) {
+          const topologyPath = findTopologyPath(
+            currentPos,
+            targetPos,
+            topology,
+            state.blockedConnections
+          );
+
+          if (!topologyPath) {
+            return makeAction(
+              node,
+              "failed",
+              buildOutcome(node, "failed", { reason: "no path available in topology" }),
+              { difficulty, failureReason: "location_blocked" }
+            );
+          }
+
+          dgsm.setCharacterPosition(node.characterId, targetPos);
+          // Also update legacy npcLocation for backward compatibility
+          dgsm.setNpcLocation(node.characterId, node.location);
+          return makeAction(
+            node,
+            "completed",
+            buildOutcome(node, "completed", {
+              reason: `Traveled via topology in ~${topologyPath.totalMinutes} min`,
+            }),
+            { difficulty, successLevel: resolvedSuccessLevel }
+          );
+        }
+      }
     }
 
     // Normal movement: BFS pathfinding
@@ -118,3 +159,23 @@ export const movementHandler: NodeHandler = {
     );
   },
 };
+
+function resolveTargetPosition(
+  locationId: string,
+  topology: TownTopology
+): CharacterPosition | null {
+  // Check junctions
+  if (topology.junctions.has(locationId)) {
+    return { type: "junction", junctionId: locationId };
+  }
+  // Check scenes (including buildings along roads and at junctions)
+  if (topology.sceneToParent.has(locationId)) {
+    return { type: "scene", sceneId: locationId };
+  }
+  // Roads are not valid direct targets — resolve to the far endpoint junction
+  const road = topology.roads.get(locationId);
+  if (road) {
+    return { type: "junction", junctionId: road.endpointB };
+  }
+  return null;
+}

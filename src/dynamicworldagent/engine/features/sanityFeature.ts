@@ -485,6 +485,33 @@ export const sanityFeature: WorldFeature = {
     return lines.length > 0 ? "Mental state:\n" + lines.join("\n") : "";
   },
 
+  getCharacterSkillModifiers(characterId: string, dgsm: DynamicGameStateManager): Array<{ skill: string; delta: number }> {
+    const sanState = getSanityState(dgsm, characterId);
+    if (!sanState) return [];
+
+    const modifiers: Array<{ skill: string; delta: number }> = [];
+
+    // Active insanity: general impairment
+    if (sanState.activeInsanity?.isActive) {
+      const restriction = sanState.activeInsanity.actionRestriction;
+      if (restriction === "incapacitated") {
+        // Cannot act at all — massive penalty to everything
+        modifiers.push({ skill: "*", delta: -100 });
+      } else if (restriction === "impaired") {
+        // General impairment
+        modifiers.push({ skill: "*", delta: -15 });
+      }
+      // flee_only and attack_only: no general penalty, but action restriction handles it
+    }
+
+    // Persistent phobias: penalty to relevant perception/awareness skills
+    if (sanState.persistentConditions.length > 0) {
+      modifiers.push({ skill: "Perception", delta: -10 });
+    }
+
+    return modifiers;
+  },
+
   tick(dgsm: DynamicGameStateManager, runtime: TickRuntimeContext): void {
     const characters = getTrackedCharacters(dgsm);
     const currentTimeMinutes = computeGameTimeMinutes(runtime.gameDay, runtime.tickTime);
