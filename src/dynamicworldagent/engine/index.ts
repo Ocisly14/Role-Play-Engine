@@ -3,7 +3,8 @@ export { createExecutionContext } from "./executionContext.js";
 export { createDefaultRegistry } from "./registerDefaults.js";
 export type {
   NodeHandler, WorldFeature, ExecutionContext, SkillRollResult,
-  WorldFeatureResult, TickRuntimeContext, NpcPlanningCapability,
+  TickRuntimeContext, NpcPlanningCapability,
+  FeatureNodeSchema, FeaturePropagationConfig, PropagationResult,
 } from "./types.js";
 export {
   routineHandler,
@@ -12,5 +13,4 @@ export {
   objectInteractionHandler,
   sceneInteractionHandler,
 } from "./handlers/index.js";
-export { ImpactGateFeature } from "./features/impactGateFeature.js";
 export { findAffectedCharacters, findAffectedScenes } from "./shared/impactPropagation.js";

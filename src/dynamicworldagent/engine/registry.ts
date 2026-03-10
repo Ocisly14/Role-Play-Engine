@@ -15,7 +15,6 @@ const BASE_NODE_FIELDS = new Set([
 export class GameEngineRegistry {
   private handlers = new Map<string, NodeHandler>();
   private features = new Map<string, WorldFeature>();
-  private featureTickCounters = new Map<string, number>();
 
   registerHandler(handler: NodeHandler): void {
     if (this.handlers.has(handler.type)) {
@@ -51,21 +50,79 @@ export class GameEngineRegistry {
     return this.features.get(id);
   }
 
-  // ===== Tick counter management =====
+  // ===== Propagation state management =====
 
-  /** Reset all feature tick counters (call at session start) */
+  private propagationTickCounters = new Map<string, number>();
+  private propagationSources = new Map<string, Array<{ sceneId: string; currentHop: number }>>();
+
+  /** Reset all propagation state (call at session start) */
   resetTickCounters(): void {
-    this.featureTickCounters.clear();
+    this.propagationTickCounters.clear();
+    this.propagationSources.clear();
   }
 
-  /** Increment tick counter for a feature, return true if feature should fire this tick */
-  shouldFeatureFire(featureId: string, isFullTick: boolean): boolean {
+  /** Register a new propagation source for a feature */
+  addPropagationSource(featureId: string, sceneId: string): void {
+    if (!this.propagationSources.has(featureId)) {
+      this.propagationSources.set(featureId, []);
+    }
+    const sources = this.propagationSources.get(featureId)!;
+    if (!sources.some(s => s.sceneId === sceneId)) {
+      sources.push({ sceneId, currentHop: 0 });
+    }
+  }
+
+  /**
+   * Check if a feature's propagation should fire this tick.
+   * WARNING: This method increments the internal tick counter as a side effect.
+   * Call exactly once per feature per tick.
+   */
+  shouldPropagationFire(featureId: string, isFullTick: boolean): boolean {
     if (!isFullTick) return false;
-    const current = (this.featureTickCounters.get(featureId) ?? 0) + 1;
-    this.featureTickCounters.set(featureId, current);
     const feature = this.features.get(featureId);
-    if (!feature) return false;
-    return current % feature.tickInterval === 0;
+    if (!feature?.propagation) return false;
+    const current = (this.propagationTickCounters.get(featureId) ?? 0) + 1;
+    this.propagationTickCounters.set(featureId, current);
+    return current % feature.propagation.tickInterval === 0;
+  }
+
+  /** Get current propagation sources for a feature */
+  getPropagationSources(featureId: string): Array<{ sceneId: string; currentHop: number }> {
+    return this.propagationSources.get(featureId) ?? [];
+  }
+
+  /** Update propagation sources after a propagation step */
+  updatePropagationSources(featureId: string, newSources: Array<{ sceneId: string; currentHop: number }>): void {
+    const feature = this.features.get(featureId);
+    const maxHops = feature?.propagation?.maxHops ?? 0;
+    this.propagationSources.set(featureId, newSources.filter(s => s.currentHop < maxHops));
+  }
+
+  /**
+   * Scan executed PlanNodes for feature overlay fields.
+   * For each feature with planNodeSchema, checks if any node contains
+   * at least one of the feature's required fields → registers propagation source
+   * and calls feature.activate() to initialize feature state in dgsm.
+   */
+  detectFeatureOverlays(
+    executedNodes: import("../dynamicBasicAgent/npcPlanning/types.js").PlanNode[],
+    dgsm: import("../state/DynamicGameState.js").DynamicGameStateManager
+  ): void {
+    for (const feature of this.features.values()) {
+      if (!feature.planNodeSchema) continue;
+      const featureFields = feature.planNodeSchema.requiredFields.map(f => f.field);
+      for (const node of executedNodes) {
+        const hasOverlay = featureFields.some(field => (node as Record<string, unknown>)[field] !== undefined);
+        if (hasOverlay) {
+          // Activate: let feature read overlay values and write initial state to dgsm
+          feature.activate?.(node, dgsm);
+          // Register propagation source (only if feature has propagation config)
+          if (feature.propagation) {
+            this.addPropagationSource(feature.id, node.location);
+          }
+        }
+      }
+    }
   }
 
   // ===== Prompt generation =====
@@ -203,7 +260,7 @@ The \`impact\` field on every PlanNode determines **who in the game world percei
    * 1. Assembly instruction
    * 2. Base Fields (player vs NPC variant)
    * 3. Type-Specific Additional Fields (per handler)
-   * 4. Feature Fields (from planNodeFields)
+   * 4. Feature Overlays (from planNodeSchema)
    * 5. Complete Example (one assembled JSON node)
    *
    * @param options.isPlayer - if true, uses timeAdvanceMinutes + difficulty; if false, uses gameTime
@@ -232,7 +289,7 @@ The \`impact\` field on every PlanNode determines **who in the game world percei
     sections.push("Each node is a single flat JSON object combining:");
     sections.push("1. All **Base Fields** (required on every node)");
     sections.push("2. **Type-specific fields** for the chosen `type` (see below — omit if type has none)");
-    sections.push("3. **Feature fields** if applicable (see below)");
+    sections.push("3. **Feature overlay fields** if the action involves an active world feature (see below)");
 
     // Section 2: Base Fields
     sections.push("");
@@ -252,7 +309,7 @@ The \`impact\` field on every PlanNode determines **who in the game world percei
     }
     baseJson.impact = 0;
     if (isPlayer) {
-      baseJson.timeAdvanceMinutes = 15;
+      baseJson.timeAdvanceMinutes = "minutes THIS action takes (not cumulative)" as any;
     }
     baseJson.status = "pending";
 
@@ -260,25 +317,28 @@ The \`impact\` field on every PlanNode determines **who in the game world percei
     sections.push(JSON.stringify(baseJson, null, 2));
     sections.push("```");
 
-    // Section 3: Type-Specific Additional Fields
+    // Section 3: Type-Specific Additional Fields (show ALL types)
     const typeSpecSections: string[] = [];
     for (const handler of this.handlers.values()) {
       const { required, optional, exampleExtras } = this.getTypeSpecificFields(handler);
-      if (required.length === 0 && optional.length === 0) continue;
 
       const lines: string[] = [];
-      lines.push(`**${handler.type}** adds:`);
-      for (const f of required) {
-        const exVal = exampleExtras[f] !== undefined
-          ? ` e.g. ${JSON.stringify(exampleExtras[f])}`
-          : "";
-        lines.push(`- \`"${f}"\`: (REQUIRED)${exVal}`);
-      }
-      for (const f of optional) {
-        const exVal = exampleExtras[f] !== undefined
-          ? ` e.g. ${JSON.stringify(exampleExtras[f])}`
-          : "";
-        lines.push(`- \`"${f}"\`: (optional)${exVal}`);
+      if (required.length === 0 && optional.length === 0) {
+        lines.push(`**${handler.type}**: no additional fields`);
+      } else {
+        lines.push(`**${handler.type}** adds:`);
+        for (const f of required) {
+          const exVal = exampleExtras[f] !== undefined
+            ? ` e.g. ${JSON.stringify(exampleExtras[f])}`
+            : "";
+          lines.push(`- \`"${f}"\`: (REQUIRED)${exVal}`);
+        }
+        for (const f of optional) {
+          const exVal = exampleExtras[f] !== undefined
+            ? ` e.g. ${JSON.stringify(exampleExtras[f])}`
+            : "";
+          lines.push(`- \`"${f}"\`: (optional)${exVal}`);
+        }
       }
       typeSpecSections.push(lines.join("\n"));
     }
@@ -290,20 +350,37 @@ The \`impact\` field on every PlanNode determines **who in the game world percei
       sections.push(typeSpecSections.join("\n\n"));
     }
 
-    // Section 4: Feature Fields
-    const featureFieldLines: string[] = [];
+    // Section 4: Feature Overlays
+    const featureOverlaySections: string[] = [];
     for (const feature of this.features.values()) {
-      if (feature.planNodeFields?.length) {
-        for (const ff of feature.planNodeFields) {
-          featureFieldLines.push(`- \`"${ff.field}"\`: (${ff.type}) ${ff.description}`);
+      if (!feature.planNodeSchema) continue;
+      const schema = feature.planNodeSchema;
+
+      const lines: string[] = [];
+      lines.push(`**${feature.id}** — ${feature.description}`);
+      lines.push(`When a node involves ${feature.id}, add these fields:`);
+      for (const f of schema.requiredFields) {
+        lines.push(`- \`"${f.field}"\`: (REQUIRED, ${f.type}) ${f.description}`);
+      }
+      if (schema.optionalFields?.length) {
+        for (const f of schema.optionalFields) {
+          lines.push(`- \`"${f.field}"\`: (optional, ${f.type}) ${f.description}`);
         }
       }
+      lines.push("");
+      lines.push("Example:");
+      lines.push("```json");
+      lines.push(JSON.stringify(schema.exampleNode, null, 2));
+      lines.push("```");
+
+      featureOverlaySections.push(lines.join("\n"));
     }
-    if (featureFieldLines.length > 0) {
+
+    if (featureOverlaySections.length > 0) {
       sections.push("");
-      sections.push("### Feature Fields");
+      sections.push("### Feature Overlays (can be added to ANY node type)");
       sections.push("");
-      sections.push(featureFieldLines.join("\n"));
+      sections.push(featureOverlaySections.join("\n\n"));
     }
 
     // Section 5: Complete Example — pick handler with the most extra fields

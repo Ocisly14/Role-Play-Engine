@@ -90,6 +90,7 @@ Return a JSON array of PlanNode objects. No extra text. Always write in English.
 Each node is a single flat JSON object combining:
 1. All **Base Fields** (required on every node)
 2. **Type-specific fields** for the chosen \`type\` (see below â€” omit if type has none)
+3. **Feature overlay fields** if the action involves an active world feature (see below)
 
 ### Base Fields (every node)
 \`\`\`json
@@ -101,12 +102,16 @@ Each node is a single flat JSON object combining:
   "actionType": "exploration|social|combat|stealth|chase|mental|environmental|narrative (OMIT if no skill check)",
   "difficulty": "regular|hard|extreme (only when actionType present)",
   "impact": 0,
-  "timeAdvanceMinutes": 15,
+  "timeAdvanceMinutes": "minutes THIS action takes (not cumulative)",
   "status": "pending"
 }
 \`\`\`
 
 ### Type-Specific Additional Fields
+
+**routine**: no additional fields
+
+**movement**: no additional fields
 
 **character_interaction** adds:
 - \`"targetCharacterId"\`: (REQUIRED) e.g. \`"npc_dr_morgan"\`
@@ -238,7 +243,9 @@ Use the relationship score, scene conditions, and player approach holistically â
 ${params.planningPrompt || ""}
 
 ## Time Advance
-Estimate realistic minutes for each action:
+\`timeAdvanceMinutes\` = how long **this single action** takes (in minutes). NOT cumulative, NOT relative to the previous node. The engine computes absolute game time from these durations automatically.
+
+Estimate realistic minutes:
 - Quick action (glance, pick up): 5
 - Short conversation: 10-15
 - Detailed investigation: 15-30

@@ -80,6 +80,7 @@ Only generate nodes from current time onward. Use concrete "HH:MM" timestamps th
 Each node is a single flat JSON object combining:
 1. All **Base Fields** (required on every node)
 2. **Type-specific fields** for the chosen \`type\` (see below — omit if type has none)
+3. **Feature overlay fields** if the action involves an active world feature (see below)
 
 ### Base Fields (every node)
 \`\`\`json
@@ -96,6 +97,10 @@ Each node is a single flat JSON object combining:
 \`\`\`
 
 ### Type-Specific Additional Fields
+
+**routine**: no additional fields
+
+**movement**: no additional fields
 
 **character_interaction** adds:
 - \`"targetCharacterId"\`: (REQUIRED) e.g. \`"npc_dr_morgan"\`

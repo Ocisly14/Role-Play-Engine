@@ -13,6 +13,7 @@ import type {
 import { type SessionRagChunkInput, SessionRagService } from "../knowledge/sessionRagService.js";
 import type { GameEngineRegistry } from "../../engine/registry.js";
 import type { ExecutionContext, TickRuntimeContext } from "../../engine/types.js";
+import { findAffectedCharacters } from "../../engine/shared/impactPropagation.js";
 
 // ==================== Time helpers ====================
 
@@ -321,8 +322,11 @@ interface SingleTickResult {
  * 3. Merge, sort (gameTime ASC, DEX DESC), scan encounters
  * 4. Execute all nodes via registry handlers
  * 5. Post-execution: relationship update, NPC memory, clue discovery, fumble damage, scene events, NPC failure revisePlans
- * 6. Fire eligible features via registry.shouldFeatureFire()
- * 7. Return tick result
+ * 6. Built-in impact propagation (scan impact>0 actions, notify affected NPCs, LLM gate, plan revision)
+ * 7. Feature temporal tick — each feature updates its time/state-driven logic
+ * 8. Detect feature overlay fields on executed nodes → register propagation sources
+ * 9. Drive feature propagation on schedule
+ * 10. Return tick result
  */
 async function executeSingleTick(params: SingleTickParams): Promise<SingleTickResult> {
   const {
@@ -497,19 +501,39 @@ async function executeSingleTick(params: SingleTickParams): Promise<SingleTickRe
     }
   }
 
-  // 6. Fire eligible features via registry.shouldFeatureFire()
+  // 6. Built-in impact propagation
+  //    Scans for actions with impact > 0, notifies affected NPCs,
+  //    runs LLM impact gate, triggers plan revision if needed.
   let allPlayerEvents: PlayerWitnessEvent[] = [];
   const injectedNodes: PlanNode[] = [];
 
-  for (const feature of registry.getAllFeatures()) {
-    if (!registry.shouldFeatureFire(feature.id, isFullTick)) continue;
+  const impactEvents = tickActions.filter((a) => a.impact > 0);
+  if (impactEvents.length > 0 && isFullTick) {
+    const playerId = state.playerCharacter?.id;
 
-    const result = await feature.onTickEnd(tickActions, dgsm, tickRuntime);
-    if (result.newNodes?.length) {
-      injectedNodes.push(...result.newNodes);
+    // Aggregate affected characters across all impact events
+    const characterEventsMap = new Map<string, Array<{ event: CharacterAction; impact: number }>>();
+
+    for (const event of impactEvents) {
+      const affected = findAffectedCharacters(event, event.impact, dgsm);
+      for (const [charId, level] of affected) {
+        if (!characterEventsMap.has(charId)) characterEventsMap.set(charId, []);
+        const existing = characterEventsMap.get(charId)!;
+        const idx = existing.findIndex((e) => e.event === event);
+        if (idx >= 0) {
+          if (level > existing[idx].impact) existing[idx].impact = level;
+        } else {
+          existing.push({ event, impact: level });
+        }
+      }
     }
-    if (result.playerEvents?.length) {
-      const witnessEvents: PlayerWitnessEvent[] = result.playerEvents.map((e) => ({
+
+    // Separate player events
+    const playerEvents = playerId ? characterEventsMap.get(playerId) : undefined;
+    if (playerId) characterEventsMap.delete(playerId);
+
+    if (playerEvents) {
+      allPlayerEvents = playerEvents.map((e) => ({
         characterName: e.event.characterName,
         action: e.event.action,
         outcome: e.event.outcome,
@@ -517,8 +541,102 @@ async function executeSingleTick(params: SingleTickParams): Promise<SingleTickRe
         gameTime: e.event.gameTime,
         impact: e.impact,
       }));
-      allPlayerEvents = allPlayerEvents.concat(witnessEvents);
     }
+
+    // NPC processing — parallel LLM calls
+    if (characterEventsMap.size > 0) {
+      await Promise.all(
+        [...characterEventsMap.entries()].map(async ([npcId, npcEvents]) => {
+          const npc = state.npcCharacters.find((n) => n.id === npcId);
+          const longTermIntent = await npcPlanningAgent.getLongTermIntent(sessionId, npcId);
+          const pendingNodes = await npcPlanningAgent.getPendingNodes(sessionId, npcId, gameDay);
+          const triggeringEvents = npcEvents
+            .map((e) => `[impact ${e.impact}] ${e.event.characterName}: ${e.event.outcome}`)
+            .join("\n");
+
+          const result = await npcPlanningAgent.runImpactGateForNpc(
+            {
+              npcId,
+              npcName: npc?.name ?? npcId,
+              currentLocation: dgsm.getNpcLocation(npcId) ?? "unknown",
+              longTermIntent,
+              pendingNodesSummary: pendingNodes.map((n) => `${n.gameTime} ${n.action}`).join("; "),
+              triggeringEvents,
+            },
+            tickRuntime.tickTime,
+            language
+          );
+
+          const logEntry = `Day${gameDay} ${tickRuntime.tickTime} [witness] - ${result.witnessEntry}`;
+          const npcLoc = dgsm.getNpcLocation(npcId) ?? "unknown";
+          await npcPlanningAgent.appendMemoryLog(sessionId, npcId, logEntry, gameDay, tickRuntime.tickTime, npcLoc);
+
+          if (result.shouldRevise) {
+            const memoryLog = await npcPlanningAgent.getMemoryLog(sessionId, npcId, gameDay);
+            const sortedEvents = [...npcEvents].sort((a, b) => b.impact - a.impact);
+            await npcPlanningAgent.revisePlans(dgsm, sessionId, npcId, {
+              longTermIntent,
+              memoryLog,
+              pendingNodes,
+              trigger: {
+                type: "impact",
+                triggeringAction: sortedEvents[0].event,
+              },
+            }, language);
+          }
+        })
+      );
+    }
+  }
+
+  // 7. Feature temporal tick — let each feature update its time/state-driven logic
+  for (const feature of registry.getAllFeatures()) {
+    feature.tick?.(dgsm, tickRuntime);
+  }
+
+  // 8. Detect feature overlay fields on executed nodes → register propagation sources
+  registry.detectFeatureOverlays(allNodes, dgsm);
+
+  // 9. Drive feature propagation on schedule
+  for (const feature of registry.getAllFeatures()) {
+    if (!feature.propagation || !feature.propagate) continue;
+    if (!registry.shouldPropagationFire(feature.id, isFullTick)) continue;
+
+    const sources = registry.getPropagationSources(feature.id);
+    if (sources.length === 0) continue;
+
+    const nextSources: Array<{ sceneId: string; currentHop: number }> = [];
+
+    for (const source of sources) {
+      const propResult = await feature.propagate(
+        source.sceneId, source.currentHop, dgsm, tickRuntime
+      );
+
+      // New scenes become sources at hop+1
+      for (const newSceneId of propResult.spreadTo) {
+        nextSources.push({ sceneId: newSceneId, currentHop: source.currentHop + 1 });
+      }
+      // Original source persists at hop+1
+      nextSources.push({ sceneId: source.sceneId, currentHop: source.currentHop + 1 });
+
+      // Collect propagation results
+      if (propResult.newNodes?.length) {
+        injectedNodes.push(...propResult.newNodes);
+      }
+      if (propResult.playerEvents?.length) {
+        const witnessEvents: PlayerWitnessEvent[] = propResult.playerEvents.map((e) => ({
+          characterName: e.event.characterName,
+          action: e.event.action,
+          outcome: e.event.outcome,
+          location: e.event.location,
+          gameTime: e.event.gameTime,
+          impact: e.impact,
+        }));
+        allPlayerEvents = allPlayerEvents.concat(witnessEvents);
+      }
+    }
+
+    registry.updatePropagationSources(feature.id, nextSources);
   }
 
   // Store witness events in contextualData for KeeperAgent

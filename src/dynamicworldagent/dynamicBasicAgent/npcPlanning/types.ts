@@ -54,6 +54,8 @@ export interface PlanNode {
   sceneConnectionEffect?: SceneConnectionEffect;
   status: "pending" | "completed" | "failed";
   outcome?: string;
+  /** Feature overlay fields — arbitrary keys added by WorldFeature schemas */
+  [key: string]: unknown;
 }
 
 export interface DiscoveredClueEntry {

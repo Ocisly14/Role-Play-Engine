@@ -28,11 +28,41 @@ export interface NodeHandler {
 
 // ===== World Feature: self-running world system =====
 
-/** Result returned by WorldFeature.onTickEnd */
+/** Result from world feature processing (used internally by the tick engine) */
 export interface WorldFeatureResult {
   /** New PlanNodes to inject into subsequent ticks */
   newNodes?: PlanNode[];
   /** Player witness events (for interrupt handling) */
+  playerEvents?: Array<{ event: CharacterAction; impact: number }>;
+}
+
+// ===== Feature schema & propagation declarations =====
+
+/** Schema declaration for fields a feature adds to PlanNode output */
+export interface FeatureNodeSchema {
+  /** Fields the LLM must provide when using this feature overlay */
+  requiredFields: Array<{ field: string; type: string; description: string }>;
+  /** Fields the LLM may optionally provide */
+  optionalFields?: Array<{ field: string; type: string; description: string }>;
+  /** Complete example node showing this feature's fields merged with a real node */
+  exampleNode: Record<string, unknown>;
+}
+
+/** Propagation configuration for features that spread spatially */
+export interface FeaturePropagationConfig {
+  /** How many ticks between each propagation step (e.g. 2 = every 10 min) */
+  tickInterval: number;
+  /** Maximum number of propagation hops from the source scene */
+  maxHops: number;
+}
+
+/** Result returned by WorldFeature.propagate() */
+export interface PropagationResult {
+  /** Scene IDs the feature spread to this step */
+  spreadTo: string[];
+  /** New PlanNodes to inject (e.g. NPC reaction to fire arrival) */
+  newNodes?: PlanNode[];
+  /** Player witness events from propagation */
   playerEvents?: Array<{ event: CharacterAction; impact: number }>;
 }
 
@@ -76,45 +106,63 @@ export interface TickRuntimeContext {
 }
 
 export interface WorldFeature {
-  /** Unique identifier */
+  /** Unique identifier (e.g. "fire", "rain", "poison_gas") */
   id: string;
 
   /** Human-readable description */
   description: string;
 
-  /** How many full ticks between settlements (1 = every tick, 2 = every 10 min) */
-  tickInterval: number;
-
   /**
-   * Spatial scope of this feature's effects.
-   * A number (0-5) uses the impact level scale.
-   * "dynamic" means scope follows each action's own impact level.
-   */
-  impactScope: number | "dynamic";
-
-  /**
-   * Static prompt section describing this feature's effects.
-   * Injected into the planning agent prompt. Should NOT describe impact levels
-   * (those are handled by the engine). Return "" to omit.
+   * Static prompt section describing this feature's rules and behavior.
+   * Injected into the planning agent prompt. Return "" to omit.
    */
   planningPrompt: string;
 
   /**
-   * Optional fields this feature adds to every PlanNode output.
-   * Used by the registry to build the output schema prompt.
-   * Return undefined or [] if this feature adds no node fields.
+   * Schema for fields this feature adds to PlanNode output.
+   * Rendered as a "Feature Overlay" section — LLM can combine with ANY node type.
+   * Undefined if this feature adds no output fields.
    */
-  planNodeFields?: Array<{ field: string; type: string; description: string }>;
+  planNodeSchema?: FeatureNodeSchema;
+
+  /**
+   * Propagation configuration. If defined, the tick engine will:
+   * 1. Detect this feature's overlay fields on executed nodes → register propagation sources
+   * 2. Call propagate() on schedule to spread effects to adjacent scenes
+   */
+  propagation?: FeaturePropagationConfig;
 
   /** Generate current state description for LLM context. Return "" to omit. */
   stateDescription(dgsm: DynamicGameStateManager): string;
 
-  /** Called at tick end. Receives all actions from this tick. */
-  onTickEnd(
-    tickActions: CharacterAction[],
+  /**
+   * Called every tick to update temporal state.
+   * Use this for time-driven changes (rain intensity curves, tidal cycles, etc.)
+   * or state-driven changes (fire grows near flammable objects, gas disperses in ventilated rooms).
+   * Feature reads/writes its own state via dgsm.getFeatureSceneState / setFeatureSceneState.
+   */
+  tick?(dgsm: DynamicGameStateManager, runtime: TickRuntimeContext): void;
+
+  /**
+   * Called once when the tick engine detects this feature's overlay fields on an executed node.
+   * Reads overlay field values from the node and writes initial feature state into dgsm
+   * (e.g. adding scene conditions, penalties, etc.).
+   * Only called if `planNodeSchema` is defined.
+   */
+  activate?(node: PlanNode, dgsm: DynamicGameStateManager): void;
+
+  /**
+   * Called by the tick engine on a recurring schedule (every `propagation.tickInterval` ticks)
+   * to spread feature effects to adjacent scenes.
+   * Reads current state from dgsm, computes spread, writes updated state back.
+   * Only called if `propagation` is defined.
+   */
+  propagate?(
+    sourceSceneId: string,
+    currentHop: number,
     dgsm: DynamicGameStateManager,
     runtime: TickRuntimeContext
-  ): Promise<WorldFeatureResult>;
+  ): Promise<PropagationResult>;
 }
 
 // ===== Execution Context: shared utilities passed to handlers =====

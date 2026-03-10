@@ -145,6 +145,9 @@ export interface DynamicGameState {
     keeperNotes?: string;
   } | null; // 全局触发条件
 
+  // World Feature runtime state — keyed by featureId → sceneId → feature-defined data
+  featureState: Record<string, Record<string, unknown>>;
+
   // NPC Planning System runtime state
   npcLocations: Record<string, string>;
   npcStats: Record<string, { hp: number; san: number }>;
@@ -219,6 +222,7 @@ export const initialDynamicGameState = (params: {
   pointOfNoReturnReached: false,
   pointOfNoReturnTrigger: null,
   globalTrigger: null,
+  featureState: {},
   npcLocations: {},
   npcStats: {},
   npcInventories: {},
@@ -650,6 +654,7 @@ export class DynamicGameStateManager {
       currentSceneId: data.currentSceneId ?? null,
       scenes,
       blockedConnections,
+      featureState: data.featureState ?? {},
       npcResidences: data.npcResidences ?? {},
       transportEdges: data.transportEdges ?? [],
       loadedAt: data.loadedAt
@@ -1581,6 +1586,33 @@ export class DynamicGameStateManager {
   appendSceneCondition(scenarioId: string, condition: import("../dynamicBasicAgent/npcPlanning/types.js").SceneCondition): void {
     if (!this.state.scenarioConditions[scenarioId]) this.state.scenarioConditions[scenarioId] = [];
     this.state.scenarioConditions[scenarioId].push(condition);
+  }
+
+  // === Feature State ===
+
+  /** Get feature state for a specific scene. Returns undefined if not set. */
+  getFeatureSceneState(featureId: string, sceneId: string): unknown | undefined {
+    return this.state.featureState[featureId]?.[sceneId];
+  }
+
+  /** Set feature state for a specific scene. */
+  setFeatureSceneState(featureId: string, sceneId: string, data: unknown): void {
+    if (!this.state.featureState[featureId]) this.state.featureState[featureId] = {};
+    this.state.featureState[featureId][sceneId] = data;
+    this.state.lastUpdated = new Date();
+  }
+
+  /** Get all scene states for a feature. Returns empty object if none. */
+  getFeatureState(featureId: string): Record<string, unknown> {
+    return this.state.featureState[featureId] ?? {};
+  }
+
+  /** Remove feature state for a specific scene. */
+  removeFeatureSceneState(featureId: string, sceneId: string): void {
+    if (this.state.featureState[featureId]) {
+      delete this.state.featureState[featureId][sceneId];
+      this.state.lastUpdated = new Date();
+    }
   }
 
   isConnectionBlocked(fromId: string, toId: string): boolean {
