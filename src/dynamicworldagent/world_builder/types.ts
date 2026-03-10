@@ -121,6 +121,7 @@ export interface Item {
   name: string;
   description?: string;
   type?: "weapon" | "consumable" | "tool" | "lighting" | "container" | "key" | "document" | "other";
+  era?: string;
   damaged?: boolean;
   damageDetails?: {
     damagedBy: string;

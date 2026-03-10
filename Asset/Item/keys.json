@@ -1,0 +1,130 @@
+[
+  {
+    "id": "KEY_METAL",
+    "name": "金属钥匙",
+    "description": "一把普通的金属钥匙，用于打开对应的锁。",
+    "type": "key"
+  },
+  {
+    "id": "KEY_MASTER",
+    "name": "万能钥匙",
+    "description": "可以打开同一建筑内多把锁的主钥匙。",
+    "type": "key"
+  },
+  {
+    "id": "KEY_SKELETON",
+    "name": "万能骨架钥匙",
+    "description": "一把精巧的骨架钥匙，可以打开大多数简单的锁。",
+    "type": "key"
+  },
+  {
+    "id": "KEY_ID_CARD",
+    "name": "身份证件",
+    "description": "官方身份证明文件，可用于通过检查站或进入限制区域。",
+    "type": "key"
+  },
+  {
+    "id": "KEY_ACCESS_PASS",
+    "name": "通行证",
+    "description": "授权进入特定区域的通行证件。",
+    "type": "key"
+  },
+  {
+    "id": "KEY_COMBINATION_NOTE",
+    "name": "密码条",
+    "description": "写有保险箱或密码锁组合的纸条。",
+    "type": "key"
+  },
+  {
+    "id": "KEY_CAR",
+    "name": "车钥匙",
+    "description": "汽车钥匙，可启动和驾驶对应车辆。",
+    "type": "key"
+  },
+  {
+    "id": "KEY_PADLOCK",
+    "name": "挂锁钥匙",
+    "description": "小型挂锁的钥匙，可打开对应的挂锁。",
+    "type": "key"
+  },
+  {
+    "id": "KEY_HANDCUFF",
+    "name": "手铐钥匙",
+    "description": "小型手铐钥匙，可解开标准手铐。",
+    "type": "key"
+  },
+  {
+    "id": "KEY_ROOM",
+    "name": "房间钥匙",
+    "description": "旅馆或建筑的房间钥匙，附有房号标牌。",
+    "type": "key"
+  },
+  {
+    "id": "KEY_CABINET",
+    "name": "柜子钥匙",
+    "description": "小型钥匙，用于打开文件柜、药品柜或展示柜。",
+    "type": "key"
+  },
+  {
+    "id": "KEY_CHURCH",
+    "name": "教堂钥匙",
+    "description": "古旧的大型铁钥匙，用于打开教堂大门或地下室。",
+    "type": "key"
+  },
+  {
+    "id": "KEY_KEYCARD",
+    "name": "门禁卡",
+    "description": "用于刷卡进入办公室、公寓或限制区域的标准门禁卡。",
+    "type": "key",
+    "era": "2000s"
+  },
+  {
+    "id": "KEY_MAGSTRIPE_CARD",
+    "name": "磁条卡",
+    "description": "依赖磁条读写器识别的旧式通行卡，常用于写字楼和停车场系统。",
+    "type": "key",
+    "era": "2000s"
+  },
+  {
+    "id": "KEY_IC_CARD",
+    "name": "IC 卡",
+    "description": "带芯片的电子门禁卡，可存储权限信息并用于分级区域控制。",
+    "type": "key",
+    "era": "2000s"
+  },
+  {
+    "id": "KEY_HOTEL_KEYCARD",
+    "name": "酒店房卡",
+    "description": "酒店客房使用的电子房卡，通常印有房号、楼层或酒店标识。",
+    "type": "key",
+    "era": "2000s"
+  },
+  {
+    "id": "KEY_GARAGE_REMOTE",
+    "name": "车库遥控器",
+    "description": "用于开启车库卷帘门或小区车闸的无线遥控器。",
+    "type": "key",
+    "era": "2000s"
+  },
+  {
+    "id": "KEY_ELECTRONIC_FOB",
+    "name": "电子钥匙扣",
+    "description": "小型感应式钥匙扣，可贴身携带并触发门禁系统。",
+    "type": "key",
+    "era": "2000s"
+  },
+  {
+    "id": "KEY_VISITOR_BADGE",
+    "name": "访客证",
+    "description": "临时访客佩戴的证卡，通常只能在限定时段和区域内使用。",
+    "type": "key",
+    "era": "2000s"
+  },
+  {
+    "id": "KEY_PARKING_PASS",
+    "name": "停车通行卡",
+    "description": "停车场入口识别用的通行卡，可记录车辆权限和出入时间。",
+    "type": "key",
+    "era": "2000s"
+  }
+]

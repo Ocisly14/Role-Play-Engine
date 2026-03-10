@@ -1,0 +1,284 @@
+[
+  {
+    "id": "TOOL_LOCKPICK_SET",
+    "name": "开锁工具套件",
+    "description": "专业的开锁工具套件，包含各种撬锁针和扭力扳手。",
+    "type": "tool"
+  },
+  {
+    "id": "TOOL_ROPE_10M",
+    "name": "绳索（10米）",
+    "description": "10米长的结实麻绳，可用于攀爬、捆绑或其他用途。",
+    "type": "tool"
+  },
+  {
+    "id": "TOOL_CROWBAR",
+    "name": "撬棍",
+    "description": "金属撬棍，可用于撬开门窗或箱子，也可作为临时武器。",
+    "type": "tool"
+  },
+  {
+    "id": "TOOL_SHOVEL",
+    "name": "铁锹",
+    "description": "标准铁锹，用于挖掘泥土或清理障碍物。",
+    "type": "tool"
+  },
+  {
+    "id": "TOOL_BINOCULARS",
+    "name": "望远镜",
+    "description": "双筒望远镜，可从远处观察目标。",
+    "type": "tool"
+  },
+  {
+    "id": "TOOL_CAMERA",
+    "name": "照相机",
+    "description": "便携式照相机，可拍摄照片留存证据。",
+    "type": "tool"
+  },
+  {
+    "id": "TOOL_TAPE_RECORDER",
+    "name": "录音机",
+    "description": "便携式磁带录音机，可记录声音和对话。",
+    "type": "tool"
+  },
+  {
+    "id": "TOOL_MAGNIFYING_GLASS",
+    "name": "放大镜",
+    "description": "手持放大镜，便于检查细小痕迹和文字。",
+    "type": "tool"
+  },
+  {
+    "id": "TOOL_COMPASS",
+    "name": "指南针",
+    "description": "磁性指南针，帮助确定方向，在荒野中必不可少。",
+    "type": "tool"
+  },
+  {
+    "id": "TOOL_GRAPPLING_HOOK",
+    "name": "抓钩",
+    "description": "金属抓钩配绳索，用于攀爬建筑外墙或悬崖。",
+    "type": "tool"
+  },
+  {
+    "id": "TOOL_WIRE_CUTTERS",
+    "name": "钢丝钳",
+    "description": "可剪断铁丝网、电线或细金属条的工具。",
+    "type": "tool"
+  },
+  {
+    "id": "TOOL_TOOLKIT",
+    "name": "工具箱",
+    "description": "包含锤子、螺丝刀、钳子等基本工具的便携工具箱。",
+    "type": "tool"
+  },
+  {
+    "id": "TOOL_HANDCUFFS",
+    "name": "手铐",
+    "description": "金属手铐，用于约束嫌犯或囚犯的双手。",
+    "type": "tool"
+  },
+  {
+    "id": "TOOL_CHAINS",
+    "name": "铁链",
+    "description": "一段沉重的铁链，可用于锁门、捆绑或悬挂物品。",
+    "type": "tool"
+  },
+  {
+    "id": "TOOL_WHISTLE",
+    "name": "哨子",
+    "description": "金属哨子，可发出尖锐的声响用于求救或发信号。",
+    "type": "tool"
+  },
+  {
+    "id": "TOOL_STETHOSCOPE",
+    "name": "听诊器",
+    "description": "医用听诊器，可听取心跳、呼吸声，也可用来听墙后动静或保险箱锁芯。",
+    "type": "tool"
+  },
+  {
+    "id": "TOOL_POCKET_WATCH",
+    "name": "怀表",
+    "description": "精密的机械怀表，用于准确掌握时间。",
+    "type": "tool"
+  },
+  {
+    "id": "TOOL_TELEPHONE",
+    "name": "电话",
+    "description": "旋转拨号式电话机，可与外界联络。",
+    "type": "tool"
+  },
+  {
+    "id": "TOOL_RADIO",
+    "name": "收音机",
+    "description": "真空管收音机，可接收广播节目和新闻。",
+    "type": "tool"
+  },
+  {
+    "id": "TOOL_TYPEWRITER",
+    "name": "打字机",
+    "description": "机械打字机，用于打印文件和信件。",
+    "type": "tool"
+  },
+  {
+    "id": "TOOL_HAMMER",
+    "name": "锤子",
+    "description": "标准铁锤，可钉钉子、砸碎物品或作为临时武器。",
+    "type": "tool"
+  },
+  {
+    "id": "TOOL_SAW",
+    "name": "锯子",
+    "description": "手工锯，可锯断木材或金属管。",
+    "type": "tool"
+  },
+  {
+    "id": "TOOL_MIRROR",
+    "name": "镜子",
+    "description": "手持小镜子，可用于窥视拐角或反射光线。",
+    "type": "tool"
+  },
+  {
+    "id": "TOOL_LADDER",
+    "name": "梯子",
+    "description": "木质或金属梯子，用于攀爬到高处。",
+    "type": "tool"
+  },
+  {
+    "id": "TOOL_UMBRELLA",
+    "name": "雨伞",
+    "description": "长柄雨伞，在雨天提供遮蔽，也可作为临时武器。",
+    "type": "tool"
+  },
+  {
+    "id": "TOOL_SEWING_KIT",
+    "name": "缝纫工具",
+    "description": "便携针线包，可缝补衣物或临时缝合伤口。",
+    "type": "tool"
+  },
+  {
+    "id": "TOOL_FISHING_ROD",
+    "name": "钓鱼竿",
+    "description": "简单的钓鱼竿，可用于获取食物或从远处勾取物品。",
+    "type": "tool"
+  },
+  {
+    "id": "TOOL_PADLOCK",
+    "name": "挂锁",
+    "description": "金属挂锁，可用于锁住门、箱子或柜子。",
+    "type": "tool"
+  },
+  {
+    "id": "TOOL_PLIERS",
+    "name": "钳子",
+    "description": "多用途钳子，可夹持、弯曲或切断金属丝。",
+    "type": "tool"
+  },
+  {
+    "id": "TOOL_WRENCH",
+    "name": "扳手",
+    "description": "活动扳手，可拧紧或松开螺栓和螺母。",
+    "type": "tool"
+  },
+  {
+    "id": "TOOL_PICKAXE",
+    "name": "十字镐",
+    "description": "矿工或建筑工人使用的十字镐，可刨开坚硬地面。",
+    "type": "tool"
+  },
+  {
+    "id": "TOOL_BELL",
+    "name": "铃铛",
+    "description": "金属铃铛，可作为警报或信号装置。",
+    "type": "tool"
+  },
+  {
+    "id": "TOOL_ALARM_CLOCK",
+    "name": "闹钟",
+    "description": "机械闹钟，可设定时间发出铃声。",
+    "type": "tool"
+  },
+  {
+    "id": "TOOL_FLIP_PHONE",
+    "name": "翻盖手机",
+    "description": "2000年代常见的翻盖手机，可拨打电话、发送短信并保存近期联络记录。",
+    "type": "tool",
+    "era": "2000s"
+  },
+  {
+    "id": "TOOL_SMARTPHONE",
+    "name": "智能手机",
+    "description": "早期智能手机，具备拍照、录音、短信和基础上网功能，常存有个人行程与通讯记录。",
+    "type": "tool",
+    "era": "2000s"
+  },
+  {
+    "id": "TOOL_LAPTOP",
+    "name": "笔记本电脑",
+    "description": "便携式笔记本电脑，可用于整理资料、访问网络、查看本地文件或连接外部设备。",
+    "type": "tool",
+    "era": "2000s"
+  },
+  {
+    "id": "TOOL_TABLET",
+    "name": "平板电脑",
+    "description": "轻薄的触控平板，适合快速浏览邮件、地图和现场照片。",
+    "type": "tool",
+    "era": "2000s"
+  },
+  {
+    "id": "TOOL_DIGITAL_CAMERA",
+    "name": "数码相机",
+    "description": "使用存储卡保存照片的数码相机，可快速拍摄并回看现场证据。",
+    "type": "tool",
+    "era": "2000s"
+  },
+  {
+    "id": "TOOL_CAMCORDER",
+    "name": "数码摄像机",
+    "description": "手持式数码摄像机，可连续记录影像与环境音，常用于取证或家庭录像。",
+    "type": "tool",
+    "era": "2000s"
+  },
+  {
+    "id": "TOOL_VOICE_RECORDER",
+    "name": "录音笔",
+    "description": "小型数字录音设备，可长时间记录采访、会议或自述内容。",
+    "type": "tool",
+    "era": "2000s"
+  },
+  {
+    "id": "TOOL_PORTABLE_GPS",
+    "name": "便携式 GPS",
+    "description": "手持 GPS 导航设备，可记录坐标、路径点和行进轨迹。",
+    "type": "tool",
+    "era": "2000s"
+  },
+  {
+    "id": "TOOL_WALKIE_TALKIE",
+    "name": "对讲机",
+    "description": "短距离无线通讯设备，适合小队在建筑或户外区域协同联络。",
+    "type": "tool",
+    "era": "2000s"
+  },
+  {
+    "id": "TOOL_BATTERY_CHARGER",
+    "name": "电池充电器",
+    "description": "用于为可充电电池或相机电池座充补充电力的充电器。",
+    "type": "tool",
+    "era": "2000s"
+  },
+  {
+    "id": "TOOL_CARD_READER",
+    "name": "读卡器",
+    "description": "可读取 SD 卡或其他存储卡内容的小型 USB 读卡设备。",
+    "type": "tool",
+    "era": "2000s"
+  },
+  {
+    "id": "TOOL_PORTABLE_SCANNER",
+    "name": "便携扫描仪",
+    "description": "可快速扫描文件、照片或证件的便携设备，适合在现场备份纸质资料。",
+    "type": "tool",
+    "era": "2000s"
+  }
+]

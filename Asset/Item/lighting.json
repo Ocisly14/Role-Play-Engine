@@ -1,0 +1,320 @@
+[
+  {
+    "id": "LIGHT_CANDLE",
+    "name": "蜡烛",
+    "description": "普通蜡烛，提供微弱的照明。",
+    "type": "lighting",
+    "isLightSource": true,
+    "lightLevel": 2,
+    "consumableStats": {
+      "uses": 1,
+      "effect": "照明半径 2 米",
+      "duration": 240
+    }
+  },
+  {
+    "id": "LIGHT_CANDELABRA",
+    "name": "烛台",
+    "description": "金属或铜质多头烛台，可同时点燃多根蜡烛，提供较好的室内照明。",
+    "type": "lighting",
+    "isLightSource": true,
+    "lightLevel": 3,
+    "consumableStats": {
+      "uses": 1,
+      "effect": "照明半径 4 米",
+      "duration": 240
+    }
+  },
+  {
+    "id": "LIGHT_MATCH_BOX",
+    "name": "火柴盒",
+    "description": "一盒火柴，可用于点火或短暂照明。",
+    "type": "lighting",
+    "isLightSource": true,
+    "lightLevel": 2,
+    "consumableStats": {
+      "uses": 20,
+      "effect": "短暂照明半径 1 米",
+      "duration": 1
+    }
+  },
+  {
+    "id": "LIGHT_LIGHTER",
+    "name": "打火机",
+    "description": "金属煤油打火机，可反复使用。",
+    "type": "lighting",
+    "isLightSource": true,
+    "lightLevel": 2,
+    "consumableStats": {
+      "uses": 50,
+      "effect": "短暂照明半径 1 米",
+      "duration": 5
+    }
+  },
+  {
+    "id": "LIGHT_OIL_LAMP",
+    "name": "油灯",
+    "description": "煤油灯，提供稳定温暖的照明，需要定期补充燃料。",
+    "type": "lighting",
+    "isLightSource": true,
+    "lightLevel": 3,
+    "consumableStats": {
+      "uses": 1,
+      "effect": "照明半径 5 米",
+      "duration": 480
+    }
+  },
+  {
+    "id": "LIGHT_GAS_LAMP",
+    "name": "煤气灯",
+    "description": "室内煤气灯，连接煤气管道，提供持续稳定的照明。",
+    "type": "lighting",
+    "isLightSource": true,
+    "lightLevel": 3
+  },
+  {
+    "id": "LIGHT_FLASHLIGHT",
+    "name": "手电筒",
+    "description": "电池供电的手电筒，提供定向强光照明。",
+    "type": "lighting",
+    "isLightSource": true,
+    "lightLevel": 3,
+    "consumableStats": {
+      "uses": 1,
+      "effect": "定向照明 10 米",
+      "duration": 360
+    }
+  },
+  {
+    "id": "LIGHT_TORCH",
+    "name": "火把",
+    "description": "布条浸油绑在木棒上的火把，照明范围较大。",
+    "type": "lighting",
+    "isLightSource": true,
+    "lightLevel": 3,
+    "consumableStats": {
+      "uses": 1,
+      "effect": "照明半径 5 米",
+      "duration": 60
+    }
+  },
+  {
+    "id": "LIGHT_LANTERN",
+    "name": "提灯",
+    "description": "可手持或悬挂的防风灯笼，稳定可靠的照明工具。",
+    "type": "lighting",
+    "isLightSource": true,
+    "lightLevel": 3,
+    "consumableStats": {
+      "uses": 1,
+      "effect": "照明半径 8 米",
+      "duration": 600
+    }
+  },
+  {
+    "id": "LIGHT_FLARE",
+    "name": "照明弹",
+    "description": "手持式照明信号弹，产生极强的红色光芒。",
+    "type": "lighting",
+    "isLightSource": true,
+    "lightLevel": 5,
+    "consumableStats": {
+      "uses": 1,
+      "effect": "照明半径 20 米",
+      "duration": 10
+    }
+  },
+  {
+    "id": "LIGHT_DESK_LAMP",
+    "name": "台灯",
+    "description": "铜质台灯，放置于书桌或床头，提供局部照明。",
+    "type": "lighting",
+    "isLightSource": true,
+    "lightLevel": 3
+  },
+  {
+    "id": "LIGHT_WALL_LAMP",
+    "name": "壁灯",
+    "description": "固定在墙壁上的灯具，提供走廊或房间的辅助照明。",
+    "type": "lighting",
+    "isLightSource": true,
+    "lightLevel": 3
+  },
+  {
+    "id": "LIGHT_CHANDELIER",
+    "name": "吊灯",
+    "description": "悬挂于天花板的多臂枝形吊灯，提供整个房间的主照明。",
+    "type": "lighting",
+    "isLightSource": true,
+    "lightLevel": 4
+  },
+  {
+    "id": "LIGHT_CEILING_LIGHT",
+    "name": "顶灯",
+    "description": "天花板上的电灯或日光灯管，提供均匀的室内照明。",
+    "type": "lighting",
+    "isLightSource": true,
+    "lightLevel": 4
+  },
+  {
+    "id": "LIGHT_FLUORESCENT_TUBE",
+    "name": "日光灯管",
+    "description": "荧光灯管，发出冷白色光线，常见于办公室、医院和公共场所。",
+    "type": "lighting",
+    "isLightSource": true,
+    "lightLevel": 4
+  },
+  {
+    "id": "LIGHT_STREET_LAMP",
+    "name": "路灯",
+    "description": "竖立在道路两侧的路灯，照亮街道和人行道。",
+    "type": "lighting",
+    "isLightSource": true,
+    "lightLevel": 4
+  },
+  {
+    "id": "LIGHT_GAS_STREET_LAMP",
+    "name": "煤气路灯",
+    "description": "1920年代的煤气路灯，发出昏黄温暖的光芒，照明范围有限。",
+    "type": "lighting",
+    "isLightSource": true,
+    "lightLevel": 3
+  },
+  {
+    "id": "LIGHT_FIREPLACE",
+    "name": "壁炉",
+    "description": "石砌或砖砌壁炉，燃烧木柴提供照明和取暖。",
+    "type": "lighting",
+    "isLightSource": true,
+    "lightLevel": 3,
+    "consumableStats": {
+      "uses": 1,
+      "effect": "照明半径 4 米，同时提供取暖",
+      "duration": 480
+    }
+  },
+  {
+    "id": "LIGHT_CAMPFIRE",
+    "name": "篝火",
+    "description": "户外篝火，用木柴或可燃物点燃，提供照明和取暖。",
+    "type": "lighting",
+    "isLightSource": true,
+    "lightLevel": 3,
+    "consumableStats": {
+      "uses": 1,
+      "effect": "照明半径 8 米，同时提供取暖",
+      "duration": 240
+    }
+  },
+  {
+    "id": "LIGHT_CAR_HEADLIGHT",
+    "name": "车头灯",
+    "description": "汽车前大灯，提供强力的定向照明。",
+    "type": "lighting",
+    "isLightSource": true,
+    "lightLevel": 4
+  },
+  {
+    "id": "LIGHT_NEON_SIGN",
+    "name": "霓虹灯招牌",
+    "description": "商铺或酒吧门口的霓虹灯招牌，发出彩色光芒。",
+    "type": "lighting",
+    "isLightSource": true,
+    "lightLevel": 3
+  },
+  {
+    "id": "LIGHT_FLOOR_LAMP",
+    "name": "落地灯",
+    "description": "放置在地面上的立式灯具，常见于客厅和书房。",
+    "type": "lighting",
+    "isLightSource": true,
+    "lightLevel": 3
+  },
+  {
+    "id": "LIGHT_KEROSENE_HEATER",
+    "name": "煤油暖炉",
+    "description": "燃烧煤油的取暖器，同时提供微弱照明和热量。",
+    "type": "lighting",
+    "isLightSource": true,
+    "lightLevel": 2,
+    "consumableStats": {
+      "uses": 1,
+      "effect": "照明半径 2 米，主要提供取暖",
+      "duration": 600
+    }
+  },
+  {
+    "id": "LIGHT_LED_FLASHLIGHT",
+    "name": "LED 手电筒",
+    "description": "使用 LED 灯珠的现代手电，亮度高、续航长，适合夜间搜索。",
+    "type": "lighting",
+    "era": "2000s",
+    "isLightSource": true,
+    "lightLevel": 4,
+    "consumableStats": {
+      "uses": 1,
+      "effect": "提供强力定向照明",
+      "duration": 360
+    }
+  },
+  {
+    "id": "LIGHT_HEADLAMP",
+    "name": "头灯",
+    "description": "可固定在头部的照明设备，便于在黑暗环境中空出双手操作工具。",
+    "type": "lighting",
+    "era": "2000s",
+    "isLightSource": true,
+    "lightLevel": 3,
+    "consumableStats": {
+      "uses": 1,
+      "effect": "提供随视线移动的近距离照明",
+      "duration": 300
+    }
+  },
+  {
+    "id": "LIGHT_EMERGENCY_LANTERN",
+    "name": "应急灯",
+    "description": "停电时使用的便携应急灯，可放置在桌面或手提移动。",
+    "type": "lighting",
+    "era": "2000s",
+    "isLightSource": true,
+    "lightLevel": 3,
+    "consumableStats": {
+      "uses": 1,
+      "effect": "照亮半径约 4 米区域",
+      "duration": 240
+    }
+  },
+  {
+    "id": "LIGHT_MOTION_SENSOR_LIGHT",
+    "name": "感应灯",
+    "description": "安装在走廊、楼梯或仓库入口的感应灯，在侦测到移动时自动亮起。",
+    "type": "lighting",
+    "era": "2000s",
+    "isLightSource": true,
+    "lightLevel": 3
+  },
+  {
+    "id": "LIGHT_HALOGEN_WORK_LIGHT",
+    "name": "卤素工作灯",
+    "description": "维修现场常见的高亮卤素工作灯，可瞬间照亮大片区域。",
+    "type": "lighting",
+    "era": "2000s",
+    "isLightSource": true,
+    "lightLevel": 4
+  },
+  {
+    "id": "LIGHT_PHONE_FLASHLIGHT",
+    "name": "手机闪光灯",
+    "description": "手机摄像头旁的补光灯，可在短时间内充当简易照明来源。",
+    "type": "lighting",
+    "era": "2000s",
+    "isLightSource": true,
+    "lightLevel": 2,
+    "consumableStats": {
+      "uses": 1,
+      "effect": "提供短距离应急照明并快速消耗手机电量",
+      "duration": 30
+    }
+  }
+]

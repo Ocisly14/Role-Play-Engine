@@ -1,0 +1,390 @@
+[
+  {
+    "id": "CONT_SAFE_SMALL",
+    "name": "小型保险箱",
+    "description": "一个沉重的金属保险箱，需要密码或钥匙才能打开。",
+    "type": "container",
+    "containerStats": {
+      "capacity": 5,
+      "locked": true,
+      "lockDifficulty": "hard",
+      "contents": []
+    }
+  },
+  {
+    "id": "CONT_SAFE_LARGE",
+    "name": "大型保险箱",
+    "description": "落地式大型保险箱，坚固厚实，几乎无法用暴力打开。",
+    "type": "container",
+    "containerStats": {
+      "capacity": 15,
+      "locked": true,
+      "lockDifficulty": "extreme",
+      "contents": []
+    }
+  },
+  {
+    "id": "CONT_WOODEN_CRATE",
+    "name": "木箱",
+    "description": "一个结实的木制运输箱，可用撬棍打开。",
+    "type": "container",
+    "containerStats": {
+      "capacity": 20,
+      "locked": false,
+      "contents": []
+    }
+  },
+  {
+    "id": "CONT_SUITCASE",
+    "name": "手提箱",
+    "description": "皮质手提箱，旅行或搬运物品时使用。",
+    "type": "container",
+    "containerStats": {
+      "capacity": 10,
+      "locked": false,
+      "contents": []
+    }
+  },
+  {
+    "id": "CONT_BACKPACK",
+    "name": "背包",
+    "description": "帆布背包，适合长途旅行或野外探险。",
+    "type": "container",
+    "containerStats": {
+      "capacity": 12,
+      "locked": false,
+      "contents": []
+    }
+  },
+  {
+    "id": "CONT_DESK_DRAWER",
+    "name": "书桌抽屉",
+    "description": "办公桌的抽屉，可能上锁。",
+    "type": "container",
+    "containerStats": {
+      "capacity": 8,
+      "locked": true,
+      "lockDifficulty": "easy",
+      "contents": []
+    }
+  },
+  {
+    "id": "CONT_FILING_CABINET",
+    "name": "文件柜",
+    "description": "金属文件柜，用于存放文档和档案。",
+    "type": "container",
+    "containerStats": {
+      "capacity": 30,
+      "locked": true,
+      "lockDifficulty": "regular",
+      "contents": []
+    }
+  },
+  {
+    "id": "CONT_LOCKBOX",
+    "name": "锁盒",
+    "description": "小型上锁的金属盒子，用于存放贵重物品。",
+    "type": "container",
+    "containerStats": {
+      "capacity": 3,
+      "locked": true,
+      "lockDifficulty": "regular",
+      "contents": []
+    }
+  },
+  {
+    "id": "CONT_CHEST",
+    "name": "大木箱",
+    "description": "老式带锁的大型木质箱子，常用于储藏物品。",
+    "type": "container",
+    "containerStats": {
+      "capacity": 25,
+      "locked": true,
+      "lockDifficulty": "regular",
+      "contents": []
+    }
+  },
+  {
+    "id": "CONT_ENVELOPE",
+    "name": "信封",
+    "description": "一个密封的信封，可能装有信件或文件。",
+    "type": "container",
+    "containerStats": {
+      "capacity": 2,
+      "locked": false,
+      "contents": []
+    }
+  },
+  {
+    "id": "CONT_WARDROBE",
+    "name": "衣柜",
+    "description": "大型木质衣柜，可存放衣物，也可能藏有秘密隔层。",
+    "type": "container",
+    "containerStats": {
+      "capacity": 20,
+      "locked": false,
+      "contents": []
+    }
+  },
+  {
+    "id": "CONT_BOOKSHELF",
+    "name": "书架",
+    "description": "靠墙放置的木质书架，排列着各种书籍。",
+    "type": "container",
+    "containerStats": {
+      "capacity": 40,
+      "locked": false,
+      "contents": []
+    }
+  },
+  {
+    "id": "CONT_TRUNK",
+    "name": "旅行箱",
+    "description": "大型带锁旅行箱，可存放大量物品。",
+    "type": "container",
+    "containerStats": {
+      "capacity": 15,
+      "locked": true,
+      "lockDifficulty": "regular",
+      "contents": []
+    }
+  },
+  {
+    "id": "CONT_BARREL",
+    "name": "木桶",
+    "description": "大型木桶，可用于存放液体或干货。",
+    "type": "container",
+    "containerStats": {
+      "capacity": 30,
+      "locked": false,
+      "contents": []
+    }
+  },
+  {
+    "id": "CONT_MEDICINE_CABINET",
+    "name": "药品柜",
+    "description": "带锁的玻璃门药品柜，存放医疗用品和药物。",
+    "type": "container",
+    "containerStats": {
+      "capacity": 10,
+      "locked": true,
+      "lockDifficulty": "easy",
+      "contents": []
+    }
+  },
+  {
+    "id": "CONT_DISPLAY_CABINET",
+    "name": "展示柜",
+    "description": "带玻璃门的展示柜，用于陈列贵重物品或收藏品。",
+    "type": "container",
+    "containerStats": {
+      "capacity": 12,
+      "locked": true,
+      "lockDifficulty": "easy",
+      "contents": []
+    }
+  },
+  {
+    "id": "CONT_COFFIN",
+    "name": "棺材",
+    "description": "一口木质棺材，可能是空的，也可能装有遗体或其他物品。",
+    "type": "container",
+    "containerStats": {
+      "capacity": 8,
+      "locked": false,
+      "contents": []
+    }
+  },
+  {
+    "id": "CONT_MAILBOX",
+    "name": "邮箱",
+    "description": "金属邮箱，可能装有信件或包裹。",
+    "type": "container",
+    "containerStats": {
+      "capacity": 5,
+      "locked": true,
+      "lockDifficulty": "easy",
+      "contents": []
+    }
+  },
+  {
+    "id": "CONT_LOCKER",
+    "name": "储物柜",
+    "description": "金属储物柜，常见于学校、工厂或更衣室。",
+    "type": "container",
+    "containerStats": {
+      "capacity": 10,
+      "locked": true,
+      "lockDifficulty": "regular",
+      "contents": []
+    }
+  },
+  {
+    "id": "CONT_CUPBOARD",
+    "name": "橱柜",
+    "description": "厨房或餐厅的木质橱柜，存放餐具和食物。",
+    "type": "container",
+    "containerStats": {
+      "capacity": 15,
+      "locked": false,
+      "contents": []
+    }
+  },
+  {
+    "id": "CONT_CIGAR_BOX",
+    "name": "雪茄盒",
+    "description": "精美的木质雪茄盒，也可用于存放小型物品。",
+    "type": "container",
+    "containerStats": {
+      "capacity": 3,
+      "locked": false,
+      "contents": []
+    }
+  },
+  {
+    "id": "CONT_TOOLBOX",
+    "name": "工具箱（容器）",
+    "description": "金属工具箱，存放各种维修工具。",
+    "type": "container",
+    "containerStats": {
+      "capacity": 8,
+      "locked": false,
+      "contents": []
+    }
+  },
+  {
+    "id": "CONT_COLD_STORAGE",
+    "name": "冷藏柜",
+    "description": "用于保存温度敏感物品的冷藏设备。",
+    "type": "container",
+    "containerStats": {
+      "capacity": 15,
+      "locked": true,
+      "lockDifficulty": "regular",
+      "contents": []
+    }
+  },
+  {
+    "id": "CONT_EVIDENCE_LOCKER",
+    "name": "证物柜",
+    "description": "警察局或实验室中存放证据的上锁柜子。",
+    "type": "container",
+    "containerStats": {
+      "capacity": 20,
+      "locked": true,
+      "lockDifficulty": "hard",
+      "contents": []
+    }
+  },
+  {
+    "id": "CONT_LAPTOP_BAG",
+    "name": "电脑包",
+    "description": "带缓冲夹层的电脑包，适合携带笔记本、文件和充电器。",
+    "type": "container",
+    "era": "2000s",
+    "containerStats": {
+      "capacity": 6,
+      "locked": false,
+      "contents": []
+    }
+  },
+  {
+    "id": "CONT_LOCKING_BRIEFCASE",
+    "name": "上锁公文包",
+    "description": "带密码扣或小锁的硬壳公文包，常用于携带合同、现金或敏感资料。",
+    "type": "container",
+    "era": "2000s",
+    "containerStats": {
+      "capacity": 6,
+      "locked": true,
+      "lockDifficulty": "regular",
+      "contents": []
+    }
+  },
+  {
+    "id": "CONT_ROLLING_SUITCASE",
+    "name": "拉杆箱",
+    "description": "带轮子的旅行箱，适合短期出行时收纳衣物、文件和电子设备。",
+    "type": "container",
+    "era": "2000s",
+    "containerStats": {
+      "capacity": 12,
+      "locked": true,
+      "lockDifficulty": "regular",
+      "contents": []
+    }
+  },
+  {
+    "id": "CONT_CAMERA_BAG",
+    "name": "相机包",
+    "description": "带分隔衬垫的相机包，可保护相机机身、镜头和存储卡。",
+    "type": "container",
+    "era": "2000s",
+    "containerStats": {
+      "capacity": 5,
+      "locked": false,
+      "contents": []
+    }
+  },
+  {
+    "id": "CONT_EVIDENCE_BAG",
+    "name": "证物袋",
+    "description": "带编号和封条栏位的透明证物袋，用于封存小型证据物品。",
+    "type": "container",
+    "era": "2000s",
+    "containerStats": {
+      "capacity": 2,
+      "locked": false,
+      "contents": []
+    }
+  },
+  {
+    "id": "CONT_DRIVE_CASE",
+    "name": "硬盘收纳盒",
+    "description": "带泡棉内衬的小型收纳盒，用于保存硬盘、光盘或数据线。",
+    "type": "container",
+    "era": "2000s",
+    "containerStats": {
+      "capacity": 4,
+      "locked": false,
+      "contents": []
+    }
+  },
+  {
+    "id": "CONT_DOCUMENT_BOX",
+    "name": "文件收纳盒",
+    "description": "塑料或纸质文件盒，可集中存放票据、报告和打印材料。",
+    "type": "container",
+    "era": "2000s",
+    "containerStats": {
+      "capacity": 20,
+      "locked": false,
+      "contents": []
+    }
+  },
+  {
+    "id": "CONT_ARCHIVE_CABINET_LOCKED",
+    "name": "上锁档案柜",
+    "description": "用于集中管理纸质档案和合同的金属档案柜，通常配有独立锁芯。",
+    "type": "container",
+    "era": "2000s",
+    "containerStats": {
+      "capacity": 30,
+      "locked": true,
+      "lockDifficulty": "regular",
+      "contents": []
+    }
+  },
+  {
+    "id": "CONT_STORAGE_BIN_PLASTIC",
+    "name": "塑料周转箱",
+    "description": "耐用的塑料周转箱，适合临时搬运器材、证物或办公室杂物。",
+    "type": "container",
+    "era": "2000s",
+    "containerStats": {
+      "capacity": 15,
+      "locked": false,
+      "contents": []
+    }
+  }
+]
