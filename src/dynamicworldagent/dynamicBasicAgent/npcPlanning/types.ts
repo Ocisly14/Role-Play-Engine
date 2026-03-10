@@ -1,4 +1,5 @@
 import type { ActionType } from "../../../shared/state/index.js";
+import type { Item } from "../../world_builder/types.js";
 
 export type BuiltinNodeType =
   | "routine"
@@ -28,6 +29,10 @@ export interface CharacterInteractionPayload {
 export interface ObjectInteractionPayload {
   action: "pickup" | "place" | "use" | "inspect" | "destroy";
   itemId?: string;
+  targetItemId?: string;
+  /** Non-normal use: LLM returns expected item state changes after success */
+  itemUpdates?: Partial<Item>;
+  targetItemUpdates?: Partial<Item>;
 }
 
 export interface SceneConnectionEffect {

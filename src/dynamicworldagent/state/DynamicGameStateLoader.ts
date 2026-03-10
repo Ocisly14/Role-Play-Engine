@@ -807,9 +807,16 @@ export async function initializeCompleteDynamicGameState(
       // npcInventories: from NPC profile inventory
       if (!completeState.npcInventories[npc.id]) {
         completeState.npcInventories[npc.id] = Array.isArray(npc.inventory)
-          ? npc.inventory.map((item) =>
-              typeof item === "string" ? item : item.name ?? String(item)
-            )
+          ? npc.inventory.map((item) => {
+              if (typeof item === "string") {
+                return { id: item, name: item };
+              }
+              return {
+                id: item.name ?? String(item),
+                name: item.name ?? String(item),
+                ...(item.properties ?? {}),
+              };
+            })
           : [];
       }
 

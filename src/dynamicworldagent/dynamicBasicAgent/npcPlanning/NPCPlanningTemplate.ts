@@ -60,7 +60,7 @@ const DEFAULT_NPC_NODE_TYPE_REFERENCE = `## Node Type Reference
 - **"routine"**: Self-contained action, no interaction target. Examples: eating, resting, reading, working, sleeping, thinking.
 - **"movement"**: Move to a destination scene. Set location to the target scene ID. Omit actionType for normal unblocked movement; set actionType when path is blocked (if skill can overcome it) or for creative movement.
 - **"character_interaction"**: Interact with a specific character. Requires targetCharacterId. Include characterInteractionPayload if transferring item/clue/information.
-- **"object_interaction"**: Interact with a physical object. Include objectInteractionPayload (pickup/place/use/inspect/destroy).
+- **"object_interaction"**: Interact with a physical object. Include objectInteractionPayload (pickup/place/use/inspect/destroy). For two-item interactions (e.g., use key on safe), include targetItemId. For creative non-standard uses, set actionType on the node and include itemUpdates/targetItemUpdates with expected end-state.
 - **"scene_interaction"**: Search, investigate, or modify the environment. Include sceneConnectionEffect if changing a connection.
 
 ## ActionType Categories (optional — set when skill roll is needed)
@@ -107,7 +107,7 @@ Each node is a single flat JSON object combining:
 - \`"characterInteractionPayload"\`: (optional) e.g. \`{"transferType":"item","itemId":"mysterious_letter"}\`
 
 **object_interaction** adds:
-- \`"objectInteractionPayload"\`: (optional) e.g. \`{"action":"pickup","itemId":"ancient_tome"}\`
+- \`"objectInteractionPayload"\`: (optional) e.g. \`{"action":"pickup","itemId":"ancient_tome"}\` or \`{"action":"use","itemId":"room_key","targetItemId":"locked_safe"}\`. For non-standard creative uses, add \`"itemUpdates"\` and/or \`"targetItemUpdates"\` with the expected item state changes on success.
 
 **scene_interaction** adds:
 - \`"sceneConnectionEffect"\`: (optional) e.g. \`{"targetScenarioId":"basement_entrance","action":"block"}\`

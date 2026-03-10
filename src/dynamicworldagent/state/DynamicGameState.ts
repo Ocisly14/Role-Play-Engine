@@ -31,6 +31,7 @@ import type {
   DynamicCharacterProfile,
   DynamicNPCProfile,
   DynamicScene,
+  Item,
   TransportEdge,
 } from "../world_builder/types.js";
 import type {
@@ -158,7 +159,7 @@ export interface DynamicGameState {
   // NPC Planning System runtime state
   npcLocations: Record<string, string>;
   npcStats: Record<string, { hp: number; san: number }>;
-  npcInventories: Record<string, string[]>;
+  npcInventories: Record<string, Item[]>;
   npcDiscoveredClues: Record<string, string[]>;
   npcRelationshipGraph: Record<string, Record<string, { score: number; note: string }>>;
   scenarioConditions: Record<string, import("../dynamicBasicAgent/npcPlanning/types.js").SceneCondition[]>;
@@ -1538,18 +1539,24 @@ export class DynamicGameStateManager {
     this.state.npcStats[npcId].san = Math.max(0, this.state.npcStats[npcId].san + delta);
   }
 
-  getNpcInventory(npcId: string): string[] {
+  getNpcInventory(npcId: string): Item[] {
     return this.state.npcInventories[npcId] ?? [];
   }
 
-  addItemToNpc(npcId: string, itemId: string): void {
-    if (!this.state.npcInventories[npcId]) this.state.npcInventories[npcId] = [];
-    this.state.npcInventories[npcId].push(itemId);
+  findNpcItem(npcId: string, itemId: string): Item | undefined {
+    return this.state.npcInventories[npcId]?.find(i => i.id === itemId);
   }
 
-  removeItemFromNpc(npcId: string, itemId: string): void {
-    if (!this.state.npcInventories[npcId]) return;
-    this.state.npcInventories[npcId] = this.state.npcInventories[npcId].filter(id => id !== itemId);
+  addItemToNpc(npcId: string, item: Item): void {
+    if (!this.state.npcInventories[npcId]) this.state.npcInventories[npcId] = [];
+    this.state.npcInventories[npcId].push(item);
+  }
+
+  removeItemFromNpc(npcId: string, itemId: string): Item | undefined {
+    if (!this.state.npcInventories[npcId]) return undefined;
+    const idx = this.state.npcInventories[npcId].findIndex(i => i.id === itemId);
+    if (idx === -1) return undefined;
+    return this.state.npcInventories[npcId].splice(idx, 1)[0];
   }
 
   transferClue(fromNpcId: string, toNpcId: string, clueId: string): void {

@@ -343,5 +343,19 @@
     "description": "车站、旅馆或仓储场所常见的金属手推车，可用于搬运行李、箱包或重物。",
     "type": "tool",
     "era": "2000s"
+  },
+  {
+    "id": "TOOL_COFFEE_GRINDER",
+    "name": "手摇咖啡磨",
+    "description": "用于现场研磨咖啡豆的手摇磨具，常见于小餐馆、住家厨房或讲究风味的店铺。",
+    "type": "tool",
+    "era": "2000s"
+  },
+  {
+    "id": "TOOL_FLOWER_SHEARS",
+    "name": "花艺剪",
+    "description": "修剪花枝、叶片和包装材料的专用剪刀，刀口短而锋利，常见于花店工作台。",
+    "type": "tool",
+    "era": "2000s"
   }
 ]

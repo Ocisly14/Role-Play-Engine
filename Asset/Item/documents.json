@@ -266,5 +266,33 @@
     "description": "记录送修时间、物件名称、故障说明和取件状态的登记簿，常见于钟表店或维修铺。",
     "type": "document",
     "era": "2000s"
+  },
+  {
+    "id": "DOC_RESERVATION_BOOK",
+    "name": "预约本",
+    "description": "餐厅、诊所或服务场所用于登记预约姓名、时间和人数的记录本。",
+    "type": "document",
+    "era": "2000s"
+  },
+  {
+    "id": "DOC_MENU",
+    "name": "点菜单",
+    "description": "列有菜品、饮料和价格的菜单页，常放在餐厅柜台或餐桌旁供顾客点单。",
+    "type": "document",
+    "era": "2000s"
+  },
+  {
+    "id": "DOC_PAYMENT_NOTICE",
+    "name": "欠费通知",
+    "description": "提醒房租、水电或其他账单逾期未缴的通知单，通常带有截止日期和应付金额。",
+    "type": "document",
+    "era": "2000s"
+  },
+  {
+    "id": "DOC_CASE_FILE_FOLDER",
+    "name": "案件资料夹",
+    "description": "用于装订笔录、照片、物证清单和手写批注的案件资料夹。",
+    "type": "document",
+    "era": "2000s"
   }
 ]

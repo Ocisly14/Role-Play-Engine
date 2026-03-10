@@ -19,7 +19,8 @@ export function buildOutcome(
     else if (p.transferType === "information" && p.informationContent) parts.push(`(info: ${p.informationContent})`);
   } else if (node.type === "object_interaction" && node.objectInteractionPayload) {
     const p = node.objectInteractionPayload;
-    parts.push(`(${p.action}${p.itemId ? `: ${p.itemId}` : ""})`);
+    const target = p.targetItemId ? ` → ${p.targetItemId}` : "";
+    parts.push(`(${p.action}${p.itemId ? `: ${p.itemId}` : ""}${target})`);
   } else if (node.type === "scene_interaction" && node.sceneConnectionEffect) {
     const e = node.sceneConnectionEffect;
     parts.push(`(${e.action} connection to ${e.targetScenarioId})`);

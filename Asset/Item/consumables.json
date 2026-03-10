@@ -515,5 +515,17 @@
       "effect": "处理样本或脏污物品时保护双手并减少痕迹污染",
       "duration": 30
     }
+  },
+  {
+    "id": "CONS_CIGARS",
+    "name": "雪茄",
+    "description": "盒装或单支陈列的雪茄，常见于烟草店、酒吧包间或讲究排场的私人会客场所。",
+    "type": "consumable",
+    "era": "2000s",
+    "consumableStats": {
+      "uses": 5,
+      "effect": "可用于社交、贿赂或营造放松氛围",
+      "duration": 30
+    }
   }
 ]

@@ -34,13 +34,13 @@ interface Item {
 | 文件 | type 值 | ID 前缀 | 数量 | 说明 |
 |---|---|---|---|---|
 | `weapons.json` | `"weapon"` | `WPN_` | 105 | 从 seedData.ts 迁移的全部武器 |
-| `consumables.json` | `"consumable"` | `CONS_` | 46 | 医疗、弹药、电子耗材、食物、烟草等 |
+| `consumables.json` | `"consumable"` | `CONS_` | 47 | 医疗、弹药、电子耗材、食物、烟草等 |
 | `lighting.json` | `"lighting"` | `LIGHT_` | 32 | 所有光源（便携式 + 场景固定式） |
-| `tools.json` | `"tool"` | `TOOL_` | 54 | 开锁、数码设备、通讯、测量等功能工具 |
+| `tools.json` | `"tool"` | `TOOL_` | 56 | 开锁、数码设备、通讯、测量等功能工具 |
 | `containers.json` | `"container"` | `CONT_` | 39 | 保险箱、箱包、档案柜、证物容器等 |
-| `documents.json` | `"document"` | `DOC_` | 42 | 报纸、日记、案件档案、电子时代信息载体等 |
+| `documents.json` | `"document"` | `DOC_` | 46 | 报纸、日记、案件档案、电子时代信息载体等 |
 | `keys.json` | `"key"` | `KEY_` | 20 | 钥匙、通行证、门禁卡、遥控器等 |
-| `other.json` | `"other"` | `OTH_` | 7 | 可复用的公共基础设施与环境功能物件 |
+| `other.json` | `"other"` | `OTH_` | 9 | 可复用的公共基础设施与环境功能物件 |
 
 ---
 

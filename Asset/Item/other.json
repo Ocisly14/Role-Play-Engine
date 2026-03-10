@@ -47,5 +47,19 @@
     "description": "承载供电、电话或网络线路的电线杆，表面常贴有编号、广告或临时通知。",
     "type": "other",
     "era": "2000s"
+  },
+  {
+    "id": "OTH_VENDING_MACHINE",
+    "name": "自动售货机",
+    "description": "用于售卖饮料、零食或小件用品的自动售货机，常见于医院、车站和办公场所。",
+    "type": "other",
+    "era": "2000s"
+  },
+  {
+    "id": "OTH_WAITING_CHAIR",
+    "name": "候诊椅",
+    "description": "医院、车站或办事大厅常见的连排候诊椅，供来访者或病人短暂等待时使用。",
+    "type": "other",
+    "era": "2000s"
   }
 ]

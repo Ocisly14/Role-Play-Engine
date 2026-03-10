@@ -134,8 +134,16 @@ export const characterInteractionHandler: NodeHandler = {
     if (node.characterInteractionPayload && node.targetCharacterId) {
       const payload = node.characterInteractionPayload;
       if (payload.transferType === "item" && payload.itemId) {
-        dgsm.removeItemFromNpc(node.characterId, payload.itemId);
-        dgsm.addItemToNpc(node.targetCharacterId, payload.itemId);
+        const item = dgsm.removeItemFromNpc(node.characterId, payload.itemId);
+        if (!item) {
+          return makeAction(
+            node,
+            "failed",
+            buildOutcome(node, "failed", { reason: `item ${payload.itemId} not in inventory` }),
+            { difficulty, failureReason: "object_not_found" },
+          );
+        }
+        dgsm.addItemToNpc(node.targetCharacterId, item);
       } else if (payload.transferType === "clue" && payload.clueId) {
         dgsm.transferClue(node.characterId, node.targetCharacterId, payload.clueId);
       }
