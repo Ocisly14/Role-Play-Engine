@@ -79,6 +79,11 @@ function createMockDgsm() {
       }
     },
 
+    // Topology (default: null — no outdoor topology)
+    getTopology(): any {
+      return null;
+    },
+
     // Expose internals for assertions
     _featureState: featureState,
     _scenarioConditions: scenarioConditions,
@@ -570,6 +575,390 @@ describe("fireFeature", () => {
       const desc = fireFeature.stateDescription(dgsm as any);
       expect(desc).toContain("warehouse");
       expect(desc).toContain("Light smoke");
+    });
+  });
+
+  // ===== road fire model =====
+
+  describe("road fire model", () => {
+    let roadDgsm: MockDgsm & { getTopology: () => any };
+
+    beforeEach(() => {
+      const base = createMockDgsm();
+
+      const topology = {
+        junctions: new Map([
+          ["JUNC_1", {
+            id: "JUNC_1",
+            name: "Junction 1",
+            description: "",
+            parentLocationId: "OUTDOOR",
+            items: [],
+            clues: [],
+            conditions: [],
+            events: [],
+            connectedSceneIds: [],
+          }],
+          ["JUNC_2", {
+            id: "JUNC_2",
+            name: "Junction 2",
+            description: "",
+            parentLocationId: "OUTDOOR",
+            items: [],
+            clues: [],
+            conditions: [],
+            events: [],
+            connectedSceneIds: [],
+          }],
+        ]),
+        roads: new Map([
+          ["ROAD_1", {
+            id: "ROAD_1",
+            name: "Main Street",
+            description: "",
+            parentLocationId: "OUTDOOR",
+            endpointA: "JUNC_1",
+            endpointB: "JUNC_2",
+            travelTimeMinutes: 20,
+            alongConnections: [{ sceneId: "SCN_ALONG", position: 0.5 }],
+            items: [],
+            clues: [],
+            conditions: [],
+            events: [],
+          }],
+        ]),
+        junctionToRoads: new Map(),
+        sceneToParent: new Map(),
+      };
+
+      roadDgsm = Object.assign(base, {
+        getTopology: () => topology,
+      });
+
+      // Add SCN_ALONG as a scene so damageByFire can look it up
+      roadDgsm._addScene({
+        id: "SCN_ALONG",
+        name: "Along Road Scene",
+        connections: [],
+        events: [],
+      });
+      // Add ROAD_1 as a "scene" for connections (needed by updateFireBlocking)
+      roadDgsm._addScene({
+        id: "ROAD_1",
+        name: "Main Street",
+        connections: ["JUNC_1", "JUNC_2"],
+        events: [],
+      });
+    });
+
+    it("road fire state has burnRange", () => {
+      // Manually set a road fire state
+      const roadFireState = {
+        intensity: 2,
+        maxIntensity: 5,
+        growthRate: 1,
+        decayRate: 1,
+        spreadThreshold: 3,
+        phase: "growing" as const,
+        ticksInPhase: 0,
+        totalBurnTicks: 0,
+        burnRange: { start: 0.5, end: 0.5 },
+      };
+      roadDgsm.setFeatureSceneState("fire", "ROAD_1", roadFireState);
+
+      const fs = roadDgsm.getFeatureSceneState("fire", "ROAD_1") as any;
+      expect(fs).toBeDefined();
+      expect(fs.burnRange).toBeDefined();
+      expect(fs.burnRange.start).toBe(0.5);
+      expect(fs.burnRange.end).toBe(0.5);
+    });
+
+    it("burn range expands each tick (delta = 2/20 = 0.1)", () => {
+      const roadFireState = {
+        intensity: 2,
+        maxIntensity: 5,
+        growthRate: 1,
+        decayRate: 1,
+        spreadThreshold: 3,
+        phase: "growing" as const,
+        ticksInPhase: 0,
+        totalBurnTicks: 0,
+        burnRange: { start: 0.5, end: 0.5 },
+      };
+      roadDgsm.setFeatureSceneState("fire", "ROAD_1", roadFireState);
+
+      // Run 1 tick
+      fireFeature.tick!(roadDgsm as any, runtime);
+
+      const fs = roadDgsm.getFeatureSceneState("fire", "ROAD_1") as any;
+      expect(fs.burnRange.start).toBeCloseTo(0.4, 5);
+      expect(fs.burnRange.end).toBeCloseTo(0.6, 5);
+    });
+
+    it("burn range clamps to 0.0-1.0", () => {
+      const roadFireState = {
+        intensity: 2,
+        maxIntensity: 5,
+        growthRate: 1,
+        decayRate: 1,
+        spreadThreshold: 3,
+        phase: "growing" as const,
+        ticksInPhase: 0,
+        totalBurnTicks: 0,
+        burnRange: { start: 0.05, end: 0.95 },
+      };
+      roadDgsm.setFeatureSceneState("fire", "ROAD_1", roadFireState);
+
+      // Run 1 tick: delta=0.1, start would be 0.05-0.1=-0.05 → clamped to 0, end would be 0.95+0.1=1.05 → clamped to 1
+      fireFeature.tick!(roadDgsm as any, runtime);
+
+      const fs = roadDgsm.getFeatureSceneState("fire", "ROAD_1") as any;
+      expect(fs.burnRange.start).toBe(0);
+      expect(fs.burnRange.end).toBe(1);
+    });
+
+    it("along-road scenes within burn range get fire condition", () => {
+      // SCN_ALONG is at position 0.5. Set burn range to include it.
+      const roadFireState = {
+        intensity: 2,
+        maxIntensity: 5,
+        growthRate: 1,
+        decayRate: 1,
+        spreadThreshold: 3,
+        phase: "growing" as const,
+        ticksInPhase: 0,
+        totalBurnTicks: 0,
+        burnRange: { start: 0.45, end: 0.45 },
+      };
+      roadDgsm.setFeatureSceneState("fire", "ROAD_1", roadFireState);
+
+      // After 1 tick: burn range expands by 0.1 each side → start=0.35, end=0.55
+      // SCN_ALONG at 0.5 is within [0.35, 0.55]
+      fireFeature.tick!(roadDgsm as any, runtime);
+
+      const conditions = roadDgsm.getSceneConditions("SCN_ALONG");
+      const fireCond = conditions.find(c => c.description.startsWith("[Fire]"));
+      expect(fireCond).toBeDefined();
+      // intensity=2, so along-road scene gets max(1, 2-1) = 1 → "Light smoke"
+      expect(fireCond!.description).toContain("Light smoke");
+    });
+
+    it("along-road scenes outside burn range don't get fire condition", () => {
+      // SCN_ALONG is at position 0.5. Set burn range far from it.
+      const roadFireState = {
+        intensity: 2,
+        maxIntensity: 5,
+        growthRate: 1,
+        decayRate: 1,
+        spreadThreshold: 3,
+        phase: "growing" as const,
+        ticksInPhase: 0,
+        totalBurnTicks: 0,
+        burnRange: { start: 0.1, end: 0.1 },
+      };
+      roadDgsm.setFeatureSceneState("fire", "ROAD_1", roadFireState);
+
+      // After 1 tick: burn range expands by 0.1 → start=0.0, end=0.2
+      // SCN_ALONG at 0.5 is NOT within [0.0, 0.2]
+      fireFeature.tick!(roadDgsm as any, runtime);
+
+      const conditions = roadDgsm.getSceneConditions("SCN_ALONG");
+      const fireCond = conditions.find(c => c.description.startsWith("[Fire]"));
+      expect(fireCond).toBeUndefined();
+    });
+  });
+
+  // ===== weather interaction on outdoor fire =====
+
+  describe("weather interaction on outdoor fire", () => {
+    let roadDgsm: MockDgsm & { getTopology: () => any };
+
+    beforeEach(() => {
+      const base = createMockDgsm();
+
+      const topology = {
+        junctions: new Map([
+          ["JUNC_1", {
+            id: "JUNC_1",
+            name: "Junction 1",
+            description: "",
+            parentLocationId: "OUTDOOR",
+            items: [],
+            clues: [],
+            conditions: [],
+            events: [],
+            connectedSceneIds: [],
+          }],
+          ["JUNC_2", {
+            id: "JUNC_2",
+            name: "Junction 2",
+            description: "",
+            parentLocationId: "OUTDOOR",
+            items: [],
+            clues: [],
+            conditions: [],
+            events: [],
+            connectedSceneIds: [],
+          }],
+        ]),
+        roads: new Map([
+          ["ROAD_1", {
+            id: "ROAD_1",
+            name: "Main Street",
+            description: "",
+            parentLocationId: "OUTDOOR",
+            endpointA: "JUNC_1",
+            endpointB: "JUNC_2",
+            travelTimeMinutes: 20,
+            alongConnections: [{ sceneId: "SCN_ALONG", position: 0.5 }],
+            items: [],
+            clues: [],
+            conditions: [],
+            events: [],
+          }],
+        ]),
+        junctionToRoads: new Map(),
+        sceneToParent: new Map(),
+      };
+
+      roadDgsm = Object.assign(base, {
+        getTopology: () => topology,
+      });
+
+      // Add scenes needed by tests
+      roadDgsm._addScene({
+        id: "SCN_ALONG",
+        name: "Along Road Scene",
+        connections: [],
+        events: [],
+      });
+      roadDgsm._addScene({
+        id: "ROAD_1",
+        name: "Main Street",
+        connections: ["JUNC_1", "JUNC_2"],
+        events: [],
+      });
+      roadDgsm._addScene({
+        id: "JUNC_1",
+        name: "Junction 1",
+        connections: [],
+        events: [],
+      });
+    });
+
+    it("heavy rain (intensity >= 4) extinguishes road fire", () => {
+      // Set heavy rain weather on OUTDOOR
+      roadDgsm.setFeatureSceneState("weather", "OUTDOOR", { weatherType: "rain", intensity: 4 });
+
+      // Set road fire
+      const roadFireState = {
+        intensity: 2,
+        maxIntensity: 5,
+        growthRate: 1,
+        decayRate: 1,
+        spreadThreshold: 3,
+        phase: "growing" as const,
+        ticksInPhase: 0,
+        totalBurnTicks: 3,
+        burnRange: { start: 0.4, end: 0.6 },
+      };
+      roadDgsm.setFeatureSceneState("fire", "ROAD_1", roadFireState);
+
+      // Run 1 tick
+      fireFeature.tick!(roadDgsm as any, runtime);
+
+      // Fire should be extinguished
+      const fs = roadDgsm.getFeatureSceneState("fire", "ROAD_1");
+      expect(fs).toBeUndefined();
+
+      // Aftermath condition should exist
+      const conditions = roadDgsm.getSceneConditions("ROAD_1");
+      const aftermath = conditions.find(c => c.description.startsWith("[Fire Aftermath]"));
+      expect(aftermath).toBeDefined();
+    });
+
+    it("light rain (intensity 2) slows road fire spread (0.5x)", () => {
+      // Set light rain weather on OUTDOOR
+      roadDgsm.setFeatureSceneState("weather", "OUTDOOR", { weatherType: "rain", intensity: 2 });
+
+      // Set road fire
+      const roadFireState = {
+        intensity: 2,
+        maxIntensity: 5,
+        growthRate: 1,
+        decayRate: 1,
+        spreadThreshold: 3,
+        phase: "growing" as const,
+        ticksInPhase: 0,
+        totalBurnTicks: 0,
+        burnRange: { start: 0.5, end: 0.5 },
+      };
+      roadDgsm.setFeatureSceneState("fire", "ROAD_1", roadFireState);
+
+      // Run 1 tick
+      fireFeature.tick!(roadDgsm as any, runtime);
+
+      // Spread should be halved: base delta = 2/20 = 0.1, * 0.5 = 0.05
+      const fs = roadDgsm.getFeatureSceneState("fire", "ROAD_1") as any;
+      expect(fs).toBeDefined();
+      expect(fs.burnRange.start).toBeCloseTo(0.45, 5);
+      expect(fs.burnRange.end).toBeCloseTo(0.55, 5);
+    });
+
+    it("heavy rain extinguishes junction fire", () => {
+      // Set heavy rain weather on OUTDOOR
+      roadDgsm.setFeatureSceneState("weather", "OUTDOOR", { weatherType: "rain", intensity: 4 });
+
+      // Set junction fire (regular fire state, not road fire)
+      const junctionFireState = {
+        intensity: 2,
+        maxIntensity: 5,
+        growthRate: 1,
+        decayRate: 1,
+        spreadThreshold: 3,
+        phase: "growing" as const,
+        ticksInPhase: 0,
+        totalBurnTicks: 5,
+      };
+      roadDgsm.setFeatureSceneState("fire", "JUNC_1", junctionFireState);
+
+      // Run 1 tick
+      fireFeature.tick!(roadDgsm as any, runtime);
+
+      // Fire should be extinguished
+      const fs = roadDgsm.getFeatureSceneState("fire", "JUNC_1");
+      expect(fs).toBeUndefined();
+
+      // Aftermath condition should exist
+      const conditions = roadDgsm.getSceneConditions("JUNC_1");
+      const aftermath = conditions.find(c => c.description.startsWith("[Fire Aftermath]"));
+      expect(aftermath).toBeDefined();
+    });
+
+    it("scene (building) fire NOT affected by weather (no extinguish)", () => {
+      // Set heavy rain weather on OUTDOOR
+      roadDgsm.setFeatureSceneState("weather", "OUTDOOR", { weatherType: "rain", intensity: 4 });
+
+      // SCN_ALONG is a building scene, not a road or junction in the topology
+      // Set fire on it
+      const sceneFireState = {
+        intensity: 2,
+        maxIntensity: 5,
+        growthRate: 1,
+        decayRate: 1,
+        spreadThreshold: 3,
+        phase: "growing" as const,
+        ticksInPhase: 0,
+        totalBurnTicks: 0,
+      };
+      roadDgsm.setFeatureSceneState("fire", "SCN_ALONG", sceneFireState);
+
+      // Run 1 tick
+      fireFeature.tick!(roadDgsm as any, runtime);
+
+      // Fire should still exist (not extinguished by weather)
+      const fs = roadDgsm.getFeatureSceneState("fire", "SCN_ALONG");
+      expect(fs).toBeDefined();
     });
   });
 });

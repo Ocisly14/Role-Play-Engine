@@ -19,6 +19,18 @@ interface FireSceneState {
   totalBurnTicks: number;
 }
 
+interface FireRoadState extends FireSceneState {
+  /** Burning segment on road: 0.0–1.0 */
+  burnRange: { start: number; end: number };
+}
+
+/** Minutes of road-distance fire spreads per tick (base rate, before weather) */
+const ROAD_SPREAD_RATE_MINUTES = 2;
+
+function isFireRoadState(state: FireSceneState): state is FireRoadState {
+  return "burnRange" in state;
+}
+
 // ===== Constants =====
 
 const DEFAULT_MAX_INTENSITY = 5;
@@ -54,6 +66,14 @@ function createFireState(initialIntensity: number): FireSceneState {
     phase: "growing",
     ticksInPhase: 0,
     totalBurnTicks: 0,
+  };
+}
+
+function createRoadFireState(initialIntensity: number, position: number): FireRoadState {
+  const base = createFireState(initialIntensity);
+  return {
+    ...base,
+    burnRange: { start: position, end: position },
   };
 }
 
@@ -191,6 +211,50 @@ function getAllBurningScenes(dgsm: DynamicGameStateManager): string[] {
   return Object.keys(dgsm.getFeatureState(FEATURE_ID));
 }
 
+/**
+ * Get weather-based multiplier for fire spread rate on outdoor fire.
+ * Rain reduces spread, dry/heat increases spread.
+ */
+function getWeatherSpreadMultiplier(dgsm: DynamicGameStateManager, parentLocationId: string): number {
+  const weatherState = dgsm.getFeatureSceneState("weather", parentLocationId) as
+    | { weatherType: string; intensity: number }
+    | undefined;
+  if (!weatherState) return 1.0;
+
+  const { weatherType, intensity } = weatherState;
+
+  if (weatherType === "rain") {
+    if (intensity >= 4) return 0;     // heavy rain extinguishes
+    if (intensity >= 3) return 0.1;   // near-extinguish
+    if (intensity >= 2) return 0.5;   // significantly slower
+    return 0.8;                       // light rain, slightly slower
+  }
+  if (weatherType === "storm") {
+    if (intensity >= 3) return 0;     // storm extinguishes
+    if (intensity >= 2) return 0.3;
+    return 0.7;
+  }
+  if (weatherType === "extreme_heat") {
+    if (intensity >= 3) return 1.5;   // heat accelerates fire
+    return 1.2;
+  }
+  return 1.0;
+}
+
+/**
+ * Check if a location is an outdoor topology node (road or junction).
+ * Outdoor fire is affected by weather; scene (building interior) fire is not.
+ */
+function isOutdoorTopologyNode(dgsm: DynamicGameStateManager, locationId: string): { isOutdoor: boolean; parentLocationId: string | null } {
+  const topology = dgsm.getTopology();
+  if (!topology) return { isOutdoor: false, parentLocationId: null };
+  const road = topology.roads.get(locationId);
+  if (road) return { isOutdoor: true, parentLocationId: road.parentLocationId };
+  const junction = topology.junctions.get(locationId);
+  if (junction) return { isOutdoor: true, parentLocationId: junction.parentLocationId };
+  return { isOutdoor: false, parentLocationId: null };
+}
+
 // ===== Exported feature =====
 
 export const fireFeature: WorldFeature = {
@@ -324,6 +388,43 @@ export const fireFeature: WorldFeature = {
         // Intensity changed — update condition and blocking
         writeFireCondition(dgsm, sceneId, fs.intensity);
         updateFireBlocking(dgsm, sceneId, fs.intensity);
+      }
+
+      // Weather affects outdoor fire (road + junction)
+      const outdoor = isOutdoorTopologyNode(dgsm, sceneId);
+      if (outdoor.isOutdoor && outdoor.parentLocationId) {
+        const weatherMult = getWeatherSpreadMultiplier(dgsm, outdoor.parentLocationId);
+
+        // Heavy rain/storm extinguishes outdoor fire
+        if (weatherMult <= 0) {
+          writeAftermathCondition(dgsm, sceneId, fs.totalBurnTicks);
+          clearFireConditions(dgsm, sceneId);
+          updateFireBlocking(dgsm, sceneId, 0);
+          removeFireState(dgsm, sceneId);
+          continue;
+        }
+
+        // Road fire: expand burn range
+        if (isFireRoadState(fs)) {
+          const road = dgsm.getTopology()!.roads.get(sceneId)!;
+          const spreadDelta = (ROAD_SPREAD_RATE_MINUTES / road.travelTimeMinutes) * weatherMult;
+          fs.burnRange.start = Math.max(0, fs.burnRange.start - spreadDelta);
+          fs.burnRange.end = Math.min(1, fs.burnRange.end + spreadDelta);
+
+          // Damage along-road scenes within burn range
+          for (const along of road.alongConnections) {
+            if (along.position >= fs.burnRange.start && along.position <= fs.burnRange.end) {
+              if (fs.intensity > 2) {
+                damageByFire(dgsm, along.sceneId, fs.intensity);
+              }
+              writeFireCondition(dgsm, along.sceneId, Math.max(1, fs.intensity - 1));
+            }
+          }
+        }
+
+        // Junction fire: weather slows growth (modify growth rate effectively)
+        // Already handled: if weatherMult < 1 the fire grows normally but can't spread as fast
+        // The main effect is the extinguishing at weatherMult <= 0 above
       }
 
       // Only persist if not removed above
