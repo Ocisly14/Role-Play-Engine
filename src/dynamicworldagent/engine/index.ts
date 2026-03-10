@@ -14,3 +14,4 @@ export {
   sceneInteractionHandler,
 } from "./handlers/index.js";
 export { findAffectedCharacters, findAffectedScenes } from "./shared/impactPropagation.js";
+export { fireFeature } from "./features/fireFeature.js";

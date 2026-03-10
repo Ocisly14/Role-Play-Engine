@@ -1,0 +1,339 @@
+import type {
+  WorldFeature,
+  TickRuntimeContext,
+  PropagationResult,
+} from "../types.js";
+import type { DynamicGameStateManager } from "../../state/DynamicGameState.js";
+import type { PlanNode } from "../../dynamicBasicAgent/npcPlanning/types.js";
+
+// ===== Internal types =====
+
+interface FireSceneState {
+  intensity: number;
+  maxIntensity: number;       // fixed 5
+  growthRate: number;         // default 1 (applied every 2 ticks)
+  decayRate: number;          // default 1 (applied every 2 ticks)
+  spreadThreshold: number;   // fixed 3 = ceil(5/2)
+  phase: "growing" | "decaying";
+  ticksInPhase: number;
+  totalBurnTicks: number;
+}
+
+// ===== Constants =====
+
+const DEFAULT_MAX_INTENSITY = 5;
+const DEFAULT_SPREAD_THRESHOLD = 3; // ceil(5/2)
+const DEFAULT_GROWTH_RATE = 1;
+const DEFAULT_DECAY_RATE = 1;
+const TICKS_PER_INTENSITY_CHANGE = 2;
+const BLOCK_THRESHOLD = 3; // same as spread threshold
+const FEATURE_ID = "fire";
+
+// ===== Helper functions =====
+
+function getFireState(dgsm: DynamicGameStateManager, sceneId: string): FireSceneState | undefined {
+  return dgsm.getFeatureSceneState(FEATURE_ID, sceneId) as FireSceneState | undefined;
+}
+
+function setFireState(dgsm: DynamicGameStateManager, sceneId: string, state: FireSceneState): void {
+  dgsm.setFeatureSceneState(FEATURE_ID, sceneId, state);
+}
+
+function removeFireState(dgsm: DynamicGameStateManager, sceneId: string): void {
+  dgsm.removeFeatureSceneState(FEATURE_ID, sceneId);
+}
+
+function createFireState(initialIntensity: number): FireSceneState {
+  const clamped = Math.max(1, Math.min(initialIntensity, DEFAULT_MAX_INTENSITY));
+  return {
+    intensity: clamped,
+    maxIntensity: DEFAULT_MAX_INTENSITY,
+    growthRate: DEFAULT_GROWTH_RATE,
+    decayRate: DEFAULT_DECAY_RATE,
+    spreadThreshold: DEFAULT_SPREAD_THRESHOLD,
+    phase: "growing",
+    ticksInPhase: 0,
+    totalBurnTicks: 0,
+  };
+}
+
+const INTENSITY_LABELS = [
+  "",
+  "Light smoke",
+  "Thickening smoke",
+  "Heavy smoke and flames",
+  "Intense fire",
+  "Raging inferno",
+];
+
+function getSkillPenalties(intensity: number): Array<{ skill: string; delta: number }> {
+  const penalties: Array<{ skill: string; delta: number }> = [];
+  // Always: Spot Hidden
+  penalties.push({ skill: "Spot Hidden", delta: -10 * intensity });
+  // At intensity >= 2: Listen
+  if (intensity >= 2) {
+    penalties.push({ skill: "Listen", delta: -10 * (intensity - 1) });
+  }
+  return penalties;
+}
+
+function writeFireCondition(dgsm: DynamicGameStateManager, sceneId: string, intensity: number): void {
+  // Clear existing fire conditions first
+  clearFireConditions(dgsm, sceneId);
+
+  const label = INTENSITY_LABELS[intensity] ?? INTENSITY_LABELS[INTENSITY_LABELS.length - 1];
+  const penalties = getSkillPenalties(intensity);
+
+  dgsm.appendSceneCondition(sceneId, {
+    description: `[Fire] ${label}`,
+    mechanicalEffect: {
+      skillPenalty: penalties,
+    },
+  });
+}
+
+function clearFireConditions(dgsm: DynamicGameStateManager, sceneId: string): void {
+  const state = dgsm.getState();
+  const conditions = state.scenarioConditions[sceneId];
+  if (!conditions) return;
+  const nonFire = conditions.filter(c => !c.description.startsWith("[Fire]"));
+  (dgsm.getState() as any).scenarioConditions[sceneId] = nonFire;
+}
+
+function writeAftermathCondition(dgsm: DynamicGameStateManager, sceneId: string, totalBurnTicks: number): void {
+  let description: string;
+  let penalties: Array<{ skill: string; delta: number }> | undefined;
+
+  if (totalBurnTicks <= 4) {
+    description = "[Fire Aftermath] Minor smoke stains on walls and ceiling";
+    // no penalties
+  } else if (totalBurnTicks <= 10) {
+    description = "[Fire Aftermath] Partial burn damage \u2014 some items destroyed, soot covers surfaces";
+    penalties = [{ skill: "Spot Hidden", delta: -5 }];
+  } else if (totalBurnTicks <= 20) {
+    description = "[Fire Aftermath] Severe burn damage \u2014 structural integrity compromised, many items destroyed";
+    penalties = [{ skill: "Spot Hidden", delta: -10 }];
+  } else {
+    description = "[Fire Aftermath] Scene nearly destroyed by fire \u2014 most items and clues unavailable, structure unsafe";
+    penalties = [{ skill: "Spot Hidden", delta: -20 }];
+  }
+
+  dgsm.appendSceneCondition(sceneId, {
+    description,
+    mechanicalEffect: penalties ? { skillPenalty: penalties } : undefined,
+  });
+}
+
+function updateFireBlocking(dgsm: DynamicGameStateManager, sceneId: string, intensity: number): void {
+  const scene = dgsm.getScene(sceneId);
+  if (!scene) return;
+
+  const connectedSceneIds = scene.connections;
+
+  if (intensity >= BLOCK_THRESHOLD) {
+    // Block connections INTO this scene from all connected scenes
+    for (const connId of connectedSceneIds) {
+      dgsm.setConnectionBlocked(connId, sceneId, true, `Blocked by fire (intensity ${intensity})`);
+    }
+  } else {
+    // Unblock only connections that were blocked by fire
+    const state = dgsm.getState();
+    for (const connId of connectedSceneIds) {
+      const key1 = `${connId}::${sceneId}`;
+      const key2 = `${sceneId}::${connId}`;
+      const reason1 = state.blockedConnections.get(key1);
+      const reason2 = state.blockedConnections.get(key2);
+      if (reason1 && reason1.startsWith("Blocked by fire")) {
+        dgsm.setConnectionBlocked(connId, sceneId, false, "");
+      }
+      if (reason2 && reason2.startsWith("Blocked by fire")) {
+        dgsm.setConnectionBlocked(sceneId, connId, false, "");
+      }
+    }
+  }
+}
+
+function getAllBurningScenes(dgsm: DynamicGameStateManager): string[] {
+  return Object.keys(dgsm.getFeatureState(FEATURE_ID));
+}
+
+// ===== Exported feature =====
+
+export const fireFeature: WorldFeature = {
+  id: FEATURE_ID,
+  description: "Fire system \u2014 spreads between scenes, causes skill penalties and blocks connections",
+
+  planningPrompt: `## Fire
+- Starting a fire: add \`"fireIntensity"\` to the node. Choose initial intensity based on the action:
+  - 1: Small fire (candle knocked over, match, small arson)
+  - 2: Moderate fire (deliberate arson with accelerant, oil lamp explosion)
+  - 3: Large fire (building-scale arson, explosive ignition)
+- Putting out a fire: add \`"fireExtinguish": true\` to the node.
+- Do NOT add fire fields to nodes that merely observe or react to fire.`,
+
+  planNodeSchema: {
+    requiredFields: [
+      { field: "fireIntensity", type: "number", description: "Initial fire intensity (typically 1)" },
+    ],
+    optionalFields: [
+      { field: "fireExtinguish", type: "boolean", description: "Set to true to attempt to extinguish fire at this location" },
+    ],
+    exampleNode: {
+      type: "scene_interaction",
+      action: "Set fire to the old warehouse",
+      fireIntensity: 1,
+    },
+  },
+
+  propagation: {
+    tickInterval: 2,
+    maxHops: 3,
+  },
+
+  stateDescription(dgsm: DynamicGameStateManager): string {
+    const burningScenes = getAllBurningScenes(dgsm);
+    if (burningScenes.length === 0) return "";
+
+    const lines: string[] = [];
+    for (const sceneId of burningScenes) {
+      const fs = getFireState(dgsm, sceneId);
+      if (!fs) continue;
+      const label = INTENSITY_LABELS[fs.intensity] ?? INTENSITY_LABELS[INTENSITY_LABELS.length - 1];
+      lines.push(`- ${sceneId}: intensity ${fs.intensity}/5 (${label}), phase: ${fs.phase}`);
+    }
+    return lines.length > 0 ? "Active fires:\n" + lines.join("\n") : "";
+  },
+
+  activate(node: PlanNode, dgsm: DynamicGameStateManager): void {
+    const sceneId = node.location;
+
+    // Handle extinguish
+    if ((node as Record<string, unknown>).fireExtinguish === true) {
+      const existing = getFireState(dgsm, sceneId);
+      if (!existing) return; // nothing to extinguish
+
+      existing.intensity -= 2;
+      if (existing.intensity <= 0) {
+        // Fire is fully extinguished
+        writeAftermathCondition(dgsm, sceneId, existing.totalBurnTicks);
+        clearFireConditions(dgsm, sceneId);
+        updateFireBlocking(dgsm, sceneId, 0);
+        removeFireState(dgsm, sceneId);
+      } else {
+        setFireState(dgsm, sceneId, existing);
+        writeFireCondition(dgsm, sceneId, existing.intensity);
+        updateFireBlocking(dgsm, sceneId, existing.intensity);
+      }
+      return;
+    }
+
+    // Handle fire start / boost
+    const requestedIntensity = (node as Record<string, unknown>).fireIntensity as number | undefined;
+    if (requestedIntensity === undefined) return;
+
+    const existing = getFireState(dgsm, sceneId);
+    if (existing) {
+      // Boost existing fire only if requested intensity is higher
+      if (requestedIntensity > existing.intensity) {
+        existing.intensity = Math.min(requestedIntensity, existing.maxIntensity);
+        setFireState(dgsm, sceneId, existing);
+        writeFireCondition(dgsm, sceneId, existing.intensity);
+        updateFireBlocking(dgsm, sceneId, existing.intensity);
+      }
+    } else {
+      // Create new fire
+      const newState = createFireState(requestedIntensity);
+      setFireState(dgsm, sceneId, newState);
+      writeFireCondition(dgsm, sceneId, newState.intensity);
+      updateFireBlocking(dgsm, sceneId, newState.intensity);
+    }
+  },
+
+  tick(dgsm: DynamicGameStateManager, _runtime: TickRuntimeContext): void {
+    const burningScenes = getAllBurningScenes(dgsm);
+
+    for (const sceneId of burningScenes) {
+      const fs = getFireState(dgsm, sceneId);
+      if (!fs) continue;
+
+      // Increment tick counters
+      fs.totalBurnTicks++;
+      fs.ticksInPhase++;
+
+      // Only change intensity every TICKS_PER_INTENSITY_CHANGE ticks
+      if (fs.ticksInPhase >= TICKS_PER_INTENSITY_CHANGE) {
+        fs.ticksInPhase = 0;
+
+        if (fs.phase === "growing") {
+          fs.intensity += fs.growthRate;
+          if (fs.intensity >= fs.maxIntensity) {
+            fs.intensity = fs.maxIntensity;
+            fs.phase = "decaying";
+            fs.ticksInPhase = 0;
+          }
+        } else {
+          // decaying
+          fs.intensity -= fs.decayRate;
+          if (fs.intensity <= 0) {
+            // Fire burns out
+            writeAftermathCondition(dgsm, sceneId, fs.totalBurnTicks);
+            clearFireConditions(dgsm, sceneId);
+            updateFireBlocking(dgsm, sceneId, 0);
+            removeFireState(dgsm, sceneId);
+            continue;
+          }
+        }
+
+        // Intensity changed — update condition and blocking
+        writeFireCondition(dgsm, sceneId, fs.intensity);
+        updateFireBlocking(dgsm, sceneId, fs.intensity);
+      }
+
+      // Only persist if not removed above
+      if (getFireState(dgsm, sceneId) !== undefined) {
+        setFireState(dgsm, sceneId, fs);
+      }
+    }
+  },
+
+  async propagate(
+    sourceSceneId: string,
+    _currentHop: number,
+    dgsm: DynamicGameStateManager,
+    _runtime: TickRuntimeContext
+  ): Promise<PropagationResult> {
+    const sourceState = getFireState(dgsm, sourceSceneId);
+    if (!sourceState || sourceState.intensity < sourceState.spreadThreshold) {
+      return { spreadTo: [] };
+    }
+
+    const scene = dgsm.getScene(sourceSceneId);
+    if (!scene) return { spreadTo: [] };
+
+    const newSceneIds: string[] = [];
+    const state = dgsm.getState();
+
+    for (const connId of scene.connections) {
+      // Skip if already on fire
+      if (getFireState(dgsm, connId)) continue;
+
+      // Skip if connection is blocked by a non-fire reason
+      const key1 = `${sourceSceneId}::${connId}`;
+      const key2 = `${connId}::${sourceSceneId}`;
+      const reason1 = state.blockedConnections.get(key1);
+      const reason2 = state.blockedConnections.get(key2);
+      const blocked1 = reason1 && !reason1.startsWith("Blocked by fire");
+      const blocked2 = reason2 && !reason2.startsWith("Blocked by fire");
+      if (blocked1 || blocked2) continue;
+
+      // Ignite with intensity 1
+      const newFireState = createFireState(1);
+      setFireState(dgsm, connId, newFireState);
+      writeFireCondition(dgsm, connId, 1);
+
+      newSceneIds.push(connId);
+    }
+
+    return { spreadTo: newSceneIds };
+  },
+};

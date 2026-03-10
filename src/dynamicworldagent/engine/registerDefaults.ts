@@ -6,6 +6,7 @@ import {
   objectInteractionHandler,
   sceneInteractionHandler,
 } from "./handlers/index.js";
+import { fireFeature } from "./features/fireFeature.js";
 
 export function createDefaultRegistry(): GameEngineRegistry {
   const registry = new GameEngineRegistry();
@@ -14,5 +15,8 @@ export function createDefaultRegistry(): GameEngineRegistry {
   registry.registerHandler(characterInteractionHandler);
   registry.registerHandler(objectInteractionHandler);
   registry.registerHandler(sceneInteractionHandler);
+
+  registry.registerFeature(fireFeature);
+
   return registry;
 }
