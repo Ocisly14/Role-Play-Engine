@@ -15,6 +15,7 @@ import type {
   ScenarioClue,
   ScenarioCondition,
 } from "../../shared/agents/models/scenarioTypes.js";
+import type { ItemContexts } from "./sceneItemContextPayload.js";
 
 /**
  * DynamicWorld Character Profile - Independent type definition for DynamicWorld system
@@ -85,6 +86,7 @@ export interface DynamicScene {
   description: string;
   parentLocationId: string;
   items: Item[];
+  itemContexts?: ItemContexts;
   clues: ScenarioClue[];
   conditions: ScenarioCondition[];
   connections: string[];

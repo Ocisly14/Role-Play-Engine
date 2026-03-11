@@ -41,8 +41,21 @@ function createMockDgsm() {
       if (idx === -1) return undefined;
       return npcInventories[npcId].splice(idx, 1)[0];
     },
-    _addScene(id: string, items: Item[] = [], events: string[] = []) {
-      scenes[id] = { id, name: id, items, events, clues: [], connections: [] } as unknown as DynamicScene;
+    _addScene(
+      id: string,
+      items: Item[] = [],
+      events: string[] = [],
+      itemContexts: Record<string, string> = {},
+    ) {
+      scenes[id] = {
+        id,
+        name: id,
+        items,
+        itemContexts,
+        events,
+        clues: [],
+        connections: [],
+      } as unknown as DynamicScene;
     },
     _addNpc(npcId: string, location: string, skills: Record<string, number> = {}, luck = 50) {
       npcLocations[npcId] = location;
@@ -348,7 +361,9 @@ describe("objectInteractionHandler", () => {
   describe("inspect", () => {
     it("returns item details in outcome string", () => {
       const diary: Item = { id: "diary", name: "Diary", type: "document", description: "A worn leather diary with cryptic entries." };
-      dgsm._addScene("study", [diary]);
+      dgsm._addScene("study", [diary], [], {
+        diary: "摊开在书桌上，页边压着一支掉漆的钢笔。",
+      });
       dgsm._addNpc("player-1", "study");
 
       const node = makeNode({
@@ -359,6 +374,7 @@ describe("objectInteractionHandler", () => {
       expect(result.status).toBe("completed");
       expect(result.outcome).toContain("Diary");
       expect(result.outcome).toContain("A worn leather diary");
+      expect(result.outcome).toContain("摊开在书桌上");
     });
 
     it("includes container contents when unlocked", () => {
@@ -399,7 +415,9 @@ describe("objectInteractionHandler", () => {
 
     it("works for items in NPC inventory", () => {
       const compass: Item = { id: "compass", name: "Compass", type: "tool", description: "A brass compass." };
-      dgsm._addScene("study", []);
+      dgsm._addScene("study", [], [], {
+        compass: "原本挂在墙上的木钉上。",
+      });
       dgsm._addNpc("player-1", "study");
       dgsm.addItemToNpc("player-1", compass);
 
@@ -411,6 +429,7 @@ describe("objectInteractionHandler", () => {
       expect(result.status).toBe("completed");
       expect(result.outcome).toContain("Compass");
       expect(result.outcome).toContain("A brass compass");
+      expect(result.outcome).not.toContain("木钉");
     });
   });
 

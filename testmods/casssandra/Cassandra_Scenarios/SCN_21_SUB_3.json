@@ -12,12 +12,12 @@
     {
       "id": "ITEM_SCN21_7",
       "name": "会议桌",
-      "description": "大厅中央的一张宽大的深色木制会议桌。这是Ben处理事务、接见访客和做出决策的主要场所。桌上放着一个烟灰缸和几只酒杯。"
+      "description": "一张宽大的深色木制会议桌，桌面留着长期会谈和待客的使用痕迹。"
     },
     {
       "id": "ITEM_SCN21_8",
       "name": "保险柜",
-      "description": "角落里放着几只沉重的金属保险柜。其中一只保存着Ben父亲卡绒的笔记，以及卡绒收集的与邪神活动相关的书籍、笔记和记录——不少是前克莱奥家族遗留未销毁的。"
+      "description": "几只沉重的金属保险柜，柜门和转盘都有高频使用留下的磨损。"
     }
   ],
   "clues": [
@@ -28,7 +28,10 @@
       "difficulty": "automatic",
       "location": "黑手党总部大厅",
       "discoveryMethod": "进入黑手党总部后即可感知",
-      "reveals": ["Ben Cleo是卡森德拉黑手党的首领", "火车站是黑手党的物流枢纽"],
+      "reveals": [
+        "Ben Cleo是卡森德拉黑手党的首领",
+        "火车站是黑手党的物流枢纽"
+      ],
       "discovered": false
     },
     {
@@ -38,7 +41,11 @@
       "difficulty": "regular",
       "location": "黑手党总部·与Ben交谈",
       "discoveryMethod": "与Ben Cleo达成合作后从他口中得知",
-      "reveals": ["Ben Cleo与Patrizio von Samsa曾经合作", "帕德里奇正在策划某种危险活动", "Ben不会放任帕德里奇毁掉卡森德拉"],
+      "reveals": [
+        "Ben Cleo与Patrizio von Samsa曾经合作",
+        "帕德里奇正在策划某种危险活动",
+        "Ben不会放任帕德里奇毁掉卡森德拉"
+      ],
       "discovered": false
     },
     {
@@ -48,7 +55,10 @@
       "difficulty": "extreme",
       "location": "黑手党总部·保险柜内",
       "discoveryMethod": "与Ben建立深度信任后，Ben可能会允许查看保险柜中的部分内容",
-      "reveals": ["克莱奥家族与Nyogtha之间存在古老的契约", "家族成员有被转化为Nyogtha眷属的危险"],
+      "reveals": [
+        "克莱奥家族与Nyogtha之间存在古老的契约",
+        "家族成员有被转化为Nyogtha眷属的危险"
+      ],
       "discovered": false
     }
   ],
@@ -66,6 +76,12 @@
       "description": "总部内随时有Ben的手下巡逻，气氛紧张而有序。未经许可的行为将立即被制止。"
     }
   ],
-  "connections": ["SCN_21_SUB_1"],
-  "events": []
+  "connections": [
+    "SCN_21_SUB_1"
+  ],
+  "events": [],
+  "itemContexts": {
+    "ITEM_SCN21_7": "大厅中央的一张宽大的深色木制会议桌。这是Ben处理事务、接见访客和做出决策的主要场所。桌上放着一个烟灰缸和几只酒杯。",
+    "ITEM_SCN21_8": "角落里放着几只沉重的金属保险柜。其中一只保存着Ben父亲卡绒的笔记，以及卡绒收集的与邪神活动相关的书籍、笔记和记录——不少是前克莱奥家族遗留未销毁的。"
+  }
 }

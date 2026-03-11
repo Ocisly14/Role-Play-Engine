@@ -12,7 +12,7 @@
     {
       "id": "ITEM_JUNC9_2",
       "name": "住宅邮箱组",
-      "description": "两三个金属邮箱集中固定在木桩上，箱门边缘都带着些锈迹。"
+      "description": "几只集中固定的金属邮箱，箱门边缘都带着些锈迹。"
     },
     {
       "id": "ITEM_JUNC9_3",
@@ -30,5 +30,8 @@
   "events": [],
   "connectedSceneIds": [
     "SCN_6_SUB_1"
-  ]
+  ],
+  "itemContexts": {
+    "ITEM_JUNC9_2": "两三个金属邮箱集中固定在木桩上，箱门边缘都带着些锈迹。"
+  }
 }

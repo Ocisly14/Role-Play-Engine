@@ -12,7 +12,7 @@
     {
       "id": "ITEM_SCN20_4",
       "name": "生锈的工具",
-      "description": "墙壁上挂着的几件早已生锈报废的工具——斧头、锯子和锤子。它们与伐木场的其他设备一样，似乎很少被使用过。"
+      "description": "几件早已生锈报废的工具，包括斧头、锯子和锤子。"
     }
   ],
   "clues": [
@@ -23,7 +23,11 @@
       "difficulty": "regular",
       "location": "壁炉灰烬中",
       "discoveryMethod": "仔细检查壁炉中的灰烬残迹",
-      "reveals": ["此地曾有人进行与Shub-Niggurath相关的活动", "该符号与Patrizio von Samsa的图纸上的符号一致", "这里可能是富商们曾经进行献祭活动的场所之一"],
+      "reveals": [
+        "此地曾有人进行与Shub-Niggurath相关的活动",
+        "该符号与Patrizio von Samsa的图纸上的符号一致",
+        "这里可能是富商们曾经进行献祭活动的场所之一"
+      ],
       "discovered": false
     },
     {
@@ -33,7 +37,10 @@
       "difficulty": "hard",
       "location": "壁炉灰烬中的符号",
       "discoveryMethod": "使用克苏鲁神话技能辨认符号",
-      "reveals": ["符号属于Shub-Niggurath崇拜", "卡森德拉存在邪神崇拜活动"],
+      "reveals": [
+        "符号属于Shub-Niggurath崇拜",
+        "卡森德拉存在邪神崇拜活动"
+      ],
       "discovered": false
     }
   ],
@@ -67,6 +74,11 @@
       }
     }
   ],
-  "connections": ["SCN_20_SUB_1"],
-  "events": []
+  "connections": [
+    "SCN_20_SUB_1"
+  ],
+  "events": [],
+  "itemContexts": {
+    "ITEM_SCN20_4": "墙壁上挂着的几件早已生锈报废的工具——斧头、锯子和锤子。它们与伐木场的其他设备一样，似乎很少被使用过。"
+  }
 }

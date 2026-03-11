@@ -7,7 +7,7 @@
     {
       "id": "ITEM_JUNC2_1",
       "name": "枯萎老橡树",
-      "description": "路口中央那棵枯萎的老橡树枝干扭曲，树皮干裂剥落，像一具站立的骨架。"
+      "description": "一棵枯萎的老橡树，枝干扭曲，树皮干裂剥落。"
     },
     {
       "id": "ITEM_JUNC2_2",
@@ -28,5 +28,8 @@
     }
   ],
   "events": [],
-  "connectedSceneIds": []
+  "connectedSceneIds": [],
+  "itemContexts": {
+    "ITEM_JUNC2_1": "路口中央那棵枯萎的老橡树枝干扭曲，树皮干裂剥落，像一具站立的骨架。"
+  }
 }

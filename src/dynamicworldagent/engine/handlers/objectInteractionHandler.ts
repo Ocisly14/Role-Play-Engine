@@ -64,8 +64,19 @@ function useContainer(
 // ── Inspect helper ────────────────────────────────────────────
 
 function buildInspectOutcome(item: Item): string {
+  return buildInspectOutcomeWithContext(item);
+}
+
+function buildInspectOutcomeWithContext(
+  item: Item,
+  contextDescription?: string,
+  contextLabel?: string,
+): string {
   const parts: string[] = [`[Inspect] ${item.name}`];
   if (item.description) parts.push(item.description);
+  if (contextDescription) {
+    parts.push(contextLabel ? `${contextLabel}: ${contextDescription}` : contextDescription);
+  }
   if (item.damaged && item.damageDetails) {
     parts.push(`Damaged: ${item.damageDetails.reason}`);
   }
@@ -285,15 +296,31 @@ export const objectInteractionHandler: NodeHandler = {
 
       // --- Inspect ---
       else if (payload.action === "inspect" && payload.itemId) {
-        let item = dgsm.findNpcItem(node.characterId, payload.itemId);
-        if (!item && scene) {
+        const inventoryItem = dgsm.findNpcItem(node.characterId, payload.itemId);
+        let item = inventoryItem;
+        let inspectOutcome: string | null = null;
+
+        if (inventoryItem) {
+          inspectOutcome = buildInspectOutcomeWithContext(
+            inventoryItem,
+            undefined,
+          );
+        } else if (scene) {
           item = scene.items.find(i => i.id === payload.itemId);
+          if (item) {
+            const sceneContext = scene.itemContexts?.[item.id];
+            inspectOutcome = buildInspectOutcomeWithContext(item, sceneContext);
+          }
         }
         if (!item) {
           return makeAction(node, "failed", buildOutcome(node, "failed", { reason: `${payload.itemId} not found` }), { difficulty, failureReason: "object_not_found" });
         }
-        const inspectOutcome = buildInspectOutcome(item);
-        return makeAction(node, "completed", inspectOutcome, { difficulty, successLevel: resolvedSuccessLevel });
+        return makeAction(
+          node,
+          "completed",
+          inspectOutcome ?? buildInspectOutcome(item),
+          { difficulty, successLevel: resolvedSuccessLevel },
+        );
       }
 
       // --- Destroy ---

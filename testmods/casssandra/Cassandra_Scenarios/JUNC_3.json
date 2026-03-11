@@ -7,7 +7,7 @@
     {
       "id": "ITEM_JUNC3_1",
       "name": "昏暗路灯",
-      "description": "角落里的老式路灯发出偏黄的光，灯罩内壁积着不少飞虫尸体。"
+      "description": "一盏老式路灯，发出偏黄光线，灯罩内壁积着不少飞虫尸体。"
     },
     {
       "id": "ITEM_JUNC3_2",
@@ -28,5 +28,8 @@
     }
   ],
   "events": [],
-  "connectedSceneIds": []
+  "connectedSceneIds": [],
+  "itemContexts": {
+    "ITEM_JUNC3_1": "角落里的老式路灯发出偏黄的光，灯罩内壁积着不少飞虫尸体。"
+  }
 }

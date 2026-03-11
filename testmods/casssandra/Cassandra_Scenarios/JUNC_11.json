@@ -12,7 +12,7 @@
     {
       "id": "ITEM_JUNC11_2",
       "name": "步道标记桩",
-      "description": "泥泞小路起点处立着几根矮木桩，勉强标出原本的步道边界。"
+      "description": "几根矮木质步道标记桩，用来勉强标出原有步道边界。"
     },
     {
       "id": "ITEM_JUNC11_3",
@@ -40,5 +40,8 @@
     }
   ],
   "events": [],
-  "connectedSceneIds": []
+  "connectedSceneIds": [],
+  "itemContexts": {
+    "ITEM_JUNC11_2": "泥泞小路起点处立着几根矮木桩，勉强标出原本的步道边界。"
+  }
 }

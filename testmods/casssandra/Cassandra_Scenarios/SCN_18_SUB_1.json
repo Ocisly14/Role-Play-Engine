@@ -12,7 +12,7 @@
     {
       "id": "ITEM_SCN18_2",
       "name": "Harrison的小发明（非卖品）",
-      "description": "陈列架最上层摆放着Harrison亲手制作的各种小发明，都标注着'非卖品'。这些看起来像是经过巧妙改装的小型机械装置，展现着发明家的奇思妙想。Harrison会热情地向感兴趣的人介绍每一件发明。"
+      "description": "几件经过巧妙改装的小型机械装置，都被标注为非卖品。"
     },
     {
       "id": "ITEM_SCN18_3",
@@ -43,7 +43,10 @@
       "difficulty": "hard",
       "location": "五金店内",
       "discoveryMethod": "从Adolph Carl或其他知情人处得知暗号后前来",
-      "reveals": ["Harrison暗中贩卖枪支", "可通过暗号购买武器装备"],
+      "reveals": [
+        "Harrison暗中贩卖枪支",
+        "可通过暗号购买武器装备"
+      ],
       "discovered": false
     },
     {
@@ -53,7 +56,9 @@
       "difficulty": "hard",
       "location": "五金店暗处",
       "discoveryMethod": "说出正确暗号后Harrison会展示货物清单",
-      "reveals": ["可在此处获取各类武器"],
+      "reveals": [
+        "可在此处获取各类武器"
+      ],
       "discovered": false
     }
   ],
@@ -67,7 +72,9 @@
       "description": "空气中弥漫着金属和机油的气味，混合着木屑的清香。"
     }
   ],
-  "connections": [
-  ],
-  "events": []
+  "connections": [],
+  "events": [],
+  "itemContexts": {
+    "ITEM_SCN18_2": "陈列架最上层摆放着Harrison亲手制作的各种小发明，都标注着'非卖品'。这些看起来像是经过巧妙改装的小型机械装置，展现着发明家的奇思妙想。Harrison会热情地向感兴趣的人介绍每一件发明。"
+  }
 }

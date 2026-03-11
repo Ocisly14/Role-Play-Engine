@@ -12,7 +12,7 @@
     {
       "id": "ITEM_SCN7_5",
       "name": "湿滑铁梯",
-      "description": "通往下方的铁梯每一级都覆着苔藓和水膜，踩上去带着让人不安的滑腻感。"
+      "description": "一架覆着苔藓和水膜的铁梯，踏级表面滑腻难踩。"
     },
     {
       "id": "ITEM_SCN7_6",
@@ -75,5 +75,8 @@
   "connections": [
     "SCN_7_SUB_2"
   ],
-  "events": []
+  "events": [],
+  "itemContexts": {
+    "ITEM_SCN7_5": "通往下方的铁梯每一级都覆着苔藓和水膜，踩上去带着让人不安的滑腻感。"
+  }
 }

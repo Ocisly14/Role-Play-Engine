@@ -7,7 +7,7 @@
     {
       "id": "ITEM_SCN1_8",
       "name": "药品货架",
-      "description": "存放着各类常规医疗药品的货架和冷藏柜"
+      "description": "一组用于存放常规医疗药品的货架和冷藏柜。"
     },
     {
       "id": "ITEM_SCN1_9",
@@ -28,7 +28,9 @@
       "difficulty": "hard",
       "location": "药品管理室深处",
       "discoveryMethod": "仔细搜索药品管理室",
-      "reveals": ["Vincent Galenus隐藏着不可告人的秘密"],
+      "reveals": [
+        "Vincent Galenus隐藏着不可告人的秘密"
+      ],
       "discovered": false
     },
     {
@@ -38,7 +40,11 @@
       "difficulty": "hard",
       "location": "暗门后的秘密存储空间",
       "discoveryMethod": "通过暗门进入秘密空间后搜索",
-      "reveals": ["医院秘密存放着与凶杀案相关的致幻药物", "Vincent Galenus与驯鹿酒吧凶杀案存在关联", "药物可能被用于控制受害者"],
+      "reveals": [
+        "医院秘密存放着与凶杀案相关的致幻药物",
+        "Vincent Galenus与驯鹿酒吧凶杀案存在关联",
+        "药物可能被用于控制受害者"
+      ],
       "discovered": false
     }
   ],
@@ -52,6 +58,12 @@
       "description": "房间深处光线较暗，暗门所在位置不易被察觉"
     }
   ],
-  "connections": ["SCN_1_SUB_1", "SCN_1_SUB_5"],
-  "events": []
+  "connections": [
+    "SCN_1_SUB_1",
+    "SCN_1_SUB_5"
+  ],
+  "events": [],
+  "itemContexts": {
+    "ITEM_SCN1_8": "存放着各类常规医疗药品的货架和冷藏柜"
+  }
 }

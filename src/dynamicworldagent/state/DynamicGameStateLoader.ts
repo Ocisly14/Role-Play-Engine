@@ -26,6 +26,7 @@ import type {
   DynamicNPCProfile,
   DynamicScene,
 } from "../world_builder/types.js";
+import { decodeSceneItemsPayload } from "../world_builder/sceneItemContextPayload.js";
 import { WorldModuleLoader } from "../world_builder/worldModuleLoader.js";
 import type { DynamicGameState } from "./DynamicGameState.js";
 import {
@@ -594,6 +595,7 @@ export async function initializeCompleteDynamicGameState(
       String(sceneRow.sceneImagePath).trim() !== ""
         ? { path: String(sceneRow.sceneImagePath).trim() }
         : undefined;
+    const { items, itemContexts } = decodeSceneItemsPayload(sceneRow.items);
 
     return {
       id: sceneRow.scenarioId,
@@ -601,7 +603,8 @@ export async function initializeCompleteDynamicGameState(
       description: sceneRow.description,
       parentLocationId: sceneRow.parentLocationId || "",
       connections: Array.isArray(sceneRow.connections) ? sceneRow.connections : [],
-      items: Array.isArray(sceneRow.items) ? sceneRow.items : [],
+      items,
+      itemContexts,
       sceneImage,
       clues: sceneClues.map((clue) => ({
         id: clue.clueId,

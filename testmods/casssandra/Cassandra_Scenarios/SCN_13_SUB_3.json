@@ -7,7 +7,7 @@
     {
       "id": "ITEM_SCN13_2",
       "name": "酒窖酒架",
-      "description": "沿墙排列的木质酒架，存放着大量伏特加成品，瓶身上积着薄灰"
+      "description": "沿墙排列的木质酒架，存放着大量伏特加成品，瓶身上积着薄灰。"
     },
     {
       "id": "ITEM_SCN13_7",
@@ -47,5 +47,8 @@
   "connections": [
     "SCN_13_SUB_1"
   ],
-  "events": []
+  "events": [],
+  "itemContexts": {
+    "ITEM_SCN13_2": "沿墙排列的木质酒架，存放着大量伏特加成品，瓶身上积着薄灰"
+  }
 }

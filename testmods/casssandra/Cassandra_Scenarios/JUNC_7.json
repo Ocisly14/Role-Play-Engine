@@ -17,7 +17,7 @@
     {
       "id": "ITEM_JUNC7_3",
       "name": "候车长椅",
-      "description": "站前摆着一张木质长椅，椅背上刻着多年前旅客留下的名字缩写。"
+      "description": "一张木质候车长椅，椅背上刻着多年前旅客留下的名字缩写。"
     }
   ],
   "clues": [],
@@ -30,5 +30,8 @@
   "events": [],
   "connectedSceneIds": [
     "SCN_21_SUB_1"
-  ]
+  ],
+  "itemContexts": {
+    "ITEM_JUNC7_3": "站前摆着一张木质长椅，椅背上刻着多年前旅客留下的名字缩写。"
+  }
 }

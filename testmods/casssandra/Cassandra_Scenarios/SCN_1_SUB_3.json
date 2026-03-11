@@ -7,22 +7,22 @@
     {
       "id": "ITEM_SCN1_5",
       "name": "新型医疗器械",
-      "description": "一批崭新的医疗器械，上面印着产地来自波士顿，与这家偏远小镇医院的规模极不相称"
+      "description": "一批崭新的医疗器械，机身印着波士顿产地标识，与小镇医院的常规配置明显不符。"
     },
     {
       "id": "ITEM_SCN1_6",
       "name": "注射器",
-      "description": "工作台上散着几支尚未处理的注射器，针头反射出实验灯下惨白的光。"
+      "description": "几支尚未处理的注射器，透明针筒和金属针头在冷白灯下反着惨白微光。"
     },
     {
       "id": "ITEM_SCN1_23",
       "name": "蜘蛛样本容器",
-      "description": "几只密封样本容器里装着蜘蛛标本和组织样本，标签写法过于正式，明显不是临时采集物。"
+      "description": "几只密封样本容器，里面装着蜘蛛标本和组织样本，标签格式十分正式。"
     },
     {
       "id": "ITEM_SCN1_7",
       "name": "实验档案",
-      "description": "一份实验相关的档案，记载着实验数据和进度"
+      "description": "一份记录实验数据和进度的实验档案。"
     }
   ],
   "clues": [
@@ -33,7 +33,10 @@
       "difficulty": "regular",
       "location": "实验室器械区",
       "discoveryMethod": "检查医疗器械上的产地标签",
-      "reveals": ["有外部资金支持实验室的运作", "实验室在进行不属于正常医疗范畴的活动"],
+      "reveals": [
+        "有外部资金支持实验室的运作",
+        "实验室在进行不属于正常医疗范畴的活动"
+      ],
       "discovered": false
     },
     {
@@ -43,7 +46,10 @@
       "difficulty": "regular",
       "location": "实验室工作台",
       "discoveryMethod": "检查工作台上的实验器材和样本",
-      "reveals": ["医院与蜘蛛相关的异常活动有关联", "可能涉及Constantine Frollo和阿特拉克-纳克亚的蜘蛛"],
+      "reveals": [
+        "医院与蜘蛛相关的异常活动有关联",
+        "可能涉及Constantine Frollo和阿特拉克-纳克亚的蜘蛛"
+      ],
       "discovered": false
     },
     {
@@ -53,7 +59,9 @@
       "difficulty": "regular",
       "location": "实验室档案柜",
       "discoveryMethod": "搜索实验室内的文件和档案",
-      "reveals": ["Vincent Galenus在进行人体实验"],
+      "reveals": [
+        "Vincent Galenus在进行人体实验"
+      ],
       "discovered": false
     }
   ],
@@ -67,6 +75,15 @@
       "description": "空气中混合着化学药剂和某种奇异的生物气味"
     }
   ],
-  "connections": ["SCN_1_SUB_1", "SCN_1_SUB_5"],
-  "events": []
+  "connections": [
+    "SCN_1_SUB_1",
+    "SCN_1_SUB_5"
+  ],
+  "events": [],
+  "itemContexts": {
+    "ITEM_SCN1_5": "一批崭新的医疗器械，上面印着产地来自波士顿，与这家偏远小镇医院的规模极不相称",
+    "ITEM_SCN1_6": "工作台上散着几支尚未处理的注射器，针头反射出实验灯下惨白的光。",
+    "ITEM_SCN1_23": "几只密封样本容器里装着蜘蛛标本和组织样本，标签写法过于正式，明显不是临时采集物。",
+    "ITEM_SCN1_7": "一份实验相关的档案，记载着实验数据和进度"
+  }
 }

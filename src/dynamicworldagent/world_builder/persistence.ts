@@ -25,6 +25,7 @@ import type {
   TruthEvent,
 } from "./types.js";
 import type { DynamicNPCProfile } from "./types.js";
+import { encodeSceneItemsPayload } from "./sceneItemContextPayload.js";
 
 /**
  * Save world generation results to database
@@ -232,7 +233,7 @@ export async function saveWorldToDatabase(
             description: scene.description,
             parentLocationId: scene.parentLocationId || null,
             connections: (scene.connections || []) as any,
-            items: (scene.items || []) as any,
+            items: encodeSceneItemsPayload(scene) as any,
             events: scene.events as any,
             initialScene: true,
             gameTime: null,
@@ -431,6 +432,7 @@ export async function saveWorldToJSON(
         description: scene.description,
         parentLocationId: scene.parentLocationId,
         items: scene.items,
+        itemContexts: scene.itemContexts,
         clues: scene.clues,
         conditions: scene.conditions,
         connections: scene.connections,

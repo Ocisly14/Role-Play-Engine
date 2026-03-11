@@ -8,6 +8,7 @@ import type {
   ScenarioCondition,
 } from "../../models/scenarioTypes.js";
 import type { DynamicScene } from "../../../../dynamicworldagent/world_builder/types.js";
+import { decodeSceneItemsPayload } from "../../../../dynamicworldagent/world_builder/sceneItemContextPayload.js";
 import {
   resolveModuleIdByName,
   scopeIdByModule,
@@ -146,6 +147,7 @@ export class ScenarioLoader {
     const sceneImage = scenario.mapImagePath
       ? { path: scenario.mapImagePath }
       : undefined;
+    const { items, itemContexts } = decodeSceneItemsPayload(sceneRow.items);
 
     const dynamicScene: DynamicScene = {
       id: sceneRow.sceneId,
@@ -153,7 +155,8 @@ export class ScenarioLoader {
       description: sceneRow.description,
       parentLocationId: sceneRow.parentLocationId || "",
       connections: Array.isArray(sceneRow.connections) ? sceneRow.connections as string[] : [],
-      items: [],
+      items,
+      itemContexts,
       clues: clues.map((c: any) => ({
         id: c.clueId,
         clueText: c.clueText,

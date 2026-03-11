@@ -1,5 +1,6 @@
 import type { ScenarioClue, ScenarioCondition } from "../../shared/agents/models/scenarioTypes.js";
 import type { Item } from "./types.js";
+import type { ItemContexts } from "./sceneItemContextPayload.js";
 
 /**
  * Junction — a first-class intersection/endpoint node.
@@ -11,6 +12,7 @@ export interface JunctionNode {
   description: string;
   parentLocationId: string;       // typically "OUTDOOR"
   items: Item[];
+  itemContexts?: ItemContexts;
   clues: ScenarioClue[];
   conditions: ScenarioCondition[];
   events: string[];
@@ -45,6 +47,7 @@ export interface RoadNode {
   /** Buildings accessible along this road */
   alongConnections: AlongConnection[];
   items: Item[];
+  itemContexts?: ItemContexts;
   clues: ScenarioClue[];
   conditions: ScenarioCondition[];
   events: string[];

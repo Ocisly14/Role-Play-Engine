@@ -30,6 +30,7 @@ import type {
 import type { DynamicNPCProfile } from "./types.js";
 import type { DynamicScene } from "./types.js";
 import type { JunctionNode, RoadNode, AlongConnection } from "./topologyTypes.js";
+import { decodeSceneItemsPayload, encodeSceneItemsPayload } from "./sceneItemContextPayload.js";
 
 /**
  * Complete world module data loaded from all JSON files
@@ -481,13 +482,15 @@ export class WorldModuleLoader {
 
         // New format: individual DynamicScene objects or arrays of them
         if (data.parentLocationId !== undefined || data.connections !== undefined) {
+          const { items, itemContexts } = decodeSceneItemsPayload(data.items);
           // New scene graph format — direct DynamicScene
           const scene: DynamicScene = {
             id: data.id,
             name: data.name,
             description: data.description || "",
             parentLocationId: data.parentLocationId || "",
-            items: data.items || [],
+            items,
+            itemContexts,
             clues: data.clues || [],
             conditions: data.conditions || [],
             connections: data.connections || [],
@@ -506,12 +509,14 @@ export class WorldModuleLoader {
         for (const scenario of scenarios) {
           if (scenario.snapshot) {
             const raw = scenario.snapshot;
+            const { items, itemContexts } = decodeSceneItemsPayload(raw.items);
             const scene: DynamicScene = {
               id: raw.id,
               name: raw.name,
               description: raw.description || "",
               parentLocationId: raw.parentLocationId || "",
-              items: raw.items || [],
+              items,
+              itemContexts,
               clues: raw.clues || [],
               conditions: raw.conditions || [],
               connections: raw.connections || [],
@@ -543,12 +548,14 @@ export class WorldModuleLoader {
       try {
         const filePath = path.join(scenariosDir, file);
         const data = JSON.parse(fs.readFileSync(filePath, "utf8"));
+        const { items, itemContexts } = decodeSceneItemsPayload(data.items);
         const junction: JunctionNode = {
           id: data.id,
           name: data.name,
           description: data.description || "",
           parentLocationId: data.parentLocationId || "OUTDOOR",
-          items: data.items || [],
+          items,
+          itemContexts,
           clues: data.clues || [],
           conditions: data.conditions || [],
           events: data.events || [],
@@ -584,6 +591,7 @@ export class WorldModuleLoader {
           continue;
         }
 
+        const { items, itemContexts } = decodeSceneItemsPayload(data.items);
         const road: RoadNode = {
           id: data.id,
           name: data.name,
@@ -596,7 +604,8 @@ export class WorldModuleLoader {
             sceneId: ac.sceneId,
             position: ac.position,
           })),
-          items: data.items || [],
+          items,
+          itemContexts,
           clues: data.clues || [],
           conditions: data.conditions || [],
           events: data.events || [],
@@ -1110,7 +1119,7 @@ export class WorldModuleLoader {
           description: scene.description,
           parentLocationId: scene.parentLocationId || null,
           connections: (scene.connections || []) as any,
-          items: (scene.items || []) as any,
+          items: encodeSceneItemsPayload(scene) as any,
           events: (scene.events || []) as any,
           sceneImagePath,
         },

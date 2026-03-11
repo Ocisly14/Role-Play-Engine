@@ -7,7 +7,7 @@
     {
       "id": "ITEM_JUNC10_1",
       "name": "路边垃圾桶",
-      "description": "终点附近并排放着两个塑料垃圾桶，桶盖在风里轻轻颤动。"
+      "description": "两个并排的塑料垃圾桶，桶盖边缘有长期风吹日晒留下的磨损。"
     },
     {
       "id": "ITEM_JUNC10_2",
@@ -30,5 +30,8 @@
   "events": [],
   "connectedSceneIds": [
     "SCN_8_SUB_1"
-  ]
+  ],
+  "itemContexts": {
+    "ITEM_JUNC10_1": "终点附近并排放着两个塑料垃圾桶，桶盖在风里轻轻颤动。"
+  }
 }
