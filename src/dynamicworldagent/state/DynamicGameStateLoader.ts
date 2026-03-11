@@ -28,6 +28,8 @@ import type {
 } from "../world_builder/types.js";
 import { decodeSceneItemsPayload } from "../world_builder/sceneItemContextPayload.js";
 import { WorldModuleLoader } from "../world_builder/worldModuleLoader.js";
+import { bootstrapNpcSecrets } from "../memory/bootstrapSecrets.js";
+import { EmbeddingClient } from "../../rag/embedding.js";
 import type { DynamicGameState } from "./DynamicGameState.js";
 import {
   DynamicGameStateManager,
@@ -896,6 +898,25 @@ export async function initializeCompleteDynamicGameState(
       modName: modName || undefined,
     },
   });
+
+  // Bootstrap NPC secrets into the unified NpcMemory system
+  if (npcCharacters.length > 0 && scopedModuleId) {
+    try {
+      const embedClient = new EmbeddingClient();
+      await bootstrapNpcSecrets({
+        prisma,
+        embedClient,
+        sessionId: params.sessionId,
+        moduleId: scopedModuleId,
+        npcs: npcCharacters,
+        gameDay,
+        gameTime: timeOfDay,
+      });
+    } catch (error) {
+      // Non-fatal: secrets will be missing from memory but game can still run
+      console.error("[DynamicGameState] Failed to bootstrap NPC secrets:", error);
+    }
+  }
 
   console.log(
     `[DynamicGameState] Initialized complete state for module "${params.moduleName}" and created session record`

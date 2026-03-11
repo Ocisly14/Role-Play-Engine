@@ -2,6 +2,7 @@ import type { PrismaClient } from "@prisma/client";
 import { randomUUID } from "crypto";
 import { generateText, ModelClass } from "../../../models/index.js";
 import type { DynamicGameStateManager } from "../../state/DynamicGameState.js";
+import type { NpcMemoryManager } from "../../memory/NpcMemoryManager.js";
 import {
   buildGenerateLongTermIntentPrompt,
   buildDailySchedulePrompt,
@@ -34,8 +35,17 @@ function parseJsonResponse<T>(raw: string): T {
 export class NPCPlanningAgent {
   constructor(
     private prisma: PrismaClient,
-    private runtime: any
+    private runtime: any,
+    private memoryManager?: NpcMemoryManager,
   ) {}
+
+  getMemoryManager(): NpcMemoryManager | undefined {
+    return this.memoryManager;
+  }
+
+  getRuntime(): any {
+    return this.runtime;
+  }
 
   async generateLongTermIntents(
     dgsm: DynamicGameStateManager,
@@ -86,6 +96,20 @@ export class NPCPlanningAgent {
             intent: parsed.intent,
           },
         });
+
+        // Write long-term intent to unified memory
+        if (this.memoryManager) {
+          await this.memoryManager.add({
+            npcId: npc.id,
+            sessionId,
+            moduleId,
+            type: "plan",
+            content: parsed.intent,
+            gameDay: 1,
+            gameTime: "00:00",
+            metadata: { planType: "long_term" as const },
+          });
+        }
       })
     );
   }
@@ -133,9 +157,18 @@ export class NPCPlanningAgent {
     const npc = state.npcCharacters.find((n) => n.id === npcId);
     if (!npc) return;
 
-    const longTermIntent = await this.getLongTermIntent(sessionId, npc.id);
-    const daySummaries = await this.getDaySummaries(sessionId, npc.id);
-    const todayLog = await this.getMemoryLog(sessionId, npc.id, gameDay);
+    // Get memory context from unified memory system
+    let memoryContext: string | undefined;
+    if (this.memoryManager) {
+      memoryContext = await this.memoryManager.getContext({
+        npcId: npc.id,
+        sessionId,
+        purpose: "scheduling",
+      });
+    }
+    // Legacy fields — kept empty when using unified memory
+    const longTermIntent = memoryContext ? "" : await this.getLongTermIntent(sessionId, npc.id);
+
     const npcProfile = this.formatNpcProfile(npc);
     const relationships = this.formatRelationships(dgsm, npc.id);
     const sceneMap = this.formatSceneMap(dgsm, npc.id);
@@ -148,8 +181,8 @@ export class NPCPlanningAgent {
       npcId: npc.id,
       npcProfile,
       longTermIntent,
-      memorySummary: daySummaries.join("\n"),
-      todayLog: todayLog.join("\n"),
+      memorySummary: "",
+      todayLog: "",
       relationships,
       sceneMap,
       scenarioConditions,
@@ -157,6 +190,7 @@ export class NPCPlanningAgent {
       gameDay,
       currentTime: state.timeOfDay,
       language,
+      memoryContext,
     });
 
     const response = await generateText({
@@ -184,6 +218,23 @@ export class NPCPlanningAgent {
         schedule: schedule as any,
       },
     });
+
+    // Write daily plan to unified memory
+    if (this.memoryManager) {
+      const scheduleDescription = schedule
+        .map((s: any) => `${s.time}: ${s.activity} at ${s.location}`)
+        .join("; ");
+      await this.memoryManager.add({
+        npcId: npc.id,
+        sessionId,
+        moduleId,
+        type: "plan",
+        content: `Today's plan: ${scheduleDescription}`,
+        gameDay,
+        gameTime: schedule[0]?.time ?? "08:00",
+        metadata: { planType: "daily" as const },
+      });
+    }
   }
 
   async consumeNextScheduleEntry(
@@ -226,8 +277,18 @@ export class NPCPlanningAgent {
     const npc = state.npcCharacters.find((n) => n.id === npcId);
     if (!npc) return [];
 
-    const longTermIntent = await this.getLongTermIntent(sessionId, npcId);
-    const memoryLog = await this.getMemoryLog(sessionId, npcId, gameDay);
+    // Get memory context from unified memory system
+    let memoryContext: string | undefined;
+    if (this.memoryManager) {
+      memoryContext = await this.memoryManager.getContext({
+        npcId,
+        sessionId,
+        purpose: "scheduling",
+        query: entry.activity,
+      });
+    }
+    // Legacy field — kept empty when using unified memory
+    const longTermIntent = memoryContext ? "" : await this.getLongTermIntent(sessionId, npcId);
 
     // Get scene context for the target location
     const targetScene = state.scenes.get(entry.location) ?? null;
@@ -251,7 +312,7 @@ export class NPCPlanningAgent {
       npcId: npc.id,
       npcProfile: this.formatNpcProfile(npc),
       longTermIntent,
-      memoryLog: memoryLog.join("\n"),
+      memoryLog: "",
       scheduleEntry: entry,
       sceneDescription,
       sceneItems,
@@ -262,6 +323,7 @@ export class NPCPlanningAgent {
       currentTime: entry.time,
       gameDay,
       language,
+      memoryContext,
       handlerPrompt: registry?.buildHandlerPrompt(),
       planningPrompt: registry?.buildPlanningPrompt(),
       outputSchemaPrompt: registry?.buildOutputSchemaPrompt({
@@ -362,14 +424,23 @@ export class NPCPlanningAgent {
     const schedule = plan.schedule as unknown as ScheduleEntry[];
     if (schedule.length === 0) return;
 
-    const longTermIntent = await this.getLongTermIntent(sessionId, npcId);
-    const memoryLog = await this.getMemoryLog(sessionId, npcId, gameDay);
+    // Use unified memory if available, fall back to legacy getLongTermIntent
+    let memoryContext: string | undefined;
+    if (this.memoryManager) {
+      memoryContext = await this.memoryManager.getContext({
+        npcId,
+        sessionId,
+        purpose: "reaction",
+        query: triggerDescription,
+      });
+    }
+    const longTermIntent = memoryContext ? "" : await this.getLongTermIntent(sessionId, npcId);
 
     const prompt = buildReviseSchedulePrompt({
       npcName: npc.name,
       npcProfile: this.formatNpcProfile(npc),
       longTermIntent,
-      memoryLog: memoryLog.join("\n"),
+      memoryLog: memoryContext ?? "",
       remainingSchedule: JSON.stringify(schedule, null, 2),
       triggerDescription,
       language,
@@ -470,10 +541,11 @@ export class NPCPlanningAgent {
       longTermIntent: string;
       pendingNodesSummary: string;
       triggeringEvents: string;
+      memoryContext?: string;
     },
     bucketTime: string,
     language: string = "en"
-  ): Promise<{ shouldRevise: boolean; shouldReviseSchedule: boolean; witnessEntry: string }> {
+  ): Promise<{ shouldRevise: boolean; shouldReviseSchedule: boolean; witnessEntry: string; emotionChange?: { emotionType: string; intensity: number; trigger: string } }> {
     const prompt = buildImpactGatePrompt({ bucketTime, candidate, language });
 
     const response = await generateText({
@@ -482,7 +554,7 @@ export class NPCPlanningAgent {
       modelClass: ModelClass.SMALL,
     });
 
-    return parseJsonResponse<{ shouldRevise: boolean; shouldReviseSchedule: boolean; witnessEntry: string }>(response);
+    return parseJsonResponse<{ shouldRevise: boolean; shouldReviseSchedule: boolean; witnessEntry: string; emotionChange?: { emotionType: string; intensity: number; trigger: string } }>(response);
   }
 
   async updateRelationshipViaLLM(
@@ -533,36 +605,6 @@ export class NPCPlanningAgent {
     return { scoreDelta: parsed.scoreDelta, newScore: updated?.score ?? 0, note: parsed.note };
   }
 
-  async appendMemoryLog(
-    sessionId: string,
-    npcId: string,
-    entry: string,
-    gameDay: number,
-    gameTime: string,
-    location: string
-  ): Promise<void> {
-    await this.prisma.npcMemoryLog.create({
-      data: {
-        sessionId,
-        npcId,
-        gameDay,
-        gameTime,
-        location,
-        entry,
-      },
-    });
-  }
-
-  async getMemoryLog(sessionId: string, npcId: string, gameDay?: number): Promise<string[]> {
-    const where: any = { sessionId, npcId };
-    if (gameDay !== undefined) where.gameDay = gameDay;
-    const logs = await this.prisma.npcMemoryLog.findMany({
-      where,
-      orderBy: { createdAt: "asc" },
-      select: { entry: true },
-    });
-    return logs.map((l) => l.entry);
-  }
 
   async getPendingNodes(
     sessionId: string,
@@ -648,6 +690,32 @@ export class NPCPlanningAgent {
       await this.summarizeAllNpcDayMemory(dgsm, sessionId, previousDay, language);
     }
 
+    // 1b. After summarization, trigger day_transition reasoning for all NPCs
+    if (this.memoryManager && previousDay >= 1) {
+      const generateTextFn = (prompt: string) =>
+        generateText({ runtime: this.runtime, context: prompt, modelClass: ModelClass.SMALL });
+
+      const npcCharacters = dgsm.getState().npcCharacters;
+      const reasoningPromises = npcCharacters.map((npc) =>
+        this.memoryManager!.triggerReasoning(
+          {
+            npcId: npc.id,
+            sessionId,
+            moduleId,
+            trigger: "day_transition" as const,
+            context: "End of day review",
+            gameDay: previousDay,
+            gameTime: "23:59",
+          },
+          npc.name,
+          npc.background ?? npc.backstory ?? "",
+          generateTextFn,
+          language,
+        ),
+      );
+      await Promise.all(reasoningPromises);
+    }
+
     // 2. Generate daily schedules for all NPCs (includes long-term intent check via ensureNpc path)
     await this.generateDailySchedule(dgsm, sessionId, moduleId, gameDay, language, registry);
 
@@ -673,14 +741,16 @@ export class NPCPlanningAgent {
     gameDay: number,
     language: string
   ): Promise<void> {
-    // Check if already summarized
-    const existing = await this.prisma.npcMemorySummary.findUnique({
-      where: { sessionId_npcId_gameDay: { sessionId, npcId, gameDay } },
-    });
-    if (existing) return;
+    // Requires memoryManager — skip summarization if absent
+    if (!this.memoryManager) return;
 
-    const rawLogs = await this.getMemoryLog(sessionId, npcId, gameDay);
-    if (rawLogs.length === 0) return;
+    // Fetch ALL memories from this day — no semantic filtering, no type restriction
+    const dayMemories = await this.memoryManager.getAllForDay(npcId, sessionId, gameDay);
+    if (dayMemories.length === 0) return;
+
+    const { getAllHandlers } = await import("../../memory/handlers/index.js");
+    const handlers = getAllHandlers();
+    const rawLog = dayMemories.map((m) => handlers[m.type].format(m)).join("\n");
 
     const npc = dgsm.getState().npcCharacters.find((n) => n.id === npcId);
     if (!npc) return;
@@ -689,7 +759,7 @@ export class NPCPlanningAgent {
       npcName: npc.name,
       npcProfile: this.formatNpcProfile(npc),
       gameDay,
-      rawMemoryLog: rawLogs.join("\n"),
+      rawMemoryLog: rawLog,
       language,
     });
 
@@ -701,8 +771,16 @@ export class NPCPlanningAgent {
 
     const parsed = parseJsonResponse<{ summary: string }>(response);
 
-    await this.prisma.npcMemorySummary.create({
-      data: { sessionId, npcId, gameDay, summary: parsed.summary },
+    // Write summary as high-importance event memory
+    await this.memoryManager.add({
+      npcId,
+      sessionId,
+      moduleId: await this.resolveModuleId(sessionId) ?? "",
+      type: "summary",
+      content: parsed.summary,
+      gameDay,
+      gameTime: "23:59",
+      metadata: { gameDay },
     });
   }
 
@@ -719,13 +797,6 @@ export class NPCPlanningAgent {
     return intent?.moduleId ?? null;
   }
 
-  async getDaySummaries(sessionId: string, npcId: string): Promise<string[]> {
-    const summaries = await this.prisma.npcMemorySummary.findMany({
-      where: { sessionId, npcId },
-      orderBy: { gameDay: "asc" },
-    });
-    return summaries.map((s) => `Day ${s.gameDay}: ${s.summary}`);
-  }
 
   // === Private helpers ===
 

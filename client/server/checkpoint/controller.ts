@@ -2,6 +2,9 @@ import { randomUUID } from "crypto";
 /// <reference path="../types/express.d.ts" />
 import type { Request, Response } from "express";
 import { saveDynamicGameStateCheckpoint } from "../../../src/dynamicworldagent/dynamicBasicAgent/memory/checkpoint.js";
+import { NpcMemoryManager } from "../../../src/dynamicworldagent/memory/NpcMemoryManager.js";
+import { ModelProviderName } from "../../../src/models/types.js";
+import { EmbeddingClient } from "../../../src/rag/embedding.js";
 import { getPrismaClient } from "../../../src/shared/agents/memory/database/prismaClient.js";
 import { DatabaseManager } from "../core/DatabaseManager.js";
 import { GraphManager } from "../core/GraphManager.js";
@@ -420,6 +423,7 @@ export async function loadCheckpointData(
         checkpointId: true,
         sessionId: true,
         gameState: true,
+        createdAt: true,
         session: {
           select: { characterId: true },
         },
@@ -600,8 +604,29 @@ export async function loadCheckpointData(
       `[${new Date().toISOString()}] Checkpoint loaded: ${checkpointId} → session ${newSessionId}`
     );
 
-    // Copy RAG chunks from old session to new session in background
+    // Delete NPC memories created or mutated after the checkpoint
     const oldSessionId = checkpointRecord.sessionId;
+    try {
+      const provider =
+        (process.env.MODEL_PROVIDER as ModelProviderName) ||
+        ModelProviderName.OPENAI;
+      const embedClient = new EmbeddingClient(provider);
+      const memoryManager = new NpcMemoryManager(prisma, embedClient);
+      await memoryManager.deletePostCheckpoint(
+        oldSessionId,
+        checkpointRecord.createdAt
+      );
+      console.log(
+        `[${new Date().toISOString()}] [Checkpoint NPC Memory] Cleaned up NPC memories after ${checkpointRecord.createdAt.toISOString()} for session ${oldSessionId}`
+      );
+    } catch (error) {
+      console.warn(
+        "[Checkpoint NPC Memory] Failed to clean up NPC memories:",
+        error
+      );
+    }
+
+    // Copy RAG chunks from old session to new session in background
     void (async () => {
       try {
         await prisma.$executeRaw`

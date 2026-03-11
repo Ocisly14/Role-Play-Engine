@@ -307,6 +307,7 @@ model Module {
   userLibraries        UserModuleLibrary[]
   npcLongTermIntents   NpcLongTermIntent[]
   npcDailyPlans        NpcDailyPlan[]
+  npcMemories          NpcMemory[]
 
   @@unique([ownerEmailId, moduleNameNormalized], name: "uq_modules_owner_name_normalized", map: "uq_modules_owner_name_normalized")
   @@index([ownerEmailId], map: "idx_modules_owner_email")
@@ -478,8 +479,7 @@ model Session {
   module             Module?          @relation(fields: [moduleId], references: [moduleId])
   npcLongTermIntents NpcLongTermIntent[]
   npcDailyPlans      NpcDailyPlan[]
-  npcMemoryLogs      NpcMemoryLog[]
-  npcMemorySummaries NpcMemorySummary[]
+  npcMemories        NpcMemory[]
 
   @@index([status])
   @@index([startedAt])
@@ -924,33 +924,49 @@ model NpcDailyPlan {
   @@map("npc_daily_plans")
 }
 
-model NpcMemoryLog {
-  id        String   @id @default(uuid()) @db.Uuid
-  sessionId String   @map("session_id")
-  npcId     String   @map("npc_id")
-  gameDay   Int      @map("game_day")
-  gameTime  String   @map("game_time")
-  location  String
-  entry     String
-  createdAt DateTime @default(now()) @map("created_at")
+model NpcMemory {
+  id              String        @id @default(uuid()) @db.Uuid
+  sessionId       String        @map("session_id")
+  moduleId        String        @map("module_id") @db.Uuid
+  npcId           String        @map("npc_id")
+  type            NpcMemoryType
 
-  session   Session  @relation(fields: [sessionId], references: [sessionId], onDelete: Cascade)
+  content         String
+  metadata        Json?
+  tags            String[]
+
+  gameDay         Int           @map("game_day")
+  gameTime        String        @map("game_time")
+  location        String?
+
+  importance      Float         @default(1.0)
+  baseImportance  Float         @default(1.0) @map("base_importance")
+  accessCount     Int           @default(0)   @map("access_count")
+  lastAccessedAt  DateTime      @default(now()) @map("last_accessed_at")
+
+  embedding       Bytes?
+
+  createdAt       DateTime      @default(now()) @map("created_at")
+  updatedAt       DateTime      @updatedAt      @map("updated_at")
+
+  session         Session       @relation(fields: [sessionId], references: [sessionId], onDelete: Cascade)
+  module          Module        @relation(fields: [moduleId], references: [moduleId], onDelete: Cascade)
 
   @@index([sessionId, npcId])
-  @@map("npc_memory_logs")
+  @@index([sessionId, npcId, type])
+  @@index([sessionId, npcId, gameDay])
+  @@map("npc_memories")
 }
 
-model NpcMemorySummary {
-  id        String   @id @default(uuid()) @db.Uuid
-  sessionId String   @map("session_id")
-  npcId     String   @map("npc_id")
-  gameDay   Int      @map("game_day")
-  summary   String
-  createdAt DateTime @default(now()) @map("created_at")
-
-  session   Session  @relation(fields: [sessionId], references: [sessionId], onDelete: Cascade)
-
-  @@unique([sessionId, npcId, gameDay])
-  @@index([sessionId, npcId])
-  @@map("npc_memory_summaries")
+enum NpcMemoryType {
+  event
+  witness
+  clue
+  conversation
+  belief
+  emotion
+  relationship
+  plan
+  secret
+  summary
 }

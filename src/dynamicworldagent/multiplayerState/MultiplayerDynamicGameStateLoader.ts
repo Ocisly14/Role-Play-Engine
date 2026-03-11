@@ -34,6 +34,8 @@ import type {
 import {
   loadDynamicGameState,
 } from "../state/DynamicGameStateLoader.js";
+import { bootstrapNpcSecrets } from "../memory/bootstrapSecrets.js";
+import { EmbeddingClient } from "../../rag/embedding.js";
 import {
   initialMultiplayerDynamicGameState,
   MultiplayerDynamicGameStateManager,
@@ -396,6 +398,25 @@ export async function initializeMultiplayerGameState(
   console.log(
     `[MultiplayerLoader] Session record created/updated: ${sessionId}`
   );
+
+  // 7b. Bootstrap NPC secrets into the unified NpcMemory system
+  if (state.npcCharacters.length > 0 && scopedModuleId) {
+    try {
+      const embedClient = new EmbeddingClient();
+      await bootstrapNpcSecrets({
+        prisma,
+        embedClient,
+        sessionId,
+        moduleId: scopedModuleId,
+        npcs: state.npcCharacters,
+        gameDay: state.gameDay,
+        gameTime: state.timeOfDay,
+      });
+    } catch (error) {
+      // Non-fatal: secrets will be missing from memory but game can still run
+      console.error("[MultiplayerLoader] Failed to bootstrap NPC secrets:", error);
+    }
+  }
 
   // 8. Load baseline scenario snapshots and set initial scenario on the sceneRoom
   //    (mirrors single-player initializeCompleteDynamicGameState logic)

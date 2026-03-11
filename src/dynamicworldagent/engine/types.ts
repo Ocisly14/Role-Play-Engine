@@ -68,7 +68,6 @@ export interface PropagationResult {
 
 /** Minimal interface for NPC planning capabilities needed by WorldFeatures */
 export interface NpcPlanningCapability {
-  getLongTermIntent(sessionId: string, npcId: string): Promise<string>;
   getPendingNodes(sessionId: string, npcId: string, gameDay: number): Promise<PlanNode[]>;
   runImpactGateForNpc(
     candidate: {
@@ -82,11 +81,6 @@ export interface NpcPlanningCapability {
     bucketTime: string,
     language: string
   ): Promise<{ shouldRevise: boolean; witnessEntry: string }>;
-  appendMemoryLog(
-    sessionId: string, npcId: string, entry: string,
-    gameDay: number, gameTime: string, location: string
-  ): Promise<void>;
-  getMemoryLog(sessionId: string, npcId: string, gameDay?: number): Promise<string[]>;
   revisePlans(
     dgsm: DynamicGameStateManager, sessionId: string, npcId: string,
     context: RevisePlansContext, language: string

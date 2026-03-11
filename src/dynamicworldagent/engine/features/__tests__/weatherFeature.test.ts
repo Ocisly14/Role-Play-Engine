@@ -87,11 +87,8 @@ function createMockRuntime(): TickRuntimeContext {
     sessionId: "test", gameDay: 1, language: "en",
     tickTime: "08:00", tickDurationMinutes: 5,
     npcPlanning: {
-      getLongTermIntent: async () => "",
       getPendingNodes: async () => [],
       runImpactGateForNpc: async () => ({ shouldRevise: false, witnessEntry: "" }),
-      appendMemoryLog: async () => {},
-      getMemoryLog: async () => [],
       revisePlans: async () => {},
     },
   };

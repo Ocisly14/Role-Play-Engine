@@ -1,5 +1,6 @@
 import { EmbeddingClient } from "../../../rag/embedding.js";
 import { ModelProviderName } from "../../../models/types.js";
+import { generateText, ModelClass } from "../../../models/index.js";
 import type { DynamicGameStateManager } from "../../state/DynamicGameState.js";
 import type { NPCPlanningAgent } from "./NPCPlanningAgent.js";
 import type {
@@ -14,6 +15,7 @@ import { type SessionRagChunkInput, SessionRagService } from "../knowledge/sessi
 import type { GameEngineRegistry } from "../../engine/registry.js";
 import type { ExecutionContext, TickRuntimeContext } from "../../engine/types.js";
 import { findAffectedCharacters } from "../../engine/shared/impactPropagation.js";
+import type { NpcMemoryManager } from "../../memory/NpcMemoryManager.js";
 
 // ==================== Time helpers ====================
 
@@ -302,9 +304,11 @@ interface SingleTickParams {
   dgsm: DynamicGameStateManager;
   npcPlanningAgent: NPCPlanningAgent;
   sessionId: string;
+  moduleId: string;
   language: string;
   registry: GameEngineRegistry;
   ctx: ExecutionContext;
+  memoryManager?: NpcMemoryManager;
 }
 
 interface SingleTickResult {
@@ -336,9 +340,11 @@ async function executeSingleTick(params: SingleTickParams): Promise<SingleTickRe
     dgsm,
     npcPlanningAgent,
     sessionId,
+    moduleId,
     language,
     registry,
     ctx,
+    memoryManager,
   } = params;
 
   const state = dgsm.getState();
@@ -430,6 +436,28 @@ async function executeSingleTick(params: SingleTickParams): Promise<SingleTickRe
       if (relResult) {
         const sign = relResult.scoreDelta >= 0 ? "+" : "";
         relationshipChange = `[relationship ${sign}${relResult.scoreDelta} → ${relResult.newScore}, ${relResult.note}]`;
+
+        // Write relationship memory via NpcMemoryManager
+        if (memoryManager) {
+          const targetChar = state.npcCharacters.find((n) => n.id === node.targetCharacterId);
+          const targetName = targetChar?.name ?? (state.playerCharacter?.id === node.targetCharacterId ? state.playerCharacter.name : node.targetCharacterId ?? "");
+          await memoryManager.add({
+            npcId: node.characterId,
+            sessionId,
+            moduleId,
+            type: "relationship",
+            content: relResult.note,
+            gameDay,
+            gameTime: action.gameTime,
+            location: action.location,
+            metadata: {
+              targetId: node.targetCharacterId ?? "",
+              targetName,
+              scoreDelta: relResult.scoreDelta,
+              newScore: relResult.newScore,
+            },
+          });
+        }
       }
     }
 
@@ -437,8 +465,122 @@ async function executeSingleTick(params: SingleTickParams): Promise<SingleTickRe
     if (!node.isPlayer) {
       let logEntry = `Day${gameDay} ${action.gameTime} [${action.location}] - ${action.outcome}`;
       if (relationshipChange) logEntry += ` ${relationshipChange}`;
-      await npcPlanningAgent.appendMemoryLog(sessionId, node.characterId, logEntry, gameDay, action.gameTime, action.location);
+
+      // Write event memory via NpcMemoryManager
+      if (memoryManager) {
+        await memoryManager.add({
+          npcId: node.characterId,
+          sessionId,
+          moduleId,
+          type: "event",
+          content: logEntry,
+          gameDay,
+          gameTime: action.gameTime,
+          location: action.location,
+          metadata: { outcome: action.outcome },
+        });
+      }
+
       await npcPlanningAgent.markNodeCompleted(sessionId, node.characterId, gameDay, node.nodeId, action.outcome);
+    }
+
+    // Write conversation memory for character interactions involving the player
+    if (memoryManager && action.status === "completed" && node.type === "character_interaction" && node.targetCharacterId) {
+      const isPlayerInvolved = node.isPlayer || node.targetCharacterId === state.playerCharacter?.id;
+      if (isPlayerInvolved) {
+        const playerId = state.playerCharacter?.id ?? "";
+        const playerName = state.playerCharacter?.name ?? "Player";
+        // Determine who is NPC and who is player in this interaction
+        const npcInConvo = node.isPlayer ? node.targetCharacterId : node.characterId;
+        const playerInConvo = node.isPlayer ? node.characterId : playerId;
+        const playerNameInConvo = node.isPlayer ? node.characterName : playerName;
+        await memoryManager.add({
+          npcId: npcInConvo,
+          sessionId,
+          moduleId,
+          type: "conversation",
+          content: `Conversation with ${playerNameInConvo}: ${action.outcome}`,
+          gameDay,
+          gameTime: action.gameTime,
+          location: action.location,
+          metadata: {
+            withCharacterId: playerInConvo,
+            withCharacterName: playerNameInConvo,
+            topic: action.action,
+          },
+        });
+      }
+    }
+
+    // Write clue transfer memories when a clue was successfully transferred
+    if (memoryManager && action.status === "completed" && node.type === "character_interaction"
+        && node.characterInteractionPayload?.transferType === "clue"
+        && node.characterInteractionPayload.clueId
+        && node.targetCharacterId) {
+      const clueId = node.characterInteractionPayload.clueId;
+      // Try to get clue text from DGSM state
+      const npcClues = state.npcCharacters.find(n => n.id === node.targetCharacterId)?.clues ?? [];
+      const clueObj = npcClues.find((c: any) => c.id === clueId || c.clueId === clueId);
+      const clueText = clueObj?.clueText ?? clueId;
+      const targetChar = state.npcCharacters.find(n => n.id === node.targetCharacterId);
+      const targetName = targetChar?.name ?? node.targetCharacterId;
+
+      // Receiver gets a clue memory
+      const senderChar = state.npcCharacters.find(n => n.id === node.characterId);
+      const senderName = senderChar?.name ?? node.characterId;
+      await memoryManager.add({
+        npcId: node.targetCharacterId,
+        sessionId,
+        moduleId,
+        type: "clue",
+        content: `Received information from ${senderName}: ${clueText}`,
+        gameDay,
+        gameTime: action.gameTime,
+        location: action.location,
+        metadata: { clueId, category: "knowledge" as const, sourceCharacterId: node.characterId, sourceCharacterName: senderName },
+      });
+
+      // Sender gets an event memory about sharing info
+      await memoryManager.add({
+        npcId: node.characterId,
+        sessionId,
+        moduleId,
+        type: "event",
+        content: `Shared information about "${clueText}" with ${targetName}`,
+        gameDay,
+        gameTime: action.gameTime,
+        location: action.location,
+      });
+    }
+
+    // Trigger reasoning on novel player information
+    if (memoryManager && node.isPlayer && node.type === "character_interaction" && node.targetCharacterId) {
+      const shouldReason = await memoryManager.shouldTriggerReasoningOnConversation(
+        node.targetCharacterId,
+        sessionId,
+        action.outcome,
+      );
+      if (shouldReason) {
+        const targetNpc = state.npcCharacters.find(n => n.id === node.targetCharacterId);
+        const npcProfile = targetNpc?.background ?? targetNpc?.backstory ?? "";
+        const generateTextFn = (prompt: string) =>
+          generateText({ runtime: npcPlanningAgent.getRuntime(), context: prompt, modelClass: ModelClass.SMALL });
+        await memoryManager.triggerReasoning(
+          {
+            npcId: node.targetCharacterId,
+            sessionId,
+            moduleId,
+            trigger: "player_question",
+            context: action.outcome,
+            gameDay,
+            gameTime: action.gameTime,
+          },
+          targetNpc?.name ?? node.targetCharacterId,
+          npcProfile,
+          generateTextFn,
+          language,
+        );
+      }
     }
 
     // Clue discovery — only for player's successful nodes
@@ -494,8 +636,17 @@ async function executeSingleTick(params: SingleTickParams): Promise<SingleTickRe
 
     // On failure -> immediate revisePlans (no gate) — NPC only
     if (action.status === "failed" && !node.isPlayer) {
-      const longTermIntent = await npcPlanningAgent.getLongTermIntent(sessionId, node.characterId);
-      const memoryLog = await npcPlanningAgent.getMemoryLog(sessionId, node.characterId, gameDay);
+      let failureContext: string | undefined;
+      if (memoryManager) {
+        failureContext = await memoryManager.getContext({
+          npcId: node.characterId,
+          sessionId,
+          purpose: "reaction",
+          query: `${action.action} failed: ${action.failureReason}`,
+        });
+      }
+      const longTermIntent = failureContext ?? await npcPlanningAgent.getLongTermIntent(sessionId, node.characterId);
+      const memoryLog = failureContext ? [failureContext] : [];
       const pendingNodes = await npcPlanningAgent.getPendingNodes(sessionId, node.characterId, gameDay);
       await npcPlanningAgent.revisePlans(dgsm, sessionId, node.characterId, {
         longTermIntent,
@@ -563,11 +714,22 @@ async function executeSingleTick(params: SingleTickParams): Promise<SingleTickRe
       await Promise.all(
         [...characterEventsMap.entries()].map(async ([npcId, npcEvents]) => {
           const npc = state.npcCharacters.find((n) => n.id === npcId);
-          const longTermIntent = await npcPlanningAgent.getLongTermIntent(sessionId, npcId);
           const pendingNodes = await npcPlanningAgent.getPendingNodes(sessionId, npcId, gameDay);
           const triggeringEvents = npcEvents
             .map((e) => `[impact ${e.impact}] ${e.event.characterName}: ${e.event.outcome}`)
             .join("\n");
+
+          let reactionContext: string | undefined;
+          if (memoryManager) {
+            reactionContext = await memoryManager.getContext({
+              npcId,
+              sessionId,
+              purpose: "reaction",
+              query: triggeringEvents,
+            });
+          }
+          // Use unified memory context or fall back to legacy getLongTermIntent
+          const longTermIntent = reactionContext ?? await npcPlanningAgent.getLongTermIntent(sessionId, npcId);
 
           const result = await npcPlanningAgent.runImpactGateForNpc(
             {
@@ -577,6 +739,7 @@ async function executeSingleTick(params: SingleTickParams): Promise<SingleTickRe
               longTermIntent,
               pendingNodesSummary: pendingNodes.map((n) => `${n.gameTime} ${n.action}`).join("; "),
               triggeringEvents,
+              memoryContext: reactionContext,
             },
             tickRuntime.tickTime,
             language
@@ -584,10 +747,45 @@ async function executeSingleTick(params: SingleTickParams): Promise<SingleTickRe
 
           const logEntry = `Day${gameDay} ${tickRuntime.tickTime} [witness] - ${result.witnessEntry}`;
           const npcLoc = dgsm.getNpcLocation(npcId) ?? "unknown";
-          await npcPlanningAgent.appendMemoryLog(sessionId, npcId, logEntry, gameDay, tickRuntime.tickTime, npcLoc);
+
+          // Write witness memory via NpcMemoryManager
+          if (memoryManager) {
+            const sortedEventsForWitness = [...npcEvents].sort((a, b) => b.impact - a.impact);
+            await memoryManager.add({
+              npcId,
+              sessionId,
+              moduleId,
+              type: "witness",
+              content: logEntry,
+              gameDay,
+              gameTime: tickRuntime.tickTime,
+              location: npcLoc,
+              metadata: {
+                sourceCharacterId: sortedEventsForWitness[0]?.event.characterId ?? "",
+                sourceAction: sortedEventsForWitness[0]?.event.outcome ?? "",
+                impact: sortedEventsForWitness[0]?.impact ?? 1,
+              },
+            });
+          }
+
+          // Write emotion memory if the impact gate returned an emotional shift
+          if (result.emotionChange && memoryManager) {
+            await memoryManager.add({
+              npcId,
+              sessionId,
+              moduleId,
+              type: "emotion",
+              content: `Feeling ${result.emotionChange.emotionType} due to ${result.emotionChange.trigger}`,
+              gameDay,
+              gameTime: tickRuntime.tickTime,
+              location: npcLoc ?? undefined,
+              metadata: result.emotionChange,
+            });
+          }
 
           if (result.shouldRevise) {
-            const memoryLog = await npcPlanningAgent.getMemoryLog(sessionId, npcId, gameDay);
+            // Use unified memory context for revision, or empty array as fallback
+            const memoryLog = reactionContext ? [reactionContext] : [];
             const sortedEvents = [...npcEvents].sort((a, b) => b.impact - a.impact);
             await npcPlanningAgent.revisePlans(dgsm, sessionId, npcId, {
               longTermIntent,
@@ -598,6 +796,29 @@ async function executeSingleTick(params: SingleTickParams): Promise<SingleTickRe
                 triggeringAction: sortedEvents[0].event,
               },
             }, language);
+
+            // Trigger reasoning for high-impact events
+            if (memoryManager) {
+              const npcForReasoning = state.npcCharacters.find((n) => n.id === npcId);
+              const npcProfile = npcForReasoning?.background ?? npcForReasoning?.backstory ?? "";
+              const generateTextFn = (prompt: string) =>
+                generateText({ runtime: npcPlanningAgent.getRuntime(), context: prompt, modelClass: ModelClass.SMALL });
+              await memoryManager.triggerReasoning(
+                {
+                  npcId,
+                  sessionId,
+                  moduleId,
+                  trigger: "high_impact",
+                  context: triggeringEvents,
+                  gameDay,
+                  gameTime: tickRuntime.tickTime,
+                },
+                npcForReasoning?.name ?? npcId,
+                npcProfile,
+                generateTextFn,
+                language,
+              );
+            }
           }
           if (result.shouldReviseSchedule) {
             const sortedEvents = [...npcEvents].sort((a, b) => b.impact - a.impact);
@@ -695,6 +916,11 @@ export async function runPlayerAction(
   const gameDay = state.gameDay;
   const currentMinutes = timeToMinutes(state.timeOfDay);
 
+  // Resolve moduleId and memoryManager once for the entire player action
+  const resolvedModuleId = await npcPlanningAgent.resolveModuleId(sessionId);
+  const moduleId = resolvedModuleId ?? "";
+  const memoryManager = npcPlanningAgent.getMemoryManager();
+
   // Calculate total minutes from the player action
   const maxPlayerAdvance = playerNodes.reduce((max, n) => Math.max(max, n.timeAdvanceMinutes), 0);
   const totalMinutes = maxPlayerAdvance;
@@ -716,9 +942,11 @@ export async function runPlayerAction(
       dgsm,
       npcPlanningAgent,
       sessionId,
+      moduleId,
       language,
       registry,
       ctx,
+      memoryManager,
     });
 
     allActions.push(...tickResult.actions);
@@ -791,6 +1019,11 @@ export async function resumePlayerAction(
   const state = dgsm.getState();
   const gameDay = state.gameDay;
 
+  // Resolve moduleId and memoryManager once for the entire resumed action
+  const resolvedModuleId = await npcPlanningAgent.resolveModuleId(sessionId);
+  const moduleId = resolvedModuleId ?? "";
+  const memoryManager = npcPlanningAgent.getMemoryManager();
+
   const allActions: CharacterAction[] = [...previousActions];
   let playerFailed = false;
   let minutesProcessed = 0;
@@ -808,9 +1041,11 @@ export async function resumePlayerAction(
       dgsm,
       npcPlanningAgent,
       sessionId,
+      moduleId,
       language,
       registry,
       ctx,
+      memoryManager,
     });
 
     allActions.push(...tickResult.actions);

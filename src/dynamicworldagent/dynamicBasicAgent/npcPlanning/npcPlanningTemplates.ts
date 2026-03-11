@@ -93,9 +93,15 @@ export interface DailyScheduleParams {
   gameDay: number;
   currentTime: string;
   language: string;
+  /** Unified memory context (replaces longTermIntent + memorySummary + todayLog when present) */
+  memoryContext?: string;
 }
 
 export function buildDailySchedulePrompt(params: DailyScheduleParams): string {
+  const memorySection = params.memoryContext
+    ? `## Your Memory\n${params.memoryContext}`
+    : `## Your Goal\n${params.longTermIntent}\n\n## What You Remember (previous days)\n${params.memorySummary || "This is your first day."}\n\n## What Happened Today So Far\n${params.todayLog || "Nothing yet — the day is just starting."}`;
+
   return `You are ${params.npcName}, a character in a Call of Cthulhu tabletop RPG.
 
 ## Task
@@ -108,14 +114,7 @@ Your character ID is "${params.npcId}". Today is Day ${params.gameDay}.
 ## Who You Are
 ${params.npcProfile}
 
-## Your Goal
-${params.longTermIntent}
-
-## What You Remember (previous days)
-${params.memorySummary || "This is your first day."}
-
-## What Happened Today So Far
-${params.todayLog || "Nothing yet — the day is just starting."}
+${memorySection}
 
 ## People You Know
 ${params.relationships}
@@ -177,6 +176,8 @@ export interface DetailedNodesParams {
   handlerPrompt?: string;
   planningPrompt?: string;
   outputSchemaPrompt?: string;
+  /** Unified memory context (replaces longTermIntent + memoryLog when present) */
+  memoryContext?: string;
 }
 
 const DEFAULT_DETAILED_NODE_TYPE_REF = `## Node Type Reference
@@ -212,6 +213,10 @@ Add type-specific fields as needed:
 - **scene_interaction**: optional \`"sceneConnectionEffect"\``;
 
 export function buildDetailedNodesPrompt(params: DetailedNodesParams): string {
+  const memorySection = params.memoryContext
+    ? `## Your Memory\n${params.memoryContext}`
+    : `## Your Goal\n${params.longTermIntent}\n\n## What You Remember (recent)\n${params.memoryLog || "Nothing recorded yet."}`;
+
   return `You are ${params.npcName}, a character in a Call of Cthulhu tabletop RPG.
 
 ## Task
@@ -226,11 +231,7 @@ Your character ID is "${params.npcId}".
 ## Who You Are
 ${params.npcProfile}
 
-## Your Goal
-${params.longTermIntent}
-
-## What You Remember (recent)
-${params.memoryLog || "Nothing recorded yet."}
+${memorySection}
 
 ## Where You Are
 ${params.sceneDescription || "No description available."}
@@ -382,6 +383,7 @@ export interface ImpactGateParams {
     longTermIntent: string;
     pendingNodesSummary: string;
     triggeringEvents: string;
+    memoryContext?: string;
   };
   language: string;
 }
@@ -389,11 +391,15 @@ export interface ImpactGateParams {
 export function buildImpactGatePrompt(params: ImpactGateParams): string {
   const c = params.candidate;
 
+  const memorySection = c.memoryContext
+    ? `\n## Relevant Memories\n${c.memoryContext}\n`
+    : "";
+
   return `You are ${c.npcName}, a character in a Call of Cthulhu tabletop RPG.
 
 ## What Just Happened
 ${c.triggeringEvents}
-
+${memorySection}
 ## Task
 You just witnessed something. Think about what you saw and how it affects you.
 
@@ -413,6 +419,7 @@ ${params.bucketTime}
 - Write a brief note about what you perceived and how you feel about it.
 - Set shouldRevise=true only if the events meaningfully affect what you're doing right now.
 - Set shouldReviseSchedule=true only if the events fundamentally change your plans for the rest of the day (e.g., a place you planned to visit was destroyed, someone you need to meet was arrested).
+- Include emotionChange only if the event causes a notable emotional shift (fear, anger, trust, suspicion, grief, etc.). Omit the field entirely if there is no significant emotional reaction.
 
 ## Output
 Return a single JSON object. No extra text. Always write in English.
@@ -421,9 +428,12 @@ Return a single JSON object. No extra text. Always write in English.
 {
   "shouldRevise": false,
   "shouldReviseSchedule": false,
-  "witnessEntry": "Brief description of what you perceived."
+  "witnessEntry": "Brief description of what you perceived.",
+  "emotionChange": { "emotionType": "fear|anger|trust|suspicion|grief|etc", "intensity": 1, "trigger": "what caused it" }
 }
-\`\`\``;
+\`\`\`
+
+Note: "emotionChange" is optional — include it only when the event triggers a notable emotional shift. "intensity" ranges from 1 (mild) to 5 (overwhelming).`;
 }
 
 // ===================== Relationship Update (GM perspective) =====================
