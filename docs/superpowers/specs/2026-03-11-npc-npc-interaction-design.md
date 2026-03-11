@@ -31,8 +31,9 @@ export interface CharacterInteractionPayload {
 ```
 
 When `transferType === "information"`:
-- `informationContent` contains what the NPC wants to communicate (written by the planning LLM from the NPC's personality/perspective — distortion is implicit)
-- `targetCharacterIds` lists all recipients. Falls back to `[node.targetCharacterId]` if not provided.
+- `informationContent` (required for memory write) contains what the NPC wants to communicate (written by the planning LLM from the NPC's personality/perspective — distortion is implicit)
+- `targetCharacterIds` lists all recipients. When present, it is authoritative — `node.targetCharacterId` is ignored for memory distribution. Falls back to `[node.targetCharacterId]` only if `targetCharacterIds` is absent.
+- Self-targeting (sender ID in `targetCharacterIds`) is filtered out before processing.
 
 #### Handler Change
 
@@ -48,6 +49,10 @@ if (payload.transferType === "information" && payload.informationContent) {
 ```
 
 The handler itself stays focused on mechanical resolution (location check, skill roll, success/failure). Memory writing for information transfer happens in tickProcessor post-execution, same as existing clue transfer memory writes.
+
+**Partial delivery**: If some targets are absent from the location, the node still succeeds — memory is written for present targets only. The outcome text notes which targets were unreachable. This mirrors real life: you tell a group something, but whoever isn't there doesn't hear it.
+
+**Bidirectional sharing**: If A plans to tell B something and B plans to tell A something in the same tick, both nodes execute independently. These are not duplicates — they represent different information flowing in different directions.
 
 #### Memory Write (in tickProcessor)
 
@@ -87,16 +92,22 @@ No additional LLM call needed at execution. The distortion is implicit in what t
 
 ### 2. Bilateral Memory (Mirror Write)
 
-For all NPC-to-NPC `character_interaction` nodes (not player-involved), the passive side now also receives memory on success.
+For all NPC-to-NPC `character_interaction` nodes (not player-involved), the passive side now also receives memory on success. This includes nodes injected by `scanUnplannedEncounters`.
+
+#### Why This Is Needed
+
+Currently `dgsm.updateRelationship()` writes bidirectionally to the in-memory relationship graph (both sides get the score update). But the `relationship` type *memory record* (used for retrieval/reasoning) is only written for the initiating side (A). The passive side (B) gets a graph score change but no searchable memory entry. Mirror write fills this gap.
 
 #### Mirror Write Rules
 
 When NPC A performs a `character_interaction` on NPC B (both are NPCs, not players):
 
+Guard: `!node.isPlayer && node.targetCharacterId !== state.playerCharacter?.id && action.status === "completed"`
+
 - **A side**: Existing logic unchanged (already writes event + relationship memory)
-- **B side**: New mirror write in tickProcessor post-execution:
+- **B side**: New mirror write in tickProcessor post-execution, placed after the relationship update block (after ~line 461) and before the existing player conversation block (~line 487):
   - `conversation` memory: "A [action] me, result was [outcome]" with `withCharacterId` pointing to A
-  - `relationship` memory: same `scoreDelta` as A's record
+  - `relationship` memory (only if relationship was updated): uses the same `scoreDelta` and `newScore` from A's relationship update
 
 Mirror write is a direct copy with perspective flip — no LLM call needed.
 
@@ -106,10 +117,9 @@ Player-involved interactions already have their own memory write path (tickProce
 
 #### Prompt Injection
 
-Inject into `generateDailySchedule()` and `generateDetailedNodes()` prompts:
+The scheduling context profile update (Section 4) adds `conversation` and `relationship` to the memory types retrieved by `memoryManager.getContext({ purpose: "scheduling" })`. This means the unified `memoryContext` string already passed to `buildDailySchedulePrompt` and `buildDetailedNodesPrompt` will now include recent social interactions and relationship changes.
 
-1. **Relationship summary** — From `npcRelationshipGraph`: each related NPC's name, score, and most recent relationship memory summary
-2. **Recent social memories** — Last 5 `conversation` type memories for this NPC
+Additionally, `formatRelationships()` (already called in `generateSingleNpcSchedule`) provides relationship scores and notes from `npcRelationshipGraph`. No changes needed to `formatRelationships()` — the combination of graph data + memory context gives the LLM enough social awareness.
 
 With this context, the planning LLM can naturally generate `character_interaction` nodes with `transferType: "information"` to share what it knows — driven entirely by personality and memory.
 
