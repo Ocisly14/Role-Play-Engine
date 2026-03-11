@@ -35,6 +35,12 @@ export interface ObjectInteractionPayload {
   targetItemUpdates?: Partial<Item>;
 }
 
+export interface ScheduleEntry {
+  time: string;       // "HH:MM"
+  location: string;   // scene ID
+  activity: string;   // natural language description
+}
+
 export interface SceneConnectionEffect {
   targetScenarioId: string;
   action: "block" | "unblock";

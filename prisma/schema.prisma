@@ -479,6 +479,7 @@ model Session {
   npcLongTermIntents NpcLongTermIntent[]
   npcDailyPlans      NpcDailyPlan[]
   npcMemoryLogs      NpcMemoryLog[]
+  npcMemorySummaries NpcMemorySummary[]
 
   @@index([status])
   @@index([startedAt])
@@ -912,6 +913,7 @@ model NpcDailyPlan {
   npcName     String   @map("npc_name")
   gameDay     Int      @map("game_day")
   nodes       Json
+  schedule    Json?
   generatedAt DateTime @default(now()) @map("generated_at")
 
   session     Session  @relation(fields: [sessionId], references: [sessionId], onDelete: Cascade)
@@ -936,4 +938,19 @@ model NpcMemoryLog {
 
   @@index([sessionId, npcId])
   @@map("npc_memory_logs")
+}
+
+model NpcMemorySummary {
+  id        String   @id @default(uuid()) @db.Uuid
+  sessionId String   @map("session_id")
+  npcId     String   @map("npc_id")
+  gameDay   Int      @map("game_day")
+  summary   String
+  createdAt DateTime @default(now()) @map("created_at")
+
+  session   Session  @relation(fields: [sessionId], references: [sessionId], onDelete: Cascade)
+
+  @@unique([sessionId, npcId, gameDay])
+  @@index([sessionId, npcId])
+  @@map("npc_memory_summaries")
 }

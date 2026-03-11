@@ -6,6 +6,7 @@ export type {
   ObjectInteractionPayload,
   SceneConnectionEffect,
   SceneCondition,
+  ScheduleEntry,
   FailureTrigger,
   ImpactTrigger,
   RevisePlansContext,

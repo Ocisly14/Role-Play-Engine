@@ -1271,8 +1271,10 @@ export class DynamicGameStateManager {
   /**
    * Update game time based on elapsed time in minutes
    */
-  updateGameTime(elapsedMinutes: number): void {
-    if (!elapsedMinutes || elapsedMinutes <= 0) return;
+  updateGameTime(elapsedMinutes: number): { dayChanged: boolean; previousDay: number } {
+    if (!elapsedMinutes || elapsedMinutes <= 0) return { dayChanged: false, previousDay: this.state.gameDay };
+
+    const previousDay = this.state.gameDay;
 
     // Parse current time "HH:MM"
     const [hours, minutes] = this.state.timeOfDay.split(":").map(Number);
@@ -1296,6 +1298,8 @@ export class DynamicGameStateManager {
     // Update time in HH:MM format
     this.state.timeOfDay = `${String(newHours).padStart(2, "0")}:${String(newMinutes).padStart(2, "0")}`;
     this.state.lastUpdated = new Date();
+
+    return { dayChanged: this.state.gameDay !== previousDay, previousDay };
   }
 
   // =====================================================================

@@ -358,6 +358,16 @@ async function executeSingleTick(params: SingleTickParams): Promise<SingleTickRe
     npcPlanning: npcPlanningAgent,
   };
 
+  // 0. Ensure NPCs have detailed nodes available (two-tier planning refill)
+  const allNpcIds = state.npcCharacters.map((n) => n.id);
+  await Promise.all(
+    allNpcIds.map((npcId) =>
+      npcPlanningAgent.ensureNpcNodesAvailable(
+        dgsm, sessionId, npcId, gameDay, tickStartTime, language, registry
+      )
+    )
+  );
+
   // 1. Get NPC nodes due up to end of this tick
   const dueNpcNodes = await npcPlanningAgent.getDueNpcNodes(sessionId, gameDay, tickEndTime, dgsm);
 
@@ -498,6 +508,11 @@ async function executeSingleTick(params: SingleTickParams): Promise<SingleTickRe
           gameTime: action.gameTime,
         },
       }, language);
+      // Also revise schedule if the failure was significant
+      if (action.impact >= 2) {
+        const triggerDesc = `Own action "${action.action}" at ${action.gameTime} failed: ${action.failureReason}`;
+        await npcPlanningAgent.reviseSchedule(dgsm, sessionId, node.characterId, triggerDesc, language);
+      }
     }
   }
 
@@ -583,6 +598,11 @@ async function executeSingleTick(params: SingleTickParams): Promise<SingleTickRe
                 triggeringAction: sortedEvents[0].event,
               },
             }, language);
+          }
+          if (result.shouldReviseSchedule) {
+            const sortedEvents = [...npcEvents].sort((a, b) => b.impact - a.impact);
+            const triggerDesc = `Witnessed: ${sortedEvents[0].event.action} by ${sortedEvents[0].event.characterName} (${sortedEvents[0].event.outcome})`;
+            await npcPlanningAgent.reviseSchedule(dgsm, sessionId, npcId, triggerDesc, language);
           }
         })
       );
@@ -735,7 +755,15 @@ export async function runPlayerAction(
       return sum + (matchingNode?.timeAdvanceMinutes ?? 0);
     }, 0);
   const timeAdvance = successfulPlayerAdvance > 0 ? successfulPlayerAdvance : maxPlayerAdvance;
-  dgsm.updateGameTime(timeAdvance);
+  const { dayChanged } = dgsm.updateGameTime(timeAdvance);
+
+  if (dayChanged) {
+    const updatedState = dgsm.getState();
+    const moduleId = await npcPlanningAgent.resolveModuleId(sessionId);
+    if (moduleId) {
+      await npcPlanningAgent.onNewDay(dgsm, sessionId, moduleId, updatedState.gameDay, language, registry);
+    }
+  }
 
   return { type: "completed", actions: allActions };
 }
@@ -820,7 +848,15 @@ export async function resumePlayerAction(
       return sum + (matchingNode?.timeAdvanceMinutes ?? 0);
     }, 0);
   const timeAdvance = successfulPlayerAdvance > 0 ? successfulPlayerAdvance : maxPlayerAdvance;
-  dgsm.updateGameTime(timeAdvance);
+  const { dayChanged: dayChangedOnResume } = dgsm.updateGameTime(timeAdvance);
+
+  if (dayChangedOnResume) {
+    const updatedState = dgsm.getState();
+    const moduleId = await npcPlanningAgent.resolveModuleId(sessionId);
+    if (moduleId) {
+      await npcPlanningAgent.onNewDay(dgsm, sessionId, moduleId, updatedState.gameDay, language, registry);
+    }
+  }
 
   return { type: "completed", actions: allActions };
 }
