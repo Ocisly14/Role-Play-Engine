@@ -10,23 +10,23 @@ The current system has three gaps in NPC-to-NPC interaction:
 
 ## Design
 
-No new node types. All changes build on the existing `character_interaction` node and its `information` transfer type.
+No new node types. All changes build on the existing `character_interaction` node.
 
-### 1. Multi-Target Information Transfer
+### 1. Unified Information Transfer (Merge `clue` into `information`)
 
-Currently `CharacterInteractionPayload` supports `transferType: "information"` with `informationContent?: string`, but the handler does nothing with it (line 150: "no mechanical side effect").
+Currently `CharacterInteractionPayload` has three transfer types: `item`, `clue`, `information`. Clue transfer is fundamentally an information flow — the physical evidence (documents, photos, objects) should be transferred as `item`, while the knowledge content of a clue should flow as `information`.
 
-#### Type Extension
+#### Type Change
 
-Add `targetCharacterIds` to the payload for multi-target information delivery:
+Merge `clue` into `information`. Remove `clue` as a transfer type:
 
 ```typescript
 export interface CharacterInteractionPayload {
-  transferType: "item" | "clue" | "information";
+  transferType: "item" | "information";  // CHANGED: removed "clue"
   itemId?: string;
-  clueId?: string;
   informationContent?: string;
-  targetCharacterIds?: string[];  // NEW: for information transfer to multiple recipients
+  targetCharacterIds?: string[];         // NEW: for multi-target information delivery
+  relatedClueIds?: string[];             // NEW: clue IDs to formally transfer to recipients
 }
 ```
 
@@ -34,21 +34,34 @@ When `transferType === "information"`:
 - `informationContent` (required for memory write) contains what the NPC wants to communicate (written by the planning LLM from the NPC's personality/perspective — distortion is implicit)
 - `targetCharacterIds` lists all recipients. When present, it is authoritative — `node.targetCharacterId` is ignored for memory distribution. Falls back to `[node.targetCharacterId]` only if `targetCharacterIds` is absent.
 - Self-targeting (sender ID in `targetCharacterIds`) is filtered out before processing.
+- `relatedClueIds` (optional): when present, these clue IDs are formally transferred to each recipient via `dgsm.transferClue()`, same as the current `clue` transfer path. This makes the recipient "officially know" the clue (added to their clues list), not just have a memory of hearing about it.
 
 #### Handler Change
 
-In `characterInteractionHandler.ts`, the `information` branch (currently a no-op comment) becomes:
+In `characterInteractionHandler.ts`:
+
+1. Remove the existing `clue` branch (`payload.transferType === "clue"`)
+2. Replace the `information` no-op with clue transfer logic:
 
 ```
-if (payload.transferType === "information" && payload.informationContent) {
+if (payload.transferType === "information") {
   const targets = payload.targetCharacterIds ??
     (node.targetCharacterId ? [node.targetCharacterId] : []);
+
+  // Formal clue transfer (if any clue IDs specified)
+  if (payload.relatedClueIds?.length) {
+    for (const clueId of payload.relatedClueIds) {
+      for (const targetId of targets) {
+        dgsm.transferClue(node.characterId, targetId, clueId);
+      }
+    }
+  }
+
   // Memory writing happens in tickProcessor post-execution, not here.
-  // Handler just validates targets are present.
 }
 ```
 
-The handler itself stays focused on mechanical resolution (location check, skill roll, success/failure). Memory writing for information transfer happens in tickProcessor post-execution, same as existing clue transfer memory writes.
+The handler handles mechanical state changes (clue ID transfer to recipient profiles). Memory writing happens in tickProcessor post-execution.
 
 **Partial delivery**: If some targets are absent from the location, the node still succeeds — memory is written for present targets only. The outcome text notes which targets were unreachable. This mirrors real life: you tell a group something, but whoever isn't there doesn't hear it.
 
@@ -59,6 +72,7 @@ The handler itself stays focused on mechanical resolution (location check, skill
 On successful `information` transfer, for each target NPC:
 
 ```
+// Receiver gets a conversation memory
 await memoryManager.add({
   npcId: targetId,
   type: "conversation",
@@ -68,6 +82,16 @@ await memoryManager.add({
     withCharacterName: senderName,
   },
 });
+
+// If clue IDs were transferred, also write clue memories for each
+for (const clueId of relatedClueIds) {
+  await memoryManager.add({
+    npcId: targetId,
+    type: "clue",
+    content: `Learned from ${senderName}: ${clueText}`,
+    metadata: { clueId, category: "knowledge", sourceCharacterId: node.characterId, sourceCharacterName: senderName },
+  });
+}
 ```
 
 The sender also gets an event memory:
@@ -80,6 +104,8 @@ await memoryManager.add({
   metadata: { outcome: action.outcome },
 });
 ```
+
+This replaces the existing clue-transfer memory write block in tickProcessor (lines 516-554), which is removed.
 
 #### Information Distortion (Gossip)
 
@@ -129,13 +155,15 @@ Update the `character_interaction` documentation in the detailed nodes prompt to
 
 ```
 - **"character_interaction"**: Interact with a specific character. Requires targetCharacterId.
-  - For sharing information with one or more characters, set:
+  - For sharing information or clues with one or more characters, set:
     characterInteractionPayload: {
       transferType: "information",
       informationContent: "what you want to tell them",
-      targetCharacterIds: ["npc_id_1", "npc_id_2"]  // optional, for multiple recipients
+      targetCharacterIds: ["npc_id_1", "npc_id_2"],  // optional, for multiple recipients
+      relatedClueIds: ["clue_id"]                     // optional, formally transfers these clues
     }
   - The informationContent should reflect YOUR perspective — what you believe and how you'd say it.
+  - Use relatedClueIds when you want to formally share a specific clue you possess.
 ```
 
 #### Scheduling Prompt
@@ -165,8 +193,8 @@ scheduling: {
 ### No New Files
 
 ### Modified Files
-- `src/dynamicworldagent/dynamicBasicAgent/npcPlanning/types.ts` — Add `targetCharacterIds?: string[]` to `CharacterInteractionPayload`
-- `src/dynamicworldagent/engine/handlers/characterInteractionHandler.ts` — Validate multi-target presence for information transfers
-- `src/dynamicworldagent/dynamicBasicAgent/npcPlanning/tickProcessor.ts` — Add information transfer memory writes; add mirror write for passive NPC in all `character_interaction` completions
-- `src/dynamicworldagent/dynamicBasicAgent/npcPlanning/npcPlanningTemplates.ts` — Update `character_interaction` docs with information transfer format; add social interaction hint to daily schedule prompt
+- `src/dynamicworldagent/dynamicBasicAgent/npcPlanning/types.ts` — Remove `"clue"` from `transferType` union; add `targetCharacterIds?: string[]` and `relatedClueIds?: string[]` to `CharacterInteractionPayload`; remove `clueId?: string`
+- `src/dynamicworldagent/engine/handlers/characterInteractionHandler.ts` — Remove `clue` branch; add multi-target clue transfer in `information` branch
+- `src/dynamicworldagent/dynamicBasicAgent/npcPlanning/tickProcessor.ts` — Replace clue-transfer memory block (lines 516-554) with unified information transfer memory writes; add mirror write for passive NPC in all `character_interaction` completions
+- `src/dynamicworldagent/dynamicBasicAgent/npcPlanning/npcPlanningTemplates.ts` — Update `character_interaction` docs with unified information transfer format; add social interaction hint to daily schedule prompt
 - `src/dynamicworldagent/memory/types.ts` — Add `conversation` and `relationship` to scheduling context profile; increase limit to 20
