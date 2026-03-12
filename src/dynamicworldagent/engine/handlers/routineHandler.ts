@@ -2,25 +2,27 @@ import type { NodeHandler, ExecutionContext } from "../types.js";
 import type { DynamicGameStateManager } from "../../state/DynamicGameState.js";
 import type { PlanNode, CharacterAction } from "../../dynamicBasicAgent/npcPlanning/types.js";
 import { buildOutcome, makeAction } from "../shared/nodeHelpers.js";
+import { restCharacter } from "../features/staminaFeature.js";
 
 export const routineHandler: NodeHandler = {
   type: "routine",
 
   description:
     "A routine action performed by a character at their current location. " +
-    "If actionType is set, a skill roll determines success; otherwise the action auto-succeeds.",
+    "If actionType is set, a skill roll determines success; otherwise the action auto-succeeds. " +
+    'Set routineSubtype to "rest" for sleeping, napping, or resting — this resets fatigue automatically.',
 
   requiredFields: ["action", "location"],
 
-  optionalFields: ["actionType"],
+  optionalFields: ["actionType", "routineSubtype"],
 
   exampleNode: {
     nodeId: "r1",
     type: "routine",
-    action: "Search the bookshelves for occult references",
-    location: "library_main",
-    actionType: "exploration",
-    impact: 1,
+    routineSubtype: "rest",
+    action: "Sleep for the night to recover from exhaustion",
+    location: "home_bedroom",
+    impact: 0,
     timeAdvanceMinutes: 5,
   },
 
@@ -68,6 +70,12 @@ export const routineHandler: NodeHandler = {
         );
       }
       lastRollDetail = rollResult.detail;
+    }
+
+    // Rest subtype → reset fatigue via stamina feature
+    if (node.routineSubtype === "rest") {
+      const isPlayer = !!node.isPlayer;
+      restCharacter(dgsm, node.characterId, isPlayer);
     }
 
     return makeAction(

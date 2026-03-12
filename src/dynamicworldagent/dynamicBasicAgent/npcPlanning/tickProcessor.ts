@@ -663,12 +663,7 @@ async function executeSingleTick(params: SingleTickParams): Promise<SingleTickRe
           action: action.action,
           gameTime: action.gameTime,
         },
-      }, language);
-      // Also revise schedule if the failure was significant
-      if (action.impact >= 2) {
-        const triggerDesc = `Own action "${action.action}" at ${action.gameTime} failed: ${action.failureReason}`;
-        await npcPlanningAgent.reviseSchedule(dgsm, sessionId, node.characterId, triggerDesc, language);
-      }
+      }, language, registry);
     }
   }
 
@@ -720,6 +715,8 @@ async function executeSingleTick(params: SingleTickParams): Promise<SingleTickRe
         [...characterEventsMap.entries()].map(async ([npcId, npcEvents]) => {
           const npc = state.npcCharacters.find((n) => n.id === npcId);
           const pendingNodes = await npcPlanningAgent.getPendingNodes(sessionId, npcId, gameDay);
+          const plan = await npcPlanningAgent.getDailyPlan(sessionId, npcId, gameDay);
+          const schedule = (plan?.schedule as unknown as import("./types.js").ScheduleEntry[]) ?? [];
           const triggeringEvents = npcEvents
             .map((e) => `[impact ${e.impact}] ${e.event.characterName}: ${e.event.outcome}`)
             .join("\n");
@@ -743,7 +740,8 @@ async function executeSingleTick(params: SingleTickParams): Promise<SingleTickRe
               npcName: npc?.name ?? npcId,
               currentLocation: dgsm.getNpcLocation(npcId) ?? "unknown",
               longTermIntent,
-              pendingNodesSummary: pendingNodes.map((n) => `${n.gameTime} ${n.action}`).join("; "),
+              todayScheduleSummary: schedule.map((s) => `${s.location}: ${s.activity}`).join("; "),
+              currentDetailedPlan: pendingNodes.map((n) => `${n.gameTime} ${n.action}`).join("; "),
               triggeringEvents,
               memoryContext: reactionContext,
             },
@@ -786,7 +784,7 @@ async function executeSingleTick(params: SingleTickParams): Promise<SingleTickRe
                 type: "impact",
                 triggeringAction: sortedEvents[0].event,
               },
-            }, language);
+            }, language, registry);
 
             // Trigger reasoning for high-impact events
             if (memoryManager) {
@@ -814,7 +812,7 @@ async function executeSingleTick(params: SingleTickParams): Promise<SingleTickRe
           if (result.shouldReviseSchedule) {
             const sortedEvents = [...npcEvents].sort((a, b) => b.impact - a.impact);
             const triggerDesc = `Witnessed: ${sortedEvents[0].event.action} by ${sortedEvents[0].event.characterName} (${sortedEvents[0].event.outcome})`;
-            await npcPlanningAgent.reviseSchedule(dgsm, sessionId, npcId, triggerDesc, language);
+            await npcPlanningAgent.reviseSchedule(dgsm, sessionId, npcId, triggerDesc, language, registry);
           }
         })
       );

@@ -233,6 +233,23 @@ function getTrackedCharacters(dgsm: DynamicGameStateManager): Array<{
   return result;
 }
 
+// ===== Rest / Recovery =====
+
+/**
+ * Reset a character's fatigue after resting.
+ * Called by routineHandler when a rest node completes.
+ */
+export function restCharacter(dgsm: DynamicGameStateManager, characterId: string, isPlayer: boolean): void {
+  const stamina = getStaminaState(dgsm, characterId);
+  if (!stamina) return;
+
+  stamina.minutesSinceLastRest = 0;
+  stamina.fatigueLevel = 0;
+  stamina.exhaustedDrainTicks = 0;
+  setStaminaState(dgsm, characterId, stamina);
+  updateFatigueCondition(dgsm, characterId, 0, isPlayer);
+}
+
 // ===== Exported feature =====
 
 export const staminaFeature: WorldFeature = {

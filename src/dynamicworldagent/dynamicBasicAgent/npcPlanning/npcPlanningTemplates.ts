@@ -318,11 +318,18 @@ ${params.outputSchemaPrompt || DEFAULT_DETAILED_OUTPUT_SCHEMA}`;
 
 export interface ReviseScheduleParams {
   npcName: string;
+  npcId: string;
   npcProfile: string;
   longTermIntent: string;
-  memoryLog: string;
+  memoryContext: string;
+  relationships: string;
+  sceneMap: string;
+  scenarioConditions: string;
+  worldStatePrompt: string;
   remainingSchedule: string;
   triggerDescription: string;
+  gameDay: number;
+  currentTime: string;
   language: string;
 }
 
@@ -337,21 +344,37 @@ Something significant just happened. Look at your remaining plans for today and 
 
 Think about how this event affects your goals and your safety. Adjust your schedule if needed — you can change plans, add new ones, drop old ones, or rearrange the order. If the event doesn't really affect your plans, leave them as they are.
 
+Your character ID is "${params.npcId}". Today is Day ${params.gameDay}.
+
 ## Who You Are
 ${params.npcProfile}
 
 ## Your Goal
 ${params.longTermIntent}
 
-## What You Remember
-${params.memoryLog || "Nothing recorded yet."}
+${params.memoryContext ? `## Your Memory\n${params.memoryContext}` : ""}
+
+## People You Know
+${params.relationships}
+
+## Places You Know
+${params.sceneMap}
+
+## Current Conditions Around You
+${params.scenarioConditions || "Nothing unusual."}
+
+${params.worldStatePrompt || ""}
 
 ## Your Remaining Plans for Today
 ${params.remainingSchedule}
 
+## Right Now
+Day ${params.gameDay}, ${params.currentTime}
+
 ## Instructions
 - Only change what the event actually affects. Don't rewrite plans that are still fine.
 - Keep the same format: each entry has "location", "activity". Order matters.
+- Use scene IDs from "Places You Know" for locations.
 - If this event fundamentally changes what you're trying to accomplish, update your long-term goal too.
 
 ## Output
@@ -372,15 +395,42 @@ Return a single JSON object. No extra text. Always write in English.
 
 export interface RevisePlansParams {
   npcName: string;
+  npcId: string;
   npcProfile: string;
   longTermIntent: string;
   memoryLog: string;
+  todayPlan: ScheduleEntry[];
   pendingNodes: string;
   triggerDescription: string;
+  currentLocation: string;
+  sceneDescription: string;
+  sceneItems: string;
+  sceneNpcs: string;
+  sceneConditions: string;
+  worldStatePrompt: string;
+  npcInventory: string;
+  currentTime: string;
+  gameDay: number;
   language: string;
+  handlerPrompt?: string;
+  planningPrompt?: string;
+  outputSchemaPrompt?: string;
 }
 
+const REVISE_PLANS_OUTPUT_SCHEMA = `## Output
+Return a single JSON object. No extra text. Always write in English.
+
+\`\`\`json
+{
+  "revisedNodes": [ /* same PlanNode format */ ],
+  "shouldUpdateLongTermIntent": false,
+  "updatedLongTermIntent": "only if shouldUpdateLongTermIntent is true"
+}
+\`\`\``;
+
 export function buildRevisePlansPrompt(params: RevisePlansParams): string {
+  const todayPlan = JSON.stringify(params.todayPlan, null, 2);
+
   return `You are ${params.npcName}, a character in a Call of Cthulhu tabletop RPG.
 
 ## What Just Happened
@@ -391,32 +441,61 @@ Something just disrupted your plans. Look at what you were about to do and decid
 
 You can reorder, change, add, or drop actions. If this event fundamentally changes what you're trying to accomplish long-term, say so.
 
+Set each node's \`location\` to the scene where that action happens. If the next step is not at your current location, include movement nodes first.
+
+Your character ID is "${params.npcId}".
+
 ## Who You Are
 ${params.npcProfile}
 
 ## Your Goal
 ${params.longTermIntent}
 
-## What You Remember
-${params.memoryLog || "No actions recorded yet today."}
+## Your Plan For Today
+${todayPlan}
+
+## What Happened Today So Far
+${params.memoryLog || "Nothing recorded yet."}
 
 ## Your Pending Actions
 ${params.pendingNodes}
 
+## Your Current Location
+${params.currentLocation || "Unknown"}
+
+## Where You Are
+${params.sceneDescription || "No description available."}
+
+## Conditions Here
+${params.sceneConditions || "Nothing unusual."}
+
+${params.worldStatePrompt || ""}
+
+## Items You Can See
+${params.sceneItems || "Nothing here."}
+
+## People Present
+${params.sceneNpcs || "You're alone."}
+
+## What You're Carrying
+${params.npcInventory || "Nothing."}
+
+## Right Now
+Day ${params.gameDay}, ${params.currentTime}
+
 ## Instructions
 - Only change what the event actually affects. Don't rewrite actions that are still fine.
-- Keep the same node format.
+- You may reorder, change, add, or drop actions.
 
-## Output
-Return a single JSON object. No extra text. Always write in English.
+## When Your Actions Need a Skill Check
+- Everyday activities, simple movement, friendly conversation → **no actionType** (auto-succeed)
+- Searching for hidden things, persuading reluctant people, sneaking, fighting → **set actionType**
 
-\`\`\`json
-{
-  "revisedNodes": [ /* same PlanNode format */ ],
-  "shouldUpdateLongTermIntent": false,
-  "updatedLongTermIntent": "only if shouldUpdateLongTermIntent is true"
-}
-\`\`\``;
+${params.handlerPrompt || DEFAULT_DETAILED_NODE_TYPE_REF}
+
+${params.planningPrompt || ""}
+
+${params.outputSchemaPrompt || REVISE_PLANS_OUTPUT_SCHEMA}`;
 }
 
 // ===================== Impact Gate =====================
@@ -428,7 +507,8 @@ export interface ImpactGateParams {
     npcName: string;
     currentLocation: string;
     longTermIntent: string;
-    pendingNodesSummary: string;
+    todayScheduleSummary: string;
+    currentDetailedPlan: string;
     triggeringEvents: string;
     memoryContext?: string;
   };
@@ -457,7 +537,8 @@ Decide:
 ## Who You Are
 - Current location: ${c.currentLocation}
 - Your goal: ${c.longTermIntent}
-- What you're about to do: ${c.pendingNodesSummary || "Nothing planned."}
+- Your plan for today: ${c.todayScheduleSummary || "No schedule."}
+- What you're doing right now: ${c.currentDetailedPlan || "Nothing planned."}
 
 ## Right Now
 ${params.bucketTime}

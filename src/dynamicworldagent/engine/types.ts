@@ -75,7 +75,8 @@ export interface NpcPlanningCapability {
       npcName: string;
       currentLocation: string;
       longTermIntent: string;
-      pendingNodesSummary: string;
+      todayScheduleSummary: string;
+      currentDetailedPlan: string;
       triggeringEvents: string;
     },
     bucketTime: string,
@@ -83,7 +84,7 @@ export interface NpcPlanningCapability {
   ): Promise<{ shouldRevise: boolean; witnessEntry: string }>;
   revisePlans(
     dgsm: DynamicGameStateManager, sessionId: string, npcId: string,
-    context: RevisePlansContext, language: string
+    context: RevisePlansContext, language: string, registry?: import("./registry.js").GameEngineRegistry
   ): Promise<void>;
 }
 

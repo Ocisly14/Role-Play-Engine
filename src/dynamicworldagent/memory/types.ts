@@ -174,7 +174,7 @@ export const CONTEXT_PROFILES: Record<ContextPurpose, ContextProfile> = {
   },
   reaction: {
     defaultTypes: ["witness", "belief"],
-    defaultLimit: 10,
+    defaultLimit: 5,
   },
   reasoning: {
     defaultTypes: ["information", "witness", "event", "belief", "summary"],
