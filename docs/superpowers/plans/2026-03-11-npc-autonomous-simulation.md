@@ -8,7 +8,7 @@
 
 **Tech Stack:** TypeScript, Prisma, Express, WebSocket, Node EventEmitter
 
-**Spec:** `docs/superpowers/specs/2026-03-11-npc-autonomous-simulation-design.md`
+**Spec:** Spec was inline in brainstorming session (original file deleted in subsequent refactors).
 
 ---
 
@@ -296,7 +296,7 @@ export type TickMode = "player_turn" | "simulation";
 
 - [ ] **Step 2: Add mode to SingleTickParams**
 
-In `tickProcessor.ts`, update `SingleTickParams` (line ~300) — add:
+In `tickProcessor.ts`, update `SingleTickParams` (line ~312) — add:
 
 ```typescript
 mode?: TickMode;
@@ -306,7 +306,7 @@ And import `TickMode` from `./types.js`.
 
 - [ ] **Step 3: Add simulation guards in executeSingleTick**
 
-In `executeSingleTick` (line 335), destructure mode with default:
+In `executeSingleTick` (line ~347), destructure mode with default:
 
 ```typescript
 const { mode = "player_turn", ...rest } = params;
@@ -315,17 +315,17 @@ const isSimulation = mode === "simulation";
 
 Then add guards at these locations:
 
-**Line ~411 — skip player failure tracking in simulation:**
+**Line ~423 — skip player failure tracking in simulation:**
 ```typescript
 if (playerFailed && node.isPlayer && !isSimulation) {
 ```
 
-**Line ~425 — skip player failure marking:**
+**Line ~437 — skip player failure marking:**
 ```typescript
 if (action.status === "failed" && node.isPlayer && !isSimulation) {
 ```
 
-**Line ~618 — skip fumble damage:**
+**Line ~622 — skip fumble damage:**
 ```typescript
 if (node.isPlayer && action.successLevel === "fumble" && !isSimulation) {
 ```
@@ -356,14 +356,14 @@ git commit -m "feat(simulation): add TickMode param to executeSingleTick"
 
 ---
 
-### Task 5: NPC clue discovery in simulation mode
+### Task 5: NPC evidence discovery in simulation mode
 
 **Files:**
 - Modify: `src/dynamicworldagent/dynamicBasicAgent/npcPlanning/tickProcessor.ts`
 
-- [ ] **Step 1: Modify clue discovery guard**
+- [ ] **Step 1: Modify evidence discovery guard**
 
-At line ~587, change:
+At line ~589, change:
 
 ```typescript
 if (action.status === "completed" && node.isPlayer) {
@@ -375,14 +375,14 @@ to:
 if (action.status === "completed" && (node.isPlayer || isSimulation)) {
 ```
 
-- [ ] **Step 2: Use NPC's scene for clue discovery**
+- [ ] **Step 2: Use NPC's scene for evidence discovery**
 
-Inside the clue discovery block, the current code calls `discoverClues(node, effectiveSuccess, dgsm, language)`. The `discoverClues` function internally uses `dgsm.getCurrentScene()` which returns the player's scene.
+Inside the evidence discovery block, the current code calls `discoverEvidence(node, effectiveSuccess, dgsm, language)`. The `discoverEvidence` function internally uses `dgsm.getCurrentScene()` which returns the player's scene.
 
-Modify `discoverClues` to accept an optional `sceneId` parameter:
+Modify `discoverEvidence` to accept an optional `sceneId` parameter:
 
 ```typescript
-async function discoverClues(
+async function discoverEvidence(
   node: PlanNode,
   successLevel: SuccessLevel,
   dgsm: DynamicGameStateManager,
@@ -391,7 +391,7 @@ async function discoverClues(
 ): Promise<DiscoveredClueEntry[]> {
 ```
 
-Inside `discoverClues`, change scene lookup:
+Inside `discoverEvidence`, change scene lookup:
 
 ```typescript
 const scene = overrideSceneId
@@ -399,11 +399,11 @@ const scene = overrideSceneId
   : dgsm.getCurrentScene();
 ```
 
-At the call site (line ~589), pass the NPC's location in simulation mode:
+At the call site (line ~591), pass the NPC's location in simulation mode:
 
 ```typescript
-const clueSceneId = isSimulation ? node.location : undefined;
-const clues = await discoverClues(node, effectiveSuccess, dgsm, language, clueSceneId);
+const evidenceSceneId = isSimulation ? node.location : undefined;
+const evidence = await discoverEvidence(node, effectiveSuccess, dgsm, language, evidenceSceneId);
 ```
 
 - [ ] **Step 3: Verify build**
@@ -415,7 +415,7 @@ Expected: No type errors.
 
 ```bash
 git add src/dynamicworldagent/dynamicBasicAgent/npcPlanning/tickProcessor.ts
-git commit -m "feat(simulation): enable NPC clue discovery in simulation mode"
+git commit -m "feat(simulation): enable NPC evidence discovery in simulation mode"
 ```
 
 ---
@@ -851,23 +851,23 @@ export class SimulationRunner {
       }
     }
 
-    // Check all clues discovered — collect from scenes Map + NPC clues
-    const sceneClues = [...(state.scenes?.values() ?? [])].flatMap(
+    // Check all knowledge discovered — collect from scenes Map + NPC knowledge
+    const sceneKnowledge = [...(state.scenes?.values() ?? [])].flatMap(
       (s) => s.clues ?? []
     );
-    const npcClues = (state.npcCharacters ?? []).flatMap(
+    const npcKnowledge = (state.npcCharacters ?? []).flatMap(
       (n) => n.clues ?? []
     );
-    const totalClueCount = sceneClues.length + npcClues.length;
-    const discoveredCount = (state.discoveredClues ?? []).length;
-    if (totalClueCount > 0 && discoveredCount >= totalClueCount) {
+    const totalKnowledgeCount = sceneKnowledge.length + npcKnowledge.length;
+    const discoveredCount = (state.discoveredKnowledge ?? []).length;
+    if (totalKnowledgeCount > 0 && discoveredCount >= totalKnowledgeCount) {
       const event = this.events.emitSimulationEvent(
         "all_clues_discovered",
         "system",
         "",
         gameDay,
         gameTime,
-        { totalClues: totalClueCount }
+        { totalKnowledge: totalKnowledgeCount }
       );
       this.collectedEvents.push(event);
     }
