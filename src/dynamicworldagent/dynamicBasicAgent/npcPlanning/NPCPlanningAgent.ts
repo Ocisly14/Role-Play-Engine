@@ -164,6 +164,7 @@ export class NPCPlanningAgent {
         npcId: npc.id,
         sessionId,
         purpose: "scheduling",
+        currentGameDay: gameDay,
       });
     }
     // Legacy fields — kept empty when using unified memory
@@ -404,6 +405,7 @@ export class NPCPlanningAgent {
         sessionId,
         purpose: "reaction",
         query: triggerDescription,
+        currentGameDay: gameDay,
       });
     }
     const longTermIntent = memoryContext ? "" : await this.getLongTermIntent(sessionId, npcId);

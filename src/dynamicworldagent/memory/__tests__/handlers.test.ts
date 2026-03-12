@@ -182,36 +182,6 @@ describe("BeliefHandler", () => {
   });
 });
 
-// ===== EmotionHandler =====
-
-describe("EmotionHandler", () => {
-  const handler = getHandler("emotion");
-
-  it("has type 'emotion'", () => {
-    expect(handler.type).toBe("emotion");
-  });
-
-  it("prepare returns baseImportance 2.0 and includes emotion + location tags", () => {
-    const result = handler.prepare("Afraid after seeing creature", { emotionType: "fear", intensity: 3 }, "basement");
-    expect(result.baseImportance).toBe(2.0);
-    expect(result.tags).toContain("emotion");
-    expect(result.tags).toContain("basement");
-  });
-
-  it("format includes emotionType and intensity", () => {
-    const mem = makeMemory({
-      type: "emotion",
-      content: "Afraid after seeing creature",
-      metadata: { emotionType: "fear", intensity: 3 },
-    });
-    expect(handler.format(mem)).toBe("[emotion] fear (intensity: 3): Afraid after seeing creature");
-  });
-
-  it("customDecayRate returns 2.0 (fast decay)", () => {
-    expect(handler.customDecayRate!()).toBe(2.0);
-  });
-});
-
 // ===== PlanHandler =====
 
 describe("PlanHandler", () => {

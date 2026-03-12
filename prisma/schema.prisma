@@ -938,7 +938,6 @@ enum NpcMemoryType {
   witness
   information
   belief
-  emotion
   plan
   secret
   summary

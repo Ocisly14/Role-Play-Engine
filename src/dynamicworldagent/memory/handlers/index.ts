@@ -4,7 +4,6 @@ import { EventHandler } from "./EventHandler.js";
 import { WitnessHandler } from "./WitnessHandler.js";
 import { InformationHandler } from "./InformationHandler.js";
 import { BeliefHandler } from "./BeliefHandler.js";
-import { EmotionHandler } from "./EmotionHandler.js";
 import { PlanHandler } from "./PlanHandler.js";
 import { SecretHandler } from "./SecretHandler.js";
 import { SummaryHandler } from "./SummaryHandler.js";
@@ -14,7 +13,6 @@ export {
   WitnessHandler,
   InformationHandler,
   BeliefHandler,
-  EmotionHandler,
   PlanHandler,
   SecretHandler,
   SummaryHandler,
@@ -25,7 +23,6 @@ const HANDLERS: Record<NpcMemoryType, MemoryHandler> = {
   witness: new WitnessHandler(),
   information: new InformationHandler(),
   belief: new BeliefHandler(),
-  emotion: new EmotionHandler(),
   plan: new PlanHandler(),
   secret: new SecretHandler(),
   summary: new SummaryHandler(),

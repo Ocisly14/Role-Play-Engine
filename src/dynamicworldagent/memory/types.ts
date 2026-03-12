@@ -106,6 +106,8 @@ export interface QueryMemoryParams {
   filters?: {
     types?: NpcMemoryType[];
     gameDay?: number;
+    /** When set, ephemeral types (event/witness/plan) are restricted to this day only. */
+    currentGameDay?: number;
     location?: string;
     tags?: string[];
     minImportance?: number;
@@ -118,6 +120,8 @@ export interface GetContextParams {
   sessionId: string;
   purpose: ContextPurpose;
   query?: string;
+  /** Current game day — ephemeral memories (event/witness/plan) are restricted to this day. */
+  currentGameDay?: number;
 }
 
 export interface TriggerReasoningParams {
@@ -162,11 +166,11 @@ export const CONTEXT_PROFILES: Record<ContextPurpose, ContextProfile> = {
     defaultLimit: 20,
   },
   conversation: {
-    defaultTypes: ["event", "information", "belief", "secret", "emotion", "summary"],
+    defaultTypes: ["event", "information", "belief", "secret", "summary"],
     defaultLimit: 20,
   },
   reaction: {
-    defaultTypes: ["witness", "emotion", "belief"],
+    defaultTypes: ["witness", "belief"],
     defaultLimit: 10,
   },
   reasoning: {

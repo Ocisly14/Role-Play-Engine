@@ -54,7 +54,7 @@ export class NpcMemoryManager {
       npcId: params.npcId,
       sessionId: params.sessionId,
       query: params.query ?? "",
-      filters: { types: profile.defaultTypes },
+      filters: { types: profile.defaultTypes, currentGameDay: params.currentGameDay },
       limit: profile.defaultLimit,
     });
 
@@ -130,6 +130,7 @@ export class NpcMemoryManager {
       query: params.context ?? "",
       filters: {
         types: ["information", "witness", "event", "belief"],
+        currentGameDay: params.gameDay,
       },
       limit: 25,
     });

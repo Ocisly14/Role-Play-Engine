@@ -50,12 +50,16 @@ export class MemoryStore {
     });
   }
 
+  /** Types that are ephemeral — only relevant for the current game day (past ones are covered by summary). */
+  private static EPHEMERAL_TYPES: NpcMemoryType[] = ["event", "witness", "plan"];
+
   async findCandidates(params: {
     sessionId: string;
     npcId: string;
     filters?: {
       types?: NpcMemoryType[];
       gameDay?: number;
+      currentGameDay?: number;
       location?: string;
       tags?: string[];
       minImportance?: number;
@@ -63,6 +67,43 @@ export class MemoryStore {
     limit?: number;
   }): Promise<NpcMemory[]> {
     const { filters, limit } = params;
+
+    // When currentGameDay is set, ephemeral types (event/witness/plan) are restricted
+    // to the current day only; past days are represented by summary memories.
+    if (filters?.currentGameDay !== undefined && filters.gameDay === undefined) {
+      const requestedTypes = filters.types;
+      const ephemeralRequested = requestedTypes
+        ? MemoryStore.EPHEMERAL_TYPES.filter((t) => requestedTypes.includes(t))
+        : MemoryStore.EPHEMERAL_TYPES;
+      const durableRequested = requestedTypes
+        ? requestedTypes.filter((t) => !MemoryStore.EPHEMERAL_TYPES.includes(t))
+        : (["summary", "secret", "belief", "information"] as NpcMemoryType[]);
+
+      const baseWhere = {
+        sessionId: params.sessionId,
+        npcId: params.npcId,
+        ...(filters.location && { location: filters.location }),
+        ...(filters.tags && { tags: { hasSome: filters.tags } }),
+        ...(filters.minImportance !== undefined && { importance: { gte: filters.minImportance } }),
+      };
+
+      const orClauses: any[] = [];
+      if (durableRequested.length > 0) {
+        orClauses.push({ ...baseWhere, type: { in: durableRequested } });
+      }
+      if (ephemeralRequested.length > 0) {
+        orClauses.push({ ...baseWhere, type: { in: ephemeralRequested }, gameDay: filters.currentGameDay });
+      }
+
+      if (orClauses.length === 0) return [];
+
+      return this.prisma.npcMemory.findMany({
+        where: { OR: orClauses },
+        orderBy: { importance: "desc" },
+        take: limit ?? 200,
+      });
+    }
+
     return this.prisma.npcMemory.findMany({
       where: {
         sessionId: params.sessionId,

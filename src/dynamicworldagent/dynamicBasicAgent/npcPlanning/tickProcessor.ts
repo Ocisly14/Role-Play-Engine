@@ -664,6 +664,7 @@ async function executeSingleTick(params: SingleTickParams): Promise<SingleTickRe
           sessionId,
           purpose: "reaction",
           query: `${action.action} failed: ${action.failureReason}`,
+          currentGameDay: gameDay,
         });
       }
       const longTermIntent = failureContext ?? await npcPlanningAgent.getLongTermIntent(sessionId, node.characterId);
@@ -747,6 +748,7 @@ async function executeSingleTick(params: SingleTickParams): Promise<SingleTickRe
               sessionId,
               purpose: "reaction",
               query: triggeringEvents,
+              currentGameDay: gameDay,
             });
           }
           // Use unified memory context or fall back to legacy getLongTermIntent
@@ -886,27 +888,8 @@ async function executeSingleTick(params: SingleTickParams): Promise<SingleTickRe
     registry.updatePropagationSources(feature.id, nextSources);
   }
 
-  // Drain sanity-triggered emotions and write as memory
-  if (memoryManager) {
-    const emotions = drainPendingEmotions(dgsm);
-    for (const emo of emotions) {
-      await memoryManager.add({
-        npcId: emo.characterId,
-        sessionId,
-        moduleId,
-        type: "emotion",
-        content: `Feeling ${emo.emotionType} due to ${emo.trigger}`,
-        gameDay,
-        gameTime: tickRuntime.tickTime,
-        location: dgsm.getNpcLocation(emo.characterId) ?? undefined,
-        metadata: {
-          emotionType: emo.emotionType,
-          intensity: emo.intensity,
-          trigger: emo.trigger,
-        },
-      });
-    }
-  }
+  // Drain sanity-triggered emotions (clear from pending queue; no longer persisted as memory)
+  drainPendingEmotions(dgsm);
 
   // Store witness events in contextualData for KeeperAgent
   if (allPlayerEvents.length > 0) {
