@@ -1548,9 +1548,7 @@ export class DynamicGameStateManager {
     if (!this.state.npcDiscoveredKnowledge[toNpcId].includes(knowledgeId)) {
       this.state.npcDiscoveredKnowledge[toNpcId].push(knowledgeId);
     }
-    if (this.state.npcDiscoveredKnowledge[fromNpcId]) {
-      this.state.npcDiscoveredKnowledge[fromNpcId] = this.state.npcDiscoveredKnowledge[fromNpcId].filter(id => id !== knowledgeId);
-    }
+    // Knowledge sharing is a copy, not a move — sender retains the knowledge
   }
 
   /** Damage an evidence item in the current scene (e.g., on fumble) */

@@ -313,6 +313,8 @@ interface SingleTickParams {
   tickStartMinutes: number;
   tickDurationMinutes: number;
   playerNodes: PlanNode[];
+  /** Nodes injected by previous ticks' feature propagation, to be executed in this tick */
+  carryOverNodes?: PlanNode[];
   dgsm: DynamicGameStateManager;
   npcPlanningAgent: NPCPlanningAgent;
   sessionId: string;
@@ -349,6 +351,7 @@ async function executeSingleTick(params: SingleTickParams): Promise<SingleTickRe
     tickStartMinutes,
     tickDurationMinutes,
     playerNodes,
+    carryOverNodes,
     dgsm,
     npcPlanningAgent,
     sessionId,
@@ -398,9 +401,10 @@ async function executeSingleTick(params: SingleTickParams): Promise<SingleTickRe
     return nodeMinutes >= tickStartMinutes && nodeMinutes <= tickEndMinutes;
   });
 
-  // 3. Merge, sort by gameTime ASC then DEX DESC
-  const allNodes: PlanNode[] = [...npcNodesInRange, ...playerNodesInRange];
+  // 3. Merge (including carry-over nodes from previous tick's feature propagation)
+  const allNodes: PlanNode[] = [...npcNodesInRange, ...playerNodesInRange, ...(carryOverNodes ?? [])];
 
+  // Sort by gameTime ASC then DEX DESC
   allNodes.sort((a, b) => {
     const timeDiff = a.gameTime.localeCompare(b.gameTime);
     if (timeDiff !== 0) return timeDiff;
@@ -410,9 +414,6 @@ async function executeSingleTick(params: SingleTickParams): Promise<SingleTickRe
     const dexB = npcB?.attributes?.DEX ?? 50;
     return dexB - dexA;
   });
-
-  // Scan unplanned encounters (same-scene NPC pairs with |score| >= 60)
-  scanUnplannedEncounters(allNodes, dgsm);
 
   // 4. Execute all nodes
   const tickActions: CharacterAction[] = [];
@@ -667,14 +668,19 @@ async function executeSingleTick(params: SingleTickParams): Promise<SingleTickRe
     }
   }
 
+  // 5.5 Scan NPC co-presence → write witness memories + build synthetic encounter events
+  const encounterEvents = scanUnplannedEncounters(
+    dgsm, tickStartTime, tickActions, memoryManager, sessionId, moduleId, gameDay
+  );
+
   // 6. Built-in impact propagation
   //    Scans for actions with impact > 0, notifies affected NPCs,
   //    runs LLM impact gate, triggers plan revision if needed.
   let allPlayerEvents: PlayerWitnessEvent[] = [];
   const injectedNodes: PlanNode[] = [];
 
-  const impactEvents = tickActions.filter((a) => a.impact > 0);
-  if (impactEvents.length > 0 && isFullTick) {
+  const impactEvents = [...tickActions.filter((a) => a.impact > 0), ...encounterEvents];
+  if (impactEvents.length > 0) {
     const playerId = state.playerCharacter?.id;
 
     // Aggregate affected characters across all impact events
@@ -920,6 +926,7 @@ export async function runPlayerAction(
   const allActions: CharacterAction[] = [];
   let playerFailed = false;
   let minutesProcessed = 0;
+  let pendingInjectedNodes: PlanNode[] = [];
 
   // Loop in TICK_DURATION_MINUTES increments
   while (minutesProcessed < totalMinutes) {
@@ -931,6 +938,7 @@ export async function runPlayerAction(
       tickStartMinutes,
       tickDurationMinutes: tickDuration,
       playerNodes,
+      carryOverNodes: pendingInjectedNodes.length > 0 ? pendingInjectedNodes : undefined,
       dgsm,
       npcPlanningAgent,
       sessionId,
@@ -940,6 +948,9 @@ export async function runPlayerAction(
       ctx,
       memoryManager,
     });
+
+    // Carry injected nodes (from feature propagation) to the next tick
+    pendingInjectedNodes = tickResult.injectedNodes;
 
     allActions.push(...tickResult.actions);
 
@@ -1019,6 +1030,7 @@ export async function resumePlayerAction(
   const allActions: CharacterAction[] = [...previousActions];
   let playerFailed = false;
   let minutesProcessed = 0;
+  let pendingInjectedNodes: PlanNode[] = [];
 
   // Loop in TICK_DURATION_MINUTES increments over the remaining budget
   while (minutesProcessed < remainingMinutes) {
@@ -1030,6 +1042,7 @@ export async function resumePlayerAction(
       tickStartMinutes,
       tickDurationMinutes: tickDuration,
       playerNodes,
+      carryOverNodes: pendingInjectedNodes.length > 0 ? pendingInjectedNodes : undefined,
       dgsm,
       npcPlanningAgent,
       sessionId,
@@ -1039,6 +1052,9 @@ export async function resumePlayerAction(
       ctx,
       memoryManager,
     });
+
+    // Carry injected nodes (from feature propagation) to the next tick
+    pendingInjectedNodes = tickResult.injectedNodes;
 
     allActions.push(...tickResult.actions);
 
@@ -1088,14 +1104,25 @@ export async function resumePlayerAction(
   return { type: "completed", actions: allActions };
 }
 
-// ==================== Unplanned encounters ====================
+// ==================== Unplanned encounters (signal-only) ====================
 
+/**
+ * Detect NPC co-presence per scene after node execution.
+ * Writes a lightweight witness memory per NPC and returns synthetic
+ * impact-2 CharacterActions (one per scene) for the gate pipeline.
+ */
 function scanUnplannedEncounters(
-  queue: PlanNode[],
-  dgsm: DynamicGameStateManager
-): void {
+  dgsm: DynamicGameStateManager,
+  tickTime: string,
+  tickActions: CharacterAction[],
+  memoryManager: NpcMemoryManager | undefined,
+  sessionId: string,
+  moduleId: string,
+  gameDay: number,
+): CharacterAction[] {
   const state = dgsm.getState();
-  // Group NPCs by location at this point in time
+
+  // Group NPCs by location
   const locationGroups = new Map<string, string[]>();
   for (const npc of state.npcCharacters) {
     const loc = dgsm.getNpcLocation(npc.id);
@@ -1104,51 +1131,83 @@ function scanUnplannedEncounters(
     locationGroups.get(loc)!.push(npc.id);
   }
 
-  const existingPairs = new Set<string>();
-  // Track existing character_interaction pairs to avoid duplicates
-  for (const node of queue) {
-    if (node.type === "character_interaction" && node.targetCharacterId) {
-      const pairKey = [node.characterId, node.targetCharacterId].sort().join("_");
-      existingPairs.add(pairKey);
+  // Build dedup set from already-executed character_interaction actions
+  const interactedPairs = new Set<string>();
+  for (const action of tickActions) {
+    if (action.type === "character_interaction" && action.targetCharacterId) {
+      const pairKey = [action.characterId, action.targetCharacterId].sort().join("_");
+      interactedPairs.add(pairKey);
     }
   }
 
-  for (const [location, npcIds] of locationGroups) {
+  const encounterEvents: CharacterAction[] = [];
+
+  for (const [sceneId, npcIds] of locationGroups) {
+    if (npcIds.length < 2) continue;
+
+    // Filter out NPC pairs that already interacted this tick
+    // For each NPC, collect others they haven't interacted with
+    const npcEncounterMap = new Map<string, string[]>(); // npcId -> other NPC ids to notice
     for (let i = 0; i < npcIds.length; i++) {
       for (let j = i + 1; j < npcIds.length; j++) {
-        const idA = npcIds[i];
-        const idB = npcIds[j];
-        const pairKey = [idA, idB].sort().join("_");
-        if (existingPairs.has(pairKey)) continue;
-
-        const rel = dgsm.getRelationship(idA, idB);
-        if (!rel) continue;
-
-        if (rel.score >= 60 || rel.score <= -60) {
-          const npcA = state.npcCharacters.find((n) => n.id === idA);
-          const npcB = state.npcCharacters.find((n) => n.id === idB);
-          const isFriendly = rel.score >= 60;
-
-          // Insert temp encounter node (A initiates toward B)
-          queue.push({
-            nodeId: `encounter-${idA}-${idB}-${Date.now()}`,
-            characterId: idA,
-            characterName: npcA?.name ?? idA,
-            gameTime: state.timeOfDay,
-            action: isFriendly
-              ? `Friendly encounter with ${npcB?.name ?? idB}`
-              : `Hostile confrontation with ${npcB?.name ?? idB}`,
-            location,
-            type: "character_interaction",
-            actionType: isFriendly ? "social" : "combat",
-            impact: 2,
-            timeAdvanceMinutes: 0,
-            targetCharacterId: idB,
-            status: "pending",
-          });
-          existingPairs.add(pairKey);
-        }
+        const pairKey = [npcIds[i], npcIds[j]].sort().join("_");
+        if (interactedPairs.has(pairKey)) continue;
+        // Both NPCs notice each other
+        if (!npcEncounterMap.has(npcIds[i])) npcEncounterMap.set(npcIds[i], []);
+        if (!npcEncounterMap.has(npcIds[j])) npcEncounterMap.set(npcIds[j], []);
+        npcEncounterMap.get(npcIds[i])!.push(npcIds[j]);
+        npcEncounterMap.get(npcIds[j])!.push(npcIds[i]);
       }
     }
+
+    if (npcEncounterMap.size === 0) continue;
+
+    const sceneName = dgsm.getScene(sceneId)?.name ?? sceneId;
+
+    // Write witness memory per NPC
+    if (memoryManager) {
+      for (const [npcId, otherIds] of npcEncounterMap) {
+        const otherNames = otherIds.map((id) => {
+          const npc = state.npcCharacters.find((n) => n.id === id);
+          return npc?.name ?? id;
+        });
+        // Fire-and-forget; consistent with existing memory write pattern
+        void memoryManager.add({
+          npcId,
+          sessionId,
+          moduleId,
+          type: "witness",
+          content: `Day${gameDay} ${tickTime} [${sceneName}] - Saw ${otherNames.join(", ")} here`,
+          gameDay,
+          gameTime: tickTime,
+          location: sceneId,
+          metadata: {
+            sourceCharacterId: "__encounter__",
+            sourceAction: "co-presence",
+            impact: 2,
+          },
+        });
+      }
+    }
+
+    // Build one synthetic event per scene
+    const allNpcNames = [...npcEncounterMap.keys()].map((id) => {
+      const npc = state.npcCharacters.find((n) => n.id === id);
+      return npc?.name ?? id;
+    });
+
+    encounterEvents.push({
+      characterId: "__encounter__",
+      characterName: "Co-presence",
+      gameTime: tickTime,
+      action: `NPCs present together at ${sceneName}`,
+      location: sceneId,
+      type: "character_interaction",
+      impact: 2 as const,
+      status: "completed",
+      outcome: `${allNpcNames.join(", ")} are at ${sceneName}`,
+    });
   }
+
+  return encounterEvents;
 }
