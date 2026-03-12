@@ -517,7 +517,7 @@ export class NPCPlanningAgent {
     },
     bucketTime: string,
     language: string = "en"
-  ): Promise<{ shouldRevise: boolean; shouldReviseSchedule: boolean; witnessEntry: string; emotionChange?: { emotionType: string; intensity: number; trigger: string } }> {
+  ): Promise<{ shouldRevise: boolean; shouldReviseSchedule: boolean; witnessEntry: string }> {
     const prompt = buildImpactGatePrompt({ bucketTime, candidate, language });
 
     const response = await generateText({
@@ -526,7 +526,7 @@ export class NPCPlanningAgent {
       modelClass: ModelClass.SMALL,
     });
 
-    return parseJsonResponse<{ shouldRevise: boolean; shouldReviseSchedule: boolean; witnessEntry: string; emotionChange?: { emotionType: string; intensity: number; trigger: string } }>(response);
+    return parseJsonResponse<{ shouldRevise: boolean; shouldReviseSchedule: boolean; witnessEntry: string }>(response);
   }
 
   async updateRelationshipViaLLM(

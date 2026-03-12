@@ -30,10 +30,18 @@ export interface PersistentMentalCondition {
   description: string;
 }
 
+export interface SanityEmotionEntry {
+  emotionType: string;
+  intensity: number;
+  trigger: string;
+  characterId: string;
+}
+
 export interface SanityCharacterState {
   sanLossLog: Array<{ amount: number; gameTimeMinutes: number }>;
   activeInsanity: ActiveInsanity | null;
   persistentConditions: PersistentMentalCondition[];
+  pendingEmotions: SanityEmotionEntry[];
 }
 
 export interface BoutTableEntry {
@@ -77,6 +85,19 @@ export const BOUT_OF_MADNESS_TABLE: BoutTableEntry[] = [
   { roll: 10, boutType: "mania",                     actionRestriction: "impaired",      persistent: true, label: "Mania" },
 ];
 
+const BOUT_TO_EMOTION: Record<BoutOfMadnessType, { emotionType: string; intensity: number }> = {
+  amnesia:                   { emotionType: "confusion",  intensity: 3 },
+  psychosomatic_disability:  { emotionType: "distress",   intensity: 3 },
+  violence:                  { emotionType: "rage",       intensity: 4 },
+  paranoia:                  { emotionType: "paranoia",   intensity: 4 },
+  significant_person:        { emotionType: "delusion",   intensity: 3 },
+  faint:                     { emotionType: "shock",      intensity: 4 },
+  flee:                      { emotionType: "terror",     intensity: 5 },
+  hysterics:                 { emotionType: "hysteria",   intensity: 4 },
+  phobia:                    { emotionType: "fear",       intensity: 4 },
+  mania:                     { emotionType: "obsession",  intensity: 4 },
+};
+
 // ===== Helper functions =====
 
 /**
@@ -95,6 +116,7 @@ export function createEmptySanityState(): SanityCharacterState {
     sanLossLog: [],
     activeInsanity: null,
     persistentConditions: [],
+    pendingEmotions: [],
   };
 }
 
@@ -341,6 +363,15 @@ export function applySanityLoss(
     );
     injectInsanityCondition(dgsm, characterId, conditionStr, isPlayer);
 
+    // Push emotion derived from bout type
+    const emotionDef = BOUT_TO_EMOTION[bout.boutType];
+    charSanState.pendingEmotions.push({
+      emotionType: emotionDef.emotionType,
+      intensity: emotionDef.intensity,
+      trigger: source ?? BOUT_DESCRIPTIONS[bout.boutType],
+      characterId,
+    });
+
     // If bout is persistent (phobia/mania), also add to persistentConditions
     if (bout.persistent) {
       const subject = extractSubjectFromSource(bout.boutType as "phobia" | "mania", source);
@@ -387,6 +418,15 @@ export function applySanityLoss(
 
       // Do NOT inject condition yet (happens when onset delay expires)
 
+      // Push emotion derived from bout type (even though onset is delayed, the emotional impact is immediate)
+      const emotionDef = BOUT_TO_EMOTION[bout.boutType];
+      charSanState.pendingEmotions.push({
+        emotionType: emotionDef.emotionType,
+        intensity: emotionDef.intensity,
+        trigger: source ?? BOUT_DESCRIPTIONS[bout.boutType],
+        characterId,
+      });
+
       // If bout is persistent, add to persistentConditions
       if (bout.persistent) {
         const subject = extractSubjectFromSource(bout.boutType as "phobia" | "mania", source);
@@ -427,6 +467,26 @@ export async function generatePhobiaManiaSubject(
   _sceneId: string,
 ): Promise<string> {
   return extractSubjectFromSource(type, triggerContext);
+}
+
+// ===== Drain pending emotions =====
+
+/**
+ * Drain all pending emotions from all characters' sanity states.
+ * Returns the emotion entries and clears them from state.
+ */
+export function drainPendingEmotions(dgsm: DynamicGameStateManager): SanityEmotionEntry[] {
+  const allStates = dgsm.getFeatureState(FEATURE_ID) as Record<string, SanityCharacterState> | undefined;
+  if (!allStates) return [];
+
+  const results: SanityEmotionEntry[] = [];
+  for (const [characterId, charState] of Object.entries(allStates)) {
+    if (!charState?.pendingEmotions?.length) continue;
+    results.push(...charState.pendingEmotions);
+    charState.pendingEmotions = [];
+    setSanityState(dgsm, characterId, charState);
+  }
+  return results;
 }
 
 // ===== Helper: getTrackedCharacters =====

@@ -435,7 +435,6 @@ ${params.bucketTime}
 - Write a brief note about what you perceived and how you feel about it.
 - Set shouldRevise=true only if the events meaningfully affect what you're doing right now.
 - Set shouldReviseSchedule=true only if the events fundamentally change your plans for the rest of the day (e.g., a place you planned to visit was destroyed, someone you need to meet was arrested).
-- Include emotionChange only if the event causes a notable emotional shift (fear, anger, trust, suspicion, grief, etc.). Omit the field entirely if there is no significant emotional reaction.
 
 ## Output
 Return a single JSON object. No extra text. Always write in English.
@@ -444,12 +443,9 @@ Return a single JSON object. No extra text. Always write in English.
 {
   "shouldRevise": false,
   "shouldReviseSchedule": false,
-  "witnessEntry": "Brief description of what you perceived.",
-  "emotionChange": { "emotionType": "fear|anger|trust|suspicion|grief|etc", "intensity": 1, "trigger": "what caused it" }
+  "witnessEntry": "Brief description of what you perceived."
 }
-\`\`\`
-
-Note: "emotionChange" is optional — include it only when the event triggers a notable emotional shift. "intensity" ranges from 1 (mild) to 5 (overwhelming).`;
+\`\`\``;
 }
 
 // ===================== Relationship Update (GM perspective) =====================

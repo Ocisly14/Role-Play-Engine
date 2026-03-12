@@ -15,6 +15,7 @@ import { type SessionRagChunkInput, SessionRagService } from "../knowledge/sessi
 import type { GameEngineRegistry } from "../../engine/registry.js";
 import type { ExecutionContext, TickRuntimeContext } from "../../engine/types.js";
 import { findAffectedCharacters } from "../../engine/shared/impactPropagation.js";
+import { drainPendingEmotions } from "../../engine/features/sanityFeature.js";
 import type { NpcMemoryManager } from "../../memory/NpcMemoryManager.js";
 
 // ==================== Time helpers ====================
@@ -818,21 +819,6 @@ async function executeSingleTick(params: SingleTickParams): Promise<SingleTickRe
             });
           }
 
-          // Write emotion memory if the impact gate returned an emotional shift
-          if (result.emotionChange && memoryManager) {
-            await memoryManager.add({
-              npcId,
-              sessionId,
-              moduleId,
-              type: "emotion",
-              content: `Feeling ${result.emotionChange.emotionType} due to ${result.emotionChange.trigger}`,
-              gameDay,
-              gameTime: tickRuntime.tickTime,
-              location: npcLoc ?? undefined,
-              metadata: result.emotionChange,
-            });
-          }
-
           if (result.shouldRevise) {
             // Use unified memory context for revision, or empty array as fallback
             const memoryLog = reactionContext ? [reactionContext] : [];
@@ -928,6 +914,28 @@ async function executeSingleTick(params: SingleTickParams): Promise<SingleTickRe
     }
 
     registry.updatePropagationSources(feature.id, nextSources);
+  }
+
+  // Drain sanity-triggered emotions and write as memory
+  if (memoryManager) {
+    const emotions = drainPendingEmotions(dgsm);
+    for (const emo of emotions) {
+      await memoryManager.add({
+        npcId: emo.characterId,
+        sessionId,
+        moduleId,
+        type: "emotion",
+        content: `Feeling ${emo.emotionType} due to ${emo.trigger}`,
+        gameDay,
+        gameTime: tickRuntime.tickTime,
+        location: dgsm.getNpcLocation(emo.characterId) ?? undefined,
+        metadata: {
+          emotionType: emo.emotionType,
+          intensity: emo.intensity,
+          trigger: emo.trigger,
+        },
+      });
+    }
   }
 
   // Store witness events in contextualData for KeeperAgent

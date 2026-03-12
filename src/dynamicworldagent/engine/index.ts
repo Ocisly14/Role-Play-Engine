@@ -18,5 +18,5 @@ export { fireFeature } from "./features/fireFeature.js";
 export { weatherFeature } from "./features/weatherFeature.js";
 export { lightingFeature } from "./features/lightingFeature.js";
 export { staminaFeature } from "./features/staminaFeature.js";
-export { sanityFeature, applySanityLoss } from "./features/sanityFeature.js";
-export type { SanityCharacterState, BoutOfMadnessType, ActionRestriction } from "./features/sanityFeature.js";
+export { sanityFeature, applySanityLoss, drainPendingEmotions } from "./features/sanityFeature.js";
+export type { SanityCharacterState, SanityEmotionEntry, BoutOfMadnessType, ActionRestriction } from "./features/sanityFeature.js";
