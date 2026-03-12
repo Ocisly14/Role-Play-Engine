@@ -4,7 +4,6 @@ import { generateText, ModelClass } from "../../../models/index.js";
 import type { DynamicGameStateManager } from "../../state/DynamicGameState.js";
 import type { NpcMemoryManager } from "../../memory/NpcMemoryManager.js";
 import {
-  buildGenerateLongTermIntentPrompt,
   buildDailySchedulePrompt,
   buildDetailedNodesPrompt,
   buildReviseSchedulePrompt,
@@ -47,38 +46,19 @@ export class NPCPlanningAgent {
     return this.runtime;
   }
 
-  async generateLongTermIntents(
+  async seedLongTermIntents(
     dgsm: DynamicGameStateManager,
     sessionId: string,
     moduleId: string,
-    language: string = "en"
   ): Promise<void> {
     const state = dgsm.getState();
     const npcs = state.npcCharacters;
-    const moduleBackground = state.moduleDigest?.moduleNotes ?? state.moduleDigest?.introduction ?? "";
-    const truthTimelineRaw = state.truthTimeline ?? [];
-    const truthTimeline = truthTimelineRaw
-      .map((t) => `- ${t.time ?? ""}: ${t.event}`)
-      .join("\n");
 
     await Promise.all(
       npcs.map(async (npc) => {
-        const npcProfile = this.formatNpcProfile(npc);
-        const prompt = buildGenerateLongTermIntentPrompt({
-          npcName: npc.name,
-          npcProfile,
-          truthTimeline,
-          moduleBackground,
-          language,
-        });
-
-        const response = await generateText({
-          runtime: this.runtime,
-          context: prompt,
-          modelClass: ModelClass.SMALL,
-        });
-
-        const parsed = parseJsonResponse<{ intent: string }>(response);
+        const intent = npc.goals?.length
+          ? npc.goals.join("; ")
+          : npc.background ?? "No specific goal.";
 
         await this.prisma.npcLongTermIntent.upsert({
           where: {
@@ -90,21 +70,20 @@ export class NPCPlanningAgent {
             moduleId,
             npcId: npc.id,
             npcName: npc.name,
-            intent: parsed.intent,
+            intent,
           },
           update: {
-            intent: parsed.intent,
+            intent,
           },
         });
 
-        // Write long-term intent to unified memory
         if (this.memoryManager) {
           await this.memoryManager.add({
             npcId: npc.id,
             sessionId,
             moduleId,
             type: "plan",
-            content: parsed.intent,
+            content: intent,
             gameDay: 1,
             gameTime: "00:00",
             metadata: { planType: "long_term" as const },
@@ -176,7 +155,7 @@ export class NPCPlanningAgent {
     const scenarioConditions = this.formatNpcLocalConditions(dgsm, npcLocation);
     const worldStatePrompt = this.buildNpcWorldStatePrompt(dgsm, npc.id, npcLocation, registry);
 
-    const prompt = buildDailySchedulePrompt({
+    const { systemPrompt, userPrompt } = buildDailySchedulePrompt({
       npcName: npc.name,
       npcId: npc.id,
       npcProfile,
@@ -193,8 +172,9 @@ export class NPCPlanningAgent {
 
     const response = await generateText({
       runtime: this.runtime,
-      context: prompt,
-      modelClass: ModelClass.SMALL,
+      context: userPrompt,
+      customSystemPrompt: systemPrompt,
+      modelClass: ModelClass.MEDIUM,
     });
 
     const schedule = parseJsonResponse<ScheduleEntry[]>(response);
@@ -280,7 +260,7 @@ export class NPCPlanningAgent {
 
     const npcInventory = formatItemList(dgsm.getNpcInventory(npcId));
 
-    const prompt = buildDetailedNodesPrompt({
+    const { systemPrompt, userPrompt } = buildDetailedNodesPrompt({
       npcName: npc.name,
       npcId: npc.id,
       npcProfile: this.formatNpcProfile(npc),
@@ -307,8 +287,9 @@ export class NPCPlanningAgent {
 
     const response = await generateText({
       runtime: this.runtime,
-      context: prompt,
-      modelClass: ModelClass.SMALL,
+      context: userPrompt,
+      customSystemPrompt: systemPrompt,
+      modelClass: ModelClass.MEDIUM,
     });
 
     const rawNodes = parseJsonResponse<any[]>(response);
@@ -362,10 +343,10 @@ export class NPCPlanningAgent {
         select: { moduleId: true },
       }))?.moduleId;
       if (moduleId) {
-        // Generate long-term intent if missing
+        // Seed long-term intent from module data if missing
         const hasIntent = await this.getLongTermIntent(sessionId, npcId);
         if (!hasIntent) {
-          await this.generateLongTermIntents(dgsm, sessionId, moduleId, language);
+          await this.seedLongTermIntents(dgsm, sessionId, moduleId);
         }
         await this.generateSingleNpcSchedule(dgsm, sessionId, moduleId, npcId, gameDay, language, registry);
       }
@@ -419,7 +400,7 @@ export class NPCPlanningAgent {
 
     const npcLocation = state.npcLocations[npcId];
 
-    const prompt = buildReviseSchedulePrompt({
+    const { systemPrompt, userPrompt } = buildReviseSchedulePrompt({
       npcName: npc.name,
       npcId: npc.id,
       npcProfile: this.formatNpcProfile(npc),
@@ -438,8 +419,9 @@ export class NPCPlanningAgent {
 
     const response = await generateText({
       runtime: this.runtime,
-      context: prompt,
-      modelClass: ModelClass.SMALL,
+      context: userPrompt,
+      customSystemPrompt: systemPrompt,
+      modelClass: ModelClass.MEDIUM,
     });
 
     const parsed = parseJsonResponse<{
@@ -495,7 +477,7 @@ export class NPCPlanningAgent {
       })
       .join("\n");
 
-    const prompt = buildRevisePlansPrompt({
+    const { systemPrompt, userPrompt } = buildRevisePlansPrompt({
       npcName: npc.name,
       npcId: npc.id,
       npcProfile: this.formatNpcProfile(npc),
@@ -526,8 +508,9 @@ export class NPCPlanningAgent {
 
     const response = await generateText({
       runtime: this.runtime,
-      context: prompt,
-      modelClass: ModelClass.SMALL,
+      context: userPrompt,
+      customSystemPrompt: systemPrompt,
+      modelClass: ModelClass.MEDIUM,
     });
 
     const parsed = parseJsonResponse<{
@@ -574,11 +557,16 @@ export class NPCPlanningAgent {
     bucketTime: string,
     language: string = "en"
   ): Promise<{ shouldRevise: boolean; shouldReviseSchedule: boolean; witnessEntry: string }> {
-    const prompt = buildImpactGatePrompt({ bucketTime, candidate, language });
+    const { systemPrompt, userPrompt } = buildImpactGatePrompt({
+      bucketTime,
+      candidate,
+      language,
+    });
 
     const response = await generateText({
       runtime: this.runtime,
-      context: prompt,
+      context: userPrompt,
+      customSystemPrompt: systemPrompt,
       modelClass: ModelClass.SMALL,
     });
 
@@ -809,7 +797,7 @@ export class NPCPlanningAgent {
 
     const existingKnowledgeIds = (npc.knowledge ?? []).map((k) => k.id);
 
-    const prompt = buildSummarizeDayMemoryPrompt({
+    const { systemPrompt, userPrompt } = buildSummarizeDayMemoryPrompt({
       npcName: npc.name,
       npcProfile: this.formatNpcProfile(npc),
       gameDay,
@@ -821,7 +809,8 @@ export class NPCPlanningAgent {
 
     const response = await generateText({
       runtime: this.runtime,
-      context: prompt,
+      context: userPrompt,
+      customSystemPrompt: systemPrompt,
       modelClass: ModelClass.SMALL,
     });
 

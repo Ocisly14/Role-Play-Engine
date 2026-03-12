@@ -800,7 +800,7 @@ function createMockRuntime(overrides?: Partial<TickRuntimeContext>): TickRuntime
     tickDurationMinutes: 5,
     npcPlanning: {
       getPendingNodes: async () => [],
-      runImpactGateForNpc: async () => ({ shouldRevise: false, witnessEntry: "" }),
+      runImpactGateForNpc: async () => ({ shouldRevise: false, shouldReviseSchedule: false, witnessEntry: "" }),
       revisePlans: async () => {},
     },
     ...overrides,

@@ -1,5 +1,12 @@
 import type { ScheduleEntry } from "./types.js";
 
+// ===================== Shared Type =====================
+
+export interface PromptParts {
+  systemPrompt: string;
+  userPrompt: string;
+}
+
 // ===================== Day Memory Summarization =====================
 
 export interface SummarizeDayMemoryParams {
@@ -12,7 +19,7 @@ export interface SummarizeDayMemoryParams {
   language: string;
 }
 
-export function buildSummarizeDayMemoryPrompt(params: SummarizeDayMemoryParams): string {
+export function buildSummarizeDayMemoryPrompt(params: SummarizeDayMemoryParams): PromptParts {
   const receivedSection = params.receivedKnowledge.length > 0
     ? params.receivedKnowledge.map(k => `- [${k.id}] (from ${k.from}) "${k.text}" (${k.category})`).join("\n")
     : "None.";
@@ -21,24 +28,12 @@ export function buildSummarizeDayMemoryPrompt(params: SummarizeDayMemoryParams):
     ? params.existingKnowledgeIds.join(", ")
     : "(none)";
 
-  return `You are ${params.npcName}, a character in a Call of Cthulhu tabletop RPG.
+  const systemPrompt = `You are an NPC character in a Call of Cthulhu tabletop RPG.
 
 ## Task
-It's the end of Day ${params.gameDay}. Review everything that happened today and produce two outputs:
+It's the end of the day. Review everything that happened today and produce two outputs:
 1. **Long-term memory**: The key moments worth remembering — what matters to you going forward.
 2. **New knowledge**: Any facts, secrets, or observations you learned today that you didn't know before.
-
-## Who You Are
-${params.npcProfile}
-
-## Your Existing Knowledge IDs
-${existingIds}
-
-## Today's Events
-${params.eventLog}
-
-## Knowledge Received Today
-${receivedSection}
 
 ## Instructions
 
@@ -52,7 +47,7 @@ ${receivedSection}
 ### New Knowledge
 - Review "Knowledge Received Today" and "Today's Events" for new information
 - For knowledge received from other characters, keep the original ID and text — decide whether to accept it
-- For things you observed or deduced yourself, generate a new ID (e.g. "learned_day${params.gameDay}_1")
+- For things you observed or deduced yourself, generate a new ID (e.g. "learned_dayN_1")
 - Do NOT include knowledge you already have (check "Your Existing Knowledge IDs")
 - **category**: "knowledge" for facts and information, "secret" for things you want to keep hidden from others
 - **difficulty**: How hard it would be for someone to extract this from you — "automatic" (you'd share freely), "regular", "hard", "extreme" (you'd never willingly reveal)
@@ -72,9 +67,26 @@ Return a JSON object. No extra text. Always write in English.
   ]
 }
 \`\`\``;
+
+  const userPrompt = `## Day ${params.gameDay}
+
+## Who You Are
+${params.npcProfile}
+
+## Your Existing Knowledge IDs
+${existingIds}
+
+## Today's Events
+${params.eventLog}
+
+## Knowledge Received Today
+${receivedSection}`;
+
+  return { systemPrompt, userPrompt };
 }
 
 // ===================== Long-Term Intent (GM perspective) =====================
+// NOTE: Excluded from PromptParts refactor — called once on init, low cache value.
 
 export interface LongTermIntentParams {
   npcName: string;
@@ -129,37 +141,13 @@ export interface DailyScheduleParams {
   memoryContext?: string;
 }
 
-export function buildDailySchedulePrompt(params: DailyScheduleParams): string {
-  return `You are ${params.npcName}, a character in a Call of Cthulhu tabletop RPG.
+export function buildDailySchedulePrompt(params: DailyScheduleParams): PromptParts {
+  const systemPrompt = `You are an NPC character in a Call of Cthulhu tabletop RPG.
 
 ## Task
 Plan your day. Think about what you need to do and where you need to go — from now until you go to sleep.
 
 Write your plan as an ordered list of activities: WHERE you'll go and WHAT you intend to do there. Each entry is one sentence — just your intent, not the details of how you'll do it. The order matters — it's the sequence you'll follow.
-
-Your character ID is "${params.npcId}". Today is Day ${params.gameDay}.
-
-## Who You Are
-${params.npcProfile}
-
-## Your Goal
-${params.longTermIntent}
-
-${params.memoryContext ? `## Your Memory\n${params.memoryContext}` : ""}
-
-## People You Know
-${params.relationships}
-
-## Places You Know
-${params.sceneMap}
-
-## Current Conditions Around You
-${params.scenarioConditions || "Nothing unusual."}
-
-${params.worldStatePrompt || ""}
-
-## Right Now
-Day ${params.gameDay}, ${params.currentTime}
 
 ## How to Plan Your Day
 - Think about who you are — your job, your habits, your personality. Plan a day that feels natural for someone like you.
@@ -177,14 +165,39 @@ Return a JSON array in the order you plan to do them. No extra text. Always writ
 \`\`\`json
 [
   { "location": "home_kitchen", "activity": "Have breakfast and review notes from yesterday" },
-  { "location": "library_main", "activity": "Search the archives for information about the ritual" },
-  { "location": "home_kitchen", "activity": "Lunch break" }
+  { "location": "library_main", "activity": "Search the archives for information about the ritual" }
 ]
 \`\`\`
 
 Each entry has exactly two fields:
 - \`"location"\`: scene ID — where you need to go for this activity
 - \`"activity"\`: one sentence — what you intend to do there`;
+
+  const userPrompt = `## Places You Know
+${params.sceneMap}
+
+## Current Conditions Around You
+${params.scenarioConditions || "Nothing unusual."}
+
+${params.worldStatePrompt || ""}
+
+## Right Now
+Day ${params.gameDay}, ${params.currentTime}
+
+## Character: ${params.npcName} (${params.npcId})
+
+## Who You Are
+${params.npcProfile}
+
+## Your Goal
+${params.longTermIntent}
+
+${params.memoryContext ? `## Your Memory\n${params.memoryContext}` : ""}
+
+## People You Know
+${params.relationships}`;
+
+  return { systemPrompt, userPrompt };
 }
 
 // ===================== Detailed Nodes (Layer 2 — fine) =====================
@@ -248,10 +261,10 @@ Add type-specific fields as needed:
 - **object_interaction**: \`"objectInteractionPayload"\` with \`itemUpdates\`/\`targetItemUpdates\` for non-standard use
 - **scene_interaction**: optional \`"sceneConnectionEffect"\``;
 
-export function buildDetailedNodesPrompt(params: DetailedNodesParams): string {
+export function buildDetailedNodesPrompt(params: DetailedNodesParams): PromptParts {
   const todayPlan = JSON.stringify(params.todayPlan, null, 2);
 
-  return `You are ${params.npcName}, a character in a Call of Cthulhu tabletop RPG.
+  const systemPrompt = `You are an NPC character in a Call of Cthulhu tabletop RPG.
 
 ## Task
 Look at your full plan for today and what has already happened. First decide which plan step is the next one you should actually do now. Then break only that next step into concrete action nodes.
@@ -260,7 +273,26 @@ Do not expand the whole day. Do not repeat plan steps that your memory log alrea
 
 Set each node's \`location\` to the scene where that action happens. If the next step is not at your current location, include movement nodes first. Cross-location travel is handled automatically.
 
-Your character ID is "${params.npcId}".
+## How To Choose The Next Step
+- Use "Your Plan For Today" as the source of truth for the intended sequence.
+- Use "What Happened Today So Far" to judge which planned steps are already done, blocked, disrupted, or no longer necessary.
+- Choose exactly one next plan step to execute now.
+- If all meaningful plan steps are already done, return an empty JSON array.
+
+## When Your Actions Need a Skill Check
+- Everyday activities, simple movement, friendly conversation → **no actionType** (auto-succeed)
+- Searching for hidden things, persuading reluctant people, sneaking, fighting → **set actionType**
+
+${params.handlerPrompt || DEFAULT_DETAILED_NODE_TYPE_REF}
+
+${params.planningPrompt || ""}
+
+${params.outputSchemaPrompt || DEFAULT_DETAILED_OUTPUT_SCHEMA}`;
+
+  const userPrompt = `## Right Now
+Day ${params.gameDay}, ${params.currentTime}
+
+## Character: ${params.npcName} (${params.npcId})
 
 ## Who You Are
 ${params.npcProfile}
@@ -292,26 +324,9 @@ ${params.sceneItems || "Nothing here."}
 ${params.sceneNpcs || "You're alone."}
 
 ## What You're Carrying
-${params.npcInventory || "Nothing."}
+${params.npcInventory || "Nothing."}`;
 
-## Right Now
-Day ${params.gameDay}, ${params.currentTime}
-
-## How To Choose The Next Step
-- Use "Your Plan For Today" as the source of truth for the intended sequence.
-- Use "What Happened Today So Far" to judge which planned steps are already done, blocked, disrupted, or no longer necessary.
-- Choose exactly one next plan step to execute now.
-- If all meaningful plan steps are already done, return an empty JSON array.
-
-## When Your Actions Need a Skill Check
-- Everyday activities, simple movement, friendly conversation → **no actionType** (auto-succeed)
-- Searching for hidden things, persuading reluctant people, sneaking, fighting → **set actionType**
-
-${params.handlerPrompt || DEFAULT_DETAILED_NODE_TYPE_REF}
-
-${params.planningPrompt || ""}
-
-${params.outputSchemaPrompt || DEFAULT_DETAILED_OUTPUT_SCHEMA}`;
+  return { systemPrompt, userPrompt };
 }
 
 // ===================== Schedule Revision (Layer 1) =====================
@@ -333,43 +348,13 @@ export interface ReviseScheduleParams {
   language: string;
 }
 
-export function buildReviseSchedulePrompt(params: ReviseScheduleParams): string {
-  return `You are ${params.npcName}, a character in a Call of Cthulhu tabletop RPG.
-
-## What Just Happened
-${params.triggerDescription}
+export function buildReviseSchedulePrompt(params: ReviseScheduleParams): PromptParts {
+  const systemPrompt = `You are an NPC character in a Call of Cthulhu tabletop RPG.
 
 ## Task
 Something significant just happened. Look at your remaining plans for today and decide: do you need to change anything?
 
 Think about how this event affects your goals and your safety. Adjust your schedule if needed — you can change plans, add new ones, drop old ones, or rearrange the order. If the event doesn't really affect your plans, leave them as they are.
-
-Your character ID is "${params.npcId}". Today is Day ${params.gameDay}.
-
-## Who You Are
-${params.npcProfile}
-
-## Your Goal
-${params.longTermIntent}
-
-${params.memoryContext ? `## Your Memory\n${params.memoryContext}` : ""}
-
-## People You Know
-${params.relationships}
-
-## Places You Know
-${params.sceneMap}
-
-## Current Conditions Around You
-${params.scenarioConditions || "Nothing unusual."}
-
-${params.worldStatePrompt || ""}
-
-## Your Remaining Plans for Today
-${params.remainingSchedule}
-
-## Right Now
-Day ${params.gameDay}, ${params.currentTime}
 
 ## Instructions
 - Only change what the event actually affects. Don't rewrite plans that are still fine.
@@ -389,6 +374,38 @@ Return a single JSON object. No extra text. Always write in English.
   "updatedLongTermIntent": "only if shouldUpdateLongTermIntent is true"
 }
 \`\`\``;
+
+  const userPrompt = `## Places You Know
+${params.sceneMap}
+
+## Current Conditions Around You
+${params.scenarioConditions || "Nothing unusual."}
+
+${params.worldStatePrompt || ""}
+
+## Right Now
+Day ${params.gameDay}, ${params.currentTime}
+
+## Character: ${params.npcName} (${params.npcId})
+
+## Who You Are
+${params.npcProfile}
+
+## Your Goal
+${params.longTermIntent}
+
+${params.memoryContext ? `## Your Memory\n${params.memoryContext}` : ""}
+
+## People You Know
+${params.relationships}
+
+## What Just Happened
+${params.triggerDescription}
+
+## Your Remaining Plans for Today
+${params.remainingSchedule}`;
+
+  return { systemPrompt, userPrompt };
 }
 
 // ===================== Plan Node Revision (Layer 2) =====================
@@ -428,13 +445,10 @@ Return a single JSON object. No extra text. Always write in English.
 }
 \`\`\``;
 
-export function buildRevisePlansPrompt(params: RevisePlansParams): string {
+export function buildRevisePlansPrompt(params: RevisePlansParams): PromptParts {
   const todayPlan = JSON.stringify(params.todayPlan, null, 2);
 
-  return `You are ${params.npcName}, a character in a Call of Cthulhu tabletop RPG.
-
-## What Just Happened
-${params.triggerDescription}
+  const systemPrompt = `You are an NPC character in a Call of Cthulhu tabletop RPG.
 
 ## Task
 Something just disrupted your plans. Look at what you were about to do and decide how to adjust.
@@ -443,13 +457,33 @@ You can reorder, change, add, or drop actions. If this event fundamentally chang
 
 Set each node's \`location\` to the scene where that action happens. If the next step is not at your current location, include movement nodes first.
 
-Your character ID is "${params.npcId}".
+## Instructions
+- Only change what the event actually affects. Don't rewrite actions that are still fine.
+- You may reorder, change, add, or drop actions.
+
+## When Your Actions Need a Skill Check
+- Everyday activities, simple movement, friendly conversation → **no actionType** (auto-succeed)
+- Searching for hidden things, persuading reluctant people, sneaking, fighting → **set actionType**
+
+${params.handlerPrompt || DEFAULT_DETAILED_NODE_TYPE_REF}
+
+${params.planningPrompt || ""}
+
+${params.outputSchemaPrompt || REVISE_PLANS_OUTPUT_SCHEMA}`;
+
+  const userPrompt = `## Right Now
+Day ${params.gameDay}, ${params.currentTime}
+
+## Character: ${params.npcName} (${params.npcId})
 
 ## Who You Are
 ${params.npcProfile}
 
 ## Your Goal
 ${params.longTermIntent}
+
+## What Just Happened
+${params.triggerDescription}
 
 ## Your Plan For Today
 ${todayPlan}
@@ -478,27 +512,12 @@ ${params.sceneItems || "Nothing here."}
 ${params.sceneNpcs || "You're alone."}
 
 ## What You're Carrying
-${params.npcInventory || "Nothing."}
+${params.npcInventory || "Nothing."}`;
 
-## Right Now
-Day ${params.gameDay}, ${params.currentTime}
-
-## Instructions
-- Only change what the event actually affects. Don't rewrite actions that are still fine.
-- You may reorder, change, add, or drop actions.
-
-## When Your Actions Need a Skill Check
-- Everyday activities, simple movement, friendly conversation → **no actionType** (auto-succeed)
-- Searching for hidden things, persuading reluctant people, sneaking, fighting → **set actionType**
-
-${params.handlerPrompt || DEFAULT_DETAILED_NODE_TYPE_REF}
-
-${params.planningPrompt || ""}
-
-${params.outputSchemaPrompt || REVISE_PLANS_OUTPUT_SCHEMA}`;
+  return { systemPrompt, userPrompt };
 }
 
-// ===================== Impact Gate =====================
+// ===================== Impact Gate (per-NPC) =====================
 
 export interface ImpactGateParams {
   bucketTime: string;
@@ -515,33 +534,21 @@ export interface ImpactGateParams {
   language: string;
 }
 
-export function buildImpactGatePrompt(params: ImpactGateParams): string {
+export function buildImpactGatePrompt(params: ImpactGateParams): PromptParts {
   const c = params.candidate;
 
   const memorySection = c.memoryContext
     ? `\n## Relevant Memories\n${c.memoryContext}\n`
     : "";
 
-  return `You are ${c.npcName}, a character in a Call of Cthulhu tabletop RPG.
+  const systemPrompt = `You are an NPC character in a Call of Cthulhu tabletop RPG.
 
-## What Just Happened
-${c.triggeringEvents}
-${memorySection}
 ## Task
 You just witnessed something. Think about what you saw and how it affects you.
 
 Decide:
 1. Should you change what you're doing **right now**? (shouldRevise)
 2. Should you change your **plans for the rest of the day**? (shouldReviseSchedule)
-
-## Who You Are
-- Current location: ${c.currentLocation}
-- Your goal: ${c.longTermIntent}
-- Your plan for today: ${c.todayScheduleSummary || "No schedule."}
-- What you're doing right now: ${c.currentDetailedPlan || "Nothing planned."}
-
-## Right Now
-${params.bucketTime}
 
 ## Instructions
 - Write a brief note about what you perceived and how you feel about it.
@@ -558,9 +565,26 @@ Return a single JSON object. No extra text. Always write in English.
   "witnessEntry": "Brief description of what you perceived."
 }
 \`\`\``;
+
+  const userPrompt = `You are ${c.npcName}.
+
+## What Just Happened
+${c.triggeringEvents}
+${memorySection}
+## Who You Are
+- Current location: ${c.currentLocation}
+- Your goal: ${c.longTermIntent}
+- Your plan for today: ${c.todayScheduleSummary || "No schedule."}
+- What you're doing right now: ${c.currentDetailedPlan || "Nothing planned."}
+
+## Right Now
+${params.bucketTime}`;
+
+  return { systemPrompt, userPrompt };
 }
 
 // ===================== Relationship Update (GM perspective) =====================
+// NOTE: Excluded from PromptParts refactor — both profiles unique per call, low cache value.
 
 export interface RelationshipUpdateParams {
   npcAName: string;

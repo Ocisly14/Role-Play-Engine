@@ -88,7 +88,7 @@ function createMockRuntime(): TickRuntimeContext {
     tickTime: "08:00", tickDurationMinutes: 5,
     npcPlanning: {
       getPendingNodes: async () => [],
-      runImpactGateForNpc: async () => ({ shouldRevise: false, witnessEntry: "" }),
+      runImpactGateForNpc: async () => ({ shouldRevise: false, shouldReviseSchedule: false, witnessEntry: "" }),
       revisePlans: async () => {},
     },
   };

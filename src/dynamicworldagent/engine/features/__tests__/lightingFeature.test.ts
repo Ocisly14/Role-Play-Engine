@@ -76,7 +76,7 @@ function createRuntime(tickTime: string): TickRuntimeContext {
     tickTime, tickDurationMinutes: 5,
     npcPlanning: {
       getPendingNodes: async () => [],
-      runImpactGateForNpc: async () => ({ shouldRevise: false, witnessEntry: "" }),
+      runImpactGateForNpc: async () => ({ shouldRevise: false, shouldReviseSchedule: false, witnessEntry: "" }),
       revisePlans: async () => {},
     },
   };

@@ -78,10 +78,11 @@ export interface NpcPlanningCapability {
       todayScheduleSummary: string;
       currentDetailedPlan: string;
       triggeringEvents: string;
+      memoryContext?: string;
     },
     bucketTime: string,
     language: string
-  ): Promise<{ shouldRevise: boolean; witnessEntry: string }>;
+  ): Promise<{ shouldRevise: boolean; shouldReviseSchedule: boolean; witnessEntry: string }>;
   revisePlans(
     dgsm: DynamicGameStateManager, sessionId: string, npcId: string,
     context: RevisePlansContext, language: string, registry?: import("./registry.js").GameEngineRegistry
