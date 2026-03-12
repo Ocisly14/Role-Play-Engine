@@ -222,7 +222,7 @@ export class NPCPlanningAgent {
     // Write daily plan to unified memory
     if (this.memoryManager) {
       const scheduleDescription = schedule
-        .map((s: any) => `${s.time}: ${s.activity} at ${s.location}`)
+        .map((s: any, i: number) => `${i + 1}. ${s.activity} at ${s.location}`)
         .join("; ");
       await this.memoryManager.add({
         npcId: npc.id,
@@ -231,44 +231,16 @@ export class NPCPlanningAgent {
         type: "plan",
         content: `Today's plan: ${scheduleDescription}`,
         gameDay,
-        gameTime: schedule[0]?.time ?? "08:00",
+        gameTime: state.timeOfDay,
         metadata: { planType: "daily" as const },
       });
     }
-  }
-
-  async consumeNextScheduleEntry(
-    sessionId: string,
-    npcId: string,
-    gameDay: number,
-    currentTime: string
-  ): Promise<ScheduleEntry | null> {
-    const plan = await this.prisma.npcDailyPlan.findUnique({
-      where: { sessionId_npcId_gameDay: { sessionId, npcId, gameDay } },
-    });
-    if (!plan?.schedule) return null;
-
-    const schedule = plan.schedule as unknown as ScheduleEntry[];
-    // Find next entry at or after current time
-    const idx = schedule.findIndex((e) => e.time >= currentTime);
-    if (idx === -1) return null;
-
-    const entry = schedule[idx];
-    // Remove consumed entry
-    const remaining = [...schedule.slice(0, idx), ...schedule.slice(idx + 1)];
-    await this.prisma.npcDailyPlan.update({
-      where: { sessionId_npcId_gameDay: { sessionId, npcId, gameDay } },
-      data: { schedule: remaining as any },
-    });
-
-    return entry;
   }
 
   async generateDetailedNodes(
     dgsm: DynamicGameStateManager,
     sessionId: string,
     npcId: string,
-    entry: ScheduleEntry,
     gameDay: number,
     language: string = "en",
     registry?: GameEngineRegistry
@@ -277,31 +249,27 @@ export class NPCPlanningAgent {
     const npc = state.npcCharacters.find((n) => n.id === npcId);
     if (!npc) return [];
 
-    // Get memory context from unified memory system
-    let memoryContext: string | undefined;
-    if (this.memoryManager) {
-      memoryContext = await this.memoryManager.getContext({
-        npcId,
-        sessionId,
-        purpose: "scheduling",
-        query: entry.activity,
-      });
-    }
-    // Legacy field — kept empty when using unified memory
-    const longTermIntent = memoryContext ? "" : await this.getLongTermIntent(sessionId, npcId);
+    const plan = await this.prisma.npcDailyPlan.findUnique({
+      where: { sessionId_npcId_gameDay: { sessionId, npcId, gameDay } },
+    });
+    const schedule = (plan?.schedule as unknown as ScheduleEntry[]) ?? [];
+    if (schedule.length === 0) return [];
 
-    // Get scene context for the target location
-    const targetScene = state.scenes.get(entry.location) ?? null;
-    const sceneDescription = targetScene?.description ?? "";
-    const sceneItems = formatSceneItems(targetScene);
-    const sceneConditions = targetScene
-      ? dgsm.getSceneConditions(targetScene.id).map((c) => `- ${c.description}`).join("\n")
+    const longTermIntent = await this.getLongTermIntent(sessionId, npcId);
+    const memoryLog = await this.getNpcDayMemoryLog(sessionId, npcId, gameDay);
+
+    const currentLocation = state.npcLocations[npcId] ?? "";
+    const currentScene = currentLocation ? state.scenes.get(currentLocation) ?? null : null;
+    const sceneDescription = currentScene?.description ?? "";
+    const sceneItems = formatSceneItems(currentScene);
+    const sceneConditions = currentScene
+      ? dgsm.getSceneConditions(currentScene.id).map((c) => `- ${c.description}`).join("\n")
       : "";
-    const worldStatePrompt = this.buildNpcWorldStatePrompt(dgsm, npcId, entry.location, registry);
+    const worldStatePrompt = this.buildNpcWorldStatePrompt(dgsm, npcId, currentLocation, registry);
 
-    // NPCs at target location
+    // NPCs at current location
     const npcsAtLocation = state.npcCharacters
-      .filter((n) => n.id !== npcId && state.npcLocations[n.id] === entry.location)
+      .filter((n) => n.id !== npcId && state.npcLocations[n.id] === currentLocation)
       .map((n) => `- ${n.name} (${n.id})`)
       .join("\n");
 
@@ -312,23 +280,23 @@ export class NPCPlanningAgent {
       npcId: npc.id,
       npcProfile: this.formatNpcProfile(npc),
       longTermIntent,
-      memoryLog: "",
-      scheduleEntry: entry,
+      memoryLog,
+      todayPlan: schedule,
+      currentLocation,
       sceneDescription,
       sceneItems,
       sceneNpcs: npcsAtLocation,
       sceneConditions,
       worldStatePrompt,
       npcInventory,
-      currentTime: entry.time,
+      currentTime: state.timeOfDay,
       gameDay,
       language,
-      memoryContext,
       handlerPrompt: registry?.buildHandlerPrompt(),
       planningPrompt: registry?.buildPlanningPrompt(),
       outputSchemaPrompt: registry?.buildOutputSchemaPrompt({
         isPlayer: false,
-        extraInstructions: "Use the schedule entry time as the starting gameTime.",
+        extraInstructions: "Use the current time as the starting gameTime.",
       }),
     });
 
@@ -348,10 +316,10 @@ export class NPCPlanningAgent {
     }));
 
     // Append new nodes to existing nodes in DB
-    const plan = await this.prisma.npcDailyPlan.findUnique({
+    const existingPlan = await this.prisma.npcDailyPlan.findUnique({
       where: { sessionId_npcId_gameDay: { sessionId, npcId, gameDay } },
     });
-    const existingNodes = (plan?.nodes as unknown as PlanNode[]) ?? [];
+    const existingNodes = (existingPlan?.nodes as unknown as PlanNode[]) ?? [];
     const mergedNodes = [...existingNodes, ...enrichedNodes];
 
     await this.prisma.npcDailyPlan.update({
@@ -398,10 +366,14 @@ export class NPCPlanningAgent {
       }
     }
 
-    const entry = await this.consumeNextScheduleEntry(sessionId, npcId, gameDay, currentTime);
-    if (!entry) return; // No more schedule entries for today
+    const refreshedPlan = await this.prisma.npcDailyPlan.findUnique({
+      where: { sessionId_npcId_gameDay: { sessionId, npcId, gameDay } },
+      select: { schedule: true },
+    });
+    const schedule = (refreshedPlan?.schedule as unknown as ScheduleEntry[]) ?? [];
+    if (schedule.length === 0) return; // No more schedule entries for today
 
-    await this.generateDetailedNodes(dgsm, sessionId, npcId, entry, gameDay, language, registry);
+    await this.generateDetailedNodes(dgsm, sessionId, npcId, gameDay, language, registry);
   }
 
   async reviseSchedule(
@@ -782,6 +754,30 @@ export class NPCPlanningAgent {
       gameTime: "23:59",
       metadata: { gameDay },
     });
+  }
+
+  private async getNpcDayMemoryLog(
+    sessionId: string,
+    npcId: string,
+    gameDay: number,
+  ): Promise<string> {
+    if (!this.memoryManager) return "";
+
+    const dayMemories = await this.memoryManager.getAllForDay(npcId, sessionId, gameDay);
+    const memories = [...dayMemories]
+      // Daily plan memories duplicate todayPlan and can confuse completion inference.
+      .filter((memory) => memory.type !== "plan")
+      .sort((a, b) => {
+        const timeCompare = (a.gameTime ?? "").localeCompare(b.gameTime ?? "");
+        if (timeCompare !== 0) return timeCompare;
+        return a.createdAt.getTime() - b.createdAt.getTime();
+      });
+
+    if (memories.length === 0) return "";
+
+    const { getAllHandlers } = await import("../../memory/handlers/index.js");
+    const handlers = getAllHandlers();
+    return memories.map((memory) => handlers[memory.type].format(memory)).join("\n");
   }
 
   async resolveModuleId(sessionId: string): Promise<string | null> {

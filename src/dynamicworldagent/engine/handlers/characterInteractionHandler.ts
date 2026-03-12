@@ -144,10 +144,18 @@ export const characterInteractionHandler: NodeHandler = {
           );
         }
         dgsm.addItemToNpc(node.targetCharacterId, item);
-      } else if (payload.transferType === "clue" && payload.clueId) {
-        dgsm.transferClue(node.characterId, node.targetCharacterId, payload.clueId);
+      } else if (payload.transferType === "information" && payload.relatedClueIds?.length) {
+        // Formal clue transfer to all targets
+        const targets = payload.targetCharacterIds ??
+          (node.targetCharacterId ? [node.targetCharacterId] : []);
+        const filteredTargets = targets.filter((id) => id !== node.characterId);
+        for (const clueId of payload.relatedClueIds) {
+          for (const targetId of filteredTargets) {
+            dgsm.transferClue(node.characterId, targetId, clueId);
+          }
+        }
       }
-      // "information" transfer: no mechanical side effect here; impact gate handles plan revision
+      // Memory writing for information transfer happens in tickProcessor post-execution
     }
 
     return makeAction(

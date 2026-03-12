@@ -23,12 +23,6 @@ export interface ClueMetadata {
   relatedTo?: string[];
 }
 
-export interface ConversationMetadata {
-  withCharacterId: string;
-  withCharacterName: string;
-  topic?: string;
-}
-
 export interface BeliefMetadata {
   confidence: number;
   reasoningChain: string;
@@ -62,7 +56,6 @@ export type MemoryMetadata =
   | EventMetadata
   | WitnessMetadata
   | ClueMetadata
-  | ConversationMetadata
   | BeliefMetadata
   | EmotionMetadata
   | RelationshipMetadata
@@ -160,11 +153,11 @@ export interface ContextProfile {
 
 export const CONTEXT_PROFILES: Record<ContextPurpose, ContextProfile> = {
   scheduling: {
-    defaultTypes: ["plan", "event", "clue", "belief", "summary"],
-    defaultLimit: 15,
+    defaultTypes: ["plan", "event", "clue", "belief", "summary", "relationship"],
+    defaultLimit: 20,
   },
   conversation: {
-    defaultTypes: ["conversation", "clue", "belief", "relationship", "secret", "emotion", "summary"],
+    defaultTypes: ["event", "clue", "belief", "relationship", "secret", "emotion", "summary"],
     defaultLimit: 20,
   },
   reaction: {
@@ -172,7 +165,7 @@ export const CONTEXT_PROFILES: Record<ContextPurpose, ContextProfile> = {
     defaultLimit: 10,
   },
   reasoning: {
-    defaultTypes: ["clue", "witness", "event", "conversation", "belief", "summary"],
+    defaultTypes: ["clue", "witness", "event", "belief", "summary"],
     defaultLimit: 25,
   },
 };

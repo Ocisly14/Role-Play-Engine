@@ -3,7 +3,6 @@ import type { MemoryHandler } from "../types.js";
 import { EventHandler } from "./EventHandler.js";
 import { WitnessHandler } from "./WitnessHandler.js";
 import { ClueHandler } from "./ClueHandler.js";
-import { ConversationHandler } from "./ConversationHandler.js";
 import { BeliefHandler } from "./BeliefHandler.js";
 import { EmotionHandler } from "./EmotionHandler.js";
 import { RelationshipHandler } from "./RelationshipHandler.js";
@@ -15,7 +14,6 @@ export {
   EventHandler,
   WitnessHandler,
   ClueHandler,
-  ConversationHandler,
   BeliefHandler,
   EmotionHandler,
   RelationshipHandler,
@@ -28,7 +26,6 @@ const HANDLERS: Record<NpcMemoryType, MemoryHandler> = {
   event: new EventHandler(),
   witness: new WitnessHandler(),
   clue: new ClueHandler(),
-  conversation: new ConversationHandler(),
   belief: new BeliefHandler(),
   emotion: new EmotionHandler(),
   relationship: new RelationshipHandler(),

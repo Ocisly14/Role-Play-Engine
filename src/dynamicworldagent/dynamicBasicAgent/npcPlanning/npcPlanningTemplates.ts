@@ -105,9 +105,9 @@ export function buildDailySchedulePrompt(params: DailyScheduleParams): string {
   return `You are ${params.npcName}, a character in a Call of Cthulhu tabletop RPG.
 
 ## Task
-Plan your day. Think about what you need to do, where you need to go, and when — from now until you go to sleep.
+Plan your day. Think about what you need to do and where you need to go — from now until you go to sleep.
 
-Write your schedule as a sequence of time-stamped entries: WHEN you'll be somewhere, WHERE you'll go, and WHAT you intend to do there. Each entry is one sentence — just your intent, not the details of how you'll do it.
+Write your plan as an ordered list of activities: WHERE you'll go and WHAT you intend to do there. Each entry is one sentence — just your intent, not the details of how you'll do it. The order matters — it's the sequence you'll follow.
 
 Your character ID is "${params.npcId}". Today is Day ${params.gameDay}.
 
@@ -134,23 +134,25 @@ Day ${params.gameDay}, ${params.currentTime}
 - Think about who you are — your job, your habits, your personality. Plan a day that feels natural for someone like you.
 - Balance your everyday routine (meals, work, rest, hobbies) with actions that move you closer to your goal.
 - Use scene IDs from "Places You Know" for locations.
-- Be realistic about timing — you wouldn't break into someone's office in broad daylight, and you need to eat and rest.
+- Be realistic — you wouldn't break into someone's office in broad daylight, and you need to eat and rest.
 - Plan 6-12 entries for a full day. Fewer if it's already late.
 
+## Social Interactions
+If you want to share information with or talk to another character, plan a visit to their location. The detailed planning step will handle the specifics of what you say.
+
 ## Output
-Return a JSON array. No extra text. Always write in English.
+Return a JSON array in the order you plan to do them. No extra text. Always write in English.
 
 \`\`\`json
 [
-  { "time": "08:00", "location": "home_kitchen", "activity": "Have breakfast and review notes from yesterday" },
-  { "time": "09:30", "location": "library_main", "activity": "Search the archives for information about the ritual" },
-  { "time": "12:00", "location": "home_kitchen", "activity": "Lunch break" }
+  { "location": "home_kitchen", "activity": "Have breakfast and review notes from yesterday" },
+  { "location": "library_main", "activity": "Search the archives for information about the ritual" },
+  { "location": "home_kitchen", "activity": "Lunch break" }
 ]
 \`\`\`
 
-Each entry has exactly three fields:
-- \`"time"\`: "HH:MM" — when you start this activity
-- \`"location"\`: scene ID — where you'll be
+Each entry has exactly two fields:
+- \`"location"\`: scene ID — where you need to go for this activity
 - \`"activity"\`: one sentence — what you intend to do there`;
 }
 
@@ -162,7 +164,8 @@ export interface DetailedNodesParams {
   npcProfile: string;
   longTermIntent: string;
   memoryLog: string;
-  scheduleEntry: ScheduleEntry;
+  todayPlan: ScheduleEntry[];
+  currentLocation: string;
   sceneDescription: string;
   sceneItems: string;
   sceneNpcs: string;
@@ -176,14 +179,16 @@ export interface DetailedNodesParams {
   handlerPrompt?: string;
   planningPrompt?: string;
   outputSchemaPrompt?: string;
-  /** Unified memory context (replaces longTermIntent + memoryLog when present) */
-  memoryContext?: string;
 }
 
 const DEFAULT_DETAILED_NODE_TYPE_REF = `## Node Type Reference
 - **"routine"**: Self-contained action, no interaction target.
 - **"movement"**: Move to a destination scene. Set location to the target scene ID.
 - **"character_interaction"**: Interact with a specific character. Requires targetCharacterId.
+  - For sharing information or clues with one or more characters, include characterInteractionPayload:
+    { "transferType": "information", "informationContent": "what you want to tell them", "targetCharacterIds": ["id1", "id2"], "relatedClueIds": ["clue_id"] }
+  - informationContent should reflect YOUR perspective — what you believe and how you'd say it.
+  - targetCharacterIds is optional (defaults to targetCharacterId). relatedClueIds is optional (use when formally sharing a clue you possess).
 - **"object_interaction"**: Interact with a physical object. Include objectInteractionPayload. For creative non-standard uses, set actionType and include itemUpdates/targetItemUpdates.
 - **"scene_interaction"**: Search, investigate, or modify the environment.
 
@@ -208,30 +213,38 @@ Return a JSON array of PlanNode objects. No extra text. Always write in English.
 \`\`\`
 
 Add type-specific fields as needed:
-- **character_interaction**: \`"targetCharacterId"\`, optional \`"characterInteractionPayload"\`
+- **character_interaction**: \`"targetCharacterId"\`, optional \`"characterInteractionPayload"\` with \`transferType\` ("item" or "information"), \`informationContent\`, \`targetCharacterIds\`, \`relatedClueIds\`
 - **object_interaction**: \`"objectInteractionPayload"\` with \`itemUpdates\`/\`targetItemUpdates\` for non-standard use
 - **scene_interaction**: optional \`"sceneConnectionEffect"\``;
 
 export function buildDetailedNodesPrompt(params: DetailedNodesParams): string {
-  const memorySection = params.memoryContext
-    ? `## Your Memory\n${params.memoryContext}`
-    : `## Your Goal\n${params.longTermIntent}\n\n## What You Remember (recent)\n${params.memoryLog || "Nothing recorded yet."}`;
+  const todayPlan = JSON.stringify(params.todayPlan, null, 2);
 
   return `You are ${params.npcName}, a character in a Call of Cthulhu tabletop RPG.
 
 ## Task
-You have arrived at your next scheduled activity. Now decide exactly what you do — step by step.
+Look at your full plan for today and what has already happened. First decide which plan step is the next one you should actually do now. Then break only that next step into concrete action nodes.
 
-**Your plan for this moment:** ${params.scheduleEntry.time} | ${params.scheduleEntry.location} | ${params.scheduleEntry.activity}
+Do not expand the whole day. Do not repeat plan steps that your memory log already shows as completed, interrupted, cancelled, or no longer relevant.
 
-Look around. What items are here? Who else is present? Based on what you actually see, break your intent into concrete actions.
+Set each node's \`location\` to the scene where that action happens. If the next step is not at your current location, include movement nodes first. Cross-location travel is handled automatically.
 
 Your character ID is "${params.npcId}".
 
 ## Who You Are
 ${params.npcProfile}
 
-${memorySection}
+## Your Goal
+${params.longTermIntent}
+
+## Your Plan For Today
+${todayPlan}
+
+## What Happened Today So Far
+${params.memoryLog || "Nothing recorded yet."}
+
+## Your Current Location
+${params.currentLocation || "Unknown"}
 
 ## Where You Are
 ${params.sceneDescription || "No description available."}
@@ -253,8 +266,11 @@ ${params.npcInventory || "Nothing."}
 ## Right Now
 Day ${params.gameDay}, ${params.currentTime}
 
-## Movement
-If you're not at the target location yet, your first action should be moving there. Then do 1-2 actions for the activity itself.
+## How To Choose The Next Step
+- Use "Your Plan For Today" as the source of truth for the intended sequence.
+- Use "What Happened Today So Far" to judge which planned steps are already done, blocked, disrupted, or no longer necessary.
+- Choose exactly one next plan step to execute now.
+- If all meaningful plan steps are already done, return an empty JSON array.
 
 ## When Your Actions Need a Skill Check
 - Everyday activities, simple movement, friendly conversation → **no actionType** (auto-succeed)
@@ -304,7 +320,7 @@ ${params.remainingSchedule}
 
 ## Instructions
 - Only change what the event actually affects. Don't rewrite plans that are still fine.
-- Keep the same format: each entry has "time", "location", "activity".
+- Keep the same format: each entry has "location", "activity". Order matters.
 - If this event fundamentally changes what you're trying to accomplish, update your long-term goal too.
 
 ## Output
@@ -313,7 +329,7 @@ Return a single JSON object. No extra text. Always write in English.
 \`\`\`json
 {
   "revisedSchedule": [
-    { "time": "HH:MM", "location": "scene_id", "activity": "what you will do" }
+    { "location": "scene_id", "activity": "what you will do" }
   ],
   "shouldUpdateLongTermIntent": false,
   "updatedLongTermIntent": "only if shouldUpdateLongTermIntent is true"

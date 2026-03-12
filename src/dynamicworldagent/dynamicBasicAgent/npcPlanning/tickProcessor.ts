@@ -431,8 +431,9 @@ async function executeSingleTick(params: SingleTickParams): Promise<SingleTickRe
 
     // On character_interaction success -> update relationship
     let relationshipChange: string | undefined;
+    let relResult: { scoreDelta: number; newScore: number; note: string } | null | undefined;
     if (action.status === "completed" && node.type === "character_interaction" && node.targetCharacterId) {
-      const relResult = await npcPlanningAgent.updateRelationshipViaLLM(dgsm, node.characterId, node.targetCharacterId, action.outcome, language);
+      relResult = await npcPlanningAgent.updateRelationshipViaLLM(dgsm, node.characterId, node.targetCharacterId, action.outcome, language);
       if (relResult) {
         const sign = relResult.scoreDelta >= 0 ? "+" : "";
         relationshipChange = `[relationship ${sign}${relResult.scoreDelta} → ${relResult.newScore}, ${relResult.note}]`;
@@ -461,6 +462,50 @@ async function executeSingleTick(params: SingleTickParams): Promise<SingleTickRe
       }
     }
 
+    // Mirror write: passive NPC gets memory of this interaction (NPC-to-NPC only)
+    if (memoryManager
+        && action.status === "completed"
+        && node.type === "character_interaction"
+        && node.targetCharacterId
+        && !node.isPlayer
+        && node.targetCharacterId !== state.playerCharacter?.id) {
+      const targetId = node.targetCharacterId;
+      const initiatorName = node.characterName;
+
+      // Event memory for passive side
+      await memoryManager.add({
+        npcId: targetId,
+        sessionId,
+        moduleId,
+        type: "event",
+        content: `${initiatorName} ${action.action} — result: ${action.outcome}`,
+        gameDay,
+        gameTime: action.gameTime,
+        location: action.location,
+        metadata: { outcome: action.outcome },
+      });
+
+      // Relationship memory for passive side (only if relationship was updated)
+      if (relResult) {
+        await memoryManager.add({
+          npcId: targetId,
+          sessionId,
+          moduleId,
+          type: "relationship",
+          content: `Interaction with ${initiatorName}: ${action.outcome}`,
+          gameDay,
+          gameTime: action.gameTime,
+          location: action.location,
+          metadata: {
+            targetId: node.characterId,
+            targetName: initiatorName,
+            scoreDelta: relResult.scoreDelta,
+            newScore: relResult.newScore,
+          },
+        });
+      }
+    }
+
     // Log NPC actions (not player)
     if (!node.isPlayer) {
       let logEntry = `Day${gameDay} ${action.gameTime} [${action.location}] - ${action.outcome}`;
@@ -484,73 +529,78 @@ async function executeSingleTick(params: SingleTickParams): Promise<SingleTickRe
       await npcPlanningAgent.markNodeCompleted(sessionId, node.characterId, gameDay, node.nodeId, action.outcome);
     }
 
-    // Write conversation memory for character interactions involving the player
-    if (memoryManager && action.status === "completed" && node.type === "character_interaction" && node.targetCharacterId) {
-      const isPlayerInvolved = node.isPlayer || node.targetCharacterId === state.playerCharacter?.id;
-      if (isPlayerInvolved) {
-        const playerId = state.playerCharacter?.id ?? "";
-        const playerName = state.playerCharacter?.name ?? "Player";
-        // Determine who is NPC and who is player in this interaction
-        const npcInConvo = node.isPlayer ? node.targetCharacterId : node.characterId;
-        const playerInConvo = node.isPlayer ? node.characterId : playerId;
-        const playerNameInConvo = node.isPlayer ? node.characterName : playerName;
+    // Write information transfer memories (unified: replaces old clue-transfer block)
+    if (memoryManager && action.status === "completed" && node.type === "character_interaction"
+        && node.characterInteractionPayload?.transferType === "information"
+        && node.characterInteractionPayload.informationContent) {
+      const payload = node.characterInteractionPayload;
+      const informationContent = payload.informationContent!;
+      const targets = payload.targetCharacterIds ??
+        (node.targetCharacterId ? [node.targetCharacterId] : []);
+      const filteredTargets = targets.filter((id) => id !== node.characterId);
+
+      const senderChar = state.npcCharacters.find(n => n.id === node.characterId);
+      const senderName = senderChar?.name ?? node.characterName;
+
+      // Filter to targets actually present at the same location
+      const presentTargets = filteredTargets.filter((id) => {
+        const loc = dgsm.getNpcLocation(id);
+        return loc === node.location;
+      });
+
+      for (const targetId of presentTargets) {
+        // Receiver event memory for information transfer
         await memoryManager.add({
-          npcId: npcInConvo,
+          npcId: targetId,
           sessionId,
           moduleId,
-          type: "conversation",
-          content: `Conversation with ${playerNameInConvo}: ${action.outcome}`,
+          type: "event",
+          content: `${senderName} told me: ${informationContent}`,
           gameDay,
           gameTime: action.gameTime,
           location: action.location,
-          metadata: {
-            withCharacterId: playerInConvo,
-            withCharacterName: playerNameInConvo,
-            topic: action.action,
-          },
+          metadata: { outcome: informationContent },
+        });
+
+        // Clue memories if formal clue IDs were transferred
+        if (payload.relatedClueIds?.length) {
+          for (const clueId of payload.relatedClueIds) {
+            const npcClues = state.npcCharacters.find(n => n.id === targetId)?.clues ?? [];
+            const clueObj = npcClues.find((c: any) => c.id === clueId || c.clueId === clueId);
+            const clueText = clueObj?.clueText ?? clueId;
+            await memoryManager.add({
+              npcId: targetId,
+              sessionId,
+              moduleId,
+              type: "clue",
+              content: `Learned from ${senderName}: ${clueText}`,
+              gameDay,
+              gameTime: action.gameTime,
+              location: action.location,
+              metadata: { clueId, category: "knowledge" as const, sourceCharacterId: node.characterId, sourceCharacterName: senderName },
+            });
+          }
+        }
+      }
+
+      // Sender event memory
+      const targetNames = presentTargets.map(id => {
+        const npc = state.npcCharacters.find(n => n.id === id);
+        return npc?.name ?? id;
+      }).join(", ");
+      if (targetNames) {
+        await memoryManager.add({
+          npcId: node.characterId,
+          sessionId,
+          moduleId,
+          type: "event",
+          content: `Shared information with ${targetNames}: ${informationContent}`,
+          gameDay,
+          gameTime: action.gameTime,
+          location: action.location,
+          metadata: { outcome: action.outcome },
         });
       }
-    }
-
-    // Write clue transfer memories when a clue was successfully transferred
-    if (memoryManager && action.status === "completed" && node.type === "character_interaction"
-        && node.characterInteractionPayload?.transferType === "clue"
-        && node.characterInteractionPayload.clueId
-        && node.targetCharacterId) {
-      const clueId = node.characterInteractionPayload.clueId;
-      // Try to get clue text from DGSM state
-      const npcClues = state.npcCharacters.find(n => n.id === node.targetCharacterId)?.clues ?? [];
-      const clueObj = npcClues.find((c: any) => c.id === clueId || c.clueId === clueId);
-      const clueText = clueObj?.clueText ?? clueId;
-      const targetChar = state.npcCharacters.find(n => n.id === node.targetCharacterId);
-      const targetName = targetChar?.name ?? node.targetCharacterId;
-
-      // Receiver gets a clue memory
-      const senderChar = state.npcCharacters.find(n => n.id === node.characterId);
-      const senderName = senderChar?.name ?? node.characterId;
-      await memoryManager.add({
-        npcId: node.targetCharacterId,
-        sessionId,
-        moduleId,
-        type: "clue",
-        content: `Received information from ${senderName}: ${clueText}`,
-        gameDay,
-        gameTime: action.gameTime,
-        location: action.location,
-        metadata: { clueId, category: "knowledge" as const, sourceCharacterId: node.characterId, sourceCharacterName: senderName },
-      });
-
-      // Sender gets an event memory about sharing info
-      await memoryManager.add({
-        npcId: node.characterId,
-        sessionId,
-        moduleId,
-        type: "event",
-        content: `Shared information about "${clueText}" with ${targetName}`,
-        gameDay,
-        gameTime: action.gameTime,
-        location: action.location,
-      });
     }
 
     // Trigger reasoning on novel player information

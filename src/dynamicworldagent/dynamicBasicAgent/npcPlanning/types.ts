@@ -20,10 +20,11 @@ export interface SceneCondition {
 }
 
 export interface CharacterInteractionPayload {
-  transferType: "item" | "clue" | "information";
+  transferType: "item" | "information";
   itemId?: string;
-  clueId?: string;
   informationContent?: string;
+  targetCharacterIds?: string[];
+  relatedClueIds?: string[];
 }
 
 export interface ObjectInteractionPayload {
@@ -36,7 +37,6 @@ export interface ObjectInteractionPayload {
 }
 
 export interface ScheduleEntry {
-  time: string;       // "HH:MM"
   location: string;   // scene ID
   activity: string;   // natural language description
 }

@@ -962,7 +962,6 @@ enum NpcMemoryType {
   event
   witness
   clue
-  conversation
   belief
   emotion
   relationship

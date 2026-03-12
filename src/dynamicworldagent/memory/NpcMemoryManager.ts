@@ -129,7 +129,7 @@ export class NpcMemoryManager {
       sessionId: params.sessionId,
       query: params.context ?? "",
       filters: {
-        types: ["clue", "witness", "event", "conversation", "belief"],
+        types: ["clue", "witness", "event", "belief"],
       },
       limit: 25,
     });

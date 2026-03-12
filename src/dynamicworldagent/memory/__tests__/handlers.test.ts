@@ -39,12 +39,12 @@ describe("getAllHandlers", () => {
     expect(keys.sort()).toEqual([
       "belief",
       "clue",
-      "conversation",
       "emotion",
       "event",
       "plan",
       "relationship",
       "secret",
+      "summary",
       "witness",
     ]);
   });
@@ -137,46 +137,6 @@ describe("ClueHandler", () => {
 
   it("customDecayRate returns 0.5 (slow decay)", () => {
     expect(handler.customDecayRate!()).toBe(0.5);
-  });
-});
-
-// ===== ConversationHandler =====
-
-describe("ConversationHandler", () => {
-  const handler = getHandler("conversation");
-
-  it("has type 'conversation'", () => {
-    expect(handler.type).toBe("conversation");
-  });
-
-  it("prepare returns baseImportance 1.5 and includes conversation + location + withCharacterId tags", () => {
-    const result = handler.prepare("discussed the ritual", { withCharacterId: "john-1" }, "tavern");
-    expect(result.baseImportance).toBe(1.5);
-    expect(result.tags).toContain("conversation");
-    expect(result.tags).toContain("tavern");
-    expect(result.tags).toContain("john-1");
-  });
-
-  it("format includes character name from metadata", () => {
-    const mem = makeMemory({
-      type: "conversation",
-      content: "discussed the ritual",
-      metadata: { withCharacterName: "John", withCharacterId: "john-1" },
-    });
-    expect(handler.format(mem)).toBe("[conversation] with John: discussed the ritual");
-  });
-
-  it("format falls back to withCharacterId when no name", () => {
-    const mem = makeMemory({
-      type: "conversation",
-      content: "discussed the ritual",
-      metadata: { withCharacterId: "john-1" },
-    });
-    expect(handler.format(mem)).toBe("[conversation] with john-1: discussed the ritual");
-  });
-
-  it("does not have customDecayRate", () => {
-    expect(handler.customDecayRate).toBeUndefined();
   });
 });
 
