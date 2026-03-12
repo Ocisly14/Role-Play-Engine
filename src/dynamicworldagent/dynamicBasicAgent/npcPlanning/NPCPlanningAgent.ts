@@ -167,8 +167,7 @@ export class NPCPlanningAgent {
         currentGameDay: gameDay,
       });
     }
-    // Legacy fields — kept empty when using unified memory
-    const longTermIntent = memoryContext ? "" : await this.getLongTermIntent(sessionId, npc.id);
+    const longTermIntent = await this.getLongTermIntent(sessionId, npc.id);
 
     const npcProfile = this.formatNpcProfile(npc);
     const relationships = this.formatRelationships(dgsm, npc.id);
@@ -182,8 +181,6 @@ export class NPCPlanningAgent {
       npcId: npc.id,
       npcProfile,
       longTermIntent,
-      memorySummary: "",
-      todayLog: "",
       relationships,
       sceneMap,
       scenarioConditions,
@@ -766,23 +763,27 @@ export class NPCPlanningAgent {
     });
 
     const parsed = parseJsonResponse<{
-      summary: string;
+      memories: Array<{ content: string; importance: number }>;
       newKnowledge?: Array<{ id: string; text: string; category?: string; difficulty?: string; relatedTo?: string[] }>;
     }>(response);
 
     const moduleId = await this.resolveModuleId(sessionId) ?? "";
 
-    // Write summary memory
-    await this.memoryManager.add({
-      npcId,
-      sessionId,
-      moduleId,
-      type: "summary",
-      content: parsed.summary,
-      gameDay,
-      gameTime: "23:59",
-      metadata: { gameDay },
-    });
+    // Write each summary memory as a separate record with its own importance
+    await Promise.all(
+      parsed.memories.map((m) =>
+        this.memoryManager!.add({
+          npcId,
+          sessionId,
+          moduleId,
+          type: "summary",
+          content: m.content,
+          gameDay,
+          gameTime: "23:59",
+          metadata: { gameDay, importance: m.importance },
+        })
+      )
+    );
 
     // Add extracted knowledge and secrets to NPC profile
     if (parsed.newKnowledge?.length) {
@@ -852,8 +853,6 @@ export class NPCPlanningAgent {
     if (npc.occupation) parts.push(`Occupation: ${npc.occupation}`);
     if (npc.personality) parts.push(`Personality: ${npc.personality}`);
     if (npc.background) parts.push(`Background: ${npc.background}`);
-    if (npc.goals?.length) parts.push(`Goals: ${npc.goals.join(", ")}`);
-    if (npc.secrets?.length) parts.push(`Secrets: ${npc.secrets.join(", ")}`);
     if (npc.inventory?.length) {
       parts.push(`Inventory:\n${formatItemList(npc.inventory)}`);
     }

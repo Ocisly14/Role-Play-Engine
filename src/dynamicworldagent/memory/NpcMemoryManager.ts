@@ -50,13 +50,34 @@ export class NpcMemoryManager {
 
   async getContext(params: GetContextParams): Promise<string> {
     const profile = CONTEXT_PROFILES[params.purpose];
-    const memories = await this.retriever.query({
-      npcId: params.npcId,
-      sessionId: params.sessionId,
-      query: params.query ?? "",
-      filters: { types: profile.defaultTypes, currentGameDay: params.currentGameDay },
-      limit: profile.defaultLimit,
-    });
+    const query = params.query ?? "";
+
+    let memories: ScoredMemory[];
+
+    if (profile.typeLimits) {
+      // Query each type separately with its own limit, then merge
+      const perTypeResults = await Promise.all(
+        profile.defaultTypes.map((type) => {
+          const limit = profile.typeLimits![type] ?? profile.defaultLimit;
+          return this.retriever.query({
+            npcId: params.npcId,
+            sessionId: params.sessionId,
+            query,
+            filters: { types: [type], currentGameDay: params.currentGameDay },
+            limit: limit === 0 ? 500 : limit,
+          });
+        })
+      );
+      memories = perTypeResults.flat();
+    } else {
+      memories = await this.retriever.query({
+        npcId: params.npcId,
+        sessionId: params.sessionId,
+        query,
+        filters: { types: profile.defaultTypes, currentGameDay: params.currentGameDay },
+        limit: profile.defaultLimit,
+      });
+    }
 
     const handlers = getAllHandlers();
     return memories.map((m) => handlers[m.type].format(m)).join("\n");

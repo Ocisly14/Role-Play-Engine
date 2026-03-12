@@ -158,12 +158,15 @@ export interface ReasoningResult {
 export interface ContextProfile {
   defaultTypes: NpcMemoryType[];
   defaultLimit: number;
+  /** Per-type limit overrides. 0 = fetch all (up to 500). Types not listed use defaultLimit. */
+  typeLimits?: Partial<Record<NpcMemoryType, number>>;
 }
 
 export const CONTEXT_PROFILES: Record<ContextPurpose, ContextProfile> = {
   scheduling: {
     defaultTypes: ["information", "belief", "secret", "summary"],
     defaultLimit: 20,
+    typeLimits: { summary: 20, information: 0, belief: 0, secret: 10 },
   },
   conversation: {
     defaultTypes: ["event", "information", "belief", "secret", "summary"],

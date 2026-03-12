@@ -15,7 +15,7 @@ export class SummaryHandler implements MemoryHandler {
     if (gameDay !== undefined) tags.push(`day_${gameDay}`);
     return {
       tags,
-      baseImportance: 3.0,
+      baseImportance: meta.importance ?? 3.0,
       metadata: meta,
     };
   }

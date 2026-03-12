@@ -43,10 +43,11 @@ ${receivedSection}
 ## Instructions
 
 ### Long-term Memory
-- Write concise entries, each one sentence
+- Write each memory as a separate entry with an importance score
+- **importance** (1-5): 1 = minor detail, 2 = routine but worth noting, 3 = significant event, 4 = major turning point, 5 = critical/life-threatening
 - Focus on: important events, relationship changes, emotional moments, threats or opportunities
 - Drop routine actions unless something notable happened during them
-- Write from your perspective
+- Write from your perspective, one concise sentence per entry
 
 ### New Knowledge
 - Review "Knowledge Received Today" and "Today's Events" for new information
@@ -62,7 +63,10 @@ Return a JSON object. No extra text. Always write in English.
 
 \`\`\`json
 {
-  "summary": "Memory 1. | Memory 2. | Memory 3.",
+  "memories": [
+    { "content": "One concise sentence about what happened.", "importance": 3 },
+    { "content": "Another memory entry.", "importance": 4 }
+  ],
   "newKnowledge": [
     { "id": "knowledge_id", "text": "what you learned", "category": "knowledge", "difficulty": "regular", "relatedTo": ["T1"] }
   ]
@@ -113,10 +117,6 @@ export interface DailyScheduleParams {
   npcId: string;
   npcProfile: string;
   longTermIntent: string;
-  /** Compressed summaries from all previous days */
-  memorySummary: string;
-  /** Raw memory log from the current day */
-  todayLog: string;
   relationships: string;
   sceneMap: string;
   scenarioConditions: string;
@@ -125,15 +125,11 @@ export interface DailyScheduleParams {
   gameDay: number;
   currentTime: string;
   language: string;
-  /** Unified memory context (replaces longTermIntent + memorySummary + todayLog when present) */
+  /** Ranked memory context from unified memory system */
   memoryContext?: string;
 }
 
 export function buildDailySchedulePrompt(params: DailyScheduleParams): string {
-  const memorySection = params.memoryContext
-    ? `## Your Memory\n${params.memoryContext}`
-    : `## Your Goal\n${params.longTermIntent}\n\n## What You Remember (previous days)\n${params.memorySummary || "This is your first day."}\n\n## What Happened Today So Far\n${params.todayLog || "Nothing yet — the day is just starting."}`;
-
   return `You are ${params.npcName}, a character in a Call of Cthulhu tabletop RPG.
 
 ## Task
@@ -146,7 +142,10 @@ Your character ID is "${params.npcId}". Today is Day ${params.gameDay}.
 ## Who You Are
 ${params.npcProfile}
 
-${memorySection}
+## Your Goal
+${params.longTermIntent}
+
+${params.memoryContext ? `## Your Memory\n${params.memoryContext}` : ""}
 
 ## People You Know
 ${params.relationships}
