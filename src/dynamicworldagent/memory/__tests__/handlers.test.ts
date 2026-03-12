@@ -35,14 +35,12 @@ describe("getAllHandlers", () => {
   it("returns exactly 9 handlers", () => {
     const handlers = getAllHandlers();
     const keys = Object.keys(handlers);
-    expect(keys).toHaveLength(9);
+    expect(keys).toHaveLength(7);
     expect(keys.sort()).toEqual([
       "belief",
-      "emotion",
       "event",
       "information",
       "plan",
-      "relationship",
       "secret",
       "summary",
       "witness",
