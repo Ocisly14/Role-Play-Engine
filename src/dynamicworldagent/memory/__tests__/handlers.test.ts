@@ -212,46 +212,6 @@ describe("EmotionHandler", () => {
   });
 });
 
-// ===== RelationshipHandler =====
-
-describe("RelationshipHandler", () => {
-  const handler = getHandler("relationship");
-
-  it("has type 'relationship'", () => {
-    expect(handler.type).toBe("relationship");
-  });
-
-  it("prepare returns baseImportance 2.0 and includes relationship + location + targetId tags", () => {
-    const result = handler.prepare("Trust improved", { targetId: "john-1", scoreDelta: 5, newScore: 60 }, "library");
-    expect(result.baseImportance).toBe(2.0);
-    expect(result.tags).toContain("relationship");
-    expect(result.tags).toContain("library");
-    expect(result.tags).toContain("john-1");
-  });
-
-  it("format includes target name and positive delta", () => {
-    const mem = makeMemory({
-      type: "relationship",
-      content: "Trust improved",
-      metadata: { targetName: "John", targetId: "john-1", scoreDelta: 5, newScore: 60 },
-    });
-    expect(handler.format(mem)).toBe("[relationship] John +5: Trust improved");
-  });
-
-  it("format shows negative delta correctly", () => {
-    const mem = makeMemory({
-      type: "relationship",
-      content: "Tension increased",
-      metadata: { targetName: "Alice", targetId: "alice-1", scoreDelta: -10, newScore: 20 },
-    });
-    expect(handler.format(mem)).toBe("[relationship] Alice -10: Tension increased");
-  });
-
-  it("customDecayRate returns 0.5 (slow decay)", () => {
-    expect(handler.customDecayRate!()).toBe(0.5);
-  });
-});
-
 // ===== PlanHandler =====
 
 describe("PlanHandler", () => {

@@ -939,7 +939,6 @@ enum NpcMemoryType {
   information
   belief
   emotion
-  relationship
   plan
   secret
   summary
