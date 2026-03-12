@@ -2,6 +2,7 @@
 
 **Date:** 2026-03-12
 **Status:** Draft
+**Hard Prerequisite:** Simulation plan Chunk 1 (Tasks 1–3) must be implemented first — `playerCharacter` optional, `sessionType` field, Prisma `SimulationEvent` model.
 **Context:** Backend design for simulation mode where NPCs run autonomously and players can inject custom AI-controlled characters. Builds on existing simulation plan (`docs/superpowers/plans/2026-03-11-npc-autonomous-simulation.md`) and map viewer spec (`docs/superpowers/specs/2026-03-12-simulation-map-viewer-design.md`).
 
 ---
@@ -84,23 +85,49 @@ class SimulationRunner {
   stop(): void;
   getStatus(): SimulationStatus;
 
+  // --- Internal tracking ---
+  private modifiedCharacterIds: Set<string> = new Set();
+
   // --- New: character injection ---
   injectCharacter(profile: DynamicNPCProfile): Promise<void>;
   // Only callable when state is "paused" or before start
   // 1. Add to dgsm.npcCharacters (with isPlayerInjected: true, isNPC: true)
-  // 2. Initialize npcLocations, npcRelationshipGraph, npcStats, npcResidences
-  // 3. Write profile.goals directly to npcLongTermIntent table (NO LLM call)
-  // 4. Generate day-1 schedule only (one LLM call)
+  // 2. Initialize ALL per-NPC state maps:
+  //    - npcLocations[id] = residence (macro location ID)
+  //    - npcStats[id] = { hp: derived from CON/SIZ, san: POW }
+  //    - npcResidences[id] = residence
+  //    - npcInventories[id] = []
+  //    - npcDiscoveredKnowledge[id] = []
+  //    - npcRelationshipGraph[id] = {} (empty — relationships form naturally via encounters)
+  //    - characterPositions[id] = { type: "scene", sceneId: entrySceneId }
+  // 3. Upsert npcLongTermIntent with deterministic ID `${sessionId}_${characterId}`
+  //    matching existing seedLongTermIntents convention (NO LLM call)
+  // 4. Generate day-1 schedule only (one LLM call via generateSingleNpcSchedule)
 
   removeCharacter(characterId: string): void;
   // Only callable when paused
-  // Remove from npcCharacters + clean up npcLocations, relationships, etc.
+  // In-memory cleanup (all per-NPC state maps):
+  //   - npcCharacters: filter out
+  //   - npcLocations: delete key
+  //   - npcStats: delete key
+  //   - npcResidences: delete key
+  //   - npcInventories: delete key
+  //   - npcDiscoveredKnowledge: delete key
+  //   - characterPositions: delete key
+  //   - npcRelationshipGraph: delete graph[id] AND delete graph[*][id] (bidirectional)
+  // Prisma cleanup:
+  //   - Delete npcLongTermIntent rows for (sessionId, npcId)
+  //   - Delete npcDailyPlan rows for (sessionId, npcId)
+  //   - Delete NpcMemory rows for (sessionId, npcId)
 
   // --- New: intent management ---
   updateIntent(characterId: string, intent: string): void;
   // Only callable when paused
-  // Write new intent to npcLongTermIntent table
-  // Mark character as needing reviseSchedule on resume
+  // Upsert npcLongTermIntent with ID `${sessionId}_${characterId}` (same convention)
+  // Add characterId to this.modifiedCharacterIds
+
+  clearIntent(characterId: string): void;
+  // Remove from modifiedCharacterIds, reset intent to original goals
 
   getInjectedCharacters(): DynamicNPCProfile[];
   // Return all characters where isPlayerInjected === true
@@ -110,9 +137,10 @@ class SimulationRunner {
 ### Resume Behavior
 
 When `resume()` is called:
-1. Find all injected characters whose intent was modified since last pause
-2. Call `npcPlanningAgent.reviseSchedule()` for each
-3. Then continue the tick loop
+1. Drain `modifiedCharacterIds` set
+2. For each modified character, call `npcPlanningAgent.reviseSchedule(dgsm, sessionId, charId, "Player updated character intent", language)`
+3. Clear `modifiedCharacterIds`
+4. Then continue the tick loop (delegate to `start()`)
 
 ---
 
@@ -121,15 +149,18 @@ When `resume()` is called:
 ### On Character Injection
 
 1. Player provides full `DynamicNPCProfile` including desired intents (as free-text)
-2. System writes intent directly to `npcLongTermIntent` Prisma record — skips `generateLongTermIntents()` LLM call
+2. System upserts `npcLongTermIntent` with deterministic ID `${sessionId}_${characterId}` — skips `generateLongTermIntents()` LLM call. The `moduleId` is resolved from the simulation session context.
 3. System calls `generateSingleNpcSchedule()` to create day-1 schedule (one LLM call)
 4. Character is ready to participate in tick execution
+
+**Note on relationships:** Existing module NPCs will have no initial relationship entries pointing to the injected character. Relationships form naturally when encounters occur (via `updateRelationshipViaLLM` in the tick processor). This is correct behavior — a newly arrived character is unknown to residents.
 
 ### On Intent Update (During Pause)
 
 1. Player calls `PUT /api/simulation/:id/characters/:charId/intent` with new intent text
-2. System overwrites `npcLongTermIntent.intent` in database
-3. On resume, `reviseSchedule()` is called for that character — the updated intent feeds into the existing schedule revision prompt naturally
+2. System upserts `npcLongTermIntent.intent` using deterministic ID `${sessionId}_${charId}`
+3. Character ID added to `modifiedCharacterIds` set
+4. On resume, `reviseSchedule()` is called for that character — the updated intent feeds into the existing schedule revision prompt naturally
 
 ### Pipeline Changes: None
 
@@ -210,15 +241,30 @@ When injecting a character, the following fields are required:
 | `attributes` | Yes | STR, CON, SIZ, DEX, APP, INT, POW, EDU, LUCK |
 | `skills` | Yes | `Record<string, number>` — CoC skill percentages |
 | `backstory` | Yes | Character background narrative |
-| `residence` | Yes | Starting location (must be valid scene ID in module) |
+| `residence` | Yes | Starting macro location (`scenarioOutline.id`), must exist in module. Returns 400 if invalid. |
 | `personality` | Recommended | Personality description (used by AI for behavior) |
 | `occupation` | Recommended | Character occupation |
 | `age` | Optional | Character age |
 | `gender` | Optional | Character gender |
 
-System auto-sets: `id` (UUID), `isNPC: true`, `isPlayerInjected: true`, `status` (default HP/SAN from attributes), `inventory` (empty), `knowledge` (empty), `relationships` (empty).
+System auto-sets:
+- `id`: UUID
+- `isNPC: true`, `isPlayerInjected: true`
+- `status`: `{ hp: derived from CON/SIZ, san: POW }`
+- `inventory`: `[]`
+- `knowledge`: `[]` (typed `NPCKnowledge[]`, required on `DynamicNPCProfile`)
+- `relationships`: `[]` (typed `NPCRelationship[]`, required on `DynamicNPCProfile`)
 
-The player also provides an initial **intent** (free-text string) which is written directly to the `npcLongTermIntent` table.
+State maps initialized:
+- `npcStats[id]`: `{ hp, san }` matching `status`
+- `npcLocations[id]`: resolved from `residence` (macro location → entry scene)
+- `npcResidences[id]`: `residence`
+- `npcInventories[id]`: `[]`
+- `npcDiscoveredKnowledge[id]`: `[]`
+- `npcRelationshipGraph[id]`: `{}`
+- `characterPositions[id]`: `{ type: "scene", sceneId: entrySceneId }`
+
+The player also provides an initial **intent** (free-text string) which is upserted to `npcLongTermIntent` with deterministic ID `${sessionId}_${characterId}`.
 
 ---
 
