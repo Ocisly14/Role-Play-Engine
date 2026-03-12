@@ -85,43 +85,6 @@ ${receivedSection}`;
   return { systemPrompt, userPrompt };
 }
 
-// ===================== Long-Term Intent (GM perspective) =====================
-// NOTE: Excluded from PromptParts refactor — called once on init, low cache value.
-
-export interface LongTermIntentParams {
-  npcName: string;
-  npcProfile: string;
-  truthTimeline: string;
-  moduleBackground: string;
-  language: string;
-}
-
-export function buildGenerateLongTermIntentPrompt(params: LongTermIntentParams): string {
-  return `You are the Game Master for a Call of Cthulhu tabletop RPG.
-
-## Task
-Generate a long-term intent (multi-day goal) for this NPC. The intent should reflect their personality, role in the story, and knowledge of the truth timeline.
-
-## NPC Profile
-${params.npcProfile}
-
-## Module Background
-${params.moduleBackground}
-
-## Truth Timeline (Keeper-only)
-${params.truthTimeline}
-
-## Output
-Return a single JSON object. No extra text.
-Always write in English.
-
-\`\`\`json
-{
-  "intent": "A concise 1-3 sentence description of this NPC's multi-day goal and motivation."
-}
-\`\`\``;
-}
-
 // ===================== Daily Schedule (Layer 1 — coarse) =====================
 
 export interface DailyScheduleParams {
