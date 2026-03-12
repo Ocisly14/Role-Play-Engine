@@ -169,7 +169,6 @@ export class SceneGraphBuilder {
           clues: [],
           conditions: [],
           connections: [],
-          events: [],
         });
       }
 

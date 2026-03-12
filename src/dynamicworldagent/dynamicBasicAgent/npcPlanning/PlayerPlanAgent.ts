@@ -45,6 +45,7 @@ export class PlayerPlanAgent {
     const state = dgsm.getState();
     const lang = language ?? "en";
     const player = state.playerCharacter;
+    if (!player) return [];
     const currentScenario = state.scenes.get(state.currentSceneId ?? "") ?? null;
 
     // Build player profile string

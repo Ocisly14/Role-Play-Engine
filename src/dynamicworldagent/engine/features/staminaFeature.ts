@@ -138,7 +138,9 @@ function processExhaustionDrain(
       if (isPlayer) {
         const state = dgsm.getState();
         const player = state.playerCharacter;
-        (player.status as any).hp = Math.max(0, player.status.hp - 1);
+        if (player) {
+          (player.status as any).hp = Math.max(0, player.status.hp - 1);
+        }
       } else {
         dgsm.updateNpcHp(characterId, -1);
       }
@@ -180,7 +182,9 @@ function updateFatigueCondition(
 
   // Write back
   if (isPlayer) {
-    (state.playerCharacter.status as any).conditions = filtered;
+    if (state.playerCharacter?.status) {
+      (state.playerCharacter.status as any).conditions = filtered;
+    }
   } else {
     const npc = state.npcCharacters?.find((n: any) => n.id === characterId);
     if (npc?.status) {

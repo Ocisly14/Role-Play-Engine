@@ -689,9 +689,9 @@ export const buildDynamicGraph = (
     const stream = state.stream;
 
     // Check 1: Character HP/Sanity
-    const playerStatus = currentState.playerCharacter.status;
-    const hp = playerStatus.hp || 0;
-    const sanity = playerStatus.sanity || 0;
+    const playerStatus = currentState.playerCharacter?.status;
+    const hp = playerStatus?.hp || 0;
+    const sanity = playerStatus?.sanity || 0;
 
     console.log(`   Player Status: HP=${hp}, Sanity=${sanity}`);
 
@@ -771,9 +771,9 @@ export const buildDynamicGraph = (
     "gameEndCheck" as any,
     (state: DynamicGraphState) => {
       const currentState = state.dynamicGameState;
-      const playerStatus = currentState.playerCharacter.status;
-      const hp = playerStatus.hp || 0;
-      const sanity = playerStatus.sanity || 0;
+      const playerStatus = currentState.playerCharacter?.status;
+      const hp = playerStatus?.hp || 0;
+      const sanity = playerStatus?.sanity || 0;
 
       if (currentState.gameEnding?.isEnded) {
         console.log(

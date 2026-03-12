@@ -181,11 +181,13 @@ export class KeeperAgent {
 
     // Prepare template context (JSON-packed to keep template concise)
     const currentLocation = currentScene?.name || null;
-    const playerCharacterComplete = this.extractCompletePlayerCharacter(
-      dynamicState.playerCharacter,
-      currentLocation,
-      interactionPartnerName
-    );
+    const playerCharacterComplete = dynamicState.playerCharacter
+      ? this.extractCompletePlayerCharacter(
+          dynamicState.playerCharacter,
+          currentLocation,
+          interactionPartnerName
+        )
+      : null;
 
     // Get full game time
     const fullGameTime = gameStateManager.getFullGameTime();
@@ -225,8 +227,6 @@ export class KeeperAgent {
       hasPlayerWitnessEvents: (options?.witnessEvents?.length ?? 0) > 0,
       playerWitnessEvents: options?.witnessEvents ?? null,
       isWitnessInterrupt: options?.isWitnessInterrupt ?? false,
-      hasSceneEvents: (currentScene?.events?.length ?? 0) > 0,
-      sceneEvents: currentScene?.events ?? [],
     };
 
     // Use template and LLM to generate narrative and clue revelations
@@ -346,11 +346,13 @@ export class KeeperAgent {
     // Get player character information
     const currentScene = gameStateManager.getCurrentScene();
     const currentLocation = currentScene?.name || null;
-    const playerCharacter = this.extractCompletePlayerCharacter(
-      dynamicState.playerCharacter,
-      currentLocation,
-      null // No interaction partner for epilogue
-    );
+    const playerCharacter = dynamicState.playerCharacter
+      ? this.extractCompletePlayerCharacter(
+          dynamicState.playerCharacter,
+          currentLocation,
+          null // No interaction partner for epilogue
+        )
+      : null;
 
     // Get conversation history (last 1 turn for continuity anchor)
     const conversationHistory =
@@ -487,7 +489,6 @@ export class KeeperAgent {
       parentLocationId: scene.parentLocationId,
       conditions: scene.conditions,
       items: scene.items,
-      events: scene.events,
       connections,
       presentNpcs,
     };
@@ -529,7 +530,7 @@ export class KeeperAgent {
       return [];
     }
 
-    const playerName = dynamicState.playerCharacter.name;
+    const playerName = dynamicState.playerCharacter?.name ?? "Unknown";
     const addedNpcIds = new Set<string>();
     const actionRelatedNpcs = [];
 

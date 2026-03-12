@@ -8,7 +8,9 @@ import type {
   CharacterAction,
   DiscoveryEntry,
   SuccessLevel,
+  TickMode,
   TickResult,
+  SimulationTickResult,
   PlayerWitnessEvent,
 } from "./types.js";
 import { type SessionRagChunkInput, SessionRagService } from "../knowledge/sessionRagService.js";
@@ -99,9 +101,12 @@ async function discoverEvidence(
   node: PlanNode,
   successLevel: SuccessLevel,
   dgsm: DynamicGameStateManager,
-  language: string
+  language: string,
+  overrideSceneId?: string
 ): Promise<DiscoveryEntry[]> {
-  const scene = dgsm.getCurrentScene();
+  const scene = overrideSceneId
+    ? dgsm.getScene(overrideSceneId)
+    : dgsm.getCurrentScene();
   if (!scene?.items) return [];
   if (node.type !== "scene_interaction" && node.type !== "object_interaction") return [];
 
@@ -315,6 +320,7 @@ interface SingleTickParams {
   playerNodes: PlanNode[];
   /** Nodes injected by previous ticks' feature propagation, to be executed in this tick */
   carryOverNodes?: PlanNode[];
+  mode?: TickMode;
   dgsm: DynamicGameStateManager;
   npcPlanningAgent: NPCPlanningAgent;
   sessionId: string;
@@ -352,6 +358,7 @@ async function executeSingleTick(params: SingleTickParams): Promise<SingleTickRe
     tickDurationMinutes,
     playerNodes,
     carryOverNodes,
+    mode = "player_turn",
     dgsm,
     npcPlanningAgent,
     sessionId,
@@ -361,6 +368,8 @@ async function executeSingleTick(params: SingleTickParams): Promise<SingleTickRe
     ctx,
     memoryManager,
   } = params;
+
+  const isSimulation = mode === "simulation";
 
   const state = dgsm.getState();
   const gameDay = state.gameDay;
@@ -396,7 +405,9 @@ async function executeSingleTick(params: SingleTickParams): Promise<SingleTickRe
   const npcNodesInRange = dueNpcNodes.filter((n) => n.gameTime >= tickStartTime);
 
   // 2. Filter player nodes in this tick's time range
-  const playerNodesInRange = playerNodes.filter((n) => {
+  //    Defense-in-depth: ensure player nodes are empty in simulation mode
+  const effectivePlayerNodes = isSimulation ? [] : playerNodes;
+  const playerNodesInRange = effectivePlayerNodes.filter((n) => {
     const nodeMinutes = timeToMinutes(n.gameTime);
     return nodeMinutes >= tickStartMinutes && nodeMinutes <= tickEndMinutes;
   });
@@ -420,8 +431,8 @@ async function executeSingleTick(params: SingleTickParams): Promise<SingleTickRe
   let playerFailed = false;
 
   for (const node of allNodes) {
-    // If player already failed, skip subsequent player nodes
-    if (playerFailed && node.isPlayer) {
+    // If player already failed, skip subsequent player nodes (not applicable in simulation)
+    if (playerFailed && node.isPlayer && !isSimulation) {
       continue;
     }
 
@@ -434,8 +445,8 @@ async function executeSingleTick(params: SingleTickParams): Promise<SingleTickRe
     const action = handler.execute(node, dgsm, ctx);
     tickActions.push(action);
 
-    // Check if a player node just failed
-    if (action.status === "failed" && node.isPlayer) {
+    // Check if a player node just failed (not applicable in simulation)
+    if (action.status === "failed" && node.isPlayer && !isSimulation) {
       playerFailed = true;
       // Continue executing remaining NPC nodes (skip logic above handles player nodes)
     }
@@ -586,11 +597,13 @@ async function executeSingleTick(params: SingleTickParams): Promise<SingleTickRe
       }
     }
 
-    // Discovery — only for player's successful nodes
-    if (action.status === "completed" && node.isPlayer) {
+    // Discovery — for player's successful nodes, or any NPC in simulation mode
+    if (action.status === "completed" && (node.isPlayer || isSimulation)) {
       const effectiveSuccess: SuccessLevel = action.successLevel ?? "regular";
+      // In simulation mode, use the NPC's location instead of the player's current scene
+      const evidenceSceneId = isSimulation ? node.location : undefined;
       // Discover evidence items from scene
-      const evidence = await discoverEvidence(node, effectiveSuccess, dgsm, language);
+      const evidence = await discoverEvidence(node, effectiveSuccess, dgsm, language, evidenceSceneId);
       // Discover NPC knowledge
       const npcKnowledge = await discoverNpcKnowledge(node, effectiveSuccess, dgsm, language);
       const allDiscoveries = [...evidence, ...npcKnowledge];
@@ -614,13 +627,13 @@ async function executeSingleTick(params: SingleTickParams): Promise<SingleTickRe
           });
         }
         console.log(
-          `[TickProcessor] Player discovered ${allDiscoveries.length} item(s): ${allDiscoveries.map((d) => `[${d.difficulty}] ${d.text.slice(0, 40)}`).join("; ")}`
+          `[TickProcessor] ${isSimulation ? "NPC" : "Player"} discovered ${allDiscoveries.length} item(s): ${allDiscoveries.map((d) => `[${d.difficulty}] ${d.text.slice(0, 40)}`).join("; ")}`
         );
       }
     }
 
-    // Fumble -> damage a random evidence item in scene
-    if (node.isPlayer && action.successLevel === "fumble") {
+    // Fumble -> damage a random evidence item in scene (not applicable in simulation)
+    if (node.isPlayer && action.successLevel === "fumble" && !isSimulation) {
       const scene = dgsm.getCurrentScene();
       const damageable = scene?.items?.filter((i) => i.category === "evidence" && !i.damaged) ?? [];
       if (damageable.length > 0) {
@@ -631,13 +644,7 @@ async function executeSingleTick(params: SingleTickParams): Promise<SingleTickRe
       }
     }
 
-    // Scene event logging for high-impact completed NPC actions
-    if (action.status === "completed" && action.impact >= 2 && !node.isPlayer) {
-      const scene = dgsm.getScene(node.location);
-      if (scene) {
-        scene.events.push(`${node.characterName}: ${action.outcome}`);
-      }
-    }
+
 
     // On failure -> immediate revisePlans (no gate) — NPC only
     if (action.status === "failed" && !node.isPlayer) {
@@ -1210,4 +1217,44 @@ function scanUnplannedEncounters(
   }
 
   return encounterEvents;
+}
+
+// ==================== Simulation tick ====================
+
+/**
+ * Execute a single simulation tick (no player involved).
+ *
+ * Wraps executeSingleTick in simulation mode and advances game time
+ * by TICK_DURATION_MINUTES afterwards.
+ */
+export async function runSimulationTick(params: {
+  dgsm: DynamicGameStateManager;
+  npcPlanningAgent: NPCPlanningAgent;
+  sessionId: string;
+  moduleId: string;
+  language: string;
+  registry: GameEngineRegistry;
+  ctx: ExecutionContext;
+  memoryManager?: NpcMemoryManager;
+}): Promise<SimulationTickResult> {
+  const state = params.dgsm.getState();
+  const tickStartMinutes =
+    parseInt(state.timeOfDay.split(":")[0]) * 60 +
+    parseInt(state.timeOfDay.split(":")[1]);
+
+  const result = await executeSingleTick({
+    tickStartMinutes,
+    tickDurationMinutes: TICK_DURATION_MINUTES,
+    playerNodes: [],
+    mode: "simulation",
+    ...params,
+  });
+
+  const { dayChanged } = params.dgsm.updateGameTime(TICK_DURATION_MINUTES);
+
+  return {
+    actions: result.actions,
+    events: [], // Events will be constructed by SimulationEventEmitter from actions
+    dayChanged,
+  };
 }

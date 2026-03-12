@@ -495,7 +495,6 @@ export class WorldModuleLoader {
             conditions: data.conditions || [],
             connections: data.connections || [],
             sceneImage: data.sceneImage,
-            events: data.events || [],
           };
           scenes.set(scene.id, scene);
           continue;
@@ -521,7 +520,6 @@ export class WorldModuleLoader {
               conditions: raw.conditions || [],
               connections: raw.connections || [],
               sceneImage: raw.sceneImage,
-              events: [],
             };
             scenes.set(scene.id, scene);
           }
@@ -558,7 +556,6 @@ export class WorldModuleLoader {
           itemContexts,
           clues: data.clues || [],
           conditions: data.conditions || [],
-          events: data.events || [],
           connectedSceneIds: data.connectedSceneIds || [],
         };
         junctions.set(junction.id, junction);
@@ -608,7 +605,6 @@ export class WorldModuleLoader {
           itemContexts,
           clues: data.clues || [],
           conditions: data.conditions || [],
-          events: data.events || [],
         };
         roads.set(road.id, road);
       } catch (error) {
@@ -1120,7 +1116,6 @@ export class WorldModuleLoader {
           parentLocationId: scene.parentLocationId || null,
           connections: (scene.connections || []) as any,
           items: encodeSceneItemsPayload(scene) as any,
-          events: (scene.events || []) as any,
           sceneImagePath,
         },
       });

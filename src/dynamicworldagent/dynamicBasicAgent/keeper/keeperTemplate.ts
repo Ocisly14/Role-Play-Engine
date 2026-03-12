@@ -144,14 +144,6 @@ You are a writer, responsible for writing a narrative of the game.
   The investigator's fumble has destroyed or rendered unusable a piece of evidence at this location. Narrate that the investigator accidentally damaged or ruined something — describe the physical destruction naturally (e.g., knocked over, broke, tore, smudged) without revealing what the evidence contained.
   {{/if}}
 
-  {{#if hasSceneEvents}}
-  ### Recent Scene Changes
-  The following physical changes have occurred at this location. Incorporate relevant ones naturally.
-  {{#each sceneEvents}}
-  - {{this}}
-  {{/each}}
-  {{/if}}
-
   {{#if hasNpcActions}}
   ### NPC Activities This Turn
   These are autonomous NPC actions that occurred during this tick. Weave observable ones naturally into the narrative from the investigator's perspective. Only narrate what the investigator can perceive.

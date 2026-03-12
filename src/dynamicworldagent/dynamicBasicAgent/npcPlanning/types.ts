@@ -1,5 +1,6 @@
 import type { ActionType } from "../../../shared/state/index.js";
 import type { Item } from "../../world_builder/types.js";
+import type { SimulationEvent } from "../../simulation/types.js";
 
 export type BuiltinNodeType =
   | "routine"
@@ -142,6 +143,8 @@ export interface PlayerWitnessEvent {
   impact: number;
 }
 
+export type TickMode = "player_turn" | "simulation";
+
 export type TickResult =
   | { type: "completed"; actions: CharacterAction[] }
   | {
@@ -154,4 +157,10 @@ export type TickResult =
       resumeFromMinutes: number;
       gameDay: number;
     };
+
+export interface SimulationTickResult {
+  actions: CharacterAction[];
+  events: SimulationEvent[];
+  dayChanged: boolean;
+}
 

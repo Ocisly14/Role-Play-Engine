@@ -158,7 +158,6 @@ export class ScenarioLoader {
           : undefined,
       })),
       sceneImage,
-      events: (sceneRow.events as any[]) || [],
     };
 
     return dynamicScene;

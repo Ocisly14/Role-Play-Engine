@@ -598,7 +598,6 @@ export async function initializeCompleteDynamicGameState(
               : (cond.mechanicalEffect as ScenarioCondition["mechanicalEffect"]))
           : undefined,
       })),
-      events: [],
     };
   };
 

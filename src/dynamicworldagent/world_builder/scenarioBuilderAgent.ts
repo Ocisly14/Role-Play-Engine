@@ -498,7 +498,6 @@ export class ScenarioBuilderAgent {
         })),
         conditions: parsedScene?.conditions || [],
         sceneImage: undefined,
-        events: parsedScene?.events || [],
       };
 
       // Enforce starting scene identity to match the selected scenario exactly.

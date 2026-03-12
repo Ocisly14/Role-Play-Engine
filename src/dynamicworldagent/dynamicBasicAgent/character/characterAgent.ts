@@ -71,8 +71,10 @@ export class CharacterAgent {
       [];
 
     const player = dynamicState.playerCharacter;
-    const playerLog = (player.actionLog || []).slice(-3);
-    out.push({ characterName: player.name, last3ActionLog: playerLog });
+    if (player) {
+      const playerLog = (player.actionLog || []).slice(-3);
+      out.push({ characterName: player.name, last3ActionLog: playerLog });
+    }
 
     for (const sc of sceneCharacters) {
       const npc = dynamicState.npcCharacters.find((n) =>

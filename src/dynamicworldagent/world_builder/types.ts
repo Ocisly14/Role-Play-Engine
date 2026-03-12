@@ -77,6 +77,7 @@ export interface DynamicNPCProfile extends DynamicCharacterProfile {
   instantiatedFrom?: string; // Knowledge holder ID that this NPC represents
   inheritsKnowledge?: string[]; // Truth event IDs from knowledge holder
   residence?: string; // macroLocationId -- derived from ScenarioOutline.residents
+  isPlayerInjected?: boolean; // true = player-created character in simulation mode
 }
 
 export interface DynamicScene {
@@ -89,7 +90,6 @@ export interface DynamicScene {
   conditions: ScenarioCondition[];
   connections: string[];
   sceneImage?: SceneImage;
-  events: string[];
   indoor?: boolean;
 }
 

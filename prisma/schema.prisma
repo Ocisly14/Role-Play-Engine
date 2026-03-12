@@ -401,7 +401,6 @@ model Scene {
   parentLocationId String?  @map("parent_location_id")
   connections      Json?
   items          Json?
-  events         Json?
   initialScene   Boolean            @default(false) @map("initial_scene")
   gameTime       String?            @map("game_time")
   sceneImagePath String?            @map("scene_image_path")
@@ -449,12 +448,14 @@ model Session {
   subId           Int?             @map("sub_id")
   moduleId        String?          @map("module_id") @db.Uuid
   emailId         String?          @map("email_id")
+  sessionType     String           @default("player_game") @map("session_type")
   checkpoints        GameCheckpoint[]
   turns              GameTurn[]
   module             Module?          @relation(fields: [moduleId], references: [moduleId])
   npcLongTermIntents NpcLongTermIntent[]
   npcDailyPlans      NpcDailyPlan[]
   npcMemories        NpcMemory[]
+  simulationEvents   SimulationEvent[]
 
   @@index([status])
   @@index([startedAt])
@@ -941,4 +942,25 @@ enum NpcMemoryType {
   plan
   secret
   summary
+}
+
+model SimulationEvent {
+  id          String   @id @default(uuid())
+  sessionId   String   @map("session_id")
+  tick        Int
+  gameDay     Int      @map("game_day")
+  gameTime    String   @map("game_time")
+  type        String
+  actorNpcId  String   @map("actor_npc_id")
+  targetNpcId String?  @map("target_npc_id")
+  location    String
+  data        Json
+  timestamp   DateTime @default(now())
+
+  session     Session  @relation(fields: [sessionId], references: [sessionId], onDelete: Cascade)
+
+  @@index([sessionId])
+  @@index([sessionId, type])
+  @@index([sessionId, gameDay])
+  @@map("simulation_events")
 }

@@ -146,7 +146,6 @@ export class SubSceneBuilder {
             ? raw.internalConnections
             : [],
           sceneImage: undefined,
-          events: [], // Events assigned separately
         };
 
         scenes.push(scene);

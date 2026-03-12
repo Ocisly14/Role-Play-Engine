@@ -234,7 +234,6 @@ export async function saveWorldToDatabase(
             parentLocationId: scene.parentLocationId || null,
             connections: (scene.connections || []) as any,
             items: encodeSceneItemsPayload(scene) as any,
-            events: scene.events as any,
             initialScene: true,
             gameTime: null,
           },
@@ -437,7 +436,6 @@ export async function saveWorldToJSON(
         conditions: scene.conditions,
         connections: scene.connections,
         sceneImage: scene.sceneImage,
-        events: scene.events,
         initialScene: true,
       };
     } else {
@@ -451,7 +449,6 @@ export async function saveWorldToJSON(
         conditions: [],
         connections: [],
         items: [],
-        events: [],
         initialScene: false,
       };
     }

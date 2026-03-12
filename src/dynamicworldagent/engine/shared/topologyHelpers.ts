@@ -86,7 +86,7 @@ export function resolveCharacterLocationId(
 
   // 2. Fallback: player → currentSceneId
   const state = dgsm.getState();
-  if (characterId === state.playerCharacter.id) {
+  if (state.playerCharacter && characterId === state.playerCharacter.id) {
     return state.currentSceneId ?? undefined;
   }
 

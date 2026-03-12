@@ -15,7 +15,6 @@ export interface JunctionNode {
   itemContexts?: ItemContexts;
   clues: ScenarioClue[];
   conditions: ScenarioCondition[];
-  events: string[];
   /** Scene IDs directly accessible from this junction (buildings at the intersection) */
   connectedSceneIds: string[];
 }
@@ -50,7 +49,6 @@ export interface RoadNode {
   itemContexts?: ItemContexts;
   clues: ScenarioClue[];
   conditions: ScenarioCondition[];
-  events: string[];
 }
 
 /**

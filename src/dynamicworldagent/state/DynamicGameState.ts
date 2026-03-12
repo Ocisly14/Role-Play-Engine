@@ -70,6 +70,7 @@ export interface DynamicTemporaryInfo {
 export interface DynamicGameState {
   // === Session & Runtime Data (from old GameState) ===
   sessionId: string;
+  sessionType?: "player_game" | "simulation";
 
   // Current scene
   currentSceneId: string | null;
@@ -107,7 +108,7 @@ export interface DynamicGameState {
   moduleLimitations: string | null; // Module limitation conditions (permanent information)
 
   // Characters
-  playerCharacter: DynamicCharacterProfile;
+  playerCharacter?: DynamicCharacterProfile;
   npcCharacters: DynamicNPCProfile[];
 
   // Knowledge discoveries and progression
@@ -185,12 +186,14 @@ export interface DynamicGameState {
 export const initialDynamicGameState = (params: {
   sessionId: string;
   moduleName: string;
-  playerCharacter: DynamicCharacterProfile;
+  playerCharacter?: DynamicCharacterProfile;
+  sessionType?: "player_game" | "simulation";
   gameDay?: number;
   timeOfDay?: string;
 }): DynamicGameState => ({
   // Session & Runtime Data
   sessionId: params.sessionId,
+  sessionType: params.sessionType ?? "player_game",
   currentSceneId: null,
   scenes: new Map(),
   gameDay: params.gameDay ?? 1,
@@ -1000,7 +1003,7 @@ export class DynamicGameStateManager {
     if (!stateUpdate) return;
 
     // Update player character
-    if (stateUpdate.playerCharacter) {
+    if (stateUpdate.playerCharacter && this.state.playerCharacter) {
       this.updateCharacter(
         this.state.playerCharacter,
         stateUpdate.playerCharacter
@@ -1377,6 +1380,16 @@ export class DynamicGameStateManager {
 
     // Long rest: ≥ 8 h, restore HP and SAN
     const player = this.state.playerCharacter;
+    if (!player) {
+      this.state.lastUpdated = new Date();
+      const hours = Math.round(restMinutes / 60);
+      return {
+        restType: "long",
+        hpRestored: 0,
+        sanRestored: 0,
+        summary: `进行了 ${hours} 小时的深度休息，疲劳解除。`,
+      };
+    }
     const maxHP: number = (player as any).maxHp ?? player.attributes?.siz ?? 10;
     const initialSAN: number =
       (player as any).initialSan ?? player.attributes?.pow ?? 50;

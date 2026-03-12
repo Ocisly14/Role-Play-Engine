@@ -44,7 +44,6 @@ function createMockDgsm() {
     _addScene(
       id: string,
       items: Item[] = [],
-      events: string[] = [],
       itemContexts: Record<string, string> = {},
     ) {
       scenes[id] = {
@@ -52,7 +51,6 @@ function createMockDgsm() {
         name: id,
         items,
         itemContexts,
-        events,
         connections: [],
       } as unknown as DynamicScene;
     },
@@ -360,7 +358,7 @@ describe("objectInteractionHandler", () => {
   describe("inspect", () => {
     it("returns item details in outcome string", () => {
       const diary: Item = { id: "diary", name: "Diary", type: "document", description: "A worn leather diary with cryptic entries." };
-      dgsm._addScene("study", [diary], [], {
+      dgsm._addScene("study", [diary], {
         diary: "摊开在书桌上，页边压着一支掉漆的钢笔。",
       });
       dgsm._addNpc("player-1", "study");
@@ -414,7 +412,7 @@ describe("objectInteractionHandler", () => {
 
     it("works for items in NPC inventory", () => {
       const compass: Item = { id: "compass", name: "Compass", type: "tool", description: "A brass compass." };
-      dgsm._addScene("study", [], [], {
+      dgsm._addScene("study", [], {
         compass: "原本挂在墙上的木钉上。",
       });
       dgsm._addNpc("player-1", "study");
@@ -447,7 +445,6 @@ describe("objectInteractionHandler", () => {
       const result = objectInteractionHandler.execute(node, dgsm as any, ctx);
       expect(result.status).toBe("completed");
       expect(dgsm._scenes["study"].items).toHaveLength(0);
-      expect(dgsm._scenes["study"].events).toContain("Investigator destroyed Ming Vase");
     });
 
     it("removes item from inventory when not in scene", () => {

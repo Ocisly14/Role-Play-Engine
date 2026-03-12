@@ -274,7 +274,9 @@ export function removeInsanityCondition(
 
   // Write back
   if (isPlayer) {
-    (state.playerCharacter.status as any).conditions = filtered;
+    if (state.playerCharacter?.status) {
+      (state.playerCharacter.status as any).conditions = filtered;
+    }
   } else {
     const npc = state.npcCharacters?.find((n: any) => n.id === characterId);
     if (npc?.status) {
@@ -309,6 +311,7 @@ export function applySanityLoss(
 
   // 1. Apply SAN delta
   if (isPlayer) {
+    if (!state.playerCharacter) return;
     state.playerCharacter.status.sanity = Math.max(0, state.playerCharacter.status.sanity + delta);
   } else {
     (dgsm as any).updateNpcSan(characterId, delta);
@@ -394,7 +397,7 @@ export function applySanityLoss(
     // 6b. Indefinite insanity (hourly cumulative >= currentSan / 5)
     // Use SAN *before* this loss for the threshold check
     const currentSan = isPlayer
-      ? state.playerCharacter.status.sanity + lossAmount
+      ? (state.playerCharacter?.status?.sanity ?? 0) + lossAmount
       : ((dgsm as any).getNpcStats(characterId)?.san ?? 0) + lossAmount;
 
     const hourlyCumulative = getHourlyCumulativeLoss(charSanState, gameTimeMinutes);

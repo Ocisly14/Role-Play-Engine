@@ -335,9 +335,8 @@ export const objectInteractionHandler: NodeHandler = {
         if (!removed) {
           return makeAction(node, "failed", buildOutcome(node, "failed", { reason: `${payload.itemId} not found` }), { difficulty, failureReason: "object_not_found" });
         }
-        if (scene) {
-          scene.events.push(`${node.characterName} destroyed ${removed.name}`);
-        }
+
+
       }
     }
 
