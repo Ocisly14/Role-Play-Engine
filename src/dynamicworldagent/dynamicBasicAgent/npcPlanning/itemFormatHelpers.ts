@@ -1,4 +1,4 @@
-import type { Item, DynamicScene } from "../../world_builder/types.js";
+import type { Item, DynamicScene } from "../../state/types.js";
 
 /**
  * One-line summary of an Item: "Name (id: X, type: Y, ...key stats)"

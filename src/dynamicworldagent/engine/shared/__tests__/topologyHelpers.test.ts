@@ -5,8 +5,8 @@ import {
   getTopologyNeighbors,
   resolveCharacterLocationId,
 } from "../topologyHelpers.js";
-import type { JunctionNode, RoadNode, TownTopology } from "../../../world_builder/topologyTypes.js";
-import { buildTopology } from "../../../world_builder/topologyTypes.js";
+import type { JunctionNode, RoadNode, TownTopology } from "../../../state/topologyTypes.js";
+import { buildTopology } from "../../../state/topologyTypes.js";
 
 // ===== Test topology =====
 //

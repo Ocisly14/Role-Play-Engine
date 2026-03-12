@@ -13,7 +13,7 @@ import type {
   RedHerring,
   ScenarioOutline,
   TruthEvent,
-} from "../world_builder/types.js";
+} from "./types.js";
 
 import type {
   CoCDatabase,
@@ -33,14 +33,14 @@ import type {
   DynamicScene,
   Item,
   TransportEdge,
-} from "../world_builder/types.js";
+} from "./types.js";
 import type {
   CharacterPosition,
   JunctionNode,
   RoadNode,
   TownTopology,
-} from "../world_builder/topologyTypes.js";
-import { buildTopology } from "../world_builder/topologyTypes.js";
+} from "./topologyTypes.js";
+import { buildTopology } from "./topologyTypes.js";
 
 export interface DefeatedNpcHistoryEntry {
   name: string;

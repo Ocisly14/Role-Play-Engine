@@ -3,7 +3,7 @@
 import { randomUUID } from "node:crypto";
 import type { PrismaClient } from "@prisma/client";
 import type { DynamicGameStateManager } from "../state/DynamicGameState.js";
-import type { DynamicNPCProfile } from "../world_builder/types.js";
+import type { DynamicNPCProfile } from "../state/types.js";
 
 /**
  * Build a DynamicNPCProfile for a player-injected character.
@@ -76,7 +76,7 @@ export function injectCharacterIntoState(
   const state = dgsm.getState() as ReturnType<typeof dgsm.getState> & {
     npcStats: Record<string, { hp: number; san: number }>;
     npcResidences: Record<string, string>;
-    npcInventories: Record<string, import("../world_builder/types.js").Item[]>;
+    npcInventories: Record<string, import("../state/types.js").Item[]>;
     npcDiscoveredKnowledge: Record<string, string[]>;
     npcRelationshipGraph: Record<string, Record<string, { score: number; note: string }>>;
   };
@@ -116,10 +116,10 @@ export async function removeCharacterFromState(
     npcCharacters: DynamicNPCProfile[];
     npcStats: Record<string, { hp: number; san: number }>;
     npcResidences: Record<string, string>;
-    npcInventories: Record<string, import("../world_builder/types.js").Item[]>;
+    npcInventories: Record<string, import("../state/types.js").Item[]>;
     npcDiscoveredKnowledge: Record<string, string[]>;
     npcRelationshipGraph: Record<string, Record<string, { score: number; note: string }>>;
-    characterPositions: Record<string, import("../world_builder/topologyTypes.js").CharacterPosition>;
+    characterPositions: Record<string, import("../state/topologyTypes.js").CharacterPosition>;
     npcLocations: Record<string, string>;
   };
 

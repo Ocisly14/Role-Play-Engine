@@ -1,7 +1,6 @@
 import type React from "react";
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
-import { useNavigate } from "react-router-dom";
 import { CharacterSheetModal } from "../components/CharacterSheetModal";
 import { FrameImage } from "../components/FrameImage";
 import { authFetch } from "../utils/authFetch";
@@ -30,96 +29,11 @@ const Homes: React.FC<HomeProps> = ({
   onManageMods,
 }) => {
   const { t } = useTranslation("home");
-  const navigate = useNavigate();
-  const [menuLevel, setMenuLevel] = useState<"main" | "singleplayer">("main");
   const [showCharacterBrowser, setShowCharacterBrowser] = useState(false);
   const [characters, setCharacters] = useState<Character[]>([]);
   const [loading, setLoading] = useState(false);
   const [selectedCharacterId, setSelectedCharacterId] = useState<string>("");
   const [showCharacterSheet, setShowCharacterSheet] = useState(false);
-  const [showMultiplayerLobby, setShowMultiplayerLobby] = useState(false);
-  const [mpCreating, setMpCreating] = useState(false);
-  const [mpJoinCode, setMpJoinCode] = useState("");
-  const [mpJoining, setMpJoining] = useState(false);
-  const [mpError, setMpError] = useState<string | null>(null);
-  const [showCreateModal, setShowCreateModal] = useState(false);
-  const [mpCheckpoints, setMpCheckpoints] = useState<Array<{
-    checkpointId: string;
-    name: string;
-    createdAt: string;
-    gameDay: number | null;
-    timeOfDay: string | null;
-    playerCount: number;
-  }>>([]);
-  const [mpLoadingCheckpoints, setMpLoadingCheckpoints] = useState(false);
-
-  const handleOpenCreateModal = async () => {
-    setMpError(null);
-    setShowCreateModal(true);
-    setMpLoadingCheckpoints(true);
-    try {
-      const res = await authFetch("/api/multiplayer/checkpoints/mine");
-      const data = await res.json();
-      if (data.success) {
-        setMpCheckpoints(data.checkpoints ?? []);
-      }
-    } catch {
-      // Non-critical
-    } finally {
-      setMpLoadingCheckpoints(false);
-    }
-  };
-
-  const handleCreateRoom = async (checkpointId?: string) => {
-    setShowCreateModal(false);
-    setMpError(null);
-    setMpCreating(true);
-    try {
-      const res = await authFetch("/api/multiplayer/rooms/create", {
-        method: "POST",
-        headers: checkpointId ? { "Content-Type": "application/json" } : undefined,
-        body: checkpointId ? JSON.stringify({ checkpointId }) : undefined,
-      });
-      const data = await res.json();
-      if (!data.success) throw new Error(data.error ?? t("multiplayer.createFailed"));
-      navigate(`/multiplayer/room/${data.roomId}`);
-    } catch (err) {
-      setMpError((err as Error).message);
-    } finally {
-      setMpCreating(false);
-    }
-  };
-
-  const handleJoinRoom = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (mpJoinCode.trim().length !== 5) {
-      setMpError(t("multiplayer.codeInvalid"));
-      return;
-    }
-    setMpError(null);
-    setMpJoining(true);
-    try {
-      const res = await authFetch("/api/multiplayer/rooms/join", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ roomCode: mpJoinCode.trim() }),
-      });
-      const data = await res.json();
-      if (!data.success) throw new Error(data.error ?? t("multiplayer.joinFailed"));
-      navigate(`/multiplayer/room/${data.roomId}`);
-    } catch (err) {
-      setMpError((err as Error).message);
-    } finally {
-      setMpJoining(false);
-    }
-  };
-
-  const handleOpenMultiplayerLobby = () => {
-    setMpError(null);
-    setMpJoinCode("");
-    setShowMultiplayerLobby(true);
-  };
-
   const handleStartGame = () => {
     // Just trigger the character selector
     onStartGame();
@@ -172,200 +86,26 @@ const Homes: React.FC<HomeProps> = ({
         <div className="home-frame">
           <FrameImage />
           <div className="home-actions">
-            {menuLevel === "main" ? (
-              <>
-                <button className="primary" onClick={() => setMenuLevel("singleplayer")}>
-                  {t("menu.singlePlayer")}
-                </button>
-                <button className="primary" onClick={handleOpenMultiplayerLobby}>
-                  {t("menu.multiplayer")}
-                </button>
-                <button className="secondary" onClick={onManageMods}>
-                  {t("menu.manageModules")}
-                </button>
-                <button className="secondary" onClick={onCreate}>
-                  {t("menu.createCharacter")}
-                </button>
-                <button className="secondary" onClick={handleViewCharacters}>
-                  {t("menu.viewCharacters")}
-                </button>
-              </>
-            ) : (
-              <>
-                <button className="primary" onClick={handleStartGame}>
-                  {t("menu.newGame")}
-                </button>
-                <button className="primary" onClick={onContinueGame}>
-                  {t("menu.continueGame")}
-                </button>
-                <button className="secondary" onClick={() => setMenuLevel("main")}>
-                  {t("menu.back")}
-                </button>
-              </>
-            )}
+            <>
+              <button className="primary" onClick={handleStartGame}>
+                {t("menu.newGame")}
+              </button>
+              <button className="primary" onClick={onContinueGame}>
+                {t("menu.continueGame")}
+              </button>
+              <button className="secondary" onClick={onManageMods}>
+                {t("menu.manageModules")}
+              </button>
+              <button className="secondary" onClick={onCreate}>
+                {t("menu.createCharacter")}
+              </button>
+              <button className="secondary" onClick={handleViewCharacters}>
+                {t("menu.viewCharacters")}
+              </button>
+            </>
           </div>
         </div>
       </div>
-
-      {/* Multiplayer Lobby Modal */}
-      {showMultiplayerLobby && (
-        <div className="fixed inset-0 z-50 bg-black/50 backdrop-blur-sm supports-[backdrop-filter]:bg-black/30 supports-[backdrop-filter]:backdrop-blur-sm flex items-center justify-center p-5">
-          <div className="fixed left-[50%] top-[50%] z-50 translate-x-[-50%] translate-y-[-50%] max-w-[480px] max-h-[90vh] w-full overflow-y-auto rounded-3xl p-0 supports-[backdrop-filter]:backdrop-blur-lg border border-white/50 bg-white/80 shadow-[0_30px_80px_rgba(15,23,42,0.25)] supports-[backdrop-filter]:bg-white/55 flex flex-col">
-            <div className="p-12 space-y-8">
-              <div className="flex justify-between items-center">
-                <h2 className="text-2xl font-semibold m-0" style={{ color: "var(--title)" }}>
-                  {t("multiplayer.title")}
-                </h2>
-                <button
-                  onClick={() => setShowMultiplayerLobby(false)}
-                  className="close-button"
-                  aria-label={t("common:button.close")}
-                >
-                  ×
-                </button>
-              </div>
-
-              {mpError && (
-                <div className="backdrop-blur-sm bg-red-50/60 border border-red-200 rounded-xl p-3 text-sm" style={{ color: "#b91c1c" }}>
-                  {mpError}
-                </div>
-              )}
-
-              {/* Create Room */}
-              <div className="backdrop-blur-sm bg-white/50 border border-slate-200 rounded-xl p-6 space-y-4">
-                <h3 className="text-lg font-semibold m-0" style={{ color: "var(--title)" }}>
-                  {t("multiplayer.createRoom")}
-                </h3>
-                <p className="text-sm m-0" style={{ color: "#666" }}>
-                  {t("multiplayer.createRoomDesc")}
-                </p>
-                <button
-                  type="button"
-                  onClick={handleOpenCreateModal}
-                  disabled={mpCreating}
-                  className="primary"
-                  style={{ width: "100%", opacity: mpCreating ? 0.5 : 1 }}
-                >
-                  {mpCreating ? t("multiplayer.creating") : t("multiplayer.createRoom")}
-                </button>
-              </div>
-
-              {/* Join Room */}
-              <div className="backdrop-blur-sm bg-white/50 border border-slate-200 rounded-xl p-6 space-y-4">
-                <h3 className="text-lg font-semibold m-0" style={{ color: "var(--title)" }}>
-                  {t("multiplayer.joinRoom")}
-                </h3>
-                <form onSubmit={handleJoinRoom} className="space-y-3">
-                  <input
-                    type="text"
-                    inputMode="numeric"
-                    maxLength={5}
-                    value={mpJoinCode}
-                    onChange={(e) => setMpJoinCode(e.target.value.replace(/\D/g, ""))}
-                    placeholder={t("multiplayer.codePlaceholder")}
-                    className="backdrop-blur-sm bg-white/60 border border-slate-200 rounded-xl"
-                    style={{
-                      width: "100%",
-                      padding: "12px 16px",
-                      textAlign: "center",
-                      fontSize: "1.25rem",
-                      letterSpacing: "0.2em",
-                      color: "var(--title)",
-                      outline: "none",
-                      boxSizing: "border-box",
-                    }}
-                  />
-                  <button
-                    type="submit"
-                    disabled={mpJoining || mpJoinCode.trim().length !== 5}
-                    className="primary"
-                    style={{ width: "100%", opacity: (mpJoining || mpJoinCode.trim().length !== 5) ? 0.5 : 1 }}
-                  >
-                    {mpJoining ? t("multiplayer.joining") : t("multiplayer.joinRoom")}
-                  </button>
-                </form>
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* New Game / Continue from Checkpoint Modal */}
-      {showCreateModal && (
-        <div className="fixed inset-0 z-[60] flex items-center justify-center">
-          <div
-            className="absolute inset-0 bg-black/30 backdrop-blur-sm"
-            onClick={() => setShowCreateModal(false)}
-          />
-          <div className="relative z-10 w-full max-w-[420px] mx-4 rounded-3xl supports-[backdrop-filter]:backdrop-blur-lg border border-white/50 bg-white/80 shadow-[0_30px_80px_rgba(15,23,42,0.25)] supports-[backdrop-filter]:bg-white/55 overflow-hidden">
-            <div className="p-8 space-y-4">
-              <h2 className="text-xl font-bold m-0" style={{ color: "var(--title)" }}>
-                {t("multiplayer.newOrContinue")}
-              </h2>
-
-              {/* New Game */}
-              <button
-                type="button"
-                onClick={() => handleCreateRoom()}
-                disabled={mpCreating}
-                className="primary"
-                style={{ width: "100%", opacity: mpCreating ? 0.5 : 1 }}
-              >
-                {t("multiplayer.newGame")}
-              </button>
-
-              {/* Continue from checkpoint */}
-              <div className="backdrop-blur-sm bg-white/50 border border-slate-200 rounded-xl p-4 space-y-2">
-                <h3 className="text-sm font-semibold m-0" style={{ color: "var(--title)" }}>
-                  {t("multiplayer.continueGame")}
-                </h3>
-                {mpLoadingCheckpoints ? (
-                  <p className="text-xs m-0" style={{ color: "#666" }}>...</p>
-                ) : mpCheckpoints.length === 0 ? (
-                  <p className="text-xs m-0" style={{ color: "#666" }}>
-                    {t("multiplayer.noCheckpoints")}
-                  </p>
-                ) : (
-                  <div className="space-y-1.5 max-h-48 overflow-y-auto">
-                    {mpCheckpoints.map((cp) => (
-                      <button
-                        key={cp.checkpointId}
-                        type="button"
-                        onClick={() => handleCreateRoom(cp.checkpointId)}
-                        disabled={mpCreating}
-                        className="w-full text-left backdrop-blur-sm bg-white/60 border border-slate-200 rounded-lg px-3 py-2 hover:bg-white/80 transition-all"
-                        style={{ opacity: mpCreating ? 0.5 : 1 }}
-                      >
-                        <p className="text-sm font-medium m-0" style={{ color: "var(--title)" }}>
-                          {cp.name}
-                        </p>
-                        <p className="text-xs m-0" style={{ color: "#666" }}>
-                          {cp.gameDay != null && t("multiplayer.checkpointDay", { day: cp.gameDay })}
-                          {cp.timeOfDay && ` ${cp.timeOfDay}`}
-                          {" · "}
-                          {cp.playerCount} {t("multiplayer.players")}
-                          {" · "}
-                          {new Date(cp.createdAt).toLocaleDateString()}
-                        </p>
-                      </button>
-                    ))}
-                  </div>
-                )}
-              </div>
-
-              {/* Cancel */}
-              <button
-                type="button"
-                onClick={() => setShowCreateModal(false)}
-                className="secondary"
-                style={{ width: "100%" }}
-              >
-                {t("multiplayer.cancelReady")}
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
 
       {/* Character Browser Modal */}
       {showCharacterBrowser && (

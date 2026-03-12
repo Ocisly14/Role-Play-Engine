@@ -1,7 +1,7 @@
 import { describe, it, expect, beforeEach } from "vitest";
 import { objectInteractionHandler } from "../objectInteractionHandler.js";
 import type { PlanNode } from "../../../dynamicBasicAgent/npcPlanning/types.js";
-import type { Item, DynamicScene } from "../../../world_builder/types.js";
+import type { Item, DynamicScene } from "../../../state/types.js";
 import type { ExecutionContext } from "../../types.js";
 
 // ===== Mock DGSM =====

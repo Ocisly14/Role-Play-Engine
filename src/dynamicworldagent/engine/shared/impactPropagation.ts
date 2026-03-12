@@ -1,6 +1,6 @@
 import type { DynamicGameStateManager } from "../../state/DynamicGameState.js";
 import type { CharacterAction } from "../../dynamicBasicAgent/npcPlanning/types.js";
-import type { TransportEdge } from "../../world_builder/types.js";
+import type { TransportEdge } from "../../state/types.js";
 
 const NEIGHBORHOOD_TRAVEL_MINUTES = 15;
 

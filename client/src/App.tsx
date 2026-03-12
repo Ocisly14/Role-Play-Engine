@@ -24,9 +24,6 @@ import { ModSelectionPage } from "./views/ModSelectionPage";
 import { ModuleIntroPage } from "./views/ModuleIntroPage";
 import { StoryCreatorPage } from "./views/StoryCreatorPage";
 import { TutorialPage } from "./views/TutorialPage";
-import { MultiplayerLobby } from "./views/MultiplayerLobby";
-import { MultiplayerGamePage } from "./views/MultiplayerGamePage";
-import { MultiplayerRoomWaiting } from "./views/MultiplayerRoomWaiting";
 import ForgotPassword from "./views/auth/ForgotPassword";
 import Login from "./views/auth/Login";
 import Register from "./views/auth/Register";
@@ -63,12 +60,9 @@ const BackgroundManager: React.FC = () => {
     initializeBackground();
   }, []);
 
-  // Detect whether we're on a game page (single-player or multiplayer)
+  // Detect whether we're on a game page
   const isGamePage = location.pathname === "/game";
-  const multiplayerMatch = location.pathname.match(/^\/multiplayer\/game\/([^/]+)/);
-  const isMultiplayerGamePage = !!multiplayerMatch;
-  const multiplayerRoomId = multiplayerMatch?.[1] ?? null;
-  const isAnyGamePage = isGamePage || isMultiplayerGamePage;
+  const isAnyGamePage = isGamePage;
 
   // Fetch current scenario sceneImage and set as background when on game page
   useEffect(() => {
@@ -83,16 +77,7 @@ const BackgroundManager: React.FC = () => {
 
     const fetchGameState = async () => {
       try {
-        // Choose endpoint based on single-player vs multiplayer
-        let gamestateUrl: string;
-        if (isMultiplayerGamePage) {
-          const viewedRoom = gameSession.viewedMultiplayerSceneRoomId;
-          gamestateUrl = viewedRoom
-            ? `/api/multiplayer/rooms/${multiplayerRoomId}/gamestate?sceneRoomId=${encodeURIComponent(viewedRoom)}`
-            : `/api/multiplayer/rooms/${multiplayerRoomId}/gamestate`;
-        } else {
-          gamestateUrl = "/api/gamestate";
-        }
+        const gamestateUrl = "/api/gamestate";
         const response = await authFetch(gamestateUrl);
         if (!response.ok) {
           return;
@@ -141,11 +126,8 @@ const BackgroundManager: React.FC = () => {
     location.pathname,
     isAnyGamePage,
     isGamePage,
-    isMultiplayerGamePage,
-    multiplayerRoomId,
     gameSession.sessionId,
     gameSession.sidebarRefreshTrigger,
-    gameSession.viewedMultiplayerSceneRoomId,
     gameSession.setCurrentModuleName,
     setDefaultBackground,
   ]);
@@ -191,9 +173,6 @@ const AppRoutes: React.FC = () => {
           <Route path="/story/create" element={<StoryCreatorPage />} />
           <Route path="/tutorial" element={<TutorialPage />} />
           <Route path="/game" element={<GamePage />} />
-          <Route path="/multiplayer" element={<MultiplayerLobby />} />
-          <Route path="/multiplayer/room/:roomId" element={<MultiplayerRoomWaiting />} />
-          <Route path="/multiplayer/game/:roomId" element={<MultiplayerGamePage />} />
         </Route>
       </Routes>
     </>

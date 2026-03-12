@@ -62,10 +62,6 @@ interface GameSessionContextType {
   sidebarRefreshTrigger: number;
   triggerSidebarRefresh: () => void;
 
-  // Multiplayer: which scene room tab the user is currently viewing (null = own room)
-  viewedMultiplayerSceneRoomId: string | null;
-  setViewedMultiplayerSceneRoomId: (id: string | null) => void;
-
   // Loading states
   isRestoringSession: boolean;
 }
@@ -91,7 +87,6 @@ export const GameSessionProvider: React.FC<{ children: React.ReactNode }> = ({
   const [moduleIntroduction, setModuleIntroduction] =
     useState<ModuleIntroduction | null>(null);
   const [sidebarRefreshTrigger, setSidebarRefreshTrigger] = useState(0);
-  const [viewedMultiplayerSceneRoomId, setViewedMultiplayerSceneRoomId] = useState<string | null>(null);
   const [isRestoringSession, setIsRestoringSession] = useState(false);
   const hasInitialized = useRef(false);
 
@@ -276,8 +271,6 @@ export const GameSessionProvider: React.FC<{ children: React.ReactNode }> = ({
     clearSession,
     sidebarRefreshTrigger,
     triggerSidebarRefresh,
-    viewedMultiplayerSceneRoomId,
-    setViewedMultiplayerSceneRoomId,
     isRestoringSession,
   };
 

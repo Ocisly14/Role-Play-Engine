@@ -3,7 +3,7 @@ import type { DynamicGameStateManager } from "../../state/DynamicGameState.js";
 import type { PlanNode, CharacterAction } from "../../dynamicBasicAgent/npcPlanning/types.js";
 import { buildOutcome, makeAction } from "../shared/nodeHelpers.js";
 import { findPath, calculateTravelTime, findTopologyPath } from "../shared/pathfinding.js";
-import type { CharacterPosition, TownTopology } from "../../world_builder/topologyTypes.js";
+import type { CharacterPosition, TownTopology } from "../../state/topologyTypes.js";
 
 export const movementHandler: NodeHandler = {
   type: "movement",

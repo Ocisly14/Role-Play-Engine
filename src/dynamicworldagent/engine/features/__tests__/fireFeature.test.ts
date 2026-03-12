@@ -3,7 +3,7 @@ import { fireFeature } from "../fireFeature.js";
 import type { TickRuntimeContext } from "../../types.js";
 import type { PlanNode } from "../../../dynamicBasicAgent/npcPlanning/types.js";
 import type { SceneCondition } from "../../../dynamicBasicAgent/npcPlanning/types.js";
-import type { Item } from "../../../world_builder/types.js";
+import type { Item } from "../../../state/types.js";
 
 // ===== Minimal mock of DynamicGameStateManager =====
 

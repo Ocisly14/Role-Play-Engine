@@ -1,4 +1,4 @@
-import type { TownTopology } from "../../world_builder/topologyTypes.js";
+import type { TownTopology } from "../../state/topologyTypes.js";
 import type { DynamicGameStateManager } from "../../state/DynamicGameState.js";
 
 /**

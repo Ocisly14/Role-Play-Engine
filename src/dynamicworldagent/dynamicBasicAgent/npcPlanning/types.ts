@@ -1,5 +1,5 @@
 import type { ActionType } from "../../../shared/state/index.js";
-import type { Item } from "../../world_builder/types.js";
+import type { Item } from "../../state/types.js";
 import type { SimulationEvent } from "../../simulation/types.js";
 
 export type BuiltinNodeType =

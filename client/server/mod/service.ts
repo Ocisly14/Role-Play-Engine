@@ -1,6 +1,6 @@
 import fs from "fs";
 import path from "path";
-import { WorldModuleLoader } from "../../../src/dynamicworldagent/world_builder/worldModuleLoader.js";
+import { WorldModuleLoader } from "../../../src/dynamicworldagent/state/worldModuleLoader.js";
 import { NPCLoader } from "../../../src/shared/agents/character/npcloader/index.js";
 import type {
   CoCDatabase,

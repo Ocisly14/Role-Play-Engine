@@ -1,5 +1,5 @@
-import type { DynamicScene, TransportEdge } from "../../world_builder/types.js";
-import type { CharacterPosition, TownTopology } from "../../world_builder/topologyTypes.js";
+import type { DynamicScene, TransportEdge } from "../../state/types.js";
+import type { CharacterPosition, TownTopology } from "../../state/topologyTypes.js";
 
 /**
  * BFS pathfinding between sub-scenes.

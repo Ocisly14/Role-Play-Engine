@@ -10,18 +10,14 @@ import express from "express";
 import analyticsRoutes from "./server/analytics/routes.js";
 // Import all route modules
 import authRoutes from "./server/auth/routes.js";
-import { multiplayerRoutes } from "./server/multiplayer/routes.js";
 import characterRoutes from "./server/character/routes.js";
-import checkpointRoutes from "./server/checkpoint/routes.js";
 import dataRoutes from "./server/data/routes.js";
-import gameRoutes from "./server/game/routes.js";
 import mapRoutes from "./server/maps/routes.js";
 import memoRoutes from "./server/memos/routes.js";
 import modRoutes from "./server/mod/routes.js";
 import ragRoutes from "./server/rag/routes.js";
 import simulationRoutes from "./server/simulation/routes.js";
 import skillRoutes from "./server/skills/routes.js";
-import turnRoutes from "./server/turn/routes.js";
 
 import { LocalEmbeddingManager } from "../src/rag/localEmbeddingManager.js";
 import {
@@ -76,11 +72,7 @@ app.use("/api/maps", mapRoutes); // /api/maps/* - Map image serving (MUST be fir
 app.use("/api/auth", authRoutes); // /api/auth/* - Authentication routes
 app.use("/api", dataRoutes); // /api/occupations, /api/weapons, /api/mods
 app.use("/api", characterRoutes); // /api/character*, /api/characters
-app.use("/api", gameRoutes); // /api/game/*, /api/gamestate
 app.use("/api", modRoutes); // /api/mod/*, /api/module/*
-app.use("/api", turnRoutes); // /api/turns*, /api/sessions/*
-app.use("/api", checkpointRoutes); // /api/checkpoints/*
-app.use("/api/multiplayer", multiplayerRoutes); // /api/multiplayer/*
 app.use("/api", memoRoutes); // /api/memos
 app.use("/api", skillRoutes); // /api/skills/*
 app.use("/api", analyticsRoutes); // /api/analytics/*

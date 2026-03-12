@@ -6,8 +6,8 @@
 import type {
   ScenarioCondition,
 } from "../../models/scenarioTypes.js";
-import type { DynamicScene } from "../../../../dynamicworldagent/world_builder/types.js";
-import { decodeSceneItemsPayload } from "../../../../dynamicworldagent/world_builder/sceneItemContextPayload.js";
+import type { DynamicScene } from "../../../../dynamicworldagent/state/types.js";
+import { decodeSceneItemsPayload } from "../../../../dynamicworldagent/state/sceneItemContextPayload.js";
 import {
   resolveModuleIdByName,
   scopeIdByModule,

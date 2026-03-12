@@ -24,9 +24,9 @@ import type {
   DynamicCharacterProfile,
   DynamicNPCProfile,
   DynamicScene,
-} from "../world_builder/types.js";
-import { decodeSceneItemsPayload } from "../world_builder/sceneItemContextPayload.js";
-import { WorldModuleLoader } from "../world_builder/worldModuleLoader.js";
+} from "./types.js";
+import { decodeSceneItemsPayload } from "./sceneItemContextPayload.js";
+import { WorldModuleLoader } from "./worldModuleLoader.js";
 import { bootstrapNpcSecrets } from "../memory/bootstrapSecrets.js";
 import { EmbeddingClient } from "../../rag/embedding.js";
 import { ModelProviderName } from "../../models/types.js";
@@ -363,7 +363,7 @@ export async function loadDynamicGameStateFromModuleLoader(
 
   // Load topology if junctions/roads available
   if (loadedModule.junctions.size > 0 || loadedModule.roads.size > 0) {
-    const { buildTopology } = await import("../world_builder/topologyTypes.js");
+    const { buildTopology } = await import("./topologyTypes.js");
     const topology = buildTopology(loadedModule.junctions, loadedModule.roads);
     manager.setTopology(topology);
     console.log(

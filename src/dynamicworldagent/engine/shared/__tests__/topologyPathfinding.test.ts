@@ -1,7 +1,7 @@
 import { describe, it, expect } from "vitest";
 import { findTopologyPath } from "../pathfinding.js";
-import type { JunctionNode, RoadNode, TownTopology } from "../../../world_builder/topologyTypes.js";
-import { buildTopology } from "../../../world_builder/topologyTypes.js";
+import type { JunctionNode, RoadNode, TownTopology } from "../../../state/topologyTypes.js";
+import { buildTopology } from "../../../state/topologyTypes.js";
 
 // Helper: build a simple test topology
 //   JUNC_A -- ROAD_1 (10min) -- JUNC_B -- ROAD_2 (5min) -- JUNC_C

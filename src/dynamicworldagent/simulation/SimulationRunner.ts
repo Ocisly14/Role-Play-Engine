@@ -14,7 +14,7 @@ import type { NPCPlanningAgent } from "../dynamicBasicAgent/npcPlanning/NPCPlann
 import type { GameEngineRegistry } from "../engine/registry.js";
 import type { ExecutionContext } from "../engine/types.js";
 import type { NpcMemoryManager } from "../memory/NpcMemoryManager.js";
-import type { DynamicNPCProfile } from "../world_builder/types.js";
+import type { DynamicNPCProfile } from "../state/types.js";
 import {
   injectCharacterIntoState,
   removeCharacterFromState,

@@ -1,7 +1,7 @@
 import type { NodeHandler, ExecutionContext } from "../types.js";
 import type { DynamicGameStateManager } from "../../state/DynamicGameState.js";
 import type { PlanNode, CharacterAction } from "../../dynamicBasicAgent/npcPlanning/types.js";
-import type { Item } from "../../world_builder/types.js";
+import type { Item } from "../../state/types.js";
 import { buildOutcome, makeAction } from "../shared/nodeHelpers.js";
 import { deepMergeItem } from "../shared/deepMerge.js";
 

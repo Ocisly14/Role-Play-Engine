@@ -2,7 +2,7 @@ import fs from "node:fs";
 import path from "node:path";
 /// <reference path="../types/express.d.ts" />
 import type { Request, Response } from "express";
-import { WorldModuleLoader } from "../../../src/dynamicworldagent/world_builder/worldModuleLoader.js";
+import { WorldModuleLoader } from "../../../src/dynamicworldagent/state/worldModuleLoader.js";
 import { ModuleLoader } from "../../../src/shared/agents/memory/moduleloader/index.js";
 import { DatabaseManager } from "../core/DatabaseManager.js";
 import { isNameSimilar } from "../utils/stringUtils.js";
@@ -17,7 +17,6 @@ import {
   shareModule,
   unshareModule,
 } from "./library.js";
-import { getQuotaStatus } from "./quotaManager.js";
 import { loadMod } from "./service.js";
 
 /**
@@ -598,25 +597,3 @@ export async function restoreModsBulk(
   }
 }
 
-/**
- * Get current generation quota status for the authenticated user
- * GET /api/mods/quota
- */
-export async function getModQuota(req: Request, res: Response): Promise<void> {
-  try {
-    const email = req.user?.email;
-    if (!email) {
-      res.status(401).json({ error: "Authentication required" });
-      return;
-    }
-
-    const quota = await getQuotaStatus(email);
-
-    res.json({ success: true, quota });
-  } catch (error) {
-    console.error("Error getting quota status:", error);
-    res.status(500).json({
-      error: `Failed to get quota status: ${(error as Error).message}`,
-    });
-  }
-}
