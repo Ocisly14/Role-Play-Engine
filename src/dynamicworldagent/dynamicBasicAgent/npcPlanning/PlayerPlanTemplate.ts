@@ -5,7 +5,7 @@ export interface PlayerPlanParams {
   currentScenarioId: string;
   currentScenarioName: string;
   currentScenarioDescription: string;
-  scenarioClues: string;
+  sceneEvidence: string;
   sceneConditions: string;
   sceneItems: string;
   connections: string;
@@ -34,7 +34,7 @@ export interface PlayerPlanParams {
 const DEFAULT_NODE_TYPE_REFERENCE = `## Node Type Reference
 - **"routine"**: Self-contained action, no interaction target. Examples: eating, resting, reading something already in hand, thinking, recalling memories.
 - **"movement"**: Move to a destination scene. Set location to the target scene ID. Omit actionType for normal unblocked movement; set actionType when path is blocked (if skill can overcome it) or for creative movement (climbing, jumping, swimming).
-- **"character_interaction"**: Interact with a specific NPC. Requires targetCharacterId. Include characterInteractionPayload if transferring item/clue/information.
+- **"character_interaction"**: Interact with a specific NPC. Requires targetCharacterId. Include characterInteractionPayload if transferring item/knowledge/information.
 - **"object_interaction"**: Interact with a physical object in the scene. Include objectInteractionPayload (pickup/place/use/inspect/destroy). For two-item interactions (e.g., use key on safe), include targetItemId. For creative non-standard uses, set actionType on the node and include itemUpdates/targetItemUpdates with expected end-state.
 - **"scene_interaction"**: Search, investigate, or modify the environment/scene itself. Include sceneConnectionEffect if changing a connection (e.g., unlocking/barricading a door).
 
@@ -44,7 +44,7 @@ actionType represents the **kind of skill check** required. When present, the ex
 
 ### exploration
 **Finding hidden things, gathering information, researching, analyzing.**
-Triggered by: actively searching for concealed clues, picking locks to access hidden areas, deciphering foreign texts, appraising artifacts, forensic analysis, library research, tracking footprints.
+Triggered by: actively searching for concealed evidence, picking locks to access hidden areas, deciphering foreign texts, appraising artifacts, forensic analysis, library research, tracking footprints.
 Typical skills: Spot Hidden, Listen, Library Use, Locksmith, Navigate, Track, Science (*), Language (Other).
 
 ### social
@@ -182,8 +182,8 @@ ${params.sceneItems || "No items in this scene."}
 
 ${params.worldStatePrompt || ""}
 
-## Available Clues in This Scene
-${params.scenarioClues || "No clues available."}
+## Available Evidence in This Scene
+${params.sceneEvidence || "No evidence available."}
 
 ## Connected Scenes
 ${params.connections || "No connections."}

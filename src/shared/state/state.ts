@@ -70,32 +70,29 @@ export interface VisitedScenarioBasic {
 }
 
 /**
- * Detailed information about a discovered clue
+ * Detailed information about a discovered piece of knowledge or evidence
  */
-export interface DiscoveredClue {
-  /** Clue text content */
+export interface DiscoveredKnowledge {
+  /** Knowledge/evidence text content */
   text: string;
-  /** Clue type: scenario clue, NPC clue, or secret */
-  type: "scenario" | "npc" | "secret";
-  /** Source name (scenario name or NPC name) */
+  /** Type: evidence (physical item), information (from NPC), or secret */
+  type: "evidence" | "information" | "secret";
+  /** Source name (scene name or NPC name) */
   sourceName: string;
-  /** Who discovered this clue */
+  /** Who discovered this */
   discoveredBy: string;
   /** When discovered (ISO format) */
   discoveredAt: string;
-  /** Clue category (scenario clues only) */
-  category?:
-    | "physical"
-    | "witness"
-    | "document"
-    | "environment"
-    | "knowledge"
-    | "observation";
-  /** Clue difficulty (scenario clues only) */
+  /** Difficulty level */
   difficulty?: "automatic" | "regular" | "hard" | "extreme";
   /** Discovery method */
   method?: string;
 }
+
+/**
+ * @deprecated Use DiscoveredKnowledge instead
+ */
+export type DiscoveredClue = DiscoveredKnowledge;
 
 export type TimeConsumption =
   | "instant"

@@ -125,9 +125,9 @@ export class KeeperAgent {
         metadata: Record<string, any>;
       }>) || [];
 
-    // 8.2. Get retrieved clue context from RAG (populated by memory agent)
-    const retrievedClueContext =
-      (dynamicState.temporaryInfo.contextualData?.retrievedClueContext as Array<{
+    // 8.2. Get retrieved discovery context from RAG (populated by memory agent)
+    const retrievedDiscoveryContext =
+      (dynamicState.temporaryInfo.contextualData?.retrievedDiscoveryContext as Array<{
         content: string;
         score: number;
         metadata: Record<string, unknown> | null;
@@ -167,14 +167,14 @@ export class KeeperAgent {
         null;
     };
 
-    // 9. Extract discovered clues from player actions (tick processor already handled discovery)
-    const discoveredCluesThisTurn = playerActions
-      .flatMap((a) => (a.discoveredClues ?? []).map((c) => ({ ...c, sourceName: c.sourceName })))
-      .filter((c) => c.clueText);
+    // 9. Extract discoveries from player actions (tick processor already handled discovery)
+    const discoveriesThisTurn = playerActions
+      .flatMap((a) => (a.discoveries ?? []).map((d) => ({ ...d, sourceName: d.sourceName })))
+      .filter((d) => d.text);
 
-    // 10. Extract damaged clue from fumble (if any)
-    const damagedClueAction = playerActions.find((a) => a.damagedClue);
-    const hasDamagedClueThisTurn = Boolean(damagedClueAction?.damagedClue);
+    // 10. Extract damaged evidence from fumble (if any)
+    const damagedEvidenceAction = playerActions.find((a) => a.damagedEvidence);
+    const hasDamagedEvidenceThisTurn = Boolean(damagedEvidenceAction?.damagedEvidence);
 
     // Get template
     const template = getKeeperTemplate(language);
@@ -198,14 +198,14 @@ export class KeeperAgent {
       isTransition,
       conversationHistory, // Recent conversation history (for {{#each}} loop)
       relevantHistory, // RAG-retrieved relevant history (for {{#each}} loop)
-      hasRetrievedClues: retrievedClueContext.length > 0,
-      retrievedClueContextJson: retrievedClueContext.length > 0
-        ? this.safeStringify(retrievedClueContext)
+      hasRetrievedDiscoveries: retrievedDiscoveryContext.length > 0,
+      retrievedDiscoveryContextJson: retrievedDiscoveryContext.length > 0
+        ? this.safeStringify(retrievedDiscoveryContext)
         : null,
-      // Clues discovered this turn by tick processor
-      hasDiscoveredCluesThisTurn: discoveredCluesThisTurn.length > 0,
-      discoveredCluesThisTurn,
-      hasDamagedClueThisTurn,
+      // Discoveries this turn by tick processor
+      hasDiscoveriesThisTurn: discoveriesThisTurn.length > 0,
+      discoveriesThisTurn,
+      hasDamagedEvidenceThisTurn,
       // JSON string version (used directly in template)
       scenarioContextJson: this.safeStringify(completeScenarioInfo),
       playerCharacterJson: this.safeStringify(playerCharacterComplete),

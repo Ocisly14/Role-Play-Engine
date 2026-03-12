@@ -8,7 +8,7 @@ export const characterInteractionHandler: NodeHandler = {
 
   description:
     "Interact with another character (NPC or player). " +
-    "Supports item transfer, clue transfer, and information exchange. " +
+    "Supports item transfer, knowledge transfer, and information exchange. " +
     "Difficulty is derived from the relationship score between characters. " +
     "NPC luck_only difficulty skips skill rolls and uses luck-based checks instead.",
 
@@ -144,14 +144,14 @@ export const characterInteractionHandler: NodeHandler = {
           );
         }
         dgsm.addItemToNpc(node.targetCharacterId, item);
-      } else if (payload.transferType === "information" && payload.relatedClueIds?.length) {
-        // Formal clue transfer to all targets
+      } else if (payload.transferType === "information" && payload.relatedKnowledgeIds?.length) {
+        // Knowledge transfer to all targets
         const targets = payload.targetCharacterIds ??
           (node.targetCharacterId ? [node.targetCharacterId] : []);
         const filteredTargets = targets.filter((id) => id !== node.characterId);
-        for (const clueId of payload.relatedClueIds) {
+        for (const knowledgeId of payload.relatedKnowledgeIds) {
           for (const targetId of filteredTargets) {
-            dgsm.transferClue(node.characterId, targetId, clueId);
+            dgsm.transferKnowledge(node.characterId, targetId, knowledgeId);
           }
         }
       }

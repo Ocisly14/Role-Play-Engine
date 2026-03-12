@@ -18,7 +18,6 @@ import { getPrismaClient } from "../../shared/agents/memory/database/prismaClien
 import { resolveEmailId } from "../../shared/agents/memory/database/userContext.js";
 import type { NPCProfile } from "../../shared/agents/models/gameTypes.js";
 import type {
-  ScenarioClue,
   ScenarioCondition,
 } from "../../shared/agents/models/scenarioTypes.js";
 import type {
@@ -30,6 +29,7 @@ import { decodeSceneItemsPayload } from "../world_builder/sceneItemContextPayloa
 import { WorldModuleLoader } from "../world_builder/worldModuleLoader.js";
 import { bootstrapNpcSecrets } from "../memory/bootstrapSecrets.js";
 import { EmbeddingClient } from "../../rag/embedding.js";
+import { ModelProviderName } from "../../models/types.js";
 import type { DynamicGameState } from "./DynamicGameState.js";
 import {
   DynamicGameStateManager,
@@ -559,25 +559,6 @@ export async function initializeCompleteDynamicGameState(
   const buildSceneFromRow = async (
     sceneRow: any
   ): Promise<DynamicScene> => {
-    // Load scene clues
-    const sceneClues = await prisma.scenarioClue.findMany({
-      where: {
-        sceneId: sceneRow.sceneId,
-        ...(scopedModuleId ? { moduleId: scopedModuleId } : {}),
-      },
-      select: {
-        clueId: true,
-        clueText: true,
-        category: true,
-        difficulty: true,
-        clueLocation: true,
-        discoveryMethod: true,
-        reveals: true,
-        discovered: true,
-        discoveryDetails: true,
-      },
-    });
-
     // Load scene conditions
     const sceneConditions = await prisma.scenarioCondition.findMany({
       where: {
@@ -608,20 +589,6 @@ export async function initializeCompleteDynamicGameState(
       items,
       itemContexts,
       sceneImage,
-      clues: sceneClues.map((clue) => ({
-        id: clue.clueId,
-        clueText: clue.clueText,
-        category: clue.category as ScenarioClue["category"],
-        difficulty: clue.difficulty as ScenarioClue["difficulty"],
-        location: clue.clueLocation,
-        discoveryMethod: clue.discoveryMethod || undefined,
-        // Prisma returns JSON fields already parsed
-        reveals: clue.reveals ? (clue.reveals as any[]) : [],
-        discovered: clue.discovered === true,
-        discoveryDetails: clue.discoveryDetails
-          ? (clue.discoveryDetails as any)
-          : undefined,
-      })),
       conditions: sceneConditions.map((cond) => ({
         type: cond.conditionType as ScenarioCondition["type"],
         description: cond.description,
@@ -716,10 +683,10 @@ export async function initializeCompleteDynamicGameState(
     return {
       ...dynamicNpc,
       id: normalizedId,
-      clues: Array.isArray(dynamicNpc.clues)
-        ? dynamicNpc.clues.map((clue) => ({
-            ...clue,
-            id: normalizeIdToModuleScope(clue.id, scopedModuleId),
+      knowledge: Array.isArray(dynamicNpc.knowledge)
+        ? dynamicNpc.knowledge.map((k) => ({
+            ...k,
+            id: normalizeIdToModuleScope(k.id, scopedModuleId),
           }))
         : [],
       relationships: Array.isArray(dynamicNpc.relationships)
@@ -825,9 +792,9 @@ export async function initializeCompleteDynamicGameState(
           : [];
       }
 
-      // npcDiscoveredClues: start empty
-      if (!completeState.npcDiscoveredClues[npc.id]) {
-        completeState.npcDiscoveredClues[npc.id] = [];
+      // npcDiscoveredKnowledge: start empty
+      if (!completeState.npcDiscoveredKnowledge[npc.id]) {
+        completeState.npcDiscoveredKnowledge[npc.id] = [];
       }
 
       // npcRelationshipGraph: from NPC profile relationships
@@ -902,7 +869,9 @@ export async function initializeCompleteDynamicGameState(
   // Bootstrap NPC secrets into the unified NpcMemory system
   if (npcCharacters.length > 0 && scopedModuleId) {
     try {
-      const embedClient = new EmbeddingClient();
+      const embedClient = new EmbeddingClient(
+        (process.env.MODEL_PROVIDER as ModelProviderName) || ModelProviderName.OPENAI
+      );
       await bootstrapNpcSecrets({
         prisma,
         embedClient,

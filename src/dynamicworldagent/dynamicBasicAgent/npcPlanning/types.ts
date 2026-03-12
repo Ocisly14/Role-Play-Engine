@@ -24,7 +24,7 @@ export interface CharacterInteractionPayload {
   itemId?: string;
   informationContent?: string;
   targetCharacterIds?: string[];
-  relatedClueIds?: string[];
+  relatedKnowledgeIds?: string[];
 }
 
 export interface ObjectInteractionPayload {
@@ -69,15 +69,20 @@ export interface PlanNode {
   [key: string]: unknown;
 }
 
-export interface DiscoveredClueEntry {
-  clueId: string;
-  clueText: string;
-  source: "scene" | "npc";
-  sourceId: string;       // scenarioId or npcId
-  sourceName: string;     // scenario name or NPC name
+export interface DiscoveryEntry {
+  id: string;
+  text: string;
+  source: "evidence" | "npc";
+  sourceId: string;       // sceneId or npcId
+  sourceName: string;     // scene name or NPC name
   difficulty: "automatic" | "regular" | "hard" | "extreme";
   similarity: number;     // semantic match score
 }
+
+/**
+ * @deprecated Use DiscoveryEntry instead
+ */
+export type DiscoveredClueEntry = DiscoveryEntry;
 
 export type SuccessLevel = "critical" | "hard" | "regular" | "fail" | "fumble";
 
@@ -97,8 +102,8 @@ export interface CharacterAction {
   outcome: string;
   failureReason?: FailureReason;
   targetCharacterId?: string;
-  discoveredClues?: DiscoveredClueEntry[];
-  damagedClue?: { clueId: string; sourceName: string };
+  discoveries?: DiscoveryEntry[];
+  damagedEvidence?: { itemId: string; sourceName: string };
 }
 
 export type FailureReason =

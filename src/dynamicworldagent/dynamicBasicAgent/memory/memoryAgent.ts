@@ -559,8 +559,8 @@ export const enrichMemoryContext = async (
     }
   }
 
-  // --- Clue RAG: single player, max 2, with similarity threshold ---
-  let retrievedClueContext: Array<{
+  // --- Discovery RAG: single player, max 2, with similarity threshold ---
+  let retrievedDiscoveryContext: Array<{
     content: string;
     score: number;
     metadata: Record<string, unknown> | null;
@@ -569,17 +569,17 @@ export const enrichMemoryContext = async (
 
   if (db && characterInput && characterInput.trim()) {
     try {
-      const clueChunks = await sessionRagService.searchHybrid({
+      const discoveryChunks = await sessionRagService.searchHybrid({
         sessionId: gameState.sessionId,
         ragQuery: characterInput.trim(),
         topK: 2,
         semanticWeight: 1 - alpha,
         bm25Weight: alpha,
         language: effectiveLanguage,
-        chunkType: "clue",
+        chunkType: "discovery",
         sceneRoomId: null,
       });
-      retrievedClueContext = clueChunks
+      retrievedDiscoveryContext = discoveryChunks
         .filter((c) => c.score >= 0.4)
         .map((c) => ({
           content: c.content,
@@ -588,12 +588,12 @@ export const enrichMemoryContext = async (
           sourceKey: c.sourceKey,
         }));
 
-      if (retrievedClueContext.length > 0) {
+      if (retrievedDiscoveryContext.length > 0) {
         console.log(
-          `🔎 [Memory Agent] Retrieved ${retrievedClueContext.length} clue RAG chunk(s) for single-player session`
+          `🔎 [Memory Agent] Retrieved ${retrievedDiscoveryContext.length} discovery RAG chunk(s) for single-player session`
         );
       }
-    } catch { /* swallow — clue RAG failure is non-fatal */ }
+    } catch { /* swallow — discovery RAG failure is non-fatal */ }
   }
 
   return {
@@ -605,7 +605,7 @@ export const enrichMemoryContext = async (
         conversationHistory,
         relevantHistory, // Add RAG-retrieved relevant history
         relevantHistoryIncludesActionLogs: true,
-        retrievedClueContext,
+        retrievedDiscoveryContext,
       },
     },
   };

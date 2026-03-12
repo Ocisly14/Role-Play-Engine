@@ -121,7 +121,6 @@ export class CharacterAgent {
       location: currentSceneId,
       description: scene.description,
       characters: sceneCharacters,
-      clues: scene.clues || [],
       conditions: scene.conditions || [],
       connections: scene.connections || [],
     };
@@ -209,7 +208,7 @@ export class CharacterAgent {
       status: npc.status,
       skills: npc.skills,
       inventory: npc.inventory || [],
-      clues: npcProfile.clues || [],
+      knowledge: npcProfile.knowledge || [],
       relationships: npcProfile.relationships || [],
       notes: npc.notes || "",
       recentActionLog: recentActionLog,

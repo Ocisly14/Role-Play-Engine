@@ -16,12 +16,17 @@ export interface WitnessMetadata {
   impact: number;
 }
 
-export interface ClueMetadata {
-  clueId: string;
+export interface InformationMetadata {
+  knowledgeId: string;
   category: "knowledge" | "observation" | "rumor" | "secret";
   difficulty?: string;
   relatedTo?: string[];
 }
+
+/**
+ * @deprecated Use InformationMetadata instead
+ */
+export type ClueMetadata = InformationMetadata;
 
 export interface BeliefMetadata {
   confidence: number;
@@ -55,7 +60,7 @@ export interface SecretMetadata {
 export type MemoryMetadata =
   | EventMetadata
   | WitnessMetadata
-  | ClueMetadata
+  | InformationMetadata
   | BeliefMetadata
   | EmotionMetadata
   | RelationshipMetadata
@@ -75,7 +80,7 @@ export type ReasoningTrigger =
   | "day_transition"
   | "high_impact"
   | "player_question"
-  | "clue_discovered"
+  | "information_discovered"
   | "witness_major";
 
 // ===== Manager API Parameter Types =====
@@ -153,11 +158,11 @@ export interface ContextProfile {
 
 export const CONTEXT_PROFILES: Record<ContextPurpose, ContextProfile> = {
   scheduling: {
-    defaultTypes: ["plan", "event", "clue", "belief", "summary", "relationship"],
+    defaultTypes: ["plan", "event", "information", "belief", "summary", "relationship"],
     defaultLimit: 20,
   },
   conversation: {
-    defaultTypes: ["event", "clue", "belief", "relationship", "secret", "emotion", "summary"],
+    defaultTypes: ["event", "information", "belief", "relationship", "secret", "emotion", "summary"],
     defaultLimit: 20,
   },
   reaction: {
@@ -165,7 +170,7 @@ export const CONTEXT_PROFILES: Record<ContextPurpose, ContextProfile> = {
     defaultLimit: 10,
   },
   reasoning: {
-    defaultTypes: ["clue", "witness", "event", "belief", "summary"],
+    defaultTypes: ["information", "witness", "event", "belief", "summary"],
     defaultLimit: 25,
   },
 };

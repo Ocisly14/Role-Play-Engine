@@ -151,20 +151,7 @@ function damageByFire(dgsm: DynamicGameStateManager, sceneId: string, intensity:
   const now = new Date().toISOString();
   const reason = `Destroyed by fire (intensity ${intensity})`;
 
-  // Damage 20% of undiscovered, undamaged clues
-  const damageableClues = scene.clues?.filter(c => !c.discovered && !c.damaged) ?? [];
-  if (damageableClues.length > 0) {
-    const clueCount = Math.round(damageableClues.length * 0.2);
-    if (clueCount > 0) {
-      const shuffled = [...damageableClues].sort(() => Math.random() - 0.5);
-      for (let i = 0; i < clueCount; i++) {
-        shuffled[i].damaged = true;
-        shuffled[i].damageDetails = { damagedBy: "fire", damagedAt: now, reason };
-      }
-    }
-  }
-
-  // Damage 20% of undamaged items
+  // Damage 20% of undamaged items (evidence and mundane alike)
   const damageableItems = scene.items?.filter(item => !item.damaged) ?? [];
   if (damageableItems.length > 0) {
     const itemCount = Math.round(damageableItems.length * 0.2);

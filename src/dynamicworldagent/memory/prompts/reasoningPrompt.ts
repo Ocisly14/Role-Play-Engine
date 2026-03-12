@@ -40,7 +40,7 @@ export function buildReasoningPrompt(params: ReasoningPromptParams): string {
     day_transition: "End of day review — reflecting on today's events",
     high_impact: "High-impact event just occurred",
     player_question: "Player provided new information",
-    clue_discovered: "New clue discovered",
+    information_discovered: "New information discovered",
     witness_major: "Witnessed a major event",
   };
   const triggerDesc = params.triggerContext ?? triggerMap[params.trigger];

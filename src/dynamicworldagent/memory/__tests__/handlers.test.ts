@@ -38,9 +38,9 @@ describe("getAllHandlers", () => {
     expect(keys).toHaveLength(9);
     expect(keys.sort()).toEqual([
       "belief",
-      "clue",
       "emotion",
       "event",
+      "information",
       "plan",
       "relationship",
       "secret",
@@ -113,26 +113,26 @@ describe("WitnessHandler", () => {
   });
 });
 
-// ===== ClueHandler =====
+// ===== InformationHandler =====
 
-describe("ClueHandler", () => {
-  const handler = getHandler("clue");
+describe("InformationHandler", () => {
+  const handler = getHandler("information");
 
-  it("has type 'clue'", () => {
-    expect(handler.type).toBe("clue");
+  it("has type 'information'", () => {
+    expect(handler.type).toBe("information");
   });
 
-  it("prepare returns baseImportance 3.0 and includes clue + location + clueId tags", () => {
-    const result = handler.prepare("Ritual requires dagger", { clueId: "clue-42" }, "library");
+  it("prepare returns baseImportance 3.0 and includes information + location + knowledgeId tags", () => {
+    const result = handler.prepare("Ritual requires dagger", { knowledgeId: "know-42" }, "library");
     expect(result.baseImportance).toBe(3.0);
-    expect(result.tags).toContain("clue");
+    expect(result.tags).toContain("information");
     expect(result.tags).toContain("library");
-    expect(result.tags).toContain("clue-42");
+    expect(result.tags).toContain("know-42");
   });
 
-  it("format omits day/time (bare clue format)", () => {
-    const mem = makeMemory({ type: "clue", content: "Ritual requires dagger", gameDay: 1, gameTime: "10:00" });
-    expect(handler.format(mem)).toBe("[clue] Ritual requires dagger");
+  it("format omits day/time (bare information format)", () => {
+    const mem = makeMemory({ type: "information" as any, content: "Ritual requires dagger", gameDay: 1, gameTime: "10:00" });
+    expect(handler.format(mem)).toBe("[information] Ritual requires dagger");
   });
 
   it("customDecayRate returns 0.5 (slow decay)", () => {

@@ -2,7 +2,7 @@ import type { NpcMemoryType } from "@prisma/client";
 import type { MemoryHandler } from "../types.js";
 import { EventHandler } from "./EventHandler.js";
 import { WitnessHandler } from "./WitnessHandler.js";
-import { ClueHandler } from "./ClueHandler.js";
+import { InformationHandler } from "./InformationHandler.js";
 import { BeliefHandler } from "./BeliefHandler.js";
 import { EmotionHandler } from "./EmotionHandler.js";
 import { RelationshipHandler } from "./RelationshipHandler.js";
@@ -13,7 +13,7 @@ import { SummaryHandler } from "./SummaryHandler.js";
 export {
   EventHandler,
   WitnessHandler,
-  ClueHandler,
+  InformationHandler,
   BeliefHandler,
   EmotionHandler,
   RelationshipHandler,
@@ -25,7 +25,7 @@ export {
 const HANDLERS: Record<NpcMemoryType, MemoryHandler> = {
   event: new EventHandler(),
   witness: new WitnessHandler(),
-  clue: new ClueHandler(),
+  information: new InformationHandler(),
   belief: new BeliefHandler(),
   emotion: new EmotionHandler(),
   relationship: new RelationshipHandler(),

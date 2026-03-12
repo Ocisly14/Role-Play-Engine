@@ -50,8 +50,8 @@ export class PlayerPlanAgent {
     // Build player profile string
     const playerProfile = this.formatPlayerProfile(player);
 
-    // Build scenario clues string (undiscovered clues available in current scene)
-    const scenarioClues = this.formatScenarioClues(currentScenario);
+    // Build scene evidence items list (undiscovered evidence in current scene)
+    const sceneEvidence = this.formatSceneEvidence(currentScenario);
 
     // Build scene conditions
     const sceneConditions = currentScenario
@@ -109,7 +109,7 @@ export class PlayerPlanAgent {
       currentScenarioId: currentScenario?.id ?? "",
       currentScenarioName: currentScenario?.name ?? "",
       currentScenarioDescription: currentScenario?.description ?? "",
-      scenarioClues,
+      sceneEvidence,
       sceneConditions,
       sceneItems,
       connections,
@@ -203,17 +203,17 @@ export class PlayerPlanAgent {
     return parts.join("\n");
   }
 
-  private formatScenarioClues(
-    scenario: { clues?: Array<{ id: string; clueText: string; category?: string; difficulty?: string; discovered?: boolean; discoveryMethod?: string }> } | null
+  private formatSceneEvidence(
+    scenario: { items?: Array<{ id: string; name: string; description?: string; category?: string; damaged?: boolean; discoveryMethod?: string }> } | null
   ): string {
-    if (!scenario?.clues?.length) return "";
-    // Show undiscovered clues only (keeper-side info for LLM to decide if player's action targets them)
-    const undiscovered = scenario.clues.filter((c) => !c.discovered);
-    if (undiscovered.length === 0) return "All clues in this scene have been discovered.";
-    return undiscovered
+    if (!scenario?.items?.length) return "";
+    // Show undamaged evidence items only (keeper-side info for LLM to decide if player's action targets them)
+    const evidence = scenario.items.filter((i) => i.category === "evidence" && !i.damaged);
+    if (evidence.length === 0) return "No evidence items remain in this scene.";
+    return evidence
       .map(
-        (c) =>
-          `- [${c.id}] (${c.category ?? "info"}, difficulty: ${c.difficulty ?? "regular"}) ${c.clueText}${c.discoveryMethod ? ` | method: ${c.discoveryMethod}` : ""}`
+        (i) =>
+          `- [${i.id}] ${i.description || i.name}${i.discoveryMethod ? ` | method: ${i.discoveryMethod}` : ""}`
       )
       .join("\n");
   }

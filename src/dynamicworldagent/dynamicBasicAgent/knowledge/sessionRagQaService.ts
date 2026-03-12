@@ -37,7 +37,7 @@ export interface SessionRagQaRequest {
 export interface SessionRagCitation {
   chunkId: string;
   turnNumber: number | null;
-  chunkType: "turn" | "clue";
+  chunkType: "turn" | "discovery";
   snippet: string;
   score: number;
 }
@@ -135,7 +135,7 @@ function buildEvidenceBlock(
         ].join("\n");
       }
     }
-    // For actionlog and clue chunks, use chunk content directly
+    // For actionlog and discovery chunks, use chunk content directly
     return [
       `[Memory${i + 1}]`,
       `turn: ${chunk.turnNumber ?? "unknown"}`,

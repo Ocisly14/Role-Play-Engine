@@ -20,7 +20,7 @@ import type {
   CharacterAttributes,
   CharacterStatus,
   InventoryItem,
-  NPCClue,
+  NPCKnowledge,
   NPCProfile,
   NPCRelationship,
   ParsedNPCData,
@@ -161,7 +161,7 @@ export class NPCLoader {
       const relWhere = emailId ? { emailId } : {};
       const charWhere = emailId ? { isNpc: true, emailId } : { isNpc: true };
 
-      await tx.npcClue.deleteMany({ where: clueWhere });
+      await tx.npcKnowledge.deleteMany({ where: clueWhere });
       await tx.npcRelationship.deleteMany({ where: relWhere });
       await tx.character.deleteMany({ where: charWhere });
     });
@@ -265,7 +265,7 @@ export class NPCLoader {
       const relWhere = emailId ? { emailId } : {};
       const charWhere = emailId ? { isNpc: true, emailId } : { isNpc: true };
 
-      await tx.npcClue.deleteMany({ where: clueWhere });
+      await tx.npcKnowledge.deleteMany({ where: clueWhere });
       await tx.npcRelationship.deleteMany({ where: relWhere });
       await tx.character.deleteMany({ where: charWhere });
     });
@@ -583,14 +583,14 @@ export class NPCLoader {
       ...parsedData.status,
     };
 
-    // Convert clues
-    const clues: NPCClue[] = (parsedData.clues || []).map((clue, index) => ({
-      id: `${npcId}-clue-${index}`,
-      clueText: clue.clueText,
-      category: clue.category,
-      difficulty: clue.difficulty,
+    // Convert knowledge
+    const knowledge: NPCKnowledge[] = (parsedData.knowledge || []).map((k, index) => ({
+      id: `${npcId}-knowledge-${index}`,
+      text: k.text,
+      category: k.category,
+      difficulty: k.difficulty,
       revealed: false,
-      relatedTo: clue.relatedTo,
+      relatedTo: k.relatedTo,
     }));
 
     // Convert relationships
@@ -623,7 +623,7 @@ export class NPCLoader {
       goals: parsedData.goals || [],
       secrets: parsedData.secrets || [],
       currentLocation: parsedData.currentLocation,
-      clues,
+      knowledge,
       relationships,
       isNPC: true,
     };
@@ -669,11 +669,11 @@ export class NPCLoader {
       status: npc.status,
       skills: npc.skills,
       inventory: npc.inventory,
-      clues: npc.clues?.map((c) => ({
-        clueText: c.clueText,
-        category: c.category,
-        difficulty: c.difficulty,
-        relatedTo: c.relatedTo,
+      knowledge: npc.knowledge?.map((k) => ({
+        text: k.text,
+        category: k.category,
+        difficulty: k.difficulty,
+        relatedTo: k.relatedTo,
       })),
       relationships: npc.relationships?.map((r) => ({
         targetName: r.targetName,
@@ -817,7 +817,7 @@ export class NPCLoader {
       status: npc.status || {},
       skills: npc.skills || {},
       inventory: InventoryUtils.normalizeInventory(npc.inventory),
-      clues: npc.clues || [],
+      knowledge: npc.knowledge || [],
       relationships: npc.relationships || [],
       notes: npc.notes,
     }));
@@ -826,10 +826,10 @@ export class NPCLoader {
 - If entries are the same NPC, merge them into ONE object.
 - If they are different people, return multiple objects (one per distinct NPC).
 - Do NOT invent details. If a field is missing, leave it empty/omit it.
-- For lists (goals, secrets, inventory, clues, relationships), take the union and deduplicate exact duplicates.
+- For lists (goals, secrets, inventory, knowledge, relationships), take the union and deduplicate exact duplicates.
 - Acceptable outputs: a single JSON object OR a JSON array of objects.
 - Required field: "name" (use the best/most complete name; you may pick one of the provided names).
-- Keep clue/relationship structures unchanged if present.
+- Keep knowledge/relationship structures unchanged if present.
 - The text may be partial; missing info is OK.
 - If two entries are clearly different people (e.g., different surnames and roles), keep them separate.
 
@@ -876,7 +876,7 @@ Return ONLY JSON (object or array), no extra text.`;
             status: obj.status,
             skills: obj.skills,
             inventory: obj.inventory,
-            clues: obj.clues,
+            knowledge: obj.knowledge,
             relationships: obj.relationships,
             notes: obj.notes,
           };
@@ -1027,29 +1027,29 @@ Return ONLY JSON array, no extra text.`;
         },
       });
 
-      // Delete existing clues and relationships for this NPC
-      const clueWhere = emailId
+      // Delete existing knowledge and relationships for this NPC
+      const knowledgeWhere = emailId
         ? { npcId: npc.id, emailId }
         : { npcId: npc.id };
-      await tx.npcClue.deleteMany({ where: clueWhere });
+      await tx.npcKnowledge.deleteMany({ where: knowledgeWhere });
 
       const relWhere = emailId
         ? { sourceId: npc.id, emailId }
         : { sourceId: npc.id };
       await tx.npcRelationship.deleteMany({ where: relWhere });
 
-      // Insert clues
-      if (npc.clues.length > 0) {
-        for (const clue of npc.clues) {
-          await tx.npcClue.create({
+      // Insert knowledge
+      if (npc.knowledge.length > 0) {
+        for (const k of npc.knowledge) {
+          await tx.npcKnowledge.create({
             data: {
-              id: clue.id,
+              id: k.id,
               npcId: npc.id,
-              clueText: clue.clueText,
-              category: clue.category || null,
-              difficulty: clue.difficulty || null,
-              revealed: clue.revealed,
-              relatedTo: (clue.relatedTo as any) ?? null,
+              content: k.text,
+              category: k.category || null,
+              difficulty: k.difficulty || null,
+              revealed: k.revealed,
+              relatedTo: (k.relatedTo as any) ?? null,
               emailId: emailId ?? null,
             },
           });
@@ -1157,13 +1157,13 @@ Return ONLY JSON array, no extra text.`;
     }
     const resolvedNpcId = character.characterId;
 
-    // Get clues
-    const clueWhere = emailId
+    // Get knowledge
+    const knowledgeWhere = emailId
       ? { npcId: resolvedNpcId, emailId }
       : { npcId: resolvedNpcId };
 
-    const clues = await prisma.npcClue.findMany({
-      where: clueWhere,
+    const knowledgeRows = await prisma.npcKnowledge.findMany({
+      where: knowledgeWhere,
     });
 
     // Get relationships
@@ -1199,14 +1199,14 @@ Return ONLY JSON array, no extra text.`;
       inheritsKnowledge: character.inheritsKnowledge
         ? (character.inheritsKnowledge as any)
         : undefined,
-      clues: clues.map((c) => ({
-        id: c.id,
-        clueText: c.clueText,
-        category: (c.category ?? undefined) as NPCClue["category"],
-        difficulty: (c.difficulty ?? undefined) as NPCClue["difficulty"],
-        revealed: c.revealed,
-        relatedTo: c.relatedTo ? (c.relatedTo as any) : undefined,
-      })) as NPCClue[],
+      knowledge: knowledgeRows.map((k) => ({
+        id: k.id,
+        text: k.content,
+        category: (k.category ?? undefined) as NPCKnowledge["category"],
+        difficulty: (k.difficulty ?? undefined) as NPCKnowledge["difficulty"],
+        revealed: k.revealed,
+        relatedTo: k.relatedTo ? (k.relatedTo as any) : undefined,
+      })) as NPCKnowledge[],
       relationships: relationships.map((r) => ({
         targetId: r.targetId,
         targetName: r.targetName,

@@ -15,7 +15,6 @@ export function buildOutcome(
   if (node.type === "character_interaction" && node.characterInteractionPayload) {
     const p = node.characterInteractionPayload;
     if (p.transferType === "item" && p.itemId) parts.push(`(item: ${p.itemId})`);
-    else if (p.transferType === "clue" && p.clueId) parts.push(`(clue: ${p.clueId})`);
     else if (p.transferType === "information" && p.informationContent) parts.push(`(info: ${p.informationContent})`);
   } else if (node.type === "object_interaction" && node.objectInteractionPayload) {
     const p = node.objectInteractionPayload;

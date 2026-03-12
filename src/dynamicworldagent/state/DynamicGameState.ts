@@ -23,7 +23,7 @@ import {
   type NPCRelationship,
 } from "../../shared/agents/models/gameTypes.js";
 import type {
-  DiscoveredClue,
+  DiscoveredKnowledge,
   GameEndingInfo,
   TimeConsumption,
 } from "../../shared/state/index.js";
@@ -110,8 +110,8 @@ export interface DynamicGameState {
   playerCharacter: DynamicCharacterProfile;
   npcCharacters: DynamicNPCProfile[];
 
-  // Clues and progression
-  discoveredClues: DiscoveredClue[];
+  // Knowledge discoveries and progression
+  discoveredKnowledge: DiscoveredKnowledge[];
   turnsInCurrentScene: number;
   lastPlayerInputTime: Date | null;
 
@@ -160,7 +160,7 @@ export interface DynamicGameState {
   npcLocations: Record<string, string>;
   npcStats: Record<string, { hp: number; san: number }>;
   npcInventories: Record<string, Item[]>;
-  npcDiscoveredClues: Record<string, string[]>;
+  npcDiscoveredKnowledge: Record<string, string[]>;
   npcRelationshipGraph: Record<string, Record<string, { score: number; note: string }>>;
   scenarioConditions: Record<string, import("../dynamicBasicAgent/npcPlanning/types.js").SceneCondition[]>;
   blockedConnections: Map<string, string>;  // "sceneA::sceneB" -> reason
@@ -209,7 +209,7 @@ export const initialDynamicGameState = (params: {
   moduleLimitations: null,
   playerCharacter: params.playerCharacter,
   npcCharacters: [],
-  discoveredClues: [],
+  discoveredKnowledge: [],
   turnsInCurrentScene: 0,
   lastPlayerInputTime: null,
   temporaryInfo: {
@@ -240,7 +240,7 @@ export const initialDynamicGameState = (params: {
   npcLocations: {},
   npcStats: {},
   npcInventories: {},
-  npcDiscoveredClues: {},
+  npcDiscoveredKnowledge: {},
   npcRelationshipGraph: {},
   scenarioConditions: {},
   blockedConnections: new Map(),
@@ -1467,26 +1467,6 @@ export class DynamicGameStateManager {
       }
     }
 
-    // Update clue states
-    if (scenarioUpdates.clues && Array.isArray(scenarioUpdates.clues)) {
-      for (const clueUpdate of scenarioUpdates.clues) {
-        const existingIndex = currentScene.clues.findIndex(
-          (clue) => clue.id === clueUpdate.id
-        );
-
-        if (existingIndex >= 0) {
-          // Update existing clue
-          currentScene.clues[existingIndex] = {
-            ...currentScene.clues[existingIndex],
-            ...clueUpdate,
-          };
-        } else if (clueUpdate.id) {
-          // Add new clue
-          currentScene.clues.push(clueUpdate);
-        }
-      }
-    }
-
     this.state.lastUpdated = new Date();
   }
 
@@ -1563,37 +1543,24 @@ export class DynamicGameStateManager {
     return this.state.npcInventories[npcId].splice(idx, 1)[0];
   }
 
-  transferClue(fromNpcId: string, toNpcId: string, clueId: string): void {
-    if (!this.state.npcDiscoveredClues[toNpcId]) this.state.npcDiscoveredClues[toNpcId] = [];
-    if (!this.state.npcDiscoveredClues[toNpcId].includes(clueId)) {
-      this.state.npcDiscoveredClues[toNpcId].push(clueId);
+  transferKnowledge(fromNpcId: string, toNpcId: string, knowledgeId: string): void {
+    if (!this.state.npcDiscoveredKnowledge[toNpcId]) this.state.npcDiscoveredKnowledge[toNpcId] = [];
+    if (!this.state.npcDiscoveredKnowledge[toNpcId].includes(knowledgeId)) {
+      this.state.npcDiscoveredKnowledge[toNpcId].push(knowledgeId);
     }
-    if (this.state.npcDiscoveredClues[fromNpcId]) {
-      this.state.npcDiscoveredClues[fromNpcId] = this.state.npcDiscoveredClues[fromNpcId].filter(id => id !== clueId);
-    }
-  }
-
-  markScenarioClueDiscovered(clueId: string, discoveredBy: string): void {
-    const scene = this.getCurrentScene();
-    if (!scene?.clues) return;
-    const clue = scene.clues.find((c) => c.id === clueId);
-    if (clue && !clue.discovered) {
-      clue.discovered = true;
-      clue.discoveryDetails = {
-        discoveredBy,
-        discoveredAt: new Date().toISOString(),
-        method: "tick_discovery",
-      };
+    if (this.state.npcDiscoveredKnowledge[fromNpcId]) {
+      this.state.npcDiscoveredKnowledge[fromNpcId] = this.state.npcDiscoveredKnowledge[fromNpcId].filter(id => id !== knowledgeId);
     }
   }
 
-  damageScenarioClue(clueId: string, damagedBy: string, reason: string): void {
+  /** Damage an evidence item in the current scene (e.g., on fumble) */
+  damageEvidenceItem(itemId: string, damagedBy: string, reason: string): void {
     const scene = this.getCurrentScene();
-    if (!scene?.clues) return;
-    const clue = scene.clues.find((c) => c.id === clueId);
-    if (clue && !clue.discovered && !clue.damaged) {
-      clue.damaged = true;
-      clue.damageDetails = {
+    if (!scene?.items) return;
+    const item = scene.items.find((i) => i.id === itemId && i.category === "evidence");
+    if (item && !item.damaged) {
+      item.damaged = true;
+      item.damageDetails = {
         damagedBy,
         damagedAt: new Date().toISOString(),
         reason,
@@ -1601,18 +1568,17 @@ export class DynamicGameStateManager {
     }
   }
 
-  markNpcClueRevealed(npcId: string, clueId: string): void {
+  markNpcKnowledgeRevealed(npcId: string, knowledgeId: string): void {
     const npc = this.state.npcCharacters.find((n) => n.id === npcId);
-    if (!npc?.clues) return;
-    // Handle regular NPC clues
-    const clue = npc.clues.find((c) => c.id === clueId);
-    if (clue) clue.revealed = true;
+    if (!npc?.knowledge) return;
+    const entry = npc.knowledge.find((k) => k.id === knowledgeId);
+    if (entry) entry.revealed = true;
   }
 
-  addDiscoveredClue(clue: DiscoveredClue): void {
-    const exists = this.state.discoveredClues.some((c) => c.text === clue.text);
+  addDiscoveredKnowledge(entry: DiscoveredKnowledge): void {
+    const exists = this.state.discoveredKnowledge.some((k) => k.text === entry.text);
     if (!exists) {
-      this.state.discoveredClues.push(clue);
+      this.state.discoveredKnowledge.push(entry);
     }
   }
 

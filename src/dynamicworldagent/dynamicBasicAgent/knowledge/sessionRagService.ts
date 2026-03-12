@@ -3,7 +3,7 @@ import { ModelProviderName } from "../../../models/types.js";
 import { EmbeddingClient } from "../../../rag/embedding.js";
 import { getPrismaClient } from "../../../shared/agents/memory/database/prismaClient.js";
 
-export type SessionRagChunkType = "turn" | "clue";
+export type SessionRagChunkType = "turn" | "discovery";
 
 export interface SessionRagChunkInput {
   sessionId: string;
@@ -222,7 +222,7 @@ export class SessionRagService {
     semanticWeight?: number;
     bm25Weight?: number;
     language?: "en" | "zh";
-    chunkType?: "turn" | "clue";
+    chunkType?: "turn" | "discovery";
     segmentType?: "narrative" | "actionlog";
     sceneRoomId?: string | null;
   }): Promise<RetrievedSessionRagChunk[]> {

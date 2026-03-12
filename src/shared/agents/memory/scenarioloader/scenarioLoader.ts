@@ -4,7 +4,6 @@
  */
 
 import type {
-  ScenarioClue,
   ScenarioCondition,
 } from "../../models/scenarioTypes.js";
 import type { DynamicScene } from "../../../../dynamicworldagent/world_builder/types.js";
@@ -127,14 +126,6 @@ export class ScenarioLoader {
       return null;
     }
 
-    // Get clues for this scene
-    const clues = await prisma.scenarioClue.findMany({
-      where: {
-        sceneId: sceneRow.sceneId,
-        ...(moduleId ? { moduleId } : {}),
-      },
-    });
-
     // Get conditions for this scene
     const conditions = await prisma.scenarioCondition.findMany({
       where: {
@@ -157,19 +148,6 @@ export class ScenarioLoader {
       connections: Array.isArray(sceneRow.connections) ? sceneRow.connections as string[] : [],
       items,
       itemContexts,
-      clues: clues.map((c: any) => ({
-        id: c.clueId,
-        clueText: c.clueText,
-        category: c.category as ScenarioClue["category"],
-        difficulty: c.difficulty as ScenarioClue["difficulty"],
-        location: c.clueLocation,
-        discoveryMethod: c.discoveryMethod || undefined,
-        reveals: (c.reveals as any[]) || [],
-        discovered: c.discovered,
-        discoveryDetails: c.discoveryDetails
-          ? (c.discoveryDetails as any)
-          : undefined,
-      })),
       conditions: conditions.map((c) => ({
         type: c.conditionType as ScenarioCondition["type"],
         description: c.description,
@@ -230,88 +208,4 @@ export class ScenarioLoader {
     return count > 0;
   }
 
-  /**
-   * Mark a clue as discovered
-   */
-  async discoverClue(
-    clueId: string,
-    discoveredBy: string,
-    method: string,
-    timestamp: string = new Date().toISOString()
-  ): Promise<void> {
-    const prisma = getPrismaClient();
-    const moduleId = await this.getModuleId();
-    const scopedClueId = this.scopeScenarioId(clueId, moduleId);
-
-    const discoveryDetails = {
-      discoveredBy,
-      discoveredAt: timestamp,
-      method,
-    };
-
-    await prisma.scenarioClue.updateMany({
-      where: {
-        clueId: scopedClueId,
-        ...(moduleId ? { moduleId } : {}),
-      },
-      data: {
-        discovered: true,
-        discoveryDetails: discoveryDetails,
-      },
-    });
-  }
-
-  /**
-   * Get undiscovered clues for a scenario or scene
-   */
-  async getUndiscoveredClues(
-    scenarioId?: string,
-    sceneId?: string
-  ): Promise<ScenarioClue[]> {
-    const prisma = getPrismaClient();
-    const moduleId = await this.getModuleId();
-
-    let results: any[];
-
-    if (sceneId) {
-      const scopedSceneId = this.scopeScenarioId(sceneId, moduleId);
-      results = await prisma.scenarioClue.findMany({
-        where: {
-          sceneId: scopedSceneId,
-          discovered: false,
-          ...(moduleId ? { moduleId } : {}),
-        },
-      });
-    } else if (scenarioId) {
-      const scopedScenarioId = this.scopeScenarioId(scenarioId, moduleId);
-      results = await prisma.scenarioClue.findMany({
-        where: {
-          scene: {
-            scenarioId: scopedScenarioId,
-            ...(moduleId ? { moduleId } : {}),
-          },
-          discovered: false,
-          ...(moduleId ? { moduleId } : {}),
-        },
-      });
-    } else {
-      results = await prisma.scenarioClue.findMany({
-        where: {
-          discovered: false,
-          ...(moduleId ? { moduleId } : {}),
-        },
-      });
-    }
-
-    return results.map((c) => ({
-      id: c.clueId,
-      clueText: c.clueText,
-      category: c.category,
-      difficulty: c.difficulty,
-      location: c.clueLocation,
-      discoveryMethod: c.discoveryMethod || undefined,
-      reveals: (c.reveals as any[]) || [],
-      discovered: false,
-    }));
-  }
 }

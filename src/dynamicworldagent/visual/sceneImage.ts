@@ -10,8 +10,7 @@ export interface SceneImageResult {
 }
 
 function sanitizeScene(scene: DynamicScene): Partial<DynamicScene> {
-  const { clues, ...rest } = scene;
-  return rest;
+  return scene;
 }
 
 export function buildSceneImagePromptFromScene(

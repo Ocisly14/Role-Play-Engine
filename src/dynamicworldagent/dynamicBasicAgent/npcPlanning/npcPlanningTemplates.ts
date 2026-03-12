@@ -185,10 +185,10 @@ const DEFAULT_DETAILED_NODE_TYPE_REF = `## Node Type Reference
 - **"routine"**: Self-contained action, no interaction target.
 - **"movement"**: Move to a destination scene. Set location to the target scene ID.
 - **"character_interaction"**: Interact with a specific character. Requires targetCharacterId.
-  - For sharing information or clues with one or more characters, include characterInteractionPayload:
-    { "transferType": "information", "informationContent": "what you want to tell them", "targetCharacterIds": ["id1", "id2"], "relatedClueIds": ["clue_id"] }
+  - For sharing information or knowledge with one or more characters, include characterInteractionPayload:
+    { "transferType": "information", "informationContent": "what you want to tell them", "targetCharacterIds": ["id1", "id2"], "relatedKnowledgeIds": ["knowledge_id"] }
   - informationContent should reflect YOUR perspective — what you believe and how you'd say it.
-  - targetCharacterIds is optional (defaults to targetCharacterId). relatedClueIds is optional (use when formally sharing a clue you possess).
+  - targetCharacterIds is optional (defaults to targetCharacterId). relatedKnowledgeIds is optional (use when formally sharing knowledge you possess).
 - **"object_interaction"**: Interact with a physical object. Include objectInteractionPayload. For creative non-standard uses, set actionType and include itemUpdates/targetItemUpdates.
 - **"scene_interaction"**: Search, investigate, or modify the environment.
 
@@ -213,7 +213,7 @@ Return a JSON array of PlanNode objects. No extra text. Always write in English.
 \`\`\`
 
 Add type-specific fields as needed:
-- **character_interaction**: \`"targetCharacterId"\`, optional \`"characterInteractionPayload"\` with \`transferType\` ("item" or "information"), \`informationContent\`, \`targetCharacterIds\`, \`relatedClueIds\`
+- **character_interaction**: \`"targetCharacterId"\`, optional \`"characterInteractionPayload"\` with \`transferType\` ("item" or "information"), \`informationContent\`, \`targetCharacterIds\`, \`relatedKnowledgeIds\`
 - **object_interaction**: \`"objectInteractionPayload"\` with \`itemUpdates\`/\`targetItemUpdates\` for non-standard use
 - **scene_interaction**: optional \`"sceneConnectionEffect"\``;
 

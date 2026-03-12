@@ -188,9 +188,9 @@ The JSON array entries should follow this structure:
       "skill name": value (0-100)
     },
     "inventory": ["item 1", "item 2"],
-    "clues": [
+    "knowledge": [
       {
-        "clueText": "information this NPC knows",
+        "text": "information this NPC knows",
         "category": "knowledge" | "observation" | "rumor" | "secret",
         "difficulty": "regular" | "hard" | "extreme",
         "relatedTo": ["related character or location"]
@@ -213,7 +213,7 @@ Important notes:
 1. Only include fields that are present in the document
 2. For missing numerical attributes, you can infer reasonable values based on the NPC description
 3. If skills are not specified, include only the most relevant skills for this NPC
-4. Extract all clues and relationships mentioned in the document
+4. Extract all knowledge and relationships mentioned in the document
 5. Ensure all numerical values are within valid CoC 7e ranges (attributes: 0-Infinity, hp: derived from CON+SIZ/10, sanity: typically POW*5, luck: typically 50-99)
 6. Return a JSON ARRAY only. Do not wrap in an object or add extra keys.
 7. The text you see may be only a fragment of the full NPC data. If information is missing or incomplete, leave the field empty/omit it—do NOT fabricate details.
@@ -406,10 +406,10 @@ Return ONLY the JSON array, no additional text.`;
       merged.status = { ...(merged.status || {}), ...(next.status || {}) };
       merged.skills = { ...(merged.skills || {}), ...(next.skills || {}) };
 
-      merged.clues = this.mergeByKey(
-        merged.clues,
-        next.clues,
-        (c) => c.clueText
+      merged.knowledge = this.mergeByKey(
+        merged.knowledge,
+        next.knowledge,
+        (k) => k.text
       );
       merged.relationships = this.mergeByKey(
         merged.relationships,

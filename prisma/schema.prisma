@@ -208,7 +208,7 @@ model Character {
   instantiatedFrom    String?           @map("instantiated_from")
   inheritsKnowledge   Json?             @map("inherits_knowledge")
   emailId             String?           @map("email_id")
-  npcClues            NpcClue[]
+  npcKnowledge        NpcKnowledge[]
   sourceRelationships NpcRelationship[] @relation("SourceCharacter")
   targetRelationships NpcRelationship[] @relation("TargetCharacter")
 
@@ -218,10 +218,10 @@ model Character {
   @@map("characters")
 }
 
-model NpcClue {
+model NpcKnowledge {
   id         String    @id
   npcId      String    @map("npc_id")
-  clueText   String    @map("clue_text")
+  content    String
   category   String?
   difficulty String?
   revealed   Boolean   @default(false)
@@ -233,7 +233,7 @@ model NpcClue {
   @@index([npcId])
   @@index([revealed])
   @@index([emailId])
-  @@map("npc_clues")
+  @@map("npc_knowledge")
 }
 
 model NpcRelationship {
@@ -298,7 +298,6 @@ model Module {
   background           ModuleBackground?
   permissions          ModulePermission[]
   memos                PlayerMemo[]
-  scenarioClues        ScenarioClue[]
   scenarioConds        ScenarioCondition[]
   scenes               Scene[]
   scenarios            Scenario[]
@@ -408,7 +407,6 @@ model Scene {
   sceneImagePath String?            @map("scene_image_path")
   createdAt      DateTime           @default(now()) @map("created_at")
   moduleId       String             @map("module_id") @db.Uuid
-  clues          ScenarioClue[]
   conditions     ScenarioCondition[]
   module         Module             @relation(fields: [moduleId], references: [moduleId], onDelete: Cascade)
   scenario       Scenario           @relation(fields: [moduleId, scenarioId], references: [moduleId, scenarioId], onDelete: Cascade)
@@ -418,29 +416,6 @@ model Scene {
   @@index([moduleId], map: "idx_scenes_module")
   @@index([moduleId, scenarioId], map: "idx_scenes_module_scenario")
   @@map("scenes")
-}
-
-model ScenarioClue {
-  clueId          String   @id @map("clue_id")
-  sceneId         String   @map("scene_id")
-  clueText        String   @map("clue_text")
-  category        String
-  difficulty      String
-  clueLocation    String   @map("clue_location")
-  discoveryMethod String?  @map("discovery_method")
-  reveals         Json?
-  discovered      Boolean  @default(false)
-  discoveryDetails Json?   @map("discovery_details")
-  createdAt       DateTime @default(now()) @map("created_at")
-  moduleId        String   @map("module_id") @db.Uuid
-  module          Module   @relation(fields: [moduleId], references: [moduleId], onDelete: Cascade)
-  scene           Scene    @relation(fields: [moduleId, sceneId], references: [moduleId, sceneId], onDelete: Cascade)
-
-  @@index([sceneId])
-  @@index([moduleId], map: "idx_scenario_clues_module")
-  @@index([clueLocation])
-  @@index([discovered])
-  @@map("scenario_clues")
 }
 
 model ScenarioCondition {
@@ -961,7 +936,7 @@ model NpcMemory {
 enum NpcMemoryType {
   event
   witness
-  clue
+  information
   belief
   emotion
   relationship

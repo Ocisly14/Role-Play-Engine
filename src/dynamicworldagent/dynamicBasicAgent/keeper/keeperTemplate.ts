@@ -120,26 +120,26 @@ You are a writer, responsible for writing a narrative of the game.
   {{/each}}
   {{/if}}
 
-  {{#if hasRetrievedClues}}
-  ### Previously Discovered Clues (Context-Relevant)
-  The following clues/secrets were previously discovered by the investigator and retrieved because they are relevant to the current player input:
+  {{#if hasRetrievedDiscoveries}}
+  ### Previous Discoveries (Context-Relevant)
+  The following knowledge/evidence was previously discovered by the investigator and retrieved because they are relevant to the current player input:
   \`\`\`json
-  {{retrievedClueContextJson}}
+  {{retrievedDiscoveryContextJson}}
   \`\`\`
   - You MAY naturally weave these into your narrative when they connect to what the investigator is doing.
   - Do NOT re-announce them as new discoveries — they are already known information.
   - Only reference them when they directly relate to the current action or conversation.
   {{/if}}
 
-  {{#if hasDiscoveredCluesThisTurn}}
-  ### Clues Discovered This Turn
-  The tick engine has already determined which clues were discovered through the investigator's actions. Weave these naturally into the narrative as things the investigator finds or learns.
-  {{#each discoveredCluesThisTurn}}
-  - **[{{this.difficulty}}]** {{this.clueText}} (source: {{this.sourceName}})
+  {{#if hasDiscoveriesThisTurn}}
+  ### Discoveries This Turn
+  The tick engine has already determined what was discovered through the investigator's actions. Weave these naturally into the narrative as things the investigator finds or learns.
+  {{#each discoveriesThisTurn}}
+  - **[{{this.difficulty}}]** {{this.text}} (source: {{this.sourceName}})
   {{/each}}
   {{/if}}
 
-  {{#if hasDamagedClueThisTurn}}
+  {{#if hasDamagedEvidenceThisTurn}}
   ### Evidence Damaged
   The investigator's fumble has destroyed or rendered unusable a piece of evidence at this location. Narrate that the investigator accidentally damaged or ruined something — describe the physical destruction naturally (e.g., knocked over, broke, tore, smudged) without revealing what the evidence contained.
   {{/if}}

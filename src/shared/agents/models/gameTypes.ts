@@ -250,16 +250,21 @@ export interface CharacterProfile {
 }
 
 /**
- * NPC Clue - Information that the NPC knows or can reveal
+ * NPC Knowledge - Information that the NPC knows or can reveal
  */
-export interface NPCClue {
+export interface NPCKnowledge {
   id: string;
-  clueText: string;
+  text: string;
   category?: "knowledge" | "observation" | "rumor" | "secret";
-  difficulty?: Difficulty; // difficulty to extract this clue
+  difficulty?: Difficulty; // difficulty to extract this knowledge
   revealed: boolean;
   relatedTo?: string[]; // related character or location IDs
 }
+
+/**
+ * @deprecated Use NPCKnowledge instead
+ */
+export type NPCClue = NPCKnowledge;
 
 /**
  * NPC Relationship - Connection between NPCs or PC and NPC
@@ -294,7 +299,7 @@ export interface NPCProfile extends CharacterProfile {
   background?: string;
   goals?: string[];
   secrets?: string[];
-  clues: NPCClue[];
+  knowledge: NPCKnowledge[];
   relationships: NPCRelationship[];
   isNPC: true; // flag to distinguish from player characters
   currentLocation?: string; // NPC的当前地点
@@ -320,7 +325,7 @@ export interface ParsedNPCData {
   status?: Partial<CharacterStatus>;
   skills?: Record<string, number>;
   inventory?: InventoryItem[];
-  clues?: Omit<NPCClue, "id" | "revealed">[];
+  knowledge?: Omit<NPCKnowledge, "id" | "revealed">[];
   relationships?: Omit<NPCRelationship, "targetId">[];
   notes?: string;
   actionLog?: ActionLogEntry[];

@@ -311,7 +311,7 @@ Generate an updated COMPLETE snapshot for the current player scene, driven by su
 - Generate a COMPLETE snapshot with fields:
   - description
   - characters
-  - clues
+  - items
   - conditions
   - keeperNotes
 - description must be a concise atmospheric narrative of at most 2 sentences, covering key sensory details and what changed.
@@ -324,12 +324,12 @@ Generate an updated COMPLETE snapshot for the current player scene, driven by su
   - status
   - location
   - notes
-- clues must be full ScenarioClue objects (id, clueText, category, difficulty, location, discoveryMethod, reveals, discovered, discoveryDetails when applicable).
-- **Clue ID & State Stability (CRITICAL)**: Every baseline clue MUST keep its original \`id\`. Do NOT generate new IDs for existing clues. Do NOT change \`discovered\` or \`damaged\` fields — these are managed by game mechanics. NPCs may move a clue to another scene (update \`location\`, keep same \`id\`). If a clue was removed from this scene by NPC action, omit it — it should appear in the destination scene with the same \`id\`.
-- clues should be inferred from: current baseline snapshot + suddenActionLogs + reactionNpcActionLogUpdates + current scene NPC reactions in this window.
+- items must be full Item objects (id, name, description, type, category, reveals, discoveryMethod, damaged, damageDetails). Evidence items use \`category: "evidence"\`.
+- **Item ID & State Stability (CRITICAL)**: Every baseline item MUST keep its original \`id\`. Do NOT generate new IDs for existing items. Do NOT change \`discovered\` or \`damaged\` fields — these are managed by game mechanics. NPCs may move an item to another scene (update \`location\`, keep same \`id\`). If an item was removed from this scene by NPC action, omit it — it should appear in the destination scene with the same \`id\`.
+- items should be inferred from: current baseline snapshot + suddenActionLogs + reactionNpcActionLogUpdates + current scene NPC reactions in this window.
 - conditions must be full ScenarioCondition objects (type, description, mechanicalEffect when applicable).
 - conditions should reflect environmental/mechanical changes caused by sudden intrusion and NPC reactions (e.g., lighting, access pressure, hazards, crowd panic, barricades).
-- If no meaningful clue/condition changes occurred, preserve baseline clues/conditions instead of fabricating noise.
+- If no meaningful item/condition changes occurred, preserve baseline items/conditions instead of fabricating noise.
 - Output reaction NPC actions separately in \`reactionNpcActionLogUpdates\`.
 - Each reaction actionLog entry must include:
   - time: "Day X, HH:MM"
@@ -409,11 +409,13 @@ Generate an updated COMPLETE snapshot for the current player scene, driven by su
           "notes": "Patrolling near the south shutter with a ring of heavy keys, watching every movement."
         }
       ],
-      "clues": [
+      "items": [
         {
-          "id": "clue_warehouse_ledger",
-          "clueText": "A wet shipping ledger lists an unscheduled midnight transfer.",
-          "category": "document",
+          "id": "item_warehouse_ledger",
+          "name": "Wet Shipping Ledger",
+          "description": "A wet shipping ledger lists an unscheduled midnight transfer.",
+          "type": "document",
+          "category": "evidence",
           "difficulty": "regular",
           "location": "Office desk drawer",
           "discoveryMethod": "Investigation",
@@ -478,11 +480,13 @@ Return ONLY valid JSON:
           "notes": "Standing guard outside the villa door with a tactical shotgun, enforcing the quarantine and watching the shadows aggressively."
         }
       ],
-      "clues": [
+      "items": [
         {
-          "id": "clue-id",
-          "clueText": "clue text",
-          "category": "document",
+          "id": "item-id",
+          "name": "evidence item",
+          "description": "evidence description",
+          "type": "other",
+          "category": "evidence",
           "difficulty": "regular",
           "location": "specific location",
           "discoveryMethod": "Investigation",
@@ -586,15 +590,15 @@ Generate simplified snapshots only for scenes listed in "Scenes To Update".
 - Produce simplified snapshots only.
 - Each updated snapshot must include:
   - description
-  - clues
+  - items
   - conditions
   - gameTime = currentGameTime
 - Output \`connections\` ONLY when connection state changed in this time window; otherwise omit.
-- clues guidance:
-  - Derive clues from baseline clues + time-window changes caused by NPC/player actions.
-  - Keep clue objects structurally valid (id, clueText, category, difficulty, location, discoveryMethod, reveals, discovered, discoveryDetails when applicable).
-  - **Clue ID & State Stability (CRITICAL)**: Every baseline clue MUST keep its original \`id\`. Do NOT generate new IDs for existing clues. Do NOT change \`discovered\` or \`damaged\` fields — these are managed by game mechanics. NPCs may move a clue to another scene (update \`location\`, keep same \`id\`). If a clue was removed from this scene by NPC action, omit it — it should appear in the destination scene with the same \`id\`.
-  - Do not invent clues that conflict with truthTimeline/knowledgeMatrix.
+- items guidance:
+  - Derive items from baseline items + time-window changes caused by NPC/player actions.
+  - Keep item objects structurally valid (id, name, description, type, category, reveals, discoveryMethod, damaged, damageDetails). Evidence items use \`category: "evidence"\`.
+  - **Item ID & State Stability (CRITICAL)**: Every baseline item MUST keep its original \`id\`. Do NOT generate new IDs for existing items. Do NOT change \`discovered\` or \`damaged\` fields — these are managed by game mechanics. NPCs may move an item to another scene (update \`location\`, keep same \`id\`). If an item was removed from this scene by NPC action, omit it — it should appear in the destination scene with the same \`id\`.
+  - Do not invent items that conflict with truthTimeline/knowledgeMatrix.
 - conditions guidance:
   - Derive conditions from environment changes in the time window (e.g., lighting, weather, sound, access constraints, damage aftermath).
   - Keep condition objects structurally valid (type, description, mechanicalEffect when applicable).
@@ -659,11 +663,13 @@ Generate simplified snapshots only for scenes listed in "Scenes To Update".
         "location": "Old Chapel",
         "description": "The chapel remains bitterly cold, but the west aisle is now partially blocked by hastily stacked pews and rope, channeling movement toward the altar side.",
         "gameTime": "Day 2, 18:00",
-        "clues": [
+        "items": [
           {
-            "id": "clue_chapel_rope_fibers",
-            "clueText": "Fresh rope fibers and splinters suggest the west door was reinforced recently.",
-            "category": "physical",
+            "id": "item_chapel_rope_fibers",
+            "name": "Rope Fibers and Splinters",
+            "description": "Fresh rope fibers and splinters suggest the west door was reinforced recently.",
+            "type": "other",
+            "category": "evidence",
             "difficulty": "regular",
             "location": "West door frame",
             "discoveryMethod": "Spot Hidden",

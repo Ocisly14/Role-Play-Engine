@@ -6,7 +6,7 @@ import type { NPCPlanningAgent } from "./NPCPlanningAgent.js";
 import type {
   PlanNode,
   CharacterAction,
-  DiscoveredClueEntry,
+  DiscoveryEntry,
   SuccessLevel,
   TickResult,
   PlayerWitnessEvent,
@@ -34,30 +34,30 @@ function minutesToTimeLabel(minutes: number): string {
 
 const TICK_DURATION_MINUTES = 5;
 
-// ==================== Clue Discovery ====================
+// ==================== Discovery ====================
 
-const CLUE_DIFFICULTY_RANK: Record<string, number> = {
+const DIFFICULTY_RANK: Record<string, number> = {
   automatic: 0,
   regular: 1,
   hard: 2,
   extreme: 3,
 };
 
-/** success level -> max clue difficulty rank discoverable */
-const SUCCESS_TO_MAX_CLUE_RANK: Record<SuccessLevel, number> = {
+/** success level -> max difficulty rank discoverable */
+const SUCCESS_TO_MAX_RANK: Record<SuccessLevel, number> = {
   critical: 3, // extreme
   hard: 2,     // hard
   regular: 1,  // regular
   fail: 0,     // automatic only
-  fumble: -1,  // no clues, may damage one
+  fumble: -1,  // nothing, may damage evidence
 };
 
-/** Only these actionTypes can trigger non-automatic clue discovery */
-const CLUE_DISCOVERY_ACTION_TYPES = new Set<string>([
+/** Only these actionTypes can trigger non-automatic discovery */
+const DISCOVERY_ACTION_TYPES = new Set<string>([
   "exploration", "social", "stealth", "narrative",
 ]);
 
-const CLUE_SIMILARITY_THRESHOLD = 0.7;
+const DISCOVERY_SIMILARITY_THRESHOLD = 0.7;
 
 // Lazy embedding client singleton
 let _embeddingClient: EmbeddingClient | null = null;
@@ -81,130 +81,144 @@ function cosineSimilarity(a: number[], b: number[]): number {
   return denom === 0 ? 0 : dot / denom;
 }
 
-interface ClueCandidate {
-  clueId: string;
-  clueText: string;
+interface DiscoveryCandidate {
+  id: string;
+  text: string;
   difficulty: string;
-  source: "scene" | "npc";
+  source: "evidence" | "npc";
   sourceId: string;
   sourceName: string;
 }
 
 /**
- * Discover clues after a successful action.
- *
- * - Scene clues: triggered by scene_interaction / object_interaction
- * - NPC clues + secrets: triggered by character_interaction
- * - Only exploration/social/stealth/narrative actionTypes unlock non-automatic clues
- * - Filters by success level -> clue difficulty
- * - Semantic match with 0.7 threshold, prioritizes highest difficulty first
+ * Discover evidence items (from scenes) after a successful action.
+ * Triggered by scene_interaction / object_interaction.
+ * Candidates: scene.items where category === "evidence" and !damaged.
  */
-async function discoverClues(
+async function discoverEvidence(
   node: PlanNode,
   successLevel: SuccessLevel,
   dgsm: DynamicGameStateManager,
   language: string
-): Promise<DiscoveredClueEntry[]> {
-  const state = dgsm.getState();
+): Promise<DiscoveryEntry[]> {
   const scene = dgsm.getCurrentScene();
+  if (!scene?.items) return [];
+  if (node.type !== "scene_interaction" && node.type !== "object_interaction") return [];
 
-  // Determine max discoverable difficulty rank
   let maxRank: number;
-  if (node.actionType && CLUE_DISCOVERY_ACTION_TYPES.has(node.actionType)) {
-    // Qualifying actionType -> use success level
-    maxRank = SUCCESS_TO_MAX_CLUE_RANK[successLevel] ?? 0;
-  } else if (
-    !node.actionType &&
-    node.type === "character_interaction" &&
-    node.targetCharacterId
-  ) {
-    // No actionType + character_interaction -> NPC relationship score determines max clue rank
-    const rel = dgsm.getRelationship(node.characterId, node.targetCharacterId);
-    const score = rel?.score ?? 0;
-    if (score >= 80) maxRank = 3;      // extreme
-    else if (score >= 70) maxRank = 2; // hard
-    else if (score >= 60) maxRank = 1; // regular
-    else maxRank = 0;                  // automatic only
+  if (node.actionType && DISCOVERY_ACTION_TYPES.has(node.actionType)) {
+    maxRank = SUCCESS_TO_MAX_RANK[successLevel] ?? 0;
   } else {
-    // No qualifying actionType, not NPC interaction -> automatic only
-    maxRank = 0;
+    maxRank = 0; // automatic only
   }
 
-  // Collect candidates based on node type
-  const candidates: ClueCandidate[] = [];
+  const candidates: DiscoveryCandidate[] = [];
+  for (const item of scene.items) {
+    if (item.category !== "evidence" || item.damaged) continue;
+    const difficulty = item.discoveryMethod ? "regular" : "automatic";
+    const rank = DIFFICULTY_RANK[difficulty] ?? 1;
+    if (rank > maxRank) continue;
+    candidates.push({
+      id: item.id,
+      text: item.description || item.name,
+      difficulty,
+      source: "evidence",
+      sourceId: scene.id,
+      sourceName: scene.name,
+    });
+  }
 
-  if (
-    (node.type === "scene_interaction" || node.type === "object_interaction") &&
-    scene?.clues
-  ) {
-    for (const clue of scene.clues) {
-      if (clue.discovered || clue.damaged) continue;
-      const rank = CLUE_DIFFICULTY_RANK[clue.difficulty] ?? 1;
+  return matchCandidates(candidates, node, language);
+}
+
+/**
+ * Discover NPC knowledge after a successful character_interaction.
+ * Candidates: npc.knowledge (unrevealed) + npc.secrets.
+ */
+async function discoverNpcKnowledge(
+  node: PlanNode,
+  successLevel: SuccessLevel,
+  dgsm: DynamicGameStateManager,
+  language: string
+): Promise<DiscoveryEntry[]> {
+  const state = dgsm.getState();
+  if (node.type !== "character_interaction" || !node.targetCharacterId) return [];
+
+  let maxRank: number;
+  if (node.actionType && DISCOVERY_ACTION_TYPES.has(node.actionType)) {
+    maxRank = SUCCESS_TO_MAX_RANK[successLevel] ?? 0;
+  } else {
+    // relationship score determines max rank
+    const rel = dgsm.getRelationship(node.characterId, node.targetCharacterId);
+    const score = rel?.score ?? 0;
+    if (score >= 80) maxRank = 3;
+    else if (score >= 70) maxRank = 2;
+    else if (score >= 60) maxRank = 1;
+    else maxRank = 0;
+  }
+
+  const npc = state.npcCharacters.find((n) => n.id === node.targetCharacterId);
+  if (!npc) return [];
+
+  const candidates: DiscoveryCandidate[] = [];
+
+  // NPC knowledge
+  if (npc.knowledge) {
+    for (const k of npc.knowledge) {
+      if (k.revealed) continue;
+      const rank = DIFFICULTY_RANK[k.difficulty ?? "regular"] ?? 1;
       if (rank > maxRank) continue;
       candidates.push({
-        clueId: clue.id,
-        clueText: clue.clueText,
-        difficulty: clue.difficulty,
-        source: "scene",
-        sourceId: scene.id,
-        sourceName: scene.name,
+        id: k.id,
+        text: k.text,
+        difficulty: k.difficulty ?? "regular",
+        source: "npc",
+        sourceId: npc.id,
+        sourceName: npc.name,
       });
     }
   }
 
-  if (node.type === "character_interaction" && node.targetCharacterId) {
-    const npc = state.npcCharacters.find((n) => n.id === node.targetCharacterId);
-    if (npc) {
-      // NPC clues
-      if (npc.clues) {
-        for (const clue of npc.clues) {
-          if (clue.revealed) continue;
-          const rank = CLUE_DIFFICULTY_RANK[clue.difficulty ?? "regular"] ?? 1;
-          if (rank > maxRank) continue;
-          candidates.push({
-            clueId: clue.id,
-            clueText: clue.clueText,
-            difficulty: clue.difficulty ?? "regular",
-            source: "npc",
-            sourceId: npc.id,
-            sourceName: npc.name,
-          });
-        }
-      }
-      // NPC secrets (treated as "hard" difficulty)
-      if (npc.secrets) {
-        const hardRank = CLUE_DIFFICULTY_RANK["hard"];
-        if (hardRank <= maxRank) {
-          for (let i = 0; i < npc.secrets.length; i++) {
-            const alreadyKnown = state.discoveredClues.some(
-              (dc) => dc.text === npc.secrets![i] || dc.text === `Secret: ${npc.secrets![i]}`
-            );
-            if (alreadyKnown) continue;
-            candidates.push({
-              clueId: `${npc.id}_secret_${i}`,
-              clueText: npc.secrets[i],
-              difficulty: "hard",
-              source: "npc",
-              sourceId: npc.id,
-              sourceName: npc.name,
-            });
-          }
-        }
+  // NPC secrets (treated as "hard" difficulty)
+  if (npc.secrets) {
+    const hardRank = DIFFICULTY_RANK["hard"];
+    if (hardRank <= maxRank) {
+      for (let i = 0; i < npc.secrets.length; i++) {
+        const alreadyKnown = state.discoveredKnowledge.some(
+          (dk) => dk.text === npc.secrets![i] || dk.text === `Secret: ${npc.secrets![i]}`
+        );
+        if (alreadyKnown) continue;
+        candidates.push({
+          id: `${npc.id}_secret_${i}`,
+          text: npc.secrets[i],
+          difficulty: "hard",
+          source: "npc",
+          sourceId: npc.id,
+          sourceName: npc.name,
+        });
       }
     }
   }
 
+  return matchCandidates(candidates, node, language);
+}
+
+/** Common logic: split automatic vs semantic-match candidates */
+async function matchCandidates(
+  candidates: DiscoveryCandidate[],
+  node: PlanNode,
+  language: string,
+): Promise<DiscoveryEntry[]> {
   if (candidates.length === 0) return [];
 
-  // Split automatic (always discovered) vs non-automatic (need semantic match)
-  const automaticResults: DiscoveredClueEntry[] = [];
-  const matchCandidates: ClueCandidate[] = [];
+  const automaticResults: DiscoveryEntry[] = [];
+  const semanticCandidates: DiscoveryCandidate[] = [];
 
   for (const c of candidates) {
     if (c.difficulty === "automatic") {
       automaticResults.push({
-        clueId: c.clueId,
-        clueText: c.clueText,
+        id: c.id,
+        text: c.text,
         source: c.source,
         sourceId: c.sourceId,
         sourceName: c.sourceName,
@@ -212,87 +226,84 @@ async function discoverClues(
         similarity: 1.0,
       });
     } else {
-      matchCandidates.push(c);
+      semanticCandidates.push(c);
     }
   }
 
-  if (matchCandidates.length === 0) return automaticResults;
+  if (semanticCandidates.length === 0) return automaticResults;
 
-  // Semantic match: embed action, compare against each candidate
   try {
     const embedClient = getEmbeddingClient();
     const lang = (language?.startsWith("zh") ? "zh" : "en") as "zh" | "en";
     const actionEmbedding = await embedClient.embed(node.action, { language: lang });
     if (!actionEmbedding.length) return automaticResults;
 
-    // Sort candidates by difficulty descending (hardest first) before matching
-    matchCandidates.sort(
-      (a, b) => (CLUE_DIFFICULTY_RANK[b.difficulty] ?? 0) - (CLUE_DIFFICULTY_RANK[a.difficulty] ?? 0)
+    semanticCandidates.sort(
+      (a, b) => (DIFFICULTY_RANK[b.difficulty] ?? 0) - (DIFFICULTY_RANK[a.difficulty] ?? 0)
     );
 
-    const matched: DiscoveredClueEntry[] = [];
-    for (const c of matchCandidates) {
-      const clueEmbedding = await embedClient.embed(c.clueText, { language: lang });
-      if (!clueEmbedding.length) continue;
+    const matched: DiscoveryEntry[] = [];
+    for (const c of semanticCandidates) {
+      const cEmbedding = await embedClient.embed(c.text, { language: lang });
+      if (!cEmbedding.length) continue;
 
-      const sim = cosineSimilarity(actionEmbedding, clueEmbedding);
-      if (sim >= CLUE_SIMILARITY_THRESHOLD) {
+      const sim = cosineSimilarity(actionEmbedding, cEmbedding);
+      if (sim >= DISCOVERY_SIMILARITY_THRESHOLD) {
         matched.push({
-          clueId: c.clueId,
-          clueText: c.clueText,
+          id: c.id,
+          text: c.text,
           source: c.source,
           sourceId: c.sourceId,
           sourceName: c.sourceName,
-          difficulty: c.difficulty as DiscoveredClueEntry["difficulty"],
+          difficulty: c.difficulty as DiscoveryEntry["difficulty"],
           similarity: sim,
         });
       }
     }
 
-    // Already sorted by difficulty desc; break ties by similarity desc
     matched.sort((a, b) => {
-      const diffDelta = (CLUE_DIFFICULTY_RANK[b.difficulty] ?? 0) - (CLUE_DIFFICULTY_RANK[a.difficulty] ?? 0);
+      const diffDelta = (DIFFICULTY_RANK[b.difficulty] ?? 0) - (DIFFICULTY_RANK[a.difficulty] ?? 0);
       if (diffDelta !== 0) return diffDelta;
       return b.similarity - a.similarity;
     });
 
     return [...automaticResults, ...matched];
   } catch (error) {
-    console.warn("[TickProcessor] Clue discovery embedding failed:", error);
+    console.warn("[TickProcessor] Discovery embedding failed:", error);
     return automaticResults;
   }
 }
 
-// ==================== Clue RAG embedding ====================
+// ==================== Discovery RAG embedding ====================
 
-function embedDiscoveredClues(
-  clues: DiscoveredClueEntry[],
+function embedDiscoveries(
+  discoveries: DiscoveryEntry[],
   dgsm: DynamicGameStateManager,
   language: "en" | "zh"
 ): void {
-  if (clues.length === 0) return;
+  if (discoveries.length === 0) return;
   const ragService = new SessionRagService();
   const state = dgsm.getState();
-  const ragChunks: SessionRagChunkInput[] = clues.map((entry) => ({
+  const ragChunks: SessionRagChunkInput[] = discoveries.map((entry) => ({
     sessionId: state.sessionId,
-    chunkType: "clue" as const,
+    chunkType: "discovery" as const,
     role: "system" as const,
     content: [
-      "Clue Discovered",
+      "Discovery",
       `Type: ${entry.source}`,
       `Source: ${entry.sourceName}`,
-      `Content: ${entry.clueText}`,
+      `Content: ${entry.text}`,
     ].join("\n"),
     metadata: {
-      clueType: entry.source,
+      discoveryType: entry.source,
       sourceName: entry.sourceName,
       discoveredAt: `Day ${state.gameDay}, ${state.timeOfDay}`,
     },
-    sourceKey: `clue:${entry.clueId}`,
+    sourceKey: `discovery:${entry.id}`,
     language,
   }));
   void ragService.upsertChunks(ragChunks).catch((err) =>
-    console.error("[TickProcessor] Failed to embed clue:", err)
+    console.error("[TickProcessor] Failed to embed discovery:", err)
   );
 }
 
@@ -438,32 +449,10 @@ async function executeSingleTick(params: SingleTickParams): Promise<SingleTickRe
       if (relResult) {
         const sign = relResult.scoreDelta >= 0 ? "+" : "";
         relationshipChange = `[relationship ${sign}${relResult.scoreDelta} → ${relResult.newScore}, ${relResult.note}]`;
-
-        // Write relationship memory via NpcMemoryManager
-        if (memoryManager) {
-          const targetChar = state.npcCharacters.find((n) => n.id === node.targetCharacterId);
-          const targetName = targetChar?.name ?? (state.playerCharacter?.id === node.targetCharacterId ? state.playerCharacter.name : node.targetCharacterId ?? "");
-          await memoryManager.add({
-            npcId: node.characterId,
-            sessionId,
-            moduleId,
-            type: "relationship",
-            content: relResult.note,
-            gameDay,
-            gameTime: action.gameTime,
-            location: action.location,
-            metadata: {
-              targetId: node.targetCharacterId ?? "",
-              targetName,
-              scoreDelta: relResult.scoreDelta,
-              newScore: relResult.newScore,
-            },
-          });
-        }
       }
     }
 
-    // Mirror write: passive NPC gets memory of this interaction (NPC-to-NPC only)
+    // Mirror write: passive NPC gets event memory of this interaction (NPC-to-NPC only)
     if (memoryManager
         && action.status === "completed"
         && node.type === "character_interaction"
@@ -473,7 +462,6 @@ async function executeSingleTick(params: SingleTickParams): Promise<SingleTickRe
       const targetId = node.targetCharacterId;
       const initiatorName = node.characterName;
 
-      // Event memory for passive side
       await memoryManager.add({
         npcId: targetId,
         sessionId,
@@ -485,26 +473,6 @@ async function executeSingleTick(params: SingleTickParams): Promise<SingleTickRe
         location: action.location,
         metadata: { outcome: action.outcome },
       });
-
-      // Relationship memory for passive side (only if relationship was updated)
-      if (relResult) {
-        await memoryManager.add({
-          npcId: targetId,
-          sessionId,
-          moduleId,
-          type: "relationship",
-          content: `Interaction with ${initiatorName}: ${action.outcome}`,
-          gameDay,
-          gameTime: action.gameTime,
-          location: action.location,
-          metadata: {
-            targetId: node.characterId,
-            targetName: initiatorName,
-            scoreDelta: relResult.scoreDelta,
-            newScore: relResult.newScore,
-          },
-        });
-      }
     }
 
     // Log NPC actions (not player)
@@ -563,22 +531,22 @@ async function executeSingleTick(params: SingleTickParams): Promise<SingleTickRe
           metadata: { outcome: informationContent },
         });
 
-        // Clue memories if formal clue IDs were transferred
-        if (payload.relatedClueIds?.length) {
-          for (const clueId of payload.relatedClueIds) {
-            const npcClues = state.npcCharacters.find(n => n.id === targetId)?.clues ?? [];
-            const clueObj = npcClues.find((c: any) => c.id === clueId || c.clueId === clueId);
-            const clueText = clueObj?.clueText ?? clueId;
+        // Information memories if formal knowledge IDs were transferred
+        if (payload.relatedKnowledgeIds?.length) {
+          for (const knowledgeId of payload.relatedKnowledgeIds) {
+            const npcKnowledge = state.npcCharacters.find(n => n.id === targetId)?.knowledge ?? [];
+            const knowledgeObj = npcKnowledge.find((k: any) => k.id === knowledgeId);
+            const knowledgeText = knowledgeObj?.text ?? knowledgeId;
             await memoryManager.add({
               npcId: targetId,
               sessionId,
               moduleId,
-              type: "clue",
-              content: `Learned from ${senderName}: ${clueText}`,
+              type: "information",
+              content: `Learned from ${senderName}: ${knowledgeText}`,
               gameDay,
               gameTime: action.gameTime,
               location: action.location,
-              metadata: { clueId, category: "knowledge" as const, sourceCharacterId: node.characterId, sourceCharacterName: senderName },
+              metadata: { knowledgeId, category: "knowledge" as const, sourceCharacterId: node.characterId, sourceCharacterName: senderName },
             });
           }
         }
@@ -634,24 +602,26 @@ async function executeSingleTick(params: SingleTickParams): Promise<SingleTickRe
       }
     }
 
-    // Clue discovery — only for player's successful nodes
+    // Discovery — only for player's successful nodes
     if (action.status === "completed" && node.isPlayer) {
       const effectiveSuccess: SuccessLevel = action.successLevel ?? "regular";
-      const clues = await discoverClues(node, effectiveSuccess, dgsm, language);
-      if (clues.length > 0) {
-        action.discoveredClues = clues;
-        embedDiscoveredClues(clues, dgsm, language as "en" | "zh");
-        // Mark scene clues as discovered
-        for (const entry of clues) {
-          if (entry.source === "scene") {
-            dgsm.markScenarioClueDiscovered(entry.clueId, node.characterName);
-          } else if (entry.source === "npc") {
-            dgsm.markNpcClueRevealed(entry.sourceId, entry.clueId);
+      // Discover evidence items from scene
+      const evidence = await discoverEvidence(node, effectiveSuccess, dgsm, language);
+      // Discover NPC knowledge
+      const npcKnowledge = await discoverNpcKnowledge(node, effectiveSuccess, dgsm, language);
+      const allDiscoveries = [...evidence, ...npcKnowledge];
+
+      if (allDiscoveries.length > 0) {
+        action.discoveries = allDiscoveries;
+        embedDiscoveries(allDiscoveries, dgsm, language as "en" | "zh");
+        for (const entry of allDiscoveries) {
+          if (entry.source === "npc") {
+            dgsm.markNpcKnowledgeRevealed(entry.sourceId, entry.id);
           }
-          // Add to global discoveredClues list
-          dgsm.addDiscoveredClue({
-            text: entry.clueText,
-            type: entry.source === "scene" ? "scenario" : entry.clueId.includes("_secret_") ? "secret" : "npc",
+          // Add to global discoveredKnowledge list
+          dgsm.addDiscoveredKnowledge({
+            text: entry.text,
+            type: entry.source === "evidence" ? "evidence" : entry.id.includes("_secret_") ? "secret" : "information",
             sourceName: entry.sourceName,
             discoveredBy: node.characterName,
             discoveredAt: new Date().toISOString(),
@@ -660,20 +630,20 @@ async function executeSingleTick(params: SingleTickParams): Promise<SingleTickRe
           });
         }
         console.log(
-          `[TickProcessor] Player discovered ${clues.length} clue(s): ${clues.map((c) => `[${c.difficulty}] ${c.clueText.slice(0, 40)}`).join("; ")}`
+          `[TickProcessor] Player discovered ${allDiscoveries.length} item(s): ${allDiscoveries.map((d) => `[${d.difficulty}] ${d.text.slice(0, 40)}`).join("; ")}`
         );
       }
     }
 
-    // Fumble -> damage a random undiscovered scene clue
+    // Fumble -> damage a random evidence item in scene
     if (node.isPlayer && action.successLevel === "fumble") {
       const scene = dgsm.getCurrentScene();
-      const damageable = scene?.clues?.filter((c) => !c.discovered && !c.damaged) ?? [];
+      const damageable = scene?.items?.filter((i) => i.category === "evidence" && !i.damaged) ?? [];
       if (damageable.length > 0) {
         const victim = damageable[Math.floor(Math.random() * damageable.length)];
-        dgsm.damageScenarioClue(victim.id, node.characterName, `Fumbled: ${node.action}`);
-        action.damagedClue = { clueId: victim.id, sourceName: scene!.name };
-        console.log(`[TickProcessor] Fumble damaged clue: ${victim.clueText.slice(0, 40)}`);
+        dgsm.damageEvidenceItem(victim.id, node.characterName, `Fumbled: ${node.action}`);
+        action.damagedEvidence = { itemId: victim.id, sourceName: scene!.name };
+        console.log(`[TickProcessor] Fumble damaged evidence: ${(victim.description || victim.name).slice(0, 40)}`);
       }
     }
 

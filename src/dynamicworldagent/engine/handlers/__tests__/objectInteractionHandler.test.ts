@@ -53,7 +53,6 @@ function createMockDgsm() {
         items,
         itemContexts,
         events,
-        clues: [],
         connections: [],
       } as unknown as DynamicScene;
     },

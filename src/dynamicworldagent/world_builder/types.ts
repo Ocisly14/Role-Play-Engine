@@ -8,11 +8,10 @@ import type {
   CharacterAttributes,
   CharacterStatus,
   InventoryItem,
-  NPCClue,
+  NPCKnowledge,
   NPCRelationship,
 } from "../../shared/agents/models/gameTypes.js";
 import type {
-  ScenarioClue,
   ScenarioCondition,
 } from "../../shared/agents/models/scenarioTypes.js";
 import type { ItemContexts } from "./sceneItemContextPayload.js";
@@ -70,7 +69,7 @@ export interface DynamicNPCProfile extends DynamicCharacterProfile {
   background?: string; // NPC-specific background (may differ from backstory)
   goals?: string[];
   secrets?: string[];
-  clues: NPCClue[];
+  knowledge: NPCKnowledge[];
   relationships: NPCRelationship[];
   isNPC: true; // flag to distinguish from player characters
 
@@ -87,7 +86,6 @@ export interface DynamicScene {
   parentLocationId: string;
   items: Item[];
   itemContexts?: ItemContexts;
-  clues: ScenarioClue[];
   conditions: ScenarioCondition[];
   connections: string[];
   sceneImage?: SceneImage;
@@ -123,6 +121,9 @@ export interface Item {
   name: string;
   description?: string;
   type?: "weapon" | "consumable" | "tool" | "lighting" | "container" | "key" | "document" | "other";
+  category?: "evidence" | "mundane";
+  reveals?: string[];
+  discoveryMethod?: string;
   era?: string;
   damaged?: boolean;
   damageDetails?: {
