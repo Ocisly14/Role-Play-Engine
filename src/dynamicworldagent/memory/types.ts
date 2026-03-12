@@ -162,7 +162,7 @@ export interface ContextProfile {
 
 export const CONTEXT_PROFILES: Record<ContextPurpose, ContextProfile> = {
   scheduling: {
-    defaultTypes: ["plan", "event", "information", "belief", "summary"],
+    defaultTypes: ["information", "belief", "secret", "summary"],
     defaultLimit: 20,
   },
   conversation: {

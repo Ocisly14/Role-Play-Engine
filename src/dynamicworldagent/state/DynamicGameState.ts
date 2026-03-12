@@ -1568,6 +1568,14 @@ export class DynamicGameStateManager {
     }
   }
 
+  addNpcKnowledge(npcId: string, entry: import("../../shared/agents/models/gameTypes.js").NPCKnowledge): void {
+    const npc = this.state.npcCharacters.find((n) => n.id === npcId);
+    if (!npc) return;
+    if (!npc.knowledge) npc.knowledge = [];
+    const exists = npc.knowledge.some((k) => k.id === entry.id);
+    if (!exists) npc.knowledge.push(entry);
+  }
+
   markNpcKnowledgeRevealed(npcId: string, knowledgeId: string): void {
     const npc = this.state.npcCharacters.find((n) => n.id === npcId);
     if (!npc?.knowledge) return;

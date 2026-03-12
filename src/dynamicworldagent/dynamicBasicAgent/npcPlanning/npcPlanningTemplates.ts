@@ -6,34 +6,66 @@ export interface SummarizeDayMemoryParams {
   npcName: string;
   npcProfile: string;
   gameDay: number;
-  rawMemoryLog: string;
+  eventLog: string;
+  receivedKnowledge: Array<{ id: string; text: string; category: string; from: string }>;
+  existingKnowledgeIds: string[];
   language: string;
 }
 
 export function buildSummarizeDayMemoryPrompt(params: SummarizeDayMemoryParams): string {
+  const receivedSection = params.receivedKnowledge.length > 0
+    ? params.receivedKnowledge.map(k => `- [${k.id}] (from ${k.from}) "${k.text}" (${k.category})`).join("\n")
+    : "None.";
+
+  const existingIds = params.existingKnowledgeIds.length > 0
+    ? params.existingKnowledgeIds.join(", ")
+    : "(none)";
+
   return `You are ${params.npcName}, a character in a Call of Cthulhu tabletop RPG.
 
 ## Task
-It's the end of Day ${params.gameDay}. Look back at everything that happened today and distill it into a few key memories — the moments that matter, the things you learned, and anything that changed how you see the world.
+It's the end of Day ${params.gameDay}. Review everything that happened today and produce two outputs:
+1. **Long-term memory**: The key moments worth remembering — what matters to you going forward.
+2. **New knowledge**: Any facts, secrets, or observations you learned today that you didn't know before.
 
 ## Who You Are
 ${params.npcProfile}
 
-## Everything That Happened Today
-${params.rawMemoryLog}
+## Your Existing Knowledge IDs
+${existingIds}
+
+## Today's Events
+${params.eventLog}
+
+## Knowledge Received Today
+${receivedSection}
 
 ## Instructions
-- Write concise memory entries, each one sentence
-- Focus on: important events, new information learned, relationship changes, emotional moments, threats or opportunities discovered
-- Drop routine actions (eating, walking) unless something notable happened during them
-- Write from your perspective — what YOU experienced and how it affects you
+
+### Long-term Memory
+- Write concise entries, each one sentence
+- Focus on: important events, relationship changes, emotional moments, threats or opportunities
+- Drop routine actions unless something notable happened during them
+- Write from your perspective
+
+### New Knowledge
+- Review "Knowledge Received Today" and "Today's Events" for new information
+- For knowledge received from other characters, keep the original ID and text — decide whether to accept it
+- For things you observed or deduced yourself, generate a new ID (e.g. "learned_day${params.gameDay}_1")
+- Do NOT include knowledge you already have (check "Your Existing Knowledge IDs")
+- **category**: "knowledge" for facts and information, "secret" for things you want to keep hidden from others
+- **difficulty**: How hard it would be for someone to extract this from you — "automatic" (you'd share freely), "regular", "hard", "extreme" (you'd never willingly reveal)
+- **relatedTo**: Array of truth event IDs, character IDs, or location IDs this knowledge relates to (optional, omit if unclear)
 
 ## Output
 Return a JSON object. No extra text. Always write in English.
 
 \`\`\`json
 {
-  "summary": "Entry 1. | Entry 2. | Entry 3."
+  "summary": "Memory 1. | Memory 2. | Memory 3.",
+  "newKnowledge": [
+    { "id": "knowledge_id", "text": "what you learned", "category": "knowledge", "difficulty": "regular", "relatedTo": ["T1"] }
+  ]
 }
 \`\`\``;
 }
@@ -135,7 +167,7 @@ Day ${params.gameDay}, ${params.currentTime}
 - Balance your everyday routine (meals, work, rest, hobbies) with actions that move you closer to your goal.
 - Use scene IDs from "Places You Know" for locations.
 - Be realistic — you wouldn't break into someone's office in broad daylight, and you need to eat and rest.
-- Plan 6-12 entries for a full day. Fewer if it's already late.
+- Plan entries as you need for a full day. Fewer if it's already late.
 
 ## Social Interactions
 If you want to share information with or talk to another character, plan a visit to their location. The detailed planning step will handle the specifics of what you say.

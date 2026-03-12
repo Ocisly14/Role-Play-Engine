@@ -498,7 +498,7 @@ async function executeSingleTick(params: SingleTickParams): Promise<SingleTickRe
       await npcPlanningAgent.markNodeCompleted(sessionId, node.characterId, gameDay, node.nodeId, action.outcome);
     }
 
-    // Write information transfer memories (unified: replaces old clue-transfer block)
+    // Knowledge transfer: write event memories only; summary extracts knowledge at day-end
     if (memoryManager && action.status === "completed" && node.type === "character_interaction"
         && node.characterInteractionPayload?.transferType === "information"
         && node.characterInteractionPayload.informationContent) {
@@ -518,7 +518,6 @@ async function executeSingleTick(params: SingleTickParams): Promise<SingleTickRe
       });
 
       for (const targetId of presentTargets) {
-        // Receiver event memory for information transfer
         await memoryManager.add({
           npcId: targetId,
           sessionId,
@@ -528,28 +527,12 @@ async function executeSingleTick(params: SingleTickParams): Promise<SingleTickRe
           gameDay,
           gameTime: action.gameTime,
           location: action.location,
-          metadata: { outcome: informationContent },
+          metadata: {
+            outcome: informationContent,
+            relatedKnowledgeIds: payload.relatedKnowledgeIds ?? [],
+            sourceCharacterId: node.characterId,
+          },
         });
-
-        // Information memories if formal knowledge IDs were transferred
-        if (payload.relatedKnowledgeIds?.length) {
-          for (const knowledgeId of payload.relatedKnowledgeIds) {
-            const npcKnowledge = state.npcCharacters.find(n => n.id === targetId)?.knowledge ?? [];
-            const knowledgeObj = npcKnowledge.find((k: any) => k.id === knowledgeId);
-            const knowledgeText = knowledgeObj?.text ?? knowledgeId;
-            await memoryManager.add({
-              npcId: targetId,
-              sessionId,
-              moduleId,
-              type: "information",
-              content: `Learned from ${senderName}: ${knowledgeText}`,
-              gameDay,
-              gameTime: action.gameTime,
-              location: action.location,
-              metadata: { knowledgeId, category: "knowledge" as const, sourceCharacterId: node.characterId, sourceCharacterName: senderName },
-            });
-          }
-        }
       }
 
       // Sender event memory

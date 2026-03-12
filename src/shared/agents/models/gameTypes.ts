@@ -255,7 +255,7 @@ export interface CharacterProfile {
 export interface NPCKnowledge {
   id: string;
   text: string;
-  category?: "knowledge" | "observation" | "rumor" | "secret";
+  category?: "knowledge" | "secret";
   difficulty?: Difficulty; // difficulty to extract this knowledge
   revealed: boolean;
   relatedTo?: string[]; // related character or location IDs

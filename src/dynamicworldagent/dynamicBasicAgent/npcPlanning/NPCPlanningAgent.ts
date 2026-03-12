@@ -724,16 +724,38 @@ export class NPCPlanningAgent {
 
     const { getAllHandlers } = await import("../../memory/handlers/index.js");
     const handlers = getAllHandlers();
-    const rawLog = dayMemories.map((m) => handlers[m.type].format(m)).join("\n");
+    const state = dgsm.getState();
 
-    const npc = dgsm.getState().npcCharacters.find((n) => n.id === npcId);
+    // Format events
+    const eventLog = dayMemories.map((m) => handlers[m.type].format(m)).join("\n");
+
+    // Collect knowledge received today (resolve relatedKnowledgeIds from sender NPCs)
+    const receivedKnowledge: Array<{ id: string; text: string; category: string; from: string }> = [];
+    for (const m of dayMemories) {
+      const meta = m.metadata as Record<string, any> | null;
+      if (!meta?.relatedKnowledgeIds?.length || !meta?.sourceCharacterId) continue;
+      const senderNpc = state.npcCharacters.find(n => n.id === meta.sourceCharacterId);
+      if (!senderNpc?.knowledge) continue;
+      for (const kid of meta.relatedKnowledgeIds as string[]) {
+        const k = senderNpc.knowledge.find(k => k.id === kid);
+        if (k && !receivedKnowledge.some(r => r.id === k.id)) {
+          receivedKnowledge.push({ id: k.id, text: k.text, category: k.category ?? "knowledge", from: senderNpc.name });
+        }
+      }
+    }
+
+    const npc = state.npcCharacters.find((n) => n.id === npcId);
     if (!npc) return;
+
+    const existingKnowledgeIds = (npc.knowledge ?? []).map((k) => k.id);
 
     const prompt = buildSummarizeDayMemoryPrompt({
       npcName: npc.name,
       npcProfile: this.formatNpcProfile(npc),
       gameDay,
-      rawMemoryLog: rawLog,
+      eventLog,
+      receivedKnowledge,
+      existingKnowledgeIds,
       language,
     });
 
@@ -743,19 +765,46 @@ export class NPCPlanningAgent {
       modelClass: ModelClass.SMALL,
     });
 
-    const parsed = parseJsonResponse<{ summary: string }>(response);
+    const parsed = parseJsonResponse<{
+      summary: string;
+      newKnowledge?: Array<{ id: string; text: string; category?: string; difficulty?: string; relatedTo?: string[] }>;
+    }>(response);
 
-    // Write summary as high-importance event memory
+    const moduleId = await this.resolveModuleId(sessionId) ?? "";
+
+    // Write summary memory
     await this.memoryManager.add({
       npcId,
       sessionId,
-      moduleId: await this.resolveModuleId(sessionId) ?? "",
+      moduleId,
       type: "summary",
       content: parsed.summary,
       gameDay,
       gameTime: "23:59",
       metadata: { gameDay },
     });
+
+    // Add extracted knowledge and secrets to NPC profile
+    if (parsed.newKnowledge?.length) {
+      const npcRef = state.npcCharacters.find((n) => n.id === npcId);
+      for (const k of parsed.newKnowledge) {
+        if (k.category === "secret") {
+          if (npcRef) {
+            if (!npcRef.secrets) npcRef.secrets = [];
+            if (!npcRef.secrets.includes(k.text)) npcRef.secrets.push(k.text);
+          }
+        } else {
+          dgsm.addNpcKnowledge(npcId, {
+            id: k.id,
+            text: k.text,
+            category: "knowledge",
+            difficulty: (k.difficulty as "automatic" | "regular" | "hard" | "extreme") ?? "automatic",
+            revealed: false,
+            relatedTo: k.relatedTo,
+          });
+        }
+      }
+    }
   }
 
   private async getNpcDayMemoryLog(
