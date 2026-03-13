@@ -59,22 +59,7 @@ export const sceneInteractionHandler: NodeHandler = {
       );
     }
 
-    if (node.isPlayer) {
-      if (node.actionType) {
-        const rollResult = ctx.resolveSkillRoll(node, adjustedSkills, dgsm);
-        resolvedSuccessLevel = rollResult.successLevel;
-        if (rollResult.failed) {
-          lastRollDetail = rollResult.reason;
-          return makeAction(
-            node,
-            "failed",
-            buildOutcome(node, "failed", { rollDetail: lastRollDetail }),
-            { difficulty, successLevel: resolvedSuccessLevel, failureReason: "skill_roll_failed" }
-          );
-        }
-        lastRollDetail = rollResult.detail;
-      }
-    } else if (difficulty === "luck_only") {
+    if (difficulty === "luck_only") {
       if (Math.random() < ctx.luckFailureRate(luck)) {
         return makeAction(
           node,

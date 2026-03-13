@@ -86,7 +86,6 @@ function makeNode(overrides: Partial<PlanNode> = {}): PlanNode {
     impact: 1 as const,
     timeAdvanceMinutes: 5,
     status: "pending" as const,
-    isPlayer: true,
     ...overrides,
   } as PlanNode;
 }

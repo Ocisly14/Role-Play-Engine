@@ -75,8 +75,8 @@ export const characterInteractionHandler: NodeHandler = {
       }
     }
 
-    // For NPC nodes with luck_only difficulty: skip actionType skill roll, only do luck-based roll
-    if (!node.isPlayer && difficulty === "luck_only") {
+    if (difficulty === "luck_only") {
+      // Luck-only difficulty: skip actionType skill roll, only do luck-based roll
       if (Math.random() < ctx.luckFailureRate(luck)) {
         return makeAction(
           node,
@@ -85,25 +85,7 @@ export const characterInteractionHandler: NodeHandler = {
           { difficulty, failureReason: "bad_luck" }
         );
       }
-    } else if (node.isPlayer) {
-      // Player nodes: skip luck-based failure check entirely
-      // Only do skill roll if actionType present
-      if (node.actionType) {
-        const rollResult = ctx.resolveSkillRoll(node, adjustedSkills, dgsm);
-        resolvedSuccessLevel = rollResult.successLevel;
-        if (rollResult.failed) {
-          lastRollDetail = rollResult.reason;
-          return makeAction(
-            node,
-            "failed",
-            buildOutcome(node, "failed", { rollDetail: lastRollDetail }),
-            { difficulty, successLevel: resolvedSuccessLevel, failureReason: "skill_roll_failed" }
-          );
-        }
-        lastRollDetail = rollResult.detail;
-      }
     } else {
-      // NPC nodes (non-luck_only): existing logic
       // Luck-based failure (only when no actionType)
       if (!node.actionType && Math.random() < ctx.luckFailureRate(luck)) {
         return makeAction(

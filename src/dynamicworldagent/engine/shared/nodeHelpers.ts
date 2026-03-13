@@ -47,7 +47,6 @@ export function makeAction(
     type: node.type,
     actionType: node.actionType,
     impact: node.impact,
-    isPlayer: node.isPlayer,
     difficulty: opts?.difficulty,
     successLevel: opts?.successLevel,
     status,

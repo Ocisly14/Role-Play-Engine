@@ -280,7 +280,6 @@ export class NPCPlanningAgent {
       handlerPrompt: registry?.buildHandlerPrompt(),
       planningPrompt: registry?.buildPlanningPrompt(),
       outputSchemaPrompt: registry?.buildOutputSchemaPrompt({
-        isPlayer: false,
         extraInstructions: "Use the current time as the starting gameTime.",
       }),
     });
@@ -501,7 +500,6 @@ export class NPCPlanningAgent {
       handlerPrompt: registry?.buildHandlerPrompt(),
       planningPrompt: registry?.buildPlanningPrompt(),
       outputSchemaPrompt: registry?.buildOutputSchemaPrompt({
-        isPlayer: false,
         extraInstructions: "Revise pending actions. Only change what the event actually affects.",
       }),
     });

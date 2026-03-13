@@ -226,20 +226,12 @@ export function injectInsanityCondition(
   dgsm: DynamicGameStateManager,
   characterId: string,
   conditionString: string,
-  isPlayer: boolean,
 ): void {
   const state = dgsm.getState();
-
-  if (isPlayer) {
-    const conditions = state.playerCharacter?.status?.conditions;
-    if (!conditions) return;
-    conditions.push(conditionString);
-  } else {
-    const npc = state.npcCharacters?.find((n: any) => n.id === characterId);
-    const conditions = npc?.status?.conditions;
-    if (!conditions) return;
-    conditions.push(conditionString);
-  }
+  const npc = state.npcCharacters?.find((n: any) => n.id === characterId);
+  const conditions = npc?.status?.conditions;
+  if (!conditions) return;
+  conditions.push(conditionString);
 }
 
 /**
@@ -250,20 +242,11 @@ export function injectInsanityCondition(
 export function removeInsanityCondition(
   dgsm: DynamicGameStateManager,
   characterId: string,
-  isPlayer: boolean,
   keepPersistent?: boolean,
 ): void {
   const state = dgsm.getState();
-
-  let conditions: string[] | undefined;
-
-  if (isPlayer) {
-    conditions = state.playerCharacter?.status?.conditions;
-  } else {
-    const npc = state.npcCharacters?.find((n: any) => n.id === characterId);
-    conditions = npc?.status?.conditions;
-  }
-
+  const npc = state.npcCharacters?.find((n: any) => n.id === characterId);
+  const conditions = npc?.status?.conditions;
   if (!conditions) return;
 
   const filtered = conditions.filter((c: string) => {
@@ -272,16 +255,8 @@ export function removeInsanityCondition(
     return false;
   });
 
-  // Write back
-  if (isPlayer) {
-    if (state.playerCharacter?.status) {
-      (state.playerCharacter.status as any).conditions = filtered;
-    }
-  } else {
-    const npc = state.npcCharacters?.find((n: any) => n.id === characterId);
-    if (npc?.status) {
-      (npc.status as any).conditions = filtered;
-    }
+  if (npc?.status) {
+    (npc.status as any).conditions = filtered;
   }
 }
 
@@ -293,7 +268,6 @@ export function removeInsanityCondition(
  * @param dgsm - DynamicGameStateManager instance
  * @param characterId - the character to affect
  * @param delta - negative for loss, positive for recovery
- * @param isPlayer - true if the character is the player
  * @param gameDay - optional, reads from dgsm state if not provided
  * @param tickTime - optional, reads from dgsm state if not provided
  * @param source - optional description of what caused the loss
@@ -302,7 +276,6 @@ export function applySanityLoss(
   dgsm: DynamicGameStateManager,
   characterId: string,
   delta: number,
-  isPlayer: boolean,
   gameDay?: number,
   tickTime?: string,
   source?: string,
@@ -310,12 +283,7 @@ export function applySanityLoss(
   const state = dgsm.getState();
 
   // 1. Apply SAN delta
-  if (isPlayer) {
-    if (!state.playerCharacter) return;
-    state.playerCharacter.status.sanity = Math.max(0, state.playerCharacter.status.sanity + delta);
-  } else {
-    (dgsm as any).updateNpcSan(characterId, delta);
-  }
+  (dgsm as any).updateNpcSan(characterId, delta);
 
   // 2. If recovery (delta >= 0), return immediately
   if (delta >= 0) return;
@@ -364,7 +332,7 @@ export function applySanityLoss(
       bout.label,
       bout.actionRestriction,
     );
-    injectInsanityCondition(dgsm, characterId, conditionStr, isPlayer);
+    injectInsanityCondition(dgsm, characterId, conditionStr);
 
     // Push emotion derived from bout type
     const emotionDef = BOUT_TO_EMOTION[bout.boutType];
@@ -391,14 +359,12 @@ export function applySanityLoss(
         bout.actionRestriction,
         subject,
       );
-      injectInsanityCondition(dgsm, characterId, persistentCondStr, isPlayer);
+      injectInsanityCondition(dgsm, characterId, persistentCondStr);
     }
   } else {
     // 6b. Indefinite insanity (hourly cumulative >= currentSan / 5)
     // Use SAN *before* this loss for the threshold check
-    const currentSan = isPlayer
-      ? (state.playerCharacter?.status?.sanity ?? 0) + lossAmount
-      : ((dgsm as any).getNpcStats(characterId)?.san ?? 0) + lossAmount;
+    const currentSan = ((dgsm as any).getNpcStats(characterId)?.san ?? 0) + lossAmount;
 
     const hourlyCumulative = getHourlyCumulativeLoss(charSanState, gameTimeMinutes);
 
@@ -496,15 +462,11 @@ export function drainPendingEmotions(dgsm: DynamicGameStateManager): SanityEmoti
 
 function getTrackedCharacters(dgsm: DynamicGameStateManager): Array<{
   characterId: string;
-  isPlayer: boolean;
 }> {
   const state = dgsm.getState();
-  const result: Array<{ characterId: string; isPlayer: boolean }> = [];
-  if (state.playerCharacter?.id) {
-    result.push({ characterId: state.playerCharacter.id, isPlayer: true });
-  }
+  const result: Array<{ characterId: string }> = [];
   for (const npcId of Object.keys(state.npcLocations)) {
-    result.push({ characterId: npcId, isPlayer: false });
+    result.push({ characterId: npcId });
   }
   return result;
 }
@@ -579,7 +541,7 @@ export const sanityFeature: WorldFeature = {
     const characters = getTrackedCharacters(dgsm);
     const currentTimeMinutes = computeGameTimeMinutes(runtime.gameDay, runtime.tickTime);
 
-    for (const { characterId, isPlayer } of characters) {
+    for (const { characterId } of characters) {
       let charState = getSanityState(dgsm, characterId);
       if (!charState) continue;
 
@@ -603,7 +565,7 @@ export const sanityFeature: WorldFeature = {
           label,
           ai.actionRestriction,
         );
-        injectInsanityCondition(dgsm, characterId, conditionStr, isPlayer);
+        injectInsanityCondition(dgsm, characterId, conditionStr);
         changed = true;
       }
 
@@ -620,7 +582,7 @@ export const sanityFeature: WorldFeature = {
 
         if (currentTimeMinutes >= expiryTime) {
           // Remove the active insanity condition but preserve persistent phobia/mania conditions
-          removeInsanityCondition(dgsm, characterId, isPlayer, true);
+          removeInsanityCondition(dgsm, characterId, true);
           charState.activeInsanity = null;
           changed = true;
         }

@@ -8,10 +8,7 @@ import type {
   CharacterAction,
   DiscoveryEntry,
   SuccessLevel,
-  TickMode,
-  TickResult,
   SimulationTickResult,
-  PlayerWitnessEvent,
 } from "./types.js";
 import { type SessionRagChunkInput, SessionRagService } from "../knowledge/sessionRagService.js";
 import type { GameEngineRegistry } from "../../engine/registry.js";
@@ -317,10 +314,8 @@ function embedDiscoveries(
 interface SingleTickParams {
   tickStartMinutes: number;
   tickDurationMinutes: number;
-  playerNodes: PlanNode[];
   /** Nodes injected by previous ticks' feature propagation, to be executed in this tick */
   carryOverNodes?: PlanNode[];
-  mode?: TickMode;
   dgsm: DynamicGameStateManager;
   npcPlanningAgent: NPCPlanningAgent;
   sessionId: string;
@@ -333,32 +328,27 @@ interface SingleTickParams {
 
 interface SingleTickResult {
   actions: CharacterAction[];
-  playerFailed: boolean;
-  playerEvents: PlayerWitnessEvent[];
   injectedNodes: PlanNode[];
 }
 
 /**
- * Execute a single 5-minute tick.
+ * Execute a single 5-minute simulation tick.
  *
  * 1. Fetch NPC nodes due in [tickStart, tickEnd)
- * 2. Filter player nodes in range
- * 3. Merge, sort (gameTime ASC, DEX DESC), scan encounters
- * 4. Execute all nodes via registry handlers
- * 5. Post-execution: relationship update, NPC memory, clue discovery, fumble damage, scene events, NPC failure revisePlans
- * 6. Built-in impact propagation (scan impact>0 actions, notify affected NPCs, LLM gate, plan revision)
- * 7. Feature temporal tick — each feature updates its time/state-driven logic
- * 8. Detect feature overlay fields on executed nodes → register propagation sources
- * 9. Drive feature propagation on schedule
- * 10. Return tick result
+ * 2. Merge with carry-over nodes, sort (gameTime ASC, DEX DESC), scan encounters
+ * 3. Execute all nodes via registry handlers
+ * 4. Post-execution: relationship update, NPC memory, discovery, NPC failure revisePlans
+ * 5. Built-in impact propagation (scan impact>0 actions, notify affected NPCs, LLM gate, plan revision)
+ * 6. Feature temporal tick — each feature updates its time/state-driven logic
+ * 7. Detect feature overlay fields on executed nodes → register propagation sources
+ * 8. Drive feature propagation on schedule
+ * 9. Return tick result
  */
 async function executeSingleTick(params: SingleTickParams): Promise<SingleTickResult> {
   const {
     tickStartMinutes,
     tickDurationMinutes,
-    playerNodes,
     carryOverNodes,
-    mode = "player_turn",
     dgsm,
     npcPlanningAgent,
     sessionId,
@@ -368,8 +358,6 @@ async function executeSingleTick(params: SingleTickParams): Promise<SingleTickRe
     ctx,
     memoryManager,
   } = params;
-
-  const isSimulation = mode === "simulation";
 
   const state = dgsm.getState();
   const gameDay = state.gameDay;
@@ -404,16 +392,8 @@ async function executeSingleTick(params: SingleTickParams): Promise<SingleTickRe
   // Filter to nodes >= tickStartTime
   const npcNodesInRange = dueNpcNodes.filter((n) => n.gameTime >= tickStartTime);
 
-  // 2. Filter player nodes in this tick's time range
-  //    Defense-in-depth: ensure player nodes are empty in simulation mode
-  const effectivePlayerNodes = isSimulation ? [] : playerNodes;
-  const playerNodesInRange = effectivePlayerNodes.filter((n) => {
-    const nodeMinutes = timeToMinutes(n.gameTime);
-    return nodeMinutes >= tickStartMinutes && nodeMinutes <= tickEndMinutes;
-  });
-
-  // 3. Merge (including carry-over nodes from previous tick's feature propagation)
-  const allNodes: PlanNode[] = [...npcNodesInRange, ...playerNodesInRange, ...(carryOverNodes ?? [])];
+  // 2. Merge (including carry-over nodes from previous tick's feature propagation)
+  const allNodes: PlanNode[] = [...npcNodesInRange, ...(carryOverNodes ?? [])];
 
   // Sort by gameTime ASC then DEX DESC
   allNodes.sort((a, b) => {
@@ -426,16 +406,10 @@ async function executeSingleTick(params: SingleTickParams): Promise<SingleTickRe
     return dexB - dexA;
   });
 
-  // 4. Execute all nodes
+  // 3. Execute all nodes
   const tickActions: CharacterAction[] = [];
-  let playerFailed = false;
 
   for (const node of allNodes) {
-    // If player already failed, skip subsequent player nodes (not applicable in simulation)
-    if (playerFailed && node.isPlayer && !isSimulation) {
-      continue;
-    }
-
     // Dispatch to registry handler
     const handler = registry.getHandler(node.type);
     if (!handler) {
@@ -445,13 +419,7 @@ async function executeSingleTick(params: SingleTickParams): Promise<SingleTickRe
     const action = handler.execute(node, dgsm, ctx);
     tickActions.push(action);
 
-    // Check if a player node just failed (not applicable in simulation)
-    if (action.status === "failed" && node.isPlayer && !isSimulation) {
-      playerFailed = true;
-      // Continue executing remaining NPC nodes (skip logic above handles player nodes)
-    }
-
-    // 5. Post-execution processing
+    // 4. Post-execution processing
 
     // On character_interaction success -> update relationship
     let relationshipChange: string | undefined;
@@ -464,13 +432,11 @@ async function executeSingleTick(params: SingleTickParams): Promise<SingleTickRe
       }
     }
 
-    // Mirror write: passive NPC gets event memory of this interaction (NPC-to-NPC only)
+    // Mirror write: passive NPC gets event memory of this interaction
     if (memoryManager
         && action.status === "completed"
         && node.type === "character_interaction"
-        && node.targetCharacterId
-        && !node.isPlayer
-        && node.targetCharacterId !== state.playerCharacter?.id) {
+        && node.targetCharacterId) {
       const targetId = node.targetCharacterId;
       const initiatorName = node.characterName;
 
@@ -487,8 +453,8 @@ async function executeSingleTick(params: SingleTickParams): Promise<SingleTickRe
       });
     }
 
-    // Log NPC actions (not player)
-    if (!node.isPlayer) {
+    // Log NPC actions and mark completed
+    {
       let logEntry = `Day${gameDay} ${action.gameTime} [${action.location}] - ${action.outcome}`;
       if (relationshipChange) logEntry += ` ${relationshipChange}`;
 
@@ -567,41 +533,10 @@ async function executeSingleTick(params: SingleTickParams): Promise<SingleTickRe
       }
     }
 
-    // Trigger reasoning on novel player information
-    if (memoryManager && node.isPlayer && node.type === "character_interaction" && node.targetCharacterId) {
-      const shouldReason = await memoryManager.shouldTriggerReasoningOnConversation(
-        node.targetCharacterId,
-        sessionId,
-        action.outcome,
-      );
-      if (shouldReason) {
-        const targetNpc = state.npcCharacters.find(n => n.id === node.targetCharacterId);
-        const npcProfile = targetNpc?.background ?? targetNpc?.backstory ?? "";
-        const generateTextFn = (prompt: string) =>
-          generateText({ runtime: npcPlanningAgent.getRuntime(), context: prompt, modelClass: ModelClass.SMALL });
-        await memoryManager.triggerReasoning(
-          {
-            npcId: node.targetCharacterId,
-            sessionId,
-            moduleId,
-            trigger: "player_question",
-            context: action.outcome,
-            gameDay,
-            gameTime: action.gameTime,
-          },
-          targetNpc?.name ?? node.targetCharacterId,
-          npcProfile,
-          generateTextFn,
-          language,
-        );
-      }
-    }
-
-    // Discovery — for player's successful nodes, or any NPC in simulation mode
-    if (action.status === "completed" && (node.isPlayer || isSimulation)) {
+    // Discovery — NPC discovers evidence/knowledge on successful actions
+    if (action.status === "completed") {
       const effectiveSuccess: SuccessLevel = action.successLevel ?? "regular";
-      // In simulation mode, use the NPC's location instead of the player's current scene
-      const evidenceSceneId = isSimulation ? node.location : undefined;
+      const evidenceSceneId = node.location;
       // Discover evidence items from scene
       const evidence = await discoverEvidence(node, effectiveSuccess, dgsm, language, evidenceSceneId);
       // Discover NPC knowledge
@@ -627,14 +562,14 @@ async function executeSingleTick(params: SingleTickParams): Promise<SingleTickRe
           });
         }
         console.log(
-          `[TickProcessor] ${isSimulation ? "NPC" : "Player"} discovered ${allDiscoveries.length} item(s): ${allDiscoveries.map((d) => `[${d.difficulty}] ${d.text.slice(0, 40)}`).join("; ")}`
+          `[TickProcessor] NPC discovered ${allDiscoveries.length} item(s): ${allDiscoveries.map((d) => `[${d.difficulty}] ${d.text.slice(0, 40)}`).join("; ")}`
         );
       }
     }
 
-    // Fumble -> damage a random evidence item in scene (not applicable in simulation)
-    if (node.isPlayer && action.successLevel === "fumble" && !isSimulation) {
-      const scene = dgsm.getCurrentScene();
+    // Fumble -> damage a random evidence item in the NPC's current scene
+    if (action.successLevel === "fumble") {
+      const scene = dgsm.getScene(node.location);
       const damageable = scene?.items?.filter((i) => i.category === "evidence" && !i.damaged) ?? [];
       if (damageable.length > 0) {
         const victim = damageable[Math.floor(Math.random() * damageable.length)];
@@ -644,10 +579,8 @@ async function executeSingleTick(params: SingleTickParams): Promise<SingleTickRe
       }
     }
 
-
-
-    // On failure -> immediate revisePlans (no gate) — NPC only
-    if (action.status === "failed" && !node.isPlayer) {
+    // On failure -> immediate revisePlans (no gate)
+    if (action.status === "failed") {
       let failureContext: string | undefined;
       if (memoryManager) {
         failureContext = await memoryManager.getContext({
@@ -675,21 +608,18 @@ async function executeSingleTick(params: SingleTickParams): Promise<SingleTickRe
     }
   }
 
-  // 5.5 Scan NPC co-presence → write witness memories + build synthetic encounter events
+  // 4.5 Scan NPC co-presence → write witness memories + build synthetic encounter events
   const encounterEvents = scanUnplannedEncounters(
     dgsm, tickStartTime, tickActions, memoryManager, sessionId, moduleId, gameDay
   );
 
-  // 6. Built-in impact propagation
+  // 5. Built-in impact propagation
   //    Scans for actions with impact > 0, notifies affected NPCs,
   //    runs LLM impact gate, triggers plan revision if needed.
-  let allPlayerEvents: PlayerWitnessEvent[] = [];
   const injectedNodes: PlanNode[] = [];
 
   const impactEvents = [...tickActions.filter((a) => a.impact > 0), ...encounterEvents];
   if (impactEvents.length > 0) {
-    const playerId = state.playerCharacter?.id;
-
     // Aggregate affected characters across all impact events
     const characterEventsMap = new Map<string, Array<{ event: CharacterAction; impact: number }>>();
 
@@ -705,21 +635,6 @@ async function executeSingleTick(params: SingleTickParams): Promise<SingleTickRe
           existing.push({ event, impact: level });
         }
       }
-    }
-
-    // Separate player events
-    const playerEvents = playerId ? characterEventsMap.get(playerId) : undefined;
-    if (playerId) characterEventsMap.delete(playerId);
-
-    if (playerEvents) {
-      allPlayerEvents = playerEvents.map((e) => ({
-        characterName: e.event.characterName,
-        action: e.event.action,
-        outcome: e.event.outcome,
-        location: e.event.location,
-        gameTime: e.event.gameTime,
-        impact: e.impact,
-      }));
     }
 
     // NPC processing — parallel LLM calls
@@ -832,15 +747,15 @@ async function executeSingleTick(params: SingleTickParams): Promise<SingleTickRe
     }
   }
 
-  // 7. Feature temporal tick — let each feature update its time/state-driven logic
+  // 6. Feature temporal tick — let each feature update its time/state-driven logic
   for (const feature of registry.getAllFeatures()) {
     feature.tick?.(dgsm, tickRuntime);
   }
 
-  // 8. Detect feature overlay fields on executed nodes → register propagation sources
+  // 7. Detect feature overlay fields on executed nodes → register propagation sources
   registry.detectFeatureOverlays(allNodes, dgsm);
 
-  // 9. Drive feature propagation on schedule
+  // 8. Drive feature propagation on schedule
   for (const feature of registry.getAllFeatures()) {
     if (!feature.propagation || !feature.propagate) continue;
     if (!registry.shouldPropagationFire(feature.id, isFullTick)) continue;
@@ -862,20 +777,9 @@ async function executeSingleTick(params: SingleTickParams): Promise<SingleTickRe
       // Original source persists at hop+1
       nextSources.push({ sceneId: source.sceneId, currentHop: source.currentHop + 1 });
 
-      // Collect propagation results
+      // Collect propagation-injected nodes
       if (propResult.newNodes?.length) {
         injectedNodes.push(...propResult.newNodes);
-      }
-      if (propResult.playerEvents?.length) {
-        const witnessEvents: PlayerWitnessEvent[] = propResult.playerEvents.map((e) => ({
-          characterName: e.event.characterName,
-          action: e.event.action,
-          outcome: e.event.outcome,
-          location: e.event.location,
-          gameTime: e.event.gameTime,
-          impact: e.impact,
-        }));
-        allPlayerEvents = allPlayerEvents.concat(witnessEvents);
       }
     }
 
@@ -885,230 +789,10 @@ async function executeSingleTick(params: SingleTickParams): Promise<SingleTickRe
   // Drain sanity-triggered emotions (clear from pending queue; no longer persisted as memory)
   drainPendingEmotions(dgsm);
 
-  // Store witness events in contextualData for KeeperAgent
-  if (allPlayerEvents.length > 0) {
-    const existing = (dgsm.getContextualData("playerWitnessEvents") as any[]) ?? [];
-    dgsm.setContextualData("playerWitnessEvents", [...existing, ...allPlayerEvents]);
-  }
-
   return {
     actions: tickActions,
-    playerFailed,
-    playerEvents: allPlayerEvents,
     injectedNodes,
   };
-}
-
-// ==================== Main runPlayerAction ====================
-
-/**
- * Drives N ticks in a loop for a player action. Replaces the old `runTick`.
- *
- * Calculates total minutes from the player action's timeAdvanceMinutes,
- * loops in TICK_DURATION_MINUTES increments, calls executeSingleTick for each.
- * Handles player interrupts and player failure, advances game time at the end.
- */
-export async function runPlayerAction(
-  playerNodes: PlanNode[],
-  dgsm: DynamicGameStateManager,
-  npcPlanningAgent: NPCPlanningAgent,
-  sessionId: string,
-  language: string = "en",
-  registry: GameEngineRegistry,
-  ctx: ExecutionContext
-): Promise<TickResult> {
-  const state = dgsm.getState();
-  const gameDay = state.gameDay;
-  const currentMinutes = timeToMinutes(state.timeOfDay);
-
-  // Resolve moduleId and memoryManager once for the entire player action
-  const resolvedModuleId = await npcPlanningAgent.resolveModuleId(sessionId);
-  const moduleId = resolvedModuleId ?? "";
-  const memoryManager = npcPlanningAgent.getMemoryManager();
-
-  // Calculate total minutes from the player action
-  const maxPlayerAdvance = playerNodes.reduce((max, n) => Math.max(max, n.timeAdvanceMinutes), 0);
-  const totalMinutes = maxPlayerAdvance;
-
-  const allActions: CharacterAction[] = [];
-  let playerFailed = false;
-  let minutesProcessed = 0;
-  let pendingInjectedNodes: PlanNode[] = [];
-
-  // Loop in TICK_DURATION_MINUTES increments
-  while (minutesProcessed < totalMinutes) {
-    const remaining = totalMinutes - minutesProcessed;
-    const tickDuration = Math.min(TICK_DURATION_MINUTES, remaining);
-    const tickStartMinutes = currentMinutes + minutesProcessed;
-
-    const tickResult = await executeSingleTick({
-      tickStartMinutes,
-      tickDurationMinutes: tickDuration,
-      playerNodes,
-      carryOverNodes: pendingInjectedNodes.length > 0 ? pendingInjectedNodes : undefined,
-      dgsm,
-      npcPlanningAgent,
-      sessionId,
-      moduleId,
-      language,
-      registry,
-      ctx,
-      memoryManager,
-    });
-
-    // Carry injected nodes (from feature propagation) to the next tick
-    pendingInjectedNodes = tickResult.injectedNodes;
-
-    allActions.push(...tickResult.actions);
-
-    // Handle player interrupt — pause so player can decide
-    if (tickResult.playerEvents.length > 0) {
-      const resumeFromMinutes = tickStartMinutes + tickDuration;
-      const remainingMinutes = totalMinutes - (minutesProcessed + tickDuration);
-
-      return {
-        type: "player_interrupt",
-        actions: allActions,
-        witnessEvents: tickResult.playerEvents,
-        remainingMinutes,
-        resumeFromMinutes,
-        gameDay,
-      };
-    }
-
-    // Handle player failure — stop processing further ticks
-    if (tickResult.playerFailed) {
-      playerFailed = true;
-      break;
-    }
-
-    minutesProcessed += tickDuration;
-  }
-
-  // Advance game time: sum timeAdvanceMinutes from all successfully executed player nodes
-  const successfulPlayerAdvance = allActions
-    .filter((a) => a.isPlayer && a.status === "completed")
-    .reduce((sum, a) => {
-      const matchingNode = playerNodes.find((n) => n.characterId === a.characterId && n.action === a.action);
-      return sum + (matchingNode?.timeAdvanceMinutes ?? 0);
-    }, 0);
-  const timeAdvance = successfulPlayerAdvance > 0 ? successfulPlayerAdvance : maxPlayerAdvance;
-  const { dayChanged } = dgsm.updateGameTime(timeAdvance);
-
-  if (dayChanged) {
-    const updatedState = dgsm.getState();
-    const moduleId = await npcPlanningAgent.resolveModuleId(sessionId);
-    if (moduleId) {
-      await npcPlanningAgent.onNewDay(dgsm, sessionId, moduleId, updatedState.gameDay, language, registry);
-    }
-  }
-
-  return { type: "completed", actions: allActions };
-}
-
-// ==================== Resume after player interrupt ====================
-
-/**
- * Resume tick processing from where a player interrupt paused it. Replaces the old `resumeTick`.
- *
- * Similar to runPlayerAction but starts from a resumeFromMinutes offset
- * with a remainingMinutes budget.
- */
-export async function resumePlayerAction(
-  playerNodes: PlanNode[],
-  previousActions: CharacterAction[],
-  resumeFromMinutes: number,
-  remainingMinutes: number,
-  dgsm: DynamicGameStateManager,
-  npcPlanningAgent: NPCPlanningAgent,
-  sessionId: string,
-  language: string = "en",
-  registry: GameEngineRegistry,
-  ctx: ExecutionContext
-): Promise<TickResult> {
-  const state = dgsm.getState();
-  const gameDay = state.gameDay;
-
-  // Resolve moduleId and memoryManager once for the entire resumed action
-  const resolvedModuleId = await npcPlanningAgent.resolveModuleId(sessionId);
-  const moduleId = resolvedModuleId ?? "";
-  const memoryManager = npcPlanningAgent.getMemoryManager();
-
-  const allActions: CharacterAction[] = [...previousActions];
-  let playerFailed = false;
-  let minutesProcessed = 0;
-  let pendingInjectedNodes: PlanNode[] = [];
-
-  // Loop in TICK_DURATION_MINUTES increments over the remaining budget
-  while (minutesProcessed < remainingMinutes) {
-    const remaining = remainingMinutes - minutesProcessed;
-    const tickDuration = Math.min(TICK_DURATION_MINUTES, remaining);
-    const tickStartMinutes = resumeFromMinutes + minutesProcessed;
-
-    const tickResult = await executeSingleTick({
-      tickStartMinutes,
-      tickDurationMinutes: tickDuration,
-      playerNodes,
-      carryOverNodes: pendingInjectedNodes.length > 0 ? pendingInjectedNodes : undefined,
-      dgsm,
-      npcPlanningAgent,
-      sessionId,
-      moduleId,
-      language,
-      registry,
-      ctx,
-      memoryManager,
-    });
-
-    // Carry injected nodes (from feature propagation) to the next tick
-    pendingInjectedNodes = tickResult.injectedNodes;
-
-    allActions.push(...tickResult.actions);
-
-    // Handle player interrupt — pause again
-    if (tickResult.playerEvents.length > 0) {
-      const newResumeFrom = tickStartMinutes + tickDuration;
-      const newRemainingMinutes = remainingMinutes - (minutesProcessed + tickDuration);
-
-      return {
-        type: "player_interrupt",
-        actions: allActions,
-        witnessEvents: tickResult.playerEvents,
-        remainingMinutes: newRemainingMinutes,
-        resumeFromMinutes: newResumeFrom,
-        gameDay,
-      };
-    }
-
-    // Handle player failure — stop processing further ticks
-    if (tickResult.playerFailed) {
-      playerFailed = true;
-      break;
-    }
-
-    minutesProcessed += tickDuration;
-  }
-
-  // Advance game time
-  const maxPlayerAdvance = playerNodes.reduce((max, n) => Math.max(max, n.timeAdvanceMinutes), 0);
-  const successfulPlayerAdvance = allActions
-    .filter((a) => a.isPlayer && a.status === "completed")
-    .reduce((sum, a) => {
-      const matchingNode = playerNodes.find((n) => n.characterId === a.characterId && n.action === a.action);
-      return sum + (matchingNode?.timeAdvanceMinutes ?? 0);
-    }, 0);
-  const timeAdvance = successfulPlayerAdvance > 0 ? successfulPlayerAdvance : maxPlayerAdvance;
-  const { dayChanged: dayChangedOnResume } = dgsm.updateGameTime(timeAdvance);
-
-  if (dayChangedOnResume) {
-    const updatedState = dgsm.getState();
-    const moduleId = await npcPlanningAgent.resolveModuleId(sessionId);
-    if (moduleId) {
-      await npcPlanningAgent.onNewDay(dgsm, sessionId, moduleId, updatedState.gameDay, language, registry);
-    }
-  }
-
-  return { type: "completed", actions: allActions };
 }
 
 // ==================== Unplanned encounters (signal-only) ====================
@@ -1224,7 +908,7 @@ function scanUnplannedEncounters(
 /**
  * Execute a single simulation tick (no player involved).
  *
- * Wraps executeSingleTick in simulation mode and advances game time
+ * Wraps executeSingleTick and advances game time
  * by TICK_DURATION_MINUTES afterwards.
  */
 export async function runSimulationTick(params: {
@@ -1245,8 +929,6 @@ export async function runSimulationTick(params: {
   const result = await executeSingleTick({
     tickStartMinutes,
     tickDurationMinutes: TICK_DURATION_MINUTES,
-    playerNodes: [],
-    mode: "simulation",
     ...params,
   });
 

@@ -123,7 +123,6 @@ function processExhaustionDrain(
   dgsm: DynamicGameStateManager,
   characterId: string,
   stamina: StaminaCharacterState,
-  isPlayer: boolean,
 ): void {
   stamina.exhaustedDrainTicks++;
 
@@ -134,18 +133,9 @@ function processExhaustionDrain(
     if (Math.random() < failChance) {
       // CON check failed — drain HP and SAN
       const sanDrain = roll1d3();
-
-      if (isPlayer) {
-        const state = dgsm.getState();
-        const player = state.playerCharacter;
-        if (player) {
-          (player.status as any).hp = Math.max(0, player.status.hp - 1);
-        }
-      } else {
-        dgsm.updateNpcHp(characterId, -1);
-      }
+      dgsm.updateNpcHp(characterId, -1);
       // Route SAN drain through sanity feature for insanity trigger checks
-      applySanityLoss(dgsm, characterId, -sanDrain, isPlayer, undefined, undefined, "exhaustion");
+      applySanityLoss(dgsm, characterId, -sanDrain, undefined, undefined, "exhaustion");
     }
   }
 }
@@ -156,19 +146,10 @@ function updateFatigueCondition(
   dgsm: DynamicGameStateManager,
   characterId: string,
   fatigueLevel: 0 | 1 | 2,
-  isPlayer: boolean,
 ): void {
   const state = dgsm.getState();
-
-  let conditions: string[] | undefined;
-
-  if (isPlayer) {
-    conditions = state.playerCharacter?.status?.conditions;
-  } else {
-    const npc = state.npcCharacters?.find((n: any) => n.id === characterId);
-    conditions = npc?.status?.conditions;
-  }
-
+  const npc = state.npcCharacters?.find((n: any) => n.id === characterId);
+  const conditions = npc?.status?.conditions;
   if (!conditions) return;
 
   // Remove any existing fatigue condition
@@ -181,15 +162,8 @@ function updateFatigueCondition(
   }
 
   // Write back
-  if (isPlayer) {
-    if (state.playerCharacter?.status) {
-      (state.playerCharacter.status as any).conditions = filtered;
-    }
-  } else {
-    const npc = state.npcCharacters?.find((n: any) => n.id === characterId);
-    if (npc?.status) {
-      (npc.status as any).conditions = filtered;
-    }
+  if (npc?.status) {
+    (npc.status as any).conditions = filtered;
   }
 }
 
@@ -201,36 +175,17 @@ function updateFatigueCondition(
 function getTrackedCharacters(dgsm: DynamicGameStateManager): Array<{
   characterId: string;
   locationId: string;
-  isPlayer: boolean;
 }> {
   const state = dgsm.getState();
   const result: Array<{
     characterId: string;
     locationId: string;
-    isPlayer: boolean;
   }> = [];
 
-  // Player
-  if (state.playerCharacter?.id) {
-    const locationId = resolveCharacterLocationId(state.playerCharacter.id, dgsm);
-    if (locationId) {
-      result.push({
-        characterId: state.playerCharacter.id,
-        locationId,
-        isPlayer: true,
-      });
-    }
-  }
-
-  // NPCs
   for (const npc of state.npcCharacters) {
     const locationId = resolveCharacterLocationId(npc.id, dgsm);
     if (locationId) {
-      result.push({
-        characterId: npc.id,
-        locationId,
-        isPlayer: false,
-      });
+      result.push({ characterId: npc.id, locationId });
     }
   }
 
@@ -243,7 +198,7 @@ function getTrackedCharacters(dgsm: DynamicGameStateManager): Array<{
  * Reset a character's fatigue after resting.
  * Called by routineHandler when a rest node completes.
  */
-export function restCharacter(dgsm: DynamicGameStateManager, characterId: string, isPlayer: boolean): void {
+export function restCharacter(dgsm: DynamicGameStateManager, characterId: string): void {
   const stamina = getStaminaState(dgsm, characterId);
   if (!stamina) return;
 
@@ -251,7 +206,7 @@ export function restCharacter(dgsm: DynamicGameStateManager, characterId: string
   stamina.fatigueLevel = 0;
   stamina.exhaustedDrainTicks = 0;
   setStaminaState(dgsm, characterId, stamina);
-  updateFatigueCondition(dgsm, characterId, 0, isPlayer);
+  updateFatigueCondition(dgsm, characterId, 0);
 }
 
 // ===== Exported feature =====
@@ -294,7 +249,7 @@ export const staminaFeature: WorldFeature = {
   tick(dgsm: DynamicGameStateManager, runtime: TickRuntimeContext): void {
     const characters = getTrackedCharacters(dgsm);
 
-    for (const { characterId, locationId, isPlayer } of characters) {
+    for (const { characterId, locationId } of characters) {
       // Get or create stamina state
       let stamina = getStaminaState(dgsm, characterId);
       if (!stamina) {
@@ -316,12 +271,12 @@ export const staminaFeature: WorldFeature = {
 
       // Inject/remove fatigue condition on level change
       if (stamina.fatigueLevel !== prevLevel) {
-        updateFatigueCondition(dgsm, characterId, stamina.fatigueLevel, isPlayer);
+        updateFatigueCondition(dgsm, characterId, stamina.fatigueLevel);
       }
 
       // Process exhaustion drain if at level 2
       if (stamina.fatigueLevel === 2) {
-        processExhaustionDrain(dgsm, characterId, stamina, isPlayer);
+        processExhaustionDrain(dgsm, characterId, stamina);
       } else {
         stamina.exhaustedDrainTicks = 0;
       }

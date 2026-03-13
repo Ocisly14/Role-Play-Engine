@@ -58,7 +58,6 @@ export interface PlanNode {
   actionType?: ActionType;
   impact: 0 | 1 | 2 | 3 | 4 | 5;
   difficulty?: "regular" | "hard" | "extreme";
-  isPlayer?: boolean;
   timeAdvanceMinutes: number;
   targetCharacterId?: string;
   characterInteractionPayload?: CharacterInteractionPayload;
@@ -96,7 +95,6 @@ export interface CharacterAction {
   type: PlanNodeType;
   actionType?: ActionType;
   impact: 0 | 1 | 2 | 3 | 4 | 5;
-  isPlayer?: boolean;
   difficulty?: "regular" | "hard" | "extreme" | "luck_only";
   successLevel?: SuccessLevel;
   status: "completed" | "failed";
@@ -133,30 +131,6 @@ export interface RevisePlansContext {
   pendingNodes: PlanNode[];
   trigger: FailureTrigger | ImpactTrigger;
 }
-
-export interface PlayerWitnessEvent {
-  characterName: string;
-  action: string;
-  outcome: string;
-  location: string;
-  gameTime: string;
-  impact: number;
-}
-
-export type TickMode = "player_turn" | "simulation";
-
-export type TickResult =
-  | { type: "completed"; actions: CharacterAction[] }
-  | {
-      type: "player_interrupt";
-      actions: CharacterAction[];
-      witnessEvents: PlayerWitnessEvent[];
-      /** Minutes remaining after this interrupt */
-      remainingMinutes: number;
-      /** Game-time minute offset to resume from */
-      resumeFromMinutes: number;
-      gameDay: number;
-    };
 
 export interface SimulationTickResult {
   actions: CharacterAction[];

@@ -106,6 +106,8 @@ describe("staminaFeature", () => {
   beforeEach(() => {
     dgsm = createMockDgsm();
     runtime = createMockRuntime();
+    // Default NPC for stamina tracking (player is no longer tracked)
+    dgsm._addNpc("npc-test", "tavern", 12, 60);
   });
 
   afterEach(() => {
@@ -115,14 +117,14 @@ describe("staminaFeature", () => {
   // ===== Initialization =====
 
   describe("initialization", () => {
-    it("should create player stamina state on first tick", () => {
+    it("should create NPC stamina state on first tick", () => {
       runTicks(dgsm, runtime, 1);
 
-      const playerState = dgsm.getFeatureSceneState("stamina", "player-1") as any;
-      expect(playerState).toBeDefined();
-      expect(playerState.minutesSinceLastRest).toBe(5);
-      expect(playerState.fatigueLevel).toBe(0);
-      expect(playerState.exhaustedDrainTicks).toBe(0);
+      const npcState = dgsm.getFeatureSceneState("stamina", "npc-test") as any;
+      expect(npcState).toBeDefined();
+      expect(npcState.minutesSinceLastRest).toBe(5);
+      expect(npcState.fatigueLevel).toBe(0);
+      expect(npcState.exhaustedDrainTicks).toBe(0);
     });
 
     it("should create NPC stamina state on first tick", () => {
@@ -144,27 +146,27 @@ describe("staminaFeature", () => {
       // 95 ticks * 5 min = 475 min (< 480)
       runTicks(dgsm, runtime, 95);
 
-      const playerState = dgsm.getFeatureSceneState("stamina", "player-1") as any;
-      expect(playerState.minutesSinceLastRest).toBe(475);
-      expect(playerState.fatigueLevel).toBe(0);
+      const npcState = dgsm.getFeatureSceneState("stamina", "npc-test") as any;
+      expect(npcState.minutesSinceLastRest).toBe(475);
+      expect(npcState.fatigueLevel).toBe(0);
     });
 
     it("should be tired (level 1) at exactly 480 minutes", () => {
       // 96 ticks * 5 min = 480 min
       runTicks(dgsm, runtime, 96);
 
-      const playerState = dgsm.getFeatureSceneState("stamina", "player-1") as any;
-      expect(playerState.minutesSinceLastRest).toBe(480);
-      expect(playerState.fatigueLevel).toBe(1);
+      const npcState = dgsm.getFeatureSceneState("stamina", "npc-test") as any;
+      expect(npcState.minutesSinceLastRest).toBe(480);
+      expect(npcState.fatigueLevel).toBe(1);
     });
 
     it("should be tired (level 1) between 480 and 960 minutes", () => {
       // 100 ticks * 5 min = 500 min
       runTicks(dgsm, runtime, 100);
 
-      const playerState = dgsm.getFeatureSceneState("stamina", "player-1") as any;
-      expect(playerState.minutesSinceLastRest).toBe(500);
-      expect(playerState.fatigueLevel).toBe(1);
+      const npcState = dgsm.getFeatureSceneState("stamina", "npc-test") as any;
+      expect(npcState.minutesSinceLastRest).toBe(500);
+      expect(npcState.fatigueLevel).toBe(1);
     });
 
     it("should be exhausted (level 2) at exactly 960 minutes", () => {
@@ -173,9 +175,9 @@ describe("staminaFeature", () => {
       mockRandom.mockReturnValue(0.99); // always pass CON checks
       runTicks(dgsm, runtime, 192);
 
-      const playerState = dgsm.getFeatureSceneState("stamina", "player-1") as any;
-      expect(playerState.minutesSinceLastRest).toBe(960);
-      expect(playerState.fatigueLevel).toBe(2);
+      const npcState = dgsm.getFeatureSceneState("stamina", "npc-test") as any;
+      expect(npcState.minutesSinceLastRest).toBe(960);
+      expect(npcState.fatigueLevel).toBe(2);
     });
 
     it("should remain exhausted (level 2) above 960 minutes", () => {
@@ -184,9 +186,9 @@ describe("staminaFeature", () => {
       // 200 ticks * 5 min = 1000 min
       runTicks(dgsm, runtime, 200);
 
-      const playerState = dgsm.getFeatureSceneState("stamina", "player-1") as any;
-      expect(playerState.minutesSinceLastRest).toBe(1000);
-      expect(playerState.fatigueLevel).toBe(2);
+      const npcState = dgsm.getFeatureSceneState("stamina", "npc-test") as any;
+      expect(npcState.minutesSinceLastRest).toBe(1000);
+      expect(npcState.fatigueLevel).toBe(2);
     });
   });
 
@@ -204,8 +206,8 @@ describe("staminaFeature", () => {
       // 1 tick at 2x = 10 min effective
       runTicks(dgsm, runtime, 1);
 
-      const playerState = dgsm.getFeatureSceneState("stamina", "player-1") as any;
-      expect(playerState.minutesSinceLastRest).toBe(10);
+      const npcState = dgsm.getFeatureSceneState("stamina", "npc-test") as any;
+      expect(npcState.minutesSinceLastRest).toBe(10);
     });
 
     it("should accumulate at 2x with fire intensity >= 2", () => {
@@ -215,8 +217,8 @@ describe("staminaFeature", () => {
       // 1 tick at 2x = 10 min effective
       runTicks(dgsm, runtime, 1);
 
-      const playerState = dgsm.getFeatureSceneState("stamina", "player-1") as any;
-      expect(playerState.minutesSinceLastRest).toBe(10);
+      const npcState = dgsm.getFeatureSceneState("stamina", "npc-test") as any;
+      expect(npcState.minutesSinceLastRest).toBe(10);
     });
 
     it("should accumulate at 3x with both extreme weather and fire", () => {
@@ -230,8 +232,8 @@ describe("staminaFeature", () => {
       // 1 tick at 3x = 15 min effective
       runTicks(dgsm, runtime, 1);
 
-      const playerState = dgsm.getFeatureSceneState("stamina", "player-1") as any;
-      expect(playerState.minutesSinceLastRest).toBe(15);
+      const npcState = dgsm.getFeatureSceneState("stamina", "npc-test") as any;
+      expect(npcState.minutesSinceLastRest).toBe(15);
     });
 
     it("should NOT accelerate with weather intensity below 3", () => {
@@ -243,8 +245,8 @@ describe("staminaFeature", () => {
 
       runTicks(dgsm, runtime, 1);
 
-      const playerState = dgsm.getFeatureSceneState("stamina", "player-1") as any;
-      expect(playerState.minutesSinceLastRest).toBe(5); // no acceleration
+      const npcState = dgsm.getFeatureSceneState("stamina", "npc-test") as any;
+      expect(npcState.minutesSinceLastRest).toBe(5); // no acceleration
     });
 
     it("should NOT accelerate with fire intensity below 2", () => {
@@ -252,8 +254,8 @@ describe("staminaFeature", () => {
 
       runTicks(dgsm, runtime, 1);
 
-      const playerState = dgsm.getFeatureSceneState("stamina", "player-1") as any;
-      expect(playerState.minutesSinceLastRest).toBe(5); // no acceleration
+      const npcState = dgsm.getFeatureSceneState("stamina", "npc-test") as any;
+      expect(npcState.minutesSinceLastRest).toBe(5); // no acceleration
     });
 
     it("should NOT accelerate with non-extreme weather types", () => {
@@ -265,8 +267,8 @@ describe("staminaFeature", () => {
 
       runTicks(dgsm, runtime, 1);
 
-      const playerState = dgsm.getFeatureSceneState("stamina", "player-1") as any;
-      expect(playerState.minutesSinceLastRest).toBe(5); // no acceleration
+      const npcState = dgsm.getFeatureSceneState("stamina", "npc-test") as any;
+      expect(npcState.minutesSinceLastRest).toBe(5); // no acceleration
     });
 
     it("should apply NPC acceleration based on NPC scene", () => {
@@ -277,19 +279,15 @@ describe("staminaFeature", () => {
 
       const npcState = dgsm.getFeatureSceneState("stamina", "npc-guard") as any;
       expect(npcState.minutesSinceLastRest).toBe(10); // 2x from fire
-
-      // Player at tavern should have no acceleration
-      const playerState = dgsm.getFeatureSceneState("stamina", "player-1") as any;
-      expect(playerState.minutesSinceLastRest).toBe(5);
     });
   });
 
   // ===== Exhausted drain =====
 
   describe("exhausted drain", () => {
-    function fastForwardToExhausted(dgsm: MockDgsm, runtime: TickRuntimeContext) {
+    function fastForwardToExhausted(dgsm: MockDgsm) {
       // Directly inject exhausted state to avoid running 192 ticks
-      dgsm.setFeatureSceneState("stamina", "player-1", {
+      dgsm.setFeatureSceneState("stamina", "npc-test", {
         minutesSinceLastRest: 960,
         fatigueLevel: 2,
         exhaustedDrainTicks: 0,
@@ -297,7 +295,7 @@ describe("staminaFeature", () => {
     }
 
     it("should drain HP and SAN on CON fail every 6 ticks at exhausted level", () => {
-      fastForwardToExhausted(dgsm, runtime);
+      fastForwardToExhausted(dgsm);
 
       const mockRandom = vi.spyOn(Math, "random");
       // At 960 min: failChance = min(0.6, 0.3 + (960-960)/960 * 0.3) = 0.3
@@ -308,12 +306,12 @@ describe("staminaFeature", () => {
 
       runTicks(dgsm, runtime, 6);
 
-      expect(dgsm._playerCharacter.status.hp).toBe(11); // 12 - 1
-      expect(dgsm._playerCharacter.status.sanity).toBeLessThan(60); // reduced by 1-3
+      expect(dgsm._npcStats["npc-test"].hp).toBe(11); // 12 - 1
+      expect(dgsm._npcStats["npc-test"].san).toBeLessThan(60); // reduced by 1-3
     });
 
     it("should NOT drain on CON pass", () => {
-      fastForwardToExhausted(dgsm, runtime);
+      fastForwardToExhausted(dgsm);
 
       const mockRandom = vi.spyOn(Math, "random");
       // At 960 min: failChance = 0.3
@@ -322,8 +320,8 @@ describe("staminaFeature", () => {
 
       runTicks(dgsm, runtime, 6);
 
-      expect(dgsm._playerCharacter.status.hp).toBe(12); // unchanged
-      expect(dgsm._playerCharacter.status.sanity).toBe(60); // unchanged
+      expect(dgsm._npcStats["npc-test"].hp).toBe(12); // unchanged
+      expect(dgsm._npcStats["npc-test"].san).toBe(60); // unchanged
     });
 
     it("should drain NPC HP and SAN on CON fail", () => {
@@ -335,8 +333,8 @@ describe("staminaFeature", () => {
       });
 
       const mockRandom = vi.spyOn(Math, "random");
-      // Player will also tick — set up player state to avoid drain
-      dgsm.setFeatureSceneState("stamina", "player-1", {
+      // npc-test will also tick — set up its state to avoid drain
+      dgsm.setFeatureSceneState("stamina", "npc-test", {
         minutesSinceLastRest: 100,
         fatigueLevel: 0,
         exhaustedDrainTicks: 0,
@@ -354,7 +352,7 @@ describe("staminaFeature", () => {
 
     it("should have scaling fail chance based on minutes active", () => {
       // At 1920 minutes: failChance = min(0.6, 0.3 + (1920-960)/960 * 0.3) = min(0.6, 0.6) = 0.6
-      dgsm.setFeatureSceneState("stamina", "player-1", {
+      dgsm.setFeatureSceneState("stamina", "npc-test", {
         minutesSinceLastRest: 1920,
         fatigueLevel: 2,
         exhaustedDrainTicks: 0,
@@ -367,7 +365,7 @@ describe("staminaFeature", () => {
 
       runTicks(dgsm, runtime, 6);
 
-      expect(dgsm._playerCharacter.status.hp).toBe(11); // drained
+      expect(dgsm._npcStats["npc-test"].hp).toBe(11); // drained
 
       // At 960, failChance = 0.3, 0.55 > 0.3 → would pass
       // So the scaling actually matters
@@ -375,7 +373,7 @@ describe("staminaFeature", () => {
 
     it("should cap fail chance at 0.6", () => {
       // At 3000 minutes: failChance = min(0.6, 0.3 + (3000-960)/960 * 0.3) = min(0.6, ~0.937) = 0.6
-      dgsm.setFeatureSceneState("stamina", "player-1", {
+      dgsm.setFeatureSceneState("stamina", "npc-test", {
         minutesSinceLastRest: 3000,
         fatigueLevel: 2,
         exhaustedDrainTicks: 0,
@@ -388,11 +386,11 @@ describe("staminaFeature", () => {
 
       runTicks(dgsm, runtime, 6);
 
-      expect(dgsm._playerCharacter.status.hp).toBe(11);
+      expect(dgsm._npcStats["npc-test"].hp).toBe(11);
     });
 
     it("should drain SAN by 1d3 (1-3) on fail", () => {
-      fastForwardToExhausted(dgsm, runtime);
+      fastForwardToExhausted(dgsm);
 
       const mockRandom = vi.spyOn(Math, "random");
       // fail check
@@ -403,7 +401,7 @@ describe("staminaFeature", () => {
 
       runTicks(dgsm, runtime, 6);
 
-      expect(dgsm._playerCharacter.status.sanity).toBe(57); // 60 - 3
+      expect(dgsm._npcStats["npc-test"].san).toBe(57); // 60 - 3
     });
   });
 
@@ -419,25 +417,23 @@ describe("staminaFeature", () => {
     });
 
     it("should list tired characters with hours active", () => {
-      dgsm.setFeatureSceneState("stamina", "player-1", {
+      dgsm.setFeatureSceneState("stamina", "npc-test", {
         minutesSinceLastRest: 500,
         fatigueLevel: 1,
         exhaustedDrainTicks: 0,
-
       });
 
       const desc = staminaFeature.stateDescription(dgsm as any);
       expect(desc).not.toBe("");
       expect(desc).toContain("tired");
-      expect(desc).toContain("player-1");
+      expect(desc).toContain("npc-test");
     });
 
     it("should list exhausted characters", () => {
-      dgsm.setFeatureSceneState("stamina", "player-1", {
+      dgsm.setFeatureSceneState("stamina", "npc-test", {
         minutesSinceLastRest: 1000,
         fatigueLevel: 2,
         exhaustedDrainTicks: 5,
-
       });
 
       const desc = staminaFeature.stateDescription(dgsm as any);
@@ -446,11 +442,10 @@ describe("staminaFeature", () => {
     });
 
     it("should not list rested characters", () => {
-      dgsm.setFeatureSceneState("stamina", "player-1", {
+      dgsm.setFeatureSceneState("stamina", "npc-test", {
         minutesSinceLastRest: 100,
         fatigueLevel: 0,
         exhaustedDrainTicks: 0,
-
       });
 
       const desc = staminaFeature.stateDescription(dgsm as any);
@@ -461,11 +456,11 @@ describe("staminaFeature", () => {
   // ===== character condition injection =====
 
   describe("character condition injection", () => {
-    it("should add Tired condition to player when reaching level 1", () => {
+    it("should add Tired condition to NPC when reaching level 1", () => {
       // 96 ticks * 5 min = 480 min → tired
       runTicks(dgsm, runtime, 96);
 
-      const conditions = dgsm._playerCharacter.status.conditions;
+      const conditions = dgsm.getState().npcCharacters.find(n => n.id === "npc-test")!.status.conditions;
       expect(conditions.some((c: string) => c.includes("[Fatigue]") && c.includes("Tired"))).toBe(true);
     });
 
@@ -476,7 +471,7 @@ describe("staminaFeature", () => {
       // 192 ticks * 5 min = 960 min → exhausted
       runTicks(dgsm, runtime, 192);
 
-      const conditions = dgsm._playerCharacter.status.conditions;
+      const conditions = dgsm.getState().npcCharacters.find(n => n.id === "npc-test")!.status.conditions;
       expect(conditions.some((c: string) => c.includes("Tired"))).toBe(false);
       expect(conditions.some((c: string) => c.includes("[Fatigue]") && c.includes("Exhausted"))).toBe(true);
     });
@@ -493,7 +488,7 @@ describe("staminaFeature", () => {
     it("should not have fatigue condition when rested", () => {
       runTicks(dgsm, runtime, 10); // 50 min → still rested
 
-      const conditions = dgsm._playerCharacter.status.conditions;
+      const conditions = dgsm.getState().npcCharacters.find(n => n.id === "npc-test")!.status.conditions;
       expect(conditions.some((c: string) => c.includes("[Fatigue]"))).toBe(false);
     });
   });
@@ -532,16 +527,6 @@ describe("staminaFeature", () => {
       expect(stamina.minutesSinceLastRest).toBe(10);
     });
 
-    it("should use currentSceneId for player when no CharacterPosition", () => {
-      // Player at tavern (currentSceneId), no CharacterPosition
-      dgsm.setFeatureSceneState("fire", "tavern", { intensity: 3 });
-
-      runTicks(dgsm, runtime, 1);
-
-      const stamina = dgsm.getFeatureSceneState("stamina", "player-1") as any;
-      // Player at tavern, fire at tavern → 2x
-      expect(stamina.minutesSinceLastRest).toBe(10);
-    });
   });
 
   // ===== planningPrompt =====

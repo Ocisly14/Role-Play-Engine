@@ -20,10 +20,7 @@ export function getNodeDifficulty(
   node: PlanNode,
   dgsm: DynamicGameStateManager
 ): "regular" | "hard" | "extreme" | "luck_only" {
-  // Player nodes: use explicit difficulty from LLM
-  if (node.isPlayer) return node.difficulty ?? "regular";
-
-  // NPC scene interactions: always regular
+  // Non-character interactions: always regular
   if (node.type !== "character_interaction") return "regular";
   if (!node.targetCharacterId) return "regular";
 
@@ -211,7 +208,7 @@ export function resolveSkillRoll(
 
     if (level === "fail" || level === "fumble") {
       const sanLoss = horror.sanLossMax;
-      applySanityLoss(dgsm, node.characterId, -sanLoss, false, undefined, undefined, node.action);
+      applySanityLoss(dgsm, node.characterId, -sanLoss, undefined, undefined, node.action);
       return {
         failed: true,
         successLevel: level,

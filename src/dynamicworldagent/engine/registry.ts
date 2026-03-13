@@ -9,7 +9,7 @@ const BASE_NODE_FIELDS = new Set([
   "nodeId", "gameTime", "action", "location", "type",
   "actionType", "impact", "status",
   "difficulty", "timeAdvanceMinutes",
-  "characterId", "characterName", "isPlayer", "outcome",
+  "characterId", "characterName", "outcome",
 ]);
 
 export class GameEngineRegistry {
@@ -233,7 +233,6 @@ The \`impact\` field on every PlanNode determines **who in the game world percei
   private buildCompleteExample(
     handler: NodeHandler,
     extras: Record<string, unknown>,
-    isPlayer: boolean
   ): Record<string, unknown> {
     const example: Record<string, unknown> = {
       nodeId: (handler.exampleNode.nodeId as string) ?? "ci1",
@@ -244,19 +243,10 @@ The \`impact\` field on every PlanNode determines **who in the game world percei
 
     if (handler.exampleNode.actionType) {
       example.actionType = handler.exampleNode.actionType;
-      if (isPlayer) {
-        example.difficulty = "regular";
-      }
     }
 
     example.impact = handler.exampleNode.impact ?? 0;
-
-    if (isPlayer) {
-      example.timeAdvanceMinutes = handler.exampleNode.timeAdvanceMinutes ?? 10;
-    } else {
-      example.gameTime = handler.exampleNode.gameTime ?? "09:00";
-    }
-
+    example.gameTime = handler.exampleNode.gameTime ?? "09:00";
     example.status = "pending";
 
     // Merge type-specific extras
@@ -276,14 +266,11 @@ The \`impact\` field on every PlanNode determines **who in the game world percei
    * 4. Feature Overlays (from planNodeSchema)
    * 5. Complete Example (one assembled JSON node)
    *
-   * @param options.isPlayer - if true, uses timeAdvanceMinutes + difficulty; if false, uses gameTime
    * @param options.extraInstructions - additional output instructions
    */
   buildOutputSchemaPrompt(options?: {
-    isPlayer?: boolean;
     extraInstructions?: string;
   }): string {
-    const isPlayer = options?.isPlayer ?? false;
     const typeNames = this.handlers.size > 0
       ? [...this.handlers.keys()].join("|")
       : "routine|movement|character_interaction|object_interaction|scene_interaction";
@@ -309,22 +296,14 @@ The \`impact\` field on every PlanNode determines **who in the game world percei
     sections.push("### Base Fields (every node)");
     const baseJson: Record<string, string | number> = {
       nodeId: "unique-id",
+      gameTime: "HH:MM" as any,
+      action: "description of what the character does" as any,
+      location: "sceneId" as any,
+      type: typeNames as any,
+      actionType: "exploration|social|combat|stealth|chase|mental|environmental|narrative (OMIT if no skill check)" as any,
+      impact: 0,
+      status: "pending" as any,
     };
-    if (!isPlayer) {
-      baseJson.gameTime = "HH:MM";
-    }
-    baseJson.action = "description of what the character does";
-    baseJson.location = "sceneId";
-    baseJson.type = typeNames;
-    baseJson.actionType = "exploration|social|combat|stealth|chase|mental|environmental|narrative (OMIT if no skill check)";
-    if (isPlayer) {
-      baseJson.difficulty = "regular|hard|extreme (only when actionType present)";
-    }
-    baseJson.impact = 0;
-    if (isPlayer) {
-      baseJson.timeAdvanceMinutes = "minutes THIS action takes (not cumulative)" as any;
-    }
-    baseJson.status = "pending";
 
     sections.push("```json");
     sections.push(JSON.stringify(baseJson, null, 2));
@@ -411,7 +390,7 @@ The \`impact\` field on every PlanNode determines **who in the game world percei
     }
 
     if (richestHandler) {
-      const fullExample = this.buildCompleteExample(richestHandler, richestExtras, isPlayer);
+      const fullExample = this.buildCompleteExample(richestHandler, richestExtras);
       sections.push("");
       sections.push("### Complete Example");
       sections.push("```json");

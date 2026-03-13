@@ -163,42 +163,28 @@ export const objectInteractionHandler: NodeHandler = {
     let lastRollDetail: string | undefined;
 
     if (node.actionType) {
-      if (node.isPlayer) {
-        const rollResult = ctx.resolveSkillRoll(node, adjustedSkills, dgsm);
-        resolvedSuccessLevel = rollResult.successLevel;
-        if (rollResult.failed) {
-          return makeAction(
-            node,
-            "failed",
-            buildOutcome(node, "failed", { rollDetail: rollResult.reason }),
-            { difficulty, successLevel: resolvedSuccessLevel, failureReason: "skill_roll_failed" },
-          );
-        }
-        lastRollDetail = rollResult.detail;
-      } else {
-        // NPC: luck check + skill roll
-        if (Math.random() < ctx.luckFailureRate(luck)) {
-          return makeAction(
-            node,
-            "failed",
-            buildOutcome(node, "failed", { reason: `bad luck (luck=${luck})` }),
-            { difficulty, failureReason: "bad_luck" },
-          );
-        }
-        const rollResult = ctx.resolveSkillRoll(node, adjustedSkills, dgsm);
-        resolvedSuccessLevel = rollResult.successLevel;
-        if (rollResult.failed) {
-          return makeAction(
-            node,
-            "failed",
-            buildOutcome(node, "failed", { rollDetail: rollResult.reason }),
-            { difficulty, successLevel: resolvedSuccessLevel, failureReason: "skill_roll_failed" },
-          );
-        }
-        lastRollDetail = rollResult.detail;
+      // Luck check + skill roll
+      if (Math.random() < ctx.luckFailureRate(luck)) {
+        return makeAction(
+          node,
+          "failed",
+          buildOutcome(node, "failed", { reason: `bad luck (luck=${luck})` }),
+          { difficulty, failureReason: "bad_luck" },
+        );
       }
-    } else if (!node.isPlayer) {
-      // NPC without actionType: luck-only check
+      const rollResult = ctx.resolveSkillRoll(node, adjustedSkills, dgsm);
+      resolvedSuccessLevel = rollResult.successLevel;
+      if (rollResult.failed) {
+        return makeAction(
+          node,
+          "failed",
+          buildOutcome(node, "failed", { rollDetail: rollResult.reason }),
+          { difficulty, successLevel: resolvedSuccessLevel, failureReason: "skill_roll_failed" },
+        );
+      }
+      lastRollDetail = rollResult.detail;
+    } else {
+      // No actionType: luck-only check
       if (Math.random() < ctx.luckFailureRate(luck)) {
         return makeAction(
           node,

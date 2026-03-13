@@ -74,8 +74,7 @@ export const routineHandler: NodeHandler = {
 
     // Rest subtype → reset fatigue via stamina feature
     if (node.routineSubtype === "rest") {
-      const isPlayer = !!node.isPlayer;
-      restCharacter(dgsm, node.characterId, isPlayer);
+      restCharacter(dgsm, node.characterId);
     }
 
     return makeAction(
