@@ -6,7 +6,7 @@ This document describes the scene-related JSON structures currently consumed by 
 
 The runtime scene layer currently uses these files:
 
-1. `module_setup.json` (optional, weather only)
+1. `module_setup.json` (optional, introduction + weather)
 2. `scenarios_outline.json`
 3. `transport_edges.json` (optional)
 4. `SCN_*.json`
@@ -28,10 +28,11 @@ NPC JSON remains a separate import path for NPC data, not part of the runtime sc
 
 ## 1. module_setup.json
 
-Optional module-level runtime setup. It currently only carries weather presets.
+Optional module-level runtime setup. It currently carries module introduction text and weather presets.
 
 ```json
 {
+  "introduction": "A rural mystery unfolds under gathering storm clouds.",
   "weatherPresets": [
     {
       "regionId": "LOC_downtown",

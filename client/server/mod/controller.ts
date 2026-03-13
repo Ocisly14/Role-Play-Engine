@@ -177,7 +177,12 @@ export async function getModuleIntroduction(
       } else {
         res.json({
           success: true,
-          moduleIntroduction: null,
+          moduleIntroduction: loadedModule.moduleSetup?.introduction
+            ? {
+                introduction: loadedModule.moduleSetup.introduction,
+                moduleNotes: "",
+              }
+            : null,
           moduleTitle: loadedModule.moduleName,
         });
       }

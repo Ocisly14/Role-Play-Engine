@@ -170,6 +170,7 @@ export interface TransportEdge {
 }
 
 export interface ModuleSetup {
+  introduction?: string;
   weatherPresets?: Array<{
     regionId: string;
     weatherType: "clear" | "rain" | "fog" | "storm" | "snow" | "extreme_heat" | "extreme_cold";

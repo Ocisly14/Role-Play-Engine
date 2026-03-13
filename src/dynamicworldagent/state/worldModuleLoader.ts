@@ -188,14 +188,14 @@ export class WorldModuleLoader {
     console.log(`Loading world module: ${moduleName}`);
 
     try {
-      // 1. Load module digest
+      // 1. Load module setup
       console.log(`  [1/5] Loading module setup...`);
       const moduleSetupFile = this.resolveModuleSetupPath(moduleDir);
       const moduleSetup = moduleSetupFile
         ? this.loadJSON<ModuleSetup>(moduleSetupFile)
         : null;
       console.log(
-        `    Module setup loaded: ${moduleSetup?.weatherPresets?.length ?? 0} weather preset(s)`
+        `    Module setup loaded: introduction=${moduleSetup?.introduction ? "yes" : "no"}, weather preset(s)=${moduleSetup?.weatherPresets?.length ?? 0}`
       );
 
       // 2. Load scenario outlines
@@ -579,7 +579,7 @@ export class WorldModuleLoader {
       .map((s, i) => `${i + 1}. ${s.name}: ${s.description}`)
       .join("\n");
 
-    // Get initial game time from module digest (scenes no longer carry gameTime)
+    // Get initial game time from module setup/scenes if needed in the future.
     const initialGameTime: string | null = null;
 
     // Characters are no longer stored on scenes; initial NPC names come from module.npcs
@@ -602,7 +602,7 @@ export class WorldModuleLoader {
         moduleLimitations: null,
         initialGameTime,
         initialScenarioNpcs: initialScenarioNPCs,
-        introduction: null,
+        introduction: module.moduleSetup?.introduction ?? null,
         tags,
         emailId: emailId || null,
         macroMapPath: null,
@@ -617,7 +617,7 @@ export class WorldModuleLoader {
         moduleLimitations: null,
         initialGameTime,
         initialScenarioNpcs: initialScenarioNPCs,
-        introduction: null,
+        introduction: module.moduleSetup?.introduction ?? null,
         tags,
         emailId: emailId || null,
         macroMapPath: null,
