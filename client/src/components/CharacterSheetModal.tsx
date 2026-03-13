@@ -227,8 +227,10 @@ export function CharacterSheetModal({
         const nextMap: Record<string, string> = {};
         data.occupations.groups.forEach((group: any) => {
           group.occupations?.forEach((occ: any) => {
-            const en = typeof occ.name_en === "string" ? occ.name_en.trim() : "";
-            const zh = typeof occ.name_zh === "string" ? occ.name_zh.trim() : "";
+            const en =
+              typeof occ.name_en === "string" ? occ.name_en.trim() : "";
+            const zh =
+              typeof occ.name_zh === "string" ? occ.name_zh.trim() : "";
             if (en && zh) {
               nextMap[en] = zh;
             }
@@ -262,7 +264,9 @@ export function CharacterSheetModal({
       return;
     }
 
-    navigate(`/character/create?characterId=${encodeURIComponent(resolvedCharacterId)}`);
+    navigate(
+      `/character/create?characterId=${encodeURIComponent(resolvedCharacterId)}`
+    );
     onClose();
   };
 

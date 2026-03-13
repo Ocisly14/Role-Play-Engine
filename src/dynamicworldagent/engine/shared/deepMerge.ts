@@ -5,7 +5,10 @@
  * - undefined values in updates are skipped.
  * Returns the mutated `target`.
  */
-export function deepMergeItem<T extends Record<string, unknown>>(target: T, updates: Partial<T>): T {
+export function deepMergeItem<T extends Record<string, unknown>>(
+  target: T,
+  updates: Partial<T>
+): T {
   for (const key of Object.keys(updates) as Array<keyof T>) {
     const uVal = updates[key];
     if (uVal === undefined) continue;
@@ -20,7 +23,7 @@ export function deepMergeItem<T extends Record<string, unknown>>(target: T, upda
     ) {
       deepMergeItem(
         tVal as Record<string, unknown>,
-        uVal as Record<string, unknown>,
+        uVal as Record<string, unknown>
       );
     } else {
       (target as Record<string, unknown>)[key as string] = uVal;

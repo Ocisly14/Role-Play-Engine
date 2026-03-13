@@ -1,5 +1,5 @@
-import type { DynamicGameStateManager } from "../../state/DynamicGameState.js";
 import type { SceneCondition } from "../../dynamicBasicAgent/npcPlanning/types.js";
+import type { DynamicGameStateManager } from "../../state/DynamicGameState.js";
 
 export function getScenePenalties(
   location: string,

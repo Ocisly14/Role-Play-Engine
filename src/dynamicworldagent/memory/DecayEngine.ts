@@ -1,9 +1,9 @@
 import {
   DECAY_HALF_LIFE,
-  REINFORCEMENT_WEIGHT,
-  SEMANTIC_WEIGHT,
   IMPORTANCE_WEIGHT,
   RECENCY_WEIGHT,
+  REINFORCEMENT_WEIGHT,
+  SEMANTIC_WEIGHT,
 } from "./types.js";
 
 interface DecayInput {
@@ -22,7 +22,7 @@ export class DecayEngine {
     const hoursSinceAccess =
       (now.getTime() - input.lastAccessedAt.getTime()) / (1000 * 3600);
     const decayFactor = Math.exp(
-      -hoursSinceAccess / (DECAY_HALF_LIFE * input.decayRateMultiplier),
+      -hoursSinceAccess / (DECAY_HALF_LIFE * input.decayRateMultiplier)
     );
     const reinforcementBonus =
       Math.log2(1 + input.accessCount) * REINFORCEMENT_WEIGHT;
@@ -33,12 +33,12 @@ export class DecayEngine {
     const hoursSinceAccess =
       (now.getTime() - input.lastAccessedAt.getTime()) / (1000 * 3600);
     const decayFactor = Math.exp(
-      -hoursSinceAccess / (DECAY_HALF_LIFE * input.decayRateMultiplier),
+      -hoursSinceAccess / (DECAY_HALF_LIFE * input.decayRateMultiplier)
     );
     const reinforcementBonus =
       Math.log2(1 + input.accessCount) * REINFORCEMENT_WEIGHT;
     const importanceScore = this.normalize(
-      input.baseImportance * decayFactor + reinforcementBonus,
+      input.baseImportance * decayFactor + reinforcementBonus
     );
 
     return (
@@ -52,12 +52,12 @@ export class DecayEngine {
     const hoursSinceAccess =
       (now.getTime() - input.lastAccessedAt.getTime()) / (1000 * 3600);
     const decayFactor = Math.exp(
-      -hoursSinceAccess / (DECAY_HALF_LIFE * input.decayRateMultiplier),
+      -hoursSinceAccess / (DECAY_HALF_LIFE * input.decayRateMultiplier)
     );
     const reinforcementBonus =
       Math.log2(1 + input.accessCount) * REINFORCEMENT_WEIGHT;
     const importanceScore = this.normalize(
-      input.baseImportance * decayFactor + reinforcementBonus,
+      input.baseImportance * decayFactor + reinforcementBonus
     );
 
     return 0.6 * importanceScore + 0.4 * decayFactor;

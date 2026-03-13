@@ -1,0 +1,31 @@
+[
+    {
+      "name": "Shoggoth",
+      "occupation": "Servitor of the Elder Things",
+      "age": 1000000,
+      "appearance": "A massive, amorphous, black, gelatinous entity with a constantly shifting surface. It can spontaneously form tentacles, claws, pseudopods, or other crude appendages. Its bulk fills space like living tar, accompanied by an oily stench.",
+      "personality": "Alien, instinct-driven, and largely mindless. It follows ancient conditioning rather than conscious intent, showing no empathy or recognizable emotions.",
+      "background": "Shoggoths are ancient protoplasmic organisms engineered by the Elder Things as slave labor in a pre-human age. Over vast spans of time, some developed limited autonomy. They now lurk in deep underground ruins and forgotten places, remnants of a bygone cosmic civilization.",
+      "attributes": {
+        "STR": 315,
+        "CON": 210,
+        "DEX": 15,
+        "POW": 50,
+        "SIZ": 420,
+        "INT": 35
+      },
+      "status": {
+        "hp": 63,
+        "maxHp": 63,
+        "sanity": 0,
+        "maxSanity": 0,
+        "mp": 10,
+        "conditions": []
+      },
+      "skills": {
+        "Fighting": 70,
+        "Dodge": 8
+      },
+      "notes": "Combat Method: In combat, the Shoggoth occupies an area of approximately 5 square yards. It can generate tentacles, claws, or any form of crude appendage to perform crushing attacks. Any victim struck may be engulfed. Attacks per round: 2. \n\nEngulf (Swallow): Each character engulfed by the Shoggoth is attacked independently. Every engulfed victim must succeed in an opposed STR check each round or be torn apart. If the Shoggoth attacks more than one target, its STR is divided evenly among all targets for these opposed checks. Investigators trapped inside the Shoggoth’s black mass must roll 1D100 each round; only on a roll equal to or under their own STR may they attempt an attack. Each round spent inside inflicts HP damage equal to the Shoggoth’s damage bonus, described as crushing, tearing, or rupturing. The Shoggoth may engulf any number of enemies as long as their combined SIZ does not exceed its own SIZ. \n\nArmor: None, but (1) fire and electrical attacks deal only half damage; (2) physical weapons such as firearms and knives inflict only 1 point of damage per successful hit; (3) the Shoggoth regenerates 2 HP per round. \n\nMagic: None by default, though exceptionally ancient Shoggoths may possess knowledge of spells and the ability to cast them. \n\nSanity Loss: 1D6/1D20 upon seeing a Shoggoth."
+    }
+  ]

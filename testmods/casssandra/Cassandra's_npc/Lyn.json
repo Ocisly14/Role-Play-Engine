@@ -1,0 +1,90 @@
+[
+    {
+      "name": "Lyn",
+      "occupation": "Former Special Forces Soldier",
+      "age": 36,
+      "gender": "male",
+      "appearance": "A physically fit and battle-hardened man with quick movements and a fighter’s posture; looks capable and intimidating but otherwise unremarkable.",
+      "personality": "Hot-tempered and aggressive in conflicts, skeptical of the supernatural, prone to acting on impulse. Despite a short attention span, he is stubborn about certain principles and extremely reliable to his friends.",
+      "background": "Born in Detroit, Lyn grew up surrounded by violence and learned to fight from a young age. He later became a special forces soldier, developing strong combat instincts and a deep distrust of anything he cannot explain rationally. He is part of a close-knit group of friends connected through Bruno. During the Cassandra incident, Lyn was the one who sent Wind to the hospital and then contacted the others to go to the police station.",
+      "goals": [
+        "Protect his friends from harm",
+        "Solve problems through direct and decisive action"
+      ],
+      "secrets": [],
+      "attributes": {
+        "STR": 65,
+        "CON": 70,
+        "DEX": 80,
+        "APP": 40,
+        "POW": 45,
+        "SIZ": 80,
+        "INT": 65,
+        "EDU": 85
+      },
+      "status": {
+        "hp": 15,
+        "maxHp": 15,
+        "sanity": 45,
+        "maxSanity": 45,
+        "luck": 45,
+        "mp": 9,
+        "conditions": []
+      },
+      "skills": {
+        "Fighting (Brawl)": 70,
+        "Dodge": 60,
+        "Firearms": 60,
+        "Intimidate": 65,
+        "Listen": 50,
+        "Spot Hidden": 55
+      },
+      "inventory": [],
+      "clues": [
+        {
+          "clueText": "After escorting Wind to the hospital, Lyn immediately contacted the others and went to the police station.",
+          "category": "observation",
+          "difficulty": "regular",
+          "relatedTo": ["Wind", "Police Station"]
+        }
+      ],
+      "relationships": [
+        {
+          "targetName": "Bruno Galilei",
+          "relationshipType": "friend",
+          "attitude": 60,
+          "description": "A trusted acquaintance who connects the group together.",
+          "history": "Met through shared circles and mutual respect forged by dangerous situations."
+        },
+        {
+          "targetName": "Reid",
+          "relationshipType": "friend",
+          "attitude": 55,
+          "description": "A dependable companion within the group.",
+          "history": "Bonded through shared danger and mutual reliance."
+        },
+        {
+          "targetName": "Hawthorne",
+          "relationshipType": "friend",
+          "attitude": 55,
+          "description": "A cautious but loyal member of the group.",
+          "history": "Trust built over time through group cooperation."
+        },
+        {
+          "targetName": "Lily",
+          "relationshipType": "friend",
+          "attitude": 50,
+          "description": "A determined young detective.",
+          "history": "Fought and survived alongside her during earlier incidents."
+        },
+        {
+          "targetName": "Bigbear",
+          "relationshipType": "friend",
+          "attitude": 50,
+          "description": "A physically imposing but good-natured ally.",
+          "history": "Part of the same friend group connected by Bruno."
+        }
+      ],
+      "notes": "Lyn firmly rejects the idea of monsters or magic, even when faced with unsettling evidence, preferring practical explanations and direct action."
+    }
+  ]

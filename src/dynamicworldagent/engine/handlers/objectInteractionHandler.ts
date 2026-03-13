@@ -1,15 +1,25 @@
-import type { NodeHandler, ExecutionContext } from "../types.js";
+import type {
+  CharacterAction,
+  PlanNode,
+} from "../../dynamicBasicAgent/npcPlanning/types.js";
 import type { DynamicGameStateManager } from "../../state/DynamicGameState.js";
-import type { PlanNode, CharacterAction } from "../../dynamicBasicAgent/npcPlanning/types.js";
 import type { Item } from "../../state/types.js";
-import { buildOutcome, makeAction } from "../shared/nodeHelpers.js";
 import { deepMergeItem } from "../shared/deepMerge.js";
+import { buildOutcome, makeAction } from "../shared/nodeHelpers.js";
+import type { ExecutionContext, NodeHandler } from "../types.js";
 
 // ── Normal-use type handlers ──────────────────────────────────
 
-function useConsumable(item: Item, npcId: string, dgsm: DynamicGameStateManager): string {
+function useConsumable(
+  item: Item,
+  npcId: string,
+  dgsm: DynamicGameStateManager
+): string {
   if (item.consumableStats) {
-    item.consumableStats.uses = Math.max(0, (item.consumableStats.uses ?? 1) - 1);
+    item.consumableStats.uses = Math.max(
+      0,
+      (item.consumableStats.uses ?? 1) - 1
+    );
     if (item.consumableStats.uses <= 0) {
       dgsm.removeItemFromNpc(npcId, item.id);
       return `Used ${item.name} (consumed, removed from inventory)`;
@@ -23,10 +33,10 @@ function useConsumable(item: Item, npcId: string, dgsm: DynamicGameStateManager)
 function useKey(
   item: Item,
   targetItemId: string | undefined,
-  scene: { items: Item[] },
+  scene: { items: Item[] }
 ): string | null {
   if (!targetItemId) return null;
-  const target = scene.items.find(i => i.id === targetItemId);
+  const target = scene.items.find((i) => i.id === targetItemId);
   if (!target) return null;
   if (target.containerStats?.locked) {
     target.containerStats.locked = false;
@@ -38,20 +48,25 @@ function useKey(
 function useLighting(item: Item): string {
   item.isLightSource = !item.isLightSource;
   if (item.consumableStats && item.isLightSource) {
-    item.consumableStats.uses = Math.max(0, (item.consumableStats.uses ?? 1) - 1);
+    item.consumableStats.uses = Math.max(
+      0,
+      (item.consumableStats.uses ?? 1) - 1
+    );
   }
-  return item.isLightSource ? `${item.name} turned on` : `${item.name} turned off`;
+  return item.isLightSource
+    ? `${item.name} turned on`
+    : `${item.name} turned off`;
 }
 
 function useContainer(
   item: Item,
   npcId: string,
-  dgsm: DynamicGameStateManager,
+  dgsm: DynamicGameStateManager
 ): string {
   if (!item.containerStats) return `${item.name} has no container properties`;
   if (item.containerStats.locked) {
     const inv = dgsm.getNpcInventory(npcId);
-    const key = inv.find(i => i.type === "key");
+    const key = inv.find((i) => i.type === "key");
     if (key) {
       item.containerStats.locked = false;
       return `Unlocked ${item.name} with ${key.name}`;
@@ -70,12 +85,16 @@ function buildInspectOutcome(item: Item): string {
 function buildInspectOutcomeWithContext(
   item: Item,
   contextDescription?: string,
-  contextLabel?: string,
+  contextLabel?: string
 ): string {
   const parts: string[] = [`[Inspect] ${item.name}`];
   if (item.description) parts.push(item.description);
   if (contextDescription) {
-    parts.push(contextLabel ? `${contextLabel}: ${contextDescription}` : contextDescription);
+    parts.push(
+      contextLabel
+        ? `${contextLabel}: ${contextDescription}`
+        : contextDescription
+    );
   }
   if (item.damaged && item.damageDetails) {
     parts.push(`Damaged: ${item.damageDetails.reason}`);
@@ -133,7 +152,7 @@ export const objectInteractionHandler: NodeHandler = {
   execute(
     node: PlanNode,
     dgsm: DynamicGameStateManager,
-    ctx: ExecutionContext,
+    ctx: ExecutionContext
   ): CharacterAction {
     const state = dgsm.getState();
     const npcLocation = dgsm.getNpcLocation(node.characterId);
@@ -154,12 +173,14 @@ export const objectInteractionHandler: NodeHandler = {
         node,
         "failed",
         buildOutcome(node, "failed", { reason: "not at expected location" }),
-        { difficulty, failureReason: "location_mismatch" },
+        { difficulty, failureReason: "location_mismatch" }
       );
     }
 
     // Skill roll (for non-normal use with actionType)
-    let resolvedSuccessLevel: import("../../dynamicBasicAgent/npcPlanning/types.js").SuccessLevel | undefined;
+    let resolvedSuccessLevel:
+      | import("../../dynamicBasicAgent/npcPlanning/types.js").SuccessLevel
+      | undefined;
     let lastRollDetail: string | undefined;
 
     if (node.actionType) {
@@ -169,7 +190,7 @@ export const objectInteractionHandler: NodeHandler = {
           node,
           "failed",
           buildOutcome(node, "failed", { reason: `bad luck (luck=${luck})` }),
-          { difficulty, failureReason: "bad_luck" },
+          { difficulty, failureReason: "bad_luck" }
         );
       }
       const rollResult = ctx.resolveSkillRoll(node, adjustedSkills, dgsm);
@@ -179,7 +200,11 @@ export const objectInteractionHandler: NodeHandler = {
           node,
           "failed",
           buildOutcome(node, "failed", { rollDetail: rollResult.reason }),
-          { difficulty, successLevel: resolvedSuccessLevel, failureReason: "skill_roll_failed" },
+          {
+            difficulty,
+            successLevel: resolvedSuccessLevel,
+            failureReason: "skill_roll_failed",
+          }
         );
       }
       lastRollDetail = rollResult.detail;
@@ -190,7 +215,7 @@ export const objectInteractionHandler: NodeHandler = {
           node,
           "failed",
           buildOutcome(node, "failed", { reason: `bad luck (luck=${luck})` }),
-          { difficulty, failureReason: "bad_luck" },
+          { difficulty, failureReason: "bad_luck" }
         );
       }
     }
@@ -203,11 +228,23 @@ export const objectInteractionHandler: NodeHandler = {
       // --- Pickup ---
       if (payload.action === "pickup" && payload.itemId) {
         if (!scene) {
-          return makeAction(node, "failed", buildOutcome(node, "failed", { reason: "scene not found" }), { difficulty, failureReason: "object_not_found" });
+          return makeAction(
+            node,
+            "failed",
+            buildOutcome(node, "failed", { reason: "scene not found" }),
+            { difficulty, failureReason: "object_not_found" }
+          );
         }
-        const idx = scene.items.findIndex(i => i.id === payload.itemId);
+        const idx = scene.items.findIndex((i) => i.id === payload.itemId);
         if (idx === -1) {
-          return makeAction(node, "failed", buildOutcome(node, "failed", { reason: `${payload.itemId} not found in scene` }), { difficulty, failureReason: "object_not_found" });
+          return makeAction(
+            node,
+            "failed",
+            buildOutcome(node, "failed", {
+              reason: `${payload.itemId} not found in scene`,
+            }),
+            { difficulty, failureReason: "object_not_found" }
+          );
         }
         const item = scene.items.splice(idx, 1)[0];
         dgsm.addItemToNpc(node.characterId, item);
@@ -217,7 +254,14 @@ export const objectInteractionHandler: NodeHandler = {
       else if (payload.action === "place" && payload.itemId) {
         const item = dgsm.removeItemFromNpc(node.characterId, payload.itemId);
         if (!item) {
-          return makeAction(node, "failed", buildOutcome(node, "failed", { reason: `${payload.itemId} not in inventory` }), { difficulty, failureReason: "object_not_found" });
+          return makeAction(
+            node,
+            "failed",
+            buildOutcome(node, "failed", {
+              reason: `${payload.itemId} not in inventory`,
+            }),
+            { difficulty, failureReason: "object_not_found" }
+          );
         }
         if (scene) {
           scene.items.push(item);
@@ -230,25 +274,45 @@ export const objectInteractionHandler: NodeHandler = {
         let item = dgsm.findNpcItem(node.characterId, payload.itemId);
         const itemInInventory = !!item;
         if (!item && scene) {
-          item = scene.items.find(i => i.id === payload.itemId);
+          item = scene.items.find((i) => i.id === payload.itemId);
         }
         if (!item) {
-          return makeAction(node, "failed", buildOutcome(node, "failed", { reason: `${payload.itemId} not found` }), { difficulty, failureReason: "object_not_found" });
+          return makeAction(
+            node,
+            "failed",
+            buildOutcome(node, "failed", {
+              reason: `${payload.itemId} not found`,
+            }),
+            { difficulty, failureReason: "object_not_found" }
+          );
         }
 
         if (node.actionType) {
           // Non-normal use: apply LLM-provided updates (skill check already passed above)
           if (payload.itemUpdates) {
-            deepMergeItem(item as unknown as Record<string, unknown>, payload.itemUpdates as unknown as Record<string, unknown>);
+            deepMergeItem(
+              item as unknown as Record<string, unknown>,
+              payload.itemUpdates as unknown as Record<string, unknown>
+            );
           }
           if (payload.targetItemId && payload.targetItemUpdates && scene) {
-            const target = scene.items.find(i => i.id === payload.targetItemId);
+            const target = scene.items.find(
+              (i) => i.id === payload.targetItemId
+            );
             if (target) {
-              deepMergeItem(target as unknown as Record<string, unknown>, payload.targetItemUpdates as unknown as Record<string, unknown>);
+              deepMergeItem(
+                target as unknown as Record<string, unknown>,
+                payload.targetItemUpdates as unknown as Record<string, unknown>
+              );
             }
           }
           // Remove consumed items
-          if (item.consumableStats && item.consumableStats.uses !== undefined && item.consumableStats.uses <= 0 && itemInInventory) {
+          if (
+            item.consumableStats &&
+            item.consumableStats.uses !== undefined &&
+            item.consumableStats.uses <= 0 &&
+            itemInInventory
+          ) {
             dgsm.removeItemFromNpc(node.characterId, item.id);
           }
         } else {
@@ -259,9 +323,20 @@ export const objectInteractionHandler: NodeHandler = {
               useDetail = useConsumable(item, node.characterId, dgsm);
               break;
             case "key": {
-              const keyResult = useKey(item, payload.targetItemId, scene ?? { items: [] });
+              const keyResult = useKey(
+                item,
+                payload.targetItemId,
+                scene ?? { items: [] }
+              );
               if (keyResult === null) {
-                return makeAction(node, "failed", buildOutcome(node, "failed", { reason: `no target specified for ${item.name}` }), { difficulty, failureReason: "object_not_found" });
+                return makeAction(
+                  node,
+                  "failed",
+                  buildOutcome(node, "failed", {
+                    reason: `no target specified for ${item.name}`,
+                  }),
+                  { difficulty, failureReason: "object_not_found" }
+                );
               }
               useDetail = keyResult;
               break;
@@ -282,30 +357,40 @@ export const objectInteractionHandler: NodeHandler = {
 
       // --- Inspect ---
       else if (payload.action === "inspect" && payload.itemId) {
-        const inventoryItem = dgsm.findNpcItem(node.characterId, payload.itemId);
+        const inventoryItem = dgsm.findNpcItem(
+          node.characterId,
+          payload.itemId
+        );
         let item = inventoryItem;
         let inspectOutcome: string | null = null;
 
         if (inventoryItem) {
           inspectOutcome = buildInspectOutcomeWithContext(
             inventoryItem,
-            undefined,
+            undefined
           );
         } else if (scene) {
-          item = scene.items.find(i => i.id === payload.itemId);
+          item = scene.items.find((i) => i.id === payload.itemId);
           if (item) {
             const sceneContext = scene.itemContexts?.[item.id];
             inspectOutcome = buildInspectOutcomeWithContext(item, sceneContext);
           }
         }
         if (!item) {
-          return makeAction(node, "failed", buildOutcome(node, "failed", { reason: `${payload.itemId} not found` }), { difficulty, failureReason: "object_not_found" });
+          return makeAction(
+            node,
+            "failed",
+            buildOutcome(node, "failed", {
+              reason: `${payload.itemId} not found`,
+            }),
+            { difficulty, failureReason: "object_not_found" }
+          );
         }
         return makeAction(
           node,
           "completed",
           inspectOutcome ?? buildInspectOutcome(item),
-          { difficulty, successLevel: resolvedSuccessLevel },
+          { difficulty, successLevel: resolvedSuccessLevel }
         );
       }
 
@@ -313,16 +398,21 @@ export const objectInteractionHandler: NodeHandler = {
       else if (payload.action === "destroy" && payload.itemId) {
         let removed = dgsm.removeItemFromNpc(node.characterId, payload.itemId);
         if (!removed && scene) {
-          const idx = scene.items.findIndex(i => i.id === payload.itemId);
+          const idx = scene.items.findIndex((i) => i.id === payload.itemId);
           if (idx !== -1) {
             removed = scene.items.splice(idx, 1)[0];
           }
         }
         if (!removed) {
-          return makeAction(node, "failed", buildOutcome(node, "failed", { reason: `${payload.itemId} not found` }), { difficulty, failureReason: "object_not_found" });
+          return makeAction(
+            node,
+            "failed",
+            buildOutcome(node, "failed", {
+              reason: `${payload.itemId} not found`,
+            }),
+            { difficulty, failureReason: "object_not_found" }
+          );
         }
-
-
       }
     }
 
@@ -330,7 +420,7 @@ export const objectInteractionHandler: NodeHandler = {
       node,
       "completed",
       buildOutcome(node, "completed", { rollDetail: lastRollDetail }),
-      { difficulty, successLevel: resolvedSuccessLevel },
+      { difficulty, successLevel: resolvedSuccessLevel }
     );
   },
 };

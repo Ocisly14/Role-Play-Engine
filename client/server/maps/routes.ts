@@ -38,7 +38,9 @@ router.get("/*", (req, res) => {
       if (fs.existsSync(fullPath)) {
         // Verify file extension is allowed
         const ext = path.extname(fullPath).toLowerCase();
-        if (![".jpg", ".jpeg", ".png", ".webp"].includes(ext)) {
+        if (
+          ![".jpg", ".jpeg", ".png", ".webp", ".json", ".tsx"].includes(ext)
+        ) {
           console.log("[Maps API] Rejected: Invalid file type:", ext);
           return res.status(400).json({ error: "Invalid file type" });
         }

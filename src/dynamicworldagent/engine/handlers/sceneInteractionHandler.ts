@@ -1,7 +1,10 @@
-import type { NodeHandler, ExecutionContext } from "../types.js";
+import type {
+  CharacterAction,
+  PlanNode,
+} from "../../dynamicBasicAgent/npcPlanning/types.js";
 import type { DynamicGameStateManager } from "../../state/DynamicGameState.js";
-import type { PlanNode, CharacterAction } from "../../dynamicBasicAgent/npcPlanning/types.js";
 import { buildOutcome, makeAction } from "../shared/nodeHelpers.js";
+import type { ExecutionContext, NodeHandler } from "../types.js";
 
 export const sceneInteractionHandler: NodeHandler = {
   type: "scene_interaction",
@@ -46,7 +49,9 @@ export const sceneInteractionHandler: NodeHandler = {
     const afterScene = ctx.applyPenalties(npcSkills, scenePenalties);
     const adjustedSkills = ctx.applyPenalties(afterScene, charPenalties);
 
-    let resolvedSuccessLevel: import("../../dynamicBasicAgent/npcPlanning/types.js").SuccessLevel | undefined;
+    let resolvedSuccessLevel:
+      | import("../../dynamicBasicAgent/npcPlanning/types.js").SuccessLevel
+      | undefined;
     let lastRollDetail: string | undefined;
 
     // Location check
@@ -86,7 +91,11 @@ export const sceneInteractionHandler: NodeHandler = {
             node,
             "failed",
             buildOutcome(node, "failed", { rollDetail: lastRollDetail }),
-            { difficulty, successLevel: resolvedSuccessLevel, failureReason: "skill_roll_failed" }
+            {
+              difficulty,
+              successLevel: resolvedSuccessLevel,
+              failureReason: "skill_roll_failed",
+            }
           );
         }
         lastRollDetail = rollResult.detail;
@@ -94,19 +103,24 @@ export const sceneInteractionHandler: NodeHandler = {
     }
 
     // Append outcome as scene condition
-    const outcome = buildOutcome(node, "completed", { rollDetail: lastRollDetail });
+    const outcome = buildOutcome(node, "completed", {
+      rollDetail: lastRollDetail,
+    });
     dgsm.appendSceneCondition(node.location, { description: outcome });
     if (node.sceneConnectionEffect) {
       const effect = node.sceneConnectionEffect;
       const blocked = effect.action === "block";
-      dgsm.setConnectionBlocked(node.location, effect.targetScenarioId, blocked, outcome);
+      dgsm.setConnectionBlocked(
+        node.location,
+        effect.targetScenarioId,
+        blocked,
+        outcome
+      );
     }
 
-    return makeAction(
-      node,
-      "completed",
-      outcome,
-      { difficulty, successLevel: resolvedSuccessLevel }
-    );
+    return makeAction(node, "completed", outcome, {
+      difficulty,
+      successLevel: resolvedSuccessLevel,
+    });
   },
 };

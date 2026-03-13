@@ -1,14 +1,11 @@
-import { EventEmitter } from "node:events";
 import { randomUUID } from "node:crypto";
-import type {
-  SimulationEvent,
-  SimulationEventType,
-} from "./types.js";
+import { EventEmitter } from "node:events";
 import type { CharacterAction } from "../dynamicBasicAgent/npcPlanning/types.js";
+import type { SimulationEvent, SimulationEventType } from "./types.js";
 
 export class SimulationEventEmitter extends EventEmitter {
   private sessionId: string;
-  private tick: number = 0;
+  private tick = 0;
 
   constructor(sessionId: string) {
     super();

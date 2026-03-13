@@ -60,9 +60,7 @@
       }
     }
   ],
-  "connections": [
-    "SCN_15_SUB_1"
-  ],
+  "connections": ["SCN_15_SUB_1"],
   "itemContexts": {
     "ITEM_SCN15_6": "桌角的小型服务器机箱持续发出低沉嗡鸣，机壳侧面贴着手写编号标签。"
   }

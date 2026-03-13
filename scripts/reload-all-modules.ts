@@ -42,9 +42,14 @@ async function main() {
     console.log("=".repeat(60));
 
     try {
-      const result = await loadMod(null as any, modName, EMAIL_ID, (stage, progress, message) => {
-        console.log(`  [${progress}%] ${stage}: ${message}`);
-      });
+      const result = await loadMod(
+        null as any,
+        modName,
+        EMAIL_ID,
+        (stage, progress, message) => {
+          console.log(`  [${progress}%] ${stage}: ${message}`);
+        }
+      );
       console.log(`  ✅ ${result.message}`);
       success++;
     } catch (err: any) {
@@ -54,7 +59,9 @@ async function main() {
   }
 
   console.log(`\n${"=".repeat(60)}`);
-  console.log(`Done! ${success} succeeded, ${failed} failed out of ${modNames.length} modules.`);
+  console.log(
+    `Done! ${success} succeeded, ${failed} failed out of ${modNames.length} modules.`
+  );
 
   const prisma = getPrismaClient();
   await prisma.$disconnect();

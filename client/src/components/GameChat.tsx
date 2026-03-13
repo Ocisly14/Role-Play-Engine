@@ -52,7 +52,9 @@ export function GameChat({
   } | null>(null);
   const [isResting, setIsResting] = useState(false);
   const [restModalOpen, setRestModalOpen] = useState(false);
-  const [restSelectedHours, setRestSelectedHours] = useState<number | null>(null);
+  const [restSelectedHours, setRestSelectedHours] = useState<number | null>(
+    null
+  );
   const [restCustomHours, setRestCustomHours] = useState("");
   const [restShowCustomInput, setRestShowCustomInput] = useState(false);
   const [isSkillSelectionModalOpen, setIsSkillSelectionModalOpen] =
@@ -420,7 +422,8 @@ export function GameChat({
   }, [currentGameState?.isBattle, setMessages]);
 
   const isCombatSkillRequired = currentGameState?.isBattle === true;
-  const canSendInCombat = !isCombatSkillRequired || selectedSkill.trim().length > 0;
+  const canSendInCombat =
+    !isCombatSkillRequired || selectedSkill.trim().length > 0;
 
   // Event handlers
   const handleSendMessage = useCallback(async () => {
@@ -635,7 +638,13 @@ export function GameChat({
 
     closeRestModal();
     handleRest(selectedHours);
-  }, [restShowCustomInput, restCustomHours, restSelectedHours, closeRestModal, handleRest]);
+  }, [
+    restShowCustomInput,
+    restCustomHours,
+    restSelectedHours,
+    closeRestModal,
+    handleRest,
+  ]);
 
   const isRestConfirmDisabled = restShowCustomInput
     ? !restCustomHours ||
@@ -817,7 +826,10 @@ export function GameChat({
       {restModalOpen && (
         <div
           className="fixed inset-0 z-50 flex items-center justify-center"
-          style={{ backdropFilter: "blur(4px)", background: "rgba(15,23,42,0.45)" }}
+          style={{
+            backdropFilter: "blur(4px)",
+            background: "rgba(15,23,42,0.45)",
+          }}
           onClick={closeRestModal}
         >
           <div
@@ -875,12 +887,7 @@ export function GameChat({
             {/* Preset duration buttons */}
             <div className="mb-4 grid grid-cols-4 gap-3">
               {([1, 2, 4, 8] as const).map((h) => {
-                const tier =
-                  h < 4
-                    ? "none"
-                    : h < 8
-                      ? "fatigue"
-                      : "full";
+                const tier = h < 4 ? "none" : h < 8 ? "fatigue" : "full";
                 const colorClass =
                   tier === "none"
                     ? "border-slate-200 bg-white/70 text-slate-400 dark:border-slate-700 dark:bg-slate-800/60 dark:text-slate-500"

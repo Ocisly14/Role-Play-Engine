@@ -1,0 +1,123 @@
+[
+  {
+    "name": "Ben Cleo",
+    "occupation": "Mafia Boss / Underground Power Broker",
+    "age": 38,
+    "gender": "male",
+    "appearance": "A composed and intimidating man with a calm posture. Dresses neatly and practically, giving the impression of a businessman rather than a criminal.",
+    "personality": "Cold-headed, pragmatic, disciplined, and authoritarian. Values order, loyalty, and efficiency; rarely acts on impulse.",
+    "background": "Ben Cleo is the current head of the Cleo family, a local mafia power in Cassandra. Raised within the criminal underworld, he inherited leadership after internal family power shifts. Under his control, the Cleo family manages smuggling and underground trade through the train station, operating under the principle of conducting business without interfering in the motives behind transactions. Ben maintains strict discipline among his subordinates and avoids unnecessary cruelty, focusing instead on long-term stability and profit.",
+    "goals": [
+      "Maintain control over the Cleo family's underground operations",
+      "Prevent outside forces from destabilizing his business"
+    ],
+    "secrets": [
+      "Has long-standing knowledge of illicit trades passing through the train station",
+      "Knows more about past family dealings and disappearances than he publicly admits",
+      "He has a gold-inlaid Desert Eagle .357 caliber pistol (1981 custom edition, MRI internal members only) that matches the caliber of the weapon used in the 2003 Reindeer Bar murder case",
+      "He was actually attending a secret gambling session at the church basement during the time of the 2003 Reindeer Bar murder, not praying as he claimed",
+      "The Reindeer Bar is his property, and the surveillance system was installed by his people, but the system was broken by Martin, not by Ben",
+      "He knows someone called 'Ghost Hand' works for Patrizio, but doesn't know Ghost Hand is Martin Cleo",
+      "He has a safe containing his father Karong's notes and books related to Nyogtha and other Mythos entities"
+    ],
+    "attributes": {
+      "STR": 65,
+      "CON": 70,
+      "DEX": 55,
+      "APP": 60,
+      "POW": 60,
+      "SIZ": 65,
+      "INT": 70,
+      "EDU": 65
+    },
+    "status": {
+      "hp": 14,
+      "maxHp": 14,
+      "sanity": 60,
+      "maxSanity": 99,
+      "luck": 70,
+      "mp": 12,
+      "conditions": []
+    },
+    "skills": {
+      "Intimidate": 70,
+      "Persuade": 55,
+      "Psychology": 50,
+      "Firearms (Handgun)": 60,
+      "Brawl": 55,
+      "Spot Hidden": 50
+    },
+    "inventory": [
+      {
+        "name": "Beretta pistol",
+        "quantity": 1,
+        "properties": {
+          "note": "His usual carry gun."
+        }
+      },
+      {
+        "name": "Desert Eagle (1981 custom, gold-inlaid edition, .357 caliber)",
+        "quantity": 1,
+        "properties": {
+          "clue": "Special customized gold version by MRI, internal members only. .357 caliber, matching the caliber of the weapon used in the 2003 Reindeer Bar murder case. Ben loves it and carries it everywhere, but rarely uses unless absolutely necessary."
+        }
+      }
+    ],
+    "clues": [
+      {
+        "clueText": "The Cleo family uses the train station as a front for smuggling and black-market logistics.",
+        "category": "knowledge",
+        "difficulty": "regular",
+        "relatedTo": [
+          "Cassandra Train Station",
+          "Cleo Family"
+        ]
+      },
+      {
+        "clueText": "Ben enforces a strict rule: conduct business without asking questions about clients' intentions.",
+        "category": "observation",
+        "difficulty": "regular",
+        "relatedTo": [
+          "Cleo Family"
+        ]
+      },
+      {
+        "clueText": "Ben has a .357 caliber Desert Eagle that matches the caliber of the weapon used in the 2003 Reindeer Bar murder case, but he was actually at a secret gambling session during the murder, not at the church as he claimed.",
+        "category": "observation",
+        "difficulty": "hard",
+        "relatedTo": [
+          "2003 Reindeer Bar murder",
+          "Desert Eagle",
+          ".357 caliber"
+        ]
+      },
+      {
+        "clueText": "The Reindeer Bar surveillance system was installed by Ben's people, but it was broken by Martin (Ghost Hand), not by Ben.",
+        "category": "knowledge",
+        "difficulty": "hard",
+        "relatedTo": [
+          "Reindeer Bar",
+          "Martin Gin",
+          "Surveillance"
+        ]
+      }
+    ],
+    "relationships": [
+      {
+        "targetName": "Haran Greenwood",
+        "relationshipType": "employee",
+        "attitude": 70,
+        "description": "Trusted subordinate responsible for guarding the train station entrance.",
+        "history": "Haran helped Ben secure power during earlier transitions within the Cleo family."
+      },
+      {
+        "targetName": "Adolph Carl",
+        "relationshipType": "neutral",
+        "attitude": 10,
+        "description": "Occasional business contact acting as a middleman.",
+        "history": "They have cooperated when interests aligned but maintain distance."
+      }
+    ],
+    "notes": "Ben rarely interacts directly with investigators unless provoked. Any harm done to Haran will eventually provoke retaliation from Ben."
+  }
+]

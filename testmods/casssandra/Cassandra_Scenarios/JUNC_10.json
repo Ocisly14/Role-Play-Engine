@@ -37,9 +37,7 @@
       }
     }
   ],
-  "connectedSceneIds": [
-    "SCN_8_SUB_1"
-  ],
+  "connectedSceneIds": ["SCN_8_SUB_1"],
   "itemContexts": {
     "ITEM_JUNC10_1": "终点附近并排放着两个塑料垃圾桶，桶盖在风里轻轻颤动。"
   }

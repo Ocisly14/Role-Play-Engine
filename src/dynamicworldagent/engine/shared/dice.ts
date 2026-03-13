@@ -8,7 +8,10 @@ export function isFumble(roll: number, skillValue: number): boolean {
   return skillValue < 50 ? roll >= 96 : roll === 100;
 }
 
-export function getSuccessLevel(roll: number, skillValue: number): SuccessLevel {
+export function getSuccessLevel(
+  roll: number,
+  skillValue: number
+): SuccessLevel {
   if (roll === 1) return "critical";
   if (isFumble(roll, skillValue)) return "fumble";
   if (roll <= Math.floor(skillValue / 5)) return "hard";
@@ -25,9 +28,11 @@ export function getSuccessLevelWithDifficulty(
   if (roll === 1) return "critical";
   if (isFumble(roll, skillValue)) return "fumble";
   const threshold =
-    difficulty === "extreme" ? Math.floor(skillValue / 5)
-    : difficulty === "hard" ? Math.floor(skillValue / 2)
-    : skillValue;
+    difficulty === "extreme"
+      ? Math.floor(skillValue / 5)
+      : difficulty === "hard"
+        ? Math.floor(skillValue / 2)
+        : skillValue;
   if (roll <= threshold) return "regular";
   return "fail";
 }
@@ -59,14 +64,14 @@ export function rollDamageBonus(db: string): number {
   const sign = db.startsWith("-") ? -1 : 1;
   const diceMatch = db.match(/(\d+)d(\d+)/);
   if (diceMatch) {
-    const count = parseInt(diceMatch[1]);
-    const sides = parseInt(diceMatch[2]);
+    const count = Number.parseInt(diceMatch[1]);
+    const sides = Number.parseInt(diceMatch[2]);
     let total = 0;
     for (let i = 0; i < count; i++) {
       total += Math.floor(Math.random() * sides) + 1;
     }
     return sign * total;
   }
-  const flat = parseInt(db);
+  const flat = Number.parseInt(db);
   return isNaN(flat) ? 0 : flat;
 }

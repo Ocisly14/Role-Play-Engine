@@ -1,4 +1,4 @@
-import type { PrismaClient, NpcMemory, NpcMemoryType } from "@prisma/client";
+import type { NpcMemory, NpcMemoryType, PrismaClient } from "@prisma/client";
 import type { EmbeddingClient } from "../../rag/embedding.js";
 import { getHandler } from "./handlers/index.js";
 import type { AddMemoryParams } from "./types.js";
@@ -14,8 +14,13 @@ export class MemoryStore {
 
   async create(params: AddMemoryParams): Promise<NpcMemory> {
     const handler = getHandler(params.type);
-    const prepared = handler.prepare(params.content, params.metadata, params.location);
-    const baseImportance = params.baseImportanceOverride ?? prepared.baseImportance;
+    const prepared = handler.prepare(
+      params.content,
+      params.metadata,
+      params.location
+    );
+    const baseImportance =
+      params.baseImportanceOverride ?? prepared.baseImportance;
     const tags = params.tagsOverride ?? prepared.tags;
 
     let embeddingBuffer: Uint8Array<ArrayBuffer> | undefined = undefined;
@@ -51,7 +56,11 @@ export class MemoryStore {
   }
 
   /** Types that are ephemeral — only relevant for the current game day (past ones are covered by summary). */
-  private static EPHEMERAL_TYPES: NpcMemoryType[] = ["event", "witness", "plan"];
+  private static EPHEMERAL_TYPES: NpcMemoryType[] = [
+    "event",
+    "witness",
+    "plan",
+  ];
 
   async findCandidates(params: {
     sessionId: string;
@@ -70,7 +79,10 @@ export class MemoryStore {
 
     // When currentGameDay is set, ephemeral types (event/witness/plan) are restricted
     // to the current day only; past days are represented by summary memories.
-    if (filters?.currentGameDay !== undefined && filters.gameDay === undefined) {
+    if (
+      filters?.currentGameDay !== undefined &&
+      filters.gameDay === undefined
+    ) {
       const requestedTypes = filters.types;
       const ephemeralRequested = requestedTypes
         ? MemoryStore.EPHEMERAL_TYPES.filter((t) => requestedTypes.includes(t))
@@ -84,7 +96,9 @@ export class MemoryStore {
         npcId: params.npcId,
         ...(filters.location && { location: filters.location }),
         ...(filters.tags && { tags: { hasSome: filters.tags } }),
-        ...(filters.minImportance !== undefined && { importance: { gte: filters.minImportance } }),
+        ...(filters.minImportance !== undefined && {
+          importance: { gte: filters.minImportance },
+        }),
       };
 
       const orClauses: any[] = [];
@@ -92,7 +106,11 @@ export class MemoryStore {
         orClauses.push({ ...baseWhere, type: { in: durableRequested } });
       }
       if (ephemeralRequested.length > 0) {
-        orClauses.push({ ...baseWhere, type: { in: ephemeralRequested }, gameDay: filters.currentGameDay });
+        orClauses.push({
+          ...baseWhere,
+          type: { in: ephemeralRequested },
+          gameDay: filters.currentGameDay,
+        });
       }
 
       if (orClauses.length === 0) return [];
@@ -112,7 +130,9 @@ export class MemoryStore {
         ...(filters?.gameDay !== undefined && { gameDay: filters.gameDay }),
         ...(filters?.location && { location: filters.location }),
         ...(filters?.tags && { tags: { hasSome: filters.tags } }),
-        ...(filters?.minImportance !== undefined && { importance: { gte: filters.minImportance } }),
+        ...(filters?.minImportance !== undefined && {
+          importance: { gte: filters.minImportance },
+        }),
       },
       orderBy: { importance: "desc" },
       take: limit ?? 200,
@@ -138,33 +158,38 @@ export class MemoryStore {
     memoryId: string,
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     metadata: Record<string, any>,
-    extraFields?: { baseImportance?: number },
+    extraFields?: { baseImportance?: number }
   ): Promise<void> {
     await this.prisma.npcMemory.update({
       where: { id: memoryId },
       data: {
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
         metadata: metadata as any,
-        ...(extraFields?.baseImportance !== undefined && { baseImportance: extraFields.baseImportance }),
+        ...(extraFields?.baseImportance !== undefined && {
+          baseImportance: extraFields.baseImportance,
+        }),
       },
     });
   }
 
   async batchUpdateImportance(
     sessionId: string,
-    updates: Array<{ id: string; importance: number }>,
+    updates: Array<{ id: string; importance: number }>
   ): Promise<void> {
     await this.prisma.$transaction(
       updates.map((u) =>
         this.prisma.npcMemory.update({
           where: { id: u.id },
           data: { importance: u.importance },
-        }),
-      ),
+        })
+      )
     );
   }
 
-  async deletePostCheckpoint(sessionId: string, checkpointCreatedAt: Date): Promise<void> {
+  async deletePostCheckpoint(
+    sessionId: string,
+    checkpointCreatedAt: Date
+  ): Promise<void> {
     await this.prisma.npcMemory.deleteMany({
       where: { sessionId, createdAt: { gt: checkpointCreatedAt } },
     });

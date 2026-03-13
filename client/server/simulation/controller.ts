@@ -16,7 +16,7 @@ export async function createSimulation(req: Request, res: Response) {
       moduleName,
       userId,
       language ?? "en",
-      config,
+      config
     );
     return res.status(201).json(result);
   } catch (error) {
@@ -92,7 +92,7 @@ export async function getStatus(req: Request, res: Response) {
     const prisma = getPrismaClient();
     const status = await simulationService.getSimulationStatus(
       prisma,
-      req.params.id,
+      req.params.id
     );
     return res.json(status);
   } catch (error) {
@@ -111,8 +111,10 @@ export async function getEvents(req: Request, res: Response) {
       {
         type: req.query.type as string | undefined,
         npcId: req.query.npcId as string | undefined,
-        day: req.query.day ? parseInt(req.query.day as string) : undefined,
-      },
+        day: req.query.day
+          ? Number.parseInt(req.query.day as string)
+          : undefined,
+      }
     );
     return res.json({ events });
   } catch (error) {

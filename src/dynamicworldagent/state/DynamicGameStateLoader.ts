@@ -5,6 +5,8 @@
 
 import fs from "fs";
 import path from "path";
+import { ModelProviderName } from "../../models/types.js";
+import { EmbeddingClient } from "../../rag/embedding.js";
 import { NPCLoader } from "../../shared/agents/character/npcloader/index.js";
 import type {
   CoCDatabase,
@@ -18,24 +20,16 @@ import {
 import { getPrismaClient } from "../../shared/agents/memory/database/prismaClient.js";
 import { resolveEmailId } from "../../shared/agents/memory/database/userContext.js";
 import type { NPCProfile } from "../../shared/agents/models/gameTypes.js";
-import type {
-  SceneCondition,
-} from "../dynamicBasicAgent/npcPlanning/types.js";
-import type {
-  ModuleSetup,
-  DynamicNPCProfile,
-  DynamicScene,
-} from "./types.js";
-import { decodeSceneItemsPayload } from "./sceneItemContextPayload.js";
-import { WorldModuleLoader } from "./worldModuleLoader.js";
+import type { SceneCondition } from "../dynamicBasicAgent/npcPlanning/types.js";
 import { bootstrapNpcSecrets } from "../memory/bootstrapSecrets.js";
-import { EmbeddingClient } from "../../rag/embedding.js";
-import { ModelProviderName } from "../../models/types.js";
 import type { DynamicGameState } from "./DynamicGameState.js";
 import {
   DynamicGameStateManager,
   initialDynamicGameState,
 } from "./DynamicGameState.js";
+import { decodeSceneItemsPayload } from "./sceneItemContextPayload.js";
+import type { DynamicNPCProfile, DynamicScene, ModuleSetup } from "./types.js";
+import { WorldModuleLoader } from "./worldModuleLoader.js";
 
 /**
  * Convert NPCProfile (from multiagent system) to DynamicNPCProfile (for DynamicWorld system)
@@ -146,7 +140,9 @@ export async function loadDynamicGameStateFromDatabase(
       name: row.name,
       description: row.description || "",
       sourcePlaceId: row.sourcePlaceId || undefined,
-      residents: Array.isArray(row.residents) ? row.residents as string[] : undefined,
+      residents: Array.isArray(row.residents)
+        ? (row.residents as string[])
+        : undefined,
       subSceneCount: sceneCountByScenario.get(row.scenarioId) ?? 0,
     }));
 
@@ -208,7 +204,8 @@ export async function loadDynamicGameStateFromModuleLoader(
   // Load transport edges from the module (file-based loader provides them)
   // Use type assertion to bypass Readonly — we are still in the initialization phase
   if (loadedModule.transportEdges && loadedModule.transportEdges.length > 0) {
-    (manager.getState() as DynamicGameState).transportEdges = loadedModule.transportEdges;
+    (manager.getState() as DynamicGameState).transportEdges =
+      loadedModule.transportEdges;
   }
 
   // Load scenes from the module into state
@@ -290,9 +287,7 @@ export async function initializeCompleteDynamicGameState(
   const scenesMap = new Map<string, DynamicScene>();
 
   // Helper function to build a DynamicScene from a Prisma scene row
-  const buildSceneFromRow = async (
-    sceneRow: any
-  ): Promise<DynamicScene> => {
+  const buildSceneFromRow = async (sceneRow: any): Promise<DynamicScene> => {
     // Load scene conditions
     const sceneConditions = await prisma.scenarioCondition.findMany({
       where: {
@@ -318,16 +313,18 @@ export async function initializeCompleteDynamicGameState(
       name: sceneRow.name || sceneRow.scenario?.name,
       description: sceneRow.description,
       parentLocationId: sceneRow.parentLocationId || "",
-      connections: Array.isArray(sceneRow.connections) ? sceneRow.connections : [],
+      connections: Array.isArray(sceneRow.connections)
+        ? sceneRow.connections
+        : [],
       items,
       itemContexts,
       sceneImage,
       conditions: sceneConditions.map((cond) => ({
         description: cond.description,
         mechanicalEffect: cond.mechanicalEffect
-          ? (typeof cond.mechanicalEffect === "string"
-              ? undefined
-              : (cond.mechanicalEffect as SceneCondition["mechanicalEffect"]))
+          ? typeof cond.mechanicalEffect === "string"
+            ? undefined
+            : (cond.mechanicalEffect as SceneCondition["mechanicalEffect"])
           : undefined,
       })),
     };
@@ -471,9 +468,7 @@ export async function initializeCompleteDynamicGameState(
   // Initialize NPC Planning runtime state from module data
   if (npcCharacters.length > 0) {
     const defaultScenarioId =
-      startSceneId ??
-      completeState.scenarioOutlines?.[0]?.id ??
-      "unknown";
+      startSceneId ?? completeState.scenarioOutlines?.[0]?.id ?? "unknown";
 
     for (const npc of npcCharacters) {
       // npcLocations: from NPC actionLog or default to starting scene
@@ -481,11 +476,13 @@ export async function initializeCompleteDynamicGameState(
         const actionLog = npc.actionLog ?? [];
         let lastLog: { location?: string } | undefined;
         for (let i = actionLog.length - 1; i >= 0; i--) {
-          if (actionLog[i].location) { lastLog = actionLog[i]; break; }
+          if (actionLog[i].location) {
+            lastLog = actionLog[i];
+            break;
+          }
         }
         completeState.npcLocations[npc.id] =
-          lastLog?.location ??
-          defaultScenarioId;
+          lastLog?.location ?? defaultScenarioId;
       }
 
       // npcStats: from NPC profile status
@@ -590,7 +587,8 @@ export async function initializeCompleteDynamicGameState(
   if (npcCharacters.length > 0 && scopedModuleId) {
     try {
       const embedClient = new EmbeddingClient(
-        (process.env.MODEL_PROVIDER as ModelProviderName) || ModelProviderName.OPENAI
+        (process.env.MODEL_PROVIDER as ModelProviderName) ||
+          ModelProviderName.OPENAI
       );
       await bootstrapNpcSecrets({
         prisma,
@@ -603,7 +601,10 @@ export async function initializeCompleteDynamicGameState(
       });
     } catch (error) {
       // Non-fatal: secrets will be missing from memory but game can still run
-      console.error("[DynamicGameState] Failed to bootstrap NPC secrets:", error);
+      console.error(
+        "[DynamicGameState] Failed to bootstrap NPC secrets:",
+        error
+      );
     }
   }
 

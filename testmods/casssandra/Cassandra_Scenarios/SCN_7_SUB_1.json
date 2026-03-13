@@ -55,9 +55,7 @@
       }
     }
   ],
-  "connections": [
-    "SCN_7_SUB_2"
-  ],
+  "connections": ["SCN_7_SUB_2"],
   "itemContexts": {
     "ITEM_SCN7_5": "通往下方的铁梯每一级都覆着苔藓和水膜，踩上去带着让人不安的滑腻感。"
   }

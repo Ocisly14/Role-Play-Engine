@@ -7,7 +7,7 @@ export class SecretHandler implements MemoryHandler {
   prepare(
     _content: string,
     metadata?: Record<string, any>,
-    location?: string,
+    location?: string
   ): { tags: string[]; baseImportance: number; metadata: Record<string, any> } {
     const tags: string[] = ["secret"];
     if (location) tags.push(location);

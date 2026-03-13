@@ -1,5 +1,5 @@
-import type { TownTopology } from "../../state/topologyTypes.js";
 import type { DynamicGameStateManager } from "../../state/DynamicGameState.js";
+import type { TownTopology } from "../../state/topologyTypes.js";
 
 /**
  * Returns true if the given location ID is a road in the topology.
@@ -11,7 +11,10 @@ export function isRoadId(locationId: string, topology: TownTopology): boolean {
 /**
  * Returns true if the given location ID is a junction in the topology.
  */
-export function isJunctionId(locationId: string, topology: TownTopology): boolean {
+export function isJunctionId(
+  locationId: string,
+  topology: TownTopology
+): boolean {
   return topology.junctions.has(locationId);
 }
 
@@ -24,7 +27,10 @@ export function isJunctionId(locationId: string, topology: TownTopology): boolea
  *
  * Returns an empty array if the locationId is not found in the topology.
  */
-export function getTopologyNeighbors(locationId: string, topology: TownTopology): string[] {
+export function getTopologyNeighbors(
+  locationId: string,
+  topology: TownTopology
+): string[] {
   // Check if it's a scene (in sceneToParent)
   const parentInfo = topology.sceneToParent.get(locationId);
   if (parentInfo) {
@@ -75,7 +81,7 @@ export function getTopologyNeighbors(locationId: string, topology: TownTopology)
  */
 export function resolveCharacterLocationId(
   characterId: string,
-  dgsm: DynamicGameStateManager,
+  dgsm: DynamicGameStateManager
 ): string | undefined {
   // 1. Try CharacterPosition
   const position = dgsm.getCharacterPosition(characterId);

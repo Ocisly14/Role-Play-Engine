@@ -1,5 +1,5 @@
-import type { DynamicGameStateManager } from "../../state/DynamicGameState.js";
 import type { CharacterAction } from "../../dynamicBasicAgent/npcPlanning/types.js";
+import type { DynamicGameStateManager } from "../../state/DynamicGameState.js";
 import type { TransportEdge } from "../../state/types.js";
 
 const NEIGHBORHOOD_TRAVEL_MINUTES = 15;
@@ -99,7 +99,11 @@ export function findAffectedCharacters(
   if (impactLevel >= 4) {
     const eventParent = getParentLocationId(action.location, dgsm);
     if (eventParent && state.transportEdges) {
-      const neighbors = findNeighborMacroLocations(eventParent, state.transportEdges, NEIGHBORHOOD_TRAVEL_MINUTES);
+      const neighbors = findNeighborMacroLocations(
+        eventParent,
+        state.transportEdges,
+        NEIGHBORHOOD_TRAVEL_MINUTES
+      );
       for (const charId of allCharacterIds) {
         const charLoc = getCharLocation(charId);
         if (charLoc) {
@@ -152,9 +156,16 @@ export function findAffectedScenes(
   if (scopeLevel >= 4) {
     const parent = getParentLocationId(sourceSceneId, dgsm);
     if (parent && state.transportEdges) {
-      const neighbors = findNeighborMacroLocations(parent, state.transportEdges, NEIGHBORHOOD_TRAVEL_MINUTES);
+      const neighbors = findNeighborMacroLocations(
+        parent,
+        state.transportEdges,
+        NEIGHBORHOOD_TRAVEL_MINUTES
+      );
       for (const [id, scene] of state.scenes) {
-        if (scene.parentLocationId && neighbors.includes(scene.parentLocationId)) {
+        if (
+          scene.parentLocationId &&
+          neighbors.includes(scene.parentLocationId)
+        ) {
           scenes.add(id);
         }
       }

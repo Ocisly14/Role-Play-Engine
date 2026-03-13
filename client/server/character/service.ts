@@ -149,12 +149,16 @@ export function parseCharacterFromDB(character: any): any {
         const occupationalPoints = Number(skillData.occupationalPoints);
         const interestPoints = Number(skillData.interestPoints);
         const explicitTotal =
-          skillData.value !== undefined ? Number(skillData.value) : Number(skillData.total);
+          skillData.value !== undefined
+            ? Number(skillData.value)
+            : Number(skillData.total);
         const computedTotal =
           (Number.isFinite(base) ? base : 0) +
           (Number.isFinite(occupationalPoints) ? occupationalPoints : 0) +
           (Number.isFinite(interestPoints) ? interestPoints : 0);
-        const total = Number.isFinite(explicitTotal) ? explicitTotal : computedTotal;
+        const total = Number.isFinite(explicitTotal)
+          ? explicitTotal
+          : computedTotal;
 
         processedSkills[skillName] = total;
         processedSkillDetails[skillName] = {

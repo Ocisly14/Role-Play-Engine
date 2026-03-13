@@ -1,6 +1,6 @@
 import type { SceneCondition } from "../dynamicBasicAgent/npcPlanning/types.js";
-import type { Item } from "./types.js";
 import type { ItemContexts } from "./sceneItemContextPayload.js";
+import type { Item } from "./types.js";
 
 /**
  * Junction — a first-class intersection/endpoint node.
@@ -10,7 +10,7 @@ export interface JunctionNode {
   id: string;
   name: string;
   description: string;
-  parentLocationId: string;       // typically "OUTDOOR"
+  parentLocationId: string; // typically "OUTDOOR"
   items: Item[];
   itemContexts?: ItemContexts;
   conditions: SceneCondition[];
@@ -35,7 +35,7 @@ export interface RoadNode {
   id: string;
   name: string;
   description: string;
-  parentLocationId: string;       // typically "OUTDOOR"
+  parentLocationId: string; // typically "OUTDOOR"
   /** Junction ID at the start */
   endpointA: string;
   /** Junction ID at the end */
@@ -54,7 +54,7 @@ export interface RoadNode {
  */
 export type CharacterPosition =
   | { type: "junction"; junctionId: string }
-  | { type: "road"; roadId: string; position: number }  // 0.0–1.0
+  | { type: "road"; roadId: string; position: number } // 0.0–1.0
   | { type: "scene"; sceneId: string };
 
 /**
@@ -68,14 +68,18 @@ export interface TownTopology {
   junctionToRoads: Map<string, RoadNode[]>;
 
   /** Scene ID → where this scene is attached */
-  sceneToParent: Map<string, {
-    type: "junction";
-    junctionId: string;
-  } | {
-    type: "road";
-    roadId: string;
-    position: number;
-  }>;
+  sceneToParent: Map<
+    string,
+    | {
+        type: "junction";
+        junctionId: string;
+      }
+    | {
+        type: "road";
+        roadId: string;
+        position: number;
+      }
+  >;
 }
 
 /**
@@ -86,7 +90,11 @@ export function buildTopology(
   roads: Map<string, RoadNode>
 ): TownTopology {
   const junctionToRoads = new Map<string, RoadNode[]>();
-  const sceneToParent = new Map<string, { type: "junction"; junctionId: string } | { type: "road"; roadId: string; position: number }>();
+  const sceneToParent = new Map<
+    string,
+    | { type: "junction"; junctionId: string }
+    | { type: "road"; roadId: string; position: number }
+  >();
 
   // Index roads by their endpoint junctions
   for (const road of roads.values()) {

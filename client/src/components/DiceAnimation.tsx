@@ -150,7 +150,8 @@ export function DiceAnimation({
           skill: info.skill,
           success: info.success,
           penalty: info.penalty,
-          checkDetail: info.checkDetail ?? extractCheckDetailFromRoll(info.roll),
+          checkDetail:
+            info.checkDetail ?? extractCheckDetailFromRoll(info.roll),
         };
       })
       .filter((p) => p.result > 0);

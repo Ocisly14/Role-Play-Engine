@@ -55,10 +55,7 @@
       }
     }
   ],
-  "connections": [
-    "SCN_4_SUB_2",
-    "SCN_4_SUB_3"
-  ],
+  "connections": ["SCN_4_SUB_2", "SCN_4_SUB_3"],
   "itemContexts": {
     "ITEM_SCN4_1": "弧形的深色胡桃木前台，台面镶嵌黄铜饰条，背后是镀金镜框的椭圆形大镜。台面上整齐地摆放着登记簿、铜制台灯和一个小巧的服务铃。"
   }

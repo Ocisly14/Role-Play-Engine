@@ -1,6 +1,6 @@
 import type { NpcMemory } from "@prisma/client";
-import type { ScoredMemory, ReasoningTrigger } from "../types.js";
 import { getAllHandlers } from "../handlers/index.js";
+import type { ReasoningTrigger, ScoredMemory } from "../types.js";
 
 export interface ReasoningPromptParams {
   npcName: string;

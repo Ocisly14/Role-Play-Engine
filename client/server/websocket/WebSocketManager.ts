@@ -60,13 +60,22 @@ export class WebSocketManager {
         const client: WSClient = { ws, sessionId, lastHeartbeat: new Date() };
         this.registerSimulationClient(sessionId, clientId, client);
 
-        ws.send(JSON.stringify({ type: "connected", sessionId, timestamp: new Date().toISOString() }));
+        ws.send(
+          JSON.stringify({
+            type: "connected",
+            sessionId,
+            timestamp: new Date().toISOString(),
+          })
+        );
 
         ws.on("close", () => {
           this.removeSimulationClient(sessionId, clientId);
         });
         ws.on("error", (error) => {
-          console.error(`[WebSocket] Simulation viewer error for session ${sessionId}:`, error);
+          console.error(
+            `[WebSocket] Simulation viewer error for session ${sessionId}:`,
+            error
+          );
         });
         return;
       }
@@ -120,7 +129,9 @@ export class WebSocketManager {
       const isMultiplayer = sessionId.startsWith("multi-");
       const clientKey = isMultiplayer ? `${sessionId}:${userId}` : sessionId;
 
-      console.log(`🔌 [WebSocket] Client connected: ${clientKey}${sceneRoomId ? ` sceneRoom=${sceneRoomId}` : ""}`);
+      console.log(
+        `🔌 [WebSocket] Client connected: ${clientKey}${sceneRoomId ? ` sceneRoom=${sceneRoomId}` : ""}`
+      );
 
       this.handleNewConnection(ws, clientKey);
 
@@ -137,7 +148,9 @@ export class WebSocketManager {
 
           // On close, remove multiplayer registration only if this ws is still the current one
           ws.on("close", () => {
-            const current = this.multiplayerClients.get(sceneRoomId)?.get(userId);
+            const current = this.multiplayerClients
+              .get(sceneRoomId)
+              ?.get(userId);
             if (current && current.ws === ws) {
               this.removeMultiplayerClient(sceneRoomId, userId);
             }
@@ -189,7 +202,6 @@ export class WebSocketManager {
     ws.on("error", (error) =>
       console.error(`[WebSocket] Error for client ${sessionId}:`, error)
     );
-
   }
 
   /**
@@ -205,7 +217,6 @@ export class WebSocketManager {
     const currentClient = this.clients.get(sessionId);
     if (currentClient && currentClient.ws === ws) {
       this.clients.delete(sessionId);
-
     }
   }
 
@@ -304,7 +315,6 @@ export class WebSocketManager {
           this.clients.delete(sessionId);
         }
       }
-
     }, HEARTBEAT_INTERVAL_MS);
   }
 
@@ -440,7 +450,11 @@ export class WebSocketManager {
   /**
    * Register a simulation viewer client for a specific session.
    */
-  public registerSimulationClient(sessionId: string, clientId: string, client: WSClient): void {
+  public registerSimulationClient(
+    sessionId: string,
+    clientId: string,
+    client: WSClient
+  ): void {
     if (!this.simulationClients.has(sessionId)) {
       this.simulationClients.set(sessionId, new Map());
     }
@@ -465,10 +479,7 @@ export class WebSocketManager {
     return this.simulationClients.get(sessionId) ?? new Map();
   }
 
-  private async isRoomMember(
-    roomId: string,
-    userId: string
-  ): Promise<boolean> {
+  private async isRoomMember(roomId: string, userId: string): Promise<boolean> {
     const prisma = getPrismaClient();
     const member = await prisma.multiplayerRoomMember.findFirst({
       where: { roomId, userId },

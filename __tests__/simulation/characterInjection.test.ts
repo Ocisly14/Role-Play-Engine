@@ -1,4 +1,4 @@
-import { describe, it, expect } from "vitest";
+import { describe, expect, it } from "vitest";
 import { buildInjectedProfile } from "../../src/dynamicworldagent/simulation/characterInjection.js";
 
 describe("buildInjectedProfile", () => {
@@ -109,12 +109,18 @@ describe("buildInjectedProfile", () => {
   });
 
   it("passes through optional personality field", () => {
-    const profile = buildInjectedProfile({ ...baseInput, personality: "Inquisitive and bold" });
+    const profile = buildInjectedProfile({
+      ...baseInput,
+      personality: "Inquisitive and bold",
+    });
     expect(profile.personality).toBe("Inquisitive and bold");
   });
 
   it("passes through optional occupation field", () => {
-    const profile = buildInjectedProfile({ ...baseInput, occupation: "Journalist" });
+    const profile = buildInjectedProfile({
+      ...baseInput,
+      occupation: "Journalist",
+    });
     expect(profile.occupation).toBe("Journalist");
   });
 

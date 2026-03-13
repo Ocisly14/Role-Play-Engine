@@ -1,7 +1,10 @@
-import type { NodeHandler, ExecutionContext } from "../types.js";
+import type {
+  CharacterAction,
+  PlanNode,
+} from "../../dynamicBasicAgent/npcPlanning/types.js";
 import type { DynamicGameStateManager } from "../../state/DynamicGameState.js";
-import type { PlanNode, CharacterAction } from "../../dynamicBasicAgent/npcPlanning/types.js";
 import { buildOutcome, makeAction } from "../shared/nodeHelpers.js";
+import type { ExecutionContext, NodeHandler } from "../types.js";
 
 export const characterInteractionHandler: NodeHandler = {
   type: "character_interaction",
@@ -48,7 +51,9 @@ export const characterInteractionHandler: NodeHandler = {
     const afterScene = ctx.applyPenalties(npcSkills, scenePenalties);
     const adjustedSkills = ctx.applyPenalties(afterScene, charPenalties);
 
-    let resolvedSuccessLevel: import("../../dynamicBasicAgent/npcPlanning/types.js").SuccessLevel | undefined;
+    let resolvedSuccessLevel:
+      | import("../../dynamicBasicAgent/npcPlanning/types.js").SuccessLevel
+      | undefined;
     let lastRollDetail: string | undefined;
 
     // Location check
@@ -105,7 +110,11 @@ export const characterInteractionHandler: NodeHandler = {
             node,
             "failed",
             buildOutcome(node, "failed", { rollDetail: lastRollDetail }),
-            { difficulty, successLevel: resolvedSuccessLevel, failureReason: "skill_roll_failed" }
+            {
+              difficulty,
+              successLevel: resolvedSuccessLevel,
+              failureReason: "skill_roll_failed",
+            }
           );
         }
         lastRollDetail = rollResult.detail;
@@ -121,14 +130,20 @@ export const characterInteractionHandler: NodeHandler = {
           return makeAction(
             node,
             "failed",
-            buildOutcome(node, "failed", { reason: `item ${payload.itemId} not in inventory` }),
-            { difficulty, failureReason: "object_not_found" },
+            buildOutcome(node, "failed", {
+              reason: `item ${payload.itemId} not in inventory`,
+            }),
+            { difficulty, failureReason: "object_not_found" }
           );
         }
         dgsm.addItemToNpc(node.targetCharacterId, item);
-      } else if (payload.transferType === "information" && payload.relatedKnowledgeIds?.length) {
+      } else if (
+        payload.transferType === "information" &&
+        payload.relatedKnowledgeIds?.length
+      ) {
         // Knowledge transfer to all targets
-        const targets = payload.targetCharacterIds ??
+        const targets =
+          payload.targetCharacterIds ??
           (node.targetCharacterId ? [node.targetCharacterId] : []);
         const filteredTargets = targets.filter((id) => id !== node.characterId);
         for (const knowledgeId of payload.relatedKnowledgeIds) {

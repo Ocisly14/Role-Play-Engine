@@ -5,7 +5,6 @@ import { CharacterSheetModal } from "../components/CharacterSheetModal";
 import { FrameImage } from "../components/FrameImage";
 import { authFetch } from "../utils/authFetch";
 
-
 interface HomeProps {
   onCreate: () => void;
   onStartGame: () => void;

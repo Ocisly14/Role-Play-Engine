@@ -511,10 +511,18 @@ export function GameSidebar({
             {roomPlayers
               .filter((p) => !p.isCurrentUser)
               .map((player) => {
-                const hpPct = Math.max(0, Math.min(100, (player.hp / player.maxHp) * 100));
-                const sanPct = Math.max(0, Math.min(100, (player.san / player.initialSan) * 100));
-                const hpColor = hpPct > 50 ? "#4ade80" : hpPct > 25 ? "#facc15" : "#f87171";
-                const sanColor = sanPct > 50 ? "#60a5fa" : sanPct > 25 ? "#a78bfa" : "#f472b6";
+                const hpPct = Math.max(
+                  0,
+                  Math.min(100, (player.hp / player.maxHp) * 100)
+                );
+                const sanPct = Math.max(
+                  0,
+                  Math.min(100, (player.san / player.initialSan) * 100)
+                );
+                const hpColor =
+                  hpPct > 50 ? "#4ade80" : hpPct > 25 ? "#facc15" : "#f87171";
+                const sanColor =
+                  sanPct > 50 ? "#60a5fa" : sanPct > 25 ? "#a78bfa" : "#f472b6";
                 return (
                   <div
                     key={player.characterName}
@@ -527,8 +535,16 @@ export function GameSidebar({
                       <div className="flex gap-2 flex-shrink-0 items-center">
                         {/* HP bar */}
                         <div className="flex items-center gap-1">
-                          <span className="text-[9px] font-semibold uppercase tracking-wide" style={{ color: hpColor, opacity: 0.8 }}>HP</span>
-                          <div className="w-12 h-[5px] rounded-full overflow-hidden" style={{ background: "rgba(0,0,0,0.35)" }}>
+                          <span
+                            className="text-[9px] font-semibold uppercase tracking-wide"
+                            style={{ color: hpColor, opacity: 0.8 }}
+                          >
+                            HP
+                          </span>
+                          <div
+                            className="w-12 h-[5px] rounded-full overflow-hidden"
+                            style={{ background: "rgba(0,0,0,0.35)" }}
+                          >
                             <div
                               className="h-full rounded-full transition-all duration-500 ease-out"
                               style={{
@@ -541,8 +557,16 @@ export function GameSidebar({
                         </div>
                         {/* SAN bar */}
                         <div className="flex items-center gap-1">
-                          <span className="text-[9px] font-semibold uppercase tracking-wide" style={{ color: sanColor, opacity: 0.8 }}>SAN</span>
-                          <div className="w-12 h-[5px] rounded-full overflow-hidden" style={{ background: "rgba(0,0,0,0.35)" }}>
+                          <span
+                            className="text-[9px] font-semibold uppercase tracking-wide"
+                            style={{ color: sanColor, opacity: 0.8 }}
+                          >
+                            SAN
+                          </span>
+                          <div
+                            className="w-12 h-[5px] rounded-full overflow-hidden"
+                            style={{ background: "rgba(0,0,0,0.35)" }}
+                          >
                             <div
                               className="h-full rounded-full transition-all duration-500 ease-out"
                               style={{
@@ -556,7 +580,8 @@ export function GameSidebar({
                       </div>
                     </div>
                     {/* Custom tooltip — instant on hover */}
-                    <div className="pointer-events-none absolute left-1/2 -translate-x-1/2 bottom-full mb-1.5 px-3 py-1.5 rounded-lg opacity-0 scale-95 group-hover:opacity-100 group-hover:scale-100 transition-all duration-150 ease-out z-50 whitespace-nowrap"
+                    <div
+                      className="pointer-events-none absolute left-1/2 -translate-x-1/2 bottom-full mb-1.5 px-3 py-1.5 rounded-lg opacity-0 scale-95 group-hover:opacity-100 group-hover:scale-100 transition-all duration-150 ease-out z-50 whitespace-nowrap"
                       style={{
                         background: "rgba(15, 23, 42, 0.92)",
                         backdropFilter: "blur(8px)",
@@ -565,16 +590,23 @@ export function GameSidebar({
                       }}
                     >
                       <div className="flex items-center gap-3 text-[11px]">
-                        <span style={{ color: hpColor }} className="font-medium">
+                        <span
+                          style={{ color: hpColor }}
+                          className="font-medium"
+                        >
                           HP {player.hp}/{player.maxHp}
                         </span>
                         <span className="text-slate-600">|</span>
-                        <span style={{ color: sanColor }} className="font-medium">
+                        <span
+                          style={{ color: sanColor }}
+                          className="font-medium"
+                        >
                           SAN {player.san}/{player.initialSan}
                         </span>
                       </div>
                       {/* Tooltip arrow */}
-                      <div className="absolute left-1/2 -translate-x-1/2 top-full w-0 h-0"
+                      <div
+                        className="absolute left-1/2 -translate-x-1/2 top-full w-0 h-0"
                         style={{
                           borderLeft: "5px solid transparent",
                           borderRight: "5px solid transparent",
@@ -674,7 +706,8 @@ export function GameSidebar({
                       </span>
                       <span className="status-value">
                         {gameState.playerCharacter.status.sanity}/
-                        {gameState.playerCharacter.attributes?.POW ?? gameState.playerCharacter.status.sanity}
+                        {gameState.playerCharacter.attributes?.POW ??
+                          gameState.playerCharacter.status.sanity}
                       </span>
                     </div>
                     <div className="status-item">
@@ -1200,7 +1233,8 @@ export function GameSidebar({
               <>
                 {/* Macro Map — prefer per-scene dynamic map, fallback to module static map */}
                 {gameState.moduleName &&
-                (gameState.currentScenario?.mapImagePath || gameState.moduleDigest?.macroMapPath) ? (
+                (gameState.currentScenario?.mapImagePath ||
+                  gameState.moduleDigest?.macroMapPath) ? (
                   <div className="status-section">
                     <h3>{t("game:sidebar.map.macroMap")}</h3>
                     <div className="map-display">

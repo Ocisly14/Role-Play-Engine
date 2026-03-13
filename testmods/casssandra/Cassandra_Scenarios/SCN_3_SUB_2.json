@@ -53,9 +53,7 @@
       }
     }
   ],
-  "connections": [
-    "SCN_3_SUB_1"
-  ],
+  "connections": ["SCN_3_SUB_1"],
   "itemContexts": {
     "ITEM_SCN3_6": "靠墙的证物架上只剩下淡淡灰印，像是某些重要物品被匆忙撤走后留下的轮廓。"
   }

@@ -1,4 +1,7 @@
-import type { NpcMemory as PrismaNpcMemory, NpcMemoryType } from "@prisma/client";
+import type {
+  NpcMemoryType,
+  NpcMemory as PrismaNpcMemory,
+} from "@prisma/client";
 
 // Re-export Prisma types
 export type { NpcMemoryType } from "@prisma/client";
@@ -74,7 +77,11 @@ export interface ScoredMemory extends PrismaNpcMemory {
   finalScore: number;
 }
 
-export type ContextPurpose = "scheduling" | "conversation" | "reaction" | "reasoning";
+export type ContextPurpose =
+  | "scheduling"
+  | "conversation"
+  | "reaction"
+  | "reasoning";
 
 export type ReasoningTrigger =
   | "day_transition"
@@ -190,7 +197,7 @@ export interface MemoryHandler {
   prepare(
     content: string,
     metadata?: Record<string, any>,
-    location?: string,
+    location?: string
   ): {
     tags: string[];
     baseImportance: number;

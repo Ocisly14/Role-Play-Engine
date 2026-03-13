@@ -1,0 +1,57 @@
+[
+    {
+      "name": "Isaiah Arbar",
+      "occupation": "Wealthy Investor / Cult Financier",
+      "appearance": "A middle-aged man who appears unnaturally youthful, fit, and well-groomed, with an aura of affluence and confidence that borders on the unsettling.",
+      "personality": "Calculating, ambitious, morally corrupt, and increasingly detached from normal human ethics after prolonged exposure to occult practices.",
+      "background": "Isaiah Arbar arrived in Cassandra six years ago with fellow businessman David Campbell to invest and conduct business. Both men were drawn into the influence of their wives, who were members of the transatlantic cult known as the Black Goat Cult. Initially horrified by the cult’s rituals, Isaiah’s perspective changed after participating in a blasphemous ceremony and consuming the ‘milk’ of the Dark Mother, which granted him youth, strength, and beauty. Together with David, he profited enormously by commodifying this source. In 2002, during a ritual, Isaiah was transformed into a monstrous being known as a Gof’n-Hupadgo of Shub-Niggurath and disappeared from public view.",
+      "goals": [
+        "Gain eternal vitality and transcend human limitations",
+        "Secure power and profit through occult means"
+      ],
+      "secrets": [
+        "He participated in human sacrifice rituals dedicated to Shub-Niggurath",
+        "He was transformed into a monstrous entity during a ritual in 2002"
+      ],
+      "attributes": {
+        "STR": 70,
+        "CON": 75,
+        "DEX": 60,
+        "APP": 80,
+        "POW": 70,
+        "SIZ": 65,
+        "INT": 75,
+        "EDU": 80
+      },
+      "skills": {
+        "Occult": 60,
+        "Persuade": 65,
+        "Intimidate": 55,
+        "Accounting": 60
+      },
+      "clues": [
+        {
+          "clueText": "Isaiah Arbar and David Campbell invested in Cassandra and secretly financed cult activities tied to Shub-Niggurath.",
+          "category": "knowledge",
+          "difficulty": "hard",
+          "relatedTo": ["David Campbell", "Black Goat Cult", "Cassandra"]
+        },
+        {
+          "clueText": "Isaiah gained unnatural youth and strength after consuming the ‘milk’ of the Dark Mother.",
+          "category": "secret",
+          "difficulty": "extreme",
+          "relatedTo": ["Shub-Niggurath"]
+        }
+      ],
+      "relationships": [
+        {
+          "targetName": "David Campbell",
+          "relationshipType": "ally",
+          "attitude": 70,
+          "description": "Business partner and fellow cult collaborator.",
+          "history": "They traveled together across Europe and the United States, investing and conducting rituals while fleeing authorities."
+        }
+      ],
+      "notes": "Officially listed as missing since 2002; no longer fully human."
+    }
+]

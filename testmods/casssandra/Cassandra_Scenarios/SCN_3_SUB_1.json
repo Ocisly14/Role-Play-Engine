@@ -48,11 +48,7 @@
       }
     }
   ],
-  "connections": [
-    "SCN_3_SUB_2",
-    "SCN_3_SUB_3",
-    "JUNC_8"
-  ],
+  "connections": ["SCN_3_SUB_2", "SCN_3_SUB_3", "JUNC_8"],
   "itemContexts": {
     "ITEM_SCN3_1": "大厅接待区摆放着几张办公桌，桌面堆着日常文件、通讯记录和几只喝空的纸杯。",
     "ITEM_SCN3_11": "办公桌后方竖着几只金属文件柜，抽屉把手被常年拉拽得漆面斑驳。",

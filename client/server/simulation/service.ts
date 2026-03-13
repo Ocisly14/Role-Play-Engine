@@ -1,34 +1,34 @@
-import type { PrismaClient } from "@prisma/client";
 import { randomUUID } from "crypto";
+import type { PrismaClient } from "@prisma/client";
 import { WebSocket } from "ws";
-import { SimulationRunner } from "../../../src/dynamicworldagent/simulation/SimulationRunner.js";
-import {
-  loadSimulationRuntime,
-  listSimulationRuntimeRecords,
-  runtimeToStatus,
-} from "../../../src/dynamicworldagent/simulation/runtimePersistence.js";
+import { NPCPlanningAgent } from "../../../src/dynamicworldagent/dynamicBasicAgent/npcPlanning/NPCPlanningAgent.js";
 import {
   createDefaultRegistry,
   createExecutionContext,
 } from "../../../src/dynamicworldagent/engine/index.js";
-import { NPCPlanningAgent } from "../../../src/dynamicworldagent/dynamicBasicAgent/npcPlanning/NPCPlanningAgent.js";
 import { NpcMemoryManager } from "../../../src/dynamicworldagent/memory/NpcMemoryManager.js";
-import { EmbeddingClient } from "../../../src/rag/embedding.js";
-import { ModelProviderName } from "../../../src/models/types.js";
+import { SimulationRunner } from "../../../src/dynamicworldagent/simulation/SimulationRunner.js";
 import {
-  DynamicGameStateManager,
-  type DynamicGameState,
-} from "../../../src/dynamicworldagent/state/DynamicGameState.js";
-import { initializeCompleteDynamicGameState } from "../../../src/dynamicworldagent/state/DynamicGameStateLoader.js";
-import { resolveModuleIdByName } from "../../../src/shared/agents/memory/database/moduleScope.js";
-import { resolveEmailId } from "../../../src/shared/agents/memory/database/userContext.js";
-import { DatabaseManager } from "../core/DatabaseManager.js";
-import { WebSocketManager } from "../websocket/WebSocketManager.js";
+  listSimulationRuntimeRecords,
+  loadSimulationRuntime,
+  runtimeToStatus,
+} from "../../../src/dynamicworldagent/simulation/runtimePersistence.js";
 import type {
   SimulationConfig,
   SimulationEvent,
   SimulationStatus,
 } from "../../../src/dynamicworldagent/simulation/types.js";
+import {
+  type DynamicGameState,
+  DynamicGameStateManager,
+} from "../../../src/dynamicworldagent/state/DynamicGameState.js";
+import { initializeCompleteDynamicGameState } from "../../../src/dynamicworldagent/state/DynamicGameStateLoader.js";
+import { ModelProviderName } from "../../../src/models/types.js";
+import { EmbeddingClient } from "../../../src/rag/embedding.js";
+import { resolveModuleIdByName } from "../../../src/shared/agents/memory/database/moduleScope.js";
+import { resolveEmailId } from "../../../src/shared/agents/memory/database/userContext.js";
+import { DatabaseManager } from "../core/DatabaseManager.js";
+import { WebSocketManager } from "../websocket/WebSocketManager.js";
 
 const runners = new Map<string, SimulationRunner>();
 
@@ -36,7 +36,11 @@ const runners = new Map<string, SimulationRunner>();
  * Wire event listener on a runner: persist each simulation event to DB and
  * broadcast it via WebSocket to all registered simulation viewer clients.
  */
-function wireEventListener(prisma: PrismaClient, runner: SimulationRunner, sessionId: string): void {
+function wireEventListener(
+  prisma: PrismaClient,
+  runner: SimulationRunner,
+  sessionId: string
+): void {
   runner.events.on("simulation_event", async (event: SimulationEvent) => {
     // Persist to DB (skipDuplicates handles events already persisted by runner)
     try {
@@ -59,7 +63,10 @@ function wireEventListener(prisma: PrismaClient, runner: SimulationRunner, sessi
         skipDuplicates: true,
       });
     } catch (err) {
-      console.error(`[SimulationService] Failed to persist simulation event ${event.id}:`, err);
+      console.error(
+        `[SimulationService] Failed to persist simulation event ${event.id}:`,
+        err
+      );
     }
 
     // Broadcast via WebSocket to simulation viewer clients
@@ -72,7 +79,10 @@ function wireEventListener(prisma: PrismaClient, runner: SimulationRunner, sessi
           try {
             client.ws.send(message);
           } catch (err) {
-            console.error(`[SimulationService] Failed to broadcast simulation event to client:`, err);
+            console.error(
+              `[SimulationService] Failed to broadcast simulation event to client:`,
+              err
+            );
           }
         }
       }
@@ -99,7 +109,11 @@ function buildSimulationBundle(params: {
     ModelProviderName.OPENAI;
   const embedClient = new EmbeddingClient(provider);
   const memoryManager = new NpcMemoryManager(params.prisma, embedClient);
-  const npcPlanningAgent = new NPCPlanningAgent(params.prisma, {}, memoryManager);
+  const npcPlanningAgent = new NPCPlanningAgent(
+    params.prisma,
+    {},
+    memoryManager
+  );
 
   const runner = new SimulationRunner({
     config: params.config,
@@ -116,14 +130,14 @@ function buildSimulationBundle(params: {
 }
 
 export function getRunnerFromMemory(
-  sessionId: string,
+  sessionId: string
 ): SimulationRunner | undefined {
   return runners.get(sessionId);
 }
 
 export async function getRunner(
   prisma: PrismaClient,
-  sessionId: string,
+  sessionId: string
 ): Promise<SimulationRunner | undefined> {
   const existing = runners.get(sessionId);
   if (existing) return existing;
@@ -152,7 +166,7 @@ export async function getRunner(
 }
 
 export async function listSimulations(
-  prisma: PrismaClient,
+  prisma: PrismaClient
 ): Promise<(SimulationStatus & { sessionId: string })[]> {
   const runtimes = await listSimulationRuntimeRecords(prisma);
 
@@ -175,8 +189,8 @@ export async function createSimulation(
   prisma: PrismaClient,
   moduleName: string,
   _userId: string,
-  language: string = "en",
-  config?: Partial<SimulationConfig>,
+  language = "en",
+  config?: Partial<SimulationConfig>
 ): Promise<{ sessionId: string; status: SimulationStatus }> {
   const sessionId = randomUUID();
   const db = DatabaseManager.getInstance().getDatabase();
@@ -192,7 +206,9 @@ export async function createSimulation(
     emailId,
   });
   if (!gameState) {
-    throw new Error(`Failed to initialize game state for module "${moduleName}"`);
+    throw new Error(
+      `Failed to initialize game state for module "${moduleName}"`
+    );
   }
 
   await prisma.session.update({
@@ -218,6 +234,7 @@ export async function createSimulation(
   await runner.saveRuntime();
 
   wireEventListener(prisma, runner, sessionId);
+  runner.setModuleName(moduleName);
   runners.set(sessionId, runner);
 
   return { sessionId, status: runner.getStatus() };
@@ -225,7 +242,7 @@ export async function createSimulation(
 
 async function requireRunner(
   prisma: PrismaClient,
-  sessionId: string,
+  sessionId: string
 ): Promise<SimulationRunner> {
   const runner = await getRunner(prisma, sessionId);
   if (!runner) throw new Error(`Simulation ${sessionId} not found`);
@@ -234,7 +251,7 @@ async function requireRunner(
 
 export async function startSimulation(
   prisma: PrismaClient,
-  sessionId: string,
+  sessionId: string
 ): Promise<void> {
   const runner = await requireRunner(prisma, sessionId);
   await runner.start();
@@ -242,7 +259,7 @@ export async function startSimulation(
 
 export async function pauseSimulation(
   prisma: PrismaClient,
-  sessionId: string,
+  sessionId: string
 ): Promise<void> {
   const runner = await requireRunner(prisma, sessionId);
   await runner.pause();
@@ -250,7 +267,7 @@ export async function pauseSimulation(
 
 export async function resumeSimulation(
   prisma: PrismaClient,
-  sessionId: string,
+  sessionId: string
 ): Promise<void> {
   const runner = await requireRunner(prisma, sessionId);
   await runner.resume();
@@ -259,7 +276,7 @@ export async function resumeSimulation(
 export async function stepSimulation(
   prisma: PrismaClient,
   sessionId: string,
-  ticks: number = 1,
+  ticks = 1
 ): Promise<void> {
   const runner = await requireRunner(prisma, sessionId);
   await runner.step(ticks);
@@ -267,7 +284,7 @@ export async function stepSimulation(
 
 export async function stopSimulation(
   prisma: PrismaClient,
-  sessionId: string,
+  sessionId: string
 ): Promise<void> {
   const runner = await requireRunner(prisma, sessionId);
   await runner.stop();
@@ -276,7 +293,7 @@ export async function stopSimulation(
 
 export async function getSimulationStatus(
   prisma: PrismaClient,
-  sessionId: string,
+  sessionId: string
 ): Promise<SimulationStatus> {
   const runner = await requireRunner(prisma, sessionId);
   return runner.getStatus();
@@ -289,7 +306,7 @@ export async function getSimulationEvents(
     type?: string;
     npcId?: string;
     day?: number;
-  },
+  }
 ): Promise<SimulationEvent[]> {
   const where: Record<string, unknown> = { sessionId };
   if (filters?.type) where.type = filters.type;

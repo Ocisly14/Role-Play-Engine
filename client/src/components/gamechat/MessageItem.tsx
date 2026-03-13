@@ -55,7 +55,9 @@ export const MessageItem = React.memo<MessageItemProps>(
             padding: "0 8px",
           }}
         >
-          <div style={{ flex: 1, height: "2px", background: color, opacity: 0.4 }} />
+          <div
+            style={{ flex: 1, height: "2px", background: color, opacity: 0.4 }}
+          />
           <span
             style={{
               color,
@@ -68,7 +70,9 @@ export const MessageItem = React.memo<MessageItemProps>(
           >
             {label}
           </span>
-          <div style={{ flex: 1, height: "2px", background: color, opacity: 0.4 }} />
+          <div
+            style={{ flex: 1, height: "2px", background: color, opacity: 0.4 }}
+          />
         </div>
       );
     }
@@ -79,7 +83,10 @@ export const MessageItem = React.memo<MessageItemProps>(
     if (isOtherPlayer) {
       // Other player's message — left-aligned, with name label, different bg
       return (
-        <div className="chat-message character" style={{ alignItems: "flex-start" }}>
+        <div
+          className="chat-message character"
+          style={{ alignItems: "flex-start" }}
+        >
           <div className="message-meta">
             <span className="sender-name text-blue-700/80">
               🎭 {playerName}
@@ -96,7 +103,10 @@ export const MessageItem = React.memo<MessageItemProps>(
           {isSkip ? (
             <div className="message-text backdrop-blur-sm border border-slate-200/60 shadow-sm rounded-lg px-[18px] py-[10px] bg-[rgba(200,210,230,0.35)]">
               <span className="text-slate-500 italic text-sm">
-                {playerName} {t("multiplayer.skippedRound", { defaultValue: "skipped this round" })}
+                {playerName}{" "}
+                {t("multiplayer.skippedRound", {
+                  defaultValue: "skipped this round",
+                })}
               </span>
             </div>
           ) : content ? (
@@ -151,7 +161,10 @@ export const MessageItem = React.memo<MessageItemProps>(
         {isSkip ? (
           <div className="message-text backdrop-blur-sm border border-slate-200/60 shadow-sm rounded-lg px-[18px] py-[10px] bg-[rgba(232,220,196,0.3)]">
             <span className="text-slate-500 italic text-sm">
-              {characterName} {t("multiplayer.skippedRound", { defaultValue: "skipped this round" })}
+              {characterName}{" "}
+              {t("multiplayer.skippedRound", {
+                defaultValue: "skipped this round",
+              })}
             </span>
           </div>
         ) : content ? (

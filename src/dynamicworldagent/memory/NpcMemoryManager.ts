@@ -1,22 +1,22 @@
-import type { PrismaClient, NpcMemory } from "@prisma/client";
+import type { NpcMemory, PrismaClient } from "@prisma/client";
 import type { EmbeddingClient } from "../../rag/embedding.js";
-import { MemoryStore } from "./MemoryStore.js";
-import { MemoryRetriever } from "./MemoryRetriever.js";
 import { DecayEngine } from "./DecayEngine.js";
-import { getHandler, getAllHandlers } from "./handlers/index.js";
-import {
-  CONTEXT_PROFILES,
-  MIN_MEMORIES_FOR_REASONING,
-  type AddMemoryParams,
-  type QueryMemoryParams,
-  type GetContextParams,
-  type ScoredMemory,
-  type TriggerReasoningParams,
-} from "./types.js";
+import { MemoryRetriever } from "./MemoryRetriever.js";
+import { MemoryStore } from "./MemoryStore.js";
+import { getAllHandlers, getHandler } from "./handlers/index.js";
 import {
   buildReasoningPrompt,
   parseReasoningOutput,
 } from "./prompts/reasoningPrompt.js";
+import {
+  type AddMemoryParams,
+  CONTEXT_PROFILES,
+  type GetContextParams,
+  MIN_MEMORIES_FOR_REASONING,
+  type QueryMemoryParams,
+  type ScoredMemory,
+  type TriggerReasoningParams,
+} from "./types.js";
 
 export class NpcMemoryManager {
   private store: MemoryStore;
@@ -42,8 +42,17 @@ export class NpcMemoryManager {
   }
 
   /** Fetch all memories for a specific NPC on a specific game day (no scoring/semantic filtering). */
-  async getAllForDay(npcId: string, sessionId: string, gameDay: number): Promise<NpcMemory[]> {
-    return this.store.findCandidates({ sessionId, npcId, filters: { gameDay }, limit: 500 });
+  async getAllForDay(
+    npcId: string,
+    sessionId: string,
+    gameDay: number
+  ): Promise<NpcMemory[]> {
+    return this.store.findCandidates({
+      sessionId,
+      npcId,
+      filters: { gameDay },
+      limit: 500,
+    });
   }
 
   // ===== Context Building =====
@@ -74,7 +83,10 @@ export class NpcMemoryManager {
         npcId: params.npcId,
         sessionId: params.sessionId,
         query,
-        filters: { types: profile.defaultTypes, currentGameDay: params.currentGameDay },
+        filters: {
+          types: profile.defaultTypes,
+          currentGameDay: params.currentGameDay,
+        },
         limit: profile.defaultLimit,
       });
     }
@@ -99,7 +111,7 @@ export class NpcMemoryManager {
           lastAccessedAt: m.lastAccessedAt,
           decayRateMultiplier,
         },
-        now,
+        now
       );
       return { id: m.id, importance: newImportance };
     });
@@ -113,7 +125,7 @@ export class NpcMemoryManager {
 
   async deletePostCheckpoint(
     sessionId: string,
-    checkpointCreatedAt: Date,
+    checkpointCreatedAt: Date
   ): Promise<void> {
     await this.store.deletePostCheckpoint(sessionId, checkpointCreatedAt);
   }
@@ -124,7 +136,7 @@ export class NpcMemoryManager {
     memoryId: string,
     newConfidence: number,
     reason: string,
-    currentMetadata: Record<string, any>,
+    currentMetadata: Record<string, any>
   ): Promise<void> {
     const updatedMetadata = {
       ...currentMetadata,
@@ -142,7 +154,7 @@ export class NpcMemoryManager {
     npcName: string,
     npcProfile: string,
     generateTextFn: (prompt: string) => Promise<string>,
-    language?: string,
+    language?: string
   ): Promise<NpcMemory[]> {
     // Fetch relevant memories for reasoning
     const memories = await this.retriever.query({
@@ -212,7 +224,7 @@ export class NpcMemoryManager {
     // Update existing beliefs
     for (const update of result.updatedBeliefs) {
       const existing = activeBeliefs.find(
-        (b) => b.content === update.originalBelief,
+        (b) => b.content === update.originalBelief
       );
       if (!existing) continue;
 
@@ -220,7 +232,7 @@ export class NpcMemoryManager {
         existing.id,
         update.newConfidence,
         update.reason,
-        (existing.metadata as Record<string, any>) ?? {},
+        (existing.metadata as Record<string, any>) ?? {}
       );
     }
 
@@ -230,7 +242,7 @@ export class NpcMemoryManager {
   async shouldTriggerReasoningOnConversation(
     npcId: string,
     sessionId: string,
-    playerUtterance: string,
+    playerUtterance: string
   ): Promise<boolean> {
     const results = await this.retriever.query({
       npcId,
@@ -239,8 +251,7 @@ export class NpcMemoryManager {
       limit: 5,
     });
 
-    const maxSimilarity =
-      results.length > 0 ? results[0].similarityScore : 0;
+    const maxSimilarity = results.length > 0 ? results[0].similarityScore : 0;
     return maxSimilarity < 0.3;
   }
 }

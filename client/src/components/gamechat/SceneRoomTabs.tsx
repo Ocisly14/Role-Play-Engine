@@ -28,7 +28,8 @@ export const SceneRoomTabs: React.FC<SceneRoomTabsProps> = ({
         const isActive = room.sceneRoomId === activeTabId;
         const isMine = room.sceneRoomId === mySceneRoomId;
         const playerCount = room.memberPlayerIds.length;
-        const displayName = room.scenarioName || t("multiplayer.unknownScene", "Unknown");
+        const displayName =
+          room.scenarioName || t("multiplayer.unknownScene", "Unknown");
 
         return (
           <button

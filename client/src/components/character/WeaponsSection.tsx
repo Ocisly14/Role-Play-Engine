@@ -139,9 +139,7 @@ export const WeaponsSection: React.FC<WeaponsSectionProps> = ({
                 />
               </td>
               <td>
-                <span className="mobile-weapon-label">
-                  {t("weapons.ammo")}
-                </span>
+                <span className="mobile-weapon-label">{t("weapons.ammo")}</span>
                 <input
                   name={`weapon_${i}_ammo`}
                   placeholder={i === 0 ? "6" : "-"}

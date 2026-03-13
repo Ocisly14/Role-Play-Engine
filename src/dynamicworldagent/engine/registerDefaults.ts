@@ -1,16 +1,16 @@
-import { GameEngineRegistry } from "./registry.js";
+import { fireFeature } from "./features/fireFeature.js";
+import { lightingFeature } from "./features/lightingFeature.js";
+import { sanityFeature } from "./features/sanityFeature.js";
+import { staminaFeature } from "./features/staminaFeature.js";
+import { weatherFeature } from "./features/weatherFeature.js";
 import {
-  routineHandler,
-  movementHandler,
   characterInteractionHandler,
+  movementHandler,
   objectInteractionHandler,
+  routineHandler,
   sceneInteractionHandler,
 } from "./handlers/index.js";
-import { fireFeature } from "./features/fireFeature.js";
-import { weatherFeature } from "./features/weatherFeature.js";
-import { lightingFeature } from "./features/lightingFeature.js";
-import { staminaFeature } from "./features/staminaFeature.js";
-import { sanityFeature } from "./features/sanityFeature.js";
+import { GameEngineRegistry } from "./registry.js";
 
 export function createDefaultRegistry(): GameEngineRegistry {
   const registry = new GameEngineRegistry();

@@ -1,8 +1,11 @@
-import type { NodeHandler, ExecutionContext } from "../types.js";
+import type {
+  CharacterAction,
+  PlanNode,
+} from "../../dynamicBasicAgent/npcPlanning/types.js";
 import type { DynamicGameStateManager } from "../../state/DynamicGameState.js";
-import type { PlanNode, CharacterAction } from "../../dynamicBasicAgent/npcPlanning/types.js";
-import { buildOutcome, makeAction } from "../shared/nodeHelpers.js";
 import { restCharacter } from "../features/staminaFeature.js";
+import { buildOutcome, makeAction } from "../shared/nodeHelpers.js";
+import type { ExecutionContext, NodeHandler } from "../types.js";
 
 export const routineHandler: NodeHandler = {
   type: "routine",
@@ -43,7 +46,9 @@ export const routineHandler: NodeHandler = {
     const afterScene = ctx.applyPenalties(npcSkills, scenePenalties);
     const adjustedSkills = ctx.applyPenalties(afterScene, charPenalties);
 
-    let resolvedSuccessLevel: import("../../dynamicBasicAgent/npcPlanning/types.js").SuccessLevel | undefined;
+    let resolvedSuccessLevel:
+      | import("../../dynamicBasicAgent/npcPlanning/types.js").SuccessLevel
+      | undefined;
     let lastRollDetail: string | undefined;
 
     // Location check
@@ -66,7 +71,11 @@ export const routineHandler: NodeHandler = {
           node,
           "failed",
           buildOutcome(node, "failed", { rollDetail: lastRollDetail }),
-          { difficulty, successLevel: resolvedSuccessLevel, failureReason: "skill_roll_failed" }
+          {
+            difficulty,
+            successLevel: resolvedSuccessLevel,
+            failureReason: "skill_roll_failed",
+          }
         );
       }
       lastRollDetail = rollResult.detail;

@@ -1,27 +1,22 @@
-import type { PrismaClient } from "@prisma/client";
 import { randomUUID } from "crypto";
-import { generateText, ModelClass } from "../../../models/index.js";
-import type { DynamicGameStateManager } from "../../state/DynamicGameState.js";
+import type { PrismaClient } from "@prisma/client";
+import { ModelClass, generateText } from "../../../models/index.js";
+import type { GameEngineRegistry } from "../../engine/registry.js";
+import { getTopologyNeighbors } from "../../engine/shared/topologyHelpers.js";
 import type { NpcMemoryManager } from "../../memory/NpcMemoryManager.js";
+import type { DynamicGameStateManager } from "../../state/DynamicGameState.js";
+import { formatItemList, formatSceneItems } from "./itemFormatHelpers.js";
 import {
   buildDailySchedulePrompt,
   buildDetailedNodesPrompt,
-  buildReviseSchedulePrompt,
-  buildRevisePlansPrompt,
   buildImpactGatePrompt,
   buildRelationshipUpdatePrompt,
+  buildRevisePlansPrompt,
+  buildReviseSchedulePrompt,
   buildSummarizeDayMemoryPrompt,
 } from "./npcPlanningTemplates.js";
-import type {
-  PlanNode,
-  RevisePlansContext,
-  CharacterAction,
-  ScheduleEntry,
-} from "./types.js";
-import { formatSceneItems, formatItemList } from "./itemFormatHelpers.js";
 import { formatSceneMap } from "./sceneMapFormatter.js";
-import type { GameEngineRegistry } from "../../engine/registry.js";
-import { getTopologyNeighbors } from "../../engine/shared/topologyHelpers.js";
+import type { PlanNode, RevisePlansContext, ScheduleEntry } from "./types.js";
 
 function parseJsonResponse<T>(raw: string): T {
   let text = raw.trim();
@@ -35,7 +30,7 @@ export class NPCPlanningAgent {
   constructor(
     private prisma: PrismaClient,
     private runtime: any,
-    private memoryManager?: NpcMemoryManager,
+    private memoryManager?: NpcMemoryManager
   ) {}
 
   getMemoryManager(): NpcMemoryManager | undefined {
@@ -49,7 +44,7 @@ export class NPCPlanningAgent {
   async seedLongTermIntents(
     dgsm: DynamicGameStateManager,
     sessionId: string,
-    moduleId: string,
+    moduleId: string
   ): Promise<void> {
     const state = dgsm.getState();
     const npcs = state.npcCharacters;
@@ -58,7 +53,7 @@ export class NPCPlanningAgent {
       npcs.map(async (npc) => {
         const intent = npc.goals?.length
           ? npc.goals.join("; ")
-          : npc.background ?? "No specific goal.";
+          : (npc.background ?? "No specific goal.");
 
         await this.prisma.npcLongTermIntent.upsert({
           where: {
@@ -98,11 +93,18 @@ export class NPCPlanningAgent {
     sessionId: string,
     moduleId: string,
     gameDay: number,
-    language: string = "en",
+    language = "en",
     registry?: GameEngineRegistry
   ): Promise<void> {
     // Delegate to two-tier schedule generation
-    await this.generateDailySchedule(dgsm, sessionId, moduleId, gameDay, language, registry);
+    await this.generateDailySchedule(
+      dgsm,
+      sessionId,
+      moduleId,
+      gameDay,
+      language,
+      registry
+    );
   }
 
   async generateDailySchedule(
@@ -110,7 +112,7 @@ export class NPCPlanningAgent {
     sessionId: string,
     moduleId: string,
     gameDay: number,
-    language: string = "en",
+    language = "en",
     registry?: GameEngineRegistry
   ): Promise<void> {
     const state = dgsm.getState();
@@ -118,7 +120,15 @@ export class NPCPlanningAgent {
 
     await Promise.all(
       npcs.map(async (npc) => {
-        await this.generateSingleNpcSchedule(dgsm, sessionId, moduleId, npc.id, gameDay, language, registry);
+        await this.generateSingleNpcSchedule(
+          dgsm,
+          sessionId,
+          moduleId,
+          npc.id,
+          gameDay,
+          language,
+          registry
+        );
       })
     );
   }
@@ -129,7 +139,7 @@ export class NPCPlanningAgent {
     moduleId: string,
     npcId: string,
     gameDay: number,
-    language: string = "en",
+    language = "en",
     registry?: GameEngineRegistry
   ): Promise<void> {
     const state = dgsm.getState();
@@ -153,7 +163,12 @@ export class NPCPlanningAgent {
     const sceneMap = this.formatSceneMap(dgsm, npc.id);
     const npcLocation = state.npcLocations[npc.id];
     const scenarioConditions = this.formatNpcLocalConditions(dgsm, npcLocation);
-    const worldStatePrompt = this.buildNpcWorldStatePrompt(dgsm, npc.id, npcLocation, registry);
+    const worldStatePrompt = this.buildNpcWorldStatePrompt(
+      dgsm,
+      npc.id,
+      npcLocation,
+      registry
+    );
 
     const { systemPrompt, userPrompt } = buildDailySchedulePrompt({
       npcName: npc.name,
@@ -220,7 +235,7 @@ export class NPCPlanningAgent {
     sessionId: string,
     npcId: string,
     gameDay: number,
-    language: string = "en",
+    language = "en",
     registry?: GameEngineRegistry
   ): Promise<PlanNode[]> {
     const state = dgsm.getState();
@@ -237,18 +252,30 @@ export class NPCPlanningAgent {
     const memoryLog = await this.getNpcDayMemoryLog(sessionId, npcId, gameDay);
 
     const currentLocation = state.npcLocations[npcId] ?? "";
-    const currentScene = currentLocation ? state.scenes.get(currentLocation) ?? null : null;
+    const currentScene = currentLocation
+      ? (state.scenes.get(currentLocation) ?? null)
+      : null;
     const sceneDescription = currentScene?.description ?? "";
     const sceneItems = formatSceneItems(currentScene);
     const sceneConditions = currentScene
-      ? dgsm.getSceneConditions(currentScene.id).map((c) => `- ${c.description}`).join("\n")
+      ? dgsm
+          .getSceneConditions(currentScene.id)
+          .map((c) => `- ${c.description}`)
+          .join("\n")
       : "";
-    const worldStatePrompt = this.buildNpcWorldStatePrompt(dgsm, npcId, currentLocation, registry);
+    const worldStatePrompt = this.buildNpcWorldStatePrompt(
+      dgsm,
+      npcId,
+      currentLocation,
+      registry
+    );
 
     // NPCs at current location with relationship info
     const relationshipGraph = state.npcRelationshipGraph[npcId] ?? {};
     const npcsAtLocation = state.npcCharacters
-      .filter((n) => n.id !== npcId && state.npcLocations[n.id] === currentLocation)
+      .filter(
+        (n) => n.id !== npcId && state.npcLocations[n.id] === currentLocation
+      )
       .map((n) => {
         const parts = [`- ${n.name} (${n.id})`];
         if (n.appearance) parts.push(`appearance: ${n.appearance}`);
@@ -321,7 +348,7 @@ export class NPCPlanningAgent {
     npcId: string,
     gameDay: number,
     currentTime: string,
-    language: string = "en",
+    language = "en",
     registry?: GameEngineRegistry
   ): Promise<void> {
     const pendingNodes = await this.getPendingNodes(sessionId, npcId, gameDay);
@@ -337,17 +364,29 @@ export class NPCPlanningAgent {
         where: { sessionId },
         select: { moduleId: true },
       });
-      const moduleId = existingPlan?.moduleId ?? (await this.prisma.npcLongTermIntent.findFirst({
-        where: { sessionId },
-        select: { moduleId: true },
-      }))?.moduleId;
+      const moduleId =
+        existingPlan?.moduleId ??
+        (
+          await this.prisma.npcLongTermIntent.findFirst({
+            where: { sessionId },
+            select: { moduleId: true },
+          })
+        )?.moduleId;
       if (moduleId) {
         // Seed long-term intent from module data if missing
         const hasIntent = await this.getLongTermIntent(sessionId, npcId);
         if (!hasIntent) {
           await this.seedLongTermIntents(dgsm, sessionId, moduleId);
         }
-        await this.generateSingleNpcSchedule(dgsm, sessionId, moduleId, npcId, gameDay, language, registry);
+        await this.generateSingleNpcSchedule(
+          dgsm,
+          sessionId,
+          moduleId,
+          npcId,
+          gameDay,
+          language,
+          registry
+        );
       }
     }
 
@@ -355,10 +394,18 @@ export class NPCPlanningAgent {
       where: { sessionId_npcId_gameDay: { sessionId, npcId, gameDay } },
       select: { schedule: true },
     });
-    const schedule = (refreshedPlan?.schedule as unknown as ScheduleEntry[]) ?? [];
+    const schedule =
+      (refreshedPlan?.schedule as unknown as ScheduleEntry[]) ?? [];
     if (schedule.length === 0) return; // No more schedule entries for today
 
-    await this.generateDetailedNodes(dgsm, sessionId, npcId, gameDay, language, registry);
+    await this.generateDetailedNodes(
+      dgsm,
+      sessionId,
+      npcId,
+      gameDay,
+      language,
+      registry
+    );
   }
 
   async reviseSchedule(
@@ -366,7 +413,7 @@ export class NPCPlanningAgent {
     sessionId: string,
     npcId: string,
     triggerDescription: string,
-    language: string = "en",
+    language = "en",
     registry?: GameEngineRegistry
   ): Promise<void> {
     const state = dgsm.getState();
@@ -408,7 +455,12 @@ export class NPCPlanningAgent {
       relationships: this.formatRelationships(dgsm, npcId),
       sceneMap: this.formatSceneMap(dgsm, npcId),
       scenarioConditions: this.formatNpcLocalConditions(dgsm, npcLocation),
-      worldStatePrompt: this.buildNpcWorldStatePrompt(dgsm, npcId, npcLocation, registry),
+      worldStatePrompt: this.buildNpcWorldStatePrompt(
+        dgsm,
+        npcId,
+        npcLocation,
+        registry
+      ),
       remainingSchedule: JSON.stringify(schedule, null, 2),
       triggerDescription,
       gameDay,
@@ -447,7 +499,7 @@ export class NPCPlanningAgent {
     sessionId: string,
     npcId: string,
     context: RevisePlansContext,
-    language: string = "en",
+    language = "en",
     registry?: GameEngineRegistry
   ): Promise<void> {
     const state = dgsm.getState();
@@ -460,13 +512,17 @@ export class NPCPlanningAgent {
         : `Witnessed: ${context.trigger.triggeringAction.action} by ${context.trigger.triggeringAction.characterName} (${context.trigger.triggeringAction.outcome})`;
 
     const currentLocation = state.npcLocations[npcId] ?? "";
-    const currentScene = currentLocation ? state.scenes.get(currentLocation) ?? null : null;
+    const currentScene = currentLocation
+      ? (state.scenes.get(currentLocation) ?? null)
+      : null;
     const plan = await this.getDailyPlan(sessionId, npcId, state.gameDay);
     const schedule = (plan?.schedule as unknown as ScheduleEntry[]) ?? [];
 
     const relationshipGraph = state.npcRelationshipGraph[npcId] ?? {};
     const npcsAtLocation = state.npcCharacters
-      .filter((n) => n.id !== npcId && state.npcLocations[n.id] === currentLocation)
+      .filter(
+        (n) => n.id !== npcId && state.npcLocations[n.id] === currentLocation
+      )
       .map((n) => {
         const parts = [`- ${n.name} (${n.id})`];
         if (n.appearance) parts.push(`appearance: ${n.appearance}`);
@@ -490,9 +546,17 @@ export class NPCPlanningAgent {
       sceneItems: formatSceneItems(currentScene),
       sceneNpcs: npcsAtLocation,
       sceneConditions: currentScene
-        ? dgsm.getSceneConditions(currentScene.id).map((c) => `- ${c.description}`).join("\n")
+        ? dgsm
+            .getSceneConditions(currentScene.id)
+            .map((c) => `- ${c.description}`)
+            .join("\n")
         : "",
-      worldStatePrompt: this.buildNpcWorldStatePrompt(dgsm, npcId, currentLocation, registry),
+      worldStatePrompt: this.buildNpcWorldStatePrompt(
+        dgsm,
+        npcId,
+        currentLocation,
+        registry
+      ),
       npcInventory: formatItemList(dgsm.getNpcInventory(npcId)),
       currentTime: state.timeOfDay,
       gameDay: state.gameDay,
@@ -500,7 +564,8 @@ export class NPCPlanningAgent {
       handlerPrompt: registry?.buildHandlerPrompt(),
       planningPrompt: registry?.buildPlanningPrompt(),
       outputSchemaPrompt: registry?.buildOutputSchemaPrompt({
-        extraInstructions: "Revise pending actions. Only change what the event actually affects.",
+        extraInstructions:
+          "Revise pending actions. Only change what the event actually affects.",
       }),
     });
 
@@ -553,8 +618,12 @@ export class NPCPlanningAgent {
       memoryContext?: string;
     },
     bucketTime: string,
-    language: string = "en"
-  ): Promise<{ shouldRevise: boolean; shouldReviseSchedule: boolean; witnessEntry: string }> {
+    language = "en"
+  ): Promise<{
+    shouldRevise: boolean;
+    shouldReviseSchedule: boolean;
+    witnessEntry: string;
+  }> {
     const { systemPrompt, userPrompt } = buildImpactGatePrompt({
       bucketTime,
       candidate,
@@ -568,7 +637,11 @@ export class NPCPlanningAgent {
       modelClass: ModelClass.SMALL,
     });
 
-    return parseJsonResponse<{ shouldRevise: boolean; shouldReviseSchedule: boolean; witnessEntry: string }>(response);
+    return parseJsonResponse<{
+      shouldRevise: boolean;
+      shouldReviseSchedule: boolean;
+      witnessEntry: string;
+    }>(response);
   }
 
   async updateRelationshipViaLLM(
@@ -576,11 +649,12 @@ export class NPCPlanningAgent {
     characterAId: string,
     characterBId: string,
     interactionOutcome: string,
-    language: string = "en"
+    language = "en"
   ): Promise<{ scoreDelta: number; newScore: number; note: string } | null> {
     const state = dgsm.getState();
 
-    const findCharacter = (id: string) => state.npcCharacters.find((n) => n.id === id);
+    const findCharacter = (id: string) =>
+      state.npcCharacters.find((n) => n.id === id);
     const charA = findCharacter(characterAId);
     const charB = findCharacter(characterBId);
     if (!charA || !charB) return null;
@@ -610,11 +684,19 @@ export class NPCPlanningAgent {
     const parsed = parseJsonResponse<{ scoreDelta: number; note: string }>(
       response
     );
-    dgsm.updateRelationship(characterAId, characterBId, parsed.scoreDelta, parsed.note);
+    dgsm.updateRelationship(
+      characterAId,
+      characterBId,
+      parsed.scoreDelta,
+      parsed.note
+    );
     const updated = dgsm.getRelationship(characterAId, characterBId);
-    return { scoreDelta: parsed.scoreDelta, newScore: updated?.score ?? 0, note: parsed.note };
+    return {
+      scoreDelta: parsed.scoreDelta,
+      newScore: updated?.score ?? 0,
+      note: parsed.note,
+    };
   }
-
 
   async getDailyPlan(sessionId: string, npcId: string, gameDay: number) {
     return this.prisma.npcDailyPlan.findUnique({
@@ -637,10 +719,7 @@ export class NPCPlanningAgent {
     return nodes.filter((n) => n.status === "pending");
   }
 
-  async getLongTermIntent(
-    sessionId: string,
-    npcId: string
-  ): Promise<string> {
+  async getLongTermIntent(sessionId: string, npcId: string): Promise<string> {
     const record = await this.prisma.npcLongTermIntent.findFirst({
       where: { sessionId, npcId },
     });
@@ -696,20 +775,29 @@ export class NPCPlanningAgent {
     sessionId: string,
     moduleId: string,
     gameDay: number,
-    language: string = "en",
+    language = "en",
     registry?: GameEngineRegistry
   ): Promise<void> {
     const previousDay = gameDay - 1;
 
     // 1. Summarize previous day's memory for all NPCs (parallel)
     if (previousDay >= 1) {
-      await this.summarizeAllNpcDayMemory(dgsm, sessionId, previousDay, language);
+      await this.summarizeAllNpcDayMemory(
+        dgsm,
+        sessionId,
+        previousDay,
+        language
+      );
     }
 
     // 1b. After summarization, trigger day_transition reasoning for all NPCs
     if (this.memoryManager && previousDay >= 1) {
       const generateTextFn = (prompt: string) =>
-        generateText({ runtime: this.runtime, context: prompt, modelClass: ModelClass.SMALL });
+        generateText({
+          runtime: this.runtime,
+          context: prompt,
+          modelClass: ModelClass.SMALL,
+        });
 
       const npcCharacters = dgsm.getState().npcCharacters;
       const reasoningPromises = npcCharacters.map((npc) =>
@@ -726,16 +814,25 @@ export class NPCPlanningAgent {
           npc.name,
           npc.background ?? npc.backstory ?? "",
           generateTextFn,
-          language,
-        ),
+          language
+        )
       );
       await Promise.all(reasoningPromises);
     }
 
     // 2. Generate daily schedules for all NPCs (includes long-term intent check via ensureNpc path)
-    await this.generateDailySchedule(dgsm, sessionId, moduleId, gameDay, language, registry);
+    await this.generateDailySchedule(
+      dgsm,
+      sessionId,
+      moduleId,
+      gameDay,
+      language,
+      registry
+    );
 
-    console.log(`[NPCPlanning] Day ${gameDay} lifecycle complete: summarized day ${previousDay}, generated schedules`);
+    console.log(
+      `[NPCPlanning] Day ${gameDay} lifecycle complete: summarized day ${previousDay}, generated schedules`
+    );
   }
 
   private async summarizeAllNpcDayMemory(
@@ -746,7 +843,9 @@ export class NPCPlanningAgent {
   ): Promise<void> {
     const npcs = dgsm.getState().npcCharacters;
     await Promise.all(
-      npcs.map((npc) => this.summarizeDayMemory(dgsm, sessionId, npc.id, gameDay, language))
+      npcs.map((npc) =>
+        this.summarizeDayMemory(dgsm, sessionId, npc.id, gameDay, language)
+      )
     );
   }
 
@@ -761,7 +860,11 @@ export class NPCPlanningAgent {
     if (!this.memoryManager) return;
 
     // Fetch ALL memories from this day — no semantic filtering, no type restriction
-    const dayMemories = await this.memoryManager.getAllForDay(npcId, sessionId, gameDay);
+    const dayMemories = await this.memoryManager.getAllForDay(
+      npcId,
+      sessionId,
+      gameDay
+    );
     if (dayMemories.length === 0) return;
 
     const { getAllHandlers } = await import("../../memory/handlers/index.js");
@@ -769,19 +872,34 @@ export class NPCPlanningAgent {
     const state = dgsm.getState();
 
     // Format events
-    const eventLog = dayMemories.map((m) => handlers[m.type].format(m)).join("\n");
+    const eventLog = dayMemories
+      .map((m) => handlers[m.type].format(m))
+      .join("\n");
 
     // Collect knowledge received today (resolve relatedKnowledgeIds from sender NPCs)
-    const receivedKnowledge: Array<{ id: string; text: string; category: string; from: string }> = [];
+    const receivedKnowledge: Array<{
+      id: string;
+      text: string;
+      category: string;
+      from: string;
+    }> = [];
     for (const m of dayMemories) {
       const meta = m.metadata as Record<string, any> | null;
-      if (!meta?.relatedKnowledgeIds?.length || !meta?.sourceCharacterId) continue;
-      const senderNpc = state.npcCharacters.find(n => n.id === meta.sourceCharacterId);
+      if (!meta?.relatedKnowledgeIds?.length || !meta?.sourceCharacterId)
+        continue;
+      const senderNpc = state.npcCharacters.find(
+        (n) => n.id === meta.sourceCharacterId
+      );
       if (!senderNpc?.knowledge) continue;
       for (const kid of meta.relatedKnowledgeIds as string[]) {
-        const k = senderNpc.knowledge.find(k => k.id === kid);
-        if (k && !receivedKnowledge.some(r => r.id === k.id)) {
-          receivedKnowledge.push({ id: k.id, text: k.text, category: k.category ?? "knowledge", from: senderNpc.name });
+        const k = senderNpc.knowledge.find((k) => k.id === kid);
+        if (k && !receivedKnowledge.some((r) => r.id === k.id)) {
+          receivedKnowledge.push({
+            id: k.id,
+            text: k.text,
+            category: k.category ?? "knowledge",
+            from: senderNpc.name,
+          });
         }
       }
     }
@@ -810,10 +928,16 @@ export class NPCPlanningAgent {
 
     const parsed = parseJsonResponse<{
       memories: Array<{ content: string; importance: number }>;
-      newKnowledge?: Array<{ id: string; text: string; category?: string; difficulty?: string; relatedTo?: string[] }>;
+      newKnowledge?: Array<{
+        id: string;
+        text: string;
+        category?: string;
+        difficulty?: string;
+        relatedTo?: string[];
+      }>;
     }>(response);
 
-    const moduleId = await this.resolveModuleId(sessionId) ?? "";
+    const moduleId = (await this.resolveModuleId(sessionId)) ?? "";
 
     // Write each summary memory as a separate record with its own importance
     await Promise.all(
@@ -845,7 +969,9 @@ export class NPCPlanningAgent {
             id: k.id,
             text: k.text,
             category: "knowledge",
-            difficulty: (k.difficulty as "automatic" | "regular" | "hard" | "extreme") ?? "automatic",
+            difficulty:
+              (k.difficulty as "automatic" | "regular" | "hard" | "extreme") ??
+              "automatic",
             revealed: false,
             relatedTo: k.relatedTo,
           });
@@ -857,11 +983,15 @@ export class NPCPlanningAgent {
   private async getNpcDayMemoryLog(
     sessionId: string,
     npcId: string,
-    gameDay: number,
+    gameDay: number
   ): Promise<string> {
     if (!this.memoryManager) return "";
 
-    const dayMemories = await this.memoryManager.getAllForDay(npcId, sessionId, gameDay);
+    const dayMemories = await this.memoryManager.getAllForDay(
+      npcId,
+      sessionId,
+      gameDay
+    );
     const memories = [...dayMemories]
       // Daily plan memories duplicate todayPlan and can confuse completion inference.
       .filter((memory) => memory.type !== "plan")
@@ -875,7 +1005,9 @@ export class NPCPlanningAgent {
 
     const { getAllHandlers } = await import("../../memory/handlers/index.js");
     const handlers = getAllHandlers();
-    return memories.map((memory) => handlers[memory.type].format(memory)).join("\n");
+    return memories
+      .map((memory) => handlers[memory.type].format(memory))
+      .join("\n");
   }
 
   async resolveModuleId(sessionId: string): Promise<string | null> {
@@ -891,7 +1023,6 @@ export class NPCPlanningAgent {
     return intent?.moduleId ?? null;
   }
 
-
   // === Private helpers ===
 
   private formatNpcProfile(npc: any): string {
@@ -905,7 +1036,8 @@ export class NPCPlanningAgent {
   private formatRelationshipProfile(character: any): string {
     const parts = [`Name: ${character.name}`];
     if (character.occupation) parts.push(`Occupation: ${character.occupation}`);
-    if (character.personality) parts.push(`Personality: ${character.personality}`);
+    if (character.personality)
+      parts.push(`Personality: ${character.personality}`);
     if (character.background) parts.push(`Background: ${character.background}`);
     if (character.backstory) parts.push(`Backstory: ${character.backstory}`);
     return parts.join("\n");
@@ -916,10 +1048,13 @@ export class NPCPlanningAgent {
     npcId: string
   ): string {
     const graph = dgsm.getState().npcRelationshipGraph[npcId];
-    if (!graph || Object.keys(graph).length === 0) return "No known relationships.";
+    if (!graph || Object.keys(graph).length === 0)
+      return "No known relationships.";
     return Object.entries(graph)
       .map(([targetId, rel]) => {
-        const targetNpc = dgsm.getState().npcCharacters.find((n) => n.id === targetId);
+        const targetNpc = dgsm
+          .getState()
+          .npcCharacters.find((n) => n.id === targetId);
         const targetName = targetNpc?.name ?? targetId;
         return `- ${targetName}: score=${rel.score} (${rel.note})`;
       })
@@ -945,7 +1080,10 @@ export class NPCPlanningAgent {
    * Format scenario conditions for only the NPC's current scene
    * (and sibling scenes under the same macro location).
    */
-  private formatNpcLocalConditions(dgsm: DynamicGameStateManager, npcLocation?: string): string {
+  private formatNpcLocalConditions(
+    dgsm: DynamicGameStateManager,
+    npcLocation?: string
+  ): string {
     if (!npcLocation) return "";
     const state = dgsm.getState();
     const conds = state.scenarioConditions;
@@ -960,12 +1098,15 @@ export class NPCPlanningAgent {
       }
     }
 
-    const entries = Object.entries(conds)
-      .filter(([scenarioId]) => relevantSceneIds.has(scenarioId));
+    const entries = Object.entries(conds).filter(([scenarioId]) =>
+      relevantSceneIds.has(scenarioId)
+    );
     if (entries.length === 0) return "";
     return entries
-      .map(([scenarioId, conditions]) =>
-        `${scenarioId}: ${conditions.map((c) => c.description).join("; ")}`)
+      .map(
+        ([scenarioId, conditions]) =>
+          `${scenarioId}: ${conditions.map((c) => c.description).join("; ")}`
+      )
       .join("\n");
   }
 
@@ -998,7 +1139,9 @@ export class NPCPlanningAgent {
     }
 
     // Stamina — only this NPC's fatigue
-    const staminaStates = dgsm.getFeatureState("stamina") as Record<string, { fatigueLevel?: number; minutesSinceLastRest?: number }> | undefined;
+    const staminaStates = dgsm.getFeatureState("stamina") as
+      | Record<string, { fatigueLevel?: number; minutesSinceLastRest?: number }>
+      | undefined;
     if (staminaStates?.[npcId]) {
       const stamina = staminaStates[npcId];
       if (stamina.fatigueLevel && stamina.fatigueLevel > 0) {
@@ -1009,12 +1152,27 @@ export class NPCPlanningAgent {
     }
 
     // Sanity — only this NPC's active insanity
-    const sanityStates = dgsm.getFeatureState("sanity") as Record<string, { activeInsanity?: { isActive?: boolean; insanityType?: string; boutType?: string; description?: string; actionRestriction?: string } }> | undefined;
+    const sanityStates = dgsm.getFeatureState("sanity") as
+      | Record<
+          string,
+          {
+            activeInsanity?: {
+              isActive?: boolean;
+              insanityType?: string;
+              boutType?: string;
+              description?: string;
+              actionRestriction?: string;
+            };
+          }
+        >
+      | undefined;
     if (sanityStates?.[npcId]) {
       const sanity = sanityStates[npcId];
       if (sanity.activeInsanity?.isActive) {
         const ai = sanity.activeInsanity;
-        sections.push(`Active insanity: ${ai.insanityType} (${ai.boutType}) — ${ai.description} | restriction: ${ai.actionRestriction}`);
+        sections.push(
+          `Active insanity: ${ai.insanityType} (${ai.boutType}) — ${ai.description} | restriction: ${ai.actionRestriction}`
+        );
       }
     }
 
@@ -1028,15 +1186,29 @@ export class NPCPlanningAgent {
    * - Fire is at the NPC's scene → directly perceivable
    * - Fire intensity >= 3 and NPC is at an adjacent scene (topology neighbor or connection) → perceivable via light
    */
-  private buildPerceivedFireState(dgsm: DynamicGameStateManager, npcLocation: string): string {
+  private buildPerceivedFireState(
+    dgsm: DynamicGameStateManager,
+    npcLocation: string
+  ): string {
     const fireStates = dgsm.getFeatureState("fire");
     if (!fireStates || Object.keys(fireStates).length === 0) return "";
 
     const topology = dgsm.getTopology();
 
     // Build set of scenes whose fire light reaches the NPC
-    const perceivedFires: Array<{ sceneId: string; intensity: number; label: string }> = [];
-    const INTENSITY_LABELS = ["", "Smoldering", "Small Fire", "Burning", "Blazing", "Inferno"];
+    const perceivedFires: Array<{
+      sceneId: string;
+      intensity: number;
+      label: string;
+    }> = [];
+    const INTENSITY_LABELS = [
+      "",
+      "Smoldering",
+      "Small Fire",
+      "Burning",
+      "Blazing",
+      "Inferno",
+    ];
 
     for (const [fireSceneId, state] of Object.entries(fireStates)) {
       const fs = state as { intensity: number; phase?: string } | undefined;

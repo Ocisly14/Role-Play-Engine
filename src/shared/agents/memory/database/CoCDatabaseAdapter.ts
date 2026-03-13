@@ -421,7 +421,8 @@ export class CoCDatabaseAdapter {
   ): any[] {
     const turns = this.getSessionTurns(sessionId).filter((turn) => {
       if (!sceneRoomId) return true;
-      if (Array.isArray(sceneRoomId)) return sceneRoomId.includes(turn.sceneRoomId);
+      if (Array.isArray(sceneRoomId))
+        return sceneRoomId.includes(turn.sceneRoomId);
       return turn.sceneRoomId === sceneRoomId;
     });
     if (typeof afterTurnNumber === "number") {

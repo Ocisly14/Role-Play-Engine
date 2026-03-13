@@ -48,10 +48,7 @@
       }
     }
   ],
-  "connections": [
-    "SCN_1_SUB_1",
-    "SCN_1_SUB_5"
-  ],
+  "connections": ["SCN_1_SUB_1", "SCN_1_SUB_5"],
   "itemContexts": {
     "ITEM_SCN1_8": "存放着各类常规医疗药品的货架和冷藏柜"
   }

@@ -69,9 +69,7 @@
       }
     }
   ],
-  "connections": [
-    "SCN_9_SUB_2"
-  ],
+  "connections": ["SCN_9_SUB_2"],
   "itemContexts": {
     "ITEM_SCN9_1": "展架上摆着一束束修剪整齐的鲜切花，花瓣润泽得像刚刚被人喷过水。",
     "ITEM_SCN9_6": "柜台旁的包装台上铺着牛皮纸和缎带，边缘残留着剪裁包装时留下的细碎纸屑。",

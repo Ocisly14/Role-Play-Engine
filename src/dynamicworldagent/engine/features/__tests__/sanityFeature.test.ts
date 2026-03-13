@@ -1,28 +1,27 @@
-import { describe, it, expect, beforeEach, vi, afterEach } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import type { TickRuntimeContext } from "../../types.js";
 import {
-  BOUT_OF_MADNESS_TABLE,
   BOUT_DESCRIPTIONS,
+  BOUT_OF_MADNESS_TABLE,
+  applySanityLoss,
+  buildInsanityConditionString,
+  checkIndefiniteInsanityTrigger,
+  checkTemporaryInsanityTrigger,
   computeGameTimeMinutes,
   createEmptySanityState,
-  getSanityState,
-  setSanityState,
-  recordSanLoss,
-  getHourlyCumulativeLoss,
-  checkTemporaryInsanityTrigger,
-  checkIndefiniteInsanityTrigger,
-  rollBoutOfMadness,
-  rollTemporaryDuration,
-  rollIndefiniteOnsetDelay,
-  rollIndefiniteDuration,
-  buildInsanityConditionString,
-  injectInsanityCondition,
-  removeInsanityCondition,
-  applySanityLoss,
   generatePhobiaManiaSubject,
+  getHourlyCumulativeLoss,
+  getSanityState,
+  injectInsanityCondition,
+  recordSanLoss,
+  removeInsanityCondition,
+  rollBoutOfMadness,
+  rollIndefiniteDuration,
+  rollIndefiniteOnsetDelay,
+  rollTemporaryDuration,
   sanityFeature,
+  setSanityState,
 } from "../sanityFeature.js";
-import type { SanityCharacterState, ActiveInsanity } from "../sanityFeature.js";
-import type { TickRuntimeContext } from "../../types.js";
 
 // ===== Mock DGSM =====
 
@@ -30,7 +29,16 @@ function createMockDgsm() {
   const featureState: Record<string, Record<string, unknown>> = {};
   const npcLocations: Record<string, string> = {};
   const npcStats: Record<string, { hp: number; san: number }> = {};
-  const npcCharacters: Array<{ id: string; name: string; status: { hp: number; sanity: number; maxSanity: number; conditions: string[] } }> = [];
+  const npcCharacters: Array<{
+    id: string;
+    name: string;
+    status: {
+      hp: number;
+      sanity: number;
+      maxSanity: number;
+      conditions: string[];
+    };
+  }> = [];
 
   return {
     getFeatureSceneState(featureId: string, sceneId: string) {
@@ -63,10 +71,20 @@ function createMockDgsm() {
     getNpcStats(npcId: string) {
       return npcStats[npcId];
     },
-    _addNpc(npcId: string, location: string, hp: number, san = 50, maxSanity = 99) {
+    _addNpc(
+      npcId: string,
+      location: string,
+      hp: number,
+      san = 50,
+      maxSanity = 99
+    ) {
       npcLocations[npcId] = location;
       npcStats[npcId] = { hp, san };
-      npcCharacters.push({ id: npcId, name: npcId, status: { hp, sanity: san, maxSanity, conditions: [] } });
+      npcCharacters.push({
+        id: npcId,
+        name: npcId,
+        status: { hp, sanity: san, maxSanity, conditions: [] },
+      });
     },
     _featureState: featureState,
     _npcStats: npcStats,
@@ -102,33 +120,49 @@ describe("sanityFeature", () => {
     });
 
     it("should mark phobia (roll 9) as persistent", () => {
-      const phobiaEntry = BOUT_OF_MADNESS_TABLE.find((e) => e.boutType === "phobia");
+      const phobiaEntry = BOUT_OF_MADNESS_TABLE.find(
+        (e) => e.boutType === "phobia"
+      );
       expect(phobiaEntry).toBeDefined();
       expect(phobiaEntry!.persistent).toBe(true);
       expect(phobiaEntry!.roll).toBe(9);
     });
 
     it("should mark mania (roll 10) as persistent", () => {
-      const maniaEntry = BOUT_OF_MADNESS_TABLE.find((e) => e.boutType === "mania");
+      const maniaEntry = BOUT_OF_MADNESS_TABLE.find(
+        (e) => e.boutType === "mania"
+      );
       expect(maniaEntry).toBeDefined();
       expect(maniaEntry!.persistent).toBe(true);
       expect(maniaEntry!.roll).toBe(10);
     });
 
     it("should have only phobia and mania as persistent entries", () => {
-      const persistentEntries = BOUT_OF_MADNESS_TABLE.filter((e) => e.persistent);
+      const persistentEntries = BOUT_OF_MADNESS_TABLE.filter(
+        (e) => e.persistent
+      );
       expect(persistentEntries).toHaveLength(2);
-      expect(persistentEntries.map((e) => e.boutType).sort()).toEqual(["mania", "phobia"]);
+      expect(persistentEntries.map((e) => e.boutType).sort()).toEqual([
+        "mania",
+        "phobia",
+      ]);
     });
 
     it("should have faint and hysterics with incapacitated restriction", () => {
-      const incapacitated = BOUT_OF_MADNESS_TABLE.filter((e) => e.actionRestriction === "incapacitated");
+      const incapacitated = BOUT_OF_MADNESS_TABLE.filter(
+        (e) => e.actionRestriction === "incapacitated"
+      );
       expect(incapacitated).toHaveLength(2);
-      expect(incapacitated.map((e) => e.boutType).sort()).toEqual(["faint", "hysterics"]);
+      expect(incapacitated.map((e) => e.boutType).sort()).toEqual([
+        "faint",
+        "hysterics",
+      ]);
     });
 
     it("should have violence with attack_only restriction", () => {
-      const entry = BOUT_OF_MADNESS_TABLE.find((e) => e.boutType === "violence");
+      const entry = BOUT_OF_MADNESS_TABLE.find(
+        (e) => e.boutType === "violence"
+      );
       expect(entry!.actionRestriction).toBe("attack_only");
     });
 
@@ -227,8 +261,8 @@ describe("sanityFeature", () => {
 
       it("should exclude losses outside the 60-minute window", () => {
         const state = createEmptySanityState();
-        recordSanLoss(state, 5, 10);  // outside window
-        recordSanLoss(state, 3, 50);  // inside window
+        recordSanLoss(state, 5, 10); // outside window
+        recordSanLoss(state, 3, 50); // inside window
 
         // At time 100, window is (40, 100]
         // 10 <= 40 → excluded
@@ -456,35 +490,88 @@ describe("sanityFeature", () => {
 
   describe("buildInsanityConditionString", () => {
     it("should build a temporary insanity condition string", () => {
-      const result = buildInsanityConditionString("temporary", "flee", "Flee in Panic", "flee_only");
-      expect(result).toBe("[Insanity:temporary] Flee in Panic | restriction:flee_only");
+      const result = buildInsanityConditionString(
+        "temporary",
+        "flee",
+        "Flee in Panic",
+        "flee_only"
+      );
+      expect(result).toBe(
+        "[Insanity:temporary] Flee in Panic | restriction:flee_only"
+      );
     });
 
     it("should build an indefinite insanity condition string", () => {
-      const result = buildInsanityConditionString("indefinite", "amnesia", "Amnesia", "impaired");
-      expect(result).toBe("[Insanity:indefinite] Amnesia | restriction:impaired");
+      const result = buildInsanityConditionString(
+        "indefinite",
+        "amnesia",
+        "Amnesia",
+        "impaired"
+      );
+      expect(result).toBe(
+        "[Insanity:indefinite] Amnesia | restriction:impaired"
+      );
     });
 
     it("should build a persistent phobia condition string with subject", () => {
-      const result = buildInsanityConditionString("phobia", "phobia", "Phobia", "impaired", "tentacles");
+      const result = buildInsanityConditionString(
+        "phobia",
+        "phobia",
+        "Phobia",
+        "impaired",
+        "tentacles"
+      );
       expect(result).toBe("[Insanity:phobia] Phobia (tentacles) | persistent");
     });
 
     it("should build a persistent mania condition string with subject", () => {
-      const result = buildInsanityConditionString("mania", "mania", "Mania", "impaired", "fire");
+      const result = buildInsanityConditionString(
+        "mania",
+        "mania",
+        "Mania",
+        "impaired",
+        "fire"
+      );
       expect(result).toBe("[Insanity:mania] Mania (fire) | persistent");
     });
 
     it("should build a persistent condition string without subject", () => {
-      const result = buildInsanityConditionString("phobia", "phobia", "Phobia", "impaired");
+      const result = buildInsanityConditionString(
+        "phobia",
+        "phobia",
+        "Phobia",
+        "impaired"
+      );
       expect(result).toBe("[Insanity:phobia] Phobia | persistent");
     });
 
     it("should start with [Insanity for all condition types", () => {
-      const temp = buildInsanityConditionString("temporary", "faint", "Faint", "incapacitated");
-      const indef = buildInsanityConditionString("indefinite", "violence", "Violence", "attack_only");
-      const phobia = buildInsanityConditionString("phobia", "phobia", "Phobia", "impaired", "spiders");
-      const mania = buildInsanityConditionString("mania", "mania", "Mania", "impaired", "collecting");
+      const temp = buildInsanityConditionString(
+        "temporary",
+        "faint",
+        "Faint",
+        "incapacitated"
+      );
+      const indef = buildInsanityConditionString(
+        "indefinite",
+        "violence",
+        "Violence",
+        "attack_only"
+      );
+      const phobia = buildInsanityConditionString(
+        "phobia",
+        "phobia",
+        "Phobia",
+        "impaired",
+        "spiders"
+      );
+      const mania = buildInsanityConditionString(
+        "mania",
+        "mania",
+        "Mania",
+        "impaired",
+        "collecting"
+      );
 
       expect(temp.startsWith("[Insanity")).toBe(true);
       expect(indef.startsWith("[Insanity")).toBe(true);
@@ -497,35 +584,47 @@ describe("sanityFeature", () => {
 
   describe("injectInsanityCondition", () => {
     it("should inject condition into NPC character", () => {
-      const condition = "[Insanity:temporary] Flee in Panic | restriction:flee_only";
+      const condition =
+        "[Insanity:temporary] Flee in Panic | restriction:flee_only";
       injectInsanityCondition(dgsm as any, "npc-test", condition);
 
-      const npc = dgsm.getState().npcCharacters.find((n) => n.id === "npc-test");
+      const npc = dgsm
+        .getState()
+        .npcCharacters.find((n) => n.id === "npc-test");
       expect(npc!.status.conditions).toContain(condition);
     });
 
     it("should inject condition into NPC character", () => {
       dgsm._addNpc("npc-guard", "tavern", 10, 40);
 
-      const condition = "[Insanity:temporary] Faint | restriction:incapacitated";
+      const condition =
+        "[Insanity:temporary] Faint | restriction:incapacitated";
       injectInsanityCondition(dgsm as any, "npc-guard", condition);
 
-      const npc = dgsm.getState().npcCharacters.find((n) => n.id === "npc-guard");
+      const npc = dgsm
+        .getState()
+        .npcCharacters.find((n) => n.id === "npc-guard");
       expect(npc!.status.conditions).toContain(condition);
     });
 
     it("should not throw for non-existent NPC", () => {
-      const condition = "[Insanity:temporary] Faint | restriction:incapacitated";
-      expect(() => injectInsanityCondition(dgsm as any, "non-existent", condition)).not.toThrow();
+      const condition =
+        "[Insanity:temporary] Faint | restriction:incapacitated";
+      expect(() =>
+        injectInsanityCondition(dgsm as any, "non-existent", condition)
+      ).not.toThrow();
     });
 
     it("should allow multiple conditions on the same character", () => {
-      const condition1 = "[Insanity:temporary] Violence | restriction:attack_only";
+      const condition1 =
+        "[Insanity:temporary] Violence | restriction:attack_only";
       const condition2 = "[Insanity:phobia] Phobia (darkness) | persistent";
       injectInsanityCondition(dgsm as any, "npc-test", condition1);
       injectInsanityCondition(dgsm as any, "npc-test", condition2);
 
-      const npc = dgsm.getState().npcCharacters.find((n) => n.id === "npc-test");
+      const npc = dgsm
+        .getState()
+        .npcCharacters.find((n) => n.id === "npc-test");
       expect(npc!.status.conditions).toHaveLength(2);
       expect(npc!.status.conditions).toContain(condition1);
       expect(npc!.status.conditions).toContain(condition2);
@@ -536,7 +635,9 @@ describe("sanityFeature", () => {
 
   describe("removeInsanityCondition", () => {
     it("should remove all insanity conditions from NPC", () => {
-      const npc = dgsm.getState().npcCharacters.find((n) => n.id === "npc-test")!;
+      const npc = dgsm
+        .getState()
+        .npcCharacters.find((n) => n.id === "npc-test")!;
       npc.status.conditions = [
         "[Insanity:temporary] Flee in Panic | restriction:flee_only",
         "[Insanity:phobia] Phobia (spiders) | persistent",
@@ -551,7 +652,9 @@ describe("sanityFeature", () => {
     it("should remove all insanity conditions from NPC", () => {
       dgsm._addNpc("npc-guard", "tavern", 10, 40);
 
-      const npc = dgsm.getState().npcCharacters.find((n) => n.id === "npc-guard")!;
+      const npc = dgsm
+        .getState()
+        .npcCharacters.find((n) => n.id === "npc-guard")!;
       npc.status.conditions = [
         "[Insanity:temporary] Violence | restriction:attack_only",
         "Wounded",
@@ -563,7 +666,9 @@ describe("sanityFeature", () => {
     });
 
     it("should keep persistent conditions when keepPersistent is true", () => {
-      const npc = dgsm.getState().npcCharacters.find((n) => n.id === "npc-test")!;
+      const npc = dgsm
+        .getState()
+        .npcCharacters.find((n) => n.id === "npc-test")!;
       npc.status.conditions = [
         "[Insanity:temporary] Flee in Panic | restriction:flee_only",
         "[Insanity:phobia] Phobia (spiders) | persistent",
@@ -581,7 +686,9 @@ describe("sanityFeature", () => {
     });
 
     it("should remove persistent conditions when keepPersistent is false/undefined", () => {
-      const npc = dgsm.getState().npcCharacters.find((n) => n.id === "npc-test")!;
+      const npc = dgsm
+        .getState()
+        .npcCharacters.find((n) => n.id === "npc-test")!;
       npc.status.conditions = [
         "[Insanity:temporary] Flee in Panic | restriction:flee_only",
         "[Insanity:phobia] Phobia (spiders) | persistent",
@@ -593,11 +700,15 @@ describe("sanityFeature", () => {
     });
 
     it("should not throw for non-existent NPC", () => {
-      expect(() => removeInsanityCondition(dgsm as any, "non-existent")).not.toThrow();
+      expect(() =>
+        removeInsanityCondition(dgsm as any, "non-existent")
+      ).not.toThrow();
     });
 
     it("should leave non-insanity conditions untouched", () => {
-      const npc = dgsm.getState().npcCharacters.find((n) => n.id === "npc-test")!;
+      const npc = dgsm
+        .getState()
+        .npcCharacters.find((n) => n.id === "npc-test")!;
       npc.status.conditions = [
         "[Fatigue] Tired",
         "Wounded",
@@ -606,14 +717,13 @@ describe("sanityFeature", () => {
 
       removeInsanityCondition(dgsm as any, "npc-test");
 
-      expect(npc.status.conditions).toEqual([
-        "[Fatigue] Tired",
-        "Wounded",
-      ]);
+      expect(npc.status.conditions).toEqual(["[Fatigue] Tired", "Wounded"]);
     });
 
     it("should handle empty conditions array", () => {
-      const npc = dgsm.getState().npcCharacters.find((n) => n.id === "npc-test")!;
+      const npc = dgsm
+        .getState()
+        .npcCharacters.find((n) => n.id === "npc-test")!;
       npc.status.conditions = [];
       removeInsanityCondition(dgsm as any, "npc-test");
       expect(npc.status.conditions).toEqual([]);
@@ -680,13 +790,19 @@ describe("sanityFeature", () => {
       expect(charState!.activeInsanity!.boutType).toBe("amnesia");
       expect(charState!.activeInsanity!.isActive).toBe(true);
       expect(charState!.activeInsanity!.durationMinutes).toBe(60);
-      expect(charState!.activeInsanity!.description).toBe(BOUT_DESCRIPTIONS.amnesia);
+      expect(charState!.activeInsanity!.description).toBe(
+        BOUT_DESCRIPTIONS.amnesia
+      );
 
       // Should have injected a condition
-      const npc = dgsm.getState().npcCharacters.find((n) => n.id === "npc-test");
-      expect(npc!.status.conditions.some(
-        (c: string) => c.startsWith("[Insanity:temporary]"),
-      )).toBe(true);
+      const npc = dgsm
+        .getState()
+        .npcCharacters.find((n) => n.id === "npc-test");
+      expect(
+        npc!.status.conditions.some((c: string) =>
+          c.startsWith("[Insanity:temporary]")
+        )
+      ).toBe(true);
     });
 
     it("triggers indefinite insanity when hourly cumulative >= currentSan/5", () => {
@@ -721,10 +837,14 @@ describe("sanityFeature", () => {
       expect(charState!.activeInsanity!.durationMinutes).toBe(1440);
 
       // Should NOT have injected a condition (onset delay not expired)
-      const npc = dgsm.getState().npcCharacters.find((n) => n.id === "npc-test");
-      expect(npc!.status.conditions.some(
-        (c: string) => c.startsWith("[Insanity:indefinite]"),
-      )).toBe(false);
+      const npc = dgsm
+        .getState()
+        .npcCharacters.find((n) => n.id === "npc-test");
+      expect(
+        npc!.status.conditions.some((c: string) =>
+          c.startsWith("[Insanity:indefinite]")
+        )
+      ).toBe(false);
     });
 
     it("temporary insanity takes priority over indefinite when both trigger", () => {
@@ -786,7 +906,9 @@ describe("sanityFeature", () => {
 
 // ===== Mock runtime helper =====
 
-function createMockRuntime(overrides?: Partial<TickRuntimeContext>): TickRuntimeContext {
+function createMockRuntime(
+  overrides?: Partial<TickRuntimeContext>
+): TickRuntimeContext {
   return {
     sessionId: "test-session",
     gameDay: 1,
@@ -795,7 +917,11 @@ function createMockRuntime(overrides?: Partial<TickRuntimeContext>): TickRuntime
     tickDurationMinutes: 5,
     npcPlanning: {
       getPendingNodes: async () => [],
-      runImpactGateForNpc: async () => ({ shouldRevise: false, shouldReviseSchedule: false, witnessEntry: "" }),
+      runImpactGateForNpc: async () => ({
+        shouldRevise: false,
+        shouldReviseSchedule: false,
+        witnessEntry: "",
+      }),
       revisePlans: async () => {},
     },
     ...overrides,
@@ -930,7 +1056,7 @@ describe("sanityFeature — WorldFeature interface", () => {
 
     // Verify condition removed
     expect(npc.status.conditions).not.toContain(
-      "[Insanity:temporary] Flee in Panic | restriction:flee_only",
+      "[Insanity:temporary] Flee in Panic | restriction:flee_only"
     );
   });
 
@@ -960,18 +1086,20 @@ describe("sanityFeature — WorldFeature interface", () => {
 
     // Verify condition was injected
     const npc = dgsm.getState().npcCharacters.find((n) => n.id === "npc-test");
-    expect(npc!.status.conditions.some(
-      (c: string) => c.startsWith("[Insanity:indefinite]"),
-    )).toBe(true);
+    expect(
+      npc!.status.conditions.some((c: string) =>
+        c.startsWith("[Insanity:indefinite]")
+      )
+    ).toBe(true);
   });
 
   it("tick cleans up old sanLossLog entries", () => {
     // Create state with entries at various times
     const charState = createEmptySanityState();
     charState.sanLossLog = [
-      { amount: 2, gameTimeMinutes: 100 },  // old, should be removed (480 - 60 = 420 > 100)
-      { amount: 3, gameTimeMinutes: 470 },  // recent enough, 470 >= 420
-      { amount: 1, gameTimeMinutes: 479 },  // recent, 479 >= 420
+      { amount: 2, gameTimeMinutes: 100 }, // old, should be removed (480 - 60 = 420 > 100)
+      { amount: 3, gameTimeMinutes: 470 }, // recent enough, 470 >= 420
+      { amount: 1, gameTimeMinutes: 479 }, // recent, 479 >= 420
     ];
     setSanityState(dgsm as any, "npc-test", charState);
 
@@ -982,7 +1110,9 @@ describe("sanityFeature — WorldFeature interface", () => {
     // Verify only entries >= 420 remain
     const updated = getSanityState(dgsm as any, "npc-test");
     expect(updated!.sanLossLog).toHaveLength(2);
-    expect(updated!.sanLossLog.every(e => e.gameTimeMinutes >= 420)).toBe(true);
+    expect(updated!.sanLossLog.every((e) => e.gameTimeMinutes >= 420)).toBe(
+      true
+    );
   });
 
   it("tick does not remove persistent conditions when clearing active insanity", () => {
@@ -1021,12 +1151,12 @@ describe("sanityFeature — WorldFeature interface", () => {
 
     // Persistent condition should remain in conditions array
     expect(npc.status.conditions).toContain(
-      "[Insanity:phobia] Phobia (darkness) | persistent",
+      "[Insanity:phobia] Phobia (darkness) | persistent"
     );
 
     // Temporary condition should be gone
     expect(npc.status.conditions).not.toContain(
-      "[Insanity:temporary] Phobia | restriction:impaired",
+      "[Insanity:temporary] Phobia | restriction:impaired"
     );
 
     // Persistent conditions in sanity state should remain
@@ -1040,28 +1170,48 @@ describe("sanityFeature — WorldFeature interface", () => {
 
 describe("sanityFeature — generatePhobiaManiaSubject", () => {
   it("returns a non-empty string for phobia", async () => {
-    const result = await generatePhobiaManiaSubject("phobia", "a terrifying spider crawled across the wall", "tavern");
+    const result = await generatePhobiaManiaSubject(
+      "phobia",
+      "a terrifying spider crawled across the wall",
+      "tavern"
+    );
     expect(result).toBeTruthy();
     expect(result.length).toBeGreaterThan(0);
   });
 
   it("returns a non-empty string for mania", async () => {
-    const result = await generatePhobiaManiaSubject("mania", "obsessively lighting candles in the darkness", "chapel");
+    const result = await generatePhobiaManiaSubject(
+      "mania",
+      "obsessively lighting candles in the darkness",
+      "chapel"
+    );
     expect(result).toBeTruthy();
     expect(result.length).toBeGreaterThan(0);
   });
 
   it("falls back to default when no keywords", async () => {
     // All words are 4 chars or fewer
-    const phobiaResult = await generatePhobiaManiaSubject("phobia", "the cat ran", "room");
+    const phobiaResult = await generatePhobiaManiaSubject(
+      "phobia",
+      "the cat ran",
+      "room"
+    );
     expect(phobiaResult).toBe("the unknown");
 
-    const maniaResult = await generatePhobiaManiaSubject("mania", "he sat and ate", "room");
+    const maniaResult = await generatePhobiaManiaSubject(
+      "mania",
+      "he sat and ate",
+      "room"
+    );
     expect(maniaResult).toBe("repetitive behavior");
   });
 
   it("extracts keywords from trigger context", async () => {
-    const result = await generatePhobiaManiaSubject("phobia", "tentacles reaching through the portal", "dungeon");
+    const result = await generatePhobiaManiaSubject(
+      "phobia",
+      "tentacles reaching through the portal",
+      "dungeon"
+    );
     // "tentacles" (9 chars) and "reaching" (8 chars) and "through" (7 chars) — first two
     expect(result).toContain("tentacles");
   });

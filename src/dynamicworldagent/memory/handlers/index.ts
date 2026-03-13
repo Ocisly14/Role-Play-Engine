@@ -1,12 +1,12 @@
 import type { NpcMemoryType } from "@prisma/client";
 import type { MemoryHandler } from "../types.js";
-import { EventHandler } from "./EventHandler.js";
-import { WitnessHandler } from "./WitnessHandler.js";
-import { InformationHandler } from "./InformationHandler.js";
 import { BeliefHandler } from "./BeliefHandler.js";
+import { EventHandler } from "./EventHandler.js";
+import { InformationHandler } from "./InformationHandler.js";
 import { PlanHandler } from "./PlanHandler.js";
 import { SecretHandler } from "./SecretHandler.js";
 import { SummaryHandler } from "./SummaryHandler.js";
+import { WitnessHandler } from "./WitnessHandler.js";
 
 export {
   EventHandler,

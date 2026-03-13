@@ -3,9 +3,7 @@
  * Export all DynamicWorld state management types and utilities
  */
 
-export type {
-  DynamicGameState,
-} from "./DynamicGameState.js";
+export type { DynamicGameState } from "./DynamicGameState.js";
 
 export {
   DynamicGameStateManager,

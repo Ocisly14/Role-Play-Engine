@@ -1,8 +1,8 @@
-import { describe, it, expect, beforeEach } from "vitest";
-import { objectInteractionHandler } from "../objectInteractionHandler.js";
+import { beforeEach, describe, expect, it } from "vitest";
 import type { PlanNode } from "../../../dynamicBasicAgent/npcPlanning/types.js";
-import type { Item, DynamicScene } from "../../../state/types.js";
+import type { DynamicScene, Item } from "../../../state/types.js";
 import type { ExecutionContext } from "../../types.js";
+import { objectInteractionHandler } from "../objectInteractionHandler.js";
 
 // ===== Mock DGSM =====
 
@@ -10,7 +10,11 @@ function createMockDgsm() {
   const scenes: Record<string, DynamicScene> = {};
   const npcInventories: Record<string, Item[]> = {};
   const npcLocations: Record<string, string> = {};
-  const npcCharacters: Array<{ id: string; skills: Record<string, number>; status: { luck: number } }> = [];
+  const npcCharacters: Array<{
+    id: string;
+    skills: Record<string, number>;
+    status: { luck: number };
+  }> = [];
 
   return {
     getState() {
@@ -26,7 +30,7 @@ function createMockDgsm() {
       return npcInventories[npcId] ?? [];
     },
     findNpcItem(npcId: string, itemId: string): Item | undefined {
-      return npcInventories[npcId]?.find(i => i.id === itemId);
+      return npcInventories[npcId]?.find((i) => i.id === itemId);
     },
     addItemToNpc(npcId: string, item: Item) {
       if (!npcInventories[npcId]) npcInventories[npcId] = [];
@@ -34,14 +38,14 @@ function createMockDgsm() {
     },
     removeItemFromNpc(npcId: string, itemId: string): Item | undefined {
       if (!npcInventories[npcId]) return undefined;
-      const idx = npcInventories[npcId].findIndex(i => i.id === itemId);
+      const idx = npcInventories[npcId].findIndex((i) => i.id === itemId);
       if (idx === -1) return undefined;
       return npcInventories[npcId].splice(idx, 1)[0];
     },
     _addScene(
       id: string,
       items: Item[] = [],
-      itemContexts: Record<string, string> = {},
+      itemContexts: Record<string, string> = {}
     ) {
       scenes[id] = {
         id,
@@ -51,7 +55,12 @@ function createMockDgsm() {
         connections: [],
       } as unknown as DynamicScene;
     },
-    _addNpc(npcId: string, location: string, skills: Record<string, number> = {}, luck = 50) {
+    _addNpc(
+      npcId: string,
+      location: string,
+      skills: Record<string, number> = {},
+      luck = 50
+    ) {
       npcLocations[npcId] = location;
       npcCharacters.push({ id: npcId, skills, status: { luck } });
     },
@@ -65,9 +74,16 @@ function createMockCtx(): ExecutionContext {
     getNodeDifficulty: () => "regular" as const,
     getScenePenalties: () => new Map<string, number>(),
     getCharacterPenalties: () => new Map<string, number>(),
-    applyPenalties: (skills: Record<string, number>, _penalties: Map<string, number>) => skills,
+    applyPenalties: (
+      skills: Record<string, number>,
+      _penalties: Map<string, number>
+    ) => skills,
     luckFailureRate: () => 0,
-    resolveSkillRoll: () => ({ failed: false, detail: "Regular success", successLevel: "regular" as const }),
+    resolveSkillRoll: () => ({
+      failed: false,
+      detail: "Regular success",
+      successLevel: "regular" as const,
+    }),
   } as unknown as ExecutionContext;
 }
 
@@ -100,7 +116,13 @@ describe("objectInteractionHandler", () => {
 
   describe("pickup", () => {
     it("transfers full Item from scene to NPC inventory", () => {
-      const torch: Item = { id: "torch", name: "Torch", type: "lighting", isLightSource: true, lightLevel: 3 };
+      const torch: Item = {
+        id: "torch",
+        name: "Torch",
+        type: "lighting",
+        isLightSource: true,
+        lightLevel: 3,
+      };
       dgsm._addScene("study", [torch]);
       dgsm._addNpc("player-1", "study");
 
@@ -168,7 +190,9 @@ describe("objectInteractionHandler", () => {
   describe("use — normal (no actionType)", () => {
     it("decrements consumable uses and removes when exhausted", () => {
       const medkit: Item = {
-        id: "medkit", name: "First Aid Kit", type: "consumable",
+        id: "medkit",
+        name: "First Aid Kit",
+        type: "consumable",
         consumableStats: { uses: 1, effect: "heals minor wounds" },
       };
       dgsm._addScene("study", []);
@@ -186,7 +210,9 @@ describe("objectInteractionHandler", () => {
 
     it("decrements consumable uses but keeps item when uses remain", () => {
       const bandage: Item = {
-        id: "bandage", name: "Bandage Roll", type: "consumable",
+        id: "bandage",
+        name: "Bandage Roll",
+        type: "consumable",
         consumableStats: { uses: 3, effect: "stops bleeding" },
       };
       dgsm._addScene("study", []);
@@ -204,7 +230,13 @@ describe("objectInteractionHandler", () => {
     });
 
     it("toggles lighting isLightSource", () => {
-      const flashlight: Item = { id: "flashlight", name: "Flashlight", type: "lighting", isLightSource: false, lightLevel: 3 };
+      const flashlight: Item = {
+        id: "flashlight",
+        name: "Flashlight",
+        type: "lighting",
+        isLightSource: false,
+        lightLevel: 3,
+      };
       dgsm._addScene("study", []);
       dgsm._addNpc("player-1", "study");
       dgsm.addItemToNpc("player-1", flashlight);
@@ -221,15 +253,26 @@ describe("objectInteractionHandler", () => {
     it("unlocks target container with key", () => {
       const key: Item = { id: "room_key", name: "Room Key", type: "key" };
       const safe: Item = {
-        id: "safe", name: "Safe", type: "container",
-        containerStats: { capacity: 10, locked: true, lockDifficulty: "hard", contents: [] },
+        id: "safe",
+        name: "Safe",
+        type: "container",
+        containerStats: {
+          capacity: 10,
+          locked: true,
+          lockDifficulty: "hard",
+          contents: [],
+        },
       };
       dgsm._addScene("study", [safe]);
       dgsm._addNpc("player-1", "study");
       dgsm.addItemToNpc("player-1", key);
 
       const node = makeNode({
-        objectInteractionPayload: { action: "use", itemId: "room_key", targetItemId: "safe" },
+        objectInteractionPayload: {
+          action: "use",
+          itemId: "room_key",
+          targetItemId: "safe",
+        },
       });
 
       const result = objectInteractionHandler.execute(node, dgsm as any, ctx);
@@ -254,7 +297,9 @@ describe("objectInteractionHandler", () => {
 
     it("opens unlocked container", () => {
       const box: Item = {
-        id: "box", name: "Box", type: "container",
+        id: "box",
+        name: "Box",
+        type: "container",
         containerStats: { capacity: 5, locked: false, contents: [] },
       };
       dgsm._addScene("study", []);
@@ -270,7 +315,12 @@ describe("objectInteractionHandler", () => {
     });
 
     it("document use is a no-op success", () => {
-      const diary: Item = { id: "diary", name: "Diary", type: "document", description: "A worn diary." };
+      const diary: Item = {
+        id: "diary",
+        name: "Diary",
+        type: "document",
+        description: "A worn diary.",
+      };
       dgsm._addScene("study", []);
       dgsm._addNpc("player-1", "study");
       dgsm.addItemToNpc("player-1", diary);
@@ -289,12 +339,21 @@ describe("objectInteractionHandler", () => {
   describe("use — non-normal (has actionType)", () => {
     it("applies itemUpdates and targetItemUpdates on success", () => {
       const acid: Item = {
-        id: "acid", name: "Acid", type: "consumable",
+        id: "acid",
+        name: "Acid",
+        type: "consumable",
         consumableStats: { uses: 1, effect: "corrosive" },
       };
       const lock: Item = {
-        id: "padlock", name: "Padlock", type: "container",
-        containerStats: { capacity: 0, locked: true, lockDifficulty: "hard", contents: [] },
+        id: "padlock",
+        name: "Padlock",
+        type: "container",
+        containerStats: {
+          capacity: 0,
+          locked: true,
+          lockDifficulty: "hard",
+          contents: [],
+        },
       };
       dgsm._addScene("study", [lock]);
       dgsm._addNpc("player-1", "study");
@@ -307,7 +366,10 @@ describe("objectInteractionHandler", () => {
           itemId: "acid",
           targetItemId: "padlock",
           itemUpdates: { consumableStats: { uses: 0, effect: "corrosive" } },
-          targetItemUpdates: { containerStats: { locked: false }, damaged: true },
+          targetItemUpdates: {
+            containerStats: { locked: false },
+            damaged: true,
+          },
         },
       });
 
@@ -321,13 +383,24 @@ describe("objectInteractionHandler", () => {
     it("does not apply updates on skill check failure", () => {
       const failCtx = {
         ...ctx,
-        resolveSkillRoll: () => ({ failed: true, reason: "Fumble", successLevel: "fumble" as const }),
+        resolveSkillRoll: () => ({
+          failed: true,
+          reason: "Fumble",
+          successLevel: "fumble" as const,
+        }),
       } as unknown as ExecutionContext;
 
       const lockpick: Item = { id: "lockpick", name: "Lockpick", type: "tool" };
       const safe: Item = {
-        id: "safe", name: "Safe", type: "container",
-        containerStats: { capacity: 10, locked: true, lockDifficulty: "hard", contents: [] },
+        id: "safe",
+        name: "Safe",
+        type: "container",
+        containerStats: {
+          capacity: 10,
+          locked: true,
+          lockDifficulty: "hard",
+          contents: [],
+        },
       };
       dgsm._addScene("study", [safe]);
       dgsm._addNpc("player-1", "study");
@@ -343,7 +416,11 @@ describe("objectInteractionHandler", () => {
         },
       });
 
-      const result = objectInteractionHandler.execute(node, dgsm as any, failCtx);
+      const result = objectInteractionHandler.execute(
+        node,
+        dgsm as any,
+        failCtx
+      );
       expect(result.status).toBe("failed");
       expect(dgsm._scenes["study"].items[0].containerStats!.locked).toBe(true);
     });
@@ -353,7 +430,12 @@ describe("objectInteractionHandler", () => {
 
   describe("inspect", () => {
     it("returns item details in outcome string", () => {
-      const diary: Item = { id: "diary", name: "Diary", type: "document", description: "A worn leather diary with cryptic entries." };
+      const diary: Item = {
+        id: "diary",
+        name: "Diary",
+        type: "document",
+        description: "A worn leather diary with cryptic entries.",
+      };
       dgsm._addScene("study", [diary], {
         diary: "摊开在书桌上，页边压着一支掉漆的钢笔。",
       });
@@ -372,8 +454,14 @@ describe("objectInteractionHandler", () => {
 
     it("includes container contents when unlocked", () => {
       const box: Item = {
-        id: "box", name: "Box", type: "container",
-        containerStats: { capacity: 5, locked: false, contents: ["gold_coin", "silver_ring"] },
+        id: "box",
+        name: "Box",
+        type: "container",
+        containerStats: {
+          capacity: 5,
+          locked: false,
+          contents: ["gold_coin", "silver_ring"],
+        },
       };
       dgsm._addScene("study", [box]);
       dgsm._addNpc("player-1", "study");
@@ -390,8 +478,15 @@ describe("objectInteractionHandler", () => {
 
     it("shows locked status for locked container", () => {
       const safe: Item = {
-        id: "safe", name: "Safe", type: "container",
-        containerStats: { capacity: 10, locked: true, lockDifficulty: "hard", contents: ["secret_doc"] },
+        id: "safe",
+        name: "Safe",
+        type: "container",
+        containerStats: {
+          capacity: 10,
+          locked: true,
+          lockDifficulty: "hard",
+          contents: ["secret_doc"],
+        },
       };
       dgsm._addScene("study", [safe]);
       dgsm._addNpc("player-1", "study");
@@ -407,7 +502,12 @@ describe("objectInteractionHandler", () => {
     });
 
     it("works for items in NPC inventory", () => {
-      const compass: Item = { id: "compass", name: "Compass", type: "tool", description: "A brass compass." };
+      const compass: Item = {
+        id: "compass",
+        name: "Compass",
+        type: "tool",
+        description: "A brass compass.",
+      };
       dgsm._addScene("study", [], {
         compass: "原本挂在墙上的木钉上。",
       });

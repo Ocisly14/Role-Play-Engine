@@ -14,10 +14,18 @@ interface UseMultiplayerSceneRoomsReturn {
   sceneRooms: Map<string, SceneRoomState>;
   isViewingOwnRoom: boolean;
   activeRoomMessages: Message[];
-  setActiveRoomMessages: (updater: Message[] | ((prev: Message[]) => Message[])) => void;
-  setMessagesForRoom: (targetRoomId: string, updater: Message[] | ((prev: Message[]) => Message[])) => void;
+  setActiveRoomMessages: (
+    updater: Message[] | ((prev: Message[]) => Message[])
+  ) => void;
+  setMessagesForRoom: (
+    targetRoomId: string,
+    updater: Message[] | ((prev: Message[]) => Message[])
+  ) => void;
   handleSceneRoomSplit: (newRooms: SceneRoomInfo[]) => void;
-  handleSceneRoomMerged: (survivingRoomId: string, removedRoomId: string) => void;
+  handleSceneRoomMerged: (
+    survivingRoomId: string,
+    removedRoomId: string
+  ) => void;
   updateSceneRoomInfo: (roomId: string, info: Partial<SceneRoomInfo>) => void;
   saveScrollPosition: (position: number) => void;
   getScrollPosition: () => number;
@@ -172,8 +180,7 @@ export function useMultiplayerSceneRooms({
   );
 
   // Get messages for active tab
-  const activeRoomMessages =
-    sceneRooms.get(activeTabId)?.messages ?? [];
+  const activeRoomMessages = sceneRooms.get(activeTabId)?.messages ?? [];
 
   // Set messages for active tab (used by WS handler)
   const setActiveRoomMessages = useCallback(
@@ -193,7 +200,10 @@ export function useMultiplayerSceneRooms({
 
   // Set messages for any specific room (used for routing WS events by sceneRoomId)
   const setMessagesForRoom = useCallback(
-    (targetRoomId: string, updater: Message[] | ((prev: Message[]) => Message[])) => {
+    (
+      targetRoomId: string,
+      updater: Message[] | ((prev: Message[]) => Message[])
+    ) => {
       setSceneRooms((prev) => {
         const next = new Map(prev);
         const room = next.get(targetRoomId);
@@ -208,25 +218,22 @@ export function useMultiplayerSceneRooms({
   );
 
   // Handle scene room split — add child rooms to the Map
-  const handleSceneRoomSplit = useCallback(
-    (newRooms: SceneRoomInfo[]) => {
-      setSceneRooms((prev) => {
-        const next = new Map(prev);
-        for (const room of newRooms) {
-          if (!next.has(room.sceneRoomId)) {
-            next.set(room.sceneRoomId, {
-              info: room,
-              messages: [],
-              scrollPosition: 0,
-              isLoaded: false,
-            });
-          }
+  const handleSceneRoomSplit = useCallback((newRooms: SceneRoomInfo[]) => {
+    setSceneRooms((prev) => {
+      const next = new Map(prev);
+      for (const room of newRooms) {
+        if (!next.has(room.sceneRoomId)) {
+          next.set(room.sceneRoomId, {
+            info: room,
+            messages: [],
+            scrollPosition: 0,
+            isLoaded: false,
+          });
         }
-        return next;
-      });
-    },
-    []
-  );
+      }
+      return next;
+    });
+  }, []);
 
   // Handle scene room merge
   const handleSceneRoomMerged = useCallback(

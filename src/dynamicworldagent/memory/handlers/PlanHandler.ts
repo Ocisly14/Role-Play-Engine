@@ -7,7 +7,7 @@ export class PlanHandler implements MemoryHandler {
   prepare(
     _content: string,
     metadata?: Record<string, any>,
-    location?: string,
+    location?: string
   ): { tags: string[]; baseImportance: number; metadata: Record<string, any> } {
     const tags: string[] = ["plan"];
     if (location) tags.push(location);

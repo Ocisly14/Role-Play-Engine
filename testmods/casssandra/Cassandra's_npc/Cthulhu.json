@@ -1,0 +1,39 @@
+[
+    {
+      "name": "Cthulhu",
+      "occupation": "Great Old One",
+      "appearance": "A colossal, alien entity with a vaguely humanoid form, octopus-like head covered in writhing tentacles, immense wings, and a massive, bloated body of otherworldly flesh.",
+      "background": "Cthulhu is a Great Old One who lies in a deathlike slumber in the sunken city of R'lyeh beneath the Pacific Ocean. When the stars are right, he may awaken and bring madness and destruction to the world. His presence influences dreams, cults, and cosmic events even while he sleeps.",
+      "goals": [
+        "Awaken from his slumber when the stars are right",
+        "Reestablish dominion over the Earth alongside other Great Old Ones"
+      ],
+      "secrets": [
+        "Cthulhu cannot be truly destroyed and will regenerate even after apparent annihilation",
+        "His dreams subtly control and guide cultists and sensitive minds across the world"
+      ],
+      "attributes": {
+        "STR": 700,
+        "CON": 550,
+        "DEX": 105,
+        "APP": 0,
+        "POW": 210,
+        "SIZ": 1050,
+        "INT": 210,
+        "EDU": 0
+      },
+      "status": {
+        "hp": 160,
+        "maxHp": 160,
+        "sanity": 0,
+        "maxSanity": 0,
+        "luck": 0,
+        "mp": 42,
+        "conditions": []
+      },
+      "skills": {
+        "Fighting (Brawl)": 100
+      },
+     "notes": "Combat Style: Cthulhu is immense in size and can trample, kick, or strike enemies with his feet, long-clawed hands, and tentacles. Attacks per round: 2.\nCombat: Fighting 100% (50/20), damage 1D6 + 21D6 damage bonus.\nSpecial Attack – Scoop the Sea: Each round, Cthulhu may seize 1D3 investigators with his gigantic hands, killing them in horrific fashion. If Cthulhu emerges from a cavity or bends down, the facial tentacles may also attack, allowing him to grasp up to four targets per round and pierce through small openings.\nArmor: 21 points of extradimensional slime and muscle. Additionally, Cthulhu regenerates 6 HP (Hit Points) per round. When reduced to 0 HP, Cthulhu bursts apart and dissolves into a loathsome, slick green gaseous cloud, then immediately begins reforming. He requires 1D10+10 minutes to fully restore a solid form, after which he again possesses 160 HP.\nSpells: Knows hundreds of spells, excluding Summon/Bind Nightgaunts and Contact Nodens. Through terrifying dreams, Cthulhu may grant the spells Contact Deep Ones and Contact Cthulhu.\nSkills: Fighting 100%.\nSanity Loss: Viewing Cthulhu directly costs 1D10/1D100 SAN."
+  }
+  ]

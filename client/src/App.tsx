@@ -1,5 +1,5 @@
 import type React from "react";
-import { useCallback, useEffect, useRef } from "react";
+import { Suspense, lazy, useCallback, useEffect, useRef } from "react";
 import {
   BrowserRouter,
   Navigate,
@@ -28,6 +28,8 @@ import ForgotPassword from "./views/auth/ForgotPassword";
 import Login from "./views/auth/Login";
 import Register from "./views/auth/Register";
 import ResetPassword from "./views/auth/ResetPassword";
+
+const SimulationPage = lazy(() => import("./views/SimulationPage"));
 
 // Background manager component - handles dynamic backgrounds based on game state
 const BackgroundManager: React.FC = () => {
@@ -146,6 +148,22 @@ const AppRoutes: React.FC = () => {
         <Route path="/register" element={<Register />} />
         <Route path="/forgot-password" element={<ForgotPassword />} />
         <Route path="/reset-password" element={<ResetPassword />} />
+
+        {/* Simulation map viewer (outside ProtectedRoute) */}
+        <Route
+          path="/simulation/:sessionId"
+          element={
+            <Suspense
+              fallback={
+                <div className="flex items-center justify-center h-screen bg-gray-950 text-gray-400">
+                  Loading...
+                </div>
+              }
+            >
+              <SimulationPage />
+            </Suspense>
+          }
+        />
 
         {/* Legacy route redirects */}
         <Route path="/gamechat" element={<Navigate to="/game" replace />} />

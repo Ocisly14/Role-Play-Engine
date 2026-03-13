@@ -25,9 +25,7 @@
       "description": "靠近焚化厂，空气质量较差。"
     }
   ],
-  "connectedSceneIds": [
-    "SCN_2_SUB_1"
-  ],
+  "connectedSceneIds": ["SCN_2_SUB_1"],
   "itemContexts": {
     "ITEM_JUNC1_1": "立在路口边的黄色金属警示牌，提醒来往车辆此方向通往焚化厂，靠近时有高温与粉尘风险。",
     "ITEM_JUNC1_3": "一盏高杆工业路灯立在路口边缘，灯罩外侧沾着灰尘和焦黑烟迹。"

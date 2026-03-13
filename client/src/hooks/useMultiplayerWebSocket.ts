@@ -8,9 +8,13 @@
  * - combat_start / combat_end
  */
 
-import { useCallback, useEffect, useRef } from "react";
+import { useEffect, useRef } from "react";
 import type { DiceRollInfo } from "../components/DiceAnimation";
-import type { Message, PendingDiceRolls, SceneRoomInfo } from "../types/gamechat";
+import type {
+  Message,
+  PendingDiceRolls,
+  SceneRoomInfo,
+} from "../types/gamechat";
 
 export interface MultiplayerWSMessage {
   type: string;
@@ -53,13 +57,18 @@ export interface UseMultiplayerWebSocketParams {
   roomId?: string;
   onSceneRoomSplit?: (newRooms: any[]) => void;
   onSceneRoomMerged?: (survivingRoomId: string, removedRoomId: string) => void;
-  setMessagesForRoom?: (sceneRoomId: string, updater: Message[] | ((prev: Message[]) => Message[])) => void;
+  setMessagesForRoom?: (
+    sceneRoomId: string,
+    updater: Message[] | ((prev: Message[]) => Message[])
+  ) => void;
   currentPlayerId?: string | null;
-  setRoundStatus?: React.Dispatch<React.SetStateAction<{
-    submittedCount: number;
-    totalCount: number;
-    pendingPlayerNames: string[];
-  } | null>>;
+  setRoundStatus?: React.Dispatch<
+    React.SetStateAction<{
+      submittedCount: number;
+      totalCount: number;
+      pendingPlayerNames: string[];
+    } | null>
+  >;
   /** Called when WS reconnects so the caller can re-fetch missed messages */
   onReconnect?: () => void;
   /** Called when the current player's scene room changes due to split/merge */
@@ -182,8 +191,15 @@ export function useMultiplayerWebSocket({
             // Route messages to correct state store:
             // - Own room → flat setMessages (rendered by component)
             // - Other rooms → setMessagesForRoom (Map, for tab switching)
-            const targetSetMessages = (eventSceneRoomId: string | undefined, updater: Message[] | ((prev: Message[]) => Message[])) => {
-              if (eventSceneRoomId && eventSceneRoomId !== currentSceneRoomIdRef.current && setMessagesForRoomRef.current) {
+            const targetSetMessages = (
+              eventSceneRoomId: string | undefined,
+              updater: Message[] | ((prev: Message[]) => Message[])
+            ) => {
+              if (
+                eventSceneRoomId &&
+                eventSceneRoomId !== currentSceneRoomIdRef.current &&
+                setMessagesForRoomRef.current
+              ) {
                 // Different room — route to Map for tab viewing
                 setMessagesForRoomRef.current(eventSceneRoomId, updater);
               } else {
@@ -205,7 +221,10 @@ export function useMultiplayerWebSocket({
                 const inputType = msg.inputType as "input" | "skip";
 
                 // Update round status banner (only for own room)
-                if (setRoundStatusRef.current && eventSceneRoomId === currentSceneRoomIdRef.current) {
+                if (
+                  setRoundStatusRef.current &&
+                  eventSceneRoomId === currentSceneRoomIdRef.current
+                ) {
                   setRoundStatusRef.current({
                     submittedCount: msg.submittedCount as number,
                     totalCount: msg.totalCount as number,
@@ -217,9 +236,10 @@ export function useMultiplayerWebSocket({
                 if (playerId === currentPlayerIdRef.current) break;
 
                 // Add this player's message to chat
-                const maxTurn = messagesRef.current.length > 0
-                  ? Math.max(...messagesRef.current.map((m) => m.turnNumber))
-                  : 0;
+                const maxTurn =
+                  messagesRef.current.length > 0
+                    ? Math.max(...messagesRef.current.map((m) => m.turnNumber))
+                    : 0;
 
                 if (inputType === "skip") {
                   targetSetMessages(eventSceneRoomId, (prev) => [
@@ -250,7 +270,11 @@ export function useMultiplayerWebSocket({
 
               case "round_processing":
                 // Only affect UI state for own room (ignore other rooms' processing)
-                if (msg.sceneRoomId && msg.sceneRoomId !== currentSceneRoomIdRef.current) break;
+                if (
+                  msg.sceneRoomId &&
+                  msg.sceneRoomId !== currentSceneRoomIdRef.current
+                )
+                  break;
                 setIsWaiting(true);
                 if (setRoundStatusRef.current) {
                   setRoundStatusRef.current(null);
@@ -259,7 +283,11 @@ export function useMultiplayerWebSocket({
 
               case "round_complete": {
                 // Only affect UI state for own room
-                if (msg.sceneRoomId && msg.sceneRoomId !== currentSceneRoomIdRef.current) break;
+                if (
+                  msg.sceneRoomId &&
+                  msg.sceneRoomId !== currentSceneRoomIdRef.current
+                )
+                  break;
                 setIsWaiting(false);
                 if (setRoundStatusRef.current) {
                   setRoundStatusRef.current(null);
@@ -272,9 +300,17 @@ export function useMultiplayerWebSocket({
 
               case "keeper_dice_rolls": {
                 // Only show dice rolls for own scene room
-                if (msg.sceneRoomId && msg.sceneRoomId !== currentSceneRoomIdRef.current) break;
-                const diceRolls = msg.diceRolls as Array<string | DiceRollInfo> | undefined;
-                const turnId = (msg.roundTurnId ?? msg.turnId) as string | undefined;
+                if (
+                  msg.sceneRoomId &&
+                  msg.sceneRoomId !== currentSceneRoomIdRef.current
+                )
+                  break;
+                const diceRolls = msg.diceRolls as
+                  | Array<string | DiceRollInfo>
+                  | undefined;
+                const turnId = (msg.roundTurnId ?? msg.turnId) as
+                  | string
+                  | undefined;
                 if (!diceRolls || diceRolls.length === 0) return;
 
                 if (turnId) {
@@ -307,17 +343,26 @@ export function useMultiplayerWebSocket({
               }
 
               case "keeper_stream_start": {
-                const turnId = (msg.roundTurnId ?? msg.turnId) as string | undefined;
+                const turnId = (msg.roundTurnId ?? msg.turnId) as
+                  | string
+                  | undefined;
                 if (!turnId) return;
                 // Only update streaming state for own room
-                if (!msg.sceneRoomId || msg.sceneRoomId === currentSceneRoomIdRef.current) {
+                if (
+                  !msg.sceneRoomId ||
+                  msg.sceneRoomId === currentSceneRoomIdRef.current
+                ) {
                   setStreamingTurnId(turnId);
                 }
                 targetSetMessages(msg.sceneRoomId, (prev) => {
-                  const existing = prev.find((m) => m.turnId === turnId && m.role === "keeper");
+                  const existing = prev.find(
+                    (m) => m.turnId === turnId && m.role === "keeper"
+                  );
                   if (existing) {
                     return prev.map((m) =>
-                      m.turnId === turnId && m.role === "keeper" ? { ...m, isStreaming: true } : m
+                      m.turnId === turnId && m.role === "keeper"
+                        ? { ...m, isStreaming: true }
+                        : m
                     );
                   }
                   const nextTurnNumber =
@@ -344,17 +389,20 @@ export function useMultiplayerWebSocket({
               }
 
               case "keeper_stream_delta": {
-                const turnId = (msg.roundTurnId ?? msg.turnId) as string | undefined;
+                const turnId = (msg.roundTurnId ?? msg.turnId) as
+                  | string
+                  | undefined;
                 const delta = msg.delta;
                 if (!turnId || !delta) return;
 
                 if (streamingBlockedRef.current.has(turnId)) {
-                  const existing =
-                    streamingBufferRef.current.get(turnId) || "";
+                  const existing = streamingBufferRef.current.get(turnId) || "";
                   streamingBufferRef.current.set(turnId, existing + delta);
 
                   targetSetMessages(msg.sceneRoomId, (prev) => {
-                    const found = prev.find((m) => m.turnId === turnId && m.role === "keeper");
+                    const found = prev.find(
+                      (m) => m.turnId === turnId && m.role === "keeper"
+                    );
                     if (found) return prev;
                     const nextTurnNumber =
                       prev.length > 0
@@ -382,7 +430,11 @@ export function useMultiplayerWebSocket({
                   const next = prev.map((m) => {
                     if (m.turnId === turnId && m.role === "keeper") {
                       found = true;
-                      return { ...m, content: m.content + delta, isStreaming: true };
+                      return {
+                        ...m,
+                        content: m.content + delta,
+                        isStreaming: true,
+                      };
                     }
                     return m;
                   });
@@ -408,15 +460,22 @@ export function useMultiplayerWebSocket({
               }
 
               case "keeper_stream_end": {
-                const turnId = (msg.roundTurnId ?? msg.turnId) as string | undefined;
+                const turnId = (msg.roundTurnId ?? msg.turnId) as
+                  | string
+                  | undefined;
                 if (!turnId) return;
                 targetSetMessages(msg.sceneRoomId, (prev) =>
                   prev.map((m) =>
-                    m.turnId === turnId && m.role === "keeper" ? { ...m, isStreaming: false } : m
+                    m.turnId === turnId && m.role === "keeper"
+                      ? { ...m, isStreaming: false }
+                      : m
                   )
                 );
                 // Only update UI state for own room
-                if (!msg.sceneRoomId || msg.sceneRoomId === currentSceneRoomIdRef.current) {
+                if (
+                  !msg.sceneRoomId ||
+                  msg.sceneRoomId === currentSceneRoomIdRef.current
+                ) {
                   setStreamingTurnId((cur) => (cur === turnId ? null : cur));
                   setIsWaiting(false);
                   if (onNarrativeCompleteRef.current) {
@@ -444,7 +503,9 @@ export function useMultiplayerWebSocket({
                   msg.type === "combat_start"
                     ? ("combat_start" as const)
                     : ("combat_end" as const);
-                const combatTurnId = (msg.roundTurnId ?? msg.turnId) as string | undefined;
+                const combatTurnId = (msg.roundTurnId ?? msg.turnId) as
+                  | string
+                  | undefined;
                 targetSetMessages(msg.sceneRoomId, (prev) => {
                   const resolvedTurnNumber =
                     typeof msg.turnNumber === "number"
@@ -491,10 +552,12 @@ export function useMultiplayerWebSocket({
                 if (setRoundStatusRef.current) {
                   setRoundStatusRef.current(null);
                 }
-                const errorContent = msg.error ?? "An error occurred processing the round.";
-                const maxTurn = messagesRef.current.length > 0
-                  ? Math.max(...messagesRef.current.map((m) => m.turnNumber))
-                  : 0;
+                const errorContent =
+                  msg.error ?? "An error occurred processing the round.";
+                const maxTurn =
+                  messagesRef.current.length > 0
+                    ? Math.max(...messagesRef.current.map((m) => m.turnNumber))
+                    : 0;
                 targetSetMessages(msg.sceneRoomId, (prev) => [
                   ...prev,
                   {
@@ -557,9 +620,13 @@ export function useMultiplayerWebSocket({
                 // Detect if current player is in the merged child room
                 if (
                   currentPlayerIdRef.current &&
-                  msg.mergedChildRoom?.playerIds?.includes(currentPlayerIdRef.current)
+                  msg.mergedChildRoom?.playerIds?.includes(
+                    currentPlayerIdRef.current
+                  )
                 ) {
-                  onMySceneRoomChangedRef.current?.(msg.mergedChildRoom.sceneRoomId);
+                  onMySceneRoomChangedRef.current?.(
+                    msg.mergedChildRoom.sceneRoomId
+                  );
                 }
 
                 onNarrativeCompleteRef.current?.();
@@ -592,7 +659,11 @@ export function useMultiplayerWebSocket({
                 break;
 
               case "time_drift_blocked":
-                console.log("[MP WebSocket] Time drift blocked:", msg.driftMinutes, "minutes");
+                console.log(
+                  "[MP WebSocket] Time drift blocked:",
+                  msg.driftMinutes,
+                  "minutes"
+                );
                 setIsWaiting(true);
                 break;
 
@@ -616,7 +687,10 @@ export function useMultiplayerWebSocket({
                 break;
 
               case "error":
-                console.error("[MP WebSocket] Error:", msg.message || msg.error);
+                console.error(
+                  "[MP WebSocket] Error:",
+                  msg.message || msg.error
+                );
                 break;
 
               default:

@@ -1,6 +1,6 @@
-import { describe, it, expect, beforeEach, vi, afterEach } from "vitest";
-import { staminaFeature } from "../staminaFeature.js";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import type { TickRuntimeContext } from "../../types.js";
+import { staminaFeature } from "../staminaFeature.js";
 
 // ===== Mock DGSM =====
 
@@ -8,7 +8,11 @@ function createMockDgsm() {
   const featureState: Record<string, Record<string, unknown>> = {};
   const npcLocations: Record<string, string> = {};
   const npcStats: Record<string, { hp: number; san: number }> = {};
-  const npcCharacters: Array<{ id: string; name: string; status: { hp: number; conditions: string[] } }> = [];
+  const npcCharacters: Array<{
+    id: string;
+    name: string;
+    status: { hp: number; conditions: string[] };
+  }> = [];
 
   return {
     getFeatureSceneState(featureId: string, sceneId: string) {
@@ -45,11 +49,16 @@ function createMockDgsm() {
     _addNpc(npcId: string, location: string, hp: number, san = 50) {
       npcLocations[npcId] = location;
       npcStats[npcId] = { hp, san };
-      npcCharacters.push({ id: npcId, name: npcId, status: { hp, conditions: [] } });
+      npcCharacters.push({
+        id: npcId,
+        name: npcId,
+        status: { hp, conditions: [] },
+      });
     },
     // Topology support for resolveCharacterLocationId
     getCharacterPosition: (_id: string) => null as any,
-    resolveLocationId: (pos: any) => pos?.junctionId ?? pos?.roadId ?? pos?.sceneId,
+    resolveLocationId: (pos: any) =>
+      pos?.junctionId ?? pos?.roadId ?? pos?.sceneId,
     getNpcLocation: (npcId: string) => npcLocations[npcId] ?? undefined,
 
     _featureState: featureState,
@@ -60,7 +69,9 @@ function createMockDgsm() {
 
 type MockDgsm = ReturnType<typeof createMockDgsm>;
 
-function createMockRuntime(overrides?: Partial<TickRuntimeContext>): TickRuntimeContext {
+function createMockRuntime(
+  overrides?: Partial<TickRuntimeContext>
+): TickRuntimeContext {
   return {
     sessionId: "test-session",
     gameDay: 1,
@@ -69,7 +80,11 @@ function createMockRuntime(overrides?: Partial<TickRuntimeContext>): TickRuntime
     tickDurationMinutes: 5,
     npcPlanning: {
       getPendingNodes: async () => [],
-      runImpactGateForNpc: async () => ({ shouldRevise: false, shouldReviseSchedule: false, witnessEntry: "" }),
+      runImpactGateForNpc: async () => ({
+        shouldRevise: false,
+        shouldReviseSchedule: false,
+        witnessEntry: "",
+      }),
       revisePlans: async () => {},
     },
     ...overrides,
@@ -445,8 +460,14 @@ describe("staminaFeature", () => {
       // 96 ticks * 5 min = 480 min → tired
       runTicks(dgsm, runtime, 96);
 
-      const conditions = dgsm.getState().npcCharacters.find(n => n.id === "npc-test")!.status.conditions;
-      expect(conditions.some((c: string) => c.includes("[Fatigue]") && c.includes("Tired"))).toBe(true);
+      const conditions = dgsm
+        .getState()
+        .npcCharacters.find((n) => n.id === "npc-test")!.status.conditions;
+      expect(
+        conditions.some(
+          (c: string) => c.includes("[Fatigue]") && c.includes("Tired")
+        )
+      ).toBe(true);
     });
 
     it("should replace Tired with Exhausted when reaching level 2", () => {
@@ -456,9 +477,15 @@ describe("staminaFeature", () => {
       // 192 ticks * 5 min = 960 min → exhausted
       runTicks(dgsm, runtime, 192);
 
-      const conditions = dgsm.getState().npcCharacters.find(n => n.id === "npc-test")!.status.conditions;
+      const conditions = dgsm
+        .getState()
+        .npcCharacters.find((n) => n.id === "npc-test")!.status.conditions;
       expect(conditions.some((c: string) => c.includes("Tired"))).toBe(false);
-      expect(conditions.some((c: string) => c.includes("[Fatigue]") && c.includes("Exhausted"))).toBe(true);
+      expect(
+        conditions.some(
+          (c: string) => c.includes("[Fatigue]") && c.includes("Exhausted")
+        )
+      ).toBe(true);
     });
 
     it("should add condition to NPC when fatigued", () => {
@@ -466,15 +493,23 @@ describe("staminaFeature", () => {
 
       runTicks(dgsm, runtime, 96); // 480 min → tired
 
-      const npc = dgsm.getState().npcCharacters.find((n: any) => n.id === "npc-guard");
-      expect(npc!.status.conditions.some((c: string) => c.includes("[Fatigue]"))).toBe(true);
+      const npc = dgsm
+        .getState()
+        .npcCharacters.find((n: any) => n.id === "npc-guard");
+      expect(
+        npc!.status.conditions.some((c: string) => c.includes("[Fatigue]"))
+      ).toBe(true);
     });
 
     it("should not have fatigue condition when rested", () => {
       runTicks(dgsm, runtime, 10); // 50 min → still rested
 
-      const conditions = dgsm.getState().npcCharacters.find(n => n.id === "npc-test")!.status.conditions;
-      expect(conditions.some((c: string) => c.includes("[Fatigue]"))).toBe(false);
+      const conditions = dgsm
+        .getState()
+        .npcCharacters.find((n) => n.id === "npc-test")!.status.conditions;
+      expect(conditions.some((c: string) => c.includes("[Fatigue]"))).toBe(
+        false
+      );
     });
   });
 
@@ -484,7 +519,9 @@ describe("staminaFeature", () => {
     it("should use CharacterPosition for acceleration when available", () => {
       // Override getCharacterPosition to return a road position for npc1
       (dgsm as any).getCharacterPosition = (id: string) =>
-        id === "npc1" ? { type: "road", roadId: "ROAD_1", position: 0.5 } : null;
+        id === "npc1"
+          ? { type: "road", roadId: "ROAD_1", position: 0.5 }
+          : null;
 
       dgsm._addNpc("npc1", "tavern", 10);
 
@@ -511,7 +548,6 @@ describe("staminaFeature", () => {
       // npc2 is at "tavern" via npcLocations, fire at tavern → 2x
       expect(stamina.minutesSinceLastRest).toBe(10);
     });
-
   });
 
   // ===== planningPrompt =====

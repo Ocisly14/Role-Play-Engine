@@ -70,7 +70,10 @@ export function injectCharacterIntoState(
   dgsm.setNpcLocation(profile.id, entrySceneId);
 
   // Set character position
-  dgsm.setCharacterPosition(profile.id, { type: "scene", sceneId: entrySceneId });
+  dgsm.setCharacterPosition(profile.id, {
+    type: "scene",
+    sceneId: entrySceneId,
+  });
 
   // Cast readonly away for the shallow Record maps (Readonly is shallow in TypeScript)
   const state = dgsm.getState() as ReturnType<typeof dgsm.getState> & {
@@ -78,7 +81,10 @@ export function injectCharacterIntoState(
     npcResidences: Record<string, string>;
     npcInventories: Record<string, import("../state/types.js").Item[]>;
     npcDiscoveredKnowledge: Record<string, string[]>;
-    npcRelationshipGraph: Record<string, Record<string, { score: number; note: string }>>;
+    npcRelationshipGraph: Record<
+      string,
+      Record<string, { score: number; note: string }>
+    >;
   };
 
   // Initialise npcStats (uses `san` not `sanity`)
@@ -118,8 +124,14 @@ export async function removeCharacterFromState(
     npcResidences: Record<string, string>;
     npcInventories: Record<string, import("../state/types.js").Item[]>;
     npcDiscoveredKnowledge: Record<string, string[]>;
-    npcRelationshipGraph: Record<string, Record<string, { score: number; note: string }>>;
-    characterPositions: Record<string, import("../state/topologyTypes.js").CharacterPosition>;
+    npcRelationshipGraph: Record<
+      string,
+      Record<string, { score: number; note: string }>
+    >;
+    characterPositions: Record<
+      string,
+      import("../state/topologyTypes.js").CharacterPosition
+    >;
     npcLocations: Record<string, string>;
   };
 

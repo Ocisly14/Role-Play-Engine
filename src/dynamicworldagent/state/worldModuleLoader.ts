@@ -16,15 +16,14 @@ import {
 } from "../../shared/agents/memory/database/moduleScope.js";
 import { getPrismaClient } from "../../shared/agents/memory/database/prismaClient.js";
 import { resolveEmailId } from "../../shared/agents/memory/database/userContext.js";
-import type {
-  ModuleSetup,
-  ScenarioOutline,
-  TransportEdge,
-} from "./types.js";
+import {
+  decodeSceneItemsPayload,
+  encodeSceneItemsPayload,
+} from "./sceneItemContextPayload.js";
+import type { JunctionNode, RoadNode } from "./topologyTypes.js";
+import type { ModuleSetup, ScenarioOutline, TransportEdge } from "./types.js";
 import type { DynamicNPCProfile } from "./types.js";
 import type { DynamicScene } from "./types.js";
-import type { JunctionNode, RoadNode } from "./topologyTypes.js";
-import { decodeSceneItemsPayload, encodeSceneItemsPayload } from "./sceneItemContextPayload.js";
 
 /**
  * Runtime-relevant module data loaded from world-builder files.
@@ -216,7 +215,9 @@ export class WorldModuleLoader {
         }>(transportFile);
         transportEdges = transportData.transportEdges || [];
       } else {
-        console.log(`  [3/5] transport_edges.json not found, using empty transport graph`);
+        console.log(
+          `  [3/5] transport_edges.json not found, using empty transport graph`
+        );
       }
 
       // 4. Load scenes from individual scenario files
@@ -315,9 +316,7 @@ export class WorldModuleLoader {
   /**
    * Load scenes from individual DynamicScene JSON files (SCN_*.json).
    */
-  private loadDynamicScenes(
-    scenariosDir: string
-  ): Map<string, DynamicScene> {
+  private loadDynamicScenes(scenariosDir: string): Map<string, DynamicScene> {
     const scenes = new Map<string, DynamicScene>();
 
     if (!fs.existsSync(scenariosDir)) {
@@ -327,7 +326,12 @@ export class WorldModuleLoader {
 
     const files = fs
       .readdirSync(scenariosDir)
-      .filter((f) => f.endsWith(".json") && !f.startsWith("JUNC_") && !f.startsWith("ROAD_"));
+      .filter(
+        (f) =>
+          f.endsWith(".json") &&
+          !f.startsWith("JUNC_") &&
+          !f.startsWith("ROAD_")
+      );
 
     for (const file of files) {
       try {
@@ -363,7 +367,8 @@ export class WorldModuleLoader {
     const junctions = new Map<string, JunctionNode>();
     if (!fs.existsSync(scenariosDir)) return junctions;
 
-    const files = fs.readdirSync(scenariosDir)
+    const files = fs
+      .readdirSync(scenariosDir)
       .filter((f) => f.startsWith("JUNC_") && f.endsWith(".json"));
 
     for (const file of files) {
@@ -396,7 +401,8 @@ export class WorldModuleLoader {
     const roads = new Map<string, RoadNode>();
     if (!fs.existsSync(scenariosDir)) return roads;
 
-    const files = fs.readdirSync(scenariosDir)
+    const files = fs
+      .readdirSync(scenariosDir)
       .filter((f) => f.startsWith("ROAD_") && f.endsWith(".json"));
 
     for (const file of files) {
@@ -501,9 +507,7 @@ export class WorldModuleLoader {
     await this.saveScenarios(module, moduleId);
 
     // 4. Save scenes
-    console.log(
-      `  [4/4] Saving ${module.scenes.size} scenes...`
-    );
+    console.log(`  [4/4] Saving ${module.scenes.size} scenes...`);
     await this.saveDynamicScenes(module, moduleId);
 
     console.log(`  All data saved to database`);
@@ -571,8 +575,7 @@ export class WorldModuleLoader {
       module.scenarios
         .slice(0, 3)
         .map((scenario) => `${scenario.name}: ${scenario.description}`)
-        .join(" ") ||
-      module.moduleName;
+        .join(" ") || module.moduleName;
 
     // Generate story outline from scenarios
     const storyOutline = module.scenarios
@@ -583,13 +586,12 @@ export class WorldModuleLoader {
     const initialGameTime: string | null = null;
 
     // Characters are no longer stored on scenes; initial NPC names come from module.npcs
-    const initialScenarioNPCs: string[] = importData.npcs.map((npc) => npc.name);
+    const initialScenarioNPCs: string[] = importData.npcs.map(
+      (npc) => npc.name
+    );
 
     // Auto-generate tags
-    const tags = [
-      "auto-generated",
-      "world-builder",
-    ];
+    const tags = ["auto-generated", "world-builder"];
 
     await prisma.moduleBackground.upsert({
       where: { moduleId },

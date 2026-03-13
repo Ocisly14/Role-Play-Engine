@@ -49,9 +49,7 @@
       }
     }
   ],
-  "connections": [
-    "SCN_3_SUB_1"
-  ],
+  "connections": ["SCN_3_SUB_1"],
   "itemContexts": {
     "ITEM_SCN3_8": "角落里堆着几只敞口纸箱，里面塞满了尚未来得及归档的文件袋与零散卷宗。"
   }

@@ -26,7 +26,7 @@ export interface BootstrapSecretsParams {
 }
 
 export async function bootstrapNpcSecrets(
-  params: BootstrapSecretsParams,
+  params: BootstrapSecretsParams
 ): Promise<number> {
   const { prisma, embedClient, sessionId, moduleId, npcs, gameDay, gameTime } =
     params;
@@ -72,7 +72,7 @@ export async function bootstrapNpcSecrets(
 
   if (totalWritten > 0) {
     console.log(
-      `[BootstrapSecrets] Wrote ${totalWritten} secret memories for session ${sessionId}`,
+      `[BootstrapSecrets] Wrote ${totalWritten} secret memories for session ${sessionId}`
     );
   }
 

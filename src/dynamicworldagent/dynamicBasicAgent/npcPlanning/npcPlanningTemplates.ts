@@ -14,19 +14,32 @@ export interface SummarizeDayMemoryParams {
   npcProfile: string;
   gameDay: number;
   eventLog: string;
-  receivedKnowledge: Array<{ id: string; text: string; category: string; from: string }>;
+  receivedKnowledge: Array<{
+    id: string;
+    text: string;
+    category: string;
+    from: string;
+  }>;
   existingKnowledgeIds: string[];
   language: string;
 }
 
-export function buildSummarizeDayMemoryPrompt(params: SummarizeDayMemoryParams): PromptParts {
-  const receivedSection = params.receivedKnowledge.length > 0
-    ? params.receivedKnowledge.map(k => `- [${k.id}] (from ${k.from}) "${k.text}" (${k.category})`).join("\n")
-    : "None.";
+export function buildSummarizeDayMemoryPrompt(
+  params: SummarizeDayMemoryParams
+): PromptParts {
+  const receivedSection =
+    params.receivedKnowledge.length > 0
+      ? params.receivedKnowledge
+          .map(
+            (k) => `- [${k.id}] (from ${k.from}) "${k.text}" (${k.category})`
+          )
+          .join("\n")
+      : "None.";
 
-  const existingIds = params.existingKnowledgeIds.length > 0
-    ? params.existingKnowledgeIds.join(", ")
-    : "(none)";
+  const existingIds =
+    params.existingKnowledgeIds.length > 0
+      ? params.existingKnowledgeIds.join(", ")
+      : "(none)";
 
   const systemPrompt = `You are an NPC character in a Call of Cthulhu tabletop RPG.
 
@@ -104,7 +117,9 @@ export interface DailyScheduleParams {
   memoryContext?: string;
 }
 
-export function buildDailySchedulePrompt(params: DailyScheduleParams): PromptParts {
+export function buildDailySchedulePrompt(
+  params: DailyScheduleParams
+): PromptParts {
   const systemPrompt = `You are an NPC character in a Call of Cthulhu tabletop RPG.
 
 ## Task
@@ -280,7 +295,9 @@ Add type-specific fields as needed:
 - **object_interaction**: \`"objectInteractionPayload"\` with \`itemUpdates\`/\`targetItemUpdates\` for non-standard use
 - **scene_interaction**: optional \`"sceneConnectionEffect"\``;
 
-export function buildDetailedNodesPrompt(params: DetailedNodesParams): PromptParts {
+export function buildDetailedNodesPrompt(
+  params: DetailedNodesParams
+): PromptParts {
   const todayPlan = JSON.stringify(params.todayPlan, null, 2);
 
   const systemPrompt = `You are an NPC character in a Call of Cthulhu tabletop RPG.
@@ -367,7 +384,9 @@ export interface ReviseScheduleParams {
   language: string;
 }
 
-export function buildReviseSchedulePrompt(params: ReviseScheduleParams): PromptParts {
+export function buildReviseSchedulePrompt(
+  params: ReviseScheduleParams
+): PromptParts {
   const systemPrompt = `You are an NPC character in a Call of Cthulhu tabletop RPG.
 
 ## Task
@@ -616,7 +635,9 @@ export interface RelationshipUpdateParams {
   language: string;
 }
 
-export function buildRelationshipUpdatePrompt(params: RelationshipUpdateParams): string {
+export function buildRelationshipUpdatePrompt(
+  params: RelationshipUpdateParams
+): string {
   return `You are the Game Master for a Call of Cthulhu tabletop RPG.
 
 ## Task

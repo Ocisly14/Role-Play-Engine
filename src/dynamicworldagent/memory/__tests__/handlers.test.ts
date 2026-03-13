@@ -1,5 +1,5 @@
-import { describe, it, expect } from "vitest";
 import type { NpcMemory } from "@prisma/client";
+import { describe, expect, it } from "vitest";
 import { getAllHandlers, getHandler } from "../handlers/index.js";
 
 // ===== Helper =====
@@ -70,8 +70,15 @@ describe("EventHandler", () => {
   });
 
   it("format returns correct prefix with day/time", () => {
-    const mem = makeMemory({ type: "event", content: "Searched the library", gameDay: 1, gameTime: "10:00" });
-    expect(handler.format(mem)).toBe("[event] Day1 10:00 - Searched the library");
+    const mem = makeMemory({
+      type: "event",
+      content: "Searched the library",
+      gameDay: 1,
+      gameTime: "10:00",
+    });
+    expect(handler.format(mem)).toBe(
+      "[event] Day1 10:00 - Searched the library"
+    );
   });
 
   it("does not have customDecayRate", () => {
@@ -89,7 +96,11 @@ describe("WitnessHandler", () => {
   });
 
   it("prepare returns baseImportance 2.0 and includes witness + location + sourceCharacterId tags", () => {
-    const result = handler.prepare("Saw John steal", { sourceCharacterId: "john-1" }, "market");
+    const result = handler.prepare(
+      "Saw John steal",
+      { sourceCharacterId: "john-1" },
+      "market"
+    );
     expect(result.baseImportance).toBe(2.0);
     expect(result.tags).toContain("witness");
     expect(result.tags).toContain("market");
@@ -102,7 +113,12 @@ describe("WitnessHandler", () => {
   });
 
   it("format returns correct prefix with day/time", () => {
-    const mem = makeMemory({ type: "witness", content: "Saw John steal", gameDay: 1, gameTime: "10:00" });
+    const mem = makeMemory({
+      type: "witness",
+      content: "Saw John steal",
+      gameDay: 1,
+      gameTime: "10:00",
+    });
     expect(handler.format(mem)).toBe("[witness] Day1 10:00 - Saw John steal");
   });
 
@@ -121,7 +137,11 @@ describe("InformationHandler", () => {
   });
 
   it("prepare returns baseImportance 3.0 and includes information + location + knowledgeId tags", () => {
-    const result = handler.prepare("Ritual requires dagger", { knowledgeId: "know-42" }, "library");
+    const result = handler.prepare(
+      "Ritual requires dagger",
+      { knowledgeId: "know-42" },
+      "library"
+    );
     expect(result.baseImportance).toBe(3.0);
     expect(result.tags).toContain("information");
     expect(result.tags).toContain("library");
@@ -129,7 +149,12 @@ describe("InformationHandler", () => {
   });
 
   it("format omits day/time (bare information format)", () => {
-    const mem = makeMemory({ type: "information" as any, content: "Ritual requires dagger", gameDay: 1, gameTime: "10:00" });
+    const mem = makeMemory({
+      type: "information" as any,
+      content: "Ritual requires dagger",
+      gameDay: 1,
+      gameTime: "10:00",
+    });
     expect(handler.format(mem)).toBe("[information] Ritual requires dagger");
   });
 
@@ -148,7 +173,11 @@ describe("BeliefHandler", () => {
   });
 
   it("prepare returns baseImportance 2.5 and includes belief + location tags", () => {
-    const result = handler.prepare("John is suspicious", { confidence: 0.7, reasoningChain: "because X" }, "office");
+    const result = handler.prepare(
+      "John is suspicious",
+      { confidence: 0.7, reasoningChain: "because X" },
+      "office"
+    );
     expect(result.baseImportance).toBe(2.5);
     expect(result.tags).toContain("belief");
     expect(result.tags).toContain("office");
@@ -161,7 +190,9 @@ describe("BeliefHandler", () => {
       metadata: { confidence: 0.7, reasoningChain: "because X" },
     });
     const formatted = handler.format(mem);
-    expect(formatted).toContain("[belief] John is suspicious (confidence: 0.7)");
+    expect(formatted).toContain(
+      "[belief] John is suspicious (confidence: 0.7)"
+    );
     expect(formatted).toContain("Reasoning: because X");
   });
 
@@ -190,7 +221,11 @@ describe("PlanHandler", () => {
   });
 
   it("prepare returns baseImportance 1.5 and includes plan + location tags", () => {
-    const result = handler.prepare("Plan to investigate library", { planType: "daily" }, "office");
+    const result = handler.prepare(
+      "Plan to investigate library",
+      { planType: "daily" },
+      "office"
+    );
     expect(result.baseImportance).toBe(1.5);
     expect(result.tags).toContain("plan");
     expect(result.tags).toContain("office");
@@ -202,7 +237,9 @@ describe("PlanHandler", () => {
       content: "Plan to investigate library",
       metadata: { planType: "daily" },
     });
-    expect(handler.format(mem)).toBe("[plan:daily] Plan to investigate library");
+    expect(handler.format(mem)).toBe(
+      "[plan:daily] Plan to investigate library"
+    );
   });
 
   it("format defaults to 'daily' when planType missing", () => {
@@ -250,7 +287,10 @@ describe("SecretHandler", () => {
   });
 
   it("format returns correct prefix", () => {
-    const mem = makeMemory({ type: "secret", content: "I killed the professor" });
+    const mem = makeMemory({
+      type: "secret",
+      content: "I killed the professor",
+    });
     expect(handler.format(mem)).toBe("[secret] I killed the professor");
   });
 

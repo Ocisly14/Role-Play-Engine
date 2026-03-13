@@ -59,9 +59,7 @@
       }
     }
   ],
-  "connections": [
-    "SCN_16_SUB_1"
-  ],
+  "connections": ["SCN_16_SUB_1"],
   "itemContexts": {
     "ITEM_SCN16_6": "围栏边排着几张小圆桌，桌面上还留着深浅不一的酒渍圆环。",
     "ITEM_SCN16_8": "隔层墙面上的几盏壁灯散着微弱琥珀色光芒，照不透角落的阴影。",

@@ -584,14 +584,16 @@ export class NPCLoader {
     };
 
     // Convert knowledge
-    const knowledge: NPCKnowledge[] = (parsedData.knowledge || []).map((k, index) => ({
-      id: `${npcId}-knowledge-${index}`,
-      text: k.text,
-      category: k.category,
-      difficulty: k.difficulty,
-      revealed: false,
-      relatedTo: k.relatedTo,
-    }));
+    const knowledge: NPCKnowledge[] = (parsedData.knowledge || []).map(
+      (k, index) => ({
+        id: `${npcId}-knowledge-${index}`,
+        text: k.text,
+        category: k.category,
+        difficulty: k.difficulty,
+        revealed: false,
+        relatedTo: k.relatedTo,
+      })
+    );
 
     // Convert relationships
     const relationships: NPCRelationship[] = (

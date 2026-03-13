@@ -1,18 +1,18 @@
 import type { ActionType } from "../../../shared/state/index.js";
-import type { DynamicGameStateManager } from "../../state/DynamicGameState.js";
-import type { PlanNode, SuccessLevel } from "../../dynamicBasicAgent/npcPlanning/types.js";
-import type { SkillRollResult } from "../types.js";
 import { ACTION_TYPE_SKILL_MAP } from "../../dynamicBasicAgent/npcPlanning/actionTypeSkillMap.js";
 import { BASELINE_HORROR_SOURCES } from "../../dynamicBasicAgent/npcPlanning/horrorSourceData.js";
+import type { PlanNode } from "../../dynamicBasicAgent/npcPlanning/types.js";
+import type { DynamicGameStateManager } from "../../state/DynamicGameState.js";
+import { applySanityLoss } from "../features/sanityFeature.js";
+import type { SkillRollResult } from "../types.js";
 import {
-  rollD100,
-  getSuccessLevel,
-  getSuccessLevelWithDifficulty,
   SUCCESS_RANK,
   getDamageBonus,
+  getSuccessLevel,
+  getSuccessLevelWithDifficulty,
+  rollD100,
   rollDamageBonus,
 } from "./dice.js";
-import { applySanityLoss } from "../features/sanityFeature.js";
 
 // ==================== Difficulty derivation ====================
 
@@ -76,7 +76,10 @@ export function selectBestSkill(
 
 // ==================== Horror RAG (keyword overlap) ====================
 
-export function matchHorrorSource(actionDesc: string): { sanLossMin: number; sanLossMax: number } {
+export function matchHorrorSource(actionDesc: string): {
+  sanLossMin: number;
+  sanLossMax: number;
+} {
   const words = actionDesc.toLowerCase().split(/\s+/);
   let bestMatch: (typeof BASELINE_HORROR_SOURCES)[number] | null = null;
   let bestScore = 0;
@@ -111,15 +114,32 @@ export function resolveSkillRoll(
 
   // Get NPC profile for attributes
   const npc = state.npcCharacters.find((n) => n.id === node.characterId);
-  const npcAttrs = npc?.attributes ?? { STR: 50, DEX: 50, INT: 50, POW: 50, CON: 50, SIZ: 50, APP: 50, EDU: 50 };
+  const npcAttrs = npc?.attributes ?? {
+    STR: 50,
+    DEX: 50,
+    INT: 50,
+    POW: 50,
+    CON: 50,
+    SIZ: 50,
+    APP: 50,
+    EDU: 50,
+  };
 
   if (actionType === "combat" && node.targetCharacterId) {
     // Opposed roll: attacker vs defender Dodge — difficulty doesn't directly apply
-    const attackSkill = selectBestSkill(node.action, actionType, adjustedSkills);
+    const attackSkill = selectBestSkill(
+      node.action,
+      actionType,
+      adjustedSkills
+    );
     const attackValue = attackSkill?.value ?? npcAttrs.STR;
 
-    const defender = state.npcCharacters.find((n) => n.id === node.targetCharacterId);
-    const defenderDodge = defender?.skills?.["Dodge"] ?? Math.floor((defender?.attributes?.DEX ?? 50) / 2);
+    const defender = state.npcCharacters.find(
+      (n) => n.id === node.targetCharacterId
+    );
+    const defenderDodge =
+      defender?.skills?.["Dodge"] ??
+      Math.floor((defender?.attributes?.DEX ?? 50) / 2);
 
     const attackRoll = rollD100();
     const defendRoll = rollD100();
@@ -136,22 +156,35 @@ export function resolveSkillRoll(
     }
 
     // Hit: apply damage
-    const db = npc?.status?.damageBonus ?? getDamageBonus(npcAttrs.STR, npcAttrs.SIZ);
+    const db =
+      npc?.status?.damageBonus ?? getDamageBonus(npcAttrs.STR, npcAttrs.SIZ);
     const weaponDamage = Math.floor(Math.random() * 6) + 1; // default 1d6
     const bonusDamage = rollDamageBonus(db);
     const totalDamage = weaponDamage + bonusDamage;
     dgsm.updateNpcHp(node.targetCharacterId, -totalDamage);
 
-    return { failed: false, successLevel: attackLevel, detail: `Hit for ${totalDamage} damage (${attackSkill?.skill ?? "Attack"} ${attackRoll}/${attackValue})` };
+    return {
+      failed: false,
+      successLevel: attackLevel,
+      detail: `Hit for ${totalDamage} damage (${attackSkill?.skill ?? "Attack"} ${attackRoll}/${attackValue})`,
+    };
   }
 
   if (actionType === "social" && node.targetCharacterId) {
     // Opposed roll: actor social skill vs target Psychology — difficulty doesn't directly apply
-    const socialSkill = selectBestSkill(node.action, actionType, adjustedSkills);
+    const socialSkill = selectBestSkill(
+      node.action,
+      actionType,
+      adjustedSkills
+    );
     const socialValue = socialSkill?.value ?? npcAttrs.APP;
 
-    const target = state.npcCharacters.find((n) => n.id === node.targetCharacterId);
-    const psychValue = target?.skills?.["Psychology"] ?? Math.floor((target?.attributes?.INT ?? 50) / 2);
+    const target = state.npcCharacters.find(
+      (n) => n.id === node.targetCharacterId
+    );
+    const psychValue =
+      target?.skills?.["Psychology"] ??
+      Math.floor((target?.attributes?.INT ?? 50) / 2);
 
     const actorRoll = rollD100();
     const targetRoll = rollD100();
@@ -171,13 +204,24 @@ export function resolveSkillRoll(
 
   if (actionType === "chase" && node.targetCharacterId) {
     // Opposed roll: both use best chase skill — difficulty doesn't directly apply
-    const chaserSkill = selectBestSkill(node.action, actionType, adjustedSkills);
+    const chaserSkill = selectBestSkill(
+      node.action,
+      actionType,
+      adjustedSkills
+    );
     const chaserValue = chaserSkill?.value ?? npcAttrs.DEX;
 
-    const target = state.npcCharacters.find((n) => n.id === node.targetCharacterId);
+    const target = state.npcCharacters.find(
+      (n) => n.id === node.targetCharacterId
+    );
     const targetSkills = target?.skills ?? {};
-    const targetChaseSkill = selectBestSkill("flee escape run", "chase", targetSkills);
-    const targetValue = targetChaseSkill?.value ?? (target?.attributes?.DEX ?? 50);
+    const targetChaseSkill = selectBestSkill(
+      "flee escape run",
+      "chase",
+      targetSkills
+    );
+    const targetValue =
+      targetChaseSkill?.value ?? target?.attributes?.DEX ?? 50;
 
     const chaserRoll = rollD100();
     const targetRoll = rollD100();
@@ -203,12 +247,24 @@ export function resolveSkillRoll(
     const horror = matchHorrorSource(node.action);
 
     // Apply difficulty to the SAN threshold
-    const effectiveDifficulty = difficulty === "luck_only" ? "extreme" : difficulty;
-    const level = getSuccessLevelWithDifficulty(roll, sanValue, effectiveDifficulty);
+    const effectiveDifficulty =
+      difficulty === "luck_only" ? "extreme" : difficulty;
+    const level = getSuccessLevelWithDifficulty(
+      roll,
+      sanValue,
+      effectiveDifficulty
+    );
 
     if (level === "fail" || level === "fumble") {
       const sanLoss = horror.sanLossMax;
-      applySanityLoss(dgsm, node.characterId, -sanLoss, undefined, undefined, node.action);
+      applySanityLoss(
+        dgsm,
+        node.characterId,
+        -sanLoss,
+        undefined,
+        undefined,
+        node.action
+      );
       return {
         failed: true,
         successLevel: level,
@@ -217,18 +273,36 @@ export function resolveSkillRoll(
       };
     } else {
       const sanLoss = horror.sanLossMin;
-      if (sanLoss > 0) applySanityLoss(dgsm, node.characterId, -sanLoss, false, undefined, undefined, node.action);
-      return { failed: false, successLevel: level, detail: `SAN check passed (${roll}/${sanValue}, difficulty: ${effectiveDifficulty}), lost ${sanLoss} sanity` };
+      if (sanLoss > 0)
+        applySanityLoss(
+          dgsm,
+          node.characterId,
+          -sanLoss,
+          false,
+          undefined,
+          undefined,
+          node.action
+        );
+      return {
+        failed: false,
+        successLevel: level,
+        detail: `SAN check passed (${roll}/${sanValue}, difficulty: ${effectiveDifficulty}), lost ${sanLoss} sanity`,
+      };
     }
   }
 
   // Single roll for remaining actionTypes (exploration, stealth, environmental, narrative)
   // Use difficulty-aware check
-  const effectiveDifficulty = difficulty === "luck_only" ? "extreme" : difficulty;
+  const effectiveDifficulty =
+    difficulty === "luck_only" ? "extreme" : difficulty;
   const bestSkill = selectBestSkill(node.action, actionType, adjustedSkills);
   const skillValue = bestSkill?.value ?? npcAttrs.INT;
   const roll = rollD100();
-  const level = getSuccessLevelWithDifficulty(roll, skillValue, effectiveDifficulty);
+  const level = getSuccessLevelWithDifficulty(
+    roll,
+    skillValue,
+    effectiveDifficulty
+  );
 
   if (level === "fail" || level === "fumble") {
     return {
@@ -238,5 +312,9 @@ export function resolveSkillRoll(
       detail: "skill_roll_failed",
     };
   }
-  return { failed: false, successLevel: level, detail: `${bestSkill?.skill ?? actionType} ${roll}/${skillValue} (${level}, difficulty: ${effectiveDifficulty})` };
+  return {
+    failed: false,
+    successLevel: level,
+    detail: `${bestSkill?.skill ?? actionType} ${roll}/${skillValue} (${level}, difficulty: ${effectiveDifficulty})`,
+  };
 }

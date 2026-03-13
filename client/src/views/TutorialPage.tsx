@@ -262,7 +262,10 @@ export const TutorialPage: React.FC = () => {
         stepIndex >= sceneTransitionResultStepIndex
       ) {
         setTypedInput("");
-      } else if (messageDemoStepIndex >= 0 && stepIndex > messageDemoStepIndex) {
+      } else if (
+        messageDemoStepIndex >= 0 &&
+        stepIndex > messageDemoStepIndex
+      ) {
         setTypedInput(TUTORIAL_DEMO_INPUT);
       } else {
         setTypedInput("");
@@ -409,7 +412,7 @@ export const TutorialPage: React.FC = () => {
     const easeInOut = (progress: number) =>
       progress < 0.5
         ? 2 * progress * progress
-        : 1 - ((-2 * progress + 2) ** 2) / 2;
+        : 1 - (-2 * progress + 2) ** 2 / 2;
     let animationFrameId: number | null = null;
     let startTime: number | null = null;
     const animate = (timestamp: number) => {
@@ -525,10 +528,7 @@ export const TutorialPage: React.FC = () => {
       return;
     }
 
-    if (
-      currentStep.focus === "map" ||
-      currentStep.focus === "map-updated"
-    ) {
+    if (currentStep.focus === "map" || currentStep.focus === "map-updated") {
       const top = clamp(
         rect.top + rect.height / 2 - cardHeight / 2,
         margin,
@@ -1110,7 +1110,9 @@ export const TutorialPage: React.FC = () => {
                         <span className="status-label">
                           {t("sidebar.status.time")}
                         </span>
-                        <span className="status-value">{tutorialStatusTime}</span>
+                        <span className="status-value">
+                          {tutorialStatusTime}
+                        </span>
                       </div>
                       <div className="status-item-full">
                         <span className="status-label">
@@ -1224,7 +1226,8 @@ export const TutorialPage: React.FC = () => {
               {activeSidebarTab === "map" && (
                 <div className="tab-panel map-panel">
                   {(() => {
-                    const isMapUpdatedStep = currentStep.focus === "map-updated";
+                    const isMapUpdatedStep =
+                      currentStep.focus === "map-updated";
                     return (
                       <div
                         ref={(element) => {
@@ -1266,7 +1269,9 @@ export const TutorialPage: React.FC = () => {
                         <span className="status-label">
                           {t("sidebar.status.location")}
                         </span>
-                        <span className="status-value">{tutorialMapLocation}</span>
+                        <span className="status-value">
+                          {tutorialMapLocation}
+                        </span>
                       </div>
                     </div>
                   </div>

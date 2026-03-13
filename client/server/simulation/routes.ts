@@ -2,6 +2,7 @@ import { Router } from "express";
 import { authenticate } from "../auth/middleware.js";
 import * as characterController from "./characterController.js";
 import * as simulationController from "./controller.js";
+import * as mapController from "./mapController.js";
 
 const router = Router();
 
@@ -19,22 +20,22 @@ router.get("/simulation/:id/status", simulationController.getStatus);
 router.get("/simulation/:id/events", simulationController.getEvents);
 router.get("/simulations", simulationController.listSimulations);
 
+// Configuration
+router.put("/simulation/:id/config", mapController.updateConfig);
+
 // Character management
-router.post(
-  "/simulation/:id/characters",
-  characterController.injectCharacter,
-);
+router.post("/simulation/:id/characters", characterController.injectCharacter);
 router.get(
   "/simulation/:id/characters",
-  characterController.listInjectedCharacters,
+  characterController.listInjectedCharacters
 );
 router.put(
   "/simulation/:id/characters/:charId/intent",
-  characterController.updateIntent,
+  characterController.updateIntent
 );
 router.delete(
   "/simulation/:id/characters/:charId",
-  characterController.removeCharacter,
+  characterController.removeCharacter
 );
 
 export default router;

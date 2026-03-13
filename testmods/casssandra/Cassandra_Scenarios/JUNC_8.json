@@ -33,9 +33,7 @@
       }
     }
   ],
-  "connectedSceneIds": [
-    "SCN_3_SUB_1"
-  ],
+  "connectedSceneIds": ["SCN_3_SUB_1"],
   "itemContexts": {
     "ITEM_JUNC8_2": "路口的高杆路灯亮得过分，把警察局门前一小块区域照得几乎没有阴影。",
     "ITEM_JUNC8_3": "警察局外墙边立着公告牌，上面贴着通缉令、社区提醒和临时停车规定。"

@@ -6,9 +6,7 @@
       "description": "这家医院设备不算精良，但也算的上是一家不错的医院，可惜的是缺乏正确的管理，人员显得比较松散。医院有监控设施，不过也有监控死角存在。",
       "subSceneCount": 6,
       "entrySceneId": "SCN_1_SUB_1",
-      "residents": [
-        "文森特"
-      ]
+      "residents": ["文森特"]
     },
     {
       "id": "SCN_2",
@@ -23,9 +21,7 @@
       "description": "卡森德拉的警察局，位于新月街A大道南的尽头。",
       "subSceneCount": 3,
       "entrySceneId": "SCN_3_SUB_1",
-      "residents": [
-        "卢克斯"
-      ]
+      "residents": ["卢克斯"]
     },
     {
       "id": "SCN_4",
@@ -40,9 +36,7 @@
       "description": "新月街B大道的路口正对面，是马塞尔家，廉租房的一间。",
       "subSceneCount": 1,
       "entrySceneId": "SCN_5_SUB_1",
-      "residents": [
-        "马塞尔"
-      ]
+      "residents": ["马塞尔"]
     },
     {
       "id": "SCN_6",
@@ -64,9 +58,7 @@
       "description": "菲利普位于新月街C大道的住宅。",
       "subSceneCount": 1,
       "entrySceneId": "SCN_8_SUB_1",
-      "residents": [
-        "菲利普"
-      ]
+      "residents": ["菲利普"]
     },
     {
       "id": "SCN_9",
@@ -74,10 +66,7 @@
       "description": "花店所在是一处两层建筑，下层外间是花店，内间是厨房、餐厅、午休的小隔间和洗手间，并附带有一个小酒窖。上层是西蒙的工作室、盥洗室和几间卧室。",
       "subSceneCount": 3,
       "entrySceneId": "SCN_9_SUB_1",
-      "residents": [
-        "南希",
-        "西蒙"
-      ]
+      "residents": ["南希", "西蒙"]
     },
     {
       "id": "SCN_10",
@@ -85,9 +74,7 @@
       "description": "一家小餐厅，地方不大但生意不错，常常需要预约。店老板是一位性感的拉美裔女性，至少表面上给人的感觉十分热情。",
       "subSceneCount": 1,
       "entrySceneId": "SCN_10_SUB_1",
-      "residents": [
-        "海伦"
-      ]
+      "residents": ["海伦"]
     },
     {
       "id": "SCN_11",
@@ -95,9 +82,7 @@
       "description": "花店旁有一间小小的占卜馆，大多数时候，门都是关着的。",
       "subSceneCount": 1,
       "entrySceneId": "SCN_11_SUB_1",
-      "residents": [
-        "所罗门"
-      ]
+      "residents": ["所罗门"]
     },
     {
       "id": "SCN_12",
@@ -105,9 +90,7 @@
       "description": "钟表店的主人叫做怀特，是个瘦小的老头，带着一副老花镜。店面不大，里面全都是各种各样的钟表，玻璃柜上展示着许多精致的怀表。",
       "subSceneCount": 1,
       "entrySceneId": "SCN_12_SUB_1",
-      "residents": [
-        "怀特"
-      ]
+      "residents": ["怀特"]
     },
     {
       "id": "SCN_13",
@@ -115,9 +98,7 @@
       "description": "这家酒厂主要生产伏特加。规模看起来很大，但实际上这里有一多半的地方现在是空着的。",
       "subSceneCount": 3,
       "entrySceneId": "SCN_13_SUB_1",
-      "residents": [
-        "威廉"
-      ]
+      "residents": ["威廉"]
     },
     {
       "id": "SCN_14",
@@ -125,9 +106,7 @@
       "description": "卡森德拉旧街上珊德拉的住所。",
       "subSceneCount": 2,
       "entrySceneId": "SCN_14_SUB_1",
-      "residents": [
-        "珊德拉"
-      ]
+      "residents": ["珊德拉"]
     },
     {
       "id": "SCN_15",
@@ -135,9 +114,7 @@
       "description": "阿道夫家有着千维系统和许多监控，无论阿道夫是否在家，他都会知道有人进来。",
       "subSceneCount": 2,
       "entrySceneId": "SCN_15_SUB_1",
-      "residents": [
-        "阿道夫"
-      ]
+      "residents": ["阿道夫"]
     },
     {
       "id": "SCN_16",
@@ -145,10 +122,7 @@
       "description": "案发地点。这个酒吧有上下两层，一层是大厅，二层是环绕式的小隔层，是当地非常有名的一个酒吧。",
       "subSceneCount": 2,
       "entrySceneId": "SCN_16_SUB_1",
-      "residents": [
-        "塔兰",
-        "卢泽"
-      ]
+      "residents": ["塔兰", "卢泽"]
     },
     {
       "id": "SCN_17",
@@ -163,9 +137,7 @@
       "description": "五金店的店主是一个中年男子，名字叫做哈里森。平时在店里他还喜欢捣鼓一些小发明，这些发明被标注成了非卖品放在陈列架的最上面。",
       "subSceneCount": 1,
       "entrySceneId": "SCN_18_SUB_1",
-      "residents": [
-        "哈里森"
-      ]
+      "residents": ["哈里森"]
     },
     {
       "id": "SCN_19",
@@ -187,9 +159,7 @@
       "description": "卡森德拉的火车站，位于卡森德拉旧街最西端。",
       "subSceneCount": 3,
       "entrySceneId": "SCN_21_SUB_1",
-      "residents": [
-        "哈兰"
-      ]
+      "residents": ["哈兰"]
     },
     {
       "id": "OUTDOOR",

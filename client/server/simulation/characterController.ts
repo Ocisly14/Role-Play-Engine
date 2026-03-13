@@ -28,9 +28,7 @@ export async function injectCharacter(req: Request, res: Response) {
           "Missing required fields: name, attributes, skills, backstory, residence",
       });
     if (!intent)
-      return res
-        .status(400)
-        .json({ error: "Missing required field: intent" });
+      return res.status(400).json({ error: "Missing required field: intent" });
 
     const profile = buildInjectedProfile({
       name,
@@ -76,9 +74,7 @@ export async function updateIntent(req: Request, res: Response) {
     if (!runner) return res.status(404).json({ error: "Simulation not found" });
     const { intent } = req.body;
     if (!intent)
-      return res
-        .status(400)
-        .json({ error: "Missing required field: intent" });
+      return res.status(400).json({ error: "Missing required field: intent" });
     await runner.updateIntent(req.params.charId, intent);
     return res.json({ success: true });
   } catch (error) {

@@ -7,7 +7,7 @@ export class SummaryHandler implements MemoryHandler {
   prepare(
     _content: string,
     metadata?: Record<string, any>,
-    _location?: string,
+    _location?: string
   ): { tags: string[]; baseImportance: number; metadata: Record<string, any> } {
     const meta = metadata ?? {};
     const gameDay = meta.gameDay;

@@ -50,9 +50,7 @@
       }
     }
   ],
-  "connections": [
-    "SCN_13_SUB_1"
-  ],
+  "connections": ["SCN_13_SUB_1"],
   "itemContexts": {
     "ITEM_SCN13_2": "沿墙排列的木质酒架，存放着大量伏特加成品，瓶身上积着薄灰"
   }

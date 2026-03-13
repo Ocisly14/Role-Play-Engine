@@ -4,7 +4,10 @@ type GameState = ReturnType<DynamicGameStateManager["getState"]>;
 
 // ── Public entry point ──────────────────────────────────────────────────
 
-export function formatSceneMap(dgsm: DynamicGameStateManager, npcId: string): string {
+export function formatSceneMap(
+  dgsm: DynamicGameStateManager,
+  npcId: string
+): string {
   const state = dgsm.getState();
   const topology = state.topology;
 
@@ -19,7 +22,10 @@ export function formatSceneMap(dgsm: DynamicGameStateManager, npcId: string): st
 
 // ── Topology-aware scene map ────────────────────────────────────────────
 
-function formatTopologySceneMap(dgsm: DynamicGameStateManager, npcId: string): string {
+function formatTopologySceneMap(
+  dgsm: DynamicGameStateManager,
+  npcId: string
+): string {
   const state = dgsm.getState();
   const topology = state.topology!;
   const entryToOutline = buildEntrySceneToOutlineMap(state);
@@ -33,7 +39,8 @@ function formatTopologySceneMap(dgsm: DynamicGameStateManager, npcId: string): s
     if (outline) {
       const residents = residentsMap.get(outline.id);
       let label = `${outline.id} "${outline.name}" (entry: ${sceneId})`;
-      if (residents && residents.length > 0) label += ` | Residents: ${residents.join(", ")}`;
+      if (residents && residents.length > 0)
+        label += ` | Residents: ${residents.join(", ")}`;
       return label;
     }
     // Fall back: look up scene's parentLocationId
@@ -43,7 +50,8 @@ function formatTopologySceneMap(dgsm: DynamicGameStateManager, npcId: string): s
       if (parent) {
         const residents = residentsMap.get(parent.id);
         let label = `${parent.id} "${parent.name}" (entry: ${sceneId})`;
-        if (residents && residents.length > 0) label += ` | Residents: ${residents.join(", ")}`;
+        if (residents && residents.length > 0)
+          label += ` | Residents: ${residents.join(", ")}`;
         return label;
       }
     }
@@ -88,9 +96,13 @@ function formatTopologySceneMap(dgsm: DynamicGameStateManager, npcId: string): s
   // ── Your Current Location ──
   if (currentMacro) {
     const entryId = currentMacro.entrySceneId ?? npcLocation ?? currentMacro.id;
-    parts.push(`Your Current Location:\n  ${currentMacro.id} "${currentMacro.name}" (entry: ${entryId})${currentPositionLabel ? ` — ${currentPositionLabel}` : ""}`);
+    parts.push(
+      `Your Current Location:\n  ${currentMacro.id} "${currentMacro.name}" (entry: ${entryId})${currentPositionLabel ? ` — ${currentPositionLabel}` : ""}`
+    );
   } else if (npcLocation) {
-    parts.push(`Your Current Location:\n  ${npcLocation}${currentPositionLabel ? ` — ${currentPositionLabel}` : ""}`);
+    parts.push(
+      `Your Current Location:\n  ${npcLocation}${currentPositionLabel ? ` — ${currentPositionLabel}` : ""}`
+    );
   }
 
   // ── Your Home ──
@@ -111,7 +123,9 @@ function formatTopologySceneMap(dgsm: DynamicGameStateManager, npcId: string): s
         const road = topology.roads.get(homeTopoParent.roadId);
         homePositionLabel = ` — along ${homeTopoParent.roadId} "${road?.name ?? homeTopoParent.roadId}"`;
       }
-      parts.push(`Your Home:\n  ${residenceMacro.id} "${residenceMacro.name}" (entry: ${homeEntryId})${homePositionLabel}`);
+      parts.push(
+        `Your Home:\n  ${residenceMacro.id} "${residenceMacro.name}" (entry: ${homeEntryId})${homePositionLabel}`
+      );
     } else {
       parts.push(`Your Home:\n  ${residence}`);
     }
@@ -125,10 +139,13 @@ function formatTopologySceneMap(dgsm: DynamicGameStateManager, npcId: string): s
     // Roads out from this junction
     const roads = topology.junctionToRoads.get(juncId) ?? [];
     for (const road of roads) {
-      const otherJuncId = road.endpointA === juncId ? road.endpointB : road.endpointA;
+      const otherJuncId =
+        road.endpointA === juncId ? road.endpointB : road.endpointA;
       const otherJunc = topology.junctions.get(otherJuncId);
       const otherName = otherJunc ? `"${otherJunc.name}"` : "";
-      mapLines.push(`    ── ${road.id} "${road.name}" (~${road.travelTimeMinutes} min) ──▸ ${otherJuncId} ${otherName}`.trimEnd());
+      mapLines.push(
+        `    ── ${road.id} "${road.name}" (~${road.travelTimeMinutes} min) ──▸ ${otherJuncId} ${otherName}`.trimEnd()
+      );
     }
 
     // Buildings at this junction
@@ -166,7 +183,10 @@ function formatTopologySceneMap(dgsm: DynamicGameStateManager, npcId: string): s
 
 // ── Flat scene map (no topology) ────────────────────────────────────────
 
-function formatFlatSceneMap(dgsm: DynamicGameStateManager, npcId: string): string {
+function formatFlatSceneMap(
+  dgsm: DynamicGameStateManager,
+  npcId: string
+): string {
   const state = dgsm.getState();
   const npcLocation = state.npcLocations[npcId];
   const currentScene = npcLocation ? state.scenes.get(npcLocation) : null;
@@ -176,7 +196,9 @@ function formatFlatSceneMap(dgsm: DynamicGameStateManager, npcId: string): strin
 
   // 1. Current scene + connections
   if (currentScene) {
-    parts.push(`Current Scene: ${currentScene.id} "${currentScene.name}" — ${currentScene.description}`);
+    parts.push(
+      `Current Scene: ${currentScene.id} "${currentScene.name}" — ${currentScene.description}`
+    );
 
     const connScenes = currentScene.connections
       .map((id) => state.scenes.get(id))
@@ -189,7 +211,9 @@ function formatFlatSceneMap(dgsm: DynamicGameStateManager, npcId: string): strin
 
   // 2. Current macro location
   const currentMacro = currentScene
-    ? (state.scenarioOutlines ?? []).find((o) => o.id === currentScene.parentLocationId)
+    ? (state.scenarioOutlines ?? []).find(
+        (o) => o.id === currentScene.parentLocationId
+      )
     : null;
   if (currentMacro) {
     parts.push(`Current Location: ${currentMacro.id} "${currentMacro.name}"`);
@@ -202,10 +226,16 @@ function formatFlatSceneMap(dgsm: DynamicGameStateManager, npcId: string): strin
       (e) => e.fromLocationId === parentId || e.toLocationId === parentId
     );
     const nearbyLocations = nearbyEdges.map((e) => {
-      const targetId = e.fromLocationId === parentId ? e.toLocationId : e.fromLocationId;
-      const target = (state.scenarioOutlines ?? []).find((o) => o.id === targetId);
+      const targetId =
+        e.fromLocationId === parentId ? e.toLocationId : e.fromLocationId;
+      const target = (state.scenarioOutlines ?? []).find(
+        (o) => o.id === targetId
+      );
       const residents = residentsMap.get(targetId);
-      const residentsLabel = residents && residents.length > 0 ? ` | Residents: ${residents.join(", ")}` : "";
+      const residentsLabel =
+        residents && residents.length > 0
+          ? ` | Residents: ${residents.join(", ")}`
+          : "";
       return `  - ${targetId} "${target?.name ?? targetId}" (~${e.travelTimeMinutes} min via ${e.streetSceneId})${residentsLabel}`;
     });
     if (nearbyLocations.length > 0) {
@@ -216,15 +246,24 @@ function formatFlatSceneMap(dgsm: DynamicGameStateManager, npcId: string): strin
   // 4. NPC residence
   const residence = state.npcResidences[npcId];
   if (residence) {
-    const residenceMacro = (state.scenarioOutlines ?? []).find((o) => o.id === residence);
-    parts.push(`Home/Residence: ${residence} "${residenceMacro?.name ?? residence}"`);
+    const residenceMacro = (state.scenarioOutlines ?? []).find(
+      (o) => o.id === residence
+    );
+    parts.push(
+      `Home/Residence: ${residence} "${residenceMacro?.name ?? residence}"`
+    );
   }
 
   // 5. Fallback: list all macro locations if no scene graph
   if (parts.length === 0) {
     const outlines = state.scenarioOutlines ?? [];
     if (outlines.length > 0) {
-      parts.push("Locations:\n" + outlines.map((s) => `- ${s.id} "${s.name}": ${s.description}`).join("\n"));
+      parts.push(
+        "Locations:\n" +
+          outlines
+            .map((s) => `- ${s.id} "${s.name}": ${s.description}`)
+            .join("\n")
+      );
     }
   }
 
@@ -237,7 +276,9 @@ function buildLocationResidentsMap(
   state: GameState,
   npcId: string
 ): Map<string, string[]> {
-  const knownIds = new Set(Object.keys(state.npcRelationshipGraph[npcId] ?? {}));
+  const knownIds = new Set(
+    Object.keys(state.npcRelationshipGraph[npcId] ?? {})
+  );
 
   const map = new Map<string, string[]>();
   for (const [charId, locationId] of Object.entries(state.npcResidences)) {
@@ -255,7 +296,10 @@ function buildLocationResidentsMap(
 function buildEntrySceneToOutlineMap(
   state: GameState
 ): Map<string, { id: string; name: string; entrySceneId?: string }> {
-  const map = new Map<string, { id: string; name: string; entrySceneId?: string }>();
+  const map = new Map<
+    string,
+    { id: string; name: string; entrySceneId?: string }
+  >();
   for (const outline of state.scenarioOutlines ?? []) {
     if (outline.entrySceneId) {
       map.set(outline.entrySceneId, outline);

@@ -59,10 +59,7 @@
       }
     }
   ],
-  "connections": [
-    "SCN_6_SUB_1",
-    "SCN_6_SUB_3"
-  ],
+  "connections": ["SCN_6_SUB_1", "SCN_6_SUB_3"],
   "itemContexts": {
     "ITEM_SCN6_4": "客厅里的旧沙发被厚厚灰尘罩住，坐垫上还保留着久远的下陷痕迹。",
     "ITEM_SCN6_6": "厨房橱柜的门歪斜地半开着，木板边缘因潮气而起了翘。",

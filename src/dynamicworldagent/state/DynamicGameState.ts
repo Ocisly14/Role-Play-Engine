@@ -5,10 +5,7 @@
  * node handlers, world features, and SimulationRunner.
  */
 
-import type {
-  ModuleSetup,
-  ScenarioOutline,
-} from "./types.js";
+import type { ModuleSetup, ScenarioOutline } from "./types.js";
 
 import {
   InventoryUtils,
@@ -16,18 +13,18 @@ import {
 } from "../../shared/agents/models/gameTypes.js";
 import type { DiscoveredKnowledge } from "../../shared/state/index.js";
 import type {
-  DynamicNPCProfile,
-  DynamicScene,
-  Item,
-  TransportEdge,
-} from "./types.js";
-import type {
   CharacterPosition,
   JunctionNode,
   RoadNode,
   TownTopology,
 } from "./topologyTypes.js";
 import { buildTopology } from "./topologyTypes.js";
+import type {
+  DynamicNPCProfile,
+  DynamicScene,
+  Item,
+  TransportEdge,
+} from "./types.js";
 
 /**
  * Dynamic Game State — runtime data for the simulation engine.
@@ -41,8 +38,8 @@ export interface DynamicGameState {
   scenes: Map<string, DynamicScene>;
 
   // === Time ===
-  gameDay: number;     // Day number in game
-  timeOfDay: string;   // Game time in HH:MM format
+  gameDay: number; // Day number in game
+  timeOfDay: string; // Game time in HH:MM format
 
   // === Characters ===
   npcCharacters: DynamicNPCProfile[];
@@ -60,14 +57,20 @@ export interface DynamicGameState {
   featureState: Record<string, Record<string, unknown>>;
 
   // === NPC Planning System Runtime State ===
-  npcLocations: Record<string, string>;                  // npcId -> sceneId
+  npcLocations: Record<string, string>; // npcId -> sceneId
   npcStats: Record<string, { hp: number; san: number }>;
-  npcInventories: Record<string, Item[]>;                // npcId -> items
-  npcDiscoveredKnowledge: Record<string, string[]>;      // npcId -> knowledge IDs
-  npcRelationshipGraph: Record<string, Record<string, { score: number; note: string }>>;
-  scenarioConditions: Record<string, import("../dynamicBasicAgent/npcPlanning/types.js").SceneCondition[]>;
-  blockedConnections: Map<string, string>;               // "sceneA::sceneB" -> reason
-  npcResidences: Record<string, string>;                 // npcId -> macroLocationId
+  npcInventories: Record<string, Item[]>; // npcId -> items
+  npcDiscoveredKnowledge: Record<string, string[]>; // npcId -> knowledge IDs
+  npcRelationshipGraph: Record<
+    string,
+    Record<string, { score: number; note: string }>
+  >;
+  scenarioConditions: Record<
+    string,
+    import("../dynamicBasicAgent/npcPlanning/types.js").SceneCondition[]
+  >;
+  blockedConnections: Map<string, string>; // "sceneA::sceneB" -> reason
+  npcResidences: Record<string, string>; // npcId -> macroLocationId
   transportEdges: TransportEdge[];
 
   // === Road & Junction Topology ===
@@ -201,9 +204,13 @@ export class DynamicGameStateManager {
     let topologyObj: any = null;
     if (this.state.topology) {
       const junctionsObj: Record<string, any> = {};
-      this.state.topology.junctions.forEach((j, id) => { junctionsObj[id] = j; });
+      this.state.topology.junctions.forEach((j, id) => {
+        junctionsObj[id] = j;
+      });
       const roadsObj: Record<string, any> = {};
-      this.state.topology.roads.forEach((r, id) => { roadsObj[id] = r; });
+      this.state.topology.roads.forEach((r, id) => {
+        roadsObj[id] = r;
+      });
       topologyObj = { junctions: junctionsObj, roads: roadsObj };
     }
 
@@ -229,13 +236,15 @@ export class DynamicGameStateManager {
   static deserialize(
     data: any,
     checkpointGameDay?: number,
-    checkpointTimeOfDay?: string,
+    checkpointTimeOfDay?: string
   ): DynamicGameState {
     // Convert scenes from object back to Map
     const scenes = new Map<string, DynamicScene>();
     if (data.scenes) {
       if (data.scenes instanceof Map) {
-        data.scenes.forEach((scene: DynamicScene, id: string) => scenes.set(id, scene));
+        data.scenes.forEach((scene: DynamicScene, id: string) =>
+          scenes.set(id, scene)
+        );
       } else {
         Object.entries(data.scenes).forEach(([id, scene]) => {
           scenes.set(id, scene as DynamicScene);
@@ -247,9 +256,13 @@ export class DynamicGameStateManager {
     const blockedConnections = new Map<string, string>();
     if (data.blockedConnections) {
       if (data.blockedConnections instanceof Map) {
-        data.blockedConnections.forEach((v: string, k: string) => blockedConnections.set(k, v));
+        data.blockedConnections.forEach((v: string, k: string) =>
+          blockedConnections.set(k, v)
+        );
       } else {
-        Object.entries(data.blockedConnections).forEach(([k, v]) => blockedConnections.set(k, v as string));
+        Object.entries(data.blockedConnections).forEach(([k, v]) =>
+          blockedConnections.set(k, v as string)
+        );
       }
     }
 
@@ -257,9 +270,13 @@ export class DynamicGameStateManager {
     let topology: TownTopology | null = null;
     if (data.topology?.junctions && data.topology?.roads) {
       const junctions = new Map<string, JunctionNode>();
-      Object.entries(data.topology.junctions).forEach(([id, j]) => junctions.set(id, j as JunctionNode));
+      Object.entries(data.topology.junctions).forEach(([id, j]) =>
+        junctions.set(id, j as JunctionNode)
+      );
       const roads = new Map<string, RoadNode>();
-      Object.entries(data.topology.roads).forEach(([id, r]) => roads.set(id, r as RoadNode));
+      Object.entries(data.topology.roads).forEach(([id, r]) =>
+        roads.set(id, r as RoadNode)
+      );
       topology = buildTopology(junctions, roads);
     }
 
@@ -519,8 +536,12 @@ export class DynamicGameStateManager {
   /**
    * Update game time based on elapsed time in minutes
    */
-  updateGameTime(elapsedMinutes: number): { dayChanged: boolean; previousDay: number } {
-    if (!elapsedMinutes || elapsedMinutes <= 0) return { dayChanged: false, previousDay: this.state.gameDay };
+  updateGameTime(elapsedMinutes: number): {
+    dayChanged: boolean;
+    previousDay: number;
+  } {
+    if (!elapsedMinutes || elapsedMinutes <= 0)
+      return { dayChanged: false, previousDay: this.state.gameDay };
 
     const previousDay = this.state.gameDay;
 
@@ -535,9 +556,7 @@ export class DynamicGameStateManager {
       const daysElapsed = Math.floor(totalMinutes / 1440);
       this.state.gameDay += daysElapsed;
       totalMinutes = totalMinutes % 1440;
-      console.log(
-        `A new day has dawned! It is now Day ${this.state.gameDay}`
-      );
+      console.log(`A new day has dawned! It is now Day ${this.state.gameDay}`);
     }
 
     const newHours = Math.floor(totalMinutes / 60);
@@ -566,12 +585,18 @@ export class DynamicGameStateManager {
 
   updateNpcHp(npcId: string, delta: number): void {
     if (!this.state.npcStats[npcId]) return;
-    this.state.npcStats[npcId].hp = Math.max(0, this.state.npcStats[npcId].hp + delta);
+    this.state.npcStats[npcId].hp = Math.max(
+      0,
+      this.state.npcStats[npcId].hp + delta
+    );
   }
 
   updateNpcSan(npcId: string, delta: number): void {
     if (!this.state.npcStats[npcId]) return;
-    this.state.npcStats[npcId].san = Math.max(0, this.state.npcStats[npcId].san + delta);
+    this.state.npcStats[npcId].san = Math.max(
+      0,
+      this.state.npcStats[npcId].san + delta
+    );
   }
 
   getNpcInventory(npcId: string): Item[] {
@@ -579,23 +604,31 @@ export class DynamicGameStateManager {
   }
 
   findNpcItem(npcId: string, itemId: string): Item | undefined {
-    return this.state.npcInventories[npcId]?.find(i => i.id === itemId);
+    return this.state.npcInventories[npcId]?.find((i) => i.id === itemId);
   }
 
   addItemToNpc(npcId: string, item: Item): void {
-    if (!this.state.npcInventories[npcId]) this.state.npcInventories[npcId] = [];
+    if (!this.state.npcInventories[npcId])
+      this.state.npcInventories[npcId] = [];
     this.state.npcInventories[npcId].push(item);
   }
 
   removeItemFromNpc(npcId: string, itemId: string): Item | undefined {
     if (!this.state.npcInventories[npcId]) return undefined;
-    const idx = this.state.npcInventories[npcId].findIndex(i => i.id === itemId);
+    const idx = this.state.npcInventories[npcId].findIndex(
+      (i) => i.id === itemId
+    );
     if (idx === -1) return undefined;
     return this.state.npcInventories[npcId].splice(idx, 1)[0];
   }
 
-  transferKnowledge(fromNpcId: string, toNpcId: string, knowledgeId: string): void {
-    if (!this.state.npcDiscoveredKnowledge[toNpcId]) this.state.npcDiscoveredKnowledge[toNpcId] = [];
+  transferKnowledge(
+    fromNpcId: string,
+    toNpcId: string,
+    knowledgeId: string
+  ): void {
+    if (!this.state.npcDiscoveredKnowledge[toNpcId])
+      this.state.npcDiscoveredKnowledge[toNpcId] = [];
     if (!this.state.npcDiscoveredKnowledge[toNpcId].includes(knowledgeId)) {
       this.state.npcDiscoveredKnowledge[toNpcId].push(knowledgeId);
     }
@@ -603,10 +636,17 @@ export class DynamicGameStateManager {
   }
 
   /** Damage an evidence item in the specified scene (e.g., on fumble) */
-  damageEvidenceItem(itemId: string, damagedBy: string, reason: string, sceneId: string): void {
+  damageEvidenceItem(
+    itemId: string,
+    damagedBy: string,
+    reason: string,
+    sceneId: string
+  ): void {
     const scene = this.getScene(sceneId);
     if (!scene?.items) return;
-    const item = scene.items.find((i) => i.id === itemId && i.category === "evidence");
+    const item = scene.items.find(
+      (i) => i.id === itemId && i.category === "evidence"
+    );
     if (item && !item.damaged) {
       item.damaged = true;
       item.damageDetails = {
@@ -617,7 +657,10 @@ export class DynamicGameStateManager {
     }
   }
 
-  addNpcKnowledge(npcId: string, entry: import("../../shared/agents/models/gameTypes.js").NPCKnowledge): void {
+  addNpcKnowledge(
+    npcId: string,
+    entry: import("../../shared/agents/models/gameTypes.js").NPCKnowledge
+  ): void {
     const npc = this.state.npcCharacters.find((n) => n.id === npcId);
     if (!npc) return;
     if (!npc.knowledge) npc.knowledge = [];
@@ -633,44 +676,81 @@ export class DynamicGameStateManager {
   }
 
   addDiscoveredKnowledge(entry: DiscoveredKnowledge): void {
-    const exists = this.state.discoveredKnowledge.some((k) => k.text === entry.text);
+    const exists = this.state.discoveredKnowledge.some(
+      (k) => k.text === entry.text
+    );
     if (!exists) {
       this.state.discoveredKnowledge.push(entry);
     }
   }
 
-  getRelationship(npcId: string, targetId: string): { score: number; note: string } | undefined {
+  getRelationship(
+    npcId: string,
+    targetId: string
+  ): { score: number; note: string } | undefined {
     return this.state.npcRelationshipGraph[npcId]?.[targetId];
   }
 
-  updateRelationship(npcId: string, targetId: string, scoreDelta: number, note: string): void {
-    if (!this.state.npcRelationshipGraph[npcId]) this.state.npcRelationshipGraph[npcId] = {};
-    const current = this.state.npcRelationshipGraph[npcId][targetId] ?? { score: 0, note: "" };
+  updateRelationship(
+    npcId: string,
+    targetId: string,
+    scoreDelta: number,
+    note: string
+  ): void {
+    if (!this.state.npcRelationshipGraph[npcId])
+      this.state.npcRelationshipGraph[npcId] = {};
+    const current = this.state.npcRelationshipGraph[npcId][targetId] ?? {
+      score: 0,
+      note: "",
+    };
     const newScore = Math.max(-100, Math.min(100, current.score + scoreDelta));
-    this.state.npcRelationshipGraph[npcId][targetId] = { score: newScore, note };
-    if (!this.state.npcRelationshipGraph[targetId]) this.state.npcRelationshipGraph[targetId] = {};
-    this.state.npcRelationshipGraph[targetId][npcId] = { score: newScore, note };
+    this.state.npcRelationshipGraph[npcId][targetId] = {
+      score: newScore,
+      note,
+    };
+    if (!this.state.npcRelationshipGraph[targetId])
+      this.state.npcRelationshipGraph[targetId] = {};
+    this.state.npcRelationshipGraph[targetId][npcId] = {
+      score: newScore,
+      note,
+    };
   }
 
-  getSceneConditions(scenarioId: string): import("../dynamicBasicAgent/npcPlanning/types.js").SceneCondition[] {
+  getSceneConditions(
+    scenarioId: string
+  ): import("../dynamicBasicAgent/npcPlanning/types.js").SceneCondition[] {
     return this.state.scenarioConditions[scenarioId] ?? [];
   }
 
-  appendSceneCondition(scenarioId: string, condition: import("../dynamicBasicAgent/npcPlanning/types.js").SceneCondition): void {
-    if (!this.state.scenarioConditions[scenarioId]) this.state.scenarioConditions[scenarioId] = [];
+  appendSceneCondition(
+    scenarioId: string,
+    condition: import(
+      "../dynamicBasicAgent/npcPlanning/types.js"
+    ).SceneCondition
+  ): void {
+    if (!this.state.scenarioConditions[scenarioId])
+      this.state.scenarioConditions[scenarioId] = [];
     this.state.scenarioConditions[scenarioId].push(condition);
   }
 
   // === Feature State ===
 
   /** Get feature state for a specific scene. Returns undefined if not set. */
-  getFeatureSceneState(featureId: string, sceneId: string): unknown | undefined {
+  getFeatureSceneState(
+    featureId: string,
+    sceneId: string
+  ): unknown | undefined {
     return this.state.featureState[featureId]?.[sceneId];
   }
 
   /** Set feature state for a specific scene. */
-  setFeatureSceneState(featureId: string, sceneId: string, data: unknown): void {
-    if (!this.state.featureState[featureId]) this.state.featureState[featureId] = {};
+  setFeatureSceneState(
+    featureId: string,
+    sceneId: string,
+    data: unknown
+  ): void {
+    if (!this.state.featureState[featureId])
+      this.state.featureState[featureId] = {};
     this.state.featureState[featureId][sceneId] = data;
     this.state.lastUpdated = new Date();
   }
@@ -693,10 +773,18 @@ export class DynamicGameStateManager {
   isConnectionBlocked(fromId: string, toId: string): boolean {
     const key1 = `${fromId}::${toId}`;
     const key2 = `${toId}::${fromId}`;
-    return this.state.blockedConnections.has(key1) || this.state.blockedConnections.has(key2);
+    return (
+      this.state.blockedConnections.has(key1) ||
+      this.state.blockedConnections.has(key2)
+    );
   }
 
-  setConnectionBlocked(fromId: string, toId: string, blocked: boolean, reason: string): void {
+  setConnectionBlocked(
+    fromId: string,
+    toId: string,
+    blocked: boolean,
+    reason: string
+  ): void {
     const key = `${fromId}::${toId}`;
     if (blocked) {
       this.state.blockedConnections.set(key, reason);
@@ -739,16 +827,21 @@ export class DynamicGameStateManager {
 
   getCharactersAtJunction(junctionId: string): string[] {
     return Object.entries(this.state.characterPositions)
-      .filter(([_, pos]) => pos.type === "junction" && pos.junctionId === junctionId)
+      .filter(
+        ([_, pos]) => pos.type === "junction" && pos.junctionId === junctionId
+      )
       .map(([id]) => id);
   }
 
-  getCharactersOnRoad(roadId: string): Array<{ characterId: string; position: number }> {
+  getCharactersOnRoad(
+    roadId: string
+  ): Array<{ characterId: string; position: number }> {
     return Object.entries(this.state.characterPositions)
       .filter(([_, pos]) => pos.type === "road" && pos.roadId === roadId)
       .map(([id, pos]) => ({
         characterId: id,
-        position: (pos as { type: "road"; roadId: string; position: number }).position,
+        position: (pos as { type: "road"; roadId: string; position: number })
+          .position,
       }));
   }
 
@@ -764,9 +857,12 @@ export class DynamicGameStateManager {
    */
   resolveLocationId(position: CharacterPosition): string {
     switch (position.type) {
-      case "junction": return position.junctionId;
-      case "road": return position.roadId;
-      case "scene": return position.sceneId;
+      case "junction":
+        return position.junctionId;
+      case "road":
+        return position.roadId;
+      case "scene":
+        return position.sceneId;
     }
   }
 }

@@ -1,8 +1,8 @@
 import type { NpcMemory } from "@prisma/client";
-import { MemoryStore } from "./MemoryStore.js";
-import { DecayEngine } from "./DecayEngine.js";
+import type { DecayEngine } from "./DecayEngine.js";
+import type { MemoryStore } from "./MemoryStore.js";
 import { getHandler } from "./handlers/index.js";
-import type { ScoredMemory, QueryMemoryParams } from "./types.js";
+import type { QueryMemoryParams, ScoredMemory } from "./types.js";
 import { CANDIDATE_CAP } from "./types.js";
 
 export class MemoryRetriever {
@@ -40,7 +40,10 @@ export class MemoryRetriever {
 
     const scored = candidates.map((memory) => {
       const similarity = memory.embedding
-        ? this.cosineSimilarity(queryEmbedding, this.bytesToFloatArray(memory.embedding as Buffer))
+        ? this.cosineSimilarity(
+            queryEmbedding,
+            this.bytesToFloatArray(memory.embedding as Buffer)
+          )
         : 0;
 
       const handler = getHandler(memory.type);
@@ -54,10 +57,14 @@ export class MemoryRetriever {
           lastAccessedAt: memory.lastAccessedAt,
           decayRateMultiplier,
         },
-        now,
+        now
       );
 
-      return { ...memory, similarityScore: similarity, finalScore } as ScoredMemory;
+      return {
+        ...memory,
+        similarityScore: similarity,
+        finalScore,
+      } as ScoredMemory;
     });
 
     scored.sort((a, b) => b.finalScore - a.finalScore);
@@ -66,7 +73,11 @@ export class MemoryRetriever {
     return results;
   }
 
-  private rankWithoutSemantic(candidates: NpcMemory[], now: Date, limit: number): ScoredMemory[] {
+  private rankWithoutSemantic(
+    candidates: NpcMemory[],
+    now: Date,
+    limit: number
+  ): ScoredMemory[] {
     const scored = candidates.map((memory) => {
       const handler = getHandler(memory.type);
       const decayRateMultiplier = handler.customDecayRate?.() ?? 1.0;
@@ -78,7 +89,7 @@ export class MemoryRetriever {
           lastAccessedAt: memory.lastAccessedAt,
           decayRateMultiplier,
         },
-        now,
+        now
       );
 
       return { ...memory, similarityScore: 0, finalScore } as ScoredMemory;
@@ -101,7 +112,7 @@ export class MemoryRetriever {
           lastAccessedAt: now,
           decayRateMultiplier,
         },
-        now,
+        now
       );
       this.store.reinforce(r.id, newImportance).catch(() => {});
     }
@@ -122,7 +133,11 @@ export class MemoryRetriever {
   }
 
   private bytesToFloatArray(buffer: Buffer): number[] {
-    const float32 = new Float32Array(buffer.buffer, buffer.byteOffset, buffer.byteLength / 4);
+    const float32 = new Float32Array(
+      buffer.buffer,
+      buffer.byteOffset,
+      buffer.byteLength / 4
+    );
     return Array.from(float32);
   }
 }

@@ -1,7 +1,7 @@
-import { describe, it, expect, beforeEach, vi } from "vitest";
-import { weatherFeature } from "../weatherFeature.js";
-import type { TickRuntimeContext } from "../../types.js";
+import { beforeEach, describe, expect, it, vi } from "vitest";
 import type { SceneCondition } from "../../../dynamicBasicAgent/npcPlanning/types.js";
+import type { TickRuntimeContext } from "../../types.js";
+import { weatherFeature } from "../weatherFeature.js";
 
 // ===== Mock DGSM =====
 
@@ -53,16 +53,26 @@ function createMockDgsm() {
         npcStats,
       };
     },
-    setConnectionBlocked(fromId: string, toId: string, blocked: boolean, reason: string) {
+    setConnectionBlocked(
+      fromId: string,
+      toId: string,
+      blocked: boolean,
+      reason: string
+    ) {
       const key = `${fromId}::${toId}`;
       if (blocked) blockedConnections.set(key, reason);
-      else { blockedConnections.delete(key); blockedConnections.delete(`${toId}::${fromId}`); }
+      else {
+        blockedConnections.delete(key);
+        blockedConnections.delete(`${toId}::${fromId}`);
+      }
     },
     updateNpcHp(npcId: string, delta: number) {
       if (!npcStats[npcId]) return;
       npcStats[npcId].hp = Math.max(0, npcStats[npcId].hp + delta);
     },
-    _addScene(scene: MockScene) { scenes.set(scene.id, scene); },
+    _addScene(scene: MockScene) {
+      scenes.set(scene.id, scene);
+    },
     _addNpc(npcId: string, location: string, hp: number) {
       npcLocations[npcId] = location;
       npcStats[npcId] = { hp, san: 50 };
@@ -77,11 +87,18 @@ type MockDgsm = ReturnType<typeof createMockDgsm>;
 
 function createMockRuntime(): TickRuntimeContext {
   return {
-    sessionId: "test", gameDay: 1, language: "en",
-    tickTime: "08:00", tickDurationMinutes: 5,
+    sessionId: "test",
+    gameDay: 1,
+    language: "en",
+    tickTime: "08:00",
+    tickDurationMinutes: 5,
     npcPlanning: {
       getPendingNodes: async () => [],
-      runImpactGateForNpc: async () => ({ shouldRevise: false, shouldReviseSchedule: false, witnessEntry: "" }),
+      runImpactGateForNpc: async () => ({
+        shouldRevise: false,
+        shouldReviseSchedule: false,
+        witnessEntry: "",
+      }),
       revisePlans: async () => {},
     },
   };
@@ -94,11 +111,42 @@ function runTicks(dgsm: MockDgsm, runtime: TickRuntimeContext, count: number) {
 }
 
 function setupDefaultScenes(dgsm: MockDgsm) {
-  dgsm._addScene({ id: "town_square", name: "Town Square", parentLocationId: "town", connections: ["main_street"], events: [] });
-  dgsm._addScene({ id: "main_street", name: "Main Street", parentLocationId: "town", connections: ["town_square", "tavern"], events: [] });
-  dgsm._addScene({ id: "tavern", name: "Tavern", parentLocationId: "town", connections: ["main_street"], events: [], indoor: true });
-  dgsm._addScene({ id: "forest_path", name: "Forest Path", parentLocationId: "forest", connections: ["forest_clearing"], events: [] });
-  dgsm._addScene({ id: "forest_clearing", name: "Forest Clearing", parentLocationId: "forest", connections: ["forest_path"], events: [] });
+  dgsm._addScene({
+    id: "town_square",
+    name: "Town Square",
+    parentLocationId: "town",
+    connections: ["main_street"],
+    events: [],
+  });
+  dgsm._addScene({
+    id: "main_street",
+    name: "Main Street",
+    parentLocationId: "town",
+    connections: ["town_square", "tavern"],
+    events: [],
+  });
+  dgsm._addScene({
+    id: "tavern",
+    name: "Tavern",
+    parentLocationId: "town",
+    connections: ["main_street"],
+    events: [],
+    indoor: true,
+  });
+  dgsm._addScene({
+    id: "forest_path",
+    name: "Forest Path",
+    parentLocationId: "forest",
+    connections: ["forest_clearing"],
+    events: [],
+  });
+  dgsm._addScene({
+    id: "forest_clearing",
+    name: "Forest Clearing",
+    parentLocationId: "forest",
+    connections: ["forest_path"],
+    events: [],
+  });
 }
 
 // ===== Tests =====
@@ -137,12 +185,29 @@ describe("weatherFeature", () => {
     it("should skip regions with only indoor scenes", () => {
       // Clear scenes and add only indoor ones for a region
       const indoorDgsm = createMockDgsm();
-      indoorDgsm._addScene({ id: "room1", name: "Room 1", parentLocationId: "building", connections: [], events: [], indoor: true });
-      indoorDgsm._addScene({ id: "room2", name: "Room 2", parentLocationId: "building", connections: [], events: [], indoor: true });
+      indoorDgsm._addScene({
+        id: "room1",
+        name: "Room 1",
+        parentLocationId: "building",
+        connections: [],
+        events: [],
+        indoor: true,
+      });
+      indoorDgsm._addScene({
+        id: "room2",
+        name: "Room 2",
+        parentLocationId: "building",
+        connections: [],
+        events: [],
+        indoor: true,
+      });
 
       runTicks(indoorDgsm, runtime, 1);
 
-      const buildingState = indoorDgsm.getFeatureSceneState("weather", "building");
+      const buildingState = indoorDgsm.getFeatureSceneState(
+        "weather",
+        "building"
+      );
       expect(buildingState).toBeUndefined();
     });
   });
@@ -201,7 +266,7 @@ describe("weatherFeature", () => {
       // random = 0.01 → clear
       mockRandom.mockReturnValueOnce(0.01);
       // forest region (clear) needs random too
-      mockRandom.mockReturnValueOnce(0.50); // clear stays clear
+      mockRandom.mockReturnValueOnce(0.5); // clear stays clear
 
       runTicks(dgsm, runtime, 1);
 
@@ -223,11 +288,11 @@ describe("weatherFeature", () => {
 
       const mockRandom = vi.spyOn(Math, "random");
       // sampleTransition: rain stays (0.30 falls in rain range [0.10, 0.55))
-      mockRandom.mockReturnValueOnce(0.30);
+      mockRandom.mockReturnValueOnce(0.3);
       // evolveIntensity: 0.75 → up (0.60 <= 0.75 < 0.80)
       mockRandom.mockReturnValueOnce(0.75);
       // forest clear stays
-      mockRandom.mockReturnValueOnce(0.50);
+      mockRandom.mockReturnValueOnce(0.5);
 
       runTicks(dgsm, runtime, 1);
 
@@ -249,11 +314,11 @@ describe("weatherFeature", () => {
 
       const mockRandom = vi.spyOn(Math, "random");
       // rain stays
-      mockRandom.mockReturnValueOnce(0.30);
+      mockRandom.mockReturnValueOnce(0.3);
       // intensity down: 0.95 → down (>= 0.80), 1-1=0 → clear
       mockRandom.mockReturnValueOnce(0.95);
       // forest
-      mockRandom.mockReturnValueOnce(0.50);
+      mockRandom.mockReturnValueOnce(0.5);
 
       runTicks(dgsm, runtime, 1);
 
@@ -275,11 +340,11 @@ describe("weatherFeature", () => {
 
       const mockRandom = vi.spyOn(Math, "random");
       // storm stays
-      mockRandom.mockReturnValueOnce(0.40);
+      mockRandom.mockReturnValueOnce(0.4);
       // intensity up: 0.75 → up, but capped at 5
       mockRandom.mockReturnValueOnce(0.75);
       // forest
-      mockRandom.mockReturnValueOnce(0.50);
+      mockRandom.mockReturnValueOnce(0.5);
 
       runTicks(dgsm, runtime, 1);
 
@@ -302,27 +367,33 @@ describe("weatherFeature", () => {
 
       const mockRandom = vi.spyOn(Math, "random");
       // fog stays (0.50 in fog range [0.40, 0.95))
-      mockRandom.mockReturnValueOnce(0.50);
+      mockRandom.mockReturnValueOnce(0.5);
       // intensity no change
-      mockRandom.mockReturnValueOnce(0.30);
+      mockRandom.mockReturnValueOnce(0.3);
       // forest clear stays
-      mockRandom.mockReturnValueOnce(0.50);
+      mockRandom.mockReturnValueOnce(0.5);
 
       runTicks(dgsm, runtime, 1);
 
       // town_square should have weather condition
       const squareConditions = dgsm._scenarioConditions["town_square"] ?? [];
-      const weatherCond = squareConditions.find(c => c.description.startsWith("[Weather]"));
+      const weatherCond = squareConditions.find((c) =>
+        c.description.startsWith("[Weather]")
+      );
       expect(weatherCond).toBeDefined();
       expect(weatherCond!.mechanicalEffect?.skillPenalty).toBeDefined();
 
-      const perception = weatherCond!.mechanicalEffect!.skillPenalty!.find(p => p.skill === "Perception");
+      const perception = weatherCond!.mechanicalEffect!.skillPenalty!.find(
+        (p) => p.skill === "Perception"
+      );
       expect(perception).toBeDefined();
       expect(perception!.delta).toBe(-30); // -10 * 3
 
       // tavern (indoor) should have NO weather condition
       const tavernConditions = dgsm._scenarioConditions["tavern"] ?? [];
-      const tavernWeather = tavernConditions.find(c => c.description.startsWith("[Weather]"));
+      const tavernWeather = tavernConditions.find((c) =>
+        c.description.startsWith("[Weather]")
+      );
       expect(tavernWeather).toBeUndefined();
 
       mockRandom.mockRestore();
@@ -338,25 +409,27 @@ describe("weatherFeature", () => {
       dgsm.setFeatureSceneState("weather", "town", ws);
 
       const mockRandom = vi.spyOn(Math, "random");
-      mockRandom.mockReturnValueOnce(0.30); // rain stays
-      mockRandom.mockReturnValueOnce(0.30); // intensity no change
-      mockRandom.mockReturnValueOnce(0.50); // forest
+      mockRandom.mockReturnValueOnce(0.3); // rain stays
+      mockRandom.mockReturnValueOnce(0.3); // intensity no change
+      mockRandom.mockReturnValueOnce(0.5); // forest
 
       runTicks(dgsm, runtime, 1);
 
       const conditions = dgsm._scenarioConditions["town_square"] ?? [];
-      const weatherCond = conditions.find(c => c.description.startsWith("[Weather]"));
+      const weatherCond = conditions.find((c) =>
+        c.description.startsWith("[Weather]")
+      );
       expect(weatherCond).toBeDefined();
 
       const penalties = weatherCond!.mechanicalEffect!.skillPenalty!;
       // At intensity 2: Perception (trigger 1), Track (trigger 1), Drive Auto (trigger 2), Listen (trigger 2), Climb (trigger 2)
       // NOT: Pistol etc (trigger 3)
-      expect(penalties.find(p => p.skill === "Perception")).toBeDefined();
-      expect(penalties.find(p => p.skill === "Track")).toBeDefined();
-      expect(penalties.find(p => p.skill === "Drive Auto")).toBeDefined();
-      expect(penalties.find(p => p.skill === "Listen")).toBeDefined();
-      expect(penalties.find(p => p.skill === "Climb")).toBeDefined();
-      expect(penalties.find(p => p.skill === "Pistol")).toBeUndefined(); // trigger 3, not active at intensity 2
+      expect(penalties.find((p) => p.skill === "Perception")).toBeDefined();
+      expect(penalties.find((p) => p.skill === "Track")).toBeDefined();
+      expect(penalties.find((p) => p.skill === "Drive Auto")).toBeDefined();
+      expect(penalties.find((p) => p.skill === "Listen")).toBeDefined();
+      expect(penalties.find((p) => p.skill === "Climb")).toBeDefined();
+      expect(penalties.find((p) => p.skill === "Pistol")).toBeUndefined(); // trigger 3, not active at intensity 2
 
       mockRandom.mockRestore();
     });
@@ -373,14 +446,16 @@ describe("weatherFeature", () => {
       dgsm.setFeatureSceneState("weather", "town", ws);
 
       const mockRandom = vi.spyOn(Math, "random");
-      mockRandom.mockReturnValueOnce(0.40); // storm stays
-      mockRandom.mockReturnValueOnce(0.30); // intensity no change
-      mockRandom.mockReturnValueOnce(0.50); // forest
+      mockRandom.mockReturnValueOnce(0.4); // storm stays
+      mockRandom.mockReturnValueOnce(0.3); // intensity no change
+      mockRandom.mockReturnValueOnce(0.5); // forest
 
       runTicks(dgsm, runtime, 1);
 
       // outdoor-to-outdoor should be blocked
-      const hasBlock = dgsm._blockedConnections.has("main_street::town_square") || dgsm._blockedConnections.has("town_square::main_street");
+      const hasBlock =
+        dgsm._blockedConnections.has("main_street::town_square") ||
+        dgsm._blockedConnections.has("town_square::main_street");
       expect(hasBlock).toBe(true);
 
       // outdoor-to-indoor should NOT be blocked
@@ -400,9 +475,9 @@ describe("weatherFeature", () => {
       dgsm.setFeatureSceneState("weather", "town", ws);
 
       const mockRandom = vi.spyOn(Math, "random");
-      mockRandom.mockReturnValueOnce(0.40);
-      mockRandom.mockReturnValueOnce(0.30);
-      mockRandom.mockReturnValueOnce(0.50);
+      mockRandom.mockReturnValueOnce(0.4);
+      mockRandom.mockReturnValueOnce(0.3);
+      mockRandom.mockReturnValueOnce(0.5);
 
       runTicks(dgsm, runtime, 1);
 

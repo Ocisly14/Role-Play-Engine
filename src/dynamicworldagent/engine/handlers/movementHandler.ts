@@ -1,9 +1,19 @@
-import type { NodeHandler, ExecutionContext } from "../types.js";
+import type {
+  CharacterAction,
+  PlanNode,
+} from "../../dynamicBasicAgent/npcPlanning/types.js";
 import type { DynamicGameStateManager } from "../../state/DynamicGameState.js";
-import type { PlanNode, CharacterAction } from "../../dynamicBasicAgent/npcPlanning/types.js";
+import type {
+  CharacterPosition,
+  TownTopology,
+} from "../../state/topologyTypes.js";
 import { buildOutcome, makeAction } from "../shared/nodeHelpers.js";
-import { findPath, calculateTravelTime, findTopologyPath } from "../shared/pathfinding.js";
-import type { CharacterPosition, TownTopology } from "../../state/topologyTypes.js";
+import {
+  calculateTravelTime,
+  findPath,
+  findTopologyPath,
+} from "../shared/pathfinding.js";
+import type { ExecutionContext, NodeHandler } from "../types.js";
 
 export const movementHandler: NodeHandler = {
   type: "movement",
@@ -43,7 +53,9 @@ export const movementHandler: NodeHandler = {
     const afterScene = ctx.applyPenalties(npcSkills, scenePenalties);
     const adjustedSkills = ctx.applyPenalties(afterScene, charPenalties);
 
-    let resolvedSuccessLevel: import("../../dynamicBasicAgent/npcPlanning/types.js").SuccessLevel | undefined;
+    let resolvedSuccessLevel:
+      | import("../../dynamicBasicAgent/npcPlanning/types.js").SuccessLevel
+      | undefined;
     let lastRollDetail: string | undefined;
 
     const fromLocation = npcLocation ?? node.location;
@@ -58,7 +70,11 @@ export const movementHandler: NodeHandler = {
           node,
           "failed",
           buildOutcome(node, "failed", { rollDetail: lastRollDetail }),
-          { difficulty, successLevel: resolvedSuccessLevel, failureReason: "skill_roll_failed" }
+          {
+            difficulty,
+            successLevel: resolvedSuccessLevel,
+            failureReason: "skill_roll_failed",
+          }
         );
       }
       lastRollDetail = rollResult.detail;
@@ -66,7 +82,9 @@ export const movementHandler: NodeHandler = {
       return makeAction(
         node,
         "completed",
-        buildOutcome(node, "completed", { reason: "Creative movement succeeded" }),
+        buildOutcome(node, "completed", {
+          reason: "Creative movement succeeded",
+        }),
         { difficulty, successLevel: resolvedSuccessLevel }
       );
     }
@@ -89,7 +107,9 @@ export const movementHandler: NodeHandler = {
             return makeAction(
               node,
               "failed",
-              buildOutcome(node, "failed", { reason: "no path available in topology" }),
+              buildOutcome(node, "failed", {
+                reason: "no path available in topology",
+              }),
               { difficulty, failureReason: "location_blocked" }
             );
           }
@@ -128,7 +148,12 @@ export const movementHandler: NodeHandler = {
 
     // Normal movement: BFS pathfinding
     if (state.scenes.size > 0) {
-      const path = findPath(fromLocation, node.location, state.scenes, state.blockedConnections);
+      const path = findPath(
+        fromLocation,
+        node.location,
+        state.scenes,
+        state.blockedConnections
+      );
       if (!path) {
         return makeAction(
           node,
@@ -137,13 +162,19 @@ export const movementHandler: NodeHandler = {
           { difficulty, failureReason: "location_blocked" }
         );
       }
-      const travelTime = calculateTravelTime(path, state.scenes, state.transportEdges);
+      const travelTime = calculateTravelTime(
+        path,
+        state.scenes,
+        state.transportEdges
+      );
       dgsm.setNpcLocation(node.characterId, node.location);
       const hopCount = path.length - 1;
       return makeAction(
         node,
         "completed",
-        buildOutcome(node, "completed", { reason: `Traveled ${hopCount} hops in ~${travelTime} min` }),
+        buildOutcome(node, "completed", {
+          reason: `Traveled ${hopCount} hops in ~${travelTime} min`,
+        }),
         { difficulty, successLevel: resolvedSuccessLevel }
       );
     }
@@ -168,12 +199,10 @@ export const movementHandler: NodeHandler = {
       );
     }
     dgsm.setNpcLocation(node.characterId, node.location);
-    return makeAction(
-      node,
-      "completed",
-      buildOutcome(node, "completed"),
-      { difficulty, successLevel: resolvedSuccessLevel }
-    );
+    return makeAction(node, "completed", buildOutcome(node, "completed"), {
+      difficulty,
+      successLevel: resolvedSuccessLevel,
+    });
   },
 };
 

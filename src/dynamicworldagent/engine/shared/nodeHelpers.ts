@@ -1,4 +1,9 @@
-import type { PlanNode, CharacterAction, FailureReason, SuccessLevel } from "../../dynamicBasicAgent/npcPlanning/types.js";
+import type {
+  CharacterAction,
+  FailureReason,
+  PlanNode,
+  SuccessLevel,
+} from "../../dynamicBasicAgent/npcPlanning/types.js";
 
 export function buildOutcome(
   node: PlanNode,
@@ -12,11 +17,19 @@ export function buildOutcome(
     parts.push(`[${opts.reason}]`);
   }
   // Payload context
-  if (node.type === "character_interaction" && node.characterInteractionPayload) {
+  if (
+    node.type === "character_interaction" &&
+    node.characterInteractionPayload
+  ) {
     const p = node.characterInteractionPayload;
-    if (p.transferType === "item" && p.itemId) parts.push(`(item: ${p.itemId})`);
-    else if (p.transferType === "information" && p.informationContent) parts.push(`(info: ${p.informationContent})`);
-  } else if (node.type === "object_interaction" && node.objectInteractionPayload) {
+    if (p.transferType === "item" && p.itemId)
+      parts.push(`(item: ${p.itemId})`);
+    else if (p.transferType === "information" && p.informationContent)
+      parts.push(`(info: ${p.informationContent})`);
+  } else if (
+    node.type === "object_interaction" &&
+    node.objectInteractionPayload
+  ) {
     const p = node.objectInteractionPayload;
     const target = p.targetItemId ? ` → ${p.targetItemId}` : "";
     parts.push(`(${p.action}${p.itemId ? `: ${p.itemId}` : ""}${target})`);

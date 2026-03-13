@@ -1,0 +1,81 @@
+[
+    {
+      "name": "Jun",
+      "occupation": "University Professor (History and Literature)",
+      "age": 51,
+      "appearance": "A middle-aged academic with an unremarkable appearance, more bookish than athletic, often appearing absent-minded and physically unimposing.",
+      "personality": "Intellectually curious, gentle, absent-minded, deeply interested in strange lore, but impractical and directionless in everyday matters.",
+      "background": "Jun is a little-known university professor specializing in history and literature, with a strong fascination for strange phenomena and obscure stories. He is notoriously bad with directions. He asked Lyn to drive him and Wind around the outskirts of Cassandra to collect local folklore and material. During this trip, Jun disappeared near the incinerator. Lyn never left the car, and when she went searching after waiting too long, she only found Wind, who had suddenly gone insane. No one knows that Jun sacrificed himself in his final moments to ensure Wind could escape alive.",
+      "goals": [
+        "Research and document strange and uncanny phenomena",
+        "Protect his companions despite the danger"
+      ],
+      "secrets": [
+        "He gave his life to save Wind during the incident at the incinerator"
+      ],
+      "attributes": {
+        "STR": 30,
+        "CON": 35,
+        "DEX": 35,
+        "APP": 50,
+        "POW": 60,
+        "SIZ": 40,
+        "INT": 60,
+        "EDU": 80
+      },
+      "status": {
+        "hp": 8,
+        "maxHp": 8,
+        "sanity": 60,
+        "maxSanity": 99,
+        "luck": 60,
+        "mp": 12,
+        "conditions": []
+      },
+      "skills": {
+        "Occult": 81,
+        "Persuade": 78,
+        "Credit Rating": 78,
+        "Psychology": 76,
+        "Library Use": 80,
+        "Climb": 40,
+        "Psychoanalysis": 78,
+        "Fighting (Brawl)": 50
+      },
+      "inventory": [
+        "Notebook filled with research notes",
+        "Academic books on folklore and history"
+      ],
+      "clues": [
+        {
+          "clueText": "Jun disappeared near the incinerator while researching strange phenomena around Cassandra.",
+          "category": "knowledge",
+          "difficulty": "regular",
+          "relatedTo": ["Incinerator"]
+        },
+        {
+          "clueText": "Jun sacrificed himself in his final moments to ensure Wind could escape alive.",
+          "category": "secret",
+          "difficulty": "hard",
+          "relatedTo": ["Wind"]
+        }
+      ],
+      "relationships": [
+        {
+          "targetName": "Lyn",
+          "relationshipType": "friend",
+          "attitude": 40,
+          "description": "Lyn acted as Jun’s driver during his field research.",
+          "history": "Jun relied on Lyn for transportation due to his poor sense of direction."
+        },
+        {
+          "targetName": "Wind",
+          "relationshipType": "ally",
+          "attitude": 70,
+          "description": "Jun protected Wind during their final expedition.",
+          "history": "Jun gave his life to secure Wind’s survival."
+        }
+      ],
+      "notes": "Jun is presumed dead. His disappearance and sacrifice are key emotional and investigative elements tied to the incinerator incident."
+    }
+  ]

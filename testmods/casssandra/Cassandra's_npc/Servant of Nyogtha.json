@@ -1,0 +1,67 @@
+[
+    {
+      "name": "Servant of Nyogtha",
+      "occupation": "Mythos Cult Servitor / Aberrant Hybrid",
+      "age": 0,
+      "appearance": "In human form, indistinguishable from an ordinary person. When partially revealed, black ichor seeps in place of blood. In full monstrous form, the body becomes a nauseating mass of cold gelatinous flesh, clawed limbs, fanged maw, and writhing worm-like tentacles that force their way into a victim’s bodily openings.",
+      "personality": "Emotionally distant, obedient, and utterly inhuman beneath the surface. Displays minimal individuality, driven by devotion to Nyogtha and predatory instinct once transformed.",
+      "background": "The Servants of Nyogtha are humans bound to the Outer God Nyogtha. During adolescence they learn forbidden rites and begin a gradual transformation. Some retain a human façade for years, while others fully convert into monstrous forms steeped in Nyogtha’s cold, abyssal essence.",
+      "goals": [
+        "Serve Nyogtha and expand its influence",
+        "Capture, suffocate, and consume designated victims"
+      ],
+      "secrets": [
+        "They can perfectly pass as human until revealing their true nature",
+        "Fully transformed servants command multiple Mythos spells tied to Nyogtha and other Great Old Ones"
+      ],
+      "attributes": {
+        "STR": 80,
+        "CON": 85,
+        "DEX": 50,
+        "APP": 10,
+        "POW": 80,
+        "SIZ": 65,
+        "INT": 60,
+        "EDU": 0
+      },
+      "status": {
+        "hp": 15,
+        "maxHp": 15,
+        "sanity": 0,
+        "maxSanity": 0,
+        "luck": 0,
+        "mp": 16,
+        "conditions": []
+      },
+      "skills": {
+        "Claw Attack": 65,
+        "Bite": 65,
+        "Grapple": 50
+      },
+      "inventory": [],
+      "clues": [
+        {
+          "clueText": "Servants of Nyogtha appear completely human until wounded or fully transformed.",
+          "category": "observation",
+          "difficulty": "regular",
+          "relatedTo": ["Nyogtha"]
+        },
+        {
+          "clueText": "All servants learn the spell Contact Nyogtha during adolescence.",
+          "category": "knowledge",
+          "difficulty": "hard",
+          "relatedTo": ["Nyogtha"]
+        }
+      ],
+      "relationships": [
+        {
+          "targetName": "Nyogtha",
+          "relationshipType": "employer",
+          "attitude": 100,
+          "description": "Outer God master worshipped and served without question.",
+          "history": "The servants exist solely to enact Nyogtha’s will in the material world."
+        }
+      ],
+      "notes": "Combat & Abilities:\n\nForms:\n• Human Form: Indistinguishable from normal humans; fights as an ordinary person.\n• Monster Form: Reveals true aberrant body of cold, gelatinous flesh and tentacles.\n\nCombat Style:\nIn monster form, a servant may attack with two claws and one bite in the same round, OR attempt to grapple a target and pull them into a horrifying embrace.\n\nGrapple & Suffocation:\nIf a grapple succeeds, the victim must win a STR vs STR contest or be pressed against the servant’s cold, gelatinous body. Worm-like tentacles erupt and force themselves into the victim’s bodily openings, causing immediate SAN loss of 0 / 1D6.\nOnce grappled, the victim must pass a CON check each round or begin suffocating, taking 1D8 HP damage per round until they escape or die.\nWhile grappling and suffocating victims, the servant may still use its two claw attacks but cannot bite. A servant may grapple multiple targets, but must divide STR between contests. Movement drops to 1 while grappling.\n\nAttacks (Monster Form):\n• Claw – 65%: 1D6 + damage bonus.\n• Bite – 65%: 1D8 + damage bonus.\n• Grapple – 50%: Special (see above).\nEach servant attacks once per round.\n\nArmor & Immunities:\nAll servants of Nyogtha, in both human and monster forms, are immune to firearms and piercing weapons; other attacks deal minimum damage only. They are also immune to fire, acid, radiation, and electricity.\n\nSpells:\nAll servants know the spell Contact Nyogtha from adolescence. After full transformation, a servant knows 2D6 spells, mostly related to Nyogtha and other Great Old Ones.\n\nSanity Loss:\n• Seeing a servant in human form: No SAN loss.\n• Seeing black ichor ooze instead of blood: 0 / 1D3 SAN.\n• Witnessing a fully transformed servant: 1 / 1D10 SAN."
+    }
+  ]

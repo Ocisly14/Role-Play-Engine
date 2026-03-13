@@ -246,8 +246,7 @@ function mapCharacterToForm(character: any): Record<string, string> {
     formData[`item_${index}_name`] = item?.name || "";
     formData[`item_${index}_quantity`] =
       typeof item?.quantity === "number" ? String(item.quantity) : "";
-    formData[`item_${index}_description`] =
-      item?.properties?.description || "";
+    formData[`item_${index}_description`] = item?.properties?.description || "";
   });
 
   return formData;
@@ -431,11 +430,9 @@ export const useCharacterCreation = ({
   // Calculate skills state
   const skillsState = useMemo(() => {
     const dex = Number(form.DEX);
-    const dodgeBase =
-      Number.isFinite(dex) && dex > 0 ? Math.floor(dex / 2) : 0;
+    const dodgeBase = Number.isFinite(dex) && dex > 0 ? Math.floor(dex / 2) : 0;
     const edu = Number(form.EDU);
-    const ownLangBase =
-      Number.isFinite(edu) && edu > 0 ? edu : 0;
+    const ownLangBase = Number.isFinite(edu) && edu > 0 ? edu : 0;
 
     return SKILLS.map((skill) => {
       let base = skill.base;
@@ -642,10 +639,10 @@ export const useCharacterCreation = ({
         setSaveMessage({
           type: "error",
           text: `${
-            isEditMode ? t("character:form.updateFailed") : t("character:form.failed")
-          }: ${
-            data.error || t("common:error.generic")
-          }`,
+            isEditMode
+              ? t("character:form.updateFailed")
+              : t("character:form.failed")
+          }: ${data.error || t("common:error.generic")}`,
         });
       }
     } catch (error) {

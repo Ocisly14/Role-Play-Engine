@@ -1,12 +1,16 @@
-import { describe, it, expect } from "vitest";
+import { describe, expect, it } from "vitest";
+import type {
+  JunctionNode,
+  RoadNode,
+  TownTopology,
+} from "../../../state/topologyTypes.js";
+import { buildTopology } from "../../../state/topologyTypes.js";
 import {
-  isRoadId,
-  isJunctionId,
   getTopologyNeighbors,
+  isJunctionId,
+  isRoadId,
   resolveCharacterLocationId,
 } from "../topologyHelpers.js";
-import type { JunctionNode, RoadNode, TownTopology } from "../../../state/topologyTypes.js";
-import { buildTopology } from "../../../state/topologyTypes.js";
 
 // ===== Test topology =====
 //
@@ -96,14 +100,20 @@ function createMockDgsm(overrides?: {
   characterPositions?: Record<string, any>;
   npcLocations?: Record<string, string>;
 }) {
-  const characterPositions: Record<string, any> = overrides?.characterPositions ?? {};
+  const characterPositions: Record<string, any> =
+    overrides?.characterPositions ?? {};
   const npcLocations: Record<string, string> = overrides?.npcLocations ?? {};
 
   return {
     getCharacterPosition(characterId: string) {
       return characterPositions[characterId] ?? null;
     },
-    resolveLocationId(position: { type: string; junctionId?: string; roadId?: string; sceneId?: string }) {
+    resolveLocationId(position: {
+      type: string;
+      junctionId?: string;
+      roadId?: string;
+      sceneId?: string;
+    }) {
       switch (position.type) {
         case "junction":
           return position.junctionId!;
@@ -276,7 +286,9 @@ describe("resolveCharacterLocationId", () => {
 
   it("returns undefined when no location is found at all", () => {
     const dgsm = createMockDgsm();
-    expect(resolveCharacterLocationId("unknown-char", dgsm as any)).toBeUndefined();
+    expect(
+      resolveCharacterLocationId("unknown-char", dgsm as any)
+    ).toBeUndefined();
   });
 
   it("prefers CharacterPosition over fallback", () => {

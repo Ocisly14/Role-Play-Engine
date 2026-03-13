@@ -10,9 +10,7 @@ import type {
   NPCKnowledge,
   NPCRelationship,
 } from "../../shared/agents/models/gameTypes.js";
-import type {
-  SceneCondition,
-} from "../dynamicBasicAgent/npcPlanning/types.js";
+import type { SceneCondition } from "../dynamicBasicAgent/npcPlanning/types.js";
 import type { ItemContexts } from "./sceneItemContextPayload.js";
 
 /**
@@ -119,7 +117,15 @@ export interface Item {
   id: string;
   name: string;
   description?: string;
-  type?: "weapon" | "consumable" | "tool" | "lighting" | "container" | "key" | "document" | "other";
+  type?:
+    | "weapon"
+    | "consumable"
+    | "tool"
+    | "lighting"
+    | "container"
+    | "key"
+    | "document"
+    | "other";
   category?: "evidence" | "mundane";
   reveals?: string[];
   discoveryMethod?: string;
@@ -173,7 +179,14 @@ export interface ModuleSetup {
   introduction?: string;
   weatherPresets?: Array<{
     regionId: string;
-    weatherType: "clear" | "rain" | "fog" | "storm" | "snow" | "extreme_heat" | "extreme_cold";
+    weatherType:
+      | "clear"
+      | "rain"
+      | "fog"
+      | "storm"
+      | "snow"
+      | "extreme_heat"
+      | "extreme_cold";
     intensity: number;
   }>;
 }

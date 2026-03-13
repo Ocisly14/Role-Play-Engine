@@ -1,6 +1,6 @@
 import type { ActionType } from "../../../shared/state/index.js";
-import type { Item } from "../../state/types.js";
 import type { SimulationEvent } from "../../simulation/types.js";
+import type { Item } from "../../state/types.js";
 
 export type BuiltinNodeType =
   | "routine"
@@ -38,8 +38,8 @@ export interface ObjectInteractionPayload {
 }
 
 export interface ScheduleEntry {
-  location: string;   // scene ID
-  activity: string;   // natural language description
+  location: string; // scene ID
+  activity: string; // natural language description
 }
 
 export interface SceneConnectionEffect {
@@ -73,10 +73,10 @@ export interface DiscoveryEntry {
   id: string;
   text: string;
   source: "evidence" | "npc";
-  sourceId: string;       // sceneId or npcId
-  sourceName: string;     // scene name or NPC name
+  sourceId: string; // sceneId or npcId
+  sourceName: string; // scene name or NPC name
   difficulty: "automatic" | "regular" | "hard" | "extreme";
-  similarity: number;     // semantic match score
+  similarity: number; // semantic match score
 }
 
 export type SuccessLevel = "critical" | "hard" | "regular" | "fail" | "fumble";
@@ -132,4 +132,3 @@ export interface SimulationTickResult {
   events: SimulationEvent[];
   dayChanged: boolean;
 }
-

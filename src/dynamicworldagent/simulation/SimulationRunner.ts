@@ -1,20 +1,13 @@
+import * as path from "node:path";
 import type { PrismaClient } from "@prisma/client";
-import type {
-  SimulationConfig,
-  SimulationEvent,
-  SimulationState,
-  SimulationStatus,
-  StopReason,
-} from "./types.js";
-import { DEFAULT_TICK_INTERVAL_MS } from "./types.js";
-import { SimulationEventEmitter } from "./SimulationEventEmitter.js";
-import { runSimulationTick } from "../dynamicBasicAgent/npcPlanning/tickProcessor.js";
-import type { DynamicGameStateManager } from "../state/DynamicGameState.js";
 import type { NPCPlanningAgent } from "../dynamicBasicAgent/npcPlanning/NPCPlanningAgent.js";
+import { runSimulationTick } from "../dynamicBasicAgent/npcPlanning/tickProcessor.js";
 import type { GameEngineRegistry } from "../engine/registry.js";
 import type { ExecutionContext } from "../engine/types.js";
 import type { NpcMemoryManager } from "../memory/NpcMemoryManager.js";
+import type { DynamicGameStateManager } from "../state/DynamicGameState.js";
 import type { DynamicNPCProfile } from "../state/types.js";
+import { SimulationEventEmitter } from "./SimulationEventEmitter.js";
 import {
   injectCharacterIntoState,
   removeCharacterFromState,
@@ -25,6 +18,14 @@ import {
   persistSimulationEvents,
   persistSimulationRuntime,
 } from "./runtimePersistence.js";
+import type {
+  SimulationConfig,
+  SimulationEvent,
+  SimulationState,
+  SimulationStatus,
+  StopReason,
+} from "./types.js";
+import { DEFAULT_TICK_INTERVAL_MS } from "./types.js";
 
 export class SimulationRunner {
   // --- Core dependencies ---
@@ -38,14 +39,17 @@ export class SimulationRunner {
   private readonly memoryManager?: NpcMemoryManager;
   private readonly prisma: PrismaClient;
 
+  // --- Module metadata ---
+  private moduleName = "";
+
   // --- State tracking ---
   private state: SimulationState = "paused";
-  private ticksExecuted: number = 0;
+  private ticksExecuted = 0;
   private stopReason?: StopReason;
   private intervalId: ReturnType<typeof setTimeout> | null = null;
-  private tickInProgress: boolean = false;
-  private shouldStop: boolean = false;
-  private shouldPause: boolean = false;
+  private tickInProgress = false;
+  private shouldStop = false;
+  private shouldPause = false;
 
   // --- NPC tracking ---
   private readonly deadNpcIds: Set<string> = new Set();
@@ -94,13 +98,38 @@ export class SimulationRunner {
     };
   }
 
+  getDgsm(): DynamicGameStateManager {
+    return this.dgsm;
+  }
+
+  getModuleName(): string {
+    return this.moduleName;
+  }
+
+  setModuleName(name: string): void {
+    this.moduleName = name;
+  }
+
+  getModulePath(): string | null {
+    if (!this.moduleName) return null;
+    return path.join(process.cwd(), "data", "Mods", this.moduleName);
+  }
+
+  updateTickInterval(ms: number): void {
+    (this.config as { tickIntervalMs?: number }).tickIntervalMs = ms;
+    if (this.state === "running" && this.intervalId) {
+      clearTimeout(this.intervalId);
+      this.intervalId = null;
+      this.scheduleNextTick();
+    }
+  }
+
   hydrateFromRuntime(params: {
     state: SimulationState;
     ticksExecuted: number;
     stopReason?: StopReason;
   }): void {
-    this.state =
-      params.state === "running" ? "paused" : params.state;
+    this.state = params.state === "running" ? "paused" : params.state;
     this.ticksExecuted = params.ticksExecuted;
     this.stopReason = params.stopReason;
     this.shouldPause = false;
@@ -173,7 +202,7 @@ export class SimulationRunner {
    * Execute a fixed number of ticks synchronously (step mode).
    * Only callable when paused.
    */
-  async step(ticks: number = 1): Promise<void> {
+  async step(ticks = 1): Promise<void> {
     if (this.state !== "paused") return;
 
     // Drain modifiedCharacterIds before stepping
@@ -314,7 +343,9 @@ export class SimulationRunner {
    */
   getInjectedCharacters(): DynamicNPCProfile[] {
     const gameState = this.dgsm.getState();
-    return gameState.npcCharacters.filter((npc) => npc.isPlayerInjected === true);
+    return gameState.npcCharacters.filter(
+      (npc) => npc.isPlayerInjected === true
+    );
   }
 
   // ===== Private helpers =====
@@ -378,10 +409,7 @@ export class SimulationRunner {
       });
 
       // Convert actions to simulation events
-      const events = this.events.actionsToEvents(
-        tickResult.actions,
-        dayBefore
-      );
+      const events = this.events.actionsToEvents(tickResult.actions, dayBefore);
       this.collectedEvents.push(...events);
       const pendingEvents = [...events];
 
@@ -438,7 +466,10 @@ export class SimulationRunner {
         await this.persistEvents([this.emitStateChange()]);
         await this.saveRuntime();
       } catch (persistError) {
-        console.error("[SimulationRunner] Failed to persist paused state:", persistError);
+        console.error(
+          "[SimulationRunner] Failed to persist paused state:",
+          persistError
+        );
       }
     } finally {
       this.tickInProgress = false;

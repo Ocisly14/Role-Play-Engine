@@ -4,8 +4,8 @@ import {
   getAccumulatedStats,
   getHistoricalStats,
   getRecentWindowStats,
-  getTopUsersByMessagesForDate,
   getTodayStats,
+  getTopUsersByMessagesForDate,
   saveDailyStats,
 } from "./service.js";
 

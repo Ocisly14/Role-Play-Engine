@@ -37,9 +37,7 @@
       }
     }
   ],
-  "connectedSceneIds": [
-    "SCN_6_SUB_1"
-  ],
+  "connectedSceneIds": ["SCN_6_SUB_1"],
   "itemContexts": {
     "ITEM_JUNC9_2": "两三个金属邮箱集中固定在木桩上，箱门边缘都带着些锈迹。"
   }

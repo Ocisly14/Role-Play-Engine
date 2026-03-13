@@ -54,9 +54,7 @@
       }
     }
   ],
-  "connections": [
-    "SCN_17_SUB_1"
-  ],
+  "connections": ["SCN_17_SUB_1"],
   "itemContexts": {
     "ITEM_SCN17_8": "赌场一角的简易吧台，摆放着各种廉价烈酒瓶。这里为赌客们提供酒水，让他们在酒精的刺激下更加肆无忌惮地下注。"
   }

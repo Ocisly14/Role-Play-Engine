@@ -1,4 +1,4 @@
-import { describe, it, expect } from "vitest";
+import { describe, expect, it } from "vitest";
 import { deepMergeItem } from "../deepMerge.js";
 
 // Tests use Record<string, unknown> to exercise the runtime deep-merge behavior
@@ -6,7 +6,11 @@ import { deepMergeItem } from "../deepMerge.js";
 
 describe("deepMergeItem", () => {
   it("overwrites flat fields", () => {
-    const target: Record<string, unknown> = { id: "x", name: "Torch", description: "A lit torch" };
+    const target: Record<string, unknown> = {
+      id: "x",
+      name: "Torch",
+      description: "A lit torch",
+    };
     const result = deepMergeItem(target, { description: "A burnt-out torch" });
     expect(result.description).toBe("A burnt-out torch");
     expect(result.name).toBe("Torch");
@@ -16,7 +20,12 @@ describe("deepMergeItem", () => {
     const target: Record<string, unknown> = {
       id: "x",
       name: "Safe",
-      containerStats: { capacity: 10, locked: true, lockDifficulty: "hard", contents: [] },
+      containerStats: {
+        capacity: 10,
+        locked: true,
+        lockDifficulty: "hard",
+        contents: [],
+      },
     };
     deepMergeItem(target, { containerStats: { locked: false } });
     const cs = target.containerStats as Record<string, unknown>;
@@ -38,7 +47,14 @@ describe("deepMergeItem", () => {
 
   it("adds new fields without removing existing ones", () => {
     const target: Record<string, unknown> = { id: "x", name: "Key" };
-    deepMergeItem(target, { damaged: true, damageDetails: { damagedBy: "fire", damagedAt: "12:00", reason: "burned" } });
+    deepMergeItem(target, {
+      damaged: true,
+      damageDetails: {
+        damagedBy: "fire",
+        damagedAt: "12:00",
+        reason: "burned",
+      },
+    });
     expect(target.damaged).toBe(true);
     const dd = target.damageDetails as Record<string, unknown>;
     expect(dd.damagedBy).toBe("fire");
@@ -52,7 +68,11 @@ describe("deepMergeItem", () => {
   });
 
   it("skips undefined values in updates", () => {
-    const target: Record<string, unknown> = { id: "x", name: "Torch", description: "A lit torch" };
+    const target: Record<string, unknown> = {
+      id: "x",
+      name: "Torch",
+      description: "A lit torch",
+    };
     deepMergeItem(target, { description: undefined });
     expect(target.description).toBe("A lit torch");
   });

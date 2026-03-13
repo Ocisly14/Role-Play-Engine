@@ -55,7 +55,5 @@
       }
     }
   ],
-  "connections": [
-    "SCN_9_SUB_2"
-  ]
+  "connections": ["SCN_9_SUB_2"]
 }

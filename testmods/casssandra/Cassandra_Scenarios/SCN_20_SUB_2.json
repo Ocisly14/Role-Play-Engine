@@ -50,9 +50,7 @@
       }
     }
   ],
-  "connections": [
-    "SCN_20_SUB_1"
-  ],
+  "connections": ["SCN_20_SUB_1"],
   "itemContexts": {
     "ITEM_SCN20_4": "墙壁上挂着的几件早已生锈报废的工具——斧头、锯子和锤子。它们与伐木场的其他设备一样，似乎很少被使用过。"
   }

@@ -1,0 +1,67 @@
+[
+    {
+      "name": "Cold Spider(Reality)",
+      "occupation": "Mythos Creature",
+      "age": 0,
+      "appearance": "A pale, chitinous spider with an unnaturally cold, lifeless body. In the real world it is roughly dog-sized, with black, glossy eyes and barbed legs capable of clinging to walls and ceilings.",
+      "personality": "Alien and predatory. Cold spiders act on instinct and the will of the Spider God, showing no empathy and little self-preservation beyond ensuring successful reproduction.",
+      "background": "Cold spiders originate from the Dreamlands and have crossed into the real world through vast webs woven by Atlach-Nacha. Their forms are weakened in reality, but they retain their most horrifying trait: infecting humans by implanting spider eggs, which may kill the host or transform them into spider-humans.",
+      "goals": [
+        "Reproduce by infecting human hosts",
+        "Serve the will of Atlach-Nacha"
+      ],
+      "secrets": [
+        "Some infected hosts may survive and transform into spider-humans",
+        "Cold spiders are less powerful in the real world than in the Dreamlands"
+      ],
+      "attributes": {
+        "STR": 28,
+        "CON": 18,
+        "DEX": 17,
+        "APP": 5,
+        "POW": 14,
+        "SIZ": 7,
+        "INT": 11,
+        "EDU": 0
+      },
+      "status": {
+        "hp": 5,
+        "maxHp": 5,
+        "sanity": 0,
+        "maxSanity": 0,
+        "luck": 0,
+        "mp": 3,
+        "conditions": []
+      },
+      "skills": {
+        "Bite": 40,
+        "Web Projection": 60,
+        "Stealth": 50
+      },
+      "inventory": [],
+      "clues": [
+        {
+          "clueText": "Cold spiders enter the real world through giant webs hidden in the church and nearby areas.",
+          "category": "knowledge",
+          "difficulty": "regular",
+          "relatedTo": ["Church", "Atlach-Nacha"]
+        },
+        {
+          "clueText": "Their bite can infect humans with spider eggs, leading to death or transformation.",
+          "category": "observation",
+          "difficulty": "hard",
+          "relatedTo": ["Spider-Humans"]
+        }
+      ],
+      "relationships": [
+        {
+          "targetName": "Atlach-Nacha",
+          "relationshipType": "employer",
+          "attitude": 100,
+          "description": "Cold spiders are servants and offspring of the Spider God.",
+          "history": "They act as extensions of Atlach-Nacha's will, spreading its influence between worlds."
+        }
+      ],
+      "notes": "Cold Spider Overview, Infection & Treatment (applicable to Nancy’s bite):\n\nGeneral Traits & Behavior:\nCold spiders infect humans through biting, implanting spider eggs directly into the host’s body. Each cold spider can attack once per combat round. A successful bite deals 1D3 damage and carries a risk of infection; if the victim fails a Luck check, they immediately enter Infection Stage 0. Cold spiders possess minimal natural armor (1 point, chitinous shell). There is a 10% chance that an individual cold spider knows the spell “Call Atlach-Nacha.”\n\nInfection Consequences:\nMost infected victims die during the infection process. Those who survive may be ‘assimilated’ into half-human, half-spider creatures known as Spider-Humans.\n\nSanity Effects:\nSeeing a cold spider alone does not cause SAN loss. However, witnessing a cold spider tear through an infected host’s flesh and escape—spraying blood and black pus—causes a SAN loss of 1d3 / 1d6.\n\nInfection Progression (roll succeeds = no progression):\nStage 0 – Regular Luck: Mild prickling sensation, as if something crawled over exposed skin; small pink bruises appear.\nStage 1 – Regular CON: Pain; bitten area feels warm, wound turns bright red.\nStage 2 – Hard CON: Bite area swells slightly (about half an inch), bright red lump forms.\nStage 3 – Hard CON: Swelling grows to 2 inches; redness spreads, center darkens; extreme pain on contact. Victim loses 1 HP.\nStage 4 – Extreme CON: Swelling grows to 4 inches and hardens; black core expands to 1 inch; victim feels movement under the skin. Victim loses 1 HP and must make a SAN check (1 / 1d3).\nStage 5 – Extreme CON: A developing cold spider may burst from the hardened abscess, tearing flesh and spraying blood and black pus before escaping. Victim loses 1d3+1 HP and must make a SAN check (1d3 / 1d6). Victim may die or transform.\n\nTreatment:\nThe only treatment is to surgically cut open the cyst and remove the young spider. This can only be attempted when the infection is at stages 2–4 and requires a Medicine check with sharp tools.\n\nThe procedure is extremely painful. To succeed, one of the following methods must be used:\n1) Willpower Method: Patient makes a POW check while enduring pain, and the operator makes a Medicine check. Both must succeed.\n2) Restraint Method: Operator makes a combined Medicine + DEX check (both must succeed) to restrain the patient and perform the operation safely.\n3) Anesthesia Method: If anesthetics are available, the operator makes two Medicine checks (one for anesthesia, one for surgery). Both must succeed.\n\nOutcome:\n• Success: Infection stage resets to 0; patient suffers 1 HP damage.\n• Failure: The spider burrows deeper; the patient loses 1d3 HP.\n\nLimits & Keeper Guidance:\n• Each person may undergo this type of field surgery only once.\n• If the spider burrows deeper after a failed attempt, only major hospital surgery can remove it.\n• If not treated in time and the infection reaches Stage 5, the spider bursting out may cause even greater bodily harm at the Keeper’s discretion.\n• The Keeper may adjust damage at Stage 5 or show leniency if circumstances or narrative pacing require it."
+  }
+  ]

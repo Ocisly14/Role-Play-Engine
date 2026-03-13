@@ -271,9 +271,7 @@ export const SkillsSection: React.FC<SkillsSectionProps> = ({
                         >
                           <td className="skill-name-cell">
                             <span>{translateSkill(skill.name)}</span>
-                            <span className="skill-base">
-                              ({skill.base})
-                            </span>
+                            <span className="skill-base">({skill.base})</span>
                           </td>
                           <td className="skill-value-cell skill-col-value">
                             <input
@@ -305,9 +303,7 @@ export const SkillsSection: React.FC<SkillsSectionProps> = ({
                               }
                             />
                           </td>
-                          <td
-                            className="skill-value-cell skill-col-total"
-                          >
+                          <td className="skill-value-cell skill-col-total">
                             {totalValue}
                           </td>
                         </tr>
@@ -391,9 +387,7 @@ export const SkillsSection: React.FC<SkillsSectionProps> = ({
                         >
                           <td className="skill-name-cell">
                             <span>{translateSkill(skill.name)}</span>
-                            <span className="skill-base">
-                              ({skill.base})
-                            </span>
+                            <span className="skill-base">({skill.base})</span>
                           </td>
                           <td className="skill-value-cell skill-col-value">
                             <input
@@ -425,9 +419,7 @@ export const SkillsSection: React.FC<SkillsSectionProps> = ({
                               }
                             />
                           </td>
-                          <td
-                            className="skill-value-cell skill-col-total"
-                          >
+                          <td className="skill-value-cell skill-col-total">
                             {totalValue}
                           </td>
                         </tr>

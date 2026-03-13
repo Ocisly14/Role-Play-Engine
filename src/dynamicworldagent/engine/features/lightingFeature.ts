@@ -1,9 +1,6 @@
-import type {
-  WorldFeature,
-  TickRuntimeContext,
-} from "../types.js";
 import type { DynamicGameStateManager } from "../../state/DynamicGameState.js";
 import { getTopologyNeighbors } from "../shared/topologyHelpers.js";
+import type { TickRuntimeContext, WorldFeature } from "../types.js";
 
 // ===== Types =====
 
@@ -16,14 +13,21 @@ export interface LightingSceneState {
 
 const FEATURE_ID = "lighting";
 
-const LIGHT_LEVEL_LABELS = ["", "Pitch black", "Dark", "Normal lighting", "Bright", "Blinding light"];
+const LIGHT_LEVEL_LABELS = [
+  "",
+  "Pitch black",
+  "Dark",
+  "Normal lighting",
+  "Bright",
+  "Blinding light",
+];
 
 // ===== Sun Curve =====
 
 function computeSunLevel(timeStr: string): number {
   const [hStr, mStr] = timeStr.split(":");
-  const h = parseInt(hStr, 10);
-  const m = parseInt(mStr, 10);
+  const h = Number.parseInt(hStr, 10);
+  const m = Number.parseInt(mStr, 10);
   const t = h + m / 60;
 
   if (t < 4) return 1;
@@ -43,7 +47,10 @@ function lerp(a: number, b: number, t: number): number {
 
 // ===== Weather Modifier =====
 
-function getWeatherLightModifier(dgsm: DynamicGameStateManager, regionId: string): number {
+function getWeatherLightModifier(
+  dgsm: DynamicGameStateManager,
+  regionId: string
+): number {
   const weatherState = dgsm.getFeatureSceneState("weather", regionId) as
     | { weatherType: string; intensity: number }
     | undefined;
@@ -72,7 +79,9 @@ interface FireLightContribution {
   lightLevel: number;
 }
 
-function getFireLightContributions(dgsm: DynamicGameStateManager): FireLightContribution[] {
+function getFireLightContributions(
+  dgsm: DynamicGameStateManager
+): FireLightContribution[] {
   const contributions: FireLightContribution[] = [];
   const fireStates = dgsm.getFeatureState("fire");
   const topology = dgsm.getTopology();
@@ -92,7 +101,10 @@ function getFireLightContributions(dgsm: DynamicGameStateManager): FireLightCont
         // Topology-aware: use topology neighbors
         const neighbors = getTopologyNeighbors(locationId, topology);
         for (const neighborId of neighbors) {
-          contributions.push({ sceneId: neighborId, lightLevel: adjacentLevel });
+          contributions.push({
+            sceneId: neighborId,
+            lightLevel: adjacentLevel,
+          });
         }
       } else {
         // Fallback: use scene.connections
@@ -155,7 +167,11 @@ const LIGHT_LEVEL_PENALTIES: Record<number, LightPenaltyEntry[]> = {
 
 // ===== Scene Condition Helpers =====
 
-function writeLightingCondition(dgsm: DynamicGameStateManager, sceneId: string, lightLevel: number): void {
+function writeLightingCondition(
+  dgsm: DynamicGameStateManager,
+  sceneId: string,
+  lightLevel: number
+): void {
   clearLightingConditions(dgsm, sceneId);
 
   if (lightLevel === 3 || lightLevel === 4) return;
@@ -165,22 +181,30 @@ function writeLightingCondition(dgsm: DynamicGameStateManager, sceneId: string, 
 
   dgsm.appendSceneCondition(sceneId, {
     description: `[Lighting] ${label}`,
-    mechanicalEffect: penalties.length > 0 ? { skillPenalty: penalties } : undefined,
+    mechanicalEffect:
+      penalties.length > 0 ? { skillPenalty: penalties } : undefined,
   });
 }
 
-function clearLightingConditions(dgsm: DynamicGameStateManager, sceneId: string): void {
+function clearLightingConditions(
+  dgsm: DynamicGameStateManager,
+  sceneId: string
+): void {
   const state = dgsm.getState();
   const conditions = state.scenarioConditions[sceneId];
   if (!conditions) return;
   (dgsm.getState() as any).scenarioConditions[sceneId] = conditions.filter(
-    (c: any) => !c.description.startsWith("[Lighting]"),
+    (c: any) => !c.description.startsWith("[Lighting]")
   );
 }
 
 // ===== State Helpers =====
 
-function setLightingState(dgsm: DynamicGameStateManager, sceneId: string, state: LightingSceneState): void {
+function setLightingState(
+  dgsm: DynamicGameStateManager,
+  sceneId: string,
+  state: LightingSceneState
+): void {
   dgsm.setFeatureSceneState(FEATURE_ID, sceneId, state);
 }
 
@@ -190,7 +214,7 @@ function computeSceneLighting(
   dgsm: DynamicGameStateManager,
   sceneId: string,
   sunLevel: number,
-  fireContributions: FireLightContribution[],
+  fireContributions: FireLightContribution[]
 ): LightingSceneState {
   const scene = dgsm.getScene(sceneId);
   if (!scene) return { lightLevel: 1, sources: [] };
@@ -222,13 +246,14 @@ function computeSceneLighting(
     }
   }
 
-  const maxLevel = sources.length > 0
-    ? Math.min(5, Math.max(...sources.map(s => s.level)))
-    : 1;
+  const maxLevel =
+    sources.length > 0
+      ? Math.min(5, Math.max(...sources.map((s) => s.level)))
+      : 1;
 
   return {
     lightLevel: maxLevel,
-    sources: sources.filter(s => s.level === maxLevel).map(s => s.name),
+    sources: sources.filter((s) => s.level === maxLevel).map((s) => s.name),
   };
 }
 
@@ -239,7 +264,7 @@ function computeOutdoorLighting(
   locationId: string,
   parentLocationId: string,
   sunLevel: number,
-  fireContributions: FireLightContribution[],
+  fireContributions: FireLightContribution[]
 ): LightingSceneState {
   const sources: Array<{ name: string; level: number }> = [];
 
@@ -259,13 +284,14 @@ function computeOutdoorLighting(
     }
   }
 
-  const maxLevel = sources.length > 0
-    ? Math.min(5, Math.max(...sources.map(s => s.level)))
-    : 1;
+  const maxLevel =
+    sources.length > 0
+      ? Math.min(5, Math.max(...sources.map((s) => s.level)))
+      : 1;
 
   return {
     lightLevel: maxLevel,
-    sources: sources.filter(s => s.level === maxLevel).map(s => s.name),
+    sources: sources.filter((s) => s.level === maxLevel).map((s) => s.name),
   };
 }
 
@@ -273,7 +299,8 @@ function computeOutdoorLighting(
 
 export const lightingFeature: WorldFeature = {
   id: FEATURE_ID,
-  description: "Unified lighting system — aggregates sun, moon, fire, and item light sources with skill penalties",
+  description:
+    "Unified lighting system — aggregates sun, moon, fire, and item light sources with skill penalties",
 
   planningPrompt: `## Lighting
 Current lighting conditions are shown in the state description below.
@@ -306,7 +333,12 @@ Dark environments impose skill penalties. Blinding light also impairs vision.`,
 
     // Process all scenes
     state.scenes.forEach((_scene: any, sceneId: string) => {
-      const lighting = computeSceneLighting(dgsm, sceneId, sunLevel, fireContributions);
+      const lighting = computeSceneLighting(
+        dgsm,
+        sceneId,
+        sunLevel,
+        fireContributions
+      );
       setLightingState(dgsm, sceneId, lighting);
       writeLightingCondition(dgsm, sceneId, lighting.lightLevel);
     });
@@ -315,12 +347,24 @@ Dark environments impose skill penalties. Blinding light also impairs vision.`,
     const topology = dgsm.getTopology();
     if (topology) {
       for (const [roadId, road] of topology.roads) {
-        const lighting = computeOutdoorLighting(dgsm, roadId, road.parentLocationId, sunLevel, fireContributions);
+        const lighting = computeOutdoorLighting(
+          dgsm,
+          roadId,
+          road.parentLocationId,
+          sunLevel,
+          fireContributions
+        );
         setLightingState(dgsm, roadId, lighting);
         writeLightingCondition(dgsm, roadId, lighting.lightLevel);
       }
       for (const [juncId, junc] of topology.junctions) {
-        const lighting = computeOutdoorLighting(dgsm, juncId, junc.parentLocationId, sunLevel, fireContributions);
+        const lighting = computeOutdoorLighting(
+          dgsm,
+          juncId,
+          junc.parentLocationId,
+          sunLevel,
+          fireContributions
+        );
         setLightingState(dgsm, juncId, lighting);
         writeLightingCondition(dgsm, juncId, lighting.lightLevel);
       }

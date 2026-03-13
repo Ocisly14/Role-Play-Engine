@@ -1,19 +1,19 @@
-import type {
-  WorldFeature,
-  TickRuntimeContext,
-  PropagationResult,
-} from "../types.js";
-import type { DynamicGameStateManager } from "../../state/DynamicGameState.js";
 import type { PlanNode } from "../../dynamicBasicAgent/npcPlanning/types.js";
+import type { DynamicGameStateManager } from "../../state/DynamicGameState.js";
+import type {
+  PropagationResult,
+  TickRuntimeContext,
+  WorldFeature,
+} from "../types.js";
 
 // ===== Internal types =====
 
 interface FireSceneState {
   intensity: number;
-  maxIntensity: number;       // fixed 5
-  growthRate: number;         // default 1 (applied every 2 ticks)
-  decayRate: number;          // default 1 (applied every 2 ticks)
-  spreadThreshold: number;   // fixed 3 = ceil(5/2)
+  maxIntensity: number; // fixed 5
+  growthRate: number; // default 1 (applied every 2 ticks)
+  decayRate: number; // default 1 (applied every 2 ticks)
+  spreadThreshold: number; // fixed 3 = ceil(5/2)
   phase: "growing" | "decaying";
   ticksInPhase: number;
   totalBurnTicks: number;
@@ -43,11 +43,20 @@ const FEATURE_ID = "fire";
 
 // ===== Helper functions =====
 
-function getFireState(dgsm: DynamicGameStateManager, sceneId: string): FireSceneState | undefined {
-  return dgsm.getFeatureSceneState(FEATURE_ID, sceneId) as FireSceneState | undefined;
+function getFireState(
+  dgsm: DynamicGameStateManager,
+  sceneId: string
+): FireSceneState | undefined {
+  return dgsm.getFeatureSceneState(FEATURE_ID, sceneId) as
+    | FireSceneState
+    | undefined;
 }
 
-function setFireState(dgsm: DynamicGameStateManager, sceneId: string, state: FireSceneState): void {
+function setFireState(
+  dgsm: DynamicGameStateManager,
+  sceneId: string,
+  state: FireSceneState
+): void {
   dgsm.setFeatureSceneState(FEATURE_ID, sceneId, state);
 }
 
@@ -56,7 +65,10 @@ function removeFireState(dgsm: DynamicGameStateManager, sceneId: string): void {
 }
 
 function createFireState(initialIntensity: number): FireSceneState {
-  const clamped = Math.max(1, Math.min(initialIntensity, DEFAULT_MAX_INTENSITY));
+  const clamped = Math.max(
+    1,
+    Math.min(initialIntensity, DEFAULT_MAX_INTENSITY)
+  );
   return {
     intensity: clamped,
     maxIntensity: DEFAULT_MAX_INTENSITY,
@@ -69,7 +81,10 @@ function createFireState(initialIntensity: number): FireSceneState {
   };
 }
 
-function createRoadFireState(initialIntensity: number, position: number): FireRoadState {
+function createRoadFireState(
+  initialIntensity: number,
+  position: number
+): FireRoadState {
   const base = createFireState(initialIntensity);
   return {
     ...base,
@@ -86,7 +101,9 @@ const INTENSITY_LABELS = [
   "Raging inferno",
 ];
 
-function getSkillPenalties(intensity: number): Array<{ skill: string; delta: number }> {
+function getSkillPenalties(
+  intensity: number
+): Array<{ skill: string; delta: number }> {
   const penalties: Array<{ skill: string; delta: number }> = [];
   // Always: Spot Hidden
   penalties.push({ skill: "Perception", delta: -10 * intensity });
@@ -97,11 +114,17 @@ function getSkillPenalties(intensity: number): Array<{ skill: string; delta: num
   return penalties;
 }
 
-function writeFireCondition(dgsm: DynamicGameStateManager, sceneId: string, intensity: number): void {
+function writeFireCondition(
+  dgsm: DynamicGameStateManager,
+  sceneId: string,
+  intensity: number
+): void {
   // Clear existing fire conditions first
   clearFireConditions(dgsm, sceneId);
 
-  const label = INTENSITY_LABELS[intensity] ?? INTENSITY_LABELS[INTENSITY_LABELS.length - 1];
+  const label =
+    INTENSITY_LABELS[intensity] ??
+    INTENSITY_LABELS[INTENSITY_LABELS.length - 1];
   const penalties = getSkillPenalties(intensity);
 
   dgsm.appendSceneCondition(sceneId, {
@@ -112,15 +135,22 @@ function writeFireCondition(dgsm: DynamicGameStateManager, sceneId: string, inte
   });
 }
 
-function clearFireConditions(dgsm: DynamicGameStateManager, sceneId: string): void {
+function clearFireConditions(
+  dgsm: DynamicGameStateManager,
+  sceneId: string
+): void {
   const state = dgsm.getState();
   const conditions = state.scenarioConditions[sceneId];
   if (!conditions) return;
-  const nonFire = conditions.filter(c => !c.description.startsWith("[Fire]"));
+  const nonFire = conditions.filter((c) => !c.description.startsWith("[Fire]"));
   (dgsm.getState() as any).scenarioConditions[sceneId] = nonFire;
 }
 
-function writeAftermathCondition(dgsm: DynamicGameStateManager, sceneId: string, totalBurnTicks: number): void {
+function writeAftermathCondition(
+  dgsm: DynamicGameStateManager,
+  sceneId: string,
+  totalBurnTicks: number
+): void {
   let description: string;
   let penalties: Array<{ skill: string; delta: number }> | undefined;
 
@@ -128,13 +158,16 @@ function writeAftermathCondition(dgsm: DynamicGameStateManager, sceneId: string,
     description = "[Fire Aftermath] Minor smoke stains on walls and ceiling";
     // no penalties
   } else if (totalBurnTicks <= 10) {
-    description = "[Fire Aftermath] Partial burn damage \u2014 some items destroyed, soot covers surfaces";
+    description =
+      "[Fire Aftermath] Partial burn damage \u2014 some items destroyed, soot covers surfaces";
     penalties = [{ skill: "Perception", delta: -5 }];
   } else if (totalBurnTicks <= 20) {
-    description = "[Fire Aftermath] Severe burn damage \u2014 structural integrity compromised, many items destroyed";
+    description =
+      "[Fire Aftermath] Severe burn damage \u2014 structural integrity compromised, many items destroyed";
     penalties = [{ skill: "Perception", delta: -10 }];
   } else {
-    description = "[Fire Aftermath] Scene nearly destroyed by fire \u2014 most items and clues unavailable, structure unsafe";
+    description =
+      "[Fire Aftermath] Scene nearly destroyed by fire \u2014 most items and clues unavailable, structure unsafe";
     penalties = [{ skill: "Perception", delta: -20 }];
   }
 
@@ -144,7 +177,11 @@ function writeAftermathCondition(dgsm: DynamicGameStateManager, sceneId: string,
   });
 }
 
-function damageByFire(dgsm: DynamicGameStateManager, sceneId: string, intensity: number): void {
+function damageByFire(
+  dgsm: DynamicGameStateManager,
+  sceneId: string,
+  intensity: number
+): void {
   const scene = dgsm.getScene(sceneId);
   if (!scene) return;
 
@@ -152,20 +189,28 @@ function damageByFire(dgsm: DynamicGameStateManager, sceneId: string, intensity:
   const reason = `Destroyed by fire (intensity ${intensity})`;
 
   // Damage 20% of undamaged items (evidence and mundane alike)
-  const damageableItems = scene.items?.filter(item => !item.damaged) ?? [];
+  const damageableItems = scene.items?.filter((item) => !item.damaged) ?? [];
   if (damageableItems.length > 0) {
     const itemCount = Math.round(damageableItems.length * 0.2);
     if (itemCount > 0) {
       const shuffled = [...damageableItems].sort(() => Math.random() - 0.5);
       for (let i = 0; i < itemCount; i++) {
         shuffled[i].damaged = true;
-        shuffled[i].damageDetails = { damagedBy: "fire", damagedAt: now, reason };
+        shuffled[i].damageDetails = {
+          damagedBy: "fire",
+          damagedAt: now,
+          reason,
+        };
       }
     }
   }
 }
 
-function updateFireBlocking(dgsm: DynamicGameStateManager, locationId: string, intensity: number): void {
+function updateFireBlocking(
+  dgsm: DynamicGameStateManager,
+  locationId: string,
+  intensity: number
+): void {
   const state = dgsm.getState();
 
   // Scene-based blocking (existing)
@@ -174,7 +219,12 @@ function updateFireBlocking(dgsm: DynamicGameStateManager, locationId: string, i
     const connectedSceneIds = scene.connections;
     if (intensity >= BLOCK_THRESHOLD) {
       for (const connId of connectedSceneIds) {
-        dgsm.setConnectionBlocked(connId, locationId, true, `Blocked by fire (intensity ${intensity})`);
+        dgsm.setConnectionBlocked(
+          connId,
+          locationId,
+          true,
+          `Blocked by fire (intensity ${intensity})`
+        );
       }
     } else {
       for (const connId of connectedSceneIds) {
@@ -199,17 +249,27 @@ function updateFireBlocking(dgsm: DynamicGameStateManager, locationId: string, i
   const junction = topology.junctions.get(locationId);
   if (junction) {
     const roads = topology.junctionToRoads.get(locationId) ?? [];
-    neighbors.push(...roads.map((r: { id: string }) => r.id), ...junction.connectedSceneIds);
+    neighbors.push(
+      ...roads.map((r: { id: string }) => r.id),
+      ...junction.connectedSceneIds
+    );
   }
   const road = topology.roads.get(locationId);
   if (road) {
     neighbors.push(road.endpointA, road.endpointB);
-    neighbors.push(...road.alongConnections.map((a: { sceneId: string }) => a.sceneId));
+    neighbors.push(
+      ...road.alongConnections.map((a: { sceneId: string }) => a.sceneId)
+    );
   }
 
   if (intensity >= BLOCK_THRESHOLD) {
     for (const nId of neighbors) {
-      dgsm.setConnectionBlocked(nId, locationId, true, `Blocked by fire (intensity ${intensity})`);
+      dgsm.setConnectionBlocked(
+        nId,
+        locationId,
+        true,
+        `Blocked by fire (intensity ${intensity})`
+      );
     }
   } else {
     for (const nId of neighbors) {
@@ -233,7 +293,10 @@ function getAllBurningScenes(dgsm: DynamicGameStateManager): string[] {
  * Get weather-based multiplier for fire spread rate on outdoor fire.
  * Rain reduces spread, dry/heat increases spread.
  */
-function getWeatherSpreadMultiplier(dgsm: DynamicGameStateManager, parentLocationId: string): number {
+function getWeatherSpreadMultiplier(
+  dgsm: DynamicGameStateManager,
+  parentLocationId: string
+): number {
   const weatherState = dgsm.getFeatureSceneState("weather", parentLocationId) as
     | { weatherType: string; intensity: number }
     | undefined;
@@ -242,18 +305,18 @@ function getWeatherSpreadMultiplier(dgsm: DynamicGameStateManager, parentLocatio
   const { weatherType, intensity } = weatherState;
 
   if (weatherType === "rain") {
-    if (intensity >= 4) return 0;     // heavy rain extinguishes
-    if (intensity >= 3) return 0.1;   // near-extinguish
-    if (intensity >= 2) return 0.5;   // significantly slower
-    return 0.8;                       // light rain, slightly slower
+    if (intensity >= 4) return 0; // heavy rain extinguishes
+    if (intensity >= 3) return 0.1; // near-extinguish
+    if (intensity >= 2) return 0.5; // significantly slower
+    return 0.8; // light rain, slightly slower
   }
   if (weatherType === "storm") {
-    if (intensity >= 3) return 0;     // storm extinguishes
+    if (intensity >= 3) return 0; // storm extinguishes
     if (intensity >= 2) return 0.3;
     return 0.7;
   }
   if (weatherType === "extreme_heat") {
-    if (intensity >= 3) return 1.5;   // heat accelerates fire
+    if (intensity >= 3) return 1.5; // heat accelerates fire
     return 1.2;
   }
   return 1.0;
@@ -263,13 +326,17 @@ function getWeatherSpreadMultiplier(dgsm: DynamicGameStateManager, parentLocatio
  * Check if a location is an outdoor topology node (road or junction).
  * Outdoor fire is affected by weather; scene (building interior) fire is not.
  */
-function isOutdoorTopologyNode(dgsm: DynamicGameStateManager, locationId: string): { isOutdoor: boolean; parentLocationId: string | null } {
+function isOutdoorTopologyNode(
+  dgsm: DynamicGameStateManager,
+  locationId: string
+): { isOutdoor: boolean; parentLocationId: string | null } {
   const topology = dgsm.getTopology();
   if (!topology) return { isOutdoor: false, parentLocationId: null };
   const road = topology.roads.get(locationId);
   if (road) return { isOutdoor: true, parentLocationId: road.parentLocationId };
   const junction = topology.junctions.get(locationId);
-  if (junction) return { isOutdoor: true, parentLocationId: junction.parentLocationId };
+  if (junction)
+    return { isOutdoor: true, parentLocationId: junction.parentLocationId };
   return { isOutdoor: false, parentLocationId: null };
 }
 
@@ -277,7 +344,8 @@ function isOutdoorTopologyNode(dgsm: DynamicGameStateManager, locationId: string
 
 export const fireFeature: WorldFeature = {
   id: FEATURE_ID,
-  description: "Fire system \u2014 spreads between scenes, causes skill penalties and blocks connections",
+  description:
+    "Fire system \u2014 spreads between scenes, causes skill penalties and blocks connections",
 
   planningPrompt: `## Fire
 - Starting a fire: add \`"fireIntensity"\` to the node. Choose initial intensity based on the action:
@@ -289,10 +357,19 @@ export const fireFeature: WorldFeature = {
 
   planNodeSchema: {
     requiredFields: [
-      { field: "fireIntensity", type: "number", description: "Initial fire intensity (typically 1)" },
+      {
+        field: "fireIntensity",
+        type: "number",
+        description: "Initial fire intensity (typically 1)",
+      },
     ],
     optionalFields: [
-      { field: "fireExtinguish", type: "boolean", description: "Set to true to attempt to extinguish fire at this location" },
+      {
+        field: "fireExtinguish",
+        type: "boolean",
+        description:
+          "Set to true to attempt to extinguish fire at this location",
+      },
     ],
     exampleNode: {
       type: "scene_interaction",
@@ -314,8 +391,12 @@ export const fireFeature: WorldFeature = {
     for (const sceneId of burningScenes) {
       const fs = getFireState(dgsm, sceneId);
       if (!fs) continue;
-      const label = INTENSITY_LABELS[fs.intensity] ?? INTENSITY_LABELS[INTENSITY_LABELS.length - 1];
-      lines.push(`- ${sceneId}: intensity ${fs.intensity}/5 (${label}), phase: ${fs.phase}`);
+      const label =
+        INTENSITY_LABELS[fs.intensity] ??
+        INTENSITY_LABELS[INTENSITY_LABELS.length - 1];
+      lines.push(
+        `- ${sceneId}: intensity ${fs.intensity}/5 (${label}), phase: ${fs.phase}`
+      );
     }
     return lines.length > 0 ? "Active fires:\n" + lines.join("\n") : "";
   },
@@ -344,14 +425,18 @@ export const fireFeature: WorldFeature = {
     }
 
     // Handle fire start / boost
-    const requestedIntensity = (node as Record<string, unknown>).fireIntensity as number | undefined;
+    const requestedIntensity = (node as Record<string, unknown>)
+      .fireIntensity as number | undefined;
     if (requestedIntensity === undefined) return;
 
     const existing = getFireState(dgsm, sceneId);
     if (existing) {
       // Boost existing fire only if requested intensity is higher
       if (requestedIntensity > existing.intensity) {
-        existing.intensity = Math.min(requestedIntensity, existing.maxIntensity);
+        existing.intensity = Math.min(
+          requestedIntensity,
+          existing.maxIntensity
+        );
         setFireState(dgsm, sceneId, existing);
         writeFireCondition(dgsm, sceneId, existing.intensity);
         updateFireBlocking(dgsm, sceneId, existing.intensity);
@@ -411,7 +496,10 @@ export const fireFeature: WorldFeature = {
       // Weather affects outdoor fire (road + junction)
       const outdoor = isOutdoorTopologyNode(dgsm, sceneId);
       if (outdoor.isOutdoor && outdoor.parentLocationId) {
-        const weatherMult = getWeatherSpreadMultiplier(dgsm, outdoor.parentLocationId);
+        const weatherMult = getWeatherSpreadMultiplier(
+          dgsm,
+          outdoor.parentLocationId
+        );
 
         // Heavy rain/storm extinguishes outdoor fire
         if (weatherMult <= 0) {
@@ -425,17 +513,25 @@ export const fireFeature: WorldFeature = {
         // Road fire: expand burn range
         if (isFireRoadState(fs)) {
           const road = dgsm.getTopology()!.roads.get(sceneId)!;
-          const spreadDelta = (ROAD_SPREAD_RATE_MINUTES / road.travelTimeMinutes) * weatherMult;
+          const spreadDelta =
+            (ROAD_SPREAD_RATE_MINUTES / road.travelTimeMinutes) * weatherMult;
           fs.burnRange.start = Math.max(0, fs.burnRange.start - spreadDelta);
           fs.burnRange.end = Math.min(1, fs.burnRange.end + spreadDelta);
 
           // Damage along-road scenes within burn range
           for (const along of road.alongConnections) {
-            if (along.position >= fs.burnRange.start && along.position <= fs.burnRange.end) {
+            if (
+              along.position >= fs.burnRange.start &&
+              along.position <= fs.burnRange.end
+            ) {
               if (fs.intensity > 2) {
                 damageByFire(dgsm, along.sceneId, fs.intensity);
               }
-              writeFireCondition(dgsm, along.sceneId, Math.max(1, fs.intensity - 1));
+              writeFireCondition(
+                dgsm,
+                along.sceneId,
+                Math.max(1, fs.intensity - 1)
+              );
             }
           }
         }
@@ -471,8 +567,10 @@ export const fireFeature: WorldFeature = {
     const isNonFireBlocked = (a: string, b: string): boolean => {
       const reason1 = state.blockedConnections.get(`${a}::${b}`);
       const reason2 = state.blockedConnections.get(`${b}::${a}`);
-      return (!!reason1 && !reason1.startsWith("Blocked by fire")) ||
-             (!!reason2 && !reason2.startsWith("Blocked by fire"));
+      return (
+        (!!reason1 && !reason1.startsWith("Blocked by fire")) ||
+        (!!reason2 && !reason2.startsWith("Blocked by fire"))
+      );
     };
 
     // Helper: ignite a new location
@@ -526,7 +624,12 @@ export const fireFeature: WorldFeature = {
     }
 
     // Fallback: also spread via scene.connections for scenes without topology
-    if (!topology || (!topology.roads.has(sourceId) && !topology.junctions.has(sourceId) && !topology.sceneToParent.has(sourceId))) {
+    if (
+      !topology ||
+      (!topology.roads.has(sourceId) &&
+        !topology.junctions.has(sourceId) &&
+        !topology.sceneToParent.has(sourceId))
+    ) {
       const scene = dgsm.getScene(sourceId);
       if (scene) {
         for (const connId of scene.connections) {

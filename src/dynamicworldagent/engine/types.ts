@@ -1,6 +1,10 @@
 import type { ActionType } from "../../shared/state/index.js";
+import type {
+  CharacterAction,
+  PlanNode,
+  RevisePlansContext,
+} from "../dynamicBasicAgent/npcPlanning/types.js";
 import type { DynamicGameStateManager } from "../state/DynamicGameState.js";
-import type { PlanNode, CharacterAction, RevisePlansContext } from "../dynamicBasicAgent/npcPlanning/types.js";
 
 // ===== Node Handler: executes a specific PlanNode type =====
 
@@ -9,7 +13,11 @@ export interface NodeHandler {
   type: string;
 
   /** Execute a single node, return the resulting action */
-  execute(node: PlanNode, dgsm: DynamicGameStateManager, ctx: ExecutionContext): CharacterAction;
+  execute(
+    node: PlanNode,
+    dgsm: DynamicGameStateManager,
+    ctx: ExecutionContext
+  ): CharacterAction;
 
   // --- LLM prompt metadata (auto-injected into plan agent prompts) ---
 
@@ -68,7 +76,11 @@ export interface PropagationResult {
 
 /** Minimal interface for NPC planning capabilities needed by WorldFeatures */
 export interface NpcPlanningCapability {
-  getPendingNodes(sessionId: string, npcId: string, gameDay: number): Promise<PlanNode[]>;
+  getPendingNodes(
+    sessionId: string,
+    npcId: string,
+    gameDay: number
+  ): Promise<PlanNode[]>;
   runImpactGateForNpc(
     candidate: {
       npcId: string;
@@ -82,10 +94,18 @@ export interface NpcPlanningCapability {
     },
     bucketTime: string,
     language: string
-  ): Promise<{ shouldRevise: boolean; shouldReviseSchedule: boolean; witnessEntry: string }>;
+  ): Promise<{
+    shouldRevise: boolean;
+    shouldReviseSchedule: boolean;
+    witnessEntry: string;
+  }>;
   revisePlans(
-    dgsm: DynamicGameStateManager, sessionId: string, npcId: string,
-    context: RevisePlansContext, language: string, registry?: import("./registry.js").GameEngineRegistry
+    dgsm: DynamicGameStateManager,
+    sessionId: string,
+    npcId: string,
+    context: RevisePlansContext,
+    language: string,
+    registry?: import("./registry.js").GameEngineRegistry
   ): Promise<void>;
 }
 
@@ -182,16 +202,28 @@ export interface ExecutionContext {
   ): SkillRollResult;
 
   /** Get scene penalties for a location */
-  getScenePenalties(location: string, dgsm: DynamicGameStateManager): Map<string, number>;
+  getScenePenalties(
+    location: string,
+    dgsm: DynamicGameStateManager
+  ): Map<string, number>;
 
   /** Apply penalties to a skills record */
-  applyPenalties(skills: Record<string, number>, penalties: Map<string, number>): Record<string, number>;
+  applyPenalties(
+    skills: Record<string, number>,
+    penalties: Map<string, number>
+  ): Record<string, number>;
 
   /** Get character-level skill penalties from all active features */
-  getCharacterPenalties(characterId: string, dgsm: DynamicGameStateManager): Map<string, number>;
+  getCharacterPenalties(
+    characterId: string,
+    dgsm: DynamicGameStateManager
+  ): Map<string, number>;
 
   /** Get difficulty for a node (player explicit or NPC relationship-derived) */
-  getNodeDifficulty(node: PlanNode, dgsm: DynamicGameStateManager): "regular" | "hard" | "extreme" | "luck_only";
+  getNodeDifficulty(
+    node: PlanNode,
+    dgsm: DynamicGameStateManager
+  ): "regular" | "hard" | "extreme" | "luck_only";
 
   /** Luck-based failure rate */
   luckFailureRate(luck: number): number;
@@ -204,12 +236,16 @@ export interface ExecutionContext {
   ): { skill: string; value: number } | null;
 
   /** Set by SimulationRunner to enable npc_moved event emission from handlers */
-  simulationEmitter?: import("../simulation/SimulationEventEmitter.js").SimulationEventEmitter;
+  simulationEmitter?: import(
+    "../simulation/SimulationEventEmitter.js"
+  ).SimulationEventEmitter;
 }
 
 export interface SkillRollResult {
   failed: boolean;
   reason?: string;
   detail?: string;
-  successLevel: import("../dynamicBasicAgent/npcPlanning/types.js").SuccessLevel;
+  successLevel: import(
+    "../dynamicBasicAgent/npcPlanning/types.js"
+  ).SuccessLevel;
 }

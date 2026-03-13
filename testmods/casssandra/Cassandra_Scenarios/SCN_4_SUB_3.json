@@ -50,9 +50,7 @@
       }
     }
   ],
-  "connections": [
-    "SCN_4_SUB_1"
-  ],
+  "connections": ["SCN_4_SUB_1"],
   "itemContexts": {
     "ITEM_SCN4_8": "每层走廊尽头都有一扇标着绿色安全出口标识的金属防火门，通向一条朴素的水泥楼梯间，可以直达一楼的侧门出口。"
   }

@@ -1,17 +1,26 @@
-import type {
-  WorldFeature,
-  TickRuntimeContext,
-} from "../types.js";
 import type { DynamicGameStateManager } from "../../state/DynamicGameState.js";
+import type { TickRuntimeContext, WorldFeature } from "../types.js";
 
 // ===== Types =====
 
 export type BoutOfMadnessType =
-  | "amnesia" | "psychosomatic_disability" | "violence" | "paranoia"
-  | "significant_person" | "faint" | "flee" | "hysterics" | "phobia" | "mania";
+  | "amnesia"
+  | "psychosomatic_disability"
+  | "violence"
+  | "paranoia"
+  | "significant_person"
+  | "faint"
+  | "flee"
+  | "hysterics"
+  | "phobia"
+  | "mania";
 
 export type ActionRestriction =
-  | "none" | "incapacitated" | "flee_only" | "attack_only" | "impaired";
+  | "none"
+  | "incapacitated"
+  | "flee_only"
+  | "attack_only"
+  | "impaired";
 
 export interface ActiveInsanity {
   insanityType: "temporary" | "indefinite";
@@ -61,41 +70,101 @@ const INSANITY_CONDITION_PREFIX = "[Insanity";
 
 export const BOUT_DESCRIPTIONS: Record<BoutOfMadnessType, string> = {
   amnesia: "Mind goes blank — cannot recall recent events or surroundings",
-  psychosomatic_disability: "Body betrays the mind — a limb goes numb, vision blurs, or voice fails",
-  violence: "Rational thought shatters — lashing out at anyone nearby in blind rage",
-  paranoia: "Trust collapses — everyone is a threat, every shadow hides a conspirator",
-  significant_person: "Reality warps — sees a significant person where there is none",
+  psychosomatic_disability:
+    "Body betrays the mind — a limb goes numb, vision blurs, or voice fails",
+  violence:
+    "Rational thought shatters — lashing out at anyone nearby in blind rage",
+  paranoia:
+    "Trust collapses — everyone is a threat, every shadow hides a conspirator",
+  significant_person:
+    "Reality warps — sees a significant person where there is none",
   faint: "Consciousness flickers out — collapses to the ground, unresponsive",
   flee: "Primal terror takes over — desperate to escape, stumbling and screaming",
-  hysterics: "Body convulses with uncontrollable laughter, screaming, or sobbing",
+  hysterics:
+    "Body convulses with uncontrollable laughter, screaming, or sobbing",
   phobia: "A deep irrational fear takes root",
   mania: "An obsessive compulsion seizes the mind",
 };
 
 export const BOUT_OF_MADNESS_TABLE: BoutTableEntry[] = [
-  { roll: 1,  boutType: "amnesia",                  actionRestriction: "impaired",      label: "Amnesia" },
-  { roll: 2,  boutType: "psychosomatic_disability",  actionRestriction: "impaired",      label: "Psychosomatic Disability" },
-  { roll: 3,  boutType: "violence",                  actionRestriction: "attack_only",   label: "Violence" },
-  { roll: 4,  boutType: "paranoia",                  actionRestriction: "impaired",      label: "Paranoia" },
-  { roll: 5,  boutType: "significant_person",        actionRestriction: "impaired",      label: "Significant Person Fixation" },
-  { roll: 6,  boutType: "faint",                     actionRestriction: "incapacitated", label: "Faint" },
-  { roll: 7,  boutType: "flee",                      actionRestriction: "flee_only",     label: "Flee in Panic" },
-  { roll: 8,  boutType: "hysterics",                 actionRestriction: "incapacitated", label: "Physical Hysterics" },
-  { roll: 9,  boutType: "phobia",                    actionRestriction: "impaired",      persistent: true, label: "Phobia" },
-  { roll: 10, boutType: "mania",                     actionRestriction: "impaired",      persistent: true, label: "Mania" },
+  {
+    roll: 1,
+    boutType: "amnesia",
+    actionRestriction: "impaired",
+    label: "Amnesia",
+  },
+  {
+    roll: 2,
+    boutType: "psychosomatic_disability",
+    actionRestriction: "impaired",
+    label: "Psychosomatic Disability",
+  },
+  {
+    roll: 3,
+    boutType: "violence",
+    actionRestriction: "attack_only",
+    label: "Violence",
+  },
+  {
+    roll: 4,
+    boutType: "paranoia",
+    actionRestriction: "impaired",
+    label: "Paranoia",
+  },
+  {
+    roll: 5,
+    boutType: "significant_person",
+    actionRestriction: "impaired",
+    label: "Significant Person Fixation",
+  },
+  {
+    roll: 6,
+    boutType: "faint",
+    actionRestriction: "incapacitated",
+    label: "Faint",
+  },
+  {
+    roll: 7,
+    boutType: "flee",
+    actionRestriction: "flee_only",
+    label: "Flee in Panic",
+  },
+  {
+    roll: 8,
+    boutType: "hysterics",
+    actionRestriction: "incapacitated",
+    label: "Physical Hysterics",
+  },
+  {
+    roll: 9,
+    boutType: "phobia",
+    actionRestriction: "impaired",
+    persistent: true,
+    label: "Phobia",
+  },
+  {
+    roll: 10,
+    boutType: "mania",
+    actionRestriction: "impaired",
+    persistent: true,
+    label: "Mania",
+  },
 ];
 
-const BOUT_TO_EMOTION: Record<BoutOfMadnessType, { emotionType: string; intensity: number }> = {
-  amnesia:                   { emotionType: "confusion",  intensity: 3 },
-  psychosomatic_disability:  { emotionType: "distress",   intensity: 3 },
-  violence:                  { emotionType: "rage",       intensity: 4 },
-  paranoia:                  { emotionType: "paranoia",   intensity: 4 },
-  significant_person:        { emotionType: "delusion",   intensity: 3 },
-  faint:                     { emotionType: "shock",      intensity: 4 },
-  flee:                      { emotionType: "terror",     intensity: 5 },
-  hysterics:                 { emotionType: "hysteria",   intensity: 4 },
-  phobia:                    { emotionType: "fear",       intensity: 4 },
-  mania:                     { emotionType: "obsession",  intensity: 4 },
+const BOUT_TO_EMOTION: Record<
+  BoutOfMadnessType,
+  { emotionType: string; intensity: number }
+> = {
+  amnesia: { emotionType: "confusion", intensity: 3 },
+  psychosomatic_disability: { emotionType: "distress", intensity: 3 },
+  violence: { emotionType: "rage", intensity: 4 },
+  paranoia: { emotionType: "paranoia", intensity: 4 },
+  significant_person: { emotionType: "delusion", intensity: 3 },
+  faint: { emotionType: "shock", intensity: 4 },
+  flee: { emotionType: "terror", intensity: 5 },
+  hysterics: { emotionType: "hysteria", intensity: 4 },
+  phobia: { emotionType: "fear", intensity: 4 },
+  mania: { emotionType: "obsession", intensity: 4 },
 };
 
 // ===== Helper functions =====
@@ -103,7 +172,10 @@ const BOUT_TO_EMOTION: Record<BoutOfMadnessType, { emotionType: string; intensit
 /**
  * Convert gameDay (1-based) and timeOfDay ("HH:MM") to total minutes since day 1 00:00.
  */
-export function computeGameTimeMinutes(gameDay: number, timeOfDay: string): number {
+export function computeGameTimeMinutes(
+  gameDay: number,
+  timeOfDay: string
+): number {
   const [hours, minutes] = timeOfDay.split(":").map(Number);
   return (gameDay - 1) * 1440 + hours * 60 + minutes;
 }
@@ -123,31 +195,51 @@ export function createEmptySanityState(): SanityCharacterState {
 /**
  * Get the sanity state for a character from feature state storage.
  */
-export function getSanityState(dgsm: DynamicGameStateManager, characterId: string): SanityCharacterState | undefined {
-  return dgsm.getFeatureSceneState(FEATURE_ID, characterId) as SanityCharacterState | undefined;
+export function getSanityState(
+  dgsm: DynamicGameStateManager,
+  characterId: string
+): SanityCharacterState | undefined {
+  return dgsm.getFeatureSceneState(FEATURE_ID, characterId) as
+    | SanityCharacterState
+    | undefined;
 }
 
 /**
  * Set the sanity state for a character in feature state storage.
  */
-export function setSanityState(dgsm: DynamicGameStateManager, characterId: string, state: SanityCharacterState): void {
+export function setSanityState(
+  dgsm: DynamicGameStateManager,
+  characterId: string,
+  state: SanityCharacterState
+): void {
   dgsm.setFeatureSceneState(FEATURE_ID, characterId, state);
 }
 
 /**
  * Record a sanity loss event in the character's sanLossLog.
  */
-export function recordSanLoss(state: SanityCharacterState, amount: number, gameTimeMinutes: number): void {
+export function recordSanLoss(
+  state: SanityCharacterState,
+  amount: number,
+  gameTimeMinutes: number
+): void {
   state.sanLossLog.push({ amount, gameTimeMinutes });
 }
 
 /**
  * Sum all sanity losses within the last 60-minute window.
  */
-export function getHourlyCumulativeLoss(state: SanityCharacterState, currentTimeMinutes: number): number {
+export function getHourlyCumulativeLoss(
+  state: SanityCharacterState,
+  currentTimeMinutes: number
+): number {
   const windowStart = currentTimeMinutes - HOURLY_WINDOW_MINUTES;
   return state.sanLossLog
-    .filter((entry) => entry.gameTimeMinutes > windowStart && entry.gameTimeMinutes <= currentTimeMinutes)
+    .filter(
+      (entry) =>
+        entry.gameTimeMinutes > windowStart &&
+        entry.gameTimeMinutes <= currentTimeMinutes
+    )
     .reduce((sum, entry) => sum + entry.amount, 0);
 }
 
@@ -161,7 +253,10 @@ export function checkTemporaryInsanityTrigger(sanLoss: number): boolean {
 /**
  * Check if hourly cumulative loss triggers indefinite insanity (cumulative >= currentSan / 5).
  */
-export function checkIndefiniteInsanityTrigger(hourlyCumulativeLoss: number, currentSan: number): boolean {
+export function checkIndefiniteInsanityTrigger(
+  hourlyCumulativeLoss: number,
+  currentSan: number
+): boolean {
   return hourlyCumulativeLoss >= currentSan / 5;
 }
 
@@ -208,7 +303,7 @@ export function buildInsanityConditionString(
   boutType: BoutOfMadnessType,
   label: string,
   actionRestriction: ActionRestriction,
-  subject?: string,
+  subject?: string
 ): string {
   if (insanityType === "phobia" || insanityType === "mania") {
     const subjectSuffix = subject ? ` (${subject})` : "";
@@ -224,7 +319,7 @@ export function buildInsanityConditionString(
 export function injectInsanityCondition(
   dgsm: DynamicGameStateManager,
   characterId: string,
-  conditionString: string,
+  conditionString: string
 ): void {
   const state = dgsm.getState();
   const npc = state.npcCharacters?.find((n: any) => n.id === characterId);
@@ -241,7 +336,7 @@ export function injectInsanityCondition(
 export function removeInsanityCondition(
   dgsm: DynamicGameStateManager,
   characterId: string,
-  keepPersistent?: boolean,
+  keepPersistent?: boolean
 ): void {
   const state = dgsm.getState();
   const npc = state.npcCharacters?.find((n: any) => n.id === characterId);
@@ -277,7 +372,7 @@ export function applySanityLoss(
   delta: number,
   gameDay?: number,
   tickTime?: string,
-  source?: string,
+  source?: string
 ): void {
   const state = dgsm.getState();
 
@@ -329,7 +424,7 @@ export function applySanityLoss(
       "temporary",
       bout.boutType,
       bout.label,
-      bout.actionRestriction,
+      bout.actionRestriction
     );
     injectInsanityCondition(dgsm, characterId, conditionStr);
 
@@ -344,7 +439,10 @@ export function applySanityLoss(
 
     // If bout is persistent (phobia/mania), also add to persistentConditions
     if (bout.persistent) {
-      const subject = extractSubjectFromSource(bout.boutType as "phobia" | "mania", source);
+      const subject = extractSubjectFromSource(
+        bout.boutType as "phobia" | "mania",
+        source
+      );
       charSanState.persistentConditions.push({
         type: bout.boutType as "phobia" | "mania",
         subject,
@@ -356,16 +454,20 @@ export function applySanityLoss(
         bout.boutType,
         bout.label,
         bout.actionRestriction,
-        subject,
+        subject
       );
       injectInsanityCondition(dgsm, characterId, persistentCondStr);
     }
   } else {
     // 6b. Indefinite insanity (hourly cumulative >= currentSan / 5)
     // Use SAN *before* this loss for the threshold check
-    const currentSan = ((dgsm as any).getNpcStats(characterId)?.san ?? 0) + lossAmount;
+    const currentSan =
+      ((dgsm as any).getNpcStats(characterId)?.san ?? 0) + lossAmount;
 
-    const hourlyCumulative = getHourlyCumulativeLoss(charSanState, gameTimeMinutes);
+    const hourlyCumulative = getHourlyCumulativeLoss(
+      charSanState,
+      gameTimeMinutes
+    );
 
     if (checkIndefiniteInsanityTrigger(hourlyCumulative, currentSan)) {
       const bout = rollBoutOfMadness();
@@ -397,7 +499,10 @@ export function applySanityLoss(
 
       // If bout is persistent, add to persistentConditions
       if (bout.persistent) {
-        const subject = extractSubjectFromSource(bout.boutType as "phobia" | "mania", source);
+        const subject = extractSubjectFromSource(
+          bout.boutType as "phobia" | "mania",
+          source
+        );
         charSanState.persistentConditions.push({
           type: bout.boutType as "phobia" | "mania",
           subject,
@@ -417,10 +522,13 @@ export function applySanityLoss(
  * Extract a subject keyword from the trigger source string (sync).
  * Used inline by applySanityLoss for phobia/mania subjects.
  */
-function extractSubjectFromSource(type: "phobia" | "mania", source?: string): string {
+function extractSubjectFromSource(
+  type: "phobia" | "mania",
+  source?: string
+): string {
   if (!source) return type === "phobia" ? "the unknown" : "repetitive behavior";
   const words = source.toLowerCase().split(/\s+/);
-  const keywords = words.filter(w => w.length > 4).slice(0, 2);
+  const keywords = words.filter((w) => w.length > 4).slice(0, 2);
   if (keywords.length > 0) return keywords.join(" ");
   return type === "phobia" ? "the unknown" : "repetitive behavior";
 }
@@ -432,7 +540,7 @@ function extractSubjectFromSource(type: "phobia" | "mania", source?: string): st
 export async function generatePhobiaManiaSubject(
   type: "phobia" | "mania",
   triggerContext: string,
-  _sceneId: string,
+  _sceneId: string
 ): Promise<string> {
   return extractSubjectFromSource(type, triggerContext);
 }
@@ -443,8 +551,12 @@ export async function generatePhobiaManiaSubject(
  * Drain all pending emotions from all characters' sanity states.
  * Returns the emotion entries and clears them from state.
  */
-export function drainPendingEmotions(dgsm: DynamicGameStateManager): SanityEmotionEntry[] {
-  const allStates = dgsm.getFeatureState(FEATURE_ID) as Record<string, SanityCharacterState> | undefined;
+export function drainPendingEmotions(
+  dgsm: DynamicGameStateManager
+): SanityEmotionEntry[] {
+  const allStates = dgsm.getFeatureState(FEATURE_ID) as
+    | Record<string, SanityCharacterState>
+    | undefined;
   if (!allStates) return [];
 
   const results: SanityEmotionEntry[] = [];
@@ -474,7 +586,8 @@ function getTrackedCharacters(dgsm: DynamicGameStateManager): Array<{
 
 export const sanityFeature: WorldFeature = {
   id: FEATURE_ID,
-  description: "Sanity and insanity system — tracks per-character sanity loss, temporary/indefinite insanity, bouts of madness, and persistent phobias/manias",
+  description:
+    "Sanity and insanity system — tracks per-character sanity loss, temporary/indefinite insanity, bouts of madness, and persistent phobias/manias",
 
   planningPrompt: `## Sanity / Insanity
 - Characters who lose 5+ SAN from a single event may suffer **temporary insanity** (lasts hours).
@@ -486,7 +599,10 @@ export const sanityFeature: WorldFeature = {
 - When planning for a character with active insanity, respect their action restriction.`,
 
   stateDescription(dgsm: DynamicGameStateManager): string {
-    const allStates = dgsm.getFeatureState(FEATURE_ID) as Record<string, SanityCharacterState>;
+    const allStates = dgsm.getFeatureState(FEATURE_ID) as Record<
+      string,
+      SanityCharacterState
+    >;
     const lines: string[] = [];
 
     for (const [characterId, charState] of Object.entries(allStates)) {
@@ -496,7 +612,7 @@ export const sanityFeature: WorldFeature = {
       if (charState.activeInsanity && charState.activeInsanity.isActive) {
         const ai = charState.activeInsanity;
         lines.push(
-          `- ${characterId}: ${ai.insanityType} insanity (${ai.boutType}) — ${ai.description} | restriction:${ai.actionRestriction}`,
+          `- ${characterId}: ${ai.insanityType} insanity (${ai.boutType}) — ${ai.description} | restriction:${ai.actionRestriction}`
         );
       }
 
@@ -509,7 +625,10 @@ export const sanityFeature: WorldFeature = {
     return lines.length > 0 ? "Mental state:\n" + lines.join("\n") : "";
   },
 
-  getCharacterSkillModifiers(characterId: string, dgsm: DynamicGameStateManager): Array<{ skill: string; delta: number }> {
+  getCharacterSkillModifiers(
+    characterId: string,
+    dgsm: DynamicGameStateManager
+  ): Array<{ skill: string; delta: number }> {
     const sanState = getSanityState(dgsm, characterId);
     if (!sanState) return [];
 
@@ -538,10 +657,13 @@ export const sanityFeature: WorldFeature = {
 
   tick(dgsm: DynamicGameStateManager, runtime: TickRuntimeContext): void {
     const characters = getTrackedCharacters(dgsm);
-    const currentTimeMinutes = computeGameTimeMinutes(runtime.gameDay, runtime.tickTime);
+    const currentTimeMinutes = computeGameTimeMinutes(
+      runtime.gameDay,
+      runtime.tickTime
+    );
 
     for (const { characterId } of characters) {
-      let charState = getSanityState(dgsm, characterId);
+      const charState = getSanityState(dgsm, characterId);
       if (!charState) continue;
 
       let changed = false;
@@ -551,32 +673,40 @@ export const sanityFeature: WorldFeature = {
         charState.activeInsanity &&
         charState.activeInsanity.isActive === false &&
         charState.activeInsanity.onsetDelayMinutes !== undefined &&
-        currentTimeMinutes >= charState.activeInsanity.startMinutes + charState.activeInsanity.onsetDelayMinutes
+        currentTimeMinutes >=
+          charState.activeInsanity.startMinutes +
+            charState.activeInsanity.onsetDelayMinutes
       ) {
         charState.activeInsanity.isActive = true;
         // Inject condition string
         const ai = charState.activeInsanity;
-        const boutEntry = BOUT_OF_MADNESS_TABLE.find(e => e.boutType === ai.boutType);
+        const boutEntry = BOUT_OF_MADNESS_TABLE.find(
+          (e) => e.boutType === ai.boutType
+        );
         const label = boutEntry?.label ?? ai.boutType;
         const conditionStr = buildInsanityConditionString(
           "indefinite",
           ai.boutType,
           label,
-          ai.actionRestriction,
+          ai.actionRestriction
         );
         injectInsanityCondition(dgsm, characterId, conditionStr);
         changed = true;
       }
 
       // 2. Insanity expiry check
-      if (charState.activeInsanity && charState.activeInsanity.isActive === true) {
+      if (
+        charState.activeInsanity &&
+        charState.activeInsanity.isActive === true
+      ) {
         const ai = charState.activeInsanity;
         let expiryTime: number;
         if (ai.insanityType === "temporary") {
           expiryTime = ai.startMinutes + ai.durationMinutes;
         } else {
           // indefinite: startMinutes + onsetDelayMinutes + durationMinutes
-          expiryTime = ai.startMinutes + (ai.onsetDelayMinutes ?? 0) + ai.durationMinutes;
+          expiryTime =
+            ai.startMinutes + (ai.onsetDelayMinutes ?? 0) + ai.durationMinutes;
         }
 
         if (currentTimeMinutes >= expiryTime) {
@@ -590,7 +720,8 @@ export const sanityFeature: WorldFeature = {
       // 3. Cleanup old sanLossLog entries (older than 60 minutes from current time)
       const prevLogLength = charState.sanLossLog.length;
       charState.sanLossLog = charState.sanLossLog.filter(
-        (entry) => entry.gameTimeMinutes >= currentTimeMinutes - HOURLY_WINDOW_MINUTES,
+        (entry) =>
+          entry.gameTimeMinutes >= currentTimeMinutes - HOURLY_WINDOW_MINUTES
       );
       if (charState.sanLossLog.length !== prevLogLength) {
         changed = true;

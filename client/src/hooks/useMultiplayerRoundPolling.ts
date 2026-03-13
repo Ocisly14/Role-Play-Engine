@@ -10,7 +10,13 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { authFetch } from "../utils/authFetch";
 
 export interface RoundResult {
-  status: "completed" | "waiting" | "processing" | "timeout" | "scene_changed" | "error";
+  status:
+    | "completed"
+    | "waiting"
+    | "processing"
+    | "timeout"
+    | "scene_changed"
+    | "error";
   roundTurnId?: string;
   keeperNarrative?: string | null;
   gameDay?: number | null;
@@ -79,7 +85,8 @@ export function useMultiplayerRoundPolling(
             throw new Error(`HTTP ${response.status}`);
           }
 
-          const data: RoundResult & { success?: boolean } = await response.json();
+          const data: RoundResult & { success?: boolean } =
+            await response.json();
 
           if (!data.success) {
             throw new Error(data.error || "Failed to fetch round result");

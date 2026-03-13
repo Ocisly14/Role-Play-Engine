@@ -1,9 +1,9 @@
-import { describe, it, expect, beforeEach } from "vitest";
-import { fireFeature } from "../fireFeature.js";
-import type { TickRuntimeContext } from "../../types.js";
+import { beforeEach, describe, expect, it } from "vitest";
 import type { PlanNode } from "../../../dynamicBasicAgent/npcPlanning/types.js";
 import type { SceneCondition } from "../../../dynamicBasicAgent/npcPlanning/types.js";
 import type { Item } from "../../../state/types.js";
+import type { TickRuntimeContext } from "../../types.js";
+import { fireFeature } from "../fireFeature.js";
 
 // ===== Minimal mock of DynamicGameStateManager =====
 
@@ -23,10 +23,17 @@ function createMockDgsm() {
 
   return {
     // Feature state
-    getFeatureSceneState(featureId: string, sceneId: string): unknown | undefined {
+    getFeatureSceneState(
+      featureId: string,
+      sceneId: string
+    ): unknown | undefined {
       return featureState[featureId]?.[sceneId];
     },
-    setFeatureSceneState(featureId: string, sceneId: string, data: unknown): void {
+    setFeatureSceneState(
+      featureId: string,
+      sceneId: string,
+      data: unknown
+    ): void {
       if (!featureState[featureId]) featureState[featureId] = {};
       featureState[featureId][sceneId] = data;
     },
@@ -67,7 +74,12 @@ function createMockDgsm() {
       const key2 = `${toId}::${fromId}`;
       return blockedConnections.has(key1) || blockedConnections.has(key2);
     },
-    setConnectionBlocked(fromId: string, toId: string, blocked: boolean, reason: string): void {
+    setConnectionBlocked(
+      fromId: string,
+      toId: string,
+      blocked: boolean,
+      reason: string
+    ): void {
       const key = `${fromId}::${toId}`;
       if (blocked) {
         blockedConnections.set(key, reason);
@@ -93,7 +105,9 @@ type MockDgsm = ReturnType<typeof createMockDgsm>;
 
 // ===== Helper: minimal TickRuntimeContext =====
 
-function createMockRuntime(overrides?: Partial<TickRuntimeContext>): TickRuntimeContext {
+function createMockRuntime(
+  overrides?: Partial<TickRuntimeContext>
+): TickRuntimeContext {
   return {
     sessionId: "test-session",
     gameDay: 1,
@@ -102,7 +116,11 @@ function createMockRuntime(overrides?: Partial<TickRuntimeContext>): TickRuntime
     tickDurationMinutes: 5,
     npcPlanning: {
       getPendingNodes: async () => [],
-      runImpactGateForNpc: async () => ({ shouldRevise: false, shouldReviseSchedule: false, witnessEntry: "" }),
+      runImpactGateForNpc: async () => ({
+        shouldRevise: false,
+        shouldReviseSchedule: false,
+        witnessEntry: "",
+      }),
       revisePlans: async () => {},
     },
     ...overrides,
@@ -111,7 +129,10 @@ function createMockRuntime(overrides?: Partial<TickRuntimeContext>): TickRuntime
 
 // ===== Helper: create a PlanNode with fire overlay =====
 
-function makeFireNode(location: string, overrides?: Record<string, unknown>): PlanNode {
+function makeFireNode(
+  location: string,
+  overrides?: Record<string, unknown>
+): PlanNode {
   return {
     nodeId: "test-node-1",
     characterId: "npc-arsonist",
@@ -130,7 +151,11 @@ function makeFireNode(location: string, overrides?: Record<string, unknown>): Pl
 
 // ===== Helpers for running ticks =====
 
-function runTicks(dgsm: MockDgsm, runtime: TickRuntimeContext, count: number): void {
+function runTicks(
+  dgsm: MockDgsm,
+  runtime: TickRuntimeContext,
+  count: number
+): void {
   for (let i = 0; i < count; i++) {
     fireFeature.tick!(dgsm as any, runtime);
   }
@@ -208,14 +233,16 @@ describe("fireFeature", () => {
       const conditions = dgsm.getSceneConditions("warehouse");
       expect(conditions.length).toBeGreaterThanOrEqual(1);
 
-      const fireCond = conditions.find(c => c.description.startsWith("[Fire]"));
+      const fireCond = conditions.find((c) =>
+        c.description.startsWith("[Fire]")
+      );
       expect(fireCond).toBeDefined();
       expect(fireCond!.description).toContain("[Fire]");
 
       // At intensity 1: Spot Hidden -10
       const penalties = fireCond!.mechanicalEffect?.skillPenalty;
       expect(penalties).toBeDefined();
-      const spotHidden = penalties!.find(p => p.skill === "Perception");
+      const spotHidden = penalties!.find((p) => p.skill === "Perception");
       expect(spotHidden).toBeDefined();
       expect(spotHidden!.delta).toBe(-10);
     });
@@ -277,7 +304,9 @@ describe("fireFeature", () => {
 
       // Aftermath condition should exist
       const conditions = dgsm.getSceneConditions("warehouse");
-      const aftermath = conditions.find(c => c.description.startsWith("[Fire Aftermath]"));
+      const aftermath = conditions.find((c) =>
+        c.description.startsWith("[Fire Aftermath]")
+      );
       expect(aftermath).toBeDefined();
     });
   });
@@ -333,7 +362,9 @@ describe("fireFeature", () => {
 
       // Aftermath should exist
       const conditions = dgsm.getSceneConditions("warehouse");
-      const aftermath = conditions.find(c => c.description.startsWith("[Fire Aftermath]"));
+      const aftermath = conditions.find((c) =>
+        c.description.startsWith("[Fire Aftermath]")
+      );
       expect(aftermath).toBeDefined();
     });
   });
@@ -377,7 +408,12 @@ describe("fireFeature", () => {
       fireFeature.activate!(node, dgsm as any);
 
       // Intensity 1 < spreadThreshold 3
-      const result = await fireFeature.propagate!("warehouse", 0, dgsm as any, runtime);
+      const result = await fireFeature.propagate!(
+        "warehouse",
+        0,
+        dgsm as any,
+        runtime
+      );
       expect(result.spreadTo).toEqual([]);
     });
 
@@ -385,7 +421,12 @@ describe("fireFeature", () => {
       const node = makeFireNode("warehouse", { fireIntensity: 3 });
       fireFeature.activate!(node, dgsm as any);
 
-      const result = await fireFeature.propagate!("warehouse", 0, dgsm as any, runtime);
+      const result = await fireFeature.propagate!(
+        "warehouse",
+        0,
+        dgsm as any,
+        runtime
+      );
       expect(result.spreadTo).toContain("hallway");
 
       // Hallway should now have fire at intensity 1
@@ -401,7 +442,12 @@ describe("fireFeature", () => {
       fireFeature.activate!(node1, dgsm as any);
       fireFeature.activate!(node2, dgsm as any);
 
-      const result = await fireFeature.propagate!("warehouse", 0, dgsm as any, runtime);
+      const result = await fireFeature.propagate!(
+        "warehouse",
+        0,
+        dgsm as any,
+        runtime
+      );
       expect(result.spreadTo).toEqual([]);
     });
   });
@@ -411,7 +457,13 @@ describe("fireFeature", () => {
   describe("tick -- item damage", () => {
     it("should not damage items when intensity <= 2", () => {
       const items = Array.from({ length: 5 }, (_, i) => makeItem(`i${i}`));
-      dgsm._addScene({ id: "lab", name: "Lab", connections: [], events: [], items });
+      dgsm._addScene({
+        id: "lab",
+        name: "Lab",
+        connections: [],
+        events: [],
+        items,
+      });
 
       const node = makeFireNode("lab");
       fireFeature.activate!(node, dgsm as any);
@@ -419,13 +471,19 @@ describe("fireFeature", () => {
       // 2 ticks: intensity 1→2 (still <= 2)
       runTicks(dgsm, runtime, 2);
 
-      const damaged = items.filter(it => it.damaged);
+      const damaged = items.filter((it) => it.damaged);
       expect(damaged.length).toBe(0);
     });
 
     it("should damage 20% of undamaged items when intensity rises above 2", () => {
       const items = Array.from({ length: 10 }, (_, i) => makeItem(`i${i}`));
-      dgsm._addScene({ id: "lab", name: "Lab", connections: [], events: [], items });
+      dgsm._addScene({
+        id: "lab",
+        name: "Lab",
+        connections: [],
+        events: [],
+        items,
+      });
 
       const node = makeFireNode("lab");
       fireFeature.activate!(node, dgsm as any);
@@ -433,7 +491,7 @@ describe("fireFeature", () => {
       // 4 ticks: intensity 1→2→3, triggers damage at intensity 3
       runTicks(dgsm, runtime, 4);
 
-      const damaged = items.filter(it => it.damaged);
+      const damaged = items.filter((it) => it.damaged);
       expect(damaged.length).toBe(2); // round(10 * 0.2)
       for (const it of damaged) {
         expect(it.damageDetails?.damagedBy).toBe("fire");
@@ -449,7 +507,13 @@ describe("fireFeature", () => {
         makeItem("i4"),
         makeItem("i5"),
       ];
-      dgsm._addScene({ id: "lab", name: "Lab", connections: [], events: [], items });
+      dgsm._addScene({
+        id: "lab",
+        name: "Lab",
+        connections: [],
+        events: [],
+        items,
+      });
 
       const node = makeFireNode("lab");
       fireFeature.activate!(node, dgsm as any);
@@ -457,7 +521,7 @@ describe("fireFeature", () => {
       // Intensity 3: round(4 undamaged * 0.2) = 1 newly damaged
       runTicks(dgsm, runtime, 4);
 
-      expect(items.filter(it => it.damaged).length).toBe(2); // 1 pre-damaged + 1 new
+      expect(items.filter((it) => it.damaged).length).toBe(2); // 1 pre-damaged + 1 new
     });
 
     it("should damage both evidence and mundane items together", () => {
@@ -465,7 +529,13 @@ describe("fireFeature", () => {
         ...Array.from({ length: 5 }, (_, i) => makeEvidence(`e${i}`)),
         ...Array.from({ length: 5 }, (_, i) => makeItem(`i${i}`)),
       ];
-      dgsm._addScene({ id: "lab", name: "Lab", connections: [], events: [], items });
+      dgsm._addScene({
+        id: "lab",
+        name: "Lab",
+        connections: [],
+        events: [],
+        items,
+      });
 
       const node = makeFireNode("lab");
       fireFeature.activate!(node, dgsm as any);
@@ -473,7 +543,7 @@ describe("fireFeature", () => {
       // Intensity 3: round(10 * 0.2) = 2 items damaged
       runTicks(dgsm, runtime, 4);
 
-      expect(items.filter(it => it.damaged).length).toBe(2);
+      expect(items.filter((it) => it.damaged).length).toBe(2);
     });
   });
 
@@ -505,41 +575,50 @@ describe("fireFeature", () => {
 
       const topology = {
         junctions: new Map([
-          ["JUNC_1", {
-            id: "JUNC_1",
-            name: "Junction 1",
-            description: "",
-            parentLocationId: "OUTDOOR",
-            items: [],
-            conditions: [],
-            events: [],
-            connectedSceneIds: [],
-          }],
-          ["JUNC_2", {
-            id: "JUNC_2",
-            name: "Junction 2",
-            description: "",
-            parentLocationId: "OUTDOOR",
-            items: [],
-            conditions: [],
-            events: [],
-            connectedSceneIds: [],
-          }],
+          [
+            "JUNC_1",
+            {
+              id: "JUNC_1",
+              name: "Junction 1",
+              description: "",
+              parentLocationId: "OUTDOOR",
+              items: [],
+              conditions: [],
+              events: [],
+              connectedSceneIds: [],
+            },
+          ],
+          [
+            "JUNC_2",
+            {
+              id: "JUNC_2",
+              name: "Junction 2",
+              description: "",
+              parentLocationId: "OUTDOOR",
+              items: [],
+              conditions: [],
+              events: [],
+              connectedSceneIds: [],
+            },
+          ],
         ]),
         roads: new Map([
-          ["ROAD_1", {
-            id: "ROAD_1",
-            name: "Main Street",
-            description: "",
-            parentLocationId: "OUTDOOR",
-            endpointA: "JUNC_1",
-            endpointB: "JUNC_2",
-            travelTimeMinutes: 20,
-            alongConnections: [{ sceneId: "SCN_ALONG", position: 0.5 }],
-            items: [],
-            conditions: [],
-            events: [],
-          }],
+          [
+            "ROAD_1",
+            {
+              id: "ROAD_1",
+              name: "Main Street",
+              description: "",
+              parentLocationId: "OUTDOOR",
+              endpointA: "JUNC_1",
+              endpointB: "JUNC_2",
+              travelTimeMinutes: 20,
+              alongConnections: [{ sceneId: "SCN_ALONG", position: 0.5 }],
+              items: [],
+              conditions: [],
+              events: [],
+            },
+          ],
         ]),
         junctionToRoads: new Map(),
         sceneToParent: new Map(),
@@ -651,7 +730,9 @@ describe("fireFeature", () => {
       fireFeature.tick!(roadDgsm as any, runtime);
 
       const conditions = roadDgsm.getSceneConditions("SCN_ALONG");
-      const fireCond = conditions.find(c => c.description.startsWith("[Fire]"));
+      const fireCond = conditions.find((c) =>
+        c.description.startsWith("[Fire]")
+      );
       expect(fireCond).toBeDefined();
       // intensity=2, so along-road scene gets max(1, 2-1) = 1 → "Light smoke"
       expect(fireCond!.description).toContain("Light smoke");
@@ -677,7 +758,9 @@ describe("fireFeature", () => {
       fireFeature.tick!(roadDgsm as any, runtime);
 
       const conditions = roadDgsm.getSceneConditions("SCN_ALONG");
-      const fireCond = conditions.find(c => c.description.startsWith("[Fire]"));
+      const fireCond = conditions.find((c) =>
+        c.description.startsWith("[Fire]")
+      );
       expect(fireCond).toBeUndefined();
     });
   });
@@ -692,41 +775,50 @@ describe("fireFeature", () => {
 
       const topology = {
         junctions: new Map([
-          ["JUNC_1", {
-            id: "JUNC_1",
-            name: "Junction 1",
-            description: "",
-            parentLocationId: "OUTDOOR",
-            items: [],
-            conditions: [],
-            events: [],
-            connectedSceneIds: [],
-          }],
-          ["JUNC_2", {
-            id: "JUNC_2",
-            name: "Junction 2",
-            description: "",
-            parentLocationId: "OUTDOOR",
-            items: [],
-            conditions: [],
-            events: [],
-            connectedSceneIds: [],
-          }],
+          [
+            "JUNC_1",
+            {
+              id: "JUNC_1",
+              name: "Junction 1",
+              description: "",
+              parentLocationId: "OUTDOOR",
+              items: [],
+              conditions: [],
+              events: [],
+              connectedSceneIds: [],
+            },
+          ],
+          [
+            "JUNC_2",
+            {
+              id: "JUNC_2",
+              name: "Junction 2",
+              description: "",
+              parentLocationId: "OUTDOOR",
+              items: [],
+              conditions: [],
+              events: [],
+              connectedSceneIds: [],
+            },
+          ],
         ]),
         roads: new Map([
-          ["ROAD_1", {
-            id: "ROAD_1",
-            name: "Main Street",
-            description: "",
-            parentLocationId: "OUTDOOR",
-            endpointA: "JUNC_1",
-            endpointB: "JUNC_2",
-            travelTimeMinutes: 20,
-            alongConnections: [{ sceneId: "SCN_ALONG", position: 0.5 }],
-            items: [],
-            conditions: [],
-            events: [],
-          }],
+          [
+            "ROAD_1",
+            {
+              id: "ROAD_1",
+              name: "Main Street",
+              description: "",
+              parentLocationId: "OUTDOOR",
+              endpointA: "JUNC_1",
+              endpointB: "JUNC_2",
+              travelTimeMinutes: 20,
+              alongConnections: [{ sceneId: "SCN_ALONG", position: 0.5 }],
+              items: [],
+              conditions: [],
+              events: [],
+            },
+          ],
         ]),
         junctionToRoads: new Map(),
         sceneToParent: new Map(),
@@ -759,7 +851,10 @@ describe("fireFeature", () => {
 
     it("heavy rain (intensity >= 4) extinguishes road fire", () => {
       // Set heavy rain weather on OUTDOOR
-      roadDgsm.setFeatureSceneState("weather", "OUTDOOR", { weatherType: "rain", intensity: 4 });
+      roadDgsm.setFeatureSceneState("weather", "OUTDOOR", {
+        weatherType: "rain",
+        intensity: 4,
+      });
 
       // Set road fire
       const roadFireState = {
@@ -784,13 +879,18 @@ describe("fireFeature", () => {
 
       // Aftermath condition should exist
       const conditions = roadDgsm.getSceneConditions("ROAD_1");
-      const aftermath = conditions.find(c => c.description.startsWith("[Fire Aftermath]"));
+      const aftermath = conditions.find((c) =>
+        c.description.startsWith("[Fire Aftermath]")
+      );
       expect(aftermath).toBeDefined();
     });
 
     it("light rain (intensity 2) slows road fire spread (0.5x)", () => {
       // Set light rain weather on OUTDOOR
-      roadDgsm.setFeatureSceneState("weather", "OUTDOOR", { weatherType: "rain", intensity: 2 });
+      roadDgsm.setFeatureSceneState("weather", "OUTDOOR", {
+        weatherType: "rain",
+        intensity: 2,
+      });
 
       // Set road fire
       const roadFireState = {
@@ -818,7 +918,10 @@ describe("fireFeature", () => {
 
     it("heavy rain extinguishes junction fire", () => {
       // Set heavy rain weather on OUTDOOR
-      roadDgsm.setFeatureSceneState("weather", "OUTDOOR", { weatherType: "rain", intensity: 4 });
+      roadDgsm.setFeatureSceneState("weather", "OUTDOOR", {
+        weatherType: "rain",
+        intensity: 4,
+      });
 
       // Set junction fire (regular fire state, not road fire)
       const junctionFireState = {
@@ -842,13 +945,18 @@ describe("fireFeature", () => {
 
       // Aftermath condition should exist
       const conditions = roadDgsm.getSceneConditions("JUNC_1");
-      const aftermath = conditions.find(c => c.description.startsWith("[Fire Aftermath]"));
+      const aftermath = conditions.find((c) =>
+        c.description.startsWith("[Fire Aftermath]")
+      );
       expect(aftermath).toBeDefined();
     });
 
     it("scene (building) fire NOT affected by weather (no extinguish)", () => {
       // Set heavy rain weather on OUTDOOR
-      roadDgsm.setFeatureSceneState("weather", "OUTDOOR", { weatherType: "rain", intensity: 4 });
+      roadDgsm.setFeatureSceneState("weather", "OUTDOOR", {
+        weatherType: "rain",
+        intensity: 4,
+      });
 
       // SCN_ALONG is a building scene, not a road or junction in the topology
       // Set fire on it
@@ -883,22 +991,50 @@ describe("fireFeature", () => {
 
       // Build topology with proper maps using buildTopology-style construction
       const junctions = new Map([
-        ["JUNC_1", {
-          id: "JUNC_1", name: "J1", description: "", parentLocationId: "OUTDOOR",
-          connectedSceneIds: ["SCN_A"], items: [], conditions: [], events: [],
-        }],
-        ["JUNC_2", {
-          id: "JUNC_2", name: "J2", description: "", parentLocationId: "OUTDOOR",
-          connectedSceneIds: [], items: [], conditions: [], events: [],
-        }],
+        [
+          "JUNC_1",
+          {
+            id: "JUNC_1",
+            name: "J1",
+            description: "",
+            parentLocationId: "OUTDOOR",
+            connectedSceneIds: ["SCN_A"],
+            items: [],
+            conditions: [],
+            events: [],
+          },
+        ],
+        [
+          "JUNC_2",
+          {
+            id: "JUNC_2",
+            name: "J2",
+            description: "",
+            parentLocationId: "OUTDOOR",
+            connectedSceneIds: [],
+            items: [],
+            conditions: [],
+            events: [],
+          },
+        ],
       ]);
       const roads = new Map([
-        ["ROAD_1", {
-          id: "ROAD_1", name: "R1", description: "", parentLocationId: "OUTDOOR",
-          endpointA: "JUNC_1", endpointB: "JUNC_2", travelTimeMinutes: 20,
-          alongConnections: [{ sceneId: "SCN_B", position: 0.3 }],
-          items: [], conditions: [], events: [],
-        }],
+        [
+          "ROAD_1",
+          {
+            id: "ROAD_1",
+            name: "R1",
+            description: "",
+            parentLocationId: "OUTDOOR",
+            endpointA: "JUNC_1",
+            endpointB: "JUNC_2",
+            travelTimeMinutes: 20,
+            alongConnections: [{ sceneId: "SCN_B", position: 0.3 }],
+            items: [],
+            conditions: [],
+            events: [],
+          },
+        ],
       ]);
 
       // Manually build topology with all maps
@@ -908,7 +1044,11 @@ describe("fireFeature", () => {
 
       const sceneToParent = new Map();
       sceneToParent.set("SCN_A", { type: "junction", junctionId: "JUNC_1" });
-      sceneToParent.set("SCN_B", { type: "road", roadId: "ROAD_1", position: 0.3 });
+      sceneToParent.set("SCN_B", {
+        type: "road",
+        roadId: "ROAD_1",
+        position: 0.3,
+      });
 
       const topology = { junctions, roads, junctionToRoads, sceneToParent };
 
@@ -916,29 +1056,61 @@ describe("fireFeature", () => {
         getTopology: () => topology,
       });
 
-      topoDgsm._addScene({ id: "SCN_A", name: "Scene A", connections: [], events: [] });
-      topoDgsm._addScene({ id: "SCN_B", name: "Scene B", connections: [], events: [] });
+      topoDgsm._addScene({
+        id: "SCN_A",
+        name: "Scene A",
+        connections: [],
+        events: [],
+      });
+      topoDgsm._addScene({
+        id: "SCN_B",
+        name: "Scene B",
+        connections: [],
+        events: [],
+      });
     });
 
     it("should spread from scene to parent junction", async () => {
       // Fire at SCN_A intensity 3 (>= spreadThreshold)
       topoDgsm.setFeatureSceneState("fire", "SCN_A", {
-        intensity: 3, maxIntensity: 5, growthRate: 1, decayRate: 1,
-        spreadThreshold: 3, phase: "growing" as const, ticksInPhase: 0, totalBurnTicks: 0,
+        intensity: 3,
+        maxIntensity: 5,
+        growthRate: 1,
+        decayRate: 1,
+        spreadThreshold: 3,
+        phase: "growing" as const,
+        ticksInPhase: 0,
+        totalBurnTicks: 0,
       });
 
-      const result = await fireFeature.propagate!("SCN_A", 0, topoDgsm as any, runtime);
+      const result = await fireFeature.propagate!(
+        "SCN_A",
+        0,
+        topoDgsm as any,
+        runtime
+      );
       expect(result.spreadTo).toContain("JUNC_1");
       expect(topoDgsm.getFeatureSceneState("fire", "JUNC_1")).toBeDefined();
     });
 
     it("should spread from junction to connected roads with correct position", async () => {
       topoDgsm.setFeatureSceneState("fire", "JUNC_1", {
-        intensity: 3, maxIntensity: 5, growthRate: 1, decayRate: 1,
-        spreadThreshold: 3, phase: "growing" as const, ticksInPhase: 0, totalBurnTicks: 0,
+        intensity: 3,
+        maxIntensity: 5,
+        growthRate: 1,
+        decayRate: 1,
+        spreadThreshold: 3,
+        phase: "growing" as const,
+        ticksInPhase: 0,
+        totalBurnTicks: 0,
       });
 
-      const result = await fireFeature.propagate!("JUNC_1", 0, topoDgsm as any, runtime);
+      const result = await fireFeature.propagate!(
+        "JUNC_1",
+        0,
+        topoDgsm as any,
+        runtime
+      );
       expect(result.spreadTo).toContain("ROAD_1");
 
       // Road fire should have burnRange starting at 0.0 (JUNC_1 is endpointA)
@@ -951,22 +1123,44 @@ describe("fireFeature", () => {
 
     it("should spread from junction to connected scenes", async () => {
       topoDgsm.setFeatureSceneState("fire", "JUNC_1", {
-        intensity: 3, maxIntensity: 5, growthRate: 1, decayRate: 1,
-        spreadThreshold: 3, phase: "growing" as const, ticksInPhase: 0, totalBurnTicks: 0,
+        intensity: 3,
+        maxIntensity: 5,
+        growthRate: 1,
+        decayRate: 1,
+        spreadThreshold: 3,
+        phase: "growing" as const,
+        ticksInPhase: 0,
+        totalBurnTicks: 0,
       });
 
-      const result = await fireFeature.propagate!("JUNC_1", 0, topoDgsm as any, runtime);
+      const result = await fireFeature.propagate!(
+        "JUNC_1",
+        0,
+        topoDgsm as any,
+        runtime
+      );
       expect(result.spreadTo).toContain("SCN_A");
     });
 
     it("should spread from road to endpoint junction when burnRange reaches end", async () => {
       topoDgsm.setFeatureSceneState("fire", "ROAD_1", {
-        intensity: 3, maxIntensity: 5, growthRate: 1, decayRate: 1,
-        spreadThreshold: 3, phase: "growing" as const, ticksInPhase: 0, totalBurnTicks: 0,
+        intensity: 3,
+        maxIntensity: 5,
+        growthRate: 1,
+        decayRate: 1,
+        spreadThreshold: 3,
+        phase: "growing" as const,
+        ticksInPhase: 0,
+        totalBurnTicks: 0,
         burnRange: { start: 0.0, end: 0.96 },
       });
 
-      const result = await fireFeature.propagate!("ROAD_1", 0, topoDgsm as any, runtime);
+      const result = await fireFeature.propagate!(
+        "ROAD_1",
+        0,
+        topoDgsm as any,
+        runtime
+      );
       // burnRange.start <= 0.05 -> spread to endpointA (JUNC_1)
       expect(result.spreadTo).toContain("JUNC_1");
       // burnRange.end >= 0.95 -> spread to endpointB (JUNC_2)
@@ -975,12 +1169,23 @@ describe("fireFeature", () => {
 
     it("should NOT spread from road when burnRange hasn't reached endpoints", async () => {
       topoDgsm.setFeatureSceneState("fire", "ROAD_1", {
-        intensity: 3, maxIntensity: 5, growthRate: 1, decayRate: 1,
-        spreadThreshold: 3, phase: "growing" as const, ticksInPhase: 0, totalBurnTicks: 0,
+        intensity: 3,
+        maxIntensity: 5,
+        growthRate: 1,
+        decayRate: 1,
+        spreadThreshold: 3,
+        phase: "growing" as const,
+        ticksInPhase: 0,
+        totalBurnTicks: 0,
         burnRange: { start: 0.3, end: 0.7 },
       });
 
-      const result = await fireFeature.propagate!("ROAD_1", 0, topoDgsm as any, runtime);
+      const result = await fireFeature.propagate!(
+        "ROAD_1",
+        0,
+        topoDgsm as any,
+        runtime
+      );
       expect(result.spreadTo).not.toContain("JUNC_1");
       expect(result.spreadTo).not.toContain("JUNC_2");
     });
@@ -988,11 +1193,22 @@ describe("fireFeature", () => {
     it("should spread from scene to parent road with position", async () => {
       // SCN_B is on ROAD_1 at position 0.3
       topoDgsm.setFeatureSceneState("fire", "SCN_B", {
-        intensity: 3, maxIntensity: 5, growthRate: 1, decayRate: 1,
-        spreadThreshold: 3, phase: "growing" as const, ticksInPhase: 0, totalBurnTicks: 0,
+        intensity: 3,
+        maxIntensity: 5,
+        growthRate: 1,
+        decayRate: 1,
+        spreadThreshold: 3,
+        phase: "growing" as const,
+        ticksInPhase: 0,
+        totalBurnTicks: 0,
       });
 
-      const result = await fireFeature.propagate!("SCN_B", 0, topoDgsm as any, runtime);
+      const result = await fireFeature.propagate!(
+        "SCN_B",
+        0,
+        topoDgsm as any,
+        runtime
+      );
       expect(result.spreadTo).toContain("ROAD_1");
 
       const roadFire = topoDgsm.getFeatureSceneState("fire", "ROAD_1") as any;
@@ -1003,15 +1219,36 @@ describe("fireFeature", () => {
     it("should fall back to scene.connections when no topology", async () => {
       // Use a dgsm without topology
       const noTopoDgsm = createMockDgsm();
-      noTopoDgsm._addScene({ id: "room1", name: "Room 1", connections: ["room2"], events: [] });
-      noTopoDgsm._addScene({ id: "room2", name: "Room 2", connections: ["room1"], events: [] });
-
-      noTopoDgsm.setFeatureSceneState("fire", "room1", {
-        intensity: 3, maxIntensity: 5, growthRate: 1, decayRate: 1,
-        spreadThreshold: 3, phase: "growing" as const, ticksInPhase: 0, totalBurnTicks: 0,
+      noTopoDgsm._addScene({
+        id: "room1",
+        name: "Room 1",
+        connections: ["room2"],
+        events: [],
+      });
+      noTopoDgsm._addScene({
+        id: "room2",
+        name: "Room 2",
+        connections: ["room1"],
+        events: [],
       });
 
-      const result = await fireFeature.propagate!("room1", 0, noTopoDgsm as any, runtime);
+      noTopoDgsm.setFeatureSceneState("fire", "room1", {
+        intensity: 3,
+        maxIntensity: 5,
+        growthRate: 1,
+        decayRate: 1,
+        spreadThreshold: 3,
+        phase: "growing" as const,
+        ticksInPhase: 0,
+        totalBurnTicks: 0,
+      });
+
+      const result = await fireFeature.propagate!(
+        "room1",
+        0,
+        noTopoDgsm as any,
+        runtime
+      );
       expect(result.spreadTo).toContain("room2");
     });
   });

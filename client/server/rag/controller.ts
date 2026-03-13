@@ -81,7 +81,9 @@ export async function askRag(req: Request, res: Response): Promise<void> {
         where: {
           sessionId,
           status: "completed",
-          ...(normalizedSceneRoomId ? { sceneRoomId: normalizedSceneRoomId } : {}),
+          ...(normalizedSceneRoomId
+            ? { sceneRoomId: normalizedSceneRoomId }
+            : {}),
         },
         orderBy: { turnNumber: "desc" },
         take: 5,

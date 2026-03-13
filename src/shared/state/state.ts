@@ -198,19 +198,28 @@ export function extractRollCharacter(roll: string): string | null {
 }
 
 /** Split a combined diceUsed array into per-character buckets (keyed by lowercase name). */
-export function splitDiceByCharacter(diceUsed: string[]): Map<string, string[]> {
+export function splitDiceByCharacter(
+  diceUsed: string[]
+): Map<string, string[]> {
   const result = new Map<string, string[]>();
   for (const dice of diceUsed) {
     const character = extractRollCharacter(dice);
     const key = character ? character.toLowerCase() : "__unattributed__";
     const bucket = result.get(key);
-    if (bucket) { bucket.push(dice); } else { result.set(key, [dice]); }
+    if (bucket) {
+      bucket.push(dice);
+    } else {
+      result.set(key, [dice]);
+    }
   }
   return result;
 }
 
 /** Filter a diceUsed array to only rolls belonging to a specific character. */
-export function filterDiceForCharacter(diceUsed: string[], characterName: string): string[] {
+export function filterDiceForCharacter(
+  diceUsed: string[],
+  characterName: string
+): string[] {
   if (!characterName || !diceUsed || diceUsed.length === 0) return [];
   const targetLower = characterName.toLowerCase();
   return diceUsed.filter((dice) => {

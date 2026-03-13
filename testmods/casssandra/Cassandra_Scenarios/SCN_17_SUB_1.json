@@ -59,9 +59,5 @@
       }
     }
   ],
-  "connections": [
-    "SCN_17_SUB_2",
-    "SCN_17_SUB_3",
-    "SCN_17_SUB_4"
-  ]
+  "connections": ["SCN_17_SUB_2", "SCN_17_SUB_3", "SCN_17_SUB_4"]
 }

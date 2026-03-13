@@ -42,7 +42,7 @@ export async function persistSimulationRuntime(params: {
 
 export async function persistSimulationEvents(
   prisma: PrismaClient,
-  events: SimulationEvent[],
+  events: SimulationEvent[]
 ): Promise<void> {
   if (events.length === 0) return;
 
@@ -66,7 +66,7 @@ export async function persistSimulationEvents(
 
 export async function loadSimulationRuntime(
   prisma: PrismaClient,
-  sessionId: string,
+  sessionId: string
 ): Promise<SimulationRuntimeRecord | null> {
   const row = await (prisma as any).simulationRuntime.findUnique({
     where: { sessionId },
@@ -85,7 +85,7 @@ export async function loadSimulationRuntime(
 }
 
 export async function listSimulationRuntimeRecords(
-  prisma: PrismaClient,
+  prisma: PrismaClient
 ): Promise<SimulationRuntimeRecord[]> {
   const rows = await (prisma as any).simulationRuntime.findMany({
     orderBy: { updatedAt: "desc" },
@@ -103,10 +103,12 @@ export async function listSimulationRuntimeRecords(
 }
 
 export function runtimeToStatus(
-  runtime: SimulationRuntimeRecord,
+  runtime: SimulationRuntimeRecord
 ): SimulationStatus {
   const gameDay =
-    typeof runtime.gameState.gameDay === "number" ? runtime.gameState.gameDay : 1;
+    typeof runtime.gameState.gameDay === "number"
+      ? runtime.gameState.gameDay
+      : 1;
   const currentTime =
     typeof runtime.gameState.timeOfDay === "string"
       ? runtime.gameState.timeOfDay

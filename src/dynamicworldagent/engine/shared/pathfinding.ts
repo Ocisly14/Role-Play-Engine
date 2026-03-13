@@ -1,5 +1,8 @@
+import type {
+  CharacterPosition,
+  TownTopology,
+} from "../../state/topologyTypes.js";
 import type { DynamicScene, TransportEdge } from "../../state/types.js";
-import type { CharacterPosition, TownTopology } from "../../state/topologyTypes.js";
 
 /**
  * BFS pathfinding between sub-scenes.
@@ -31,7 +34,8 @@ export function findPath(
 
       const key1 = `${sceneId}::${connId}`;
       const key2 = `${connId}::${sceneId}`;
-      if (blockedConnections.has(key1) || blockedConnections.has(key2)) continue;
+      if (blockedConnections.has(key1) || blockedConnections.has(key2))
+        continue;
 
       const newPath = [...path, connId];
       if (connId === toSceneId) return newPath;
@@ -64,8 +68,10 @@ export function calculateTravelTime(
       const edge = transportEdges.find(
         (e) =>
           (e.streetSceneId === from.id || e.streetSceneId === to.id) &&
-          ((e.fromLocationId === from.parentLocationId && e.toLocationId === to.parentLocationId) ||
-           (e.fromLocationId === to.parentLocationId && e.toLocationId === from.parentLocationId))
+          ((e.fromLocationId === from.parentLocationId &&
+            e.toLocationId === to.parentLocationId) ||
+            (e.fromLocationId === to.parentLocationId &&
+              e.toLocationId === from.parentLocationId))
       );
       totalMinutes += edge?.travelTimeMinutes ?? 5;
     }
@@ -152,9 +158,8 @@ export function findTopologyPath(
     // Expand: find all roads connected to this junction
     const roads = topology.junctionToRoads.get(current.junctionId) ?? [];
     for (const road of roads) {
-      const otherJunctionId = road.endpointA === current.junctionId
-        ? road.endpointB
-        : road.endpointA;
+      const otherJunctionId =
+        road.endpointA === current.junctionId ? road.endpointB : road.endpointA;
 
       if (visited.has(otherJunctionId)) continue;
 
@@ -162,7 +167,8 @@ export function findTopologyPath(
       // This is separate from old-style "sceneA::sceneB" blocking which is used by legacy BFS.
       const key1 = `${current.junctionId}::${road.id}`;
       const key2 = `${road.id}::${current.junctionId}`;
-      if (blockedConnections.has(key1) || blockedConnections.has(key2)) continue;
+      if (blockedConnections.has(key1) || blockedConnections.has(key2))
+        continue;
 
       const roadStep: TopologyPathStep = {
         type: "road",
@@ -188,13 +194,15 @@ function resolveToJunctions(
 ): JunctionEntry[] | null {
   switch (pos.type) {
     case "junction":
-      return [{
-        junctionId: pos.junctionId,
-        initialSteps: [],
-        initialMinutes: 0,
-        finalSteps: [],
-        finalMinutes: 0,
-      }];
+      return [
+        {
+          junctionId: pos.junctionId,
+          initialSteps: [],
+          initialMinutes: 0,
+          finalSteps: [],
+          finalMinutes: 0,
+        },
+      ];
 
     case "road": {
       const road = topology.roads.get(pos.roadId);
@@ -224,13 +232,15 @@ function resolveToJunctions(
       if (!parent) return null;
 
       if (parent.type === "junction") {
-        return [{
-          junctionId: parent.junctionId,
-          initialSteps: [{ type: "exit_scene", id: pos.sceneId, minutes: 1 }],
-          initialMinutes: 1,
-          finalSteps: [{ type: "enter_scene", id: pos.sceneId, minutes: 1 }],
-          finalMinutes: 1,
-        }];
+        return [
+          {
+            junctionId: parent.junctionId,
+            initialSteps: [{ type: "exit_scene", id: pos.sceneId, minutes: 1 }],
+            initialMinutes: 1,
+            finalSteps: [{ type: "enter_scene", id: pos.sceneId, minutes: 1 }],
+            finalMinutes: 1,
+          },
+        ];
       }
 
       // Scene on a road — can reach either junction
@@ -273,8 +283,14 @@ function resolveToJunctions(
 function positionsEqual(a: CharacterPosition, b: CharacterPosition): boolean {
   if (a.type !== b.type) return false;
   switch (a.type) {
-    case "junction": return a.junctionId === (b as typeof a).junctionId;
-    case "road": return a.roadId === (b as typeof a).roadId && a.position === (b as typeof a).position;
-    case "scene": return a.sceneId === (b as typeof a).sceneId;
+    case "junction":
+      return a.junctionId === (b as typeof a).junctionId;
+    case "road":
+      return (
+        a.roadId === (b as typeof a).roadId &&
+        a.position === (b as typeof a).position
+      );
+    case "scene":
+      return a.sceneId === (b as typeof a).sceneId;
   }
 }

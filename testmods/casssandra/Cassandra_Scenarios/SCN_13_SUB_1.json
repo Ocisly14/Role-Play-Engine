@@ -39,8 +39,5 @@
       }
     }
   ],
-  "connections": [
-    "SCN_13_SUB_2",
-    "SCN_13_SUB_3"
-  ]
+  "connections": ["SCN_13_SUB_2", "SCN_13_SUB_3"]
 }
