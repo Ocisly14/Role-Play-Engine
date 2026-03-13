@@ -279,12 +279,14 @@ interface MapLayout {
 /**
  * Assembled by the /api/simulation/:id/npc-statuses endpoint from multiple sources:
  * - name: from DynamicNPCProfile.name
- * - hp/maxHp: from npcStats.hp + DynamicNPCProfile.status.maxHp
- * - sanity/maxSanity: from npcStats.san + DynamicNPCProfile.status.maxSanity
+ * - hp/maxHp: npcStats[npcId].hp (runtime) + DynamicNPCProfile.status.maxHp (static profile)
+ *   Note: npcStats only stores { hp: number; san: number } — no max values
+ * - sanity/maxSanity: npcStats[npcId].san + DynamicNPCProfile.status.maxSanity
  *   (uses "sanity"/"maxSanity" naming to match CharacterStatus convention)
- * - location: resolved from CharacterPosition via topology lookup to human-readable name
- * - inventory: from npcInventories (full Item objects)
- * - currentAction: from most recent CharacterAction in the tick
+ * - location: resolved from characterPositions[npcId] (CharacterPosition) via topology
+ *   junction/road/scene name lookup. NOT from legacy npcLocations.
+ * - inventory: from npcInventories[npcId] (Item[] — full objects)
+ * - currentAction: from most recent CharacterAction in DynamicTemporaryInfo.characterActions
  */
 interface NpcStatusInfo {
   npcId: string;
@@ -371,7 +373,7 @@ The existing simulation plan (`2026-03-11-npc-autonomous-simulation.md`) needs t
 
 **1. New event type: `"npc_moved"`**
 
-Add `"npc_moved"` to `SimulationEventType` union in `src/dynamicworldagent/simulation/types.ts`. The tick processor already calls `dgsm.setCharacterPosition()` during NPC movement — wire the `SimulationEventEmitter` at that call site to emit:
+Add `"npc_moved"` to `SimulationEventType` union in `src/dynamicworldagent/simulation/types.ts`. The movement handler (`src/dynamicworldagent/engine/handlers/movementHandler.ts`, line ~97) calls `dgsm.setCharacterPosition(node.characterId, targetPos)` — wire the `SimulationEventEmitter` at that call site to emit:
 
 ```typescript
 {
@@ -396,9 +398,9 @@ Ensure `SimulationEvent.data` includes these fields by event type:
 | Event Type | Required fields in `data` |
 |----------|--------------------------|
 | `npc_moved` (NEW) | `fromPosition: CharacterPosition`, `toPosition: CharacterPosition` |
-| `action_executed` / `action_failed` | `action`, `location`, `outcome` (already present) |
+| `action_executed` / `action_failed` | `action`, `actionType`, `location`, `outcome`, `successLevel` (from `CharacterAction` type). Also include `discoveries?: DiscoveryEntry[]` for evidence/knowledge found. **Note:** The simulation plan's `actionsToEvents()` references `discoveredClues` but the actual `CharacterAction` field is `discoveries: DiscoveryEntry[]` — fix this in the simulation plan. |
 | `npc_death` | `npcName`, `hp`, `san` |
-| Item-related actions | `itemId`, `sceneId`, `action: "picked_up" \| "dropped" \| "destroyed"` (encoded in `action_executed.data`) |
+| Item-related actions | `itemId`, `sceneId`, `action: "picked_up" \| "dropped" \| "destroyed"` (from `ObjectInteractionPayload` in `CharacterAction`) |
 
 ### Initialization Flow
 
