@@ -66,7 +66,7 @@ export class SimulationEventEmitter extends EventEmitter {
             actionType: action.actionType,
             outcome: action.outcome,
             successLevel: action.successLevel,
-            discoveredClues: action.discoveries,
+            discoveries: action.discoveries,
           },
           action.targetCharacterId
         )

@@ -202,6 +202,9 @@ export interface ExecutionContext {
     actionType: ActionType,
     npcSkills: Record<string, number>
   ): { skill: string; value: number } | null;
+
+  /** Set by SimulationRunner to enable npc_moved event emission from handlers */
+  simulationEmitter?: import("../simulation/SimulationEventEmitter.js").SimulationEventEmitter;
 }
 
 export interface SkillRollResult {

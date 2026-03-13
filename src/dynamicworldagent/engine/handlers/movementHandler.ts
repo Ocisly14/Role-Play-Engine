@@ -97,6 +97,23 @@ export const movementHandler: NodeHandler = {
           dgsm.setCharacterPosition(node.characterId, targetPos);
           // Also update legacy npcLocation for backward compatibility
           dgsm.setNpcLocation(node.characterId, node.location);
+
+          // Emit npc_moved event for simulation viewers
+          if (ctx.simulationEmitter) {
+            const state = dgsm.getState();
+            ctx.simulationEmitter.emitSimulationEvent(
+              "npc_moved",
+              node.characterId,
+              node.location,
+              state.gameDay,
+              state.timeOfDay,
+              {
+                fromPosition: currentPos,
+                toPosition: targetPos,
+              }
+            );
+          }
+
           return makeAction(
             node,
             "completed",

@@ -1,4 +1,5 @@
 import type http from "http";
+import { randomUUID } from "node:crypto";
 import { WebSocket, WebSocketServer } from "ws";
 import { getPrismaClient } from "../../../src/shared/agents/memory/database/prismaClient.js";
 import { verifyToken } from "../auth/jwt.js";
@@ -28,6 +29,9 @@ export class WebSocketManager {
   // Room-level (waiting lobby): Map<roomId, Map<userId, WSClient>>
   private roomClients = new Map<string, Map<string, WSClient>>();
 
+  // Simulation viewers: Map<sessionId, Map<clientId, WSClient>>
+  private simulationClients: Map<string, Map<string, WSClient>> = new Map();
+
   constructor(server: http.Server) {
     WebSocketManager.instance = this;
     this.wss = new WebSocketServer({
@@ -48,6 +52,25 @@ export class WebSocketManager {
       const token = this.extractToken(req);
       const sceneRoomId = this.extractParam(req, "sceneRoomId");
       const roomId = this.extractParam(req, "roomId");
+      const connectionType = this.extractParam(req, "type");
+
+      // Simulation viewer connection: no auth required, register and return early
+      if (connectionType === "simulation" && sessionId) {
+        const clientId = randomUUID();
+        const client: WSClient = { ws, sessionId, lastHeartbeat: new Date() };
+        this.registerSimulationClient(sessionId, clientId, client);
+
+        ws.send(JSON.stringify({ type: "connected", sessionId, timestamp: new Date().toISOString() }));
+
+        ws.on("close", () => {
+          this.removeSimulationClient(sessionId, clientId);
+        });
+        ws.on("error", (error) => {
+          console.error(`[WebSocket] Simulation viewer error for session ${sessionId}:`, error);
+        });
+        return;
+      }
+
       const creds = token ? this.verifyTokenCreds(token) : null;
       const userId = creds?.userId ?? null;
       const email = creds?.email ?? null;
@@ -410,6 +433,36 @@ export class WebSocketManager {
    */
   public getRoomClients(roomId: string): Map<string, WSClient> {
     return this.roomClients.get(roomId) ?? new Map();
+  }
+
+  // ─── Simulation viewer methods ────────────────────────────────────────
+
+  /**
+   * Register a simulation viewer client for a specific session.
+   */
+  public registerSimulationClient(sessionId: string, clientId: string, client: WSClient): void {
+    if (!this.simulationClients.has(sessionId)) {
+      this.simulationClients.set(sessionId, new Map());
+    }
+    this.simulationClients.get(sessionId)!.set(clientId, client);
+  }
+
+  /**
+   * Remove a simulation viewer client.
+   */
+  public removeSimulationClient(sessionId: string, clientId: string): void {
+    const clients = this.simulationClients.get(sessionId);
+    if (clients) {
+      clients.delete(clientId);
+      if (clients.size === 0) this.simulationClients.delete(sessionId);
+    }
+  }
+
+  /**
+   * Get all simulation viewer clients for a session.
+   */
+  public getSimulationClients(sessionId: string): Map<string, WSClient> {
+    return this.simulationClients.get(sessionId) ?? new Map();
   }
 
   private async isRoomMember(

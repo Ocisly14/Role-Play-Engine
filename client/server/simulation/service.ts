@@ -1,5 +1,6 @@
 import type { PrismaClient } from "@prisma/client";
 import { randomUUID } from "crypto";
+import { WebSocket } from "ws";
 import { SimulationRunner } from "../../../src/dynamicworldagent/simulation/SimulationRunner.js";
 import {
   loadSimulationRuntime,
@@ -22,6 +23,7 @@ import { initializeCompleteDynamicGameState } from "../../../src/dynamicworldage
 import { resolveModuleIdByName } from "../../../src/shared/agents/memory/database/moduleScope.js";
 import { resolveEmailId } from "../../../src/shared/agents/memory/database/userContext.js";
 import { DatabaseManager } from "../core/DatabaseManager.js";
+import { WebSocketManager } from "../websocket/WebSocketManager.js";
 import type {
   SimulationConfig,
   SimulationEvent,
@@ -29,6 +31,54 @@ import type {
 } from "../../../src/dynamicworldagent/simulation/types.js";
 
 const runners = new Map<string, SimulationRunner>();
+
+/**
+ * Wire event listener on a runner: persist each simulation event to DB and
+ * broadcast it via WebSocket to all registered simulation viewer clients.
+ */
+function wireEventListener(prisma: PrismaClient, runner: SimulationRunner, sessionId: string): void {
+  runner.events.on("simulation_event", async (event: SimulationEvent) => {
+    // Persist to DB (skipDuplicates handles events already persisted by runner)
+    try {
+      await prisma.simulationEvent.createMany({
+        data: [
+          {
+            id: event.id,
+            sessionId: event.sessionId,
+            tick: event.tick,
+            gameDay: event.gameDay,
+            gameTime: event.gameTime,
+            type: event.type,
+            actorNpcId: event.actorNpcId,
+            targetNpcId: event.targetNpcId ?? null,
+            location: event.location,
+            data: event.data as any,
+            timestamp: event.timestamp,
+          },
+        ],
+        skipDuplicates: true,
+      });
+    } catch (err) {
+      console.error(`[SimulationService] Failed to persist simulation event ${event.id}:`, err);
+    }
+
+    // Broadcast via WebSocket to simulation viewer clients
+    const wsManager = WebSocketManager.getInstance();
+    if (wsManager) {
+      const clients = wsManager.getSimulationClients(sessionId);
+      const message = JSON.stringify({ type: "simulation_event", event });
+      for (const [, client] of clients) {
+        if (client.ws.readyState === WebSocket.OPEN) {
+          try {
+            client.ws.send(message);
+          } catch (err) {
+            console.error(`[SimulationService] Failed to broadcast simulation event to client:`, err);
+          }
+        }
+      }
+    }
+  });
+}
 
 function buildSimulationBundle(params: {
   prisma: PrismaClient;
@@ -96,6 +146,7 @@ export async function getRunner(
   if (runtime.simulationState === "running") {
     await runner.saveRuntime();
   }
+  wireEventListener(prisma, runner, sessionId);
   runners.set(sessionId, runner);
   return runner;
 }
@@ -166,6 +217,7 @@ export async function createSimulation(
   await npcPlanningAgent.seedLongTermIntents(dgsm, sessionId, moduleId);
   await runner.saveRuntime();
 
+  wireEventListener(prisma, runner, sessionId);
   runners.set(sessionId, runner);
 
   return { sessionId, status: runner.getStatus() };

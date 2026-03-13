@@ -12,7 +12,8 @@ export type SimulationEventType =
   | "day_transition"
   | "feature_triggered"
   | "npc_death"
-  | "simulation_state_changed";
+  | "simulation_state_changed"
+  | "npc_moved";
 
 export interface SimulationEvent {
   id: string;
@@ -72,4 +73,5 @@ export const SIMULATION_EVENT_TYPES: readonly SimulationEventType[] = [
   "feature_triggered",
   "npc_death",
   "simulation_state_changed",
+  "npc_moved",
 ] as const;

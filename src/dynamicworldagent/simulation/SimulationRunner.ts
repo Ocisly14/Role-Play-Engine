@@ -76,6 +76,9 @@ export class SimulationRunner {
     this.prisma = params.prisma;
 
     this.events = new SimulationEventEmitter(this.sessionId);
+
+    // Wire emitter into execution context so handlers can emit npc_moved events
+    this.ctx.simulationEmitter = this.events;
   }
 
   // ===== Public lifecycle =====
