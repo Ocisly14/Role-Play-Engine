@@ -21,17 +21,14 @@ import { loadMod } from "./service.js";
 
 /**
  * Check if a module is a world-builder generated module
- * by checking for world-builder specific files
+ * by checking for the runtime scene/module files produced by world-builder
  */
 function isWorldBuilderModule(modPath: string): boolean {
-  const worldBuilderFiles = [
-    "truth_timeline.json",
-    "knowledge_matrix.json",
-    "macro_scene.json",
-  ];
-
-  return worldBuilderFiles.every((file) =>
-    fs.existsSync(path.join(modPath, file))
+  const moduleName = path.basename(modPath);
+  return (
+    fs.existsSync(path.join(modPath, "module_setup.json")) &&
+    fs.existsSync(path.join(modPath, "scenarios_outline.json")) &&
+    fs.existsSync(path.join(modPath, `${moduleName}_Scenarios`))
   );
 }
 
@@ -178,17 +175,9 @@ export async function getModuleIntroduction(
           moduleTitle: module.title,
         });
       } else {
-        // Freshly loaded world module
-        const moduleIntroduction = loadedModule.moduleDigest.introduction
-          ? {
-              introduction: loadedModule.moduleDigest.introduction,
-              moduleNotes: loadedModule.moduleDigest.moduleNotes || "",
-            }
-          : null;
-
         res.json({
           success: true,
-          moduleIntroduction: moduleIntroduction,
+          moduleIntroduction: null,
           moduleTitle: loadedModule.moduleName,
         });
       }
@@ -596,4 +585,3 @@ export async function restoreModsBulk(
       .json({ error: `Failed to restore mods: ${(error as Error).message}` });
   }
 }
-

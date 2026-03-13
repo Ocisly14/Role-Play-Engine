@@ -1,11 +1,13 @@
 /// <reference path="../types/express.d.ts" />
 import type { Request, Response } from "express";
 import { buildInjectedProfile } from "../../../src/dynamicworldagent/simulation/characterInjection.js";
+import { getPrismaClient } from "../../../src/shared/agents/memory/database/prismaClient.js";
 import * as simulationService from "./service.js";
 
 export async function injectCharacter(req: Request, res: Response) {
   try {
-    const runner = simulationService.getRunner(req.params.id);
+    const prisma = getPrismaClient();
+    const runner = await simulationService.getRunner(prisma, req.params.id);
     if (!runner) return res.status(404).json({ error: "Simulation not found" });
 
     const {
@@ -54,9 +56,10 @@ export async function injectCharacter(req: Request, res: Response) {
   }
 }
 
-export function listInjectedCharacters(req: Request, res: Response) {
+export async function listInjectedCharacters(req: Request, res: Response) {
   try {
-    const runner = simulationService.getRunner(req.params.id);
+    const prisma = getPrismaClient();
+    const runner = await simulationService.getRunner(prisma, req.params.id);
     if (!runner) return res.status(404).json({ error: "Simulation not found" });
     return res.json({ characters: runner.getInjectedCharacters() });
   } catch (error) {
@@ -68,7 +71,8 @@ export function listInjectedCharacters(req: Request, res: Response) {
 
 export async function updateIntent(req: Request, res: Response) {
   try {
-    const runner = simulationService.getRunner(req.params.id);
+    const prisma = getPrismaClient();
+    const runner = await simulationService.getRunner(prisma, req.params.id);
     if (!runner) return res.status(404).json({ error: "Simulation not found" });
     const { intent } = req.body;
     if (!intent)
@@ -90,7 +94,8 @@ export async function updateIntent(req: Request, res: Response) {
 
 export async function removeCharacter(req: Request, res: Response) {
   try {
-    const runner = simulationService.getRunner(req.params.id);
+    const prisma = getPrismaClient();
+    const runner = await simulationService.getRunner(prisma, req.params.id);
     if (!runner) return res.status(404).json({ error: "Simulation not found" });
     await runner.removeCharacter(req.params.charId);
     return res.json({ success: true });

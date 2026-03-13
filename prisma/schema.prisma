@@ -270,13 +270,6 @@ model ModuleBackground {
   introduction        String?
   tags                Json?
   emailId             String? @map("email_id")
-  macroSceneStructure Json?   @map("macro_scene_structure")
-  truthTimeline       Json?   @map("truth_timeline")
-  knowledgeMatrix     Json?   @map("knowledge_matrix")
-  redHerrings         Json?   @map("red_herrings")
-  historicalMythos    Json?   @map("historical_mythos")
-  globalTrigger       Json?   @map("global_trigger")
-  endStateDefinition  Json?   @map("end_state_definition")
   macroMapPath        String? @map("macro_map_path")
   module              Module  @relation(fields: [moduleId], references: [moduleId], onDelete: Cascade)
 
@@ -420,7 +413,6 @@ model Scene {
 model ScenarioCondition {
   conditionId      String   @id @map("condition_id")
   sceneId          String   @map("scene_id")
-  conditionType    String   @map("condition_type")
   description      String
   mechanicalEffect Json?    @map("mechanical_effect")
   createdAt        DateTime @default(now()) @map("created_at")
@@ -430,7 +422,6 @@ model ScenarioCondition {
 
   @@index([sceneId])
   @@index([moduleId], map: "idx_scenario_conditions_module")
-  @@index([conditionType])
   @@map("scenario_conditions")
 }
 
@@ -456,6 +447,7 @@ model Session {
   npcDailyPlans      NpcDailyPlan[]
   npcMemories        NpcMemory[]
   simulationEvents   SimulationEvent[]
+  simulationRuntime  SimulationRuntime?
 
   @@index([status])
   @@index([startedAt])
@@ -464,6 +456,23 @@ model Session {
   @@index([parentSessionId, subId])
   @@index([moduleId])
   @@map("sessions")
+}
+
+model SimulationRuntime {
+  sessionId        String   @id @map("session_id")
+  tick             Int
+  simulationState  String   @map("simulation_state")
+  stopReason       String?  @map("stop_reason")
+  language         String
+  config           Json
+  gameState        Json     @map("game_state")
+  createdAt        DateTime @default(now()) @map("created_at")
+  updatedAt        DateTime @updatedAt @map("updated_at")
+
+  session          Session  @relation(fields: [sessionId], references: [sessionId], onDelete: Cascade)
+
+  @@index([simulationState])
+  @@map("simulation_runtime")
 }
 
 model GameTurn {
@@ -479,7 +488,6 @@ model GameTurn {
   actionResults    Json?     @map("action_results")
   directorDecision Json?     @map("director_decision")
   keeperNarrative  String?   @map("keeper_narrative")
-  clueRevelations  Json?     @map("clue_revelations")
   sceneId          String?   @map("scene_id")
   sceneName        String?   @map("scene_name")
   location         String?
@@ -504,57 +512,6 @@ model GameTurn {
   @@index([sessionId, sceneRoomId, turnNumber])
   @@index([startedAt])
   @@map("game_turns")
-}
-
-model GameEvent {
-  id          Int      @id @default(autoincrement())
-  eventType   String   @map("event_type")
-  sessionId   String   @map("session_id")
-  timestamp   DateTime
-  details     Json
-  characterId String?  @map("character_id")
-  location    String?
-  tags        Json?
-  createdAt   DateTime @default(now()) @map("created_at")
-
-  @@index([sessionId])
-  @@index([eventType])
-  @@index([timestamp])
-  @@index([characterId])
-  @@map("game_events")
-}
-
-model Discovery {
-  id          Int      @id @default(autoincrement())
-  clueId      String   @map("clue_id")
-  sessionId   String   @map("session_id")
-  discoverer  String
-  method      String
-  timestamp   DateTime
-  description String?
-  createdAt   DateTime @default(now()) @map("created_at")
-
-  @@index([sessionId])
-  @@index([clueId])
-  @@map("discoveries")
-}
-
-model Relationship {
-  id          Int      @id @default(autoincrement())
-  characterId String   @map("character_id")
-  npcId       String   @map("npc_id")
-  value       Int      @default(0)
-  sessionId   String   @map("session_id")
-  lastUpdated DateTime @map("last_updated")
-  notes       String?
-  createdAt   DateTime @default(now()) @map("created_at")
-  emailId     String?  @map("email_id")
-
-  @@unique([characterId, npcId, sessionId])
-  @@index([characterId])
-  @@index([npcId])
-  @@index([emailId])
-  @@map("relationships")
 }
 
 model GameCheckpoint {

@@ -28,7 +28,8 @@ export async function createSimulation(req: Request, res: Response) {
 
 export async function startSimulation(req: Request, res: Response) {
   try {
-    await simulationService.startSimulation(req.params.id);
+    const prisma = getPrismaClient();
+    await simulationService.startSimulation(prisma, req.params.id);
     return res.json({ success: true });
   } catch (error) {
     return res.status(404).json({
@@ -37,9 +38,10 @@ export async function startSimulation(req: Request, res: Response) {
   }
 }
 
-export function pauseSimulation(req: Request, res: Response) {
+export async function pauseSimulation(req: Request, res: Response) {
   try {
-    simulationService.pauseSimulation(req.params.id);
+    const prisma = getPrismaClient();
+    await simulationService.pauseSimulation(prisma, req.params.id);
     return res.json({ success: true });
   } catch (error) {
     return res.status(404).json({
@@ -50,7 +52,8 @@ export function pauseSimulation(req: Request, res: Response) {
 
 export async function resumeSimulation(req: Request, res: Response) {
   try {
-    await simulationService.resumeSimulation(req.params.id);
+    const prisma = getPrismaClient();
+    await simulationService.resumeSimulation(prisma, req.params.id);
     return res.json({ success: true });
   } catch (error) {
     return res.status(404).json({
@@ -62,7 +65,8 @@ export async function resumeSimulation(req: Request, res: Response) {
 export async function stepSimulation(req: Request, res: Response) {
   try {
     const ticks = req.body?.ticks ?? 1;
-    await simulationService.stepSimulation(req.params.id, ticks);
+    const prisma = getPrismaClient();
+    await simulationService.stepSimulation(prisma, req.params.id, ticks);
     return res.json({ success: true });
   } catch (error) {
     return res.status(404).json({
@@ -71,9 +75,10 @@ export async function stepSimulation(req: Request, res: Response) {
   }
 }
 
-export function stopSimulation(req: Request, res: Response) {
+export async function stopSimulation(req: Request, res: Response) {
   try {
-    simulationService.stopSimulation(req.params.id);
+    const prisma = getPrismaClient();
+    await simulationService.stopSimulation(prisma, req.params.id);
     return res.json({ success: true });
   } catch (error) {
     return res.status(404).json({
@@ -82,17 +87,18 @@ export function stopSimulation(req: Request, res: Response) {
   }
 }
 
-export function getStatus(req: Request, res: Response) {
+export async function getStatus(req: Request, res: Response) {
   try {
-    const runner = simulationService.getRunner(req.params.id);
-    if (!runner) {
-      return res.status(404).json({ error: "Simulation not found" });
-    }
-    return res.json(runner.getStatus());
+    const prisma = getPrismaClient();
+    const status = await simulationService.getSimulationStatus(
+      prisma,
+      req.params.id,
+    );
+    return res.json(status);
   } catch (error) {
-    return res.status(500).json({
-      error: error instanceof Error ? error.message : "Unknown error",
-    });
+    const message = error instanceof Error ? error.message : "Unknown error";
+    const status = message.includes("not found") ? 404 : 500;
+    return res.status(status).json({ error: message });
   }
 }
 
@@ -116,7 +122,8 @@ export async function getEvents(req: Request, res: Response) {
   }
 }
 
-export function listSimulations(_req: Request, res: Response) {
-  const simulations = simulationService.listSimulations();
+export async function listSimulations(_req: Request, res: Response) {
+  const prisma = getPrismaClient();
+  const simulations = await simulationService.listSimulations(prisma);
   return res.json({ simulations });
 }

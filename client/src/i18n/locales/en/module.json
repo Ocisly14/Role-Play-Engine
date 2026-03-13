@@ -32,7 +32,7 @@
   "uploadInstructions": {
     "title": "Upload Module Instructions",
     "step1": "Prepare your module folder with the following structure:",
-    "step2": "module_digest.json - Module metadata",
+    "step2": "module_setup.json - Runtime setup (weather presets)",
     "step3": "[Module]_npc/ - NPC profiles (JSON or documents)",
     "step4": "[Module]_Scenarios/ - Scenario files (JSON or documents)",
     "step5": "Compress the folder as a ZIP file",
@@ -42,7 +42,7 @@
   },
   "validation": {
     "invalidFormat": "Invalid module format",
-    "missingDigest": "Missing module_digest.json",
+    "missingDigest": "Missing module_setup.json",
     "fileTooLarge": "File size exceeds 50MB limit",
     "invalidZip": "Invalid ZIP file"
   },

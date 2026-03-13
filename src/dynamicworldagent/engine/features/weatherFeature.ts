@@ -264,7 +264,7 @@ function initWeatherFromPresets(dgsm: DynamicGameStateManager): void {
   });
 
   const presets: Array<{ regionId: string; weatherType: WeatherType; intensity: number }> =
-    (state as any).moduleDigest?.weatherPresets ?? [];
+    (state as any).moduleSetup?.weatherPresets ?? [];
 
   const presetMap = new Map<string, { weatherType: WeatherType; intensity: number }>();
   for (const p of presets) {

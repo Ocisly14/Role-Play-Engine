@@ -21,6 +21,10 @@ import {
   resolveEntryScene,
   upsertIntent,
 } from "./characterInjection.js";
+import {
+  persistSimulationEvents,
+  persistSimulationRuntime,
+} from "./runtimePersistence.js";
 
 export class SimulationRunner {
   // --- Core dependencies ---
@@ -87,6 +91,34 @@ export class SimulationRunner {
     };
   }
 
+  hydrateFromRuntime(params: {
+    state: SimulationState;
+    ticksExecuted: number;
+    stopReason?: StopReason;
+  }): void {
+    this.state =
+      params.state === "running" ? "paused" : params.state;
+    this.ticksExecuted = params.ticksExecuted;
+    this.stopReason = params.stopReason;
+    this.shouldPause = false;
+    this.shouldStop = false;
+    this.tickInProgress = false;
+    this.clearScheduledTick();
+  }
+
+  async saveRuntime(): Promise<void> {
+    await persistSimulationRuntime({
+      prisma: this.prisma,
+      sessionId: this.sessionId,
+      tick: this.ticksExecuted,
+      simulationState: this.state,
+      stopReason: this.stopReason,
+      language: this.language,
+      config: this.config,
+      gameState: this.dgsm.serialize(),
+    });
+  }
+
   async start(): Promise<void> {
     if (this.state === "running") return;
     if (this.state === "stopped" || this.state === "completed") return;
@@ -94,12 +126,13 @@ export class SimulationRunner {
     this.state = "running";
     this.shouldStop = false;
     this.shouldPause = false;
-    this.emitStateChange();
+    await this.persistEvents([this.emitStateChange()]);
+    await this.saveRuntime();
 
     this.scheduleNextTick();
   }
 
-  pause(): void {
+  async pause(): Promise<void> {
     if (this.state !== "running") return;
     this.shouldPause = true;
 
@@ -107,7 +140,8 @@ export class SimulationRunner {
     if (!this.tickInProgress) {
       this.clearScheduledTick();
       this.state = "paused";
-      this.emitStateChange();
+      await this.persistEvents([this.emitStateChange()]);
+      await this.saveRuntime();
     }
     // Otherwise, the current tick will observe shouldPause after completing
   }
@@ -160,11 +194,11 @@ export class SimulationRunner {
     }
   }
 
-  stop(): void {
+  async stop(): Promise<void> {
     this.shouldStop = true;
 
     if (!this.tickInProgress) {
-      this.finalize("manual");
+      await this.finalize("manual");
     }
     // Otherwise, the current tick will observe shouldStop after completing
   }
@@ -218,6 +252,7 @@ export class SimulationRunner {
       gameState.gameDay,
       this.language
     );
+    await this.saveRuntime();
   }
 
   /**
@@ -237,6 +272,7 @@ export class SimulationRunner {
       this.sessionId,
       characterId
     );
+    await this.saveRuntime();
   }
 
   /**
@@ -267,6 +303,7 @@ export class SimulationRunner {
 
     // Mark for schedule revision on resume
     this.modifiedCharacterIds.add(characterId);
+    await this.saveRuntime();
   }
 
   /**
@@ -295,11 +332,12 @@ export class SimulationRunner {
 
       // After tick, check if we should pause/stop or schedule the next tick
       if (this.shouldStop) {
-        this.finalize("manual");
+        await this.finalize("manual");
       } else if (this.shouldPause) {
         this.shouldPause = false;
         this.state = "paused";
-        this.emitStateChange();
+        await this.persistEvents([this.emitStateChange()]);
+        await this.saveRuntime();
       } else if (this.state === "running") {
         this.scheduleNextTick();
       }
@@ -342,11 +380,12 @@ export class SimulationRunner {
         dayBefore
       );
       this.collectedEvents.push(...events);
+      const pendingEvents = [...events];
 
       // Handle day transition
       if (tickResult.dayChanged) {
         const stateAfter = this.dgsm.getState();
-        this.events.emitSimulationEvent(
+        const dayEvent = this.events.emitSimulationEvent(
           "day_transition",
           "system",
           "global",
@@ -357,6 +396,8 @@ export class SimulationRunner {
             newDay: stateAfter.gameDay,
           }
         );
+        pendingEvents.push(dayEvent);
+        this.collectedEvents.push(dayEvent);
 
         // Let the planning agent handle new-day procedures
         await this.npcPlanningAgent.onNewDay(
@@ -370,12 +411,18 @@ export class SimulationRunner {
       }
 
       // Check derived events (NPC deaths, all clues discovered)
-      this.checkDerivedEvents();
+      const derivedEvents = this.checkDerivedEvents();
+      this.collectedEvents.push(...derivedEvents);
+      pendingEvents.push(...derivedEvents);
 
       // Check end conditions
-      if (this.shouldStopAfterTick()) {
-        return; // finalize was already called inside shouldStopAfterTick
+      const stopEvent = this.shouldStopAfterTick();
+      if (stopEvent) {
+        pendingEvents.push(stopEvent);
       }
+
+      await this.persistEvents(pendingEvents);
+      await this.saveRuntime();
     } catch (error) {
       console.error(
         `[SimulationRunner] Error during tick ${this.ticksExecuted}:`,
@@ -384,7 +431,12 @@ export class SimulationRunner {
       // Auto-pause on error
       this.clearScheduledTick();
       this.state = "paused";
-      this.emitStateChange();
+      try {
+        await this.persistEvents([this.emitStateChange()]);
+        await this.saveRuntime();
+      } catch (persistError) {
+        console.error("[SimulationRunner] Failed to persist paused state:", persistError);
+      }
     } finally {
       this.tickInProgress = false;
     }
@@ -395,8 +447,9 @@ export class SimulationRunner {
    * - NPC deaths (hp <= 0)
    * - All knowledge discovered
    */
-  private checkDerivedEvents(): void {
+  private checkDerivedEvents(): SimulationEvent[] {
     const gameState = this.dgsm.getState();
+    const derivedEvents: SimulationEvent[] = [];
 
     // --- NPC Deaths ---
     for (const npc of gameState.npcCharacters) {
@@ -418,17 +471,18 @@ export class SimulationRunner {
             hp: stats.hp,
           }
         );
-        this.collectedEvents.push(event);
+        derivedEvents.push(event);
       }
     }
 
+    return derivedEvents;
   }
 
   /**
    * Check if the simulation should stop based on configured end conditions.
    * Returns true if stop was triggered (finalize is called internally).
    */
-  private shouldStopAfterTick(): boolean {
+  private shouldStopAfterTick(): SimulationEvent | null {
     const gameState = this.dgsm.getState();
 
     // Check maxDays
@@ -436,8 +490,7 @@ export class SimulationRunner {
       this.config.maxDays !== undefined &&
       gameState.gameDay > this.config.maxDays
     ) {
-      this.finalize("max_days");
-      return true;
+      return this.transitionToTerminalState("max_days");
     }
 
     // Check stop events
@@ -449,30 +502,29 @@ export class SimulationRunner {
         recentTypes.includes(ev as any)
       );
       if (triggered) {
-        this.finalize("event_triggered");
-        return true;
+        return this.transitionToTerminalState("event_triggered");
       }
     }
 
-    return false;
+    return null;
   }
 
   /**
    * Finalize the simulation — set terminal state and clean up.
    */
-  private finalize(reason: StopReason): void {
+  private async finalize(reason: StopReason): Promise<void> {
     this.clearScheduledTick();
-    this.stopReason = reason;
-    this.state = reason === "manual" ? "stopped" : "completed";
-    this.emitStateChange();
+    const event = this.transitionToTerminalState(reason);
+    await this.persistEvents([event]);
+    await this.saveRuntime();
   }
 
   /**
    * Emit a state change event.
    */
-  private emitStateChange(): void {
+  private emitStateChange(): SimulationEvent {
     const gameState = this.dgsm.getState();
-    this.events.emitSimulationEvent(
+    return this.events.emitSimulationEvent(
       "simulation_state_changed",
       "system",
       "global",
@@ -484,5 +536,15 @@ export class SimulationRunner {
         stopReason: this.stopReason,
       }
     );
+  }
+
+  private transitionToTerminalState(reason: StopReason): SimulationEvent {
+    this.stopReason = reason;
+    this.state = reason === "manual" ? "stopped" : "completed";
+    return this.emitStateChange();
+  }
+
+  private async persistEvents(events: SimulationEvent[]): Promise<void> {
+    await persistSimulationEvents(this.prisma, events);
   }
 }

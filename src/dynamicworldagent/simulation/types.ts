@@ -35,7 +35,7 @@ export interface SimulationConfig {
   sessionId: string;
   moduleId: string;
   mode: "realtime" | "paused";
-  tickIntervalMs: number;
+  tickIntervalMs?: number;
   maxDays?: number;
   stopEvents?: string[];
 }
@@ -46,6 +46,16 @@ export interface SimulationStatus {
   currentTime: string;
   ticksExecuted: number;
   stopReason?: StopReason;
+}
+
+export interface SimulationRuntimeRecord {
+  sessionId: string;
+  tick: number;
+  simulationState: SimulationState;
+  stopReason?: StopReason;
+  language: string;
+  config: SimulationConfig;
+  gameState: Record<string, unknown>;
 }
 
 export const DEFAULT_TICK_INTERVAL_MS = 60_000;

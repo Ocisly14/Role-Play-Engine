@@ -32,7 +32,7 @@
   "uploadInstructions": {
     "title": "上传模组说明",
     "step1": "准备您的模组文件夹,结构如下:",
-    "step2": "module_digest.json - 模组元数据",
+    "step2": "module_setup.json - 运行时设置（天气预设）",
     "step3": "[模组名]_npc/ - NPC配置文件(JSON或文档)",
     "step4": "[模组名]_Scenarios/ - 场景文件(JSON或文档)",
     "step5": "将文件夹压缩为ZIP文件",
@@ -42,7 +42,7 @@
   },
   "validation": {
     "invalidFormat": "模组格式无效",
-    "missingDigest": "缺少module_digest.json文件",
+    "missingDigest": "缺少module_setup.json文件",
     "fileTooLarge": "文件大小超过50MB限制",
     "invalidZip": "无效的ZIP文件"
   },

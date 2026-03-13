@@ -79,11 +79,6 @@ export interface DiscoveryEntry {
   similarity: number;     // semantic match score
 }
 
-/**
- * @deprecated Use DiscoveryEntry instead
- */
-export type DiscoveredClueEntry = DiscoveryEntry;
-
 export type SuccessLevel = "critical" | "hard" | "regular" | "fail" | "fumble";
 
 export interface CharacterAction {

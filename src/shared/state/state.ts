@@ -89,11 +89,6 @@ export interface DiscoveredKnowledge {
   method?: string;
 }
 
-/**
- * @deprecated Use DiscoveredKnowledge instead
- */
-export type DiscoveredClue = DiscoveredKnowledge;
-
 export type TimeConsumption =
   | "instant"
   | "short"

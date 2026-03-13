@@ -3,6 +3,7 @@
  * Loads DynamicWorld data from database or files into DynamicGameState
  */
 
+import fs from "fs";
 import path from "path";
 import { NPCLoader } from "../../shared/agents/character/npcloader/index.js";
 import type {
@@ -21,6 +22,7 @@ import type {
   SceneCondition,
 } from "../dynamicBasicAgent/npcPlanning/types.js";
 import type {
+  ModuleSetup,
   DynamicNPCProfile,
   DynamicScene,
 } from "./types.js";
@@ -49,6 +51,24 @@ function normalizeIdToModuleScope(id: string, moduleId: string | null): string {
   return scopeIdByModule(stripModuleScope(id), moduleId);
 }
 
+function loadModuleSetupFromFiles(moduleName: string): ModuleSetup | null {
+  const moduleDir = path.join(process.cwd(), "data", "Mods", moduleName);
+  const source = path.join(moduleDir, "module_setup.json");
+
+  if (!fs.existsSync(source)) return null;
+
+  try {
+    const parsed = JSON.parse(fs.readFileSync(source, "utf8")) as ModuleSetup;
+    return parsed;
+  } catch (error) {
+    console.warn(
+      `[DynamicGameState] Failed to load module setup for "${moduleName}":`,
+      error
+    );
+    return null;
+  }
+}
+
 /**
  * Load DynamicGameState from database
  */
@@ -72,10 +92,6 @@ export async function loadDynamicGameStateFromDatabase(
     where: { moduleId },
     select: {
       moduleId: true,
-      title: true,
-      moduleNotes: true,
-      introduction: true,
-      macroMapPath: true,
     },
   });
 
@@ -95,20 +111,10 @@ export async function loadDynamicGameStateFromDatabase(
   const manager = new DynamicGameStateManager(state);
 
   try {
-    // Load module digest (only fields used by simulation engine)
-    if (moduleData.moduleNotes || moduleData.introduction) {
-      const moduleDigest: any = {
-        moduleNotes: moduleData.moduleNotes || "",
-        introduction: moduleData.introduction || "",
-      };
-
-      // Add macroMapPath if present
-      if (moduleData.macroMapPath) {
-        moduleDigest.macroMapPath = moduleData.macroMapPath;
-      }
-
+    const moduleSetup = loadModuleSetupFromFiles(moduleName);
+    if (moduleSetup) {
       manager.loadWorldData({
-        moduleDigest,
+        moduleSetup,
       });
     }
 
@@ -195,7 +201,7 @@ export async function loadDynamicGameStateFromModuleLoader(
 
   // Load all world data
   manager.loadWorldData({
-    moduleDigest: loadedModule.moduleDigest,
+    moduleSetup: loadedModule.moduleSetup ?? undefined,
     scenarioOutlines: loadedModule.scenarios,
   });
 
@@ -245,6 +251,10 @@ export async function loadDynamicGameState(
     resolvedEmailId
   );
   if (dbState) {
+    const moduleSetup = loadModuleSetupFromFiles(moduleName);
+    if (moduleSetup) {
+      (dbState as DynamicGameState).moduleSetup = moduleSetup;
+    }
     return dbState;
   }
 
@@ -666,4 +676,3 @@ function isValidTimeOfDay(value: string): boolean {
   const minutes = Number(timeMatch[2]);
   return hours >= 0 && hours <= 23 && minutes >= 0 && minutes <= 59;
 }
-

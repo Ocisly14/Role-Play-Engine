@@ -15,7 +15,7 @@ interface DynamicGameState {
   npcCharacters: DynamicNPCProfile[];
   discoveredKnowledge: DiscoveredKnowledge[];
   moduleName: string;
-  moduleDigest: ModuleDigest | null;
+  moduleSetup: ModuleSetup | null;
   scenarioOutlines: ScenarioOutline[];
   featureState: Record<string, Record<string, unknown>>;
   npcLocations: Record<string, string>;
@@ -55,4 +55,4 @@ const restored = DynamicGameStateManager.deserialize(serialized);
 
 ## Module Data Layer
 
-Module metadata types (`MacroSceneStructure`, `TruthEvent`, `RedHerring`, etc.) live in `types.ts` and represent the on-disk JSON file format. They are loaded by `WorldModuleLoader` and persisted to the database but are **not** part of the simulation runtime state.
+Module file metadata types such as `ModuleSetup`, `ScenarioOutline`, `DynamicScene`, and `TransportEdge` live in `types.ts`. `WorldModuleLoader` only loads the subset that the simulation runtime actually consumes.

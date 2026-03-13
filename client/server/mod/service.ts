@@ -98,14 +98,11 @@ async function purgeMissingModFromDatabase(
  * Check if a module is a world-builder generated module
  */
 function isWorldBuilderModule(modPath: string): boolean {
-  const worldBuilderFiles = [
-    "truth_timeline.json",
-    "knowledge_matrix.json",
-    "macro_scene.json",
-  ];
-
-  return worldBuilderFiles.every((file) =>
-    fs.existsSync(path.join(modPath, file))
+  const moduleName = path.basename(modPath);
+  return (
+    fs.existsSync(path.join(modPath, "module_setup.json")) &&
+    fs.existsSync(path.join(modPath, "scenarios_outline.json")) &&
+    fs.existsSync(path.join(modPath, `${moduleName}_Scenarios`))
   );
 }
 
@@ -151,8 +148,8 @@ export async function loadMod(
       throw new Error("Failed to load world-builder module");
     }
 
-    const scenariosLoaded = loadedModule.scenarios.length;
-    const npcsLoaded = loadedModule.npcs.length;
+    const scenariosLoaded = loadedModule.importStats.scenariosLoaded;
+    const npcsLoaded = loadedModule.importStats.npcsLoaded;
     const modulesLoaded = 1;
 
     onProgress?.(
@@ -257,16 +254,7 @@ async function clearExistingModData(
 
   // Delete in FK-respecting order within a transaction
   await prisma.$transaction([
-    prisma.scenarioClue.deleteMany({
-      where: moduleId ? { moduleId } : { moduleId: noMatchModuleId },
-    }),
     prisma.scenarioCondition.deleteMany({
-      where: moduleId ? { moduleId } : { moduleId: noMatchModuleId },
-    }),
-    prisma.scenarioCharacter.deleteMany({
-      where: moduleId ? { moduleId } : { moduleId: noMatchModuleId },
-    }),
-    prisma.scenarioSnapshot.deleteMany({
       where: moduleId ? { moduleId } : { moduleId: noMatchModuleId },
     }),
     prisma.scenario.deleteMany({
@@ -276,8 +264,6 @@ async function clearExistingModData(
       where: moduleId ? { moduleId } : { moduleId: noMatchModuleId },
     }),
     prisma.npcRelationship.deleteMany({ where: { emailId } }),
-    prisma.npcClue.deleteMany({ where: { emailId } }),
-    prisma.relationship.deleteMany({ where: { emailId } }),
     prisma.character.deleteMany({ where: { isNpc: true, emailId } }),
   ]);
 }

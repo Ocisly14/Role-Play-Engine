@@ -318,9 +318,6 @@ async function cleanModuleDataForOwner(
 
   // Scenario base-content is module-scoped.
   await prisma.scenarioCondition.deleteMany({ where: { moduleId } });
-  await prisma.scenarioClue.deleteMany({ where: { moduleId } });
-  await prisma.scenarioCharacter.deleteMany({ where: { moduleId } });
-  await prisma.scenarioSnapshot.deleteMany({ where: { moduleId } });
   await prisma.scenario.deleteMany({ where: { moduleId } });
 
   // Legacy cleanup for NPC data that is still keyed by email+name.
@@ -337,17 +334,11 @@ async function cleanModuleDataForOwner(
     });
     const npcIds = npcRows.map((row) => row.characterId);
     if (npcIds.length > 0) {
-      await prisma.npcClue.deleteMany({
-        where: { npcId: { in: npcIds }, emailId: ownerEmail },
-      });
       await prisma.npcRelationship.deleteMany({
         where: {
           OR: [{ sourceId: { in: npcIds } }, { targetId: { in: npcIds } }],
           emailId: ownerEmail,
         },
-      });
-      await prisma.relationship.deleteMany({
-        where: { npcId: { in: npcIds }, emailId: ownerEmail },
       });
       await prisma.character.deleteMany({
         where: {

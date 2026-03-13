@@ -6,7 +6,7 @@
  */
 
 import type {
-  ModuleDigest,
+  ModuleSetup,
   ScenarioOutline,
 } from "./types.js";
 
@@ -52,7 +52,7 @@ export interface DynamicGameState {
 
   // === Module Metadata ===
   moduleName: string;
-  moduleDigest: ModuleDigest | null;
+  moduleSetup: ModuleSetup | null;
   scenarioOutlines: ScenarioOutline[];
 
   // === World Feature Runtime State ===
@@ -99,7 +99,7 @@ export const initialDynamicGameState = (params: {
   npcCharacters: [],
   discoveredKnowledge: [],
   moduleName: params.moduleName,
-  moduleDigest: null,
+  moduleSetup: null,
   scenarioOutlines: [],
   featureState: {},
   npcLocations: {},
@@ -166,11 +166,11 @@ export class DynamicGameStateManager {
    * Only loads fields that the simulation engine uses.
    */
   loadWorldData(data: {
-    moduleDigest?: ModuleDigest;
+    moduleSetup?: ModuleSetup;
     scenarioOutlines?: ScenarioOutline[];
   }): void {
-    if (data.moduleDigest) {
-      this.state.moduleDigest = data.moduleDigest;
+    if (data.moduleSetup) {
+      this.state.moduleSetup = data.moduleSetup;
     }
     if (data.scenarioOutlines) {
       this.state.scenarioOutlines = data.scenarioOutlines;
@@ -266,7 +266,7 @@ export class DynamicGameStateManager {
     return {
       sessionId: data.sessionId ?? "",
       moduleName: data.moduleName ?? "",
-      moduleDigest: data.moduleDigest ?? null,
+      moduleSetup: data.moduleSetup ?? null,
       gameDay: data.gameDay ?? 1,
       timeOfDay: data.timeOfDay ?? "08:00",
       npcCharacters: data.npcCharacters ?? [],
