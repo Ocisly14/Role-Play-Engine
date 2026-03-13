@@ -1,4 +1,4 @@
-import type { CharacterAttributes } from "../../shared/agents/models/gameTypes.js";
+import type { CharacterAttributes } from "../state/types.js";
 
 /**
  * Base skill defaults aligned with src/shared/agents/memory/database/seedData.ts

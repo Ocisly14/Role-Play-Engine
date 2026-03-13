@@ -2,6 +2,8 @@
     {
       "name": "Isabela Smith",
       "occupation": "Head Nurse",
+      "age": 25,
+      "gender": "female",
       "appearance": "A young woman with a professional and neat appearance, usually dressed in a nurse’s uniform, giving off a calm and trustworthy impression.",
       "personality": "Responsible, patient, diligent, and caring. She takes her duties seriously and shows strong emotional commitment to those she cares about.",
       "background": "Isabela Smith is a young head nurse at the local hospital. She is known among her colleagues for being conscientious and patient. She is engaged to a man from a well-off family who works as a diplomat. Many hospital staff privately speculate that she will eventually leave her job to marry and move to a big city. On the night of December 26, she abruptly resigned and left Cassandra overnight, taking her fiancé with her after he suddenly suffered a mental breakdown.",
@@ -22,12 +24,29 @@
         "INT": 65,
         "EDU": 75
       },
+      "status": {
+        "hp": 10,
+        "maxHp": 10,
+        "sanity": 65,
+        "maxSanity": 65,
+        "luck": 60,
+        "mp": 13,
+        "conditions": []
+      },
       "skills": {
         "Medicine": 70,
         "First Aid": 75,
         "Psychology": 50,
         "Persuade": 45
       },
+      "inventory": [
+        {
+          "name": "Hospital ID card",
+          "properties": {
+            "note": "Provides access to restricted areas"
+          }
+        }
+      ],
       "clues": [
         {
           "clueText": "Isabela resigned and left Cassandra on the night of December 26, urgently taking her fiancé with her after he became mentally unstable.",
@@ -58,6 +77,7 @@
           "history": "Their engagement was stable until his sudden mental collapse, prompting Isabela to flee Cassandra with him."
         }
       ],
-      "notes": "Isabela is no longer physically present in Cassandra after December 26; her apparent presence afterward is a deliberate deception."
+      "notes": "Isabela is no longer physically present in Cassandra after December 26; her apparent presence afterward is a deliberate deception.",
+      "currentLocation": "SCN_1"
     }
   ]

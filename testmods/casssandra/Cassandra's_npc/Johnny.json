@@ -44,8 +44,18 @@
         "Charm": 90
       },
       "inventory": [
-        "Hunting shotgun",
-        "Hunting gear"
+        {
+          "name": "Hunting shotgun",
+          "properties": {
+            "note": "A well-maintained shotgun used for hunting."
+          }
+        },
+        {
+          "name": "Hunting gear",
+          "properties": {
+            "note": "Basic outdoor hunting equipment including a knife, binoculars, and camouflage clothing."
+          }
+        }
       ],
     "clues": [
       {
@@ -78,6 +88,7 @@
           "history": "Their conflict began during a bar confrontation."
         }
       ],
-      "notes": "Johnny’s emotional volatility makes him a potential wildcard who could escalate situations unexpectedly."
+      "notes": "Johnny’s emotional volatility makes him a potential wildcard who could escalate situations unexpectedly.",
+      "currentLocation": "SCN_16"
     }
   ]

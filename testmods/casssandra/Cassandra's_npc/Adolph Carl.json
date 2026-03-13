@@ -2,7 +2,7 @@
   {
     "name": "Adolph Carl",
     "occupation": "Information broker / upper-class intermediary",
-    "age": 35,
+    "age": 36,
     "gender": "male",
     "appearance": "A tall, slender man with a pale complexion and an unhealthy yet dangerous aura. He is meticulous about his appearance, always dressed in elegant, well-tailored formal wear. He keeps expensive incense and has refined taste in perfumes.",
     "personality": "Calm, elegant, manipulative, highly self-controlled. Enjoys being in control, skilled at concealing emotions and lying when necessary. Cynical toward high society yet obsessed with being accepted by it. Opportunistic and untrustworthy.",
@@ -138,6 +138,7 @@
         "history": "Their paths crossed unknowingly during a murder in France."
       }
     ],
-    "notes": "Adolph frequently manipulates investigators to gather information while revealing only what benefits him. He may betray allies at any moment if it secures his safety or advantage."
+    "notes": "Adolph frequently manipulates investigators to gather information while revealing only what benefits him. He may betray allies at any moment if it secures his safety or advantage.",
+    "currentLocation": "SCN_15"
   }
 ]

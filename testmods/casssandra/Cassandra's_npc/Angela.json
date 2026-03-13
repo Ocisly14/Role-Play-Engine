@@ -70,6 +70,7 @@
         "history": "Angela has conducted long-term drug transactions with Lux, forming a mutually beneficial business relationship."
       }
     ],
-    "notes": "Angela is a minor NPC and does not actively participate in the investigators’ main investigation unless directly approached."
+    "notes": "Angela is a minor NPC and does not actively participate in the investigators’ main investigation unless directly approached.",
+    "currentLocation": "OUTDOOR"
   }
 ]

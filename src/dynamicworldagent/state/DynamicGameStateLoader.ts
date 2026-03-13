@@ -19,7 +19,6 @@ import {
 } from "../../shared/agents/memory/database/moduleScope.js";
 import { getPrismaClient } from "../../shared/agents/memory/database/prismaClient.js";
 import { resolveEmailId } from "../../shared/agents/memory/database/userContext.js";
-import type { NPCProfile } from "../../shared/agents/models/gameTypes.js";
 import type { SceneCondition } from "../dynamicBasicAgent/npcPlanning/types.js";
 import { bootstrapNpcSecrets } from "../memory/bootstrapSecrets.js";
 import type { DynamicGameState } from "./DynamicGameState.js";
@@ -30,15 +29,6 @@ import {
 import { decodeSceneItemsPayload } from "./sceneItemContextPayload.js";
 import type { DynamicNPCProfile, DynamicScene, ModuleSetup } from "./types.js";
 import { WorldModuleLoader } from "./worldModuleLoader.js";
-
-/**
- * Convert NPCProfile (from multiagent system) to DynamicNPCProfile (for DynamicWorld system)
- * Removes currentLocation field as it's tracked via actionLog in DynamicWorld
- */
-function convertNPCProfileToDynamic(npc: NPCProfile): DynamicNPCProfile {
-  const { currentLocation, ...rest } = npc;
-  return rest as DynamicNPCProfile;
-}
 
 function normalizeIdToModuleScope(id: string, moduleId: string | null): string {
   if (!moduleId) return id;
@@ -405,27 +395,27 @@ export async function initializeCompleteDynamicGameState(
   });
   const allNPCs = await npcLoader.getAllNPCs();
 
-  const npcCharacters: DynamicNPCProfile[] = allNPCs.map((npc) => {
+  const npcCharacters: DynamicNPCProfile[] = allNPCs.map((npc: any) => {
     const normalizedId = normalizeIdToModuleScope(npc.id, scopedModuleId);
-    const dynamicNpc = convertNPCProfileToDynamic(npc);
     return {
-      ...dynamicNpc,
+      ...npc,
       id: normalizedId,
-      knowledge: Array.isArray(dynamicNpc.knowledge)
-        ? dynamicNpc.knowledge.map((k) => ({
+      longTermIntent: npc.longTermIntent ?? npc.background ?? "",
+      knowledge: Array.isArray(npc.knowledge)
+        ? npc.knowledge.map((k: any) => ({
             ...k,
             id: normalizeIdToModuleScope(k.id, scopedModuleId),
           }))
         : [],
-      relationships: Array.isArray(dynamicNpc.relationships)
-        ? dynamicNpc.relationships.map((rel) => ({
+      relationships: Array.isArray(npc.relationships)
+        ? npc.relationships.map((rel: any) => ({
             ...rel,
             targetId: rel.targetId
               ? normalizeIdToModuleScope(rel.targetId, scopedModuleId)
               : rel.targetId,
           }))
         : [],
-    };
+    } as DynamicNPCProfile;
   });
 
   console.log(

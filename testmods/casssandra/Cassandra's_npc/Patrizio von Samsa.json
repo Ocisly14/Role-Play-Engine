@@ -2,7 +2,7 @@
     {
       "name": "Patrizio von Samsa",
       "occupation": "Former Psychiatrist / Politician",
-      "age": 55,
+      "age": 50,
       "gender": "male",
       "appearance": "A reclusive middle-aged to elderly man of German descent. He dresses conservatively and neatly, favoring dark, formal clothing. His demeanor is restrained and distant, giving the impression of a man who prefers solitude and control.",
       "personality": "Cold, calculating, ambitious, and intellectually arrogant. Patrizio believes he understands human nature better than others and sees people primarily as subjects to be studied or controlled. He is patient, manipulative, and deeply convinced of his own righteousness.",
@@ -45,9 +45,9 @@
         "Credit Rating": 70
       },
       "inventory": [
-        "Personal research notes",
-        "Political documents",
-        "Medication for stress and insomnia"
+        { "name": "Personal research notes" },
+        { "name": "Political documents" },
+        { "name": "Medication for stress and insomnia" }
       ],
       "clues": [
         {
@@ -84,6 +84,7 @@
           "history": "Patrizio’s experiments and political schemes indirectly intersect with Nancy’s past involving cult rituals."
         }
       ],
-      "notes": "Patrizio is a key antagonist whose knowledge of psychology and the Mythos allows him to manipulate both individuals and institutions while maintaining a respectable public image."
+      "notes": "Patrizio is a key antagonist whose knowledge of psychology and the Mythos allows him to manipulate both individuals and institutions while maintaining a respectable public image.",
+      "currentLocation": "SCN_3"
     }
   ]

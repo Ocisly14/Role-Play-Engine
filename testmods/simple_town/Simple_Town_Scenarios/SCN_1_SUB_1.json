@@ -1,0 +1,24 @@
+{
+  "id": "SCN_1_SUB_1",
+  "name": "A's Living Room",
+  "description": "A cozy living room with a worn sofa, a small TV, and a coffee table. A bookshelf lines one wall, filled with paperbacks and a few framed photos. The kitchen area is in the corner with basic cooking supplies.",
+  "parentLocationId": "SCN_1",
+  "items": [
+    {
+      "id": "ITEM_S1_1",
+      "name": "TV Remote",
+      "description": "A well-used TV remote control sitting on the coffee table."
+    },
+    {
+      "id": "ITEM_S1_2",
+      "name": "Grocery List",
+      "description": "A handwritten grocery list stuck to the fridge with a magnet. Lists milk, bread, eggs, and canned soup."
+    }
+  ],
+  "conditions": [
+    {
+      "description": "A warm and comfortable living space. Natural light comes in through the front window."
+    }
+  ],
+  "connections": ["SCN_1_SUB_2"]
+}

@@ -1,0 +1,67 @@
+[
+  {
+    "name": "C",
+    "occupation": "Company Boss",
+    "age": 50,
+    "gender": "male",
+    "appearance": "A well-dressed man in a tailored suit. Has a confident posture and graying temples. Always carries a leather briefcase.",
+    "personality": "Authoritative but fair, business-focused, and somewhat reserved. Values efficiency and punctuality. Lives above his office for convenience.",
+    "background": "C is the owner of a small company. He lives on the second floor above his office, making his commute literally walking downstairs. He manages A and runs the day-to-day operations. In the evenings he retreats upstairs to his private residence where he enjoys wine and reads business journals.",
+    "goals": [
+      "Manage the company operations efficiently",
+      "Supervise employee A's work",
+      "Enjoy quiet evenings at home on the second floor"
+    ],
+    "secrets": [],
+    "attributes": {
+      "STR": 45,
+      "CON": 50,
+      "DEX": 45,
+      "APP": 60,
+      "POW": 65,
+      "SIZ": 55,
+      "INT": 70,
+      "EDU": 75
+    },
+    "status": {
+      "hp": 10,
+      "maxHp": 10,
+      "sanity": 65,
+      "maxSanity": 65,
+      "luck": 45,
+      "mp": 13,
+      "conditions": []
+    },
+    "skills": {
+      "Accounting": 70,
+      "Persuade": 60,
+      "Psychology": 55,
+      "Law": 45,
+      "Credit Rating": 65,
+      "Computer Use": 50,
+      "Bargain": 55,
+      "Library Use": 50
+    },
+    "inventory": [],
+    "knowledge": [],
+    "relationships": [
+      {
+        "targetName": "A",
+        "relationshipType": "employee",
+        "attitude": 65,
+        "description": "A's employer. Considers A a reliable worker.",
+        "history": "Hired A two years ago. Satisfied with A's work performance."
+      },
+      {
+        "targetName": "B",
+        "relationshipType": "acquaintance",
+        "attitude": 55,
+        "description": "The local supermarket owner.",
+        "history": "Occasionally buys wine and snacks from B's store."
+      }
+    ],
+    "residence": "SCN_3",
+    "currentLocation": "SCN_3_SUB_2",
+    "isNPC": true
+  }
+]

@@ -2,7 +2,7 @@
     {
       "name": "Jenny Florence (alias: berforth Locefern)",
       "occupation": "Hacker",
-      "age": 24,
+      "age": 21,
       "gender": "female",
       "appearance": "A young Black woman with a sexy, charming figure and attractive facial features; carries herself with confidence.",
       "personality": "Highly intelligent, confident to the point of arrogance, cautious, independent, and driven by a strong personal moral code.",
@@ -132,6 +132,7 @@
           "history": "They crossed paths during a hacking intrusion, after which Jenny witnessed him committing murder."
         }
       ],
-      "notes": "Victim of the 2003 Reindeer Bar murder case. Age 21, Black female. Killed by .357 caliber bullet to the heart, with a folding knife stuck in her back. Her hotel records for December 22 were deliberately erased. She escaped from a cold storage at Paradil Hotel, wrapped herself in a blanket, and went to Reindeer Bar seeking help, but was killed in the restroom. She knew the identity of the 2002 murder case killer (Martin Gin/Ghost Hand) and planned to reveal it to Bruno. Her identity as berforth Locefern was known only to a select few trusted contacts. She was shot and killed before finalizing her deal involving intercepted pharmaceutical materials (Borrachero/Devil's Breath)."
+      "notes": "Victim of the 2003 Reindeer Bar murder case. Age 21, Black female. Killed by .357 caliber bullet to the heart, with a folding knife stuck in her back. Her hotel records for December 22 were deliberately erased. She escaped from a cold storage at Paradil Hotel, wrapped herself in a blanket, and went to Reindeer Bar seeking help, but was killed in the restroom. She knew the identity of the 2002 murder case killer (Martin Gin/Ghost Hand) and planned to reveal it to Bruno. Her identity as berforth Locefern was known only to a select few trusted contacts. She was shot and killed before finalizing her deal involving intercepted pharmaceutical materials (Borrachero/Devil's Breath).",
+      "currentLocation": "SCN_16"
     }
   ]

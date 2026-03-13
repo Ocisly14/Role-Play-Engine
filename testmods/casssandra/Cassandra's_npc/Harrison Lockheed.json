@@ -36,7 +36,17 @@
       "mp": 10,
       "conditions": []
     },
-    "skills": {},
+    "skills": {
+      "Mechanical Repair": 65,
+      "Electrical Repair": 50,
+      "Firearms (Handgun)": 55,
+      "Firearms (Rifle)": 50,
+      "Spot Hidden": 45,
+      "Persuade": 40,
+      "Bargain": 50,
+      "Craft (Weaponsmith)": 60,
+      "Listen": 40
+    },
     "inventory": [
       {
         "name": "Illegal firearms stock (kept out of sight)",
@@ -81,6 +91,7 @@
         "history": "They have business connections."
       }
     ],
-    "notes": "Harrison is very talkative and enjoys being praised. If investigators gain his favor through conversation, he may help with simple weapon modifications or create unconventional weapons. He can tell investigators about three men in black clothes heading toward the train station platform if asked."
+    "notes": "Harrison is very talkative and enjoys being praised. If investigators gain his favor through conversation, he may help with simple weapon modifications or create unconventional weapons. He can tell investigators about three men in black clothes heading toward the train station platform if asked.",
+    "currentLocation": "SCN_18"
   }
 ]

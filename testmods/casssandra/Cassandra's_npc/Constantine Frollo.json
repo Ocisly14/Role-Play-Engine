@@ -2,7 +2,7 @@
   {
     "name": "Constantine Frollo",
     "occupation": "Catholic priest",
-    "age": 50,
+    "age": 30,
     "gender": "male",
     "appearance": "A stern-looking middle-aged man with sharp facial features, usually dressed in priestly garments. His posture is rigid, and his gaze is often intense, giving others a sense of pressure and unease.",
     "personality": "Cold, controlling, self-righteous, and manipulative. Appears pious and disciplined on the surface, but is inwardly fanatical and convinced of his own moral superiority.",
@@ -125,6 +125,7 @@
         "history": "Bruno was warned never to trust Constantine and became a direct threat to his plans."
       }
     ],
-    "notes": "Constantine presents himself as a man of God, but is in fact a central occult antagonist within the Cassandra incident."
+    "notes": "Constantine presents himself as a man of God, but is in fact a central occult antagonist within the Cassandra incident.",
+    "currentLocation": "SCN_17"
   }
 ]

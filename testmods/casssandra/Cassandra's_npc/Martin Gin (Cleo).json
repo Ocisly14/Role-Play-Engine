@@ -2,7 +2,7 @@
     {
       "name": "Martin Gin (Cleo)",
       "occupation": "Criminal courier and fixer (alias: Ghost Hand)",
-      "age": 35,
+      "age": 38,
       "gender": "male",
       "appearance": "A cautious-looking man with an unremarkable face, deliberately dressing in plain, practical clothing to avoid attention. His movements are controlled and alert, giving the impression of someone used to watching exits and escape routes.",
       "personality": "Calculating, opportunistic, and highly pragmatic. Martin is patient and careful, preferring indirect methods and aliases to direct confrontation. He is loyal only as long as cooperation benefits his own survival and profit.",
@@ -110,6 +110,7 @@
           "history": "Martin deliberately drew Patrizio’s attention and accepted work under the alias Ghost Hand to gain profit and protection."
         }
       ],
-      "notes": "Martin Gin (Ghost Hand) is the murderer of both murder cases: 1) 2002 Paradil Hotel case - killed the unknown 19-year-old Black girl found in cold storage; 2) 2003 Reindeer Bar case - killed Jenny Florence (Lucifero) with a .357 caliber bullet to the heart. He is actually Martin Cleo, son of Sanchez Cleo, and has a vendetta against Ben Cleo. He deliberately scarred his face to avoid recognition. He works for Patrizio as a hacker and courier. He is being called by Nyogtha and will eventually become one of its chosen ones. He is a shadowy logistical NPC who can reveal connections between criminal operations, financial manipulation, and Patrizio's larger schemes if pressured or exposed."
+      "notes": "Martin Gin (Ghost Hand) is the murderer of both murder cases: 1) 2002 Paradil Hotel case - killed the unknown 19-year-old Black girl found in cold storage; 2) 2003 Reindeer Bar case - killed Jenny Florence (Lucifero) with a .357 caliber bullet to the heart. He is actually Martin Cleo, son of Sanchez Cleo, and has a vendetta against Ben Cleo. He deliberately scarred his face to avoid recognition. He works for Patrizio as a hacker and courier. He is being called by Nyogtha and will eventually become one of its chosen ones. He is a shadowy logistical NPC who can reveal connections between criminal operations, financial manipulation, and Patrizio's larger schemes if pressured or exposed.",
+    "currentLocation": "SCN_6"
     }
   ]

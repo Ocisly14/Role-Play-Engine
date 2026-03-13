@@ -2,30 +2,42 @@
   {
     "name": "Atlach-Nacha, the Spider God",
     "occupation": "Great Old One / Outer God",
+    "age": 999999999,
+    "gender": "N/A",
     "appearance": "A colossal, otherworldly spider entity with innumerable long legs and a massive abdomen, constantly weaving immense cosmic webs that span between worlds.",
+    "personality": "An ancient, alien intelligence focused solely on completing its cosmic web between the Dreamlands and the waking world.",
     "background": "Atlach-Nacha is an ancient spider god dwelling in the Dreamlands, endlessly weaving a titanic web intended to connect its realm to the waking world. Through cults, spider-creatures, and hidden sanctuaries, its influence seeps into human reality.",
     "goals": [
       "Complete the great web linking the Dreamlands and the waking world",
       "Expand its influence through cultists, spider-creatures, and corrupted humans"
     ],
+    "secrets": [
+      "Its web, once complete, will permanently bridge the Dreamlands and waking world, unleashing horrors upon humanity",
+      "Constantine Frollo serves as its earthly agent, granted powers in exchange for devotion"
+    ],
     "attributes": {
       "STR": 150,
       "CON": 375,
       "DEX": 125,
+      "APP": 0,
       "POW": 150,
       "SIZ": 125,
-      "INT": 75
+      "INT": 75,
+      "EDU": 0
     },
     "status": {
       "hp": 50,
       "maxHp": 50,
-      "mp": 30
+      "sanity": 0,
+      "maxSanity": 0,
+      "luck": 0,
+      "mp": 30,
+      "conditions": []
     },
     "skills": {
       "Fighting": 60,
       "Web Projection": 80
     },
-    "notes": "Average Damage Bonus: +2D6.\nCombat Behavior: Atlach-Nacha attacks by kicking with its many legs or slamming enemies with its massive abdomen. Attacks per round: 1.\nCombat – Bite: The bite pierces any normal armor and injects a paralytic toxin. The target must succeed at an Extreme CON roll to resist paralysis for 1D10 rounds, then make a second CON roll. If both rolls succeed, the toxin is resisted; if both fail, the target is paralyzed.\nCombat Maneuver – Web Projection: Targets are wrapped in strong, sticky webs. Escaping requires an opposed STR test against STR 150.\nArmor: 12-point chitin and fur. When reduced to 0 HP, Atlach-Nacha escapes through complex web-tunnels to a secret lair to recover.\nSpells: All Contact (Call/Contact) spells.\nSkills Detail: Fighting 60% (30/12), damage bonus or bite; Web Projection 80% (40/16).\nSanity Loss: Seeing Atlach-Nacha causes 1/1D10 SAN loss.",
     "inventory": [
       {
         "name": "N/A",
@@ -33,6 +45,31 @@
           "note": "Mythos entity; document section focuses on stats/combat/spells rather than loot/inventory."
         }
       }
-    ]
+    ],
+    "clues": [
+      {
+        "clueText": "Atlach-Nacha's influence reaches into Cassandra through a portal hidden within the church, maintained by its human servant Constantine Frollo.",
+        "category": "knowledge",
+        "difficulty": "hard",
+        "relatedTo": ["Constantine Frollo", "Church"]
+      },
+      {
+        "clueText": "The cold spiders infesting the town are extensions of Atlach-Nacha's will, crossing from the Dreamlands through the cosmic web.",
+        "category": "knowledge",
+        "difficulty": "regular",
+        "relatedTo": ["Cold Spider", "Dreamlands"]
+      }
+    ],
+    "relationships": [
+      {
+        "targetName": "Constantine Frollo",
+        "relationshipType": "servant",
+        "attitude": 0,
+        "description": "A human priest who serves as its earthly agent",
+        "history": "Saved Constantine as a child, granted him powers in exchange for service"
+      }
+    ],
+    "notes": "Average Damage Bonus: +2D6.\nCombat Behavior: Atlach-Nacha attacks by kicking with its many legs or slamming enemies with its massive abdomen. Attacks per round: 1.\nCombat – Bite: The bite pierces any normal armor and injects a paralytic toxin. The target must succeed at an Extreme CON roll to resist paralysis for 1D10 rounds, then make a second CON roll. If both rolls succeed, the toxin is resisted; if both fail, the target is paralyzed.\nCombat Maneuver – Web Projection: Targets are wrapped in strong, sticky webs. Escaping requires an opposed STR test against STR 150.\nArmor: 12-point chitin and fur. When reduced to 0 HP, Atlach-Nacha escapes through complex web-tunnels to a secret lair to recover.\nSpells: All Contact (Call/Contact) spells.\nSkills Detail: Fighting 60% (30/12), damage bonus or bite; Web Projection 80% (40/16).\nSanity Loss: Seeing Atlach-Nacha causes 1/1D10 SAN loss.",
+    "currentLocation": "SCN_17"
   }
 ]

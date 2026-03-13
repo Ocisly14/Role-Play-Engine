@@ -10,7 +10,7 @@
       "goals": [
         "Beg for someone to rescue Jun when briefly lucid"
       ],
-      "secrets": [],
+      "secrets": ["Witnessed something terrible at the crematorium that drove him insane", "Occasionally becomes lucid and begs friends to rescue Jun"],
       "attributes": {
         "STR": 45,
         "CON": 50,
@@ -73,6 +73,7 @@
           "history": "Lyn remained with the vehicle while Jun and Wind explored; later rescued Wind."
         }
       ],
-      "notes": "Listed as a cameo NPC. Wind is mentally unstable and not suitable for direct investigation, but his fragmented memories can serve as emotional hooks and indirect clues."
+      "notes": "Listed as a cameo NPC. Wind is mentally unstable and not suitable for direct investigation, but his fragmented memories can serve as emotional hooks and indirect clues.",
+      "currentLocation": "SCN_1"
     }
   ]

@@ -2,6 +2,8 @@
     {
       "name": "Helen",
       "occupation": "Restaurant Owner and Chef (secretly a retired assassin)",
+      "age": 30,
+      "gender": "female",
       "appearance": "A sexy Latina woman with a confident and alluring presence, well-groomed and stylish, blending the charm of a successful restaurateur with subtle hints of danger.",
       "personality": "Calm, observant, and socially adept; outwardly warm and sociable, but inwardly cautious, independent, and capable of lethal decisiveness.",
       "background": "Helen is an ordinary friend of Jenny Florence (berforth Locefern). Publicly, she runs a restaurant as its beautiful owner and chef. In truth, she is a retired assassin enjoying a peaceful life. She and Lucifero often go shopping together, yet neither knows the other's hidden identity. On the day of the 2003 Reindeer Bar incident (December 22, 2003), she was invited by a friend named Johnny to drink, but they parted on bad terms. Later, when she intended to invite Lucifero out for a drink, she discovered that Lucifero had been killed. She is Vito's girlfriend, and Philip Scaletta tried to flirt with her at the Reindeer Bar, leading to a fight where Philip lost his folding knife.",
@@ -23,6 +25,15 @@
         "INT": 70,
         "EDU": 60
       },
+      "status": {
+        "hp": 11,
+        "maxHp": 11,
+        "sanity": 55,
+        "maxSanity": 70,
+        "luck": 55,
+        "mp": 10,
+        "conditions": []
+      },
       "skills": {
         "Charm": 65,
         "Psychology": 60,
@@ -30,6 +41,14 @@
         "Handgun": 65,
         "Brawl": 60
       },
+      "inventory": [
+        {
+          "name": "Hidden combat knife",
+          "properties": {
+            "note": "Concealed weapon from her assassin days"
+          }
+        }
+      ],
     "clues": [
       {
         "clueText": "She once suspected that Vito was having an affair with Shandra because he visited Shandra's cabin to look for Bruno several times, but later realized it was a misunderstanding.",
@@ -59,6 +78,7 @@
           "history": "They spent time together socially, believing the other to be a normal civilian."
         }
       ],
-      "notes": "Helen serves as a seemingly minor NPC who can unexpectedly display high competence and hidden depth if events force her past to resurface."
+      "notes": "Helen serves as a seemingly minor NPC who can unexpectedly display high competence and hidden depth if events force her past to resurface.",
+      "currentLocation": "SCN_10"
     }
   ]

@@ -2,7 +2,7 @@
   {
     "name": "Bruno Galilei",
     "occupation": "Police detective (former private investigator)",
-    "age": 42,
+    "age": 33,
     "gender": "male",
     "appearance": "A tall, powerfully built man with Russian ancestry. He has silver-gray hair, very pale eyes, and a rugged, straightforward demeanor that reflects his physical strength and honest nature.",
     "personality": "Sincere, upright, patient, and deeply driven by a sense of justice. Reliable and trustworthy, with a calm surface that hides strong inner determination and a willingness for self-sacrifice.",
@@ -33,7 +33,7 @@
       "maxSanity": 99,
       "luck": 65,
       "mp": 12,
-      "conditions": []
+      "conditions": ["deceased"]
     },
     "skills": {
       "Law": 60,
@@ -154,6 +154,7 @@
         "history": "Bruno believed Padrich was obstructing justice in the murder investigation."
       }
     ],
-    "notes": "Bruno Galilei takes the initiative in contacting the investigators, personally meeting them at the train station upon their arrival in Cassandra. He leads the investigators through the old streets of the town, introduces key locations, and drives them through Cassandra while explaining the town’s layout and atmosphere, acting as their initial guide and escort. During the journey, Bruno shares details of the case with the investigators but deliberately retains control over official resources. All physical evidence remains in Bruno’s custody; although he may hesitate, he can be persuaded to allow the investigators to examine and temporarily keep certain items for one night only, explicitly requiring that all evidence be returned to him the following morning. The investigation lacks full support from Bruno’s superiors, and he operates largely on personal authority rather than institutional backing. Despite these limitations, Bruno uses his position and initiative to push the investigation forward, arranging for suspects to be gathered at the Reindeer Bar for secondary questioning.Bruno ultimately dies under mysterious circumstances, his body found drained and marked by unnatural bite wounds, leaving behind an unfinished warning message on his phone."
+    "notes": "Bruno Galilei takes the initiative in contacting the investigators, personally meeting them at the train station upon their arrival in Cassandra. He leads the investigators through the old streets of the town, introduces key locations, and drives them through Cassandra while explaining the town’s layout and atmosphere, acting as their initial guide and escort. During the journey, Bruno shares details of the case with the investigators but deliberately retains control over official resources. All physical evidence remains in Bruno’s custody; although he may hesitate, he can be persuaded to allow the investigators to examine and temporarily keep certain items for one night only, explicitly requiring that all evidence be returned to him the following morning. The investigation lacks full support from Bruno’s superiors, and he operates largely on personal authority rather than institutional backing. Despite these limitations, Bruno uses his position and initiative to push the investigation forward, arranging for suspects to be gathered at the Reindeer Bar for secondary questioning. Bruno ultimately dies under mysterious circumstances, his body found drained and marked by unnatural bite wounds, leaving behind an unfinished warning message on his phone.",
+    "currentLocation": "SCN_3"
   }
 ]

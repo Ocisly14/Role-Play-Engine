@@ -1,7 +1,7 @@
 [
     {
       "name": "Marks White",
-      "occupation": "Local businessman / fixer",
+      "occupation": "Watchmaker / Clock Shop Owner",
       "age": 45,
       "gender": "male",
       "appearance": "A rather plain-looking middle-aged man with an unimpressive presence; his looks are forgettable, making him easy to overlook in a crowd.",
@@ -79,7 +79,23 @@
         "relatedTo": ["Church bell", "Temporal anomalies"]
       }
     ],
-      "relationships": [],
-      "notes": "Marks White is easy to underestimate; while lacking physical presence, his strength lies in information control and quiet influence."
+      "relationships": [
+        {
+          "targetName": "Constantine Frollo",
+          "relationshipType": "acquaintance",
+          "attitude": 0,
+          "description": "Made the church clock for Constantine's church.",
+          "history": "White crafted and installed the church bell/clock, creating a professional connection with the priest."
+        },
+        {
+          "targetName": "Abel William",
+          "relationshipType": "acquaintance",
+          "attitude": 10,
+          "description": "Knew Abel's father Peter William.",
+          "history": "Had a prior acquaintance with Peter William, the distillery owner, before his death."
+        }
+      ],
+      "notes": "Marks White is easy to underestimate; while lacking physical presence, his strength lies in information control and quiet influence.",
+      "currentLocation": "SCN_12"
     }
   ]

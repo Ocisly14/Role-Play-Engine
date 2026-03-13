@@ -11,7 +11,7 @@
         "Protect and care for close friends",
         "Maintain distance from dangerous or unstable situations"
       ],
-      "secrets": [],
+      "secrets": ["Has a wealthy adoptive father", "Taking care of mentally ill friend Bo He at a sanitarium"],
       "attributes": {
         "STR": 45,
         "CON": 50,
@@ -75,6 +75,7 @@
           "history": "Robin was adopted by a very wealthy individual who provides financial security."
         }
       ],
-      "notes": "Robin does not participate directly in the investigation due to having already left Cassandra."
+      "notes": "Robin does not participate directly in the investigation due to having already left Cassandra.",
+      "currentLocation": "OUTDOOR"
     }
   ]

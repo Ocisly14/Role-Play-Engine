@@ -46,9 +46,9 @@ export function buildInjectedProfile(input: {
       luck,
       conditions: [],
     },
+    longTermIntent: input.backstory,
     knowledge: [],
     relationships: [],
-    isNPC: true,
     isPlayerInjected: true,
   };
 }

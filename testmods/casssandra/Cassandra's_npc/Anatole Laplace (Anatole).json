@@ -2,7 +2,7 @@
   {
     "name": "Anatole Laplace (Anatole)",
     "occupation": "Information Security Engineer / Surveillance System Designer",
-    "age": 36,
+    "age": 22,
     "gender": "male",
     "appearance": "A thin, pale man with sharp features and tired eyes. Often dressed in simple shirts and jackets, giving off the impression of a reclusive technician rather than a social figure.",
     "personality": "Coldly rational, controlling, and distrustful. Anatole believes order and control are necessary to survive in a dangerous world. He is intelligent but emotionally rigid, easily frustrated by what he sees as others’ irresponsibility.",
@@ -114,6 +114,7 @@
         "history": "Blames her presence for Simon abandoning a controlled, profitable life."
       }
     ],
-    "notes": "Anatole is more dangerous as an information broker than as a direct combatant. He may attempt to manipulate investigators through surveillance data rather than confrontation."
+    "notes": "Anatole is more dangerous as an information broker than as a direct combatant. He may attempt to manipulate investigators through surveillance data rather than confrontation.",
+    "currentLocation": "SCN_9"
   }
 ]

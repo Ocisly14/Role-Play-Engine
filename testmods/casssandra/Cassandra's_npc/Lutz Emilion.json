@@ -47,9 +47,9 @@
         "Accounting": 40
       },
       "inventory": [
-        "Bartending tools",
-        "Cash register",
-        "Bar ledger"
+        { "name": "Bartending tools" },
+        { "name": "Cash register" },
+        { "name": "Bar ledger" }
       ],
       "clues": [
       {
@@ -81,7 +81,8 @@
           "history": "The bar is protected by the local mafia boss."
         }
       ],
-      "notes": "As a bartender, Lutz is a reliable source of social information and local gossip, though he rarely volunteers sensitive details without prompting. He primarily works in the main hall, handling cleaning, customer service, and drink delivery."
+      "notes": "As a bartender, Lutz is a reliable source of social information and local gossip, though he rarely volunteers sensitive details without prompting. He primarily works in the main hall, handling cleaning, customer service, and drink delivery.",
+      "currentLocation": "SCN_16"
     }
   ]
 

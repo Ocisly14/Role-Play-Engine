@@ -1,0 +1,17 @@
+{
+  "id": "ROAD_3",
+  "name": "Commerce Lane",
+  "description": "A busy commercial lane connecting the town center to B's supermarket.",
+  "parentLocationId": "OUTDOOR",
+  "endpointA": "JUNC_2",
+  "endpointB": "JUNC_4",
+  "travelTimeMinutes": 5,
+  "alongConnections": [
+    {
+      "sceneId": "SCN_4_SUB_1",
+      "position": 0.7
+    }
+  ],
+  "items": [],
+  "conditions": []
+}

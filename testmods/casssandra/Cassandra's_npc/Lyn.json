@@ -11,7 +11,7 @@
         "Protect his friends from harm",
         "Solve problems through direct and decisive action"
       ],
-      "secrets": [],
+      "secrets": ["Doesn't believe in supernatural beings", "Left Jun alone at the crematorium area"],
       "attributes": {
         "STR": 65,
         "CON": 70,
@@ -39,7 +39,14 @@
         "Listen": 50,
         "Spot Hidden": 55
       },
-      "inventory": [],
+      "inventory": [
+        {
+          "name": "Military knife",
+          "properties": {
+            "note": "From his service days"
+          }
+        }
+      ],
       "clues": [
         {
           "clueText": "After escorting Wind to the hospital, Lyn immediately contacted the others and went to the police station.",
@@ -85,6 +92,7 @@
           "history": "Part of the same friend group connected by Bruno."
         }
       ],
-      "notes": "Lyn firmly rejects the idea of monsters or magic, even when faced with unsettling evidence, preferring practical explanations and direct action."
+      "notes": "Lyn firmly rejects the idea of monsters or magic, even when faced with unsettling evidence, preferring practical explanations and direct action.",
+      "currentLocation": "SCN_4"
     }
   ]

@@ -50,9 +50,9 @@
         "Pharmacy": 85
       },
       "inventory": [
-        "Hospital ID card (belonging to Martin Gin)",
-        "Medical notes on experimental drugs",
-        "Alcohol flask"
+        { "name": "Hospital ID card (belonging to Martin Gin)" },
+        { "name": "Medical notes on experimental drugs" },
+        { "name": "Alcohol flask" }
       ],
       "clues": [
         {
@@ -109,6 +109,7 @@
           "history": "Vincent knowingly ignored Martin’s illegal use of hospital supplies."
         }
       ],
-      "notes": "Vincent is deeply reluctant to speak with investigators. He feels genuine remorse but does not fully regret his choices, as abandoning them would mean accepting that his wife’s suffering was meaningless."
+      "notes": "Vincent is deeply reluctant to speak with investigators. He feels genuine remorse but does not fully regret his choices, as abandoning them would mean accepting that his wife’s suffering was meaningless.",
+      "currentLocation": "SCN_1"
     }
   ]

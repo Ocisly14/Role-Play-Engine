@@ -1,7 +1,7 @@
 [
     {
       "name": "Reid",
-      "occupation": "Tourist / Visitor",
+      "occupation": "Retired Soldier / Bodyguard",
       "age": 35,
       "gender": "male",
       "appearance": "An ordinary-looking adult man, casually dressed for travel. Nothing about his appearance stands out, allowing him to easily blend in as a normal holiday visitor.",
@@ -11,7 +11,7 @@
         "Enjoy the holiday trip with friends",
         "Leave Cassandra safely without incident"
       ],
-      "secrets": [],
+      "secrets": ["Former military, skilled in combat"],
       "attributes": {
         "STR": 50,
         "CON": 50,
@@ -31,9 +31,30 @@
         "mp": 10,
         "conditions": []
       },
-      "skills": {},
-      "inventory": [],
-      "clues": [],
+      "skills": {
+        "Firearms (Handgun)": 55,
+        "Brawl": 50,
+        "Spot Hidden": 45,
+        "Stealth": 40,
+        "First Aid": 35,
+        "Navigate": 40
+      },
+      "inventory": [
+        {
+          "name": "Bodyguard equipment",
+          "properties": {
+            "note": "Standard protection gear"
+          }
+        }
+      ],
+      "clues": [
+        {
+          "clueText": "Came with friends to Cassandra to visit Wind's fiancée",
+          "category": "knowledge",
+          "difficulty": "regular",
+          "relatedTo": ["Wind"]
+        }
+      ],
       "relationships": [
         {
           "targetName": "Bigbear",
@@ -64,6 +85,7 @@
           "history": "Bruno was the mutual friend through whom Reid met the rest of the group."
         }
       ],
-      "notes": "Reid is a cameo NPC and does not participate in the investigators’ investigation unless the Keeper deliberately expands his role."
+      "notes": "Reid is a cameo NPC and does not participate in the investigators’ investigation unless the Keeper deliberately expands his role.",
+      "currentLocation": "SCN_4"
     }
   ]

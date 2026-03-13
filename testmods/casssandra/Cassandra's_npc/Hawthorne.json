@@ -11,7 +11,7 @@
       "Support and protect his friends during the investigation",
       "Use his forensic knowledge to uncover the truth behind the incidents in Cassandra"
     ],
-    "secrets": [],
+    "secrets": ["Knows forensic techniques that could help investigate Bruno's death"],
     "attributes": {
       "STR": 45,
       "CON": 45,
@@ -44,8 +44,21 @@
       "Spot Hidden": 47
     },
     "inventory": [
+      {
+        "name": "Forensic examination kit",
+        "properties": {
+          "note": "Professional tools"
+        }
+      }
     ],
-    "clues": [],
+    "clues": [
+      {
+        "clueText": "Arrived in Cassandra with friends to visit Wind's fiancée",
+        "category": "knowledge",
+        "difficulty": "regular",
+        "relatedTo": ["Wind", "Isabela Smith"]
+      }
+    ],
     "relationships": [
       {
         "targetName": "Bruno Galilei",
@@ -83,6 +96,7 @@
         "history": "Bonded through shared danger and loyalty within the group."
       }
     ],
-    "notes": "Although outwardly stingy, Hawthorne will not hesitate to help his friends when it truly matters."
+    "notes": "Although outwardly stingy, Hawthorne will not hesitate to help his friends when it truly matters.",
+    "currentLocation": "SCN_4"
   }
 ]

@@ -51,9 +51,7 @@ export class NPCPlanningAgent {
 
     await Promise.all(
       npcs.map(async (npc) => {
-        const intent = npc.goals?.length
-          ? npc.goals.join("; ")
-          : (npc.background ?? "No specific goal.");
+        const intent = npc.longTermIntent;
 
         await this.prisma.npcLongTermIntent.upsert({
           where: {

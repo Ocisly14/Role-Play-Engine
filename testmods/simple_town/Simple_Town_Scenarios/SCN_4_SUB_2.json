@@ -1,0 +1,24 @@
+{
+  "id": "SCN_4_SUB_2",
+  "name": "B's Living Quarters (Back Room)",
+  "description": "A small living space behind the supermarket where B lives. It has a narrow bed, a mini fridge, a microwave, and a small table. Boxes of inventory are stacked along one wall. A door leads directly to the shop floor.",
+  "parentLocationId": "SCN_4",
+  "items": [
+    {
+      "id": "ITEM_S4_4",
+      "name": "Inventory Ledger",
+      "description": "A worn notebook where B tracks daily sales and restocking needs."
+    },
+    {
+      "id": "ITEM_S4_5",
+      "name": "Mini Fridge",
+      "description": "A small personal fridge with B's meals and some drinks."
+    }
+  ],
+  "conditions": [
+    {
+      "description": "A cramped but functional living space. The hum of the shop's refrigeration units is audible."
+    }
+  ],
+  "connections": ["SCN_4_SUB_1"]
+}

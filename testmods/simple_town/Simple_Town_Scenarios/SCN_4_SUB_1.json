@@ -1,0 +1,29 @@
+{
+  "id": "SCN_4_SUB_1",
+  "name": "B's Supermarket (Shop Floor)",
+  "description": "A small but well-stocked supermarket. Shelves line the walls with groceries, canned goods, fresh produce, and daily necessities. A checkout counter sits near the entrance. B can usually be found here managing the store.",
+  "parentLocationId": "SCN_4",
+  "items": [
+    {
+      "id": "ITEM_S4_1",
+      "name": "Cash Register",
+      "description": "An old-fashioned cash register at the checkout counter."
+    },
+    {
+      "id": "ITEM_S4_2",
+      "name": "Grocery Shelves",
+      "description": "Neatly organized shelves with canned soup, rice, pasta, snacks, and beverages."
+    },
+    {
+      "id": "ITEM_S4_3",
+      "name": "Fresh Produce Section",
+      "description": "A small section with vegetables, fruits, and bread delivered daily."
+    }
+  ],
+  "conditions": [
+    {
+      "description": "Bright fluorescent lighting. A faint smell of fresh bread and cleaning products."
+    }
+  ],
+  "connections": ["SCN_4_SUB_2"]
+}

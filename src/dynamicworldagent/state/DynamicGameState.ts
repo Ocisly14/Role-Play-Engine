@@ -5,12 +5,12 @@
  * node handlers, world features, and SimulationRunner.
  */
 
-import type { ModuleSetup, ScenarioOutline } from "./types.js";
-
 import {
   InventoryUtils,
+  type ModuleSetup,
   type NPCRelationship,
-} from "../../shared/agents/models/gameTypes.js";
+  type ScenarioOutline,
+} from "./types.js";
 import type { DiscoveredKnowledge } from "../../shared/state/index.js";
 import type {
   CharacterPosition,
@@ -659,7 +659,7 @@ export class DynamicGameStateManager {
 
   addNpcKnowledge(
     npcId: string,
-    entry: import("../../shared/agents/models/gameTypes.js").NPCKnowledge
+    entry: import("./types.js").NPCKnowledge
   ): void {
     const npc = this.state.npcCharacters.find((n) => n.id === npcId);
     if (!npc) return;

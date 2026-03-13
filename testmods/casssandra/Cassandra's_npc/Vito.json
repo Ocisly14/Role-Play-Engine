@@ -40,9 +40,15 @@
         "Firearms (Handgun)": 30
       },
       "inventory": [
-        "Auxiliary police badge",
-        "Service handgun",
-        "Notebook"
+        {
+          "name": "Auxiliary police badge"
+        },
+        {
+          "name": "Service handgun"
+        },
+        {
+          "name": "Notebook"
+        }
       ],
       "clues": [
       {
@@ -58,6 +64,30 @@
         "relatedTo": ["Helen", "Philip Scaletta", "2003 Reindeer Bar murder"]
       }
     ],
-    "notes": "Vito is a good-hearted but unsophisticated auxiliary officer. He met the victim of the 2002 murder case the day before she was killed, but forgot about this after the case was shelved. His girlfriend Helen was involved in the 2003 Reindeer Bar incident when Philip tried to flirt with her."
+    "relationships": [
+      {
+        "targetName": "Helen",
+        "relationshipType": "lover",
+        "attitude": 90,
+        "description": "His girlfriend, a restaurant owner",
+        "history": "They started dating recently"
+      },
+      {
+        "targetName": "Bruno Galilei",
+        "relationshipType": "colleague",
+        "attitude": 70,
+        "description": "Fellow officer he respected",
+        "history": "Worked together at the police station"
+      },
+      {
+        "targetName": "Shandra Hernandez",
+        "relationshipType": "acquaintance",
+        "attitude": 40,
+        "description": "Shop owner Bruno frequently visited",
+        "history": "Went to her shop looking for Bruno a few times, causing Helen to be jealous"
+      }
+    ],
+    "notes": "Vito is a good-hearted but unsophisticated auxiliary officer. He met the victim of the 2002 murder case the day before she was killed, but forgot about this after the case was shelved. His girlfriend Helen was involved in the 2003 Reindeer Bar incident when Philip tried to flirt with her.",
+    "currentLocation": "SCN_3"
     }
   ]

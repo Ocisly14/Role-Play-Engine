@@ -45,7 +45,14 @@
         "Listen": 45,
         "Stealth": 40
       },
-      "inventory": [],
+      "inventory": [
+        {
+          "name": "Deck of playing cards",
+          "properties": {
+            "note": "Always fiddling with cards"
+          }
+        }
+      ],
     "clues": [
       {
         "clueText": "Lucifero was extremely cautious and only dealt with people she trusted.",
@@ -88,6 +95,7 @@
           "history": "Tallinn enjoys provoking Kovind by calling him \"little mouse,\" treating it as casual amusement."
         }
       ],
-      "notes": "Tallinn withholds information unless investigators gain his trust or approach him through proper underworld channels."
+      "notes": "Tallinn withholds information unless investigators gain his trust or approach him through proper underworld channels.",
+      "currentLocation": "SCN_21"
     }
   ]

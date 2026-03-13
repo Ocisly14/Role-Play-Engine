@@ -50,9 +50,24 @@
         "Gambling": 70
       },
       "inventory": [
-        "Handgun",
-        "Cash from gambling",
-        "Cigarettes"
+        {
+          "name": "Handgun",
+          "properties": {
+            "note": "A concealed handgun carried for protection."
+          }
+        },
+        {
+          "name": "Cash from gambling",
+          "properties": {
+            "note": "A wad of bills from recent gambling winnings."
+          }
+        },
+        {
+          "name": "Cigarettes",
+          "properties": {
+            "note": "A pack of cigarettes."
+          }
+        }
       ],
       "clues": [
       {
@@ -77,6 +92,7 @@
           "history": "Their relationship is marked by verbal provocation and mutual irritation rather than open violence."
         }
       ],
-      "notes": "Kovind is volatile under provocation but usually stops short of unnecessary escalation unless his pride or interests are directly threatened."
+      "notes": "Kovind is volatile under provocation but usually stops short of unnecessary escalation unless his pride or interests are directly threatened.",
+      "currentLocation": "SCN_21"
     }
   ]

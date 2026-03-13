@@ -3,6 +3,7 @@
     "name": "Deep One",
     "occupation": "Mythos Aquatic Humanoid",
     "age": 0,
+    "gender": "N/A",
     "appearance": "A tall, powerfully built amphibious humanoid with slick, rubbery skin mottled by scales. Bulging, unblinking eyes, gill-slits along the neck, wide mouths filled with sharp teeth, and webbed hands and feet mark them as profoundly inhuman.",
     "personality": "Cold, predatory, and communal. Deep Ones are patient and calculating, guided by ancient traditions and absolute loyalty to their kind and aquatic gods.",
     "background": "Deep Ones are an ancient aquatic race dwelling in the ocean depths. They can live both underwater and on land and often interact with humans through cults, interbreeding, or coastal settlements, most infamously tied to the Innsmouth legacy.",
@@ -57,6 +58,7 @@
       }
     ],
     "relationships": [],
-    "notes": "Combat & Abilities:\n\nCombat Style:\nDeep Ones can use human weapons, but they prefer their own spears and tridents. They attack once per round.\n\nAttacks:\n• Fighting 45% (22/9): Damage is 1D6 + damage bonus, or weapon-dependent (e.g., spear: 1D8 + damage bonus).\n\nArmor:\n1 point (tough skin and scales).\n\nSpells:\nThere is a 40% chance that a Deep One knows 1D4 spells.\n\nSpecial Ability – Amphibious Respiration:\nDeep Ones can breathe underwater naturally and can also breathe on land without limitation.\n\nSanity Loss:\nSeeing a Deep One causes SAN loss of 0 / 1D6.\n\nKeeper Notes:\nDeep Ones function well as disciplined shock troops or as emissaries of vast, ancient oceanic powers. Their true horror lies not only in their appearance but in their timeless patience and inevitable return to claim what is theirs."
+    "notes": "Combat & Abilities:\n\nCombat Style:\nDeep Ones can use human weapons, but they prefer their own spears and tridents. They attack once per round.\n\nAttacks:\n• Fighting 45% (22/9): Damage is 1D6 + damage bonus, or weapon-dependent (e.g., spear: 1D8 + damage bonus).\n\nArmor:\n1 point (tough skin and scales).\n\nSpells:\nThere is a 40% chance that a Deep One knows 1D4 spells.\n\nSpecial Ability – Amphibious Respiration:\nDeep Ones can breathe underwater naturally and can also breathe on land without limitation.\n\nSanity Loss:\nSeeing a Deep One causes SAN loss of 0 / 1D6.\n\nKeeper Notes:\nDeep Ones function well as disciplined shock troops or as emissaries of vast, ancient oceanic powers. Their true horror lies not only in their appearance but in their timeless patience and inevitable return to claim what is theirs.",
+    "currentLocation": "OUTDOOR"
   }
 ]

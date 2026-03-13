@@ -1,0 +1,67 @@
+[
+  {
+    "name": "A",
+    "occupation": "Office Worker",
+    "age": 30,
+    "gender": "male",
+    "appearance": "An average-looking man in casual business attire. Wears glasses and carries a small backpack.",
+    "personality": "Quiet, hardworking, and routine-oriented. A creature of habit who follows a predictable daily schedule.",
+    "background": "A is an ordinary office worker employed at C's company. He lives alone in a modest house and follows a simple daily routine: wake up, go to work at C's office, work through the day, stop by B's supermarket after work to buy groceries, then head home for the evening.",
+    "goals": [
+      "Go to work at C's office every morning",
+      "Buy groceries at B's supermarket after work",
+      "Maintain a quiet, comfortable daily routine"
+    ],
+    "secrets": [],
+    "attributes": {
+      "STR": 50,
+      "CON": 55,
+      "DEX": 50,
+      "APP": 50,
+      "POW": 45,
+      "SIZ": 55,
+      "INT": 60,
+      "EDU": 65
+    },
+    "status": {
+      "hp": 11,
+      "maxHp": 11,
+      "sanity": 45,
+      "maxSanity": 45,
+      "luck": 50,
+      "mp": 9,
+      "conditions": []
+    },
+    "skills": {
+      "Accounting": 40,
+      "Computer Use": 55,
+      "Library Use": 50,
+      "Spot Hidden": 40,
+      "Listen": 35,
+      "Navigate": 45,
+      "Bargain": 35,
+      "Credit Rating": 30
+    },
+    "inventory": [],
+    "knowledge": [],
+    "relationships": [
+      {
+        "targetName": "B",
+        "relationshipType": "acquaintance",
+        "attitude": 60,
+        "description": "The supermarket owner where A shops daily.",
+        "history": "A has been a regular customer at B's supermarket for years. They exchange friendly greetings."
+      },
+      {
+        "targetName": "C",
+        "relationshipType": "employer",
+        "attitude": 65,
+        "description": "A's boss at the company.",
+        "history": "C hired A two years ago. They have a professional relationship."
+      }
+    ],
+    "residence": "SCN_1",
+    "currentLocation": "SCN_1_SUB_1",
+    "isNPC": true
+  }
+]

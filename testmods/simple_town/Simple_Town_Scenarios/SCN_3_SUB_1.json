@@ -1,0 +1,29 @@
+{
+  "id": "SCN_3_SUB_1",
+  "name": "C's Office (1F)",
+  "description": "The first floor of C's company building, serving as the main office area. There are a few desks with computers, a filing cabinet, and a water cooler. A staircase at the back leads to the second floor. A works here as an employee.",
+  "parentLocationId": "SCN_3",
+  "items": [
+    {
+      "id": "ITEM_S3_1",
+      "name": "Office Computer",
+      "description": "A desktop computer on A's work desk, currently showing a spreadsheet."
+    },
+    {
+      "id": "ITEM_S3_2",
+      "name": "Filing Cabinet",
+      "description": "A metal filing cabinet containing company documents and invoices."
+    },
+    {
+      "id": "ITEM_S3_3",
+      "name": "Water Cooler",
+      "description": "A water cooler in the corner, the social gathering spot during breaks."
+    }
+  ],
+  "conditions": [
+    {
+      "description": "A standard office environment with fluorescent lighting and the hum of computers."
+    }
+  ],
+  "connections": ["SCN_3_SUB_2"]
+}

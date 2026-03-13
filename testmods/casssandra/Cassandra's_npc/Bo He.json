@@ -3,11 +3,12 @@
     "name": "Bo He",
     "occupation": "Unknown",
     "age": 30,
+    "gender": "male",
     "appearance": "No detailed physical description is recorded; appears to be an ordinary individual who does not stand out in a crowd.",
     "personality": "Little is known about Bo He’s personality; appears neutral and uninvolved compared to the main cast.",
     "background": "Bo He is listed among the cameo or non-primary NPCs connected to the Cassandra incident. Such characters are noted as not directly participating in the investigators’ main investigation and serve mainly as background figures within the setting.",
-    "goals": [],
-    "secrets": [],
+    "goals": ["Recover from mental illness"],
+    "secrets": ["Investigated the Cleo family's dark past and went insane from what he found"],
     "attributes": {
       "STR": 50,
       "CON": 50,
@@ -21,23 +22,44 @@
     "status": {
       "hp": 10,
       "maxHp": 10,
-      "sanity": 50,
+      "sanity": 20,
       "maxSanity": 50,
       "luck": 50,
       "mp": 10,
-      "conditions": []
+      "conditions": ["indefinite insanity"]
     },
-    "skills": {},
-    "inventory": [
+    "skills": {
+      "Library Use": 55,
+      "History": 50,
+      "Psychology": 40,
+      "Spot Hidden": 35
+    },
+    "inventory": [],
+    "clues": [
       {
-        "name": "N/A",
-        "properties": {
-          "note": "The source material only mentions: once investigated Ben Cleo's family past and became mentally disturbed, currently recuperating in a sanatorium; no personal items/interactive evidence described."
-        }
+        "clueText": "Investigated the Cleo family’s history and discovered something terrible that caused his mental breakdown",
+        "category": "knowledge",
+        "difficulty": "hard",
+        "relatedTo": ["Ben Cleo", "Cleo family"]
       }
     ],
-    "clues": [],
-    "relationships": [],
-    "notes": "Bo He is categorized as a cameo/non-major NPC and is not expected to engage directly with the investigators’ core storyline."
+    "relationships": [
+      {
+        "targetName": "Solomon",
+        "relationshipType": "friend",
+        "attitude": 65,
+        "description": "Came to Cassandra to visit Solomon",
+        "history": "They share an interest in occult and esoteric knowledge."
+      },
+      {
+        "targetName": "Robin",
+        "relationshipType": "friend",
+        "attitude": 75,
+        "description": "Robin is currently caring for him at a sanitarium",
+        "history": "Robin took responsibility for Bo He after his mental breakdown."
+      }
+    ],
+    "notes": "Bo He is categorized as a cameo/non-major NPC and is not expected to engage directly with the investigators’ core storyline.",
+    "currentLocation": "OUTDOOR"
   }
 ]

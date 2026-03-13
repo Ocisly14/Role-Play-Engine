@@ -2,7 +2,7 @@
     {
       "name": "Nancy Charlotte",
       "occupation": "Florist / Flower Shop Assistant",
-      "age": 22,
+      "age": 24,
       "gender": "female",
       "appearance": "A sweet and delicate young woman with a doll-like face and long golden curly hair reaching her hips. When seen by investigators, she is wearing a red woolen coat. While tending flowers, her focused and gentle demeanor gives her an almost angelic impression.",
       "personality": "Pure-hearted, kind, gentle, and emotionally vulnerable. Despite her traumatic upbringing, she remains sincere, trusting, and compassionate. She is easily hurt but capable of deep attachment and loyalty.",
@@ -113,6 +113,7 @@
           "history": "Her mother was indoctrinated into the cult and attempted to offer Nancy as a living sacrifice."
         }
       ],
-      "notes": "Nancy is emotionally fragile but remains a symbol of innocence within the story. Her survival is a key emotional anchor for Simon and a recurring target for cult forces."
+      "notes": "Nancy is emotionally fragile but remains a symbol of innocence within the story. Her survival is a key emotional anchor for Simon and a recurring target for cult forces.",
+      "currentLocation": "SCN_9"
     }
   ]

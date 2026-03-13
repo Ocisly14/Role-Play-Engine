@@ -1,0 +1,17 @@
+{
+  "id": "ROAD_2",
+  "name": "Oak Street",
+  "description": "A main street leading from the town center to the office district where C's company is located.",
+  "parentLocationId": "OUTDOOR",
+  "endpointA": "JUNC_2",
+  "endpointB": "JUNC_3",
+  "travelTimeMinutes": 5,
+  "alongConnections": [
+    {
+      "sceneId": "SCN_3_SUB_1",
+      "position": 0.8
+    }
+  ],
+  "items": [],
+  "conditions": []
+}

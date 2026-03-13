@@ -1,0 +1,10 @@
+{
+  "introduction": "A quiet small town with four buildings. A lives a simple life - commuting to C's office, shopping at B's supermarket, then going home. B runs the supermarket and lives there. C is the company boss who lives on the second floor above his office.",
+  "weatherPresets": [
+    {
+      "regionId": "OUTDOOR",
+      "weatherType": "clear",
+      "intensity": 1
+    }
+  ]
+}

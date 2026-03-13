@@ -2,7 +2,7 @@
     {
       "name": "Mrs. Barklyite (Lucia Shiny)",
       "occupation": "Lawyer",
-      "age": 35,
+      "age": 33,
       "gender": "female",
       "appearance": "An elegant and composed woman, often seen wearing a distinctive ruby brooch gifted by her adoptive father. Her attire is formal and professional, reflecting her status as a capable lawyer.",
       "personality": "Intelligent, diligent, and conscientious. She carries a sense of guilt toward her benefactor and is driven by a desire to prove her worth, while remaining unaware of the darker forces surrounding her upbringing.",
@@ -48,9 +48,24 @@
         "Credit Rating": 60
       },
       "inventory": [
-        "Ruby brooch",
-        "Legal documents",
-        "Handbag with personal effects"
+        {
+          "name": "Ruby brooch",
+          "properties": {
+            "clue": "A distinctive ruby brooch gifted by her adoptive father Albert Shiny. It originates from moon-beasts in the Dreamlands and serves as a potential exchange token."
+          }
+        },
+        {
+          "name": "Legal documents",
+          "properties": {
+            "note": "Various legal case files and professional documents."
+          }
+        },
+        {
+          "name": "Handbag with personal effects",
+          "properties": {
+            "note": "Contains everyday items and disguise materials."
+          }
+        }
       ],
     "clues": [
       {
@@ -87,6 +102,7 @@
           "history": "Albert Shiny adopted Lucia from an orphanage and supported her education, shaping her entire life."
         }
       ],
-      "notes": "Known in social circles as the 'Red Stone Lady' due to her signature ruby brooch."
+      "notes": "Known in social circles as the 'Red Stone Lady' due to her signature ruby brooch.",
+      "currentLocation": "SCN_1"
     }
   ]

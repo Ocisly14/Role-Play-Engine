@@ -2,9 +2,11 @@
   {
     "name": "David Campbell",
     "occupation": "Wealthy Investor / Cult Financier",
+    "age": 50,
+    "gender": "male",
     "appearance": "A tall, handsome man whose appearance is strikingly youthful for his age, with a polished and aristocratic demeanor.",
     "personality": "Pragmatic, opportunistic, and ruthless when necessary; values results and survival over morality.",
-    "background": "David Campbell arrived in Cassandra alongside Isaiah Arbar six years ago as a wealthy investor. His wife, like Isaiah’s, was a member of the Black Goat Cult. Though initially terrified upon discovering the truth, David’s stance changed after participating in the cult’s rituals and gaining supernatural benefits. He and Isaiah exploited the cult’s power for profit, selling access to the Dark Mother’s ‘milk’. In 2002, David was also transformed during a ritual and disappeared, officially recorded as missing.",
+    "background": "David Campbell arrived in Cassandra alongside Isaiah Arbar six years ago as a wealthy investor. His wife, like Isaiah's, was a member of the Black Goat Cult. Though initially terrified upon discovering the truth, David's stance changed after participating in the cult's rituals and gaining supernatural benefits. He and Isaiah exploited the cult's power for profit, selling access to the Dark Mother's 'milk'. In 2002, David was also transformed during a ritual and disappeared, officially recorded as missing.",
     "goals": [
       "Maintain power and survival through occult transformation",
       "Exploit supernatural resources for wealth"
@@ -22,6 +24,15 @@
       "SIZ": 67,
       "INT": 72,
       "EDU": 78
+    },
+    "status": {
+      "hp": 14,
+      "maxHp": 14,
+      "sanity": 10,
+      "maxSanity": 68,
+      "luck": 35,
+      "mp": 14,
+      "conditions": ["transformed"]
     },
     "skills": {
       "Occult": 55,
@@ -59,13 +70,7 @@
       }
     ],
     "notes": "Like Isaiah, David is officially missing and presumed dead, but his true fate is far worse.",
-    "inventory": [
-      {
-        "name": "N/A",
-        "properties": {
-          "note": "资料以“Isaiah Arbar & David Campbell（富商）”整体背景为主（黑山羊密教/莎布相关）；未给出大卫的具体随身物品清单。"
-        }
-      }
-    ]
+    "inventory": [],
+    "currentLocation": "SCN_20"
   }
 ]

@@ -1,81 +1,219 @@
 /**
  * Type definitions for DynamicWorld runtime/module data.
+ * All types used by DynamicGameState, TickProcessor, and engine components.
  */
 
-import type {
-  ActionLogEntry,
-  CharacterAttributes,
-  CharacterStatus,
-  InventoryItem,
-  NPCKnowledge,
-  NPCRelationship,
-} from "../../shared/agents/models/gameTypes.js";
 import type { SceneCondition } from "../dynamicBasicAgent/npcPlanning/types.js";
 import type { ItemContexts } from "./sceneItemContextPayload.js";
 
+// ─── Character-related types ───────────────────────────────────────
+
+export type Difficulty = "regular" | "hard" | "extreme";
+
+export interface CharacterAttributes {
+  STR: number;
+  CON: number;
+  DEX: number;
+  APP: number;
+  POW: number;
+  SIZ: number;
+  INT: number;
+  EDU: number;
+  [key: string]: number;
+}
+
+export interface CharacterStatus {
+  hp: number;
+  maxHp: number;
+  sanity: number;
+  maxSanity: number;
+  luck: number;
+  mp?: number;
+  conditions: string[];
+  notes?: string;
+  damageBonus?: string;
+  build?: number;
+  mov?: number;
+  [key: string]: number | string[] | string | undefined;
+}
+
+export interface ActionLogEntry {
+  time: string;
+  location: string;
+  character?: string;
+  summary: string;
+  successLevel?:
+    | "critical"
+    | "extreme"
+    | "hard"
+    | "regular"
+    | "failure"
+    | "fumble"
+    | "unknown";
+}
+
+export interface InventoryItem {
+  name: string;
+  quantity?: number;
+  properties?: Record<string, any>;
+}
+
+export interface NPCKnowledge {
+  id: string;
+  text: string;
+  category?: "knowledge" | "secret";
+  difficulty?: Difficulty;
+  revealed: boolean;
+  relatedTo?: string[];
+}
+
+export interface NPCRelationship {
+  targetId: string;
+  targetName: string;
+  relationshipType:
+    | "ally"
+    | "enemy"
+    | "neutral"
+    | "family"
+    | "friend"
+    | "rival"
+    | "employer"
+    | "employee"
+    | "stranger";
+  attitude: number;
+  description?: string;
+  history?: string;
+}
+
+// ─── Inventory utilities ───────────────────────────────────────────
+
+export class InventoryUtils {
+  static normalizeInventory(
+    inventory: InventoryItem[] | undefined | null
+  ): InventoryItem[] {
+    if (!inventory || !Array.isArray(inventory)) return [];
+    return inventory.filter(
+      (item) =>
+        item &&
+        typeof item === "object" &&
+        "name" in item &&
+        typeof item.name === "string"
+    );
+  }
+
+  static toSimpleList(inventory: InventoryItem[]): string[] {
+    return inventory.map((item) => {
+      if (item.quantity && item.quantity > 1) {
+        return `${item.name} (x${item.quantity})`;
+      }
+      return item.name;
+    });
+  }
+
+  static findItem(
+    inventory: InventoryItem[],
+    itemName: string
+  ): InventoryItem | undefined {
+    const normalizedName = itemName.toLowerCase().trim();
+    return inventory.find(
+      (item) => item.name.toLowerCase().trim() === normalizedName
+    );
+  }
+
+  static addItems(
+    inventory: InventoryItem[],
+    items: InventoryItem[]
+  ): InventoryItem[] {
+    const newInventory = [...inventory];
+    for (const itemToAdd of items) {
+      const existingIndex = newInventory.findIndex(
+        (invItem) =>
+          invItem.name.toLowerCase().trim() ===
+          itemToAdd.name.toLowerCase().trim()
+      );
+      if (existingIndex >= 0) {
+        const existing = newInventory[existingIndex];
+        newInventory[existingIndex] = {
+          ...existing,
+          quantity: (existing.quantity || 1) + (itemToAdd.quantity || 1),
+          properties:
+            existing.properties || itemToAdd.properties
+              ? { ...existing.properties, ...itemToAdd.properties }
+              : undefined,
+        };
+      } else {
+        newInventory.push({
+          name: itemToAdd.name,
+          quantity: itemToAdd.quantity || 1,
+          properties: itemToAdd.properties,
+        });
+      }
+    }
+    return newInventory;
+  }
+
+  static removeItems(
+    inventory: InventoryItem[],
+    itemsToRemove: InventoryItem[]
+  ): InventoryItem[] {
+    const removeNames = itemsToRemove.map((item) =>
+      item.name.toLowerCase().trim()
+    );
+    return inventory
+      .map((item) => {
+        const itemName = item.name.toLowerCase().trim();
+        const index = removeNames.indexOf(itemName);
+        if (index >= 0) {
+          const removeItem = itemsToRemove[index];
+          const removeQuantity = removeItem.quantity || 1;
+          const currentQuantity = item.quantity || 1;
+          if (currentQuantity > removeQuantity) {
+            return { ...item, quantity: currentQuantity - removeQuantity };
+          } else {
+            return null;
+          }
+        }
+        return item;
+      })
+      .filter((item): item is InventoryItem => item !== null);
+  }
+}
+
+// ─── Character profile ─────────────────────────────────────────────
+
 /**
- * DynamicWorld Character Profile - Independent type definition for DynamicWorld system
- * Based on CharacterProfile but without currentLocation field
- * Location is determined from actionLog instead of currentLocation field
+ * DynamicWorld NPC Profile — flat character type for the simulation engine.
+ * Location is tracked via npcLocations/characterPositions, not on the profile.
  */
-export interface DynamicCharacterProfile {
+export interface DynamicNPCProfile {
   id: string;
   name: string;
   attributes: CharacterAttributes;
   status: CharacterStatus;
   inventory: InventoryItem[];
   skills: Record<string, number>;
-  notes?: string;
   actionLog?: ActionLogEntry[];
-  // Additional character information (mainly for player characters)
+
+  // Character descriptors (used in LLM planning prompts)
   occupation?: string;
   age?: number;
   gender?: string;
   appearance?: string;
   personality?: string;
+  background?: string;
   backstory?: string;
   residence?: string;
-  birthplace?: string;
-  era?: string;
-  ideology?: string;
-  significantPeople?: string;
-  gear?: string;
-  weapons?: Array<{
-    name: string;
-    skill: string;
-    damage: string;
-    range: string;
-    attacks: string;
-    ammo: string;
-  }>;
-  derivedAttributes?: {
-    MOV?: number;
-    BUILD?: string;
-    DB?: string;
-    ARMOR?: string;
-  };
-  // Note: currentLocation is intentionally omitted - location is tracked via actionLog
-}
 
-/**
- * DynamicWorld NPC Profile - Extended character profile with NPC-specific data
- * Location is determined from actionLog instead of currentLocation field
- */
-export interface DynamicNPCProfile extends DynamicCharacterProfile {
-  // NPC-specific fields (override some optional fields from CharacterProfile)
-  background?: string; // NPC-specific background (may differ from backstory)
-  goals?: string[];
+  // Simulation data
+  longTermIntent: string;
   secrets?: string[];
   knowledge: NPCKnowledge[];
   relationships: NPCRelationship[];
-  isNPC: true; // flag to distinguish from player characters
 
-  // DynamicWorld specific fields
-  instantiatedFrom?: string; // Knowledge holder ID that this NPC represents
-  inheritsKnowledge?: string[]; // Truth event IDs from knowledge holder
-  residence?: string; // macroLocationId -- derived from ScenarioOutline.residents
-  isPlayerInjected?: boolean; // true = player-created character in simulation mode
+  isPlayerInjected?: boolean;
 }
+
+// ─── Scene types ───────────────────────────────────────────────────
 
 export interface DynamicScene {
   id: string;
@@ -149,9 +287,10 @@ export interface SceneImage {
   generatedAt?: string;
 }
 
+// ─── World structure types ─────────────────────────────────────────
+
 /**
  * Scenario Outline - Macro location container for sub-scenes
- * Pure container: no connections, no clues. Grouping framework for DynamicScene instances.
  */
 export interface ScenarioOutline {
   id: string;
@@ -166,7 +305,6 @@ export interface ScenarioOutline {
 
 /**
  * Transport Edge - Connects two macro locations via a street/outdoor scene
- * Carries travel time for tick processor pathfinding
  */
 export interface TransportEdge {
   fromLocationId: string;
@@ -193,24 +331,14 @@ export interface ModuleSetup {
 
 /**
  * Structured Story Elements - Extracted from user creative prompt
- * Used as structured input for all downstream world generation agents
  */
 export interface StructuredStoryElements {
-  /** Time period / era, e.g. "1920s Prohibition-era New England" */
   era: string;
-  /** World rules: magic/science systems, political structure, civilizations, religion */
   worldbuilding: string;
-  /** Story genres, e.g. ["horror", "mystery", "adventure"] */
   genre: string[];
-  /** Overall tone / atmosphere, e.g. "dark, oppressive, paranoid" */
   tone: string;
-  /** Core thematic idea, e.g. "humanity's insignificance before cosmic entities" */
   theme: string;
-  /** All elements synthesized into a precise English creative brief */
   refinedPrompt: string;
 }
 
-/**
- * Progress Callback - For reporting generation progress
- */
 export type ProgressCallback = (message: string) => void;

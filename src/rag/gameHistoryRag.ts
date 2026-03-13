@@ -13,7 +13,7 @@ import type {
   CoCDatabase,
   CoCDatabaseAdapter,
 } from "../shared/agents/memory/database/index.js";
-import type { ActionLogEntry } from "../shared/agents/models/gameTypes.js";
+import type { ActionLogEntry } from "../dynamicworldagent/state/types.js";
 import { EmbeddingClient } from "./embedding.js";
 
 /** Relevant history item returned from search */

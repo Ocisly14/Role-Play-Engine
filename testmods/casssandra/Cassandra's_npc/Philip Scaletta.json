@@ -1,8 +1,8 @@
 [
     {
       "name": "Philip Scaletta",
-      "occupation": "Mafia Enforcer / Criminal Fixer",
-      "age": 38,
+      "occupation": "Petty Thief / Street Hustler",
+      "age": 28,
       "gender": "male",
       "appearance": "A sharply dressed Italian-American man with slicked-back dark hair, a thin mustache, and cold, watchful eyes. Usually wears tailored suits and leather gloves, even in inappropriate weather.",
       "personality": "Calm, calculating, and ruthlessly pragmatic. Speaks politely but carries an undercurrent of menace. Loyal to his organization, distrustful of outsiders.",
@@ -121,6 +121,7 @@
           "history": "Worked together on smuggling and intimidation jobs."
         }
       ],
-      "notes": "Philip avoids prolonged exposure to crime scenes involving abnormal creatures. His SAN loss history suggests prior encounters with the unnatural. CRITICALLY: He was THE FIRST PERSON to publicly discover and report the victim's body at the Reindeer Bar on December 22, 2003. He noticed Marcel returning from the restroom looking nervous and suspicious, suspected Marcel might be hiding something or involved in drug dealing. Concerned about what had just happened (the victim seeking help), he went to check the restroom and discovered the body, then shouted - which caught Marcel before he could escape. However, Marcel had actually discovered the body first but was too afraid to report it, making Philip the first person to publicly discover and report the body."
+      "notes": "Philip avoids prolonged exposure to crime scenes involving abnormal creatures. His SAN loss history suggests prior encounters with the unnatural. CRITICALLY: He was THE FIRST PERSON to publicly discover and report the victim's body at the Reindeer Bar on December 22, 2003. He noticed Marcel returning from the restroom looking nervous and suspicious, suspected Marcel might be hiding something or involved in drug dealing. Concerned about what had just happened (the victim seeking help), he went to check the restroom and discovered the body, then shouted - which caught Marcel before he could escape. However, Marcel had actually discovered the body first but was too afraid to report it, making Philip the first person to publicly discover and report the body.",
+      "currentLocation": "SCN_8"
     }
   ]

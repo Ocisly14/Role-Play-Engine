@@ -273,15 +273,10 @@ export async function getCharacterById(
       appearance: character.appearance,
       personality: character.personality,
       background: character.background,
-      goals: character.goals ? JSON.stringify(character.goals) : null,
       secrets: character.secrets ? JSON.stringify(character.secrets) : null,
       current_location: character.currentLocation,
       email_id: character.emailId,
       updated_at: character.updatedAt?.toISOString(),
-      instantiated_from: character.instantiatedFrom,
-      inherits_knowledge: character.inheritsKnowledge
-        ? JSON.stringify(character.inheritsKnowledge)
-        : null,
     };
 
     // Parse character data

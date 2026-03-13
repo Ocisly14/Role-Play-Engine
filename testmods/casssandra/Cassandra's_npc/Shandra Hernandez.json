@@ -1,8 +1,8 @@
 [
     {
       "name": "Shandra Hernandez",
-      "occupation": "Hotel Housekeeper / Temporary Staff",
-      "age": 26,
+      "occupation": "Former Detective / Nine Angels Agent",
+      "age": 31,
       "gender": "female",
       "appearance": "A young Latina woman with tired eyes and neatly tied dark hair. Dresses plainly in practical work clothes; often appears nervous and sleep-deprived.",
       "personality": "Anxious, cautious, and soft-spoken. Easily intimidated but fundamentally compassionate. Tends to avoid conflict and authority figures.",
@@ -47,9 +47,9 @@
         "Psychology": 35
       },
       "inventory": [
-        "Hotel master key (limited access)",
-        "Cleaning supplies",
-        "Personal notebook"
+        { "name": "Hotel master key (limited access)" },
+        { "name": "Cleaning supplies" },
+        { "name": "Personal notebook" }
       ],
     "clues": [
       {
@@ -80,6 +80,7 @@
           "history": "Threatened with termination if she asks questions."
         }
       ],
-      "notes": "Shandra may cooperate with investigators if they earn her trust and offer protection."
+      "notes": "Shandra may cooperate with investigators if they earn her trust and offer protection.",
+      "currentLocation": "SCN_14"
     }
   ]

@@ -2,7 +2,7 @@
   {
     "name": "Ben Cleo",
     "occupation": "Mafia Boss / Underground Power Broker",
-    "age": 38,
+    "age": 47,
     "gender": "male",
     "appearance": "A composed and intimidating man with a calm posture. Dresses neatly and practically, giving the impression of a businessman rather than a criminal.",
     "personality": "Cold-headed, pragmatic, disciplined, and authoritarian. Values order, loyalty, and efficiency; rarely acts on impulse.",
@@ -118,6 +118,7 @@
         "history": "They have cooperated when interests aligned but maintain distance."
       }
     ],
-    "notes": "Ben rarely interacts directly with investigators unless provoked. Any harm done to Haran will eventually provoke retaliation from Ben."
+    "notes": "Ben rarely interacts directly with investigators unless provoked. Any harm done to Haran will eventually provoke retaliation from Ben.",
+    "currentLocation": "SCN_21"
   }
 ]

@@ -11,7 +11,7 @@
         "Prove herself as a capable detective",
         "Protect her friends and uncover the truth behind the Cassandra incidents"
       ],
-      "secrets": [],
+      "secrets": ["Accidentally discharged her gun and injured Hawthorne and Lyn"],
       "attributes": {
         "STR": 30,
         "CON": 55,
@@ -43,8 +43,22 @@
         "Fighting (Brawl)": 50,
         "Handgun": 76
       },
-      "inventory": [],
-      "clues": [],
+      "inventory": [
+        {
+          "name": "Service pistol",
+          "properties": {
+            "note": "The gun that accidentally went off"
+          }
+        }
+      ],
+      "clues": [
+        {
+          "clueText": "Admires her senior colleague Bruno (not the Cassandra one) and wants to be a great detective",
+          "category": "knowledge",
+          "difficulty": "regular",
+          "relatedTo": ["O'Neil"]
+        }
+      ],
       "relationships": [
         {
           "targetName": "Bruno Galilei",
@@ -82,6 +96,7 @@
           "history": "Trust built through shared danger and mutual reliance."
         }
       ],
-      "notes": "Lily’s past mistake still weighs on her, driving her to be more cautious yet more determined in dangerous situations."
+      "notes": "Lily’s past mistake still weighs on her, driving her to be more cautious yet more determined in dangerous situations.",
+      "currentLocation": "SCN_4"
     }
   ]

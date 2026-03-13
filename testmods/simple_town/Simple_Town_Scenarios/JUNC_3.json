@@ -1,0 +1,9 @@
+{
+  "id": "JUNC_3",
+  "name": "Office District Corner",
+  "description": "A corner near the office district. C's company building is visible from here.",
+  "parentLocationId": "OUTDOOR",
+  "items": [],
+  "conditions": [],
+  "connectedSceneIds": ["SCN_3_SUB_1"]
+}

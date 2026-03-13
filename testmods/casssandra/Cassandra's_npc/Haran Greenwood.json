@@ -74,6 +74,7 @@
         "history": "They have known each other for many years through routine encounters at the train station."
       }
     ],
-    "notes": "Haran is a background NPC useful for atmosphere and local history rather than direct plot progression."
+    "notes": "Haran is a background NPC useful for atmosphere and local history rather than direct plot progression.",
+    "currentLocation": "SCN_21"
   }
 ]
