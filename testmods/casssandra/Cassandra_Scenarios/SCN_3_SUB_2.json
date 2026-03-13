@@ -25,47 +25,37 @@
       "description": "工具柜上方的半球形摄像头红灯一闪一闪，时刻监视着整个工作室。"
     }
   ],
-  "clues": [
-    {
-      "id": "CLUE_SCN3_2",
-      "clueText": "与Jenny Florence（卢奇菲罗）有关的所有法医记载已经消失。去年帕拉迪尔大酒店冷柜案中黑人女孩遇害案的法医鉴定报告也是空白的。",
-      "category": "document",
-      "difficulty": "automatic",
-      "location": "法医工作室",
-      "discoveryMethod": "检查法医工作室的档案和记录",
-      "reveals": [
-        "有人系统性地销毁了与案件相关的法医证据",
-        "两起案件之间可能存在关联"
-      ],
-      "discovered": false
-    },
-    {
-      "id": "CLUE_SCN3_3",
-      "clueText": "法医工具锁在专门的柜子里，撬开会引发监控报警。",
-      "category": "observation",
-      "difficulty": "automatic",
-      "location": "法医工具柜",
-      "discoveryMethod": "检查工具柜的锁和连接装置",
-      "reveals": [
-        "无法在不引起注意的情况下使用法医工具"
-      ],
-      "discovered": false
-    }
-  ],
   "conditions": [
     {
-      "type": "lighting",
-      "description": "工作室灯光苍白，空荡荡的操作台和空置的证物架显得格外冷清"
+      "description": "工作室灯光苍白，空荡荡的操作台和空置的证物架显得格外冷清",
+      "mechanicalEffect": {
+        "skillPenalty": [
+          {
+            "skill": "Perception",
+            "delta": -10
+          }
+        ]
+      }
     },
     {
-      "type": "other",
-      "description": "工具柜连接着监控报警系统，强行撬开将立即触发警报"
+      "description": "工具柜连接着监控报警系统，强行撬开将立即触发警报",
+      "mechanicalEffect": {
+        "skillPenalty": [
+          {
+            "skill": "Stealth",
+            "delta": -20
+          },
+          {
+            "skill": "Disguise",
+            "delta": -10
+          }
+        ]
+      }
     }
   ],
   "connections": [
     "SCN_3_SUB_1"
   ],
-  "events": [],
   "itemContexts": {
     "ITEM_SCN3_6": "靠墙的证物架上只剩下淡淡灰印，像是某些重要物品被匆忙撤走后留下的轮廓。"
   }

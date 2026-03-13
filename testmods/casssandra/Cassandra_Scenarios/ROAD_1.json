@@ -29,12 +29,17 @@
       "description": "大道两侧的路灯杆间距很大，到了夜里只会留下分段式的昏黄照明。"
     }
   ],
-  "clues": [],
   "conditions": [
     {
-      "type": "weather",
-      "description": "露天街道，受天气影响。冬季气温低，偶有降雪。"
+      "description": "露天街道，受天气影响。冬季气温低，偶有降雪。",
+      "mechanicalEffect": {
+        "skillPenalty": [
+          {
+            "skill": "Perception",
+            "delta": -10
+          }
+        ]
+      }
     }
-  ],
-  "events": []
+  ]
 }

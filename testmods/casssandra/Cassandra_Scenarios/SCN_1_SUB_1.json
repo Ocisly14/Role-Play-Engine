@@ -45,50 +45,19 @@
       "description": "一组绿色科室指示牌，标注着停尸间、病房和实验室等区域方向。"
     }
   ],
-  "clues": [
-    {
-      "id": "CLUE_SCN1_1",
-      "clueText": "这家医院拥有远超其规模的反黑客系统，有人专门对网络安全系统做了加强。药品管理室和实验室两处区域格外可疑。",
-      "category": "knowledge",
-      "difficulty": "hard",
-      "location": "医院网络系统",
-      "discoveryMethod": "通过Simon Laplace尝试入侵医院系统后得知",
-      "reveals": [
-        "医院存在不可告人的秘密",
-        "Vincent Galenus参与了某些隐秘活动"
-      ],
-      "discovered": false
-    },
-    {
-      "id": "CLUE_SCN1_2",
-      "clueText": "进入药品管理室和实验室需要院长Vincent Galenus的ID卡。通过复制ID卡可以获取进入权限，但必须及时归还原卡，否则会触发警报。",
-      "category": "observation",
-      "difficulty": "regular",
-      "location": "医院大厅公告与门禁系统",
-      "discoveryMethod": "观察门禁系统或向工作人员打听",
-      "reveals": [
-        "需要获取Vincent Galenus的ID卡"
-      ],
-      "discovered": false
-    },
-    {
-      "id": "CLUE_SCN1_3",
-      "clueText": "医院管理松散，调查员可以伪装成警察进入调查尸体，医院人员不会产生怀疑。如果乔装失败也可以另想办法进入，难度不大。",
-      "category": "observation",
-      "difficulty": "automatic",
-      "location": "医院大厅",
-      "discoveryMethod": "观察医院工作人员的态度和管理状态",
-      "reveals": [],
-      "discovered": false
-    }
-  ],
   "conditions": [
     {
-      "type": "lighting",
-      "description": "医院内部灯光明亮，走廊里弥漫着消毒水的气味"
+      "description": "医院内部灯光明亮，走廊里弥漫着消毒水的气味",
+      "mechanicalEffect": {
+        "skillPenalty": [
+          {
+            "skill": "Perception",
+            "delta": 10
+          }
+        ]
+      }
     },
     {
-      "type": "other",
       "description": "医院管理松散，人员来往稀疏，伪装进入相对容易",
       "mechanicalEffect": {
         "skillPenalty": [
@@ -107,7 +76,6 @@
     "SCN_1_SUB_5",
     "SCN_1_SUB_6"
   ],
-  "events": [],
   "itemContexts": {
     "ITEM_SCN1_2": "大厅角落的监控显示屏可以观察各处走廊画面，但存在若干监控死角。",
     "ITEM_SCN1_15": "前台的接待窗口半开着，玻璃下方的缝隙里塞着几张折起的通知和旧表单。",

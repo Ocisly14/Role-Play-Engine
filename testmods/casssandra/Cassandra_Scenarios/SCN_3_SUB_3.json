@@ -25,50 +25,24 @@
       "description": "靠门的小抽屉柜里塞满了手写索引卡，用来按年份和案件名检索纸质档案。"
     }
   ],
-  "clues": [
-    {
-      "id": "CLUE_SCN3_4",
-      "clueText": "可以找到关于驯鹿酒吧凶杀案和一年前帕拉迪尔大酒店冷柜案的卷宗资料，内容基本与Bruno Galilei所述一致。从中可以找到驯鹿酒吧案相关人员的住址信息。",
-      "category": "document",
-      "difficulty": "regular",
-      "location": "档案柜",
-      "discoveryMethod": "按年份和案件类型检索卷宗",
-      "reveals": [
-        "驯鹿酒吧案相关人员的住址",
-        "两起案件的官方记录细节"
-      ],
-      "discovered": false
-    },
-    {
-      "id": "CLUE_SCN3_5",
-      "clueText": "仔细调查会发现一些失踪人口报告：在过去几年里，每年冬春季节都有一两起女孩离家出走的失踪报告。但奇怪的是，2002年和2003年没有这类报告。",
-      "category": "document",
-      "difficulty": "hard",
-      "location": "档案柜深处",
-      "discoveryMethod": "仔细翻阅多年的失踪人口档案并比对年份",
-      "reveals": [
-        "每年冬春季节规律性的女孩失踪暗示着某种周期性的犯罪活动",
-        "2002和2003年缺少报告可能意味着作案模式发生了变化或者受害者来源改变了"
-      ],
-      "discovered": false
-    }
-  ],
   "conditions": [
     {
-      "type": "lighting",
-      "description": "档案室光线不足，高大的档案柜投下大片阴影"
+      "description": "档案室光线不足，高大的档案柜投下大片阴影",
+      "mechanicalEffect": {
+        "skillPenalty": [
+          {
+            "skill": "Perception",
+            "delta": -20
+          }
+        ]
+      }
     },
     {
-      "type": "other",
       "description": "卷宗数量庞大且摆放不够整齐，详细搜寻需要花费大量时间",
       "mechanicalEffect": {
         "skillPenalty": [
           {
-            "skill": "Library Use",
-            "delta": -10
-          },
-          {
-            "skill": "Spot Hidden",
+            "skill": "Perception",
             "delta": -10
           }
         ]
@@ -78,7 +52,6 @@
   "connections": [
     "SCN_3_SUB_1"
   ],
-  "events": [],
   "itemContexts": {
     "ITEM_SCN3_8": "角落里堆着几只敞口纸箱，里面塞满了尚未来得及归档的文件袋与零散卷宗。"
   }

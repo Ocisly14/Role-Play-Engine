@@ -15,38 +15,36 @@
       "description": "金属抽屉式冷藏柜，用于保存尸体，部分抽屉已空置"
     }
   ],
-  "clues": [
-    {
-      "id": "CLUE_SCN1_4",
-      "clueText": "Jenny Florence（卢奇菲罗）的尸体不在停尸间，已被运往焚化厂。医院档案显示尸体转运时间就在不久前，由院长Vincent Galenus亲自运送。",
-      "category": "document",
-      "difficulty": "regular",
-      "location": "停尸间档案记录",
-      "discoveryMethod": "查阅停尸间的尸体档案记录",
-      "reveals": ["尸体被紧急转移到焚化厂", "Vincent Galenus亲自参与了尸体转运，行为可疑"],
-      "discovered": false
-    },
-    {
-      "id": "CLUE_SCN1_5",
-      "clueText": "如果调查员需要寻找其他相关遗体，也会发现同样的结果——尸体均已被转运。",
-      "category": "observation",
-      "difficulty": "regular",
-      "location": "停尸间冷藏柜",
-      "discoveryMethod": "检查冷藏柜中的尸体存放情况",
-      "reveals": ["有人在系统性地销毁尸体证据"],
-      "discovered": false
-    }
-  ],
   "conditions": [
     {
-      "type": "temperature",
-      "description": "停尸间内温度极低，冷气从冷藏柜中散发出来"
+      "description": "停尸间内温度极低，冷气从冷藏柜中散发出来",
+      "mechanicalEffect": {
+        "skillPenalty": [
+          {
+            "skill": "Perception",
+            "delta": -10
+          }
+        ]
+      }
     },
     {
-      "type": "smell",
-      "description": "弥漫着福尔马林和消毒液的刺鼻气味"
+      "description": "弥漫着福尔马林和消毒液的刺鼻气味",
+      "mechanicalEffect": {
+        "skillPenalty": [
+          {
+            "skill": "Perception",
+            "delta": -10
+          },
+          {
+            "skill": "Listen",
+            "delta": -10
+          }
+        ]
+      }
     }
   ],
-  "connections": ["SCN_1_SUB_1", "SCN_1_SUB_5"],
-  "events": []
+  "connections": [
+    "SCN_1_SUB_1",
+    "SCN_1_SUB_5"
+  ]
 }

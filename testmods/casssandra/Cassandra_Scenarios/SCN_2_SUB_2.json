@@ -10,42 +10,42 @@
       "description": "半坍塌的二层小楼，部分房间尚且完好，但结构极不稳定"
     }
   ],
-  "clues": [
-    {
-      "id": "CLUE_SCN2_3",
-      "clueText": "从完好房间窗户观察，室内灰尘不算太厚重，小楼坍塌发生在一年以内。这里存在着某种危险的大型生物活动痕迹。",
-      "category": "observation",
-      "difficulty": "regular",
-      "location": "小楼完好一侧的窗户",
-      "discoveryMethod": "从窗户外小心观察内部情况",
-      "reveals": ["近期有异常活动导致了小楼坍塌", "此处栖息着极度危险的神话生物"],
-      "discovered": false
-    },
-    {
-      "id": "CLUE_SCN2_4",
-      "clueText": "地面上和墙壁上有某种巨大生物留下的黏液痕迹和不规则的刮擦痕迹，这不是任何已知动物能留下的。",
-      "category": "physical",
-      "difficulty": "hard",
-      "location": "小楼内部地面和墙壁",
-      "discoveryMethod": "冒险进入小楼内部仔细检查",
-      "reveals": ["修格斯在此栖息"],
-      "discovered": false
-    }
-  ],
   "conditions": [
     {
-      "type": "other",
-      "description": "建筑结构极不稳定，随时可能进一步坍塌。修格斯在此栖息，是整个卡森德拉最危险的区域之一。"
+      "description": "建筑结构极不稳定，随时可能进一步坍塌。修格斯在此栖息，是整个卡森德拉最危险的区域之一。",
+      "mechanicalEffect": {
+        "skillPenalty": [
+          {
+            "skill": "Climb",
+            "delta": -20
+          }
+        ]
+      }
     },
     {
-      "type": "sound",
-      "description": "偶尔从废墟深处传来湿滑的蠕动声和沉重的呼吸般的声响"
+      "description": "偶尔从废墟深处传来湿滑的蠕动声和沉重的呼吸般的声响",
+      "mechanicalEffect": {
+        "skillPenalty": [
+          {
+            "skill": "Listen",
+            "delta": -10
+          }
+        ]
+      }
     },
     {
-      "type": "smell",
-      "description": "空气中弥漫着腐败和某种不属于自然界的刺鼻气味"
+      "description": "空气中弥漫着腐败和某种不属于自然界的刺鼻气味",
+      "mechanicalEffect": {
+        "skillPenalty": [
+          {
+            "skill": "Perception",
+            "delta": -10
+          }
+        ]
+      }
     }
   ],
-  "connections": ["SCN_2_SUB_1"],
-  "events": []
+  "connections": [
+    "SCN_2_SUB_1"
+  ]
 }

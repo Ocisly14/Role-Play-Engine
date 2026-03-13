@@ -20,14 +20,11 @@
       "description": "一根双头路灯杆，夜里能把周围路面照得更亮。"
     }
   ],
-  "clues": [],
   "conditions": [
     {
-      "type": "weather",
-      "description": "露天路口，受天气影响。十字路口较为开阔。"
+      "description": "十字路口较为开阔。"
     }
   ],
-  "events": [],
   "connectedSceneIds": [],
   "itemContexts": {
     "ITEM_JUNC5_1": "路口中央的小型喷水池冬季已停水，池边落着几片被风吹进来的枯叶。",

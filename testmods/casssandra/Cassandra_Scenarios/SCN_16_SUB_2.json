@@ -35,56 +35,33 @@
       "description": "几只未清理的烟灰缸，里面积着烟蒂和灰白色烟灰。"
     }
   ],
-  "clues": [
-    {
-      "id": "CLUE_SCN16_6",
-      "clueText": "从二层隔层可以清楚地俯瞰一层大厅的情况，包括吧台、各个座位区和洗手间入口。在案发当晚，如果有人坐在二层，就有可能观察到一层的人员动态。",
-      "category": "environment",
-      "difficulty": "regular",
-      "location": "驯鹿酒吧二层隔层",
-      "discoveryMethod": "站在二层围栏旁观察一层",
-      "reveals": [
-        "二层是一个绝佳的观察位置",
-        "案发时坐在二层的人可能目击了关键信息"
-      ],
-      "discovered": false
-    },
-    {
-      "id": "CLUE_SCN16_7",
-      "clueText": "二层隔层的某些角落视线较为死角，加上监控损坏，这些位置的活动几乎无法被追溯。这些死角是Ben Cleo的手下刻意留出的。",
-      "category": "environment",
-      "difficulty": "hard",
-      "location": "驯鹿酒吧二层隔层角落",
-      "discoveryMethod": "仔细勘察二层的每个角落，注意监控覆盖盲区",
-      "reveals": [
-        "酒吧的监控死角是有意为之",
-        "Ben Cleo利用这些死角处理一些不方便公开的事务"
-      ],
-      "discovered": false
-    }
-  ],
   "conditions": [
     {
-      "type": "lighting",
       "description": "二层隔层的灯光比一层更为昏暗，角落里几乎没有什么光线，营造出一种隐秘幽暗的氛围",
       "mechanicalEffect": {
         "skillPenalty": [
           {
-            "skill": "Spot Hidden",
-            "delta": -15
+            "skill": "Perception",
+            "delta": -20
           }
         ]
       }
     },
     {
-      "type": "sound",
-      "description": "一层的背景音乐和交谈声从下方传来，但在二层音量有所降低，可以进行较为私密的对话"
+      "description": "一层的背景音乐和交谈声从下方传来，但在二层音量有所降低，可以进行较为私密的对话",
+      "mechanicalEffect": {
+        "skillPenalty": [
+          {
+            "skill": "Listen",
+            "delta": 5
+          }
+        ]
+      }
     }
   ],
   "connections": [
     "SCN_16_SUB_1"
   ],
-  "events": [],
   "itemContexts": {
     "ITEM_SCN16_6": "围栏边排着几张小圆桌，桌面上还留着深浅不一的酒渍圆环。",
     "ITEM_SCN16_8": "隔层墙面上的几盏壁灯散着微弱琥珀色光芒，照不透角落的阴影。",

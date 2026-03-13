@@ -20,29 +20,32 @@
       "description": "一幅卡森德拉辖区地图，标注了主要街道、建筑和分区。"
     }
   ],
-  "clues": [
-    {
-      "id": "CLUE_SCN3_1",
-      "clueText": "警察局受到现任镇长Patrizio von Samsa的严密掌控，副警长Lux Lynch是他安插在警局的眼线，时刻监视着警局的一举一动。",
-      "category": "observation",
-      "difficulty": "hard",
-      "location": "警察局大厅",
-      "discoveryMethod": "观察警局人员的行为举止和权力关系",
-      "reveals": [
-        "卡森德拉的执法机构已被Patrizio von Samsa渗透控制",
-        "Lux Lynch不值得信任"
-      ],
-      "discovered": false
-    }
-  ],
   "conditions": [
     {
-      "type": "lighting",
-      "description": "警察局内灯光略显昏暗，日光灯管偶尔闪烁"
+      "description": "警察局内灯光略显昏暗，日光灯管偶尔闪烁",
+      "mechanicalEffect": {
+        "skillPenalty": [
+          {
+            "skill": "Perception",
+            "delta": -10
+          }
+        ]
+      }
     },
     {
-      "type": "other",
-      "description": "警察局看似平常，但前局长Patrizio von Samsa对此地的掌控使得任何冲突都可能招致危险的后果"
+      "description": "警察局看似平常，但前局长Patrizio von Samsa对此地的掌控使得任何冲突都可能招致危险的后果",
+      "mechanicalEffect": {
+        "skillPenalty": [
+          {
+            "skill": "Stealth",
+            "delta": -10
+          },
+          {
+            "skill": "Disguise",
+            "delta": -10
+          }
+        ]
+      }
     }
   ],
   "connections": [
@@ -50,7 +53,6 @@
     "SCN_3_SUB_3",
     "JUNC_8"
   ],
-  "events": [],
   "itemContexts": {
     "ITEM_SCN3_1": "大厅接待区摆放着几张办公桌，桌面堆着日常文件、通讯记录和几只喝空的纸杯。",
     "ITEM_SCN3_11": "办公桌后方竖着几只金属文件柜，抽屉把手被常年拉拽得漆面斑驳。",

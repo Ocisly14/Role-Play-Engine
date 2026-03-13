@@ -20,52 +20,42 @@
       "description": "Simon翻到的一份帕德里奇的秘密文件的图片。在与调查员达成合作后，Simon会将此文件分享给调查员。"
     }
   ],
-  "clues": [
-    {
-      "id": "CLUE_SCN9_3",
-      "clueText": "Simon是一名黑客，他通过自己的监测网络了解信息和控制部分卡森德拉的公共设施。他可以为调查员提供许多黑客工作相关的帮助，但首先要求调查员对他的身份绝对保密——如果调查员对任何人提起Simon是个黑客，Simon必死无疑。",
-      "category": "knowledge",
-      "difficulty": "automatic",
-      "location": "西蒙的工作室",
-      "discoveryMethod": "与Simon合作后获取",
-      "reveals": ["Simon拥有强大的黑客能力", "Simon的身份一旦暴露就会遭到杀害", "Simon可以帮助调查员破解电子信息"],
-      "discovered": false
-    },
-    {
-      "id": "CLUE_SCN9_4",
-      "clueText": "Simon告诉调查员，星辰医院有着不可能有的严密反黑客系统，很显然是有人对这个系统做了加强。如果强行入侵，会有触发警报的危险。有两处地方显得非常可疑——药品管理室和实验室。要进入这两个地方，需要取得院长Vincent Galenus的ID卡进行复制。",
-      "category": "knowledge",
-      "difficulty": "automatic",
-      "location": "西蒙的工作室",
-      "discoveryMethod": "请求Simon帮忙黑入星辰医院系统后获取",
-      "reveals": ["星辰医院的网络安全被刻意加强", "药品管理室和实验室隐藏着秘密", "需要Vincent Galenus的ID卡才能进入"],
-      "discovered": false
-    },
-    {
-      "id": "CLUE_SCN9_5",
-      "clueText": "Simon提供了一些关于帕德里奇的信息：他看到了帕德里奇的文件，经历过卡森德拉的黑客交锋。Simon还分享了一份他翻到的帕德里奇的秘密文件图片。",
-      "category": "document",
-      "difficulty": "automatic",
-      "location": "西蒙的工作室",
-      "discoveryMethod": "与Simon达成合作后获取",
-      "reveals": ["帕德里奇有不可告人的秘密", "卡森德拉存在多方黑客势力的交锋"],
-      "discovered": false
-    }
-  ],
   "conditions": [
     {
-      "type": "lighting",
-      "description": "工作室内被多台显示器的光芒照亮，屏幕上滚动着各种数据和监控画面，投射出幽蓝色的光影。"
+      "description": "工作室内被多台显示器的光芒照亮，屏幕上滚动着各种数据和监控画面，投射出幽蓝色的光影。",
+      "mechanicalEffect": {
+        "skillPenalty": [
+          {
+            "skill": "Stealth",
+            "delta": -10
+          }
+        ]
+      }
     },
     {
-      "type": "sound",
-      "description": "房间里充满了电子设备持续运转的嗡嗡声和散热风扇的低鸣。"
+      "description": "房间里充满了电子设备持续运转的嗡嗡声和散热风扇的低鸣。",
+      "mechanicalEffect": {
+        "skillPenalty": [
+          {
+            "skill": "Listen",
+            "delta": -10
+          }
+        ]
+      }
     },
     {
-      "type": "temperature",
-      "description": "由于大量电子设备散热，工作室内温度比其他房间略高。"
+      "description": "由于大量电子设备散热，工作室内温度比其他房间略高。",
+      "mechanicalEffect": {
+        "skillPenalty": [
+          {
+            "skill": "Perception",
+            "delta": -5
+          }
+        ]
+      }
     }
   ],
-  "connections": ["SCN_9_SUB_2"],
-  "events": []
+  "connections": [
+    "SCN_9_SUB_2"
+  ]
 }

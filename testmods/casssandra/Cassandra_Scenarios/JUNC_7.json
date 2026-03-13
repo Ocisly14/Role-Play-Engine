@@ -20,14 +20,23 @@
       "description": "一张木质候车长椅，椅背上刻着多年前旅客留下的名字缩写。"
     }
   ],
-  "clues": [],
   "conditions": [
     {
-      "type": "weather",
-      "description": "露天路口，受天气影响。火车站前空旷，风势较强。"
+      "description": "露天路口，受天气影响。火车站前空旷，风势较强。",
+      "mechanicalEffect": {
+        "skillPenalty": [
+          {
+            "skill": "Listen",
+            "delta": -10
+          },
+          {
+            "skill": "Stealth",
+            "delta": -10
+          }
+        ]
+      }
     }
   ],
-  "events": [],
   "connectedSceneIds": [
     "SCN_21_SUB_1"
   ],

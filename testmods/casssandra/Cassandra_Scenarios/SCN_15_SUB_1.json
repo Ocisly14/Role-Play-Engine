@@ -20,79 +20,48 @@
       "description": "一枚磨得发亮的旧钱币，边缘被长期把玩得格外光滑。"
     }
   ],
-  "clues": [
-    {
-      "id": "CLUE_SCN15_2",
-      "clueText": "阿道夫是混迹于上流圈的骗子和信息掮客，表面光鲜实则一文不值。他掌握着卡森德拉不少人的秘密，靠买卖敏感消息过活。",
-      "category": "knowledge",
-      "difficulty": "hard",
-      "location": "阿道夫的住宅",
-      "discoveryMethod": "与阿道夫深入交谈或从其他NPC处了解",
-      "reveals": [
-        "阿道夫知道很多人的秘密",
-        "他对外自称'岸先生'",
-        "阿道夫随时可能背叛合作者"
-      ],
-      "discovered": false
-    },
-    {
-      "id": "CLUE_SCN15_3",
-      "clueText": "住宅内大量监控设施的存在表明阿道夫对安全极度偏执，这与他掌握他人秘密、靠信息贩卖生存的危险生活方式有关。无论他是否在家，他都能知道有人来访。",
-      "category": "physical",
-      "difficulty": "automatic",
-      "location": "阿道夫住宅各处",
-      "discoveryMethod": "进入住宅时观察到无处不在的监控设备",
-      "reveals": [
-        "阿道夫对自身安全极度重视",
-        "他的生活方式充满了危险"
-      ],
-      "discovered": false
-    },
-    {
-      "id": "CLUE_SCN15_4",
-      "clueText": "阿道夫知道五金店Harrison Lockheed暗中贩卖枪支的秘密，以及买卖枪支的暗号。",
-      "category": "knowledge",
-      "difficulty": "hard",
-      "location": "阿道夫的住宅",
-      "discoveryMethod": "与阿道夫进行足够深入的交谈或以信息交换",
-      "reveals": [
-        "五金店暗中贩卖枪支",
-        "阿道夫掌握着进入地下军火交易的暗号"
-      ],
-      "discovered": false
-    },
-    {
-      "id": "CLUE_SCN15_5",
-      "clueText": "阿道夫知道红石夫人化名苏珊在星辰医院做护士，但他不知道12月26日晚之后的'苏珊'已经不再是红石夫人。",
-      "category": "knowledge",
-      "difficulty": "extreme",
-      "location": "阿道夫的住宅",
-      "discoveryMethod": "与阿道夫进行深层信息交换或威逼利诱",
-      "reveals": [
-        "红石夫人在星辰医院以苏珊的身份隐藏",
-        "阿道夫与红石夫人之间存在利益关系"
-      ],
-      "discovered": false
-    }
-  ],
   "conditions": [
     {
-      "type": "lighting",
-      "description": "客厅内灯光明亮且精心布置，水晶吊灯将暖色光线均匀散布在每个角落，与石榴巷朴素的街道形成鲜明对比"
+      "description": "客厅内灯光明亮且精心布置，水晶吊灯将暖色光线均匀散布在每个角落，与石榴巷朴素的街道形成鲜明对比",
+      "mechanicalEffect": {
+        "skillPenalty": [
+          {
+            "skill": "Perception",
+            "delta": 10
+          }
+        ]
+      }
     },
     {
-      "type": "smell",
-      "description": "空气中弥漫着昂贵的熏香和精心调配的香水味道，檀木与东方香料的气息沉稳而浓郁"
+      "description": "空气中弥漫着昂贵的熏香和精心调配的香水味道，檀木与东方香料的气息沉稳而浓郁",
+      "mechanicalEffect": {
+        "skillPenalty": [
+          {
+            "skill": "Perception",
+            "delta": -5
+          }
+        ]
+      }
     },
     {
-      "type": "other",
-      "description": "门廊和客厅天花板边缘可见多个半球形监控摄像头，红色指示灯持续闪烁，来访者会被全程记录"
+      "description": "门廊和客厅天花板边缘可见多个半球形监控摄像头，红色指示灯持续闪烁，来访者会被全程记录",
+      "mechanicalEffect": {
+        "skillPenalty": [
+          {
+            "skill": "Stealth",
+            "delta": -20
+          },
+          {
+            "skill": "Disguise",
+            "delta": -10
+          }
+        ]
+      }
     }
   ],
   "connections": [
     "SCN_15_SUB_2"
   ],
-  "events": [],
   "itemContexts": {
     "ITEM_SCN15_3": "衣柜里挂着不少考究得体的礼服，保存完好，柜中放着昂贵的熏香，空气中弥漫着精心调配的香水味道",
     "ITEM_SCN15_5": "茶几上放着一枚磨得发亮的旧钱币，似乎经常被人把玩"

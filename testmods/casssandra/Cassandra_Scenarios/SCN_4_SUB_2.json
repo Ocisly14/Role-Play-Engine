@@ -20,26 +20,45 @@
       "description": "一扇厚重的灰色金属门，把手处留着长期开合的磨损痕迹。"
     }
   ],
-  "clues": [],
   "conditions": [
     {
-      "type": "lighting",
-      "description": "餐厅内光线柔和温馨，以壁灯和桌上烛台为主要照明。后厨则是白炽灯管发出的冷白色光线，明亮而缺乏情调。"
+      "description": "餐厅内光线柔和温馨，以壁灯和桌上烛台为主要照明。后厨则是白炽灯管发出的冷白色光线，明亮而缺乏情调。",
+      "mechanicalEffect": {
+        "skillPenalty": [
+          {
+            "skill": "Perception",
+            "delta": 5
+          }
+        ]
+      }
     },
     {
-      "type": "smell",
-      "description": "餐厅弥漫着淡淡的咖啡香和烘焙面包的余味。推开厨房门后，空气中混杂着油烟、香料和清洁剂的气味。"
+      "description": "餐厅弥漫着淡淡的咖啡香和烘焙面包的余味。推开厨房门后，空气中混杂着油烟、香料和清洁剂的气味。",
+      "mechanicalEffect": {
+        "skillPenalty": [
+          {
+            "skill": "Perception",
+            "delta": -5
+          }
+        ]
+      }
     },
     {
-      "type": "sound",
-      "description": "餐厅内背景音乐若有若无，刀叉碰撞瓷盘的清脆声偶尔响起。后厨则是抽油烟机的呼呼声和冰箱压缩机的低鸣。"
+      "description": "餐厅内背景音乐若有若无，刀叉碰撞瓷盘的清脆声偶尔响起。后厨则是抽油烟机的呼呼声和冰箱压缩机的低鸣。",
+      "mechanicalEffect": {
+        "skillPenalty": [
+          {
+            "skill": "Listen",
+            "delta": -10
+          }
+        ]
+      }
     }
   ],
   "connections": [
     "SCN_4_SUB_1",
     "SCN_4_SUB_4"
   ],
-  "events": [],
   "itemContexts": {
     "ITEM_SCN4_4": "铺着白色亚麻桌布的餐桌，每张桌上摆放着银质烛台和精心折叠的布餐巾。桌椅均为深色木质，椅背雕刻着简洁的卷草花纹。",
     "ITEM_SCN4_5": "沿墙排列的不锈钢操作台，台面擦拭得很干净。头顶的金属架上悬挂着各式厨具，旁边是大型商用冰箱，压缩机发出持续的低沉嗡鸣。",

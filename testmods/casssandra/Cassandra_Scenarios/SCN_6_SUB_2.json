@@ -35,49 +35,25 @@
       "description": "几只蒙尘瓷杯，其中一只杯沿磕出了一道明显缺口。"
     }
   ],
-  "clues": [
-    {
-      "id": "CLUE_SCN6_4",
-      "clueText": "地面灰尘中可以辨认出三种不同的脚印，但没有Bruno Galilei的脚印。通过脚印上覆盖的灰尘厚度可以判断来访时间的先后：第一种脚印上的灰尘最多，活动范围非常规律且范围小，只在几间屋子里出现过——这是Simon Laplace的脚印；第二种脚印和驯鹿酒吧受害人Jenny Florence（卢奇菲罗）的鞋码相似，上面落满了灰尘，看起来至少超过一个月——这是卢奇菲罗追踪黑客到此处时留下的；第三种脚印最新，灰尘最少，遍布全屋且十分凌乱——这是Martin Gin追踪卢奇菲罗来此处时留下的。从时间来看，来访顺序为Simon最早，卢奇菲罗居中，Martin Gin最晚。",
-      "category": "physical",
-      "difficulty": "hard",
-      "location": "木屋各房间地面",
-      "discoveryMethod": "仔细调查地面灰尘中的脚印，比较灰尘厚度",
-      "reveals": [
-        "有三个不同的人在不同时间来过这里",
-        "其中一种脚印与驯鹿酒吧受害人相似",
-        "活动范围规律的脚印属于熟悉此处的人（Simon）",
-        "最新的脚印遍布全屋，是在搜索什么（Martin Gin）"
-      ],
-      "discovered": false
-    },
-    {
-      "id": "CLUE_SCN6_5",
-      "clueText": "有两种脚印很凌乱而且遍布全屋，其中之一是类似受害人（卢奇菲罗）的。剩下一种脚印活动范围非常规律而且范围小，只在几间屋子里出现过。",
-      "category": "physical",
-      "difficulty": "regular",
-      "location": "木屋各房间地面",
-      "discoveryMethod": "观察脚印的分布模式",
-      "reveals": [
-        "有人对这座木屋非常熟悉，只去固定的几个房间",
-        "另外两人则在全屋搜索"
-      ],
-      "discovered": false
-    }
-  ],
   "conditions": [
     {
-      "type": "other",
-      "description": "屋内布满灰尘，空气中弥漫着陈旧潮湿的气味，长时间无人居住的痕迹十分明显。"
+      "description": "屋内布满灰尘，空气中弥漫着陈旧潮湿的气味，长时间无人居住的痕迹十分明显。",
+      "mechanicalEffect": {
+        "skillPenalty": [
+          {
+            "skill": "Perception",
+            "delta": -10
+          }
+        ]
+      }
     },
     {
-      "type": "lighting",
       "description": "屋内光线昏暗，窗户蒙着厚厚的灰尘，白天也只有微弱的自然光透入。",
       "mechanicalEffect": {
         "skillPenalty": [
           {
-            "skill": "Spot Hidden",
-            "delta": -15
+            "skill": "Perception",
+            "delta": -20
           }
         ]
       }
@@ -87,7 +63,6 @@
     "SCN_6_SUB_1",
     "SCN_6_SUB_3"
   ],
-  "events": [],
   "itemContexts": {
     "ITEM_SCN6_4": "客厅里的旧沙发被厚厚灰尘罩住，坐垫上还保留着久远的下陷痕迹。",
     "ITEM_SCN6_6": "厨房橱柜的门歪斜地半开着，木板边缘因潮气而起了翘。",

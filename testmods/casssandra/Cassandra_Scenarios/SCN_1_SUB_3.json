@@ -25,61 +25,34 @@
       "description": "一份记录实验数据和进度的实验档案。"
     }
   ],
-  "clues": [
-    {
-      "id": "CLUE_SCN1_6",
-      "clueText": "实验室内有一批来自波士顿的全新医疗器械，远超这家小镇医院应有的设备水平。",
-      "category": "physical",
-      "difficulty": "regular",
-      "location": "实验室器械区",
-      "discoveryMethod": "检查医疗器械上的产地标签",
-      "reveals": [
-        "有外部资金支持实验室的运作",
-        "实验室在进行不属于正常医疗范畴的活动"
-      ],
-      "discovered": false
-    },
-    {
-      "id": "CLUE_SCN1_7",
-      "clueText": "工作台上的注射器和蜘蛛样本表明，这里正在进行某种与蜘蛛相关的秘密实验。隔间玻璃门上贴有生化标识符号。",
-      "category": "physical",
-      "difficulty": "regular",
-      "location": "实验室工作台",
-      "discoveryMethod": "检查工作台上的实验器材和样本",
-      "reveals": [
-        "医院与蜘蛛相关的异常活动有关联",
-        "可能涉及Constantine Frollo和阿特拉克-纳克亚的蜘蛛"
-      ],
-      "discovered": false
-    },
-    {
-      "id": "CLUE_SCN1_8",
-      "clueText": "实验室中可以找到一份档案，记载了实验的相关数据。",
-      "category": "document",
-      "difficulty": "regular",
-      "location": "实验室档案柜",
-      "discoveryMethod": "搜索实验室内的文件和档案",
-      "reveals": [
-        "Vincent Galenus在进行人体实验"
-      ],
-      "discovered": false
-    }
-  ],
   "conditions": [
     {
-      "type": "lighting",
-      "description": "实验室内灯光惨白，生化标识在玻璃门上格外醒目"
+      "description": "实验室内灯光惨白，生化标识在玻璃门上格外醒目",
+      "mechanicalEffect": {
+        "skillPenalty": [
+          {
+            "skill": "Perception",
+            "delta": 5
+          }
+        ]
+      }
     },
     {
-      "type": "smell",
-      "description": "空气中混合着化学药剂和某种奇异的生物气味"
+      "description": "空气中混合着化学药剂和某种奇异的生物气味",
+      "mechanicalEffect": {
+        "skillPenalty": [
+          {
+            "skill": "Perception",
+            "delta": -10
+          }
+        ]
+      }
     }
   ],
   "connections": [
     "SCN_1_SUB_1",
     "SCN_1_SUB_5"
   ],
-  "events": [],
   "itemContexts": {
     "ITEM_SCN1_5": "一批崭新的医疗器械，上面印着产地来自波士顿，与这家偏远小镇医院的规模极不相称",
     "ITEM_SCN1_6": "工作台上散着几支尚未处理的注射器，针头反射出实验灯下惨白的光。",

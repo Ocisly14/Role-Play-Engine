@@ -30,61 +30,33 @@
       "description": "几只塞满进货单和工资条的发票夹，纸页按月份分开夹存。"
     }
   ],
-  "clues": [
-    {
-      "id": "CLUE_SCN13_4",
-      "clueText": "剪报集中有一则Peter William（彼得·威廉）的讣告，记录了老威廉的去世。这份讣告被夹在其中一本剪报集的显眼位置。",
-      "category": "document",
-      "difficulty": "automatic",
-      "location": "威廉的办公室剪报集",
-      "discoveryMethod": "翻阅剪报集",
-      "reveals": [
-        "老威廉于2002年在医院去世，死因与帕德里奇的人体实验可能存在联系"
-      ],
-      "discovered": false
-    },
-    {
-      "id": "CLUE_SCN13_5",
-      "clueText": "从一本剪报集中掉落出一张年代为1988年的报纸剪报，报道了1988年的一场暴动事件。这段线索涉及Simon Laplace（西蒙）不为人知的过去。",
-      "category": "document",
-      "difficulty": "regular",
-      "location": "威廉的办公室剪报集",
-      "discoveryMethod": "仔细翻阅剪报集时从中掉落",
-      "reveals": [
-        "1988年发生过一场暴动",
-        "Simon Laplace的过去与这场暴动有关联"
-      ],
-      "discovered": false
-    },
-    {
-      "id": "CLUE_SCN13_6",
-      "clueText": "桌上一份几周前的报纸报道了太平洋的鱼群异动现象：有人声称看到了圣经中的海中巨兽利维坦；另有海军和游船遭受鲨鱼袭击的消息；多个州对沙滩实行了管制。",
-      "category": "document",
-      "difficulty": "automatic",
-      "location": "威廉的办公室桌上",
-      "discoveryMethod": "阅读桌上的报纸",
-      "reveals": [
-        "太平洋海域出现异常活动",
-        "鱼群异动和鲨鱼袭击与深潜者的活动有关",
-        "这可能是卡森德拉灾难的预兆"
-      ],
-      "discovered": false
-    }
-  ],
   "conditions": [
     {
-      "type": "lighting",
-      "description": "办公室内光线昏暗，主要靠一盏台灯和窗户透进的有限光线照明"
+      "description": "办公室内光线昏暗，主要靠一盏台灯和窗户透进的有限光线照明",
+      "mechanicalEffect": {
+        "skillPenalty": [
+          {
+            "skill": "Perception",
+            "delta": -20
+          }
+        ]
+      }
     },
     {
-      "type": "smell",
-      "description": "空气中混合着纸张陈旧的气味和远处酒窖飘来的淡淡酒精味"
+      "description": "空气中混合着纸张陈旧的气味和远处酒窖飘来的淡淡酒精味",
+      "mechanicalEffect": {
+        "skillPenalty": [
+          {
+            "skill": "Perception",
+            "delta": -10
+          }
+        ]
+      }
     }
   ],
   "connections": [
     "SCN_13_SUB_1"
   ],
-  "events": [],
   "itemContexts": {
     "ITEM_SCN13_4": "办公室书架上的书大多与酿酒工艺、发酵控制和小型工厂经营有关。",
     "ITEM_SCN13_6": "办公桌上摊着一份几周前的报纸，周围还散着零碎的旧报和剪下来的版面。",

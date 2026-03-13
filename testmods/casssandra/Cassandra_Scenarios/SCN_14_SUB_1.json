@@ -35,50 +35,44 @@
       "description": "一部店内常用的有线电话，塑料听筒和拨号按键都带着频繁使用的磨痕。"
     }
   ],
-  "clues": [
-    {
-      "id": "CLUE_SCN14_1",
-      "clueText": "Shandra Hernandez与Bruno Galilei的关系非常亲密。从两人的交谈来看，他们之间的关系远超普通的店主和顾客。Bruno经常在空闲时来这里。",
-      "category": "observation",
-      "difficulty": "automatic",
-      "location": "珊德拉的小屋店内",
-      "discoveryMethod": "观察珊德拉谈及布鲁诺时的神态和语气",
-      "reveals": [
-        "珊德拉对布鲁诺有特殊的感情"
-      ],
-      "discovered": false
-    },
-    {
-      "id": "CLUE_SCN14_2",
-      "clueText": "珊德拉一直打不通Bruno Galilei的电话，对此十分焦急。她想了解Bruno的情况，这表明两人之间的联系突然中断。",
-      "category": "witness",
-      "difficulty": "automatic",
-      "location": "珊德拉的小屋",
-      "discoveryMethod": "路过此处时珊德拉主动向调查员招手询问",
-      "reveals": [
-        "布鲁诺可能已经出事"
-      ],
-      "discovered": false
-    }
-  ],
   "conditions": [
     {
-      "type": "smell",
-      "description": "店内弥漫着浓郁的烟草香味，混合着雪茄和各种香烟的独特气息，令人感到一种温暖朴实的氛围"
+      "description": "店内弥漫着浓郁的烟草香味，混合着雪茄和各种香烟的独特气息，令人感到一种温暖朴实的氛围",
+      "mechanicalEffect": {
+        "skillPenalty": [
+          {
+            "skill": "Perception",
+            "delta": -5
+          }
+        ]
+      }
     },
     {
-      "type": "lighting",
-      "description": "暖色壁灯和头顶缓转的吊扇营造出柔和、舒适的光线，橡木柜台和胡桃木展柜在灯光下泛着温润的光泽"
+      "description": "暖色壁灯和头顶缓转的吊扇营造出柔和、舒适的光线，橡木柜台和胡桃木展柜在灯光下泛着温润的光泽",
+      "mechanicalEffect": {
+        "skillPenalty": [
+          {
+            "skill": "Perception",
+            "delta": 10
+          }
+        ]
+      }
     },
     {
-      "type": "sound",
-      "description": "老松木地板踩上去会发出细微的吱呀声，门口的铜铃在有人进出时叮当作响，吊扇的叶片在头顶缓缓切割空气"
+      "description": "老松木地板踩上去会发出细微的吱呀声，门口的铜铃在有人进出时叮当作响，吊扇的叶片在头顶缓缓切割空气",
+      "mechanicalEffect": {
+        "skillPenalty": [
+          {
+            "skill": "Stealth",
+            "delta": -20
+          }
+        ]
+      }
     }
   ],
   "connections": [
     "SCN_14_SUB_2"
   ],
-  "events": [],
   "itemContexts": {
     "ITEM_SCN14_1": "玻璃罩下整齐陈列着不同产地的雪茄，标签用娟秀字迹标明了风味与产地。",
     "ITEM_SCN14_2": "柜台后挂着一条被反复洗过的深色围裙，边角被磨得发软，显然是珊德拉日常看店时穿的。",

@@ -20,14 +20,23 @@
       "description": "旁边住宅门廊的小灯白天熄着，灯罩里凝着一层薄薄的水汽。"
     }
   ],
-  "clues": [],
   "conditions": [
     {
-      "type": "weather",
-      "description": "露天路口，受天气影响。住宅区尽头，十分安静。"
+      "description": "露天路口，受天气影响。住宅区尽头，十分安静。",
+      "mechanicalEffect": {
+        "skillPenalty": [
+          {
+            "skill": "Perception",
+            "delta": -10
+          },
+          {
+            "skill": "Listen",
+            "delta": 10
+          }
+        ]
+      }
     }
   ],
-  "events": [],
   "connectedSceneIds": [
     "SCN_8_SUB_1"
   ],

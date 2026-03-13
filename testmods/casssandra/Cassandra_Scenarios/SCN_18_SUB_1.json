@@ -35,45 +35,31 @@
       "description": "5.56毫米口径，遭遇战大杀器。扣动扳机即可结束战斗。售价3000美元，圣诞节促销活动附送弹药。（需说出暗号后才会展示）"
     }
   ],
-  "clues": [
-    {
-      "id": "CLUE_SCN18_1",
-      "clueText": "Harrison Lockheed除了经营五金店之外，还暗中贩卖枪支。他并非黑手党成员，但受到当地黑手党Ben Cleo的保护。购买枪支需要对他说出暗号：'用锤子砸钉子，钉子会怎么样呢？'他就会展示自己私藏的货物。",
-      "category": "knowledge",
-      "difficulty": "hard",
-      "location": "五金店内",
-      "discoveryMethod": "从Adolph Carl或其他知情人处得知暗号后前来",
-      "reveals": [
-        "Harrison暗中贩卖枪支",
-        "可通过暗号购买武器装备"
-      ],
-      "discovered": false
-    },
-    {
-      "id": "CLUE_SCN18_2",
-      "clueText": "Harrison的枪支货物都是好货但价格不菲。货单包括：雷明顿M870霰弹枪（$4000）、沙漠之鹰手枪（$1000）、史密斯625转轮手枪（$10000，需议价）、柯尔特M16步枪（$3000，圣诞促销送弹药）。",
-      "category": "knowledge",
-      "difficulty": "hard",
-      "location": "五金店暗处",
-      "discoveryMethod": "说出正确暗号后Harrison会展示货物清单",
-      "reveals": [
-        "可在此处获取各类武器"
-      ],
-      "discovered": false
-    }
-  ],
   "conditions": [
     {
-      "type": "lighting",
-      "description": "店内灯光明亮，货架排列整齐，是一家看起来普普通通的五金店。"
+      "description": "店内灯光明亮，货架排列整齐，是一家看起来普普通通的五金店。",
+      "mechanicalEffect": {
+        "skillPenalty": [
+          {
+            "skill": "Perception",
+            "delta": 10
+          }
+        ]
+      }
     },
     {
-      "type": "smell",
-      "description": "空气中弥漫着金属和机油的气味，混合着木屑的清香。"
+      "description": "空气中弥漫着金属和机油的气味，混合着木屑的清香。",
+      "mechanicalEffect": {
+        "skillPenalty": [
+          {
+            "skill": "Perception",
+            "delta": -5
+          }
+        ]
+      }
     }
   ],
   "connections": [],
-  "events": [],
   "itemContexts": {
     "ITEM_SCN18_2": "陈列架最上层摆放着Harrison亲手制作的各种小发明，都标注着'非卖品'。这些看起来像是经过巧妙改装的小型机械装置，展现着发明家的奇思妙想。Harrison会热情地向感兴趣的人介绍每一件发明。"
   }

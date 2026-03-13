@@ -15,39 +15,44 @@
       "description": "酒窖各处布满了异常密集的蜘蛛网，从酒架缝隙蔓延到墙角和天花板砖缝之间"
     }
   ],
-  "clues": [
-    {
-      "id": "CLUE_SCN13_1",
-      "clueText": "酒窖里到处都是蜘蛛网，怎么清理都清理不干净，杀虫剂也毫无效果。这种异常的蜘蛛活动与卡森德拉近期的怪异事件有关联。",
-      "category": "environment",
-      "difficulty": "regular",
-      "location": "酒厂酒窖",
-      "discoveryMethod": "进入酒窖观察",
-      "reveals": [
-        "蜘蛛活动异常可能与阿特拉克-纳克亚的影响有关",
-        "冷蜘蛛的感染正在蔓延"
-      ],
-      "discovered": false
-    }
-  ],
   "conditions": [
     {
-      "type": "temperature",
-      "description": "地下酒窖温度明显低于地面，阴冷潮湿的空气贴在皮肤上令人不适"
+      "description": "地下酒窖温度明显低于地面，阴冷潮湿的空气贴在皮肤上令人不适",
+      "mechanicalEffect": {
+        "skillPenalty": [
+          {
+            "skill": "Perception",
+            "delta": -10
+          }
+        ]
+      }
     },
     {
-      "type": "lighting",
-      "description": "酒窖内只有入口处一盏昏暗的壁灯，深处几乎完全被黑暗笼罩"
+      "description": "酒窖内只有入口处一盏昏暗的壁灯，深处几乎完全被黑暗笼罩",
+      "mechanicalEffect": {
+        "skillPenalty": [
+          {
+            "skill": "Perception",
+            "delta": -40
+          }
+        ]
+      }
     },
     {
-      "type": "smell",
-      "description": "浓郁的酒精挥发气味混合着石头的潮腥味和腐朽木料的甜腻气息"
+      "description": "浓郁的酒精挥发气味混合着石头的潮腥味和腐朽木料的甜腻气息",
+      "mechanicalEffect": {
+        "skillPenalty": [
+          {
+            "skill": "Perception",
+            "delta": -10
+          }
+        ]
+      }
     }
   ],
   "connections": [
     "SCN_13_SUB_1"
   ],
-  "events": [],
   "itemContexts": {
     "ITEM_SCN13_2": "沿墙排列的木质酒架，存放着大量伏特加成品，瓶身上积着薄灰"
   }

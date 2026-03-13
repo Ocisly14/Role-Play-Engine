@@ -20,62 +20,44 @@
       "description": "通道一侧嵌着一只金属控制箱，连接着更深处的污水闸门系统。"
     }
   ],
-  "clues": [
-    {
-      "id": "CLUE_SCN7_1",
-      "clueText": "下水道的闸门系统可以被远程控制。据Simon调查，位于新月街B大道的污水处理系统每隔一段时间都会被有人刻意关闭一小会，最后一次更改日期是12月17日。",
-      "category": "knowledge",
-      "difficulty": "regular",
-      "location": "通过Simon的黑客调查获取",
-      "discoveryMethod": "向Simon Laplace询问关于下水道的事情，等待他的调查结果",
-      "reveals": [
-        "有人定期关闭闸门进入下水道深处",
-        "最后一次操作是12月17日（与Marcel目击脸上有胎记的西装男子从下水道爬出的时间吻合）"
-      ],
-      "discovered": false
-    },
-    {
-      "id": "CLUE_SCN7_2",
-      "clueText": "关闭闸门后，下水道内壁的深处可以发现一扇不易察觉的暗门。",
-      "category": "physical",
-      "difficulty": "hard",
-      "location": "下水道深处",
-      "discoveryMethod": "在闸门关闭后仔细搜索下水道墙壁",
-      "reveals": [
-        "下水道内藏有秘密空间"
-      ],
-      "discovered": false
-    }
-  ],
   "conditions": [
     {
-      "type": "smell",
-      "description": "下水道内弥漫着浓烈的污水臭味，令人作呕。"
-    },
-    {
-      "type": "lighting",
-      "description": "下水道内几乎没有光源，必须自备照明工具。",
+      "description": "下水道内弥漫着浓烈的污水臭味，令人作呕。",
       "mechanicalEffect": {
         "skillPenalty": [
           {
-            "skill": "Spot Hidden",
-            "delta": -30
+            "skill": "Perception",
+            "delta": -10
           }
         ]
       }
     },
     {
-      "type": "other",
+      "description": "下水道内几乎没有光源，必须自备照明工具。",
+      "mechanicalEffect": {
+        "skillPenalty": [
+          {
+            "skill": "Perception",
+            "delta": -40
+          }
+        ]
+      }
+    },
+    {
       "description": "闸门未关闭时，污水湍急流过通道，无法安全深入。",
       "mechanicalEffect": {
-        "blocked": true
+        "skillPenalty": [
+          {
+            "skill": "Climb",
+            "delta": -20
+          }
+        ]
       }
     }
   ],
   "connections": [
     "SCN_7_SUB_2"
   ],
-  "events": [],
   "itemContexts": {
     "ITEM_SCN7_5": "通往下方的铁梯每一级都覆着苔藓和水膜，踩上去带着让人不安的滑腻感。"
   }

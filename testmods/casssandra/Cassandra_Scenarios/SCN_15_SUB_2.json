@@ -25,40 +25,44 @@
       "description": "抽屉里收着几盒贴了日期标签的刻录光盘和备用存储介质，显然用于保存监控备份。"
     }
   ],
-  "clues": [
-    {
-      "id": "CLUE_SCN15_1",
-      "clueText": "千维系统是一套极为强大的监控与信息收集系统，由Anatole Laplace制作，可以监控卡森德拉几乎所有区域。阿道夫利用它来掌控信息、贩卖情报，但他自称不是黑客，对计算机的了解不如卡森德拉的几位黑客那么深入。",
-      "category": "physical",
-      "difficulty": "regular",
-      "location": "住宅监控室内的显示屏组",
-      "discoveryMethod": "阿道夫展示千维系统或调查员发现隐藏的显示屏机关",
-      "reveals": [
-        "千维系统由Anatole Laplace制作",
-        "阿道夫通过信息贩卖维生",
-        "千维系统原属于两名失踪的富商"
-      ],
-      "discovered": false
-    }
-  ],
   "conditions": [
     {
-      "type": "lighting",
-      "description": "房间内没有自然光源，仅靠显示屏的待机蓝光和角落里的台灯提供照明，整体光线偏暗偏冷"
+      "description": "房间内没有自然光源，仅靠显示屏的待机蓝光和角落里的台灯提供照明，整体光线偏暗偏冷",
+      "mechanicalEffect": {
+        "skillPenalty": [
+          {
+            "skill": "Perception",
+            "delta": -20
+          }
+        ]
+      }
     },
     {
-      "type": "sound",
-      "description": "服务器机箱的散热风扇持续发出低沉的嗡鸣声，房间因隔音板而异常安静"
+      "description": "服务器机箱的散热风扇持续发出低沉的嗡鸣声，房间因隔音板而异常安静",
+      "mechanicalEffect": {
+        "skillPenalty": [
+          {
+            "skill": "Listen",
+            "delta": -10
+          }
+        ]
+      }
     },
     {
-      "type": "smell",
-      "description": "空气中弥漫着电子设备运转时散发的微热气味，混合着塑料和金属的淡淡味道"
+      "description": "空气中弥漫着电子设备运转时散发的微热气味，混合着塑料和金属的淡淡味道",
+      "mechanicalEffect": {
+        "skillPenalty": [
+          {
+            "skill": "Perception",
+            "delta": -5
+          }
+        ]
+      }
     }
   ],
   "connections": [
     "SCN_15_SUB_1"
   ],
-  "events": [],
   "itemContexts": {
     "ITEM_SCN15_6": "桌角的小型服务器机箱持续发出低沉嗡鸣，机壳侧面贴着手写编号标签。"
   }

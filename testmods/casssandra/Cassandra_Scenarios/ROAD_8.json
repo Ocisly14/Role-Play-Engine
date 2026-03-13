@@ -29,12 +29,17 @@
       "description": "街边电线杆上缠着电话线与网线，底部被人用白漆简单涂过编号。"
     }
   ],
-  "clues": [],
   "conditions": [
     {
-      "type": "weather",
-      "description": "露天街道，受天气影响。街道两旁有住宅和木屋。"
+      "description": "露天街道，受天气影响。街道两旁有住宅和木屋。",
+      "mechanicalEffect": {
+        "skillPenalty": [
+          {
+            "skill": "Perception",
+            "delta": 5
+          }
+        ]
+      }
     }
-  ],
-  "events": []
+  ]
 }

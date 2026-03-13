@@ -20,14 +20,19 @@
       "description": "路边狭窄的排水沟盖板上沾着泥点和落叶，雨后会积起一层浑水。"
     }
   ],
-  "clues": [],
   "conditions": [
     {
-      "type": "weather",
-      "description": "露天路口，受天气影响。巷道分叉处，光线稍暗。"
+      "description": "露天路口，受天气影响。巷道分叉处，光线稍暗。",
+      "mechanicalEffect": {
+        "skillPenalty": [
+          {
+            "skill": "Perception",
+            "delta": -20
+          }
+        ]
+      }
     }
   ],
-  "events": [],
   "connectedSceneIds": [],
   "itemContexts": {
     "ITEM_JUNC6_2": "分叉点旁立着一根老电线杆，木杆上缠着层层叠叠的旧广告和电话号条。"

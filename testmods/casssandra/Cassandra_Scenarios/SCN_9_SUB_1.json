@@ -45,47 +45,33 @@
       "description": "一只白瓷茶壶，壶嘴附近还留着一点花草茶的淡香。"
     }
   ],
-  "clues": [
-    {
-      "id": "CLUE_SCN9_1",
-      "clueText": "花店看起来经营得不错，但从规模来看，仅靠卖花的收入恐怕难以支撑两个人的生活以及楼上的电子设备开销。这家花店更像是一个掩护身份的门面。",
-      "category": "observation",
-      "difficulty": "hard",
-      "location": "花店整体",
-      "discoveryMethod": "观察花店的经营状况和生活水平的不匹配",
-      "reveals": [
-        "花店可能只是Simon和Nancy的身份掩护"
-      ],
-      "discovered": false
-    },
-    {
-      "id": "CLUE_SCN9_2",
-      "clueText": "Nancy的手腕上缠着一条绷带，她说是在酒厂附近摘花时被蜘蛛咬伤的，虽然有些痛但并无大碍。仔细观察还能发现她的手臂上有一条纹身，被衣物遮掩着，只在靠近手腕的地方露出一小部分。",
-      "category": "observation",
-      "difficulty": "regular",
-      "location": "与Nancy交谈时可观察到",
-      "discoveryMethod": "注意观察Nancy的手腕和手臂",
-      "reveals": [
-        "Nancy被蜘蛛咬伤，可能与卡森德拉的蜘蛛相关异变有关",
-        "Nancy并不像表面上看起来那么单纯"
-      ],
-      "discovered": false
-    }
-  ],
   "conditions": [
     {
-      "type": "smell",
-      "description": "花店内弥漫着清新宜人的花香，与卡森德拉其他地方的阴郁气氛形成鲜明对比。"
+      "description": "花店内弥漫着清新宜人的花香，与卡森德拉其他地方的阴郁气氛形成鲜明对比。",
+      "mechanicalEffect": {
+        "skillPenalty": [
+          {
+            "skill": "Perception",
+            "delta": 10
+          }
+        ]
+      }
     },
     {
-      "type": "lighting",
-      "description": "花店内光线明亮温暖，给人一种舒适安全的感觉。"
+      "description": "花店内光线明亮温暖，给人一种舒适安全的感觉。",
+      "mechanicalEffect": {
+        "skillPenalty": [
+          {
+            "skill": "Perception",
+            "delta": 10
+          }
+        ]
+      }
     }
   ],
   "connections": [
     "SCN_9_SUB_2"
   ],
-  "events": [],
   "itemContexts": {
     "ITEM_SCN9_1": "展架上摆着一束束修剪整齐的鲜切花，花瓣润泽得像刚刚被人喷过水。",
     "ITEM_SCN9_6": "柜台旁的包装台上铺着牛皮纸和缎带，边缘残留着剪裁包装时留下的细碎纸屑。",

@@ -37,14 +37,23 @@
       "description": "一张石基木面的长椅，椅面被风沙磨得粗糙发灰。"
     }
   ],
-  "clues": [],
   "conditions": [
     {
-      "type": "weather",
-      "description": "露天街道，受天气影响。旧街路面不太平整，冬季更加寒冷。"
+      "description": "露天街道，受天气影响。旧街路面不太平整，冬季更加寒冷。",
+      "mechanicalEffect": {
+        "skillPenalty": [
+          {
+            "skill": "Perception",
+            "delta": -10
+          },
+          {
+            "skill": "Climb",
+            "delta": -10
+          }
+        ]
+      }
     }
   ],
-  "events": [],
   "itemContexts": {
     "ITEM_ROAD4_1": "老街口立着一块指向火车站的金属方向标，箭头边缘已经锈出深色斑点。",
     "ITEM_ROAD4_3": "一张石基木面的长椅靠墙摆放，椅面被风沙磨得粗糙发灰。"

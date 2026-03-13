@@ -35,26 +35,45 @@
       "description": "两只窄木箱，里面装着本地产的苹果白兰地，木板缝里透出淡淡果香。"
     }
   ],
-  "clues": [],
   "conditions": [
     {
-      "type": "smell",
-      "description": "厨房里飘散着炖菜与香料的温暖气味，与花店前厅的花香形成微妙的过渡。"
+      "description": "厨房里飘散着炖菜与香料的温暖气味，与花店前厅的花香形成微妙的过渡。",
+      "mechanicalEffect": {
+        "skillPenalty": [
+          {
+            "skill": "Perception",
+            "delta": 5
+          }
+        ]
+      }
     },
     {
-      "type": "lighting",
-      "description": "后厅光线偏暖偏暗，主要靠壁灯和灶台上方的吊灯照明，酒窖里则更为昏暗。"
+      "description": "后厅光线偏暖偏暗，主要靠壁灯和灶台上方的吊灯照明，酒窖里则更为昏暗。",
+      "mechanicalEffect": {
+        "skillPenalty": [
+          {
+            "skill": "Perception",
+            "delta": -10
+          }
+        ]
+      }
     },
     {
-      "type": "temperature",
-      "description": "厨房区域因烹饪而略显温热，酒窖则明显阴凉潮湿。"
+      "description": "厨房区域因烹饪而略显温热，酒窖则明显阴凉潮湿。",
+      "mechanicalEffect": {
+        "skillPenalty": [
+          {
+            "skill": "Perception",
+            "delta": -10
+          }
+        ]
+      }
     }
   ],
   "connections": [
     "SCN_9_SUB_1",
     "SCN_9_SUB_3"
   ],
-  "events": [],
   "itemContexts": {
     "ITEM_SCN9_2": "角落里的窄楼梯通向一个小酒窖，石砌拱顶下面横卧着数瓶红酒与苹果白兰地。",
     "ITEM_SCN9_9": "后厅中央摆着一张四人座橡木餐桌，格纹桌布上还压着一只插有冬青枝的花瓶。",

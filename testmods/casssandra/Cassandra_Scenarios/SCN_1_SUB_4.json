@@ -20,49 +20,38 @@
       "description": "暗门后发现的危险药品，被小心翼翼地放在一个盒子里，周围标有危险标识。这种药物来自南美，从一种名为'波拉切洛'的植物中提取。一克的致幻效果相当于一克海洛因，毒性甚至比炭疽更强，过量服用可顷刻致命。更可怕的是，它能让服用者丧失自主意识，变得犹如人偶一样任人摆布，严重时甚至造成失忆。医院档案中没有此物品的任何记录。"
     }
   ],
-  "clues": [
-    {
-      "id": "CLUE_SCN1_9",
-      "clueText": "药品管理室深处有一扇秘密暗门，门上标注需要Vincent Galenus的最高权限才能进入。",
-      "category": "physical",
-      "difficulty": "hard",
-      "location": "药品管理室深处",
-      "discoveryMethod": "仔细搜索药品管理室",
-      "reveals": [
-        "Vincent Galenus隐藏着不可告人的秘密"
-      ],
-      "discovered": false
-    },
-    {
-      "id": "CLUE_SCN1_10",
-      "clueText": "暗门后面存放着一种名为'魔鬼呼吸'（东莨菪碱）的危险药物，被小心保存在标有危险标识的盒子里。查阅医院档案，发现没有此物品的任何记录。这种药物与驯鹿酒吧凶杀案中受害人酒杯里发现的致幻药物相同。",
-      "category": "physical",
-      "difficulty": "hard",
-      "location": "暗门后的秘密存储空间",
-      "discoveryMethod": "通过暗门进入秘密空间后搜索",
-      "reveals": [
-        "医院秘密存放着与凶杀案相关的致幻药物",
-        "Vincent Galenus与驯鹿酒吧凶杀案存在关联",
-        "药物可能被用于控制受害者"
-      ],
-      "discovered": false
-    }
-  ],
   "conditions": [
     {
-      "type": "temperature",
-      "description": "药品管理室温度恒定偏低，冷藏设备持续运转发出低沉的嗡鸣声"
+      "description": "药品管理室温度恒定偏低，冷藏设备持续运转发出低沉的嗡鸣声",
+      "mechanicalEffect": {
+        "skillPenalty": [
+          {
+            "skill": "Perception",
+            "delta": -10
+          },
+          {
+            "skill": "Listen",
+            "delta": -10
+          }
+        ]
+      }
     },
     {
-      "type": "lighting",
-      "description": "房间深处光线较暗，暗门所在位置不易被察觉"
+      "description": "房间深处光线较暗，暗门所在位置不易被察觉",
+      "mechanicalEffect": {
+        "skillPenalty": [
+          {
+            "skill": "Perception",
+            "delta": -20
+          }
+        ]
+      }
     }
   ],
   "connections": [
     "SCN_1_SUB_1",
     "SCN_1_SUB_5"
   ],
-  "events": [],
   "itemContexts": {
     "ITEM_SCN1_8": "存放着各类常规医疗药品的货架和冷藏柜"
   }

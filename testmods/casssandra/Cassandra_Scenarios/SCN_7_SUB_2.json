@@ -20,87 +20,44 @@
       "description": "散落在地面的各种被砸坏烧毁的电子设备碎片——显示器碎片、扭曲的键盘、烧焦的硬盘和服务器机箱、缠成一团的网线。这些设备曾经组成了一个功能强大的黑客工作站。"
     }
   ],
-  "clues": [
-    {
-      "id": "CLUE_SCN7_3",
-      "clueText": "照片背面的数字54816871是一个电话拨号序列。用手机拨打这串数字，会听到一个女性的声音，让你输入密码。这个密码可以在卢奇菲罗的钱包中找到（千维系统测试ID：XX3776），输入后可连接到卢奇菲罗的千维系统测试版。",
-      "category": "document",
-      "difficulty": "hard",
-      "location": "照片背面",
-      "discoveryMethod": "翻转烧了一半的照片查看背面",
-      "reveals": [
-        "这串数字是连接卢奇菲罗千维系统的密钥",
-        "需要配合卢奇菲罗钱包中的密码才能使用"
-      ],
-      "discovered": false
-    },
-    {
-      "id": "CLUE_SCN7_4",
-      "clueText": "暗格中发现了'Martin Gin'这个名字和一包魔鬼呼吸（波拉切洛提纯物）。这表明一个名叫Martin Gin的人与这个地下据点有关联，而魔鬼呼吸正是驯鹿酒吧案受害者酒杯中发现的致幻药物。",
-      "category": "physical",
-      "difficulty": "extreme",
-      "location": "墙壁暗格内",
-      "discoveryMethod": "对墙壁进行极为仔细的搜索",
-      "reveals": [
-        "Martin Gin（鬼手/克莱奥）与此地下据点有关联",
-        "魔鬼呼吸与驯鹿酒吧凶杀案有关",
-        "卢奇菲罗可能截获了原本属于Martin Gin的魔鬼呼吸"
-      ],
-      "discovered": false
-    },
-    {
-      "id": "CLUE_SCN7_5",
-      "clueText": "这个地下空间的所有电子设备都被人为地砸坏和烧毁，破坏十分彻底，显示破坏者既有目的性又有紧迫感——意图彻底销毁这里的一切数据和设备。",
-      "category": "observation",
-      "difficulty": "automatic",
-      "location": "整个操作平台空间",
-      "discoveryMethod": "进入空间后即可观察到",
-      "reveals": [
-        "有人刻意销毁了这里的一切证据",
-        "破坏者不希望任何人发现这个据点的用途"
-      ],
-      "discovered": false
-    },
-    {
-      "id": "CLUE_SCN7_6",
-      "clueText": "尽管设备被严重破坏，但从残留的设备规模和布局来看，这里曾经是一个相当专业的网络监控和黑客工作站。残存的线缆接口和网络设备痕迹表明，这里曾连接着覆盖范围极广的监控网络。",
-      "category": "observation",
-      "difficulty": "regular",
-      "location": "操作平台各处",
-      "discoveryMethod": "观察被毁设备的布局和规模",
-      "reveals": [
-        "这里曾是一个专业黑客的据点",
-        "该黑客拥有覆盖范围广泛的监控能力（卢奇菲罗的千维系统）"
-      ],
-      "discovered": false
-    }
-  ],
   "conditions": [
     {
-      "type": "smell",
-      "description": "空气中混杂着电子设备烧焦的刺鼻气味和下水道的潮湿腥臭。"
-    },
-    {
-      "type": "lighting",
-      "description": "空间内没有任何照明，必须依靠自带光源。烧毁的设备上偶尔有微弱的电火花闪过。",
+      "description": "空气中混杂着电子设备烧焦的刺鼻气味和下水道的潮湿腥臭。",
       "mechanicalEffect": {
         "skillPenalty": [
           {
-            "skill": "Spot Hidden",
-            "delta": -20
+            "skill": "Perception",
+            "delta": -10
           }
         ]
       }
     },
     {
-      "type": "other",
-      "description": "空间极为狭小，不足五平方米，地面散落着碎玻璃和烧焦的金属碎片。"
+      "description": "空间内没有任何照明，必须依靠自带光源。烧毁的设备上偶尔有微弱的电火花闪过。",
+      "mechanicalEffect": {
+        "skillPenalty": [
+          {
+            "skill": "Perception",
+            "delta": -40
+          }
+        ]
+      }
+    },
+    {
+      "description": "空间极为狭小，不足五平方米，地面散落着碎玻璃和烧焦的金属碎片。",
+      "mechanicalEffect": {
+        "skillPenalty": [
+          {
+            "skill": "Climb",
+            "delta": -10
+          }
+        ]
+      }
     }
   ],
   "connections": [
     "SCN_7_SUB_1"
   ],
-  "events": [],
   "itemContexts": {
     "ITEM_SCN7_1": "一张被火烧去了一半的照片。残留的部分可以辨认出上面的人像是驯鹿酒吧的受害人Jenny Florence（卢奇菲罗），照片中是少女时期的她和一个女人，看起来像是家庭合照的一部分。照片背面写着一串数字：54816871。"
   }

@@ -20,14 +20,23 @@
       "description": "路边一块铸铁雨水井盖半嵌在地里，四周积着尘土与碎叶。"
     }
   ],
-  "clues": [],
   "conditions": [
     {
-      "type": "weather",
-      "description": "露天路口，受天气影响。街道尽头，较为安静。"
+      "description": "露天路口，受天气影响。街道尽头，较为安静。",
+      "mechanicalEffect": {
+        "skillPenalty": [
+          {
+            "skill": "Perception",
+            "delta": -10
+          },
+          {
+            "skill": "Listen",
+            "delta": 10
+          }
+        ]
+      }
     }
   ],
-  "events": [],
   "connectedSceneIds": [
     "SCN_6_SUB_1"
   ],

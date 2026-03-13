@@ -10,32 +10,46 @@
       "description": "由钟表匠Marks White亲手制造的教堂大钟，是他自认为最杰出的作品。精密的齿轮结构与优雅的铜铸钟体完美结合。钟面刻有精致的花纹。仔细检查可以发现钟表有被拨动过的痕迹。"
     }
   ],
-  "clues": [
-    {
-      "id": "CLUE_SCN17_3",
-      "clueText": "大钟的时间出现了差错。仔细检查后可以发现钟表有被人为拨动过的痕迹。考虑到Marks White的精湛技艺，这种差错绝不可能是自然发生的——有人故意拨动了这座钟。时间不准只是一个预兆，关乎到卡森德拉镇的秘密。",
-      "category": "physical",
-      "difficulty": "regular",
-      "location": "钟楼大钟",
-      "discoveryMethod": "掌握Constantine Frollo更多信息后再次进入教堂，仔细检查大钟，或请Marks White亲自查看",
-      "reveals": ["有人故意拨动了大钟", "时间异常与卡森德拉镇的秘密有关"],
-      "discovered": false
-    }
-  ],
   "conditions": [
     {
-      "type": "other",
-      "description": "通往钟楼的石阶狭窄陡峭，仅容一人通行。攀爬需要一定体力，对腿脚不便者尤其吃力。"
+      "description": "通往钟楼的石阶狭窄陡峭，仅容一人通行。攀爬需要一定体力，对腿脚不便者尤其吃力。",
+      "mechanicalEffect": {
+        "skillPenalty": [
+          {
+            "skill": "Climb",
+            "delta": -20
+          }
+        ]
+      }
     },
     {
-      "type": "sound",
-      "description": "整点时大钟会敲响，在钟楼内部声音震耳欲聋。平时钟楼内安静异常，只有齿轮运转的细微声响。"
+      "description": "整点时大钟会敲响，在钟楼内部声音震耳欲聋。平时钟楼内安静异常，只有齿轮运转的细微声响。",
+      "mechanicalEffect": {
+        "skillPenalty": [
+          {
+            "skill": "Listen",
+            "delta": -40
+          }
+        ]
+      }
     },
     {
-      "type": "temperature",
-      "description": "钟楼位于高处，冬季寒风透过圆顶结构的缝隙灌入，温度比主殿低不少。"
+      "description": "钟楼位于高处，冬季寒风透过圆顶结构的缝隙灌入，温度比主殿低不少。",
+      "mechanicalEffect": {
+        "skillPenalty": [
+          {
+            "skill": "Perception",
+            "delta": -10
+          },
+          {
+            "skill": "Listen",
+            "delta": -10
+          }
+        ]
+      }
     }
   ],
-  "connections": ["SCN_17_SUB_1"],
-  "events": []
+  "connections": [
+    "SCN_17_SUB_1"
+  ]
 }

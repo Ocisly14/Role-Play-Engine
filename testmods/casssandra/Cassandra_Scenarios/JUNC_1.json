@@ -20,14 +20,11 @@
       "description": "一盏高杆工业路灯，灯罩外侧沾着灰尘和焦黑烟迹。"
     }
   ],
-  "clues": [],
   "conditions": [
     {
-      "type": "weather",
-      "description": "露天路口，受天气影响。靠近焚化厂，空气质量较差。"
+      "description": "靠近焚化厂，空气质量较差。"
     }
   ],
-  "events": [],
   "connectedSceneIds": [
     "SCN_2_SUB_1"
   ],

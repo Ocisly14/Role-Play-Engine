@@ -37,12 +37,21 @@
       "description": "木框布告板上贴着镇民活动、失物招领和商户优惠海报。"
     }
   ],
-  "clues": [],
   "conditions": [
     {
-      "type": "weather",
-      "description": "露天街道，受天气影响。冬季寒冷，街上行人稀少。"
+      "description": "露天街道，受天气影响。冬季寒冷，街上行人稀少。",
+      "mechanicalEffect": {
+        "skillPenalty": [
+          {
+            "skill": "Perception",
+            "delta": -10
+          },
+          {
+            "skill": "Stealth",
+            "delta": 10
+          }
+        ]
+      }
     }
-  ],
-  "events": []
+  ]
 }

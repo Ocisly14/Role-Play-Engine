@@ -34,26 +34,30 @@
       "description": "一块长条形排水栅嵌在路面最低处，积着泥水和碎叶。"
     }
   ],
-  "clues": [],
   "conditions": [
     {
-      "type": "weather",
-      "description": "露天巷道，受天气影响。巷道较窄，两侧建筑遮挡部分风雪。"
+      "description": "露天巷道，受天气影响。巷道较窄，两侧建筑遮挡部分风雪。",
+      "mechanicalEffect": {
+        "skillPenalty": [
+          {
+            "skill": "Stealth",
+            "delta": -10
+          }
+        ]
+      }
     },
     {
-      "type": "lighting",
       "description": "巷道路灯稀疏，夜间光线昏暗。",
       "mechanicalEffect": {
         "skillPenalty": [
           {
-            "skill": "Spot Hidden",
-            "delta": -10
+            "skill": "Perception",
+            "delta": -20
           }
         ]
       }
     }
   ],
-  "events": [],
   "itemContexts": {
     "ITEM_ROAD5B_1": "木质电线杆立在巷口一侧，表面被风雨打得发灰，杆身钉着几枚生锈的旧钉。",
     "ITEM_ROAD5B_4": "电线杆上层层叠叠贴着电话号码条和卷边广告纸，风一吹就会哗啦作响。"

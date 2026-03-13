@@ -20,14 +20,19 @@
       "description": "一块警局公告牌，上面贴着通缉令、社区提醒和停车规定。"
     }
   ],
-  "clues": [],
   "conditions": [
     {
-      "type": "weather",
-      "description": "露天路口，受天气影响。警察局前照明较好。"
+      "description": "露天路口，受天气影响。警察局前照明较好。",
+      "mechanicalEffect": {
+        "skillPenalty": [
+          {
+            "skill": "Perception",
+            "delta": 10
+          }
+        ]
+      }
     }
   ],
-  "events": [],
   "connectedSceneIds": [
     "SCN_3_SUB_1"
   ],

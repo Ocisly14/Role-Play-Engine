@@ -15,25 +15,44 @@
       "description": "一扇标着绿色安全出口的金属防火门，后面接着朴素的水泥楼梯间。"
     }
   ],
-  "clues": [],
   "conditions": [
     {
-      "type": "lighting",
-      "description": "走廊以黄铜壁灯提供昏黄柔和的照明，客房内则依靠床头灯和写字台灯，光线温暖但算不上明亮。走廊尽头的窗户在白天透进些许天光。"
+      "description": "走廊以黄铜壁灯提供昏黄柔和的照明，客房内则依靠床头灯和写字台灯，光线温暖但算不上明亮。走廊尽头的窗户在白天透进些许天光。",
+      "mechanicalEffect": {
+        "skillPenalty": [
+          {
+            "skill": "Perception",
+            "delta": -10
+          }
+        ]
+      }
     },
     {
-      "type": "sound",
-      "description": "深红色厚地毯几乎完全吸收了脚步声，走廊安静得令人不安。偶尔能听到隔壁房间传来的模糊声响，或是暖气管道中热水流动的轻微咕噜声。"
+      "description": "深红色厚地毯几乎完全吸收了脚步声，走廊安静得令人不安。偶尔能听到隔壁房间传来的模糊声响，或是暖气管道中热水流动的轻微咕噜声。",
+      "mechanicalEffect": {
+        "skillPenalty": [
+          {
+            "skill": "Stealth",
+            "delta": 10
+          }
+        ]
+      }
     },
     {
-      "type": "temperature",
-      "description": "客房楼层暖气供应良好，走廊和房间都保持着舒适的温度。只有靠近走廊尽头窗户时，才能感受到一丝从窗缝渗入的冬季寒意。"
+      "description": "客房楼层暖气供应良好，走廊和房间都保持着舒适的温度。只有靠近走廊尽头窗户时，才能感受到一丝从窗缝渗入的冬季寒意。",
+      "mechanicalEffect": {
+        "skillPenalty": [
+          {
+            "skill": "Perception",
+            "delta": 5
+          }
+        ]
+      }
     }
   ],
   "connections": [
     "SCN_4_SUB_1"
   ],
-  "events": [],
   "itemContexts": {
     "ITEM_SCN4_8": "每层走廊尽头都有一扇标着绿色安全出口标识的金属防火门，通向一条朴素的水泥楼梯间，可以直达一楼的侧门出口。"
   }

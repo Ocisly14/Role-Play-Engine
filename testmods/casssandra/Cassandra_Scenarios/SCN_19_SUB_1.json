@@ -10,33 +10,44 @@
       "description": "一块相对较新的墓碑，上面刻着Vincent Galenus妻子的名字和生卒年份。墓碑前偶尔能看到枯萎的花束，显示有人曾来此祭拜。"
     }
   ],
-  "clues": [
-    {
-      "id": "CLUE_SCN19_1",
-      "clueText": "Vincent Galenus的妻子的墓穴空空如也——棺材里什么都没有。这意味着她的遗体并未安葬于此，或者已被移走。结合帕德里奇曾承诺将她'以另一种形式复活'的情报，她的遗体很可能被用于某种可怕的转化实验。",
-      "category": "physical",
-      "difficulty": "hard",
-      "location": "Vincent Galenus妻子的墓穴",
-      "discoveryMethod": "掘开墓穴或以其他方式检查墓穴内部",
-      "reveals": ["Vincent Galenus妻子的遗体不在墓中", "遗体可能被用于转化为食尸鬼的实验", "Vincent Galenus与Patrizio von Samsa之间存在不可告人的交易"],
-      "discovered": false
-    }
-  ],
   "conditions": [
     {
-      "type": "weather",
-      "description": "墓地位于开阔地带，冬季的寒风在墓碑间呼啸而过，枯黄的野草随风摇摆。天空常年笼罩着灰色的阴云。"
+      "description": "墓地位于开阔地带，冬季的寒风在墓碑间呼啸而过，枯黄的野草随风摇摆。天空常年笼罩着灰色的阴云。",
+      "mechanicalEffect": {
+        "skillPenalty": [
+          {
+            "skill": "Perception",
+            "delta": -10
+          },
+          {
+            "skill": "Listen",
+            "delta": -10
+          }
+        ]
+      }
     },
     {
-      "type": "lighting",
-      "description": "墓地没有照明设施，白天依靠自然光线。傍晚和夜间光线昏暗，老树的枝干在地面投下怪异的阴影。"
+      "description": "墓地没有照明设施，白天依靠自然光线。傍晚和夜间光线昏暗，老树的枝干在地面投下怪异的阴影。",
+      "mechanicalEffect": {
+        "skillPenalty": [
+          {
+            "skill": "Perception",
+            "delta": -20
+          }
+        ]
+      }
     },
     {
-      "type": "other",
-      "description": "墓地的氛围萧索压抑，枯树、残碑和呼啸的风声交织在一起，令人不由自主地感到一丝不安。"
+      "description": "墓地的氛围萧索压抑，枯树、残碑和呼啸的风声交织在一起，令人不由自主地感到一丝不安。",
+      "mechanicalEffect": {
+        "skillPenalty": [
+          {
+            "skill": "Perception",
+            "delta": -10
+          }
+        ]
+      }
     }
   ],
-  "connections": [
-  ],
-  "events": []
+  "connections": []
 }

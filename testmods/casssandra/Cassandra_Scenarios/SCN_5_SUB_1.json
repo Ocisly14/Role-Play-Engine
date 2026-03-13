@@ -40,45 +40,31 @@
       "description": "几张潦草写着电话号码的便签，纸面被来回翻看得发软。"
     }
   ],
-  "clues": [
-    {
-      "id": "CLUE_SCN5_1",
-      "clueText": "Marcel Gwynplaine是一名普通的失业人员，住在廉租房中，经济状况拮据。警方已调查过其身份，未发现特别之处。",
-      "category": "observation",
-      "difficulty": "automatic",
-      "location": "廉租房内部",
-      "discoveryMethod": "观察房间的整体环境和生活状态",
-      "reveals": [
-        "Marcel Gwynplaine表面上只是一个普通的失业者"
-      ],
-      "discovered": false
-    },
-    {
-      "id": "CLUE_SCN5_2",
-      "clueText": "在驯鹿酒吧凶杀案当晚，含有'魔鬼呼吸'的酒杯原本应该是给Marcel Gwynplaine的，是酒吧弄错了酒单。这意味着Marcel Gwynplaine才是药物的原定目标。",
-      "category": "witness",
-      "difficulty": "regular",
-      "location": "通过与Marcel Gwynplaine交谈或回忆案件细节获知",
-      "discoveryMethod": "综合酒吧老板Lutz Emilion的证词与案件物证分析",
-      "reveals": [
-        "有人想要对Marcel Gwynplaine下药",
-        "Marcel Gwynplaine可能知道某些令人想要灭口的信息"
-      ],
-      "discovered": false
-    }
-  ],
   "conditions": [
     {
-      "type": "lighting",
-      "description": "廉租房内光线昏暗，只有一盏老旧的台灯勉强照亮房间"
+      "description": "廉租房内光线昏暗，只有一盏老旧的台灯勉强照亮房间",
+      "mechanicalEffect": {
+        "skillPenalty": [
+          {
+            "skill": "Perception",
+            "delta": -20
+          }
+        ]
+      }
     },
     {
-      "type": "temperature",
-      "description": "房间里暖气不足，冬季的寒意从门窗缝隙中渗入"
+      "description": "房间里暖气不足，冬季的寒意从门窗缝隙中渗入",
+      "mechanicalEffect": {
+        "skillPenalty": [
+          {
+            "skill": "Perception",
+            "delta": -10
+          }
+        ]
+      }
     }
   ],
   "connections": [],
-  "events": [],
   "itemContexts": {
     "ITEM_SCN5_1": "墙角那张单人床床垫边缘鼓起发黄，裸露的弹簧几乎要顶破薄薄的床单。",
     "ITEM_SCN5_3": "桌边地板上的烟灰缸早已满到溢出，堆着发黑烟蒂和凝固烟灰。",

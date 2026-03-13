@@ -35,99 +35,44 @@
       "description": "一间老式酒吧洗手间，瓷砖和隔间门板都带着高频使用留下的旧痕。"
     }
   ],
-  "clues": [
-    {
-      "id": "CLUE_SCN16_1",
-      "clueText": "酒吧的监控设施在案件发生前几天损坏了还没来得及修理，导致无法查看案发时的店内视频。附近的摄像头也有死角，不能正确反映酒吧的人员进出情况。",
-      "category": "physical",
-      "difficulty": "automatic",
-      "location": "驯鹿酒吧一层大厅",
-      "discoveryMethod": "询问酒吧老板或检查监控设备",
-      "reveals": [
-        "监控损坏不是巧合，实际上是Martin Gin（马丁·琴）所为",
-        "Ben Cleo的手下安装的监控留有特殊的死角"
-      ],
-      "discovered": false
-    },
-    {
-      "id": "CLUE_SCN16_2",
-      "clueText": "酒吧老板Taran Emilion和Lutz Emilion是两兄弟，他们声称对凶杀案一无所知，两人看起来受到了惊吓。Lutz Emilion证实受害人杯中的酒实际上是弄错了单子——那杯本该是给Marcel Gwynplaine（马塞尔）的。",
-      "category": "witness",
-      "difficulty": "automatic",
-      "location": "驯鹿酒吧一层大厅吧台",
-      "discoveryMethod": "询问酒吧老板关于案发经过",
-      "reveals": [
-        "受害人杯中的致幻药物原本是针对Marcel Gwynplaine的",
-        "酒单被调换过"
-      ],
-      "discovered": false
-    },
-    {
-      "id": "CLUE_SCN16_3",
-      "clueText": "酒吧门店是Ben Cleo的产业，受黑手党庇护。监控设施完全由本的下属安装，酒吧老板兄弟俩无权过问。",
-      "category": "knowledge",
-      "difficulty": "regular",
-      "location": "驯鹿酒吧一层大厅",
-      "discoveryMethod": "深入调查酒吧的所有权或从其他渠道了解",
-      "reveals": [
-        "酒吧与黑手党有密切关联",
-        "Ben Cleo对酒吧的监控有完全的掌控权"
-      ],
-      "discovered": false
-    },
-    {
-      "id": "CLUE_SCN16_4",
-      "clueText": "案发时间是12月22日周一晚上8点左右。受害人是一名黑人女性，身穿深蓝色名贵大衣，全身上下没有打斗痕迹，当场死亡。致命伤：一颗.357口径子弹击中心脏，后背还插着一把折刀。",
-      "category": "physical",
-      "difficulty": "automatic",
-      "location": "驯鹿酒吧一层洗手间（已清扫）",
-      "discoveryMethod": "回顾Bruno Galilei提供的案件资料",
-      "reveals": [
-        ".357口径与Ben Cleo的镶金沙漠之鹰口径相同",
-        "折刀属于Philip Scaletta"
-      ],
-      "discovered": false
-    },
-    {
-      "id": "CLUE_SCN16_5",
-      "clueText": "受害人酒杯中发现了强烈的致幻药物'魔鬼呼吸'，提取自南美植物波拉切洛。幸运的是受害人还未来得及饮用。",
-      "category": "physical",
-      "difficulty": "automatic",
-      "location": "驯鹿酒吧一层大厅（受害人座位处）",
-      "discoveryMethod": "检查Bruno Galilei保管的物证",
-      "reveals": [
-        "魔鬼呼吸可以使人丧失自主意识",
-        "原本这杯酒是给Marcel Gwynplaine的"
-      ],
-      "discovered": false
-    }
-  ],
   "conditions": [
     {
-      "type": "lighting",
       "description": "酒吧内灯光昏暗偏暖，营造出典型的美式酒吧氛围，部分角落光线不足",
       "mechanicalEffect": {
         "skillPenalty": [
           {
-            "skill": "Spot Hidden",
-            "delta": -10
+            "skill": "Perception",
+            "delta": -20
           }
         ]
       }
     },
     {
-      "type": "sound",
-      "description": "营业时酒吧内通常播放着背景音乐，混合着客人们的交谈声和酒杯碰撞声"
+      "description": "营业时酒吧内通常播放着背景音乐，混合着客人们的交谈声和酒杯碰撞声",
+      "mechanicalEffect": {
+        "skillPenalty": [
+          {
+            "skill": "Listen",
+            "delta": -20
+          }
+        ]
+      }
     },
     {
-      "type": "smell",
-      "description": "空气中混合着酒精、烟草和木质装饰的气味"
+      "description": "空气中混合着酒精、烟草和木质装饰的气味",
+      "mechanicalEffect": {
+        "skillPenalty": [
+          {
+            "skill": "Perception",
+            "delta": -10
+          }
+        ]
+      }
     }
   ],
   "connections": [
     "SCN_16_SUB_2"
   ],
-  "events": [],
   "itemContexts": {
     "ITEM_SCN16_1": "酒吧的主吧台，Taran Emilion通常在这里调酒。吧台后方的架子上摆放着各式酒类",
     "ITEM_SCN16_2": "墙壁上装饰着驯鹿角，是酒吧标志性的装饰元素",

@@ -20,14 +20,11 @@
       "description": "老旧的铁皮邮箱歪斜地立在碎石边缘，盖板被风吹得轻轻作响。"
     }
   ],
-  "clues": [],
   "conditions": [
     {
-      "type": "weather",
-      "description": "露天路口，受天气影响。三条道路交汇处，风较大。"
+      "description": "三条道路交汇处，风较大。"
     }
   ],
-  "events": [],
   "connectedSceneIds": [],
   "itemContexts": {
     "ITEM_JUNC2_1": "路口中央那棵枯萎的老橡树枝干扭曲，树皮干裂剥落，像一具站立的骨架。"

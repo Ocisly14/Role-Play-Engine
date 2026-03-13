@@ -20,26 +20,45 @@
       "description": "悬挂在大堂天花板上的巨型水晶吊灯，数以百计的切割水晶片在灯光下折射出虹彩光斑，是整个大堂最引人注目的装饰。"
     }
   ],
-  "clues": [],
   "conditions": [
     {
-      "type": "lighting",
-      "description": "水晶吊灯和壁灯将大堂照得通亮温暖，大理石地面反射着柔和的光泽，与十二月末户外的阴沉天色形成鲜明对比。"
+      "description": "水晶吊灯和壁灯将大堂照得通亮温暖，大理石地面反射着柔和的光泽，与十二月末户外的阴沉天色形成鲜明对比。",
+      "mechanicalEffect": {
+        "skillPenalty": [
+          {
+            "skill": "Perception",
+            "delta": 10
+          }
+        ]
+      }
     },
     {
-      "type": "temperature",
-      "description": "大堂暖气充足，从室外的刺骨寒风中走进来，会立刻感到一阵舒适的温暖包裹全身。"
+      "description": "大堂暖气充足，从室外的刺骨寒风中走进来，会立刻感到一阵舒适的温暖包裹全身。",
+      "mechanicalEffect": {
+        "skillPenalty": [
+          {
+            "skill": "Perception",
+            "delta": 5
+          }
+        ]
+      }
     },
     {
-      "type": "smell",
-      "description": "空气中弥漫着檀木香薰的沉稳气息和鲜花的淡淡清甜，偶尔还能隐约捕捉到真皮沙发散发的皮革味道。"
+      "description": "空气中弥漫着檀木香薰的沉稳气息和鲜花的淡淡清甜，偶尔还能隐约捕捉到真皮沙发散发的皮革味道。",
+      "mechanicalEffect": {
+        "skillPenalty": [
+          {
+            "skill": "Perception",
+            "delta": -5
+          }
+        ]
+      }
     }
   ],
   "connections": [
     "SCN_4_SUB_2",
     "SCN_4_SUB_3"
   ],
-  "events": [],
   "itemContexts": {
     "ITEM_SCN4_1": "弧形的深色胡桃木前台，台面镶嵌黄铜饰条，背后是镀金镜框的椭圆形大镜。台面上整齐地摆放着登记簿、铜制台灯和一个小巧的服务铃。"
   }

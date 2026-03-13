@@ -25,60 +25,34 @@
       "description": "几只透明密封物证袋，里面装着与酒吧案相关的小件证物。"
     }
   ],
-  "clues": [
-    {
-      "id": "CLUE_SCN6_1",
-      "clueText": "Bruno Galilei的遗体呈现出极其诡异的死状——全身水分被抽干如同干尸，脖子上有两个直径约1厘米的圆形血洞。这种可怖的死法使死亡时间无法推断。",
-      "category": "physical",
-      "difficulty": "automatic",
-      "location": "别克汽车驾驶座",
-      "discoveryMethod": "检查Bruno的遗体",
-      "reveals": [
-        "Bruno的死因非常诡异，涉及超自然力量"
-      ],
-      "discovered": false
-    },
-    {
-      "id": "CLUE_SCN6_2",
-      "clueText": "Bruno手机上有一条未编辑完的短信，内容只有一个人名：'是卢奇菲罗……'。这条短信是Jenny Florence（卢奇菲罗）事先编辑好的定时发送短信。",
-      "category": "document",
-      "difficulty": "automatic",
-      "location": "Bruno手中的手机",
-      "discoveryMethod": "查看Bruno手中的手机",
-      "reveals": [
-        "Bruno临死前试图传达关于卢奇菲罗的信息",
-        "Bruno在与调查员分开前曾收到过一条短信"
-      ],
-      "discovered": false
-    },
-    {
-      "id": "CLUE_SCN6_3",
-      "clueText": "询问Lux Lynch和其他警察局的人，他们都表示并不知道Bruno有回到办公室的事情。Bruno在某个时间点独自来到了这座木屋，却再也没有离开。",
-      "category": "witness",
-      "difficulty": "regular",
-      "location": "向警察局方面询问可得",
-      "discoveryMethod": "询问Lux Lynch或其他警察局人员",
-      "reveals": [
-        "Bruno独自前往木屋，没有告知同事"
-      ],
-      "discovered": false
-    }
-  ],
   "conditions": [
     {
-      "type": "weather",
-      "description": "2003年12月末的加利福尼亚卡森德拉镇，天气阴冷。"
+      "description": "2003年12月末的加利福尼亚卡森德拉镇，天气阴冷。",
+      "mechanicalEffect": {
+        "skillPenalty": [
+          {
+            "skill": "Perception",
+            "delta": -10
+          }
+        ]
+      }
     },
     {
-      "type": "other",
-      "description": "木屋周围杂草丛生，花园荒废，显示已长时间无人居住打理。"
+      "description": "木屋周围杂草丛生，花园荒废，显示已长时间无人居住打理。",
+      "mechanicalEffect": {
+        "skillPenalty": [
+          {
+            "skill": "Stealth",
+            "delta": 10
+          }
+        ]
+      }
     }
   ],
   "connections": [
     "SCN_6_SUB_2",
     "JUNC_9"
   ],
-  "events": [],
   "itemContexts": {
     "ITEM_SCN6_3": "副驾驶座上摊着一只装满笔录、照片和手写批注的案件资料夹。",
     "ITEM_SCN6_12": "资料夹旁压着几只透明物证袋，里面装着与酒吧案相关的小件证物。"

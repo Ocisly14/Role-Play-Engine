@@ -30,34 +30,25 @@
       "description": "几只歪斜的衣架，弯钩和横杆都带着长久闲置后的轻微锈痕。"
     }
   ],
-  "clues": [
-    {
-      "id": "CLUE_SCN6_6",
-      "clueText": "木屋虽已废弃多时，但从内部结构来看，曾经是一处条件不错的居所。书房的书桌上留有明显的设备放置痕迹——墙上留有线缆固定孔和设备安装印记，但设备本身已被移走。",
-      "category": "environment",
-      "difficulty": "hard",
-      "location": "二层书房",
-      "discoveryMethod": "仔细搜查二层书房",
-      "reveals": [
-        "木屋曾安装过复杂的电子系统（千维系统）",
-        "设备已被他人取走（阿道夫）"
-      ],
-      "discovered": false
-    }
-  ],
   "conditions": [
     {
-      "type": "other",
-      "description": "二层空气更为沉闷，弥漫着灰尘和纸张腐朽的气味，长年密闭导致空气几乎不流通。"
+      "description": "二层空气更为沉闷，弥漫着灰尘和纸张腐朽的气味，长年密闭导致空气几乎不流通。",
+      "mechanicalEffect": {
+        "skillPenalty": [
+          {
+            "skill": "Perception",
+            "delta": -10
+          }
+        ]
+      }
     },
     {
-      "type": "lighting",
       "description": "二层窗户同样被尘垢遮蔽，走廊和房间里光线昏暗。",
       "mechanicalEffect": {
         "skillPenalty": [
           {
-            "skill": "Spot Hidden",
-            "delta": -15
+            "skill": "Perception",
+            "delta": -20
           }
         ]
       }
@@ -66,7 +57,6 @@
   "connections": [
     "SCN_6_SUB_2"
   ],
-  "events": [],
   "itemContexts": {
     "ITEM_SCN6_8": "卧室里的双人床仍铺着被褥，但布料已经被细灰染成一层死气沉沉的灰白色。",
     "ITEM_SCN6_9": "床头柜上的相框玻璃下面压着一张褪色严重的旧照，人物轮廓已模糊得难以辨认。",

@@ -15,40 +15,43 @@
       "description": "散落在地面上的各种木头碎片，大部分已经腐烂变软，与枯枝落叶混杂在一起。"
     }
   ],
-  "clues": [
-    {
-      "id": "CLUE_SCN20_1",
-      "clueText": "伐木场的许多机器看起来从未真正运转过，这座伐木场似乎从建成之初就并非真正用于伐木。它更像是一个掩人耳目的外壳，掩盖着这片区域曾经的某些秘密活动。",
-      "category": "observation",
-      "difficulty": "regular",
-      "location": "伐木场各处",
-      "discoveryMethod": "仔细观察机器的磨损状态",
-      "reveals": ["伐木场并非真正用于伐木", "此地曾有其他用途"],
-      "discovered": false
-    }
-  ],
   "conditions": [
     {
-      "type": "smell",
-      "description": "空气中弥漫着腐朽木头和铁锈的混合气味，偶尔夹杂着森林深处飘来的潮湿泥土气息。"
+      "description": "空气中弥漫着腐朽木头和铁锈的混合气味，偶尔夹杂着森林深处飘来的潮湿泥土气息。",
+      "mechanicalEffect": {
+        "skillPenalty": [
+          {
+            "skill": "Perception",
+            "delta": -10
+          }
+        ]
+      }
     },
     {
-      "type": "sound",
-      "description": "除了风穿过废弃机器发出的呜咽声和远处森林中偶尔传来的鸟鸣，这里寂静得令人不安。"
+      "description": "除了风穿过废弃机器发出的呜咽声和远处森林中偶尔传来的鸟鸣，这里寂静得令人不安。",
+      "mechanicalEffect": {
+        "skillPenalty": [
+          {
+            "skill": "Listen",
+            "delta": 10
+          }
+        ]
+      }
     },
     {
-      "type": "other",
       "description": "地面不平整，散落着腐烂的木头碎片和生锈的金属零件，行走时需要小心脚下。",
       "mechanicalEffect": {
         "skillPenalty": [
           {
-            "skill": "Dodge",
+            "skill": "Climb",
             "delta": -10
           }
         ]
       }
     }
   ],
-  "connections": ["SCN_20_SUB_2", "SCN_20_SUB_3"],
-  "events": []
+  "connections": [
+    "SCN_20_SUB_2",
+    "SCN_20_SUB_3"
+  ]
 }

@@ -20,26 +20,34 @@
       "description": "森林入口旁的路灯灯罩裂了一角，夜里几乎起不到照明作用。"
     }
   ],
-  "clues": [],
   "conditions": [
     {
-      "type": "weather",
-      "description": "露天路口，受天气影响。森林边缘，光线昏暗，空气潮湿。"
+      "description": "露天路口，受天气影响。森林边缘，光线昏暗，空气潮湿。",
+      "mechanicalEffect": {
+        "skillPenalty": [
+          {
+            "skill": "Perception",
+            "delta": -20
+          },
+          {
+            "skill": "Listen",
+            "delta": -10
+          }
+        ]
+      }
     },
     {
-      "type": "lighting",
       "description": "森林入口处几乎没有路灯，夜间极为黑暗。",
       "mechanicalEffect": {
         "skillPenalty": [
           {
-            "skill": "Spot Hidden",
-            "delta": -20
+            "skill": "Perception",
+            "delta": -40
           }
         ]
       }
     }
   ],
-  "events": [],
   "connectedSceneIds": [],
   "itemContexts": {
     "ITEM_JUNC11_2": "泥泞小路起点处立着几根矮木桩，勉强标出原本的步道边界。"

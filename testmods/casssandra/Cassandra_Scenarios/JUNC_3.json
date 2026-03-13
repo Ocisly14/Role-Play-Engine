@@ -20,14 +20,11 @@
       "description": "钉在电线杆旁的公告木板贴着几张卷边的寻人启事和商店传单。"
     }
   ],
-  "clues": [],
   "conditions": [
     {
-      "type": "weather",
-      "description": "露天路口，受天气影响。三岔口位置风大。"
+      "description": "三岔口位置风大。"
     }
   ],
-  "events": [],
   "connectedSceneIds": [],
   "itemContexts": {
     "ITEM_JUNC3_1": "角落里的老式路灯发出偏黄的光，灯罩内壁积着不少飞虫尸体。"

@@ -15,50 +15,42 @@
       "description": "偶尔从巨网缝隙中坠落的小型蜘蛛，来自幻梦境。在现实世界中看起来小巧袖珍，散发着不自然的寒气。虽然毒性有所削弱，但仍具有一定危险性。"
     }
   ],
-  "clues": [
-    {
-      "id": "CLUE_SCN17_4",
-      "clueText": "暗门后的巨网是由蜘蛛之神Atlach-Nacha编织的，是连接现实世界与幻梦境的不稳定桥梁。这解释了教堂中不时出现的神秘蜘蛛的来源——它们是从幻梦境坠落而来的'冷蜘蛛'。",
-      "category": "knowledge",
-      "difficulty": "extreme",
-      "location": "暗门后方",
-      "discoveryMethod": "需先去过星辰医院并发现Constantine Frollo与蜘蛛的秘密，然后返回教堂仔细搜索才能发现暗门",
-      "reveals": ["教堂与蜘蛛之神Atlach-Nacha有关", "Constantine Frollo是Atlach-Nacha的侍奉者", "幻梦境与现实世界在此处存在连接"],
-      "discovered": false
-    },
-    {
-      "id": "CLUE_SCN17_5",
-      "clueText": "冷蜘蛛的咬伤可以导致感染——被感染的男性往往会死亡，而被感染的女性可能变成Atlach-Nacha的眷族。这种感染与酒厂附近发生的蜘蛛咬伤事件存在关联。",
-      "category": "knowledge",
-      "difficulty": "extreme",
-      "location": "暗门后方·蛛网附近",
-      "discoveryMethod": "拥有克苏鲁神话技能或结合星辰医院的发现进行推断",
-      "reveals": ["冷蜘蛛感染可致人死亡或变异", "需要手术才能解除感染"],
-      "discovered": false
-    }
-  ],
   "conditions": [
     {
-      "type": "temperature",
-      "description": "暗门后方弥漫着不自然的刺骨寒气，温度远低于教堂其他区域。这种寒冷仿佛来自另一个维度。"
-    },
-    {
-      "type": "lighting",
-      "description": "暗门后方几乎没有自然光源，唯一的光亮来自蛛网丝线上散发的不属于此世的微弱荧光。",
+      "description": "暗门后方弥漫着不自然的刺骨寒气，温度远低于教堂其他区域。这种寒冷仿佛来自另一个维度。",
       "mechanicalEffect": {
         "skillPenalty": [
           {
-            "skill": "Spot Hidden",
+            "skill": "Perception",
             "delta": -20
           }
         ]
       }
     },
     {
-      "type": "other",
-      "description": "偶尔会有冷蜘蛛从蛛网的缝隙中坠落，虽然体型小巧但仍具有毒性。"
+      "description": "暗门后方几乎没有自然光源，唯一的光亮来自蛛网丝线上散发的不属于此世的微弱荧光。",
+      "mechanicalEffect": {
+        "skillPenalty": [
+          {
+            "skill": "Perception",
+            "delta": -40
+          }
+        ]
+      }
+    },
+    {
+      "description": "偶尔会有冷蜘蛛从蛛网的缝隙中坠落，虽然体型小巧但仍具有毒性。",
+      "mechanicalEffect": {
+        "skillPenalty": [
+          {
+            "skill": "Perception",
+            "delta": -10
+          }
+        ]
+      }
     }
   ],
-  "connections": ["SCN_17_SUB_1"],
-  "events": []
+  "connections": [
+    "SCN_17_SUB_1"
+  ]
 }

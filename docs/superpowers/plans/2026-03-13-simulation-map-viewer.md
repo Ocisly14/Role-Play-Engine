@@ -629,12 +629,11 @@ import * as mapController from "./mapController.js";
 
 const router = Router();
 
-// Map viewer endpoints — no authentication (public viewer page)
+// Map viewer READ endpoints — no authentication (public viewer page)
 router.get("/simulation/:id/topology", mapController.getTopology);
 router.get("/simulation/:id/map-layout", mapController.getMapLayout);
 router.get("/simulation/:id/positions", mapController.getPositions);
 router.get("/simulation/:id/npc-statuses", mapController.getNpcStatuses);
-router.put("/simulation/:id/config", mapController.updateConfig);
 
 export default router;
 ```
@@ -645,7 +644,16 @@ Then mount it in `client/server.ts` alongside the existing maps route (BEFORE th
 import simulationMapRoutes from "./server/simulation/mapRoutes.js";
 
 // After existing "/api/maps" route and before authenticated routes:
-app.use("/api", simulationMapRoutes); // /api/simulation/:id/* — Map viewer (no auth)
+app.use("/api", simulationMapRoutes); // /api/simulation/:id/* — Map viewer (no auth, read-only)
+```
+
+Add the `PUT /simulation/:id/config` route to the **existing authenticated** `client/server/simulation/routes.ts` (since it's a write operation):
+
+```typescript
+import * as mapController from "./mapController.js";
+
+// After existing routes (line ~38):
+router.put("/simulation/:id/config", mapController.updateConfig);
 ```
 
 - [ ] **Step 4: Extend existing `/api/maps` route to serve tilemap assets**

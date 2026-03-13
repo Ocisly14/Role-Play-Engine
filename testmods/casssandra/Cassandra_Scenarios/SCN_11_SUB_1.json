@@ -20,63 +20,42 @@
       "description": "一套占卜工具，包括星盘、塔罗牌和水晶球等摆件。"
     }
   ],
-  "clues": [
-    {
-      "id": "CLUE_SCN11_1",
-      "clueText": "Solomon身边的旧书上的某些符号，与帕德里奇的神秘图纸上的某个图案有些相似。这暗示帕德里奇的行动可能与某种古老的、超自然的力量有关。",
-      "category": "observation",
-      "difficulty": "hard",
-      "location": "Solomon身旁的书籍",
-      "discoveryMethod": "在看过帕德里奇的图纸后注意到书上的符号并尝试回忆比对（需要灵感检定）",
-      "reveals": [
-        "帕德里奇图纸上的符号与某种神秘学知识有关",
-        "Solomon可能掌握着与帕德里奇行动相关的知识"
-      ],
-      "discovered": false
-    },
-    {
-      "id": "CLUE_SCN11_2",
-      "clueText": "Solomon和Simon是朋友，但当Simon介绍他时，Solomon会阴恻恻地回应说，如果Simon不赶紧闭嘴，他就要聊聊关于一个叫'安纳托尔'的人的故事了。这个名字让Simon明显不自在。",
-      "category": "witness",
-      "difficulty": "regular",
-      "location": "占卜馆门口",
-      "discoveryMethod": "与Simon一起路过占卜馆时，在两人的交谈中听到",
-      "reveals": [
-        "Solomon知道关于'安纳托尔'的某些事情",
-        "'安纳托尔'这个名字对Simon来说是个敏感话题"
-      ],
-      "discovered": false
-    },
-    {
-      "id": "CLUE_SCN11_3",
-      "clueText": "Solomon的朋友薄荷（Bo He）来卡森德拉看望他时，调查了当地黑手党（Ben Cleo的克莱奥家族）的过去，之后不明不白地精神失常了，目前在疗养院休养。",
-      "category": "witness",
-      "difficulty": "regular",
-      "location": "与Solomon交谈",
-      "discoveryMethod": "向Solomon询问他的朋友们的近况",
-      "reveals": [
-        "调查克莱奥家族的过去是危险的",
-        "黑手党的历史中可能藏有令人发疯的真相"
-      ],
-      "discovered": false
-    }
-  ],
   "conditions": [
     {
-      "type": "other",
-      "description": "占卜馆大多数时候门都是关着的，只有偶尔才能碰上开门的时候。需要与Simon Laplace同行时，遇到Solomon的概率更大。"
+      "description": "占卜馆大多数时候门都是关着的，只有偶尔才能碰上开门的时候。需要与Simon Laplace同行时，遇到Solomon的概率更大。",
+      "mechanicalEffect": {
+        "skillPenalty": [
+          {
+            "skill": "Disguise",
+            "delta": -20
+          }
+        ]
+      }
     },
     {
-      "type": "lighting",
-      "description": "馆内光线昏暗，点着蜡烛，营造出一种神秘的氛围。"
+      "description": "馆内光线昏暗，点着蜡烛，营造出一种神秘的氛围。",
+      "mechanicalEffect": {
+        "skillPenalty": [
+          {
+            "skill": "Perception",
+            "delta": -20
+          }
+        ]
+      }
     },
     {
-      "type": "smell",
-      "description": "空气中飘荡着某种焚香的气味，混合着旧书纸张的味道。"
+      "description": "空气中飘荡着某种焚香的气味，混合着旧书纸张的味道。",
+      "mechanicalEffect": {
+        "skillPenalty": [
+          {
+            "skill": "Perception",
+            "delta": -5
+          }
+        ]
+      }
     }
   ],
   "connections": [],
-  "events": [],
   "itemContexts": {
     "ITEM_SCN11_1": "Solomon身边放着的一本旧书，是他来卡森德拉之前在旧书店淘到的。书上有一些奇异的符号，与帕德里奇神秘图纸上的某个图案相似。这本书实际上是《黄衣之王》——一本与真正的克苏鲁神话魔法有关的著作，尽管不包含魔法内容。Solomon已经读过很多遍，不会再因此失去理智。他绝不会让调查员翻阅此书，甚至不会告诉调查员书名。",
     "ITEM_SCN11_2": "占卜馆门边放着一把躺椅，Solomon常在上面烤着火昏昏欲睡。旁边还有一个小火盆，在寒冬中提供些许温暖。",

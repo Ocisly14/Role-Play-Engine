@@ -40,43 +40,22 @@
       "description": "一卷被拉得有些变形的细钢丝，常被当作配合开锁工具的辅助材料。"
     }
   ],
-  "clues": [
-    {
-      "id": "CLUE_SCN8_1",
-      "clueText": "Philip的住所中摆满了明显来路不明的各种小物件，说明他有严重的盗窃癖好。",
-      "category": "observation",
-      "difficulty": "automatic",
-      "location": "屋内各处",
-      "discoveryMethod": "进入房间即可注意到",
-      "reveals": [
-        "Philip Scaletta是一个惯偷"
-      ],
-      "discovered": false
-    },
-    {
-      "id": "CLUE_SCN8_2",
-      "clueText": "经过改造的旧夹克内侧有专门用于藏匿物品的暗袋设计，手法十分专业，带有魔术师的巧思。",
-      "category": "physical",
-      "difficulty": "regular",
-      "location": "衣物存放处",
-      "discoveryMethod": "仔细检查Philip的旧夹克",
-      "reveals": [
-        "Philip具有精巧的手工技艺，可能与其魔术师父亲有关",
-        "夹克是专门为盗窃设计的工具"
-      ],
-      "discovered": false
-    }
-  ],
   "conditions": [
     {
-      "type": "other",
-      "description": "屋内陈设简陋但不算脏乱，各种小物件被有条理地摆放在不同位置，显示主人虽然生活拮据，但对自己的'收藏品'颇为珍惜。"
+      "description": "屋内陈设简陋但不算脏乱，各种小物件被有条理地摆放在不同位置，显示主人虽然生活拮据，但对自己的'收藏品'颇为珍惜。",
+      "mechanicalEffect": {
+        "skillPenalty": [
+          {
+            "skill": "Perception",
+            "delta": 5
+          }
+        ]
+      }
     }
   ],
   "connections": [
     "JUNC_10"
   ],
-  "events": [],
   "itemContexts": {
     "ITEM_SCN8_4": "抽屉深处塞着几支临时改造的开锁工具，磨损痕迹表明它们经常被带出门。",
     "ITEM_SCN8_5": "客厅角落那台笨重的显像管电视机屏幕积着灰，机顶上还放着一只空烟盒。",

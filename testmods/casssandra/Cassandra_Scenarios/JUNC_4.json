@@ -20,14 +20,11 @@
       "description": "石基木面的长椅摆在街角，椅面被来往行人磨得发亮。"
     }
   ],
-  "clues": [],
   "conditions": [
     {
-      "type": "weather",
-      "description": "露天路口，受天气影响。镇中心区域，稍显热闹。"
+      "description": "镇中心区域，稍显热闹。"
     }
   ],
-  "events": [],
   "connectedSceneIds": [],
   "itemContexts": {
     "ITEM_JUNC4_1": "金属方向牌立在路口中央偏北的位置，指示酒店、警察局和教堂的大致方向。",

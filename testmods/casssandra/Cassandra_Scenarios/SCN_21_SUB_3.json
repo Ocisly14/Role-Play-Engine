@@ -20,66 +20,48 @@
       "description": "几只沉重的金属保险柜，柜门和转盘都有高频使用留下的磨损。"
     }
   ],
-  "clues": [
-    {
-      "id": "CLUE_SCN21_4",
-      "clueText": "Ben Cleo是卡森德拉黑手党克莱奥家族的头领和大家长，在17岁时从失踪的父亲卡绒那里接过了这个位置。他主要经营卡森德拉及附近地区的非法生意，利用火车站作为合法物流和黑市交易的渠道。",
-      "category": "observation",
-      "difficulty": "automatic",
-      "location": "黑手党总部大厅",
-      "discoveryMethod": "进入黑手党总部后即可感知",
-      "reveals": [
-        "Ben Cleo是卡森德拉黑手党的首领",
-        "火车站是黑手党的物流枢纽"
-      ],
-      "discovered": false
-    },
-    {
-      "id": "CLUE_SCN21_5",
-      "clueText": "Ben Cleo曾与Patrizio von Samsa有过合作——帕德里奇从警察局长升为镇长少不了Ben的帮助。但帕德里奇上台后深居简出，与Ben终止了合作，并且似乎在筹谋对付Ben。Ben感觉到帕德里奇正在做一些对卡森德拉有危险的事情。",
-      "category": "witness",
-      "difficulty": "regular",
-      "location": "黑手党总部·与Ben交谈",
-      "discoveryMethod": "与Ben Cleo达成合作后从他口中得知",
-      "reveals": [
-        "Ben Cleo与Patrizio von Samsa曾经合作",
-        "帕德里奇正在策划某种危险活动",
-        "Ben不会放任帕德里奇毁掉卡森德拉"
-      ],
-      "discovered": false
-    },
-    {
-      "id": "CLUE_SCN21_6",
-      "clueText": "保险柜中保存着Ben父亲卡绒的笔记，以及克莱奥家族遗留的与邪神活动相关的书籍和记录。这些资料涉及尼约格达（Nyogtha）以及克莱奥家族几代人试图摆脱的可怕'诅咒'。",
-      "category": "document",
-      "difficulty": "extreme",
-      "location": "黑手党总部·保险柜内",
-      "discoveryMethod": "与Ben建立深度信任后，Ben可能会允许查看保险柜中的部分内容",
-      "reveals": [
-        "克莱奥家族与Nyogtha之间存在古老的契约",
-        "家族成员有被转化为Nyogtha眷属的危险"
-      ],
-      "discovered": false
-    }
-  ],
   "conditions": [
     {
-      "type": "lighting",
-      "description": "总部内灯火通明，但没有一扇窗户——完全依靠电力照明。暖色的灯光将整个空间照得透亮。"
+      "description": "总部内灯火通明，但没有一扇窗户——完全依靠电力照明。暖色的灯光将整个空间照得透亮。",
+      "mechanicalEffect": {
+        "skillPenalty": [
+          {
+            "skill": "Perception",
+            "delta": 10
+          }
+        ]
+      }
     },
     {
-      "type": "smell",
-      "description": "空气中弥漫着雪茄烟和皮革的气味，混合着一丝威士忌酒的醇香。"
+      "description": "空气中弥漫着雪茄烟和皮革的气味，混合着一丝威士忌酒的醇香。",
+      "mechanicalEffect": {
+        "skillPenalty": [
+          {
+            "skill": "Perception",
+            "delta": -5
+          }
+        ]
+      }
     },
     {
-      "type": "other",
-      "description": "总部内随时有Ben的手下巡逻，气氛紧张而有序。未经许可的行为将立即被制止。"
+      "description": "总部内随时有Ben的手下巡逻，气氛紧张而有序。未经许可的行为将立即被制止。",
+      "mechanicalEffect": {
+        "skillPenalty": [
+          {
+            "skill": "Stealth",
+            "delta": -20
+          },
+          {
+            "skill": "Disguise",
+            "delta": -20
+          }
+        ]
+      }
     }
   ],
   "connections": [
     "SCN_21_SUB_1"
   ],
-  "events": [],
   "itemContexts": {
     "ITEM_SCN21_7": "大厅中央的一张宽大的深色木制会议桌。这是Ben处理事务、接见访客和做出决策的主要场所。桌上放着一个烟灰缸和几只酒杯。",
     "ITEM_SCN21_8": "角落里放着几只沉重的金属保险柜。其中一只保存着Ben父亲卡绒的笔记，以及卡绒收集的与邪神活动相关的书籍、笔记和记录——不少是前克莱奥家族遗留未销毁的。"

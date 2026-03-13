@@ -35,57 +35,31 @@
       "description": "一本钟表维修登记簿，里面按日期记录送修项目、客户姓名和取件时间。"
     }
   ],
-  "clues": [
-    {
-      "id": "CLUE_SCN12_1",
-      "clueText": "所有钟表上都刻有Marks White的名字，怀特声称自己亲手制作了所有的钟表，包括教堂那座大钟。他保证他手出的钟表在他有生之年绝对不会出一秒的差错。",
-      "category": "witness",
-      "difficulty": "automatic",
-      "location": "钟表店玻璃展柜与店面各处",
-      "discoveryMethod": "与怀特交谈或观察店内钟表",
-      "reveals": [
-        "怀特制造了教堂大钟",
-        "如果教堂大钟出现误差，说明有异常情况发生"
-      ],
-      "discovered": false
-    },
-    {
-      "id": "CLUE_SCN12_2",
-      "clueText": "怀特的外貌特征——瘦小的老头、扁平的额头——对于了解印斯茅斯传说的人来说，可能暗示着某种非人类血统。",
-      "category": "observation",
-      "difficulty": "hard",
-      "location": "钟表店内",
-      "discoveryMethod": "仔细观察怀特的外貌特征并结合克苏鲁神话知识",
-      "reveals": [
-        "怀特可能是混血深潜者"
-      ],
-      "discovered": false
-    },
-    {
-      "id": "CLUE_SCN12_3",
-      "clueText": "老装饰油画中似乎混入了一只造型诡异的生物形象，其抽象的外貌与画作风格奇异地融为一体。",
-      "category": "observation",
-      "difficulty": "extreme",
-      "location": "钟表店墙壁上的老装饰油画",
-      "discoveryMethod": "对油画进行极为仔细的观察",
-      "reveals": [
-        "画中可能混入了一只混血廷达罗斯猎犬的形象，暗示卡森德拉的时空正在出现异常"
-      ],
-      "discovered": false
-    }
-  ],
   "conditions": [
     {
-      "type": "sound",
-      "description": "店内钟表此起彼伏的滴答声交织在一起，形成一种有节奏的背景音，让人感到时间在这里被精确地度量着"
+      "description": "店内钟表此起彼伏的滴答声交织在一起，形成一种有节奏的背景音，让人感到时间在这里被精确地度量着",
+      "mechanicalEffect": {
+        "skillPenalty": [
+          {
+            "skill": "Listen",
+            "delta": -10
+          }
+        ]
+      }
     },
     {
-      "type": "lighting",
-      "description": "店面不大，光线来自门窗和工作台上的台灯，展柜中的怀表在灯光下闪烁着金属光泽"
+      "description": "店面不大，光线来自门窗和工作台上的台灯，展柜中的怀表在灯光下闪烁着金属光泽",
+      "mechanicalEffect": {
+        "skillPenalty": [
+          {
+            "skill": "Perception",
+            "delta": 5
+          }
+        ]
+      }
     }
   ],
   "connections": [],
-  "events": [],
   "itemContexts": {
     "ITEM_SCN12_1": "玻璃展柜里整齐排着多只怀表，每只表壳背面都刻着Marks White的名字。",
     "ITEM_SCN12_2": "墙面上密密麻麻挂着不同年代和尺寸的挂钟，钟摆节奏彼此交错，形成令人恍惚的滴答合奏。",

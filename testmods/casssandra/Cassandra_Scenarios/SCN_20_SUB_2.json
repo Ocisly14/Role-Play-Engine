@@ -15,60 +15,36 @@
       "description": "几件早已生锈报废的工具，包括斧头、锯子和锤子。"
     }
   ],
-  "clues": [
-    {
-      "id": "CLUE_SCN20_2",
-      "clueText": "壁炉灰烬中依稀可辨的纸张上画着Shub-Niggurath（舒卜-尼古拉斯）的标志性符号，与Patrizio von Samsa的图纸上的一个符号完全相同。拥有克苏鲁神话技能的调查员会知道这是某种邪神的标志，在欧洲和美国都有分布，崇拜一种主宰丰收的黑暗神明。",
-      "category": "physical",
-      "difficulty": "regular",
-      "location": "壁炉灰烬中",
-      "discoveryMethod": "仔细检查壁炉中的灰烬残迹",
-      "reveals": [
-        "此地曾有人进行与Shub-Niggurath相关的活动",
-        "该符号与Patrizio von Samsa的图纸上的符号一致",
-        "这里可能是富商们曾经进行献祭活动的场所之一"
-      ],
-      "discovered": false
-    },
-    {
-      "id": "CLUE_SCN20_3",
-      "clueText": "拥有克苏鲁神话技能的调查员能够辨认出灰烬中的符号属于对Shub-Niggurath的崇拜——一种主宰丰收的黑暗神明，其信徒在欧洲和美国都有分布。这暗示卡森德拉镇曾有人进行过与外神相关的仪式。",
-      "category": "knowledge",
-      "difficulty": "hard",
-      "location": "壁炉灰烬中的符号",
-      "discoveryMethod": "使用克苏鲁神话技能辨认符号",
-      "reveals": [
-        "符号属于Shub-Niggurath崇拜",
-        "卡森德拉存在邪神崇拜活动"
-      ],
-      "discovered": false
-    }
-  ],
   "conditions": [
     {
-      "type": "lighting",
       "description": "工作屋内光线昏暗，唯一的窗户被灰尘覆盖，只有少量自然光透入。",
       "mechanicalEffect": {
         "skillPenalty": [
           {
-            "skill": "Spot Hidden",
+            "skill": "Perception",
             "delta": -20
           }
         ]
       }
     },
     {
-      "type": "smell",
-      "description": "屋内弥漫着陈年灰尘和腐朽木头的气味，壁炉附近还有烧焦纸张残留的焦味。"
+      "description": "屋内弥漫着陈年灰尘和腐朽木头的气味，壁炉附近还有烧焦纸张残留的焦味。",
+      "mechanicalEffect": {
+        "skillPenalty": [
+          {
+            "skill": "Perception",
+            "delta": -10
+          }
+        ]
+      }
     },
     {
-      "type": "other",
       "description": "地面铺着厚厚的灰尘，任何人进入都会留下清晰的脚印。",
       "mechanicalEffect": {
         "skillPenalty": [
           {
-            "skill": "Track",
-            "delta": 15
+            "skill": "Stealth",
+            "delta": -20
           }
         ]
       }
@@ -77,7 +53,6 @@
   "connections": [
     "SCN_20_SUB_1"
   ],
-  "events": [],
   "itemContexts": {
     "ITEM_SCN20_4": "墙壁上挂着的几件早已生锈报废的工具——斧头、锯子和锤子。它们与伐木场的其他设备一样，似乎很少被使用过。"
   }

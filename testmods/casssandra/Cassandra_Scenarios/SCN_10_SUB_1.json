@@ -45,50 +45,42 @@
       "description": "一只深色木底的手摇咖啡磨，金属摇柄磨得发亮，机身留着现磨咖啡的淡淡苦香。"
     }
   ],
-  "clues": [
-    {
-      "id": "CLUE_SCN10_1",
-      "clueText": "Helen与驯鹿酒吧案受害人Jenny Florence（卢奇菲罗）是日常朋友关系。案发当晚，Helen本被朋友Johnny约到驯鹿酒吧喝酒，但发生了不愉快后一拍两散。当Helen准备约卢奇菲罗去喝一杯时，却发现她已经死了。",
-      "category": "witness",
-      "difficulty": "regular",
-      "location": "餐厅内，与Helen交谈",
-      "discoveryMethod": "向Helen询问关于卢奇菲罗的事情",
-      "reveals": [
-        "Helen认识驯鹿酒吧案的受害人",
-        "案发当晚Helen也在酒吧附近"
-      ],
-      "discovered": false
-    },
-    {
-      "id": "CLUE_SCN10_2",
-      "clueText": "Helen的男友Vito是警察局的协警，曾因工作原因多次去珊德拉的小屋找Bruno Galilei。因Vito嘴笨没跟Helen说清楚，导致Helen一度误会Vito和珊德拉有染，后来才解除了误会。",
-      "category": "witness",
-      "difficulty": "hard",
-      "location": "餐厅内，与Helen深入交谈",
-      "discoveryMethod": "聊到Vito和Bruno的关系时可能提及",
-      "reveals": [
-        "Vito和Bruno关系不错",
-        "珊德拉的小屋是Bruno常去的地方"
-      ],
-      "discovered": false
-    }
-  ],
   "conditions": [
     {
-      "type": "smell",
-      "description": "餐厅内弥漫着诱人的食物香气，混合着咖啡和香料的味道，给人温暖舒适的感觉。"
+      "description": "餐厅内弥漫着诱人的食物香气，混合着咖啡和香料的味道，给人温暖舒适的感觉。",
+      "mechanicalEffect": {
+        "skillPenalty": [
+          {
+            "skill": "Perception",
+            "delta": 5
+          }
+        ]
+      }
     },
     {
-      "type": "sound",
-      "description": "背景中播放着轻柔的拉丁音乐，偶尔伴随着厨房传来的锅碗瓢盆声。"
+      "description": "背景中播放着轻柔的拉丁音乐，偶尔伴随着厨房传来的锅碗瓢盆声。",
+      "mechanicalEffect": {
+        "skillPenalty": [
+          {
+            "skill": "Listen",
+            "delta": -10
+          }
+        ]
+      }
     },
     {
-      "type": "lighting",
-      "description": "餐厅内灯光柔和温暖，营造出亲密舒适的用餐氛围。"
+      "description": "餐厅内灯光柔和温暖，营造出亲密舒适的用餐氛围。",
+      "mechanicalEffect": {
+        "skillPenalty": [
+          {
+            "skill": "Perception",
+            "delta": 5
+          }
+        ]
+      }
     }
   ],
   "connections": [],
-  "events": [],
   "itemContexts": {
     "ITEM_SCN10_1": "几张擦得发亮的木质餐桌铺着干净桌布，桌面边缘因长期使用而泛出温润光泽。",
     "ITEM_SCN10_2": "柜台边那本厚本子写满了客人的预约名字和用餐时间，翻页边角有频繁使用留下的卷痕。",

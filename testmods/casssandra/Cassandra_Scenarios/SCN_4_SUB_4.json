@@ -20,29 +20,55 @@
       "description": "天花板上的荧光灯管有一根接触不良，不时闪烁几下，在水泥墙面上投射出跳动的光影。"
     }
   ],
-  "clues": [],
   "conditions": [
     {
-      "type": "temperature",
-      "description": "地下储藏室没有暖气，冬季的寒意从水泥地面和墙壁渗透而来。靠近冷藏柜时温度更低，呼出的气息隐约可见白雾。"
+      "description": "地下储藏室没有暖气，冬季的寒意从水泥地面和墙壁渗透而来。靠近冷藏柜时温度更低，呼出的气息隐约可见白雾。",
+      "mechanicalEffect": {
+        "skillPenalty": [
+          {
+            "skill": "Perception",
+            "delta": -10
+          }
+        ]
+      }
     },
     {
-      "type": "lighting",
-      "description": "裸露的白炽灯泡和荧光灯管提供照明，光线惨白而不均匀。其中一根灯管接触不良，不时闪烁，使得角落里的阴影似乎在微微晃动。"
+      "description": "裸露的白炽灯泡和荧光灯管提供照明，光线惨白而不均匀。其中一根灯管接触不良，不时闪烁，使得角落里的阴影似乎在微微晃动。",
+      "mechanicalEffect": {
+        "skillPenalty": [
+          {
+            "skill": "Perception",
+            "delta": -20
+          }
+        ]
+      }
     },
     {
-      "type": "smell",
-      "description": "空气中混杂着纸板的干燥气味、清洁液的刺鼻化学味和冷藏设备散发出的冰冷金属气息。潮湿的水泥墙壁还带着一丝霉味。"
+      "description": "空气中混杂着纸板的干燥气味、清洁液的刺鼻化学味和冷藏设备散发出的冰冷金属气息。潮湿的水泥墙壁还带着一丝霉味。",
+      "mechanicalEffect": {
+        "skillPenalty": [
+          {
+            "skill": "Perception",
+            "delta": -10
+          }
+        ]
+      }
     },
     {
-      "type": "sound",
-      "description": "冷藏柜压缩机发出持续而沉闷的嗡鸣，在封闭的地下空间里被放大成一种低沉的共振。荧光灯管闪烁时会发出轻微的噼啪声。"
+      "description": "冷藏柜压缩机发出持续而沉闷的嗡鸣，在封闭的地下空间里被放大成一种低沉的共振。荧光灯管闪烁时会发出轻微的噼啪声。",
+      "mechanicalEffect": {
+        "skillPenalty": [
+          {
+            "skill": "Listen",
+            "delta": -10
+          }
+        ]
+      }
     }
   ],
   "connections": [
     "SCN_4_SUB_2"
   ],
-  "events": [],
   "itemContexts": {
     "ITEM_SCN4_10": "简易的灰色金属货架将储藏室隔成几个区域，上面分门别类地堆放着酒水饮料、罐头食品、清洁用品和备用的酒店布草。"
   }

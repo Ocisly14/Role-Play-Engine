@@ -20,42 +20,48 @@
       "description": "放在祭坛上的一本古旧圣经，Constantine Frollo经常在此处诵读。书页泛黄，边角磨损，显示出频繁使用的痕迹。"
     }
   ],
-  "clues": [
-    {
-      "id": "CLUE_SCN17_1",
-      "clueText": "教堂某些角落偶尔能看到一些不寻常的小型黑色蜘蛛出没。这些蜘蛛看起来小巧袖珍，但与普通蜘蛛有明显不同——它们散发着一种不自然的冰冷感。",
-      "category": "observation",
-      "difficulty": "hard",
-      "location": "教堂主殿角落与暗处",
-      "discoveryMethod": "仔细搜索教堂各处角落，或在已知Constantine Frollo与蜘蛛的关联后再次来到教堂",
-      "reveals": ["教堂内存在不寻常的蜘蛛活动", "可能与Constantine Frollo有关", "暗示教堂内隐藏着某种通道"],
-      "discovered": false
-    },
-    {
-      "id": "CLUE_SCN17_2",
-      "clueText": "Constantine Frollo声称教堂内的大钟由Marks White亲手制造，时间绝对不会出错。但若调查员再次前来，可能发现钟的时间出现了差错——这暗示着卡森德拉镇隐藏着某种与时间有关的秘密。",
-      "category": "observation",
-      "difficulty": "regular",
-      "location": "教堂主殿（可观察到钟楼方向）",
-      "discoveryMethod": "多次拜访教堂后对比时间，或仔细观察时钟",
-      "reveals": ["大钟被人拨动过", "卡森德拉镇存在某种与时间相关的异常"],
-      "discovered": false
-    }
-  ],
   "conditions": [
     {
-      "type": "lighting",
-      "description": "彩色玻璃窗将日光过滤成斑斓的色彩，殿内光线柔和而庄严。夜晚则只有蜡烛提供微弱的照明，阴影在墙壁和廊柱间摇曳。"
+      "description": "彩色玻璃窗将日光过滤成斑斓的色彩，殿内光线柔和而庄严。夜晚则只有蜡烛提供微弱的照明，阴影在墙壁和廊柱间摇曳。",
+      "mechanicalEffect": {
+        "skillPenalty": [
+          {
+            "skill": "Perception",
+            "delta": -10
+          }
+        ]
+      }
     },
     {
-      "type": "smell",
-      "description": "蜡烛燃烧后的淡淡烟熏气息与陈旧木头的味道交织在一起，偶尔还能嗅到一丝不易察觉的寒冷气味。"
+      "description": "蜡烛燃烧后的淡淡烟熏气息与陈旧木头的味道交织在一起，偶尔还能嗅到一丝不易察觉的寒冷气味。",
+      "mechanicalEffect": {
+        "skillPenalty": [
+          {
+            "skill": "Perception",
+            "delta": -5
+          }
+        ]
+      }
     },
     {
-      "type": "sound",
-      "description": "教堂内非常安静，只有偶尔的风声穿过彩色玻璃窗的缝隙。脚步声在石板地面上会产生清晰的回响。"
+      "description": "教堂内非常安静，只有偶尔的风声穿过彩色玻璃窗的缝隙。脚步声在石板地面上会产生清晰的回响。",
+      "mechanicalEffect": {
+        "skillPenalty": [
+          {
+            "skill": "Listen",
+            "delta": 10
+          },
+          {
+            "skill": "Stealth",
+            "delta": -10
+          }
+        ]
+      }
     }
   ],
-  "connections": ["SCN_17_SUB_2", "SCN_17_SUB_3", "SCN_17_SUB_4"],
-  "events": []
+  "connections": [
+    "SCN_17_SUB_2",
+    "SCN_17_SUB_3",
+    "SCN_17_SUB_4"
+  ]
 }

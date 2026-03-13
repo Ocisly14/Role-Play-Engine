@@ -15,45 +15,42 @@
       "description": "混血深潜者和丘丘人改造过的石质祭坛，表面有深潜者的符号和新近使用的痕迹"
     }
   ],
-  "clues": [
-    {
-      "id": "CLUE_SCN2_5",
-      "clueText": "地下空间由远古昆扬人建造，后经混血深潜者和丘丘人改造为仪式场所。昆扬人曾在卡森德拉进行采矿活动，1860年收拢了地下范围后将此地废弃，留下了不少地下建筑。",
-      "category": "knowledge",
-      "difficulty": "extreme",
-      "location": "地下洞穴墙壁",
-      "discoveryMethod": "辨认墙壁上的昆扬文字和深潜者符号（需要克苏鲁神话技能）",
-      "reveals": ["卡森德拉有着远比人类城镇更古老的历史", "昆扬人、深潜者和丘丘人都曾在此活动"],
-      "discovered": false
-    },
-    {
-      "id": "CLUE_SCN2_6",
-      "clueText": "祭坛上有新近使用过的痕迹，蜡烛残渣和某种黑色液体的残留，表明有人近期在此进行了仪式。",
-      "category": "physical",
-      "difficulty": "regular",
-      "location": "仪式祭坛",
-      "discoveryMethod": "检查祭坛表面",
-      "reveals": ["Patrizio von Samsa正在此处进行某种仪式", "仪式与克苏鲁有关"],
-      "discovered": false
-    }
-  ],
   "conditions": [
     {
-      "type": "lighting",
       "description": "地下空间一片漆黑，需要自备光源。古老的符文在光线照射下似乎微微泛着幽光。",
       "mechanicalEffect": {
-        "skillPenalty": [{ "skill": "Spot Hidden", "delta": -40 }]
+        "skillPenalty": [
+          {
+            "skill": "Perception",
+            "delta": -40
+          }
+        ]
       }
     },
     {
-      "type": "temperature",
-      "description": "地下深处寒气逼人，温度远低于地面"
+      "description": "地下深处寒气逼人，温度远低于地面",
+      "mechanicalEffect": {
+        "skillPenalty": [
+          {
+            "skill": "Perception",
+            "delta": -10
+          }
+        ]
+      }
     },
     {
-      "type": "other",
-      "description": "这里弥漫着一种令人不安的压迫感，空气中似乎有某种古老而邪恶的力量残存"
+      "description": "这里弥漫着一种令人不安的压迫感，空气中似乎有某种古老而邪恶的力量残存",
+      "mechanicalEffect": {
+        "skillPenalty": [
+          {
+            "skill": "Perception",
+            "delta": -10
+          }
+        ]
+      }
     }
   ],
-  "connections": ["SCN_2_SUB_1"],
-  "events": []
+  "connections": [
+    "SCN_2_SUB_1"
+  ]
 }
