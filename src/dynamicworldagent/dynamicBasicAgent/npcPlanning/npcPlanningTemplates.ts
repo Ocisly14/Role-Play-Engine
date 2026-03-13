@@ -199,8 +199,64 @@ const DEFAULT_DETAILED_NODE_TYPE_REF = `## Node Type Reference
 - **"object_interaction"**: Interact with a physical object. Include objectInteractionPayload. For creative non-standard uses, set actionType and include itemUpdates/targetItemUpdates.
 - **"scene_interaction"**: Search, investigate, or modify the environment.
 
-## ActionType (optional — set when skill roll is needed)
-exploration | social | combat | stealth | chase | mental | environmental | narrative`;
+## The 8 ActionType Categories
+
+actionType represents the **kind of skill check** required. When present, the execution engine auto-selects the best matching skill and rolls d100. When omitted, the action auto-succeeds.
+
+### exploration
+**Finding hidden things, gathering information, researching, analyzing.**
+Triggered by: actively searching for concealed evidence, picking locks to access hidden areas, deciphering foreign texts, appraising artifacts, forensic analysis, library research, tracking footprints.
+Typical skills: Spot Hidden, Listen, Library Use, Locksmith, Navigate, Track, Science (*), Language (Other).
+
+### social
+**Influencing, persuading, deceiving, intimidating another character.**
+Triggered by: convincing a reluctant NPC, lying, negotiating, bargaining, seduction, leveraging authority, reading someone's true intentions.
+Typical skills: Charm, Fast Talk, Persuade, Intimidate, Psychology, Credit Rating, Disguise.
+
+### combat
+**Physical violence — attacking, defending, restraining.**
+Triggered by: punching, shooting, stabbing, throwing objects at someone, grappling, setting up traps intended to harm.
+Both attacker and defender roll. Damage applies to HP on hit.
+Typical skills: Fighting (*), Firearms (*), Throw, Dodge.
+
+### stealth
+**Acting undetected — sneaking, hiding, pickpocketing, infiltrating.**
+Triggered by: sneaking past guards, hiding in shadows, planting/stealing items without notice, forging documents, bypassing security systems.
+Typical skills: Stealth, Sleight of Hand, Disguise, Locksmith.
+
+### chase
+**Pursuit or escape — running, driving, climbing under pressure.**
+Triggered by: fleeing from danger, chasing a suspect, vehicle pursuit, swimming to escape.
+Both pursuer and quarry roll. Higher success wins.
+Typical skills: Drive Auto, Climb, Swim, Jump, Dodge, Ride, Pilot (*), Operate Heavy Machinery.
+
+### mental
+**Sanity resistance — confronting cosmic horror, resisting psychological trauma.**
+Triggered by: witnessing something horrifying, reading blasphemous texts, encountering Mythos entities, resisting madness.
+Rolls against SAN stat. Failure causes sanity loss.
+Typical skills: Psychology, Psychoanalysis, Occult, Cthulhu Mythos.
+
+### environmental
+**Surviving harsh conditions, physical endurance, wilderness hazards, emergency medicine, and creative movement.**
+Triggered by: crossing a raging river, surviving extreme cold/heat, treating wounds in the field, navigating without landmarks, handling toxic substances, climbing walls, jumping between rooftops, swimming across a lake, breaking through obstacles.
+Typical skills: Survival (*), First Aid, Medicine, Navigate, Climb, Swim, Jump, Electrical Repair, Mechanical Repair.
+
+### narrative
+**Key story moments — interpreting lore, performing rituals, making dramatic speeches.**
+Triggered by: decoding ancient manuscripts, performing a ritual, delivering a critical speech, creative problem-solving through art or writing.
+Typical skills: History, Occult, Language (*), Art/Craft (*), Psychology, Law.
+
+## When to Assign actionType
+
+**Principle: actionType = uncertain outcome requiring a dice roll. No actionType = guaranteed success.**
+
+- Everyday activities, simple movement, friendly conversation → **OMIT actionType**
+- Searching for hidden things, persuading reluctant people, sneaking, fighting → **SET actionType**
+
+### Movement-specific rules
+- Moving along an unblocked connected path → **OMIT actionType**
+- Moving through a BLOCKED connection → read the block reason. If a skill can overcome it (locked door → Locksmith, barricade → environmental), **SET actionType**. If impassable (collapsed building, magically sealed), do NOT attempt.
+- Creative movement with no connection (jumping, climbing, swimming) → **SET actionType** (e.g. environmental, chase)`;
 
 const DEFAULT_DETAILED_OUTPUT_SCHEMA = `## Output
 Return a JSON array of PlanNode objects. No extra text. Always write in English.
