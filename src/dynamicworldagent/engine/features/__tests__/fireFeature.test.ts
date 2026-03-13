@@ -511,7 +511,6 @@ describe("fireFeature", () => {
             description: "",
             parentLocationId: "OUTDOOR",
             items: [],
-            clues: [],
             conditions: [],
             events: [],
             connectedSceneIds: [],
@@ -522,7 +521,6 @@ describe("fireFeature", () => {
             description: "",
             parentLocationId: "OUTDOOR",
             items: [],
-            clues: [],
             conditions: [],
             events: [],
             connectedSceneIds: [],
@@ -539,7 +537,6 @@ describe("fireFeature", () => {
             travelTimeMinutes: 20,
             alongConnections: [{ sceneId: "SCN_ALONG", position: 0.5 }],
             items: [],
-            clues: [],
             conditions: [],
             events: [],
           }],
@@ -701,7 +698,6 @@ describe("fireFeature", () => {
             description: "",
             parentLocationId: "OUTDOOR",
             items: [],
-            clues: [],
             conditions: [],
             events: [],
             connectedSceneIds: [],
@@ -712,7 +708,6 @@ describe("fireFeature", () => {
             description: "",
             parentLocationId: "OUTDOOR",
             items: [],
-            clues: [],
             conditions: [],
             events: [],
             connectedSceneIds: [],
@@ -729,7 +724,6 @@ describe("fireFeature", () => {
             travelTimeMinutes: 20,
             alongConnections: [{ sceneId: "SCN_ALONG", position: 0.5 }],
             items: [],
-            clues: [],
             conditions: [],
             events: [],
           }],
@@ -891,11 +885,11 @@ describe("fireFeature", () => {
       const junctions = new Map([
         ["JUNC_1", {
           id: "JUNC_1", name: "J1", description: "", parentLocationId: "OUTDOOR",
-          connectedSceneIds: ["SCN_A"], items: [], clues: [], conditions: [], events: [],
+          connectedSceneIds: ["SCN_A"], items: [], conditions: [], events: [],
         }],
         ["JUNC_2", {
           id: "JUNC_2", name: "J2", description: "", parentLocationId: "OUTDOOR",
-          connectedSceneIds: [], items: [], clues: [], conditions: [], events: [],
+          connectedSceneIds: [], items: [], conditions: [], events: [],
         }],
       ]);
       const roads = new Map([
@@ -903,7 +897,7 @@ describe("fireFeature", () => {
           id: "ROAD_1", name: "R1", description: "", parentLocationId: "OUTDOOR",
           endpointA: "JUNC_1", endpointB: "JUNC_2", travelTimeMinutes: 20,
           alongConnections: [{ sceneId: "SCN_B", position: 0.3 }],
-          items: [], clues: [], conditions: [], events: [],
+          items: [], conditions: [], events: [],
         }],
       ]);
 

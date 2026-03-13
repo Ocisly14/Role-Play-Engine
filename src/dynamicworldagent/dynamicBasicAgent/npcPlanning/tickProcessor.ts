@@ -99,11 +99,9 @@ async function discoverEvidence(
   successLevel: SuccessLevel,
   dgsm: DynamicGameStateManager,
   language: string,
-  overrideSceneId?: string
+  sceneId: string
 ): Promise<DiscoveryEntry[]> {
-  const scene = overrideSceneId
-    ? dgsm.getScene(overrideSceneId)
-    : dgsm.getCurrentScene();
+  const scene = dgsm.getScene(sceneId);
   if (!scene?.items) return [];
   if (node.type !== "scene_interaction" && node.type !== "object_interaction") return [];
 
@@ -573,7 +571,7 @@ async function executeSingleTick(params: SingleTickParams): Promise<SingleTickRe
       const damageable = scene?.items?.filter((i) => i.category === "evidence" && !i.damaged) ?? [];
       if (damageable.length > 0) {
         const victim = damageable[Math.floor(Math.random() * damageable.length)];
-        dgsm.damageEvidenceItem(victim.id, node.characterName, `Fumbled: ${node.action}`);
+        dgsm.damageEvidenceItem(victim.id, node.characterName, `Fumbled: ${node.action}`, node.location);
         action.damagedEvidence = { itemId: victim.id, sourceName: scene!.name };
         console.log(`[TickProcessor] Fumble damaged evidence: ${(victim.description || victim.name).slice(0, 40)}`);
       }

@@ -209,14 +209,7 @@ export const collectScenarioImages = (state: CoCState): ImageInput[] => {
     // Multiplayer: caller provides mapImagePath directly on the scoped state
     mapImagePath = state.mapImagePath as string | undefined;
   } else {
-    // Single-player: look up mapImagePath from ScenarioOutline matching currentSceneId
-    const dynamicState = extractDynamicGameState(state);
-    if (dynamicState?.currentSceneId) {
-      const outline = dynamicState.scenarioOutlines?.find(
-        (o) => o.id === dynamicState.currentSceneId
-      );
-      mapImagePath = (outline as any)?.mapImagePath;
-    }
+    // Simulation mode: no current scene concept, skip map image
   }
   if (!mapImagePath) return [];
 

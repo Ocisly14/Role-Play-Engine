@@ -12,7 +12,6 @@ interface MockScene {
   connections: string[];
   events: string[];
   indoor?: boolean;
-  clues?: any[];
   items?: any[];
 }
 
@@ -23,8 +22,6 @@ function createMockDgsm() {
   const scenes = new Map<string, MockScene>();
   const npcLocations: Record<string, string> = {};
   const npcStats: Record<string, { hp: number; san: number }> = {};
-  let currentSceneId = "town_square";
-  const playerCharacter = { status: { hp: 10 } };
 
   return {
     getFeatureSceneState(featureId: string, sceneId: string) {
@@ -52,8 +49,6 @@ function createMockDgsm() {
         scenarioConditions,
         blockedConnections,
         scenes,
-        currentSceneId,
-        playerCharacter,
         npcLocations,
         npcStats,
       };
@@ -72,11 +67,9 @@ function createMockDgsm() {
       npcLocations[npcId] = location;
       npcStats[npcId] = { hp, san: 50 };
     },
-    _setCurrentScene(sceneId: string) { currentSceneId = sceneId; },
     _featureState: featureState,
     _scenarioConditions: scenarioConditions,
     _blockedConnections: blockedConnections,
-    _playerCharacter: playerCharacter,
   };
 }
 

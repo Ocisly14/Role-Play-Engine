@@ -238,14 +238,12 @@ function buildLocationResidentsMap(
   npcId: string
 ): Map<string, string[]> {
   const knownIds = new Set(Object.keys(state.npcRelationshipGraph[npcId] ?? {}));
-  if (state.playerCharacter?.id) knownIds.add(state.playerCharacter.id);
 
   const map = new Map<string, string[]>();
   for (const [charId, locationId] of Object.entries(state.npcResidences)) {
     if (charId === npcId) continue;
     if (!knownIds.has(charId)) continue;
-    const char = state.npcCharacters.find((n) => n.id === charId)
-      ?? (state.playerCharacter?.id === charId ? state.playerCharacter : null);
+    const char = state.npcCharacters.find((n) => n.id === charId);
     if (!char) continue;
     const list = map.get(locationId) ?? [];
     list.push(char.name);

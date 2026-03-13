@@ -18,10 +18,9 @@ import { getPrismaClient } from "../../shared/agents/memory/database/prismaClien
 import { resolveEmailId } from "../../shared/agents/memory/database/userContext.js";
 import type { NPCProfile } from "../../shared/agents/models/gameTypes.js";
 import type {
-  ScenarioCondition,
-} from "../../shared/agents/models/scenarioTypes.js";
+  SceneCondition,
+} from "../dynamicBasicAgent/npcPlanning/types.js";
 import type {
-  DynamicCharacterProfile,
   DynamicNPCProfile,
   DynamicScene,
 } from "./types.js";
@@ -51,17 +50,6 @@ function normalizeIdToModuleScope(id: string, moduleId: string | null): string {
 }
 
 /**
- * Convert CharacterProfile (from multiagent system) to DynamicCharacterProfile (for DynamicWorld system)
- * Removes currentLocation field as it's tracked via actionLog in DynamicWorld
- */
-function convertCharacterProfileToDynamic(
-  character: any
-): DynamicCharacterProfile {
-  const { currentLocation, ...rest } = character;
-  return rest as DynamicCharacterProfile;
-}
-
-/**
  * Load DynamicGameState from database
  */
 export async function loadDynamicGameStateFromDatabase(
@@ -85,17 +73,8 @@ export async function loadDynamicGameStateFromDatabase(
     select: {
       moduleId: true,
       title: true,
-      keeperGuidance: true,
-      moduleLimitations: true,
       moduleNotes: true,
       introduction: true,
-      globalTrigger: true,
-      macroSceneStructure: true,
-      truthTimeline: true,
-      knowledgeMatrix: true,
-      redHerrings: true,
-      historicalMythos: true,
-      endStateDefinition: true,
       macroMapPath: true,
     },
   });
@@ -112,55 +91,16 @@ export async function loadDynamicGameStateFromDatabase(
   const state = initialDynamicGameState({
     sessionId: "", // Will be set when creating complete state
     moduleName,
-    playerCharacter: {
-      id: "placeholder",
-      name: "Placeholder",
-      attributes: {
-        STR: 50,
-        CON: 50,
-        DEX: 50,
-        APP: 50,
-        POW: 50,
-        SIZ: 50,
-        INT: 50,
-        EDU: 50,
-      },
-      status: {
-        hp: 10,
-        maxHp: 10,
-        sanity: 60,
-        maxSanity: 99,
-        luck: 50,
-        mp: 10,
-        conditions: [],
-      },
-      skills: {},
-      inventory: [],
-      notes: "",
-      actionLog: [],
-    },
   });
   const manager = new DynamicGameStateManager(state);
 
   try {
-    // Load module digest
-    if (
-      moduleData.keeperGuidance ||
-      moduleData.moduleLimitations ||
-      moduleData.moduleNotes ||
-      moduleData.introduction
-    ) {
+    // Load module digest (only fields used by simulation engine)
+    if (moduleData.moduleNotes || moduleData.introduction) {
       const moduleDigest: any = {
         moduleNotes: moduleData.moduleNotes || "",
-        keeperGuidance: moduleData.keeperGuidance || "",
-        moduleLimitations: moduleData.moduleLimitations || "",
         introduction: moduleData.introduction || "",
       };
-
-      // Add globalTrigger if present (already parsed as JSON by Prisma)
-      if (moduleData.globalTrigger) {
-        moduleDigest.globalTrigger = moduleData.globalTrigger;
-      }
 
       // Add macroMapPath if present
       if (moduleData.macroMapPath) {
@@ -170,42 +110,6 @@ export async function loadDynamicGameStateFromDatabase(
       manager.loadWorldData({
         moduleDigest,
       });
-    }
-
-    // Load macro scene (already parsed as JSON by Prisma)
-    if (moduleData.macroSceneStructure) {
-      manager.loadWorldData({
-        macroScene: moduleData.macroSceneStructure as any,
-      });
-    }
-
-    // Load truth timeline (already parsed as JSON by Prisma)
-    if (moduleData.truthTimeline) {
-      manager.loadWorldData({ truthTimeline: moduleData.truthTimeline as any });
-    }
-
-    // Load knowledge matrix (already parsed as JSON by Prisma)
-    if (moduleData.knowledgeMatrix) {
-      manager.loadWorldData({
-        knowledgeMatrix: moduleData.knowledgeMatrix as any,
-      });
-    }
-
-    // Load red herrings (already parsed as JSON by Prisma)
-    if (moduleData.redHerrings) {
-      manager.loadWorldData({ redHerrings: moduleData.redHerrings as any });
-    }
-
-    // Load mythos events (already parsed as JSON by Prisma)
-    if (moduleData.historicalMythos) {
-      manager.loadWorldData({
-        mythosEvents: moduleData.historicalMythos as any,
-      });
-    }
-
-    // Load end state (already parsed as JSON by Prisma)
-    if (moduleData.endStateDefinition) {
-      manager.loadWorldData({ endState: moduleData.endStateDefinition as any });
     }
 
     // Load scenario outlines from database
@@ -220,9 +124,6 @@ export async function loadDynamicGameStateFromDatabase(
       },
     });
 
-    // Get knowledge matrix to look up sourcePlaceName
-    const knowledgeMatrix = manager.getState().knowledgeMatrix || [];
-
     // Count scenes per scenario for subSceneCount
     const sceneCountByScenario = new Map<string, number>();
     const sceneCounts = await prisma.scene.groupBy({
@@ -234,31 +135,14 @@ export async function loadDynamicGameStateFromDatabase(
       sceneCountByScenario.set(sc.scenarioId, sc._count.sceneId);
     }
 
-    const scenarioOutlines = scenarioRows.map((row) => {
-      // Find sourcePlaceName from knowledgeMatrix if sourcePlaceId exists
-      let sourcePlaceName: string | undefined = undefined;
-      if (row.sourcePlaceId) {
-        const knowledgeHolder = knowledgeMatrix.find(
-          (holder) =>
-            holder.id === row.sourcePlaceId && holder.holderType === "PLACE"
-        );
-        if (knowledgeHolder) {
-          sourcePlaceName = knowledgeHolder.holderName;
-        }
-      }
-
-      // Convert database format to ScenarioOutline format
-      // ScenarioOutline is a pure container: no connections, no clues.
-      return {
-        id: row.scenarioId,
-        name: row.name,
-        description: row.description || "",
-        sourcePlaceId: row.sourcePlaceId || undefined,
-        sourcePlaceName: sourcePlaceName,
-        residents: Array.isArray(row.residents) ? row.residents as string[] : undefined,
-        subSceneCount: sceneCountByScenario.get(row.scenarioId) ?? 0,
-      };
-    });
+    const scenarioOutlines = scenarioRows.map((row) => ({
+      id: row.scenarioId,
+      name: row.name,
+      description: row.description || "",
+      sourcePlaceId: row.sourcePlaceId || undefined,
+      residents: Array.isArray(row.residents) ? row.residents as string[] : undefined,
+      subSceneCount: sceneCountByScenario.get(row.scenarioId) ?? 0,
+    }));
 
     if (scenarioOutlines.length > 0) {
       manager.loadWorldData({ scenarioOutlines });
@@ -306,45 +190,12 @@ export async function loadDynamicGameStateFromModuleLoader(
   const state = initialDynamicGameState({
     sessionId: "", // Will be set when creating complete state
     moduleName,
-    playerCharacter: {
-      id: "placeholder",
-      name: "Placeholder",
-      attributes: {
-        STR: 50,
-        CON: 50,
-        DEX: 50,
-        APP: 50,
-        POW: 50,
-        SIZ: 50,
-        INT: 50,
-        EDU: 50,
-      },
-      status: {
-        hp: 10,
-        maxHp: 10,
-        sanity: 60,
-        maxSanity: 99,
-        luck: 50,
-        mp: 10,
-        conditions: [],
-      },
-      skills: {},
-      inventory: [],
-      notes: "",
-      actionLog: [],
-    },
   });
   const manager = new DynamicGameStateManager(state);
 
   // Load all world data
   manager.loadWorldData({
     moduleDigest: loadedModule.moduleDigest,
-    macroScene: loadedModule.macroScene,
-    truthTimeline: loadedModule.truthTimeline,
-    knowledgeMatrix: loadedModule.knowledgeMatrix,
-    redHerrings: loadedModule.redHerrings,
-    mythosEvents: loadedModule.mythosEvents,
-    endState: loadedModule.endState,
     scenarioOutlines: loadedModule.scenarios,
   });
 
@@ -406,15 +257,14 @@ export async function loadDynamicGameState(
 }
 
 /**
- * Initialize complete DynamicGameState with runtime data (character, scenario, NPCs)
- * This creates a fully initialized state ready for gameplay
+ * Initialize complete DynamicGameState with runtime data (scenarios, NPCs)
+ * This creates a fully initialized NPC simulation state ready for gameplay
  */
 export async function initializeCompleteDynamicGameState(
   db: CoCDatabase | CoCDatabaseAdapter,
   params: {
     sessionId: string;
     moduleName: string;
-    characterId?: string;
     emailId?: string;
   }
 ): Promise<DynamicGameState | null> {
@@ -423,134 +273,8 @@ export async function initializeCompleteDynamicGameState(
   const scopedModuleId =
     (await resolveModuleIdByName(params.moduleName, resolvedEmailId)) || null;
 
-  // 1. Load player character
-  let playerCharacter: DynamicCharacterProfile;
-  if (params.characterId) {
-    const character = await prisma.character.findFirst({
-      where: {
-        characterId: params.characterId,
-        isNpc: false,
-      },
-      select: {
-        characterId: true,
-        name: true,
-        attributes: true,
-        status: true,
-        skills: true,
-        inventory: true,
-        notes: true,
-        occupation: true,
-        age: true,
-        gender: true,
-        appearance: true,
-        personality: true,
-        background: true,
-      },
-    });
-
-    if (!character) {
-      throw new Error("Character not found");
-    }
-
-    // Prisma returns JSON fields already parsed
-    const parsedAttributes = character.attributes as any;
-    const parsedStatus = character.status as any;
-    const parsedSkillsRaw = (character.skills || {}) as any;
-    const parsedInventory = (character.inventory || []) as any;
-
-    let parsedNotes: any = {};
-    try {
-      parsedNotes =
-        typeof character.notes === "string" ? JSON.parse(character.notes) : {};
-    } catch (e) {
-      parsedNotes = {};
-    }
-
-    const parsedSkills: Record<string, number> = {};
-    for (const [skillName, skillData] of Object.entries(parsedSkillsRaw)) {
-      if (
-        typeof skillData === "object" &&
-        skillData !== null &&
-        "value" in skillData
-      ) {
-        parsedSkills[skillName] = (skillData as any).value;
-      } else {
-        parsedSkills[skillName] = typeof skillData === "number" ? skillData : 0;
-      }
-    }
-
-    playerCharacter = {
-      id: character.characterId,
-      name: character.name,
-      attributes: parsedAttributes,
-      status: parsedStatus,
-      skills: parsedSkills,
-      inventory: parsedInventory,
-      notes: character.notes || "",
-      actionLog: [],
-      occupation: character.occupation || undefined,
-      age: character.age || undefined,
-      gender: character.gender || parsedNotes.gender || undefined,
-      appearance: character.appearance || parsedNotes.appearance || undefined,
-      personality: character.personality || undefined,
-      backstory: character.background || parsedNotes.backstory || undefined,
-      era: parsedNotes.era || undefined,
-      residence: parsedNotes.residence || undefined,
-      birthplace: parsedNotes.birthplace || undefined,
-      ideology: parsedNotes.ideology || undefined,
-      significantPeople: parsedNotes.people || undefined,
-      gear: parsedNotes.gear || undefined,
-      weapons: parsedNotes.weapons || undefined,
-      derivedAttributes: {
-        MOV: parsedStatus.mov || undefined,
-        BUILD:
-          parsedStatus.build !== undefined
-            ? String(parsedStatus.build)
-            : undefined,
-        DB: parsedStatus.damageBonus || undefined,
-        ARMOR: undefined,
-      },
-    };
-  } else {
-    // Use default character
-    playerCharacter = {
-      id: "investigator-1",
-      name: "Character",
-      attributes: {
-        STR: 50,
-        CON: 50,
-        DEX: 50,
-        APP: 50,
-        POW: 50,
-        SIZ: 50,
-        INT: 50,
-        EDU: 50,
-      },
-      status: {
-        hp: 10,
-        maxHp: 10,
-        sanity: 60,
-        maxSanity: 99,
-        luck: 50,
-        mp: 10,
-        conditions: [],
-      },
-      inventory: [],
-      skills: {
-        Perception: 25,
-        Listen: 20,
-        Research: 20,
-        Brawling: 25,
-        Dodge: 25,
-        Pistol: 20,
-      },
-      notes: "Auto-generated placeholder character",
-      actionLog: [],
-    };
-  }
-
-  // 2. Load all baseline scenes for this module's scenarios
-  let currentSceneId: string | null = null;
+  // 1. Load all baseline scenes for this module's scenarios
+  let startSceneId: string | null = null; // Used for NPC default location fallback
   let gameDay = 1;
   let timeOfDay = "08:00";
   const scenesMap = new Map<string, DynamicScene>();
@@ -567,7 +291,6 @@ export async function initializeCompleteDynamicGameState(
       },
       select: {
         conditionId: true,
-        conditionType: true,
         description: true,
         mechanicalEffect: true,
       },
@@ -581,7 +304,7 @@ export async function initializeCompleteDynamicGameState(
     const { items, itemContexts } = decodeSceneItemsPayload(sceneRow.items);
 
     return {
-      id: sceneRow.scenarioId,
+      id: sceneRow.sceneId,
       name: sceneRow.name || sceneRow.scenario?.name,
       description: sceneRow.description,
       parentLocationId: sceneRow.parentLocationId || "",
@@ -590,12 +313,11 @@ export async function initializeCompleteDynamicGameState(
       itemContexts,
       sceneImage,
       conditions: sceneConditions.map((cond) => ({
-        type: cond.conditionType as ScenarioCondition["type"],
         description: cond.description,
         mechanicalEffect: cond.mechanicalEffect
           ? (typeof cond.mechanicalEffect === "string"
               ? undefined
-              : (cond.mechanicalEffect as ScenarioCondition["mechanicalEffect"]))
+              : (cond.mechanicalEffect as SceneCondition["mechanicalEffect"]))
           : undefined,
       })),
     };
@@ -615,7 +337,7 @@ export async function initializeCompleteDynamicGameState(
     orderBy: [{ scenarioId: "asc" }, { createdAt: "asc" }],
   });
 
-  // Determine player starting scene:
+  // Determine starting scene (used for NPC default location fallback and game time):
   // 1) first initialScene=true (if present), otherwise
   // 2) first available module scene.
   const startSceneRow =
@@ -623,22 +345,22 @@ export async function initializeCompleteDynamicGameState(
     allModuleScenes[0] ||
     null;
 
-  // Build scenes — flat Map keyed by scenarioId (one scene per ID)
+  // Build scenes — flat Map keyed by sceneId (one scene per ID)
   for (const sceneRow of allModuleScenes) {
-    const sceneId = sceneRow.scenarioId;
-    // Only keep the first (baseline) scene per scenarioId
+    const sceneId = sceneRow.sceneId;
+    // Only keep the first (baseline) scene per sceneId
     if (!scenesMap.has(sceneId)) {
       const scene = await buildSceneFromRow(sceneRow);
       scenesMap.set(sceneId, scene);
     }
   }
 
-  // Set player start scene
+  // Extract start scene info for NPC defaults and game time
   if (startSceneRow) {
-    currentSceneId = startSceneRow.scenarioId;
+    startSceneId = startSceneRow.sceneId;
 
     console.log(
-      `[DynamicGameState] Start scene: ${startSceneRow.name || startSceneRow.scenario?.name} (${startSceneRow.scenarioId})`
+      `[DynamicGameState] Start scene: ${startSceneRow.name || startSceneRow.scenario?.name} (${startSceneRow.sceneId})`
     );
 
     // Parse game time from scene
@@ -670,7 +392,7 @@ export async function initializeCompleteDynamicGameState(
     `[DynamicGameState] Loaded ${scenesMap.size} scenes from ${allModuleScenes.length} scene rows`
   );
 
-  // 3. Load all NPCs and normalize legacy ids to module scope.
+  // 2. Load all NPCs and normalize legacy ids to module scope.
   const npcLoader = new NPCLoader(db as any, undefined, undefined, {
     emailId: resolvedEmailId,
   });
@@ -703,7 +425,7 @@ export async function initializeCompleteDynamicGameState(
     `[DynamicGameState] Loaded ${npcCharacters.length} NPCs from database`
   );
 
-  // 4. Load DynamicWorld data
+  // 3. Load DynamicWorld data
   const worldData = await loadDynamicGameState(
     db,
     params.moduleName,
@@ -716,7 +438,7 @@ export async function initializeCompleteDynamicGameState(
     return null;
   }
 
-  // 5. Create complete state with runtime data
+  // 4. Create complete state with runtime data
   // Merge module baseline scenes with any existing in-memory scenes (flat map, one per ID)
   const mergedScenes = new Map(worldData.scenes);
   for (const [sceneId, scene] of scenesMap.entries()) {
@@ -728,20 +450,9 @@ export async function initializeCompleteDynamicGameState(
   const completeState: DynamicGameState = {
     ...worldData,
     sessionId: params.sessionId,
-    playerCharacter,
     npcCharacters,
-    currentSceneId,
     gameDay,
     timeOfDay,
-    scenarioTimeState: {
-      sceneStartTime: timeOfDay,
-      playerTimeConsumption: {},
-    },
-    // Stamina state: default values for new sessions and backward-compat with old saves
-    staminaState: (worldData as any).staminaState ?? {
-      minutesSinceLastRest: 0,
-      fatigueActive: false,
-    },
     // Store all module scenes in the flat scenes map.
     // This allows agents to read all module scenes directly from state.
     scenes: mergedScenes,
@@ -750,7 +461,7 @@ export async function initializeCompleteDynamicGameState(
   // Initialize NPC Planning runtime state from module data
   if (npcCharacters.length > 0) {
     const defaultScenarioId =
-      currentSceneId ??
+      startSceneId ??
       completeState.scenarioOutlines?.[0]?.id ??
       "unknown";
 
@@ -852,8 +563,8 @@ export async function initializeCompleteDynamicGameState(
       moduleId,
       emailId: resolvedEmailId || null,
       modName,
-      characterId: completeState.playerCharacter?.id || null,
-      characterName: completeState.playerCharacter?.name || null,
+      characterId: null,
+      characterName: null,
       status: "active",
       metadata: {},
     },
@@ -956,7 +667,3 @@ function isValidTimeOfDay(value: string): boolean {
   return hours >= 0 && hours <= 23 && minutes >= 0 && minutes <= 59;
 }
 
-function isNameSimilar(name1: string, name2: string): boolean {
-  const normalize = (s: string) => s.toLowerCase().trim().replace(/\s+/g, " ");
-  return normalize(name1) === normalize(name2);
-}

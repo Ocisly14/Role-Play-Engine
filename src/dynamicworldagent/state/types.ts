@@ -12,8 +12,8 @@ import type {
   NPCRelationship,
 } from "../../shared/agents/models/gameTypes.js";
 import type {
-  ScenarioCondition,
-} from "../../shared/agents/models/scenarioTypes.js";
+  SceneCondition,
+} from "../dynamicBasicAgent/npcPlanning/types.js";
 import type { ItemContexts } from "./sceneItemContextPayload.js";
 
 /**
@@ -87,7 +87,7 @@ export interface DynamicScene {
   parentLocationId: string;
   items: Item[];
   itemContexts?: ItemContexts;
-  conditions: ScenarioCondition[];
+  conditions: SceneCondition[];
   connections: string[];
   sceneImage?: SceneImage;
   indoor?: boolean;
@@ -296,12 +296,6 @@ export interface TransportEdge {
   toLocationId: string;
   streetSceneId: string;
   travelTimeMinutes: number;
-}
-
-export interface ScenarioClueSeed {
-  clueText: string;
-  evidenceRef?: string;
-  notes?: string;
 }
 
 export interface ScenarioNpcAssignment {

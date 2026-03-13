@@ -21,7 +21,7 @@ interface MockScene {
   events: string[];
   indoor?: boolean;
   items?: MockItem[];
-  clues?: any[];
+
 }
 
 function createMockDgsm() {
@@ -314,7 +314,7 @@ describe("lightingFeature", () => {
       // Build a simple topology: SCN_A is connected to JUNC_1
       const junctions = new Map([
         ["JUNC_1", { id: "JUNC_1", name: "J1", description: "", parentLocationId: "OUTDOOR",
-          connectedSceneIds: ["SCN_A"], items: [], clues: [], conditions: [], events: [] }],
+          connectedSceneIds: ["SCN_A"], items: [], conditions: [], events: [] }],
       ]);
       const roads = new Map();
 
@@ -344,12 +344,12 @@ describe("lightingFeature", () => {
     it("should compute lighting for roads and junctions", () => {
       const junctions = new Map([
         ["JUNC_1", { id: "JUNC_1", name: "J1", description: "", parentLocationId: "OUTDOOR",
-          connectedSceneIds: [], items: [], clues: [], conditions: [], events: [] }],
+          connectedSceneIds: [], items: [], conditions: [], events: [] }],
       ]);
       const roads = new Map([
         ["ROAD_1", { id: "ROAD_1", name: "R1", description: "", parentLocationId: "OUTDOOR",
           endpointA: "JUNC_1", endpointB: "JUNC_1", travelTimeMinutes: 10,
-          alongConnections: [], items: [], clues: [], conditions: [], events: [] }],
+          alongConnections: [], items: [], conditions: [], events: [] }],
       ]);
 
       const junctionToRoads = new Map();
@@ -374,14 +374,14 @@ describe("lightingFeature", () => {
     it("should propagate fire light from road to junction via topology", () => {
       const junctions = new Map([
         ["JUNC_1", { id: "JUNC_1", name: "J1", description: "", parentLocationId: "OUTDOOR",
-          connectedSceneIds: [], items: [], clues: [], conditions: [], events: [] }],
+          connectedSceneIds: [], items: [], conditions: [], events: [] }],
         ["JUNC_2", { id: "JUNC_2", name: "J2", description: "", parentLocationId: "OUTDOOR",
-          connectedSceneIds: [], items: [], clues: [], conditions: [], events: [] }],
+          connectedSceneIds: [], items: [], conditions: [], events: [] }],
       ]);
       const roads = new Map([
         ["ROAD_1", { id: "ROAD_1", name: "R1", description: "", parentLocationId: "OUTDOOR",
           endpointA: "JUNC_1", endpointB: "JUNC_2", travelTimeMinutes: 10,
-          alongConnections: [], items: [], clues: [], conditions: [], events: [] }],
+          alongConnections: [], items: [], conditions: [], events: [] }],
       ]);
 
       const junctionToRoads = new Map();

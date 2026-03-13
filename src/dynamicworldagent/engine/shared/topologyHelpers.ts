@@ -69,8 +69,7 @@ export function getTopologyNeighbors(locationId: string, topology: TownTopology)
  *
  * Resolution order:
  * 1. Try `dgsm.getCharacterPosition()` → `dgsm.resolveLocationId()`
- * 2. If the character is the player character, fall back to `state.currentSceneId`
- * 3. Otherwise, fall back to `dgsm.getNpcLocation()`
+ * 2. Fall back to `dgsm.getNpcLocation()`
  *
  * Returns undefined if no location can be determined.
  */
@@ -84,12 +83,6 @@ export function resolveCharacterLocationId(
     return dgsm.resolveLocationId(position);
   }
 
-  // 2. Fallback: player → currentSceneId
-  const state = dgsm.getState();
-  if (state.playerCharacter && characterId === state.playerCharacter.id) {
-    return state.currentSceneId ?? undefined;
-  }
-
-  // 3. Fallback: NPC → npcLocations
+  // 2. Fallback: NPC → npcLocations
   return dgsm.getNpcLocation(characterId);
 }

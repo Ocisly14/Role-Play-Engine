@@ -11,16 +11,16 @@ import { buildTopology } from "../../../state/topologyTypes.js";
 //                               JUNC_D
 function makeTestTopology(): TownTopology {
   const junctions = new Map<string, JunctionNode>([
-    ["JUNC_A", { id: "JUNC_A", name: "A", description: "", parentLocationId: "OUTDOOR", items: [], clues: [], conditions: [], connectedSceneIds: ["SCN_1"] }],
-    ["JUNC_B", { id: "JUNC_B", name: "B", description: "", parentLocationId: "OUTDOOR", items: [], clues: [], conditions: [], connectedSceneIds: [] }],
-    ["JUNC_C", { id: "JUNC_C", name: "C", description: "", parentLocationId: "OUTDOOR", items: [], clues: [], conditions: [], connectedSceneIds: ["SCN_2"] }],
-    ["JUNC_D", { id: "JUNC_D", name: "D", description: "", parentLocationId: "OUTDOOR", items: [], clues: [], conditions: [], connectedSceneIds: [] }],
+    ["JUNC_A", { id: "JUNC_A", name: "A", description: "", parentLocationId: "OUTDOOR", items: [], conditions: [], connectedSceneIds: ["SCN_1"] }],
+    ["JUNC_B", { id: "JUNC_B", name: "B", description: "", parentLocationId: "OUTDOOR", items: [], conditions: [], connectedSceneIds: [] }],
+    ["JUNC_C", { id: "JUNC_C", name: "C", description: "", parentLocationId: "OUTDOOR", items: [], conditions: [], connectedSceneIds: ["SCN_2"] }],
+    ["JUNC_D", { id: "JUNC_D", name: "D", description: "", parentLocationId: "OUTDOOR", items: [], conditions: [], connectedSceneIds: [] }],
   ]);
 
   const roads = new Map<string, RoadNode>([
-    ["ROAD_1", { id: "ROAD_1", name: "R1", description: "", parentLocationId: "OUTDOOR", endpointA: "JUNC_A", endpointB: "JUNC_B", travelTimeMinutes: 10, alongConnections: [{ sceneId: "SCN_3", position: 0.5 }], items: [], clues: [], conditions: [] }],
-    ["ROAD_2", { id: "ROAD_2", name: "R2", description: "", parentLocationId: "OUTDOOR", endpointA: "JUNC_B", endpointB: "JUNC_C", travelTimeMinutes: 5, alongConnections: [], items: [], clues: [], conditions: [] }],
-    ["ROAD_3", { id: "ROAD_3", name: "R3", description: "", parentLocationId: "OUTDOOR", endpointA: "JUNC_B", endpointB: "JUNC_D", travelTimeMinutes: 15, alongConnections: [], items: [], clues: [], conditions: [] }],
+    ["ROAD_1", { id: "ROAD_1", name: "R1", description: "", parentLocationId: "OUTDOOR", endpointA: "JUNC_A", endpointB: "JUNC_B", travelTimeMinutes: 10, alongConnections: [{ sceneId: "SCN_3", position: 0.5 }], items: [], conditions: [] }],
+    ["ROAD_2", { id: "ROAD_2", name: "R2", description: "", parentLocationId: "OUTDOOR", endpointA: "JUNC_B", endpointB: "JUNC_C", travelTimeMinutes: 5, alongConnections: [], items: [], conditions: [] }],
+    ["ROAD_3", { id: "ROAD_3", name: "R3", description: "", parentLocationId: "OUTDOOR", endpointA: "JUNC_B", endpointB: "JUNC_D", travelTimeMinutes: 15, alongConnections: [], items: [], conditions: [] }],
   ]);
 
   return buildTopology(junctions, roads);

@@ -219,8 +219,7 @@ export function buildInsanityConditionString(
 
 /**
  * Inject an insanity condition string into a character's conditions array.
- * Player: state.playerCharacter.status.conditions
- * NPC: state.npcCharacters.find(n => n.id === characterId).status.conditions
+ * Looks up NPC via state.npcCharacters.find(n => n.id === characterId).status.conditions
  */
 export function injectInsanityCondition(
   dgsm: DynamicGameStateManager,

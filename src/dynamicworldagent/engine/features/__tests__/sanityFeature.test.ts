@@ -31,15 +31,6 @@ function createMockDgsm() {
   const npcLocations: Record<string, string> = {};
   const npcStats: Record<string, { hp: number; san: number }> = {};
   const npcCharacters: Array<{ id: string; name: string; status: { hp: number; sanity: number; maxSanity: number; conditions: string[] } }> = [];
-  let currentSceneId = "tavern";
-  const playerCharacter = {
-    id: "player-1",
-    name: "Investigator",
-    status: { hp: 12, maxHp: 12, sanity: 60, maxSanity: 99, luck: 50, conditions: [] as string[] },
-    attributes: { STR: 50, CON: 60, DEX: 50, APP: 50, POW: 50, SIZ: 50, INT: 60, EDU: 70 },
-    skills: {} as Record<string, number>,
-    inventory: [],
-  };
 
   return {
     getFeatureSceneState(featureId: string, sceneId: string) {
@@ -54,8 +45,6 @@ function createMockDgsm() {
     },
     getState() {
       return {
-        currentSceneId,
-        playerCharacter,
         npcLocations,
         npcStats,
         npcCharacters,
@@ -79,11 +68,7 @@ function createMockDgsm() {
       npcStats[npcId] = { hp, san };
       npcCharacters.push({ id: npcId, name: npcId, status: { hp, sanity: san, maxSanity, conditions: [] } });
     },
-    _setCurrentScene(sceneId: string) {
-      currentSceneId = sceneId;
-    },
     _featureState: featureState,
-    _playerCharacter: playerCharacter,
     _npcStats: npcStats,
   };
 }

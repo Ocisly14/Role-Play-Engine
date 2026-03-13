@@ -4,11 +4,10 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-CoC Multi-Agent System is an AI-powered Call of Cthulhu (7th Edition) game master built with LangGraph multi-agent architecture. The system uses 6 specialized AI agents working in a sequential pipeline to run complete tabletop RPG sessions.
+CoC NPC Simulation System is an autonomous NPC simulation engine for Call of Cthulhu (7th Edition) scenarios. The system uses a two-tier hierarchical planning architecture with pluggable handlers and world features to simulate NPC behaviors, interactions, and world events without player input.
 
-**Tech Stack:** TypeScript, LangGraph, LangChain, SQLite, React, Express, WebSocket
+**Tech Stack:** TypeScript, Prisma, SQLite
 
-**Current Branch:** `weaktime` (development branch for time mechanics improvements)
 **Main Branch:** `main` (use for PRs)
 
 ## Essential Commands
@@ -21,18 +20,6 @@ pnpm install
 
 # Build the project (compiles TypeScript to dist/)
 pnpm build
-
-# Run backend server (starts Express API + WebSocket server)
-pnpm chat
-
-# Run frontend (in separate terminal, starts Vite dev server)
-pnpm chat:frontend
-
-# Run both backend + frontend concurrently
-pnpm chat:dev
-
-# Development mode with debug logs
-pnpm dev:debug
 ```
 
 ### Code Quality
@@ -69,161 +56,76 @@ pnpm build:turbo
 
 ## Architecture
 
-### Multi-Agent Pipeline
+### Core: NPC Simulation Engine
 
-The system processes player input through a **sequential agent pipeline** defined in `src/graph.ts`:
+The system runs autonomous NPC simulation via `SimulationRunner` → `TickProcessor` in 5-minute time buckets. No player input pipeline exists.
 
 ```
-Player Input → Entry → Orchestrator → Memory → Action → Character → Director → Keeper → Output
+SimulationRunner.start()
+  → loop: runSimulationTick()
+    → executeSingleTick() (5-min bucket)
+      → Ensure NPC nodes (two-tier planning refill)
+      → Fetch due NPC nodes
+      → Execute via NodeHandlers
+      → Post-execution (memory, relationships, knowledge transfer)
+      → Impact propagation → plan revision
+      → WorldFeature temporal ticks + propagation
+      → Drain sanity emotions
 ```
-
-**Agent Responsibilities:**
-
-1. **Entry** (`src/graph.ts:60`): Routes input type, clears temporary state for new player turns
-2. **Orchestrator** (`src/shared/agents/orchestrator/orchestratorAgent.ts`): Analyzes player intent and determines action type
-3. **Memory** (`src/shared/agents/memory/memoryAgent.ts`): Enriches context with relevant game rules, scenario details, and RAG results
-4. **Action** (`src/shared/agents/action/actionAgent.ts`): Executes dice rolls, updates character stats, manages inventory
-5. **Character** (`src/shared/agents/character/characterAgent.ts`): Determines NPC responses and behaviors
-6. **Director** (`src/shared/agents/director/directorAgent.ts`): Manages scene transitions, time progression, and game ending conditions
-7. **Keeper** (`src/shared/agents/keeper/keeperAgent.ts`): Generates narrative output for the player
-
-**Key State Management:**
-- `GraphState` (graph-level): Messages, game state, turn tracking
-- `GameState` (`src/state.ts`): Session data, character profiles, scenarios, clues, temporary agent outputs
-- `temporaryInfo`: Cleared at start of each player turn, holds intermediate agent results
 
 ### Project Structure
 
 ```
 CoC-AI-agent/
-├── src/                                    # Backend source code
-│   ├── graph.ts                           # LangGraph workflow definition
-│   ├── state.ts                           # GameState types and manager
-│   ├── index.ts                           # CLI entry point
-│   ├── shared/
-│   │   ├── agents/                        # 6 specialized AI agents
-│   │   │   ├── orchestrator/              # Intent analysis
-│   │   │   ├── memory/                    # Context enrichment & loaders
-│   │   │   │   ├── database/              # SQLite schema & seed data
-│   │   │   │   ├── moduleloader/          # Module digest loading
-│   │   │   │   ├── scenarioloader/        # Scenario/location loading
-│   │   │   │   ├── RagManager.ts          # RAG system (currently disabled)
-│   │   │   │   ├── turnManager.ts         # Turn persistence
-│   │   │   │   └── checkpointManager.ts   # Save/load functionality
-│   │   │   ├── action/                    # Dice rolls & mechanics
-│   │   │   │   └── tools.ts               # Action execution tools
-│   │   │   ├── character/                 # NPC behavior
-│   │   │   │   ├── npcloader/             # NPC profile loading
-│   │   │   │   └── playerloader/          # Player character loading
-│   │   │   ├── director/                  # Scene & time management
-│   │   │   │   └── progressionMonitor.ts  # Story progression tracking
-│   │   │   ├── keeper/                    # Narrative generation
-│   │   │   └── models/                    # Shared types
-│   │   │       ├── gameTypes.ts           # Character, inventory types
-│   │   │       ├── scenarioTypes.ts       # Scenario, clue types
-│   │   │       └── moduleTypes.ts         # Module digest types
-│   │   └── rules/                         # CoC 7e mechanics (8 action types)
-│   │       ├── exploration.ts
-│   │       ├── social.ts
-│   │       ├── combat.ts
-│   │       ├── stealth.ts
-│   │       ├── chase.ts
-│   │       ├── mental.ts
-│   │       ├── environmental.ts
-│   │       └── narrative.ts
-│   ├── dynamicworldagent/                  # Dynamic World system (NPC planning)
+├── src/
+│   ├── dynamicworldagent/                  # NPC Simulation System (core)
 │   │   ├── dynamicBasicAgent/npcPlanning/  # Two-tier NPC planning system
 │   │   ├── engine/                         # Pluggable NodeHandlers + WorldFeatures
 │   │   │   ├── handlers/                   # movement, routine, object, character, scene
-│   │   │   └── features/                   # fire, lighting, weather, sanity, stamina
+│   │   │   ├── features/                   # fire, lighting, weather, sanity, stamina
+│   │   │   └── shared/                     # Dice, skill rolls, pathfinding, topology
+│   │   ├── simulation/                     # SimulationRunner (autonomous tick loop)
 │   │   ├── state/DynamicGameState.ts       # DynamicGameState types + manager
-│   │   ├── graph/dynamicGraph.ts           # DynamicGraphState + graph wiring
+│   │   ├── world_builder/                  # Scene/topology type definitions
 │   │   └── memory/NpcMemoryManager.ts      # Unified NPC memory with retrieval
-│   └── rag/                               # RAG infrastructure (WIP)
+│   └── rag/                               # Embedding utilities (for semantic matching)
 │
-├── client/                                 # React frontend
-│   ├── server.ts                          # Express server entry point
-│   ├── server/                            # Backend API modules
-│   │   ├── auth/                          # Authentication & JWT
-│   │   ├── character/                     # Character CRUD
-│   │   ├── game/                          # Game state management
-│   │   ├── turn/                          # Turn execution (LangGraph invocation)
-│   │   ├── checkpoint/                    # Save/load endpoints
-│   │   ├── mod/                           # Module management
-│   │   ├── core/                          # DatabaseManager, GraphManager
-│   │   ├── websocket/                     # WebSocket for real-time updates
-│   │   └── utils/                         # Shared utilities
-│   └── src/                               # React UI
-│       ├── App.tsx                        # Main application (82KB, complex)
-│       ├── components/                    # UI components
-│       │   └── GameChat.tsx               # Main chat interface
-│       ├── views/                         # Page-level components
-│       └── services/                      # API client
-
 ├── data/
-│   ├── db.sqlite                          # Game database (auto-generated)
 │   └── Mods/                              # Module packages
 │       └── [Module Name]/
 │           ├── module_digest.json         # Module metadata
-│           ├── [Module]_npc/              # NPC profiles (JSON/docs)
+│           ├── npc/                        # NPC profiles (JSON)
 │           └── [Module]_Scenarios/        # Scenario/location files
-
-├── scripts/                                # Deployment scripts
-├── deployment/                             # AWS Elastic Beanstalk config
+│
+├── testmods/                              # Test module data (e.g. casssandra/)
+├── prisma/schema.prisma                   # Database schema
 └── test-*.ts                              # Standalone loader tests
 ```
 
 ## Key Workflows
 
-### Turn Execution Flow
+### Simulation Execution Flow
 
-When a player submits an action via the web UI:
-
-1. **Frontend** (`client/src/components/GameChat.tsx`) sends POST to `/api/turns/:sessionId`
-2. **Turn Controller** (`client/server/turn/controller.ts`) validates session and invokes graph
-3. **Graph Execution** (`src/graph.ts`):
-   - Entry node clears temporary state, increments turn counter
-   - Orchestrator analyzes intent → outputs `ActionAnalysis`
-   - Memory enriches context (rules, scenario data, RAG if enabled)
-   - Action executes mechanics → outputs `ActionResult[]`
-   - Character determines NPC responses → outputs `NPCResponseAnalysis[]`
-   - Director checks scene transitions, time progression, game ending → outputs `DirectorDecision`
-   - Keeper generates narrative using all previous agent outputs
-4. **Turn Manager** (`src/shared/agents/memory/turnManager.ts`) persists turn to database
-5. **WebSocket** broadcasts updated game state to connected clients
+1. Initialize `DynamicGameStateManager` with module data (scenes, NPCs, topology)
+2. `NPCPlanningAgent.seedLongTermIntents()` — set NPC goals from character profiles
+3. `NPCPlanningAgent.onNewDay()` — generate daily schedules for all NPCs
+4. `SimulationRunner.start()` — begin autonomous tick loop:
+   - Each tick = 5 minutes of game time
+   - NPC nodes are generated on-demand from schedule entries (two-tier refill)
+   - Nodes executed via `GameEngineRegistry` handlers
+   - Impact propagation triggers plan revision for affected NPCs
+   - Day transitions trigger new daily schedules
 
 ### Module Loading
 
-The system supports custom Call of Cthulhu scenarios (modules) with NPCs, locations, and clues.
+The system supports custom Call of Cthulhu scenario modules with NPCs, locations, and topology.
 
 **Module Structure:**
-- `data/Mods/[Module Name]/module_digest.json`: Title, background, story outline, keeper guidance, initial game time
-- `data/Mods/[Module Name]/[Module]_npc/`: NPC JSON files or documents (.docx, .pdf)
-- `data/Mods/[Module Name]/[Module]_Scenarios/`: Scenario JSON files or documents
-
-**Loaders:**
-- `ModuleLoader` (`src/shared/agents/memory/moduleloader/`): Parses module digest
-- `NPCLoader` (`src/shared/agents/character/npcloader/`): Loads NPC profiles with AI-powered document parsing
-- `ScenarioLoader` (`src/shared/agents/memory/scenarioloader/`): Loads scenarios/locations
-
-**Document Parsing:**
-- Supports both structured JSON and unstructured documents (.docx, .pdf)
-- Uses LLM-powered extraction when JSON is not available
-
-### Database Schema
-
-SQLite database (`data/db.sqlite`) managed by `src/shared/agents/memory/database/schema.ts`:
-
-**Core Tables:**
-- `users`: User authentication
-- `sessions`: Game sessions (links user + module)
-- `characters`: Player and NPC profiles
-- `scenarios`: Scenario/location instances
-- `turns`: Turn history with full state snapshots
-- `checkpoints`: Manual save points
-- `game_state`: Current game state per session
-
-**Important:** Database is auto-created on first run. Use `DatabaseManager` singleton for all DB access.
+- `module_digest.json`: Title, background, story outline, initial game time
+- `npc/`: NPC profile JSON files
+- `[Module]_Scenarios/`: Scene, road, and junction JSON files
+- `scenarios_outline.json`: Macro location definitions
+- `transport_network.json`: Outdoor topology edges
 
 ## Configuration
 
@@ -243,50 +145,33 @@ GOOGLE_API_KEY=...
 SMALL_GOOGLE_MODEL=gemini-2.0-flash
 MEDIUM_GOOGLE_MODEL=gemini-2.5-flash
 
-# Database
-DATABASE_PATH=./data/db.sqlite
-
-# Server
-PORT=3000
-NODE_ENV=development
-
-# JWT (change in production!)
-JWT_SECRET=CHANGE-THIS-TO-A-SECURE-RANDOM-STRING
+# Database (Prisma)
+DATABASE_URL=file:./data/db.sqlite
 ```
 
 **Model Strategy:**
-- SMALL models: Orchestrator, Memory, Action, Character, Director (fast, structured output)
-- MEDIUM models: Keeper only (creative narrative generation)
+- SMALL models: Daily schedule generation, impact gate (fast, structured output)
+- MEDIUM models: Detailed node generation, plan revision (richer decisions)
 
-### RAG System Status
+### Embedding / Semantic Matching
 
-RAG (Retrieval-Augmented Generation) is **NOT USED** in the system:
-- Dynamic World system does not use RAG (explicitly disabled)
-- `RAG.md` contains an unimplemented design document (marked as deprecated)
-- Only basic embedding functionality exists in `src/rag/` for skill matching feature
-- Skill matching uses semantic similarity to suggest relevant character skills
+Basic embedding functionality in `src/rag/` is used for:
+- Discovery system: cosine similarity matching of NPC knowledge/evidence against action descriptions
+- Not a full RAG pipeline — just point-to-point similarity
 
 ## Important Implementation Details
 
-### Time System (weaktime branch)
+### Time System
 
-The `weaktime` branch implements in-game time tracking:
-- `GameState.gameDay`: Current day number
-- `GameState.timeOfDay`: HH:MM format
-- `scenarioTimeState`: Tracks time consumption per player action
-- Time advances based on action types and Director decisions
-- Modified files: `client/server/turn/controller.ts`, `client/server/turn/routes.ts`, `client/src/App.tsx`, `client/src/components/GameChat.tsx`
-
-### Simulated vs Real Input
-
-The graph distinguishes between real player input and Director-simulated queries:
-- `state.isSimulatedQuery`: If true, skips Orchestrator and Memory agents
-- `state.simulatedQueryCount`: Safety counter (max 5) to prevent infinite loops
-- Used when Director needs to generate autonomous NPC actions or environmental events
+Game time is tracked via `DynamicGameState`:
+- `gameDay`: Current day number
+- `timeOfDay`: HH:MM format
+- Time advances in 5-minute tick increments via `TickProcessor`
+- Day transitions trigger `NPCPlanningAgent.onNewDay()` (new daily schedules)
 
 ### Action Types (8 Categories)
 
-CoC 7e mechanics organized into 8 action types (`src/state.ts:10-19`):
+CoC 7e mechanics organized into 8 action types:
 1. **Exploration**: Finding clues, gathering information
 2. **Social**: Influencing NPCs, persuasion, interrogation
 3. **Combat**: Fighting, causing damage
@@ -296,44 +181,14 @@ CoC 7e mechanics organized into 8 action types (`src/state.ts:10-19`):
 7. **Environmental**: Surviving harsh conditions, physical endurance
 8. **Narrative**: Key story choices, plot decisions
 
-Each type has corresponding rules in `src/shared/rules/[type].ts`
-
-### NPC Response System
-
-NPCs can respond autonomously to player actions:
-- Character agent analyzes context and determines `NPCResponseAnalysis[]`
-- Each NPC response has `responseType` (one of 8 action types or "none")
-- `executionOrder`: Determines sequence when multiple NPCs respond
-- Responses are processed in order, each can trigger additional mechanics
-
-### State Cleanup
-
-**Critical:** `temporaryInfo` in `GameState` is cleared at the start of each real player turn (Entry node):
-- `actionResults`: Cleared
-- `npcResponseAnalyses`: Cleared
-- `currentActionAnalysis`: Cleared
-- `narrativeDirection`: Cleared
-- `rules`, `ragResults`: Cleared
-
-Do not persist temporary agent outputs across turns unless explicitly moved to permanent state.
+NPC plan nodes use `actionType` from these categories. Skill mapping in `actionTypeSkillMap.ts`.
 
 ## Testing
-
-**Current Status:** No automated test suite configured.
-
-**Manual Testing:**
-1. Run `pnpm build` to catch type errors
-2. Use `pnpm chat:dev` to test full stack
-3. Test module loading with standalone scripts:
-   - `test-moduleloader.ts`: Module digest parsing
-   - `test-npcloader.ts`: NPC loading
-   - `test-playerloader.ts`: Player character loading
-   - `test-scenarioloader.ts`: Scenario loading
 
 **When Adding Tests:**
 - Place in `tests/` or alongside modules as `*.spec.ts`
 - Use Vitest (`vitest.config.ts` is configured)
-- Mock SQLite layer to avoid mutating real data
+- Run `pnpm build` to catch type errors
 
 ## Scene & Topology Architecture (Dynamic World)
 
@@ -415,21 +270,20 @@ type CharacterPosition =
 **There are no standalone clue objects.** The tick processor discovers information from two sources:
 
 **1. Evidence Discovery** (scene items):
-- Triggered on player's successful `scene_interaction` or `object_interaction`
+- Triggered on successful `scene_interaction` or `object_interaction`
 - Candidates: `scene.items[]` where `category === "evidence"` and `!damaged`
 - Item difficulty: has `discoveryMethod` → `"regular"`; no `discoveryMethod` → `"automatic"`
 - ActionType must be a discovery type (exploration/social/stealth/narrative) to find non-automatic items; otherwise only automatic items are returned
 
 **2. NPC Knowledge Discovery** (character interaction):
-- Triggered on player's successful `character_interaction`
+- Triggered on successful `character_interaction`
 - Candidates: target NPC's `knowledge[]` (unrevealed, uses `knowledge.difficulty` field: regular/hard/extreme) + `secrets[]` (treated as hard difficulty)
-- When actionType is a discovery type (exploration/social/stealth/narrative), success level gates max difficulty
-- Otherwise, **relationship score** gates difficulty: ≥80→extreme, ≥70→hard, ≥60→regular, <60→automatic only
+- **Relationship score** gates difficulty: ≥80→extreme, ≥70→hard, ≥60→regular, <60→automatic only
 
 **Success level → max discoverable difficulty:**
 - `critical` → extreme | `hard` → hard | `regular` → regular | `fail` → automatic only | `fumble` → nothing + may damage evidence
 
-**Semantic matching:** Non-automatic candidates matched via embedding cosine similarity (threshold 0.7) against player's action description.
+**Semantic matching:** Non-automatic candidates matched via embedding cosine similarity (threshold 0.7) against action description.
 
 **Fumble damage:** On fumble, a random undamaged `category === "evidence"` item in the current scene is damaged.
 
@@ -488,8 +342,6 @@ src/dynamicworldagent/
 ├── dynamicBasicAgent/npcPlanning/
 │   ├── types.ts                  # PlanNode, CharacterAction, ScheduleEntry, TickResult, etc.
 │   ├── NPCPlanningAgent.ts       # Plan generation, revision, impact gate, relationship updates
-│   ├── PlayerPlanAgent.ts        # Player action planning (converts intent → PlanNode[])
-│   ├── PlayerPlanTemplate.ts     # Player plan prompt templates
 │   ├── tickProcessor.ts          # Execution engine: 5-min buckets, discovery, impact propagation
 │   ├── npcPlanningTemplates.ts   # LLM prompt templates (schedule, nodes, revision, impact gate)
 │   ├── actionTypeSkillMap.ts     # Static mapping of ActionType → CoC skills
@@ -505,10 +357,10 @@ src/dynamicworldagent/
 │   ├── handlers/                  # Built-in node handlers (movement, routine, object, character, scene)
 │   ├── features/                  # WorldFeature plugins (fire, lighting, weather, sanity, stamina)
 │   └── shared/                    # Dice, skill rolls, scene penalties, topology, pathfinding
+├── simulation/
+│   └── SimulationRunner.ts        # Autonomous tick loop runner
 ├── state/
 │   └── DynamicGameState.ts        # DynamicGameState types + DynamicGameStateManager
-├── graph/
-│   └── dynamicGraph.ts            # DynamicGraphState + graph wiring
 └── memory/
     └── NpcMemoryManager.ts        # Unified NPC memory with retrieval
 ```
@@ -545,11 +397,6 @@ interface DiscoveryEntry {
   similarity: number;  // cosine similarity score
 }
 
-interface PlayerWitnessEvent {
-  characterName: string; action: string; outcome: string;
-  location: string; gameTime: string; impact: number;
-}
-
 interface PlanNode {
   nodeId: string;
   characterId: string; characterName: string;
@@ -560,7 +407,6 @@ interface PlanNode {
   actionType?: ActionType;
   impact: 0 | 1 | 2 | 3 | 4 | 5;
   difficulty?: "regular" | "hard" | "extreme";
-  isPlayer?: boolean;
   timeAdvanceMinutes: number;
   status: "pending" | "completed" | "failed";
   outcome?: string;
@@ -577,7 +423,6 @@ interface CharacterAction {
   gameTime: string; action: string; location: string;
   type: PlanNodeType; actionType?: ActionType;
   impact: 0 | 1 | 2 | 3 | 4 | 5;
-  isPlayer?: boolean;
   difficulty?: "regular" | "hard" | "extreme" | "luck_only";
   successLevel?: "critical" | "hard" | "regular" | "fail" | "fumble";
   status: "completed" | "failed";
@@ -588,11 +433,10 @@ interface CharacterAction {
   damagedEvidence?: { itemId: string; sourceName: string };
 }
 
-type TickResult =
-  | { type: "completed"; actions: CharacterAction[] }
-  | { type: "player_interrupt"; actions: CharacterAction[];
-      witnessEvents: PlayerWitnessEvent[];
-      remainingMinutes: number; resumeFromMinutes: number; gameDay: number; };
+interface SimulationTickResult {
+  actions: CharacterAction[];
+  dayTransition: boolean;
+}
 ```
 
 ### NPCPlanningAgent — Key Methods
@@ -635,29 +479,26 @@ markNodeCompleted(sessionId, npcId, gameDay, nodeId, outcome)
 
 ### TickProcessor — Execution Engine
 
-Entry points:
-- `runPlayerAction(playerNodes, dgsm, npcPlanningAgent, sessionId, language?, registry, ctx)` → `TickResult`
-- `resumePlayerAction(playerNodes, previousActions, resumeFromMinutes, remainingMinutes, dgsm, npcPlanningAgent, sessionId, language?, registry, ctx)` → `TickResult`
+Entry point:
+- `runSimulationTick(dgsm, npcPlanningAgent, sessionId, language?, registry, ctx)` → `SimulationTickResult`
 
 **Execution flow per tick (5-minute bucket):**
 1. Ensure each NPC has detailed nodes available (two-tier refill)
-2. Fetch due NPC nodes + filter player nodes in time range
-3. Merge & sort (gameTime ASC, DEX DESC), scan unplanned encounters (|relationship| >= 60)
+2. Fetch due NPC nodes for current time range
+3. Sort (gameTime ASC, DEX DESC), scan unplanned encounters (|relationship| >= 60)
 4. Execute all nodes serially via `registry.getHandler(node.type).execute()`
 5. Post-execution per node:
    - `character_interaction` success → `updateRelationshipViaLLM()` + mirror write (passive NPC gets event memory)
    - NPC action → write event memory via `NpcMemoryManager`, mark node completed
    - Knowledge transfer → write event memories to all present target NPCs
-   - Player `character_interaction` → trigger reasoning on novel information
-   - **Player discovery**: evidence from `scene.items[category==="evidence"]` + NPC `knowledge[]`/`secrets[]` (semantic matching, see Scene Architecture above)
-   - **Player fumble** → damage random evidence item in scene
+   - Discovery: evidence from `scene.items[category==="evidence"]` + NPC `knowledge[]`/`secrets[]` (semantic matching)
+   - Fumble → damage random evidence item in scene
    - NPC failure → immediate `revisePlans()` (no gate)
 6. Impact propagation: `findAffectedCharacters()` → batch `runImpactGateForNpc()` → `revisePlans()`/`reviseSchedule()`
 7. Feature temporal tick → feature overlay detection → feature propagation
 8. Drain pending sanity emotions
-9. Store player witness events in contextualData for KeeperAgent
 
-**Multi-tick loop:** `runPlayerAction` loops in 5-min increments over `playerNode.timeAdvanceMinutes`. On `player_interrupt` (witness events), returns early so player can react. On day change, triggers `onNewDay()` (new daily schedules).
+**Day transitions:** On day change, triggers `onNewDay()` (new daily schedules for all NPCs).
 
 ### GameEngineRegistry — Pluggable Architecture
 
@@ -708,8 +549,7 @@ interface DynamicGameState {
 interface DynamicTemporaryInfo {
   rules: string[];
   contextualData: Record<string, any>;
-  playerNodes: PlanNode[];           // From Orchestrator (tick-plan system)
-  characterActions: CharacterAction[]; // From TickProcessor (player + NPC)
+  characterActions: CharacterAction[]; // From TickProcessor (NPC actions)
 }
 ```
 
@@ -743,61 +583,16 @@ model NpcMemory {
 
 **Note:** NPC action logs are stored as `NpcMemory` entries (type = action_log), not as a separate table.
 
-### Graph Integration
-
-In `src/dynamicworldagent/graph/dynamicGraph.ts`:
+### SimulationRunner Integration
 
 ```typescript
 import { NPCPlanningAgent } from "../dynamicBasicAgent/npcPlanning/NPCPlanningAgent.js";
-import { PlayerPlanAgent } from "../dynamicBasicAgent/npcPlanning/PlayerPlanAgent.js";
-import { runPlayerAction, resumePlayerAction } from "../dynamicBasicAgent/npcPlanning/tickProcessor.js";
+import { runSimulationTick } from "../dynamicBasicAgent/npcPlanning/tickProcessor.js";
 
 const npcPlanningAgent = new NPCPlanningAgent(prisma, {});
-const playerPlanAgent = new PlayerPlanAgent({});
 const registry = createDefaultRegistry();
 const executionCtx = createExecutionContext(registry);
 ```
-
-## Known Issues & Limitations
-
-1. **Single Player Only**: Multiplayer support under development
-2. **RAG Disabled**: System being redesigned for better retrieval
-3. **Frontend UX**: UI improvements in progress
-4. **Large App.tsx**: Main app component is 82KB, needs refactoring
-5. **Time Mechanics**: Still experimental on `weaktime` branch
-
-## API Architecture (client/server)
-
-The backend API is organized by domain:
-
-**Authentication** (`/api/auth/*`):
-- POST `/login`, `/register`, `/logout`
-- JWT-based with refresh tokens
-- Session management with idle timeout
-
-**Game Management** (`/api/game/*`):
-- POST `/game/init`: Initialize new game session
-- GET `/game/:sessionId`: Get current game state
-- PUT `/game/:sessionId`: Update game state
-
-**Turn Execution** (`/api/turns/*`, `/api/sessions/*`):
-- POST `/turns/:sessionId`: Execute player action (invokes LangGraph)
-- GET `/sessions/:sessionId/turns`: Get turn history
-- WebSocket `/ws`: Real-time game state updates
-
-**Character Management** (`/api/character*`):
-- GET `/characters`: List all characters in session
-- POST `/character`: Create new character
-- PUT `/character/:id`: Update character
-
-**Module Management** (`/api/mod/*`, `/api/module/*`):
-- GET `/mods`: List available modules
-- POST `/mod/load`: Load specific module into session
-
-**Checkpoint System** (`/api/checkpoints/*`):
-- POST `/checkpoints/:sessionId`: Create save point
-- GET `/checkpoints/:sessionId`: List checkpoints
-- POST `/checkpoints/:checkpointId/restore`: Load from checkpoint
 
 ## Development Best Practices
 
@@ -809,37 +604,29 @@ The backend API is organized by domain:
 - Explicit return types preferred
 - Avoid `any` type
 
-### Agent Development
+### Extending the Engine
 
-When adding/modifying agents:
-1. Agent logic goes in `src/shared/agents/[agent-name]/[agent-name]Agent.ts`
-2. Prompt templates in `[agent-name]Template.ts`
-3. Update `src/graph.ts` to wire into pipeline
-4. Update `GraphState` or `GameState` if new state fields needed
-5. Document agent's role and outputs
+**Adding a NodeHandler:**
+1. Implement `NodeHandler` interface in `src/dynamicworldagent/engine/handlers/`
+2. Register in `registerDefaults.ts` via `registry.registerHandler()`
+3. Handler's `description` and `exampleNode` are auto-injected into LLM planning prompts
+
+**Adding a WorldFeature:**
+1. Implement `WorldFeature` interface in `src/dynamicworldagent/engine/features/`
+2. Register in `registerDefaults.ts` via `registry.registerFeature()`
+3. Feature's `planningPrompt` and `planNodeSchema` are auto-injected into LLM planning prompts
 
 ### Database Access
 
-- Always use `DatabaseManager.getInstance()` singleton
-- Never mutate database directly in agent code
-- Use TurnManager for persisting turns
-- Use CheckpointManager for save/restore
-- Close database on shutdown (handled in `client/server.ts`)
+- Use Prisma client for all DB access
+- NPC planning data: `NpcDailyPlan`, `NpcLongTermIntent`, `NpcMemory` tables
+- Simulation events: `SimulationEvent` table
 
 ### Module Creation
 
-See README.md section "How to Upload Your Own Module" for detailed instructions. Key points:
-- Use structured JSON for complex data
-- Documents (.docx, .pdf) work for rapid prototyping
+Key points:
+- Use structured JSON for scene/NPC data
 - Always include `module_digest.json`
-- Test with standalone loaders before running full game
-
-## Monorepo Structure
-
-This is a pnpm workspace with two packages:
-- Root: Backend (Express server, LangGraph agents)
-- `client/`: Frontend (React app)
-
-**Shared Dependencies:** Root `pnpm install` installs both backend and frontend dependencies.
-
-**Build System:** Turbo.json configures monorepo tasks. Use `pnpm build:turbo` for optimized builds.
+- Scenes: `SCN_*.json`, Roads: `ROAD_*.json`, Junctions: `JUNC_*.json`
+- NPC profiles: JSON files in `npc/` directory
+- Topology: `scenarios_outline.json` + `transport_network.json`

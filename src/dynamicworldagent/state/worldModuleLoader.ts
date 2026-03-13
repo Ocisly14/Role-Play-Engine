@@ -491,7 +491,6 @@ export class WorldModuleLoader {
             parentLocationId: data.parentLocationId || "",
             items,
             itemContexts,
-            clues: data.clues || [],
             conditions: data.conditions || [],
             connections: data.connections || [],
             sceneImage: data.sceneImage,
@@ -516,7 +515,6 @@ export class WorldModuleLoader {
               parentLocationId: raw.parentLocationId || "",
               items,
               itemContexts,
-              clues: raw.clues || [],
               conditions: raw.conditions || [],
               connections: raw.connections || [],
               sceneImage: raw.sceneImage,
@@ -554,7 +552,6 @@ export class WorldModuleLoader {
           parentLocationId: data.parentLocationId || "OUTDOOR",
           items,
           itemContexts,
-          clues: data.clues || [],
           conditions: data.conditions || [],
           connectedSceneIds: data.connectedSceneIds || [],
         };
@@ -603,7 +600,6 @@ export class WorldModuleLoader {
           })),
           items,
           itemContexts,
-          clues: data.clues || [],
           conditions: data.conditions || [],
         };
         roads.set(road.id, road);
@@ -831,12 +827,6 @@ export class WorldModuleLoader {
             ...(emailId ? { emailId } : {}),
           },
         });
-        await prisma.npcClue.deleteMany({
-          where: {
-            npcId: legacyEmailScopedNpcId,
-            ...(emailId ? { emailId } : {}),
-          },
-        });
         await prisma.character.deleteMany({
           where: {
             characterId: legacyEmailScopedNpcId,
@@ -891,40 +881,6 @@ export class WorldModuleLoader {
           emailId: emailId || null,
         },
       });
-    }
-
-    // Pass 2: save clues (depends on NPC character existing).
-    for (const npc of npcs) {
-      const npcId = this.scopeByModule(npc.id, moduleId);
-
-      if (npc.clues && npc.clues.length > 0) {
-        for (const clue of npc.clues) {
-          const clueId = this.scopeByModule(clue.id, moduleId);
-
-          await prisma.npcClue.upsert({
-            where: { id: clueId },
-            update: {
-              npcId: npcId,
-              clueText: clue.clueText,
-              category: clue.category || null,
-              difficulty: clue.difficulty || null,
-              revealed: clue.revealed ? true : false,
-              relatedTo: clue.relatedTo || [],
-              emailId: emailId || null,
-            },
-            create: {
-              id: clueId,
-              npcId: npcId,
-              clueText: clue.clueText,
-              category: clue.category || null,
-              difficulty: clue.difficulty || null,
-              revealed: clue.revealed ? true : false,
-              relatedTo: clue.relatedTo || [],
-              emailId: emailId || null,
-            },
-          });
-        }
-      }
     }
 
     // Collect relationship targets that are not in this NPC batch.
@@ -1120,36 +1076,6 @@ export class WorldModuleLoader {
         },
       });
 
-      // Insert clues
-      if (scene.clues && scene.clues.length > 0) {
-        for (const clue of scene.clues) {
-          const scopedClueId = this.scopeByModule(clue.id, moduleId);
-
-          try {
-            await prisma.scenarioClue.create({
-              data: {
-                clueId: scopedClueId,
-                sceneId: scopedSceneId,
-                moduleId,
-                clueText: clue.clueText,
-                category: clue.category,
-                difficulty: clue.difficulty,
-                clueLocation: clue.location,
-                discoveryMethod: clue.discoveryMethod || null,
-                reveals: this.scopeArrayByModule(clue.reveals || [], moduleId),
-                discovered: clue.discovered ? true : false,
-                discoveryDetails: (clue.discoveryDetails || undefined) as any,
-              },
-            });
-          } catch (error: any) {
-            // P2002: Unique constraint violation - ignore duplicates
-            if (error?.code !== "P2002") {
-              throw error;
-            }
-          }
-        }
-      }
-
       // Insert conditions
       if (scene.conditions && scene.conditions.length > 0) {
         for (const condition of scene.conditions) {
@@ -1161,7 +1087,7 @@ export class WorldModuleLoader {
                 conditionId,
                 sceneId: scopedSceneId,
                 moduleId,
-                conditionType: condition.type,
+                conditionType: (condition as any).type || "other",
                 description: condition.description,
                 mechanicalEffect: condition.mechanicalEffect ?? undefined,
               },

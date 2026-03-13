@@ -51,8 +51,6 @@ export function findAffectedCharacters(
   dgsm: DynamicGameStateManager
 ): Map<string, number> {
   const state = dgsm.getState();
-  const playerScene = state.currentSceneId;
-  const playerId = state.playerCharacter?.id;
 
   const result = new Map<string, number>();
 
@@ -64,13 +62,9 @@ export function findAffectedCharacters(
     }
   };
 
-  const allCharacterIds = [
-    ...state.npcCharacters.map((n) => n.id),
-    ...(playerId ? [playerId] : []),
-  ];
+  const allCharacterIds = state.npcCharacters.map((n) => n.id);
 
   const getCharLocation = (charId: string): string | undefined => {
-    if (charId === playerId) return playerScene ?? undefined;
     return dgsm.getNpcLocation(charId);
   };
 

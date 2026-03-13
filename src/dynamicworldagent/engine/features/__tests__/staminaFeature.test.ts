@@ -9,15 +9,6 @@ function createMockDgsm() {
   const npcLocations: Record<string, string> = {};
   const npcStats: Record<string, { hp: number; san: number }> = {};
   const npcCharacters: Array<{ id: string; name: string; status: { hp: number; conditions: string[] } }> = [];
-  let currentSceneId = "tavern";
-  const playerCharacter = {
-    id: "player-1",
-    name: "Investigator",
-    status: { hp: 12, maxHp: 12, sanity: 60, maxSanity: 99, luck: 50, conditions: [] },
-    attributes: { STR: 50, CON: 60, DEX: 50, APP: 50, POW: 50, SIZ: 50, INT: 60, EDU: 70 },
-    skills: {} as Record<string, number>,
-    inventory: [],
-  };
 
   return {
     getFeatureSceneState(featureId: string, sceneId: string) {
@@ -35,8 +26,6 @@ function createMockDgsm() {
     },
     getState() {
       return {
-        currentSceneId,
-        playerCharacter,
         npcLocations,
         npcStats,
         npcCharacters,
@@ -58,16 +47,12 @@ function createMockDgsm() {
       npcStats[npcId] = { hp, san };
       npcCharacters.push({ id: npcId, name: npcId, status: { hp, conditions: [] } });
     },
-    _setCurrentScene(sceneId: string) {
-      currentSceneId = sceneId;
-    },
     // Topology support for resolveCharacterLocationId
     getCharacterPosition: (_id: string) => null as any,
     resolveLocationId: (pos: any) => pos?.junctionId ?? pos?.roadId ?? pos?.sceneId,
     getNpcLocation: (npcId: string) => npcLocations[npcId] ?? undefined,
 
     _featureState: featureState,
-    _playerCharacter: playerCharacter,
     _npcStats: npcStats,
     _npcLocations: npcLocations,
   };

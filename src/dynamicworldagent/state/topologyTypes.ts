@@ -1,4 +1,4 @@
-import type { ScenarioClue, ScenarioCondition } from "../../shared/agents/models/scenarioTypes.js";
+import type { SceneCondition } from "../dynamicBasicAgent/npcPlanning/types.js";
 import type { Item } from "./types.js";
 import type { ItemContexts } from "./sceneItemContextPayload.js";
 
@@ -13,8 +13,7 @@ export interface JunctionNode {
   parentLocationId: string;       // typically "OUTDOOR"
   items: Item[];
   itemContexts?: ItemContexts;
-  clues: ScenarioClue[];
-  conditions: ScenarioCondition[];
+  conditions: SceneCondition[];
   /** Scene IDs directly accessible from this junction (buildings at the intersection) */
   connectedSceneIds: string[];
 }
@@ -47,8 +46,7 @@ export interface RoadNode {
   alongConnections: AlongConnection[];
   items: Item[];
   itemContexts?: ItemContexts;
-  clues: ScenarioClue[];
-  conditions: ScenarioCondition[];
+  conditions: SceneCondition[];
 }
 
 /**

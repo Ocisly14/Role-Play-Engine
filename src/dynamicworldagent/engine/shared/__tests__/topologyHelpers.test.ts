@@ -24,7 +24,6 @@ function makeTestTopology(): TownTopology {
         description: "",
         parentLocationId: "OUTDOOR",
         items: [],
-        clues: [],
         conditions: [],
         connectedSceneIds: ["SCN_A1"],
       },
@@ -37,7 +36,6 @@ function makeTestTopology(): TownTopology {
         description: "",
         parentLocationId: "OUTDOOR",
         items: [],
-        clues: [],
         conditions: [],
         connectedSceneIds: ["SCN_B1"],
       },
@@ -50,7 +48,6 @@ function makeTestTopology(): TownTopology {
         description: "",
         parentLocationId: "OUTDOOR",
         items: [],
-        clues: [],
         conditions: [],
         connectedSceneIds: [],
       },
@@ -70,7 +67,6 @@ function makeTestTopology(): TownTopology {
         travelTimeMinutes: 10,
         alongConnections: [{ sceneId: "SCN_ALONG", position: 0.5 }],
         items: [],
-        clues: [],
         conditions: [],
       },
     ],
@@ -86,7 +82,6 @@ function makeTestTopology(): TownTopology {
         travelTimeMinutes: 5,
         alongConnections: [],
         items: [],
-        clues: [],
         conditions: [],
       },
     ],
@@ -100,13 +95,9 @@ function makeTestTopology(): TownTopology {
 function createMockDgsm(overrides?: {
   characterPositions?: Record<string, any>;
   npcLocations?: Record<string, string>;
-  currentSceneId?: string | null;
-  playerCharacterId?: string;
 }) {
   const characterPositions: Record<string, any> = overrides?.characterPositions ?? {};
   const npcLocations: Record<string, string> = overrides?.npcLocations ?? {};
-  const currentSceneId = overrides?.currentSceneId ?? null;
-  const playerCharacterId = overrides?.playerCharacterId ?? "player-1";
 
   return {
     getCharacterPosition(characterId: string) {
@@ -126,12 +117,6 @@ function createMockDgsm(overrides?: {
     },
     getNpcLocation(npcId: string) {
       return npcLocations[npcId];
-    },
-    getState() {
-      return {
-        currentSceneId,
-        playerCharacter: { id: playerCharacterId },
-      };
     },
   };
 }
@@ -282,27 +267,15 @@ describe("resolveCharacterLocationId", () => {
     expect(resolveCharacterLocationId("npc-1", dgsm as any)).toBe("SCN_A1");
   });
 
-  it("falls back to currentSceneId for the player character", () => {
-    const dgsm = createMockDgsm({
-      playerCharacterId: "player-1",
-      currentSceneId: "SCN_B1",
-    });
-    // player-1 has no CharacterPosition set, but is the player character
-    expect(resolveCharacterLocationId("player-1", dgsm as any)).toBe("SCN_B1");
-  });
-
   it("falls back to getNpcLocation for NPCs without CharacterPosition", () => {
     const dgsm = createMockDgsm({
-      playerCharacterId: "player-1",
       npcLocations: { "npc-2": "SCN_ALONG" },
     });
     expect(resolveCharacterLocationId("npc-2", dgsm as any)).toBe("SCN_ALONG");
   });
 
   it("returns undefined when no location is found at all", () => {
-    const dgsm = createMockDgsm({
-      playerCharacterId: "player-1",
-    });
+    const dgsm = createMockDgsm();
     expect(resolveCharacterLocationId("unknown-char", dgsm as any)).toBeUndefined();
   });
 
@@ -315,15 +288,5 @@ describe("resolveCharacterLocationId", () => {
     });
     // CharacterPosition takes precedence
     expect(resolveCharacterLocationId("npc-1", dgsm as any)).toBe("JUNC_B");
-  });
-
-  it("falls back to currentSceneId for player even when currentSceneId is set", () => {
-    const dgsm = createMockDgsm({
-      playerCharacterId: "player-1",
-      currentSceneId: "SCN_A1",
-      npcLocations: { "player-1": "SCN_B1" },
-    });
-    // Player fallback uses currentSceneId, not npcLocations
-    expect(resolveCharacterLocationId("player-1", dgsm as any)).toBe("SCN_A1");
   });
 });

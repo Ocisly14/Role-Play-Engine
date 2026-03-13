@@ -580,11 +580,7 @@ export class NPCPlanningAgent {
   ): Promise<{ scoreDelta: number; newScore: number; note: string } | null> {
     const state = dgsm.getState();
 
-    // Look up both characters — could be NPC or player
-    const findCharacter = (id: string) => {
-      if (state.playerCharacter?.id === id) return state.playerCharacter;
-      return state.npcCharacters.find((n) => n.id === id);
-    };
+    const findCharacter = (id: string) => state.npcCharacters.find((n) => n.id === id);
     const charA = findCharacter(characterAId);
     const charB = findCharacter(characterBId);
     if (!charA || !charB) return null;

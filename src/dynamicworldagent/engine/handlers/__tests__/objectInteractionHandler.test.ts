@@ -19,9 +19,6 @@ function createMockDgsm() {
     getScene(sceneId: string) {
       return scenes[sceneId] ?? null;
     },
-    getCurrentScene() {
-      return null;
-    },
     getNpcLocation(npcId: string) {
       return npcLocations[npcId] ?? null;
     },

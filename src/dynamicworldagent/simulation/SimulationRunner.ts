@@ -422,39 +422,6 @@ export class SimulationRunner {
       }
     }
 
-    // --- All Knowledge Discovered ---
-    // Collect all truth event IDs from knowledge matrix
-    const allTruthEventIds = new Set<string>();
-    for (const holder of gameState.knowledgeMatrix) {
-      for (const eventId of holder.knows) {
-        allTruthEventIds.add(eventId);
-      }
-    }
-
-    // Check if any NPC has discovered all of them
-    if (allTruthEventIds.size > 0) {
-      for (const npc of gameState.npcCharacters) {
-        const discovered = gameState.npcDiscoveredKnowledge[npc.id] ?? [];
-        const allFound = [...allTruthEventIds].every((id) =>
-          discovered.includes(id)
-        );
-        if (allFound) {
-          const location = gameState.npcLocations[npc.id] ?? "unknown";
-          const event = this.events.emitSimulationEvent(
-            "all_clues_discovered",
-            npc.id,
-            location,
-            gameState.gameDay,
-            gameState.timeOfDay,
-            {
-              npcName: npc.name,
-              totalClues: allTruthEventIds.size,
-            }
-          );
-          this.collectedEvents.push(event);
-        }
-      }
-    }
   }
 
   /**
