@@ -593,21 +593,6 @@ model PlayerMemo {
   @@map("player_memos")
 }
 
-model ActionLogEmbedding {
-  id        String   @id
-  sessionId String   @map("session_id")
-  turnId    String   @map("turn_id")
-  actionLog Json     @map("action_log")
-  embedding Bytes
-  createdAt DateTime @default(now()) @map("created_at")
-  emailId   String?  @map("email_id")
-
-  @@index([sessionId])
-  @@index([turnId])
-  @@index([emailId])
-  @@map("action_log_embeddings")
-}
-
 model TurnEmbedding {
   id        String   @id
   sessionId String   @map("session_id")

@@ -461,18 +461,9 @@ export async function initializeCompleteDynamicGameState(
       startSceneId ?? completeState.scenarioOutlines?.[0]?.id ?? "unknown";
 
     for (const npc of npcCharacters) {
-      // npcLocations: from NPC actionLog or default to starting scene
+      // npcLocations: default to starting scene
       if (!completeState.npcLocations[npc.id]) {
-        const actionLog = npc.actionLog ?? [];
-        let lastLog: { location?: string } | undefined;
-        for (let i = actionLog.length - 1; i >= 0; i--) {
-          if (actionLog[i].location) {
-            lastLog = actionLog[i];
-            break;
-          }
-        }
-        completeState.npcLocations[npc.id] =
-          lastLog?.location ?? defaultScenarioId;
+        completeState.npcLocations[npc.id] = defaultScenarioId;
       }
 
       // npcStats: from NPC profile status

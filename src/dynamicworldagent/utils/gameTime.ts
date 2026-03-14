@@ -1,7 +1,5 @@
 /**
  * Shared game-time parsing and comparison for DynamicWorld.
- * Used to decide if an NPC's latest actionLog is "after" the scene time
- * (e.g. NPC has left or arrived since the scene was loaded).
  */
 
 /**
@@ -63,18 +61,4 @@ export function isTimeAfter(time1: string, time2: string): boolean {
   const [h1, m1] = t1.timeOfDay.split(":").map(Number);
   const [h2, m2] = t2.timeOfDay.split(":").map(Number);
   return h1 > h2 || (h1 === h2 && m1 > m2);
-}
-
-/**
- * Get the latest actionLog entry that has both time and location (iterate backwards).
- */
-export function getLatestActionLogEntryWithLocation(
-  actionLog?: Array<{ time?: string; location?: string }>
-): { time: string; location: string } | null {
-  if (!actionLog || actionLog.length === 0) return null;
-  for (let i = actionLog.length - 1; i >= 0; i--) {
-    const e = actionLog[i];
-    if (e?.time && e?.location) return { time: e.time, location: e.location };
-  }
-  return null;
 }

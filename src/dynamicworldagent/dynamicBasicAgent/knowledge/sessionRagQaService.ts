@@ -135,7 +135,7 @@ function buildEvidenceBlock(
         ].join("\n");
       }
     }
-    // For actionlog and discovery chunks, use chunk content directly
+    // For discovery chunks, use chunk content directly
     return [
       `[Memory${i + 1}]`,
       `turn: ${chunk.turnNumber ?? "unknown"}`,

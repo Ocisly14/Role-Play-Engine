@@ -578,49 +578,6 @@ export class CoCDatabaseAdapter {
       });
   }
 
-  addActionLogEmbedding(params: {
-    sessionId: string;
-    turnId: string;
-    actionLog: any;
-    embedding: number[];
-    emailId?: string;
-  }): void {
-    const id = randomUUID();
-    // Convert embedding array to Buffer for BLOB storage
-    const embeddingBuffer = Buffer.from(
-      new Float32Array(params.embedding).buffer
-    );
-    this.prisma.actionLogEmbedding
-      .create({
-        data: {
-          id,
-          sessionId: params.sessionId,
-          turnId: params.turnId,
-          actionLog: params.actionLog,
-          embedding: embeddingBuffer,
-          emailId: params.emailId || null,
-        },
-      })
-      .catch((error) => {
-        console.error(`Failed to add action log embedding:`, error);
-      });
-  }
-
-  searchActionLogEmbeddings(params: {
-    sessionId: string;
-    queryEmbedding: number[];
-    topK?: number;
-    emailId?: string;
-  }): Array<{
-    id: string;
-    turnId: string;
-    actionLog: any;
-    similarity: number;
-  }> {
-    // Sync API cannot await Prisma query. Return empty to avoid blocking event loop.
-    return [];
-  }
-
   searchTurnEmbeddings(params: {
     sessionId: string;
     queryEmbedding: number[];
@@ -634,25 +591,6 @@ export class CoCDatabaseAdapter {
     similarity: number;
   }> {
     // Sync API cannot await Prisma query. Return empty to avoid blocking event loop.
-    return [];
-  }
-
-  searchActionLogsByKeywords(params: {
-    sessionId: string;
-    query: string;
-    topK?: number;
-    emailId?: string;
-  }): Array<{
-    id: string;
-    turnId: string;
-    actionLog: any;
-    bm25Score: number;
-  }> {
-    // BM25/FTS5 search is not available via Prisma/PostgreSQL adapter
-    // Return empty results - hybrid search will fall back to vector-only
-    console.warn(
-      "[CoCDatabaseAdapter] searchActionLogsByKeywords not implemented for Prisma adapter"
-    );
     return [];
   }
 

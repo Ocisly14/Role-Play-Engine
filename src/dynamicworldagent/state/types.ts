@@ -37,21 +37,6 @@ export interface CharacterStatus {
   [key: string]: number | string[] | string | undefined;
 }
 
-export interface ActionLogEntry {
-  time: string;
-  location: string;
-  character?: string;
-  summary: string;
-  successLevel?:
-    | "critical"
-    | "extreme"
-    | "hard"
-    | "regular"
-    | "failure"
-    | "fumble"
-    | "unknown";
-}
-
 export interface InventoryItem {
   name: string;
   quantity?: number;
@@ -192,7 +177,6 @@ export interface DynamicNPCProfile {
   status: CharacterStatus;
   inventory: InventoryItem[];
   skills: Record<string, number>;
-  actionLog?: ActionLogEntry[];
 
   // Character descriptors (used in LLM planning prompts)
   occupation?: string;

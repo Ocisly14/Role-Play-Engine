@@ -223,7 +223,7 @@ export class SessionRagService {
     bm25Weight?: number;
     language?: "en" | "zh";
     chunkType?: "turn" | "discovery";
-    segmentType?: "narrative" | "actionlog";
+    segmentType?: "narrative";
     sceneRoomId?: string | null;
   }): Promise<RetrievedSessionRagChunk[]> {
     const {
