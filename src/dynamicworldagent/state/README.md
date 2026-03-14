@@ -13,7 +13,6 @@ interface DynamicGameState {
   gameDay: number;
   timeOfDay: string;      // "HH:MM"
   npcCharacters: DynamicNPCProfile[];
-  discoveredKnowledge: DiscoveredKnowledge[];
   moduleName: string;
   moduleSetup: ModuleSetup | null;
   scenarioOutlines: ScenarioOutline[];
@@ -21,7 +20,6 @@ interface DynamicGameState {
   npcLocations: Record<string, string>;
   npcStats: Record<string, { hp: number; san: number }>;
   npcInventories: Record<string, Item[]>;
-  npcDiscoveredKnowledge: Record<string, string[]>;
   npcRelationshipGraph: Record<string, Record<string, { score: number; note: string }>>;
   scenarioConditions: Record<string, SceneCondition[]>;
   blockedConnections: Map<string, string>;

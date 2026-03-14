@@ -5,8 +5,6 @@
 
 import fs from "fs";
 import path from "path";
-import { ModelProviderName } from "../../models/types.js";
-import { EmbeddingClient } from "../../rag/embedding.js";
 import { NPCLoader } from "../../shared/agents/character/npcloader/index.js";
 import type {
   CoCDatabase,
@@ -20,7 +18,6 @@ import {
 import { getPrismaClient } from "../../shared/agents/memory/database/prismaClient.js";
 import { resolveEmailId } from "../../shared/agents/memory/database/userContext.js";
 import type { SceneCondition } from "../dynamicBasicAgent/npcPlanning/types.js";
-import { bootstrapNpcSecrets } from "../memory/bootstrapSecrets.js";
 import type { DynamicGameState } from "./DynamicGameState.js";
 import {
   DynamicGameStateManager,
@@ -401,12 +398,6 @@ export async function initializeCompleteDynamicGameState(
       ...npc,
       id: normalizedId,
       longTermIntent: npc.longTermIntent ?? npc.background ?? "",
-      knowledge: Array.isArray(npc.knowledge)
-        ? npc.knowledge.map((k: any) => ({
-            ...k,
-            id: normalizeIdToModuleScope(k.id, scopedModuleId),
-          }))
-        : [],
       relationships: Array.isArray(npc.relationships)
         ? npc.relationships.map((rel: any) => ({
             ...rel,
@@ -490,11 +481,6 @@ export async function initializeCompleteDynamicGameState(
           : [];
       }
 
-      // npcDiscoveredKnowledge: start empty
-      if (!completeState.npcDiscoveredKnowledge[npc.id]) {
-        completeState.npcDiscoveredKnowledge[npc.id] = [];
-      }
-
       // npcRelationshipGraph: from NPC profile relationships
       if (!completeState.npcRelationshipGraph[npc.id]) {
         const rels: Record<string, { score: number; note: string }> = {};
@@ -563,31 +549,6 @@ export async function initializeCompleteDynamicGameState(
       modName: modName || undefined,
     },
   });
-
-  // Bootstrap NPC secrets into the unified NpcMemory system
-  if (npcCharacters.length > 0 && scopedModuleId) {
-    try {
-      const embedClient = new EmbeddingClient(
-        (process.env.MODEL_PROVIDER as ModelProviderName) ||
-          ModelProviderName.OPENAI
-      );
-      await bootstrapNpcSecrets({
-        prisma,
-        embedClient,
-        sessionId: params.sessionId,
-        moduleId: scopedModuleId,
-        npcs: npcCharacters,
-        gameDay,
-        gameTime: timeOfDay,
-      });
-    } catch (error) {
-      // Non-fatal: secrets will be missing from memory but game can still run
-      console.error(
-        "[DynamicGameState] Failed to bootstrap NPC secrets:",
-        error
-      );
-    }
-  }
 
   console.log(
     `[DynamicGameState] Initialized complete state for module "${params.moduleName}" and created session record`

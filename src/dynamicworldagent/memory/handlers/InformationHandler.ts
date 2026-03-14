@@ -21,7 +21,11 @@ export class InformationHandler implements MemoryHandler {
   }
 
   format(memory: PrismaNpcMemory): string {
-    return `[information] ${memory.content}`;
+    const meta = memory.metadata as Record<string, any> | null;
+    const kid = (meta?.knowledgeId as string) ?? "";
+    return kid
+      ? `[information:${kid}] ${memory.content}`
+      : `[information] ${memory.content}`;
   }
 
   customDecayRate(): number {

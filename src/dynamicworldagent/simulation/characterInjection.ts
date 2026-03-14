@@ -47,7 +47,6 @@ export function buildInjectedProfile(input: {
       conditions: [],
     },
     longTermIntent: input.backstory,
-    knowledge: [],
     relationships: [],
     isPlayerInjected: true,
   };
@@ -80,7 +79,6 @@ export function injectCharacterIntoState(
     npcStats: Record<string, { hp: number; san: number }>;
     npcResidences: Record<string, string>;
     npcInventories: Record<string, import("../state/types.js").Item[]>;
-    npcDiscoveredKnowledge: Record<string, string[]>;
     npcRelationshipGraph: Record<
       string,
       Record<string, { score: number; note: string }>
@@ -101,9 +99,6 @@ export function injectCharacterIntoState(
   // Initialise empty inventory record
   state.npcInventories[profile.id] = [];
 
-  // Initialise empty discovered knowledge record
-  state.npcDiscoveredKnowledge[profile.id] = [];
-
   // Initialise empty relationship graph entry
   state.npcRelationshipGraph[profile.id] = {};
 }
@@ -123,7 +118,6 @@ export async function removeCharacterFromState(
     npcStats: Record<string, { hp: number; san: number }>;
     npcResidences: Record<string, string>;
     npcInventories: Record<string, import("../state/types.js").Item[]>;
-    npcDiscoveredKnowledge: Record<string, string[]>;
     npcRelationshipGraph: Record<
       string,
       Record<string, { score: number; note: string }>
@@ -143,7 +137,6 @@ export async function removeCharacterFromState(
   delete state.npcStats[characterId];
   delete state.npcResidences[characterId];
   delete state.npcInventories[characterId];
-  delete state.npcDiscoveredKnowledge[characterId];
   delete state.npcLocations[characterId];
   delete state.characterPositions[characterId];
 

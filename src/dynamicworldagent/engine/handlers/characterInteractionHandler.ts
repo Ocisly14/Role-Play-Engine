@@ -137,22 +137,8 @@ export const characterInteractionHandler: NodeHandler = {
           );
         }
         dgsm.addItemToNpc(node.targetCharacterId, item);
-      } else if (
-        payload.transferType === "information" &&
-        payload.relatedKnowledgeIds?.length
-      ) {
-        // Knowledge transfer to all targets
-        const targets =
-          payload.targetCharacterIds ??
-          (node.targetCharacterId ? [node.targetCharacterId] : []);
-        const filteredTargets = targets.filter((id) => id !== node.characterId);
-        for (const knowledgeId of payload.relatedKnowledgeIds) {
-          for (const targetId of filteredTargets) {
-            dgsm.transferKnowledge(node.characterId, targetId, knowledgeId);
-          }
-        }
       }
-      // Memory writing for information transfer happens in tickProcessor post-execution
+      // Information transfer memory writes handled by tickProcessor post-execution
     }
 
     return makeAction(

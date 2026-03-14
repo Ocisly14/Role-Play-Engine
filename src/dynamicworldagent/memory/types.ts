@@ -19,17 +19,12 @@ export interface WitnessMetadata {
   impact: number;
 }
 
-export interface InformationMetadata {
+export interface KnowledgeMetadata {
   knowledgeId: string;
-  category: "knowledge" | "observation" | "rumor" | "secret";
   difficulty?: string;
   relatedTo?: string[];
+  revealed?: boolean;
 }
-
-/**
- * @deprecated Use InformationMetadata instead
- */
-export type ClueMetadata = InformationMetadata;
 
 export interface BeliefMetadata {
   confidence: number;
@@ -55,20 +50,15 @@ export interface PlanMetadata {
   priority?: number;
 }
 
-export interface SecretMetadata {
-  knownBy?: string[];
-  revealCondition?: string;
-}
 
 export type MemoryMetadata =
   | EventMetadata
   | WitnessMetadata
-  | InformationMetadata
+  | KnowledgeMetadata
   | BeliefMetadata
   | EmotionMetadata
   | RelationshipMetadata
-  | PlanMetadata
-  | SecretMetadata;
+  | PlanMetadata;
 
 // ===== Query & Retrieval Types =====
 

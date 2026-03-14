@@ -5,13 +5,6 @@
  * node handlers, world features, and SimulationRunner.
  */
 
-import {
-  InventoryUtils,
-  type ModuleSetup,
-  type NPCRelationship,
-  type ScenarioOutline,
-} from "./types.js";
-import type { DiscoveredKnowledge } from "../../shared/state/index.js";
 import type {
   CharacterPosition,
   JunctionNode,
@@ -19,6 +12,12 @@ import type {
   TownTopology,
 } from "./topologyTypes.js";
 import { buildTopology } from "./topologyTypes.js";
+import {
+  InventoryUtils,
+  type ModuleSetup,
+  type NPCRelationship,
+  type ScenarioOutline,
+} from "./types.js";
 import type {
   DynamicNPCProfile,
   DynamicScene,
@@ -44,9 +43,6 @@ export interface DynamicGameState {
   // === Characters ===
   npcCharacters: DynamicNPCProfile[];
 
-  // === Knowledge & Discovery ===
-  discoveredKnowledge: DiscoveredKnowledge[];
-
   // === Module Metadata ===
   moduleName: string;
   moduleSetup: ModuleSetup | null;
@@ -60,7 +56,6 @@ export interface DynamicGameState {
   npcLocations: Record<string, string>; // npcId -> sceneId
   npcStats: Record<string, { hp: number; san: number }>;
   npcInventories: Record<string, Item[]>; // npcId -> items
-  npcDiscoveredKnowledge: Record<string, string[]>; // npcId -> knowledge IDs
   npcRelationshipGraph: Record<
     string,
     Record<string, { score: number; note: string }>
@@ -100,7 +95,6 @@ export const initialDynamicGameState = (params: {
   gameDay: params.gameDay ?? 1,
   timeOfDay: params.timeOfDay ?? "08:00",
   npcCharacters: [],
-  discoveredKnowledge: [],
   moduleName: params.moduleName,
   moduleSetup: null,
   scenarioOutlines: [],
@@ -108,7 +102,6 @@ export const initialDynamicGameState = (params: {
   npcLocations: {},
   npcStats: {},
   npcInventories: {},
-  npcDiscoveredKnowledge: {},
   npcRelationshipGraph: {},
   scenarioConditions: {},
   blockedConnections: new Map(),
@@ -287,7 +280,6 @@ export class DynamicGameStateManager {
       gameDay: data.gameDay ?? 1,
       timeOfDay: data.timeOfDay ?? "08:00",
       npcCharacters: data.npcCharacters ?? [],
-      discoveredKnowledge: data.discoveredKnowledge ?? [],
       scenarioOutlines: data.scenarioOutlines ?? [],
       scenes,
       blockedConnections,
@@ -295,7 +287,6 @@ export class DynamicGameStateManager {
       npcLocations: data.npcLocations ?? {},
       npcStats: data.npcStats ?? {},
       npcInventories: data.npcInventories ?? {},
-      npcDiscoveredKnowledge: data.npcDiscoveredKnowledge ?? {},
       npcRelationshipGraph: data.npcRelationshipGraph ?? {},
       scenarioConditions: data.scenarioConditions ?? {},
       npcResidences: data.npcResidences ?? {},
@@ -622,19 +613,6 @@ export class DynamicGameStateManager {
     return this.state.npcInventories[npcId].splice(idx, 1)[0];
   }
 
-  transferKnowledge(
-    fromNpcId: string,
-    toNpcId: string,
-    knowledgeId: string
-  ): void {
-    if (!this.state.npcDiscoveredKnowledge[toNpcId])
-      this.state.npcDiscoveredKnowledge[toNpcId] = [];
-    if (!this.state.npcDiscoveredKnowledge[toNpcId].includes(knowledgeId)) {
-      this.state.npcDiscoveredKnowledge[toNpcId].push(knowledgeId);
-    }
-    // Knowledge sharing is a copy, not a move — sender retains the knowledge
-  }
-
   /** Damage an evidence item in the specified scene (e.g., on fumble) */
   damageEvidenceItem(
     itemId: string,
@@ -654,33 +632,6 @@ export class DynamicGameStateManager {
         damagedAt: new Date().toISOString(),
         reason,
       };
-    }
-  }
-
-  addNpcKnowledge(
-    npcId: string,
-    entry: import("./types.js").NPCKnowledge
-  ): void {
-    const npc = this.state.npcCharacters.find((n) => n.id === npcId);
-    if (!npc) return;
-    if (!npc.knowledge) npc.knowledge = [];
-    const exists = npc.knowledge.some((k) => k.id === entry.id);
-    if (!exists) npc.knowledge.push(entry);
-  }
-
-  markNpcKnowledgeRevealed(npcId: string, knowledgeId: string): void {
-    const npc = this.state.npcCharacters.find((n) => n.id === npcId);
-    if (!npc?.knowledge) return;
-    const entry = npc.knowledge.find((k) => k.id === knowledgeId);
-    if (entry) entry.revealed = true;
-  }
-
-  addDiscoveredKnowledge(entry: DiscoveredKnowledge): void {
-    const exists = this.state.discoveredKnowledge.some(
-      (k) => k.text === entry.text
-    );
-    if (!exists) {
-      this.state.discoveredKnowledge.push(entry);
     }
   }
 

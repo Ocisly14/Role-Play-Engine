@@ -869,51 +869,35 @@ export class NPCPlanningAgent {
     const handlers = getAllHandlers();
     const state = dgsm.getState();
 
-    // Format events
     const eventLog = dayMemories
       .map((m) => handlers[m.type].format(m))
       .join("\n");
 
-    // Collect knowledge received today (resolve relatedKnowledgeIds from sender NPCs)
-    const receivedKnowledge: Array<{
-      id: string;
-      text: string;
-      category: string;
-      from: string;
-    }> = [];
-    for (const m of dayMemories) {
-      const meta = m.metadata as Record<string, any> | null;
-      if (!meta?.relatedKnowledgeIds?.length || !meta?.sourceCharacterId)
-        continue;
-      const senderNpc = state.npcCharacters.find(
-        (n) => n.id === meta.sourceCharacterId
-      );
-      if (!senderNpc?.knowledge) continue;
-      for (const kid of meta.relatedKnowledgeIds as string[]) {
-        const k = senderNpc.knowledge.find((k) => k.id === kid);
-        if (k && !receivedKnowledge.some((r) => r.id === k.id)) {
-          receivedKnowledge.push({
-            id: k.id,
-            text: k.text,
-            category: k.category ?? "knowledge",
-            from: senderNpc.name,
-          });
-        }
-      }
-    }
-
     const npc = state.npcCharacters.find((n) => n.id === npcId);
     if (!npc) return;
 
-    const existingKnowledgeIds = (npc.knowledge ?? []).map((k) => k.id);
+    // Query NPC's existing information/secret memories as knowledge context
+    const existingKnowledgeMemories = await this.memoryManager.query({
+      npcId,
+      sessionId,
+      query: "",
+      filters: { types: ["information", "secret"] },
+      limit: 50,
+    });
+    const existingKnowledge = existingKnowledgeMemories
+      .map((m) => {
+        const meta = m.metadata as Record<string, any> | null;
+        const kid = (meta?.knowledgeId as string) ?? m.id;
+        return `- [${kid}] ${m.content}`;
+      })
+      .join("\n");
 
     const { systemPrompt, userPrompt } = buildSummarizeDayMemoryPrompt({
       npcName: npc.name,
       npcProfile: this.formatNpcProfile(npc),
       gameDay,
       eventLog,
-      receivedKnowledge,
-      existingKnowledgeIds,
+      existingKnowledge,
       language,
     });
 
@@ -927,17 +911,16 @@ export class NPCPlanningAgent {
     const parsed = parseJsonResponse<{
       memories: Array<{ content: string; importance: number }>;
       newKnowledge?: Array<{
-        id: string;
+        id?: string;
         text: string;
         category?: string;
         difficulty?: string;
-        relatedTo?: string[];
       }>;
     }>(response);
 
     const moduleId = (await this.resolveModuleId(sessionId)) ?? "";
 
-    // Write each summary memory as a separate record with its own importance
+    // Write summary memories
     await Promise.all(
       parsed.memories.map((m) =>
         this.memoryManager!.add({
@@ -953,27 +936,26 @@ export class NPCPlanningAgent {
       )
     );
 
-    // Add extracted knowledge and secrets to NPC profile
+    // Write new knowledge as information/secret memories
     if (parsed.newKnowledge?.length) {
-      const npcRef = state.npcCharacters.find((n) => n.id === npcId);
       for (const k of parsed.newKnowledge) {
-        if (k.category === "secret") {
-          if (npcRef) {
-            if (!npcRef.secrets) npcRef.secrets = [];
-            if (!npcRef.secrets.includes(k.text)) npcRef.secrets.push(k.text);
-          }
-        } else {
-          dgsm.addNpcKnowledge(npcId, {
-            id: k.id,
-            text: k.text,
-            category: "knowledge",
-            difficulty:
-              (k.difficulty as "automatic" | "regular" | "hard" | "extreme") ??
-              "automatic",
+        const isSecret = k.category === "secret";
+        const knowledgeId =
+          k.id || `learned_day${gameDay}_${Date.now()}`;
+        await this.memoryManager!.add({
+          npcId,
+          sessionId,
+          moduleId,
+          type: isSecret ? "secret" : "information",
+          content: k.text,
+          gameDay,
+          gameTime: "23:59",
+          metadata: {
+            knowledgeId,
+            difficulty: k.difficulty ?? (isSecret ? "hard" : "automatic"),
             revealed: false,
-            relatedTo: k.relatedTo,
-          });
-        }
+          },
+        });
       }
     }
   }

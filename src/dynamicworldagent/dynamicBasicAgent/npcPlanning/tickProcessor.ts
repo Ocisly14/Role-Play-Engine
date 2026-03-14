@@ -147,15 +147,15 @@ async function discoverEvidence(
 
 /**
  * Discover NPC knowledge after a successful character_interaction.
- * Candidates: npc.knowledge (unrevealed) + npc.secrets.
+ * Queries target NPC's information and secret memories (unrevealed).
  */
 async function discoverNpcKnowledge(
   node: PlanNode,
   successLevel: SuccessLevel,
   dgsm: DynamicGameStateManager,
-  language: string
+  language: string,
+  memoryManager: NpcMemoryManager
 ): Promise<DiscoveryEntry[]> {
-  const state = dgsm.getState();
   if (node.type !== "character_interaction" || !node.targetCharacterId)
     return [];
 
@@ -163,7 +163,6 @@ async function discoverNpcKnowledge(
   if (node.actionType && DISCOVERY_ACTION_TYPES.has(node.actionType)) {
     maxRank = SUCCESS_TO_MAX_RANK[successLevel] ?? 0;
   } else {
-    // relationship score determines max rank
     const rel = dgsm.getRelationship(node.characterId, node.targetCharacterId);
     const score = rel?.score ?? 0;
     if (score >= 80) maxRank = 3;
@@ -172,52 +171,72 @@ async function discoverNpcKnowledge(
     else maxRank = 0;
   }
 
-  const npc = state.npcCharacters.find((n) => n.id === node.targetCharacterId);
-  if (!npc) return [];
+  const targetId = node.targetCharacterId;
+  const state = dgsm.getState();
+  const targetNpc = state.npcCharacters.find((n) => n.id === targetId);
+  if (!targetNpc) return [];
+
+  // Query target NPC's unrevealed information and secret memories
+  const targetMemories = await memoryManager.query({
+    npcId: targetId,
+    sessionId: state.sessionId,
+    query: node.action,
+    filters: { types: ["information", "secret"] },
+    limit: 50,
+  });
 
   const candidates: DiscoveryCandidate[] = [];
 
-  // NPC knowledge
-  if (npc.knowledge) {
-    for (const k of npc.knowledge) {
-      if (k.revealed) continue;
-      const rank = DIFFICULTY_RANK[k.difficulty ?? "regular"] ?? 1;
-      if (rank > maxRank) continue;
-      candidates.push({
-        id: k.id,
-        text: k.text,
-        difficulty: k.difficulty ?? "regular",
-        source: "npc",
-        sourceId: npc.id,
-        sourceName: npc.name,
-      });
-    }
-  }
+  for (const mem of targetMemories) {
+    const meta = mem.metadata as Record<string, any> | null;
+    if (meta?.revealed) continue;
 
-  // NPC secrets (treated as "hard" difficulty)
-  if (npc.secrets) {
-    const hardRank = DIFFICULTY_RANK["hard"];
-    if (hardRank <= maxRank) {
-      for (let i = 0; i < npc.secrets.length; i++) {
-        const alreadyKnown = state.discoveredKnowledge.some(
-          (dk) =>
-            dk.text === npc.secrets![i] ||
-            dk.text === `Secret: ${npc.secrets![i]}`
-        );
-        if (alreadyKnown) continue;
-        candidates.push({
-          id: `${npc.id}_secret_${i}`,
-          text: npc.secrets[i],
-          difficulty: "hard",
-          source: "npc",
-          sourceId: npc.id,
-          sourceName: npc.name,
-        });
-      }
-    }
+    const difficulty =
+      (meta?.difficulty as string) ??
+      (mem.type === "secret" ? "hard" : "regular");
+    const rank = DIFFICULTY_RANK[difficulty] ?? 1;
+    if (rank > maxRank) continue;
+
+    candidates.push({
+      id: (meta?.knowledgeId as string) ?? mem.id,
+      text: mem.content,
+      difficulty,
+      source: "npc",
+      sourceId: targetNpc.id,
+      sourceName: targetNpc.name,
+    });
   }
 
   return matchCandidates(candidates, node, language);
+}
+
+/** Mark a target NPC's knowledge/secret memory as revealed after discovery */
+async function markMemoryRevealed(
+  memoryManager: NpcMemoryManager,
+  targetNpcId: string,
+  sessionId: string,
+  knowledgeIdOrMemoryId: string
+): Promise<void> {
+  const candidates = await memoryManager.query({
+    npcId: targetNpcId,
+    sessionId,
+    query: "",
+    filters: { types: ["information", "secret"] },
+    limit: 100,
+  });
+  for (const mem of candidates) {
+    const meta = mem.metadata as Record<string, any> | null;
+    const kid = (meta?.knowledgeId as string) ?? mem.id;
+    if (kid === knowledgeIdOrMemoryId) {
+      await memoryManager.updateBeliefConfidence(
+        mem.id,
+        meta?.confidence ?? 1,
+        "revealed via discovery",
+        { ...meta, revealed: true }
+      );
+      break;
+    }
+  }
 }
 
 /** Common logic: split automatic vs semantic-match candidates */
@@ -537,7 +556,7 @@ async function executeSingleTick(
       );
     }
 
-    // Knowledge transfer: write event memories only; summary extracts knowledge at day-end
+    // Knowledge transfer: write information memory to target NPC
     if (
       memoryManager &&
       action.status === "completed" &&
@@ -563,25 +582,29 @@ async function executeSingleTick(
         return loc === node.location;
       });
 
+      // Use source knowledgeId if available, otherwise generate one
+      const sourceKnowledgeId =
+        payload.relatedKnowledgeIds?.[0] ??
+        `transfer_${node.nodeId}`;
+
       for (const targetId of presentTargets) {
         await memoryManager.add({
           npcId: targetId,
           sessionId,
           moduleId,
-          type: "event",
+          type: "information",
           content: `${senderName} told me: ${informationContent}`,
           gameDay,
           gameTime: action.gameTime,
           location: action.location,
           metadata: {
-            outcome: informationContent,
-            relatedKnowledgeIds: payload.relatedKnowledgeIds ?? [],
-            sourceCharacterId: node.characterId,
+            knowledgeId: sourceKnowledgeId,
+            difficulty: "automatic",
           },
         });
       }
 
-      // Sender event memory
+      // Sender event memory (recording the act of sharing)
       const targetNames = presentTargets
         .map((id) => {
           const npc = state.npcCharacters.find((n) => n.id === id);
@@ -616,36 +639,29 @@ async function executeSingleTick(
         evidenceSceneId
       );
       // Discover NPC knowledge
-      const npcKnowledge = await discoverNpcKnowledge(
-        node,
-        effectiveSuccess,
-        dgsm,
-        language
-      );
+      const npcKnowledge = memoryManager
+        ? await discoverNpcKnowledge(
+            node,
+            effectiveSuccess,
+            dgsm,
+            language,
+            memoryManager
+          )
+        : [];
       const allDiscoveries = [...evidence, ...npcKnowledge];
 
       if (allDiscoveries.length > 0) {
         action.discoveries = allDiscoveries;
         embedDiscoveries(allDiscoveries, dgsm, language as "en" | "zh");
         for (const entry of allDiscoveries) {
-          if (entry.source === "npc") {
-            dgsm.markNpcKnowledgeRevealed(entry.sourceId, entry.id);
+          if (entry.source === "npc" && memoryManager) {
+            await markMemoryRevealed(
+              memoryManager,
+              entry.sourceId,
+              sessionId,
+              entry.id
+            );
           }
-          // Add to global discoveredKnowledge list
-          dgsm.addDiscoveredKnowledge({
-            text: entry.text,
-            type:
-              entry.source === "evidence"
-                ? "evidence"
-                : entry.id.includes("_secret_")
-                  ? "secret"
-                  : "information",
-            sourceName: entry.sourceName,
-            discoveredBy: node.characterName,
-            discoveredAt: new Date().toISOString(),
-            difficulty: entry.difficulty,
-            method: node.action,
-          });
         }
         console.log(
           `[TickProcessor] NPC discovered ${allDiscoveries.length} item(s): ${allDiscoveries.map((d) => `[${d.difficulty}] ${d.text.slice(0, 40)}`).join("; ")}`

@@ -43,15 +43,6 @@ export interface InventoryItem {
   properties?: Record<string, any>;
 }
 
-export interface NPCKnowledge {
-  id: string;
-  text: string;
-  category?: "knowledge" | "secret";
-  difficulty?: Difficulty;
-  revealed: boolean;
-  relatedTo?: string[];
-}
-
 export interface NPCRelationship {
   targetId: string;
   targetName: string;
@@ -190,8 +181,6 @@ export interface DynamicNPCProfile {
 
   // Simulation data
   longTermIntent: string;
-  secrets?: string[];
-  knowledge: NPCKnowledge[];
   relationships: NPCRelationship[];
 
   isPlayerInjected?: boolean;
