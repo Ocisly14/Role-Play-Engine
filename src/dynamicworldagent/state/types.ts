@@ -4,7 +4,6 @@
  */
 
 import type { SceneCondition } from "../dynamicBasicAgent/npcPlanning/types.js";
-import type { ItemContexts } from "./sceneItemContextPayload.js";
 
 // ─── Character-related types ───────────────────────────────────────
 
@@ -202,7 +201,7 @@ export interface DynamicScene {
   description: string;
   parentLocationId: string;
   items: Item[];
-  itemContexts?: ItemContexts;
+  itemContexts?: Record<string, string>;
   conditions: SceneCondition[];
   connections: string[];
   sceneImage?: SceneImage;

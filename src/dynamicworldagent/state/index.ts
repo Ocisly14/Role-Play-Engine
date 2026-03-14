@@ -10,8 +10,9 @@ export {
   initialDynamicGameState,
 } from "./DynamicGameState.js";
 
-export {
-  loadDynamicGameState,
-  loadDynamicGameStateFromDatabase,
-  loadDynamicGameStateFromModuleLoader,
-} from "./DynamicGameStateLoader.js";
+export { initializeCompleteDynamicGameState } from "./DynamicGameStateLoader.js";
+
+export { loadModule, createSession, initRuntime } from "./moduleLoader.js";
+export type { ModuleData } from "./moduleLoader.js";
+
+export { importModule, scanAndImportModules } from "./moduleImporter.js";

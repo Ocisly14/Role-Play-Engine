@@ -1,5 +1,4 @@
 import type { SceneCondition } from "../dynamicBasicAgent/npcPlanning/types.js";
-import type { ItemContexts } from "./sceneItemContextPayload.js";
 import type { Item } from "./types.js";
 
 /**
@@ -12,7 +11,7 @@ export interface JunctionNode {
   description: string;
   parentLocationId: string; // typically "OUTDOOR"
   items: Item[];
-  itemContexts?: ItemContexts;
+  itemContexts?: Record<string, string>;
   conditions: SceneCondition[];
   /** Scene IDs directly accessible from this junction (buildings at the intersection) */
   connectedSceneIds: string[];
@@ -45,7 +44,7 @@ export interface RoadNode {
   /** Buildings accessible along this road */
   alongConnections: AlongConnection[];
   items: Item[];
-  itemContexts?: ItemContexts;
+  itemContexts?: Record<string, string>;
   conditions: SceneCondition[];
 }
 
