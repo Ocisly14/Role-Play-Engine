@@ -17,7 +17,10 @@ import {
 } from "../../shared/agents/memory/database/moduleScope.js";
 import { getPrismaClient } from "../../shared/agents/memory/database/prismaClient.js";
 import { resolveEmailId } from "../../shared/agents/memory/database/userContext.js";
+import { ModelProviderName } from "../../models/types.js";
+import { EmbeddingClient } from "../../rag/embedding.js";
 import type { SceneCondition } from "../dynamicBasicAgent/npcPlanning/types.js";
+import { bootstrapNpcMemory } from "../memory/bootstrapNpcMemory.js";
 import type { DynamicGameState } from "./DynamicGameState.js";
 import {
   DynamicGameStateManager,
@@ -549,6 +552,30 @@ export async function initializeCompleteDynamicGameState(
       modName: modName || undefined,
     },
   });
+
+  // Bootstrap NPC memory entries from profile JSON into NpcMemory table
+  if (npcCharacters.length > 0 && scopedModuleId) {
+    try {
+      const embedClient = new EmbeddingClient(
+        (process.env.MODEL_PROVIDER as ModelProviderName) ||
+          ModelProviderName.OPENAI
+      );
+      await bootstrapNpcMemory({
+        prisma,
+        embedClient,
+        sessionId: params.sessionId,
+        moduleId: scopedModuleId,
+        npcs: npcCharacters,
+        gameDay,
+        gameTime: timeOfDay,
+      });
+    } catch (error) {
+      console.error(
+        "[DynamicGameState] Failed to bootstrap NPC memory:",
+        error
+      );
+    }
+  }
 
   console.log(
     `[DynamicGameState] Initialized complete state for module "${params.moduleName}" and created session record`

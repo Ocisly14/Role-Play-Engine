@@ -43,6 +43,13 @@ export interface InventoryItem {
   properties?: Record<string, any>;
 }
 
+/** Memory entry defined in NPC profile JSON, bootstrapped into NpcMemory at session init. */
+export interface NpcProfileMemoryEntry {
+  type: "information" | "secret" | "event" | "belief";
+  content: string;
+  metadata?: Record<string, any>;
+}
+
 export interface NPCRelationship {
   targetId: string;
   targetName: string;
@@ -182,6 +189,7 @@ export interface DynamicNPCProfile {
   // Simulation data
   longTermIntent: string;
   relationships: NPCRelationship[];
+  memory?: NpcProfileMemoryEntry[];
 
   isPlayerInjected?: boolean;
 }
