@@ -50,7 +50,6 @@ export interface PlanMetadata {
   priority?: number;
 }
 
-
 export type MemoryMetadata =
   | EventMetadata
   | WitnessMetadata

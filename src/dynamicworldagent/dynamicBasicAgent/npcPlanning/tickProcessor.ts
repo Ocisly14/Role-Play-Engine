@@ -584,8 +584,7 @@ async function executeSingleTick(
 
       // Use source knowledgeId if available, otherwise generate one
       const sourceKnowledgeId =
-        payload.relatedKnowledgeIds?.[0] ??
-        `transfer_${node.nodeId}`;
+        payload.relatedKnowledgeIds?.[0] ?? `transfer_${node.nodeId}`;
 
       for (const targetId of presentTargets) {
         await memoryManager.add({

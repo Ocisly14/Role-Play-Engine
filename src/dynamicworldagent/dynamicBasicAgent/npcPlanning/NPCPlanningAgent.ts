@@ -940,8 +940,7 @@ export class NPCPlanningAgent {
     if (parsed.newKnowledge?.length) {
       for (const k of parsed.newKnowledge) {
         const isSecret = k.category === "secret";
-        const knowledgeId =
-          k.id || `learned_day${gameDay}_${Date.now()}`;
+        const knowledgeId = k.id || `learned_day${gameDay}_${Date.now()}`;
         await this.memoryManager!.add({
           npcId,
           sessionId,

@@ -7,648 +7,28 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
-model Rule {
-  id           String   @id
-  category     String
-  title        String
-  description  String
-  mechanics    String?
-  examples     Json?
-  relatedRules Json?    @map("related_rules")
-  tags         Json?
-  createdAt    DateTime @default(now()) @map("created_at")
-
-  @@index([category])
-  @@index([title])
-  @@map("rules")
-}
-
-model Skill {
-  name        String   @id
-  baseValue   Int      @map("base_value")
-  description String
-  category    String
-  uncommon    Boolean  @default(false)
-  examples    Json?
-  createdAt   DateTime @default(now()) @map("created_at")
-
-  @@index([category])
-  @@map("skills")
-}
-
-model Weapon {
-  name            String   @id
-  skill           String
-  damage          String
-  range           String
-  attacksPerRound Int      @map("attacks_per_round")
-  ammo            Int?
-  malfunction     Int?
-  era             String?
-  createdAt       DateTime @default(now()) @map("created_at")
-
-  @@map("weapons")
-}
-
-model SanityTrigger {
-  trigger     String   @id
-  sanityLoss  String   @map("sanity_loss")
-  description String?
-  createdAt   DateTime @default(now()) @map("created_at")
-
-  @@map("sanity_triggers")
-}
-
-model User {
-  id                   String              @id
-  email                String              @unique
-  username             String?             @unique
-  passwordHash         String              @map("password_hash")
-  isEmailVerified      Boolean             @default(false) @map("is_email_verified")
-  isActive             Boolean             @default(true) @map("is_active")
-  role                 String              @default("USER")
-  createdAt            DateTime            @default(now()) @map("created_at")
-  updatedAt            DateTime            @default(now()) @map("updated_at")
-  lastLoginAt          DateTime?           @map("last_login_at")
-  emailVerifications   EmailVerification[]
-  passwordResets       PasswordReset[]
-  referralCodeUses     ReferralCodeUse[]
-  createdReferralCodes ReferralCode[]      @relation("CreatedReferralCodes")
-  usedReferralCodes    ReferralCode[]      @relation("UsedReferralCodes")
-  refreshTokens                RefreshToken[]
-  userSessions                 UserSession[]
-  multiplayerMemberships       MultiplayerRoomMember[]
-  multiplayerCheckpointMembers MultiplayerCheckpointMember[]
-
-  @@index([email])
-  @@index([username])
-  @@map("users")
-}
-
-model UserSession {
-  id           String    @id
-  userId       String    @map("user_id")
-  token        String    @unique
-  userAgent    String?   @map("user_agent")
-  ipAddress    String?   @map("ip_address")
-  expiresAt    DateTime  @map("expires_at")
-  createdAt    DateTime  @default(now()) @map("created_at")
-  lastUsedAt   DateTime  @default(now()) @map("last_used_at")
-  isRevoked    Boolean   @default(false) @map("is_revoked")
-  revokedAt    DateTime? @map("revoked_at")
-  revokeReason String?   @map("revoke_reason")
-  user         User      @relation(fields: [userId], references: [id], onDelete: Cascade)
-
-  @@index([userId])
-  @@index([token])
-  @@index([expiresAt])
-  @@map("user_sessions")
-}
-
-model EmailVerification {
-  id        String   @id
-  userId    String   @map("user_id")
-  code      String
-  expiresAt DateTime @map("expires_at")
-  createdAt DateTime @default(now()) @map("created_at")
-  verified  Boolean  @default(false)
-  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-
-  @@index([userId])
-  @@index([code])
-  @@map("email_verifications")
-}
-
-model PasswordReset {
-  id        String    @id
-  userId    String    @map("user_id")
-  token     String    @unique
-  expiresAt DateTime  @map("expires_at")
-  createdAt DateTime  @default(now()) @map("created_at")
-  used      Boolean   @default(false)
-  usedAt    DateTime? @map("used_at")
-  user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
-
-  @@index([userId])
-  @@index([token])
-  @@map("password_resets")
-}
-
-model RefreshToken {
-  id        String    @id
-  userId    String    @map("user_id")
-  token     String    @unique
-  expiresAt DateTime  @map("expires_at")
-  createdAt DateTime  @default(now()) @map("created_at")
-  revokedAt DateTime? @map("revoked_at")
-  user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
-
-  @@index([userId])
-  @@index([token])
-  @@map("refresh_tokens")
-}
-
-model ReferralCode {
-  id              String            @id
-  code            String            @unique
-  maxUses         Int?              @map("max_uses")
-  expiresAt       DateTime?         @map("expires_at")
-  description     String?
-  createdAt       DateTime          @default(now()) @map("created_at")
-  createdByUserId String?           @map("created_by_user_id")
-  usedByUserId    String?           @map("used_by_user_id")
-  uses            ReferralCodeUse[]
-  createdBy       User?             @relation("CreatedReferralCodes", fields: [createdByUserId], references: [id])
-  usedBy          User?             @relation("UsedReferralCodes", fields: [usedByUserId], references: [id])
-
-  @@index([code])
-  @@map("referral_codes")
-}
-
-model ReferralCodeUse {
-  id             String       @id
-  referralCodeId String       @map("referral_code_id")
-  userId         String       @map("user_id")
-  usedAt         DateTime     @default(now()) @map("used_at")
-  referralCode   ReferralCode @relation(fields: [referralCodeId], references: [id], onDelete: Cascade)
-  user           User         @relation(fields: [userId], references: [id], onDelete: Cascade)
-
-  @@index([referralCodeId])
-  @@index([userId])
-  @@map("referral_code_uses")
-}
-
-model DisposableEmailDomain {
-  id        String   @id
-  domain    String   @unique
-  createdAt DateTime @default(now()) @map("created_at")
-
-  @@map("disposable_email_domains")
-}
-
-model Character {
-  characterId         String            @id @map("character_id")
-  name                String
-  attributes          Json
-  status              Json
-  inventory           Json?
-  skills              Json?
-  notes               String?
-  isNpc               Boolean           @default(false) @map("is_npc")
-  occupation          String?
-  age                 Int?
-  gender              String?
-  appearance          String?
-  personality         String?
-  background          String?
-  goals               Json?
-  secrets             Json?
-  currentLocation     String?           @map("current_location")
-  updatedAt           DateTime          @default(now()) @map("updated_at")
-  instantiatedFrom    String?           @map("instantiated_from")
-  inheritsKnowledge   Json?             @map("inherits_knowledge")
-  emailId             String?           @map("email_id")
-  npcKnowledge        NpcKnowledge[]
-  sourceRelationships NpcRelationship[] @relation("SourceCharacter")
-  targetRelationships NpcRelationship[] @relation("TargetCharacter")
-
-  @@index([name])
-  @@index([isNpc])
-  @@index([emailId])
-  @@map("characters")
-}
-
-model NpcKnowledge {
-  id         String    @id
-  npcId      String    @map("npc_id")
-  content    String
-  category   String?
-  difficulty String?
-  revealed   Boolean   @default(false)
-  relatedTo  Json?     @map("related_to")
-  createdAt  DateTime  @default(now()) @map("created_at")
-  emailId    String?   @map("email_id")
-  npc        Character @relation(fields: [npcId], references: [characterId], onDelete: Cascade)
-
-  @@index([npcId])
-  @@index([revealed])
-  @@index([emailId])
-  @@map("npc_knowledge")
-}
-
-model NpcRelationship {
-  id               String    @id
-  sourceId         String    @map("source_id")
-  targetId         String    @map("target_id")
-  targetName       String    @map("target_name")
-  relationshipType String    @map("relationship_type")
-  attitude         Int       @default(0)
-  description      String?
-  history          String?
-  createdAt        DateTime  @default(now()) @map("created_at")
-  emailId          String?   @map("email_id")
-  source           Character @relation("SourceCharacter", fields: [sourceId], references: [characterId], onDelete: Cascade)
-  target           Character @relation("TargetCharacter", fields: [targetId], references: [characterId], onDelete: Cascade)
-
-  @@unique([sourceId, targetId])
-  @@index([sourceId])
-  @@index([targetId])
-  @@index([emailId])
-  @@map("npc_relationships")
-}
-
-model ModuleBackground {
-  moduleId            String  @id @map("module_id") @db.Uuid
-  title               String
-  background          String?
-  storyOutline        String? @map("story_outline")
-  moduleNotes         String? @map("module_notes")
-  keeperGuidance      String? @map("keeper_guidance")
-  moduleLimitations   String? @map("module_limitations")
-  initialGameTime     String? @map("initial_game_time")
-  initialScenarioNpcs Json?   @map("initial_scenario_npcs")
-  introduction        String?
-  tags                Json?
-  emailId             String? @map("email_id")
-  macroMapPath        String? @map("macro_map_path")
-  module              Module  @relation(fields: [moduleId], references: [moduleId], onDelete: Cascade)
-
-  @@index([emailId])
-  @@map("module_backgrounds")
-}
+// ─── Core ────────────────────────────────────────────────────────
 
 model Module {
-  moduleId             String              @id @default(dbgenerated("gen_random_uuid()")) @map("module_id") @db.Uuid
-  moduleName           String              @map("module_name")
-  moduleNameNormalized String?             @map("module_name_normalized")
-  ownerEmailId         String              @default("__system__") @map("owner_email_id")
-  share                Boolean             @default(false)
-  status               ModuleStatus        @default(active)
-  createdAt            DateTime            @default(now()) @map("created_at")
-  updatedAt            DateTime            @default(now()) @map("updated_at")
-  checkpoints          GameCheckpoint[]
-  turns                GameTurn[]
-  background           ModuleBackground?
-  permissions          ModulePermission[]
-  memos                PlayerMemo[]
-  scenarioConds        ScenarioCondition[]
-  scenes               Scene[]
-  scenarios            Scenario[]
-  sessions             Session[]
-  deletedByUsers       UserModuleDeleted[]
-  userLibraries        UserModuleLibrary[]
-  npcLongTermIntents   NpcLongTermIntent[]
-  npcDailyPlans        NpcDailyPlan[]
-  npcMemories          NpcMemory[]
+  moduleId             String          @id @default(dbgenerated("gen_random_uuid()")) @map("module_id") @db.Uuid
+  moduleName           String          @map("module_name")
+  moduleNameNormalized String?         @map("module_name_normalized")
+  ownerEmailId         String          @default("__system__") @map("owner_email_id")
+  status               ModuleStatus    @default(active)
+  createdAt            DateTime        @default(now()) @map("created_at")
+  updatedAt            DateTime        @default(now()) @map("updated_at")
 
-  @@unique([ownerEmailId, moduleNameNormalized], name: "uq_modules_owner_name_normalized", map: "uq_modules_owner_name_normalized")
-  @@index([ownerEmailId], map: "idx_modules_owner_email")
-  @@index([share], map: "idx_modules_share")
-  @@index([status], map: "idx_modules_status")
-  @@index([share, status, updatedAt], map: "idx_modules_share_status_updated")
-  @@index([moduleNameNormalized], map: "idx_modules_name_normalized")
-  @@map("modules")
-}
-
-model ModulePermission {
-  moduleId  String     @map("module_id") @db.Uuid
-  emailId   String     @map("email_id")
-  role      ModuleRole
-  canPlay   Boolean    @default(true) @map("can_play")
-  canManage Boolean    @default(false) @map("can_manage")
-  grantedAt DateTime   @default(now()) @map("granted_at")
-  module    Module     @relation(fields: [moduleId], references: [moduleId], onDelete: Cascade)
-
-  @@id([moduleId, emailId])
-  @@index([emailId], map: "idx_module_permissions_email")
-  @@index([emailId, moduleId], map: "idx_module_permissions_email_module")
-  @@map("module_permissions")
-}
-
-model UserModuleLibrary {
-  emailId  String        @map("email_id")
-  moduleId String        @map("module_id") @db.Uuid
-  source   LibrarySource
-  addedAt  DateTime      @default(now()) @map("added_at")
-  module   Module        @relation(fields: [moduleId], references: [moduleId], onDelete: Cascade)
-
-  @@id([emailId, moduleId])
-  @@index([moduleId], map: "idx_user_module_library_module")
-  @@map("user_module_library")
-}
-
-model UserModuleDeleted {
-  emailId   String   @map("email_id")
-  moduleId  String   @map("module_id") @db.Uuid
-  deletedAt DateTime @default(now()) @map("deleted_at")
-  module    Module   @relation(fields: [moduleId], references: [moduleId], onDelete: Cascade)
-
-  @@id([emailId, moduleId])
-  @@index([deletedAt], map: "idx_user_module_deleted_deleted_at")
-  @@index([moduleId], map: "idx_user_module_deleted_module")
-  @@map("user_module_deleted")
-}
-
-model ModGeneration {
-  id          String   @id
-  emailId     String   @map("email_id")
-  moduleName  String   @map("module_name")
-  storyLength String   @map("story_length")
-  generatedAt DateTime @default(now()) @map("generated_at")
-
-  @@index([emailId], map: "idx_mod_generations_email")
-  @@index([emailId, generatedAt], map: "idx_mod_generations_email_time")
-  @@map("mod_generations")
-}
-
-model Scenario {
-  scenarioId       String    @map("scenario_id")
-  name             String
-  description      String
-  residents        Json?
-  subSceneCount    Int?     @map("sub_scene_count")
-  permanentChanges Json?     @map("permanent_changes")
-  metadata         Json
-  createdAt        DateTime  @default(now()) @map("created_at")
-  mapImagePath     String?   @map("map_image_path")
-  sourcePlaceId    String?   @map("source_place_id")
-  showMap          Boolean?  @map("show_map")
-  timeRestriction  String?   @map("time_restriction")
-  moduleId         String    @map("module_id") @db.Uuid
-  scenes           Scene[]
-  module           Module    @relation(fields: [moduleId], references: [moduleId], onDelete: Cascade)
-
-  @@id([moduleId, scenarioId])
-  @@index([name])
-  @@index([scenarioId], map: "idx_scenarios_scenario_id")
-  @@index([moduleId], map: "idx_scenarios_module")
-  @@index([moduleId, name], map: "idx_scenarios_module_name")
-  @@map("scenarios")
-}
-
-model Scene {
-  sceneId        String             @map("scene_id")
-  scenarioId     String             @map("scenario_id")
-  name           String
-  description    String
-  parentLocationId String?  @map("parent_location_id")
-  connections      Json?
-  items          Json?
-  initialScene   Boolean            @default(false) @map("initial_scene")
-  gameTime       String?            @map("game_time")
-  sceneImagePath String?            @map("scene_image_path")
-  createdAt      DateTime           @default(now()) @map("created_at")
-  moduleId       String             @map("module_id") @db.Uuid
-  conditions     ScenarioCondition[]
-  module         Module             @relation(fields: [moduleId], references: [moduleId], onDelete: Cascade)
-  scenario       Scenario           @relation(fields: [moduleId, scenarioId], references: [moduleId, scenarioId], onDelete: Cascade)
-
-  @@id([moduleId, sceneId])
-  @@index([scenarioId])
-  @@index([moduleId], map: "idx_scenes_module")
-  @@index([moduleId, scenarioId], map: "idx_scenes_module_scenario")
-  @@map("scenes")
-}
-
-model ScenarioCondition {
-  conditionId      String   @id @map("condition_id")
-  sceneId          String   @map("scene_id")
-  description      String
-  mechanicalEffect Json?    @map("mechanical_effect")
-  createdAt        DateTime @default(now()) @map("created_at")
-  moduleId         String   @map("module_id") @db.Uuid
-  module           Module   @relation(fields: [moduleId], references: [moduleId], onDelete: Cascade)
-  scene            Scene    @relation(fields: [moduleId, sceneId], references: [moduleId, sceneId], onDelete: Cascade)
-
-  @@index([sceneId])
-  @@index([moduleId], map: "idx_scenario_conditions_module")
-  @@map("scenario_conditions")
-}
-
-model Session {
-  sessionId       String           @id @map("session_id")
-  modName         String?          @map("mod_name")
-  characterId     String?          @map("character_id")
-  characterName   String?          @map("character_name")
-  startedAt       DateTime         @default(now()) @map("started_at")
-  lastActivityAt  DateTime         @default(now()) @map("last_activity_at")
-  status          String           @default("active")
-  metadata        Json?
-  createdAt       DateTime         @default(now()) @map("created_at")
-  parentSessionId String?          @map("parent_session_id")
-  subId           Int?             @map("sub_id")
-  moduleId        String?          @map("module_id") @db.Uuid
-  emailId         String?          @map("email_id")
-  sessionType     String           @default("player_game") @map("session_type")
-  checkpoints        GameCheckpoint[]
-  turns              GameTurn[]
-  module             Module?          @relation(fields: [moduleId], references: [moduleId])
+  sessions           Session[]
   npcLongTermIntents NpcLongTermIntent[]
   npcDailyPlans      NpcDailyPlan[]
   npcMemories        NpcMemory[]
-  simulationEvents   SimulationEvent[]
-  simulationRuntime  SimulationRuntime?
+  moduleNpcs         ModuleNpc[]
+  moduleScenes       ModuleScene[]
+  moduleSetup        ModuleSetup?
 
-  @@index([status])
-  @@index([startedAt])
-  @@index([emailId])
-  @@index([parentSessionId])
-  @@index([parentSessionId, subId])
-  @@index([moduleId])
-  @@map("sessions")
-}
-
-model SimulationRuntime {
-  sessionId        String   @id @map("session_id")
-  tick             Int
-  simulationState  String   @map("simulation_state")
-  stopReason       String?  @map("stop_reason")
-  language         String
-  config           Json
-  gameState        Json     @map("game_state")
-  createdAt        DateTime @default(now()) @map("created_at")
-  updatedAt        DateTime @updatedAt @map("updated_at")
-
-  session          Session  @relation(fields: [sessionId], references: [sessionId], onDelete: Cascade)
-
-  @@index([simulationState])
-  @@map("simulation_runtime")
-}
-
-model GameTurn {
-  turnId           String    @id @map("turn_id")
-  sessionId        String    @map("session_id")
-  turnNumber       Int       @map("turn_number")
-  characterInput   String    @map("character_input")
-  characterId      String?   @map("character_id")
-  characterName    String?   @map("character_name")
-  // Multiplayer: sceneRoom-scoped turn history (null for single-player sessions)
-  sceneRoomId      String?   @map("scene_room_id")
-  actionAnalysis   Json?     @map("action_analysis")
-  actionResults    Json?     @map("action_results")
-  directorDecision Json?     @map("director_decision")
-  keeperNarrative  String?   @map("keeper_narrative")
-  sceneId          String?   @map("scene_id")
-  sceneName        String?   @map("scene_name")
-  location         String?
-  status           String    @default("processing")
-  errorMessage     String?   @map("error_message")
-  startedAt        DateTime  @map("started_at")
-  completedAt      DateTime? @map("completed_at")
-  createdAt        DateTime  @default(now()) @map("created_at")
-  isSimulated      Boolean   @default(false) @map("is_simulated")
-  gameDay          Int?      @map("game_day")
-  gameTime         String?   @map("game_time")
-  moduleId         String?   @map("module_id") @db.Uuid
-  emailId          String?   @map("email_id")
-  module           Module?   @relation(fields: [moduleId], references: [moduleId])
-  session          Session   @relation(fields: [sessionId], references: [sessionId], onDelete: Cascade)
-
-  @@index([sessionId])
-  @@index([moduleId])
-  @@index([emailId])
-  @@index([status])
-  @@index([sessionId, turnNumber])
-  @@index([sessionId, sceneRoomId, turnNumber])
-  @@index([startedAt])
-  @@map("game_turns")
-}
-
-model GameCheckpoint {
-  checkpointId     String   @id @map("checkpoint_id")
-  sessionId        String   @map("session_id")
-  turnNumber       Int      @map("turn_number")
-  checkpointName   String?  @map("checkpoint_name")
-  gameState        Json     @map("game_state")
-  currentSceneName String?  @map("current_scene_name")
-  isAutoCheckpoint Boolean  @default(false) @map("is_auto_checkpoint")
-  createdAt        DateTime @default(now()) @map("created_at")
-  moduleId         String?  @map("module_id") @db.Uuid
-  emailId          String?  @map("email_id")
-  module           Module?  @relation(fields: [moduleId], references: [moduleId])
-  session          Session  @relation(fields: [sessionId], references: [sessionId], onDelete: Cascade)
-
-  @@index([sessionId])
-  @@index([moduleId])
-  @@index([emailId])
-  @@index([sessionId, currentSceneName])
-  @@index([sessionId, turnNumber])
-  @@index([isAutoCheckpoint])
-  @@map("game_checkpoints")
-}
-
-model UserTokenUsage {
-  id           String   @id
-  emailId      String   @map("email_id")
-  provider     String
-  modelName    String   @map("model_name")
-  modelClass   String   @map("model_class")
-  operation    String
-  inputTokens  Int      @default(0) @map("input_tokens")
-  outputTokens Int      @default(0) @map("output_tokens")
-  totalTokens  Int      @default(0) @map("total_tokens")
-  createdAt    DateTime @default(now()) @map("created_at")
-
-  @@index([emailId])
-  @@index([createdAt])
-  @@index([modelName, modelClass])
-  @@map("user_token_usage")
-}
-
-model DailyAnalytics {
-  id                       String   @id
-  statDate                 DateTime @unique @map("stat_date") @db.Date
-  loginUsersCount          Int      @default(0) @map("login_users_count")
-  activeUsersCount         Int      @default(0) @map("active_users_count")
-  newUsersCount            Int      @default(0) @map("new_users_count")
-  totalMessagesCount       Int      @default(0) @map("total_messages_count")
-  avgMessagesPerActiveUser Float    @default(0.0) @map("avg_messages_per_active_user")
-  newModsShortCount        Int      @default(0) @map("new_mods_short_count")
-  newModsMediumCount       Int      @default(0) @map("new_mods_medium_count")
-  newModsLongCount         Int      @default(0) @map("new_mods_long_count")
-  totalNewModsCount        Int      @default(0) @map("total_new_mods_count")
-  createdAt                DateTime @default(now()) @map("created_at")
-  updatedAt                DateTime @default(now()) @map("updated_at")
-
-  @@index([statDate])
-  @@map("daily_analytics")
-}
-
-model PlayerMemo {
-  memoId    String   @id @map("memo_id")
-  sessionId String   @map("session_id")
-  emailId   String   @map("email_id")
-  text      String
-  gameDay   Int?     @map("game_day")
-  gameTime  String?  @map("game_time")
-  location  String?
-  createdAt DateTime @default(now()) @map("created_at")
-  updatedAt DateTime @default(now()) @map("updated_at")
-  moduleId  String?  @map("module_id") @db.Uuid
-  module    Module?  @relation(fields: [moduleId], references: [moduleId])
-
-  @@index([sessionId])
-  @@index([emailId])
-  @@index([moduleId], map: "idx_player_memos_module")
-  @@map("player_memos")
-}
-
-model TurnEmbedding {
-  id        String   @id
-  sessionId String   @map("session_id")
-  turnId    String   @map("turn_id")
-  userInput String   @map("user_input")
-  narrative String
-  embedding Bytes
-  createdAt DateTime @default(now()) @map("created_at")
-  emailId   String?  @map("email_id")
-
-  @@index([sessionId])
-  @@index([turnId])
-  @@index([emailId])
-  @@map("turn_embeddings")
-}
-
-model SessionRagChunk {
-  id         String   @id
-  sessionId  String   @map("session_id")
-  turnId     String?  @map("turn_id")
-  turnNumber Int?     @map("turn_number")
-  chunkType  String   @map("chunk_type")
-  // Multiplayer: scope RAG chunks by sceneRoom (null for single-player sessions)
-  sceneRoomId String? @map("scene_room_id")
-  role       String?
-  content    String
-  metadata   Json?
-  sourceKey  String   @map("source_key")
-  embedding  Bytes
-  language   String?
-  createdAt  DateTime @default(now()) @map("created_at")
-  emailId    String?  @map("email_id")
-
-  @@unique([sessionId, sourceKey], map: "session_rag_chunks_session_source_key_key")
-  @@index([sessionId, createdAt], map: "idx_session_rag_chunks_session_created")
-  @@index([sessionId, chunkType], map: "idx_session_rag_chunks_session_type")
-  @@index([sessionId, turnNumber], map: "idx_session_rag_chunks_session_turn")
-  @@index([sessionId, sceneRoomId, createdAt], map: "idx_session_rag_chunks_session_room_created")
-  @@index([sessionId, sceneRoomId, chunkType], map: "idx_session_rag_chunks_session_room_type")
-  @@map("session_rag_chunks")
-}
-
-model reminder_embeddings {
-  id         String   @id
-  session_id String
-  turn_id    String
-  chunk_type String
-  content    String
-  embedding  Bytes
-  metadata   Json?
-  created_at DateTime @default(now()) @db.Timestamptz(6)
-  email_id   String?
-
-  @@index([email_id], map: "idx_reminder_embeddings_email")
-  @@index([session_id], map: "idx_reminder_embeddings_session")
-  @@index([turn_id], map: "idx_reminder_embeddings_turn")
+  @@unique([ownerEmailId, moduleNameNormalized], name: "uq_modules_owner_name_normalized", map: "uq_modules_owner_name_normalized")
+  @@index([moduleNameNormalized], map: "idx_modules_name_normalized")
+  @@map("modules")
 }
 
 enum ModuleStatus {
@@ -656,155 +36,49 @@ enum ModuleStatus {
   archived
 }
 
-enum ModuleRole {
-  owner
-  viewer
-}
+model Session {
+  sessionId       String             @id @map("session_id")
+  modName         String?            @map("mod_name")
+  startedAt       DateTime           @default(now()) @map("started_at")
+  lastActivityAt  DateTime           @default(now()) @map("last_activity_at")
+  status          String             @default("active")
+  metadata        Json?
+  createdAt       DateTime           @default(now()) @map("created_at")
+  moduleId        String?            @map("module_id") @db.Uuid
+  emailId         String?            @map("email_id")
 
-enum LibrarySource {
-  owned
-  shared_added
-}
-
-// =============================
-// MULTIPLAYER
-// =============================
-
-enum RoomStatus {
-  waiting
-  ready
-  playing
-  finished
-  closed
-}
-
-enum RoomMemberRole {
-  host
-  player
-}
-
-enum MemberConfirmStatus {
-  pending
-  confirmed
-}
-
-enum RoundInputType {
-  input
-  skip
-}
-
-model MultiplayerRoom {
-  roomId     String     @id @map("room_id")
-  roomCode   String     @unique @map("room_code")
-  hostUserId String     @map("host_user_id")
-  moduleName         String?    @map("module_name")
-  sourceCheckpointId String?    @map("source_checkpoint_id")
-  status             RoomStatus @default(waiting)
-  createdAt          DateTime   @default(now()) @map("created_at")
-  updatedAt          DateTime   @updatedAt @map("updated_at")
-  metadata           Json?      @db.JsonB
-
-  members    MultiplayerRoomMember[]
-  sceneRooms MultiplayerSceneRoom[]
+  module             Module?            @relation(fields: [moduleId], references: [moduleId])
+  npcLongTermIntents NpcLongTermIntent[]
+  npcDailyPlans      NpcDailyPlan[]
+  npcMemories        NpcMemory[]
+  simulationEvents   SimulationEvent[]
+  simulationRuntime  SimulationRuntime?
 
   @@index([status])
-  @@map("multiplayer_rooms")
+  @@index([moduleId])
+  @@map("sessions")
 }
 
-model MultiplayerRoomMember {
-  id                 String              @id
-  roomId             String              @map("room_id")
-  userId             String              @map("user_id")
-  role               RoomMemberRole      @default(player)
-  characterId        String?             @map("character_id")
-  currentSceneRoomId String?             @map("current_scene_room_id")
-  seatOrder          Int                 @map("seat_order")
-  confirmStatus      MemberConfirmStatus @default(pending)
-  joinedAt           DateTime            @default(now()) @map("joined_at")
+// ─── Simulation Runtime ──────────────────────────────────────────
 
-  room      MultiplayerRoom       @relation(fields: [roomId], references: [roomId], onDelete: Cascade)
-  user      User                  @relation(fields: [userId], references: [id])
-  sceneRoom MultiplayerSceneRoom? @relation(fields: [currentSceneRoomId], references: [sceneRoomId])
+model SimulationRuntime {
+  sessionId       String   @id @map("session_id")
+  tick            Int
+  simulationState String   @map("simulation_state")
+  stopReason      String?  @map("stop_reason")
+  language        String
+  config          Json
+  gameState       Json     @map("game_state")
+  createdAt       DateTime @default(now()) @map("created_at")
+  updatedAt       DateTime @updatedAt @map("updated_at")
 
-  @@unique([roomId, userId])
-  @@unique([roomId, characterId])
-  @@index([roomId, seatOrder])
-  @@map("multiplayer_room_members")
+  session Session @relation(fields: [sessionId], references: [sessionId], onDelete: Cascade)
+
+  @@index([simulationState])
+  @@map("simulation_runtime")
 }
 
-model MultiplayerSceneRoom {
-  sceneRoomId        String    @id @map("scene_room_id")
-  roomId             String    @map("room_id")
-  scenarioId         String?   @map("scenario_id")
-  scenarioName       String?   @map("scenario_name")
-  sceneId            String?   @map("scene_id")
-  sceneName          String?   @map("scene_name")
-  status             String    @default("active")
-  roundNumber        Int       @default(1) @map("round_number")
-  /// Tree structure: empty = root node; one entry = fork child; multiple = merged child
-  parentSceneRoomIds String[]  @default([]) @map("parent_scene_room_ids")
-  /// Per-room game day (independent time tracking)
-  gameDay            Int       @default(1) @map("game_day")
-  /// Per-room time of day "HH:MM" (independent time tracking)
-  timeOfDay          String    @default("08:00") @map("time_of_day")
-  /// Non-null when status = "frozen"
-  frozenAt           DateTime? @map("frozen_at")
-  createdAt          DateTime  @default(now()) @map("created_at")
-  updatedAt          DateTime  @updatedAt @map("updated_at")
-
-  room    MultiplayerRoom         @relation(fields: [roomId], references: [roomId], onDelete: Cascade)
-  members MultiplayerRoomMember[]
-
-  @@index([roomId, status])
-  @@map("multiplayer_scene_rooms")
-}
-
-model MultiplayerRoundInput {
-  inputId            String         @id @map("input_id")
-  roomId             String         @map("room_id")
-  sceneRoomId        String         @map("scene_room_id")
-  roundNumber        Int            @map("round_number")
-  playerId           String         @map("player_id")
-  characterId        String         @map("character_id")
-  inputType          RoundInputType @map("input_type")
-  content            String?
-  selectedSkill      String?        @map("selected_skill")
-  skillSelectionMode String?        @map("skill_selection_mode")
-  submittedAt        DateTime       @default(now()) @map("submitted_at")
-
-  @@unique([sceneRoomId, roundNumber, playerId])
-  @@index([roomId, sceneRoomId, roundNumber])
-  @@map("multiplayer_round_inputs")
-}
-
-model MultiplayerCheckpoint {
-  checkpointId String   @id @map("checkpoint_id")
-  roomId       String   @map("room_id")
-  name         String?
-  payload      Json     @db.JsonB
-  createdBy    String   @map("created_by")
-  createdAt    DateTime @default(now()) @map("created_at")
-
-  members MultiplayerCheckpointMember[]
-
-  @@index([roomId])
-  @@index([createdBy])
-  @@map("multiplayer_checkpoints")
-}
-
-model MultiplayerCheckpointMember {
-  id           String   @id
-  checkpointId String   @map("checkpoint_id")
-  userId       String   @map("user_id")
-  createdAt    DateTime @default(now()) @map("created_at")
-
-  checkpoint MultiplayerCheckpoint @relation(fields: [checkpointId], references: [checkpointId], onDelete: Cascade)
-  user       User                  @relation(fields: [userId], references: [id])
-
-  @@unique([checkpointId, userId])
-  @@index([userId])
-  @@map("multiplayer_checkpoint_members")
-}
+// ─── NPC Planning ────────────────────────────────────────────────
 
 model NpcLongTermIntent {
   id        String   @id @default(uuid()) @db.Uuid
@@ -816,8 +90,8 @@ model NpcLongTermIntent {
   updatedAt DateTime @updatedAt @map("updated_at")
   createdAt DateTime @default(now()) @map("created_at")
 
-  session   Session  @relation(fields: [sessionId], references: [sessionId], onDelete: Cascade)
-  module    Module   @relation(fields: [moduleId], references: [moduleId], onDelete: Cascade)
+  session Session @relation(fields: [sessionId], references: [sessionId], onDelete: Cascade)
+  module  Module  @relation(fields: [moduleId], references: [moduleId], onDelete: Cascade)
 
   @@index([sessionId])
   @@map("npc_long_term_intents")
@@ -834,41 +108,43 @@ model NpcDailyPlan {
   schedule    Json?
   generatedAt DateTime @default(now()) @map("generated_at")
 
-  session     Session  @relation(fields: [sessionId], references: [sessionId], onDelete: Cascade)
-  module      Module   @relation(fields: [moduleId], references: [moduleId], onDelete: Cascade)
+  session Session @relation(fields: [sessionId], references: [sessionId], onDelete: Cascade)
+  module  Module  @relation(fields: [moduleId], references: [moduleId], onDelete: Cascade)
 
   @@unique([sessionId, npcId, gameDay])
   @@index([sessionId, gameDay])
   @@map("npc_daily_plans")
 }
 
+// ─── NPC Memory ──────────────────────────────────────────────────
+
 model NpcMemory {
-  id              String        @id @default(uuid()) @db.Uuid
-  sessionId       String        @map("session_id")
-  moduleId        String        @map("module_id") @db.Uuid
-  npcId           String        @map("npc_id")
-  type            NpcMemoryType
+  id             String        @id @default(uuid()) @db.Uuid
+  sessionId      String        @map("session_id")
+  moduleId       String        @map("module_id") @db.Uuid
+  npcId          String        @map("npc_id")
+  type           NpcMemoryType
 
-  content         String
-  metadata        Json?
-  tags            String[]
+  content        String
+  metadata       Json?
+  tags           String[]
 
-  gameDay         Int           @map("game_day")
-  gameTime        String        @map("game_time")
-  location        String?
+  gameDay        Int           @map("game_day")
+  gameTime       String        @map("game_time")
+  location       String?
 
-  importance      Float         @default(1.0)
-  baseImportance  Float         @default(1.0) @map("base_importance")
-  accessCount     Int           @default(0)   @map("access_count")
-  lastAccessedAt  DateTime      @default(now()) @map("last_accessed_at")
+  importance     Float         @default(1.0)
+  baseImportance Float         @default(1.0) @map("base_importance")
+  accessCount    Int           @default(0)   @map("access_count")
+  lastAccessedAt DateTime      @default(now()) @map("last_accessed_at")
 
-  embedding       Bytes?
+  embedding      Bytes?
 
-  createdAt       DateTime      @default(now()) @map("created_at")
-  updatedAt       DateTime      @updatedAt      @map("updated_at")
+  createdAt      DateTime      @default(now()) @map("created_at")
+  updatedAt      DateTime      @updatedAt      @map("updated_at")
 
-  session         Session       @relation(fields: [sessionId], references: [sessionId], onDelete: Cascade)
-  module          Module        @relation(fields: [moduleId], references: [moduleId], onDelete: Cascade)
+  session Session @relation(fields: [sessionId], references: [sessionId], onDelete: Cascade)
+  module  Module  @relation(fields: [moduleId], references: [moduleId], onDelete: Cascade)
 
   @@index([sessionId, npcId])
   @@index([sessionId, npcId, type])
@@ -886,6 +162,8 @@ enum NpcMemoryType {
   summary
 }
 
+// ─── Simulation Events ───────────────────────────────────────────
+
 model SimulationEvent {
   id          String   @id @default(uuid())
   sessionId   String   @map("session_id")
@@ -899,10 +177,43 @@ model SimulationEvent {
   data        Json
   timestamp   DateTime @default(now())
 
-  session     Session  @relation(fields: [sessionId], references: [sessionId], onDelete: Cascade)
+  session Session @relation(fields: [sessionId], references: [sessionId], onDelete: Cascade)
 
   @@index([sessionId])
   @@index([sessionId, type])
   @@index([sessionId, gameDay])
   @@map("simulation_events")
+}
+
+// ─── Module Data (JSON blob storage) ─────────────────────────────
+
+model ModuleNpc {
+  moduleId String @map("module_id") @db.Uuid
+  npcId    String @map("npc_id")
+  data     Json
+
+  module Module @relation(fields: [moduleId], references: [moduleId], onDelete: Cascade)
+
+  @@id([moduleId, npcId])
+  @@map("module_npcs")
+}
+
+model ModuleScene {
+  moduleId String @map("module_id") @db.Uuid
+  entryId  String @map("entry_id")
+  data     Json
+
+  module Module @relation(fields: [moduleId], references: [moduleId], onDelete: Cascade)
+
+  @@id([moduleId, entryId])
+  @@map("module_scenes")
+}
+
+model ModuleSetup {
+  moduleId String @id @map("module_id") @db.Uuid
+  data     Json
+
+  module Module @relation(fields: [moduleId], references: [moduleId], onDelete: Cascade)
+
+  @@map("module_setups")
 }

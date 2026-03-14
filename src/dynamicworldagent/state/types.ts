@@ -295,7 +295,12 @@ export interface TransportEdge {
 }
 
 export interface ModuleSetup {
+  title?: string;
+  background?: string;
+  storyOutline?: string;
   introduction?: string;
+  initialGameTime?: string;
+  tags?: string[];
   weatherPresets?: Array<{
     regionId: string;
     weatherType:
@@ -308,6 +313,7 @@ export interface ModuleSetup {
       | "extreme_cold";
     intensity: number;
   }>;
+  [key: string]: unknown;
 }
 
 /**
