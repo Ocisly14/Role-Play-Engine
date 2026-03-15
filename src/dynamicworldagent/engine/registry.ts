@@ -11,7 +11,7 @@ const BASE_NODE_FIELDS = new Set([
   "action",
   "location",
   "type",
-  "actionType",
+  "skill",
   "impact",
   "status",
   "difficulty",
@@ -278,8 +278,8 @@ The \`impact\` field on every PlanNode determines **who in the game world percei
       type: handler.type,
     };
 
-    if (handler.exampleNode.actionType) {
-      example.actionType = handler.exampleNode.actionType;
+    if (handler.exampleNode.skill) {
+      example.skill = handler.exampleNode.skill;
     }
 
     example.impact = handler.exampleNode.impact ?? 0;
@@ -344,8 +344,7 @@ The \`impact\` field on every PlanNode determines **who in the game world percei
       action: "description of what the character does" as any,
       location: "sceneId" as any,
       type: typeNames as any,
-      actionType:
-        "exploration|social|combat|stealth|chase|mental|environmental|narrative (OMIT if no skill check)" as any,
+      skill: "exact skill name (OMIT if no check needed)" as any,
       impact: 0,
       status: "pending" as any,
     };

@@ -16,7 +16,7 @@ export const sceneInteractionHandler: NodeHandler = {
 
   requiredFields: ["action", "location"],
 
-  optionalFields: ["actionType", "sceneConnectionEffect"],
+  optionalFields: ["skill", "sceneConnectionEffect"],
 
   exampleNode: {
     nodeId: "si1",
@@ -74,7 +74,7 @@ export const sceneInteractionHandler: NodeHandler = {
         );
       }
     } else {
-      if (!node.actionType && Math.random() < ctx.luckFailureRate(luck)) {
+      if (!node.skill && Math.random() < ctx.luckFailureRate(luck)) {
         return makeAction(
           node,
           "failed",
@@ -82,7 +82,7 @@ export const sceneInteractionHandler: NodeHandler = {
           { difficulty, failureReason: "bad_luck" }
         );
       }
-      if (node.actionType) {
+      if (node.skill) {
         const rollResult = ctx.resolveSkillRoll(node, adjustedSkills, dgsm);
         resolvedSuccessLevel = rollResult.successLevel;
         if (rollResult.failed) {

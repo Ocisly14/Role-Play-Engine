@@ -17,7 +17,7 @@ export const characterInteractionHandler: NodeHandler = {
 
   requiredFields: ["action", "location", "targetCharacterId"],
 
-  optionalFields: ["actionType", "characterInteractionPayload"],
+  optionalFields: ["skill", "characterInteractionPayload"],
 
   exampleNode: {
     nodeId: "ci1",
@@ -81,7 +81,7 @@ export const characterInteractionHandler: NodeHandler = {
     }
 
     if (difficulty === "luck_only") {
-      // Luck-only difficulty: skip actionType skill roll, only do luck-based roll
+      // Luck-only difficulty: skip skill skill roll, only do luck-based roll
       if (Math.random() < ctx.luckFailureRate(luck)) {
         return makeAction(
           node,
@@ -91,8 +91,8 @@ export const characterInteractionHandler: NodeHandler = {
         );
       }
     } else {
-      // Luck-based failure (only when no actionType)
-      if (!node.actionType && Math.random() < ctx.luckFailureRate(luck)) {
+      // Luck-based failure (only when no skill)
+      if (!node.skill && Math.random() < ctx.luckFailureRate(luck)) {
         return makeAction(
           node,
           "failed",
@@ -100,8 +100,8 @@ export const characterInteractionHandler: NodeHandler = {
           { difficulty, failureReason: "bad_luck" }
         );
       }
-      // Skill roll if actionType present
-      if (node.actionType) {
+      // Skill roll if skill present
+      if (node.skill) {
         const rollResult = ctx.resolveSkillRoll(node, adjustedSkills, dgsm);
         resolvedSuccessLevel = rollResult.successLevel;
         if (rollResult.failed) {

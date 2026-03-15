@@ -7,6 +7,7 @@
  *   npx tsx scripts/run-simple-town.ts --days 3     # run for 3 days
  */
 
+import fs from "fs";
 import path from "path";
 import { PrismaClient } from "@prisma/client";
 import { ModelProviderName } from "../src/models/types.js";
@@ -198,22 +199,48 @@ async function main() {
     });
 
     if (existingRuntime) {
-      runner.restoreFrom({
+      runner.hydrateFromRuntime({
         state: existingRuntime.simulationState as any,
         ticksExecuted: existingRuntime.tick,
         stopReason: existingRuntime.stopReason as any,
       });
     }
 
+    // Tick log for JSON output
+    const tickLog: Array<{
+      tick: number;
+      gameDay: number;
+      gameTime: string;
+      type: string;
+      actor: string;
+      location: string;
+      action?: string;
+      outcome?: string;
+      skill?: string;
+      status: string;
+    }> = [];
+
     // Wire event listener
     runner.events.on("simulation_event", (event: any) => {
-      const sceneName =
-        resolveSceneName(dgsm, event.location);
+      const sceneName = resolveSceneName(dgsm, event.location);
       const data = event.data ?? {};
+
       if (event.type === "action_executed") {
         console.log(
           `  [${event.gameTime}] ✓ ${data.characterName ?? event.actorNpcId} @ ${sceneName}: ${data.action ?? ""}`
         );
+        tickLog.push({
+          tick: event.tick,
+          gameDay: event.gameDay,
+          gameTime: event.gameTime,
+          type: data.type ?? "action",
+          actor: data.characterName ?? event.actorNpcId,
+          location: sceneName,
+          action: data.action,
+          outcome: data.outcome,
+          skill: data.skill,
+          status: "success",
+        });
       } else if (event.type === "action_failed") {
         console.log(
           `  [${event.gameTime}] ✗ ${data.characterName ?? event.actorNpcId} @ ${sceneName}: ${data.action ?? ""}`
@@ -221,12 +248,33 @@ async function main() {
         if (data.outcome) {
           console.log(`           → ${data.outcome}`);
         }
+        tickLog.push({
+          tick: event.tick,
+          gameDay: event.gameDay,
+          gameTime: event.gameTime,
+          type: data.type ?? "action",
+          actor: data.characterName ?? event.actorNpcId,
+          location: sceneName,
+          action: data.action,
+          outcome: data.outcome,
+          skill: data.skill,
+          status: "failed",
+        });
       } else if (event.type === "npc_moved") {
-        const toScene =
-          resolveSceneName(dgsm, data.toLocation as string);
+        const toScene = resolveSceneName(dgsm, data.toLocation as string);
         console.log(
           `  [${event.gameTime}] 🚶 ${data.characterName ?? event.actorNpcId}: moved to ${toScene}`
         );
+        tickLog.push({
+          tick: event.tick,
+          gameDay: event.gameDay,
+          gameTime: event.gameTime,
+          type: "movement",
+          actor: data.characterName ?? event.actorNpcId,
+          location: toScene,
+          action: `moved to ${toScene}`,
+          status: "success",
+        });
       } else if (event.type === "day_transition") {
         console.log(`\n═══ Day ${event.gameDay} ═══\n`);
       }
@@ -240,8 +288,16 @@ async function main() {
 
     const TICKS_PER_DAY = 192;
     const MAX_TICKS = TICKS_PER_DAY * maxDays;
+    let interrupted = false;
+
+    process.on("SIGINT", () => {
+      if (interrupted) process.exit(1); // second Ctrl+C = force quit
+      console.log("\n⏸ Ctrl+C received — saving and exiting after current tick...");
+      interrupted = true;
+    });
 
     for (let tick = 0; tick < MAX_TICKS; tick++) {
+      if (interrupted) break;
       const gs = dgsm.getState();
       if (gs.gameDay > endDay) break;
 
@@ -310,6 +366,11 @@ async function main() {
         console.log();
       }
     }
+
+    // Write tick log to JSON
+    const logPath = path.join(process.cwd(), "data", "simulation-log.json");
+    fs.writeFileSync(logPath, JSON.stringify(tickLog, null, 2));
+    console.log(`═══ Tick log written to ${logPath} (${tickLog.length} events) ═══`);
 
     // Final save after summaries
     await runner.saveRuntime();

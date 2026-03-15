@@ -57,14 +57,6 @@ const SUCCESS_TO_MAX_RANK: Record<SuccessLevel, number> = {
   fumble: -1, // nothing, may damage evidence
 };
 
-/** Only these actionTypes can trigger non-automatic discovery */
-const DISCOVERY_ACTION_TYPES = new Set<string>([
-  "exploration",
-  "social",
-  "stealth",
-  "narrative",
-]);
-
 const DISCOVERY_SIMILARITY_THRESHOLD = 0.7;
 
 // Lazy embedding client singleton
@@ -119,12 +111,10 @@ async function discoverEvidence(
   if (node.type !== "scene_interaction" && node.type !== "object_interaction")
     return [];
 
-  let maxRank: number;
-  if (node.actionType && DISCOVERY_ACTION_TYPES.has(node.actionType)) {
-    maxRank = SUCCESS_TO_MAX_RANK[successLevel] ?? 0;
-  } else {
-    maxRank = 0; // automatic only
-  }
+  // If skill roll was made, success level gates difficulty; otherwise automatic only
+  const maxRank = node.skill
+    ? (SUCCESS_TO_MAX_RANK[successLevel] ?? 0)
+    : 0;
 
   const candidates: DiscoveryCandidate[] = [];
   for (const item of scene.items) {
@@ -160,9 +150,11 @@ async function discoverNpcKnowledge(
     return [];
 
   let maxRank: number;
-  if (node.actionType && DISCOVERY_ACTION_TYPES.has(node.actionType)) {
+  if (node.skill) {
+    // Skill roll was made — success level gates difficulty
     maxRank = SUCCESS_TO_MAX_RANK[successLevel] ?? 0;
   } else {
+    // No skill roll — relationship score gates difficulty
     const rel = dgsm.getRelationship(node.characterId, node.targetCharacterId);
     const score = rel?.score ?? 0;
     if (score >= 80) maxRank = 3;
@@ -1015,6 +1007,14 @@ function scanUnplannedEncounters(
     locationGroups.get(loc)!.push(npc.id);
   }
 
+  // NPCs who just arrived at a new scene this tick
+  const arrivedNpcIds = new Set<string>();
+  for (const action of tickActions) {
+    if (action.type === "movement" && action.status === "completed") {
+      arrivedNpcIds.add(action.characterId);
+    }
+  }
+
   // Build dedup set from already-executed character_interaction actions
   const interactedPairs = new Set<string>();
   for (const action of tickActions) {
@@ -1031,14 +1031,14 @@ function scanUnplannedEncounters(
   for (const [sceneId, npcIds] of locationGroups) {
     if (npcIds.length < 2) continue;
 
-    // Filter out NPC pairs that already interacted this tick
-    // For each NPC, collect others they haven't interacted with
-    const npcEncounterMap = new Map<string, string[]>(); // npcId -> other NPC ids to notice
+    // Only trigger encounters involving NPCs who just arrived
+    const npcEncounterMap = new Map<string, string[]>();
     for (let i = 0; i < npcIds.length; i++) {
       for (let j = i + 1; j < npcIds.length; j++) {
+        // At least one must have just arrived this tick
+        if (!arrivedNpcIds.has(npcIds[i]) && !arrivedNpcIds.has(npcIds[j])) continue;
         const pairKey = [npcIds[i], npcIds[j]].sort().join("_");
         if (interactedPairs.has(pairKey)) continue;
-        // Both NPCs notice each other
         if (!npcEncounterMap.has(npcIds[i])) npcEncounterMap.set(npcIds[i], []);
         if (!npcEncounterMap.has(npcIds[j])) npcEncounterMap.set(npcIds[j], []);
         npcEncounterMap.get(npcIds[i])!.push(npcIds[j]);

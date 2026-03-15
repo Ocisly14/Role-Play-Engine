@@ -209,10 +209,21 @@ export function initRuntime(params: {
     }
   }
 
+  // Build macro location → entry scene lookup
+  const macroToEntry: Record<string, string> = {};
+  for (const outline of moduleData.scenarioOutlines) {
+    if (outline.entrySceneId) {
+      macroToEntry[outline.id] = outline.entrySceneId;
+    }
+  }
+
   for (const npc of moduleData.npcs) {
-    // Location: use residence if available, else default
+    // Location: resolve macro location to entry scene
     const residence = npc.residence ?? residentToLocation[npc.id];
-    npcLocations[npc.id] = residence ?? defaultSceneId;
+    const resolvedLocation = residence
+      ? (macroToEntry[residence] ?? residence)
+      : defaultSceneId;
+    npcLocations[npc.id] = resolvedLocation;
     if (residence) npcResidences[npc.id] = residence;
 
     // Stats

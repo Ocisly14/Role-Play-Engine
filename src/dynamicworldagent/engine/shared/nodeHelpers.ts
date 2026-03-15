@@ -58,7 +58,7 @@ export function makeAction(
     action: node.action,
     location: node.location,
     type: node.type,
-    actionType: node.actionType,
+    skill: node.skill,
     impact: node.impact,
     difficulty: opts?.difficulty,
     successLevel: opts?.successLevel,

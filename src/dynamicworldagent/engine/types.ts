@@ -1,4 +1,3 @@
-import type { ActionType } from "../../shared/state/index.js";
 import type {
   CharacterAction,
   PlanNode,
@@ -227,13 +226,6 @@ export interface ExecutionContext {
 
   /** Luck-based failure rate */
   luckFailureRate(luck: number): number;
-
-  /** Select best skill for an action description + action type */
-  selectBestSkill(
-    actionDesc: string,
-    actionType: ActionType,
-    npcSkills: Record<string, number>
-  ): { skill: string; value: number } | null;
 
   /** Set by SimulationRunner to enable npc_moved event emission from handlers */
   simulationEmitter?: import(

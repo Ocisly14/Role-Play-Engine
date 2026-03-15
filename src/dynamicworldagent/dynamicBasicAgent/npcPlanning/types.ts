@@ -1,4 +1,3 @@
-import type { ActionType } from "../../../shared/state/index.js";
 import type { SimulationEvent } from "../../simulation/types.js";
 import type { Item } from "../../state/types.js";
 
@@ -55,7 +54,8 @@ export interface PlanNode {
   action: string;
   location: string;
   type: PlanNodeType;
-  actionType?: ActionType;
+  /** Skill name for dice roll. Omit = auto-success. */
+  skill?: string;
   impact: 0 | 1 | 2 | 3 | 4 | 5;
   difficulty?: "regular" | "hard" | "extreme";
   timeAdvanceMinutes: number;
@@ -88,7 +88,7 @@ export interface CharacterAction {
   action: string;
   location: string;
   type: PlanNodeType;
-  actionType?: ActionType;
+  skill?: string;
   impact: 0 | 1 | 2 | 3 | 4 | 5;
   difficulty?: "regular" | "hard" | "extreme" | "luck_only";
   successLevel?: SuccessLevel;

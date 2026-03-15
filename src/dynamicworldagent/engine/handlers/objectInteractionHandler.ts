@@ -120,7 +120,7 @@ export const objectInteractionHandler: NodeHandler = {
     "Interact with an object in the current scene. " +
     "Supports pickup, place, use, inspect, and destroy actions. " +
     "Side effects modify inventory and scene item lists.\n\n" +
-    "For non-normal use (actionType set), include `itemUpdates` and/or `targetItemUpdates` " +
+    "For non-normal use (skill set), include `itemUpdates` and/or `targetItemUpdates` " +
     "with the expected item state changes after success. Mergeable Item fields:\n" +
     "- `damaged` (boolean), `damageDetails`: `{ damagedBy, damagedAt, reason }`\n" +
     "- `isLightSource` (boolean), `lightLevel` (number)\n" +
@@ -130,14 +130,14 @@ export const objectInteractionHandler: NodeHandler = {
 
   requiredFields: ["action", "location"],
 
-  optionalFields: ["actionType", "objectInteractionPayload"],
+  optionalFields: ["skill", "objectInteractionPayload"],
 
   exampleNode: {
     nodeId: "oi1",
     type: "object_interaction",
     action: "Pour acid on the padlock to dissolve it",
     location: "study_room",
-    actionType: "exploration",
+    skill: "exploration",
     impact: 2,
     timeAdvanceMinutes: 10,
     objectInteractionPayload: {
@@ -177,13 +177,13 @@ export const objectInteractionHandler: NodeHandler = {
       );
     }
 
-    // Skill roll (for non-normal use with actionType)
+    // Skill roll (for non-normal use with skill)
     let resolvedSuccessLevel:
       | import("../../dynamicBasicAgent/npcPlanning/types.js").SuccessLevel
       | undefined;
     let lastRollDetail: string | undefined;
 
-    if (node.actionType) {
+    if (node.skill) {
       // Luck check + skill roll
       if (Math.random() < ctx.luckFailureRate(luck)) {
         return makeAction(
@@ -209,7 +209,7 @@ export const objectInteractionHandler: NodeHandler = {
       }
       lastRollDetail = rollResult.detail;
     } else {
-      // No actionType: luck-only check
+      // No skill: luck-only check
       if (Math.random() < ctx.luckFailureRate(luck)) {
         return makeAction(
           node,
@@ -287,7 +287,7 @@ export const objectInteractionHandler: NodeHandler = {
           );
         }
 
-        if (node.actionType) {
+        if (node.skill) {
           // Non-normal use: apply LLM-provided updates (skill check already passed above)
           if (payload.itemUpdates) {
             deepMergeItem(

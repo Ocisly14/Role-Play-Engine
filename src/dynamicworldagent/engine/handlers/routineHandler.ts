@@ -12,12 +12,12 @@ export const routineHandler: NodeHandler = {
 
   description:
     "A routine action performed by a character at their current location. " +
-    "If actionType is set, a skill roll determines success; otherwise the action auto-succeeds. " +
+    "If skill is set, a skill roll determines success; otherwise the action auto-succeeds. " +
     'Set routineSubtype to "rest" for sleeping, napping, or resting — this resets fatigue automatically.',
 
   requiredFields: ["action", "location"],
 
-  optionalFields: ["actionType", "routineSubtype"],
+  optionalFields: ["skill", "routineSubtype"],
 
   exampleNode: {
     nodeId: "r1",
@@ -61,8 +61,8 @@ export const routineHandler: NodeHandler = {
       );
     }
 
-    // actionType present? -> skill roll
-    if (node.actionType) {
+    // skill present? -> skill roll
+    if (node.skill) {
       const rollResult = ctx.resolveSkillRoll(node, adjustedSkills, dgsm);
       resolvedSuccessLevel = rollResult.successLevel;
       if (rollResult.failed) {

@@ -1,6 +1,4 @@
-import type { ActionType } from "../../../shared/state/index.js";
-import { ACTION_TYPE_SKILL_MAP } from "../../dynamicBasicAgent/npcPlanning/actionTypeSkillMap.js";
-import { BASELINE_HORROR_SOURCES } from "../../dynamicBasicAgent/npcPlanning/horrorSourceData.js";
+import { COC_SKILL_BASE_VALUES } from "../../dynamicBasicAgent/npcPlanning/cocSkillList.js";
 import type { PlanNode } from "../../dynamicBasicAgent/npcPlanning/types.js";
 import type { DynamicGameStateManager } from "../../state/DynamicGameState.js";
 import { applySanityLoss } from "../features/sanityFeature.js";
@@ -20,11 +18,9 @@ export function getNodeDifficulty(
   node: PlanNode,
   dgsm: DynamicGameStateManager
 ): "regular" | "hard" | "extreme" | "luck_only" {
-  // Non-character interactions: always regular
   if (node.type !== "character_interaction") return "regular";
   if (!node.targetCharacterId) return "regular";
 
-  // NPC character interactions: derive from relationship score
   const rel = dgsm.getRelationship(node.characterId, node.targetCharacterId);
   const score = rel?.score ?? 0;
   if (score >= 70) return "luck_only";
@@ -33,132 +29,75 @@ export function getNodeDifficulty(
   return "extreme";
 }
 
-// ==================== Skill RAG (keyword overlap) ====================
+// ==================== Best skill selection (for opposed rolls) ====================
 
-export function selectBestSkill(
-  actionDesc: string,
-  actionType: ActionType,
+/** Pick the NPC's highest skill value from a list of candidate skill names */
+function pickBestFromCandidates(
+  candidates: string[],
   npcSkills: Record<string, number>
 ): { skill: string; value: number } | null {
-  const candidates = ACTION_TYPE_SKILL_MAP[actionType] ?? [];
-  const words = actionDesc.toLowerCase().split(/\s+/);
-
-  let best: { skill: string; value: number; score: number } | null = null;
-
-  for (const skillName of candidates) {
-    const value = npcSkills[skillName];
-    if (value === undefined) continue;
-
-    const skillWords = skillName.toLowerCase().split(/[\s/()]+/);
-    let overlap = 0;
-    for (const sw of skillWords) {
-      if (sw.length >= 3 && words.some((w) => w.includes(sw))) overlap++;
-    }
-    // Prefer higher skill value as tiebreaker
-    const score = overlap * 1000 + value;
-    if (!best || score > best.score) {
-      best = { skill: skillName, value, score };
+  let best: { skill: string; value: number } | null = null;
+  for (const name of candidates) {
+    const value = npcSkills[name];
+    if (value !== undefined && (!best || value > best.value)) {
+      best = { skill: name, value };
     }
   }
-
-  // Fallback: if no keyword match, pick highest-value candidate
-  if (!best) {
-    for (const skillName of candidates) {
-      const value = npcSkills[skillName];
-      if (value !== undefined && (!best || value > best.value)) {
-        best = { skill: skillName, value, score: value };
-      }
-    }
-  }
-
-  return best ? { skill: best.skill, value: best.value } : null;
-}
-
-// ==================== Horror RAG (keyword overlap) ====================
-
-export function matchHorrorSource(actionDesc: string): {
-  sanLossMin: number;
-  sanLossMax: number;
-} {
-  const words = actionDesc.toLowerCase().split(/\s+/);
-  let bestMatch: (typeof BASELINE_HORROR_SOURCES)[number] | null = null;
-  let bestScore = 0;
-
-  for (const source of BASELINE_HORROR_SOURCES) {
-    const sourceWords = source.description.toLowerCase().split(/\s+/);
-    let overlap = 0;
-    for (const sw of sourceWords) {
-      if (sw.length >= 3 && words.some((w) => w.includes(sw))) overlap++;
-    }
-    if (overlap > bestScore) {
-      bestScore = overlap;
-      bestMatch = source;
-    }
-  }
-
-  return bestMatch ?? { sanLossMin: 0, sanLossMax: 1 };
+  return best;
 }
 
 // ==================== Skill Roll Resolution ====================
+
+/** Opposed social skills for defender */
+const SOCIAL_DEFEND_SKILLS = ["Psychology", "Intimidate", "Persuade", "Fast Talk", "Charm"];
+/** Opposed combat defend */
+const COMBAT_DEFEND_SKILLS = ["Dodge", "Fighting (Brawl)"];
+/** Chase skills for target */
+const CHASE_SKILLS = ["Dodge", "Drive Auto", "Climb", "Swim", "Jump", "Ride"];
 
 export function resolveSkillRoll(
   node: PlanNode,
   adjustedSkills: Record<string, number>,
   dgsm: DynamicGameStateManager
 ): SkillRollResult {
-  const actionType = node.actionType;
-  if (!actionType) return { failed: false, successLevel: "regular" };
+  const skill = node.skill;
+  if (!skill) return { failed: false, successLevel: "regular" };
 
   const state = dgsm.getState();
   const difficulty = getNodeDifficulty(node, dgsm);
-
-  // Get NPC profile for attributes
   const npc = state.npcCharacters.find((n) => n.id === node.characterId);
   const npcAttrs = npc?.attributes ?? {
-    STR: 50,
-    DEX: 50,
-    INT: 50,
-    POW: 50,
-    CON: 50,
-    SIZ: 50,
-    APP: 50,
-    EDU: 50,
+    STR: 50, DEX: 50, INT: 50, POW: 50, CON: 50, SIZ: 50, APP: 50, EDU: 50,
   };
 
-  if (actionType === "combat" && node.targetCharacterId) {
-    // Opposed roll: attacker vs defender Dodge — difficulty doesn't directly apply
-    const attackSkill = selectBestSkill(
-      node.action,
-      actionType,
-      adjustedSkills
-    );
-    const attackValue = attackSkill?.value ?? npcAttrs.STR;
+  // NPC's trained value, or CoC base value for untrained skill
+  const baseValue = COC_SKILL_BASE_VALUES.get(skill) ?? 1;
+  const skillValue = adjustedSkills[skill] ?? baseValue;
 
-    const defender = state.npcCharacters.find(
-      (n) => n.id === node.targetCharacterId
-    );
-    const defenderDodge =
-      defender?.skills?.["Dodge"] ??
-      Math.floor((defender?.attributes?.DEX ?? 50) / 2);
+  // --- Combat (opposed) ---
+  if (node.type === "character_interaction" && node.targetCharacterId && isCombatSkill(skill)) {
+    const defender = state.npcCharacters.find((n) => n.id === node.targetCharacterId);
+    const defenderSkills = defender?.skills ?? {};
+    const defSkill = pickBestFromCandidates(COMBAT_DEFEND_SKILLS, defenderSkills);
+    const defValue = defSkill?.value ?? Math.floor((defender?.attributes?.DEX ?? 50) / 2);
 
     const attackRoll = rollD100();
     const defendRoll = rollD100();
-    const attackLevel = getSuccessLevel(attackRoll, attackValue);
-    const defendLevel = getSuccessLevel(defendRoll, defenderDodge);
+    const attackLevel = getSuccessLevel(attackRoll, skillValue);
+    const defendLevel = getSuccessLevel(defendRoll, defValue);
 
     if (SUCCESS_RANK[attackLevel] <= SUCCESS_RANK[defendLevel]) {
       return {
         failed: true,
         successLevel: attackLevel,
-        reason: `${attackSkill?.skill ?? "Attack"} ${attackValue}, rolled ${attackRoll} (${attackLevel}) vs Dodge ${defenderDodge}, rolled ${defendRoll} (${defendLevel})`,
+        reason: `${skill} ${skillValue}, rolled ${attackRoll} (${attackLevel}) vs ${defSkill?.skill ?? "Dodge"} ${defValue}, rolled ${defendRoll} (${defendLevel})`,
         detail: "skill_roll_failed",
       };
     }
 
     // Hit: apply damage
-    const db =
-      npc?.status?.damageBonus ?? getDamageBonus(npcAttrs.STR, npcAttrs.SIZ);
-    const weaponDamage = Math.floor(Math.random() * 6) + 1; // default 1d6
+    const db = npc?.status?.damageBonus ?? getDamageBonus(npcAttrs.STR, npcAttrs.SIZ);
+    const weaponDamage = Math.floor(Math.random() * 6) + 1;
     const bonusDamage = rollDamageBonus(db);
     const totalDamage = weaponDamage + bonusDamage;
     dgsm.updateNpcHp(node.targetCharacterId, -totalDamage);
@@ -166,155 +105,65 @@ export function resolveSkillRoll(
     return {
       failed: false,
       successLevel: attackLevel,
-      detail: `Hit for ${totalDamage} damage (${attackSkill?.skill ?? "Attack"} ${attackRoll}/${attackValue})`,
+      detail: `Hit for ${totalDamage} damage (${skill} ${attackRoll}/${skillValue})`,
     };
   }
 
-  if (actionType === "social" && node.targetCharacterId) {
-    // Opposed roll: actor social skill vs target Psychology — difficulty doesn't directly apply
-    const socialSkill = selectBestSkill(
-      node.action,
-      actionType,
-      adjustedSkills
-    );
-    const socialValue = socialSkill?.value ?? npcAttrs.APP;
-
-    const target = state.npcCharacters.find(
-      (n) => n.id === node.targetCharacterId
-    );
-    const psychValue =
-      target?.skills?.["Psychology"] ??
-      Math.floor((target?.attributes?.INT ?? 50) / 2);
+  // --- Social opposed ---
+  if (node.type === "character_interaction" && node.targetCharacterId && isSocialSkill(skill)) {
+    const target = state.npcCharacters.find((n) => n.id === node.targetCharacterId);
+    const targetSkills = target?.skills ?? {};
+    const defSkill = pickBestFromCandidates(SOCIAL_DEFEND_SKILLS, targetSkills);
+    const defValue = defSkill?.value ?? Math.floor((target?.attributes?.INT ?? 50) / 2);
 
     const actorRoll = rollD100();
     const targetRoll = rollD100();
-    const actorLevel = getSuccessLevel(actorRoll, socialValue);
-    const targetLevel = getSuccessLevel(targetRoll, psychValue);
+    const actorLevel = getSuccessLevel(actorRoll, skillValue);
+    const targetLevel = getSuccessLevel(targetRoll, defValue);
 
     if (SUCCESS_RANK[actorLevel] <= SUCCESS_RANK[targetLevel]) {
       return {
         failed: true,
         successLevel: actorLevel,
-        reason: `${socialSkill?.skill ?? "Social"} ${socialValue}, rolled ${actorRoll} (${actorLevel}) vs Psychology ${psychValue}, rolled ${targetRoll} (${targetLevel})`,
+        reason: `${skill} ${skillValue}, rolled ${actorRoll} (${actorLevel}) vs ${defSkill?.skill ?? "Psychology"} ${defValue}, rolled ${targetRoll} (${targetLevel})`,
         detail: "skill_roll_failed",
       };
     }
     return { failed: false, successLevel: actorLevel };
   }
 
-  if (actionType === "chase" && node.targetCharacterId) {
-    // Opposed roll: both use best chase skill — difficulty doesn't directly apply
-    const chaserSkill = selectBestSkill(
-      node.action,
-      actionType,
-      adjustedSkills
-    );
-    const chaserValue = chaserSkill?.value ?? npcAttrs.DEX;
-
-    const target = state.npcCharacters.find(
-      (n) => n.id === node.targetCharacterId
-    );
-    const targetSkills = target?.skills ?? {};
-    const targetChaseSkill = selectBestSkill(
-      "flee escape run",
-      "chase",
-      targetSkills
-    );
-    const targetValue =
-      targetChaseSkill?.value ?? target?.attributes?.DEX ?? 50;
-
-    const chaserRoll = rollD100();
-    const targetRoll = rollD100();
-    const chaserLevel = getSuccessLevel(chaserRoll, chaserValue);
-    const targetLevel = getSuccessLevel(targetRoll, targetValue);
-
-    if (SUCCESS_RANK[chaserLevel] <= SUCCESS_RANK[targetLevel]) {
-      return {
-        failed: true,
-        successLevel: chaserLevel,
-        reason: `${chaserSkill?.skill ?? "Chase"} ${chaserValue}, rolled ${chaserRoll} (${chaserLevel}) vs ${targetChaseSkill?.skill ?? "Flee"} ${targetValue}, rolled ${targetRoll} (${targetLevel})`,
-        detail: "skill_roll_failed",
-      };
-    }
-    return { failed: false, successLevel: chaserLevel };
-  }
-
-  if (actionType === "mental") {
-    // SAN roll + horror source match — use difficulty for SAN check
-    const npcStats = dgsm.getNpcStats(node.characterId);
-    const sanValue = npcStats?.san ?? npc?.status?.sanity ?? 50;
-    const roll = rollD100();
-    const horror = matchHorrorSource(node.action);
-
-    // Apply difficulty to the SAN threshold
-    const effectiveDifficulty =
-      difficulty === "luck_only" ? "extreme" : difficulty;
-    const level = getSuccessLevelWithDifficulty(
-      roll,
-      sanValue,
-      effectiveDifficulty
-    );
-
-    if (level === "fail" || level === "fumble") {
-      const sanLoss = horror.sanLossMax;
-      applySanityLoss(
-        dgsm,
-        node.characterId,
-        -sanLoss,
-        undefined,
-        undefined,
-        node.action
-      );
-      return {
-        failed: true,
-        successLevel: level,
-        reason: `SAN ${sanValue}, rolled ${roll} (difficulty: ${effectiveDifficulty}), lost ${sanLoss} sanity`,
-        detail: "skill_roll_failed",
-      };
-    } else {
-      const sanLoss = horror.sanLossMin;
-      if (sanLoss > 0)
-        applySanityLoss(
-          dgsm,
-          node.characterId,
-          -sanLoss,
-          false,
-          undefined,
-          undefined,
-          node.action
-        );
-      return {
-        failed: false,
-        successLevel: level,
-        detail: `SAN check passed (${roll}/${sanValue}, difficulty: ${effectiveDifficulty}), lost ${sanLoss} sanity`,
-      };
-    }
-  }
-
-  // Single roll for remaining actionTypes (exploration, stealth, environmental, narrative)
-  // Use difficulty-aware check
-  const effectiveDifficulty =
-    difficulty === "luck_only" ? "extreme" : difficulty;
-  const bestSkill = selectBestSkill(node.action, actionType, adjustedSkills);
-  const skillValue = bestSkill?.value ?? npcAttrs.INT;
+  // --- Standard single roll ---
+  const effectiveDifficulty = difficulty === "luck_only" ? "extreme" : difficulty;
   const roll = rollD100();
-  const level = getSuccessLevelWithDifficulty(
-    roll,
-    skillValue,
-    effectiveDifficulty
-  );
+  const level = getSuccessLevelWithDifficulty(roll, skillValue, effectiveDifficulty);
 
   if (level === "fail" || level === "fumble") {
     return {
       failed: true,
       successLevel: level,
-      reason: `${bestSkill?.skill ?? actionType} ${skillValue}, rolled ${roll} (difficulty: ${effectiveDifficulty})`,
+      reason: `${skill} ${skillValue}, rolled ${roll} (difficulty: ${effectiveDifficulty})`,
       detail: "skill_roll_failed",
     };
   }
   return {
     failed: false,
     successLevel: level,
-    detail: `${bestSkill?.skill ?? actionType} ${roll}/${skillValue} (${level}, difficulty: ${effectiveDifficulty})`,
+    detail: `${skill} ${roll}/${skillValue} (${level}, difficulty: ${effectiveDifficulty})`,
   };
+}
+
+// ==================== Skill classification helpers ====================
+
+const COMBAT_SKILL_PREFIXES = ["Fighting", "Firearms", "Throw", "Dodge"];
+const SOCIAL_SKILL_NAMES = new Set([
+  "Charm", "Fast Talk", "Persuade", "Intimidate", "Psychology",
+  "Credit Rating", "Disguise", "Art/Craft (Acting)", "Law",
+]);
+
+function isCombatSkill(skill: string): boolean {
+  return COMBAT_SKILL_PREFIXES.some((p) => skill.startsWith(p));
+}
+
+function isSocialSkill(skill: string): boolean {
+  return SOCIAL_SKILL_NAMES.has(skill);
 }

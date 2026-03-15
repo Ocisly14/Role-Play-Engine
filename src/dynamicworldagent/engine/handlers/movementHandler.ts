@@ -20,12 +20,12 @@ export const movementHandler: NodeHandler = {
 
   description:
     "Move a character to a different location. " +
-    "If actionType is set, a creative single-hop movement with skill check is attempted. " +
+    "If skill is set, a creative single-hop movement with skill check is attempted. " +
     "Otherwise, BFS pathfinding is used to find a route through the scene graph.",
 
   requiredFields: ["action", "location"],
 
-  optionalFields: ["actionType"],
+  optionalFields: ["skill"],
 
   exampleNode: {
     nodeId: "m1",
@@ -61,7 +61,7 @@ export const movementHandler: NodeHandler = {
     const fromLocation = npcLocation ?? node.location;
 
     // Creative movement: single hop with skill check, no pathfinding
-    if (node.actionType) {
+    if (node.skill) {
       const rollResult = ctx.resolveSkillRoll(node, adjustedSkills, dgsm);
       resolvedSuccessLevel = rollResult.successLevel;
       if (rollResult.failed) {
