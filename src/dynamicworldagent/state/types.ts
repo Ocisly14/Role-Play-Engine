@@ -165,7 +165,7 @@ export class InventoryUtils {
 
 /**
  * DynamicWorld NPC Profile — flat character type for the simulation engine.
- * Location is tracked via npcLocations/characterPositions, not on the profile.
+ * Location is tracked via characterPositions, not on the profile.
  */
 export interface DynamicNPCProfile {
   id: string;

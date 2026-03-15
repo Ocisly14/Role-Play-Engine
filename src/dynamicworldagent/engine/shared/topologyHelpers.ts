@@ -73,9 +73,7 @@ export function getTopologyNeighbors(
 /**
  * Resolve a character's current location ID from the game state manager.
  *
- * Resolution order:
- * 1. Try `dgsm.getCharacterPosition()` → `dgsm.resolveLocationId()`
- * 2. Fall back to `dgsm.getNpcLocation()`
+ * Uses `dgsm.getCharacterPosition()` → `dgsm.resolveLocationId()`.
  *
  * Returns undefined if no location can be determined.
  */
@@ -83,12 +81,7 @@ export function resolveCharacterLocationId(
   characterId: string,
   dgsm: DynamicGameStateManager
 ): string | undefined {
-  // 1. Try CharacterPosition
   const position = dgsm.getCharacterPosition(characterId);
-  if (position) {
-    return dgsm.resolveLocationId(position);
-  }
-
-  // 2. Fallback: NPC → npcLocations
-  return dgsm.getNpcLocation(characterId);
+  if (!position) return undefined;
+  return dgsm.resolveLocationId(position);
 }

@@ -331,8 +331,8 @@ Dark environments impose skill penalties. Blinding light also impairs vision.`,
 
     const state = dgsm.getState();
 
-    // Process all locations (scenes + junctions + roads)
-    dgsm.getAllLocations().forEach((_scene: any, sceneId: string) => {
+    // Process all scenes
+    state.scenes.forEach((_scene, sceneId) => {
       const lighting = computeSceneLighting(
         dgsm,
         sceneId,
@@ -345,29 +345,27 @@ Dark environments impose skill penalties. Blinding light also impairs vision.`,
 
     // Process roads and junctions (outdoor, always receive sun)
     const topology = dgsm.getTopology();
-    if (topology) {
-      for (const [roadId, road] of topology.roads) {
-        const lighting = computeOutdoorLighting(
-          dgsm,
-          roadId,
-          road.parentLocationId,
-          sunLevel,
-          fireContributions
-        );
-        setLightingState(dgsm, roadId, lighting);
-        writeLightingCondition(dgsm, roadId, lighting.lightLevel);
-      }
-      for (const [juncId, junc] of topology.junctions) {
-        const lighting = computeOutdoorLighting(
-          dgsm,
-          juncId,
-          junc.parentLocationId,
-          sunLevel,
-          fireContributions
-        );
-        setLightingState(dgsm, juncId, lighting);
-        writeLightingCondition(dgsm, juncId, lighting.lightLevel);
-      }
+    for (const [roadId, road] of topology.roads) {
+      const lighting = computeOutdoorLighting(
+        dgsm,
+        roadId,
+        road.parentLocationId,
+        sunLevel,
+        fireContributions
+      );
+      setLightingState(dgsm, roadId, lighting);
+      writeLightingCondition(dgsm, roadId, lighting.lightLevel);
+    }
+    for (const [juncId, junc] of topology.junctions) {
+      const lighting = computeOutdoorLighting(
+        dgsm,
+        juncId,
+        junc.parentLocationId,
+        sunLevel,
+        fireContributions
+      );
+      setLightingState(dgsm, juncId, lighting);
+      writeLightingCondition(dgsm, juncId, lighting.lightLevel);
     }
   },
 };

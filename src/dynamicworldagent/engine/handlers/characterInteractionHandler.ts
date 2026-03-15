@@ -39,10 +39,10 @@ export const characterInteractionHandler: NodeHandler = {
     ctx: ExecutionContext
   ): CharacterAction {
     const state = dgsm.getState();
-    const npcLocation = dgsm.getNpcLocation(node.characterId);
+    const pos = dgsm.getCharacterPosition(node.characterId);
+    const npcLocation = pos ? dgsm.resolveLocationId(pos) : undefined;
     const npc = state.npcCharacters.find((n) => n.id === node.characterId);
     const npcSkills = npc?.skills ?? {};
-    const luck = npc?.status?.luck ?? 50;
     const difficulty = ctx.getNodeDifficulty(node, dgsm);
 
     // Scene + character penalties
@@ -68,8 +68,9 @@ export const characterInteractionHandler: NodeHandler = {
 
     // Target presence check
     if (node.targetCharacterId) {
-      const targetLocation = dgsm.getNpcLocation(node.targetCharacterId);
-      // Player character doesn't have npcLocation entry -- skip check for player
+      const targetPos = dgsm.getCharacterPosition(node.targetCharacterId);
+      const targetLocation = targetPos ? dgsm.resolveLocationId(targetPos) : undefined;
+      // Player character doesn't have characterPosition entry -- skip check for player
       if (targetLocation && targetLocation !== node.location) {
         return makeAction(
           node,
@@ -80,45 +81,24 @@ export const characterInteractionHandler: NodeHandler = {
       }
     }
 
-    if (difficulty === "luck_only") {
-      // Luck-only difficulty: skip skill skill roll, only do luck-based roll
-      if (Math.random() < ctx.luckFailureRate(luck)) {
+    // Skill roll if skill present; otherwise auto-success
+    if (node.skill && difficulty !== "luck_only") {
+      const rollResult = ctx.resolveSkillRoll(node, adjustedSkills, dgsm);
+      resolvedSuccessLevel = rollResult.successLevel;
+      if (rollResult.failed) {
+        lastRollDetail = rollResult.reason;
         return makeAction(
           node,
           "failed",
-          buildOutcome(node, "failed", { reason: `bad luck (luck=${luck})` }),
-          { difficulty, failureReason: "bad_luck" }
+          buildOutcome(node, "failed", { rollDetail: lastRollDetail }),
+          {
+            difficulty,
+            successLevel: resolvedSuccessLevel,
+            failureReason: "skill_roll_failed",
+          }
         );
       }
-    } else {
-      // Luck-based failure (only when no skill)
-      if (!node.skill && Math.random() < ctx.luckFailureRate(luck)) {
-        return makeAction(
-          node,
-          "failed",
-          buildOutcome(node, "failed", { reason: `bad luck (luck=${luck})` }),
-          { difficulty, failureReason: "bad_luck" }
-        );
-      }
-      // Skill roll if skill present
-      if (node.skill) {
-        const rollResult = ctx.resolveSkillRoll(node, adjustedSkills, dgsm);
-        resolvedSuccessLevel = rollResult.successLevel;
-        if (rollResult.failed) {
-          lastRollDetail = rollResult.reason;
-          return makeAction(
-            node,
-            "failed",
-            buildOutcome(node, "failed", { rollDetail: lastRollDetail }),
-            {
-              difficulty,
-              successLevel: resolvedSuccessLevel,
-              failureReason: "skill_roll_failed",
-            }
-          );
-        }
-        lastRollDetail = rollResult.detail;
-      }
+      lastRollDetail = rollResult.detail;
     }
 
     // Apply side effects

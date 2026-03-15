@@ -4,8 +4,8 @@ export function rollD100(): number {
   return Math.floor(Math.random() * 100) + 1;
 }
 
-export function isFumble(roll: number, skillValue: number): boolean {
-  return skillValue < 50 ? roll >= 96 : roll === 100;
+export function isFumble(roll: number, _skillValue: number): boolean {
+  return roll >= 98;
 }
 
 export function getSuccessLevel(
@@ -45,10 +45,6 @@ export const SUCCESS_RANK: Record<SuccessLevel, number> = {
   fumble: -1,
 };
 
-export function luckFailureRate(luck: number): number {
-  return 0.025 + (100 - luck) * 0.0005;
-}
-
 export function getDamageBonus(str: number, siz: number): string {
   const total = str + siz;
   if (total <= 64) return "-2";
@@ -73,5 +69,5 @@ export function rollDamageBonus(db: string): number {
     return sign * total;
   }
   const flat = Number.parseInt(db);
-  return isNaN(flat) ? 0 : flat;
+  return Number.isNaN(flat) ? 0 : flat;
 }

@@ -65,7 +65,8 @@ export function findAffectedCharacters(
   const allCharacterIds = state.npcCharacters.map((n) => n.id);
 
   const getCharLocation = (charId: string): string | undefined => {
-    return dgsm.getNpcLocation(charId);
+    const pos = dgsm.getCharacterPosition(charId);
+    return pos ? dgsm.resolveLocationId(pos) : undefined;
   };
 
   // Level 1: targeted
@@ -142,14 +143,18 @@ export function findAffectedScenes(
     scenes.add(sourceSceneId);
   }
 
-  const allLocations = dgsm.getAllLocations();
-
   // Level 3: same macro location
   if (scopeLevel >= 3) {
     const parent = getParentLocationId(sourceSceneId, dgsm);
     if (parent) {
-      for (const [id, scene] of allLocations) {
+      for (const [id, scene] of state.scenes) {
         if (scene.parentLocationId === parent) scenes.add(id);
+      }
+      for (const [id, junc] of state.junctions) {
+        if (junc.parentLocationId === parent) scenes.add(id);
+      }
+      for (const [id, road] of state.roads) {
+        if (road.parentLocationId === parent) scenes.add(id);
       }
     }
   }
@@ -163,10 +168,26 @@ export function findAffectedScenes(
         state.transportEdges,
         NEIGHBORHOOD_TRAVEL_MINUTES
       );
-      for (const [id, scene] of allLocations) {
+      for (const [id, scene] of state.scenes) {
         if (
           scene.parentLocationId &&
           neighbors.includes(scene.parentLocationId)
+        ) {
+          scenes.add(id);
+        }
+      }
+      for (const [id, junc] of state.junctions) {
+        if (
+          junc.parentLocationId &&
+          neighbors.includes(junc.parentLocationId)
+        ) {
+          scenes.add(id);
+        }
+      }
+      for (const [id, road] of state.roads) {
+        if (
+          road.parentLocationId &&
+          neighbors.includes(road.parentLocationId)
         ) {
           scenes.add(id);
         }
@@ -176,7 +197,13 @@ export function findAffectedScenes(
 
   // Level 5: global
   if (scopeLevel >= 5) {
-    for (const id of allLocations.keys()) {
+    for (const id of state.scenes.keys()) {
+      scenes.add(id);
+    }
+    for (const id of state.junctions.keys()) {
+      scenes.add(id);
+    }
+    for (const id of state.roads.keys()) {
       scenes.add(id);
     }
   }

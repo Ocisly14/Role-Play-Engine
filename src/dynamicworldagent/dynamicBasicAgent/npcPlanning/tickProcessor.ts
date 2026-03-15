@@ -10,6 +10,7 @@ import type {
 } from "../../engine/types.js";
 import type { NpcMemoryManager } from "../../memory/NpcMemoryManager.js";
 import type { DynamicGameStateManager } from "../../state/DynamicGameState.js";
+import type { Item } from "../../state/types.js";
 import {
   type SessionRagChunkInput,
   SessionRagService,
@@ -38,6 +39,111 @@ function minutesToTimeLabel(minutes: number): string {
 }
 
 const TICK_DURATION_MINUTES = 5;
+
+interface ItemActionContext {
+  itemId?: string;
+  itemName?: string;
+  targetItemId?: string;
+  targetItemName?: string;
+}
+
+function findKnownItem(
+  dgsm: DynamicGameStateManager,
+  node: PlanNode,
+  itemId: string
+): Item | null {
+  const actorItem = dgsm.findNpcItem(node.characterId, itemId);
+  if (actorItem) return actorItem;
+
+  const sceneItem = dgsm.getScene(node.location)?.items.find((i) => i.id === itemId);
+  if (sceneItem) return sceneItem;
+
+  if (node.targetCharacterId) {
+    const targetItem = dgsm.findNpcItem(node.targetCharacterId, itemId);
+    if (targetItem) return targetItem;
+  }
+
+  return null;
+}
+
+function getItemActionContext(
+  dgsm: DynamicGameStateManager,
+  node: PlanNode
+): ItemActionContext | null {
+  if (node.type === "object_interaction" && node.objectInteractionPayload) {
+    const { itemId, targetItemId } = node.objectInteractionPayload;
+    if (!itemId && !targetItemId) return null;
+
+    const item = itemId ? findKnownItem(dgsm, node, itemId) : null;
+    const targetItem = targetItemId ? findKnownItem(dgsm, node, targetItemId) : null;
+
+    return {
+      itemId,
+      itemName: item?.name,
+      targetItemId,
+      targetItemName: targetItem?.name,
+    };
+  }
+
+  if (
+    node.type === "character_interaction" &&
+    node.characterInteractionPayload?.transferType === "item" &&
+    node.characterInteractionPayload.itemId
+  ) {
+    const itemId = node.characterInteractionPayload.itemId;
+    const item = findKnownItem(dgsm, node, itemId);
+    return {
+      itemId,
+      itemName: item?.name,
+    };
+  }
+
+  return null;
+}
+
+function formatItemReference(name: string | undefined, id: string | undefined): string | null {
+  if (!name && !id) return null;
+  if (name && id) return `${name} (id:${id})`;
+  return name ?? id ?? null;
+}
+
+function appendItemContext(
+  outcome: string,
+  itemContext: ItemActionContext | null
+): string {
+  if (!itemContext) return outcome;
+
+  const parts: string[] = [];
+  const itemRef = formatItemReference(itemContext.itemName, itemContext.itemId);
+  if (itemRef) parts.push(`item: ${itemRef}`);
+
+  const targetRef = formatItemReference(
+    itemContext.targetItemName,
+    itemContext.targetItemId
+  );
+  if (targetRef) parts.push(`target: ${targetRef}`);
+
+  if (parts.length === 0) return outcome;
+  return `${outcome} [${parts.join("; ")}]`;
+}
+
+function buildEventMetadata(
+  outcome: string,
+  itemContext: ItemActionContext | null
+): Record<string, string> {
+  const metadata: Record<string, string> = { outcome };
+
+  if (itemContext?.itemId) metadata.itemId = itemContext.itemId;
+  if (itemContext?.itemName) metadata.itemName = itemContext.itemName;
+  if (itemContext?.targetItemId) metadata.targetItemId = itemContext.targetItemId;
+  if (itemContext?.targetItemName) metadata.targetItemName = itemContext.targetItemName;
+
+  return metadata;
+}
+
+function shouldRunImpactGate(action: CharacterAction): boolean {
+  return action.impact >= 2 || (action.impact === 1 && Boolean(action.skill));
+}
 
 // ==================== Discovery ====================
 
@@ -467,8 +573,11 @@ async function executeSingleTick(
       );
       continue;
     }
+    const itemContext = getItemActionContext(dgsm, node);
     const action = handler.execute(node, dgsm, ctx);
     tickActions.push(action);
+    const eventOutcome = appendItemContext(action.outcome, itemContext);
+    const eventMetadata = buildEventMetadata(action.outcome, itemContext);
 
     // 4. Post-execution processing
 
@@ -511,17 +620,17 @@ async function executeSingleTick(
         sessionId,
         moduleId,
         type: "event",
-        content: `${initiatorName} ${action.action} — result: ${action.outcome}`,
+        content: `${initiatorName} ${action.action} — result: ${eventOutcome}`,
         gameDay,
         gameTime: action.gameTime,
         location: action.location,
-        metadata: { outcome: action.outcome },
+        metadata: eventMetadata,
       });
     }
 
     // Log NPC actions and mark completed
     {
-      let logEntry = `Day${gameDay} ${action.gameTime} [${action.location}] - ${action.outcome}`;
+      let logEntry = `Day${gameDay} ${action.gameTime} [${action.location}] - ${eventOutcome}`;
       if (relationshipChange) logEntry += ` ${relationshipChange}`;
 
       // Write event memory via NpcMemoryManager
@@ -535,7 +644,7 @@ async function executeSingleTick(
           gameDay,
           gameTime: action.gameTime,
           location: action.location,
-          metadata: { outcome: action.outcome },
+          metadata: eventMetadata,
         });
       }
 
@@ -570,7 +679,8 @@ async function executeSingleTick(
 
       // Filter to targets actually present at the same location
       const presentTargets = filteredTargets.filter((id) => {
-        const loc = dgsm.getNpcLocation(id);
+        const tPos = dgsm.getCharacterPosition(id);
+        const loc = tPos ? dgsm.resolveLocationId(tPos) : undefined;
         return loc === node.location;
       });
 
@@ -682,8 +792,17 @@ async function executeSingleTick(
       }
     }
 
-    // On failure -> immediate revisePlans (no gate)
+    // On failure -> mark node as failed (removes from pending), then revisePlans
     if (action.status === "failed") {
+      // Remove the failed node first so revisePlans won't see it in pendingNodes
+      await npcPlanningAgent.markNodeFailed(
+        sessionId,
+        node.characterId,
+        gameDay,
+        node.nodeId,
+        action.failureReason ?? "unknown"
+      );
+
       let failureContext: string | undefined;
       if (memoryManager) {
         failureContext = await memoryManager.getContext({
@@ -698,11 +817,6 @@ async function executeSingleTick(
         failureContext ??
         (await npcPlanningAgent.getLongTermIntent(sessionId, node.characterId));
       const memoryLog = failureContext ? [failureContext] : [];
-      const pendingNodes = await npcPlanningAgent.getPendingNodes(
-        sessionId,
-        node.characterId,
-        gameDay
-      );
       await npcPlanningAgent.revisePlans(
         dgsm,
         sessionId,
@@ -710,7 +824,7 @@ async function executeSingleTick(
         {
           longTermIntent,
           memoryLog,
-          pendingNodes,
+          pendingNodes: [],
           trigger: {
             type: "failure",
             failureReason: action.failureReason!,
@@ -736,12 +850,14 @@ async function executeSingleTick(
   );
 
   // 5. Built-in impact propagation
-  //    Scans for actions with impact > 0, notifies affected NPCs,
-  //    runs LLM impact gate, triggers plan revision if needed.
+  //    Scans for actions that pass the impact-gate threshold:
+  //    impact >= 2, or impact === 1 with a skill check.
+  //    Then notifies affected NPCs, runs the LLM impact gate,
+  //    and triggers plan revision if needed.
   const injectedNodes: PlanNode[] = [];
 
   const impactEvents = [
-    ...tickActions.filter((a) => a.impact > 0),
+    ...tickActions.filter((a) => shouldRunImpactGate(a)),
     ...encounterEvents,
   ];
   if (impactEvents.length > 0) {
@@ -810,7 +926,7 @@ async function executeSingleTick(
             {
               npcId,
               npcName: npc?.name ?? npcId,
-              currentLocation: dgsm.getNpcLocation(npcId) ?? "unknown",
+              currentLocation: (() => { const p = dgsm.getCharacterPosition(npcId); return p ? dgsm.resolveLocationId(p) : "unknown"; })(),
               longTermIntent,
               todayScheduleSummary: schedule
                 .map((s) => `${s.location}: ${s.activity}`)
@@ -826,7 +942,8 @@ async function executeSingleTick(
           );
 
           const logEntry = `Day${gameDay} ${tickRuntime.tickTime} [witness] - ${result.witnessEntry}`;
-          const npcLoc = dgsm.getNpcLocation(npcId) ?? "unknown";
+          const npcLocPos = dgsm.getCharacterPosition(npcId);
+          const npcLoc = npcLocPos ? dgsm.resolveLocationId(npcLocPos) : "unknown";
 
           // Write witness memory via NpcMemoryManager
           if (memoryManager) {
@@ -885,7 +1002,7 @@ async function executeSingleTick(
                 generateText({
                   runtime: npcPlanningAgent.getRuntime(),
                   context: prompt,
-                  modelClass: ModelClass.SMALL,
+                  modelClass: ModelClass.MEDIUM,
                 });
               await memoryManager.triggerReasoning(
                 {
@@ -1001,7 +1118,8 @@ function scanUnplannedEncounters(
   // Group NPCs by location
   const locationGroups = new Map<string, string[]>();
   for (const npc of state.npcCharacters) {
-    const loc = dgsm.getNpcLocation(npc.id);
+    const npcEncPos = dgsm.getCharacterPosition(npc.id);
+    const loc = npcEncPos ? dgsm.resolveLocationId(npcEncPos) : undefined;
     if (!loc) continue;
     if (!locationGroups.has(loc)) locationGroups.set(loc, []);
     locationGroups.get(loc)!.push(npc.id);

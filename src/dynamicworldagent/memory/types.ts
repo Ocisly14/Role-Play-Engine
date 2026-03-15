@@ -11,6 +11,10 @@ export type NpcMemory = PrismaNpcMemory;
 
 export interface EventMetadata {
   outcome?: string;
+  itemId?: string;
+  itemName?: string;
+  targetItemId?: string;
+  targetItemName?: string;
 }
 
 export interface WitnessMetadata {

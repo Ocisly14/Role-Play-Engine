@@ -192,7 +192,22 @@ const DEFAULT_DETAILED_NODE_TYPE_REF = `## Node Type Reference
 
 ## Skill Checks
 
-You can use a skill to accomplish an action or achieve your goal. Set \`"skill"\` to a skill name from "Available Skills" below. The engine will roll d100 to determine success or failure. Omit \`"skill"\` for everyday actions that don't need a check (eating, walking, casual conversation, etc.).
+You can use a skill to accomplish an action or achieve your goal. Set \`"skill"\` to a skill name from "Available Skills" below only when the action is genuinely difficult or uses an unusual, forceful, deceptive, or creative method. The engine will roll d100 to determine success or failure.
+
+- Omit \`"skill"\` by default for routine or straightforward actions.
+- Simple \`pickup\`, \`place\`, ordinary \`inspect\`, casual conversation, and other everyday actions should usually omit \`"skill"\`.
+- Before choosing a skill for an object action, inspect the injected item state first (locked/unlocked, damaged, uses, lit/unlit, ammo, etc.) and choose a normal action if the state already makes it possible.
+- If you include \`"skill"\`, it must be an exact name from "Available Skills". Never invent generic labels such as \`social\`, \`professional\`, or \`exploration\`.
+
+## Impact
+
+- \`"impact": 0\` = private or low-consequence action. No one else needs to react.
+- \`"impact": 1\` = direct target only. Use this only for targeted actions with a \`targetCharacterId\` where the target should meaningfully react, and only when the action also uses a \`skill\`.
+- \`"impact": 2\` = noticeable to others in the same scene.
+- \`"impact": 3\` = noticeable across the same larger location or building.
+- \`"impact": 4\` = noticeable in nearby locations or the surrounding area.
+- \`"impact": 5\` = major event with global or session-wide consequences.
+- Default to \`"impact": 0\` unless there is a clear reason to escalate it.
 
 ## Available Skills
 ${COC_SKILL_LIST_PROMPT}`;
@@ -209,7 +224,7 @@ Return a JSON array of PlanNode objects. No extra text. Always write in English.
   "location": "sceneId",
   "type": "routine|movement|character_interaction|object_interaction|scene_interaction",
   "skill": "OMIT if no skill check needed, otherwise exact skill name",
-  "impact": 0,
+  "impact": "Default 0. Use 1 only for targeted consequential actions with skill; 2+ for broader effects",
   "status": "pending"
 }
 \`\`\`
@@ -231,7 +246,7 @@ Look at your full plan for today and what has already happened. First decide whi
 
 Do not expand the whole day. Do not repeat plan steps that your memory log already shows as completed, interrupted, cancelled, or no longer relevant.
 
-Set each node's \`location\` to the scene where that action happens. If the next step is not at your current location, include movement nodes first. Cross-location travel is handled automatically.
+If the next step is not at your current location, emit a movement node first (set location to the destination), then emit the action node. Movement does not need to be broken into segments — one movement node will take you directly to the destination regardless of distance.
 
 ## How To Choose The Next Step
 - Use "Your Plan For Today" as the source of truth for the intended sequence.
@@ -240,7 +255,7 @@ Set each node's \`location\` to the scene where that action happens. If the next
 - If all meaningful plan steps are already done, return an empty JSON array.
 
 ## Skill Checks
-You can use a skill to accomplish an action. Pick from "Available Skills". Omit for everyday actions.
+You can use a skill to accomplish an action. Pick from "Available Skills" only when the action is difficult or uses a non-routine method. Omit it for straightforward actions.
 
 ${params.handlerPrompt || DEFAULT_DETAILED_NODE_TYPE_REF}
 
@@ -398,11 +413,23 @@ export interface RevisePlansParams {
 }
 
 const REVISE_PLANS_OUTPUT_SCHEMA = `## Output
-Return a single JSON object. No extra text. Always write in English.
+Return a single JSON object with a "revisedNodes" array. No extra text. Always write in English.
+
+IMPORTANT: "revisedNodes" MUST be an array of PlanNode objects — even if there is only one node, wrap it in an array.
 
 \`\`\`json
 {
-  "revisedNodes": [ /* same PlanNode format */ ],
+  "revisedNodes": [
+    {
+      "nodeId": "unique-id",
+      "gameTime": "HH:MM",
+      "action": "description of what you do",
+      "location": "sceneId",
+      "type": "routine|movement|character_interaction|object_interaction|scene_interaction",
+      "impact": "Default 0. Use 1 only for targeted consequential actions with skill; 2+ for broader effects",
+      "status": "pending"
+    }
+  ],
   "shouldUpdateLongTermIntent": false,
   "updatedLongTermIntent": "only if shouldUpdateLongTermIntent is true"
 }

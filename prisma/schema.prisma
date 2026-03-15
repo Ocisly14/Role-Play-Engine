@@ -150,6 +150,7 @@ model NpcMemory {
   @@index([sessionId, npcId])
   @@index([sessionId, npcId, type])
   @@index([sessionId, npcId, gameDay])
+  @@index([sessionId, createdAt])
   @@map("npc_memories")
 }
 

@@ -55,7 +55,6 @@ export interface DynamicGameState {
   featureState: Record<string, Record<string, unknown>>;
 
   // === NPC Planning System Runtime State ===
-  npcLocations: Record<string, string>; // npcId -> sceneId
   npcStats: Record<string, { hp: number; san: number }>;
   npcInventories: Record<string, Item[]>; // npcId -> items
   npcRelationshipGraph: Record<
@@ -70,9 +69,8 @@ export interface DynamicGameState {
   npcResidences: Record<string, string>; // npcId -> macroLocationId
   transportEdges: TransportEdge[];
 
-  // === Road & Junction Topology ===
-  // null if module has no JUNC/ROAD files
-  topology: TownTopology | null;
+  // === Road & Junction Topology (required) ===
+  topology: TownTopology;
 
   // === Character Positions (NPC) ===
   characterPositions: Record<string, CharacterPosition>;
@@ -103,7 +101,6 @@ export const initialDynamicGameState = (params: {
   moduleSetup: null,
   scenarioOutlines: [],
   featureState: {},
-  npcLocations: {},
   npcStats: {},
   npcInventories: {},
   npcRelationshipGraph: {},
@@ -111,7 +108,7 @@ export const initialDynamicGameState = (params: {
   blockedConnections: new Map(),
   npcResidences: {},
   transportEdges: [],
-  topology: null,
+  topology: null as unknown as TownTopology,
   characterPositions: {},
   loadedAt: new Date(),
   lastUpdated: new Date(),
@@ -157,44 +154,6 @@ export class DynamicGameStateManager {
       (this.state.roads.get(sceneId) as unknown as DynamicScene) ??
       null
     );
-  }
-
-  /**
-   * Get a merged map of all locations (scenes + junctions + roads).
-   * Junctions and roads get a synthesized `connections` field for BFS compatibility.
-   */
-  getAllLocations(): Map<string, DynamicScene> {
-    const all = new Map(this.state.scenes);
-
-    // Build junction → road lookup
-    const junctionRoads = new Map<string, string[]>();
-    for (const [id, road] of this.state.roads) {
-      for (const ep of [road.endpointA, road.endpointB]) {
-        if (!junctionRoads.has(ep)) junctionRoads.set(ep, []);
-        junctionRoads.get(ep)!.push(id);
-      }
-    }
-
-    // Junctions: connections = connectedSceneIds + connected roads
-    for (const [id, junc] of this.state.junctions) {
-      const connections = [
-        ...(junc.connectedSceneIds ?? []),
-        ...(junctionRoads.get(id) ?? []),
-      ];
-      all.set(id, { ...junc, connections } as unknown as DynamicScene);
-    }
-
-    // Roads: connections = endpointA + endpointB + along scenes
-    for (const [id, road] of this.state.roads) {
-      const connections = [
-        road.endpointA,
-        road.endpointB,
-        ...(road.alongConnections ?? []).map((ac) => ac.sceneId),
-      ];
-      all.set(id, { ...road, connections } as unknown as DynamicScene);
-    }
-
-    return all;
   }
 
   /**
@@ -373,15 +332,27 @@ export class DynamicGameStateManager {
       roads,
       blockedConnections,
       featureState: data.featureState ?? {},
-      npcLocations: data.npcLocations ?? {},
       npcStats: data.npcStats ?? {},
       npcInventories: data.npcInventories ?? {},
       npcRelationshipGraph: data.npcRelationshipGraph ?? {},
       scenarioConditions: data.scenarioConditions ?? {},
       npcResidences: data.npcResidences ?? {},
       transportEdges: data.transportEdges ?? [],
-      topology,
-      characterPositions: data.characterPositions ?? {},
+      topology: topology!,
+      characterPositions: (() => {
+        if (data.characterPositions && Object.keys(data.characterPositions).length > 0) {
+          return data.characterPositions;
+        }
+        // Backward compat: convert old npcLocations to characterPositions
+        if (data.npcLocations) {
+          const positions: Record<string, CharacterPosition> = {};
+          for (const [npcId, locId] of Object.entries(data.npcLocations)) {
+            positions[npcId] = { type: "scene", sceneId: locId as string };
+          }
+          return positions;
+        }
+        return {};
+      })(),
       loadedAt: data.loadedAt
         ? typeof data.loadedAt === "string"
           ? new Date(data.loadedAt)
@@ -402,6 +373,8 @@ export class DynamicGameStateManager {
     return {
       ...this.state,
       scenes: new Map(this.state.scenes),
+      junctions: new Map(this.state.junctions),
+      roads: new Map(this.state.roads),
       blockedConnections: new Map(this.state.blockedConnections),
     };
   }
@@ -651,14 +624,6 @@ export class DynamicGameStateManager {
 
   // === NPC Planning System Helpers ===
 
-  getNpcLocation(npcId: string): string | undefined {
-    return this.state.npcLocations[npcId];
-  }
-
-  setNpcLocation(npcId: string, scenarioId: string): void {
-    this.state.npcLocations[npcId] = scenarioId;
-  }
-
   getNpcStats(npcId: string): { hp: number; san: number } | undefined {
     return this.state.npcStats[npcId];
   }
@@ -845,7 +810,7 @@ export class DynamicGameStateManager {
     return this.state.topology?.roads.get(roadId) ?? null;
   }
 
-  getTopology(): TownTopology | null {
+  getTopology(): TownTopology {
     return this.state.topology;
   }
 

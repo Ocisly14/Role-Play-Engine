@@ -6,7 +6,7 @@ import { staminaFeature } from "../staminaFeature.js";
 
 function createMockDgsm() {
   const featureState: Record<string, Record<string, unknown>> = {};
-  const npcLocations: Record<string, string> = {};
+  const characterPositions: Record<string, any> = {};
   const npcStats: Record<string, { hp: number; san: number }> = {};
   const npcCharacters: Array<{
     id: string;
@@ -30,7 +30,7 @@ function createMockDgsm() {
     },
     getState() {
       return {
-        npcLocations,
+        characterPositions,
         npcStats,
         npcCharacters,
       };
@@ -47,7 +47,7 @@ function createMockDgsm() {
       return npcStats[npcId] ?? undefined;
     },
     _addNpc(npcId: string, location: string, hp: number, san = 50) {
-      npcLocations[npcId] = location;
+      characterPositions[npcId] = { type: "scene", sceneId: location };
       npcStats[npcId] = { hp, san };
       npcCharacters.push({
         id: npcId,
@@ -56,14 +56,16 @@ function createMockDgsm() {
       });
     },
     // Topology support for resolveCharacterLocationId
-    getCharacterPosition: (_id: string) => null as any,
-    resolveLocationId: (pos: any) =>
-      pos?.junctionId ?? pos?.roadId ?? pos?.sceneId,
-    getNpcLocation: (npcId: string) => npcLocations[npcId] ?? undefined,
+    getCharacterPosition: (id: string) => characterPositions[id] ?? null,
+    resolveLocationId: (pos: any) => {
+      if (pos.type === "scene") return pos.sceneId;
+      if (pos.type === "junction") return pos.junctionId;
+      return pos.roadId;
+    },
 
     _featureState: featureState,
     _npcStats: npcStats,
-    _npcLocations: npcLocations,
+    _characterPositions: characterPositions,
   };
 }
 
@@ -517,13 +519,9 @@ describe("staminaFeature", () => {
 
   describe("CharacterPosition resolution", () => {
     it("should use CharacterPosition for acceleration when available", () => {
-      // Override getCharacterPosition to return a road position for npc1
-      (dgsm as any).getCharacterPosition = (id: string) =>
-        id === "npc1"
-          ? { type: "road", roadId: "ROAD_1", position: 0.5 }
-          : null;
-
       dgsm._addNpc("npc1", "tavern", 10);
+      // Override position to a road position for npc1
+      dgsm._characterPositions["npc1"] = { type: "road", roadId: "ROAD_1", position: 0.5 };
 
       // Set fire on ROAD_1 (intensity 2 → acceleration)
       dgsm.setFeatureSceneState("fire", "ROAD_1", { intensity: 2 });
@@ -535,19 +533,6 @@ describe("staminaFeature", () => {
       expect(stamina.minutesSinceLastRest).toBe(10);
     });
 
-    it("should fallback to npcLocations when no CharacterPosition", () => {
-      // Default getCharacterPosition returns null
-      dgsm._addNpc("npc2", "tavern", 10);
-
-      // Set fire on tavern (intensity 2 → acceleration)
-      dgsm.setFeatureSceneState("fire", "tavern", { intensity: 2 });
-
-      runTicks(dgsm, runtime, 1);
-
-      const stamina = dgsm.getFeatureSceneState("stamina", "npc2") as any;
-      // npc2 is at "tavern" via npcLocations, fire at tavern → 2x
-      expect(stamina.minutesSinceLastRest).toBe(10);
-    });
   });
 
   // ===== planningPrompt =====

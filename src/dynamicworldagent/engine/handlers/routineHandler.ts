@@ -35,7 +35,8 @@ export const routineHandler: NodeHandler = {
     ctx: ExecutionContext
   ): CharacterAction {
     const state = dgsm.getState();
-    const npcLocation = dgsm.getNpcLocation(node.characterId);
+    const pos = dgsm.getCharacterPosition(node.characterId);
+    const npcLocation = pos ? dgsm.resolveLocationId(pos) : undefined;
     const npc = state.npcCharacters.find((n) => n.id === node.characterId);
     const npcSkills = npc?.skills ?? {};
     const difficulty = ctx.getNodeDifficulty(node, dgsm);

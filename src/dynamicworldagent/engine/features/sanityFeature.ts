@@ -576,7 +576,7 @@ function getTrackedCharacters(dgsm: DynamicGameStateManager): Array<{
 }> {
   const state = dgsm.getState();
   const result: Array<{ characterId: string }> = [];
-  for (const npcId of Object.keys(state.npcLocations)) {
+  for (const npcId of Object.keys(state.characterPositions)) {
     result.push({ characterId: npcId });
   }
   return result;

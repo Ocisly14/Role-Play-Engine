@@ -20,7 +20,7 @@ function createMockDgsm() {
   const scenarioConditions: Record<string, SceneCondition[]> = {};
   const blockedConnections = new Map<string, string>();
   const scenes = new Map<string, MockScene>();
-  const npcLocations: Record<string, string> = {};
+  const characterPositions: Record<string, any> = {};
   const npcStats: Record<string, { hp: number; san: number }> = {};
 
   return {
@@ -49,7 +49,9 @@ function createMockDgsm() {
         scenarioConditions,
         blockedConnections,
         scenes,
-        npcLocations,
+        junctions: new Map(),
+        roads: new Map(),
+        characterPositions,
         npcStats,
       };
     },
@@ -74,7 +76,7 @@ function createMockDgsm() {
       scenes.set(scene.id, scene);
     },
     _addNpc(npcId: string, location: string, hp: number) {
-      npcLocations[npcId] = location;
+      characterPositions[npcId] = { type: "scene", sceneId: location };
       npcStats[npcId] = { hp, san: 50 };
     },
     _featureState: featureState,

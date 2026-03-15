@@ -148,12 +148,23 @@ function getOutdoorSceneIds(
   dgsm: DynamicGameStateManager,
   regionId: string
 ): string[] {
+  const state = dgsm.getState();
   const sceneIds: string[] = [];
-  dgsm.getAllLocations().forEach((scene: any, id: string) => {
+  state.scenes.forEach((scene, id) => {
     if (scene.parentLocationId === regionId && !scene.indoor) {
       sceneIds.push(id);
     }
   });
+  for (const [id, junc] of state.junctions) {
+    if (junc.parentLocationId === regionId) {
+      sceneIds.push(id);
+    }
+  }
+  for (const [id, road] of state.roads) {
+    if (road.parentLocationId === regionId) {
+      sceneIds.push(id);
+    }
+  }
   return sceneIds;
 }
 
@@ -352,9 +363,15 @@ function initWeatherFromPresets(dgsm: DynamicGameStateManager): void {
   const state = dgsm.getState();
 
   const regionIds = new Set<string>();
-  dgsm.getAllLocations().forEach((scene: any) => {
+  state.scenes.forEach((scene) => {
     regionIds.add(scene.parentLocationId);
   });
+  for (const [, junc] of state.junctions) {
+    regionIds.add(junc.parentLocationId);
+  }
+  for (const [, road] of state.roads) {
+    regionIds.add(road.parentLocationId);
+  }
 
   const presets: Array<{
     regionId: string;

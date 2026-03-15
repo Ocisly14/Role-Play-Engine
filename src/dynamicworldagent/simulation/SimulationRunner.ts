@@ -261,7 +261,7 @@ export class SimulationRunner {
       );
     }
 
-    // 1. Inject into game state (npcCharacters, npcStats, npcLocations, etc.)
+    // 1. Inject into game state (npcCharacters, npcStats, characterPositions, etc.)
     injectCharacterIntoState(this.dgsm, profile, entrySceneId);
 
     // 2. Upsert long-term intent (deterministic ID, no LLM call)
@@ -493,7 +493,7 @@ export class SimulationRunner {
       if (stats && stats.hp <= 0) {
         this.deadNpcIds.add(npc.id);
 
-        const location = gameState.npcLocations[npc.id] ?? "unknown";
+        const location = (() => { const p = gameState.characterPositions[npc.id]; return p ? (p.type === "scene" ? p.sceneId : p.type === "junction" ? p.junctionId : p.roadId) : "unknown"; })();
         const event = this.events.emitSimulationEvent(
           "npc_death",
           npc.id,

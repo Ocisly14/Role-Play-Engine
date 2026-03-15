@@ -65,9 +65,6 @@ export function injectCharacterIntoState(
   // Add NPC profile to npcCharacters
   dgsm.updateNpcs([profile]);
 
-  // Set scene location
-  dgsm.setNpcLocation(profile.id, entrySceneId);
-
   // Set character position
   dgsm.setCharacterPosition(profile.id, {
     type: "scene",
@@ -126,7 +123,6 @@ export async function removeCharacterFromState(
       string,
       import("../state/topologyTypes.js").CharacterPosition
     >;
-    npcLocations: Record<string, string>;
   };
 
   // Remove from npcCharacters array
@@ -137,7 +133,6 @@ export async function removeCharacterFromState(
   delete state.npcStats[characterId];
   delete state.npcResidences[characterId];
   delete state.npcInventories[characterId];
-  delete state.npcLocations[characterId];
   delete state.characterPositions[characterId];
 
   // Bidirectional relationship graph cleanup

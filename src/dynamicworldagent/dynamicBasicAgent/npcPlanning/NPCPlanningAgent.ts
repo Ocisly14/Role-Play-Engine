@@ -26,6 +26,26 @@ function parseJsonResponse<T>(raw: string): T {
   return JSON.parse(text) as T;
 }
 
+/**
+ * Extract revisedNodes array from various LLM response shapes:
+ * - { revisedNodes: [...] }         → return revisedNodes
+ * - { revisedNodes: { ... } }       → wrap in array
+ * - [ ... ]  (raw array)            → return as-is
+ * - { nodes: [...] }                → return nodes (common LLM alias)
+ */
+function extractRevisedNodes(parsed: unknown): PlanNode[] | null {
+  if (Array.isArray(parsed)) return parsed;
+  if (parsed && typeof parsed === "object") {
+    const obj = parsed as Record<string, unknown>;
+    if (Array.isArray(obj.revisedNodes)) return obj.revisedNodes as PlanNode[];
+    if (obj.revisedNodes && typeof obj.revisedNodes === "object" && !Array.isArray(obj.revisedNodes)) {
+      return [obj.revisedNodes as PlanNode];
+    }
+    if (Array.isArray(obj.nodes)) return obj.nodes as PlanNode[];
+  }
+  return null;
+}
+
 export class NPCPlanningAgent {
   constructor(
     private prisma: PrismaClient,
@@ -158,7 +178,8 @@ export class NPCPlanningAgent {
     const npcProfile = this.formatNpcProfile(npc);
     const relationships = this.formatRelationships(dgsm, npc.id);
     const sceneMap = this.formatSceneMap(dgsm, npc.id);
-    const npcLocation = state.npcLocations[npc.id];
+    const npcPos = dgsm.getCharacterPosition(npc.id);
+    const npcLocation = npcPos ? dgsm.resolveLocationId(npcPos) : undefined;
     const scenarioConditions = this.formatNpcLocalConditions(dgsm, npcLocation);
     const worldStatePrompt = this.buildNpcWorldStatePrompt(
       dgsm,
@@ -249,7 +270,8 @@ export class NPCPlanningAgent {
     const longTermIntent = await this.getLongTermIntent(sessionId, npcId);
     const memoryLog = await this.getNpcDayMemoryLog(sessionId, npcId, gameDay);
 
-    const currentLocation = state.npcLocations[npcId] ?? "";
+    const currentPos = dgsm.getCharacterPosition(npcId);
+    const currentLocation = currentPos ? dgsm.resolveLocationId(currentPos) : "";
     const currentScene = currentLocation
       ? (state.scenes.get(currentLocation) ?? null)
       : null;
@@ -272,7 +294,12 @@ export class NPCPlanningAgent {
     const relationshipGraph = state.npcRelationshipGraph[npcId] ?? {};
     const npcsAtLocation = state.npcCharacters
       .filter(
-        (n) => n.id !== npcId && state.npcLocations[n.id] === currentLocation
+        (n) => {
+          if (n.id === npcId) return false;
+          const nPos = dgsm.getCharacterPosition(n.id);
+          const nLoc = nPos ? dgsm.resolveLocationId(nPos) : undefined;
+          return nLoc === currentLocation;
+        }
       )
       .map((n) => {
         const parts = [`- ${n.name} (${n.id})`];
@@ -327,16 +354,22 @@ export class NPCPlanningAgent {
       status: "pending" as const,
     }));
 
-    // Append new nodes to existing nodes in DB
+    // Append new nodes to existing nodes in DB and consume the schedule entry
     const existingPlan = await this.prisma.npcDailyPlan.findUnique({
       where: { sessionId_npcId_gameDay: { sessionId, npcId, gameDay } },
     });
     const existingNodes = (existingPlan?.nodes as unknown as PlanNode[]) ?? [];
     const mergedNodes = [...existingNodes, ...enrichedNodes];
 
+    // Consume the first schedule entry (shift it off)
+    const remainingSchedule = schedule.slice(1);
+
     await this.prisma.npcDailyPlan.update({
       where: { sessionId_npcId_gameDay: { sessionId, npcId, gameDay } },
-      data: { nodes: mergedNodes as any },
+      data: {
+        nodes: mergedNodes as any,
+        schedule: remainingSchedule as any,
+      },
     });
 
     return enrichedNodes;
@@ -444,7 +477,8 @@ export class NPCPlanningAgent {
       });
     }
 
-    const npcLocation = state.npcLocations[npcId];
+    const revSchedPos = dgsm.getCharacterPosition(npcId);
+    const npcLocation = revSchedPos ? dgsm.resolveLocationId(revSchedPos) : undefined;
 
     const { systemPrompt, userPrompt } = buildReviseSchedulePrompt({
       npcName: npc.name,
@@ -512,7 +546,8 @@ export class NPCPlanningAgent {
         ? `Action "${context.trigger.action}" at ${context.trigger.gameTime} failed: ${context.trigger.failureReason}`
         : `Witnessed: ${context.trigger.triggeringAction.action} by ${context.trigger.triggeringAction.characterName} (${context.trigger.triggeringAction.outcome})`;
 
-    const currentLocation = state.npcLocations[npcId] ?? "";
+    const revisePos = dgsm.getCharacterPosition(npcId);
+    const currentLocation = revisePos ? dgsm.resolveLocationId(revisePos) : "";
     const currentScene = currentLocation
       ? (state.scenes.get(currentLocation) ?? null)
       : null;
@@ -522,7 +557,12 @@ export class NPCPlanningAgent {
     const relationshipGraph = state.npcRelationshipGraph[npcId] ?? {};
     const npcsAtLocation = state.npcCharacters
       .filter(
-        (n) => n.id !== npcId && state.npcLocations[n.id] === currentLocation
+        (n) => {
+          if (n.id === npcId) return false;
+          const nPos = dgsm.getCharacterPosition(n.id);
+          const nLoc = nPos ? dgsm.resolveLocationId(nPos) : undefined;
+          return nLoc === currentLocation;
+        }
       )
       .map((n) => {
         const parts = [`- ${n.name} (${n.id})`];
@@ -578,15 +618,14 @@ export class NPCPlanningAgent {
       modelClass: ModelClass.MEDIUM,
     });
 
-    const parsed = parseJsonResponse<{
-      revisedNodes: PlanNode[];
-      shouldUpdateLongTermIntent: boolean;
-      updatedLongTermIntent?: string;
-    }>(response);
+    const parsed = parseJsonResponse<Record<string, unknown>>(response);
+    const rawRevisedNodes = extractRevisedNodes(parsed);
+    if (!rawRevisedNodes || rawRevisedNodes.length === 0) {
+      console.warn(`[Planning] revisePlans for ${npc.name}: could not extract revisedNodes from LLM response, keeping existing nodes`);
+      return;
+    }
 
-    // Inject characterId + characterName
-    if (!Array.isArray(parsed.revisedNodes)) return;
-    const revisedNodes = parsed.revisedNodes.map((node) => ({
+    const revisedNodes = rawRevisedNodes.map((node) => ({
       ...node,
       characterId: npcId,
       characterName: npc.name,
@@ -604,7 +643,7 @@ export class NPCPlanningAgent {
     if (parsed.shouldUpdateLongTermIntent && parsed.updatedLongTermIntent) {
       await this.prisma.npcLongTermIntent.updateMany({
         where: { sessionId, npcId },
-        data: { intent: parsed.updatedLongTermIntent },
+        data: { intent: parsed.updatedLongTermIntent as string },
       });
     }
   }
@@ -638,7 +677,7 @@ export class NPCPlanningAgent {
       runtime: this.runtime,
       context: userPrompt,
       customSystemPrompt: systemPrompt,
-      modelClass: ModelClass.SMALL,
+      modelClass: ModelClass.MEDIUM,
     });
 
     return parseJsonResponse<{
@@ -683,7 +722,7 @@ export class NPCPlanningAgent {
     const response = await generateText({
       runtime: this.runtime,
       context: prompt,
-      modelClass: ModelClass.SMALL,
+      modelClass: ModelClass.MEDIUM,
     });
 
     const parsed = parseJsonResponse<{ scoreDelta: number; note: string }>(
@@ -773,6 +812,26 @@ export class NPCPlanningAgent {
     });
   }
 
+  async markNodeFailed(
+    sessionId: string,
+    npcId: string,
+    gameDay: number,
+    nodeId: string,
+    reason: string
+  ): Promise<void> {
+    const plan = await this.prisma.npcDailyPlan.findUnique({
+      where: { sessionId_npcId_gameDay: { sessionId, npcId, gameDay } },
+    });
+    if (!plan) return;
+    const nodes = plan.nodes as unknown as PlanNode[];
+    // Remove failed node from pending list (prevents retry loops)
+    const remaining = nodes.filter((n) => n.nodeId !== nodeId);
+    await this.prisma.npcDailyPlan.update({
+      where: { sessionId_npcId_gameDay: { sessionId, npcId, gameDay } },
+      data: { nodes: remaining as any },
+    });
+  }
+
   // === Day transition lifecycle ===
 
   async onNewDay(
@@ -801,7 +860,7 @@ export class NPCPlanningAgent {
         generateText({
           runtime: this.runtime,
           context: prompt,
-          modelClass: ModelClass.SMALL,
+          modelClass: ModelClass.MEDIUM,
         });
 
       const npcCharacters = dgsm.getState().npcCharacters;
@@ -913,7 +972,7 @@ export class NPCPlanningAgent {
       runtime: this.runtime,
       context: userPrompt,
       customSystemPrompt: systemPrompt,
-      modelClass: ModelClass.SMALL,
+      modelClass: ModelClass.MEDIUM,
     });
 
     const parsed = parseJsonResponse<{

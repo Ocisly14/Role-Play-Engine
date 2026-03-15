@@ -224,9 +224,6 @@ export interface ExecutionContext {
     dgsm: DynamicGameStateManager
   ): "regular" | "hard" | "extreme" | "luck_only";
 
-  /** Luck-based failure rate */
-  luckFailureRate(luck: number): number;
-
   /** Set by SimulationRunner to enable npc_moved event emission from handlers */
   simulationEmitter?: import(
     "../simulation/SimulationEventEmitter.js"

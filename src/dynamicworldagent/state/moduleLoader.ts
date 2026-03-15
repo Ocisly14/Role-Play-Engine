@@ -182,14 +182,18 @@ export function initRuntime(params: {
       ? buildTopology(moduleData.junctions, moduleData.roads)
       : null;
 
+  if (!topology) {
+    throw new Error(`Module ${moduleData.moduleId} has no topology. Topology is required.`);
+  }
+
   // Determine default starting scene
   const defaultSceneId =
     moduleData.scenarioOutlines?.[0]?.entrySceneId ??
     moduleData.scenarioOutlines?.[0]?.id ??
+    moduleData.scenes.keys().next().value ??
     "unknown";
 
   // Initialize runtime NPC state
-  const npcLocations: Record<string, string> = {};
   const npcStats: Record<string, { hp: number; san: number }> = {};
   const npcInventories: Record<string, any[]> = {};
   const npcRelationshipGraph: Record<
@@ -218,12 +222,32 @@ export function initRuntime(params: {
   }
 
   for (const npc of moduleData.npcs) {
-    // Location: resolve macro location to entry scene
+    // Location: prefer explicit currentLocation from NPC profile
     const residence = npc.residence ?? residentToLocation[npc.id];
-    const resolvedLocation = residence
-      ? (macroToEntry[residence] ?? residence)
-      : defaultSceneId;
-    npcLocations[npc.id] = resolvedLocation;
+    let resolvedLocation: string;
+    if (npc.currentLocation && moduleData.scenes.has(npc.currentLocation)) {
+      // NPC profile specifies a valid sub-scene directly
+      resolvedLocation = npc.currentLocation;
+    } else if (residence) {
+      resolvedLocation = macroToEntry[residence] ?? residence;
+    } else {
+      resolvedLocation = defaultSceneId;
+    }
+    // Validate: if resolvedLocation is a macro ID (not in scenes/junctions/roads), map to entry scene
+    if (
+      !moduleData.scenes.has(resolvedLocation) &&
+      !moduleData.junctions.has(resolvedLocation) &&
+      !moduleData.roads.has(resolvedLocation)
+    ) {
+      const fallback = macroToEntry[resolvedLocation];
+      if (fallback) {
+        console.warn(`[moduleLoader] NPC ${npc.id} resolved to macro location ${resolvedLocation}, mapping to entry scene ${fallback}`);
+        resolvedLocation = fallback;
+      } else {
+        console.warn(`[moduleLoader] NPC ${npc.id} resolved to unknown location ${resolvedLocation}, using default ${defaultSceneId}`);
+        resolvedLocation = defaultSceneId;
+      }
+    }
     if (residence) npcResidences[npc.id] = residence;
 
     // Stats
@@ -255,6 +279,9 @@ export function initRuntime(params: {
       }
     }
     npcRelationshipGraph[npc.id] = rels;
+
+    // Initialize characterPosition from resolved location
+    characterPositions[npc.id] = { type: "scene", sceneId: resolvedLocation };
   }
 
   // Build scenarioConditions from scenes, junctions, and roads
@@ -287,7 +314,6 @@ export function initRuntime(params: {
     moduleSetup: moduleData.setup,
     scenarioOutlines: moduleData.scenarioOutlines,
     featureState: {},
-    npcLocations,
     npcStats,
     npcInventories,
     npcRelationshipGraph,

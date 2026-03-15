@@ -3,7 +3,6 @@ import {
   applyPenalties,
   getNodeDifficulty,
   getScenePenalties,
-  luckFailureRate,
   resolveSkillRoll,
 } from "./shared/index.js";
 import type { ExecutionContext } from "./types.js";
@@ -16,7 +15,6 @@ export function createExecutionContext(
     getScenePenalties,
     applyPenalties,
     getNodeDifficulty,
-    luckFailureRate,
     getCharacterPenalties(characterId, dgsm) {
       if (!registry) return new Map();
       return registry.collectCharacterPenalties(characterId, dgsm);

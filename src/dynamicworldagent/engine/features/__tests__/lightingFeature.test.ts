@@ -65,9 +65,14 @@ function createMockDgsm() {
         affectedSceneIds: [],
       };
     },
-    // Topology (default: null — no outdoor topology)
+    // Topology (default: empty — no junctions/roads)
     getTopology(): any {
-      return null;
+      return {
+        junctions: new Map(),
+        roads: new Map(),
+        junctionToRoads: new Map(),
+        sceneToParent: new Map(),
+      };
     },
 
     _featureState: featureState,
@@ -246,11 +251,13 @@ describe("lightingFeature", () => {
       const alleyState = dgsm.getFeatureSceneState("lighting", "alley") as any;
       expect(alleyState.lightLevel).toBe(4);
 
+      // Without topology connections between alley and street, fire light
+      // does not propagate — street only gets moon light (level 2)
       const streetState = dgsm.getFeatureSceneState(
         "lighting",
         "street"
       ) as any;
-      expect(streetState.lightLevel).toBe(3); // fire adjacent=3 > moon=2
+      expect(streetState.lightLevel).toBe(2);
     });
 
     it("should map fire intensity 5 to blinding (level 5)", () => {
@@ -575,18 +582,7 @@ describe("lightingFeature", () => {
       expect(junc2Lighting.lightLevel).toBeGreaterThanOrEqual(3);
     });
 
-    it("should fall back to scene.connections when no topology", () => {
-      // Default dgsm has getTopology() returning null
-      dgsm._setFireState("alley", 3);
-
-      lightingFeature.tick!(dgsm as any, createRuntime("00:00"));
-
-      // Street is connected to alley — should get fire light via scene.connections fallback
-      const streetState = dgsm.getFeatureSceneState(
-        "lighting",
-        "street"
-      ) as any;
-      expect(streetState.lightLevel).toBe(3); // adjacent fire light level
-    });
+    // Removed: "should fall back to scene.connections when no topology"
+    // — topology is now required, no fallback path exists.
   });
 });

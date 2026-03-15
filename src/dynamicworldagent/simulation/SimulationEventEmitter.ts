@@ -60,6 +60,7 @@ export class SimulationEventEmitter extends EventEmitter {
           action.gameTime,
           {
             action: action.action,
+            characterName: action.characterName,
             skill: action.skill,
             outcome: action.outcome,
             successLevel: action.successLevel,

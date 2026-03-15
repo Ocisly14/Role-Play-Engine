@@ -9,7 +9,7 @@ import { objectInteractionHandler } from "../objectInteractionHandler.js";
 function createMockDgsm() {
   const scenes: Record<string, DynamicScene> = {};
   const npcInventories: Record<string, Item[]> = {};
-  const npcLocations: Record<string, string> = {};
+  const characterPositions: Record<string, any> = {};
   const npcCharacters: Array<{
     id: string;
     skills: Record<string, number>;
@@ -23,8 +23,13 @@ function createMockDgsm() {
     getScene(sceneId: string) {
       return scenes[sceneId] ?? null;
     },
-    getNpcLocation(npcId: string) {
-      return npcLocations[npcId] ?? null;
+    getCharacterPosition(characterId: string) {
+      return characterPositions[characterId] ?? null;
+    },
+    resolveLocationId(position: any) {
+      if (position.type === "scene") return position.sceneId;
+      if (position.type === "junction") return position.junctionId;
+      return position.roadId;
     },
     getNpcInventory(npcId: string): Item[] {
       return npcInventories[npcId] ?? [];
@@ -61,7 +66,7 @@ function createMockDgsm() {
       skills: Record<string, number> = {},
       luck = 50
     ) {
-      npcLocations[npcId] = location;
+      characterPositions[npcId] = { type: "scene", sceneId: location };
       npcCharacters.push({ id: npcId, skills, status: { luck } });
     },
     _scenes: scenes,
@@ -78,7 +83,6 @@ function createMockCtx(): ExecutionContext {
       skills: Record<string, number>,
       _penalties: Map<string, number>
     ) => skills,
-    luckFailureRate: () => 0,
     resolveSkillRoll: () => ({
       failed: false,
       detail: "Regular success",
@@ -360,7 +364,7 @@ describe("objectInteractionHandler", () => {
       dgsm.addItemToNpc("player-1", acid);
 
       const node = makeNode({
-        actionType: "exploration",
+        skill: "Perception",
         objectInteractionPayload: {
           action: "use",
           itemId: "acid",
@@ -407,7 +411,7 @@ describe("objectInteractionHandler", () => {
       dgsm.addItemToNpc("player-1", lockpick);
 
       const node = makeNode({
-        actionType: "stealth",
+        skill: "Stealth",
         objectInteractionPayload: {
           action: "use",
           itemId: "lockpick",

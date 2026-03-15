@@ -194,8 +194,7 @@ function updateFatigueCondition(
 
 /**
  * Build a list of all tracked characters and their location IDs.
- * Uses CharacterPosition when available (topology-aware), falling back to
- * npcLocations.
+ * Uses CharacterPosition to resolve location IDs.
  */
 function getTrackedCharacters(dgsm: DynamicGameStateManager): Array<{
   characterId: string;

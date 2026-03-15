@@ -27,7 +27,7 @@ import {
 
 function createMockDgsm() {
   const featureState: Record<string, Record<string, unknown>> = {};
-  const npcLocations: Record<string, string> = {};
+  const characterPositions: Record<string, any> = {};
   const npcStats: Record<string, { hp: number; san: number }> = {};
   const npcCharacters: Array<{
     id: string;
@@ -53,7 +53,7 @@ function createMockDgsm() {
     },
     getState() {
       return {
-        npcLocations,
+        characterPositions,
         npcStats,
         npcCharacters,
         timeOfDay: "08:00",
@@ -78,7 +78,7 @@ function createMockDgsm() {
       san = 50,
       maxSanity = 99
     ) {
-      npcLocations[npcId] = location;
+      characterPositions[npcId] = { type: "scene", sceneId: location };
       npcStats[npcId] = { hp, san };
       npcCharacters.push({
         id: npcId,

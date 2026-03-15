@@ -8,11 +8,7 @@ import type {
   TownTopology,
 } from "../../state/topologyTypes.js";
 import { buildOutcome, makeAction } from "../shared/nodeHelpers.js";
-import {
-  calculateTravelTime,
-  findPath,
-  findTopologyPath,
-} from "../shared/pathfinding.js";
+import { findTopologyPath } from "../shared/pathfinding.js";
 import type { ExecutionContext, NodeHandler } from "../types.js";
 
 export const movementHandler: NodeHandler = {
@@ -21,7 +17,7 @@ export const movementHandler: NodeHandler = {
   description:
     "Move a character to a different location. " +
     "If skill is set, a creative single-hop movement with skill check is attempted. " +
-    "Otherwise, BFS pathfinding is used to find a route through the scene graph.",
+    "Otherwise, topology pathfinding is used to find a route through the scene graph.",
 
   requiredFields: ["action", "location"],
 
@@ -42,7 +38,8 @@ export const movementHandler: NodeHandler = {
     ctx: ExecutionContext
   ): CharacterAction {
     const state = dgsm.getState();
-    const npcLocation = dgsm.getNpcLocation(node.characterId);
+    const pos = dgsm.getCharacterPosition(node.characterId);
+    const npcLocation = pos ? dgsm.resolveLocationId(pos) : undefined;
     const npc = state.npcCharacters.find((n) => n.id === node.characterId);
     const npcSkills = npc?.skills ?? {};
     const difficulty = ctx.getNodeDifficulty(node, dgsm);
@@ -78,7 +75,11 @@ export const movementHandler: NodeHandler = {
         );
       }
       lastRollDetail = rollResult.detail;
-      dgsm.setNpcLocation(node.characterId, node.location);
+      const topology = dgsm.getTopology();
+      const targetPos = resolveTargetPosition(node.location, topology);
+      if (targetPos) {
+        dgsm.setCharacterPosition(node.characterId, targetPos);
+      }
       return makeAction(
         node,
         "completed",
@@ -89,121 +90,64 @@ export const movementHandler: NodeHandler = {
       );
     }
 
-    // Topology-based movement (preferred when topology is loaded)
+    // Topology-based movement
     const topology = dgsm.getTopology();
-    if (topology) {
-      const currentPos = dgsm.getCharacterPosition(node.characterId);
-      if (currentPos) {
-        const targetPos = resolveTargetPosition(node.location, topology);
-        if (targetPos) {
-          const topologyPath = findTopologyPath(
-            currentPos,
-            targetPos,
-            topology,
-            state.blockedConnections
-          );
-
-          if (!topologyPath) {
-            return makeAction(
-              node,
-              "failed",
-              buildOutcome(node, "failed", {
-                reason: "no path available in topology",
-              }),
-              { difficulty, failureReason: "location_blocked" }
-            );
-          }
-
-          dgsm.setCharacterPosition(node.characterId, targetPos);
-          // Also update legacy npcLocation for backward compatibility
-          dgsm.setNpcLocation(node.characterId, node.location);
-
-          // Emit npc_moved event for simulation viewers
-          if (ctx.simulationEmitter) {
-            const state = dgsm.getState();
-            ctx.simulationEmitter.emitSimulationEvent(
-              "npc_moved",
-              node.characterId,
-              node.location,
-              state.gameDay,
-              state.timeOfDay,
-              {
-                fromPosition: currentPos,
-                toPosition: targetPos,
-              }
-            );
-          }
-
-          return makeAction(
-            node,
-            "completed",
-            buildOutcome(node, "completed", {
-              reason: `Traveled via topology in ~${topologyPath.totalMinutes} min`,
-            }),
-            { difficulty, successLevel: resolvedSuccessLevel }
-          );
-        }
-      }
-    }
-
-    // Normal movement: BFS pathfinding
-    const allLocations = dgsm.getAllLocations();
-    if (allLocations.size > 0) {
-      const path = findPath(
-        fromLocation,
-        node.location,
-        allLocations,
+    const currentPos = dgsm.getCharacterPosition(node.characterId);
+    const targetPos = resolveTargetPosition(node.location, topology);
+    if (currentPos && targetPos) {
+      const topologyPath = findTopologyPath(
+        currentPos,
+        targetPos,
+        topology,
         state.blockedConnections
       );
-      if (!path) {
+
+      if (!topologyPath) {
         return makeAction(
           node,
           "failed",
-          buildOutcome(node, "failed", { reason: "no path available" }),
+          buildOutcome(node, "failed", {
+            reason: "no path available in topology",
+          }),
           { difficulty, failureReason: "location_blocked" }
         );
       }
-      const travelTime = calculateTravelTime(
-        path,
-        allLocations,
-        state.transportEdges
-      );
-      dgsm.setNpcLocation(node.characterId, node.location);
-      const hopCount = path.length - 1;
+
+      dgsm.setCharacterPosition(node.characterId, targetPos);
+
+      // Emit npc_moved event for simulation viewers
+      if (ctx.simulationEmitter) {
+        const state = dgsm.getState();
+        ctx.simulationEmitter.emitSimulationEvent(
+          "npc_moved",
+          node.characterId,
+          node.location,
+          state.gameDay,
+          state.timeOfDay,
+          {
+            fromPosition: currentPos,
+            toPosition: targetPos,
+          }
+        );
+      }
+
       return makeAction(
         node,
         "completed",
         buildOutcome(node, "completed", {
-          reason: `Traveled ${hopCount} hops in ~${travelTime} min`,
+          reason: `Traveled via topology in ~${topologyPath.totalMinutes} min`,
         }),
         { difficulty, successLevel: resolvedSuccessLevel }
       );
     }
 
-    // Fallback: no scene graph loaded, use legacy direct movement
-    if (dgsm.isConnectionBlocked(fromLocation, node.location)) {
-      return makeAction(
-        node,
-        "failed",
-        buildOutcome(node, "failed", { reason: "path blocked" }),
-        { difficulty, failureReason: "location_blocked" }
-      );
-    }
-    const targetConditions = dgsm.getSceneConditions(node.location);
-    const isBlocked = targetConditions.some((c) => c.mechanicalEffect?.blocked);
-    if (isBlocked) {
-      return makeAction(
-        node,
-        "failed",
-        buildOutcome(node, "failed", { reason: "destination blocked" }),
-        { difficulty, failureReason: "location_blocked" }
-      );
-    }
-    dgsm.setNpcLocation(node.characterId, node.location);
-    return makeAction(node, "completed", buildOutcome(node, "completed"), {
-      difficulty,
-      successLevel: resolvedSuccessLevel,
-    });
+    // No position or target — cannot move
+    return makeAction(
+      node,
+      "failed",
+      buildOutcome(node, "failed", { reason: "no path available in topology" }),
+      { difficulty, failureReason: "location_blocked" }
+    );
   },
 };
 

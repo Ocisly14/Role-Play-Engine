@@ -98,11 +98,9 @@ function makeTestTopology(): TownTopology {
 
 function createMockDgsm(overrides?: {
   characterPositions?: Record<string, any>;
-  npcLocations?: Record<string, string>;
 }) {
   const characterPositions: Record<string, any> =
     overrides?.characterPositions ?? {};
-  const npcLocations: Record<string, string> = overrides?.npcLocations ?? {};
 
   return {
     getCharacterPosition(characterId: string) {
@@ -124,9 +122,6 @@ function createMockDgsm(overrides?: {
         default:
           return "";
       }
-    },
-    getNpcLocation(npcId: string) {
-      return npcLocations[npcId];
     },
   };
 }
@@ -277,13 +272,6 @@ describe("resolveCharacterLocationId", () => {
     expect(resolveCharacterLocationId("npc-1", dgsm as any)).toBe("SCN_A1");
   });
 
-  it("falls back to getNpcLocation for NPCs without CharacterPosition", () => {
-    const dgsm = createMockDgsm({
-      npcLocations: { "npc-2": "SCN_ALONG" },
-    });
-    expect(resolveCharacterLocationId("npc-2", dgsm as any)).toBe("SCN_ALONG");
-  });
-
   it("returns undefined when no location is found at all", () => {
     const dgsm = createMockDgsm();
     expect(
@@ -291,14 +279,4 @@ describe("resolveCharacterLocationId", () => {
     ).toBeUndefined();
   });
 
-  it("prefers CharacterPosition over fallback", () => {
-    const dgsm = createMockDgsm({
-      characterPositions: {
-        "npc-1": { type: "junction", junctionId: "JUNC_B" },
-      },
-      npcLocations: { "npc-1": "SCN_A1" },
-    });
-    // CharacterPosition takes precedence
-    expect(resolveCharacterLocationId("npc-1", dgsm as any)).toBe("JUNC_B");
-  });
 });

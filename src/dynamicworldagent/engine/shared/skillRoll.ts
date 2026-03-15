@@ -31,6 +31,33 @@ export function getNodeDifficulty(
 
 // ==================== Best skill selection (for opposed rolls) ====================
 
+/** Case-insensitive lookup in a Record<string, number>. */
+function caseInsensitiveLookup(
+  skills: Record<string, number>,
+  key: string
+): number | undefined {
+  if (skills[key] !== undefined) return skills[key];
+  const lower = key.toLowerCase();
+  for (const [k, v] of Object.entries(skills)) {
+    if (k.toLowerCase() === lower) return v;
+  }
+  return undefined;
+}
+
+/** Case-insensitive lookup in a Map<string, number>. */
+function caseInsensitiveMapGet(
+  map: Map<string, number>,
+  key: string
+): number | undefined {
+  const direct = map.get(key);
+  if (direct !== undefined) return direct;
+  const lower = key.toLowerCase();
+  for (const [k, v] of map) {
+    if (k.toLowerCase() === lower) return v;
+  }
+  return undefined;
+}
+
 /** Pick the NPC's highest skill value from a list of candidate skill names */
 function pickBestFromCandidates(
   candidates: string[],
@@ -38,7 +65,7 @@ function pickBestFromCandidates(
 ): { skill: string; value: number } | null {
   let best: { skill: string; value: number } | null = null;
   for (const name of candidates) {
-    const value = npcSkills[name];
+    const value = caseInsensitiveLookup(npcSkills, name);
     if (value !== undefined && (!best || value > best.value)) {
       best = { skill: name, value };
     }
@@ -70,9 +97,9 @@ export function resolveSkillRoll(
     STR: 50, DEX: 50, INT: 50, POW: 50, CON: 50, SIZ: 50, APP: 50, EDU: 50,
   };
 
-  // NPC's trained value, or CoC base value for untrained skill
-  const baseValue = COC_SKILL_BASE_VALUES.get(skill) ?? 1;
-  const skillValue = adjustedSkills[skill] ?? baseValue;
+  // NPC's trained value, or CoC base value for untrained skill (case-insensitive)
+  const baseValue = caseInsensitiveMapGet(COC_SKILL_BASE_VALUES, skill) ?? 1;
+  const skillValue = caseInsensitiveLookup(adjustedSkills, skill) ?? baseValue;
 
   // --- Combat (opposed) ---
   if (node.type === "character_interaction" && node.targetCharacterId && isCombatSkill(skill)) {
