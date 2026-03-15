@@ -188,13 +188,12 @@ export async function upsertIntent(
   characterName: string,
   intent: string
 ): Promise<void> {
-  const id = `${sessionId}_${characterId}`;
-
   await prisma.npcLongTermIntent.upsert({
-    where: { id },
+    where: {
+      sessionId_npcId: { sessionId, npcId: characterId },
+    },
     update: { intent },
     create: {
-      id,
       sessionId,
       moduleId,
       npcId: characterId,

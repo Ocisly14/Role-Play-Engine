@@ -93,6 +93,7 @@ model NpcLongTermIntent {
   session Session @relation(fields: [sessionId], references: [sessionId], onDelete: Cascade)
   module  Module  @relation(fields: [moduleId], references: [moduleId], onDelete: Cascade)
 
+  @@unique([sessionId, npcId])
   @@index([sessionId])
   @@map("npc_long_term_intents")
 }

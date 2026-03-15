@@ -110,7 +110,7 @@ function getFireLightContributions(
         // Fallback: use scene.connections
         const scene = dgsm.getScene(locationId);
         if (scene) {
-          for (const connId of scene.connections) {
+          for (const connId of scene.connections ?? []) {
             contributions.push({ sceneId: connId, lightLevel: adjacentLevel });
           }
         }
@@ -331,8 +331,8 @@ Dark environments impose skill penalties. Blinding light also impairs vision.`,
 
     const state = dgsm.getState();
 
-    // Process all scenes
-    state.scenes.forEach((_scene: any, sceneId: string) => {
+    // Process all locations (scenes + junctions + roads)
+    dgsm.getAllLocations().forEach((_scene: any, sceneId: string) => {
       const lighting = computeSceneLighting(
         dgsm,
         sceneId,

@@ -55,10 +55,9 @@ export class NPCPlanningAgent {
 
         await this.prisma.npcLongTermIntent.upsert({
           where: {
-            id: `${sessionId}_${npc.id}`,
+            sessionId_npcId: { sessionId, npcId: npc.id },
           },
           create: {
-            id: `${sessionId}_${npc.id}`,
             sessionId,
             moduleId,
             npcId: npc.id,
@@ -183,6 +182,7 @@ export class NPCPlanningAgent {
       memoryContext,
     });
 
+    console.log(`[Planning] 📋 Generating daily schedule for ${npc.name}`);
     const response = await generateText({
       runtime: this.runtime,
       context: userPrompt,
@@ -309,6 +309,8 @@ export class NPCPlanningAgent {
       }),
     });
 
+    const nextEntry = schedule[0];
+    console.log(`[Planning] 🎯 Generating detailed nodes for ${npc.name}: "${nextEntry?.activity ?? ""}" @ ${nextEntry?.location ?? "?"}`);
     const response = await generateText({
       runtime: this.runtime,
       context: userPrompt,
@@ -466,6 +468,7 @@ export class NPCPlanningAgent {
       language,
     });
 
+    console.log(`[Planning] 🔄 Revising schedule for ${npc.name}: "${triggerDescription.slice(0, 60)}"`);
     const response = await generateText({
       runtime: this.runtime,
       context: userPrompt,
@@ -567,6 +570,7 @@ export class NPCPlanningAgent {
       }),
     });
 
+    console.log(`[Planning] ⚡ Revising plans for ${npc.name}: ${triggerDescription.slice(0, 60)}`);
     const response = await generateText({
       runtime: this.runtime,
       context: userPrompt,
@@ -581,6 +585,7 @@ export class NPCPlanningAgent {
     }>(response);
 
     // Inject characterId + characterName
+    if (!Array.isArray(parsed.revisedNodes)) return;
     const revisedNodes = parsed.revisedNodes.map((node) => ({
       ...node,
       characterId: npcId,
@@ -628,6 +633,7 @@ export class NPCPlanningAgent {
       language,
     });
 
+    console.log(`[Planning] 🔍 Impact gate for ${candidate.npcName}: "${candidate.triggeringEvents.slice(0, 60)}"`);
     const response = await generateText({
       runtime: this.runtime,
       context: userPrompt,
@@ -673,6 +679,7 @@ export class NPCPlanningAgent {
       language,
     });
 
+    console.log(`[Planning] 💬 Updating relationship ${charA.name} ↔ ${charB.name}`);
     const response = await generateText({
       runtime: this.runtime,
       context: prompt,
@@ -901,6 +908,7 @@ export class NPCPlanningAgent {
       language,
     });
 
+    console.log(`[Planning] 📝 Summarizing day ${gameDay} for ${npc.name}`);
     const response = await generateText({
       runtime: this.runtime,
       context: userPrompt,

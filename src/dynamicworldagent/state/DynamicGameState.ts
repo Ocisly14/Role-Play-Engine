@@ -33,8 +33,10 @@ export interface DynamicGameState {
   // === Session ===
   sessionId: string;
 
-  // === Scenes ===
+  // === Scenes & Topology Nodes ===
   scenes: Map<string, DynamicScene>;
+  junctions: Map<string, JunctionNode>;
+  roads: Map<string, RoadNode>;
 
   // === Time ===
   gameDay: number; // Day number in game
@@ -92,6 +94,8 @@ export const initialDynamicGameState = (params: {
 }): DynamicGameState => ({
   sessionId: params.sessionId,
   scenes: new Map(),
+  junctions: new Map(),
+  roads: new Map(),
   gameDay: params.gameDay ?? 1,
   timeOfDay: params.timeOfDay ?? "08:00",
   npcCharacters: [],
@@ -143,10 +147,54 @@ export class DynamicGameStateManager {
   // === Scene Helpers ===
 
   /**
-   * Get a scene by ID
+   * Get a scene, junction, or road by ID.
+   * Searches scenes first, then junctions, then roads.
    */
   getScene(sceneId: string): DynamicScene | null {
-    return this.state.scenes.get(sceneId) ?? null;
+    return (
+      this.state.scenes.get(sceneId) ??
+      (this.state.junctions.get(sceneId) as unknown as DynamicScene) ??
+      (this.state.roads.get(sceneId) as unknown as DynamicScene) ??
+      null
+    );
+  }
+
+  /**
+   * Get a merged map of all locations (scenes + junctions + roads).
+   * Junctions and roads get a synthesized `connections` field for BFS compatibility.
+   */
+  getAllLocations(): Map<string, DynamicScene> {
+    const all = new Map(this.state.scenes);
+
+    // Build junction → road lookup
+    const junctionRoads = new Map<string, string[]>();
+    for (const [id, road] of this.state.roads) {
+      for (const ep of [road.endpointA, road.endpointB]) {
+        if (!junctionRoads.has(ep)) junctionRoads.set(ep, []);
+        junctionRoads.get(ep)!.push(id);
+      }
+    }
+
+    // Junctions: connections = connectedSceneIds + connected roads
+    for (const [id, junc] of this.state.junctions) {
+      const connections = [
+        ...(junc.connectedSceneIds ?? []),
+        ...(junctionRoads.get(id) ?? []),
+      ];
+      all.set(id, { ...junc, connections } as unknown as DynamicScene);
+    }
+
+    // Roads: connections = endpointA + endpointB + along scenes
+    for (const [id, road] of this.state.roads) {
+      const connections = [
+        road.endpointA,
+        road.endpointB,
+        ...(road.alongConnections ?? []).map((ac) => ac.sceneId),
+      ];
+      all.set(id, { ...road, connections } as unknown as DynamicScene);
+    }
+
+    return all;
   }
 
   /**
@@ -181,10 +229,18 @@ export class DynamicGameStateManager {
    * Serialize state for storage (converts Maps to Objects, Dates to ISO strings)
    */
   serialize(): any {
-    // Convert scenes Map to plain object
+    // Convert scenes/junctions/roads Maps to plain objects
     const scenesObj: Record<string, DynamicScene> = {};
     this.state.scenes.forEach((scene, id) => {
       scenesObj[id] = scene;
+    });
+    const junctionsObj: Record<string, any> = {};
+    this.state.junctions.forEach((j, id) => {
+      junctionsObj[id] = j;
+    });
+    const roadsObj: Record<string, any> = {};
+    this.state.roads.forEach((r, id) => {
+      roadsObj[id] = r;
     });
 
     // Convert blockedConnections Map to plain object
@@ -210,6 +266,8 @@ export class DynamicGameStateManager {
     return {
       ...this.state,
       scenes: scenesObj,
+      junctions: junctionsObj,
+      roads: roadsObj,
       blockedConnections: blockedConnsObj,
       topology: topologyObj,
       characterPositions: this.state.characterPositions,
@@ -259,18 +317,47 @@ export class DynamicGameStateManager {
       }
     }
 
-    // Reconstruct topology from serialized junctions/roads
+    // Reconstruct junctions Map
+    const junctions = new Map<string, JunctionNode>();
+    if (data.junctions) {
+      if (data.junctions instanceof Map) {
+        data.junctions.forEach((j: JunctionNode, id: string) =>
+          junctions.set(id, j)
+        );
+      } else {
+        Object.entries(data.junctions).forEach(([id, j]) =>
+          junctions.set(id, j as JunctionNode)
+        );
+      }
+    }
+
+    // Reconstruct roads Map
+    const roads = new Map<string, RoadNode>();
+    if (data.roads) {
+      if (data.roads instanceof Map) {
+        data.roads.forEach((r: RoadNode, id: string) => roads.set(id, r));
+      } else {
+        Object.entries(data.roads).forEach(([id, r]) =>
+          roads.set(id, r as RoadNode)
+        );
+      }
+    }
+
+    // Reconstruct topology from junctions/roads
     let topology: TownTopology | null = null;
-    if (data.topology?.junctions && data.topology?.roads) {
-      const junctions = new Map<string, JunctionNode>();
-      Object.entries(data.topology.junctions).forEach(([id, j]) =>
-        junctions.set(id, j as JunctionNode)
-      );
-      const roads = new Map<string, RoadNode>();
-      Object.entries(data.topology.roads).forEach(([id, r]) =>
-        roads.set(id, r as RoadNode)
-      );
+    if (junctions.size > 0 || roads.size > 0) {
       topology = buildTopology(junctions, roads);
+    } else if (data.topology?.junctions && data.topology?.roads) {
+      // Fallback: old serialization format stored topology separately
+      const topoJunctions = new Map<string, JunctionNode>();
+      Object.entries(data.topology.junctions).forEach(([id, j]) =>
+        topoJunctions.set(id, j as JunctionNode)
+      );
+      const topoRoads = new Map<string, RoadNode>();
+      Object.entries(data.topology.roads).forEach(([id, r]) =>
+        topoRoads.set(id, r as RoadNode)
+      );
+      topology = buildTopology(topoJunctions, topoRoads);
     }
 
     return {
@@ -282,6 +369,8 @@ export class DynamicGameStateManager {
       npcCharacters: data.npcCharacters ?? [],
       scenarioOutlines: data.scenarioOutlines ?? [],
       scenes,
+      junctions,
+      roads,
       blockedConnections,
       featureState: data.featureState ?? {},
       npcLocations: data.npcLocations ?? {},

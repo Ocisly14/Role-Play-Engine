@@ -66,7 +66,11 @@ export async function loadModule(
   for (const row of sceneRows) {
     const data = row.data as any;
     if (row.entryId === "__scenarios_outline__") {
-      scenarioOutlines = Array.isArray(data) ? data : [];
+      scenarioOutlines = Array.isArray(data)
+        ? data
+        : Array.isArray(data?.scenarios)
+          ? data.scenarios
+          : [];
     } else if (row.entryId === "__transport_edges__") {
       transportEdges = Array.isArray(data)
         ? data
@@ -172,15 +176,6 @@ export function initRuntime(params: {
 }): DynamicGameState {
   const { sessionId, moduleData, gameDay, timeOfDay } = params;
 
-  // Merge all spatial data into flat scenes map
-  const allScenes = new Map(moduleData.scenes);
-  for (const [id, junc] of moduleData.junctions) {
-    allScenes.set(id, junc as unknown as DynamicScene);
-  }
-  for (const [id, road] of moduleData.roads) {
-    allScenes.set(id, road as unknown as DynamicScene);
-  }
-
   // Build topology
   const topology: TownTopology | null =
     moduleData.junctions.size > 0 || moduleData.roads.size > 0
@@ -251,17 +246,29 @@ export function initRuntime(params: {
     npcRelationshipGraph[npc.id] = rels;
   }
 
-  // Build scenarioConditions from scenes
+  // Build scenarioConditions from scenes, junctions, and roads
   const scenarioConditions: Record<string, any[]> = {};
-  for (const [sceneId, scene] of allScenes) {
+  for (const [sceneId, scene] of moduleData.scenes) {
     if (scene.conditions && scene.conditions.length > 0) {
       scenarioConditions[sceneId] = scene.conditions;
+    }
+  }
+  for (const [id, junc] of moduleData.junctions) {
+    if (junc.conditions && junc.conditions.length > 0) {
+      scenarioConditions[id] = junc.conditions;
+    }
+  }
+  for (const [id, road] of moduleData.roads) {
+    if (road.conditions && road.conditions.length > 0) {
+      scenarioConditions[id] = road.conditions;
     }
   }
 
   return {
     sessionId,
-    scenes: allScenes,
+    scenes: moduleData.scenes,
+    junctions: moduleData.junctions,
+    roads: moduleData.roads,
     gameDay,
     timeOfDay,
     npcCharacters: moduleData.npcs,

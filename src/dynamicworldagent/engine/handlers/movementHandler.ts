@@ -147,11 +147,12 @@ export const movementHandler: NodeHandler = {
     }
 
     // Normal movement: BFS pathfinding
-    if (state.scenes.size > 0) {
+    const allLocations = dgsm.getAllLocations();
+    if (allLocations.size > 0) {
       const path = findPath(
         fromLocation,
         node.location,
-        state.scenes,
+        allLocations,
         state.blockedConnections
       );
       if (!path) {
@@ -164,7 +165,7 @@ export const movementHandler: NodeHandler = {
       }
       const travelTime = calculateTravelTime(
         path,
-        state.scenes,
+        allLocations,
         state.transportEdges
       );
       dgsm.setNpcLocation(node.characterId, node.location);

@@ -142,11 +142,13 @@ export function findAffectedScenes(
     scenes.add(sourceSceneId);
   }
 
+  const allLocations = dgsm.getAllLocations();
+
   // Level 3: same macro location
   if (scopeLevel >= 3) {
     const parent = getParentLocationId(sourceSceneId, dgsm);
     if (parent) {
-      for (const [id, scene] of state.scenes) {
+      for (const [id, scene] of allLocations) {
         if (scene.parentLocationId === parent) scenes.add(id);
       }
     }
@@ -161,7 +163,7 @@ export function findAffectedScenes(
         state.transportEdges,
         NEIGHBORHOOD_TRAVEL_MINUTES
       );
-      for (const [id, scene] of state.scenes) {
+      for (const [id, scene] of allLocations) {
         if (
           scene.parentLocationId &&
           neighbors.includes(scene.parentLocationId)
@@ -174,7 +176,7 @@ export function findAffectedScenes(
 
   // Level 5: global
   if (scopeLevel >= 5) {
-    for (const id of state.scenes.keys()) {
+    for (const id of allLocations.keys()) {
       scenes.add(id);
     }
   }

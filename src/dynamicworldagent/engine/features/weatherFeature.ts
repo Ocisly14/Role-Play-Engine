@@ -149,8 +149,7 @@ function getOutdoorSceneIds(
   regionId: string
 ): string[] {
   const sceneIds: string[] = [];
-  const state = dgsm.getState();
-  state.scenes.forEach((scene: any, id: string) => {
+  dgsm.getAllLocations().forEach((scene: any, id: string) => {
     if (scene.parentLocationId === regionId && !scene.indoor) {
       sceneIds.push(id);
     }
@@ -311,7 +310,7 @@ function updateWeatherBlocking(
     const scene = dgsm.getScene(sceneId);
     if (!scene) continue;
 
-    for (const connId of scene.connections) {
+    for (const connId of scene.connections ?? []) {
       const connScene = dgsm.getScene(connId);
       if (!connScene || (connScene as any).indoor) continue;
 
@@ -353,7 +352,7 @@ function initWeatherFromPresets(dgsm: DynamicGameStateManager): void {
   const state = dgsm.getState();
 
   const regionIds = new Set<string>();
-  state.scenes.forEach((scene: any) => {
+  dgsm.getAllLocations().forEach((scene: any) => {
     regionIds.add(scene.parentLocationId);
   });
 

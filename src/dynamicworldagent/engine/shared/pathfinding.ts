@@ -29,7 +29,7 @@ export function findPath(
     const scene = scenes.get(sceneId);
     if (!scene) continue;
 
-    for (const connId of scene.connections) {
+    for (const connId of scene.connections ?? []) {
       if (visited.has(connId)) continue;
 
       const key1 = `${sceneId}::${connId}`;

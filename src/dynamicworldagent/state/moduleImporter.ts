@@ -36,6 +36,11 @@ export async function importModule(params: {
   });
   const moduleId = mod.moduleId;
 
+  // Clean old data for this module before re-importing
+  await prisma.moduleNpc.deleteMany({ where: { moduleId } });
+  await prisma.moduleScene.deleteMany({ where: { moduleId } });
+  await prisma.moduleSetup.deleteMany({ where: { moduleId } });
+
   // 2. Import module_setup.json
   const setupPath = path.join(moduleDir, "module_setup.json");
   if (fs.existsSync(setupPath)) {
@@ -101,7 +106,7 @@ export async function importModule(params: {
     const full = path.join(moduleDir, d);
     return (
       fs.statSync(full).isDirectory() &&
-      (d.endsWith("_npc") || d.includes("'s_npc"))
+      (d === "npc" || d.endsWith("_npc") || d.includes("'s_npc"))
     );
   });
   for (const dir of npcDirs) {
