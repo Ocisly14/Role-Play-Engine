@@ -411,6 +411,7 @@ export interface RevisePlansParams {
   pendingNodes: string;
   triggerDescription: string;
   currentLocation: string;
+  currentPositionDetail: string;
   sceneMap: string;
   sceneDescription: string;
   sceneItems: string;
@@ -505,6 +506,9 @@ ${params.pendingNodes}
 ## Your Current Location
 ${params.currentLocation || "Unknown"}
 
+## Your Exact Position
+${params.currentPositionDetail || "Unknown."}
+
 ## Where You Are
 ${params.sceneDescription || "No description available."}
 
@@ -554,7 +558,7 @@ export function buildImpactGatePrompt(params: ImpactGateParams): PromptParts {
   const systemPrompt = `You are an NPC character in a Call of Cthulhu tabletop RPG.
 
 ## Task
-You just witnessed something. Think about what you saw and how it affects you.
+Something just happened involving you or around you. Think about what you perceived and how it affects you.
 
 Decide:
 1. Should you change what you're doing **right now**? (shouldRevise)

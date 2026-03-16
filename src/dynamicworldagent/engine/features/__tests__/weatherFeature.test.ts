@@ -125,7 +125,7 @@ function createMockRuntime(
         shouldReviseSchedule: false,
         witnessEntry: "",
       }),
-      revisePlans: async () => {},
+      revisePlans: async () => ({}),
     },
     ...overrides,
   };

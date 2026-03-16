@@ -83,6 +83,8 @@ export interface PlanNodeExecutionMeta {
   startedAt?: string;
   completedAt?: string;
   failedAt?: string;
+  interruptedAt?: string;
+  interruptionReason?: string;
   blockedReason?: string;
   movement?: MovementExecutionState;
 }
@@ -91,7 +93,8 @@ export type PlanNodeStatus =
   | "pending"
   | "in_progress"
   | "completed"
-  | "failed";
+  | "failed"
+  | "interrupted";
 
 export interface PlanNode {
   nodeId: string;
@@ -140,9 +143,10 @@ export interface CharacterAction {
   impact: 0 | 1 | 2 | 3 | 4 | 5;
   difficulty?: "regular" | "hard" | "extreme" | "luck_only";
   successLevel?: SuccessLevel;
-  status: "completed" | "failed";
+  status: "completed" | "failed" | "interrupted";
   outcome: string;
   failureReason?: FailureReason;
+  interruptionReason?: "revise_replan";
   targetCharacterId?: string;
   discoveries?: DiscoveryEntry[];
   damagedEvidence?: { itemId: string; sourceName: string };
@@ -173,6 +177,10 @@ export interface RevisePlansContext {
   memoryLog: string[];
   pendingNodes: PlanNode[];
   trigger: FailureTrigger | ImpactTrigger;
+}
+
+export interface RevisePlansResult {
+  interruptedAction?: CharacterAction;
 }
 
 export interface SimulationTickResult {

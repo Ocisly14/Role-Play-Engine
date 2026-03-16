@@ -6,6 +6,7 @@ import type {
 import type { DynamicGameStateManager } from "../../state/DynamicGameState.js";
 import type { Item } from "../../state/types.js";
 import { deepMergeItem } from "../shared/deepMerge.js";
+import { isCharacterAtLocation } from "../shared/locationPresence.js";
 import { buildOutcome, makeAction } from "../shared/nodeHelpers.js";
 import type { ExecutionContext, NodeHandler } from "../types.js";
 
@@ -263,7 +264,6 @@ export const objectInteractionHandler: NodeHandler = {
   ): CharacterAction {
     const state = dgsm.getState();
     const pos = dgsm.getCharacterPosition(node.characterId);
-    const npcLocation = pos ? dgsm.resolveLocationId(pos) : undefined;
     const npc = state.npcCharacters.find((n) => n.id === node.characterId);
     const npcSkills = npc?.skills ?? {};
     const difficulty = ctx.getNodeDifficulty(node, dgsm);
@@ -275,7 +275,7 @@ export const objectInteractionHandler: NodeHandler = {
     const adjustedSkills = ctx.applyPenalties(afterScene, charPenalties);
 
     // Location check
-    if (npcLocation && npcLocation !== node.location) {
+    if (!isCharacterAtLocation(pos, node.location)) {
       return makeAction(
         node,
         "failed",

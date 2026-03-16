@@ -1,6 +1,7 @@
 import type { CharacterAction } from "../../dynamicBasicAgent/npcPlanning/types.js";
 import type { DynamicGameStateManager } from "../../state/DynamicGameState.js";
 import type { TransportEdge } from "../../state/types.js";
+import { arePositionsCoLocated } from "./locationPresence.js";
 
 const NEIGHBORHOOD_TRAVEL_MINUTES = 15;
 
@@ -64,6 +65,10 @@ export function findAffectedCharacters(
 
   const allCharacterIds = state.npcCharacters.map((n) => n.id);
 
+  const getCharPosition = (charId: string) => {
+    return dgsm.getCharacterPosition(charId);
+  };
+
   const getCharLocation = (charId: string): string | undefined => {
     const pos = dgsm.getCharacterPosition(charId);
     return pos ? dgsm.resolveLocationId(pos) : undefined;
@@ -76,9 +81,18 @@ export function findAffectedCharacters(
 
   // Level 2: same sub-scene
   if (impactLevel >= 2) {
-    for (const charId of allCharacterIds) {
-      if (getCharLocation(charId) === action.location) {
-        addChar(charId, 2);
+    const sourcePos = getCharPosition(action.characterId);
+    if (sourcePos) {
+      for (const charId of allCharacterIds) {
+        if (arePositionsCoLocated(sourcePos, getCharPosition(charId), dgsm)) {
+          addChar(charId, 2);
+        }
+      }
+    } else {
+      for (const charId of allCharacterIds) {
+        if (getCharLocation(charId) === action.location) {
+          addChar(charId, 2);
+        }
       }
     }
   }

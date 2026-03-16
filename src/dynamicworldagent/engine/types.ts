@@ -105,7 +105,9 @@ export interface NpcPlanningCapability {
     context: RevisePlansContext,
     language: string,
     registry?: import("./registry.js").GameEngineRegistry
-  ): Promise<void>;
+  ): Promise<
+    import("../dynamicBasicAgent/npcPlanning/types.js").RevisePlansResult
+  >;
 }
 
 /** Runtime dependencies passed to WorldFeature hooks */

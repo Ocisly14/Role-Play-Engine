@@ -5,6 +5,10 @@ import { drainPendingEmotions } from "../../engine/features/sanityFeature.js";
 import { resolveTargetPosition } from "../../engine/handlers/movementHandler.js";
 import type { GameEngineRegistry } from "../../engine/registry.js";
 import { findAffectedCharacters } from "../../engine/shared/impactPropagation.js";
+import {
+  arePositionsCoLocated,
+  isCharacterAtLocation,
+} from "../../engine/shared/locationPresence.js";
 import { buildMovementRouteIgnoringBlocks } from "../../engine/shared/pathfinding.js";
 import type {
   ExecutionContext,
@@ -18,6 +22,7 @@ import {
   type SessionRagChunkInput,
   SessionRagService,
 } from "../knowledge/sessionRagService.js";
+import { buildAutoMovementReplacement } from "./autoMovementHelpers.js";
 import type { NPCPlanningAgent } from "./NPCPlanningAgent.js";
 import type {
   CharacterAction,
@@ -161,6 +166,48 @@ function buildEventMetadata(
 
 function shouldRunImpactGate(action: CharacterAction): boolean {
   return action.impact >= 2 || (action.impact === 1 && Boolean(action.skill));
+}
+
+function classifyImpactPerspective(
+  npcId: string,
+  action: CharacterAction
+): "targeted" | "witness" | "co_presence" {
+  if (action.characterId === "__encounter__") return "co_presence";
+  if (action.targetCharacterId === npcId) return "targeted";
+  return "witness";
+}
+
+function buildImpactEventText(
+  perspective: "targeted" | "witness" | "co_presence",
+  action: CharacterAction,
+  impact: number
+): string {
+  switch (perspective) {
+    case "targeted":
+      return `[impact ${impact}] ${action.characterName} directly involved you: ${action.outcome}`;
+    case "co_presence":
+      return `[impact ${impact}] You encountered others in person: ${action.outcome}`;
+    case "witness":
+    default:
+      return `[impact ${impact}] You noticed ${action.characterName}: ${action.outcome}`;
+  }
+}
+
+function buildImpactMemoryContent(
+  perspective: "targeted" | "witness" | "co_presence",
+  bucketTime: string,
+  gameDay: number,
+  witnessEntry: string
+): string {
+  switch (perspective) {
+    case "targeted":
+      return `Day${gameDay} ${bucketTime} [direct] - ${witnessEntry}`;
+    case "co_presence":
+      return `Day${gameDay} ${bucketTime} [encounter] - ${witnessEntry}`;
+    case "witness":
+    default:
+      return `Day${gameDay} ${bucketTime} [witness] - ${witnessEntry}`;
+  }
 }
 
 function getNodeDurationMinutes(node: PlanNode): number {
@@ -983,6 +1030,46 @@ async function executeSingleTick(
   const movementFinalizations: Array<{ node: PlanNode; action: CharacterAction }> =
     [];
   const movedNpcIds = new Set<string>();
+  const pendingRevisionRequests: Array<{
+    npcId: string;
+    trigger: {
+      type: "failure";
+      failureReason:
+        | "location_mismatch"
+        | "location_blocked"
+        | "target_absent"
+        | "object_not_found"
+        | "skill_roll_failed"
+        | "bad_luck";
+      action: string;
+      gameTime: string;
+    };
+    reactionQuery: string;
+  }> = [];
+
+  const recordRevisionInterruption = async (
+    action: CharacterAction | undefined
+  ): Promise<void> => {
+    if (!action) return;
+
+    tickActions.push(action);
+    if (!memoryManager) return;
+
+    await memoryManager.add({
+      npcId: action.characterId,
+      sessionId,
+      moduleId,
+      type: "event",
+      content: `Day${gameDay} ${action.gameTime} [${action.location}] - ${action.outcome}`,
+      gameDay,
+      gameTime: action.gameTime,
+      location: action.location,
+      metadata: {
+        outcome: action.outcome,
+        interruptionReason: action.interruptionReason ?? "",
+      },
+    });
+  };
 
   for (const rawNode of allNodes) {
     if (rawNode.type === "movement") {
@@ -1043,6 +1130,61 @@ async function executeSingleTick(
 
   // 2. Execute nodes that reach their final minute in this tick
   for (const node of nodesReadyToExecute) {
+    const actorPosition = dgsm.getCharacterPosition(node.characterId);
+    if (node.type !== "movement" && !isCharacterAtLocation(actorPosition, node.location)) {
+      const targetPosition = resolveTargetPosition(node.location, dgsm.getTopology(), dgsm);
+      const route =
+        actorPosition && targetPosition
+          ? buildMovementRouteIgnoringBlocks(
+              actorPosition,
+              targetPosition,
+              dgsm.getTopology()
+            )
+          : null;
+
+      if (route) {
+        const fromLocation = actorPosition
+          ? dgsm.resolveLocationId(actorPosition)
+          : "unknown";
+        const { movementNode, resumedNode } = buildAutoMovementReplacement(node, {
+          currentTime: tickStartTime,
+          fromLocation,
+          travelMinutes: route.totalMinutes,
+        });
+
+        await npcPlanningAgent.replaceNodeWithNodes(
+          sessionId,
+          node.characterId,
+          gameDay,
+          node.nodeId,
+          [movementNode, resumedNode]
+        );
+
+        const advancedMovement = advanceMovementNodeOneMinute(
+          initializeMovementNode(movementNode, dgsm, tickStartTime),
+          dgsm,
+          tickStartTime
+        );
+        await npcPlanningAgent.updateNode(
+          sessionId,
+          node.characterId,
+          gameDay,
+          advancedMovement.node
+        );
+        if (advancedMovement.moved) {
+          movedNpcIds.add(node.characterId);
+        }
+        if (advancedMovement.action) {
+          movementFinalizations.push({
+            node: advancedMovement.node,
+            action: advancedMovement.action,
+          });
+          executedNodes.push(advancedMovement.node);
+        }
+        continue;
+      }
+    }
+
     // Dispatch to registry handler
     const handler = registry.getHandler(node.type);
     if (!handler) {
@@ -1158,9 +1300,9 @@ async function executeSingleTick(
 
       // Filter to targets actually present at the same location
       const presentTargets = filteredTargets.filter((id) => {
+        const actorPos = dgsm.getCharacterPosition(node.characterId);
         const tPos = dgsm.getCharacterPosition(id);
-        const loc = tPos ? dgsm.resolveLocationId(tPos) : undefined;
-        return loc === node.location;
+        return arePositionsCoLocated(actorPos, tPos, dgsm);
       });
 
       // Use source knowledgeId if available, otherwise generate one
@@ -1282,38 +1424,16 @@ async function executeSingleTick(
         action.failureReason ?? "unknown"
       );
 
-      let failureContext: string | undefined;
-      if (memoryManager) {
-        failureContext = await memoryManager.getContext({
-          npcId: node.characterId,
-          sessionId,
-          purpose: "reaction",
-          query: `${action.action} failed: ${action.failureReason}`,
-          currentGameDay: gameDay,
-        });
-      }
-      const longTermIntent =
-        failureContext ??
-        (await npcPlanningAgent.getLongTermIntent(sessionId, node.characterId));
-      const memoryLog = failureContext ? [failureContext] : [];
-      await npcPlanningAgent.revisePlans(
-        dgsm,
-        sessionId,
-        node.characterId,
-        {
-          longTermIntent,
-          memoryLog,
-          pendingNodes: [],
-          trigger: {
-            type: "failure",
-            failureReason: action.failureReason!,
-            action: action.action,
-            gameTime: action.gameTime,
-          },
+      pendingRevisionRequests.push({
+        npcId: node.characterId,
+        trigger: {
+          type: "failure",
+          failureReason: action.failureReason!,
+          action: action.action,
+          gameTime: action.gameTime,
         },
-        language,
-        registry
-      );
+        reactionQuery: `${action.action} failed: ${action.failureReason}`,
+      });
     }
   }
 
@@ -1339,38 +1459,70 @@ async function executeSingleTick(
     }
 
     if (action.status === "failed") {
-      let failureContext: string | undefined;
-      if (memoryManager) {
-        failureContext = await memoryManager.getContext({
-          npcId: node.characterId,
-          sessionId,
-          purpose: "reaction",
-          query: `${action.action} failed: ${node.executionMeta.blockedReason ?? action.failureReason}`,
-          currentGameDay: gameDay,
-        });
-      }
-      const longTermIntent =
-        failureContext ??
-        (await npcPlanningAgent.getLongTermIntent(sessionId, node.characterId));
-      const memoryLog = failureContext ? [failureContext] : [];
-      await npcPlanningAgent.revisePlans(
-        dgsm,
-        sessionId,
-        node.characterId,
-        {
-          longTermIntent,
-          memoryLog,
-          pendingNodes: [],
-          trigger: {
-            type: "failure",
-            failureReason: "location_blocked",
-            action: action.action,
-            gameTime: action.gameTime,
-          },
+      pendingRevisionRequests.push({
+        npcId: node.characterId,
+        trigger: {
+          type: "failure",
+          failureReason: "location_blocked",
+          action: action.action,
+          gameTime: action.gameTime,
         },
-        language,
-        registry
-      );
+        reactionQuery: `${action.action} failed: ${node.executionMeta.blockedReason ?? action.failureReason}`,
+      });
+    } else if (action.status === "completed") {
+      const scheduledEndMinutes = timeToMinutes(node.endTime);
+      const actualEndMinutes = timeToMinutes(action.gameTime);
+      const scheduleDeltaMinutes = scheduledEndMinutes - actualEndMinutes;
+
+      if (scheduleDeltaMinutes !== 0) {
+        await npcPlanningAgent.shiftPendingNodesByDelta(
+          sessionId,
+          node.characterId,
+          gameDay,
+          node.endTime,
+          scheduleDeltaMinutes
+        );
+      }
+    }
+  }
+
+  if (pendingRevisionRequests.length > 0) {
+    const revisionResults = await Promise.all(
+      pendingRevisionRequests.map(async (request) => {
+        let failureContext: string | undefined;
+        if (memoryManager) {
+          failureContext = await memoryManager.getContext({
+            npcId: request.npcId,
+            sessionId,
+            purpose: "reaction",
+            query: request.reactionQuery,
+            currentGameDay: gameDay,
+          });
+        }
+        const longTermIntent =
+          failureContext ??
+          (await npcPlanningAgent.getLongTermIntent(sessionId, request.npcId));
+        const memoryLog = failureContext ? [failureContext] : [];
+        const reviseResult = await npcPlanningAgent.revisePlans(
+          dgsm,
+          sessionId,
+          request.npcId,
+          {
+            longTermIntent,
+            memoryLog,
+            pendingNodes: [],
+            trigger: request.trigger,
+          },
+          language,
+          registry
+        );
+
+        return reviseResult.interruptedAction;
+      })
+    );
+
+    for (const interruptedAction of revisionResults) {
+      await recordRevisionInterruption(interruptedAction);
     }
   }
 
@@ -1437,15 +1589,17 @@ async function executeSingleTick(
             (plan?.schedule as unknown as import(
               "./types.js"
             ).ScheduleEntry[]) ?? [];
-          const triggeringEvents = npcEvents
-            .map(
-              (e) =>
-                `[impact ${e.impact}] ${e.event.characterName}: ${e.event.outcome}`
-            )
-            .join("\n");
-
           let reactionContext: string | undefined;
           if (memoryManager) {
+            const triggeringEvents = npcEvents
+              .map((e) =>
+                buildImpactEventText(
+                  classifyImpactPerspective(npcId, e.event),
+                  e.event,
+                  e.impact
+                )
+              )
+              .join("\n");
             reactionContext = await memoryManager.getContext({
               npcId,
               sessionId,
@@ -1458,6 +1612,20 @@ async function executeSingleTick(
           const longTermIntent =
             reactionContext ??
             (await npcPlanningAgent.getLongTermIntent(sessionId, npcId));
+          const sortedEvents = [...npcEvents].sort((a, b) => b.impact - a.impact);
+          const primaryEvent = sortedEvents[0]?.event;
+          const perspective = primaryEvent
+            ? classifyImpactPerspective(npcId, primaryEvent)
+            : "witness";
+          const triggeringEvents = npcEvents
+            .map((e) =>
+              buildImpactEventText(
+                classifyImpactPerspective(npcId, e.event),
+                e.event,
+                e.impact
+              )
+            )
+            .join("\n");
 
           const result = await npcPlanningAgent.runImpactGateForNpc(
             {
@@ -1481,7 +1649,14 @@ async function executeSingleTick(
             language
           );
 
-          const logEntry = `Day${gameDay} ${tickRuntime.tickTime} [witness] - ${result.witnessEntry}`;
+          const logEntry = primaryEvent
+            ? buildImpactMemoryContent(
+                perspective,
+                tickRuntime.tickTime,
+                gameDay,
+                result.witnessEntry
+              )
+            : `Day${gameDay} ${tickRuntime.tickTime} [witness] - ${result.witnessEntry}`;
           const npcLocPos = dgsm.getCharacterPosition(npcId);
           const npcLoc = npcLocPos
             ? dgsm.resolveLocationId(npcLocPos)
@@ -1489,23 +1664,20 @@ async function executeSingleTick(
 
           // Write witness memory via NpcMemoryManager
           if (memoryManager) {
-            const sortedEventsForWitness = [...npcEvents].sort(
-              (a, b) => b.impact - a.impact
-            );
             await memoryManager.add({
               npcId,
               sessionId,
               moduleId,
-              type: "witness",
+              type: perspective === "targeted" ? "event" : "witness",
               content: logEntry,
               gameDay,
               gameTime: tickRuntime.tickTime,
               location: npcLoc,
               metadata: {
-                sourceCharacterId:
-                  sortedEventsForWitness[0]?.event.characterId ?? "",
-                sourceAction: sortedEventsForWitness[0]?.event.outcome ?? "",
-                impact: sortedEventsForWitness[0]?.impact ?? 1,
+                sourceCharacterId: primaryEvent?.characterId ?? "",
+                sourceAction: primaryEvent?.outcome ?? "",
+                impact: sortedEvents[0]?.impact ?? 1,
+                perspective,
               },
             });
           }
@@ -1513,10 +1685,7 @@ async function executeSingleTick(
           if (result.shouldRevise) {
             // Use unified memory context for revision, or empty array as fallback
             const memoryLog = reactionContext ? [reactionContext] : [];
-            const sortedEvents = [...npcEvents].sort(
-              (a, b) => b.impact - a.impact
-            );
-            await npcPlanningAgent.revisePlans(
+            const reviseResult = await npcPlanningAgent.revisePlans(
               dgsm,
               sessionId,
               npcId,
@@ -1526,12 +1695,13 @@ async function executeSingleTick(
                 pendingNodes,
                 trigger: {
                   type: "impact",
-                  triggeringAction: sortedEvents[0].event,
+                  triggeringAction: primaryEvent!,
                 },
               },
               language,
               registry
             );
+            await recordRevisionInterruption(reviseResult.interruptedAction);
 
             // Trigger reasoning for high-impact events
             if (memoryManager) {
@@ -1564,10 +1734,9 @@ async function executeSingleTick(
             }
           }
           if (result.shouldReviseSchedule) {
-            const sortedEvents = [...npcEvents].sort(
-              (a, b) => b.impact - a.impact
-            );
-            const triggerDesc = `Witnessed: ${sortedEvents[0].event.action} by ${sortedEvents[0].event.characterName} (${sortedEvents[0].event.outcome})`;
+            const triggerDesc = primaryEvent
+              ? buildImpactEventText(perspective, primaryEvent, sortedEvents[0]?.impact ?? 1)
+              : "You perceived something relevant.";
             await npcPlanningAgent.reviseSchedule(
               dgsm,
               sessionId,
@@ -1657,16 +1826,9 @@ function scanUnplannedEncounters(
   gameDay: number
 ): CharacterAction[] {
   const state = dgsm.getState();
-
-  // Group NPCs by location
-  const locationGroups = new Map<string, string[]>();
-  for (const npc of state.npcCharacters) {
-    const npcEncPos = dgsm.getCharacterPosition(npc.id);
-    const loc = npcEncPos ? dgsm.resolveLocationId(npcEncPos) : undefined;
-    if (!loc) continue;
-    if (!locationGroups.has(loc)) locationGroups.set(loc, []);
-    locationGroups.get(loc)!.push(npc.id);
-  }
+  const positionByNpc = new Map(
+    state.npcCharacters.map((npc) => [npc.id, dgsm.getCharacterPosition(npc.id)])
+  );
 
   // NPCs who just arrived at a new scene this tick
   const arrivedNpcIds = new Set<string>(movedNpcIds);
@@ -1689,28 +1851,39 @@ function scanUnplannedEncounters(
 
   const encounterEvents: CharacterAction[] = [];
 
-  for (const [sceneId, npcIds] of locationGroups) {
-    if (npcIds.length < 2) continue;
+  const locationEncounterMaps = new Map<string, Map<string, string[]>>();
+  const npcIds = state.npcCharacters.map((npc) => npc.id);
+  for (let i = 0; i < npcIds.length; i++) {
+    for (let j = i + 1; j < npcIds.length; j++) {
+      const npcAId = npcIds[i];
+      const npcBId = npcIds[j];
+      if (!arrivedNpcIds.has(npcAId) && !arrivedNpcIds.has(npcBId)) continue;
 
-    // Only trigger encounters involving NPCs who just arrived
-    const npcEncounterMap = new Map<string, string[]>();
-    for (let i = 0; i < npcIds.length; i++) {
-      for (let j = i + 1; j < npcIds.length; j++) {
-        // At least one must have just arrived this tick
-        if (!arrivedNpcIds.has(npcIds[i]) && !arrivedNpcIds.has(npcIds[j]))
-          continue;
-        const pairKey = [npcIds[i], npcIds[j]].sort().join("_");
-        if (interactedPairs.has(pairKey)) continue;
-        if (!npcEncounterMap.has(npcIds[i])) npcEncounterMap.set(npcIds[i], []);
-        if (!npcEncounterMap.has(npcIds[j])) npcEncounterMap.set(npcIds[j], []);
-        npcEncounterMap.get(npcIds[i])!.push(npcIds[j]);
-        npcEncounterMap.get(npcIds[j])!.push(npcIds[i]);
+      const pairKey = [npcAId, npcBId].sort().join("_");
+      if (interactedPairs.has(pairKey)) continue;
+
+      const posA = positionByNpc.get(npcAId) ?? null;
+      const posB = positionByNpc.get(npcBId) ?? null;
+      if (!arePositionsCoLocated(posA, posB, dgsm)) continue;
+
+      const locationId = posA ? dgsm.resolveLocationId(posA) : undefined;
+      if (!locationId) continue;
+
+      if (!locationEncounterMaps.has(locationId)) {
+        locationEncounterMaps.set(locationId, new Map<string, string[]>());
       }
+      const npcEncounterMap = locationEncounterMaps.get(locationId)!;
+      if (!npcEncounterMap.has(npcAId)) npcEncounterMap.set(npcAId, []);
+      if (!npcEncounterMap.has(npcBId)) npcEncounterMap.set(npcBId, []);
+      npcEncounterMap.get(npcAId)!.push(npcBId);
+      npcEncounterMap.get(npcBId)!.push(npcAId);
     }
+  }
 
+  for (const [locationId, npcEncounterMap] of locationEncounterMaps) {
     if (npcEncounterMap.size === 0) continue;
 
-    const sceneName = dgsm.getScene(sceneId)?.name ?? sceneId;
+    const sceneName = dgsm.getScene(locationId)?.name ?? locationId;
 
     // Write witness memory per NPC
     if (memoryManager) {
@@ -1728,7 +1901,7 @@ function scanUnplannedEncounters(
           content: `Day${gameDay} ${tickTime} [${sceneName}] - Saw ${otherNames.join(", ")} here`,
           gameDay,
           gameTime: tickTime,
-          location: sceneId,
+          location: locationId,
           metadata: {
             sourceCharacterId: "__encounter__",
             sourceAction: "co-presence",
@@ -1749,7 +1922,7 @@ function scanUnplannedEncounters(
       characterName: "Co-presence",
       gameTime: tickTime,
       action: `NPCs present together at ${sceneName}`,
-      location: sceneId,
+      location: locationId,
       type: "character_interaction",
       impact: 2 as const,
       status: "completed",

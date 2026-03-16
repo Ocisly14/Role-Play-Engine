@@ -3,6 +3,10 @@ import type {
   PlanNode,
 } from "../../dynamicBasicAgent/npcPlanning/types.js";
 import type { DynamicGameStateManager } from "../../state/DynamicGameState.js";
+import {
+  arePositionsCoLocated,
+  isCharacterAtLocation,
+} from "../shared/locationPresence.js";
 import { buildOutcome, makeAction } from "../shared/nodeHelpers.js";
 import type { ExecutionContext, NodeHandler } from "../types.js";
 
@@ -41,7 +45,6 @@ export const characterInteractionHandler: NodeHandler = {
   ): CharacterAction {
     const state = dgsm.getState();
     const pos = dgsm.getCharacterPosition(node.characterId);
-    const npcLocation = pos ? dgsm.resolveLocationId(pos) : undefined;
     const npc = state.npcCharacters.find((n) => n.id === node.characterId);
     const npcSkills = npc?.skills ?? {};
     const difficulty = ctx.getNodeDifficulty(node, dgsm);
@@ -58,7 +61,7 @@ export const characterInteractionHandler: NodeHandler = {
     let lastRollDetail: string | undefined;
 
     // Location check
-    if (npcLocation && npcLocation !== node.location) {
+    if (!isCharacterAtLocation(pos, node.location)) {
       return makeAction(
         node,
         "failed",
@@ -74,7 +77,7 @@ export const characterInteractionHandler: NodeHandler = {
         ? dgsm.resolveLocationId(targetPos)
         : undefined;
       // Player character doesn't have characterPosition entry -- skip check for player
-      if (targetLocation && targetLocation !== node.location) {
+      if (targetLocation && !arePositionsCoLocated(pos, targetPos, dgsm)) {
         return makeAction(
           node,
           "failed",

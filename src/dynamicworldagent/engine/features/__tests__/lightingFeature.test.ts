@@ -96,7 +96,7 @@ function createRuntime(tickTime: string): TickRuntimeContext {
         shouldReviseSchedule: false,
         witnessEntry: "",
       }),
-      revisePlans: async () => {},
+      revisePlans: async () => ({}),
     },
   };
 }

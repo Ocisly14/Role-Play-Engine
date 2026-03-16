@@ -272,6 +272,56 @@ async function main() {
         });
         return;
       }
+      const detailedMatch = msg.match(
+        /^\[Planning\] 🧩 Detailed nodes for (.+?)\n([\s\S]*)$/
+      );
+      if (detailedMatch) {
+        const actor = detailedMatch[1];
+        const lines = detailedMatch[2]
+          .split("\n")
+          .map((line) => line.trim())
+          .filter(Boolean);
+        origLog(`  [${gs.timeOfDay}] 🧩 ${actor}: generated detailed plan`);
+        for (const line of lines) {
+          origLog(`           ${line}`);
+          tickLog.push({
+            tick: runner.getStatus().ticksExecuted,
+            gameDay: gs.gameDay,
+            gameTime: gs.timeOfDay,
+            type: "detailed_plan_generated",
+            actor,
+            location: "",
+            action: line,
+            status: "generated",
+          });
+        }
+        return;
+      }
+      const revisedNodesMatch = msg.match(
+        /^\[Planning\] 📝 Revised nodes for (.+?)\n([\s\S]*)$/
+      );
+      if (revisedNodesMatch) {
+        const actor = revisedNodesMatch[1];
+        const lines = revisedNodesMatch[2]
+          .split("\n")
+          .map((line) => line.trim())
+          .filter(Boolean);
+        origLog(`  [${gs.timeOfDay}] 📝 ${actor}: revised detailed plan`);
+        for (const line of lines) {
+          origLog(`           ${line}`);
+          tickLog.push({
+            tick: runner.getStatus().ticksExecuted,
+            gameDay: gs.gameDay,
+            gameTime: gs.timeOfDay,
+            type: "detailed_plan_revised",
+            actor,
+            location: "",
+            action: line,
+            status: "revised",
+          });
+        }
+        return;
+      }
 
       origLog(...args);
     };

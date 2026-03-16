@@ -3,6 +3,7 @@ import type {
   PlanNode,
 } from "../../dynamicBasicAgent/npcPlanning/types.js";
 import type { DynamicGameStateManager } from "../../state/DynamicGameState.js";
+import { isCharacterAtLocation } from "../shared/locationPresence.js";
 import { buildOutcome, makeAction } from "../shared/nodeHelpers.js";
 import type { ExecutionContext, NodeHandler } from "../types.js";
 
@@ -39,7 +40,6 @@ export const sceneInteractionHandler: NodeHandler = {
   ): CharacterAction {
     const state = dgsm.getState();
     const pos = dgsm.getCharacterPosition(node.characterId);
-    const npcLocation = pos ? dgsm.resolveLocationId(pos) : undefined;
     const npc = state.npcCharacters.find((n) => n.id === node.characterId);
     const npcSkills = npc?.skills ?? {};
     const difficulty = ctx.getNodeDifficulty(node, dgsm);
@@ -56,7 +56,7 @@ export const sceneInteractionHandler: NodeHandler = {
     let lastRollDetail: string | undefined;
 
     // Location check
-    if (npcLocation && npcLocation !== node.location) {
+    if (!isCharacterAtLocation(pos, node.location)) {
       return makeAction(
         node,
         "failed",
