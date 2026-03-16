@@ -76,7 +76,7 @@ export const movementHandler: NodeHandler = {
       }
       lastRollDetail = rollResult.detail;
       const topology = dgsm.getTopology();
-      const targetPos = resolveTargetPosition(node.location, topology);
+      const targetPos = resolveTargetPosition(node.location, topology, dgsm);
       if (targetPos) {
         dgsm.setCharacterPosition(node.characterId, targetPos);
       }
@@ -93,7 +93,7 @@ export const movementHandler: NodeHandler = {
     // Topology-based movement
     const topology = dgsm.getTopology();
     const currentPos = dgsm.getCharacterPosition(node.characterId);
-    const targetPos = resolveTargetPosition(node.location, topology);
+    const targetPos = resolveTargetPosition(node.location, topology, dgsm);
     if (currentPos && targetPos) {
       const topologyPath = findTopologyPath(
         currentPos,
@@ -153,7 +153,8 @@ export const movementHandler: NodeHandler = {
 
 function resolveTargetPosition(
   locationId: string,
-  topology: TownTopology
+  topology: TownTopology,
+  dgsm?: DynamicGameStateManager
 ): CharacterPosition | null {
   // Check junctions
   if (topology.junctions.has(locationId)) {
@@ -167,6 +168,27 @@ function resolveTargetPosition(
   const road = topology.roads.get(locationId);
   if (road) {
     return { type: "junction", junctionId: road.endpointB };
+  }
+  // Fallback: interior sub-scene or outline ID — resolve via entry scene
+  if (dgsm) {
+    const state = dgsm.getState();
+    // Check if it's an outline ID (e.g., "SCN_1") — resolve to entrySceneId
+    const outline = (state.scenarioOutlines ?? []).find(
+      (o) => o.id === locationId
+    );
+    if (outline?.entrySceneId && topology.sceneToParent.has(outline.entrySceneId)) {
+      return { type: "scene", sceneId: outline.entrySceneId };
+    }
+    // Check if it's an interior sub-scene — resolve to building's entry scene
+    const scene = state.scenes.get(locationId);
+    if (scene) {
+      const parentOutline = (state.scenarioOutlines ?? []).find(
+        (o) => o.id === scene.parentLocationId
+      );
+      if (parentOutline?.entrySceneId && topology.sceneToParent.has(parentOutline.entrySceneId)) {
+        return { type: "scene", sceneId: parentOutline.entrySceneId };
+      }
+    }
   }
   return null;
 }

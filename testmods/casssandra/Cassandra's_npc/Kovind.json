@@ -1,80 +1,84 @@
 [
-    {
-      "name": "Kovind",
-      "occupation": "Gang enforcer / gambler",
-      "age": 39,
-      "gender": "male",
-      "appearance": "A well-built man with a tough, streetwise demeanor; moves confidently and keeps a watchful eye on his surroundings.",
-      "personality": "Aggressive, intimidating, pragmatic, enjoys exerting pressure on others and taking risks, but remains calculating rather than reckless.",
-      "background": "Kovind is involved in the local underworld and is accustomed to violence, gambling, and intimidation. He operates as muscle when needed and is comfortable using firearms. Within his social circle, he is known for his confrontational style and for being the target of mocking nicknames from those who enjoy provoking him.",
-      "goals": [
-        "Maintain his position and influence within the local criminal circles",
-        "Profit through gambling and underworld dealings"
-      ],
-      "secrets": [
+  {
+    "name": "Kovind",
+    "occupation": "Gang enforcer / gambler",
+    "age": 39,
+    "gender": "male",
+    "appearance": "A well-built man with a tough, streetwise demeanor; moves confidently and keeps a watchful eye on his surroundings.",
+    "personality": "Aggressive, intimidating, pragmatic, enjoys exerting pressure on others and taking risks, but remains calculating rather than reckless.",
+    "background": "Kovind is involved in the local underworld and is accustomed to violence, gambling, and intimidation. He operates as muscle when needed and is comfortable using firearms. Within his social circle, he is known for his confrontational style and for being the target of mocking nicknames from those who enjoy provoking him.",
+    "goals": [
+      "Maintain his position and influence within the local criminal circles",
+      "Profit through gambling and underworld dealings"
+    ],
+    "secrets": [
       "He holds compromising photos of Nancy Charlotte taken as collateral for her gambling debt",
       "He trapped Nancy in a gambling scheme and demanded payment or sexual favors",
       "He sent Lucifero (Jenny Florence) to collect Nancy's debt, but kept some of the photos",
       "His nickname is 'Tiger' and he works with Tallinn at the underground casino",
       "He is annoyed by Tallinn calling him 'little mouse'"
     ],
-      "attributes": {
-        "STR": 45,
-        "CON": 55,
-        "DEX": 55,
-        "APP": 60,
-        "POW": 50,
-        "SIZ": 60,
-        "INT": 65,
-        "EDU": 75
-      },
-      "status": {
-        "hp": 12,
-        "maxHp": 12,
-        "sanity": 50,
-        "maxSanity": 99,
-        "luck": 50,
-        "mp": 10,
-        "conditions": []
-      },
-      "skills": {
-        "Brawl": 65,
-        "Handgun": 65,
-        "Shotgun": 65,
-        "Credit Rating": 30,
-        "Spot Hidden": 60,
-        "Stealth": 60,
-        "Listen": 60,
-        "Intimidate": 60,
-        "Track": 50,
-        "Gambling": 70
-      },
-      "inventory": [
-        {
-          "name": "Handgun",
-          "properties": {
-            "note": "A concealed handgun carried for protection."
-          }
-        },
-        {
-          "name": "Cash from gambling",
-          "properties": {
-            "note": "A wad of bills from recent gambling winnings."
-          }
-        },
-        {
-          "name": "Cigarettes",
-          "properties": {
-            "note": "A pack of cigarettes."
-          }
+    "attributes": {
+      "STR": 45,
+      "CON": 55,
+      "DEX": 55,
+      "APP": 60,
+      "POW": 50,
+      "SIZ": 60,
+      "INT": 65,
+      "EDU": 75
+    },
+    "status": {
+      "hp": 12,
+      "maxHp": 12,
+      "sanity": 50,
+      "maxSanity": 99,
+      "luck": 50,
+      "mp": 10,
+      "conditions": []
+    },
+    "skills": {
+      "Brawl": 65,
+      "Handgun": 65,
+      "Shotgun": 65,
+      "Credit Rating": 30,
+      "Spot Hidden": 60,
+      "Stealth": 60,
+      "Listen": 60,
+      "Intimidate": 60,
+      "Track": 50,
+      "Gambling": 70
+    },
+    "inventory": [
+      {
+        "name": "Handgun",
+        "properties": {
+          "note": "A concealed handgun carried for protection."
         }
-      ],
-      "clues": [
+      },
+      {
+        "name": "Cash from gambling",
+        "properties": {
+          "note": "A wad of bills from recent gambling winnings."
+        }
+      },
+      {
+        "name": "Cigarettes",
+        "properties": {
+          "note": "A pack of cigarettes."
+        }
+      }
+    ],
+    "clues": [
       {
         "clueText": "He holds compromising photos of Nancy Charlotte and sent Lucifero to collect her gambling debt. Some photos are still missing.",
         "category": "secret",
         "difficulty": "hard",
-        "relatedTo": ["Nancy Charlotte", "Jenny Florence (Lucifero)", "Gambling"]
+        "relatedTo": [
+          "Nancy Charlotte",
+          "Jenny Florence (Lucifero)",
+          "Gambling"
+        ]
       },
       {
         "clueText": "His nickname is 'Tiger' and he works at the underground casino in the church basement with Tallinn.",
@@ -83,16 +87,16 @@
         "relatedTo": ["Underground casino", "Tallinn", "Church basement"]
       }
     ],
-      "relationships": [
-        {
-          "targetName": "Tallinn",
-          "relationshipType": "rival",
-          "attitude": -30,
-          "description": "Tallinn frequently mocks Kovind by calling him 'little mouse,' treating his anger as entertainment.",
-          "history": "Their relationship is marked by verbal provocation and mutual irritation rather than open violence."
-        }
-      ],
-      "notes": "Kovind is volatile under provocation but usually stops short of unnecessary escalation unless his pride or interests are directly threatened.",
-      "currentLocation": "SCN_21"
-    }
-  ]
+    "relationships": [
+      {
+        "targetName": "Tallinn",
+        "relationshipType": "rival",
+        "attitude": -30,
+        "description": "Tallinn frequently mocks Kovind by calling him 'little mouse,' treating his anger as entertainment.",
+        "history": "Their relationship is marked by verbal provocation and mutual irritation rather than open violence."
+      }
+    ],
+    "notes": "Kovind is volatile under provocation but usually stops short of unnecessary escalation unless his pride or interests are directly threatened.",
+    "currentLocation": "SCN_21"
+  }
+]

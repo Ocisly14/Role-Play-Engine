@@ -44,17 +44,13 @@
         "clueText": "Deep Ones can breathe both underwater and on land without assistance.",
         "category": "knowledge",
         "difficulty": "regular",
-        "relatedTo": [
-          "Deep Ones"
-        ]
+        "relatedTo": ["Deep Ones"]
       },
       {
         "clueText": "They favor spears and tridents over human-made weapons.",
         "category": "observation",
         "difficulty": "regular",
-        "relatedTo": [
-          "Deep Ones"
-        ]
+        "relatedTo": ["Deep Ones"]
       }
     ],
     "relationships": [],

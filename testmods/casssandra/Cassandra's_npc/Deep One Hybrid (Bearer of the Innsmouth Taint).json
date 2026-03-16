@@ -48,18 +48,13 @@
         "clueText": "Deep One hybrids age normally but will eventually undergo a complete transformation into Deep Ones.",
         "category": "knowledge",
         "difficulty": "regular",
-        "relatedTo": [
-          "Innsmouth",
-          "Deep Ones"
-        ]
+        "relatedTo": ["Innsmouth", "Deep Ones"]
       },
       {
         "clueText": "Older hybrids who accept their heritage may possess forbidden spells.",
         "category": "rumor",
         "difficulty": "hard",
-        "relatedTo": [
-          "Deep Ones"
-        ]
+        "relatedTo": ["Deep Ones"]
       }
     ],
     "relationships": [

@@ -84,10 +84,7 @@
         "clueText": "Knows extensive hidden information about influential figures in Cassandra.",
         "category": "knowledge",
         "difficulty": "hard",
-        "relatedTo": [
-          "Cassandra",
-          "Qianwei System"
-        ]
+        "relatedTo": ["Cassandra", "Qianwei System"]
       },
       {
         "clueText": "Witnessed Anatole murder Nancy's mother in his family home in France (1988).",
@@ -104,10 +101,7 @@
         "clueText": "The deceased (Lucifero) was a contact person he knew, and she had a note listing Adolph's 'good deeds'.",
         "category": "knowledge",
         "difficulty": "hard",
-        "relatedTo": [
-          "Jenny Florence (Lucifero)",
-          "Reindeer Bar murder (2003)"
-        ]
+        "relatedTo": ["Jenny Florence (Lucifero)", "Reindeer Bar murder (2003)"]
       },
       {
         "clueText": "Knows Red Stone Lady works as 'Susan' at Star Hospital, and knows the hardware store's secrets and gun-buying code.",
@@ -123,10 +117,7 @@
         "clueText": "The 'acquaintance' he met at the Reindeer Bar was Lux Lynch, though he doesn't know why Lux was there.",
         "category": "observation",
         "difficulty": "hard",
-        "relatedTo": [
-          "Lux Lynch",
-          "Reindeer Bar murder (2003)"
-        ]
+        "relatedTo": ["Lux Lynch", "Reindeer Bar murder (2003)"]
       }
     ],
     "relationships": [

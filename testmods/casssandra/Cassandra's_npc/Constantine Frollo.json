@@ -74,28 +74,19 @@
         "clueText": "He has no legitimate standing to serve God and is secretly practicing forbidden rituals.",
         "category": "secret",
         "difficulty": "hard",
-        "relatedTo": [
-          "Cassandra Church"
-        ]
+        "relatedTo": ["Cassandra Church"]
       },
       {
         "clueText": "He is cooperating with Patrizio von Samsa and helped him eliminate Bruno Galilei by distracting investigators.",
         "category": "secret",
         "difficulty": "extreme",
-        "relatedTo": [
-          "Patrizio von Samsa",
-          "Bruno Galilei"
-        ]
+        "relatedTo": ["Patrizio von Samsa", "Bruno Galilei"]
       },
       {
         "clueText": "He knows Vincent Galenus's secrets from his confession and helps him deal with spider-infected people, working with Patrizio to cover up these cases.",
         "category": "secret",
         "difficulty": "hard",
-        "relatedTo": [
-          "Vincent Galenus",
-          "Spider infection",
-          "Cold spiders"
-        ]
+        "relatedTo": ["Vincent Galenus", "Spider infection", "Cold spiders"]
       },
       {
         "clueText": "The church basement contains Atlach-Nacha's web connecting to the Dreamlands, and he can control spider-people through magic.",

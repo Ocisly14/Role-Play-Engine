@@ -45,19 +45,13 @@
         "clueText": "David Campbell and Isaiah Arbar traveled across Europe and America to avoid authorities while continuing cult sacrifices.",
         "category": "knowledge",
         "difficulty": "hard",
-        "relatedTo": [
-          "Isaiah Arbar",
-          "Black Goat Cult"
-        ]
+        "relatedTo": ["Isaiah Arbar", "Black Goat Cult"]
       },
       {
         "clueText": "Young women were considered the best sacrifices for their rituals.",
         "category": "secret",
         "difficulty": "extreme",
-        "relatedTo": [
-          "Shub-Niggurath",
-          "Black Goat Cult"
-        ]
+        "relatedTo": ["Shub-Niggurath", "Black Goat Cult"]
       }
     ],
     "relationships": [

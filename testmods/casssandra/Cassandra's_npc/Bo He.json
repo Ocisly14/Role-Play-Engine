@@ -8,7 +8,9 @@
     "personality": "Little is known about Bo He’s personality; appears neutral and uninvolved compared to the main cast.",
     "background": "Bo He is listed among the cameo or non-primary NPCs connected to the Cassandra incident. Such characters are noted as not directly participating in the investigators’ main investigation and serve mainly as background figures within the setting.",
     "goals": ["Recover from mental illness"],
-    "secrets": ["Investigated the Cleo family's dark past and went insane from what he found"],
+    "secrets": [
+      "Investigated the Cleo family's dark past and went insane from what he found"
+    ],
     "attributes": {
       "STR": 50,
       "CON": 50,

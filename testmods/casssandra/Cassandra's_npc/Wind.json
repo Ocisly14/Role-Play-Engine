@@ -1,79 +1,80 @@
 [
-    {
-      "name": "Wind",
-      "occupation": "Diplomat (unconfirmed)",
-      "age": 30,
-      "gender": "male",
-      "appearance": "A thin, exhausted man with hollow eyes and an unsteady posture, often staring into space as if listening to voices no one else can hear.",
-      "personality": "Gentle and peace-loving by nature, but currently unstable, fearful, and fragmented due to severe psychological trauma.",
-      "background": "Wind is the fiancé of Isabella, the head nurse at Starlight Hospital. He arrived in Cassandra with two companions—Jun, a history professor, and Lyn, a retired soldier—wandering the town and its surroundings. After visiting the area near the incinerator, Jun disappeared. Wind was later found in a state of sudden mental collapse and was sent to the hospital by Lyn.",
-      "goals": [
-        "Beg for someone to rescue Jun when briefly lucid"
-      ],
-      "secrets": ["Witnessed something terrible at the crematorium that drove him insane", "Occasionally becomes lucid and begs friends to rescue Jun"],
-      "attributes": {
-        "STR": 45,
-        "CON": 50,
-        "DEX": 45,
-        "APP": 55,
-        "POW": 40,
-        "SIZ": 50,
-        "INT": 60,
-        "EDU": 65
+  {
+    "name": "Wind",
+    "occupation": "Diplomat (unconfirmed)",
+    "age": 30,
+    "gender": "male",
+    "appearance": "A thin, exhausted man with hollow eyes and an unsteady posture, often staring into space as if listening to voices no one else can hear.",
+    "personality": "Gentle and peace-loving by nature, but currently unstable, fearful, and fragmented due to severe psychological trauma.",
+    "background": "Wind is the fiancé of Isabella, the head nurse at Starlight Hospital. He arrived in Cassandra with two companions—Jun, a history professor, and Lyn, a retired soldier—wandering the town and its surroundings. After visiting the area near the incinerator, Jun disappeared. Wind was later found in a state of sudden mental collapse and was sent to the hospital by Lyn.",
+    "goals": ["Beg for someone to rescue Jun when briefly lucid"],
+    "secrets": [
+      "Witnessed something terrible at the crematorium that drove him insane",
+      "Occasionally becomes lucid and begs friends to rescue Jun"
+    ],
+    "attributes": {
+      "STR": 45,
+      "CON": 50,
+      "DEX": 45,
+      "APP": 55,
+      "POW": 40,
+      "SIZ": 50,
+      "INT": 60,
+      "EDU": 65
+    },
+    "status": {
+      "hp": 10,
+      "maxHp": 10,
+      "sanity": 20,
+      "maxSanity": 40,
+      "luck": 50,
+      "mp": 8,
+      "conditions": ["temporary insanity"]
+    },
+    "skills": {
+      "Psychology": 40,
+      "Diplomacy": 50,
+      "Persuade": 45
+    },
+    "inventory": [],
+    "clues": [
+      {
+        "clueText": "Jun disappeared near the incinerator while traveling together in Cassandra.",
+        "category": "observation",
+        "difficulty": "regular",
+        "relatedTo": ["Jun", "Incinerator"]
       },
-      "status": {
-        "hp": 10,
-        "maxHp": 10,
-        "sanity": 20,
-        "maxSanity": 40,
-        "luck": 50,
-        "mp": 8,
-        "conditions": ["temporary insanity"]
+      {
+        "clueText": "Jun sacrificed himself to ensure Wind could escape alive, though no one knows this truth.",
+        "category": "secret",
+        "difficulty": "extreme",
+        "relatedTo": ["Jun"]
+      }
+    ],
+    "relationships": [
+      {
+        "targetName": "Isabella",
+        "relationshipType": "family",
+        "attitude": 70,
+        "description": "His fiancée and the head nurse at Starlight Hospital.",
+        "history": "Their engagement predates the Cassandra incident; Isabella now oversees his care."
       },
-      "skills": {
-        "Psychology": 40,
-        "Diplomacy": 50,
-        "Persuade": 45
+      {
+        "targetName": "Jun",
+        "relationshipType": "friend",
+        "attitude": 80,
+        "description": "A history professor who traveled with Wind and later vanished.",
+        "history": "Jun disappeared near the incinerator after protecting Wind."
       },
-      "inventory": [],
-      "clues": [
-        {
-          "clueText": "Jun disappeared near the incinerator while traveling together in Cassandra.",
-          "category": "observation",
-          "difficulty": "regular",
-          "relatedTo": ["Jun", "Incinerator"]
-        },
-        {
-          "clueText": "Jun sacrificed himself to ensure Wind could escape alive, though no one knows this truth.",
-          "category": "secret",
-          "difficulty": "extreme",
-          "relatedTo": ["Jun"]
-        }
-      ],
-      "relationships": [
-        {
-          "targetName": "Isabella",
-          "relationshipType": "family",
-          "attitude": 70,
-          "description": "His fiancée and the head nurse at Starlight Hospital.",
-          "history": "Their engagement predates the Cassandra incident; Isabella now oversees his care."
-        },
-        {
-          "targetName": "Jun",
-          "relationshipType": "friend",
-          "attitude": 80,
-          "description": "A history professor who traveled with Wind and later vanished.",
-          "history": "Jun disappeared near the incinerator after protecting Wind."
-        },
-        {
-          "targetName": "Lyn",
-          "relationshipType": "friend",
-          "attitude": 40,
-          "description": "A retired soldier who brought Wind to the hospital.",
-          "history": "Lyn remained with the vehicle while Jun and Wind explored; later rescued Wind."
-        }
-      ],
-      "notes": "Listed as a cameo NPC. Wind is mentally unstable and not suitable for direct investigation, but his fragmented memories can serve as emotional hooks and indirect clues.",
-      "currentLocation": "SCN_1"
-    }
-  ]
+      {
+        "targetName": "Lyn",
+        "relationshipType": "friend",
+        "attitude": 40,
+        "description": "A retired soldier who brought Wind to the hospital.",
+        "history": "Lyn remained with the vehicle while Jun and Wind explored; later rescued Wind."
+      }
+    ],
+    "notes": "Listed as a cameo NPC. Wind is mentally unstable and not suitable for direct investigation, but his fragmented memories can serve as emotional hooks and indirect clues.",
+    "currentLocation": "SCN_1"
+  }
+]

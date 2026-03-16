@@ -1,62 +1,59 @@
 [
-    {
-      "name": "Johnny",
-      "occupation": "Hunter",
-      "age": 35,
-      "gender": "male",
-      "appearance": "A physically fit man with a rugged outdoorsman look, accustomed to hunting and physical activity.",
-      "personality": "Hot-tempered, possessive, impulsive, easily angered when provoked, especially regarding romantic rivals.",
-      "background": "A hunting enthusiast who has long harbored romantic feelings for Helen. He resents Vito, believing himself no inferior. On December 22, 2003, he arranged a date with Helen at the Reindeer Bar to confess his feelings, but got into a violent altercation with Philip Scaletta, who was harassing her. Although Johnny drove Philip off, the interruption ruined his chance to confess, and Helen left early, leaving Johnny furious and frustrated. This happened on the same day as the Reindeer Bar murder case.",
-      "goals": [
-        "Win Helen’s affection",
-        "Prove himself superior to Vito"
-      ],
-      "secrets": [
-        "His growing jealousy and anger could push him toward reckless or violent actions"
-      ],
-      "attributes": {
-        "STR": 45,
-        "CON": 55,
-        "DEX": 55,
-        "APP": 60,
-        "POW": 45,
-        "SIZ": 60,
-        "INT": 65,
-        "EDU": 75
-      },
-      "status": {
-        "hp": 12,
-        "maxHp": 12,
-        "sanity": 45,
-        "maxSanity": 99,
-        "luck": 45,
-        "mp": 9,
-        "conditions": []
-      },
-      "skills": {
-        "Brawl": 65,
-        "Shotgun": 65,
-        "Credit Rating": 15,
-        "Spot Hidden": 60,
-        "Track": 50,
-        "Listen": 60,
-        "Intimidate": 50,
-        "Charm": 90
-      },
-      "inventory": [
-        {
-          "name": "Hunting shotgun",
-          "properties": {
-            "note": "A well-maintained shotgun used for hunting."
-          }
-        },
-        {
-          "name": "Hunting gear",
-          "properties": {
-            "note": "Basic outdoor hunting equipment including a knife, binoculars, and camouflage clothing."
-          }
+  {
+    "name": "Johnny",
+    "occupation": "Hunter",
+    "age": 35,
+    "gender": "male",
+    "appearance": "A physically fit man with a rugged outdoorsman look, accustomed to hunting and physical activity.",
+    "personality": "Hot-tempered, possessive, impulsive, easily angered when provoked, especially regarding romantic rivals.",
+    "background": "A hunting enthusiast who has long harbored romantic feelings for Helen. He resents Vito, believing himself no inferior. On December 22, 2003, he arranged a date with Helen at the Reindeer Bar to confess his feelings, but got into a violent altercation with Philip Scaletta, who was harassing her. Although Johnny drove Philip off, the interruption ruined his chance to confess, and Helen left early, leaving Johnny furious and frustrated. This happened on the same day as the Reindeer Bar murder case.",
+    "goals": ["Win Helen’s affection", "Prove himself superior to Vito"],
+    "secrets": [
+      "His growing jealousy and anger could push him toward reckless or violent actions"
+    ],
+    "attributes": {
+      "STR": 45,
+      "CON": 55,
+      "DEX": 55,
+      "APP": 60,
+      "POW": 45,
+      "SIZ": 60,
+      "INT": 65,
+      "EDU": 75
+    },
+    "status": {
+      "hp": 12,
+      "maxHp": 12,
+      "sanity": 45,
+      "maxSanity": 99,
+      "luck": 45,
+      "mp": 9,
+      "conditions": []
+    },
+    "skills": {
+      "Brawl": 65,
+      "Shotgun": 65,
+      "Credit Rating": 15,
+      "Spot Hidden": 60,
+      "Track": 50,
+      "Listen": 60,
+      "Intimidate": 50,
+      "Charm": 90
+    },
+    "inventory": [
+      {
+        "name": "Hunting shotgun",
+        "properties": {
+          "note": "A well-maintained shotgun used for hunting."
         }
-      ],
+      },
+      {
+        "name": "Hunting gear",
+        "properties": {
+          "note": "Basic outdoor hunting equipment including a knife, binoculars, and camouflage clothing."
+        }
+      }
+    ],
     "clues": [
       {
         "clueText": "Johnny violently confronted Philip Scaletta at the Reindeer Bar on December 22, 2003 (the day of the murder) for harassing Helen.",
@@ -65,30 +62,30 @@
         "relatedTo": ["Helen", "Philip Scaletta", "2003 Reindeer Bar murder"]
       }
     ],
-      "relationships": [
-        {
-          "targetName": "Helen",
-          "relationshipType": "friend",
-          "attitude": 60,
-          "description": "Johnny is deeply infatuated with Helen and wants to confess his feelings.",
-          "history": "He has admired her for a long time but has never successfully expressed his love."
-        },
-        {
-          "targetName": "Vito",
-          "relationshipType": "rival",
-          "attitude": -50,
-          "description": "Johnny resents Vito for being in a relationship with Helen.",
-          "history": "Johnny believes he is no worse than Vito and feels unfairly overlooked."
-        },
-        {
-          "targetName": "Philip",
-          "relationshipType": "enemy",
-          "attitude": -70,
-          "description": "Philip was beaten by Johnny after harassing Helen.",
-          "history": "Their conflict began during a bar confrontation."
-        }
-      ],
-      "notes": "Johnny’s emotional volatility makes him a potential wildcard who could escalate situations unexpectedly.",
-      "currentLocation": "SCN_16"
-    }
-  ]
+    "relationships": [
+      {
+        "targetName": "Helen",
+        "relationshipType": "friend",
+        "attitude": 60,
+        "description": "Johnny is deeply infatuated with Helen and wants to confess his feelings.",
+        "history": "He has admired her for a long time but has never successfully expressed his love."
+      },
+      {
+        "targetName": "Vito",
+        "relationshipType": "rival",
+        "attitude": -50,
+        "description": "Johnny resents Vito for being in a relationship with Helen.",
+        "history": "Johnny believes he is no worse than Vito and feels unfairly overlooked."
+      },
+      {
+        "targetName": "Philip",
+        "relationshipType": "enemy",
+        "attitude": -70,
+        "description": "Philip was beaten by Johnny after harassing Helen.",
+        "history": "Their conflict began during a bar confrontation."
+      }
+    ],
+    "notes": "Johnny’s emotional volatility makes him a potential wildcard who could escalate situations unexpectedly.",
+    "currentLocation": "SCN_16"
+  }
+]

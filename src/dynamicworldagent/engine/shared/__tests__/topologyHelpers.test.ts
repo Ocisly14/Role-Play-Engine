@@ -278,5 +278,4 @@ describe("resolveCharacterLocationId", () => {
       resolveCharacterLocationId("unknown-char", dgsm as any)
     ).toBeUndefined();
   });
-
 });

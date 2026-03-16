@@ -11,6 +11,11 @@ import type {
   RoadNode,
   TownTopology,
 } from "./topologyTypes.js";
+import {
+  getBlockedConnectionReason,
+  makeBlockedConnectionKey,
+  resolveBlockedConnectionNodeRef,
+} from "./blockedConnections.js";
 import { buildTopology } from "./topologyTypes.js";
 import {
   InventoryUtils,
@@ -65,7 +70,7 @@ export interface DynamicGameState {
     string,
     import("../dynamicBasicAgent/npcPlanning/types.js").SceneCondition[]
   >;
-  blockedConnections: Map<string, string>; // "sceneA::sceneB" -> reason
+  blockedConnections: Map<string, string>; // "scene:id::road:id" typed canonical edge key -> reason
   npcResidences: Record<string, string>; // npcId -> macroLocationId
   transportEdges: TransportEdge[];
 
@@ -340,7 +345,10 @@ export class DynamicGameStateManager {
       transportEdges: data.transportEdges ?? [],
       topology: topology!,
       characterPositions: (() => {
-        if (data.characterPositions && Object.keys(data.characterPositions).length > 0) {
+        if (
+          data.characterPositions &&
+          Object.keys(data.characterPositions).length > 0
+        ) {
           return data.characterPositions;
         }
         // Backward compat: convert old npcLocations to characterPositions
@@ -776,12 +784,14 @@ export class DynamicGameStateManager {
   // === Blocked Connections ===
 
   isConnectionBlocked(fromId: string, toId: string): boolean {
-    const key1 = `${fromId}::${toId}`;
-    const key2 = `${toId}::${fromId}`;
-    return (
-      this.state.blockedConnections.has(key1) ||
-      this.state.blockedConnections.has(key2)
-    );
+    return this.getConnectionBlockReason(fromId, toId) !== undefined;
+  }
+
+  getConnectionBlockReason(fromId: string, toId: string): string | undefined {
+    const fromRef = resolveBlockedConnectionNodeRef(fromId, this.state);
+    const toRef = resolveBlockedConnectionNodeRef(toId, this.state);
+    if (!fromRef || !toRef) return undefined;
+    return getBlockedConnectionReason(this.state.blockedConnections, fromRef, toRef);
   }
 
   setConnectionBlocked(
@@ -790,12 +800,19 @@ export class DynamicGameStateManager {
     blocked: boolean,
     reason: string
   ): void {
-    const key = `${fromId}::${toId}`;
+    const fromRef = resolveBlockedConnectionNodeRef(fromId, this.state);
+    const toRef = resolveBlockedConnectionNodeRef(toId, this.state);
+    if (!fromRef || !toRef) {
+      throw new Error(
+        `Cannot update blocked connection for unknown endpoints: ${fromId}, ${toId}`
+      );
+    }
+
+    const key = makeBlockedConnectionKey(fromRef, toRef);
     if (blocked) {
       this.state.blockedConnections.set(key, reason);
     } else {
       this.state.blockedConnections.delete(key);
-      this.state.blockedConnections.delete(`${toId}::${fromId}`);
     }
     this.state.lastUpdated = new Date();
   }

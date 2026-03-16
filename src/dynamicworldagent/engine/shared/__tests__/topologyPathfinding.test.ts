@@ -1,4 +1,5 @@
 import { describe, expect, it } from "vitest";
+import { makeBlockedConnectionKey } from "../../../state/blockedConnections.js";
 import type {
   JunctionNode,
   RoadNode,
@@ -172,7 +173,13 @@ describe("findTopologyPath", () => {
 
   it("returns null when path is blocked", () => {
     const blockedConns = new Map<string, string>();
-    blockedConns.set("JUNC_A::ROAD_1", "fire");
+    blockedConns.set(
+      makeBlockedConnectionKey(
+        { type: "junction", id: "JUNC_A" },
+        { type: "road", id: "ROAD_1" }
+      ),
+      "fire"
+    );
     const path = findTopologyPath(
       { type: "junction", junctionId: "JUNC_A" },
       { type: "junction", junctionId: "JUNC_C" },
@@ -213,6 +220,53 @@ describe("findTopologyPath", () => {
       topology,
       blocked
     );
+    expect(path).toBeNull();
+  });
+
+  it("returns null when a scene cannot exit to its parent junction", () => {
+    const blockedConns = new Map<string, string>();
+    blockedConns.set(
+      makeBlockedConnectionKey(
+        { type: "scene", id: "SCN_1" },
+        { type: "junction", id: "JUNC_A" }
+      ),
+      "locked"
+    );
+
+    const path = findTopologyPath(
+      { type: "scene", sceneId: "SCN_1" },
+      { type: "junction", junctionId: "JUNC_C" },
+      topology,
+      blockedConns
+    );
+
+    expect(path).toBeNull();
+  });
+
+  it("returns null when a road position can only reach blocked endpoints", () => {
+    const blockedConns = new Map<string, string>();
+    blockedConns.set(
+      makeBlockedConnectionKey(
+        { type: "road", id: "ROAD_1" },
+        { type: "junction", id: "JUNC_A" }
+      ),
+      "collapse"
+    );
+    blockedConns.set(
+      makeBlockedConnectionKey(
+        { type: "road", id: "ROAD_1" },
+        { type: "junction", id: "JUNC_B" }
+      ),
+      "collapse"
+    );
+
+    const path = findTopologyPath(
+      { type: "road", roadId: "ROAD_1", position: 0.5 },
+      { type: "junction", junctionId: "JUNC_C" },
+      topology,
+      blockedConns
+    );
+
     expect(path).toBeNull();
   });
 });

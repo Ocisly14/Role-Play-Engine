@@ -1,81 +1,84 @@
 [
-    {
-      "name": "Robin",
-      "occupation": "Unemployed socialite",
-      "age": 50,
-      "gender": "male",
-      "appearance": "A well-groomed middle-aged individual who often presents in feminine clothing, with a style that reflects access to wealth and refined taste.",
-      "personality": "Caring, loyal to friends, discreet, and emotionally resilient. Tends to avoid direct conflict and prefers to resolve matters quietly.",
-      "background": "Robin is a cross-dresser with a very wealthy adoptive father. A close friend of Solomon, Robin came to Cassandra some time ago to visit him. During that period, Robin took responsibility for caring for another friend, Bo He, who was suffering from mental instability. Before the investigators arrived in Cassandra, Robin had already left the town.",
-      "goals": [
-        "Protect and care for close friends",
-        "Maintain distance from dangerous or unstable situations"
-      ],
-      "secrets": ["Has a wealthy adoptive father", "Taking care of mentally ill friend Bo He at a sanitarium"],
-      "attributes": {
-        "STR": 45,
-        "CON": 50,
-        "DEX": 55,
-        "APP": 70,
-        "POW": 55,
-        "SIZ": 55,
-        "INT": 60,
-        "EDU": 65
+  {
+    "name": "Robin",
+    "occupation": "Unemployed socialite",
+    "age": 50,
+    "gender": "male",
+    "appearance": "A well-groomed middle-aged individual who often presents in feminine clothing, with a style that reflects access to wealth and refined taste.",
+    "personality": "Caring, loyal to friends, discreet, and emotionally resilient. Tends to avoid direct conflict and prefers to resolve matters quietly.",
+    "background": "Robin is a cross-dresser with a very wealthy adoptive father. A close friend of Solomon, Robin came to Cassandra some time ago to visit him. During that period, Robin took responsibility for caring for another friend, Bo He, who was suffering from mental instability. Before the investigators arrived in Cassandra, Robin had already left the town.",
+    "goals": [
+      "Protect and care for close friends",
+      "Maintain distance from dangerous or unstable situations"
+    ],
+    "secrets": [
+      "Has a wealthy adoptive father",
+      "Taking care of mentally ill friend Bo He at a sanitarium"
+    ],
+    "attributes": {
+      "STR": 45,
+      "CON": 50,
+      "DEX": 55,
+      "APP": 70,
+      "POW": 55,
+      "SIZ": 55,
+      "INT": 60,
+      "EDU": 65
+    },
+    "status": {
+      "hp": 10,
+      "maxHp": 10,
+      "sanity": 55,
+      "maxSanity": 55,
+      "luck": 65,
+      "mp": 11,
+      "conditions": []
+    },
+    "skills": {
+      "Charm": 60,
+      "Persuade": 55,
+      "Psychology": 45,
+      "Listen": 40
+    },
+    "inventory": [],
+    "clues": [
+      {
+        "clueText": "Robin left Cassandra before the investigators arrived.",
+        "category": "knowledge",
+        "difficulty": "regular",
+        "relatedTo": ["Cassandra"]
       },
-      "status": {
-        "hp": 10,
-        "maxHp": 10,
-        "sanity": 55,
-        "maxSanity": 55,
-        "luck": 65,
-        "mp": 11,
-        "conditions": []
+      {
+        "clueText": "Robin was caring for Bo He, who was suffering from mental instability.",
+        "category": "knowledge",
+        "difficulty": "regular",
+        "relatedTo": ["Bo He"]
+      }
+    ],
+    "relationships": [
+      {
+        "targetName": "Solomon",
+        "relationshipType": "friend",
+        "attitude": 70,
+        "description": "Close personal friend",
+        "history": "Robin traveled to Cassandra specifically to visit Solomon and maintains a strong friendship with him."
       },
-      "skills": {
-        "Charm": 60,
-        "Persuade": 55,
-        "Psychology": 45,
-        "Listen": 40
+      {
+        "targetName": "Bo He",
+        "relationshipType": "friend",
+        "attitude": 80,
+        "description": "Friend under Robin's care",
+        "history": "Robin took responsibility for looking after Bo He during a period of mental instability."
       },
-      "inventory": [],
-      "clues": [
-        {
-          "clueText": "Robin left Cassandra before the investigators arrived.",
-          "category": "knowledge",
-          "difficulty": "regular",
-          "relatedTo": ["Cassandra"]
-        },
-        {
-          "clueText": "Robin was caring for Bo He, who was suffering from mental instability.",
-          "category": "knowledge",
-          "difficulty": "regular",
-          "relatedTo": ["Bo He"]
-        }
-      ],
-      "relationships": [
-        {
-          "targetName": "Solomon",
-          "relationshipType": "friend",
-          "attitude": 70,
-          "description": "Close personal friend",
-          "history": "Robin traveled to Cassandra specifically to visit Solomon and maintains a strong friendship with him."
-        },
-        {
-          "targetName": "Bo He",
-          "relationshipType": "friend",
-          "attitude": 80,
-          "description": "Friend under Robin's care",
-          "history": "Robin took responsibility for looking after Bo He during a period of mental instability."
-        },
-        {
-          "targetName": "Wealthy adoptive father",
-          "relationshipType": "family",
-          "attitude": 50,
-          "description": "Financial supporter",
-          "history": "Robin was adopted by a very wealthy individual who provides financial security."
-        }
-      ],
-      "notes": "Robin does not participate directly in the investigation due to having already left Cassandra.",
-      "currentLocation": "OUTDOOR"
-    }
-  ]
+      {
+        "targetName": "Wealthy adoptive father",
+        "relationshipType": "family",
+        "attitude": 50,
+        "description": "Financial supporter",
+        "history": "Robin was adopted by a very wealthy individual who provides financial security."
+      }
+    ],
+    "notes": "Robin does not participate directly in the investigation due to having already left Cassandra.",
+    "currentLocation": "OUTDOOR"
+  }
+]

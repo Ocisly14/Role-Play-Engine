@@ -211,8 +211,6 @@ function updateFireBlocking(
   locationId: string,
   intensity: number
 ): void {
-  const state = dgsm.getState();
-
   // Scene-based blocking (existing)
   const scene = dgsm.getScene(locationId);
   if (scene) {
@@ -228,13 +226,12 @@ function updateFireBlocking(
       }
     } else {
       for (const connId of connectedSceneIds) {
-        const key1 = `${connId}::${locationId}`;
-        const key2 = `${locationId}::${connId}`;
-        if (state.blockedConnections.get(key1)?.startsWith("Blocked by fire")) {
+        if (
+          dgsm
+            .getConnectionBlockReason(connId, locationId)
+            ?.startsWith("Blocked by fire")
+        ) {
           dgsm.setConnectionBlocked(connId, locationId, false, "");
-        }
-        if (state.blockedConnections.get(key2)?.startsWith("Blocked by fire")) {
-          dgsm.setConnectionBlocked(locationId, connId, false, "");
         }
       }
     }
@@ -273,13 +270,12 @@ function updateFireBlocking(
     }
   } else {
     for (const nId of neighbors) {
-      const key1 = `${nId}::${locationId}`;
-      const key2 = `${locationId}::${nId}`;
-      if (state.blockedConnections.get(key1)?.startsWith("Blocked by fire")) {
+      if (
+        dgsm
+          .getConnectionBlockReason(nId, locationId)
+          ?.startsWith("Blocked by fire")
+      ) {
         dgsm.setConnectionBlocked(nId, locationId, false, "");
-      }
-      if (state.blockedConnections.get(key2)?.startsWith("Blocked by fire")) {
-        dgsm.setConnectionBlocked(locationId, nId, false, "");
       }
     }
   }
@@ -561,16 +557,11 @@ export const fireFeature: WorldFeature = {
 
     const topology = dgsm.getTopology();
     const newIds: string[] = [];
-    const state = dgsm.getState();
 
     // Helper: check if connection is blocked by non-fire reason
     const isNonFireBlocked = (a: string, b: string): boolean => {
-      const reason1 = state.blockedConnections.get(`${a}::${b}`);
-      const reason2 = state.blockedConnections.get(`${b}::${a}`);
-      return (
-        (!!reason1 && !reason1.startsWith("Blocked by fire")) ||
-        (!!reason2 && !reason2.startsWith("Blocked by fire"))
-      );
+      const reason = dgsm.getConnectionBlockReason(a, b);
+      return !!reason && !reason.startsWith("Blocked by fire");
     };
 
     // Helper: ignite a new location

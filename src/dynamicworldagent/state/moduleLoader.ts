@@ -183,7 +183,9 @@ export function initRuntime(params: {
       : null;
 
   if (!topology) {
-    throw new Error(`Module ${moduleData.moduleId} has no topology. Topology is required.`);
+    throw new Error(
+      `Module ${moduleData.moduleId} has no topology. Topology is required.`
+    );
   }
 
   // Determine default starting scene
@@ -241,10 +243,14 @@ export function initRuntime(params: {
     ) {
       const fallback = macroToEntry[resolvedLocation];
       if (fallback) {
-        console.warn(`[moduleLoader] NPC ${npc.id} resolved to macro location ${resolvedLocation}, mapping to entry scene ${fallback}`);
+        console.warn(
+          `[moduleLoader] NPC ${npc.id} resolved to macro location ${resolvedLocation}, mapping to entry scene ${fallback}`
+        );
         resolvedLocation = fallback;
       } else {
-        console.warn(`[moduleLoader] NPC ${npc.id} resolved to unknown location ${resolvedLocation}, using default ${defaultSceneId}`);
+        console.warn(
+          `[moduleLoader] NPC ${npc.id} resolved to unknown location ${resolvedLocation}, using default ${defaultSceneId}`
+        );
         resolvedLocation = defaultSceneId;
       }
     }

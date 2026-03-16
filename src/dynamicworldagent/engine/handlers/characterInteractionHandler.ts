@@ -69,7 +69,9 @@ export const characterInteractionHandler: NodeHandler = {
     // Target presence check
     if (node.targetCharacterId) {
       const targetPos = dgsm.getCharacterPosition(node.targetCharacterId);
-      const targetLocation = targetPos ? dgsm.resolveLocationId(targetPos) : undefined;
+      const targetLocation = targetPos
+        ? dgsm.resolveLocationId(targetPos)
+        : undefined;
       // Player character doesn't have characterPosition entry -- skip check for player
       if (targetLocation && targetLocation !== node.location) {
         return makeAction(

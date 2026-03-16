@@ -18,9 +18,10 @@ async function main() {
   const sessionIdx = args.indexOf("--session");
   const sessionId = sessionIdx >= 0 ? args[sessionIdx + 1] : "simple_town_sim";
   const outIdx = args.indexOf("--out");
-  const outPath = outIdx >= 0
-    ? args[outIdx + 1]
-    : path.join(process.cwd(), "data", `simulation-log-${sessionId}.json`);
+  const outPath =
+    outIdx >= 0
+      ? args[outIdx + 1]
+      : path.join(process.cwd(), "data", `simulation-log-${sessionId}.json`);
 
   console.log(`Exporting events for session: ${sessionId}`);
 

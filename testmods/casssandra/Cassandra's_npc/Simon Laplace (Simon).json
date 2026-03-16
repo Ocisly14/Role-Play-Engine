@@ -1,12 +1,12 @@
 [
-    {
+  {
     "name": "Simon Laplace (Simon)",
     "occupation": "Hacker / Drifter",
     "age": 30,
     "gender": "male",
-      "appearance": "A lean Caucasian man with a weary expression and unkempt hair. His clothing is often mismatched and worn from constant travel, giving him the look of someone who rarely stays in one place for long.",
-      "personality": "Protective, guilt-ridden, and restless. Simon shows a surprising sense of conscience despite his morally gray past. Distrustful of authority, but deeply loyal to the few people he cares about.",
-      "background": "Simon Laplace is a hacker with dissociative identity disorder (dual personality). His alter ego is Anatole. Simon is a skilled hacker who has been in a long-running online rivalry with Lucifero (Jenny Florence), though they never met in person. During the 2003 Reindeer Bar incident, Anatole was in control of the body and had an argument with Lucifero. Simon was one of the suspects in the murder case. He lives in Cassandra with Nancy Charlotte, running a flower shop. He discovered Patrizio's secrets by hacking into his computer over a year ago, downloading a mysterious image. He wants to stop Patrizio's cult activities but fears for his life if his identity as a hacker is revealed.",
+    "appearance": "A lean Caucasian man with a weary expression and unkempt hair. His clothing is often mismatched and worn from constant travel, giving him the look of someone who rarely stays in one place for long.",
+    "personality": "Protective, guilt-ridden, and restless. Simon shows a surprising sense of conscience despite his morally gray past. Distrustful of authority, but deeply loyal to the few people he cares about.",
+    "background": "Simon Laplace is a hacker with dissociative identity disorder (dual personality). His alter ego is Anatole. Simon is a skilled hacker who has been in a long-running online rivalry with Lucifero (Jenny Florence), though they never met in person. During the 2003 Reindeer Bar incident, Anatole was in control of the body and had an argument with Lucifero. Simon was one of the suspects in the murder case. He lives in Cassandra with Nancy Charlotte, running a flower shop. He discovered Patrizio's secrets by hacking into his computer over a year ago, downloading a mysterious image. He wants to stop Patrizio's cult activities but fears for his life if his identity as a hacker is revealed.",
     "goals": [
       "Protect Nancy and help her rebuild her life",
       "Stop Patrizio's cult activities and prevent disaster in Cassandra",
@@ -24,25 +24,25 @@
       "He can help investigators crack encrypted phones and access digital evidence",
       "He does not know that Adolph took the Qianwei System from the two-story wooden house"
     ],
-      "attributes": {
-        "STR": 55,
-        "CON": 60,
-        "DEX": 65,
-        "APP": 55,
-        "POW": 60,
-        "SIZ": 55,
-        "INT": 65,
-        "EDU": 50
-      },
-      "status": {
-        "hp": 11,
-        "maxHp": 11,
-        "sanity": 50,
-        "maxSanity": 60,
-        "luck": 70,
-        "mp": 12,
-        "conditions": []
-      },
+    "attributes": {
+      "STR": 55,
+      "CON": 60,
+      "DEX": 65,
+      "APP": 55,
+      "POW": 60,
+      "SIZ": 55,
+      "INT": 65,
+      "EDU": 50
+    },
+    "status": {
+      "hp": 11,
+      "maxHp": 11,
+      "sanity": 50,
+      "maxSanity": 60,
+      "luck": 70,
+      "mp": 12,
+      "conditions": []
+    },
     "skills": {
       "Computer Use": 85,
       "Electronics": 75,
@@ -90,7 +90,11 @@
         "clueText": "During the 2003 Reindeer Bar incident, Anatole (Simon's alter ego) was in control and had an argument with Lucifero, but Simon was not aware of this until later.",
         "category": "secret",
         "difficulty": "extreme",
-        "relatedTo": ["2003 Reindeer Bar murder", "Anatole", "Dissociative Identity Disorder"]
+        "relatedTo": [
+          "2003 Reindeer Bar murder",
+          "Anatole",
+          "Dissociative Identity Disorder"
+        ]
       },
       {
         "clueText": "Simon hacked into Patrizio's computer over a year ago and downloaded a mysterious image revealing Patrizio's cult activities. He can help investigators crack encrypted phones and access digital evidence.",
@@ -102,7 +106,11 @@
         "clueText": "Simon can help investigators decode messages from Bruno's phone and Lucifero's phone, revealing important information about the murder cases.",
         "category": "knowledge",
         "difficulty": "regular",
-        "relatedTo": ["Bruno Galilei", "Jenny Florence (Lucifero)", "2003 Reindeer Bar murder"]
+        "relatedTo": [
+          "Bruno Galilei",
+          "Jenny Florence (Lucifero)",
+          "2003 Reindeer Bar murder"
+        ]
       },
       {
         "clueText": "Simon wants to stop Patrizio's cult activities but fears for his life if his identity as a hacker is revealed.",
@@ -111,23 +119,23 @@
         "relatedTo": ["Patrizio von Samsa"]
       }
     ],
-      "relationships": [
-        {
-          "targetName": "Nancy",
-          "relationshipType": "family",
-          "attitude": 80,
-          "description": "Acts as her protector and caretaker.",
-          "history": "Rescued her from exploitation and chose a drifting life to keep her safe."
-        },
-        {
-          "targetName": "Anatole",
-          "relationshipType": "enemy",
-          "attitude": -50,
-          "description": "Anatole disapproves of Simon’s choices and lifestyle.",
-          "history": "Their relationship deteriorated after Simon took Nancy away and rejected Anatole’s plans."
-        }
-      ],
-      "notes": "Simon may be reluctant to share information unless investigators convince him they pose no threat to Nancy.",
-      "currentLocation": "SCN_9"
-    }
-  ]
+    "relationships": [
+      {
+        "targetName": "Nancy",
+        "relationshipType": "family",
+        "attitude": 80,
+        "description": "Acts as her protector and caretaker.",
+        "history": "Rescued her from exploitation and chose a drifting life to keep her safe."
+      },
+      {
+        "targetName": "Anatole",
+        "relationshipType": "enemy",
+        "attitude": -50,
+        "description": "Anatole disapproves of Simon’s choices and lifestyle.",
+        "history": "Their relationship deteriorated after Simon took Nancy away and rejected Anatole’s plans."
+      }
+    ],
+    "notes": "Simon may be reluctant to share information unless investigators convince him they pose no threat to Nancy.",
+    "currentLocation": "SCN_9"
+  }
+]

@@ -333,22 +333,11 @@ function updateWeatherBlocking(
           `Blocked by ${weatherType} (intensity ${intensity})`
         );
       } else {
-        const state = dgsm.getState();
-        const key1 = `${connId}::${sceneId}`;
-        const key2 = `${sceneId}::${connId}`;
-        const reason1 = state.blockedConnections.get(key1);
-        const reason2 = state.blockedConnections.get(key2);
+        const reason = dgsm.getConnectionBlockReason(connId, sceneId);
         if (
-          reason1 &&
-          (reason1.startsWith("Blocked by storm") ||
-            reason1.startsWith("Blocked by snow"))
-        ) {
-          dgsm.setConnectionBlocked(connId, sceneId, false, "");
-        }
-        if (
-          reason2 &&
-          (reason2.startsWith("Blocked by storm") ||
-            reason2.startsWith("Blocked by snow"))
+          reason &&
+          (reason.startsWith("Blocked by storm") ||
+            reason.startsWith("Blocked by snow"))
         ) {
           dgsm.setConnectionBlocked(sceneId, connId, false, "");
         }

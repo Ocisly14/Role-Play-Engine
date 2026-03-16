@@ -1,7 +1,6 @@
 import { COC_SKILL_BASE_VALUES } from "../../dynamicBasicAgent/npcPlanning/cocSkillList.js";
 import type { PlanNode } from "../../dynamicBasicAgent/npcPlanning/types.js";
 import type { DynamicGameStateManager } from "../../state/DynamicGameState.js";
-import { applySanityLoss } from "../features/sanityFeature.js";
 import type { SkillRollResult } from "../types.js";
 import {
   SUCCESS_RANK,
@@ -76,7 +75,13 @@ function pickBestFromCandidates(
 // ==================== Skill Roll Resolution ====================
 
 /** Opposed social skills for defender */
-const SOCIAL_DEFEND_SKILLS = ["Psychology", "Intimidate", "Persuade", "Fast Talk", "Charm"];
+const SOCIAL_DEFEND_SKILLS = [
+  "Psychology",
+  "Intimidate",
+  "Persuade",
+  "Fast Talk",
+  "Charm",
+];
 /** Opposed combat defend */
 const COMBAT_DEFEND_SKILLS = ["Dodge", "Fighting (Brawl)"];
 /** Chase skills for target */
@@ -94,7 +99,14 @@ export function resolveSkillRoll(
   const difficulty = getNodeDifficulty(node, dgsm);
   const npc = state.npcCharacters.find((n) => n.id === node.characterId);
   const npcAttrs = npc?.attributes ?? {
-    STR: 50, DEX: 50, INT: 50, POW: 50, CON: 50, SIZ: 50, APP: 50, EDU: 50,
+    STR: 50,
+    DEX: 50,
+    INT: 50,
+    POW: 50,
+    CON: 50,
+    SIZ: 50,
+    APP: 50,
+    EDU: 50,
   };
 
   // NPC's trained value, or CoC base value for untrained skill (case-insensitive)
@@ -102,11 +114,21 @@ export function resolveSkillRoll(
   const skillValue = caseInsensitiveLookup(adjustedSkills, skill) ?? baseValue;
 
   // --- Combat (opposed) ---
-  if (node.type === "character_interaction" && node.targetCharacterId && isCombatSkill(skill)) {
-    const defender = state.npcCharacters.find((n) => n.id === node.targetCharacterId);
+  if (
+    node.type === "character_interaction" &&
+    node.targetCharacterId &&
+    isCombatSkill(skill)
+  ) {
+    const defender = state.npcCharacters.find(
+      (n) => n.id === node.targetCharacterId
+    );
     const defenderSkills = defender?.skills ?? {};
-    const defSkill = pickBestFromCandidates(COMBAT_DEFEND_SKILLS, defenderSkills);
-    const defValue = defSkill?.value ?? Math.floor((defender?.attributes?.DEX ?? 50) / 2);
+    const defSkill = pickBestFromCandidates(
+      COMBAT_DEFEND_SKILLS,
+      defenderSkills
+    );
+    const defValue =
+      defSkill?.value ?? Math.floor((defender?.attributes?.DEX ?? 50) / 2);
 
     const attackRoll = rollD100();
     const defendRoll = rollD100();
@@ -123,7 +145,8 @@ export function resolveSkillRoll(
     }
 
     // Hit: apply damage
-    const db = npc?.status?.damageBonus ?? getDamageBonus(npcAttrs.STR, npcAttrs.SIZ);
+    const db =
+      npc?.status?.damageBonus ?? getDamageBonus(npcAttrs.STR, npcAttrs.SIZ);
     const weaponDamage = Math.floor(Math.random() * 6) + 1;
     const bonusDamage = rollDamageBonus(db);
     const totalDamage = weaponDamage + bonusDamage;
@@ -137,11 +160,18 @@ export function resolveSkillRoll(
   }
 
   // --- Social opposed ---
-  if (node.type === "character_interaction" && node.targetCharacterId && isSocialSkill(skill)) {
-    const target = state.npcCharacters.find((n) => n.id === node.targetCharacterId);
+  if (
+    node.type === "character_interaction" &&
+    node.targetCharacterId &&
+    isSocialSkill(skill)
+  ) {
+    const target = state.npcCharacters.find(
+      (n) => n.id === node.targetCharacterId
+    );
     const targetSkills = target?.skills ?? {};
     const defSkill = pickBestFromCandidates(SOCIAL_DEFEND_SKILLS, targetSkills);
-    const defValue = defSkill?.value ?? Math.floor((target?.attributes?.INT ?? 50) / 2);
+    const defValue =
+      defSkill?.value ?? Math.floor((target?.attributes?.INT ?? 50) / 2);
 
     const actorRoll = rollD100();
     const targetRoll = rollD100();
@@ -160,9 +190,14 @@ export function resolveSkillRoll(
   }
 
   // --- Standard single roll ---
-  const effectiveDifficulty = difficulty === "luck_only" ? "extreme" : difficulty;
+  const effectiveDifficulty =
+    difficulty === "luck_only" ? "extreme" : difficulty;
   const roll = rollD100();
-  const level = getSuccessLevelWithDifficulty(roll, skillValue, effectiveDifficulty);
+  const level = getSuccessLevelWithDifficulty(
+    roll,
+    skillValue,
+    effectiveDifficulty
+  );
 
   if (level === "fail" || level === "fumble") {
     return {
@@ -183,8 +218,15 @@ export function resolveSkillRoll(
 
 const COMBAT_SKILL_PREFIXES = ["Fighting", "Firearms", "Throw", "Dodge"];
 const SOCIAL_SKILL_NAMES = new Set([
-  "Charm", "Fast Talk", "Persuade", "Intimidate", "Psychology",
-  "Credit Rating", "Disguise", "Art/Craft (Acting)", "Law",
+  "Charm",
+  "Fast Talk",
+  "Persuade",
+  "Intimidate",
+  "Psychology",
+  "Credit Rating",
+  "Disguise",
+  "Art/Craft (Acting)",
+  "Law",
 ]);
 
 function isCombatSkill(skill: string): boolean {

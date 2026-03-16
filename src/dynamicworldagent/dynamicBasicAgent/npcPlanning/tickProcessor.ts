@@ -55,7 +55,9 @@ function findKnownItem(
   const actorItem = dgsm.findNpcItem(node.characterId, itemId);
   if (actorItem) return actorItem;
 
-  const sceneItem = dgsm.getScene(node.location)?.items.find((i) => i.id === itemId);
+  const sceneItem = dgsm
+    .getScene(node.location)
+    ?.items.find((i) => i.id === itemId);
   if (sceneItem) return sceneItem;
 
   if (node.targetCharacterId) {
@@ -75,7 +77,9 @@ function getItemActionContext(
     if (!itemId && !targetItemId) return null;
 
     const item = itemId ? findKnownItem(dgsm, node, itemId) : null;
-    const targetItem = targetItemId ? findKnownItem(dgsm, node, targetItemId) : null;
+    const targetItem = targetItemId
+      ? findKnownItem(dgsm, node, targetItemId)
+      : null;
 
     return {
       itemId,
@@ -101,7 +105,10 @@ function getItemActionContext(
   return null;
 }
 
-function formatItemReference(name: string | undefined, id: string | undefined): string | null {
+function formatItemReference(
+  name: string | undefined,
+  id: string | undefined
+): string | null {
   if (!name && !id) return null;
   if (name && id) return `${name} (id:${id})`;
   return name ?? id ?? null;
@@ -135,8 +142,10 @@ function buildEventMetadata(
 
   if (itemContext?.itemId) metadata.itemId = itemContext.itemId;
   if (itemContext?.itemName) metadata.itemName = itemContext.itemName;
-  if (itemContext?.targetItemId) metadata.targetItemId = itemContext.targetItemId;
-  if (itemContext?.targetItemName) metadata.targetItemName = itemContext.targetItemName;
+  if (itemContext?.targetItemId)
+    metadata.targetItemId = itemContext.targetItemId;
+  if (itemContext?.targetItemName)
+    metadata.targetItemName = itemContext.targetItemName;
 
   return metadata;
 }
@@ -218,9 +227,7 @@ async function discoverEvidence(
     return [];
 
   // If skill roll was made, success level gates difficulty; otherwise automatic only
-  const maxRank = node.skill
-    ? (SUCCESS_TO_MAX_RANK[successLevel] ?? 0)
-    : 0;
+  const maxRank = node.skill ? (SUCCESS_TO_MAX_RANK[successLevel] ?? 0) : 0;
 
   const candidates: DiscoveryCandidate[] = [];
   for (const item of scene.items) {
@@ -926,7 +933,10 @@ async function executeSingleTick(
             {
               npcId,
               npcName: npc?.name ?? npcId,
-              currentLocation: (() => { const p = dgsm.getCharacterPosition(npcId); return p ? dgsm.resolveLocationId(p) : "unknown"; })(),
+              currentLocation: (() => {
+                const p = dgsm.getCharacterPosition(npcId);
+                return p ? dgsm.resolveLocationId(p) : "unknown";
+              })(),
               longTermIntent,
               todayScheduleSummary: schedule
                 .map((s) => `${s.location}: ${s.activity}`)
@@ -943,7 +953,9 @@ async function executeSingleTick(
 
           const logEntry = `Day${gameDay} ${tickRuntime.tickTime} [witness] - ${result.witnessEntry}`;
           const npcLocPos = dgsm.getCharacterPosition(npcId);
-          const npcLoc = npcLocPos ? dgsm.resolveLocationId(npcLocPos) : "unknown";
+          const npcLoc = npcLocPos
+            ? dgsm.resolveLocationId(npcLocPos)
+            : "unknown";
 
           // Write witness memory via NpcMemoryManager
           if (memoryManager) {
@@ -1154,7 +1166,8 @@ function scanUnplannedEncounters(
     for (let i = 0; i < npcIds.length; i++) {
       for (let j = i + 1; j < npcIds.length; j++) {
         // At least one must have just arrived this tick
-        if (!arrivedNpcIds.has(npcIds[i]) && !arrivedNpcIds.has(npcIds[j])) continue;
+        if (!arrivedNpcIds.has(npcIds[i]) && !arrivedNpcIds.has(npcIds[j]))
+          continue;
         const pairKey = [npcIds[i], npcIds[j]].sort().join("_");
         if (interactedPairs.has(pairKey)) continue;
         if (!npcEncounterMap.has(npcIds[i])) npcEncounterMap.set(npcIds[i], []);

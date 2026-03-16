@@ -87,27 +87,19 @@
         "clueText": "He does not know Shandra Hernandez's true identity but trusts her deeply.",
         "category": "knowledge",
         "difficulty": "regular",
-        "relatedTo": [
-          "Shandra Hernandez"
-        ]
+        "relatedTo": ["Shandra Hernandez"]
       },
       {
         "clueText": "An anonymous message warned him not to trust Mayor Padrich or Father Constantine.",
         "category": "secret",
         "difficulty": "hard",
-        "relatedTo": [
-          "Mayor Padrich",
-          "Father Constantine"
-        ]
+        "relatedTo": ["Mayor Padrich", "Father Constantine"]
       },
       {
         "clueText": "He was about to expose crucial leads in the 2002 Paradil Hotel murder case before his death.",
         "category": "knowledge",
         "difficulty": "extreme",
-        "relatedTo": [
-          "2002 Paradil Hotel murder",
-          "Unknown victim"
-        ]
+        "relatedTo": ["2002 Paradil Hotel murder", "Unknown victim"]
       },
       {
         "clueText": "He received an anonymous SMS from Lucifero warning him not to trust his superiors, especially Patrizio, and that Constantine was not qualified to serve God and was in league with Patrizio.",

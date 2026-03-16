@@ -521,7 +521,11 @@ describe("staminaFeature", () => {
     it("should use CharacterPosition for acceleration when available", () => {
       dgsm._addNpc("npc1", "tavern", 10);
       // Override position to a road position for npc1
-      dgsm._characterPositions["npc1"] = { type: "road", roadId: "ROAD_1", position: 0.5 };
+      dgsm._characterPositions["npc1"] = {
+        type: "road",
+        roadId: "ROAD_1",
+        position: 0.5,
+      };
 
       // Set fire on ROAD_1 (intensity 2 → acceleration)
       dgsm.setFeatureSceneState("fire", "ROAD_1", { intensity: 2 });
@@ -532,7 +536,6 @@ describe("staminaFeature", () => {
       // With fire acceleration: 5 * 2 = 10 minutes
       expect(stamina.minutesSinceLastRest).toBe(10);
     });
-
   });
 
   // ===== planningPrompt =====

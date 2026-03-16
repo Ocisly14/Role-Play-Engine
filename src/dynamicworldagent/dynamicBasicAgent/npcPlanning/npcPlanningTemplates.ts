@@ -106,7 +106,7 @@ Write your plan as an ordered list of activities: WHERE you'll go and WHAT you i
 ## How to Plan Your Day
 - Think about who you are — your job, your habits, your personality. Plan a day that feels natural for someone like you.
 - Balance your everyday routine (meals, work, rest, hobbies) with actions that move you closer to your goal.
-- Use scene IDs from "Places You Know" for locations.
+- Use exact location names from "Places You Know" for the location field.
 - Be realistic — you wouldn't break into someone's office in broad daylight, and you need to eat and rest.
 - Plan entries as you need for a full day. Fewer if it's already late.
 
@@ -118,13 +118,13 @@ Return a JSON array in the order you plan to do them. No extra text. Always writ
 
 \`\`\`json
 [
-  { "location": "home_kitchen", "activity": "Have breakfast and review notes from yesterday" },
-  { "location": "library_main", "activity": "Search the archives for information about the ritual" }
+  { "location": "My Home", "activity": "Have breakfast and review notes from yesterday" },
+  { "location": "Public Library", "activity": "Search the archives for information about the ritual" }
 ]
 \`\`\`
 
 Each entry has exactly two fields:
-- \`"location"\`: scene ID — where you need to go for this activity
+- \`"location"\`: exact location name from "Places You Know"
 - \`"activity"\`: one sentence — what you intend to do there`;
 
   const userPrompt = `## Places You Know
@@ -164,6 +164,7 @@ export interface DetailedNodesParams {
   memoryLog: string;
   todayPlan: ScheduleEntry[];
   currentLocation: string;
+  sceneMap: string;
   sceneDescription: string;
   sceneItems: string;
   sceneNpcs: string;
@@ -181,7 +182,7 @@ export interface DetailedNodesParams {
 
 const DEFAULT_DETAILED_NODE_TYPE_REF = `## Node Type Reference
 - **"routine"**: Self-contained action, no interaction target.
-- **"movement"**: Move to a destination scene. Set location to the target scene ID.
+- **"movement"**: Move to a destination. Set location to the exact destination name from "Places You Know".
 - **"character_interaction"**: Interact with a specific character. Requires targetCharacterId.
   - For sharing information or knowledge with one or more characters, include characterInteractionPayload:
     { "transferType": "information", "informationContent": "what you want to tell them", "targetCharacterIds": ["id1", "id2"], "relatedKnowledgeIds": ["knowledge_id"] }
@@ -220,8 +221,8 @@ Return a JSON array of PlanNode objects. No extra text. Always write in English.
 {
   "nodeId": "unique-id",
   "gameTime": "HH:MM",
-  "action": "description of what you do",
-  "location": "sceneId",
+    "action": "description of what you do",
+    "location": "exact location name from Places You Know",
   "type": "routine|movement|character_interaction|object_interaction|scene_interaction",
   "skill": "OMIT if no skill check needed, otherwise exact skill name",
   "impact": "Default 0. Use 1 only for targeted consequential actions with skill; 2+ for broader effects",
@@ -263,7 +264,10 @@ ${params.planningPrompt || ""}
 
 ${params.outputSchemaPrompt || DEFAULT_DETAILED_OUTPUT_SCHEMA}`;
 
-  const userPrompt = `## Right Now
+  const userPrompt = `## Places You Know
+${params.sceneMap || "No map available."}
+
+## Right Now
 Day ${params.gameDay}, ${params.currentTime}
 
 ## Character: ${params.npcName} (${params.npcId})
@@ -337,7 +341,7 @@ Think about how this event affects your goals and your safety. Adjust your sched
 ## Instructions
 - Only change what the event actually affects. Don't rewrite plans that are still fine.
 - Keep the same format: each entry has "location", "activity". Order matters.
-- Use scene IDs from "Places You Know" for locations.
+- Use exact location names from "Places You Know" for the location field.
 - If this event fundamentally changes what you're trying to accomplish, update your long-term goal too.
 
 ## Output
@@ -346,7 +350,7 @@ Return a single JSON object. No extra text. Always write in English.
 \`\`\`json
 {
   "revisedSchedule": [
-    { "location": "scene_id", "activity": "what you will do" }
+    { "location": "exact location name from Places You Know", "activity": "what you will do" }
   ],
   "shouldUpdateLongTermIntent": false,
   "updatedLongTermIntent": "only if shouldUpdateLongTermIntent is true"
@@ -398,6 +402,7 @@ export interface RevisePlansParams {
   pendingNodes: string;
   triggerDescription: string;
   currentLocation: string;
+  sceneMap: string;
   sceneDescription: string;
   sceneItems: string;
   sceneNpcs: string;
@@ -424,7 +429,7 @@ IMPORTANT: "revisedNodes" MUST be an array of PlanNode objects — even if there
       "nodeId": "unique-id",
       "gameTime": "HH:MM",
       "action": "description of what you do",
-      "location": "sceneId",
+      "location": "exact location name from Places You Know",
       "type": "routine|movement|character_interaction|object_interaction|scene_interaction",
       "impact": "Default 0. Use 1 only for targeted consequential actions with skill; 2+ for broader effects",
       "status": "pending"
@@ -445,7 +450,7 @@ Something just disrupted your plans. Look at what you were about to do and decid
 
 You can reorder, change, add, or drop actions. If this event fundamentally changes what you're trying to accomplish long-term, say so.
 
-Set each node's \`location\` to the scene where that action happens. If the next step is not at your current location, include movement nodes first.
+Set each node's \`location\` to the exact location name from "Places You Know" where that action happens. If the next step is not at your current location, include movement nodes first.
 
 ## Instructions
 - Only change what the event actually affects. Don't rewrite actions that are still fine.
@@ -460,7 +465,10 @@ ${params.planningPrompt || ""}
 
 ${params.outputSchemaPrompt || REVISE_PLANS_OUTPUT_SCHEMA}`;
 
-  const userPrompt = `## Right Now
+  const userPrompt = `## Places You Know
+${params.sceneMap || "No map available."}
+
+## Right Now
 Day ${params.gameDay}, ${params.currentTime}
 
 ## Character: ${params.npcName} (${params.npcId})

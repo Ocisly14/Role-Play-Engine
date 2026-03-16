@@ -62,19 +62,13 @@
         "clueText": "The Qianwei surveillance system covers most of Cassandra and key facilities.",
         "category": "knowledge",
         "difficulty": "regular",
-        "relatedTo": [
-          "Cassandra",
-          "Qianwei System"
-        ]
+        "relatedTo": ["Cassandra", "Qianwei System"]
       },
       {
         "clueText": "A hidden backdoor allows Anatole to remotely access and control the entire system.",
         "category": "secret",
         "difficulty": "hard",
-        "relatedTo": [
-          "Qianwei System",
-          "Dark Web Clients"
-        ]
+        "relatedTo": ["Qianwei System", "Dark Web Clients"]
       },
       {
         "clueText": "During the 2003 Reindeer Bar incident, Anatole was in control and had an argument with Lucifero, but Simon was not aware of this until later.",
@@ -91,11 +85,7 @@
         "clueText": "He received a threatening note from Adolph mentioning the 1988 incident, which forced him to attend the meeting at the Reindeer Bar.",
         "category": "secret",
         "difficulty": "hard",
-        "relatedTo": [
-          "Adolph Carl",
-          "1988 Paris incident",
-          "Reindeer Bar"
-        ]
+        "relatedTo": ["Adolph Carl", "1988 Paris incident", "Reindeer Bar"]
       }
     ],
     "relationships": [

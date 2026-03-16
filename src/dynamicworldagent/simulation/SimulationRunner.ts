@@ -493,7 +493,16 @@ export class SimulationRunner {
       if (stats && stats.hp <= 0) {
         this.deadNpcIds.add(npc.id);
 
-        const location = (() => { const p = gameState.characterPositions[npc.id]; return p ? (p.type === "scene" ? p.sceneId : p.type === "junction" ? p.junctionId : p.roadId) : "unknown"; })();
+        const location = (() => {
+          const p = gameState.characterPositions[npc.id];
+          return p
+            ? p.type === "scene"
+              ? p.sceneId
+              : p.type === "junction"
+                ? p.junctionId
+                : p.roadId
+            : "unknown";
+        })();
         const event = this.events.emitSimulationEvent(
           "npc_death",
           npc.id,

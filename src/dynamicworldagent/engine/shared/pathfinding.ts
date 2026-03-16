@@ -2,6 +2,7 @@ import type {
   CharacterPosition,
   TownTopology,
 } from "../../state/topologyTypes.js";
+import { hasBlockedConnection } from "../../state/blockedConnections.js";
 
 // ===== Topology-aware pathfinding (Junction-Road graph) =====
 
@@ -38,15 +39,15 @@ export function findTopologyPath(
   topology: TownTopology,
   blockedConnections: Map<string, string>
 ): TopologyPath | null {
-  const startInfo = resolveToJunctions(from, topology);
-  const endInfo = resolveToJunctions(to, topology);
-
-  if (!startInfo || !endInfo) return null;
-
   // Same location check
   if (positionsEqual(from, to)) {
     return { steps: [], totalMinutes: 0 };
   }
+
+  const startInfo = resolveToJunctions(from, topology, blockedConnections);
+  const endInfo = resolveToJunctions(to, topology, blockedConnections);
+
+  if (!startInfo || !endInfo) return null;
 
   // BFS on junctions
   const visited = new Set<string>();
@@ -87,12 +88,15 @@ export function findTopologyPath(
 
       if (visited.has(otherJunctionId)) continue;
 
-      // Topology blocking uses "junctionId::roadId" format.
-      // This is separate from old-style "sceneA::sceneB" blocking which is used by legacy BFS.
-      const key1 = `${current.junctionId}::${road.id}`;
-      const key2 = `${road.id}::${current.junctionId}`;
-      if (blockedConnections.has(key1) || blockedConnections.has(key2))
+      if (
+        hasBlockedConnection(
+          blockedConnections,
+          { type: "junction", id: current.junctionId },
+          { type: "road", id: road.id }
+        )
+      ) {
         continue;
+      }
 
       const roadStep: TopologyPathStep = {
         type: "road",
@@ -114,7 +118,8 @@ export function findTopologyPath(
 /** Resolve a CharacterPosition to reachable junction(s) with initial travel cost */
 function resolveToJunctions(
   pos: CharacterPosition,
-  topology: TownTopology
+  topology: TownTopology,
+  blockedConnections: Map<string, string>
 ): JunctionEntry[] | null {
   switch (pos.type) {
     case "junction":
@@ -133,22 +138,41 @@ function resolveToJunctions(
       if (!road) return null;
       const toA = pos.position * road.travelTimeMinutes;
       const toB = (1 - pos.position) * road.travelTimeMinutes;
-      return [
-        {
+      const entries: JunctionEntry[] = [];
+
+      if (
+        !hasBlockedConnection(
+          blockedConnections,
+          { type: "road", id: road.id },
+          { type: "junction", id: road.endpointA }
+        )
+      ) {
+        entries.push({
           junctionId: road.endpointA,
           initialSteps: [{ type: "road", id: road.id, minutes: toA }],
           initialMinutes: toA,
           finalSteps: [{ type: "road", id: road.id, minutes: toA }],
           finalMinutes: toA,
-        },
-        {
+        });
+      }
+
+      if (
+        !hasBlockedConnection(
+          blockedConnections,
+          { type: "road", id: road.id },
+          { type: "junction", id: road.endpointB }
+        )
+      ) {
+        entries.push({
           junctionId: road.endpointB,
           initialSteps: [{ type: "road", id: road.id, minutes: toB }],
           initialMinutes: toB,
           finalSteps: [{ type: "road", id: road.id, minutes: toB }],
           finalMinutes: toB,
-        },
-      ];
+        });
+      }
+
+      return entries.length > 0 ? entries : null;
     }
 
     case "scene": {
@@ -156,6 +180,16 @@ function resolveToJunctions(
       if (!parent) return null;
 
       if (parent.type === "junction") {
+        if (
+          hasBlockedConnection(
+            blockedConnections,
+            { type: "scene", id: pos.sceneId },
+            { type: "junction", id: parent.junctionId }
+          )
+        ) {
+          return null;
+        }
+
         return [
           {
             junctionId: parent.junctionId,
@@ -170,10 +204,28 @@ function resolveToJunctions(
       // Scene on a road — can reach either junction
       const road = topology.roads.get(parent.roadId);
       if (!road) return null;
+      if (
+        hasBlockedConnection(
+          blockedConnections,
+          { type: "scene", id: pos.sceneId },
+          { type: "road", id: road.id }
+        )
+      ) {
+        return null;
+      }
+
       const toA = parent.position * road.travelTimeMinutes;
       const toB = (1 - parent.position) * road.travelTimeMinutes;
-      return [
-        {
+      const entries: JunctionEntry[] = [];
+
+      if (
+        !hasBlockedConnection(
+          blockedConnections,
+          { type: "road", id: road.id },
+          { type: "junction", id: road.endpointA }
+        )
+      ) {
+        entries.push({
           junctionId: road.endpointA,
           initialSteps: [
             { type: "exit_scene", id: pos.sceneId, minutes: 1 },
@@ -185,8 +237,17 @@ function resolveToJunctions(
             { type: "enter_scene", id: pos.sceneId, minutes: 1 },
           ],
           finalMinutes: 1 + toA,
-        },
-        {
+        });
+      }
+
+      if (
+        !hasBlockedConnection(
+          blockedConnections,
+          { type: "road", id: road.id },
+          { type: "junction", id: road.endpointB }
+        )
+      ) {
+        entries.push({
           junctionId: road.endpointB,
           initialSteps: [
             { type: "exit_scene", id: pos.sceneId, minutes: 1 },
@@ -198,8 +259,10 @@ function resolveToJunctions(
             { type: "enter_scene", id: pos.sceneId, minutes: 1 },
           ],
           finalMinutes: 1 + toB,
-        },
-      ];
+        });
+      }
+
+      return entries.length > 0 ? entries : null;
     }
   }
 }

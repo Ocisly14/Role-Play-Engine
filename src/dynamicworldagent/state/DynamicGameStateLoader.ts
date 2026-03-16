@@ -9,7 +9,7 @@ import { resolveModuleIdByName } from "../../shared/agents/memory/database/modul
 import { getPrismaClient } from "../../shared/agents/memory/database/prismaClient.js";
 import { resolveEmailId } from "../../shared/agents/memory/database/userContext.js";
 import type { DynamicGameState } from "./DynamicGameState.js";
-import { loadModule, createSession, initRuntime } from "./moduleLoader.js";
+import { createSession, initRuntime, loadModule } from "./moduleLoader.js";
 
 /**
  * Initialize complete DynamicGameState with runtime data.

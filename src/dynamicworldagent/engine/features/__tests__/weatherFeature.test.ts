@@ -1,5 +1,9 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import type { SceneCondition } from "../../../dynamicBasicAgent/npcPlanning/types.js";
+import {
+  makeBlockedConnectionKey,
+  resolveBlockedConnectionNodeRef,
+} from "../../../state/blockedConnections.js";
 import type { TickRuntimeContext } from "../../types.js";
 import { weatherFeature } from "../weatherFeature.js";
 
@@ -23,7 +27,14 @@ function createMockDgsm() {
   const characterPositions: Record<string, any> = {};
   const npcStats: Record<string, { hp: number; san: number }> = {};
 
-  return {
+  let api: {
+    getConnectionBlockReason(fromId: string, toId: string): string | undefined;
+    [key: string]: unknown;
+  };
+
+  const getNodeRef = (id: string) => resolveBlockedConnectionNodeRef(id, { scenes });
+
+  api = {
     getFeatureSceneState(featureId: string, sceneId: string) {
       return featureState[featureId]?.[sceneId];
     },
@@ -55,18 +66,28 @@ function createMockDgsm() {
         npcStats,
       };
     },
+    getConnectionBlockReason(fromId: string, toId: string) {
+      const fromRef = getNodeRef(fromId);
+      const toRef = getNodeRef(toId);
+      if (!fromRef || !toRef) return undefined;
+      return blockedConnections.get(makeBlockedConnectionKey(fromRef, toRef));
+    },
     setConnectionBlocked(
       fromId: string,
       toId: string,
       blocked: boolean,
       reason: string
     ) {
-      const key = `${fromId}::${toId}`;
-      if (blocked) blockedConnections.set(key, reason);
-      else {
-        blockedConnections.delete(key);
-        blockedConnections.delete(`${toId}::${fromId}`);
+      const fromRef = getNodeRef(fromId);
+      const toRef = getNodeRef(toId);
+      if (!fromRef || !toRef) {
+        throw new Error(
+          `Unknown blocked connection endpoint in test mock: ${fromId}, ${toId}`
+        );
       }
+      const key = makeBlockedConnectionKey(fromRef, toRef);
+      if (blocked) blockedConnections.set(key, reason);
+      else blockedConnections.delete(key);
     },
     updateNpcHp(npcId: string, delta: number) {
       if (!npcStats[npcId]) return;
@@ -83,6 +104,7 @@ function createMockDgsm() {
     _scenarioConditions: scenarioConditions,
     _blockedConnections: blockedConnections,
   };
+  return api;
 }
 
 type MockDgsm = ReturnType<typeof createMockDgsm>;
@@ -455,14 +477,12 @@ describe("weatherFeature", () => {
       runTicks(dgsm, runtime, 1);
 
       // outdoor-to-outdoor should be blocked
-      const hasBlock =
-        dgsm._blockedConnections.has("main_street::town_square") ||
-        dgsm._blockedConnections.has("town_square::main_street");
-      expect(hasBlock).toBe(true);
+      expect(dgsm.getConnectionBlockReason("town_square", "main_street")).toBe(
+        "Blocked by storm (intensity 4)"
+      );
 
       // outdoor-to-indoor should NOT be blocked
-      expect(dgsm._blockedConnections.has("tavern::main_street")).toBe(false);
-      expect(dgsm._blockedConnections.has("main_street::tavern")).toBe(false);
+      expect(dgsm.getConnectionBlockReason("main_street", "tavern")).toBeUndefined();
 
       mockRandom.mockRestore();
     });

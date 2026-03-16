@@ -1,16 +1,16 @@
 [
-    {
-      "name": "Mrs. Barklyite (Lucia Shiny)",
-      "occupation": "Lawyer",
-      "age": 33,
-      "gender": "female",
-      "appearance": "An elegant and composed woman, often seen wearing a distinctive ruby brooch gifted by her adoptive father. Her attire is formal and professional, reflecting her status as a capable lawyer.",
-      "personality": "Intelligent, diligent, and conscientious. She carries a sense of guilt toward her benefactor and is driven by a desire to prove her worth, while remaining unaware of the darker forces surrounding her upbringing.",
-      "background": "Lucia Shiny, known as Mrs. Barklyite or 'the Red Stone Lady,' was an orphan from the slums with no knowledge of her biological parents. She was adopted by Albert Shiny, who ran an orphanage and secretly was a Shoggoth Lord. Although his true intention was to increase the human population for predation, Lucia believed his motives were benevolent. She grew up to become a highly capable lawyer, though she feels she has not lived up to her adoptive father's expectations.",
-      "goals": [
-        "To achieve greater success and recognition as a lawyer",
-        "To repay her adoptive father's kindness and live up to his expectations"
-      ],
+  {
+    "name": "Mrs. Barklyite (Lucia Shiny)",
+    "occupation": "Lawyer",
+    "age": 33,
+    "gender": "female",
+    "appearance": "An elegant and composed woman, often seen wearing a distinctive ruby brooch gifted by her adoptive father. Her attire is formal and professional, reflecting her status as a capable lawyer.",
+    "personality": "Intelligent, diligent, and conscientious. She carries a sense of guilt toward her benefactor and is driven by a desire to prove her worth, while remaining unaware of the darker forces surrounding her upbringing.",
+    "background": "Lucia Shiny, known as Mrs. Barklyite or 'the Red Stone Lady,' was an orphan from the slums with no knowledge of her biological parents. She was adopted by Albert Shiny, who ran an orphanage and secretly was a Shoggoth Lord. Although his true intention was to increase the human population for predation, Lucia believed his motives were benevolent. She grew up to become a highly capable lawyer, though she feels she has not lived up to her adoptive father's expectations.",
+    "goals": [
+      "To achieve greater success and recognition as a lawyer",
+      "To repay her adoptive father's kindness and live up to his expectations"
+    ],
     "secrets": [
       "She is unaware that her adoptive father is a non-human entity with horrific motives",
       "Her upbringing was part of a larger, inhuman scheme rather than an act of pure charity",
@@ -21,52 +21,52 @@
       "She is skilled in disguise and can help investigators if they gain her trust",
       "The ruby brooch she wears comes from moon-beasts in the Dreamlands, and her adoptive father can exchange her through it if she becomes useless"
     ],
-      "attributes": {
-        "STR": 40,
-        "CON": 50,
-        "DEX": 55,
-        "APP": 65,
-        "POW": 60,
-        "SIZ": 50,
-        "INT": 75,
-        "EDU": 80
-      },
-      "status": {
-        "hp": 10,
-        "maxHp": 10,
-        "sanity": 60,
-        "maxSanity": 60,
-        "luck": 65,
-        "mp": 12,
-        "conditions": []
-      },
-      "skills": {
-        "Law": 80,
-        "Persuade": 70,
-        "Charm": 60,
-        "Psychology": 55,
-        "Credit Rating": 60
-      },
-      "inventory": [
-        {
-          "name": "Ruby brooch",
-          "properties": {
-            "clue": "A distinctive ruby brooch gifted by her adoptive father Albert Shiny. It originates from moon-beasts in the Dreamlands and serves as a potential exchange token."
-          }
-        },
-        {
-          "name": "Legal documents",
-          "properties": {
-            "note": "Various legal case files and professional documents."
-          }
-        },
-        {
-          "name": "Handbag with personal effects",
-          "properties": {
-            "note": "Contains everyday items and disguise materials."
-          }
+    "attributes": {
+      "STR": 40,
+      "CON": 50,
+      "DEX": 55,
+      "APP": 65,
+      "POW": 60,
+      "SIZ": 50,
+      "INT": 75,
+      "EDU": 80
+    },
+    "status": {
+      "hp": 10,
+      "maxHp": 10,
+      "sanity": 60,
+      "maxSanity": 60,
+      "luck": 65,
+      "mp": 12,
+      "conditions": []
+    },
+    "skills": {
+      "Law": 80,
+      "Persuade": 70,
+      "Charm": 60,
+      "Psychology": 55,
+      "Credit Rating": 60
+    },
+    "inventory": [
+      {
+        "name": "Ruby brooch",
+        "properties": {
+          "clue": "A distinctive ruby brooch gifted by her adoptive father Albert Shiny. It originates from moon-beasts in the Dreamlands and serves as a potential exchange token."
         }
-      ],
+      },
+      {
+        "name": "Legal documents",
+        "properties": {
+          "note": "Various legal case files and professional documents."
+        }
+      },
+      {
+        "name": "Handbag with personal effects",
+        "properties": {
+          "note": "Contains everyday items and disguise materials."
+        }
+      }
+    ],
     "clues": [
       {
         "clueText": "Her adoptive father ran an orphanage that selectively took in intelligent children.",
@@ -84,7 +84,12 @@
         "clueText": "She conducted business with Lucifero through Adolph Carl (Shore Master), asking her to intercept Borrachero shipments.",
         "category": "secret",
         "difficulty": "hard",
-        "relatedTo": ["Jenny Florence (Lucifero)", "Adolph Carl", "Lux Lynch", "Borrachero"]
+        "relatedTo": [
+          "Jenny Florence (Lucifero)",
+          "Adolph Carl",
+          "Lux Lynch",
+          "Borrachero"
+        ]
       },
       {
         "clueText": "She helped Ben Cleo escape conviction for murdering a judge five years ago, which she now deeply regrets.",
@@ -93,16 +98,16 @@
         "relatedTo": ["Ben Cleo"]
       }
     ],
-      "relationships": [
-        {
-          "targetName": "Albert Shiny",
-          "relationshipType": "family",
-          "attitude": 60,
-          "description": "Her adoptive father, whom she respects deeply and feels indebted to.",
-          "history": "Albert Shiny adopted Lucia from an orphanage and supported her education, shaping her entire life."
-        }
-      ],
-      "notes": "Known in social circles as the 'Red Stone Lady' due to her signature ruby brooch.",
-      "currentLocation": "SCN_1"
-    }
-  ]
+    "relationships": [
+      {
+        "targetName": "Albert Shiny",
+        "relationshipType": "family",
+        "attitude": 60,
+        "description": "Her adoptive father, whom she respects deeply and feels indebted to.",
+        "history": "Albert Shiny adopted Lucia from an orphanage and supported her education, shaping her entire life."
+      }
+    ],
+    "notes": "Known in social circles as the 'Red Stone Lady' due to her signature ruby brooch.",
+    "currentLocation": "SCN_1"
+  }
+]

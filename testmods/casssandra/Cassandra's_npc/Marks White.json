@@ -1,17 +1,17 @@
 [
-    {
-      "name": "Marks White",
-      "occupation": "Watchmaker / Clock Shop Owner",
-      "age": 45,
-      "gender": "male",
-      "appearance": "A rather plain-looking middle-aged man with an unimpressive presence; his looks are forgettable, making him easy to overlook in a crowd.",
-      "personality": "Cautious, calculating, pragmatic, and emotionally restrained; prefers indirect methods and avoids unnecessary confrontation.",
-      "background": "Marks White is a clockmaker and owner of a clock shop in Cassandra. He is a Deep One hybrid who did not fully transform, living as an ugly old man with a flat forehead. Due to his Deep One heritage, he is well aware of what is happening in Cassandra, but he will neither help nor prevent it, nor participate in any of it. He only wants to make his clocks well in his lifetime. He was the first to notice the temporal anomalies in Cassandra and realized that a hybrid Hound of Tindalos has mixed into an old decorative oil painting hanging in his shop.",
-      "goals": [
-        "Protect his business interests",
-        "Remain uninvolved in open conflicts"
-      ],
-      "secrets": [
+  {
+    "name": "Marks White",
+    "occupation": "Watchmaker / Clock Shop Owner",
+    "age": 45,
+    "gender": "male",
+    "appearance": "A rather plain-looking middle-aged man with an unimpressive presence; his looks are forgettable, making him easy to overlook in a crowd.",
+    "personality": "Cautious, calculating, pragmatic, and emotionally restrained; prefers indirect methods and avoids unnecessary confrontation.",
+    "background": "Marks White is a clockmaker and owner of a clock shop in Cassandra. He is a Deep One hybrid who did not fully transform, living as an ugly old man with a flat forehead. Due to his Deep One heritage, he is well aware of what is happening in Cassandra, but he will neither help nor prevent it, nor participate in any of it. He only wants to make his clocks well in his lifetime. He was the first to notice the temporal anomalies in Cassandra and realized that a hybrid Hound of Tindalos has mixed into an old decorative oil painting hanging in his shop.",
+    "goals": [
+      "Protect his business interests",
+      "Remain uninvolved in open conflicts"
+    ],
+    "secrets": [
       "He is a Deep One hybrid who did not fully transform, living as an ugly old man with a flat forehead",
       "Due to his Deep One heritage, he is well aware of what is happening in Cassandra, but he will neither help nor prevent it",
       "He was the first to notice the temporal anomalies in Cassandra",
@@ -19,32 +19,32 @@
       "He made the church bell and claims his clocks will never be off by even a second during his lifetime",
       "He can tell investigators about three men in black clothes heading toward the train station platform if asked"
     ],
-      "attributes": {
-        "STR": 50,
-        "CON": 55,
-        "DEX": 50,
-        "APP": 30,
-        "POW": 65,
-        "SIZ": 60,
-        "INT": 55,
-        "EDU": 65
-      },
-      "status": {
-        "hp": 12,
-        "maxHp": 12,
-        "sanity": 50,
-        "maxSanity": 99,
-        "luck": 50,
-        "mp": 13,
-        "conditions": []
-      },
-      "skills": {
-        "Credit Rating": 40,
-        "Fast Talk": 50,
-        "Psychology": 55,
-        "Accounting": 60,
-        "Library Use": 40
-      },
+    "attributes": {
+      "STR": 50,
+      "CON": 55,
+      "DEX": 50,
+      "APP": 30,
+      "POW": 65,
+      "SIZ": 60,
+      "INT": 55,
+      "EDU": 65
+    },
+    "status": {
+      "hp": 12,
+      "maxHp": 12,
+      "sanity": 50,
+      "maxSanity": 99,
+      "luck": 50,
+      "mp": 13,
+      "conditions": []
+    },
+    "skills": {
+      "Credit Rating": 40,
+      "Fast Talk": 50,
+      "Psychology": 55,
+      "Accounting": 60,
+      "Library Use": 40
+    },
     "inventory": [
       {
         "name": "Handmade clocks and watches",
@@ -59,7 +59,7 @@
         }
       }
     ],
-      "clues": [
+    "clues": [
       {
         "clueText": "He is a Deep One hybrid who is well aware of what is happening in Cassandra, but he will neither help nor prevent it.",
         "category": "knowledge",
@@ -79,23 +79,23 @@
         "relatedTo": ["Church bell", "Temporal anomalies"]
       }
     ],
-      "relationships": [
-        {
-          "targetName": "Constantine Frollo",
-          "relationshipType": "acquaintance",
-          "attitude": 0,
-          "description": "Made the church clock for Constantine's church.",
-          "history": "White crafted and installed the church bell/clock, creating a professional connection with the priest."
-        },
-        {
-          "targetName": "Abel William",
-          "relationshipType": "acquaintance",
-          "attitude": 10,
-          "description": "Knew Abel's father Peter William.",
-          "history": "Had a prior acquaintance with Peter William, the distillery owner, before his death."
-        }
-      ],
-      "notes": "Marks White is easy to underestimate; while lacking physical presence, his strength lies in information control and quiet influence.",
-      "currentLocation": "SCN_12"
-    }
-  ]
+    "relationships": [
+      {
+        "targetName": "Constantine Frollo",
+        "relationshipType": "acquaintance",
+        "attitude": 0,
+        "description": "Made the church clock for Constantine's church.",
+        "history": "White crafted and installed the church bell/clock, creating a professional connection with the priest."
+      },
+      {
+        "targetName": "Abel William",
+        "relationshipType": "acquaintance",
+        "attitude": 10,
+        "description": "Knew Abel's father Peter William.",
+        "history": "Had a prior acquaintance with Peter William, the distillery owner, before his death."
+      }
+    ],
+    "notes": "Marks White is easy to underestimate; while lacking physical presence, his strength lies in information control and quiet influence.",
+    "currentLocation": "SCN_12"
+  }
+]

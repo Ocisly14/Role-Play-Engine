@@ -68,18 +68,13 @@
         "clueText": "The Cleo family uses the train station as a front for smuggling and black-market logistics.",
         "category": "knowledge",
         "difficulty": "regular",
-        "relatedTo": [
-          "Cassandra Train Station",
-          "Cleo Family"
-        ]
+        "relatedTo": ["Cassandra Train Station", "Cleo Family"]
       },
       {
         "clueText": "Ben enforces a strict rule: conduct business without asking questions about clients' intentions.",
         "category": "observation",
         "difficulty": "regular",
-        "relatedTo": [
-          "Cleo Family"
-        ]
+        "relatedTo": ["Cleo Family"]
       },
       {
         "clueText": "Ben has a .357 caliber Desert Eagle that matches the caliber of the weapon used in the 2003 Reindeer Bar murder case, but he was actually at a secret gambling session during the murder, not at the church as he claimed.",
@@ -95,11 +90,7 @@
         "clueText": "The Reindeer Bar surveillance system was installed by Ben's people, but it was broken by Martin (Ghost Hand), not by Ben.",
         "category": "knowledge",
         "difficulty": "hard",
-        "relatedTo": [
-          "Reindeer Bar",
-          "Martin Gin",
-          "Surveillance"
-        ]
+        "relatedTo": ["Reindeer Bar", "Martin Gin", "Surveillance"]
       }
     ],
     "relationships": [

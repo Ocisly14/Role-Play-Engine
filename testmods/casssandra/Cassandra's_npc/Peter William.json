@@ -1,68 +1,68 @@
 [
-    {
-      "name": "Peter William",
-      "occupation": "Distillery owner",
-      "age": 51,
-      "gender": "male",
-      "appearance": "An older man in his later years, usually seen as a sturdy factory owner typical of a provincial industrialist.",
-      "personality": "Hardworking, traditional, and business-oriented, with a strong sense of responsibility toward his family business.",
-      "background": "Peter William operated a distillery in Cassandra, which appeared to be quite large and primarily produced vodka. In 2002, he suddenly fell ill and died in the hospital, leaving the distillery to his son.",
-      "goals": [
-        "Maintain the family distillery",
-        "Secure his family's livelihood"
-      ],
-      "secrets": [
-        "His death may be connected to Patrizio von Samsa’s human experiments"
-      ],
-      "attributes": {
-        "STR": 55,
-        "CON": 55,
-        "DEX": 45,
-        "APP": 45,
-        "POW": 50,
-        "SIZ": 60,
-        "INT": 55,
-        "EDU": 55
+  {
+    "name": "Peter William",
+    "occupation": "Distillery owner",
+    "age": 51,
+    "gender": "male",
+    "appearance": "An older man in his later years, usually seen as a sturdy factory owner typical of a provincial industrialist.",
+    "personality": "Hardworking, traditional, and business-oriented, with a strong sense of responsibility toward his family business.",
+    "background": "Peter William operated a distillery in Cassandra, which appeared to be quite large and primarily produced vodka. In 2002, he suddenly fell ill and died in the hospital, leaving the distillery to his son.",
+    "goals": [
+      "Maintain the family distillery",
+      "Secure his family's livelihood"
+    ],
+    "secrets": [
+      "His death may be connected to Patrizio von Samsa’s human experiments"
+    ],
+    "attributes": {
+      "STR": 55,
+      "CON": 55,
+      "DEX": 45,
+      "APP": 45,
+      "POW": 50,
+      "SIZ": 60,
+      "INT": 55,
+      "EDU": 55
+    },
+    "status": {
+      "hp": 11,
+      "maxHp": 11,
+      "sanity": 50,
+      "maxSanity": 50,
+      "luck": 55,
+      "mp": 10,
+      "conditions": ["deceased"]
+    },
+    "skills": {
+      "Accounting": 50,
+      "Craft (Distilling)": 60,
+      "Persuade": 45
+    },
+    "inventory": [],
+    "clues": [
+      {
+        "clueText": "Peter William died suddenly in 2002 after falling ill.",
+        "category": "knowledge",
+        "difficulty": "regular",
+        "relatedTo": ["William Distillery"]
       },
-      "status": {
-        "hp": 11,
-        "maxHp": 11,
-        "sanity": 50,
-        "maxSanity": 50,
-        "luck": 55,
-        "mp": 10,
-        "conditions": ["deceased"]
-      },
-      "skills": {
-        "Accounting": 50,
-        "Craft (Distilling)": 60,
-        "Persuade": 45
-      },
-      "inventory": [],
-      "clues": [
-        {
-          "clueText": "Peter William died suddenly in 2002 after falling ill.",
-          "category": "knowledge",
-          "difficulty": "regular",
-          "relatedTo": ["William Distillery"]
-        },
-        {
-          "clueText": "His death may have links to human experimentation conducted by Patrizio von Samsa.",
-          "category": "secret",
-          "difficulty": "hard",
-          "relatedTo": ["Patrizio von Samsa"]
-        }
-      ],
-      "relationships": [
-        {
-          "targetName": "Abel William",
-          "relationshipType": "family",
-          "attitude": 70,
-          "description": "Father and son",
-          "history": "Peter founded and ran the distillery before passing it on to Abel."
-        }
-      ],
-      "notes": "Peter William is already deceased before the investigators’ arrival.",
-      "currentLocation": "SCN_13"
-    }
+      {
+        "clueText": "His death may have links to human experimentation conducted by Patrizio von Samsa.",
+        "category": "secret",
+        "difficulty": "hard",
+        "relatedTo": ["Patrizio von Samsa"]
+      }
+    ],
+    "relationships": [
+      {
+        "targetName": "Abel William",
+        "relationshipType": "family",
+        "attitude": 70,
+        "description": "Father and son",
+        "history": "Peter founded and ran the distillery before passing it on to Abel."
+      }
+    ],
+    "notes": "Peter William is already deceased before the investigators’ arrival.",
+    "currentLocation": "SCN_13"
+  }
 ]

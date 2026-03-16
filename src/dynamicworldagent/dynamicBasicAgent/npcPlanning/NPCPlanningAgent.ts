@@ -15,7 +15,12 @@ import {
   buildReviseSchedulePrompt,
   buildSummarizeDayMemoryPrompt,
 } from "./npcPlanningTemplates.js";
-import { formatSceneMap } from "./sceneMapFormatter.js";
+import {
+  buildLocationNameMap,
+  formatSceneMap,
+  resolveLocationId as resolveLocationFromName,
+  resolveLocationName,
+} from "./sceneMapFormatter.js";
 import type { PlanNode, RevisePlansContext, ScheduleEntry } from "./types.js";
 
 function parseJsonResponse<T>(raw: string): T {
@@ -38,7 +43,11 @@ function extractRevisedNodes(parsed: unknown): PlanNode[] | null {
   if (parsed && typeof parsed === "object") {
     const obj = parsed as Record<string, unknown>;
     if (Array.isArray(obj.revisedNodes)) return obj.revisedNodes as PlanNode[];
-    if (obj.revisedNodes && typeof obj.revisedNodes === "object" && !Array.isArray(obj.revisedNodes)) {
+    if (
+      obj.revisedNodes &&
+      typeof obj.revisedNodes === "object" &&
+      !Array.isArray(obj.revisedNodes)
+    ) {
       return [obj.revisedNodes as PlanNode];
     }
     if (Array.isArray(obj.nodes)) return obj.nodes as PlanNode[];
@@ -271,9 +280,12 @@ export class NPCPlanningAgent {
     const memoryLog = await this.getNpcDayMemoryLog(sessionId, npcId, gameDay);
 
     const currentPos = dgsm.getCharacterPosition(npcId);
-    const currentLocation = currentPos ? dgsm.resolveLocationId(currentPos) : "";
-    const currentScene = currentLocation
-      ? (state.scenes.get(currentLocation) ?? null)
+    const currentLocationId = currentPos
+      ? dgsm.resolveLocationId(currentPos)
+      : "";
+    const currentLocationName = resolveLocationName(dgsm, currentLocationId);
+    const currentScene = currentLocationId
+      ? (state.scenes.get(currentLocationId) ?? null)
       : null;
     const sceneDescription = currentScene?.description ?? "";
     const sceneItems = formatSceneItems(currentScene);
@@ -286,21 +298,20 @@ export class NPCPlanningAgent {
     const worldStatePrompt = this.buildNpcWorldStatePrompt(
       dgsm,
       npcId,
-      currentLocation,
+      currentLocationId,
       registry
     );
+    const sceneMap = this.formatSceneMap(dgsm, npc.id);
 
     // NPCs at current location with relationship info
     const relationshipGraph = state.npcRelationshipGraph[npcId] ?? {};
     const npcsAtLocation = state.npcCharacters
-      .filter(
-        (n) => {
-          if (n.id === npcId) return false;
-          const nPos = dgsm.getCharacterPosition(n.id);
-          const nLoc = nPos ? dgsm.resolveLocationId(nPos) : undefined;
-          return nLoc === currentLocation;
-        }
-      )
+      .filter((n) => {
+        if (n.id === npcId) return false;
+        const nPos = dgsm.getCharacterPosition(n.id);
+        const nLoc = nPos ? dgsm.resolveLocationId(nPos) : undefined;
+        return nLoc === currentLocationId;
+      })
       .map((n) => {
         const parts = [`- ${n.name} (${n.id})`];
         if (n.appearance) parts.push(`appearance: ${n.appearance}`);
@@ -319,7 +330,8 @@ export class NPCPlanningAgent {
       longTermIntent,
       memoryLog,
       todayPlan: schedule,
-      currentLocation,
+      currentLocation: currentLocationName,
+      sceneMap,
       sceneDescription,
       sceneItems,
       sceneNpcs: npcsAtLocation,
@@ -337,7 +349,9 @@ export class NPCPlanningAgent {
     });
 
     const nextEntry = schedule[0];
-    console.log(`[Planning] 🎯 Generating detailed nodes for ${npc.name}: "${nextEntry?.activity ?? ""}" @ ${nextEntry?.location ?? "?"}`);
+    console.log(
+      `[Planning] 🎯 Generating detailed nodes for ${npc.name}: "${nextEntry?.activity ?? ""}" @ ${nextEntry?.location ?? "?"}`
+    );
     const response = await generateText({
       runtime: this.runtime,
       context: userPrompt,
@@ -346,11 +360,14 @@ export class NPCPlanningAgent {
     });
 
     const rawNodes = parseJsonResponse<any[]>(response);
+    // Resolve location names to IDs
+    const nameMap = buildLocationNameMap(dgsm);
     const enrichedNodes: PlanNode[] = rawNodes.map((node) => ({
       ...node,
       nodeId: node.nodeId || randomUUID(),
       characterId: npcId,
       characterName: npc.name,
+      location: resolveLocationFromName(node.location, nameMap),
       status: "pending" as const,
     }));
 
@@ -478,7 +495,9 @@ export class NPCPlanningAgent {
     }
 
     const revSchedPos = dgsm.getCharacterPosition(npcId);
-    const npcLocation = revSchedPos ? dgsm.resolveLocationId(revSchedPos) : undefined;
+    const npcLocation = revSchedPos
+      ? dgsm.resolveLocationId(revSchedPos)
+      : undefined;
 
     const { systemPrompt, userPrompt } = buildReviseSchedulePrompt({
       npcName: npc.name,
@@ -502,7 +521,9 @@ export class NPCPlanningAgent {
       language,
     });
 
-    console.log(`[Planning] 🔄 Revising schedule for ${npc.name}: "${triggerDescription.slice(0, 60)}"`);
+    console.log(
+      `[Planning] 🔄 Revising schedule for ${npc.name}: "${triggerDescription.slice(0, 60)}"`
+    );
     const response = await generateText({
       runtime: this.runtime,
       context: userPrompt,
@@ -547,23 +568,25 @@ export class NPCPlanningAgent {
         : `Witnessed: ${context.trigger.triggeringAction.action} by ${context.trigger.triggeringAction.characterName} (${context.trigger.triggeringAction.outcome})`;
 
     const revisePos = dgsm.getCharacterPosition(npcId);
-    const currentLocation = revisePos ? dgsm.resolveLocationId(revisePos) : "";
-    const currentScene = currentLocation
-      ? (state.scenes.get(currentLocation) ?? null)
+    const currentLocationId = revisePos
+      ? dgsm.resolveLocationId(revisePos)
+      : "";
+    const currentLocationName = resolveLocationName(dgsm, currentLocationId);
+    const currentScene = currentLocationId
+      ? (state.scenes.get(currentLocationId) ?? null)
       : null;
     const plan = await this.getDailyPlan(sessionId, npcId, state.gameDay);
     const schedule = (plan?.schedule as unknown as ScheduleEntry[]) ?? [];
+    const sceneMap = this.formatSceneMap(dgsm, npcId);
 
     const relationshipGraph = state.npcRelationshipGraph[npcId] ?? {};
     const npcsAtLocation = state.npcCharacters
-      .filter(
-        (n) => {
-          if (n.id === npcId) return false;
-          const nPos = dgsm.getCharacterPosition(n.id);
-          const nLoc = nPos ? dgsm.resolveLocationId(nPos) : undefined;
-          return nLoc === currentLocation;
-        }
-      )
+      .filter((n) => {
+        if (n.id === npcId) return false;
+        const nPos = dgsm.getCharacterPosition(n.id);
+        const nLoc = nPos ? dgsm.resolveLocationId(nPos) : undefined;
+        return nLoc === currentLocationId;
+      })
       .map((n) => {
         const parts = [`- ${n.name} (${n.id})`];
         if (n.appearance) parts.push(`appearance: ${n.appearance}`);
@@ -582,7 +605,8 @@ export class NPCPlanningAgent {
       todayPlan: schedule,
       pendingNodes: JSON.stringify(context.pendingNodes, null, 2),
       triggerDescription,
-      currentLocation,
+      currentLocation: currentLocationName,
+      sceneMap,
       sceneDescription: currentScene?.description ?? "",
       sceneItems: formatSceneItems(currentScene),
       sceneNpcs: npcsAtLocation,
@@ -595,7 +619,7 @@ export class NPCPlanningAgent {
       worldStatePrompt: this.buildNpcWorldStatePrompt(
         dgsm,
         npcId,
-        currentLocation,
+        currentLocationId,
         registry
       ),
       npcInventory: formatItemList(dgsm.getNpcInventory(npcId)),
@@ -610,7 +634,9 @@ export class NPCPlanningAgent {
       }),
     });
 
-    console.log(`[Planning] ⚡ Revising plans for ${npc.name}: ${triggerDescription.slice(0, 60)}`);
+    console.log(
+      `[Planning] ⚡ Revising plans for ${npc.name}: ${triggerDescription.slice(0, 60)}`
+    );
     const response = await generateText({
       runtime: this.runtime,
       context: userPrompt,
@@ -621,14 +647,19 @@ export class NPCPlanningAgent {
     const parsed = parseJsonResponse<Record<string, unknown>>(response);
     const rawRevisedNodes = extractRevisedNodes(parsed);
     if (!rawRevisedNodes || rawRevisedNodes.length === 0) {
-      console.warn(`[Planning] revisePlans for ${npc.name}: could not extract revisedNodes from LLM response, keeping existing nodes`);
+      console.warn(
+        `[Planning] revisePlans for ${npc.name}: could not extract revisedNodes from LLM response, keeping existing nodes`
+      );
       return;
     }
 
+    // Resolve location names to IDs
+    const nameMap = buildLocationNameMap(dgsm);
     const revisedNodes = rawRevisedNodes.map((node) => ({
       ...node,
       characterId: npcId,
       characterName: npc.name,
+      location: resolveLocationFromName(node.location, nameMap),
       status: "pending" as const,
     }));
 
@@ -672,7 +703,9 @@ export class NPCPlanningAgent {
       language,
     });
 
-    console.log(`[Planning] 🔍 Impact gate for ${candidate.npcName}: "${candidate.triggeringEvents.slice(0, 60)}"`);
+    console.log(
+      `[Planning] 🔍 Impact gate for ${candidate.npcName}: "${candidate.triggeringEvents.slice(0, 60)}"`
+    );
     const response = await generateText({
       runtime: this.runtime,
       context: userPrompt,
@@ -718,7 +751,9 @@ export class NPCPlanningAgent {
       language,
     });
 
-    console.log(`[Planning] 💬 Updating relationship ${charA.name} ↔ ${charB.name}`);
+    console.log(
+      `[Planning] 💬 Updating relationship ${charA.name} ↔ ${charB.name}`
+    );
     const response = await generateText({
       runtime: this.runtime,
       context: prompt,

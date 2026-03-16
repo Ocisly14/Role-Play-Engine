@@ -11,7 +11,9 @@
       "Support and protect his friends during the investigation",
       "Use his forensic knowledge to uncover the truth behind the incidents in Cassandra"
     ],
-    "secrets": ["Knows forensic techniques that could help investigate Bruno's death"],
+    "secrets": [
+      "Knows forensic techniques that could help investigate Bruno's death"
+    ],
     "attributes": {
       "STR": 45,
       "CON": 45,

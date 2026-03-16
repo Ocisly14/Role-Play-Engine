@@ -56,9 +56,7 @@
         "clueText": "She regularly trades drugs with Lux Lynch.",
         "category": "knowledge",
         "difficulty": "regular",
-        "relatedTo": [
-          "Lux Lynch"
-        ]
+        "relatedTo": ["Lux Lynch"]
       }
     ],
     "relationships": [

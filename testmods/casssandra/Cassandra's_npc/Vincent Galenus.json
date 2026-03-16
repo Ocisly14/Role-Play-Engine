@@ -1,115 +1,123 @@
 [
-    {
-      "name": "Vincent Galenus",
-      "occupation": "Hospital Director / Medical Doctor",
-      "age": 41,
-      "gender": "male",
-      "appearance": "A sickly-looking middle-aged man with trembling hands, pale complexion, and signs of chronic exhaustion. Often appears sleep-deprived and physically unwell.",
-      "personality": "Guilt-ridden, conflicted, withdrawn, and remorseful. Torn between his medical ethics and desperate devotion to his wife. Suffers from alcoholism and self-justification.",
-      "background": "Vincent Galenus is the director of the local hospital in Cassandra. Despite his profession, he is far wealthier than his position should allow. In 1999, wealthy patrons involved in occult sacrifices recruited him to analyze a mysterious substance known as 'milk' for potential mass production. Desperate to save his terminally ill wife, Vincent accepted their offer in exchange for money and experimental medicine. After the patrons disappeared in 2002, his wife died. Patrizio later coerced Vincent into assisting with human experimentation to create Cthulhu-related hybrids, promising to resurrect Vincent’s wife as a ghoul. Though wracked with regret, Vincent continued down this path, clinging to the belief that his wife’s revival was worth any cost.",
-      "goals": [
-        "Keep his resurrected wife in existence at any cost",
-        "Justify his actions and avoid total psychological collapse"
-      ],
-      "secrets": [
-        "He conducted human experiments to transform people into Cthulhu-related beings",
-        "His wife was resurrected as a ghoul and later committed suicide due to unbearable mental anguish",
-        "He personally transported Lucifero's body from the hospital morgue to the crematorium under orders",
-        "He knows Martin Gin (Ghost Hand) works for Patrizio and uses the hospital's pharmaceutical storage room, but doesn't know Ghost Hand is Martin",
-        "The hospital ID card he uses actually belongs to Martin Gin"
-      ],
-      "attributes": {
-        "STR": 55,
-        "CON": 60,
-        "DEX": 60,
-        "APP": 55,
-        "POW": 45,
-        "SIZ": 65,
-        "INT": 75,
-        "EDU": 90
+  {
+    "name": "Vincent Galenus",
+    "occupation": "Hospital Director / Medical Doctor",
+    "age": 41,
+    "gender": "male",
+    "appearance": "A sickly-looking middle-aged man with trembling hands, pale complexion, and signs of chronic exhaustion. Often appears sleep-deprived and physically unwell.",
+    "personality": "Guilt-ridden, conflicted, withdrawn, and remorseful. Torn between his medical ethics and desperate devotion to his wife. Suffers from alcoholism and self-justification.",
+    "background": "Vincent Galenus is the director of the local hospital in Cassandra. Despite his profession, he is far wealthier than his position should allow. In 1999, wealthy patrons involved in occult sacrifices recruited him to analyze a mysterious substance known as 'milk' for potential mass production. Desperate to save his terminally ill wife, Vincent accepted their offer in exchange for money and experimental medicine. After the patrons disappeared in 2002, his wife died. Patrizio later coerced Vincent into assisting with human experimentation to create Cthulhu-related hybrids, promising to resurrect Vincent’s wife as a ghoul. Though wracked with regret, Vincent continued down this path, clinging to the belief that his wife’s revival was worth any cost.",
+    "goals": [
+      "Keep his resurrected wife in existence at any cost",
+      "Justify his actions and avoid total psychological collapse"
+    ],
+    "secrets": [
+      "He conducted human experiments to transform people into Cthulhu-related beings",
+      "His wife was resurrected as a ghoul and later committed suicide due to unbearable mental anguish",
+      "He personally transported Lucifero's body from the hospital morgue to the crematorium under orders",
+      "He knows Martin Gin (Ghost Hand) works for Patrizio and uses the hospital's pharmaceutical storage room, but doesn't know Ghost Hand is Martin",
+      "The hospital ID card he uses actually belongs to Martin Gin"
+    ],
+    "attributes": {
+      "STR": 55,
+      "CON": 60,
+      "DEX": 60,
+      "APP": 55,
+      "POW": 45,
+      "SIZ": 65,
+      "INT": 75,
+      "EDU": 90
+    },
+    "status": {
+      "hp": 13,
+      "maxHp": 13,
+      "sanity": 37,
+      "maxSanity": 45,
+      "luck": 45,
+      "mp": 9,
+      "conditions": ["Alcoholism", "Severe guilt", "Chronic stress"]
+    },
+    "skills": {
+      "Credit Rating": 45,
+      "Cthulhu Mythos": 8,
+      "Brawl": 35,
+      "First Aid": 90,
+      "Latin": 80,
+      "Library Use": 75,
+      "Medicine": 89,
+      "Psychology": 60,
+      "Biology": 75,
+      "Pharmacy": 85
+    },
+    "inventory": [
+      { "name": "Hospital ID card (belonging to Martin Gin)" },
+      { "name": "Medical notes on experimental drugs" },
+      { "name": "Alcohol flask" }
+    ],
+    "clues": [
+      {
+        "clueText": "He assisted in treating victims infected by spider bites linked to occult rituals.",
+        "category": "knowledge",
+        "difficulty": "regular",
+        "relatedTo": ["Constantine Frollo", "Patrizio von Samsa"]
       },
-      "status": {
-        "hp": 13,
-        "maxHp": 13,
-        "sanity": 37,
-        "maxSanity": 45,
-        "luck": 45,
-        "mp": 9,
-        "conditions": ["Alcoholism", "Severe guilt", "Chronic stress"]
+      {
+        "clueText": "His wife was resurrected as a ghoul and lived in the Cassandra cemetery.",
+        "category": "secret",
+        "difficulty": "hard",
+        "relatedTo": ["Cassandra Cemetery"]
       },
-      "skills": {
-        "Credit Rating": 45,
-        "Cthulhu Mythos": 8,
-        "Brawl": 35,
-        "First Aid": 90,
-        "Latin": 80,
-        "Library Use": 75,
-        "Medicine": 89,
-        "Psychology": 60,
-        "Biology": 75,
-        "Pharmacy": 85
+      {
+        "clueText": "The hospital ID he uses actually belongs to Martin Gin.",
+        "category": "observation",
+        "difficulty": "hard",
+        "relatedTo": ["Martin Gin"]
       },
-      "inventory": [
-        { "name": "Hospital ID card (belonging to Martin Gin)" },
-        { "name": "Medical notes on experimental drugs" },
-        { "name": "Alcohol flask" }
-      ],
-      "clues": [
-        {
-          "clueText": "He assisted in treating victims infected by spider bites linked to occult rituals.",
-          "category": "knowledge",
-          "difficulty": "regular",
-          "relatedTo": ["Constantine Frollo", "Patrizio von Samsa"]
-        },
-        {
-          "clueText": "His wife was resurrected as a ghoul and lived in the Cassandra cemetery.",
-          "category": "secret",
-          "difficulty": "hard",
-          "relatedTo": ["Cassandra Cemetery"]
-        },
-        {
-          "clueText": "The hospital ID he uses actually belongs to Martin Gin.",
-          "category": "observation",
-          "difficulty": "hard",
-          "relatedTo": ["Martin Gin"]
-        },
-        {
-          "clueText": "He personally transported Lucifero's body from the hospital morgue to the crematorium under orders, causing the body to disappear from the morgue.",
-          "category": "secret",
-          "difficulty": "hard",
-          "relatedTo": ["Jenny Florence (Lucifero)", "2003 Reindeer Bar murder", "Crematorium"]
-        },
-        {
-          "clueText": "He knows Martin Gin (Ghost Hand) works for Patrizio and uses hospital resources, but doesn't realize Ghost Hand is the murderer of both the 2002 and 2003 cases.",
-          "category": "knowledge",
-          "difficulty": "extreme",
-          "relatedTo": ["Martin Gin", "2002 Paradil Hotel murder", "2003 Reindeer Bar murder"]
-        }
-      ],
-      "relationships": [
-        {
-          "targetName": "Patrizio von Samsa",
-          "relationshipType": "ally",
-          "attitude": -30,
-          "description": "Occult collaborator who coerced Vincent into human experimentation.",
-          "history": "Patrizio exploited Vincent’s grief and desperation to recruit him into forbidden research."
-        },
-        {
-          "targetName": "Constantine Frollo",
-          "relationshipType": "neutral",
-          "attitude": -10,
-          "description": "A priest who heard Vincent’s drunken confession.",
-          "history": "Vincent confessed to Constantine during a drunken breakdown, believing divine judgment was upon him."
-        },
-        {
-          "targetName": "Martin Gin",
-          "relationshipType": "neutral",
-          "attitude": 0,
-          "description": "Subordinate who misuses hospital resources.",
-          "history": "Vincent knowingly ignored Martin’s illegal use of hospital supplies."
-        }
-      ],
-      "notes": "Vincent is deeply reluctant to speak with investigators. He feels genuine remorse but does not fully regret his choices, as abandoning them would mean accepting that his wife’s suffering was meaningless.",
-      "currentLocation": "SCN_1"
-    }
-  ]
+      {
+        "clueText": "He personally transported Lucifero's body from the hospital morgue to the crematorium under orders, causing the body to disappear from the morgue.",
+        "category": "secret",
+        "difficulty": "hard",
+        "relatedTo": [
+          "Jenny Florence (Lucifero)",
+          "2003 Reindeer Bar murder",
+          "Crematorium"
+        ]
+      },
+      {
+        "clueText": "He knows Martin Gin (Ghost Hand) works for Patrizio and uses hospital resources, but doesn't realize Ghost Hand is the murderer of both the 2002 and 2003 cases.",
+        "category": "knowledge",
+        "difficulty": "extreme",
+        "relatedTo": [
+          "Martin Gin",
+          "2002 Paradil Hotel murder",
+          "2003 Reindeer Bar murder"
+        ]
+      }
+    ],
+    "relationships": [
+      {
+        "targetName": "Patrizio von Samsa",
+        "relationshipType": "ally",
+        "attitude": -30,
+        "description": "Occult collaborator who coerced Vincent into human experimentation.",
+        "history": "Patrizio exploited Vincent’s grief and desperation to recruit him into forbidden research."
+      },
+      {
+        "targetName": "Constantine Frollo",
+        "relationshipType": "neutral",
+        "attitude": -10,
+        "description": "A priest who heard Vincent’s drunken confession.",
+        "history": "Vincent confessed to Constantine during a drunken breakdown, believing divine judgment was upon him."
+      },
+      {
+        "targetName": "Martin Gin",
+        "relationshipType": "neutral",
+        "attitude": 0,
+        "description": "Subordinate who misuses hospital resources.",
+        "history": "Vincent knowingly ignored Martin’s illegal use of hospital supplies."
+      }
+    ],
+    "notes": "Vincent is deeply reluctant to speak with investigators. He feels genuine remorse but does not fully regret his choices, as abandoning them would mean accepting that his wife’s suffering was meaningless.",
+    "currentLocation": "SCN_1"
+  }
+]

@@ -34,9 +34,7 @@
       "maxSanity": 50,
       "luck": 55,
       "mp": 10,
-      "conditions": [
-        "deceased"
-      ]
+      "conditions": ["deceased"]
     },
     "skills": {
       "Accounting": 45,
@@ -84,9 +82,7 @@
         "clueText": "Marcel was one of the employees laid off after the distillery downsized.",
         "category": "knowledge",
         "difficulty": "regular",
-        "relatedTo": [
-          "Marcel Gwynplaine"
-        ]
+        "relatedTo": ["Marcel Gwynplaine"]
       },
       {
         "clueText": "His father's death in 2002 may be connected to Patrizio von Samsa's human experiments.",

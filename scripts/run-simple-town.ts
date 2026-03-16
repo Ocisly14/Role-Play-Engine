@@ -10,20 +10,20 @@
 import fs from "fs";
 import path from "path";
 import { PrismaClient } from "@prisma/client";
-import { ModelProviderName } from "../src/models/types.js";
-import { EmbeddingClient } from "../src/rag/embedding.js";
 import { NPCPlanningAgent } from "../src/dynamicworldagent/dynamicBasicAgent/npcPlanning/NPCPlanningAgent.js";
-import { createDefaultRegistry } from "../src/dynamicworldagent/engine/registerDefaults.js";
 import { createExecutionContext } from "../src/dynamicworldagent/engine/executionContext.js";
+import { createDefaultRegistry } from "../src/dynamicworldagent/engine/registerDefaults.js";
 import { NpcMemoryManager } from "../src/dynamicworldagent/memory/NpcMemoryManager.js";
+import { SimulationRunner } from "../src/dynamicworldagent/simulation/SimulationRunner.js";
 import { DynamicGameStateManager } from "../src/dynamicworldagent/state/DynamicGameState.js";
 import { importModule } from "../src/dynamicworldagent/state/moduleImporter.js";
 import {
-  loadModule,
   createSession,
   initRuntime,
+  loadModule,
 } from "../src/dynamicworldagent/state/moduleLoader.js";
-import { SimulationRunner } from "../src/dynamicworldagent/simulation/SimulationRunner.js";
+import { ModelProviderName } from "../src/models/types.js";
+import { EmbeddingClient } from "../src/rag/embedding.js";
 
 const MODULE_NAME = "simple_town";
 const SESSION_ID = `simple_town_sim`;
@@ -218,7 +218,63 @@ async function main() {
       outcome?: string;
       skill?: string;
       status: string;
+      reason?: string;
     }> = [];
+
+    // Intercept [Planning] log lines to capture revise/schedule events in tickLog
+    const origLog = console.log;
+    console.log = (...args: any[]) => {
+      const msg = args[0];
+      if (typeof msg !== "string") {
+        origLog(...args);
+        return;
+      }
+      const gs = dgsm.getState();
+      // ⚡ Revising plans for NpcName: reason...
+      const reviseMatch = msg.match(
+        /\[Planning\] ⚡ Revising plans for (.+?): (.+)/
+      );
+      if (reviseMatch) {
+        const actor = reviseMatch[1];
+        const reason = reviseMatch[2].replace(/^"|"$/g, "");
+        origLog(`  [${gs.timeOfDay}] ↻ ${actor}: revise plans — ${reason}`);
+        tickLog.push({
+          tick: runner.getStatus().ticksExecuted,
+          gameDay: gs.gameDay,
+          gameTime: gs.timeOfDay,
+          type: "plan_revised",
+          actor,
+          location: "",
+          action: "revisePlans",
+          reason,
+          status: "revised",
+        });
+        return;
+      }
+      // 🔄 Revising schedule for NpcName: reason...
+      const schedMatch = msg.match(
+        /\[Planning\] 🔄 Revising schedule for (.+?): (.+)/
+      );
+      if (schedMatch) {
+        const actor = schedMatch[1];
+        const reason = schedMatch[2].replace(/^"|"$/g, "");
+        origLog(`  [${gs.timeOfDay}] ↺ ${actor}: revise schedule — ${reason}`);
+        tickLog.push({
+          tick: runner.getStatus().ticksExecuted,
+          gameDay: gs.gameDay,
+          gameTime: gs.timeOfDay,
+          type: "schedule_revised",
+          actor,
+          location: "",
+          action: "reviseSchedule",
+          reason,
+          status: "revised",
+        });
+        return;
+      }
+
+      origLog(...args);
+    };
 
     // Wire event listener
     runner.events.on("simulation_event", (event: any) => {
@@ -292,7 +348,9 @@ async function main() {
 
     process.on("SIGINT", () => {
       if (interrupted) process.exit(1); // second Ctrl+C = force quit
-      console.log("\n⏸ Ctrl+C received — saving and exiting after current tick...");
+      console.log(
+        "\n⏸ Ctrl+C received — saving and exiting after current tick..."
+      );
       interrupted = true;
     });
 
@@ -311,6 +369,19 @@ async function main() {
 
     // Final save
     await runner.saveRuntime();
+
+    // Write tick log to JSON (always, even on interrupt)
+    const logPath = path.join(process.cwd(), "data", "simulation-log.json");
+    fs.writeFileSync(logPath, JSON.stringify(tickLog, null, 2));
+    console.log = origLog; // restore before summaries
+    console.log(
+      `═══ Tick log written to ${logPath} (${tickLog.length} entries) ═══`
+    );
+
+    if (interrupted) {
+      console.log("═══ Simulation interrupted. Run again to continue. ═══");
+      return;
+    }
 
     // ─── Step 6: Day-end summaries ───
     for (let day = startDay; day <= endDay; day++) {
@@ -367,10 +438,8 @@ async function main() {
       }
     }
 
-    // Write tick log to JSON
-    const logPath = path.join(process.cwd(), "data", "simulation-log.json");
+    // Overwrite log with final version (includes summaries period)
     fs.writeFileSync(logPath, JSON.stringify(tickLog, null, 2));
-    console.log(`═══ Tick log written to ${logPath} (${tickLog.length} events) ═══`);
 
     // Final save after summaries
     await runner.saveRuntime();
@@ -391,7 +460,9 @@ async function printSchedules(
     const schedule = (plan?.schedule as any[]) ?? [];
     console.log(`\n  ${npc.name}'s schedule:`);
     for (const entry of schedule) {
-      console.log(`    → [${resolveSceneName(dgsm, entry.location)}] ${entry.activity}`);
+      console.log(
+        `    → [${resolveSceneName(dgsm, entry.location)}] ${entry.activity}`
+      );
     }
   }
 }

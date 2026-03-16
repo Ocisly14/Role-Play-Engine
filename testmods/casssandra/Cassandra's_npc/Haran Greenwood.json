@@ -60,9 +60,7 @@
         "clueText": "Haran has worked at the Cassandra train station for over forty years and knows its history, including its original underground construction.",
         "category": "knowledge",
         "difficulty": "regular",
-        "relatedTo": [
-          "Cassandra Train Station"
-        ]
+        "relatedTo": ["Cassandra Train Station"]
       }
     ],
     "relationships": [

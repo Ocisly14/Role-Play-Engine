@@ -1,16 +1,16 @@
 [
-    {
-      "name": "Tallinn",
-      "occupation": "Underworld fixer / intermediary",
-      "age": 51,
-      "gender": "male",
-      "appearance": "A middle-aged man with a hardened, world-weary look. He carries himself cautiously, dressed plainly, blending easily into criminal or working-class environments.",
-      "personality": "Cautious, tight-lipped, pragmatic, and emotionally reserved. Despite his criminal connections, he is capable of genuine attachment and loyalty to those he trusts.",
-      "background": "Tallinn operates on the fringes of the underworld and is familiar with criminal codes, contacts, and euphemisms. He had an ongoing working relationship with Lucifero, maintained through money and discretion. Although their relationship was professional, Tallinn genuinely regarded Lucifero as a friend. Learning of Lucifero’s death affected him deeply. He is knowledgeable about certain underworld terms and structures but avoids unnecessary exposure.",
-      "goals": [
-        "Avoid drawing attention from criminal organizations",
-        "Protect himself by limiting what he reveals"
-      ],
+  {
+    "name": "Tallinn",
+    "occupation": "Underworld fixer / intermediary",
+    "age": 51,
+    "gender": "male",
+    "appearance": "A middle-aged man with a hardened, world-weary look. He carries himself cautiously, dressed plainly, blending easily into criminal or working-class environments.",
+    "personality": "Cautious, tight-lipped, pragmatic, and emotionally reserved. Despite his criminal connections, he is capable of genuine attachment and loyalty to those he trusts.",
+    "background": "Tallinn operates on the fringes of the underworld and is familiar with criminal codes, contacts, and euphemisms. He had an ongoing working relationship with Lucifero, maintained through money and discretion. Although their relationship was professional, Tallinn genuinely regarded Lucifero as a friend. Learning of Lucifero’s death affected him deeply. He is knowledgeable about certain underworld terms and structures but avoids unnecessary exposure.",
+    "goals": [
+      "Avoid drawing attention from criminal organizations",
+      "Protect himself by limiting what he reveals"
+    ],
     "secrets": [
       "He knows that the code word 'the docks' is used exclusively within the Mafia",
       "He is aware that Lucifero claimed to be a messenger from hell (Hell Messenger/地狱使者)",
@@ -19,40 +19,40 @@
       "He asked Lucifero to help him threaten his partner who seemed to be cheating, because he didn't want to expose his identity by asking his underworld brothers",
       "About two months before Lucifero's death, she told him she had finally defeated someone and seized a troublesome prize, which made her very excited"
     ],
-      "attributes": {
-        "STR": 55,
-        "CON": 60,
-        "DEX": 55,
-        "APP": 45,
-        "POW": 60,
-        "SIZ": 60,
-        "INT": 65,
-        "EDU": 55
-      },
-      "status": {
-        "hp": 12,
-        "maxHp": 12,
-        "sanity": 60,
-        "maxSanity": 60,
-        "luck": 65,
-        "mp": 12,
-        "conditions": []
-      },
-      "skills": {
-        "Intimidate": 50,
-        "Persuade": 55,
-        "Psychology": 50,
-        "Listen": 45,
-        "Stealth": 40
-      },
-      "inventory": [
-        {
-          "name": "Deck of playing cards",
-          "properties": {
-            "note": "Always fiddling with cards"
-          }
+    "attributes": {
+      "STR": 55,
+      "CON": 60,
+      "DEX": 55,
+      "APP": 45,
+      "POW": 60,
+      "SIZ": 60,
+      "INT": 65,
+      "EDU": 55
+    },
+    "status": {
+      "hp": 12,
+      "maxHp": 12,
+      "sanity": 60,
+      "maxSanity": 60,
+      "luck": 65,
+      "mp": 12,
+      "conditions": []
+    },
+    "skills": {
+      "Intimidate": 50,
+      "Persuade": 55,
+      "Psychology": 50,
+      "Listen": 45,
+      "Stealth": 40
+    },
+    "inventory": [
+      {
+        "name": "Deck of playing cards",
+        "properties": {
+          "note": "Always fiddling with cards"
         }
-      ],
+      }
+    ],
     "clues": [
       {
         "clueText": "Lucifero was extremely cautious and only dealt with people she trusted.",
@@ -64,7 +64,11 @@
         "clueText": "About two months before Lucifero's death, she claimed to have defeated someone and seized a troublesome prize (likely referring to Simon's computer from the two-story wooden house).",
         "category": "knowledge",
         "difficulty": "hard",
-        "relatedTo": ["Jenny Florence (Lucifero)", "Simon Laplace", "Two-story wooden house"]
+        "relatedTo": [
+          "Jenny Florence (Lucifero)",
+          "Simon Laplace",
+          "Two-story wooden house"
+        ]
       },
       {
         "clueText": "The term 'the docks' is an internal Mafia code word, and those who know it are likely Mafia members.",
@@ -79,23 +83,23 @@
         "relatedTo": ["Jenny Florence (Lucifero)", "2003 Reindeer Bar murder"]
       }
     ],
-      "relationships": [
-        {
-          "targetName": "Lucifero",
-          "relationshipType": "friend",
-          "attitude": 60,
-          "description": "Professional partner and trusted associate",
-          "history": "They worked together discreetly for money, but over time Tallinn came to regard Lucifero as a genuine friend."
-        },
-        {
-          "targetName": "Kovind",
-          "relationshipType": "neutral",
-          "attitude": -10,
-          "description": "Annoying underworld contact",
-          "history": "Tallinn enjoys provoking Kovind by calling him \"little mouse,\" treating it as casual amusement."
-        }
-      ],
-      "notes": "Tallinn withholds information unless investigators gain his trust or approach him through proper underworld channels.",
-      "currentLocation": "SCN_21"
-    }
-  ]
+    "relationships": [
+      {
+        "targetName": "Lucifero",
+        "relationshipType": "friend",
+        "attitude": 60,
+        "description": "Professional partner and trusted associate",
+        "history": "They worked together discreetly for money, but over time Tallinn came to regard Lucifero as a genuine friend."
+      },
+      {
+        "targetName": "Kovind",
+        "relationshipType": "neutral",
+        "attitude": -10,
+        "description": "Annoying underworld contact",
+        "history": "Tallinn enjoys provoking Kovind by calling him \"little mouse,\" treating it as casual amusement."
+      }
+    ],
+    "notes": "Tallinn withholds information unless investigators gain his trust or approach him through proper underworld channels.",
+    "currentLocation": "SCN_21"
+  }
+]

@@ -32,9 +32,7 @@
       "maxSanity": 0,
       "luck": 60,
       "mp": 17,
-      "conditions": [
-        "Regeneration"
-      ]
+      "conditions": ["Regeneration"]
     },
     "skills": {
       "Fighting (Claw)": 30,
@@ -49,18 +47,13 @@
         "clueText": "These creatures were once wealthy merchants who vanished after forbidden rituals.",
         "category": "knowledge",
         "difficulty": "regular",
-        "relatedTo": [
-          "Shub-Niggurath",
-          "Black Goat Cult"
-        ]
+        "relatedTo": ["Shub-Niggurath", "Black Goat Cult"]
       },
       {
         "clueText": "They regenerate health each round unless slain completely.",
         "category": "observation",
         "difficulty": "hard",
-        "relatedTo": [
-          "Forest Swamp"
-        ]
+        "relatedTo": ["Forest Swamp"]
       }
     ],
     "relationships": [

@@ -1,6 +1,11 @@
 import { beforeEach, describe, expect, it } from "vitest";
 import type { PlanNode } from "../../../dynamicBasicAgent/npcPlanning/types.js";
 import type { SceneCondition } from "../../../dynamicBasicAgent/npcPlanning/types.js";
+import {
+  getBlockedConnectionReason,
+  makeBlockedConnectionKey,
+  resolveBlockedConnectionNodeRef,
+} from "../../../state/blockedConnections.js";
 import type { Item } from "../../../state/types.js";
 import type { TickRuntimeContext } from "../../types.js";
 import { fireFeature } from "../fireFeature.js";
@@ -20,8 +25,29 @@ function createMockDgsm() {
   const scenarioConditions: Record<string, SceneCondition[]> = {};
   const blockedConnections = new Map<string, string>();
   const scenes = new Map<string, MockScene>();
+  let api: {
+    getTopology(): any;
+    getConnectionBlockReason(fromId: string, toId: string): string | undefined;
+    isConnectionBlocked(fromId: string, toId: string): boolean;
+    setConnectionBlocked(
+      fromId: string,
+      toId: string,
+      blocked: boolean,
+      reason: string
+    ): void;
+    [key: string]: unknown;
+  };
 
-  return {
+  const getNodeRef = (id: string) => {
+    const topology = api.getTopology();
+    return resolveBlockedConnectionNodeRef(id, {
+      scenes,
+      junctions: topology?.junctions,
+      roads: topology?.roads,
+    });
+  };
+
+  api = {
     // Feature state
     getFeatureSceneState(
       featureId: string,
@@ -69,10 +95,14 @@ function createMockDgsm() {
     },
 
     // Connection blocking
+    getConnectionBlockReason(fromId: string, toId: string): string | undefined {
+      const fromRef = getNodeRef(fromId);
+      const toRef = getNodeRef(toId);
+      if (!fromRef || !toRef) return undefined;
+      return getBlockedConnectionReason(blockedConnections, fromRef, toRef);
+    },
     isConnectionBlocked(fromId: string, toId: string): boolean {
-      const key1 = `${fromId}::${toId}`;
-      const key2 = `${toId}::${fromId}`;
-      return blockedConnections.has(key1) || blockedConnections.has(key2);
+      return api.getConnectionBlockReason(fromId, toId) !== undefined;
     },
     setConnectionBlocked(
       fromId: string,
@@ -80,12 +110,19 @@ function createMockDgsm() {
       blocked: boolean,
       reason: string
     ): void {
-      const key = `${fromId}::${toId}`;
+      const fromRef = getNodeRef(fromId);
+      const toRef = getNodeRef(toId);
+      if (!fromRef || !toRef) {
+        throw new Error(
+          `Unknown blocked connection endpoint in test mock: ${fromId}, ${toId}`
+        );
+      }
+
+      const key = makeBlockedConnectionKey(fromRef, toRef);
       if (blocked) {
         blockedConnections.set(key, reason);
       } else {
         blockedConnections.delete(key);
-        blockedConnections.delete(`${toId}::${fromId}`);
       }
     },
 
@@ -99,6 +136,7 @@ function createMockDgsm() {
     _scenarioConditions: scenarioConditions,
     _blockedConnections: blockedConnections,
   };
+  return api;
 }
 
 type MockDgsm = ReturnType<typeof createMockDgsm>;
@@ -635,13 +673,6 @@ describe("fireFeature", () => {
         connections: [],
         events: [],
       });
-      // Add ROAD_1 as a "scene" for connections (needed by updateFireBlocking)
-      roadDgsm._addScene({
-        id: "ROAD_1",
-        name: "Main Street",
-        connections: ["JUNC_1", "JUNC_2"],
-        events: [],
-      });
     });
 
     it("road fire state has burnRange", () => {
@@ -832,18 +863,6 @@ describe("fireFeature", () => {
       roadDgsm._addScene({
         id: "SCN_ALONG",
         name: "Along Road Scene",
-        connections: [],
-        events: [],
-      });
-      roadDgsm._addScene({
-        id: "ROAD_1",
-        name: "Main Street",
-        connections: ["JUNC_1", "JUNC_2"],
-        events: [],
-      });
-      roadDgsm._addScene({
-        id: "JUNC_1",
-        name: "Junction 1",
         connections: [],
         events: [],
       });

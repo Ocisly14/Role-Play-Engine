@@ -2,13 +2,115 @@ import type { DynamicGameStateManager } from "../../state/DynamicGameState.js";
 
 type GameState = ReturnType<DynamicGameStateManager["getState"]>;
 
-// ── Public entry point ──────────────────────────────────────────────────
+// ── Public entry points ─────────────────────────────────────────────────
 
 export function formatSceneMap(
   dgsm: DynamicGameStateManager,
   npcId: string
 ): string {
   return formatTopologySceneMap(dgsm, npcId);
+}
+
+/**
+ * Build a name → ID lookup map for all navigable locations.
+ * Used to resolve LLM-generated location names back to IDs.
+ */
+export function buildLocationNameMap(
+  dgsm: DynamicGameStateManager
+): Map<string, string> {
+  const state = dgsm.getState();
+  const map = new Map<string, string>();
+
+  // Buildings: outline name → entry scene ID
+  for (const outline of state.scenarioOutlines ?? []) {
+    if (outline.entrySceneId && outline.id !== "OUTDOOR") {
+      map.set(outline.name, outline.entrySceneId);
+    }
+  }
+
+  // Junctions: junction name → junction ID
+  if (state.topology) {
+    for (const [id, junction] of state.topology.junctions) {
+      map.set(junction.name, id);
+    }
+  }
+
+  // Individual scenes — interior sub-scenes resolve to their building's entry scene
+  for (const [id, scene] of state.scenes) {
+    if (map.has(scene.name)) continue; // outline/junction name takes priority
+    const outline = (state.scenarioOutlines ?? []).find(
+      (o) => o.id === scene.parentLocationId
+    );
+    if (outline?.entrySceneId && id !== outline.entrySceneId) {
+      // Interior sub-scene → resolve to building entry
+      map.set(scene.name, outline.entrySceneId);
+    } else {
+      map.set(scene.name, id);
+    }
+  }
+
+  return map;
+}
+
+/**
+ * Resolve a location ID to a display name.
+ * Prefers outline (building) name for entry scenes.
+ */
+export function resolveLocationName(
+  dgsm: DynamicGameStateManager,
+  locationId: string
+): string {
+  if (!locationId) return "Unknown";
+  const state = dgsm.getState();
+
+  // Check if it's an entry scene → use outline (building) name
+  for (const outline of state.scenarioOutlines ?? []) {
+    if (outline.entrySceneId === locationId && outline.id !== "OUTDOOR") {
+      return outline.name;
+    }
+  }
+
+  // Check scenes — if inside a building sub-scene, use the outline name
+  const scene = state.scenes.get(locationId);
+  if (scene) {
+    const outline = (state.scenarioOutlines ?? []).find(
+      (o) => o.id === scene.parentLocationId && o.id !== "OUTDOOR"
+    );
+    if (outline) return outline.name;
+    return scene.name;
+  }
+
+  // Check junctions
+  if (state.topology) {
+    const junction = state.topology.junctions.get(locationId);
+    if (junction) return junction.name;
+
+    const road = state.topology.roads.get(locationId);
+    if (road) return road.name;
+  }
+
+  return locationId; // fallback to raw ID
+}
+
+/**
+ * Resolve a location name (from LLM output) to a location ID.
+ * Falls back to case-insensitive match, then returns the original string.
+ */
+export function resolveLocationId(
+  name: string,
+  nameMap: Map<string, string>
+): string {
+  // Exact match
+  const exact = nameMap.get(name);
+  if (exact) return exact;
+
+  // Case-insensitive fallback
+  const lower = name.toLowerCase();
+  for (const [key, value] of nameMap) {
+    if (key.toLowerCase() === lower) return value;
+  }
+
+  return name; // return as-is (may already be an ID)
 }
 
 // ── Topology-aware scene map ────────────────────────────────────────────
@@ -23,13 +125,13 @@ function formatTopologySceneMap(
   const residentsMap = buildLocationResidentsMap(state, npcId);
   const outlines = state.scenarioOutlines ?? [];
 
-  // Helper: resolve a connected scene ID to a macro location label
+  // Helper: resolve a connected scene ID to a building name label
   const buildingLabel = (sceneId: string): string | null => {
     // Try entryScene → outline mapping first
     const outline = entryToOutline.get(sceneId);
     if (outline) {
       const residents = residentsMap.get(outline.id);
-      let label = `${outline.id} "${outline.name}" (entry: ${sceneId})`;
+      let label = outline.name;
       if (residents && residents.length > 0)
         label += ` | Residents: ${residents.join(", ")}`;
       return label;
@@ -40,7 +142,7 @@ function formatTopologySceneMap(
       const parent = outlines.find((o) => o.id === scene.parentLocationId);
       if (parent) {
         const residents = residentsMap.get(parent.id);
-        let label = `${parent.id} "${parent.name}" (entry: ${sceneId})`;
+        let label = parent.name;
         if (residents && residents.length > 0)
           label += ` | Residents: ${residents.join(", ")}`;
         return label;
@@ -51,7 +153,13 @@ function formatTopologySceneMap(
 
   // ── Determine NPC's current position ──
   const npcPos = state.characterPositions[npcId];
-  const npcLocation = npcPos ? (npcPos.type === "scene" ? npcPos.sceneId : npcPos.type === "junction" ? npcPos.junctionId : npcPos.roadId) : undefined;
+  const npcLocation = npcPos
+    ? npcPos.type === "scene"
+      ? npcPos.sceneId
+      : npcPos.type === "junction"
+        ? npcPos.junctionId
+        : npcPos.roadId
+    : undefined;
   const currentScene = npcLocation ? state.scenes.get(npcLocation) : null;
   const currentMacro = currentScene
     ? outlines.find((o) => o.id === currentScene.parentLocationId)
@@ -64,10 +172,10 @@ function formatTopologySceneMap(
     if (topoParent) {
       if (topoParent.type === "junction") {
         const junc = topology.junctions.get(topoParent.junctionId);
-        currentPositionLabel = `at ${topoParent.junctionId} "${junc?.name ?? topoParent.junctionId}"`;
+        currentPositionLabel = `at ${junc?.name ?? topoParent.junctionId}`;
       } else {
         const road = topology.roads.get(topoParent.roadId);
-        currentPositionLabel = `along ${topoParent.roadId} "${road?.name ?? topoParent.roadId}"`;
+        currentPositionLabel = `along ${road?.name ?? topoParent.roadId}`;
       }
     } else if (currentScene) {
       // NPC is inside a building — find which junction/road the entry scene is at
@@ -75,10 +183,10 @@ function formatTopologySceneMap(
       const entryParent = entryId ? topology.sceneToParent.get(entryId) : null;
       if (entryParent?.type === "junction") {
         const junc = topology.junctions.get(entryParent.junctionId);
-        currentPositionLabel = `at ${entryParent.junctionId} "${junc?.name ?? entryParent.junctionId}"`;
+        currentPositionLabel = `at ${junc?.name ?? entryParent.junctionId}`;
       } else if (entryParent?.type === "road") {
         const road = topology.roads.get(entryParent.roadId);
-        currentPositionLabel = `along ${entryParent.roadId} "${road?.name ?? entryParent.roadId}"`;
+        currentPositionLabel = `along ${road?.name ?? entryParent.roadId}`;
       }
     }
   }
@@ -86,14 +194,15 @@ function formatTopologySceneMap(
   const parts: string[] = [];
 
   // ── Your Current Location ──
-  if (currentMacro) {
-    const entryId = currentMacro.entrySceneId ?? npcLocation ?? currentMacro.id;
+  if (currentMacro && currentMacro.id !== "OUTDOOR") {
     parts.push(
-      `Your Current Location:\n  ${currentMacro.id} "${currentMacro.name}" (entry: ${entryId})${currentPositionLabel ? ` — ${currentPositionLabel}` : ""}`
+      `Your Current Location:\n  ${currentMacro.name}${currentPositionLabel ? ` — ${currentPositionLabel}` : ""}`
     );
   } else if (npcLocation) {
+    // NPC is outdoors — show junction/road name
+    const name = resolveLocationName(dgsm, npcLocation);
     parts.push(
-      `Your Current Location:\n  ${npcLocation}${currentPositionLabel ? ` — ${currentPositionLabel}` : ""}`
+      `Your Current Location:\n  ${name}${currentPositionLabel ? ` — ${currentPositionLabel}` : ""}`
     );
   }
 
@@ -101,8 +210,7 @@ function formatTopologySceneMap(
   const residence = state.npcResidences[npcId];
   if (residence) {
     const residenceMacro = outlines.find((o) => o.id === residence);
-    if (residenceMacro) {
-      const homeEntryId = residenceMacro.entrySceneId ?? residence;
+    if (residenceMacro && residenceMacro.id !== "OUTDOOR") {
       // Find where home is in topology
       let homePositionLabel = "";
       const homeTopoParent = residenceMacro.entrySceneId
@@ -110,14 +218,12 @@ function formatTopologySceneMap(
         : null;
       if (homeTopoParent?.type === "junction") {
         const junc = topology.junctions.get(homeTopoParent.junctionId);
-        homePositionLabel = ` — at ${homeTopoParent.junctionId} "${junc?.name ?? homeTopoParent.junctionId}"`;
+        homePositionLabel = ` — at ${junc?.name ?? homeTopoParent.junctionId}`;
       } else if (homeTopoParent?.type === "road") {
         const road = topology.roads.get(homeTopoParent.roadId);
-        homePositionLabel = ` — along ${homeTopoParent.roadId} "${road?.name ?? homeTopoParent.roadId}"`;
+        homePositionLabel = ` — along ${road?.name ?? homeTopoParent.roadId}`;
       }
-      parts.push(
-        `Your Home:\n  ${residenceMacro.id} "${residenceMacro.name}" (entry: ${homeEntryId})${homePositionLabel}`
-      );
+      parts.push(`Your Home:\n  ${residenceMacro.name}${homePositionLabel}`);
     } else {
       parts.push(`Your Home:\n  ${residence}`);
     }
@@ -126,7 +232,7 @@ function formatTopologySceneMap(
   // ── Town Map ──
   const mapLines: string[] = [];
   for (const [juncId, junction] of topology.junctions) {
-    mapLines.push(`  ${juncId} "${junction.name}"`);
+    mapLines.push(`  ${junction.name}`);
 
     // Roads out from this junction
     const roads = topology.junctionToRoads.get(juncId) ?? [];
@@ -134,9 +240,9 @@ function formatTopologySceneMap(
       const otherJuncId =
         road.endpointA === juncId ? road.endpointB : road.endpointA;
       const otherJunc = topology.junctions.get(otherJuncId);
-      const otherName = otherJunc ? `"${otherJunc.name}"` : "";
+      const otherName = otherJunc?.name ?? otherJuncId;
       mapLines.push(
-        `    ── ${road.id} "${road.name}" (~${road.travelTimeMinutes} min) ──▸ ${otherJuncId} ${otherName}`.trimEnd()
+        `    ── ${road.name} (~${road.travelTimeMinutes} min) ──▸ ${otherName}`
       );
     }
 
@@ -159,7 +265,7 @@ function formatTopologySceneMap(
         if (label) alongBuildings.push(label);
       }
       if (alongBuildings.length > 0) {
-        mapLines.push(`    Along ${road.id}: ${alongBuildings.join(" | ")}`);
+        mapLines.push(`    Along ${road.name}: ${alongBuildings.join(" | ")}`);
       }
     }
 

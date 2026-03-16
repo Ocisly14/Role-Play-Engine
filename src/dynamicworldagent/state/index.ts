@@ -9,6 +9,7 @@ export {
   DynamicGameStateManager,
   initialDynamicGameState,
 } from "./DynamicGameState.js";
+export * from "./blockedConnections.js";
 
 export { initializeCompleteDynamicGameState } from "./DynamicGameStateLoader.js";
 
