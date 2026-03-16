@@ -21,12 +21,13 @@ export const routineHandler: NodeHandler = {
 
   exampleNode: {
     nodeId: "r1",
+    startTime: "22:00",
+    endTime: "22:05",
     type: "routine",
     routineSubtype: "rest",
     action: "Sleep for the night to recover from exhaustion",
     location: "home_bedroom",
     impact: 0,
-    timeAdvanceMinutes: 5,
   },
 
   execute(

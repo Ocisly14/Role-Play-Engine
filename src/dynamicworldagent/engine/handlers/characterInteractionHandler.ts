@@ -21,12 +21,13 @@ export const characterInteractionHandler: NodeHandler = {
 
   exampleNode: {
     nodeId: "ci1",
+    startTime: "10:00",
+    endTime: "10:05",
     type: "character_interaction",
     action: "Hand over the mysterious letter to Dr. Morgan",
     location: "hospital_lobby",
     targetCharacterId: "npc_dr_morgan",
     impact: 2,
-    timeAdvanceMinutes: 5,
     characterInteractionPayload: {
       transferType: "item",
       itemId: "mysterious_letter",

@@ -20,11 +20,12 @@ export const sceneInteractionHandler: NodeHandler = {
 
   exampleNode: {
     nodeId: "si1",
+    startTime: "11:00",
+    endTime: "11:10",
     type: "scene_interaction",
     action: "Barricade the door to the basement",
     location: "ground_floor_hallway",
     impact: 3,
-    timeAdvanceMinutes: 10,
     sceneConnectionEffect: {
       targetScenarioId: "basement_entrance",
       action: "block",

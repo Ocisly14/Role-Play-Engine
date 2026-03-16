@@ -175,13 +175,14 @@ function makeFireNode(
     nodeId: "test-node-1",
     characterId: "npc-arsonist",
     characterName: "Arsonist",
-    gameTime: "08:00",
+    startTime: "08:00",
+    endTime: "08:05",
     action: "Set fire",
     location,
     type: "scene_interaction",
     impact: 3,
-    timeAdvanceMinutes: 5,
     status: "pending",
+    executionMeta: { remainingMinutes: 5 },
     fireIntensity: 1,
     ...overrides,
   } as PlanNode;
@@ -261,7 +262,7 @@ describe("fireFeature", () => {
       expect(fs.maxIntensity).toBe(5);
       expect(fs.spreadThreshold).toBe(3);
       expect(fs.phase).toBe("growing");
-      expect(fs.totalBurnTicks).toBe(0);
+      expect(fs.totalBurnMinutes).toBe(0);
     });
 
     it("should write fire scene condition with skill penalties", () => {
@@ -360,8 +361,8 @@ describe("fireFeature", () => {
 
       const fs = dgsm.getFeatureSceneState("fire", "warehouse") as any;
       expect(fs.intensity).toBe(1);
-      expect(fs.totalBurnTicks).toBe(1);
-      expect(fs.ticksInPhase).toBe(1);
+      expect(fs.totalBurnMinutes).toBe(5);
+      expect(fs.minutesInPhase).toBe(5);
     });
 
     it("should increase intensity after 2 ticks", () => {
@@ -372,6 +373,19 @@ describe("fireFeature", () => {
 
       const fs = dgsm.getFeatureSceneState("fire", "warehouse") as any;
       expect(fs.intensity).toBe(2);
+    });
+
+    it("should preserve the 10-minute intensity interval with 1-minute ticks", () => {
+      const oneMinuteRuntime = createMockRuntime({ tickDurationMinutes: 1 });
+      const node = makeFireNode("warehouse");
+      fireFeature.activate!(node, dgsm as any);
+
+      runTicks(dgsm, oneMinuteRuntime, 9);
+
+      const fs = dgsm.getFeatureSceneState("fire", "warehouse") as any;
+      expect(fs.intensity).toBe(1);
+      expect(fs.totalBurnMinutes).toBe(9);
+      expect(fs.minutesInPhase).toBe(9);
     });
 
     it("should switch to decaying phase at max intensity", () => {
@@ -684,8 +698,8 @@ describe("fireFeature", () => {
         decayRate: 1,
         spreadThreshold: 3,
         phase: "growing" as const,
-        ticksInPhase: 0,
-        totalBurnTicks: 0,
+        minutesInPhase: 0,
+        totalBurnMinutes: 0,
         burnRange: { start: 0.5, end: 0.5 },
       };
       roadDgsm.setFeatureSceneState("fire", "ROAD_1", roadFireState);
@@ -705,8 +719,8 @@ describe("fireFeature", () => {
         decayRate: 1,
         spreadThreshold: 3,
         phase: "growing" as const,
-        ticksInPhase: 0,
-        totalBurnTicks: 0,
+        minutesInPhase: 0,
+        totalBurnMinutes: 0,
         burnRange: { start: 0.5, end: 0.5 },
       };
       roadDgsm.setFeatureSceneState("fire", "ROAD_1", roadFireState);
@@ -727,8 +741,8 @@ describe("fireFeature", () => {
         decayRate: 1,
         spreadThreshold: 3,
         phase: "growing" as const,
-        ticksInPhase: 0,
-        totalBurnTicks: 0,
+        minutesInPhase: 0,
+        totalBurnMinutes: 0,
         burnRange: { start: 0.05, end: 0.95 },
       };
       roadDgsm.setFeatureSceneState("fire", "ROAD_1", roadFireState);
@@ -750,8 +764,8 @@ describe("fireFeature", () => {
         decayRate: 1,
         spreadThreshold: 3,
         phase: "growing" as const,
-        ticksInPhase: 0,
-        totalBurnTicks: 0,
+        minutesInPhase: 0,
+        totalBurnMinutes: 0,
         burnRange: { start: 0.45, end: 0.45 },
       };
       roadDgsm.setFeatureSceneState("fire", "ROAD_1", roadFireState);
@@ -778,8 +792,8 @@ describe("fireFeature", () => {
         decayRate: 1,
         spreadThreshold: 3,
         phase: "growing" as const,
-        ticksInPhase: 0,
-        totalBurnTicks: 0,
+        minutesInPhase: 0,
+        totalBurnMinutes: 0,
         burnRange: { start: 0.1, end: 0.1 },
       };
       roadDgsm.setFeatureSceneState("fire", "ROAD_1", roadFireState);
@@ -883,8 +897,8 @@ describe("fireFeature", () => {
         decayRate: 1,
         spreadThreshold: 3,
         phase: "growing" as const,
-        ticksInPhase: 0,
-        totalBurnTicks: 3,
+        minutesInPhase: 0,
+        totalBurnMinutes: 15,
         burnRange: { start: 0.4, end: 0.6 },
       };
       roadDgsm.setFeatureSceneState("fire", "ROAD_1", roadFireState);
@@ -919,8 +933,8 @@ describe("fireFeature", () => {
         decayRate: 1,
         spreadThreshold: 3,
         phase: "growing" as const,
-        ticksInPhase: 0,
-        totalBurnTicks: 0,
+        minutesInPhase: 0,
+        totalBurnMinutes: 0,
         burnRange: { start: 0.5, end: 0.5 },
       };
       roadDgsm.setFeatureSceneState("fire", "ROAD_1", roadFireState);
@@ -950,8 +964,8 @@ describe("fireFeature", () => {
         decayRate: 1,
         spreadThreshold: 3,
         phase: "growing" as const,
-        ticksInPhase: 0,
-        totalBurnTicks: 5,
+        minutesInPhase: 0,
+        totalBurnMinutes: 25,
       };
       roadDgsm.setFeatureSceneState("fire", "JUNC_1", junctionFireState);
 
@@ -986,8 +1000,8 @@ describe("fireFeature", () => {
         decayRate: 1,
         spreadThreshold: 3,
         phase: "growing" as const,
-        ticksInPhase: 0,
-        totalBurnTicks: 0,
+        minutesInPhase: 0,
+        totalBurnMinutes: 0,
       };
       roadDgsm.setFeatureSceneState("fire", "SCN_ALONG", sceneFireState);
 
@@ -1098,8 +1112,8 @@ describe("fireFeature", () => {
         decayRate: 1,
         spreadThreshold: 3,
         phase: "growing" as const,
-        ticksInPhase: 0,
-        totalBurnTicks: 0,
+        minutesInPhase: 0,
+        totalBurnMinutes: 0,
       });
 
       const result = await fireFeature.propagate!(
@@ -1120,8 +1134,8 @@ describe("fireFeature", () => {
         decayRate: 1,
         spreadThreshold: 3,
         phase: "growing" as const,
-        ticksInPhase: 0,
-        totalBurnTicks: 0,
+        minutesInPhase: 0,
+        totalBurnMinutes: 0,
       });
 
       const result = await fireFeature.propagate!(
@@ -1148,8 +1162,8 @@ describe("fireFeature", () => {
         decayRate: 1,
         spreadThreshold: 3,
         phase: "growing" as const,
-        ticksInPhase: 0,
-        totalBurnTicks: 0,
+        minutesInPhase: 0,
+        totalBurnMinutes: 0,
       });
 
       const result = await fireFeature.propagate!(
@@ -1169,8 +1183,8 @@ describe("fireFeature", () => {
         decayRate: 1,
         spreadThreshold: 3,
         phase: "growing" as const,
-        ticksInPhase: 0,
-        totalBurnTicks: 0,
+        minutesInPhase: 0,
+        totalBurnMinutes: 0,
         burnRange: { start: 0.0, end: 0.96 },
       });
 
@@ -1194,8 +1208,8 @@ describe("fireFeature", () => {
         decayRate: 1,
         spreadThreshold: 3,
         phase: "growing" as const,
-        ticksInPhase: 0,
-        totalBurnTicks: 0,
+        minutesInPhase: 0,
+        totalBurnMinutes: 0,
         burnRange: { start: 0.3, end: 0.7 },
       });
 
@@ -1218,8 +1232,8 @@ describe("fireFeature", () => {
         decayRate: 1,
         spreadThreshold: 3,
         phase: "growing" as const,
-        ticksInPhase: 0,
-        totalBurnTicks: 0,
+        minutesInPhase: 0,
+        totalBurnMinutes: 0,
       });
 
       const result = await fireFeature.propagate!(
@@ -1258,8 +1272,8 @@ describe("fireFeature", () => {
         decayRate: 1,
         spreadThreshold: 3,
         phase: "growing" as const,
-        ticksInPhase: 0,
-        totalBurnTicks: 0,
+        minutesInPhase: 0,
+        totalBurnMinutes: 0,
       });
 
       const result = await fireFeature.propagate!(

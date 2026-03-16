@@ -7,7 +7,8 @@ import type { NodeHandler, WorldFeature } from "./types.js";
  */
 const BASE_NODE_FIELDS = new Set([
   "nodeId",
-  "gameTime",
+  "startTime",
+  "endTime",
   "action",
   "location",
   "type",
@@ -15,7 +16,7 @@ const BASE_NODE_FIELDS = new Set([
   "impact",
   "status",
   "difficulty",
-  "timeAdvanceMinutes",
+  "executionMeta",
   "characterId",
   "characterName",
   "outcome",
@@ -273,6 +274,8 @@ The \`impact\` field on every PlanNode determines **who in the game world percei
   ): Record<string, unknown> {
     const example: Record<string, unknown> = {
       nodeId: (handler.exampleNode.nodeId as string) ?? "ci1",
+      startTime: (handler.exampleNode.startTime as string) ?? "09:00",
+      endTime: (handler.exampleNode.endTime as string) ?? "09:05",
       action: (handler.exampleNode.action as string) ?? "Example action",
       location: (handler.exampleNode.location as string) ?? "example_location",
       type: handler.type,
@@ -283,7 +286,6 @@ The \`impact\` field on every PlanNode determines **who in the game world percei
     }
 
     example.impact = handler.exampleNode.impact ?? 0;
-    example.gameTime = handler.exampleNode.gameTime ?? "09:00";
     example.status = "pending";
 
     // Merge type-specific extras
@@ -340,7 +342,8 @@ The \`impact\` field on every PlanNode determines **who in the game world percei
     sections.push("### Base Fields (every node)");
     const baseJson: Record<string, string | number> = {
       nodeId: "unique-id",
-      gameTime: "HH:MM" as any,
+      startTime: "HH:MM" as any,
+      endTime: "HH:MM" as any,
       action: "description of what the character does" as any,
       location: "sceneId" as any,
       type: typeNames as any,

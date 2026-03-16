@@ -1,4 +1,5 @@
 import type { SimulationEvent } from "../../simulation/types.js";
+import type { CharacterPosition } from "../../state/topologyTypes.js";
 import type { Item } from "../../state/types.js";
 
 export type BuiltinNodeType =
@@ -46,11 +47,48 @@ export interface SceneConnectionEffect {
   action: "block" | "unblock";
 }
 
+export interface MovementStep {
+  kind: "to_junction" | "along_road" | "to_scene";
+  from: CharacterPosition;
+  to: CharacterPosition;
+  durationMinutes: number;
+  roadId?: string;
+  blockCheck?: {
+    fromId: string;
+    toId: string;
+  };
+}
+
+export interface MovementExecutionState {
+  routeSnapshot: MovementStep[];
+  currentStepIndex: number;
+  minutesIntoStep: number;
+  lastReachablePosition: CharacterPosition;
+  targetPosition: CharacterPosition;
+  blockedReason?: string;
+}
+
+export interface PlanNodeExecutionMeta {
+  remainingMinutes: number;
+  startedAt?: string;
+  completedAt?: string;
+  failedAt?: string;
+  blockedReason?: string;
+  movement?: MovementExecutionState;
+}
+
+export type PlanNodeStatus =
+  | "pending"
+  | "in_progress"
+  | "completed"
+  | "failed";
+
 export interface PlanNode {
   nodeId: string;
   characterId: string;
   characterName: string;
-  gameTime: string;
+  startTime: string;
+  endTime: string;
   action: string;
   location: string;
   type: PlanNodeType;
@@ -58,12 +96,12 @@ export interface PlanNode {
   skill?: string;
   impact: 0 | 1 | 2 | 3 | 4 | 5;
   difficulty?: "regular" | "hard" | "extreme";
-  timeAdvanceMinutes: number;
   targetCharacterId?: string;
   characterInteractionPayload?: CharacterInteractionPayload;
   objectInteractionPayload?: ObjectInteractionPayload;
   sceneConnectionEffect?: SceneConnectionEffect;
-  status: "pending" | "completed" | "failed";
+  status: PlanNodeStatus;
+  executionMeta: PlanNodeExecutionMeta;
   outcome?: string;
   /** Feature overlay fields — arbitrary keys added by WorldFeature schemas */
   [key: string]: unknown;

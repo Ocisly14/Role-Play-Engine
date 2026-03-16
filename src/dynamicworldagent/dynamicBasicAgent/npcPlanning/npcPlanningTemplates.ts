@@ -107,6 +107,7 @@ Write your plan as an ordered list of activities: WHERE you'll go and WHAT you i
 - Think about who you are — your job, your habits, your personality. Plan a day that feels natural for someone like you.
 - Balance your everyday routine (meals, work, rest, hobbies) with actions that move you closer to your goal.
 - Use exact location names from "Places You Know" for the location field.
+- Use only the exact name itself for \`location\`. Do not copy topology notes, residents, or text after labels like \`Exact Name:\` or \`Topology Note:\`.
 - Be realistic — you wouldn't break into someone's office in broad daylight, and you need to eat and rest.
 - Plan entries as you need for a full day. Fewer if it's already late.
 
@@ -199,6 +200,7 @@ You can use a skill to accomplish an action or achieve your goal. Set \`"skill"\
 - Simple \`pickup\`, \`place\`, ordinary \`inspect\`, casual conversation, and other everyday actions should usually omit \`"skill"\`.
 - Before choosing a skill for an object action, inspect the injected item state first (locked/unlocked, damaged, uses, lit/unlit, ammo, etc.) and choose a normal action if the state already makes it possible.
 - If you include \`"skill"\`, it must be an exact name from "Available Skills". Never invent generic labels such as \`social\`, \`professional\`, or \`exploration\`.
+- For every node's \`location\`, copy only the exact location name. Never include helper text such as topology notes, resident lists, or formatting labels.
 
 ## Impact
 
@@ -220,9 +222,10 @@ Return a JSON array of PlanNode objects. No extra text. Always write in English.
 \`\`\`json
 {
   "nodeId": "unique-id",
-  "gameTime": "HH:MM",
-    "action": "description of what you do",
-    "location": "exact location name from Places You Know",
+  "startTime": "HH:MM",
+  "endTime": "HH:MM",
+  "action": "description of what you do",
+  "location": "exact location name from Places You Know",
   "type": "routine|movement|character_interaction|object_interaction|scene_interaction",
   "skill": "OMIT if no skill check needed, otherwise exact skill name",
   "impact": "Default 0. Use 1 only for targeted consequential actions with skill; 2+ for broader effects",
@@ -248,6 +251,7 @@ Look at your full plan for today and what has already happened. First decide whi
 Do not expand the whole day. Do not repeat plan steps that your memory log already shows as completed, interrupted, cancelled, or no longer relevant.
 
 If the next step is not at your current location, emit a movement node first (set location to the destination), then emit the action node. Movement does not need to be broken into segments — one movement node will take you directly to the destination regardless of distance.
+Use only the exact destination name itself in \`location\`; do not include topology notes or any explanatory suffix.
 
 ## How To Choose The Next Step
 - Use "Your Plan For Today" as the source of truth for the intended sequence.
@@ -427,7 +431,8 @@ IMPORTANT: "revisedNodes" MUST be an array of PlanNode objects — even if there
   "revisedNodes": [
     {
       "nodeId": "unique-id",
-      "gameTime": "HH:MM",
+      "startTime": "HH:MM",
+      "endTime": "HH:MM",
       "action": "description of what you do",
       "location": "exact location name from Places You Know",
       "type": "routine|movement|character_interaction|object_interaction|scene_interaction",
@@ -451,6 +456,7 @@ Something just disrupted your plans. Look at what you were about to do and decid
 You can reorder, change, add, or drop actions. If this event fundamentally changes what you're trying to accomplish long-term, say so.
 
 Set each node's \`location\` to the exact location name from "Places You Know" where that action happens. If the next step is not at your current location, include movement nodes first.
+Do not include topology notes, residents, or label prefixes in \`location\`; output only the exact place name.
 
 ## Instructions
 - Only change what the event actually affects. Don't rewrite actions that are still fine.

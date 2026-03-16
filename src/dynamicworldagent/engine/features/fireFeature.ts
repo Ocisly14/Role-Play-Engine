@@ -11,12 +11,12 @@ import type {
 interface FireSceneState {
   intensity: number;
   maxIntensity: number; // fixed 5
-  growthRate: number; // default 1 (applied every 2 ticks)
-  decayRate: number; // default 1 (applied every 2 ticks)
+  growthRate: number; // default 1 (applied every 10 minutes)
+  decayRate: number; // default 1 (applied every 10 minutes)
   spreadThreshold: number; // fixed 3 = ceil(5/2)
   phase: "growing" | "decaying";
-  ticksInPhase: number;
-  totalBurnTicks: number;
+  minutesInPhase: number;
+  totalBurnMinutes: number;
 }
 
 interface FireRoadState extends FireSceneState {
@@ -24,8 +24,8 @@ interface FireRoadState extends FireSceneState {
   burnRange: { start: number; end: number };
 }
 
-/** Minutes of road-distance fire spreads per tick (base rate, before weather) */
-const ROAD_SPREAD_RATE_MINUTES = 2;
+/** Minutes of road-distance fire spreads per in-game minute (base rate, before weather). */
+const ROAD_SPREAD_TRAVEL_MINUTES_PER_MINUTE = 0.4;
 
 function isFireRoadState(state: FireSceneState): state is FireRoadState {
   return "burnRange" in state;
@@ -37,9 +37,12 @@ const DEFAULT_MAX_INTENSITY = 5;
 const DEFAULT_SPREAD_THRESHOLD = 3; // ceil(5/2)
 const DEFAULT_GROWTH_RATE = 1;
 const DEFAULT_DECAY_RATE = 1;
-const TICKS_PER_INTENSITY_CHANGE = 2;
+const INTENSITY_CHANGE_INTERVAL_MINUTES = 10;
 const BLOCK_THRESHOLD = 3; // same as spread threshold
 const FEATURE_ID = "fire";
+const MINOR_AFTERMATH_THRESHOLD_MINUTES = 20;
+const PARTIAL_AFTERMATH_THRESHOLD_MINUTES = 50;
+const SEVERE_AFTERMATH_THRESHOLD_MINUTES = 100;
 
 // ===== Helper functions =====
 
@@ -76,8 +79,8 @@ function createFireState(initialIntensity: number): FireSceneState {
     decayRate: DEFAULT_DECAY_RATE,
     spreadThreshold: DEFAULT_SPREAD_THRESHOLD,
     phase: "growing",
-    ticksInPhase: 0,
-    totalBurnTicks: 0,
+    minutesInPhase: 0,
+    totalBurnMinutes: 0,
   };
 }
 
@@ -149,19 +152,19 @@ function clearFireConditions(
 function writeAftermathCondition(
   dgsm: DynamicGameStateManager,
   sceneId: string,
-  totalBurnTicks: number
+  totalBurnMinutes: number
 ): void {
   let description: string;
   let penalties: Array<{ skill: string; delta: number }> | undefined;
 
-  if (totalBurnTicks <= 4) {
+  if (totalBurnMinutes <= MINOR_AFTERMATH_THRESHOLD_MINUTES) {
     description = "[Fire Aftermath] Minor smoke stains on walls and ceiling";
     // no penalties
-  } else if (totalBurnTicks <= 10) {
+  } else if (totalBurnMinutes <= PARTIAL_AFTERMATH_THRESHOLD_MINUTES) {
     description =
       "[Fire Aftermath] Partial burn damage \u2014 some items destroyed, soot covers surfaces";
     penalties = [{ skill: "Perception", delta: -5 }];
-  } else if (totalBurnTicks <= 20) {
+  } else if (totalBurnMinutes <= SEVERE_AFTERMATH_THRESHOLD_MINUTES) {
     description =
       "[Fire Aftermath] Severe burn damage \u2014 structural integrity compromised, many items destroyed";
     penalties = [{ skill: "Perception", delta: -10 }];
@@ -375,7 +378,7 @@ export const fireFeature: WorldFeature = {
   },
 
   propagation: {
-    tickInterval: 2,
+    tickInterval: 10,
     maxHops: 3,
   },
 
@@ -408,7 +411,7 @@ export const fireFeature: WorldFeature = {
       existing.intensity -= 2;
       if (existing.intensity <= 0) {
         // Fire is fully extinguished
-        writeAftermathCondition(dgsm, sceneId, existing.totalBurnTicks);
+        writeAftermathCondition(dgsm, sceneId, existing.totalBurnMinutes);
         clearFireConditions(dgsm, sceneId);
         updateFireBlocking(dgsm, sceneId, 0);
         removeFireState(dgsm, sceneId);
@@ -446,20 +449,19 @@ export const fireFeature: WorldFeature = {
     }
   },
 
-  tick(dgsm: DynamicGameStateManager, _runtime: TickRuntimeContext): void {
+  tick(dgsm: DynamicGameStateManager, runtime: TickRuntimeContext): void {
     const burningScenes = getAllBurningScenes(dgsm);
+    const elapsedMinutes = Math.max(1, runtime.tickDurationMinutes);
 
     for (const sceneId of burningScenes) {
       const fs = getFireState(dgsm, sceneId);
       if (!fs) continue;
 
-      // Increment tick counters
-      fs.totalBurnTicks++;
-      fs.ticksInPhase++;
+      fs.totalBurnMinutes += elapsedMinutes;
+      fs.minutesInPhase += elapsedMinutes;
 
-      // Only change intensity every TICKS_PER_INTENSITY_CHANGE ticks
-      if (fs.ticksInPhase >= TICKS_PER_INTENSITY_CHANGE) {
-        fs.ticksInPhase = 0;
+      while (fs.minutesInPhase >= INTENSITY_CHANGE_INTERVAL_MINUTES) {
+        fs.minutesInPhase -= INTENSITY_CHANGE_INTERVAL_MINUTES;
 
         if (fs.phase === "growing") {
           fs.intensity += fs.growthRate;
@@ -469,14 +471,14 @@ export const fireFeature: WorldFeature = {
           if (fs.intensity >= fs.maxIntensity) {
             fs.intensity = fs.maxIntensity;
             fs.phase = "decaying";
-            fs.ticksInPhase = 0;
+            fs.minutesInPhase = 0;
           }
         } else {
           // decaying
           fs.intensity -= fs.decayRate;
           if (fs.intensity <= 0) {
             // Fire burns out
-            writeAftermathCondition(dgsm, sceneId, fs.totalBurnTicks);
+            writeAftermathCondition(dgsm, sceneId, fs.totalBurnMinutes);
             clearFireConditions(dgsm, sceneId);
             updateFireBlocking(dgsm, sceneId, 0);
             removeFireState(dgsm, sceneId);
@@ -499,7 +501,7 @@ export const fireFeature: WorldFeature = {
 
         // Heavy rain/storm extinguishes outdoor fire
         if (weatherMult <= 0) {
-          writeAftermathCondition(dgsm, sceneId, fs.totalBurnTicks);
+          writeAftermathCondition(dgsm, sceneId, fs.totalBurnMinutes);
           clearFireConditions(dgsm, sceneId);
           updateFireBlocking(dgsm, sceneId, 0);
           removeFireState(dgsm, sceneId);
@@ -510,7 +512,9 @@ export const fireFeature: WorldFeature = {
         if (isFireRoadState(fs)) {
           const road = dgsm.getTopology()!.roads.get(sceneId)!;
           const spreadDelta =
-            (ROAD_SPREAD_RATE_MINUTES / road.travelTimeMinutes) * weatherMult;
+            ((ROAD_SPREAD_TRAVEL_MINUTES_PER_MINUTE * elapsedMinutes) /
+              road.travelTimeMinutes) *
+            weatherMult;
           fs.burnRange.start = Math.max(0, fs.burnRange.start - spreadDelta);
           fs.burnRange.end = Math.min(1, fs.burnRange.end + spreadDelta);
 

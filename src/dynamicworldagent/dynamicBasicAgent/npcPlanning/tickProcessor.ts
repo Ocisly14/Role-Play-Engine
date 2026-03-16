@@ -2,14 +2,17 @@ import { ModelClass, generateText } from "../../../models/index.js";
 import { ModelProviderName } from "../../../models/types.js";
 import { EmbeddingClient } from "../../../rag/embedding.js";
 import { drainPendingEmotions } from "../../engine/features/sanityFeature.js";
+import { resolveTargetPosition } from "../../engine/handlers/movementHandler.js";
 import type { GameEngineRegistry } from "../../engine/registry.js";
 import { findAffectedCharacters } from "../../engine/shared/impactPropagation.js";
+import { buildMovementRouteIgnoringBlocks } from "../../engine/shared/pathfinding.js";
 import type {
   ExecutionContext,
   TickRuntimeContext,
 } from "../../engine/types.js";
 import type { NpcMemoryManager } from "../../memory/NpcMemoryManager.js";
 import type { DynamicGameStateManager } from "../../state/DynamicGameState.js";
+import type { CharacterPosition } from "../../state/topologyTypes.js";
 import type { Item } from "../../state/types.js";
 import {
   type SessionRagChunkInput,
@@ -19,6 +22,7 @@ import type { NPCPlanningAgent } from "./NPCPlanningAgent.js";
 import type {
   CharacterAction,
   DiscoveryEntry,
+  MovementStep,
   PlanNode,
   SimulationTickResult,
   SuccessLevel,
@@ -38,7 +42,7 @@ function minutesToTimeLabel(minutes: number): string {
   return `${String(h).padStart(2, "0")}:${String(m).padStart(2, "0")}`;
 }
 
-const TICK_DURATION_MINUTES = 5;
+const TICK_DURATION_MINUTES = 1;
 
 interface ItemActionContext {
   itemId?: string;
@@ -152,6 +156,379 @@ function buildEventMetadata(
 
 function shouldRunImpactGate(action: CharacterAction): boolean {
   return action.impact >= 2 || (action.impact === 1 && Boolean(action.skill));
+}
+
+function getNodeDurationMinutes(node: PlanNode): number {
+  return Math.max(1, timeToMinutes(node.endTime) - timeToMinutes(node.startTime));
+}
+
+function startNode(node: PlanNode, currentTime: string): PlanNode {
+  return {
+    ...node,
+    status: "in_progress",
+    executionMeta: {
+      ...node.executionMeta,
+      startedAt: node.executionMeta.startedAt ?? currentTime,
+      remainingMinutes:
+        node.executionMeta.remainingMinutes > 0
+          ? node.executionMeta.remainingMinutes
+          : getNodeDurationMinutes(node),
+    },
+  };
+}
+
+function interpolateMovementPosition(
+  from: CharacterPosition,
+  to: CharacterPosition,
+  progress: number
+): CharacterPosition {
+  if (
+    from.type === "road" &&
+    to.type === "road" &&
+    from.roadId === to.roadId
+  ) {
+    return {
+      type: "road",
+      roadId: from.roadId,
+      position: from.position + (to.position - from.position) * progress,
+    };
+  }
+
+  return progress >= 1 ? to : from;
+}
+
+function buildMovementAction(
+  node: PlanNode,
+  status: "completed" | "failed",
+  gameTime: string,
+  location: string,
+  outcome: string,
+  failureReason?: "location_blocked"
+): CharacterAction {
+  return {
+    characterId: node.characterId,
+    characterName: node.characterName,
+    gameTime,
+    action: node.action,
+    location,
+    type: node.type,
+    skill: node.skill,
+    impact: node.impact,
+    status,
+    outcome,
+    failureReason,
+    targetCharacterId: node.targetCharacterId,
+  };
+}
+
+function initializeMovementNode(
+  node: PlanNode,
+  dgsm: DynamicGameStateManager,
+  currentTime: string
+): PlanNode {
+  const topology = dgsm.getTopology();
+  const currentPosition = dgsm.getCharacterPosition(node.characterId);
+  const targetPosition = resolveTargetPosition(node.location, topology, dgsm);
+  if (!currentPosition || !targetPosition) {
+    return {
+      ...startNode(node, currentTime),
+      status: "failed",
+      executionMeta: {
+        ...node.executionMeta,
+        startedAt: currentTime,
+        failedAt: currentTime,
+        remainingMinutes: 0,
+      },
+      outcome: `${node.action} [no path available in topology] failed`,
+    };
+  }
+
+  const route = buildMovementRouteIgnoringBlocks(
+    currentPosition,
+    targetPosition,
+    topology
+  );
+  if (!route) {
+    return {
+      ...startNode(node, currentTime),
+      status: "failed",
+      executionMeta: {
+        ...node.executionMeta,
+        startedAt: currentTime,
+        failedAt: currentTime,
+        remainingMinutes: 0,
+      },
+      outcome: `${node.action} [no path available in topology] failed`,
+    };
+  }
+
+  return {
+    ...startNode(node, currentTime),
+    executionMeta: {
+      ...node.executionMeta,
+      startedAt: currentTime,
+      remainingMinutes: Math.max(1, Math.ceil(route.totalMinutes)),
+      movement: {
+        routeSnapshot: route.steps,
+        currentStepIndex: 0,
+        minutesIntoStep: 0,
+        lastReachablePosition: currentPosition,
+        targetPosition,
+      },
+    },
+  };
+}
+
+function processImmediateMovementTransitions(
+  node: PlanNode,
+  dgsm: DynamicGameStateManager
+): { node: PlanNode; blockedReason?: string; moved: boolean } {
+  const movement = node.executionMeta.movement;
+  if (!movement) return { node, moved: false };
+
+  let currentNode = node;
+  let moved = false;
+
+  while (true) {
+    const currentMovement = currentNode.executionMeta.movement;
+    if (!currentMovement) break;
+    const step = currentMovement.routeSnapshot[currentMovement.currentStepIndex];
+    if (!step || step.durationMinutes > 0) break;
+
+    const blockedReason = step.blockCheck
+      ? dgsm.getConnectionBlockReason(
+          step.blockCheck.fromId,
+          step.blockCheck.toId
+        )
+      : undefined;
+    if (blockedReason) {
+      return { node: currentNode, blockedReason, moved };
+    }
+
+    dgsm.setCharacterPosition(currentNode.characterId, step.to);
+    moved = true;
+    currentNode = {
+      ...currentNode,
+      executionMeta: {
+        ...currentNode.executionMeta,
+        movement: {
+          ...currentMovement,
+          currentStepIndex: currentMovement.currentStepIndex + 1,
+          minutesIntoStep: 0,
+          lastReachablePosition: step.to,
+        },
+      },
+    };
+  }
+
+  return { node: currentNode, moved };
+}
+
+function advanceMovementNodeOneMinute(
+  node: PlanNode,
+  dgsm: DynamicGameStateManager,
+  currentTime: string
+): {
+  node: PlanNode;
+  action?: CharacterAction;
+  moved: boolean;
+} {
+  const processed = processImmediateMovementTransitions(node, dgsm);
+  if (processed.blockedReason) {
+    const failedNode: PlanNode = {
+      ...processed.node,
+      status: "failed",
+      executionMeta: {
+        ...processed.node.executionMeta,
+        failedAt: currentTime,
+        blockedReason: processed.blockedReason,
+        remainingMinutes: 0,
+        movement: processed.node.executionMeta.movement
+          ? {
+              ...processed.node.executionMeta.movement,
+              blockedReason: processed.blockedReason,
+            }
+          : undefined,
+      },
+      outcome: `${processed.node.action} [blocked: ${processed.blockedReason}] failed`,
+    };
+    const failedPosition = dgsm.getCharacterPosition(node.characterId);
+    return {
+      node: failedNode,
+      moved: processed.moved,
+      action: buildMovementAction(
+        failedNode,
+        "failed",
+        currentTime,
+        failedPosition ? dgsm.resolveLocationId(failedPosition) : node.location,
+        failedNode.outcome!,
+        "location_blocked"
+      ),
+    };
+  }
+
+  const movement = processed.node.executionMeta.movement;
+  if (!movement) {
+    return { node: processed.node, moved: processed.moved };
+  }
+
+  const step = movement.routeSnapshot[movement.currentStepIndex];
+  if (!step) {
+    const completedNode: PlanNode = {
+      ...processed.node,
+      status: "completed",
+      executionMeta: {
+        ...processed.node.executionMeta,
+        completedAt: currentTime,
+        remainingMinutes: 0,
+      },
+      outcome: `${processed.node.action} [arrived at ${processed.node.location}] succeeded`,
+    };
+    return {
+      node: completedNode,
+      moved: processed.moved,
+      action: buildMovementAction(
+        completedNode,
+        "completed",
+        currentTime,
+        processed.node.location,
+        completedNode.outcome!
+      ),
+    };
+  }
+
+  const blockedReason =
+    movement.minutesIntoStep === 0 && step.blockCheck
+      ? dgsm.getConnectionBlockReason(step.blockCheck.fromId, step.blockCheck.toId)
+      : undefined;
+  if (blockedReason) {
+    const failedNode: PlanNode = {
+      ...processed.node,
+      status: "failed",
+      executionMeta: {
+        ...processed.node.executionMeta,
+        failedAt: currentTime,
+        blockedReason,
+        remainingMinutes: 0,
+        movement: {
+          ...movement,
+          blockedReason,
+        },
+      },
+      outcome: `${processed.node.action} [blocked: ${blockedReason}] failed`,
+    };
+    const failedPosition = dgsm.getCharacterPosition(node.characterId);
+    return {
+      node: failedNode,
+      moved: processed.moved,
+      action: buildMovementAction(
+        failedNode,
+        "failed",
+        currentTime,
+        failedPosition ? dgsm.resolveLocationId(failedPosition) : node.location,
+        failedNode.outcome!,
+        "location_blocked"
+      ),
+    };
+  }
+
+  const duration = Math.max(1, step.durationMinutes);
+  const nextMinutesIntoStep = movement.minutesIntoStep + 1;
+  const progress = Math.min(nextMinutesIntoStep / duration, 1);
+  const nextPosition = interpolateMovementPosition(step.from, step.to, progress);
+  dgsm.setCharacterPosition(node.characterId, nextPosition);
+
+  let nextNode: PlanNode = {
+    ...processed.node,
+    executionMeta: {
+      ...processed.node.executionMeta,
+      remainingMinutes: Math.max(0, processed.node.executionMeta.remainingMinutes - 1),
+      movement: {
+        ...movement,
+        minutesIntoStep: nextMinutesIntoStep,
+        lastReachablePosition: nextPosition,
+      },
+    },
+  };
+
+  if (progress >= 1) {
+    nextNode = {
+      ...nextNode,
+      executionMeta: {
+        ...nextNode.executionMeta,
+        movement: {
+          ...nextNode.executionMeta.movement!,
+          currentStepIndex: movement.currentStepIndex + 1,
+          minutesIntoStep: 0,
+          lastReachablePosition: step.to,
+        },
+      },
+    };
+  }
+
+  const afterMinute = processImmediateMovementTransitions(nextNode, dgsm);
+  if (afterMinute.blockedReason) {
+    const failedNode: PlanNode = {
+      ...afterMinute.node,
+      status: "failed",
+      executionMeta: {
+        ...afterMinute.node.executionMeta,
+        failedAt: currentTime,
+        blockedReason: afterMinute.blockedReason,
+        remainingMinutes: 0,
+        movement: afterMinute.node.executionMeta.movement
+          ? {
+              ...afterMinute.node.executionMeta.movement,
+              blockedReason: afterMinute.blockedReason,
+            }
+          : undefined,
+      },
+      outcome: `${afterMinute.node.action} [blocked: ${afterMinute.blockedReason}] failed`,
+    };
+    const failedPosition = dgsm.getCharacterPosition(node.characterId);
+    return {
+      node: failedNode,
+      moved: true,
+      action: buildMovementAction(
+        failedNode,
+        "failed",
+        currentTime,
+        failedPosition ? dgsm.resolveLocationId(failedPosition) : node.location,
+        failedNode.outcome!,
+        "location_blocked"
+      ),
+    };
+  }
+
+  const nextMovement = afterMinute.node.executionMeta.movement;
+  if (!nextMovement || !nextMovement.routeSnapshot[nextMovement.currentStepIndex]) {
+    const completedNode: PlanNode = {
+      ...afterMinute.node,
+      status: "completed",
+      executionMeta: {
+        ...afterMinute.node.executionMeta,
+        completedAt: currentTime,
+        remainingMinutes: 0,
+      },
+      outcome: `${afterMinute.node.action} [arrived at ${afterMinute.node.location}] succeeded`,
+    };
+    return {
+      node: completedNode,
+      moved: true,
+      action: buildMovementAction(
+        completedNode,
+        "completed",
+        currentTime,
+        afterMinute.node.location,
+        completedNode.outcome!
+      ),
+    };
+  }
+
+  return {
+    node: afterMinute.node,
+    moved: true,
+  };
 }
 
 // ==================== Discovery ====================
@@ -514,6 +891,7 @@ async function executeSingleTick(
   const tickStartTime = minutesToTimeLabel(tickStartMinutes);
   const tickEndTime = minutesToTimeLabel(tickEndMinutes);
   const isFullTick = tickDurationMinutes >= TICK_DURATION_MINUTES;
+  ctx.currentTime = tickStartTime;
 
   // Build runtime context for WorldFeature hooks
   const tickRuntime: TickRuntimeContext = {
@@ -541,7 +919,11 @@ async function executeSingleTick(
     )
   );
 
-  // 1. Get NPC nodes due up to end of this tick
+  // 1. Get active and due nodes for this minute
+  const inProgressNodes = await npcPlanningAgent.getInProgressNodes(
+    sessionId,
+    gameDay
+  );
   const dueNpcNodes = await npcPlanningAgent.getDueNpcNodes(
     sessionId,
     gameDay,
@@ -549,17 +931,39 @@ async function executeSingleTick(
     dgsm
   );
 
-  // Filter to nodes >= tickStartTime
-  const npcNodesInRange = dueNpcNodes.filter(
-    (n) => n.gameTime >= tickStartTime
-  );
+  const nodeByNpc = new Map<string, PlanNode>();
+  for (const node of inProgressNodes) {
+    nodeByNpc.set(node.characterId, node);
+  }
+  for (const node of dueNpcNodes) {
+    if (nodeByNpc.has(node.characterId)) continue;
+    const existing = nodeByNpc.get(node.characterId);
+    if (!existing) {
+      nodeByNpc.set(node.characterId, node);
+      continue;
+    }
+    const existingNpc = state.npcCharacters.find((n) => n.id === existing.characterId);
+    const nodeNpc = state.npcCharacters.find((n) => n.id === node.characterId);
+    const existingDex = existingNpc?.attributes?.DEX ?? 50;
+    const nodeDex = nodeNpc?.attributes?.DEX ?? 50;
+    if (
+      node.startTime < existing.startTime ||
+      (node.startTime === existing.startTime && nodeDex > existingDex)
+    ) {
+      nodeByNpc.set(node.characterId, node);
+    }
+  }
 
-  // 2. Merge (including carry-over nodes from previous tick's feature propagation)
-  const allNodes: PlanNode[] = [...npcNodesInRange, ...(carryOverNodes ?? [])];
+  const allNodes: PlanNode[] = [
+    ...nodeByNpc.values(),
+    ...(carryOverNodes ?? []),
+  ];
 
-  // Sort by gameTime ASC then DEX DESC
   allNodes.sort((a, b) => {
-    const timeDiff = a.gameTime.localeCompare(b.gameTime);
+    if (a.status !== b.status) {
+      return a.status === "in_progress" ? -1 : 1;
+    }
+    const timeDiff = a.startTime.localeCompare(b.startTime);
     if (timeDiff !== 0) return timeDiff;
     const npcA = state.npcCharacters.find((n) => n.id === a.characterId);
     const npcB = state.npcCharacters.find((n) => n.id === b.characterId);
@@ -568,10 +972,72 @@ async function executeSingleTick(
     return dexB - dexA;
   });
 
-  // 3. Execute all nodes
   const tickActions: CharacterAction[] = [];
+  const executedNodes: PlanNode[] = [];
+  const nodesReadyToExecute: PlanNode[] = [];
+  const movementFinalizations: Array<{ node: PlanNode; action: CharacterAction }> =
+    [];
+  const movedNpcIds = new Set<string>();
 
-  for (const node of allNodes) {
+  for (const rawNode of allNodes) {
+    if (rawNode.type === "movement") {
+      const initializedNode =
+        rawNode.status === "pending"
+          ? initializeMovementNode(rawNode, dgsm, tickStartTime)
+          : rawNode;
+
+      const advancedMovement = advanceMovementNodeOneMinute(
+        initializedNode,
+        dgsm,
+        tickStartTime
+      );
+      await npcPlanningAgent.updateNode(
+        sessionId,
+        rawNode.characterId,
+        gameDay,
+        advancedMovement.node
+      );
+      if (advancedMovement.moved) {
+        movedNpcIds.add(rawNode.characterId);
+      }
+      if (advancedMovement.action) {
+        movementFinalizations.push({
+          node: advancedMovement.node,
+          action: advancedMovement.action,
+        });
+        executedNodes.push(advancedMovement.node);
+      }
+      continue;
+    }
+
+    let node = rawNode;
+    if (node.status === "pending") {
+      node = startNode(node, tickStartTime);
+    }
+
+    const remainingMinutes = Math.max(0, node.executionMeta.remainingMinutes - 1);
+    if (remainingMinutes > 0) {
+      await npcPlanningAgent.updateNode(sessionId, node.characterId, gameDay, {
+        ...node,
+        executionMeta: {
+          ...node.executionMeta,
+          remainingMinutes,
+        },
+      });
+      continue;
+    }
+
+    nodesReadyToExecute.push({
+      ...node,
+      executionMeta: {
+        ...node.executionMeta,
+        remainingMinutes: 0,
+      },
+    });
+  }
+
+  // 2. Execute nodes that reach their final minute in this tick
+  for (const node of nodesReadyToExecute) {
     // Dispatch to registry handler
     const handler = registry.getHandler(node.type);
     if (!handler) {
@@ -580,6 +1046,7 @@ async function executeSingleTick(
       );
       continue;
     }
+    executedNodes.push(node);
     const itemContext = getItemActionContext(dgsm, node);
     const action = handler.execute(node, dgsm, ctx);
     tickActions.push(action);
@@ -845,11 +1312,69 @@ async function executeSingleTick(
     }
   }
 
+  for (const { node, action } of movementFinalizations) {
+    tickActions.push(action);
+
+    if (memoryManager) {
+      await memoryManager.add({
+        npcId: node.characterId,
+        sessionId,
+        moduleId,
+        type: "event",
+        content: `Day${gameDay} ${action.gameTime} [${action.location}] - ${action.outcome}`,
+        gameDay,
+        gameTime: action.gameTime,
+        location: action.location,
+        metadata: {
+          outcome: action.outcome,
+          failureReason: action.failureReason ?? "",
+          blockedReason: node.executionMeta.blockedReason ?? "",
+        },
+      });
+    }
+
+    if (action.status === "failed") {
+      let failureContext: string | undefined;
+      if (memoryManager) {
+        failureContext = await memoryManager.getContext({
+          npcId: node.characterId,
+          sessionId,
+          purpose: "reaction",
+          query: `${action.action} failed: ${node.executionMeta.blockedReason ?? action.failureReason}`,
+          currentGameDay: gameDay,
+        });
+      }
+      const longTermIntent =
+        failureContext ??
+        (await npcPlanningAgent.getLongTermIntent(sessionId, node.characterId));
+      const memoryLog = failureContext ? [failureContext] : [];
+      await npcPlanningAgent.revisePlans(
+        dgsm,
+        sessionId,
+        node.characterId,
+        {
+          longTermIntent,
+          memoryLog,
+          pendingNodes: [],
+          trigger: {
+            type: "failure",
+            failureReason: "location_blocked",
+            action: action.action,
+            gameTime: action.gameTime,
+          },
+        },
+        language,
+        registry
+      );
+    }
+  }
+
   // 4.5 Scan NPC co-presence → write witness memories + build synthetic encounter events
   const encounterEvents = scanUnplannedEncounters(
     dgsm,
     tickStartTime,
     tickActions,
+    movedNpcIds,
     memoryManager,
     sessionId,
     moduleId,
@@ -942,7 +1467,7 @@ async function executeSingleTick(
                 .map((s) => `${s.location}: ${s.activity}`)
                 .join("; "),
               currentDetailedPlan: pendingNodes
-                .map((n) => `${n.gameTime} ${n.action}`)
+                .map((n) => `${n.startTime}-${n.endTime} ${n.action}`)
                 .join("; "),
               triggeringEvents,
               memoryContext: reactionContext,
@@ -1058,7 +1583,7 @@ async function executeSingleTick(
   }
 
   // 7. Detect feature overlay fields on executed nodes → register propagation sources
-  registry.detectFeatureOverlays(allNodes, dgsm);
+  registry.detectFeatureOverlays(executedNodes, dgsm);
 
   // 8. Drive feature propagation on schedule
   for (const feature of registry.getAllFeatures()) {
@@ -1120,6 +1645,7 @@ function scanUnplannedEncounters(
   dgsm: DynamicGameStateManager,
   tickTime: string,
   tickActions: CharacterAction[],
+  movedNpcIds: Set<string>,
   memoryManager: NpcMemoryManager | undefined,
   sessionId: string,
   moduleId: string,
@@ -1138,7 +1664,7 @@ function scanUnplannedEncounters(
   }
 
   // NPCs who just arrived at a new scene this tick
-  const arrivedNpcIds = new Set<string>();
+  const arrivedNpcIds = new Set<string>(movedNpcIds);
   for (const action of tickActions) {
     if (action.type === "movement" && action.status === "completed") {
       arrivedNpcIds.add(action.characterId);

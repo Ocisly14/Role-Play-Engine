@@ -25,11 +25,12 @@ export const movementHandler: NodeHandler = {
 
   exampleNode: {
     nodeId: "m1",
+    startTime: "09:00",
+    endTime: "09:05",
     type: "movement",
     action: "Walk to the harbor docks",
     location: "harbor_docks",
     impact: 0,
-    timeAdvanceMinutes: 5,
   },
 
   execute(
@@ -151,7 +152,7 @@ export const movementHandler: NodeHandler = {
   },
 };
 
-function resolveTargetPosition(
+export function resolveTargetPosition(
   locationId: string,
   topology: TownTopology,
   dgsm?: DynamicGameStateManager

@@ -109,7 +109,9 @@ function createMockDgsm() {
 
 type MockDgsm = ReturnType<typeof createMockDgsm>;
 
-function createMockRuntime(): TickRuntimeContext {
+function createMockRuntime(
+  overrides?: Partial<TickRuntimeContext>
+): TickRuntimeContext {
   return {
     sessionId: "test",
     gameDay: 1,
@@ -125,6 +127,7 @@ function createMockRuntime(): TickRuntimeContext {
       }),
       revisePlans: async () => {},
     },
+    ...overrides,
   };
 }
 
@@ -265,7 +268,7 @@ describe("weatherFeature", () => {
       const ws = dgsm.getFeatureSceneState("weather", "town") as any;
       ws.weatherType = "rain";
       ws.intensity = 3;
-      ws.ticksInState = 0;
+      ws.minutesInState = 0;
       dgsm.setFeatureSceneState("weather", "town", ws);
 
       runTicks(dgsm, runtime, 5);
@@ -273,7 +276,7 @@ describe("weatherFeature", () => {
       const updated = dgsm.getFeatureSceneState("weather", "town") as any;
       expect(updated.weatherType).toBe("rain");
       expect(updated.intensity).toBe(3);
-      expect(updated.ticksInState).toBe(5);
+      expect(updated.minutesInState).toBe(25);
     });
 
     it("should transition to clear when random hits clear range", () => {
@@ -282,7 +285,7 @@ describe("weatherFeature", () => {
       const ws = dgsm.getFeatureSceneState("weather", "town") as any;
       ws.weatherType = "rain";
       ws.intensity = 3;
-      ws.ticksInState = 5;
+      ws.minutesInState = 25;
       dgsm.setFeatureSceneState("weather", "town", ws);
 
       const mockRandom = vi.spyOn(Math, "random");
@@ -307,7 +310,7 @@ describe("weatherFeature", () => {
       const ws = dgsm.getFeatureSceneState("weather", "town") as any;
       ws.weatherType = "rain";
       ws.intensity = 2;
-      ws.ticksInState = 5;
+      ws.minutesInState = 25;
       dgsm.setFeatureSceneState("weather", "town", ws);
 
       const mockRandom = vi.spyOn(Math, "random");
@@ -333,7 +336,7 @@ describe("weatherFeature", () => {
       const ws = dgsm.getFeatureSceneState("weather", "town") as any;
       ws.weatherType = "rain";
       ws.intensity = 1;
-      ws.ticksInState = 5;
+      ws.minutesInState = 25;
       dgsm.setFeatureSceneState("weather", "town", ws);
 
       const mockRandom = vi.spyOn(Math, "random");
@@ -359,7 +362,7 @@ describe("weatherFeature", () => {
       const ws = dgsm.getFeatureSceneState("weather", "town") as any;
       ws.weatherType = "storm";
       ws.intensity = 5;
-      ws.ticksInState = 5;
+      ws.minutesInState = 25;
       dgsm.setFeatureSceneState("weather", "town", ws);
 
       const mockRandom = vi.spyOn(Math, "random");
@@ -386,7 +389,7 @@ describe("weatherFeature", () => {
       const ws = dgsm.getFeatureSceneState("weather", "town") as any;
       ws.weatherType = "fog";
       ws.intensity = 3;
-      ws.ticksInState = 5;
+      ws.minutesInState = 25;
       dgsm.setFeatureSceneState("weather", "town", ws);
 
       const mockRandom = vi.spyOn(Math, "random");
@@ -429,7 +432,7 @@ describe("weatherFeature", () => {
       const ws = dgsm.getFeatureSceneState("weather", "town") as any;
       ws.weatherType = "rain";
       ws.intensity = 2;
-      ws.ticksInState = 5;
+      ws.minutesInState = 25;
       dgsm.setFeatureSceneState("weather", "town", ws);
 
       const mockRandom = vi.spyOn(Math, "random");
@@ -466,7 +469,7 @@ describe("weatherFeature", () => {
       const ws = dgsm.getFeatureSceneState("weather", "town") as any;
       ws.weatherType = "storm";
       ws.intensity = 4;
-      ws.ticksInState = 5;
+      ws.minutesInState = 25;
       dgsm.setFeatureSceneState("weather", "town", ws);
 
       const mockRandom = vi.spyOn(Math, "random");
@@ -493,7 +496,7 @@ describe("weatherFeature", () => {
       const ws = dgsm.getFeatureSceneState("weather", "town") as any;
       ws.weatherType = "storm";
       ws.intensity = 3;
-      ws.ticksInState = 5;
+      ws.minutesInState = 25;
       dgsm.setFeatureSceneState("weather", "town", ws);
 
       const mockRandom = vi.spyOn(Math, "random");
@@ -515,6 +518,26 @@ describe("weatherFeature", () => {
       expect(weatherFeature.planningPrompt).toContain("automatically");
       expect((weatherFeature as any).planNodeSchema).toBeUndefined();
       expect((weatherFeature as any).propagation).toBeUndefined();
+    });
+  });
+
+  describe("minute-based pacing", () => {
+    it("should preserve the 30-minute transition interval with 1-minute ticks", () => {
+      const oneMinuteRuntime = createMockRuntime({ tickDurationMinutes: 1 });
+      runTicks(dgsm, oneMinuteRuntime, 1); // init
+
+      const ws = dgsm.getFeatureSceneState("weather", "town") as any;
+      ws.weatherType = "rain";
+      ws.intensity = 2;
+      ws.minutesInState = 0;
+      dgsm.setFeatureSceneState("weather", "town", ws);
+
+      runTicks(dgsm, oneMinuteRuntime, 29);
+
+      const beforeTransition = dgsm.getFeatureSceneState("weather", "town") as any;
+      expect(beforeTransition.weatherType).toBe("rain");
+      expect(beforeTransition.intensity).toBe(2);
+      expect(beforeTransition.minutesInState).toBe(29);
     });
   });
 });

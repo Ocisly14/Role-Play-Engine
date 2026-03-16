@@ -134,12 +134,13 @@ export const objectInteractionHandler: NodeHandler = {
 
   exampleNode: {
     nodeId: "oi1",
+    startTime: "14:00",
+    endTime: "14:10",
     type: "object_interaction",
     action: "Pour acid on the padlock to dissolve it",
     location: "study_room",
     skill: "exploration",
     impact: 2,
-    timeAdvanceMinutes: 10,
     objectInteractionPayload: {
       action: "use",
       itemId: "acid_vial",

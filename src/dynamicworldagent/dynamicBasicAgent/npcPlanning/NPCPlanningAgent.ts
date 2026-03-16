@@ -23,6 +23,96 @@ import {
 } from "./sceneMapFormatter.js";
 import type { PlanNode, RevisePlansContext, ScheduleEntry } from "./types.js";
 
+function timeToMinutes(hhmm: string): number {
+  const [h, m] = hhmm.split(":").map(Number);
+  return h * 60 + m;
+}
+
+function minutesToTimeLabel(minutes: number): string {
+  const clamped = Math.max(0, Math.min(1439, minutes));
+  const h = Math.floor(clamped / 60);
+  const m = clamped % 60;
+  return `${String(h).padStart(2, "0")}:${String(m).padStart(2, "0")}`;
+}
+
+function getDefaultNodeDurationMinutes(type: string): number {
+  switch (type) {
+    case "scene_interaction":
+    case "object_interaction":
+      return 10;
+    case "routine":
+    case "movement":
+    case "character_interaction":
+    default:
+      return 5;
+  }
+}
+
+function normalizeNodeTimeRange(
+  rawNode: Record<string, unknown>,
+  fallbackStartTime: string
+): { startTime: string; endTime: string; remainingMinutes: number } {
+  const rawStart =
+    (typeof rawNode.startTime === "string" && rawNode.startTime) ||
+    fallbackStartTime;
+  let rawEnd =
+    (typeof rawNode.endTime === "string" && rawNode.endTime) || undefined;
+
+  if (!rawEnd) {
+    const baseMinutes = timeToMinutes(rawStart);
+    rawEnd = minutesToTimeLabel(
+      baseMinutes +
+        getDefaultNodeDurationMinutes(
+          typeof rawNode.type === "string" ? rawNode.type : "routine"
+        )
+    );
+  }
+
+  let remainingMinutes = timeToMinutes(rawEnd) - timeToMinutes(rawStart);
+  if (remainingMinutes <= 0) {
+    remainingMinutes = getDefaultNodeDurationMinutes(
+      typeof rawNode.type === "string" ? rawNode.type : "routine"
+    );
+    rawEnd = minutesToTimeLabel(timeToMinutes(rawStart) + remainingMinutes);
+  }
+
+  return {
+    startTime: rawStart,
+    endTime: rawEnd,
+    remainingMinutes,
+  };
+}
+
+function normalizePlanNode(
+  rawNode: Record<string, unknown>,
+  params: {
+    npcId: string;
+    npcName: string;
+    locationId: string;
+    fallbackStartTime: string;
+  }
+): PlanNode {
+  const { startTime, endTime, remainingMinutes } = normalizeNodeTimeRange(
+    rawNode,
+    params.fallbackStartTime
+  );
+
+  return {
+    ...rawNode,
+    nodeId:
+      (typeof rawNode.nodeId === "string" && rawNode.nodeId) || randomUUID(),
+    characterId: params.npcId,
+    characterName: params.npcName,
+    location: params.locationId,
+    startTime,
+    endTime,
+    status: "pending",
+    executionMeta: {
+      remainingMinutes,
+    },
+  } as PlanNode;
+}
+
 function parseJsonResponse<T>(raw: string): T {
   let text = raw.trim();
   // Strip markdown fences
@@ -344,7 +434,8 @@ export class NPCPlanningAgent {
       handlerPrompt: registry?.buildHandlerPrompt(),
       planningPrompt: registry?.buildPlanningPrompt(),
       outputSchemaPrompt: registry?.buildOutputSchemaPrompt({
-        extraInstructions: "Use the current time as the starting gameTime.",
+        extraInstructions:
+          "Use the current time as the default startTime for the first node. Always include both startTime and endTime.",
       }),
     });
 
@@ -363,12 +454,12 @@ export class NPCPlanningAgent {
     // Resolve location names to IDs
     const nameMap = buildLocationNameMap(dgsm);
     const enrichedNodes: PlanNode[] = rawNodes.map((node) => ({
-      ...node,
-      nodeId: node.nodeId || randomUUID(),
-      characterId: npcId,
-      characterName: npc.name,
-      location: resolveLocationFromName(node.location, nameMap),
-      status: "pending" as const,
+      ...normalizePlanNode(node as Record<string, unknown>, {
+        npcId,
+        npcName: npc.name,
+        locationId: resolveLocationFromName(node.location, nameMap),
+        fallbackStartTime: state.timeOfDay,
+      }),
     }));
 
     // Append new nodes to existing nodes in DB and consume the schedule entry
@@ -401,8 +492,8 @@ export class NPCPlanningAgent {
     language = "en",
     registry?: GameEngineRegistry
   ): Promise<void> {
-    const pendingNodes = await this.getPendingNodes(sessionId, npcId, gameDay);
-    if (pendingNodes.length > 0) return; // Already has nodes, nothing to do
+    const openNodes = await this.getOpenNodes(sessionId, npcId, gameDay);
+    if (openNodes.length > 0) return; // Already has nodes, nothing to do
 
     // Check if schedule exists for today — generate one if missing
     const plan = await this.prisma.npcDailyPlan.findUnique({
@@ -656,11 +747,12 @@ export class NPCPlanningAgent {
     // Resolve location names to IDs
     const nameMap = buildLocationNameMap(dgsm);
     const revisedNodes = rawRevisedNodes.map((node) => ({
-      ...node,
-      characterId: npcId,
-      characterName: npc.name,
-      location: resolveLocationFromName(node.location, nameMap),
-      status: "pending" as const,
+      ...normalizePlanNode(node as Record<string, unknown>, {
+        npcId,
+        npcName: npc.name,
+        locationId: resolveLocationFromName(node.location, nameMap),
+        fallbackStartTime: state.timeOfDay,
+      }),
     }));
 
     // Update daily plan with revised nodes
@@ -798,6 +890,23 @@ export class NPCPlanningAgent {
     return nodes.filter((n) => n.status === "pending");
   }
 
+  async getOpenNodes(
+    sessionId: string,
+    npcId: string,
+    gameDay: number
+  ): Promise<PlanNode[]> {
+    const plan = await this.prisma.npcDailyPlan.findUnique({
+      where: {
+        sessionId_npcId_gameDay: { sessionId, npcId, gameDay },
+      },
+    });
+    if (!plan) return [];
+    const nodes = plan.nodes as unknown as PlanNode[];
+    return nodes.filter(
+      (n) => n.status === "pending" || n.status === "in_progress"
+    );
+  }
+
   async getLongTermIntent(sessionId: string, npcId: string): Promise<string> {
     const record = await this.prisma.npcLongTermIntent.findFirst({
       where: { sessionId, npcId },
@@ -811,6 +920,7 @@ export class NPCPlanningAgent {
     upToTime: string,
     dgsm: DynamicGameStateManager
   ): Promise<PlanNode[]> {
+    void dgsm;
     const plans = await this.prisma.npcDailyPlan.findMany({
       where: { sessionId, gameDay },
     });
@@ -819,12 +929,52 @@ export class NPCPlanningAgent {
     for (const plan of plans) {
       const nodes = plan.nodes as unknown as PlanNode[];
       for (const node of nodes) {
-        if (node.status === "pending" && node.gameTime <= upToTime) {
+        if (node.status === "pending" && node.startTime <= upToTime) {
           dueNodes.push(node);
         }
       }
     }
     return dueNodes;
+  }
+
+  async getInProgressNodes(
+    sessionId: string,
+    gameDay: number
+  ): Promise<PlanNode[]> {
+    const plans = await this.prisma.npcDailyPlan.findMany({
+      where: { sessionId, gameDay },
+    });
+    const activeNodes: PlanNode[] = [];
+    for (const plan of plans) {
+      const nodes = plan.nodes as unknown as PlanNode[];
+      for (const node of nodes) {
+        if (node.status === "in_progress") {
+          activeNodes.push(node);
+        }
+      }
+    }
+    return activeNodes;
+  }
+
+  async updateNode(
+    sessionId: string,
+    npcId: string,
+    gameDay: number,
+    updatedNode: PlanNode
+  ): Promise<void> {
+    const plan = await this.prisma.npcDailyPlan.findUnique({
+      where: { sessionId_npcId_gameDay: { sessionId, npcId, gameDay } },
+    });
+    if (!plan) return;
+
+    const nodes = plan.nodes as unknown as PlanNode[];
+    const nextNodes = nodes.map((node) =>
+      node.nodeId === updatedNode.nodeId ? updatedNode : node
+    );
+    await this.prisma.npcDailyPlan.update({
+      where: { sessionId_npcId_gameDay: { sessionId, npcId, gameDay } },
+      data: { nodes: nextNodes as any },
+    });
   }
 
   async markNodeCompleted(
@@ -839,11 +989,23 @@ export class NPCPlanningAgent {
     });
     if (!plan) return;
     const nodes = plan.nodes as unknown as PlanNode[];
-    // Remove completed node from pending list
-    const remaining = nodes.filter((n) => n.nodeId !== nodeId);
+    const updatedNodes = nodes.map((node) =>
+      node.nodeId === nodeId
+        ? {
+            ...node,
+            status: "completed" as const,
+            outcome,
+            executionMeta: {
+              ...node.executionMeta,
+              remainingMinutes: 0,
+              completedAt: node.endTime,
+            },
+          }
+        : node
+    );
     await this.prisma.npcDailyPlan.update({
       where: { sessionId_npcId_gameDay: { sessionId, npcId, gameDay } },
-      data: { nodes: remaining as any },
+      data: { nodes: updatedNodes as any },
     });
   }
 
@@ -859,11 +1021,21 @@ export class NPCPlanningAgent {
     });
     if (!plan) return;
     const nodes = plan.nodes as unknown as PlanNode[];
-    // Remove failed node from pending list (prevents retry loops)
-    const remaining = nodes.filter((n) => n.nodeId !== nodeId);
+    const updatedNodes = nodes.map((node) =>
+      node.nodeId === nodeId
+        ? {
+            ...node,
+            status: "failed" as const,
+            executionMeta: {
+              ...node.executionMeta,
+              failedAt: node.endTime,
+            },
+          }
+        : node
+    );
     await this.prisma.npcDailyPlan.update({
       where: { sessionId_npcId_gameDay: { sessionId, npcId, gameDay } },
-      data: { nodes: remaining as any },
+      data: { nodes: updatedNodes as any },
     });
   }
 

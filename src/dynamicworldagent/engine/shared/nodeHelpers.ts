@@ -46,6 +46,7 @@ export function makeAction(
   status: "completed" | "failed",
   outcome: string,
   opts?: {
+    gameTime?: string;
     difficulty?: "regular" | "hard" | "extreme" | "luck_only";
     successLevel?: SuccessLevel;
     failureReason?: FailureReason;
@@ -54,7 +55,7 @@ export function makeAction(
   return {
     characterId: node.characterId,
     characterName: node.characterName,
-    gameTime: node.gameTime,
+    gameTime: opts?.gameTime ?? node.endTime,
     action: node.action,
     location: node.location,
     type: node.type,

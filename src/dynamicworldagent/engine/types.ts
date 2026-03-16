@@ -224,6 +224,9 @@ export interface ExecutionContext {
     dgsm: DynamicGameStateManager
   ): "regular" | "hard" | "extreme" | "luck_only";
 
+  /** Current tick time label (HH:MM) */
+  currentTime?: string;
+
   /** Set by SimulationRunner to enable npc_moved event emission from handlers */
   simulationEmitter?: import(
     "../simulation/SimulationEventEmitter.js"

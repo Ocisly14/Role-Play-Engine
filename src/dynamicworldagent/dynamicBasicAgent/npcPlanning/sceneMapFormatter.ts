@@ -126,15 +126,17 @@ function formatTopologySceneMap(
   const outlines = state.scenarioOutlines ?? [];
 
   // Helper: resolve a connected scene ID to a building name label
-  const buildingLabel = (sceneId: string): string | null => {
+  const buildingInfo = (
+    sceneId: string
+  ): { name: string; residents?: string[] } | null => {
     // Try entryScene → outline mapping first
     const outline = entryToOutline.get(sceneId);
     if (outline) {
       const residents = residentsMap.get(outline.id);
-      let label = outline.name;
-      if (residents && residents.length > 0)
-        label += ` | Residents: ${residents.join(", ")}`;
-      return label;
+      return {
+        name: outline.name,
+        residents: residents && residents.length > 0 ? residents : undefined,
+      };
     }
     // Fall back: look up scene's parentLocationId
     const scene = state.scenes.get(sceneId);
@@ -142,10 +144,10 @@ function formatTopologySceneMap(
       const parent = outlines.find((o) => o.id === scene.parentLocationId);
       if (parent) {
         const residents = residentsMap.get(parent.id);
-        let label = parent.name;
-        if (residents && residents.length > 0)
-          label += ` | Residents: ${residents.join(", ")}`;
-        return label;
+        return {
+          name: parent.name,
+          residents: residents && residents.length > 0 ? residents : undefined,
+        };
       }
     }
     return null;
@@ -196,13 +198,13 @@ function formatTopologySceneMap(
   // ── Your Current Location ──
   if (currentMacro && currentMacro.id !== "OUTDOOR") {
     parts.push(
-      `Your Current Location:\n  ${currentMacro.name}${currentPositionLabel ? ` — ${currentPositionLabel}` : ""}`
+      `Your Current Location:\n  Exact Name: ${currentMacro.name}${currentPositionLabel ? `\n  Topology Note: ${currentPositionLabel}` : ""}`
     );
   } else if (npcLocation) {
     // NPC is outdoors — show junction/road name
     const name = resolveLocationName(dgsm, npcLocation);
     parts.push(
-      `Your Current Location:\n  ${name}${currentPositionLabel ? ` — ${currentPositionLabel}` : ""}`
+      `Your Current Location:\n  Exact Name: ${name}${currentPositionLabel ? `\n  Topology Note: ${currentPositionLabel}` : ""}`
     );
   }
 
@@ -218,14 +220,16 @@ function formatTopologySceneMap(
         : null;
       if (homeTopoParent?.type === "junction") {
         const junc = topology.junctions.get(homeTopoParent.junctionId);
-        homePositionLabel = ` — at ${junc?.name ?? homeTopoParent.junctionId}`;
+        homePositionLabel = `at ${junc?.name ?? homeTopoParent.junctionId}`;
       } else if (homeTopoParent?.type === "road") {
         const road = topology.roads.get(homeTopoParent.roadId);
-        homePositionLabel = ` — along ${road?.name ?? homeTopoParent.roadId}`;
+        homePositionLabel = `along ${road?.name ?? homeTopoParent.roadId}`;
       }
-      parts.push(`Your Home:\n  ${residenceMacro.name}${homePositionLabel}`);
+      parts.push(
+        `Your Home:\n  Exact Name: ${residenceMacro.name}${homePositionLabel ? `\n  Topology Note: ${homePositionLabel}` : ""}`
+      );
     } else {
-      parts.push(`Your Home:\n  ${residence}`);
+      parts.push(`Your Home:\n  Exact Name: ${residence}`);
     }
   }
 
@@ -249,8 +253,14 @@ function formatTopologySceneMap(
     // Buildings at this junction
     const juncBuildings: string[] = [];
     for (const sceneId of junction.connectedSceneIds) {
-      const label = buildingLabel(sceneId);
-      if (label) juncBuildings.push(label);
+      const info = buildingInfo(sceneId);
+      if (!info) continue;
+      juncBuildings.push(info.name);
+      if (info.residents?.length) {
+        mapLines.push(
+          `    Residents at ${info.name}: ${info.residents.join(", ")}`
+        );
+      }
     }
     if (juncBuildings.length > 0) {
       mapLines.push(`    Buildings here: ${juncBuildings.join(" | ")}`);
@@ -261,8 +271,14 @@ function formatTopologySceneMap(
       if (road.alongConnections.length === 0) continue;
       const alongBuildings: string[] = [];
       for (const along of road.alongConnections) {
-        const label = buildingLabel(along.sceneId);
-        if (label) alongBuildings.push(label);
+        const info = buildingInfo(along.sceneId);
+        if (!info) continue;
+        alongBuildings.push(info.name);
+        if (info.residents?.length) {
+          mapLines.push(
+            `    Residents at ${info.name}: ${info.residents.join(", ")}`
+          );
+        }
       }
       if (alongBuildings.length > 0) {
         mapLines.push(`    Along ${road.name}: ${alongBuildings.join(" | ")}`);

@@ -96,13 +96,14 @@ function makeNode(overrides: Partial<PlanNode> = {}): PlanNode {
     nodeId: "oi1",
     characterId: "player-1",
     characterName: "Investigator",
-    gameTime: "10:00",
+    startTime: "10:00",
+    endTime: "10:05",
     action: "interact with object",
     location: "study",
     type: "object_interaction",
     impact: 1 as const,
-    timeAdvanceMinutes: 5,
     status: "pending" as const,
+    executionMeta: { remainingMinutes: 5 },
     ...overrides,
   } as PlanNode;
 }

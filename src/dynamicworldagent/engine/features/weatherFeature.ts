@@ -15,14 +15,14 @@ export type WeatherType =
 export interface WeatherRegionState {
   weatherType: WeatherType;
   intensity: number;
-  ticksInState: number;
+  minutesInState: number;
   affectedSceneIds: string[];
 }
 
 // ===== Constants =====
 
 const FEATURE_ID = "weather";
-const TICKS_PER_TRANSITION_CHECK = 6;
+const TRANSITION_CHECK_INTERVAL_MINUTES = 30;
 const MAX_INTENSITY = 5;
 const BLOCKING_INTENSITY_THRESHOLD = 4;
 
@@ -179,7 +179,7 @@ function createWeatherState(
       weatherType === "clear"
         ? 0
         : Math.max(1, Math.min(intensity, MAX_INTENSITY)),
-    ticksInState: 0,
+    minutesInState: 0,
     affectedSceneIds,
   };
 }
@@ -431,21 +431,23 @@ Weather affects outdoor scenes only (skill penalties, blocked paths in severe we
     return "Weather:\n" + lines.join("\n");
   },
 
-  tick(dgsm: DynamicGameStateManager, _runtime: TickRuntimeContext): void {
+  tick(dgsm: DynamicGameStateManager, runtime: TickRuntimeContext): void {
     const regions = getAllWeatherRegions(dgsm);
     if (regions.length === 0) {
       initWeatherFromPresets(dgsm);
       return;
     }
 
+    const elapsedMinutes = Math.max(1, runtime.tickDurationMinutes);
+
     for (const regionId of regions) {
       const ws = getWeatherState(dgsm, regionId);
       if (!ws) continue;
 
-      ws.ticksInState++;
+      ws.minutesInState += elapsedMinutes;
 
-      if (ws.ticksInState >= TICKS_PER_TRANSITION_CHECK) {
-        ws.ticksInState = 0;
+      while (ws.minutesInState >= TRANSITION_CHECK_INTERVAL_MINUTES) {
+        ws.minutesInState -= TRANSITION_CHECK_INTERVAL_MINUTES;
 
         const newType = sampleTransition(ws.weatherType);
 
