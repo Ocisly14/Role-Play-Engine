@@ -1,5 +1,6 @@
 import type {
   CharacterAction,
+  ItemLocationRef,
   PlanNode,
 } from "../../dynamicBasicAgent/npcPlanning/types.js";
 import type { DynamicGameStateManager } from "../../state/DynamicGameState.js";
@@ -100,15 +101,122 @@ function buildInspectOutcomeWithContext(
     parts.push(`Damaged: ${item.damageDetails.reason}`);
   }
   if (item.containerStats) {
+    const storedItems = item.containerStats.storedItems ?? [];
+    const contentLabels =
+      storedItems.length > 0
+        ? storedItems.map((stored) => `${stored.name} (id:${stored.id})`)
+        : item.containerStats.contents ?? [];
     if (item.containerStats.locked) {
       parts.push("Status: locked");
-    } else if (item.containerStats.contents?.length) {
-      parts.push(`Contents: ${item.containerStats.contents.join(", ")}`);
+    } else if (contentLabels.length > 0) {
+      parts.push(`Contents: ${contentLabels.join(", ")}`);
     } else {
       parts.push("Contents: empty");
     }
   }
   return parts.join(" | ");
+}
+
+function syncContainerContents(container: Item): void {
+  if (!container.containerStats) return;
+  const storedItems = container.containerStats.storedItems ?? [];
+  container.containerStats.contents = storedItems.map((item) => item.id);
+}
+
+function findContainer(
+  ref: ItemLocationRef,
+  npcId: string,
+  scene: { items: Item[] } | null,
+  dgsm: DynamicGameStateManager
+): Item | null {
+  if (ref.type !== "container" || !ref.containerItemId) return null;
+
+  if ((ref.scope ?? "scene") === "inventory") {
+    return dgsm.findNpcItem(npcId, ref.containerItemId) ?? null;
+  }
+
+  return scene?.items.find((item) => item.id === ref.containerItemId) ?? null;
+}
+
+function removeItemFromMoveSource(
+  ref: ItemLocationRef,
+  itemId: string,
+  npcId: string,
+  scene: { items: Item[] } | null,
+  dgsm: DynamicGameStateManager
+): { item?: Item; error?: string } {
+  if (ref.type === "scene") {
+    if (!scene) return { error: "scene not found" };
+    const idx = scene.items.findIndex((item) => item.id === itemId);
+    if (idx === -1) return { error: `${itemId} not found in scene` };
+    return { item: scene.items.splice(idx, 1)[0] };
+  }
+
+  if (ref.type === "inventory") {
+    const item = dgsm.removeItemFromNpc(npcId, itemId);
+    if (!item) return { error: `${itemId} not in inventory` };
+    return { item };
+  }
+
+  const container = findContainer(ref, npcId, scene, dgsm);
+  if (!container?.containerStats) {
+    return { error: `${ref.containerItemId ?? "container"} not found` };
+  }
+  if (container.containerStats.locked) {
+    return { error: `${container.name} is locked` };
+  }
+
+  const storedItems = container.containerStats.storedItems ?? [];
+  const idx = storedItems.findIndex((item) => item.id === itemId);
+  if (idx === -1) {
+    return { error: `${itemId} not found in ${container.name}` };
+  }
+
+  const [item] = storedItems.splice(idx, 1);
+  container.containerStats.storedItems = storedItems;
+  syncContainerContents(container);
+  return { item };
+}
+
+function addItemToMoveTarget(
+  ref: ItemLocationRef,
+  item: Item,
+  npcId: string,
+  scene: { items: Item[] } | null,
+  dgsm: DynamicGameStateManager
+): { error?: string } {
+  if (ref.type === "scene") {
+    if (!scene) return { error: "scene not found" };
+    scene.items.push(item);
+    return {};
+  }
+
+  if (ref.type === "inventory") {
+    dgsm.addItemToNpc(npcId, item);
+    return {};
+  }
+
+  const container = findContainer(ref, npcId, scene, dgsm);
+  if (!container?.containerStats) {
+    return { error: `${ref.containerItemId ?? "container"} not found` };
+  }
+  if (container.containerStats.locked) {
+    return { error: `${container.name} is locked` };
+  }
+
+  const storedItems = container.containerStats.storedItems ?? [];
+  storedItems.push(item);
+  container.containerStats.storedItems = storedItems;
+  syncContainerContents(container);
+  return {};
+}
+
+function formatMoveRef(ref: ItemLocationRef): string {
+  if (ref.type === "container") {
+    const scope = ref.scope === "inventory" ? "inventory" : "scene";
+    return `${scope} container ${ref.containerItemId ?? "unknown"}`;
+  }
+  return ref.type;
 }
 
 // ── Main handler ──────────────────────────────────────────────
@@ -118,14 +226,14 @@ export const objectInteractionHandler: NodeHandler = {
 
   description:
     "Interact with an object in the current scene. " +
-    "Supports pickup, place, use, inspect, and destroy actions. " +
-    "Side effects modify inventory and scene item lists.\n\n" +
+    "Supports move, use, inspect, and destroy actions. " +
+    "Move uses explicit from/to refs so the same action can cover taking, putting back, stashing, and moving scene items into containers.\n\n" +
     "For non-normal use (skill set), include `itemUpdates` and/or `targetItemUpdates` " +
     "with the expected item state changes after success. Mergeable Item fields:\n" +
     "- `damaged` (boolean), `damageDetails`: `{ damagedBy, damagedAt, reason }`\n" +
     "- `isLightSource` (boolean), `lightLevel` (number)\n" +
     "- `consumableStats`: `{ uses, effect, duration }` — set uses to 0 to consume\n" +
-    "- `containerStats`: `{ locked, contents }` — set locked:false to unlock\n" +
+    "- `containerStats`: `{ locked, contents, storedItems }` — set locked:false to unlock\n" +
     "- `weaponStats`: `{ ammo }` — decrement for ammo use",
 
   requiredFields: ["action", "location"],
@@ -137,16 +245,14 @@ export const objectInteractionHandler: NodeHandler = {
     startTime: "14:00",
     endTime: "14:10",
     type: "object_interaction",
-    action: "Pour acid on the padlock to dissolve it",
+    action: "Move the petty cash box from the desk drawer into my briefcase",
     location: "study_room",
-    skill: "exploration",
-    impact: 2,
+    impact: 1,
     objectInteractionPayload: {
-      action: "use",
-      itemId: "acid_vial",
-      targetItemId: "padlock",
-      itemUpdates: { consumableStats: { uses: 0 } },
-      targetItemUpdates: { containerStats: { locked: false }, damaged: true },
+      action: "move",
+      itemId: "petty_cash_box",
+      from: { type: "container", containerItemId: "desk_drawer", scope: "scene" },
+      to: { type: "container", containerItemId: "briefcase", scope: "inventory" },
     },
   },
 
@@ -208,47 +314,57 @@ export const objectInteractionHandler: NodeHandler = {
     const payload = node.objectInteractionPayload;
 
     if (payload) {
-      // --- Pickup ---
-      if (payload.action === "pickup" && payload.itemId) {
-        if (!scene) {
-          return makeAction(
-            node,
-            "failed",
-            buildOutcome(node, "failed", { reason: "scene not found" }),
-            { difficulty, failureReason: "object_not_found" }
-          );
-        }
-        const idx = scene.items.findIndex((i) => i.id === payload.itemId);
-        if (idx === -1) {
+      // --- Move ---
+      if (
+        payload.action === "move" &&
+        payload.itemId &&
+        payload.from &&
+        payload.to
+      ) {
+        const sourceResult = removeItemFromMoveSource(
+          payload.from,
+          payload.itemId,
+          node.characterId,
+          scene,
+          dgsm
+        );
+        if (!sourceResult.item) {
           return makeAction(
             node,
             "failed",
             buildOutcome(node, "failed", {
-              reason: `${payload.itemId} not found in scene`,
+              reason: sourceResult.error ?? `${payload.itemId} not found`,
             }),
             { difficulty, failureReason: "object_not_found" }
           );
         }
-        const item = scene.items.splice(idx, 1)[0];
-        dgsm.addItemToNpc(node.characterId, item);
-      }
 
-      // --- Place ---
-      else if (payload.action === "place" && payload.itemId) {
-        const item = dgsm.removeItemFromNpc(node.characterId, payload.itemId);
-        if (!item) {
+        const targetResult = addItemToMoveTarget(
+          payload.to,
+          sourceResult.item,
+          node.characterId,
+          scene,
+          dgsm
+        );
+        if (targetResult.error) {
+          addItemToMoveTarget(
+            payload.from,
+            sourceResult.item,
+            node.characterId,
+            scene,
+            dgsm
+          );
           return makeAction(
             node,
             "failed",
             buildOutcome(node, "failed", {
-              reason: `${payload.itemId} not in inventory`,
+              reason: targetResult.error,
             }),
             { difficulty, failureReason: "object_not_found" }
           );
         }
-        if (scene) {
-          scene.items.push(item);
-        }
+
+        lastRollDetail = `Moved ${sourceResult.item.name} from ${formatMoveRef(payload.from)} to ${formatMoveRef(payload.to)}`;
       }
 
       // --- Use ---

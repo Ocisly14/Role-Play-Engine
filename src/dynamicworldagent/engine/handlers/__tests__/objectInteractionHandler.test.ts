@@ -117,9 +117,9 @@ describe("objectInteractionHandler", () => {
     ctx = createMockCtx();
   });
 
-  // ── Pickup ──
+  // ── Move ──
 
-  describe("pickup", () => {
+  describe("move", () => {
     it("transfers full Item from scene to NPC inventory", () => {
       const torch: Item = {
         id: "torch",
@@ -132,7 +132,12 @@ describe("objectInteractionHandler", () => {
       dgsm._addNpc("player-1", "study");
 
       const node = makeNode({
-        objectInteractionPayload: { action: "pickup", itemId: "torch" },
+        objectInteractionPayload: {
+          action: "move",
+          itemId: "torch",
+          from: { type: "scene" },
+          to: { type: "inventory" },
+        },
       });
 
       const result = objectInteractionHandler.execute(node, dgsm as any, ctx);
@@ -147,18 +152,19 @@ describe("objectInteractionHandler", () => {
       dgsm._addNpc("player-1", "study");
 
       const node = makeNode({
-        objectInteractionPayload: { action: "pickup", itemId: "missing_item" },
+        objectInteractionPayload: {
+          action: "move",
+          itemId: "missing_item",
+          from: { type: "scene" },
+          to: { type: "inventory" },
+        },
       });
 
       const result = objectInteractionHandler.execute(node, dgsm as any, ctx);
       expect(result.status).toBe("failed");
       expect(result.failureReason).toBe("object_not_found");
     });
-  });
 
-  // ── Place ──
-
-  describe("place", () => {
     it("transfers full Item from NPC inventory to scene", () => {
       const key: Item = { id: "room_key", name: "Room Key", type: "key" };
       dgsm._addScene("study", []);
@@ -166,7 +172,12 @@ describe("objectInteractionHandler", () => {
       dgsm.addItemToNpc("player-1", key);
 
       const node = makeNode({
-        objectInteractionPayload: { action: "place", itemId: "room_key" },
+        objectInteractionPayload: {
+          action: "move",
+          itemId: "room_key",
+          from: { type: "inventory" },
+          to: { type: "scene" },
+        },
       });
 
       const result = objectInteractionHandler.execute(node, dgsm as any, ctx);
@@ -181,12 +192,93 @@ describe("objectInteractionHandler", () => {
       dgsm._addNpc("player-1", "study");
 
       const node = makeNode({
-        objectInteractionPayload: { action: "place", itemId: "missing_item" },
+        objectInteractionPayload: {
+          action: "move",
+          itemId: "missing_item",
+          from: { type: "inventory" },
+          to: { type: "scene" },
+        },
       });
 
       const result = objectInteractionHandler.execute(node, dgsm as any, ctx);
       expect(result.status).toBe("failed");
       expect(result.failureReason).toBe("object_not_found");
+    });
+
+    it("moves a scene item into a scene container without a prior pickup", () => {
+      const cashBox: Item = {
+        id: "cash_box",
+        name: "Cash Box",
+        type: "container",
+      };
+      const drawer: Item = {
+        id: "desk_drawer",
+        name: "Desk Drawer",
+        type: "container",
+        containerStats: { capacity: 5, locked: false, contents: [] },
+      };
+      dgsm._addScene("study", [cashBox, drawer]);
+      dgsm._addNpc("player-1", "study");
+
+      const node = makeNode({
+        objectInteractionPayload: {
+          action: "move",
+          itemId: "cash_box",
+          from: { type: "scene" },
+          to: {
+            type: "container",
+            containerItemId: "desk_drawer",
+            scope: "scene",
+          },
+        },
+      });
+
+      const result = objectInteractionHandler.execute(node, dgsm as any, ctx);
+      expect(result.status).toBe("completed");
+      expect(dgsm._scenes["study"].items).toHaveLength(1);
+      const updatedDrawer = dgsm._scenes["study"].items[0];
+      expect(updatedDrawer.id).toBe("desk_drawer");
+      expect(updatedDrawer.containerStats?.contents).toEqual(["cash_box"]);
+      expect(updatedDrawer.containerStats?.storedItems?.[0].id).toBe("cash_box");
+    });
+
+    it("moves an item from a scene container into inventory", () => {
+      const cashBox: Item = {
+        id: "cash_box",
+        name: "Cash Box",
+        type: "container",
+      };
+      const drawer: Item = {
+        id: "desk_drawer",
+        name: "Desk Drawer",
+        type: "container",
+        containerStats: {
+          capacity: 5,
+          locked: false,
+          contents: ["cash_box"],
+          storedItems: [cashBox],
+        },
+      };
+      dgsm._addScene("study", [drawer]);
+      dgsm._addNpc("player-1", "study");
+
+      const node = makeNode({
+        objectInteractionPayload: {
+          action: "move",
+          itemId: "cash_box",
+          from: {
+            type: "container",
+            containerItemId: "desk_drawer",
+            scope: "scene",
+          },
+          to: { type: "inventory" },
+        },
+      });
+
+      const result = objectInteractionHandler.execute(node, dgsm as any, ctx);
+      expect(result.status).toBe("completed");
+      expect(dgsm._npcInventories["player-1"][0].id).toBe("cash_box");
+      expect(dgsm._scenes["study"].items[0].containerStats?.contents).toEqual([]);
     });
   });
 
@@ -586,7 +678,12 @@ describe("objectInteractionHandler", () => {
 
       const node = makeNode({
         location: "study",
-        objectInteractionPayload: { action: "pickup", itemId: "book" },
+        objectInteractionPayload: {
+          action: "move",
+          itemId: "book",
+          from: { type: "scene" },
+          to: { type: "inventory" },
+        },
       });
 
       const result = objectInteractionHandler.execute(node, dgsm as any, ctx);

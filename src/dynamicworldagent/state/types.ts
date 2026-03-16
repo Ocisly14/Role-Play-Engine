@@ -229,6 +229,7 @@ export interface ContainerStats {
   locked?: boolean;
   lockDifficulty?: "easy" | "regular" | "hard" | "extreme";
   contents?: string[];
+  storedItems?: Item[];
 }
 
 export interface Item {

@@ -342,8 +342,10 @@ async function main() {
       `\n═══ Running simulation — Day ${startDay}${maxDays > 1 ? ` to ${endDay}` : ""} ═══\n`
     );
 
-    const TICKS_PER_DAY = 192;
-    const MAX_TICKS = TICKS_PER_DAY * maxDays;
+    // The simulation now advances in 1-minute ticks. Keep a generous safety cap,
+    // but rely on gameDay advancement as the real stop condition.
+    const MINUTES_PER_DAY = 24 * 60;
+    const MAX_TICKS = MINUTES_PER_DAY * maxDays;
     let interrupted = false;
 
     process.on("SIGINT", () => {

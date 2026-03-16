@@ -28,10 +28,20 @@ export interface CharacterInteractionPayload {
   relatedKnowledgeIds?: string[];
 }
 
+export interface ItemLocationRef {
+  type: "scene" | "inventory" | "container";
+  /** Required when type === "container". */
+  containerItemId?: string;
+  /** Where to look for the container itself. Defaults to "scene". */
+  scope?: "scene" | "inventory";
+}
+
 export interface ObjectInteractionPayload {
-  action: "pickup" | "place" | "use" | "inspect" | "destroy";
+  action: "move" | "use" | "inspect" | "destroy";
   itemId?: string;
   targetItemId?: string;
+  from?: ItemLocationRef;
+  to?: ItemLocationRef;
   /** Non-normal use: LLM returns expected item state changes after success */
   itemUpdates?: Partial<Item>;
   targetItemUpdates?: Partial<Item>;

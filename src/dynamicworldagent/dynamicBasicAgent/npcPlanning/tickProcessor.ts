@@ -77,18 +77,23 @@ function getItemActionContext(
   node: PlanNode
 ): ItemActionContext | null {
   if (node.type === "object_interaction" && node.objectInteractionPayload) {
-    const { itemId, targetItemId } = node.objectInteractionPayload;
-    if (!itemId && !targetItemId) return null;
+    const { itemId, targetItemId, action, to, from } = node.objectInteractionPayload;
+    const resolvedTargetItemId =
+      targetItemId ??
+      (action === "move" && to?.type === "container" ? to.containerItemId : undefined);
+    const resolvedSourceContainerId =
+      action === "move" && from?.type === "container" ? from.containerItemId : undefined;
+    if (!itemId && !resolvedTargetItemId && !resolvedSourceContainerId) return null;
 
     const item = itemId ? findKnownItem(dgsm, node, itemId) : null;
-    const targetItem = targetItemId
-      ? findKnownItem(dgsm, node, targetItemId)
+    const targetItem = resolvedTargetItemId
+      ? findKnownItem(dgsm, node, resolvedTargetItemId)
       : null;
 
     return {
       itemId,
       itemName: item?.name,
-      targetItemId,
+      targetItemId: resolvedTargetItemId ?? resolvedSourceContainerId,
       targetItemName: targetItem?.name,
     };
   }

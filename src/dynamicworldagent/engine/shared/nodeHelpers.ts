@@ -31,8 +31,21 @@ export function buildOutcome(
     node.objectInteractionPayload
   ) {
     const p = node.objectInteractionPayload;
-    const target = p.targetItemId ? ` → ${p.targetItemId}` : "";
-    parts.push(`(${p.action}${p.itemId ? `: ${p.itemId}` : ""}${target})`);
+    if (p.action === "move" && p.itemId && p.from && p.to) {
+      const formatRef = (ref: typeof p.from) => {
+        if (ref.type === "container") {
+          const scope = ref.scope === "inventory" ? "inventory" : "scene";
+          return `${scope} container ${ref.containerItemId ?? "unknown"}`;
+        }
+        return ref.type;
+      };
+      parts.push(
+        `(move: ${p.itemId} ${formatRef(p.from)} -> ${formatRef(p.to)})`
+      );
+    } else {
+      const target = p.targetItemId ? ` → ${p.targetItemId}` : "";
+      parts.push(`(${p.action}${p.itemId ? `: ${p.itemId}` : ""}${target})`);
+    }
   } else if (node.type === "scene_interaction" && node.sceneConnectionEffect) {
     const e = node.sceneConnectionEffect;
     parts.push(`(${e.action} connection to ${e.targetScenarioId})`);

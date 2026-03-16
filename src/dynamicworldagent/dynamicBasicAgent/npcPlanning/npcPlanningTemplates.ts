@@ -189,7 +189,7 @@ const DEFAULT_DETAILED_NODE_TYPE_REF = `## Node Type Reference
     { "transferType": "information", "informationContent": "what you want to tell them", "targetCharacterIds": ["id1", "id2"], "relatedKnowledgeIds": ["knowledge_id"] }
   - informationContent should reflect YOUR perspective — what you believe and how you'd say it.
   - targetCharacterIds is optional (defaults to targetCharacterId). relatedKnowledgeIds is optional (use when formally sharing knowledge you possess).
-- **"object_interaction"**: Interact with a physical object. Include objectInteractionPayload. For creative non-standard uses, set skill and include itemUpdates/targetItemUpdates.
+- **"object_interaction"**: Interact with a physical object. Use \`action: "move"\` with explicit \`from\`/\`to\` for taking, putting back, stashing, removing from containers, or moving scene items. Use \`inspect\`, \`use\`, or \`destroy\` for non-relocation interactions.
 - **"scene_interaction"**: Search, investigate, or modify the environment.
 
 ## Skill Checks
@@ -197,10 +197,13 @@ const DEFAULT_DETAILED_NODE_TYPE_REF = `## Node Type Reference
 You can use a skill to accomplish an action or achieve your goal. Set \`"skill"\` to a skill name from "Available Skills" below only when the action is genuinely difficult or uses an unusual, forceful, deceptive, or creative method. The engine will roll d100 to determine success or failure.
 
 - Omit \`"skill"\` by default for routine or straightforward actions.
-- Simple \`pickup\`, \`place\`, ordinary \`inspect\`, casual conversation, and other everyday actions should usually omit \`"skill"\`.
+- Simple \`move\`, ordinary \`inspect\`, casual conversation, and other everyday actions should usually omit \`"skill"\`.
 - Before choosing a skill for an object action, inspect the injected item state first (locked/unlocked, damaged, uses, lit/unlit, ammo, etc.) and choose a normal action if the state already makes it possible.
 - If you include \`"skill"\`, it must be an exact name from "Available Skills". Never invent generic labels such as \`social\`, \`professional\`, or \`exploration\`.
 - For every node's \`location\`, copy only the exact location name. Never include helper text such as topology notes, resident lists, or formatting labels.
+- For object movement, only reference items that already appear in \`Items You Can See\` or \`What You're Carrying\`. Do not invent new intermediate objects such as printouts unless a previous action has already created them.
+- Use \`move\` when the item is simply changing where it is. Do not split same-scene relocation into artificial \`pickup\` then \`place\` steps.
+- By default, object interactions may only target items in the current scene or items you are carrying. Do not remote-interact with items in other locations, and do not assume access to items on another character unless a prior step explicitly transferred them to you.
 
 ## Impact
 
@@ -235,7 +238,9 @@ Return a JSON array of PlanNode objects. No extra text. Always write in English.
 
 Add type-specific fields as needed:
 - **character_interaction**: \`"targetCharacterId"\`, optional \`"characterInteractionPayload"\` with \`transferType\` ("item" or "information"), \`informationContent\`, \`targetCharacterIds\`, \`relatedKnowledgeIds\`
-- **object_interaction**: \`"objectInteractionPayload"\` with \`itemUpdates\`/\`targetItemUpdates\` for non-standard use
+- **object_interaction**:
+  - relocation: \`"objectInteractionPayload": { "action": "move", "itemId": "item_id", "from": { "type": "scene|inventory|container", "containerItemId"?: "container_id", "scope"?: "scene|inventory" }, "to": { ...same shape... } }\`
+  - non-standard use: include \`itemUpdates\`/\`targetItemUpdates\`
 - **scene_interaction**: optional \`"sceneConnectionEffect"\``;
 
 export function buildDetailedNodesPrompt(
