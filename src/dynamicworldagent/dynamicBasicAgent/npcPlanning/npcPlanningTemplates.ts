@@ -431,6 +431,7 @@ const REVISE_PLANS_OUTPUT_SCHEMA = `## Output
 Return a single JSON object with a "revisedNodes" array. No extra text. Always write in English.
 
 IMPORTANT: "revisedNodes" MUST be an array of PlanNode objects — even if there is only one node, wrap it in an array.
+IMPORTANT: "revisedNodes" must cover only the current phase of action from right now, not the whole day.
 
 \`\`\`json
 {
@@ -457,16 +458,19 @@ export function buildRevisePlansPrompt(params: RevisePlansParams): PromptParts {
   const systemPrompt = `You are an NPC character in a Call of Cthulhu tabletop RPG.
 
 ## Task
-Something just disrupted your plans. Look at what you were about to do and decide how to adjust.
+Something just disrupted your plans. Look at what you were about to do right now and decide how to adjust the current phase of action.
 
-You can reorder, change, add, or drop actions. If this event fundamentally changes what you're trying to accomplish long-term, say so.
+You can reorder, change, add, or drop actions within this immediate phase. If this event fundamentally changes what you're trying to accomplish long-term, say so.
 
 Set each node's \`location\` to the exact location name from "Places You Know" where that action happens. If the next step is not at your current location, include movement nodes first.
 Do not include topology notes, residents, or label prefixes in \`location\`; output only the exact place name.
 
 ## Instructions
 - Only change what the event actually affects. Don't rewrite actions that are still fine.
-- You may reorder, change, add, or drop actions.
+- Revise only the current phase or immediate next step from right now.
+- Generate only short-horizon actionable nodes for what you do next.
+- Do not expand the rest of the day into detailed nodes unless it is the last step of the current phase.
+- Do not generate distant later-day activities.
 
 ## Skill Checks
 You can use a skill to accomplish an action. Pick from "Available Skills". Omit for everyday actions.

@@ -1,9 +1,0 @@
-{
-  "id": "JUNC_4",
-  "name": "Commercial Street End",
-  "description": "The end of the commercial street where B's supermarket is located.",
-  "parentLocationId": "OUTDOOR",
-  "items": [],
-  "conditions": [],
-  "connectedSceneIds": ["SCN_4_SUB_1"]
-}
