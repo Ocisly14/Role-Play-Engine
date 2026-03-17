@@ -82,6 +82,14 @@
         "confidence": 0.95,
         "reasoningChain": "Anything buried long enough becomes part of the darkness below."
       }
+    },
+    {
+      "type": "information",
+      "content": "I can move through foundations, shafts, wells, and sinkholes as easily as a man walks through a doorway.",
+      "metadata": {
+        "knowledgeId": "k_nyogtha_tunnels",
+        "difficulty": "hard"
+      }
     }
   ]
 }

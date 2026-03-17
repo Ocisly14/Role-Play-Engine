@@ -99,6 +99,20 @@
       }
     },
     {
+      "type": "secret",
+      "content": "The previous owner of The King in Yellow left me more than a dangerous book. I also learned a version of Hastur's song that still works under the wrong sky, though the cost is ugly.",
+      "metadata": {
+        "knowledgeId": "s_solomon_hastur_song"
+      }
+    },
+    {
+      "type": "secret",
+      "content": "I do not know Ben personally, and I dislike him on principle. After my friend Bo He started digging into matters tied to Ben, he lost his mind and had to be taken somewhere safe.",
+      "metadata": {
+        "knowledgeId": "s_solomon_bohe"
+      }
+    },
+    {
       "type": "belief",
       "content": "Some knowledge is better handled as a private burden than as a public fact.",
       "metadata": {

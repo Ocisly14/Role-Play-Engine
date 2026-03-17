@@ -48,7 +48,7 @@
   "memory": [
     {
       "type": "information",
-      "content": "Cold spiders enter the real world through hidden strands linked to the church web. That passage is weaker here, but still lethal to the careless.",
+      "content": "I came into the waking world through the hidden web beneath the church. This side weakens me, but it also gives me warm walls, dark corners, and human flesh to breed in.",
       "metadata": {
         "knowledgeId": "k_coldspider_reality_portal",
         "difficulty": "regular"
@@ -56,22 +56,30 @@
     },
     {
       "type": "information",
-      "content": "A bite can implant spider eggs in a human host, and that infection may end in death or transformation into a spider-human.",
+      "content": "My bite plants a brood beneath skin. If the host is not cut open in time, the young ripen, tear free, and leave ruin behind them.",
       "metadata": {
         "knowledgeId": "k_coldspider_infection",
         "difficulty": "hard"
       }
     },
     {
+      "type": "information",
+      "content": "The black-robed priest shelters this crossing and tolerates the brood around his church. The half-spider servants that obey him are hosts my kind did not finish killing.",
+      "metadata": {
+        "knowledgeId": "k_coldspider_priest_and_spiderhumans",
+        "difficulty": "hard"
+      }
+    },
+    {
       "type": "secret",
-      "content": "If a host survives long enough, the infection can be hidden for a time, but the body becomes a nest rather than a refuge.",
+      "content": "A host can still walk for a while with me growing inside. The swelling, heat, blackening, and pain betray the nest only when it is already too late.",
       "metadata": {
         "knowledgeId": "s_coldspider_hidden_growth"
       }
     },
     {
       "type": "belief",
-      "content": "The waking world is just another surface to cling to until the next opening in the web appears.",
+      "content": "The waking world is only another surface to cling to until the web opens wider.",
       "metadata": {
         "confidence": 0.8,
         "reasoningChain": "Reality is not home. It is a thin membrane that can be pierced, used, and abandoned."

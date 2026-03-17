@@ -65,6 +65,14 @@
       }
     },
     {
+      "type": "information",
+      "content": "I still remember how human bargains worked, and I use that old knowledge to choose prey that will not fight too hard.",
+      "metadata": {
+        "knowledgeId": "k_gofern_human_memory",
+        "difficulty": "regular"
+      }
+    },
+    {
       "type": "secret",
       "content": "I regenerate unnaturally unless I am destroyed completely. Wounds are delays, not endings.",
       "metadata": {
@@ -72,8 +80,15 @@
       }
     },
     {
+      "type": "secret",
+      "content": "I stay in the swamp because hunters, roads, and bright lights make it harder to hide what I have become.",
+      "metadata": {
+        "knowledgeId": "s_gofern_hunters"
+      }
+    },
+    {
       "type": "belief",
-      "content": "Hunger is the clearest prayer. Shub-Niggurath answers through what survives feeding.",
+      "content": "For me, hunger is the clearest prayer. Shub-Niggurath answers through what survives feeding.",
       "metadata": {
         "confidence": 0.9,
         "reasoningChain": "The body that feeds is the body that continues."

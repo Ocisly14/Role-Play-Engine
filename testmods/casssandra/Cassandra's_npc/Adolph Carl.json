@@ -99,7 +99,7 @@
   "memory": [
     {
       "type": "information",
-      "content": "I live at SCN_15 and control a private monitor room inside the house. The cameras and system there let me keep close watch on my own property and much more besides.",
+      "content": "I live at SCN_15 and keep a hidden monitor room there. From that room I watch my own house, nearby movements, and far more of Cassandra than most people would find comfortable.",
       "metadata": {
         "knowledgeId": "k_adolph_house_system",
         "difficulty": "automatic"
@@ -107,7 +107,7 @@
     },
     {
       "type": "information",
-      "content": "People in town know me by different names. Some know me as Adolph Carl, others only as Shore Master or Mr. An.",
+      "content": "People know me by different names for different kinds of business. Some know Adolph Carl, others only know Shore Master or Mr. An, and I prefer it that way.",
       "metadata": {
         "knowledgeId": "k_adolph_aliases",
         "difficulty": "regular"
@@ -115,7 +115,7 @@
     },
     {
       "type": "information",
-      "content": "I survive by trading in sensitive information. Cassandra is full of useful secrets, especially among the people who pretend to be respectable.",
+      "content": "I live by buying, storing, and selling sensitive information. Cassandra is full of profitable secrets, especially among the people who insist they are respectable.",
       "metadata": {
         "knowledgeId": "k_adolph_information_trade",
         "difficulty": "regular"
@@ -123,7 +123,7 @@
     },
     {
       "type": "information",
-      "content": "The real Qianwei System came into my hands in 2002 after I found it in the basement of a missing wealthy couple's villa. It is the single best reason to remain in Cassandra.",
+      "content": "In 2002 I acquired the real Qianwei System from the basement of a missing wealthy couple's villa. That machine is the best reason I have to remain in Cassandra at all.",
       "metadata": {
         "knowledgeId": "k_adolph_qianwei",
         "difficulty": "regular"
@@ -131,7 +131,7 @@
     },
     {
       "type": "information",
-      "content": "I know the Red Stone Lady works under the alias Susan at Star Hospital, and I know enough about the hardware store's private gun business to navigate it if needed.",
+      "content": "I know the Red Stone Lady works under the name Susan at Star Hospital, and I know the hardware store's gun-running code well enough to navigate that trade when necessary.",
       "metadata": {
         "knowledgeId": "k_adolph_local_channels",
         "difficulty": "hard"
@@ -139,35 +139,28 @@
     },
     {
       "type": "secret",
-      "content": "My polished social image is largely a fraud. I can pass among wealthy people only because I possess information they fear, not because they truly accept me.",
+      "content": "My polished upper-class image is mostly a fraud. I am tolerated in those circles because I hold information they fear, not because they would ever truly accept me as one of them.",
       "metadata": {
         "knowledgeId": "s_adolph_false_status"
       }
     },
     {
       "type": "secret",
-      "content": "When my family collapsed in France, I secretly witnessed Anatole kill Nancy's mother. He never realized I was there, and I have kept that knowledge for years.",
+      "content": "When my family collapsed in France, I secretly witnessed Anatole kill Nancy's mother. He never realized I was there, and I have treated that knowledge as a long-term investment ever since.",
       "metadata": {
         "knowledgeId": "s_adolph_1988_witness"
       }
     },
     {
       "type": "secret",
-      "content": "I recognized Anatole or Simon after encountering him in Cassandra. I still do not understand the full nature of his identity, but I have been watching him ever since.",
-      "metadata": {
-        "knowledgeId": "s_adolph_watch_anatole"
-      }
-    },
-    {
-      "type": "secret",
-      "content": "I arranged the threatening note that lured Anatole to the Reindeer Bar because I wanted to test his reaction and re-open the old 1988 thread. Lucifero's death and Lux's appearance interrupted that plan.",
+      "content": "After recognizing Anatole or Simon in Cassandra, I began watching him closely and eventually sent the threatening note that drew him to the Reindeer Bar. Lux's appearance and Lucifero's murder ruined the meeting before I could turn the old secret into profit.",
       "metadata": {
         "knowledgeId": "s_adolph_bar_note"
       }
     },
     {
       "type": "secret",
-      "content": "Lucifero was a contact of mine, and I noticed the note in her pocket listed jobs tied to me and others. I am relieved most people still do not know one of the messages on her phone leads back to me.",
+      "content": "Lucifero was one of my contacts. The note in her pocket and the message on her phone could both have pointed back to me, and I am very relieved that most people still do not know where one of those messages came from.",
       "metadata": {
         "knowledgeId": "s_adolph_lucifero"
       }

@@ -7,17 +7,20 @@
     {
       "id": "ITEM_JUNC4_1",
       "name": "镇中心方向牌",
-      "description": "一块金属方向牌，标示镇内主要公共地点的方向。"
+      "description": "一块金属方向牌，标示镇内主要公共地点的方向。",
+      "type": "document"
     },
     {
       "id": "ITEM_JUNC4_2",
       "name": "公共告示栏",
-      "description": "一块玻璃面的公共告示栏，里面夹着通知、海报和社区公告。"
+      "description": "一块玻璃面的公共告示栏，里面夹着通知、海报和社区公告。",
+      "type": "document"
     },
     {
       "id": "ITEM_JUNC4_3",
       "name": "街角长椅",
-      "description": "石基木面的长椅摆在街角，椅面被来往行人磨得发亮。"
+      "description": "石基木面的长椅摆在街角，椅面被来往行人磨得发亮。",
+      "type": "other"
     }
   ],
   "conditions": [

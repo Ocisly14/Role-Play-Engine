@@ -63,7 +63,7 @@
     },
     {
       "type": "information",
-      "content": "The infected body keeps a hard outer shell and hook-like claws. Those traits are what make the hybrid effective in close pursuit.",
+      "content": "Cold-spider infection does not cure itself in survivors. It hardens the body, changes the hands to hooks, and leaves only scraps of the old self underneath the new instincts.",
       "metadata": {
         "knowledgeId": "k_spiderhuman_body",
         "difficulty": "regular"
@@ -71,9 +71,23 @@
     },
     {
       "type": "secret",
-      "content": "Some spider-humans still retain faint memories of their former lives, but those memories are usually fragments rather than a stable identity.",
+      "content": "Some of us still retain faint memories of our former lives, but those memories are fragments rather than a stable identity and they get weaker when the web's orders grow stronger.",
       "metadata": {
         "knowledgeId": "s_spiderhuman_memory"
+      }
+    },
+    {
+      "type": "secret",
+      "content": "When ordered, I wrap prey alive and carry it back in silk instead of killing it where it stands. The web does not always want a corpse immediately.",
+      "metadata": {
+        "knowledgeId": "s_spiderhuman_cocoon"
+      }
+    },
+    {
+      "type": "secret",
+      "content": "The church grounds and the hidden web beyond them are where the spider call feels strongest. Near that pull, it is harder to remember I was ever anything else.",
+      "metadata": {
+        "knowledgeId": "s_spiderhuman_web_call"
       }
     },
     {

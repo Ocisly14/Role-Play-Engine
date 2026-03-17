@@ -7,17 +7,22 @@
     {
       "id": "ITEM_JUNC5_1",
       "name": "小型喷水池",
-      "description": "一座小型喷水池，冬季停水时池壁显得格外干冷。"
+      "description": "一座小型喷水池，冬季停水时池壁显得格外干冷。",
+      "type": "other"
     },
     {
       "id": "ITEM_JUNC5_2",
       "name": "交通指示牌",
-      "description": "一块交通指示牌，提醒车辆减速通过路口。"
+      "description": "一块交通指示牌，提醒车辆减速通过路口。",
+      "type": "document"
     },
     {
       "id": "ITEM_JUNC5_3",
       "name": "双头路灯",
-      "description": "一根双头路灯杆，夜里能把周围路面照得更亮。"
+      "description": "一根双头路灯杆，夜里能把周围路面照得更亮。",
+      "type": "lighting",
+      "isLightSource": true,
+      "lightLevel": 3
     }
   ],
   "conditions": [

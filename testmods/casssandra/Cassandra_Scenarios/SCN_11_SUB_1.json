@@ -7,17 +7,22 @@
     {
       "id": "ITEM_SCN11_1",
       "name": "Solomon的神秘书籍",
-      "description": "一本封面陈旧的神秘书籍，纸页间夹着奇异符号和反复翻阅留下的折痕。"
+      "description": "一本封面陈旧的神秘书籍，纸页间夹着奇异符号和反复翻阅留下的折痕。",
+      "type": "document",
+      "category": "evidence",
+      "discoveryMethod": "inspect bookshelf"
     },
     {
       "id": "ITEM_SCN11_2",
       "name": "门边的躺椅",
-      "description": "一把旧躺椅，扶手和椅面都带着长期使用的磨痕。"
+      "description": "一把旧躺椅，扶手和椅面都带着长期使用的磨痕。",
+      "type": "other"
     },
     {
       "id": "ITEM_SCN11_3",
       "name": "占卜工具",
-      "description": "一套占卜工具，包括星盘、塔罗牌和水晶球等摆件。"
+      "description": "一套占卜工具，包括星盘、塔罗牌和水晶球等摆件。",
+      "type": "tool"
     }
   ],
   "conditions": [

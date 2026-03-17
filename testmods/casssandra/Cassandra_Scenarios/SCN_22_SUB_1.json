@@ -7,17 +7,20 @@
     {
       "id": "ITEM_SCN22_1",
       "name": "黄铜座钟",
-      "description": "一只擦拭得一尘不染的黄铜座钟，指针走得异常精准。"
+      "description": "一只擦拭得一尘不染的黄铜座钟，指针走得异常精准。",
+      "type": "other"
     },
     {
       "id": "ITEM_SCN22_2",
       "name": "无署名相框",
-      "description": "几只摆在壁炉台上的相框，里面夹着风景照与正式合影，却都看不见题字。"
+      "description": "几只摆在壁炉台上的相框，里面夹着风景照与正式合影，却都看不见题字。",
+      "type": "other"
     },
     {
       "id": "ITEM_SCN22_3",
       "name": "待客茶盘",
-      "description": "银色茶盘里摆着干净的茶具，仿佛随时准备接待某位被筛选过的访客。"
+      "description": "银色茶盘里摆着干净的茶具，仿佛随时准备接待某位被筛选过的访客。",
+      "type": "other"
     }
   ],
   "conditions": [

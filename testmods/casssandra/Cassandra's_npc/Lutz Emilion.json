@@ -106,6 +106,22 @@
         "confidence": 0.85,
         "reasoningChain": "A bar that becomes a battlefield stops being a business."
       }
+    },
+    {
+      "type": "information",
+      "content": "I know Ben Cleo's protection keeps open violence out of the bar, but every favor in this town still has a price.",
+      "metadata": {
+        "knowledgeId": "k_lutz_ben_price",
+        "difficulty": "regular"
+      }
+    },
+    {
+      "type": "information",
+      "content": "Years behind the bar have taught me to remember who is angry, who is afraid, and who can still be talked down before a fight starts.",
+      "metadata": {
+        "knowledgeId": "k_lutz_reading_room",
+        "difficulty": "regular"
+      }
     }
   ]
 }

@@ -96,7 +96,15 @@
     },
     {
       "type": "information",
-      "content": "The family survives by keeping business cleanly separated from questions about clients' motives. I expect discipline and silence from subordinates.",
+      "content": "I took control of the family when I was seventeen after my father disappeared. Since then, I have kept power by rewarding discipline and crushing hesitation before it grows teeth.",
+      "metadata": {
+        "knowledgeId": "k_ben_inherited_power",
+        "difficulty": "regular"
+      }
+    },
+    {
+      "type": "information",
+      "content": "The family survives by keeping business cleanly separated from questions about clients' motives. I expect discipline, silence, and efficient work from everyone under me.",
       "metadata": {
         "knowledgeId": "k_ben_rule",
         "difficulty": "regular"
@@ -104,7 +112,7 @@
     },
     {
       "type": "secret",
-      "content": "My gold-inlaid Desert Eagle is a rare 1981 custom .357. I was not at the Reindeer Bar murder scene when I claimed to be at prayer.",
+      "content": "My gold-inlaid Desert Eagle is a rare 1981 custom .357, and I know exactly how bad that looks. I also know I was not at the murder scene when Lucifero was shot.",
       "metadata": {
         "knowledgeId": "s_ben_gun_and_alibi"
       }
@@ -118,17 +126,24 @@
     },
     {
       "type": "secret",
-      "content": "My father's notes and occult books are locked in a safe. I do not openly believe in the things they describe, but I have not destroyed them either.",
+      "content": "My father's notes and occult books are locked in a safe. I do not openly believe the things they describe, but I have not destroyed them because some part of me suspects they explain more than I want explained.",
       "metadata": {
         "knowledgeId": "s_ben_safe"
       }
     },
     {
-      "type": "belief",
-      "content": "Patrizio is useful only while his ambitions stay contained. If he starts putting Cassandra itself at risk, he becomes a liability.",
+      "type": "secret",
+      "content": "I know Patrizio has a man working for him under the name Ghost Hand, but I have never met that operative face to face and do not know who he really is.",
       "metadata": {
-        "confidence": 0.8,
-        "reasoningChain": "I helped him climb, but he keeps making moves that suggest he wants more than a working arrangement."
+        "knowledgeId": "s_ben_ghost_hand"
+      }
+    },
+    {
+      "type": "belief",
+      "content": "Patrizio is useful only while his ambitions stay contained. If he starts putting Cassandra itself at risk, he becomes a liability, and I will not let him wreck the town I feed on.",
+      "metadata": {
+        "confidence": 0.86,
+        "reasoningChain": "I helped him climb, but he keeps making moves that suggest he wants more than a working arrangement. I am no saint, but anyone who destroys Cassandra destroys my livelihood too."
       }
     }
   ]

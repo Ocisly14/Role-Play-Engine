@@ -7,11 +7,20 @@
     {
       "id": "ITEM_SCN1_3",
       "name": "尸体档案记录",
+      "type": "document",
+      "category": "evidence",
+      "discoveryMethod": "inspect archive",
       "description": "停尸间的档案柜，记录着每具尸体的入库时间、转运情况等信息"
     },
     {
       "id": "ITEM_SCN1_4",
       "name": "冷藏柜",
+      "type": "container",
+      "containerStats": {
+        "capacity": 6,
+        "locked": false,
+        "contents": []
+      },
       "description": "金属抽屉式冷藏柜，用于保存尸体，部分抽屉已空置"
     }
   ],

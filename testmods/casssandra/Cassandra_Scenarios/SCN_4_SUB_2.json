@@ -7,17 +7,20 @@
     {
       "id": "ITEM_SCN4_4",
       "name": "餐厅餐桌",
-      "description": "几张铺着白色亚麻桌布的餐桌，桌上摆着银质烛台和折叠布餐巾。"
+      "description": "几张铺着白色亚麻桌布的餐桌，桌上摆着银质烛台和折叠布餐巾。",
+      "type": "other"
     },
     {
       "id": "ITEM_SCN4_5",
       "name": "后厨操作台",
-      "description": "一组沿墙排列的不锈钢后厨操作台，旁边配有悬挂厨具和大型商用冰箱。"
+      "description": "一组沿墙排列的不锈钢后厨操作台，旁边配有悬挂厨具和大型商用冰箱。",
+      "type": "other"
     },
     {
       "id": "ITEM_SCN4_6",
       "name": "通往地下的金属门",
-      "description": "一扇厚重的灰色金属门，把手处留着长期开合的磨损痕迹。"
+      "description": "一扇厚重的灰色金属门，把手处留着长期开合的磨损痕迹。",
+      "type": "other"
     }
   ],
   "conditions": [

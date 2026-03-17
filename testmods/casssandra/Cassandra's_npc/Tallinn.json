@@ -71,10 +71,18 @@
   "memory": [
     {
       "type": "information",
-      "content": "I work around the casino side of town, where the important conversations happen quietly and the money changes hands quickly.",
+      "content": "I work the casino side of town with Kovind, where the money moves fast, the talk stays low, and the wrong question can get a man hurt.",
       "metadata": {
         "knowledgeId": "k_tallinn_casino",
         "difficulty": "automatic"
+      }
+    },
+    {
+      "type": "information",
+      "content": "People on this side know me as the Tallinn Widow. The nickname is half joke, half warning, and I let it do work for me.",
+      "metadata": {
+        "knowledgeId": "k_tallinn_nickname",
+        "difficulty": "regular"
       }
     },
     {
@@ -87,9 +95,30 @@
     },
     {
       "type": "secret",
-      "content": "I keep my private life hidden from most of the underworld, because I know exactly how quickly gossip becomes leverage.",
+      "content": "I keep my private life hidden from most of the underworld because I know exactly how quickly gossip becomes leverage, especially once men like me stop fitting the image they expect.",
       "metadata": {
         "knowledgeId": "s_tallinn_private"
+      }
+    },
+    {
+      "type": "secret",
+      "content": "I hired Lucifero for a personal job because I thought my lover was drifting toward someone else, and I would rather spend money on deniable trouble than let the wrong people learn why I was angry.",
+      "metadata": {
+        "knowledgeId": "s_tallinn_personal_job"
+      }
+    },
+    {
+      "type": "secret",
+      "content": "A couple of months before she died, Lucifero told me she had finally beaten a rival and taken a troublesome prize from them. She looked prouder than I had ever seen her.",
+      "metadata": {
+        "knowledgeId": "s_tallinn_lucifero_prize"
+      }
+    },
+    {
+      "type": "secret",
+      "content": "I do not know who Ghost Hand is, but I know the people who use the word 'dock' as a password are almost certainly tied to the mafia side of town.",
+      "metadata": {
+        "knowledgeId": "s_tallinn_dock_code"
       }
     },
     {

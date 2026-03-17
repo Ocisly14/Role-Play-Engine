@@ -6,13 +6,19 @@
   "items": [
     {
       "id": "ITEM_SCN2_4",
-      "name": "昆扬人的壁刻",
-      "description": "洞穴墙壁上古老的昆扬文字和符文浮雕，记载着远古时期的某种仪式"
+      "name": "古老壁刻",
+      "description": "洞穴墙壁上布满古老文字与符文浮雕，明显出自远早于卡森德拉镇史的文明之手。",
+      "type": "document",
+      "category": "evidence",
+      "discoveryMethod": "inspect wall"
     },
     {
       "id": "ITEM_SCN2_5",
       "name": "改造后的仪式祭坛",
-      "description": "混血深潜者和丘丘人改造过的石质祭坛，表面有深潜者的符号和新近使用的痕迹"
+      "description": "一座被后人反复改动过的石质祭坛，古老石面上叠压着较新的刻痕、烛泪和干涸污迹。",
+      "type": "other",
+      "category": "evidence",
+      "discoveryMethod": "inspect altar"
     }
   ],
   "conditions": [
@@ -39,7 +45,7 @@
       }
     },
     {
-      "description": "这里弥漫着一种令人不安的压迫感，空气中似乎有某种古老而邪恶的力量残存",
+      "description": "这里弥漫着一种令人不安的压迫感，空气中仿佛残留着某种难以名状的古老力量。",
       "mechanicalEffect": {
         "skillPenalty": [
           {

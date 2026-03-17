@@ -90,6 +90,14 @@
     },
     {
       "type": "information",
+      "content": "I know the woods around Cassandra well enough to hunt there, and I hate feeling trapped in town when I should be free outside.",
+      "metadata": {
+        "knowledgeId": "k_johnny_hunter",
+        "difficulty": "regular"
+      }
+    },
+    {
+      "type": "information",
       "content": "Philip Scaletta harassed Helen that night, and I drove him off after a violent argument.",
       "metadata": {
         "knowledgeId": "k_johnny_philip_fight",
@@ -101,6 +109,13 @@
       "content": "My jealousy and temper can push me into reckless or violent behavior if I feel humiliated again.",
       "metadata": {
         "knowledgeId": "s_johnny_jealousy"
+      }
+    },
+    {
+      "type": "secret",
+      "content": "I watch Vito more than I should, because I cannot stand the idea of being second place in Helen's life.",
+      "metadata": {
+        "knowledgeId": "s_johnny_vito_watch"
       }
     },
     {

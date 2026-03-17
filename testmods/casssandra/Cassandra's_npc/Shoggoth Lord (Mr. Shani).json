@@ -79,17 +79,39 @@
     },
     {
       "type": "information",
-      "content": "When I am calm, I can remain in human form. When anger or hunger rises too far, the body starts to fail and melt back into shoggoth substance.",
+      "content": "When I am calm, I can remain in human form. When anger, hunger, or strain rises too far, the shape begins to fail and the body starts to slip back into shoggoth matter.",
       "metadata": {
         "knowledgeId": "k_shoggothlord_control",
         "difficulty": "regular"
       }
     },
     {
+      "type": "information",
+      "content": "The orphanage and charity work are useful because intelligent children become useful adults, and useful adults build the systems that let human herds keep multiplying around me.",
+      "metadata": {
+        "knowledgeId": "k_shoggothlord_orphanage",
+        "difficulty": "regular"
+      }
+    },
+    {
       "type": "secret",
-      "content": "My orphanage and charity image are not acts of kindness alone. They are long-term infrastructure for control, selection, and survival.",
+      "content": "My orphanage and charity image are not acts of kindness alone. They are long-term infrastructure for selection, concealment, and feeding.",
       "metadata": {
         "knowledgeId": "s_shoggothlord_facade"
+      }
+    },
+    {
+      "type": "secret",
+      "content": "Lucia was one of the bright children I chose to raise, shape, and keep near. She still does not understand what kind of thing I really am.",
+      "metadata": {
+        "knowledgeId": "s_shoggothlord_lucia"
+      }
+    },
+    {
+      "type": "secret",
+      "content": "I feed in isolation and remove witnesses because a single exposed feeding would force me to abandon years of careful human work.",
+      "metadata": {
+        "knowledgeId": "s_shoggothlord_feeding"
       }
     },
     {

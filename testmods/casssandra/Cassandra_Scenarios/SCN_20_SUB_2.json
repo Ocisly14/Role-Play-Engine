@@ -7,11 +7,16 @@
     {
       "id": "ITEM_SCN20_3",
       "name": "壁炉中的灰烬残迹",
+      "type": "other",
+      "category": "evidence",
+      "discoveryMethod": "inspect ashes",
       "description": "壁炉中残留的大量灰烬。在被烧毁的灰烬里，依稀可辨一张纸上画着某种神秘的符号。这个符号与Patrizio von Samsa的图纸上的一个符号相同。"
     },
     {
       "id": "ITEM_SCN20_4",
       "name": "生锈的工具",
+      "type": "tool",
+      "damaged": true,
       "description": "几件早已生锈报废的工具，包括斧头、锯子和锤子。"
     }
   ],

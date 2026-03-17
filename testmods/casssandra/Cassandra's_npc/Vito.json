@@ -75,6 +75,14 @@
   "memory": [
     {
       "type": "information",
+      "content": "I am a local auxiliary officer, but I am better at small jobs, repairs, and helping ordinary people than I am at reading politics or hidden motives.",
+      "metadata": {
+        "knowledgeId": "k_vito_local",
+        "difficulty": "automatic"
+      }
+    },
+    {
+      "type": "information",
       "content": "Last year before Christmas, I met the unknown Black girl who later became the 2002 Paradil Hotel murder victim.",
       "metadata": {
         "knowledgeId": "k_vito_victim",
@@ -94,6 +102,20 @@
       "content": "I said I did not know of any cheap rooms for rent, and the next day the girl I spoke to was murdered.",
       "metadata": {
         "knowledgeId": "s_vito_rooms"
+      }
+    },
+    {
+      "type": "secret",
+      "content": "I meant to mention that girl to the police, but the case was shelved so quickly that I convinced myself my memory would not help. Then I forgot about it, and that still sits badly with me.",
+      "metadata": {
+        "knowledgeId": "s_vito_shelved_case"
+      }
+    },
+    {
+      "type": "secret",
+      "content": "I went to Shandra's place more than once because Bruno spent time there, and my lousy way of explaining that caused trouble with Helen before we finally cleared it up.",
+      "metadata": {
+        "knowledgeId": "s_vito_shandra"
       }
     },
     {

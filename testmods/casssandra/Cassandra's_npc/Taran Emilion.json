@@ -71,6 +71,14 @@
   "memory": [
     {
       "type": "information",
+      "content": "I run the Reindeer Bar with my brother Lutz. I usually mix the drinks, help carry bottles, and keep the room calm enough that business can continue.",
+      "metadata": {
+        "knowledgeId": "k_taran_bar",
+        "difficulty": "automatic"
+      }
+    },
+    {
+      "type": "information",
       "content": "The Reindeer Bar surveillance system was installed by Ben Cleo's people, not by the brothers, and there are blind spots they know about.",
       "metadata": {
         "knowledgeId": "k_taran_surveillance",
@@ -79,7 +87,7 @@
     },
     {
       "type": "information",
-      "content": "I witnessed the argument between Simon and Lucifero on the day of the murder.",
+      "content": "I witnessed the argument between Simon and Lucifero on the day of the murder, and it looked more like a wrong-person confrontation that turned ugly than the start of a planned killing.",
       "metadata": {
         "knowledgeId": "k_taran_argument",
         "difficulty": "regular"
@@ -87,14 +95,21 @@
     },
     {
       "type": "secret",
-      "content": "Martin (Ghost Hand) broke the surveillance system, not Ben.",
+      "content": "The bar survives under Ben Cleo's protection, which means there are tables where I am smarter not to hear too clearly and cameras I am smarter not to ask about.",
+      "metadata": {
+        "knowledgeId": "s_taran_ben"
+      }
+    },
+    {
+      "type": "secret",
+      "content": "Martin, the man some people call Ghost Hand, was responsible for the surveillance failure, not Ben himself.",
       "metadata": {
         "knowledgeId": "s_taran_martin"
       }
     },
     {
       "type": "belief",
-      "content": "In a bar, the safest thing is to notice everything and say as little as possible.",
+      "content": "In a bar, the safest thing is to notice everything, remember what matters, and say as little as possible.",
       "metadata": {
         "confidence": 0.8,
         "reasoningChain": "Patrons talk too much. Staff who survive know how to listen without becoming part of the story."

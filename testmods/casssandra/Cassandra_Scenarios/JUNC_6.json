@@ -7,17 +7,20 @@
     {
       "id": "ITEM_JUNC6_1",
       "name": "褪色路标",
-      "description": "分叉口那块褪色的木质路标字迹已经发白，但仍能勉强辨认出石榴巷和日暮大道。"
+      "description": "分叉口那块褪色的木质路标字迹已经发白，但仍能勉强辨认出石榴巷和日暮大道。",
+      "type": "document"
     },
     {
       "id": "ITEM_JUNC6_2",
       "name": "电线杆",
-      "description": "一根老旧电线杆，木杆上缠着层层叠叠的旧广告和电话号条。"
+      "description": "一根老旧电线杆，木杆上缠着层层叠叠的旧广告和电话号条。",
+      "type": "other"
     },
     {
       "id": "ITEM_JUNC6_3",
       "name": "排水沟盖板",
-      "description": "路边狭窄的排水沟盖板上沾着泥点和落叶，雨后会积起一层浑水。"
+      "description": "路边狭窄的排水沟盖板上沾着泥点和落叶，雨后会积起一层浑水。",
+      "type": "other"
     }
   ],
   "conditions": [

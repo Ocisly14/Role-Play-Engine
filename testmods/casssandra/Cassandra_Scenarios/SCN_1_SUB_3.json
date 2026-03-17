@@ -7,21 +7,34 @@
     {
       "id": "ITEM_SCN1_5",
       "name": "新型医疗器械",
+      "type": "tool",
       "description": "一批崭新的医疗器械，机身印着波士顿产地标识，与小镇医院的常规配置明显不符。"
     },
     {
       "id": "ITEM_SCN1_6",
       "name": "注射器",
+      "type": "tool",
       "description": "几支尚未处理的注射器，透明针筒和金属针头在冷白灯下反着惨白微光。"
     },
     {
       "id": "ITEM_SCN1_23",
       "name": "蜘蛛样本容器",
+      "type": "container",
+      "category": "evidence",
+      "discoveryMethod": "inspect samples",
+      "containerStats": {
+        "capacity": 3,
+        "locked": false,
+        "contents": []
+      },
       "description": "几只密封样本容器，里面装着蜘蛛标本和组织样本，标签格式十分正式。"
     },
     {
       "id": "ITEM_SCN1_7",
       "name": "实验档案",
+      "type": "document",
+      "category": "evidence",
+      "discoveryMethod": "inspect files",
       "description": "一份记录实验数据和进度的实验档案。"
     }
   ],

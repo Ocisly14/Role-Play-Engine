@@ -7,11 +7,20 @@
     {
       "id": "ITEM_SCN1_13",
       "name": "排班表",
+      "type": "document",
+      "category": "evidence",
+      "discoveryMethod": "inspect whiteboard",
       "description": "护士站白板上的排班表，记录着医护人员的值班安排"
     },
     {
       "id": "ITEM_SCN1_14",
       "name": "病历档案架",
+      "type": "container",
+      "containerStats": {
+        "capacity": 40,
+        "locked": false,
+        "contents": []
+      },
       "description": "一组存放病历和医疗记录表格的档案架。"
     }
   ],

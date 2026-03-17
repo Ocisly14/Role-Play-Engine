@@ -7,12 +7,14 @@
     {
       "id": "ITEM_SCN2_3",
       "name": "坍塌的建筑残骸",
-      "description": "半坍塌的二层小楼，部分房间尚且完好，但结构极不稳定"
+      "description": "半坍塌的二层小楼，部分房间尚且完好，但结构极不稳定",
+      "type": "other",
+      "damaged": true
     }
   ],
   "conditions": [
     {
-      "description": "建筑结构极不稳定，随时可能进一步坍塌。修格斯在此栖息，是整个卡森德拉最危险的区域之一。",
+      "description": "建筑结构极不稳定，随时可能进一步坍塌。废墟深处很可能栖息着某种体型巨大、对声音敏感的危险生物。",
       "mechanicalEffect": {
         "skillPenalty": [
           {

@@ -105,6 +105,22 @@
         "confidence": 0.9,
         "reasoningChain": "I have already gone too far to pretend I can walk away cleanly."
       }
+    },
+    {
+      "type": "information",
+      "content": "Patrizio expects me to smooth over complaints, disappear paperwork, and keep arrests from becoming stories people repeat.",
+      "metadata": {
+        "knowledgeId": "k_lux_patrol_duties",
+        "difficulty": "regular"
+      }
+    },
+    {
+      "type": "information",
+      "content": "I have survived this long by looking reliable to the people above me and forgettable to everyone else.",
+      "metadata": {
+        "knowledgeId": "k_lux_survival_pattern",
+        "difficulty": "regular"
+      }
     }
   ]
 }

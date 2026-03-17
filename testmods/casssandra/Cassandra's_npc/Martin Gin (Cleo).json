@@ -117,6 +117,22 @@
         "confidence": 0.9,
         "reasoningChain": "My best survival tool has always been control of identity and timing."
       }
+    },
+    {
+      "type": "information",
+      "content": "I keep my routes, aliases, and drop points separate because anyone who sees the whole pattern can start closing the net around me.",
+      "metadata": {
+        "knowledgeId": "k_martin_routes",
+        "difficulty": "regular"
+      }
+    },
+    {
+      "type": "information",
+      "content": "I prefer jobs that can be made to look like logistics, because that keeps people arguing over routes and paperwork instead of the violence itself.",
+      "metadata": {
+        "knowledgeId": "k_martin_clean_jobs",
+        "difficulty": "regular"
+      }
     }
   ]
 }

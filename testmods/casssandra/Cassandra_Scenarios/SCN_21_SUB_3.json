@@ -7,17 +7,26 @@
     {
       "id": "ITEM_SCN21_6",
       "name": "Ben Cleo的巨幅画像",
-      "description": "占据整面正墙的巨大画像，画中之人是黑手党头领Ben Cleo。画中的Ben身着长风衣，脸色阴沉，目光锐利。Ben不信仰神明也不信仰上帝，他只相信自己和手里的枪——因此议事厅里挂的是他自己的画像。"
+      "description": "占据整面正墙的巨大画像，画中之人是黑手党头领Ben Cleo。画中的Ben身着长风衣，脸色阴沉，目光锐利。Ben不信仰神明也不信仰上帝，他只相信自己和手里的枪——因此议事厅里挂的是他自己的画像。",
+      "type": "other"
     },
     {
       "id": "ITEM_SCN21_7",
       "name": "会议桌",
-      "description": "一张宽大的深色木制会议桌，桌面留着长期会谈和待客的使用痕迹。"
+      "description": "一张宽大的深色木制会议桌，桌面留着长期会谈和待客的使用痕迹。",
+      "type": "other"
     },
     {
       "id": "ITEM_SCN21_8",
       "name": "保险柜",
-      "description": "几只沉重的金属保险柜，柜门和转盘都有高频使用留下的磨损。"
+      "description": "几只沉重的金属保险柜，柜门和转盘都有高频使用留下的磨损。",
+      "type": "container",
+      "containerStats": {
+        "capacity": 12,
+        "locked": true,
+        "lockDifficulty": "hard",
+        "contents": []
+      }
     }
   ],
   "conditions": [
@@ -59,7 +68,9 @@
       }
     }
   ],
-  "connections": ["SCN_21_SUB_1"],
+  "connections": [
+    "SCN_21_SUB_1"
+  ],
   "itemContexts": {
     "ITEM_SCN21_7": "大厅中央的一张宽大的深色木制会议桌。这是Ben处理事务、接见访客和做出决策的主要场所。桌上放着一个烟灰缸和几只酒杯。",
     "ITEM_SCN21_8": "角落里放着几只沉重的金属保险柜。其中一只保存着Ben父亲卡绒的笔记，以及卡绒收集的与邪神活动相关的书籍、笔记和记录——不少是前克莱奥家族遗留未销毁的。"

@@ -7,7 +7,8 @@
     {
       "id": "ITEM_SCN19_1",
       "name": "Vincent Galenus妻子的墓碑",
-      "description": "一块相对较新的墓碑，上面刻着Vincent Galenus妻子的名字和生卒年份。墓碑前偶尔能看到枯萎的花束，显示有人曾来此祭拜。"
+      "description": "一块相对较新的墓碑，上面刻着Vincent Galenus妻子的名字和生卒年份。墓碑前偶尔能看到枯萎的花束，显示有人曾来此祭拜。",
+      "type": "other"
     }
   ],
   "conditions": [

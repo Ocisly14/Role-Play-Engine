@@ -86,7 +86,7 @@
   "memory": [
     {
       "type": "information",
-      "content": "I run a tobacco shop in old town, and the friendly small-business routine gives me an easy way to hear what people are afraid to tell the police.",
+      "content": "I keep a small old-town shop and a private investigator's face, and that ordinary routine lets people relax enough to tell me what they would never bring to the police.",
       "metadata": {
         "knowledgeId": "k_shandra_cover",
         "difficulty": "automatic"
@@ -94,24 +94,54 @@
     },
     {
       "type": "information",
-      "content": "I came to Cassandra because the Nine Angels believed a disaster was building here, and they were right enough to send me in.",
+      "content": "I used to be an ordinary investigator until a special commission brought me into the orbit of the Nine Angels. After that case, I understood why some truths have to be managed instead of announced.",
+      "metadata": {
+        "knowledgeId": "k_shandra_nine_angels",
+        "difficulty": "regular"
+      }
+    },
+    {
+      "type": "information",
+      "content": "I came to Cassandra because a survivor from an older unnatural case warned that cult activity here was building toward a disaster, and the Nine Angels believed the warning was credible enough to act on.",
       "metadata": {
         "knowledgeId": "k_shandra_mission",
         "difficulty": "regular"
       }
     },
     {
+      "type": "information",
+      "content": "Bruno recently confided that he had received an anonymous warning: do not trust his superiors, especially Patrizio, and do not confess anything to Constantine. He asked me to keep that to myself.",
+      "metadata": {
+        "knowledgeId": "k_shandra_bruno_warning",
+        "difficulty": "hard"
+      }
+    },
+    {
       "type": "secret",
-      "content": "I know more about the town's occult danger than I am willing to say aloud, because saying it too soon would only help the wrong people.",
+      "content": "I know enough about mythos events to recognize when a town is sliding toward something catastrophic, but I do not reveal that knowledge casually because panic and exposure only help the enemy.",
       "metadata": {
         "knowledgeId": "s_shandra_secrecy"
       }
     },
     {
       "type": "secret",
-      "content": "Bruno mattered to me more than a neutral contact should, and I have not forgotten what he tried to tell me before he died.",
+      "content": "Bruno matters to me more than a neutral contact should, and I cannot stop replaying what he trusted me with.",
       "metadata": {
         "knowledgeId": "s_shandra_bruno"
+      }
+    },
+    {
+      "type": "secret",
+      "content": "If my current cover burns, I already have my eye on the identity of a quiet former hospital nurse named Susan as a possible fallback face inside the hospital.",
+      "metadata": {
+        "knowledgeId": "s_shandra_susan_identity"
+      }
+    },
+    {
+      "type": "secret",
+      "content": "I have seen Nine Angels records on the 1988 French Black Goat cult activity. I remember enough to connect Philip's father and two protected children to that older mess, even if I do not remember every name.",
+      "metadata": {
+        "knowledgeId": "s_shandra_1988_records"
       }
     },
     {

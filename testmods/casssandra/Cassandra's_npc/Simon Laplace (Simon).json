@@ -86,10 +86,34 @@
     },
     {
       "type": "information",
+      "content": "I know Anatole exists. I can feel where some of his actions touched my life, but our memories do not line up cleanly and he can hide things from me.",
+      "metadata": {
+        "knowledgeId": "k_simon_anatole",
+        "difficulty": "regular"
+      }
+    },
+    {
+      "type": "information",
+      "content": "Nancy was the first person who treated me like a person instead of a problem. Finding her again and keeping her safe became the one thing in my life that still felt worth doing.",
+      "metadata": {
+        "knowledgeId": "k_simon_nancy",
+        "difficulty": "automatic"
+      }
+    },
+    {
+      "type": "information",
       "content": "I have evidence that Patrizio's influence reaches farther than it should, and I do not trust the people around him.",
       "metadata": {
         "knowledgeId": "k_simon_patrizio",
         "difficulty": "regular"
+      }
+    },
+    {
+      "type": "information",
+      "content": "About a year ago I pulled a single image file out of Patrizio's computer before two different counter-traces closed on me. The text is gone, but I am sure the missing material described something cultic and terrible.",
+      "metadata": {
+        "knowledgeId": "k_simon_stolen_file",
+        "difficulty": "hard"
       }
     },
     {
@@ -101,9 +125,23 @@
     },
     {
       "type": "secret",
-      "content": "The thing I lived through in France in 1988 is tied to Nancy's mother and to the reason I stay quiet about some parts of my past.",
+      "content": "The thing I lived through in France in 1988 is tied to Nancy's mother, a cult, and a train disaster. I do not talk about it because too much of that history can still get people killed.",
       "metadata": {
         "knowledgeId": "s_simon_1988"
+      }
+    },
+    {
+      "type": "secret",
+      "content": "I once hijacked a local broadcast to accuse Patrizio of being a cultist. He erased it quickly, and that was enough to convince me I had made myself visible to the wrong people.",
+      "metadata": {
+        "knowledgeId": "s_simon_broadcast"
+      }
+    },
+    {
+      "type": "secret",
+      "content": "Bruno worries me because I had half convinced myself he belonged to Patrizio's side. If he is actually pushing toward the same rot I found, then he is already in danger and I may have judged him very badly.",
+      "metadata": {
+        "knowledgeId": "s_simon_bruno"
       }
     },
     {

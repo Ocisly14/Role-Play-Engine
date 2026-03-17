@@ -7,22 +7,37 @@
     {
       "id": "ITEM_SCN3_3",
       "name": "上锁的工具柜",
-      "description": "法医工具被锁在专门的柜子里，柜体连接着监控与报警系统。"
+      "description": "法医工具被锁在专门的柜子里，柜体连接着监控与报警系统。",
+      "type": "container",
+      "containerStats": {
+        "capacity": 8,
+        "locked": true,
+        "lockDifficulty": "hard",
+        "contents": []
+      }
     },
     {
       "id": "ITEM_SCN3_5",
       "name": "不锈钢操作台",
-      "description": "工作室中央的不锈钢操作台被擦得过分干净，台面上几乎看不到任何残留痕迹。"
+      "description": "工作室中央的不锈钢操作台被擦得过分干净，台面上几乎看不到任何残留痕迹。",
+      "type": "other"
     },
     {
       "id": "ITEM_SCN3_6",
       "name": "空置证物架",
-      "description": "一组金属证物架，隔板上残留着重要物品被搬空后的浅浅灰印。"
+      "description": "一组金属证物架，隔板上残留着重要物品被搬空后的浅浅灰印。",
+      "type": "container",
+      "containerStats": {
+        "capacity": 12,
+        "locked": false,
+        "contents": []
+      }
     },
     {
       "id": "ITEM_SCN3_7",
       "name": "半球摄像头",
-      "description": "工具柜上方的半球形摄像头红灯一闪一闪，时刻监视着整个工作室。"
+      "description": "工具柜上方的半球形摄像头红灯一闪一闪，时刻监视着整个工作室。",
+      "type": "other"
     }
   ],
   "conditions": [
@@ -55,6 +70,6 @@
   ],
   "connections": ["SCN_3_SUB_1"],
   "itemContexts": {
-    "ITEM_SCN3_6": "靠墙的证物架上只剩下淡淡灰印，像是某些重要物品被匆忙撤走后留下的轮廓。"
+    "ITEM_SCN3_6": "靠墙的证物架上只剩下淡淡灰印，说明这里最近摆过一些尺寸不小的物件，如今已被转移到别处。"
   }
 }

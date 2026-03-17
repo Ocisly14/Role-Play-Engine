@@ -7,27 +7,44 @@
     {
       "id": "ITEM_SCN13_4",
       "name": "酿酒技术书架",
-      "description": "一组摆满酿酒工艺、发酵控制和小型工厂经营书籍的木书架。"
+      "description": "一组摆满酿酒工艺、发酵控制和小型工厂经营书籍的木书架。",
+      "type": "container",
+      "containerStats": {
+        "capacity": 12,
+        "locked": false
+      }
     },
     {
       "id": "ITEM_SCN13_5",
       "name": "剪报集",
-      "description": "几本厚重剪报集被按时间顺序码在一旁，边角卷起，明显被反复翻阅过。"
+      "description": "几本厚重剪报集被按时间顺序码在一旁，边角卷起，明显被反复翻阅过。",
+      "type": "document",
+      "category": "evidence",
+      "discoveryMethod": "inspect office shelf"
     },
     {
       "id": "ITEM_SCN13_6",
       "name": "桌上的报纸",
-      "description": "几份被反复翻看的旧报纸，纸页间夹着剪下来的版面和折角标记。"
+      "description": "几份被反复翻看的旧报纸，纸页间夹着剪下来的版面和折角标记。",
+      "type": "document",
+      "category": "evidence",
+      "discoveryMethod": "inspect desk"
     },
     {
       "id": "ITEM_SCN13_8",
       "name": "经营账本",
-      "description": "一本厚重的经营账本，里面按日期记录出货、工资和日常支出。"
+      "description": "一本厚重的经营账本，里面按日期记录出货、工资和日常支出。",
+      "type": "document",
+      "category": "evidence",
+      "discoveryMethod": "inspect desk"
     },
     {
       "id": "ITEM_SCN13_9",
       "name": "发票夹",
-      "description": "几只塞满进货单和工资条的发票夹，纸页按月份分开夹存。"
+      "description": "几只塞满进货单和工资条的发票夹，纸页按月份分开夹存。",
+      "type": "document",
+      "category": "evidence",
+      "discoveryMethod": "inspect desk"
     }
   ],
   "conditions": [

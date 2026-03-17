@@ -76,22 +76,29 @@
     },
     {
       "type": "information",
-      "content": "My hotel stay and the hotel records are all that connected me to the town before the case was shelved.",
+      "content": "I was not from Cassandra, which meant nobody here knew my face and nobody local was going to file a missing report for me if I disappeared too.",
       "metadata": {
-        "knowledgeId": "k_unknown_hotel",
+        "knowledgeId": "k_unknown_outsider",
         "difficulty": "regular"
       }
     },
     {
       "type": "secret",
-      "content": "My sister had already been sacrificed to Shub-Niggurath a year before I arrived.",
+      "content": "My hotel stay, my notes, and a few receipts were the only proof I had that I was here looking for my sister at all. I kept records because I was afraid my search would vanish with me.",
+      "metadata": {
+        "knowledgeId": "s_unknown_hotel"
+      }
+    },
+    {
+      "type": "secret",
+      "content": "By the time I arrived, somebody in Cassandra already wanted my sister's trail buried. I never found out who, only that every lead here felt wrong.",
       "metadata": {
         "knowledgeId": "s_unknown_sister"
       }
     },
     {
       "type": "secret",
-      "content": "My own death at the Paradil Hotel was never properly identified or investigated.",
+      "content": "I became the nameless girl from the Paradil Hotel cold storage, and the town let the case go cold almost as quickly as my body.",
       "metadata": {
         "knowledgeId": "s_unknown_death"
       }

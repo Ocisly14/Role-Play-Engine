@@ -7,16 +7,26 @@
     {
       "id": "ITEM_SCN1_8",
       "name": "药品货架",
+      "type": "container",
+      "containerStats": {
+        "capacity": 24,
+        "locked": false,
+        "contents": []
+      },
       "description": "一组用于存放常规医疗药品的货架和冷藏柜。"
     },
     {
       "id": "ITEM_SCN1_9",
       "name": "暗门",
+      "type": "other",
       "description": "药品管理室深处的一扇秘密小门，标注着需要Vincent Galenus的最高权限才能进入"
     },
     {
       "id": "ITEM_SCN1_10",
       "name": "魔鬼呼吸（东莨菪碱）",
+      "type": "consumable",
+      "category": "evidence",
+      "discoveryMethod": "inspect hidden box",
       "description": "暗门后发现的危险药品，被小心翼翼地放在一个盒子里，周围标有危险标识。这种药物来自南美，从一种名为'波拉切洛'的植物中提取。一克的致幻效果相当于一克海洛因，毒性甚至比炭疽更强，过量服用可顷刻致命。更可怕的是，它能让服用者丧失自主意识，变得犹如人偶一样任人摆布，严重时甚至造成失忆。医院档案中没有此物品的任何记录。"
     }
   ],

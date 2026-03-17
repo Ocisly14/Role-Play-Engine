@@ -73,6 +73,14 @@
     },
     {
       "type": "information",
+      "content": "I remember Johnny's night at the Reindeer Bar ending in a fight with Philip, not in a promise from me, and I do not want that story inflated any further.",
+      "metadata": {
+        "knowledgeId": "k_helen_reindeer_bar",
+        "difficulty": "regular"
+      }
+    },
+    {
+      "type": "information",
       "content": "Vito once worried about me visiting Shandra's cabin for Bruno, but it was a misunderstanding and nothing more.",
       "metadata": {
         "knowledgeId": "k_helen_vito_misunderstanding",
@@ -94,8 +102,15 @@
       }
     },
     {
+      "type": "secret",
+      "content": "I keep my past tight and private because once people start digging into old violence, they stop seeing the life I built for myself.",
+      "metadata": {
+        "knowledgeId": "s_helen_past_control"
+      }
+    },
+    {
       "type": "belief",
-      "content": "The safest life is one where I stay useful, stay calm, and let dangerous people underestimate me.",
+      "content": "For me, the safest life is one where I stay useful, stay calm, and let dangerous people underestimate me.",
       "metadata": {
         "confidence": 0.85,
         "reasoningChain": "Being underestimated kept me alive before, and it still works."

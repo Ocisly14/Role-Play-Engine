@@ -78,6 +78,14 @@
     },
     {
       "type": "information",
+      "content": "Ben Cleo trusts me because I have kept the station quiet for decades and never asked for more than my pay.",
+      "metadata": {
+        "knowledgeId": "k_haran_ben_trust",
+        "difficulty": "regular"
+      }
+    },
+    {
+      "type": "information",
       "content": "My work records the cargo movements that pass through the station, and I know which shipments are more sensitive than others.",
       "metadata": {
         "knowledgeId": "k_haran_cargo",
@@ -86,14 +94,21 @@
     },
     {
       "type": "secret",
-      "content": "The work shack connects to the mafia headquarters entrance, and I serve as the guard there when needed.",
+      "content": "I know the work shack connects to the mafia headquarters entrance, and I serve as the guard there when needed.",
       "metadata": {
         "knowledgeId": "s_haran_shack"
       }
     },
     {
+      "type": "secret",
+      "content": "I can tell which cargo is meant for ordinary freight and which cargo should never be written down too clearly.",
+      "metadata": {
+        "knowledgeId": "s_haran_sensitive_cargo"
+      }
+    },
+    {
       "type": "belief",
-      "content": "The safest way to finish my life is to stay useful, stay quiet, and not ask questions that do not concern the station.",
+      "content": "For me, the safest way to finish my life is to stay useful, stay quiet, and not ask questions that do not concern the station.",
       "metadata": {
         "confidence": 0.85,
         "reasoningChain": "Decades of work have taught me that curiosity rarely helps a man my age."

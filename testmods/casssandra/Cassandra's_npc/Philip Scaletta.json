@@ -106,6 +106,22 @@
         "confidence": 0.78,
         "reasoningChain": "People who look harmless survive longer when they stay blurry. The fewer details I give out, the fewer reasons anyone has to come after me."
       }
+    },
+    {
+      "type": "information",
+      "content": "The Reindeer Bar incident taught me that one wrong pocket can turn into a permanent problem if I stay in the room too long.",
+      "metadata": {
+        "knowledgeId": "k_philip_bar_problem",
+        "difficulty": "regular"
+      }
+    },
+    {
+      "type": "information",
+      "content": "I have learned that if people remember me as a fool, they usually stop looking for the hand that actually took the thing.",
+      "metadata": {
+        "knowledgeId": "k_philip_playing_fool",
+        "difficulty": "regular"
+      }
     }
   ]
 }

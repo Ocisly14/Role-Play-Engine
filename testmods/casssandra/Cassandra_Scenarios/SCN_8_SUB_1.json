@@ -7,37 +7,46 @@
     {
       "id": "ITEM_SCN8_1",
       "name": "Philip的改造夹克",
-      "description": "一件看起来陈旧的夹克，内侧经过精心改造，加装了多个隐蔽暗袋，方便藏匿赃物。"
+      "description": "一件看起来陈旧的夹克，内侧经过精心改造，加装了多个隐蔽暗袋，方便藏匿赃物。",
+      "type": "other"
     },
     {
       "id": "ITEM_SCN8_2",
       "name": "偷来的零碎战利品",
-      "description": "一堆偷来的零碎战利品，包括手表、钱夹、首饰和小装饰品。"
+      "description": "一堆偷来的零碎战利品，包括手表、钱夹、首饰和小装饰品。",
+      "type": "other"
     },
     {
       "id": "ITEM_SCN8_3",
       "name": "全家福老照片",
-      "description": "一张被藏在隐蔽处的全家福老照片，记录着Philip与父母还未破碎的旧日生活。"
+      "description": "一张被藏在隐蔽处的全家福老照片，记录着Philip与父母还未破碎的旧日生活。",
+      "type": "document"
     },
     {
       "id": "ITEM_SCN8_4",
       "name": "开锁工具",
-      "description": "几支临时改造的开锁工具，磨损痕迹表明它们曾被频繁使用。"
+      "description": "几支临时改造的开锁工具，磨损痕迹表明它们曾被频繁使用。",
+      "type": "tool"
     },
     {
       "id": "ITEM_SCN8_5",
       "name": "显像管电视机",
-      "description": "一台笨重的显像管电视机，屏幕积着薄灰，塑料外壳留着长年使用的划痕。"
+      "description": "一台笨重的显像管电视机，屏幕积着薄灰，塑料外壳留着长年使用的划痕。",
+      "type": "other"
     },
     {
       "id": "ITEM_SCN8_6",
       "name": "典当票据",
-      "description": "几张揉皱的典当票夹在杯垫下面，能看出Philip并不总是把到手的东西全部留下。"
+      "description": "几张揉皱的典当票夹在杯垫下面，能看出Philip并不总是把到手的东西全部留下。",
+      "type": "document",
+      "category": "evidence",
+      "discoveryMethod": "inspect hidden papers"
     },
     {
       "id": "ITEM_SCN8_7",
       "name": "细钢丝卷",
-      "description": "一卷被拉得有些变形的细钢丝，常被当作配合开锁工具的辅助材料。"
+      "description": "一卷被拉得有些变形的细钢丝，常被当作配合开锁工具的辅助材料。",
+      "type": "tool"
     }
   ],
   "conditions": [

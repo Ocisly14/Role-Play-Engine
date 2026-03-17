@@ -99,6 +99,21 @@
         "confidence": 0.8,
         "reasoningChain": "The less I involve myself, the less likely I am to become collateral."
       }
+    },
+    {
+      "type": "information",
+      "content": "The church clock I built is one of the few things in town I trust to tell the truth when people do not.",
+      "metadata": {
+        "knowledgeId": "k_marks_church_clock",
+        "difficulty": "regular"
+      }
+    },
+    {
+      "type": "secret",
+      "content": "When the clocks slip out of sync, I take it as a warning that something unnatural is moving nearby.",
+      "metadata": {
+        "knowledgeId": "s_marks_time_warning"
+      }
     }
   ]
 }

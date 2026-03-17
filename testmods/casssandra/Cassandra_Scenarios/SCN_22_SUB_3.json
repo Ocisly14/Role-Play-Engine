@@ -7,17 +7,39 @@
     {
       "id": "ITEM_SCN22_7",
       "name": "封蜡文件盒",
-      "description": "几只厚纸文件盒外侧贴着日期标签，盒盖边缘用旧式封蜡加固。"
+      "description": "几只厚纸文件盒外侧贴着日期标签，盒盖边缘用旧式封蜡加固。",
+      "type": "container",
+      "containerStats": {
+        "capacity": 8,
+        "locked": true,
+        "lockDifficulty": "regular",
+        "contents": []
+      }
     },
     {
       "id": "ITEM_SCN22_8",
       "name": "上锁木箱",
-      "description": "两只沉重的木箱紧靠墙角，上着黄铜挂锁，箱盖有长期搬动留下的擦痕。"
+      "description": "两只沉重的木箱紧靠墙角，上着黄铜挂锁，箱盖有长期搬动留下的擦痕。",
+      "type": "container",
+      "containerStats": {
+        "capacity": 10,
+        "locked": true,
+        "lockDifficulty": "hard",
+        "contents": []
+      }
     },
     {
       "id": "ITEM_SCN22_9",
       "name": "碎纸盆",
-      "description": "金属碎纸盆里堆着未完全烧净的纸屑和发黑纸边。"
+      "description": "金属碎纸盆里堆着未完全烧净的纸屑和发黑纸边。",
+      "type": "container",
+      "category": "evidence",
+      "discoveryMethod": "inspect shred bin",
+      "containerStats": {
+        "capacity": 3,
+        "locked": false,
+        "contents": []
+      }
     }
   ],
   "conditions": [
@@ -44,7 +66,9 @@
       }
     }
   ],
-  "connections": ["SCN_22_SUB_2"],
+  "connections": [
+    "SCN_22_SUB_2"
+  ],
   "itemContexts": {
     "ITEM_SCN22_7": "文件盒外侧的日期标签按年份排列，摆放方式带着近乎病态的整齐。",
     "ITEM_SCN22_9": "碎纸盆里压着几片没有完全烧透的纸角，像是被反复确认过内容才处理掉。"

@@ -7,32 +7,74 @@
     {
       "id": "ITEM_SCN18_1",
       "name": "五金工具陈列",
-      "description": "货架上摆满了各种常见的五金工具——锤子、扳手、螺丝刀、钉子、锯条等，品类齐全，价格公道。"
+      "description": "货架上摆满了各种常见的五金工具——锤子、扳手、螺丝刀、钉子、锯条等，品类齐全，价格公道。",
+      "type": "tool"
     },
     {
       "id": "ITEM_SCN18_2",
       "name": "Harrison的小发明（非卖品）",
-      "description": "几件经过巧妙改装的小型机械装置，都被标注为非卖品。"
+      "description": "几件经过巧妙改装的小型机械装置，都被标注为非卖品。",
+      "type": "tool"
     },
     {
       "id": "ITEM_SCN18_3",
       "name": "雷明顿M870霰弹枪",
-      "description": "先进的584毫米滑膛枪管，枪托带有横向防滑纹，制作精良，性能可靠。售价4000美元。（需说出暗号后才会展示）"
+      "description": "先进的584毫米滑膛枪管，枪托带有横向防滑纹，制作精良，性能可靠。售价4000美元。（需说出暗号后才会展示）",
+      "type": "weapon",
+      "weaponStats": {
+        "skill": "Rifle",
+        "damage": "4d6/2d6/1d6",
+        "range": "10/20/50 yards",
+        "attacksPerRound": 1,
+        "ammo": 5,
+        "malfunction": 100,
+        "era": "modern"
+      }
     },
     {
       "id": "ITEM_SCN18_4",
       "name": "沙漠之鹰手枪（.44马格南型）",
-      "description": "造型优雅，威力巨大。卡森德拉仅此一家。售价1000美元。（需说出暗号后才会展示）"
+      "description": "造型优雅，威力巨大。卡森德拉仅此一家。售价1000美元。（需说出暗号后才会展示）",
+      "type": "weapon",
+      "weaponStats": {
+        "skill": "Handgun",
+        "damage": "1d10+1d6+3",
+        "range": "15 yards",
+        "attacksPerRound": 3,
+        "ammo": 7,
+        "malfunction": 94,
+        "era": "modern"
+      }
     },
     {
       "id": "ITEM_SCN18_5",
       "name": "史密斯625转轮手枪",
-      "description": "不锈钢枪身，产于1987年，基于M1917碳钢转轮手枪的限量版，全世界仅5000把。.45ACP转轮手枪弹药，火力一流，绝不卡壳。Harrison本想收藏，非卖品——除非通过议价技能说服他，以10000美元购入。（需说出暗号后才会展示）"
+      "description": "不锈钢枪身，产于1987年，基于M1917碳钢转轮手枪的限量版，全世界仅5000把。.45ACP转轮手枪弹药，火力一流，绝不卡壳。Harrison本想收藏，非卖品——除非通过议价技能说服他，以10000美元购入。（需说出暗号后才会展示）",
+      "type": "weapon",
+      "weaponStats": {
+        "skill": "Handgun",
+        "damage": "1d10+2",
+        "range": "15 yards",
+        "attacksPerRound": 3,
+        "ammo": 6,
+        "malfunction": 100,
+        "era": "modern"
+      }
     },
     {
       "id": "ITEM_SCN18_6",
       "name": "柯尔特M16步枪",
-      "description": "5.56毫米口径，遭遇战大杀器。扣动扳机即可结束战斗。售价3000美元，圣诞节促销活动附送弹药。（需说出暗号后才会展示）"
+      "description": "5.56毫米口径，遭遇战大杀器。扣动扳机即可结束战斗。售价3000美元，圣诞节促销活动附送弹药。（需说出暗号后才会展示）",
+      "type": "weapon",
+      "weaponStats": {
+        "skill": "Rifle",
+        "damage": "2d6",
+        "range": "110 yards",
+        "attacksPerRound": 3,
+        "ammo": 30,
+        "malfunction": 97,
+        "era": "modern"
+      }
     }
   ],
   "conditions": [

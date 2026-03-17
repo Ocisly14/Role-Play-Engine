@@ -7,12 +7,16 @@
     {
       "id": "ITEM_SCN2_1",
       "name": "焚化炉",
-      "description": "破旧的焚化炉，内部有近期使用过的痕迹，炉膛中残留着灰烬"
+      "description": "破旧的焚化炉，内部有近期使用过的痕迹，炉膛中残留着灰烬",
+      "type": "other"
     },
     {
       "id": "ITEM_SCN2_2",
       "name": "焚化记录",
-      "description": "焚化厂的简易记录簿，可能记载着近期焚化的物品和尸体信息"
+      "description": "焚化厂的简易记录簿，可能记载着近期焚化的物品和尸体信息",
+      "type": "document",
+      "category": "evidence",
+      "discoveryMethod": "inspect logbook"
     }
   ],
   "conditions": [
@@ -39,7 +43,7 @@
       }
     },
     {
-      "description": "这是一片危险区域，深潜者祭司曾在此试验控制修格斯并将其遗弃于此",
+      "description": "这是一片危险区域，过去似乎有人在此进行过失控的危险试验，废墟深处现在可能仍潜伏着会被动静惊醒的未知生物。",
       "mechanicalEffect": {
         "skillPenalty": [
           {
@@ -50,5 +54,9 @@
       }
     }
   ],
-  "connections": ["SCN_2_SUB_2", "SCN_2_SUB_3", "JUNC_1"]
+  "connections": [
+    "SCN_2_SUB_2",
+    "SCN_2_SUB_3",
+    "JUNC_1"
+  ]
 }

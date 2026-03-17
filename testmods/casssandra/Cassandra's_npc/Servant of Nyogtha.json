@@ -76,6 +76,14 @@
         "confidence": 0.85,
         "reasoningChain": "Deception shortens the distance between the surface and the abyss."
       }
+    },
+    {
+      "type": "information",
+      "content": "I know every drain, crawlspace, and foundation crack that leads from one feeding ground to another.",
+      "metadata": {
+        "knowledgeId": "k_servant_routes",
+        "difficulty": "regular"
+      }
     }
   ]
 }

@@ -47,7 +47,7 @@
   "memory": [
     {
       "type": "information",
-      "content": "Dreamlands cold spiders are far stronger and more resilient than those encountered in the waking world.",
+      "content": "In the Dreamlands I am larger, harder, and more complete than the weak hunting form that crawls through waking reality.",
       "metadata": {
         "knowledgeId": "k_coldspider_dreamlands_strength",
         "difficulty": "regular"
@@ -55,7 +55,15 @@
     },
     {
       "type": "information",
-      "content": "Some cold spiders grow to truly gigantic size, and those beasts are feared even by others of my kind.",
+      "content": "The great web can carry my kind into the waking world, but the crossing strips strength away from us. Reality is only a thinner hunting skin.",
+      "metadata": {
+        "knowledgeId": "k_coldspider_crossing",
+        "difficulty": "regular"
+      }
+    },
+    {
+      "type": "information",
+      "content": "Some of my kind swell into enormous things even spiders fear. I know better than to trespass on the strands claimed by such elders.",
       "metadata": {
         "knowledgeId": "k_coldspider_gigantic",
         "difficulty": "hard"
@@ -63,14 +71,14 @@
     },
     {
       "type": "secret",
-      "content": "Cold spiders do not cooperate. Cannibalism and territorial violence are normal, especially when prey or web-space is scarce.",
+      "content": "I do not trust other cold spiders. Hunger turns webmates into rivals, and rivalry turns quickly into cannibalism when prey or web-space grows scarce.",
       "metadata": {
         "knowledgeId": "s_coldspider_cannibalism"
       }
     },
     {
       "type": "belief",
-      "content": "Only the strongest spiders deserve the best prey and the safest strands of the web.",
+      "content": "Only the strongest hunter deserves the safest strand and the softest prey.",
       "metadata": {
         "confidence": 0.85,
         "reasoningChain": "The Dreamlands are large enough for many hunters, but only dominance keeps a spider alive."

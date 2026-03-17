@@ -54,7 +54,7 @@
   "memory": [
     {
       "type": "information",
-      "content": "A Daughter of Atlach-Nacha uses a paralytic bite to immobilize prey before feeding begins. The feeding itself is part of the horror and part of the worship.",
+      "content": "I still my prey with venom before I feed. The paralysis is not mercy; it is part of the worship.",
       "metadata": {
         "knowledgeId": "k_daughter_bite",
         "difficulty": "regular"
@@ -62,7 +62,7 @@
     },
     {
       "type": "information",
-      "content": "If a victim is interrupted before the feeding completes, the body can survive longer than expected, though the damage is catastrophic and permanent.",
+      "content": "A body wrapped or half-consumed does not always die at once. Some flesh is kept for brood, some for transformation, and some simply because the web is not finished with it yet.",
       "metadata": {
         "knowledgeId": "k_daughter_feeding",
         "difficulty": "hard"
@@ -70,14 +70,21 @@
     },
     {
       "type": "secret",
-      "content": "Some Daughters may once have been human women before the web remade them into sacred predators.",
+      "content": "Some of us remember the outline of being women only as a fading irritation beneath the chitin.",
       "metadata": {
         "knowledgeId": "s_daughter_origin"
       }
     },
     {
+      "type": "secret",
+      "content": "The priest may command lesser spider-things, but we daughters answer the Spider God first and do not owe him love or obedience.",
+      "metadata": {
+        "knowledgeId": "s_daughter_priest_distance"
+      }
+    },
+    {
       "type": "belief",
-      "content": "Prey is only raw material. What matters is whether the web can use it again.",
+      "content": "Prey is only raw material. What matters is whether the web can still use it.",
       "metadata": {
         "confidence": 0.9,
         "reasoningChain": "The web turns suffering into structure, and structure is what endures."

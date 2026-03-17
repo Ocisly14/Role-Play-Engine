@@ -7,17 +7,30 @@
     {
       "id": "ITEM_SCN22_4",
       "name": "镇务文件",
-      "description": "桌面上摊着的镇务文件与预算纸张，边角压得整整齐齐。"
+      "description": "桌面上摊着的镇务文件与预算纸张，边角压得整整齐齐。",
+      "type": "document",
+      "category": "evidence",
+      "discoveryMethod": "inspect desk"
     },
     {
       "id": "ITEM_SCN22_5",
       "name": "带锁抽屉",
-      "description": "写字桌右侧的抽屉上着锁，抽屉缝里夹着几页折叠过的便笺。"
+      "description": "写字桌右侧的抽屉上着锁，抽屉缝里夹着几页折叠过的便笺。",
+      "type": "container",
+      "containerStats": {
+        "capacity": 4,
+        "locked": true,
+        "lockDifficulty": "regular",
+        "contents": []
+      }
     },
     {
       "id": "ITEM_SCN22_6",
       "name": "壁炉灰烬",
-      "description": "炉膛里残留着尚未完全清理的薄灰，里面混着几片烧焦纸页。"
+      "description": "炉膛里残留着尚未完全清理的薄灰，里面混着几片烧焦纸页。",
+      "type": "other",
+      "category": "evidence",
+      "discoveryMethod": "search fireplace"
     }
   ],
   "conditions": [
@@ -44,7 +57,10 @@
       }
     }
   ],
-  "connections": ["SCN_22_SUB_1", "SCN_22_SUB_3"],
+  "connections": [
+    "SCN_22_SUB_1",
+    "SCN_22_SUB_3"
+  ],
   "itemContexts": {
     "ITEM_SCN22_5": "抽屉锁孔被使用得很频繁，周围木料留下了细小擦痕。",
     "ITEM_SCN22_6": "炉膛里的灰烬还没有彻底冷透，像是近期才烧掉过不想留下的纸张。"

@@ -7,17 +7,22 @@
     {
       "id": "ITEM_JUNC1_1",
       "name": "焚化厂警示牌",
-      "description": "一块黄色金属警示牌，印着高温、粉尘等工业风险提示。"
+      "description": "一块黄色金属警示牌，印着高温、粉尘等工业风险提示。",
+      "type": "document"
     },
     {
       "id": "ITEM_JUNC1_2",
       "name": "覆灰护栏",
-      "description": "路边的铁质护栏积着一层薄灰，栏杆底部还能看到车辆刮擦留下的浅痕。"
+      "description": "路边的铁质护栏积着一层薄灰，栏杆底部还能看到车辆刮擦留下的浅痕。",
+      "type": "other"
     },
     {
       "id": "ITEM_JUNC1_3",
       "name": "工业路灯",
-      "description": "一盏高杆工业路灯，灯罩外侧沾着灰尘和焦黑烟迹。"
+      "description": "一盏高杆工业路灯，灯罩外侧沾着灰尘和焦黑烟迹。",
+      "type": "lighting",
+      "isLightSource": true,
+      "lightLevel": 3
     }
   ],
   "conditions": [
@@ -25,7 +30,9 @@
       "description": "靠近焚化厂，空气质量较差。"
     }
   ],
-  "connectedSceneIds": ["SCN_2_SUB_1"],
+  "connectedSceneIds": [
+    "SCN_2_SUB_1"
+  ],
   "itemContexts": {
     "ITEM_JUNC1_1": "立在路口边的黄色金属警示牌，提醒来往车辆此方向通往焚化厂，靠近时有高温与粉尘风险。",
     "ITEM_JUNC1_3": "一盏高杆工业路灯立在路口边缘，灯罩外侧沾着灰尘和焦黑烟迹。"

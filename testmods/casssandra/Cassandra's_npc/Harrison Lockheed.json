@@ -83,7 +83,15 @@
     },
     {
       "type": "information",
-      "content": "The phrase for buying guns is 'What happens when you hit a nail with a hammer?' and the people who know it know how to ask quietly.",
+      "content": "I can usually tell when a customer wants hardware as an excuse to ask about guns, and I know how to steer the conversation.",
+      "metadata": {
+        "knowledgeId": "k_harrison_customer_read",
+        "difficulty": "regular"
+      }
+    },
+    {
+      "type": "information",
+      "content": "When someone wants to buy guns from me, I make them ask with the phrase 'What happens when you hit a nail with a hammer?' and only the quiet ones get taken seriously.",
       "metadata": {
         "knowledgeId": "k_harrison_code",
         "difficulty": "regular"
@@ -101,6 +109,13 @@
       "content": "Ben Cleo and Adolph Carl both know about my arms business, and Ben's protection is one reason I can keep operating.",
       "metadata": {
         "knowledgeId": "s_harrison_protection"
+      }
+    },
+    {
+      "type": "secret",
+      "content": "Some of my best modifications are kept back for people who can pay well and keep their mouths shut.",
+      "metadata": {
+        "knowledgeId": "s_harrison_special_mods"
       }
     },
     {

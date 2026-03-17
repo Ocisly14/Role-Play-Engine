@@ -7,32 +7,44 @@
     {
       "id": "ITEM_SCN6_4",
       "name": "蒙尘沙发",
-      "description": "一张被厚厚灰尘罩住的旧沙发，坐垫上还保留着久远的下陷痕迹。"
+      "description": "一张被厚厚灰尘罩住的旧沙发，坐垫上还保留着久远的下陷痕迹。",
+      "type": "other"
     },
     {
       "id": "ITEM_SCN6_5",
       "name": "堆满落叶的壁炉",
-      "description": "壁炉炉膛里积着干枯落叶和碎屑，像是很久以前就失去了取暖的功能。"
+      "description": "壁炉炉膛里积着干枯落叶和碎屑，像是很久以前就失去了取暖的功能。",
+      "type": "other"
     },
     {
       "id": "ITEM_SCN6_6",
       "name": "半开的橱柜",
-      "description": "一只木质橱柜，柜门歪斜半开，木板边缘因潮气而起翘。"
+      "description": "一只木质橱柜，柜门歪斜半开，木板边缘因潮气而起翘。",
+      "type": "container",
+      "containerStats": {
+        "capacity": 10,
+        "locked": false,
+        "contents": []
+      }
     },
     {
       "id": "ITEM_SCN6_7",
       "name": "歪斜镜框",
-      "description": "一只歪斜的镜框，玻璃蒙尘得几乎照不出人影。"
+      "description": "一只歪斜的镜框，玻璃蒙尘得几乎照不出人影。",
+      "type": "other"
     },
     {
       "id": "ITEM_SCN6_13",
       "name": "木质茶几",
-      "description": "一张木质茶几，表面结着灰，桌角留着模糊的杯底圆印。"
+      "description": "一张木质茶几，表面结着灰，桌角留着模糊的杯底圆印。",
+      "type": "other"
     },
     {
       "id": "ITEM_SCN6_14",
       "name": "蒙尘瓷杯",
-      "description": "几只蒙尘瓷杯，其中一只杯沿磕出了一道明显缺口。"
+      "description": "几只蒙尘瓷杯，其中一只杯沿磕出了一道明显缺口。",
+      "type": "other",
+      "damaged": true
     }
   ],
   "conditions": [

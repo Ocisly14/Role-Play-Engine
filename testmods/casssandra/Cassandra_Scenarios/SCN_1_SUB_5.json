@@ -7,21 +7,25 @@
     {
       "id": "ITEM_SCN1_11",
       "name": "病房门列",
+      "type": "other",
       "description": "一列半掩的病房门，褪色的房号牌和护墙板刮痕清晰可见。"
     },
     {
       "id": "ITEM_SCN1_12",
       "name": "推床",
+      "type": "tool",
       "description": "一辆空推床，金属护栏冰冷发亮，白床单被折得一丝不苟。"
     },
     {
       "id": "ITEM_SCN1_18",
       "name": "输液架",
+      "type": "tool",
       "description": "几只可移动输液架，底部轮子转动时会发出轻微金属噪音。"
     },
     {
       "id": "ITEM_SCN1_19",
       "name": "床头监护仪",
+      "type": "tool",
       "description": "一台处于待机状态的心电监护仪，偶尔闪一下微弱的提示灯。"
     }
   ],

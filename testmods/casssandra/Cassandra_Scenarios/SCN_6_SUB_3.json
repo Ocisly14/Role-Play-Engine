@@ -7,27 +7,37 @@
     {
       "id": "ITEM_SCN6_8",
       "name": "蒙尘双人床",
-      "description": "一张仍铺着被褥的双人床，布料已经被细灰染成一层死气沉沉的灰白色。"
+      "description": "一张仍铺着被褥的双人床，布料已经被细灰染成一层死气沉沉的灰白色。",
+      "type": "other"
     },
     {
       "id": "ITEM_SCN6_9",
       "name": "褪色相框",
-      "description": "一只蒙尘相框，玻璃下面压着褪色严重的旧照，人物轮廓已模糊得难以辨认。"
+      "description": "一只蒙尘相框，玻璃下面压着褪色严重的旧照，人物轮廓已模糊得难以辨认。",
+      "type": "document"
     },
     {
       "id": "ITEM_SCN6_10",
       "name": "空衣柜",
-      "description": "一只几乎空无一物的衣柜，木板内壁上还留着浅色衣物痕迹。"
+      "description": "一只几乎空无一物的衣柜，木板内壁上还留着浅色衣物痕迹。",
+      "type": "container",
+      "containerStats": {
+        "capacity": 5,
+        "locked": false,
+        "contents": []
+      }
     },
     {
       "id": "ITEM_SCN6_11",
       "name": "设备痕迹明显的书桌",
-      "description": "一张橡木书桌，桌面留着规则设备印记和穿线孔，其余部分覆着厚厚一层灰。"
+      "description": "一张橡木书桌，桌面留着规则设备印记和穿线孔，其余部分覆着厚厚一层灰。",
+      "type": "other"
     },
     {
       "id": "ITEM_SCN6_15",
       "name": "歪斜衣架",
-      "description": "几只歪斜的衣架，弯钩和横杆都带着长久闲置后的轻微锈痕。"
+      "description": "几只歪斜的衣架，弯钩和横杆都带着长久闲置后的轻微锈痕。",
+      "type": "other"
     }
   ],
   "conditions": [

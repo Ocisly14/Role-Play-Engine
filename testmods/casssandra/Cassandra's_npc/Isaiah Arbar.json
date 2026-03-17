@@ -56,6 +56,14 @@
       }
     },
     {
+      "type": "information",
+      "content": "David and I used pharmaceutical and forestry fronts to hide our money and our rites from Cassandra's people.",
+      "metadata": {
+        "knowledgeId": "k_isaiah_fronts",
+        "difficulty": "regular"
+      }
+    },
+    {
       "type": "secret",
       "content": "I participated in human sacrifice rituals dedicated to Shub-Niggurath and consumed the milk of the Dark Mother.",
       "metadata": {
@@ -67,6 +75,13 @@
       "content": "During a ritual in 2002 I was transformed into a monstrous entity, and that change is not something I can easily hide.",
       "metadata": {
         "knowledgeId": "s_isaiah_transformed"
+      }
+    },
+    {
+      "type": "secret",
+      "content": "After the 2002 ritual, I could no longer expect to pass as an ordinary man in public, which is why I stay out of sight.",
+      "metadata": {
+        "knowledgeId": "s_isaiah_public_hide"
       }
     },
     {

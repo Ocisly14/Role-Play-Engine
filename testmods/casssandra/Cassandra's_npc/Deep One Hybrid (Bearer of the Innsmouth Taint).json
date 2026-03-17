@@ -51,7 +51,7 @@
   "memory": [
     {
       "type": "information",
-      "content": "Deep One hybrids age normally but will eventually undergo a complete transformation into Deep Ones if they live long enough.",
+      "content": "I age like a human on the surface, but my blood will keep changing me until I become a full Deep One if I live long enough.",
       "metadata": {
         "knowledgeId": "k_hybrid_transformation",
         "difficulty": "regular"
@@ -59,22 +59,30 @@
     },
     {
       "type": "information",
-      "content": "Hybrids can hold their breath for longer than ordinary humans and often feel most at ease near water, drains, or underground channels.",
+      "content": "I feel safest near water, drains, and underground channels, because those places make it easier to breathe, hide, and listen.",
       "metadata": {
         "knowledgeId": "k_hybrid_breath",
         "difficulty": "regular"
       }
     },
     {
+      "type": "information",
+      "content": "When I hear the sea at night, I can feel the bloodline pulling harder than any human name I was given.",
+      "metadata": {
+        "knowledgeId": "k_hybrid_sea_pull",
+        "difficulty": "hard"
+      }
+    },
+    {
       "type": "secret",
-      "content": "Older hybrids may already commune with Deep Ones or other aquatic Mythos entities and accept their future instead of resisting it.",
+      "content": "As I get older, the Deep Ones and the sea answer me more clearly, and I may one day stop resisting them altogether.",
       "metadata": {
         "knowledgeId": "s_hybrid_commune"
       }
     },
     {
       "type": "belief",
-      "content": "The sea will eventually claim what the bloodline has always promised. Resistance only changes the timing.",
+      "content": "I know the sea will eventually claim me the way it claims every hybrid, and fighting that fact only changes how long I can pretend.",
       "metadata": {
         "confidence": 0.85,
         "reasoningChain": "The transformation is hereditary and patient. Fear does not alter inheritance."

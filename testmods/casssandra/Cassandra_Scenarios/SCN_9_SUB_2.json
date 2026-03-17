@@ -7,32 +7,53 @@
     {
       "id": "ITEM_SCN9_2",
       "name": "小酒窖",
-      "description": "一间石砌拱顶的小酒窖，空气阴凉潮湿，存着数瓶红酒与苹果白兰地。"
+      "description": "一间石砌拱顶的小酒窖，空气阴凉潮湿，存着数瓶红酒与苹果白兰地。",
+      "type": "other"
     },
     {
       "id": "ITEM_SCN9_9",
       "name": "橡木餐桌",
-      "description": "一张四人座橡木餐桌，桌面结实宽阔，边缘打磨得圆润。"
+      "description": "一张四人座橡木餐桌，桌面结实宽阔，边缘打磨得圆润。",
+      "type": "other"
     },
     {
       "id": "ITEM_SCN9_10",
       "name": "搪瓷炖锅",
-      "description": "一只搪瓷炖锅，锅盖边缘凝着湿润白雾，锅身还保着余温。"
+      "description": "一只搪瓷炖锅，锅盖边缘凝着湿润白雾，锅身还保着余温。",
+      "type": "tool"
     },
     {
       "id": "ITEM_SCN9_11",
       "name": "木质酒架",
-      "description": "一只木质酒架，横卧摆放着十来瓶红酒，瓶身外侧沾着细密潮气。"
+      "description": "一只木质酒架，横卧摆放着十来瓶红酒，瓶身外侧沾着细密潮气。",
+      "type": "container",
+      "containerStats": {
+        "capacity": 12,
+        "locked": false,
+        "contents": []
+      }
     },
     {
       "id": "ITEM_SCN9_16",
       "name": "陶瓷储物罐",
-      "description": "几只陶瓷储物罐，里面装着香料和日常烹饪用干货。"
+      "description": "几只陶瓷储物罐，里面装着香料和日常烹饪用干货。",
+      "type": "container",
+      "containerStats": {
+        "capacity": 6,
+        "locked": false,
+        "contents": []
+      }
     },
     {
       "id": "ITEM_SCN9_17",
       "name": "白兰地木箱",
-      "description": "两只窄木箱，里面装着本地产的苹果白兰地，木板缝里透出淡淡果香。"
+      "description": "两只窄木箱，里面装着本地产的苹果白兰地，木板缝里透出淡淡果香。",
+      "type": "container",
+      "containerStats": {
+        "capacity": 8,
+        "locked": false,
+        "contents": []
+      }
     }
   ],
   "conditions": [

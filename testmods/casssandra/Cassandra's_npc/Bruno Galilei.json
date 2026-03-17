@@ -89,7 +89,7 @@
   "memory": [
     {
       "type": "information",
-      "content": "I am investigating both the 2002 Paradil Hotel murder and the 2003 Reindeer Bar murder because I believe they are connected.",
+      "content": "I am treating the 2002 Paradil Hotel freezer death and the 2003 Reindeer Bar murder as the same hand. Two Black female victims, freezing, and official indifference are too much to dismiss as coincidence.",
       "metadata": {
         "knowledgeId": "k_bruno_cases",
         "difficulty": "automatic"
@@ -97,24 +97,47 @@
     },
     {
       "type": "information",
-      "content": "I trust Shandra Hernandez deeply, though I do not know her real identity.",
+      "content": "When the work starts to choke me, I go to Shandra's shop. I trust her judgment and her discretion, even though I know almost nothing about who she really is outside that room.",
       "metadata": {
         "knowledgeId": "k_bruno_shandra",
         "difficulty": "regular"
       }
     },
     {
+      "type": "information",
+      "content": "I keep the victim's phone, witness notes, and the old freezer-case material close because too many people in this town would rather these murders stay unsolved.",
+      "metadata": {
+        "knowledgeId": "k_bruno_case_materials",
+        "difficulty": "regular"
+      }
+    },
+    {
+      "type": "information",
+      "content": "I spend so many nights at the station that it feels more like home than any apartment. If something happens to me, most of my work will still be there.",
+      "metadata": {
+        "knowledgeId": "k_bruno_station_habit",
+        "difficulty": "automatic"
+      }
+    },
+    {
       "type": "secret",
-      "content": "An anonymous message warned me not to trust my superiors or Constantine Frollo.",
+      "content": "An anonymous text warned me not to trust my superiors, especially Patrizio, and said Constantine Frollo has no right to serve God.",
       "metadata": {
         "knowledgeId": "s_bruno_warning"
       }
     },
     {
       "type": "secret",
-      "content": "Lucifero sent me an anonymous SMS warning me about Patrizio and Constantine and pointing me toward the truth.",
+      "content": "I still do not know who sent that warning, but the sender knew about my old case, the pressure from above, and the exact people I had begun to fear.",
       "metadata": {
         "knowledgeId": "s_bruno_sms"
+      }
+    },
+    {
+      "type": "secret",
+      "content": "I called my old friends in from outside Cassandra because I no longer trust local support enough to finish this alone. If I disappear, I need someone honest to keep digging.",
+      "metadata": {
+        "knowledgeId": "s_bruno_outside_help"
       }
     },
     {

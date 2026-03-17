@@ -7,42 +7,54 @@
     {
       "id": "ITEM_SCN10_1",
       "name": "木质餐桌",
-      "description": "深色木质餐桌，桌面平整结实，边缘因长期使用而泛出温润光泽。"
+      "description": "深色木质餐桌，桌面平整结实，边缘因长期使用而泛出温润光泽。",
+      "type": "other"
     },
     {
       "id": "ITEM_SCN10_2",
       "name": "预约本",
-      "description": "一本记录订位姓名、时间和人数的厚预约本，翻页边角有频繁使用留下的卷痕。"
+      "description": "一本记录订位姓名、时间和人数的厚预约本，翻页边角有频繁使用留下的卷痕。",
+      "type": "document"
     },
     {
       "id": "ITEM_SCN10_5",
       "name": "木椅",
-      "description": "结实的木椅，椅背和坐面都被长期擦拭，表面带着细密使用磨痕。"
+      "description": "结实的木椅，椅背和坐面都被长期擦拭，表面带着细密使用磨痕。",
+      "type": "other"
     },
     {
       "id": "ITEM_SCN10_6",
       "name": "陶瓶摆设",
-      "description": "一只小巧的手工陶瓶，瓶身带着粗陶质感，里面插着已经风干的装饰花枝。"
+      "description": "一只小巧的手工陶瓶，瓶身带着粗陶质感，里面插着已经风干的装饰花枝。",
+      "type": "other"
     },
     {
       "id": "ITEM_SCN10_7",
       "name": "点菜单",
-      "description": "纸质点菜单，边缘沾着轻微油渍，印着店里的招牌菜和饮品。"
+      "description": "纸质点菜单，边缘沾着轻微油渍，印着店里的招牌菜和饮品。",
+      "type": "document"
     },
     {
       "id": "ITEM_SCN10_3",
       "name": "角落收音机",
-      "description": "一台老式收音机，旋钮和网罩都带着年代感，喇叭里偶尔夹着轻微电流声。"
+      "description": "一台老式收音机，旋钮和网罩都带着年代感，喇叭里偶尔夹着轻微电流声。",
+      "type": "other"
     },
     {
       "id": "ITEM_SCN10_4",
       "name": "香料架",
-      "description": "木质香料架上整齐摆着孜然、辣椒粉等常用香料罐，开盖时会溢出浓烈辛香。"
+      "description": "木质香料架上整齐摆着孜然、辣椒粉等常用香料罐，开盖时会溢出浓烈辛香。",
+      "type": "container",
+      "containerStats": {
+        "capacity": 12,
+        "locked": false
+      }
     },
     {
       "id": "ITEM_SCN10_8",
       "name": "手摇咖啡磨",
-      "description": "一只深色木底的手摇咖啡磨，金属摇柄磨得发亮，机身留着现磨咖啡的淡淡苦香。"
+      "description": "一只深色木底的手摇咖啡磨，金属摇柄磨得发亮，机身留着现磨咖啡的淡淡苦香。",
+      "type": "tool"
     }
   ],
   "conditions": [

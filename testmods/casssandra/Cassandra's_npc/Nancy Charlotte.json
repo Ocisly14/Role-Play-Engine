@@ -124,6 +124,22 @@
         "confidence": 0.9,
         "reasoningChain": "He is the only person who has consistently protected me when things became dangerous."
       }
+    },
+    {
+      "type": "information",
+      "content": "Working in the flower shop gives me a routine that makes the day feel smaller and safer.",
+      "metadata": {
+        "knowledgeId": "k_nancy_flower_routine",
+        "difficulty": "automatic"
+      }
+    },
+    {
+      "type": "information",
+      "content": "Working with flowers and other ordinary routines helps keep my fear from swallowing the whole day.",
+      "metadata": {
+        "knowledgeId": "k_nancy_coping_routine",
+        "difficulty": "regular"
+      }
     }
   ]
 }

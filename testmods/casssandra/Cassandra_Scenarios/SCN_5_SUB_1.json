@@ -7,37 +7,48 @@
     {
       "id": "ITEM_SCN5_1",
       "name": "弹簧外露的单人床",
-      "description": "一张弹簧外露的单人床，床垫边缘鼓起发黄，裸露金属几乎要顶破薄床单。"
+      "description": "一张弹簧外露的单人床，床垫边缘鼓起发黄，裸露金属几乎要顶破薄床单。",
+      "type": "other"
     },
     {
       "id": "ITEM_SCN5_2",
       "name": "折叠桌上的个人杂物",
-      "description": "一堆随手丢放的个人杂物，包括便宜打火机、药盒、零钱和马克杯。"
+      "description": "一堆随手丢放的个人杂物，包括便宜打火机、药盒、零钱和马克杯。",
+      "type": "other"
     },
     {
       "id": "ITEM_SCN5_3",
       "name": "烟灰缸",
-      "description": "一只满到溢出的烟灰缸，里面堆着发黑烟蒂和凝固烟灰。"
+      "description": "一只满到溢出的烟灰缸，里面堆着发黑烟蒂和凝固烟灰。",
+      "type": "other"
     },
     {
       "id": "ITEM_SCN5_4",
       "name": "欠费单",
-      "description": "几张揉皱的欠费通知，纸张边缘因为潮气而卷起发软。"
+      "description": "几张揉皱的欠费通知，纸张边缘因为潮气而卷起发软。",
+      "type": "document",
+      "category": "evidence",
+      "discoveryMethod": "search room"
     },
     {
       "id": "ITEM_SCN5_5",
       "name": "塞缝旧报纸的窗框",
-      "description": "一扇变形铝窗，缝隙里塞着发黑的旧报纸，风吹时会发出窸窣摩擦声。"
+      "description": "一扇变形铝窗，缝隙里塞着发黑的旧报纸，风吹时会发出窸窣摩擦声。",
+      "type": "other"
     },
     {
       "id": "ITEM_SCN5_6",
       "name": "空酒瓶",
-      "description": "两只廉价空酒瓶，瓶口和瓶身残留着没擦净的酒渍。"
+      "description": "两只廉价空酒瓶，瓶口和瓶身残留着没擦净的酒渍。",
+      "type": "other"
     },
     {
       "id": "ITEM_SCN5_7",
       "name": "电话号码便签",
-      "description": "几张潦草写着电话号码的便签，纸面被来回翻看得发软。"
+      "description": "几张潦草写着电话号码的便签，纸面被来回翻看得发软。",
+      "type": "document",
+      "category": "evidence",
+      "discoveryMethod": "search room"
     }
   ],
   "conditions": [

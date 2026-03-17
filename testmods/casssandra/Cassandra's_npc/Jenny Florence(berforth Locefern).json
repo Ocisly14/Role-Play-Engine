@@ -106,6 +106,14 @@
     },
     {
       "type": "information",
+      "content": "I used Adolph Carl as a discreet middleman whenever I needed to move information without tying it directly back to my real name.",
+      "metadata": {
+        "knowledgeId": "k_jenny_adolph_middleman",
+        "difficulty": "regular"
+      }
+    },
+    {
+      "type": "information",
       "content": "I knew the 2002 Paradil Hotel murder case was tied to Martin Gin, even though I never saw his face clearly.",
       "metadata": {
         "knowledgeId": "k_jenny_murder_case",
@@ -135,7 +143,7 @@
     },
     {
       "type": "belief",
-      "content": "The truth is worth leaving behind even if I do not get to walk away with it.",
+      "content": "I believe the truth is worth leaving behind even if I do not get to walk away with it.",
       "metadata": {
         "confidence": 0.95,
         "reasoningChain": "Some cases matter more than self-preservation."

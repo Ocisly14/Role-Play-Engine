@@ -89,6 +89,14 @@
       }
     },
     {
+      "type": "information",
+      "content": "I keep the casino alive because people fear losing face there more than they fear the police, and I make sure that fear stays useful.",
+      "metadata": {
+        "knowledgeId": "k_kovind_casino_pressure",
+        "difficulty": "regular"
+      }
+    },
+    {
       "type": "secret",
       "content": "I hold compromising photos of Nancy Charlotte and used them as collateral for her gambling debt.",
       "metadata": {
@@ -103,8 +111,16 @@
       }
     },
     {
+      "type": "information",
+      "content": "I treat Lucifero like a useful collector because he looks less threatening than I do, and that helps when money has to move quietly.",
+      "metadata": {
+        "knowledgeId": "k_kovind_lucifero",
+        "difficulty": "regular"
+      }
+    },
+    {
       "type": "belief",
-      "content": "Fear and debt are more reliable than mercy when you want people to keep their promises.",
+      "content": "I trust fear and debt more than mercy when I want people to keep their promises.",
       "metadata": {
         "confidence": 0.85,
         "reasoningChain": "The casino survives because people believe the consequences of default are worse than paying."

@@ -7,16 +7,19 @@
     {
       "id": "ITEM_SCN21_1",
       "name": "锈迹斑斑的站牌",
+      "type": "other",
       "description": "一块老旧站牌，锈迹斑斑，站名字样已被风雨侵蚀得模糊。"
     },
     {
       "id": "ITEM_SCN21_2",
       "name": "破旧的长椅",
+      "type": "other",
       "description": "几张木质长椅，木板开裂变形，涂漆剥落殆尽。"
     },
     {
       "id": "ITEM_SCN21_3",
       "name": "Haran的工作小屋",
+      "type": "other",
       "description": "一间小型值班室，里面堆放着工具和记录簿。"
     }
   ],

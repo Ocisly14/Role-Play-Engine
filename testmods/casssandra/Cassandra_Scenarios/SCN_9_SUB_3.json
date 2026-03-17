@@ -7,17 +7,22 @@
     {
       "id": "ITEM_SCN9_3",
       "name": "黑客工作站",
-      "description": "多台显示器、高性能主机和各种网络设备组成的专业黑客工作站。Simon通过这些设备监测卡森德拉的信息网络，控制部分公共设施，并可以帮助调查员进行各种电子信息的破解和调查。"
+      "description": "多台显示器、高性能主机和各种网络设备组成的专业工作站，足以用于监测网络、处理数据和运行复杂的入侵或追踪程序。",
+      "type": "tool"
     },
     {
       "id": "ITEM_SCN9_4",
       "name": "ID卡复制机器",
-      "description": "Simon准备的一台小型设备，可以用来复制ID卡。他会告诉调查员，如果需要进入星辰医院的药品管理室和实验室，需要得到院长Vincent Galenus的ID卡，将卡插入卡槽后就可以复制一张一模一样的卡。"
+      "description": "一台小型读卡复制设备，需要配套样本卡和合适的权限信息，才能制作出可用的复制卡。",
+      "type": "tool"
     },
     {
       "id": "ITEM_SCN9_5",
       "name": "帕德里奇的秘密文件图片",
-      "description": "Simon翻到的一份帕德里奇的秘密文件的图片。在与调查员达成合作后，Simon会将此文件分享给调查员。"
+      "description": "一组翻拍自纸质文件的模糊图片，内容似乎涉及帕德里奇的敏感往来与内部记录，但缺少完整上下文。",
+      "type": "document",
+      "category": "evidence",
+      "discoveryMethod": "inspect workstation"
     }
   ],
   "conditions": [

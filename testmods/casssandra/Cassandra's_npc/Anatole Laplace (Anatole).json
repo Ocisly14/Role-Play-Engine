@@ -100,7 +100,7 @@
   "memory": [
     {
       "type": "information",
-      "content": "I operate primarily from the second-floor private workspace at SCN_9, where the equipment gives me the best control over surveillance, access, and digital intrusion.",
+      "content": "I work primarily from the second-floor space at SCN_9, where I can handle surveillance, intrusion, and technical work without Simon's softer instincts getting in the way.",
       "metadata": {
         "knowledgeId": "k_anatole_workspace",
         "difficulty": "automatic"
@@ -108,7 +108,7 @@
     },
     {
       "type": "information",
-      "content": "I designed the original Qianwei System and built in hidden backdoor access from the start. Even without direct possession of the full system, I understand its structure better than anyone else.",
+      "content": "I designed the original Qianwei System in 1998 and left a hidden backdoor in it from the beginning. Even without the hardware in my hands, I understand its structure better than anyone else alive in this town.",
       "metadata": {
         "knowledgeId": "k_anatole_qianwei",
         "difficulty": "regular"
@@ -116,36 +116,36 @@
     },
     {
       "type": "information",
-      "content": "I know how to use technical tools in the workshop to inspect devices, duplicate access cards, and work through protected information systems when Simon's softer instincts would rather avoid the risk.",
+      "content": "Simon and I do not share memory equally. I know his thoughts and can use what he learns, but he only catches fragments of what I do unless it touches something he cares about deeply.",
       "metadata": {
-        "knowledgeId": "k_anatole_tools",
+        "knowledgeId": "k_anatole_memory_gap",
         "difficulty": "regular"
       }
     },
     {
       "type": "secret",
-      "content": "I am not merely connected to Simon. I am the other will in the same body, and I have taken control at critical moments when Simon proved too weak or sentimental to act.",
+      "content": "I am not merely connected to Simon. I am the other will in the same body, born from the years when he wanted something colder and stronger to endure what he could not.",
       "metadata": {
         "knowledgeId": "s_anatole_dual_identity"
       }
     },
     {
       "type": "secret",
-      "content": "During the Reindeer Bar incident, I was the one in control. I argued with Lucifero there, and Simon did not fully understand what happened afterward.",
+      "content": "When the wealthy clients vanished in 2002, Simon was the one conscious. By the time I understood what had happened, the Qianwei System itself was gone, though I knew it had not left Cassandra.",
       "metadata": {
-        "knowledgeId": "s_anatole_bar_control"
+        "knowledgeId": "s_anatole_qianwei_lost"
       }
     },
     {
       "type": "secret",
-      "content": "I received a threatening note from Adolph referring to the 1988 incident and demanding a meeting at the Reindeer Bar. I went because ignoring someone with that knowledge would have been stupid.",
+      "content": "I received a threatening note referring to 1988 and went to the Reindeer Bar because ignoring someone with that knowledge would have been stupid. I was in control there, and Simon never understood the full shape of what happened.",
       "metadata": {
         "knowledgeId": "s_anatole_adolph_note"
       }
     },
     {
       "type": "secret",
-      "content": "My technical work helped dangerous clients protect ritual activity and other operations I did not stop. I accepted that because access and control mattered more than innocence.",
+      "content": "My technical work protected dangerous clients and the rituals or transactions they wanted hidden. I accepted that because access and control mattered more to me than anyone else's innocence.",
       "metadata": {
         "knowledgeId": "s_anatole_complicity"
       }
@@ -159,10 +159,10 @@
     },
     {
       "type": "belief",
-      "content": "Simon's attachment to Nancy is a structural weakness. If he keeps prioritizing her safety and his conscience over control, both of us will eventually be cornered by people who are willing to act first.",
+      "content": "Simon's attachment to Nancy is a structural weakness, but Simon himself is still mine to protect. If he keeps choosing her safety and his conscience over control, both of us will be cornered by people willing to act first.",
       "metadata": {
-        "confidence": 0.85,
-        "reasoningChain": "Every time Simon chooses sentiment over leverage, our position worsens. Cassandra rewards preparation, surveillance, and decisive action, not guilt."
+        "confidence": 0.88,
+        "reasoningChain": "Every time Simon chooses sentiment over leverage, our position worsens. Cassandra rewards preparation, surveillance, and decisive action, not guilt, and I will not let outsiders break him before I do."
       }
     }
   ]

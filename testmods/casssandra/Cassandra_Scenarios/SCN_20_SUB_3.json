@@ -7,16 +7,22 @@
     {
       "id": "ITEM_SCN20_5",
       "name": "残破伐木标桩",
+      "type": "tool",
+      "damaged": true,
       "description": "一根带红漆记号的旧伐木标桩半埋在腐叶里，像是这片森林里最后一点人类痕迹。"
     },
     {
       "id": "ITEM_SCN20_6",
       "name": "带抓痕的树干",
+      "type": "other",
       "description": "一株粗壮树干上留着深深抓痕和黏稠残留物，怎么看都不像普通野兽能留下的印记。"
     },
     {
       "id": "ITEM_SCN20_7",
       "name": "泥地巨大足迹",
+      "type": "other",
+      "category": "evidence",
+      "discoveryMethod": "inspect ground",
       "description": "湿软泥地里凹着几个过分庞大的足迹，边缘仍保持着相对新鲜的塌陷轮廓。"
     }
   ],

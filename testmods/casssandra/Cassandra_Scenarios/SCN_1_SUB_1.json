@@ -7,41 +7,58 @@
     {
       "id": "ITEM_SCN1_1",
       "name": "医院档案",
+      "type": "document",
+      "category": "evidence",
+      "discoveryMethod": "inspect records",
       "description": "医院的患者与尸体档案记录系统，可以查阅尸体转运等信息。"
     },
     {
       "id": "ITEM_SCN1_2",
       "name": "监控屏幕",
+      "type": "tool",
       "description": "一组用于查看院内走廊画面的监控屏幕，但部分区域存在明显的监控死角。"
     },
     {
       "id": "ITEM_SCN1_15",
       "name": "接待窗口",
+      "type": "other",
       "description": "一扇半开放式接待窗口，玻璃下方的传递缝里塞着几张旧通知和表单。"
     },
     {
       "id": "ITEM_SCN1_16",
       "name": "候诊椅",
+      "type": "other",
       "description": "一排塑料候诊椅，扶手漆面被长期频繁使用磨得发亮。"
     },
     {
       "id": "ITEM_SCN1_17",
       "name": "排班白板",
+      "type": "document",
       "description": "一块写满值班姓名和班次调整的排班白板，字迹潦草并反复擦写。"
     },
     {
       "id": "ITEM_SCN1_20",
       "name": "来访登记表",
+      "type": "document",
+      "category": "evidence",
+      "discoveryMethod": "inspect desk",
       "description": "几张用于记录访客姓名、来访事由和时间的纸质登记表，边角已经微微卷起。"
     },
     {
       "id": "ITEM_SCN1_21",
       "name": "自动售货机",
-      "description": "一台老旧自动售货机，玻璃面板后摆着饮料和零食，投币口磨损明显。"
+      "type": "container",
+      "description": "一台老旧自动售货机，玻璃面板后摆着饮料和零食，投币口磨损明显。",
+      "containerStats": {
+        "capacity": 12,
+        "locked": false,
+        "contents": []
+      }
     },
     {
       "id": "ITEM_SCN1_22",
       "name": "科室指示牌",
+      "type": "other",
       "description": "一组绿色科室指示牌，标注着停尸间、病房和实验室等区域方向。"
     }
   ],

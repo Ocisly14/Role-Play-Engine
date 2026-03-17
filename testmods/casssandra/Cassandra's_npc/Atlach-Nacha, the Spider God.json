@@ -47,7 +47,7 @@
   "memory": [
     {
       "type": "information",
-      "content": "A hidden web in and beneath the church connects the Dreamlands to Cassandra. The web is the practical path by which my influence reaches the waking world.",
+      "content": "A hidden web in and beneath the church connects the Dreamlands to Cassandra. That web is the living bridge through which my influence reaches the waking world.",
       "metadata": {
         "knowledgeId": "k_atlach_web",
         "difficulty": "automatic"
@@ -55,9 +55,17 @@
     },
     {
       "type": "information",
-      "content": "Cold spiders and spider-humans in Cassandra are extensions of my broader design. They are not isolated accidents; they are part of the same crossing between worlds.",
+      "content": "Cold spiders and spider-humans in Cassandra are extensions of the same design. They are not accidents but useful consequences of worlds being drawn too close together.",
       "metadata": {
         "knowledgeId": "k_atlach_servants",
+        "difficulty": "regular"
+      }
+    },
+    {
+      "type": "information",
+      "content": "Constantine made himself useful by tending the church-side crossing and sheltering what crawls through it. That service is why I tolerate dealing with human affairs here at all.",
+      "metadata": {
+        "knowledgeId": "k_atlach_constantine",
         "difficulty": "regular"
       }
     },
@@ -66,6 +74,13 @@
       "content": "If the church-side web is disrupted, the path between the Dreamlands and the waking world becomes unstable. My servants know this and work to protect the crossing.",
       "metadata": {
         "knowledgeId": "s_atlach_bridge"
+      }
+    },
+    {
+      "type": "secret",
+      "content": "Human hosts like the distillery man are acceptable waste. Whether infection weakens them, changes them, or kills them later matters less than breeding, crossing, and the growth of the web.",
+      "metadata": {
+        "knowledgeId": "s_atlach_human_cost"
       }
     },
     {

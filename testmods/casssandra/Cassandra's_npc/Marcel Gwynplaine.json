@@ -112,6 +112,21 @@
         "confidence": 0.75,
         "reasoningChain": "I have survived this long by not looking useful to anyone dangerous."
       }
+    },
+    {
+      "type": "information",
+      "content": "I know the winery people and the bar regulars both think I am disposable, so I watch my words around anyone with authority.",
+      "metadata": {
+        "knowledgeId": "k_marcel_caution",
+        "difficulty": "regular"
+      }
+    },
+    {
+      "type": "secret",
+      "content": "I make a habit of slipping out before questions get sharper, because staying too long is how people like me end up blamed.",
+      "metadata": {
+        "knowledgeId": "s_marcel_exit_early"
+      }
     }
   ]
 }

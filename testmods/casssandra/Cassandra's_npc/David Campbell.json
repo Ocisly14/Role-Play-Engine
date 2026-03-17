@@ -57,9 +57,25 @@
     },
     {
       "type": "information",
-      "content": "Young women made the best sacrifices for the rites tied to the Black Goat cult, but obtaining those offerings safely was always the most dangerous part of the work.",
+      "content": "In Cassandra, I used pharmaceutical and forestry cover to make the worst of our work look like ordinary business, which kept the town looking away for longer than it should have.",
+      "metadata": {
+        "knowledgeId": "k_david_front_cover",
+        "difficulty": "automatic"
+      }
+    },
+    {
+      "type": "information",
+      "content": "I learned that young women made the best sacrifices for the rites tied to the Black Goat cult, but obtaining those offerings safely was always the most dangerous part of the work.",
       "metadata": {
         "knowledgeId": "k_david_sacrifice_logic",
+        "difficulty": "hard"
+      }
+    },
+    {
+      "type": "information",
+      "content": "Since the 2002 ritual changed me, I have learned to stay near the marsh and the treeline, because open streets would expose how far I have drifted from a human life.",
+      "metadata": {
+        "knowledgeId": "k_david_marsh_survival",
         "difficulty": "hard"
       }
     },
@@ -72,14 +88,14 @@
     },
     {
       "type": "secret",
-      "content": "The occult transformation that made me stronger also made me less human, and I can no longer move through ordinary life the way I once did.",
+      "content": "I know the occult transformation that made me stronger also made me less human, and I can no longer move through ordinary life the way I once did.",
       "metadata": {
         "knowledgeId": "s_david_transformed"
       }
     },
     {
       "type": "belief",
-      "content": "What was gained through ritual is too valuable to surrender, even if it leaves nothing of the respectable man I used to appear to be.",
+      "content": "I believe what was gained through ritual is too valuable to surrender, even if it leaves nothing of the respectable man I used to appear to be.",
       "metadata": {
         "confidence": 0.85,
         "reasoningChain": "Youth, strength, and profit were not gifts the normal world would ever have given back to me. Once a man tastes that, retreat becomes weakness."

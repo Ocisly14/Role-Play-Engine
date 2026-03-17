@@ -90,10 +90,18 @@
   "memory": [
     {
       "type": "information",
-      "content": "I direct Star Hospital and know how to keep it operating even when the people inside it are compromised.",
+      "content": "I direct Star Hospital and know how to keep it operating even when the people inside it are compromised, frightened, or lying to each other.",
       "metadata": {
         "knowledgeId": "k_vincent_hospital",
         "difficulty": "automatic"
+      }
+    },
+    {
+      "type": "information",
+      "content": "I came to Cassandra for money and for the rich men's medicine that promised to keep my wife alive. That was the first compromise, and it was enough to make the rest possible.",
+      "metadata": {
+        "knowledgeId": "k_vincent_arrival",
+        "difficulty": "regular"
       }
     },
     {
@@ -106,7 +114,7 @@
     },
     {
       "type": "information",
-      "content": "I personally transported Lucifero's body to the crematorium under orders.",
+      "content": "If the pressure from above continues, I may be ordered to move Lucifero's body to the crematorium myself, and I hate how likely I am to obey.",
       "metadata": {
         "knowledgeId": "k_vincent_lucifero",
         "difficulty": "hard"
@@ -121,7 +129,7 @@
     },
     {
       "type": "secret",
-      "content": "My wife's resurrection became a ghoul-like existence and ended in unbearable suffering.",
+      "content": "My wife was brought back in a ghoul-like form, and I keep pretending that bargain still means something. We fought at the cemetery, and I have been too afraid to face her since.",
       "metadata": {
         "knowledgeId": "s_vincent_wife"
       }
@@ -131,6 +139,13 @@
       "content": "I know Martin Gin works for Patrizio and uses hospital resources, but I do not realize he is Ghost Hand.",
       "metadata": {
         "knowledgeId": "s_vincent_martin"
+      }
+    },
+    {
+      "type": "secret",
+      "content": "After my wife died I drank too much, stumbled into a confession before Constantine, and felt as if something really was listening. Since then I have treated spider-bitten victims for him and tried not to ask what that makes me.",
+      "metadata": {
+        "knowledgeId": "s_vincent_constantine"
       }
     },
     {

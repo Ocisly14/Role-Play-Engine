@@ -129,6 +129,22 @@
         "confidence": 0.9,
         "reasoningChain": "Order comes from dependency. If everyone needs a little permission, a little favor, or a little fear, they stop imagining they can resist."
       }
+    },
+    {
+      "type": "information",
+      "content": "I chose my private house on Stone Alley because it sits close to the center of town without feeling like an office, which makes visits easier to control.",
+      "metadata": {
+        "knowledgeId": "k_patrizio_house_stone_alley",
+        "difficulty": "regular"
+      }
+    },
+    {
+      "type": "information",
+      "content": "I prefer power to appear in fragments and intermediaries instead of forcing every fear in town to point back at my own face.",
+      "metadata": {
+        "knowledgeId": "k_patrizio_fragmented_power",
+        "difficulty": "regular"
+      }
     }
   ]
 }

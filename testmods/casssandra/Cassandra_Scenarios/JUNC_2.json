@@ -7,17 +7,25 @@
     {
       "id": "ITEM_JUNC2_1",
       "name": "枯萎老橡树",
-      "description": "一棵枯萎的老橡树，枝干扭曲，树皮干裂剥落。"
+      "description": "一棵枯萎的老橡树，枝干扭曲，树皮干裂剥落。",
+      "type": "other"
     },
     {
       "id": "ITEM_JUNC2_2",
       "name": "三岔路指示牌",
-      "description": "一块木质指示牌钉在树旁，箭头分别指向星辰大道、北新街和石榴巷。"
+      "description": "一块木质指示牌钉在树旁，箭头分别指向星辰大道、北新街和石榴巷。",
+      "type": "document"
     },
     {
       "id": "ITEM_JUNC2_3",
       "name": "路边邮箱",
-      "description": "老旧的铁皮邮箱歪斜地立在碎石边缘，盖板被风吹得轻轻作响。"
+      "description": "老旧的铁皮邮箱歪斜地立在碎石边缘，盖板被风吹得轻轻作响。",
+      "type": "container",
+      "containerStats": {
+        "capacity": 4,
+        "locked": false,
+        "contents": []
+      }
     }
   ],
   "conditions": [

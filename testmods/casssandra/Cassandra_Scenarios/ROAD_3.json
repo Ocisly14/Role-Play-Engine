@@ -24,17 +24,28 @@
     {
       "id": "ITEM_ROAD3_1",
       "name": "教堂告示栏",
-      "description": "路边的教堂告示栏里夹着本周弥撒时间与慈善募捐通知。"
+      "description": "路边的教堂告示栏里夹着本周弥撒时间与慈善募捐通知。",
+      "type": "document"
     },
     {
       "id": "ITEM_ROAD3_2",
       "name": "酒吧霓虹牌",
-      "description": "一块鹿角形霓虹招牌，部分灯管已经不亮。"
+      "description": "一块鹿角形霓虹招牌，部分灯管已经不亮。",
+      "type": "lighting",
+      "isLightSource": true,
+      "lightLevel": 3,
+      "damaged": true
     },
     {
       "id": "ITEM_ROAD3_3",
       "name": "五金货箱",
-      "description": "几只装着钉子和锯条的木箱，箱盖边缘磨得发毛。"
+      "description": "几只装着钉子和锯条的木箱，箱盖边缘磨得发毛。",
+      "type": "container",
+      "containerStats": {
+        "capacity": 10,
+        "locked": false,
+        "contents": []
+      }
     }
   ],
   "conditions": [

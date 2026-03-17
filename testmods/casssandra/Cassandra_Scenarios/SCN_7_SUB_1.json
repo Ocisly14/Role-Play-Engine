@@ -7,17 +7,20 @@
     {
       "id": "ITEM_SCN7_4",
       "name": "铸铁井盖",
-      "description": "新月街路面上的铸铁井盖沉重潮湿，边缘的锈色说明它很少被真正打开。"
+      "description": "新月街路面上的铸铁井盖沉重潮湿，边缘的锈色说明它很少被真正打开。",
+      "type": "other"
     },
     {
       "id": "ITEM_SCN7_5",
       "name": "湿滑铁梯",
-      "description": "一架覆着苔藓和水膜的铁梯，踏级表面滑腻难踩。"
+      "description": "一架覆着苔藓和水膜的铁梯，踏级表面滑腻难踩。",
+      "type": "other"
     },
     {
       "id": "ITEM_SCN7_6",
       "name": "污水闸门控制箱",
-      "description": "通道一侧嵌着一只金属控制箱，连接着更深处的污水闸门系统。"
+      "description": "通道一侧嵌着一只金属控制箱，连接着更深处的污水闸门系统。",
+      "type": "tool"
     }
   ],
   "conditions": [

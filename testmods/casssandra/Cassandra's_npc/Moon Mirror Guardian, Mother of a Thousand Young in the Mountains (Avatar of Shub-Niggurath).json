@@ -83,6 +83,14 @@
         "confidence": 0.9,
         "reasoningChain": "What is swallowed can be transformed, and what is transformed can serve."
       }
+    },
+    {
+      "type": "information",
+      "content": "I do not truly emerge unless the mirror, the moon, and the offering all align.",
+      "metadata": {
+        "knowledgeId": "k_moonmirror_alignment",
+        "difficulty": "hard"
+      }
     }
   ]
 }

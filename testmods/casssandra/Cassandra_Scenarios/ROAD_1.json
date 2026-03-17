@@ -16,17 +16,22 @@
     {
       "id": "ITEM_ROAD1_1",
       "name": "焚化厂方向牌",
-      "description": "路边的铁质方向牌用红字标出焚化厂所在方向，牌面沾着灰扑扑的污迹。"
+      "description": "路边的铁质方向牌用红字标出焚化厂所在方向，牌面沾着灰扑扑的污迹。",
+      "type": "other"
     },
     {
       "id": "ITEM_ROAD1_2",
       "name": "防撞路障",
-      "description": "靠近大道北段的一组混凝土路障上残留着被货车蹭过的黑色轮胎印。"
+      "description": "靠近大道北段的一组混凝土路障上残留着被货车蹭过的黑色轮胎印。",
+      "type": "other"
     },
     {
       "id": "ITEM_ROAD1_3",
       "name": "街边路灯",
-      "description": "大道两侧的路灯杆间距很大，到了夜里只会留下分段式的昏黄照明。"
+      "description": "大道两侧的路灯杆间距很大，到了夜里只会留下分段式的昏黄照明。",
+      "type": "lighting",
+      "isLightSource": true,
+      "lightLevel": 2
     }
   ],
   "conditions": [

@@ -93,7 +93,7 @@
     },
     {
       "type": "secret",
-      "content": "On December 26, 2003, I disguised myself as Isabela Smith after Isabela left with her mentally disturbed fiancé.",
+      "content": "I am watching for a clean opening to step into Isabela Smith's place once her departure creates the chance, because keeping the cover intact matters more than making a scene.",
       "metadata": {
         "knowledgeId": "s_lucia_isabela"
       }
@@ -111,6 +111,22 @@
       "metadata": {
         "confidence": 0.85,
         "reasoningChain": "I can honor what he gave me without becoming trapped by it."
+      }
+    },
+    {
+      "type": "information",
+      "content": "I learned that immaculate paperwork and a calm face are often more persuasive than authority itself.",
+      "metadata": {
+        "knowledgeId": "k_lucia_paperwork",
+        "difficulty": "regular"
+      }
+    },
+    {
+      "type": "information",
+      "content": "I have learned to change roles carefully enough that I can keep operating without losing the part of myself that still wants to do good.",
+      "metadata": {
+        "knowledgeId": "k_lucia_role_control",
+        "difficulty": "regular"
       }
     }
   ]

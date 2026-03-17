@@ -64,10 +64,18 @@
   "memory": [
     {
       "type": "information",
+      "content": "I came to Cassandra with Jun and Lyn to see my fiancee Isabela and enjoy a quiet holiday before the wedding. It was supposed to be simple.",
+      "metadata": {
+        "knowledgeId": "k_wind_trip",
+        "difficulty": "automatic"
+      }
+    },
+    {
+      "type": "information",
       "content": "I traveled to Cassandra with Jun and Lyn, and Jun disappeared while we were out around the incinerator.",
       "metadata": {
         "knowledgeId": "k_wind_jun",
-        "difficulty": "automatic"
+        "difficulty": "regular"
       }
     },
     {
@@ -80,7 +88,7 @@
     },
     {
       "type": "secret",
-      "content": "When I am briefly lucid, I keep begging people to rescue Jun.",
+      "content": "When I am briefly lucid, I keep begging people to rescue Jun because that is the only clear duty left in my head.",
       "metadata": {
         "knowledgeId": "s_wind_lucidity"
       }
@@ -90,6 +98,13 @@
       "content": "I witnessed something terrible near the crematorium and my mind has not recovered from it.",
       "metadata": {
         "knowledgeId": "s_wind_terror"
+      }
+    },
+    {
+      "type": "secret",
+      "content": "Part of me knows Jun bought me time at the cost of his own safety, and that knowledge hurts more than the fear does whenever I become clear enough to think.",
+      "metadata": {
+        "knowledgeId": "s_wind_jun_sacrifice"
       }
     },
     {

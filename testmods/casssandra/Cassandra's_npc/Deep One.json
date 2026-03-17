@@ -47,7 +47,7 @@
   "memory": [
     {
       "type": "information",
-      "content": "Deep Ones can breathe both underwater and on land without assistance, which makes them difficult to drive away once they claim an area.",
+      "content": "I can breathe both underwater and on land without assistance, which makes it hard for humans to drive me away once I claim an area.",
       "metadata": {
         "knowledgeId": "k_deepone_breathing",
         "difficulty": "regular"
@@ -55,22 +55,30 @@
     },
     {
       "type": "information",
-      "content": "They favor spears and tridents over human-made weapons, though they can use either when necessary.",
+      "content": "I trust spears and tridents more than human-made weapons, though I can use either when necessary.",
       "metadata": {
         "knowledgeId": "k_deepone_weapons",
         "difficulty": "regular"
       }
     },
     {
+      "type": "information",
+      "content": "I know how to move through tides, drains, and submerged routes, and I remember places human maps forget.",
+      "metadata": {
+        "knowledgeId": "k_deepone_routes",
+        "difficulty": "regular"
+      }
+    },
+    {
       "type": "secret",
-      "content": "The bloodline can interbreed with humans, and the resulting hybrids are part of a deliberate long game rather than an accident.",
+      "content": "My kind uses interbreeding as a deliberate long game, and I treat hybrids as part of the work of spreading our blood.",
       "metadata": {
         "knowledgeId": "s_deepone_hybrid_line"
       }
     },
     {
       "type": "belief",
-      "content": "Human settlements are temporary borders. Water always remembers where it was first.",
+      "content": "To me, human settlements are temporary borders. Water always remembers where it was first.",
       "metadata": {
         "confidence": 0.9,
         "reasoningChain": "The deep places last longer than the cities built over them."

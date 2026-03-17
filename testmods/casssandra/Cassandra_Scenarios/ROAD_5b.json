@@ -20,22 +20,31 @@
     {
       "id": "ITEM_ROAD5B_1",
       "name": "电线杆",
-      "description": "一根老旧的木质电线杆，表面被风雨侵蚀得发灰，杆身上还留着几枚生锈旧钉。"
+      "description": "一根老旧的木质电线杆，表面被风雨侵蚀得发灰，杆身上还留着几枚生锈旧钉。",
+      "type": "other"
     },
     {
       "id": "ITEM_ROAD5B_4",
       "name": "卷边杂贴广告",
-      "description": "几张层层覆盖的杂贴广告和电话号码条，纸面受潮卷边，边角一扯就会碎裂。"
+      "description": "几张层层覆盖的杂贴广告和电话号码条，纸面受潮卷边，边角一扯就会碎裂。",
+      "type": "document"
     },
     {
       "id": "ITEM_ROAD5B_2",
       "name": "住户邮箱",
-      "description": "巷道一侧的住户邮箱颜色斑驳，投递口边缘留下了反复拉扯的磨痕。"
+      "description": "巷道一侧的住户邮箱颜色斑驳，投递口边缘留下了反复拉扯的磨痕。",
+      "type": "container",
+      "containerStats": {
+        "capacity": 1,
+        "locked": false,
+        "contents": []
+      }
     },
     {
       "id": "ITEM_ROAD5B_3",
       "name": "路边排水栅",
-      "description": "一块长条形排水栅嵌在路面最低处，积着泥水和碎叶。"
+      "description": "一块长条形排水栅嵌在路面最低处，积着泥水和碎叶。",
+      "type": "other"
     }
   ],
   "conditions": [
