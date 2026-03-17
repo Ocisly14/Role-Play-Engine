@@ -21,6 +21,8 @@ export interface SimulationViewState {
   gameDay: number;
   timeOfDay: string;
   simulationState: SimulationStatus["state"];
+  moduleName: string | null;
+  mapsPrefix: string | null;
   eventLog: SimulationEvent[];
   isLoading: boolean;
   error: string | null;
@@ -41,6 +43,8 @@ export function useSimulationState(sessionId: string | null) {
     gameDay: 1,
     timeOfDay: "08:00",
     simulationState: "paused",
+    moduleName: null,
+    mapsPrefix: null,
     eventLog: [],
     isLoading: true,
     error: null,
@@ -68,6 +72,8 @@ export function useSimulationState(sessionId: string | null) {
           gameDay: status.currentDay,
           timeOfDay: status.currentTime,
           simulationState: status.state,
+          moduleName: status.moduleName ?? null,
+          mapsPrefix: status.mapsPrefix ?? null,
           isLoading: false,
         }));
       } catch (err) {

@@ -204,7 +204,7 @@ function evolveIntensity(current: number): number {
   return current - 1;
 }
 
-function computeSkillPenalties(
+export function computeSkillPenalties(
   weatherType: WeatherType,
   intensity: number
 ): Array<{ skill: string; delta: number }> {
@@ -268,7 +268,7 @@ const WEATHER_LABELS: Record<WeatherType, string[]> = {
   ],
 };
 
-function getWeatherLabel(weatherType: WeatherType, intensity: number): string {
+export function getWeatherLabel(weatherType: WeatherType, intensity: number): string {
   if (weatherType === "clear") return "Clear skies";
   const labels = WEATHER_LABELS[weatherType];
   return labels[intensity] ?? labels[labels.length - 1];

@@ -15,6 +15,7 @@ export async function persistSimulationRuntime(params: {
   simulationState: SimulationState;
   stopReason?: StopReason;
   language: string;
+  moduleName?: string;
   config: SimulationConfig;
   gameState: Record<string, unknown>;
 }): Promise<void> {
@@ -26,6 +27,7 @@ export async function persistSimulationRuntime(params: {
       simulationState: params.simulationState,
       stopReason: params.stopReason,
       language: params.language,
+      moduleName: params.moduleName,
       config: params.config,
       gameState: params.gameState,
     },
@@ -34,6 +36,7 @@ export async function persistSimulationRuntime(params: {
       simulationState: params.simulationState,
       stopReason: params.stopReason,
       language: params.language,
+      moduleName: params.moduleName,
       config: params.config,
       gameState: params.gameState,
     },
@@ -79,6 +82,7 @@ export async function loadSimulationRuntime(
     simulationState: row.simulationState as SimulationState,
     stopReason: (row.stopReason ?? undefined) as StopReason | undefined,
     language: row.language,
+    moduleName: row.moduleName ?? undefined,
     config: row.config as unknown as SimulationConfig,
     gameState: row.gameState as Record<string, unknown>,
   };
@@ -97,6 +101,7 @@ export async function listSimulationRuntimeRecords(
     simulationState: row.simulationState as SimulationState,
     stopReason: (row.stopReason ?? undefined) as StopReason | undefined,
     language: row.language,
+    moduleName: row.moduleName ?? undefined,
     config: row.config as SimulationConfig,
     gameState: row.gameState as Record<string, unknown>,
   }));

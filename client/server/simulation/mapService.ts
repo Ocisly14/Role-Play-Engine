@@ -116,7 +116,7 @@ function resolveLocationName(
   }
 }
 
-function findMapsDirectory(modulePath: string): string | null {
+export function findMapsDirectory(modulePath: string): string | null {
   if (!fs.existsSync(modulePath)) return null;
   const entries = fs.readdirSync(modulePath);
   const mapsDir = entries.find((e) => e.endsWith("_Maps"));

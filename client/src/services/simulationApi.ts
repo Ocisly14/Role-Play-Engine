@@ -52,9 +52,39 @@ export interface SimulationStatus {
   currentTime: string;
   ticksExecuted: number;
   stopReason?: string;
+  moduleName?: string;
+  mapsPrefix?: string;
 }
 
-// API calls
+export interface SimulationListItem {
+  sessionId: string;
+  moduleName?: string;
+  state: "running" | "paused" | "stopped" | "completed";
+  currentDay: number;
+  currentTime: string;
+  ticksExecuted: number;
+}
+
+// Simulation lifecycle
+export async function createSimulation(params: {
+  moduleName: string;
+  language?: string;
+  config?: {
+    tickIntervalMs?: number;
+    maxDays?: number;
+    weather?: "clear" | "rain" | "fog" | "storm" | "snow" | "extreme_heat" | "extreme_cold";
+  };
+}): Promise<{ sessionId: string }> {
+  const { data } = await api.post("/simulation", params);
+  return data;
+}
+
+export async function listSimulations(): Promise<SimulationListItem[]> {
+  const { data } = await api.get("/simulations");
+  return data.simulations;
+}
+
+// Map viewer API calls
 export async function fetchTopology(
   sessionId: string
 ): Promise<TopologyResponse> {

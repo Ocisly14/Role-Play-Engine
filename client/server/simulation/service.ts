@@ -27,6 +27,11 @@ import { ModelProviderName } from "../../../src/models/types.js";
 import { EmbeddingClient } from "../../../src/rag/embedding.js";
 import { resolveModuleIdByName } from "../../../src/shared/agents/memory/database/moduleScope.js";
 import { resolveEmailId } from "../../../src/shared/agents/memory/database/userContext.js";
+import {
+  type WeatherType,
+  getWeatherLabel,
+  computeSkillPenalties,
+} from "../../../src/dynamicworldagent/engine/features/weatherFeature.js";
 import { DatabaseManager } from "../core/DatabaseManager.js";
 import { WebSocketManager } from "../websocket/WebSocketManager.js";
 
@@ -157,6 +162,7 @@ export async function getRunner(
     ticksExecuted: runtime.tick,
     stopReason: runtime.stopReason,
   });
+  runner.setModuleName(runtime.moduleName ?? "");
   if (runtime.simulationState === "running") {
     await runner.saveRuntime();
   }
@@ -167,7 +173,7 @@ export async function getRunner(
 
 export async function listSimulations(
   prisma: PrismaClient
-): Promise<(SimulationStatus & { sessionId: string })[]> {
+): Promise<(SimulationStatus & { sessionId: string; moduleName?: string })[]> {
   const runtimes = await listSimulationRuntimeRecords(prisma);
 
   return runtimes.map((runtime) => {
@@ -178,6 +184,7 @@ export async function listSimulations(
         : runtime;
     return {
       sessionId: runtime.sessionId,
+      moduleName: liveRunner?.getModuleName() ?? runtime.moduleName,
       ...(liveRunner
         ? liveRunner.getStatus()
         : runtimeToStatus(effectiveRuntime)),
@@ -185,12 +192,39 @@ export async function listSimulations(
   });
 }
 
+function applyGlobalWeather(dgsm: DynamicGameStateManager, weather: WeatherType): void {
+  const topology = dgsm.getTopology();
+  if (!topology) return;
+
+  const DEFAULT_INTENSITY = 3;
+  const outdoorIds = [
+    ...Array.from(topology.junctions.keys()),
+    ...Array.from(topology.roads.keys()),
+  ];
+
+  const label = getWeatherLabel(weather, DEFAULT_INTENSITY);
+  const penalties = computeSkillPenalties(weather, DEFAULT_INTENSITY);
+
+  for (const sceneId of outdoorIds) {
+    const state = dgsm.getState();
+    const conditions = state.scenarioConditions[sceneId] ?? [];
+    state.scenarioConditions[sceneId] = conditions.filter(
+      (c: any) => !c.description.startsWith("[Weather]")
+    );
+
+    dgsm.appendSceneCondition(sceneId, {
+      description: `[Weather] ${label}`,
+      mechanicalEffect: penalties.length > 0 ? { skillPenalty: penalties } : undefined,
+    });
+  }
+}
+
 export async function createSimulation(
   prisma: PrismaClient,
   moduleName: string,
   _userId: string,
   language = "en",
-  config?: Partial<SimulationConfig>
+  config?: Partial<SimulationConfig> & { weather?: WeatherType }
 ): Promise<{ sessionId: string; status: SimulationStatus }> {
   const sessionId = randomUUID();
   const db = DatabaseManager.getInstance().getDatabase();
@@ -230,11 +264,16 @@ export async function createSimulation(
     language,
   });
 
+  // Apply initial weather if specified
+  if (config?.weather && config.weather !== "clear") {
+    applyGlobalWeather(dgsm, config.weather);
+  }
+
   await npcPlanningAgent.seedLongTermIntents(dgsm, sessionId, moduleId);
+  runner.setModuleName(moduleName);
   await runner.saveRuntime();
 
   wireEventListener(prisma, runner, sessionId);
-  runner.setModuleName(moduleName);
   runners.set(sessionId, runner);
 
   return { sessionId, status: runner.getStatus() };

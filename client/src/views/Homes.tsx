@@ -7,8 +7,8 @@ import { authFetch } from "../utils/authFetch";
 
 interface HomeProps {
   onCreate: () => void;
-  onStartGame: () => void;
-  onContinueGame: () => void;
+  onNewSimulation: () => void;
+  onContinueSimulation: () => void;
   onManageMods: () => void;
 }
 
@@ -23,8 +23,8 @@ interface Character {
 
 const Homes: React.FC<HomeProps> = ({
   onCreate,
-  onStartGame,
-  onContinueGame,
+  onNewSimulation,
+  onContinueSimulation,
   onManageMods,
 }) => {
   const { t } = useTranslation("home");
@@ -33,9 +33,8 @@ const Homes: React.FC<HomeProps> = ({
   const [loading, setLoading] = useState(false);
   const [selectedCharacterId, setSelectedCharacterId] = useState<string>("");
   const [showCharacterSheet, setShowCharacterSheet] = useState(false);
-  const handleStartGame = () => {
-    // Just trigger the character selector
-    onStartGame();
+  const handleNewSimulation = () => {
+    onNewSimulation();
   };
 
   const handleViewCharacters = async () => {
@@ -86,11 +85,11 @@ const Homes: React.FC<HomeProps> = ({
           <FrameImage />
           <div className="home-actions">
             <>
-              <button className="primary" onClick={handleStartGame}>
-                {t("menu.newGame")}
+              <button className="primary" onClick={handleNewSimulation}>
+                New Simulation
               </button>
-              <button className="primary" onClick={onContinueGame}>
-                {t("menu.continueGame")}
+              <button className="primary" onClick={onContinueSimulation}>
+                Continue Simulation
               </button>
               <button className="secondary" onClick={onManageMods}>
                 {t("menu.manageModules")}

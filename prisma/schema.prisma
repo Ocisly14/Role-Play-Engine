@@ -67,6 +67,7 @@ model SimulationRuntime {
   simulationState String   @map("simulation_state")
   stopReason      String?  @map("stop_reason")
   language        String
+  moduleName      String?  @map("module_name")
   config          Json
   gameState       Json     @map("game_state")
   createdAt       DateTime @default(now()) @map("created_at")

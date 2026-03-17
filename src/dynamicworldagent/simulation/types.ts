@@ -55,6 +55,7 @@ export interface SimulationRuntimeRecord {
   simulationState: SimulationState;
   stopReason?: StopReason;
   language: string;
+  moduleName?: string;
   config: SimulationConfig;
   gameState: Record<string, unknown>;
 }

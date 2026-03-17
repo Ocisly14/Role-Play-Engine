@@ -1,6 +1,8 @@
 /// <reference path="../types/express.d.ts" />
+import * as path from "node:path";
 import type { Request, Response } from "express";
 import { getPrismaClient } from "../../../src/shared/agents/memory/database/prismaClient.js";
+import { findMapsDirectory } from "./mapService.js";
 import * as simulationService from "./service.js";
 
 export async function createSimulation(req: Request, res: Response) {
@@ -90,15 +92,27 @@ export async function stopSimulation(req: Request, res: Response) {
 export async function getStatus(req: Request, res: Response) {
   try {
     const prisma = getPrismaClient();
-    const status = await simulationService.getSimulationStatus(
-      prisma,
-      req.params.id
-    );
-    return res.json(status);
+    const runner = await simulationService.getRunner(prisma, req.params.id);
+    if (!runner) {
+      return res.status(404).json({ error: `Simulation ${req.params.id} not found` });
+    }
+    const status = runner.getStatus();
+    const moduleName = runner.getModuleName();
+    const modulePath = runner.getModulePath();
+
+    let mapsPrefix: string | null = null;
+    if (modulePath) {
+      const mapsDir = findMapsDirectory(modulePath);
+      if (mapsDir) {
+        mapsPrefix = path.basename(mapsDir);
+      }
+    }
+
+    return res.json({ ...status, moduleName, mapsPrefix });
   } catch (error) {
     const message = error instanceof Error ? error.message : "Unknown error";
-    const status = message.includes("not found") ? 404 : 500;
-    return res.status(status).json({ error: message });
+    const httpStatus = message.includes("not found") ? 404 : 500;
+    return res.status(httpStatus).json({ error: message });
   }
 }
 

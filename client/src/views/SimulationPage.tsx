@@ -11,6 +11,7 @@ import { useSimulationWebSocket } from "../hooks/useSimulationWebSocket";
 export default function SimulationPage() {
   const { sessionId } = useParams<{ sessionId: string }>();
   const gameRef = useRef<Phaser.Game | null>(null);
+  const mapsPrefixRef = useRef<string | null>(null);
 
   const {
     state,
@@ -36,6 +37,15 @@ export default function SimulationPage() {
       game.events.on("npc-clicked", (npcId: string) => setSelectedNpc(npcId));
       game.events.on("building-clicked", (sceneId: string) => {
         enterBuilding(sceneId, sceneId);
+        const mapsPrefix = mapsPrefixRef.current;
+        if (mapsPrefix) {
+          game.events.emit("load-interior", {
+            sceneId,
+            mapUrl: `/api/maps/${mapsPrefix}/interiors/${sceneId}.json`,
+            tilesetUrl: `/api/maps/${mapsPrefix}/tilesets/interior.png`,
+            tilesetKey: "interior",
+          });
+        }
       });
       game.events.on("building-exited", () => exitBuilding());
       game.events.on("zoom-level-changed", (level: number) =>
@@ -66,6 +76,21 @@ export default function SimulationPage() {
       });
     }
   }, [state.npcPositions, state.topology, state.npcStatuses]);
+
+  // Keep mapsPrefix ref in sync for stale closure in building-clicked handler
+  useEffect(() => {
+    mapsPrefixRef.current = state.mapsPrefix;
+  }, [state.mapsPrefix]);
+
+  // Load town tilemap when all data is ready
+  useEffect(() => {
+    if (!gameRef.current || !state.topology || !state.mapLayout || !state.mapsPrefix) return;
+    gameRef.current.events.emit("load-town-map", {
+      mapUrl: `/api/maps/${state.mapsPrefix}/town.json`,
+      tilesetUrl: `/api/maps/${state.mapsPrefix}/tilesets/outdoor.png`,
+      tilesetKey: "outdoor",
+    });
+  }, [state.topology, state.mapLayout, state.mapsPrefix]);
 
   const handleZoomToNpc = useCallback(
     (npcId: string) => {

@@ -146,6 +146,7 @@ export class SimulationRunner {
       simulationState: this.state,
       stopReason: this.stopReason,
       language: this.language,
+      moduleName: this.moduleName,
       config: this.config,
       gameState: this.dgsm.serialize(),
     });

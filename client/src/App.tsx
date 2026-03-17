@@ -1,27 +1,21 @@
 import type React from "react";
-import { Suspense, lazy, useCallback, useEffect, useRef } from "react";
+import { Suspense, lazy, useEffect } from "react";
 import {
   BrowserRouter,
   Navigate,
   Route,
   Routes,
-  useLocation,
 } from "react-router-dom";
 import { ProtectedRoute } from "./components/ProtectedRoute";
 import { MainLayout } from "./components/layout/MainLayout";
 import { AppSettingsProvider } from "./contexts/AppSettingsContext";
 import { AuthProvider } from "./contexts/AuthContext";
 import { GameSessionProvider } from "./contexts/GameSessionContext";
-import { useGameSession } from "./hooks/useGameSession";
-import { authFetch } from "./utils/authFetch";
 import { setBackgroundWithTransition } from "./utils/backgroundTransition";
 import { findAvailableImage } from "./utils/imageLoader";
 import { CharacterCreationPage } from "./views/CharacterCreationPage";
 import { CharacterSelectionPage } from "./views/CharacterSelectionPage";
-import { GamePage } from "./views/GamePage";
 import { HomePage } from "./views/HomePage";
-import { ModSelectionPage } from "./views/ModSelectionPage";
-import { ModuleIntroPage } from "./views/ModuleIntroPage";
 import { StoryCreatorPage } from "./views/StoryCreatorPage";
 import { TutorialPage } from "./views/TutorialPage";
 import ForgotPassword from "./views/auth/ForgotPassword";
@@ -30,24 +24,11 @@ import Register from "./views/auth/Register";
 import ResetPassword from "./views/auth/ResetPassword";
 
 const SimulationPage = lazy(() => import("./views/SimulationPage"));
+const SimulationSelectPage = lazy(() => import("./views/SimulationSelectPage"));
+const SimulationConfigPage = lazy(() => import("./views/SimulationConfigPage"));
 
 // Background manager component - handles dynamic backgrounds based on game state
 const BackgroundManager: React.FC = () => {
-  const location = useLocation();
-  const gameSession = useGameSession();
-  const currentBackgroundImageRef = useRef<string | null>(null);
-
-  // Helper function to set default background
-  const setDefaultBackground = useCallback(async () => {
-    try {
-      const imageUrl = await findAvailableImage("background");
-      setBackgroundWithTransition(imageUrl, true);
-    } catch (err) {
-      console.error("Failed to load default background:", err);
-      setBackgroundWithTransition("/asset/background.jpeg", true);
-    }
-  }, []);
-
   // Initialize default background on mount
   useEffect(() => {
     const initializeBackground = async () => {
@@ -61,78 +42,6 @@ const BackgroundManager: React.FC = () => {
     };
     initializeBackground();
   }, []);
-
-  // Detect whether we're on a game page
-  const isGamePage = location.pathname === "/game";
-  const isAnyGamePage = isGamePage;
-
-  // Fetch current scenario sceneImage and set as background when on game page
-  useEffect(() => {
-    if (!isAnyGamePage || (isGamePage && !gameSession.sessionId)) {
-      // Reset to default background when not on game page
-      if (currentBackgroundImageRef.current) {
-        setDefaultBackground();
-        currentBackgroundImageRef.current = null;
-      }
-      return;
-    }
-
-    const fetchGameState = async () => {
-      try {
-        const gamestateUrl = "/api/gamestate";
-        const response = await authFetch(gamestateUrl);
-        if (!response.ok) {
-          return;
-        }
-
-        const data = await response.json();
-        const sceneImagePath =
-          data?.gameState?.currentScenario?.sceneImage?.path;
-
-        // Extract module name from game state
-        const moduleName = data?.gameState?.moduleName;
-        if (moduleName) {
-          gameSession.setCurrentModuleName(moduleName);
-        }
-
-        if (sceneImagePath) {
-          const backgroundUrl = `/api/maps/${sceneImagePath}`;
-          // Only update if the image has changed
-          if (currentBackgroundImageRef.current !== backgroundUrl) {
-            setBackgroundWithTransition(backgroundUrl, true, () => {
-              currentBackgroundImageRef.current = backgroundUrl;
-            });
-          }
-        } else {
-          // No sceneImage, reset to default
-          if (currentBackgroundImageRef.current) {
-            setDefaultBackground();
-            currentBackgroundImageRef.current = null;
-          }
-        }
-      } catch (err) {
-        console.error("Failed to fetch game state for background:", err);
-      }
-    };
-
-    fetchGameState();
-
-    // Cleanup: restore default background when page changes
-    return () => {
-      if (!isAnyGamePage) {
-        setDefaultBackground();
-        currentBackgroundImageRef.current = null;
-      }
-    };
-  }, [
-    location.pathname,
-    isAnyGamePage,
-    isGamePage,
-    gameSession.sessionId,
-    gameSession.sidebarRefreshTrigger,
-    gameSession.setCurrentModuleName,
-    setDefaultBackground,
-  ]);
 
   return null;
 };
@@ -166,7 +75,7 @@ const AppRoutes: React.FC = () => {
         />
 
         {/* Legacy route redirects */}
-        <Route path="/gamechat" element={<Navigate to="/game" replace />} />
+        <Route path="/gamechat" element={<Navigate to="/" replace />} />
         <Route
           path="/charactercreate"
           element={<Navigate to="/character/create" replace />}
@@ -186,11 +95,18 @@ const AppRoutes: React.FC = () => {
             path="/character/select"
             element={<CharacterSelectionPage />}
           />
-          <Route path="/mod/select" element={<ModSelectionPage />} />
-          <Route path="/mod/intro" element={<ModuleIntroPage />} />
+          <Route path="/simulation/select" element={
+            <Suspense fallback={<div className="flex items-center justify-center h-screen">Loading...</div>}>
+              <SimulationSelectPage />
+            </Suspense>
+          } />
+          <Route path="/simulation/config" element={
+            <Suspense fallback={<div className="flex items-center justify-center h-screen">Loading...</div>}>
+              <SimulationConfigPage />
+            </Suspense>
+          } />
           <Route path="/story/create" element={<StoryCreatorPage />} />
           <Route path="/tutorial" element={<TutorialPage />} />
-          <Route path="/game" element={<GamePage />} />
         </Route>
       </Routes>
     </>
