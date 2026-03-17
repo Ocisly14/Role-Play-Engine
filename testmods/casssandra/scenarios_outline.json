@@ -162,6 +162,14 @@
       "residents": ["哈兰"]
     },
     {
+      "id": "SCN_22",
+      "name": "镇长私宅",
+      "description": "石榴巷南段一栋低调而体面的私人住宅，窗帘常年紧闭，外观不张扬，却处处透着不愿被打扰的权力感。",
+      "subSceneCount": 3,
+      "entrySceneId": "SCN_22_SUB_1",
+      "residents": ["帕德里奇"]
+    },
+    {
       "id": "OUTDOOR",
       "name": "卡森德拉街道",
       "description": "卡森德拉镇的街道和巷道网络，连接着镇上的各个建筑和场所。",

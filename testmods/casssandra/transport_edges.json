@@ -75,7 +75,7 @@
     {
       "fromLocationId": "SCN_1",
       "toLocationId": "SCN_15",
-      "streetSceneId": "ROAD_5",
+      "streetSceneId": "ROAD_5a",
       "travelTimeMinutes": 5
     },
     {
@@ -93,8 +93,14 @@
     {
       "fromLocationId": "SCN_16",
       "toLocationId": "SCN_15",
-      "streetSceneId": "ROAD_5",
+      "streetSceneId": "ROAD_5b",
       "travelTimeMinutes": 3
+    },
+    {
+      "fromLocationId": "SCN_16",
+      "toLocationId": "SCN_22",
+      "streetSceneId": "ROAD_5b",
+      "travelTimeMinutes": 4
     },
     {
       "fromLocationId": "SCN_16",
@@ -125,6 +131,18 @@
       "toLocationId": "SCN_8",
       "streetSceneId": "ROAD_9",
       "travelTimeMinutes": 5
+    },
+    {
+      "fromLocationId": "SCN_4",
+      "toLocationId": "SCN_22",
+      "streetSceneId": "ROAD_6",
+      "travelTimeMinutes": 3
+    },
+    {
+      "fromLocationId": "SCN_15",
+      "toLocationId": "SCN_22",
+      "streetSceneId": "ROAD_5b",
+      "travelTimeMinutes": 2
     }
   ]
 }

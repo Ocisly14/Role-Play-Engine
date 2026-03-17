@@ -1,7 +1,7 @@
 {
   "id": "ROAD_5b",
   "name": "石榴巷南段",
-  "description": "石榴巷的南段，从日暮大道分叉处向南延伸至南新街东端三岔口。沿途有阿道夫的屋子。",
+  "description": "石榴巷的南段，从日暮大道分叉处向南延伸至南新街东端三岔口。沿途有阿道夫的屋子和一栋镇长的私宅。",
   "parentLocationId": "OUTDOOR",
   "endpointA": "JUNC_6",
   "endpointB": "JUNC_4",
@@ -10,6 +10,10 @@
     {
       "sceneId": "SCN_15_SUB_1",
       "position": 0.5
+    },
+    {
+      "sceneId": "SCN_22_SUB_1",
+      "position": 0.8
     }
   ],
   "items": [

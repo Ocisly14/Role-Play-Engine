@@ -7,8 +7,8 @@
   "appearance": "A pale, slender man who dresses with careful elegance and carries himself as if every room already belongs to him. His expression is polite by default, but his eyes rarely stop calculating.",
   "personality": "Controlled, manipulative, patient, and deeply committed to maintaining authority. Patrizio prefers pressure, access, and quiet leverage over open confrontation, and he values image almost as much as power.",
   "background": "Born into a German immigrant family that still clung to old status and old fantasies, Patrizio studied psychiatry and later spent time in Arkham, where an encounter with things he could not explain changed the direction of his life. He left medicine, entered local politics, and eventually turned Cassandra into a place he could govern through fear, favors, and carefully managed secrets. As town leader he prefers to stay out of sight and govern through proxies, while his network reaches into the police, the hospital, and the town's hidden rituals.",
-  "residence": "OUTDOOR",
-  "currentLocation": "OUTDOOR",
+  "residence": "SCN_22",
+  "currentLocation": "SCN_22_SUB_2",
   "longTermIntent": "Keep Cassandra under his control, protect the people and systems that keep his influence intact, and complete his hidden ritual plans without exposing how much of the town answers to him.",
   "attributes": {
     "STR": 40,
