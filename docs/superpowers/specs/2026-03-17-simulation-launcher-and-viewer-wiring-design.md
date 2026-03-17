@@ -192,6 +192,10 @@ Update routes:
 - Keep `/character/create`, `/character/select`
 - Remove `BackgroundManager` reference to `/game` path (dead code after removal)
 
+### `hooks/useSimulationState.ts`
+
+Add `moduleName: string | null` and `mapsPrefix: string | null` to `SimulationViewState` (initialized as `null`). In `loadInitialState()`, store both from the `fetchStatus()` response. These are consumed by `SimulationPage.tsx` for constructing tilemap URLs.
+
 ### `views/SimulationSelectPage.tsx` — `ModSelector` adaptation
 
 The existing `ModSelector` component has an `onCreateStory` prop that shows a "Create Your Own Story" card. In the simulation context, this should be hidden — pass `onCreateStory={undefined}` or add a prop to disable it. The "Start Adventure" button label should also change to "Next" or "Configure".
@@ -200,12 +204,24 @@ The existing `ModSelector` component has an `onCreateStory` prop that shows a "C
 
 ### `server/simulation/controller.ts`
 
-**`getStatus` handler:** Include `moduleName` in response:
+**`getStatus` handler:** Include `moduleName` and `mapsPrefix` in response:
 
 ```typescript
 // In getStatus handler
 const status = runner.getStatus();
-return res.json({ ...status, moduleName: runner.getModuleName() });
+const moduleName = runner.getModuleName();
+const modulePath = runner.getModulePath();
+
+// Resolve mapsPrefix: find the *_Maps directory name within the module folder
+let mapsPrefix: string | null = null;
+if (modulePath) {
+  const mapsDir = findMapsDirectory(modulePath); // from mapService.ts
+  if (mapsDir) {
+    mapsPrefix = path.basename(mapsDir); // e.g., "Simple_Town_Maps"
+  }
+}
+
+return res.json({ ...status, moduleName, mapsPrefix });
 ```
 
 ### `server/simulation/service.ts`
@@ -231,31 +247,36 @@ export async function createSimulation(
 }
 
 function applyGlobalWeather(dgsm: DynamicGameStateManager, weather: WeatherType): void {
-  // Set weather on all outdoor topology nodes (junctions and roads).
-  // Uses the weatherFeature's WeatherRegionState interface.
-  // Iterates over topology junctions and roads, adding a SceneCondition
-  // with type: "weather" and the corresponding mechanical effects
-  // (e.g., fog → perception penalties, storm → movement penalties).
-  const state = dgsm.getState();
+  // Reuse the same pattern as weatherFeature's writeWeatherConditions():
+  // - Tag conditions with "[Weather]" prefix for identification
+  // - Use computeSkillPenalties() and getWeatherLabel() from weatherFeature.ts
+  // - Default intensity: 3 (moderate)
   const topology = dgsm.getTopology();
   if (!topology) return;
 
+  const DEFAULT_INTENSITY = 3;
   const outdoorIds = [
     ...Array.from(topology.junctions.keys()),
     ...Array.from(topology.roads.keys()),
   ];
 
+  // Import and reuse from weatherFeature: getWeatherLabel, computeSkillPenalties
+  const label = getWeatherLabel(weather, DEFAULT_INTENSITY);
+  const penalties = computeSkillPenalties(weather, DEFAULT_INTENSITY);
+
   for (const sceneId of outdoorIds) {
-    const existing = state.scenarioConditions[sceneId] ?? [];
-    const weatherCondition = {
-      type: "weather" as const,
-      description: `Weather: ${weather}`,
-      mechanicalEffect: getWeatherMechanicalEffect(weather),
-    };
-    state.scenarioConditions[sceneId] = [
-      ...existing.filter(c => c.type !== "weather"),
-      weatherCondition,
-    ];
+    // Clear existing weather conditions (same pattern as clearWeatherConditions)
+    const state = dgsm.getState();
+    const conditions = state.scenarioConditions[sceneId] ?? [];
+    state.scenarioConditions[sceneId] = conditions.filter(
+      (c: any) => !c.description.startsWith("[Weather]")
+    );
+
+    // Append new weather condition (SceneCondition has description + mechanicalEffect, NO type field)
+    dgsm.appendSceneCondition(sceneId, {
+      description: `[Weather] ${label}`,
+      mechanicalEffect: penalties.length > 0 ? { skillPenalty: penalties } : undefined,
+    });
   }
 }
 ```
@@ -289,6 +310,14 @@ model SimulationRuntime {
 ```
 
 Apply with `prisma db push` (consistent with existing migration strategy).
+
+**Implementation order in `createSimulation`:** Call `runner.setModuleName(moduleName)` BEFORE `runner.saveRuntime()` — currently `service.ts` calls `saveRuntime()` on line 234 and `setModuleName()` on line 237, which means the moduleName would not be persisted. Swap the order.
+
+**Persistence changes required:**
+- `SimulationRuntimeRecord` type in `types.ts`: add `moduleName?: string`
+- `persistSimulationRuntime()` in `runtimePersistence.ts`: add `moduleName` to upsert create/update
+- `loadSimulationRuntime()`: read `moduleName` from DB row
+- `listSimulationRuntimeRecords()`: include `moduleName` in select/return
 
 ### `GET /api/simulations` response update
 
@@ -326,7 +355,6 @@ The backend resolves this via `mapService.findMapsDirectory(modulePath)` which f
 
 - `TownScene.ts` / `InteriorScene.ts` — Phaser scenes already implement all needed functionality
 - `SidePanel.tsx` / `ControlPanel.tsx` / `EventLog.tsx` / `NpcCard.tsx` / `NpcDetail.tsx` — already working
-- `useSimulationState.ts` — needs minor update: add `moduleName` and `mapsPrefix` to `SimulationViewState`, populate from `fetchStatus()` response
 - `useSimulationWebSocket.ts` — already working
 - `server/simulation/mapService.ts` / `mapRoutes.ts` / `mapController.ts` — already working
 - `server/maps/routes.ts` — already serves static map files
