@@ -19,6 +19,7 @@ export class EventHandler implements MemoryHandler {
   }
 
   format(memory: PrismaNpcMemory): string {
-    return `[event] Day${memory.gameDay} ${memory.gameTime} - ${memory.content}`;
+    const loc = memory.location ? ` [${memory.location}]` : "";
+    return `[event] Day${memory.gameDay} ${memory.gameTime}${loc} - ${memory.content}`;
   }
 }

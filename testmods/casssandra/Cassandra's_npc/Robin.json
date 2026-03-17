@@ -1,84 +1,104 @@
-[
-  {
-    "name": "Robin",
-    "occupation": "Unemployed socialite",
-    "age": 50,
-    "gender": "male",
-    "appearance": "A well-groomed middle-aged individual who often presents in feminine clothing, with a style that reflects access to wealth and refined taste.",
-    "personality": "Caring, loyal to friends, discreet, and emotionally resilient. Tends to avoid direct conflict and prefers to resolve matters quietly.",
-    "background": "Robin is a cross-dresser with a very wealthy adoptive father. A close friend of Solomon, Robin came to Cassandra some time ago to visit him. During that period, Robin took responsibility for caring for another friend, Bo He, who was suffering from mental instability. Before the investigators arrived in Cassandra, Robin had already left the town.",
-    "goals": [
-      "Protect and care for close friends",
-      "Maintain distance from dangerous or unstable situations"
-    ],
-    "secrets": [
-      "Has a wealthy adoptive father",
-      "Taking care of mentally ill friend Bo He at a sanitarium"
-    ],
-    "attributes": {
-      "STR": 45,
-      "CON": 50,
-      "DEX": 55,
-      "APP": 70,
-      "POW": 55,
-      "SIZ": 55,
-      "INT": 60,
-      "EDU": 65
-    },
-    "status": {
-      "hp": 10,
-      "maxHp": 10,
-      "sanity": 55,
-      "maxSanity": 55,
-      "luck": 65,
-      "mp": 11,
-      "conditions": []
-    },
-    "skills": {
-      "Charm": 60,
-      "Persuade": 55,
-      "Psychology": 45,
-      "Listen": 40
-    },
-    "inventory": [],
-    "clues": [
-      {
-        "clueText": "Robin left Cassandra before the investigators arrived.",
-        "category": "knowledge",
-        "difficulty": "regular",
-        "relatedTo": ["Cassandra"]
-      },
-      {
-        "clueText": "Robin was caring for Bo He, who was suffering from mental instability.",
-        "category": "knowledge",
-        "difficulty": "regular",
-        "relatedTo": ["Bo He"]
+{
+  "id": "Robin",
+  "name": "Robin",
+  "occupation": "Socialite / caregiver",
+  "age": 50,
+  "gender": "male",
+  "appearance": "A stylish, sharply presented man who knows how to turn personal appearance into a form of self-protection. He looks polished enough to belong anywhere, but never casual enough to be easy to read.",
+  "personality": "Elegant, observant, protective, and a little theatrical when the situation allows it. Robin keeps his real feelings controlled and uses charm and good taste to avoid giving people an opening.",
+  "background": "Robin is a wealthy, cross-dressing socialite with an affluent adoptive father and a broad social life outside Cassandra. He came to town to see his friend Solomon and spent time caring for Bo He while his friend was unwell. By the time investigators arrive, Robin has already left Cassandra, preferring distance to getting trapped in the town's more dangerous problems.",
+  "residence": "OUTDOOR",
+  "currentLocation": "OUTDOOR",
+  "longTermIntent": "Stay outside Cassandra, keep his life comfortable, support his friends from a distance, and avoid being dragged into the town's worst secrets.",
+  "attributes": {
+    "STR": 40,
+    "CON": 45,
+    "DEX": 55,
+    "APP": 75,
+    "POW": 55,
+    "SIZ": 50,
+    "INT": 65,
+    "EDU": 70
+  },
+  "status": {
+    "hp": 9,
+    "maxHp": 9,
+    "sanity": 55,
+    "maxSanity": 55,
+    "luck": 60,
+    "mp": 11,
+    "conditions": ["away_from_town"]
+  },
+  "skills": {
+    "Charm": 75,
+    "Persuade": 60,
+    "Fast Talk": 55,
+    "Credit Rating": 80,
+    "Psychology": 50
+  },
+  "inventory": [
+    {
+      "name": "Travel Wardrobe",
+      "properties": {
+        "note": "Carefully selected clothes and accessories suited to his public image."
       }
-    ],
-    "relationships": [
-      {
-        "targetName": "Solomon",
-        "relationshipType": "friend",
-        "attitude": 70,
-        "description": "Close personal friend",
-        "history": "Robin traveled to Cassandra specifically to visit Solomon and maintains a strong friendship with him."
-      },
-      {
-        "targetName": "Bo He",
-        "relationshipType": "friend",
-        "attitude": 80,
-        "description": "Friend under Robin's care",
-        "history": "Robin took responsibility for looking after Bo He during a period of mental instability."
-      },
-      {
-        "targetName": "Wealthy adoptive father",
-        "relationshipType": "family",
-        "attitude": 50,
-        "description": "Financial supporter",
-        "history": "Robin was adopted by a very wealthy individual who provides financial security."
+    },
+    {
+      "name": "Expensive Calling Cards",
+      "properties": {
+        "note": "A small set of cards and contacts that keep doors open for him."
       }
-    ],
-    "notes": "Robin does not participate directly in the investigation due to having already left Cassandra.",
-    "currentLocation": "OUTDOOR"
-  }
-]
+    }
+  ],
+  "relationships": [
+    {
+      "targetId": "Solomon",
+      "targetName": "Solomon",
+      "relationshipType": "friend",
+      "attitude": 70,
+      "description": "An old friend whose shop he visited in Cassandra.",
+      "history": "Robin keeps in touch with Solomon because their friendship is dependable and low drama."
+    },
+    {
+      "targetId": "Bo He",
+      "targetName": "Bo He",
+      "relationshipType": "friend",
+      "attitude": 55,
+      "description": "A friend he helped care for while Bo He was mentally unwell.",
+      "history": "Robin spent time making sure Bo He was safe and settled before leaving town."
+    }
+  ],
+  "memory": [
+    {
+      "type": "information",
+      "content": "I visited Cassandra to see Solomon and to make sure Bo He had support while things were difficult.",
+      "metadata": {
+        "knowledgeId": "k_robin_visit",
+        "difficulty": "automatic"
+      }
+    },
+    {
+      "type": "information",
+      "content": "I already left Cassandra before the investigators arrived, and I intend to keep my distance unless one of my friends truly needs me back.",
+      "metadata": {
+        "knowledgeId": "k_robin_left",
+        "difficulty": "regular"
+      }
+    },
+    {
+      "type": "secret",
+      "content": "I prefer to keep my private life, presentation, and family arrangement separate from the people who think they know me.",
+      "metadata": {
+        "knowledgeId": "s_robin_private_life"
+      }
+    },
+    {
+      "type": "belief",
+      "content": "If a place starts demanding more from me than my friends or my peace, it is time to leave.",
+      "metadata": {
+        "confidence": 0.82,
+        "reasoningChain": "A little distance is better than becoming part of a problem that was never mine to begin with."
+      }
+    }
+  ]
+}

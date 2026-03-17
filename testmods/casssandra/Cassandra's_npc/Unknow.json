@@ -1,89 +1,108 @@
-[
-  {
-    "name": "Unknown",
-    "occupation": "Traveler / Investigator (unofficial)",
-    "age": 19,
-    "gender": "female",
-    "appearance": "A young woman of indeterminate background, travel-worn and tired, with signs of long-distance journeying and emotional strain.",
-    "personality": "Determined, anxious, and persistent; driven by guilt and familial attachment, yet unaware of the true cosmic horror surrounding her investigation.",
-    "background": "An unnamed Black woman, approximately 19 years old, who died on December 22, 2002 at the Paradil Hotel. She was not a local resident of Cassandra, so no missing person report exists. She came to Cassandra to investigate the disappearance of her younger sister, who ran away from home. Evidence indicates that her sister's last known destination was Cassandra. Her body was discovered in a cold storage unit in the hotel kitchen's basement, completely naked and encased in a large block of ice. The body showed no wounds. She had no identification documents and no relatives could be found. The case was quickly shelved and became a cold case.",
-    "goals": [
-      "Find her missing sister",
-      "Uncover the truth behind her sister’s disappearance"
-    ],
-    "secrets": [
-      "Her sister had already been sacrificed to Shub-Niggurath a year earlier",
-      "Her own death at the Paradil Hotel was never properly identified or investigated"
-    ],
-    "attributes": {
-      "STR": 45,
-      "CON": 55,
-      "DEX": 50,
-      "APP": 50,
-      "POW": 60,
-      "SIZ": 50,
-      "INT": 65,
-      "EDU": 60
-    },
-    "status": {
-      "hp": 10,
-      "maxHp": 10,
-      "sanity": 60,
-      "maxSanity": 60,
-      "luck": 55,
-      "mp": 12,
-      "conditions": ["deceased"]
-    },
-    "skills": {
-      "Spot Hidden": 50,
-      "Library Use": 40,
-      "Psychology": 35,
-      "Persuade": 40
-    },
-    "inventory": [
-      {
-        "name": "Travel bag",
-        "properties": {
-          "note": "Personal belongings, location unknown after death."
-        }
-      },
-      {
-        "name": "Notes about her sister's disappearance",
-        "properties": {
-          "note": "Evidence that her sister's last known destination was Cassandra."
-        }
-      },
-      {
-        "name": "Hotel receipt from Paradil Hotel",
-        "properties": {
-          "note": "Proof of her stay at the hotel before her death."
-        }
+{
+  "id": "Unknown",
+  "name": "Unknown",
+  "occupation": "Traveler / Investigator (unofficial)",
+  "age": 19,
+  "gender": "female",
+  "appearance": "A young Black woman with travel weariness and signs of emotional strain from a long search.",
+  "personality": "Determined, anxious, and persistent. She is driven by family loyalty and worry, not by curiosity for its own sake.",
+  "background": "An unnamed Black woman came to Cassandra looking for her missing sister. She stayed at the Paradil Hotel and was later found dead in the hotel's basement cold storage, leaving no useful records behind.",
+  "residence": "SCN_4",
+  "currentLocation": "SCN_4_SUB_4",
+  "longTermIntent": "Find her sister and uncover why Cassandra swallowed her trail.",
+  "attributes": {
+    "STR": 45,
+    "CON": 55,
+    "DEX": 50,
+    "APP": 50,
+    "POW": 60,
+    "SIZ": 50,
+    "INT": 65,
+    "EDU": 60
+  },
+  "status": {
+    "hp": 10,
+    "maxHp": 10,
+    "sanity": 60,
+    "maxSanity": 60,
+    "luck": 55,
+    "mp": 12,
+    "conditions": ["deceased"]
+  },
+  "skills": {
+    "Spot Hidden": 50,
+    "Library Use": 40,
+    "Psychology": 35,
+    "Persuade": 40
+  },
+  "inventory": [
+    {
+      "name": "Travel bag",
+      "properties": {
+        "note": "Personal belongings were left behind."
       }
-    ],
-    "clues": [
-      {
-        "clueText": "Her sister’s final journey ended in Cassandra and she was never seen again afterward.",
-        "category": "knowledge",
-        "difficulty": "regular",
-        "relatedTo": ["Cassandra", "Shub-Niggurath Cult"]
-      },
-      {
-        "clueText": "Her sister had already been sacrificed to Shub-Niggurath one year before her arrival.",
-        "category": "secret",
-        "difficulty": "hard",
-        "relatedTo": ["Shub-Niggurath"]
+    },
+    {
+      "name": "Notes about her sister's disappearance",
+      "properties": {
+        "note": "Evidence that Cassandra was her sister's last known destination."
       }
-    ],
-    "relationships": [
-      {
-        "targetName": "Unknown Sister",
-        "relationshipType": "family",
-        "attitude": 80,
-        "description": "Her younger sister who ran away from home and disappeared.",
-        "history": "She traveled to Cassandra solely to find her sister, unaware that the cult had already sacrificed her."
+    },
+    {
+      "name": "Hotel receipt",
+      "properties": {
+        "note": "Proof of her stay at the Paradil Hotel."
       }
-    ],
-    "notes": "Victim of the 2002 Paradil Hotel murder case (the old case). Age approximately 19, Black female. Body found on December 22, 2002 in a cold storage unit in the hotel kitchen's basement, completely naked and encased in a large block of ice. No wounds on the body. No identification documents found, no relatives could be located. The case was quickly shelved and became a cold case. Bruno persistently investigated this case despite lack of support from superiors. The murderer was Martin Gin (Ghost Hand). Jenny Florence (Lucifero) witnessed the murder but did not reveal it until planning to tell Bruno in 2003.",
-    "currentLocation": "SCN_4"
-  }
-]
+    }
+  ],
+  "relationships": [
+    {
+      "targetId": "Unknown Sister",
+      "targetName": "Unknown Sister",
+      "relationshipType": "family",
+      "attitude": 80,
+      "description": "Her younger sister, the reason she came to Cassandra.",
+      "history": "She traveled to find her sister, unaware that the cult had already consumed her trail."
+    }
+  ],
+  "memory": [
+    {
+      "type": "information",
+      "content": "I came to Cassandra because my younger sister vanished after her trail led here.",
+      "metadata": {
+        "knowledgeId": "k_unknown_sister",
+        "difficulty": "automatic"
+      }
+    },
+    {
+      "type": "information",
+      "content": "My hotel stay and the hotel records are all that connected me to the town before the case was shelved.",
+      "metadata": {
+        "knowledgeId": "k_unknown_hotel",
+        "difficulty": "regular"
+      }
+    },
+    {
+      "type": "secret",
+      "content": "My sister had already been sacrificed to Shub-Niggurath a year before I arrived.",
+      "metadata": {
+        "knowledgeId": "s_unknown_sister"
+      }
+    },
+    {
+      "type": "secret",
+      "content": "My own death at the Paradil Hotel was never properly identified or investigated.",
+      "metadata": {
+        "knowledgeId": "s_unknown_death"
+      }
+    },
+    {
+      "type": "belief",
+      "content": "A missing person is not really gone until every lead has been exhausted.",
+      "metadata": {
+        "confidence": 0.85,
+        "reasoningChain": "She came this far because giving up would have meant abandoning her sister. Even now, that resolve remains the center of her story."
+      }
+    }
+  ]
+}

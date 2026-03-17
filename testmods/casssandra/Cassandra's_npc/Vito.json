@@ -1,93 +1,108 @@
-[
-  {
-    "name": "Vito",
-    "occupation": "Auxiliary Police Officer",
-    "age": 30,
-    "gender": "male",
-    "appearance": "A sturdy man of Latin American descent, dressed in the plain uniform of an auxiliary police officer, with a friendly but somewhat clumsy demeanor.",
-    "personality": "Honest, good-natured, and simple-minded; well-meaning but not particularly sharp or suspicious.",
-    "background": "Vito is a local auxiliary police officer in Cassandra. He is known for being kind-hearted and dependable, though lacking in experience and investigative insight.",
-    "goals": [
-      "Do his job and assist the local police",
-      "Maintain peace and order in Cassandra"
-    ],
-    "secrets": [
-      "Last year before Christmas, he met the unknown Black girl (victim of the 2002 Paradil Hotel murder case) who asked him if there were any cheap rooms for rent. He said no, and the next day she was murdered. He forgot about this after the case was shelved."
-    ],
-    "attributes": {
-      "STR": 60,
-      "CON": 65,
-      "DEX": 50,
-      "APP": 45,
-      "POW": 50,
-      "SIZ": 65,
-      "INT": 45,
-      "EDU": 40
+{
+  "id": "Vito",
+  "name": "Vito",
+  "occupation": "Auxiliary Police Officer",
+  "age": 30,
+  "gender": "male",
+  "appearance": "A sturdy man of Latin American descent in a plain auxiliary police uniform, with a friendly but slightly clumsy look.",
+  "personality": "Honest, good-natured, and simple-minded. He means well but is not the sharpest observer in the room.",
+  "background": "Vito is a local auxiliary police officer in Cassandra. He is dependable, kind-hearted, and not especially suspicious by nature.",
+  "residence": "SCN_3",
+  "currentLocation": "SCN_3_SUB_1",
+  "longTermIntent": "Keep peace in town, do his job honestly, and make sure Helen is safe.",
+  "attributes": {
+    "STR": 60,
+    "CON": 65,
+    "DEX": 50,
+    "APP": 45,
+    "POW": 50,
+    "SIZ": 65,
+    "INT": 45,
+    "EDU": 40
+  },
+  "status": {
+    "hp": 13,
+    "maxHp": 13,
+    "sanity": 50,
+    "maxSanity": 50,
+    "luck": 55,
+    "mp": 10,
+    "conditions": []
+  },
+  "skills": {
+    "Spot Hidden": 40,
+    "Law": 30,
+    "Persuade": 35,
+    "Firearms (Handgun)": 30
+  },
+  "inventory": [
+    {
+      "name": "Auxiliary police badge"
     },
-    "status": {
-      "hp": 13,
-      "maxHp": 13,
-      "sanity": 50,
-      "maxSanity": 50,
-      "luck": 55,
-      "mp": 10,
-      "conditions": []
+    {
+      "name": "Service handgun"
     },
-    "skills": {
-      "Spot Hidden": 40,
-      "Law": 30,
-      "Persuade": 35,
-      "Firearms (Handgun)": 30
+    {
+      "name": "Notebook"
+    }
+  ],
+  "relationships": [
+    {
+      "targetId": "Helen",
+      "targetName": "Helen",
+      "relationshipType": "friend",
+      "attitude": 90,
+      "description": "His girlfriend and the person he cares about most.",
+      "history": "They started dating recently."
     },
-    "inventory": [
-      {
-        "name": "Auxiliary police badge"
-      },
-      {
-        "name": "Service handgun"
-      },
-      {
-        "name": "Notebook"
+    {
+      "targetId": "Bruno Galilei",
+      "targetName": "Bruno Galilei",
+      "relationshipType": "friend",
+      "attitude": 70,
+      "description": "Fellow officer he respected.",
+      "history": "They worked together at the police station."
+    },
+    {
+      "targetId": "Shandra Hernandez",
+      "targetName": "Shandra Hernandez",
+      "relationshipType": "acquaintance",
+      "attitude": 40,
+      "description": "Shop owner Bruno frequently visited.",
+      "history": "Vito asked after Bruno at her shop more than once."
+    }
+  ],
+  "memory": [
+    {
+      "type": "information",
+      "content": "Last year before Christmas, I met the unknown Black girl who later became the 2002 Paradil Hotel murder victim.",
+      "metadata": {
+        "knowledgeId": "k_vito_victim",
+        "difficulty": "regular"
       }
-    ],
-    "clues": [
-      {
-        "clueText": "Last year before Christmas, he met the unknown Black girl (victim of the 2002 Paradil Hotel murder case) who asked him if there were any cheap rooms for rent. He said no, and the next day she was murdered.",
-        "category": "knowledge",
-        "difficulty": "regular",
-        "relatedTo": ["2002 Paradil Hotel murder", "Unknown victim"]
-      },
-      {
-        "clueText": "His girlfriend Helen was the woman Philip tried to flirt with at the Reindeer Bar on the day of the 2003 murder case.",
-        "category": "knowledge",
-        "difficulty": "regular",
-        "relatedTo": ["Helen", "Philip Scaletta", "2003 Reindeer Bar murder"]
+    },
+    {
+      "type": "information",
+      "content": "Helen was the woman Philip tried to flirt with at the Reindeer Bar.",
+      "metadata": {
+        "knowledgeId": "k_vito_helen",
+        "difficulty": "regular"
       }
-    ],
-    "relationships": [
-      {
-        "targetName": "Helen",
-        "relationshipType": "lover",
-        "attitude": 90,
-        "description": "His girlfriend, a restaurant owner",
-        "history": "They started dating recently"
-      },
-      {
-        "targetName": "Bruno Galilei",
-        "relationshipType": "colleague",
-        "attitude": 70,
-        "description": "Fellow officer he respected",
-        "history": "Worked together at the police station"
-      },
-      {
-        "targetName": "Shandra Hernandez",
-        "relationshipType": "acquaintance",
-        "attitude": 40,
-        "description": "Shop owner Bruno frequently visited",
-        "history": "Went to her shop looking for Bruno a few times, causing Helen to be jealous"
+    },
+    {
+      "type": "secret",
+      "content": "I said I did not know of any cheap rooms for rent, and the next day the girl I spoke to was murdered.",
+      "metadata": {
+        "knowledgeId": "s_vito_rooms"
       }
-    ],
-    "notes": "Vito is a good-hearted but unsophisticated auxiliary officer. He met the victim of the 2002 murder case the day before she was killed, but forgot about this after the case was shelved. His girlfriend Helen was involved in the 2003 Reindeer Bar incident when Philip tried to flirt with her.",
-    "currentLocation": "SCN_3"
-  }
-]
+    },
+    {
+      "type": "belief",
+      "content": "Doing the right thing should be straightforward, even if I am not always smart enough to see every angle.",
+      "metadata": {
+        "confidence": 0.8,
+        "reasoningChain": "I may miss details, but I know the difference between helping people and making their lives worse."
+      }
+    }
+  ]
+}

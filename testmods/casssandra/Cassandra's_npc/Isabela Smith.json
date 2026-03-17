@@ -1,83 +1,103 @@
-[
-  {
-    "name": "Isabela Smith",
-    "occupation": "Head Nurse",
-    "age": 25,
-    "gender": "female",
-    "appearance": "A young woman with a professional and neat appearance, usually dressed in a nurse’s uniform, giving off a calm and trustworthy impression.",
-    "personality": "Responsible, patient, diligent, and caring. She takes her duties seriously and shows strong emotional commitment to those she cares about.",
-    "background": "Isabela Smith is a young head nurse at the local hospital. She is known among her colleagues for being conscientious and patient. She is engaged to a man from a well-off family who works as a diplomat. Many hospital staff privately speculate that she will eventually leave her job to marry and move to a big city. On the night of December 26, she abruptly resigned and left Cassandra overnight, taking her fiancé with her after he suddenly suffered a mental breakdown.",
-    "goals": [
-      "Protect and take care of her mentally unstable fiancé",
-      "Leave Cassandra and start a safer, more stable life elsewhere"
-    ],
-    "secrets": [
-      "After the night of December 26, the Isabela seen by investigators is actually an impostor disguised by Mrs. Barklyite"
-    ],
-    "attributes": {
-      "STR": 45,
-      "CON": 55,
-      "DEX": 55,
-      "APP": 60,
-      "POW": 65,
-      "SIZ": 50,
-      "INT": 65,
-      "EDU": 75
-    },
-    "status": {
-      "hp": 10,
-      "maxHp": 10,
-      "sanity": 65,
-      "maxSanity": 65,
-      "luck": 60,
-      "mp": 13,
-      "conditions": []
-    },
-    "skills": {
-      "Medicine": 70,
-      "First Aid": 75,
-      "Psychology": 50,
-      "Persuade": 45
-    },
-    "inventory": [
-      {
-        "name": "Hospital ID card",
-        "properties": {
-          "note": "Provides access to restricted areas"
-        }
+{
+  "id": "Isabela Smith",
+  "name": "Isabela Smith",
+  "occupation": "Head nurse",
+  "age": 25,
+  "gender": "female",
+  "appearance": "A young woman with a professional and neat appearance, usually dressed in a nurse's uniform, giving off a calm and trustworthy impression.",
+  "personality": "Responsible, patient, diligent, and caring. She takes her duties seriously and shows strong emotional commitment to those she cares about.",
+  "background": "Isabela Smith is a young head nurse at the local hospital. She is known among her colleagues for being conscientious and patient. She is engaged to Wind, and many hospital staff privately speculate that she will eventually leave her job to marry and move to a big city. On the night of December 26, she abruptly resigned and left Cassandra overnight, taking Wind with her after he suddenly suffered a mental breakdown.",
+  "residence": "SCN_1",
+  "currentLocation": "SCN_1",
+  "longTermIntent": "Protect Wind, keep him safe during his recovery, and leave Cassandra before the situation gets any more dangerous.",
+  "attributes": {
+    "STR": 45,
+    "CON": 55,
+    "DEX": 55,
+    "APP": 60,
+    "POW": 65,
+    "SIZ": 50,
+    "INT": 65,
+    "EDU": 75
+  },
+  "status": {
+    "hp": 10,
+    "maxHp": 10,
+    "sanity": 65,
+    "maxSanity": 65,
+    "luck": 60,
+    "mp": 13,
+    "conditions": []
+  },
+  "skills": {
+    "Medicine": 70,
+    "First Aid": 75,
+    "Psychology": 50,
+    "Persuade": 45
+  },
+  "inventory": [
+    {
+      "name": "Hospital ID card",
+      "properties": {
+        "note": "Provides access to restricted areas."
       }
-    ],
-    "clues": [
-      {
-        "clueText": "Isabela resigned and left Cassandra on the night of December 26, urgently taking her fiancé with her after he became mentally unstable.",
-        "category": "knowledge",
-        "difficulty": "regular",
-        "relatedTo": ["Cassandra Hospital", "Isabela Smith's Fiancé"]
-      },
-      {
-        "clueText": "Any Isabela encountered by investigators after December 26 is actually Mrs. Barklyite in disguise.",
-        "category": "secret",
-        "difficulty": "hard",
-        "relatedTo": ["Mrs. Barklyite"]
+    },
+    {
+      "name": "Travel bag",
+      "properties": {
+        "note": "Packed in a hurry when leaving Cassandra."
       }
-    ],
-    "relationships": [
-      {
-        "targetName": "Mrs. Barklyite",
-        "relationshipType": "enemy",
-        "attitude": -40,
-        "description": "An unknown but dangerous figure who impersonates Isabela after her departure.",
-        "history": "Mrs. Barklyite disguises herself as Isabela after December 26, misleading investigators."
-      },
-      {
-        "targetName": "Unnamed Fiancé",
-        "relationshipType": "family",
-        "attitude": 80,
-        "description": "Her fiancé from a wealthy family, who suddenly became mentally unstable.",
-        "history": "Their engagement was stable until his sudden mental collapse, prompting Isabela to flee Cassandra with him."
+    }
+  ],
+  "relationships": [
+    {
+      "targetId": "Wind",
+      "targetName": "Wind",
+      "relationshipType": "friend",
+      "attitude": 80,
+      "description": "Her fiancé, whom she is determined to protect.",
+      "history": "Their engagement was stable until his sudden mental collapse, prompting Isabela to flee Cassandra with him."
+    },
+    {
+      "targetId": "Mrs. Barklyite (Lucia Shiny)",
+      "targetName": "Mrs. Barklyite (Lucia Shiny)",
+      "relationshipType": "enemy",
+      "attitude": -40,
+      "description": "The person who impersonates her after she leaves town.",
+      "history": "Any Isabela encountered after December 26 is actually an impostor in disguise."
+    }
+  ],
+  "memory": [
+    {
+      "type": "information",
+      "content": "I worked at the hospital in Cassandra and was known as a conscientious head nurse.",
+      "metadata": {
+        "knowledgeId": "k_isabela_hospital",
+        "difficulty": "automatic"
       }
-    ],
-    "notes": "Isabela is no longer physically present in Cassandra after December 26; her apparent presence afterward is a deliberate deception.",
-    "currentLocation": "SCN_1"
-  }
-]
+    },
+    {
+      "type": "information",
+      "content": "I left Cassandra on the night of December 26 with Wind after he became mentally unstable.",
+      "metadata": {
+        "knowledgeId": "k_isabela_departure",
+        "difficulty": "regular"
+      }
+    },
+    {
+      "type": "secret",
+      "content": "After December 26, any Isabela seen by investigators is actually Mrs. Barklyite in disguise.",
+      "metadata": {
+        "knowledgeId": "s_isabela_impostor"
+      }
+    },
+    {
+      "type": "belief",
+      "content": "The safest choice is to get Wind out of Cassandra first and sort everything else out somewhere else.",
+      "metadata": {
+        "confidence": 0.9,
+        "reasoningChain": "The town has become unstable enough that staying longer feels irresponsible."
+      }
+    }
+  ]
+}

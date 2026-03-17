@@ -1,101 +1,139 @@
-[
-  {
-    "name": "Lyn",
-    "occupation": "Former Special Forces Soldier",
-    "age": 36,
-    "gender": "male",
-    "appearance": "A physically fit and battle-hardened man with quick movements and a fighter’s posture; looks capable and intimidating but otherwise unremarkable.",
-    "personality": "Hot-tempered and aggressive in conflicts, skeptical of the supernatural, prone to acting on impulse. Despite a short attention span, he is stubborn about certain principles and extremely reliable to his friends.",
-    "background": "Born in Detroit, Lyn grew up surrounded by violence and learned to fight from a young age. He later became a special forces soldier, developing strong combat instincts and a deep distrust of anything he cannot explain rationally. He is part of a close-knit group of friends connected through Bruno. During the Cassandra incident, Lyn was the one who sent Wind to the hospital and then contacted the others to go to the police station.",
-    "goals": [
-      "Protect his friends from harm",
-      "Solve problems through direct and decisive action"
-    ],
-    "secrets": [
-      "Doesn't believe in supernatural beings",
-      "Left Jun alone at the crematorium area"
-    ],
-    "attributes": {
-      "STR": 65,
-      "CON": 70,
-      "DEX": 80,
-      "APP": 40,
-      "POW": 45,
-      "SIZ": 80,
-      "INT": 65,
-      "EDU": 85
-    },
-    "status": {
-      "hp": 15,
-      "maxHp": 15,
-      "sanity": 45,
-      "maxSanity": 45,
-      "luck": 45,
-      "mp": 9,
-      "conditions": []
-    },
-    "skills": {
-      "Fighting (Brawl)": 70,
-      "Dodge": 60,
-      "Firearms": 60,
-      "Intimidate": 65,
-      "Listen": 50,
-      "Spot Hidden": 55
-    },
-    "inventory": [
-      {
-        "name": "Military knife",
-        "properties": {
-          "note": "From his service days"
-        }
+{
+  "id": "Lyn",
+  "name": "Lyn",
+  "occupation": "Former Special Forces Soldier",
+  "age": 36,
+  "gender": "male",
+  "appearance": "A physically fit and battle-hardened man with quick movements and a fighter's posture; he looks capable and intimidating but otherwise unremarkable.",
+  "personality": "Hot-tempered and aggressive in conflicts, skeptical of the supernatural, and prone to acting on impulse. Despite this, he is extremely reliable to his friends.",
+  "background": "Born in Detroit, Lyn grew up surrounded by violence and learned to fight from a young age. He later became a special forces soldier, developing strong combat instincts and a deep distrust of anything he cannot explain rationally. He is part of a close-knit group of friends connected through Bruno. During the Cassandra incident, Lyn was the one who sent Wind to the hospital and then contacted the others to go to the police station.",
+  "residence": "OUTDOOR",
+  "currentLocation": "SCN_3_SUB_1",
+  "longTermIntent": "Protect his friends, keep moving, and solve problems through direct, practical action rather than speculation.",
+  "attributes": {
+    "STR": 65,
+    "CON": 70,
+    "DEX": 80,
+    "APP": 40,
+    "POW": 45,
+    "SIZ": 80,
+    "INT": 65,
+    "EDU": 85
+  },
+  "status": {
+    "hp": 15,
+    "maxHp": 15,
+    "sanity": 45,
+    "maxSanity": 45,
+    "luck": 45,
+    "mp": 9,
+    "conditions": []
+  },
+  "skills": {
+    "Fighting (Brawl)": 70,
+    "Dodge": 60,
+    "Firearms": 60,
+    "Intimidate": 65,
+    "Listen": 50,
+    "Spot Hidden": 55
+  },
+  "inventory": [
+    {
+      "name": "Military knife",
+      "properties": {
+        "note": "From his service days"
       }
-    ],
-    "clues": [
-      {
-        "clueText": "After escorting Wind to the hospital, Lyn immediately contacted the others and went to the police station.",
-        "category": "observation",
-        "difficulty": "regular",
-        "relatedTo": ["Wind", "Police Station"]
+    }
+  ],
+  "relationships": [
+    {
+      "targetId": "Bruno Galilei",
+      "targetName": "Bruno Galilei",
+      "relationshipType": "friend",
+      "attitude": 60,
+      "description": "A trusted acquaintance who connects the group together.",
+      "history": "Met through shared circles and mutual respect forged by dangerous situations."
+    },
+    {
+      "targetId": "Reid",
+      "targetName": "Reid",
+      "relationshipType": "friend",
+      "attitude": 55,
+      "description": "A dependable companion within the group.",
+      "history": "Bonded through shared danger and mutual reliance."
+    },
+    {
+      "targetId": "Hawthorne",
+      "targetName": "Hawthorne",
+      "relationshipType": "friend",
+      "attitude": 55,
+      "description": "A cautious but loyal member of the group.",
+      "history": "Trust built over time through group cooperation."
+    },
+    {
+      "targetId": "Lily",
+      "targetName": "Lily",
+      "relationshipType": "friend",
+      "attitude": 50,
+      "description": "A determined young detective.",
+      "history": "Fought and survived alongside her during earlier incidents."
+    },
+    {
+      "targetId": "Bigbear",
+      "targetName": "Bigbear",
+      "relationshipType": "friend",
+      "attitude": 50,
+      "description": "A physically imposing but good-natured ally.",
+      "history": "Part of the same friend group connected by Bruno."
+    },
+    {
+      "targetId": "Wind",
+      "targetName": "Wind",
+      "relationshipType": "friend",
+      "attitude": 70,
+      "description": "A friend whose crisis drove much of the group's trip.",
+      "history": "Lyn helped get Wind to the hospital when he collapsed."
+    },
+    {
+      "targetId": "Jun",
+      "targetName": "Jun",
+      "relationshipType": "friend",
+      "attitude": 40,
+      "description": "The absent-minded professor who disappeared during their outing.",
+      "history": "Jun relied on Lyn for transport during their research trip."
+    }
+  ],
+  "memory": [
+    {
+      "type": "information",
+      "content": "I sent Wind to the hospital and then contacted the others, ending up at the police station to coordinate next steps.",
+      "metadata": {
+        "knowledgeId": "k_lyn_hospital_station",
+        "difficulty": "automatic"
       }
-    ],
-    "relationships": [
-      {
-        "targetName": "Bruno Galilei",
-        "relationshipType": "friend",
-        "attitude": 60,
-        "description": "A trusted acquaintance who connects the group together.",
-        "history": "Met through shared circles and mutual respect forged by dangerous situations."
-      },
-      {
-        "targetName": "Reid",
-        "relationshipType": "friend",
-        "attitude": 55,
-        "description": "A dependable companion within the group.",
-        "history": "Bonded through shared danger and mutual reliance."
-      },
-      {
-        "targetName": "Hawthorne",
-        "relationshipType": "friend",
-        "attitude": 55,
-        "description": "A cautious but loyal member of the group.",
-        "history": "Trust built over time through group cooperation."
-      },
-      {
-        "targetName": "Lily",
-        "relationshipType": "friend",
-        "attitude": 50,
-        "description": "A determined young detective.",
-        "history": "Fought and survived alongside her during earlier incidents."
-      },
-      {
-        "targetName": "Bigbear",
-        "relationshipType": "friend",
-        "attitude": 50,
-        "description": "A physically imposing but good-natured ally.",
-        "history": "Part of the same friend group connected by Bruno."
+    },
+    {
+      "type": "information",
+      "content": "Jun disappeared while the group was out researching, and I still have not stopped thinking about that.",
+      "metadata": {
+        "knowledgeId": "k_lyn_jun_missing",
+        "difficulty": "regular"
       }
-    ],
-    "notes": "Lyn firmly rejects the idea of monsters or magic, even when faced with unsettling evidence, preferring practical explanations and direct action.",
-    "currentLocation": "SCN_4"
-  }
-]
+    },
+    {
+      "type": "secret",
+      "content": "I left Jun alone near the crematorium area, and that decision still bothers me.",
+      "metadata": {
+        "knowledgeId": "s_lyn_jun_guilt"
+      }
+    },
+    {
+      "type": "belief",
+      "content": "If something is wrong, it is better to act on it immediately than to spend time speculating about monsters or magic.",
+      "metadata": {
+        "confidence": 0.9,
+        "reasoningChain": "Direct action has kept me alive more than once, and hesitation usually makes things worse."
+      }
+    }
+  ]
+}

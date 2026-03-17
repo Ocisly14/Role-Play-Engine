@@ -485,12 +485,7 @@ export const objectInteractionHandler: NodeHandler = {
             { difficulty, failureReason: "object_not_found" }
           );
         }
-        return makeAction(
-          node,
-          "completed",
-          inspectOutcome ?? buildInspectOutcome(item),
-          { difficulty, successLevel: resolvedSuccessLevel }
-        );
+        lastRollDetail = inspectOutcome ?? buildInspectOutcome(item);
       }
 
       // --- Destroy ---

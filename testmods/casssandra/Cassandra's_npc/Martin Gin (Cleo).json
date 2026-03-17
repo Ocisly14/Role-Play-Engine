@@ -1,125 +1,122 @@
-[
-  {
-    "name": "Martin Gin (Cleo)",
-    "occupation": "Criminal courier and fixer (alias: Ghost Hand)",
-    "age": 38,
-    "gender": "male",
-    "appearance": "A cautious-looking man with an unremarkable face, deliberately dressing in plain, practical clothing to avoid attention. His movements are controlled and alert, giving the impression of someone used to watching exits and escape routes.",
-    "personality": "Calculating, opportunistic, and highly pragmatic. Martin is patient and careful, preferring indirect methods and aliases to direct confrontation. He is loyal only as long as cooperation benefits his own survival and profit.",
-    "background": "Martin Gin, also known as 'Ghost Hand,' is the third hacker in Cassandra and the murderer of both the 2002 Paradil Hotel murder case and the 2003 Reindeer Bar murder case. He deliberately attracted Patrizio von Samsa's attention and was employed by him under the alias 'Ghost Hand' to handle computer security. Acting as a courier and intermediary, Martin transported goods to the docks and handled sensitive deliveries. Through his work, he assisted Patrizio in seizing the missing businessmen's bank assets in Cassandra. Martin operates under false names and avoids revealing his true identity. He is actually Martin Cleo, son of Sanchez Cleo, and has a vendetta against Ben Cleo, believing Ben was responsible for his father's disappearance.",
-    "goals": [
-      "Complete assignments efficiently to secure payment and protection",
-      "Remain hidden and avoid becoming a disposable pawn"
-    ],
-    "secrets": [
-      "He operates under the alias 'Ghost Hand' and conceals his true identity",
-      "He knowingly assisted Patrizio in acquiring the missing businessmen's assets",
-      "He is the murderer of the 2002 Paradil Hotel murder case (the unknown 19-year-old Black girl found in cold storage)",
-      "He is the murderer of the 2003 Reindeer Bar murder case (Jenny Florence/Lucifero)",
-      "He killed Lucifero because he mistakenly identified her as the hacker who stole Patrizio's secrets, and because she intercepted the Borrachero package",
-      "He has a scar on his face that he deliberately inflicted to avoid being recognized by Ben Cleo",
-      "He can sense Cassandra calling to him, but doesn't realize this is Nyogtha's call to its chosen ones",
-      "He placed the hallucinogenic drug in Marcel's drink, suspecting Marcel saw him emerging from the sewer",
-      "He went into the sewer to find Lucifero's hideout and retrieve the intercepted Borrachero",
-      "He gave the folding knife (which belonged to Philip) to Lux to plant on Lucifero's body to confuse the investigation"
-    ],
-    "attributes": {
-      "STR": 55,
-      "CON": 60,
-      "DEX": 65,
-      "APP": 40,
-      "POW": 55,
-      "SIZ": 55,
-      "INT": 65,
-      "EDU": 55
-    },
-    "status": {
-      "hp": 11,
-      "maxHp": 11,
-      "sanity": 55,
-      "maxSanity": 55,
-      "luck": 60,
-      "mp": 11,
-      "conditions": []
-    },
-    "skills": {
-      "Stealth": 60,
-      "Drive Auto": 55,
-      "Fast Talk": 50,
-      "Spot Hidden": 45,
-      "Locksmith": 40
-    },
-    "inventory": [
-      {
-        "name": "False identification papers",
-        "properties": {
-          "note": "Conceals his true identity as Martin Cleo."
-        }
-      },
-      {
-        "name": "Unmarked mobile phone",
-        "properties": {
-          "note": "Used for secret communications."
-        }
-      },
-      {
-        "name": "Dock delivery documents",
-        "properties": {
-          "note": "Related to his work as Ghost Hand."
-        }
-      },
-      {
-        "name": ".357 caliber handgun (Desert Eagle)",
-        "properties": {
-          "clue": "Used to kill Lucifero in the 2003 Reindeer Bar murder case. Same caliber as Ben Cleo's gold-plated Desert Eagle, but Martin's is not the same gun."
-        }
+{
+  "id": "Martin Gin (Cleo)",
+  "name": "Martin Gin (Cleo)",
+  "occupation": "Criminal courier and fixer (alias: Ghost Hand)",
+  "age": 38,
+  "gender": "male",
+  "appearance": "A cautious-looking man with an unremarkable face, deliberately dressing in plain, practical clothing to avoid attention. His movements are controlled and alert, as if he is always tracking exits.",
+  "personality": "Calculating, opportunistic, and highly pragmatic. Martin is patient and careful, preferring aliases and indirect methods to confrontation. He is loyal only while cooperation benefits his own survival and profit.",
+  "background": "Martin Gin, also known as Ghost Hand, is the third hacker in Cassandra and the murderer of both the 2002 Paradil Hotel murder case and the 2003 Reindeer Bar murder case. He deliberately attracted Patrizio von Samsa's attention and was employed by him under the alias Ghost Hand to handle computer security. Acting as a courier and intermediary, Martin transported goods to the docks and handled sensitive deliveries. Through his work, he assisted Patrizio in seizing the missing businessmen's bank assets in Cassandra. Martin operates under false names and avoids revealing his true identity. He is actually Martin Cleo, son of Sanchez Cleo, and has a vendetta against Ben Cleo, believing Ben was responsible for his father's disappearance.",
+  "residence": "SCN_6",
+  "currentLocation": "SCN_6_SUB_1",
+  "longTermIntent": "Stay hidden, finish assignments efficiently, and keep his routes, aliases, and leverage intact.",
+  "attributes": {
+    "STR": 55,
+    "CON": 60,
+    "DEX": 65,
+    "APP": 40,
+    "POW": 55,
+    "SIZ": 55,
+    "INT": 65,
+    "EDU": 55
+  },
+  "status": {
+    "hp": 11,
+    "maxHp": 11,
+    "sanity": 55,
+    "maxSanity": 55,
+    "luck": 60,
+    "mp": 11,
+    "conditions": []
+  },
+  "skills": {
+    "Stealth": 60,
+    "Drive Auto": 55,
+    "Fast Talk": 50,
+    "Spot Hidden": 45,
+    "Locksmith": 40
+  },
+  "inventory": [
+    {
+      "name": "False identification papers",
+      "properties": {
+        "note": "Conceals his true identity as Martin Cleo."
       }
-    ],
-    "clues": [
-      {
-        "clueText": "The individual known as 'Ghost Hand' was responsible for transporting goods to the docks for Patrizio.",
-        "category": "knowledge",
-        "difficulty": "regular",
-        "relatedTo": ["Patrizio von Samsa", "Docks"]
-      },
-      {
-        "clueText": "Ghost Hand assisted Patrizio in obtaining the missing businessmen's bank assets in Cassandra.",
-        "category": "secret",
-        "difficulty": "hard",
-        "relatedTo": ["Patrizio von Samsa", "Missing Businessmen"]
-      },
-      {
-        "clueText": "Ghost Hand (Martin Gin) is the murderer of both the 2002 Paradil Hotel murder case (unknown 19-year-old Black girl) and the 2003 Reindeer Bar murder case (Jenny Florence/Lucifero).",
-        "category": "secret",
-        "difficulty": "extreme",
-        "relatedTo": [
-          "2002 Paradil Hotel murder",
-          "2003 Reindeer Bar murder",
-          "Unknown victim",
-          "Jenny Florence"
-        ]
-      },
-      {
-        "clueText": "He killed Lucifero because he mistakenly thought she was the hacker who stole Patrizio's secrets, and because she intercepted the Borrachero package.",
-        "category": "secret",
-        "difficulty": "hard",
-        "relatedTo": [
-          "Jenny Florence",
-          "Reindeer Bar murder (2003)",
-          "Patrizio von Samsa"
-        ]
+    },
+    {
+      "name": "Unmarked mobile phone",
+      "properties": {
+        "note": "Used for secret communications."
       }
-    ],
-    "relationships": [
-      {
-        "targetName": "Patrizio von Samsa",
-        "relationshipType": "employer",
-        "attitude": -20,
-        "description": "A dangerous employer whom Martin serves out of necessity rather than loyalty.",
-        "history": "Martin deliberately drew Patrizio’s attention and accepted work under the alias Ghost Hand to gain profit and protection."
+    },
+    {
+      "name": "Dock delivery documents",
+      "properties": {
+        "note": "Related to his work as Ghost Hand."
       }
-    ],
-    "notes": "Martin Gin (Ghost Hand) is the murderer of both murder cases: 1) 2002 Paradil Hotel case - killed the unknown 19-year-old Black girl found in cold storage; 2) 2003 Reindeer Bar case - killed Jenny Florence (Lucifero) with a .357 caliber bullet to the heart. He is actually Martin Cleo, son of Sanchez Cleo, and has a vendetta against Ben Cleo. He deliberately scarred his face to avoid recognition. He works for Patrizio as a hacker and courier. He is being called by Nyogtha and will eventually become one of its chosen ones. He is a shadowy logistical NPC who can reveal connections between criminal operations, financial manipulation, and Patrizio's larger schemes if pressured or exposed.",
-    "currentLocation": "SCN_6"
-  }
-]
+    },
+    {
+      "name": ".357 caliber handgun (Desert Eagle)",
+      "properties": {
+        "note": "Used to kill Lucifero in the 2003 Reindeer Bar murder case."
+      }
+    }
+  ],
+  "relationships": [
+    {
+      "targetId": "Patrizio von Samsa",
+      "targetName": "Patrizio von Samsa",
+      "relationshipType": "employer",
+      "attitude": -20,
+      "description": "A dangerous employer whom Martin serves out of necessity rather than loyalty.",
+      "history": "Martin drew Patrizio's attention and accepted work under the alias Ghost Hand to gain profit and protection."
+    },
+    {
+      "targetId": "Ben Cleo",
+      "targetName": "Ben Cleo",
+      "relationshipType": "enemy",
+      "attitude": -60,
+      "description": "A family rival Martin believes is tied to his father's disappearance.",
+      "history": "Martin has carried a vendetta against Ben for years."
+    }
+  ],
+  "memory": [
+    {
+      "type": "information",
+      "content": "I handle deliveries to the docks and other sensitive errands for Patrizio under the Ghost Hand alias.",
+      "metadata": {
+        "knowledgeId": "k_martin_docks",
+        "difficulty": "automatic"
+      }
+    },
+    {
+      "type": "secret",
+      "content": "I murdered the 2002 Paradil Hotel victim and the 2003 Reindeer Bar victim.",
+      "metadata": {
+        "knowledgeId": "s_martin_murders"
+      }
+    },
+    {
+      "type": "secret",
+      "content": "I killed Lucifero after mistaking her for the hacker who stole Patrizio's secrets and after she intercepted the Borrachero package.",
+      "metadata": {
+        "knowledgeId": "s_martin_lucifero"
+      }
+    },
+    {
+      "type": "secret",
+      "content": "I gave the folding knife from Philip to Lux so the investigation would be misled.",
+      "metadata": {
+        "knowledgeId": "s_martin_knife"
+      }
+    },
+    {
+      "type": "belief",
+      "content": "Staying anonymous matters more than being right. Once people know your name, they start building traps around it.",
+      "metadata": {
+        "confidence": 0.9,
+        "reasoningChain": "My best survival tool has always been control of identity and timing."
+      }
+    }
+  ]
+}

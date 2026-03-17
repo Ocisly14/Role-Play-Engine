@@ -71,3 +71,4 @@ temp/
 *.pem
 deployment/.env.production
 client/coc-deploy.tar.gz
+/Asset

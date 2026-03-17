@@ -1,91 +1,121 @@
-[
-  {
-    "name": "Reid",
-    "occupation": "Retired Soldier / Bodyguard",
-    "age": 35,
-    "gender": "male",
-    "appearance": "An ordinary-looking adult man, casually dressed for travel. Nothing about his appearance stands out, allowing him to easily blend in as a normal holiday visitor.",
-    "personality": "Friendly, easygoing, and loyal to his friends. Prefers to avoid trouble and treats the trip as a relaxing getaway rather than an adventure.",
-    "background": "Reid is part of a close group of friends that includes Bigbear, Hawthorne, Lily, Lyn, Jun, Wind, Solomon, and others. They all met through a mutual friend, a police officer named Bruno (not the Cassandra Bruno). In December 2003, the group traveled to Cassandra to accompany Wind, who was about to get married, and to visit his fiancée Isabela. Reid has no connection to the occult events in Cassandra and is categorized as a cameo NPC.",
-    "goals": [
-      "Enjoy the holiday trip with friends",
-      "Leave Cassandra safely without incident"
-    ],
-    "secrets": ["Former military, skilled in combat"],
-    "attributes": {
-      "STR": 50,
-      "CON": 50,
-      "DEX": 50,
-      "APP": 50,
-      "POW": 50,
-      "SIZ": 60,
-      "INT": 50,
-      "EDU": 60
-    },
-    "status": {
-      "hp": 11,
-      "maxHp": 11,
-      "sanity": 50,
-      "maxSanity": 50,
-      "luck": 50,
-      "mp": 10,
-      "conditions": []
-    },
-    "skills": {
-      "Firearms (Handgun)": 55,
-      "Brawl": 50,
-      "Spot Hidden": 45,
-      "Stealth": 40,
-      "First Aid": 35,
-      "Navigate": 40
-    },
-    "inventory": [
-      {
-        "name": "Bodyguard equipment",
-        "properties": {
-          "note": "Standard protection gear"
-        }
+{
+  "id": "Reid",
+  "name": "Reid",
+  "occupation": "Retired soldier / bodyguard",
+  "age": 46,
+  "gender": "male",
+  "appearance": "A solidly built man with a rough, practical look and the kind of posture that makes it obvious he has spent years on his feet and in trouble. He does not look delicate, but he does look reliable.",
+  "personality": "Steady, loyal, socially smooth, and protective. Reid knows how to read a room, talk to rough people without provoking them, and step in physically only when that stops working.",
+  "background": "Reid came to Cassandra with Bigbear, Lily, Lyn, and the others to accompany Wind on his trip to see Isabela. He is a veteran who settled into security work after leaving the military, and the group trusts him because he handles trouble with a mix of calm talk, street sense, and force when necessary. When Wind fell apart and Jun disappeared, Reid chose to stay and wait rather than leave his friend behind.",
+  "residence": "SCN_4",
+  "currentLocation": "SCN_4_SUB_3",
+  "longTermIntent": "Keep the group together, help Wind recover enough to leave town, and keep looking for Jun until there is no reason left to stay.",
+  "attributes": {
+    "STR": 65,
+    "CON": 65,
+    "DEX": 55,
+    "APP": 45,
+    "POW": 50,
+    "SIZ": 65,
+    "INT": 55,
+    "EDU": 50
+  },
+  "status": {
+    "hp": 13,
+    "maxHp": 13,
+    "sanity": 50,
+    "maxSanity": 50,
+    "luck": 45,
+    "mp": 10,
+    "conditions": []
+  },
+  "skills": {
+    "Brawl": 65,
+    "Dodge": 55,
+    "Firearms": 55,
+    "First Aid": 45,
+    "Spot Hidden": 45,
+    "Psychology": 40
+  },
+  "inventory": [
+    {
+      "name": "Practical Jacket",
+      "properties": {
+        "note": "A durable jacket suited for travel, weather, and getting in the way of danger."
       }
-    ],
-    "clues": [
-      {
-        "clueText": "Came with friends to Cassandra to visit Wind's fiancée",
-        "category": "knowledge",
-        "difficulty": "regular",
-        "relatedTo": ["Wind"]
+    },
+    {
+      "name": "Travel Bag",
+      "properties": {
+        "note": "A simple bag with spare clothing and the sort of necessities a veteran packs by habit."
       }
-    ],
-    "relationships": [
-      {
-        "targetName": "Bigbear",
-        "relationshipType": "friend",
-        "attitude": 65,
-        "description": "Close friend and fellow traveler.",
-        "history": "They have known each other for years through the same friend group."
-      },
-      {
-        "targetName": "Wind",
-        "relationshipType": "friend",
-        "attitude": 70,
-        "description": "Friend whose upcoming wedding motivated the trip.",
-        "history": "Reid joined the journey to support Wind before his marriage."
-      },
-      {
-        "targetName": "Lily",
-        "relationshipType": "friend",
-        "attitude": 60,
-        "description": "Member of the same close-knit group.",
-        "history": "They travel together regularly and share a long-standing friendship."
-      },
-      {
-        "targetName": "Bruno Galilei",
-        "relationshipType": "friend",
-        "attitude": 70,
-        "description": "Police officer who originally connected the group.",
-        "history": "Bruno was the mutual friend through whom Reid met the rest of the group."
+    }
+  ],
+  "relationships": [
+    {
+      "targetId": "Bigbear",
+      "targetName": "Bigbear",
+      "relationshipType": "friend",
+      "attitude": 55,
+      "description": "One of the friends who came to Cassandra together.",
+      "history": "Reid has traveled with Bigbear long enough to trust him in a crisis."
+    },
+    {
+      "targetId": "Lyn",
+      "targetName": "Lyn",
+      "relationshipType": "friend",
+      "attitude": 50,
+      "description": "A tough, dependable friend who helped get Wind to the hospital.",
+      "history": "Reid respects Lyn's directness and willingness to handle danger without panicking."
+    },
+    {
+      "targetId": "Wind",
+      "targetName": "Wind",
+      "relationshipType": "friend",
+      "attitude": 70,
+      "description": "The man whose trip brought the group to Cassandra.",
+      "history": "Reid came to help Wind see Isabela and stayed when Wind's condition turned bad."
+    },
+    {
+      "targetId": "Jun",
+      "targetName": "Jun",
+      "relationshipType": "friend",
+      "attitude": 35,
+      "description": "The missing friend the group is still waiting for.",
+      "history": "Reid does not know what happened to Jun, but he is not willing to leave him behind as if he never mattered."
+    }
+  ],
+  "memory": [
+    {
+      "type": "information",
+      "content": "I came to Cassandra with the others to support Wind while he met Isabela and took a short holiday.",
+      "metadata": {
+        "knowledgeId": "k_reid_trip",
+        "difficulty": "automatic"
       }
-    ],
-    "notes": "Reid is a cameo NPC and does not participate in the investigators’ investigation unless the Keeper deliberately expands his role.",
-    "currentLocation": "SCN_4"
-  }
-]
+    },
+    {
+      "type": "information",
+      "content": "Wind ended up in the hospital after the trip, and Jun disappeared while the group was trying to figure out what had gone wrong.",
+      "metadata": {
+        "knowledgeId": "k_reid_wind_jun",
+        "difficulty": "regular"
+      }
+    },
+    {
+      "type": "secret",
+      "content": "The group will not leave Cassandra until there is at least a real answer about Jun, even if that makes the stay longer and more dangerous.",
+      "metadata": {
+        "knowledgeId": "s_reid_stay"
+      }
+    },
+    {
+      "type": "belief",
+      "content": "People who travel together should also stand together when things go wrong.",
+      "metadata": {
+        "confidence": 0.84,
+        "reasoningChain": "The only reason to be useful in a bad situation is so the people beside you know you will not vanish when things get ugly."
+      }
+    }
+  ]
+}

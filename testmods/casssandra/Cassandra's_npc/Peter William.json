@@ -1,68 +1,97 @@
-[
-  {
-    "name": "Peter William",
-    "occupation": "Distillery owner",
-    "age": 51,
-    "gender": "male",
-    "appearance": "An older man in his later years, usually seen as a sturdy factory owner typical of a provincial industrialist.",
-    "personality": "Hardworking, traditional, and business-oriented, with a strong sense of responsibility toward his family business.",
-    "background": "Peter William operated a distillery in Cassandra, which appeared to be quite large and primarily produced vodka. In 2002, he suddenly fell ill and died in the hospital, leaving the distillery to his son.",
-    "goals": [
-      "Maintain the family distillery",
-      "Secure his family's livelihood"
-    ],
-    "secrets": [
-      "His death may be connected to Patrizio von Samsa’s human experiments"
-    ],
-    "attributes": {
-      "STR": 55,
-      "CON": 55,
-      "DEX": 45,
-      "APP": 45,
-      "POW": 50,
-      "SIZ": 60,
-      "INT": 55,
-      "EDU": 55
-    },
-    "status": {
-      "hp": 11,
-      "maxHp": 11,
-      "sanity": 50,
-      "maxSanity": 50,
-      "luck": 55,
-      "mp": 10,
-      "conditions": ["deceased"]
-    },
-    "skills": {
-      "Accounting": 50,
-      "Craft (Distilling)": 60,
-      "Persuade": 45
-    },
-    "inventory": [],
-    "clues": [
-      {
-        "clueText": "Peter William died suddenly in 2002 after falling ill.",
-        "category": "knowledge",
-        "difficulty": "regular",
-        "relatedTo": ["William Distillery"]
-      },
-      {
-        "clueText": "His death may have links to human experimentation conducted by Patrizio von Samsa.",
-        "category": "secret",
-        "difficulty": "hard",
-        "relatedTo": ["Patrizio von Samsa"]
+{
+  "id": "Peter William",
+  "name": "Peter William",
+  "occupation": "Vodka distillery owner",
+  "age": 58,
+  "gender": "male",
+  "appearance": "A broad, weathered working man with a thick neck, a blunt face, and the tired look of someone who spent too many years keeping a difficult business running. In life, he looked more durable than comfortable.",
+  "personality": "Practical, stubborn, business-minded, and a little rough around the edges. Peter cared more about keeping the distillery going than appearing refined, but he still wanted his family business to be respected.",
+  "background": "Peter ran the William distillery in Cassandra, where the family made vodka on a scale large enough to matter locally. He raised Abel and expected the business to outlast him, but a sudden illness took his life in 2002 before he could settle the future properly. The distillery survived him, though not cleanly, and the family's troubles became part of the town's larger pattern of decay.",
+  "residence": "SCN_13",
+  "currentLocation": "OUTDOOR",
+  "longTermIntent": "Leave the distillery stable enough that Abel could carry it forward and keep the family name from becoming a joke.",
+  "attributes": {
+    "STR": 60,
+    "CON": 60,
+    "DEX": 40,
+    "APP": 45,
+    "POW": 45,
+    "SIZ": 65,
+    "INT": 55,
+    "EDU": 50
+  },
+  "status": {
+    "hp": 0,
+    "maxHp": 0,
+    "sanity": 0,
+    "maxSanity": 0,
+    "luck": 0,
+    "mp": 0,
+    "conditions": [
+      "deceased"
+    ]
+  },
+  "skills": {
+    "Bargain": 55,
+    "Accounting": 45,
+    "Persuade": 45,
+    "Spot Hidden": 40
+  },
+  "inventory": [
+    {
+      "name": "Distillery Ledger",
+      "properties": {
+        "note": "A record book for the family's production, sales, and supply notes."
       }
-    ],
-    "relationships": [
-      {
-        "targetName": "Abel William",
-        "relationshipType": "family",
-        "attitude": 70,
-        "description": "Father and son",
-        "history": "Peter founded and ran the distillery before passing it on to Abel."
+    },
+    {
+      "name": "Factory Keys",
+      "properties": {
+        "note": "The old keys that once opened the main rooms of the distillery."
       }
-    ],
-    "notes": "Peter William is already deceased before the investigators’ arrival.",
-    "currentLocation": "SCN_13"
-  }
-]
+    }
+  ],
+  "relationships": [
+    {
+      "targetId": "Abel William",
+      "targetName": "Abel William",
+      "relationshipType": "family",
+      "attitude": 65,
+      "description": "His son and the person he expected to inherit the business.",
+      "history": "Peter built the distillery with Abel in mind, even if he never got to see the inheritance settle cleanly."
+    }
+  ],
+  "memory": [
+    {
+      "type": "information",
+      "content": "I ran the William distillery in SCN_13 and spent years keeping the vodka business alive.",
+      "metadata": {
+        "knowledgeId": "k_peter_distillery",
+        "difficulty": "automatic"
+      }
+    },
+    {
+      "type": "information",
+      "content": "Abel inherited the distillery after my death, but the business was already under strain long before that.",
+      "metadata": {
+        "knowledgeId": "k_peter_abel_inheritance",
+        "difficulty": "regular"
+      }
+    },
+    {
+      "type": "secret",
+      "content": "Before I died, the business was already under strain and I had the growing sense that something in town was making matters worse.",
+      "metadata": {
+        "knowledgeId": "s_peter_town_rot"
+      }
+    },
+    {
+      "type": "belief",
+      "content": "A family business only matters if the next generation can inherit something worth saving.",
+      "metadata": {
+        "confidence": 0.78,
+        "reasoningChain": "If you build something and cannot pass it on, then you have only delayed the collapse. A name survives only when the work behind it does."
+      }
+    }
+  ]
+}

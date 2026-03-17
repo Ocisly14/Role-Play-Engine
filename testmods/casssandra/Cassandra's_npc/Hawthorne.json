@@ -1,104 +1,127 @@
-[
-  {
-    "name": "Hawthorne",
-    "occupation": "Forensic Pathologist",
-    "age": 30,
-    "gender": "male",
-    "appearance": "An unassuming man of average build with a plain, practical appearance; dresses modestly and often looks slightly tired.",
-    "personality": "Frugal to the point of stinginess, cautious and pragmatic, but deeply loyal to his friends once trust is established.",
-    "background": "Hawthorne is a forensic pathologist who previously worked with the police officer Bruno. Through Bruno, he became close friends with Reid, Lily, Bigbear, and Lyn. In 2003, he traveled to Cassandra with the group during Christmas, intending to accompany a friend before a wedding and enjoy a short holiday, only to be drawn into the town’s unsettling events.",
-    "goals": [
-      "Support and protect his friends during the investigation",
-      "Use his forensic knowledge to uncover the truth behind the incidents in Cassandra"
-    ],
-    "secrets": [
-      "Knows forensic techniques that could help investigate Bruno's death"
-    ],
-    "attributes": {
-      "STR": 45,
-      "CON": 45,
-      "DEX": 45,
-      "APP": 45,
-      "POW": 70,
-      "SIZ": 85,
-      "INT": 75,
-      "EDU": 65
-    },
-    "status": {
-      "hp": 17,
-      "maxHp": 17,
-      "sanity": 70,
-      "maxSanity": 70,
-      "luck": 70,
-      "mp": 14,
-      "conditions": []
-    },
-    "skills": {
-      "Credit Rating": 35,
-      "Computer Use": 75,
-      "Psychology": 50,
-      "Dodge": 27,
-      "Mathematics": 50,
-      "Electronics": 70,
-      "Electrical Repair": 60,
-      "Persuade": 60,
-      "Fighting (Brawl)": 40,
-      "Spot Hidden": 47
-    },
-    "inventory": [
-      {
-        "name": "Forensic examination kit",
-        "properties": {
-          "note": "Professional tools"
-        }
+{
+  "id": "Hawthorne",
+  "name": "Hawthorne",
+  "occupation": "Forensic pathologist",
+  "age": 30,
+  "gender": "male",
+  "appearance": "An unassuming man of average build with a plain, practical appearance. He dresses modestly and often looks slightly tired.",
+  "personality": "Frugal to the point of stinginess, cautious and pragmatic, but deeply loyal to his friends once trust is established.",
+  "background": "Hawthorne is a forensic pathologist who previously worked with the police officer Bruno. Through Bruno, he became close friends with Reid, Lily, Bigbear, and Lyn. In 2003, he traveled to Cassandra with the group during Christmas, intending to accompany a friend before a wedding and enjoy a short holiday, only to be drawn into the town’s unsettling events.",
+  "residence": "SCN_4",
+  "currentLocation": "SCN_4",
+  "longTermIntent": "Support his friends during the investigation, use his forensic knowledge to help interpret evidence, and get everyone out of Cassandra alive.",
+  "attributes": {
+    "STR": 45,
+    "CON": 45,
+    "DEX": 45,
+    "APP": 45,
+    "POW": 70,
+    "SIZ": 85,
+    "INT": 75,
+    "EDU": 65
+  },
+  "status": {
+    "hp": 17,
+    "maxHp": 17,
+    "sanity": 70,
+    "maxSanity": 70,
+    "luck": 70,
+    "mp": 14,
+    "conditions": []
+  },
+  "skills": {
+    "Credit Rating": 35,
+    "Computer Use": 75,
+    "Psychology": 50,
+    "Dodge": 27,
+    "Mathematics": 50,
+    "Electronics": 70,
+    "Electrical Repair": 60,
+    "Persuade": 60,
+    "Fighting (Brawl)": 40,
+    "Spot Hidden": 47
+  },
+  "inventory": [
+    {
+      "name": "Forensic examination kit",
+      "properties": {
+        "note": "Professional tools."
       }
-    ],
-    "clues": [
-      {
-        "clueText": "Arrived in Cassandra with friends to visit Wind's fiancée",
-        "category": "knowledge",
-        "difficulty": "regular",
-        "relatedTo": ["Wind", "Isabela Smith"]
+    }
+  ],
+  "relationships": [
+    {
+      "targetId": "Bruno Galilei",
+      "targetName": "Bruno Galilei",
+      "relationshipType": "friend",
+      "attitude": 70,
+      "description": "Former colleague and the person who introduced Hawthorne to the rest of the group.",
+      "history": "They worked together in the past on police-related cases, building mutual trust."
+    },
+    {
+      "targetId": "Reid",
+      "targetName": "Reid",
+      "relationshipType": "friend",
+      "attitude": 60,
+      "description": "A close friend met through Bruno.",
+      "history": "Their friendship was strengthened after earlier investigations and mutual danger."
+    },
+    {
+      "targetId": "Lily",
+      "targetName": "Lily",
+      "relationshipType": "friend",
+      "attitude": 55,
+      "description": "A detective who admires Bruno and later became friends with Hawthorne.",
+      "history": "They grew closer after surviving dangerous situations together."
+    },
+    {
+      "targetId": "Bigbear",
+      "targetName": "Bigbear",
+      "relationshipType": "friend",
+      "attitude": 50,
+      "description": "A physically imposing but good-natured companion.",
+      "history": "Part of the same friend group brought together by Bruno."
+    },
+    {
+      "targetId": "Lyn",
+      "targetName": "Lyn",
+      "relationshipType": "friend",
+      "attitude": 55,
+      "description": "A tough but reliable soldier.",
+      "history": "Bonded through shared danger and loyalty within the group."
+    }
+  ],
+  "memory": [
+    {
+      "type": "information",
+      "content": "I came to Cassandra with my friends to visit Wind's fiancée and got pulled into the town's troubles with them.",
+      "metadata": {
+        "knowledgeId": "k_hawthorne_trip",
+        "difficulty": "automatic"
       }
-    ],
-    "relationships": [
-      {
-        "targetName": "Bruno Galilei",
-        "relationshipType": "friend",
-        "attitude": 70,
-        "description": "Former colleague and the person who introduced Hawthorne to the rest of the group.",
-        "history": "They worked together in the past on police-related cases, building mutual trust."
-      },
-      {
-        "targetName": "Reid",
-        "relationshipType": "friend",
-        "attitude": 60,
-        "description": "A close friend met through Bruno.",
-        "history": "Their friendship was strengthened after an accidental injury incident during earlier investigations."
-      },
-      {
-        "targetName": "Lily",
-        "relationshipType": "friend",
-        "attitude": 55,
-        "description": "A detective who admires Bruno and later became friends with Hawthorne.",
-        "history": "They grew closer after surviving dangerous situations together."
-      },
-      {
-        "targetName": "Bigbear",
-        "relationshipType": "friend",
-        "attitude": 50,
-        "description": "A physically imposing but good-natured companion.",
-        "history": "Part of the same friend group brought together by Bruno."
-      },
-      {
-        "targetName": "Lyn",
-        "relationshipType": "friend",
-        "attitude": 55,
-        "description": "A tough, hot-tempered but reliable soldier.",
-        "history": "Bonded through shared danger and loyalty within the group."
+    },
+    {
+      "type": "information",
+      "content": "My work as a forensic pathologist means I can read injuries, deaths, and evidence in ways most of the group cannot.",
+      "metadata": {
+        "knowledgeId": "k_hawthorne_forensics",
+        "difficulty": "regular"
       }
-    ],
-    "notes": "Although outwardly stingy, Hawthorne will not hesitate to help his friends when it truly matters.",
-    "currentLocation": "SCN_4"
-  }
-]
+    },
+    {
+      "type": "secret",
+      "content": "I know forensic techniques that could help investigate Bruno's death more thoroughly if I am given access to the body or scene.",
+      "metadata": {
+        "knowledgeId": "s_hawthorne_bruno"
+      }
+    },
+    {
+      "type": "belief",
+      "content": "Careful evidence work matters more than shouting, and if we stay methodical we can still bring everyone home.",
+      "metadata": {
+        "confidence": 0.9,
+        "reasoningChain": "Most mistakes happen when people rush or panic."
+      }
+    }
+  ]
+}

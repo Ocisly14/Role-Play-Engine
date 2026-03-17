@@ -196,18 +196,18 @@ function buildImpactEventText(
 
 function buildImpactMemoryContent(
   perspective: "targeted" | "witness" | "co_presence",
-  bucketTime: string,
-  gameDay: number,
+  _bucketTime: string,
+  _gameDay: number,
   witnessEntry: string
 ): string {
   switch (perspective) {
     case "targeted":
-      return `Day${gameDay} ${bucketTime} [direct] - ${witnessEntry}`;
+      return `[direct] ${witnessEntry}`;
     case "co_presence":
-      return `Day${gameDay} ${bucketTime} [encounter] - ${witnessEntry}`;
+      return `[encounter] ${witnessEntry}`;
     case "witness":
     default:
-      return `Day${gameDay} ${bucketTime} [witness] - ${witnessEntry}`;
+      return `[witness] ${witnessEntry}`;
   }
 }
 
@@ -1050,7 +1050,7 @@ async function executeSingleTick(
       sessionId,
       moduleId,
       type: "event",
-      content: `Day${gameDay} ${action.gameTime} [${action.location}] - ${action.outcome}`,
+      content: action.outcome,
       gameDay,
       gameTime: action.gameTime,
       location: action.location,
@@ -1241,7 +1241,7 @@ async function executeSingleTick(
 
     // Log NPC actions and mark completed
     {
-      let logEntry = `Day${gameDay} ${action.gameTime} [${action.location}] - ${eventOutcome}`;
+      let logEntry = eventOutcome;
       if (relationshipChange) logEntry += ` ${relationshipChange}`;
 
       // Write event memory via NpcMemoryManager
@@ -1437,7 +1437,7 @@ async function executeSingleTick(
         sessionId,
         moduleId,
         type: "event",
-        content: `Day${gameDay} ${action.gameTime} [${action.location}] - ${action.outcome}`,
+        content: action.outcome,
         gameDay,
         gameTime: action.gameTime,
         location: action.location,
@@ -1650,7 +1650,7 @@ async function executeSingleTick(
                 gameDay,
                 result.witnessEntry
               )
-            : `Day${gameDay} ${tickRuntime.tickTime} [witness] - ${result.witnessEntry}`;
+            : `[witness] ${result.witnessEntry}`;
           const npcLocPos = dgsm.getCharacterPosition(npcId);
           const npcLoc = npcLocPos
             ? dgsm.resolveLocationId(npcLocPos)
@@ -1892,7 +1892,7 @@ function scanUnplannedEncounters(
           sessionId,
           moduleId,
           type: "witness",
-          content: `Day${gameDay} ${tickTime} [${sceneName}] - Saw ${otherNames.join(", ")} here`,
+          content: `Saw ${otherNames.join(", ")} here`,
           gameDay,
           gameTime: tickTime,
           location: locationId,

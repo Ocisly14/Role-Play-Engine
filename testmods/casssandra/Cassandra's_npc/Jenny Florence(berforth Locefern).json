@@ -1,146 +1,145 @@
-[
-  {
-    "name": "Jenny Florence (alias: berforth Locefern)",
-    "occupation": "Hacker",
-    "age": 21,
-    "gender": "female",
-    "appearance": "A young Black woman with a sexy, charming figure and attractive facial features; carries herself with confidence.",
-    "personality": "Highly intelligent, confident to the point of arrogance, cautious, independent, and driven by a strong personal moral code.",
-    "background": "Jenny Florence was a gifted hacker who grew up in a poor Black family. She first encountered computers at school and quickly became fascinated with programming. Despite excellent grades, she dropped out of high school after her mother fell seriously ill, lost her job, and died, forcing Jenny to support her family. She worked near MIT, learning whenever she could, and later forged a new identity to start over in California. Under the alias berforth Locefern, she became involved in underground hacking activities and was ultimately murdered in the Reindeer Bar incident.",
-    "goals": [
-      "Uncover and preserve the truth behind the Reindeer Bar murder case (2003)",
-      "Gather evidence on Martin Gin (Ghost Hand) to assist Bruno in solving the cold case from 2002",
-      "Help Bruno solve the 2002 Paradil Hotel murder case by revealing the truth about the killer"
-    ],
-    "secrets": [
-      "Her real name is Jenny Florence; berforth Locefern is a fabricated identity",
-      "She knew that Martin Gin (Ghost Hand) was the murderer in the 2002 Paradil Hotel murder case (the old case involving the unknown 19-year-old Black girl)",
-      "She witnessed Martin (Ghost Hand) committing the murder at Paradil Hotel in 2002 while trying to hack into the hotel's central system",
-      "She did not see Ghost Hand's face during the network confrontation, so she didn't know the hacker and the murderer were the same person",
-      "She planned to anonymously reveal the truth about the 2002 case to Bruno on Christmas, moved by his persistence in investigating the case",
-      "She approached Martin (Ghost Hand) to gather more information about him to help Bruno solve the case",
-      "She intercepted the package containing Borrachero that Lux picked up from the dock, which led to her death",
-      "She conducted business through Adolph as an intermediary with Red Stone Lady",
-      "She called herself 'Hell Messenger' (地狱使者) in her business dealings",
-      "Her hotel records for December 22 were deliberately erased",
-      "She used the alias 'Hell Messenger' to send Borrachero extract (Devil's Breath) and payment to Colombia for Martin"
-    ],
-    "attributes": {
-      "STR": 40,
-      "CON": 50,
-      "DEX": 60,
-      "APP": 65,
-      "POW": 55,
-      "SIZ": 50,
-      "INT": 80,
-      "EDU": 70
-    },
-    "status": {
-      "hp": 10,
-      "maxHp": 10,
-      "sanity": 55,
-      "maxSanity": 99,
-      "luck": 65,
-      "mp": 11,
-      "conditions": []
-    },
-    "skills": {
-      "Computer Use": 90,
-      "Electronics": 80,
-      "Library Use": 60,
-      "Spot Hidden": 55,
-      "Psychology": 45,
-      "Stealth": 50
-    },
-    "inventory": [
-      {
-        "name": "Smartphone",
-        "properties": {
-          "clue": "Contains: 1) Unfinished dial number '8764239' (not a phone number format); 2) Reply to unknown source SMS: 'No way, you can't get another penny from me, you scoundrel' / 'Alright, we'll see'; 3) Browser stopped at a blog page about a hacker who hacked local TV station and published dangerous conspiracy theories about a leader being a cultist (this message was cleared by Martin and hard to find online or in newspapers)."
-        }
-      },
-      {
-        "name": "Wallet",
-        "properties": {
-          "clue": "Contains: 1) A note listing various 'jobs' (Tiger Kovind: deliver photos to little mouse, 1000 USD; Ghost Hand: transport goods to dock, 1500 USD; Tallinn Widow: threaten her husband disguised as terrorist, 5000 USD; Shore Master: contact and threaten Red Stone Lady, raise price, 10000-20000 USD); 2) ID card showing 'Aberforth Locefern', age 21, address: Pomegranate Lane 441-F (all fake information); 3) Coded password 'XX3776' for Qianwei System test ID."
-        }
-      },
-      {
-        "name": "Folding knife (stuck in her back)",
-        "properties": {
-          "clue": "Crime scene evidence: folding knife stuck in victim's back. This knife belonged to Philip Scaletta, who lost it during a fight in the bar earlier that day."
-        }
-      },
-      {
-        "name": "Expensive blue coat",
-        "properties": {
-          "note": "Wearing a deep blue expensive brand-name coat at the time of death."
-        }
-      },
-      {
-        "name": "Blanket",
-        "properties": {
-          "note": "Wrapped herself in a blanket when escaping from the cold storage, then went to Reindeer Bar seeking help."
-        }
+{
+  "id": "Jenny Florence (berforth Locefern)",
+  "name": "Jenny Florence (berforth Locefern)",
+  "occupation": "Hacker",
+  "age": 21,
+  "gender": "female",
+  "appearance": "A young Black woman with a confident, charming presence and attractive facial features.",
+  "personality": "Highly intelligent, independent, cautious, and driven by a strong personal moral code. She can be proud, but she is also stubborn about doing what she thinks is right.",
+  "background": "Jenny Florence was a gifted hacker who grew up in a poor Black family. She first encountered computers at school and quickly became fascinated by programming. After dropping out of high school to support her family, she worked near MIT, learned whatever she could, and eventually forged a new identity under the alias berforth Locefern before coming to California. By the time of the Reindeer Bar incident, she was already deep in underground hacking work and carrying evidence about the crimes in Cassandra.",
+  "residence": "SCN_16",
+  "currentLocation": "SCN_16",
+  "longTermIntent": "Keep the truth she uncovered from being buried, get Bruno the evidence he needs, and make sure the 2002 case does not disappear with her death.",
+  "attributes": {
+    "STR": 40,
+    "CON": 50,
+    "DEX": 60,
+    "APP": 65,
+    "POW": 55,
+    "SIZ": 50,
+    "INT": 80,
+    "EDU": 70
+  },
+  "status": {
+    "hp": 0,
+    "maxHp": 10,
+    "sanity": 55,
+    "maxSanity": 99,
+    "luck": 65,
+    "mp": 11,
+    "conditions": ["deceased"]
+  },
+  "skills": {
+    "Computer Use": 90,
+    "Electronics": 80,
+    "Library Use": 60,
+    "Spot Hidden": 55,
+    "Psychology": 45,
+    "Stealth": 50
+  },
+  "inventory": [
+    {
+      "name": "Smartphone",
+      "properties": {
+        "note": "Carries the half-finished clues she was trying to send to Bruno."
       }
-    ],
-    "clues": [
-      {
-        "clueText": "She knew that Martin Gin (Ghost Hand) was the murderer in the 2002 Paradil Hotel murder case (the old case involving the unknown 19-year-old Black girl found in the cold storage).",
-        "category": "secret",
-        "difficulty": "hard",
-        "relatedTo": [
-          "Martin Gin",
-          "2002 Paradil Hotel murder",
-          "Unknown victim"
-        ]
-      },
-      {
-        "clueText": "She witnessed Martin (Ghost Hand) committing the 2002 murder while trying to hack into Paradil Hotel's central system, but did not see his face and didn't realize the hacker and murderer were the same person.",
-        "category": "secret",
-        "difficulty": "extreme",
-        "relatedTo": ["Martin Gin", "2002 Paradil Hotel murder", "Hacking"]
-      },
-      {
-        "clueText": "Her alias 'Aberforth Locefern' and all associated documents (ID, address at Pomegranate Lane 441-F) were completely fabricated and do not correspond to any real records.",
-        "category": "knowledge",
-        "difficulty": "regular",
-        "relatedTo": ["berforth Locefern", "False identity"]
-      },
-      {
-        "clueText": "She was killed in 2003 at Reindeer Bar because Martin discovered she had intercepted the Borrachero package and mistakenly identified her as the hacker who stole Patrizio's secrets.",
-        "category": "secret",
-        "difficulty": "hard",
-        "relatedTo": [
-          "Martin Gin",
-          "Reindeer Bar murder (2003)",
-          "Patrizio von Samsa"
-        ]
-      },
-      {
-        "clueText": "She had set up an automatic SMS to send to Bruno revealing the truth about the 2002 case, and arranged to meet Bruno, but was killed before the meeting.",
-        "category": "secret",
-        "difficulty": "regular",
-        "relatedTo": ["Bruno Galilei", "2002 Paradil Hotel murder"]
+    },
+    {
+      "name": "Wallet",
+      "properties": {
+        "note": "Contains fake identity documents and the records she used for business."
       }
-    ],
-    "relationships": [
-      {
-        "targetName": "Bruno Galilei",
-        "relationshipType": "ally",
-        "attitude": 60,
-        "description": "She admired Bruno's persistence in investigating the murder of an overlooked victim.",
-        "history": "Moved by Bruno's dedication, she planned to anonymously provide him with crucial evidence during Christmas."
-      },
-      {
-        "targetName": "Martin Gin (Ghost Hand)",
-        "relationshipType": "enemy",
-        "attitude": -80,
-        "description": "A rival hacker and the murderer she secretly investigated.",
-        "history": "They crossed paths during a hacking intrusion, after which Jenny witnessed him committing murder."
+    },
+    {
+      "name": "Folding knife",
+      "properties": {
+        "note": "Crime scene evidence left in her back."
       }
-    ],
-    "notes": "Victim of the 2003 Reindeer Bar murder case. Age 21, Black female. Killed by .357 caliber bullet to the heart, with a folding knife stuck in her back. Her hotel records for December 22 were deliberately erased. She escaped from a cold storage at Paradil Hotel, wrapped herself in a blanket, and went to Reindeer Bar seeking help, but was killed in the restroom. She knew the identity of the 2002 murder case killer (Martin Gin/Ghost Hand) and planned to reveal it to Bruno. Her identity as berforth Locefern was known only to a select few trusted contacts. She was shot and killed before finalizing her deal involving intercepted pharmaceutical materials (Borrachero/Devil's Breath).",
-    "currentLocation": "SCN_16"
-  }
-]
+    },
+    {
+      "name": "Expensive blue coat",
+      "properties": {
+        "note": "The coat she was wearing at the time of death."
+      }
+    },
+    {
+      "name": "Blanket",
+      "properties": {
+        "note": "What she wrapped around herself after escaping the cold storage."
+      }
+    }
+  ],
+  "relationships": [
+    {
+      "targetId": "Bruno Galilei",
+      "targetName": "Bruno Galilei",
+      "relationshipType": "friend",
+      "attitude": 60,
+      "description": "The detective she wanted to help with the truth about the older murder case.",
+      "history": "Moved by Bruno's persistence, she planned to provide him with crucial evidence during Christmas."
+    },
+    {
+      "targetId": "Martin Gin (Cleo)",
+      "targetName": "Martin Gin (Cleo)",
+      "relationshipType": "enemy",
+      "attitude": -80,
+      "description": "The hacker and killer she had been investigating.",
+      "history": "They crossed paths during hacking work and she later witnessed him committing murder."
+    },
+    {
+      "targetId": "Adolph Carl",
+      "targetName": "Adolph Carl",
+      "relationshipType": "neutral",
+      "attitude": 10,
+      "description": "An intermediary she used for some of her dealings.",
+      "history": "She conducted business through him when discretion mattered."
+    }
+  ],
+  "memory": [
+    {
+      "type": "information",
+      "content": "My real name is Jenny Florence, and berforth Locefern is the fabricated identity I built to keep working and stay hidden.",
+      "metadata": {
+        "knowledgeId": "k_jenny_identity",
+        "difficulty": "automatic"
+      }
+    },
+    {
+      "type": "information",
+      "content": "I knew the 2002 Paradil Hotel murder case was tied to Martin Gin, even though I never saw his face clearly.",
+      "metadata": {
+        "knowledgeId": "k_jenny_murder_case",
+        "difficulty": "hard"
+      }
+    },
+    {
+      "type": "secret",
+      "content": "I set up an automatic SMS for Bruno so the truth about the old case would reach him even if I could not deliver it myself.",
+      "metadata": {
+        "knowledgeId": "s_jenny_sms"
+      }
+    },
+    {
+      "type": "secret",
+      "content": "I intercepted the Borrachero package that Lux picked up from the dock, and that made me far more visible than I intended.",
+      "metadata": {
+        "knowledgeId": "s_jenny_borrachero"
+      }
+    },
+    {
+      "type": "secret",
+      "content": "I was killed at the Reindeer Bar after Martin mistook me for the hacker who had stolen Patrizio's secrets.",
+      "metadata": {
+        "knowledgeId": "s_jenny_death"
+      }
+    },
+    {
+      "type": "belief",
+      "content": "The truth is worth leaving behind even if I do not get to walk away with it.",
+      "metadata": {
+        "confidence": 0.95,
+        "reasoningChain": "Some cases matter more than self-preservation."
+      }
+    }
+  ]
+}

@@ -1,91 +1,104 @@
-[
-  {
-    "name": "Taran Emilion",
-    "occupation": "Bar owner",
-    "age": 34,
-    "gender": "male",
-    "appearance": "A well-groomed man with a professional, approachable look typical of an experienced bartender; appears attentive and accustomed to dealing with customers from all walks of life.",
-    "personality": "Sociable, observant, discreet, and emotionally perceptive; a good listener who knows how to keep conversations flowing without revealing too much himself.",
-    "background": "Taran Emilion works as a bartender and bar owner alongside his partner Lutz. Through daily interactions with patrons, he has developed strong people-reading skills and a habit of quietly collecting information. His work has made him familiar with local rumors, personal dramas, and subtle changes in the town's atmosphere. Taran is primarily responsible for bartending and service work, operating the bar under Ben Cleo's protection.",
-    "goals": [
-      "Maintain smooth operation of the bar",
-      "Avoid becoming entangled in dangerous affairs"
-    ],
-    "secrets": [
-      "The Reindeer Bar surveillance system was installed by Ben Cleo's people, not by the brothers",
-      "There are surveillance blind spots that only Ben and his people know about",
-      "The surveillance system was broken by Martin (Ghost Hand), not by Ben",
-      "He witnessed the incident at the Reindeer Bar on December 22, 2003"
-    ],
-    "attributes": {
-      "STR": 50,
-      "CON": 55,
-      "DEX": 50,
-      "APP": 55,
-      "POW": 50,
-      "SIZ": 60,
-      "INT": 55,
-      "EDU": 65
+{
+  "id": "Taran Emilion",
+  "name": "Taran Emilion",
+  "occupation": "Bar owner / staff",
+  "age": 34,
+  "gender": "male",
+  "appearance": "A well-groomed bartender with an attentive, professional look and the calm posture of someone used to managing strangers.",
+  "personality": "Sociable, observant, discreet, and emotionally perceptive. He knows how to keep a conversation moving without revealing too much.",
+  "background": "Taran Emilion helps run the Reindeer Bar with his partner Lutz and knows local gossip better than most people in Cassandra. He was present when the bar's surveillance and the December 22 murder incident intersected.",
+  "residence": "SCN_16",
+  "currentLocation": "SCN_16_SUB_1",
+  "longTermIntent": "Keep the bar running smoothly, avoid getting dragged into the town's larger violence, and stay useful to the people who keep the business protected.",
+  "attributes": {
+    "STR": 50,
+    "CON": 55,
+    "DEX": 50,
+    "APP": 55,
+    "POW": 50,
+    "SIZ": 60,
+    "INT": 55,
+    "EDU": 65
+  },
+  "status": {
+    "hp": 12,
+    "maxHp": 12,
+    "sanity": 50,
+    "maxSanity": 99,
+    "luck": 50,
+    "mp": 10,
+    "conditions": []
+  },
+  "skills": {
+    "Bartending": 70,
+    "Credit Rating": 30,
+    "Fast Talk": 55,
+    "Psychology": 50,
+    "Charm": 60,
+    "Spot Hidden": 50,
+    "Listen": 50,
+    "Accounting": 40
+  },
+  "inventory": [
+    {
+      "name": "Bartending tools"
     },
-    "status": {
-      "hp": 12,
-      "maxHp": 12,
-      "sanity": 50,
-      "maxSanity": 99,
-      "luck": 50,
-      "mp": 10,
-      "conditions": []
+    {
+      "name": "Cash register"
     },
-    "skills": {
-      "Bartending": 70,
-      "Credit Rating": 30,
-      "Fast Talk": 55,
-      "Psychology": 50,
-      "Charm": 60,
-      "Spot Hidden": 50,
-      "Listen": 50,
-      "Accounting": 40
+    {
+      "name": "Bar ledger"
+    }
+  ],
+  "relationships": [
+    {
+      "targetId": "Lutz Emilion",
+      "targetName": "Lutz Emilion",
+      "relationshipType": "partner",
+      "attitude": 75,
+      "description": "Business partner and co-owner of the bar.",
+      "history": "They work together to operate the Reindeer Bar."
     },
-    "inventory": [
-      { "name": "Bartending tools" },
-      { "name": "Cash register" },
-      { "name": "Bar ledger" }
-    ],
-    "clues": [
-      {
-        "clueText": "The Reindeer Bar surveillance system was broken by Martin (Ghost Hand), not by Ben Cleo. The system has blind spots known only to Ben and his people.",
-        "category": "knowledge",
-        "difficulty": "regular",
-        "relatedTo": ["Reindeer Bar", "Surveillance", "Martin Gin", "Ben Cleo"]
-      },
-      {
-        "clueText": "He witnessed Simon (Anatole) having an argument with the victim (Lucifero) at the bar on the day of the murder.",
-        "category": "observation",
-        "difficulty": "regular",
-        "relatedTo": [
-          "Simon Laplace",
-          "Jenny Florence (Lucifero)",
-          "2003 Reindeer Bar murder"
-        ]
+    {
+      "targetId": "Ben Cleo",
+      "targetName": "Ben Cleo",
+      "relationshipType": "employer",
+      "attitude": 50,
+      "description": "The bar operates under Ben Cleo's protection.",
+      "history": "Ben's protection keeps the bar open and the staff cautious."
+    }
+  ],
+  "memory": [
+    {
+      "type": "information",
+      "content": "The Reindeer Bar surveillance system was installed by Ben Cleo's people, not by the brothers, and there are blind spots they know about.",
+      "metadata": {
+        "knowledgeId": "k_taran_surveillance",
+        "difficulty": "regular"
       }
-    ],
-    "relationships": [
-      {
-        "targetName": "Lutz Emilion",
-        "relationshipType": "partner",
-        "attitude": 70,
-        "description": "Business partner and co-owner of the bar.",
-        "history": "They work together to operate the Reindeer Bar."
-      },
-      {
-        "targetName": "Ben Cleo",
-        "relationshipType": "employer",
-        "attitude": 50,
-        "description": "The bar operates under Ben Cleo's protection.",
-        "history": "The bar is protected by the local mafia boss."
+    },
+    {
+      "type": "information",
+      "content": "I witnessed the argument between Simon and Lucifero on the day of the murder.",
+      "metadata": {
+        "knowledgeId": "k_taran_argument",
+        "difficulty": "regular"
       }
-    ],
-    "notes": "As a bartender, Taran is a reliable source of social information and local gossip, though he rarely volunteers sensitive details without prompting. He primarily works behind the bar counter and in the main hall, responsible for bartending and service work.",
-    "currentLocation": "SCN_16"
-  }
-]
+    },
+    {
+      "type": "secret",
+      "content": "Martin (Ghost Hand) broke the surveillance system, not Ben.",
+      "metadata": {
+        "knowledgeId": "s_taran_martin"
+      }
+    },
+    {
+      "type": "belief",
+      "content": "In a bar, the safest thing is to notice everything and say as little as possible.",
+      "metadata": {
+        "confidence": 0.8,
+        "reasoningChain": "Patrons talk too much. Staff who survive know how to listen without becoming part of the story."
+      }
+    }
+  ]
+}

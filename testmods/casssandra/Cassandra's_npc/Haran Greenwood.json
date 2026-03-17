@@ -1,78 +1,103 @@
-[
-  {
-    "name": "Haran Greenwood",
-    "occupation": "Train Station Attendant",
-    "age": 65,
-    "gender": "male",
-    "appearance": "An elderly man with a weathered face, dressed in old-fashioned work clothes typical of a small-town train station employee. He carries himself with the quiet routine of someone who has spent decades in the same place.",
-    "personality": "Taciturn, routine-oriented, and detached. Haran rarely involves himself in other people's affairs and shows little curiosity about the strange events around Cassandra.",
-    "background": "Haran has worked at the Cassandra train station for over forty years. He has no children, and his wife passed away many years ago. The train station was originally built underground and later relocated above ground; Haran has been there since those early days. He is well-known to locals like Bruno but remains largely overlooked.",
-    "goals": [
-      "Finish his remaining years quietly at the train station",
-      "Avoid involvement in town affairs or dangerous secrets"
-    ],
-    "secrets": [
-      "He witnessed and handled Sanchez Cleo's urgent request to send Martin away before his disappearance, though he didn't understand the reason",
-      "He knows about the Cleo family's business operations and cargo movements through the train station",
-      "His work shack connects to the Mafia headquarters entrance, and he serves as a guard"
-    ],
-    "attributes": {
-      "STR": 40,
-      "CON": 55,
-      "DEX": 35,
-      "APP": 30,
-      "POW": 50,
-      "SIZ": 50,
-      "INT": 55,
-      "EDU": 60
-    },
-    "status": {
-      "hp": 10,
-      "maxHp": 10,
-      "sanity": 50,
-      "maxSanity": 50,
-      "luck": 45,
-      "mp": 10,
-      "conditions": []
-    },
-    "skills": {
-      "Spot Hidden": 40,
-      "Listen": 45,
-      "Mechanical Repair": 30,
-      "History (Local)": 50
-    },
-    "inventory": [
-      {
-        "name": "Cargo transaction records (train station business)",
-        "properties": {
-          "clue": "Manages train station 'business' transactions for Ben; maintains internal records of cargo movements (deals only, no questions about background), which can serve as an entry point for investigating smuggling/cargo flow."
-        }
-      },
-      {
-        "name": "Work shack access / guard post",
-        "properties": {
-          "clue": "The work shack connects to the Mafia headquarters entrance; Haran serves as a guard, and any forced entry must pass through him (meaning he knows the entrance location/access protocols)."
-        }
+{
+  "id": "Haran Greenwood",
+  "name": "Haran Greenwood",
+  "occupation": "Train station attendant",
+  "age": 65,
+  "gender": "male",
+  "appearance": "An elderly man with a weathered face, dressed in old-fashioned work clothes typical of a small-town train station employee. He carries himself with the quiet routine of someone who has spent decades in the same place.",
+  "personality": "Taciturn, routine-oriented, and detached. Haran rarely involves himself in other people's affairs and shows little curiosity about the strange events around Cassandra.",
+  "background": "Haran has worked at the Cassandra train station for over forty years. He has no children, and his wife passed away many years ago. The train station was originally built underground and later relocated above ground; Haran has been there since those early days. He is well-known to locals like Bruno but remains largely overlooked.",
+  "residence": "SCN_21",
+  "currentLocation": "SCN_21",
+  "longTermIntent": "Finish his remaining years quietly at the train station and avoid becoming tangled up in town affairs or dangerous secrets.",
+  "attributes": {
+    "STR": 40,
+    "CON": 55,
+    "DEX": 35,
+    "APP": 30,
+    "POW": 50,
+    "SIZ": 50,
+    "INT": 55,
+    "EDU": 60
+  },
+  "status": {
+    "hp": 10,
+    "maxHp": 10,
+    "sanity": 50,
+    "maxSanity": 50,
+    "luck": 45,
+    "mp": 10,
+    "conditions": []
+  },
+  "skills": {
+    "Spot Hidden": 40,
+    "Listen": 45,
+    "Mechanical Repair": 30,
+    "History (Local)": 50
+  },
+  "inventory": [
+    {
+      "name": "Cargo transaction records",
+      "properties": {
+        "note": "Internal station records for the cargo movements Haran has seen over the years."
       }
-    ],
-    "clues": [
-      {
-        "clueText": "Haran has worked at the Cassandra train station for over forty years and knows its history, including its original underground construction.",
-        "category": "knowledge",
-        "difficulty": "regular",
-        "relatedTo": ["Cassandra Train Station"]
+    },
+    {
+      "name": "Work shack access",
+      "properties": {
+        "note": "The shack connects to the mafia headquarters entrance and doubles as his guard post."
       }
-    ],
-    "relationships": [
-      {
-        "targetName": "Bruno Galilei",
-        "relationshipType": "friend",
-        "attitude": 30,
-        "description": "A familiar local policeman who occasionally talks with Haran at the station.",
-        "history": "They have known each other for many years through routine encounters at the train station."
+    }
+  ],
+  "relationships": [
+    {
+      "targetId": "Bruno Galilei",
+      "targetName": "Bruno Galilei",
+      "relationshipType": "friend",
+      "attitude": 30,
+      "description": "A familiar local policeman who occasionally talks with him at the station.",
+      "history": "They have known each other for many years through routine encounters at the train station."
+    },
+    {
+      "targetId": "Ben Cleo",
+      "targetName": "Ben Cleo",
+      "relationshipType": "employee",
+      "attitude": 65,
+      "description": "The man Haran works for and quietly serves.",
+      "history": "Haran helps keep the train-station side of the family's business orderly and private."
+    }
+  ],
+  "memory": [
+    {
+      "type": "information",
+      "content": "I have worked at the Cassandra train station for over forty years and know its original underground history.",
+      "metadata": {
+        "knowledgeId": "k_haran_history",
+        "difficulty": "automatic"
       }
-    ],
-    "notes": "Haran is a background NPC useful for atmosphere and local history rather than direct plot progression.",
-    "currentLocation": "SCN_21"
-  }
-]
+    },
+    {
+      "type": "information",
+      "content": "My work records the cargo movements that pass through the station, and I know which shipments are more sensitive than others.",
+      "metadata": {
+        "knowledgeId": "k_haran_cargo",
+        "difficulty": "regular"
+      }
+    },
+    {
+      "type": "secret",
+      "content": "The work shack connects to the mafia headquarters entrance, and I serve as the guard there when needed.",
+      "metadata": {
+        "knowledgeId": "s_haran_shack"
+      }
+    },
+    {
+      "type": "belief",
+      "content": "The safest way to finish my life is to stay useful, stay quiet, and not ask questions that do not concern the station.",
+      "metadata": {
+        "confidence": 0.85,
+        "reasoningChain": "Decades of work have taught me that curiosity rarely helps a man my age."
+      }
+    }
+  ]
+}

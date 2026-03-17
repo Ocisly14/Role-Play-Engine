@@ -1,127 +1,111 @@
-[
-  {
-    "name": "Philip Scaletta",
-    "occupation": "Petty Thief / Street Hustler",
-    "age": 28,
-    "gender": "male",
-    "appearance": "A sharply dressed Italian-American man with slicked-back dark hair, a thin mustache, and cold, watchful eyes. Usually wears tailored suits and leather gloves, even in inappropriate weather.",
-    "personality": "Calm, calculating, and ruthlessly pragmatic. Speaks politely but carries an undercurrent of menace. Loyal to his organization, distrustful of outsiders.",
-    "background": "Philip Scaletta is a mid-level operative connected to organized crime activities linked to Cassandra. He handles intimidation, debt collection, and discreet eliminations when subtlety fails. While not a leader, he is deeply trusted by higher-ranking figures due to his efficiency and silence.",
-    "goals": [
-      "Maintain his standing within the criminal organization",
-      "Eliminate threats that could expose his employers"
-    ],
-    "secrets": [
-      "He has personally disposed of multiple bodies connected to ritual-related crimes",
-      "He suspects the organization is involved with something inhuman, but chooses not to ask questions",
-      "He stole Lucifero's wallet at the Reindeer Bar on the day of the murder (2003.12.22)",
-      "He lost his folding knife during a fight at the Reindeer Bar, and this knife was later found stuck in Lucifero's back",
-      "He is left-handed but tries to hide this fact",
-      "He is a habitual thief with a compulsion for stealing",
-      "The woman he tried to flirt with at the bar was Helen, who is not actually with her fiancé",
-      "He was THE FIRST PERSON to publicly discover and report the victim's body. He noticed Marcel returning from the restroom looking nervous and suspicious, suspected Marcel might be hiding something or involved in drug dealing. Concerned about what had just happened (the victim seeking help), he went to check the restroom and discovered the body, then shouted - which caught Marcel before he could escape"
-    ],
-    "attributes": {
-      "STR": 65,
-      "CON": 70,
-      "DEX": 75,
-      "APP": 60,
-      "POW": 55,
-      "SIZ": 65,
-      "INT": 60,
-      "EDU": 55
-    },
-    "status": {
-      "hp": 13,
-      "maxHp": 13,
-      "sanity": 45,
-      "maxSanity": 55,
-      "luck": 60,
-      "mp": 11,
-      "conditions": []
-    },
-    "skills": {
-      "Brawl": 70,
-      "Firearms (Handgun)": 65,
-      "Intimidate": 75,
-      "Stealth": 60,
-      "Spot Hidden": 50,
-      "Psychology": 40
-    },
-    "inventory": [
-      {
-        "name": "Concealed handgun",
-        "properties": {
-          "note": "Carried for protection."
-        }
-      },
-      {
-        "name": "Folding knife (lost at Reindeer Bar)",
-        "properties": {
-          "clue": "Philip lost this folding knife during a fight at Reindeer Bar on the day of the murder (2003.12.22) when he tried to flirt with a woman who turned out to have a boyfriend. This knife was later found stuck in Lucifero's back. Martin (Ghost Hand) picked it up and gave it to Lux to plant on the body to confuse the investigation."
-        }
-      },
-      {
-        "name": "Leather gloves",
-        "properties": {
-          "note": "Worn even in inappropriate weather."
-        }
-      },
-      {
-        "name": "Cigarettes",
-        "properties": {
-          "note": "Personal item."
-        }
-      },
-      {
-        "name": "Cash roll",
-        "properties": {
-          "note": "Money from various activities."
-        }
-      },
-      {
-        "name": "Stolen wallet from Lucifero",
-        "properties": {
-          "clue": "Philip stole Lucifero's wallet when she left her seat. It contained a thick wad of cash and a note listing various 'jobs' (including one involving Adolph). He did not report this theft and kept the money."
-        }
-      },
-      {
-        "name": "Old family photo",
-        "properties": {
-          "note": "The only surviving photo of Philip with his parents."
-        }
+{
+  "id": "Philip Scaletta",
+  "name": "Philip Scaletta",
+  "occupation": "Street hustler / petty thief",
+  "age": 28,
+  "gender": "male",
+  "appearance": "A wiry young man with a guarded look, cheap clothes, and the restless posture of someone used to watching for trouble. He looks like he can slip through a crowd and disappear before anyone notices what he took.",
+  "personality": "Suspicious, opportunistic, slippery, and quick with excuses. Philip is not brave enough to be heroic, but he is sharp enough to know when to lie low, when to talk, and when to steal first.",
+  "background": "Philip survives on small thefts, quick hands, and whatever information he can use before someone else uses it against him. He drifted into the Reindeer Bar incident while trying to make a little money and avoid getting dragged into something bigger than himself. His habit of pocketing things from the wrong place and his reluctance to answer direct questions make him look guiltier than he is, which is usually how he prefers it.",
+  "residence": "SCN_8",
+  "currentLocation": "SCN_8_SUB_1",
+  "longTermIntent": "Keep making enough money to stay ahead of trouble, avoid jail, and leave Cassandra with his skin intact if a better opportunity ever appears.",
+  "attributes": {
+    "STR": 45,
+    "CON": 50,
+    "DEX": 70,
+    "APP": 45,
+    "POW": 40,
+    "SIZ": 50,
+    "INT": 60,
+    "EDU": 45
+  },
+  "status": {
+    "hp": 10,
+    "maxHp": 10,
+    "sanity": 40,
+    "maxSanity": 40,
+    "luck": 35,
+    "mp": 8,
+    "conditions": []
+  },
+  "skills": {
+    "Stealth": 65,
+    "Sleight of Hand": 70,
+    "Fast Talk": 55,
+    "Dodge": 60,
+    "Brawl": 45,
+    "Spot Hidden": 45
+  },
+  "inventory": [
+    {
+      "name": "Modified Jacket",
+      "properties": {
+        "note": "A worn jacket with hidden pockets sewn into the lining for concealing stolen goods."
       }
-    ],
-    "clues": [
-      {
-        "clueText": "Several disappearances in Cassandra were covered up through bribery and intimidation.",
-        "category": "knowledge",
-        "difficulty": "regular",
-        "relatedTo": ["Cassandra", "Local Mafia"]
-      },
-      {
-        "clueText": "Certain victims were handed over alive to unknown parties rather than killed.",
-        "category": "secret",
-        "difficulty": "hard",
-        "relatedTo": ["Cult Activities"]
-      },
-      {
-        "clueText": "Philip was THE FIRST PERSON to publicly discover and report the victim's body at the Reindeer Bar. He noticed Marcel returning from the restroom looking nervous and suspicious, suspected Marcel might be hiding something or involved in drug dealing. Concerned about what had just happened (the victim seeking help), he went to check the restroom and discovered the body, then shouted - which caught Marcel before he could escape. However, Marcel had actually discovered the body first but was too afraid to report it.",
-        "category": "witness",
-        "difficulty": "regular",
-        "relatedTo": ["2003 Reindeer Bar murder", "Marcel Gwynplaine"]
+    },
+    {
+      "name": "Folding Knife",
+      "properties": {
+        "note": "A small blade he carries for intimidation and self-defense."
       }
-    ],
-    "relationships": [
-      {
-        "targetName": "Patrizio von Samsa",
-        "relationshipType": "ally",
-        "attitude": 40,
-        "description": "Occasional collaborator on criminal logistics.",
-        "history": "Worked together on smuggling and intimidation jobs."
+    },
+    {
+      "name": "Pocketed Trinkets",
+      "properties": {
+        "note": "Loose change, cheap jewelry, and a few things Philip has not yet sold."
       }
-    ],
-    "notes": "Philip avoids prolonged exposure to crime scenes involving abnormal creatures. His SAN loss history suggests prior encounters with the unnatural. CRITICALLY: He was THE FIRST PERSON to publicly discover and report the victim's body at the Reindeer Bar on December 22, 2003. He noticed Marcel returning from the restroom looking nervous and suspicious, suspected Marcel might be hiding something or involved in drug dealing. Concerned about what had just happened (the victim seeking help), he went to check the restroom and discovered the body, then shouted - which caught Marcel before he could escape. However, Marcel had actually discovered the body first but was too afraid to report it, making Philip the first person to publicly discover and report the body.",
-    "currentLocation": "SCN_8"
-  }
-]
+    }
+  ],
+  "relationships": [
+    {
+      "targetId": "Helen",
+      "targetName": "Helen",
+      "relationshipType": "neutral",
+      "attitude": 5,
+      "description": "A woman he flirted with and annoyed at the bar.",
+      "history": "Philip remembers Helen as someone he tried to tease into attention. He backed off once the situation turned ugly."
+    },
+    {
+      "targetId": "Lux Lynch",
+      "targetName": "Lux Lynch",
+      "relationshipType": "rival",
+      "attitude": -20,
+      "description": "A police contact Philip does not trust.",
+      "history": "Philip knows cops are bad news and assumes Lux will always side with himself first."
+    }
+  ],
+  "memory": [
+    {
+      "type": "information",
+      "content": "I live by small thefts, fast hands, and pretending I saw less than I really did.",
+      "metadata": {
+        "knowledgeId": "k_philip_hustle",
+        "difficulty": "automatic"
+      }
+    },
+    {
+      "type": "information",
+      "content": "The Reindeer Bar incident is tied to me whether I like it or not, because I was there and I knew enough to make people suspicious.",
+      "metadata": {
+        "knowledgeId": "k_philip_bar_incident",
+        "difficulty": "regular"
+      }
+    },
+    {
+      "type": "secret",
+      "content": "I took things that were not mine from the wrong place and I would rather people focus on someone else, especially Marcel, than look too closely at me.",
+      "metadata": {
+        "knowledgeId": "s_philip_stolen_goods"
+      }
+    },
+    {
+      "type": "belief",
+      "content": "If I keep my story small and my mouth shut, Cassandra will eat someone else before it eats me.",
+      "metadata": {
+        "confidence": 0.78,
+        "reasoningChain": "People who look harmless survive longer when they stay blurry. The fewer details I give out, the fewer reasons anyone has to come after me."
+      }
+    }
+  ]
+}

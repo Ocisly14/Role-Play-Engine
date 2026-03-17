@@ -1,80 +1,104 @@
-[
-  {
-    "name": "Wind",
-    "occupation": "Diplomat (unconfirmed)",
-    "age": 30,
-    "gender": "male",
-    "appearance": "A thin, exhausted man with hollow eyes and an unsteady posture, often staring into space as if listening to voices no one else can hear.",
-    "personality": "Gentle and peace-loving by nature, but currently unstable, fearful, and fragmented due to severe psychological trauma.",
-    "background": "Wind is the fiancé of Isabella, the head nurse at Starlight Hospital. He arrived in Cassandra with two companions—Jun, a history professor, and Lyn, a retired soldier—wandering the town and its surroundings. After visiting the area near the incinerator, Jun disappeared. Wind was later found in a state of sudden mental collapse and was sent to the hospital by Lyn.",
-    "goals": ["Beg for someone to rescue Jun when briefly lucid"],
-    "secrets": [
-      "Witnessed something terrible at the crematorium that drove him insane",
-      "Occasionally becomes lucid and begs friends to rescue Jun"
-    ],
-    "attributes": {
-      "STR": 45,
-      "CON": 50,
-      "DEX": 45,
-      "APP": 55,
-      "POW": 40,
-      "SIZ": 50,
-      "INT": 60,
-      "EDU": 65
+{
+  "id": "Wind",
+  "name": "Wind",
+  "occupation": "Diplomat (unconfirmed)",
+  "age": 30,
+  "gender": "male",
+  "appearance": "A thin, exhausted man with hollow eyes and an unsteady posture, often staring into space as if listening to something far away.",
+  "personality": "Gentle and peace-loving by nature, but currently unstable, fearful, and fragmented by severe psychological trauma.",
+  "background": "Wind came to Cassandra with Jun and Lyn to visit his fiancée Isabela. After Jun disappeared near the incinerator, Wind suffered a collapse that left him mentally unstable and under hospital care.",
+  "residence": "SCN_1",
+  "currentLocation": "SCN_1_SUB_5",
+  "longTermIntent": "Recover enough to ask someone to help find Jun and get back to the life he expected to have.",
+  "attributes": {
+    "STR": 45,
+    "CON": 50,
+    "DEX": 45,
+    "APP": 55,
+    "POW": 40,
+    "SIZ": 50,
+    "INT": 60,
+    "EDU": 65
+  },
+  "status": {
+    "hp": 10,
+    "maxHp": 10,
+    "sanity": 20,
+    "maxSanity": 40,
+    "luck": 50,
+    "mp": 8,
+    "conditions": ["temporary insanity"]
+  },
+  "skills": {
+    "Psychology": 40,
+    "Diplomacy": 50,
+    "Persuade": 45
+  },
+  "inventory": [],
+  "relationships": [
+    {
+      "targetId": "Isabela Smith",
+      "targetName": "Isabela Smith",
+      "relationshipType": "family",
+      "attitude": 70,
+      "description": "His fiancée and the person he wants to protect.",
+      "history": "Their engagement predates the Cassandra incident."
     },
-    "status": {
-      "hp": 10,
-      "maxHp": 10,
-      "sanity": 20,
-      "maxSanity": 40,
-      "luck": 50,
-      "mp": 8,
-      "conditions": ["temporary insanity"]
+    {
+      "targetId": "Jun",
+      "targetName": "Jun",
+      "relationshipType": "friend",
+      "attitude": 80,
+      "description": "The professor who traveled with him and then vanished.",
+      "history": "Jun disappeared near the incinerator after protecting Wind."
     },
-    "skills": {
-      "Psychology": 40,
-      "Diplomacy": 50,
-      "Persuade": 45
-    },
-    "inventory": [],
-    "clues": [
-      {
-        "clueText": "Jun disappeared near the incinerator while traveling together in Cassandra.",
-        "category": "observation",
-        "difficulty": "regular",
-        "relatedTo": ["Jun", "Incinerator"]
-      },
-      {
-        "clueText": "Jun sacrificed himself to ensure Wind could escape alive, though no one knows this truth.",
-        "category": "secret",
-        "difficulty": "extreme",
-        "relatedTo": ["Jun"]
+    {
+      "targetId": "Lyn",
+      "targetName": "Lyn",
+      "relationshipType": "friend",
+      "attitude": 40,
+      "description": "The friend who brought him to the hospital.",
+      "history": "Lyn kept the group moving after Wind collapsed."
+    }
+  ],
+  "memory": [
+    {
+      "type": "information",
+      "content": "I traveled to Cassandra with Jun and Lyn, and Jun disappeared while we were out around the incinerator.",
+      "metadata": {
+        "knowledgeId": "k_wind_jun",
+        "difficulty": "automatic"
       }
-    ],
-    "relationships": [
-      {
-        "targetName": "Isabella",
-        "relationshipType": "family",
-        "attitude": 70,
-        "description": "His fiancée and the head nurse at Starlight Hospital.",
-        "history": "Their engagement predates the Cassandra incident; Isabella now oversees his care."
-      },
-      {
-        "targetName": "Jun",
-        "relationshipType": "friend",
-        "attitude": 80,
-        "description": "A history professor who traveled with Wind and later vanished.",
-        "history": "Jun disappeared near the incinerator after protecting Wind."
-      },
-      {
-        "targetName": "Lyn",
-        "relationshipType": "friend",
-        "attitude": 40,
-        "description": "A retired soldier who brought Wind to the hospital.",
-        "history": "Lyn remained with the vehicle while Jun and Wind explored; later rescued Wind."
+    },
+    {
+      "type": "information",
+      "content": "Lyn brought me to the hospital after I collapsed.",
+      "metadata": {
+        "knowledgeId": "k_wind_hospital",
+        "difficulty": "regular"
       }
-    ],
-    "notes": "Listed as a cameo NPC. Wind is mentally unstable and not suitable for direct investigation, but his fragmented memories can serve as emotional hooks and indirect clues.",
-    "currentLocation": "SCN_1"
-  }
-]
+    },
+    {
+      "type": "secret",
+      "content": "When I am briefly lucid, I keep begging people to rescue Jun.",
+      "metadata": {
+        "knowledgeId": "s_wind_lucidity"
+      }
+    },
+    {
+      "type": "secret",
+      "content": "I witnessed something terrible near the crematorium and my mind has not recovered from it.",
+      "metadata": {
+        "knowledgeId": "s_wind_terror"
+      }
+    },
+    {
+      "type": "belief",
+      "content": "Someone has to go back for Jun. If I cannot do it, I need to say it clearly enough that others will.",
+      "metadata": {
+        "confidence": 0.85,
+        "reasoningChain": "The one clear thing left in my head is that Jun mattered and was not supposed to vanish like that."
+      }
+    }
+  ]
+}

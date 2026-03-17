@@ -1,69 +1,83 @@
-[
-  {
-    "name": "O'Neil",
-    "occupation": "Former street thug (reformed)",
-    "age": 50,
-    "gender": "male",
-    "appearance": "A middle-aged Black man with a sturdy build and a rough, street-hardened look softened by calmer manners after reform.",
-    "personality": "Loyal to friends, pragmatic, cautious, and avoids unnecessary trouble. Though once impulsive, he now prefers stability and staying out of dangerous affairs.",
-    "background": "O'Neil, also known as Oleao, is a reformed former street thug. He is a close friend of Wind and their circle. He planned to travel to Cassandra together with Wind but was forced to cancel due to an unexpected police case involving his friend Bruno.",
-    "goals": [
-      "Stay out of criminal trouble",
-      "Protect and support his friends from a distance"
-    ],
-    "secrets": [],
-    "attributes": {
-      "STR": 65,
-      "CON": 70,
-      "DEX": 60,
-      "APP": 45,
-      "POW": 55,
-      "SIZ": 70,
-      "INT": 55,
-      "EDU": 45
+{
+  "id": "O'Neil",
+  "name": "O'Neil",
+  "occupation": "Former street thug (reformed)",
+  "age": 50,
+  "gender": "male",
+  "appearance": "A middle-aged Black man with a sturdy build and a rough, street-hardened look softened by calmer manners after reform.",
+  "personality": "Loyal to friends, pragmatic, cautious, and avoids unnecessary trouble. Though once impulsive, he now prefers stability and staying out of dangerous affairs.",
+  "background": "O'Neil, also known as Oleao, is a reformed former street thug. He is a close friend of Wind and their circle. He planned to travel to Cassandra together with Wind but was forced to cancel due to an unexpected police case involving his friend Bruno.",
+  "residence": "OUTDOOR",
+  "currentLocation": "ROAD_1",
+  "longTermIntent": "Stay out of criminal trouble and support his friends from a distance without getting pulled back into old problems.",
+  "attributes": {
+    "STR": 65,
+    "CON": 70,
+    "DEX": 60,
+    "APP": 45,
+    "POW": 55,
+    "SIZ": 70,
+    "INT": 55,
+    "EDU": 45
+  },
+  "status": {
+    "hp": 14,
+    "maxHp": 14,
+    "sanity": 55,
+    "maxSanity": 55,
+    "luck": 60,
+    "mp": 11,
+    "conditions": []
+  },
+  "skills": {
+    "Brawl": 60,
+    "Intimidate": 55,
+    "Streetwise": 60,
+    "Listen": 45,
+    "Spot Hidden": 40
+  },
+  "inventory": [],
+  "relationships": [
+    {
+      "targetId": "Wind",
+      "targetName": "Wind",
+      "relationshipType": "friend",
+      "attitude": 70,
+      "description": "Close and trusted friend.",
+      "history": "They share a past connection from the streets and mutual trust after O'Neil reformed."
     },
-    "status": {
-      "hp": 14,
-      "maxHp": 14,
-      "sanity": 55,
-      "maxSanity": 55,
-      "luck": 60,
-      "mp": 11,
-      "conditions": []
-    },
-    "skills": {
-      "Brawl": 60,
-      "Intimidate": 55,
-      "Streetwise": 60,
-      "Listen": 45,
-      "Spot Hidden": 40
-    },
-    "inventory": [],
-    "clues": [
-      {
-        "clueText": "O'Neil was supposed to travel to Cassandra with Wind but was delayed due to a police case.",
-        "category": "knowledge",
-        "difficulty": "regular",
-        "relatedTo": ["Wind"]
+    {
+      "targetId": "Bruno Galilei",
+      "targetName": "Bruno Galilei",
+      "relationshipType": "friend",
+      "attitude": 60,
+      "description": "Police officer friend who helped hold the group together.",
+      "history": "Bruno and O'Neil share a long-standing friendship that occasionally pulls O'Neil back into police-related matters."
+    }
+  ],
+  "memory": [
+    {
+      "type": "information",
+      "content": "I was supposed to travel to Cassandra with Wind, but I had to cancel because of a police case involving Bruno.",
+      "metadata": {
+        "knowledgeId": "k_oneil_trip",
+        "difficulty": "automatic"
       }
-    ],
-    "relationships": [
-      {
-        "targetName": "Wind",
-        "relationshipType": "friend",
-        "attitude": 70,
-        "description": "Close and trusted friend",
-        "history": "They share a past connection from the streets and mutual trust after O'Neil reformed."
-      },
-      {
-        "targetName": "Bruno",
-        "relationshipType": "friend",
-        "attitude": 60,
-        "description": "Police officer friend (not the Cassandra Bruno)",
-        "history": "Bruno and O'Neil share a long-standing friendship that occasionally pulls O'Neil back into police-related matters."
+    },
+    {
+      "type": "secret",
+      "content": "My old street-life instincts still make me wary of gangs and police trouble.",
+      "metadata": {
+        "knowledgeId": "s_oneil_instinct"
       }
-    ],
-    "notes": "O'Neil does not appear directly in Cassandra during the investigation but remains a significant off-screen connection tying Wind to the outside world.",
-    "currentLocation": "OUTDOOR"
-  }
-]
+    },
+    {
+      "type": "belief",
+      "content": "The smartest move is usually to keep my distance until the trouble passes.",
+      "metadata": {
+        "confidence": 0.85,
+        "reasoningChain": "I have already paid enough for one lifetime of bad decisions."
+      }
+    }
+  ]
+}

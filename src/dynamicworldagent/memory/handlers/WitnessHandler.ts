@@ -21,6 +21,7 @@ export class WitnessHandler implements MemoryHandler {
   }
 
   format(memory: PrismaNpcMemory): string {
-    return `[witness] Day${memory.gameDay} ${memory.gameTime} - ${memory.content}`;
+    const loc = memory.location ? ` [${memory.location}]` : "";
+    return `[witness] Day${memory.gameDay} ${memory.gameTime}${loc} - ${memory.content}`;
   }
 }

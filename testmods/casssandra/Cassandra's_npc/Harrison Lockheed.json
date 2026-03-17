@@ -1,97 +1,115 @@
-[
-  {
-    "name": "Harrison Lockheed",
-    "occupation": "Hardware Store Owner / Arms Dealer",
-    "age": 45,
-    "gender": "male",
-    "appearance": "A middle-aged man who squints his eyes when speaking, appearing somewhat cunning. He enjoys tinkering with small inventions in his shop.",
-    "personality": "Very talkative, enjoys being praised (subtlety is better). Enthusiastic about weapon modifications and firearms.",
-    "background": "Harrison Lockheed is the owner of a hardware store in Cassandra. Publicly, he runs a hardware store, but actually he is an arms dealer. Because many of his firearms do not comply with California regulations, weapons can only be sold secretly. He is also a weapon modification enthusiast. Ben Cleo and Adolph Carl both know about his arms business. He is protected by the local mafia.",
-    "goals": [
-      "Maintain his hardware store as a front for arms dealing",
-      "Avoid legal trouble while selling illegal firearms"
-    ],
-    "secrets": [
-      "He is an arms dealer selling firearms that don't comply with California regulations",
-      "He knows the code phrase for buying guns: 'What happens when you hit a nail with a hammer?'",
-      "Ben Cleo and Adolph Carl know about his arms business",
-      "He is protected by the local mafia"
-    ],
-    "attributes": {
-      "STR": 50,
-      "CON": 50,
-      "DEX": 50,
-      "APP": 50,
-      "POW": 50,
-      "SIZ": 60,
-      "INT": 50,
-      "EDU": 60
-    },
-    "status": {
-      "hp": 11,
-      "maxHp": 11,
-      "sanity": 50,
-      "maxSanity": 50,
-      "luck": 50,
-      "mp": 10,
-      "conditions": []
-    },
-    "skills": {
-      "Mechanical Repair": 65,
-      "Electrical Repair": 50,
-      "Firearms (Handgun)": 55,
-      "Firearms (Rifle)": 50,
-      "Spot Hidden": 45,
-      "Persuade": 40,
-      "Bargain": 50,
-      "Craft (Weaponsmith)": 60,
-      "Listen": 40
-    },
-    "inventory": [
-      {
-        "name": "Illegal firearms stock (kept out of sight)",
-        "properties": {
-          "clue": "Publicly a hardware store owner, actually an arms dealer; because some firearms do not comply with California regulations, weapons can only be sold secretly."
-        }
-      },
-      {
-        "name": "Weapon modification tools / hobby gear",
-        "properties": {
-          "note": "The source material mentions he is a weapon modification enthusiast; if favorable relations are established, he may help investigators with simple modifications or create unconventional weapons (Keeper's discretion)."
-        }
+{
+  "id": "Harrison Lockheed",
+  "name": "Harrison Lockheed",
+  "occupation": "Hardware store owner / arms dealer",
+  "age": 45,
+  "gender": "male",
+  "appearance": "A middle-aged man who squints when speaking, appearing somewhat cunning. He enjoys tinkering with small inventions in his shop.",
+  "personality": "Very talkative, eager to be praised, and enthusiastic about weapon modifications and firearms.",
+  "background": "Harrison Lockheed is the owner of a hardware store in Cassandra. Publicly he runs a hardware store, but in practice he is also an arms dealer. Because many of his firearms do not comply with California regulations, he only sells them secretly. He is protected by local mafia interests and has enough technical curiosity to tinker with unusual weapons when the mood strikes.",
+  "residence": "SCN_18",
+  "currentLocation": "SCN_18",
+  "longTermIntent": "Keep the hardware store running as a discreet front, continue selling firearms without attracting legal attention, and stay on the good side of the people who protect his business.",
+  "attributes": {
+    "STR": 50,
+    "CON": 50,
+    "DEX": 50,
+    "APP": 50,
+    "POW": 50,
+    "SIZ": 60,
+    "INT": 50,
+    "EDU": 60
+  },
+  "status": {
+    "hp": 11,
+    "maxHp": 11,
+    "sanity": 50,
+    "maxSanity": 50,
+    "luck": 50,
+    "mp": 10,
+    "conditions": []
+  },
+  "skills": {
+    "Mechanical Repair": 65,
+    "Electrical Repair": 50,
+    "Firearms (Handgun)": 55,
+    "Firearms (Rifle)": 50,
+    "Spot Hidden": 45,
+    "Persuade": 40,
+    "Bargain": 50,
+    "Craft (Weaponsmith)": 60,
+    "Listen": 40
+  },
+  "inventory": [
+    {
+      "name": "Illegal firearms stock",
+      "properties": {
+        "note": "Publicly a hardware store owner, privately an arms dealer."
       }
-    ],
-    "clues": [
-      {
-        "clueText": "He is an arms dealer selling firearms that don't comply with California regulations. The code phrase to buy guns is: 'What happens when you hit a nail with a hammer?'",
-        "category": "secret",
-        "difficulty": "regular",
-        "relatedTo": ["Arms dealing", "Firearms", "Adolph Carl"]
-      },
-      {
-        "clueText": "Ben Cleo and Adolph Carl both know about his arms business, and he is protected by the local mafia.",
-        "category": "knowledge",
-        "difficulty": "regular",
-        "relatedTo": ["Ben Cleo", "Adolph Carl", "Mafia"]
+    },
+    {
+      "name": "Weapon modification tools",
+      "properties": {
+        "note": "His hobby gear for tinkering with firearms and improvised devices."
       }
-    ],
-    "relationships": [
-      {
-        "targetName": "Ben Cleo",
-        "relationshipType": "ally",
-        "attitude": 50,
-        "description": "Ben knows about his arms business and provides protection.",
-        "history": "Harrison operates under mafia protection."
-      },
-      {
-        "targetName": "Adolph Carl",
-        "relationshipType": "neutral",
-        "attitude": 30,
-        "description": "Adolph knows about his arms business and the code phrase.",
-        "history": "They have business connections."
+    }
+  ],
+  "relationships": [
+    {
+      "targetId": "Ben Cleo",
+      "targetName": "Ben Cleo",
+      "relationshipType": "ally",
+      "attitude": 50,
+      "description": "Ben knows about his arms business and provides protection.",
+      "history": "Harrison operates under mafia protection."
+    },
+    {
+      "targetId": "Adolph Carl",
+      "targetName": "Adolph Carl",
+      "relationshipType": "neutral",
+      "attitude": 30,
+      "description": "Adolph knows about his arms business and the code phrase.",
+      "history": "They have business connections."
+    }
+  ],
+  "memory": [
+    {
+      "type": "information",
+      "content": "I run the hardware store at SCN_18, but the store also hides the real gun trade that keeps me in business.",
+      "metadata": {
+        "knowledgeId": "k_harrison_store",
+        "difficulty": "automatic"
       }
-    ],
-    "notes": "Harrison is very talkative and enjoys being praised. If investigators gain his favor through conversation, he may help with simple weapon modifications or create unconventional weapons. He can tell investigators about three men in black clothes heading toward the train station platform if asked.",
-    "currentLocation": "SCN_18"
-  }
-]
+    },
+    {
+      "type": "information",
+      "content": "The phrase for buying guns is 'What happens when you hit a nail with a hammer?' and the people who know it know how to ask quietly.",
+      "metadata": {
+        "knowledgeId": "k_harrison_code",
+        "difficulty": "regular"
+      }
+    },
+    {
+      "type": "secret",
+      "content": "I sell firearms that do not comply with California regulations, so all the serious transactions have to stay secret.",
+      "metadata": {
+        "knowledgeId": "s_harrison_illegal_sales"
+      }
+    },
+    {
+      "type": "secret",
+      "content": "Ben Cleo and Adolph Carl both know about my arms business, and Ben's protection is one reason I can keep operating.",
+      "metadata": {
+        "knowledgeId": "s_harrison_protection"
+      }
+    },
+    {
+      "type": "belief",
+      "content": "If I stay useful, talkative, and careful, I can keep my store open and my problems mostly off the books.",
+      "metadata": {
+        "confidence": 0.8,
+        "reasoningChain": "People who buy from me want convenience, not attention."
+      }
+    }
+  ]
+}

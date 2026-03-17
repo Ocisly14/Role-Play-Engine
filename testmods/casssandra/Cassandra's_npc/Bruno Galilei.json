@@ -1,152 +1,129 @@
-[
-  {
-    "name": "Bruno Galilei",
-    "occupation": "Police detective (former private investigator)",
-    "age": 33,
-    "gender": "male",
-    "appearance": "A tall, powerfully built man with Russian ancestry. He has silver-gray hair, very pale eyes, and a rugged, straightforward demeanor that reflects his physical strength and honest nature.",
-    "personality": "Sincere, upright, patient, and deeply driven by a sense of justice. Reliable and trustworthy, with a calm surface that hides strong inner determination and a willingness for self-sacrifice.",
-    "background": "Bruno once ran a private detective agency with friends, but it failed because he refused unethical or illegal commissions and even turned corrupt clients over to the authorities. After the agency collapsed, he continued working as a police detective. For over a year, he persistently investigated an unresolved murder case that his superiors ignored, unknowingly drawing the attention of dangerous forces in Cassandra.",
-    "goals": [
-      "Uncover the truth behind the unsolved 2002 Paradil Hotel murder case (the old case involving the unknown 19-year-old Black girl)",
-      "Investigate the 2003 Reindeer Bar murder case (the new case involving Jenny Florence/Lucifero)",
-      "Protect Cassandra and uphold justice regardless of personal cost"
-    ],
-    "secrets": [
-      "He suspects corruption within the local authorities but lacks proof",
-      "He received anonymous warnings telling him not to trust his superiors or the local priest"
-    ],
-    "attributes": {
-      "STR": 75,
-      "CON": 70,
-      "DEX": 55,
-      "APP": 50,
-      "POW": 60,
-      "SIZ": 70,
-      "INT": 65,
-      "EDU": 60
-    },
-    "status": {
-      "hp": 14,
-      "maxHp": 14,
-      "sanity": 60,
-      "maxSanity": 99,
-      "luck": 65,
-      "mp": 12,
-      "conditions": ["deceased"]
-    },
-    "skills": {
-      "Law": 60,
-      "Spot Hidden": 65,
-      "Listen": 60,
-      "Psychology": 55,
-      "Intimidate": 50,
-      "Persuade": 55,
-      "Firearms (Handgun)": 60,
-      "Drive Auto": 55,
-      "Brawl": 65
-    },
-    "inventory": [
-      {
-        "name": "Case evidence package (kept by Bruno)",
-        "properties": {
-          "clue": "物证由布鲁诺保管；会给调查员看。若调查员要求带走，布鲁诺会犹豫后允许调查员“保管一晚”，并强调次日早上必须归还。"
-        }
-      },
-      {
-        "name": "Victim's phone (from 2003 Reindeer Bar case)",
-        "quantity": 1,
-        "properties": {
-          "clue": "Jenny Florence (Lucifero)'s phone from the 2003 Reindeer Bar murder case. Contains: 1) Unfinished dial number '8764239' (not a phone number format); 2) Reply to unknown source SMS: 'No way, you can't get another penny from me, you scoundrel' / 'Alright, we'll see'; 3) Browser stopped at a blog page about a hacker who hacked local TV station and published dangerous conspiracy theories about a leader being a cultist (this message was cleared by Martin and hard to find online or in newspapers)."
-        }
-      },
-      {
-        "name": "Note/paper slip from victim's pocket (2003 Reindeer Bar case)",
-        "quantity": 1,
-        "properties": {
-          "clue": "Note from Jenny Florence (Lucifero)'s pocket listing various 'jobs': Tiger Kovind: deliver photos to little mouse, 1000 USD; Ghost Hand: transport goods to dock, 1500 USD; Tallinn Widow: threaten her husband disguised as terrorist, 5000 USD; Shore Master (Adolph): contact and threaten Red Stone Lady, raise price, 10000-20000 USD."
-        }
-      },
-      {
-        "name": "Folding knife (stuck in victim's back, 2003 Reindeer Bar case)",
-        "quantity": 1,
-        "properties": {
-          "clue": "Crime scene evidence: folding knife stuck in Jenny Florence (Lucifero)'s back. This knife belonged to Philip Scaletta, who lost it during a fight at the Reindeer Bar earlier that day. Martin (Ghost Hand) picked it up and gave it to Lux to plant on the body to confuse the investigation."
-        }
-      },
-      {
-        "name": "Case files and evidence from 2002 Paradil Hotel murder case",
-        "quantity": 1,
-        "properties": {
-          "clue": "Files related to the old case: unknown 19-year-old Black girl found in cold storage at Paradil Hotel on December 22, 2002. Body was naked, encased in ice, no wounds, no identification, no relatives found. Case was shelved."
-        }
+{
+  "id": "Bruno Galilei",
+  "name": "Bruno Galilei",
+  "occupation": "Police detective (former private investigator)",
+  "age": 33,
+  "gender": "male",
+  "appearance": "A tall, powerfully built man with Russian ancestry. He has silver-gray hair, very pale eyes, and a rugged, straightforward demeanor that reflects his physical strength and honest nature.",
+  "personality": "Sincere, upright, patient, and deeply driven by a sense of justice. Reliable and trustworthy, with a calm surface that hides strong inner determination and a willingness for self-sacrifice.",
+  "background": "Bruno once ran a private detective agency with friends, but it failed because he refused unethical or illegal commissions and even turned corrupt clients over to the authorities. After the agency collapsed, he continued working as a police detective. For over a year, he persistently investigated an unresolved murder case that his superiors ignored, unknowingly drawing the attention of dangerous forces in Cassandra.",
+  "residence": "SCN_3",
+  "currentLocation": "SCN_3",
+  "longTermIntent": "Uncover the truth behind the old and new murder cases, protect Cassandra, and force the people hiding behind those crimes into the light even if it costs him everything.",
+  "attributes": {
+    "STR": 75,
+    "CON": 70,
+    "DEX": 55,
+    "APP": 50,
+    "POW": 60,
+    "SIZ": 70,
+    "INT": 65,
+    "EDU": 60
+  },
+  "status": {
+    "hp": 14,
+    "maxHp": 14,
+    "sanity": 60,
+    "maxSanity": 99,
+    "luck": 65,
+    "mp": 12,
+    "conditions": []
+  },
+  "skills": {
+    "Law": 60,
+    "Spot Hidden": 65,
+    "Listen": 60,
+    "Psychology": 55,
+    "Intimidate": 50,
+    "Persuade": 55,
+    "Firearms (Handgun)": 60,
+    "Drive Auto": 55,
+    "Brawl": 65
+  },
+  "inventory": [
+    {
+      "name": "Case evidence package",
+      "properties": {
+        "note": "Physical evidence he keeps together and shows to investigators when needed."
       }
-    ],
-    "clues": [
-      {
-        "clueText": "He does not know Shandra Hernandez's true identity but trusts her deeply.",
-        "category": "knowledge",
-        "difficulty": "regular",
-        "relatedTo": ["Shandra Hernandez"]
-      },
-      {
-        "clueText": "An anonymous message warned him not to trust Mayor Padrich or Father Constantine.",
-        "category": "secret",
-        "difficulty": "hard",
-        "relatedTo": ["Mayor Padrich", "Father Constantine"]
-      },
-      {
-        "clueText": "He was about to expose crucial leads in the 2002 Paradil Hotel murder case before his death.",
-        "category": "knowledge",
-        "difficulty": "extreme",
-        "relatedTo": ["2002 Paradil Hotel murder", "Unknown victim"]
-      },
-      {
-        "clueText": "He received an anonymous SMS from Lucifero warning him not to trust his superiors, especially Patrizio, and that Constantine was not qualified to serve God and was in league with Patrizio.",
-        "category": "secret",
-        "difficulty": "hard",
-        "relatedTo": [
-          "Jenny Florence (Lucifero)",
-          "Patrizio von Samsa",
-          "Constantine Frollo"
-        ]
-      },
-      {
-        "clueText": "He was investigating both the 2002 Paradil Hotel murder case (unknown 19-year-old Black girl) and the 2003 Reindeer Bar murder case (Jenny Florence/Lucifero), believing they were connected.",
-        "category": "knowledge",
-        "difficulty": "regular",
-        "relatedTo": [
-          "2002 Paradil Hotel murder",
-          "2003 Reindeer Bar murder",
-          "Unknown victim",
-          "Jenny Florence"
-        ]
+    },
+    {
+      "name": "Victim's phone",
+      "properties": {
+        "note": "Lucifero's phone from the 2003 Reindeer Bar case, containing a few crucial fragments of information."
       }
-    ],
-    "relationships": [
-      {
-        "targetName": "Shandra Hernandez",
-        "relationshipType": "friend",
-        "attitude": 70,
-        "description": "A close confidant and emotional refuge for Bruno.",
-        "history": "Bruno often spent his free time at her shop, trusting her enough to confide his worries."
-      },
-      {
-        "targetName": "Lux Lynch",
-        "relationshipType": "ally",
-        "attitude": 60,
-        "description": "A trusted colleague within the police force.",
-        "history": "Lux Lynch respects Bruno and discreetly protects his investigation materials after his death."
-      },
-      {
-        "targetName": "Mayor Padrich",
-        "relationshipType": "enemy",
-        "attitude": -60,
-        "description": "An authority figure Bruno was warned against.",
-        "history": "Bruno believed Padrich was obstructing justice in the murder investigation."
+    },
+    {
+      "name": "Folded case notes",
+      "properties": {
+        "note": "Working notes for both murder cases and his own follow-up questions."
       }
-    ],
-    "notes": "Bruno Galilei takes the initiative in contacting the investigators, personally meeting them at the train station upon their arrival in Cassandra. He leads the investigators through the old streets of the town, introduces key locations, and drives them through Cassandra while explaining the town’s layout and atmosphere, acting as their initial guide and escort. During the journey, Bruno shares details of the case with the investigators but deliberately retains control over official resources. All physical evidence remains in Bruno’s custody; although he may hesitate, he can be persuaded to allow the investigators to examine and temporarily keep certain items for one night only, explicitly requiring that all evidence be returned to him the following morning. The investigation lacks full support from Bruno’s superiors, and he operates largely on personal authority rather than institutional backing. Despite these limitations, Bruno uses his position and initiative to push the investigation forward, arranging for suspects to be gathered at the Reindeer Bar for secondary questioning. Bruno ultimately dies under mysterious circumstances, his body found drained and marked by unnatural bite wounds, leaving behind an unfinished warning message on his phone.",
-    "currentLocation": "SCN_3"
-  }
-]
+    }
+  ],
+  "relationships": [
+    {
+      "targetId": "Shandra Hernandez",
+      "targetName": "Shandra Hernandez",
+      "relationshipType": "friend",
+      "attitude": 70,
+      "description": "A close confidant and emotional refuge.",
+      "history": "Bruno often spent his free time at her shop, trusting her enough to confide his worries."
+    },
+    {
+      "targetId": "Lux Lynch",
+      "targetName": "Lux Lynch",
+      "relationshipType": "ally",
+      "attitude": 60,
+      "description": "A trusted colleague within the police force.",
+      "history": "Lux respects Bruno and discreetly protects his investigation materials."
+    },
+    {
+      "targetId": "Patrizio von Samsa",
+      "targetName": "Patrizio von Samsa",
+      "relationshipType": "enemy",
+      "attitude": -60,
+      "description": "An authority figure Bruno believes is obstructing justice.",
+      "history": "Bruno suspects Patrizio's influence reaches into the cases he has been investigating."
+    }
+  ],
+  "memory": [
+    {
+      "type": "information",
+      "content": "I am investigating both the 2002 Paradil Hotel murder and the 2003 Reindeer Bar murder because I believe they are connected.",
+      "metadata": {
+        "knowledgeId": "k_bruno_cases",
+        "difficulty": "automatic"
+      }
+    },
+    {
+      "type": "information",
+      "content": "I trust Shandra Hernandez deeply, though I do not know her real identity.",
+      "metadata": {
+        "knowledgeId": "k_bruno_shandra",
+        "difficulty": "regular"
+      }
+    },
+    {
+      "type": "secret",
+      "content": "An anonymous message warned me not to trust my superiors or Constantine Frollo.",
+      "metadata": {
+        "knowledgeId": "s_bruno_warning"
+      }
+    },
+    {
+      "type": "secret",
+      "content": "Lucifero sent me an anonymous SMS warning me about Patrizio and Constantine and pointing me toward the truth.",
+      "metadata": {
+        "knowledgeId": "s_bruno_sms"
+      }
+    },
+    {
+      "type": "belief",
+      "content": "The truth is more important than my comfort or my career, and someone has to keep pushing until Cassandra's lies break open.",
+      "metadata": {
+        "confidence": 0.95,
+        "reasoningChain": "The town has already buried too many bodies and too many excuses."
+      }
+    }
+  ]
+}

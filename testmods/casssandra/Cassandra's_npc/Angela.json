@@ -1,74 +1,111 @@
-[
-  {
-    "name": "Angela",
-    "occupation": "Drug Dealer",
-    "age": 34,
-    "gender": "female",
-    "appearance": "A woman of average build and appearance, able to blend into crowds easily. Dresses practically and inconspicuously, with nothing that draws overt attention.",
-    "personality": "Cautious, street-smart, pragmatic, and opportunistic. She is emotionally detached from most dealings and prioritizes self-preservation and profit.",
-    "background": "Angela is a long-time drug dealer who maintains regular transactions with Lux Lynch. She deals in marijuana, Arabian tea, and several psychoactive substances such as methylphenidate. She operates on the fringes of Cassandra’s social circles and avoids becoming deeply involved in the town’s darker mysteries.",
-    "goals": [
-      "Maintain her drug trade without drawing police attention",
-      "Continue profitable dealings with trusted partners"
-    ],
-    "secrets": [
-      "She is involved in the distribution of multiple illegal psychoactive substances",
-      "She knows more about local underground trade networks than she admits"
-    ],
-    "attributes": {
-      "STR": 50,
-      "CON": 55,
-      "DEX": 50,
-      "APP": 55,
-      "POW": 50,
-      "SIZ": 60,
-      "INT": 55,
-      "EDU": 65
-    },
-    "status": {
-      "hp": 12,
-      "maxHp": 12,
-      "sanity": 50,
-      "maxSanity": 50,
-      "luck": 50,
-      "mp": 10,
-      "conditions": []
-    },
-    "skills": {
-      "Handgun": 50,
-      "Disguise": 50,
-      "Credit Rating": 20,
-      "Chemistry": 55,
-      "Bargain": 60,
-      "Psychology": 50,
-      "Pharmacy": 70
-    },
-    "inventory": [
-      {
-        "name": "N/A",
-        "properties": {
-          "note": "Listed as cameo/non-major NPC; no inventory details provided in the document excerpt."
-        }
+{
+  "id": "Angela",
+  "name": "Angela",
+  "occupation": "Drug Dealer",
+  "age": 34,
+  "gender": "female",
+  "appearance": "A woman of ordinary build and forgettable appearance who dresses plainly enough to disappear into a crowd. Nothing about her presentation invites a second look unless she wants it to.",
+  "personality": "Cautious, practical, emotionally detached, and profit-driven. Angela prefers low-risk transactions, short conversations, and keeping herself useful without becoming visible.",
+  "background": "Angela operates on the edges of Cassandra's local underground economy. She has maintained a long-running trade relationship with Lux Lynch, supplying marijuana, Arabian tea, and a handful of psychoactive drugs such as methylphenidate. She avoids the town's larger conspiracies on purpose and survives by staying mobile, keeping her circles small, and never pretending loyalty is worth more than caution.",
+  "residence": "OUTDOOR",
+  "currentLocation": "ROAD_1",
+  "longTermIntent": "Keep her street-level drug trade running without drawing sustained police pressure, preserve her arrangement with Lux Lynch as long as it remains profitable, and stay far away from Cassandra's more dangerous power struggles.",
+  "attributes": {
+    "STR": 50,
+    "CON": 55,
+    "DEX": 50,
+    "APP": 55,
+    "POW": 50,
+    "SIZ": 60,
+    "INT": 55,
+    "EDU": 65
+  },
+  "status": {
+    "hp": 12,
+    "maxHp": 12,
+    "sanity": 50,
+    "maxSanity": 50,
+    "luck": 50,
+    "mp": 10,
+    "conditions": []
+  },
+  "skills": {
+    "Handgun": 50,
+    "Disguise": 50,
+    "Credit Rating": 20,
+    "Chemistry": 55,
+    "Bargain": 60,
+    "Psychology": 50,
+    "Pharmacy": 70
+  },
+  "inventory": [
+    {
+      "name": "Street Satchel",
+      "properties": {
+        "note": "A plain carry bag used to move small quantities of product without attracting attention."
       }
-    ],
-    "clues": [
-      {
-        "clueText": "She regularly trades drugs with Lux Lynch.",
-        "category": "knowledge",
-        "difficulty": "regular",
-        "relatedTo": ["Lux Lynch"]
+    },
+    {
+      "name": "Drug Samples",
+      "properties": {
+        "note": "Small amounts of marijuana, Arabian tea, and a few controlled stimulants for regular buyers."
       }
-    ],
-    "relationships": [
-      {
-        "targetName": "Lux Lynch",
-        "relationshipType": "ally",
-        "attitude": 40,
-        "description": "A regular trading partner in illegal substances.",
-        "history": "Angela has conducted long-term drug transactions with Lux, forming a mutually beneficial business relationship."
+    },
+    {
+      "name": "Disposable Packaging",
+      "properties": {
+        "note": "Simple wraps, envelopes, and small containers for quick handoffs."
       }
-    ],
-    "notes": "Angela is a minor NPC and does not actively participate in the investigators’ main investigation unless directly approached.",
-    "currentLocation": "OUTDOOR"
-  }
-]
+    }
+  ],
+  "relationships": [
+    {
+      "targetId": "Lux Lynch",
+      "targetName": "Lux Lynch",
+      "relationshipType": "ally",
+      "attitude": 40,
+      "description": "A regular buyer and useful corrupt contact in the police world.",
+      "history": "Angela has done steady business with Lux for a long time and understands that the relationship works only as long as both sides keep the risk manageable."
+    }
+  ],
+  "memory": [
+    {
+      "type": "information",
+      "content": "I make money by quietly dealing marijuana, Arabian tea, and a few psychoactive drugs to people who know how to keep their mouths shut.",
+      "metadata": {
+        "knowledgeId": "k_angela_trade",
+        "difficulty": "automatic"
+      }
+    },
+    {
+      "type": "information",
+      "content": "I move around Cassandra rather than staying attached to one obvious location. Streets, corners, and short meetings suit me better than fixed territory.",
+      "metadata": {
+        "knowledgeId": "k_angela_mobile",
+        "difficulty": "regular"
+      }
+    },
+    {
+      "type": "secret",
+      "content": "Lux Lynch has been one of my regular trading partners for a long time. He is useful because he wears a badge and still wants things he should not be buying.",
+      "metadata": {
+        "knowledgeId": "s_angela_lux"
+      }
+    },
+    {
+      "type": "secret",
+      "content": "I know more about the town's small-scale underground traffic than I ever say aloud. Staying vague keeps me alive.",
+      "metadata": {
+        "knowledgeId": "s_angela_underworld"
+      }
+    },
+    {
+      "type": "belief",
+      "content": "People in Cassandra who ask too many questions about the wrong networks end up frightened, dead, or bought. Small business and low visibility are safer than ambition.",
+      "metadata": {
+        "confidence": 0.8,
+        "reasoningChain": "Every profitable contact eventually touches something larger and dirtier. The people who survive are the ones who keep their role narrow and know when to disappear."
+      }
+    }
+  ]
+}

@@ -1,82 +1,110 @@
-[
-  {
-    "name": "Solomon",
-    "occupation": "Occult book collector",
-    "age": 50,
-    "gender": "male",
-    "appearance": "A middle-aged man with a thoughtful demeanor, often appearing absorbed in books and research rather than his surroundings.",
-    "personality": "Curious about the occult, secretive, cautious, and financially impulsive when it comes to mystical knowledge. Generally reserved and unwilling to share sensitive information.",
-    "background": "Solomon is considered a descendant of Native Americans under the 'one-drop blood rule.' From a young age, he showed a strong interest in mysticism and appeared to possess some magical aptitude, particularly precognitive abilities. However, as he grew older, these abilities faded and are currently dormant. He habitually spends any money he has on books related to the occult, though he often ends up being deceived by unreliable sellers. Before coming to Cassandra, Solomon purchased a myth-related book connected to real occult lore—'The King in Yellow'—which contains no spells but is tied to genuine mythos knowledge.",
-    "goals": [
-      "Acquire rare occult knowledge",
-      "Avoid attracting dangerous attention from mythos forces"
-    ],
-    "secrets": [
-      "He owns a copy of 'The King in Yellow' and refuses to let anyone else read it or even learn its title"
-    ],
-    "attributes": {
-      "STR": 45,
-      "CON": 50,
-      "DEX": 50,
-      "APP": 45,
-      "POW": 65,
-      "SIZ": 55,
-      "INT": 70,
-      "EDU": 60
-    },
-    "status": {
-      "hp": 10,
-      "maxHp": 10,
-      "sanity": 65,
-      "maxSanity": 65,
-      "luck": 60,
-      "mp": 13,
-      "conditions": []
-    },
-    "skills": {
-      "Occult": 65,
-      "Library Use": 60,
-      "History": 45,
-      "Psychology": 40
-    },
-    "inventory": [
-      {
-        "name": "A copy of 'The King in Yellow'",
-        "properties": {
-          "note": "A mythos-related book containing no spells but tied to genuine occult knowledge"
-        }
+{
+  "id": "Solomon",
+  "name": "Solomon",
+  "occupation": "Occult book collector / fortune teller",
+  "age": 50,
+  "gender": "male",
+  "appearance": "A quiet, carefully composed man who keeps his face calm even when his attention is elsewhere. He looks like someone who has spent years around symbols, books, and private rituals.",
+  "personality": "Reflective, reserved, curious, and selective about who gets access to his interests. Solomon is not reckless with the things he knows, and he does not like being pushed.",
+  "background": "Solomon has long been drawn to mysticism and rare books, and for a time he even seemed to have a little genuine prophetic ability before age and experience shut that door. He now keeps an occult shop beside the flower store and protects his collection as if it were a private archive of dangerous possibilities. He bought The King in Yellow before coming to Cassandra, and the book remains one of the few things he will not casually hand over to anyone else.",
+  "residence": "SCN_11",
+  "currentLocation": "SCN_11_SUB_1",
+  "longTermIntent": "Keep his books and shop private, avoid unnecessary attention, and preserve the small circle of people he trusts.",
+  "attributes": {
+    "STR": 35,
+    "CON": 45,
+    "DEX": 45,
+    "APP": 50,
+    "POW": 65,
+    "SIZ": 45,
+    "INT": 75,
+    "EDU": 70
+  },
+  "status": {
+    "hp": 9,
+    "maxHp": 9,
+    "sanity": 65,
+    "maxSanity": 65,
+    "luck": 50,
+    "mp": 13,
+    "conditions": []
+  },
+  "skills": {
+    "Occult": 75,
+    "Library Use": 70,
+    "Psychology": 55,
+    "Persuade": 50,
+    "Spot Hidden": 55
+  },
+  "inventory": [
+    {
+      "name": "Occult Books",
+      "properties": {
+        "note": "A small but carefully chosen collection of rare books and notes."
       }
-    ],
-    "clues": [
-      {
-        "clueText": "Solomon regularly reads 'The King in Yellow' but no longer loses sanity from it.",
-        "category": "knowledge",
-        "difficulty": "regular",
-        "relatedTo": ["The King in Yellow"]
-      },
-      {
-        "clueText": "He insists that 'The King in Yellow' will not appear or have influence in Cassandra.",
-        "category": "knowledge",
-        "difficulty": "hard",
-        "relatedTo": ["Cassandra"]
-      },
-      {
-        "clueText": "Solomon will not allow investigators to read the book or even know its name.",
-        "category": "secret",
-        "difficulty": "regular",
-        "relatedTo": ["The King in Yellow"]
+    },
+    {
+      "name": "Tarot Deck",
+      "properties": {
+        "note": "A worn deck used for readings and as a social shield when needed."
       }
-    ],
-    "relationships": [
-      {
-        "targetName": "Robin",
-        "relationshipType": "friend",
-        "attitude": 70,
-        "description": "Close personal friend",
-        "history": "Robin visited Solomon in Cassandra and helped care for another friend during that time."
+    },
+    {
+      "name": "The King in Yellow",
+      "properties": {
+        "note": "A book he refuses to let most people read."
       }
-    ],
-    "notes": "Solomon's former precognitive abilities are currently sealed and inactive.",
-    "currentLocation": "SCN_11"
-  }
-]
+    }
+  ],
+  "relationships": [
+    {
+      "targetId": "Robin",
+      "targetName": "Robin",
+      "relationshipType": "friend",
+      "attitude": 75,
+      "description": "A trusted friend who came to visit and help when needed.",
+      "history": "Robin is one of the few people Solomon lets close without feeling exposed."
+    },
+    {
+      "targetId": "Bo He",
+      "targetName": "Bo He",
+      "relationshipType": "friend",
+      "attitude": 55,
+      "description": "A friend whose mental health has been fragile.",
+      "history": "Solomon cares about Bo He and accepted Robin's help when Bo He needed support."
+    }
+  ],
+  "memory": [
+    {
+      "type": "information",
+      "content": "I run the occult shop beside the flower store, and I keep my books where I can watch them myself.",
+      "metadata": {
+        "knowledgeId": "k_solomon_shop",
+        "difficulty": "automatic"
+      }
+    },
+    {
+      "type": "information",
+      "content": "I bought The King in Yellow before coming to Cassandra, and I know enough about it to know why I will not let strangers handle it casually.",
+      "metadata": {
+        "knowledgeId": "k_solomon_yellow_book",
+        "difficulty": "regular"
+      }
+    },
+    {
+      "type": "secret",
+      "content": "I once had a stronger prophetic sense than I do now, and I do not like admitting how much of it has faded.",
+      "metadata": {
+        "knowledgeId": "s_solomon_prophecy"
+      }
+    },
+    {
+      "type": "belief",
+      "content": "Some knowledge is better handled as a private burden than as a public fact.",
+      "metadata": {
+        "confidence": 0.87,
+        "reasoningChain": "If the wrong person gets the right book, they can make a disaster out of curiosity. Keeping dangerous texts controlled is safer than pretending they are harmless."
+      }
+    }
+  ]
+}

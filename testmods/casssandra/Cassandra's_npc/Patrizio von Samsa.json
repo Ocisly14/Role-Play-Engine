@@ -1,94 +1,134 @@
-[
-  {
-    "name": "Patrizio von Samsa",
-    "occupation": "Former Psychiatrist / Politician",
-    "age": 50,
-    "gender": "male",
-    "appearance": "A reclusive middle-aged to elderly man of German descent. He dresses conservatively and neatly, favoring dark, formal clothing. His demeanor is restrained and distant, giving the impression of a man who prefers solitude and control.",
-    "personality": "Cold, calculating, ambitious, and intellectually arrogant. Patrizio believes he understands human nature better than others and sees people primarily as subjects to be studied or controlled. He is patient, manipulative, and deeply convinced of his own righteousness.",
-    "background": "Patrizio von Samsa is a German immigrant whose grandfather was among the last nobility of the German Empire and fled to the United States after the November Revolution. Raised with the weight of a lost aristocratic identity, Patrizio received an elite education and became a psychiatrist. In late 1986, he participated in a six-month exchange program in Arkham, Massachusetts. There, he encountered a bizarre psychiatric case involving an Innsmouth native displaying dissociative states, inhuman strength, and unnatural intelligence. This experience fundamentally altered Patrizio’s worldview and set him on a path that eventually led him away from medicine and toward politics, using his psychological expertise to pursue power and influence in Cassandra.",
-    "goals": [
-      "To gain political power and reshape society according to his understanding of human nature",
-      "To continue researching and exploiting abnormal psychological and inhuman phenomena"
-    ],
-    "secrets": [
-      "His interest in psychiatry was driven by a desire to control and experiment on others rather than to heal",
-      "His political ambitions are rooted in knowledge gained from unnatural encounters in Arkham",
-      "He employs Martin Gin (Ghost Hand) as a hacker and courier, and knows Ghost Hand is the murderer of both the 2002 and 2003 murder cases",
-      "He ordered the killing of Lucifero because she intercepted the Borrachero package and was mistakenly identified as the hacker who stole his secrets",
-      "He is preparing a ritual to awaken Cthulhu and other Great Old Ones, which will actually summon Ghatanothoa instead"
-    ],
-    "attributes": {
-      "STR": 45,
-      "CON": 55,
-      "DEX": 50,
-      "APP": 60,
-      "POW": 75,
-      "SIZ": 55,
-      "INT": 85,
-      "EDU": 90
-    },
-    "status": {
-      "hp": 11,
-      "maxHp": 11,
-      "sanity": 75,
-      "maxSanity": 75,
-      "luck": 60,
-      "mp": 15,
-      "conditions": []
-    },
-    "skills": {
-      "Psychology": 85,
-      "Psychoanalysis": 70,
-      "Persuade": 65,
-      "Law": 50,
-      "Credit Rating": 70
-    },
-    "inventory": [
-      { "name": "Personal research notes" },
-      { "name": "Political documents" },
-      { "name": "Medication for stress and insomnia" }
-    ],
-    "clues": [
-      {
-        "clueText": "He once treated a patient from Innsmouth who exhibited multiple personalities and inhuman strength.",
-        "category": "knowledge",
-        "difficulty": "hard",
-        "relatedTo": ["Arkham", "Innsmouth"]
-      },
-      {
-        "clueText": "His shift from psychiatry to politics was triggered by encounters with unnatural phenomena.",
-        "category": "secret",
-        "difficulty": "extreme",
-        "relatedTo": ["Arkham Exchange Program"]
-      },
-      {
-        "clueText": "He employs Martin Gin (Ghost Hand) who is the murderer of both the 2002 Paradil Hotel murder case and the 2003 Reindeer Bar murder case.",
-        "category": "secret",
-        "difficulty": "extreme",
-        "relatedTo": [
-          "Martin Gin",
-          "2002 Paradil Hotel murder",
-          "2003 Reindeer Bar murder"
-        ]
-      },
-      {
-        "clueText": "He ordered Lucifero's death because she intercepted the Borrachero package and was mistakenly identified as the hacker who stole his secrets.",
-        "category": "secret",
-        "difficulty": "extreme",
-        "relatedTo": ["Jenny Florence (Lucifero)", "2003 Reindeer Bar murder"]
+{
+  "id": "Patrizio von Samsa",
+  "name": "Patrizio von Samsa",
+  "occupation": "Mayor / Former Psychiatrist",
+  "age": 50,
+  "gender": "male",
+  "appearance": "A pale, slender man who dresses with careful elegance and carries himself as if every room already belongs to him. His expression is polite by default, but his eyes rarely stop calculating.",
+  "personality": "Controlled, manipulative, patient, and deeply committed to maintaining authority. Patrizio prefers pressure, access, and quiet leverage over open confrontation, and he values image almost as much as power.",
+  "background": "Born into a German immigrant family that still clung to old status and old fantasies, Patrizio studied psychiatry and later spent time in Arkham, where an encounter with things he could not explain changed the direction of his life. He left medicine, entered local politics, and eventually turned Cassandra into a place he could govern through fear, favors, and carefully managed secrets. As town leader he prefers to stay out of sight and govern through proxies, while his network reaches into the police, the hospital, and the town's hidden rituals.",
+  "residence": "OUTDOOR",
+  "currentLocation": "OUTDOOR",
+  "longTermIntent": "Keep Cassandra under his control, protect the people and systems that keep his influence intact, and complete his hidden ritual plans without exposing how much of the town answers to him.",
+  "attributes": {
+    "STR": 40,
+    "CON": 55,
+    "DEX": 45,
+    "APP": 75,
+    "POW": 80,
+    "SIZ": 55,
+    "INT": 80,
+    "EDU": 85
+  },
+  "status": {
+    "hp": 10,
+    "maxHp": 10,
+    "sanity": 75,
+    "maxSanity": 99,
+    "luck": 60,
+    "mp": 16,
+    "conditions": []
+  },
+  "skills": {
+    "Psychology": 80,
+    "Persuade": 75,
+    "Fast Talk": 70,
+    "Credit Rating": 80,
+    "Medicine": 60,
+    "Spot Hidden": 55
+  },
+  "inventory": [
+    {
+      "name": "Tailored Suit",
+      "properties": {
+        "note": "Several carefully maintained suits that reinforce his public image."
       }
-    ],
-    "relationships": [
-      {
-        "targetName": "Nancy Charlotte",
-        "relationshipType": "enemy",
-        "attitude": -80,
-        "description": "A potential subject and obstacle tied to cult activities he is aware of.",
-        "history": "Patrizio’s experiments and political schemes indirectly intersect with Nancy’s past involving cult rituals."
+    },
+    {
+      "name": "Mayor's Documents",
+      "properties": {
+        "note": "Official papers, notes, and contacts that help him manage the town."
       }
-    ],
-    "notes": "Patrizio is a key antagonist whose knowledge of psychology and the Mythos allows him to manipulate both individuals and institutions while maintaining a respectable public image.",
-    "currentLocation": "SCN_3"
-  }
-]
+    },
+    {
+      "name": "Private Appointment Book",
+      "properties": {
+        "note": "A slim notebook of meetings, favors, and reminders that never appears in public."
+      }
+    }
+  ],
+  "relationships": [
+    {
+      "targetId": "Martin Gin (Cleo)",
+      "targetName": "Martin Gin (Cleo)",
+      "relationshipType": "ally",
+      "attitude": 60,
+      "description": "A useful operative who handles discreet work and technical support.",
+      "history": "Patrizio brought Martin into Cassandra because Martin could do the jobs Patrizio did not want his own hands tied to."
+    },
+    {
+      "targetId": "Vincent Galenus",
+      "targetName": "Vincent Galenus",
+      "relationshipType": "ally",
+      "attitude": 35,
+      "description": "The doctor whose hospital work supports Patrizio's private projects.",
+      "history": "Patrizio uses Vincent's guilt, money problems, and access to keep the hospital aligned with his plans."
+    },
+    {
+      "targetId": "Lux Lynch",
+      "targetName": "Lux Lynch",
+      "relationshipType": "ally",
+      "attitude": 20,
+      "description": "A compromised policeman whose loyalty is mostly fear and habit.",
+      "history": "Patrizio keeps Lux useful by letting him feel protected while making sure he never forgets who has leverage."
+    },
+    {
+      "targetId": "Simon Laplace (Simon)",
+      "targetName": "Simon Laplace (Simon)",
+      "relationshipType": "rival",
+      "attitude": -30,
+      "description": "A hacker whose curiosity threatens the secrets Patrizio has buried.",
+      "history": "Simon has seen too much of Patrizio's hidden structure and has become a problem that cannot be ignored forever."
+    }
+  ],
+  "memory": [
+    {
+      "type": "information",
+      "content": "I am the man who keeps Cassandra's public machinery running while the private machinery stays hidden.",
+      "metadata": {
+        "knowledgeId": "k_patrizio_power",
+        "difficulty": "automatic"
+      }
+    },
+    {
+      "type": "information",
+      "content": "My network reaches into the police, the hospital, and the town's darker business because each piece is easier to control when it looks separate.",
+      "metadata": {
+        "knowledgeId": "k_patrizio_network",
+        "difficulty": "regular"
+      }
+    },
+    {
+      "type": "secret",
+      "content": "My political authority is inseparable from the ritual and occult work I have been building underneath it. If people understood how deep that runs, my power would collapse.",
+      "metadata": {
+        "knowledgeId": "s_patrizio_ritual"
+      }
+    },
+    {
+      "type": "secret",
+      "content": "Martin and Vincent are useful because each of them can do what I cannot let be tied to my name.",
+      "metadata": {
+        "knowledgeId": "s_patrizio_proxies"
+      }
+    },
+    {
+      "type": "belief",
+      "content": "A town is easiest to govern when people are isolated, indebted, and convinced that the worst thing they can do is challenge authority.",
+      "metadata": {
+        "confidence": 0.9,
+        "reasoningChain": "Order comes from dependency. If everyone needs a little permission, a little favor, or a little fear, they stop imagining they can resist."
+      }
+    }
+  ]
+}

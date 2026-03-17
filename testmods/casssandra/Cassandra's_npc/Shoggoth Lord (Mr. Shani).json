@@ -1,86 +1,104 @@
-[
-  {
-    "name": "Shoggoth Lord (Mr. Shani)",
-    "occupation": "Unique Shoggoth Entity / Hidden Manipulator",
-    "age": 1000000,
-    "gender": "male",
-    "appearance": "In human form, Mr. Shani appears as an unremarkable middle-aged man whose presence feels subtly unsettling. When revealing his true nature, he becomes a massive, amorphous Shoggoth—an ever-melting black mass capable of forming crushing limbs and engulfing victims.",
-    "personality": "Extremely self-controlled, cautious, and calculating. He is capable of long-term planning and deception, prioritizing secrecy above all else. When overwhelmed by anger, hunger, or emotional turmoil, he loses control and reverts to his monstrous instincts.",
-    "background": "Mr. Shani is the sole known Shoggoth Lord, a unique being among his species. Unlike ordinary Shoggoths, he possesses high intelligence and the ability to assume and maintain a human form. He lives covertly among humanity, feeding only in isolation and eliminating witnesses before fleeing the scene.",
-    "goals": [
-      "Increase human population to feed upon",
-      "Use adopted children to advance human civilization for his benefit"
-    ],
-    "secrets": [
-      "True form is a Shoggoth Lord",
-      "Plans to eventually trade Lucia to Moon Beasts via her ruby brooch"
-    ],
-    "attributes": {
-      "STR": 120,
-      "CON": 130,
-      "DEX": 85,
-      "APP": 45,
-      "POW": 90,
-      "SIZ": 90,
-      "INT": 65,
-      "EDU": 100
-    },
-    "status": {
-      "hp": 22,
-      "maxHp": 22,
-      "sanity": 0,
-      "maxSanity": 0,
-      "luck": 0,
-      "mp": 18,
-      "conditions": []
-    },
-    "skills": {
-      "Archaeology": 10,
-      "Bargain": 15,
-      "Biology": 65,
-      "Chemistry": 25,
-      "Appraise Prey": 90,
-      "Climb": 75,
-      "Credit Rating": 65,
-      "Cthulhu Mythos": 12,
-      "Electrical Repair": 10,
-      "Electronics": 10,
-      "Hide": 90,
-      "History": 35,
-      "Law": 10,
-      "Library Use": 35,
-      "Listen": 75,
-      "Persuade": 30,
-      "Psychology": 15,
-      "Stealth": 70,
-      "Track": 75
-    },
-    "inventory": [
-      {
-        "name": "Philanthropist's business card",
-        "properties": {
-          "note": "Facade identity as Albert Shani, orphanage director"
-        }
+{
+  "id": "Shoggoth Lord (Mr. Shani)",
+  "name": "Shoggoth Lord (Mr. Shani)",
+  "occupation": "Unique Shoggoth Entity / Hidden Manipulator",
+  "age": 1000000,
+  "gender": "male",
+  "appearance": "In human form, Mr. Shani appears as an unremarkable middle-aged man whose presence feels subtly unsettling. When revealing his true nature, he becomes a massive, amorphous Shoggoth—an ever-melting black mass capable of forming crushing limbs and engulfing victims.",
+  "personality": "Extremely self-controlled, cautious, and calculating. He is capable of long-term planning and deception, prioritizing secrecy above all else. When overwhelmed by anger, hunger, or emotional turmoil, he loses control and reverts to his monstrous instincts.",
+  "background": "Mr. Shani is the sole known Shoggoth Lord, a unique being among his species. Unlike ordinary Shoggoths, he possesses high intelligence and the ability to assume and maintain a human form. He lives covertly among humanity, feeding only in isolation and eliminating witnesses before fleeing the scene.",
+  "residence": "SCN_1",
+  "currentLocation": "SCN_1",
+  "longTermIntent": "Keep his human facade intact, grow or preserve useful human systems through manipulation, and feed only in ways that protect the identity he uses to move among people.",
+  "attributes": {
+    "STR": 120,
+    "CON": 130,
+    "DEX": 85,
+    "APP": 45,
+    "POW": 90,
+    "SIZ": 90,
+    "INT": 65,
+    "EDU": 100
+  },
+  "status": {
+    "hp": 22,
+    "maxHp": 22,
+    "sanity": 0,
+    "maxSanity": 0,
+    "luck": 0,
+    "mp": 18,
+    "conditions": []
+  },
+  "skills": {
+    "Archaeology": 10,
+    "Bargain": 15,
+    "Biology": 65,
+    "Chemistry": 25,
+    "Appraise Prey": 90,
+    "Climb": 75,
+    "Credit Rating": 65,
+    "Cthulhu Mythos": 12,
+    "Electrical Repair": 10,
+    "Electronics": 10,
+    "Hide": 90,
+    "History": 35,
+    "Law": 10,
+    "Library Use": 35,
+    "Listen": 75,
+    "Persuade": 30,
+    "Psychology": 15,
+    "Stealth": 70,
+    "Track": 75
+  },
+  "inventory": [
+    {
+      "name": "Philanthropist's business card",
+      "properties": {
+        "note": "Facade identity as Albert Shani, orphanage director."
       }
-    ],
-    "clues": [
-      {
-        "clueText": "Runs an orphanage that adopts gifted children, claiming to help them reach their potential",
-        "category": "knowledge",
-        "difficulty": "hard",
-        "relatedTo": ["Mrs. Barklyite (Lucia Shiny)"]
+    }
+  ],
+  "relationships": [
+    {
+      "targetId": "Mrs. Barklyite (Lucia Shiny)",
+      "targetName": "Mrs. Barklyite (Lucia Shiny)",
+      "relationshipType": "family",
+      "attitude": -10,
+      "description": "Adopted daughter, viewed as both useful and expendable.",
+      "history": "Raised Lucia from childhood in his orphanage and shaped the life she now leads."
+    }
+  ],
+  "memory": [
+    {
+      "type": "information",
+      "content": "My human face is a tool. It lets me feed, plan, and move through town without drawing immediate violence.",
+      "metadata": {
+        "knowledgeId": "k_shoggothlord_human_mask",
+        "difficulty": "automatic"
       }
-    ],
-    "relationships": [
-      {
-        "targetName": "Mrs. Barklyite (Lucia Shiny)",
-        "relationshipType": "guardian",
-        "attitude": -10,
-        "description": "Adopted daughter, views her as a useful tool",
-        "history": "Raised Lucia from childhood in his orphanage"
+    },
+    {
+      "type": "information",
+      "content": "When I am calm, I can remain in human form. When anger or hunger rises too far, the body starts to fail and melt back into shoggoth substance.",
+      "metadata": {
+        "knowledgeId": "k_shoggothlord_control",
+        "difficulty": "regular"
       }
-    ],
-    "notes": "Combat Behavior: In human form, Mr. Shani relies on powerful grapples (bear hugs) or devastating punches. He avoids prolonged fights and, once exposed, attempts to kill all witnesses as quickly as possible before escaping. He goes to great lengths to conceal his true identity. When driven by intense hunger, he drags victims into abandoned buildings or dark basements to feed undisturbed.\n\nForm Control: As long as Mr. Shani remains calm and emotionally controlled, he can maintain his human form. If he becomes enraged or mentally distressed, he rapidly melts into his Shoggoth form. Regardless of circumstances, if his human form's HP is reduced to 0, he automatically reverts to Shoggoth form.\n\nAttacks per Round: 2 attacks per round in Shoggoth form; 1 attack per round in human form.\n\nCombat Attacks: Crush (Shoggoth form) 100%, damage 2D6 + damage bonus. Rhino Punch 95% (damage bonus 2D6 in Shoggoth form, 1D6 in human form), damage 2D3 + damage bonus. Grab (Shoggoth form) 90%: the victim is pulled into Mr. Shani's body and suffers 1D6 damage per round until fully dissolved.\n\nArmor & Regeneration: No armor. Fire and electrical attacks deal only half damage. Physical weapons such as firearms inflict only 1 point of damage per hit if they fail to penetrate. Mr. Shani regenerates 2 HP per round.\n\nMagic: Knows the spell 'Control' and may possess additional spells at the Keeper's discretion, limited by his intelligence and slow learning speed.\n\nLanguages: Arabic 20%, Ancient Egyptian 10%, English 60%, Nattic 65%, Spanish 30%, Sumerian 5%.\n\nSanity Loss: Seeing Mr. Shani in human form causes no SAN loss. Seeing his Shoggoth form causes 1D6/1D20 SAN loss. Witnessing the transformation from human to Shoggoth causes an additional 1/1D5 SAN loss.",
-    "currentLocation": "OUTDOOR"
-  }
-]
+    },
+    {
+      "type": "secret",
+      "content": "My orphanage and charity image are not acts of kindness alone. They are long-term infrastructure for control, selection, and survival.",
+      "metadata": {
+        "knowledgeId": "s_shoggothlord_facade"
+      }
+    },
+    {
+      "type": "belief",
+      "content": "A hidden predator lasts longer than a glorious one. Patience is worth more than spectacle.",
+      "metadata": {
+        "confidence": 0.9,
+        "reasoningChain": "Exposure creates targets. Secrecy creates options."
+      }
+    }
+  ]
+}

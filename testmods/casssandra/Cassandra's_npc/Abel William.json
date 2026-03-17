@@ -1,116 +1,152 @@
-[
-  {
-    "name": "Abel William",
-    "occupation": "Distillery owner",
-    "age": 40,
-    "gender": "male",
-    "appearance": "A bearded man with a square face and darker complexion than most white men. He keeps a thick beard that appears carefully groomed.",
-    "personality": "Anxious, overworked, and frustrated. He tries to stay professional but is clearly under pressure from economic decline and unexplained events.",
-    "background": "After his father Peter William died, Abel inherited the family distillery in Cassandra. He manages the business alone, but declining economic conditions forced him to shut down part of the factory and lay off many workers, leaving much of the facility unused.",
-    "goals": [
-      "Keep the distillery operational",
-      "Understand the strange events plaguing his workplace"
-    ],
-    "secrets": [
-      "The spider infestation and his own death are connected to unnatural forces (cold spiders from Constantine's church)",
-      "He was already dead earlier than it appeared to investigators",
-      "He was infected by a cold spider bite, similar to Nancy Charlotte's infection",
-      "His father's death in 2002 may be connected to Patrizio von Samsa's human experiments"
-    ],
-    "attributes": {
-      "STR": 50,
-      "CON": 55,
-      "DEX": 45,
-      "APP": 45,
-      "POW": 50,
-      "SIZ": 60,
-      "INT": 55,
-      "EDU": 50
+{
+  "id": "Abel William",
+  "name": "Abel William",
+  "occupation": "Distillery owner",
+  "age": 40,
+  "gender": "male",
+  "appearance": "A square-faced man with a darker complexion than most of the town's white residents. He keeps a thick beard that is carefully groomed, though lately he looks pale, tense, and more worn down than he wants to admit.",
+  "personality": "Anxious, overworked, proud, and increasingly irritable under pressure. Abel tries to remain professional with visitors, but financial strain, isolation, and the strange situation at the distillery have left him exhausted and short-tempered.",
+  "background": "After Peter William died in 2002, Abel inherited the family distillery in Cassandra. The distillery still produces vodka, but shrinking business forced Abel to shut down large sections of the plant and dismiss part of the workforce. He now manages the place with minimal help, spending long hours in the office, factory floor, and cellar while trying to keep the business alive through a worsening winter and a growing spider problem he cannot explain.",
+  "residence": "SCN_13",
+  "currentLocation": "SCN_13_SUB_2",
+  "longTermIntent": "Keep the distillery operating through the winter, hide how badly the neck wound and spider infestation are affecting him, and find a practical way to stop the problem before the business finally collapses.",
+  "attributes": {
+    "STR": 50,
+    "CON": 55,
+    "DEX": 45,
+    "APP": 45,
+    "POW": 50,
+    "SIZ": 60,
+    "INT": 55,
+    "EDU": 50
+  },
+  "status": {
+    "hp": 9,
+    "maxHp": 11,
+    "sanity": 45,
+    "maxSanity": 50,
+    "luck": 55,
+    "mp": 10,
+    "conditions": ["fatigued", "neck wound", "cold spider infection"]
+  },
+  "skills": {
+    "Accounting": 45,
+    "Craft (Distilling)": 55,
+    "Spot Hidden": 40,
+    "Listen": 40,
+    "Mechanical Repair": 30,
+    "Persuade": 35
+  },
+  "inventory": [
+    {
+      "name": "Office Keys"
     },
-    "status": {
-      "hp": 11,
-      "maxHp": 11,
-      "sanity": 50,
-      "maxSanity": 50,
-      "luck": 55,
-      "mp": 10,
-      "conditions": ["deceased"]
+    {
+      "name": "Neck Bandage",
+      "properties": {
+        "note": "Wrapped around a wound Abel dismisses as a workplace accident."
+      }
     },
-    "skills": {
-      "Accounting": 45,
-      "Craft (Distilling)": 55,
-      "Spot Hidden": 40,
-      "Listen": 40
+    {
+      "name": "Insecticide Spray",
+      "properties": {
+        "note": "Used repeatedly in the cellar and storage areas, with little visible effect."
+      }
     },
-    "inventory": [
-      {
-        "name": "Scrapbook clippings (incl. father's obituary + loose 1988 newspaper clipping)",
-        "properties": {
-          "clue": "Obituary + a loose 1988-era clipping about a riot, hinting at Simon's past."
-        }
-      },
-      {
-        "name": "Recent newspaper (weeks old)",
-        "properties": {
-          "clue": "Reports unusual Pacific fish activity + shark attacks/beach controls; foreshadows Cassandra anomalies tied to Deep Ones activity."
-        }
+    {
+      "name": "Ledger Notebook",
+      "properties": {
+        "note": "Tracks reduced production, payroll cuts, and day-to-day operating costs."
       }
-    ],
-    "clues": [
-      {
-        "clueText": "Abel complained about a growing spider infestation in and around the distillery (cold spiders from Constantine's church).",
-        "category": "observation",
-        "difficulty": "regular",
-        "relatedTo": [
-          "William Distillery",
-          "Cold spiders",
-          "Constantine Frollo"
-        ]
-      },
-      {
-        "clueText": "A black spider (cold spider) emerged from Abel's neck, killing him instantly. This is the same type of infection that Nancy Charlotte suffers from.",
-        "category": "observation",
-        "difficulty": "regular",
-        "relatedTo": [
-          "William Distillery",
-          "Cold spider",
-          "Spider infection",
-          "Nancy Charlotte"
-        ]
-      },
-      {
-        "clueText": "Marcel was one of the employees laid off after the distillery downsized.",
-        "category": "knowledge",
-        "difficulty": "regular",
-        "relatedTo": ["Marcel Gwynplaine"]
-      },
-      {
-        "clueText": "His father's death in 2002 may be connected to Patrizio von Samsa's human experiments.",
-        "category": "secret",
-        "difficulty": "hard",
-        "relatedTo": [
-          "Peter William",
-          "Patrizio von Samsa",
-          "Human experiments"
-        ]
+    }
+  ],
+  "relationships": [
+    {
+      "targetId": "Peter William",
+      "targetName": "Peter William",
+      "relationshipType": "family",
+      "attitude": 72,
+      "description": "His late father and the previous owner of the distillery.",
+      "history": "Abel inherited the distillery after Peter's sudden death in 2002 and has been trying to preserve the family business ever since."
+    },
+    {
+      "targetId": "Marcel Gwynplaine",
+      "targetName": "Marcel Gwynplaine",
+      "relationshipType": "employee",
+      "attitude": -20,
+      "description": "A laid-off former worker who still resents Abel.",
+      "history": "Abel dismissed Marcel during downsizing when the distillery could no longer support its previous workforce."
+    },
+    {
+      "targetId": "Marks White",
+      "targetName": "Marks White",
+      "relationshipType": "neutral",
+      "attitude": 10,
+      "description": "A local craftsman Abel knows through old town connections and his father's generation.",
+      "history": "Marks knew Peter William, so Abel treats him as one of the few older locals tied to the family's past in Cassandra."
+    }
+  ],
+  "memory": [
+    {
+      "type": "information",
+      "content": "I own the distillery at SCN_13 and spend most of my time between the office, the factory floor, and the cellar trying to keep the place running.",
+      "metadata": {
+        "knowledgeId": "k_abel_distillery",
+        "difficulty": "automatic"
       }
-    ],
-    "relationships": [
-      {
-        "targetName": "Peter William",
-        "relationshipType": "family",
-        "attitude": 60,
-        "description": "Son and successor",
-        "history": "Inherited the distillery after Peter’s death."
-      },
-      {
-        "targetName": "Marcel",
-        "relationshipType": "employee",
-        "attitude": -20,
-        "description": "Former employee",
-        "history": "Marcel was dismissed during downsizing of the distillery."
+    },
+    {
+      "type": "information",
+      "content": "Business has been getting worse. I shut down part of the distillery and laid off several workers, including Marcel Gwynplaine, because I could not keep paying everyone.",
+      "metadata": {
+        "knowledgeId": "k_abel_layoffs",
+        "difficulty": "regular"
       }
-    ],
-    "notes": "Abel’s corpse may later reappear in the wine cellar if investigators return."
-  }
-]
+    },
+    {
+      "type": "information",
+      "content": "The scale of the distillery has shrunk, but the vodka quality is still good. I take that personally and do not like hearing people talk as if the place is already dead.",
+      "metadata": {
+        "knowledgeId": "k_abel_pride",
+        "difficulty": "regular"
+      }
+    },
+    {
+      "type": "information",
+      "content": "My office contains clipping books, my father's obituary, an old 1988 riot clipping that got mixed into the stack, and a recent newspaper about strange Pacific sea activity and shark attacks.",
+      "metadata": {
+        "knowledgeId": "k_abel_office_papers",
+        "difficulty": "regular"
+      }
+    },
+    {
+      "type": "secret",
+      "content": "Something bit or cut my neck around the distillery. I have been telling people it was a simple work accident because I do not want them thinking I am weak or losing control.",
+      "metadata": {
+        "knowledgeId": "s_abel_neck_wound"
+      }
+    },
+    {
+      "type": "secret",
+      "content": "The spider infestation around the cellar and unused parts of the distillery is getting worse. The webs come back after I clear them, and insecticide has done almost nothing.",
+      "metadata": {
+        "knowledgeId": "s_abel_spiders"
+      }
+    },
+    {
+      "type": "secret",
+      "content": "I have never been comfortable with how suddenly my father died in 2002. I cannot prove anything, but I suspect there was more to it than a normal illness.",
+      "metadata": {
+        "knowledgeId": "s_abel_father_death"
+      }
+    },
+    {
+      "type": "belief",
+      "content": "If I cannot get ahead of the infestation and my own condition soon, the distillery will fail completely and I will go down with it.",
+      "metadata": {
+        "confidence": 0.8,
+        "reasoningChain": "Sales are down, half the plant is idle, the cold webs keep returning, and the wound on my neck is getting worse instead of healing."
+      }
+    }
+  ]
+}
