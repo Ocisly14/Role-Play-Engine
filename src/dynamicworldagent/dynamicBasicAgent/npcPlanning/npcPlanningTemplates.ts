@@ -181,6 +181,10 @@ export interface DetailedNodesParams {
   outputSchemaPrompt?: string;
 }
 
+const DEFAULT_NODE_GUARDRAILS_PROMPT = `## Planning Guardrails
+- For every node's \`location\`, copy only the exact location name. Never include helper text such as topology notes, resident lists, or formatting labels.
+- For object interactions, you may only target items that already appear in \`Items You Can See\` or \`What You're Carrying\`.`;
+
 const DEFAULT_DETAILED_NODE_TYPE_REF = `## Node Type Reference
 - **"routine"**: Self-contained action, no interaction target.
 - **"movement"**: Move to a destination. Set location to the exact destination name from "Places You Know".
@@ -191,6 +195,10 @@ const DEFAULT_DETAILED_NODE_TYPE_REF = `## Node Type Reference
   - targetCharacterIds is optional (defaults to targetCharacterId). relatedKnowledgeIds is optional (use when formally sharing knowledge you possess).
 - **"object_interaction"**: Interact with a physical object. Use \`action: "move"\` with explicit \`from\`/\`to\` for taking, putting back, stashing, removing from containers, or moving scene items. Use \`inspect\`, \`use\`, or \`destroy\` for non-relocation interactions.
 - **"scene_interaction"**: Search, investigate, or modify the environment.
+  - Only include \`sceneConnectionEffect\` when you are changing a real map connection that already exists.
+  - \`sceneConnectionEffect.targetScenarioId\` must be an existing connected location ID from the current location's known map data.
+  - Never invent internal sub-areas, doors, partitions, or descriptive labels such as \`private_office_partition\`.
+  - If there is no exact existing connected location ID to target, omit \`sceneConnectionEffect\`.
 
 ## Skill Checks
 
@@ -200,10 +208,8 @@ You can use a skill to accomplish an action or achieve your goal. Set \`"skill"\
 - Simple \`move\`, ordinary \`inspect\`, casual conversation, and other everyday actions should usually omit \`"skill"\`.
 - Before choosing a skill for an object action, inspect the injected item state first (locked/unlocked, damaged, uses, lit/unlit, ammo, etc.) and choose a normal action if the state already makes it possible.
 - If you include \`"skill"\`, it must be an exact name from "Available Skills". Never invent generic labels such as \`social\`, \`professional\`, or \`exploration\`.
-- For every node's \`location\`, copy only the exact location name. Never include helper text such as topology notes, resident lists, or formatting labels.
 - For object movement, only reference items that already appear in \`Items You Can See\` or \`What You're Carrying\`. Do not invent new intermediate objects such as printouts unless a previous action has already created them.
 - Use \`move\` when the item is simply changing where it is. Do not split same-scene relocation into artificial \`pickup\` then \`place\` steps.
-- By default, object interactions may only target items in the current scene or items you are carrying. Do not remote-interact with items in other locations, and do not assume access to items on another character unless a prior step explicitly transferred them to you.
 
 ## Impact
 
@@ -241,7 +247,10 @@ Add type-specific fields as needed:
 - **object_interaction**:
   - relocation: \`"objectInteractionPayload": { "action": "move", "itemId": "item_id", "from": { "type": "scene|inventory|container", "containerItemId"?: "container_id", "scope"?: "scene|inventory" }, "to": { ...same shape... } }\`
   - non-standard use: include \`itemUpdates\`/\`targetItemUpdates\`
-- **scene_interaction**: optional \`"sceneConnectionEffect"\``;
+- **scene_interaction**: optional \`"sceneConnectionEffect"\`
+  - Use it only for a real existing connection that is already present in the map.
+  - \`"sceneConnectionEffect": { "targetScenarioId": "existing_connected_location_id", "action": "block|unblock" }\`
+  - Never invent room fragments, doors, partitions, or other non-location IDs. If unsure, omit this field.`;
 
 export function buildDetailedNodesPrompt(
   params: DetailedNodesParams
@@ -268,6 +277,8 @@ Use only the exact destination name itself in \`location\`; do not include topol
 You can use a skill to accomplish an action. Pick from "Available Skills" only when the action is difficult or uses a non-routine method. Omit it for straightforward actions.
 
 ${params.handlerPrompt || DEFAULT_DETAILED_NODE_TYPE_REF}
+
+${DEFAULT_NODE_GUARDRAILS_PROMPT}
 
 ${params.planningPrompt || ""}
 
@@ -425,6 +436,9 @@ export interface RevisePlansParams {
   handlerPrompt?: string;
   planningPrompt?: string;
   outputSchemaPrompt?: string;
+  failureReason?: string;
+  failureOutcome?: string;
+  blockedReason?: string;
 }
 
 const REVISE_PLANS_OUTPUT_SCHEMA = `## Output
@@ -477,6 +491,8 @@ You can use a skill to accomplish an action. Pick from "Available Skills". Omit 
 
 ${params.handlerPrompt || DEFAULT_DETAILED_NODE_TYPE_REF}
 
+${DEFAULT_NODE_GUARDRAILS_PROMPT}
+
 ${params.planningPrompt || ""}
 
 ${params.outputSchemaPrompt || REVISE_PLANS_OUTPUT_SCHEMA}`;
@@ -498,10 +514,18 @@ ${params.longTermIntent}
 ## What Just Happened
 ${params.triggerDescription}
 
+${params.failureReason || params.failureOutcome || params.blockedReason
+    ? `## Why The Last Action Failed
+- Engine failure reason: ${params.failureReason || "unknown"}
+- Detailed outcome: ${params.failureOutcome || "No detailed outcome provided."}
+${params.blockedReason ? `- Blocked reason: ${params.blockedReason}` : ""}`
+    : ""
+}
+
 ## Your Plan For Today
 ${todayPlan}
 
-## What Happened Today So Far
+## Relevant Memories / Recent Context
 ${params.memoryLog || "Nothing recorded yet."}
 
 ## Your Pending Actions
@@ -570,8 +594,11 @@ Decide:
 
 ## Instructions
 - Write a brief note about what you perceived and how you feel about it.
-- Set shouldRevise=true only if the events meaningfully affect what you're doing right now.
+- Set shouldRevise=true only for major immediate disruptions to what you're doing right now.
+- Minor observations, background tension, ordinary chatter, low-stakes suspicion, or events that merely make you curious should keep shouldRevise=false.
+- Use shouldRevise=true when your current action is materially blocked, becomes unsafe, loses its purpose, or a time-critical opportunity/threat now forces a different immediate action.
 - Set shouldReviseSchedule=true only if the events fundamentally change your plans for the rest of the day (e.g., a place you planned to visit was destroyed, someone you need to meet was arrested).
+- A brief interruption or local distraction is not enough to change the rest-of-day schedule.
 
 ## Output
 Return a single JSON object. No extra text. Always write in English.

@@ -165,6 +165,8 @@ export type FailureTrigger = {
   failureReason: FailureReason;
   action: string;
   gameTime: string;
+  failureOutcome?: string;
+  blockedReason?: string;
 };
 
 export type ImpactTrigger = {

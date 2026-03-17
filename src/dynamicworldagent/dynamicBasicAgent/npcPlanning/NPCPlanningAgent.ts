@@ -192,6 +192,12 @@ function buildImpactTriggerDescription(
   return `You noticed ${action.characterName} ${action.action.toLowerCase()} (${action.outcome})`;
 }
 
+function buildFailureTriggerDescription(
+  trigger: import("./types.js").FailureTrigger
+): string {
+  return `Action "${trigger.action}" at ${trigger.gameTime} failed with ${trigger.failureReason}.`;
+}
+
 export class NPCPlanningAgent {
   constructor(
     private prisma: PrismaClient,
@@ -706,9 +712,11 @@ export class NPCPlanningAgent {
     const npc = state.npcCharacters.find((n) => n.id === npcId);
     if (!npc) return {};
 
+    const failureTrigger =
+      context.trigger.type === "failure" ? context.trigger : undefined;
     const triggerDescription =
       context.trigger.type === "failure"
-        ? `Action "${context.trigger.action}" at ${context.trigger.gameTime} failed: ${context.trigger.failureReason}`
+        ? buildFailureTriggerDescription(context.trigger)
         : buildImpactTriggerDescription(npcId, context.trigger);
 
     const revisePos = dgsm.getCharacterPosition(npcId);
@@ -778,6 +786,9 @@ export class NPCPlanningAgent {
         extraInstructions:
           "Revise pending actions. Only change what the event actually affects.",
       }),
+      failureReason: failureTrigger?.failureReason,
+      failureOutcome: failureTrigger?.failureOutcome,
+      blockedReason: failureTrigger?.blockedReason,
     });
 
     console.log(

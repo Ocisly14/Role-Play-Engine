@@ -5,6 +5,7 @@ import type {
 import type { DynamicGameStateManager } from "../../state/DynamicGameState.js";
 import { isCharacterAtLocation } from "../shared/locationPresence.js";
 import { buildOutcome, makeAction } from "../shared/nodeHelpers.js";
+import { getTopologyNeighbors } from "../shared/topologyHelpers.js";
 import type { ExecutionContext, NodeHandler } from "../types.js";
 
 export const sceneInteractionHandler: NodeHandler = {
@@ -13,6 +14,8 @@ export const sceneInteractionHandler: NodeHandler = {
   description:
     "Interact with the scene itself, modifying scene conditions or connections. " +
     "Can block or unblock connections between scenes. " +
+    "sceneConnectionEffect.targetScenarioId must reference a real adjacent map location ID; " +
+    "never invent partitions, doors, or descriptive sub-areas. " +
     "Outcomes are appended as scene conditions.",
 
   requiredFields: ["action", "location"],
@@ -28,7 +31,7 @@ export const sceneInteractionHandler: NodeHandler = {
     location: "ground_floor_hallway",
     impact: 3,
     sceneConnectionEffect: {
-      targetScenarioId: "basement_entrance",
+      targetScenarioId: "service_hallway",
       action: "block",
     },
   },
@@ -92,13 +95,31 @@ export const sceneInteractionHandler: NodeHandler = {
     dgsm.appendSceneCondition(node.location, { description: outcome });
     if (node.sceneConnectionEffect) {
       const effect = node.sceneConnectionEffect;
-      const blocked = effect.action === "block";
-      dgsm.setConnectionBlocked(
-        node.location,
-        effect.targetScenarioId,
-        blocked,
-        outcome
-      );
+      const topology = dgsm.getTopology();
+      const neighbors = topology
+        ? getTopologyNeighbors(node.location, topology)
+        : [];
+      const scene = dgsm.getScene(node.location);
+      const directConnections = scene?.connections ?? [];
+      const connectedTargets = new Set([...directConnections, ...neighbors]);
+      const targetExists =
+        dgsm.getScene(effect.targetScenarioId) !== null ||
+        dgsm.getJunction(effect.targetScenarioId) !== null ||
+        dgsm.getRoad(effect.targetScenarioId) !== null;
+
+      if (targetExists && connectedTargets.has(effect.targetScenarioId)) {
+        const blocked = effect.action === "block";
+        dgsm.setConnectionBlocked(
+          node.location,
+          effect.targetScenarioId,
+          blocked,
+          outcome
+        );
+      } else {
+        console.warn(
+          `[sceneInteractionHandler] Ignoring invalid sceneConnectionEffect from ${node.location} to ${effect.targetScenarioId}`
+        );
+      }
     }
 
     return makeAction(node, "completed", outcome, {

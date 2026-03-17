@@ -27,6 +27,7 @@ import type { NPCPlanningAgent } from "./NPCPlanningAgent.js";
 import type {
   CharacterAction,
   DiscoveryEntry,
+  FailureTrigger,
   MovementStep,
   PlanNode,
   SimulationTickResult,
@@ -1032,18 +1033,7 @@ async function executeSingleTick(
   const movedNpcIds = new Set<string>();
   const pendingRevisionRequests: Array<{
     npcId: string;
-    trigger: {
-      type: "failure";
-      failureReason:
-        | "location_mismatch"
-        | "location_blocked"
-        | "target_absent"
-        | "object_not_found"
-        | "skill_roll_failed"
-        | "bad_luck";
-      action: string;
-      gameTime: string;
-    };
+    trigger: FailureTrigger;
     reactionQuery: string;
   }> = [];
 
@@ -1431,8 +1421,9 @@ async function executeSingleTick(
           failureReason: action.failureReason!,
           action: action.action,
           gameTime: action.gameTime,
+          failureOutcome: action.outcome,
         },
-        reactionQuery: `${action.action} failed: ${action.failureReason}`,
+        reactionQuery: `${action.action} failed: ${action.outcome}`,
       });
     }
   }
@@ -1466,8 +1457,10 @@ async function executeSingleTick(
           failureReason: "location_blocked",
           action: action.action,
           gameTime: action.gameTime,
+          failureOutcome: action.outcome,
+          blockedReason: node.executionMeta.blockedReason,
         },
-        reactionQuery: `${action.action} failed: ${node.executionMeta.blockedReason ?? action.failureReason}`,
+        reactionQuery: `${action.action} failed: ${node.executionMeta.blockedReason ?? action.outcome}`,
       });
     } else if (action.status === "completed") {
       const scheduledEndMinutes = timeToMinutes(node.endTime);
@@ -1499,9 +1492,10 @@ async function executeSingleTick(
             currentGameDay: gameDay,
           });
         }
-        const longTermIntent =
-          failureContext ??
-          (await npcPlanningAgent.getLongTermIntent(sessionId, request.npcId));
+        const longTermIntent = await npcPlanningAgent.getLongTermIntent(
+          sessionId,
+          request.npcId
+        );
         const memoryLog = failureContext ? [failureContext] : [];
         const reviseResult = await npcPlanningAgent.revisePlans(
           dgsm,
@@ -1608,10 +1602,10 @@ async function executeSingleTick(
               currentGameDay: gameDay,
             });
           }
-          // Use unified memory context or fall back to legacy getLongTermIntent
-          const longTermIntent =
-            reactionContext ??
-            (await npcPlanningAgent.getLongTermIntent(sessionId, npcId));
+          const longTermIntent = await npcPlanningAgent.getLongTermIntent(
+            sessionId,
+            npcId
+          );
           const sortedEvents = [...npcEvents].sort((a, b) => b.impact - a.impact);
           const primaryEvent = sortedEvents[0]?.event;
           const perspective = primaryEvent
