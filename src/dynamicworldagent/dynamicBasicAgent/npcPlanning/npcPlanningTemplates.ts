@@ -110,6 +110,7 @@ Write your plan as an ordered list of activities: WHERE you'll go and WHAT you i
 - Use only the exact name itself for \`location\`. Do not copy topology notes, residents, or text after labels like \`Exact Name:\` or \`Topology Note:\`.
 - Be realistic — you wouldn't break into someone's office in broad daylight, and you need to eat and rest.
 - Plan entries as you need for a full day. Fewer if it's already late.
+- Treat the current time as 24-hour clock time.
 
 ## Social Interactions
 If you want to share information with or talk to another character, plan a visit to their location. The detailed planning step will handle the specifics of what you say.
@@ -181,9 +182,13 @@ export interface DetailedNodesParams {
   outputSchemaPrompt?: string;
 }
 
+const TWENTY_FOUR_HOUR_TIME_GUIDANCE = `## Time Semantics
+- All times use a 24-hour clock in \`HH:MM\` format.`;
+
 const DEFAULT_NODE_GUARDRAILS_PROMPT = `## Planning Guardrails
 - For every node's \`location\`, copy only the exact location name. Never include helper text such as topology notes, resident lists, or formatting labels.
-- For object interactions, you may only target items that already appear in \`Items You Can See\` or \`What You're Carrying\`.`;
+- For object interactions, you may only target items that already appear in \`Items You Can See\` or \`What You're Carrying\`.
+- Do not invent new documents, copies, notes, printouts, receipts, witness copies, or memo variants unless they already exist in the scene, inventory, or prior action history.`;
 
 const DEFAULT_DETAILED_NODE_TYPE_REF = `## Node Type Reference
 - **"routine"**: Self-contained action, no interaction target.
@@ -266,6 +271,8 @@ Do not expand the whole day. Do not repeat plan steps that your memory log alrea
 
 If the next step is not at your current location, emit a movement node first (set location to the destination), then emit the action node. Movement does not need to be broken into segments — one movement node will take you directly to the destination regardless of distance.
 Use only the exact destination name itself in \`location\`; do not include topology notes or any explanatory suffix.
+
+${TWENTY_FOUR_HOUR_TIME_GUIDANCE}
 
 ## How To Choose The Next Step
 - Use "Your Plan For Today" as the source of truth for the intended sequence.
@@ -363,6 +370,7 @@ Think about how this event affects your goals and your safety. Adjust your sched
 - Keep the same format: each entry has "location", "activity". Order matters.
 - Use exact location names from "Places You Know" for the location field.
 - If this event fundamentally changes what you're trying to accomplish, update your long-term goal too.
+- Treat the current time as 24-hour clock time.
 
 ## Output
 Return a single JSON object. No extra text. Always write in English.
@@ -485,6 +493,7 @@ Do not include topology notes, residents, or label prefixes in \`location\`; out
 - Generate only short-horizon actionable nodes for what you do next.
 - Do not expand the rest of the day into detailed nodes unless it is the last step of the current phase.
 - Do not generate distant later-day activities.
+- Treat the current time as 24-hour clock time.
 
 ## Skill Checks
 You can use a skill to accomplish an action. Pick from "Available Skills". Omit for everyday actions.

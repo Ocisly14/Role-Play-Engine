@@ -9,6 +9,7 @@ import { NpcMemoryManager } from "../memory/NpcMemoryManager.js";
 import type { DynamicGameState } from "./DynamicGameState.js";
 import { buildTopology } from "./topologyTypes.js";
 import type {
+  CharacterPosition,
   JunctionNode,
   RoadNode,
   TownTopology,
@@ -203,7 +204,7 @@ export function initRuntime(params: {
     Record<string, { score: number; note: string }>
   > = {};
   const npcResidences: Record<string, string> = {};
-  const characterPositions: Record<string, any> = {};
+  const characterPositions: Record<string, CharacterPosition> = {};
 
   // Build residence lookup from scenarioOutlines
   const residentToLocation: Record<string, string> = {};
@@ -287,7 +288,31 @@ export function initRuntime(params: {
     npcRelationshipGraph[npc.id] = rels;
 
     // Initialize characterPosition from resolved location
-    characterPositions[npc.id] = { type: "scene", sceneId: resolvedLocation };
+    if (moduleData.scenes.has(resolvedLocation)) {
+      characterPositions[npc.id] = {
+        type: "scene",
+        sceneId: resolvedLocation,
+      };
+    } else if (moduleData.junctions.has(resolvedLocation)) {
+      characterPositions[npc.id] = {
+        type: "junction",
+        junctionId: resolvedLocation,
+      };
+    } else if (moduleData.roads.has(resolvedLocation)) {
+      characterPositions[npc.id] = {
+        type: "road",
+        roadId: resolvedLocation,
+        position: 0.5,
+      };
+    } else {
+      console.warn(
+        `[moduleLoader] NPC ${npc.id} resolved to unsupported location ${resolvedLocation}, using default scene ${defaultSceneId}`
+      );
+      characterPositions[npc.id] = {
+        type: "scene",
+        sceneId: defaultSceneId,
+      };
+    }
   }
 
   // Build scenarioConditions from scenes, junctions, and roads

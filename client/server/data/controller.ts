@@ -80,23 +80,24 @@ export async function getMods(req: Request, res: Response): Promise<void> {
   try {
     res.setHeader("Cache-Control", "no-store");
     const modsDir = path.join(process.cwd(), "data", "Mods");
-    const email = req.user?.email;
-    if (!email) {
-      res.status(401).json({ error: "Authentication required" });
+
+    // Read directly from data/Mods/ directory
+    const fs = await import("node:fs");
+    if (!fs.existsSync(modsDir)) {
+      res.json({ success: true, mods: [] });
       return;
     }
-    const library = await listUserLibrary(email);
-    const mods = library.map((mod) => ({
-      name: mod.name,
-      path: path.join(modsDir, mod.name),
-      shared: mod.shared,
-      ownerEmail: mod.ownerEmail,
-      isOwner: mod.isOwner,
-    }));
+    const entries = fs.readdirSync(modsDir, { withFileTypes: true });
+    const mods = entries
+      .filter((e) => e.isDirectory() && !e.name.startsWith("."))
+      .map((e) => ({
+        name: e.name,
+        path: path.join(modsDir, e.name),
+      }));
 
     res.json({
       success: true,
-      mods: mods,
+      mods,
     });
   } catch (error) {
     console.error("Error fetching mods:", error);
