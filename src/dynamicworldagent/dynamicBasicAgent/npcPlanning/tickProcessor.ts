@@ -782,26 +782,20 @@ async function matchCandidates(
 ): Promise<DiscoveryEntry[]> {
   if (candidates.length === 0) return [];
 
-  const automaticResults: DiscoveryEntry[] = [];
+  const automaticCandidates: DiscoveryCandidate[] = [];
   const semanticCandidates: DiscoveryCandidate[] = [];
 
   for (const c of candidates) {
     if (c.difficulty === "automatic") {
-      automaticResults.push({
-        id: c.id,
-        text: c.text,
-        source: c.source,
-        sourceId: c.sourceId,
-        sourceName: c.sourceName,
-        difficulty: "automatic",
-        similarity: 1.0,
-      });
+      automaticCandidates.push(c);
     } else {
       semanticCandidates.push(c);
     }
   }
 
-  if (semanticCandidates.length === 0) return automaticResults;
+  // All candidates (including automatic) go through semantic matching
+  const allSemanticCandidates = [...automaticCandidates, ...semanticCandidates];
+  if (allSemanticCandidates.length === 0) return [];
 
   try {
     const embedClient = getEmbeddingClient();
@@ -809,16 +803,16 @@ async function matchCandidates(
     const actionEmbedding = await embedClient.embed(node.action, {
       language: lang,
     });
-    if (!actionEmbedding.length) return automaticResults;
+    if (!actionEmbedding.length) return [];
 
-    semanticCandidates.sort(
+    allSemanticCandidates.sort(
       (a, b) =>
         (DIFFICULTY_RANK[b.difficulty] ?? 0) -
         (DIFFICULTY_RANK[a.difficulty] ?? 0)
     );
 
     const matched: DiscoveryEntry[] = [];
-    for (const c of semanticCandidates) {
+    for (const c of allSemanticCandidates) {
       const cEmbedding = await embedClient.embed(c.text, { language: lang });
       if (!cEmbedding.length) continue;
 
@@ -844,7 +838,18 @@ async function matchCandidates(
       return b.similarity - a.similarity;
     });
 
-    return [...automaticResults, ...matched];
+    // Limit automatic discoveries to 1 per interaction (drip-feed)
+    let automaticCount = 0;
+    const results: DiscoveryEntry[] = [];
+    for (const entry of matched) {
+      if (entry.difficulty === "automatic") {
+        if (automaticCount >= 1) continue;
+        automaticCount++;
+      }
+      results.push(entry);
+    }
+
+    return results;
   } catch (error) {
     console.warn("[TickProcessor] Discovery embedding failed:", error);
     return automaticResults;

@@ -309,18 +309,21 @@ The \`impact\` field on every PlanNode determines **who in the game world percei
    */
   buildOutputSchemaPrompt(options?: {
     extraInstructions?: string;
+    language?: string;
   }): string {
     const typeNames =
       this.handlers.size > 0
         ? [...this.handlers.keys()].join("|")
         : "routine|movement|character_interaction|object_interaction|scene_interaction";
 
+    const langName = options?.language?.startsWith("zh") ? "Chinese" : "English";
+
     const sections: string[] = [];
 
     // Header
     sections.push("## Output");
     sections.push(
-      "Return a JSON array of PlanNode objects. No extra text. Always write in English."
+      `Return a JSON array of PlanNode objects. No extra text. JSON keys must be in English. Write "action" and "informationContent" values in ${langName}. Keep "location", "type", "skill", "nodeId", IDs, and enum values in English.`
     );
     if (options?.extraInstructions) {
       sections.push(options.extraInstructions);

@@ -8,6 +8,10 @@ export interface PromptParts {
   userPrompt: string;
 }
 
+function contentLanguageName(language: string): string {
+  return language?.startsWith("zh") ? "Chinese" : "English";
+}
+
 // ===================== Day Memory Summarization =====================
 
 export interface SummarizeDayMemoryParams {
@@ -47,7 +51,7 @@ It's the end of the day. Review everything that happened today and produce two o
 - **difficulty**: How hard it would be for someone to extract this from you — "automatic" (you'd share freely), "regular", "hard", "extreme" (you'd never willingly reveal)
 
 ## Output
-Return a JSON object. No extra text. Always write in English.
+Return a JSON object. No extra text. JSON keys must be in English. Write all text content ("content", "text") in ${contentLanguageName(params.language)}.
 
 \`\`\`json
 {
@@ -116,7 +120,7 @@ Write your plan as an ordered list of activities: WHERE you'll go and WHAT you i
 If you want to share information with or talk to another character, plan a visit to their location. The detailed planning step will handle the specifics of what you say.
 
 ## Output
-Return a JSON array in the order you plan to do them. No extra text. Always write in English.
+Return a JSON array in the order you plan to do them. No extra text. JSON keys must be in English. Write the "activity" value in ${contentLanguageName(params.language)}. Keep "location" as the exact English location name from "Places You Know".
 
 \`\`\`json
 [
@@ -126,8 +130,8 @@ Return a JSON array in the order you plan to do them. No extra text. Always writ
 \`\`\`
 
 Each entry has exactly two fields:
-- \`"location"\`: exact location name from "Places You Know"
-- \`"activity"\`: one sentence — what you intend to do there`;
+- \`"location"\`: exact location name from "Places You Know" (always English)
+- \`"activity"\`: one sentence — what you intend to do there (in ${contentLanguageName(params.language)})`;
 
   const userPrompt = `## Places You Know
 ${params.sceneMap}
@@ -229,8 +233,10 @@ You can use a skill to accomplish an action or achieve your goal. Set \`"skill"\
 ## Available Skills
 ${COC_SKILL_LIST_PROMPT}`;
 
-const DEFAULT_DETAILED_OUTPUT_SCHEMA = `## Output
-Return a JSON array of PlanNode objects. No extra text. Always write in English.
+function defaultDetailedOutputSchema(language: string): string {
+  const lang = contentLanguageName(language);
+  return `## Output
+Return a JSON array of PlanNode objects. No extra text. JSON keys must be in English. Write "action" and "informationContent" values in ${lang}. Keep "location", "type", "skill", "nodeId", IDs, and enum values in English.
 
 ### Fields
 \`\`\`json
@@ -238,17 +244,17 @@ Return a JSON array of PlanNode objects. No extra text. Always write in English.
   "nodeId": "unique-id",
   "startTime": "HH:MM",
   "endTime": "HH:MM",
-  "action": "description of what you do",
-  "location": "exact location name from Places You Know",
+  "action": "description of what you do (in ${lang})",
+  "location": "exact location name from Places You Know (English)",
   "type": "routine|movement|character_interaction|object_interaction|scene_interaction",
-  "skill": "OMIT if no skill check needed, otherwise exact skill name",
+  "skill": "OMIT if no skill check needed, otherwise exact skill name (English)",
   "impact": "Default 0. Use 1 only for targeted consequential actions with skill; 2+ for broader effects",
   "status": "pending"
 }
 \`\`\`
 
 Add type-specific fields as needed:
-- **character_interaction**: \`"targetCharacterId"\`, optional \`"characterInteractionPayload"\` with \`transferType\` ("item" or "information"), \`informationContent\`, \`targetCharacterIds\`, \`relatedKnowledgeIds\`
+- **character_interaction**: \`"targetCharacterId"\`, optional \`"characterInteractionPayload"\` with \`transferType\` ("item" or "information"), \`informationContent\` (in ${lang}), \`targetCharacterIds\`, \`relatedKnowledgeIds\`
 - **object_interaction**:
   - relocation: \`"objectInteractionPayload": { "action": "move", "itemId": "item_id", "from": { "type": "scene|inventory|container", "containerItemId"?: "container_id", "scope"?: "scene|inventory" }, "to": { ...same shape... } }\`
   - non-standard use: include \`itemUpdates\`/\`targetItemUpdates\`
@@ -256,6 +262,7 @@ Add type-specific fields as needed:
   - Use it only for a real existing connection that is already present in the map.
   - \`"sceneConnectionEffect": { "targetScenarioId": "existing_connected_location_id", "action": "block|unblock" }\`
   - Never invent room fragments, doors, partitions, or other non-location IDs. If unsure, omit this field.`;
+}
 
 export function buildDetailedNodesPrompt(
   params: DetailedNodesParams
@@ -289,7 +296,7 @@ ${DEFAULT_NODE_GUARDRAILS_PROMPT}
 
 ${params.planningPrompt || ""}
 
-${params.outputSchemaPrompt || DEFAULT_DETAILED_OUTPUT_SCHEMA}`;
+${params.outputSchemaPrompt || defaultDetailedOutputSchema(params.language)}`;
 
   const userPrompt = `## Places You Know
 ${params.sceneMap || "No map available."}
@@ -373,7 +380,7 @@ Think about how this event affects your goals and your safety. Adjust your sched
 - Treat the current time as 24-hour clock time.
 
 ## Output
-Return a single JSON object. No extra text. Always write in English.
+Return a single JSON object. No extra text. JSON keys must be in English. Write "activity" and "updatedLongTermIntent" values in ${contentLanguageName(params.language)}. Keep "location" as the exact English location name.
 
 \`\`\`json
 {
@@ -449,8 +456,10 @@ export interface RevisePlansParams {
   blockedReason?: string;
 }
 
-const REVISE_PLANS_OUTPUT_SCHEMA = `## Output
-Return a single JSON object with a "revisedNodes" array. No extra text. Always write in English.
+function revisePlansOutputSchema(language: string): string {
+  const lang = contentLanguageName(language);
+  return `## Output
+Return a single JSON object with a "revisedNodes" array. No extra text. JSON keys must be in English. Write "action" and "updatedLongTermIntent" values in ${lang}. Keep "location", "type", "skill", "nodeId", IDs, and enum values in English.
 
 IMPORTANT: "revisedNodes" MUST be an array of PlanNode objects — even if there is only one node, wrap it in an array.
 IMPORTANT: "revisedNodes" must cover only the current phase of action from right now, not the whole day.
@@ -462,8 +471,8 @@ IMPORTANT: "revisedNodes" must cover only the current phase of action from right
       "nodeId": "unique-id",
       "startTime": "HH:MM",
       "endTime": "HH:MM",
-      "action": "description of what you do",
-      "location": "exact location name from Places You Know",
+      "action": "description of what you do (in ${lang})",
+      "location": "exact location name from Places You Know (English)",
       "type": "routine|movement|character_interaction|object_interaction|scene_interaction",
       "impact": "Default 0. Use 1 only for targeted consequential actions with skill; 2+ for broader effects",
       "status": "pending"
@@ -473,6 +482,7 @@ IMPORTANT: "revisedNodes" must cover only the current phase of action from right
   "updatedLongTermIntent": "only if shouldUpdateLongTermIntent is true"
 }
 \`\`\``;
+}
 
 export function buildRevisePlansPrompt(params: RevisePlansParams): PromptParts {
   const todayPlan = JSON.stringify(params.todayPlan, null, 2);
@@ -504,7 +514,7 @@ ${DEFAULT_NODE_GUARDRAILS_PROMPT}
 
 ${params.planningPrompt || ""}
 
-${params.outputSchemaPrompt || REVISE_PLANS_OUTPUT_SCHEMA}`;
+${params.outputSchemaPrompt || revisePlansOutputSchema(params.language)}`;
 
   const userPrompt = `## Places You Know
 ${params.sceneMap || "No map available."}
@@ -610,7 +620,7 @@ Decide:
 - A brief interruption or local distraction is not enough to change the rest-of-day schedule.
 
 ## Output
-Return a single JSON object. No extra text. Always write in English.
+Return a single JSON object. No extra text. JSON keys must be in English. Write "witnessEntry" in ${contentLanguageName(params.language)}.
 
 \`\`\`json
 {
@@ -678,7 +688,7 @@ ${params.interactionOutcome}
 -61~-80: Antagonistic | -81~-100: Mortal enemy
 
 ## Output
-Return a single JSON object. No extra text. Always write in English.
+Return a single JSON object. No extra text. JSON keys must be in English. Write "note" in ${contentLanguageName(params.language)}.
 
 \`\`\`json
 {

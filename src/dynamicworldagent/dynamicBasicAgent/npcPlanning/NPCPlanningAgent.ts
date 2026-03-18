@@ -489,6 +489,7 @@ export class NPCPlanningAgent {
       outputSchemaPrompt: registry?.buildOutputSchemaPrompt({
         extraInstructions:
           "Use the current time as the default startTime for the first node. Always include both startTime and endTime.",
+        language,
       }),
     });
 
@@ -785,6 +786,7 @@ export class NPCPlanningAgent {
       outputSchemaPrompt: registry?.buildOutputSchemaPrompt({
         extraInstructions:
           "Revise pending actions. Only change what the event actually affects.",
+        language,
       }),
       failureReason: failureTrigger?.failureReason,
       failureOutcome: failureTrigger?.failureOutcome,
