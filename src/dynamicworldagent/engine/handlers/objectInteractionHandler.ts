@@ -229,6 +229,11 @@ export const objectInteractionHandler: NodeHandler = {
     "Interact with an object in the current scene. " +
     "Supports move, use, inspect, and destroy actions. " +
     "Move uses explicit from/to refs so the same action can cover taking, putting back, stashing, and moving scene items into containers.\n\n" +
+    "SKILL GUIDANCE: Do NOT set `skill` for routine actions — picking up items, opening unlocked containers, " +
+    "inspecting objects, searching your own belongings, or using items normally. These always succeed without a roll. " +
+    "Only set `skill` when the action is genuinely difficult: picking a lock without a key (Locksmith), " +
+    "disarming a trap (Mechanical Repair), forcing open a stuck/barricaded container (STR), " +
+    "or using an item in a non-standard way that requires expertise.\n\n" +
     "For non-normal use (skill set), include `itemUpdates` and/or `targetItemUpdates` " +
     "with the expected item state changes after success. Mergeable Item fields:\n" +
     "- `damaged` (boolean), `damageDetails`: `{ damagedBy, damagedAt, reason }`\n" +

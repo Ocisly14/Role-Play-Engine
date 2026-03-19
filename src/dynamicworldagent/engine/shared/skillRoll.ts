@@ -84,7 +84,9 @@ const CHASE_SKILLS = ["Dodge", "Drive Auto", "Climb", "Swim", "Jump", "Ride"];
 export function resolveSkillRoll(
   node: PlanNode,
   adjustedSkills: Record<string, number>,
-  dgsm: DynamicGameStateManager
+  dgsm: DynamicGameStateManager,
+  /** Apply scene + character feature penalties to a target's skills */
+  adjustTargetSkills?: (targetId: string, rawSkills: Record<string, number>) => Record<string, number>
 ): SkillRollResult {
   const skill = node.skill;
   if (!skill) return { failed: false, successLevel: "regular" };
@@ -118,7 +120,10 @@ export function resolveSkillRoll(
 
     for (const targetId of targetIds) {
       const defender = state.npcCharacters.find((n) => n.id === targetId);
-      const defenderSkills = defender?.skills ?? {};
+      const rawDefenderSkills = defender?.skills ?? {};
+      const defenderSkills = adjustTargetSkills
+        ? adjustTargetSkills(targetId, rawDefenderSkills)
+        : rawDefenderSkills;
       const defSkill = pickBestFromCandidates(
         COMBAT_DEFEND_SKILLS,
         defenderSkills
@@ -182,7 +187,10 @@ export function resolveSkillRoll(
 
     for (const targetId of targetIds) {
       const target = state.npcCharacters.find((n) => n.id === targetId);
-      const targetSkills = target?.skills ?? {};
+      const rawTargetSkills = target?.skills ?? {};
+      const targetSkills = adjustTargetSkills
+        ? adjustTargetSkills(targetId, rawTargetSkills)
+        : rawTargetSkills;
       const defSkill = pickBestFromCandidates(SOCIAL_DEFEND_SKILLS, targetSkills);
       const defValue =
         defSkill?.value ?? Math.floor((target?.attributes?.INT ?? 50) / 2);

@@ -97,7 +97,17 @@ export const characterInteractionHandler: NodeHandler = {
 
     // 3. Skill roll — opposed rolls handle per-target mechanics
     if (node.skill) {
-      const rollResult = ctx.resolveSkillRoll(node, adjustedSkills, dgsm);
+      const rollResult = ctx.resolveSkillRoll(
+        node, adjustedSkills, dgsm,
+        (targetId, rawSkills) => {
+          const targetScenePenalties = ctx.getScenePenalties(node.location, dgsm);
+          const targetCharPenalties = ctx.getCharacterPenalties(targetId, dgsm);
+          return ctx.applyPenalties(
+            ctx.applyPenalties(rawSkills, targetScenePenalties),
+            targetCharPenalties
+          );
+        }
+      );
       resolvedSuccessLevel = rollResult.successLevel;
       resolvedPerTargetResults = rollResult.perTargetResults;
       if (rollResult.failed) {

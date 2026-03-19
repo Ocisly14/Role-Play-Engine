@@ -126,12 +126,49 @@ function normalizePlanNode(
   } as PlanNode;
 }
 
+function repairJson(text: string): string {
+  // Remove trailing commas before } or ]
+  text = text.replace(/,\s*([}\]])/g, "$1");
+
+  // Fix unescaped newlines inside JSON string values
+  text = text.replace(
+    /"(?:[^"\\]|\\.)*"/g,
+    (match) => match.replace(/\n/g, "\\n").replace(/\r/g, "\\r").replace(/\t/g, "\\t")
+  );
+
+  // Try to close truncated JSON by balancing braces/brackets
+  let inString = false;
+  let escape = false;
+  const stack: string[] = [];
+  for (const ch of text) {
+    if (escape) { escape = false; continue; }
+    if (ch === "\\") { escape = true; continue; }
+    if (ch === '"') { inString = !inString; continue; }
+    if (inString) continue;
+    if (ch === "{") stack.push("}");
+    else if (ch === "[") stack.push("]");
+    else if (ch === "}" || ch === "]") stack.pop();
+  }
+  // Close any unclosed structures
+  while (stack.length > 0) text += stack.pop();
+
+  return text;
+}
+
 function parseJsonResponse<T>(raw: string): T {
   let text = raw.trim();
   // Strip markdown fences
   const fenceMatch = text.match(/```(?:json)?\s*([\s\S]*?)```/);
   if (fenceMatch) text = fenceMatch[1].trim();
-  return JSON.parse(text) as T;
+  // Fix invalid JSON escape sequences (e.g. \$ \' \. etc.) produced by LLMs
+  text = text.replace(/\\([^"\\\/bfnrtu])/g, "$1");
+  try {
+    return JSON.parse(text) as T;
+  } catch {
+    // Attempt repair on malformed LLM output
+    const repaired = repairJson(text);
+    return JSON.parse(repaired) as T;
+  }
 }
 
 /**
@@ -903,11 +940,19 @@ export class NPCPlanningAgent {
       modelClass: ModelClass.MEDIUM,
     });
 
-    return parseJsonResponse<{
-      shouldRevise: boolean;
-      shouldReviseSchedule: boolean;
-      witnessEntry: string;
-    }>(response);
+    try {
+      return parseJsonResponse<{
+        shouldRevise: boolean;
+        shouldReviseSchedule: boolean;
+        witnessEntry: string;
+      }>(response);
+    } catch (err) {
+      console.warn(
+        `[Planning] ⚠️ Impact gate JSON parse failed for ${candidate.npcName}, skipping revision:`,
+        err instanceof Error ? err.message : err
+      );
+      return { shouldRevise: false, shouldReviseSchedule: false, witnessEntry: "" };
+    }
   }
 
   async updateRelationshipViaLLM(

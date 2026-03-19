@@ -199,7 +199,8 @@ export interface ExecutionContext {
   resolveSkillRoll(
     node: PlanNode,
     adjustedSkills: Record<string, number>,
-    dgsm: DynamicGameStateManager
+    dgsm: DynamicGameStateManager,
+    adjustTargetSkills?: (targetId: string, rawSkills: Record<string, number>) => Record<string, number>
   ): SkillRollResult;
 
   /** Get scene penalties for a location */
