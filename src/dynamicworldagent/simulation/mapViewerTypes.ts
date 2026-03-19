@@ -37,4 +37,17 @@ export interface TopologyResponse {
     parentLocationId: string;
     connections: string[];
   }>;
+  scenarioOutlines: Array<{
+    id: string;
+    name: string;
+    entrySceneId?: string;
+    residents?: string[];
+    subSceneCount: number;
+  }>;
+  transportEdges: Array<{
+    fromLocationId: string;
+    toLocationId: string;
+    streetSceneId: string;
+    travelTimeMinutes: number;
+  }>;
 }

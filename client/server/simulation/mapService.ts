@@ -40,7 +40,23 @@ export function getTopology(sessionId: string): TopologyResponse | null {
     parentLocationId: s.parentLocationId,
     connections: s.connections ?? [],
   }));
-  return { junctions, roads, scenes };
+  const state = dgsm.getState();
+  const scenarioOutlines = (state.scenarioOutlines ?? [])
+    .filter((o) => o.id !== "OUTDOOR")
+    .map((o) => ({
+      id: o.id,
+      name: o.name,
+      entrySceneId: o.entrySceneId,
+      residents: o.residents,
+      subSceneCount: o.subSceneCount,
+    }));
+  const transportEdges = (state.transportEdges ?? []).map((e) => ({
+    fromLocationId: e.fromLocationId,
+    toLocationId: e.toLocationId,
+    streetSceneId: e.streetSceneId,
+    travelTimeMinutes: e.travelTimeMinutes,
+  }));
+  return { junctions, roads, scenes, scenarioOutlines, transportEdges };
 }
 
 export function getMapLayout(sessionId: string): MapLayout | null {
@@ -48,6 +64,16 @@ export function getMapLayout(sessionId: string): MapLayout | null {
   if (!runner) return null;
   const modulePath = runner.getModulePath();
   if (!modulePath) return null;
+
+  // Prefer scene/ directory first, then fallback to *_Maps
+  const sceneDir = findSceneDirectory(modulePath);
+  if (sceneDir) {
+    const layoutPath = path.join(sceneDir, "map_layout.json");
+    if (fs.existsSync(layoutPath)) {
+      return JSON.parse(fs.readFileSync(layoutPath, "utf-8")) as MapLayout;
+    }
+  }
+
   const mapsDir = findMapsDirectory(modulePath);
   if (!mapsDir) return null;
   const layoutPath = path.join(mapsDir, "map_layout.json");
@@ -114,6 +140,14 @@ function resolveLocationName(
       return s?.name ?? position.sceneId;
     }
   }
+}
+
+export function findSceneDirectory(modulePath: string): string | null {
+  const sceneDir = path.join(modulePath, "scene");
+  if (fs.existsSync(sceneDir) && fs.statSync(sceneDir).isDirectory()) {
+    return sceneDir;
+  }
+  return null;
 }
 
 export function findMapsDirectory(modulePath: string): string | null {

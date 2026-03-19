@@ -30,86 +30,117 @@ export default function SimulationPage() {
     onConnected: resync,
   });
 
+  useEffect(() => {
+    mapsPrefixRef.current = state.mapsPrefix;
+  }, [state.mapsPrefix]);
+
+  // Enter a building scene from side panel or town node click
+  const handleEnterScene = useCallback(
+    (scenarioId: string, subSceneId: string) => {
+      enterBuilding(scenarioId, subSceneId);
+      const mapsPrefix = mapsPrefixRef.current;
+      if (gameRef.current && mapsPrefix) {
+        gameRef.current.events.emit("load-interior", {
+          sceneId: subSceneId,
+          configUrl: `/api/maps/${mapsPrefix}/map_config.json`,
+          baseUrl: `/api/maps/${mapsPrefix}/`,
+        });
+      }
+    },
+    [enterBuilding]
+  );
+
   const handleGameReady = useCallback(
     (game: Phaser.Game) => {
       gameRef.current = game;
 
       game.events.on("npc-clicked", (npcId: string) => setSelectedNpc(npcId));
-      game.events.on("building-clicked", (sceneId: string) => {
-        enterBuilding(sceneId, sceneId);
-        const mapsPrefix = mapsPrefixRef.current;
-        if (mapsPrefix) {
-          game.events.emit("load-interior", {
-            sceneId,
-            mapUrl: `/api/maps/${mapsPrefix}/interiors/${sceneId}.json`,
-            tilesetUrl: `/api/maps/${mapsPrefix}/tilesets/interior.png`,
-            tilesetKey: "interior",
-          });
-        }
-      });
       game.events.on("building-exited", () => exitBuilding());
       game.events.on("zoom-level-changed", (level: number) =>
         setCurrentLevel(level as 1 | 2)
       );
+      game.events.on(
+        "building-clicked",
+        (data: { scenarioId: string; entrySceneId?: string }) => {
+          if (data.entrySceneId) {
+            handleEnterScene(data.scenarioId, data.entrySceneId);
+          }
+        }
+      );
     },
-    [setSelectedNpc, enterBuilding, exitBuilding, setCurrentLevel]
+    [setSelectedNpc, exitBuilding, setCurrentLevel, handleEnterScene]
   );
 
+  // Forward NPC positions to interior scene
   useEffect(() => {
-    if (!gameRef.current || !state.mapLayout) return;
-    gameRef.current.events.emit(
-      "set-junction-coords",
-      state.mapLayout.junctions
-    );
-  }, [state.mapLayout]);
-
-  useEffect(() => {
-    if (!gameRef.current || !state.topology) return;
-    const roads = state.topology.roads;
+    if (!gameRef.current) return;
     for (const [npcId, position] of Object.entries(state.npcPositions)) {
+      if (position.type !== "scene") continue;
       const npc = state.npcStatuses.find((n) => n.npcId === npcId);
-      gameRef.current.events.emit("npc-position-update", {
+      gameRef.current.events.emit("npc-position-update-interior", {
         npcId,
         name: npc?.name ?? npcId,
-        position,
-        roads,
+        sceneId: position.sceneId,
       });
     }
-  }, [state.npcPositions, state.topology, state.npcStatuses]);
+  }, [state.npcPositions, state.npcStatuses]);
 
-  // Keep mapsPrefix ref in sync for stale closure in building-clicked handler
+  // Forward NPC positions to town scene
   useEffect(() => {
-    mapsPrefixRef.current = state.mapsPrefix;
-  }, [state.mapsPrefix]);
-
-  // Load town tilemap when all data is ready
-  useEffect(() => {
-    if (!gameRef.current || !state.topology || !state.mapLayout || !state.mapsPrefix) return;
-    gameRef.current.events.emit("load-town-map", {
-      mapUrl: `/api/maps/${state.mapsPrefix}/town.json`,
-      tilesetUrl: `/api/maps/${state.mapsPrefix}/tilesets/outdoor.png`,
-      tilesetKey: "outdoor",
+    if (!gameRef.current || !state.topology) return;
+    gameRef.current.events.emit("npc-position-update-town", {
+      positions: state.npcPositions,
+      npcStatuses: state.npcStatuses.map((n) => ({
+        npcId: n.npcId,
+        name: n.name,
+      })),
+      scenes: state.topology.scenes ?? [],
+      junctions: state.topology.junctions ?? [],
+      transportEdges: state.topology.transportEdges ?? [],
     });
-  }, [state.topology, state.mapLayout, state.mapsPrefix]);
+  }, [state.npcPositions, state.npcStatuses, state.topology]);
+
+  // Load town map with topology data
+  useEffect(() => {
+    if (!gameRef.current || !state.mapsPrefix || !state.topology) return;
+    gameRef.current.events.emit("load-town-map", {
+      configUrl: `/api/maps/${state.mapsPrefix}/map_config.json`,
+      baseUrl: `/api/maps/${state.mapsPrefix}/`,
+      scenarioOutlines: state.topology.scenarioOutlines ?? [],
+      transportEdges: state.topology.transportEdges ?? [],
+      scenes: state.topology.scenes ?? [],
+      junctions: state.topology.junctions ?? [],
+    });
+  }, [state.mapsPrefix, state.topology]);
 
   const handleZoomToNpc = useCallback(
     (npcId: string) => {
+      setSelectedNpc(npcId);
+      // If NPC is in a scene, navigate to that scene
       const pos = state.npcPositions[npcId];
-      if (!pos || !gameRef.current || !state.mapLayout) return;
-
-      let x = 0,
-        y = 0;
-      if (pos.type === "junction" && pos.junctionId) {
-        const coords = state.mapLayout.junctions[pos.junctionId];
-        if (coords) {
-          x = coords.x;
-          y = coords.y;
+      if (pos?.type === "scene") {
+        const scene = state.topology?.scenes.find((s) => s.id === pos.sceneId);
+        if (scene) {
+          handleEnterScene(scene.parentLocationId, pos.sceneId);
         }
       }
-      gameRef.current.events.emit("zoom-to", { x, y, zoom: 1.0 });
-      setSelectedNpc(npcId);
     },
-    [state.npcPositions, state.mapLayout, setSelectedNpc]
+    [state.npcPositions, state.topology, setSelectedNpc, handleEnterScene]
+  );
+
+  const handleSwitchSubScene = useCallback(
+    (subSceneId: string) => {
+      switchSubScene(subSceneId);
+      const mapsPrefix = mapsPrefixRef.current;
+      if (gameRef.current && mapsPrefix) {
+        gameRef.current.events.emit("switch-sub-scene", {
+          subSceneId,
+          configUrl: `/api/maps/${mapsPrefix}/map_config.json`,
+          baseUrl: `/api/maps/${mapsPrefix}/`,
+        });
+      }
+    },
+    [switchSubScene]
   );
 
   if (state.isLoading) {
@@ -146,7 +177,7 @@ export default function SimulationPage() {
           <SubSceneTabs
             subScenes={buildingSubScenes}
             activeSubSceneId={state.focusedSubSceneId}
-            onSelect={switchSubScene}
+            onSelect={handleSwitchSubScene}
             onBack={exitBuilding}
           />
         )}

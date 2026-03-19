@@ -30,8 +30,8 @@ export function PhaserContainer({
         autoCenter: Phaser.Scale.CENTER_BOTH,
       },
       render: {
-        pixelArt: true,
-        antialias: false,
+        pixelArt: false,
+        antialias: true,
       },
     });
 
@@ -48,7 +48,7 @@ export function PhaserContainer({
     <div
       ref={containerRef}
       className="w-full h-full"
-      style={{ imageRendering: "pixelated" }}
+      style={{}}
     />
   );
 }

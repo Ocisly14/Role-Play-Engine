@@ -1,24 +1,85 @@
 import Phaser from "phaser";
 
-interface NpcSpriteData {
-  dot: Phaser.GameObjects.Arc;
-  sprite?: Phaser.GameObjects.Sprite;
-  label: Phaser.GameObjects.Text;
-  npcId: string;
-  color: number;
+interface ScenarioConfig {
+  x: number;
+  y: number;
+  thumbnail?: string;
 }
 
-const ZOOM_SPRITE_THRESHOLD = 0.5;
+interface MapConfig {
+  town?: { background?: string };
+  scenarios?: Record<string, ScenarioConfig>;
+}
+
+interface ScenarioOutlineData {
+  id: string;
+  name: string;
+  entrySceneId?: string;
+  residents?: string[];
+  subSceneCount: number;
+}
+
+interface TransportEdgeData {
+  fromLocationId: string;
+  toLocationId: string;
+  streetSceneId: string;
+  travelTimeMinutes: number;
+}
+
+interface SceneData {
+  id: string;
+  name: string;
+  parentLocationId: string;
+}
+
+interface JunctionData {
+  id: string;
+  name: string;
+  connectedSceneIds: string[];
+}
+
+type CharacterPosition =
+  | { type: "junction"; junctionId: string }
+  | { type: "road"; roadId: string; position: number }
+  | { type: "scene"; sceneId: string };
+
+interface NpcStatusEntry {
+  npcId: string;
+  name: string;
+}
+
+interface NpcDotData {
+  dot: Phaser.GameObjects.Arc;
+  label: Phaser.GameObjects.Text;
+  currentX: number;
+  currentY: number;
+}
+
 const NPC_COLORS = [
   0xff6b6b, 0x4ecdc4, 0xffe66d, 0xa29bfe, 0xfd79a8, 0x00b894, 0xe17055,
   0x6c5ce7,
 ];
 
+const NODE_WIDTH = 120;
+const NODE_HEIGHT = 80;
+const EDGE_COLOR = 0x888888;
+const EDGE_WIDTH = 2;
+const NPC_DOT_RADIUS = 6;
+const NPC_JITTER = 30;
+
 export class TownScene extends Phaser.Scene {
-  private npcSprites: Map<string, NpcSpriteData> = new Map();
-  private mapLoaded = false;
-  private junctionCoords: Record<string, { x: number; y: number }> = {};
+  private scenarioOutlines: ScenarioOutlineData[] = [];
+  private transportEdges: TransportEdgeData[] = [];
+  private scenes: SceneData[] = [];
+  private junctions: JunctionData[] = [];
+  private nodePositions: Map<string, { x: number; y: number }> = new Map();
+  private nodeContainers: Map<string, Phaser.GameObjects.Container> = new Map();
+  private npcDots: Map<string, NpcDotData> = new Map();
+  private edgeGraphics: Phaser.GameObjects.Graphics | null = null;
   private colorIndex = 0;
+  private configCache: MapConfig | null = null;
+  private baseUrl = "";
+  private isBuilt = false;
 
   constructor() {
     super({ key: "TownScene" });
@@ -27,20 +88,15 @@ export class TownScene extends Phaser.Scene {
   init() {
     this.game.events.on("load-town-map", this.handleLoadTownMap, this);
     this.game.events.on(
-      "npc-position-update",
+      "npc-position-update-town",
       this.handleNpcPositionUpdate,
       this
     );
-    this.game.events.on(
-      "set-junction-coords",
-      this.handleSetJunctionCoords,
-      this
-    );
     this.game.events.on("zoom-to", this.handleZoomTo, this);
-    this.game.events.on("enter-building", this.handleEnterBuilding, this);
   }
 
   create() {
+    // Scroll zoom
     this.input.on(
       "wheel",
       (
@@ -50,16 +106,13 @@ export class TownScene extends Phaser.Scene {
         deltaY: number
       ) => {
         const cam = this.cameras.main;
-        const newZoom = Phaser.Math.Clamp(
-          cam.zoom + (deltaY > 0 ? -0.1 : 0.1),
-          0.1,
-          2
+        cam.setZoom(
+          Phaser.Math.Clamp(cam.zoom + (deltaY > 0 ? -0.1 : 0.1), 0.3, 3)
         );
-        cam.setZoom(newZoom);
-        this.updateNpcRenderMode(newZoom);
       }
     );
 
+    // Drag pan
     this.input.on("pointermove", (pointer: Phaser.Input.Pointer) => {
       if (pointer.isDown) {
         const cam = this.cameras.main;
@@ -70,159 +123,368 @@ export class TownScene extends Phaser.Scene {
   }
 
   private handleLoadTownMap(data: {
-    mapUrl: string;
-    tilesetUrl: string;
-    tilesetKey: string;
+    configUrl: string;
+    baseUrl: string;
+    scenarioOutlines: ScenarioOutlineData[];
+    transportEdges: TransportEdgeData[];
+    scenes: SceneData[];
+    junctions: JunctionData[];
   }) {
-    this.load.tilemapTiledJSON("town", data.mapUrl);
-    this.load.image(data.tilesetKey, data.tilesetUrl);
-    this.load.once("complete", () => {
-      this.createTilemap(data.tilesetKey);
-    });
-    this.load.start();
+    this.scenarioOutlines = data.scenarioOutlines ?? [];
+    this.transportEdges = data.transportEdges ?? [];
+    this.scenes = data.scenes ?? [];
+    this.junctions = data.junctions ?? [];
+    this.baseUrl = data.baseUrl;
+
+    if (this.isBuilt) return;
+
+    fetch(data.configUrl)
+      .then((res) => res.json())
+      .then((config: MapConfig) => {
+        this.configCache = config;
+        this.computeNodePositions();
+        this.loadThumbnails();
+      })
+      .catch(() => {
+        this.configCache = {};
+        this.computeNodePositions();
+        this.buildGraph();
+      });
   }
 
-  private createTilemap(tilesetKey: string) {
-    const map = this.make.tilemap({ key: "town" });
-    const tileset = map.addTilesetImage(map.tilesets[0].name, tilesetKey);
-    if (!tileset) return;
-
-    const layerNames = ["ground", "roads", "buildings", "decoration"];
-    for (const name of layerNames) {
-      const layer = map.createLayer(name, tileset);
-      if (layer) layer.setDepth(layerNames.indexOf(name));
-    }
-
-    this.cameras.main.setBounds(0, 0, map.widthInPixels, map.heightInPixels);
-    this.cameras.main.centerOn(map.widthInPixels / 2, map.heightInPixels / 2);
-    this.cameras.main.setZoom(
-      Math.min(
-        this.scale.width / map.widthInPixels,
-        this.scale.height / map.heightInPixels
-      )
-    );
-
-    const entrancesLayer = map.getObjectLayer("building_entrances");
-    if (entrancesLayer) {
-      for (const obj of entrancesLayer.objects) {
-        const sceneId = (
-          obj.properties as Array<{ name: string; value: string }> | undefined
-        )?.find((p) => p.name === "sceneId")?.value;
-        if (sceneId && obj.x !== undefined && obj.y !== undefined) {
-          const zone = this.add
-            .zone(obj.x, obj.y, obj.width ?? 32, obj.height ?? 32)
-            .setInteractive()
-            .setOrigin(0, 0);
-          zone.on("pointerdown", () => {
-            this.game.events.emit("building-clicked", sceneId);
-          });
+  private computeNodePositions() {
+    const scenarios = this.configCache?.scenarios;
+    if (scenarios) {
+      for (const outline of this.scenarioOutlines) {
+        const cfg = scenarios[outline.id];
+        if (cfg) {
+          this.nodePositions.set(outline.id, { x: cfg.x, y: cfg.y });
         }
       }
     }
 
-    this.mapLoaded = true;
+    // Auto-layout for scenarios without config
+    const unpositioned = this.scenarioOutlines.filter(
+      (o) => !this.nodePositions.has(o.id)
+    );
+    if (unpositioned.length > 0) {
+      const cx = 400;
+      const cy = 300;
+      const radius = Math.max(150, unpositioned.length * 40);
+      const startAngle = -Math.PI / 2;
+      unpositioned.forEach((o, i) => {
+        const angle =
+          startAngle + (2 * Math.PI * i) / unpositioned.length;
+        this.nodePositions.set(o.id, {
+          x: cx + Math.cos(angle) * radius,
+          y: cy + Math.sin(angle) * radius,
+        });
+      });
+    }
   }
 
-  private handleSetJunctionCoords(
-    coords: Record<string, { x: number; y: number }>
-  ) {
-    this.junctionCoords = coords;
+  private loadThumbnails() {
+    const scenarios = this.configCache?.scenarios;
+    let hasLoads = false;
+
+    for (const outline of this.scenarioOutlines) {
+      const cfg = scenarios?.[outline.id];
+      const thumbFile = cfg?.thumbnail;
+      if (thumbFile) {
+        const key = `thumb_${outline.id}`;
+        if (!this.textures.exists(key)) {
+          this.load.image(key, `${this.baseUrl}${thumbFile}`);
+          hasLoads = true;
+        }
+      }
+    }
+
+    // Also load town background if configured
+    if (this.configCache?.town?.background) {
+      const bgKey = "town_bg";
+      if (!this.textures.exists(bgKey)) {
+        this.load.image(
+          bgKey,
+          `${this.baseUrl}${this.configCache.town.background}`
+        );
+        hasLoads = true;
+      }
+    }
+
+    if (hasLoads) {
+      this.load.once("complete", () => this.buildGraph());
+      this.load.start();
+    } else {
+      this.buildGraph();
+    }
+  }
+
+  private buildGraph() {
+    if (this.isBuilt) return;
+    this.isBuilt = true;
+
+    // Optional background
+    if (this.textures.exists("town_bg")) {
+      this.add.image(0, 0, "town_bg").setOrigin(0, 0).setDepth(-1);
+    }
+
+    // Draw edges
+    this.edgeGraphics = this.add.graphics().setDepth(0);
+    this.edgeGraphics.lineStyle(EDGE_WIDTH, EDGE_COLOR, 0.6);
+
+    for (const edge of this.transportEdges) {
+      const fromPos = this.nodePositions.get(edge.fromLocationId);
+      const toPos = this.nodePositions.get(edge.toLocationId);
+      if (fromPos && toPos) {
+        this.edgeGraphics.beginPath();
+        this.edgeGraphics.moveTo(fromPos.x, fromPos.y);
+        this.edgeGraphics.lineTo(toPos.x, toPos.y);
+        this.edgeGraphics.strokePath();
+      }
+    }
+
+    // Draw nodes
+    for (const outline of this.scenarioOutlines) {
+      const pos = this.nodePositions.get(outline.id);
+      if (!pos) continue;
+
+      const container = this.add.container(pos.x, pos.y).setDepth(1);
+      const thumbKey = `thumb_${outline.id}`;
+
+      // Background rect
+      const bg = this.add
+        .rectangle(0, 0, NODE_WIDTH, NODE_HEIGHT, 0x2a2a3e)
+        .setStrokeStyle(2, 0x5566aa);
+      container.add(bg);
+
+      // Thumbnail image
+      if (this.textures.exists(thumbKey)) {
+        const thumb = this.add.image(0, 0, thumbKey);
+        const scale = Math.min(
+          NODE_WIDTH / thumb.width,
+          NODE_HEIGHT / thumb.height
+        );
+        thumb.setScale(scale);
+        container.add(thumb);
+      }
+
+      // Label
+      const label = this.add
+        .text(0, NODE_HEIGHT / 2 + 8, outline.name, {
+          fontSize: "11px",
+          color: "#ddd",
+          fontFamily: "Arial",
+          align: "center",
+          backgroundColor: "rgba(0,0,0,0.6)",
+          padding: { x: 4, y: 2 },
+        })
+        .setOrigin(0.5, 0);
+      container.add(label);
+
+      // Make interactive
+      bg.setInteractive({ useHandCursor: true });
+      bg.on("pointerover", () => {
+        this.tweens.add({
+          targets: container,
+          scaleX: 1.1,
+          scaleY: 1.1,
+          duration: 150,
+          ease: "Power2",
+        });
+      });
+      bg.on("pointerout", () => {
+        this.tweens.add({
+          targets: container,
+          scaleX: 1.0,
+          scaleY: 1.0,
+          duration: 150,
+          ease: "Power2",
+        });
+      });
+      bg.on("pointerdown", () => {
+        this.game.events.emit("building-clicked", {
+          scenarioId: outline.id,
+          entrySceneId: outline.entrySceneId,
+        });
+      });
+
+      this.nodeContainers.set(outline.id, container);
+    }
+
+    // Set camera bounds
+    this.fitCamera();
+  }
+
+  private fitCamera() {
+    if (this.nodePositions.size === 0) return;
+    const margin = 150;
+    let minX = Infinity;
+    let minY = Infinity;
+    let maxX = -Infinity;
+    let maxY = -Infinity;
+    for (const pos of this.nodePositions.values()) {
+      minX = Math.min(minX, pos.x);
+      minY = Math.min(minY, pos.y);
+      maxX = Math.max(maxX, pos.x);
+      maxY = Math.max(maxY, pos.y);
+    }
+    const w = maxX - minX + margin * 2;
+    const h = maxY - minY + margin * 2;
+    const cam = this.cameras.main;
+    cam.setBounds(minX - margin, minY - margin, w, h);
+    cam.centerOn((minX + maxX) / 2, (minY + maxY) / 2);
+    cam.setZoom(Math.min(cam.width / w, cam.height / h, 1));
   }
 
   private handleNpcPositionUpdate(data: {
-    npcId: string;
-    name: string;
-    position: {
-      type: string;
-      junctionId?: string;
-      roadId?: string;
-      position?: number;
-      sceneId?: string;
-    };
-    roads?: Array<{ id: string; endpointA: string; endpointB: string }>;
+    positions: Record<string, CharacterPosition>;
+    npcStatuses: NpcStatusEntry[];
+    scenes: SceneData[];
+    junctions: JunctionData[];
+    transportEdges: TransportEdgeData[];
   }) {
-    const pixelPos = this.resolvePixelPosition(data.position, data.roads);
-    if (!pixelPos) return;
-
-    let npcData = this.npcSprites.get(data.npcId);
-    if (!npcData) {
-      const color = NPC_COLORS[this.colorIndex % NPC_COLORS.length];
-      this.colorIndex++;
-
-      const dot = this.add
-        .circle(pixelPos.x, pixelPos.y, 6, color)
-        .setDepth(10);
-      const label = this.add
-        .text(pixelPos.x, pixelPos.y + 10, data.name, {
-          fontSize: "10px",
-          color: "#ffffff",
-          backgroundColor: "rgba(0,0,0,0.5)",
-          padding: { x: 2, y: 1 },
-        })
-        .setOrigin(0.5, 0)
-        .setDepth(11);
-
-      dot.setInteractive();
-      dot.on("pointerdown", () => {
-        this.game.events.emit("npc-clicked", data.npcId);
-      });
-
-      npcData = { dot, label, npcId: data.npcId, color };
-      this.npcSprites.set(data.npcId, npcData);
+    // Build lookup maps
+    const sceneToParent = new Map<string, string>();
+    for (const s of data.scenes) {
+      sceneToParent.set(s.id, s.parentLocationId);
     }
 
-    this.tweens.add({
-      targets: [npcData.dot, npcData.label],
-      x: pixelPos.x,
-      y: (target: Phaser.GameObjects.GameObject) =>
-        target === npcData!.label ? pixelPos.y + 10 : pixelPos.y,
-      duration: 500,
-      ease: "Power2",
-    });
+    const junctionMap = new Map<string, JunctionData>();
+    for (const j of data.junctions) {
+      junctionMap.set(j.id, j);
+    }
+
+    // Build roadId → transportEdge lookup (by streetSceneId matching roadId pattern)
+    const roadToEdge = new Map<string, TransportEdgeData>();
+    for (const edge of data.transportEdges) {
+      roadToEdge.set(edge.streetSceneId, edge);
+    }
+
+    const npcNameMap = new Map<string, string>();
+    for (const npc of data.npcStatuses) {
+      npcNameMap.set(npc.npcId, npc.name);
+    }
+
+    // Track which NPCs are still present
+    const activeNpcIds = new Set<string>();
+
+    for (const [npcId, position] of Object.entries(data.positions)) {
+      activeNpcIds.add(npcId);
+      const name = npcNameMap.get(npcId) ?? npcId;
+      const target = this.resolveNpcPosition(
+        position,
+        sceneToParent,
+        junctionMap,
+        roadToEdge
+      );
+      if (!target) continue;
+
+      const existing = this.npcDots.get(npcId);
+      if (existing) {
+        // Animate to new position
+        if (
+          Math.abs(existing.currentX - target.x) > 1 ||
+          Math.abs(existing.currentY - target.y) > 1
+        ) {
+          this.tweens.add({
+            targets: [existing.dot, existing.label],
+            x: (current: number, _key: string, _target: unknown, targetObj: Phaser.GameObjects.Arc | Phaser.GameObjects.Text) =>
+              targetObj === existing.dot ? target.x : target.x,
+            y: (current: number, _key: string, _target: unknown, targetObj: Phaser.GameObjects.Arc | Phaser.GameObjects.Text) =>
+              targetObj === existing.dot ? target.y : target.y + NPC_DOT_RADIUS + 4,
+            duration: 300,
+            ease: "Power2",
+          });
+          existing.currentX = target.x;
+          existing.currentY = target.y;
+        }
+      } else {
+        // Create new NPC dot
+        const color = NPC_COLORS[this.colorIndex % NPC_COLORS.length];
+        this.colorIndex++;
+
+        const dot = this.add
+          .circle(target.x, target.y, NPC_DOT_RADIUS, color)
+          .setDepth(10);
+        const label = this.add
+          .text(target.x, target.y + NPC_DOT_RADIUS + 4, name, {
+            fontSize: "9px",
+            color: "#fff",
+            backgroundColor: "rgba(0,0,0,0.6)",
+            padding: { x: 2, y: 1 },
+          })
+          .setOrigin(0.5, 0)
+          .setDepth(11);
+
+        this.npcDots.set(npcId, {
+          dot,
+          label,
+          currentX: target.x,
+          currentY: target.y,
+        });
+      }
+    }
+
+    // Remove dots for NPCs no longer present
+    for (const [npcId, npcData] of this.npcDots) {
+      if (!activeNpcIds.has(npcId)) {
+        npcData.dot.destroy();
+        npcData.label.destroy();
+        this.npcDots.delete(npcId);
+      }
+    }
   }
 
-  private resolvePixelPosition(
-    position: {
-      type: string;
-      junctionId?: string;
-      roadId?: string;
-      position?: number;
-      sceneId?: string;
-    },
-    roads?: Array<{ id: string; endpointA: string; endpointB: string }>
+  private resolveNpcPosition(
+    position: CharacterPosition,
+    sceneToParent: Map<string, string>,
+    junctionMap: Map<string, JunctionData>,
+    roadToEdge: Map<string, TransportEdgeData>
   ): { x: number; y: number } | null {
     switch (position.type) {
-      case "junction": {
-        const coords = this.junctionCoords[position.junctionId!];
-        return coords ?? null;
+      case "scene": {
+        const parentId = sceneToParent.get(position.sceneId);
+        if (!parentId) return null;
+        const nodePos = this.nodePositions.get(parentId);
+        if (!nodePos) return null;
+        return {
+          x: nodePos.x + (Math.random() - 0.5) * NPC_JITTER,
+          y: nodePos.y + (Math.random() - 0.5) * NPC_JITTER,
+        };
       }
       case "road": {
-        const road = roads?.find((r) => r.id === position.roadId);
-        if (!road) return null;
-        const a = this.junctionCoords[road.endpointA];
-        const b = this.junctionCoords[road.endpointB];
-        if (!a || !b) return null;
-        const t = position.position ?? 0.5;
-        return { x: a.x + (b.x - a.x) * t, y: a.y + (b.y - a.y) * t };
+        // Find transportEdge whose streetSceneId matches roadId
+        const edge = roadToEdge.get(position.roadId);
+        if (edge) {
+          const fromPos = this.nodePositions.get(edge.fromLocationId);
+          const toPos = this.nodePositions.get(edge.toLocationId);
+          if (fromPos && toPos) {
+            return {
+              x: Phaser.Math.Linear(fromPos.x, toPos.x, position.position),
+              y: Phaser.Math.Linear(fromPos.y, toPos.y, position.position),
+            };
+          }
+        }
+        return null;
       }
-      case "scene":
-        return null;
-      default:
-        return null;
+      case "junction": {
+        const junction = junctionMap.get(position.junctionId);
+        if (!junction || junction.connectedSceneIds.length === 0) return null;
+        const firstSceneId = junction.connectedSceneIds[0];
+        const parentId = sceneToParent.get(firstSceneId);
+        if (!parentId) return null;
+        const nodePos = this.nodePositions.get(parentId);
+        if (!nodePos) return null;
+        return {
+          x: nodePos.x + (Math.random() - 0.5) * NPC_JITTER,
+          y: nodePos.y + (Math.random() - 0.5) * NPC_JITTER,
+        };
+      }
     }
   }
 
   private handleZoomTo(data: { x: number; y: number; zoom: number }) {
     this.cameras.main.pan(data.x, data.y, 500, "Power2");
     this.cameras.main.zoomTo(data.zoom, 500);
-  }
-
-  private handleEnterBuilding(_data: { sceneId: string }) {
-    this.scene.start("InteriorScene");
-  }
-
-  private updateNpcRenderMode(zoom: number) {
-    const useSprites = zoom >= ZOOM_SPRITE_THRESHOLD;
-    this.game.events.emit("zoom-level-changed", useSprites ? 2 : 1);
   }
 }

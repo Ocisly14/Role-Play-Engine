@@ -2,7 +2,7 @@
 import * as path from "node:path";
 import type { Request, Response } from "express";
 import { getPrismaClient } from "../../../src/shared/agents/memory/database/prismaClient.js";
-import { findMapsDirectory } from "./mapService.js";
+import { findMapsDirectory, findSceneDirectory } from "./mapService.js";
 import * as simulationService from "./service.js";
 
 export async function createSimulation(req: Request, res: Response) {
@@ -102,9 +102,15 @@ export async function getStatus(req: Request, res: Response) {
 
     let mapsPrefix: string | null = null;
     if (modulePath) {
-      const mapsDir = findMapsDirectory(modulePath);
-      if (mapsDir) {
-        mapsPrefix = path.basename(mapsDir);
+      // Prefer scene/ directory (image layer maps), fallback to *_Maps (tile maps)
+      const sceneDir = findSceneDirectory(modulePath);
+      if (sceneDir) {
+        mapsPrefix = "scene";
+      } else {
+        const mapsDir = findMapsDirectory(modulePath);
+        if (mapsDir) {
+          mapsPrefix = path.basename(mapsDir);
+        }
       }
     }
 

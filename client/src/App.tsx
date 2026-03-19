@@ -26,6 +26,7 @@ import ResetPassword from "./views/auth/ResetPassword";
 const SimulationPage = lazy(() => import("./views/SimulationPage"));
 const SimulationSelectPage = lazy(() => import("./views/SimulationSelectPage"));
 const SimulationConfigPage = lazy(() => import("./views/SimulationConfigPage"));
+const MapEditorPage = lazy(() => import("./views/MapEditorPage"));
 
 // Background manager component - handles dynamic backgrounds based on game state
 const BackgroundManager: React.FC = () => {
@@ -70,6 +71,22 @@ const AppRoutes: React.FC = () => {
               }
             >
               <SimulationPage />
+            </Suspense>
+          }
+        />
+
+        {/* Map editor (outside ProtectedRoute) */}
+        <Route
+          path="/map-editor/:moduleName?"
+          element={
+            <Suspense
+              fallback={
+                <div className="flex items-center justify-center h-screen bg-gray-950 text-gray-400">
+                  Loading...
+                </div>
+              }
+            >
+              <MapEditorPage />
             </Suspense>
           }
         />
