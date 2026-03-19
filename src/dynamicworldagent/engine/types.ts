@@ -11,12 +11,12 @@ export interface NodeHandler {
   /** The PlanNodeType this handler processes (e.g. "movement", "fire_spread") */
   type: string;
 
-  /** Execute a single node, return the resulting action */
+  /** Execute a single node, return the resulting action (may be async for LLM-based handlers) */
   execute(
     node: PlanNode,
     dgsm: DynamicGameStateManager,
     ctx: ExecutionContext
-  ): CharacterAction;
+  ): CharacterAction | Promise<CharacterAction>;
 
   // --- LLM prompt metadata (auto-injected into plan agent prompts) ---
 
@@ -220,11 +220,11 @@ export interface ExecutionContext {
     dgsm: DynamicGameStateManager
   ): Map<string, number>;
 
-  /** Get difficulty for a node (player explicit or NPC relationship-derived) */
+  /** Get difficulty for a node */
   getNodeDifficulty(
     node: PlanNode,
     dgsm: DynamicGameStateManager
-  ): "regular" | "hard" | "extreme" | "luck_only";
+  ): "regular" | "hard" | "extreme";
 
   /** Current tick time label (HH:MM) */
   currentTime?: string;
@@ -233,6 +233,15 @@ export interface ExecutionContext {
   simulationEmitter?: import(
     "../simulation/SimulationEventEmitter.js"
   ).SimulationEventEmitter;
+
+  /** LLM runtime (model provider context) — needed by handlers that call LLM resolvers */
+  runtime?: any;
+
+  /** Language code (e.g. "en", "zh") — used by LLM-based handlers */
+  language?: string;
+
+  /** NPC memory manager — used by handlers that write character memories */
+  memoryManager?: import("../memory/NpcMemoryManager.js").NpcMemoryManager;
 }
 
 export interface SkillRollResult {
@@ -242,4 +251,17 @@ export interface SkillRollResult {
   successLevel: import(
     "../dynamicBasicAgent/npcPlanning/types.js"
   ).SuccessLevel;
+  /** Per-target opposed roll outcomes (multi-target character_interaction) */
+  perTargetResults?: Record<
+    string,
+    {
+      successLevel: import(
+        "../dynamicBasicAgent/npcPlanning/types.js"
+      ).SuccessLevel;
+      actorWon: boolean;
+      detail: string;
+      /** Pre-computed combat damage (only when actorWon in combat) */
+      damage?: number;
+    }
+  >;
 }

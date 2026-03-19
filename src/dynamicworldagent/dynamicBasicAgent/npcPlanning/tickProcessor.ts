@@ -24,6 +24,11 @@ import {
 } from "../knowledge/sessionRagService.js";
 import { buildAutoMovementReplacement } from "./autoMovementHelpers.js";
 import type { NPCPlanningAgent } from "./NPCPlanningAgent.js";
+import {
+  applyCharacterDelta,
+  resolveInteractionState,
+  resolveTargets,
+} from "../../engine/handlers/interactionStateResolver.js";
 import type {
   CharacterAction,
   DiscoveryEntry,
@@ -70,8 +75,9 @@ function findKnownItem(
     ?.items.find((i) => i.id === itemId);
   if (sceneItem) return sceneItem;
 
-  if (node.targetCharacterId) {
-    const targetItem = dgsm.findNpcItem(node.targetCharacterId, itemId);
+  const primaryTargetId = node.targetCharacterIds?.[0];
+  if (primaryTargetId) {
+    const targetItem = dgsm.findNpcItem(primaryTargetId, itemId);
     if (targetItem) return targetItem;
   }
 
@@ -101,19 +107,6 @@ function getItemActionContext(
       itemName: item?.name,
       targetItemId: resolvedTargetItemId ?? resolvedSourceContainerId,
       targetItemName: targetItem?.name,
-    };
-  }
-
-  if (
-    node.type === "character_interaction" &&
-    node.characterInteractionPayload?.transferType === "item" &&
-    node.characterInteractionPayload.itemId
-  ) {
-    const itemId = node.characterInteractionPayload.itemId;
-    const item = findKnownItem(dgsm, node, itemId);
-    return {
-      itemId,
-      itemName: item?.name,
     };
   }
 
@@ -174,7 +167,7 @@ function classifyImpactPerspective(
   action: CharacterAction
 ): "targeted" | "witness" | "co_presence" {
   if (action.characterId === "__encounter__") return "co_presence";
-  if (action.targetCharacterId === npcId) return "targeted";
+  if (action.targetCharacterIds?.includes(npcId)) return "targeted";
   return "witness";
 }
 
@@ -270,7 +263,7 @@ function buildMovementAction(
     status,
     outcome,
     failureReason,
-    targetCharacterId: node.targetCharacterId,
+    targetCharacterIds: node.targetCharacterIds,
   };
 }
 
@@ -604,7 +597,7 @@ const SUCCESS_TO_MAX_RANK: Record<SuccessLevel, number> = {
 
 const DISCOVERY_SIMILARITY_THRESHOLD = 0.7;
 
-// Lazy embedding client singleton
+// Lazy embedding client singleton for evidence discovery semantic matching.
 let _embeddingClient: EmbeddingClient | null = null;
 function getEmbeddingClient(): EmbeddingClient {
   if (!_embeddingClient) {
@@ -679,102 +672,50 @@ async function discoverEvidence(
 }
 
 /**
- * Discover NPC knowledge after a successful character_interaction.
- * Queries target NPC's information and secret memories (unrevealed).
+ * Load all candidate NPC knowledge for a character_interaction.
+ * The LLM decides what actually gets transferred.
  */
 async function discoverNpcKnowledge(
   node: PlanNode,
-  successLevel: SuccessLevel,
   dgsm: DynamicGameStateManager,
-  language: string,
   memoryManager: NpcMemoryManager
 ): Promise<DiscoveryEntry[]> {
-  if (node.type !== "character_interaction" || !node.targetCharacterId)
-    return [];
+  if (node.type !== "character_interaction") return [];
 
-  let maxRank: number;
-  if (node.skill) {
-    // Skill roll was made — success level gates difficulty
-    maxRank = SUCCESS_TO_MAX_RANK[successLevel] ?? 0;
-  } else {
-    // No skill roll — relationship score gates difficulty
-    const rel = dgsm.getRelationship(node.characterId, node.targetCharacterId);
-    const score = rel?.score ?? 0;
-    if (score >= 80) maxRank = 3;
-    else if (score >= 70) maxRank = 2;
-    else if (score >= 60) maxRank = 1;
-    else maxRank = 0;
-  }
-
-  const targetId = node.targetCharacterId;
   const state = dgsm.getState();
-  const targetNpc = state.npcCharacters.find((n) => n.id === targetId);
-  if (!targetNpc) return [];
+  const targetIds = resolveTargets(node);
+  const discoveries: DiscoveryEntry[] = [];
 
-  // Query target NPC's unrevealed information and secret memories
-  const targetMemories = await memoryManager.query({
-    npcId: targetId,
-    sessionId: state.sessionId,
-    query: node.action,
-    filters: { types: ["information", "secret"] },
-    limit: 50,
-  });
+  for (const targetId of targetIds) {
+    const targetNpc = state.npcCharacters.find((n) => n.id === targetId);
+    if (!targetNpc) continue;
 
-  const candidates: DiscoveryCandidate[] = [];
+    const targetMemories = await memoryManager.getAllByTypes(
+      targetId,
+      state.sessionId,
+      ["information", "secret"]
+    );
 
-  for (const mem of targetMemories) {
-    const meta = mem.metadata as Record<string, any> | null;
-    if (meta?.revealed) continue;
-
-    const difficulty =
-      (meta?.difficulty as string) ??
-      (mem.type === "secret" ? "hard" : "regular");
-    const rank = DIFFICULTY_RANK[difficulty] ?? 1;
-    if (rank > maxRank) continue;
-
-    candidates.push({
-      id: (meta?.knowledgeId as string) ?? mem.id,
-      text: mem.content,
-      difficulty,
-      source: "npc",
-      sourceId: targetNpc.id,
-      sourceName: targetNpc.name,
-    });
-  }
-
-  return matchCandidates(candidates, node, language);
-}
-
-/** Mark a target NPC's knowledge/secret memory as revealed after discovery */
-async function markMemoryRevealed(
-  memoryManager: NpcMemoryManager,
-  targetNpcId: string,
-  sessionId: string,
-  knowledgeIdOrMemoryId: string
-): Promise<void> {
-  const candidates = await memoryManager.query({
-    npcId: targetNpcId,
-    sessionId,
-    query: "",
-    filters: { types: ["information", "secret"] },
-    limit: 100,
-  });
-  for (const mem of candidates) {
-    const meta = mem.metadata as Record<string, any> | null;
-    const kid = (meta?.knowledgeId as string) ?? mem.id;
-    if (kid === knowledgeIdOrMemoryId) {
-      await memoryManager.updateBeliefConfidence(
-        mem.id,
-        meta?.confidence ?? 1,
-        "revealed via discovery",
-        { ...meta, revealed: true }
-      );
-      break;
+    for (const mem of targetMemories) {
+      const meta = mem.metadata as Record<string, any> | null;
+      discoveries.push({
+        id: (meta?.knowledgeId as string) ?? mem.id,
+        text: mem.content,
+        difficulty:
+          ((meta?.difficulty as string) ??
+            (mem.type === "secret" ? "hard" : "regular")) as DiscoveryEntry["difficulty"],
+        source: "npc",
+        sourceId: targetNpc.id,
+        sourceName: targetNpc.name,
+        similarity: 1,
+      });
     }
   }
+
+  return discoveries;
 }
 
-/** Common logic: split automatic vs semantic-match candidates */
+/** Common logic: split automatic vs semantic-match candidates. */
 async function matchCandidates(
   candidates: DiscoveryCandidate[],
   node: PlanNode,
@@ -792,6 +733,18 @@ async function matchCandidates(
       semanticCandidates.push(c);
     }
   }
+
+  const automaticResults: DiscoveryEntry[] = automaticCandidates
+    .slice(0, 1)
+    .map((candidate) => ({
+      id: candidate.id,
+      text: candidate.text,
+      source: candidate.source,
+      sourceId: candidate.sourceId,
+      sourceName: candidate.sourceName,
+      difficulty: "automatic",
+      similarity: 0,
+    }));
 
   // All candidates (including automatic) go through semantic matching
   const allSemanticCandidates = [...automaticCandidates, ...semanticCandidates];
@@ -1190,63 +1143,111 @@ async function executeSingleTick(
     }
     executedNodes.push(node);
     const itemContext = getItemActionContext(dgsm, node);
-    const action = handler.execute(node, dgsm, ctx);
+    const action = await handler.execute(node, dgsm, ctx);
     tickActions.push(action);
     const eventOutcome = appendItemContext(action.outcome, itemContext);
     const eventMetadata = buildEventMetadata(action.outcome, itemContext);
 
     // 4. Post-execution processing
 
-    // On character_interaction success -> update relationship
-    let relationshipChange: string | undefined;
-    let relResult:
-      | { scoreDelta: number; newScore: number; note: string }
-      | null
-      | undefined;
+    // 4a. character_interaction: load full NPC knowledge first, then let the LLM decide transfer
     if (
       action.status === "completed" &&
-      node.type === "character_interaction" &&
-      node.targetCharacterId
+      node.type === "character_interaction"
     ) {
-      relResult = await npcPlanningAgent.updateRelationshipViaLLM(
+      const npcKnowledge = memoryManager
+        ? await discoverNpcKnowledge(node, dgsm, memoryManager)
+        : [];
+
+      const skillRollResult =
+        action.successLevel
+          ? {
+              successLevel: action.successLevel,
+              detail: action.rollDetail ?? "",
+              perTargetResults: action.perTargetResults,
+            }
+          : null;
+
+      const delta = await resolveInteractionState(
+        node,
         dgsm,
-        node.characterId,
-        node.targetCharacterId,
-        action.outcome,
+        ctx.runtime,
+        skillRollResult,
+        npcKnowledge,
         language
       );
-      if (relResult) {
-        const sign = relResult.scoreDelta >= 0 ? "+" : "";
-        relationshipChange = `[relationship ${sign}${relResult.scoreDelta} → ${relResult.newScore}, ${relResult.note}]`;
-      }
-    }
 
-    // Mirror write: passive NPC gets event memory of this interaction
-    if (
-      memoryManager &&
-      action.status === "completed" &&
-      node.type === "character_interaction" &&
-      node.targetCharacterId
-    ) {
-      const targetId = node.targetCharacterId;
-      const initiatorName = node.characterName;
-
-      await memoryManager.add({
-        npcId: targetId,
+      // Apply actor state changes
+      const interactionTargets = resolveTargets(node);
+      await applyCharacterDelta(
+        dgsm,
+        node.characterId,
+        delta.actorChanges,
+        interactionTargets.length > 0 ? interactionTargets : [node.characterId],
+        memoryManager,
         sessionId,
         moduleId,
-        type: "event",
-        content: `${initiatorName} ${action.action} — result: ${eventOutcome}`,
         gameDay,
-        gameTime: action.gameTime,
-        location: action.location,
-        metadata: eventMetadata,
-      });
+        node.endTime
+      );
+
+      // Apply each target's state changes
+      for (const targetId of Object.keys(delta.targetChanges)) {
+        await applyCharacterDelta(
+          dgsm,
+          targetId,
+          delta.targetChanges[targetId],
+          [node.characterId],
+          memoryManager,
+          sessionId,
+          moduleId,
+          gameDay,
+          node.endTime
+        );
+      }
+
+      // Update action with LLM-resolved memory
+      action.outcome = delta.actorChanges.memory;
+      action.stateMemories = {
+        [node.characterId]: delta.actorChanges.memory,
+        ...Object.fromEntries(
+          Object.entries(delta.targetChanges).map(([id, d]) => [id, d.memory])
+        ),
+      };
+    }
+
+    // On character_interaction success -> update relationships with all targets
+    let relationshipChange: string | undefined;
+    const allTargetIds = node.targetCharacterIds ?? [];
+    if (
+      action.status === "completed" &&
+      node.type === "character_interaction" &&
+      allTargetIds.length > 0
+    ) {
+      const relParts: string[] = [];
+      for (const targetId of allTargetIds) {
+        const relResult = await npcPlanningAgent.updateRelationshipViaLLM(
+          dgsm,
+          node.characterId,
+          targetId,
+          action.outcome,
+          language
+        );
+        if (relResult) {
+          const sign = relResult.scoreDelta >= 0 ? "+" : "";
+          const targetName = state.npcCharacters.find((n) => n.id === targetId)?.name ?? targetId;
+          relParts.push(`[rel:${targetName} ${sign}${relResult.scoreDelta} → ${relResult.newScore}]`);
+        }
+      }
+      if (relParts.length > 0) {
+        relationshipChange = relParts.join(" ");
+      }
     }
 
     // Log NPC actions and mark completed
     {
-      let logEntry = eventOutcome;
+      // Actor event memory: prefer stateMemories if available
+      let logEntry = action.stateMemories?.[node.characterId] ?? eventOutcome;
       if (relationshipChange) logEntry += ` ${relationshipChange}`;
 
       // Write event memory via NpcMemoryManager
@@ -1264,6 +1265,46 @@ async function executeSingleTick(
         });
       }
 
+      // Mirror write: other participants get event memories
+      if (memoryManager && action.stateMemories) {
+        // Write memories for each target in stateMemories (except actor)
+        for (const [charId, memoryText] of Object.entries(action.stateMemories)) {
+          if (charId === node.characterId) continue; // actor already written above
+          await memoryManager.add({
+            npcId: charId,
+            sessionId,
+            moduleId,
+            type: "event",
+            content: memoryText,
+            gameDay,
+            gameTime: action.gameTime,
+            location: action.location,
+            metadata: eventMetadata,
+          });
+        }
+      } else if (
+        memoryManager &&
+        action.status === "completed" &&
+        node.type === "character_interaction" &&
+        allTargetIds.length > 0
+      ) {
+        // Fallback mirror write for non-stateMemories handlers
+        const initiatorName = node.characterName;
+        for (const targetId of allTargetIds) {
+          await memoryManager.add({
+            npcId: targetId,
+            sessionId,
+            moduleId,
+            type: "event",
+            content: `${initiatorName} ${action.action} — result: ${eventOutcome}`,
+            gameDay,
+            gameTime: action.gameTime,
+            location: action.location,
+            metadata: eventMetadata,
+          });
+        }
+      }
+
       await npcPlanningAgent.markNodeCompleted(
         sessionId,
         node.characterId,
@@ -1273,113 +1314,23 @@ async function executeSingleTick(
       );
     }
 
-    // Knowledge transfer: write information memory to target NPC
-    if (
-      memoryManager &&
-      action.status === "completed" &&
-      node.type === "character_interaction" &&
-      node.characterInteractionPayload?.transferType === "information" &&
-      node.characterInteractionPayload.informationContent
-    ) {
-      const payload = node.characterInteractionPayload;
-      const informationContent = payload.informationContent!;
-      const targets =
-        payload.targetCharacterIds ??
-        (node.targetCharacterId ? [node.targetCharacterId] : []);
-      const filteredTargets = targets.filter((id) => id !== node.characterId);
-
-      const senderChar = state.npcCharacters.find(
-        (n) => n.id === node.characterId
-      );
-      const senderName = senderChar?.name ?? node.characterName;
-
-      // Filter to targets actually present at the same location
-      const presentTargets = filteredTargets.filter((id) => {
-        const actorPos = dgsm.getCharacterPosition(node.characterId);
-        const tPos = dgsm.getCharacterPosition(id);
-        return arePositionsCoLocated(actorPos, tPos, dgsm);
-      });
-
-      // Use source knowledgeId if available, otherwise generate one
-      const sourceKnowledgeId =
-        payload.relatedKnowledgeIds?.[0] ?? `transfer_${node.nodeId}`;
-
-      for (const targetId of presentTargets) {
-        await memoryManager.add({
-          npcId: targetId,
-          sessionId,
-          moduleId,
-          type: "information",
-          content: `${senderName} told me: ${informationContent}`,
-          gameDay,
-          gameTime: action.gameTime,
-          location: action.location,
-          metadata: {
-            knowledgeId: sourceKnowledgeId,
-            difficulty: "automatic",
-          },
-        });
-      }
-
-      // Sender event memory (recording the act of sharing)
-      const targetNames = presentTargets
-        .map((id) => {
-          const npc = state.npcCharacters.find((n) => n.id === id);
-          return npc?.name ?? id;
-        })
-        .join(", ");
-      if (targetNames) {
-        await memoryManager.add({
-          npcId: node.characterId,
-          sessionId,
-          moduleId,
-          type: "event",
-          content: `Shared information with ${targetNames}: ${informationContent}`,
-          gameDay,
-          gameTime: action.gameTime,
-          location: action.location,
-          metadata: { outcome: action.outcome },
-        });
-      }
-    }
-
-    // Discovery — NPC discovers evidence/knowledge on successful actions
+    // Discovery — NPC discovers evidence on successful actions
+    // Note: character_interaction npcKnowledge is already handled in step 4a above.
     if (action.status === "completed") {
       const effectiveSuccess: SuccessLevel = action.successLevel ?? "regular";
-      const evidenceSceneId = node.location;
-      // Discover evidence items from scene
       const evidence = await discoverEvidence(
         node,
         effectiveSuccess,
         dgsm,
         language,
-        evidenceSceneId
+        node.location
       );
-      // Discover NPC knowledge
-      const npcKnowledge = memoryManager
-        ? await discoverNpcKnowledge(
-            node,
-            effectiveSuccess,
-            dgsm,
-            language,
-            memoryManager
-          )
-        : [];
-      const allDiscoveries = [...evidence, ...npcKnowledge];
+      const allDiscoveries = evidence;
 
       if (allDiscoveries.length > 0) {
-        action.discoveries = allDiscoveries;
+        // Merge with any discoveries already set (e.g. from step 4a)
+        action.discoveries = [...(action.discoveries ?? []), ...allDiscoveries];
         embedDiscoveries(allDiscoveries, dgsm, language as "en" | "zh");
-        for (const entry of allDiscoveries) {
-          if (entry.source === "npc" && memoryManager) {
-            await markMemoryRevealed(
-              memoryManager,
-              entry.sourceId,
-              sessionId,
-              entry.id
-            );
-          }
-        }
         console.log(
           `[TickProcessor] NPC discovered ${allDiscoveries.length} item(s): ${allDiscoveries.map((d) => `[${d.difficulty}] ${d.text.slice(0, 40)}`).join("; ")}`
         );
@@ -1840,11 +1791,11 @@ function scanUnplannedEncounters(
   // Build dedup set from already-executed character_interaction actions
   const interactedPairs = new Set<string>();
   for (const action of tickActions) {
-    if (action.type === "character_interaction" && action.targetCharacterId) {
-      const pairKey = [action.characterId, action.targetCharacterId]
-        .sort()
-        .join("_");
-      interactedPairs.add(pairKey);
+    if (action.type === "character_interaction" && action.targetCharacterIds?.length) {
+      for (const targetId of action.targetCharacterIds) {
+        const pairKey = [action.characterId, targetId].sort().join("_");
+        interactedPairs.add(pairKey);
+      }
     }
   }
 

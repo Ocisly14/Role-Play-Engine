@@ -286,7 +286,6 @@ The \`impact\` field on every PlanNode determines **who in the game world percei
     }
 
     example.impact = handler.exampleNode.impact ?? 0;
-    example.status = "pending";
 
     // Merge type-specific extras
     for (const [k, v] of Object.entries(extras)) {
@@ -323,7 +322,7 @@ The \`impact\` field on every PlanNode determines **who in the game world percei
     // Header
     sections.push("## Output");
     sections.push(
-      `Return a JSON array of PlanNode objects. No extra text. JSON keys must be in English. Write "action" and "informationContent" values in ${langName}. Keep "location", "type", "skill", "nodeId", IDs, and enum values in English.`
+      `Return a JSON array of PlanNode objects. No extra text. JSON keys must be in English. Write "action" values in ${langName}. Keep "location", "type", "skill", "nodeId", IDs, and enum values in English.`
     );
     if (options?.extraInstructions) {
       sections.push(options.extraInstructions);
@@ -352,7 +351,6 @@ The \`impact\` field on every PlanNode determines **who in the game world percei
       type: typeNames as any,
       skill: "exact skill name (OMIT if no check needed)" as any,
       impact: 0,
-      status: "pending" as any,
     };
 
     sections.push("```json");

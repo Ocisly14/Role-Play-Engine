@@ -1,4 +1,4 @@
-import type { NpcMemory, PrismaClient } from "@prisma/client";
+import type { NpcMemory, NpcMemoryType, PrismaClient } from "@prisma/client";
 import type { EmbeddingClient } from "../../rag/embedding.js";
 import { DecayEngine } from "./DecayEngine.js";
 import { MemoryRetriever } from "./MemoryRetriever.js";
@@ -52,6 +52,21 @@ export class NpcMemoryManager {
       npcId,
       filters: { gameDay },
       limit: 500,
+    });
+  }
+
+  /** Fetch all memories for a specific NPC and memory types without semantic filtering. */
+  async getAllByTypes(
+    npcId: string,
+    sessionId: string,
+    types: NpcMemoryType[],
+    limit = 500
+  ): Promise<NpcMemory[]> {
+    return this.store.findCandidates({
+      sessionId,
+      npcId,
+      filters: { types },
+      limit,
     });
   }
 

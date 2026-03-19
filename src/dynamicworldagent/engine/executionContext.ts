@@ -6,9 +6,15 @@ import {
   resolveSkillRoll,
 } from "./shared/index.js";
 import type { ExecutionContext } from "./types.js";
+import type { NpcMemoryManager } from "../memory/NpcMemoryManager.js";
 
 export function createExecutionContext(
-  registry?: GameEngineRegistry
+  registry?: GameEngineRegistry,
+  opts?: {
+    runtime?: any;
+    language?: string;
+    memoryManager?: NpcMemoryManager;
+  }
 ): ExecutionContext {
   return {
     resolveSkillRoll,
@@ -19,5 +25,8 @@ export function createExecutionContext(
       if (!registry) return new Map();
       return registry.collectCharacterPenalties(characterId, dgsm);
     },
+    runtime: opts?.runtime,
+    language: opts?.language,
+    memoryManager: opts?.memoryManager,
   };
 }

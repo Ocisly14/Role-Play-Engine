@@ -14,7 +14,7 @@ function makeNode(overrides: Partial<PlanNode> = {}): PlanNode {
     type: "character_interaction",
     impact: 1,
     status: "pending",
-    targetCharacterId: "npc-2",
+    targetCharacterIds: ["npc-2"],
     executionMeta: { remainingMinutes: 0 },
     ...overrides,
   } as PlanNode;

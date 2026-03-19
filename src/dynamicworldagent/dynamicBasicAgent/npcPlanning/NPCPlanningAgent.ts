@@ -185,7 +185,7 @@ function buildImpactTriggerDescription(
     return `Encountered others in person: ${action.outcome}`;
   }
 
-  if (action.targetCharacterId === npcId) {
+  if (action.targetCharacterIds?.includes(npcId)) {
     return `You were directly involved: ${action.characterName} targeted you with "${action.action}" (${action.outcome})`;
   }
 

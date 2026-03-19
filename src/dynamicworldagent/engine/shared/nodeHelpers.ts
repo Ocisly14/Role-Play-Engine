@@ -18,15 +18,6 @@ export function buildOutcome(
   }
   // Payload context
   if (
-    node.type === "character_interaction" &&
-    node.characterInteractionPayload
-  ) {
-    const p = node.characterInteractionPayload;
-    if (p.transferType === "item" && p.itemId)
-      parts.push(`(item: ${p.itemId})`);
-    else if (p.transferType === "information" && p.informationContent)
-      parts.push(`(info: ${p.informationContent})`);
-  } else if (
     node.type === "object_interaction" &&
     node.objectInteractionPayload
   ) {
@@ -60,7 +51,7 @@ export function makeAction(
   outcome: string,
   opts?: {
     gameTime?: string;
-    difficulty?: "regular" | "hard" | "extreme" | "luck_only";
+    difficulty?: "regular" | "hard" | "extreme";
     successLevel?: SuccessLevel;
     failureReason?: FailureReason;
   }
@@ -79,6 +70,6 @@ export function makeAction(
     status,
     outcome,
     failureReason: opts?.failureReason,
-    targetCharacterId: node.targetCharacterId,
+    targetCharacterIds: node.targetCharacterIds,
   };
 }

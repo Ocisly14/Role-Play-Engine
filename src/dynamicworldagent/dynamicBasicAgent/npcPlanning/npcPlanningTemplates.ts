@@ -197,11 +197,10 @@ const DEFAULT_NODE_GUARDRAILS_PROMPT = `## Planning Guardrails
 const DEFAULT_DETAILED_NODE_TYPE_REF = `## Node Type Reference
 - **"routine"**: Self-contained action, no interaction target.
 - **"movement"**: Move to a destination. Set location to the exact destination name from "Places You Know".
-- **"character_interaction"**: Interact with a specific character. Requires targetCharacterId.
-  - For sharing information or knowledge with one or more characters, include characterInteractionPayload:
-    { "transferType": "information", "informationContent": "what you want to tell them", "targetCharacterIds": ["id1", "id2"], "relatedKnowledgeIds": ["knowledge_id"] }
-  - informationContent should reflect YOUR perspective — what you believe and how you'd say it.
-  - targetCharacterIds is optional (defaults to targetCharacterId). relatedKnowledgeIds is optional (use when formally sharing knowledge you possess).
+- **"character_interaction"**: Interact with one or more characters.
+  - Describe what you do entirely in \`action\`.
+  - Put all targets in top-level \`targetCharacterIds\`.
+  - For single-target interactions, \`targetCharacterIds\` should still be an array with one ID.
 - **"object_interaction"**: Interact with a physical object. Use \`action: "move"\` with explicit \`from\`/\`to\` for taking, putting back, stashing, removing from containers, or moving scene items. Use \`inspect\`, \`use\`, or \`destroy\` for non-relocation interactions.
 - **"scene_interaction"**: Search, investigate, or modify the environment.
   - Only include \`sceneConnectionEffect\` when you are changing a real map connection that already exists.
@@ -223,7 +222,7 @@ You can use a skill to accomplish an action or achieve your goal. Set \`"skill"\
 ## Impact
 
 - \`"impact": 0\` = private or low-consequence action. No one else needs to react.
-- \`"impact": 1\` = direct target only. Use this only for targeted actions with a \`targetCharacterId\` where the target should meaningfully react, and only when the action also uses a \`skill\`.
+- \`"impact": 1\` = direct target only. Use this only for targeted actions with \`targetCharacterIds\` where the target should meaningfully react, and only when the action also uses a \`skill\`.
 - \`"impact": 2\` = noticeable to others in the same scene.
 - \`"impact": 3\` = noticeable across the same larger location or building.
 - \`"impact": 4\` = noticeable in nearby locations or the surrounding area.
@@ -236,7 +235,7 @@ ${COC_SKILL_LIST_PROMPT}`;
 function defaultDetailedOutputSchema(language: string): string {
   const lang = contentLanguageName(language);
   return `## Output
-Return a JSON array of PlanNode objects. No extra text. JSON keys must be in English. Write "action" and "informationContent" values in ${lang}. Keep "location", "type", "skill", "nodeId", IDs, and enum values in English.
+Return a JSON array of PlanNode objects. No extra text. JSON keys must be in English. Write "action" values in ${lang}. Keep "location", "type", "skill", "nodeId", IDs, and enum values in English.
 
 ### Fields
 \`\`\`json
@@ -248,13 +247,12 @@ Return a JSON array of PlanNode objects. No extra text. JSON keys must be in Eng
   "location": "exact location name from Places You Know (English)",
   "type": "routine|movement|character_interaction|object_interaction|scene_interaction",
   "skill": "OMIT if no skill check needed, otherwise exact skill name (English)",
-  "impact": "Default 0. Use 1 only for targeted consequential actions with skill; 2+ for broader effects",
-  "status": "pending"
+  "impact": "Default 0. Use 1 only for targeted consequential actions with skill; 2+ for broader effects"
 }
 \`\`\`
 
 Add type-specific fields as needed:
-- **character_interaction**: \`"targetCharacterId"\`, optional \`"characterInteractionPayload"\` with \`transferType\` ("item" or "information"), \`informationContent\` (in ${lang}), \`targetCharacterIds\`, \`relatedKnowledgeIds\`
+- **character_interaction**: \`"targetCharacterIds"\` (array of one or more character IDs)
 - **object_interaction**:
   - relocation: \`"objectInteractionPayload": { "action": "move", "itemId": "item_id", "from": { "type": "scene|inventory|container", "containerItemId"?: "container_id", "scope"?: "scene|inventory" }, "to": { ...same shape... } }\`
   - non-standard use: include \`itemUpdates\`/\`targetItemUpdates\`
@@ -474,8 +472,7 @@ IMPORTANT: "revisedNodes" must cover only the current phase of action from right
       "action": "description of what you do (in ${lang})",
       "location": "exact location name from Places You Know (English)",
       "type": "routine|movement|character_interaction|object_interaction|scene_interaction",
-      "impact": "Default 0. Use 1 only for targeted consequential actions with skill; 2+ for broader effects",
-      "status": "pending"
+      "impact": "Default 0. Use 1 only for targeted consequential actions with skill; 2+ for broader effects"
     }
   ],
   "shouldUpdateLongTermIntent": false,

@@ -1,6 +1,7 @@
 import type {
   CharacterAction,
   PlanNode,
+  SuccessLevel,
 } from "../../dynamicBasicAgent/npcPlanning/types.js";
 import type { DynamicGameStateManager } from "../../state/DynamicGameState.js";
 import {
@@ -15,39 +16,48 @@ export const characterInteractionHandler: NodeHandler = {
 
   description:
     "Interact with another character (NPC or player). " +
-    "Supports item transfer, knowledge transfer, and information exchange. " +
-    "Difficulty is derived from the relationship score between characters. " +
-    "NPC luck_only difficulty skips skill rolls and uses luck-based checks instead.",
+    "Supports any form of interaction: conversation, item exchange, " +
+    "persuasion, intimidation, physical contact, leading/escorting, " +
+    "or forcing someone to leave. " +
+    "An LLM resolver determines all state changes (HP, SAN, items, " +
+    "position, conditions, appearance) for both characters based on " +
+    "the action description and skill roll result.",
 
-  requiredFields: ["action", "location", "targetCharacterId"],
+  requiredFields: ["action", "location", "targetCharacterIds"],
 
-  optionalFields: ["skill", "characterInteractionPayload"],
+  optionalFields: ["skill"],
 
   exampleNode: {
     nodeId: "ci1",
     startTime: "10:00",
     endTime: "10:05",
     type: "character_interaction",
-    action: "Hand over the mysterious letter to Dr. Morgan",
+    action: "Convince Dr. Morgan to follow me to the library",
     location: "hospital_lobby",
-    targetCharacterId: "npc_dr_morgan",
+    targetCharacterIds: ["npc_dr_morgan"],
     impact: 2,
-    characterInteractionPayload: {
-      transferType: "item",
-      itemId: "mysterious_letter",
-    },
+    skill: "Persuade",
   },
 
-  execute(
+  async execute(
     node: PlanNode,
     dgsm: DynamicGameStateManager,
     ctx: ExecutionContext
-  ): CharacterAction {
+  ): Promise<CharacterAction> {
     const state = dgsm.getState();
     const pos = dgsm.getCharacterPosition(node.characterId);
     const npc = state.npcCharacters.find((n) => n.id === node.characterId);
     const npcSkills = npc?.skills ?? {};
-    const difficulty = ctx.getNodeDifficulty(node, dgsm);
+    const targetIds = node.targetCharacterIds ?? [];
+
+    if (targetIds.length === 0) {
+      return makeAction(
+        node,
+        "failed",
+        buildOutcome(node, "failed", { reason: "no target specified" }),
+        { failureReason: "target_absent" }
+      );
+    }
 
     // Scene + character penalties
     const scenePenalties = ctx.getScenePenalties(node.location, dgsm);
@@ -55,83 +65,67 @@ export const characterInteractionHandler: NodeHandler = {
     const afterScene = ctx.applyPenalties(npcSkills, scenePenalties);
     const adjustedSkills = ctx.applyPenalties(afterScene, charPenalties);
 
-    let resolvedSuccessLevel:
-      | import("../../dynamicBasicAgent/npcPlanning/types.js").SuccessLevel
-      | undefined;
+    let resolvedSuccessLevel: SuccessLevel | undefined;
     let lastRollDetail: string | undefined;
+    let resolvedPerTargetResults: CharacterAction["perTargetResults"];
 
-    // Location check
+    // 1. Location check
     if (!isCharacterAtLocation(pos, node.location)) {
       return makeAction(
         node,
         "failed",
         buildOutcome(node, "failed", { reason: "not at expected location" }),
-        { difficulty, failureReason: "location_mismatch" }
+        { failureReason: "location_mismatch" }
       );
     }
 
-    // Target presence check
-    if (node.targetCharacterId) {
-      const targetPos = dgsm.getCharacterPosition(node.targetCharacterId);
+    // 2. Target presence check — all targets must be co-located
+    for (const targetId of targetIds) {
+      const targetPos = dgsm.getCharacterPosition(targetId);
       const targetLocation = targetPos
         ? dgsm.resolveLocationId(targetPos)
         : undefined;
-      // Player character doesn't have characterPosition entry -- skip check for player
       if (targetLocation && !arePositionsCoLocated(pos, targetPos, dgsm)) {
         return makeAction(
           node,
           "failed",
-          buildOutcome(node, "failed", { reason: "target not present" }),
-          { difficulty, failureReason: "target_absent" }
+          buildOutcome(node, "failed", { reason: `target ${targetId} not present` }),
+          { failureReason: "target_absent" }
         );
       }
     }
 
-    // Skill roll if skill present; otherwise auto-success
-    if (node.skill && difficulty !== "luck_only") {
+    // 3. Skill roll — opposed rolls handle per-target mechanics
+    if (node.skill) {
       const rollResult = ctx.resolveSkillRoll(node, adjustedSkills, dgsm);
       resolvedSuccessLevel = rollResult.successLevel;
+      resolvedPerTargetResults = rollResult.perTargetResults;
       if (rollResult.failed) {
         lastRollDetail = rollResult.reason;
-        return makeAction(
+        const failedAction = makeAction(
           node,
           "failed",
           buildOutcome(node, "failed", { rollDetail: lastRollDetail }),
           {
-            difficulty,
             successLevel: resolvedSuccessLevel,
             failureReason: "skill_roll_failed",
           }
         );
+        failedAction.perTargetResults = resolvedPerTargetResults;
+        return failedAction;
       }
       lastRollDetail = rollResult.detail;
     }
 
-    // Apply side effects
-    if (node.characterInteractionPayload && node.targetCharacterId) {
-      const payload = node.characterInteractionPayload;
-      if (payload.transferType === "item" && payload.itemId) {
-        const item = dgsm.removeItemFromNpc(node.characterId, payload.itemId);
-        if (!item) {
-          return makeAction(
-            node,
-            "failed",
-            buildOutcome(node, "failed", {
-              reason: `item ${payload.itemId} not in inventory`,
-            }),
-            { difficulty, failureReason: "object_not_found" }
-          );
-        }
-        dgsm.addItemToNpc(node.targetCharacterId, item);
-      }
-      // Information transfer memory writes handled by tickProcessor post-execution
-    }
-
-    return makeAction(
+    // 4. Return success — tickProcessor handles LLM resolution and state changes
+    const action = makeAction(
       node,
       "completed",
-      buildOutcome(node, "completed", { rollDetail: lastRollDetail }),
-      { difficulty, successLevel: resolvedSuccessLevel }
+      node.action,
+      { successLevel: resolvedSuccessLevel }
     );
+    action.rollDetail = lastRollDetail;
+    action.perTargetResults = resolvedPerTargetResults;
+    return action;
   },
 };

@@ -18,7 +18,7 @@ export function buildInterruptedMovementAction(
     status: "interrupted",
     outcome: `${node.action} [interrupted for replanning at ${location}] interrupted`,
     interruptionReason: "revise_replan",
-    targetCharacterId: node.targetCharacterId,
+    targetCharacterIds: node.targetCharacterIds,
   };
 }
 

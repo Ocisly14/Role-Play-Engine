@@ -69,7 +69,7 @@ export const sceneInteractionHandler: NodeHandler = {
     }
 
     // Skill roll if skill present; otherwise auto-success
-    if (node.skill && difficulty !== "luck_only") {
+    if (node.skill) {
       const rollResult = ctx.resolveSkillRoll(node, adjustedSkills, dgsm);
       resolvedSuccessLevel = rollResult.successLevel;
       if (rollResult.failed) {

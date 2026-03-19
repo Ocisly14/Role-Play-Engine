@@ -75,8 +75,10 @@ export function findAffectedCharacters(
   };
 
   // Level 1: targeted
-  if (impactLevel >= 1 && action.targetCharacterId) {
-    addChar(action.targetCharacterId, 1);
+  if (impactLevel >= 1 && action.targetCharacterIds?.length) {
+    for (const targetId of action.targetCharacterIds) {
+      addChar(targetId, 1);
+    }
   }
 
   // Level 2: same sub-scene

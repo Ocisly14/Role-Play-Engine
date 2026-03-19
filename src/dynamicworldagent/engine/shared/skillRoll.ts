@@ -15,17 +15,11 @@ import {
 
 export function getNodeDifficulty(
   node: PlanNode,
-  dgsm: DynamicGameStateManager
-): "regular" | "hard" | "extreme" | "luck_only" {
-  if (node.type !== "character_interaction") return "regular";
-  if (!node.targetCharacterId) return "regular";
-
-  const rel = dgsm.getRelationship(node.characterId, node.targetCharacterId);
-  const score = rel?.score ?? 0;
-  if (score >= 70) return "luck_only";
-  if (score >= 30) return "regular";
-  if (score >= -30) return "hard";
-  return "extreme";
+  _dgsm: DynamicGameStateManager
+): "regular" | "hard" | "extreme" {
+  // character_interaction always uses "regular" — opposed rolls handle
+  // per-target mechanics, and the LLM resolver has full relationship data.
+  return node.difficulty ?? "regular";
 }
 
 // ==================== Best skill selection (for opposed rolls) ====================
@@ -96,102 +90,135 @@ export function resolveSkillRoll(
   if (!skill) return { failed: false, successLevel: "regular" };
 
   const state = dgsm.getState();
-  const difficulty = getNodeDifficulty(node, dgsm);
+  const difficulty = node.difficulty ?? "regular";
+  const targetIds = node.targetCharacterIds ?? [];
   const npc = state.npcCharacters.find((n) => n.id === node.characterId);
   const npcAttrs = npc?.attributes ?? {
-    STR: 50,
-    DEX: 50,
-    INT: 50,
-    POW: 50,
-    CON: 50,
-    SIZ: 50,
-    APP: 50,
-    EDU: 50,
+    STR: 50, DEX: 50, INT: 50, POW: 50,
+    CON: 50, SIZ: 50, APP: 50, EDU: 50,
   };
 
   // NPC's trained value, or CoC base value for untrained skill (case-insensitive)
   const baseValue = caseInsensitiveMapGet(COC_SKILL_BASE_VALUES, skill) ?? 1;
   const skillValue = caseInsensitiveLookup(adjustedSkills, skill) ?? baseValue;
 
-  // --- Combat (opposed) ---
+  // --- Combat (opposed, per-target) ---
   if (
     node.type === "character_interaction" &&
-    node.targetCharacterId &&
+    targetIds.length > 0 &&
     isCombatSkill(skill)
   ) {
-    const defender = state.npcCharacters.find(
-      (n) => n.id === node.targetCharacterId
-    );
-    const defenderSkills = defender?.skills ?? {};
-    const defSkill = pickBestFromCandidates(
-      COMBAT_DEFEND_SKILLS,
-      defenderSkills
-    );
-    const defValue =
-      defSkill?.value ?? Math.floor((defender?.attributes?.DEX ?? 50) / 2);
-
     const attackRoll = rollD100();
-    const defendRoll = rollD100();
-    const attackLevel = getSuccessLevel(attackRoll, skillValue);
-    const defendLevel = getSuccessLevel(defendRoll, defValue);
-
-    if (SUCCESS_RANK[attackLevel] <= SUCCESS_RANK[defendLevel]) {
-      return {
-        failed: true,
-        successLevel: attackLevel,
-        reason: `${skill} ${skillValue}, rolled ${attackRoll} (${attackLevel}) vs ${defSkill?.skill ?? "Dodge"} ${defValue}, rolled ${defendRoll} (${defendLevel})`,
-        detail: "skill_roll_failed",
-      };
-    }
-
-    // Hit: apply damage
+    const actorLevel = getSuccessLevel(attackRoll, skillValue);
     const db =
       npc?.status?.damageBonus ?? getDamageBonus(npcAttrs.STR, npcAttrs.SIZ);
-    const weaponDamage = Math.floor(Math.random() * 6) + 1;
-    const bonusDamage = rollDamageBonus(db);
-    const totalDamage = weaponDamage + bonusDamage;
-    dgsm.updateNpcHp(node.targetCharacterId, -totalDamage);
 
-    return {
-      failed: false,
-      successLevel: attackLevel,
-      detail: `Hit for ${totalDamage} damage (${skill} ${attackRoll}/${skillValue})`,
-    };
-  }
+    const perTargetResults: SkillRollResult["perTargetResults"] = {};
+    let anyWon = false;
 
-  // --- Social opposed ---
-  if (
-    node.type === "character_interaction" &&
-    node.targetCharacterId &&
-    isSocialSkill(skill)
-  ) {
-    const target = state.npcCharacters.find(
-      (n) => n.id === node.targetCharacterId
-    );
-    const targetSkills = target?.skills ?? {};
-    const defSkill = pickBestFromCandidates(SOCIAL_DEFEND_SKILLS, targetSkills);
-    const defValue =
-      defSkill?.value ?? Math.floor((target?.attributes?.INT ?? 50) / 2);
+    for (const targetId of targetIds) {
+      const defender = state.npcCharacters.find((n) => n.id === targetId);
+      const defenderSkills = defender?.skills ?? {};
+      const defSkill = pickBestFromCandidates(
+        COMBAT_DEFEND_SKILLS,
+        defenderSkills
+      );
+      const defValue =
+        defSkill?.value ?? Math.floor((defender?.attributes?.DEX ?? 50) / 2);
 
-    const actorRoll = rollD100();
-    const targetRoll = rollD100();
-    const actorLevel = getSuccessLevel(actorRoll, skillValue);
-    const targetLevel = getSuccessLevel(targetRoll, defValue);
+      const defendRoll = rollD100();
+      const defendLevel = getSuccessLevel(defendRoll, defValue);
+      const actorWon = SUCCESS_RANK[actorLevel] > SUCCESS_RANK[defendLevel];
+      if (actorWon) anyWon = true;
 
-    if (SUCCESS_RANK[actorLevel] <= SUCCESS_RANK[targetLevel]) {
+      if (actorWon) {
+        const weaponDamage = Math.floor(Math.random() * 6) + 1;
+        const bonusDamage = rollDamageBonus(db);
+        const totalDamage = weaponDamage + bonusDamage;
+        perTargetResults![targetId] = {
+          successLevel: defendLevel,
+          actorWon: true,
+          detail: `vs ${defSkill?.skill ?? "Dodge"} ${defValue}, rolled ${defendRoll} (${defendLevel}), hit for ${totalDamage} damage`,
+          damage: totalDamage,
+        };
+      } else {
+        perTargetResults![targetId] = {
+          successLevel: defendLevel,
+          actorWon: false,
+          detail: `vs ${defSkill?.skill ?? "Dodge"} ${defValue}, rolled ${defendRoll} (${defendLevel})`,
+        };
+      }
+    }
+
+    if (!anyWon) {
       return {
         failed: true,
         successLevel: actorLevel,
-        reason: `${skill} ${skillValue}, rolled ${actorRoll} (${actorLevel}) vs ${defSkill?.skill ?? "Psychology"} ${defValue}, rolled ${targetRoll} (${targetLevel})`,
+        reason: `${skill} ${skillValue}, rolled ${attackRoll} (${actorLevel}) — all targets defended`,
         detail: "skill_roll_failed",
+        perTargetResults,
       };
     }
-    return { failed: false, successLevel: actorLevel };
+
+    return {
+      failed: false,
+      successLevel: actorLevel,
+      detail: `${skill} ${attackRoll}/${skillValue} (${actorLevel})`,
+      perTargetResults,
+    };
+  }
+
+  // --- Social opposed (per-target) ---
+  if (
+    node.type === "character_interaction" &&
+    targetIds.length > 0 &&
+    isSocialSkill(skill)
+  ) {
+    const actorRoll = rollD100();
+    const actorLevel = getSuccessLevel(actorRoll, skillValue);
+
+    const perTargetResults: SkillRollResult["perTargetResults"] = {};
+    let anyWon = false;
+
+    for (const targetId of targetIds) {
+      const target = state.npcCharacters.find((n) => n.id === targetId);
+      const targetSkills = target?.skills ?? {};
+      const defSkill = pickBestFromCandidates(SOCIAL_DEFEND_SKILLS, targetSkills);
+      const defValue =
+        defSkill?.value ?? Math.floor((target?.attributes?.INT ?? 50) / 2);
+
+      const targetRoll = rollD100();
+      const targetLevel = getSuccessLevel(targetRoll, defValue);
+      const actorWon = SUCCESS_RANK[actorLevel] > SUCCESS_RANK[targetLevel];
+      if (actorWon) anyWon = true;
+
+      perTargetResults![targetId] = {
+        successLevel: targetLevel,
+        actorWon,
+        detail: `vs ${defSkill?.skill ?? "Psychology"} ${defValue}, rolled ${targetRoll} (${targetLevel})`,
+      };
+    }
+
+    if (!anyWon) {
+      return {
+        failed: true,
+        successLevel: actorLevel,
+        reason: `${skill} ${skillValue}, rolled ${actorRoll} (${actorLevel}) — all targets resisted`,
+        detail: "skill_roll_failed",
+        perTargetResults,
+      };
+    }
+
+    return {
+      failed: false,
+      successLevel: actorLevel,
+      detail: `${skill} ${actorRoll}/${skillValue} (${actorLevel})`,
+      perTargetResults,
+    };
   }
 
   // --- Standard single roll ---
-  const effectiveDifficulty =
-    difficulty === "luck_only" ? "extreme" : difficulty;
+  const effectiveDifficulty = difficulty;
   const roll = rollD100();
   const level = getSuccessLevelWithDifficulty(
     roll,

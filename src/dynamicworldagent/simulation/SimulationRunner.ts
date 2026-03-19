@@ -83,6 +83,11 @@ export class SimulationRunner {
 
     // Wire emitter into execution context so handlers can emit npc_moved events
     this.ctx.simulationEmitter = this.events;
+
+    // Wire runtime, language, and memoryManager into execution context for LLM-based handlers
+    this.ctx.runtime = this.npcPlanningAgent.getRuntime();
+    this.ctx.language = this.language;
+    this.ctx.memoryManager = this.memoryManager;
   }
 
   // ===== Public lifecycle =====

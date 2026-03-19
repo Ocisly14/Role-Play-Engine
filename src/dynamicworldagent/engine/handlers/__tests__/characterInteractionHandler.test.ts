@@ -82,7 +82,7 @@ function makeNode(overrides: Partial<PlanNode> = {}): PlanNode {
     type: "character_interaction",
     impact: 1,
     status: "pending",
-    targetCharacterId: "npc_b",
+    targetCharacterIds: ["npc_b"],
     executionMeta: { remainingMinutes: 5 },
     ...overrides,
   } as PlanNode;
@@ -91,21 +91,21 @@ function makeNode(overrides: Partial<PlanNode> = {}): PlanNode {
 describe("characterInteractionHandler", () => {
   const ctx = createMockCtx();
 
-  it("allows interaction on the same road when characters are within the proximity threshold", () => {
+  it("allows interaction on the same road when characters are within the proximity threshold", async () => {
     const dgsm = createMockDgsm();
     dgsm._addNpc("npc_a", { type: "road", roadId: "ROAD_1", position: 0.1 });
     dgsm._addNpc("npc_b", { type: "road", roadId: "ROAD_1", position: 0.25 });
 
-    const result = characterInteractionHandler.execute(makeNode(), dgsm as any, ctx);
+    const result = await characterInteractionHandler.execute(makeNode(), dgsm as any, ctx);
     expect(result.status).toBe("completed");
   });
 
-  it("fails when characters are too far apart on the same road", () => {
+  it("fails when characters are too far apart on the same road", async () => {
     const dgsm = createMockDgsm();
     dgsm._addNpc("npc_a", { type: "road", roadId: "ROAD_1", position: 0.1 });
     dgsm._addNpc("npc_b", { type: "road", roadId: "ROAD_1", position: 0.8 });
 
-    const result = characterInteractionHandler.execute(makeNode(), dgsm as any, ctx);
+    const result = await characterInteractionHandler.execute(makeNode(), dgsm as any, ctx);
     expect(result.status).toBe("failed");
     expect(result.failureReason).toBe("target_absent");
   });

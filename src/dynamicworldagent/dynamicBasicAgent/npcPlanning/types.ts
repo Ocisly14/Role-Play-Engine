@@ -20,12 +20,23 @@ export interface SceneCondition {
   };
 }
 
-export interface CharacterInteractionPayload {
-  transferType: "item" | "information";
-  itemId?: string;
-  informationContent?: string;
-  targetCharacterIds?: string[];
-  relatedKnowledgeIds?: string[];
+// ===== LLM State Resolver types (character_interaction) =====
+
+export interface CharacterStateDelta {
+  hpDelta?: number;
+  sanDelta?: number;
+  moveTo?: string;
+  addItems?: string[];
+  removeItems?: string[];
+  addConditions?: string[];
+  removeConditions?: string[];
+  appearanceChange?: string;
+  memory: string;
+}
+
+export interface InteractionStateDelta {
+  actorChanges: CharacterStateDelta;
+  targetChanges: Record<string, CharacterStateDelta>;
 }
 
 export interface ItemLocationRef {
@@ -109,8 +120,7 @@ export interface PlanNode {
   skill?: string;
   impact: 0 | 1 | 2 | 3 | 4 | 5;
   difficulty?: "regular" | "hard" | "extreme";
-  targetCharacterId?: string;
-  characterInteractionPayload?: CharacterInteractionPayload;
+  targetCharacterIds?: string[];
   objectInteractionPayload?: ObjectInteractionPayload;
   sceneConnectionEffect?: SceneConnectionEffect;
   status: PlanNodeStatus;
@@ -141,15 +151,27 @@ export interface CharacterAction {
   type: PlanNodeType;
   skill?: string;
   impact: 0 | 1 | 2 | 3 | 4 | 5;
-  difficulty?: "regular" | "hard" | "extreme" | "luck_only";
+  difficulty?: "regular" | "hard" | "extreme";
   successLevel?: SuccessLevel;
+  /** Dice roll detail string from the skill check (e.g. "rolled 45 vs. skill 60"). Used by tickProcessor to pass context to LLM state resolver. */
+  rollDetail?: string;
   status: "completed" | "failed" | "interrupted";
   outcome: string;
   failureReason?: FailureReason;
   interruptionReason?: "revise_replan";
-  targetCharacterId?: string;
+  targetCharacterIds?: string[];
   discoveries?: DiscoveryEntry[];
   damagedEvidence?: { itemId: string; sourceName: string };
+  /** Per-character memory text from LLM state resolver. When present, tickProcessor writes these instead of auto-generating. */
+  stateMemories?: Record<string, string>;
+  /** Per-target opposed roll outcomes (multi-target character_interaction) */
+  perTargetResults?: Record<string, {
+    successLevel: SuccessLevel;
+    actorWon: boolean;
+    detail: string;
+    /** Pre-computed combat damage (only when actorWon in combat) */
+    damage?: number;
+  }>;
 }
 
 export type FailureReason =
