@@ -1,0 +1,69 @@
+{
+  "id": "SCN_11_SUB_1",
+  "name": "占卜馆",
+  "description": "花店旁挤着一间窄小的占卜馆，褪色的木质招牌上写着「占星师小铺」几个歪歪扭扭的字。大多数时候，从这里经过时门都是关着的，厚重的深紫色帘幕遮住了里面的一切。偶尔门开着的时候，能瞥见昏暗的内部：墙上挂满了星图和干花束，天花板悬着几盏铜质油灯，投下摇曳的橘黄光晕。一张铺着暗红丝绒布的圆桌占据了房间中央，上面摆着一只拳头大小的水晶球和一副磨得发亮的塔罗牌。空气中弥漫着乳香与没药混合的烟雾，甜腻而沉重，像是要把时间本身也熏得凝滞。角落里堆着几本旧书，散发出陈年纸张独有的干燥气味。整间铺子安静得不像是镇上的店面，倒更像某种被遗忘在巷弄深处的、属于另一个时代的密室。",
+  "parentLocationId": "SCN_11",
+  "items": [
+    {
+      "id": "ITEM_SCN11_1",
+      "name": "Solomon的神秘书籍",
+      "description": "一本封面陈旧的神秘书籍，纸页间夹着奇异符号和反复翻阅留下的折痕。",
+      "type": "document",
+      "category": "evidence",
+      "discoveryMethod": "inspect bookshelf"
+    },
+    {
+      "id": "ITEM_SCN11_2",
+      "name": "门边的躺椅",
+      "description": "一把旧躺椅，扶手和椅面都带着长期使用的磨痕。",
+      "type": "other"
+    },
+    {
+      "id": "ITEM_SCN11_3",
+      "name": "占卜工具",
+      "description": "一套占卜工具，包括星盘、塔罗牌和水晶球等摆件。",
+      "type": "tool"
+    }
+  ],
+  "conditions": [
+    {
+      "description": "占卜馆大多数时候门都是关着的，只有偶尔才能碰上开门的时候。需要与Simon Laplace同行时，遇到Solomon的概率更大。",
+      "mechanicalEffect": {
+        "skillPenalty": [
+          {
+            "skill": "Disguise",
+            "delta": -20
+          }
+        ]
+      }
+    },
+    {
+      "description": "馆内光线昏暗，点着蜡烛，营造出一种神秘的氛围。",
+      "mechanicalEffect": {
+        "skillPenalty": [
+          {
+            "skill": "Perception",
+            "delta": -20
+          }
+        ]
+      }
+    },
+    {
+      "description": "空气中飘荡着某种焚香的气味，混合着旧书纸张的味道。",
+      "mechanicalEffect": {
+        "skillPenalty": [
+          {
+            "skill": "Perception",
+            "delta": -5
+          }
+        ]
+      }
+    }
+  ],
+  "connections": [],
+  "itemContexts": {
+    "ITEM_SCN11_1": "Solomon身边放着的一本旧书，是他来卡森德拉之前在旧书店淘到的。书上有一些奇异的符号，与帕德里奇神秘图纸上的某个图案相似。这本书实际上是《黄衣之王》——一本与真正的克苏鲁神话魔法有关的著作，尽管不包含魔法内容。Solomon已经读过很多遍，不会再因此失去理智。他绝不会让调查员翻阅此书，甚至不会告诉调查员书名。",
+    "ITEM_SCN11_2": "占卜馆门边放着一把躺椅，Solomon常在上面烤着火昏昏欲睡。旁边还有一个小火盆，在寒冬中提供些许温暖。",
+    "ITEM_SCN11_3": "馆内摆放着一些占星和占卜用的工具——星盘、塔罗牌、水晶球等，虽然不知道Solomon是否真的会使用它们。"
+  }
+}

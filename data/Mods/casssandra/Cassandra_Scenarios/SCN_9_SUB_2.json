@@ -1,0 +1,103 @@
+{
+  "id": "SCN_9_SUB_2",
+  "name": "后厅与酒窖",
+  "description": "穿过花店柜台旁那道半掩的木门，便来到建筑下层的内间——一处兼具厨房、餐厅和休息功能的生活空间。厨房的灶台是老式燃气炉，上面架着一只搪瓷炖锅，锅盖边缘冒出细细的蒸汽，空气中弥漫着炖煮蔬菜和香料的气味，混着一丝面包烤过后残留的麦香。料理台上整齐地码着几只陶瓷罐，橄榄油瓶旁立着一小束迷迭香。餐厅紧邻厨房，一张四人座的橡木餐桌占据了大部分空间，桌面上铺着格纹桌布，中央摆着一只插了冬青枝的玻璃花瓶。靠墙有一个窄小的午休隔间，勉强放下一张单人沙发和一盏落地灯，沙发上搭着一条手织毛毯。隔间的另一侧是洗手间，门板漆成了与墙面相同的奶白色。角落里有一道向下的窄楼梯，通往小酒窖——石砌的拱顶低矮而阴凉，墙壁上凝着细密的水珠，木架上横卧着十来瓶红酒和几瓶本地产的苹果白兰地，空气中浮动着橡木桶和陈年果香混合的微醺气息。整个后厅的氛围与前面的花店截然不同，少了商业气息，多了几分居家的温暖与私密。",
+  "parentLocationId": "SCN_9",
+  "items": [
+    {
+      "id": "ITEM_SCN9_2",
+      "name": "小酒窖",
+      "description": "一间石砌拱顶的小酒窖，空气阴凉潮湿，存着数瓶红酒与苹果白兰地。",
+      "type": "other"
+    },
+    {
+      "id": "ITEM_SCN9_9",
+      "name": "橡木餐桌",
+      "description": "一张四人座橡木餐桌，桌面结实宽阔，边缘打磨得圆润。",
+      "type": "other"
+    },
+    {
+      "id": "ITEM_SCN9_10",
+      "name": "搪瓷炖锅",
+      "description": "一只搪瓷炖锅，锅盖边缘凝着湿润白雾，锅身还保着余温。",
+      "type": "tool"
+    },
+    {
+      "id": "ITEM_SCN9_11",
+      "name": "木质酒架",
+      "description": "一只木质酒架，横卧摆放着十来瓶红酒，瓶身外侧沾着细密潮气。",
+      "type": "container",
+      "containerStats": {
+        "capacity": 12,
+        "locked": false,
+        "contents": []
+      }
+    },
+    {
+      "id": "ITEM_SCN9_16",
+      "name": "陶瓷储物罐",
+      "description": "几只陶瓷储物罐，里面装着香料和日常烹饪用干货。",
+      "type": "container",
+      "containerStats": {
+        "capacity": 6,
+        "locked": false,
+        "contents": []
+      }
+    },
+    {
+      "id": "ITEM_SCN9_17",
+      "name": "白兰地木箱",
+      "description": "两只窄木箱，里面装着本地产的苹果白兰地，木板缝里透出淡淡果香。",
+      "type": "container",
+      "containerStats": {
+        "capacity": 8,
+        "locked": false,
+        "contents": []
+      }
+    }
+  ],
+  "conditions": [
+    {
+      "description": "厨房里飘散着炖菜与香料的温暖气味，与花店前厅的花香形成微妙的过渡。",
+      "mechanicalEffect": {
+        "skillPenalty": [
+          {
+            "skill": "Perception",
+            "delta": 5
+          }
+        ]
+      }
+    },
+    {
+      "description": "后厅光线偏暖偏暗，主要靠壁灯和灶台上方的吊灯照明，酒窖里则更为昏暗。",
+      "mechanicalEffect": {
+        "skillPenalty": [
+          {
+            "skill": "Perception",
+            "delta": -10
+          }
+        ]
+      }
+    },
+    {
+      "description": "厨房区域因烹饪而略显温热，酒窖则明显阴凉潮湿。",
+      "mechanicalEffect": {
+        "skillPenalty": [
+          {
+            "skill": "Perception",
+            "delta": -10
+          }
+        ]
+      }
+    }
+  ],
+  "connections": ["SCN_9_SUB_1", "SCN_9_SUB_3"],
+  "itemContexts": {
+    "ITEM_SCN9_2": "角落里的窄楼梯通向一个小酒窖，石砌拱顶下面横卧着数瓶红酒与苹果白兰地。",
+    "ITEM_SCN9_9": "后厅中央摆着一张四人座橡木餐桌，格纹桌布上还压着一只插有冬青枝的花瓶。",
+    "ITEM_SCN9_10": "灶台上的搪瓷炖锅冒着细细热气，锅盖边缘凝着一圈湿润的白雾。",
+    "ITEM_SCN9_11": "酒窖墙边的木质酒架上横卧着十来瓶红酒，瓶身外侧沾着细密潮气。",
+    "ITEM_SCN9_16": "料理台边整齐排着几只陶瓷储物罐，里面装着香料和日常烹饪用干货。",
+    "ITEM_SCN9_17": "酒架旁堆着两只窄木箱，里面装着本地产的苹果白兰地，木板缝里透出淡淡果香。"
+  }
+}

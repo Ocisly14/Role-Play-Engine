@@ -1,0 +1,60 @@
+{
+  "id": "ROAD_2",
+  "name": "卡森德拉北新街",
+  "description": "从星辰大道南端向西南延伸的街道，沿途有花店、小餐厅和占卜馆。端点是三岔路口，连接卡森德拉旧街和卡森德拉南新街。",
+  "parentLocationId": "OUTDOOR",
+  "endpointA": "JUNC_2",
+  "endpointB": "JUNC_3",
+  "travelTimeMinutes": 10,
+  "alongConnections": [
+    {
+      "sceneId": "SCN_11_SUB_1",
+      "position": 0.2
+    },
+    {
+      "sceneId": "SCN_9_SUB_1",
+      "position": 0.5
+    },
+    {
+      "sceneId": "SCN_10_SUB_1",
+      "position": 0.8
+    }
+  ],
+  "items": [
+    {
+      "id": "ITEM_ROAD2_1",
+      "name": "店铺招牌列",
+      "description": "沿街店铺的招牌高低错落地伸出墙面，花店、餐厅和占卜馆的名字都能在这里看到。",
+      "type": "other"
+    },
+    {
+      "id": "ITEM_ROAD2_2",
+      "name": "公交站长椅",
+      "description": "路边一张漆成蓝色的长椅兼做简易候车点，椅脚被人用砖块垫高了一角。",
+      "type": "other"
+    },
+    {
+      "id": "ITEM_ROAD2_3",
+      "name": "社区布告板",
+      "description": "木框布告板上贴着镇民活动、失物招领和商户优惠海报。",
+      "type": "document"
+    }
+  ],
+  "conditions": [
+    {
+      "description": "露天街道，受天气影响。冬季寒冷，街上行人稀少。",
+      "mechanicalEffect": {
+        "skillPenalty": [
+          {
+            "skill": "Perception",
+            "delta": -10
+          },
+          {
+            "skill": "Stealth",
+            "delta": 10
+          }
+        ]
+      }
+    }
+  ]
+}

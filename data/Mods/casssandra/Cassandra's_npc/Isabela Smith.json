@@ -1,0 +1,126 @@
+{
+  "id": "Isabela Smith",
+  "name": "Isabela Smith",
+  "occupation": "Head nurse",
+  "age": 25,
+  "gender": "female",
+  "appearance": "A young woman with a professional and neat appearance, usually dressed in a nurse's uniform, giving off a calm and trustworthy impression.",
+  "personality": "Responsible, patient, diligent, and caring. She takes her duties seriously and shows strong emotional commitment to those she cares about.",
+  "background": "Isabela Smith is a young head nurse at the local hospital. She is known among her colleagues for being conscientious and patient. She is engaged to Wind, and many hospital staff privately speculate that she will eventually leave her job to marry and move to a big city. As December 26 approaches, she is preparing to resign and leave Cassandra overnight with Wind if his condition worsens.",
+  "residence": "SCN_1",
+  "currentLocation": "SCN_1",
+  "longTermIntent": "Protect Wind, keep him safe during his recovery, and leave Cassandra before the situation gets any more dangerous.",
+  "attributes": {
+    "STR": 45,
+    "CON": 55,
+    "DEX": 55,
+    "APP": 60,
+    "POW": 65,
+    "SIZ": 50,
+    "INT": 65,
+    "EDU": 75
+  },
+  "status": {
+    "hp": 10,
+    "maxHp": 10,
+    "sanity": 65,
+    "maxSanity": 65,
+    "luck": 60,
+    "mp": 13,
+    "conditions": []
+  },
+  "skills": {
+    "Medicine": 70,
+    "First Aid": 75,
+    "Psychology": 50,
+    "Persuade": 45
+  },
+  "inventory": [
+    {
+      "name": "Hospital ID card",
+      "properties": {
+        "note": "Provides access to restricted areas."
+      }
+    },
+    {
+      "name": "Travel bag",
+      "properties": {
+        "note": "Packed in a hurry when leaving Cassandra."
+      }
+    }
+  ],
+  "relationships": [
+    {
+      "targetId": "Wind",
+      "targetName": "Wind",
+      "relationshipType": "friend",
+      "attitude": 80,
+      "description": "Her fiancé, whom she is determined to protect.",
+      "history": "Their engagement was stable until his sudden mental collapse, and Isabela is preparing to leave Cassandra with him if she cannot keep him safe in town."
+    },
+    {
+      "targetId": "Mrs. Barklyite (Lucia Shiny)",
+      "targetName": "Mrs. Barklyite (Lucia Shiny)",
+      "relationshipType": "enemy",
+      "attitude": -40,
+      "description": "The person Isabela expects to impersonate her once she leaves town.",
+      "history": "Mrs. Barklyite seems poised to exploit Isabela's departure and may try to keep using her face once the chance opens."
+    }
+  ],
+  "memory": [
+    {
+      "type": "information",
+      "content": "I worked at the hospital in Cassandra and was known as a conscientious head nurse.",
+      "metadata": {
+        "knowledgeId": "k_isabela_hospital",
+        "difficulty": "automatic"
+      }
+    },
+    {
+      "type": "information",
+      "content": "I know the hospital routines, medication storage, and the quiet corners where staff can notice when a patient is becoming a danger to himself.",
+      "metadata": {
+        "knowledgeId": "k_isabela_hospital_routines",
+        "difficulty": "regular"
+      }
+    },
+    {
+      "type": "information",
+      "content": "I am preparing to leave Cassandra on the night of December 26 with Wind if he remains mentally unstable.",
+      "metadata": {
+        "knowledgeId": "k_isabela_departure",
+        "difficulty": "regular"
+      }
+    },
+    {
+      "type": "information",
+      "content": "Wind's breakdown was sudden, and I would rather move him than wait for the town to turn his condition into a spectacle.",
+      "metadata": {
+        "knowledgeId": "k_isabela_wind_breakdown",
+        "difficulty": "hard"
+      }
+    },
+    {
+      "type": "secret",
+      "content": "If I do leave with Wind, I expect Mrs. Barklyite to keep using my face as cover inside Cassandra.",
+      "metadata": {
+        "knowledgeId": "s_isabela_impostor"
+      }
+    },
+    {
+      "type": "secret",
+      "content": "I am trying to get Wind out before rumor and fear harden around him, because Cassandra no longer feels safe for either of us.",
+      "metadata": {
+        "knowledgeId": "s_isabela_departure_reason"
+      }
+    },
+    {
+      "type": "belief",
+      "content": "I believe the safest choice is to get Wind out of Cassandra first and sort everything else out somewhere else.",
+      "metadata": {
+        "confidence": 0.9,
+        "reasoningChain": "The town has become unstable enough that staying longer feels irresponsible."
+      }
+    }
+  ]
+}

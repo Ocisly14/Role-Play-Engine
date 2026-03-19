@@ -1,0 +1,53 @@
+{
+  "town": {
+    "background": ""
+  },
+  "scenarios": {
+    "SCN_2":  { "x": 350, "y": 40,   "thumbnail": "焚化厂.jpg" },
+    "SCN_1":  { "x": 350, "y": 150,  "thumbnail": "星辰医院.jpg" },
+    "SCN_20": { "x": 680, "y": 60,   "thumbnail": "伐木场.jpg" },
+    "SCN_19": { "x": 560, "y": 130,  "thumbnail": "墓地.jpg" },
+    "SCN_9":  { "x": 270, "y": 260,  "thumbnail": "花店.png" },
+    "SCN_11": { "x": 240, "y": 320,  "thumbnail": "占星师小屋.png" },
+    "SCN_15": { "x": 450, "y": 280,  "thumbnail": "阿道夫家.png" },
+    "SCN_22": { "x": 490, "y": 350,  "thumbnail": "镇长私宅.jpg" },
+    "SCN_10": { "x": 160, "y": 360,  "thumbnail": "海伦的餐桌.png" },
+    "SCN_12": { "x": 100, "y": 440,  "thumbnail": "钟表店.png" },
+    "SCN_16": { "x": 210, "y": 440,  "thumbnail": "驯鹿酒吧.jpg" },
+    "SCN_17": { "x": 340, "y": 450,  "thumbnail": "教堂.png" },
+    "SCN_18": { "x": 470, "y": 450,  "thumbnail": "五金店.jpg" },
+    "SCN_13": { "x": 60,  "y": 490,  "thumbnail": "酒厂.png" },
+    "SCN_4":  { "x": 600, "y": 430,  "thumbnail": "大酒店.jpg" },
+    "SCN_5":  { "x": 670, "y": 480,  "thumbnail": "马赛尔家.png" },
+    "SCN_14": { "x": 40,  "y": 550,  "thumbnail": "珊德拉小屋.png" },
+    "SCN_3":  { "x": 560, "y": 540,  "thumbnail": "警察局.jpg" },
+    "SCN_6":  { "x": 750, "y": 510,  "thumbnail": "二层木屋.png" },
+    "SCN_7":  { "x": 720, "y": 560,  "thumbnail": "下水道.png" },
+    "SCN_8":  { "x": 670, "y": 600,  "thumbnail": "菲利普家.png" },
+    "SCN_21": { "x": 40,  "y": 620,  "thumbnail": "火车站.jpg" }
+  },
+  "scenes": {
+    "SCN_1_SUB_1":  { "background": "星辰医院.jpg",   "npcAreas": [{ "x": 50, "y": 50, "width": 250, "height": 150 }] },
+    "SCN_2_SUB_1":  { "background": "焚化厂.jpg",     "npcAreas": [{ "x": 50, "y": 50, "width": 250, "height": 150 }] },
+    "SCN_3_SUB_1":  { "background": "警察局.jpg",     "npcAreas": [{ "x": 50, "y": 50, "width": 250, "height": 150 }] },
+    "SCN_4_SUB_1":  { "background": "大酒店.jpg",     "npcAreas": [{ "x": 50, "y": 50, "width": 250, "height": 150 }] },
+    "SCN_5_SUB_1":  { "background": "马赛尔家.png",   "npcAreas": [{ "x": 50, "y": 50, "width": 200, "height": 120 }] },
+    "SCN_6_SUB_1":  { "background": "二层木屋.png",   "npcAreas": [{ "x": 50, "y": 50, "width": 200, "height": 120 }] },
+    "SCN_7_SUB_1":  { "background": "下水道.png",     "npcAreas": [{ "x": 50, "y": 50, "width": 200, "height": 120 }] },
+    "SCN_8_SUB_1":  { "background": "菲利普家.png",   "npcAreas": [{ "x": 50, "y": 50, "width": 200, "height": 120 }] },
+    "SCN_9_SUB_1":  { "background": "花店.png",       "npcAreas": [{ "x": 50, "y": 50, "width": 250, "height": 150 }] },
+    "SCN_10_SUB_1": { "background": "海伦的餐桌.png", "npcAreas": [{ "x": 50, "y": 50, "width": 250, "height": 150 }] },
+    "SCN_12_SUB_1": { "background": "钟表店.png",     "npcAreas": [{ "x": 50, "y": 50, "width": 200, "height": 120 }] },
+    "SCN_14_SUB_1": { "background": "珊德拉小屋.png", "npcAreas": [{ "x": 50, "y": 50, "width": 200, "height": 120 }] },
+    "SCN_15_SUB_1": { "background": "阿道夫家.png",   "npcAreas": [{ "x": 50, "y": 50, "width": 200, "height": 120 }] },
+    "SCN_16_SUB_1": { "background": "驯鹿酒吧.jpg",   "npcAreas": [{ "x": 50, "y": 50, "width": 250, "height": 150 }] },
+    "SCN_17_SUB_1": { "background": "教堂.png",       "npcAreas": [{ "x": 50, "y": 50, "width": 250, "height": 150 }] },
+    "SCN_18_SUB_1": { "background": "五金店.jpg",     "npcAreas": [{ "x": 50, "y": 50, "width": 250, "height": 150 }] },
+    "SCN_19_SUB_1": { "background": "墓地.jpg",       "npcAreas": [{ "x": 50, "y": 50, "width": 250, "height": 150 }] },
+    "SCN_21_SUB_1": { "background": "火车站.jpg",     "npcAreas": [{ "x": 50, "y": 50, "width": 250, "height": 150 }] },
+    "SCN_11_SUB_1": { "background": "占星师小屋.png", "npcAreas": [{ "x": 50, "y": 50, "width": 200, "height": 120 }] },
+    "SCN_13_SUB_1": { "background": "酒厂.png",       "npcAreas": [{ "x": 50, "y": 50, "width": 250, "height": 150 }] },
+    "SCN_20_SUB_1": { "background": "伐木场.jpg",     "npcAreas": [{ "x": 50, "y": 50, "width": 250, "height": 150 }] },
+    "SCN_22_SUB_1": { "background": "镇长私宅.jpg",   "npcAreas": [{ "x": 50, "y": 50, "width": 200, "height": 120 }] }
+  }
+}

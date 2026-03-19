@@ -1,0 +1,27 @@
+{
+  "id": "SCN_4_SUB_2",
+  "name": "Lisa's Bedroom",
+  "description": "A small, neat bedroom with a single bed, a wardrobe, and a vanity mirror. A framed photo of a mountain landscape hangs on the wall. A yoga mat is rolled up in the corner.",
+  "parentLocationId": "SCN_4",
+  "items": [
+    {
+      "id": "ITEM_S4_4",
+      "name": "Journal",
+      "description": "A personal journal on the nightstand. The cover is worn from frequent use.",
+      "category": "evidence",
+      "discoveryMethod": "Reading the journal",
+      "reveals": ["Recent entries mention feeling uneasy about Victor's management style and concern about accounting irregularities she noticed at work."]
+    },
+    {
+      "id": "ITEM_S4_5",
+      "name": "Yoga Mat",
+      "description": "A purple yoga mat rolled up in the corner. Lisa uses it for morning stretches."
+    }
+  ],
+  "conditions": [
+    {
+      "description": "A peaceful, private space. Quiet except for street sounds from outside."
+    }
+  ],
+  "connections": ["SCN_4_SUB_1"]
+}

@@ -1,0 +1,66 @@
+{
+  "id": "ROAD_10",
+  "name": "日暮大道",
+  "description": "从石榴巷中段分叉向东北延伸的大道，中途路过公墓，尽头是森林和废弃的伐木场。",
+  "parentLocationId": "OUTDOOR",
+  "endpointA": "JUNC_6",
+  "endpointB": "JUNC_11",
+  "travelTimeMinutes": 15,
+  "alongConnections": [
+    {
+      "sceneId": "SCN_19_SUB_1",
+      "position": 0.4
+    },
+    {
+      "sceneId": "SCN_20_SUB_1",
+      "position": 0.8
+    }
+  ],
+  "items": [
+    {
+      "id": "ITEM_ROAD10_1",
+      "name": "公墓方向牌",
+      "description": "道路一侧的箭头牌指向公墓和伐木场，白漆字面被雨水冲得发灰。",
+      "type": "other"
+    },
+    {
+      "id": "ITEM_ROAD10_2",
+      "name": "林地木栅",
+      "description": "靠近森林的一段矮木栅断了几截，只剩下零散木桩还立在地里。",
+      "type": "other"
+    },
+    {
+      "id": "ITEM_ROAD10_3",
+      "name": "步道标桩",
+      "description": "一根编号步道标桩，用来标示通往林地和伐木场的小路。",
+      "type": "other"
+    }
+  ],
+  "conditions": [
+    {
+      "description": "露天大道，受天气影响。通往森林和伐木场，越往深处越荒凉。",
+      "mechanicalEffect": {
+        "skillPenalty": [
+          {
+            "skill": "Perception",
+            "delta": -10
+          }
+        ]
+      }
+    },
+    {
+      "description": "大道远端靠近森林处路灯稀少，夜间极为昏暗。",
+      "mechanicalEffect": {
+        "skillPenalty": [
+          {
+            "skill": "Perception",
+            "delta": -40
+          }
+        ]
+      }
+    }
+  ],
+  "itemContexts": {
+    "ITEM_ROAD10_3": "通往林地与废弃伐木场的小路旁每隔一段就立着一根编号标桩。"
+  }
+}

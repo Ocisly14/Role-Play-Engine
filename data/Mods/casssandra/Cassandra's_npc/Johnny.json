@@ -1,0 +1,130 @@
+{
+  "id": "Johnny",
+  "name": "Johnny",
+  "occupation": "Hunter",
+  "age": 35,
+  "gender": "male",
+  "appearance": "A physically fit man with a rugged outdoorsman look, accustomed to hunting and physical activity.",
+  "personality": "Hot-tempered, possessive, and impulsive. He is quick to anger when he feels mocked or blocked, especially in matters involving Helen.",
+  "background": "Johnny is a hunting enthusiast who has long harbored romantic feelings for Helen. He resents Vito, believing himself no inferior. On December 22, 2003, he arranged a date with Helen at the Reindeer Bar to confess his feelings, but got into a violent altercation with Philip Scaletta, who was harassing her. Although Johnny drove Philip off, the interruption ruined his chance to confess, and Helen left early, leaving Johnny furious and frustrated.",
+  "residence": "OUTDOOR",
+  "currentLocation": "SCN_16_SUB_1",
+  "longTermIntent": "Win Helen's affection, prove himself superior to Vito, and keep his pride intact after the Reindeer Bar incident.",
+  "attributes": {
+    "STR": 45,
+    "CON": 55,
+    "DEX": 55,
+    "APP": 60,
+    "POW": 45,
+    "SIZ": 60,
+    "INT": 65,
+    "EDU": 75
+  },
+  "status": {
+    "hp": 12,
+    "maxHp": 12,
+    "sanity": 45,
+    "maxSanity": 99,
+    "luck": 45,
+    "mp": 9,
+    "conditions": []
+  },
+  "skills": {
+    "Brawl": 65,
+    "Shotgun": 65,
+    "Credit Rating": 15,
+    "Spot Hidden": 60,
+    "Track": 50,
+    "Listen": 60,
+    "Intimidate": 50,
+    "Charm": 90
+  },
+  "inventory": [
+    {
+      "name": "Hunting shotgun",
+      "properties": {
+        "note": "A well-maintained shotgun used for hunting."
+      }
+    },
+    {
+      "name": "Hunting gear",
+      "properties": {
+        "note": "Basic outdoor hunting equipment including a knife, binoculars, and camouflage clothing."
+      }
+    }
+  ],
+  "relationships": [
+    {
+      "targetId": "Helen",
+      "targetName": "Helen",
+      "relationshipType": "friend",
+      "attitude": 80,
+      "description": "The woman Johnny wants to impress and confess to.",
+      "history": "He has admired Helen for a long time and planned to speak to her at the Reindeer Bar."
+    },
+    {
+      "targetId": "Vito",
+      "targetName": "Vito",
+      "relationshipType": "rival",
+      "attitude": -50,
+      "description": "Johnny resents Vito for being the man Helen is tied to.",
+      "history": "Johnny believes he is no worse than Vito and feels unfairly overlooked."
+    },
+    {
+      "targetId": "Philip Scaletta",
+      "targetName": "Philip Scaletta",
+      "relationshipType": "enemy",
+      "attitude": -70,
+      "description": "Philip was beaten by Johnny after harassing Helen.",
+      "history": "Their conflict began during the Reindeer Bar confrontation on December 22."
+    }
+  ],
+  "memory": [
+    {
+      "type": "information",
+      "content": "I went to the Reindeer Bar on December 22, 2003 to meet Helen and finally confess what I felt.",
+      "metadata": {
+        "knowledgeId": "k_johnny_bar_date",
+        "difficulty": "automatic"
+      }
+    },
+    {
+      "type": "information",
+      "content": "I know the woods around Cassandra well enough to hunt there, and I hate feeling trapped in town when I should be free outside.",
+      "metadata": {
+        "knowledgeId": "k_johnny_hunter",
+        "difficulty": "regular"
+      }
+    },
+    {
+      "type": "information",
+      "content": "Philip Scaletta harassed Helen that night, and I drove him off after a violent argument.",
+      "metadata": {
+        "knowledgeId": "k_johnny_philip_fight",
+        "difficulty": "regular"
+      }
+    },
+    {
+      "type": "secret",
+      "content": "My jealousy and temper can push me into reckless or violent behavior if I feel humiliated again.",
+      "metadata": {
+        "knowledgeId": "s_johnny_jealousy"
+      }
+    },
+    {
+      "type": "secret",
+      "content": "I watch Vito more than I should, because I cannot stand the idea of being second place in Helen's life.",
+      "metadata": {
+        "knowledgeId": "s_johnny_vito_watch"
+      }
+    },
+    {
+      "type": "belief",
+      "content": "If I act with enough confidence, Helen will see that I am serious and not just another loud fool.",
+      "metadata": {
+        "confidence": 0.7,
+        "reasoningChain": "I have more than enough grit to protect people I care about. What I lack is the chance to show it cleanly."
+      }
+    }
+  ]
+}

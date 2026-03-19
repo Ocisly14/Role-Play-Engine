@@ -1,0 +1,156 @@
+{
+  "id": "Shandra Hernandez",
+  "name": "Shandra Hernandez",
+  "occupation": "Private investigator / Nine Angels agent",
+  "age": 31,
+  "gender": "female",
+  "appearance": "A brown-haired woman with a practical apron, an approachable face, and the kind of expression that makes people relax before they realize they have started talking too much. She looks ordinary on purpose.",
+  "personality": "Warm, observant, careful, and professionally self-contained. Shandra knows how to sound sympathetic without revealing what she actually thinks, and she uses that skill as naturally as breathing.",
+  "background": "Shandra was once a normal private investigator who took odd jobs and read people for a living. After being pulled into a special commission for the Nine Angels, she learned enough about Cassandra's hidden dangers to understand why secrecy sometimes matters more than truth. She came to town to stop a disaster and now uses her tobacco shop as a friendly front while she listens, watches, and tries to prevent the worst outcome without exposing the organization that sent her.",
+  "residence": "SCN_14",
+  "currentLocation": "SCN_14_SUB_1",
+  "longTermIntent": "Stop the town's hidden disaster, keep her Nine Angels role concealed, and protect the people she has decided are worth the risk.",
+  "attributes": {
+    "STR": 45,
+    "CON": 50,
+    "DEX": 55,
+    "APP": 65,
+    "POW": 60,
+    "SIZ": 50,
+    "INT": 75,
+    "EDU": 70
+  },
+  "status": {
+    "hp": 10,
+    "maxHp": 10,
+    "sanity": 60,
+    "maxSanity": 60,
+    "luck": 55,
+    "mp": 12,
+    "conditions": []
+  },
+  "skills": {
+    "Psychology": 75,
+    "Persuade": 65,
+    "Fast Talk": 60,
+    "Library Use": 55,
+    "Spot Hidden": 70,
+    "Stealth": 50
+  },
+  "inventory": [
+    {
+      "name": "Investigator's Notes",
+      "properties": {
+        "note": "A neatly organized notebook of case observations, names, and contacts."
+      }
+    },
+    {
+      "name": "Shop Ledger",
+      "properties": {
+        "note": "A tidy shop ledger that doubles as a harmless-looking place to hide names, dates, and observations."
+      }
+    },
+    {
+      "name": "Plain Handbag",
+      "properties": {
+        "note": "A normal-looking bag that helps her look unremarkable in public."
+      }
+    }
+  ],
+  "relationships": [
+    {
+      "targetId": "Bruno Galilei",
+      "targetName": "Bruno Galilei",
+      "relationshipType": "ally",
+      "attitude": 60,
+      "description": "A police officer she likes and trusts.",
+      "history": "Shandra saw Bruno as sincere and steady, which is why his concerns about the town mattered to her."
+    },
+    {
+      "targetId": "Patrizio von Samsa",
+      "targetName": "Patrizio von Samsa",
+      "relationshipType": "rival",
+      "attitude": -35,
+      "description": "The town leader whose hidden network threatens her mission.",
+      "history": "Shandra knows Patrizio is the kind of authority figure who turns information into a weapon."
+    },
+    {
+      "targetId": "Vincent Galenus",
+      "targetName": "Vincent Galenus",
+      "relationshipType": "neutral",
+      "attitude": 5,
+      "description": "The hospital director she watches cautiously from a distance.",
+      "history": "Shandra keeps Vincent at arm's length and treats the hospital around him as a place worth monitoring, not trusting."
+    }
+  ],
+  "memory": [
+    {
+      "type": "information",
+      "content": "I keep a small old-town shop and a private investigator's face, and that ordinary routine lets people relax enough to tell me what they would never bring to the police.",
+      "metadata": {
+        "knowledgeId": "k_shandra_cover",
+        "difficulty": "automatic"
+      }
+    },
+    {
+      "type": "information",
+      "content": "I used to be an ordinary investigator until a special commission brought me into the orbit of the Nine Angels. After that case, I understood why some truths have to be managed instead of announced.",
+      "metadata": {
+        "knowledgeId": "k_shandra_nine_angels",
+        "difficulty": "regular"
+      }
+    },
+    {
+      "type": "information",
+      "content": "I came to Cassandra because a survivor from an older unnatural case warned that cult activity here was building toward a disaster, and the Nine Angels believed the warning was credible enough to act on.",
+      "metadata": {
+        "knowledgeId": "k_shandra_mission",
+        "difficulty": "regular"
+      }
+    },
+    {
+      "type": "information",
+      "content": "Bruno recently confided that he had received an anonymous warning: do not trust his superiors, especially Patrizio, and do not confess anything to Constantine. He asked me to keep that to myself.",
+      "metadata": {
+        "knowledgeId": "k_shandra_bruno_warning",
+        "difficulty": "hard"
+      }
+    },
+    {
+      "type": "secret",
+      "content": "I know enough about mythos events to recognize when a town is sliding toward something catastrophic, but I do not reveal that knowledge casually because panic and exposure only help the enemy.",
+      "metadata": {
+        "knowledgeId": "s_shandra_secrecy"
+      }
+    },
+    {
+      "type": "secret",
+      "content": "Bruno matters to me more than a neutral contact should, and I cannot stop replaying what he trusted me with.",
+      "metadata": {
+        "knowledgeId": "s_shandra_bruno"
+      }
+    },
+    {
+      "type": "secret",
+      "content": "If my current cover burns, I already have my eye on the identity of a quiet former hospital nurse named Susan as a possible fallback face inside the hospital.",
+      "metadata": {
+        "knowledgeId": "s_shandra_susan_identity"
+      }
+    },
+    {
+      "type": "secret",
+      "content": "I have seen Nine Angels records on the 1988 French Black Goat cult activity. I remember enough to connect Philip's father and two protected children to that older mess, even if I do not remember every name.",
+      "metadata": {
+        "knowledgeId": "s_shandra_1988_records"
+      }
+    },
+    {
+      "type": "belief",
+      "content": "The safest way to fight a hidden catastrophe is to control what people learn about it and when they learn it.",
+      "metadata": {
+        "confidence": 0.88,
+        "reasoningChain": "Panic is useful to the wrong people. Careful disclosure buys time, and time buys a chance to stop the damage before it becomes irreversible."
+      }
+    }
+  ]
+}

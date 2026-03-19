@@ -1,0 +1,76 @@
+{
+  "id": "SCN_20_SUB_3",
+  "name": "森林深处",
+  "description": "从伐木场废墟延伸出的泥径蜿蜒没入森林，几步之后便被枯枝落叶与蕨类植物吞没殆尽。越往深处走，树木越发密集粗壮，巨大的树冠层层叠叠地遮蔽了天空，即使是白天，林间也暗如黄昏，只有零星的光斑从枝叶缝隙中漏下。脚下的泥土湿软黏腻，每一步都发出沉闷的吮吸声。空气潮重得近乎凝固，泥土的腥气与腐叶的酸臭浓烈刺鼻，深吸一口便觉得肺叶发沉。四周安静得极不正常——没有鸟鸣，没有虫声，只有偶尔从远处传来的枯枝折断声在寂静中格外清晰。粗壮的树根盘虬错节地裸露在地表，黑色的苔藓覆盖着一切，树干间的间距越来越窄，仿佛森林本身正在收拢合围。一种原始的、来自本能深处的不安感在心底蔓延开来——这片森林太过幽深茂密，贸然深入绝无可能全身而退。",
+  "parentLocationId": "SCN_20",
+  "items": [
+    {
+      "id": "ITEM_SCN20_5",
+      "name": "残破伐木标桩",
+      "type": "tool",
+      "damaged": true,
+      "description": "一根带红漆记号的旧伐木标桩半埋在腐叶里，像是这片森林里最后一点人类痕迹。"
+    },
+    {
+      "id": "ITEM_SCN20_6",
+      "name": "带抓痕的树干",
+      "type": "other",
+      "description": "一株粗壮树干上留着深深抓痕和黏稠残留物，怎么看都不像普通野兽能留下的印记。"
+    },
+    {
+      "id": "ITEM_SCN20_7",
+      "name": "泥地巨大足迹",
+      "type": "other",
+      "category": "evidence",
+      "discoveryMethod": "inspect ground",
+      "description": "湿软泥地里凹着几个过分庞大的足迹，边缘仍保持着相对新鲜的塌陷轮廓。"
+    }
+  ],
+  "conditions": [
+    {
+      "description": "遮天蔽日的树冠将阳光几乎完全隔绝，即使白天森林深处也如同黄昏般昏暗。越深入越黑暗。",
+      "mechanicalEffect": {
+        "skillPenalty": [
+          {
+            "skill": "Perception",
+            "delta": -40
+          }
+        ]
+      }
+    },
+    {
+      "description": "森林极为茂密，小路几乎被植被完全吞没。贸然深入极有可能迷失方向，尸骨无存。",
+      "mechanicalEffect": {
+        "skillPenalty": [
+          {
+            "skill": "Perception",
+            "delta": -20
+          }
+        ]
+      }
+    },
+    {
+      "description": "空气潮湿沉闷，弥漫着泥土的腥味与腐叶的酸臭，越深入气味越浓烈，偶尔还能嗅到一股不明来源的腥臭。",
+      "mechanicalEffect": {
+        "skillPenalty": [
+          {
+            "skill": "Perception",
+            "delta": -10
+          }
+        ]
+      }
+    },
+    {
+      "description": "四周静得诡异，偶尔传来树枝折断的声响。有时能听到远处似乎有某种大型生物移动的沉重脚步声。",
+      "mechanicalEffect": {
+        "skillPenalty": [
+          {
+            "skill": "Listen",
+            "delta": -10
+          }
+        ]
+      }
+    }
+  ],
+  "connections": ["SCN_20_SUB_1"]
+}

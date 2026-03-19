@@ -1,0 +1,150 @@
+{
+  "id": "Constantine Frollo",
+  "name": "Constantine Frollo",
+  "occupation": "Catholic priest",
+  "age": 30,
+  "gender": "male",
+  "appearance": "A stern-looking man with sharp facial features, usually dressed in priestly garments. His posture is rigid, and his gaze is often intense, giving others a sense of pressure and unease.",
+  "personality": "Cold, controlling, self-righteous, and manipulative. Appears pious and disciplined on the surface, but is inwardly fanatical and convinced of his own moral superiority.",
+  "background": "Originally named Michael Parker, Constantine was born in the United States. At the age of six, he moved to France with his adoptive parents and grew up there, becoming culturally French. He later entered the clergy and eventually came to Cassandra as a priest. Beneath his religious role, he is deeply entangled with occult beliefs and forbidden forces, believing himself chosen to enact a divine plan.",
+  "residence": "SCN_17",
+  "currentLocation": "SCN_17",
+  "longTermIntent": "Keep the church and its hidden web under control, advance the ritual he believes will validate his faith, and maintain his hold over Cassandra's frightened people.",
+  "attributes": {
+    "STR": 45,
+    "CON": 50,
+    "DEX": 40,
+    "APP": 55,
+    "POW": 75,
+    "SIZ": 50,
+    "INT": 70,
+    "EDU": 80
+  },
+  "status": {
+    "hp": 10,
+    "maxHp": 10,
+    "sanity": 45,
+    "maxSanity": 75,
+    "luck": 60,
+    "mp": 15,
+    "conditions": []
+  },
+  "skills": {
+    "Occult": 75,
+    "Psychology": 60,
+    "Persuade": 65,
+    "Intimidate": 55,
+    "Religion": 80,
+    "Cthulhu Mythos": 20
+  },
+  "inventory": [
+    {
+      "name": "Silver cross",
+      "quantity": 1,
+      "properties": {
+        "note": "A pure silver cross worn as part of his priestly identity."
+      }
+    },
+    {
+      "name": "Black priest robe",
+      "quantity": 1,
+      "properties": {
+        "note": "He is always seen in this robe when appearing in Cassandra."
+      }
+    },
+    {
+      "name": "Church hidden-door access",
+      "properties": {
+        "note": "Knowledge of the concealed route into the church basement and the web below it."
+      }
+    }
+  ],
+  "relationships": [
+    {
+      "targetId": "Patrizio von Samsa",
+      "targetName": "Patrizio von Samsa",
+      "relationshipType": "ally",
+      "attitude": 70,
+      "description": "A co-conspirator working toward a shared occult objective.",
+      "history": "They formed an alliance to use Cassandra as the stage for a forbidden summoning."
+    },
+    {
+      "targetId": "Bruno Galilei",
+      "targetName": "Bruno Galilei",
+      "relationshipType": "enemy",
+      "attitude": -80,
+      "description": "A dangerous investigator who came close to uncovering the truth.",
+      "history": "Bruno was warned never to trust Constantine and became a direct threat to his plans."
+    },
+    {
+      "targetId": "Vincent Galenus",
+      "targetName": "Vincent Galenus",
+      "relationshipType": "ally",
+      "attitude": 45,
+      "description": "A local doctor whose confessions and compromises Constantine knows too well.",
+      "history": "Their relationship is based on secrecy, mutual utility, and the handling of infected townspeople."
+    }
+  ],
+  "memory": [
+    {
+      "type": "information",
+      "content": "I serve from this church, and I use it as both sanctuary and threshold. The congregation sees prayer; I know what waits behind the hidden door.",
+      "metadata": {
+        "knowledgeId": "k_constantine_church",
+        "difficulty": "automatic"
+      }
+    },
+    {
+      "type": "information",
+      "content": "I was Michael once, the child who lived through Jonestown because the Spider God chose not to let me die. Everything after that has been obedience layered on obedience.",
+      "metadata": {
+        "knowledgeId": "k_constantine_origin",
+        "difficulty": "hard"
+      }
+    },
+    {
+      "type": "information",
+      "content": "Vincent confessed enough in drink and grief that I learned what he and Patrizio had done. Since then he has helped me deal with the infected and with other things that should not reach the public.",
+      "metadata": {
+        "knowledgeId": "k_constantine_vincent",
+        "difficulty": "regular"
+      }
+    },
+    {
+      "type": "secret",
+      "content": "My rites are not purely Catholic. Prayer, web, and sorcery blur together when I serve the voice that has followed me since childhood.",
+      "metadata": {
+        "knowledgeId": "s_constantine_rites"
+      }
+    },
+    {
+      "type": "secret",
+      "content": "Beneath the church is Atlach-Nacha's web and an unstable bridge to the Dreamlands. Cold spiders pass through it because I have allowed that passage to remain open.",
+      "metadata": {
+        "knowledgeId": "s_constantine_web"
+      }
+    },
+    {
+      "type": "secret",
+      "content": "Patrizio and I keep a practical peace. I help hide spider cases and remove meddlers when it suits us both, and in return he leaves my church and my work intact.",
+      "metadata": {
+        "knowledgeId": "s_constantine_patrizio"
+      }
+    },
+    {
+      "type": "secret",
+      "content": "If the Spider God still accepts me as priest, the spider-humans obey me, some cocooned victims can be spared, and even the transformed daughters do not mistake me for ordinary prey.",
+      "metadata": {
+        "knowledgeId": "s_constantine_priesthood"
+      }
+    },
+    {
+      "type": "belief",
+      "content": "If my god descends and destroys me in the same moment, that is still obedience fulfilled.",
+      "metadata": {
+        "confidence": 0.9,
+        "reasoningChain": "Meaning is found in obedience and ritual, not in ordinary human comfort."
+      }
+    }
+  ]
+}
