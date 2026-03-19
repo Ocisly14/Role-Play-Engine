@@ -1,6 +1,6 @@
 import type { CharacterAction, PlanNode } from "./types.js";
 
-export function buildInterruptedMovementAction(
+export function buildInterruptedAction(
   node: PlanNode,
   gameTime: string,
   location: string
@@ -22,7 +22,7 @@ export function buildInterruptedMovementAction(
   };
 }
 
-function interruptMovementNode(
+function interruptNode(
   node: PlanNode,
   gameTime: string
 ): PlanNode {
@@ -61,12 +61,8 @@ export function mergeRevisedNodesWithHistory(
     }
 
     if (node.status === "in_progress") {
-      if (node.type === "movement") {
-        interruptedNode = interruptMovementNode(node, gameTime);
-        preservedNodes.push(interruptedNode);
-      } else {
-        preservedNodes.push(node);
-      }
+      interruptedNode = interruptNode(node, gameTime);
+      preservedNodes.push(interruptedNode);
     }
   }
 

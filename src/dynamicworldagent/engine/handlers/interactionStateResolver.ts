@@ -41,8 +41,9 @@ function parseJsonResponse<T>(raw: string): T {
 interface CharacterPromptData {
   id: string;
   name: string;
-  background?: string;
   occupation?: string;
+  appearance?: string;
+  personality?: string;
   stats: { hp: number; san: number } | undefined;
   inventory: { id: string; name: string; description?: string }[];
   position: string | null;
@@ -68,8 +69,9 @@ function collectCharacterData(
   return {
     id: characterId,
     name: npc?.name ?? characterId,
-    background: npc?.background ?? npc?.backstory,
     occupation: npc?.occupation,
+    appearance: npc?.appearance,
+    personality: npc?.personality,
     stats,
     inventory,
     position: positionLabel,
@@ -228,8 +230,9 @@ function buildUserPrompt(
     `## Actor`,
     `ID: ${actor.id}`,
     `Name: ${actor.name}`,
-    actor.background ? `Background: ${actor.background}` : null,
     actor.occupation ? `Occupation: ${actor.occupation}` : null,
+    actor.appearance ? `Appearance: ${actor.appearance}` : null,
+    actor.personality ? `Personality: ${actor.personality}` : null,
     actor.stats
       ? `Stats: HP=${actor.stats.hp}, SAN=${actor.stats.san}`
       : null,
@@ -259,8 +262,9 @@ function buildUserPrompt(
       return [
         `## Target: ${t.name}`,
         `ID: ${t.id}`,
-        t.background ? `Background: ${t.background}` : null,
         t.occupation ? `Occupation: ${t.occupation}` : null,
+        t.appearance ? `Appearance: ${t.appearance}` : null,
+        t.personality ? `Personality: ${t.personality}` : null,
         t.stats ? `Stats: HP=${t.stats.hp}, SAN=${t.stats.san}` : null,
         `Inventory: ${JSON.stringify(t.inventory)}`,
         `Position: ${t.position ?? "unknown"}`,

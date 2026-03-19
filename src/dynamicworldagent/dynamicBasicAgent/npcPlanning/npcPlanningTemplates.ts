@@ -433,6 +433,7 @@ export interface RevisePlansParams {
   memoryLog: string;
   todayPlan: ScheduleEntry[];
   pendingNodes: string;
+  interruptedNode?: string;
   triggerDescription: string;
   currentLocation: string;
   currentPositionDetail: string;
@@ -544,7 +545,13 @@ ${todayPlan}
 ## Relevant Memories / Recent Context
 ${params.memoryLog || "Nothing recorded yet."}
 
-## Your Pending Actions
+${params.interruptedNode
+    ? `## Action Being Interrupted
+You were in the middle of this action when the disruption occurred. It is now cancelled — you must account for it in your revised plan.
+${params.interruptedNode}
+
+`
+    : ""}## Your Pending Actions
 ${params.pendingNodes}
 
 ## Your Current Location

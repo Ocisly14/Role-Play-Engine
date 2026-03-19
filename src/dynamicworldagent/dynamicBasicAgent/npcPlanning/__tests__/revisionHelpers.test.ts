@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import {
-  buildInterruptedMovementAction,
+  buildInterruptedAction,
   mergeRevisedNodesWithHistory,
 } from "../revisionHelpers.js";
 import type { PlanNode } from "../types.js";
@@ -68,8 +68,40 @@ describe("revisionHelpers", () => {
     expect(result.interruptedNode?.executionMeta.interruptedAt).toBe("10:02");
   });
 
+  it("interrupts in-progress non-movement nodes (e.g. character_interaction)", () => {
+    const inProgressInteraction = makeNode({
+      nodeId: "talk",
+      status: "in_progress",
+      type: "character_interaction",
+      action: "Talk to the librarian",
+      executionMeta: { remainingMinutes: 2 },
+    });
+    const pendingNode = makeNode({
+      nodeId: "old-pending",
+      action: "Old future plan",
+    });
+    const revisedNode = makeNode({
+      nodeId: "new-pending",
+      action: "New revised plan",
+    });
+
+    const result = mergeRevisedNodesWithHistory(
+      [inProgressInteraction, pendingNode],
+      [revisedNode],
+      "10:03"
+    );
+
+    expect(result.nextNodes.map((node) => node.nodeId)).toEqual([
+      "talk",
+      "new-pending",
+    ]);
+    expect(result.interruptedNode?.status).toBe("interrupted");
+    expect(result.interruptedNode?.executionMeta.remainingMinutes).toBe(0);
+    expect(result.interruptedNode?.executionMeta.interruptedAt).toBe("10:03");
+  });
+
   it("builds an interrupted action for logging and UI", () => {
-    const action = buildInterruptedMovementAction(
+    const action = buildInterruptedAction(
       makeNode({
         status: "interrupted",
       }),

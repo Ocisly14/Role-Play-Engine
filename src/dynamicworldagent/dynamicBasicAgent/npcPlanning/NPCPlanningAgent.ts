@@ -26,7 +26,7 @@ import {
   resolveLocationName,
 } from "./sceneMapFormatter.js";
 import {
-  buildInterruptedMovementAction,
+  buildInterruptedAction,
   mergeRevisedNodesWithHistory,
 } from "./revisionHelpers.js";
 import type {
@@ -750,6 +750,11 @@ export class NPCPlanningAgent {
       })
       .join("\n");
 
+    // Find in_progress node that will be interrupted
+    const inProgressNode = existingNodes.find(
+      (n) => n.status === "in_progress"
+    );
+
     const { systemPrompt, userPrompt } = buildRevisePlansPrompt({
       npcName: npc.name,
       npcId: npc.id,
@@ -758,6 +763,9 @@ export class NPCPlanningAgent {
       memoryLog: context.memoryLog.join("\n"),
       todayPlan: schedule,
       pendingNodes: JSON.stringify(context.pendingNodes, null, 2),
+      interruptedNode: inProgressNode
+        ? JSON.stringify(inProgressNode, null, 2)
+        : undefined,
       triggerDescription,
       currentLocation: currentLocationName,
       currentPositionDetail,
@@ -852,7 +860,7 @@ export class NPCPlanningAgent {
 
     return interruptedNode
       ? {
-          interruptedAction: buildInterruptedMovementAction(
+          interruptedAction: buildInterruptedAction(
             interruptedNode,
             state.timeOfDay,
             currentLocationId || interruptedNode.location
