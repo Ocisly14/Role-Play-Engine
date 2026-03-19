@@ -1,8 +1,8 @@
 import type { Request, Response } from "express";
 import * as mapService from "./mapService.js";
 
-export function getTopology(req: Request, res: Response) {
-  const topology = mapService.getTopology(req.params.id);
+export async function getTopology(req: Request, res: Response) {
+  const topology = await mapService.getTopology(req.params.id);
   if (!topology)
     return res
       .status(404)
@@ -10,21 +10,21 @@ export function getTopology(req: Request, res: Response) {
   return res.json(topology);
 }
 
-export function getMapLayout(req: Request, res: Response) {
-  const layout = mapService.getMapLayout(req.params.id);
+export async function getMapLayout(req: Request, res: Response) {
+  const layout = await mapService.getMapLayout(req.params.id);
   if (!layout) return res.status(404).json({ error: "Map layout not found" });
   return res.json(layout);
 }
 
-export function getPositions(req: Request, res: Response) {
-  const positions = mapService.getPositions(req.params.id);
+export async function getPositions(req: Request, res: Response) {
+  const positions = await mapService.getPositions(req.params.id);
   if (!positions)
     return res.status(404).json({ error: "Simulation not found" });
   return res.json({ positions });
 }
 
-export function getNpcStatuses(req: Request, res: Response) {
-  const statuses = mapService.getNpcStatuses(req.params.id);
+export async function getNpcStatuses(req: Request, res: Response) {
+  const statuses = await mapService.getNpcStatuses(req.params.id);
   if (!statuses) return res.status(404).json({ error: "Simulation not found" });
   return res.json({ statuses });
 }

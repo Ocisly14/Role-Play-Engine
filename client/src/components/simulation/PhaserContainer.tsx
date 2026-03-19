@@ -5,12 +5,12 @@ import { TownScene } from "./TownScene";
 
 interface PhaserContainerProps {
   onGameReady: (game: Phaser.Game) => void;
-  moduleName: string;
+  sessionKey: string;
 }
 
 export function PhaserContainer({
   onGameReady,
-  moduleName,
+  sessionKey,
 }: PhaserContainerProps) {
   const containerRef = useRef<HTMLDivElement>(null);
   const gameRef = useRef<Phaser.Game | null>(null);
@@ -33,6 +33,11 @@ export function PhaserContainer({
         pixelArt: false,
         antialias: true,
       },
+      // This viewer does not use sound. Disabling audio avoids StrictMode
+      // teardown races where Phaser tries to resume/suspend a closed context.
+      audio: {
+        noAudio: true,
+      },
     });
 
     gameRef.current = game;
@@ -42,7 +47,7 @@ export function PhaserContainer({
       game.destroy(true);
       gameRef.current = null;
     };
-  }, [onGameReady, moduleName]);
+  }, [onGameReady, sessionKey]);
 
   return (
     <div

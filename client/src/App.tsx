@@ -64,8 +64,10 @@ const AppRoutes: React.FC = () => {
           element={
             <Suspense
               fallback={
-                <div className="flex items-center justify-center h-screen bg-gray-950 text-gray-400">
-                  Loading...
+                <div className="game-container">
+                  <div className="flex items-center justify-center flex-1 text-slate-500">
+                    Loading...
+                  </div>
                 </div>
               }
             >

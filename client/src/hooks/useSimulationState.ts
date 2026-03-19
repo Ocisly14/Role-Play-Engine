@@ -1,7 +1,6 @@
 import { useCallback, useEffect, useState } from "react";
 import type {
   CharacterPosition,
-  MapLayout,
   NpcStatusInfo,
   SimulationStatus,
   TopologyResponse,
@@ -11,7 +10,6 @@ import type { SimulationEvent } from "./useSimulationWebSocket.js";
 
 export interface SimulationViewState {
   topology: TopologyResponse | null;
-  mapLayout: MapLayout | null;
   npcPositions: Record<string, CharacterPosition>;
   npcStatuses: NpcStatusInfo[];
   currentLevel: 1 | 2 | 3;
@@ -33,7 +31,6 @@ const MAX_EVENT_LOG = 200;
 export function useSimulationState(sessionId: string | null) {
   const [state, setState] = useState<SimulationViewState>({
     topology: null,
-    mapLayout: null,
     npcPositions: {},
     npcStatuses: [],
     currentLevel: 1,
@@ -55,18 +52,15 @@ export function useSimulationState(sessionId: string | null) {
 
     async function loadInitialState() {
       try {
-        const [topology, mapLayout, positions, statuses, status] =
-          await Promise.all([
-            simApi.fetchTopology(sessionId!),
-            simApi.fetchMapLayout(sessionId!).catch(() => null),
-            simApi.fetchPositions(sessionId!),
-            simApi.fetchNpcStatuses(sessionId!),
-            simApi.fetchStatus(sessionId!),
-          ]);
+        const [topology, positions, statuses, status] = await Promise.all([
+          simApi.fetchTopology(sessionId),
+          simApi.fetchPositions(sessionId),
+          simApi.fetchNpcStatuses(sessionId),
+          simApi.fetchStatus(sessionId),
+        ]);
         setState((prev) => ({
           ...prev,
           topology,
-          mapLayout,
           npcPositions: positions,
           npcStatuses: statuses,
           gameDay: status.currentDay,

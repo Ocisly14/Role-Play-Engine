@@ -8,14 +8,19 @@ import type {
 } from "../../../src/dynamicworldagent/simulation/mapViewerTypes.js";
 import type { DynamicGameStateManager } from "../../../src/dynamicworldagent/state/DynamicGameState.js";
 import type { CharacterPosition } from "../../../src/dynamicworldagent/state/topologyTypes.js";
-import { getRunnerFromMemory } from "./service.js";
+import { getPrismaClient } from "../../../src/shared/agents/memory/database/prismaClient.js";
+import { getRunner, getRunnerFromMemory } from "./service.js";
+
+async function requireRunner(sessionId: string): Promise<SimulationRunner | undefined> {
+  return getRunnerFromMemory(sessionId) ?? (await getRunner(getPrismaClient(), sessionId));
+}
 
 export function getRunnerById(sessionId: string): SimulationRunner | undefined {
   return getRunnerFromMemory(sessionId);
 }
 
-export function getTopology(sessionId: string): TopologyResponse | null {
-  const runner = getRunnerFromMemory(sessionId);
+export async function getTopology(sessionId: string): Promise<TopologyResponse | null> {
+  const runner = await requireRunner(sessionId);
   if (!runner) return null;
   const dgsm = runner.getDgsm();
   const topology = dgsm.getTopology();
@@ -59,8 +64,8 @@ export function getTopology(sessionId: string): TopologyResponse | null {
   return { junctions, roads, scenes, scenarioOutlines, transportEdges };
 }
 
-export function getMapLayout(sessionId: string): MapLayout | null {
-  const runner = getRunnerFromMemory(sessionId);
+export async function getMapLayout(sessionId: string): Promise<MapLayout | null> {
+  const runner = await requireRunner(sessionId);
   if (!runner) return null;
   const modulePath = runner.getModulePath();
   if (!modulePath) return null;
@@ -81,16 +86,16 @@ export function getMapLayout(sessionId: string): MapLayout | null {
   return JSON.parse(fs.readFileSync(layoutPath, "utf-8")) as MapLayout;
 }
 
-export function getPositions(
+export async function getPositions(
   sessionId: string
-): Record<string, CharacterPosition> | null {
-  const runner = getRunnerFromMemory(sessionId);
+): Promise<Record<string, CharacterPosition> | null> {
+  const runner = await requireRunner(sessionId);
   if (!runner) return null;
   return runner.getDgsm().getState().characterPositions;
 }
 
-export function getNpcStatuses(sessionId: string): NpcStatusInfo[] | null {
-  const runner = getRunnerFromMemory(sessionId);
+export async function getNpcStatuses(sessionId: string): Promise<NpcStatusInfo[] | null> {
+  const runner = await requireRunner(sessionId);
   if (!runner) return null;
   const dgsm = runner.getDgsm();
   const state = dgsm.getState();

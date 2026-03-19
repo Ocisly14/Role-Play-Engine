@@ -19,27 +19,27 @@ const EVENT_LABELS: Record<string, string> = {
 export function EventLog({ events }: EventLogProps) {
   return (
     <div className="flex-1 overflow-y-auto">
-      <div className="px-3 py-2 text-xs font-medium text-gray-500 border-b border-gray-800">
+      <div className="px-3 py-2 text-xs font-medium text-slate-500 border-b border-slate-200/60">
         Event Log
       </div>
       {events.map((event) => (
         <div
           key={event.id}
-          className="px-3 py-1.5 text-xs border-b border-gray-900 hover:bg-gray-800/30"
+          className="px-3 py-1.5 text-xs border-b border-slate-200/40 hover:bg-white/30"
         >
           <div className="flex items-center gap-1">
-            <span className="text-gray-600">
+            <span className="text-slate-400">
               [{EVENT_LABELS[event.type] ?? event.type}]
             </span>
-            <span className="text-gray-500">{event.gameTime}</span>
-            <span className="text-gray-300 truncate">
+            <span className="text-slate-400">{event.gameTime}</span>
+            <span className="text-slate-700 truncate">
               {formatEventText(event)}
             </span>
           </div>
         </div>
       ))}
       {events.length === 0 && (
-        <div className="px-3 py-4 text-xs text-gray-600 text-center">
+        <div className="px-3 py-4 text-xs text-slate-400 text-center">
           No events yet
         </div>
       )}

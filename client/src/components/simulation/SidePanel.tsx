@@ -34,6 +34,9 @@ interface SidePanelProps {
   eventLog: SimulationEvent[];
   onSelectNpc: (npcId: string | null) => void;
   onZoomToNpc: (npcId: string) => void;
+  isMobile: boolean;
+  isOpen: boolean;
+  onClose: () => void;
 }
 
 export function SidePanel({
@@ -46,6 +49,9 @@ export function SidePanel({
   eventLog,
   onSelectNpc,
   onZoomToNpc,
+  isMobile,
+  isOpen,
+  onClose,
 }: SidePanelProps) {
   const selectedNpc = selectedNpcId
     ? npcStatuses.find((n) => n.npcId === selectedNpcId)
@@ -53,8 +59,26 @@ export function SidePanel({
 
   const isPreparing = simulationState === "paused" && eventLog.length === 0;
 
+  const drawerClass = isMobile
+    ? isOpen
+      ? "sidebar-drawer-open"
+      : "sidebar-drawer-closed"
+    : "";
+
   return (
-    <div className="w-80 bg-gray-900 border-l border-gray-700 flex flex-col h-full">
+    <div
+      className={`game-sidebar backdrop-blur-sm border border-slate-200 shadow-md rounded-lg flex flex-col ${drawerClass}`}
+    >
+      {isMobile && (
+        <button
+          className="sidebar-close-btn"
+          onClick={onClose}
+          aria-label="Close sidebar"
+        >
+          ×
+        </button>
+      )}
+
       <GameClock
         gameDay={gameDay}
         timeOfDay={timeOfDay}
@@ -73,7 +97,7 @@ export function SidePanel({
             />
           ) : (
             <div className="flex-1 overflow-y-auto">
-              <div className="px-3 py-2 text-xs font-medium text-gray-500 border-b border-gray-800">
+              <div className="px-3 py-2 text-xs font-medium text-slate-500 border-b border-slate-200/60">
                 NPCs ({npcStatuses.length})
               </div>
               {npcStatuses.map((npc) => (
@@ -125,14 +149,14 @@ function PreparationPanel({
   return (
     <div className="flex-1 flex flex-col overflow-y-auto">
       {/* Config Section */}
-      <div className="p-4 space-y-4 border-b border-gray-800">
-        <h3 className="text-sm font-semibold text-gray-300 uppercase tracking-wider">
+      <div className="p-4 space-y-4 border-b border-slate-200/60">
+        <h3 className="text-sm font-semibold text-slate-600 uppercase tracking-wider">
           Configuration
         </h3>
 
         {/* Tick Speed */}
         <div>
-          <label className="block text-xs font-medium text-gray-400 mb-1.5">
+          <label className="block text-xs font-medium text-slate-500 mb-1.5">
             Tick Speed
           </label>
           <div className="flex gap-1.5">
@@ -144,7 +168,7 @@ function PreparationPanel({
                 className={`flex-1 py-1.5 rounded text-xs font-medium transition-all ${
                   tickSpeed === ms
                     ? "bg-amber-600 text-white"
-                    : "bg-gray-800 text-gray-400 hover:bg-gray-700"
+                    : "bg-white/50 text-slate-600 border border-slate-200 hover:bg-white/70"
                 }`}
               >
                 {label}
@@ -155,7 +179,7 @@ function PreparationPanel({
 
         {/* Max Days */}
         <div>
-          <label className="block text-xs font-medium text-gray-400 mb-1.5">
+          <label className="block text-xs font-medium text-slate-500 mb-1.5">
             Max Days: {maxDays}
           </label>
           <input
@@ -166,7 +190,7 @@ function PreparationPanel({
             onChange={(e) => setMaxDays(Number(e.target.value))}
             className="w-full accent-amber-600"
           />
-          <div className="flex justify-between text-xs text-gray-600">
+          <div className="flex justify-between text-xs text-slate-400">
             <span>1</span>
             <span>30</span>
           </div>
@@ -174,13 +198,13 @@ function PreparationPanel({
 
         {/* Weather */}
         <div>
-          <label className="block text-xs font-medium text-gray-400 mb-1.5">
+          <label className="block text-xs font-medium text-slate-500 mb-1.5">
             Weather
           </label>
           <select
             value={weather}
             onChange={(e) => setWeather(e.target.value)}
-            className="w-full py-1.5 px-2 rounded bg-gray-800 text-gray-300 border border-gray-700 text-sm"
+            className="w-full py-1.5 px-2 rounded-lg bg-white/50 text-slate-700 border border-slate-300 text-sm"
           >
             {WEATHER_OPTIONS.map(({ value, label }) => (
               <option key={value} value={value}>{label}</option>
@@ -196,7 +220,7 @@ function PreparationPanel({
           type="button"
           onClick={handleStart}
           disabled={starting}
-          className="w-full py-2.5 rounded-lg bg-amber-600 text-white font-medium hover:bg-amber-700 disabled:opacity-50 transition-all text-sm"
+          className="w-full py-2.5 rounded-xl bg-amber-600 text-white font-medium hover:bg-amber-700 disabled:opacity-50 transition-all text-sm shadow-md"
         >
           {starting ? "Starting..." : "Start Simulation"}
         </button>
@@ -204,7 +228,7 @@ function PreparationPanel({
 
       {/* NPC List */}
       <div className="flex-1 overflow-y-auto">
-        <div className="px-3 py-2 text-xs font-medium text-gray-500 border-b border-gray-800">
+        <div className="px-3 py-2 text-xs font-medium text-slate-500 border-b border-slate-200/60">
           NPCs ({npcStatuses.length})
         </div>
         {npcStatuses.map((npc) => (

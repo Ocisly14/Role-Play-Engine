@@ -52,6 +52,12 @@ export class InteriorScene extends Phaser.Scene {
   create() {
     this.addBackButton();
     this.input.keyboard?.on("keydown-ESC", () => this.handleExitBuilding());
+
+    // Boot once in the background so global game events can target this scene
+    // before the first user-driven scene switch.
+    if (!this.currentSceneId) {
+      this.scene.sleep();
+    }
   }
 
   private addBackButton() {

@@ -42,10 +42,6 @@ export interface TopologyResponse {
   }>;
 }
 
-export interface MapLayout {
-  junctions: Record<string, { x: number; y: number }>;
-}
-
 export interface NpcStatusInfo {
   npcId: string;
   name: string;
@@ -102,11 +98,6 @@ export async function fetchTopology(
   sessionId: string
 ): Promise<TopologyResponse> {
   const { data } = await api.get(`/simulation/${sessionId}/topology`);
-  return data;
-}
-
-export async function fetchMapLayout(sessionId: string): Promise<MapLayout> {
-  const { data } = await api.get(`/simulation/${sessionId}/map-layout`);
   return data;
 }
 

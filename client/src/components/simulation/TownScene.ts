@@ -183,40 +183,63 @@ export class TownScene extends Phaser.Scene {
     }
   }
 
-  private loadThumbnails() {
+  private async loadThumbnails() {
     const scenarios = this.configCache?.scenarios;
-    let hasLoads = false;
+    const loadPromises: Promise<void>[] = [];
 
     for (const outline of this.scenarioOutlines) {
       const cfg = scenarios?.[outline.id];
       const thumbFile = cfg?.thumbnail;
-      if (thumbFile) {
-        const key = `thumb_${outline.id}`;
-        if (!this.textures.exists(key)) {
-          this.load.image(key, `${this.baseUrl}${thumbFile}`);
-          hasLoads = true;
-        }
-      }
-    }
-
-    // Also load town background if configured
-    if (this.configCache?.town?.background) {
-      const bgKey = "town_bg";
-      if (!this.textures.exists(bgKey)) {
-        this.load.image(
-          bgKey,
-          `${this.baseUrl}${this.configCache.town.background}`
+      if (thumbFile && !this.textures.exists(`thumb_${outline.id}`)) {
+        loadPromises.push(
+          this.fetchAndAddTexture(
+            `thumb_${outline.id}`,
+            `${this.baseUrl}${thumbFile}`
+          )
         );
-        hasLoads = true;
       }
     }
 
-    if (hasLoads) {
-      this.load.once("complete", () => this.buildGraph());
-      this.load.start();
-    } else {
-      this.buildGraph();
+    if (
+      this.configCache?.town?.background &&
+      !this.textures.exists("town_bg")
+    ) {
+      loadPromises.push(
+        this.fetchAndAddTexture(
+          "town_bg",
+          `${this.baseUrl}${this.configCache.town.background}`
+        )
+      );
     }
+
+    await Promise.allSettled(loadPromises);
+    this.buildGraph();
+  }
+
+  private fetchAndAddTexture(key: string, url: string): Promise<void> {
+    return fetch(url)
+      .then((res) => res.blob())
+      .then(
+        (blob) =>
+          new Promise<void>((resolve, reject) => {
+            const img = new Image();
+            img.onload = () => {
+              if (!this.textures.exists(key)) {
+                this.textures.addImage(key, img);
+              }
+              URL.revokeObjectURL(img.src);
+              resolve();
+            };
+            img.onerror = () => {
+              URL.revokeObjectURL(img.src);
+              reject(new Error(`Failed to decode ${url}`));
+            };
+            img.src = URL.createObjectURL(blob);
+          })
+      )
+      .catch((err) => {
+        console.warn(`[TownScene] Skip texture ${key}:`, err.message);
+      });
   }
 
   private buildGraph() {

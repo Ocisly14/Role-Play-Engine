@@ -14,22 +14,25 @@ export function SubSceneTabs({
   if (subScenes.length === 0) return null;
 
   return (
-    <div className="absolute top-0 left-0 right-0 z-40 bg-gray-900/90 border-b border-gray-700 px-3 py-1 flex items-center gap-2">
+    <div className="absolute top-2 right-2 bottom-2 z-40 backdrop-blur-xl bg-white/50 border border-white/30 px-1.5 py-2 flex flex-col items-center gap-1.5 rounded-2xl shadow-lg">
       <button
         onClick={onBack}
-        className="text-xs text-gray-400 hover:text-gray-200 mr-2"
+        className="text-xs text-slate-500 hover:text-slate-700 px-1 py-1"
+        title="Back to Town"
       >
-        &larr; Town
+        &larr;
       </button>
+      <div className="w-full border-t border-slate-200/60" />
       {subScenes.map((scene) => (
         <button
           key={scene.id}
           onClick={() => onSelect(scene.id)}
-          className={`text-xs px-2 py-1 rounded ${
+          className={`text-xs px-1.5 py-1.5 rounded-lg transition-colors whitespace-nowrap writing-vertical ${
             scene.id === activeSubSceneId
-              ? "bg-amber-700 text-amber-100"
-              : "text-gray-400 hover:bg-gray-800 hover:text-gray-200"
+              ? "bg-amber-600 text-white"
+              : "text-slate-500 hover:bg-white/50 hover:text-slate-700"
           }`}
+          style={{ writingMode: "vertical-rl" }}
         >
           {scene.name}
         </button>

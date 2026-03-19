@@ -42,10 +42,10 @@ export function ControlPanel({
   }
 
   return (
-    <div className="fixed bottom-4 left-4 z-50 bg-gray-900/95 border border-gray-700 rounded-lg px-4 py-2 flex items-center gap-3 shadow-lg">
+    <div className="absolute bottom-4 left-4 z-10 backdrop-blur-xl bg-white/50 border border-white/30 rounded-2xl px-4 py-2 flex items-center gap-3 shadow-lg">
       <button
         onClick={handlePlayPause}
-        className="text-xl hover:text-amber-400 transition-colors"
+        className="text-xl text-slate-600 hover:text-amber-600 transition-colors"
         disabled={!isRunning && !isPaused}
       >
         {isRunning ? "\u23F8" : "\u25B6"}
@@ -53,19 +53,19 @@ export function ControlPanel({
 
       <button
         onClick={handleStep}
-        className="text-xl hover:text-amber-400 transition-colors disabled:opacity-30"
+        className="text-xl text-slate-600 hover:text-amber-600 transition-colors disabled:opacity-30"
         disabled={!isPaused}
         title="Step one tick"
       >
         {"\u23ED"}
       </button>
 
-      <div className="border-l border-gray-700 pl-3 flex gap-1">
+      <div className="border-l border-slate-200/60 pl-3 flex gap-1">
         {SPEEDS.map(({ label, ms }) => (
           <button
             key={label}
             onClick={() => handleSpeedChange(ms)}
-            className="text-xs px-2 py-1 rounded hover:bg-gray-700 text-gray-400 hover:text-gray-200"
+            className="text-xs px-2 py-1 rounded-lg hover:bg-white/50 text-slate-500 hover:text-slate-700"
           >
             {label}
           </button>
