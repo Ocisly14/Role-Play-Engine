@@ -860,7 +860,7 @@ interface SingleTickResult {
 }
 
 /**
- * Execute a single 5-minute simulation tick.
+ * Execute a single 1-minute simulation tick.
  *
  * 1. Fetch NPC nodes due in [tickStart, tickEnd)
  * 2. Merge with carry-over nodes, sort (gameTime ASC, DEX DESC), scan encounters

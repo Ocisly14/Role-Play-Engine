@@ -58,12 +58,12 @@ pnpm build:turbo
 
 ### Core: NPC Simulation Engine
 
-The system runs autonomous NPC simulation via `SimulationRunner` → `TickProcessor` in 5-minute time buckets. No player input pipeline exists.
+The system runs autonomous NPC simulation via `SimulationRunner` → `TickProcessor` in 1-minute time buckets. No player input pipeline exists.
 
 ```
 SimulationRunner.start()
   → loop: runSimulationTick()
-    → executeSingleTick() (5-min bucket)
+    → executeSingleTick() (1-min bucket)
       → Ensure NPC nodes (two-tier planning refill)
       → Fetch due NPC nodes
       → Execute via NodeHandlers
@@ -110,7 +110,7 @@ CoC-AI-agent/
 2. `NPCPlanningAgent.seedLongTermIntents()` — set NPC goals from character profiles
 3. `NPCPlanningAgent.onNewDay()` — generate daily schedules for all NPCs
 4. `SimulationRunner.start()` — begin autonomous tick loop:
-   - Each tick = 5 minutes of game time
+   - Each tick = 1 minute of game time
    - NPC nodes are generated on-demand from schedule entries (two-tier refill)
    - Nodes executed via `GameEngineRegistry` handlers
    - Impact propagation triggers plan revision for affected NPCs
@@ -166,7 +166,7 @@ Basic embedding functionality in `src/rag/` is used for:
 Game time is tracked via `DynamicGameState`:
 - `gameDay`: Current day number
 - `timeOfDay`: HH:MM format
-- Time advances in 5-minute tick increments via `TickProcessor`
+- Time advances in 1-minute tick increments via `TickProcessor`
 - Day transitions trigger `NPCPlanningAgent.onNewDay()` (new daily schedules)
 
 ### Action Types (8 Categories)
@@ -342,7 +342,7 @@ src/dynamicworldagent/
 ├── dynamicBasicAgent/npcPlanning/
 │   ├── types.ts                  # PlanNode, CharacterAction, ScheduleEntry, TickResult, etc.
 │   ├── NPCPlanningAgent.ts       # Plan generation, revision, impact gate, relationship updates
-│   ├── tickProcessor.ts          # Execution engine: 5-min buckets, discovery, impact propagation
+│   ├── tickProcessor.ts          # Execution engine: 1-min buckets, discovery, impact propagation
 │   ├── npcPlanningTemplates.ts   # LLM prompt templates (schedule, nodes, revision, impact gate)
 │   ├── actionTypeSkillMap.ts     # Static mapping of ActionType → CoC skills
 │   ├── horrorSourceData.ts       # Baseline Cthulhu horror sources for sanity loss
@@ -482,7 +482,7 @@ markNodeCompleted(sessionId, npcId, gameDay, nodeId, outcome)
 Entry point:
 - `runSimulationTick(dgsm, npcPlanningAgent, sessionId, language?, registry, ctx)` → `SimulationTickResult`
 
-**Execution flow per tick (5-minute bucket):**
+**Execution flow per tick (1-minute bucket):**
 1. Ensure each NPC has detailed nodes available (two-tier refill)
 2. Fetch due NPC nodes for current time range
 3. Sort (gameTime ASC, DEX DESC), scan unplanned encounters (|relationship| >= 60)

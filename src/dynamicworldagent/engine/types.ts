@@ -57,7 +57,7 @@ export interface FeatureNodeSchema {
 
 /** Propagation configuration for features that spread spatially */
 export interface FeaturePropagationConfig {
-  /** How many ticks between each propagation step (e.g. 2 = every 10 min) */
+  /** How many ticks between each propagation step (e.g. 10 = every 10 min) */
   tickInterval: number;
   /** Maximum number of propagation hops from the source scene */
   maxHops: number;
@@ -117,7 +117,7 @@ export interface TickRuntimeContext {
   language: string;
   /** Current tick's time label (HH:MM) */
   tickTime: string;
-  /** Duration of this tick in minutes (usually 5, can be less for final tick) */
+  /** Duration of this tick in minutes (usually 1, can be less for final tick) */
   tickDurationMinutes: number;
   npcPlanning: NpcPlanningCapability;
 }

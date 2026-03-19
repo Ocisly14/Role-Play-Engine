@@ -273,9 +273,17 @@ ${TWENTY_FOUR_HOUR_TIME_GUIDANCE}
 
 ## How To Choose The Next Step
 - Use "Your Plan For Today" as the source of truth for the intended sequence.
-- Use "What Happened Today So Far" to judge which planned steps are already done, blocked, disrupted, or no longer necessary.
+- **Carefully read "What Happened Today So Far"** to understand what you have already done, what outcomes occurred, and what the current situation is. Use this to:
+  - Judge which planned steps are already done, blocked, disrupted, or no longer necessary.
+  - Avoid generating actions that duplicate, repeat, or contradict what you already accomplished (e.g., if you already hid your notebook, do not generate another "hide notebook" action).
+  - Build on completed actions — your next steps should logically follow from what has already happened, not ignore it.
 - Choose exactly one next plan step to execute now.
 - If all meaningful plan steps are already done, return an empty JSON array.
+
+## Node Quality
+- Every node must represent a **meaningful, substantive action** that advances your goals or your daily plan.
+- Do NOT generate trivial micro-actions such as "close a page", "adjust posture", "glance around" as standalone nodes. These can be mentioned within a larger action's description but should not be their own node.
+- If a single logical activity can be described in one node, do not split it into multiple tiny steps.
 
 ## Skill Checks
 You can use a skill to accomplish an action. Pick from "Available Skills" only when the action is difficult or uses a non-routine method. Omit it for straightforward actions.
@@ -494,6 +502,8 @@ Do not include topology notes, residents, or label prefixes in \`location\`; out
 - Do not expand the rest of the day into detailed nodes unless it is the last step of the current phase.
 - Do not generate distant later-day activities.
 - Treat the current time as 24-hour clock time.
+- **Carefully read "Relevant Memories / Recent Context"** to understand what you have already done today. Do NOT generate actions that duplicate or repeat completed actions (e.g., if you already stashed your notebook, do not generate another "stash notebook" node).
+- Every revised node must be a **meaningful, substantive action**. Do not create trivial micro-actions (e.g., "adjust posture", "close a page", "glance around") as standalone nodes. Fold minor details into the description of a larger action instead.
 
 ## Skill Checks
 You can use a skill to accomplish an action. Pick from "Available Skills". Omit for everyday actions.
@@ -609,11 +619,18 @@ Decide:
 
 ## Instructions
 - Write a brief note about what you perceived and how you feel about it.
-- Set shouldRevise=true only for major immediate disruptions to what you're doing right now.
-- Minor observations, background tension, ordinary chatter, low-stakes suspicion, or events that merely make you curious should keep shouldRevise=false.
-- Use shouldRevise=true when your current action is materially blocked, becomes unsafe, loses its purpose, or a time-critical opportunity/threat now forces a different immediate action.
-- Set shouldReviseSchedule=true only if the events fundamentally change your plans for the rest of the day (e.g., a place you planned to visit was destroyed, someone you need to meet was arrested).
-- A brief interruption or local distraction is not enough to change the rest-of-day schedule.
+- shouldRevise=true ONLY when the event directly threatens your current plan's success or your personal safety:
+  - Your current action is materially blocked or impossible to continue
+  - You are in physical danger or your sanity is at risk
+  - A critical opportunity or threat demands an immediate change in action
+  - Someone you need for your plan has left, been incapacitated, or turned hostile
+- shouldRevise=false for everything else:
+  - Someone entering or leaving the room is NOT a reason to revise unless it directly blocks your plan
+  - Casual encounters, background noise, overhearing conversation, minor curiosity
+  - Events that are interesting but don't affect what you're currently doing
+  - Seeing colleagues or acquaintances nearby — this is normal, not disruptive
+- shouldReviseSchedule=true ONLY if the event makes your rest-of-day plans impossible or pointless (e.g., a destination destroyed, a key person arrested, a critical deadline moved).
+- A brief interruption or local distraction is never enough to change the rest-of-day schedule.
 
 ## Output
 Return a single JSON object. No extra text. JSON keys must be in English. Write "witnessEntry" in ${contentLanguageName(params.language)}.
