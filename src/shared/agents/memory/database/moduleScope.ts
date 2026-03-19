@@ -42,18 +42,6 @@ export async function resolveModuleIdByName(
     });
     if (owned) return owned.moduleId;
 
-    const permitted = await prisma.modulePermission.findFirst({
-      where: {
-        emailId,
-        module: {
-          moduleNameNormalized: normalized,
-          status: "active",
-        },
-      },
-      include: { module: { select: { moduleId: true } } },
-      orderBy: [{ canManage: "desc" }, { grantedAt: "desc" }],
-    });
-    if (permitted?.module?.moduleId) return permitted.module.moduleId;
   }
 
   const fallback = await prisma.module.findFirst({

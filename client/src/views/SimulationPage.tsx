@@ -8,6 +8,12 @@ import { SubSceneTabs } from "../components/simulation/SubSceneTabs";
 import { useSimulationState } from "../hooks/useSimulationState";
 import { useSimulationWebSocket } from "../hooks/useSimulationWebSocket";
 
+// In dev mode, load map images directly from the backend to bypass Vite proxy
+// (Vite proxy corrupts large binary responses like 8MB+ JPEGs)
+const MAPS_BASE = import.meta.env.DEV
+  ? `${window.location.protocol}//${window.location.hostname}:3000/api/maps`
+  : "/api/maps";
+
 export default function SimulationPage() {
   const { sessionId } = useParams<{ sessionId: string }>();
   const gameRef = useRef<Phaser.Game | null>(null);
@@ -42,8 +48,8 @@ export default function SimulationPage() {
       if (gameRef.current && mapsPrefix) {
         gameRef.current.events.emit("load-interior", {
           sceneId: subSceneId,
-          configUrl: `/api/maps/${mapsPrefix}/map_config.json`,
-          baseUrl: `/api/maps/${mapsPrefix}/`,
+          configUrl: `${MAPS_BASE}/${mapsPrefix}/map_config.json`,
+          baseUrl: `${MAPS_BASE}/${mapsPrefix}/`,
         });
       }
     },
@@ -104,8 +110,8 @@ export default function SimulationPage() {
   useEffect(() => {
     if (!gameRef.current || !state.mapsPrefix || !state.topology) return;
     gameRef.current.events.emit("load-town-map", {
-      configUrl: `/api/maps/${state.mapsPrefix}/map_config.json`,
-      baseUrl: `/api/maps/${state.mapsPrefix}/`,
+      configUrl: `${MAPS_BASE}/${state.mapsPrefix}/map_config.json`,
+      baseUrl: `${MAPS_BASE}/${state.mapsPrefix}/`,
       scenarioOutlines: state.topology.scenarioOutlines ?? [],
       transportEdges: state.topology.transportEdges ?? [],
       scenes: state.topology.scenes ?? [],
@@ -135,8 +141,8 @@ export default function SimulationPage() {
       if (gameRef.current && mapsPrefix) {
         gameRef.current.events.emit("switch-sub-scene", {
           subSceneId,
-          configUrl: `/api/maps/${mapsPrefix}/map_config.json`,
-          baseUrl: `/api/maps/${mapsPrefix}/`,
+          configUrl: `${MAPS_BASE}/${mapsPrefix}/map_config.json`,
+          baseUrl: `${MAPS_BASE}/${mapsPrefix}/`,
         });
       }
     },
@@ -184,6 +190,7 @@ export default function SimulationPage() {
       </div>
 
       <SidePanel
+        sessionId={sessionId ?? ""}
         gameDay={state.gameDay}
         timeOfDay={state.timeOfDay}
         simulationState={state.simulationState}
@@ -194,7 +201,7 @@ export default function SimulationPage() {
         onZoomToNpc={handleZoomToNpc}
       />
 
-      {sessionId && (
+      {sessionId && state.eventLog.length > 0 && (
         <ControlPanel
           sessionId={sessionId}
           simulationState={state.simulationState}

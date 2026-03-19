@@ -1,14 +1,5 @@
-import fs from "fs";
-import path from "path";
-import { WorldModuleLoader } from "../../../src/dynamicworldagent/state/worldModuleLoader.js";
-import { NPCLoader } from "../../../src/shared/agents/character/npcloader/index.js";
-import type {
-  CoCDatabase,
-  CoCDatabaseAdapter,
-} from "../../../src/shared/agents/memory/database/index.js";
 import { resolveModuleIdByName } from "../../../src/shared/agents/memory/database/moduleScope.js";
 import { getPrismaClient } from "../../../src/shared/agents/memory/database/prismaClient.js";
-import { ModuleLoader } from "../../../src/shared/agents/memory/moduleloader/index.js";
 import { registerModuleForUser } from "./library.js";
 
 type ProgressCallback = (
@@ -95,148 +86,28 @@ async function purgeMissingModFromDatabase(
 }
 
 /**
- * Check if a module is a world-builder generated module
- */
-function isWorldBuilderModule(modPath: string): boolean {
-  const moduleName = path.basename(modPath);
-  return (
-    fs.existsSync(path.join(modPath, "module_setup.json")) &&
-    fs.existsSync(path.join(modPath, "scenarios_outline.json")) &&
-    fs.existsSync(path.join(modPath, `${moduleName}_Scenarios`))
-  );
-}
-
-/**
- * Load mod data from directory
- * @param db - Database instance
- * @param modName - Name of the mod to load
- * @param onProgress - Optional progress callback for SSE
+ * Load mod data — legacy loaders have been removed.
+ * Module loading now happens via the simulation system's moduleLoader.
  */
 export async function loadMod(
-  db: CoCDatabase | CoCDatabaseAdapter,
+  _db: unknown,
   modName: string,
   emailId?: string,
   onProgress?: ProgressCallback
 ): Promise<any> {
-  const modsDir = path.join(process.cwd(), "data", "Mods");
-  const modPath = path.join(modsDir, modName);
-
-  if (!fs.existsSync(modPath)) {
-    await purgeMissingModFromDatabase(modName, emailId);
-    throw new Error(`Mod "${modName}" not found`);
-  }
-
   if (emailId) {
     await registerModuleForUser(emailId, modName);
   }
-  await clearExistingModData(emailId, modName);
 
-  onProgress?.("Initializing", 10, "Initializing loaders...");
-
-  // Check if this is a world-builder generated module
-  if (isWorldBuilderModule(modPath)) {
-    console.log(`Detected world-builder module: ${modName}`);
-    onProgress?.("Loading", 20, "Loading world-builder module...");
-
-    const worldModuleLoader = new WorldModuleLoader(db, { emailId: emailId });
-    const loadedModule = await worldModuleLoader.loadAndSaveWorldModule(
-      modPath,
-      true
-    );
-
-    if (!loadedModule) {
-      throw new Error("Failed to load world-builder module");
-    }
-
-    const scenariosLoaded = loadedModule.importStats.scenariosLoaded;
-    const npcsLoaded = loadedModule.importStats.npcsLoaded;
-    const modulesLoaded = 1;
-
-    onProgress?.(
-      "Complete",
-      100,
-      `Loaded ${scenariosLoaded} scenarios, ${npcsLoaded} NPCs, ${modulesLoaded} modules`
-    );
-
-    return {
-      success: true,
-      message: `World-builder mod loaded: ${scenariosLoaded} scenarios, ${npcsLoaded} NPCs, ${modulesLoaded} modules`,
-      scenariosLoaded,
-      npcsLoaded,
-      modulesLoaded,
-      timestamp: new Date().toISOString(),
-      worldBuilderModule: true,
-    };
-  }
-
-  // Regular module loading (old format)
-  console.log(`Loading regular module: ${modName}`);
-
-  const npcLoader = new NPCLoader(db, undefined, undefined, {
-    emailId: emailId,
-  });
-  const moduleLoader = new ModuleLoader(db, undefined, { emailId: emailId });
-
-  onProgress?.("Scanning", 15, "Scanning mod directory...");
-
-  const subdirs = fs
-    .readdirSync(modPath, { withFileTypes: true })
-    .filter((dirent) => dirent.isDirectory())
-    .map((dirent) => dirent.name);
-
-  const npcDirs = subdirs.filter((name) => name.toLowerCase().includes("npc"));
-  const backgroundDirs = subdirs.filter(
-    (name) =>
-      name.toLowerCase().includes("background") ||
-      name.toLowerCase().includes("module")
-  );
-
-  let npcsLoaded = 0;
-  let modulesLoaded = 0;
-
-  // Load NPCs
-  if (npcDirs.length > 0) {
-    onProgress?.("Loading NPCs", 50, "Loading NPC data...");
-    for (const dir of npcDirs) {
-      const npcs = await npcLoader.loadNPCsFromJSONDirectory(
-        path.join(modPath, dir),
-        false
-      );
-      npcsLoaded += npcs.length;
-    }
-  }
-
-  // Load modules
-  if (backgroundDirs.length > 0) {
-    onProgress?.("Loading Modules", 70, "Loading module data...");
-    for (const dir of backgroundDirs) {
-      const moduleDir = path.join(modPath, dir);
-      const jsonFiles = fs
-        .readdirSync(moduleDir)
-        .filter((f) => f.toLowerCase().endsWith(".json"));
-
-      const modules =
-        jsonFiles.length > 0
-          ? await moduleLoader.loadModulesFromJSONDirectory(moduleDir, false)
-          : await moduleLoader.loadModulesFromDirectory(moduleDir, false);
-      modulesLoaded += modules.length;
-    }
-  }
-
-  onProgress?.(
-    "Complete",
-    100,
-    `Loaded ${npcsLoaded} NPCs, ${modulesLoaded} modules`
-  );
+  onProgress?.("Complete", 100, "Module registered");
 
   return {
     success: true,
-    message: `Mod data loaded: ${npcsLoaded} NPCs, ${modulesLoaded} modules`,
+    message: `Module "${modName}" registered. Use simulation API to load module data.`,
     scenariosLoaded: 0,
-    npcsLoaded,
-    modulesLoaded,
+    npcsLoaded: 0,
+    modulesLoaded: 0,
     timestamp: new Date().toISOString(),
-    worldBuilderModule: false,
   };
 }
 

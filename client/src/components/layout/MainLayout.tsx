@@ -9,17 +9,10 @@ import { UserMenu } from "./UserMenu";
 export const MainLayout: React.FC = () => {
   const { user, logout } = useAuth();
   const gameSession = useGameSession();
-  const { sessionId, isRestoringSession, restoreLatestSession, clearSession } =
-    gameSession;
+  const { clearSession } = gameSession;
   const [showAnalytics, setShowAnalytics] = useState(false);
   const location = useLocation();
 
-  // Restore latest session when user logs in
-  useEffect(() => {
-    if (user && !sessionId && !isRestoringSession) {
-      restoreLatestSession();
-    }
-  }, [user, sessionId, isRestoringSession, restoreLatestSession]);
 
   const handleLogout = async () => {
     try {

@@ -9,7 +9,6 @@ router.use(authenticate);
 
 // Mod management endpoints
 router.post("/mod/load", modController.loadModData);
-router.get("/module/introduction", modController.getModuleIntroduction);
 router.get("/mods/shared", modController.getSharedMods);
 router.get(
   "/mods/admin/catalog",

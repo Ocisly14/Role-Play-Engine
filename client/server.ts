@@ -28,7 +28,6 @@ import {
 import { syncReferralCodes } from "./server/auth/referral-sync.js";
 // Import managers
 import { DatabaseManager } from "./server/core/DatabaseManager.js";
-import { warmupSkillEmbeddings } from "./server/skills/skillMatcher.js";
 import { WebSocketManager } from "./server/websocket/WebSocketManager.js";
 
 const __filename = fileURLToPath(import.meta.url);
@@ -105,42 +104,6 @@ server.keepAliveTimeout = 610000; // Slightly longer than timeout
 // Create WebSocket server
 const wsManager = new WebSocketManager(server);
 
-/**
- * Update admin user roles based on ADMIN_EMAIL environment variable
- * This runs on every server startup to ensure admin users have the correct role
- */
-async function updateAdminUserRoles() {
-  try {
-    const adminEmails = (process.env.ADMIN_EMAIL || "")
-      .split(",")
-      .map((email) => email.trim().toLowerCase())
-      .filter((email) => email.length > 0);
-
-    if (adminEmails.length === 0) {
-      console.log("⚠️  No admin emails configured in ADMIN_EMAIL");
-      return;
-    }
-
-    const prisma = DatabaseManager.getInstance().getPrisma();
-
-    for (const email of adminEmails) {
-      const result = await prisma.user.updateMany({
-        where: {
-          email: { equals: email, mode: "insensitive" },
-          role: { not: "ADMIN" },
-        },
-        data: { role: "ADMIN" },
-      });
-
-      if (result.count > 0) {
-        console.log(`✅ Updated user ${email} to ADMIN role`);
-      }
-    }
-  } catch (error) {
-    console.error("❌ Failed to update admin user roles:", error);
-  }
-}
-
 // Start server
 server.listen(PORT, async () => {
   console.log(`🚀 Server running on http://localhost:${PORT}`);
@@ -148,10 +111,36 @@ server.listen(PORT, async () => {
   console.log("✅ Frontend server ready (lazy initialization)");
 
   // Update admin user roles on startup
-  await updateAdminUserRoles();
+  try {
+    const adminEmails = (process.env.ADMIN_EMAIL || "")
+      .split(",")
+      .map((email: string) => email.trim().toLowerCase())
+      .filter((email: string) => email.length > 0);
+    if (adminEmails.length > 0) {
+      const prisma = DatabaseManager.getInstance().getPrisma();
+      for (const email of adminEmails) {
+        const result = await prisma.user.updateMany({
+          where: {
+            email: { equals: email, mode: "insensitive" },
+            role: { not: "ADMIN" },
+          },
+          data: { role: "ADMIN" },
+        });
+        if (result.count > 0) {
+          console.log(`✅ Updated user ${email} to ADMIN role`);
+        }
+      }
+    }
+  } catch (error) {
+    console.error("❌ Failed to update admin user roles:", error);
+  }
 
   // Sync referral codes from environment variables
-  await syncReferralCodes();
+  try {
+    await syncReferralCodes();
+  } catch (error) {
+    console.error("❌ Failed to sync referral codes:", error);
+  }
 
   // Start analytics scheduler
   startDailyScheduler();
@@ -161,28 +150,6 @@ server.listen(PORT, async () => {
       .warmup(["en", "zh"])
       .then(async () => {
         console.log("✅ Local embedding model warmed up");
-        if (process.env.SKIP_SKILL_EMBEDDING_WARMUP === "true") {
-          return;
-        }
-        try {
-          const prisma = DatabaseManager.getInstance().getPrisma();
-          const skills = await prisma.skill.findMany({
-            select: { name: true, description: true },
-          });
-          if (skills.length === 0) {
-            console.warn("⚠️  Skill embedding warmup skipped: no skills found");
-            return;
-          }
-          warmupSkillEmbeddings(skills)
-            .then(() => {
-              console.log("✅ Skill embeddings warmed up");
-            })
-            .catch((error) => {
-              console.warn("⚠️  Skill embedding warmup failed:", error);
-            });
-        } catch (error) {
-          console.warn("⚠️  Skill embedding warmup failed:", error);
-        }
       })
       .catch((error) => {
         console.warn("⚠️  Local embedding warmup failed:", error);

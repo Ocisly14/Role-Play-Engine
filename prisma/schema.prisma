@@ -7,6 +7,101 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
+// ─── Auth & Users ────────────────────────────────────────────────
+
+model User {
+  id              String    @id @default(uuid()) @db.Uuid
+  email           String    @unique
+  username        String?
+  passwordHash    String    @map("password_hash")
+  isEmailVerified Boolean   @default(false) @map("is_email_verified")
+  isActive        Boolean   @default(true) @map("is_active")
+  role            String    @default("USER")
+  createdAt       DateTime  @default(now()) @map("created_at")
+  updatedAt       DateTime  @updatedAt @map("updated_at")
+  lastLoginAt     DateTime? @map("last_login_at")
+
+  refreshTokens      RefreshToken[]
+  emailVerifications EmailVerification[]
+  passwordResets     PasswordReset[]
+  referralCodeUses   ReferralCodeUse[]
+
+  @@map("users")
+}
+
+model RefreshToken {
+  id        String    @id @default(uuid()) @db.Uuid
+  userId    String    @map("user_id") @db.Uuid
+  token     String    @unique
+  expiresAt DateTime  @map("expires_at")
+  revokedAt DateTime? @map("revoked_at")
+  createdAt DateTime  @default(now()) @map("created_at")
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@map("refresh_tokens")
+}
+
+model EmailVerification {
+  id        String   @id @default(uuid()) @db.Uuid
+  userId    String   @map("user_id") @db.Uuid
+  code      String
+  expiresAt DateTime @map("expires_at")
+  verified  Boolean  @default(false)
+  createdAt DateTime @default(now()) @map("created_at")
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@map("email_verifications")
+}
+
+model PasswordReset {
+  id        String    @id @default(uuid()) @db.Uuid
+  userId    String    @map("user_id") @db.Uuid
+  token     String    @unique
+  expiresAt DateTime  @map("expires_at")
+  used      Boolean   @default(false)
+  usedAt    DateTime? @map("used_at")
+  createdAt DateTime  @default(now()) @map("created_at")
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@map("password_resets")
+}
+
+model ReferralCode {
+  id          String  @id @default(uuid()) @db.Uuid
+  code        String  @unique
+  maxUses     Int?    @map("max_uses")
+  description String?
+  createdAt   DateTime @default(now()) @map("created_at")
+
+  uses ReferralCodeUse[]
+
+  @@map("referral_codes")
+}
+
+model ReferralCodeUse {
+  id             String   @id @default(uuid()) @db.Uuid
+  referralCodeId String   @map("referral_code_id") @db.Uuid
+  userId         String   @map("user_id") @db.Uuid
+  usedAt         DateTime @default(now()) @map("used_at")
+
+  referralCode ReferralCode @relation(fields: [referralCodeId], references: [id], onDelete: Cascade)
+  user         User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("referral_code_uses")
+}
+
+model DisposableEmailDomain {
+  domain String @id
+
+  @@map("disposable_email_domains")
+}
+
 // ─── Core ────────────────────────────────────────────────────────
 
 model Module {

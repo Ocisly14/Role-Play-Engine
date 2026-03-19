@@ -1,37 +1,7 @@
 /// <reference path="../types/express.d.ts" />
 import type { Request, Response } from "express";
-import { generateRandomAttributes } from "../../../src/shared/agents/character/characterBuilder.js";
 import { getPrismaClient } from "../../../src/shared/agents/memory/database/prismaClient.js";
 import { parseCharacterFromDB, prepareCharacterForDB } from "./service.js";
-
-/**
- * Generate random character attributes
- * POST /api/character/random-attributes
- */
-export function generateRandomAttrs(req: Request, res: Response): void {
-  try {
-    const { age } = req.body;
-
-    // Generate random attributes
-    const attributes = generateRandomAttributes(age);
-
-    console.log(
-      `[${new Date().toISOString()}] Generated random attributes${age ? ` for age ${age}` : ""}`
-    );
-
-    res.json({
-      success: true,
-      attributes: attributes,
-      timestamp: new Date().toISOString(),
-    });
-  } catch (error) {
-    console.error("Error generating random attributes:", error);
-    res.status(500).json({
-      error:
-        "Failed to generate random attributes: " + (error as Error).message,
-    });
-  }
-}
 
 /**
  * Create/save a new character

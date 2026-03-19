@@ -245,11 +245,6 @@ export async function createSimulation(
     );
   }
 
-  await prisma.session.update({
-    where: { sessionId },
-    data: { sessionType: "simulation" },
-  });
-
   const { runner, dgsm, npcPlanningAgent } = buildSimulationBundle({
     prisma,
     gameState,

@@ -1,11 +1,6 @@
-import fs from "node:fs";
-import path from "node:path";
 /// <reference path="../types/express.d.ts" />
 import type { Request, Response } from "express";
-import { WorldModuleLoader } from "../../../src/dynamicworldagent/state/worldModuleLoader.js";
-import { ModuleLoader } from "../../../src/shared/agents/memory/moduleloader/index.js";
 import { DatabaseManager } from "../core/DatabaseManager.js";
-import { isNameSimilar } from "../utils/stringUtils.js";
 import {
   addModuleToAllUsers,
   addSharedModuleToLibrary,
@@ -18,19 +13,6 @@ import {
   unshareModule,
 } from "./library.js";
 import { loadMod } from "./service.js";
-
-/**
- * Check if a module is a world-builder generated module
- * by checking for the runtime scene/module files produced by world-builder
- */
-function isWorldBuilderModule(modPath: string): boolean {
-  const moduleName = path.basename(modPath);
-  return (
-    fs.existsSync(path.join(modPath, "module_setup.json")) &&
-    fs.existsSync(path.join(modPath, "scenarios_outline.json")) &&
-    fs.existsSync(path.join(modPath, `${moduleName}_Scenarios`))
-  );
-}
 
 /**
  * Load mod data (scenarios, NPCs, modules)
@@ -99,142 +81,6 @@ export async function loadModData(req: Request, res: Response): Promise<void> {
     } else {
       res.status(500).json({ error: errorMessage });
     }
-  }
-}
-
-/**
- * Get module introduction (without starting game)
- * GET /api/module/introduction
- */
-export async function getModuleIntroduction(
-  req: Request,
-  res: Response
-): Promise<void> {
-  try {
-    const { modName } = req.query;
-
-    if (!modName || typeof modName !== "string") {
-      res.status(400).json({ error: "modName is required" });
-      return;
-    }
-
-    const db = DatabaseManager.getInstance().getDatabase();
-    const emailId = req.user?.email;
-
-    const modsDir = path.join(process.cwd(), "data", "Mods");
-    const modPath = path.join(modsDir, modName);
-
-    if (!fs.existsSync(modPath)) {
-      res.status(404).json({ error: `Mod "${modName}" not found` });
-      return;
-    }
-
-    // Check if this is a world-builder generated module
-    if (isWorldBuilderModule(modPath)) {
-      console.log(`Loading world-builder module: ${modName}`);
-
-      const worldModuleLoader = new WorldModuleLoader(db, { emailId: emailId });
-      const loadedModule = await worldModuleLoader.loadAndSaveWorldModule(
-        modPath,
-        false
-      );
-
-      if (!loadedModule) {
-        // Module hasn't changed, get from database
-        const moduleLoader = new ModuleLoader(db, undefined, {
-          emailId: emailId,
-        });
-        const modules = await moduleLoader.getAllModules();
-        const normalizedModName = modName.trim().toLowerCase();
-        const module =
-          modules.find(
-            (candidate) =>
-              candidate.title?.trim().toLowerCase() === normalizedModName
-          ) ||
-          modules.find(
-            (candidate) =>
-              candidate.title && isNameSimilar(candidate.title, modName)
-          ) ||
-          modules[0];
-
-        if (!module) {
-          res.status(404).json({ error: "Module not found in database" });
-          return;
-        }
-
-        const moduleIntroduction = module.introduction
-          ? {
-              introduction: module.introduction,
-              moduleNotes: module.moduleNotes || "",
-            }
-          : null;
-
-        res.json({
-          success: true,
-          moduleIntroduction: moduleIntroduction,
-          moduleTitle: module.title,
-        });
-      } else {
-        res.json({
-          success: true,
-          moduleIntroduction: loadedModule.moduleSetup?.introduction
-            ? {
-                introduction: loadedModule.moduleSetup.introduction,
-                moduleNotes: "",
-              }
-            : null,
-          moduleTitle: loadedModule.moduleName,
-        });
-      }
-    } else {
-      // Regular module (old format)
-      console.log(`Loading regular module: ${modName}`);
-
-      const moduleLoader = new ModuleLoader(db, undefined, {
-        emailId: emailId,
-      });
-
-      // Load module data
-      const moduleDigestPath = path.join(modPath, "module_digest.json");
-      if (fs.existsSync(moduleDigestPath)) {
-        await moduleLoader.loadModuleFromJSON(moduleDigestPath);
-      }
-
-      const modules = await moduleLoader.getAllModules();
-      if (modules.length === 0) {
-        res.status(404).json({ error: "No module data found" });
-        return;
-      }
-
-      const normalizedModName = modName.trim().toLowerCase();
-      const module =
-        modules.find(
-          (candidate) =>
-            candidate.title?.trim().toLowerCase() === normalizedModName
-        ) ||
-        modules.find(
-          (candidate) =>
-            candidate.title && isNameSimilar(candidate.title, modName)
-        ) ||
-        modules[0];
-      const moduleIntroduction = module.introduction
-        ? {
-            introduction: module.introduction,
-            moduleNotes: module.moduleNotes || "",
-          }
-        : null;
-
-      res.json({
-        success: true,
-        moduleIntroduction: moduleIntroduction,
-        moduleTitle: module.title,
-      });
-    }
-  } catch (error) {
-    console.error("Error getting module introduction:", error);
-    res.status(500).json({
-      error: `Failed to get module introduction: ${(error as Error).message}`,
-    });
   }
 }
 

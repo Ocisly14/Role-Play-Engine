@@ -45,9 +45,21 @@ router.get("/*", (req, res) => {
           return res.status(400).json({ error: "Invalid file type" });
         }
 
-        // Send the file
+        // Send the file with explicit Content-Type for image files
+        // (Chinese filenames can confuse MIME detection in some setups)
+        const contentTypes: Record<string, string> = {
+          ".jpg": "image/jpeg",
+          ".jpeg": "image/jpeg",
+          ".png": "image/png",
+          ".webp": "image/webp",
+          ".json": "application/json",
+        };
+        const contentType = contentTypes[ext];
+        if (contentType) {
+          res.setHeader("Content-Type", contentType);
+        }
         console.log("[Maps API] Serving file:", fullPath);
-        return res.sendFile(fullPath);
+        return res.sendFile(path.resolve(fullPath), { acceptRanges: false });
       }
     }
 
