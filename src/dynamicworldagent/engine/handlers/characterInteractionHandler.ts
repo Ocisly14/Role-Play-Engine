@@ -15,10 +15,12 @@ export const characterInteractionHandler: NodeHandler = {
   type: "character_interaction",
 
   description:
-    "Interact with another character (NPC or player). " +
+    "Interact with one or more characters (NPC or player). " +
     "Supports any form of interaction: conversation, item exchange, " +
     "persuasion, intimidation, physical contact, leading/escorting, " +
-    "or forcing someone to leave. " +
+    "or forcing someone to leave.\n\n" +
+    "Set `targetCharacterIds` to an array of character IDs (even for a single target). " +
+    "Describe what you do entirely in `action`.\n\n" +
     "An LLM resolver determines all state changes (HP, SAN, items, " +
     "position, conditions, appearance) for both characters based on " +
     "the action description and skill roll result.",

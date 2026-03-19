@@ -13,10 +13,11 @@ export const sceneInteractionHandler: NodeHandler = {
 
   description:
     "Interact with the scene itself, modifying scene conditions or connections. " +
-    "Can block or unblock connections between scenes. " +
-    "sceneConnectionEffect.targetScenarioId must reference a real adjacent map location ID; " +
-    "never invent partitions, doors, or descriptive sub-areas. " +
     "Outcomes are appended as scene conditions.\n\n" +
+    "Optional: `sceneConnectionEffect` to block/unblock a connection between scenes.\n" +
+    "Format: `{ \"targetScenarioId\": \"existing_connected_location_id\", \"action\": \"block|unblock\" }`\n" +
+    "`targetScenarioId` must reference a real adjacent map location ID from the current location's known connections. " +
+    "Never invent room fragments, doors, partitions, or descriptive sub-areas. If unsure, omit this field.\n\n" +
     "SKILL GUIDANCE: Do NOT set `skill` for ordinary scene actions — closing/opening doors, " +
     "drawing curtains, turning on lights, or looking around a room. These always succeed. " +
     "Only set `skill` when the action requires special effort: barricading a door (STR), " +

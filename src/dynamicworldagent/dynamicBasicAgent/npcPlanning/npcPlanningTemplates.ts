@@ -201,7 +201,7 @@ const DEFAULT_DETAILED_NODE_TYPE_REF = `## Node Type Reference
   - Describe what you do entirely in \`action\`.
   - Put all targets in top-level \`targetCharacterIds\`.
   - For single-target interactions, \`targetCharacterIds\` should still be an array with one ID.
-- **"object_interaction"**: Interact with a physical object. Use \`action: "move"\` with explicit \`from\`/\`to\` for taking, putting back, stashing, removing from containers, or moving scene items. Use \`inspect\`, \`use\`, or \`destroy\` for non-relocation interactions.
+- **"object_interaction"**: Interact with a physical object. Describe what you do in \`action\`. Set \`objectInteractionPayload.itemId\` to the primary item. An LLM resolver handles all state changes.
 - **"scene_interaction"**: Search, investigate, or modify the environment.
   - Only include \`sceneConnectionEffect\` when you are changing a real map connection that already exists.
   - \`sceneConnectionEffect.targetScenarioId\` must be an existing connected location ID from the current location's known map data.
@@ -251,15 +251,7 @@ Return a JSON array of PlanNode objects. No extra text. JSON keys must be in Eng
 }
 \`\`\`
 
-Add type-specific fields as needed:
-- **character_interaction**: \`"targetCharacterIds"\` (array of one or more character IDs)
-- **object_interaction**:
-  - relocation: \`"objectInteractionPayload": { "action": "move", "itemId": "item_id", "from": { "type": "scene|inventory|container", "containerItemId"?: "container_id", "scope"?: "scene|inventory" }, "to": { ...same shape... } }\`
-  - non-standard use: include \`itemUpdates\`/\`targetItemUpdates\`
-- **scene_interaction**: optional \`"sceneConnectionEffect"\`
-  - Use it only for a real existing connection that is already present in the map.
-  - \`"sceneConnectionEffect": { "targetScenarioId": "existing_connected_location_id", "action": "block|unblock" }\`
-  - Never invent room fragments, doors, partitions, or other non-location IDs. If unsure, omit this field.`;
+Add type-specific fields as documented in the Node Type Reference above.`;
 }
 
 export function buildDetailedNodesPrompt(

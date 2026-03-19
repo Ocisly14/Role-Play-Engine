@@ -39,23 +39,44 @@ export interface InteractionStateDelta {
   targetChanges: Record<string, CharacterStateDelta>;
 }
 
-export interface ItemLocationRef {
-  type: "scene" | "inventory" | "container";
-  /** Required when type === "container". */
-  containerItemId?: string;
-  /** Where to look for the container itself. Defaults to "scene". */
-  scope?: "scene" | "inventory";
+// ===== LLM State Resolver types (object_interaction) =====
+
+/** LLM outputs the final state of each affected item. */
+export interface ItemResult {
+  itemId: string;
+  /** Final location: "scene" | "inventory" | "inventory:<npcId>" | "container:<containerId>" | "destroyed" */
+  location: string;
+  /** Changed Item fields to deep-merge. Omit if unchanged. */
+  updates?: Record<string, unknown>;
+}
+
+export interface NewItemEntry {
+  id: string;
+  name: string;
+  /** Where the new item appears: "scene" | "inventory" | "container:<containerId>" */
+  location: string;
+  /** Original item ID this was produced from. The source item is automatically removed. */
+  sourceItemId?: string;
+  /** Any additional Item fields (type, description, category, containerStats, weaponStats, etc.) */
+  [key: string]: unknown;
+}
+
+export interface ObjectStateDelta {
+  /** Final state of each affected item. Only include items that changed. */
+  items: ItemResult[];
+  /** New items created by disassembly, crafting, or transformation. */
+  newItems?: NewItemEntry[];
+  /** Scene condition descriptions to add. */
+  addSceneConditions?: string[];
+  /** First-person memory for the actor. */
+  memory: string;
+  /** First-person memories for co-present NPCs who witnessed the action. */
+  witnessMemories?: Record<string, string>;
 }
 
 export interface ObjectInteractionPayload {
-  action: "move" | "use" | "inspect" | "destroy";
+  /** Primary item this interaction targets. Used for existence pre-check. */
   itemId?: string;
-  targetItemId?: string;
-  from?: ItemLocationRef;
-  to?: ItemLocationRef;
-  /** Non-normal use: LLM returns expected item state changes after success */
-  itemUpdates?: Partial<Item>;
-  targetItemUpdates?: Partial<Item>;
 }
 
 export interface ScheduleEntry {

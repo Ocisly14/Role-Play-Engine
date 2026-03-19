@@ -227,20 +227,14 @@ export const objectInteractionHandler: NodeHandler = {
 
   description:
     "Interact with an object in the current scene. " +
-    "Supports move, use, inspect, and destroy actions. " +
-    "Move uses explicit from/to refs so the same action can cover taking, putting back, stashing, and moving scene items into containers.\n\n" +
+    "An LLM resolver determines all item state changes (move, modify, destroy, disassemble, combine) " +
+    "based on the action description and skill roll result.\n\n" +
+    "Set `objectInteractionPayload.itemId` to the primary item being interacted with.\n\n" +
     "SKILL GUIDANCE: Do NOT set `skill` for routine actions — picking up items, opening unlocked containers, " +
     "inspecting objects, searching your own belongings, or using items normally. These always succeed without a roll. " +
     "Only set `skill` when the action is genuinely difficult: picking a lock without a key (Locksmith), " +
     "disarming a trap (Mechanical Repair), forcing open a stuck/barricaded container (STR), " +
-    "or using an item in a non-standard way that requires expertise.\n\n" +
-    "For non-normal use (skill set), include `itemUpdates` and/or `targetItemUpdates` " +
-    "with the expected item state changes after success. Mergeable Item fields:\n" +
-    "- `damaged` (boolean), `damageDetails`: `{ damagedBy, damagedAt, reason }`\n" +
-    "- `isLightSource` (boolean), `lightLevel` (number)\n" +
-    "- `consumableStats`: `{ uses, effect, duration }` — set uses to 0 to consume\n" +
-    "- `containerStats`: `{ locked, contents, storedItems }` — set locked:false to unlock\n" +
-    "- `weaponStats`: `{ ammo }` — decrement for ammo use",
+    "or using an item in a non-standard way that requires expertise.",
 
   requiredFields: ["action", "location"],
 
@@ -255,10 +249,7 @@ export const objectInteractionHandler: NodeHandler = {
     location: "study_room",
     impact: 1,
     objectInteractionPayload: {
-      action: "move",
       itemId: "petty_cash_box",
-      from: { type: "container", containerItemId: "desk_drawer", scope: "scene" },
-      to: { type: "container", containerItemId: "briefcase", scope: "inventory" },
     },
   },
 
@@ -314,212 +305,51 @@ export const objectInteractionHandler: NodeHandler = {
       lastRollDetail = rollResult.detail;
     }
 
-    // ── Apply side effects ────────────────────────────────────
-    const scene = dgsm.getScene(node.location);
+    // Item existence pre-check (fast-fail before LLM call)
     const payload = node.objectInteractionPayload;
-
-    if (payload) {
-      // --- Move ---
-      if (
-        payload.action === "move" &&
-        payload.itemId &&
-        payload.from &&
-        payload.to
-      ) {
-        const sourceResult = removeItemFromMoveSource(
-          payload.from,
-          payload.itemId,
-          node.characterId,
-          scene,
-          dgsm
-        );
-        if (!sourceResult.item) {
-          return makeAction(
-            node,
-            "failed",
-            buildOutcome(node, "failed", {
-              reason: sourceResult.error ?? `${payload.itemId} not found`,
-            }),
-            { difficulty, failureReason: "object_not_found" }
-          );
-        }
-
-        const targetResult = addItemToMoveTarget(
-          payload.to,
-          sourceResult.item,
-          node.characterId,
-          scene,
-          dgsm
-        );
-        if (targetResult.error) {
-          addItemToMoveTarget(
-            payload.from,
-            sourceResult.item,
-            node.characterId,
-            scene,
-            dgsm
-          );
-          return makeAction(
-            node,
-            "failed",
-            buildOutcome(node, "failed", {
-              reason: targetResult.error,
-            }),
-            { difficulty, failureReason: "object_not_found" }
-          );
-        }
-
-        lastRollDetail = `Moved ${sourceResult.item.name} from ${formatMoveRef(payload.from)} to ${formatMoveRef(payload.to)}`;
-      }
-
-      // --- Use ---
-      else if (payload.action === "use" && payload.itemId) {
-        // Find item in inventory or scene
-        let item = dgsm.findNpcItem(node.characterId, payload.itemId);
-        const itemInInventory = !!item;
-        if (!item && scene) {
-          item = scene.items.find((i) => i.id === payload.itemId);
-        }
-        if (!item) {
-          return makeAction(
-            node,
-            "failed",
-            buildOutcome(node, "failed", {
-              reason: `${payload.itemId} not found`,
-            }),
-            { difficulty, failureReason: "object_not_found" }
-          );
-        }
-
-        if (node.skill) {
-          // Non-normal use: apply LLM-provided updates (skill check already passed above)
-          if (payload.itemUpdates) {
-            deepMergeItem(
-              item as unknown as Record<string, unknown>,
-              payload.itemUpdates as unknown as Record<string, unknown>
-            );
-          }
-          if (payload.targetItemId && payload.targetItemUpdates && scene) {
-            const target = scene.items.find(
-              (i) => i.id === payload.targetItemId
-            );
-            if (target) {
-              deepMergeItem(
-                target as unknown as Record<string, unknown>,
-                payload.targetItemUpdates as unknown as Record<string, unknown>
-              );
-            }
-          }
-          // Remove consumed items
-          if (
-            item.consumableStats &&
-            item.consumableStats.uses !== undefined &&
-            item.consumableStats.uses <= 0 &&
-            itemInInventory
-          ) {
-            dgsm.removeItemFromNpc(node.characterId, item.id);
-          }
-        } else {
-          // Normal use: type-specific handler
-          let useDetail: string;
-          switch (item.type) {
-            case "consumable":
-              useDetail = useConsumable(item, node.characterId, dgsm);
-              break;
-            case "key": {
-              const keyResult = useKey(
-                item,
-                payload.targetItemId,
-                scene ?? { items: [] }
-              );
-              if (keyResult === null) {
-                return makeAction(
-                  node,
-                  "failed",
-                  buildOutcome(node, "failed", {
-                    reason: `no target specified for ${item.name}`,
-                  }),
-                  { difficulty, failureReason: "object_not_found" }
-                );
-              }
-              useDetail = keyResult;
+    if (payload?.itemId) {
+      const scene = dgsm.getScene(node.location);
+      const inInventory = dgsm.findNpcItem(node.characterId, payload.itemId);
+      const inScene = scene?.items.find((i) => i.id === payload.itemId);
+      // Also check inside containers (scene + inventory)
+      let inContainer = false;
+      if (!inInventory && !inScene) {
+        if (scene?.items) {
+          for (const si of scene.items) {
+            if (si.containerStats?.storedItems?.some((s) => s.id === payload.itemId)) {
+              inContainer = true;
               break;
             }
-            case "lighting":
-              useDetail = useLighting(item);
-              break;
-            case "container":
-              useDetail = useContainer(item, node.characterId, dgsm);
-              break;
-            default:
-              useDetail = `Used ${item.name}`;
-              break;
           }
-          lastRollDetail = useDetail;
+        }
+        if (!inContainer) {
+          const inv = dgsm.getNpcInventory(node.characterId);
+          for (const ii of inv) {
+            if (ii.containerStats?.storedItems?.some((s) => s.id === payload.itemId)) {
+              inContainer = true;
+              break;
+            }
+          }
         }
       }
-
-      // --- Inspect ---
-      else if (payload.action === "inspect" && payload.itemId) {
-        const inventoryItem = dgsm.findNpcItem(
-          node.characterId,
-          payload.itemId
+      if (!inInventory && !inScene && !inContainer) {
+        return makeAction(
+          node,
+          "failed",
+          buildOutcome(node, "failed", { reason: `${payload.itemId} not found` }),
+          { difficulty, failureReason: "object_not_found" }
         );
-        let item = inventoryItem;
-        let inspectOutcome: string | null = null;
-
-        if (inventoryItem) {
-          inspectOutcome = buildInspectOutcomeWithContext(
-            inventoryItem,
-            undefined
-          );
-        } else if (scene) {
-          item = scene.items.find((i) => i.id === payload.itemId);
-          if (item) {
-            const sceneContext = scene.itemContexts?.[item.id];
-            inspectOutcome = buildInspectOutcomeWithContext(item, sceneContext);
-          }
-        }
-        if (!item) {
-          return makeAction(
-            node,
-            "failed",
-            buildOutcome(node, "failed", {
-              reason: `${payload.itemId} not found`,
-            }),
-            { difficulty, failureReason: "object_not_found" }
-          );
-        }
-        lastRollDetail = inspectOutcome ?? buildInspectOutcome(item);
-      }
-
-      // --- Destroy ---
-      else if (payload.action === "destroy" && payload.itemId) {
-        let removed = dgsm.removeItemFromNpc(node.characterId, payload.itemId);
-        if (!removed && scene) {
-          const idx = scene.items.findIndex((i) => i.id === payload.itemId);
-          if (idx !== -1) {
-            removed = scene.items.splice(idx, 1)[0];
-          }
-        }
-        if (!removed) {
-          return makeAction(
-            node,
-            "failed",
-            buildOutcome(node, "failed", {
-              reason: `${payload.itemId} not found`,
-            }),
-            { difficulty, failureReason: "object_not_found" }
-          );
-        }
       }
     }
 
-    return makeAction(
+    // Return success — tickProcessor calls LLM resolver for state changes
+    const action = makeAction(
       node,
       "completed",
-      buildOutcome(node, "completed", { rollDetail: lastRollDetail }),
+      node.action,
       { difficulty, successLevel: resolvedSuccessLevel }
     );
+    action.rollDetail = lastRollDetail;
+    return action;
   },
 };

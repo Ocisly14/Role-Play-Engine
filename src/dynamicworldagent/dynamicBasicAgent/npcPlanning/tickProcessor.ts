@@ -29,6 +29,10 @@ import {
   resolveInteractionState,
   resolveTargets,
 } from "../../engine/handlers/interactionStateResolver.js";
+import {
+  applyObjectDelta,
+  resolveObjectInteractionState,
+} from "../../engine/handlers/objectInteractionStateResolver.js";
 import type {
   CharacterAction,
   DiscoveryEntry,
@@ -89,24 +93,13 @@ function getItemActionContext(
   node: PlanNode
 ): ItemActionContext | null {
   if (node.type === "object_interaction" && node.objectInteractionPayload) {
-    const { itemId, targetItemId, action, to, from } = node.objectInteractionPayload;
-    const resolvedTargetItemId =
-      targetItemId ??
-      (action === "move" && to?.type === "container" ? to.containerItemId : undefined);
-    const resolvedSourceContainerId =
-      action === "move" && from?.type === "container" ? from.containerItemId : undefined;
-    if (!itemId && !resolvedTargetItemId && !resolvedSourceContainerId) return null;
+    const { itemId } = node.objectInteractionPayload;
+    if (!itemId) return null;
 
-    const item = itemId ? findKnownItem(dgsm, node, itemId) : null;
-    const targetItem = resolvedTargetItemId
-      ? findKnownItem(dgsm, node, resolvedTargetItemId)
-      : null;
-
+    const item = findKnownItem(dgsm, node, itemId);
     return {
       itemId,
       itemName: item?.name,
-      targetItemId: resolvedTargetItemId ?? resolvedSourceContainerId,
-      targetItemName: targetItem?.name,
     };
   }
 
@@ -1213,6 +1206,35 @@ async function executeSingleTick(
         ...Object.fromEntries(
           Object.entries(delta.targetChanges).map(([id, d]) => [id, d.memory])
         ),
+      };
+    }
+
+    // 4b. object_interaction: call LLM resolver for item state changes + memories
+    if (
+      action.status === "completed" &&
+      node.type === "object_interaction"
+    ) {
+      const objSkillRollResult =
+        action.successLevel
+          ? { successLevel: action.successLevel, detail: action.rollDetail ?? "" }
+          : null;
+
+      const objDelta = await resolveObjectInteractionState(
+        node,
+        dgsm,
+        ctx.runtime,
+        objSkillRollResult,
+        language,
+        memoryManager,
+        sessionId
+      );
+
+      applyObjectDelta(dgsm, node.characterId, objDelta, node.location);
+
+      action.outcome = objDelta.memory;
+      action.stateMemories = {
+        [node.characterId]: objDelta.memory,
+        ...(objDelta.witnessMemories ?? {}),
       };
     }
 
