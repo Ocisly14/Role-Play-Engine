@@ -315,3 +315,21 @@ model ModuleSetup {
 
   @@map("module_setups")
 }
+
+// ─── Token Usage Tracking ─────────────────────────────────────────
+
+model UserTokenUsage {
+  id           String   @id @default(uuid())
+  emailId      String   @map("email_id")
+  provider     String
+  modelName    String   @map("model_name")
+  modelClass   String   @map("model_class")
+  operation    String
+  inputTokens  Int      @map("input_tokens")
+  outputTokens Int      @map("output_tokens")
+  totalTokens  Int      @map("total_tokens")
+  createdAt    DateTime @default(now()) @map("created_at")
+
+  @@index([emailId])
+  @@map("user_token_usage")
+}

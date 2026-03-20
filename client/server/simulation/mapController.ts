@@ -34,9 +34,15 @@ export function updateConfig(req: Request, res: Response) {
     const runner = mapService.getRunnerById(req.params.id);
     if (!runner) return res.status(404).json({ error: "Simulation not found" });
 
-    const { tickIntervalMs } = req.body;
+    const { tickIntervalMs, syncRealTime, realTimeBufferMinutes } = req.body;
     if (typeof tickIntervalMs === "number" && tickIntervalMs > 0) {
       runner.updateTickInterval(tickIntervalMs);
+    }
+    if (syncRealTime === true) {
+      const result = runner.enableRealTimeSync(
+        typeof realTimeBufferMinutes === "number" ? realTimeBufferMinutes : 5
+      );
+      return res.json({ success: true, status: runner.getStatus(), ...result });
     }
     return res.json({ success: true, status: runner.getStatus() });
   } catch (error) {

@@ -17,6 +17,7 @@ router.post("/simulation/:id/resume", simulationController.resumeSimulation);
 router.post("/simulation/:id/step", simulationController.stepSimulation);
 router.post("/simulation/:id/stop", simulationController.stopSimulation);
 router.get("/simulation/:id/status", simulationController.getStatus);
+router.get("/simulation/:id/playback-status", simulationController.getPlaybackStatus);
 router.get("/simulation/:id/events", simulationController.getEvents);
 router.get("/simulations", simulationController.listSimulations);
 

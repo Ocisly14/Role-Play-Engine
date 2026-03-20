@@ -29,6 +29,13 @@ export function PhaserContainer({
         mode: Phaser.Scale.RESIZE,
         autoCenter: Phaser.Scale.CENTER_BOTH,
       },
+      input: {
+        // Prevent Phaser from adding pointer listeners to `window`.
+        // Without this, clicks on DOM overlay panels (sidebar, popup) are
+        // captured by the window-level listener and forwarded to Phaser,
+        // causing game objects underneath to respond to UI clicks.
+        windowEvents: false,
+      },
       render: {
         pixelArt: false,
         antialias: true,

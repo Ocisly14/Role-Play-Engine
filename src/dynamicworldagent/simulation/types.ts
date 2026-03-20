@@ -13,7 +13,10 @@ export type SimulationEventType =
   | "feature_triggered"
   | "npc_death"
   | "simulation_state_changed"
-  | "npc_moved";
+  | "npc_moved"
+  | "npc_position_snapshot"
+  | "playback_buffering"
+  | "playback_resumed";
 
 export interface SimulationEvent {
   id: string;
@@ -39,6 +42,18 @@ export interface SimulationConfig {
   tickIntervalMs?: number;
   maxDays?: number;
   stopEvents?: string[];
+  /** Display rhythm in ms — how fast events are released to frontend (default 60000 = 1x) */
+  displayIntervalMs?: number;
+  /** Minimum buffered ticks before playback starts (default 5) */
+  minBufferTicks?: number;
+  /** Minimum delay between simulation ticks in ms (default 50, yields event loop) */
+  simulationDelayMs?: number;
+  /** Sync game time to real wall-clock time */
+  syncRealTime?: boolean;
+  /** Buffer minutes ahead of real time (default 5). Game starts at now + this value */
+  realTimeBufferMinutes?: number;
+  /** Wall-clock timestamp (ms) when playback should begin releasing events */
+  displayStartTime?: number;
 }
 
 export interface SimulationStatus {
@@ -75,4 +90,18 @@ export const SIMULATION_EVENT_TYPES: readonly SimulationEventType[] = [
   "npc_death",
   "simulation_state_changed",
   "npc_moved",
+  "npc_position_snapshot",
+  "playback_buffering",
+  "playback_resumed",
 ] as const;
+
+export interface PlaybackStatus {
+  buffered: number;
+  displayTick: number;
+  simulationTick: number;
+  isPlaying: boolean;
+  /** Wall-clock timestamp (ms) when playback starts releasing events */
+  displayStartTime?: number;
+  /** Milliseconds until playback starts (0 = already started) */
+  timeUntilStart?: number;
+}

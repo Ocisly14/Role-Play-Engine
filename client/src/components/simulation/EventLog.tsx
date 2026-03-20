@@ -1,65 +1,121 @@
+import { useEffect, useRef } from "react";
 import type { SimulationEvent } from "../../hooks/useSimulationWebSocket";
 
 interface EventLogProps {
   events: SimulationEvent[];
 }
 
-const EVENT_LABELS: Record<string, string> = {
-  action_executed: "action",
-  action_failed: "failed",
-  npc_moved: "moved",
-  npc_death: "death",
-  day_transition: "day",
-  clue_discovered: "clue",
-  encounter: "encounter",
-  relationship_changed: "social",
-  simulation_state_changed: "state",
-};
+const SYSTEM_EVENT_TYPES = new Set([
+  "day_transition",
+  "npc_death",
+  "simulation_state_changed",
+]);
+
+const ACTION_EVENT_TYPES = new Set(["action_executed", "action_failed"]);
 
 export function EventLog({ events }: EventLogProps) {
+  const bottomRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    bottomRef.current?.scrollIntoView({ behavior: "smooth" });
+  }, [events.length]);
+
   return (
-    <div className="flex-1 overflow-y-auto">
-      <div className="px-3 py-2 text-xs font-medium text-slate-500 border-b border-slate-200/60">
-        Event Log
-      </div>
-      {events.map((event) => (
-        <div
-          key={event.id}
-          className="px-3 py-1.5 text-xs border-b border-slate-200/40 hover:bg-white/30"
-        >
-          <div className="flex items-center gap-1">
-            <span className="text-slate-400">
-              [{EVENT_LABELS[event.type] ?? event.type}]
-            </span>
-            <span className="text-slate-400">{event.gameTime}</span>
-            <span className="text-slate-700 truncate">
-              {formatEventText(event)}
-            </span>
-          </div>
-        </div>
-      ))}
+    <div className="flex-1 overflow-y-auto px-2 py-2 space-y-1.5">
       {events.length === 0 && (
         <div className="px-3 py-4 text-xs text-slate-400 text-center">
           No events yet
+        </div>
+      )}
+      {events.map((event) => {
+        if (SYSTEM_EVENT_TYPES.has(event.type)) {
+          return <SystemMessage key={event.id} event={event} />;
+        }
+        if (ACTION_EVENT_TYPES.has(event.type)) {
+          return <ActionMessage key={event.id} event={event} />;
+        }
+        return <CompactMessage key={event.id} event={event} />;
+      })}
+      <div ref={bottomRef} />
+    </div>
+  );
+}
+
+function ActionMessage({ event }: { event: SimulationEvent }) {
+  const isFailed = event.type === "action_failed";
+  const name =
+    (event.data.characterName as string) || event.actorNpcId || "Unknown";
+  const action = (event.data.action as string) || event.type;
+  const outcome = event.data.outcome as string | undefined;
+
+  return (
+    <div
+      className={`rounded-lg px-3 py-2 text-xs ${isFailed ? "bg-red-50/60 border border-red-200/50" : "bg-white/60 border border-slate-200/50"}`}
+    >
+      <div className="flex items-center justify-between mb-0.5">
+        <span className="font-semibold text-slate-800 truncate">{name}</span>
+        <span className="text-[10px] text-slate-400 ml-2 shrink-0">
+          {event.gameTime}
+        </span>
+      </div>
+      <div className="text-slate-600 leading-relaxed">{action}</div>
+      {outcome && (
+        <div
+          className={`mt-1 text-[11px] ${isFailed ? "text-red-500" : "text-emerald-600"}`}
+        >
+          {isFailed ? "✗" : "✓"} {outcome}
         </div>
       )}
     </div>
   );
 }
 
-function formatEventText(event: SimulationEvent): string {
-  const data = event.data;
+function SystemMessage({ event }: { event: SimulationEvent }) {
+  let text: string;
+  switch (event.type) {
+    case "day_transition":
+      text = `Day ${event.gameDay}`;
+      break;
+    case "npc_death":
+      text = `${(event.data.npcName as string) || event.actorNpcId} died`;
+      break;
+    default:
+      text = event.type.replace(/_/g, " ");
+  }
+
+  return (
+    <div className="flex items-center gap-2 py-1">
+      <div className="flex-1 border-t border-slate-300/50" />
+      <span className="text-[10px] text-slate-400 whitespace-nowrap">
+        {text}
+      </span>
+      <div className="flex-1 border-t border-slate-300/50" />
+    </div>
+  );
+}
+
+function CompactMessage({ event }: { event: SimulationEvent }) {
+  return (
+    <div className="px-2 py-1 text-[11px] text-slate-500 flex items-center gap-1.5">
+      <span className="text-slate-400">{event.gameTime}</span>
+      <span className="truncate">{formatCompactText(event)}</span>
+    </div>
+  );
+}
+
+function formatCompactText(event: SimulationEvent): string {
+  const name =
+    (event.data.characterName as string) || event.actorNpcId || "";
   switch (event.type) {
     case "npc_moved":
-      return `${event.actorNpcId} moved to ${event.location}`;
-    case "action_executed":
-    case "action_failed":
-      return `${event.actorNpcId}: ${(data.action as string) ?? event.type}`;
-    case "npc_death":
-      return `${(data.npcName as string) ?? event.actorNpcId} died`;
-    case "day_transition":
-      return `Day ${event.gameDay}`;
+      return `${name} moved to ${event.location}`;
+    case "relationship_changed":
+      return `${name} — relationship changed`;
+    case "clue_discovered":
+      return `${name} discovered a clue`;
+    case "encounter":
+      return `${name} — encounter`;
     default:
-      return event.type;
+      return `${name} — ${event.type.replace(/_/g, " ")}`;
   }
 }

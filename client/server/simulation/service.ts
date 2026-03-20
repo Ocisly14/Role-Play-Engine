@@ -37,17 +37,25 @@ import { WebSocketManager } from "../websocket/WebSocketManager.js";
 
 const runners = new Map<string, SimulationRunner>();
 
+/** Event types that should NOT be persisted to DB (transient display-only). */
+const SKIP_PERSIST_TYPES = new Set([
+  "npc_position_snapshot",
+  "playback_buffering",
+  "playback_resumed",
+]);
+
 /**
  * Wire event listener on a runner: persist each simulation event to DB and
- * broadcast it via WebSocket to all registered simulation viewer clients.
+ * set up playback scheduler to broadcast via WebSocket at display rhythm.
  */
 function wireEventListener(
   prisma: PrismaClient,
   runner: SimulationRunner,
   sessionId: string
 ): void {
+  // DB persistence (immediate — events written as soon as produced)
   runner.events.on("simulation_event", async (event: SimulationEvent) => {
-    // Persist to DB (skipDuplicates handles events already persisted by runner)
+    if (SKIP_PERSIST_TYPES.has(event.type)) return;
     try {
       await prisma.simulationEvent.createMany({
         data: [
@@ -73,21 +81,21 @@ function wireEventListener(
         err
       );
     }
+  });
 
-    // Broadcast via WebSocket to simulation viewer clients
+  // WebSocket broadcast (rate-limited via PlaybackScheduler)
+  runner.getPlaybackScheduler().setBroadcastCallback((events) => {
     const wsManager = WebSocketManager.getInstance();
-    if (wsManager) {
-      const clients = wsManager.getSimulationClients(sessionId);
+    if (!wsManager) return;
+    const clients = wsManager.getSimulationClients(sessionId);
+    for (const event of events) {
       const message = JSON.stringify({ type: "simulation_event", event });
       for (const [, client] of clients) {
         if (client.ws.readyState === WebSocket.OPEN) {
           try {
             client.ws.send(message);
-          } catch (err) {
-            console.error(
-              `[SimulationService] Failed to broadcast simulation event to client:`,
-              err
-            );
+          } catch {
+            // ignore send errors
           }
         }
       }
@@ -245,6 +253,18 @@ export async function createSimulation(
     );
   }
 
+  // Real-time sync: override game start time to wall-clock + buffer
+  let displayStartTime: number | undefined;
+  if (config?.syncRealTime) {
+    const bufferMin = config.realTimeBufferMinutes ?? 5;
+    const startWall = Date.now() + bufferMin * 60_000;
+    const startDate = new Date(startWall);
+    const hh = String(startDate.getHours()).padStart(2, "0");
+    const mm = String(startDate.getMinutes()).padStart(2, "0");
+    gameState.timeOfDay = `${hh}:${mm}`;
+    displayStartTime = startWall;
+  }
+
   const { runner, dgsm, npcPlanningAgent } = buildSimulationBundle({
     prisma,
     gameState,
@@ -255,6 +275,11 @@ export async function createSimulation(
       tickIntervalMs: config?.tickIntervalMs,
       maxDays: config?.maxDays,
       stopEvents: config?.stopEvents,
+      syncRealTime: config?.syncRealTime,
+      realTimeBufferMinutes: config?.realTimeBufferMinutes,
+      displayStartTime,
+      // Force 1:1 display speed for real-time sync
+      ...(config?.syncRealTime ? { displayIntervalMs: 60_000 } : {}),
     },
     language,
   });

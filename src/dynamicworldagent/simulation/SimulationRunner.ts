@@ -14,6 +14,7 @@ import {
   resolveEntryScene,
   upsertIntent,
 } from "./characterInjection.js";
+import { PlaybackScheduler } from "./PlaybackScheduler.js";
 import {
   persistSimulationEvents,
   persistSimulationRuntime,
@@ -25,7 +26,6 @@ import type {
   SimulationStatus,
   StopReason,
 } from "./types.js";
-import { DEFAULT_TICK_INTERVAL_MS } from "./types.js";
 
 export class SimulationRunner {
   // --- Core dependencies ---
@@ -59,6 +59,9 @@ export class SimulationRunner {
   readonly events: SimulationEventEmitter;
   private readonly collectedEvents: SimulationEvent[] = [];
 
+  // --- Playback ---
+  private playbackScheduler: PlaybackScheduler;
+
   constructor(params: {
     config: SimulationConfig;
     dgsm: DynamicGameStateManager;
@@ -80,6 +83,11 @@ export class SimulationRunner {
     this.prisma = params.prisma;
 
     this.events = new SimulationEventEmitter(this.sessionId);
+    this.playbackScheduler = new PlaybackScheduler({
+      displayIntervalMs: params.config.displayIntervalMs ?? params.config.tickIntervalMs ?? 60_000,
+      minBufferTicks: params.config.minBufferTicks ?? 5,
+      displayStartTime: params.config.displayStartTime,
+    });
 
     // Wire emitter into execution context so handlers can emit npc_moved events
     this.ctx.simulationEmitter = this.events;
@@ -122,11 +130,50 @@ export class SimulationRunner {
 
   updateTickInterval(ms: number): void {
     (this.config as { tickIntervalMs?: number }).tickIntervalMs = ms;
-    if (this.state === "running" && this.intervalId) {
-      clearTimeout(this.intervalId);
-      this.intervalId = null;
-      this.scheduleNextTick();
-    }
+    this.playbackScheduler.updateDisplayInterval(ms);
+  }
+
+  /**
+   * Enable real-time sync mode: override game time to wall-clock + buffer,
+   * and recreate the playback scheduler with a displayStartTime gate.
+   * Only callable when paused (before start).
+   */
+  enableRealTimeSync(bufferMinutes = 5): { displayStartTime: number; gameTime: string } {
+    const startWall = Date.now() + bufferMinutes * 60_000;
+    const startDate = new Date(startWall);
+    const hh = String(startDate.getHours()).padStart(2, "0");
+    const mm = String(startDate.getMinutes()).padStart(2, "0");
+    const gameTime = `${hh}:${mm}`;
+
+    // Update game state
+    const gameState = this.dgsm.getState();
+    gameState.timeOfDay = gameTime;
+
+    // Update config
+    const cfg = this.config as Record<string, unknown>;
+    cfg.syncRealTime = true;
+    cfg.realTimeBufferMinutes = bufferMinutes;
+    cfg.displayStartTime = startWall;
+    cfg.displayIntervalMs = 60_000; // Force 1:1 speed
+
+    // Recreate playback scheduler with new displayStartTime
+    // Preserve broadcast callback from the old scheduler
+    const oldScheduler = this.playbackScheduler;
+    this.playbackScheduler = new PlaybackScheduler({
+      displayIntervalMs: 60_000,
+      minBufferTicks: this.config.minBufferTicks ?? 5,
+      displayStartTime: startWall,
+    });
+    // Re-wire the broadcast callback (set externally via wireEventListener)
+    const cb = oldScheduler.getBroadcastCallback();
+    if (cb) this.playbackScheduler.setBroadcastCallback(cb);
+    oldScheduler.destroy();
+
+    return { displayStartTime: startWall, gameTime };
+  }
+
+  getPlaybackScheduler(): PlaybackScheduler {
+    return this.playbackScheduler;
   }
 
   hydrateFromRuntime(params: {
@@ -173,6 +220,7 @@ export class SimulationRunner {
   async pause(): Promise<void> {
     if (this.state !== "running") return;
     this.shouldPause = true;
+    this.playbackScheduler.pausePlayback();
 
     // If no tick is in progress, transition immediately
     if (!this.tickInProgress) {
@@ -225,10 +273,15 @@ export class SimulationRunner {
       this.modifiedCharacterIds.clear();
     }
 
-    for (let i = 0; i < ticks; i++) {
-      // executeTick() may mutate this.state — use helper to avoid TS narrowing
-      if (this.isTerminal()) break;
-      await this.executeTick();
+    // Step mode: bypass playback buffer, deliver events immediately
+    this.playbackScheduler.setImmediateMode(true);
+    try {
+      for (let i = 0; i < ticks; i++) {
+        if (this.isTerminal()) break;
+        await this.executeTick();
+      }
+    } finally {
+      this.playbackScheduler.setImmediateMode(false);
     }
   }
 
@@ -366,7 +419,9 @@ export class SimulationRunner {
   private scheduleNextTick(): void {
     if (this.state !== "running") return;
 
-    const interval = this.config.tickIntervalMs ?? DEFAULT_TICK_INTERVAL_MS;
+    // Fast tick: use simulationDelayMs (default 50ms) to yield the event loop,
+    // instead of the old tickIntervalMs which matched real-time pace.
+    const delay = this.config.simulationDelayMs ?? 50;
     this.intervalId = setTimeout(async () => {
       await this.executeTick();
 
@@ -376,12 +431,13 @@ export class SimulationRunner {
       } else if (this.shouldPause) {
         this.shouldPause = false;
         this.state = "paused";
+        this.playbackScheduler.pausePlayback();
         await this.persistEvents([this.emitStateChange()]);
         await this.saveRuntime();
       } else if (this.state === "running") {
         this.scheduleNextTick();
       }
-    }, interval);
+    }, delay);
   }
 
   private clearScheduledTick(): void {
@@ -452,6 +508,21 @@ export class SimulationRunner {
       this.collectedEvents.push(...derivedEvents);
       pendingEvents.push(...derivedEvents);
 
+      // Emit NPC position snapshot (every tick)
+      const stateAfterTick = this.dgsm.getState();
+      const snapshotEvent = this.events.emitSimulationEvent(
+        "npc_position_snapshot",
+        "system",
+        "global",
+        stateAfterTick.gameDay,
+        stateAfterTick.timeOfDay,
+        {
+          positions: { ...stateAfterTick.characterPositions },
+          displayIntervalMs: this.config.displayIntervalMs ?? this.config.tickIntervalMs ?? 60_000,
+        }
+      );
+      pendingEvents.push(snapshotEvent);
+
       // Check end conditions
       const stopEvent = this.shouldStopAfterTick();
       if (stopEvent) {
@@ -459,6 +530,10 @@ export class SimulationRunner {
       }
 
       await this.persistEvents(pendingEvents);
+
+      // Enqueue events into playback scheduler for rate-limited broadcast
+      this.playbackScheduler.enqueue(pendingEvents, this.ticksExecuted);
+
       await this.saveRuntime();
     } catch (error) {
       console.error(
@@ -563,6 +638,7 @@ export class SimulationRunner {
    */
   private async finalize(reason: StopReason): Promise<void> {
     this.clearScheduledTick();
+    this.playbackScheduler.destroy();
     const event = this.transitionToTerminalState(reason);
     await this.persistEvents([event]);
     await this.saveRuntime();

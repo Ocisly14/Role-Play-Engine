@@ -1,9 +1,12 @@
+import { useState } from "react";
 import type { SimulationEvent } from "../../hooks/useSimulationWebSocket";
 import type { NpcStatusInfo } from "../../services/simulationApi";
 import { EventLog } from "./EventLog";
 import { GameClock } from "./GameClock";
 import { NpcCard } from "./NpcCard";
 import { NpcDetail } from "./NpcDetail";
+
+type SimTabType = "npcs" | "events";
 
 interface SidePanelProps {
   gameDay: number;
@@ -32,17 +35,18 @@ export function SidePanel({
   isOpen,
   onClose,
 }: SidePanelProps) {
+  const [activeTab, setActiveTab] = useState<SimTabType>("npcs");
+
   const selectedNpc = selectedNpcId
     ? npcStatuses.find((n) => n.npcId === selectedNpcId)
     : null;
-
-  const isPreparing = simulationState === "paused" && eventLog.length === 0;
 
   const drawerClass = isOpen ? "sim-sidebar-open" : "sim-sidebar-closed";
 
   return (
     <div
       className={`sim-sidebar backdrop-blur-sm bg-white/50 border border-slate-200 shadow-lg rounded-lg flex flex-col ${drawerClass}`}
+      onPointerDown={(e) => e.stopPropagation()}
     >
       <button
         className="sim-sidebar-close"
@@ -58,21 +62,31 @@ export function SidePanel({
         simulationState={simulationState}
       />
 
-      {isPreparing ? (
-        <PreparationPanel npcStatuses={npcStatuses} onSelectNpc={onSelectNpc} />
+      {selectedNpc ? (
+        <NpcDetail
+          npc={selectedNpc}
+          onBack={() => onSelectNpc(null)}
+          onZoomTo={onZoomToNpc}
+        />
       ) : (
         <>
-          {selectedNpc ? (
-            <NpcDetail
-              npc={selectedNpc}
-              onBack={() => onSelectNpc(null)}
-              onZoomTo={onZoomToNpc}
-            />
-          ) : (
+          <div className="sidebar-tabs">
+            <button
+              className={`sidebar-tab backdrop-blur-sm bg-white/50 border border-slate-200 shadow-md rounded-lg hover:bg-white/70 transition-all ${activeTab === "npcs" ? "active" : ""}`}
+              onClick={() => setActiveTab("npcs")}
+            >
+              NPCs
+            </button>
+            <button
+              className={`sidebar-tab backdrop-blur-sm bg-white/50 border border-slate-200 shadow-md rounded-lg hover:bg-white/70 transition-all ${activeTab === "events" ? "active" : ""}`}
+              onClick={() => setActiveTab("events")}
+            >
+              Events
+            </button>
+          </div>
+
+          {activeTab === "npcs" ? (
             <div className="flex-1 overflow-y-auto">
-              <div className="px-3 py-2 text-xs font-medium text-slate-500 border-b border-slate-200/60">
-                NPCs ({npcStatuses.length})
-              </div>
               {npcStatuses.map((npc) => (
                 <NpcCard
                   key={npc.npcId}
@@ -82,35 +96,12 @@ export function SidePanel({
                 />
               ))}
             </div>
+          ) : (
+            <EventLog events={eventLog} />
           )}
-
-          <EventLog events={eventLog} />
         </>
       )}
     </div>
   );
 }
 
-function PreparationPanel({
-  npcStatuses,
-  onSelectNpc,
-}: {
-  npcStatuses: NpcStatusInfo[];
-  onSelectNpc: (npcId: string | null) => void;
-}) {
-  return (
-    <div className="flex-1 overflow-y-auto">
-      <div className="px-3 py-2 text-xs font-medium text-slate-500 border-b border-slate-200/60">
-        NPCs ({npcStatuses.length})
-      </div>
-      {npcStatuses.map((npc) => (
-        <NpcCard
-          key={npc.npcId}
-          npc={npc}
-          isSelected={false}
-          onClick={() => onSelectNpc(npc.npcId)}
-        />
-      ))}
-    </div>
-  );
-}

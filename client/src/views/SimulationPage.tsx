@@ -1,5 +1,5 @@
 import type Phaser from "phaser";
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { SidebarToggleButton } from "../components/layout/SidebarToggleButton";
 import { ConfigPanel } from "../components/simulation/ConfigPanel";
@@ -117,6 +117,7 @@ export default function SimulationPage() {
       scenes: state.topology.scenes ?? [],
       junctions: state.topology.junctions ?? [],
       transportEdges: state.topology.transportEdges ?? [],
+      displayIntervalMs: state.displayIntervalMs,
     });
   }, [state.npcPositions, state.npcStatuses, state.topology]);
 
@@ -226,6 +227,22 @@ export default function SimulationPage() {
     ? state.topology?.scenarioOutlines?.find((o) => o.id === state.focusedBuildingId)?.name ?? null
     : null;
 
+  // Real-time sync countdown
+  const [countdownNow, setCountdownNow] = useState(Date.now());
+  useEffect(() => {
+    if (!state.displayStartTime) return;
+    const id = setInterval(() => setCountdownNow(Date.now()), 1000);
+    return () => clearInterval(id);
+  }, [state.displayStartTime]);
+  const countdown = useMemo(() => {
+    if (!state.displayStartTime) return null;
+    const remaining = Math.max(0, state.displayStartTime - countdownNow);
+    if (remaining <= 0) return null;
+    const mins = Math.floor(remaining / 60_000);
+    const secs = Math.floor((remaining % 60_000) / 1000);
+    return { mins, secs, remaining };
+  }, [state.displayStartTime, countdownNow]);
+
   return (
     <div className={`sim-page${state.focusedBuildingId ? " sim-page--has-popup" : ""}`}>
       {/* Full-viewport Phaser canvas — the interactive game area */}
@@ -249,7 +266,7 @@ export default function SimulationPage() {
       )}
 
       {/* Floating header */}
-      <div className="sim-header backdrop-blur-sm bg-white/50 border border-slate-200 shadow-md rounded-lg">
+      <div className="sim-header backdrop-blur-sm bg-white/50 border border-slate-200 shadow-md rounded-lg" onPointerDown={(e) => e.stopPropagation()}>
         <button
           onClick={() => navigate("/simulation/select")}
           className="back-button backdrop-blur-md bg-white/50 border border-slate-200 shadow-md rounded-xl hover:bg-white/70 hover:border-slate-300 hover:-translate-y-0.5 transition-all"
@@ -269,12 +286,12 @@ export default function SimulationPage() {
 
       {/* Click map to close popup — only covers canvas, below all UI */}
       {state.focusedBuildingId && (
-        <div className="sim-popup-backdrop" onClick={exitBuilding} />
+        <div className="sim-popup-backdrop" onClick={exitBuilding} onPointerDown={(e) => e.stopPropagation()} />
       )}
 
       {/* Scene image popup */}
       {state.focusedBuildingId && (
-        <div className={`sim-scene-popup ${isSidebarOpen ? "sim-scene-popup-shifted" : ""}`}>
+        <div className={`sim-scene-popup ${isSidebarOpen ? "sim-scene-popup-shifted" : ""}`} onPointerDown={(e) => e.stopPropagation()}>
           <div className="sim-scene-popup-content backdrop-blur-sm bg-white/50 border border-slate-200 shadow-lg rounded-lg overflow-hidden">
             {/* Header — scenario name + sub-scene tabs */}
             <div className="flex items-center gap-1.5 p-2 border-b border-slate-200/60 flex-wrap">
@@ -348,8 +365,18 @@ export default function SimulationPage() {
         <ConfigPanel sessionId={sessionId} />
       )}
 
+      {/* Real-time sync countdown */}
+      {countdown && state.simulationState === "running" && (
+        <div className="fixed bottom-4 left-4 z-10 backdrop-blur-xl bg-white/50 border border-white/30 rounded-2xl px-4 py-2 shadow-lg flex items-center gap-2" onPointerDown={(e) => e.stopPropagation()}>
+          <span className="text-xs text-slate-500">Preparing...</span>
+          <span className="text-sm font-medium text-amber-600">
+            {countdown.mins}m {String(countdown.secs).padStart(2, "0")}s
+          </span>
+        </div>
+      )}
+
       {/* Simulation control panel */}
-      {sessionId && state.eventLog.length > 0 && (
+      {sessionId && state.eventLog.length > 0 && !countdown && (
         <ControlPanel
           sessionId={sessionId}
           simulationState={state.simulationState}
@@ -358,7 +385,7 @@ export default function SimulationPage() {
 
       {/* Sidebar */}
       {isSidebarOpen && (
-        <div className="sim-sidebar-backdrop" onClick={closeSidebar} />
+        <div className="sim-sidebar-backdrop" onClick={closeSidebar} onPointerDown={(e) => e.stopPropagation()} />
       )}
 
       <SidePanel

@@ -151,6 +151,35 @@ function buildEventMetadata(
   return metadata;
 }
 
+function formatActionStatusLabel(action: CharacterAction): string {
+  switch (action.status) {
+    case "completed":
+      return "completed";
+    case "failed":
+      return `failed${action.failureReason ? ` (${action.failureReason})` : ""}`;
+    case "interrupted":
+      return `interrupted${action.interruptionReason ? ` (${action.interruptionReason})` : ""}`;
+    default:
+      return action.status;
+  }
+}
+
+function logNodeExecutionResult(node: PlanNode, action: CharacterAction): void {
+  const details: string[] = [
+    `[NodeResult] ${formatActionStatusLabel(action)}`,
+    `${node.characterName}`,
+    `${node.type}`,
+    `@ ${action.location}`,
+    `[${action.gameTime}]`,
+  ];
+
+  if (action.successLevel) {
+    details.push(`[roll ${action.successLevel}]`);
+  }
+
+  console.log(`${details.join(" ")} ${action.outcome}`);
+}
+
 function shouldRunImpactGate(action: CharacterAction): boolean {
   return action.impact >= 2 || (action.impact === 1 && Boolean(action.skill));
 }
@@ -1359,6 +1388,8 @@ async function executeSingleTick(
       }
     }
 
+    logNodeExecutionResult(node, action);
+
     // Fumble -> damage a random evidence item in the NPC's current scene
     if (action.successLevel === "fumble") {
       const scene = dgsm.getScene(node.location);
@@ -1408,6 +1439,7 @@ async function executeSingleTick(
 
   for (const { node, action } of movementFinalizations) {
     tickActions.push(action);
+    logNodeExecutionResult(node, action);
 
     if (memoryManager) {
       await memoryManager.add({

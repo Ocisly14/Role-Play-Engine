@@ -82,6 +82,8 @@ export async function createSimulation(params: {
     tickIntervalMs?: number;
     maxDays?: number;
     weather?: "clear" | "rain" | "fog" | "storm" | "snow" | "extreme_heat" | "extreme_cold";
+    syncRealTime?: boolean;
+    realTimeBufferMinutes?: number;
   };
 }): Promise<{ sessionId: string }> {
   const { data } = await api.post("/simulation", params);
@@ -146,4 +148,31 @@ export async function updateSpeed(
   tickIntervalMs: number
 ): Promise<void> {
   await api.put(`/simulation/${sessionId}/config`, { tickIntervalMs });
+}
+
+export async function updateSyncRealTime(
+  sessionId: string,
+  syncRealTime: boolean,
+  realTimeBufferMinutes?: number
+): Promise<void> {
+  await api.put(`/simulation/${sessionId}/config`, {
+    syncRealTime,
+    realTimeBufferMinutes,
+  });
+}
+
+export interface PlaybackStatus {
+  buffered: number;
+  displayTick: number;
+  simulationTick: number;
+  isPlaying: boolean;
+  displayStartTime?: number;
+  timeUntilStart?: number;
+}
+
+export async function fetchPlaybackStatus(
+  sessionId: string
+): Promise<PlaybackStatus> {
+  const { data } = await api.get(`/simulation/${sessionId}/playback-status`);
+  return data;
 }

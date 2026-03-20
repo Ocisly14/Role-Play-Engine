@@ -149,3 +149,18 @@ export async function listSimulations(_req: Request, res: Response) {
   const simulations = await simulationService.listSimulations(prisma);
   return res.json({ simulations });
 }
+
+export async function getPlaybackStatus(req: Request, res: Response) {
+  try {
+    const prisma = getPrismaClient();
+    const runner = await simulationService.getRunner(prisma, req.params.id);
+    if (!runner) {
+      return res.status(404).json({ error: `Simulation ${req.params.id} not found` });
+    }
+    return res.json(runner.getPlaybackScheduler().getBufferStatus());
+  } catch (error) {
+    return res.status(500).json({
+      error: error instanceof Error ? error.message : "Unknown error",
+    });
+  }
+}

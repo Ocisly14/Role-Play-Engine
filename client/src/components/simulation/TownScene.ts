@@ -88,6 +88,14 @@ export class TownScene extends Phaser.Scene {
   private roadPolylines: Map<string, [number, number][]> = new Map();
   private baseUrl = "";
   private isBuilt = false;
+  /** Animation state for road NPCs — constant-speed interpolation between snapshots. */
+  private npcAnimTargets: Map<string, {
+    startX: number; startY: number;
+    targetX: number; targetY: number;
+    startTime: number;
+  }> = new Map();
+  /** Expected ms between position snapshots — used to pace NPC movement. */
+  private displayIntervalMs = 60_000;
   private mapWidth = 0;
   private mapHeight = 0;
   private minZoom = 0.15;
@@ -168,7 +176,8 @@ export class TownScene extends Phaser.Scene {
 
     // Touch: pinch-to-zoom + two-finger pan
     this.input.addPointer(1); // enable 2nd pointer
-    this.input.on("pointerdown", (_pointer: Phaser.Input.Pointer) => {
+    this.input.on("pointerdown", (pointer: Phaser.Input.Pointer) => {
+      if (this.isOverUI(pointer)) return;
       const p1 = this.input.pointer1;
       const p2 = this.input.pointer2;
       if (p1.isDown && p2.isDown) {
@@ -177,7 +186,8 @@ export class TownScene extends Phaser.Scene {
         this.lastPinchMidY = (p1.y + p2.y) / 2;
       }
     });
-    this.input.on("pointermove", (_pointer: Phaser.Input.Pointer) => {
+    this.input.on("pointermove", (pointer: Phaser.Input.Pointer) => {
+      if (this.isOverUI(pointer)) return;
       const p1 = this.input.pointer1;
       const p2 = this.input.pointer2;
       if (!p1.isDown || !p2.isDown) return;
@@ -498,7 +508,8 @@ export class TownScene extends Phaser.Scene {
         .setInteractive({ useHandCursor: true });
       container.add(hitZone);
 
-      hitZone.on("pointerover", () => {
+      hitZone.on("pointerover", (pointer: Phaser.Input.Pointer) => {
+        if (this.isOverUI(pointer)) return;
         container.setDepth(9999);
         // Dynamically set label resolution based on camera zoom so text stays crisp
         const cam = this.cameras.main;
@@ -539,7 +550,8 @@ export class TownScene extends Phaser.Scene {
           duration: 200,
         });
       });
-      hitZone.on("pointerdown", () => {
+      hitZone.on("pointerdown", (pointer: Phaser.Input.Pointer) => {
+        if (this.isOverUI(pointer)) return;
         this.game.events.emit("building-clicked", {
           scenarioId: outline.id,
           entrySceneId: outline.entrySceneId,
@@ -587,7 +599,11 @@ export class TownScene extends Phaser.Scene {
     scenes: SceneData[];
     junctions: JunctionData[];
     transportEdges: TransportEdgeData[];
+    displayIntervalMs?: number;
   }) {
+    if (data.displayIntervalMs) {
+      this.displayIntervalMs = data.displayIntervalMs;
+    }
     const sceneToParent = new Map<string, string>();
     for (const s of data.scenes) sceneToParent.set(s.id, s.parentLocationId);
 
@@ -637,30 +653,54 @@ export class TownScene extends Phaser.Scene {
       }
     }
 
-    // Handle road NPCs (not inside a building — place along road polyline)
+    // Handle road NPCs — compute target position and let update() lerp smoothly
     for (const [npcId, position] of Object.entries(data.positions)) {
       if (npcBuildingMap.has(npcId)) continue;
       if (position.type !== "road") continue;
 
       const name = npcNameMap.get(npcId) ?? npcId;
+      let target: { x: number; y: number } | null = null;
 
       // Try polyline interpolation first
       const polyline = this.roadPolylines.get(position.roadId);
       if (polyline) {
-        const { x: tx, y: ty } = this.interpolatePolyline(polyline, position.position);
-        this.upsertNpcDot(npcId, name, tx, ty, null);
-        continue;
+        target = this.interpolatePolyline(polyline, position.position);
+      } else {
+        // Fallback: straight line between building endpoints
+        const edge = roadToEdge.get(position.roadId);
+        if (edge) {
+          const fromPos = this.nodePositions.get(edge.fromLocationId);
+          const toPos = this.nodePositions.get(edge.toLocationId);
+          if (fromPos && toPos) {
+            target = {
+              x: Phaser.Math.Linear(fromPos.x, toPos.x, position.position),
+              y: Phaser.Math.Linear(fromPos.y, toPos.y, position.position),
+            };
+          }
+        }
       }
 
-      // Fallback: straight line between building endpoints
-      const edge = roadToEdge.get(position.roadId);
-      if (!edge) continue;
-      const fromPos = this.nodePositions.get(edge.fromLocationId);
-      const toPos = this.nodePositions.get(edge.toLocationId);
-      if (!fromPos || !toPos) continue;
-      const tx = Phaser.Math.Linear(fromPos.x, toPos.x, position.position);
-      const ty = Phaser.Math.Linear(fromPos.y, toPos.y, position.position);
-      this.upsertNpcDot(npcId, name, tx, ty, null);
+      if (!target) continue;
+
+      const existing = this.npcDots.get(npcId);
+      // Store animation: start from current position, arrive at target over displayIntervalMs
+      this.npcAnimTargets.set(npcId, {
+        startX: existing ? existing.currentX : target.x,
+        startY: existing ? existing.currentY : target.y,
+        targetX: target.x,
+        targetY: target.y,
+        startTime: this.time.now,
+      });
+
+      // First appearance: place immediately (no lerp needed yet)
+      if (!existing) {
+        this.upsertNpcDot(npcId, name, target.x, target.y, null);
+      }
+    }
+
+    // Clean up animation targets for NPCs that moved into buildings
+    for (const [npcId] of npcBuildingMap) {
+      this.npcAnimTargets.delete(npcId);
     }
 
     // Remove NPCs that are no longer active
@@ -669,6 +709,7 @@ export class TownScene extends Phaser.Scene {
         npcData.dot.destroy();
         npcData.label.destroy();
         this.npcDots.delete(npcId);
+        this.npcAnimTargets.delete(npcId);
       }
     }
   }
@@ -717,22 +758,26 @@ export class TownScene extends Phaser.Scene {
         Math.abs(existing.currentX - tx) > 1 ||
         Math.abs(existing.currentY - ty) > 1
       ) {
-        this.tweens.add({
-          targets: existing.dot,
-          x: tx,
-          y: ty,
-          duration: 400,
-          ease: "Sine.easeInOut",
-        });
-        this.tweens.add({
-          targets: existing.label,
-          x: tx,
-          y: ty + NPC_DOT_RADIUS + 6,
-          duration: 400,
-          ease: "Sine.easeInOut",
-        });
-        existing.currentX = tx;
-        existing.currentY = ty;
+        if (buildingId !== null) {
+          // Building NPCs: tween to new layout position
+          this.tweens.add({
+            targets: existing.dot,
+            x: tx,
+            y: ty,
+            duration: 400,
+            ease: "Sine.easeInOut",
+          });
+          this.tweens.add({
+            targets: existing.label,
+            x: tx,
+            y: ty + NPC_DOT_RADIUS + 6,
+            duration: 400,
+            ease: "Sine.easeInOut",
+          });
+          existing.currentX = tx;
+          existing.currentY = ty;
+        }
+        // Road NPCs: skip tween — update() handles smooth per-frame lerp
       }
     } else {
       const color = NPC_COLORS[this.colorIndex % NPC_COLORS.length];
@@ -768,6 +813,30 @@ export class TownScene extends Phaser.Scene {
         currentY: ty,
         buildingId,
       });
+    }
+  }
+
+  /**
+   * Per-frame update: move road NPCs at constant speed between snapshots.
+   * Each snapshot sets a start→target pair; we linearly interpolate over
+   * displayIntervalMs so the NPC arrives exactly when the next snapshot drops.
+   */
+  update(time: number, _delta: number) {
+    for (const [npcId, anim] of this.npcAnimTargets) {
+      const npcData = this.npcDots.get(npcId);
+      if (!npcData || npcData.buildingId !== null) continue;
+
+      const elapsed = time - anim.startTime;
+      // Clamp to [0, 1] — NPC reaches target at t=1, then holds position
+      const t = Math.min(elapsed / this.displayIntervalMs, 1);
+
+      const newX = Phaser.Math.Linear(anim.startX, anim.targetX, t);
+      const newY = Phaser.Math.Linear(anim.startY, anim.targetY, t);
+
+      npcData.dot.setPosition(newX, newY);
+      npcData.label.setPosition(newX, newY + NPC_DOT_RADIUS + 6);
+      npcData.currentX = newX;
+      npcData.currentY = newY;
     }
   }
 

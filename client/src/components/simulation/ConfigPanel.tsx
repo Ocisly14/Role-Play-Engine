@@ -27,6 +27,8 @@ export function ConfigPanel({ sessionId }: ConfigPanelProps) {
   const [tickSpeed, setTickSpeed] = useState(60000);
   const [maxDays, setMaxDays] = useState(7);
   const [weather, setWeather] = useState("clear");
+  const [syncRealTime, setSyncRealTime] = useState(false);
+  const [bufferMinutes, setBufferMinutes] = useState(5);
   const [starting, setStarting] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -37,7 +39,12 @@ export function ConfigPanel({ sessionId }: ConfigPanelProps) {
     setStarting(true);
     setError(null);
     try {
-      await simApi.updateSpeed(sessionId, tickSpeed);
+      // When syncRealTime is on, force 1x speed (60s per tick)
+      const effectiveSpeed = syncRealTime ? 60000 : tickSpeed;
+      await simApi.updateSpeed(sessionId, effectiveSpeed);
+      if (syncRealTime) {
+        await simApi.updateSyncRealTime(sessionId, true, bufferMinutes);
+      }
       await simApi.startSimulation(sessionId);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Failed to start");
@@ -76,26 +83,60 @@ export function ConfigPanel({ sessionId }: ConfigPanelProps) {
         &#9881;
       </button>
 
-      {/* Tick Speed */}
-      <div className="flex gap-1">
-        {SPEED_OPTIONS.map(({ label, ms }) => (
-          <button
-            key={label}
-            type="button"
-            onClick={() => setTickSpeed(ms)}
-            className={`px-2 py-1 rounded-lg text-xs font-medium transition-all ${
-              tickSpeed === ms
-                ? "bg-amber-600 text-white"
-                : "text-slate-500 hover:bg-white/50 hover:text-slate-700"
-            }`}
-          >
-            {label}
-          </button>
-        ))}
-      </div>
+      {/* Sync Real Time toggle */}
+      <label className="flex items-center gap-1.5 shrink-0 cursor-pointer select-none">
+        <input
+          type="checkbox"
+          checked={syncRealTime}
+          onChange={(e) => setSyncRealTime(e.target.checked)}
+          className="accent-amber-600 w-3.5 h-3.5"
+        />
+        <span className="text-xs text-slate-600 whitespace-nowrap">Real-time</span>
+      </label>
+
+      {/* Buffer minutes (only when sync is on) */}
+      {syncRealTime && (
+        <div className="flex items-center gap-1 shrink-0">
+          <label className="text-xs text-slate-500 whitespace-nowrap">Buffer</label>
+          <input
+            type="number"
+            min={3}
+            max={10}
+            value={bufferMinutes}
+            onChange={(e) => setBufferMinutes(Math.max(3, Math.min(10, Number(e.target.value))))}
+            className="w-10 py-1 px-1 rounded-lg bg-white/50 text-slate-700 border border-slate-200 text-xs text-center"
+          />
+          <span className="text-xs text-slate-400">min</span>
+        </div>
+      )}
 
       {/* Divider */}
       <div className="w-px h-5 bg-slate-200/60 shrink-0" />
+
+      {/* Tick Speed (hidden when real-time sync is on) */}
+      {!syncRealTime && (
+        <div className="flex gap-1">
+          {SPEED_OPTIONS.map(({ label, ms }) => (
+            <button
+              key={label}
+              type="button"
+              onClick={() => setTickSpeed(ms)}
+              className={`px-2 py-1 rounded-lg text-xs font-medium transition-all ${
+                tickSpeed === ms
+                  ? "bg-amber-600 text-white"
+                  : "text-slate-500 hover:bg-white/50 hover:text-slate-700"
+              }`}
+            >
+              {label}
+            </button>
+          ))}
+        </div>
+      )}
+
+      {!syncRealTime && (
+        /* Divider */
+        <div className="w-px h-5 bg-slate-200/60 shrink-0" />
+      )}
 
       {/* Max Days */}
       <div className="flex items-center gap-1.5 shrink-0">
