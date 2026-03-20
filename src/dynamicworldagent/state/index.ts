@@ -13,7 +13,12 @@ export * from "./blockedConnections.js";
 
 export { initializeCompleteDynamicGameState } from "./DynamicGameStateLoader.js";
 
-export { loadModule, createSession, initRuntime } from "./moduleLoader.js";
-export type { ModuleData } from "./moduleLoader.js";
+export {
+  loadModule,
+  createSession,
+  initRuntime,
+  filterNpcsByPolicy,
+} from "./moduleLoader.js";
+export type { ModuleData, NpcInjectionPolicy } from "./moduleLoader.js";
 
 export { importModule, scanAndImportModules } from "./moduleImporter.js";

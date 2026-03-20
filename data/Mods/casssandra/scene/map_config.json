@@ -3,63 +3,942 @@
     "background": "map.jpg"
   },
   "scenarios": {
-    "SCN_21": { "x": 605,  "y": 2025, "thumbnail": "火车站.jpg" },
-    "SCN_12": { "x": 1024, "y": 1894, "thumbnail": "钟表店.png" },
-    "SCN_14": { "x": 1397, "y": 2004, "thumbnail": "珊德拉小屋.png" },
-    "SCN_9":  { "x": 1802, "y": 1779, "thumbnail": "花店.png" },
-    "SCN_13": { "x": 1738, "y": 2259, "thumbnail": "酒厂.png" },
-    "SCN_10": { "x": 2035, "y": 1079, "thumbnail": "海伦的餐桌.png" },
-    "SCN_11": { "x": 2348, "y": 1231, "thumbnail": "占星师小屋.png" },
-    "SCN_2":  { "x": 2018, "y": 650,  "thumbnail": "焚化厂.jpg" },
-    "SCN_1":  { "x": 2687, "y": 873,  "thumbnail": "星辰医院.jpg" },
-    "SCN_15": { "x": 2763, "y": 1358, "thumbnail": "阿道夫家.png" },
-    "SCN_18": { "x": 2218, "y": 2279, "thumbnail": "五金店.jpg" },
-    "SCN_4":  { "x": 3210, "y": 2472, "thumbnail": "大酒店.jpg" },
-    "SCN_19": { "x": 3424, "y": 1120, "thumbnail": "墓地.jpg" },
-    "SCN_20": { "x": 4234, "y": 1366, "thumbnail": "伐木场.jpg" },
-    "SCN_22": { "x": 3073, "y": 2014, "thumbnail": "镇长私宅.jpg" },
-    "SCN_17": { "x": 2057, "y": 2544, "thumbnail": "教堂.png" },
-    "SCN_16": { "x": 2640, "y": 2286, "thumbnail": "驯鹿酒吧.jpg" },
-    "SCN_5":  { "x": 2793, "y": 2686, "thumbnail": "马赛尔家.png" },
-    "SCN_3":  { "x": 2045, "y": 2804, "thumbnail": "警察局.jpg" },
-    "SCN_8":  { "x": 3285, "y": 3034, "thumbnail": "菲利普家.png" },
-    "SCN_7":  { "x": 3598, "y": 2232, "thumbnail": "下水道.png" },
-    "SCN_6":  { "x": 4595, "y": 2327, "thumbnail": "二层木屋.png" }
+    "SCN_21": {
+      "x": 605,
+      "y": 2025,
+      "thumbnail": "SCN_21/火车站.jpg"
+    },
+    "SCN_12": {
+      "x": 1024,
+      "y": 1894,
+      "thumbnail": "SCN_12/钟表店.png"
+    },
+    "SCN_14": {
+      "x": 1397,
+      "y": 2004,
+      "thumbnail": "SCN_14/珊德拉小屋.png"
+    },
+    "SCN_9": {
+      "x": 1802,
+      "y": 1779,
+      "thumbnail": "SCN_9/花店.png"
+    },
+    "SCN_13": {
+      "x": 1738,
+      "y": 2259,
+      "thumbnail": "SCN_13/酒厂.png"
+    },
+    "SCN_10": {
+      "x": 2035,
+      "y": 1079,
+      "thumbnail": "SCN_10/海伦的餐桌.png"
+    },
+    "SCN_11": {
+      "x": 2348,
+      "y": 1231,
+      "thumbnail": "SCN_11/占星师小屋.png"
+    },
+    "SCN_2": {
+      "x": 2018,
+      "y": 650,
+      "thumbnail": "SCN_2/焚化厂.jpg"
+    },
+    "SCN_1": {
+      "x": 2687,
+      "y": 873,
+      "thumbnail": "SCN_1/星辰医院.jpg"
+    },
+    "SCN_15": {
+      "x": 2763,
+      "y": 1358,
+      "thumbnail": "SCN_15/阿道夫家.png"
+    },
+    "SCN_18": {
+      "x": 2218,
+      "y": 2279,
+      "thumbnail": "SCN_18/五金店.jpg"
+    },
+    "SCN_4": {
+      "x": 3210,
+      "y": 2472,
+      "thumbnail": "SCN_4/大酒店.jpg"
+    },
+    "SCN_19": {
+      "x": 3424,
+      "y": 1120,
+      "thumbnail": "SCN_19/墓地.jpg"
+    },
+    "SCN_20": {
+      "x": 4234,
+      "y": 1366,
+      "thumbnail": "SCN_20/伐木场.jpg"
+    },
+    "SCN_22": {
+      "x": 3073,
+      "y": 2014,
+      "thumbnail": "SCN_22/镇长私宅.jpg"
+    },
+    "SCN_17": {
+      "x": 2057,
+      "y": 2544,
+      "thumbnail": "SCN_17/教堂.png"
+    },
+    "SCN_16": {
+      "x": 2640,
+      "y": 2286,
+      "thumbnail": "SCN_16/驯鹿酒吧.jpg"
+    },
+    "SCN_5": {
+      "x": 2793,
+      "y": 2686,
+      "thumbnail": "SCN_5/马赛尔家.png"
+    },
+    "SCN_3": {
+      "x": 2045,
+      "y": 2804,
+      "thumbnail": "SCN_3/警察局.jpg"
+    },
+    "SCN_8": {
+      "x": 3285,
+      "y": 3034,
+      "thumbnail": "SCN_8/菲利普家.png"
+    },
+    "SCN_7": {
+      "x": 3598,
+      "y": 2232,
+      "thumbnail": "SCN_7/下水道.png"
+    },
+    "SCN_6": {
+      "x": 4595,
+      "y": 2327,
+      "thumbnail": "SCN_6/二层木屋.png"
+    }
   },
   "roads": {
-    "卡森德拉旧街":     { "points": [[601,1951],[435,1947],[456,1645],[963,1652],[963,1801],[1186,1808],[1184,1940],[1592,1944]] },
-    "卡森德拉北新街":   { "points": [[1596,1947],[1716,1947],[1723,1290],[1875,1290],[1871,1147],[2529,1156]] },
-    "星辰大道":         { "points": [[2177,373],[2186,714],[2541,726],[2536,1159]] },
-    "石榴巷":           { "points": [[2536,1161],[2541,1495],[2847,1509],[2843,1977],[2999,1995],[2995,2403]] },
-    "日暮大道":         { "points": [[2852,1714],[3085,1712],[3085,1378],[3197,1368],[3195,917],[4225,926],[4225,1272],[4432,1290]] },
-    "卡森德拉南新街":   { "points": [[1599,1949],[1594,2165],[2020,2170],[2023,2396],[2999,2400]] },
-    "新月街A大道-北街": { "points": [[2997,2398],[2988,2877]] },
-    "新月街A大道-南街": { "points": [[2992,2873],[2002,2882]] },
-    "新月街C大道":      { "points": [[2995,2880],[2999,3091],[3601,3094]] },
-    "新月街B大道":      { "points": [[2995,2651],[3446,2654],[3439,2140],[4398,2149],[4400,2400],[4646,2403]] }
+    "卡森德拉旧街": {
+      "points": [
+        [
+          601,
+          1951
+        ],
+        [
+          435,
+          1947
+        ],
+        [
+          456,
+          1645
+        ],
+        [
+          963,
+          1652
+        ],
+        [
+          963,
+          1801
+        ],
+        [
+          1186,
+          1808
+        ],
+        [
+          1184,
+          1940
+        ],
+        [
+          1592,
+          1944
+        ]
+      ]
+    },
+    "卡森德拉北新街": {
+      "points": [
+        [
+          1596,
+          1947
+        ],
+        [
+          1716,
+          1947
+        ],
+        [
+          1723,
+          1290
+        ],
+        [
+          1875,
+          1290
+        ],
+        [
+          1871,
+          1147
+        ],
+        [
+          2529,
+          1156
+        ]
+      ]
+    },
+    "星辰大道": {
+      "points": [
+        [
+          2177,
+          373
+        ],
+        [
+          2186,
+          714
+        ],
+        [
+          2541,
+          726
+        ],
+        [
+          2536,
+          1159
+        ]
+      ]
+    },
+    "石榴巷": {
+      "points": [
+        [
+          2536,
+          1161
+        ],
+        [
+          2541,
+          1495
+        ],
+        [
+          2847,
+          1509
+        ],
+        [
+          2843,
+          1977
+        ],
+        [
+          2999,
+          1995
+        ],
+        [
+          2995,
+          2403
+        ]
+      ]
+    },
+    "日暮大道": {
+      "points": [
+        [
+          2852,
+          1714
+        ],
+        [
+          3085,
+          1712
+        ],
+        [
+          3085,
+          1378
+        ],
+        [
+          3197,
+          1368
+        ],
+        [
+          3195,
+          917
+        ],
+        [
+          4225,
+          926
+        ],
+        [
+          4225,
+          1272
+        ],
+        [
+          4432,
+          1290
+        ]
+      ]
+    },
+    "卡森德拉南新街": {
+      "points": [
+        [
+          1599,
+          1949
+        ],
+        [
+          1594,
+          2165
+        ],
+        [
+          2020,
+          2170
+        ],
+        [
+          2023,
+          2396
+        ],
+        [
+          2999,
+          2400
+        ]
+      ]
+    },
+    "新月街A大道-北街": {
+      "points": [
+        [
+          2997,
+          2398
+        ],
+        [
+          2988,
+          2877
+        ]
+      ]
+    },
+    "新月街A大道-南街": {
+      "points": [
+        [
+          2992,
+          2873
+        ],
+        [
+          2002,
+          2882
+        ]
+      ]
+    },
+    "新月街C大道": {
+      "points": [
+        [
+          2995,
+          2880
+        ],
+        [
+          2999,
+          3091
+        ],
+        [
+          3601,
+          3094
+        ]
+      ]
+    },
+    "新月街B大道": {
+      "points": [
+        [
+          2995,
+          2651
+        ],
+        [
+          3446,
+          2654
+        ],
+        [
+          3439,
+          2140
+        ],
+        [
+          4398,
+          2149
+        ],
+        [
+          4400,
+          2400
+        ],
+        [
+          4646,
+          2403
+        ]
+      ]
+    }
   },
   "scenes": {
-    "SCN_1_SUB_1":  { "background": "星辰医院.jpg",   "npcAreas": [{ "x": 50, "y": 50, "width": 250, "height": 150 }] },
-    "SCN_2_SUB_1":  { "background": "焚化厂.jpg",     "npcAreas": [{ "x": 50, "y": 50, "width": 250, "height": 150 }] },
-    "SCN_3_SUB_1":  { "background": "警察局.jpg",     "npcAreas": [{ "x": 50, "y": 50, "width": 250, "height": 150 }] },
-    "SCN_4_SUB_1":  { "background": "大酒店.jpg",     "npcAreas": [{ "x": 50, "y": 50, "width": 250, "height": 150 }] },
-    "SCN_5_SUB_1":  { "background": "马赛尔家.png",   "npcAreas": [{ "x": 50, "y": 50, "width": 200, "height": 120 }] },
-    "SCN_6_SUB_1":  { "background": "二层木屋.png",   "npcAreas": [{ "x": 50, "y": 50, "width": 200, "height": 120 }] },
-    "SCN_7_SUB_1":  { "background": "下水道.png",     "npcAreas": [{ "x": 50, "y": 50, "width": 200, "height": 120 }] },
-    "SCN_8_SUB_1":  { "background": "菲利普家.png",   "npcAreas": [{ "x": 50, "y": 50, "width": 200, "height": 120 }] },
-    "SCN_9_SUB_1":  { "background": "花店.png",       "npcAreas": [{ "x": 50, "y": 50, "width": 250, "height": 150 }] },
-    "SCN_10_SUB_1": { "background": "海伦的餐桌.png", "npcAreas": [{ "x": 50, "y": 50, "width": 250, "height": 150 }] },
-    "SCN_11_SUB_1": { "background": "占星师小屋.png", "npcAreas": [{ "x": 50, "y": 50, "width": 200, "height": 120 }] },
-    "SCN_12_SUB_1": { "background": "钟表店.png",     "npcAreas": [{ "x": 50, "y": 50, "width": 200, "height": 120 }] },
-    "SCN_13_SUB_1": { "background": "酒厂.png",       "npcAreas": [{ "x": 50, "y": 50, "width": 250, "height": 150 }] },
-    "SCN_14_SUB_1": { "background": "珊德拉小屋.png", "npcAreas": [{ "x": 50, "y": 50, "width": 200, "height": 120 }] },
-    "SCN_15_SUB_1": { "background": "阿道夫家.png",   "npcAreas": [{ "x": 50, "y": 50, "width": 200, "height": 120 }] },
-    "SCN_16_SUB_1": { "background": "驯鹿酒吧.jpg",   "npcAreas": [{ "x": 50, "y": 50, "width": 250, "height": 150 }] },
-    "SCN_17_SUB_1": { "background": "教堂.png",       "npcAreas": [{ "x": 50, "y": 50, "width": 250, "height": 150 }] },
-    "SCN_18_SUB_1": { "background": "五金店.jpg",     "npcAreas": [{ "x": 50, "y": 50, "width": 250, "height": 150 }] },
-    "SCN_19_SUB_1": { "background": "墓地.jpg",       "npcAreas": [{ "x": 50, "y": 50, "width": 250, "height": 150 }] },
-    "SCN_20_SUB_1": { "background": "伐木场.jpg",     "npcAreas": [{ "x": 50, "y": 50, "width": 250, "height": 150 }] },
-    "SCN_21_SUB_1": { "background": "火车站.jpg",     "npcAreas": [{ "x": 50, "y": 50, "width": 250, "height": 150 }] },
-    "SCN_22_SUB_1": { "background": "镇长私宅.jpg",   "npcAreas": [{ "x": 50, "y": 50, "width": 200, "height": 120 }] }
+    "SCN_1_SUB_1": {
+      "background": "SCN_1/医院大厅.jpg",
+      "npcAreas": [
+        {
+          "x": 50,
+          "y": 50,
+          "width": 250,
+          "height": 150
+        }
+      ]
+    },
+    "SCN_2_SUB_1": {
+      "background": "SCN_2/焚化设施.jpg",
+      "npcAreas": [
+        {
+          "x": 50,
+          "y": 50,
+          "width": 250,
+          "height": 150
+        }
+      ]
+    },
+    "SCN_3_SUB_1": {
+      "background": "SCN_3/警察局大厅.jpg",
+      "npcAreas": [
+        {
+          "x": 50,
+          "y": 50,
+          "width": 250,
+          "height": 150
+        }
+      ]
+    },
+    "SCN_4_SUB_1": {
+      "background": "SCN_4/酒店大堂.jpg",
+      "npcAreas": [
+        {
+          "x": 50,
+          "y": 50,
+          "width": 250,
+          "height": 150
+        }
+      ]
+    },
+    "SCN_5_SUB_1": {
+      "background": "SCN_5/马塞尔的廉租房.jpg",
+      "npcAreas": [
+        {
+          "x": 50,
+          "y": 50,
+          "width": 200,
+          "height": 120
+        }
+      ]
+    },
+    "SCN_6_SUB_1": {
+      "background": "SCN_6/木屋外观.jpg",
+      "npcAreas": [
+        {
+          "x": 50,
+          "y": 50,
+          "width": 200,
+          "height": 120
+        }
+      ]
+    },
+    "SCN_7_SUB_1": {
+      "background": "SCN_7/下水道入口.jpg",
+      "npcAreas": [
+        {
+          "x": 50,
+          "y": 50,
+          "width": 200,
+          "height": 120
+        }
+      ]
+    },
+    "SCN_8_SUB_1": {
+      "background": "SCN_8/菲利普的住宅.jpg",
+      "npcAreas": [
+        {
+          "x": 50,
+          "y": 50,
+          "width": 200,
+          "height": 120
+        }
+      ]
+    },
+    "SCN_9_SUB_1": {
+      "background": "SCN_9/花店·卡森德拉之花.jpg",
+      "npcAreas": [
+        {
+          "x": 50,
+          "y": 50,
+          "width": 250,
+          "height": 150
+        }
+      ]
+    },
+    "SCN_10_SUB_1": {
+      "background": "SCN_10/小餐厅.jpg",
+      "npcAreas": [
+        {
+          "x": 50,
+          "y": 50,
+          "width": 250,
+          "height": 150
+        }
+      ]
+    },
+    "SCN_11_SUB_1": {
+      "background": "SCN_11/占卜馆.jpg",
+      "npcAreas": [
+        {
+          "x": 50,
+          "y": 50,
+          "width": 200,
+          "height": 120
+        }
+      ]
+    },
+    "SCN_12_SUB_1": {
+      "background": "SCN_12/怀特的钟表店.jpg",
+      "npcAreas": [
+        {
+          "x": 50,
+          "y": 50,
+          "width": 200,
+          "height": 120
+        }
+      ]
+    },
+    "SCN_13_SUB_1": {
+      "background": "SCN_13/酒厂厂区.jpg",
+      "npcAreas": [
+        {
+          "x": 50,
+          "y": 50,
+          "width": 250,
+          "height": 150
+        }
+      ]
+    },
+    "SCN_14_SUB_1": {
+      "background": "SCN_14/珊德拉的小屋·店面.jpg",
+      "npcAreas": [
+        {
+          "x": 50,
+          "y": 50,
+          "width": 200,
+          "height": 120
+        }
+      ]
+    },
+    "SCN_15_SUB_1": {
+      "background": "SCN_15/住宅入口与客厅.jpg",
+      "npcAreas": [
+        {
+          "x": 50,
+          "y": 50,
+          "width": 200,
+          "height": 120
+        }
+      ]
+    },
+    "SCN_16_SUB_1": {
+      "background": "SCN_16/一层大厅.jpg",
+      "npcAreas": [
+        {
+          "x": 50,
+          "y": 50,
+          "width": 250,
+          "height": 150
+        }
+      ]
+    },
+    "SCN_17_SUB_1": {
+      "background": "SCN_17/教堂主殿.jpg",
+      "npcAreas": [
+        {
+          "x": 50,
+          "y": 50,
+          "width": 250,
+          "height": 150
+        }
+      ]
+    },
+    "SCN_18_SUB_1": {
+      "background": "SCN_18/哈里森的五金店.jpg",
+      "npcAreas": [
+        {
+          "x": 50,
+          "y": 50,
+          "width": 250,
+          "height": 150
+        }
+      ]
+    },
+    "SCN_19_SUB_1": {
+      "background": "SCN_19/卡森德拉公墓.jpg",
+      "npcAreas": [
+        {
+          "x": 50,
+          "y": 50,
+          "width": 250,
+          "height": 150
+        }
+      ]
+    },
+    "SCN_20_SUB_1": {
+      "background": "SCN_20/伐木场废墟.jpg",
+      "npcAreas": [
+        {
+          "x": 50,
+          "y": 50,
+          "width": 250,
+          "height": 150
+        }
+      ]
+    },
+    "SCN_21_SUB_1": {
+      "background": "SCN_21/月台.jpg",
+      "npcAreas": [
+        {
+          "x": 50,
+          "y": 50,
+          "width": 250,
+          "height": 150
+        }
+      ]
+    },
+    "SCN_22_SUB_1": {
+      "background": "SCN_22/门厅与会客室.jpg",
+      "npcAreas": [
+        {
+          "x": 50,
+          "y": 50,
+          "width": 200,
+          "height": 120
+        }
+      ]
+    },
+    "SCN_1_SUB_2": {
+      "background": "SCN_1/停尸间.jpg",
+      "npcAreas": [
+        {
+          "x": 50,
+          "y": 50,
+          "width": 200,
+          "height": 120
+        }
+      ]
+    },
+    "SCN_1_SUB_3": {
+      "background": "SCN_1/实验室.jpg",
+      "npcAreas": [
+        {
+          "x": 50,
+          "y": 50,
+          "width": 200,
+          "height": 120
+        }
+      ]
+    },
+    "SCN_1_SUB_4": {
+      "background": "SCN_1/药品管理室.jpg",
+      "npcAreas": [
+        {
+          "x": 50,
+          "y": 50,
+          "width": 200,
+          "height": 120
+        }
+      ]
+    },
+    "SCN_1_SUB_5": {
+      "background": "SCN_1/走廊与病房区.jpg",
+      "npcAreas": [
+        {
+          "x": 50,
+          "y": 50,
+          "width": 200,
+          "height": 120
+        }
+      ]
+    },
+    "SCN_1_SUB_6": {
+      "background": "SCN_1/护士站.jpg",
+      "npcAreas": [
+        {
+          "x": 50,
+          "y": 50,
+          "width": 200,
+          "height": 120
+        }
+      ]
+    },
+    "SCN_2_SUB_2": {
+      "background": "SCN_2/坍塌小楼.jpg",
+      "npcAreas": [
+        {
+          "x": 50,
+          "y": 50,
+          "width": 200,
+          "height": 120
+        }
+      ]
+    },
+    "SCN_2_SUB_3": {
+      "background": "SCN_2/地下仪式场.jpg",
+      "npcAreas": [
+        {
+          "x": 50,
+          "y": 50,
+          "width": 200,
+          "height": 120
+        }
+      ]
+    },
+    "SCN_3_SUB_2": {
+      "background": "SCN_3/法医工作室.jpg",
+      "npcAreas": [
+        {
+          "x": 50,
+          "y": 50,
+          "width": 200,
+          "height": 120
+        }
+      ]
+    },
+    "SCN_3_SUB_3": {
+      "background": "SCN_3/档案室.jpg",
+      "npcAreas": [
+        {
+          "x": 50,
+          "y": 50,
+          "width": 200,
+          "height": 120
+        }
+      ]
+    },
+    "SCN_4_SUB_2": {
+      "background": "SCN_4/餐厅与厨房.jpg",
+      "npcAreas": [
+        {
+          "x": 50,
+          "y": 50,
+          "width": 200,
+          "height": 120
+        }
+      ]
+    },
+    "SCN_4_SUB_3": {
+      "background": "SCN_4/客房楼层.jpg",
+      "npcAreas": [
+        {
+          "x": 50,
+          "y": 50,
+          "width": 200,
+          "height": 120
+        }
+      ]
+    },
+    "SCN_4_SUB_4": {
+      "background": "SCN_4/地下储藏室.jpg",
+      "npcAreas": [
+        {
+          "x": 50,
+          "y": 50,
+          "width": 200,
+          "height": 120
+        }
+      ]
+    },
+    "SCN_6_SUB_2": {
+      "background": "SCN_6/一层内部.jpg",
+      "npcAreas": [
+        {
+          "x": 50,
+          "y": 50,
+          "width": 200,
+          "height": 120
+        }
+      ]
+    },
+    "SCN_6_SUB_3": {
+      "background": "SCN_6/二层.jpg",
+      "npcAreas": [
+        {
+          "x": 50,
+          "y": 50,
+          "width": 200,
+          "height": 120
+        }
+      ]
+    },
+    "SCN_7_SUB_2": {
+      "background": "SCN_7/暗门后·操作平台.jpg",
+      "npcAreas": [
+        {
+          "x": 50,
+          "y": 50,
+          "width": 200,
+          "height": 120
+        }
+      ]
+    },
+    "SCN_9_SUB_2": {
+      "background": "SCN_9/后厅与酒窖.jpg",
+      "npcAreas": [
+        {
+          "x": 50,
+          "y": 50,
+          "width": 200,
+          "height": 120
+        }
+      ]
+    },
+    "SCN_9_SUB_3": {
+      "background": "SCN_9/二楼私人空间.jpg",
+      "npcAreas": [
+        {
+          "x": 50,
+          "y": 50,
+          "width": 200,
+          "height": 120
+        }
+      ]
+    },
+    "SCN_13_SUB_2": {
+      "background": "SCN_13/办公室.jpg",
+      "npcAreas": [
+        {
+          "x": 50,
+          "y": 50,
+          "width": 200,
+          "height": 120
+        }
+      ]
+    },
+    "SCN_13_SUB_3": {
+      "background": "SCN_13/酒窖.jpg",
+      "npcAreas": [
+        {
+          "x": 50,
+          "y": 50,
+          "width": 200,
+          "height": 120
+        }
+      ]
+    },
+    "SCN_14_SUB_2": {
+      "background": "SCN_14/珊德拉的小屋·后屋.jpg",
+      "npcAreas": [
+        {
+          "x": 50,
+          "y": 50,
+          "width": 200,
+          "height": 120
+        }
+      ]
+    },
+    "SCN_15_SUB_2": {
+      "background": "SCN_15/监控室.jpg",
+      "npcAreas": [
+        {
+          "x": 50,
+          "y": 50,
+          "width": 200,
+          "height": 120
+        }
+      ]
+    },
+    "SCN_16_SUB_2": {
+      "background": "SCN_16/二层隔层.jpg",
+      "npcAreas": [
+        {
+          "x": 50,
+          "y": 50,
+          "width": 200,
+          "height": 120
+        }
+      ]
+    },
+    "SCN_17_SUB_2": {
+      "background": "SCN_17/钟楼.jpg",
+      "npcAreas": [
+        {
+          "x": 50,
+          "y": 50,
+          "width": 200,
+          "height": 120
+        }
+      ]
+    },
+    "SCN_17_SUB_3": {
+      "background": "SCN_17/暗门·蛛网.jpg",
+      "npcAreas": [
+        {
+          "x": 50,
+          "y": 50,
+          "width": 200,
+          "height": 120
+        }
+      ]
+    },
+    "SCN_17_SUB_4": {
+      "background": "SCN_17/地下赌场.jpg",
+      "npcAreas": [
+        {
+          "x": 50,
+          "y": 50,
+          "width": 200,
+          "height": 120
+        }
+      ]
+    },
+    "SCN_20_SUB_2": {
+      "background": "SCN_20/工作屋.jpg",
+      "npcAreas": [
+        {
+          "x": 50,
+          "y": 50,
+          "width": 200,
+          "height": 120
+        }
+      ]
+    },
+    "SCN_20_SUB_3": {
+      "background": "SCN_20/森林深处.jpg",
+      "npcAreas": [
+        {
+          "x": 50,
+          "y": 50,
+          "width": 200,
+          "height": 120
+        }
+      ]
+    },
+    "SCN_21_SUB_2": {
+      "background": "SCN_21/站外广场.jpg",
+      "npcAreas": [
+        {
+          "x": 50,
+          "y": 50,
+          "width": 200,
+          "height": 120
+        }
+      ]
+    },
+    "SCN_21_SUB_3": {
+      "background": "SCN_21/黑手党总部.jpg",
+      "npcAreas": [
+        {
+          "x": 50,
+          "y": 50,
+          "width": 200,
+          "height": 120
+        }
+      ]
+    },
+    "SCN_22_SUB_2": {
+      "background": "SCN_22/私人书房.jpg",
+      "npcAreas": [
+        {
+          "x": 50,
+          "y": 50,
+          "width": 200,
+          "height": 120
+        }
+      ]
+    },
+    "SCN_22_SUB_3": {
+      "background": "SCN_22/地下储藏室.jpg",
+      "npcAreas": [
+        {
+          "x": 50,
+          "y": 50,
+          "width": 200,
+          "height": 120
+        }
+      ]
+    }
   }
 }

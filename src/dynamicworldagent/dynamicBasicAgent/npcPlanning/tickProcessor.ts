@@ -908,7 +908,7 @@ async function executeSingleTick(
   };
 
   // 0. Ensure NPCs have detailed nodes available (two-tier planning refill)
-  const allNpcIds = state.npcCharacters.map((n) => n.id);
+  const allNpcIds = dgsm.getSimulatedNpcs().map((n) => n.id);
   await Promise.all(
     allNpcIds.map((npcId) =>
       npcPlanningAgent.ensureNpcNodesAvailable(

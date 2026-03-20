@@ -2,6 +2,7 @@ import type Phaser from "phaser";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { SidebarToggleButton } from "../components/layout/SidebarToggleButton";
+import { ConfigPanel } from "../components/simulation/ConfigPanel";
 import { ControlPanel } from "../components/simulation/ControlPanel";
 import { PhaserContainer } from "../components/simulation/PhaserContainer";
 import { SidePanel } from "../components/simulation/SidePanel";
@@ -17,6 +18,12 @@ interface SceneConfig {
   npcAreas: Array<{ x: number; y: number; width: number; height: number }>;
 }
 
+interface ScenarioConfig {
+  x: number;
+  y: number;
+  thumbnail: string;
+}
+
 export default function SimulationPage() {
   const { sessionId } = useParams<{ sessionId: string }>();
   const navigate = useNavigate();
@@ -27,6 +34,7 @@ export default function SimulationPage() {
 
   // Scene image popup state
   const [sceneConfigs, setSceneConfigs] = useState<Record<string, SceneConfig> | null>(null);
+  const [scenarioConfigs, setScenarioConfigs] = useState<Record<string, ScenarioConfig> | null>(null);
 
   const {
     state,
@@ -51,8 +59,9 @@ export default function SimulationPage() {
     if (!state.mapsPrefix) return;
     fetch(`${MAPS_BASE}/${state.mapsPrefix}/map_config.json`)
       .then((res) => res.json())
-      .then((config: { scenes?: Record<string, SceneConfig> }) => {
+      .then((config: { scenes?: Record<string, SceneConfig>; scenarios?: Record<string, ScenarioConfig> }) => {
         if (config.scenes) setSceneConfigs(config.scenes);
+        if (config.scenarios) setScenarioConfigs(config.scenarios);
       })
       .catch(() => {});
   }, [state.mapsPrefix]);
@@ -128,7 +137,7 @@ export default function SimulationPage() {
   );
 
   const handleSwitchSubScene = useCallback(
-    (subSceneId: string) => {
+    (subSceneId: string | null) => {
       switchSubScene(subSceneId);
     },
     [switchSubScene]
@@ -156,13 +165,19 @@ export default function SimulationPage() {
         .map((s) => ({ id: s.id, name: s.name })) ?? [])
     : [];
 
-  // Resolve scene image URL
-  const sceneImageUrl =
-    state.focusedSubSceneId && sceneConfigs && state.mapsPrefix
-      ? sceneConfigs[state.focusedSubSceneId]?.background
-        ? `${MAPS_BASE}/${state.mapsPrefix}/${sceneConfigs[state.focusedSubSceneId].background}`
-        : null
-      : null;
+  // Resolve scene image URL — sub-scene background or scenario thumbnail
+  const sceneImageUrl = (() => {
+    if (!state.mapsPrefix) return null;
+    if (state.focusedSubSceneId && sceneConfigs) {
+      const bg = sceneConfigs[state.focusedSubSceneId]?.background;
+      return bg ? `${MAPS_BASE}/${state.mapsPrefix}/${bg}` : null;
+    }
+    if (state.focusedBuildingId && scenarioConfigs) {
+      const thumb = scenarioConfigs[state.focusedBuildingId]?.thumbnail;
+      return thumb ? `${MAPS_BASE}/${state.mapsPrefix}/${thumb}` : null;
+    }
+    return null;
+  })();
 
   // Resolve scene name
   const focusedSceneName = state.focusedSubSceneId
@@ -225,37 +240,43 @@ export default function SimulationPage() {
         <div className={`sim-scene-popup ${isSidebarOpen ? "sim-scene-popup-shifted" : ""}`}>
           <div className="sim-scene-popup-content backdrop-blur-sm bg-white/50 border border-slate-200 shadow-lg rounded-lg overflow-hidden">
             {/* Header — scenario name + sub-scene tabs */}
-            {buildingSubScenes.length > 1 && (
-              <div className="flex items-center gap-1.5 p-2 border-b border-slate-200/60 flex-wrap">
-                <span
-                  onClick={() => handleSwitchSubScene(buildingSubScenes[0].id)}
-                  className="text-xs px-3 py-1.5 rounded-lg cursor-pointer text-slate-500 hover:bg-white/50 hover:text-slate-700 transition-all font-bold"
-                >
-                  {focusedBuildingName ?? state.focusedBuildingId}
-                </span>
-                <div className="w-px h-5 bg-slate-200/60" />
-                {buildingSubScenes.map((scene) => (
-                  <button
-                    key={scene.id}
-                    onClick={() => handleSwitchSubScene(scene.id)}
-                    className={`text-xs px-3 py-1.5 rounded-lg transition-all ${
-                      scene.id === state.focusedSubSceneId
-                        ? "bg-amber-600 text-white"
-                        : "bg-white/50 text-slate-600 border border-slate-200 hover:bg-white/70"
-                    }`}
-                  >
-                    {scene.name}
-                  </button>
-                ))}
-              </div>
-            )}
+            <div className="flex items-center gap-1.5 p-2 border-b border-slate-200/60 flex-wrap">
+              <span
+                onClick={() => switchSubScene(null)}
+                className={`text-xs px-3 py-1.5 rounded-lg cursor-pointer transition-all font-bold ${
+                  state.focusedSubSceneId === null
+                    ? "bg-amber-600 text-white"
+                    : "text-slate-500 hover:bg-white/50 hover:text-slate-700"
+                }`}
+              >
+                {focusedBuildingName ?? state.focusedBuildingId}
+              </span>
+              {buildingSubScenes.length > 0 && (
+                <>
+                  <div className="w-px h-5 bg-slate-200/60" />
+                  {buildingSubScenes.map((scene) => (
+                    <button
+                      key={scene.id}
+                      onClick={() => handleSwitchSubScene(scene.id)}
+                      className={`text-xs px-3 py-1.5 rounded-lg transition-all ${
+                        scene.id === state.focusedSubSceneId
+                          ? "bg-amber-600 text-white"
+                          : "bg-white/50 text-slate-600 border border-slate-200 hover:bg-white/70"
+                      }`}
+                    >
+                      {scene.name}
+                    </button>
+                  ))}
+                </>
+              )}
+            </div>
 
             {/* Scene image */}
             <div className="flex-1 overflow-hidden flex items-center justify-center">
               {sceneImageUrl ? (
                 <img
                   src={sceneImageUrl}
-                  alt={focusedSceneName ?? ""}
+                  alt={focusedSceneName ?? focusedBuildingName ?? ""}
                   className="w-full max-h-full object-cover"
                 />
               ) : (
@@ -264,6 +285,11 @@ export default function SimulationPage() {
             </div>
           </div>
         </div>
+      )}
+
+      {/* Config panel (pre-start) */}
+      {sessionId && state.eventLog.length === 0 && state.simulationState === "paused" && (
+        <ConfigPanel sessionId={sessionId} />
       )}
 
       {/* Simulation control panel */}
@@ -280,7 +306,6 @@ export default function SimulationPage() {
       )}
 
       <SidePanel
-        sessionId={sessionId ?? ""}
         gameDay={state.gameDay}
         timeOfDay={state.timeOfDay}
         simulationState={state.simulationState}

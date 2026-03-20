@@ -1,31 +1,11 @@
-import { useState } from "react";
 import type { SimulationEvent } from "../../hooks/useSimulationWebSocket";
 import type { NpcStatusInfo } from "../../services/simulationApi";
-import * as simApi from "../../services/simulationApi";
 import { EventLog } from "./EventLog";
 import { GameClock } from "./GameClock";
 import { NpcCard } from "./NpcCard";
 import { NpcDetail } from "./NpcDetail";
 
-const SPEED_OPTIONS = [
-  { label: "1x", ms: 60000 },
-  { label: "2x", ms: 30000 },
-  { label: "5x", ms: 12000 },
-  { label: "10x", ms: 6000 },
-];
-
-const WEATHER_OPTIONS = [
-  { value: "clear", label: "Clear" },
-  { value: "rain", label: "Rain" },
-  { value: "fog", label: "Fog" },
-  { value: "storm", label: "Storm" },
-  { value: "snow", label: "Snow" },
-  { value: "extreme_heat", label: "Extreme Heat" },
-  { value: "extreme_cold", label: "Extreme Cold" },
-] as const;
-
 interface SidePanelProps {
-  sessionId: string;
   gameDay: number;
   timeOfDay: string;
   simulationState: string;
@@ -40,7 +20,6 @@ interface SidePanelProps {
 }
 
 export function SidePanel({
-  sessionId,
   gameDay,
   timeOfDay,
   simulationState,
@@ -80,7 +59,7 @@ export function SidePanel({
       />
 
       {isPreparing ? (
-        <PreparationPanel sessionId={sessionId} npcStatuses={npcStatuses} onSelectNpc={onSelectNpc} />
+        <PreparationPanel npcStatuses={npcStatuses} onSelectNpc={onSelectNpc} />
       ) : (
         <>
           {selectedNpc ? (
@@ -113,127 +92,25 @@ export function SidePanel({
 }
 
 function PreparationPanel({
-  sessionId,
   npcStatuses,
   onSelectNpc,
 }: {
-  sessionId: string;
   npcStatuses: NpcStatusInfo[];
   onSelectNpc: (npcId: string | null) => void;
 }) {
-  const [tickSpeed, setTickSpeed] = useState(60000);
-  const [maxDays, setMaxDays] = useState(7);
-  const [weather, setWeather] = useState("clear");
-  const [starting, setStarting] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-
-  async function handleStart() {
-    setStarting(true);
-    setError(null);
-    try {
-      // Apply config before starting
-      await simApi.updateSpeed(sessionId, tickSpeed);
-      await simApi.startSimulation(sessionId);
-    } catch (err) {
-      setError(err instanceof Error ? err.message : "Failed to start");
-      setStarting(false);
-    }
-  }
-
   return (
-    <div className="flex-1 flex flex-col overflow-y-auto">
-      {/* Config Section */}
-      <div className="p-4 space-y-4 border-b border-slate-200/60">
-        <h3 className="text-sm font-semibold text-slate-600 uppercase tracking-wider">
-          Configuration
-        </h3>
-
-        {/* Tick Speed */}
-        <div>
-          <label className="block text-xs font-medium text-slate-500 mb-1.5">
-            Tick Speed
-          </label>
-          <div className="flex gap-1.5">
-            {SPEED_OPTIONS.map(({ label, ms }) => (
-              <button
-                key={label}
-                type="button"
-                onClick={() => setTickSpeed(ms)}
-                className={`flex-1 py-1.5 rounded text-xs font-medium transition-all ${
-                  tickSpeed === ms
-                    ? "bg-amber-600 text-white"
-                    : "bg-white/50 text-slate-600 border border-slate-200 hover:bg-white/70"
-                }`}
-              >
-                {label}
-              </button>
-            ))}
-          </div>
-        </div>
-
-        {/* Max Days */}
-        <div>
-          <label className="block text-xs font-medium text-slate-500 mb-1.5">
-            Max Days: {maxDays}
-          </label>
-          <input
-            type="range"
-            min={1}
-            max={30}
-            value={maxDays}
-            onChange={(e) => setMaxDays(Number(e.target.value))}
-            className="w-full accent-amber-600"
-          />
-          <div className="flex justify-between text-xs text-slate-400">
-            <span>1</span>
-            <span>30</span>
-          </div>
-        </div>
-
-        {/* Weather */}
-        <div>
-          <label className="block text-xs font-medium text-slate-500 mb-1.5">
-            Weather
-          </label>
-          <select
-            value={weather}
-            onChange={(e) => setWeather(e.target.value)}
-            className="w-full py-1.5 px-2 rounded-lg bg-white/50 text-slate-700 border border-slate-300 text-sm"
-          >
-            {WEATHER_OPTIONS.map(({ value, label }) => (
-              <option key={value} value={value}>{label}</option>
-            ))}
-          </select>
-        </div>
-
-        {error && (
-          <p className="text-red-400 text-xs">{error}</p>
-        )}
-
-        <button
-          type="button"
-          onClick={handleStart}
-          disabled={starting}
-          className="w-full py-2.5 rounded-xl bg-amber-600 text-white font-medium hover:bg-amber-700 disabled:opacity-50 transition-all text-sm shadow-md"
-        >
-          {starting ? "Starting..." : "Start Simulation"}
-        </button>
+    <div className="flex-1 overflow-y-auto">
+      <div className="px-3 py-2 text-xs font-medium text-slate-500 border-b border-slate-200/60">
+        NPCs ({npcStatuses.length})
       </div>
-
-      {/* NPC List */}
-      <div className="flex-1 overflow-y-auto">
-        <div className="px-3 py-2 text-xs font-medium text-slate-500 border-b border-slate-200/60">
-          NPCs ({npcStatuses.length})
-        </div>
-        {npcStatuses.map((npc) => (
-          <NpcCard
-            key={npc.npcId}
-            npc={npc}
-            isSelected={false}
-            onClick={() => onSelectNpc(npc.npcId)}
-          />
-        ))}
-      </div>
+      {npcStatuses.map((npc) => (
+        <NpcCard
+          key={npc.npcId}
+          npc={npc}
+          isSelected={false}
+          onClick={() => onSelectNpc(npc.npcId)}
+        />
+      ))}
     </div>
   );
 }

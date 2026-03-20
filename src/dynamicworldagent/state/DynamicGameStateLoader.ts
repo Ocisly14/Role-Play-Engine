@@ -3,12 +3,15 @@
  * Delegates to moduleLoader three-step API: loadModule → createSession → initRuntime
  */
 
+import fs from "fs";
+import path from "path";
 import { ModelProviderName } from "../../models/types.js";
 import { EmbeddingClient } from "../../rag/embedding.js";
 import { resolveModuleIdByName } from "../../shared/agents/memory/database/moduleScope.js";
 import { getPrismaClient } from "../../shared/agents/memory/database/prismaClient.js";
 import { resolveEmailId } from "../../shared/agents/memory/database/userContext.js";
 import type { DynamicGameState } from "./DynamicGameState.js";
+import { importModule } from "./moduleImporter.js";
 import { createSession, initRuntime, loadModule } from "./moduleLoader.js";
 
 /**
@@ -27,6 +30,17 @@ export async function initializeCompleteDynamicGameState(
   const resolvedEmailId = params.emailId
     ? resolveEmailId(params.emailId)
     : undefined;
+
+  // Re-import module from filesystem to ensure DB has latest data (idempotent)
+  const moduleDir = path.join(process.cwd(), "data", "Mods", params.moduleName);
+  if (fs.existsSync(moduleDir)) {
+    await importModule({
+      prisma,
+      moduleDir,
+      moduleName: params.moduleName,
+      emailId: resolvedEmailId,
+    });
+  }
 
   // Resolve moduleId from name
   const moduleId = await resolveModuleIdByName(
@@ -81,7 +95,7 @@ export async function initializeCompleteDynamicGameState(
   });
 
   console.log(
-    `[DynamicGameState] Initialized module "${params.moduleName}" — ${moduleData.npcs.length} NPCs, ${moduleData.scenes.size} scenes`
+    `[DynamicGameState] Initialized module "${params.moduleName}" — ${state.npcCharacters.length}/${moduleData.npcs.length} NPCs (policy filtered), ${moduleData.scenes.size} scenes`
   );
   return state;
 }

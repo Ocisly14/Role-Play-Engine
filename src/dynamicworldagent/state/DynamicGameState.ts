@@ -80,6 +80,9 @@ export interface DynamicGameState {
   // === Character Positions (NPC) ===
   characterPositions: Record<string, CharacterPosition>;
 
+  // === NPC Injection Policy ===
+  npcInjectionPolicy: import("./moduleLoader.js").NpcInjectionPolicy | null;
+
   // === Metadata ===
   loadedAt: Date;
   lastUpdated: Date;
@@ -115,6 +118,7 @@ export const initialDynamicGameState = (params: {
   transportEdges: [],
   topology: null as unknown as TownTopology,
   characterPositions: {},
+  npcInjectionPolicy: null,
   loadedAt: new Date(),
   lastUpdated: new Date(),
 });
@@ -144,6 +148,31 @@ export class DynamicGameStateManager {
    */
   getState(): Readonly<DynamicGameState> {
     return this.state;
+  }
+
+  // === NPC Injection Policy Helpers ===
+
+  /**
+   * Get the set of NPC IDs that should be actively simulated
+   * (daily_sim + investigator_sim tiers). If no policy, all NPCs are simulated.
+   */
+  getSimulatedNpcIds(): Set<string> {
+    const policy = this.state.npcInjectionPolicy;
+    if (!policy) {
+      return new Set(this.state.npcCharacters.map((n) => n.id));
+    }
+    const ids = new Set<string>();
+    for (const name of policy.tiers.daily_sim ?? []) ids.add(name);
+    for (const name of policy.tiers.investigator_sim ?? []) ids.add(name);
+    return ids;
+  }
+
+  /**
+   * Get NPC profiles that should be actively simulated.
+   */
+  getSimulatedNpcs(): DynamicNPCProfile[] {
+    const simIds = this.getSimulatedNpcIds();
+    return this.state.npcCharacters.filter((n) => simIds.has(n.id));
   }
 
   // === Scene Helpers ===
@@ -343,6 +372,7 @@ export class DynamicGameStateManager {
       scenarioConditions: data.scenarioConditions ?? {},
       npcResidences: data.npcResidences ?? {},
       transportEdges: data.transportEdges ?? [],
+      npcInjectionPolicy: data.npcInjectionPolicy ?? null,
       topology: topology!,
       characterPositions: (() => {
         if (

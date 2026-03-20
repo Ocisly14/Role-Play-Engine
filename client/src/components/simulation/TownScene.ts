@@ -103,15 +103,33 @@ export class TownScene extends Phaser.Scene {
     this.game.events.on("zoom-to", this.handleZoomTo, this);
   }
 
+  /** Returns true when a pointer event originated outside the Phaser canvas (i.e. on a UI overlay). */
+  private isOverUI(pointer: Phaser.Input.Pointer): boolean {
+    const domEvent = pointer.event as PointerEvent | MouseEvent | WheelEvent | undefined;
+    if (!domEvent?.target) return false;
+    return domEvent.target !== this.game.canvas;
+  }
+
   create() {
+    // Globally disable Phaser hit-testing when the pointer is over a DOM overlay.
+    // This prevents building-clicked, pointerover/out, etc. from firing through UI.
+    this.input.on("pointerdown", (pointer: Phaser.Input.Pointer) => {
+      if (this.isOverUI(pointer)) {
+        this.input.enabled = false;
+        // Re-enable on next frame so subsequent canvas interactions work normally.
+        this.time.delayedCall(0, () => { this.input.enabled = true; });
+      }
+    });
+
     this.input.on(
       "wheel",
       (
-        _pointer: Phaser.Input.Pointer,
+        pointer: Phaser.Input.Pointer,
         _gameObjects: Phaser.GameObjects.GameObject[],
         _deltaX: number,
         deltaY: number
       ) => {
+        if (this.isOverUI(pointer)) return;
         const cam = this.cameras.main;
         cam.setZoom(
           Phaser.Math.Clamp(cam.zoom + (deltaY > 0 ? -0.05 : 0.05), this.minZoom, 10)
@@ -120,6 +138,7 @@ export class TownScene extends Phaser.Scene {
     );
 
     this.input.on("pointermove", (pointer: Phaser.Input.Pointer) => {
+      if (this.isOverUI(pointer)) return;
       if (pointer.isDown) {
         const cam = this.cameras.main;
         cam.scrollX -= (pointer.x - pointer.prevPosition.x) / cam.zoom;
@@ -310,13 +329,8 @@ export class TownScene extends Phaser.Scene {
       shadow.fillRoundedRect(-halfW + 6, -halfH + 6, NODE_WIDTH, NODE_HEIGHT, 16);
       container.add(shadow);
 
-      // Card background
-      const cardBg = this.add.graphics();
-      cardBg.fillStyle(0x1a1a2e, 0.9);
-      cardBg.fillRoundedRect(-halfW, -halfH, NODE_WIDTH, NODE_HEIGHT, 16);
-      container.add(cardBg);
-
-      // Thumbnail
+      // Thumbnail + mask
+      let maskGfx: Phaser.GameObjects.Graphics | null = null;
       if (this.textures.exists(thumbKey)) {
         const thumb = this.add.image(0, 0, thumbKey);
         const scale = Math.max(
@@ -324,46 +338,47 @@ export class TownScene extends Phaser.Scene {
           NODE_HEIGHT / thumb.height
         );
         thumb.setScale(scale);
-
-        // Mask to rounded rect
-        const maskGfx = this.make.graphics({ x: 0, y: 0 });
-        maskGfx.fillStyle(0xffffff);
-        maskGfx.fillRoundedRect(
-          pos.x - halfW,
-          pos.y - halfH,
-          NODE_WIDTH,
-          NODE_HEIGHT,
-          16
-        );
-        thumb.setMask(maskGfx.createGeometryMask());
-
         container.add(thumb);
+
+        // Mask — applied to thumb only so label/glow aren't clipped
+        maskGfx = this.make.graphics({ x: pos.x, y: pos.y });
+        maskGfx.fillStyle(0xffffff);
+        maskGfx.fillRoundedRect(-halfW, -halfH, NODE_WIDTH, NODE_HEIGHT, 16);
+        thumb.setMask(maskGfx.createGeometryMask());
       }
 
       // Border
       const border = this.add.graphics();
-      border.lineStyle(3, 0x6a6a8a, 0.8);
+      border.lineStyle(2, 0xffffff, 0.5);
       border.strokeRoundedRect(-halfW, -halfH, NODE_WIDTH, NODE_HEIGHT, 16);
       container.add(border);
 
-      // Hover glow (hidden)
+      // Hover glow (hidden) — multi-layer for bloom/highlight effect
       const hoverGlow = this.add.graphics();
-      hoverGlow.lineStyle(5, 0xd4a843, 0.9);
-      hoverGlow.strokeRoundedRect(-halfW - 2, -halfH - 2, NODE_WIDTH + 4, NODE_HEIGHT + 4, 18);
+      hoverGlow.lineStyle(20, 0xffffff, 0.15);
+      hoverGlow.strokeRoundedRect(-halfW - 10, -halfH - 10, NODE_WIDTH + 20, NODE_HEIGHT + 20, 26);
+      hoverGlow.lineStyle(12, 0xffffff, 0.35);
+      hoverGlow.strokeRoundedRect(-halfW - 6, -halfH - 6, NODE_WIDTH + 12, NODE_HEIGHT + 12, 22);
+      hoverGlow.lineStyle(6, 0xffffff, 0.65);
+      hoverGlow.strokeRoundedRect(-halfW - 3, -halfH - 3, NODE_WIDTH + 6, NODE_HEIGHT + 6, 19);
+      hoverGlow.lineStyle(3, 0xffffff, 1);
+      hoverGlow.strokeRoundedRect(-halfW - 1, -halfH - 1, NODE_WIDTH + 2, NODE_HEIGHT + 2, 17);
       hoverGlow.setAlpha(0);
       container.add(hoverGlow);
 
-      // Label
+      // Label — above image, hidden by default, shown on hover
       const label = this.add
-        .text(0, halfH + 12, outline.name, {
+        .text(0, -halfH - 16, outline.name, {
           fontSize: "32px",
-          color: "#e8dcc8",
+          color: "#ffffff",
           fontFamily: "serif",
           align: "center",
-          stroke: "#111118",
-          strokeThickness: 6,
+          stroke: "#000000",
+          strokeThickness: 5,
         })
-        .setOrigin(0.5, 0);
+        .setOrigin(0.5, 1)
+        .setAlpha(0)
+        .setResolution(3);
       container.add(label);
 
       // Interactive
@@ -373,29 +388,36 @@ export class TownScene extends Phaser.Scene {
       container.add(hitZone);
 
       hitZone.on("pointerover", () => {
+        container.setDepth(9999);
+        // Dynamically set label resolution based on camera zoom so text stays crisp
+        const zoom = this.cameras.main.zoom;
+        label.setResolution(Math.max(3, Math.ceil(1 / zoom) * 3));
+        const targets = maskGfx ? [container, maskGfx] : [container];
         this.tweens.add({
-          targets: container,
-          scaleX: 1.12,
-          scaleY: 1.12,
+          targets,
+          scaleX: 1.5,
+          scaleY: 1.5,
           duration: 200,
           ease: "Back.easeOut",
         });
         this.tweens.add({
-          targets: hoverGlow,
+          targets: [hoverGlow, label],
           alpha: 1,
           duration: 200,
         });
       });
       hitZone.on("pointerout", () => {
+        container.setDepth(0);
+        const targets = maskGfx ? [container, maskGfx] : [container];
         this.tweens.add({
-          targets: container,
+          targets,
           scaleX: 1.0,
           scaleY: 1.0,
           duration: 200,
           ease: "Sine.easeOut",
         });
         this.tweens.add({
-          targets: hoverGlow,
+          targets: [hoverGlow, label],
           alpha: 0,
           duration: 200,
         });

@@ -140,12 +140,12 @@ export function useSimulationState(sessionId: string | null) {
   }, []);
 
   const enterBuilding = useCallback(
-    (buildingId: string, subSceneId: string) => {
+    (buildingId: string, _subSceneId?: string) => {
       setState((prev) => ({
         ...prev,
         currentLevel: 3,
         focusedBuildingId: buildingId,
-        focusedSubSceneId: subSceneId,
+        focusedSubSceneId: null,
       }));
     },
     []
@@ -160,7 +160,7 @@ export function useSimulationState(sessionId: string | null) {
     }));
   }, []);
 
-  const switchSubScene = useCallback((subSceneId: string) => {
+  const switchSubScene = useCallback((subSceneId: string | null) => {
     setState((prev) => ({ ...prev, focusedSubSceneId: subSceneId }));
   }, []);
 

@@ -255,8 +255,7 @@ export class NPCPlanningAgent {
     sessionId: string,
     moduleId: string
   ): Promise<void> {
-    const state = dgsm.getState();
-    const npcs = state.npcCharacters;
+    const npcs = dgsm.getSimulatedNpcs();
 
     await Promise.all(
       npcs.map(async (npc) => {
@@ -321,8 +320,7 @@ export class NPCPlanningAgent {
     language = "en",
     registry?: GameEngineRegistry
   ): Promise<void> {
-    const state = dgsm.getState();
-    const npcs = state.npcCharacters;
+    const npcs = dgsm.getSimulatedNpcs();
 
     await Promise.all(
       npcs.map(async (npc) => {
@@ -1274,7 +1272,7 @@ export class NPCPlanningAgent {
           modelClass: ModelClass.MEDIUM,
         });
 
-      const npcCharacters = dgsm.getState().npcCharacters;
+      const npcCharacters = dgsm.getSimulatedNpcs();
       const reasoningPromises = npcCharacters.map((npc) =>
         this.memoryManager!.triggerReasoning(
           {
@@ -1316,7 +1314,7 @@ export class NPCPlanningAgent {
     gameDay: number,
     language: string
   ): Promise<void> {
-    const npcs = dgsm.getState().npcCharacters;
+    const npcs = dgsm.getSimulatedNpcs();
     await Promise.all(
       npcs.map((npc) =>
         this.summarizeDayMemory(dgsm, sessionId, npc.id, gameDay, language)

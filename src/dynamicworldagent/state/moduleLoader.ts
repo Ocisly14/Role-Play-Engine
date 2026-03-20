@@ -22,6 +22,20 @@ import type {
   ScenarioOutline,
 } from "./types.js";
 
+export interface NpcInjectionPolicy {
+  moduleId?: string;
+  moduleStartDate?: string;
+  description?: string;
+  tiers: {
+    daily_sim?: string[];
+    investigator_sim?: string[];
+    limited_sim?: string[];
+    scene_only?: string[];
+    cosmic_not_sim?: string[];
+    [key: string]: string[] | undefined;
+  };
+}
+
 export interface ModuleData {
   moduleId: string;
   moduleName: string;
@@ -32,6 +46,7 @@ export interface ModuleData {
   roads: Map<string, RoadNode>;
   scenarioOutlines: ScenarioOutline[];
   transportEdges: TransportEdge[];
+  npcInjectionPolicy: NpcInjectionPolicy | null;
 }
 
 /**
@@ -63,6 +78,7 @@ export async function loadModule(
   const roads = new Map<string, RoadNode>();
   let scenarioOutlines: ScenarioOutline[] = [];
   let transportEdges: TransportEdge[] = [];
+  let npcInjectionPolicy: NpcInjectionPolicy | null = null;
 
   for (const row of sceneRows) {
     const data = row.data as any;
@@ -76,6 +92,8 @@ export async function loadModule(
       transportEdges = Array.isArray(data)
         ? data
         : (data?.transportEdges ?? []);
+    } else if (row.entryId === "__npc_injection_policy__") {
+      npcInjectionPolicy = data as NpcInjectionPolicy;
     } else if (row.entryId.startsWith("JUNC_")) {
       junctions.set(row.entryId, data as JunctionNode);
     } else if (row.entryId.startsWith("ROAD_")) {
@@ -101,6 +119,7 @@ export async function loadModule(
     roads,
     scenarioOutlines,
     transportEdges,
+    npcInjectionPolicy,
   };
 }
 
@@ -138,10 +157,14 @@ export async function createSession(
     },
   });
 
-  // Bootstrap NPC memory from profile.memory[]
+  // Bootstrap NPC memory from profile.memory[] (only simulated NPCs)
   const memoryManager = new NpcMemoryManager(prisma, embedClient);
+  const simulatedNpcs = filterNpcsByPolicy(
+    moduleData.npcs,
+    moduleData.npcInjectionPolicy
+  );
 
-  for (const npc of moduleData.npcs) {
+  for (const npc of simulatedNpcs) {
     if (!npc.memory || npc.memory.length === 0) continue;
 
     // Idempotent: skip if NPC already has memories
@@ -167,6 +190,27 @@ export async function createSession(
 }
 
 /**
+ * Filter NPCs by injection policy. Returns only NPCs in the specified tiers.
+ * If no policy exists, returns all NPCs (backward compatible).
+ */
+export function filterNpcsByPolicy(
+  npcs: DynamicNPCProfile[],
+  policy: NpcInjectionPolicy | null,
+  tiers: string[] = ["daily_sim", "investigator_sim"]
+): DynamicNPCProfile[] {
+  if (!policy) return npcs;
+  const allowed = new Set<string>();
+  for (const tier of tiers) {
+    for (const name of policy.tiers[tier] ?? []) allowed.add(name);
+  }
+  const filtered = npcs.filter((n) => allowed.has(n.id) || allowed.has(n.name));
+  console.log(
+    `[moduleLoader] Injection policy: ${filtered.length}/${npcs.length} NPCs pass tiers [${tiers.join(", ")}]`
+  );
+  return filtered;
+}
+
+/**
  * Step 3: Build DynamicGameState with runtime fields. Pure, no DB access.
  */
 export function initRuntime(params: {
@@ -176,6 +220,12 @@ export function initRuntime(params: {
   timeOfDay: string;
 }): DynamicGameState {
   const { sessionId, moduleData, gameDay, timeOfDay } = params;
+
+  // Filter NPCs by injection policy (only daily_sim + investigator_sim)
+  const simulatedNpcs = filterNpcsByPolicy(
+    moduleData.npcs,
+    moduleData.npcInjectionPolicy
+  );
 
   // Build topology
   const topology: TownTopology | null =
@@ -224,7 +274,7 @@ export function initRuntime(params: {
     }
   }
 
-  for (const npc of moduleData.npcs) {
+  for (const npc of simulatedNpcs) {
     // Location: prefer explicit currentLocation from NPC profile
     const residence = npc.residence ?? residentToLocation[npc.id];
     let resolvedLocation: string;
@@ -340,7 +390,7 @@ export function initRuntime(params: {
     roads: moduleData.roads,
     gameDay,
     timeOfDay,
-    npcCharacters: moduleData.npcs,
+    npcCharacters: simulatedNpcs,
     moduleName: moduleData.moduleName,
     moduleSetup: moduleData.setup,
     scenarioOutlines: moduleData.scenarioOutlines,
@@ -354,6 +404,7 @@ export function initRuntime(params: {
     transportEdges: moduleData.transportEdges,
     topology,
     characterPositions,
+    npcInjectionPolicy: moduleData.npcInjectionPolicy,
     loadedAt: new Date(),
     lastUpdated: new Date(),
   };
